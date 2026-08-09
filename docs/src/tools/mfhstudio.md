@@ -183,7 +183,7 @@ selector at the top of the Scales panel offers a second kind of cell.
 
 A **laminate** is a periodic stack of parallel layers of common normal. It has
 no matrix, no reference medium and no auxiliary Eshelby problem — and its
-effective behaviour is **exact**, not an estimate. It is the deterministic
+effective behavior is **exact**, not an estimate. It is the deterministic
 counterpart of the morphologies the rest of the interface describes.
 
 Picking *Laminate* replaces the phase list with a stack:
