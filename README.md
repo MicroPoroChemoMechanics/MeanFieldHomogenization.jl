@@ -13,10 +13,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/LICENSE)
 [![code style: runic](https://img.shields.io/badge/code_style-%E1%9A%B1%E1%9A%A2%E1%9A%BE%E1%9B%81%E1%9A%B2-pink)](https://github.com/fredrikekre/Runic.jl)
 
-> [!NOTE] Try it without installing anything
-> [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/MicroPoroChemoMechanics/MeanFieldHomogenization.jl?quickstart=1)
-> One click opens a machine in your browser with Julia, the package and
-> [MFH Studio](#mfh-studio--building-models-in-the-browser) already running.
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/MicroPoroChemoMechanics/MeanFieldHomogenization.jl?quickstart=1)
 
 `MeanFieldHomogenization.jl` is a Julia framework for **mean-field homogenization**
 of heterogeneous materials: it predicts effective elastic, transport and
