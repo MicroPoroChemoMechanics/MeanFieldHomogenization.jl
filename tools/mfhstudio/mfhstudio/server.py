@@ -19,13 +19,16 @@ from urllib.parse import parse_qs, urlparse
 
 from . import catalog as catalog_module
 from . import convert as convert_module
-from .codegen import extract_embedded, generate
+from .codegen import cell_expression, extract_embedded, generate
 from .juliabridge import PROJECT_ROOT, Bridge, SidecarError, SidecarUnavailable
 from .model import Model, default_model
 from .preflight import check_project
 from .readback import model_from_script
 
 WEB_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "web"))
+EXAMPLES_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "examples")
+)
 
 _MIME = {
     ".html": "text/html; charset=utf-8",
@@ -217,6 +220,16 @@ class Handler(BaseHTTPRequestHandler):
 
     def _traces(self, body: dict) -> None:
         expr = body.get("expr") or ""
+        # A laminate has no per-member shape — the geometry of the cell *is*
+        # the stack — so the browser names the cell and the expression is built
+        # here, by the code generator. Spelling it out a second time in
+        # JavaScript would give the picture its own idea of the model.
+        cid = body.get("cell")
+        if not expr and cid:
+            c = self.session.model.cell(cid)
+            # A parametrized builder has no single value to draw.
+            if c is not None and not c.params:
+                expr = cell_expression(self.session.model, c)
         if not expr:
             return self._json({"data": [], "layout": {}})
         kw = {}
@@ -285,14 +298,20 @@ class Handler(BaseHTTPRequestHandler):
     def _default_dir(self) -> str:
         if self.session.path:
             return os.path.dirname(os.path.abspath(self.session.path))
-        scripts = os.path.join(PROJECT_ROOT, "scripts")
-        return scripts if os.path.isdir(scripts) else os.getcwd()
+        # The examples are where somebody opening this for the first time
+        # should land: they are the only files that come back as a filled-in
+        # model rather than as preserved text.
+        for p in (EXAMPLES_DIR, os.path.join(PROJECT_ROOT, "scripts")):
+            if os.path.isdir(p):
+                return p
+        return os.getcwd()
 
     @staticmethod
     def _places() -> list:
         """Shortcuts worth one click, and only the ones that exist."""
         out = []
         for label, p in (
+            ("examples", EXAMPLES_DIR),
             ("scripts", os.path.join(PROJECT_ROOT, "scripts")),
             ("package", PROJECT_ROOT),
             ("home", os.path.expanduser("~")),

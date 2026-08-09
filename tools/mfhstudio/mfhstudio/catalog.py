@@ -18,6 +18,28 @@ merged with it, so a scheme that MFH drops disappears from the interface.
 
 from __future__ import annotations
 
+from .model import LAMINATE_SCHEMES
+
+#: The two kinds of homogenization cell. A laminate is a *cell*, not an
+#: inclusion: it is a unit of homogenization, and embedding one in a matrix
+#: would need its Hill tensor, which is a different and open problem. So the
+#: interface offers it beside the RVE rather than inside the shape list, where
+#: it would promise something MeanFieldHomogenization cannot do.
+CELL_KINDS = [
+    {
+        "name": "rve", "label": "RVE (matrix + inclusions)",
+        "doc": "A random morphology: one matrix phase and the inclusions "
+               "dispersed in it. Estimated by the mean-field schemes.",
+    },
+    {
+        "name": "laminate", "label": "Laminate (periodic stack)",
+        "doc": "A periodic unit cell of parallel layers of common normal — no "
+               "matrix, no reference medium, and an exact effective behaviour "
+               "rather than an estimate.",
+        "schemes": list(LAMINATE_SCHEMES),
+    },
+]
+
 GEOMETRIES = [
     {
         "name": "Spheroid", "kind": "spheroid", "dim": 3,
@@ -280,25 +302,100 @@ INTERFACES = [
         "fields": [{"name": "ks", "label": "κₛ", "type": "number", "default": 1.0}],
         "order": 2,
     },
+    # ── laminate-only, anisotropic ───────────────────────────────────────
+    #
+    # These take a tensor, not two scalars, so the field is a Julia expression
+    # rather than a pair of numbers. They exist only on a laminate: a layered
+    # sphere's interface is a sphere, where "anisotropic in the interface
+    # plane" has no fixed frame to be written in. There is deliberately no
+    # anisotropic Kapitza — `[T] = ρ qₙ` is already fully general.
+    {
+        "name": "AnisotropicSpringInterface", "label": "Spring, anisotropic",
+        "laminate_only": True,
+        "doc": "Symmetric 3×3 compliance in the layer frame (ℓ, m, n).",
+        "fields": [{
+            "name": "compliance", "label": "compliance (3×3)", "type": "code",
+            "default": "[1.0e-3 0.0 0.0; 0.0 2.0e-3 0.0; 0.0 0.0 5.0e-4]",
+        }],
+    },
+    {
+        "name": "AnisotropicMembraneInterface", "label": "Membrane, anisotropic",
+        "laminate_only": True,
+        "doc": "In-plane Kelvin-Mandel block on (ℓ⊗ℓ, m⊗m, √2 ℓ⊗ˢm); "
+               "entry [3,3] is 2 Cˢ₁₂₁₂.",
+        "fields": [{
+            "name": "stiffness", "label": "stiffness (3×3 KM)", "type": "code",
+            "default": "[1.0 0.3 0.0; 0.3 1.0 0.0; 0.0 0.0 0.7]",
+        }],
+    },
+    {
+        "name": "AnisotropicSurfaceConductiveInterface",
+        "label": "Surface conductive, anisotropic",
+        "laminate_only": True, "order": 2,
+        "doc": "In-plane conductance tensor in the layer frame.",
+        "fields": [{
+            "name": "conductance", "label": "conductance (3×3)", "type": "code",
+            "default": "[1.0 0.0 0.0; 0.0 2.0 0.0; 0.0 0.0 0.0]",
+        }],
+    },
 ]
 
+#: `cells` says which kind of cell a lens exists on. `amount` is not merely
+#: unhelpful on a laminate — `AmountParameter` raises there, pointing at
+#: `ThicknessParameter` — and the two laminate lenses have no meaning on an RVE.
 LENSES = [
     {
         "name": "amount", "label": "Phase amount (fraction or density)",
-        "args": ["phase"],
+        "args": ["phase"], "cells": ["rve"],
         "doc": "The matrix amount is derived (1 − Σ f) and cannot be set.",
     },
-    {"name": "property", "label": "Property component", "args": ["phase", "property", "index"]},
+    {
+        "name": "property", "label": "Property component",
+        "args": ["phase", "property", "index"], "cells": ["rve", "laminate"],
+        "doc": "On a laminate the phase name is a layer name.",
+    },
     {
         "name": "geometry", "label": "Geometry field",
-        "args": ["phase", "field", "index"],
+        "args": ["phase", "field", "index"], "cells": ["rve"],
         "doc": "Changing a semi-axis reclassifies the shape trait.",
     },
-    {"name": "shape_param", "label": "Distribution shape", "args": ["field", "index"]},
+    {
+        "name": "shape_param", "label": "Distribution shape",
+        "args": ["field", "index"], "cells": ["rve"],
+    },
+    {
+        "name": "thickness", "label": "Layer thickness", "args": ["phase"],
+        "cells": ["laminate"],
+        "doc": "Not the same as a volume fraction: changing hᵢ moves the "
+               "period too, hence the 1/L weight of every imperfect interface.",
+    },
+    {
+        "name": "interface_param", "label": "Interface field",
+        "args": ["index", "field"], "cells": ["laminate"],
+        "doc": "Interface k sits on top of layer k in stacking order.",
+        "fields": ["kn", "kt", "κs", "μs", "resistance", "conductance"],
+    },
     {
         "name": "nested", "label": "Through a nested scale",
-        "args": ["member", "property", "inner"],
+        "args": ["member", "property", "inner"], "cells": ["rve", "laminate"],
         "doc": "Reaches into a Homogenized inner cell; crosses scales for AD.",
+    },
+]
+
+#: The four autodiff wrappers, as the Sensitivity panel offers them.
+SENSITIVITIES = [
+    {
+        "name": "derivative", "label": "Derivative (one parameter)",
+        "doc": "f′(x₀) of one scalar reading of the effective tensor.",
+    },
+    {
+        "name": "gradient", "label": "Gradient (several parameters)",
+        "doc": "∇f(x₀) of one scalar reading, one entry per parameter.",
+    },
+    {
+        "name": "jacobian", "label": "Jacobian (whole tensor)",
+        "doc": "The effective tensor flattened, differentiated against every "
+               "parameter. No scalar extraction, so no isotropy needed.",
     },
 ]
 
@@ -354,17 +451,20 @@ def base_catalog() -> dict:
         "julia_version": None,
         "introspected": False,
         "schemes": FALLBACK_SCHEMES,
+        "cell_kinds": CELL_KINDS,
         "geometries": GEOMETRIES,
         "properties": PROPERTIES,
         "symmetrize": SYMMETRIZE,
         "projections": PROJECTIONS,
         "interfaces": INTERFACES,
         "lenses": LENSES,
+        "sensitivities": SENSITIVITIES,
         "visco": VISCO,
         "hill_methods": ["auto", "analytical", "residues", "decuhr", "nestedquadgk"],
         "constraints": {
             "no_multiscale_in_alv": True,
             "matrix_amount_is_derived": True,
+            "laminate_schemes": list(LAMINATE_SCHEMES),
         },
     }
 

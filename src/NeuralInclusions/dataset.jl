@@ -148,13 +148,23 @@ function sample_box(box::SampleBox, n::Integer; offset::Integer = 0)
     )
     n ≥ 1 || throw(ArgumentError("`n` must be at least 1"))
     X = Matrix{Float64}(undef, d, n)
+    # The bounds are per-dimension, so their logs are invariant in `j`: taking
+    # them once turns 2·d·n transcendentals into 2·d. The interpolation is then
+    # a fused multiply-add either way, the log branch just working on the
+    # pre-taken logarithms.
+    lo = Vector{Float64}(undef, d)
+    span = Vector{Float64}(undef, d)
+    islog = BitVector(undef, d)
+    for i in 1:d
+        islog[i] = box.scale[i] === :log
+        a, b = Float64(box.lo[i]), Float64(box.hi[i])
+        lo[i] = islog[i] ? log(a) : a
+        span[i] = (islog[i] ? log(b) : b) - lo[i]
+    end
     for j in 1:n, i in 1:d
         u = halton(_HALTON_BURN + offset + j, _HALTON_BASES[i])
-        X[i, j] = if box.scale[i] === :log
-            exp(log(box.lo[i]) + u * (log(box.hi[i]) - log(box.lo[i])))
-        else
-            box.lo[i] + u * (box.hi[i] - box.lo[i])
-        end
+        x = muladd(u, span[i], lo[i])
+        X[i, j] = islog[i] ? exp(x) : x
     end
     return X
 end

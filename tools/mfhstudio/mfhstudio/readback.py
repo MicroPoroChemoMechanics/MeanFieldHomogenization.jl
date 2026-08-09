@@ -21,6 +21,7 @@ from .codegen import extract_embedded
 from .model import (
     Cell,
     Geometry,
+    Layer,
     Model,
     OpaqueBlock,
     Param,
@@ -204,7 +205,7 @@ def model_from_script(source: str, bridge) -> Tuple[Model, dict]:
             order += 1
             continue
 
-        if kind == "rve_builder":
+        if kind in ("rve_builder", "laminate_builder"):
             why = _unrepresentable(node)
             if why is None:
                 why = _fails_to_reproduce(node, src)
@@ -234,7 +235,7 @@ def model_from_script(source: str, bridge) -> Tuple[Model, dict]:
     # Resolve the multiscale seams now that every cell has a name.
     unresolved = []
     for c in model.cells:
-        for ph in c.phases:
+        for ph in c.members():
             for pr in ph.properties:
                 if pr.source == "cell" and isinstance(pr.cell, str) and pr.cell.startswith("@name:"):
                     name = pr.cell[len("@name:"):]
@@ -307,6 +308,9 @@ def _unrepresentable(node: dict) -> Optional[str]:
         if not _IDENT.match(s):
             return f"the builder signature uses `{s}`, which the studio does not model"
 
+    if node.get("kind") == "laminate_builder":
+        return _unrepresentable_laminate(node)
+
     for ph in node.get("phases") or []:
         geom = ph.get("geometry", "")
         if parse_geometry(geom) is None:
@@ -322,7 +326,101 @@ def _unrepresentable(node: dict) -> Optional[str]:
     return None
 
 
+def _unrepresentable_laminate(node: dict) -> Optional[str]:
+    """Why this stack cannot be regenerated faithfully, or None if it can."""
+    opts = node.get("laminate_options") or {}
+    for k in opts:
+        # `basis = …` is the route for a symbolic frame; the model stores a
+        # normal or a triple of angles and would have to invent one.
+        if k not in ("normal", "euler_angles"):
+            return f"`{k} = …` on the Laminate is not one the studio models"
+
+    layers = node.get("layers") or []
+    if not layers:
+        return "the laminate has no layer"
+    kinds = set()
+    for lay in layers:
+        props = lay.get("properties", "")
+        if props.strip() and not props.strip().startswith("Dict"):
+            return f"properties `{props}` are not a Dict the studio can rebuild"
+        lopts = lay.get("options") or {}
+        for k in lopts:
+            if k not in ("fraction", "thickness", "interface"):
+                return f"`{k} = …` on add_layer! is not one the studio models"
+        if "fraction" in lopts:
+            kinds.add("fraction")
+        elif "thickness" in lopts:
+            kinds.add("thickness")
+        else:
+            return f"layer `{lay.get('name')}` gives neither a fraction nor a thickness"
+        itf = (lopts.get("interface") or "").strip()
+        if itf and _parse_interface(itf) is None:
+            return f"interface `{itf}` is not one the studio can rebuild"
+    if len(kinds) > 1:
+        # MeanFieldHomogenization rejects this too; refusing to claim it keeps
+        # the source intact instead of rewriting a stack that cannot be built.
+        return "the stack mixes fractions and absolute thicknesses"
+    return None
+
+
+_INTERFACE = re.compile(r"^([A-Za-z_]\w*Interface)\s*\((.*)\)\s*$", re.S)
+
+#: The scalar fields each interface takes, in constructor order. Read-back
+#: needs the names to fill the form; the emitter only needs the order, which is
+#: why the two directions share this one table.
+_INTERFACE_FIELDS = {
+    "PerfectInterface": [],
+    "SpringInterface": ["kn", "kt"],
+    "MembraneInterface": ["k2D", "mu2D"],
+    "KapitzaInterface": ["h"],
+    "SurfaceConductiveInterface": ["ks"],
+    "AnisotropicSpringInterface": ["compliance"],
+    "AnisotropicMembraneInterface": ["stiffness"],
+    "AnisotropicSurfaceConductiveInterface": ["conductance"],
+}
+
+
+def _parse_interface(expr: str) -> Optional[dict]:
+    """`SpringInterface(1.0e-3, 2.0e-3)` → the form fields, or None."""
+    m = _INTERFACE.match(expr.strip())
+    if m is None:
+        return None
+    kind, body = m.group(1), m.group(2).strip()
+    names = _INTERFACE_FIELDS.get(kind)
+    if names is None:
+        return None
+    parts = _split_toplevel(body) if body else []
+    if len(parts) != len(names):
+        return None
+    return {
+        "kind": kind,
+        "args": {n: _number(v) for n, v in zip(names, parts)},
+    }
+
+
+def _split_toplevel(body: str) -> list:
+    """Split on commas at bracket depth zero.
+
+    A matrix argument — `[1.0 0.0; 0.0 2.0]` — contains no top-level comma but
+    plenty of nested ones, so a plain `split(",")` would tear it in half.
+    """
+    out, depth, start = [], 0, 0
+    for i, ch in enumerate(body):
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth -= 1
+        elif ch == "," and depth == 0:
+            out.append(body[start:i])
+            start = i + 1
+    out.append(body[start:])
+    return [p.strip() for p in out if p.strip()]
+
+
 def _cell_from_node(node: dict) -> Cell:
+    if node.get("kind") == "laminate_builder":
+        return _laminate_from_node(node)
+
     fname = node.get("function", "build_rve")
     name = fname[len("build_"):] if fname.startswith("build_") else fname
     cell = Cell(
@@ -354,3 +452,51 @@ def _cell_from_node(node: dict) -> Cell:
             ph.symmetrize = "ti"
         cell.phases.append(ph)
     return cell
+
+
+def _laminate_from_node(node: dict) -> Cell:
+    fname = node.get("function", "build_lam")
+    name = fname[len("build_"):] if fname.startswith("build_") else fname
+    opts = dict(node.get("laminate_options") or {})
+    cell = Cell(
+        name=name,
+        kind="laminate",
+        params=list(node.get("params") or []),
+        builder_name=fname,
+    )
+    if "euler_angles" in opts:
+        cell.frame_mode = "euler"
+        cell.euler_angles = [_number(x) for x in _tuple_items(opts["euler_angles"])]
+    elif "normal" in opts:
+        cell.frame_mode = "normal"
+        cell.normal = [_number(x) for x in _tuple_items(opts["normal"])]
+    else:
+        # No keyword at all is the canonical frame, which is what the emitter
+        # writes for e₃ — so reading it back has to land on the same model.
+        cell.frame_mode = "normal"
+        cell.normal = [0.0, 0.0, 1.0]
+
+    for lay in node.get("layers", []):
+        lopts = lay.get("options") or {}
+        layer = Layer(
+            name=lay.get("name", "A"),
+            properties=parse_properties(lay.get("properties", "")),
+        )
+        if "thickness" in lopts:
+            layer.amount_kind, layer.amount = "thickness", _number(lopts["thickness"])
+        else:
+            layer.amount_kind, layer.amount = "fraction", _number(lopts.get("fraction", 1.0))
+        layer.interface = (
+            _parse_interface(lopts["interface"]) if "interface" in lopts
+            else {"kind": "PerfectInterface", "args": {}}
+        ) or {"kind": "PerfectInterface", "args": {}}
+        cell.layers.append(layer)
+    return cell
+
+
+def _tuple_items(text: str) -> list:
+    """The elements of a Julia tuple literal, as written."""
+    t = text.strip()
+    if t.startswith("(") and t.endswith(")"):
+        t = t[1:-1]
+    return _split_toplevel(t)

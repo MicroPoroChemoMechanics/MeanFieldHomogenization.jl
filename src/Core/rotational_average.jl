@@ -204,6 +204,17 @@ end
 
 # ── Public API — 4th order ───────────────────────────────────────────────────
 
+# `isotropify` EXTENDS TensND's rather than declaring a rival binding. TensND
+# exports one too — it takes a raw array and computes the same average — and
+# `Core` is `using TensND`, so two independent functions of that name both
+# reach the top-level module through `using`. Julia then refuses to bind the
+# name at all, and `MeanFieldHomogenization.isotropify` was an `UndefVarError`
+# despite being exported. Adding methods to the one function is the same
+# arrangement `layer_count` and `layer_interface` already use across the
+# layered morphologies. `transverse_isotropify` has no such twin and stands
+# alone.
+import TensND: isotropify
+
 """
     isotropify(t::TensND.AbstractTens{4,3}) → TensND.TensISO{4}
 

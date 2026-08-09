@@ -38,6 +38,19 @@ def _angles(euler) -> list:
     return [] if all(x == 0 for x in a) else a
 
 
+def _is_canonical_normal(n) -> bool:
+    """Is this the default stacking direction, e₃?
+
+    Worth asking, because `Laminate()` with no keyword yields a
+    `CanonicalBasis` and the kernel then skips the frame rotation entirely.
+    Writing `normal = (0.0, 0.0, 1.0)` would say the same thing at a cost.
+    """
+    vals = list(n or [])
+    if len(vals) != 3 or any(isinstance(x, str) for x in vals):
+        return False
+    return vals[0] == 0 and vals[1] == 0 and vals[2] > 0
+
+
 def _angle_num(x) -> str:
     """An angle is a number *or* a Julia expression the user typed.
 
@@ -205,9 +218,16 @@ class CodeGen:
         self.w("using TensND")
         self.w("using LinearAlgebra")
         self.w("using Printf")
-        if (self.m.sweep.enabled and self.m.sweep.plot) or (
-            self.m.alv.enabled and self.m.alv.plot
-        ):
+        # Only when the main that actually plots is the one being emitted:
+        # sensitivities print a table, and an unused `using Plots` costs the
+        # reader a question and the script a load.
+        if self.m.alv.enabled:
+            plots = self.m.alv.plot
+        elif self.m.sens.enabled:
+            plots = False
+        else:
+            plots = self.m.sweep.enabled and self.m.sweep.mode != "single" and self.m.sweep.plot
+        if plots:
             self.w("using Plots")
             self.w("gr()")
         self.blank()
@@ -257,6 +277,29 @@ class CodeGen:
     def _builder(self, c: Cell) -> None:
         args = ", ".join(c.params)
         self.w(f"function {c.builder}({args})")
+        for line in self._cell_body(c):
+            self.w(line)
+        self.w("end")
+        self.blank()
+
+    def _cell_body(self, c: Cell) -> list:
+        """The builder's statements, without the `function`/`end` wrapper.
+
+        Kept apart from `_builder` because the 3-D view needs the same
+        statements as a single expression (`let … end`), and two spellings of
+        one construction is how the picture and the script start disagreeing.
+        """
+        saved, self.out = self.out, []
+        try:
+            if c.is_laminate():
+                self._laminate_body(c)
+            else:
+                self._rve_body(c)
+            return self.out
+        finally:
+            self.out = saved
+
+    def _rve_body(self, c: Cell) -> None:
         opts = c.rve_options or {}
         tail = ("; " + ", ".join(f"{k} = {v}" for k, v in sorted(opts.items()))) if opts else ""
         self.w(f"{IND}rve = RVE(:{c.matrix_name}{tail})")
@@ -266,8 +309,61 @@ class CodeGen:
         for ph in c.inclusions():
             self._emit_phase(ph, c)
         self.w(f"{IND}return rve")
-        self.w("end")
-        self.blank()
+
+    def _laminate_body(self, c: Cell) -> None:
+        """`Laminate(...)` then one `add_layer!` per layer, in stacking order.
+
+        The frame is given one way only — MeanFieldHomogenization takes at most
+        one of `normal`, `euler_angles` and `basis`, and rejects two. The
+        canonical `(0, 0, 1)` is emitted as nothing at all, which is both the
+        default and the case where the kernel skips the frame rotation.
+        """
+        opts = []
+        if c.frame_mode == "euler" and _angles(c.euler_angles):
+            vals = ", ".join(
+                x if isinstance(x, str) else _fnum(x) for x in c.euler_angles
+            )
+            opts.append(
+                f"euler_angles = ({vals},)" if len(c.euler_angles) == 1
+                else f"euler_angles = ({vals})"
+            )
+        elif c.frame_mode != "euler" and not _is_canonical_normal(c.normal):
+            vals = ", ".join(
+                x if isinstance(x, str) else _fnum(x) for x in (c.normal or [])
+            )
+            opts.append(f"normal = ({vals})")
+        for k, v in sorted((c.rve_options or {}).items()):
+            opts.append(f"{k} = {v}")
+        tail = ("; " + ", ".join(opts)) if opts else ""
+        self.w(f"{IND}lam = Laminate({tail})")
+
+        for lay in c.layers:
+            props = self._properties(lay)
+            kw = [f"{lay.amount_kind} = {self._amount(lay)}"]
+            itf = self._interface_expr(lay.interface)
+            if itf:
+                kw.append(f"interface = {itf}")
+            self._call(
+                f"add_layer!(lam, :{lay.name}, {props}; " + ", ".join(kw) + ")"
+            )
+        self.w(f"{IND}return lam")
+
+    @staticmethod
+    def _interface_expr(itf) -> str:
+        """A layer's interface, or `""` for the perfect one.
+
+        Perfect is the default of `add_layer!`, and writing it out adds a
+        keyword that says nothing.
+        """
+        itf = itf or {}
+        kind = itf.get("kind", "PerfectInterface")
+        if kind == "PerfectInterface":
+            return ""
+        args = ", ".join(
+            (v if isinstance(v, str) else _num(v))
+            for v in (itf.get("args") or {}).values()
+        )
+        return f"{kind}({args})" if args else f"{kind}()"
 
     def _emit_phase(self, ph: Phase, c: Cell) -> None:
         geom = self._geometry(ph)
@@ -542,6 +638,8 @@ class CodeGen:
         self.w(_rule("Result"))
         if self.m.alv.enabled:
             self._alv_main(root)
+        elif self.m.sens.enabled:
+            self._sens_main(root)
         elif not self.m.sweep.enabled or self.m.sweep.mode == "single":
             self._single_main(root)
         else:
@@ -557,7 +655,49 @@ class CodeGen:
         fn = self._PROJECTIONS.get(self.m.sweep.projection)
         return f"{fn}({var})" if fn else var
 
-    def _output_expr(self, o: dict, var: str = "C") -> str:
+    def _clamped(self, expr: str) -> str:
+        """`max(…, 0.0)` when the sweep asks for it, as `scripts/28` does."""
+        return f"max({expr}, 0.0)" if self.m.sweep.clamp_zero else expr
+
+    #: What each output kind reduces the effective tensor with, and the local
+    #: name to bind it to. `k` and `μ` come out of one `k_mu` call, `E` and `ν`
+    #: out of one `E_nu`, a component and a trace out of one `Array` — so
+    #: asking for both members of a pair must not compute the pair twice.
+    _REDUCERS = {
+        "k": ("km", "k_mu({var})"),
+        "mu": ("km", "k_mu({var})"),
+        "E": ("Enu", "E_nu({var})"),
+        "nu": ("Enu", "E_nu({var})"),
+        "km": ("KMC", "KM({var})"),
+        "comp": ("arr", "Array({var})"),
+        "trace3": ("arr", "Array({var})"),
+    }
+
+    def _bindings(self, outputs: list, var: str, suffix: str = "") -> list:
+        """`[(name, expr)]` for every reduction used more than once.
+
+        Plotting `k` and `μ` together used to emit `k_mu(C)[1], k_mu(C)[2]` —
+        the same solve run twice, at every point of every sweep, for every
+        scheme. Binding it once is both what one would write by hand and a
+        straight halving of the reduction work.
+
+        A reduction used once is left inline: a name introduced for a single
+        use is a line of noise in a script somebody has to read.
+        """
+        seen: dict = {}
+        for o in outputs:
+            entry = self._REDUCERS.get(o.get("kind", "k"))
+            if entry is None:
+                continue
+            name, tmpl = entry
+            seen.setdefault(name, [tmpl, 0])
+            seen[name][1] += 1
+        return [
+            (name + suffix, tmpl.format(var=var))
+            for name, (tmpl, n) in seen.items() if n > 1
+        ]
+
+    def _output_expr(self, o: dict, var: str = "C", binds: Optional[dict] = None) -> str:
         """One plotted quantity.
 
         `k`/`μ`/`E`/`ν` exist only for an isotropic tensor — MeanFieldHomogenization's
@@ -565,24 +705,34 @@ class CodeGen:
         oriented inclusion without an orientation average produces. Kelvin-
         Mandel components are defined whatever the symmetry, so they are the
         way out rather than a silent projection.
+
+        `binds` maps a reduction's name to the local it was bound to by
+        `_bindings`; anything not in it is emitted inline.
         """
+        binds = binds or {}
+
+        def red(kind: str) -> str:
+            """The reduced value: the local when there is one, else the call."""
+            name, tmpl = self._REDUCERS[kind]
+            return binds.get(name) or tmpl.format(var=var)
+
         kind = o.get("kind", "k")
         i, j = int(o.get("i", 1)), int(o.get("j", 1))
         if kind == "k":
-            return f"k_mu({var})[1]"
+            return f"{red('k')}[1]"
         if kind == "mu":
-            return f"k_mu({var})[2]"
+            return f"{red('mu')}[2]"
         if kind == "E":
-            return f"E_nu({var})[1]"
+            return f"{red('E')}[1]"
         if kind == "nu":
-            return f"E_nu({var})[2]"
+            return f"{red('nu')}[2]"
         if kind == "km":
-            return f"KM({var})[{i}, {j}]"
+            return f"{red('km')}[{i}, {j}]"
         if kind == "comp":
-            return f"Array({var})[{i}, {j}]"
+            return f"{red('comp')}[{i}, {j}]"
         if kind == "trace3":
-            return f"tr(Array({var})) / 3"
-        return f"k_mu({var})[1]"
+            return f"tr({red('trace3')}) / 3"
+        return f"{red('k')}[1]"
 
     @staticmethod
     def _output_label(o: dict) -> str:
@@ -615,9 +765,17 @@ class CodeGen:
             proj = self._project(var)
             if proj != var:
                 self.w(f"{var} = {proj}")
+            # One binding per scheme: these are top-level names, so they carry
+            # the scheme's suffix rather than colliding with the previous one.
+            binds = {}
+            for name, expr in self._bindings(sw.outputs, var, f"_{scheme_name}"):
+                self.w(f"{name} = {expr}")
+                binds[name[: -len(scheme_name) - 1]] = name
             # `@printf` takes its arguments space-separated: commas would make
             # them a single tuple and the format-specifier count would not match.
-            vals = " ".join(self._output_expr(o, var) for o in sw.outputs) or var
+            vals = " ".join(
+                self._clamped(self._output_expr(o, var, binds)) for o in sw.outputs
+            ) or var
             fmt = "  ".join(f"{n} = %.6f" for n in names)
             nl = "\\n"
             self.w(f'@printf "{scheme_name:<24}  {fmt}{nl}" {vals}')
@@ -646,7 +804,13 @@ class CodeGen:
         proj = self._project("C")
         if proj != "C":
             self.w(f"{IND}C = {proj}")
-        outs = ", ".join(self._output_expr(o) for o in sw.outputs) or "C"
+        binds = {}
+        for name, expr in self._bindings(sw.outputs, "C"):
+            self.w(f"{IND}{name} = {expr}")
+            binds[name] = name
+        outs = ", ".join(
+            self._clamped(self._output_expr(o, "C", binds)) for o in sw.outputs
+        ) or "C"
         self.w(f"{IND}return ({outs},)" if len(names) == 1 else f"{IND}return ({outs})")
         self.w("end")
         self.blank()
@@ -670,7 +834,12 @@ class CodeGen:
             f'Dict("x" => collect({sw.variable}s), "xlabel" => "{sw.variable}"), RESULTS)'
         )
         self.blank()
-        self.w("for (label, ys) in sort!(collect(RESULTS); by = first)")
+        # Sorted once and reused: the table and the figure walk the same
+        # curves, in the same order, and ordering them twice would let the two
+        # disagree if the key ever changed.
+        self.w("const CURVES = sort!(collect(RESULTS); by = first)")
+        self.blank()
+        self.w("for (label, ys) in CURVES")
         self.w(f'{IND}@printf "%-28s  first = %.6f   last = %.6f\\n" label first(ys) last(ys)')
         self.w("end")
 
@@ -680,10 +849,108 @@ class CodeGen:
                 f'p = plot(; xlabel = "{sw.variable}", ylabel = "effective property", '
                 f"legend = :best)"
             )
-            self.w("for (label, ys) in sort!(collect(RESULTS); by = first)")
+            self.w("for (label, ys) in CURVES")
             self.w(f"{IND}plot!(p, {sw.variable}s, ys; label = label, lw = 2)")
             self.w("end")
             self.w("display(p)")
+
+    # -- sensitivities -----------------------------------------------------
+
+    def _sens_main(self, root: Cell) -> None:
+        """`derivative` / `gradient` / `jacobian`, straight from the lenses.
+
+        These wrappers take the cell and the parameter lens themselves — they
+        build the perturbed cell with `set_param` and run `homogenize` inside
+        the ForwardDiff pass — so there is no closure to write. What the
+        interface supplies is the lens it already models and the scalar
+        extraction the sweep already emits, handed over as `indexer`.
+
+        A jacobian passes no `indexer`: it differentiates the whole effective
+        tensor, flattened. That is also the way out when the result is not
+        isotropic and `k_mu` therefore has no method for it.
+        """
+        s = self.m.sens
+        cell = self.m.cell(s.cell) or root
+        call = f"{cell.builder}(" + ", ".join(cell.params) + ")"
+        scheme = self._scheme(s.scheme, s.scheme_options or {})
+        lenses = [self._lens_expr(l) for l in s.lenses] or ["amount(:PHASE)"]
+
+        self.w(f"const cell = {call}")
+        self.w(f"const scheme = {scheme}")
+        self.blank()
+        if s.kind == "derivative":
+            self.w("const param = " + lenses[0])
+        else:
+            self.w("const params = [")
+            for l in lenses:
+                self.w(f"{IND}{l},")
+            self.w("]")
+        self.blank()
+
+        indexer = ""
+        if s.kind != "jacobian":
+            # The projection sits inside the differentiated function, not after
+            # it: `best_fit_*` is a least-squares fit, so what comes out is the
+            # derivative of the *reported* quantity, which is the one asked for.
+            fn = self._PROJECTIONS.get(s.projection)
+            var = f"{fn}(C)" if fn else "C"
+            indexer = f", indexer = C -> {self._output_expr(s.output, var)}"
+        arg = "param" if s.kind == "derivative" else "params"
+        self.w("# `get_param` reads the point the derivative is taken at, so the")
+        self.w("# values in the model are the x₀ — nothing is entered twice.")
+        self.w(f"const D = {s.kind}(cell, scheme, {arg}; output = {s.property}{indexer})")
+        self.blank()
+
+        label = self._output_label(s.output)
+        if s.kind == "derivative":
+            self.w(f'@printf "d({label}) / d(%s) = %.8g\\n" "{self._lens_label(s.lenses[0])}" D')
+            return
+
+        self.w("const LABELS = [")
+        for l in s.lenses:
+            self.w(f'{IND}"{self._lens_label(l)}",')
+        self.w("]")
+        if s.kind == "gradient":
+            self.w(f'@printf "%-34s  d({label}) / d(p)\\n" "parameter"')
+            self.w("for (name, g) in zip(LABELS, D)")
+            self.w(f'{IND}@printf "%-34s  %.8g\\n" name g')
+            self.w("end")
+            return
+
+        self.w("# One row per component of the flattened effective tensor.")
+        self.w('println("jacobian ", size(D, 1), " x ", size(D, 2), "  columns: ",')
+        self.w(f'{IND}join(LABELS, ", "))')
+        self.w("for i in axes(D, 1)")
+        # The row is taken once. `@view` allocates nothing, but naming it says
+        # plainly that the test and the print look at the same thing.
+        self.w(f"{IND}row = @view D[i, :]")
+        self.w(f"{IND}any(!iszero, row) || continue")
+        self.w(f'{IND}@printf "  [%3d]  %s\\n" i join(')
+        self.w(f'{IND}{IND}[@sprintf("%12.6g", x) for x in row], "")')
+        self.w("end")
+
+    @staticmethod
+    def _lens_label(lens) -> str:
+        """How a parameter is named in the printed table."""
+        k = lens.kind
+        if k == "amount":
+            return f"amount({lens.phase})"
+        if k == "thickness":
+            return f"thickness({lens.phase})"
+        if k == "interface_param":
+            return f"interface {lens.index}.{lens.field_name}"
+        if k == "property":
+            return f"{lens.phase}{lens.property}[{lens.index}]"
+        if k == "geometry":
+            return f"{lens.phase}.{lens.field_name}[{lens.index}]"
+        if k == "shape_param":
+            return f"shape.{lens.field_name}[{lens.index}]"
+        if k == "nested":
+            from .model import Lens as _L
+
+            inner = _L.from_dict(lens.inner or {})
+            return f"{lens.member}{lens.property} → {CodeGen._lens_label(inner)}"
+        return k
 
     # -- ageing viscoelasticity -------------------------------------------
 
@@ -734,7 +1001,11 @@ class CodeGen:
             'Dict("x" => collect(times), "xlabel" => "t"), RESULTS)'
         )
         self.blank()
-        self.w("for (label, ys) in sort!(collect(RESULTS); by = first)")
+        # Sorted once, as in the sweep: the table and the figure show the same
+        # curves in the same order.
+        self.w("const CURVES = sort!(collect(RESULTS); by = first)")
+        self.blank()
+        self.w("for (label, ys) in CURVES")
         self.w(f'{IND}@printf "%-24s  J(t₁) = %.6g   J(t_end) = %.6g\\n" label first(ys) last(ys)')
         self.w("end")
         if alv.plot:
@@ -743,7 +1014,7 @@ class CodeGen:
                 'p = plot(; xlabel = "t", ylabel = "uniaxial creep", legend = :best'
                 + (", xscale = :log10)" if alv.log_time else ")")
             )
-            self.w("for (label, ys) in sort!(collect(RESULTS); by = first)")
+            self.w("for (label, ys) in CURVES")
             self.w(f"{IND}plot!(p, times, ys; label = label, lw = 2)")
             self.w("end")
             self.w("display(p)")
@@ -772,6 +1043,13 @@ class CodeGen:
             return f"geometry(:{lens.phase}, :{lens.field_name}, {lens.index})"
         if k == "shape_param":
             return f"shape_param(:{lens.field_name}, {lens.index})"
+        if k == "thickness":
+            return f"thickness(:{lens.phase})"
+        if k == "interface_param":
+            # The field is a Symbol naming one scalar of the interface — `:kn`,
+            # `:κs`, `:resistance`, … — and the index is the interface's
+            # position, on top of the layer of the same index.
+            return f"interface_param({lens.index}, :{lens.field_name})"
         if k == "nested":
             from .model import Lens as _L
 
@@ -799,6 +1077,32 @@ def _toplevel_kw_split(body: str) -> Optional[int]:
 
 def generate(model: Model, embed_model: bool = True) -> str:
     return CodeGen(model, embed_model).generate()
+
+
+def cell_expression(model: Model, cell: Cell) -> str:
+    """The cell as one Julia expression, for the 3-D view.
+
+    A phase's shape is already an expression (`Spheroid(0.4)`) and the viewer
+    evaluates it directly. A laminate has no per-member shape — the geometry of
+    the whole cell *is* the stack — so what has to be drawn is the cell, and a
+    cell takes several statements to build. `let … end` is the expression form
+    of exactly those statements, so the picture is built from the same code as
+    the script rather than from a parallel description of it.
+
+    A builder taking parameters cannot be drawn this way; the caller checks.
+    """
+    g = CodeGen(model, embed_model=False)
+    body = []
+    for ln in g._cell_body(cell):
+        if not ln.strip():
+            continue
+        # `let` yields its last expression: the `return` has to go, and the
+        # lines keep the indentation the builder gave them.
+        stripped = ln.lstrip()
+        if stripped.startswith("return "):
+            ln = ln[: len(ln) - len(stripped)] + stripped[len("return "):]
+        body.append(ln)
+    return "let\n" + "\n".join(body) + "\nend"
 
 
 def render_cell(model: Model, cell: Cell) -> str:

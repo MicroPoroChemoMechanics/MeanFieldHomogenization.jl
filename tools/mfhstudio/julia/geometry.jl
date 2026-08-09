@@ -238,6 +238,107 @@ function traces(ls::MeanFieldHomogenization.LayeredSpheroid; cutaway::Bool = tru
     return out
 end
 
+# ── Laminate ────────────────────────────────────────────────────────────────
+
+"""
+    _slab(R, z0, h, half; color, opacity, name) -> Dict
+
+One layer of a stack: a rectangular slab of thickness `h` whose faces are
+normal to the third column of `R`, its lower face at height `z0` along that
+axis and its in-plane extent `[-half, half] × [-half, ymax]`.
+
+Drawn as a single closed `mesh3d` rather than six `surface` patches, because a
+stack of transparent surfaces reads as a muddle of overlapping planes while a
+mesh keeps its edges.
+"""
+function _slab(R, z0, h, half, ymax; color = FACE, opacity = 0.75, name = "")
+    # Eight corners in the laminate's own frame, rotated into the global one.
+    corners = Vector{Float64}[]
+    for z in (z0, z0 + h),
+            (x, y) in ((-half, -half), (half, -half), (half, ymax), (-half, ymax))
+        push!(corners, R * [x, y, z])
+    end
+    P = reduce(hcat, corners)
+    # Two triangles per face, the bottom four vertices being 0-3 and the top 4-7
+    # in the same rotational order.
+    i = [0, 0, 4, 4, 0, 0, 1, 1, 2, 2, 3, 3]
+    j = [1, 2, 5, 6, 1, 5, 2, 6, 3, 7, 0, 4]
+    k = [2, 3, 6, 7, 5, 4, 6, 5, 7, 6, 4, 7]
+    d = Dict{String, Any}(
+        "type" => "mesh3d",
+        "x" => collect(Float64, @view P[1, :]),
+        "y" => collect(Float64, @view P[2, :]),
+        "z" => collect(Float64, @view P[3, :]),
+        "i" => i, "j" => j, "k" => k,
+        "color" => color, "opacity" => opacity,
+        "flatshading" => true, "hoverinfo" => "skip",
+    )
+    isempty(name) || (d["name"] = name; d["showlegend"] = true)
+    return d
+end
+
+# The stacking direction is the third axis of the stored basis, and `vecbasis`
+# gives the whole frame — so `(ℓ, m)` come from the same place the kernel takes
+# them, and a tilted stack is drawn tilted rather than merely labelled so.
+function _rot(lam::MeanFieldHomogenization.Laminate)
+    try
+        return Matrix{Float64}(MeanFieldHomogenization.TensND.vecbasis(lam.basis))
+    catch
+        return Matrix{Float64}(I, 3, 3)
+    end
+end
+
+"""
+    traces(lam::Laminate; cutaway = true, guides = true)
+
+The periodic cell, drawn as one period of the stack plus the normal.
+
+`cutaway` cuts the stack in half along one in-plane direction, exposing the
+cross-section — which is where a laminate is legible, the layers being
+unbounded in their own plane and identical from above.
+"""
+function traces(
+        lam::MeanFieldHomogenization.Laminate;
+        cutaway::Bool = true, guides::Bool = true, kw...
+    )
+    names = MeanFieldHomogenization.layer_names(lam)
+    n = length(names)
+    n == 0 && return Dict{String, Any}[]
+
+    R = _rot(lam)
+    hs = Float64[Float64(MeanFieldHomogenization.layer_thickness(lam, nm)) for nm in names]
+    L = sum(hs)
+    L > 0 || return Dict{String, Any}[]
+    # The lateral extent is arbitrary — the layers are unbounded in their plane
+    # — so it is tied to the period, which keeps the picture in proportion
+    # whatever the thicknesses are entered in.
+    half = 0.6 * L
+    ymax = cutaway ? 0.0 : half
+    colors = _layer_colors(n)
+
+    out = Dict{String, Any}[]
+    z = -L / 2
+    for (idx, nm) in enumerate(names)
+        h = hs[idx]
+        f = h / L
+        push!(
+            out,
+            _slab(
+                R, z, h, half, ymax; color = colors[idx], opacity = 0.9,
+                name = "$(nm) (f = $(round(f; digits = 3)))",
+            ),
+        )
+        z += h
+    end
+
+    if guides
+        nvec = R[:, 3] .* (L * 1.1)
+        push!(out, polyline(hcat(zeros(3), nvec); color = GUIDE, width = 5))
+        push!(out, labels3d(reshape(nvec .* 1.12, 3, 1), ["n"]))
+    end
+    return out
+end
+
 """
     scene(geom; kw...) -> Dict
 

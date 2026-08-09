@@ -18,16 +18,24 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
 
-from mfhstudio.codegen import extract_embedded, generate, render_cell  # noqa: E402
+from mfhstudio.codegen import (  # noqa: E402
+    cell_expression,
+    extract_embedded,
+    generate,
+    render_cell,
+)
 from mfhstudio.model import (  # noqa: E402
     Cell,
     Geometry,
+    Layer,
     Lens,
     Model,
     Param,
     Phase,
     Property,
+    Sens,
     Sweep,
+    default_layers,
     default_model,
 )
 
@@ -95,8 +103,58 @@ def test_kelvin_mandel_output_needs_no_isotropy():
     m.sweep.projection = "none"
     m.sweep.outputs = [{"kind": "km", "i": 1, "j": 1}, {"kind": "km", "i": 3, "j": 3}]
     src = generate(m, embed_model=False)
-    assert "KM(C)[1, 1]" in src and "KM(C)[3, 3]" in src
+    # Both components come off one `KM` call, bound to a local.
+    assert "KMC = KM(C)" in src
+    assert "KMC[1, 1]" in src and "KMC[3, 3]" in src
     assert "k_mu" not in src
+
+
+def test_negative_values_can_be_clipped_for_the_figure():
+    """`scripts/28` clips them, because Dilute goes below zero well before
+    f = 1 and would otherwise set the scale for all ten curves. It is a
+    display choice, so it is off unless asked for."""
+    m = default_model()
+    assert "max(" not in generate(m, embed_model=False)
+    m.sweep.clamp_zero = True
+    src = generate(m, embed_model=False)
+    assert "return (max(km[1], 0.0), max(km[2], 0.0))" in src
+
+
+def test_a_reduction_is_computed_once():
+    """`k` and `μ` come out of one `k_mu` call.
+
+    Emitting `k_mu(C)[1], k_mu(C)[2]` solved the same thing twice at every
+    point of every sweep, for every scheme.
+    """
+    m = default_model()
+    src = generate(m, embed_model=False)
+    assert "km = k_mu(C)" in src
+    assert src.count("k_mu(C)") == 1, "k_mu must be called once per point"
+
+    # One use needs no name: a local introduced for a single reference is
+    # noise in a script somebody has to read.
+    m.sweep.outputs = [{"kind": "k"}]
+    src = generate(m, embed_model=False)
+    assert "km = " not in src and "k_mu(C)[1]" in src
+
+    # Two Kelvin-Mandel components share one `KM` call, and an unrelated
+    # single `k` stays inline beside it.
+    m.sweep.outputs = [{"kind": "km", "i": 1, "j": 1},
+                       {"kind": "km", "i": 3, "j": 3}, {"kind": "k"}]
+    src = generate(m, embed_model=False)
+    assert "KMC = KM(C)" in src
+    assert src.count("KM(C)") == 1
+    assert "k_mu(C)[1]" in src
+
+    # Top-level bindings carry the scheme they belong to, so two schemes in a
+    # single-point run cannot collide.
+    m.sweep.mode = "single"
+    m.sweep.outputs = [{"kind": "k"}, {"kind": "mu"}]
+    m.sweep.schemes = [{"name": "MoriTanaka", "options": {}},
+                       {"name": "Voigt", "options": {}}]
+    src = generate(m, embed_model=False)
+    assert "km_MoriTanaka = k_mu(C_MoriTanaka)" in src
+    assert "km_Voigt = k_mu(C_Voigt)" in src
 
 
 def test_isotropic_only_output_without_a_projection_is_flagged():
@@ -300,6 +358,210 @@ def test_geometry_sizes_are_floats():
     src = generate(Model(cells=[c]), embed_model=False)
     assert "LayeredSphere((0.6, 1.0)" in src
     assert "(0.6, 1)" not in src
+
+
+# ---------------------------------------------------------------------------
+# Laminates — a cell, not an inclusion
+# ---------------------------------------------------------------------------
+
+
+def _bilayer(**kw) -> Model:
+    """The 30/70 stack of `scripts/33_laminate_basics.jl`."""
+    lam = Cell(name="lam", kind="laminate", layers=default_layers(), **kw)
+    m = Model(title="bilayer", cells=[lam], root_cell=lam.id)
+    m.sweep = Sweep(
+        enabled=True, mode="single", cell=lam.id,
+        schemes=[{"name": "Laminated", "options": {}}],
+        projection="none", outputs=[{"kind": "km", "i": 3, "j": 3}],
+    )
+    return m
+
+
+def test_laminate_emits_add_layer_in_stacking_order():
+    src = generate(_bilayer(), embed_model=False)
+    assert "lam = Laminate()" in src
+    i = src.index("add_layer!(lam, :A, Dict(:C => iso_stiffness(2.0, 0.8)); fraction = 0.3)")
+    j = src.index("add_layer!(lam, :B, Dict(:C => iso_stiffness(0.5, 0.2)); fraction = 0.7)")
+    assert i < j, "layers must be emitted in stacking order"
+
+
+def test_canonical_normal_is_not_written_out():
+    """`Laminate()` already means e₃, and the kernel then skips the rotation."""
+    src = generate(_bilayer(), embed_model=False)
+    assert "normal" not in src
+
+
+def test_a_tilted_stack_carries_its_normal():
+    m = _bilayer()
+    m.cells[0].normal = [1.0, 0.0, 1.0]
+    assert "Laminate(; normal = (1.0, 0.0, 1.0))" in generate(m, embed_model=False)
+    m.cells[0].frame_mode = "euler"
+    m.cells[0].euler_angles = ["π/4", 0.3]
+    src = generate(m, embed_model=False)
+    # An expression reaches the script as written, exactly as for a shape:
+    # `π/4` says what its seventeen digits only approximate, and it is what
+    # comes back out when the file is read again.
+    assert "Laminate(; euler_angles = (π/4, 0.3))" in src
+    assert "normal" not in src
+
+
+def test_perfect_interface_is_left_implicit():
+    """It is the default of `add_layer!`; writing it out says nothing."""
+    assert "PerfectInterface" not in generate(_bilayer(), embed_model=False)
+
+
+def test_an_imperfect_interface_reaches_the_call():
+    m = _bilayer()
+    m.cells[0].layers[0].interface = {
+        "kind": "SpringInterface", "args": {"kn": 1.0e-3, "kt": 2.0e-3}
+    }
+    assert "interface = SpringInterface(0.001, 0.002)" in generate(m, embed_model=False)
+
+
+def test_a_stack_may_not_mix_fractions_and_thicknesses():
+    """MFH refuses it: with an imperfect interface the period is meaningful,
+    so a half-specified stack is ambiguous rather than merely unusual."""
+    m = _bilayer()
+    m.cells[0].layers[0].amount_kind = "thickness"
+    assert any("mixes absolute thicknesses" in p for p in m.validate())
+
+
+def test_fractions_must_sum_to_one():
+    """`validate_laminate` checks Σf ≈ 1 rather than rescaling silently."""
+    m = _bilayer()
+    m.cells[0].layers[0].amount = 0.5
+    assert any("sum to 1.2" in p for p in m.validate())
+
+
+def test_a_laminate_needs_no_matrix():
+    """The RVE rule must not leak: a laminate has no matrix by construction."""
+    assert not any("matrix" in p for p in _bilayer().validate())
+
+
+def test_a_scheme_that_needs_a_matrix_is_refused_on_a_laminate():
+    m = _bilayer()
+    m.sweep.schemes = [{"name": "MoriTanaka", "options": {}}]
+    problems = m.validate()
+    assert any("does not apply to the laminate" in p for p in problems)
+    assert any("`Laminated`" in p for p in problems)
+
+
+def test_a_layer_carries_the_multiscale_seam():
+    """A layer property may be a `Homogenized`, and the topological order has
+    to see it — otherwise the script calls a builder before defining it."""
+    inner = Cell(name="foam", matrix_name="SOLID", phases=[
+        Phase(name="SOLID", is_matrix=True,
+              properties=[Property(args={"k": 72.0, "mu": 32.0})]),
+        Phase(name="PORE", amount=0.3,
+              properties=[Property(args={"k": 1e-6, "mu": 1e-6})]),
+    ])
+    lam = Cell(name="lam", kind="laminate", layers=[
+        Layer(name="A", amount=0.4, properties=[
+            Property(key=":C", source="cell", cell=inner.id, scheme="MoriTanaka"),
+        ]),
+        Layer(name="B", amount=0.6,
+              properties=[Property(args={"k": 0.5, "mu": 0.2})]),
+    ])
+    m = Model(title="ms_lam", cells=[lam, inner], root_cell=lam.id)
+    src = generate(m, embed_model=False)
+    assert "Homogenized(build_foam(), MoriTanaka())" in src
+    assert src.index("function build_foam") < src.index("function build_lam")
+
+
+def test_the_3d_view_is_built_from_the_generated_code():
+    """A laminate has no per-member shape, so the picture is of the cell — and
+    it comes from the code generator, not from a second description of it."""
+    m = _bilayer()
+    expr = cell_expression(m, m.cells[0])
+    assert expr.startswith("let") and expr.rstrip().endswith("end")
+    assert "return" not in expr
+    assert expr.count("add_layer!") == 2
+
+
+def test_laminate_lenses_reach_the_script():
+    m = _bilayer()
+    m.sweep.mode = "sweep"
+    m.sweep.lens = Lens(kind="thickness", phase="A")
+    assert "thickness(:A)" in generate(m, embed_model=False)
+    m.sweep.lens = Lens(kind="interface_param", index=2, field_name="kn")
+    assert "interface_param(2, :kn)" in generate(m, embed_model=False)
+
+
+def test_a_laminate_reopens_exactly():
+    m = _bilayer()
+    m.cells[0].normal = [0.0, 1.0, 1.0]
+    m.cells[0].layers[1].interface = {
+        "kind": "KapitzaInterface", "args": {"h": 0.25}
+    }
+    back = Model.from_dict(extract_embedded(generate(m)))
+    assert back.to_dict() == m.to_dict()
+
+
+# ---------------------------------------------------------------------------
+# Sensitivities
+# ---------------------------------------------------------------------------
+
+
+def _sens_model(**kw) -> Model:
+    m = default_model()
+    m.sweep.enabled = False
+    m.sens = Sens(
+        enabled=True, cell=m.cells[0].id, scheme="MoriTanaka",
+        output={"kind": "k"}, projection="iso",
+        lenses=[Lens(kind="amount", phase="PORE")],
+        **kw,
+    )
+    return m
+
+
+def test_derivative_passes_the_lens_and_the_indexer():
+    """The wrappers take the cell and the lens themselves, so the panel hands
+    over exactly the two things it already models."""
+    src = generate(_sens_model(), embed_model=False)
+    assert "const param = amount(:PORE)" in src
+    assert "derivative(cell, scheme, param; output = :C, " \
+           "indexer = C -> k_mu(best_fit_iso(C))[1])" in src
+
+
+def test_gradient_takes_a_vector_of_lenses():
+    m = _sens_model(kind="gradient")
+    m.sens.lenses = [Lens(kind="amount", phase="PORE"),
+                     Lens(kind="property", phase="SOLID", property=":C", index=1)]
+    src = generate(m, embed_model=False)
+    assert "const params = [" in src
+    assert "amount(:PORE)," in src and "property(:SOLID, :C, 1)," in src
+    assert "gradient(cell, scheme, params;" in src
+
+
+def test_a_jacobian_extracts_nothing():
+    """It differentiates the whole tensor, which is also the way out when the
+    result is not isotropic."""
+    src = generate(_sens_model(kind="jacobian"), embed_model=False)
+    assert "jacobian(cell, scheme, params; output = :C)" in src
+    assert "indexer" not in src
+
+
+def test_a_derivative_takes_exactly_one_parameter():
+    m = _sens_model()
+    m.sens.lenses = [Lens(kind="amount", phase="PORE"),
+                     Lens(kind="amount", phase="PORE")]
+    assert any("one parameter" in p for p in m.validate())
+
+
+def test_amount_is_refused_on_a_laminate():
+    """`AmountParameter` raises there and points at `ThicknessParameter`; the
+    interface says so before the run does."""
+    m = _bilayer()
+    m.sweep.enabled = False
+    m.sens = Sens(enabled=True, cell=m.cells[0].id, scheme="Laminated",
+                  lenses=[Lens(kind="amount", phase="A")],
+                  output={"kind": "km", "i": 3, "j": 3}, projection="none")
+    assert any("no phase amount" in p for p in m.validate())
+
+
+def test_sensitivities_do_not_pull_in_plots():
+    """A gradient is a table, not a curve."""
+    assert "using Plots" not in generate(_sens_model(), embed_model=False)
 
 
 # ---------------------------------------------------------------------------
@@ -616,6 +878,145 @@ def test_a_tilted_layered_spheroid_is_drawn_tilted():
         b.stop()
 
 
+def test_every_example_validates_and_is_up_to_date():
+    """The examples are generated, so they cannot be allowed to drift.
+
+    An example that no longer matches what the emitter produces is worse than
+    no example: it is the interface's own output, shown to a newcomer as a
+    model answer, quietly out of date.
+    """
+    sys.path.insert(0, os.path.join(HERE, "..", "examples"))
+    import build_examples
+
+    stale = []
+    for name, fn in build_examples.EXAMPLES:
+        m = build_examples._stabilize(fn())
+        assert not m.validate(), f"{name}: {m.validate()}"
+        path = os.path.join(HERE, "..", "examples", name)
+        assert os.path.exists(path), f"{name} has not been generated"
+        with open(path, encoding="utf-8") as fh:
+            if fh.read() != build_examples.build(name, fn):
+                stale.append(name)
+    assert not stale, (
+        f"out of date: {stale} — run `python3 examples/build_examples.py`"
+    )
+
+
+def test_every_example_reopens_exactly():
+    """Each one carries its model, which is what makes it a starting point
+    rather than a listing."""
+    sys.path.insert(0, os.path.join(HERE, "..", "examples"))
+    import build_examples
+
+    for name, fn in build_examples.EXAMPLES:
+        with open(os.path.join(HERE, "..", "examples", name), encoding="utf-8") as fh:
+            embedded = extract_embedded(fh.read())
+        assert embedded is not None, f"{name} carries no model block"
+        want = build_examples._stabilize(fn()).to_dict()
+        assert Model.from_dict(embedded).to_dict() == want, name
+
+
+def test_the_bilayer_reproduces_backus():
+    """The whole point of the laminate: it is exact, not an estimate.
+
+    `scripts/33_laminate_basics.jl` checks the studio-independent version of
+    this against the closed form of Backus (1962). Two of the bound
+    bracketings are equalities — exactly Reuss across the layers and exactly
+    Voigt in their plane — which is what pins the orientation as well as the
+    values.
+    """
+    b = _bridge()
+    try:
+        m = _bilayer()
+        m.sweep.schemes = [
+            {"name": n, "options": {}} for n in ("Laminated", "Voigt", "Reuss")
+        ]
+        m.sweep.outputs = [
+            {"kind": "km", "i": 3, "j": 3}, {"kind": "km", "i": 6, "j": 6}
+        ]
+        r = b.run(generate(m, embed_model=False), timeout=300)
+        assert r["ok"], r.get("error")
+        got = {}
+        for line in r["stdout"].splitlines():
+            mm = re.match(
+                r"\s*(\w+)\s+KM33 = ([-\d.eE+]+)\s+KM66 = ([-\d.eE+]+)", line
+            )
+            if mm:
+                got[mm.group(1)] = (float(mm.group(2)), float(mm.group(3)))
+        assert set(got) == {"Laminated", "Voigt", "Reuss"}, r["stdout"]
+        # C₃₃₃₃ = 1 / ⟨1/(λ+2μ)⟩ and 2·C₁₂₁₂ = 2⟨μ⟩ for the 30/70 stack.
+        # The tolerance is the emitter's `%.6f`, not the solver's accuracy:
+        # these are read off the printed table, which is what a user sees.
+        assert abs(got["Laminated"][0] - 0.98924731) < 5e-7, got
+        assert abs(got["Laminated"][1] - 0.76) < 5e-7, got
+        assert got["Laminated"][0] == got["Reuss"][0], got
+        assert got["Laminated"][1] == got["Voigt"][1], got
+    finally:
+        b.stop()
+
+
+def test_a_laminate_written_by_the_studio_is_read_back():
+    """Without its embedded block, so the answer comes from `Meta.parse` and
+    the recognizer rather than from the model the file carries."""
+    from mfhstudio.readback import model_from_script
+
+    b = _bridge()
+    try:
+        m = _bilayer()
+        m.cells[0].normal = [1.0, 0.0, 1.0]
+        m.cells[0].layers[0].interface = {
+            "kind": "SpringInterface", "args": {"kn": 1.0e-3, "kt": 2.0e-3}
+        }
+        src = generate(m)
+        src = src[: src.index("#= mfhstudio-model")]
+        back, _ = model_from_script(src, b)
+        assert [c.kind for c in back.cells] == ["laminate"]
+        c = back.cells[0]
+        assert c.normal == [1.0, 0.0, 1.0]
+        assert [l.name for l in c.layers] == ["A", "B"]
+        assert [l.amount for l in c.layers] == [0.3, 0.7]
+        assert c.layers[0].interface["kind"] == "SpringInterface"
+        assert c.layers[0].interface["args"] == {"kn": 0.001, "kt": 0.002}
+        assert c.layers[1].interface["kind"] == "PerfectInterface"
+    finally:
+        b.stop()
+
+
+def test_a_laminate_is_drawn_as_a_stack_along_its_normal():
+    """The cell is the shape. A tilted normal must tilt the slabs, or the
+    picture is agreeing with a model nobody entered."""
+    import math
+
+    b = _bridge()
+    try:
+        m = _bilayer()
+        upright = b.traces(cell_expression(m, m.cells[0]))
+        m.cells[0].normal = [1.0, 0.0, 1.0]
+        tilted = b.traces(cell_expression(m, m.cells[0]))
+
+        def slabs(scene):
+            return [t for t in scene["data"] if t["type"] == "mesh3d"]
+
+        assert len(slabs(upright)) == 2, upright["data"]
+        assert [t["name"].split()[0] for t in slabs(upright)] == ["A", "B"]
+
+        def normal_dir(scene):
+            """The stacking direction, from the two slab centroids."""
+            a, c = slabs(scene)
+            ca = [sum(a[k]) / len(a[k]) for k in "xyz"]
+            cc = [sum(c[k]) / len(c[k]) for k in "xyz"]
+            d = [cc[i] - ca[i] for i in range(3)]
+            n = math.sqrt(sum(x * x for x in d)) or 1.0
+            return [x / n for x in d]
+
+        assert abs(normal_dir(upright)[2]) > 0.99, normal_dir(upright)
+        want = [1 / math.sqrt(2), 0.0, 1 / math.sqrt(2)]
+        got = normal_dir(tilted)
+        assert abs(sum(a * b_ for a, b_ in zip(got, want))) > 0.99, got
+    finally:
+        b.stop()
+
+
 JULIA_TESTS = {
     "test_catalog_covers_every_exported_scheme",
     "test_self_consistent_offers_only_what_it_reads",
@@ -623,6 +1024,9 @@ JULIA_TESTS = {
     "test_generated_script_matches_the_echoes_reference",
     "test_traces_come_back_as_real_json",
     "test_a_tilted_layered_spheroid_is_drawn_tilted",
+    "test_the_bilayer_reproduces_backus",
+    "test_a_laminate_written_by_the_studio_is_read_back",
+    "test_a_laminate_is_drawn_as_a_stack_along_its_normal",
 }
 
 

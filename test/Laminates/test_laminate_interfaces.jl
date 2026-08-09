@@ -23,6 +23,11 @@ using LinearAlgebra
 using StaticArrays
 using Random
 using ForwardDiff
+# `Tensors.SymmetricTensor` is used below. `using TensND` does not bring the
+# name in, so without this the file only ran because an earlier file in the
+# suite had leaked it into `Main` — passing in the full run and erroring on
+# its own, which is the worst way for a test to be wrong.
+import Tensors
 
 const MFHC_I = MeanFieldHomogenization.Core
 const ATOL_ITF = 1.0e-11

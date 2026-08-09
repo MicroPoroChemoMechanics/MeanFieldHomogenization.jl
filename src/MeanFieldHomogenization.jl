@@ -217,10 +217,16 @@ export Homogenized, NestedParameter, nested
 
 # ── Laminates : the periodic multilayer cell ────────────────────────────────
 export Laminate, Layer, add_layer!
-export layer_names, layer_count, layer_property, layer_property_raw
-export layer_thickness, layer_fraction
-export laminate_period, laminate_basis, laminate_normal, laminate_interface
+export layer_names, layer_property, layer_property_raw
+export layer_thickness
+export laminate_period, laminate_basis, laminate_normal
 export validate_laminate
+# `layer_count`, `layer_interface` and `layer_volume_fraction` are NOT re-listed
+# here: `Laminates` extends the `LayeredSpheres` generics rather than declaring
+# rival bindings, so the exports above the LayeredSphere block already cover a
+# laminate. The volume fraction of a layer is `layer_volume_fraction` and the
+# interface on top of it is `layer_interface`; `layer_fraction` and
+# `laminate_interface` were exported here for a while and are defined nowhere.
 export AnisotropicSpringInterface, AnisotropicMembraneInterface
 export AnisotropicSurfaceConductiveInterface
 export laminate_hill

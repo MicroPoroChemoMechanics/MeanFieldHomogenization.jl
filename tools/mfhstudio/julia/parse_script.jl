@@ -172,6 +172,60 @@ function recognize_builder(ex)
 end
 
 """
+Recognize a laminate builder: a function whose body creates a `Laminate` and
+fills it with `add_layer!` calls.
+
+Deliberately a separate recognizer rather than a branch of `recognize_builder`:
+the two cells share nothing but the `function … end` wrapper, and a laminate has
+no matrix, no per-member geometry and no orientation average to look for.
+
+The frame keyword is kept as written — `normal = (0, 0, 1)` and
+`euler_angles = (θ, ϕ, ψ)` are the two forms the emitter produces, and
+MeanFieldHomogenization refuses both at once, so at most one is ever there.
+"""
+function recognize_laminate(ex)
+    (ex isa Expr && ex.head === :function) || return nothing
+    sig = ex.args[1]
+    (sig isa Expr && sig.head === :call) || return nothing
+    fname = String(sig.args[1])
+    args = String[string(a) for a in sig.args[2:end] if !(a isa Expr && a.head === :parameters)]
+
+    layers = Dict{String, Any}[]
+    var = nothing
+    found = false
+    lam_opts = Dict{String, String}()
+
+    for st in ex.args[2].args
+        st isa LineNumberNode && continue
+        if st isa Expr && st.head === :(=) && _iscall(st.args[2], :Laminate)
+            var = String(st.args[1])
+            lam_opts = _kwargs(st.args[2])
+            found = true
+        elseif _iscall(st, :add_layer!)
+            a = _positional(st)
+            length(a) >= 3 || continue
+            push!(
+                layers, Dict{String, Any}(
+                    "name" => replace(string(a[2]), ":" => ""),
+                    "properties" => string(a[3]),
+                    "options" => _kwargs(st),
+                )
+            )
+        end
+    end
+
+    found || return nothing
+    return Dict{String, Any}(
+        "kind" => "laminate_builder",
+        "function" => fname,
+        "params" => args,
+        "var" => var,
+        "laminate_options" => lam_opts,
+        "layers" => layers,
+    )
+end
+
+"""
 Recognize a top-level `const NAME = expr` binding, which the emitter uses for
 every scalar and tensor parameter.
 """
@@ -209,7 +263,9 @@ function recognize_homogenize(ex)
     )
 end
 
-const RECOGNIZERS = [recognize_const, recognize_builder, recognize_homogenize]
+const RECOGNIZERS = [
+    recognize_const, recognize_builder, recognize_laminate, recognize_homogenize,
+]
 
 """
     parse_script(source; filename = "script.jl") -> Dict

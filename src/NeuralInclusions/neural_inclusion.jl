@@ -95,8 +95,8 @@ exactly the box `log_r2 ≤ 0, log_r32 ≤ 0`, whereas the second pair is confin
 to a triangular wedge that no `SampleBox` can express.
 """
 _feature(::Val{:log_aspect}, incl, _P₀) = log(_spheroid_ratio(_axes(incl)))
-_feature(::Val{:log_r2}, incl, _P₀) = log(_axes(incl)[2] / _axes(incl)[1])
-_feature(::Val{:log_r32}, incl, _P₀) = log(_axes(incl)[3] / _axes(incl)[2])
+_feature(::Val{:log_r2}, incl, _P₀) = (a = _axes(incl); log(a[2] / a[1]))
+_feature(::Val{:log_r32}, incl, _P₀) = (a = _axes(incl); log(a[3] / a[2]))
 
 function _feature(::Val{:nu0}, _incl, P₀::TensND.TensISO{4, 3})
     _, nu = Elasticity.E_nu(P₀)

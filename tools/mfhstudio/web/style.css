@@ -8,6 +8,7 @@
   --warn: #a5580f;
   --bad: #b03030;
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --gutter: 6px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -73,9 +74,15 @@ header h1 {
 
 /* ── layout ─────────────────────────────────────────────────────── */
 
+/* Only the two outer tracks are sized. The middle one takes what is left, so
+   a window resize needs no arithmetic and the stored layout is two numbers
+   rather than three that must be kept summing to the width. `split.js`
+   overwrites the variables in pixels; these are the defaults it removes back
+   to on a double-click. */
 main {
   display: grid;
-  grid-template-columns: minmax(320px, 26%) minmax(300px, 36%) minmax(320px, 38%);
+  grid-template-columns:
+    var(--col-l, 26%) var(--gutter) minmax(0, 1fr) var(--gutter) var(--col-r, 38%);
   height: calc(100% - 45px);
   min-height: 0;
 }
@@ -86,11 +93,34 @@ section {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-right: 1px solid var(--line);
 }
-section:last-child { border-right: none; }
 
 #left { background: var(--panel); }
+
+/* ── resize handles ─────────────────────────────────────────────── */
+
+/* The handle replaces the border it sits where: one line, not a line plus a
+   grip beside it. It only announces itself on hover, so the resting interface
+   looks the way it did. */
+.gutter {
+  background: var(--line);
+  flex: 0 0 var(--gutter);
+  position: relative;
+  touch-action: none;
+}
+.gutter-v { cursor: col-resize; }
+.gutter-h { cursor: row-resize; }
+.gutter:hover, .gutter.dragging { background: var(--accent); }
+
+/* A 6-pixel target is thin for a mouse and hopeless for a trackpad, so the
+   grabbable area is widened invisibly on both sides. */
+.gutter::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+}
+.gutter-v::after { inset: 0 -3px; }
+.gutter-h::after { inset: -3px 0; }
 
 .panel-head {
   display: flex;
@@ -113,12 +143,17 @@ section:last-child { border-right: none; }
   overflow: hidden;
   min-height: 0;
 }
-#view3d { flex: 1 1 55%; }
-#plot { flex: 1 1 45%; }
+/* Shares of the middle column, not fixed heights: `split.js` moves a
+   separator by rewriting these two grow factors, and a basis of 0 is what
+   makes the ratio the whole story. With the graph hidden — its usual state —
+   3 : 2.4 is the 55 / 45 this used to read. */
+#view3d { flex: 3 1 0; }
+#plot { flex: 2.4 1 0; }
 
 #stdout {
   margin: 0;
   padding: 8px 10px;
+  flex: 0 0 auto;
   max-height: 26%;
   overflow: auto;
   font: 11.5px/1.4 var(--mono);
@@ -260,10 +295,11 @@ h3 {
 
 /* ── scale graph ────────────────────────────────────────────────── */
 
+/* A share like its neighbours, so the separator below it is the one way to
+   resize it. The CSS `resize: vertical` it used to carry was a second,
+   independent mechanism that the separator would have fought. */
 .graph {
-  flex: 0 0 auto;
-  height: 260px;
-  resize: vertical;
+  flex: 2 1 0;
   position: relative;
   background: var(--bg);
   background-image:
@@ -277,9 +313,22 @@ h3 {
   user-select: none;
 }
 
+/* Two layers, painted by DOM order alone — no z-index, hence no new stacking
+   context in a panel that has none. `.under` is appended before the boxes and
+   holds the fat `edge-hit` strokes; `.over` is appended after them and holds
+   the visible curves, so a connector reads across the scales it crosses
+   instead of disappearing behind them. Both are `pointer-events: none`; only
+   `path.edge-hit` opts back in, and it lives in the layer that cannot cover a
+   box. */
+/* Pinned at the origin and sized by its own `width`/`height` attributes rather
+   than stretched with `inset: 0`. `centerOf` works in content coordinates
+   (it adds the scroll offsets), so the layer has to live in that same space:
+   stretched to the padding box it stayed put while the boxes scrolled under
+   it, and the connectors drifted off their ports. */
 .graph svg.edges {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
   pointer-events: none;
   overflow: visible;
 }

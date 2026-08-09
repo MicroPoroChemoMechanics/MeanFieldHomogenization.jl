@@ -115,7 +115,25 @@ restarted after a wedge without losing work.
 | `julia/geometry.jl` | 3-D traces |
 | `julia/parse_script.jl` | `Meta.parse` → nodes that tile the file exactly |
 | `web/graph.js` | the draggable scale graph |
+| `web/split.js` | the panel separators |
 | `web/picker.js` | the file dialog |
+| `examples/build_examples.py` | regenerates `examples/*.jl` |
+
+## Two kinds of cell
+
+`Cell.kind` is `"rve"` or `"laminate"`, and the difference runs the whole depth
+of the app: an RVE has a matrix and inclusion phases, a laminate has an ordered
+stack of layers and a normal. What they share is that both carry *members* with
+a name and a property list, which is all the multiscale seam needs — so
+`Cell.members()` (and `cellMembers` in `graph.js`, its one JavaScript twin) is
+what the dependency walk, the validation, the ports and the connectors are
+written against. Anything that reaches for `.phases` directly is a bug waiting
+for a laminate.
+
+Only `Laminated`, `Voigt` and `Reuss` apply to a laminate; the constraint is
+published in the catalog as a name list and *intersected* with the introspected
+schemes rather than substituted for them, so the "never hard-code the scheme
+list" rule survives.
 
 ## Three design decisions worth knowing
 
@@ -188,10 +206,23 @@ python3 tests/test_studio.py --julia  # adds the sidecar-backed tests
 The load-bearing one is preservation: every script under `scripts/` is opened
 and written back, and no line may be lost.
 
+`examples/*.jl` are generated, and two tests keep them honest — every example
+must validate with no problems, and regenerating must be a no-op. Cell ids are
+numbered rather than random for exactly that reason. After changing the emitter:
+
+```bash
+python3 examples/build_examples.py
+```
+
 ## Known limits
 
-- Sensitivities, laminates and custom/FE/neural inclusions are not modeled.
-  Scripts using them open and are preserved, but those parts are not editable.
+- Custom, FE and neural inclusions are not modeled. Scripts using them open and
+  are preserved, but those parts are not editable.
+
+- Read-back claims the vocabulary the emitter *writes* — one builder function
+  per scale. A cell assembled at top level, which is how every demo under
+  `scripts/` is written, is preserved verbatim and not offered as a form. That
+  is what `examples/` is for.
 
 - An inner `Homogenized` cannot sit inside an ALV chain (MeanFieldHomogenization cannot
   re-express a homogenized result as a `ViscoLaw`); the interface blocks the

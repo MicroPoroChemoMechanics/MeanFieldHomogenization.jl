@@ -83,6 +83,26 @@ function apply(st) {
 const cell = () => S.model.cells.find((c) => c.id === S.cellId) || null;
 const phases = () => (cell() ? cell().phases : []);
 const phase = () => phases()[S.phaseIdx] || null;
+const isLaminate = (c = cell()) => !!c && c.kind === "laminate";
+/** The cell carrying the final result, which is what a panel targets by default. */
+const rootCell = () =>
+  S.model.cells.find((c) => c.id === S.model.root_cell)
+  || S.model.cells[S.model.cells.length - 1] || null;
+/** Phases or layers, whichever this cell has — `graph.js` owns the definition. */
+const members = (c = cell()) => cellMembers(c);
+
+/** The schemes a cell can be homogenized with.
+ *
+ * A laminate takes only the three that need no matrix phase. The list is still
+ * the introspected one, intersected rather than substituted, so a scheme
+ * MeanFieldHomogenization drops disappears here too.
+ */
+function schemesFor(c) {
+  const all = S.catalog.schemes || [];
+  if (!isLaminate(c)) return all;
+  const allowed = (S.catalog.constraints || {}).laminate_schemes || [];
+  return all.filter((s) => allowed.includes(s.name));
+}
 
 const geomForm = (kind) =>
   (S.catalog.geometries || []).find((g) => g.kind === kind) || null;
@@ -162,6 +182,7 @@ function render() {
   _keySeq = 0;
   renderScales();
   renderSweep();
+  renderSens();
   renderAlv();
   renderParams();
   renderKept();
@@ -178,15 +199,174 @@ function renderScales() {
   const c = cell();
   $("#cell-name").value = c ? c.name : "";
   $("#cell-matrix").value = c ? c.matrix_name : "";
+  // A laminate has no matrix — that is the point of it — so the field goes
+  // away rather than sitting there inert.
+  $("#cell-matrix-field").hidden = isLaminate(c);
+  $("#cell-kind").value = c ? (c.kind || "rve") : "rve";
+  $("#phase-head").hidden = isLaminate(c);
 
   // The graph only earns its place once there is more than one scale: with a
   // single RVE there is nothing to connect and it would be noise.
   const multi = S.model.cells.length > 1;
   $("#graph").hidden = !multi;
   $("#graph-head").hidden = !multi;
+  // The separator below the graph goes with it: a handle that resizes nothing
+  // is worse than no handle.
+  $("#gutter-graph").hidden = !multi;
   if (multi) drawGraph();
 
-  $("#phases").replaceChildren(...phases().map(phaseCard));
+  $("#phases").replaceChildren(
+    ...(isLaminate(c) ? laminateEditor(c) : phases().map(phaseCard))
+  );
+}
+
+/* ── laminate ───────────────────────────────────────────────────── */
+
+/** The stack: its frame, then one card per layer in stacking order.
+ *
+ * A layer is not a phase. It has no shape of its own — the geometry of a
+ * laminate is the stacking direction, which belongs to the cell — and no
+ * orientation average, the cell being deterministic rather than random. What
+ * it does have is the same property list a phase has, so `propertyEditor` is
+ * reused whole and a layer gets the nested seam, the viscoelastic laws and the
+ * anisotropic forms without any of them being written twice.
+ */
+function laminateEditor(c) {
+  c.layers = c.layers || [];
+  const kind = c.layers.length ? c.layers[0].amount_kind : "fraction";
+
+  const out = [
+    el("div", { class: "note" },
+      "A periodic stack of parallel layers of common normal — no matrix and no "
+      + "reference medium. `Laminated` is exact for it; `Voigt` and `Reuss` "
+      + "bracket it, and two of the bracketings are equalities."),
+    el("h3", {}, "Stacking direction"),
+    field("Given as", select(
+      [["normal", "normal vector"], ["euler", "ZYZ Euler angles"]],
+      c.frame_mode || "normal",
+      (v) => { c.frame_mode = v; push(); }
+    )),
+  ];
+
+  if ((c.frame_mode || "normal") === "euler") {
+    out.push(anglesEditor(c, 3));
+  } else {
+    c.normal = c.normal && c.normal.length === 3 ? c.normal : [0, 0, 1];
+    out.push(
+      el("div", { class: "note" },
+        "(0, 0, 1) is the canonical frame, where the kernel skips the rotation "
+        + "altogether."),
+      el("div", { class: "grid3" },
+        ...["nₓ", "n_y", "n_z"].map((lbl, i) =>
+          field(lbl, input(c.normal[i] ?? 0, (v) => {
+            c.normal[i] = isFinite(+v) && v.trim() !== "" ? +v : v;
+            push();
+          }))
+        ))
+    );
+  }
+
+  out.push(
+    el("h3", {}, "Layers",
+      el("button", {
+        class: "small",
+        title: "Add a layer on top of the stack",
+        onclick: () => {
+          c.layers.push({
+            name: String.fromCharCode(65 + c.layers.length),
+            amount_kind: kind, amount: kind === "fraction" ? 0.5 : 1.0,
+            interface: { kind: "PerfectInterface", args: {} },
+            properties: [{
+              key: ":C", source: "builder", builder: "iso_stiffness",
+              form: "iso_kmu", args: { k: 10, mu: 5 }, scheme_options: {},
+            }],
+          });
+          push();
+        },
+      }, "+")),
+    // The choice belongs to the cell, not the layer: MeanFieldHomogenization
+    // refuses a stack that mixes the two forms, because with an imperfect
+    // interface the absolute period is physically meaningful.
+    field("Layers given by", select(
+      [["fraction", "volume fraction (Σ = 1)"], ["thickness", "absolute thickness"]],
+      kind,
+      (v) => { for (const l of c.layers) l.amount_kind = v; push(); }
+    )),
+    el("div", { class: "note" }, kind === "fraction"
+      ? "Fractions of the period; they must sum to 1. The period is then "
+        + "irrelevant — unless an interface is imperfect, which is what "
+        + "absolute thicknesses are for."
+      : "Absolute heights. Their sum is the period L, and an imperfect "
+        + "interface enters with weight 1/L — an interface density.")
+  );
+
+  c.layers.forEach((l, i) => out.push(layerCard(c, l, i)));
+  return out;
+}
+
+function layerCard(c, l, i) {
+  const seam = (l.properties || []).some((p) => p.source === "cell");
+  const move = (d) => {
+    const j = i + d;
+    if (j < 0 || j >= c.layers.length) return;
+    c.layers.splice(j, 0, c.layers.splice(i, 1)[0]);
+    push();
+  };
+  const itf = l.interface || (l.interface = { kind: "PerfectInterface", args: {} });
+  const itfForm = (S.catalog.interfaces || []).find((x) => x.name === itf.kind);
+
+  return el("div", { class: "card" },
+    el("header", {},
+      el("b", {}, `${i + 1}. ${l.name || "(unnamed)"}`),
+      seam ? el("span", { class: "tag seam" }, "nested scale") : null,
+      el("button", { class: "small", title: "Move down the stack", onclick: () => move(-1) }, "↑"),
+      el("button", { class: "small", title: "Move up the stack", onclick: () => move(+1) }, "↓"),
+      el("button", { class: "small", onclick: () => { c.layers.splice(i, 1); push(); } }, "−")),
+    el("div", { class: "grid2" },
+      field("Name", input(l.name, (v) => { l.name = v; push(); })),
+      field(l.amount_kind === "thickness" ? "thickness h" : "fraction f",
+        input(l.amount, (v) => {
+          l.amount = isFinite(+v) && v.trim() !== "" ? +v : v;
+          push();
+        }))
+    ),
+    el("h3", {}, "Properties",
+      el("button", {
+        class: "small",
+        onclick: () => {
+          l.properties.push({
+            key: ":C", source: "builder", builder: "iso_stiffness",
+            form: "iso_kmu", args: { k: 10, mu: 5 }, scheme_options: {},
+          });
+          push();
+        },
+      }, "+")),
+    ...(l.properties || []).map((pr, j) => propertyEditor(l, pr, j)),
+    el("h3", {}, "Interface on top"),
+    el("div", { class: "note" },
+      i === c.layers.length - 1
+        ? "The last one closes the cell back onto layer 1 by periodicity."
+        : `Between this layer and ${(c.layers[i + 1] || {}).name || "the next"}.`),
+    select(
+      (S.catalog.interfaces || []).map((x) => [x.name, x.label]),
+      itf.kind,
+      (v) => {
+        const f = (S.catalog.interfaces || []).find((x) => x.name === v);
+        const args = {};
+        for (const fl of (f && f.fields) || []) args[fl.name] = fl.default;
+        l.interface = { kind: v, args };
+        push();
+      }
+    ),
+    itfForm && itfForm.doc ? el("div", { class: "note" }, itfForm.doc) : null,
+    ...((itfForm && itfForm.fields) || []).map((fl) =>
+      field(fl.label, input(itf.args[fl.name] ?? fl.default, (v) => {
+        itf.args[fl.name] = fl.type === "code"
+          ? v
+          : (isFinite(+v) && v.trim() !== "" ? +v : v);
+        push();
+      })))
+  );
 }
 
 function phaseCard(ph, i) {
@@ -480,8 +660,12 @@ function layersEditor(g, form) {
       el("header", {}, el("b", {}, `layer ${i + 1}`),
         el("button", { class: "small", onclick: () => { g.layers.splice(i, 1); push(); } }, "\u2212")),
       row,
+      // The anisotropic interfaces are laminate-only: they are written in the
+      // layer frame (ℓ, m, n), and a concentric shell has no such frame.
       field("Interface with the next layer", select(
-        (S.catalog.interfaces || []).map((x) => [x.name, x.label]),
+        (S.catalog.interfaces || [])
+          .filter((x) => !x.laminate_only)
+          .map((x) => [x.name, x.label]),
         (l.interface && l.interface.kind) || "PerfectInterface",
         (v) => {
           const f = (S.catalog.interfaces || []).find((x) => x.name === v);
@@ -603,12 +787,21 @@ function renderSweep() {
   const t = $("#tab-sweep");
   const inner = sw.lens.inner || (sw.lens.inner = { kind: "amount", phase: "", property: ":C", field_name: "semi_axes", index: 1, member: "", inner: null });
   const sweeping = sw.enabled && sw.mode !== "single";
+  // The sweep runs on one cell, and it need not be the one being edited.
+  const target = S.model.cells.find((c) => c.id === sw.cell) || rootCell();
 
   const kids = [
     field("What to compute", select(
       [["single", "one point, with the amounts above"], ["sweep", "sweep a parameter"]],
       sw.mode || "sweep",
-      (v) => { sw.mode = v; sw.enabled = true; push(); }
+      (v) => {
+        sw.mode = v;
+        sw.enabled = true;
+        // Same exclusivity as the other two panels.
+        S.model.sens.enabled = false;
+        S.model.alv.enabled = false;
+        push();
+      }
     )),
     el("div", { class: "note" }, sw.mode === "single"
       ? "Homogenizes once with the fractions entered in Scales."
@@ -625,11 +818,11 @@ function renderSweep() {
       field("Points", input(sw.length, (v) => { sw.length = Math.max(2, +v | 0); push(); })),
       el("h3", {}, "What varies"),
       field("Lens", select(
-        (S.catalog.lenses || []).map((l) => [l.name, l.label]),
+        lensesFor(target).map((l) => [l.name, l.label]),
         sw.lens.kind, (v) => { sw.lens.kind = v; push(); }
       )),
       lensDoc(sw.lens.kind),
-      ...lensFields(sw.lens, inner)
+      ...lensFields(sw.lens, inner, target)
     );
   }
 
@@ -646,7 +839,7 @@ function renderSweep() {
           ? el("button", { class: "small", onclick: () => { sw.schemes.splice(i, 1); push(); } }, "\u2212")
           : null),
       field("Scheme", select(
-        (S.catalog.schemes || []).map((x) => [x.name, x.name]),
+        schemesFor(target).map((x) => [x.name, x.name]),
         sc.name,
         (v) => {
           sc.name = v;
@@ -668,7 +861,13 @@ function renderSweep() {
       onclick: () => { sw.outputs.push({ kind: "km", i: 1, j: 1 }); push(); },
     }, "+")));
   const needsIso = sw.outputs.some((o) => ISOTROPIC_ONLY.includes(o.kind));
-  const anyFree = S.model.cells.some((c) => c.phases.some((p) => p.symmetrize === "none"));
+  // A laminate of more than one layer is transversely isotropic about its
+  // normal even with isotropic layers — that is what Backus says — so it falls
+  // into the same trap as an unaveraged oriented inclusion.
+  const anyFree = S.model.cells.some(
+    (c) => c.phases.some((p) => p.symmetrize === "none")
+      || (c.kind === "laminate" && (c.layers || []).length > 1)
+  );
   if (needsIso && sw.projection === "none" && anyFree) {
     kids.push(el("div", { class: "note problem" },
       "k, μ, E and ν exist only for an isotropic tensor. This model has phases "
@@ -701,6 +900,18 @@ function renderSweep() {
       ))
     )
   );
+  kids.push(
+    field("", checkboxLabel(
+      "clip negative values to zero", !!sw.clamp_zero,
+      (v) => { sw.clamp_zero = v; push(); }
+    )),
+    el("div", { class: "note" },
+      "A scheme pushed outside its range gives negative moduli — Dilute does, "
+      + "well before f = 1 — and on a shared figure that one curve sets the "
+      + "scale for every other. Clipping is a display choice; on a single "
+      + "scheme, a negative modulus is the useful signal and is better left "
+      + "showing.")
+  );
   if (sweeping) {
     kids.push(field("Plot", checkboxLabel("draw a figure", sw.plot, (v) => { sw.plot = v; push(); })));
   }
@@ -718,25 +929,56 @@ function lensDoc(kind) {
   return l && l.doc ? el("div", { class: "note" }, l.doc) : el("span");
 }
 
-function lensFields(lens, inner) {
-  const names = phases().map((p) => [p.name, p.name]);
+/** The lenses that exist on this kind of cell.
+ *
+ * Not a nicety: `AmountParameter` *raises* on a laminate, pointing at
+ * `ThicknessParameter`, and the two laminate lenses have no meaning on an RVE.
+ * Offering them regardless would move the error from the form to the run.
+ */
+function lensesFor(c) {
+  const k = isLaminate(c) ? "laminate" : "rve";
+  return (S.catalog.lenses || []).filter(
+    (l) => !l.cells || l.cells.includes(k)
+  );
+}
+
+function lensFields(lens, inner, c = cell()) {
+  const names = members(c).map((p) => [p.name, p.name]);
   const out = [];
   if (lens.kind === "nested") {
     out.push(
       el("div", { class: "grid2" },
-        field("Through phase", select(names, lens.member || (names[0] && names[0][0]), (v) => { lens.member = v; push(); })),
+        field(isLaminate(c) ? "Through layer" : "Through phase",
+          select(names, lens.member || (names[0] && names[0][0]), (v) => { lens.member = v; push(); })),
         field("Key", input(lens.property, (v) => { lens.property = v.startsWith(":") ? v : ":" + v; push(); }))
       ),
       el("h3", {}, "Inside that scale"),
       field("Lens", select(
-        (S.catalog.lenses || []).filter((l) => l.name !== "nested").map((l) => [l.name, l.label]),
+        lensesFor(c).filter((l) => l.name !== "nested").map((l) => [l.name, l.label]),
         inner.kind, (v) => { inner.kind = v; push(); }
       )),
-      ...lensFields(inner, {})
+      ...lensFields(inner, {}, c)
     );
     return out;
   }
-  if (lens.kind === "amount") {
+  if (lens.kind === "thickness") {
+    out.push(field("Layer", select(
+      names, lens.phase || (names[0] && names[0][0]),
+      (v) => { lens.phase = v; push(); }
+    )));
+  } else if (lens.kind === "interface_param") {
+    const fields = ((S.catalog.lenses || []).find((l) => l.name === "interface_param")
+      || {}).fields || [];
+    out.push(el("div", { class: "grid2" },
+      field("Interface (on top of layer)", input(lens.index, (v) => {
+        lens.index = Math.max(1, +v | 0); push();
+      })),
+      field("Field", select(
+        fields.map((f) => [f, f]), lens.field_name,
+        (v) => { lens.field_name = v; push(); }
+      ))
+    ));
+  } else if (lens.kind === "amount") {
     out.push(field("Phase", select(names, lens.phase || (names[0] && names[0][0]), (v) => { lens.phase = v; push(); })));
   } else if (lens.kind === "property") {
     out.push(el("div", { class: "grid3" },
@@ -757,6 +999,137 @@ function lensFields(lens, inner) {
     ));
   }
   return out;
+}
+
+/* ── sensitivities ──────────────────────────────────────────────── */
+
+/** Derivatives of the effective property, through the lenses.
+ *
+ * MeanFieldHomogenization's wrappers take the cell and the lens directly, so
+ * this panel is the sweep's lens editor and the sweep's output picker put side
+ * by side — there is no closure to write and no new vocabulary to learn.
+ *
+ * The point where the derivative is taken is the model itself: `get_param`
+ * reads x₀ off the cell, so the amounts and moduli entered in Scales are the
+ * point, and nothing is typed twice.
+ */
+function renderSens() {
+  const s = S.model.sens;
+  s.lenses = s.lenses && s.lenses.length ? s.lenses : [{ kind: "amount", phase: "", property: ":C", field_name: "semi_axes", index: 1, member: "", inner: null }];
+  s.output = s.output || { kind: "k" };
+  const t = $("#tab-sens");
+  const target = S.model.cells.find((c) => c.id === s.cell) || rootCell();
+  const many = s.kind !== "derivative";
+
+  const kids = [
+    field("Compute", checkboxLabel(
+      "differentiate the effective property", s.enabled,
+      (v) => {
+        s.enabled = v;
+        // The three result modes are exclusive: one `Result` section is
+        // emitted, and two of them would fight over the same `cell`.
+        if (v) { S.model.alv.enabled = false; S.model.sweep.enabled = false; }
+        push();
+      }
+    )),
+    el("div", { class: "note" },
+      "ForwardDiff through the whole scheme — and through a nested scale too, "
+      + "the `nested` lens composing across the seam in one pass."),
+  ];
+
+  if (!s.enabled) { t.replaceChildren(...kids); return; }
+
+  kids.push(
+    field("Kind", select(
+      (S.catalog.sensitivities || []).map((x) => [x.name, x.label]),
+      s.kind,
+      (v) => {
+        s.kind = v;
+        if (v === "derivative") s.lenses = s.lenses.slice(0, 1);
+        push();
+      }
+    )),
+    sensDoc(s.kind),
+    el("div", { class: "grid2" },
+      field("Scale", select(
+        S.model.cells.map((c) => [c.id, c.name]),
+        s.cell || (target && target.id),
+        (v) => { s.cell = v; push(); }
+      )),
+      field("Property", input(s.property, (v) => {
+        s.property = v.startsWith(":") ? v : ":" + v; push();
+      }))
+    ),
+    field("Scheme", select(
+      schemesFor(target).map((x) => [x.name, x.name]),
+      s.scheme,
+      (v) => { s.scheme = v; s.scheme_options = {}; push(); }
+    )),
+    schemeOptions(s.scheme, s.scheme_options || (s.scheme_options = {}))
+  );
+
+  kids.push(el("h3", {}, many ? "Parameters" : "Parameter",
+    many
+      ? el("button", {
+          class: "small",
+          onclick: () => {
+            s.lenses.push({ kind: "amount", phase: "", property: ":C", field_name: "semi_axes", index: 1, member: "", inner: null });
+            push();
+          },
+        }, "+")
+      : null));
+
+  s.lenses.forEach((l, i) => {
+    const inner = l.inner || (l.inner = { kind: "amount", phase: "", property: ":C", field_name: "semi_axes", index: 1, member: "", inner: null });
+    kids.push(el("div", { class: "card" },
+      el("header", {}, el("b", {}, `p${i + 1}`),
+        s.lenses.length > 1
+          ? el("button", { class: "small", onclick: () => { s.lenses.splice(i, 1); push(); } }, "−")
+          : null),
+      field("Lens", select(
+        lensesFor(target).map((x) => [x.name, x.label]),
+        l.kind, (v) => { l.kind = v; push(); }
+      )),
+      lensDoc(l.kind),
+      ...lensFields(l, inner, target)
+    ));
+  });
+
+  // A jacobian differentiates the whole tensor, so there is nothing to extract
+  // — and that is also the way out when the result is not isotropic.
+  if (s.kind !== "jacobian") {
+    const row = [field("Quantity", select(OUTPUT_KINDS, s.output.kind, (v) => {
+      s.output.kind = v; push();
+    }))];
+    if (s.output.kind === "km" || s.output.kind === "comp") {
+      row.push(
+        field("i", input(s.output.i ?? 1, (v) => { s.output.i = Math.max(1, +v | 0); push(); })),
+        field("j", input(s.output.j ?? 1, (v) => { s.output.j = Math.max(1, +v | 0); push(); }))
+      );
+    }
+    row.push(field("Report as", select(
+      (S.catalog.projections || []).map((p) => [p.name, p.label]),
+      s.projection || "iso", (v) => { s.projection = v; push(); }
+    )));
+    kids.push(el("h3", {}, "Differentiated quantity"),
+      el("div", { class: row.length > 2 ? "grid3" : "grid2" }, ...row),
+      el("div", { class: "note" },
+        "The projection sits inside the differentiated function, so what comes "
+        + "out is the derivative of the reported quantity."));
+  } else {
+    kids.push(el("div", { class: "note" },
+      "The whole effective tensor, flattened — no scalar is extracted, so no "
+      + "isotropy is required."));
+  }
+
+  kids.push(el("div", { class: "note" },
+    "The answer is a table, in the output panel: a gradient is not a curve."));
+  t.replaceChildren(...kids);
+}
+
+function sensDoc(kind) {
+  const x = (S.catalog.sensitivities || []).find((s) => s.name === kind);
+  return x && x.doc ? el("div", { class: "note" }, x.doc) : el("span");
 }
 
 /* ── viscoelasticity ────────────────────────────────────────────── */
@@ -789,7 +1162,12 @@ function renderAlv() {
       + (viscoPhases.length
           ? "Found on: " + viscoPhases.join(", ") + "."
           : "No phase carries one yet, so this run has nothing to age.")),
-    field("", checkboxLabel("Ageing linear viscoelastic run", a.enabled, (v) => { a.enabled = v; push(); })),
+    field("", checkboxLabel("Ageing linear viscoelastic run", a.enabled, (v) => {
+      a.enabled = v;
+      // One `Result` section is emitted; two run modes would fight over it.
+      if (v) S.model.sens.enabled = false;
+      push();
+    })),
     el("div", { class: "grid3" },
       field(a.log_time ? "log₁₀ t from" : "t from", input(a.t_start, (v) => { a.t_start = +v; push(); })),
       field(a.log_time ? "log₁₀ t to" : "t to", input(a.t_stop, (v) => { a.t_stop = +v; push(); })),
@@ -928,26 +1306,43 @@ function checkboxLabel(text, value, on) {
 
 let lastExpr = null;
 async function draw3d() {
-  const ph = phase();
-  const expr = geomExpr(ph);
-  $("#shape-label").textContent = expr || "";
-  if (!expr) { Plotly.purge("view3d"); lastExpr = null; return; }
+  const c = cell();
+  // A laminate's layers have no shape of their own: the geometry of the cell
+  // *is* the stack, so what gets drawn is the cell. The expression for it is
+  // built by the server from the same code generator that writes the script —
+  // a second spelling here would let the picture drift from the model.
+  const lam = isLaminate(c);
+  const body = lam
+    ? { cell: c.id, cutaway: $("#cutaway").checked }
+    : { expr: geomExpr(phase()), cutaway: $("#cutaway").checked };
+  const shown = lam
+    ? `Laminate — ${(c.layers || []).length} layer(s)`
+    : body.expr;
+  $("#shape-label").textContent = shown || "";
+  if (lam && (c.params || []).length) {
+    // A builder taking parameters has no single stack to draw.
+    Plotly.purge("view3d");
+    $("#shape-label").textContent = shown + " — parametrized, nothing to draw";
+    lastExpr = null;
+    return;
+  }
+  if (!lam && !body.expr) { Plotly.purge("view3d"); lastExpr = null; return; }
   if (!S.catalogIntrospected) {
     // The sidecar draws the shapes; without it, say so once rather than
     // firing a request per edit that can only fail.
     Plotly.purge("view3d");
-    $("#shape-label").textContent = expr + " — 3-D needs Julia";
+    $("#shape-label").textContent = shown + " — 3-D needs Julia";
     return;
   }
-  const key = expr + "|" + $("#cutaway").checked;
+  const key = JSON.stringify([body, lam ? JSON.stringify(c) : null]);
   if (key === lastExpr) return;
   lastExpr = key;
   try {
-    const sc = await api("/api/traces", { expr, cutaway: $("#cutaway").checked });
+    const sc = await api("/api/traces", body);
     Plotly.react("view3d", sc.data, sc.layout, { displayModeBar: false, responsive: true });
   } catch (e) {
     // A shape the sidecar cannot build is a modeling error worth showing.
-    $("#shape-label").textContent = expr + " — " + e.message.split("\n")[0];
+    $("#shape-label").textContent = shown + " — " + e.message.split("\n")[0];
   }
 }
 
@@ -1155,6 +1550,28 @@ function wire() {
     if (i >= 0 && S.model.cells.length > 1) { S.model.cells.splice(i, 1); S.cellId = null; push(); }
   });
   $("#cell-name").addEventListener("change", (e) => { cell().name = e.target.value; push(); });
+  $("#cell-kind").addEventListener("change", (e) => {
+    const c = cell();
+    c.kind = e.target.value;
+    // Switching kind seeds the other shape rather than leaving it empty: an
+    // empty laminate is a validation error, and starting on one reads as a
+    // fault rather than as a choice. Whatever was there is kept, so switching
+    // back and forth loses nothing.
+    if (c.kind === "laminate" && !(c.layers || []).length) {
+      c.layers = [
+        { name: "A", amount_kind: "fraction", amount: 0.3,
+          interface: { kind: "PerfectInterface", args: {} },
+          properties: [{ key: ":C", source: "builder", builder: "iso_stiffness",
+                         form: "iso_kmu", args: { k: 2.0, mu: 0.8 }, scheme_options: {} }] },
+        { name: "B", amount_kind: "fraction", amount: 0.7,
+          interface: { kind: "PerfectInterface", args: {} },
+          properties: [{ key: ":C", source: "builder", builder: "iso_stiffness",
+                         form: "iso_kmu", args: { k: 0.5, mu: 0.2 }, scheme_options: {} }] },
+      ];
+    }
+    S.phaseIdx = 0;
+    push();
+  });
   $("#cell-matrix").addEventListener("change", (e) => { cell().matrix_name = e.target.value; push(); });
   $("#phase-add").addEventListener("click", () => {
     cell().phases.push({
@@ -1175,6 +1592,7 @@ function wire() {
 }
 
 wire();
+Split.init();
 boot();
 pollSidecar();
 setInterval(pollSidecar, 2000);
