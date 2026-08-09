@@ -8,6 +8,43 @@ everything it does not recognize.
 The script stays the deliverable. The studio is a way of writing one, not a
 format to be locked into.
 
+## [Without installing anything](@id tools-mfhstudio-codespaces)
+
+If you have a GitHub account and have never used Julia, this is the way in:
+
+**[Open MFH Studio in GitHub Codespaces](https://codespaces.new/MicroPoroChemoMechanics/MeanFieldHomogenization.jl?quickstart=1)**
+
+That starts a Linux machine in your browser with Julia, the package and the
+studio already installed. The studio launches by itself and a tab opens on it;
+a `WELCOME.md` explains what to click. Nothing is installed on your own
+computer, and closing the tab discards the machine.
+
+GitHub gives every account a monthly allowance of Codespaces time, and the
+configuration asks for the smallest machine, which stretches it furthest. Stop
+the codespace from <https://github.com/codespaces> when you are done — it also
+stops itself after 30 minutes of inactivity.
+
+What that machine contains is [`.devcontainer/`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/tree/main/.devcontainer):
+a Dockerfile pinning the same Julia the CI uses, a `setup.sh` that resolves and
+precompiles the environment, and a `start-studio.sh` that launches the server
+on every attach.
+
+!!! note "For the maintainer: turn on prebuilds"
+    Without them, the first codespace a visitor opens pays the whole
+    precompilation — several minutes of watching a terminal. With them, that
+    work is done ahead of time and baked into the image, and the studio is
+    ready in seconds. *Settings → Codespaces → Set up prebuild*, on `main`.
+    `setup.sh` runs as `onCreateCommand` precisely so that a prebuild captures
+    it.
+
+!!! warning "One visitor per machine, by design"
+    The studio keeps a single session and its **Run** button executes Julia on
+    the machine it runs on. That is exactly right for a container that belongs
+    to one person, and exactly wrong for a shared public server: everyone would
+    edit the same model, and anyone could run arbitrary code. Codespaces gives
+    each visitor their own container, which is why it is the deployment
+    recommended here.
+
 ## Starting the studio
 
 From a Julia session with MeanFieldHomogenization loaded — the studio ships with the
@@ -89,7 +126,7 @@ the interface can express:
 | `01_porous_schemes.jl` | **every** scheme on one figure — where they agree, and where they fail |
 | `02_cracked_solid.jl` | cracks entering with a *density*, and orientation averaging |
 | `03_coated_inclusion.jl` | one inclusion with concentric shells |
-| `04_conductivity_fibres.jl` | the same schemes answering a **conduction** problem |
+| `04_conductivity_fibers.jl` | the same schemes answering a **conduction** problem |
 | `05_two_scales.jl` | the multiscale seam, and a sweep reaching through it |
 | `06_laminate_basics.jl` | the exact laminate; Backus, and both bounds saturating |
 | `07_laminate_interfaces.jl` | an imperfect interface and the size effect it brings |

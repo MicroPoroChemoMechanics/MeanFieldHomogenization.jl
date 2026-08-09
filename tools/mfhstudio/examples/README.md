@@ -11,7 +11,7 @@ Start with `01`, then jump to whichever line interests you.
 | `01_porous_schemes.jl` | all ten schemes on one figure; where they agree, and where they fail | `scripts/28`, `scripts/20` |
 | `02_cracked_solid.jl` | cracks enter with a **density**, not a fraction; orientation averaging | `scripts/15`, `scripts/86` |
 | `03_coated_inclusion.jl` | one inclusion with concentric shells | `scripts/30` |
-| `04_conductivity_fibres.jl` | the same schemes answering a **conduction** problem | `scripts/32` |
+| `04_conductivity_fibers.jl` | the same schemes answering a **conduction** problem | `scripts/32` |
 | `05_two_scales.jl` | the multiscale seam, and a sweep that reaches through it | `scripts/42` |
 | `06_laminate_basics.jl` | the exact laminate; Backus, and both bounds saturating | `scripts/33` |
 | `07_laminate_interfaces.jl` | an imperfect interface and the size effect it brings | `scripts/34` |

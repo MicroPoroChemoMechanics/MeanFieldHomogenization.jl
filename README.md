@@ -13,6 +13,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/LICENSE)
 [![code style: runic](https://img.shields.io/badge/code_style-%E1%9A%B1%E1%9A%A2%E1%9A%BE%E1%9B%81%E1%9A%B2-pink)](https://github.com/fredrikekre/Runic.jl)
 
+**Try it without installing anything — not even Julia:**
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/MicroPoroChemoMechanics/MeanFieldHomogenization.jl?quickstart=1)
+
+One click opens a machine in your browser with Julia, the package and
+[MFH Studio](#mfh-studio--building-models-in-the-browser) already running.
+
 `MeanFieldHomogenization.jl` is a Julia framework for **mean-field homogenization**
 of heterogeneous materials: it predicts effective elastic, transport and
 viscoelastic properties from the properties, shapes, orientations and
@@ -140,10 +147,17 @@ for details.
 
 ## MFH Studio — building models in the browser
 
+Locally, from a Julia session:
+
 ```julia
 using MeanFieldHomogenization
 mfhstudio()
 ```
+
+Or with nothing installed at all —
+[**open it in GitHub Codespaces**](https://codespaces.new/MicroPoroChemoMechanics/MeanFieldHomogenization.jl?quickstart=1).
+The studio starts by itself and a browser tab opens on it; see
+[`.devcontainer/`](.devcontainer/) for what that machine contains.
 
 ![MFH Studio: a two-scale model, its 3-D shape and the Julia it generates](docs/src/assets/mfhstudio/readme.png)
 

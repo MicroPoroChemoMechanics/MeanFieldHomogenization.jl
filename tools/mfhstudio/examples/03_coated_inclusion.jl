@@ -5,13 +5,13 @@
 #  studio reads it back and preserves anything it does not
 #  recognize.
 #
-#  A stiff core in a compliant shell, dispersed in a matrix. The shells are given by outer radius, ascending, with r = 0 at the centre.
+#  A stiff core in a compliant shell, dispersed in a matrix. The shells are given by outer radius, ascending, with r = 0 at the center.
 # =============================================================================
 #
 # After `scripts/30_average_nlayers.jl`.
 #
 # A `LayeredSphere` is one inclusion with concentric shells, given by their
-# outer radii with r = 0 implicit at the centre — not a nested cell. The
+# outer radii with r = 0 implicit at the center — not a nested cell. The
 # interface between two shells can be imperfect; here they are perfect and
 # the interest is in the coating alone.
 #
@@ -244,7 +244,7 @@ Deleting it costs nothing but a best-effort re-reading of the code.
    }
   }
  ],
- "description": "A stiff core in a compliant shell, dispersed in a matrix. The shells are given by outer radius, ascending, with r = 0 at the centre.",
+ "description": "A stiff core in a compliant shell, dispersed in a matrix. The shells are given by outer radius, ascending, with r = 0 at the center.",
  "opaque": [],
  "params": [],
  "root_cell": "cell1",

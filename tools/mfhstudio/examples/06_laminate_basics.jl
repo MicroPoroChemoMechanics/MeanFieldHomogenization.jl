@@ -11,7 +11,7 @@
 # After `scripts/33_laminate_basics.jl`.
 #
 # A laminate is a *cell*, not an inclusion: a periodic stack with no matrix
-# and no reference medium, and an exact effective behaviour rather than an
+# and no reference medium, and an exact effective behavior rather than an
 # estimate. Two isotropic layers give a transversely isotropic result — that
 # is Backus (1962) — and the bounds saturate: exactly Reuss across the layers
 # (KM 3,3) and exactly Voigt in their plane (KM 6,6), at once.

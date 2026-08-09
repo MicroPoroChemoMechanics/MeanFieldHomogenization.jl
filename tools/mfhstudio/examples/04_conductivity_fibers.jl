@@ -1,11 +1,11 @@
 # =============================================================================
-#  conductivity_fibres.jl
+#  conductivity_fibers.jl
 #
 #  Built with MFH Studio. Editing this file by hand is fine: the
 #  studio reads it back and preserves anything it does not
 #  recognize.
 #
-#  Aligned conductive fibres (ω = 10) in a poor matrix. The result is transversely isotropic about e₃: K₃₃ follows the fibres, K₁₁ does not.
+#  Aligned conductive fibers (ω = 10) in a poor matrix. The result is transversely isotropic about e₃: K₃₃ follows the fibers, K₁₁ does not.
 # =============================================================================
 #
 # After `scripts/32_spheroid_effective_conductivity.jl`.
@@ -13,7 +13,7 @@
 # Everything above is stiffness; nothing about the schemes is. Store a
 # second-order tensor under `:K`, ask for `:K`, and the same machinery
 # answers a conduction problem. The inclusions are prolate spheroids —
-# fibres — with no orientation average, so the effective conductivity is
+# fibers — with no orientation average, so the effective conductivity is
 # transversely isotropic and the plot follows components, not a scalar.
 #
 
@@ -41,7 +41,7 @@ gr()
 function build_rve()
     rve = RVE(:MATRIX)
     add_matrix!(rve, Spheroid(1.0), Dict(:K => TensISO{3}(1.0)))
-    add_phase!(rve, :FIBRES, Spheroid(10.0), Dict(:K => TensISO{3}(50.0)); fraction = 0.2)
+    add_phase!(rve, :FIBERS, Spheroid(10.0), Dict(:K => TensISO{3}(50.0)); fraction = 0.2)
     return rve
 end
 
@@ -54,7 +54,7 @@ const fs = range(0.0, 0.4; length = 21)
 const base_cell = build_rve()
 
 function evaluate(scheme, f)
-    cell = set_param(base_cell, amount(:FIBRES), f)
+    cell = set_param(base_cell, amount(:FIBERS), f)
     C = homogenize(cell, scheme, :K)
     arr = Array(C)
     return (arr[1, 1], arr[3, 3])
@@ -166,7 +166,7 @@ Deleting it costs nothing but a best-effort re-reading of the code.
       "layers": []
      },
      "is_matrix": false,
-     "name": "FIBRES",
+     "name": "FIBERS",
      "properties": [
       {
        "args": {
@@ -194,7 +194,7 @@ Deleting it costs nothing but a best-effort re-reading of the code.
    }
   }
  ],
- "description": "Aligned conductive fibres (\u03c9 = 10) in a poor matrix. The result is transversely isotropic about e\u2083: K\u2083\u2083 follows the fibres, K\u2081\u2081 does not.",
+ "description": "Aligned conductive fibers (\u03c9 = 10) in a poor matrix. The result is transversely isotropic about e\u2083: K\u2083\u2083 follows the fibers, K\u2081\u2081 does not.",
  "opaque": [],
  "params": [],
  "root_cell": "cell1",
@@ -232,7 +232,7 @@ Deleting it costs nothing but a best-effort re-reading of the code.
    "inner": null,
    "kind": "amount",
    "member": "",
-   "phase": "FIBRES",
+   "phase": "FIBERS",
    "property": ":C"
   },
   "mode": "sweep",
@@ -261,6 +261,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
   "stop": 0.4,
   "variable": "f"
  },
- "title": "conductivity_fibres"
+ "title": "conductivity_fibers"
 }
 =#

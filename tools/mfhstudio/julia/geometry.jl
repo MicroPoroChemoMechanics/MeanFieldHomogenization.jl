@@ -279,7 +279,7 @@ end
 
 # The stacking direction is the third axis of the stored basis, and `vecbasis`
 # gives the whole frame — so `(ℓ, m)` come from the same place the kernel takes
-# them, and a tilted stack is drawn tilted rather than merely labelled so.
+# them, and a tilted stack is drawn tilted rather than merely labeled so.
 function _rot(lam::MeanFieldHomogenization.Laminate)
     try
         return Matrix{Float64}(MeanFieldHomogenization.TensND.vecbasis(lam.basis))

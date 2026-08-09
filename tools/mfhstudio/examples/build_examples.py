@@ -156,7 +156,7 @@ def coated_inclusion() -> Model:
     """After `scripts/30_average_nlayers.jl`.
 
     A `LayeredSphere` is one inclusion with concentric shells, given by their
-    outer radii with r = 0 implicit at the centre — not a nested cell. The
+    outer radii with r = 0 implicit at the center — not a nested cell. The
     interface between two shells can be imperfect; here they are perfect and
     the interest is in the coating alone.
     """
@@ -175,7 +175,7 @@ def coated_inclusion() -> Model:
     m = Model(title="coated_inclusion", cells=[c], root_cell=c.id)
     m.description = (
         "A stiff core in a compliant shell, dispersed in a matrix. The shells "
-        "are given by outer radius, ascending, with r = 0 at the centre."
+        "are given by outer radius, ascending, with r = 0 at the center."
     )
     m.sweep = Sweep(
         enabled=True, mode="sweep", variable="f", start=0.0, stop=0.5, length=21,
@@ -191,30 +191,30 @@ def coated_inclusion() -> Model:
 # ---------------------------------------------------------------------------
 
 
-def conductivity_fibres() -> Model:
+def conductivity_fibers() -> Model:
     """After `scripts/32_spheroid_effective_conductivity.jl`.
 
     Everything above is stiffness; nothing about the schemes is. Store a
     second-order tensor under `:K`, ask for `:K`, and the same machinery
     answers a conduction problem. The inclusions are prolate spheroids —
-    fibres — with no orientation average, so the effective conductivity is
+    fibers — with no orientation average, so the effective conductivity is
     transversely isotropic and the plot follows components, not a scalar.
     """
     matrix = Phase(name="MATRIX", is_matrix=True, properties=[cond(1.0)])
-    fibres = Phase(
-        name="FIBRES", amount=0.2,
+    fibers = Phase(
+        name="FIBERS", amount=0.2,
         geometry=Geometry(kind="spheroid", args={"omega": 10.0}),
         properties=[cond(50.0)],
     )
-    c = Cell(name="rve", matrix_name="MATRIX", phases=[matrix, fibres])
-    m = Model(title="conductivity_fibres", cells=[c], root_cell=c.id)
+    c = Cell(name="rve", matrix_name="MATRIX", phases=[matrix, fibers])
+    m = Model(title="conductivity_fibers", cells=[c], root_cell=c.id)
     m.description = (
-        "Aligned conductive fibres (ω = 10) in a poor matrix. The result is "
-        "transversely isotropic about e₃: K₃₃ follows the fibres, K₁₁ does not."
+        "Aligned conductive fibers (ω = 10) in a poor matrix. The result is "
+        "transversely isotropic about e₃: K₃₃ follows the fibers, K₁₁ does not."
     )
     m.sweep = Sweep(
         enabled=True, mode="sweep", variable="f", start=0.0, stop=0.4, length=21,
-        lens=Lens(kind="amount", phase="FIBRES"), cell=c.id,
+        lens=Lens(kind="amount", phase="FIBERS"), cell=c.id,
         schemes=[{"name": "MoriTanaka", "options": {}}],
         property=":K", projection="none",
         outputs=[{"kind": "comp", "i": 1, "j": 1}, {"kind": "comp", "i": 3, "j": 3}],
@@ -274,7 +274,7 @@ def laminate_basics() -> Model:
     """After `scripts/33_laminate_basics.jl`.
 
     A laminate is a *cell*, not an inclusion: a periodic stack with no matrix
-    and no reference medium, and an exact effective behaviour rather than an
+    and no reference medium, and an exact effective behavior rather than an
     estimate. Two isotropic layers give a transversely isotropic result — that
     is Backus (1962) — and the bounds saturate: exactly Reuss across the layers
     (KM 3,3) and exactly Voigt in their plane (KM 6,6), at once.
@@ -459,7 +459,7 @@ EXAMPLES = [
     ("01_porous_schemes.jl", porous_schemes),
     ("02_cracked_solid.jl", cracked_solid),
     ("03_coated_inclusion.jl", coated_inclusion),
-    ("04_conductivity_fibres.jl", conductivity_fibres),
+    ("04_conductivity_fibers.jl", conductivity_fibers),
     ("05_two_scales.jl", two_scales),
     ("06_laminate_basics.jl", laminate_basics),
     ("07_laminate_interfaces.jl", laminate_interfaces),

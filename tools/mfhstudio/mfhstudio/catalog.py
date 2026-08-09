@@ -34,7 +34,7 @@ CELL_KINDS = [
     {
         "name": "laminate", "label": "Laminate (periodic stack)",
         "doc": "A periodic unit cell of parallel layers of common normal — no "
-               "matrix, no reference medium, and an exact effective behaviour "
+               "matrix, no reference medium, and an exact effective behavior "
                "rather than an estimate.",
         "schemes": list(LAMINATE_SCHEMES),
     },
