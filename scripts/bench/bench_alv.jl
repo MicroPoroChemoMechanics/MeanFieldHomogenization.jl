@@ -4,7 +4,7 @@
 #  Usage : julia --project bench/bench_alv.jl
 #  Output: stdout (one ALV operation per line, time + allocations)
 #
-#  Designed to be re-run after each optimisation step in the audit plan
+#  Designed to be re-run after each optimization step in the audit plan
 #  to track regressions.  Uses `@time` (3 warm-ups + 5 measurements,
 #  reports the minimum) — good enough for relative comparisons; switch
 #  to `BenchmarkTools.@btime` for finer numbers.

@@ -71,7 +71,7 @@ want(name) = SECTIONS === nothing || name in SECTIONS
 
 """
 The two-dimensional mesh actually solved: the meridian half-plane `ρ ≥ 0`, with
-the core, the shell and the surrounding matrix in three colours. A node of this
+the core, the shell and the surrounding matrix in three colors. A node of this
 mesh stands for a whole circle of the three-dimensional body.
 """
 function figure_mesh(incl; zoom = nothing, kw...)
@@ -106,7 +106,7 @@ end
 #  by.  The sketch says it in one look — α = 1 is where the core touches the
 #  outer surface, which is why d = α(a − a_c) and not α·a.
 
-"Circle of radius `r` centred at `(x0, z0)`, as a closed polyline."
+"Circle of radius `r` centered at `(x0, z0)`, as a closed polyline."
 function _circle(x0, z0, r; n = 400)
     θ = range(0, 2π; length = n)
     return x0 .+ r .* cos.(θ), z0 .+ r .* sin.(θ)
@@ -142,12 +142,12 @@ function figure_schematic(α; w = W_CORE, a = 1.0, kw...)
     plot!(plt, [0, x_a], [z_a, z_a]; lc = :black, lw = 1.0)
     plot!(plt, [x_a, x_a], [z_a - 0.05a, z_a + 0.05a]; lc = :black, lw = 1.0)
     annotate!(plt, 0.5x_a, z_a - 0.13a, text("a", 9, :black))
-    ## a_c: the core radius, on the up-right diagonal from the core centre.
+    ## a_c: the core radius, on the up-right diagonal from the core center.
     xe = ac / sqrt(2)
     ze = d + ac / sqrt(2)
     plot!(plt, [0, xe], [d, ze]; lc = :firebrick, lw = 1.0)
     annotate!(plt, xe + 0.06a, ze + 0.02a, text("a_c", 8, :firebrick, :left))
-    ## The core centre, and d: the offset, bracketed to the left of everything.
+    ## The core center, and d: the offset, bracketed to the left of everything.
     scatter!(plt, [0], [d]; mc = :firebrick, ms = 3, msw = 0)
     if α > 0
         xb = -1.20a

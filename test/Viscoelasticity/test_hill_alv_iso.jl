@@ -4,7 +4,7 @@ using TensND
 using LinearAlgebra
 
 # =============================================================================
-#  test_hill_alv_iso.jl — discrete ALV Hill polarisation tensor for an
+#  test_hill_alv_iso.jl — discrete ALV Hill polarization tensor for an
 #  isotropic ALV matrix, via the time-space decoupling formula of the
 #  ECHOES manual appendix `viscoelastic_hill_kernel.qmd`.
 # =============================================================================

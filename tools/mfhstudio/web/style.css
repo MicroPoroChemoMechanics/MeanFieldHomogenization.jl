@@ -295,7 +295,7 @@ h3 {
 
 /* ── scale graph ────────────────────────────────────────────────── */
 
-/* A share like its neighbours, so the separator below it is the one way to
+/* A share like its neighbors, so the separator below it is the one way to
    resize it. The CSS `resize: vertical` it used to carry was a second,
    independent mechanism that the separator would have fought. */
 .graph {

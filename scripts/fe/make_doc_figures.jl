@@ -151,7 +151,7 @@ end
 """
 Cut-away perspective of the ball: the half `y ≤ 0` of the outer surface, the
 `y = 0` cut face — which exposes the interior grading — and the crack lips in
-red. Everything is drawn as a single NaN-separated polyline per colour, which
+red. Everything is drawn as a single NaN-separated polyline per color, which
 keeps GR fast.
 """
 function figure_3d(crack; half = nothing, outer = true, slice = true, kw...)

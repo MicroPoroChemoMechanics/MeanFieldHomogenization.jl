@@ -15,7 +15,7 @@
 #   6. `_bond6` against `TensND.KM(C, basis)`.
 #   7. `laminate_stiffness` : N = 1 degeneracy, identical layers, the exact
 #      Backus (1962) bilayer closed form, in-plane rotation invariance.
-#   8. Localisation : `Σ f 𝔸 = Σ f 𝔹 = 𝕀`, the block structure of `𝔸`, and
+#   8. Localization : `Σ f 𝔸 = Σ f 𝔹 = 𝕀`, the block structure of `𝔸`, and
 #      `⟨ℂ:𝔸⟩ = ℂ_hom`.
 #   9. `laminate_conductivity` : the exact series / parallel laws.
 #  10. ForwardDiff through the kernel.
@@ -187,7 +187,7 @@ end
     @test MFHC.laminate_stiffness(C6r, f, Z, Z) ≈ Qz' * Ch * Qz atol = 1.0e-10
 end
 
-@testset "laminate localisation — sum rules and block structure" begin
+@testset "laminate localization — sum rules and block structure" begin
     rng = MersenneTwister(59)
     C6s = ntuple(_ -> _rand_km6(rng), 3)
     f = (0.2, 0.45, 0.35)

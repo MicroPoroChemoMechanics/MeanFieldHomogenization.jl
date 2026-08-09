@@ -174,7 +174,7 @@ end
 @printf "Two-layer prolate particle (a_out=%.1f, b_out=%.1f)\n" PRO_A_OUT PRO_B_OUT
 println("─"^70)
 @printf "core (a=%.2f, b=%.2f) with Kapitza ρ=%.2f  |  shell (a=%.2f, b=%.2f), perfect\n" PRO_A_IN PRO_B_IN PRO_ρ PRO_A_OUT PRO_B_OUT
-@printf "T at the centre: %.4f   T far away (x=0, z=10): %.4f\n" local_temperature(
+@printf "T at the center: %.4f   T far away (x=0, z=10): %.4f\n" local_temperature(
     s_pro, PRO_KM, 1.0 + 1.0e-6, 1.0, 0.0; H_axial = 1.0
 ) local_temperature(s_pro, PRO_KM, _coord_prolate(1.0e-6, 10.0)..., 0.0; H_axial = 1.0)
 println()
@@ -188,7 +188,7 @@ _outline!(p_T, PRO_A_IN, PRO_B_IN; color = :white)
 _outline!(p_T, PRO_A_OUT, PRO_B_OUT; color = :white)
 
 p_q = plot(;
-    xlabel = "x", ylabel = "z", title = "Heat flux streamlines (colour = ‖q‖)",
+    xlabel = "x", ylabel = "z", title = "Heat flux streamlines (color = ‖q‖)",
     aspect_ratio = :equal, legend = false, xlims = (-4.6, 4.6), ylims = (-4.5, 4.5),
     colorbar = true, colorbar_title = "‖q‖",
 )

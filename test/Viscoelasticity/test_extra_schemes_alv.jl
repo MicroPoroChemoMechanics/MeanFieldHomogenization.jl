@@ -145,7 +145,7 @@ end
     )
     @test isapprox(R_s, R_c; rtol = 1.0e-8, atol = 1.0e-8)
 
-    # Genuinely ageing matrix — the equivalence is not an artefact of the
+    # Genuinely ageing matrix — the equivalence is not an artifact of the
     # elastic limit.
     law_M = maxwell_iso(20.0, 8.0, 2.0, 1.5)
     t = collect(range(0.0, 2.0; length = 5))

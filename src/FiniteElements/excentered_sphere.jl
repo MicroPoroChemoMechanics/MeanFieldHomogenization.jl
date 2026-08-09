@@ -211,14 +211,14 @@ end
 """
     core_radius(incl) -> Real
 
-Radius of the off-centre core, `a·w^(1/3)`.
+Radius of the off-center core, `a·w^(1/3)`.
 """
 core_radius(s::FEExcenteredSphere) = s.a * cbrt(s.core_fraction)
 
 """
     core_offset(incl) -> Real
 
-Distance from the inclusion centre to the core centre, `α·(a − a_core)`.
+Distance from the inclusion center to the core center, `α·(a − a_core)`.
 """
 core_offset(s::FEExcenteredSphere) = s.eccentricity * (s.a - core_radius(s))
 

@@ -55,7 +55,7 @@ the failure above: `max ≠ min` signals a type instability, and it immediately
 invalidates any "one measurement on a fresh process" reading.
 
 The `counters` channel distinguishes *faster* from *did less work*. A drop in
-adaptive-quadrature node count is a change of behaviour (and of accuracy), not
+adaptive-quadrature node count is a change of behavior (and of accuracy), not
 a speed-up. A tier that claims a 2× win must show the node count unchanged and
 the Hill-call count halved — not the other way round.
 

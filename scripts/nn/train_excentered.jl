@@ -78,7 +78,7 @@ geometry(x) = FEExcenteredSphere(
     core_fraction = x[2], eccentricity = x[1], MESH...
 )
 
-# ─── Labelling ───────────────────────────────────────────────────────────────
+# ─── Labeling ────────────────────────────────────────────────────────────────
 #
 #  Deliberately *not* through `generate_dataset`: one finite-element solve
 #  returns **both** localization tensors, and going through the generic path
@@ -163,7 +163,7 @@ end
 
 sA, hA, valA = fit(
     "excentered_sphere_strain", SPEC_A, ZAt, ZAv;
-    notes = "𝔸_εε of a sphere with an off-centre core, from axisymmetric Fourier " *
+    notes = "𝔸_εε of a sphere with an off-center core, from axisymmetric Fourier " *
         "finite elements; features (α, w, log E₂/E₀) at ν = 0.2 and E₁/E₀ = 3.5",
 )
 sB, hB, valB = fit(

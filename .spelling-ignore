@@ -1,0 +1,22 @@
+# Deliberate exceptions to the US English convention (checked on every
+# commit/PR by .github/workflows/Spelling.yml).
+#
+# Each line is either a glob (fnmatch, relative to the repo root) or
+# `literal:<word>` for a token to mask anywhere.
+#
+# CHANGELOG.md — historical record: entries describe releases as they were
+# written, so the UK spellings they shipped with are not rewritten
+# retroactively. New entries must be US English.
+CHANGELOG.md
+
+# scripts/bench/DIAGNOSTIC.md — a private audit note written in French;
+# "US English" does not apply to it.
+scripts/bench/DIAGNOSTIC.md
+
+# tools/echoes2mfh/tests/test_translate.py — deliberately asserts that the
+# Echoes translator flags UK spellings; the "colour" fixture is the test.
+tools/echoes2mfh/tests/test_translate.py
+
+# CLAUDE.md — gitignored personal Claude Code memory, never committed, so CI
+# can never see it; exclude it so a local `check .` and the CI check agree.
+CLAUDE.md

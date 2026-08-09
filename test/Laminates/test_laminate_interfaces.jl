@@ -43,7 +43,7 @@ function _schur_ip_i(t, basis)
     return A - B * MFHC_I._inv3(MFHC_I._op_block(M)) * C
 end
 
-# Two-layer reference cell, parameterised by its interfaces and its period.
+# Two-layer reference cell, parameterized by its interfaces and its period.
 function _bilayer(; itf1 = PerfectInterface(), itf2 = PerfectInterface(), scale = 1.0)
     lam = Laminate(; normal = (0, 0, 1))
     add_layer!(

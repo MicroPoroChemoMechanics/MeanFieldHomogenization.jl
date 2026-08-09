@@ -21,7 +21,7 @@
 #    * `counters` — instrumented `Ref{Int}` work counters read around a
 #                   separate clean call.  Distinguishes "faster" from "did
 #                   less work": a drop in adaptive-quadrature nodes is a
-#                   change of behaviour, not a speed-up.
+#                   change of behavior, not a speed-up.
 #
 #  Every case also carries a `checksum` closure evaluated on **the same call
 #  that is timed**, so numerical non-regression is asserted on the real code

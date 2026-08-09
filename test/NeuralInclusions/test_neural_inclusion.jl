@@ -76,7 +76,7 @@ const _NN_SPHEROID_BOX4 =
 const _NN_SPHEROID_BOX2 = NI.SampleBox([:log_aspect], [-log(20)], [log(20)])
 
 # The committed models. Loading them is itself the first assertion: the pilot is
-# worthless if the artefacts are missing or stale.
+# worthless if the artifacts are missing or stale.
 const NN_ELASTIC = NI.load_surrogate(NI.model_path("spheroid_hill_iso_elastic"))
 const NN_CONDUCTION = NI.load_surrogate(NI.model_path("spheroid_hill_iso_conduction"))
 const NN_TRIAXIAL = NI.load_surrogate(NI.model_path("triaxial_hill_iso_elastic"))

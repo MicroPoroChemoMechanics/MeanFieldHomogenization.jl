@@ -1,7 +1,7 @@
 # =============================================================================
 #  test_axi_excentered_sphere.jl
 #
-#  The sphere with an off-centre spherical core, solved by axisymmetric Fourier
+#  The sphere with an off-center spherical core, solved by axisymmetric Fourier
 #  finite elements with the corrected boundary condition of Adessina et al.
 #  (2017).  Requires the Ferrite stack; `runtests.jl` skips this file when it
 #  is unavailable.
@@ -178,7 +178,7 @@ end
         end
         prev_axial = M[3, 3]
     end
-    # Moving the core off centre softens the pattern along the axis.
+    # Moving the core off center softens the pattern along the axis.
     @test prev_axial < ref[3, 3]
 end
 

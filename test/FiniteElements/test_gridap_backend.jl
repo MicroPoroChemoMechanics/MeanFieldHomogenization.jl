@@ -54,7 +54,7 @@ end
     rf = fe_axi_mesh_report(gx_incl(FerriteBackend(), (GX_C_CORE, GX_C_SHELL)))
     rg = fe_axi_mesh_report(gx_incl(GridapBackend(), (GX_C_CORE, GX_C_SHELL)))
     @test rf.ncells == rg.ncells
-    # Node counts need not match to the unit: the three arc-centre points of
+    # Node counts need not match to the unit: the three arc-center points of
     # the geometry belong to no element, and FerriteGmsh keeps them (it reads
     # the live gmsh session) where `GmshDiscreteModel` drops them (it re-reads
     # a written file, discarding orphans). Nothing downstream sees them.

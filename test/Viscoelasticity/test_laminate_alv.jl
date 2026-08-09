@@ -10,7 +10,7 @@
 #  validated in closed form against Backus (1962).
 #
 #  Further coverage: N = 1 degeneracy, Voigt/Reuss ALV bracketing, genuine
-#  ageing behaviour (a creeping layer), conduction at order 2, and the
+#  ageing behavior (a creeping layer), conduction at order 2, and the
 #  interaction with `has_visco_property`.
 # =============================================================================
 

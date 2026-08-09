@@ -52,7 +52,7 @@ const _MFHC = MeanFieldHomogenization.Core
     end
 
     @testset "hydrostatic Π = p·1 gives a purely radial field" begin
-        # A centre of dilatation: u = c·n̂/r², with c = -2(1-2ν)p/(16πμ(1-ν)).
+        # A center of dilatation: u = c·n̂/r², with c = -2(1-2ν)p/(16πμ(1-ν)).
         p = 3.0
         for x in xs
             r = norm(x)

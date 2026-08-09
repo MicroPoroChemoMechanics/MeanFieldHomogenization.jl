@@ -142,7 +142,7 @@ import ForwardDiff as FD
             fraction = 0.2, symmetrize = TISymmetrize((0.0, 0.0, 1.0))
         )
         C_eff = homogenize(rve, MoriTanaka(), :C)
-        # MT keeps the homogenised tensor in a TI subspace ; verify the
+        # MT keeps the homogenized tensor in a TI subspace ; verify the
         # canonical/walpole representation has the expected axisymmetry by
         # checking C[1,1,1,1] == C[2,2,2,2] (transverse symmetry plane).
         a = TensND.get_array(C_eff)

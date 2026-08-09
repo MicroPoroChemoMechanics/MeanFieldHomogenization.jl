@@ -1,7 +1,7 @@
 """
 derive_shear_transition.py — derive the closed-form 4×4 shear (Y₂)
 amplitude transition `T = M_b(R)^{-1} · M_a(R)` at a perfect interface
-between two isotropic layers in (κ, μ) parametrisation, then dump
+between two isotropic layers in (κ, μ) parametrization, then dump
 Julia code that builds each entry of T as a polynomial in
 `(M_κ_a, M_μ_a, M_κ_b, M_μ_b, R)` divided by a common denominator.
 

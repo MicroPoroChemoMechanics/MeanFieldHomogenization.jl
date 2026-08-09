@@ -39,7 +39,7 @@ end
     @test isapprox(K_back.α, α; atol = 1.0e-14)
     @test isapprox(K_back.β, β; atol = 1.0e-14)
 
-    # `getindex` lazy view matches dense materialisation
+    # `getindex` lazy view matches dense materialization
     for i in 1:6n, j in 1:6n
         @test K[i, j] == M[i, j]
     end
@@ -154,7 +154,7 @@ end
     @test K_TI isa ALVKernelTI
     @test K_O isa ALVKernelOrtho
 
-    # Conversions preserve the materialised matrix.
+    # Conversions preserve the materialized matrix.
     @test isapprox(Matrix(K_iso), Matrix(K_TI); atol = 1.0e-12)
     @test isapprox(Matrix(K_iso), Matrix(K_O); atol = 1.0e-12)
 

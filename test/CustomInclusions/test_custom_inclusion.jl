@@ -75,7 +75,7 @@ end
     # Gate C supplies only the contribution tensors.  That is enough for every
     # scheme whose kernel consumes `N`/`H` alone, but not for the ones that
     # also need the dilute concentration tensor `A` (Mori-Tanaka and the two
-    # self-consistent flavours) — see the warning in the `CustomInclusion`
+    # self-consistent flavors) — see the warning in the `CustomInclusion`
     # docstring.
     all_schemes = (
         Dilute(), DiluteDual(), MoriTanaka(), Maxwell(),

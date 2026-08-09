@@ -18,7 +18,7 @@
 #  Further coverage: Backus (1962) bilayer closed form, N = 1 degeneracy,
 #  identical layers, layer-order invariance, exact `TensTI` output, bounds
 #  bracketing with the in-plane Voigt / out-of-plane Reuss exactness, the
-#  localisation sum rules, and a deliberately asymmetric anisotropic case.
+#  localization sum rules, and a deliberately asymmetric anisotropic case.
 # =============================================================================
 
 using Test
@@ -198,7 +198,7 @@ end
         _acoustic(homogenize(lam, Reuss(), :C), b) atol = ATOL_LAM
 end
 
-@testset "Laminate — localisation sum rules and block structure" begin
+@testset "Laminate — localization sum rules and block structure" begin
     rng = MersenneTwister(1003)
     Cs = [_rand_stiffness(rng) for _ in 1:3]
     hs = [0.2, 0.45, 0.35]

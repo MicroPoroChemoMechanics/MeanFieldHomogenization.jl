@@ -130,7 +130,7 @@ _resolve_algo(::Val, ::AbstractInclusion, ::TensND.AbstractTens) = Analytical()
 
 Translate a method symbol (`:auto`, `:residues`, `:decuhr`) into the
 concrete [`AbstractAlgorithm`](@ref) instance, taking the inclusion
-class and the TensND symmetry class of `C₀` into account.  Centralised
+class and the TensND symmetry class of `C₀` into account.  Centralized
 here so that every high-level entry point (`hill_tensor`,
 `cod_tensor`, `compliance_contribution`, `sif`, `dif`) shares a single
 truth table — new dispatch rules are added as new methods of this

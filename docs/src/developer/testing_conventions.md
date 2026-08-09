@@ -55,7 +55,7 @@ three kinds:
 
     This is not hypothetical. As of 2026-07 the elastic ``\mathbb{H}`` is
     covered by a smoke test plus penny and ribbon cases only, so the elliptic
-    ``\eta \ne 1`` behaviour of the ``\boldsymbol{B} \to \mathbb{H}`` factor is
+    ``\eta \ne 1`` behavior of the ``\boldsymbol{B} \to \mathbb{H}`` factor is
     pinned by no test at all. The same trap applies to spheres among spheroids
     and to isotropy among symmetry classes: **always add one asymmetric case**.
 

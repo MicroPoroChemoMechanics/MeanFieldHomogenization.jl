@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Pre-commit hook: US/UK spelling check, reproducing exactly what the Spelling
+# CI action runs (`spelling_tool.py check .`), so a UK spelling is caught at
+# commit time instead of on the push — no more "discovered in CI, recommit".
+#
+# Enable once, per clone:
+#     git config core.hooksPath .githooks
+#
+# Check-only by design: on failure it prints the offending files and words and
+# exits non-zero. Fix with the converter (US convention):
+#     python3 .github/scripts/spelling_tool.py convert . --to us --dry-run   # preview
+#     python3 .github/scripts/spelling_tool.py convert . --to us             # apply
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+command -v python3 >/dev/null 2>&1 || exit 0
+TOOL=".github/scripts/spelling_tool.py"
+[ -f "$TOOL" ] || exit 0
+
+# Fast path: no prose-bearing file staged, nothing to check. Otherwise run the
+# same whole-tree check as CI (fast: a few hundred files, pure Python), which
+# also covers unstaged edits a contributor may be about to include.
+if ! git diff --cached --name-only --diff-filter=ACM \
+    -- '*.jl' '*.md' '*.py' '*.js' '*.css' | grep -q .; then
+  exit 0
+fi
+
+python3 "$TOOL" check .

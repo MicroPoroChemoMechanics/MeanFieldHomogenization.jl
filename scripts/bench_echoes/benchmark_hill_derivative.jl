@@ -34,7 +34,7 @@ const np = pyimport("numpy")
 const echoes = pyimport("echoes")
 
 # ── Conventions shared with benchmark.jl ────────────────────────────────────
-# MFH Hill tensor as a 6×6 Kelvin-Mandel matrix, minor-symmetrised (so the
+# MFH Hill tensor as a 6×6 Kelvin-Mandel matrix, minor-symmetrized (so the
 # Dual and Float64 paths agree — `tomandel` on a general Tensor would give
 # 9×9). `Core.mandel66_minor` forces the 6×6 form from the component array.
 P_KM(ell, C) = MeanFieldHomogenization.Core.mandel66_minor(

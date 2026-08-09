@@ -9,7 +9,7 @@ done and it all disappears.
 A browser tab should open by itself within a few seconds.
 
 If it does not: look for the **PORTS** tab, next to the TERMINAL panel at the
-bottom. Find the line labelled *MFH Studio*, hover it, and click the **globe**
+bottom. Find the line labeled *MFH Studio*, hover it, and click the **globe**
 icon. That opens the interface.
 
 In the interface, a badge in the top-right corner says `starting…` and turns

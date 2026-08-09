@@ -41,7 +41,7 @@ eccentricity, and the tangency limit that *defines* the normalization of
 | ``a`` | radius of the whole inclusion (`a`, the first constructor argument) |
 | ``w`` | volume fraction of the core *inside* the inclusion (`core_fraction`) |
 | ``a_c = a\,w^{1/3}`` | core radius, fixed by ``w`` |
-| ``d`` | offset of the core centre along the symmetry axis ``z`` |
+| ``d`` | offset of the core center along the symmetry axis ``z`` |
 | ``\alpha = \dfrac{d}{a - a_c}`` | **eccentricity** (`eccentricity`): the offset as a fraction of the largest one the geometry admits |
 | ``R`` | radius of the surrounding ball of matrix (`radius_ratio`, in units of ``a``) |
 | ``\mathbb C_1,\ \mathbb C_2`` | stiffness of the core and of the shell (`props`, in that order) |

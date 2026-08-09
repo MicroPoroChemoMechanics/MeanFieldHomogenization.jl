@@ -28,18 +28,24 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 
 DEFAULT_INCLUDE_GLOBS = [
-    "src/**/*.jl",
-    "docs/src/**/*.md",
-    "scripts/*.jl",
-    # The developer tools carry as much prose as the package does.
-    "tools/**/*.py",
-    "tools/**/*.jl",
-    "tools/**/*.js",
-    "tools/**/*.md",
+    # The whole repo, not a whitelist: every prose-bearing file with a
+    # supported extension is scanned.  The exclude globs below carve out
+    # regenerated/build artifacts and third-party bundles, and
+    # `.spelling-ignore` lists the deliberate exceptions (historical
+    # changelog, non-English notes, tests that exercise the UK detector
+    # itself).
+    "**/*.jl",
+    "**/*.md",
+    "**/*.py",
+    "**/*.js",
+    "**/*.css",
 ]
 DEFAULT_EXCLUDE_GLOBS = [
-    "**/generated/**",
     "docs/build/**",
+    # Literate regenerates these on every docs build; they are never
+    # committed, so there is nothing to spell-check in them.
+    "docs/generated_notebooks/**",
+    "docs/generated_scripts/**",
     "**/.git/**",
     # Third-party bundles are not ours to spell-check, and a minified one is
     # megabytes of tokens that would swamp the report.
@@ -55,7 +61,7 @@ DOCSTRING_KEYWORD_RE = re.compile(
     r"abstract\s+type|primitive\s+type|const)\b"
 )
 
-# -ize/-ise and -yze/-yse family suffixes (analyze/analyse, paralyze/paralyse);
+# -ize/-ise and -yze/-yse family suffixes (e.g. analyze, paralyze);
 # order doesn't matter here, _ALL_SUFFIXES below sorts by length for correct
 # alternation matching.
 SUFFIX_PAIRS = [

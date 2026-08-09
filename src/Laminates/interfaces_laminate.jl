@@ -180,7 +180,7 @@ For [`SpringInterface`](@ref)`(kn, kt)` — whose fields are *compliances* —
 the jump `[u] = 𝕂·(σ·n)` with `𝕂 = kn n⊗n + kt (δ − n⊗n)` contributes the
 added strain `(𝕂·(σ·n)) ⊗ˢ n`, i.e. the out-of-plane block
 `diag(kn, kt/2, kt/2)` in Mandel slots. The halving of the tangential term is
-the symmetrised product, and it is produced by
+the symmetrized product, and it is produced by
 `Core.compliance_op_block` — the very helper that turns `𝐊⁻¹` into `ℙ`, so
 the "interface = zero-thickness layer" statement is literal in the code.
 [`AnisotropicSpringInterface`](@ref) goes through the same helper with a full

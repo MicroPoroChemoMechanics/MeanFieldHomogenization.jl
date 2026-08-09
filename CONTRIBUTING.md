@@ -23,7 +23,7 @@ A bug report is most useful when it contains:
   a normalization or a frame difference. Saying which convention you are using
   resolves those immediately.
 
-If you are unsure whether the behaviour is wrong or merely surprising, open the
+If you are unsure whether the behavior is wrong or merely surprising, open the
 issue anyway and say so.
 
 ## Before you write code
@@ -67,7 +67,7 @@ julia --project=docs docs/make.jl
 
 ## What a pull request should carry
 
-- **Tests.** Every behavioural change comes with a test. Tests mirror the
+- **Tests.** Every behavioral change comes with a test. Tests mirror the
   source tree, one directory per sub-module; read [Testing
   conventions](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/dev/developer/testing_conventions/)
   first — it explains, among other things, why a test built only from symmetric
@@ -84,6 +84,21 @@ julia --project=docs docs/make.jl
   julia -e 'using Pkg; Pkg.activate("runic", shared=true); Pkg.add("Runic")'
   julia --project=@runic -e 'using Runic; Runic.main(["--inplace", "src/", "test/"])'
   ```
+
+- **US English, systematically.** All prose — comments, docstrings, error
+  messages, testset names, commit messages, docs — is US English (`localization`,
+  `parameterized`, `center`, `color`, `behavior`). A pre-commit hook catches
+  UK spellings before they reach CI:
+
+  ```shell
+  git config core.hooksPath .githooks      # once per clone
+  python3 .github/scripts/spelling_tool.py check .          # whole tree
+  python3 .github/scripts/spelling_tool.py convert . --to us --dry-run  # preview fixes
+  ```
+
+  The exceptions are listed in `.spelling-ignore` (the historical
+  `CHANGELOG.md`, the French audit note `scripts/bench/DIAGNOSTIC.md`, and the
+  `echoes2mfh` translation test, which deliberately asserts UK detection).
 
 - **Documentation.** A new public function needs a docstring and an entry in
   the relevant `docs/src/api/` page. A new capability usually deserves a
@@ -106,7 +121,7 @@ Be civil and assume good faith. Technical disagreement is welcome; personal
 remarks are not. Conduct concerns can be raised privately with the maintainer
 at the address in `Project.toml`.
 
-## Licence
+## License
 
 By contributing you agree that your contribution is licensed under the MIT
-Licence, like the rest of the package.
+License, like the rest of the package.

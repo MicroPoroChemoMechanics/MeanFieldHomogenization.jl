@@ -307,7 +307,7 @@ function _loc_setup4(lam::Laminate, name::Symbol, property::Symbol)
     C = layer_property(lam, name, property)
     C isa TensND.AbstractTens{4, 3} || throw(
         ArgumentError(
-            "layer localisation at order 4 needs a 4th-order property; got $(typeof(C))"
+            "layer localization at order 4 needs a 4th-order property; got $(typeof(C))"
         )
     )
     C6s, fs, T = _gather(lam, property, Val(4))
@@ -346,7 +346,7 @@ function _loc_setup2(lam::Laminate, name::Symbol, property::Symbol)
     K = layer_property(lam, name, property)
     K isa TensND.AbstractTens{2, 3} || throw(
         ArgumentError(
-            "layer localisation at order 2 needs a 2nd-order property; got $(typeof(K))"
+            "layer localization at order 2 needs a 2nd-order property; got $(typeof(K))"
         )
     )
     K3s, fs, T = _gather(lam, property, Val(2))
