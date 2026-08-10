@@ -27,32 +27,28 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
+# What a whole-tree scan covers. This list is the enforcement boundary: a file
+# outside it is never seen by `check .`, hence never by CI. It used to hold only
+# `src`, `docs/src` and `scripts`, which left README.md, CHANGELOG.md, the test
+# suite, weak-dependency extensions and `tools/` unchecked — the README being
+# the most-read file in the repository. It also made the pre-commit hook
+# stricter than CI, since the hook passes the staged files themselves.
 DEFAULT_INCLUDE_GLOBS = [
-    # The whole repo, not a whitelist: every prose-bearing file with a
-    # supported extension is scanned.  The exclude globs below carve out
-    # regenerated/build artifacts and third-party bundles, and
-    # `.spelling-ignore` lists the deliberate exceptions (historical
-    # changelog, non-English notes, tests that exercise the UK detector
-    # itself).
-    "**/*.jl",
-    "**/*.md",
-    "**/*.py",
-    "**/*.js",
-    "**/*.css",
+    "*.md",                 # README, CHANGELOG, CONTRIBUTING at the root
+    "src/**/*.jl",
+    "ext/**/*.jl",
+    "test/**/*.jl",
+    "docs/**/*.md",
+    "docs/**/*.jl",
+    "scripts/**/*.jl",
+    "tools/**/*.jl",
+    "tools/**/*.py",
+    "tools/**/*.md",
 ]
 DEFAULT_EXCLUDE_GLOBS = [
+    "**/generated/**",
     "docs/build/**",
-    # Literate regenerates these on every docs build; they are never
-    # committed, so there is nothing to spell-check in them.
-    "docs/generated_notebooks/**",
-    "docs/generated_scripts/**",
     "**/.git/**",
-    # Third-party bundles are not ours to spell-check, and a minified one is
-    # megabytes of tokens that would swamp the report.
-    "**/vendor/**",
-    "**/node_modules/**",
-    "**/__pycache__/**",
-    "**/*.min.js",
 ]
 
 DOCSTRING_KEYWORD_RE = re.compile(
@@ -61,7 +57,7 @@ DOCSTRING_KEYWORD_RE = re.compile(
     r"abstract\s+type|primitive\s+type|const)\b"
 )
 
-# -ize/-ise and -yze/-yse family suffixes (e.g. analyze, paralyze);
+# -ize/-ise and -yze/-yse family suffixes (analyze/analyse, paralyze/paralyse);
 # order doesn't matter here, _ALL_SUFFIXES below sorts by length for correct
 # alternation matching.
 SUFFIX_PAIRS = [
@@ -293,91 +289,6 @@ def extract_jl_prose_spans(text: str, literals: list[str]) -> list[tuple[int, in
     return spans
 
 
-def extract_py_prose_spans(text: str, literals: list[str]) -> list[tuple[int, int, str]]:
-    """Prose spans of a Python file: docstrings and `#` comments.
-
-    Structurally the same job as `extract_jl_prose_spans` — both languages use
-    triple-quoted blocks and `#` comments — so the same helpers do the work.
-    What differs is which triple-quoted blocks count: Julia marks a docstring
-    by what *follows* it, Python by where it *sits*. A block that is not the
-    first statement of a module, class or function is ordinary string data
-    (an embedded code template, say) and is left alone.
-    """
-    spans = []
-    triple_blocks = find_triple_quote_blocks(text)
-
-    for block_start, _block_end, interior_start, interior_end in triple_blocks:
-        if not _py_is_docstring(text, block_start):
-            continue
-        interior = text[interior_start:interior_end]
-        spans.append((interior_start, interior_end, mask_markdown(interior, literals)))
-
-    # Blank the string blocks before looking for comments, so a '#' inside
-    # string content is never mistaken for one.
-    working = text
-    for block_start, block_end, _, _ in triple_blocks:
-        working = _blank(working, block_start, block_end)
-
-    for start, end in _find_comment_spans(working):
-        comment_text = text[start:end]
-        masked = mask_literals(mask_inline_code(comment_text), literals)
-        spans.append((start, end, masked))
-
-    return spans
-
-
-def _py_is_docstring(text: str, block_start: int) -> bool:
-    before = text[:block_start].rstrip()
-    if not before:
-        return True  # module docstring
-    last_line = before.splitlines()[-1].strip()
-    # A docstring opens the body of a `def`/`class`/etc., so the previous
-    # meaningful line ends with a colon. `X = """…"""` does not qualify.
-    return last_line.endswith(":")
-
-
-def extract_js_prose_spans(text: str, literals: list[str]) -> list[tuple[int, int, str]]:
-    """Prose spans of a JavaScript/CSS file: `//` and `/* … */` comments.
-
-    Strings and template literals are skipped so that a `//` inside a URL or a
-    regex-looking literal is not read as a comment.
-    """
-    spans: list[tuple[int, int, str]] = []
-    n = len(text)
-    i = 0
-    quote: str | None = None
-    while i < n:
-        c = text[i]
-        if quote is not None:
-            if c == "\\":
-                i += 2
-                continue
-            if c == quote:
-                quote = None
-            i += 1
-            continue
-        if c in "\"'`":
-            quote = c
-            i += 1
-            continue
-        if c == "/" and i + 1 < n:
-            nxt = text[i + 1]
-            if nxt == "/":
-                end = text.find("\n", i)
-                end = n if end < 0 else end
-                spans.append((i + 2, end, mask_literals(mask_inline_code(text[i + 2:end]), literals)))
-                i = end
-                continue
-            if nxt == "*":
-                end = text.find("*/", i + 2)
-                end = n if end < 0 else end
-                spans.append((i + 2, end, mask_markdown(text[i + 2:end], literals)))
-                i = end + 2
-                continue
-        i += 1
-    return spans
-
-
 def _find_comment_spans(working_text: str) -> list[tuple[int, int]]:
     spans = []
     offset = 0
@@ -512,10 +423,6 @@ def scan_text(path: Path, text: str, literals: list[str], simple_regex, context_
         spans = [(0, len(text), masked)]
     elif path.suffix == ".jl":
         spans = extract_jl_prose_spans(text, literals)
-    elif path.suffix == ".py":
-        spans = extract_py_prose_spans(text, literals)
-    elif path.suffix in (".js", ".css"):
-        spans = extract_js_prose_spans(text, literals)
     else:
         return []
 
