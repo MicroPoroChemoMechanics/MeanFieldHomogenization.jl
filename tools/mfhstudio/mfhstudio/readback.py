@@ -473,7 +473,10 @@ def _laminate_from_node(node: dict) -> Cell:
     else:
         # No keyword at all is the canonical frame, which is what the emitter
         # writes for e₃ — so reading it back has to land on the same model.
-        cell.frame_mode = "normal"
+        # Either mode expresses it; the default one is chosen so that a stack
+        # read back looks like one the studio just created.
+        cell.frame_mode = "euler"
+        cell.euler_angles = []
         cell.normal = [0.0, 0.0, 1.0]
 
     for lay in node.get("layers", []):

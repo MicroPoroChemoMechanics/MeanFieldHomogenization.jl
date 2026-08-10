@@ -393,6 +393,9 @@ def test_canonical_normal_is_not_written_out():
 
 def test_a_tilted_stack_carries_its_normal():
     m = _bilayer()
+    # Angles are the default way in; the normal is the other one, and a cell
+    # is only read that way when it says so.
+    m.cells[0].frame_mode = "normal"
     m.cells[0].normal = [1.0, 0.0, 1.0]
     assert "Laminate(; normal = (1.0, 0.0, 1.0))" in generate(m, embed_model=False)
     m.cells[0].frame_mode = "euler"
@@ -967,6 +970,7 @@ def test_a_laminate_written_by_the_studio_is_read_back():
     b = _bridge()
     try:
         m = _bilayer()
+        m.cells[0].frame_mode = "normal"
         m.cells[0].normal = [1.0, 0.0, 1.0]
         m.cells[0].layers[0].interface = {
             "kind": "SpringInterface", "args": {"kn": 1.0e-3, "kt": 2.0e-3}
@@ -976,6 +980,9 @@ def test_a_laminate_written_by_the_studio_is_read_back():
         back, _ = model_from_script(src, b)
         assert [c.kind for c in back.cells] == ["laminate"]
         c = back.cells[0]
+        # A stack written as a vector comes back as one: the mode follows the
+        # file, not the studio's default.
+        assert c.frame_mode == "normal"
         assert c.normal == [1.0, 0.0, 1.0]
         assert [l.name for l in c.layers] == ["A", "B"]
         assert [l.amount for l in c.layers] == [0.3, 0.7]
@@ -995,8 +1002,15 @@ def test_a_laminate_is_drawn_as_a_stack_along_its_normal():
     try:
         m = _bilayer()
         upright = b.traces(cell_expression(m, m.cells[0]))
+        m.cells[0].frame_mode = "normal"
         m.cells[0].normal = [1.0, 0.0, 1.0]
         tilted = b.traces(cell_expression(m, m.cells[0]))
+        # The same tilt stated the default way. θ is the angle off e₃ and φ the
+        # azimuth, so θ = π/4 alone lays the normal in the x–z plane at 45° —
+        # the picture must not care which of the two forms said so.
+        m.cells[0].frame_mode = "euler"
+        m.cells[0].euler_angles = [math.pi / 4]
+        tilted_by_angles = b.traces(cell_expression(m, m.cells[0]))
 
         def slabs(scene):
             return [t for t in scene["data"] if t["type"] == "mesh3d"]
@@ -1015,8 +1029,8 @@ def test_a_laminate_is_drawn_as_a_stack_along_its_normal():
 
         assert abs(normal_dir(upright)[2]) > 0.99, normal_dir(upright)
         want = [1 / math.sqrt(2), 0.0, 1 / math.sqrt(2)]
-        got = normal_dir(tilted)
-        assert abs(sum(a * b_ for a, b_ in zip(got, want))) > 0.99, got
+        for got in (normal_dir(tilted), normal_dir(tilted_by_angles)):
+            assert abs(sum(a * b_ for a, b_ in zip(got, want))) > 0.99, got
     finally:
         b.stop()
 

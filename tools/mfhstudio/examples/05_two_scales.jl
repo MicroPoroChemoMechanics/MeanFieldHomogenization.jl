@@ -130,7 +130,7 @@ Deleting it costs nothing but a best-effort re-reading of the code.
   {
    "builder_name": null,
    "euler_angles": [],
-   "frame_mode": "normal",
+   "frame_mode": "euler",
    "id": "cell1",
    "kind": "rve",
    "layers": [],
@@ -219,7 +219,7 @@ Deleting it costs nothing but a best-effort re-reading of the code.
   {
    "builder_name": null,
    "euler_angles": [],
-   "frame_mode": "normal",
+   "frame_mode": "euler",
    "id": "cell2",
    "kind": "rve",
    "layers": [],

@@ -188,9 +188,13 @@ counterpart of the morphologies the rest of the interface describes.
 
 Picking *Laminate* replaces the phase list with a stack:
 
-- a **stacking direction**, given either as a normal vector or as ZYZ Euler
-  angles. `(0, 0, 1)` is the canonical frame, where the kernel skips the frame
-  rotation entirely and nothing is written into the script;
+- a **stacking direction**, given as ZYZ Euler angles — the form everything
+  else in the interface is oriented with, so a stack reads in the same units as
+  the anisotropic properties around it — or, for a script that states one, as a
+  normal vector. The normal is the frame's third axis: θ tilts it away from
+  `e₃`, φ turns it about `e₃`, and ψ spins the layer axes in the plane.
+  Either way the canonical frame (no angles, or `(0, 0, 1)`) is where the kernel
+  skips the frame rotation entirely and nothing is written into the script;
 - a **layer table**, in stacking order, with ↑/↓ to reorder. Each layer carries
   a full property editor — so a layer can hold an anisotropic tensor, a
   viscoelastic law, or the effective property of another scale, exactly as a

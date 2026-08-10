@@ -22,6 +22,11 @@ const el = (tag, attrs = {}, ...kids) => {
   return n;
 };
 
+// A label with a real subscript. Unicode has `ₓ` but no subscript y or z, so
+// spelling these out in text mixes two notations in one row — `nₓ, n_y, n_z`.
+// The interface is HTML and can simply set them.
+const sub = (base, s) => el("span", { html: `${base}<sub>${s}</sub>` });
+
 const S = {
   model: null,
   catalog: null,
@@ -240,28 +245,40 @@ function laminateEditor(c) {
       "A periodic stack of parallel layers of common normal — no matrix and no "
       + "reference medium. `Laminated` is exact for it; `Voigt` and `Reuss` "
       + "bracket it, and two of the bracketings are equalities."),
-    el("h3", {}, "Stacking direction"),
+    el("h3", {}, "Stacking direction",
+      el("button", {
+        class: "small",
+        title: "Back to the canonical frame",
+        onclick: () => { c.euler_angles = []; c.normal = [0, 0, 1]; push(); },
+      }, "reset")),
     field("Given as", select(
-      [["normal", "normal vector"], ["euler", "ZYZ Euler angles"]],
-      c.frame_mode || "normal",
+      [["euler", "ZYZ Euler angles"], ["normal", "normal vector"]],
+      c.frame_mode || "euler",
       (v) => { c.frame_mode = v; push(); }
     )),
   ];
 
-  if ((c.frame_mode || "normal") === "euler") {
-    out.push(anglesEditor(c, 3));
+  if ((c.frame_mode || "euler") !== "normal") {
+    // No heading of its own: the stack has exactly one orientation, already
+    // announced above, and a second title would suggest a second frame.
+    out.push(anglesEditor(c, 3, null,
+      "The normal is the third axis of the frame: θ tilts it away from e₃ and "
+      + "φ turns it about e₃. ψ spins the layer axes in the plane, which the "
+      + "stack feels only when a layer is anisotropic."));
   } else {
     c.normal = c.normal && c.normal.length === 3 ? c.normal : [0, 0, 1];
     out.push(
       el("div", { class: "note" },
         "(0, 0, 1) is the canonical frame, where the kernel skips the rotation "
         + "altogether."),
+      // `nx, ny, nz` is what `Laminate(; normal = …)` calls them, set as real
+      // subscripts so the three read as one notation.
       el("div", { class: "grid3" },
-        ...["nₓ", "n_y", "n_z"].map((lbl, i) =>
-          field(lbl, input(c.normal[i] ?? 0, (v) => {
+        ...["x", "y", "z"].map((axis, i) =>
+          field(sub("n", axis), input(c.normal[i] ?? 0, (v) => {
             c.normal[i] = isFinite(+v) && v.trim() !== "" ? +v : v;
             push();
-          }))
+          }), `n_${axis}`)
         ))
     );
   }
@@ -523,14 +540,16 @@ function angleValue(v) {
   }
 }
 
-function anglesEditor(g, count) {
+// `title = null` drops the heading and its reset button, for a caller that
+// already introduced the frame and owns the reset itself.
+function anglesEditor(g, count, title = "Orientation", what = null) {
   g.euler_angles = g.euler_angles || [];
   const deg = (v) => {
     const x = angleValue(v);
     return isFinite(x) ? `${(x * 180 / Math.PI).toFixed(1)}°` : "";
   };
   const box = el("div", {},
-    el("h3", {}, "Orientation",
+    title === null ? null : el("h3", {}, title,
       el("button", {
         class: "small",
         title: "Back to the canonical frame",
@@ -539,9 +558,9 @@ function anglesEditor(g, count) {
     el("div", { class: "note" },
       "ZYZ Euler angles in radians — `π/4`, `2pi/3` and plain decimals all "
       + "work, and an expression is kept as written in the script. "
-      + (count === 2
+      + (what || (count === 2
         ? "θ and φ point the symmetry axis."
-        : "θ, φ, ψ orient the principal axes."))
+        : "θ, φ, ψ orient the principal axes.")))
   );
   const grid = el("div", { class: count > 2 ? "grid3" : "grid2" });
   for (let i = 0; i < count; i++) {
@@ -1254,8 +1273,10 @@ function nextKey(label) {
   return `${label || "f"}#${_keySeq++}`;
 }
 
-function field(label, node) {
-  if (node && node.dataset && !node.dataset.k) node.dataset.k = nextKey(label);
+// `key` names the field for focus restoration when the label is a node rather
+// than text, which stringifies to the same thing for every element.
+function field(label, node, key = null) {
+  if (node && node.dataset && !node.dataset.k) node.dataset.k = nextKey(key ?? label);
   return el("div", { class: "field" }, label ? el("label", {}, label) : null, node);
 }
 function input(value, on) {

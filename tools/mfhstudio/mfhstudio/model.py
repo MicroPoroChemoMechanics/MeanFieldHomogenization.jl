@@ -168,6 +168,20 @@ class Layer:
         )
 
 
+def _tilted_normal(n) -> bool:
+    """Does this normal say anything other than e₃?
+
+    A symbolic component counts as tilted: it is a parameter, and nothing here
+    can rule out that it steers the stack away from the canonical axis.
+    """
+    vals = list(n or [])
+    if not vals:
+        return False
+    if len(vals) != 3 or any(isinstance(x, str) for x in vals):
+        return True
+    return [float(x) for x in vals] != [0.0, 0.0, 1.0]
+
+
 @dataclass
 class Cell:
     """One scale — either an RVE or a laminate.
@@ -193,8 +207,13 @@ class Cell:
     phases: list = field(default_factory=list)  # list[Phase]
     #: laminate only, in stacking order
     layers: list = field(default_factory=list)  # list[Layer]
-    #: how the stacking direction is given: "normal" or "euler"
-    frame_mode: str = "normal"
+    #: How the stacking direction is given: "euler" or "normal". Angles are
+    #: the default because they are the form the rest of MeanFieldHomogenization
+    #: orients things with — every anisotropic property and every inclusion
+    #: family takes ZYZ angles — so a laminate stated that way reads in the
+    #: same units as everything around it. The normal vector stays available:
+    #: it is what a script written by hand most often carries.
+    frame_mode: str = "euler"
     normal: list = field(default_factory=lambda: [0.0, 0.0, 1.0])
     euler_angles: list = field(default_factory=list)
     #: parameters this cell's builder takes (discovered from the sweep)
@@ -216,6 +235,21 @@ class Cell:
 
     def is_laminate(self) -> bool:
         return self.kind == "laminate"
+
+    def is_canonical_frame(self) -> bool:
+        """Is the stack normal to e₃, however it was stated?
+
+        The two modes reach the canonical frame differently — no angles, or
+        the vector (0, 0, 1) — and callers that care about the frame itself
+        (the emitter, and the kernels that only exist in that frame) must not
+        have to know which mode the cell happens to be in.
+        """
+        if self.frame_mode == "euler":
+            return not [
+                a for a in (self.euler_angles or [])
+                if a != "" and a is not None and a != 0
+            ]
+        return not _tilted_normal(self.normal)
 
     def members(self) -> list:
         """The property-carrying members, whichever kind of cell this is.
@@ -259,7 +293,12 @@ class Cell:
             matrix_name=d.get("matrix_name", "MATRIX"),
             phases=[Phase.from_dict(p) for p in d.get("phases", [])],
             layers=[Layer.from_dict(l) for l in d.get("layers", [])],
-            frame_mode=d.get("frame_mode", "normal"),
+            # A model embedded before the frame had a mode carries only its
+            # normal; reading that as "euler" would quietly straighten a
+            # tilted stack, so the vector decides when the mode is missing.
+            frame_mode=d.get("frame_mode") or (
+                "normal" if _tilted_normal(d.get("normal")) else "euler"
+            ),
             normal=list(d.get("normal") or [0.0, 0.0, 1.0]),
             euler_angles=list(d.get("euler_angles") or []),
             params=list(d.get("params", [])),
@@ -788,7 +827,7 @@ class Model:
             c = self.cell(self.alv.cell) or self.root()
             if (
                 c is not None and c.is_laminate() and self.alv.property != ":C"
-                and (c.frame_mode != "normal" or list(c.normal) != [0.0, 0.0, 1.0])
+                and not c.is_canonical_frame()
             ):
                 problems.append(
                     "ageing viscoelasticity of a laminate in transport (`:K`) "
