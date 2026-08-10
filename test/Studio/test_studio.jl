@@ -7,8 +7,25 @@
     @test isdir(dir)
     @test isfile(joinpath(dir, "mfhstudio", "__main__.py"))
 
-    # Explicit interpreter wins over anything on PATH.
-    @test MeanFieldHomogenization._find_python("/usr/bin/python3") == "/usr/bin/python3"
+    # Explicit interpreter wins over anything on PATH, and is taken at its word.
+    @test MeanFieldHomogenization._find_python("/usr/bin/python3") == ["/usr/bin/python3"]
+
+    # A discovered interpreter is probed before it is used: the studio has to
+    # be importable from the studio directory, which is what `-m` will do.
+    py = Sys.which("python3")
+    if py !== nothing
+        ok, _ = MeanFieldHomogenization._python_probe([py])
+        @test ok
+    end
+    # An interpreter that is not there fails the probe rather than the spawn.
+    bad, _ = MeanFieldHomogenization._python_probe(["mfhstudio-no-such-python"])
+    @test !bad
+
+    # The last line of a Python traceback is the part worth reporting.
+    @test MeanFieldHomogenization._last_line(
+        "Traceback (most recent call last):\n  File \"x\"\nModuleNotFoundError: nope\n",
+    ) == "ModuleNotFoundError: nope"
+    @test MeanFieldHomogenization._last_line("   \n\n") == "no output"
 
     # The default command is `python3 -m mfhstudio --host <host> --port <port>`
     # run from the studio directory, so `-m mfhstudio` resolves.

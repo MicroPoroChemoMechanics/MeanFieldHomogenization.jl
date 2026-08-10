@@ -26,7 +26,12 @@ python3 -m mfhstudio --check         # verify the Julia side and exit
 python3 -m mfhstudio --project @env  # use another Julia environment
 ```
 
-On Windows the command is `python -m mfhstudio`.
+On Windows the command is `python -m mfhstudio`, or `py -3 -m mfhstudio` — a
+`python3.exe` there is often a Microsoft Store stub or an MSYS2 build that
+cannot import the studio, and the `py` launcher finds the real installation.
+The Julia launcher tries all three in that spirit and skips any that fails to
+import `mfhstudio`, so it does not settle on an interpreter that would only
+fail once the server started.
 
 Over SSH or in a VS Code remote session the studio serves on the *remote*
 machine; open the printed URL locally, which VS Code and `ssh -L` both forward.

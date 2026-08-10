@@ -734,7 +734,11 @@ def test_catalog_covers_every_exported_scheme():
     try:
         cat = b.catalog()
         names = {s["name"] for s in cat["schemes"]}
-        src = open(os.path.join(REPO, "src", "Schemes", "scheme_types.jl")).read()
+        # Julia sources are UTF-8; without saying so this reads as cp1252 on
+        # Windows and dies on the first `φ`.
+        src = open(
+            os.path.join(REPO, "src", "Schemes", "scheme_types.jl"), encoding="utf-8"
+        ).read()
         for expected in ("Voigt", "Reuss", "MoriTanaka", "SelfConsistent",
                          "AsymmetricSelfConsistent", "DifferentialScheme",
                          "Dilute", "DiluteDual", "Maxwell",
