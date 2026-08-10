@@ -393,6 +393,33 @@ types explicitly.
 (`dcontract`, `qcontract`, `contract`, the single `ein"ijl,lk->ijk"` in
 `compute_Christoffel`) do contract, so the dependency stays.
 
+## 4 ter. `best_sym_tens` derived candidates it never read
+
+*Added 2026-08-10 — TensND v0.3.3.*
+
+`best_sym_tens` computed **both** the transversely isotropic axis and the
+orthotropic frame on every call, each from its own fresh
+`Array(get_array(newt))` — so the array was materialized three times — and did
+so even when `proj` named neither symmetry.
+
+| case | before | after |
+|---|---:|---:|
+| `best_sym_tens(C; proj = (:ISO,))` | 11.3 µs / 14016 B | **7.1 µs / 7568 B** (−37 % / −46 %) |
+| `best_sym_tens(C)` (all three) | 17.6 µs / 22640 B | **17.3 µs / 21168 B** |
+
+The candidates are now derived only when `proj` asks for the symmetry that
+reads them, and from the array already materialized. The full call genuinely
+needs both, so it gains only the duplicate materializations; a restricted
+`proj` gains the eigen-decomposition it was never going to use
+(`_candidate_TI_axis` 2.0 µs, `_candidate_ORTHO_frame` 3.0 µs).
+
+Behavior is unchanged, and pinned: `test_tensor_products.jl` checks that
+restricting `proj` does not alter the numbers reported for a given symmetry,
+on the nesting ISO ⊂ TI ⊂ ORTHO where restricting legitimately changes *which*
+symmetry is reported.
+
+---
+
 ## 5. Pre-existing bugs found along the way
 
 Each **verified on a worktree of the reference commit** before being asserted.
@@ -491,7 +518,7 @@ static), `dcontract.iso_ortho` at 4.0e-17 and `dcontract.ortho_ortho` at 1.9e-17
 **−5.6 %**, i.e. *faster*; the harness flags any control deviation without
 looking at the sign. Verified rather than assumed: reproducible over five fresh
 processes (−4.8 to −6.8 %), allocations identical to the byte, bit-for-bit
-checksum, work counters unchanged. An A/B cancelling the single `bases.jl` fix
+checksum, work counters unchanged. An A/B canceling the single `bases.jl` fix
 shows **it is not that one**; the remaining candidate is `inv_KM`, which ALV
 calls in a loop to convert its Mandel blocks. Never formally isolated.
 
@@ -537,10 +564,9 @@ and still current.
 
 | topic | why it is not done |
 |---|---|
-| `otimesu` / `otimesl` / `sotimes` outer products | the same non-summing `einsum` as §4bis, with an index permutation on top. The direct next step, deliberately separated so §4bis could be validated on its own |
 | 12-parameter orthotropic container | `A ⊡ B` of two `TensOrtho` has no major symmetry (§4c), so the result falls back to `TensCanonical` as before. A dedicated container would keep the structure across a chain of contractions but would cost kernel methods on the MFH side. The precedent cited at audit time — the `MethodError` on `TensTI{4,T,8}` (§5.2) — is **since fixed**, so the risk is known and manageable; it no longer blocks |
 | isolating the primitive behind `alv.voigt.n50`'s −5.6 % | investigation closed with no code consequence: the gain is real and beneficial, `bases.jl` ruled out by A/B, `inv_KM` the remaining candidate, never formally isolated. Kept for the record, nothing at stake |
 | `prepare_logI` / `prepare_logz` cache on the `:residues` path | the most invasive tier-3 item; the path leaves the campaign unchanged |
 | `SVector{21,T}` for Hill integrand returns | not needed for the gain obtained; the `Integrals`/DECUHR path needs a separate check of buffer mutability |
-| `best_sym_tens`, concrete-type bases | TensND tiers 6–7, not started. `best_sym_tens` still materializes `Array(get_array(t))` and solves the same 3×3 eigenproblem twice; the abstract fields (`Tens.basis::Basis`, `TensRotated.basis`, `CoorSystemNum.{χ,R,Γ}_func::Function`) remain |
+| concrete-type bases | TensND tier 7, not started: the abstract fields `Tens.basis::Basis`, `TensRotated.basis` and `CoorSystemNum.{χ,R,Γ}_func::Function` remain. `best_sym_tens` is **done** (§4 ter) |
 | nested `Dual` tags through `NewtonDefault` | the `_sc_newton_seed` fix is in place (578aacb) with a real regression test (`test_self_consistent.jl`, "NewtonDefault ForwardDiff sensitivity (non-matrix phase)"); the NonlinearSolve extension separately avoids nested Duals through an IFT lift (`MeanFieldHomogenizationNonlinearSolveExt.jl:31-40`). The announced "next problem" is documented nowhere — no `@test_broken`, no comment — so it should either be pinned down concretely or closed out |
