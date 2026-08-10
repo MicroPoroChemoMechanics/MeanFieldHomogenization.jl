@@ -323,52 +323,75 @@ eltypes, and `_ti8_to_ti6`); the two corresponding `@test_broken` became real
 
 ---
 
-## 4 bis. `otimes` went through a contraction engine to contract nothing
+## 4 bis. The outer products went through a contraction engine
 
 *Added 2026-08-10 — TensND v0.3.3.*
 
 The audit had noted that several `OMEinsum` calls in
 `TensND/src/array_utils.jl` perform **no summation at all**: their output
-indices are the union of the input indices, i.e. a plain outer product.
-Re-checked and quantified:
+indices are the union of the input indices. Four functions were affected —
+`otimes` (a plain outer product), `otimesu` and `otimesl` (the same product
+with the two operands' indices *interleaved*), and `sotimes` (the average of
+the first two). Measured:
 
-| case | before | plain outer product |
-|---|---|---|
-| `otimes(::Array{3,3}, ::Array{3,3})` | **3 517 ns / 4 144 B** | 65 ns / 848 B |
-| `otimes(::Vector{3}, ::Vector{3})` | **3 240 ns / 3 200 B** | — |
+| case | before | after | change |
+|---|---:|---:|---:|
+| `otimes(3×3, 3×3)` | 3517 ns / 4144 B | **163 ns / 864 B** | **−95.4 %** |
+| `otimes(3, 3)` | 3240 ns / 3200 B | **50.7 ns / 240 B** | **−98.4 %** |
+| `otimesu(3×3, 3×3)` | 8337 ns / 7680 B | **158 ns / 864 B** | **−98.1 %** |
+| `otimesl(3×3, 3×3)` | 8180 ns / 7632 B | **159 ns / 864 B** | **−98.1 %** |
+| `sotimes(3×3, 3×3)` | 8810 ns / 10016 B | **307 ns / 992 B** | **−96.5 %** |
 
-A **54×** factor, entirely machinery — `EinCode` construction, code selection
-and dispatch — around one multiplication per element.
+The time was machinery — `EinCode` construction, code selection, dispatch —
+around one multiplication per element.
 
-The replacement is the definition written out:
+All four are now a single broadcast. The key observation is that both index
+lists are **increasing**: `otimesu` sends `t1`'s indices to output positions
+`(1…o1−1, o1+1)` and `t2`'s to `(o1, o1+2…)`, neither of which reorders an
+operand's own axes. So each operand can be reshaped in place with singleton
+axes where the other's indices sit, and the product needs no permutation pass:
 
 ```julia
-reshape(vec(t1) .* transpose(vec(t2)), size(t1)..., size(t2)...)
+s1, s2 = _otimes_shapes(t1, t2, ec1, ec2, Val(n))
+reshape(t1, s1) .* reshape(t2, s2)
 ```
 
-With output indices `(1…order1, order1+1…order1+order2)` in that order, the
-column-major linear index of `out` is `a + length(t1)·(b−1)` for `t1[a]·t2[b]`,
-which is exactly the layout of `vec(t1) .* transpose(vec(t2))`. Broadcasting
-also keeps this generic over `Dual` and symbolic element types, where BLAS could
-not be used.
+`sotimes` fuses its two terms into one broadcast, turning three allocations
+into one (495 ns / 3136 B before the fusion, 307 ns / 992 B after).
 
-| case | after | change |
-|---|---|---|
-| `otimes(3×3, 3×3)` | **65.4 ns / 800 B** | **−98.1 % / −80.7 %** |
-| `otimes(3, 3)` | **35.3 ns / 144 B** | **−98.9 % / −95.5 %** |
+Verified **bit-for-bit against the einsum implementations they replace** on
+nine shape combinations per function — non-square, order-3, mixed-order, and a
+first-order second operand — with `===` element equality, `ForwardDiff.Dual`
+preserved, and the full TensND suite green.
 
-Verified **bit-for-bit against the definition** (explicit-loop oracle) on seven
-shape combinations — `(3,)⊗(3,)`, `(3,3)⊗(3,3)`, `(3,3)⊗(3,)`, `(3,)⊗(3,3)`,
-`(2,3)⊗(3,2)`, `(3,3)⊗(3,3,3)`, `(2,2,2)⊗(2,2)` — with `===` element equality,
-`ForwardDiff.Dual` element type preserved, and the full TensND suite green.
+### The regression this introduced, and how it surfaced
 
-The sibling calls (`otimesu`, `otimesl`, the second term of `sotimes`) are the
-same non-summing product **with an index permutation** on top. They are the
-obvious next step and are deliberately **not** included: at generic order the
-permutation deserves its own exhaustive index check rather than being folded in
-here. The remaining `OMEinsum` calls do contract, so the dependency stays.
+A first draft of `otimes` used `vec(t1) .* transpose(vec(t2))` — the same
+layout, and **faster** on plain arrays (65 ns) because it is a BLAS-shaped
+rank-1 product. It passed the array oracle, the array benchmark and the whole
+TensND suite.
 
----
+It still broke the documentation build:
+
+    ArgumentError: the (no-op) transpose is discontinued for `Tensors.Vec`
+
+`transpose` of a first-order `Tensors` array is deliberately discontinued
+upstream, and no test in the suite called `otimes` with a first-order
+`Tensors` operand — only `docs/` did, through
+`scripts/20_green_function.jl`. The singleton-axis form transposes nothing and
+has no such restriction; the 163 ns above is that correction, still 21× faster
+than the einsum it replaces.
+
+The lesson is about the oracle, not about the arithmetic: it was written over
+`Array` alone, while the function's callers pass `Tensors.Vec`,
+`Tensors.Tensor`, `SymmetricTensor` and `Tens`. The check now covers those
+types explicitly.
+
+### Not done
+
+`Core._quadgk`-style dead code aside, the remaining `OMEinsum` calls
+(`dcontract`, `qcontract`, `contract`, the single `ein"ijl,lk->ijk"` in
+`compute_Christoffel`) do contract, so the dependency stays.
 
 ## 5. Pre-existing bugs found along the way
 
