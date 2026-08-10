@@ -7,7 +7,7 @@ N-body homogenization models of the package.
 Where every one-site scheme (Dilute, Mori-Tanaka, Maxwell, PCW,
 self-consistent, differential) needs only the Hill tensor `ℙ` of a single
 inclusion in a reference medium, the equivalent inclusion method
-([`EquivalentInclusion`](@ref)) and the cluster model ([`ClusterModel`](@ref))
+([`EquivalentInclusion`](@ref MeanFieldHomogenization.Schemes.EquivalentInclusion)) and the cluster model ([`ClusterModel`](@ref MeanFieldHomogenization.Schemes.ClusterModel))
 need one object more: the tensor `Γ^{ab}` measuring the field induced in one
 inclusion by a uniform polarization of another. Brisard, Dormieux & Sab
 (2014), §3.1, observe that their influence pseudotensors of order zero

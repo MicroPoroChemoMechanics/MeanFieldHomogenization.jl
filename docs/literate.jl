@@ -54,6 +54,7 @@ const PUBLISHED_SCRIPTS = [
     "86_crack_distributions.jl" => "crack_distributions",
     "87_ageing_ages_aspect.jl" => "ageing_ages_aspect",
     "91_cluster_cubic_arrays.jl" => "cluster_model",
+    "92_multiscale_assemblies.jl" => "multiscale_assemblies",
     "93_eim_disk_assembly_2d.jl" => "eim_assembly",
     "96_nano_spheroids.jl" => "nano_spheroids",
 ]

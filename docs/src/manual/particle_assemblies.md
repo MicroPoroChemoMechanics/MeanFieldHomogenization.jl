@@ -172,6 +172,57 @@ derivative(asm, ClusterModel(), radius_param(:p1);    indexer = C -> get_array(C
 special. A `RadiusParameter` on a sphere sets every semi-axis together, so the geometry
 stays spherical — and keeps its closed-form kernel — along the whole derivative.
 
+## Multiscale
+
+An assembly is an ordinary cell, so it plugs into the declarative multiscale seam from
+both sides — store `Homogenized(cell, scheme)` as a property and it is resolved lazily
+at `homogenize` time, memoized for the duration of the outer call.
+
+```julia
+# An assembly as the INNER cell: a composite whose matrix is itself particulate.
+inner = cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_i); fraction = 0.3)
+outer = RVE(:M)
+add_matrix!(outer, Ellipsoid(1.0), Dict(:C => Homogenized(inner, ClusterModel())))
+add_phase!(outer, :F, Ellipsoid(1.0), Dict(:C => C_f); fraction = 0.2)
+homogenize(outer, MoriTanaka(), :C)
+
+# An assembly as the OUTER cell: a particle that is a composite in its own right.
+asm = ParticleAssembly(; boundary = PeriodicBox(1.0))
+add_matrix!(asm, Dict(:C => C_m))
+add_particle!(asm, :p1, (0.0, 0.0, 0.0), Ellipsoid(0.3),
+              Dict(:C => Homogenized(sub_rve, MoriTanaka())))
+homogenize(asm, ClusterModel(), :C)
+```
+
+Both give exactly the two-step result computed by hand — the seam adds nothing of its
+own.
+
+!!! note "Chaining N-body schemes needs the anisotropic Green operator"
+    A cluster or equivalent-inclusion estimate on a cubic array is **cubic, not
+    isotropic**: its two shear constants differ. Using one as the reference medium of
+    another scale therefore requires the interaction tensor in an anisotropic reference
+    — which is exactly what [`green_operator_aniso`](@ref) provides. This is why the
+    Barnett line integral is not an optional extra but the enabler of multiscale
+    chaining. `scripts/92` walks through a three-level example.
+
+    The isotropic route stays the default and costs microseconds; the anisotropic one
+    is a differentiated quadrature and costs milliseconds. Tune it with `green_nodes`
+    (default 32) if a strongly anisotropic reference needs more.
+
+### Sensitivities across scales
+
+A `nested` lens addresses a scalar inside the inner cell:
+
+```julia
+lens = nested(:M, :C, property(:matrix, :C, :μ))     # an inner-scale modulus
+derivative(outer, MoriTanaka(), lens; indexer = C -> get_array(C)[1, 2, 1, 2])
+```
+
+The lenses an assembly answers are its own — `radius_param`, `center_param` and
+`property`. It has **no** `amount`: volume fractions are derived from the geometry and
+the cell size, so there is nothing to vary independently, and asking for one raises a
+message that names the lens to use instead.
+
 ## Nano-interfaces: the equivalent particle
 
 [Dormieux, Lemarchand & Brisard 2016](@cite dormieux2016) is a different kind of result:

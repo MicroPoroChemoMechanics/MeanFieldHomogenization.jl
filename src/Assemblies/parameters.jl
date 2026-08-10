@@ -57,6 +57,66 @@ Convenience constructor for [`RadiusParameter`](@ref).
 """
 radius_param(name::Symbol, axis::Integer = 1) = RadiusParameter(name, Int(axis))
 
+# ─── PropertyParameter: moduli, at any member of the assembly ───────────────
+#
+# The RVE lens is typed on `RVE`, so an assembly needs its own pair. It is the
+# one lens that matters for multiscale work: it is how a modulus at an inner
+# scale is reached from an outer one through `nested`.
+
+function get_param(asm::ParticleAssembly, p::Schemes.PropertyParameter)
+    t = p.phase === asm.matrix_name ? matrix_property(asm, p.property) :
+        particle_property(asm, p.phase, p.property)
+    return TensND.get_data(t)[Schemes._resolve_selector(t, p.selector)]
+end
+
+function set_param(asm::ParticleAssembly, p::Schemes.PropertyParameter, value)
+    d = p.phase === asm.matrix_name ? asm.matrix_properties :
+        (
+            haskey(asm.particles, p.phase) ||
+            throw(ArgumentError("no member named :$(p.phase) in the assembly"));
+            asm.particles[p.phase].properties
+        )
+    haskey(d, p.property) || throw(
+        ArgumentError(":$(p.phase) does not carry property :$(p.property)")
+    )
+    old = d[p.property]
+    new = Schemes._replace_data_at(old, Schemes._resolve_selector(old, p.selector), value)
+    return MFH_Core.cell_set_property(asm, p.phase, p.property, new)
+end
+
+# ─── Lenses that do not apply to an assembly ────────────────────────────────
+#
+# An assembly has no stored amounts (volume fractions are derived from the
+# geometry) and no distribution shape. Say so, and name the lens that does the
+# job, rather than letting the call fall through to a bare `MethodError`.
+
+for (P, why) in (
+        (
+            :AmountParameter,
+            "an assembly stores no amount: volume fractions are derived from the " *
+                "particle geometry and the cell size, so vary a radius " *
+                "(`radius_param`) or the boundary instead",
+        ),
+        (
+            :GeometryParameter,
+            "use `radius_param(name, axis)` to vary a semi-axis of a particle, or " *
+                "`center_param(name, component)` to move it",
+        ),
+        (
+            :DistributionShapeParameter,
+            "an assembly carries explicit positions rather than a distribution shape",
+        ),
+    )
+    @eval begin
+        get_param(::ParticleAssembly, ::Schemes.$P) = throw(
+            ArgumentError("ParticleAssembly: " * $why)
+        )
+        set_param(::ParticleAssembly, ::Schemes.$P, _) = throw(
+            ArgumentError("ParticleAssembly: " * $why)
+        )
+    end
+end
+
 # ─── get / set ───────────────────────────────────────────────────────────────
 
 get_param(asm::ParticleAssembly, p::CenterParameter) =
@@ -84,12 +144,20 @@ end
 # A sphere stays a sphere: setting "the" radius sets every semi-axis, so the
 # shape trait — and hence the closed-form interaction kernel — is preserved
 # along the whole derivative.
+#
+# The rebuild goes through `Schemes._replace_geom_field`, the same helper the
+# `RVE` geometry lens uses. That is not just reuse: it is what promotes the
+# whole struct (semi-axes *and* basis) to absorb a `ForwardDiff.Dual`, which a
+# hand-rolled `Ellipsoid(duals...; basis = float_basis)` does not do.
 function _resize_geometry(ell::Elasticity.Ellipsoid{dim}, axis::Int, value) where {dim}
-    a = ell.semi_axes
-    allequal(a) && return Elasticity.Ellipsoid(ntuple(_ -> value, dim)...; basis = ell.basis)
-    return Elasticity.Ellipsoid(
-        ntuple(i -> i == axis ? value : a[i], dim)...; basis = ell.basis
+    allequal(ell.semi_axes) || return Schemes._replace_geom_field(
+        ell, Val(:semi_axes), axis, value
     )
+    geom = ell
+    for k in 1:dim
+        geom = Schemes._replace_geom_field(geom, Val(:semi_axes), k, value)
+    end
+    return geom
 end
 
 _resize_geometry(incl, ::Int, _) = throw(

@@ -60,26 +60,26 @@ function _pair_multipole(
         )
     )
     V_b = _inclusion_volume(incl_b)
-    Γ = MFH_Core.green_operator_iso(P₀, r)
+    Γ = MFH_Core.green_operator(P₀, r; kw...)
     order == 0 && return TensND.Tens(V_b * Γ)
     M² = _second_moment(incl_a) + _second_moment(incl_b)
-    return TensND.Tens(V_b * (Γ + _moment_contraction(P₀, r, M²) / 2))
+    return TensND.Tens(V_b * (Γ + _moment_contraction(P₀, r, M²; kw...) / 2))
 end
 
 # Σ_k λ_k d²/dt² Γ⁰(r + t v_k) — spectral form of M²_pq ∂_p∂_q Γ⁰.
-function _moment_contraction(P₀, r::AbstractVector, M²::AbstractMatrix)
+function _moment_contraction(P₀, r::AbstractVector, M²::AbstractMatrix; kw...)
     λ, V = eigen(Symmetric(_as_float_matrix(M²)))
     d = length(r)
-    acc = _second_directional(P₀, r, @view(V[:, 1])) * λ[1]
+    acc = _second_directional(P₀, r, @view(V[:, 1]); kw...) * λ[1]
     for k in 2:d
-        acc = acc + _second_directional(P₀, r, @view(V[:, k])) * λ[k]
+        acc = acc + _second_directional(P₀, r, @view(V[:, k]); kw...) * λ[k]
     end
     return acc
 end
 
 # Exact second directional derivative through one nested-dual evaluation.
-function _second_directional(P₀, r::AbstractVector, v)
-    f = t -> MFH_Core.green_operator_iso(P₀, r .+ t .* v)
+function _second_directional(P₀, r::AbstractVector, v; kw...)
+    f = t -> MFH_Core.green_operator(P₀, r .+ t .* v; kw...)
     df = t -> ForwardDiff.derivative(f, t)
     return ForwardDiff.derivative(df, zero(eltype(r)))
 end

@@ -142,6 +142,8 @@ export MaterialSymmetry, IsotropicSym, TransverselyIsotropicSym,
 export material_symmetry, dimension, inclusion_basis, shape_trait, shape_tensor
 export eshelby_tensor
 export green_gradient_iso, dipole_displacement_iso, green_operator_iso
+export green_operator_aniso, green_operator, green_function_aniso
+export gauss_legendre_nodes
 
 # ── Two-inclusion interaction tensors (EIM / cluster model ingredient) ───────
 export interaction_tensor, self_interaction_tensor

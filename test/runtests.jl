@@ -64,6 +64,7 @@ Random.seed!(20260723)
         include("Core/test_newton.jl")
         include("Core/test_newton_cylinder.jl")
         include("Core/test_green_dipole.jl")
+        include("Core/test_green_aniso.jl")
     end
 
     @testset "Elasticity" begin
@@ -110,6 +111,7 @@ Random.seed!(20260723)
         include("Assemblies/test_assembly.jl")
         include("Assemblies/test_cluster_model.jl")
         include("Assemblies/test_eim.jl")
+        include("Assemblies/test_multiscale.jl")
     end
 
     @testset "Schemes" begin

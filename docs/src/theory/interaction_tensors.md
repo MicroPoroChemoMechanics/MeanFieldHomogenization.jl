@@ -250,6 +250,67 @@ formula when both moments are isotropic. `method = :quadrature` integrates the
 definition directly by a product rule — geometry-agnostic, far slower, and the oracle
 the closed forms are validated against.
 
+## Anisotropic reference media
+
+Everything above assumes an isotropic reference, whose Green operator is a closed
+form. That is not a restriction of the method, only of the kernel, and it is lifted by
+the line integral of Barnett (1972) and Willis (1975): for an arbitrary anisotropic
+stiffness the displacement Green function is
+
+```math
+G_{ij}(\underline{x}) = \frac{1}{8\pi^2 r}
+  \oint_{\underline{\xi}\perp\underline{n},\;\|\underline{\xi}\|=1}
+    \big[\boldsymbol{K}(\underline{\xi})\big]^{-1}_{ij}\,\mathrm{d}\varphi ,
+\qquad
+K_{ij}(\underline{\xi}) = \xi_k\, C_{kijl}\, \xi_l ,
+```
+
+``\boldsymbol{K}`` being the acoustic (Christoffel) tensor and the contour the unit
+circle in the plane perpendicular to ``\underline{n} = \underline{x}/r``. The
+integrand is smooth and periodic, so a Gauss-Legendre rule converges fast, and the
+whole expression is homogeneous of degree ``-1`` in ``\underline{x}``.
+
+The Green *operator* takes two more derivatives of this. They are obtained by
+differentiating the quadrature itself with forward-mode AD rather than by
+differentiating the line integral by hand — exact, and reusing one verified
+expression instead of introducing a second. See
+[`green_function_aniso`](@ref) and [`green_operator_aniso`](@ref); the dispatcher
+[`green_operator`](@ref) keeps the closed form whenever the reference is isotropic,
+which matters because the anisotropic route is some three orders of magnitude dearer.
+
+In conduction no quadrature is needed at all — the anisotropic scalar Green function is
+elementary,
+
+```math
+G(\underline{x}) = \frac{1}{4\pi\sqrt{\det\boldsymbol{K}_0}\;
+   \sqrt{\underline{x}\cdot\boldsymbol{K}_0^{-1}\cdot\underline{x}}} ,
+```
+
+and its Hessian is written out directly.
+
+Two consequences worth keeping in mind when reading an anisotropic result:
+
+* the **closed forms of the previous sections no longer apply**, not even for a ball
+  pair. Their exactness rested on the isotropic Green function being biharmonic, which
+  a general anisotropic one is not, so the series does not terminate and every pair
+  goes through the truncated multipole expansion;
+* the **isotropic part no longer vanishes**. ``T_{iijj} = T_{ijij} = 0`` is a property
+  of the isotropic kernel, so with an anisotropic reference the bulk response *does*
+  see the spatial arrangement. The statement "a cubic array keeps the Mori-Tanaka bulk
+  modulus exactly" holds for an isotropic matrix only.
+
+The one case still open is **plane-strain elasticity with an anisotropic reference**,
+whose Green function needs the Stroh formalism rather than the Barnett integral;
+[`green_operator`](@ref) raises rather than returning an isotropic approximation.
+
+### Why this matters for multiscale chaining
+
+This is not a corner case. A cluster or equivalent-inclusion estimate on a cubic array
+*is* anisotropic — its two shear constants differ — so using one N-body result as the
+reference medium of another scale requires exactly this kernel. Chaining the two
+schemes across scales was impossible without it; see
+[the manual](@ref man-assemblies) and `scripts/92`.
+
 ## Periodic images
 
 Under a periodic boundary treatment each source carries a family of images and the

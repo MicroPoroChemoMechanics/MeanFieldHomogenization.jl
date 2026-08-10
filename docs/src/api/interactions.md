@@ -21,5 +21,14 @@ periodic_images
 ## Real-space Green operator
 
 ```@docs
+green_operator
 green_operator_iso
+```
+
+### Anisotropic reference media
+
+```@docs
+green_function_aniso
+green_operator_aniso
+gauss_legendre_nodes
 ```

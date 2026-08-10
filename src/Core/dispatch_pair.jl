@@ -13,18 +13,25 @@
 #
 #  Rules
 #  -----
-#  - two balls / two disks + isotropic reference        → Analytical
+#  - two balls / two disks + isotropic reference        → Analytical (exact)
 #  - any other pair of ellipsoids + isotropic reference → Multipole
+#  - any pair + anisotropic reference (3D, or 2D cond.) → Multipole
+#  - any pair + anisotropic reference, 2D elasticity    → Multipole, and
+#                                                         `green_operator` then
+#                                                         refuses (Stroh)
 #  - explicit `:quadrature`                             → NestedQuadGK
 #  - explicit `:multipole`                              → Multipole
 #  - explicit `:analytical`                             → Analytical (errors in
 #                                                         the kernel table if no
 #                                                         closed form exists)
 #
-#  Anisotropic references are *not* resolved here: the real-space Green
-#  operator of a generally anisotropic medium is not implemented, so the
-#  entry point rejects them with a message that names the limitation instead
-#  of dispatching to a kernel that would silently use an isotropic kernel.
+#  Anisotropic references ARE supported (since `Core/green_aniso.jl` landed):
+#  they resolve to `Multipole`, because the exactness of the closed forms rests
+#  on the isotropic Green function being biharmonic — which a general
+#  anisotropic one is not — so even a ball pair needs the truncated expansion
+#  there.  The single remaining gap is plane-strain elasticity with an
+#  anisotropic reference, which would need the Stroh formalism and is refused
+#  with a message naming the limitation.
 #
 #  As everywhere else in the package, new rules are added as new methods —
 #  never by editing an existing one.
@@ -65,19 +72,23 @@ function _resolve_pair_algo(::Val{:auto}, incl_a, incl_b, ::TensND.TensISO)
     return _pair_has_closed_form(incl_a, incl_b) ? Analytical() : Multipole()
 end
 
+# Anisotropic reference: the closed forms do not apply — their exactness rests
+# on the isotropic Green function being biharmonic, which a general anisotropic
+# one is not — so even a ball pair goes through the truncated expansion.
+_resolve_pair_algo(::Val{:auto}, _, _, ::TensND.AbstractTens{4, 3}) = Multipole()
+_resolve_pair_algo(::Val{:auto}, _, _, ::TensND.AbstractTens{2, 3}) = Multipole()
+_resolve_pair_algo(::Val{:auto}, _, _, ::TensND.AbstractTens{2, 2}) = Multipole()
+
+# Plane-strain elasticity: resolved like any other case here. When the
+# reference is genuinely anisotropic the refusal comes from `green_operator`,
+# which owns that message — putting a throwing method on this argument
+# position instead would be ambiguous with the explicit `:quadrature` /
+# `:multipole` rules below, which are more specific on the method symbol.
+_resolve_pair_algo(::Val{:auto}, _, _, ::TensND.AbstractTens{4, 2}) = Multipole()
+
 _resolve_pair_algo(::Val{:analytical}, _, _, ::TensND.AbstractTens) = Analytical()
 _resolve_pair_algo(::Val{:multipole}, _, _, ::TensND.AbstractTens) = Multipole()
 _resolve_pair_algo(::Val{:quadrature}, _, _, ::TensND.AbstractTens) = NestedQuadGK()
 
-# Anisotropic reference — refuse rather than silently mis-evaluate.
-function _resolve_pair_algo(::Val, _, _, P₀::TensND.AbstractTens)
-    throw(
-        ArgumentError(
-            "interaction_tensor: no real-space Green operator is available for a " *
-                "reference medium of type $(nameof(typeof(P₀))). Two-inclusion " *
-                "interaction kernels currently require an isotropic reference " *
-                "(`TensISO`); the anisotropic Green operator (Barnett-Willis angular " *
-                "integral, or Pan-Chou for transverse isotropy) is not implemented."
-        )
-    )
-end
+# Catch-all for an unknown method symbol on a supported reference.
+_resolve_pair_algo(::Val, _, _, ::TensND.AbstractTens) = Multipole()

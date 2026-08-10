@@ -130,6 +130,7 @@ makedocs(;
             ],
             "Interacting particle assemblies" => [
                 "tutorials/generated/cluster_model.md",
+                "tutorials/generated/multiscale_assemblies.md",
                 "tutorials/generated/eim_assembly.md",
                 "tutorials/generated/nano_spheroids.md",
             ],

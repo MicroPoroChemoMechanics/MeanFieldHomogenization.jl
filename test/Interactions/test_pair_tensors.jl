@@ -207,9 +207,11 @@ end
     C₀ = _C3()
     # Overlapping regions
     @test_throws ArgumentError interaction_tensor(_ball(1.0), _ball(1.0), [0.0, 0.0, 1.5], C₀)
-    # Anisotropic reference: refused, not silently approximated
-    Caniso = Tens(get_array(TensISO{3}(3.0, 2.0)) .+ 1.0e-3 .* rand(3, 3, 3, 3))
-    @test_throws ArgumentError interaction_tensor(_ball(1.0), _ball(1.0), [0.0, 0.0, 5.0], Caniso)
+    # An anisotropic reference in 2D ELASTICITY is still refused: its Green
+    # function needs the Stroh formalism. (3D elasticity and conduction accept
+    # any anisotropy — see the anisotropic testset below.)
+    C2aniso = Tens(get_array(TensISO{2}(3.0, 2.0)))
+    @test_throws ArgumentError interaction_tensor(_disk(1.0), _disk(1.0), [5.0, 0.0], C2aniso)
     # Non-spherical geometry forced onto the closed-form kernel
     @test_throws ArgumentError interaction_tensor(
         Ellipsoid(1.0, 0.5, 0.25), _ball(1.0), [0.0, 0.0, 5.0], C₀; method = :analytical
@@ -263,4 +265,64 @@ end
     # No image inside the cutoff ⇒ exactly zero.
     Γ0 = lattice_interaction_tensor(_ball(0.3), _ball(0.3), [0.0, 0.0, 0.0], C₀, 1.0, 0.5)
     @test maximum(abs.(get_array(Γ0))) ≈ 0.0 atol = ATOL_ZERO
+end
+
+
+@testset "𝕋^{ab} — anisotropic reference (3D)" begin
+    # Since `Core/green_aniso.jl` landed, an anisotropic reference is a
+    # supported case rather than an error.
+    #
+    # Cost note: the quadrature oracle calls the anisotropic Green operator at
+    # every node pair, and that operator is ~500x dearer than the isotropic
+    # closed form. The node counts below are therefore deliberately small — the
+    # pairs are well separated, so the integrand is smooth and a coarse rule is
+    # still far more accurate than the multipole truncation being tested.
+    ia, ib = _ball(1.0), _ball(0.8)
+    C₀ = _C3()
+
+    # (a) Isotropic values, generic type: the Barnett route must land back on
+    #     the closed form. This is the sharpest check of the whole anisotropic
+    #     chain, since the closed form is independently validated — and it is
+    #     cheap, needing no quadrature at all.
+    for r in ([1.0, 2.0, 3.0], [0.0, 0.0, 6.0])
+        A = get_array(interaction_tensor(ia, ib, r, C₀))
+        B = get_array(interaction_tensor(ia, ib, r, Tens(get_array(C₀))))
+        @test maximum(abs.(A .- B)) < 1.0e-10 * maximum(abs.(A))
+    end
+
+    # (b) A genuinely anisotropic (cubic) reference against the quadrature.
+    #     The multipole truncation is O((size/separation)^4), so the agreement
+    #     must improve at that rate as the pair separates.
+    arr = collect(get_array(C₀))
+    for (i, j) in ((1, 2), (1, 3), (2, 3)), idx in (
+                (i, j, i, j), (j, i, i, j), (i, j, j, i), (j, i, j, i),
+            )
+        arr[idx...] = 1.4
+    end
+    Ccub = Tens(arr)
+    errs = Float64[]
+    Qs = Any[]
+    for R in (6.0, 12.0)
+        r = [0.0, 0.0, R]
+        M = get_array(interaction_tensor(ia, ib, r, Ccub))
+        Q = get_array(interaction_tensor(ia, ib, r, Ccub; method = :quadrature, nodes = (4, 4, 8)))
+        push!(errs, maximum(abs.(M .- Q)) / maximum(abs.(Q)))
+        push!(Qs, Q)
+    end
+    @test errs[2] < errs[1]
+    @test errs[end] < 1.0e-3
+
+    # (c) With an anisotropic reference the isotropic part does NOT vanish —
+    #     that invariant is specific to an isotropic Green operator. The
+    #     quadrature value from (b) confirms it independently of the multipole.
+    Q = Qs[end]
+    @test abs(sum(Q[i, i, j, j] for i in 1:3, j in 1:3)) > 1.0e-3 * maximum(abs.(Q))
+
+    # (d) Conduction with an anisotropic conductivity. Cheap: the anisotropic
+    #     conduction Green operator is a closed form, not a quadrature.
+    Kan = Tens([3.0 0.4 0.1; 0.4 2.0 -0.2; 0.1 -0.2 1.5])
+    r = [0.0, 0.0, 8.0]
+    M = get_array(interaction_tensor(ia, ib, r, Kan))
+    Qk = get_array(interaction_tensor(ia, ib, r, Kan; method = :quadrature, nodes = (6, 6, 12)))
+    @test maximum(abs.(M .- Qk)) < 1.0e-3 * maximum(abs.(Qk))
 end

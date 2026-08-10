@@ -41,9 +41,9 @@ function _pair_quadrature(
     # Weights are normalized to sum to 1 over Ω_a (the 1/|Ω_a| prefactor) and
     # to |Ω_b| over Ω_b (the plain volume integral).
     Wa = sum(wa)
-    acc = zero(MFH_Core.green_operator_iso(P₀, r))
+    acc = zero(MFH_Core.green_operator(P₀, r; kw...))
     for (xa, ua) in zip(pa, wa), (xb, ub) in zip(pb, wb)
-        acc = acc + (ua * ub) * MFH_Core.green_operator_iso(P₀, r .+ xb .- xa)
+        acc = acc + (ua * ub) * MFH_Core.green_operator(P₀, r .+ xb .- xa; kw...)
     end
     return TensND.Tens(acc / Wa)
 end
@@ -55,8 +55,8 @@ function _region_nodes(ell::Ellipsoid{3}, nodes::NTuple{3, Int})
     Q = MFH_Core._basis_matrix(ell.basis)
     a1, a2, a3 = ell.semi_axes
     jac = a1 * a2 * a3                      # |det| of the unit-ball mapping
-    ρ, wρ = _gauss_legendre(nr, 0.0, 1.0)
-    c, wc = _gauss_legendre(np, -1.0, 1.0)  # c = cos θ
+    ρ, wρ = MFH_Core.gauss_legendre_nodes(nr, 0.0, 1.0)
+    c, wc = MFH_Core.gauss_legendre_nodes(np, -1.0, 1.0)  # c = cos θ
     φ = [2π * (k - 1) / na for k in 1:na]
     wφ = fill(2π / na, na)
     pts = Vector{SVector{3, Float64}}()
@@ -76,7 +76,7 @@ function _region_nodes(ell::Ellipsoid{2}, nodes::NTuple{3, Int})
     Q = MFH_Core._basis_matrix(ell.basis)
     a1, a2 = ell.semi_axes
     jac = a1 * a2
-    ρ, wρ = _gauss_legendre(nr, 0.0, 1.0)
+    ρ, wρ = MFH_Core.gauss_legendre_nodes(nr, 0.0, 1.0)
     φ = [2π * (k - 1) / na for k in 1:na]
     wφ = fill(2π / na, na)
     pts = Vector{SVector{2, Float64}}()
@@ -88,16 +88,4 @@ function _region_nodes(ell::Ellipsoid{2}, nodes::NTuple{3, Int})
         push!(wts, wρ[i] * ρ[i] * wφ[k] * jac)
     end
     return pts, wts
-end
-
-# Gauss-Legendre nodes and weights on [lo, hi], obtained from the Golub-Welsch
-# eigenvalue problem of the Jacobi matrix — a few lines, no extra dependency,
-# and plenty accurate at the small orders used here.
-function _gauss_legendre(n::Int, lo::Real, hi::Real)
-    β = [k / sqrt(4k^2 - 1) for k in 1:(n - 1)]
-    J = SymTridiagonal(zeros(n), β)
-    F = eigen(J)
-    x = F.values
-    w = 2 .* (F.vectors[1, :] .^ 2)
-    return (hi + lo) / 2 .+ (hi - lo) / 2 .* x, (hi - lo) / 2 .* w
 end

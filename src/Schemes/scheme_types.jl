@@ -127,7 +127,7 @@ scheme in which the mean strain of every inclusion is solved for, accounting
 for the pairwise interaction with every neighbor inside a cluster of radius
 `R_c`, on top of the interaction with the matrix.
 
-Acts on a [`ParticleAssembly`](@ref), not on an `RVE`. Writing
+Acts on a [`ParticleAssembly`](@ref MeanFieldHomogenization.Assemblies.ParticleAssembly), not on an `RVE`. Writing
 ``\\delta\\mathbb{C}_K = \\mathbb{C}_K - \\mathbb{C}_m``, the localization tensors
 of the families solve
 
@@ -141,8 +141,8 @@ of the families solve
 ```
 
 with ``\\bar{\\mathbb{T}}_{IK}`` the sum of the pairwise interaction tensors
-([`interaction_tensor`](@ref)) over the cluster. `cluster_radius` overrides the
-cutoff carried by the assembly's [`PeriodicBox`](@ref).
+([`interaction_tensor`](@ref MeanFieldHomogenization.Interactions.interaction_tensor)) over the cluster. `cluster_radius` overrides the
+cutoff carried by the assembly's [`PeriodicBox`](@ref MeanFieldHomogenization.Assemblies.PeriodicBox).
 
 Reducing the cluster to a single inclusion (`cluster_radius = 0`) makes every
 ``\\bar{\\mathbb{T}}`` vanish and the scheme degenerates **exactly** onto
@@ -162,7 +162,7 @@ Equivalent inclusion method in the variational (Galerkin) form of
 weak form of the Lippmann-Schwinger equation, with the polarization taken
 piecewise constant over each inclusion at `order = 0`.
 
-Acts on a [`ParticleAssembly`](@ref). The polarizations solve
+Acts on a [`ParticleAssembly`](@ref MeanFieldHomogenization.Assemblies.ParticleAssembly). The polarizations solve
 
 ```math
 \\Big[(\\mathbb{C}_a - \\mathbb{C}_0)^{-1} + \\mathbb{P}_a - f_a \\mathbb{P}_\\Omega\\Big] : \\boldsymbol{\\tau}_a
@@ -173,19 +173,19 @@ and the apparent stiffness follows from
 ``\\mathbb{C}^{app} : E = \\mathbb{C}_0 : E + \\sum_a f_a \\boldsymbol{\\tau}_a``. The term in
 ``\\mathbb{P}_\\Omega``, the Hill tensor of the SVE domain itself, is what
 implements the mixed boundary conditions of the paper — with
-[`MixedBC`](@ref) no periodization and no conditionally convergent lattice sum
+[`MixedBC`](@ref MeanFieldHomogenization.Assemblies.MixedBC) no periodization and no conditionally convergent lattice sum
 are needed.
 
 Because the method minimizes a Hashin-Shtrikman functional over a
 finite-dimensional space, the estimate is a **rigorous bound** on the apparent
 stiffness whenever the matrix is stiffer (upper bound) or softer (lower bound)
-than every inhomogeneity — see [`eim_bound_type`](@ref).
+than every inhomogeneity — see [`eim_bound_type`](@ref MeanFieldHomogenization.Assemblies.eim_bound_type).
 
 Brisard et al. note in their §3.1 that at `order = 0` their influence
 pseudotensors coincide with the interaction tensors of
 [Berveiller et al. 1987](@cite berveiller1987) and
 [Molinari & El Mouden 1996](@cite molinari1996); the two schemes of this
-package accordingly share [`interaction_tensor`](@ref) and agree on a periodic
+package accordingly share [`interaction_tensor`](@ref MeanFieldHomogenization.Interactions.interaction_tensor) and agree on a periodic
 assembly with the same cutoff.
 """
 struct EquivalentInclusion{K <: NamedTuple} <: HomogenizationScheme
