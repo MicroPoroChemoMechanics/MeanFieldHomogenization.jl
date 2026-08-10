@@ -53,6 +53,9 @@ const PUBLISHED_SCRIPTS = [
     "85_neural_excentered_sphere.jl" => "neural_excentered_sphere",
     "86_crack_distributions.jl" => "crack_distributions",
     "87_ageing_ages_aspect.jl" => "ageing_ages_aspect",
+    "91_cluster_cubic_arrays.jl" => "cluster_model",
+    "93_eim_disk_assembly_2d.jl" => "eim_assembly",
+    "96_nano_spheroids.jl" => "nano_spheroids",
 ]
 
 # `81_fe_crack_eshelby.jl`, `82_fe_crack_schemes.jl` and

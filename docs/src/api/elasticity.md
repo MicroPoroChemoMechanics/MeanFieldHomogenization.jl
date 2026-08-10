@@ -21,3 +21,10 @@ MeanFieldHomogenization.hill_tensor
 MeanFieldHomogenization.Core.eshelby_tensor
 MeanFieldHomogenization.Elasticity.iso_stiffness
 ```
+
+## Nanoinclusion interfaces (Dormieux, Lemarchand & Brisard 2016)
+
+```@docs
+surface_stiffness
+equivalent_particle
+```

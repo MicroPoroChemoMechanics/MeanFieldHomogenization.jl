@@ -77,6 +77,7 @@ Random.seed!(20260723)
         include("Elasticity/test_hill_nestedquadgk_oblate.jl")
         include("Elasticity/test_hill_ti_coaxial.jl")
         include("Elasticity/test_param_conversions.jl")
+        include("Elasticity/test_surface_stiffness.jl")
     end
 
     @testset "Cracks" begin
@@ -93,6 +94,22 @@ Random.seed!(20260723)
         include("Conductivity/test_hill_cylinder.jl")
         include("Conductivity/test_eshelby.jl")
         include("Conductivity/test_localization.jl")
+    end
+
+    # `Interactions` sits between the one-inclusion kernels it builds on and
+    # the N-body schemes that consume it: the pair tensors must be trusted
+    # before either scheme is exercised.
+    @testset "Interactions" begin
+        include("Interactions/test_pair_tensors.jl")
+    end
+
+    # `Assemblies` carries the positional cell and the two N-body schemes.  It
+    # runs after `Interactions` (whose pair tensors it consumes) and needs the
+    # `Schemes` types, so it sits between them and the rest.
+    @testset "Assemblies" begin
+        include("Assemblies/test_assembly.jl")
+        include("Assemblies/test_cluster_model.jl")
+        include("Assemblies/test_eim.jl")
     end
 
     @testset "Schemes" begin

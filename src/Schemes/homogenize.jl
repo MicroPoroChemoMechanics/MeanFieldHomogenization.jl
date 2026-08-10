@@ -100,6 +100,13 @@ const SCHEME_ALIAS = Dict{Symbol, Type{<:HomogenizationScheme}}(
     :pcw => PonteCastanedaWillis, :PCW => PonteCastanedaWillis,
     :PonteCastanedaWillis => PonteCastanedaWillis,
     :ponte_castaneda_willis => PonteCastanedaWillis,
+    # Cluster model (Molinari & El Mouden) — acts on a `ParticleAssembly`
+    :cluster => ClusterModel, :ClusterModel => ClusterModel,
+    :cluster_model => ClusterModel, :CLUSTER => ClusterModel,
+    # Equivalent inclusion method (Brisard et al.) — acts on a `ParticleAssembly`
+    :eim => EquivalentInclusion, :EIM => EquivalentInclusion,
+    :EquivalentInclusion => EquivalentInclusion,
+    :equivalent_inclusion => EquivalentInclusion,
     # Self-Consistent
     :self_consistent => SelfConsistent, :SelfConsistent => SelfConsistent,
     :sc => SelfConsistent, :SC => SelfConsistent,

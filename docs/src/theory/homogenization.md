@@ -52,6 +52,25 @@ the penny limit (`c → 0`) while their density stays finite.
 | **Maxwell** | ``\mathbb C_0 + \Sigma : (\mathbb I - \mathbb P_d : \Sigma)^{-1}`` with `P_d` the Hill tensor of the *outer distribution shape* |
 | **PCW** | identical algebraic form, distribution-shape-aware ensemble interpretation ([Ponte-Castañeda & Willis 1995](@cite ponte1995)) |
 
+## N-body schemes (require positions)
+
+The schemes above all see one inclusion in a reference medium and treat the
+interaction in an average sense. Two schemes go further and resolve it inclusion
+by inclusion, which needs strictly more information than an `RVE` carries — the
+positions of the inclusions. They act on a
+[`ParticleAssembly`](@ref) and share one ingredient, the
+[two-inclusion interaction tensor](@ref th-interaction) ``\mathbb{T}^{ab}``.
+
+| Scheme | Unknowns | Reference |
+| --- | --- | --- |
+| **ClusterModel** | mean strain of every family, from ``\sum_K \mathbb{M}_{IK} : \mathbb{A}^K = \mathbb{I}`` — see [the cluster model](@ref th-cluster) | [Molinari & El Mouden 1996](@cite molinari1996) |
+| **EquivalentInclusion** | polarization of every inclusion, from a Galerkin discretization of the weak Lippmann-Schwinger equation — see [the equivalent inclusion method](@ref th-eim) | [Brisard et al. 2014](@cite brisard2014) |
+
+The two are the *same* linear system on a periodic assembly and differ only in
+how the far field is closed. Both degenerate **exactly** onto Mori-Tanaka when
+the interaction is switched off, and the equivalent inclusion method additionally
+returns a rigorous bound on the apparent stiffness.
+
 The two right-hand entries differ from the first three in that a **second**
 shape enters, describing how the inclusions are *placed* rather than what they
 look like. Maxwell reads it as one equivalent inclusion swallowing a cluster;

@@ -30,6 +30,16 @@ def _new_id() -> str:
 LAMINATE_SCHEMES = ("Laminated", "Voigt", "Reuss")
 
 
+#: Schemes that act on a `ParticleAssembly` — a cell carrying the *positions*
+#: of individual inclusions — rather than on an `RVE`. The N-body schemes
+#: resolve the interaction between inclusions instead of averaging it, so they
+#: need information an `RVE` does not hold. MFH Studio has no positional cell,
+#: so they are filtered out of the catalog: `catalog()` on the Julia side
+#: discovers every concrete `HomogenizationScheme`, and without this they would
+#: be offered for an RVE and fail at evaluation.
+ASSEMBLY_SCHEMES = ("ClusterModel", "EquivalentInclusion")
+
+
 # ---------------------------------------------------------------------------
 # Values: either a literal, a named parameter, or a nested scale
 # ---------------------------------------------------------------------------

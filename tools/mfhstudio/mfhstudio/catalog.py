@@ -18,7 +18,7 @@ merged with it, so a scheme that MFH drops disappears from the interface.
 
 from __future__ import annotations
 
-from .model import LAMINATE_SCHEMES
+from .model import ASSEMBLY_SCHEMES, LAMINATE_SCHEMES
 
 #: The two kinds of homogenization cell. A laminate is a *cell*, not an
 #: inclusion: it is a unit of homogenization, and embedding one in a matrix
@@ -474,7 +474,10 @@ def merge(introspected: dict | None) -> dict:
     cat = base_catalog()
     if not introspected:
         return cat
-    cat["schemes"] = introspected.get("schemes") or cat["schemes"]
+    schemes = introspected.get("schemes") or cat["schemes"]
+    # Drop the schemes that act on a cell the interface cannot build —
+    # see `ASSEMBLY_SCHEMES`.
+    cat["schemes"] = [s for s in schemes if s["name"] not in ASSEMBLY_SCHEMES]
     cat["mfh_version"] = introspected.get("mfh_version")
     cat["julia_version"] = introspected.get("julia_version")
     cat["introspected"] = True

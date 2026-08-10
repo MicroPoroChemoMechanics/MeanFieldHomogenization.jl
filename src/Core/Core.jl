@@ -26,8 +26,12 @@ Contents
 - `green_helpers.jl`      : quadrature-agnostic Green-function helpers
 - `green_dipole.jl`       : real-space Kelvin Green gradient and the dipole
                              far field of a polarized inclusion (isotropic)
+- `green_operator.jl`     : real-space Green operator Γ⁰(x) — one derivative
+                             beyond `green_dipole.jl`, the regular kernel of
+                             the Lippmann-Schwinger equation (isotropic)
 - `quadrature.jl`         : DECUHR cubature backend seam
 - `dispatch.jl`           : central `_resolve_algo` mechanism
+- `dispatch_pair.jl`      : `_resolve_pair_algo` — its two-inclusion counterpart
 """
 module Core
 
@@ -53,8 +57,10 @@ include("laminate_algebra.jl")
 include("green_residue.jl")
 include("green_helpers.jl")
 include("green_dipole.jl")
+include("green_operator.jl")
 include("quadrature.jl")
 include("dispatch.jl")
+include("dispatch_pair.jl")
 
 # Abstractions
 export AbstractInclusion, AbstractEllipsoidalInclusion,
@@ -71,7 +77,7 @@ export is_homogeneous_inclusion
 
 # Traits — algorithms
 export AbstractAlgorithm, Analytical, Residue, DECUHR, NestedQuadGK,
-    CylinderQuadrature, Auto
+    CylinderQuadrature, Multipole, Auto
 
 # Traits — material symmetry
 export MaterialSymmetry, IsotropicSym, TransverselyIsotropicSym,
@@ -90,6 +96,7 @@ export newton_potential_3d, newton_potential_2d, newton_potential_3d_cylinder
 
 # Real-space Kelvin Green gradient / dipole far field (isotropic matrix)
 export green_gradient_iso, dipole_displacement_iso
+export green_operator_iso
 
 # Laminate block algebra (public — used by Laminates, the ALV twin and users)
 export KM_IP, KM_OP

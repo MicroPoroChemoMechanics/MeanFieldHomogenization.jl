@@ -56,6 +56,14 @@ accept `abstol`, `maxiters`, `damping`, `verbose`.
 | `:self_consistent` | `:sc`, `:SC` |
 | `:asymmetric_self_consistent` | `:asc`, `:ASC` |
 | `:differential` | `:diff`, `:DIFF` |
+| `:cluster` | `:cluster_model`, `:ClusterModel`, `:CLUSTER` |
+| `:eim` | `:EIM`, `:equivalent_inclusion` |
+
+!!! note "The last two act on a different cell"
+    `:cluster` and `:eim` are **N-body** schemes: they resolve the interaction
+    between individual inclusions and therefore need their positions, which an
+    `RVE` does not carry. They act on a [`ParticleAssembly`](@ref) instead — see
+    [the particle-assembly page](@ref man-assemblies).
 
 ## Distribution shape (Maxwell, PCW)
 

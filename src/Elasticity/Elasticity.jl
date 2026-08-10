@@ -34,6 +34,7 @@ include("hill_3d_aniso_decuhr.jl")
 include("hill_3d_cylinder_aniso.jl")
 include("hill_2d_iso.jl")
 include("hill_2d_aniso.jl")
+include("surface_stiffness.jl")
 include("api.jl")
 include("param_conversions.jl")
 
@@ -74,6 +75,7 @@ export EllipsoidShape, Spherical, Prolate, Oblate, Triaxial, Circular, Elliptic
 export Cylinder, CylindricalShape, CircularCylindrical, EllipticCylindrical
 export tens_IA, tens_UA, tens_VA
 export hill_tensor
+export surface_stiffness, equivalent_particle
 export k_mu, iso_stiffness, E_nu, iso_stiffness_E_nu
 export hoenig_params, hoenig_stiffness
 

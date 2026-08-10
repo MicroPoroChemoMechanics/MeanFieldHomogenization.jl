@@ -23,6 +23,10 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
   and DIF for elliptic and ribbon cracks.
 - `MeanFieldHomogenization.Conductivity` — 2nd-order Hill tensor for conductivity /
   diffusion problems.
+- `MeanFieldHomogenization.Interactions` — two-inclusion interaction tensors
+  `Γ^{ab}`, the shared ingredient of the N-body schemes (equivalent inclusion
+  method, cluster model): closed forms for ball and disk pairs, multipole
+  expansion for general ellipsoids, and periodic lattice sums.
 - `MeanFieldHomogenization.LayeredSpheres`   — `n`-layer composite spheres with five
   interface types, volume-average and pointwise localization.
 - `MeanFieldHomogenization.LayeredSpheroids` — `n`-layer confocal spheroids in
@@ -69,6 +73,10 @@ include("Core/Core.jl")
 include("Elasticity/Elasticity.jl")
 include("Cracks/Cracks.jl")
 include("Conductivity/Conductivity.jl")
+# `Interactions` needs the ellipsoid types and `hill_tensor` from `Elasticity`
+# and the 2nd-order kernels registered by `Conductivity`, and is needed in turn
+# by the N-body schemes — so it sits between the two.
+include("Interactions/Interactions.jl")
 include("LayeredSpheres/LayeredSpheres.jl")
 include("LayeredSpheroids/LayeredSpheroids.jl")
 include("Schemes/Schemes.jl")
@@ -77,6 +85,9 @@ include("Schemes/Schemes.jl")
 # the former, and the latter needs `Laminate` for the ageing-viscoelastic
 # multilayer.
 include("Laminates/Laminates.jl")
+# `Assemblies` follows the same pattern as `Laminates`: the scheme *types* are
+# declared in `Schemes`, their kernels live here with the cell they act on.
+include("Assemblies/Assemblies.jl")
 include("Viscoelasticity/Viscoelasticity.jl")
 
 using .Elliptic
@@ -84,10 +95,12 @@ using .Core
 using .Elasticity
 using .Cracks
 using .Conductivity
+using .Interactions
 using .LayeredSpheres
 using .LayeredSpheroids
 using .Schemes
 using .Laminates
+using .Assemblies
 using .Viscoelasticity
 
 # ─── Localization + contribution (top-level: need all sub-module APIs) ──────
@@ -123,12 +136,16 @@ include("Studio.jl")
 export AbstractInclusion, AbstractEllipsoidalInclusion, AbstractCrack
 export AbstractLayeredInclusion, AbstractCustomInclusion
 export AbstractAlgorithm, Analytical, Residue, DECUHR, NestedQuadGK,
-    CylinderQuadrature, Auto
+    CylinderQuadrature, Multipole, Auto
 export MaterialSymmetry, IsotropicSym, TransverselyIsotropicSym,
     OrthotropicSym, GeneralAnisotropicSym
 export material_symmetry, dimension, inclusion_basis, shape_trait, shape_tensor
 export eshelby_tensor
-export green_gradient_iso, dipole_displacement_iso
+export green_gradient_iso, dipole_displacement_iso, green_operator_iso
+
+# ── Two-inclusion interaction tensors (EIM / cluster model ingredient) ───────
+export interaction_tensor, self_interaction_tensor
+export lattice_interaction_tensor, periodic_images
 
 # ── Elasticity ───────────────────────────────────────────────────────────────
 export Ellipsoid, Spheroid
@@ -137,6 +154,7 @@ export Cylinder, CylindricalShape, CircularCylindrical, EllipticCylindrical
 export newton_potential_3d_cylinder
 export tens_IA, tens_UA, tens_VA
 export hill_tensor
+export surface_stiffness, equivalent_particle
 export k_mu, iso_stiffness, E_nu, iso_stiffness_E_nu
 export hoenig_params, hoenig_stiffness
 
@@ -235,10 +253,23 @@ export layer_gradient_localization, layer_flux_localization
 export interface_jump
 export ThicknessParameter, InterfaceParameter, thickness, interface_param
 
+# ── Assemblies : the positional cell of the N-body schemes ──────────────────
+export ParticleAssembly, Particle
+export AbstractAssemblyBoundary, MixedBC, PeriodicBox
+export add_particle!
+export particle_names, particle, particle_center, particle_geometry
+export particle_property, particle_family, family_labels
+export particle_volume, particle_volume_fraction, inclusion_volume_fraction
+export assembly_volume, validate_assembly
+export cubic_lattice, random_assembly, max_packing_fraction
+export eim_bound_type, eim_polarizations, cluster_localizations
+export CenterParameter, RadiusParameter, center_param, radius_param
+
 # ── Schemes : scheme types + entry point ─────────────────────────────────────
 export HomogenizationScheme
 export Voigt, Reuss, Laminated, Dilute, DiluteDual, MoriTanaka, Maxwell, PonteCastanedaWillis
 export SelfConsistent, AsymmetricSelfConsistent
+export ClusterModel, EquivalentInclusion
 export AndersonDefault, NewtonDefault, AutoNonlinear
 export DifferentialTrajectory, Proportional, Sequential, CustomPath, Path, DifferentialScheme
 export homogenize, differential_path

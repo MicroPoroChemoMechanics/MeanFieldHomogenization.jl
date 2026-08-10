@@ -22,6 +22,7 @@ three-scale model (`common/pichler_model.jl`), used by both the demo script
 | 60–69 | ALV cracks, interfaces & cross-validations |
 | 70–79 | Symmetrization showcases |
 | 80–89 | Custom (user-defined) inclusions, finite-element and neural-surrogate coupling |
+| 90–99 | Interacting particle assemblies: EIM & cluster model |
 
 ## Coverage map
 
@@ -138,6 +139,28 @@ The two `scripts/fe/make_*_figures.jl` are maintenance scripts, run by hand,
 that regenerate the committed PNGs and result tables of the documentation pages
 `manual/fe_inclusions.md` and `applications/recycled_aggregate.md`. Nothing
 finite-element runs at documentation-build time.
+
+### 90–99 Interacting particle assemblies (EIM & cluster model)
+
+The two **N-body** schemes: unlike every other scheme of the package they resolve
+the interaction between individual inclusions, so they act on a
+`ParticleAssembly` (which carries positions) rather than on an `RVE`. Both are
+built on the same two-inclusion interaction tensor — Brisard et al. (2014) §3.1
+note that their order-zero influence pseudotensors *are* the interaction tensors
+of Molinari & El Mouden (1996).
+
+| Script | reference / topic | Notes |
+|---|---|---|
+| `90_pair_interaction_tensor.jl` | Molinari & El Mouden (1996) App. A; Berveiller et al. (1987) | the shared kernel 𝕋^{ab}: transverse isotropy about the line of centers, the vanishing isotropic part, 𝕋^{aa} = −ℙ, R⁻³ decay and the ρ² correction, the three back-ends against each other, and the spherical-cutoff lattice sum |
+| `91_cluster_cubic_arrays.jl` | Molinari & El Mouden (1996), Figs. 3, 5, 6, 16 | **published tutorial** (`cluster_model`): convergence in cluster radius and the exact Mori-Tanaka degeneracy at R_c = 0, comparison with SC / differential / MT, the bulk modulus that stays exactly Mori-Tanaka, cubic anisotropy, SC vs BCC vs FCC porous arrays, and the EIM ≡ cluster identity |
+| `93_eim_disk_assembly_2d.jl` | Brisard, Dormieux & Sab (2014), Table 1 | **published tutorial** (`eim_assembly`): 160 circular pores at φ = 0.4 in a circular SVE of radius 20a, plane strain, ν₀ = 0.3 — reproduces the p = 0 row (0.310 μ₀) by Monte-Carlo, with the HS bound and the FEM reference for scale |
+| `96_nano_spheroids.jl` | Dormieux, Lemarchand & Brisard (2016), Eqs. (72)–(78) | **published tutorial** (`nano_spheroids`): the interface stiffness ℂ^int across aspect ratios, its three limiting cases (sphere, platelet, nanofiber) reproduced exactly, and the size effect it produces through an ordinary Mori-Tanaka estimate |
+
+Numbers 92, 94, 95 and 97–99 are free. What is deliberately **not** covered:
+Table 2 of Brisard et al. (polydisperse spheres at φ = 0.45) needs a polydisperse
+close-packing generator the package does not have, and the slender-fiber
+specialization of Martin et al. (2023) needs the axial polynomial enrichment,
+which is not implemented — see `docs/src/developer/roadmap.md`.
 
 ## Conventions worth knowing
 

@@ -43,3 +43,17 @@ flavor. A new scheme slots in beside them:
    `src/MeanFieldHomogenization.jl`.
 8. Add a unit test under `test/Schemes/` and a section in
    `docs/src/manual/schemes.md`.
+
+!!! note "A scheme need not act on an `RVE`"
+    Two cells other than `RVE` carry scheme kernels, and both follow the same
+    split: the scheme **type** is declared in `src/Schemes/scheme_types.jl` (so
+    the hierarchy and `SCHEME_ALIAS` stay in one place) while its `_evaluate`
+    method lives with the cell it acts on — `Laminated` in `src/Laminates/`, and
+    the two N-body schemes [`ClusterModel`](@ref) / [`EquivalentInclusion`](@ref)
+    in `src/Assemblies/`. If your scheme needs microstructural information an
+    `RVE` does not carry — positions, in the N-body case — add a cell rather
+    than widening `RVE`, and remember that MFH Studio discovers every concrete
+    `HomogenizationScheme` automatically: a scheme the interface cannot drive
+    must be listed in `ASSEMBLY_SCHEMES` (`tools/mfhstudio/mfhstudio/model.py`)
+    so it is filtered out of its catalog.
+

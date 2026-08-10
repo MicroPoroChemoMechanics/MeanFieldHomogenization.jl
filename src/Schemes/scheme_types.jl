@@ -28,7 +28,7 @@ abstract type HomogenizationScheme end
 """
     Voigt() <: HomogenizationScheme
 
-Voigt (uniform-strain) upper bound: ``\\langle \\mathbb C \\rangle``.
+Voigt (uniform-strain) upper bound: ``\\langle \\mathbb{C} \\rangle``.
 """
 struct Voigt <: HomogenizationScheme end
 
@@ -52,9 +52,9 @@ Unlike every other scheme in this file it is not an estimate: for a laminate
 it *is* the answer,
 
 ```math
-\\mathbb C^{hom} = \\langle\\mathbb Q\\rangle
- + \\langle\\mathbb C : \\mathbb P\\rangle : \\langle\\mathbb P\\rangle^{\\dagger}
-   : \\langle\\mathbb P : \\mathbb C\\rangle ,
+\\mathbb{C}^{hom} = \\langle\\mathbb Q\\rangle
+ + \\langle\\mathbb{C} : \\mathbb{P}\\rangle : \\langle\\mathbb{P}\\rangle^{\\dagger}
+   : \\langle\\mathbb{P} : \\mathbb{C}\\rangle ,
 ```
 
 with `ℙ_i` the flat-inclusion Hill tensor of layer `i` and
@@ -69,8 +69,8 @@ struct Laminated <: HomogenizationScheme end
 """
     Dilute() <: HomogenizationScheme
 
-Dilute scheme: ``\\mathbb C_{\\mathrm{eff}} = \\mathbb C_0 + \\sum_i f_i \\mathbb N_i``
-where ``\\mathbb N_i = (\\mathbb C_i - \\mathbb C_0):\\mathbb A_{\\varepsilon\\varepsilon}^{(i)}``
+Dilute scheme: ``\\mathbb{C}_{\\mathrm{eff}} = \\mathbb{C}_0 + \\sum_i f_i \\mathbb N_i``
+where ``\\mathbb N_i = (\\mathbb{C}_i - \\mathbb{C}_0):\\mathbb{A}_{\\varepsilon\\varepsilon}^{(i)}``
 is the size-independent stiffness contribution
 ([Eshelby 1957](@cite eshelby1957);
 [Kachanov & Sevostianov 2018](@cite kachanov2018)).
@@ -82,7 +82,7 @@ struct Dilute <: HomogenizationScheme end
 
 Dual dilute scheme on the compliance:
 ``\\mathbb S_{\\mathrm{eff}} = \\mathbb S_0 + \\sum_i f_i \\mathbb H_i``,
-returning ``\\mathbb C_{\\mathrm{eff}} = \\mathbb S_{\\mathrm{eff}}^{-1}``.
+returning ``\\mathbb{C}_{\\mathrm{eff}} = \\mathbb S_{\\mathrm{eff}}^{-1}``.
 """
 struct DiluteDual <: HomogenizationScheme end
 
@@ -109,6 +109,89 @@ Ponte-Castañeda & Willis 1995 scheme — distribution-shape-aware
 generalization of Mori-Tanaka.
 """
 struct PonteCastanedaWillis <: HomogenizationScheme end
+
+# ── N-body schemes (act on a `ParticleAssembly`, not on an `RVE`) ────────────
+#
+# Both types are declared here so that the scheme hierarchy stays in one file
+# and `SCHEME_ALIAS` can reach them, but their `_evaluate` methods live in the
+# `Assemblies` sub-module — the same split as `Laminated`, whose kernel lives
+# in `Laminates`.  Neither scheme accepts an `RVE`: a bag of volume fractions
+# does not say where the inclusions are, and that is exactly the information
+# these two models are about.
+
+"""
+    ClusterModel(; cluster_radius = nothing, kwargs...) <: HomogenizationScheme
+
+Cluster model of [Molinari & El Mouden 1996](@cite molinari1996): an N-body
+scheme in which the mean strain of every inclusion is solved for, accounting
+for the pairwise interaction with every neighbor inside a cluster of radius
+`R_c`, on top of the interaction with the matrix.
+
+Acts on a [`ParticleAssembly`](@ref), not on an `RVE`. Writing
+``\\delta\\mathbb{C}_K = \\mathbb{C}_K - \\mathbb{C}_m``, the localization tensors
+of the families solve
+
+```math
+\\sum_K \\mathbb{M}_{IK} : \\mathbb{A}_K = \\mathbb{I} ,\\qquad
+\\mathbb{M}_{IK} = \\begin{cases}
+ \\mathbb{I} + \\big[(1-f_K)\\mathbb{P}_0 - \\bar{\\mathbb{T}}_{II}\\big] : \\delta\\mathbb{C}_I
+   & K = I \\\\
+ -\\big[\\bar{\\mathbb{T}}_{IK} + f_K \\mathbb{P}_0\\big] : \\delta\\mathbb{C}_K & K \\ne I
+\\end{cases}
+```
+
+with ``\\bar{\\mathbb{T}}_{IK}`` the sum of the pairwise interaction tensors
+([`interaction_tensor`](@ref)) over the cluster. `cluster_radius` overrides the
+cutoff carried by the assembly's [`PeriodicBox`](@ref).
+
+Reducing the cluster to a single inclusion (`cluster_radius = 0`) makes every
+``\\bar{\\mathbb{T}}`` vanish and the scheme degenerates **exactly** onto
+[`MoriTanaka`](@ref) — the identity proved in Appendix C of the paper, and the
+sharpest available check on an implementation.
+"""
+struct ClusterModel{K <: NamedTuple} <: HomogenizationScheme
+    options::K
+end
+ClusterModel(; kwargs...) = ClusterModel(NamedTuple(kwargs))
+
+"""
+    EquivalentInclusion(; order = 0, kwargs...) <: HomogenizationScheme
+
+Equivalent inclusion method in the variational (Galerkin) form of
+[Brisard et al. 2014](@cite brisard2014) — a Galerkin discretization of the
+weak form of the Lippmann-Schwinger equation, with the polarization taken
+piecewise constant over each inclusion at `order = 0`.
+
+Acts on a [`ParticleAssembly`](@ref). The polarizations solve
+
+```math
+\\Big[(\\mathbb{C}_a - \\mathbb{C}_0)^{-1} + \\mathbb{P}_a - f_a \\mathbb{P}_\\Omega\\Big] : \\boldsymbol{\\tau}_a
+ - \\sum_{b \\ne a}\\Big[\\mathbb{T}^{ab} + f_b \\mathbb{P}_\\Omega\\Big] : \\tau_b = E ,
+```
+
+and the apparent stiffness follows from
+``\\mathbb{C}^{app} : E = \\mathbb{C}_0 : E + \\sum_a f_a \\boldsymbol{\\tau}_a``. The term in
+``\\mathbb{P}_\\Omega``, the Hill tensor of the SVE domain itself, is what
+implements the mixed boundary conditions of the paper — with
+[`MixedBC`](@ref) no periodization and no conditionally convergent lattice sum
+are needed.
+
+Because the method minimizes a Hashin-Shtrikman functional over a
+finite-dimensional space, the estimate is a **rigorous bound** on the apparent
+stiffness whenever the matrix is stiffer (upper bound) or softer (lower bound)
+than every inhomogeneity — see [`eim_bound_type`](@ref).
+
+Brisard et al. note in their §3.1 that at `order = 0` their influence
+pseudotensors coincide with the interaction tensors of
+[Berveiller et al. 1987](@cite berveiller1987) and
+[Molinari & El Mouden 1996](@cite molinari1996); the two schemes of this
+package accordingly share [`interaction_tensor`](@ref) and agree on a periodic
+assembly with the same cutoff.
+"""
+struct EquivalentInclusion{K <: NamedTuple} <: HomogenizationScheme
+    options::K
+end
+EquivalentInclusion(; kwargs...) = EquivalentInclusion(NamedTuple(kwargs))
 
 # ── Self-consistent solvers (built-in markers) ───────────────────────────────
 
@@ -270,9 +353,9 @@ each ODE step.  This is the natural API for the multi-phase DEM
 incorporation-sequence ODE :
 
 ```math
-\\frac{\\mathrm d \\mathbb C^{hom}}{\\mathrm d \\tau}
+\\frac{\\mathrm d \\mathbb{C}^{hom}}{\\mathrm d \\tau}
   = \\sum_i \\frac{\\mathrm d \\varphi_i}{\\mathrm d \\tau}
-            (\\mathbb C_i - \\mathbb C^{hom}):\\mathbb A_i^{dil}(\\mathbb C^{hom})
+            (\\mathbb{C}_i - \\mathbb{C}^{hom}):\\mathbb{A}_i^{dil}(\\mathbb{C}^{hom})
 ```
 
 with the volumetric balance `dφ = (𝟙 - f ⊗ 𝐔)^{-1} · df` (Sherman-
@@ -303,9 +386,9 @@ Differential scheme : integrates the Norris ODE on the fictitious
 incorporation time `τ ∈ [0, 1]` ([Norris 1985](@cite norris1985)) :
 
 ```math
-\\frac{\\mathrm d \\mathbb C^{hom}}{\\mathrm d \\tau}
+\\frac{\\mathrm d \\mathbb{C}^{hom}}{\\mathrm d \\tau}
   = \\sum_i \\frac{\\mathrm d \\varphi_i}{\\mathrm d \\tau}\\,
-            (\\mathbb C_i - \\mathbb C^{hom}):\\mathbb A_i^{dil}(\\mathbb C^{hom})
+            (\\mathbb{C}_i - \\mathbb{C}^{hom}):\\mathbb{A}_i^{dil}(\\mathbb{C}^{hom})
 ```
 
 with the volume balance `df = (𝟙 - f ⊗ 𝐔)·dφ` inverted by Sherman-

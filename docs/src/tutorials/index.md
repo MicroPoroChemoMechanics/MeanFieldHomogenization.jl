@@ -43,6 +43,24 @@ and the one where the choice of scheme matters most.
 Composite inclusions carry no Hill tensor at all: they enter the schemes through
 their volume-averaged concentration tensors instead.
 
+## Interacting particle assemblies
+
+The two **N-body** schemes. Every other scheme of the package sees a single
+inclusion in a reference medium and averages the interaction; these two resolve
+it inclusion by inclusion, so they need a `ParticleAssembly` — a cell that
+carries positions — rather than an `RVE`. Both are built on the same
+two-inclusion interaction tensor.
+
+| Tutorial | What it shows |
+|---|---|
+| [The cluster model on cubic arrays](generated/cluster_model.md) | Molinari & El Mouden (1996): convergence in cluster radius, the exact degeneracy onto Mori-Tanaka when the cluster is empty, comparison with the one-site schemes, the bulk modulus that stays exactly Mori-Tanaka whatever the arrangement, and SC vs BCC vs FCC porous arrays |
+| [The equivalent inclusion method](generated/eim_assembly.md) | Brisard, Dormieux & Sab (2014), Table 1: 160 circular pores in a circular SVE, plane strain — the `p = 0` bound reproduced by Monte-Carlo, against the Hashin-Shtrikman bound it improves on and the finite-element value it bounds |
+| [Nanocomposites: the equivalent particle](generated/nano_spheroids.md) | Dormieux, Lemarchand & Brisard (2016): a Gurtin-Murdoch interface condensed into a particle stiffness, its three limiting shapes reproduced exactly, and the size effect it produces through an ordinary Mori-Tanaka estimate — no new scheme needed |
+
+Theory: [interaction tensors](@ref th-interaction), [the cluster
+model](@ref th-cluster), [the equivalent inclusion method](@ref th-eim); the
+API is on the [particle-assembly manual page](@ref man-assemblies).
+
 ## Beyond elasticity
 
 | Page | What it shows |
