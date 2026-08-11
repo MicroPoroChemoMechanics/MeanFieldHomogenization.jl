@@ -20,11 +20,8 @@ function _cod_elliptic_numerical(
         maxiters::Int = 100_000
     ) where {T <: Number}
     η = aspect_ratio(c)
-    lhat, mhat, nhat = MFH_Core._frame_columns(crack_basis(c))
-    basis = crack_basis(c)
-
-    C0_loc = TensND.change_tens(C₀, basis)
-    Carr = MFH_Core._C_array(C0_loc)
+    # Frame consistency — see `_crack_local_frame`.
+    Carr, lhat, mhat, nhat, basis = _crack_local_frame(c, C₀)
 
     Tp = promote_type(T, eltype(Carr), eltype(lhat))
     ηp = Tp(η)
@@ -74,10 +71,10 @@ function _cod_ribbon_numerical(
         reltol::Real = 1.0e-6,
         maxiters::Int = 100_000
     ) where {T <: Number}
-    _, mhat, nhat = MFH_Core._frame_columns(crack_basis(c))
-    basis = crack_basis(c)
-    C0_loc = TensND.change_tens(C₀, basis)
-    Carr = MFH_Core._C_array(C0_loc)
+    # Same frame-consistency rule as `_cod_elliptic_numerical`: `Carr` holds the
+    # components of `C₀` in the crack basis, so the ribbon's in-plane direction
+    # and its normal are the canonical `e₂` and `e₃` of that basis.
+    Carr, _, mhat, nhat, basis = _crack_local_frame(c, C₀)
 
     Tp = promote_type(T, eltype(Carr), eltype(mhat))
 

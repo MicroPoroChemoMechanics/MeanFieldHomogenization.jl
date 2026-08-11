@@ -84,6 +84,7 @@ Random.seed!(20260723)
     @testset "Cracks" begin
         include("Cracks/test_cod.jl")
         include("Cracks/test_cod_ti_aligned.jl")
+        include("Cracks/test_crack_orientation.jl")
         include("Cracks/test_residue_accuracy.jl")
         include("Cracks/test_H_oracle.jl")
         include("Cracks/test_thermal.jl")
@@ -122,6 +123,7 @@ Random.seed!(20260723)
         include("Schemes/test_one_shot.jl")
         include("Schemes/test_maxwell_pcw.jl")
         include("Schemes/test_self_consistent.jl")
+        include("Schemes/test_sc_crack_orientation.jl")
         include("Schemes/test_self_consistent_nls.jl")
         include("Schemes/test_differential.jl")
         include("Schemes/test_complex_moduli.jl")
@@ -131,6 +133,7 @@ Random.seed!(20260723)
         include("Schemes/test_symmetrize.jl")
         include("Schemes/test_orientation.jl")
         include("Schemes/test_loc_bundles.jl")
+        include("Schemes/test_crack_families.jl")
     end
 
     # The user-defined-inclusion contract spans Core (the abstractions) and
@@ -197,6 +200,19 @@ Random.seed!(20260723)
         include("LayeredSpheroids/test_conductivity.jl")
         include("LayeredSpheroids/test_scheme_integration.jl")
         include("LayeredSpheroids/test_local_fields.jl")
+    end
+
+    # `Poromechanics` post-processes a homogenized stiffness, so it only needs
+    # `Schemes` to be exercised — same position as in the load order.
+    @testset "Poromechanics" begin
+        include("Poromechanics/test_biot.jl")
+    end
+
+    # `Constitutive` is the Gauss-point law built on a cell + scheme, so it runs
+    # after both, and after `Poromechanics` whose parameters the poroelastic
+    # materials consume.
+    @testset "Constitutive" begin
+        include("Constitutive/test_material_api.jl")
     end
 
     @testset "Viscoelasticity" begin

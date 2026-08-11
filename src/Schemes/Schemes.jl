@@ -17,6 +17,7 @@ module Schemes
 
 using LinearAlgebra
 using TensND
+using Tensors
 using ForwardDiff
 using OrdinaryDiffEq
 
@@ -57,6 +58,9 @@ include("mori_tanaka.jl")
 include("maxwell.jl")
 include("pcw.jl")
 include("self_consistent.jl")
+# Needs `_sc_solid_averages` (self_consistent.jl) and `_frob_sq`, hence its
+# position after every scheme body it decomposes.
+include("crack_families.jl")
 include("trajectory.jl")
 include("differential.jl")
 include("parameters.jl")
@@ -89,6 +93,7 @@ export DifferentialTrajectory, Proportional, Sequential, CustomPath, Path, Diffe
 
 # Entry point
 export homogenize, differential_path
+export crack_family_compliances, crack_family_residual
 
 # Sensitivities — lentilles paramétriques + wrappers ForwardDiff (extension)
 export AbstractParameter, AmountParameter, PropertyParameter,

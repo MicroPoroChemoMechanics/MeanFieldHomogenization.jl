@@ -99,6 +99,133 @@ function _sc_step(rve::RVE, C_n, prop::Symbol; kw...)
     return _sc_step_dispatch(rve, C_n, prop; kw...)
 end
 
+# ── The two accumulator loops of the SC body, factored out ───────────────────
+#
+# They are shared by the 4th- and 2nd-order `_sc_step_dispatch` methods above
+# (only the contraction operator differs, and that stays in the caller) *and*
+# by `crack_family_compliances` in `crack_families.jl`, which has to reproduce
+# the very same averages at the converged estimate to expose the per-family
+# compliance contributions. Keeping one definition is what stops the two from
+# drifting apart: a change to the SC body is automatically reflected in the
+# per-family decomposition, and the identity test in
+# `test/Schemes/test_crack_families.jl` fails loudly if it is not.
+
+"""
+    _sc_solid_averages(rve, P_n, prop; kw...) -> (A_avg, CA_avg)
+
+Volume-weighted dilute-concentration and stress-average accumulators over the
+phases that carry a [`VolumeFraction`](@ref) — the matrix included — evaluated
+in the reference medium `P_n`:
+
+```
+A_avg  = Σ_α f_α ⟨A_α(P_n)⟩          CA_avg = Σ_α f_α ⟨C_α : A_α(P_n)⟩
+```
+
+`CrackDensity` phases are skipped: their strain concentration is singular and
+they are collected by [`_sc_crack_total`](@ref) instead.
+"""
+function _sc_solid_averages(
+        rve::RVE, P_n::TensND.AbstractTens, prop::Symbol; kw...
+    )
+    A_avg = zero(P_n)
+    CA_avg = zero(P_n)
+    for name in rve.phase_names
+        if name === rve.matrix_name
+            f = matrix_volume_fraction(rve)
+        else
+            a = rve.amounts[name]
+            a isa VolumeFraction || continue
+            f = amount_value(a)
+        end
+        A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, P_n; kw...)
+        A_avg += f * A_dil
+        CA_avg += f * CA
+    end
+    return A_avg, CA_avg
+end
+
+"""
+    _major_symmetrize(P) -> AbstractTens
+
+Project a property estimate onto the **major-symmetric** tensors:
+``P_{ijkl} \\mapsto (P_{ijkl} + P_{klij})/2`` at 4th order, and
+``P_{ij} \\mapsto (P_{ij} + P_{ji})/2`` at 2nd order.
+
+An effective stiffness (or conductivity) derives from an energy, so it *is*
+major-symmetric. The self-consistent body, however, assembles it as
+`𝔹_E : 𝔸_E⁻¹` — a product of two tensors that do not commute — and that product
+is only major-symmetric when the phases happen to share a common frame. With
+non-coaxial crack families it is not: the asymmetry starts at roundoff and is
+then **amplified by the fixed-point iteration** (measured: 3·10⁻¹⁵ at the second
+iterate, 2·10⁻⁴ at the third). A stiffness that is not major-symmetric is not a
+valid Eshelby reference medium, and the anisotropic crack cubature returns a
+`NaN` integrand on it, which used to abort the whole solve with a `DomainError`.
+
+Projecting at every step keeps the iteration inside the admissible set. It is a
+no-op up to roundoff whenever the product is already symmetric, and it matches
+the reference ECHOES implementation, whose self-consistent estimate comes out
+exactly major-symmetric.
+
+The components are taken and rebuilt in the tensor's **own** basis, so the
+projection commutes with the orientation of the running estimate.
+
+!!! note "Structured types are returned untouched"
+    `TensISO`, `TensOrtho` and the five-parameter Walpole `TensTI{4,T,5}` are
+    major-symmetric *by construction*, so there is nothing to project — and
+    rebuilding them as a generic `Tens` would be actively harmful: the Newton
+    parameterization (`_sc_newton_seed`) reads the structured components through
+    `get_data`, and the symmetry-class dispatch keys on the concrete type. Only
+    the genuinely unstructured estimates — which is exactly what a mix of
+    non-coaxial families produces — are rebuilt.
+"""
+_major_symmetrize(P::TensND.TensISO{4, 3}) = P
+_major_symmetrize(P::TensND.TensISO{2, 3}) = P
+_major_symmetrize(P::TensND.TensOrtho) = P
+_major_symmetrize(P::TensND.TensTI{4, T, 5}) where {T} = P
+_major_symmetrize(P::TensND.TensTI{2}) = P
+
+function _major_symmetrize(P::TensND.AbstractTens{4, 3})
+    A = get_array(P)
+    T = eltype(A)
+    sym = Tensors.SymmetricTensor{4, 3}(
+        (i, j, k, l) -> (A[i, j, k, l] + A[k, l, i, j]) / T(2)
+    )
+    return TensND.Tens(sym, TensND.get_basis(P))
+end
+
+function _major_symmetrize(P::TensND.AbstractTens{2, 3})
+    A = get_array(P)
+    T = eltype(A)
+    sym = Tensors.SymmetricTensor{2, 3}((i, j) -> (A[i, j] + A[j, i]) / T(2))
+    return TensND.Tens(sym, TensND.get_basis(P))
+end
+
+"""
+    _sc_crack_total(rve, P_n, prop; kw...) -> (H_total, has_cracks)
+
+Sum of the *density-scaled* compliance (resistivity) contributions of every
+[`CrackDensity`](@ref) phase, evaluated in the reference medium `P_n`:
+
+```
+H_total = Σ_i (4π/3) d_i ℍ_i(P_n)
+```
+
+`has_cracks` reports whether the sum has any term at all, which is what selects
+the crack branch of the SC body.
+"""
+function _sc_crack_total(
+        rve::RVE, P_n::TensND.AbstractTens, prop::Symbol; kw...
+    )
+    H_total = zero(P_n)
+    has_cracks = false
+    for name in inclusion_phase_names(rve)
+        rve.amounts[name] isa CrackDensity || continue
+        H_total += _phase_compliance_contribution(rve, name, prop, P_n; kw...)
+        has_cracks = true
+    end
+    return H_total, has_cracks
+end
+
 # 4th-order — symmetric (Hill 1965 / Budiansky 1965) self-consistent
 # iteration : all phases (matrix included) carry a non-trivial dilute strain
 # concentration A_α = inv(I + P(C_α - C_n)) computed in the iterating
@@ -121,36 +248,15 @@ function _sc_step_dispatch(
     # compliance contribution `H_c`.  This breaks the cancellation and
     # gives a different fixed point than the textbook
     # `(Σ f·C·A)·(Σ f·A)^{-1}` SC body when cracks are present.
-    A_avg = zero(C_n)   # = Σ_solids f·sym(A_α)
-    CA_avg = zero(C_n)   # = Σ_solids f·sym(C_α·A_α)
-    H_total = zero(C_n)   # = Σ_cracks ε·sym(H_c)
-    has_cracks = false
-    for name in rve.phase_names
-        if name === rve.matrix_name
-            f = matrix_volume_fraction(rve)
-        else
-            a = rve.amounts[name]
-            a isa VolumeFraction || continue
-            f = amount_value(a)
-        end
-        A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, C_n; kw...)
-        A_avg += f * A_dil
-        CA_avg += f * CA
-    end
-    for name in inclusion_phase_names(rve)
-        a = rve.amounts[name]
-        a isa CrackDensity || continue
-        H = _phase_compliance_contribution(rve, name, prop, C_n; kw...)
-        H_total += H
-        has_cracks = true
-    end
+    A_avg, CA_avg = _sc_solid_averages(rve, C_n, prop; kw...)
+    H_total, has_cracks = _sc_crack_total(rve, C_n, prop; kw...)
     if has_cracks
         S_n = inv(C_n)
         A_E = (A_avg ⊡ S_n) + H_total
         B_E = CA_avg ⊡ S_n
-        return B_E ⊡ inv(A_E)
+        return _major_symmetrize(B_E ⊡ inv(A_E))
     else
-        return CA_avg ⊡ inv(A_avg)
+        return _major_symmetrize(CA_avg ⊡ inv(A_avg))
     end
 end
 
@@ -162,36 +268,15 @@ function _sc_step_dispatch(
     # Conduction analog of the 4th-order ECHOES SC body :
     # solids have `gradient_Flux = A · R_n` (R_n = inv(K_n) — resistivity),
     # cracks contribute the bare resistivity contribution `R_c`.
-    A_avg = zero(K_n)
-    KA_avg = zero(K_n)
-    R_total = zero(K_n)
-    has_cracks = false
-    for name in rve.phase_names
-        if name === rve.matrix_name
-            f = matrix_volume_fraction(rve)
-        else
-            a = rve.amounts[name]
-            a isa VolumeFraction || continue
-            f = amount_value(a)
-        end
-        A_dil, KA = _phase_dilute_and_stress_average(rve, name, prop, K_n; kw...)
-        A_avg += f * A_dil
-        KA_avg += f * KA
-    end
-    for name in inclusion_phase_names(rve)
-        a = rve.amounts[name]
-        a isa CrackDensity || continue
-        R = _phase_compliance_contribution(rve, name, prop, K_n; kw...)
-        R_total += R
-        has_cracks = true
-    end
+    A_avg, KA_avg = _sc_solid_averages(rve, K_n, prop; kw...)
+    R_total, has_cracks = _sc_crack_total(rve, K_n, prop; kw...)
     if has_cracks
         R_n = inv(K_n)
         A_E = (A_avg ⋅ R_n) + R_total
         B_E = KA_avg ⋅ R_n
-        return B_E ⋅ inv(A_E)
+        return _major_symmetrize(B_E ⋅ inv(A_E))
     else
-        return KA_avg ⋅ inv(A_avg)
+        return _major_symmetrize(KA_avg ⋅ inv(A_avg))
     end
 end
 

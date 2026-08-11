@@ -126,6 +126,7 @@ makedocs(;
             "Beyond elasticity" => [
                 "manual/conductivity.md",
                 "manual/viscoelasticity.md",
+                "manual/poromechanics.md",
             ],
             "Differentiation" => [
                 "manual/sensitivities.md",
@@ -205,6 +206,15 @@ makedocs(;
             "applications/bituminous.md",
             "applications/ageing_creep.md",
         ],
+        # MeanFieldHomogenization *inside* a finite-element code — the exact
+        # opposite of `manual/fe_inclusions.md`, which is the FE solver inside
+        # MeanFieldHomogenization. Kept as its own top-level section so the two
+        # can never be read as a continuation of one another.
+        "Finite-element coupling" => [
+            "fe_coupling/index.md",
+            "fe_coupling/scale_transition.md",
+            "fe_coupling/materials.md",
+        ],
         # Getting work into and out of MeanFieldHomogenization. These are companions to
         # the library rather than chapters about it, which is why they sit
         # together at the end of the user-facing material instead of
@@ -237,6 +247,8 @@ makedocs(;
             "api/laminate.md",
             "api/interactions.md",
             "api/schemes.md",
+            "api/poromechanics.md",
+            "api/constitutive.md",
             "api/assemblies.md",
             "api/viscoelasticity.md",
             "api/sensitivities.md",

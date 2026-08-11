@@ -1,5 +1,11 @@
 # [Finite-element inclusions](@id man-fe-inclusions)
 
+!!! note "The opposite coupling"
+    This page is about finite elements used **inside** MeanFieldHomogenization,
+    to solve one inclusion's Eshelby problem. For MeanFieldHomogenization used
+    **inside** a finite-element code, as a constitutive law at each Gauss point,
+    see [Finite-element coupling](@ref fe-coupling).
+
 When a morphology has no closed-form Eshelby solution, its response can be
 computed numerically and fed to the schemes through the
 [custom-inclusion contract](@ref man-custom-inclusions). `MeanFieldHomogenization` ships

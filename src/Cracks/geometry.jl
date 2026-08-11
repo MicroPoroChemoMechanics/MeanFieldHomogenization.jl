@@ -260,6 +260,36 @@ semi_minor(c::EllipticCrack) = c.b
 semi_minor(c::RibbonCrack) = c.b
 
 """
+    _crack_local_frame(c, C₀) -> (Carr, l̂, m̂, n̂, ℬ)
+
+Everything the anisotropic COD kernels need, expressed **in one single frame**:
+the components of `C₀` in the crack basis `ℬ = crack_basis(c)`, together with
+the crack's own frame vectors *in that same basis* — where they are, by
+construction, the canonical triad ``(\\mathbf e_1, \\mathbf e_2, \\mathbf e_3)``
+with ``\\mathbf e_3 = \\hat{\\mathbf n}``.
+
+Frame consistency is the whole point. `MFH_Core._frame_columns(ℬ)` returns the
+crack frame in *global* coordinates; combining those with components expressed
+in `ℬ` mixes two frames and yields a wrong COD for every crack that is not
+aligned with the canonical axes. The aligned case coincides, which is exactly
+why such a mix can survive a test suite built on aligned cracks.
+
+The COD returned by the kernels is then in the crack basis too, so wrapping it
+as `Tens(…, ℬ)` is consistent.
+"""
+function _crack_local_frame(
+        c::MFH_Core.AbstractCrack, C₀::TensND.AbstractTens{4, 3}
+    )
+    basis = crack_basis(c)
+    Carr = MFH_Core._C_array(TensND.change_tens(C₀, basis))
+    T = eltype(Carr)
+    l̂ = T[one(T), zero(T), zero(T)]
+    m̂ = T[zero(T), one(T), zero(T)]
+    n̂ = T[zero(T), zero(T), one(T)]
+    return Carr, l̂, m̂, n̂, basis
+end
+
+"""
     crack_chi(c)
 
 Dimensionless coefficient ``χ`` linking the average crack opening to the

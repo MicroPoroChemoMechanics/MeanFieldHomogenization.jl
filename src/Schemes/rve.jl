@@ -537,6 +537,103 @@ function add_phase!(
 end
 
 # =============================================================================
+#  In-place updates of an already-registered phase
+#
+#  `set_param` is the sanctioned way to change an amount: it is a pure lens,
+#  returns a NEW RVE, and that is precisely what makes ForwardDiff work through
+#  it. The price is a fresh `Dict` of amounts, a fresh `Dict` of phases and a
+#  copy of `phase_names` per call — irrelevant for a sensitivity study, wasteful
+#  in a loop that re-evaluates the same RVE at every Gauss point of every Newton
+#  iteration of every time step.
+#
+#  The two setters below are the mutating counterpart for that loop. They are
+#  NOT a replacement for `set_param`: they bypass `promote_rve`, so they do not
+#  widen the RVE's declared element-type floor, and a `Dual` stored this way
+#  will propagate but was never promoted with the rest.
+# =============================================================================
+
+"""
+    set_amount!(rve::RVE, name::Symbol, value) -> RVE
+
+Overwrite the amount of an already-registered phase **in place**, keeping its
+kind ([`VolumeFraction`](@ref) or [`CrackDensity`](@ref)) and refreshing the
+`f_matrix` cache when needed.
+
+Intended for the inner loop of a Gauss-point constitutive law, where the same
+RVE is re-evaluated thousands of times with a slightly different crack density
+or porosity. Everywhere else — and always for anything differentiated — prefer
+the immutable [`set_param`](@ref) lens.
+
+Changing the *kind* of an amount is rejected: every scheme branches on
+`a isa VolumeFraction`, so turning a crack density into a volume fraction
+silently changes which formula the phase goes through. Register a different
+phase instead.
+
+```julia
+set_amount!(rve, :CRACK, 0.12)     # new crack density
+homogenize(rve, SelfConsistent())  # sees the new value
+```
+
+!!! note "Only volume fractions touch the cache"
+    `f_matrix = 1 - Σ f_inc` sums [`VolumeFraction`](@ref) entries only, so a
+    [`CrackDensity`](@ref) write cannot stale it — cracks carry no volume. The
+    cache is still recomputed for a volume-fraction write, with the same loop
+    [`add_phase!`](@ref) uses, so the value stays bit-identical to what a fresh
+    RVE would hold.
+
+See also [`set_geometry!`](@ref), [`set_param`](@ref), [`add_phase!`](@ref).
+"""
+function set_amount!(rve::RVE{T}, name::Symbol, value) where {T}
+    haskey(rve.amounts, name) ||
+        throw(ArgumentError("no phase named :$(name) carries an amount in this RVE"))
+    old = rve.amounts[name]
+    new = if old isa VolumeFraction
+        VolumeFraction(_amount_promote(T, value))
+    else
+        CrackDensity(_amount_promote(T, value))
+    end
+    rve.amounts[name] = new
+    # Only a volume fraction can move the implicit matrix fraction.
+    if _sums_to_unit(new)
+        rve.f_matrix = _compute_matrix_volume_fraction(rve.amounts, T)
+    end
+    return rve
+end
+
+"""
+    set_geometry!(rve::RVE, name::Symbol, geometry::AbstractInclusion) -> RVE
+
+Replace the geometry of an already-registered phase **in place**.
+
+[`Phase`](@ref) is mutable and nothing on the RVE is cached from a geometry, so
+this invalidates no state. As with [`set_amount!`](@ref), it is the loop-friendly
+counterpart of the immutable [`set_param`](@ref) lens and bypasses element-type
+promotion.
+"""
+function set_geometry!(rve::RVE, name::Symbol, geometry::AbstractInclusion)
+    haskey(rve.phases, name) ||
+        throw(ArgumentError("no phase named :$(name) in RVE"))
+    rve.phases[name].geometry = geometry
+    return rve
+end
+
+"""
+    set_property!(rve::RVE, name::Symbol, key::Symbol, value) -> RVE
+
+Set (or add) the property `key` of an already-registered phase **in place**.
+
+The typical use is toggling a crack family between open and closed through its
+`:K_interface` spring stiffness without rebuilding the RVE. Nothing is cached
+from a property, so this invalidates no state.
+"""
+function set_property!(rve::RVE, name::Symbol, key::Symbol, value)
+    haskey(rve.phases, name) ||
+        throw(ArgumentError("no phase named :$(name) in RVE"))
+    rve.phases[name].properties[key] = value
+    return rve
+end
+
+# =============================================================================
 #  Accessors
 # =============================================================================
 

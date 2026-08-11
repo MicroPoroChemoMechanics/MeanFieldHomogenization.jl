@@ -34,6 +34,10 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
 - `MeanFieldHomogenization.Schemes`      — RVEs, amounts, symmetrization and the
   homogenization schemes themselves (dilute, Mori–Tanaka, self-consistent,
   PCW, Maxwell, differential).
+- `MeanFieldHomogenization.Poromechanics`  — poroelastic upscaling of a saturated
+  medium with a homogeneous solid phase: Biot tensor and modulus, drained ↔
+  undrained conversion, Skempton tensor, effective stresses. A post-processor
+  of a homogenized stiffness, not a scheme.
 - `MeanFieldHomogenization.Viscoelasticity`  — ageing linear viscoelasticity through
   Volterra operators, available to every scheme.
 - `MeanFieldHomogenization.CustomInclusions` — the user-defined inclusion contract:
@@ -46,6 +50,12 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
   trained neural network (`NeuralHillInclusion`, `NeuralLocalizationInclusion`),
   together with the sampling and fitting machinery; the optimizer comes from
   `MeanFieldHomogenizationLuxExt`, evaluation needs no extra dependency.
+- `MeanFieldHomogenization.Constitutive` — the package **as a constitutive law at
+  each Gauss point** of a structural finite-element computation, the role an
+  MFront behavior or an Abaqus UMAT plays: `material_response`, per-point
+  internal state, consistent tangent, and the `Tensors.jl` bridge. The mirror
+  image of `FiniteElements` — there the finite elements are inside MFH, here MFH
+  is inside the finite-element code.
 
 # Shared generic interface
 
@@ -88,6 +98,11 @@ include("Laminates/Laminates.jl")
 # `Assemblies` follows the same pattern as `Laminates`: the scheme *types* are
 # declared in `Schemes`, their kernels live here with the cell they act on.
 include("Assemblies/Assemblies.jl")
+# `Poromechanics` is a *post-processor* of a homogenized stiffness, not a
+# scheme: it only needs `Schemes` for the RVE convenience layer, and adds no
+# `_evaluate` method. Placed here so the poroelastic parameters are available
+# to the Gauss-point constitutive laws further down.
+include("Poromechanics/Poromechanics.jl")
 include("Viscoelasticity/Viscoelasticity.jl")
 
 using .Elliptic
@@ -101,6 +116,7 @@ using .LayeredSpheroids
 using .Schemes
 using .Laminates
 using .Assemblies
+using .Poromechanics
 using .Viscoelasticity
 
 # ─── Localization + contribution (top-level: need all sub-module APIs) ──────
@@ -124,10 +140,16 @@ include("contribution.jl")
 include("CustomInclusions/CustomInclusions.jl")
 include("FiniteElements/FiniteElements.jl")
 include("NeuralInclusions/NeuralInclusions.jl")
+# `Constitutive` turns a whole cell + scheme into a Gauss-point material law, so
+# it comes after every inclusion family a microstructure may hold. It is the
+# mirror image of `FiniteElements`: there the FE code is inside MFH, here MFH is
+# inside the FE code.
+include("Constitutive/Constitutive.jl")
 
 using .CustomInclusions
 using .FiniteElements
 using .NeuralInclusions
+using .Constitutive
 
 # ─── MFH Studio launcher ─────────────────────────────────────────────────────
 include("Studio.jl")
@@ -275,6 +297,7 @@ export ClusterModel, EquivalentInclusion
 export AndersonDefault, NewtonDefault, AutoNonlinear
 export DifferentialTrajectory, Proportional, Sequential, CustomPath, Path, DifferentialScheme
 export homogenize, differential_path
+export crack_family_compliances, crack_family_residual
 
 # ── Schemes : sensitivities (autodiff via ForwardDiff strong dependency) ────
 export AbstractParameter, AmountParameter, PropertyParameter,
@@ -282,6 +305,12 @@ export AbstractParameter, AmountParameter, PropertyParameter,
 export amount, property, geometry, shape_param
 export get_param, set_param
 export derivative, gradient, jacobian, sensitivity
+
+# ── Poromechanics : Biot tensor / modulus, drained ↔ undrained ──────────────
+export terzaghi_stress, biot_effective_stress
+export biot_tensor, inverse_biot_modulus, biot_modulus, poroelastic_parameters
+export undrained_stiffness, drained_stiffness, skempton_tensor
+export pore_volume_fraction
 
 # ── Viscoelasticity (ALV) ────────────────────────────────────────────────────
 export AbstractViscoLaw, ViscoLaw, VALID_VISCO_MODES
@@ -319,6 +348,17 @@ export dilute_concentration_alv_order2, dilute_contribution_alv_order2
 export homogenize_alv_order2
 export cod_kernel_alv, compliance_contribution_alv, delta_compliance_alv
 export stiffness_contribution_alv, stiffness_contribution_alv_at, delta_stiffness_alv
+
+# ── Constitutive : MFH as a Gauss-point law inside an FE code ───────────────
+export AbstractMFHMaterial, AbstractMaterialState, NoState
+export MaterialResponse, stress, tangent, state
+export initial_state, material_response
+export gradient_names, flux_names, tangent_blocks, transport_property
+export check_material_interface
+export HomogenizedElastic, stiffness
+export MaterialCache, cached!, cache_stats, reset_cache!
+export to_tensors, from_tensors
+export voigt_stress, voigt_strain, stress_from_voigt, strain_from_voigt
 
 # ── MFH Studio launcher ──────────────────────────────────────────────────────
 export mfhstudio

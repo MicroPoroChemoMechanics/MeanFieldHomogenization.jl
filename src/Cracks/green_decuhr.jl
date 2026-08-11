@@ -82,11 +82,8 @@ function _cod_elliptic_decuhr_direct(
         maxiters::Int = 100_000
     ) where {T <: Number}
     η = aspect_ratio(c)
-    lhat, mhat, nhat = MFH_Core._frame_columns(crack_basis(c))
-    basis = crack_basis(c)
-
-    C0_loc = TensND.change_tens(C₀, basis)
-    Carr = MFH_Core._C_array(C0_loc)
+    # Frame consistency — see `_crack_local_frame`.
+    Carr, lhat, mhat, nhat, basis = _crack_local_frame(c, C₀)
 
     Tp = promote_type(T, eltype(Carr), eltype(lhat))
     ηp = Tp(η)
