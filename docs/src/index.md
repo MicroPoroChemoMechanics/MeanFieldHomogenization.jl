@@ -95,6 +95,22 @@ Six optional package extensions cover the cubature backend, the SciML fixed-poin
 solvers, symbolic closed forms, the two finite-element backends and neural-surrogate
 training — see [Installation](@ref man-installation).
 
+## Citation
+
+If you use MeanFieldHomogenization.jl in your work, please cite the following:
+
+```bibtex
+@software{meanfieldhomogenization_jl,
+  author = {Barthélémy, Jean-François},
+  title  = {MeanFieldHomogenization.jl: Mean-field homogenization of heterogeneous materials},
+  doi    = {10.5281/zenodo.21884243},
+  url    = {https://doi.org/10.5281/zenodo.21884243},
+}
+```
+
+`CITATION.cff` in the repository root carries the same metadata in a
+machine-readable form.
+
 ## Where to start
 
 | If you want to… | Go to |

@@ -18,6 +18,7 @@ keywords:
   - "automatic differentiation"
 version: "0.1.0"
 date-released: "2026-08-07"
+doi: "10.5281/zenodo.21884243"
 url: "https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl"
 repository-code: "https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl"
 license: "MIT"

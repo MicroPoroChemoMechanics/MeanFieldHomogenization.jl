@@ -13,6 +13,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/LICENSE)
 [![code style: runic](https://img.shields.io/badge/code_style-%E1%9A%B1%E1%9A%A2%E1%9A%BE%E1%9B%81%E1%9A%B2-pink)](https://github.com/fredrikekre/Runic.jl)
 
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.21884243-blue)](https://doi.org/10.5281/zenodo.21884243)
+
 `MeanFieldHomogenization.jl` is a Julia framework for **mean-field homogenization**
 of heterogeneous materials: it predicts effective elastic, transport and
 viscoelastic properties from the properties, shapes, orientations and
@@ -201,16 +203,18 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ## Citation
 
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.21884243-blue)](https://doi.org/10.5281/zenodo.21884243)
+
 See [CITATION.cff](CITATION.cff) for citation details.
 
 **BibTeX entry:**
 
 ```bibtex
 @software{meanfieldhomogenization_jl,
-  author = {Barthélémy, Jean-François},
-  title  = {MeanFieldHomogenization.jl: Mean-field homogenization of heterogeneous materials},
-  url    = {https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl},
-  year   = {2026}
+  author = {Barth{\'e}l{\'e}my, Jean-Fran{\c{c}}ois},
+  title  = {{MeanFieldHomogenization.jl}: Mean-field homogenization of heterogeneous materials},
+  doi    = {10.5281/zenodo.21884243},
+  url    = {https://doi.org/10.5281/zenodo.21884243}
 }
 ```
 
