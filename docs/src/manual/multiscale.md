@@ -47,13 +47,21 @@ Everything `homogenize` accepts is an
 | :--- | :--- | :--- |
 | [`RVE`](@ref) | random, described through the Eshelby auxiliary problem | `Voigt`, `Reuss`, `Dilute`, `DiluteDual`, `MoriTanaka`, `Maxwell`, `PonteCastanedaWillis`, `SelfConsistent`, `AsymmetricSelfConsistent`, `DifferentialScheme` |
 | [`Laminate`](@ref) | periodic stack of parallel layers, deterministic | `Laminated` (exact), `Voigt`, `Reuss` |
-| [`ParticleAssembly`](@ref) | explicitly located inclusions — positions, not statistics | `ClusterModel`, `EquivalentInclusion` |
+| [`ParticleAssembly`](@ref) | explicitly located inclusions — positions, not statistics | `ClusterModel`, `EquivalentInclusion`, **plus every `RVE` scheme** |
 
 A scheme that a cell does not serve reports it explicitly rather than
 dispatching elsewhere: `MoriTanaka` needs a matrix phase, so it does not apply
-to a laminate; `Laminated` needs an ordered stack, so it does not apply to an
-RVE; the two N-body schemes need positions, so they do not apply to either.
-Any cell can be used at any level of a chain.
+to a laminate; `Laminated` needs an ordered stack, so it applies to neither an
+RVE nor an assembly; the two N-body schemes need positions, so they do not
+apply to an RVE. Any cell can be used at any level of a chain.
+
+The assembly row is the one asymmetry: an assembly is strictly *richer* than an
+RVE, so forgetting its positions is always well defined and
+[`RVE(asm)`](@ref) does exactly that. Every one-site scheme therefore runs on
+an assembly directly — `homogenize(asm, MoriTanaka(), :C)` — which is what
+makes "the same microstructure, seen by two families of scheme" a single cell
+rather than two. The converse does not exist: an `RVE` has no positions to
+invent.
 
 !!! note "Chaining an N-body estimate needs the anisotropic Green operator"
     A cluster or equivalent-inclusion estimate on a cubic array is **cubic, not

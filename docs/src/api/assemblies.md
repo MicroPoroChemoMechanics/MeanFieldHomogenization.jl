@@ -21,6 +21,12 @@ MixedBC
 PeriodicBox
 ```
 
+## The bridge to the one-site schemes
+
+```@docs
+RVE(::MeanFieldHomogenization.Assemblies.ParticleAssembly)
+```
+
 ## Accessors
 
 ```@docs

@@ -2,6 +2,74 @@
 
 ## Unreleased
 
+## v0.2.0
+
+Two N-body homogenization models, the machinery they share, and a bridge that
+puts every existing scheme on the new cell.
+
+### Breaking changes
+
+- **The documented sign convention of the transport quantities is corrected.**
+  The package now states `σ ≡ −q = K·∇T` as the stress analog: on a surface
+  of normal `n`, `σ·n` is in *both* theories what the exterior transmits to the
+  interior. **No returned value changed** — `flux_gradient_loc`, `flux_flux_loc`
+  and `gradient_flux_loc` compute exactly what they always did — but their
+  docstrings previously described that quantity as the flux `q` rather than as
+  `σ = −q`. Code that followed the old docstrings was interpreting the sign
+  backwards; the numbers were always the ones documented now. The same applies
+  to the thermal `sif` / `dif`, whose driving vector is `σ∞ ≡ −q∞`.
+- **Two names were removed from the export list**: `laminate_interface` and
+  `layer_fraction`. Both were exported without ever being defined, so any use
+  already raised `UndefVarError`; no working code is affected.
+
+### Added
+
+- **`ParticleAssembly`** — a cell holding individually *located* inclusions,
+  with `PeriodicBox` and `MixedBC` far-field treatments, volume fractions
+  derived from the geometry (`f_a = |Ω_a|/|Ω|`), particle families, and the
+  `cubic_lattice` / `random_assembly` generators.
+- **`ClusterModel`** — Molinari & El Mouden (1996): the mean strain of every
+  inclusion, resolved pairwise inside a cluster of radius `R_c`. Degenerates
+  *exactly* onto Mori-Tanaka at `cluster_radius = 0`.
+- **`EquivalentInclusion`** — Brisard, Dormieux & Sab (2014) at order `p = 0`,
+  a Galerkin discretization of the weak Lippmann-Schwinger equation, with
+  `eim_bound_type` reporting when the estimate is a rigorous bound.
+- **`interaction_tensor` / `self_interaction_tensor`** — the two-inclusion
+  tensor `𝕋^{ab}` both schemes are built on, with three back-ends
+  (`:analytical` closed forms exact at any separation, `:multipole`,
+  `:quadrature`) plus `lattice_interaction_tensor` for periodic images.
+- **Anisotropic Green operator** — `green_operator_aniso` (Barnett line
+  integral for 3D elasticity, closed form for conduction), `green_function_aniso`
+  and the `green_operator` dispatcher. This is what makes it possible to chain
+  an N-body estimate into a further scale, since a cluster estimate on a cubic
+  array is *cubic*, not isotropic.
+- **`RVE(asm)`** — forgets the positions and keeps the derived fractions, so
+  **every one-site scheme runs directly on an assembly**
+  (`homogenize(asm, MoriTanaka(), :C)`). One phase per particle, which is exact
+  because every scheme sums over phases linearly. `matrix_geometry` and
+  `distribution_shape` are forwarded through `homogenize`.
+- **Nano-interfaces** — `surface_stiffness` and `equivalent_particle`
+  (Dormieux, Lemarchand & Brisard, 2016): a Gurtin-Murdoch interface condensed
+  into an equivalent particle stiffness, after which the classical schemes
+  apply unchanged.
+- **Parameter lenses for assemblies** — `center_param` and `radius_param`,
+  differentiable through both the N-body and the one-site paths.
+
+### Changed
+
+- The Green operator follows [Brisard, Bertin & Legoll (2023)](https://doi.org/10.1016/j.cma.2023.116389),
+  Eq. (9): it maps a polarization onto **minus** the induced field, so its
+  Fourier symbol is positive semi-definite and its self term is
+  `𝕋^{aa} = +ℙ`, coherent with the Hill tensor. Molinari & El Mouden and
+  Berveiller et al. use the opposite sign, which the documentation now names
+  explicitly wherever a formula is transcribed from them. (This convention
+  governs API introduced in this release only.)
+- `green_operator_iso` and the other public Green entry points return a `Tens`
+  like every other tensor-valued function of the package; the `SArray` kernels
+  they wrap are internal.
+- The Theory and Manual sections of the documentation are grouped, so that the
+  standard theory precedes what is built on it.
+
 ## v0.1.0 — 2026-08-07
 
 First public release of MeanFieldHomogenization.jl — a mean-field homogenization toolkit
@@ -29,7 +97,7 @@ cross-validated against the C++ ECHOES code.
 
 - **`Viscoelasticity` sub-module** — time-domain ALV homogenization after
   Sanahuja (2013) and Barthélémy et al. (2016, 2019): `ViscoLaw` relaxation /
-  creep kernels, Sanahuja trapezoidal discretisation, block-Volterra inverse,
+  creep kernels, Sanahuja trapezoidal discretization, block-Volterra inverse,
   discrete ALV Hill kernel.
 - **`homogenize_alv(rve, scheme, prop; times)`** for all schemes, order-4 and
   order-2; iso and TI Walpole-basis fast paths; BLAS/LAPACK Volterra fast path.
@@ -107,7 +175,7 @@ cross-validated against the C++ ECHOES code.
   - `AbstractHomogenizationCell` (in `Core/cells.jl`) is now the supertype of
     everything `homogenize` accepts — `RVE` and `Laminate` today. `homogenize`,
     `get_param`/`set_param` and `derivative`/`gradient`/`jacobian` are typed on
-    it; every scheme kernel stays on `RVE`, so existing behaviour is unchanged.
+    it; every scheme kernel stays on `RVE`, so existing behavior is unchanged.
   - `Homogenized(cell, scheme)` may be stored **as a property value**: a whole
     multiscale model becomes one object, resolved lazily. With no explicit
     `property` it *inherits the key it is stored under*, so one nested cell
@@ -154,7 +222,7 @@ cross-validated against the C++ ECHOES code.
     two-callback teacher (`geometry`, `response` — the only morphology-dependent
     part), `fit_scaling`, `train_surrogate`, `validate_surrogate`,
     `report_surrogate`.
-  - `Provenance` travelling with every model — teacher, sample counts, held-out
+  - `Provenance` traveling with every model — teacher, sample counts, held-out
     error — and a **domain guard** that refuses (or warns on) an evaluation
     outside the box the model was trained on. Test tolerances are derived from
     the recorded error rather than hard-coded, so a retraining cannot silently
@@ -177,7 +245,7 @@ cross-validated against the C++ ECHOES code.
     `cod_tensor` is enough for ℍ, ℕ, 𝐑, 𝐍_K, the bundled pair and the four
     `delta_*` to be inherited, so it drops into every scheme, `symmetrize`
     included.
-  - `FEExcenteredSphere` — sphere with an off-centre spherical core, solved by
+  - `FEExcenteredSphere` — sphere with an off-center spherical core, solved by
     **axisymmetric Fourier elements** (modes 0/1/2 in elasticity, 0/1 in
     transport). Three assemblies and eight solves in two dimensions where the
     three-dimensional formulation needs six solves on a mesh two orders of
@@ -234,7 +302,7 @@ cross-validated against the C++ ECHOES code.
 - **`LayeredSphere` phases in the ALV differential scheme**, through
   block-matrix (`_at`) variants of the layered-sphere ALV kernels. Mori-Tanaka
   and the self-consistent schemes already supported them.
-- Unrecognised `DifferentialScheme` keywords are now forwarded to
+- Unrecognized `DifferentialScheme` keywords are now forwarded to
   `OrdinaryDiffEq.solve` (`maxiters`, `dtmax`, `callback`, …) instead of being
   silently dropped.
 - **New tutorial: [Comparing loading-path trajectories](docs/src/tutorials/differential_loading_paths.md)**,
@@ -449,7 +517,7 @@ cross-validated against the C++ ECHOES code.
   `Cracks._ti_crack_dispatch` ended on a hard-coded `Residue()` for a crack in
   a non-aligned TI matrix, so that path kept the residue algorithm as its
   `:auto` regardless of the shared rule — exactly the duplication
-  `Core/dispatch.jl` centralises to avoid. It now defers to
+  `Core/dispatch.jl` centralizes to avoid. It now defers to
   `_aniso_default_algo`, as the ellipsoid TI refinement already did.
 - **Crack densities are now diluted by the solid increments in the
   differential scheme.** Replacing `dφ` of the current medium by solid
@@ -485,8 +553,8 @@ cross-validated against the C++ ECHOES code.
   raise an `ArgumentError` naming the phase and the two ways out. Cracks with
   `symmetrize = :iso` now work, where they used to fail with a cryptic "only
   iso reference is supported".
-- `homogenize_alv(rve, DifferentialScheme(), prop; times)` honours `prop`
-  instead of always homogenising `:C`.
+- `homogenize_alv(rve, DifferentialScheme(), prop; times)` honors `prop`
+  instead of always homogenizing `:C`.
 
 - **The n-layer sphere's shear localization `β_k` is validated against ECHOES.**
   `benchmark_nlayers.jl` had dropped the comparison, citing a 1–50 % gap blamed
@@ -646,7 +714,7 @@ MPCM-Registry). Kept for reference.
 
 **`DifferentialScheme` is now solved by an adaptive SciML ODE
 integrator** (`Tsit5` default) on the fictitious incorporation time
-`τ ∈ [0, 1]`, replacing the explicit Euler discretisation.  The
+`τ ∈ [0, 1]`, replacing the explicit Euler discretization.  The
 underlying multi-phase incorporation-sequence ODE
 ([Norris 1985](@cite norris1985); user's hand-written DEM note) reads
 
@@ -780,7 +848,7 @@ block.  The Walpole 2×2 part `[[ℓ₁, ℓ₃]; [ℓ₄, ℓ₂]]` is packed a
 
 ISO inputs are subsumed automatically (iso ⊂ TI), so a TI-matrix +
 iso-inclusion combination — common in layered concrete /
-fibre-reinforced ALV — gets the fast path "for free".  Storage is 6 ·
+fiber-reinforced ALV — gets the fast path "for free".  Storage is 6 ·
 n² doubles per phase (vs 36 · n² generic), and the inverse cost drops
 from `O((6n)²)` to `O((2n)²) + 2·O(n²) ≈ ×3` cheaper than the generic
 6n×6n path.
@@ -798,7 +866,7 @@ triangular matrices with 3×3 blocks.  Mirrors the order-4 API:
   * `homogenize_alv_order2(rve, scheme, prop; times)` — public entry
     point, dispatching on Voigt / Reuss / Dilute / DiluteDual /
     Mori-Tanaka / Maxwell schemes.
-  * `hill_kernel_order2(ell, K_0_law, times)` — Hill polarisation for
+  * `hill_kernel_order2(ell, K_0_law, times)` — Hill polarization for
     iso ALV matrix + ellipsoidal inclusion (time-space decoupling
     `P̃[block(i,j)] = α₀^{-vol}[i,j] · 𝐈^A`, with `𝐈^A` from the
     existing elastic `tens_IA(ell)`).
@@ -823,7 +891,7 @@ crosscheck on the `fluage_echoes_maxwell_ordre2.py` setup.
 `volterra_left_divide` and `volterra_divide` now dispatch to LAPACK
 `trtri` / `trsm` via the `LowerTriangular(...)` wrapper for
 `BlasFloat` element types and `n ≥ 64` (the crossover where BLAS
-overhead amortises).  Measured speedups vs the hand-rolled forward
+overhead amortizes).  Measured speedups vs the hand-rolled forward
 substitution: **×9.7** at `n = 500`, **×14.6** at `n = 1000`.  The
 hand-rolled fallback is preserved for small grids and for
 non-BlasFloat element types (`BigFloat`, `Sym`, `ForwardDiff.Dual`).
@@ -855,7 +923,7 @@ M_C++ = D_row · M_Christ–Lo · D_col,
 
 This gives the **best of both worlds**: numerical stability of the
 closed-form (only `(3κ+4μ)^{-vol}` and `μ^{-vol}` `n×n` Volterra
-inverses are needed) under the elastic-compatible mode normalisation
+inverses are needed) under the elastic-compatible mode normalization
 where the Christensen–Lo membrane jumps stay correct.  The
 `Membrane interface (elastic limit)` test is back to `≤ 1e-10`
 tolerance with no convention asterisk.
@@ -934,7 +1002,7 @@ the previous unbounded / oscillating output.  Bench results :
 - `bench_step_n2.jl` (N=2 step layers, no pore) : 1e-14.
 - `bench_layered_alv_nopore.jl` (N=4 elastic, varied moduli) : 1e-15.
 
-### v0.5.1 — Multi-layer sphere shear localisation bug fix
+### v0.5.1 — Multi-layer sphere shear localization bug fix
 
 **Bug fix** : on a non-uniform time grid (e.g. `logspace`) with a
 matrix relaxation kernel that has multiple time constants and/or
@@ -975,7 +1043,7 @@ causes :
   closed-form inverse is naturally written in σ-form and FP
   stability now comes from the closed form rather than the rescaling.
 - Rewrote `_shear_M_matrix_alv` to use the C++ ECHOES mode
-  normalisation (mode 1 contributes `U = a · r`, not Christensen–Lo's
+  normalization (mode 1 contributes `U = a · r`, not Christensen–Lo's
   `2a · r`) so it stays consistent with the analytic `M^{-1}`
   formula.  Mode-2 dev contribution factor
   `F_k = (21/5) μ^{-vol} (3κ + μ) (r_b⁵ − r_a⁵)/(r_b³ − r_a³)` was
@@ -993,7 +1061,7 @@ the previous unbounded / oscillating output.  Bench results :
 - `bench_step_n2.jl` (N=2 step layers, no pore) : 1e-14.
 - `bench_layered_alv_nopore.jl` (N=4 elastic, varied moduli) : 1e-15.
 
-### v0.5.1 — Multi-layer sphere shear localisation bug fix
+### v0.5.1 — Multi-layer sphere shear localization bug fix
 
 **Bug fix** : `LayeredSpheres._shear_localization` and the
 companion ALV `shear_localization_alv` previously returned only the
@@ -1005,7 +1073,7 @@ genuinely multi-layer composite spheres with distinct core, shell
 and matrix moduli, `b_k` is non-zero and contributes to the
 volume-averaged deviatoric strain via the mode-2 r³ profile.
 
-The corrected per-layer dev localisation is
+The corrected per-layer dev localization is
 
 ```text
 β_k = a_k + b_k · (21/5) (3κ_k + μ_k)/μ_k · (r_k⁵ − r_{k-1}⁵)/(r_k³ − r_{k-1}³)
@@ -1045,7 +1113,7 @@ chapter 7 and appendix `viscoelastic_hill_kernel.qmd`.
   kernel, scalar- or 4-tensor-valued, with built-in convenience
   constructors `maxwell_relaxation`, `kelvin_creep`, `maxwell_iso`,
   `kelvin_iso`, `heaviside_law`.
-- **`trapezoidal_matrix`** : Sanahuja-2013 trapezoidal discretisation of
+- **`trapezoidal_matrix`** : Sanahuja-2013 trapezoidal discretization of
   the Stieltjes integral on a time grid `times`, returning a dense
   `Matrix{T}` of size `(B·n) × (B·n)` in lower-block-triangular form
   (`B = 6` for 4-tensor in Mandel convention, `B = 1` for scalar
@@ -1053,7 +1121,7 @@ chapter 7 and appendix `viscoelastic_hill_kernel.qmd`.
 - **`volterra_inverse`** : block-triangular forward-substitution that
   takes a discrete relaxation matrix to its discrete creep matrix in
   `O(B³ n²)` flops.
-- **`hill_kernel`** : discrete ALV Hill polarisation tensor for an
+- **`hill_kernel`** : discrete ALV Hill polarization tensor for an
   ellipsoidal inclusion in an isotropic ALV matrix, using the
   time-space decoupling formula of the manual appendix : reuses the
   elastic auxiliary tensors `tens_UA`, `tens_VA` and combines them with
@@ -1095,13 +1163,13 @@ chapter 7 and appendix `viscoelastic_hill_kernel.qmd`.
 #### N-layer sphere ALV — full bulk + shear recurrence (added in 0.5.0)
 
 - **`bulk_localization_alv(sphere::LayeredSphere, C0_law, times)`** —
-  per-layer bulk localisation matrices `α_k(t,t')` of size `n × n`
+  per-layer bulk localization matrices `α_k(t,t')` of size `n × n`
   (one per layer).  Extends the elastic Hervé-Zaoui bulk recurrence
   ([`LayeredSpheres/bulk_recurrence.jl`]) by replacing every scalar
   modulus with its `n × n` trapezoidal Volterra matrix, building
   `(2n × 2n)` block transfer matrices.
 - **`shear_localization_alv(sphere::LayeredSphere, C0_law, times)`** —
-  per-layer deviatoric (Y₂-harmonic) localisation matrices `β_k(t,t')`
+  per-layer deviatoric (Y₂-harmonic) localization matrices `β_k(t,t')`
   of size `n × n`.  Builds the Hervé-Zaoui 1993 4×4 fundamental matrix
   in **time-major** layout (`(4n × 4n)` block-lower-triangular with
   4×4 diagonal blocks), inverts it via `volterra_inverse(_;
@@ -1126,7 +1194,7 @@ chapter 7 and appendix `viscoelastic_hill_kernel.qmd`.
   reduces to the elastic 4×4 jump for scalar parameters.
 - **Composite-sphere assembly**:
   `strain_strain_loc_alv(sphere, C0_law, times)` builds the volume-
-  averaged strain-strain localisation tensor
+  averaged strain-strain localization tensor
   `A_avg = ⟨α⟩ 𝕁 + ⟨β⟩ 𝕂` (`(6n × 6n)`), and
   `stiffness_contribution_alv(sphere, C0_law, times)` builds the
   size-independent stiffness contribution
@@ -1168,7 +1236,7 @@ The release also ships an RVE-level orientation-distribution projection
 (`symmetrize`), a corrected Hill-symmetric self-consistent scheme that
 percolates exactly at φ=0.5 for spherical pores, a `Spheroid` convenience
 constructor, Dual-stable SC convergence, and a `select_best` mode that
-mirrors the C++ reference's behaviour at percolation thresholds.
+mirrors the C++ reference's behavior at percolation thresholds.
 
 #### Additions
 
@@ -1203,7 +1271,7 @@ mirrors the C++ reference's behaviour at percolation thresholds.
     `axis` ⇒ transversely-isotropic contribution (`TensTI(axis)`).
   Implemented for tensor orders 2 and 4. The TI projection currently
   routes the matrix through an iso projection during the
-  localisation-tensor computation (workaround for non-coaxial inclusion
+  localization-tensor computation (workaround for non-coaxial inclusion
   families); see [`src/Schemes/symmetrize.jl`](src/Schemes/symmetrize.jl)
   for the rationale.
 - **`Spheroid(ω; euler_angles)`** convenience constructor on top of
@@ -1232,7 +1300,7 @@ mirrors the C++ reference's behaviour at percolation thresholds.
   fall below `abstol`. Without that, the value can converge while the
   partials carry residual error of order `‖∂step/∂x‖ × abstol`,
   producing numerically wrong sensitivities through the SC fixed point.
-- **TI symmetrize Walpole normalisation**: the `_apply_symmetrize` for
+- **TI symmetrize Walpole normalization**: the `_apply_symmetrize` for
   `TISymmetrize` now divides the W₅ and W₆ projection coefficients by
   `‖W_k‖² = 2`, matching the basis-decomposition convention of
   `TensND.TensTI{4}`. Round-trip on a coaxial TI(ez) tensor is now
@@ -1289,7 +1357,7 @@ Total: 3421 tests pass.
   Hill-symmetric SC fix. The pre-v0.4 SC step treated the matrix as
   Mori-Tanaka-style (A = I) and therefore selected the upper branch
   unconditionally. The new step is the textbook Hill / Budiansky 1965
-  symmetric SC. Users who relied on the old upper-branch behaviour for
+  symmetric SC. Users who relied on the old upper-branch behavior for
   porous-sphere systems should switch to `MoriTanaka` (which is also
   not broken by the fix).
 - **`homogenize` API** keeps the `homogenize(rve, scheme; property=:C)`
@@ -1322,12 +1390,12 @@ from C++ ECHOES, with a few Julia-idiomatic improvements.
   `volume_fraction`, `crack_density`, `matrix_volume_fraction`,
   `validate_rve`).  Volume fractions are stored at the RVE level rather
   than on the inclusions — a single inclusion remains usable for
-  localisation-tensor calculations without any RVE machinery.
+  localization-tensor calculations without any RVE machinery.
 - **`AbstractAmount`** hierarchy with `VolumeFraction` (solid inclusions)
   and `CrackDensity` (flat cracks); the matrix amount is implicit
   (`1 − Σ f_inc`) and crack densities are excluded from that sum.
 - **`AbstractDistributionShape`** hierarchy with `UniformDistribution`
-  (single outer envelope, current behaviour); leaves an extension hook
+  (single outer envelope, current behavior); leaves an extension hook
   for a future `PairwiseDistribution` (Willis 1982) without breaking
   the public API.
 - **Ten homogenization schemes**: `Voigt`, `Reuss`, `Dilute`,
@@ -1358,7 +1426,7 @@ from C++ ECHOES, with a few Julia-idiomatic improvements.
   bifurcation). See the
   [nonlinear solvers tutorial](docs/src/tutorials/12_nonlinear_solvers.md).
 - **Conductivity (`property = :K`)** is supported by every scheme
-  through 2nd-order tensor algebra (gradient-gradient localisation,
+  through 2nd-order tensor algebra (gradient-gradient localization,
   resistivity contributions for cracks).
 
 #### Number-type compatibility
@@ -1396,7 +1464,7 @@ the new snake_case + UPPERCASE-acronym convention.
 
 - `TensND.TensWalpole` references (type annotations, dispatch rules,
   constructor calls) now use `TensND.TensTI{4}`.  The struct layout is
-  identical so numerical behaviour is unchanged.
+  identical so numerical behavior is unchanged.
 - Accessor renames propagated from TensND: `getbasis` → `get_basis`,
   `tensbasis` → `tens_basis`, `invKM` → `inv_KM`, `getdata` → `get_data`,
   `getarray` → `get_array`, `getvar` → `get_var`, `getdim` → `get_dim`,
@@ -1414,4 +1482,4 @@ None — functional surface unchanged.
 
 If you have your own code depending on MeanFieldHomogenization dispatch, apply the
 same renames as listed in TensND's v0.2 changelog. All MeanFieldHomogenization tests
-(2865) pass without behavioural change after migration.
+(2865) pass without behavioral change after migration.

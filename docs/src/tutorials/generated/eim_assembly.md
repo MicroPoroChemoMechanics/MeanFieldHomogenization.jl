@@ -12,13 +12,16 @@ is a Galerkin discretization of the weak Lippmann-Schwinger equation. At order
 ```math
 \Big[(\mathbb{C}_a-\mathbb{C}_0)^{-1} + \mathbb{P}_a
      - f_a\, \mathbb{P}_\Omega\Big] : \boldsymbol{\tau}_a
- - \sum_{b \ne a}\Big[\mathbb{T}^{ab} + f_b\, \mathbb{P}_\Omega\Big]
+ + \sum_{b \ne a}\Big[\mathbb{T}^{ab} - f_b\, \mathbb{P}_\Omega\Big]
      : \boldsymbol{\tau}_b = \boldsymbol{E} ,
 ```
 
 ``\mathbb{P}_\Omega`` being the Hill tensor of the statistical volume element
 itself — the term that implements their mixed boundary conditions and removes
-any need for periodization.
+any need for periodization. The package shares the sign convention of
+[Brisard, Bertin & Legoll (2023)](https://doi.org/10.1016/j.cma.2023.116389),
+so this is their Eq. (37) transcribed with nothing flipped: the self term is
+``\mathbb{T}^{aa} = +\mathbb{P}_a`` and every block carries a plus.
 
 Because the method minimizes a Hashin-Shtrikman functional over a
 finite-dimensional space, the estimate is a **rigorous bound** whenever the

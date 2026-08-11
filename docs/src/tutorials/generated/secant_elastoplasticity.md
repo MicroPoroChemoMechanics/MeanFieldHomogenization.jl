@@ -24,8 +24,8 @@ Two ingredients make it work, and both already exist in the package:
 
 ## The nonlinear closure, and why a derivative gives it
 
-Write the macroscopic strain as ``\boldsymbol{E} = \tfrac{E_v}{3}\boldsymbol{1}
-+ \boldsymbol{E}_d`` with ``E_v = \mathrm{tr}\,\boldsymbol{E}`` its volumetric
+Write the macroscopic strain as ``\boldsymbol{E} = \tfrac{E_v}{3}\boldsymbol{1} +
+\boldsymbol{E}_d`` with ``E_v = \mathrm{tr}\,\boldsymbol{E}`` its volumetric
 part and ``\boldsymbol{E}_d`` its deviator. For an isotropic effective
 behavior of moduli ``(k^{\hom}, \mu^{\hom})`` the macroscopic elastic energy is
 

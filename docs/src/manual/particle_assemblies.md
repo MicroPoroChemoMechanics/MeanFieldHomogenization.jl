@@ -26,7 +26,66 @@ homogenize(asm, EquivalentInclusion(), :C)
 ```
 
 Volume fractions are **derived**, never stored — `f_a = |Ω_a| / |Ω|` — so the geometry
-and the fractions cannot disagree:
+and the fractions cannot disagree. This is the one place where an assembly differs
+from an `RVE` in kind rather than in detail: on an `RVE` the inclusion *size* is
+arbitrary (the Hill tensor is size-independent, so `Ellipsoid(1.0)` is idiomatic),
+whereas here the size **is** the volume fraction.
+
+## Every other scheme, on the same assembly
+
+An assembly is strictly richer than an `RVE` — it knows *where* each inclusion is —
+so forgetting the positions is always well defined. [`RVE(asm)`](@ref) does exactly
+that, and it is applied automatically: **every one-site scheme of the package works
+directly on an assembly**.
+
+```julia
+homogenize(asm, ClusterModel(), :C)          # reads the positions
+homogenize(asm, EquivalentInclusion(), :C)   # reads the positions
+homogenize(asm, MoriTanaka(), :C)            # ignores them — via RVE(asm)
+homogenize(asm, SelfConsistent(), :C)
+homogenize(asm, DifferentialScheme(), :C)
+homogenize(asm, Voigt(), :C), homogenize(asm, Reuss(), :C)
+
+rve = RVE(asm)                               # …the intermediate cell, to inspect
+```
+
+So "what would Mori-Tanaka say about *this* microstructure?" is one call rather than
+a second, hand-built cell — and the exact degeneracy of the cluster model becomes a
+statement about a single object:
+
+```julia
+homogenize(asm, ClusterModel(; cluster_radius = 0.0), :C) ≈ homogenize(asm, MoriTanaka(), :C)
+```
+
+The conversion keeps **one phase per particle**, named as the particle was. It does
+not need to merge identical ones: every scheme sums over phases linearly, so `N`
+identical phases of fraction `f/N` give exactly the same effective property as one
+phase of fraction `f` — in Mori-Tanaka, in the self-consistent fixed point and along
+a differential path alike.
+
+Two keywords are forwarded through `homogenize` to the conversion:
+
+| keyword | default | who reads it |
+| :-- | :-- | :-- |
+| `matrix_geometry` | a ball (a disk in 2D) | only the schemes that localize the matrix like any other phase — the self-consistent family. `MoriTanaka`, `Dilute` and the bounds never look at it |
+| `distribution_shape` | none | [`PonteCastanedaWillis`](@ref), which needs one; an assembly carries no such statistical descriptor |
+
+!!! warning "The bridge is one-way"
+    `RVE(asm)` discards the positions — that is the point — so its result can no
+    longer feed [`ClusterModel`](@ref) or [`EquivalentInclusion`](@ref). There is
+    deliberately no `ParticleAssembly(rve)`: an `RVE` has no positions to invent,
+    which is the clearest statement that the assembly is the richer object rather
+    than a variant of it. `Laminated` is refused on both.
+
+!!! note "In 2D, only the N-body schemes and the bounds"
+    The bridge inherits the `RVE`'s own capabilities exactly, and outside
+    `Voigt` / `Reuss` the one-site family is implemented for **3D properties
+    only**. A plane-strain assembly therefore answers `ClusterModel`,
+    `EquivalentInclusion`, `Voigt` and `Reuss`; `MoriTanaka` and the rest raise
+    the same `MethodError` they would raise on a hand-built 2D `RVE`. This is a
+    limitation of the one-site kernels, not of the conversion.
+
+Derived quantities remain available on the assembly itself:
 
 ```julia
 particle_volume_fraction(asm, :p1)

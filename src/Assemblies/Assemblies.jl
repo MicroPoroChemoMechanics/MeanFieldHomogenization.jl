@@ -29,6 +29,9 @@ Contents
                         onto the Kelvin-Mandel basis
 - `cluster_model.jl` : the Molinari & El Mouden kernel
 - `eim.jl`           : the Brisard, Dormieux & Sab kernel
+- `as_rve.jl`        : `RVE(asm)` — forget the positions, keep the fractions,
+                        which is what makes every one-site scheme of the
+                        package available on an assembly
 - `parameters.jl`    : parameter lenses (positions, radii) for the
                         differentiation entry points
 """
@@ -60,6 +63,7 @@ include("generators.jl")
 include("block_solve.jl")
 include("cluster_model.jl")
 include("eim.jl")
+include("as_rve.jl")
 include("parameters.jl")
 
 # ── The cell and its parts ──────────────────────────────────────────────────
