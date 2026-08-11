@@ -231,8 +231,10 @@ end
 
     asm = ParticleAssembly(; boundary = PeriodicBox(1.0))
     add_matrix!(asm, Dict(:C => C_m))
-    add_particle!(asm, :p1, (0.5, 0.5, 0.5), Ellipsoid(0.3),
-        Dict(:C => Homogenized(inner, MoriTanaka())))
+    add_particle!(
+        asm, :p1, (0.5, 0.5, 0.5), Ellipsoid(0.3),
+        Dict(:C => Homogenized(inner, MoriTanaka()))
+    )
     got = get_array(homogenize(asm, MoriTanaka(), :C))
 
     C_in = homogenize(inner, MoriTanaka(), :C)
