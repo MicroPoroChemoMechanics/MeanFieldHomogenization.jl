@@ -30,11 +30,24 @@
 #  line integral covers the transversely isotropic case too, and one code path
 #  is one code path to validate.
 #
-#  NOTE — a normalization slip in the source. `Green.jl`'s scalar `Green2` /
-#  `GradGreen2` divide by `det(c)` where the anisotropic Laplace Green function
-#  needs `sqrt(det(c))`; with `c = σ₀ 𝟏` they return `1/(4π σ₀^{5/2} r)` instead
-#  of `1/(4π σ₀ r)`. The correct normalization is used here, and the isotropic
-#  cross-check in the test suite is what pins it.
+#  NORMALIZATION of the scalar (conduction) Green function.  It solves
+#  -∇·(K∇G) = δ.  Substituting x = K^{1/2}·y turns ∇_x·(K∇_x) into the plain
+#  Laplacian Δ_y and rescales the source, δ(x) = δ(y)/√(det K), so
+#
+#       G(x) = 1/(4π √(det K) √(x·K⁻¹·x))              (3D)
+#       G(x) = -log√(x·K⁻¹·x) / (2π √(det K))          (2D)
+#
+#  Only the prefactor distinguishes √(det K) from det K — both give a function
+#  that is harmonic away from the origin — and the isotropic case is what
+#  settles it: with det K one gets 1/(4π σ₀^{5/2} r) instead of 1/(4π σ₀ r),
+#  which is not even dimensionally right.  The exploratory `Green.jl` divides
+#  by `det(c)`; √(det K) is used here, and the isotropic cross-check in the
+#  test suite is what pins it.
+#
+#  SIGN and API.  Both conventions of `green_operator.jl` carry over unchanged:
+#  the operator is MINUS the second gradient (Brisard, Bertin & Legoll 2023,
+#  Eq. (9)), and the exported functions return a `Tens` while the `_`-prefixed
+#  kernels return the bare `SArray` the hot loops need.
 # =============================================================================
 
 """
@@ -98,7 +111,7 @@ function gauss_legendre_nodes(n::Int, lo::Real = -1.0, hi::Real = 1.0)
 end
 
 """
-    green_function_aniso(C₀, x; nodes = 32) -> SMatrix{3,3}
+    green_function_aniso(C₀, x; nodes = 32) -> Tens{2,3}
 
 Displacement Green function of an infinite medium of arbitrary anisotropic
 stiffness `C₀`, evaluated at `x ≠ 0` by the Barnett line integral
@@ -117,10 +130,12 @@ Green *function* itself is at machine accuracy by 16 nodes.
 
 Reduces to the Kelvin solution for an isotropic `C₀`, which is how the
 implementation is tested. Type-generic, including `ForwardDiff.Dual` — the
-Green operator is obtained by differentiating this very function.
+Green operator is obtained by differentiating this very function, through the
+`SArray`-returning kernel `_green_function_aniso` rather than through this
+`Tens` wrapper.
 """
 function green_function_aniso(C₀::TensND.AbstractTens{4, 3}, x::AbstractVector; nodes::Int = 32)
-    return _green_function_aniso(_C_array(C₀), x, nodes)
+    return TensND.Tens(_green_function_aniso(_C_array(C₀), x, nodes))
 end
 
 function _green_function_aniso(C, x::AbstractVector, nodes::Int)
@@ -141,14 +156,17 @@ function _green_function_aniso(C, x::AbstractVector, nodes::Int)
 end
 
 """
-    green_operator_aniso(C₀, x; nodes = 32) -> SArray{Tuple{3,3,3,3}}
+    green_operator_aniso(C₀, x; nodes = 32) -> Tens{4,3}
 
 Real-space Green operator of an arbitrary anisotropic elastic medium,
 
 ```math
-\\mathbb{G}^0_{ijkl}(\\underline{x}) = \\Big[\\frac{\\partial^2 G_{ik}}
-  {\\partial x_j\\, \\partial x_l}(\\underline{x})\\Big]_{(ij)(kl)} .
+\\mathbb{G}^0_{ijkl}(\\underline{x}) = -\\Big[\\frac{\\partial^2 G_{ik}}
+  {\\partial x_j\\, \\partial x_l}(\\underline{x})\\Big]_{(ij)(kl)} ,
 ```
+
+with the leading minus of the [Brisard et al. 2023](@cite brisard2023)
+convention, exactly as in the isotropic closed form.
 
 The second gradient is taken with `ForwardDiff` through the line integral of
 [`green_function_aniso`](@ref) — exact, and reusing one verified expression
@@ -171,9 +189,11 @@ Considerably more expensive than the isotropic closed form
 why the dispatcher [`green_operator`](@ref) prefers the latter whenever the
 reference is isotropic.
 """
-function green_operator_aniso(
-        C₀::TensND.AbstractTens{4, 3}, x::AbstractVector; nodes::Int = 32
-    )
+green_operator_aniso(
+    C₀::TensND.AbstractTens{4, 3}, x::AbstractVector; nodes::Int = 32
+) = TensND.Tens(_green_operator_aniso(C₀, x, nodes))
+
+function _green_operator_aniso(C₀::TensND.AbstractTens{4, 3}, x::AbstractVector, nodes::Int)
     C = _C_array(C₀)
     # H[(i,j), k, l] = ∂²G_ij/∂x_k∂x_l, obtained as a jacobian of a jacobian.
     f = y -> vec(Matrix(_green_function_aniso(C, y, nodes)))
@@ -187,14 +207,14 @@ function green_operator_aniso(
     end
     return SArray{Tuple{3, 3, 3, 3}}(
         @inbounds [
-            (H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
+            -(H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
                 for i in 1:3, j in 1:3, k in 1:3, l in 1:3
         ]
     )
 end
 
 """
-    green_operator_aniso(K₀::AbstractTens{2,3}, x) -> SArray{Tuple{3,3}}
+    green_operator_aniso(K₀::AbstractTens{2,3}, x) -> Tens{2,3}
 
 Conduction counterpart in three dimensions. Here the Green function *is*
 elementary,
@@ -204,25 +224,27 @@ G(\\underline{x}) = \\frac{1}{4\\pi\\sqrt{\\det \\boldsymbol{K}_0}\\;
    \\sqrt{\\underline{x}\\cdot\\boldsymbol{K}_0^{-1}\\cdot\\underline{x}}} ,
 ```
 
-so its Hessian is written in closed form: with
+so minus its Hessian is written in closed form: with
 ``\\underline{y} = \\boldsymbol{K}_0^{-1}\\cdot\\underline{x}`` and
 ``s = \\underline{x}\\cdot\\underline{y}``,
 
 ```math
 \\boldsymbol{G}^0 = \\frac{1}{4\\pi\\sqrt{\\det\\boldsymbol{K}_0}}
-  \\left[\\frac{3\\,\\underline{y}\\otimes\\underline{y}}{s^{5/2}}
-       - \\frac{\\boldsymbol{K}_0^{-1}}{s^{3/2}}\\right].
+  \\left[\\frac{\\boldsymbol{K}_0^{-1}}{s^{3/2}}
+       - \\frac{3\\,\\underline{y}\\otimes\\underline{y}}{s^{5/2}}\\right].
 ```
 
 It is `K₀`-traceless in the sense ``\\boldsymbol{K}_0 : \\boldsymbol{G}^0 = 0``,
 the anisotropic form of the vanishing isotropic part.
 """
-function green_operator_aniso(K₀::TensND.AbstractTens{2, 3}, x::AbstractVector)
-    return _green_operator_aniso_order2(TensND.get_array(K₀), x, 3)
-end
+green_operator_aniso(K₀::TensND.AbstractTens{2, 3}, x::AbstractVector) =
+    TensND.Tens(_green_operator_aniso(K₀, x))
+
+_green_operator_aniso(K₀::TensND.AbstractTens{2, 3}, x::AbstractVector) =
+    _green_operator_aniso_order2(TensND.get_array(K₀), x, 3)
 
 """
-    green_operator_aniso(K₀::AbstractTens{2,2}, x) -> SArray{Tuple{2,2}}
+    green_operator_aniso(K₀::AbstractTens{2,2}, x) -> Tens{2,2}
 
 Two-dimensional conduction counterpart, from
 ``G = -\\log\\sqrt{\\underline{x}\\cdot\\boldsymbol{K}_0^{-1}\\cdot\\underline{x}}
@@ -230,13 +252,15 @@ Two-dimensional conduction counterpart, from
 
 ```math
 \\boldsymbol{G}^0 = \\frac{1}{2\\pi\\sqrt{\\det\\boldsymbol{K}_0}}
-  \\left[\\frac{2\\,\\underline{y}\\otimes\\underline{y}}{s^{2}}
-       - \\frac{\\boldsymbol{K}_0^{-1}}{s}\\right].
+  \\left[\\frac{\\boldsymbol{K}_0^{-1}}{s}
+       - \\frac{2\\,\\underline{y}\\otimes\\underline{y}}{s^{2}}\\right].
 ```
 """
-function green_operator_aniso(K₀::TensND.AbstractTens{2, 2}, x::AbstractVector)
-    return _green_operator_aniso_order2(TensND.get_array(K₀), x, 2)
-end
+green_operator_aniso(K₀::TensND.AbstractTens{2, 2}, x::AbstractVector) =
+    TensND.Tens(_green_operator_aniso(K₀, x))
+
+_green_operator_aniso(K₀::TensND.AbstractTens{2, 2}, x::AbstractVector) =
+    _green_operator_aniso_order2(TensND.get_array(K₀), x, 2)
 
 function _green_operator_aniso_order2(K, x::AbstractVector, d::Int)
     Kinv = inv(Matrix(K))
@@ -251,7 +275,7 @@ function _green_operator_aniso_order2(K, x::AbstractVector, d::Int)
     q = d == 3 ? 3 // 2 : 1
     return SArray{Tuple{d, d}}(
         @inbounds [
-            pre * ((d == 3 ? 3 : 2) * y[i] * y[j] / s^p - Kinv[i, j] / s^q)
+            pre * (Kinv[i, j] / s^q - (d == 3 ? 3 : 2) * y[i] * y[j] / s^p)
                 for i in 1:d, j in 1:d
         ]
     )
@@ -260,10 +284,18 @@ end
 # ─── The dispatcher ──────────────────────────────────────────────────────────
 
 """
-    green_operator(P₀, x; kw...) -> SArray
+    green_operator(P₀, x; kw...) -> AbstractTens
 
-Real-space Green operator of an infinite medium of reference property `P₀`,
-evaluated at `x ≠ 0` — the regular kernel of the Lippmann-Schwinger equation.
+Real-space Green operator ``\\mathbb{G}^0`` of an infinite medium of reference
+property `P₀`, evaluated at `x ≠ 0` — the regular kernel of the
+Lippmann-Schwinger equation, which the package writes in the sign convention
+of [Brisard et al. 2023](@cite brisard2023), Eq. (9):
+
+```math
+\\boldsymbol{\\varepsilon}(\\underline{x}) = \\boldsymbol{E}
+  - \\int \\mathbb{G}^0(\\underline{x}-\\underline{y}):
+      \\boldsymbol{\\tau}(\\underline{y})\\,\\mathrm{d}V_{\\underline y} .
+```
 
 Dispatches on the symmetry class: an isotropic reference goes to the closed
 form [`green_operator_iso`](@ref), anything else to
@@ -275,23 +307,27 @@ covered; the one gap is **plane-strain elasticity with an anisotropic
 reference**, whose Green function needs the Stroh formalism rather than the
 Barnett line integral, and which raises an `ArgumentError`.
 
-This is the entry point the two-inclusion interaction kernels call, so lifting
-the isotropic restriction here lifts it for
-[`interaction_tensor`](@ref MeanFieldHomogenization.Interactions.interaction_tensor) as well.
+This is the entry point the two-inclusion interaction kernels call — through
+its `SArray`-returning twin `_green_operator`, which is the same dispatch
+without the `Tens` wrapper — so lifting the isotropic restriction here lifts it
+for [`interaction_tensor`](@ref MeanFieldHomogenization.Interactions.interaction_tensor) as well.
 """
-green_operator(P₀::TensND.TensISO, x::AbstractVector; kw...) = green_operator_iso(P₀, x)
+green_operator(P₀::TensND.AbstractTens, x::AbstractVector; kw...) =
+    TensND.Tens(_green_operator(P₀, x; kw...))
 
-green_operator(
+_green_operator(P₀::TensND.TensISO, x::AbstractVector; kw...) = _green_operator_iso(P₀, x)
+
+_green_operator(
     P₀::TensND.AbstractTens{4, 3}, x::AbstractVector; green_nodes::Int = 32, kw...
-) = green_operator_aniso(P₀, x; nodes = green_nodes)
+) = _green_operator_aniso(P₀, x, green_nodes)
 
-green_operator(P₀::TensND.AbstractTens{2, 3}, x::AbstractVector; kw...) =
-    green_operator_aniso(P₀, x)
+_green_operator(P₀::TensND.AbstractTens{2, 3}, x::AbstractVector; kw...) =
+    _green_operator_aniso(P₀, x)
 
-green_operator(P₀::TensND.AbstractTens{2, 2}, x::AbstractVector; kw...) =
-    green_operator_aniso(P₀, x)
+_green_operator(P₀::TensND.AbstractTens{2, 2}, x::AbstractVector; kw...) =
+    _green_operator_aniso(P₀, x)
 
-green_operator(P₀::TensND.AbstractTens{4, 2}, x::AbstractVector; kw...) = throw(
+_green_operator(P₀::TensND.AbstractTens{4, 2}, x::AbstractVector; kw...) = throw(
     ArgumentError(
         "green_operator: the plane-strain Green function of an anisotropic " *
             "reference needs the Stroh formalism, which is not implemented; only an " *

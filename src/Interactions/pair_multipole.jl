@@ -13,7 +13,7 @@
 #
 #  Applying it to the source region and to the receiver region gives
 #
-#       Γ^{ab} = V_b [ Γ⁰(r) + ½ (M²_a + M²_b)_pq ∂_p∂_q Γ⁰(r) + … ] ,   (∗)
+#       𝕋^{ab} = V_b [ 𝔾⁰(r) + ½ (M²_a + M²_b)_pq ∂_p∂_q 𝔾⁰(r) + … ] ,   (∗)
 #
 #  which is the expansion of Brisard et al. in the equivalent "moment" form.
 #  For an ellipsoid of semi-axes (a₁, …, a_d) the second moment is diagonal in
@@ -30,7 +30,7 @@
 #  M² = Σ_k λ_k v_k ⊗ v_k turns the contraction into d second *directional*
 #  derivatives,
 #
-#       M²_pq ∂_p∂_q Γ⁰(r) = Σ_k λ_k d²/dt² Γ⁰(r + t v_k) |_{t=0} ,
+#       M²_pq ∂_p∂_q 𝔾⁰(r) = Σ_k λ_k d²/dt² 𝔾⁰(r + t v_k) |_{t=0} ,
 #
 #  each of which is one nested-dual evaluation of the whole kernel.  This is
 #  exact (no finite differences), type-generic, and costs d evaluations
@@ -43,7 +43,7 @@
 Interaction tensor between two general ellipsoids by the truncated multipole
 expansion of [Brisard et al. 2014](@cite brisard2014), §4.2.
 
-`order = 0` keeps the leading (point-dipole) term `V_b Γ⁰(r)`; `order = 2`
+`order = 0` keeps the leading (point-dipole) term `V_b 𝔾⁰(r)`; `order = 2`
 adds the second-moment correction, which is the first non-vanishing one
 because the first moments vanish about the centroids. Accuracy degrades as
 the inclusions approach each other — the expansion parameter is the ratio of
@@ -60,13 +60,13 @@ function _pair_multipole(
         )
     )
     V_b = _inclusion_volume(incl_b)
-    Γ = MFH_Core.green_operator(P₀, r; kw...)
-    order == 0 && return TensND.Tens(V_b * Γ)
+    G = MFH_Core._green_operator(P₀, r; kw...)
+    order == 0 && return TensND.Tens(V_b * G)
     M² = _second_moment(incl_a) + _second_moment(incl_b)
-    return TensND.Tens(V_b * (Γ + _moment_contraction(P₀, r, M²; kw...) / 2))
+    return TensND.Tens(V_b * (G + _moment_contraction(P₀, r, M²; kw...) / 2))
 end
 
-# Σ_k λ_k d²/dt² Γ⁰(r + t v_k) — spectral form of M²_pq ∂_p∂_q Γ⁰.
+# Σ_k λ_k d²/dt² 𝔾⁰(r + t v_k) — spectral form of M²_pq ∂_p∂_q 𝔾⁰.
 function _moment_contraction(P₀, r::AbstractVector, M²::AbstractMatrix; kw...)
     λ, V = eigen(Symmetric(_as_float_matrix(M²)))
     d = length(r)
@@ -79,7 +79,7 @@ end
 
 # Exact second directional derivative through one nested-dual evaluation.
 function _second_directional(P₀, r::AbstractVector, v; kw...)
-    f = t -> MFH_Core.green_operator(P₀, r .+ t .* v; kw...)
+    f = t -> MFH_Core._green_operator(P₀, r .+ t .* v; kw...)
     df = t -> ForwardDiff.derivative(f, t)
     return ForwardDiff.derivative(df, zero(eltype(r)))
 end

@@ -9,38 +9,55 @@
 #  force dipole), this file gives one derivative more: the *field* generated
 #  by that dipole.  In elasticity
 #
-#       Γ⁰_ijkl(x) = [ ∂²G_ik/∂x_j∂x_l ]_{(ij)(kl)}
+#       𝔾⁰_ijkl(x) = -[ ∂²G_ik/∂x_j∂x_l ]_{(ij)(kl)}
 #
 #  (the brackets denoting minor symmetrization), so that a uniform
 #  polarization τ carried by a small volume V at the origin induces the
-#  strain V·Γ⁰(x):τ at x.  In conduction the same object is the Hessian of
-#  the scalar Green function, Γ⁰_ij = ∂²G/∂x_i∂x_j.
+#  strain -V·𝔾⁰(x):τ at x.  In conduction the same object is minus the Hessian
+#  of the scalar Green function, 𝔾⁰_ij = -∂²G/∂x_i∂x_j.
 #
-#  Sign convention.  The interior counterpart of this kernel is *minus* the
-#  Hill tensor: averaging Γ⁰ over an ellipsoid containing the source returns
-#  −ℙ.  Both are kept consistent throughout the package — see
-#  `Interactions/api.jl`, which builds the two-inclusion interaction tensors
-#  on top of this kernel.
+#  SIGN CONVENTION — the leading minus is not decoration.  The package follows
+#  Brisard, Bertin & Legoll (2023), Eq. (9): the Green operator maps a
+#  polarization onto *minus* the induced field,
 #
-#  Isotropic reference only.  The anisotropic counterpart needs the
-#  Barnett-Willis angular integral (or the Pan-Chou closed form for
-#  transverse isotropy) and is not implemented — same limitation as
-#  `green_dipole.jl`.
+#       ε = E - 𝔾⁰ * τ ,
+#
+#  which makes its Fourier symbol positive semi-definite (their Eq. (11),
+#  Γ̂₀(k) = σ₀⁻¹ k⊗k/‖k‖² in conduction) and its interior average *plus* the
+#  Hill tensor: averaging 𝔾⁰ over an ellipsoid containing the source returns
+#  +ℙ.  The one-inclusion case is then the ε = -ℙ:τ that the rest of the
+#  package already uses.  See `Interactions/api.jl`, which builds the
+#  two-inclusion interaction tensors on top of this kernel, and the theory
+#  page `theory/interaction_tensors.md` for the comparison with Molinari &
+#  El Mouden (1996), who use the opposite sign.
+#
+#  Isotropic reference only in this file.  The anisotropic counterpart is the
+#  Barnett-Willis angular integral of `green_aniso.jl`, which also owns the
+#  `green_operator` dispatcher over both.
+#
+#  Public API vs kernel.  The exported `green_operator_iso` returns a `Tens`,
+#  like every other tensor-valued entry point of the package.  The `_`-prefixed
+#  methods return the bare `SArray` and are what the interaction kernels call:
+#  wrapping costs about 1.4× time and ~900 B per evaluation, which is
+#  irrelevant once but decisive inside a quadrature that evaluates the kernel
+#  millions of times per interaction tensor.
 # =============================================================================
 
 """
-    green_operator_iso(C₀::TensISO{4,3}, x) -> SArray{Tuple{3,3,3,3}}
+    green_operator_iso(C₀::TensISO{4,3}, x) -> Tens{4,3}
 
 Real-space Green operator ``\\mathbb{G}^0`` of an infinite isotropic elastic
 matrix `C₀`, evaluated at `x ≠ 0`:
 
 ```math
 \\mathbb{G}^0_{ijkl}(x)
-  = \\Big[\\frac{\\partial^2 G_{ik}}{\\partial x_j \\partial x_l}(x)\\Big]_{(ij)(kl)} ,
+  = -\\Big[\\frac{\\partial^2 G_{ik}}{\\partial x_j \\partial x_l}(x)\\Big]_{(ij)(kl)} ,
 ```
 
 where ``G`` is the Kelvin Green function and the brackets denote
-symmetrization with respect to ``(i,j)`` and ``(k,l)``.
+symmetrization with respect to ``(i,j)`` and ``(k,l)``. The leading minus is
+the convention of [Brisard et al. 2023](@cite brisard2023), Eq. (9) — see the
+file header.
 
 With ``r = \\|x\\|``, ``\\underline{n} = x/r`` and ``A = 1/(16\\pi\\mu(1-\\nu))``,
 the second gradient of the Kelvin solution reads
@@ -56,21 +73,23 @@ the second gradient of the Kelvin solution reads
 ```
 
 A uniform polarization ``\\tau`` carried by a volume ``V`` around the origin
-induces the strain ``V\\,\\mathbb{G}^0(x):\\tau`` at `x` — exact in the far field,
-and *exact at any separation* when the source region is a ball, because each
-component of ``\\mathbb{G}^0`` is then averaged over a region where it is
+induces the strain ``-V\\,\\mathbb{G}^0(x):\\tau`` at `x` — exact in the far
+field, and *exact at any separation* when the source region is a ball, because
+each component of ``\\mathbb{G}^0`` is then averaged over a region where it is
 harmonic.
 
-Returned as a static `3×3×3×3` array with both minor symmetries and the major
-symmetry. Throws a `DomainError` at the origin. Type-generic (`Float64`,
+Returned as a `Tens{4,3}` with both minor symmetries and the major symmetry.
+Throws a `DomainError` at the origin. Type-generic (`Float64`,
 `ForwardDiff.Dual`, symbolic scalars).
 
 See also [`green_gradient_iso`](@ref), [`dipole_displacement_iso`](@ref).
 """
-function green_operator_iso(C₀::TensND.TensISO{4, 3}, x::AbstractVector)
+green_operator_iso(C₀::TensND.TensISO{4, 3}, x::AbstractVector) =
+    TensND.Tens(_green_operator_iso(C₀, x))
+
+function _green_operator_iso(C₀::TensND.TensISO{4, 3}, x::AbstractVector)
     E, ν = extract_iso_moduli(C₀)
-    μ = E / (2 * (1 + ν))
-    return _green_operator_iso(μ, ν, x)
+    return _green_operator_iso(E / (2 * (1 + ν)), ν, x)
 end
 
 function _green_operator_iso(μ, ν, x::AbstractVector)
@@ -99,36 +118,45 @@ function _green_operator_iso(μ, ν, x::AbstractVector)
             )
             for i in 1:3, j in 1:3, k in 1:3, l in 1:3
     ]
-    # Γ_ijkl = [H_{ik,jl}]_{(ij)(kl)} — the double index swap is what turns the
-    # displacement Hessian into the strain-to-polarization operator.
+    # 𝔾⁰_ijkl = -[H_{ik,jl}]_{(ij)(kl)} — the double index swap is what turns
+    # the displacement Hessian into the strain-to-polarization operator, and
+    # the leading minus is the Brisard convention of the file header.
     return SArray{Tuple{3, 3, 3, 3}}(
         @inbounds [
-            (H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
+            -(H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
                 for i in 1:3, j in 1:3, k in 1:3, l in 1:3
         ]
     )
 end
 
 """
-    green_operator_iso(K₀::TensISO{2,3}, x) -> SArray{Tuple{3,3}}
+    green_operator_iso(K₀::TensISO{2,3}, x) -> Tens{2,3}
 
-Conduction counterpart: Hessian of the scalar Green function of an infinite
-isotropic medium of conductivity ``\\sigma_0``,
+Conduction counterpart: minus the Hessian of the scalar Green function of an
+infinite isotropic medium of conductivity ``\\sigma_0``,
 
 ```math
-\\mathbb{G}^0_{ij}(x) = \\frac{\\partial^2}{\\partial x_i \\partial x_j}
+\\boldsymbol{G}^0_{ij}(x) = -\\frac{\\partial^2}{\\partial x_i \\partial x_j}
    \\frac{1}{4\\pi\\sigma_0 r}
- = \\frac{3 n_i n_j - \\delta_{ij}}{4\\pi\\sigma_0 r^{3}} .
+ = \\frac{\\delta_{ij} - 3 n_i n_j}{4\\pi\\sigma_0 r^{3}} .
 ```
 
 It is traceless away from the origin — the isotropic part of the interaction
 between two distinct inclusions vanishes identically in conduction, exactly
-as the deviatoric statement ``\\Gamma_{iijj} = \\Gamma_{ijij} = 0`` does in
-elasticity.
+as the deviatoric statement ``\\mathbb{G}^0_{iijj} = \\mathbb{G}^0_{ijij} = 0``
+does in elasticity.
+
+The order-2 objects follow the ``\\boldsymbol{\\sigma} \\equiv -\\underline{q}``
+convention of the package (see the notation page): the field this kernel
+transports is the gradient ``\\nabla T`` and the source is the flux
+polarization ``\\underline{\\tau}_q``, so every sign matches the elastic case
+symbol for symbol.
 """
-function green_operator_iso(K₀::TensND.TensISO{2, 3}, x::AbstractVector)
-    σ₀ = extract_iso_conductivity(K₀)
-    return _green_operator_iso_order2(σ₀, x)
+green_operator_iso(K₀::TensND.TensISO{2, 3}, x::AbstractVector) =
+    TensND.Tens(_green_operator_iso(K₀, x))
+
+function _green_operator_iso(K₀::TensND.TensISO{2, 3}, x::AbstractVector)
+    return _green_operator_iso_order2(extract_iso_conductivity(K₀), x)
 end
 
 function _green_operator_iso_order2(σ₀, x::AbstractVector)
@@ -143,23 +171,31 @@ function _green_operator_iso_order2(σ₀, x::AbstractVector)
     T = typeof(A)
     return SArray{Tuple{3, 3}}(
         @inbounds [
-            A * (3 * n[i] * n[j] - _δ(i, j, T)) for i in 1:3, j in 1:3
+            A * (_δ(i, j, T) - 3 * n[i] * n[j]) for i in 1:3, j in 1:3
         ]
     )
 end
 
 """
-    green_operator_iso(K₀::TensISO{2,2}, x) -> SArray{Tuple{2,2}}
+    green_operator_iso(K₀::TensISO{2,2}, x) -> Tens{2,2}
 
 Two-dimensional conduction counterpart, from ``G = -\\log r/(2\\pi\\sigma_0)``:
 
 ```math
-\\mathbb{G}^0_{ij}(x) = \\frac{2 n_i n_j - \\delta_{ij}}{2\\pi\\sigma_0 r^{2}} .
+\\boldsymbol{G}^0_{ij}(x) = \\frac{\\delta_{ij} - 2 n_i n_j}{2\\pi\\sigma_0 r^{2}} .
 ```
+
+Multiplied by the area ``\\pi b^2`` of a source disk this is *literally*
+Eq. (26) of [Brisard et al. 2023](@cite brisard2023),
+``\\boldsymbol{T}^{ab} = \\frac{b^2}{2\\sigma_0 r^2}
+  (\\boldsymbol{1} - 2\\,\\underline{n}\\otimes\\underline{n})``, which is the
+sharpest available check that the package and the paper share one convention.
 """
-function green_operator_iso(K₀::TensND.TensISO{2, 2}, x::AbstractVector)
-    σ₀ = extract_iso_conductivity(K₀)
-    return _green_operator_iso_order2_2d(σ₀, x)
+green_operator_iso(K₀::TensND.TensISO{2, 2}, x::AbstractVector) =
+    TensND.Tens(_green_operator_iso(K₀, x))
+
+function _green_operator_iso(K₀::TensND.TensISO{2, 2}, x::AbstractVector)
+    return _green_operator_iso_order2_2d(extract_iso_conductivity(K₀), x)
 end
 
 function _green_operator_iso_order2_2d(σ₀, x::AbstractVector)
@@ -174,13 +210,13 @@ function _green_operator_iso_order2_2d(σ₀, x::AbstractVector)
     T = typeof(A)
     return SArray{Tuple{2, 2}}(
         @inbounds [
-            A * (2 * n[i] * n[j] - _δ(i, j, T)) for i in 1:2, j in 1:2
+            A * (_δ(i, j, T) - 2 * n[i] * n[j]) for i in 1:2, j in 1:2
         ]
     )
 end
 
 """
-    green_operator_iso(C₀::TensISO{4,2}, x) -> SArray{Tuple{2,2,2,2}}
+    green_operator_iso(C₀::TensISO{4,2}, x) -> Tens{4,2}
 
 Plane-strain elastic Green operator of an infinite isotropic matrix. The
 two-dimensional Kelvin solution is
@@ -203,12 +239,15 @@ whose second gradient gives
 ```
 
 with ``A_2 = 1/(8\\pi\\mu(1-\\nu))``. `ν` is the plane-strain Poisson ratio of
-the reference medium. The result is symmetrized exactly as in 3D.
+the reference medium. The result is symmetrized — and negated, per the
+convention of the file header — exactly as in 3D.
 """
-function green_operator_iso(C₀::TensND.TensISO{4, 2}, x::AbstractVector)
+green_operator_iso(C₀::TensND.TensISO{4, 2}, x::AbstractVector) =
+    TensND.Tens(_green_operator_iso(C₀, x))
+
+function _green_operator_iso(C₀::TensND.TensISO{4, 2}, x::AbstractVector)
     E, ν = extract_iso_moduli(C₀)
-    μ = E / (2 * (1 + ν))
-    return _green_operator_iso_2d(μ, ν, x)
+    return _green_operator_iso_2d(E / (2 * (1 + ν)), ν, x)
 end
 
 function _green_operator_iso_2d(μ, ν, x::AbstractVector)
@@ -238,7 +277,7 @@ function _green_operator_iso_2d(μ, ν, x::AbstractVector)
     ]
     return SArray{Tuple{2, 2, 2, 2}}(
         @inbounds [
-            (H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
+            -(H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
                 for i in 1:2, j in 1:2, k in 1:2, l in 1:2
         ]
     )

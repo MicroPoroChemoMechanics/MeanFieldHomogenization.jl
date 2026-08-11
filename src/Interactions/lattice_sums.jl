@@ -2,7 +2,7 @@
 #  lattice_sums.jl — interaction with all the periodic images of a source
 #  inclusion, truncated to a cluster of finite radius.
 #
-#      Γ̄^{ab} = Σ_{n ∈ Z^d, ‖r_ab + nL‖ ≤ R_c}  Γ^{ab}(r_ab + nL)
+#      𝕋̄^{ab} = Σ_{n ∈ Z^d, ‖r_ab + nL‖ ≤ R_c}  𝕋^{ab}(r_ab + nL)
 #
 #  Convergence.  The sum is only conditionally convergent if taken over all of
 #  Z^d, and the summation order then has to be prescribed — this is the
@@ -13,7 +13,7 @@
 #  & El Mouden (1996) prove why in their Appendix B: the interaction kernel
 #  integrates to zero over the exterior of any sphere centered on the receiver,
 #
-#       ∫_{‖x-x_a‖ > R_c} Γ⁰(x - x_a) dV = 0 ,
+#       ∫_{‖x-x_a‖ > R_c} 𝔾⁰(x - x_a) dV = 0 ,
 #
 #  so the contribution of the images beyond a *spherical* cutoff tends to zero
 #  as R_c grows.  Summing over a sphere of images — not over a cube — is

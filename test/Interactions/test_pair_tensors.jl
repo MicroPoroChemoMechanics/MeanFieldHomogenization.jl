@@ -8,7 +8,8 @@ using ForwardDiff
 #  test_pair_tensors.jl — two-inclusion interaction tensors 𝕋^{ab}.
 #
 #  Coverage:
-#   1. Green operator 𝔾⁰ against a finite difference of `green_gradient_iso`.
+#   1. Green operator 𝔾⁰ against a finite difference of `green_gradient_iso`,
+#      including the leading MINUS of the Brisard convention.
 #   2. Zero isotropic part: T_iijj = T_ijij = 0 (elasticity), tr 𝕋 = 0
 #      (conduction) — the invariant behind "cubic arrays keep the Mori-Tanaka
 #      bulk modulus".
@@ -16,7 +17,10 @@ using ForwardDiff
 #      physics × dimension combinations.
 #   4. Multipole expansion reproduces the closed form exactly for ball pairs,
 #      and converges at the expected rate for general ellipsoids.
-#   5. Self term: 𝕋^{aa} = -ℙ, exactly.
+#   5. Self term: 𝕋^{aa} = +ℙ, exactly.
+#   5b. The convention pinned to its normative source: Brisard, Bertin &
+#      Legoll (2023), Eq. (26) (two disks, conduction) and Eq. (11) (the
+#      Fourier symbol).  These are what stop the sign from drifting again.
 #   6. Far-field decay R⁻³ (3D) / R⁻² (2D) and the ρ² finite-size correction.
 #   7. Frame equivariance under a rigid rotation of the pair.
 #   8. Asymmetric case: unequal radii, off-axis separation.
@@ -41,19 +45,23 @@ _disk(a) = Ellipsoid(a, a)
     C₀ = _C3()
     x = [1.3, -0.7, 2.1]
     h = 1.0e-5
-    # 𝔾⁰_ijkl = [∂²G_ik/∂x_j∂x_l]_{(ij)(kl)}: differentiate ∂G/∂x once more.
+    # 𝔾⁰_ijkl = -[∂²G_ik/∂x_j∂x_l]_{(ij)(kl)}: differentiate ∂G/∂x once more,
+    # and negate — the minus is the convention of Brisard et al. (2023),
+    # Eq. (9), and this test is where it is checked against a raw derivative.
     dG = k -> begin
         xp = copy(x); xp[k] += h
         xm = copy(x); xm[k] -= h
         (green_gradient_iso(C₀, xp) .- green_gradient_iso(C₀, xm)) ./ (2h)
     end
     H = [dG(l)[i, k, j] for i in 1:3, k in 1:3, j in 1:3, l in 1:3]
-    Γfd = [
-        (H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
+    Gfd = [
+        -(H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
             for i in 1:3, j in 1:3, k in 1:3, l in 1:3
     ]
-    Γ = green_operator_iso(C₀, x)
-    @test maximum(abs.(Γ .- Γfd)) < 1.0e-6 * maximum(abs.(Γ))
+    G = green_operator_iso(C₀, x)
+    @test maximum(abs.(G .- Gfd)) < 1.0e-6 * maximum(abs.(G))
+    # …and it is a `Tens`, like every other tensor-valued public entry point.
+    @test G isa TensND.AbstractTens{4, 3}
 end
 
 @testset "Green operator — conduction kernels are traceless" begin
@@ -143,15 +151,104 @@ end
     @test errs2[end] < 1.0e-4
 end
 
-@testset "𝕋^{aa} — self term is minus the Hill tensor" begin
+@testset "𝕋^{aa} — self term IS the Hill tensor" begin
+    # The identity that fixes the sign convention of the whole N-body family:
+    # 𝕋^{aa} = +ℙ, positive definite like ℙ itself. Molinari & El Mouden use
+    # the opposite sign; the package follows Brisard et al. (2023), Eq. (9).
     for (incl, P₀) in (
             (_ball(1.0), _C3()), (Ellipsoid(1.0, 0.5, 0.25), _C3()),
             (_ball(1.0), _K3()), (_disk(1.0), _C2()), (_disk(1.0), _K2()),
         )
         S = get_array(self_interaction_tensor(incl, P₀))
         P = get_array(hill_tensor(incl, P₀))
-        @test maximum(abs.(S .+ P)) ≈ 0.0 atol = 1.0e-14
+        @test maximum(abs.(S .- P)) ≈ 0.0 atol = 1.0e-14
     end
+end
+
+@testset "Convention — Brisard, Bertin & Legoll (2023), Eq. (26)" begin
+    # Their Eq. (26), the infinite-medium influence tensor of two disks in
+    # 2D conduction, written for a source disk of radius b at distance r:
+    #
+    #     Γ^∞_αβ = b²/(2σ₀ r²) (𝟏 - 2 n̂⊗n̂) .
+    #
+    # The package reproduces it LITERALLY — same sign, same prefactor — which
+    # is the sharpest statement that the two share one convention. A flipped
+    # kernel fails on every component.
+    σ₀ = 2.0
+    K₀ = TensISO{2}(σ₀)
+    a, b = 0.35, 0.6
+    for r in ([5.0, 0.0], [3.0, -4.0], [-2.0, 2.0])
+        R = sqrt(r[1]^2 + r[2]^2)
+        n̂ = r ./ R
+        expected = [
+            b^2 / (2 * σ₀ * R^2) * ((i == j ? 1.0 : 0.0) - 2 * n̂[i] * n̂[j])
+                for i in 1:2, j in 1:2
+        ]
+        T = get_array(interaction_tensor(_disk(a), _disk(b), r, K₀))
+        @test maximum(abs.(T .- expected)) < 1.0e-14 * maximum(abs.(expected))
+        # Traceless, as their Appendix D requires of the infinite-medium form.
+        @test tr(T) ≈ 0.0 atol = ATOL_ZERO
+    end
+end
+
+@testset "Convention — Brisard, Bertin & Legoll (2023), Eq. (11)" begin
+    # Their Eq. (11): the Fourier symbol of the conduction Green operator is
+    #
+    #     Γ̂₀(k) = k⊗k / (σ₀‖k‖²) ,     POSITIVE semi-definite,
+    #
+    # and that positivity is the whole reason for this convention: it is what
+    # makes the interior average +ℙ rather than -ℙ.
+    #
+    # In real space the corresponding distribution is
+    #
+    #     𝔾⁰(x) = (𝟏 - 3n̂⊗n̂)/(4πσ₀r³)  +  𝟏 δ(x)/(3σ₀) ,
+    #
+    # the first term being the regular kernel this package evaluates and the
+    # second the self (delta) part. The two statements checked below pin both
+    # halves, and a flipped kernel fails both:
+    #
+    #   (a) the regular part has the eigenvalue -2/(4πσ₀r³) along n̂ and
+    #       +1/(4πσ₀r³) in the perpendicular plane — the sign pattern of
+    #       -∇∇(1/4πσ₀r), not its opposite;
+    #   (b) its angular average vanishes, so the whole interior average is the
+    #       delta part 𝟏/(3σ₀), which is exactly ℙ of a sphere: 𝕋^{aa} = +ℙ.
+    σ₀ = 2.0
+    K₀ = TensISO{3}(σ₀)
+    for x in ([1.0, 0.0, 0.0], [1.0, -2.0, 0.5], [0.0, 0.3, 0.4])
+        r = sqrt(sum(abs2, x))
+        n̂ = x ./ r
+        G = get_array(green_operator_iso(K₀, x))
+        @test (G * n̂) ≈ (-2 / (4π * σ₀ * r^3)) .* n̂ rtol = 1.0e-12
+        u = abs(n̂[3]) < 0.9 ? [0.0, 0.0, 1.0] : [1.0, 0.0, 0.0]
+        u = u .- (u ⋅ n̂) .* n̂
+        u = u ./ norm(u)
+        @test (G * u) ≈ (1 / (4π * σ₀ * r^3)) .* u rtol = 1.0e-12
+    end
+    # (b) angular average of the regular part, on the unit sphere. Gauss-
+    #     Legendre in cos θ and the trapezoidal rule in φ make this exact for
+    #     the quadratic angular dependence, so the gate can be machine-tight.
+    cs, wc = gauss_legendre_nodes(8, -1.0, 1.0)
+    nφ = 16
+    avg = zeros(3, 3)
+    for (c, w) in zip(cs, wc), j in 1:nφ
+        φ = 2π * (j - 1) / nφ
+        s = sqrt(1 - c^2)
+        avg .+= (w * 2π / nφ) .*
+            get_array(green_operator_iso(K₀, [s * cos(φ), s * sin(φ), c]))
+    end
+    @test maximum(abs.(avg)) < 1.0e-12
+    # …hence the interior average is the delta part alone, 𝟏/(3σ₀) = ℙ.
+    @test get_array(self_interaction_tensor(_ball(1.0), K₀)) ≈
+        Matrix(I, 3, 3) ./ (3 * σ₀) rtol = 1.0e-12
+
+    # The 2D kernel carries the same pattern; 𝟏 - 2n̂⊗n̂ is the plane form used
+    # by Eq. (26) above.
+    K2 = TensISO{2}(σ₀)
+    x = [3.0, -4.0]
+    r = norm(x)
+    n̂ = x ./ r
+    G2 = get_array(green_operator_iso(K2, x))
+    @test (G2 * n̂) ≈ (-1 / (2π * σ₀ * r^2)) .* n̂ rtol = 1.0e-12
 end
 
 @testset "𝕋^{ab} — far-field decay and finite-size correction" begin
@@ -189,7 +286,7 @@ end
 
 @testset "𝕋^{ab} — asymmetric case: unequal radii, off-axis" begin
     # A symmetric configuration can hide an index or an axis mistake; this one
-    # cannot.  Note that 𝕋^{ab} ≠ Γ^{ba} in general — only the *moment* form
+    # cannot.  Note that 𝕋^{ab} ≠ 𝕋^{ba} in general — only the *moment* form
     # V_a 𝕋^{ab} is symmetric under the exchange of the two inclusions.
     C₀ = _C3()
     a, b = 1.3, 0.4

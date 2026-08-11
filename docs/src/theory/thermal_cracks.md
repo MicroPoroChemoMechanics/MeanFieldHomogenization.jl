@@ -7,10 +7,20 @@ is a vector rather than a symmetric 2-tensor.
 
 ## Elasticity ↔ Conductivity — correspondence table
 
+The table below is a *literal* dictionary: every entry on the right is the
+entry on the left with the symbols substituted, no sign changed. That is only
+true because the stress analog is taken to be **minus** the flux,
+``\boldsymbol\sigma \equiv -\mathbf q = \mathbf K_0\cdot\nabla T``, which is
+the convention fixed in
+[Elasticity and transport: one set of formulas](@ref th-notation-sigma-q):
+``\boldsymbol\sigma\cdot\hat{\mathbf n}`` is then, in both theories, what the
+exterior transmits to the interior across a surface. Read the rows with that
+substitution in mind and no minus sign is ever needed.
+
 | Elasticity (4-tensor problem)                                    | Conductivity (2-tensor problem)                                         |
 | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | Displacement ``\mathbf u`` — 1-tensor                            | Temperature ``T`` — scalar                                              |
-| Stress ``\boldsymbol\sigma = \mathbb C:\boldsymbol\varepsilon``  | Heat flux ``\mathbf q = -\mathbf K_0\cdot\nabla T``                     |
+| Stress ``\boldsymbol\sigma = \mathbb C:\boldsymbol\varepsilon``  | ``\boldsymbol\sigma \equiv -\mathbf q = \mathbf K_0\cdot\nabla T`` (see below)|
 | Stiffness ``\mathbb C`` — 4-tensor, 21 independent components    | Conductivity ``\mathbf K_0`` — 2-tensor, 6 independent components       |
 | Hill tensor ``\mathbb P`` — 4-tensor                             | Hill tensor ``\mathbf P`` — 2-tensor                                    |
 | COD tensor ``\mathbf B`` — **2-tensor** (6 components)           | COD scalar ``b`` — **scalar** (1 component)                             |
@@ -196,15 +206,19 @@ These reduce to the Sevostianov–Kachanov expressions
 Thermal analogs of the elastic stress / displacement intensity
 factors:
 
+Both are driven by ``\boldsymbol\sigma^{\infty} \equiv -\mathbf q^{\infty}``,
+the transport twin of the remote stress — the convention of the table above —
+so each formula is the elastic one with the symbols substituted.
+
 - **Heat-flux intensity factor** ``K_T`` (mode I analog, scalar):
   the singular crack-tip field scales as ``\sim K_T/\sqrt{r}``.  For a
-  ribbon crack of half-width ``b`` and remote flux ``\mathbf q^\infty``,
-  ``K_T = \sqrt{\pi b}\,(\hat{\mathbf n}\cdot\mathbf q^{\infty})``.
+  ribbon crack of half-width ``b``,
+  ``K_T = \sqrt{\pi b}\,(\hat{\mathbf n}\cdot\boldsymbol\sigma^{\infty})``.
   For an elliptic crack the formula involves the tangent-ribbon COD
   ratio exactly as in the elasticity case (``b^\mathcal E/b^\mathcal R``
   replaces ``\mathbf B^\mathcal E(\mathbf B^\mathcal R)^{-1}``).
 - **Temperature intensity factor** (scalar):
-  ``[T]_\text{avg} = b\,(\hat{\mathbf n}\cdot\mathbf q^{\infty})``.
+  ``[T]_\text{avg} = b\,(\hat{\mathbf n}\cdot\boldsymbol\sigma^{\infty})``.
 
 See [`sif`](@ref) and [`dif`](@ref) for the full signatures (dispatched
 on ``\mathbf K_0::\texttt{AbstractTens\{2,3\}}``).

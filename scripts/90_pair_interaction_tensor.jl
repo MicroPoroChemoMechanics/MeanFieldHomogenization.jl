@@ -9,6 +9,11 @@
 #  et al. (2014) note in their §3.1 that their order-zero influence
 #  pseudotensors coincide with the interaction tensors of Molinari & El Mouden
 #  (1996) and Berveiller et al. (1987).
+#
+#  SIGN.  The package follows Brisard, Bertin & Legoll (2023), Eq. (9): the
+#  Green operator maps a polarization onto MINUS the induced field, so
+#  𝕋^{aa} = +ℙ.  Molinari and Berveiller use the opposite sign; §2 below is
+#  where the difference is visible.
 # =============================================================================
 
 import Pkg
@@ -29,10 +34,10 @@ println("§1  Structure of 𝕋^{ab} for two spheres on the e₃ axis")
 println("=" ^ 74)
 
 a, b, R = 1.0, 1.0, 4.0
-Γ = interaction_tensor(Ellipsoid(a), Ellipsoid(b), [0.0, 0.0, R], C₀)
-A = get_array(Γ)
+𝕋 = interaction_tensor(Ellipsoid(a), Ellipsoid(b), [0.0, 0.0, R], C₀)
+A = get_array(𝕋)
 @printf "  a = %.1f   b = %.1f   R = %.1f   ν = %.2f\n" a b R ν₀
-println("  type: ", typeof(Γ), "  (transversely isotropic about the line of centers)")
+println("  type: ", typeof(𝕋), "  (transversely isotropic about the line of centers)")
 @printf "  T_1111 = %+.6e    T_1122 = %+.6e\n" A[1, 1, 1, 1] A[1, 1, 2, 2]
 @printf "  T_1133 = %+.6e    T_1212 = %+.6e\n" A[1, 1, 3, 3] A[1, 2, 1, 2]
 @printf "  T_1313 = %+.6e    T_3333 = %+.6e\n" A[1, 3, 1, 3] A[3, 3, 3, 3]
@@ -48,13 +53,13 @@ println("  Mori-Tanaka bulk modulus exactly:")
 
 println()
 println("=" ^ 74)
-println("§2  The self term is minus the Hill tensor")
+println("§2  The self term IS the Hill tensor (Brisard convention)")
 println("=" ^ 74)
 
 for incl in (Ellipsoid(1.0), Ellipsoid(1.0, 0.5, 0.25))
     S = get_array(self_interaction_tensor(incl, C₀))
     P = get_array(hill_tensor(incl, C₀))
-    @printf "  %-28s  max|𝕋^{aa} + ℙ| = %.3e\n" string(incl.semi_axes) maximum(abs.(S .+ P))
+    @printf "  %-28s  max|𝕋^{aa} - ℙ| = %.3e\n" string(incl.semi_axes) maximum(abs.(S .- P))
 end
 
 println()

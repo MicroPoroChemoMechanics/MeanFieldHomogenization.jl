@@ -47,11 +47,23 @@ Everything `homogenize` accepts is an
 | :--- | :--- | :--- |
 | [`RVE`](@ref) | random, described through the Eshelby auxiliary problem | `Voigt`, `Reuss`, `Dilute`, `DiluteDual`, `MoriTanaka`, `Maxwell`, `PonteCastanedaWillis`, `SelfConsistent`, `AsymmetricSelfConsistent`, `DifferentialScheme` |
 | [`Laminate`](@ref) | periodic stack of parallel layers, deterministic | `Laminated` (exact), `Voigt`, `Reuss` |
+| [`ParticleAssembly`](@ref) | explicitly located inclusions — positions, not statistics | `ClusterModel`, `EquivalentInclusion` |
 
 A scheme that a cell does not serve reports it explicitly rather than
 dispatching elsewhere: `MoriTanaka` needs a matrix phase, so it does not apply
 to a laminate; `Laminated` needs an ordered stack, so it does not apply to an
-RVE. Any cell can be used at any level of a chain.
+RVE; the two N-body schemes need positions, so they do not apply to either.
+Any cell can be used at any level of a chain.
+
+!!! note "Chaining an N-body estimate needs the anisotropic Green operator"
+    A cluster or equivalent-inclusion estimate on a cubic array is **cubic, not
+    isotropic** — its two shear constants differ. Using one as the *reference*
+    of a further N-body scale therefore requires the interaction tensor in an
+    anisotropic reference, which is what
+    [`green_operator_aniso`](@ref) provides. Nothing extra to write: the
+    dispatcher picks it up. It costs milliseconds where the isotropic closed
+    form costs microseconds, and `green_nodes` (default 32) tunes its
+    quadrature. See [Particle assemblies](@ref man-assemblies).
 
 ## Explicit chaining
 
@@ -172,7 +184,9 @@ typically when it is to be differentiated, fitted or swept.
 - **`Homogenized` inside an ALV chain is not supported.** `homogenize_alv`
   works on discretized Volterra operators; for a nested cell to take part, its
   inner result would have to be re-expressible as a
-  [`ViscoLaw`](@ref). Chain ageing-viscoelastic scales explicitly.
+  [`ViscoLaw`](@ref). Chain ageing-viscoelastic scales explicitly. This applies
+  to a [`ParticleAssembly`](@ref) exactly as it does to an `RVE`: the two
+  N-body schemes have no ALV twin.
 - The declarative form does not check scale separation. That remains the
   modeler's responsibility, exactly as in the explicit form.
 

@@ -120,14 +120,25 @@ homogenize(asm, ClusterModel(; method = :multipole, order = 2), :C)
 
 | `method` | applies to | notes |
 | :-- | :-- | :-- |
-| `:analytical` | ball and disk pairs | closed form, **exact at any separation** |
-| `:multipole` | any ellipsoid pair | truncated expansion, default off the ball case |
+| `:analytical` | ball and disk pairs, **isotropic reference** | closed form, **exact at any separation** |
+| `:multipole` | any ellipsoid pair | truncated expansion, default off the isotropic ball case |
 | `:quadrature` | anything | product rule on the definition; the validation oracle, far too slow to assemble a system |
 
-!!! warning "Isotropic reference only"
-    The real-space Green operator is implemented for isotropic references. An
-    anisotropic `C₀` raises an `ArgumentError` naming the limitation rather than
-    silently using an isotropic kernel.
+The reference medium may be anisotropic: 3D elasticity goes through the Barnett line
+integral ([`green_operator_aniso`](@ref)), conduction through a closed form in 2D and
+3D. Two consequences to keep in mind there — the *analytical* kernel no longer applies
+even to a ball pair (its exactness came from the isotropic Green function being
+biharmonic), and the isotropic part of `𝕋` no longer vanishes, so "a cubic array keeps
+the Mori-Tanaka bulk modulus" is an isotropic-matrix statement. The one remaining gap
+is **plane-strain elasticity with an anisotropic reference**, which needs the Stroh
+formalism and raises an `ArgumentError` naming the limitation.
+
+!!! warning "Two sign conventions exist; the package uses Brisard's"
+    ``\mathbb{T}^{aa} = +\mathbb{P}``, i.e. the self term **is** the Hill tensor
+    ([Brisard, Bertin & Legoll 2023](https://doi.org/10.1016/j.cma.2023.116389),
+    Eq. (9)). Molinari & El Mouden (1996) and Berveiller et al. (1987) use the
+    opposite sign, so any formula transcribed from them must be flipped. See
+    [interaction tensors](@ref th-interaction).
 
 ## Local fields and bounds
 
@@ -175,8 +186,10 @@ stays spherical — and keeps its closed-form kernel — along the whole derivat
 ## Multiscale
 
 An assembly is an ordinary cell, so it plugs into the declarative multiscale seam from
-both sides — store `Homogenized(cell, scheme)` as a property and it is resolved lazily
-at `homogenize` time, memoized for the duration of the outer call.
+both sides. The mechanism itself — `Homogenized(cell, scheme)` as a property, lazy
+resolution, memoization, `nested` lenses — is described once in
+[Multiscale homogenization](@ref man-multiscale); what follows is only what is specific
+to an assembly.
 
 ```julia
 # An assembly as the INNER cell: a composite whose matrix is itself particulate.
@@ -194,8 +207,7 @@ add_particle!(asm, :p1, (0.0, 0.0, 0.0), Ellipsoid(0.3),
 homogenize(asm, ClusterModel(), :C)
 ```
 
-Both give exactly the two-step result computed by hand — the seam adds nothing of its
-own.
+Both give exactly the two-step result computed by hand.
 
 !!! note "Chaining N-body schemes needs the anisotropic Green operator"
     A cluster or equivalent-inclusion estimate on a cubic array is **cubic, not
@@ -209,19 +221,21 @@ own.
     is a differentiated quadrature and costs milliseconds. Tune it with `green_nodes`
     (default 32) if a strongly anisotropic reference needs more.
 
-### Sensitivities across scales
+### Which lenses an assembly answers
 
-A `nested` lens addresses a scalar inside the inner cell:
+A `nested` lens addresses a scalar inside the inner cell exactly as it does for an
+`RVE`:
 
 ```julia
 lens = nested(:M, :C, property(:matrix, :C, :μ))     # an inner-scale modulus
 derivative(outer, MoriTanaka(), lens; indexer = C -> get_array(C)[1, 2, 1, 2])
 ```
 
-The lenses an assembly answers are its own — `radius_param`, `center_param` and
-`property`. It has **no** `amount`: volume fractions are derived from the geometry and
-the cell size, so there is nothing to vary independently, and asking for one raises a
-message that names the lens to use instead.
+What is assembly-specific is the innermost lens. An assembly answers `radius_param`,
+`center_param` and `property`, and has **no** `amount`: volume fractions are derived
+from the geometry and the cell size, so there is nothing to vary independently, and
+asking for one raises a message that names the lens to use instead. It has no
+`distribution_shape` either, for the same reason — positions are explicit.
 
 ## Nano-interfaces: the equivalent particle
 

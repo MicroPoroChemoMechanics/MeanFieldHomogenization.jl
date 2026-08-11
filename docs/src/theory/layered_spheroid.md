@@ -181,8 +181,14 @@ flux, under a remote gradient ``\underline{H}``:
 
 ``\boldsymbol{A}_\Omega`` is the **concentration tensor** — how much of the
 remote gradient the particle actually sees — and ``\boldsymbol{B}_\Omega`` the
-corresponding **flux** average. Both are transversely isotropic, diagonal in the
-spheroid's own frame, and returned as `TensND.TensTI{2,3}`.
+corresponding **flux** average. Note which flux: the averaged quantity is
+``\boldsymbol{K}\cdot\nabla T = \boldsymbol{\sigma} \equiv -\underline{q}``, the
+stress analog of the package (see
+[Elasticity and transport: one set of formulas](@ref th-notation-sigma-q)), so
+``\boldsymbol{B}_\Omega`` is the exact twin of the elastic
+``\mathbb{B}_\Omega`` with no sign to remember. Both are transversely
+isotropic, diagonal in the spheroid's own frame, and returned as
+`TensND.TensTI{2,3}`.
 
 Remarkably, they depend on the whole layered structure only through the single
 ratio ``(b/a) = b^{0/1}_{N+1,1}/a^{0/1}_{N+1,1}`` of the leading coefficients at

@@ -2,7 +2,7 @@
 #  pair_quadrature.jl — brute-force evaluation of the two-inclusion
 #  interaction integral by a product quadrature rule.
 #
-#      Γ^{ab} = (1/|Ω_a|) ∫_{Ω_a} ∫_{Ω_b} Γ⁰(x - y) dV_y dV_x
+#      𝕋^{ab} = (1/|Ω_a|) ∫_{Ω_a} ∫_{Ω_b} 𝔾⁰(x - y) dV_y dV_x
 #
 #  This is the reference implementation: slow, geometry-agnostic, and used to
 #  validate the closed forms and the multipole truncation.  It is never the
@@ -41,9 +41,9 @@ function _pair_quadrature(
     # Weights are normalized to sum to 1 over Ω_a (the 1/|Ω_a| prefactor) and
     # to |Ω_b| over Ω_b (the plain volume integral).
     Wa = sum(wa)
-    acc = zero(MFH_Core.green_operator(P₀, r; kw...))
+    acc = zero(MFH_Core._green_operator(P₀, r; kw...))
     for (xa, ua) in zip(pa, wa), (xb, ub) in zip(pb, wb)
-        acc = acc + (ua * ub) * MFH_Core.green_operator(P₀, r .+ xb .- xa; kw...)
+        acc = acc + (ua * ub) * MFH_Core._green_operator(P₀, r .+ xb .- xa; kw...)
     end
     return TensND.Tens(acc / Wa)
 end

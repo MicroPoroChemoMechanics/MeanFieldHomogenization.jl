@@ -8,21 +8,32 @@
 #
 #  SIGN CONVENTION — read this before transcribing any formula.
 #
-#  Three sign conventions coexist in the literature and mixing them is the
-#  single most likely way to get a wrong answer here:
+#  Two sign conventions coexist in the literature and mixing them is the single
+#  most likely way to get a wrong answer here:
 #
-#    * Molinari & El Mouden (1996) and Berveiller et al. (1987) write the
-#      Lippmann-Schwinger equation as ε^I = ε⁰ + Σ_J Γ^{IJ}:δℂ^J:ε^J, so
-#      Γ^{IJ}:τ is the strain *induced* by the polarization τ, and the
-#      self term is Γ^{II} = -ℙ.
-#    * Brisard et al. (2014, 2023) define Γ₀ as mapping the polarization onto
-#      *minus* the induced field, so their influence tensors are the opposite
-#      of the above and their self term is +ℙ.
+#    * Brisard, Bertin & Legoll (2023), Eq. (9) — THE ONE THIS PACKAGE USES —
+#      define the Green operator as mapping a polarization onto MINUS the
+#      induced field,
 #
-#  This package uses the FIRST convention throughout, because it is the one
-#  that keeps `self_interaction_tensor` a direct function of `hill_tensor`,
-#  which is the object the rest of MFH is built on.  Every scheme kernel that
-#  transcribes a formula from Brisard flips the sign explicitly and says so.
+#          ε = E - 𝔾⁰ * τ ,       𝔾⁰_ijkl = -[∂²G_ik/∂x_j∂x_l]_{(ij)(kl)} ,
+#
+#      so its Fourier symbol is positive semi-definite (their Eq. (11),
+#      Γ̂₀(k) = σ₀⁻¹k⊗k/‖k‖² in conduction) and its self term is
+#
+#          𝕋^{aa} = +ℙ ,
+#
+#      positive definite like the Hill tensor itself.  The one-inclusion case
+#      is then ε = -ℙ:τ, which is what `theory/eshelby_problem.md` and
+#      `theory/viscoelasticity.md` already write.
+#
+#    * Molinari & El Mouden (1996) and Berveiller et al. (1987) write
+#      ε^I = ε⁰ + Σ_J Γ^{IJ}:δℂ^J:ε^J, so their Γ^{IJ} is the OPPOSITE of the
+#      above and their self term is Γ^{II} = -ℙ.
+#
+#  Consequence: any formula transcribed from Molinari or Berveiller — their
+#  App. A component table in particular — must be flipped on the way in.  The
+#  closed forms of `pair_ball_iso.jl` are flipped at their κ, once, with a
+#  comment saying so.  Nothing else in the package carries a compensating sign.
 # =============================================================================
 
 """
@@ -41,9 +52,9 @@ regions,
 ```
 
 so that contracting it with a *uniform polarization* carried by `incl_b`
-returns the **average field induced in `incl_a`** — strain in elasticity,
-minus the gradient in conduction. Its self counterpart is
-[`self_interaction_tensor`](@ref), equal to ``-\\mathbb{P}``.
+returns **minus the average field induced in `incl_a`** — strain in
+elasticity, gradient of the temperature in conduction. Its self counterpart is
+[`self_interaction_tensor`](@ref), equal to ``+\\mathbb{P}``.
 
 `P₀` may be a 4th-order stiffness (elasticity) or a 2nd-order conductivity
 tensor; dispatch selects the corresponding formulation, in 2D or 3D. Two
@@ -61,10 +72,17 @@ This is the shared numerical ingredient of both N-body models in the package,
 (2014), §3.1, note that their influence pseudotensors of order `k = l = 0`
 coincide with the interaction tensors of Molinari & El Mouden.
 
-!!! note "Isotropic reference only"
-    The real-space Green operator is implemented for isotropic references
-    only. An anisotropic `P₀` raises an `ArgumentError` rather than silently
-    falling back to an isotropic kernel.
+!!! warning "Molinari's convention is the opposite one"
+    The package follows [Brisard et al. 2023](@cite brisard2023), Eq. (9), for
+    which ``\\mathbb{T}^{aa} = +\\mathbb{P}``. Molinari & El Mouden (1996) and
+    Berveiller et al. (1987) use ``\\Gamma^{II} = -\\mathbb{P}``, so a formula
+    taken from them — their Appendix A table in particular — must be flipped
+    before it is compared with anything here.
+
+An anisotropic reference is supported in 3D elasticity and in conduction; only
+plane-strain elasticity with an anisotropic `P₀` is missing, and it raises an
+`ArgumentError` naming the limitation rather than falling back to an isotropic
+kernel.
 """
 function interaction_tensor(
         incl_a::MFH_Core.AbstractInclusion,
@@ -81,22 +99,25 @@ end
 """
     self_interaction_tensor(incl, P₀; kw...) -> AbstractTens
 
-Self term of the interaction family, ``\\mathbb{T}^{aa} = -\\mathbb{P}_a``: the
-average field induced in an inclusion by its *own* uniform polarization.
+Self term of the interaction family, ``\\mathbb{T}^{aa} = +\\mathbb{P}_a``:
+minus the average field induced in an inclusion by its *own* uniform
+polarization, which is the Eshelby result ``\\varepsilon = -\\mathbb{P}:\\tau``.
 
-It is minus the Hill polarization tensor, so it inherits every back-end of
+It **is** the Hill polarization tensor, so it inherits every back-end of
 [`hill_tensor`](@ref) — closed forms for isotropic and transversely isotropic
 references, the residue algorithm, the DECUHR and nested-QuadGK cubatures, in
 2D and 3D, for elasticity and for conduction. Keyword arguments are forwarded
 to `hill_tensor`.
 
-The identity ``\\mathbb{T}^{aa} = -\\mathbb{P}_a`` is what ties the two N-body
-schemes of this package to the one-site schemes: it is the reason the cluster
-model collapses onto Mori-Tanaka when the cluster is reduced to a single
-inclusion ([Molinari & El Mouden 1996](@cite molinari1996), App. C).
+That the self term is *plus* the Hill tensor is the whole reason the package
+follows [Brisard et al. 2023](@cite brisard2023) rather than Molinari's
+opposite sign: it makes the N-body kernels and the one-site schemes share one
+object, and it is why the cluster model collapses onto Mori-Tanaka when the
+cluster is reduced to a single inclusion
+([Molinari & El Mouden 1996](@cite molinari1996), App. C).
 """
 self_interaction_tensor(incl::MFH_Core.AbstractInclusion, P₀::TensND.AbstractTens; kw...) =
-    -Elasticity.hill_tensor(incl, P₀; kw...)
+    Elasticity.hill_tensor(incl, P₀; kw...)
 
 # ─── Kernel table ────────────────────────────────────────────────────────────
 

@@ -77,10 +77,21 @@ which is all the crack machinery does internally before taking the flat limit.
 
 Replace elasticity by a scalar diffusion problem — heat conduction, mass
 diffusion, electric conduction, Darcy flow. The unknown is a scalar potential
-``T``, the flux is ``\underline{q} = -\boldsymbol{K}\cdot\nabla T``, and the
-reference property is an order-2 conductivity ``\boldsymbol{K}``. Eshelby's
-uniformity result holds unchanged: a uniform polarization flux inside the
-ellipsoid produces a **uniform gradient** inside it, and an order-2 Hill tensor
+``T``, and the reference property is an order-2 conductivity
+``\boldsymbol{K}``. Fourier's law carries a minus sign that Hooke's does not,
+so the stress analog is taken to be **minus** the flux,
+
+```math
+\boldsymbol{\sigma} \equiv -\,\underline{q} = \boldsymbol{K}\cdot\nabla T ,
+```
+
+the convention fixed in
+[Elasticity and transport: one set of formulas](@ref th-notation-sigma-q) —
+``\boldsymbol{\sigma}\cdot\underline{n}`` is then, in both theories, what the
+exterior transmits to the interior across a surface. With that substitution
+Eshelby's uniformity result holds *literally*: a uniform polarization
+``\underline{\tau}_q`` inside the ellipsoid produces a **uniform gradient**
+inside it, and an order-2 Hill tensor
 ``\boldsymbol{P}(\boldsymbol{A},\boldsymbol{K})`` plays the role of
 ``\mathbb{P}`` [willis1977](@cite):
 
@@ -89,13 +100,18 @@ ellipsoid produces a **uniform gradient** inside it, and an order-2 Hill tensor
 \qquad
 \boldsymbol{s} = \boldsymbol{P}\cdot\boldsymbol{K},
 \qquad
-\boldsymbol{Q} = \boldsymbol{K} - \boldsymbol{K}\cdot\boldsymbol{P}\cdot\boldsymbol{K}.
+\boldsymbol{Q} = \boldsymbol{K} - \boldsymbol{K}\cdot\boldsymbol{P}\cdot\boldsymbol{K},
 ```
+
+which is the elastic ``\boldsymbol{\varepsilon} = -\mathbb{P}:\boldsymbol{\tau}``
+above with ``(\boldsymbol{\varepsilon},\mathbb{P},\boldsymbol{\tau})`` replaced
+by ``(\nabla T,\boldsymbol{P},\underline{\tau}_q)`` — no sign changed.
 
 The two problems are handled by the same functions in `MeanFieldHomogenization`, which
 dispatch on the order of the property tensor passed in: an order-4
 ``\mathbb{C}`` selects the elastic path, an order-2 ``\boldsymbol{K}`` the
-transport one.
+transport one. That single implementation is possible *because* of the
+convention above.
 
 See [Conduction and diffusion](@ref man-conductivity) for the call.
 

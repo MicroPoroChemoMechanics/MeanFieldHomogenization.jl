@@ -35,6 +35,7 @@ and the one where the choice of scheme matters most.
 | [Layered spheroids: geometry and effective conductivity](generated/layered_spheroid_effective.md) | the confocal `n`-layer spheroid, the equivalent particle, harmonic-series accuracy |
 | [Imperfect interfaces: what they do to the local fields](generated/layered_spheroid_interfaces.md) | pointwise temperature and flux, streamlines, conductance sweep, 3-D view |
 | [Highly conducting interfaces](generated/layered_spheroid_hc.md) | equivalent conductivity of an HC-coated particle vs aspect ratio |
+| [Nanocomposites: the equivalent particle](generated/nano_spheroids.md) | Dormieux, Lemarchand & Brisard (2016): a Gurtin-Murdoch interface condensed into a particle stiffness, its three limiting shapes reproduced exactly, and the size effect it produces through an ordinary Mori-Tanaka estimate — no new scheme needed |
 | [Symmetrization](generated/symmetrization.md) | exact rotation-group average vs best-fit projection |
 | [The custom-inclusion contract](generated/custom_inclusion_contract.md) | plugging an arbitrary morphology into every scheme — the three entry gates, the density seam, free orientation averaging |
 | [An inclusion whose response is a neural network](generated/neural_inclusion.md) | both phases — how a surrogate is **trained** (schematics of the network and of the fitting loop, the recorded learning curve) and how a trained one is **used**: what stays exact whatever the fit, accuracy against the closed form, every scheme, and the derivative with respect to the *morphology* |
@@ -56,7 +57,6 @@ two-inclusion interaction tensor.
 | [The cluster model on cubic arrays](generated/cluster_model.md) | Molinari & El Mouden (1996): convergence in cluster radius, the exact degeneracy onto Mori-Tanaka when the cluster is empty, comparison with the one-site schemes, the bulk modulus that stays exactly Mori-Tanaka whatever the arrangement, and SC vs BCC vs FCC porous arrays |
 | [The equivalent inclusion method](generated/eim_assembly.md) | Brisard, Dormieux & Sab (2014), Table 1: 160 circular pores in a circular SVE, plane strain — the `p = 0` bound reproduced by Monte-Carlo, against the Hashin-Shtrikman bound it improves on and the finite-element value it bounds |
 | [Chaining scales through an N-body scheme](generated/multiscale_assemblies.md) | the declarative multiscale seam with an assembly on either side, and why chaining two N-body estimates needs the *anisotropic* Green operator: a cluster estimate on a cubic array is cubic, not isotropic. Three scales end to end, plus a sensitivity across them |
-| [Nanocomposites: the equivalent particle](generated/nano_spheroids.md) | Dormieux, Lemarchand & Brisard (2016): a Gurtin-Murdoch interface condensed into a particle stiffness, its three limiting shapes reproduced exactly, and the size effect it produces through an ordinary Mori-Tanaka estimate — no new scheme needed |
 
 Theory: [interaction tensors](@ref th-interaction), [the cluster
 model](@ref th-cluster), [the equivalent inclusion method](@ref th-eim); the

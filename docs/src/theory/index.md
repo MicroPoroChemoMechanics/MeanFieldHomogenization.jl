@@ -6,7 +6,12 @@ order in which it is built. Every page is self-contained on notation
 ([Notation and conventions](notation.md)) and every formula is either cited or
 derived on the page.
 
-## The chain, in one paragraph
+The section is in four groups, and they are meant to be read in that order:
+**Foundations**, then **Schemes and specializations**, then the **N-body
+models**, then the **Appendices** — pages that support the rest but are written
+in its language rather than the other way round.
+
+## Foundations: the chain, in one paragraph
 
 An **inclusion** embedded in an infinite reference medium responds to a remote
 load in a way entirely captured by one object, the **Hill polarization tensor**
@@ -20,25 +25,48 @@ under an assumption about how phases interact gives a **homogenization scheme**
 — dilute, Mori–Tanaka, self-consistent, differential, and the bounds
 ([Homogenization schemes](homogenization.md)).
 
-Everything else in this section is a specialization of that chain:
+## Schemes and specializations
+
+Each of these keeps the chain above and changes one of its ingredients:
 
 | Page | Specialization |
 | :--- | :------------- |
-| [The finite Eshelby cell](corrected_cell.md) | when no closed form exists: the inclusion is solved on a *finite* cell and the truncation bias removed by its own dipole far field |
 | [Differential scheme](differential_scheme.md) | incorporation as an ODE in a fictitious time, and what a crack — which has no volume to replace — does to it |
 | [Crack opening displacement](cod_tensors.md) | the flat-inclusion limit: a crack has no volume, so it is described by ``\boldsymbol{B}`` and ``\mathbb{H}`` instead of a volume fraction |
 | [Thermal cracks](thermal_cracks.md) | the same limit for scalar transport |
 | [Layered sphere](layered_sphere.md) | a *composite* inclusion: no Hill tensor exists, the response is assembled by a radial recurrence |
 | [Layered spheroid](layered_spheroid.md) | the same for confocal spheroids, where imperfect interfaces couple harmonic degrees |
+| [Laminate](laminate.md) | a periodic stack: no inclusion at all, the interface algebra replaces the Hill tensor |
 | [Ageing linear viscoelasticity](viscoelasticity.md) | moduli become Volterra operators; the algebra of the chain is unchanged |
-| [Elliptic integrals](elliptic_integrals.md) | mathematical appendix: the special functions the closed forms need |
+
+## N-body models
+
+These are the only pages that drop the one-site assumption: instead of averaging
+the interaction between inclusions, they resolve it pair by pair, and therefore
+need to know *where* the inclusions are.
+
+| Page | What it adds |
+| :--- | :----------- |
+| [Interaction tensors](interaction_tensors.md) | the two-inclusion tensor ``\mathbb{T}^{ab}``, its Green operator, its closed forms — and the sign convention both models follow |
+| [The cluster model](cluster_model.md) | Molinari & El Mouden: the mean strain of every inclusion, resolved inside a cluster |
+| [The equivalent inclusion method](eim.md) | Brisard, Dormieux & Sab: the same physics as a variational Galerkin problem, with rigorous bounds |
+
+## Appendices
+
+| Page | Role |
+| :--- | :--- |
+| [The finite Eshelby cell](corrected_cell.md) | a numerical device supporting the finite-element inclusions: the inclusion is solved on a *finite* cell and the truncation bias removed by its own dipole far field. Written in the language of [localization](localization.md) and [crack opening displacement](cod_tensors.md), so it is read after both |
+| [Elliptic integrals](elliptic_integrals.md) | the special functions the closed forms need |
 
 ## Where the two physics meet
 
 The Eshelby framework applies verbatim to elasticity (order-4 tensors) and to
 scalar transport — heat conduction, diffusion, electric conduction, Darcy flow
 (order-2 tensors). The documentation treats them in parallel rather than in
-separate sections, because the algebra is identical:
+separate sections, because with the convention
+``\boldsymbol{\sigma} \equiv -\underline{q}`` fixed in
+[Elasticity and transport: one set of formulas](@ref th-notation-sigma-q) the
+algebra is not merely analogous but *identical, symbol for symbol*:
 
 | | Elasticity | Transport |
 | :--- | :--- | :--- |

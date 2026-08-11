@@ -107,35 +107,41 @@ end
 # =============================================================================
 
 # Heat-flux intensity factor `K_T` — thermal analog of the elasticity SIF.
-# For a flat crack driven by remote heat flux ``\mathbf q^∞``, the crack-tip
-# singular field scales as ``\sim K_T/\sqrt{r}``:
-#   - Ribbon:    ``K_T = \sqrt{\pi b}\,(\hat n\cdot \mathbf q^∞)``
-#   - Elliptic:  ``K_T = (3\pi^{3/2} b/8)\sqrt{b\,n_S}\,(b^{\mathcal E}/b^{\mathcal R})
-#                      \,(\hat n\cdot \mathbf q^∞)``
+# The driving vector is the transport twin of the remote stress, σ^∞ ≡ -q^∞ =
+# K₀·∇T^∞ (see the sign block in `localization.jl`), and the crack-tip singular
+# field scales as ~ K_T/√r:
+#   - Ribbon:    K_T = √(π b) (n̂ · σ^∞)
+#   - Elliptic:  K_T = (3π^{3/2} b/8) √(b n_S) (b^𝓔/b^𝓡) (n̂ · σ^∞)
 # Only the mode I analog exists in the scalar-temperature case (no shear mode).
 
 """
-    sif(crack::RibbonCrack, K₀::AbstractTens{2,3}, q∞; kw...) -> Real
+    sif(crack::RibbonCrack, K₀::AbstractTens{2,3}, σ∞; kw...) -> Real
 
 Thermal SIF (heat-flux intensity factor) of a ribbon crack:
-``K_T = \\sqrt{\\pi b}\\;\\hat{\\mathbf n}\\cdot\\mathbf q^{\\infty}``.
+``K_T = \\sqrt{\\pi b}\\;\\hat{\\mathbf n}\\cdot\\boldsymbol\\sigma^{\\infty}``.
+
+The driving vector is the transport twin of the remote stress of the elastic
+`sif`, i.e. ``\\boldsymbol\\sigma^\\infty \\equiv -\\mathbf q^\\infty
+= \\mathbf K_0\\cdot\\nabla T^\\infty``, per the package convention. Passing
+the physical flux ``\\mathbf q^\\infty`` instead returns ``-K_T``; the kernel
+is linear in its third argument and takes no view of its own.
 """
 function sif(
         crack::RibbonCrack{T},
         K₀::TensND.AbstractTens{2, 3},
-        q∞;
+        σ∞;
         y₀ = nothing, method::Symbol = :auto, kw...
     ) where {T}
     b = crack.b
     n̂ = TensND.tens_basis(crack_basis(crack), 3)
-    return sqrt(T(π) * b) * (n̂ ⋅ q∞)
+    return sqrt(T(π) * b) * (n̂ ⋅ σ∞)
 end
 
 # Elliptic crack — thermal
 function sif(
         crack::EllipticCrack{T},
         K₀::TensND.AbstractTens{2, 3},
-        q∞;
+        σ∞;
         y₀ = nothing, method::Symbol = :auto, kw...
     ) where {T}
     a = crack.a
@@ -164,30 +170,33 @@ function sif(
     b_ℛ = cod_tensor(ribbon_ref, K₀; method = method, kw...)
 
     return (3 * T(π)^(T(3) / 2) * b / 8) * sqrt(b * n_Sy) *
-        (b_ℰ / b_ℛ) * (n̂ ⋅ q∞)
+        (b_ℰ / b_ℛ) * (n̂ ⋅ σ∞)
 end
 
 """
-    dif(crack, K₀::AbstractTens{2,3}, q∞; method=:auto, kw...) -> Real
+    dif(crack, K₀::AbstractTens{2,3}, σ∞; method=:auto, kw...) -> Real
 
 Temperature intensity factor (analog of displacement intensity
-factor) for a flat crack driven by a remote heat-flux vector
-``\\mathbf q^{\\infty}``:
+factor) for a flat crack driven by the remote vector
+``\\boldsymbol\\sigma^{\\infty} \\equiv -\\mathbf q^{\\infty}
+ = \\mathbf K_0\\cdot\\nabla T^{\\infty}``:
 
 ```
-[[T]]_avg = b · (\\hat{\\mathbf n}·\\mathbf q^{\\infty}) .
+[[T]]_avg = b · (\\hat{\\mathbf n}·\\boldsymbol\\sigma^{\\infty}) .
 ```
 
-Returns a scalar (vs the `Tens{1,3}` returned by the elasticity `dif`)
-since the temperature field is scalar.
+Same convention as the thermal [`sif`](@ref): the driving vector is the
+transport twin of the remote stress, so the formula is the elastic one symbol
+for symbol. Returns a scalar (vs the `Tens{1,3}` returned by the elasticity
+`dif`) since the temperature field is scalar.
 """
 function dif(
         crack::MFH_Core.AbstractCrack,
         K₀::TensND.AbstractTens{2, 3},
-        q∞;
+        σ∞;
         method::Symbol = :auto, kw...
     )
     b = cod_tensor(crack, K₀; method = method, kw...)
     n̂ = TensND.tens_basis(crack_basis(crack), 3)
-    return b * (n̂ ⋅ q∞)
+    return b * (n̂ ⋅ σ∞)
 end

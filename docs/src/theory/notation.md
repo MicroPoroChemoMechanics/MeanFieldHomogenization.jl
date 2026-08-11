@@ -43,6 +43,75 @@ tensor ``\boldsymbol{B}`` and a unit vector ``\underline{n}``.
 | ``\langle\,\cdot\,\rangle_\Omega`` | volume average over ``\Omega`` |
 | ``\mathrm{d}S_\xi`` | surface element in the ``\underline{\xi}`` parametrization |
 
+## [Elasticity and transport: one set of formulas](@id th-notation-sigma-q)
+
+Hooke's law carries no minus sign; Fourier's and Fick's do. That single
+asymmetry — ``\boldsymbol{\sigma} = \mathbb{C}:\boldsymbol{\varepsilon}``
+against ``\underline{q} = -\boldsymbol{K}\cdot\nabla T`` — is the only reason
+order-2 and order-4 mean-field formulas ever look as though they disagreed on a
+sign. The documentation and the code remove it by taking as the stress
+analog **minus** the flux:
+
+```math
+\boxed{\;\boldsymbol{\sigma} \;\equiv\; -\,\underline{q}
+   \;=\; \boldsymbol{K}\cdot\nabla T\;}
+```
+
+This is not bookkeeping. Take a surface of outward normal ``\underline{n}``:
+
+- in mechanics, ``\boldsymbol{\sigma}\cdot\underline{n}`` is the traction — the
+  force the material **outside** exerts on the material **inside**;
+- in conduction, ``-\underline{q}\cdot\underline{n}`` is the flux **entering**
+  the domain — what the outside delivers to the inside.
+
+With ``\boldsymbol{\sigma} \equiv -\underline{q}``, the quantity
+``\boldsymbol{\sigma}\cdot\underline{n}`` is, in *both* theories, what the
+exterior transmits to the interior across that surface. The two objects are the
+same physical thing, and the analogy is structural rather than notational —
+which is why every formula of this documentation comes out identical, symbol
+for symbol:
+
+| elasticity (order 4) | transport (order 2) |
+| :------------------- | :------------------ |
+| ``\boldsymbol{\varepsilon}`` | ``\nabla T`` |
+| ``\boldsymbol{\sigma} = \mathbb{C}:\boldsymbol{\varepsilon} + \boldsymbol{\tau}`` | ``-\underline{q} = \boldsymbol{K}\cdot\nabla T + \underline{\tau}_q`` |
+| ``\mathbb{C}`` | ``\boldsymbol{K}`` |
+| ``\mathbb{P}``, ``\mathbb{A}``, ``\mathbb{T}^{ab}``, ``\mathbb{G}^0`` | ``\boldsymbol{P}``, ``\boldsymbol{A}``, ``\boldsymbol{T}^{ab}``, ``\boldsymbol{G}^0`` |
+| ``\boldsymbol{\varepsilon} = -\mathbb{P}:\boldsymbol{\tau}`` | ``\nabla T = -\boldsymbol{P}\cdot\underline{\tau}_q`` |
+
+Two consequences worth keeping in mind while reading the code:
+
+- the localization tensors named `flux_gradient_loc`, `flux_flux_loc`,
+  `gradient_flux_loc` carry ``\boldsymbol{\sigma} = -\underline{q}``, not
+  ``\underline{q}``. The names are kept for continuity with their elastic
+  twins; the sign is the one stated here.
+- a conductivity ``\boldsymbol{K}`` and a stiffness ``\mathbb{C}`` are then
+  interchangeable in every scheme, which is exactly why one implementation
+  serves both physics.
+
+## [The Green operator maps a polarization onto minus the field](@id th-notation-green-sign)
+
+The second convention that must be fixed once is the sign of the Green
+operator, since two incompatible ones are current in the literature. This
+documentation follows [Brisard, Bertin & Legoll 2023](@cite brisard2023),
+Eq. (9):
+
+```math
+\boldsymbol{\varepsilon}(\underline{x}) = \boldsymbol{E}
+  - \int \mathbb{G}^0(\underline{x}-\underline{y}):
+      \boldsymbol{\tau}(\underline{y})\,\mathrm{d}V_{\underline{y}},
+\qquad
+\mathbb{G}^0_{ijkl}
+  = -\Big[\frac{\partial^2 G_{ik}}{\partial x_j\partial x_l}\Big]_{(ij)(kl)} .
+```
+
+The leading minus makes the Fourier symbol of ``\mathbb{G}^0`` positive
+semi-definite and its interior average **plus** the Hill tensor,
+``\mathbb{T}^{aa} = +\mathbb{P}``, so the one-inclusion case is the
+``\boldsymbol{\varepsilon} = -\mathbb{P}:\boldsymbol{\tau}`` used on every page
+of this section. [Interaction tensors](interaction_tensors.md) develops the
+consequences and names the references that use the opposite sign.
+
 ## Isotropic and transversely isotropic bases
 
 Any isotropic order-4 tensor is a combination of the spherical and deviatoric

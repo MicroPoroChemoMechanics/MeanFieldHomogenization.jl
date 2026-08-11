@@ -103,6 +103,12 @@ delta_compliance(H::TensND.AbstractTens{4, 3}, f) = f * H
 
 # =============================================================================
 #  Conductivity contribution (2-tensor fields)
+#
+#  Same sign convention as `localization.jl`: the "flux" side of these
+#  expressions carries σ ≡ -q = K·∇T, so `A_q∇` and `A_qq` are the transport
+#  twins of `A_σε` and `A_σσ` symbol for symbol.  Both kernels below are
+#  written in terms of those tensors, so nothing here needs a compensating
+#  sign — see the block comment in `localization.jl`.
 # =============================================================================
 
 """

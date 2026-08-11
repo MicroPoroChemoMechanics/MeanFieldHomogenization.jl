@@ -16,7 +16,7 @@ uniform in each inclusion. Averaging the Lippmann-Schwinger equation over inclus
 
 ```math
 \boldsymbol{\varepsilon}^I = \boldsymbol{\varepsilon}^0
-  + \sum_J \mathbb{T}^{IJ} : \delta\mathbb{C}^J : \boldsymbol{\varepsilon}^J ,
+  - \sum_J \mathbb{T}^{IJ} : \delta\mathbb{C}^J : \boldsymbol{\varepsilon}^J ,
 \qquad \delta\mathbb{C}^J = \mathbb{C}^J - \mathbb{C}_m ,
 ```
 
@@ -25,17 +25,25 @@ and relating ``\boldsymbol{\varepsilon}^0`` to the macroscopic strain
 
 ```math
 \boldsymbol{\varepsilon}^I = \boldsymbol{E}
-  + \sum_J \mathbb{T}^{IJ} : \delta\mathbb{C}^J : \boldsymbol{\varepsilon}^J
+  - \sum_J \mathbb{T}^{IJ} : \delta\mathbb{C}^J : \boldsymbol{\varepsilon}^J
   + \mathbb{E}^0 : \sum_K f_K\, \delta\mathbb{C}^K : \boldsymbol{\varepsilon}^K .
 ```
+
+!!! warning "The paper's own sign is the opposite one"
+    Molinari & El Mouden write these two equations with a ``+`` in front of the
+    interaction sum, because their ``\Gamma^{IJ}`` is the opposite of this package's
+    ``\mathbb{T}^{IJ}`` (their self term is ``\Gamma^{II} = -\mathbb{P}_0``). The
+    equations above are theirs with that single flip applied — see the
+    [convention note](@ref th-interaction). Nothing else in this page or in the
+    implementation carries a compensating sign.
 
 Two identities connect this to the rest of the package:
 
 ```math
-\mathbb{T}^{II} = -\,\mathbb{P}_0 , \qquad \mathbb{E}^0 = +\,\mathbb{P}_0 ,
+\mathbb{T}^{II} = +\,\mathbb{P}_0 , \qquad \mathbb{E}^0 = +\,\mathbb{P}_0 ,
 ```
 
-the self term of the interaction family being minus the Hill tensor, and the far-field
+the self term of the interaction family **being** the Hill tensor, and the far-field
 operator being the Hill tensor of the inclusion shape. For an isotropic matrix and
 spherical inclusions,
 
@@ -69,13 +77,14 @@ linear system whose unknowns are order-4 tensors:
 ```math
 \sum_K \mathbb{M}_{IK} : \mathbb{A}^K = \mathbb{I} ,
 \qquad
-\mathbb{M}_{IK} =
-\begin{cases}
- \mathbb{I} + \big[(1-f_I)\,\mathbb{P}_0 - \bar{\mathbb{T}}_{II}\big]
-   : \delta\mathbb{C}_I & K = I ,\\[4pt]
- -\big[\bar{\mathbb{T}}_{IK} + f_K\, \mathbb{P}_0\big] : \delta\mathbb{C}_K & K \ne I .
-\end{cases}
+\boxed{\;\mathbb{M}_{IK} = \delta_{IK}\,\mathbb{I}
+  + \big[\bar{\mathbb{T}}_{IK} + (\delta_{IK} - f_K)\,\mathbb{P}_0\big]
+    : \delta\mathbb{C}_K \;}
 ```
+
+A **single** expression covers both the diagonal and the off-diagonal block, which is
+the practical dividend of the Brisard sign convention: in Molinari's own convention the
+two cases carry opposite signs and have to be written separately.
 
 The matrix localization follows from the strain average rule and the effective
 stiffness from the stress one:

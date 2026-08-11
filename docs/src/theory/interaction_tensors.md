@@ -18,16 +18,26 @@ for order 2, blackboard bold for order 4. Two symbols are introduced here.
 the letter ``\mathbb{T}`` is kept here because a Greek capital carries no order in this
 typeface convention.
 
+Everything below is written once and read twice, in elasticity and in transport, using
+the dictionary of
+[Elasticity and transport: one set of formulas](@ref th-notation-sigma-q):
+``\boldsymbol{\varepsilon} \leftrightarrow \nabla T``,
+``\mathbb{C} \leftrightarrow \boldsymbol{K}``,
+``\boldsymbol{\sigma} \equiv -\underline{q}``. Order-2 objects keep the bold typeface
+(``\boldsymbol{T}^{ab}``, ``\boldsymbol{G}^0``, ``\boldsymbol{P}``); no sign changes
+between the two columns.
+
 ## The Lippmann-Schwinger equation
 
 With a homogeneous reference ``\mathbb{C}_0`` and the polarization
 ``\boldsymbol{\tau} = (\mathbb{C}-\mathbb{C}_0):\boldsymbol{\varepsilon}``, the local
 problem is equivalent to the integral equation of
-[Zeller & Dederichs 1973](@cite zeller1973)
+[Zeller & Dederichs 1973](@cite zeller1973), written here in the sign convention of
+[Brisard, Bertin & Legoll 2023](@cite brisard2023), Eq. (9):
 
 ```math
 \boldsymbol{\varepsilon}(\underline{x}) = \boldsymbol{E}
-  + \int_{\mathbb{R}^d} \mathbb{G}^0(\underline{x}-\underline{y})
+  - \int_{\mathbb{R}^d} \mathbb{G}^0(\underline{x}-\underline{y})
     : \boldsymbol{\tau}(\underline{y})\, \mathrm{d}V_{\underline{y}} ,
 ```
 
@@ -36,21 +46,43 @@ function ``\boldsymbol{G}`` by
 
 ```math
 \mathbb{G}^0_{ijkl}(\underline{x})
-  = \Big[\frac{\partial^2 G_{ik}}
+  = -\Big[\frac{\partial^2 G_{ik}}
               {\partial x_j\, \partial x_l}(\underline{x})\Big]_{(ij)(kl)} ,
 ```
 
 the brackets denoting symmetrization on ``(i,j)`` and on ``(k,l)``. In conduction the
-same object is the Hessian of the scalar Green function ``G``,
+same object is minus the Hessian of the scalar Green function ``G``,
 
 ```math
 \boldsymbol{G}^0_{ij}(\underline{x})
-  = \frac{\partial^2 G}{\partial x_i\, \partial x_j}(\underline{x}) .
+  = -\frac{\partial^2 G}{\partial x_i\, \partial x_j}(\underline{x}) .
 ```
 
-The kernel splits into a Dirac part and a regular part; integrating it over an
-inclusion containing the source returns minus the Hill tensor, which is the identity
-tying this page to the rest of the package.
+The leading minus is what makes this convention the coherent one. As a distribution the
+conduction kernel splits into the regular part above and a Dirac self term,
+
+```math
+\boldsymbol{G}^0(\underline{x})
+  = \frac{\boldsymbol{1} - 3\,\underline{n}\otimes\underline{n}}
+         {4\pi\sigma_0 r^3}
+  + \frac{\boldsymbol{1}}{3\sigma_0}\,\delta(\underline{x}) ,
+```
+
+and the transform of the whole is
+
+```math
+\hat{\boldsymbol{G}}^0(\underline{k})
+  = \frac{\underline{k}\otimes\underline{k}}{\sigma_0\,\|\underline{k}\|^2}
+\qquad (\underline{k} \ne \underline{0}) ,
+```
+
+which is [Brisard et al. 2023](@cite brisard2023), Eq. (11): a **positive
+semi-definite** operator. The regular part averages to zero over any ball centered on
+the source, so the whole interior average is the Dirac term
+``\boldsymbol{1}/(3\sigma_0)`` — which is exactly ``\boldsymbol{P}`` of a sphere.
+*Plus* the Hill tensor, positive definite as ``\mathbb{P}`` is: the identity tying this
+page to the rest of the package. (The functions of the package evaluate the regular
+part; the Dirac term is what [`self_interaction_tensor`](@ref) carries.)
 
 ## Definition
 
@@ -64,26 +96,35 @@ separated by ``\underline{r}``,
      \mathrm{d}V_{\underline{y}}\, \mathrm{d}V_{\underline{x}} ,
 ```
 
-so that ``\mathbb{T}^{ab}:\boldsymbol{\tau}_b`` is the **average field induced in
+so that ``-\mathbb{T}^{ab}:\boldsymbol{\tau}_b`` is the **average field induced in
 ``a``** by a uniform polarization ``\boldsymbol{\tau}_b`` carried by ``b``. Over a
 single inclusion the same integral gives
 
 ```math
-\mathbb{T}^{aa} = -\,\mathbb{P}_a .
+\boxed{\;\mathbb{T}^{aa} = +\,\mathbb{P}_a\;}
 ```
 
-See [`self_interaction_tensor`](@ref) and the Mori-Tanaka limit on the
+so the one-inclusion case is exactly the
+``\boldsymbol{\varepsilon} = -\mathbb{P}:\boldsymbol{\tau}`` of
+[the Eshelby problem](@ref th-eshelby-problem). See
+[`self_interaction_tensor`](@ref) and the Mori-Tanaka limit on the
 [cluster-model page](@ref th-cluster).
 
-!!! warning "Sign conventions differ across the literature"
+!!! warning "Molinari and Berveiller use the opposite sign"
+    The package follows [Brisard, Bertin & Legoll 2023](@cite brisard2023), Eq. (9):
+    the Green operator maps a polarization onto **minus** the induced field, its
+    Fourier symbol ``\sigma_0^{-1}\underline{k}\otimes\underline{k}/\|\underline{k}\|^2``
+    is positive, and ``\mathbb{T}^{aa} = +\mathbb{P}``, coherent with the Hill tensor.
+
     [Molinari & El Mouden 1996](@cite molinari1996) and
-    [Berveiller et al. 1987](@cite berveiller1987) use the convention above, with
-    ``\mathbb{T}^{aa} = -\mathbb{P}``. [Brisard et al. 2014](@cite brisard2014) define
-    their Green operator as mapping the polarization onto *minus* the induced field, so
-    their influence tensors are the opposite of these and their self term is
-    ``+\mathbb{P}``. The package uses the first convention throughout, because it keeps
-    the self term a direct function of `hill_tensor`. Every kernel transcribing a
-    formula from Brisard flips the sign explicitly.
+    [Berveiller et al. 1987](@cite berveiller1987) write instead
+    ``\boldsymbol{\varepsilon}^I = \boldsymbol{\varepsilon}^0
+    + \sum_J \Gamma^{IJ}:\delta\mathbb{C}^J:\boldsymbol{\varepsilon}^J``, so their
+    ``\Gamma^{IJ}`` is the **opposite** of ``\mathbb{T}^{IJ}`` and their self term is
+    ``\Gamma^{II} = -\mathbb{P}``. Any formula transcribed from them — their
+    Appendix A component table in particular — must be flipped before it is compared
+    with anything on this page. The closed form below is *their table with the sign
+    already flipped*, which is why its ``\kappa`` is positive where theirs is negative.
 
 ## Exact closed forms for balls and disks
 
@@ -114,14 +155,15 @@ Let ``\underline{n} = \underline{r}/R`` be the unit vector along the line of cen
 ``R = \|\underline{r}\|``, and
 
 ```math
-\kappa = -\frac{b^3}{12\,R^3\,\mu\,(1-\nu)} ,
+\kappa = \frac{b^3}{12\,R^3\,\mu\,(1-\nu)} ,
 \qquad
 \rho^2 = \frac{a^2+b^2}{R^2} .
 ```
 
-In the frame whose third axis is ``\underline{n}``
-([Molinari & El Mouden 1996](@cite molinari1996), App. A;
-[Berveiller et al. 1987](@cite berveiller1987)):
+— note the sign of ``\kappa``: [Molinari & El Mouden 1996](@cite molinari1996) write
+``-b^3/(12R^3\mu(1-\nu))``, and the flip to this package's convention is applied here,
+once. In the frame whose third axis is ``\underline{n}``
+(their App. A; [Berveiller et al. 1987](@cite berveiller1987)):
 
 ```math
 \begin{aligned}
@@ -189,13 +231,18 @@ out entirely:
 
 ```math
 \boldsymbol{T}^{ab} = \frac{b^3}{3\,\sigma_0 R^3}
-  \big(3\,\underline{n}\otimes\underline{n} - \boldsymbol{1}\big)
+  \big(\boldsymbol{1} - 3\,\underline{n}\otimes\underline{n}\big)
 \quad (3\text{D}),
 \qquad
 \boldsymbol{T}^{ab} = \frac{b^2}{2\,\sigma_0 R^2}
-  \big(2\,\underline{n}\otimes\underline{n} - \boldsymbol{1}\big)
+  \big(\boldsymbol{1} - 2\,\underline{n}\otimes\underline{n}\big)
 \quad (2\text{D}).
 ```
+
+The two-dimensional form is **literally** Eq. (26) of
+[Brisard et al. 2023](@cite brisard2023) — same sign, same prefactor — and the test
+suite checks it component by component. It is the sharpest available statement that
+the package and its normative reference share one convention.
 
 ### Elasticity, plane strain
 
@@ -205,13 +252,15 @@ out entirely:
 ```
 
 ```math
-\Delta\mathbb{G}^0(\underline{r}) = \frac{24}{8\pi\mu(1-\nu)R^4}
+\Delta\mathbb{G}^0(\underline{r}) = \frac{-24}{8\pi\mu(1-\nu)R^4}
   \Big[\mathbb{K}_2
     - (2\boldsymbol{N}-\boldsymbol{1})\otimes(2\boldsymbol{N}-\boldsymbol{1})\Big],
 ```
 
 ``\mathbb{K}_2`` being the plane deviatoric projector. Note that
-``\Delta\mathbb{G}^0`` does not depend on the reference Poisson ratio.
+``\Delta\mathbb{G}^0`` does not depend on the reference Poisson ratio, and that both
+terms of the bracket above carry the same overall convention: ``\mathbb{G}^0`` and
+``\Delta\mathbb{G}^0`` are negated together, never one without the other.
 
 ## The vanishing isotropic part
 

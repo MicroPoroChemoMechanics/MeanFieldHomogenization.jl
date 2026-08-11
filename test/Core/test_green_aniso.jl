@@ -145,11 +145,13 @@ end
         ) ./ (4h^2)
     end
     H = [d2(j, l)[i, k] for i in 1:3, k in 1:3, j in 1:3, l in 1:3]
-    Γfd = [
-        (H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
+    # 𝔾⁰ = -[∂²G]_{(ij)(kl)}: the minus is the Brisard convention, and the
+    # anisotropic route must carry it exactly as the closed form does.
+    Gfd = [
+        -(H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
             for i in 1:3, j in 1:3, k in 1:3, l in 1:3
     ]
-    @test maximum(abs.(Γ .- Γfd)) < 1.0e-5 * maximum(abs.(Γ))
+    @test maximum(abs.(Γ .- Gfd)) < 1.0e-5 * maximum(abs.(Γ))
 end
 
 @testset "green_operator — dispatch" begin
@@ -164,6 +166,15 @@ end
     # `green_nodes` reaches the anisotropic branch and is ignored by the
     # isotropic one, so both can be passed together with a quadrature `nodes`.
     @test green_operator(C₀, x; green_nodes = 8) == green_operator_iso(C₀, x)
+
+    # The public API is tensor-valued throughout; the `SArray` kernels the hot
+    # loops use are the `_`-prefixed twins, not these.
+    @test green_operator(C₀, x) isa TensND.AbstractTens{4, 3}
+    @test green_operator(_Cgen(), x) isa TensND.AbstractTens{4, 3}
+    @test green_operator_aniso(TensISO{3}(2.0), x) isa TensND.AbstractTens{2, 3}
+    @test green_function_aniso(C₀, x) isa TensND.AbstractTens{2, 3}
+    K = MeanFieldHomogenization.Core._green_operator(C₀, x)
+    @test K isa AbstractArray && !(K isa TensND.AbstractTens)
 end
 
 @testset "Anisotropic Green — error paths" begin

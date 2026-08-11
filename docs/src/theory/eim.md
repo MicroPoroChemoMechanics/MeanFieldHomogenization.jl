@@ -58,8 +58,8 @@ Eq. (37). At ``p = 0`` — one constant polarization per inclusion — dividing 
 ```math
 \Big[(\mathbb{C}_a-\mathbb{C}_0)^{-1} + \mathbb{P}_a
      - f_a\, \mathbb{P}_\Omega\Big] : \boldsymbol{\tau}_a
- \;-\; \sum_{b \ne a}\Big[\mathbb{T}^{ab}(\underline{r}_{ab})
-     + f_b\, \mathbb{P}_\Omega\Big] : \boldsymbol{\tau}_b
+ \;+\; \sum_{b \ne a}\Big[\mathbb{T}^{ab}(\underline{r}_{ab})
+     - f_b\, \mathbb{P}_\Omega\Big] : \boldsymbol{\tau}_b
  \;=\; \boldsymbol{E} ,
 ```
 
@@ -74,12 +74,12 @@ and
 ``\boldsymbol{\sigma}_a = \mathbb{C}_0 : \boldsymbol{\varepsilon}_a
 + \boldsymbol{\tau}_a``.
 
-!!! warning "Sign"
-    Brisard's Green operator maps a polarization onto *minus* the induced field, so his
-    influence tensors are the opposite of this package's ``\mathbb{T}^{ab}`` and his
-    self term is ``+\mathbb{P}_a``. That is why ``+\mathbb{P}_a`` appears on the
-    diagonal above while the off-diagonal blocks carry a minus in front of
-    ``\mathbb{T}^{ab}``. See the [convention note](@ref th-interaction).
+!!! note "Transcribed verbatim"
+    The package shares Brisard's sign convention (see the
+    [convention note](@ref th-interaction)), so the system above is his Eq. (37) with
+    nothing flipped: his self term ``|\Omega_a|^{-1}S^{00}_a`` is ``+\mathbb{P}_a``,
+    which is ``\mathbb{T}^{aa}``, and every block carries a plus. It is the *cluster
+    model* page, transcribing Molinari, that has a flip to declare.
 
 ## Relation to the cluster model
 

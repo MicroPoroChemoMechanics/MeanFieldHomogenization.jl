@@ -19,7 +19,11 @@
 #      \mathrm{d}V_{\underline{y}}\,\mathrm{d}V_{\underline{x}} ,
 # ```
 #
-# whose self counterpart is ``\mathbb{T}^{aa} = -\mathbb{P}``. Theory: the
+# whose self counterpart is ``\mathbb{T}^{aa} = +\mathbb{P}`` — the package follows
+# the sign convention of [Brisard, Bertin & Legoll (2023)](https://doi.org/10.1016/j.cma.2023.116389),
+# Eq. (9), for which the Green operator maps a polarization onto *minus* the induced
+# field. Molinari's own convention is the opposite one, so the formulas below are his
+# with that flip already applied. Theory: the
 # [cluster model](@ref th-cluster) and the [interaction tensors](@ref th-interaction).
 
 import Pkg                                                          #jl

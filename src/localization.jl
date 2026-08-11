@@ -141,6 +141,23 @@ end
 
 # =============================================================================
 #  Conductivity localization (2-tensor fields)
+#
+#  SIGN CONVENTION.  Hooke carries no minus sign, Fourier and Fick do.  The
+#  package removes that asymmetry by taking as the stress analog MINUS the
+#  flux,
+#
+#       σ ≡ -q = K·∇T ,
+#
+#  which is not bookkeeping: σ·n is then, in both theories, what the exterior
+#  transmits to the interior across a surface of normal n — the traction in
+#  mechanics, the entering flux in conduction.  Every transport formula is then
+#  the elastic one symbol for symbol (∇T ↔ ε, K ↔ ℂ, ℙ ↔ 𝐏, …).
+#
+#  Consequence for the four functions below: the "flux" they carry is σ = -q.
+#  The names are kept aligned with their elastic twins — renaming them would be
+#  breaking and would not make the meaning any clearer than saying it here —
+#  and each docstring states the quantity explicitly.  See the notation page,
+#  section "Elasticity and transport: one set of formulas".
 # =============================================================================
 
 """
@@ -172,13 +189,17 @@ end
 """
     flux_gradient_loc(incl, K₁, K₀; kw...) -> Tens{2,3}
 
-Dilute **flux-gradient localization tensor** `A_q∇`: `q_inc = A_q∇ · ∇T∞`.
+Dilute **flux-gradient localization tensor** `A_q∇`: `σ_inc = A_q∇ · ∇T∞`,
+with `σ ≡ -q = K·∇T` the stress analog of the package (see the sign note
+above this block, and the notation page). It is `A_q∇ = K₁ · A_∇∇`, so the
+quantity it produces is `K₁ · ∇T_inc`, i.e. **minus** the flux — exactly what
+makes this the transport twin of [`stress_strain_loc`](@ref), symbol for
+symbol.
 
 !!! warning "The generic method assumes a homogeneous inclusion"
-    Transport counterpart of [`stress_strain_loc`](@ref): it evaluates
-    `A_q∇ = K₁ · A_∇∇`, valid only for a single uniform conductivity. A
-    heterogeneous inclusion must supply its own method; [`flux_flux_loc`](@ref)
-    then follows.
+    The expression `A_q∇ = K₁ · A_∇∇` is valid only for a single uniform
+    conductivity. A heterogeneous inclusion must supply its own method;
+    [`flux_flux_loc`](@ref) then follows.
 """
 function flux_gradient_loc(
         incl::AbstractInclusion,
@@ -193,7 +214,8 @@ end
     gradient_flux_loc(incl, K₁, K₀; kw...) -> Tens{2,3}
 
 Dilute **gradient-flux localization tensor** `A_∇q = A_∇∇ · R₀`
-(with `R₀ = K₀⁻¹`): `∇T_inc = A_∇q · q∞`.
+(with `R₀ = K₀⁻¹`): `∇T_inc = A_∇q · σ∞`, with `σ ≡ -q = K₀·∇T∞` the stress
+analog of the package. Transport twin of [`strain_stress_loc`](@ref).
 """
 function gradient_flux_loc(
         incl::AbstractInclusion,
@@ -208,7 +230,9 @@ end
     flux_flux_loc(incl, K₁, K₀; kw...) -> Tens{2,3}
 
 Dilute **flux-flux localization tensor** `A_qq = A_q∇ · R₀`:
-`q_inc = A_qq · q∞`.
+`σ_inc = A_qq · σ∞`, with `σ ≡ -q` throughout — both sides carry the same
+convention, so the tensor itself is the one a reader of
+[`stress_stress_loc`](@ref) expects.
 
 Derived from [`flux_gradient_loc`](@ref), for the reason given in
 [`stress_stress_loc`](@ref).

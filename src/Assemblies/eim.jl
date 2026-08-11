@@ -7,17 +7,16 @@
 #  divided by |Ω_a|, reads
 #
 #     [(ℂ_a-ℂ₀)⁻¹ + ℙ_a - f_a ℙ_Ω] : τ_a
-#       - Σ_{b≠a} [Γ^{ab} + f_b ℙ_Ω] : τ_b  =  E ,
+#       + Σ_{b≠a} [𝕋^{ab} - f_b ℙ_Ω] : τ_b  =  E ,
 #
 #     ℂ^app : E = ℂ₀ : E + Σ_a f_a τ_a .
 #
-#  SIGN.  Brisard's Γ₀ maps a polarization onto MINUS the induced field, so
-#  his influence tensors are the opposite of this package's `Γ^{ab}` (see the
-#  convention block in `Interactions/api.jl`).  His self term |Ω_a|⁻¹S⁰⁰_a is
-#  therefore +ℙ_a, which is what appears above, while the off-diagonal blocks
-#  carry a minus sign in front of our Γ^{ab}.  That single flip is the whole
-#  translation between the two papers, and the test that EIM and the cluster
-#  model agree on a periodic assembly is what keeps it honest.
+#  SIGN.  The package shares Brisard's convention (see the block in
+#  `Interactions/api.jl`), so this is his Eq. (37) transcribed verbatim: his
+#  self term |Ω_a|⁻¹S⁰⁰_a is +ℙ_a, which is `𝕋^{aa}`, and every block above
+#  carries a plus.  Nothing is flipped on the way in, and the test that EIM
+#  and the cluster model agree on a periodic assembly is what keeps the two
+#  transcriptions consistent with each other.
 #
 #  ℙ_Ω, the Hill tensor of the SVE DOMAIN, is the mixed-boundary-condition
 #  term: it closes the far field without periodization and without the
@@ -91,19 +90,20 @@ function _eim_polarizations(asm, P₀, prop::Symbol, scheme; kw...)
             gk = particle_geometry(asm, names[k])
             if i == k
                 # Self block: the inverse contrast, the Hill tensor of the
-                # inclusion, and the boundary term.  A lattice adds the
-                # interaction with the particle's own periodic images.
-                Γself = Interactions.lattice_interaction_tensor(
+                # inclusion (which IS 𝕋^{aa}), and the boundary term.  A
+                # lattice adds the interaction with the particle's own
+                # periodic images.
+                𝕋self = Interactions.lattice_interaction_tensor(
                     gi, gk, zeros(eltype(ci), length(ci)), P₀, L, cutoff; pass...
                 )
-                blocks[i][k] = inv(ΔP) + Pi - f[k] * P_far - Γself
+                blocks[i][k] = inv(ΔP) + Pi - f[k] * P_far + 𝕋self
             else
                 r = [particle_center(asm, names[k])[q] - ci[q] for q in eachindex(ci)]
                 # `lattice_interaction_tensor` already contains the primary
                 # pair (the null translation is dropped only when r = 0), so
                 # the direct term must NOT be added again here.
-                Γ = Interactions.lattice_interaction_tensor(gi, gk, r, P₀, L, cutoff; pass...)
-                blocks[i][k] = -(Γ + f[k] * P_far)
+                𝕋 = Interactions.lattice_interaction_tensor(gi, gk, r, P₀, L, cutoff; pass...)
+                blocks[i][k] = 𝕋 - f[k] * P_far
             end
         end
     end

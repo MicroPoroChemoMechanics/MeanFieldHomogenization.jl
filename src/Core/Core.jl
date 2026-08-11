@@ -26,7 +26,7 @@ Contents
 - `green_helpers.jl`      : quadrature-agnostic Green-function helpers
 - `green_dipole.jl`       : real-space Kelvin Green gradient and the dipole
                              far field of a polarized inclusion (isotropic)
-- `green_operator.jl`     : real-space Green operator Γ⁰(x) — one derivative
+- `green_operator.jl`     : real-space Green operator 𝔾⁰(x) — one derivative
                              beyond `green_dipole.jl`, the regular kernel of
                              the Lippmann-Schwinger equation (isotropic)
 - `green_aniso.jl`        : its anisotropic counterpart — Barnett line integral

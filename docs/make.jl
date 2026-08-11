@@ -69,48 +69,70 @@ makedocs(;
     plugins = [bib],
     pages = [
         "Home" => "index.md",
-        # Ordered as a reading path: conventions, then the Eshelby framework,
-        # then the tool it produces (the Hill tensor, with every shape limit
-        # tabulated in place), then what is built on it (localization, schemes),
-        # then the specializations (cracks, layered inclusions, viscoelasticity),
-        # and finally the mathematical appendix.
+        # Ordered as a reading path, and grouped so that the standard theory
+        # comes before what is built on top of it: conventions, then the
+        # Eshelby framework and the tools it produces (Hill tensor,
+        # localization, the schemes), then the specializations (cracks,
+        # layered inclusions, laminates, viscoelasticity), then the N-body
+        # models, and finally the appendices — pages that support the rest but
+        # are written in its language rather than the other way round.
         "Theory"  => [
             "theory/index.md",
             "theory/notation.md",
-            "theory/eshelby_problem.md",
-            "theory/corrected_cell.md",
-            "theory/hill_tensors.md",
-            "theory/localization.md",
-            "theory/homogenization.md",
-            "theory/differential_scheme.md",
-            "theory/interaction_tensors.md",
-            "theory/cluster_model.md",
-            "theory/eim.md",
-            "theory/cod_tensors.md",
-            "theory/thermal_cracks.md",
-            "theory/layered_sphere.md",
-            "theory/layered_spheroid.md",
-            "theory/laminate.md",
-            "theory/viscoelasticity.md",
-            "theory/elliptic_integrals.md",
+            "Foundations" => [
+                "theory/eshelby_problem.md",
+                "theory/hill_tensors.md",
+                "theory/localization.md",
+                "theory/homogenization.md",
+            ],
+            "Schemes and specializations" => [
+                "theory/differential_scheme.md",
+                "theory/cod_tensors.md",
+                "theory/thermal_cracks.md",
+                "theory/layered_sphere.md",
+                "theory/layered_spheroid.md",
+                "theory/laminate.md",
+                "theory/viscoelasticity.md",
+            ],
+            "N-body models" => [
+                "theory/interaction_tensors.md",
+                "theory/cluster_model.md",
+                "theory/eim.md",
+            ],
+            "Appendices" => [
+                "theory/corrected_cell.md",
+                "theory/elliptic_integrals.md",
+            ],
         ],
+        # Same principle: the inclusion families first, then the cells and
+        # schemes that consume them, then what goes beyond elasticity.
         "Manual"  => [
             "manual/installation.md",
-            "manual/inclusion_gallery.md",
-            "manual/ellipsoidal_inclusions.md",
-            "manual/cylindrical_inclusions.md",
-            "manual/cracks.md",
-            "manual/custom_inclusions.md",
-            "manual/fe_inclusions.md",
-            "manual/neural_inclusions.md",
-            "manual/conductivity.md",
-            "manual/schemes.md",
-            "manual/particle_assemblies.md",
-            "manual/laminates.md",
-            "manual/multiscale.md",
-            "manual/viscoelasticity.md",
-            "manual/sensitivities.md",
-            "manual/elliptic_examples.md",
+            "Inclusions" => [
+                "manual/inclusion_gallery.md",
+                "manual/ellipsoidal_inclusions.md",
+                "manual/cylindrical_inclusions.md",
+                "manual/cracks.md",
+                "manual/custom_inclusions.md",
+                "manual/fe_inclusions.md",
+                "manual/neural_inclusions.md",
+            ],
+            "Cells and schemes" => [
+                "manual/schemes.md",
+                "manual/particle_assemblies.md",
+                "manual/laminates.md",
+                "manual/multiscale.md",
+            ],
+            "Beyond elasticity" => [
+                "manual/conductivity.md",
+                "manual/viscoelasticity.md",
+            ],
+            "Differentiation" => [
+                "manual/sensitivities.md",
+            ],
+            "Appendices" => [
+                "manual/elliptic_examples.md",
+            ],
         ],
         # One learning path, grouped by theme rather than by how the page
         # happens to be produced. Pages under `tutorials/generated/` are built
@@ -128,12 +150,6 @@ makedocs(;
                 "tutorials/differential_paths.md",
                 "tutorials/differential_loading_paths.md",
             ],
-            "Interacting particle assemblies" => [
-                "tutorials/generated/cluster_model.md",
-                "tutorials/generated/multiscale_assemblies.md",
-                "tutorials/generated/eim_assembly.md",
-                "tutorials/generated/nano_spheroids.md",
-            ],
             "Inclusions, geometries and orientation" => [
                 "tutorials/generated/hill_tensors.md",
                 "tutorials/cracks.md",
@@ -143,12 +159,22 @@ makedocs(;
                 "tutorials/generated/layered_spheroid_effective.md",
                 "tutorials/generated/layered_spheroid_interfaces.md",
                 "tutorials/generated/layered_spheroid_hc.md",
+                "tutorials/generated/nano_spheroids.md",
                 "tutorials/generated/laminate.md",
                 "tutorials/generated/laminate_interfaces.md",
                 "tutorials/generated/symmetrization.md",
                 "tutorials/generated/custom_inclusion_contract.md",
                 "tutorials/generated/neural_inclusion.md",
                 "tutorials/generated/neural_excentered_sphere.md",
+            ],
+            # After the inclusion families, since an N-body tutorial assumes
+            # the reader knows them. `nano_spheroids` is NOT here: it condenses
+            # a single particle's interface into an equivalent stiffness and
+            # feeds an ordinary Mori-Tanaka — no N-body content at all.
+            "Interacting particle assemblies" => [
+                "tutorials/generated/cluster_model.md",
+                "tutorials/generated/multiscale_assemblies.md",
+                "tutorials/generated/eim_assembly.md",
             ],
             "Beyond elasticity" => [
                 "tutorials/viscoelasticity.md",

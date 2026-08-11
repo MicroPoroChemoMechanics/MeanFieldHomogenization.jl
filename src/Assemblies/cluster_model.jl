@@ -5,27 +5,32 @@
 #  reference medium and a uniform strain per inclusion, the mean strain of
 #  inclusion I obeys
 #
-#     ε^I = E + Σ_J Γ^{IJ} : δℂ^J : ε^J + 𝔼⁰ : Σ_K f_K δℂ^K : ε^K ,     (23)
+#     ε^I = E - Σ_J 𝕋^{IJ} : δℂ^J : ε^J + 𝔼⁰ : Σ_K f_K δℂ^K : ε^K ,     (23)
 #
 #  the last term carrying the far field of the periodic array.  Two identities
 #  tie this to the rest of the package:
 #
-#     Γ^{II} = -ℙ        and        𝔼⁰ = +ℙ₀ ,
+#     𝕋^{II} = +ℙ        and        𝔼⁰ = +ℙ₀ ,
 #
-#  i.e. the self term of the interaction family is minus the Hill tensor
+#  i.e. the self term of the interaction family IS the Hill tensor
 #  (`self_interaction_tensor`) and the far-field operator is the Hill tensor of
-#  the inclusion shape.  Splitting Γ^{II} out of the sum and writing ε^K = 𝔸^K:E
-#  turns (23) into the block system Σ_K 𝕄_{IK}:𝔸^K = 𝕀 with
+#  the inclusion shape.  Splitting 𝕋^{II} out of the sum and writing ε^K = 𝔸^K:E
+#  turns (23) into the block system Σ_K 𝕄_{IK}:𝔸^K = 𝕀 with the single form
 #
-#     𝕄_{II} = 𝕀 + [(1-f_I)ℙ₀ - Γ̄_{II}] : δℂ_I
-#     𝕄_{IK} = -[Γ̄_{IK} + f_K ℙ₀] : δℂ_K        (K ≠ I)
+#     𝕄_{IK} = δ_{IK} 𝕀 + [𝕋̄_{IK} + (δ_{IK} - f_K) ℙ₀] : δℂ_K ,
 #
-#  where Γ̄_{IK} sums the pair interactions between the reference inclusion of
+#  where 𝕋̄_{IK} sums the pair interactions between the reference inclusion of
 #  family I and every inclusion of family K inside the cluster, excluding the
 #  reference inclusion itself.
 #
-#  The Mori-Tanaka limit is then immediate and is the acceptance gate of this
-#  file: with an empty cluster every Γ̄ vanishes, 𝕄_{II} = 𝕀 + (1-f)ℙ₀:δℂ and
+#  SIGN.  Molinari & El Mouden's own Γ^{IJ} is the OPPOSITE of the package's
+#  𝕋^{IJ} — theirs satisfies Γ^{II} = -ℙ.  Eq. (23) above is therefore their
+#  equation with the sign of the interaction sum already flipped, which is also
+#  what turns their two block cases into the one expression above.  See the
+#  convention block of `Interactions/api.jl`.
+#
+#  The Mori-Tanaka limit is immediate and is the acceptance gate of this file:
+#  with an empty cluster every 𝕋̄ vanishes, 𝕄_{II} = 𝕀 + (1-f)ℙ₀:δℂ and
 #  𝕄_{IK} = -f_K ℙ₀:δℂ_K, which is exactly the Mori-Tanaka system (Appendix C
 #  of the paper).
 # =============================================================================
@@ -85,11 +90,14 @@ function _cluster_localizations(asm, P₀, prop::Symbol, R_c, pass; kw...)
     rhs = [Id for _ in 1:n]
     for i in 1:n
         for k in 1:n
-            Γ̄ = _family_interaction(asm, reps[i], labels[k], P₀, L, cutoff, pass)
+            𝕋̄ = _family_interaction(asm, reps[i], labels[k], P₀, L, cutoff, pass)
+            # 𝕄_{IK} = δ_{IK} 𝕀 + [𝕋̄_{IK} + (δ_{IK} - f_K) ℙ₀] : δℂ_K — one
+            # expression for both cases, which is what the Brisard sign
+            # convention buys over Molinari's (see the file header).
             M = if i == k
-                Id + ((1 - f[k]) * P_hill[i] - Γ̄) ⊙ δP[k]
+                Id + (𝕋̄ + (1 - f[k]) * P_hill[i]) ⊙ δP[k]
             else
-                -(Γ̄ + f[k] * P_hill[i]) ⊙ δP[k]
+                (𝕋̄ - f[k] * P_hill[i]) ⊙ δP[k]
             end
             blocks[i][k] = M
         end
