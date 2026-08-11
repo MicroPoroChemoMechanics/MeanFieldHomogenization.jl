@@ -50,15 +50,12 @@ C_void = TensISO{3}(3 * 1.0e-9, 2 * 1.0e-9)
 
 μ_of(C) = get_array(C)[1, 2, 1, 2]
 κ_of(C) = (A = get_array(C); sum(A[i, i, j, j] for i in 1:3, j in 1:3) / 9)
-
-# Mori-Tanaka on the equivalent RVE, for comparison.
-function mt_rve(f, C_i)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
-    add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = f)
-    return rve
-end
 ````
+
+The one-site schemes read the *same* assembly: `RVE(asm)` forgets the
+positions and keeps the derived fractions, so no parallel cell has to be
+built by hand for the comparisons below — and none can silently drift out of
+step with the assembly it is meant to mirror.
 
 ## §1 Convergence in the cluster radius
 
@@ -85,7 +82,7 @@ for f in (0.2, 0.5)
 end
 
 for f in (0.2, 0.5)
-    @printf "f = %.1f :  Mori-Tanaka %.4f   cluster(R_c=0) %.4f   cluster(R_c=3) %.4f\n" f (μ_of(homogenize(mt_rve(f, C_rigid), MoriTanaka(), :C)) / μ_m) conv[f][1] conv[f][13]
+    @printf "f = %.1f :  Mori-Tanaka %.4f   cluster(R_c=0) %.4f   cluster(R_c=3) %.4f\n" f (μ_of(homogenize(cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_rigid); fraction = f), MoriTanaka(), :C)) / μ_m) conv[f][1] conv[f][13]
 end
 
 p1 = plot(;
@@ -96,7 +93,7 @@ p1 = plot(;
 for f in (0.2, 0.5)
     plot!(p1, cutoffs, conv[f]; marker = :circle, ms = 3, label = "cluster, f = $f")
     hline!(
-        p1, [μ_of(homogenize(mt_rve(f, C_rigid), MoriTanaka(), :C)) / μ_m];
+        p1, [μ_of(homogenize(cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_rigid); fraction = f), MoriTanaka(), :C)) / μ_m];
         ls = :dash, label = "Mori-Tanaka, f = $f"
     )
 end
@@ -123,10 +120,9 @@ for f in fracs
         :sc, Dict(:C => C_m), Dict(:C => C_rigid); fraction = f, cutoff = 3.0
     )
     push!(cluster, μ_of(homogenize(asm, ClusterModel(), :C)) / μ_m)
-    rve = mt_rve(f, C_rigid)
-    push!(mt, μ_of(homogenize(rve, MoriTanaka(), :C)) / μ_m)
-    push!(sc, μ_of(homogenize(rve, SelfConsistent(), :C)) / μ_m)
-    push!(diff_, μ_of(homogenize(rve, DifferentialScheme(; nsteps = 200), :C)) / μ_m)
+    push!(mt, μ_of(homogenize(asm, MoriTanaka(), :C)) / μ_m)
+    push!(sc, μ_of(homogenize(asm, SelfConsistent(), :C)) / μ_m)
+    push!(diff_, μ_of(homogenize(asm, DifferentialScheme(; nsteps = 200), :C)) / μ_m)
 end
 
 p2 = plot(
@@ -153,7 +149,7 @@ println("\n  f      κ_cluster / κ_MT      μ_cluster / μ_MT")
 for f in (0.1, 0.2, 0.3, 0.4)
     asm = cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_rigid); fraction = f, cutoff = 3.0)
     Ccl = homogenize(asm, ClusterModel(), :C)
-    Cmt = homogenize(mt_rve(f, C_rigid), MoriTanaka(), :C)
+    Cmt = homogenize(asm, MoriTanaka(), :C)          # same cell, positions ignored
     @printf " %.1f     %.14f     %.6f\n" f (κ_of(Ccl) / κ_of(Cmt)) (μ_of(Ccl) / μ_of(Cmt))
 end
 ````
@@ -199,7 +195,14 @@ for (kind, mk) in ((:sc, :circle), (:bcc, :square), (:fcc, :diamond))
 end
 fs = 0.05:0.05:0.45
 plot!(
-    p3, fs, [μ_of(homogenize(mt_rve(f, C_void), MoriTanaka(), :C)) / μ_m for f in fs];
+    p3, fs, [
+        μ_of(
+            homogenize(
+                cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_void); fraction = f),
+                MoriTanaka(), :C
+            )
+        ) / μ_m for f in fs
+    ];
     ls = :dash, color = :black, label = "Mori-Tanaka"
 )
 p3

@@ -104,10 +104,10 @@ minus the average field induced in an inclusion by its *own* uniform
 polarization, which is the Eshelby result ``\\varepsilon = -\\mathbb{P}:\\tau``.
 
 It **is** the Hill polarization tensor, so it inherits every back-end of
-[`hill_tensor`](@ref) — closed forms for isotropic and transversely isotropic
-references, the residue algorithm, the DECUHR and nested-QuadGK cubatures, in
-2D and 3D, for elasticity and for conduction. Keyword arguments are forwarded
-to `hill_tensor`.
+[`hill_tensor`](@ref MeanFieldHomogenization.Elasticity.hill_tensor) — closed
+forms for isotropic and transversely isotropic references, the residue
+algorithm, the DECUHR and nested-QuadGK cubatures, in 2D and 3D, for elasticity
+and for conduction. Keyword arguments are forwarded to `hill_tensor`.
 
 That the self term is *plus* the Hill tensor is the whole reason the package
 follows [Brisard et al. 2023](@cite brisard2023) rather than Molinari's

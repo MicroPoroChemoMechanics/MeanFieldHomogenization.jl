@@ -27,10 +27,10 @@
     RVE(asm::ParticleAssembly; matrix_geometry = nothing, distribution_shape = nothing)
 
 Statistical view of an assembly: **forget the positions, keep everything
-else**. Returns an [`RVE`](@ref) whose matrix carries the assembly's matrix
-properties and which has one phase per particle, each with that particle's
-geometry, properties and *derived* volume fraction
-``f_a = |\\Omega_a| / |\\Omega|``.
+else**. Returns an [`RVE`](@ref MeanFieldHomogenization.Schemes.RVE) whose
+matrix carries the assembly's matrix properties and which has one phase per
+particle, each with that particle's geometry, properties and *derived* volume
+fraction ``f_a = |\\Omega_a| / |\\Omega|``.
 
 This is the bridge that makes every one-site scheme available on an assembly.
 It is applied automatically by [`homogenize`](@ref) — `homogenize(asm,
@@ -52,8 +52,9 @@ like any other phase, the self-consistent family; `MoriTanaka`, `Dilute` and
 the bounds never look at it.
 
 `distribution_shape` is forwarded to the `RVE` constructor and is what
-[`PonteCastanedaWillis`](@ref) needs; an assembly carries no such statistical
-descriptor, so it must be supplied here if that scheme is wanted.
+[`PonteCastanedaWillis`](@ref MeanFieldHomogenization.Schemes.PonteCastanedaWillis)
+needs; an assembly carries no such statistical descriptor, so it must be
+supplied here if that scheme is wanted.
 
 !!! note "One phase per particle"
     The conversion does not merge identical particles. It does not need to:
