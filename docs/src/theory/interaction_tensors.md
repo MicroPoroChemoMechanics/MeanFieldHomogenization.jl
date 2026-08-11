@@ -118,8 +118,8 @@ so the one-inclusion case is exactly the
 
     [Molinari & El Mouden 1996](@cite molinari1996) and
     [Berveiller et al. 1987](@cite berveiller1987) write instead
-    ``\boldsymbol{\varepsilon}^I = \boldsymbol{\varepsilon}^0
-    + \sum_J \Gamma^{IJ}:\delta\mathbb{C}^J:\boldsymbol{\varepsilon}^J``, so their
+    ``\boldsymbol{\varepsilon}^I = \boldsymbol{\varepsilon}^0 +
+    \sum_J \Gamma^{IJ}:\delta\mathbb{C}^J:\boldsymbol{\varepsilon}^J``, so their
     ``\Gamma^{IJ}`` is the **opposite** of ``\mathbb{T}^{IJ}`` and their self term is
     ``\Gamma^{II} = -\mathbb{P}``. Any formula transcribed from them — their
     Appendix A component table in particular — must be flipped before it is compared

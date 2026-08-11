@@ -55,7 +55,8 @@ inclusion lying within the cluster radius `R_c` of the receiver, for a cubic
 cell of side `L`:
 
 ```math
-\\bar\\mathbb{T}^{ab} = \\sum_{\\|r_{ab} + nL\\| \\le R_c} \\mathbb{T}^{ab}(r_{ab} + nL) .
+\\bar{\\mathbb{T}}^{ab} = \\sum_{\\|r_{ab} + nL\\| \\le R_c}
+   \\mathbb{T}^{ab}(r_{ab} + nL) .
 ```
 
 When `incl_a` and `incl_b` are the *same* inclusion of the cell (`r = 0`), the

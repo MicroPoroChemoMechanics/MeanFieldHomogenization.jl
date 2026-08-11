@@ -71,8 +71,8 @@ Eq. (37). At ``p = 0`` — one constant polarization per inclusion — dividing 
 Local fields come out for free:
 ``\boldsymbol{\varepsilon}_a = (\mathbb{C}_a-\mathbb{C}_0)^{-1}:\boldsymbol{\tau}_a``
 and
-``\boldsymbol{\sigma}_a = \mathbb{C}_0 : \boldsymbol{\varepsilon}_a
-+ \boldsymbol{\tau}_a``.
+``\boldsymbol{\sigma}_a = \mathbb{C}_0 : \boldsymbol{\varepsilon}_a +
+\boldsymbol{\tau}_a``.
 
 !!! note "Transcribed verbatim"
     The package shares Brisard's sign convention (see the
@@ -109,8 +109,8 @@ Two further exact degeneracies:
 ## Bounds
 
 Introducing
-``\mathcal{H}(\boldsymbol{\varpi}) = \ell(\boldsymbol{\varpi})
-- \tfrac{1}{2}\,a(\boldsymbol{\varpi},\boldsymbol{\varpi})``, the exact solution
+``\mathcal{H}(\boldsymbol{\varpi}) = \ell(\boldsymbol{\varpi}) -
+\tfrac{1}{2}\,a(\boldsymbol{\varpi},\boldsymbol{\varpi})``, the exact solution
 satisfies
 
 ```math
