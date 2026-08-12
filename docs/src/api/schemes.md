@@ -73,8 +73,7 @@ MeanFieldHomogenization.Schemes.SCHEME_ALIAS
 
 Best-fit projection of a tensor onto a symmetry class. These force major
 symmetry, unlike the exact rotation-group averages
-[`MeanFieldHomogenization.Core.isotropify`](@ref) / [`MeanFieldHomogenization.Core.transverse_isotropify`](@ref) in
-[API — Core](core.md); the two differ whenever the input is not
+`isotropify` / `transverse_isotropify` (re-exported from `TensND`); the two differ whenever the input is not
 major-symmetric, and the difference is worked through in
 [Symmetrization showcase](../tutorials/generated/symmetrization.md).
 

@@ -26,10 +26,11 @@ correctness fixes for cracks that are not aligned with the canonical axes.
 - **`SelfConsistent` iterates are now projected onto the major-symmetric
   tensors.** Coaxial configurations move by roundoff; non-coaxial crack
   families, which used to return `NaN`, now converge.
-- **`TensND ≥ 0.3.5` is required** (was `0.3`). Versions 0.3.0–0.3.4 rotate
-  `TensTI` / `TensOrtho` incorrectly in `change_tens` and drop the basis in
-  `TensISO` products — the two bugs the fixes above depend on. Any environment
-  pinning an older `TensND` must be updated.
+- **`TensND ≥ 0.3.5` is required** (was `0.3`). Versions up to 0.3.3 rotate
+  `TensTI` / `TensOrtho` incorrectly in `change_tens` (fixed in 0.3.4), and
+  versions up to 0.3.4 drop the basis in `TensISO` products, returning a bare
+  `Array` where a `Tens` is expected (fixed in 0.3.5). Both are relied on by the
+  fixes above, so the bound states the first version that carries them all.
 
 ### Bug fixes
 

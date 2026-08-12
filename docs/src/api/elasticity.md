@@ -28,3 +28,13 @@ MeanFieldHomogenization.Elasticity.iso_stiffness
 surface_stiffness
 equivalent_particle
 ```
+
+## Parameter conversions
+
+```@docs
+k_mu
+E_nu
+iso_stiffness_E_nu
+MeanFieldHomogenization.Elasticity.hoenig_params
+MeanFieldHomogenization.Elasticity.hoenig_stiffness
+```

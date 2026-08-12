@@ -48,7 +48,7 @@
 #  ── Why no `pinv` ─────────────────────────────────────────────────────────
 #  `⟨ℙ⟩` is supported on the 3-dimensional out-of-plane subspace, so its
 #  Moore-Penrose pseudo-inverse is the ordinary inverse of its `OP` block,
-#  embedded back.  Computing it as a 3×3 cofactor inversion ([`_inv3`](@ref))
+#  embedded back.  Computing it as a 3×3 cofactor inversion (`_inv3`)
 #  rather than through `LinearAlgebra.pinv` keeps the whole laminate kernel
 #  differentiable by `ForwardDiff` and evaluable on `SymPy.Sym` /
 #  `Symbolics.Num` — an SVD is neither.  For the same reason every matrix
@@ -239,7 +239,7 @@ end
     _inv_km6(M) -> SMatrix{6,6}
 
 Inverse of a 6×6 Kelvin-Mandel matrix by block elimination on the in-plane /
-out-of-plane partition: two [`_inv3`](@ref) cofactor inversions and a Schur
+out-of-plane partition: two `_inv3` cofactor inversions and a Schur
 complement, hence **no pivoting and no factorization**. Stays exact for
 `ForwardDiff.Dual` and evaluable for symbolic element types, where the LU
 fallback behind `inv(::SMatrix{6,6})` is not.
