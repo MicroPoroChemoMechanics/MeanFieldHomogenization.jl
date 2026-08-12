@@ -185,6 +185,7 @@ export hoenig_params, hoenig_stiffness
 # ── Cracks ───────────────────────────────────────────────────────────────────
 export CrackShape, Penny, EllipticShape, Ribbon
 export EllipticCrack, RibbonCrack, PennyCrack
+export ConductiveCrack, fracture_conductivity, with_conductivity
 export crack_basis, aspect_ratio, semi_major, semi_minor, crack_normal
 export cod_tensor, B_tensor
 export cod_from_compliance, compliance_from_cod
@@ -298,6 +299,7 @@ export AndersonDefault, NewtonDefault, AutoNonlinear
 export DifferentialTrajectory, Proportional, Sequential, CustomPath, Path, DifferentialScheme
 export homogenize, differential_path
 export crack_family_compliances, crack_family_residual
+export fracture_permeability
 
 # ── Schemes : sensitivities (autodiff via ForwardDiff strong dependency) ────
 export AbstractParameter, AmountParameter, PropertyParameter,

@@ -2,6 +2,58 @@
 
 ## Unreleased
 
+MeanFieldHomogenization as a **constitutive law inside a finite-element code**,
+the poroelastic and hydraulic machinery a fractured-rock model needs, and three
+correctness fixes for cracks that are not aligned with the canonical axes.
+
+### Bug fixes
+
+- **Cracks tilted with respect to the reference medium gave wrong results.**
+  The four anisotropic COD kernels rotated the stiffness into the crack basis
+  but passed the crack frame in *global* coordinates. Aligned cracks coincide,
+  which is why a suite built on them never caught it. Fixed by
+  `Cracks._crack_local_frame`, which returns both in one frame; validated
+  against the ECHOES reference across crack inclinations (agreement improved
+  from up to 8 % error to ~1.5·10⁻⁷, ECHOES' own quadrature accuracy).
+  **Any result involving non-parallel cracks in an anisotropic reference medium
+  changes**, self-consistent schemes included, since their running estimate is
+  anisotropic by construction.
+- **`SelfConsistent` diverged on non-coaxial crack families.** Its body
+  assembles `𝔹 : 𝔸⁻¹`, a product of non-commuting tensors, which is not
+  major-symmetric when families are not coaxial; the asymmetry grew from
+  roundoff to 2·10⁻⁴ over a few iterations and the crack cubature then returned
+  a `NaN` integrand. Each iterate is now projected back onto the
+  major-symmetric tensors, as the reference implementation does. Requires
+  **TensND ≥ 0.3.5**, which fixes two basis bugs of its own.
+
+### New — finite-element coupling (`MeanFieldHomogenization.Constitutive`)
+
+- `AbstractMFHMaterial` / `material_response`, a multi-gradient, multi-flux
+  Gauss-point contract with per-point internal state and a consistent tangent.
+- `HomogenizedElastic` (linear, any cell and scheme) and
+  `MicrocrackedMaterial` (crack families that open and close; piecewise linear,
+  so the tangent is exact, with steps split at every closure and reopening).
+- `MaterialCache`, keyed on the discrete open/closed set — a thick-cylinder run
+  needs **4 scheme solves for 2304 quadrature points**.
+- `to_tensors` / `from_tensors` / `plane_strain_response`, the `Tensors.jl`
+  boundary, and `check_material_interface`.
+- `MeanFieldHomogenizationFerriteMaterialExt`, activated by `import Ferrite`
+  alone (no gmsh): `mfh_states`, `mfh_element!`, `annulus_grid`.
+
+### New — poromechanics and fractured permeability
+
+- `MeanFieldHomogenization.Poromechanics`: `biot_tensor`,
+  `inverse_biot_modulus`, `poroelastic_parameters`, `undrained_stiffness`,
+  `skempton_tensor`, `terzaghi_stress`.
+- `ConductiveCrack`, the *flowing* crack (the preferential flow path, as
+  opposed to the insulating crack), and `fracture_permeability`, its
+  self-consistent effective conductivity.
+- `crack_family_compliances` / `crack_family_residual`: the per-family
+  decomposition `S_hom = S_solid + Σ (4π/3) dᵢ 𝕊ᵢ`, which is what drives an
+  aperture update.
+- `set_amount!`, `set_geometry!`, `set_property!`: mutating `RVE` setters for
+  Gauss-point loops (`set_param` remains the immutable, AD-friendly path).
+
 ## v0.2.0
 
 Two N-body homogenization models, the machinery they share, and a bridge that

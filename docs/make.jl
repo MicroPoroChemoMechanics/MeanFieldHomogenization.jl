@@ -214,6 +214,7 @@ makedocs(;
             "fe_coupling/index.md",
             "fe_coupling/scale_transition.md",
             "fe_coupling/materials.md",
+            "fe_coupling/permeability.md",
             "fe_coupling/backends.md",
             "fe_coupling/thick_cylinder.md",
         ],

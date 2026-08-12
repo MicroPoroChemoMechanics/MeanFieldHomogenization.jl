@@ -19,6 +19,9 @@ using PolynomialRoots
 
 import ..Core
 using ..Core
+# `ConductiveCrack` takes the ω → 0 limit of the spheroid contribution for an
+# anisotropic reference medium, which needs the ellipsoid type.
+import ..Elasticity
 const MFH_Core = Core
 
 # `compliance_contribution` / `delta_compliance` / `delta_resistivity` are
@@ -38,11 +41,13 @@ include("green_nestedquadgk.jl")
 include("green_decuhr.jl")
 include("cod_numerical.jl")
 include("compliance.jl")
+include("conductive.jl")
 include("sif.jl")
 include("api.jl")
 
 # ── Geometry ─────────────────────────────────────────────────────────────────
 export CrackShape, Penny, EllipticShape, Ribbon
+export ConductiveCrack, fracture_conductivity, with_conductivity
 export EllipticCrack, RibbonCrack
 export PennyCrack
 export crack_basis, aspect_ratio, semi_major, semi_minor, crack_normal

@@ -73,7 +73,8 @@ with the loading.
 - `rve` — the microstructure, whose crack phases are the families. Their
   densities, normals and radii are fixed data; only the apertures evolve.
 - `scheme` — any scheme supporting the per-family decomposition
-  ([`SelfConsistent`](@ref), [`MoriTanaka`](@ref)).
+  ([`SelfConsistent`](@ref MeanFieldHomogenization.SelfConsistent),
+  [`MoriTanaka`](@ref MeanFieldHomogenization.MoriTanaka)).
 - `families` — the crack phase names, in order. Defaults to every
   [`CrackDensity`](@ref MeanFieldHomogenization.Schemes.CrackDensity) phase of
   `rve`.

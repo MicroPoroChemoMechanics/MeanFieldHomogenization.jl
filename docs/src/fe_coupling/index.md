@@ -46,6 +46,7 @@ apertures.
 |:--|:--|
 | [Scale transition](@ref fe-scale-transition) | the equations: incremental format, consistent tangent, tangent blocks |
 | [Materials](@ref fe-materials) | the Gauss-point contract, in code |
+| [Fractured permeability](@ref fe-permeability) | flowing cracks and the effective conductivity of a fracture network |
 | [Ferrite backend](@ref fe-backends) | the three helpers a Ferrite driver needs |
 | [Thick-walled cylinder](@ref fe-thick-cylinder) | worked model, checked against Lamé, then with closing cracks |
 

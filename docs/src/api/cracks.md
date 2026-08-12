@@ -10,6 +10,9 @@ MeanFieldHomogenization.Cracks
 MeanFieldHomogenization.EllipticCrack
 MeanFieldHomogenization.RibbonCrack
 MeanFieldHomogenization.PennyCrack
+MeanFieldHomogenization.ConductiveCrack
+MeanFieldHomogenization.Cracks.fracture_conductivity
+MeanFieldHomogenization.Cracks.with_conductivity
 MeanFieldHomogenization.cod_tensor
 MeanFieldHomogenization.B_tensor
 MeanFieldHomogenization.Cracks.crack_density_factor

@@ -33,6 +33,10 @@ check_material_interface
 ```@docs
 HomogenizedElastic
 stiffness
+MicrocrackedMaterial
+CrackedState
+open_set
+apertures
 ```
 
 ## Memoization
@@ -49,6 +53,7 @@ reset_cache!
 ```@docs
 to_tensors
 from_tensors
+plane_strain_response
 voigt_stress
 voigt_strain
 stress_from_voigt

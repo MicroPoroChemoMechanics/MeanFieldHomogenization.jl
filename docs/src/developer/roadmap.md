@@ -97,6 +97,14 @@ open, and what has since been closed:
   `AndersonDefault` (currently Picard with relaxation, memory = 1).
 - Optional structured `TensTI{4,T,8}` fast path for the ALV TI schemes.
 - Viscoelastic constitutive laws in the Laplace–Carson domain.
+- **Finite-element coupling, remaining pieces.** The Gauss-point contract,
+  `HomogenizedElastic`, `MicrocrackedMaterial`, the Ferrite glue, the
+  poroelastic parameters and the fractured permeability are shipped (see
+  [Finite-element coupling](@ref fe-coupling)). Still open: a
+  `FracturedPoroelasticRock` material assembling the four poroelastic tangent
+  blocks with the aperture and conductivity updates; the coupled *u–p*
+  reservoir applications of [barthelemyARMA2011](@cite) (consolidation column,
+  well test); drivers for Gridap, FEniCSx and an Abaqus-shaped UMAT.
 - Finite-element inclusions, behind the `FEBackend` contract
   (`MeanFieldHomogenizationFerriteExt`, `MeanFieldHomogenizationGridapExt`), both with the
   first-order corrected boundary condition of

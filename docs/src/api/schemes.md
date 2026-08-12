@@ -62,6 +62,9 @@ AutoNonlinear
 
 ```@docs
 homogenize
+crack_family_compliances
+crack_family_residual
+fracture_permeability
 differential_path
 MeanFieldHomogenization.Schemes.SCHEME_ALIAS
 ```

@@ -37,6 +37,7 @@ import ..Core: AbstractHomogenizationCell, AbstractParameter,
 # Forward declarations of inclusion types we touch from the other sub-modules
 # (loaded earlier than Schemes by `MeanFieldHomogenization.jl`).
 import ..Elasticity: Ellipsoid, hill_tensor
+import ..Cracks
 import ..Core: compliance_contribution, delta_compliance, delta_resistivity,
     compliance_and_stiffness_contribution
 import ..LayeredSpheres
@@ -61,6 +62,7 @@ include("self_consistent.jl")
 # Needs `_sc_solid_averages` (self_consistent.jl) and `_frob_sq`, hence its
 # position after every scheme body it decomposes.
 include("crack_families.jl")
+include("fracture_permeability.jl")
 include("trajectory.jl")
 include("differential.jl")
 include("parameters.jl")
@@ -94,6 +96,7 @@ export DifferentialTrajectory, Proportional, Sequential, CustomPath, Path, Diffe
 # Entry point
 export homogenize, differential_path
 export crack_family_compliances, crack_family_residual
+export fracture_permeability
 
 # Sensitivities — lentilles paramétriques + wrappers ForwardDiff (extension)
 export AbstractParameter, AmountParameter, PropertyParameter,

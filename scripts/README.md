@@ -233,3 +233,16 @@ Converting a script to the contract, whether or not it ends up promoted:
 See `docs/literate.jl` for the generator entry point and
 `Assets/plans/MFH_LITERATE_SCRIPTS.md` for the gap-filler vs. duplicate
 classification of all 41 scripts.
+
+## 88 — MeanFieldHomogenization *inside* a finite-element code
+
+`88_fe_thick_cylinder.jl` is the other direction of the 80-89 block: not an
+inclusion whose response comes from a finite-element solve, but a whole
+microstructure acting as the constitutive law at every Gauss point of a
+structural computation (`src/Constitutive/`). It runs a thick-walled cylinder
+twice — a linear composite checked against the Lamé closed form, then a
+microcracked solid whose cracks close — and needs only `Ferrite` (no gmsh).
+
+Figures for the documentation come from
+`scripts/fe/make_thick_cylinder_figures.jl`, run by hand; the pages are static
+so no documentation build re-runs a finite-element solve.
