@@ -13,15 +13,16 @@ diverges, keeping the **fracture conductivity** finite:
 C = 2\,c\,k_f \qquad (\text{conductivity} \times \text{aperture}).
 ```
 
-With ``\gamma = C/2a``, the contribution per unit ``(4\pi/3)\,d`` in an
-isotropic matrix ``k_0`` is purely in-plane:
+With ``\gamma = C/2a``, the contribution ``\boldsymbol{k}`` per unit
+``(4\pi/3)\,d`` in an isotropic matrix ``k_0`` is purely in-plane, ``\underline{n}``
+being the unit normal to the fracture plane:
 
 ```math
-\mathbb K = \frac{\gamma}{1 + \dfrac{\pi\gamma}{4k_0}}
-            \left(\boldsymbol\delta - \hat{\mathbf n}\otimes\hat{\mathbf n}\right),
+\boldsymbol{k} = \frac{\gamma}{1 + \dfrac{\pi\gamma}{4k_0}}
+            \left(\boldsymbol{1} - \underline{n}\otimes\underline{n}\right),
 \qquad
-\mathbb K \xrightarrow[C\to\infty]{} \frac{4k_0}{\pi}
-            \left(\boldsymbol\delta - \hat{\mathbf n}\otimes\hat{\mathbf n}\right).
+\boldsymbol{k} \xrightarrow[C\to\infty]{} \frac{4k_0}{\pi}
+            \left(\boldsymbol{1} - \underline{n}\otimes\underline{n}\right).
 ```
 
 ```@example perm
@@ -44,8 +45,8 @@ inherited unchanged — one object serves both physics.
 ## The self-consistent estimate
 
 ```math
-\mathbf K = k_s\,\boldsymbol\delta
-  + \sum_i \frac{4\pi}{3}\,d_i\,\mathbb K_i(\mathbf K)
+\boldsymbol{K}^{\rm hom} = k_s\,\boldsymbol{1}
+  + \sum_i \frac{4\pi}{3}\,d_i\,\boldsymbol{k}_i(\boldsymbol{K}^{\rm hom})
 ```
 
 Each family is read **in the effective medium**, which is what lets fractures
@@ -59,17 +60,18 @@ K = fracture_permeability(1.0e-6, fams, (0.05, 0.05))
 (K₁₁ = K[1, 1], K₃₃ = K[3, 3])
 ```
 
-Two vertical families with normals ``\mathbf e_1`` and ``\mathbf e_2`` leave
-``\mathbf e_3`` lying in *both* fracture planes, so the vertical direction
+Two vertical families with normals ``\underline{e}_1`` and ``\underline{e}_2`` leave
+``\underline{e}_3`` lying in *both* fracture planes, so the vertical direction
 conducts most — visible in the numbers above.
 
 !!! warning "The matrix must not be exactly impermeable"
     [`fracture_permeability`](@ref) is written out rather than routed through
     [`SelfConsistent`](@ref) on `:K`, whose crack branch is built for
-    *insulating* cracks: its volumetric accumulator ``\sum f_\alpha K_\alpha
-    A_\alpha`` drops the ``0\times\infty`` product a flowing crack is, so with
-    ``k_s = 0`` it collapses to ``\mathbf K = 0`` for any input. Use a small but
-    non-zero matrix conductivity.
+    *insulating* cracks: its volumetric accumulator
+    ``\sum_\alpha f_\alpha\,\boldsymbol{K}_\alpha\cdot\boldsymbol{A}_\alpha``
+    drops the ``0\times\infty`` product a flowing crack is, so with ``k_s = 0``
+    it collapses to ``\boldsymbol{K}^{\rm hom} = 0`` for any input. Use a small
+    but non-zero matrix conductivity.
 
     A dense, strongly conducting network can also pass the percolation
     threshold, where the estimate diverges; the solver warns rather than

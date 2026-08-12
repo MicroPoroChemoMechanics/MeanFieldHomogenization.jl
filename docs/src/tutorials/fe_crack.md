@@ -13,7 +13,7 @@ method is in
 
 ## The correction is the ``(a/R)^3`` dipole
 
-``\|\mathbf B_u\|`` measures the truncation bias being removed. If the boundary
+``\|\boldsymbol{B}_u\|`` measures the truncation bias being removed. If the boundary
 term really is the elastic dipole, it must fall like the cube of the domain
 radius — and it does, over a decade:
 
@@ -29,7 +29,7 @@ radius — and it does, over a decade:
 Fitted log-log slope: **−2.98** against a theoretical −3. This is the sharpest
 available check that the dipole boundary condition has the right magnitude
 *and* the right sign — a sign error would not merely change the exponent, it
-would send ``\mathbf B_\infty`` the wrong way.
+would send ``\boldsymbol{B}_\infty`` the wrong way.
 
 Note how *small* the correction is at `R = 5a` (≈ 0.1 % on `B`). That is the
 whole point: it is what makes so small a domain legitimate, at the cost of
@@ -75,7 +75,7 @@ the front. The extrapolated values land within a percent — the residual is
 discretization, not a modeling error.
 
 For reference, the FEniCSx implementation of the same scheme in the `SifAniso`
-study reports ±5 % on ``\mathbf B_\infty`` at `htipdiv = 12` with P3 elements.
+study reports ±5 % on ``\boldsymbol{B}_\infty`` at `htipdiv = 12` with P3 elements.
 
 
 ## See also

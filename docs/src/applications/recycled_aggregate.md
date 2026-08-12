@@ -105,10 +105,10 @@ one mode:
 
 | Macroscopic loading | Boundary displacement | Mode |
 | :--- | :--- | :---: |
-| ``\mathbf m_1 = (e_1\otimes e_1 + e_2\otimes e_2)/\sqrt2`` | ``\bar u_\rho = \rho/\sqrt2`` | 0 |
-| ``\mathbf m_2 = e_3\otimes e_3`` | ``\bar u_z = z`` | 0 |
-| ``\mathbf m_3 = (e_1\otimes e_3 + e_3\otimes e_1)/\sqrt2`` | ``\bar u_\rho = z/\sqrt2,\; \bar u_\theta = -z/\sqrt2,\; \bar u_z = \rho/\sqrt2`` | 1 |
-| ``\mathbf m_4 = (e_1\otimes e_1 - e_2\otimes e_2)/\sqrt2`` | ``\bar u_\rho = \rho/\sqrt2,\; \bar u_\theta = -\rho/\sqrt2`` | 2 |
+| ``\underline{m}_1 = (e_1\otimes e_1 + e_2\otimes e_2)/\sqrt2`` | ``\bar u_\rho = \rho/\sqrt2`` | 0 |
+| ``\underline{m}_2 = e_3\otimes e_3`` | ``\bar u_z = z`` | 0 |
+| ``\underline{m}_3 = (e_1\otimes e_3 + e_3\otimes e_1)/\sqrt2`` | ``\bar u_\rho = z/\sqrt2,\; \bar u_\theta = -z/\sqrt2,\; \bar u_z = \rho/\sqrt2`` | 1 |
+| ``\underline{m}_4 = (e_1\otimes e_1 - e_2\otimes e_2)/\sqrt2`` | ``\bar u_\rho = \rho/\sqrt2,\; \bar u_\theta = -\rho/\sqrt2`` | 2 |
 | ``\nabla T = e_3`` | ``\bar t = z`` | 0 |
 | ``\nabla T = e_1`` | ``\bar t = \rho`` | 1 |
 

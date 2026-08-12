@@ -60,8 +60,8 @@ for cell in CellIterator(dh)
 end
 ```
 
-The residual is the internal force ``\\int_\\Omega \\boldsymbol\\sigma :
-\\nabla^{\\rm s}\\hat{\\mathbf u}\\,{\\rm d}\\Omega``; external loads are the
+The residual is the internal force ``\\int_\\Omega \\boldsymbol{\\sigma} :
+\\nabla^{\\rm s}\\delta\\underline{u}\\,{\\rm d}\\Omega``; external loads are the
 caller's business.
 
 !!! note "Plane strain"
@@ -95,6 +95,104 @@ function mfh_element!(
 end
 
 """
+    mfh_poro_element!(Ke, re, cvu, cvp, material, ue, pe, states, states_old, Δt,
+                      mobility; u_range, p_range, cache = nothing)
+
+Assemble one **coupled ``(\\underline{u}, p)``** element of a transient
+poroelastic problem, backward Euler, whose behavior comes from a two-gradient
+MFH material such as [`FracturedPoroelasticRock`](@ref MeanFieldHomogenization.FracturedPoroelasticRock).
+
+The residual of the step is the momentum balance dualized by
+``\\delta\\underline{u}`` and the fluid mass balance dualized by ``\\delta p``:
+
+```math
+\\int_\\Omega \\boldsymbol{\\Sigma} : \\nabla^{\\rm s}\\delta\\underline{u}
+   \\,{\\rm d}\\Omega ,
+\\qquad
+\\int_\\Omega \\Delta\\varphi\\,\\delta p\\,{\\rm d}\\Omega
+ + \\Delta t \\int_\\Omega \\nabla\\delta p \\cdot
+   \\left(\\frac{\\boldsymbol{K}}{\\mu}\\cdot\\nabla p\\right){\\rm d}\\Omega ,
+```
+
+external loads, imposed flow rates and well terms being the caller's business.
+The Jacobian is the four-block operator the material declares — ``\\mathbb{C}^{\\rm hom}``,
+``-\\boldsymbol{B}``, ``\\boldsymbol{B}``, ``1/M`` — plus the Darcy term.
+
+- `cvu`, `cvp` — cell values of the displacement and pressure interpolations,
+  **sharing one quadrature rule**.
+- `u_range`, `p_range` — `dof_range(dh, :u)` and `dof_range(dh, :p)`.
+- `mobility` — the mobility ``\\boldsymbol{K}/\\mu`` at each quadrature point, as
+  a `SymmetricTensor{2,3}` per point.
+
+!!! note "The mobility is an argument, not an output"
+    ``\\boldsymbol{K}`` follows the apertures, so it belongs to the state; but
+    differentiating it would couple the flow block to the mechanics through a
+    self-consistent solve. Drivers evaluate it once per step from the last
+    converged state — [`transport_property`](@ref MeanFieldHomogenization.transport_property) —
+    and pass it here. The scheme is then implicit in ``(\\underline{u}, p)`` and
+    explicit in ``\\boldsymbol{K}``, which is the usual reservoir practice and
+    what the element's signature makes visible.
+"""
+function mfh_poro_element!(
+        Ke::AbstractMatrix, re::AbstractVector,
+        cvu::Ferrite.CellValues, cvp::Ferrite.CellValues, material,
+        ue::AbstractVector, pe::AbstractVector, states::AbstractVector,
+        states_old::AbstractVector, Δt::Real, mobility;
+        u_range, p_range, cache = nothing
+    )
+    nu, np = length(u_range), length(p_range)
+    for qp in 1:Ferrite.getnquadpoints(cvu)
+        dΩ = Ferrite.getdetJdV(cvu, qp)
+        ε = Ferrite.function_symmetric_gradient(cvu, qp, ue)
+        p = Ferrite.function_value(cvp, qp, pe)
+        ∇p = Ferrite.function_gradient(cvp, qp, pe)
+
+        r = MeanFieldHomogenization.material_response(
+            material, (; ε = MeanFieldHomogenization.from_tensors(ε), p = p),
+            states_old[qp], Δt; cache = cache
+        )
+        states[qp] = MeanFieldHomogenization.state(r)
+
+        σ = MeanFieldHomogenization.to_tensors(r.fluxes.σ)
+        ℂ = MeanFieldHomogenization.to_tensors(r.tangents.σε)
+        B = MeanFieldHomogenization.to_tensors(r.tangents.φε)
+        invM = r.tangents.φp
+        Δφ = r.fluxes.φ - MeanFieldHomogenization.fluid_content(
+            material, states_old[qp]; cache = cache
+        )
+        𝕄 = mobility[qp]
+
+        for i in 1:nu
+            δε = Ferrite.shape_symmetric_gradient(cvu, qp, i)
+            re[u_range[i]] += (δε ⊡ σ) * dΩ
+            for j in 1:nu
+                Ke[u_range[i], u_range[j]] +=
+                    (δε ⊡ ℂ ⊡ Ferrite.shape_symmetric_gradient(cvu, qp, j)) * dΩ
+            end
+            for b in 1:np
+                Ke[u_range[i], p_range[b]] -=
+                    (δε ⊡ B) * Ferrite.shape_value(cvp, qp, b) * dΩ
+            end
+        end
+        for a in 1:np
+            Na, ∇Na = Ferrite.shape_value(cvp, qp, a), Ferrite.shape_gradient(cvp, qp, a)
+            re[p_range[a]] += (Δφ * Na + Δt * (∇Na ⋅ (𝕄 ⋅ ∇p))) * dΩ
+            for j in 1:nu
+                Ke[p_range[a], u_range[j]] +=
+                    Na * (B ⊡ Ferrite.shape_symmetric_gradient(cvu, qp, j)) * dΩ
+            end
+            for b in 1:np
+                Ke[p_range[a], p_range[b]] += (
+                    Na * invM * Ferrite.shape_value(cvp, qp, b) +
+                        Δt * (∇Na ⋅ (𝕄 ⋅ Ferrite.shape_gradient(cvp, qp, b)))
+                ) * dΩ
+            end
+        end
+    end
+    return Ke, re
+end
+
+"""
     annulus_grid(Ri, Ro, nr, nθ; θmax = π/2) -> Ferrite.Grid
 
 A structured quadrilateral mesh of an annular sector, built **without gmsh** by
@@ -118,6 +216,40 @@ function annulus_grid(Ri::Real, Ro::Real, nr::Integer, nθ::Integer; θmax::Real
             r = Ri + (Ro - Ri) * x[1]
             θ = θmax * x[2]
             Ferrite.Vec{2}((r * cos(θ), r * sin(θ)))
+        end
+    )
+    return grid
+end
+
+"""
+    cylinder_sector_grid(Ri, Ro, H, nr, nθ, nz; θmax = π/2, grading = :log)
+
+A structured hexahedral mesh of a cylindrical sector, built **without gmsh** by
+bending a box in ``(\\rho, \\theta, z)`` — the three-dimensional twin of
+[`annulus_grid`](@ref).
+
+`grading = :log` spaces the radial layers geometrically, which is what a well
+problem needs: the pressure drop is logarithmic in ``\\rho``, so uniform layers
+would waste every element far from the well and resolve none near it.
+
+The facet sets of `generate_grid` keep their meaning after the mapping:
+`"left"` is the inner radius, `"right"` the outer one, `"front"` the
+``\\theta = 0`` plane, `"back"` the ``\\theta = \\theta_{\\max}`` one, `"bottom"`
+and `"top"` the two horizontal faces.
+"""
+function cylinder_sector_grid(
+        Ri::Real, Ro::Real, H::Real, nr::Integer, nθ::Integer, nz::Integer;
+        θmax::Real = π / 2, grading::Symbol = :log
+    )
+    grid = Ferrite.generate_grid(
+        Ferrite.Hexahedron, (nr, nθ, nz),
+        Ferrite.Vec{3}((0.0, 0.0, 0.0)), Ferrite.Vec{3}((1.0, 1.0, 1.0))
+    )
+    Ferrite.transform_coordinates!(
+        grid, x -> begin
+            r = grading === :log ? Ri * (Ro / Ri)^x[1] : Ri + (Ro - Ri) * x[1]
+            θ = θmax * x[2]
+            Ferrite.Vec{3}((r * cos(θ), r * sin(θ), H * x[3]))
         end
     )
     return grid

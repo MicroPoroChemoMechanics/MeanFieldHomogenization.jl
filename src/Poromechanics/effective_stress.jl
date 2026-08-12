@@ -10,19 +10,19 @@
 """
     terzaghi_stress(Σ, p) -> Tens{2,3}
 
-**Terzaghi effective stress** ``\\boldsymbol\\Sigma' = \\boldsymbol\\Sigma +
-p\\,\\boldsymbol\\delta``.
+**Terzaghi effective stress** ``\\boldsymbol{\\Sigma}' = \\boldsymbol{\\Sigma} +
+p\\,\\boldsymbol{1}``.
 
 This is the loading measure that drives the *microstructure*: for a porous or
 fractured medium whose solid phase has uniform elastic properties, the problem
-defined by ``(\\boldsymbol\\Sigma, p)`` splits into
+defined by ``(\\boldsymbol{\\Sigma}, p)`` splits into
 
 1. a dry problem (no fluid pressure) under the macroscopic stress
-   ``\\boldsymbol\\Sigma + p\\,\\boldsymbol\\delta``, during which pores and
+   ``\\boldsymbol{\\Sigma} + p\\,\\boldsymbol{1}``, during which pores and
    fractures may open or close, and
-2. a superimposed loading ``(-p\\,\\boldsymbol\\delta, p)`` whose solution is
-   the *uniform* pair ``\\boldsymbol\\sigma = -p\\,\\boldsymbol\\delta``,
-   ``\\boldsymbol\\varepsilon = -p\\,\\mathbb s_s : \\boldsymbol\\delta``.
+2. a superimposed loading ``(-p\\,\\boldsymbol{1}, p)`` whose solution is
+   the *uniform* pair ``\\boldsymbol{\\sigma} = -p\\,\\boldsymbol{1}``,
+   ``\\boldsymbol{\\varepsilon} = -p\\,\\mathbb{S}_{\\rm s} : \\boldsymbol{1}``.
 
 Step 2 carries no strain singularity, so it cannot change the aperture of a flat
 crack. All the information about the evolution of the pore space is therefore
@@ -31,7 +31,7 @@ This is the argument of [barthelemyARMA2011](@cite) § 1.1 and the reason why
 the constitutive laws of
 [`MeanFieldHomogenization.Constitutive`](@ref MeanFieldHomogenization.Constitutive)
 drive their internal state with `terzaghi_stress` rather than with
-`\\boldsymbol\\Sigma`.
+`\\boldsymbol{\\Sigma}`.
 
 Do not confuse it with [`biot_effective_stress`](@ref), which is the measure
 that makes the *macroscopic* constitutive law take its drained form.
@@ -46,14 +46,14 @@ end
 """
     biot_effective_stress(Σ, p, B) -> Tens{2,3}
 
-**Biot effective stress** ``\\boldsymbol\\Sigma + p\\,\\mathbf B``, the measure
+**Biot effective stress** ``\\boldsymbol{\\Sigma} + p\\,\\boldsymbol{B}``, the measure
 for which the poroelastic law
-``\\dot{\\boldsymbol\\Sigma} = \\mathbb C^{\\rm hom} : \\dot{\\mathbf E} -
-\\dot p\\,\\mathbf B`` reduces to the drained relation
-``\\boldsymbol\\Sigma + p\\,\\mathbf B = \\mathbb C^{\\rm hom} : \\mathbf E``.
+``\\dot{\\boldsymbol{\\Sigma}} = \\mathbb{C}^{\\rm hom} : \\dot{\\boldsymbol{E}} -
+\\dot p\\,\\boldsymbol{B}`` reduces to the drained relation
+``\\boldsymbol{\\Sigma} + p\\,\\boldsymbol{B} = \\mathbb{C}^{\\rm hom} : \\boldsymbol{E}``.
 
-It coincides with [`terzaghi_stress`](@ref) only when ``\\mathbf B =
-\\boldsymbol\\delta``, i.e. for an incompressible solid phase.
+It coincides with [`terzaghi_stress`](@ref) only when ``\\boldsymbol{B} =
+\\boldsymbol{1}``, i.e. for an incompressible solid phase.
 
 See also [`biot_tensor`](@ref), [`terzaghi_stress`](@ref).
 """

@@ -1,7 +1,7 @@
 """
     MeanFieldHomogenization.Poromechanics
 
-Poroelastic upscaling: the **Biot tensor** ``\\mathbf B``, the **Biot modulus**
+Poroelastic upscaling: the **Biot tensor** ``\\boldsymbol{B}``, the **Biot modulus**
 ``M``, the drained ↔ undrained conversion and the **Skempton tensor** of a
 saturated porous or fractured medium whose solid phase is homogeneous.
 
@@ -11,9 +11,9 @@ elsewhere entirely — together with the solid stiffness `C_s` and the Lagrangia
 porosity `φ`, and closes the poroelastic constitutive law
 
 ```math
-\\dot{\\boldsymbol\\Sigma} = \\mathbb C^{\\rm hom} : \\dot{\\mathbf E}
-- \\dot p\\,\\mathbf B, \\qquad
-\\dot\\varphi = \\mathbf B : \\dot{\\mathbf E} + \\frac{\\dot p}{M},
+\\dot{\\boldsymbol{\\Sigma}} = \\mathbb{C}^{\\rm hom} : \\dot{\\boldsymbol{E}}
+- \\dot p\\,\\boldsymbol{B}, \\qquad
+\\dot\\varphi = \\boldsymbol{B} : \\dot{\\boldsymbol{E}} + \\frac{\\dot p}{M},
 ```
 
 using the classical poroelastic relations ([coussy2004](@cite)) in the form
@@ -24,12 +24,12 @@ is solved: everything follows from `C_hom`, `C_s` and `φ`.
 
 | Function | Returns |
 |---|---|
-| [`biot_tensor`](@ref) | ``\\mathbf B = \\boldsymbol\\delta : (\\mathbb I - \\mathbb s_s : \\mathbb C^{\\rm hom})`` |
-| [`inverse_biot_modulus`](@ref) | ``1/M = \\boldsymbol\\delta : \\mathbb s_s : (\\mathbf B - \\varphi\\boldsymbol\\delta)`` |
+| [`biot_tensor`](@ref) | ``\\boldsymbol{B} = \\boldsymbol{1} : (\\mathbb{I} - \\mathbb{S}_{\\rm s} : \\mathbb{C}^{\\rm hom})`` |
+| [`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus) | ``1/M = \\boldsymbol{1} : \\mathbb{S}_{\\rm s} : (\\boldsymbol{B} - \\varphi\\boldsymbol{1})`` |
 | [`biot_modulus`](@ref) | ``M`` (`Inf` for an incompressible solid) |
-| [`poroelastic_parameters`](@ref) | all three at once, inverting ``\\mathbb C_s`` once |
-| [`undrained_stiffness`](@ref) / [`drained_stiffness`](@ref) | ``\\mathbb C^{\\rm u} = \\mathbb C^{\\rm hom} + M\\,\\mathbf B\\otimes\\mathbf B`` and back |
-| [`skempton_tensor`](@ref) | ``\\mathbf B^{\\rm sk}`` such that ``p = -\\mathbf B^{\\rm sk}:\\boldsymbol\\Sigma`` undrained |
+| [`poroelastic_parameters`](@ref) | all three at once, inverting ``\\mathbb{C}_s`` once |
+| [`undrained_stiffness`](@ref) / [`drained_stiffness`](@ref) | ``\\mathbb{C}^{\\rm u} = \\mathbb{C}^{\\rm hom} + M\\,\\boldsymbol{B}\\otimes\\boldsymbol{B}`` and back |
+| [`skempton_tensor`](@ref) | ``\\boldsymbol{B}^{\\rm sk}`` such that ``p = -\\boldsymbol{B}^{\\rm sk}:\\boldsymbol{\\Sigma}`` undrained |
 | [`terzaghi_stress`](@ref) / [`biot_effective_stress`](@ref) | the two effective-stress measures |
 | [`pore_volume_fraction`](@ref) | ``\\varphi`` summed over declared pore phases |
 

@@ -12,7 +12,7 @@
 #  THE ESTIMATE.  Each family contributes its conductive limit evaluated in the
 #  effective medium itself:
 #
-#      𝐊 = k_s 𝛅 + Σ_i (4π/3) d_i 𝕂_i(𝐊) ,
+#      𝐊 = k_s 𝟏 + Σ_i (4π/3) d_i 𝕂_i(𝐊) ,
 #
 #  a self-consistent condition solved by the same fixed-point driver as every
 #  other iterative scheme in the package. Reading `𝕂_i` in the effective medium
@@ -31,15 +31,15 @@ Effective conductivity (permeability, diffusivity) of a solid of conductivity
   fractured rock it is small but must be **non-zero**: with an exactly
   impermeable matrix the medium conducts nothing below the percolation
   threshold, and the estimate degenerates.
-- `cracks` — the [`ConductiveCrack`](@ref MeanFieldHomogenization.ConductiveCrack) families, each carrying its own
+- `cracks` — the [`ConductiveCrack`](@ref MeanFieldHomogenization.Cracks.ConductiveCrack) families, each carrying its own
   normal and fracture conductivity.
 - `densities` — the Budiansky crack density ``d_i`` of each family.
 
 Solves the self-consistent condition
 
 ```math
-\\mathbf K = k_s\\,\\boldsymbol\\delta
-  + \\sum_i \\frac{4\\pi}{3}\\,d_i\\,\\mathbb K_i(\\mathbf K) ,
+\\boldsymbol{K}^{\\rm hom} = k_s\\,\\boldsymbol{1}
+  + \\sum_i \\frac{4\\pi}{3}\\,d_i\\,\\boldsymbol{k}_i(\\boldsymbol{K}^{\\rm hom}) ,
 ```
 
 each family being read **in the effective medium**, which is what lets the
@@ -63,7 +63,7 @@ K = fracture_permeability(1.0e-18, cracks, (0.37, 0.37))
 """
 function fracture_permeability(
         k_matrix, cracks, densities;
-        abstol = 1.0e-10, reltol = 1.0e-8, maxiters = 500,
+        abstol = 0.0, reltol = 1.0e-8, maxiters = 500,
         damping = 1.0, verbose = false, kw...
     )
     length(cracks) == length(densities) || throw(
@@ -77,8 +77,12 @@ function fracture_permeability(
     # `maxiters` assume that structure — and the additive condition here is
     # simple enough that owning the loop is clearer than bending it to fit.
     #
-    # The convergence test is RELATIVE: conductivities span many decades
-    # (10⁻¹⁸ m² for a tight rock), so an absolute tolerance is meaningless.
+    # The convergence test is RELATIVE, and `abstol` DEFAULTS TO ZERO on
+    # purpose: conductivities span many decades — 10⁻¹⁸ m² for a tight rock —
+    # so any fixed absolute floor is met by the very first iterate and the loop
+    # returns the DILUTE estimate, silently, with no percolation threshold and
+    # no dependence on the fracture conductivity at all. Pass `abstol` only with
+    # a value scaled to the problem at hand.
     K = K_s
     converged = false
     for it in 1:maxiters
@@ -114,7 +118,7 @@ _as_conductivity_tensor(K::TensND.AbstractTens{2, 3}) = K
     fracture_permeability(rve::RVE; property = :K, kw...) -> Tens{2,3}
 
 [`fracture_permeability`](@ref) reading the matrix conductivity, the
-[`ConductiveCrack`](@ref MeanFieldHomogenization.ConductiveCrack) families and their densities straight off an
+[`ConductiveCrack`](@ref MeanFieldHomogenization.Cracks.ConductiveCrack) families and their densities straight off an
 [`RVE`](@ref).
 
 Phases that are not conductive cracks are ignored — a fracture network model has

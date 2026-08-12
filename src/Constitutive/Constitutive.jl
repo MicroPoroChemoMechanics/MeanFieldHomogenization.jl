@@ -43,6 +43,7 @@ purely mechanical law only ever sees the one-gradient specialization.
 | [`MaterialResponse`](@ref), [`stress`](@ref), [`tangent`](@ref), [`state`](@ref) | what a response carries |
 | [`HomogenizedElastic`](@ref) | linear law from any scheme — the control case |
 | [`MicrocrackedMaterial`](@ref) | crack families that open and close; exact piecewise-linear tangent |
+| [`FracturedPoroelasticRock`](@ref) | the saturated fractured rock: two gradients, two fluxes, evolving permeability |
 | [`MaterialCache`](@ref), [`cache_stats`](@ref) | memoization on the microstructural configuration |
 | [`to_tensors`](@ref), [`from_tensors`](@ref) | the `Tensors.jl` bridge |
 | [`plane_strain_response`](@ref) | driving a 3-D material from a 2-D element loop |
@@ -77,6 +78,7 @@ include("material.jl")
 include("cache.jl")
 include("elastic.jl")
 include("cracked.jl")
+include("poroelastic.jl")
 include("plane_strain.jl")
 include("check.jl")
 
@@ -90,6 +92,7 @@ export check_material_interface
 # ── Materials ────────────────────────────────────────────────────────────────
 export HomogenizedElastic, stiffness
 export MicrocrackedMaterial, CrackedState, open_set, apertures
+export FracturedPoroelasticRock, PoroFracturedState, conductivities, fluid_content
 
 # ── Memoization ──────────────────────────────────────────────────────────────
 export MaterialCache, cached!, cache_stats, reset_cache!

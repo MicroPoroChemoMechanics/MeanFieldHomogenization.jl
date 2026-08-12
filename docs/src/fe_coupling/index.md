@@ -49,6 +49,7 @@ apertures.
 | [Fractured permeability](@ref fe-permeability) | flowing cracks and the effective conductivity of a fracture network |
 | [Ferrite backend](@ref fe-backends) | the three helpers a Ferrite driver needs |
 | [Thick-walled cylinder](@ref fe-thick-cylinder) | worked model, checked against Lamé, then with closing cracks |
+| [The saturated fractured rock](@ref fe-fractured-rock) | the ARMA 2011 material: two gradients, two fluxes, evolving permeability |
 
 The Biot machinery the poroelastic coupling builds on is a property of a
 microstructure rather than of the coupling, so it lives on its own page:

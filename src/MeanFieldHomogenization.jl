@@ -359,6 +359,7 @@ export gradient_names, flux_names, tangent_blocks, transport_property
 export check_material_interface
 export HomogenizedElastic, stiffness
 export MicrocrackedMaterial, CrackedState, open_set, apertures
+export FracturedPoroelasticRock, PoroFracturedState, conductivities, fluid_content
 export MaterialCache, cached!, cache_stats, reset_cache!
 export plane_strain_response
 export to_tensors, from_tensors

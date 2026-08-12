@@ -37,6 +37,10 @@ MicrocrackedMaterial
 CrackedState
 open_set
 apertures
+FracturedPoroelasticRock
+PoroFracturedState
+conductivities
+fluid_content
 ```
 
 ## Memoization

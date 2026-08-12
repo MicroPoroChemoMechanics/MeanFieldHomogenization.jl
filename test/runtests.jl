@@ -215,6 +215,7 @@ Random.seed!(20260723)
     @testset "Constitutive" begin
         include("Constitutive/test_material_api.jl")
         include("Constitutive/test_cracked.jl")
+        include("Constitutive/test_poroelastic.jl")
     end
 
     @testset "Viscoelasticity" begin

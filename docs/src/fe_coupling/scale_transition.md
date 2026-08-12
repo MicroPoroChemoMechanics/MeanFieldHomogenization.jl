@@ -6,11 +6,11 @@ At each quadrature point a finite-element code solving a nonlinear problem needs
 two things from the material, per step:
 
 ```math
-\boldsymbol\sigma_{n+1}
-  = \mathcal{F}\!\left(\boldsymbol\varepsilon_{n+1},\, \alpha_n\right),
+\boldsymbol{\sigma}_{n+1}
+  = \mathcal{F}\!\left(\boldsymbol{\varepsilon}_{n+1},\, \alpha_n\right),
 \qquad
 \mathbb{C}^{\text{tg}}
-  = \frac{\partial \boldsymbol\sigma_{n+1}}{\partial \boldsymbol\varepsilon_{n+1}} ,
+  = \frac{\partial \boldsymbol{\sigma}_{n+1}}{\partial \boldsymbol{\varepsilon}_{n+1}} ,
 ```
 
 the stress and the **consistent tangent**, together with the updated internal
@@ -24,7 +24,7 @@ The material response *is* a homogenization: the strain drives an RVE, the
 scheme returns its effective stiffness, and
 
 ```math
-\boldsymbol\sigma = \mathbb{C}^{\rm hom}(\alpha) : \boldsymbol\varepsilon .
+\boldsymbol{\sigma} = \mathbb{C}^{\rm hom}(\alpha) : \boldsymbol{\varepsilon} .
 ```
 
 All the nonlinearity sits in ``\alpha`` — the crack apertures, the open/closed
@@ -51,8 +51,8 @@ stress **and** a variation of fluid content:
 
 ```math
 \begin{aligned}
-\dot{\boldsymbol\Sigma} &= \mathbb{C}^{\rm hom} : \dot{\mathbf{E}} - \dot{p}\,\mathbf{B}, \\
-\dot{\varphi}           &= \mathbf{B} : \dot{\mathbf{E}} + \frac{\dot{p}}{M} .
+\dot{\boldsymbol{\Sigma}} &= \mathbb{C}^{\rm hom} : \dot{\boldsymbol{E}} - \dot{p}\,\boldsymbol{B}, \\
+\dot{\varphi}           &= \boldsymbol{B} : \dot{\boldsymbol{E}} + \frac{\dot{p}}{M} .
 \end{aligned}
 ```
 
@@ -61,9 +61,9 @@ tangent as a set of blocks keyed *flux then gradient*:
 
 | block | value | key |
 |:--|:--|:--|
-| ``\partial\boldsymbol\Sigma/\partial\mathbf{E}`` | ``\mathbb{C}^{\rm hom}`` | `:σε` |
-| ``\partial\boldsymbol\Sigma/\partial p``         | ``-\mathbf{B}``          | `:σp` |
-| ``\partial\varphi/\partial\mathbf{E}``           | ``\mathbf{B}``           | `:φε` |
+| ``\partial\boldsymbol{\Sigma}/\partial\boldsymbol{E}`` | ``\mathbb{C}^{\rm hom}`` | `:σε` |
+| ``\partial\boldsymbol{\Sigma}/\partial p``         | ``-\boldsymbol{B}``          | `:σp` |
+| ``\partial\varphi/\partial\boldsymbol{E}``           | ``\boldsymbol{B}``           | `:φε` |
 | ``\partial\varphi/\partial p``                   | ``1/M``                  | `:φp` |
 
 A purely mechanical law declares only `:σε` and never sees the rest. This is the

@@ -36,16 +36,16 @@ Decompose the macroscopic compliance of `rve` into a solid part and one
 contribution per crack family, such that
 
 ```math
-\\mathbb S^{\\rm hom} = \\mathbb S^{\\rm solid}
-  + \\sum_i \\frac{4\\pi}{3}\\,d_i\\,\\mathbb S_i .
+\\mathbb{S}^{\\rm hom} = \\mathbb{S}^{\\rm solid}
+  + \\sum_i \\frac{4\\pi}{3}\\,d_i\\,\\mathbb{S}_i .
 ```
 
 Returns a `NamedTuple`:
 
-- `solid` — the solid part ``\\mathbb S^{\\rm solid}`` (for a single-matrix RVE,
-  the matrix compliance ``\\mathbb s_s``);
+- `solid` — the solid part ``\\mathbb{S}^{\\rm solid}`` (for a single-matrix RVE,
+  the matrix compliance ``\\mathbb{S}_{\\rm s}``);
 - `families` — a `Dict{Symbol,…}` mapping each crack phase name to its
-  ``\\mathbb S_i``, **normalized per unit** ``(4\\pi/3)\\,d_i``, so that the
+  ``\\mathbb{S}_i``, **normalized per unit** ``(4\\pi/3)\\,d_i``, so that the
   scaled contribution is recovered with
   [`delta_compliance`](@ref MeanFieldHomogenization.Core.delta_compliance).
 
@@ -54,20 +54,20 @@ Returns a `NamedTuple`:
 scheme *at its own fixed point*, and evaluating it anywhere else is meaningless.
 [`crack_family_residual`](@ref) checks exactly that.
 
-The ``\\mathbb S_i`` are what drives an aperture update — see the derivation of
+The ``\\mathbb{S}_i`` are what drives an aperture update — see the derivation of
 ``(\\star)`` at the top of this file, and
 [`MeanFieldHomogenization.Constitutive`](@ref MeanFieldHomogenization.Constitutive),
 which consumes them.
 
 # Supported schemes
 
-| Scheme | ``\\mathbb S^{\\rm solid}`` | correction |
+| Scheme | ``\\mathbb{S}^{\\rm solid}`` | correction |
 |---|---|---|
-| [`SelfConsistent`](@ref) | ``\\langle\\mathbb A\\rangle : \\langle\\mathbb C\\mathbb A\\rangle^{-1}`` | ``\\mathbb C^{\\rm hom} : \\langle\\mathbb C\\mathbb A\\rangle^{-1}`` |
-| [`MoriTanaka`](@ref) | ``\\mathbb s_s`` | none (identity) |
+| [`SelfConsistent`](@ref) | ``\\langle\\mathbb{A}\\rangle : \\langle\\mathbb{C}\\mathbb{A}\\rangle^{-1}`` | ``\\mathbb{C}^{\\rm hom} : \\langle\\mathbb{C}\\mathbb{A}\\rangle^{-1}`` |
+| [`MoriTanaka`](@ref) | ``\\mathbb{S}_{\\rm s}`` | none (identity) |
 
-For Mori-Tanaka the identity ``\\mathbb S^{\\rm MT} = \\mathbb s_s + \\sum_i
-(4\\pi/3) d_i \\mathbb H_i(\\mathbb c_s)`` is exact — a two-line consequence of
+For Mori-Tanaka the identity ``\\mathbb{S}^{\\rm MT} = \\mathbb{S}_{\\rm s} + \\sum_i
+(4\\pi/3) d_i \\mathbb{H}_i(\\mathbb{C}_{\\rm s})`` is exact — a two-line consequence of
 the `𝔹 : 𝔸⁻¹` body — but **only when the matrix is the sole phase carrying
 volume**. An RVE with solid inclusions *and* cracks is rejected rather than
 answered approximately.
@@ -75,7 +75,7 @@ answered approximately.
 !!! warning "Unsymmetrized families only"
     ``(\\star)`` is a statement about one orientation. A crack phase declared
     with `symmetrize = :iso` or `:ti` has already had its ℍ averaged over an
-    orbit of orientations, and no single ``\\hat n_i`` remains to project onto.
+    orbit of orientations, and no single ``\\underline{n}_i`` remains to project onto.
     Such a phase raises an `ArgumentError` here instead of returning a plausible
     but meaningless tensor. Discrete fracture families — the ARMA setting — are
     unsymmetrized by construction.
@@ -154,8 +154,8 @@ Relative Frobenius residual of the identity guaranteed by
 [`crack_family_compliances`](@ref):
 
 ```math
-\\frac{\\bigl\\| \\mathbb S^{\\rm hom} - \\mathbb S^{\\rm solid}
-- \\sum_i (4\\pi/3) d_i \\mathbb S_i \\bigr\\|}{\\bigl\\|\\mathbb S^{\\rm hom}\\bigr\\|}
+\\frac{\\bigl\\| \\mathbb{S}^{\\rm hom} - \\mathbb{S}^{\\rm solid}
+- \\sum_i (4\\pi/3) d_i \\mathbb{S}_i \\bigr\\|}{\\bigl\\|\\mathbb{S}^{\\rm hom}\\bigr\\|}
 ```
 
 A model self-check, and the regression test of the decomposition. For an

@@ -152,8 +152,8 @@ nothing # hide
 
 ## Strength criterion and the autodiff sensitivity
 
-The compliance pull-back ``\mathbf M = \mathbf S_{MO}:\partial\mathbb
-C_{MO}/\partial\mu_{\rm hyd}:\mathbf S_{MO}`` gives the axial term ``M_{3333}``,
+The compliance pull-back ``\boldsymbol{M} = \boldsymbol{S}_{MO}:\partial\mathbb
+C_{MO}/\partial\mu_{\rm hyd}:\boldsymbol{S}_{MO}`` gives the axial term ``M_{3333}``,
 and [pichler2011](@cite)'s criterion reads
 
 ```math

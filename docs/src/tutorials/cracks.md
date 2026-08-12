@@ -43,13 +43,13 @@ the dilute compliance correction is
 
 ```math
 \Delta\mathbb{S} = \frac{4\pi}{3}\,\varepsilon\,\mathbb{H}, \qquad
-\mathbb{H} = \tfrac{3}{4}\,\hat{\mathbf n}\otimes^{\!s}\mathbf B\otimes^{\!s}\hat{\mathbf n},
+\mathbb{H} = \tfrac{3}{4}\,\underline{n}\otimes^{\!s}\boldsymbol{B}\otimes^{\!s}\underline{n},
 ```
 
 [kachanov1992](@cite), [kachanov1993](@cite) — ``\mathbb{H}`` is the
 **size-independent compliance contribution tensor**
 ([`compliance_contribution`](@ref)), computed once from `B` and the
-crack normal ``\hat{\mathbf n}``, and reused unchanged across an entire
+crack normal ``\underline{n}``, and reused unchanged across an entire
 crack population that shares the same orientation and shape.
 
 ```@example tutcracks

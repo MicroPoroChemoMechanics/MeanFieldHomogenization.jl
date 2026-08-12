@@ -19,7 +19,11 @@ using Ferrite
 using LinearAlgebra
 using Printf
 using Plots
+# Composite panels crop their outer labels unless the margins are explicit —
+# a big enough canvas is not enough on its own.
 gr(size = (760, 320), dpi = 130)
+const MARGINS = (left_margin = 7Plots.mm, bottom_margin = 7Plots.mm,
+    top_margin = 3Plots.mm, right_margin = 3Plots.mm)
 
 const EXT = Base.get_extension(
     MeanFieldHomogenization, :MeanFieldHomogenizationFerriteMaterialExt
@@ -145,7 +149,10 @@ p2 = scatter(
     xlabel = "radius r", ylabel = "hoop stress σθθ", legend = :topright, msw = 0
 )
 plot!(p2, range(Ri, Ro; length = 200), lame_σθθ; label = "Lamé", lw = 2, lc = :black, ls = :dash)
-savefig(plot(p1, p2; layout = (1, 2)), joinpath(OUT, "lame.png"))
+savefig(
+    plot(p1, p2; layout = (1, 2), size = (900, 380), MARGINS...),
+    joinpath(OUT, "lame.png")
+)
 
 # ── 2. mesh and deformed shape ───────────────────────────────────────────────
 
@@ -164,8 +171,8 @@ end
 savefig(
     plot(
         mesh_plot(; title = "mesh (24×24, no gmsh)"),
-        mesh_plot(u_lin; scale = 8.0, color = :steelblue, title = "deformed ×8"),
-        layout = (1, 2), size = (760, 380)
+        mesh_plot(u_lin; scale = 8.0, color = :steelblue, title = "deformed ×8");
+        layout = (1, 2), size = (860, 400), MARGINS...
     ),
     joinpath(OUT, "mesh.png")
 )
@@ -230,7 +237,7 @@ savefig(
     plot(
         state_map(1, "family normal to e₁"),
         state_map(2, "family normal to e₂");
-        layout = (1, 2), size = (760, 380),
+        layout = (1, 2), size = (880, 420), MARGINS...,
         plot_title = "blue = open, red = closed (p = 20 MPa)"
     ),
     joinpath(OUT, "anisotropy.png")

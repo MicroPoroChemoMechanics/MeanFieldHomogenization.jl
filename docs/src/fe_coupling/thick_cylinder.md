@@ -53,7 +53,7 @@ validates the coupling — any defect in the plumbing would show up here:
 
 ## Step 2 — cracks that close
 
-Two crack families, normals ``\mathbf e_1`` and ``\mathbf e_2``, replace the
+Two crack families, normals ``\underline{e}_1`` and ``\underline{e}_2``, replace the
 inclusions. Nothing else in the driver changes:
 
 ```julia
@@ -65,14 +65,14 @@ mat = MicrocrackedMaterial(rve, MoriTanaka(); ω₀ = (2.0e-3, 2.0e-3))
 
 A family closes where the traction normal to its plane turns compressive. In a
 pressurized cylinder ``\sigma_{rr} < 0`` and ``\sigma_{\theta\theta} > 0``, and a
-crack of normal ``\mathbf e_1`` sees
+crack of normal ``\underline{e}_1`` sees
 
 ```math
 \sigma_{11} = \sigma_{rr}\cos^2\theta + \sigma_{\theta\theta}\sin^2\theta ,
 ```
 
 so it closes near ``\theta = 0`` and stays open near ``\theta = \pi/2`` — while
-the ``\mathbf e_2`` family does the mirror image. The result is an anisotropy
+the ``\underline{e}_2`` family does the mirror image. The result is an anisotropy
 that varies **with position and with the load**, which no fitted law reproduces:
 
 ![closed and open families across the domain](../assets/fe_coupling/anisotropy.png)
@@ -86,7 +86,7 @@ cracked run: 4 scheme solves for 2304 quadrature points
 ```
 
 The homogenized stiffness depends on the state only through the *discrete*
-open/closed set — for a flat crack ``\mathbb H`` is the ``\omega \to 0`` limit
+open/closed set — for a flat crack ``\mathbb{H}`` is the ``\omega \to 0`` limit
 and carries no aperture — so a [`MaterialCache`](@ref) reduces 12 load steps ×
 Newton iterations × 2304 points to **four** Mori-Tanaka solves.
 

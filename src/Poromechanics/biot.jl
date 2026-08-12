@@ -21,23 +21,23 @@
 """
     biot_tensor(C_hom, C_s) -> Tens{2,3}
 
-**Biot tensor** ``\\mathbf B`` of a porous medium with a *homogeneous* solid
+**Biot tensor** ``\\boldsymbol{B}`` of a porous medium with a *homogeneous* solid
 phase of stiffness `C_s`, from its drained homogenized stiffness `C_hom`:
 
 ```math
-\\mathbf B = \\boldsymbol\\delta : \\left(\\mathbb I - \\mathbb s_s :
-\\mathbb C^{\\rm hom}\\right), \\qquad \\mathbb s_s = \\mathbb C_s^{-1}.
+\\boldsymbol{B} = \\boldsymbol{1} : \\left(\\mathbb{I} - \\mathbb{S}_{\\rm s} :
+\\mathbb{C}^{\\rm hom}\\right), \\qquad \\mathbb{S}_{\\rm s} = \\mathbb{C}_s^{-1}.
 ```
 
-`\\mathbf B` is the tensor appearing in the poroelastic law
-``\\dot{\\boldsymbol\\Sigma} = \\mathbb C^{\\rm hom} : \\dot{\\mathbf E} -
-\\dot p\\,\\mathbf B``; it is generally **anisotropic** even when the solid is
+`\\boldsymbol{B}` is the tensor appearing in the poroelastic law
+``\\dot{\\boldsymbol{\\Sigma}} = \\mathbb{C}^{\\rm hom} : \\dot{\\boldsymbol{E}} -
+\\dot p\\,\\boldsymbol{B}``; it is generally **anisotropic** even when the solid is
 isotropic, because the pore space is not.
 
 Two limits are worth remembering as sanity checks: a homogeneous medium
-(`C_hom == C_s`) gives ``\\mathbf B = \\mathbf 0``, and a vanishing drained
-stiffness gives ``\\mathbf B = \\boldsymbol\\delta``. For an isotropic medium
-the tensor collapses to ``b\\,\\boldsymbol\\delta`` with the familiar
+(`C_hom == C_s`) gives ``\\boldsymbol{B} = \\boldsymbol{0}``, and a vanishing drained
+stiffness gives ``\\boldsymbol{B} = \\boldsymbol{1}``. For an isotropic medium
+the tensor collapses to ``b\\,\\boldsymbol{1}`` with the familiar
 ``b = 1 - k^{\\rm hom}/k_s``.
 
 !!! note "Homogeneous solid phase only"
@@ -49,7 +49,7 @@ Pass the solid **stiffness**, not its compliance — the inverse is taken
 internally. Computing several poroelastic parameters at once is cheaper through
 [`poroelastic_parameters`](@ref), which inverts `C_s` only once.
 
-See also [`inverse_biot_modulus`](@ref), [`undrained_stiffness`](@ref),
+See also [`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus), [`undrained_stiffness`](@ref),
 [`terzaghi_stress`](@ref).
 """
 biot_tensor(
@@ -75,8 +75,8 @@ Inverse **Biot modulus** ``1/M`` (also written ``1/N``) of a porous medium with
 a homogeneous solid phase:
 
 ```math
-\\frac{1}{M} = \\boldsymbol\\delta : \\mathbb s_s : \\left(\\mathbf B -
-\\varphi\\,\\boldsymbol\\delta\\right).
+\\frac{1}{M} = \\boldsymbol{1} : \\mathbb{S}_{\\rm s} : \\left(\\boldsymbol{B} -
+\\varphi\\,\\boldsymbol{1}\\right).
 ```
 
 `φ` is the **Lagrangian porosity** of the connected pore space in the reference
@@ -94,8 +94,8 @@ For an isotropic medium this reduces to the textbook ``1/M = (b -
     ``k_f`` adds the storage term ``\\varphi/k_f``:
 
     ```math
-    \\frac{1}{M} = \\boldsymbol\\delta : \\mathbb s_s :
-    (\\mathbf B - \\varphi\\,\\boldsymbol\\delta) + \\frac{\\varphi}{k_f}.
+    \\frac{1}{M} = \\boldsymbol{1} : \\mathbb{S}_{\\rm s} :
+    (\\boldsymbol{B} - \\varphi\\,\\boldsymbol{1}) + \\frac{\\varphi}{k_f}.
     ```
 
     Add it yourself if the fluid compressibility matters — the function does
@@ -128,10 +128,10 @@ end
     biot_modulus(C_s, B, φ) -> Number
 
 Biot modulus ``M = 1/(1/M)``, the reciprocal of
-[`inverse_biot_modulus`](@ref).
+[`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus).
 
 Returns `Inf` for an incompressible solid phase (``1/M = 0``). Prefer
-[`inverse_biot_modulus`](@ref) wherever the value is assembled into a system
+[`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus) wherever the value is assembled into a system
 matrix.
 """
 biot_modulus(
@@ -149,7 +149,7 @@ phase, in one pass:
 ```
 
 with `B` the [`biot_tensor`](@ref), `inverse_modulus` the
-[`inverse_biot_modulus`](@ref) ``1/M`` and `modulus` its reciprocal ``M``.
+[`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus) ``1/M`` and `modulus` its reciprocal ``M``.
 
 `C_s` is inverted **once**, which is why this is the entry point the
 Gauss-point materials use rather than the three functions separately.
@@ -184,8 +184,8 @@ end
 """
     undrained_stiffness(C_hom, B, M) -> Tens{4,3}
 
-**Undrained** stiffness ``\\mathbb C^{\\rm u} = \\mathbb C^{\\rm hom} +
-M\\,\\mathbf B \\otimes \\mathbf B``.
+**Undrained** stiffness ``\\mathbb{C}^{\\rm u} = \\mathbb{C}^{\\rm hom} +
+M\\,\\boldsymbol{B} \\otimes \\boldsymbol{B}``.
 
 It is the tangent stiffness of the closed system, obtained by eliminating `p`
 from the poroelastic law under the undrained condition ``\\dot\\varphi = 0``.
@@ -204,8 +204,8 @@ end
     drained_stiffness(C_u, B, M) -> Tens{4,3}
 
 Inverse of [`undrained_stiffness`](@ref): recover the drained stiffness
-``\\mathbb C^{\\rm hom} = \\mathbb C^{\\rm u} - M\\,\\mathbf B \\otimes
-\\mathbf B`` from an undrained measurement.
+``\\mathbb{C}^{\\rm hom} = \\mathbb{C}^{\\rm u} - M\\,\\boldsymbol{B} \\otimes
+\\boldsymbol{B}`` from an undrained measurement.
 """
 function drained_stiffness(
         C_u::TensND.AbstractTens{4, 3}, B::TensND.AbstractTens{2, 3}, M::Number
@@ -216,17 +216,16 @@ end
 """
     skempton_tensor(C_hom, B, M) -> Tens{2,3}
 
-**Skempton tensor** ``\\mathbf B^{\\rm sk} = M\\,\\mathbf B : \\mathbb
-s^{\\rm u}`` (``\\mathbb s^{\\rm u} = (\\mathbb C^{\\rm u})^{-1}``), which gives
+**Skempton tensor** ``\\boldsymbol{B}^{\\rm sk} = M\\,\\boldsymbol{B} : \\mathbb{S}^{\\rm u}`` (``\\mathbb{S}^{\\rm u} = (\\mathbb{C}^{\\rm u})^{-1}``), which gives
 the pore pressure built up by an undrained stress increment:
 
 ```math
-p = -\\,\\mathbf B^{\\rm sk} : \\boldsymbol\\Sigma .
+p = -\\,\\boldsymbol{B}^{\\rm sk} : \\boldsymbol{\\Sigma} .
 ```
 
-Under isotropic compression ``\\boldsymbol\\Sigma = -p_0\\,\\boldsymbol\\delta``
-this yields ``p = p_0\\,{\\rm tr}\\,\\mathbf B^{\\rm sk}``, so
-``{\\rm tr}\\,\\mathbf B^{\\rm sk}`` plays the role of the classical scalar
+Under isotropic compression ``\\boldsymbol{\\Sigma} = -p_0\\,\\boldsymbol{1}``
+this yields ``p = p_0\\,{\\rm tr}\\,\\boldsymbol{B}^{\\rm sk}``, so
+``{\\rm tr}\\,\\boldsymbol{B}^{\\rm sk}`` plays the role of the classical scalar
 Skempton coefficient. In the isotropic case it reduces to ``M b / k^{\\rm u}``,
 equivalently
 
@@ -237,7 +236,7 @@ B = \\frac{1/k^{\\rm hom} - 1/k_s}
 
 !!! warning "The bound `B ≤ 1` does not hold here"
     The familiar ``0 \\le B \\le 1`` assumes a fluid no stiffer than the solid
-    grains, ``k_f \\le k_s``. [`inverse_biot_modulus`](@ref) assumes an
+    grains, ``k_f \\le k_s``. [`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus) assumes an
     **incompressible** fluid (``k_f = \\infty``), so with a compressible solid
     the last term above is negative and ``B > 1``: the pore pressure exceeds the
     applied mean stress, because the pore volume is held fixed while the grains

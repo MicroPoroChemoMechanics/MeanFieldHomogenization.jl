@@ -51,7 +51,7 @@ Conventions and formulation choices, not numerical error — do not "fix" them.
 ratio ``\eta = b/a``:
 
 ```math
-\mathbb H_{\mathrm{MFH}} = \tfrac{3}{4}\,\hat n \otimes^s \mathbf B \otimes^s \hat n,
+\mathbb H_{\mathrm{MFH}} = \tfrac{3}{4}\,\underline{n} \otimes^s \boldsymbol{B} \otimes^s \underline{n},
 \qquad
 \mathbb H_{\mathrm{Echoes}} = \eta\,\mathbb H_{\mathrm{MFH}} .
 ```

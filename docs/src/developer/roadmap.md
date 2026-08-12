@@ -98,13 +98,19 @@ open, and what has since been closed:
 - Optional structured `TensTI{4,T,8}` fast path for the ALV TI schemes.
 - Viscoelastic constitutive laws in the Laplace–Carson domain.
 - **Finite-element coupling, remaining pieces.** The Gauss-point contract,
-  `HomogenizedElastic`, `MicrocrackedMaterial`, the Ferrite glue, the
-  poroelastic parameters and the fractured permeability are shipped (see
-  [Finite-element coupling](@ref fe-coupling)). Still open: a
-  `FracturedPoroelasticRock` material assembling the four poroelastic tangent
-  blocks with the aperture and conductivity updates; the coupled *u–p*
-  reservoir applications of [barthelemyARMA2011](@cite) (consolidation column,
-  well test); drivers for Gridap, FEniCSx and an Abaqus-shaped UMAT.
+  `HomogenizedElastic`, `MicrocrackedMaterial`, the Ferrite glue — including
+  the coupled ``(\underline{u}, p)`` element — the poroelastic parameters, the
+  fractured permeability, the `FracturedPoroelasticRock` material and the
+  [ARMA 2011 well test](@ref fe-arma2011) are shipped (see
+  [Finite-element coupling](@ref fe-coupling)). Still open:
+  - the **consolidation column** of [barthelemyARMA2011](@cite) § 3.1, models
+    M1/M2/M3 — the case where a family actually *closes* during the loading.
+    Everything it needs is shipped; it is a driver, not a capability.
+  - the paper's **Eq. (12) permeability**, whose matrix concentration factor
+    (order-2 Hill tensor of the effective medium) the simpler estimate in
+    `fracture_permeability` omits. It is worth ≈ 55× on the ARMA microstructure
+    — the [well test](@ref fe-arma2011-scope) quantifies exactly what it costs.
+  - drivers for Gridap, FEniCSx and an Abaqus-shaped UMAT.
 - Finite-element inclusions, behind the `FEBackend` contract
   (`MeanFieldHomogenizationFerriteExt`, `MeanFieldHomogenizationGridapExt`), both with the
   first-order corrected boundary condition of

@@ -3,24 +3,26 @@
 Once a scheme has produced a **drained** stiffness ``\mathbb{C}^{\rm hom}``, the
 poroelastic law of a saturated medium is closed *without any further
 homogenization*: for a solid phase with uniform elastic properties
-``\mathbb{C}_s`` (compliance ``\mathbb{s}_s = \mathbb{C}_s^{-1}``),
+``\mathbb{C}_{\rm s}`` (compliance ``\mathbb{S}_{\rm s} = \mathbb{C}_{\rm s}^{-1}``),
 
 ```math
-\mathbf{B} = \boldsymbol\delta : \left(\mathbb{I} - \mathbb{s}_s : \mathbb{C}^{\rm hom}\right),
+\boldsymbol{B} = \boldsymbol{1} : \left(\mathbb{I} - \mathbb{S}_{\rm s} : \mathbb{C}^{\rm hom}\right),
 \qquad
-\frac{1}{M} = \boldsymbol\delta : \mathbb{s}_s : \left(\mathbf{B} - \varphi\,\boldsymbol\delta\right),
+\frac{1}{M} = \boldsymbol{1} : \mathbb{S}_{\rm s} : \left(\boldsymbol{B} - \varphi\,\boldsymbol{1}\right),
 ```
 
-the **Biot tensor** and **Biot modulus** ([coussy2004](@cite)). They enter the
-constitutive law as
+the **Biot tensor** and **Biot modulus** ([coussy2004](@cite)) — ``\boldsymbol{B}``
+here, and nowhere else in this documentation, denotes the Biot tensor rather
+than a [crack opening displacement](@ref th-cod-tensors). They enter the constitutive
+law as
 
 ```math
-\dot{\boldsymbol\Sigma} = \mathbb{C}^{\rm hom} : \dot{\mathbf{E}} - \dot{p}\,\mathbf{B},
+\dot{\boldsymbol{\Sigma}} = \mathbb{C}^{\rm hom} : \dot{\boldsymbol{E}} - \dot{p}\,\boldsymbol{B},
 \qquad
-\dot{\varphi} = \mathbf{B} : \dot{\mathbf{E}} + \frac{\dot{p}}{M} .
+\dot{\varphi} = \boldsymbol{B} : \dot{\boldsymbol{E}} + \frac{\dot{p}}{M} .
 ```
 
-``\mathbf{B}`` is generally **anisotropic** even for an isotropic solid, because
+``\boldsymbol{B}`` is generally **anisotropic** even for an isotropic solid, because
 the pore space need not be isotropic.
 
 ```@example poro
@@ -38,7 +40,7 @@ par = poroelastic_parameters(homogenize(rve, MoriTanaka()), C_s, φ)
 (b = par.B[1, 1], invM = par.inverse_modulus, M = par.modulus)
 ```
 
-Spherical pores give ``\mathbf{B} = b\,\boldsymbol\delta`` with the familiar
+Spherical pores give ``\boldsymbol{B} = b\,\boldsymbol{1}`` with the familiar
 ``b = 1 - k^{\rm hom}/k_s``. Aligned cracks do not:
 
 ```@example poro
@@ -63,28 +65,28 @@ Two different measures, easy to confuse:
 
 | | | drives |
 |:--|:--|:--|
-| [`terzaghi_stress`](@ref) | ``\boldsymbol\Sigma + p\,\boldsymbol\delta`` | the **microstructure** — crack opening and closure |
-| [`biot_effective_stress`](@ref) | ``\boldsymbol\Sigma + p\,\mathbf{B}`` | the **macroscopic** law, which it reduces to the drained one |
+| [`terzaghi_stress`](@ref) | ``\boldsymbol{\Sigma} + p\,\boldsymbol{1}`` | the **microstructure** — crack opening and closure |
+| [`biot_effective_stress`](@ref) | ``\boldsymbol{\Sigma} + p\,\boldsymbol{B}`` | the **macroscopic** law, which it reduces to the drained one |
 
-They coincide only when ``\mathbf{B} = \boldsymbol\delta``. That the *Terzaghi*
+They coincide only when ``\boldsymbol{B} = \boldsymbol{1}``. That the *Terzaghi*
 measure is the one governing the pore space is the argument of
-[barthelemyARMA2011](@cite) § 1.1: the loading ``(\boldsymbol\Sigma, p)`` splits
-into a dry problem under ``\boldsymbol\Sigma + p\,\boldsymbol\delta``, plus a
+[barthelemyARMA2011](@cite) § 1.1: the loading ``(\boldsymbol{\Sigma}, p)`` splits
+into a dry problem under ``\boldsymbol{\Sigma} + p\,\boldsymbol{1}``, plus a
 uniform field that carries no strain singularity and so cannot open or close a
 flat crack.
 
 ## Drained ↔ undrained
 
 ```math
-\mathbb{C}^{\rm u} = \mathbb{C}^{\rm hom} + M\,\mathbf{B} \otimes \mathbf{B}
+\mathbb{C}^{\rm u} = \mathbb{C}^{\rm hom} + M\,\boldsymbol{B} \otimes \boldsymbol{B}
 ```
 
 via [`undrained_stiffness`](@ref) and [`drained_stiffness`](@ref), with
 [`skempton_tensor`](@ref) giving the pore pressure built up by an undrained
-stress increment, ``p = -\mathbf{B}^{\rm sk} : \boldsymbol\Sigma``.
+stress increment, ``p = -\boldsymbol{B}^{\rm sk} : \boldsymbol{\Sigma}``.
 
 !!! note "Homogeneous solid phase only"
     These relations need a solid phase with *uniform* elastic properties — a
     rock matrix with pores or fractures. A medium built from two distinct solid
-    constituents needs the general Levin/eigenstrain route, and ``\mathbb{C}_s``
+    constituents needs the general Levin/eigenstrain route, and ``\mathbb{C}_{\rm s}``
     is then not defined.

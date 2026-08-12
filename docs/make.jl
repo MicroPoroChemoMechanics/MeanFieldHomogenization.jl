@@ -210,13 +210,24 @@ makedocs(;
         # opposite of `manual/fe_inclusions.md`, which is the FE solver inside
         # MeanFieldHomogenization. Kept as its own top-level section so the two
         # can never be read as a continuation of one another.
+        # Sorted the way the section is read: the equations first, then how to
+        # build a model with them, then worked models.
         "Finite-element coupling" => [
             "fe_coupling/index.md",
-            "fe_coupling/scale_transition.md",
-            "fe_coupling/materials.md",
-            "fe_coupling/permeability.md",
-            "fe_coupling/backends.md",
-            "fe_coupling/thick_cylinder.md",
+            "Theory" => [
+                "fe_coupling/scale_transition.md",
+                "fe_coupling/poroelastic_coupling.md",
+                "fe_coupling/permeability.md",
+            ],
+            "Manual" => [
+                "fe_coupling/materials.md",
+                "fe_coupling/fractured_rock.md",
+                "fe_coupling/backends.md",
+            ],
+            "Examples" => [
+                "fe_coupling/thick_cylinder.md",
+                "fe_coupling/arma2011.md",
+            ],
         ],
         # Getting work into and out of MeanFieldHomogenization. These are companions to
         # the library rather than chapters about it, which is why they sit

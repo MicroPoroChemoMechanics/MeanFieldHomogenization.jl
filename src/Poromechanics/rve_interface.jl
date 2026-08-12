@@ -36,7 +36,7 @@ poroelastic_parameters(
 
 Sum of the volume fractions of the phases listed in `names` — the Lagrangian
 porosity of the connected pore space, for use as the `φ` argument of
-[`inverse_biot_modulus`](@ref) and [`poroelastic_parameters`](@ref).
+[`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus) and [`poroelastic_parameters`](@ref).
 
 `names` is any iterable of phase symbols; a single `Symbol` is accepted too.
 Passing the pore phases explicitly is deliberate: an RVE has no way of knowing

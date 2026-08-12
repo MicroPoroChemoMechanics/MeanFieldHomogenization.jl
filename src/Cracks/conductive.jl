@@ -16,10 +16,10 @@
 #  stays finite. Writing γ = C / 2a, the dilute contribution per unit
 #  (4π/3)·d in an ISOTROPIC matrix k₀ is
 #
-#      𝕂 = γ / (1 + π γ / (4 k₀)) · (δ − n̂⊗n̂) ,
+#      𝕂 = γ / (1 + π γ / (4 k₀)) · (𝟏 − n̂⊗n̂) ,
 #
 #  purely in-plane: the normal component vanishes as O(ω). The ideal-fracture
-#  limit C → ∞ gives 𝕂 = (4k₀/π)(δ − n̂⊗n̂), i.e. ΔK = (16/3) d k₀ in plane,
+#  limit C → ∞ gives 𝕂 = (4k₀/π)(𝟏 − n̂⊗n̂), i.e. ΔK = (16/3) d k₀ in plane,
 #  which is the classical result and the check the tests pin.
 #
 #  For an anisotropic reference medium there is no such closed form, and rather
@@ -107,8 +107,8 @@ cod_tensor(c::ConductiveCrack, C₀::TensND.AbstractTens{4, 3}; kw...) =
 """
     conductivity_contribution(c::ConductiveCrack, K₀; kw...) -> Tens{2,3}
 
-Size-independent **conductivity contribution** ``\\mathbb K`` of a flowing
-crack, such that `delta_conductivity(c, 𝕂, d)` ``= (4\\pi/3)\\,d\\,\\mathbb K``
+Size-independent **conductivity contribution** ``\\boldsymbol{k}`` of a flowing
+crack, such that `delta_conductivity(c, 𝕂, d)` ``= (4\\pi/3)\\,d\\,\\boldsymbol{k}``
 is the dilute correction to the effective conductivity.
 
 Positive and purely in-plane, in contrast with the insulating crack whose
@@ -124,7 +124,7 @@ function _conductive_crack_K(c::ConductiveCrack, K₀::TensND.TensISO{2, 3})
     γ = c.conductivity / (2 * semi_major(c))
     T = float(promote_type(typeof(γ), typeof(k₀)))
     κ = T(γ) / (one(T) + T(π) * T(γ) / (4 * T(k₀)))
-    # (δ − n̂⊗n̂) in the crack basis, where n̂ is e₃ by construction.
+    # (𝟏 − n̂⊗n̂) in the crack basis, where n̂ is e₃ by construction.
     P = Tensors.SymmetricTensor{2, 3}((i, j) -> (i == j && i < 3) ? one(T) : zero(T))
     return TensND.Tens(κ * P, crack_basis(c))
 end

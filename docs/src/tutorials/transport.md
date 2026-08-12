@@ -33,7 +33,7 @@ D_eff = homogenize(rve, MoriTanaka(), :K)
 tr(Array(D_eff)) / 3
 ```
 
-`TensISO{3}(k)` builds the isotropic 2nd-order tensor ``k\,\mathbf{1}``; note
+`TensISO{3}(k)` builds the isotropic 2nd-order tensor ``k\,\boldsymbol{1}``; note
 the single argument, against two (``\alpha, \beta``) for a 4th-order isotropic
 stiffness.
 
@@ -238,7 +238,7 @@ paste value.
 
 In the limit ``e_{\rm ITZ}\to 0`` the thin, highly-conductive ITZ shell can be
 collapsed onto a **zero-thickness surface-conductive interface** carrying a
-tangential surface current ``\mathbf q_s = k_s\,\nabla_{\!s}T`` with
+tangential surface current ``\underline{q}_s = k_s\,\nabla_{\!s}T`` with
 transmissivity ``k_s = \alpha = D_s\,e_{\rm ITZ}`` — the Echoes book's `DUALDISC`
 model. This is exactly a [`SurfaceConductiveInterface`](@ref) on a *bare*
 aggregate (a one-layer [`LayeredSphere`](@ref)); it avoids the explicit shell and

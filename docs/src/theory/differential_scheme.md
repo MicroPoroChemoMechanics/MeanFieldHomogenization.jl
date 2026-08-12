@@ -110,9 +110,9 @@ of phase `i` in the current medium,
 ```math
 \mathbb N_i = \mathbb B_i - \mathbb C^{hom} : \mathbb A_i ,
 \qquad
-\langle \boldsymbol\sigma \rangle_i = \mathbb B_i : \mathbf E^\infty ,
+\langle \boldsymbol\sigma \rangle_i = \mathbb B_i : \boldsymbol{E}^\infty ,
 \quad
-\langle \boldsymbol\varepsilon \rangle_i = \mathbb A_i : \mathbf E^\infty .
+\langle \boldsymbol\varepsilon \rangle_i = \mathbb A_i : \boldsymbol{E}^\infty .
 ```
 
 Written this way, ``\mathbb N_i`` needs only the phase's concentration
@@ -352,7 +352,7 @@ processing history, and it is measured in
 ## Conduction and viscoelasticity
 
 The derivation never used the tensor order: replacing
-``(\mathbb C, \mathbb N)`` by ``(\mathbf K, \mathbf N_K)`` gives the
+``(\mathbb C, \mathbb N)`` by ``(\boldsymbol{K}, \underline{N}_K)`` gives the
 conduction / diffusion scheme, and the compliance form becomes the
 resistivity form. Both orders are implemented.
 

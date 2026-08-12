@@ -1,4 +1,5 @@
-# Environment for the finite-element demonstration scripts (81, 82, 83).
+# Environment for the finite-element demonstration scripts (81, 82, 83, 88)
+# and for the hand-run figure makers next to them.
 #
 # `Ferrite`, `FerriteGmsh` and `Gmsh` are *weak* dependencies of
 # `MeanFieldHomogenization`, so they are not loadable from the package's own environment —
@@ -13,6 +14,7 @@ MeanFieldHomogenization = "c1e5f8a3-7b2d-4a6c-9e4f-3b8a2c5d7e9f"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
+Tensors = "48a634ad-e948-5137-8d70-aa71f2a747f4"
 
 [sources]
 MeanFieldHomogenization = {path = "../.."}

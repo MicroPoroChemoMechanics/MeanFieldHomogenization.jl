@@ -17,8 +17,8 @@ and a response carries three things:
 
 | accessor | |
 |:--|:--|
-| [`stress`](@ref) | the flux ``\boldsymbol\sigma`` |
-| [`tangent`](@ref) | the consistent tangent ``\partial\boldsymbol\sigma/\partial\boldsymbol\varepsilon`` |
+| [`stress`](@ref) | the flux ``\boldsymbol{\sigma}`` |
+| [`tangent`](@ref) | the consistent tangent ``\partial\boldsymbol{\sigma}/\partial\boldsymbol{\varepsilon}`` |
 | [`state`](@ref) | the **new** internal state |
 
 `state_old` is never mutated. That is what lets a rejected Newton iteration be
@@ -86,16 +86,17 @@ cache_stats(cache)
 |:--|:--|
 | [`HomogenizedElastic`](@ref) | linear, from any cell and scheme — the control case for a new coupling |
 | [`MicrocrackedMaterial`](@ref) | crack families that open and close; piecewise linear, so the tangent is exact |
+| [`FracturedPoroelasticRock`](@ref) | the same, saturated: two gradients ``(\boldsymbol{E}, p)``, two fluxes ``(\boldsymbol{\Sigma}, \varphi)``, evolving permeability — see [the fractured rock](@ref fe-fractured-rock) |
 
 [`MicrocrackedMaterial`](@ref) carries the aperture ``\omega_i`` and the
 open/closed flag of each family as internal state, updated by
 
 ```math
-\Delta\omega_i = \hat{\mathbf n}_i \cdot (\mathbb S_i : \Delta\boldsymbol\Sigma)
-                  \cdot \hat{\mathbf n}_i ,
+\Delta\omega_i = \underline{n}_i \cdot (\mathbb{S}_i : \Delta\boldsymbol{\Sigma})
+                  \cdot \underline{n}_i ,
 ```
 
-with ``\mathbb S_i`` the family's own contribution to the macroscopic
+with ``\mathbb{S}_i`` the family's own contribution to the macroscopic
 compliance ([`crack_family_compliances`](@ref MeanFieldHomogenization.Schemes.crack_family_compliances)).
 Steps are split at every closure and reopening, so the result does not depend on
 how the loading was subdivided. See it at work on the

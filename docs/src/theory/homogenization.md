@@ -8,7 +8,7 @@ multi-phase medium from (i) the phase geometries, (ii) the phase properties and
 
 The Representative Volume Element (RVE) consists of:
 
-- a *matrix* phase of property tensor ``\mathbb C_0`` (or ``\mathbf K_0``
+- a *matrix* phase of property tensor ``\mathbb C_0`` (or ``\boldsymbol{K}_0``
   for the 2nd-order conductivity problem),
 - one or more *inclusion* phases of property tensors
   ``\mathbb C_i``, geometries ``\mathcal G_i``, and amounts

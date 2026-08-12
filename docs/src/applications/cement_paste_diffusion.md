@@ -432,20 +432,20 @@ fixed by requiring the **elastic** and **diffusion** percolation thresholds to
 fall at the porosities observed experimentally [achourCBM2020](@cite). For a
 self-consistent two-phase medium of solid spheroids (aspect ratio ``\omega_s``,
 ``\mathbb C_s \neq 0``, impervious) and pore spheroids (``\omega_p``,
-``\mathbb C_p = 0``, ``\mathbf D_p \neq 0``), both thresholds depend only on the
+``\mathbb C_p = 0``, ``\boldsymbol{D}_p \neq 0``), both thresholds depend only on the
 two shapes, not on the (non-zero) modulus values.
 
 The **diffusion threshold** ``\varphi^{\rm diff}`` — the porosity above which the
 pore network conducts — follows in closed form from the 2nd-order SC equation at
-``\mathbf D^{\rm hom}\to 0^+``:
+``\boldsymbol{D}^{\rm hom}\to 0^+``:
 
 ```math
 \varphi^{\rm diff}
-  = \frac{\operatorname{tr}\mathbf Q_s^{-1}}
-         {\operatorname{tr}\mathbf P_p^{-1} + \operatorname{tr}\mathbf Q_s^{-1}},
+  = \frac{\operatorname{tr}\boldsymbol{Q}_s^{-1}}
+         {\operatorname{tr}\boldsymbol{P}_p^{-1} + \operatorname{tr}\boldsymbol{Q}_s^{-1}},
 \qquad
-\mathbf P_p = \mathbf P(\omega_p,\mathbf 1),\quad
-\mathbf Q_s = \mathbf 1 - \mathbf P(\omega_s,\mathbf 1).
+\boldsymbol{P}_p = \boldsymbol{P}(\omega_p,\boldsymbol{1}),\quad
+\boldsymbol{Q}_s = \boldsymbol{1} - \boldsymbol{P}(\omega_s,\boldsymbol{1}).
 ```
 
 The **elastic threshold** ``\varphi^{\rm elas}`` — the porosity above which the
@@ -580,7 +580,7 @@ two thresholds are well separated, which is what reproduces both the early set
 and the late diffusivity drop. The gel sits at ``\varphi^{\rm elas} \approx 64\%``
 and ``\varphi^{\rm diff} \approx 17\%``, so at ``\varphi_{HD} = 0.24`` it is
 simultaneously load-bearing and diffusive — the prolate gel pores are what keep
-``\mathbf D_{HD} > 0``.
+``\boldsymbol{D}_{HD} > 0``.
 
 !!! note "Numerical agreement with Echoes"
     Evaluated with the compiled Echoes library, ``\varphi^{\rm elas}`` and

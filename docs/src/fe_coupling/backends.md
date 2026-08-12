@@ -21,13 +21,15 @@ const EXT = Base.get_extension(
     reason to pull a ~100 MB gmsh artifact into its environment — or into a
     documentation build.
 
-## The three helpers
+## The helpers
 
 | | |
 |:--|:--|
 | `mfh_states(mat, dh, cv)` | one [`initial_state`](@ref) per quadrature point, as the nested `[cell][qp]` vector Ferrite loops expect |
 | `mfh_element!(Ke, re, cv, mat, ue, states, states_old, Δt; cache)` | element stiffness and internal force, small strain, plane strain |
+| `mfh_poro_element!(Ke, re, cvu, cvp, mat, ue, pe, …, Δt, mobility; u_range, p_range, cache)` | the coupled ``(\underline{u}, p)`` element — [the equations](@ref fe-poro-coupling) |
 | `annulus_grid(Ri, Ro, nr, nθ)` | a structured annular sector, built by bending a rectangle — no gmsh |
+| `cylinder_sector_grid(Ri, Ro, H, nr, nθ, nz; grading)` | its 3-D twin, with geometric radial layers for a well problem |
 
 Keep **two** state arrays and swap only once a step has converged;
 [`material_response`](@ref) never mutates its argument, so a rejected Newton
@@ -48,7 +50,21 @@ for cell in CellIterator(dh)
 end
 ```
 
-A worked model is [`scripts/88_fe_thick_cylinder.jl`](@ref fe-thick-cylinder).
+A worked mechanical model is the [thick-walled cylinder](@ref fe-thick-cylinder);
+the coupled element drives the [ARMA 2011 well test](@ref fe-arma2011).
+
+The two-field element takes the mobility ``\boldsymbol{K}/\mu`` as an
+**argument**, one value per quadrature point: the permeability follows the
+apertures through a self-consistent solve, so the driver evaluates it once per
+step from the converged state and the scheme stays implicit in
+``(\underline{u}, p)`` and explicit in ``\boldsymbol{K}``.
+
+```julia
+for c in eachindex(states), q in eachindex(states[c])
+    K = transport_property(mat, states[c][q])
+    mob[c][q] = K === nothing ? zero(SymmetricTensor{2,3}) : to_tensors(K) / μ
+end
+```
 
 !!! warning "Two traps"
     A `DofHandler` numbers dofs **by cell traversal, not node order** — read

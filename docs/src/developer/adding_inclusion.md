@@ -51,7 +51,7 @@ Then implement — but only two of these are actually *load-bearing*:
 | [`is_homogeneous_inclusion`](@ref) | `Bool` | **defaults to `true`**; override it — and mind level 1 — when the inclusion has no single uniform property. The scheme kernels branch on it. |
 | [`dimension`](@ref MeanFieldHomogenization.Core.dimension) | `Int` | accessor. No kernel reads it, but downstream code and scripts do. Already defined for every `AbstractCrack`. |
 | [`inclusion_basis`](@ref MeanFieldHomogenization.Core.inclusion_basis) | `TensND.AbstractBasis` | accessor; for a flat object **column 3 is the normal**. Already defined for every `AbstractCrack` with a `basis` field. |
-| [`shape_tensor`](@ref MeanFieldHomogenization.Core.shape_tensor) | `Tens{2,dim}` | **optional.** It describes an *equivalent ellipsoidal envelope*, ``\mathbf A = \mathbf R\,\mathrm{diag}(a_i)\,\mathbf R^{T}``. Nothing in the package consumes it, and a morphology that has no such envelope simply does not have one. Implement it when the notion is meaningful — the degenerate conventions are tabulated in its docstring. |
+| [`shape_tensor`](@ref MeanFieldHomogenization.Core.shape_tensor) | `Tens{2,dim}` | **optional.** It describes an *equivalent ellipsoidal envelope*, ``\boldsymbol{A} = \boldsymbol{R}\,\mathrm{diag}(a_i)\,\boldsymbol{R}^{T}``. Nothing in the package consumes it, and a morphology that has no such envelope simply does not have one. Implement it when the notion is meaningful — the degenerate conventions are tabulated in its docstring. |
 | [`element_type`](@ref MeanFieldHomogenization.Core.element_type) | `Type` | **default provided** from the type parameter — do not implement it. |
 
 The point of the distinction: an inclusion that supplies its own response

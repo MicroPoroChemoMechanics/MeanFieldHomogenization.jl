@@ -1,13 +1,48 @@
 # Changelog
 
-## Unreleased
+## v0.3.1
+
+(v0.3.0 was tagged but never registered, so everything below is folded into the
+first published release. No API is removed or renamed; the "breaking" entries
+are results that change because they were wrong.)
 
 MeanFieldHomogenization as a **constitutive law inside a finite-element code**,
 the poroelastic and hydraulic machinery a fractured-rock model needs, and three
 correctness fixes for cracks that are not aligned with the canonical axes.
 
+### Breaking changes
+
+- **`fracture_permeability` now returns a genuinely self-consistent estimate.**
+  The broken loop was linear in the crack density and independent of the
+  fracture conductivity; the fixed one percolates. On a connected network the
+  two differ by orders of magnitude, so **every fractured-permeability number
+  changes**, and with it every `FracturedPoroelasticRock` transport output.
+- **Numbers change for crack families that are not parallel to one another, or
+  not aligned with an anisotropic reference medium.** The COD frame fix below
+  is a correctness fix, so any previously published `C_hom` / `S_hom` involving
+  tilted cracks was wrong and now changes — self-consistent schemes included,
+  since their running estimate is anisotropic by construction. Aligned families
+  in an isotropic matrix are unaffected, bit for bit.
+- **`SelfConsistent` iterates are now projected onto the major-symmetric
+  tensors.** Coaxial configurations move by roundoff; non-coaxial crack
+  families, which used to return `NaN`, now converge.
+- **`TensND ≥ 0.3.5` is required** (was `0.3`). Versions 0.3.0–0.3.4 rotate
+  `TensTI` / `TensOrtho` incorrectly in `change_tens` and drop the basis in
+  `TensISO` products — the two bugs the fixes above depend on. Any environment
+  pinning an older `TensND` must be updated.
+
 ### Bug fixes
 
+- **`fracture_permeability` returned the dilute estimate, not the
+  self-consistent one.** Its fixed-point loop defaulted to `abstol = 1e-10`,
+  which for a tight rock (`k ~ 1e-18 m²`) is met by the *first* iterate: the
+  loop exited after one step, so the reference medium was never updated. The
+  symptom was silent and diagnostic — the result came out exactly linear in the
+  crack density and completely independent of the fracture conductivity, hence
+  with no percolation threshold at all. `abstol` now defaults to `0` and the
+  test is purely relative. Randomly oriented flowing cracks now reproduce the
+  closed form `K/k_s = 1/(1 − 32d/9)` to three digits, percolating at
+  `d_c = 9/32`, where the broken loop gave `1 + 32d/9`.
 - **Cracks tilted with respect to the reference medium gave wrong results.**
   The four anisotropic COD kernels rotated the stiffness into the crack basis
   but passed the crack frame in *global* coordinates. Aligned cracks coincide,
@@ -38,7 +73,12 @@ correctness fixes for cracks that are not aligned with the canonical axes.
 - `to_tensors` / `from_tensors` / `plane_strain_response`, the `Tensors.jl`
   boundary, and `check_material_interface`.
 - `MeanFieldHomogenizationFerriteMaterialExt`, activated by `import Ferrite`
-  alone (no gmsh): `mfh_states`, `mfh_element!`, `annulus_grid`.
+  alone (no gmsh): `mfh_states`, `mfh_element!`, `mfh_poro_element!` — the
+  coupled `(u, p)` element, backward Euler, whose Jacobian *is* the four tangent
+  blocks the material declares — plus `annulus_grid` and `cylinder_sector_grid`.
+- The **ARMA 2011 well test**: a three-dimensional, anisotropic, coupled
+  reservoir simulation driven entirely by the homogenized material
+  (`scripts/fe/arma2011_welltest.jl`, static figures in the docs).
 
 ### New — poromechanics and fractured permeability
 
@@ -48,6 +88,12 @@ correctness fixes for cracks that are not aligned with the canonical axes.
 - `ConductiveCrack`, the *flowing* crack (the preferential flow path, as
   opposed to the insulating crack), and `fracture_permeability`, its
   self-consistent effective conductivity.
+- `FracturedPoroelasticRock`, the saturated fractured rock of
+  [barthelemyARMA2011]: two gradients `(E, p)`, two fluxes `(Σ, φ)`, the four
+  Biot tangent blocks, fractures driven by the **Terzaghi** effective stress,
+  and a permeability that follows the apertures through the cubic law. The
+  coupled *u–p* reservoir simulations of that paper are **not** shipped; the
+  material is, and is tested.
 - `crack_family_compliances` / `crack_family_residual`: the per-family
   decomposition `S_hom = S_solid + Σ (4π/3) dᵢ 𝕊ᵢ`, which is what drives an
   aperture update.

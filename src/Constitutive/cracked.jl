@@ -35,7 +35,7 @@ stress `σ` the state was reached at.
 The law is **incremental**, so both `ε` and `σ` are carried: `ε` to form the
 strain increment that drives the apertures, and `σ` because the stress must be
 integrated along the path rather than recomputed as
-``\\mathbb{C}^{\\rm hom} : \\boldsymbol\\varepsilon``. Those two differ as soon
+``\\mathbb{C}^{\\rm hom} : \\boldsymbol{\\varepsilon}``. Those two differ as soon
 as a family closes — the medium stiffens from that point on, and only from that
 point on, so a total-strain formula would make the stress jump discontinuously
 at closure.
@@ -73,8 +73,8 @@ with the loading.
 - `rve` — the microstructure, whose crack phases are the families. Their
   densities, normals and radii are fixed data; only the apertures evolve.
 - `scheme` — any scheme supporting the per-family decomposition
-  ([`SelfConsistent`](@ref MeanFieldHomogenization.SelfConsistent),
-  [`MoriTanaka`](@ref MeanFieldHomogenization.MoriTanaka)).
+  ([`SelfConsistent`](@ref MeanFieldHomogenization.Schemes.SelfConsistent),
+  [`MoriTanaka`](@ref MeanFieldHomogenization.Schemes.MoriTanaka)).
 - `families` — the crack phase names, in order. Defaults to every
   [`CrackDensity`](@ref MeanFieldHomogenization.Schemes.CrackDensity) phase of
   `rve`.
@@ -149,28 +149,44 @@ function material_response(
         st::CrackedState{N}, ::Real; cache = nothing
     ) where {N}
     ε = gradients.ε
+    new_st = _advance_cracks(m, ε, nothing, st, cache)
+    C_hom, _ = _cracked_state_tensors(m, new_st.open, cache)
+    return MaterialResponse((σ = new_st.σ,), (σε = C_hom,), new_st)
+end
+
+"""
+    _advance_cracks(m, ε, Δσ_extra, st, cache) -> CrackedState
+
+Advance the crack families from `st` to the strain `ε`, splitting the step at
+every closure and reopening and **integrating** the stress branch by branch.
+
+`Δσ_extra` is an additional stress increment that drives the apertures without
+coming from the strain — `nothing` for a purely mechanical law, and the pressure
+part of the Terzaghi increment for
+[`FracturedPoroelasticRock`](@ref). Factoring it out here is what lets the
+poroelastic material reuse the event logic instead of restating it, so the two
+can never disagree about when a fracture closes.
+"""
+function _advance_cracks(
+        m::MicrocrackedMaterial{N}, ε, Δσ_extra, st::CrackedState{N}, cache
+    ) where {N}
     Δε_total = ε - st.ε
-    ω = st.ω
-    open = st.open
-    σ = st.σ
+    ω, open, σ = st.ω, st.open, st.σ
     remaining = one(eltype(m.ω₀))
     local C_hom
 
-    # Walk the step, splitting it at every event so each piece is traversed with
-    # a constant open set — hence a constant stiffness — and INTEGRATING the
-    # stress piece by piece. Recomputing `C_hom : ε` at the end instead would
-    # make the stress jump at closure, since the medium only stiffens from the
-    # closure point onwards.
-    #
-    # Closure and reopening are searched together. Detecting reopening only at
+    # Closure and reopening are searched together: detecting reopening only at
     # the end of the step would make the answer depend on how the loading was
     # subdivided, which is exactly what sub-stepping exists to avoid.
     for _ in 0:(2N)                   # each family can close and reopen once
         C_hom, 𝕊 = _cracked_state_tensors(m, open, cache)
         Δε_left = remaining * Δε_total
-        Δσ = C_hom ⊡ Δε_left
-        dω = _aperture_increments(m, 𝕊, Δσ, open)
-        α, event = _next_event(m, ω, dω, σ, Δσ, open)
+        Δσ_mech = C_hom ⊡ Δε_left
+        # The apertures follow the FULL driving increment; the integrated stress
+        # follows only its mechanical part.
+        Δσ_drive = Δσ_extra === nothing ? Δσ_mech : Δσ_mech + remaining * Δσ_extra
+        dω = _aperture_increments(m, 𝕊, Δσ_drive, open)
+        α, event = _next_event(m, ω, dω, σ, Δσ_drive, open)
 
         σ = σ + C_hom ⊡ (α * Δε_left)
         ω = ntuple(i -> open[i] ? ω[i] + α * dω[i] : ω[i], N)
@@ -184,11 +200,7 @@ function material_response(
         )
         remaining <= 0 && break
     end
-    C_hom, _ = _cracked_state_tensors(m, open, cache)
-
-    return MaterialResponse(
-        (σ = σ,), (σε = C_hom,), CrackedState(ω, open, ε, σ)
-    )
+    return CrackedState(ω, open, ε, σ)
 end
 
 # A genuine zero `Tens{2,3}`: `zero(::TensISO)` narrows the class, and a
@@ -279,8 +291,8 @@ Two kinds of event are searched together:
 - **closure** of an open family, when its aspect ratio reaches zero,
   ``\\omega_i + \\alpha\\,\\Delta\\omega_i = 0``;
 - **reopening** of a closed family, when the normal traction on its plane turns
-  tensile, ``\\hat n_i \\cdot (\\sigma + \\alpha\\,\\Delta\\sigma) \\cdot
-  \\hat n_i = 0`` with a positive rate.
+  tensile, ``\\underline{n}_i \\cdot (\\sigma + \\alpha\\,\\Delta\\sigma) \\cdot
+  \\underline{n}_i = 0`` with a positive rate.
 
 The earliest of the two wins.
 """
