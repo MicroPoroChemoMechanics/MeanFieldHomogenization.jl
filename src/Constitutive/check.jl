@@ -56,8 +56,10 @@ function check_material_interface(
     pass(msg) = verbose && println("  ✓ ", msg)
 
     say("check_material_interface($(typeof(m)))")
-    say("  gradients = $(gradient_names(m)), fluxes = $(flux_names(m)), " *
-        "tangent blocks = $(tangent_blocks(m))")
+    say(
+        "  gradients = $(gradient_names(m)), fluxes = $(flux_names(m)), " *
+            "tangent blocks = $(tangent_blocks(m))"
+    )
 
     # 1. initial state
     st0 = initial_state(m)
@@ -91,9 +93,9 @@ function check_material_interface(
         b = TensND.get_basis(r.tangents.σε)
         b isa TensND.CanonicalBasis ? pass("tangent is in the canonical frame") :
             fail(
-            "tangent came back in a $(typeof(b).name.name); an FE code reads " *
+                "tangent came back in a $(typeof(b).name.name); an FE code reads " *
                 "components as global, so the material must convert (see to_tensors)"
-        )
+            )
     end
 
     # 5. no mutation of the old state

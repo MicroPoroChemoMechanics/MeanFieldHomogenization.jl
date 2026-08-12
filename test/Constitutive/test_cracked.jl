@@ -87,10 +87,14 @@ end
     @test σ_before ≈ σ_after rtol = 1.0e-4         # continuous across the event
 
     # …and the closed branch really is stiffer than the open one.
-    slope_open = (_g(stress(_drive(mat, hi + δ, 1).r))[3, 3] -
-        _g(stress(_drive(mat, hi + 1.0e-4, 1).r))[3, 3]) / (-1.0e-4 + δ)
-    slope_closed = (_g(stress(_drive(mat, lo - 1.0e-4, 1).r))[3, 3] -
-        _g(stress(_drive(mat, lo - δ, 1).r))[3, 3]) / (-1.0e-4 + δ)
+    slope_open = (
+        _g(stress(_drive(mat, hi + δ, 1).r))[3, 3] -
+            _g(stress(_drive(mat, hi + 1.0e-4, 1).r))[3, 3]
+    ) / (-1.0e-4 + δ)
+    slope_closed = (
+        _g(stress(_drive(mat, lo - 1.0e-4, 1).r))[3, 3] -
+            _g(stress(_drive(mat, lo - δ, 1).r))[3, 3]
+    ) / (-1.0e-4 + δ)
     @test slope_closed > slope_open
 end
 
