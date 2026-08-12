@@ -120,3 +120,44 @@ end
     @test tangent_blocks(mat) == (:σε,)
     @test transport_property(mat, initial_state(mat)) === nothing
 end
+
+@testset "structured tensor types survive the material" begin
+    # `_to_canonical` must not rebuild a structured tensor as a generic `Tens`:
+    # `k_mu` is only defined for `TensISO{4}`, and the algorithm dispatch keys on
+    # the symmetry class. Structured types already store canonical components,
+    # so there is nothing to convert.
+    mat = HomogenizedElastic(_composite_rve(), MoriTanaka())
+    @test stiffness(mat) isa TensND.TensISO
+    @test k_mu(stiffness(mat)) isa Tuple          # would throw on a generic Tens
+
+    # …while a genuinely rotated estimate IS converted, which is the whole point.
+    m_tilt = HomogenizedElastic(_tilted_rve(), MoriTanaka())
+    @test TensND.get_basis(stiffness(m_tilt)) isa TensND.CanonicalBasis
+end
+
+@testset "plane_strain_response" begin
+    mat = HomogenizedElastic(_composite_rve(), MoriTanaka())
+    k, μ = k_mu(stiffness(mat))
+    λ = k - 2μ / 3
+
+    ε₂ = TensND.Tensors.SymmetricTensor{2, 2}((i, j) -> i == j ? 1.0e-3 * i : 2.0e-4)
+    r = plane_strain_response(mat, ε₂, initial_state(mat), 0.0)
+    tr₂ = ε₂[1, 1] + ε₂[2, 2]
+
+    # Plane strain embeds ε with ε₃₃ = 0, so the 3-D isotropic law applies
+    # directly: σ = λ tr(ε) δ + 2μ ε.
+    @test r.σ[1, 1] ≈ λ * tr₂ + 2μ * ε₂[1, 1] rtol = 1.0e-12
+    @test r.σ[2, 2] ≈ λ * tr₂ + 2μ * ε₂[2, 2] rtol = 1.0e-12
+    @test r.σ[1, 2] ≈ 2μ * ε₂[1, 2] rtol = 1.0e-12
+    @test r.C[1, 1, 1, 1] ≈ λ + 2μ rtol = 1.0e-12
+    @test r.C[1, 2, 1, 2] ≈ μ rtol = 1.0e-12
+
+    # The out-of-plane stress is NOT zero — that is what distinguishes plane
+    # strain from plane stress, and why it is returned rather than discarded.
+    @test r.σ₃₃ ≈ λ * tr₂ rtol = 1.0e-12
+    @test !isapprox(r.σ₃₃, 0.0; atol = 1.0e-8)
+
+    @test r.σ isa TensND.Tensors.SymmetricTensor{2, 2}
+    @test r.C isa TensND.Tensors.SymmetricTensor{4, 2}
+    @test r.state isa NoState
+end

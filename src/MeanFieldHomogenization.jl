@@ -356,7 +356,9 @@ export initial_state, material_response
 export gradient_names, flux_names, tangent_blocks, transport_property
 export check_material_interface
 export HomogenizedElastic, stiffness
+export MicrocrackedMaterial, CrackedState, open_set, apertures
 export MaterialCache, cached!, cache_stats, reset_cache!
+export plane_strain_response
 export to_tensors, from_tensors
 export voigt_stress, voigt_strain, stress_from_voigt, strain_from_voigt
 

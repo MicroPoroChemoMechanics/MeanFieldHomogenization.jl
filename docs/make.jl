@@ -214,6 +214,8 @@ makedocs(;
             "fe_coupling/index.md",
             "fe_coupling/scale_transition.md",
             "fe_coupling/materials.md",
+            "fe_coupling/backends.md",
+            "fe_coupling/thick_cylinder.md",
         ],
         # Getting work into and out of MeanFieldHomogenization. These are companions to
         # the library rather than chapters about it, which is why they sit

@@ -15,6 +15,10 @@ Both use the finite Eshelby cell with a first-order corrected boundary
 condition of Adessina, Barthélémy, Lavergne & Ben Fraj, *Int. J. Eng. Sci.*
 **119** (2017) 1-15.
 
+The opposite coupling — a Ferrite computation using a whole microstructure as
+its constitutive law — lives in `MeanFieldHomogenizationFerriteMaterialExt`,
+which `import Ferrite` alone activates, so it never pulls gmsh in.
+
 The point of the exercise is that nothing downstream knows: because the type
 subtypes `AbstractCrack` and declares a standard `shape_trait`, supplying
 `cod_tensor` is enough for ℍ, ℕ, 𝐑, 𝐍_K, the bundled pair and the four

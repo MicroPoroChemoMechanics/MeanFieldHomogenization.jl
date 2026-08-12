@@ -2,7 +2,7 @@
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "4c69bb76e6e962939ba9ff68fadca461ccecc619"
+project_hash = "dc750eb22baf866261750c31f976d9dc38dce1dd"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "0a81a018463de6c3f4f2c9360121c562e5add9e4"
@@ -1344,11 +1344,12 @@ version = "2.28.1010+0"
 deps = ["Dates", "Elliptic", "ForwardDiff", "JSON3", "LinearAlgebra", "OrdinaryDiffEq", "PolynomialRoots", "Polynomials", "Printf", "QuadGK", "Random", "StaticArrays", "TensND", "Tensors"]
 path = "../.."
 uuid = "c1e5f8a3-7b2d-4a6c-9e4f-3b8a2c5d7e9f"
-version = "0.1.0"
+version = "0.2.0"
 
     [deps.MeanFieldHomogenization.extensions]
     MeanFieldHomogenizationDECUHRExt = ["DECUHR", "Integrals"]
     MeanFieldHomogenizationFerriteExt = ["Ferrite", "FerriteGmsh", "Gmsh"]
+    MeanFieldHomogenizationFerriteMaterialExt = "Ferrite"
     MeanFieldHomogenizationGridapExt = ["Gridap", "GridapGmsh"]
     MeanFieldHomogenizationLuxExt = ["Lux", "Optimisers", "Zygote"]
     MeanFieldHomogenizationNonlinearSolveExt = "NonlinearSolve"
@@ -2405,9 +2406,9 @@ version = "0.1.3"
 
 [[deps.TensND]]
 deps = ["ForwardDiff", "LinearAlgebra", "OMEinsum", "Rotations", "StaticArrays", "SymPy", "Symbolics", "Tensors", "TimerOutputs"]
-git-tree-sha1 = "a745368c91c376dc28ffe24c913e1f2a76db3565"
+path = "/home/jfbarthelemy/mpcm/TensND.jl"
 uuid = "474b5345-2588-4284-8a58-2430a1a40cb0"
-version = "0.2.6"
+version = "0.3.5"
 
     [deps.TensND.extensions]
     TensNDNLoptExt = "NLopt"

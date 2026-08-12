@@ -36,6 +36,7 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 [extensions]
 MeanFieldHomogenizationDECUHRExt = ["DECUHR", "Integrals"]
 MeanFieldHomogenizationFerriteExt = ["Ferrite", "FerriteGmsh", "Gmsh"]
+MeanFieldHomogenizationFerriteMaterialExt = "Ferrite"
 MeanFieldHomogenizationGridapExt = ["Gridap", "GridapGmsh"]
 MeanFieldHomogenizationLuxExt = ["Lux", "Optimisers", "Zygote"]
 MeanFieldHomogenizationNonlinearSolveExt = "NonlinearSolve"

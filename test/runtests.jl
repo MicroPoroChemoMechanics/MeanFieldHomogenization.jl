@@ -213,6 +213,7 @@ Random.seed!(20260723)
     # materials consume.
     @testset "Constitutive" begin
         include("Constitutive/test_material_api.jl")
+        include("Constitutive/test_cracked.jl")
     end
 
     @testset "Viscoelasticity" begin

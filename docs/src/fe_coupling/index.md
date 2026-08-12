@@ -46,6 +46,8 @@ apertures.
 |:--|:--|
 | [Scale transition](@ref fe-scale-transition) | the equations: incremental format, consistent tangent, tangent blocks |
 | [Materials](@ref fe-materials) | the Gauss-point contract, in code |
+| [Ferrite backend](@ref fe-backends) | the three helpers a Ferrite driver needs |
+| [Thick-walled cylinder](@ref fe-thick-cylinder) | worked model, checked against Lamé, then with closing cracks |
 
 The Biot machinery the poroelastic coupling builds on is a property of a
 microstructure rather than of the coupling, so it lives on its own page:

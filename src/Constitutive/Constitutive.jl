@@ -42,8 +42,10 @@ purely mechanical law only ever sees the one-gradient specialization.
 | [`material_response`](@ref), [`initial_state`](@ref) | the two required methods |
 | [`MaterialResponse`](@ref), [`stress`](@ref), [`tangent`](@ref), [`state`](@ref) | what a response carries |
 | [`HomogenizedElastic`](@ref) | linear law from any scheme — the control case |
+| [`MicrocrackedMaterial`](@ref) | crack families that open and close; exact piecewise-linear tangent |
 | [`MaterialCache`](@ref), [`cache_stats`](@ref) | memoization on the microstructural configuration |
 | [`to_tensors`](@ref), [`from_tensors`](@ref) | the `Tensors.jl` bridge |
+| [`plane_strain_response`](@ref) | driving a 3-D material from a 2-D element loop |
 | [`check_material_interface`](@ref) | conformance checker |
 
 # Two rules that are easy to break
@@ -67,12 +69,15 @@ import ..Core
 const MFH_Core = Core
 
 import ..Schemes
+import ..Cracks
 import ..Poromechanics
 
 include("tensors_bridge.jl")
 include("material.jl")
 include("cache.jl")
 include("elastic.jl")
+include("cracked.jl")
+include("plane_strain.jl")
 include("check.jl")
 
 # ── The contract ─────────────────────────────────────────────────────────────
@@ -84,11 +89,13 @@ export check_material_interface
 
 # ── Materials ────────────────────────────────────────────────────────────────
 export HomogenizedElastic, stiffness
+export MicrocrackedMaterial, CrackedState, open_set, apertures
 
 # ── Memoization ──────────────────────────────────────────────────────────────
 export MaterialCache, cached!, cache_stats, reset_cache!
 
 # ── Tensors.jl bridge ────────────────────────────────────────────────────────
+export plane_strain_response
 export to_tensors, from_tensors
 export voigt_stress, voigt_strain, stress_from_voigt, strain_from_voigt
 
