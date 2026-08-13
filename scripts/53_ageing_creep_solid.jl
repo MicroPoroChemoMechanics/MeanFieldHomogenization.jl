@@ -241,6 +241,8 @@ p = plot(;
 const colors = [:viridis, :plasma, :magma, :inferno, :turbo]
 const cmap = palette(:viridis, length(loading_ages))
 
+J_start = Float64[]     # E₀ · J^E_eff(t_0, t_0), for the elastic cross-check
+
 for (k, t_0) in enumerate(loading_ages)
     @printf "  loading age t_0 = %.4f\n" t_0
     t_eff = t_0 == 0.0 ? 1.0e-4 : t_0
@@ -248,49 +250,104 @@ for (k, t_0) in enumerate(loading_ages)
 
     J_hist = creep_curve(N, α_solid, t_0, T_grid, MODEL; fixed = false)
     J_frozen = creep_curve(N, α_solid, t_0, T_grid, MODEL; fixed = true)
+    push!(J_start, E0 * J_hist[1])
 
     plot!(p, T_grid, E0 .* J_hist; lw = 2, color = cmap[k], label = "history t₀=$(round(t_0; digits = 2))")
     plot!(p, T_grid, E0 .* J_frozen; lw = 2, color = cmap[k], linestyle = :dash, label = "frozen t₀=$(round(t_0; digits = 2))")
 end
 
-# Elastic reference: at every t, build a frozen elastic RVE where each
-# layer carries its instantaneous stiffness if its setting time ≤ t.
-# Reference uses the whole-pores topology (N + 1 ellipsoidal phases) — it
-# is the elastic counterpart of the ALV result irrespective of the chosen
-# `MODEL`, since at fixed t the two topologies coincide on the matrix +
-# inclusion contributions in the dilute / MT averages.
-function elastic_compliance(t::Real, N::Int, α::Real)
-    t_sets = solidification_setting_times(N, α)
+# ─── Elastic reference — purely elastic pipeline, same topology ─────────────
+#
+# `1 / E^hom(t)` is the instantaneous (glassy) compliance of the
+# microstructure frozen at time t : every layer whose setting time has
+# been reached carries its *elastic* stiffness C₁, the others are still
+# pores.  It is computed with the elastic `homogenize`, NOT with
+# `homogenize_alv` on a one-point grid — the latter would merely echo the
+# starting point of the creep curves, whereas this is an independent
+# cross-check of the ALV pipeline.
+#
+# The reference MUST use the same topology as the creep curves : the
+# `:layers` (composite sphere) and `:whole_pores` (N + 1 separate
+# ellipsoidal phases) morphologies do **not** give the same MT estimate
+# (they differ by ~23 % at t = 2/3 here).
+
+const C_0_el = TensISO{3}(3 * k0, 2 * μ0_)
+const C_1_el = TensISO{3}(3 * k1, 2 * μ1)
+
+# Elastic stiffness of solidifying layer i at time t.
+layer_stiffness(t::Real, t_set::Real) = (t ≥ t_set) ? C_1_el : C_p_tens
+
+function build_elastic_rve_whole_pores(N::Int, α::Real, t::Real)
     rve = RVE(:M)
-    add_matrix!(
-        rve, Ellipsoid(1.0, 1.0, 1.0),
-        Dict(:C => TensISO{3}(3 * k0, 2 * μ0_))
-    )
+    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_0_el))
     add_phase!(
         rve, :PORE, Ellipsoid(1.0, 1.0, 1.0),
         Dict(:C => C_p_tens); fraction = fp
     )
+    t_sets = solidification_setting_times(N, α)
     for i in 1:N
-        name = Symbol("INC_$i")
-        Ci = (t ≥ t_sets[i]) ? TensISO{3}(3 * k1, 2 * μ1) : C_p_tens
         add_phase!(
-            rve, name, Ellipsoid(1.0, 1.0, 1.0),
-            Dict(:C => Ci); fraction = finf / N
+            rve, Symbol("INC_$i"), Ellipsoid(1.0, 1.0, 1.0),
+            Dict(:C => layer_stiffness(t, t_sets[i])); fraction = finf / N
         )
     end
-    Chom = homogenize(rve, MoriTanaka(), :C)
-    Khom, μhom = TensND.get_data(Chom)[1] / 3, TensND.get_data(Chom)[2] / 2
-    Ehom = 9 * Khom * μhom / (3 * Khom + μhom)
-    return E0 / max(Ehom, 1.0e-12)
+    return rve
+end
+
+function build_elastic_rve_layers(N::Int, α::Real, t::Real)
+    rve = RVE(:M)
+    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_0_el))
+    t_sets = solidification_setting_times(N, α)
+    f_layers = vcat([fp], fill(finf / N, N))
+    cumulative = cumsum(f_layers)
+    radii = ntuple(k -> cumulative[k]^(1 / 3), N + 1)
+    # Same layer ordering as `build_rve_layers`: pore innermost, then the
+    # solidifying shells with the latest setting time outermost.
+    moduli = ntuple(N + 1) do k
+        k == 1 ? C_p_tens : layer_stiffness(t, t_sets[N - k + 2])
+    end
+    add_phase!(
+        rve, :INCLUSION, LayeredSphere(radii, moduli),
+        Dict(:C => C_p_tens); fraction = fp + finf
+    )
+    return rve
+end
+
+function elastic_compliance(t::Real, N::Int, α::Real, model::Symbol)
+    rve = model === :layers ? build_elastic_rve_layers(N, α, t) :
+        build_elastic_rve_whole_pores(N, α, t)
+    C_hom = homogenize(rve, MoriTanaka(), :C)
+    K_hom, μ_hom = TensND.get_data(C_hom)[1] / 3, TensND.get_data(C_hom)[2] / 2
+    E_hom = 9 * K_hom * μ_hom / (3 * K_hom + μ_hom)
+    return E0 / max(E_hom, 1.0e-12)
 end
 
 t_sets_for_ref = solidification_setting_times(N, α_solid)
-T_ref = vcat([0.0], filter(t -> t ≤ t_max, t_sets_for_ref), [t_max])
-J_elastic = [elastic_compliance(t, N, α_solid) for t in T_ref]
+# Sample the setting times (where 1 / E^hom jumps) *and* the loading ages,
+# so that the start of every creep curve can be read against the reference
+# without interpolation error.
+T_ref = sort(
+    vcat(
+        [1.0e-3], filter(t -> t ≤ t_max, t_sets_for_ref),
+        collect(loading_ages), [t_max]
+    )
+)
+J_elastic = [elastic_compliance(t, N, α_solid, MODEL) for t in T_ref]
 plot!(
     p, T_ref, J_elastic; lw = 2, color = :black, linestyle = :dot,
     label = "1 / E^hom(t)  (elastic)"
 )
+
+# Cross-check : the ALV creep curve must start exactly on the elastic
+# reference, `J^E_eff(t_0, t_0) = 1 / E^hom(t_0)`.  The two are computed by
+# entirely different code paths (time-domain Volterra algebra vs the
+# elastic Mori-Tanaka estimate), so agreement is a genuine validation.
+println("\nCross-check  E₀ · J^E_eff(t₀, t₀)  vs  E₀ / E^hom(t₀) :")
+@printf "  %8s  %12s  %12s  %10s\n" "t₀" "ALV start" "elastic" "rel. err."
+for (k, t_0) in enumerate(loading_ages)
+    ref = elastic_compliance(t_0, N, α_solid, MODEL)
+    @printf "  %8.4f  %12.6f  %12.6f  %10.2e\n" t_0 J_start[k] ref abs(J_start[k] - ref) / ref
+end
 
 const figdir = joinpath(@__DIR__, "figures")
 isdir(figdir) || mkdir(figdir)
