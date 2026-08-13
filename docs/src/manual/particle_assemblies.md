@@ -5,8 +5,9 @@ instead of averaging it: [`ClusterModel`](@ref) and [`EquivalentInclusion`](@ref
 need to know *where* the inclusions are, so both act on a
 [`ParticleAssembly`](@ref) rather than on an `RVE`.
 
-Theory: [interaction tensors](@ref th-interaction), [the cluster model](@ref
-th-cluster), [the equivalent inclusion method](@ref th-eim).
+Theory: [interaction tensors](@ref th-interaction),
+[the cluster model](@ref th-cluster),
+[the equivalent inclusion method](@ref th-eim).
 
 ## Building an assembly
 
@@ -107,7 +108,7 @@ That difference lives in the boundary, not in the scheme.
 | | measure of `Ω` | far-field term | source |
 | :-- | :-- | :-- | :-- |
 | [`PeriodicBox`](@ref)`(L; cutoff = R_c)` | `Lᵈ` | Hill tensor of the inclusion shape | Molinari & El Mouden |
-| [`MixedBC`](@ref)`(shape)` | volume of `shape` | Hill tensor of the SVE, `ℙ_Ω` | Brisard et al. |
+| [`MixedBC`](@ref)`(shape)` | volume of `shape` | Hill tensor of the SVE, ``\mathbb P_\Omega`` | Brisard et al. |
 
 `PeriodicBox` tiles space and truncates the image sums to a **sphere** of radius `R_c`
 around the receiver; the default `3L` sits inside the convergence plateau reported in

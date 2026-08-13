@@ -40,41 +40,27 @@ contribution is the rank-1 limit of a divergent eigenvalue).
 | **Reuss** | ``\langle \mathbb S \rangle^{-1}`` (lower bound) |
 
 Cracks are ignored in both bounds: their volume contribution vanishes in
-the penny limit (`c → 0`) while their density stays finite.
+the penny limit (``c \to 0``) while their density stays finite.
 
 ## One-shot schemes (require a matrix)
 
+Writing ``\mathbb N_\Sigma = \sum_i f_i \mathbb N_i`` for the total dilute
+stiffness contribution and ``\mathbb S_0 = \mathbb C_0^{-1}``:
+
 | Scheme | Effective stiffness |
 | --- | --- |
-| **Dilute** | ``\mathbb C_0 + \sum_i f_i \mathbb N_i`` (first order in `f`) |
+| **Dilute** | ``\mathbb C_0 + \mathbb N_\Sigma`` (first order in ``f``) |
 | **DiluteDual** | ``\big(\mathbb S_0 + \sum_i f_i \mathbb H_i\big)^{-1}`` |
-| **Mori-Tanaka** | ``\mathbb C_0 + \big(\sum_i f_i \mathbb N_i\big) : \big(f_m\,\mathbb I + \sum_i f_i \mathbb A_\mathrm{dil}^{(i)}\big)^{-1}`` ([Mori-Tanaka 1973](@cite mori1973), [Christensen 1990](@cite christensen1990)) |
-| **Maxwell** | ``\mathbb C_0 + \Sigma : (\mathbb I - \mathbb P_d : \Sigma)^{-1}`` with `P_d` the Hill tensor of the *outer distribution shape* |
+| **Mori-Tanaka** | ``\mathbb C_0 + \mathbb N_\Sigma : \big(f_m\,\mathbb I + \sum_i f_i \mathbb A_\mathrm{dil}^{(i)}\big)^{-1}`` ([Mori-Tanaka 1973](@cite mori1973), [Christensen 1990](@cite christensen1990)) |
+| **Maxwell** | ``\mathbb C_0 + \mathbb N_\Sigma : (\mathbb I - \mathbb P_d : \mathbb N_\Sigma)^{-1}`` with ``\mathbb P_d`` the Hill tensor of the *outer distribution shape* |
 | **PCW** | identical algebraic form, distribution-shape-aware ensemble interpretation ([Ponte-Castañeda & Willis 1995](@cite ponte1995)) |
 
-## N-body schemes (require positions)
+### The second shape: Maxwell and PCW
 
-The schemes above all see one inclusion in a reference medium and treat the
-interaction in an average sense. Two schemes go further and resolve it inclusion
-by inclusion, which needs strictly more information than an `RVE` carries — the
-positions of the inclusions. They act on a
-[`ParticleAssembly`](@ref) and share one ingredient, the
-[two-inclusion interaction tensor](@ref th-interaction) ``\mathbb{T}^{ab}``.
-
-| Scheme | Unknowns | Reference |
-| --- | --- | --- |
-| **ClusterModel** | mean strain of every family, from ``\sum_K \mathbb{M}_{IK} : \mathbb{A}^K = \mathbb{I}`` — see [the cluster model](@ref th-cluster) | [Molinari & El Mouden 1996](@cite molinari1996) |
-| **EquivalentInclusion** | polarization of every inclusion, from a Galerkin discretization of the weak Lippmann-Schwinger equation — see [the equivalent inclusion method](@ref th-eim) | [Brisard et al. 2014](@cite brisard2014) |
-
-The two are the *same* linear system on a periodic assembly and differ only in
-how the far field is closed. Both degenerate **exactly** onto Mori-Tanaka when
-the interaction is switched off, and the equivalent inclusion method additionally
-returns a rigorous bound on the apparent stiffness.
-
-The two right-hand entries differ from the first three in that a **second**
-shape enters, describing how the inclusions are *placed* rather than what they
-look like. Maxwell reads it as one equivalent inclusion swallowing a cluster;
-PCW reads it as a safety ellipsoid around each inclusion:
+Maxwell and PCW differ from the first three rows in that a **second** shape
+enters, describing how the inclusions are *placed* rather than what they look
+like. Maxwell reads it as one equivalent inclusion swallowing a cluster; PCW
+reads it as a safety ellipsoid around each inclusion:
 
 | Maxwell | Ponte Castañeda–Willis |
 | :---: | :---: |
@@ -125,12 +111,33 @@ Sherman-Morrison, along a user-selectable trajectory
 `formulation = :compliance`, and cracks — which have no volume but a
 finite density — enter with a balance of their own.
 
-The trajectories agree in the dilute limit (`f → 0`) and diverge like
-`f` at finite fractions — a *physical* feature of the scheme.
+The trajectories agree in the dilute limit (``f \to 0``) and diverge like
+``f`` at finite fractions — a *physical* feature of the scheme.
 
 The full derivation, the crack case, the closed form of the homothetic
 trajectory and the SciML resolution are in
 [The differential scheme](differential_scheme.md).
+
+## [N-body schemes (require positions)](@id th-nbody)
+
+Every scheme above — bounds, one-shot, iterative, differential — sees *one*
+inclusion in a reference medium and accounts for the others only through that
+reference: the interaction is treated in an average sense. Two schemes drop that
+one-site assumption and resolve the interaction inclusion by inclusion, which
+needs strictly more information than an `RVE` carries — the positions. They act
+on a [`ParticleAssembly`](@ref) instead, and share one ingredient, the
+[two-inclusion interaction tensor](@ref th-interaction) ``\mathbb{T}^{ab}``.
+
+| Scheme | Unknowns | Reference |
+| --- | --- | --- |
+| **ClusterModel** | mean strain of every family, from ``\sum_K \mathbb{M}_{IK} : \mathbb{A}^K = \mathbb{I}`` — see [the cluster model](@ref th-cluster) | [Molinari & El Mouden 1996](@cite molinari1996) |
+| **EquivalentInclusion** | polarization of every inclusion, from a Galerkin discretization of the weak Lippmann-Schwinger equation — see [the equivalent inclusion method](@ref th-eim) | [Brisard et al. 2014](@cite brisard2014) |
+
+The two are the *same* linear system on a periodic assembly and differ only in
+how the far field is closed. Both degenerate **exactly** onto Mori-Tanaka when
+the interaction is switched off — the sharpest available check that their
+assembly is right — and the equivalent inclusion method additionally returns a
+rigorous bound on the apparent stiffness.
 
 ## Number-type compatibility
 

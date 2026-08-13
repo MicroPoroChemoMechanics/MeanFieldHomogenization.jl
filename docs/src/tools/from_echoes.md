@@ -155,8 +155,9 @@ Running this snippet against Echoes 1.0 returns
 `(33.46058186790858, 17.626741619570563)` at `φ = 0.3, scheme = "MT"`,
 matching the reference table below to solver tolerance. This is the same
 pattern used throughout
-`scripts/bench_echoes/` (see [Production cross-checks](@ref
-from-echoes-where-next)) — a `py"""..."""` block defining a small helper,
+`scripts/bench_echoes/`
+(see [Production cross-checks](@ref from-echoes-where-next)) — a
+`py"""..."""` block defining a small helper,
 called from Julia like an ordinary function.
 
 ## The benchmark result

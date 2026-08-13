@@ -283,7 +283,7 @@ end
 ````
 
 The transport tensor is the easy case, and the sharpest check that the decode
-is right: the second-order Hill tensor is exactly ``\mathbb V^{\mathbf A}/k_0``,
+is right: the second-order Hill tensor is exactly ``\boldsymbol I^{\boldsymbol A}/k_0``,
 so the conductivity divides out and the surrogate is a function of the shape
 alone — one input, no material feature.
 
@@ -347,10 +347,9 @@ same symmetry class as ``\mathbb P``, so their components are recovered from
 two teacher evaluations at two Poisson ratios by solving the 2×2 system
 componentwise.
 
-The consequence is visible in the table below: the generic model, which fits
-`ν₀`, degrades towards the incompressible end where ``d`` varies fastest,
-whereas the affine model is *flat* in `ν₀` — it never saw a Poisson ratio at
-all.
+The consequence is visible in the table below: the generic model, which fits ``\nu_0``,
+degrades towards the incompressible end where ``d`` varies fastest, whereas the affine
+model is *flat* in ``\nu_0`` — it never saw a Poisson ratio at all.
 
 ````@example neural_inclusion
 nn_affine(ω) = NeuralHillInclusion(
@@ -403,7 +402,7 @@ effective tensor is genuinely anisotropic and a dropped rotation cannot hide
 behind an isotropic answer.
 
 One caveat, and it is the shipped models' only real restriction: they are
-trained for an **isotropic** reference medium — `ν₀` is their material feature,
+trained for an **isotropic** reference medium — ``\nu_0`` is their material feature,
 and the exact homogeneity used to decode assumes isotropy. The one-shot schemes
 evaluate the inclusion in the reference medium you supply, so they are
 unaffected. The *iterative* ones — `SelfConsistent`, `AsymmetricSelfConsistent`,

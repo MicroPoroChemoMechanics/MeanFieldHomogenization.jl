@@ -46,10 +46,11 @@ Random.seed!(20260810)
 
 # ## Setting
 #
-# Plane strain with `μ₀ = 1` and `ν₀ = 0.3`. In two dimensions `TensISO{2}(α, β)`
-# is `2κ₂ 𝕁₂ + 2μ 𝕂₂` with `κ₂ = μ/(1-2ν)` the plane-strain area modulus. The
-# pores are given a vanishing stiffness rather than exactly zero, so that the
-# contrast `(ℂ_a - ℂ₀)⁻¹` stays invertible.
+# Plane strain with `μ₀ = 1` and `ν₀ = 0.3`. In two dimensions `TensISO{2}(α, β)` is
+# ``2\kappa_2\,\mathbb J_2 + 2\mu\,\mathbb K_2`` with ``\kappa_2 = \mu/(1-2\nu)`` the
+# plane-strain area modulus. The pores are given a vanishing stiffness rather than
+# exactly zero, so that the contrast ``(\mathbb C_a - \mathbb C_0)^{-1}`` stays
+# invertible.
 
 μ₀, ν₀ = 1.0, 0.3
 κ₂ = μ₀ / (1 - 2ν₀)

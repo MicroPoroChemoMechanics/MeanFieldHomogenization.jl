@@ -116,10 +116,10 @@ Karr = Matrix(components(Kᵉᶠᶠ))
 
 ## Localization
 
-The layer strains follow from the same tensors. Their fraction-weighted
-average is the identity, and the in-plane block of every `𝔸ᵢ` is the
-identity: the macroscopic in-plane strain reaches each layer unchanged,
-which is the compatibility condition read backwards.
+The layer strains follow from the same tensors. Their fraction-weighted average is the
+identity, and the in-plane block of every ``\mathbb A_i`` is the identity: the
+macroscopic in-plane strain reaches each layer unchanged, which is the compatibility
+condition read backwards.
 
 ````@example laminate
 𝔸 = Dict(nm => layer_strain_localization(lam, nm) for nm in layer_names(lam))
@@ -137,9 +137,9 @@ MA = Matrix(KM(𝔸[:A]))
 )
 ````
 
-The two Hill tensors of a layer are available as well. `ℙ` is the flat limit
-of the Hill polarization tensor and operates only within out-of-plane
-tensors; `ℚ` operates only within in-plane ones.
+The two Hill tensors of a layer are available as well. ``\mathbb P`` is the flat limit
+of the Hill polarization tensor and operates only within out-of-plane tensors;
+``\mathbb Q`` operates only within in-plane ones.
 
 ````@example laminate
 ℙ, ℚ = laminate_hill(lam, :A)

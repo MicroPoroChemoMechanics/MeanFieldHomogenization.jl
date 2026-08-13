@@ -50,7 +50,7 @@ taken to get there differs:
   grows fast then flattens) — both curves are monotone on `[0, 1]` with
   the required endpoints, but neither is proportional.
 
-[`differential_path`](@ref) returns the full trajectory `C^{hom}(\tau)`
+[`differential_path`](@ref) returns the full trajectory ``\mathbb C^{\mathrm{hom}}(\tau)``
 in one solve, rather than the single value `homogenize` returns at
 `τ = 1`:
 

@@ -20,7 +20,8 @@ silent zero.
 ## §1 What is learned, and why the features are ratios
 
 The morphology is **heterogeneous**: it has no Hill tensor, so it enters
-through gate B with *both* localization tensors, `𝔸_εε` and `𝔸_σε`. Two
+through gate B with *both* localization tensors,
+``\mathbb A_{\varepsilon\varepsilon}`` and ``\mathbb A_{\sigma\varepsilon}``. Two
 surrogates, one per tensor, sharing one finite-element solve per sample.
 
 ```mermaid
@@ -73,8 +74,9 @@ scaling ``\mathbb C_0`` alone changes the contrast. What is exact is the
 ```
 
 verified to ``3\cdot10^{-15}`` and ``9\cdot10^{-14}``. Ratios are therefore the
-complete and minimal material parametrization, and `𝔸_σε/(2\mu_0)` is the
-dimensionless quantity the second network predicts.
+complete and minimal material parametrization, and
+``\mathbb A_{\sigma\varepsilon}/(2\mu_0)`` is the dimensionless quantity the second
+network predicts.
 
 ## §2 The training run
 
@@ -178,8 +180,9 @@ end
 
 ## §5 In a scheme
 
-Gate B with both tensors means the contributions take the exact heterogeneous
-branch, `ℕ = 𝔸_σε − ℂ₀:𝔸_εε`, and every scheme that consumes them works.
+Gate B with both tensors means the contributions take the exact heterogeneous branch,
+``\mathbb N = \mathbb A_{\sigma\varepsilon} - \mathbb C_0:\mathbb A_{\varepsilon\varepsilon}``,
+and every scheme that consumes them works.
 
 ````@example neural_excentered_sphere
 function rve_of(incl, f)

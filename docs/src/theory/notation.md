@@ -18,6 +18,16 @@ formulas can be compared side by side with it.
 | tensor of order 4 | blackboard bold | ``\mathbb{C}``, ``\mathbb{P}``, ``\mathbb{Q}``, ``\mathbb{H}``, ``\mathbb{S}`` |
 | set, geometry, shape function | calligraphic | ``\mathcal{E}_{\boldsymbol{A}}``, ``\mathcal{G}_i``, ``\mathcal{T}_a``, ``\mathcal{K}_\eta`` |
 
+One class of object is deliberately outside that table: the **column arrays and
+matrices of an algebraic formalism**, which are not tensors and carry no tensor
+order — the two-component state vector ``\mathbf s(r) = (u_r, \sigma_{rr})`` and
+the transfer matrices ``\mathbf T``, ``\mathbf J`` of the
+[layered sphere](layered_sphere.md), or the column of phase fractions ``[f]``
+and the column of ones ``\mathbf U`` of the
+[differential scheme](differential_scheme.md). They are typeset in **upright
+bold**, with ``\mathbb 1`` the identity matrix of the corresponding size, and
+each page states the size and the entries.
+
 The single most useful thing to remember: **an underline is a vector, bold is
 order 2, blackboard bold is order 4**. This is what makes an expression such as
 

@@ -94,7 +94,7 @@ numerical one.
 
 [Comparing loading-path trajectories](differential_loading_paths.md)
 takes this further: instead of reading off only the endpoint `k_eff` of
-a fraction sweep, it plots `C^{hom}(\tau)` for several trajectories —
+a fraction sweep, it plots ``\mathbb C^{\mathrm{hom}}(\tau)`` for several trajectories —
 including a `Path` schedule — over the whole incorporation history.
 
 ## Following the construction history

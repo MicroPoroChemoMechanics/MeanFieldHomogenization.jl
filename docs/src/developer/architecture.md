@@ -21,6 +21,14 @@ declared in `src/Core/cells.jl` alongside the rest of the package's generics:
 | :--- | :--- | :--- |
 | `Schemes.RVE` | random, through the Eshelby auxiliary problem | every mean-field scheme |
 | `Laminates.Laminate` | periodic stack of parallel layers | `Laminated` (exact), `Voigt`, `Reuss` |
+| `Assemblies.ParticleAssembly` | individual particles at **known positions** | `ClusterModel`, `EquivalentInclusion`, and the bounds |
+
+A cell carries exactly the information its schemes need, which is why there are
+three of them rather than one wide type: adding positions to `RVE` would put a
+field on every phase of every one-site model that no one-site model can read.
+The N-body schemes are typed on `ParticleAssembly` for the same reason the
+mean-field kernels stay typed on `RVE` — a mis-applied scheme then reports
+itself instead of silently ignoring data.
 
 Only the **entry points** are typed on the supertype (`homogenize`,
 `get_param`/`set_param`, `derivative`/`gradient`/`jacobian`, and the
@@ -54,18 +62,23 @@ when touching it:
 | `Conductivity`     | additional `_kernel` methods for 2nd-order transport tensors                                        |
 | `LayeredSpheres`   | `LayeredSphere`, Hervé-Zaoui recurrences, five interface types, localization fields                 |
 | `LayeredSpheroids` | `LayeredSpheroid` (confocal, conduction)                                                            |
+| `Laminates`        | `Laminate`, the interface algebra, per-layer localization, the ALV twin                              |
+| `Interactions`     | Green operator of the reference and the two-inclusion interaction tensor (closed forms, cubature, periodic sums) |
+| `Assemblies`       | `ParticleAssembly`, its generators and boundary treatments, the two N-body schemes                  |
 | `Schemes`          | `RVE`/`Phase`, `homogenize`, every scheme type, exact symmetrization, ForwardDiff sensitivities     |
+| `Poromechanics`    | Biot coefficient tensor and skeleton modulus of a porous or cracked cell                            |
 | `Viscoelasticity`  | ageing linear viscoelasticity (Volterra pipeline, ALV variant of every scheme)                      |
-
-| `CustomInclusions` | the user-defined inclusion contract: `CustomInclusion`, `check_inclusion_interface` |
+| `CustomInclusions` | the user-defined inclusion contract: `CustomInclusion`, `check_inclusion_interface`                 |
 | `FiniteElements`   | inclusions solved by finite elements (`FEEllipticCrack`, `FEExcenteredSphere`); the physics lives here, the discretization in a backend extension (`MeanFieldHomogenizationFerriteExt`, `MeanFieldHomogenizationGridapExt`) |
+| `NeuralInclusions` | inclusions answered by a trained network, with the sampling/fitting machinery; the training optimizer lives in `MeanFieldHomogenizationLuxExt` |
+| `Constitutive`     | the Gauss-point contract of the [finite-element coupling](@ref fe-coupling): `material_response`, the shipped materials, the state types; the Ferrite glue in `MeanFieldHomogenizationFerriteMaterialExt` |
 
 Two files sit at the **top level** rather than in a sub-module, and are loaded
 after every geometry sub-module on purpose: `localization.jl` and
 `contribution.jl` implement generics declared in `Core` whose methods need
-every sub-module's `_kernel` table to be visible. `CustomInclusions` and
-`FiniteElements` are included after *those*, because their fallbacks `invoke`
-the generic methods defined there.
+every sub-module's `_kernel` table to be visible. `CustomInclusions`,
+`FiniteElements` and `NeuralInclusions` are included after *those*, because
+their fallbacks `invoke` the generic methods defined there.
 
 ## Extension points
 

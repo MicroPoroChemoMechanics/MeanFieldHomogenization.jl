@@ -63,16 +63,17 @@ available.
 ### The four committed models
 
 Trained by `scripts/nn/train_models.jl` against the **analytic** Hill tensor, so
-the labels are exact and the error below is the fit's alone. All were fitted on a
-Halton sample with a held-out set drawn from the same sequence; `ω` is the
-*distinct over equal* semi-axis ratio, so `ω > 1` is prolate and `ω < 1` oblate.
+the labels are exact and the error below is the fit's alone. All were fitted on
+a Halton sample with a held-out set drawn from the same sequence; ``\omega`` is
+the *distinct over equal* semi-axis ratio, so ``\omega > 1`` is prolate and
+``\omega < 1`` oblate.
 
 | Model | Predicts | Features | Domain | Network | Samples | Worst error |
 |---|---|---|---|---|---|---|
-| `spheroid_hill_iso_elastic` | `2μ₀ℙ`, `TensTI{4,·,5}` | `log_aspect`, `nu0` | `ω ∈ [1/20, 20]`, `ν₀ ∈ [0, 0.49]` | 2→48→48→5 | 6000 / 1500 | `3.1e-3` |
-| `spheroid_hill_iso_conduction` | `k₀ℙ_K`, `TensTI{2,·,2}` | `log_aspect` | `ω ∈ [1/20, 20]` | 1→32→32→2 | 3000 / 800 | `2.1e-4` |
-| `triaxial_hill_iso_elastic` | `2μ₀ℙ`, `TensOrtho` | `log_r2`, `log_r32`, `nu0` | `a₂/a₁, a₃/a₂ ∈ [1/20, 1/1.05]`, `ν₀ ∈ [0, 0.49]` | 3→64→64→9 | 12000 / 3000 | `6.7e-3` |
-| `spheroid_hill_iso_affine` | `𝕌ᴬ` and `𝕍ᴬ`, `TensTI{4,·,5}` | `log_aspect` | `ω ∈ [1/20, 20]`, **any** `ν₀` | 1→48→48→10 | 6000 / 1500 | `2.6e-4` |
+| `spheroid_hill_iso_elastic` | ``2\mu_0\mathbb P``, `TensTI{4,·,5}` | `log_aspect`, `nu0` | ``\omega \in [1/20, 20]``, ``\nu_0 \in [0, 0.49]`` | 2→48→48→5 | 6000 / 1500 | `3.1e-3` |
+| `spheroid_hill_iso_conduction` | ``k_0\boldsymbol P``, `TensTI{2,·,2}` | `log_aspect` | ``\omega \in [1/20, 20]`` | 1→32→32→2 | 3000 / 800 | `2.1e-4` |
+| `triaxial_hill_iso_elastic` | ``2\mu_0\mathbb P``, `TensOrtho` | `log_r2`, `log_r32`, `nu0` | ``a_2/a_1,\, a_3/a_2 \in [1/20, 1/1.05]``, ``\nu_0 \in [0, 0.49]`` | 3→64→64→9 | 12000 / 3000 | `6.7e-3` |
+| `spheroid_hill_iso_affine` | ``\mathbb U^{\boldsymbol A}`` and ``\mathbb V^{\boldsymbol A}``, `TensTI{4,·,5}` | `log_aspect` | ``\omega \in [1/20, 20]``, **any** ``\nu_0`` | 1→48→48→10 | 6000 / 1500 | `2.6e-4` |
 
 "Worst error" is `worst_error(s.provenance)`: the largest error over the held-out
 set, in the ∞-norm of the component vector relative to its own magnitude. It is
@@ -92,10 +93,11 @@ Four decisions, then one call. The
 [tutorial](@ref tut-index) walks the same ground with a schematic of the network
 and of the fitting loop, and shows the recorded learning curve.
 
-**1. Which tensor, and therefore which gate.** `ℙ` (gate A) whenever the
-morphology has one: the contrast dependence and the `ℂ₁ = ℂ₀ ⟹ 𝔸 = 𝕀` limit then
-stay exact and the fit error is confined to a single tensor. The localization
-pair (gate B) only for a heterogeneous morphology, which has no `ℙ`.
+**1. Which tensor, and therefore which gate.** ``\mathbb P`` (gate A) whenever
+the morphology has one: the contrast dependence and the ``\mathbb C_1 = \mathbb
+C_0 \Rightarrow \mathbb A = \mathbb I`` limit then stay exact and the fit error
+is confined to a single tensor. The localization pair (gate B) only for a
+heterogeneous morphology, which has no ``\mathbb P``.
 
 **2. Which symmetry class**, from the shape: `HillISO` for a sphere (2
 components), `HillTI` for a spheroid (5), `HillOrtho` for a triaxial ellipsoid
@@ -105,8 +107,8 @@ returns a *different* tensor class for each and the components would otherwise
 mean something else.
 
 **3. Which features, and over what box.** Use logarithms of shape ratios — an
-aspect ratio's interesting range spans decades, and only the logarithm makes `ω`
-and `1/ω` symmetric. Add `:nu0` for a `DimensionlessHill` order-4 surrogate;
+aspect ratio's interesting range spans decades, and only the logarithm makes ``\omega``
+and ``1/\omega`` symmetric. Add `:nu0` for a `DimensionlessHill` order-4 surrogate;
 leave it out for `AffineHill` and for transport, where the material dependence is
 exact. The box becomes the model's validity limits, so choose it as the range you
 actually intend to use.
@@ -159,7 +161,7 @@ wall time:
 Two things are read off the training set automatically and stored with the model:
 the standardization of both ends, and a per-component `:log` transform wherever
 the dynamic range calls for it — which is the case of the oblate Walpole
-components, several of which grow like `1/ω` as the particle flattens.
+components, several of which grow like ``1/\omega`` as the particle flattens.
 
 ## What is exact, and what is fitted
 
@@ -167,20 +169,23 @@ Only what is genuinely unknown is learned. Three properties are enforced by
 construction and hold to machine precision *however badly* the network is
 trained:
 
-- **Zero contrast.** Gate A supplies `ℙ`, and the package evaluates
-  `𝔸_εε = [𝕀 + ℙ:(ℂ₁−ℂ₀)]⁻¹` exactly, so `ℂ₁ = ℂ₀ ⟹ 𝔸 = 𝕀`. The eight
+- **Zero contrast.** Gate A supplies ``\mathbb P``, and the package evaluates
+  ``\mathbb A_{\varepsilon\varepsilon} =
+  [\mathbb I + \mathbb P:(\mathbb C_1-\mathbb C_0)]^{-1}`` exactly, so
+  ``\mathbb C_1 = \mathbb C_0 \Rightarrow \mathbb A = \mathbb I``. The eight
   localization tensors also stay exactly consistent with one another — which a
-  surrogate predicting `𝔸` could not guarantee. `𝔸_εε` has **no major symmetry**,
-  so it needs the 6-component transversely isotropic form where `ℙ` needs 5; for
-  an oblate spheroid its major-symmetry defect is around 10 %, and forcing it onto
-  the 5-component form loses a few percent.
-- **Homogeneity.** `ℙ(λℂ₀) = ℙ(ℂ₀)/λ`. The network never sees an absolute
-  modulus, only the shape and `ν₀`.
+  surrogate predicting ``\mathbb A`` could not guarantee.
+  ``\mathbb A_{\varepsilon\varepsilon}`` has **no major symmetry**, so it needs
+  the 6-component transversely isotropic form where ``\mathbb P`` needs 5; for
+  an oblate spheroid its major-symmetry defect is around 10 %, and forcing it
+  onto the 5-component form loses a few percent.
+- **Homogeneity.** ``\mathbb P(\lambda\mathbb C_0) = \mathbb P(\mathbb C_0)/\lambda``.
+  The network never sees an absolute modulus, only the shape and ``\nu_0``.
 - **Symmetry class, major symmetry and frame.** The decoder emits a structured
   TensND type from the right number of components, in the inclusion's own frame;
   the orientation is never an input.
 
-### [Removing `ν₀` from the inputs](@id man-neural-affine)
+### [Removing the Poisson ratio from the inputs](@id man-neural-affine)
 
 This is the **shape/moduli factorization** of
 [Hill polarization tensors](@ref th-hill-tensors), regrouped. That page states
@@ -191,25 +196,25 @@ This is the **shape/moduli factorization** of
 + \frac{1}{\mu_0}\bigl(\mathbb V^{\boldsymbol A} - \mathbb U^{\boldsymbol A}\bigr),
 ```
 
-with the geometric auxiliaries
-[`tens_UA`](@ref MeanFieldHomogenization.tens_UA) and
-[`tens_VA`](@ref MeanFieldHomogenization.tens_VA) depending on the **shape alone**.
-Collecting the two terms on `𝕌ᴬ` and `𝕍ᴬ` gives
+with the geometric auxiliaries [`tens_UA`](@ref MeanFieldHomogenization.tens_UA)
+and [`tens_VA`](@ref MeanFieldHomogenization.tens_VA) depending on the **shape
+alone**. Collecting the two terms on ``\mathbb U^{\boldsymbol A}`` and
+``\mathbb V^{\boldsymbol A}`` gives
 
 ```math
 \mathbb P = d\,\mathbb U^{\boldsymbol A} + \frac{1}{\mu_0}\,\mathbb V^{\boldsymbol A},
 \qquad d = \frac{1}{\lambda_0 + 2\mu_0} - \frac{1}{\mu_0},
 ```
 
-which is affine in the two material scalars `(d, 1/μ₀)`.
+which is affine in the two material scalars ``(d, 1/\mu_0)``.
 [`AffineHill`](@ref MeanFieldHomogenization.AffineHill) exploits it: the network predicts
 those two tensors — twice the components, one fewer input — and the decoder
 contracts them with the exact coefficients. The whole material dependence becomes
-algebra, and the surrogate is valid at *any* `ν₀`, including values no label was
+algebra, and the surrogate is valid at *any* ``\nu_0``, including values no label was
 generated at.
 
 Nothing shape-specific is reimplemented to get there. Both tensors live in the
-same symmetry class as `ℙ`, so their components are recovered from two teacher
+same symmetry class as ``\mathbb P``, so their components are recovered from two teacher
 evaluations at two Poisson ratios by solving the 2×2 system componentwise. In
 transport the decomposition has a single term and the material dependence is
 exact with no material input at all.
@@ -238,9 +243,11 @@ hill_tensor(incl, C₀)   # ArgumentError: :log_aspect is outside the box
 [`NeuralLocalizationInclusion`](@ref MeanFieldHomogenization.NeuralLocalizationInclusion)
 takes gate B, the only way in for a morphology with no Hill tensor. Since
 [`is_homogeneous_inclusion`](@ref) is `false`, it costs **two** surrogates per
-physics — the strain side and the stress side — because `𝔸_σε = ℂ₁:𝔸_εε`
-presupposes a uniform `ℂ₁` that a heterogeneous inclusion does not have. Half a
-pair is refused at construction: the omission is otherwise silent, leaving
+physics — the strain side and the stress side — because
+``\mathbb A_{\sigma\varepsilon} = \mathbb C_1:\mathbb A_{\varepsilon\varepsilon}``
+presupposes a uniform ``\mathbb C_1`` that a heterogeneous inclusion does not
+have. Half a pair is refused at construction: the omission is otherwise silent,
+leaving
 `Dilute` and `MoriTanaka` right while the self-consistent schemes drift.
 
 Supplying `fractions` and `properties` unlocks the `Voigt` and `Reuss` bounds,
@@ -251,8 +258,8 @@ on [`fe_axi_localization`](@ref MeanFieldHomogenization.fe_axi_localization).
 
 ## Limitations
 
-- **Isotropic reference medium only.** Both the feature set (`ν₀` alone) and the
-  exact homogeneity used to decode assume it; an anisotropic `ℂ₀` is refused
+- **Isotropic reference medium only.** Both the feature set (``\nu_0`` alone) and the
+  exact homogeneity used to decode assume it; an anisotropic ``\mathbb C_0`` is refused
   rather than silently projected. This has a practical consequence: the
   *iterative* schemes — `SelfConsistent`, `AsymmetricSelfConsistent`,
   `DifferentialScheme` — re-evaluate the inclusion in their own running estimate,
@@ -263,7 +270,7 @@ on [`fe_axi_localization`](@ref MeanFieldHomogenization.fe_axi_localization).
   for the same reason.
 - **One class per surrogate.** `:ti` describes a spheroid, `:ortho` a genuinely
   triaxial ellipsoid, `:iso` a sphere; a mismatch is a constructor error.
-- **The shipped models stop short of the crack and needle limits** (`ω` within a
+- **The shipped models stop short of the crack and needle limits** (``\omega`` within a
   factor 20 of a sphere), where several Walpole components diverge.
 - **Accuracy is the fit's, not the closed form's.** A few parts in `10⁴` to
   `10³` on the Hill tensor. Where an exact answer is available, use it — that is

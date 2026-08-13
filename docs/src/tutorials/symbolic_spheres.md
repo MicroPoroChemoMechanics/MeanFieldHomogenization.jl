@@ -195,7 +195,7 @@ nothing # hide
 
 The general two-phase system couples `eqk` and `eqμ` through `μstar` — a
 coupled polynomial with no compact closed form. Its **limits** do have one.
-The porous limit (`kᵢ=μᵢ=0`), solved with SymPy's `solve`:
+The porous limit (``k_i=\mu_i=0``), solved with SymPy's `solve`:
 
 ```@example tutsymsph
 eqk_por = subs(eqk, ki => 0)

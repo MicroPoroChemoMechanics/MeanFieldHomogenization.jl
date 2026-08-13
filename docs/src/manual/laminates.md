@@ -135,7 +135,7 @@ add_layer!(lam, :B, Dict(:C => C_B); thickness = 0.7,
 
 !!! note "The spring fields are compliances"
     `SpringInterface(kn, kt)` follows the `LayeredSpheres` convention:
-    `[u] = 𝒦·(σ·n)`, so `kn = kt = 0` is perfect bonding and `k → ∞`
+    ``[\![\underline u]\!] = \boldsymbol{\mathcal K}\cdot(\boldsymbol\sigma\cdot\underline n)``, so `kn = kt = 0` is perfect bonding and `k → ∞`
     decouples the layers.
 
 ### Anisotropic interfaces

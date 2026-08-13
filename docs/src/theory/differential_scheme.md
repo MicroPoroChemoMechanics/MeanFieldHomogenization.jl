@@ -250,7 +250,7 @@ mechanical effect. Three consequences for the scheme:
 
    with the Budiansky-O'Connell prefactor (`4π/3` for 3D penny and
    elliptic cracks, `π` for 2D ribbons). The stiffness form of the ODE
-   therefore evaluates the crack term by passing through `ℍ_c` anyway;
+   therefore evaluates the crack term by passing through ``\mathbb H_c`` anyway;
    `formulation = :compliance` merely stops undoing that conversion,
    which is why it behaves better on heavily cracked media.
 

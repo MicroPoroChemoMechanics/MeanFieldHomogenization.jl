@@ -5,7 +5,7 @@ finite-element computation** — the role an MFront behavior or an Abaqus UMAT
 plays. One microstructure stands for one material point: the FE code hands over
 a strain, the package hands back a stress and a consistent tangent.
 
-!!! warning "Two opposite couplings — this is not [`fe_inclusions`](@ref man-fe-inclusions)"
+!!! warning "Two opposite couplings — this is not the finite-element inclusion"
     | | who calls whom | what it produces |
     |:--|:--|:--|
     | [Finite-element inclusions](@ref man-fe-inclusions) | **MFH calls** the FE solver | one inclusion's response, when no closed form exists |
@@ -42,14 +42,22 @@ apertures.
 
 ## Reading order
 
+Three groups, read in this order: the equations, then how to build a model with
+them, then worked models.
+
 | Page | |
 |:--|:--|
+| **Theory** | |
 | [Scale transition](@ref fe-scale-transition) | the equations: incremental format, consistent tangent, tangent blocks |
-| [Materials](@ref fe-materials) | the Gauss-point contract, in code |
+| [The coupled poroelastic problem](@ref fe-poro-coupling) | the same, with a fluid: two balances, the Biot blocks, the four tangents |
 | [Fractured permeability](@ref fe-permeability) | flowing cracks and the effective conductivity of a fracture network |
+| **Manual** | |
+| [Materials](@ref fe-materials) | the Gauss-point contract, in code |
+| [Building a fractured-rock material](@ref fe-fractured-rock) | the ARMA 2011 material: two gradients, two fluxes, evolving permeability |
 | [Ferrite backend](@ref fe-backends) | the three helpers a Ferrite driver needs |
+| **Examples** | |
 | [Thick-walled cylinder](@ref fe-thick-cylinder) | worked model, checked against Lamé, then with closing cracks |
-| [The saturated fractured rock](@ref fe-fractured-rock) | the ARMA 2011 material: two gradients, two fluxes, evolving permeability |
+| [A fractured-reservoir well test](@ref fe-arma2011) | the ARMA 2011 well test, end to end |
 
 The Biot machinery the poroelastic coupling builds on is a property of a
 microstructure rather than of the coupling, so it lives on its own page:

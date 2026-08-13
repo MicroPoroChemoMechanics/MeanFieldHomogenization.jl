@@ -229,8 +229,8 @@ literature for crack-bearing RVEs :
   (`strain_Strain = H̃·C_0`).  At convergence SC writes
   `C_eff = (B_E)·(A_E)^{-vol}` where the cracks contribute to `A_E`.
 
-They coincide in the dilute limit `ε → 0` and differ at finite density: at
-`d = 0.30, traction-free`, MFH MT gives `ε_xx(t→∞) ≈ 0.481` against `0.559` for
+They coincide in the dilute limit ``\varepsilon \to 0`` and differ at finite density: at
+`d = 0.30, traction-free`, MFH MT gives ``\varepsilon_{xx}(t\to\infty) \approx 0.481`` against `0.559` for
 ECHOES MT. PCW coincides between the two implementations over the configurations
 of `scripts/60_alv_cracks_interface.jl`.
 
@@ -305,7 +305,7 @@ That splits the schemes in two:
   evaluate the kernel against the **matrix**, which is fixed and
   isotropic. Any inclusion shape and orientation is fine.
 * `SelfConsistent` and `DifferentialScheme` evaluate it against their
-  **running estimate** — the fixed point for the former, `C̃(τ)` for the
+  **running estimate** — the fixed point for the former, ``\tilde{\mathbb C}(\tau)`` for the
   latter. An aligned non-spherical inclusion, or a crack (whose
   contribution is transversely isotropic in its own frame), drags that
   estimate out of the isotropic class, and the kernel would no longer be

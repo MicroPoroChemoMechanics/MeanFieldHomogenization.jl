@@ -11,9 +11,22 @@ localization tensor for each phase, and assembles a **homogenization scheme**
 — dilute, Mori–Tanaka, self-consistent, differential, PCW, or the classical
 bounds — into an effective stiffness or conductivity. The same machinery
 handles flat cracks (opening-displacement and intensity factors), composite
-`n`-layer spheres and confocal spheroids with imperfect interfaces, and
-ageing linear viscoelasticity, all under one abstraction hierarchy, a shared
-numerical core, and forward-mode automatic differentiation throughout.
+`n`-layer spheres and confocal spheroids with imperfect interfaces, periodic
+laminates, and ageing linear viscoelasticity, all under one abstraction
+hierarchy, a shared numerical core, and forward-mode automatic differentiation
+throughout.
+
+Two directions go beyond that one-site picture, and each has a section of its
+own:
+
+- **N-body schemes.** Given the *positions* of the inclusions, the cluster model
+  and the equivalent inclusion method resolve the pairwise interaction instead of
+  averaging it, and both collapse exactly onto Mori–Tanaka when it is switched
+  off — see [Particle assemblies](@ref man-assemblies).
+- **Homogenization as a constitutive law.** One microstructure per Gauss point,
+  handing a structural finite-element code a stress, a consistent tangent and the
+  Biot coefficients of an evolving microstructure — see
+  [Finite-element coupling](@ref fe-coupling).
 
 `MeanFieldHomogenization` is a pure-Julia reimplementation of the Eshelby/Hill machinery
 of the [Echoes](https://jfbarthelemy.github.io/echoes/) C++/Python
@@ -91,9 +104,10 @@ Volterra products in place of tensor products. The contract is written up in
 julia> import Pkg; Pkg.add("MeanFieldHomogenization")
 ```
 
-Six optional package extensions cover the cubature backend, the SciML fixed-point
-solvers, symbolic closed forms, the two finite-element backends and neural-surrogate
-training — see [Installation](@ref man-installation).
+Seven optional package extensions cover the cubature backend, the SciML
+fixed-point solvers, symbolic closed forms, the two finite-element backends, the
+Ferrite material interface of the [finite-element coupling](@ref fe-coupling) and
+neural-surrogate training — see [Installation](@ref man-installation).
 
 ## Citation
 
@@ -119,6 +133,8 @@ machine-readable form.
 | install the package and run the first example | [Installation](manual/installation.md) |
 | learn the API by worked example, topic by topic | [Tutorials](tutorials/index.md) |
 | see full micromechanical models of real materials | [Applications](applications/cement_paste.md) — cement paste, concrete, bituminous mixtures |
+| use a microstructure as a material law in an FE code | [Finite-element coupling](@ref fe-coupling) |
+| build a model in a browser, or port one from Echoes | [Tools and migration](tools/from_echoes.md) — the translation guide, the converter, MFH Studio |
 | look up a function's docstring | [API reference](api/elliptic.md) |
 | extend the package (new inclusion, algorithm, scheme) | [Developer guide](developer/architecture.md) |
 
@@ -133,7 +149,12 @@ machine-readable form.
 | [`MeanFieldHomogenization.Conductivity`](@ref) | Second-order Hill tensor for transport problems (diffusion, conduction, Darcy flow), closed form for any matrix anisotropy. |
 | [`MeanFieldHomogenization.LayeredSpheres`](@ref) | `n`-layer composite spheres (Hervé–Zaoui, Christensen–Lo), five interface types, volume-average and pointwise localization. |
 | [`MeanFieldHomogenization.LayeredSpheroids`](@ref) | `n`-layer confocal spheroids, conduction, Kapitza / surface-conductive interfaces, series or quadrature evaluation. |
-| [`MeanFieldHomogenization.Schemes`](@ref) | RVE container and `homogenize`; Voigt, Reuss, Dilute, Mori–Tanaka, Maxwell, PCW, self-consistent, asymmetric SC, differential; exact vs. best-fit symmetrization; `ForwardDiff` sensitivities. |
+| [`MeanFieldHomogenization.Laminates`](@ref) | Periodic multilayer cell: no matrix, no Eshelby problem — an *exact* solution in elasticity and transport, same imperfect interfaces, per-layer localization. |
+| [`MeanFieldHomogenization.Schemes`](@ref) | RVE container and `homogenize`; Voigt, Reuss, Dilute, Mori–Tanaka, Maxwell, PCW, self-consistent, asymmetric SC, differential, cluster model, equivalent inclusion; exact vs. best-fit symmetrization; `ForwardDiff` sensitivities. |
+| [`MeanFieldHomogenization.Interactions`](@ref) | Two-inclusion interaction tensor ``\mathbb{T}^{ab}`` and the Green operator of the reference — closed forms for balls and disks, cubature for the anisotropic case. |
+| [`MeanFieldHomogenization.Assemblies`](@ref) | `ParticleAssembly`: the cell that carries positions, its generators and boundary treatments — what the two N-body schemes act on. |
+| [`MeanFieldHomogenization.Poromechanics`](@ref) | Biot coefficient tensor and skeleton modulus of a porous or cracked microstructure, for saturated and drained responses. |
+| [`MeanFieldHomogenization.Constitutive`](@ref) | The Gauss-point contract: a microstructure exposed to a finite-element code as a material law returning stress, tangent and updated state. |
 | [`MeanFieldHomogenization.Viscoelasticity`](@ref) | Ageing linear viscoelasticity via Volterra operators — every scheme, cracks and layered spheres included. |
 | [`MeanFieldHomogenization.CustomInclusions`](@ref) | The user-defined inclusion contract: `CustomInclusion` (callback-driven) and `check_inclusion_interface`. |
 | [`MeanFieldHomogenization.FiniteElements`](@ref) | Inclusions whose response comes out of a finite-element solve of the Eshelby problem, behind a backend contract (`Ferrite` or `Gridap`). |

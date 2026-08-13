@@ -33,13 +33,13 @@ flowchart TB
 
 ## Pivot formula
 
-For an inclusion `I` of stiffness ``\mathbb C_1`` embedded in an
-infinite matrix of stiffness ``\mathbb C_0``, the strain–strain
-localization tensor is
+For an inclusion of shape tensor ``\boldsymbol A`` and stiffness
+``\mathbb C_1`` embedded in an infinite matrix of stiffness ``\mathbb C_0``,
+the strain–strain localization tensor is
 
 ```math
 \mathbb A_{\varepsilon\varepsilon} = \bigl[\,\mathbb I +
-\mathbb P(\mathrm I, \mathbb C_0) :
+\mathbb P(\boldsymbol A, \mathbb C_0) :
 (\mathbb C_1 - \mathbb C_0)\,\bigr]^{-1},
 ```
 
@@ -65,7 +65,8 @@ MeanFieldHomogenization are:
 
 ## Contribution tensors
 
-The **stiffness contribution tensor** (Kachanov–Sevostianov 2018) is
+The **stiffness contribution tensor** ([Kachanov & Sevostianov
+2018](@cite kachanov2018)) is
 
 ```math
 \mathbb N = (\mathbb C_1 - \mathbb C_0) : \mathbb A_{\varepsilon\varepsilon},
@@ -89,18 +90,38 @@ Functions: [`stiffness_contribution`](@ref),
 [`compliance_contribution`](@ref), with density helpers
 [`delta_stiffness`](@ref) and [`delta_compliance`](@ref).
 
+All of the above is *one-site*: the inclusion feels its neighbors only through
+the reference medium. Resolving the pairwise interaction explicitly replaces
+``\mathbb P`` by the [two-inclusion interaction tensor](@ref th-interaction)
+``\mathbb T^{ab}``, of which ``\mathbb P`` is the self term — see the
+[N-body schemes](@ref th-nbody).
+
 ## Cracks (Kachanov convention)
 
 For flat cracks the Budiansky density convention is used instead of a
 volume fraction.  The same entry points apply, with the density
-``\varepsilon`` replacing ``f``:
+``\varepsilon`` replacing ``f``, and the compliance contribution built from the
+crack-opening-displacement tensor ``\boldsymbol B`` and the crack normal
+``\underline n`` ([Crack opening displacement](cod_tensors.md)):
+
+```math
+\mathbb H = \tfrac{3}{4}\,
+  \underline n \stackrel{s}{\otimes} \boldsymbol B \stackrel{s}{\otimes} \underline n
+\quad\text{(elliptic)},
+\qquad
+\mathbb H = \tfrac{2}{\pi}\,
+  \underline n \stackrel{s}{\otimes} \boldsymbol B \stackrel{s}{\otimes} \underline n
+\quad\text{(ribbon)},
+\qquad
+\mathbb N = -\,\mathbb C_0 : \mathbb H : \mathbb C_0 .
+```
 
 - `compliance_contribution(crack, C₀)` returns the size-independent
-  `H = (3/4) n̂ ⊗ˢ B ⊗ˢ n̂` (elliptic) or `(2/π) n̂ ⊗ˢ B ⊗ˢ n̂` (ribbon);
-- `stiffness_contribution(crack, C₀)` returns `N = -C₀ : H : C₀`
-  (first order, provided for API symmetry);
+  ``\mathbb H``;
+- `stiffness_contribution(crack, C₀)` returns ``\mathbb N`` (first order in the
+  density, provided for API symmetry);
 - `delta_compliance(crack, H, ε)` and `delta_stiffness(crack, N, ε)`
-  apply the appropriate `(4π/3)` or `π` geometric prefactor.
+  apply the appropriate ``4\pi/3`` or ``\pi`` geometric prefactor.
 
 ## Conductivity (2nd-order transport)
 
