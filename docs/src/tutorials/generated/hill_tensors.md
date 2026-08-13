@@ -190,7 +190,7 @@ let
 end
 ````
 
-!!! note "`method = :auto` does not pick the residues"
+!!! note "method = :auto does not pick the residues"
     For an anisotropic 3-D elastic reference the automatic choice is a
     cubature, not the residue algorithm: the residue acoustic polynomial
     degenerates when the reference is anisotropic in *type* and isotropic in

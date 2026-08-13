@@ -234,7 +234,7 @@ B = \\frac{1/k^{\\rm hom} - 1/k_s}
           {1/k^{\\rm hom} - 1/k_s + \\varphi\\,(1/k_f - 1/k_s)} .
 ```
 
-!!! warning "The bound `B ≤ 1` does not hold here"
+!!! warning "The bound B ≤ 1 does not hold here"
     The familiar ``0 \\le B \\le 1`` assumes a fluid no stiffer than the solid
     grains, ``k_f \\le k_s``. [`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus) assumes an
     **incompressible** fluid (``k_f = \\infty``), so with a compressible solid

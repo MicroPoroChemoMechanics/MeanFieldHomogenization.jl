@@ -71,7 +71,7 @@ Once a family closes it leaves the intact matrix behind: ``\boldsymbol{B} = 0``,
 ``1/M = 0`` and [`transport_property`](@ref) returns `nothing` — the fracture
 carries no flow at all.
 
-!!! warning "`nothing` is an answer, not a failure"
+!!! warning "Returning nothing is an answer, not a failure"
     A driver that forwards it straight into a mobility gets a `MethodError` at
     the worst possible moment. Test for it — the
     [well test](@ref fe-arma2011) does.

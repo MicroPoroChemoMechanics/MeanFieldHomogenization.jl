@@ -136,7 +136,7 @@ When the matrix is in fact isotropic (`C1111 = C3333 = λ + 2μ`,
 `C1122 = C1133 = λ`, `C2323 = μ`) the returned coefficients reduce to
 the classical Mura formula.
 
-!!! note "Symbolic numbers (SymPy `Sym`)"
+!!! note "Symbolic numbers (SymPy Sym)"
     The function is **not** compatible with SymPy `Sym` inputs because
     Julia's `Complex{T}` parametric type requires `T <: Real`, which
     `Sym` does not satisfy. For symbolic exploration of the analytical

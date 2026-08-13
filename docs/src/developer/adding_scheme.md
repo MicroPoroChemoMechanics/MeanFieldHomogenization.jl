@@ -44,7 +44,7 @@ flavor. A new scheme slots in beside them:
 8. Add a unit test under `test/Schemes/` and a section in
    `docs/src/manual/schemes.md`.
 
-!!! note "A scheme need not act on an `RVE`"
+!!! note "A scheme need not act on an RVE"
     Two cells other than `RVE` carry scheme kernels, and both follow the same
     split: the scheme **type** is declared in `src/Schemes/scheme_types.jl` (so
     the hierarchy and `SCHEME_ALIAS` stay in one place) while its `_evaluate`

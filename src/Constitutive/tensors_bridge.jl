@@ -30,7 +30,7 @@ global (canonical) frame**.
 This is the direction an FE code consumes: a stress, or a tangent stiffness,
 ready to be contracted with shape-function gradients.
 
-!!! warning "Never bypass this with `get_array`"
+!!! warning "Never bypass this with get_array"
     `get_array(t)` and `t[i,j,k,l]` return the components of `t` in *its own*
     basis. Any homogenized property whose RVE carries oriented inclusions —
     tilted crack families, in particular — is returned in a rotated basis, so

@@ -5,7 +5,7 @@
 structural finite-element computation — the role an MFront behavior or an
 Abaqus UMAT plays.
 
-!!! note "Not to be confused with `MeanFieldHomogenization.FiniteElements`"
+!!! note "Not to be confused with MeanFieldHomogenization.FiniteElements"
     [`FiniteElements`](@ref MeanFieldHomogenization.FiniteElements) points the
     other way: it uses finite elements *inside* the package, to solve the
     Eshelby problem of a single inclusion whose response no closed form covers.

@@ -74,7 +74,7 @@ callback receives a 2nd-order tensor:
 add_matrix!(rve, Ellipsoid(1.0), Dict(:K => TensISO{3}(2.0)))
 ```
 
-!!! note "Callbacks must accept `kw...`"
+!!! note "Callbacks must accept kw..."
     The schemes forward `method`, tolerances and — for density-based phases —
     `K_interface` / `α_interface`. Always write `(P₀; kw...) -> …`.
 

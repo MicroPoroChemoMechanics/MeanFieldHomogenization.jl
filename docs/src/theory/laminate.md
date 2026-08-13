@@ -240,7 +240,7 @@ is simply the inverse of that block, embedded back:
 It exists as soon as ``P_{\mathcal{OO}}`` is invertible, that is as soon as
 every acoustic tensor ``\boldsymbol{K}_i`` is definite.
 
-!!! note "Never a generic `pinv`"
+!!! note "Never a generic pinv"
     The implementation does not call `LinearAlgebra.pinv`: the pseudo-inverse
     is the ordinary inverse of a ``3\times3`` block (a scalar reciprocal in
     transport), taken in closed form. An SVD would be differentiable by

@@ -217,7 +217,7 @@ Measured, not inferred from the papers — Echoes' `crack_compliance` against
 On the `MeanFieldHomogenization` side the ``3/4`` is ``\eta``-independent to machine
 precision (``\mathbb{H}_{3333}/B_{33} = 0.750000`` for every ``\eta``).
 
-!!! warning "``\boldsymbol{B}`` is the same, ``\mathbb{H}`` is not"
+!!! warning "The COD tensor is the same, the compliance is not"
     All three sources normalize ``\boldsymbol{B}`` by the half-width ``b``, so
     the **COD tensors agree**. Only the compliance differs, and only for the
     elliptic crack. If you compare a ``\boldsymbol{B}`` across papers, expect

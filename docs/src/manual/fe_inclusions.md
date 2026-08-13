@@ -129,7 +129,7 @@ orientation distribution. Iterative schemes (`SelfConsistent`,
 solve per distinct `C₀`: usable, but expensive (8 assemblies for a typical
 self-consistent run).
 
-!!! note "Iterative schemes need `IsoSymmetrize`"
+!!! note "Iterative schemes need IsoSymmetrize"
     An iterative scheme re-evaluates the crack in the *current estimate*. For a
     family of **parallel** cracks that estimate is transversely isotropic, and
     the isotropic-only boundary correction refuses it — with an error saying

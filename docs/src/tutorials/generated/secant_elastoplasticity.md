@@ -72,7 +72,7 @@ with the secant modulus
 \varepsilon_0 = \frac{\sqrt{2/3}\;\sigma_0}{2\mu_s}.
 ```
 
-!!! warning "Where the ``\sqrt{2/3}`` comes from"
+!!! warning "Where the square root of 2/3 comes from"
     ``\sigma_0`` is the yield stress in **simple tension**, which is how a von
     Mises criterion is normally quoted. The quantity the secant closure
     actually caps is the *norm of the deviatoric stress*
