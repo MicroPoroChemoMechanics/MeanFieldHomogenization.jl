@@ -24,6 +24,20 @@ Pre-compute the n̂-only quantities used by every `Q̂_{nn}` evaluation:
 Element type is the supplied `T = promote_type(...)`.
 """
 function _A_and_Tn(C::AbstractArray, n̂::AbstractVector, ::Type{T}) where {T}
+    # Single choke point of every numerical Green back-end, and the only place
+    # that needs `T` to be `isbits`: `MArray{…,T}(undef)` cannot even be
+    # *constructed* for a boxed scalar such as `SymPy.Sym` or `Symbolics.Num`.
+    # Without this check the failure surfaces as a bare
+    # `setindex!() with non-isbitstype eltype …` from StaticArrays, several
+    # frames deep, which says nothing about what to do instead.
+    isbitstype(T) || throw(
+        ArgumentError(
+            "the numerical Green back-ends require an isbits scalar type, got $T. " *
+                "Symbolic scalars only reach a closed form: for cracks that means an " *
+                "isotropic reference, or a transversely isotropic one whose axis is the " *
+                "crack normal. Check the alignment, or substitute numbers first."
+        )
+    )
     Tn_m = MArray{Tuple{3, 3, 3}, T}(undef)
     @inbounds for q in 1:3, p in 1:3, i in 1:3
         s = zero(T)

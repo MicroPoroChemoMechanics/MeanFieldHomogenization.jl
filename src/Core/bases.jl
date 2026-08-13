@@ -246,7 +246,7 @@ comparison is performed).
 function _sort_axes_and_basis(
         axes::NTuple{3, T}, basis::TensND.AbstractBasis, layout::Symbol
     ) where {T}
-    T <: Real || return (axes, basis)
+    is_hard_numeric(T) || return (axes, basis)
     if layout === :ellipsoid_3d
         σ = Tuple(sortperm(collect(axes); rev = true))::NTuple{3, Int}
         σ == (1, 2, 3) && return (axes, basis)
@@ -263,7 +263,7 @@ end
 function _sort_axes_and_basis(
         axes::NTuple{2, T}, basis::TensND.AbstractBasis, layout::Symbol
     ) where {T}
-    T <: Real || return (axes, basis)
+    is_hard_numeric(T) || return (axes, basis)
     a, b = axes
     swap = b > a
     if layout === :ellipsoid_2d
@@ -331,7 +331,7 @@ Returns an integer code instead of a type to avoid circular references:
     4 → equivalent of `Triaxial`    (a > b > c)
 """
 function _classify_shape_3d(::Type{T}, a, b, c) where {T}
-    if T <: Real
+    if is_hard_numeric(T)
         tol = max(a, b, c) * (1.0e-10 * one(T))
         AeqB = (a - b) ≤ tol
         BeqC = (b - c) ≤ tol
@@ -358,6 +358,6 @@ Classify a 2D ellipse from its (already sorted) semi-axes:
     2 → equivalent of `Elliptic`  (a > b)
 """
 function _classify_shape_2d(::Type{T}, a, b) where {T}
-    is_equal = T <: Real ? (a - b) ≤ max(a, b) * (1.0e-10 * one(T)) : isequal(a, b)
+    is_equal = is_hard_numeric(T) ? (a - b) ≤ max(a, b) * (1.0e-10 * one(T)) : isequal(a, b)
     return is_equal ? 1 : 2
 end

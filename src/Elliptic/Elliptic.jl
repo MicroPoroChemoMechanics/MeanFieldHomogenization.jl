@@ -36,11 +36,13 @@ callers will automatically pick them up.
 module Elliptic
 
 import Elliptic as _Elliptic
+import ForwardDiff
 
 include("api.jl")
 include("agm.jl")
 include("carlson.jl")
 
 export ell_K, ell_E, ell_F, ell_RF, ell_RD
+export is_hard_numeric
 
 end # module

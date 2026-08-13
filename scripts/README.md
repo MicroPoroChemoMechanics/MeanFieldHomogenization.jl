@@ -50,6 +50,7 @@ three-scale model (`common/pichler_model.jl`), used by both the demo script
 | `13_cod_ribbon.jl` | ribbon crack | 2D ribbon COD |
 | `14_sif_computation.jl` | — | stress/displacement intensity factors |
 | `15_cracks_iso_interface.jl` | iso cracks + spring interface | Sevostianov spring interface |
+| `16_cod_symbolic_thermal.jl` | `barthelemySifAniso` (transport twin) | SymPy, end-to-end derivation of the **thermal** COD scalar from the order-2 Green operator. The acoustic form is a scalar, so the ξₙ integral closes at **full anisotropy**: `Q̂*ₙₙ = ½√[(n̲∧ξ̲*)·adj(K₀)·(n̲∧ξ̲*)]`, and the contour integral reduces to an effective ellipse (`√λ₁`, `η′`). Cross-checked against the Hill flattening limit and the textbook penny jump |
 
 ### 20–29 Elastic schemes
 | Script | reference / topic | Notes |

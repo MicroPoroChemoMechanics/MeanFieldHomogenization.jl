@@ -1,11 +1,99 @@
 # Changelog
 
-## v0.3.2
+## v0.4.0
 
 The route from the Fourier Green operator to the COD tensor ``𝐁``, written down
-and executed symbolically, plus the two seams of the crack chain that were not
-symbolically transparent. No numeric result changes on any element type that
-worked before.
+and executed symbolically — first for elasticity, then for transport, where it
+turns out to be analytic at *full* anisotropy. Writing the transport derivation
+down is what exposed a wrong prefactor in the thermal closed forms, which is why
+this is a minor rather than a patch release.
+
+### Breaking changes
+
+- **The thermal COD scalar `b` was too small by ``4\pi/(3\eta)`` (elliptic) and
+  ``\pi^{2}/4`` (ribbon).** Every thermal crack number changes: `cod_tensor`,
+  `compliance_contribution`, `delta_resistivity` and the thermal `dif` on an
+  `AbstractTens{2,3}` reference. The corrected closed forms are
+
+  ```
+  b_ellipse = 4 / (3 √λ₁ 𝓔_η′)      b_iso = 4/(3 k₀ 𝓔_η)      b_penny = 8/(3π k₀)
+  b_ribbon  = π / (2 √det(K₀|₍m,n₎))                          b_ribbon_iso = π/(2 k₀)
+  ```
+
+  `b` is normalized exactly like the elastic ``𝐁`` — by the in-plane half-width,
+  through ``b = \chi/(b\Lambda)`` with ``\chi^{\mathcal E} = 2/3``,
+  ``\chi^{\mathcal R} = \pi/4`` — so the two branches now share one convention,
+  which is what the elasticity ↔ conductivity table of the theory page always
+  claimed. Three independent routes pin the new values: the ``\xi_n``-integral
+  chain (`scripts/16_cod_symbolic_thermal.jl`), the flattening limit
+  ``\lim_{\omega\to0}\omega\,\mathbf\Lambda^{-1}``, and the textbook temperature
+  jump of an insulating penny crack, ``[\![T]\!](r) = \frac{4\sigma_n a}{\pi
+  k_0}\sqrt{1-r^{2}/a^{2}}``, whose surface average gives ``8/(3\pi k_0)``.
+  **Unaffected:** the whole elastic branch, and `fracture_permeability` /
+  `ConductiveCrack`, whose conduction side does not go through these formulas.
+- **`_cod_aniso_ellipse_thermal` no longer uses the ``\mathbf K_0^{-1/2}``
+  transform.** The equivalent adjugate form needs one **2×2** eigenvalue problem
+  instead of `eigen` on a 3×3 plus `svdvals`, so the anisotropic thermal COD is
+  now type-generic: it flows through `ForwardDiff` and evaluates on symbolic
+  scalars, where it previously threw. Results agree with the old route wherever
+  the old route ran (up to the prefactor above).
+
+### Why 37 green tests did not catch it
+
+Worth recording, because the mechanism is reusable. Nearly every assertion in
+`test/Cracks/test_thermal.jl` restated the closed form the code evaluates — a
+tautology that no prefactor error can fail. The one independent check, a
+Hill-tensor limit, compared its oracle against
+`delta_resistivity(crack, R, 1) = (4π/3) R` instead of against `R`: a `b` too
+small by `4π/(3η)` is *exactly* canceled by that spurious `4π/3`, so the test
+passed on two compensating errors. The file is rewritten to anchor the oracle
+where the definition puts it, ``R = \lim_{\omega\to0}\omega\mathbf\Lambda^{-1}``,
+and to check the **convergence rate** rather than one tolerance: the truncation
+is ``O(\omega)``, so a tenfold smaller ``\omega`` must cut the error tenfold,
+which a constant prefactor offset cannot fake. It also adds a
+rotate-the-whole-problem invariance test on the adjugate branch. 46 assertions,
+up from 37.
+
+### Differentiability and symbolic scalars — one wrong predicate, six sites
+
+`T <: Real` was used throughout as a proxy for "a concrete number I may compare
+against a tolerance". It is not one: **`Symbolics.Num <: Real`**, yet `<`, `≈`
+and `iszero` on a `Num` return *symbolic* expressions that throw in a boolean
+context — while `ForwardDiff.Dual` is also `<: Real` and compares perfectly
+well, so no `<: Real` test can separate the two. The predicate is now explicit,
+closed and defaults to the safe answer:
+`Elliptic.is_hard_numeric`, replacing the wrong test in `_agm_converged`,
+`Core._sort_axes_and_basis` (both methods), `Core._classify_shape_2d/3d`,
+`Cracks._classify_crack`, `Cracks._is_unit_alignment` and
+`Cracks._elliptic_CS`.
+
+- **New weak extension `MeanFieldHomogenizationSymbolicsExt`.** Without it
+  `ell_K`/`ell_E` on a `Num` fell through to the AGM recursion and unrolled ~60
+  nested `sqrt` into the expression tree — correct, but unusable and
+  unprintable. Registered with `@register_symbolic`, they stay an unexpanded
+  call on a symbolic argument while any numeric argument still reaches the fast
+  `Float64` method, so `Symbolics.build_function` round-trips the result exactly.
+  This is the Symbolics counterpart of the existing SymPy extension.
+- **`Cracks._ti_aligned` compared `|axis·n̂|` to 1.** On a `TensTI{4, Num}` whose
+  axis *is* the crack normal, `Symbolics` leaves `abs(1.0)` unevaluated — even
+  `tsimplify` returns `-1 + abs(1.0)` — so the test said "not aligned" and
+  `cod_tensor` silently fell through to a **numerical** back-end instead of the
+  closed form. It now compares the square, which uses only `*` and does fold.
+- **The numerical Green back-ends now say why they cannot run on a boxed
+  scalar.** `Core._A_and_Tn` builds an `MArray`, which cannot even be
+  *constructed* for a non-`isbits` eltype; the failure used to surface as
+  `setindex!() with non-isbitstype eltype …` from StaticArrays, several frames
+  deep. It is now an `ArgumentError` naming the type and stating which
+  references do have a closed form.
+
+Verified, rather than asserted: `ForwardDiff` through the elastic closed forms
+(∂/∂E, ∂/∂ν, ∂/∂η, ribbon, aligned TI) and the thermal ones (∂/∂k₀ against the
+exact `-b/k₀`, ∂/∂η, ribbon, `R₃₃`, and a full six-component gradient through the
+anisotropic adjugate branch); `Symbolics.Num` through elastic iso, penny, ribbon,
+symbolic aspect ratio and aligned TI, and through thermal iso and fully
+anisotropic. `Float64` and `Dual` results are bit-unchanged throughout. No
+`TensND` change was needed — every frame of the original failure was in this
+package, so the `TensND = "0.3.5"` bound stands.
 
 ### Bug fixes
 
@@ -41,6 +129,30 @@ worked before.
   (31 tests): `cod_tensor` on `TensISO{4,3,Sym}` and on an aligned
   `TensTI{4,Sym}`, the dispatcher's aligned/non-aligned decision, and the
   ISO-vs-aligned-TI agreement at a free symbolic aspect ratio.
+
+### New — the same derivation for transport (order 2)
+
+- **New section** *From the Green operator to `b`* in `theory/thermal_cracks.md`,
+  and **new `scripts/16_cod_symbolic_thermal.jl`**. The order-2 acoustic form
+  ``\underline{\xi}\cdot\boldsymbol{K}_0\cdot\underline{\xi}`` is a *scalar*, so
+  the numerator of the kernel collapses to a constant and the ``\xi_n`` integral
+  closes **at full anisotropy** — no sextic, no residues, no cubature:
+  ``\hat{Q}^{\star}_{nn} = \tfrac12\sqrt{(\underline{n}\wedge\underline{\xi}^{\star})
+  \cdot\mathrm{adj}\boldsymbol{K}_0\cdot(\underline{n}\wedge\underline{\xi}^{\star})}``.
+  The contour integral then reduces to an **effective ellipse**: an arbitrarily
+  anisotropic conductor behaves as an isotropic one of conductivity
+  ``\sqrt{\lambda_1}`` around a crack of effective aspect ratio
+  ``\eta' = \sqrt{\lambda_2/\lambda_1}``, with ``\lambda_{1,2}`` the eigenvalues
+  of a **2×2** in-plane restriction of ``\mathrm{adj}\boldsymbol{K}_0``. Being
+  2×2, that step is closed form — and symbolically evaluable, where the shipped
+  ``\boldsymbol{K}_0^{-1/2}`` route needs `eigen` and `svdvals` on 3×3.
+- The section records a **prefactor disagreement** with the thermal closed forms
+  it precedes (``4\pi/(3\eta)`` for the ellipse, ``\pi^{2}/4`` for the ribbon),
+  supported by three independent checks: the ``\xi_n``-integral chain, the
+  flattening limit ``\lim_{\omega\to0}\omega\boldsymbol{\Lambda}^{-1}``, and the
+  textbook temperature jump of an insulating penny crack. Nothing is changed in
+  the code: resolving it moves every thermal crack result, so it is left visible
+  and measured by the script rather than patched in passing.
 
 ### Documentation fixes
 

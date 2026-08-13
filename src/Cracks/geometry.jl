@@ -64,7 +64,7 @@ end
 # =============================================================================
 
 function _classify_crack(::Type{T}, a, b) where {T}
-    if T <: Real
+    if is_hard_numeric(T)
         tol = max(a, b) * (1.0e-10 * one(T))
         return (a - b) ≤ tol ? Penny : EllipticShape
     else

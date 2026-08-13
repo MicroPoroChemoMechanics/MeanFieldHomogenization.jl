@@ -94,74 +94,238 @@ the elasticity problem).  The limit
 is rank-1 along ``\underline{n}``, with
 ``Y_{nn} = \underline{n}\cdot\boldsymbol\Lambda_1\cdot\underline{n}``.
 
+## From the Green operator to ``b``
+
+The section above reached ``\boldsymbol{R}`` by flattening an ellipsoid. This one
+reaches ``b`` from the Fourier kernel instead — the transport twin of
+[From the Green operator to ``\boldsymbol{B}``](cod_tensors.md#From-the-Green-operator-to-B)
+— and it is the route that substantiates the row *"Quadratic acoustic form →
+analytical"* of the opening table: the order-2 problem has a closed form for
+**every** anisotropy, where elasticity needs its sextic to factorize.
+`scripts/16_cod_symbolic_thermal.jl` runs the whole chain with the six
+components of ``\boldsymbol{K}_0`` as free symbols.
+
+### The reduced kernel
+
+```math
+\hat{\boldsymbol{\Gamma}}(\underline{\xi})
+  = \frac{\underline{\xi}\otimes\underline{\xi}}
+         {\underline{\xi}\cdot\boldsymbol{K}_0\cdot\underline{\xi}},
+\qquad
+\hat{\boldsymbol{Q}}(\underline{\xi})
+  = \boldsymbol{K}_0 - \boldsymbol{K}_0\cdot\hat{\boldsymbol{\Gamma}}\cdot\boldsymbol{K}_0,
+\qquad
+\hat{Q}^{\star}_{nn}(\underline{\xi}^{\star})
+  = \frac{1}{2\pi}\int_{-\infty}^{+\infty}
+    \underline{n}\cdot\hat{\boldsymbol{Q}}
+    (\underline{\xi}^{\star}+\xi_n\underline{n})\cdot\underline{n}\,\mathrm{d}\xi_n .
+```
+
+The acoustic object
+``\underline{\xi}\cdot\boldsymbol{K}_0\cdot\underline{\xi}`` is a **scalar**, not
+a 3×3 matrix — that single fact is what separates this page from its elastic
+sibling.
+
+### The ``\xi_n`` integral is elementary, at any anisotropy
+
+Write the three contractions
+
+```math
+a = \underline{n}\cdot\boldsymbol{K}_0\underline{n},
+\qquad
+b_\xi = \underline{n}\cdot\boldsymbol{K}_0\underline{\xi}^{\star},
+\qquad
+c = \underline{\xi}^{\star}\cdot\boldsymbol{K}_0\underline{\xi}^{\star},
+```
+
+so that ``N = a\xi_n^{2}+2b_\xi\xi_n+c`` and
+``\underline{n}\cdot\boldsymbol{K}_0\underline{\xi} = b_\xi + a\xi_n``. Then
+**every power of ``\xi_n`` cancels in the numerator**:
+
+```math
+a\,N - (b_\xi + a\xi_n)^{2} = ac - b_\xi^{2}
+\qquad\Longrightarrow\qquad
+\underline{n}\cdot\hat{\boldsymbol{Q}}\cdot\underline{n} = \frac{ac-b_\xi^{2}}{N},
+```
+
+a *constant over a quadratic*. Completing the square,
+``N = a[(\xi_n+b_\xi/a)^{2}+p^{2}]`` with ``p = \sqrt{ac-b_\xi^{2}}/a > 0``
+because ``ac-b_\xi^{2}`` is the Gram determinant of ``\boldsymbol{K}_0``
+restricted to ``\mathrm{span}\{\underline{n},\underline{\xi}^{\star}\}`` and
+``\boldsymbol{K}_0`` is positive definite. One elementary integral,
+``\int\mathrm{d}u/(u^{2}+p^{2}) = \pi/p``, closes it:
+
+```math
+\boxed{\;
+\hat{Q}^{\star}_{nn}(\underline{\xi}^{\star})
+= \tfrac12\sqrt{ac-b_\xi^{2}}
+= \tfrac12\sqrt{(\underline{n}\wedge\underline{\xi}^{\star})\cdot
+                \mathrm{adj}\,\boldsymbol{K}_0\cdot
+                (\underline{n}\wedge\underline{\xi}^{\star})}
+\;}
+```
+
+the second form following from
+``(\underline{u}\cdot\boldsymbol{K}\underline{u})(\underline{v}\cdot\boldsymbol{K}\underline{v})
+-(\underline{u}\cdot\boldsymbol{K}\underline{v})^{2}
+=(\underline{u}\wedge\underline{v})\cdot\mathrm{adj}\boldsymbol{K}\cdot(\underline{u}\wedge\underline{v})``,
+with ``\mathrm{adj}\boldsymbol{K}_0 = \det\boldsymbol{K}_0\,\boldsymbol{K}_0^{-1}``.
+So ``\hat{Q}^{\star}_{nn}`` is a norm of
+``\underline{n}\wedge\underline{\xi}^{\star}`` in the metric
+``\mathrm{adj}\boldsymbol{K}_0``, manifestly homogeneous of degree 1. No Stroh
+roots, no residues, no cubature — at any anisotropy. The elastic page's closing
+section, *"what breaks in the general case"*, has no counterpart here.
+
+### The crack-plane integral: an effective ellipse
+
+On the contour ``\underline{\xi}^{\star}(\varphi)
+= \eta\cos\varphi\,\underline{\ell}+\sin\varphi\,\underline{m}`` one has
+``\underline{n}\wedge\underline{\xi}^{\star}
+= \eta\cos\varphi\,\underline{m}-\sin\varphi\,\underline{\ell}``, so with
+``\underline{v} = (\cos\varphi,\sin\varphi)``
+
+```math
+\hat{Q}^{\star}_{nn} = \tfrac12\sqrt{\underline{v}\cdot\boldsymbol{Q}_2\cdot\underline{v}},
+\qquad
+\boldsymbol{Q}_2 = \begin{pmatrix}
+  \eta^{2}\,\underline{m}\cdot\mathrm{adj}\boldsymbol{K}_0\underline{m} &
+ -\eta\,\underline{m}\cdot\mathrm{adj}\boldsymbol{K}_0\underline{\ell}\\
+ -\eta\,\underline{\ell}\cdot\mathrm{adj}\boldsymbol{K}_0\underline{m} &
+       \underline{\ell}\cdot\mathrm{adj}\boldsymbol{K}_0\underline{\ell}
+\end{pmatrix}.
+```
+
+Diagonalizing this **2×2** form — a quadratic, so closed form — with eigenvalues
+``\lambda_1\ge\lambda_2>0`` and rotating to its principal axes turns the integral
+into the isotropic one:
+
+```math
+\boxed{\;
+b\Lambda = \frac14\!\int_0^{2\pi}\!\hat{Q}^{\star}_{nn}\,\mathrm{d}\varphi
+= \frac{\sqrt{\lambda_1}}{2}\,\mathcal{E}_{\eta'},
+\qquad
+\eta' = \sqrt{\lambda_2/\lambda_1},
+\qquad
+b = \frac{\chi^{\mathcal{E}}}{b\Lambda} = \frac{4}{3\sqrt{\lambda_1}\,\mathcal{E}_{\eta'}}
+\;}
+```
+
+An arbitrarily anisotropic conductor therefore behaves, around a flat crack, as
+an **isotropic** one of conductivity ``\sqrt{\lambda_1}`` containing a crack of
+**effective** aspect ratio ``\eta'``. In general ``\eta'\ne\eta``: even a
+circular crack acquires an effective ellipticity from the anisotropy
+(``\eta' = 0.84`` for ``\eta = 1`` on the sample ``\boldsymbol{K}_0`` of the
+script). The specializations:
+
+| ``\boldsymbol{K}_0`` (crack frame) | ``\lambda_1`` | ``\eta'`` | ``b`` |
+| :-- | :-- | :-- | :-- |
+| isotropic ``k_0\boldsymbol{1}`` | ``k_0^{2}`` | ``\eta`` | ``4/(3k_0\mathcal{E}_\eta)`` |
+| TI aligned, ``\mathrm{diag}(k_t,k_t,k_n)`` | ``k_tk_n`` | ``\eta`` | ``4/\bigl(3\sqrt{k_tk_n}\,\mathcal{E}_\eta\bigr)`` |
+| any, **ribbon** (``\underline{\xi}^{\star}=\underline{m}``, ``\chi^{\mathcal{R}}=\pi/4``) | — | — | ``\pi/\bigl(2\sqrt{\det\boldsymbol{K}_0\vert_{(\underline{m},\underline{n})}}\bigr)`` |
+
+The aligned-TI entry is the geometric mean ``\sqrt{k_tk_n}`` announced below, and
+the ribbon entry involves only the transverse 2×2 block — both structures the
+existing formulas already have.
+
+### Relation to the ``\boldsymbol{K}_0^{-1/2}`` route
+
+The two are equivalent, but they cost differently. The square-root transform
+needs the eigendecomposition of the 3×3 ``\boldsymbol{K}_0`` *and* the singular
+values of ``\boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}``; the adjugate form needs
+one **2×2** eigenvalue problem. That is why the adjugate route is evaluable on
+symbolic scalars, where `eigen` and `svdvals` are not.
+
 ## Closed-form COD scalar ``b``
+
+All of these are the two boxed formulas above, evaluated on a more symmetric
+``\boldsymbol{K}_0``. Implementation: `src/Cracks/cod_analytical_thermal.jl`.
+
+### Anisotropic matrix — the general case
+
+``\boldsymbol{K}_0`` arbitrary, ``\eta = b/a``, and
+``A,B,C`` the in-plane entries of ``\mathrm{adj}\boldsymbol{K}_0`` defined above:
+
+```math
+\boxed{\;
+b_{\text{ell}} = \frac{4}{3\sqrt{\lambda_1}\,\mathcal{E}_{\eta'}}
+\;},
+\qquad
+\lambda_{1,2} = \frac{\eta^{2}A+C}{2}
+  \pm\sqrt{\Bigl(\frac{\eta^{2}A+C}{2}\Bigr)^{2}-\eta^{2}(AC-B^{2})},
+\qquad
+\eta' = \sqrt{\lambda_2/\lambda_1}.
+```
+
+Being a **2×2** eigenvalue problem, this is closed form for every anisotropy —
+no symmetry assumption, and no need for the numerical
+``\boldsymbol{K}_0^{-1/2}`` route below.
 
 ### Isotropic matrix
 
-For ``\boldsymbol{K}_0 = k_0\,\boldsymbol{1}`` the square-root transform is
-trivial and ``\hat{\underline{w}} = \underline{n}``:
+``\mathrm{adj}(k_0\boldsymbol{1}) = k_0^{2}\boldsymbol{1}`` gives
+``\lambda_1 = k_0^{2}`` and ``\eta' = \eta``:
 
 ```math
 \boxed{\;
-b_{\text{ell}}^{\text{iso}}
-= \frac{\eta}{\pi\,k_0\,\mathcal E_\eta}
+b_{\text{ell}}^{\text{iso}} = \frac{4}{3\,k_0\,\mathcal E_\eta}
 \;},
 \qquad
-\mathcal E_\eta = \mathcal E\!\bigl(\sqrt{1-\eta^{2}}\bigr),
+\mathcal E_\eta = \mathcal E\!\bigl(\sqrt{1-\eta^{2}}\bigr).
 ```
 
-with ``\mathcal E`` the complete elliptic integral of the second kind.
-Penny limit ``\eta = 1``: ``b = 2/(\pi^{2} k_0)``.  Ribbon:
-``b = 2/(\pi k_0)`` (direct 2-D computation, not the ``\eta\to 0``
-limit of the elliptic formula).
+Penny limit ``\eta = 1``: ``b = 8/(3\pi k_0)``, which is exactly the surface
+average of the textbook jump of an insulating circular crack,
+``[\![T]\!](r) = \frac{4\sigma_n a}{\pi k_0}\sqrt{1-r^{2}/a^{2}}``, divided by
+``a``. Ribbon: ``b = \pi/(2k_0)``.
 
-### Anisotropic matrix (K⁻¹ᐟ² transform)
+### Transversely isotropic matrix aligned with the crack normal
 
-Applying the square-root change of variable
-``\tilde{\underline{x}} = \boldsymbol{K}_0^{-1/2}\underline{x}`` reduces the problem
-to the isotropic one with a **transformed crack shape**.  Let
-``\tilde{\boldsymbol{A}} = \boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}`` with
-``\boldsymbol{A} = \boldsymbol{R}_c\,\mathrm{diag}(a,b,0)\,\boldsymbol{R}_c^{T}``, and
-denote its singular values ``\sigma_1 \ge \sigma_2 \ge \sigma_3 = 0``.
-The transformed in-plane aspect ratio is
-``\eta_t = \sigma_2/\sigma_1 \in (0,1]`` and the transformed ellipse
-first-kind integral parameter is ``k_t^{2} = 1 - \eta_t^{2}``.  Then
+``\boldsymbol{K}_0 = \mathrm{diag}(k_t,k_t,k_n)`` in the crack frame gives
+``\lambda_1 = k_tk_n`` and ``\eta' = \eta``, so the effective conductivity is the
+**geometric mean**:
 
 ```math
-\boxed{\;
-b_{\text{ell}}^{\text{aniso}}
-= \frac{\sigma_2}
-       {\pi\,a_\text{max}\,\sqrt{\underline{n}\cdot\boldsymbol{K}_0\underline{n}}\,\mathcal E_{\eta_t}}
-\;},
+b_{\text{ell}}^{\text{aligned TI}} = \frac{4}{3\sqrt{k_tk_n}\,\mathcal E_\eta},
 \qquad
-a_\text{max} = \max(a,b).
-```
-
-It reduces to the isotropic formula above when
-``\boldsymbol{K}_0 = k_0\,\boldsymbol{1}`` (then ``\sigma_2 = \min(a,b)/\sqrt{k_0}``
-and ``\underline{n}\cdot\boldsymbol{K}_0\underline{n} = k_0``).
-For a TI matrix aligned with ``\underline{n}``
-(``\boldsymbol{K}_0 = \mathrm{diag}(k_t, k_t, k_n)`` in the crack frame, penny):
-
-```math
-b_{\text{penny}}^{\text{aligned TI}}
-= \frac{2}{\pi^{2}\,\sqrt{k_t k_n}}
-\qquad\text{(geometric mean of }k_t\text{ and }k_n\text{)}.
+b_{\text{penny}}^{\text{aligned TI}} = \frac{8}{3\pi\sqrt{k_tk_n}} .
 ```
 
 ### Ribbon crack — 2D formula
 
 Only the ``(\hat{\underline{m}}, \underline{n})`` transverse block of
-``\boldsymbol{K}_0`` enters the formula:
+``\boldsymbol{K}_0`` enters, since
+``\hat{Q}^{\star}_{nn}(\underline{m}) = \tfrac12\sqrt{\det\boldsymbol{K}_0\vert_{(\underline{m},\underline{n})}}``:
 
 ```math
 \boxed{\;
-b_{\text{ribbon}}^{\text{aniso}}
-= \frac{2}{\pi\,\sqrt{\det\bigl(\boldsymbol{K}_0|_{(\hat{\underline{m}},\underline{n})}\bigr)}}
+b_{\text{ribbon}}
+= \frac{\pi}{2\,\sqrt{\det\bigl(\boldsymbol{K}_0\vert_{(\hat{\underline{m}},\underline{n})}\bigr)}}
 \;}
 ```
 
-which reduces to ``b = 2/(\pi k_0)`` for an isotropic matrix.
+which reduces to ``b = \pi/(2 k_0)`` for an isotropic matrix.
+
+### The ``\boldsymbol{K}_0^{-1/2}`` route
+
+Historically these formulas were obtained by the square-root change of variable
+``\tilde{\underline{x}} = \boldsymbol{K}_0^{-1/2}\underline{x}``
+([Giraud et al. 2019](@cite giraudMOM2019)), which maps the problem to an
+isotropic one with a *transformed crack shape*: with
+``\tilde{\boldsymbol{A}} = \boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}`` and its
+singular values ``\sigma_1\ge\sigma_2\ge\sigma_3 = 0``, the transformed aspect
+ratio is ``\eta_t = \sigma_2/\sigma_1``. It is equivalent to the adjugate form —
+``\eta_t = \eta'`` — but it needs the eigendecomposition of the 3×3
+``\boldsymbol{K}_0`` *and* a singular-value decomposition, so it is `Float64`
+only. The package uses the adjugate form, which is why the anisotropic thermal
+COD flows through automatic differentiation and symbolic scalars.
+
+!!! warning "These prefactors changed in v0.4.0"
+    Up to v0.3.2 the formulas above read ``\eta/(\pi k_0\mathcal E_\eta)`` and
+    ``2/(\pi k_0)`` — too small by ``4\pi/(3\eta)`` and ``\pi^{2}/4``. Every
+    thermal ``b``, ``\boldsymbol{R}``, ``\Delta\boldsymbol{R}`` and thermal DIF
+    therefore changes. The elastic branch is unaffected, and so is
+    `fracture_permeability`, whose conduction side does not go through these
+    formulas.
 
 ## Resistivity contribution ``\boldsymbol{R}`` and dilute correction ``\Delta\boldsymbol{R}``
 

@@ -18,19 +18,36 @@ axis is stored separately in the structured container).
 function _ti_aligned(C₀::TensND.TensTI{4}, ℬ_crack::TensND.AbstractBasis)
     axis_C = collect(TensND.axis(C₀))
     axis_n = TensND.components_canon(TensND.tens_basis(ℬ_crack, 3))
-    d = abs(dot(axis_C, axis_n))
-    return _is_unit_alignment(d)
+    # Both unit vectors, so parallel ⟺ (axis·n̂)² = 1. The **square**, not
+    # `|axis·n̂|`: `Symbolics` does not fold `abs` of a literal, so on a
+    # `TensTI{4, Num}` whose axis is exactly `e₃` the product came out as an
+    # unevaluated `abs(1.0)` that nothing downstream could collapse — not even
+    # `tsimplify`, which returns `-1 + abs(1.0)`. Squaring uses only `*`, which
+    # does fold, and is mathematically identical here.
+    return _is_unit_alignment(dot(axis_C, axis_n)^2)
 end
 
-# Both directions being unit vectors, `d = |axis · n̂|` equals 1 exactly when
-# they are parallel.  On a `Real` element type that comparison needs a
-# tolerance; on a symbolic one `isapprox` is not even defined, so the test is
-# made structurally after simplification.  This is the same `T <: Real` split
-# as `_classify_crack` and `Core._sort_axes_and_basis` — without it,
-# `cod_tensor` on a `TensTI{4, Sym}` reference died in dispatch, which is the
-# one seam of the COD chain that was not symbolically transparent.
-_is_unit_alignment(d::Real) = isapprox(d, 1.0; atol = 1.0e-10)
-_is_unit_alignment(d) = isequal(tsimplify(d), one(d))
+# Both directions being unit vectors, `d = |axis · n̂|` equals 1 exactly when they
+# are parallel.  A comparable scalar takes a tolerance; anything else is tested
+# structurally, after simplification.
+#
+# The split is `Elliptic.is_hard_numeric`, **not** `d isa Real`: `Symbolics.Num`
+# is `<: Real` but `isapprox` on it returns a symbolic inequality that throws in
+# a boolean context, while `ForwardDiff.Dual` is `<: Real` and compares fine.
+# Dispatching on `::Real` here made `cod_tensor` throw on a `TensTI{4, Num}`
+# reference; guarding on the type made it throw on `Sym`.
+function _is_unit_alignment(d)
+    is_hard_numeric(d) && return isapprox(d, one(d); atol = 1.0e-10)
+    # Structural branch. Test `d - 1 == 0` rather than `d == 1`: on a
+    # `Symbolics.Num` the axis components carry `Float64` literals while `one(d)`
+    # carries an `Int`, so `isequal(d, one(d))` is *false* for a genuinely
+    # aligned axis. Subtracting first lets the literals collapse. Getting this
+    # wrong sent an aligned `TensTI{4, Num}` down the numerical back-end, which
+    # then failed inside StaticArrays instead of using the closed form.
+    gap = tsimplify(d - one(d))
+    verdict = iszero(gap)
+    return verdict isa Bool ? verdict : false
+end
 
 # TI-aligned dispatch rules — refine Core dispatch for `AbstractCrack` + TensTI{4}.
 # Explicit Val{:auto}, Val{:residues}, etc. methods are needed to disambiguate
@@ -161,24 +178,29 @@ scalar captures the full crack flexibility.  The associated
 size-independent resistivity contribution ``\\mathbf R = `` [`compliance_contribution`](@ref)`(crack, K₀)` is
 
 ```
-R = (3/4) b · ŵ ⊗ ŵ   (elliptic)
-R = (2/π) b · ŵ ⊗ ŵ   (ribbon)
+R = (3/4) b · n̂ ⊗ n̂   (elliptic)
+R = (2/π) b · n̂ ⊗ n̂   (ribbon)
 ```
 
-with ``\\hat{\\mathbf w}\\parallel\\mathbf K_0^{-1/2}\\hat{\\mathbf n}``
-(reduces to ``\\hat{\\mathbf n}`` for iso / aligned-TI matrices).
+The rank-1 direction is the crack normal ``\\hat{\\mathbf n}`` for *any*
+``\\mathbf K_0``: the null space of
+``\\mathbf K_0-\\mathbf K_0\\mathbf P(0)\\mathbf K_0`` is spanned by it.
 Apply [`delta_resistivity`](@ref) to recover the dilute resistivity
 correction ``\\Delta\\mathbf R = (4\\pi/3)\\varepsilon^{3\\mathrm d}\\mathbf R``
 (elliptic) or ``\\Delta\\mathbf R = \\pi\\,\\varepsilon^{2\\mathrm d}\\mathbf R``
 (ribbon).
 
-Closed-form derivation via the square-root change-of-variable of
-[Giraud et al. 2019](@cite giraudMOM2019), in the framework of
-[Sevostianov & Kachanov 2002](@cite sevostianov2002) for the rank-1
-factorization ``\\mathbf R \\propto \\hat{\\mathbf w}\\otimes\\hat{\\mathbf w}``.
-See the theory page `docs/src/theory/thermal_cracks.md`
-for the mathematical details and the elasticity ↔ conductivity
-correspondence table.
+``b`` is normalized exactly like the elastic ``\\mathbf B`` — by the in-plane
+half-width — so ``b = \\chi/(b\\Lambda)`` with ``\\chi^{\\mathcal E} = 2/3`` and
+``\\chi^{\\mathcal R} = \\pi/4``. Because the order-2 acoustic form is a
+*scalar*, the closed form holds for **every** anisotropy, through a 2×2
+eigenvalue problem on ``\\mathrm{adj}\\,\\mathbf K_0``; see the theory page
+`docs/src/theory/thermal_cracks.md` and its derivation script
+`scripts/16_cod_symbolic_thermal.jl`.
+
+!!! warning "These values changed in v0.4.0"
+    The thermal closed forms up to v0.3.2 were too small by ``4\\pi/(3\\eta)``
+    (elliptic) and ``\\pi^{2}/4`` (ribbon).
 """
 function cod_tensor(
         crack::MFH_Core.AbstractCrack,

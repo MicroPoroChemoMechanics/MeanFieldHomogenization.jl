@@ -24,7 +24,7 @@ silently produce `NaN`.
 @inline function _elliptic_CS(η::T) where {T <: Number}
     η² = η^2
     k² = one(T) - η²
-    if iszero(k²)
+    if is_hard_numeric(T) ? iszero(k²) : isequal(k², zero(k²))
         q = T(π) / T(4)
         return q, q, T(π) / T(2)
     else
