@@ -420,11 +420,46 @@ the degree-1 homogeneity cancels the ``1/\rho^{2}`` of the two in-plane dyads.
   = \mathcal{C}_\eta,
 ```
 
-with ``\mathcal{C}_\eta = (\mathcal{E}_\eta-\eta^{2}\mathcal{K}_\eta)/(1-\eta^{2})``
-and ``\mathcal{S}_\eta = (\mathcal{K}_\eta-\mathcal{E}_\eta)/(1-\eta^{2})`` — the
-combinations stored by `_elliptic_CS`. The ``\cos\varphi\sin\varphi`` cross term
-vanishes by parity, which is why ``\boldsymbol{B}`` is diagonal in the crack
-frame. Hence
+where, with ``m = 1-\eta^{2}`` the Legendre *parameter* of
+[Elliptic integrals](elliptic_integrals.md),
+
+```math
+\mathcal{K}_\eta = K(1-\eta^{2}),
+\qquad
+\mathcal{E}_\eta = E(1-\eta^{2}),
+\qquad
+\mathcal{C}_\eta = \frac{\mathcal{E}_\eta-\eta^{2}\mathcal{K}_\eta}{1-\eta^{2}},
+\qquad
+\mathcal{S}_\eta = \frac{\mathcal{K}_\eta-\mathcal{E}_\eta}{1-\eta^{2}} ,
+```
+
+the combinations stored by `_elliptic_CS`. The ``\cos\varphi\sin\varphi`` cross
+term vanishes by parity, which is why ``\boldsymbol{B}`` is diagonal in the crack
+frame.
+
+!!! note "Why cos² and sin² look exchanged against the literature"
+    [barthelemySifAniso](@cite) defines the very same two quantities as
+    ```math
+    \mathcal{C}_\eta = \int_0^{\pi/2}
+      \frac{\cos^{2}\vartheta\;\mathrm{d}\vartheta}
+           {\sqrt{\cos^{2}\vartheta+\eta^{2}\sin^{2}\vartheta}},
+    \qquad
+    \mathcal{S}_\eta = \int_0^{\pi/2}
+      \frac{\sin^{2}\vartheta\;\mathrm{d}\vartheta}
+           {\sqrt{\cos^{2}\vartheta+\eta^{2}\sin^{2}\vartheta}},
+    ```
+    that is, over the **complementary** angle
+    ``\vartheta = \pi/2 - \varphi``, for which the radical above reads
+    ``\rho``. Substituting swaps ``\cos`` and ``\sin`` in *both* the integrand
+    and the radical, so the numbers are identical — verified to ten digits
+    against the Legendre forms — while ``\mathcal{C}_\eta`` looks like a
+    ``\cos^{2}`` integral there and a ``\sin^{2}`` integral here. Neither is
+    wrong; only the origin of the angle differs. The ``\varphi`` above is the
+    one to keep, because it is the angle the code integrates over
+    (`Cracks._cod_elliptic_numerical`), matching the contour
+    ``\underline{\xi}^{\star}(\varphi)``.
+
+Hence
 
 ```math
 b\boldsymbol{\Lambda}

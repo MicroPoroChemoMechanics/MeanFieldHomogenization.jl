@@ -52,6 +52,11 @@ worked before.
   anisotropic `Float64` input. It never does, and has not since the dispatch
   rework: `:auto` picks `DECUHR` when its extension is loaded and
   `NestedQuadGK` otherwise (`src/Core/dispatch.jl`).
+- **Admonition titles rendered their markup literally.** Documenter emits an
+  admonition title as *plain text* — no inline markdown, no math — so
+  ``` ``\boldsymbol{B}`` ``` and `` `order = 0` `` appeared with their delimiters
+  in the rendered header. All 13 affected titles (7 pages, 4 docstrings, 2
+  Literate scripts) are now plain prose.
 - Stale self-references in the banners of `scripts/10_`…`14_`, left over from a
   renumbering.
 

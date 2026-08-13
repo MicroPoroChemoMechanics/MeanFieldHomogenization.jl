@@ -341,6 +341,17 @@ end
 # is why ``\boldsymbol{B}`` comes out diagonal in the crack frame. These three
 # quadratures are the one step SymPy cannot close, so they are checked
 # numerically against `ell_K` / `ell_E`.
+#
+# !!! note "Why cos² and sin² look exchanged against the literature"
+#     [barthelemySifAniso](@cite) defines the same two quantities over the
+#     **complementary** angle ``\vartheta = \pi/2-\varphi``, for which the
+#     radical reads ``\sqrt{\cos^{2}\vartheta+\eta^{2}\sin^{2}\vartheta} = \rho``:
+#     there ``\mathcal{C}_\eta`` is the ``\cos^{2}`` integral and
+#     ``\mathcal{S}_\eta`` the ``\sin^{2}`` one. Substituting swaps ``\cos`` and
+#     ``\sin`` in the integrand *and* in the radical, so the numbers are the
+#     same — that is what the check below measures, against the Legendre forms
+#     that both conventions share. The ``\varphi`` used here is the angle the
+#     package integrates over (`Cracks._cod_elliptic_numerical`).
 
 println("="^78)                                                            #jl
 println("  § 5  CRACK-PLANE INTEGRAL → ELLIPTIC INTEGRALS")                #jl
@@ -372,6 +383,20 @@ function master_numeric(ηv)
     )
 end
 
+"""
+    sifaniso_CS(ηv) -> (𝒞, 𝒮)
+
+`𝒞_η` and `𝒮_η` in the published form: over the complementary angle
+``ϑ = π/2 - φ``, so a `cos²` integral for `𝒞` and a `sin²` one for `𝒮`.
+Measuring both forms against the same Legendre reference is what shows the two
+conventions to be one and the same quantity.
+"""
+function sifaniso_CS(ηv)
+    r(ϑ) = sqrt(cos(ϑ)^2 + ηv^2 * sin(ϑ)^2)
+    q(f) = quadgk(f, 0.0, π / 2; rtol = 1.0e-13)[1]
+    return q(ϑ -> cos(ϑ)^2 / r(ϑ)), q(ϑ -> sin(ϑ)^2 / r(ϑ))
+end
+
 for ηv in (0.85, 0.5, 0.2)
     Eq, S2q, Cq, cross = master_numeric(ηv)
     ref = (
@@ -380,9 +405,13 @@ for ηv in (0.85, 0.5, 0.2)
         Float64(N(𝒞η(η => ηv))),
     )
     err = maximum(abs, (Eq, S2q, Cq) .- ref)
-    @printf "  η = %.2f : max|quadrature - (ℰη, η²𝒮η, 𝒞η)| = %.2e,  cross term = %.2e\n" ηv err abs(cross)   #jl
+    ## Same two numbers, written the other way round (see the note above).
+    C_sif, S_sif = sifaniso_CS(ηv)
+    err_sif = max(abs(C_sif - ref[3]), abs(S_sif - Float64(N(𝒮η(η => ηv)))))
+    @printf "  η = %.2f : max|quadrature - (ℰη, η²𝒮η, 𝒞η)| = %.2e,  cross term = %.2e,  vs published form = %.2e\n" ηv err abs(cross) err_sif   #jl
     @assert err < 1.0e-9 "master integral mismatch at η = $ηv"
     @assert abs(cross) < 1.0e-12 "the cross term should vanish by parity"
+    @assert err_sif < 1.0e-9 "the complementary-angle form disagrees at η = $ηv"
 end
 println()   #jl
 
