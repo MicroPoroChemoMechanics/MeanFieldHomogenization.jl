@@ -114,10 +114,11 @@ end
     @test simplify(1 / KhR[3, 3] - (f₁ / k₁ + f₂ / k₂ + ρ / L)) == 0
 end
 
-# `Symbolics` is not a declared test dependency — it is heavy, and `SymPy` is
-# the backend the package documents. Exercise it when it happens to be
-# available (same guard pattern as the Ferrite / Gridap backends), so that the
-# second symbolic backend is covered locally without charging CI for it.
+# `Symbolics` became a declared test dependency in v0.4.0 (see
+# `Cracks/test_cod_symbolic.jl`), so this guard now always takes the `true`
+# branch on CI; it is kept so the file still runs in a bare environment.
+# `import`, not `using` — both `SymPy` and `Symbolics` export `@syms`, and this
+# file uses SymPy's bare macro above.
 const LAM_HAS_SYMBOLICS = try
     @eval import Symbolics
     true

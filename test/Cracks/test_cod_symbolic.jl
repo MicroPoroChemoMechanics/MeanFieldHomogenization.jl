@@ -24,17 +24,23 @@ using MeanFieldHomogenization
 using TensND
 using SymPy
 using ForwardDiff
-using Symbolics
+import Symbolics
 
 # `Symbolics` must be a *declared* test dependency and loaded here, not merely
 # reached as `TensND.Symbolics`: the weak extension
 # `MeanFieldHomogenizationSymbolicsExt` is only registered when the trigger
-# package is resolved in this environment's manifest.
+# package is resolved in this environment's manifest. Loading it with `import`
+# is enough for that — extensions trigger on *load*, not on `using`.
 const Sy = Symbolics
 
-# `SymPy` and `Symbolics` both export `@syms`, so with both loaded the bare macro
-# is ambiguous — SymPy's is qualified throughout this file, and Symbolics'
-# variables are declared with `Sy.@variables`.
+# `import`, deliberately, **not** `using`: `SymPy` and `Symbolics` both export
+# `@syms`, and `runtests.jl` includes every test file into the same `Main`, so a
+# `using Symbolics` here makes the bare macro ambiguous in the *other* files that
+# rely on SymPy's export (`Conductivity/test_localization.jl`,
+# `LayeredSpheres/test_generic.jl`, `Laminates/test_laminate_symbolic.jl`,
+# `Elasticity/test_localization.jl`) — they fail with
+# `UndefVarError: @syms not defined in Main`. SymPy's macro is also qualified
+# throughout this file, and Symbolics' variables use `Sy.@variables`.
 
 @testset "COD — is_hard_numeric is the predicate, not T <: Real" begin
     ell = MeanFieldHomogenization.Elliptic
