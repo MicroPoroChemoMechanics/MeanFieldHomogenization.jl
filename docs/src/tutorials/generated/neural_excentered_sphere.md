@@ -21,8 +21,8 @@ silent zero.
 
 The morphology is **heterogeneous**: it has no Hill tensor, so it enters
 through gate B with *both* localization tensors,
-``\mathbb A_{\varepsilon\varepsilon}`` and ``\mathbb A_{\sigma\varepsilon}``. Two
-surrogates, one per tensor, sharing one finite-element solve per sample.
+``\mathbb A_{\varepsilon\varepsilon}`` and ``\mathbb A_{\sigma\varepsilon}``. Two surrogates,
+one per tensor, sharing one finite-element solve per sample.
 
 ```mermaid
 %%{init: {"flowchart": {"useMaxWidth": false, "nodeSpacing": 30, "rankSpacing": 45, "wrappingWidth": 280}} }%%

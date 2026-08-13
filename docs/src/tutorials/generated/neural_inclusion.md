@@ -347,9 +347,9 @@ same symmetry class as ``\mathbb P``, so their components are recovered from
 two teacher evaluations at two Poisson ratios by solving the 2×2 system
 componentwise.
 
-The consequence is visible in the table below: the generic model, which fits ``\nu_0``,
-degrades towards the incompressible end where ``d`` varies fastest, whereas the affine
-model is *flat* in ``\nu_0`` — it never saw a Poisson ratio at all.
+The consequence is visible in the table below: the generic model, which fits
+``\nu_0``, degrades towards the incompressible end where ``d`` varies fastest, whereas
+the affine model is *flat* in ``\nu_0`` — it never saw a Poisson ratio at all.
 
 ````@example neural_inclusion
 nn_affine(ω) = NeuralHillInclusion(
@@ -401,17 +401,16 @@ Gate A means there is nothing left to implement: the surrogate is a drop-in
 effective tensor is genuinely anisotropic and a dropped rotation cannot hide
 behind an isotropic answer.
 
-One caveat, and it is the shipped models' only real restriction: they are
-trained for an **isotropic** reference medium — ``\nu_0`` is their material feature,
-and the exact homogeneity used to decode assumes isotropy. The one-shot schemes
-evaluate the inclusion in the reference medium you supply, so they are
-unaffected. The *iterative* ones — `SelfConsistent`, `AsymmetricSelfConsistent`,
-`DifferentialScheme` — re-evaluate it in their own current estimate, which for a
-single tilted spheroid is transversely isotropic, and the surrogate refuses it
-rather than extrapolating silently. `symmetrize = IsoSymmetrize()` is the
-answer: the scheme then hands the kernel a pre-projected isotropic reference at
-every iteration. This is the same restriction the finite-element inclusions
-carry, for the same reason.
+One caveat, and it is the shipped models' only real restriction: they are trained for
+an **isotropic** reference medium — ``\nu_0`` is their material feature, and the exact
+homogeneity used to decode assumes isotropy. The one-shot schemes evaluate the
+inclusion in the reference medium you supply, so they are unaffected. The *iterative*
+ones — `SelfConsistent`, `AsymmetricSelfConsistent`, `DifferentialScheme` —
+re-evaluate it in their own current estimate, which for a single tilted spheroid is
+transversely isotropic, and the surrogate refuses it rather than extrapolating
+silently. `symmetrize = IsoSymmetrize()` is the answer: the scheme then hands the
+kernel a pre-projected isotropic reference at every iteration. This is the same
+restriction the finite-element inclusions carry, for the same reason.
 
 ````@example neural_inclusion
 C_M, C_I = iso_stiffness(30.0, 10.0), iso_stiffness(60.0, 20.0)

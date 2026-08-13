@@ -188,7 +188,7 @@ end
 # eighteen `limit` calls.
 
 println("="^78)                                                        #jl
-println("  § 3  BEHAVIOUR AT INFINITY  (degree-0 homogeneity)")        #jl
+println("  § 3  BEHAVIOR AT INFINITY  (degree-0 homogeneity)")         #jl
 println("="^78)                                                        #jl
 
 @syms s::positive

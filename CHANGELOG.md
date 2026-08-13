@@ -1,5 +1,60 @@
 # Changelog
 
+## v0.3.2
+
+The route from the Fourier Green operator to the COD tensor ``𝐁``, written down
+and executed symbolically, plus the two seams of the crack chain that were not
+symbolically transparent. No numeric result changes on any element type that
+worked before.
+
+### Bug fixes
+
+- **`cod_tensor` threw in dispatch on a symbolic transversely isotropic
+  reference.** `Cracks._ti_aligned` compared the stored symmetry axis with the
+  crack normal through `isapprox`, which is undefined on `SymPy.Sym` — the only
+  seam of the COD chain without a `T <: Real` guard, while
+  `_classify_crack` and `Core._sort_axes_and_basis` both have one. The
+  comparison is now structural for non-`Real` element types.
+- **`cod_tensor(PennyCrack(one(Sym)), …)` returned `NaN`, silently.**
+  `_elliptic_CS` took its removable `η = 1` shortcut only for `T <: Real`, so a
+  symbolic penny evaluated `𝒞 = (ℰ − η²𝒦)/k²` as `0/0`. The guard is now
+  `iszero(k²)` alone: `false` for a free symbol, which is the general branch and
+  the answer we want, `true` for an exact `Sym(1)`. Only non-`Real` *geometry*
+  was affected — every `Float64`, `ForwardDiff.Dual` and complex-moduli result
+  is bit-for-bit unchanged.
+
+### New — from the Green operator to `𝐁`
+
+- **New theory section** in `theory/cod_tensors.md`: the reduced kernel
+  ``\hat{𝐐}^{⋆}_{nn}``, why its ``ξ_n`` integral converges, the three
+  reductions (equivariance, degree-1 homogeneity, parity) that make it
+  tractable, the resulting ``a_1, a_2, a_3`` for an isotropic and for an
+  aligned-TI matrix, and the three master integrals that produce
+  ``𝒞_η, 𝒮_η, ℰ_η``. The radical ``σ_γ`` of the published TI closed form is
+  **derived** — it is the sum ``γ_1+γ_2`` of the two in-plane Stroh roots — and
+  the section closes on what breaks for a general anisotropy.
+- **New `scripts/09_cod_symbolic_green.jl`** — the same derivation carried out
+  by SymPy end to end, with the shipped closed forms as its oracles. Not added
+  to the documentation gallery: SymPy-heavy scripts are re-executed on every
+  docs build (repo policy, `docs/literate.jl`).
+- **First symbolic tests of the crack chain**, `test/Cracks/test_cod_symbolic.jl`
+  (31 tests): `cod_tensor` on `TensISO{4,3,Sym}` and on an aligned
+  `TensTI{4,Sym}`, the dispatcher's aligned/non-aligned decision, and the
+  ISO-vs-aligned-TI agreement at a free symbolic aspect ratio.
+
+### Documentation fixes
+
+- The isotropic prefactor was written `8η(1−ν²)/(3E)` in the docstring of
+  `_cod_iso_ellipse` and in `theory/cod_tensors.md`, where the code and the
+  reference both give `8(1−ν²)/(3E)`. The `η` was parasitic and invisible at the
+  penny crack. Prose only — no computed value changes.
+- `theory/cod_tensors.md` claimed that `method = :auto` selects `Residue` for
+  anisotropic `Float64` input. It never does, and has not since the dispatch
+  rework: `:auto` picks `DECUHR` when its extension is loaded and
+  `NestedQuadGK` otherwise (`src/Core/dispatch.jl`).
+- Stale self-references in the banners of `scripts/10_`…`14_`, left over from a
+  renumbering.
+
 ## v0.3.1
 
 (v0.3.0 was tagged but never registered, so everything below is folded into the
