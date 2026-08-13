@@ -7,12 +7,24 @@
 """
     _elliptic_CS(η) -> (𝒞, 𝒮, ℰ)
 
-Angular integrals (paper eq. 1532).
+Angular integrals (paper eq. 1532):
+``\\mathcal C_\\eta = \\int_0^{\\pi/2}\\cos^2\\!\\phi\\,/
+\\sqrt{\\cos^2\\!\\phi+\\eta^2\\sin^2\\!\\phi}\\;\\mathrm d\\phi``,
+likewise ``\\mathcal S_\\eta`` with ``\\sin^2\\!\\phi``, and
+``\\mathcal E_\\eta`` the complete integral of the second kind.
+
+The circular limit ``\\eta = 1`` is a removable ``0/0`` and must be taken
+by the shortcut below. The guard is deliberately **not** restricted to
+`T <: Real`: on a symbolic element type `iszero(k²)` is `false` for a free
+symbol (which is what we want — the elliptic branch is the general answer)
+and `true` for an exact `Sym(1)`, where the general branch would otherwise
+return `NaN`. Restricting it to `Real` made `cod_tensor(PennyCrack(one(Sym)), …)`
+silently produce `NaN`.
 """
 @inline function _elliptic_CS(η::T) where {T <: Number}
     η² = η^2
     k² = one(T) - η²
-    if T <: Real && iszero(k²)
+    if iszero(k²)
         q = T(π) / T(4)
         return q, q, T(π) / T(2)
     else
@@ -35,9 +47,9 @@ Closed-form COD tensor ``\\mathbf B`` of an elliptic crack of aspect
 ratio ``\\eta = b/a`` in an isotropic matrix ``(E,\\nu)``:
 
 ```
-B_ℓℓ = 8η(1−ν²)/(3E) · (1−η²) / ((1−ν−η²) 𝓔_η + ν η² 𝓚_η)
-B_mm = 8η(1−ν²)/(3E) · (1−η²) / ((1−(1−ν)η²) 𝓔_η − ν η² 𝓚_η)
-B_nn = 8η(1−ν²)/(3E) · 1/𝓔_η
+B_ℓℓ = 8(1−ν²)/(3E) · (1−η²) / ((1−ν−η²) 𝓔_η + ν η² 𝓚_η)
+B_mm = 8(1−ν²)/(3E) · (1−η²) / ((1−(1−ν)η²) 𝓔_η − ν η² 𝓚_η)
+B_nn = 8(1−ν²)/(3E) · 1/𝓔_η
 ```
 
 with ``\\mathcal K_\\eta = \\mathcal K(\\sqrt{1-\\eta^{2}})`` and

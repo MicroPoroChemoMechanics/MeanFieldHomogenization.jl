@@ -84,6 +84,7 @@ Random.seed!(20260723)
     @testset "Cracks" begin
         include("Cracks/test_cod.jl")
         include("Cracks/test_cod_ti_aligned.jl")
+        include("Cracks/test_cod_symbolic.jl")
         include("Cracks/test_crack_orientation.jl")
         include("Cracks/test_conductive.jl")
         include("Cracks/test_residue_accuracy.jl")

@@ -39,6 +39,7 @@ three-scale model (`common/pichler_model.jl`), used by both the demo script
 | `06_cylinder.jl` | cylinder Hill | transverse-plane quadrature |
 | `07_hill_ti_coaxial.jl` | `hill(...,TI)` | Barthélémy 2020 TI-coaxial closed form |
 | `08_hill_derivatives.jl` | `hill_derivative` | ∂P/∂C by ForwardDiff (ISO, TI), validated vs finite differences |
+| `09_cod_symbolic_green.jl` | `barthelemySifAniso` | SymPy, end-to-end derivation of the COD tensor 𝐁 from the Fourier Green operator: the ξ₃ integral of `Q̂*ₙₙ`, the crack-plane integral, ISO and aligned-TI closed forms recovered (σᵞ included), oracles = `cod_tensor` |
 
 ### 10–19 Cracks & COD
 | Script | reference / topic | Notes |

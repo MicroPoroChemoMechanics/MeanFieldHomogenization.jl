@@ -279,6 +279,189 @@ single ``\omega`` would not distinguish a true limit from a coincidence.
     cases. Neither affects [`cod_tensor`](@ref), which resolves the limit
     analytically instead of flattening an ellipsoid.
 
+## From the Green operator to ``\boldsymbol{B}``
+
+The closed forms of the next section are usually quoted. They are in fact
+derivable in closed form from the Fourier Green operator, and knowing *where*
+each factor comes from is what tells you which anisotropies admit a closed form
+at all. The script `scripts/09_cod_symbolic_green.jl` carries out the whole
+derivation symbolically, with the shipped closed forms as its oracles.
+
+### The reduced kernel ``\hat{\boldsymbol{Q}}^{\star}_{nn}``
+
+With ``\boldsymbol{N}(\underline{\xi}) = \underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi}``
+the **acoustic** (Christoffel) tensor, the two Fourier kernels of the traction
+integral equation on the crack plane are [kunin1983](@cite),
+[kanaun2009](@cite):
+
+```math
+\hat{\mathbb{\Gamma}}(\underline{\xi})
+  = \underline{\xi}\stackrel{s}{\otimes}\boldsymbol{N}^{-1}(\underline{\xi})
+    \stackrel{s}{\otimes}\underline{\xi},
+\qquad
+\hat{\mathbb{Q}}(\underline{\xi})
+  = \mathbb{C} - \mathbb{C}:\hat{\mathbb{\Gamma}}(\underline{\xi}):\mathbb{C},
+```
+
+and the object the crack problem actually needs is the **reduced** transform —
+the Fourier transform of the restriction of ``\hat{\mathbb{Q}}`` to the crack
+plane [barthelemySifAniso](@cite):
+
+```math
+\boxed{\;
+\hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{\xi}^{\star})
+= \frac{1}{2\pi}\int_{-\infty}^{+\infty}
+  \underline{n}\cdot\hat{\mathbb{Q}}(\underline{\xi}^{\star}+\xi_n\underline{n})
+  \cdot\underline{n}\;\mathrm{d}\xi_n \; }
+```
+
+Two properties do all the work. Contracting twice with ``\underline{n}``
+collapses the order-4 algebra to a 3×3 one,
+
+```math
+\underline{n}\cdot\hat{\mathbb{Q}}(\underline{\xi})\cdot\underline{n}
+= \boldsymbol{A} - \boldsymbol{V}(\underline{\xi})\cdot
+  \boldsymbol{N}^{-1}(\underline{\xi})\cdot\boldsymbol{V}^{\mathsf{T}}(\underline{\xi}),
+\qquad
+\boldsymbol{A} = \underline{n}\cdot\mathbb{C}\cdot\underline{n},
+\qquad
+\boldsymbol{V} = \underline{n}\cdot\mathbb{C}\cdot\underline{\xi},
+```
+
+which is the form every back-end evaluates (`Core/green_helpers.jl`). And
+``\hat{\mathbb{Q}}`` is homogeneous of degree ``0``, so the singly contracted
+kernel decays like ``1/\xi_n`` while the **doubly** contracted one decays like
+``1/\xi_n^{2}``: the integral above converges as written, and
+``\hat{\boldsymbol{Q}}^{\star}_{nn}`` is homogeneous of degree ``1``.
+
+### Three reductions, then the integral
+
+The integrand is a rational function of ``\xi_n`` whose denominator is
+``\det\boldsymbol{N}``, a **sextic** whose roots are the Stroh eigenvalues.
+Three structural reductions precede any integration:
+
+1. **Equivariance.** When ``\mathbb{C}`` is invariant under rotations about
+   ``\underline{n}`` — isotropic, or transversely isotropic with its axis along
+   ``\underline{n}`` — so is the whole construction, since ``\underline{n}`` is
+   also the integrated direction. One in-plane direction determines all of them.
+2. **Homogeneity.** Degree ``1`` factors out a single
+   ``\rho = \|\underline{\xi}^{\star}\|``.
+3. **Parity.** The ``\underline{u}``–``\underline{n}`` block of the integrand is
+   odd in ``\xi_n`` and integrates to zero.
+
+Together, with ``\underline{u} = \underline{\xi}^{\star}/\rho`` and
+``\underline{w} = \underline{n}\wedge\underline{u}``:
+
+```math
+\hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{\xi}^{\star})
+= \rho\,\bigl[\,a_1\,\underline{u}\otimes\underline{u}
+            + a_2\,\underline{w}\otimes\underline{w}
+            + a_3\,\underline{n}\otimes\underline{n}\,\bigr].
+```
+
+For an **isotropic** matrix the sextic degenerates to
+``\mu^{2}(\lambda+2\mu)\|\underline{\xi}\|^{6}``, leaving the single pair of
+double poles ``\xi_n = \pm i\rho``, and the three coefficients are just the
+plane-strain and antiplane moduli:
+
+```math
+a_1 = a_3 = \frac{\mu}{2(1-\nu)} = \frac{E}{4(1-\nu^{2})},
+\qquad
+a_2 = \frac{\mu}{2}.
+```
+
+For a **transversely isotropic** matrix with the crack in the plane of isotropy,
+every component ``N_{12}``, ``N_{23}`` carries an odd number of ``2`` indices and
+therefore vanishes: the antiplane (SH) polarization decouples, and the sextic
+splits into a quadratic and a **biquadratic** — solvable by radicals,
+
+```math
+\det\boldsymbol{N} = C_{2323}\bigl(\xi_n^{2}+\gamma_3^{2}\rho^{2}\bigr)\;
+  C_{3333}C_{2323}\bigl(\xi_n^{2}+\gamma_1^{2}\rho^{2}\bigr)
+  \bigl(\xi_n^{2}+\gamma_2^{2}\rho^{2}\bigr),
+```
+
+```math
+\gamma_3^{2} = \frac{C_{1212}}{C_{2323}},
+\qquad
+\gamma_1\gamma_2 = \sqrt{\frac{C_{1111}}{C_{3333}}},
+\qquad
+\gamma_1+\gamma_2 = \sigma_\gamma,
+```
+
+```math
+a_1 = \frac{C_{1111}C_{3333}-C_{1133}^{2}}{2\,\sigma_\gamma\,C_{3333}},
+\qquad
+a_2 = \frac{\sqrt{C_{2323}C_{1212}}}{2},
+\qquad
+a_3 = \frac{a_1}{\gamma_1\gamma_2}.
+```
+
+The radical ``\sigma_\gamma`` of the published TI closed form
+([hoenig1978](@cite), [barthelemyIJES2021](@cite)) is therefore nothing but the
+sum of the two in-plane Stroh roots — it *comes out of* the factorization rather
+than being postulated.
+
+### The crack-plane integral: where the elliptic integrals enter
+
+On the crack contour ``\underline{\xi}^{\star}(\varphi) =
+\eta\cos\varphi\,\underline{\ell} + \sin\varphi\,\underline{m}``, so that
+``\rho = \sqrt{\eta^{2}\cos^{2}\varphi+\sin^{2}\varphi}``, and the ``\rho`` of
+the degree-1 homogeneity cancels the ``1/\rho^{2}`` of the two in-plane dyads.
+**Exactly three** angular integrals survive:
+
+```math
+\frac14\!\int_0^{2\pi}\!\rho\,\mathrm{d}\varphi = \mathcal{E}_\eta,
+\qquad
+\frac14\!\int_0^{2\pi}\!\frac{\eta^{2}\cos^{2}\varphi}{\rho}\,\mathrm{d}\varphi
+  = \eta^{2}\mathcal{S}_\eta,
+\qquad
+\frac14\!\int_0^{2\pi}\!\frac{\sin^{2}\varphi}{\rho}\,\mathrm{d}\varphi
+  = \mathcal{C}_\eta,
+```
+
+with ``\mathcal{C}_\eta = (\mathcal{E}_\eta-\eta^{2}\mathcal{K}_\eta)/(1-\eta^{2})``
+and ``\mathcal{S}_\eta = (\mathcal{K}_\eta-\mathcal{E}_\eta)/(1-\eta^{2})`` — the
+combinations stored by `_elliptic_CS`. The ``\cos\varphi\sin\varphi`` cross term
+vanishes by parity, which is why ``\boldsymbol{B}`` is diagonal in the crack
+frame. Hence
+
+```math
+b\boldsymbol{\Lambda}
+= \mathrm{diag}\bigl(
+  a_1\eta^{2}\mathcal{S}_\eta + a_2\mathcal{C}_\eta,\;
+  a_1\mathcal{C}_\eta + a_2\eta^{2}\mathcal{S}_\eta,\;
+  a_3\mathcal{E}_\eta\bigr),
+\qquad
+\boldsymbol{B} = \chi\,(b\boldsymbol{\Lambda})^{-1},
+```
+
+with ``\chi`` the shape coefficient of the section above. The elliptic block is
+**the same** for the isotropic and the aligned-TI matrix — only ``a_1,a_2,a_3``
+change. That is why the two closed forms of the next section share one skeleton.
+
+For the ribbon the contour integral is replaced by the single direction
+``\underline{u} = \underline{m}``, so
+``\underline{w} = -\underline{\ell}``, and with ``\chi^{\mathcal{R}} = \pi/4``:
+
+```math
+\boldsymbol{B}^{\mathcal{R}}(\underline{m},\underline{n})
+= \frac{\pi}{4}\,\bigl(\hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{m})\bigr)^{-1}.
+```
+
+This is the exact identity behind the SIF ↔ DIF exchange relation at the end of
+this page: the operator that trades ``\underline{K}`` for ``\underline{N}`` *is*
+``\hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{\nu})``.
+
+### What breaks in the general case
+
+Nothing above survives a general anisotropy: the acoustic tensor no longer
+block-decouples, ``\det\boldsymbol{N}`` is an irreducible sextic in ``\xi_n``, and
+the crack plane has no rotational symmetry left, so one in-plane direction no
+longer determines the others. Both integrals become numerical — which is what
+the `Residue` and cubature back-ends do, the first summing residues over the six
+Stroh roots located numerically.
+
 ## Closed forms of ``\boldsymbol{B}``
 
 ### Isotropic matrix
@@ -296,11 +479,11 @@ and Poisson ratio ``\nu``, in the crack frame
 
 ```math
 \begin{aligned}
-B_{nn} &= \frac{8\,\eta\,(1-\nu^{2})}{3E}\,\frac{1}{\mathcal{E}_\eta},\\[4pt]
-B_{mm} &= \frac{8\,\eta\,(1-\nu^{2})}{3E}\,
+B_{nn} &= \frac{8\,(1-\nu^{2})}{3E}\,\frac{1}{\mathcal{E}_\eta},\\[4pt]
+B_{mm} &= \frac{8\,(1-\nu^{2})}{3E}\,
           \frac{1-\eta^{2}}
                {\bigl(1-(1-\nu)\eta^{2}\bigr)\mathcal{E}_\eta - \nu\,\eta^{2}\,\mathcal{K}_\eta},\\[4pt]
-B_{\ell\ell} &= \frac{8\,\eta\,(1-\nu^{2})}{3E}\,
+B_{\ell\ell} &= \frac{8\,(1-\nu^{2})}{3E}\,
           \frac{1-\eta^{2}}
                {\bigl(1-\nu-\eta^{2}\bigr)\mathcal{E}_\eta + \nu\,\eta^{2}\,\mathcal{K}_\eta},
 \end{aligned}
@@ -353,8 +536,13 @@ algorithm trait:
   [masson2008](@cite) adapted to the crack kernel, `Float64` only
   (`src/Cracks/green_residue.jl`).
 
-`method = :auto` picks `Residue` for anisotropic `Float64` inputs and falls back
-to `DECUHR` for symbolic or `ForwardDiff.Dual` scalars.
+`method = :auto` always picks a **cubature**, never `Residue`: `DECUHR` when its
+weak dependency is loaded, and the type-generic `NestedQuadGK` otherwise — which
+is also what a `ForwardDiff.Dual` or symbolic scalar gets. `Residue` is faster
+but its acoustic polynomial degenerates when the reference is anisotropic in
+*type* and isotropic in *value*, a case the self-consistent and differential
+schemes reach at their first step, so it is available on explicit
+`method = :residues` only (`src/Core/dispatch.jl`).
 
 ## Dilute correction to the effective compliance
 
@@ -483,7 +671,7 @@ Evaluation: [`sif`](@ref) and [`dif`](@ref) (`src/Cracks/sif.jl`).
 | :------------ | :-------------- | :----------- | :---------: |
 | `EllipticCrack` / `RibbonCrack`, `TensISO` | `Analytical` | — | ✓ |
 | `EllipticCrack` / `RibbonCrack`, `TensTI` (aligned) | `Analytical` (MFH) | — | ✓ |
-| `EllipticCrack` / `RibbonCrack`, `AbstractTens{4,3}` | `Residue` (Float64) | `:decuhr` | ✓ (decuhr) |
+| `EllipticCrack` / `RibbonCrack`, `AbstractTens{4,3}` | `DECUHR` if loaded, else `NestedQuadGK` | `:residues`, `:decuhr`, `:nestedquadgk` | ✓ |
 
 Entry points: [`cod_tensor`](@ref) / [`B_tensor`](@ref) for ``\boldsymbol{B}``,
 [`compliance_contribution`](@ref) for ``\mathbb{H}``,

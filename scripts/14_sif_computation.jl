@@ -1,5 +1,5 @@
 # =============================================================================
-#  scripts/05_sif_computation.jl
+#  scripts/14_sif_computation.jl
 #
 #  Plot the three SIF modes along the elliptic crack front versus the
 #  tip polar angle θˣ, for an elliptic crack with aspect ratio 0.1 in a

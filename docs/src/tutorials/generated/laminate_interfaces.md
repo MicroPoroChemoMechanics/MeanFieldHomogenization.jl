@@ -12,8 +12,9 @@ complementary:
 - **primal** (`SpringInterface`, `KapitzaInterface`) — a jump of the field.
   Moves the *out-of-plane* response and leaves the in-plane one untouched.
 - **dual** (`MembraneInterface`, `SurfaceConductiveInterface`) — a surface
-  stiffness. The interfaces being planar, ``\mathrm{div}_s\,\boldsymbol\sigma^s = 0``: there is *no
-  traction jump at all*, and only the *in-plane* response moves.
+  stiffness. The interfaces being planar,
+  ``\mathrm{div}_s\,\boldsymbol\sigma^s = 0``: there is *no traction jump at
+  all*, and only the *in-plane* response moves.
 
 Both enter with the weight `1/L`, an interface **density**: at fixed volume
 fractions, doubling the period halves the correction. That is why a laminate

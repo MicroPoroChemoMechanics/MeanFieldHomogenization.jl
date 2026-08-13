@@ -1,5 +1,5 @@
 # =============================================================================
-#  scripts/02_cod_TI.jl
+#  scripts/11_cod_TI.jl
 #
 #  Analytical COD tensor of an elliptical / ribbon crack whose plane is
 #  orthogonal to the isotropy axis of a transversely isotropic matrix.

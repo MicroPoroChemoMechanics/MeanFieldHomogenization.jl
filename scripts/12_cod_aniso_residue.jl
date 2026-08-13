@@ -1,5 +1,5 @@
 # =============================================================================
-#  scripts/03_cod_aniso_residue.jl
+#  scripts/12_cod_aniso_residue.jl
 #
 #  Demonstrate the residue and DECUHR backends on a generic anisotropic
 #  stiffness (triclinic-looking components).  Prints the 𝐁 tensor for a

@@ -19,8 +19,18 @@ function _ti_aligned(C₀::TensND.TensTI{4}, ℬ_crack::TensND.AbstractBasis)
     axis_C = collect(TensND.axis(C₀))
     axis_n = TensND.components_canon(TensND.tens_basis(ℬ_crack, 3))
     d = abs(dot(axis_C, axis_n))
-    return isapprox(d, 1.0; atol = 1.0e-10)
+    return _is_unit_alignment(d)
 end
+
+# Both directions being unit vectors, `d = |axis · n̂|` equals 1 exactly when
+# they are parallel.  On a `Real` element type that comparison needs a
+# tolerance; on a symbolic one `isapprox` is not even defined, so the test is
+# made structurally after simplification.  This is the same `T <: Real` split
+# as `_classify_crack` and `Core._sort_axes_and_basis` — without it,
+# `cod_tensor` on a `TensTI{4, Sym}` reference died in dispatch, which is the
+# one seam of the COD chain that was not symbolically transparent.
+_is_unit_alignment(d::Real) = isapprox(d, 1.0; atol = 1.0e-10)
+_is_unit_alignment(d) = isequal(tsimplify(d), one(d))
 
 # TI-aligned dispatch rules — refine Core dispatch for `AbstractCrack` + TensTI{4}.
 # Explicit Val{:auto}, Val{:residues}, etc. methods are needed to disambiguate

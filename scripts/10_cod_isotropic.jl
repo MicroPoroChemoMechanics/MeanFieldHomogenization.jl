@@ -1,5 +1,5 @@
 # =============================================================================
-#  scripts/01_cod_isotropic.jl
+#  scripts/10_cod_isotropic.jl
 #
 #  Compare the analytical isotropic COD tensor against both numerical
 #  backends, sweep the aspect ratio η ∈ (0, 1] and plot the three

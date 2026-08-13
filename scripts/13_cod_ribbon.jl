@@ -1,5 +1,5 @@
 # =============================================================================
-#  scripts/04_cod_ribbon.jl
+#  scripts/13_cod_ribbon.jl
 #
 #  Compare ribbon-crack COD tensors obtained from :analytical (ISO),
 #  :residues (ISO promoted to Tens) and :decuhr (idem), and verify the
