@@ -716,38 +716,47 @@ function _homogenize_alv_dispatch(
         C_0, C_phases, A_duts, contribs,
         H_phases, fractions, f_M; kw...
     )
+    # The dual scheme accumulates in COMPLIANCE space, but the per-phase
+    # data collected upstream are the STIFFNESS contributions Ñ.  Map them
+    # first, with the same exact identity the crack branch uses:
+    #     H̃_r = −J̃_M ∘ Ñ_r ∘ J̃_M ,   J̃_M = C̃_M^{-vol} .
+    # For a homogeneous inclusion this is algebraically the compliance
+    # contribution `(J_r − J_M) ∘ B̃^dil` of the elastic `dilute_dual.jl`
+    # (expand `B̃^dil = C̃_r ∘ Ã^dil ∘ J̃_M` and use `J̃_M ∘ C̃_M = 𝟙`); for a
+    # heterogeneous one it is the definition the elastic pipeline uses.
+    # Feeding the raw Ñ to the compliance sum would add a stiffness to a
+    # compliance — see the `glassy limit` / `elastic limit` tests.
+    J_M = volterra_inverse(C_0; block_size = 6)
+    contribs_J = [-(J_M * N̄ * J_M) for N̄ in contribs]
+
     if _has_cracks(kw)
-        # DiluteDual : invert C → J, add per-phase compliance contribs +
-        # crack ΔJ̃, invert back.  We rebuild the per-phase compliance
-        # contribs from the relaxation contribs : N̄_J = -J_M ∘ N̄_C ∘ J_M.
-        J_M = volterra_inverse(C_0; block_size = 6)
+        # Solid compliance contribs + crack ΔJ̃, then invert back.
         J_eff = copy(J_M)
-        @inbounds for (f, N̄) in zip(fractions, contribs)
-            term = -(J_M * N̄ * J_M)
-            @. J_eff += f * term
+        @inbounds for (f, H̄) in zip(fractions, contribs_J)
+            @. J_eff += f * H̄
         end
         J_eff .+= kw[:ΔJ_cracks_M]
         return volterra_inverse(J_eff; block_size = 6)
     end
-    iso_contribs = _try_iso_pairs(contribs)
+    iso_contribs = _try_iso_pairs(contribs_J)
     if iso_contribs !== nothing && _is_iso_block(C_0)
         αβ_0 = _iso_pair(C_0)
         αβ_eff = dilute_dual_alv_iso(αβ_0, iso_contribs, fractions)
         return _iso_blocks(αβ_eff)
     end
-    ti_contribs = _try_ti_tuples(contribs)
+    ti_contribs = _try_ti_tuples(contribs_J)
     if ti_contribs !== nothing && _is_ti_block(C_0)
         ℓ_0 = _ti_pair(C_0)
         ℓ_eff = dilute_dual_alv_ti(ℓ_0, ti_contribs, fractions)
         return _ti_blocks(ℓ_eff)
     end
-    ortho_contribs = _try_ortho_tuples(contribs)
+    ortho_contribs = _try_ortho_tuples(contribs_J)
     if ortho_contribs !== nothing && _is_ortho_block(C_0)
         o_0 = _ortho_pair(C_0)
         o_eff = dilute_dual_alv_ortho(o_0, ortho_contribs, fractions)
         return _ortho_blocks(o_eff)
     end
-    return dilute_dual_alv(C_0, contribs, fractions)
+    return dilute_dual_alv(C_0, contribs_J, fractions)
 end
 
 function _homogenize_alv_dispatch(

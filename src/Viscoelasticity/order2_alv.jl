@@ -534,13 +534,17 @@ function _homogenize_alv2_dispatch(
         K_0, K_phases, A_duts, contribs,
         fractions, f_M, K_M_law; kw...
     )
-    # Build per-phase compliance contributions: ΔR ∘ B^dil where
-    # B^dil = (𝟙 + Q̃ ∘ ΔR̃)^{-vol}.  For a clean dual API we instead
-    # reuse the relaxation-side N̄ via the relation N̄_dual = -K_eff^{-1}·N·K_eff^{-1}
-    # at the end — equivalently invert the relaxation result.
-    K_relax = dilute_alv_order2(K_0, contribs, fractions)
-    return K_relax  # in this lightweight implementation, dilute and dilute_dual
-    # return the same Matrix when used through homogenize_alv_order2.
+    # The dual scheme accumulates in RESISTIVITY space, but `contribs`
+    # carries the conductivity contributions Ñ.  Map them with the exact
+    # identity (the order-2 twin of the order-4 rule in
+    # `homogenize_alv.jl`) before averaging:
+    #     R̃_r = −R̃_0 ∘ Ñ_r ∘ R̃_0 ,   R̃_0 = K̃_0^{-vol} ,
+    # which is `(R_r − R_0) ∘ B̃^dil` written out.  Returning the
+    # relaxation-side `dilute_alv_order2` here instead — as this dispatch
+    # used to — made `DiluteDual` a silent alias of `Dilute`.
+    R_0 = volterra_inverse(K_0; block_size = 3)
+    contribs_R = [-(R_0 * N̄ * R_0) for N̄ in contribs]
+    return dilute_dual_alv_order2(K_0, contribs_R, fractions)
 end
 
 function _homogenize_alv2_dispatch(

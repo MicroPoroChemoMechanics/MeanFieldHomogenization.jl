@@ -238,6 +238,7 @@ Random.seed!(20260723)
         include("Viscoelasticity/test_order2_alv.jl")
         include("Viscoelasticity/test_extra_schemes_alv.jl")
         include("Viscoelasticity/test_crack_schemes_alv.jl")
+        include("Viscoelasticity/test_glassy_limit_alv.jl")
     end
 
     @testset "Regression" begin

@@ -1,5 +1,66 @@
 # Changelog
 
+## v0.4.1
+
+Two `DiluteDual` bugs on the ageing-viscoelastic path, both found by a new
+invariant test: at the loading time ``t_0``, the ALV effective relaxation must
+equal the *elastic* estimate built on the instantaneous (glassy) moduli.
+
+### Bug fixes
+
+- **`homogenize_alv(…, DiluteDual(), …)` added stiffness contributions to a
+  compliance.** The dual scheme accumulates in compliance space, but the
+  per-phase data collected upstream are the stiffness contributions ``Ñ``;
+  only the crack branch of the dispatch converted them. A **solid** inclusion
+  therefore entered the sum with the wrong quantity — and the wrong dimension.
+  The symptom was not subtle: a sphere at ``k = 20``, ``\mu = 8`` in a matrix at
+  ``k = 10``, ``\mu = 4``, ``f = 0.25`` gave ``(K, \mu) = (0.073, 0.34)``
+  instead of ``(11.78, 4.82)``. Contributions are now mapped by the exact
+  identity ``H̃ = -J̃_M ∘ Ñ ∘ J̃_M`` — for a homogeneous inclusion, the
+  ``(J_r - J_M) ∘ B̃^{\rm dil}`` of the elastic `dilute_dual.jl` — before
+  feeding the iso / TI / ortho / generic paths. The defect is independent of the
+  time grid and of the phase laws, so the elastic limit was wrong too:
+  `DiluteDual` was only ever cross-checked against `homogenize` on crack-only
+  RVEs, exactly where the converting branch runs. **Unaffected:** the elastic
+  pipeline, every other ALV scheme, and `DiluteDual` on crack-only RVEs.
+- **Order-2 `DiluteDual` was a silent alias of `Dilute`.** The conductivity
+  dispatch returned `dilute_alv_order2` verbatim, with a comment stating the
+  two schemes coincide "in this lightweight implementation"; it now calls
+  `dilute_dual_alv_order2` with the resistivity contributions
+  ``R̃_r = -R̃_0 ∘ Ñ_r ∘ R̃_0``. Unlike the order-4 defect, the old numbers were
+  *plausible* — a valid `Dilute` estimate under a `DiluteDual` label — so any
+  conduction or diffusion comparison of the two ALV schemes that found them
+  equal was reading this bug.
+
+### New — the glassy limit as a test
+
+- `test/Viscoelasticity/test_glassy_limit_alv.jl`. The trapezoidal block
+  ``(1,1)`` is ``\mathbb R(t_0, t_0)``, the glassy modulus, and every Volterra
+  operation — product, inverse, divide, layered recurrence, scheme fixed point —
+  preserves it, hence ``[R̃^{\rm hom}]_{(1,1)} = \mathbb C^{\rm hom}_{\rm
+  elastic}(\{\mathbb R_r(t_0,t_0)\})`` and, in engineering form,
+  ``J^E_{\rm eff}(t_0,t_0) = 1/E^{\rm hom}(t_0)``. Checked against `homogenize`
+  for the nine order-4 schemes, a spheroid under isotropic orientation average,
+  penny cracks in a Maxwell matrix, seven order-2 schemes, and the ageing
+  solidifying composite of [sanahuja2013](@cite) in both topologies. This
+  complements the existing elastic-limit tests, which feed *constant* Heaviside
+  laws and constrain every diagonal block; here the laws genuinely relax and
+  genuinely age, so only the first block is constrained — and that is the block
+  the two `DiluteDual` bugs survived in.
+
+### Documentation and scripts
+
+- **The elastic reference of the ageing-creep benchmark was drawn for the wrong
+  microstructure.** `scripts/53_ageing_creep_solid.jl` plotted `:layers` creep
+  curves against a `:whole_pores` reference (23 % apart at ``t_0 = 2/3``), so no
+  curve started on it. The reference is now built from the same topology, by the
+  elastic `homogenize` on the frozen microstructure — an independent check of
+  the ALV result rather than a restatement of its first point — and is sampled
+  at the loading ages as well as the setting times, the function being a
+  staircase between them. Same fix in
+  `docs/src/applications/ageing_creep.md`, which gains an *Elastic cross-check*
+  section printing the two sides.
+
 ## v0.4.0
 
 The route from the Fourier Green operator to the COD tensor ``𝐁``, written down
