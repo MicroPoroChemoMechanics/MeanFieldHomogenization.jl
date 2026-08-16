@@ -30,41 +30,43 @@ DocMeta.setdocmeta!(
 )
 
 makedocs(;
-    clean    = false,
-    modules  = [MeanFieldHomogenization,
-                MeanFieldHomogenization.Elliptic,
-                MeanFieldHomogenization.Core,
-                MeanFieldHomogenization.Elasticity,
-                MeanFieldHomogenization.Cracks,
-                MeanFieldHomogenization.Conductivity,
-                MeanFieldHomogenization.LayeredSpheres,
-                MeanFieldHomogenization.LayeredSpheroids,
-                MeanFieldHomogenization.Interactions,
-                MeanFieldHomogenization.Schemes,
-                MeanFieldHomogenization.Assemblies,
-                MeanFieldHomogenization.Laminates,
-                MeanFieldHomogenization.Poromechanics,
-                MeanFieldHomogenization.Constitutive,
-                MeanFieldHomogenization.Viscoelasticity,
-                MeanFieldHomogenization.CustomInclusions,
-                MeanFieldHomogenization.FiniteElements,
-                MeanFieldHomogenization.NeuralInclusions],
-    remotes  = nothing,
-    authors  = "Jean-François Barthélémy",
+    clean = false,
+    modules = [
+        MeanFieldHomogenization,
+        MeanFieldHomogenization.Elliptic,
+        MeanFieldHomogenization.Core,
+        MeanFieldHomogenization.Elasticity,
+        MeanFieldHomogenization.Cracks,
+        MeanFieldHomogenization.Conductivity,
+        MeanFieldHomogenization.LayeredSpheres,
+        MeanFieldHomogenization.LayeredSpheroids,
+        MeanFieldHomogenization.Interactions,
+        MeanFieldHomogenization.Schemes,
+        MeanFieldHomogenization.Assemblies,
+        MeanFieldHomogenization.Laminates,
+        MeanFieldHomogenization.Poromechanics,
+        MeanFieldHomogenization.Constitutive,
+        MeanFieldHomogenization.Viscoelasticity,
+        MeanFieldHomogenization.CustomInclusions,
+        MeanFieldHomogenization.FiniteElements,
+        MeanFieldHomogenization.NeuralInclusions,
+    ],
+    remotes = nothing,
+    authors = "Jean-François Barthélémy",
     sitename = "MeanFieldHomogenization.jl",
-    format   = Documenter.HTML(;
-        canonical        = "https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl",
-        repolink         = "https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl",
-        edit_link        = "main",
-        assets           = ["assets/favicon.ico", "assets/custom.css"],
-        prettyurls       = (get(ENV, "CI", nothing) == "true"),
-        collapselevel    = 1,
-        mathengine       = Documenter.MathJax3(),
+    format = Documenter.HTML(;
+        canonical = "https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl",
+        repolink = "https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl",
+        edit_link = "main",
+        assets = ["assets/favicon.ico", "assets/custom.css"],
+        prettyurls = (get(ENV, "CI", nothing) == "true"),
+        collapselevel = 1,
+        mathengine = Documenter.MathJax3(),
         # The interactive Plotly 3D percolation surfaces in the cement-paste
         # diffusion chapter embed their data inline, exceeding the 200 KiB
         # default; raise the ceiling for those pages.
-        size_threshold        = 3_000_000,
-        size_threshold_warn   = 1_500_000,
+        size_threshold = 3_000_000,
+        size_threshold_warn = 1_500_000,
         # The interactive 3D surfaces embed their data as inline HTML; allow it.
         example_size_threshold = 2_000_000,
     ),
@@ -78,7 +80,7 @@ makedocs(;
         # layered inclusions, laminates, viscoelasticity), then the N-body
         # models, and finally the appendices — pages that support the rest but
         # are written in its language rather than the other way round.
-        "Theory"  => [
+        "Theory" => [
             "theory/index.md",
             "theory/notation.md",
             "Foundations" => [
@@ -108,7 +110,7 @@ makedocs(;
         ],
         # Same principle: the inclusion families first, then the cells and
         # schemes that consume them, then what goes beyond elasticity.
-        "Manual"  => [
+        "Manual" => [
             "manual/installation.md",
             "Inclusions" => [
                 "manual/inclusion_gallery.md",
@@ -201,6 +203,7 @@ makedocs(;
         ],
         "Applications" => [
             "applications/cement_paste.md",
+            "applications/hydrating_blended_paste.md",
             "applications/cement_paste_diffusion.md",
             "applications/strength.md",
             "applications/itz_concrete.md",
@@ -275,7 +278,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo         = "github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl.git",
-    devbranch    = "main",
+    repo = "github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl.git",
+    devbranch = "main",
     push_preview = false,
 )

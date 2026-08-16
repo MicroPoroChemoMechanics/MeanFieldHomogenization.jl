@@ -1,19 +1,26 @@
 [deps]
+ChemistryLab = "f346e401-14f9-407c-a0e2-c4f64a3e574a"
 DECUHR = "d5c0ea0e-a2e6-4e56-a5f3-17f3ec7c9d22"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 DocumenterMermaid = "a078cd44-4d9c-4618-b545-3ab9d77f9177"
+DynamicQuantities = "06fc5a27-2a28-4c7c-a15d-362465fb6821"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 Integrals = "de52edbc-65ea-441a-8357-d3a637375a31"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
 LiveServer = "16fef848-5104-11e9-1b77-fb7a48bbb589"
 MeanFieldHomogenization = "c1e5f8a3-7b2d-4a6c-9e4f-3b8a2c5d7e9f"
 NonlinearSolve = "8913a72c-1f9b-4ce2-8d82-65094dcecaec"
+OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
+
+[compat]
+ChemistryLab = "0.5"
 
 [sources]
 MeanFieldHomogenization = {path = ".."}

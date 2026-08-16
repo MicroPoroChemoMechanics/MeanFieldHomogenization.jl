@@ -6,7 +6,10 @@ lcov.info
 /test/Manifest.toml
 /scripts/Manifest.toml
 /docs/Manifest.toml
-/docs/build/
+# `build*` and not `build`: a partial build written to `docs/build_onepage/`,
+# or any other variant, is not matched by a pattern naming the directory
+# exactly — gitignore does not match on prefix.
+/docs/build*/
 /docs/generated_notebooks/
 /docs/generated_scripts/
 /build/
