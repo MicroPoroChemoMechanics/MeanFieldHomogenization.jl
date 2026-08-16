@@ -51,11 +51,17 @@ jobs:
       - name: Check formatting (PR)
         if: github.event_name == 'pull_request'
         run: |
-          julia --project=@runic -e 'using Runic; exit(Runic.main(["--check", "src/", "test/"]))'
+          julia --project=@runic -e '
+            using Runic
+            paths = filter(isdir, ["src", "test", "ext"])
+            exit(Runic.main(["--check"; paths]))'
       - name: Auto-format (push to main)
         if: github.event_name == 'push'
         run: |
-          julia --project=@runic -e 'using Runic; Runic.main(["--inplace", "src/", "test/"])'
+          julia --project=@runic -e '
+            using Runic
+            paths = filter(isdir, ["src", "test", "ext"])
+            Runic.main(["--inplace"; paths])'
           if [ -n "$(git diff --name-only)" ]; then
             git config --local user.name "github-actions[bot]"
             git config --local user.email "github-actions[bot]@users.noreply.github.com"

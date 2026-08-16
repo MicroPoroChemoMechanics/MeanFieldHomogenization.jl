@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased — coupling to ChemistryLab.jl (documentation and scripts only)
+
+No change to `src/`, so no release of the package is required for this.
+
+- **New Applications chapter**, `applications/hydrating_blended_paste.md`: the
+  four-scale elastic model of Lavergne et al. (*CCR* **104**, 2018), with the
+  volume fractions **computed by the chemistry** — a Parrot & Killoh + Waller
+  kinetics run, the reaction stoichiometry, and the molar volumes of CEMDATA18 —
+  instead of a Powers-type correlation. Every other cement chapter here starts
+  from such a correlation, and the repository held three mutually incompatible
+  parameterizations of it; this chapter deliberately adds no fourth, since its
+  model takes volume fractions and never `(w/c, α)`.
+- **New scripts**: `44_lavergne_hydration_micromechanics.jl` and the shared
+  `common/lavergne_model.jl` (micromechanics) and `common/lavergne_hydration.jl`
+  (chemistry). Script 44 activates `docs/` rather than the repository root — it
+  is the only script needing a package outside the MeanFieldHomogenization stack.
+- **`docs/Project.toml`** gains `ChemistryLab`, `OrdinaryDiffEq`,
+  `DynamicQuantities` and `OrderedCollections`.
+- **Bibliography**: `Lavergne2018` and `ParrotKilloh1984` added, both verified —
+  the DOI against Crossref, the 1984 proceedings entry against independent
+  bibliographic records.
+
 ## v0.4.1
 
 Two `DiluteDual` bugs on the ageing-viscoelastic path, both found by a new
