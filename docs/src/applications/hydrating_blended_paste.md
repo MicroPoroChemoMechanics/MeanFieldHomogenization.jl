@@ -19,6 +19,7 @@ coupling lives entirely in this chapter and in
 `scripts/common/lavergne_hydration.jl`.
 
 ```mermaid
+%%{init: {"flowchart": {"useMaxWidth": false, "nodeSpacing": 26, "rankSpacing": 34}} }%%
 flowchart TB
     subgraph CL["ChemistryLab.jl"]
         direction TB
@@ -254,6 +255,7 @@ self-consistent scheme with all phases spherical, and only the *result* is given
 the fibrillar morphology at the foam scale.
 
 ```mermaid
+%%{init: {"flowchart": {"useMaxWidth": false, "nodeSpacing": 26, "rankSpacing": 34}} }%%
 flowchart TB
     S1["<b>1. Hydrates</b><br/>self-consistent"]
     S2["<b>2. Hydrate foam</b><br/>self-consistent"]

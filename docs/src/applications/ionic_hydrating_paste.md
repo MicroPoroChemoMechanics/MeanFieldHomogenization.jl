@@ -17,6 +17,7 @@ Only the chemistry differs, which is what makes the two chapters comparable
 term by term.
 
 ```mermaid
+%%{init: {"flowchart": {"useMaxWidth": false, "nodeSpacing": 26, "rankSpacing": 34}} }%%
 flowchart TB
     subgraph S["stoichiometric — previous chapter"]
         direction TB
@@ -140,6 +141,7 @@ p_pH = plot(
     title = "Pore solution — unavailable from the stoichiometric model",
     ylims = (11.5, 13.5), size = (760, 380),
 )
+p_pH
 ```
 
 The solution sits at pH 12.5–12.6 throughout, which is where a Portland cement
@@ -243,6 +245,7 @@ p_E = plot(
     legend = :topleft, size = (760, 420),
 )
 plot!(p_E, td, E_stoich; lw = 2, ls = :dash, label = "stoichiometric (previous chapter)")
+p_E
 ```
 
 ```@example ionic

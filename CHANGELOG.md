@@ -1,26 +1,58 @@
 # Changelog
 
-## Unreleased — coupling to ChemistryLab.jl (documentation and scripts only)
+## v0.4.2 — coupling to ChemistryLab.jl (documentation and scripts only)
 
-No change to `src/`, so no release of the package is required for this.
+**`src/` is untouched by this release.** It exists so the two new Applications
+chapters and their scripts reach the published documentation: Documenter only
+rebuilds `stable/` on a tagged release, so without it the material below stays
+in `dev/`. No exported API, no behavior, and no compat bound of the package
+changed, so nothing downstream needs adjusting.
 
-- **New Applications chapter**, `applications/hydrating_blended_paste.md`: the
-  four-scale elastic model of Lavergne et al. (*CCR* **104**, 2018), with the
-  volume fractions **computed by the chemistry** — a Parrot & Killoh + Waller
-  kinetics run, the reaction stoichiometry, and the molar volumes of CEMDATA18 —
-  instead of a Powers-type correlation. Every other cement chapter here starts
-  from such a correlation, and the repository held three mutually incompatible
-  parameterizations of it; this chapter deliberately adds no fourth, since its
-  model takes volume fractions and never `(w/c, α)`.
-- **New scripts**: `44_lavergne_hydration_micromechanics.jl` and the shared
-  `common/lavergne_model.jl` (micromechanics) and `common/lavergne_hydration.jl`
-  (chemistry). Script 44 activates `docs/` rather than the repository root — it
-  is the only script needing a package outside the MeanFieldHomogenization stack.
-- **`docs/Project.toml`** gains `ChemistryLab`, `OrdinaryDiffEq`,
-  `DynamicQuantities` and `OrderedCollections`.
+### Two cement chapters, computing what other chapters correlate
+
+- **`applications/hydrating_blended_paste.md`** — the four-scale elastic model
+  of Lavergne et al. (*CCR* **104**, 2018) with the volume fractions **computed
+  by the chemistry**: a Parrot & Killoh + Waller kinetics run, the reaction
+  stoichiometry, and the molar volumes of CEMDATA18, instead of a Powers-type
+  correlation. Every other cement chapter here starts from such a correlation,
+  and the repository held three mutually incompatible parameterizations of it;
+  this chapter deliberately adds no fourth, since its model takes volume
+  fractions and never `(w/c, α)`.
+
+- **`applications/ionic_hydrating_paste.md`** — the same paste with the
+  chemistry turned inside out. The clinker only dissolves, into Ca²⁺, SiO₂,
+  AlO₂⁻, FeO₂⁻, SO₄²⁻, CO₃²⁻ and H⁺, and a Gibbs free-energy minimization at
+  every accepted step decides which hydrates are stable. No sequencing rule is
+  written anywhere.
+
+  The two chapters share the micromechanics exactly, so the comparison is
+  meaningful: they agree to a few percent at one day and drift to some ten
+  percent at 28 days, which measures what a hand-written priority cascade costs
+  against letting the thermodynamics choose. The ionic route also yields what
+  the stoichiometric one cannot: the pore-solution pH (12.5–12.6 throughout, a
+  computed quantity), a setting threshold at 11.6 h where the self-consistent
+  fixed point collapses because the solid has not percolated, and an aluminate
+  sequence that changes with the mix without a line of code changing — with
+  3.5 % calcite the carbonate stabilises the ettringite and it survives to
+  28 days, without limestone it peaks at 6 hours and is depleted to nothing.
+
+### Scripts
+
+- `44_lavergne_hydration_micromechanics.jl`, `45_ionic_hydration_micromechanics.jl`,
+  and the shared `common/lavergne_model.jl` (micromechanics),
+  `common/lavergne_hydration.jl` and `common/ionic_hydration.jl` (chemistry).
+  These two scripts activate `docs/` rather than the repository root — they are
+  the only ones needing a package outside the MeanFieldHomogenization stack.
+
+### Documentation environment
+
+- **`docs/Project.toml`** gains `ChemistryLab` (compat `"0.7"`, which requires
+  ChemistryLab ≥ 0.7.1 for the ionic chapter to be trustworthy), `OrdinaryDiffEq`,
+  `DynamicQuantities`, `OrderedCollections` and `OptimaSolver`.
 - **Bibliography**: `Lavergne2018` and `ParrotKilloh1984` added, both verified —
   the DOI against Crossref, the 1984 proceedings entry against independent
   bibliographic records.
+
 
 ## v0.4.1
 
