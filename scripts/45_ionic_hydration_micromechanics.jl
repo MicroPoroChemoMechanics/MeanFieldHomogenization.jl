@@ -24,7 +24,7 @@
 #      the whole point: WITHOUT limestone the ettringite peaks early and
 #      converts to monosulphate once the sulfate is spent, the AFm settling at
 #      exactly the sulfate budget; WITH the 3.5 % calcite of this formulation
-#      the carbonate stabilises the AFt instead, forming monocarboaluminate, and
+#      the carbonate stabilizes the AFt instead, forming monocarboaluminate, and
 #      the ettringite persists to 28 days. Nothing in the code distinguishes the
 #      two cases — the free energy does.
 #    - a setting threshold: below percolation the self-consistent fixed point
@@ -168,7 +168,7 @@ end
 println("└──────────────────────┴──────────┴──────────┴──────────┴──────────┘")
 println()
 
-# The sulfate budget is the tell. With no carbonate to stabilise it, the AFt
+# The sulfate budget is the tell. With no carbonate to stabilize it, the AFt
 # must give its sulfate up to the AFm; with calcite, monocarboaluminate forms
 # instead and the ettringite survives.
 let r = results45[2]

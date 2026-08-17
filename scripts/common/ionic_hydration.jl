@@ -32,10 +32,10 @@ const IONIC_CEMDATA = joinpath(pkgdir(ChemistryLab), "data", "cemdata18-thermofu
 
 # Four systems. `:opc` is the model; the three smaller ones are the ladder that
 # was used to isolate what made it hard, and they are kept because reproducing an
-# intermediate is the fastest way to localise a regression.
+# intermediate is the fastest way to localize a regression.
 #
 # All four run with ChemistryLab >= 0.7.1. `:opc` over 28 days: 202 accepted
-# steps, retcode Success, pore solution at pH 12.58, sulfate and aluminium
+# steps, retcode Success, pore solution at pH 12.58, sulfate and aluminum
 # budgets closing on the last digit.
 const IONIC_SYSTEMS = Dict(
     :silicates => (
@@ -77,7 +77,7 @@ second model, and what `lavergne_hydration.jl` has to encode by hand.
 This needs ChemistryLab ≥ 0.7.1. Before it, a re-speciation could start outside
 the feasible set of its own equality constraint, and the full OPC returned an
 assemblage demanding 174 % of the sulfate present while reporting a residual of
-1.4e-2 — the residual being normalised by the 34 mol water budget, which hid a
+1.4e-2 — the residual being normalized by the 34 mol water budget, which hid a
 0.465 mol violation on the 0.27 mol of sulfate.
 
 !!! danger "Judge these runs on the pH, not on the retcode"

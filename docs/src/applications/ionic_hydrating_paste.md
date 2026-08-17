@@ -48,7 +48,7 @@ What the ionic route buys, and the stoichiometric one cannot give at all:
     Before that release a re-speciation could start outside the feasible set of
     its own equality constraint, and a full ordinary Portland cement returned an
     assemblage demanding 174 % of the sulfate present — while reporting a
-    residual of `1.4e-2`, because the residual was normalised by the 34 mol water
+    residual of `1.4e-2`, because the residual was normalized by the 34 mol water
     budget and a 0.465 mol violation on 0.27 mol of sulfate disappeared into it.
 
 ## 1. Building the chemical system
@@ -188,7 +188,7 @@ Two different histories out of one model:
 
 - **With limestone**, the ettringite forms and *survives* to 28 days. The
   carbonate reacts with the aluminate to form monocarboaluminate, so the
-  sulfate is never called upon to feed an AFm and the AFt is stabilised. This is
+  sulfate is never called upon to feed an AFm and the AFt is stabilized. This is
   the well-known limestone effect.
 - **Without limestone**, the ettringite peaks at 6 hours and is then **depleted**
   — down to a tenth of its peak by 1.5 days, and to nothing by 28 days. Once the
@@ -275,13 +275,13 @@ has not percolated, and the model says so rather than returning a small number.
 - The modulus at 28 days, near 16 GPa, is on the low side for a w/b = 0.50 paste,
   where 18–22 GPa is usual. The trend and the ordering are right; the level is
   not calibrated against experiment here.
-- The C-S-H is represented by the CEMDATA18 `Jennite` end-member, normalised per
+- The C-S-H is represented by the CEMDATA18 `Jennite` end-member, normalized per
   silicon. A real C-S-H is a solid solution of varying Ca/Si; using the CSHQ
   solid solution in a coupled solve is not exercised by the package's tests.
 - The run reports a number of equilibrium solves that stop short of the
   optimizer's tolerance. That count refers to the re-speciation buffer during
   integration, not to the trajectory used here, which is recomputed with the
-  guard rails of §3 and whose sulfate and aluminium budgets close on the last
+  guard rails of §3 and whose sulfate and aluminum budgets close on the last
   digit. It is a real diagnostic to tighten, not a silent one to ignore.
 - Kinetics are Parrot–Killoh rates applied to the dissolution reactions, with a
   per-phase calibration factor, because no Palandri–Kharaka parameter set is
