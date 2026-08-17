@@ -21,6 +21,11 @@ const CEMDATA = joinpath(pkgdir(ChemistryLab), "data", "cemdata18-thermofun.json
 # Phase families the micromechanical model consumes. Keys must match
 # `LAVERGNE_HYDRATES`, `LAVERGNE_INCLUSIONS` and `LAVERGNE_PORES` of
 # `lavergne_model.jl`; `volume_fractions` refuses to put a species in two.
+# The AFm and hydrogarnet families each gather two phases. That is faithful
+# rather than lazy: Table 5 of Lavergne et al. gives monosulfo- and
+# monocarboaluminate the same (42.3 GPa, 0.324), and C₃AH₆ and the siliceous
+# hydrogarnet the same (22.4 GPa, 0.25), so the micromechanics cannot tell them
+# apart anyway.
 const LAVERGNE_GROUPS = [
     "anhydrous" => ["C3S", "C2S", "C3A", "C4AF"],
     "gypsum" => "Gp",
@@ -29,8 +34,8 @@ const LAVERGNE_GROUPS = [
     "C-S-H" => "Jennite",
     "CH" => "Portlandite",
     "AFt" => "ettringite",
-    "AFm" => "monosulphate12",
-    "hydrogarnet" => "C3AH6",
+    "AFm" => ["monosulphate12", "monocarbonate"],
+    "hydrogarnet" => ["C3AH6", "C3AFS0.84H4.32"],
     "FH3" => "FeOOHmic",
     "water" => "H2O@",
 ]
@@ -46,7 +51,8 @@ function build_cement_system()
     substances = build_species(CEMDATA)
     syms = split(
         "C3S C2S C3A C4AF Gp Cal Amor-Sl " *
-            "Jennite Portlandite ettringite monosulphate12 C3AH6 FeOOHmic " *
+            "Jennite Portlandite ettringite monosulphate12 monocarbonate " *
+            "C3AH6 C3AFS0.84H4.32 FeOOHmic " *
             "H2O@"
     )
     sp = speciation(substances, syms; aggregate_state = [AS_AQUEOUS])
@@ -63,65 +69,214 @@ Every reaction is **balanced by ChemistryLab** from its reactants and products
 rather than by hand: CEMDATA18 stores Jennite with a rounded Ca:Si of 1.666667,
 so hand-written 4/3 and 103/30 coefficients leave a residual.
 
-C₃A and C₄AF each drive two reactions, one consuming gypsum to form ettringite
-and one forming hydrogarnet without it. The Parrot–Killoh rate of the phase is
-split between them by a smooth switch on the remaining gypsum, which reproduces
-the sequencing rule of Lavergne et al. — ettringite while sulfate lasts, then
-the sulfate-free product — while staying differentiable.
+## The aluminate cascade
+
+C₃A and C₄AF each drive **several** competing reactions, taken in a fixed order
+of priority. `hydrationDIM_CTOA4.py` implements this by calling every reaction at
+each time step with the *remainder* of the phase's kinetic increment, each
+reaction taking what its scarcest co-reactant allows and passing the rest on
+(`Reaction.react`). Depletion is never tested; it is absorbed by that clipping.
+
+The continuous analog used here is a **partition of unity** over the routes.
+With `gᵢ = xᵢ/(xᵢ+ε)` a smooth availability gate on the co-reactant of route `i`,
+expressed in moles of anhydrous phase that co-reactant can support,
+
+    w₁ = g₁,   w₂ = (1-w₁)g₂,   w₃ = (1-w₁-w₂)g₃,   …,   w_last = 1 - Σ wᵢ
+
+so `Σ wᵢ = 1` and the phase's total Parrot–Killoh rate is conserved exactly,
+whichever routes are open. The last route needs no co-reactant and takes the
+remainder, exactly as in the reference.
+
+Priority orders, from `iter()` of the reference:
+
+  - **C₃A** — gypsum → calcite → ettringite → water only.
+  - **C₄AF** — C₃S → C₂S → gypsum → calcite → ettringite → water only.
+
+### The C₄AF ordering is genuinely ambiguous in the sources
+
+`c4af_priority` selects between two readings, because the sources do not agree:
+
+  - `:silicate_first` (default) — what `iter()` of the reference actually does:
+    `RfC4AF` (with C₃S, l. 1163) and `ReC4AF` (with C₂S, l. 1164) are called
+    **before** `RaC4AF` (gypsum, l. 1167), each receiving only the remainder. The
+    paper's §1.1.1 supports it: the Brouwers reactions apply "*until all sources of
+    silica are depleted*", which is a priority rule.
+  - `:sulfate_first` — the order in which Table 2 of the paper **lists** the
+    reactions, and the order of the `d_reac_C4AF` dictionary itself (l. 225, where
+    `RaC4AF` with gypsum is the first entry).
+
+A listing order is not an execution order, and the dictionary is not iterated in
+`iter()` — so `:silicate_first` is the defensible default. Figure 1 of the paper
+cannot settle it either way: it groups the aluminate hydrates into a single
+"AFt, AFm" band with no separate hydrogarnet. The keyword exists so the difference
+can be measured rather than argued about.
+
+Two consequences worth knowing. Monocarboaluminate comes **before**
+monosulfoaluminate (Lothenbach 2008), and the *dominant* route for C₄AF is the
+siliceous hydrogarnet consuming C₃S then C₂S — not the sulfate route. The
+deduction of the C₃S/C₂S eaten there, which the reference performs by hand on the
+silicate targets, is automatic here: C₃S is a kinetic species, so that
+consumption enters its own degree of reaction and hence its own rate.
+
+The gates read amounts of species that are not themselves kinetic (`Gp`, `Cal`,
+`ettringite`). That is correct because the ODE state carries the reaction
+extents, from which the residual reconstructs every species before evaluating the
+rates (ChemistryLab ≥ 0.5).
+
+### Why smooth gates and not callbacks
+
+The `x/(x+ε)` form makes each consumer's rate proportional to `x` as the
+co-reactant runs out, so the stock decays **exponentially towards zero and cannot
+cross it**. That is a structural property of the gate, not luck: measured over a
+90-day run refined around depletion, the most negative value reached by any
+species is −1.7e-16 mol, i.e. rounding.
+
+A `ContinuousCallback` on "gypsum exhausted" would therefore be rooted on a
+quantity that never actually reaches zero, and would switch the rate
+discontinuously — which is what a Rosenbrock method handles worst, since it needs
+both a Jacobian and a time gradient of the residual. Nothing here needs an event.
+
+### The one thing the smooth form does not encode
+
+The reference consumes gypsum from a **shared, sequentially mutated** dictionary,
+so C₃A has absolute priority over C₄AF. Here both aluminates read the same
+`n["Gp"]` and draw simultaneously. That turns out not to matter: C₃A's
+Parrot–Killoh rate is far faster early on (k₁ = 1.0 against 0.37 d⁻¹) and C₄AF's
+two silicate routes are open ahead of its sulfate route, so C₃A takes essentially
+all the sulfate anyway — 3 × 0.0891 = 0.267 mol against 0.2672 mol available, with
+the C₄AF sulfate route left at zero. The priority *emerges from the kinetics*
+rather than being imposed. Worth re-checking if the clinker composition is changed
+to something where C₄AF outpaces C₃A.
 """
-function hydration_reactions(cs; wb, blaine, humidity = nothing)
+function hydration_reactions(cs; wb, blaine, humidity = nothing, c4af_priority::Symbol = :silicate_first)
     s(n) = cs[n]
     α_max = powers_alpha_max(wb)
     pk(p, n) = parrot_killoh_avrami(p, n; α_max, blaine, humidity)
-
-    # Smooth partition of an aluminate rate between the sulfated and the
-    # sulfate-free route, gated on the gypsum still present. `ε` is a mole scale,
-    # not a tolerance: it sets how sharply the switch happens as sulfate runs out.
-    #
-    # Gypsum is consumed but is not a kinetic species. Reading it here is correct
-    # because the ODE state carries the reaction extents, from which the residual
-    # reconstructs every species before evaluating the rates (ChemistryLab ≥ 0.5).
-    # The gate is kept smooth rather than a hard `> 0` test, so the residual stays
-    # continuous and differentiable for the stiff solver.
-    ε_gp = 1.0e-3
-    sulfated(rate) = (T, P, t, n, lna, n0) -> begin
-        g = max(n["Gp"], zero(eltype(n.data)))
-        rate(T, P, t, n, lna, n0) * g / (g + ε_gp)
-    end
-    unsulfated(rate) = (T, P, t, n, lna, n0) -> begin
-        g = max(n["Gp"], zero(eltype(n.data)))
-        rate(T, P, t, n, lna, n0) * ε_gp / (g + ε_gp)
-    end
     wrap(f) = KineticFunc(f, (T = 293.15u"K", P = 1.0e5u"Pa"), u"mol/s")
 
+    # Mole scale of the availability gates, not a tolerance: it sets how sharply
+    # a route closes as its co-reactant runs out.
+    ε_av = 1.0e-3
+
+    # Availability of `name` expressed in moles of anhydrous phase it can supply,
+    # given that one mole of that phase consumes `need` moles of it.
+    gate(n, name, need) = begin
+        x = max(n[name], zero(eltype(n.data))) / need
+        x / (x + ε_av)
+    end
+
+    # Monocarboaluminate is disabled above 48 °C (Lothenbach 2008). Smooth over
+    # ~1 K so the residual stays differentiable; inert at 20 °C.
+    θ48(T) = one(T) / (one(T) + exp((T - oftype(T, 321.15)) / oftype(T, 1.0)))
+
+    # Build the rate of route `k` of a cascade: base rate × its weight in the
+    # partition of unity. `gates` returns the availability gate of each route
+    # except the last, which takes the remainder.
+    function cascade_rate(base, gates, k, nroutes)
+        return wrap(
+            (T, P, t, n, lna, n0) -> begin
+                r = base(T, P, t, n, lna, n0)
+                rest = one(r)
+                w = zero(r)
+                for i in 1:(nroutes - 1)
+                    gᵢ = gates(i, T, n)
+                    w = rest * gᵢ
+                    i == k && return r * w
+                    rest = rest - w
+                end
+                return r * rest          # last route: the remainder
+            end
+        )
+    end
+
+    # ── Silicates ────────────────────────────────────────────────────────────
     r_c3s = Reaction([s("C3S"), s("H2O@")], [s("Jennite"), s("Portlandite")]; symbol = "C3S hydration")
     r_c3s[:rate] = pk(PK84_PARAMS_C3S, "C3S")
 
     r_c2s = Reaction([s("C2S"), s("H2O@")], [s("Jennite"), s("Portlandite")]; symbol = "C2S hydration")
     r_c2s[:rate] = pk(PK84_PARAMS_C2S, "C2S")
 
+    # ── C₃A: gypsum → calcite → ettringite → water only ─────────────────────
     pk_c3a = pk(PK84_PARAMS_C3A, "C3A")
-    r_c3a_aft = Reaction(
-        [s("C3A"), s("Gp"), s("H2O@")], [s("ettringite")]; symbol = "C3A + gypsum -> AFt"
-    )
-    r_c3a_aft[:rate] = wrap(sulfated(pk_c3a))
-    r_c3a_hg = Reaction([s("C3A"), s("H2O@")], [s("C3AH6")]; symbol = "C3A -> hydrogarnet")
-    r_c3a_hg[:rate] = wrap(unsulfated(pk_c3a))
+    c3a_gates(i, T, n) =
+        i == 1 ? gate(n, "Gp", 3.0) :
+        i == 2 ? gate(n, "Cal", 1.0) * θ48(T) :
+        gate(n, "ettringite", 0.5)
 
+    c3a_routes = [
+        ("C3A + gypsum -> AFt", [s("C3A"), s("Gp"), s("H2O@")], [s("ettringite")]),
+        ("C3A + calcite -> Mc", [s("C3A"), s("Cal"), s("H2O@")], [s("monocarbonate")]),
+        ("C3A + AFt -> AFm", [s("C3A"), s("ettringite"), s("H2O@")], [s("monosulphate12")]),
+        ("C3A -> hydrogarnet", [s("C3A"), s("H2O@")], [s("C3AH6")]),
+    ]
+    r_c3a = map(enumerate(c3a_routes)) do (k, (name, reac, prod))
+        r = Reaction(reac, prod; symbol = name)
+        r[:rate] = cascade_rate(pk_c3a, c3a_gates, k, length(c3a_routes))
+        r
+    end
+
+    # ── C₄AF: C₃S → C₂S → gypsum → calcite → ettringite → water only ────────
     pk_c4af = pk(PK84_PARAMS_C4AF, "C4AF")
-    r_c4af_aft = Reaction(
-        [s("C4AF"), s("Gp"), s("H2O@")],
-        [s("ettringite"), s("Portlandite"), s("FeOOHmic")];
-        symbol = "C4AF + gypsum -> AFt"
-    )
-    r_c4af_aft[:rate] = wrap(sulfated(pk_c4af))
-    r_c4af_hg = Reaction(
-        [s("C4AF"), s("H2O@")], [s("C3AH6"), s("Portlandite"), s("FeOOHmic")];
-        symbol = "C4AF -> hydrogarnet"
-    )
-    r_c4af_hg[:rate] = wrap(unsulfated(pk_c4af))
+    hg = s("C3AFS0.84H4.32")
 
-    # Pozzolanic reaction: amorphous silica consumes portlandite.
+    # (gate specification, reaction) pairs, listed in the order of priority.
+    r_si3 = (
+        "C4AF + C3S -> Fe hydrogarnet", ("C3S", 1.68),
+        [s("C4AF"), s("C3S"), s("H2O@")], [hg, s("Portlandite")],
+    )
+    r_si2 = (
+        "C4AF + C2S -> Fe hydrogarnet", ("C2S", 1.68),
+        [s("C4AF"), s("C2S"), s("H2O@")], [hg, s("Portlandite")],
+    )
+    r_gp = (
+        "C4AF + gypsum -> AFt", ("Gp", 3.0),
+        [s("C4AF"), s("Gp"), s("H2O@")],
+        [s("ettringite"), s("Portlandite"), s("FeOOHmic")],
+    )
+    r_cal = (
+        "C4AF + calcite -> Mc", ("Cal", 1.0),
+        [s("C4AF"), s("Cal"), s("H2O@")],
+        [s("monocarbonate"), s("Portlandite"), s("FeOOHmic")],
+    )
+    r_aft = (
+        "C4AF + AFt -> AFm", ("ettringite", 0.5),
+        [s("C4AF"), s("ettringite"), s("H2O@")],
+        [s("monosulphate12"), s("Portlandite"), s("FeOOHmic")],
+    )
+    r_last = (
+        "C4AF -> hydrogarnet", nothing,
+        [s("C4AF"), s("H2O@")],
+        [s("C3AH6"), s("Portlandite"), s("FeOOHmic")],
+    )
+
+    ordered = if c4af_priority === :silicate_first
+        [r_si3, r_si2, r_gp, r_cal, r_aft, r_last]
+    elseif c4af_priority === :sulfate_first
+        [r_gp, r_cal, r_aft, r_si3, r_si2, r_last]
+    else
+        throw(
+            ArgumentError(
+                "c4af_priority must be :silicate_first or :sulfate_first, " *
+                    "got :$c4af_priority"
+            )
+        )
+    end
+
+    # Calcite is the one route carrying the 48 C switch.
+    c4af_gates(i, T, n) = begin
+        (name, need) = ordered[i][2]
+        g = gate(n, name, need)
+        name == "Cal" ? g * θ48(T) : g
+    end
+
+    c4af_routes = [(nm, reac, prod) for (nm, _, reac, prod) in ordered]
+    r_c4af = map(enumerate(c4af_routes)) do (k, (name, reac, prod))
+        r = Reaction(reac, prod; symbol = name)
+        r[:rate] = cascade_rate(pk_c4af, c4af_gates, k, length(c4af_routes))
+        r
+    end
+
+    # ── Pozzolanic reaction: amorphous silica consumes portlandite ──────────
     r_sil = Reaction(
         [s("Amor-Sl"), s("Portlandite"), s("H2O@")], [s("Jennite")];
         symbol = "pozzolanic reaction"
@@ -131,7 +286,7 @@ function hydration_reactions(cs; wb, blaine, humidity = nothing)
         α_max = 0.95, blaine = 2000.0u"m^2/kg", humidity
     )
 
-    return [r_c3s, r_c2s, r_c3a_aft, r_c3a_hg, r_c4af_aft, r_c4af_hg, r_sil]
+    return vcat([r_c3s, r_c2s], r_c3a, r_c4af, [r_sil])
 end
 
 """
@@ -150,6 +305,7 @@ function run_hydration(;
         clinker = (C3S = 0.65, C2S = 0.11, C3A = 0.11, C4AF = 0.08),
         gypsum = 0.046, filler = 0.035, silica = 0.0,
         blaine = 380.0u"m^2/kg", tend = 90 * 86400.0, humidity = nothing,
+        c4af_priority::Symbol = :silicate_first,
     )
     cs = build_cement_system()
     f_clinker = 1.0 - gypsum - filler - silica
@@ -164,7 +320,7 @@ function run_hydration(;
     silica > 0 && set_quantity!(state0, "Amor-Sl", silica * u"kg")
     set_quantity!(state0, "H2O@", wb * u"kg")
 
-    rxns = hydration_reactions(cs; wb, blaine, humidity)
+    rxns = hydration_reactions(cs; wb, blaine, humidity, c4af_priority)
     kp = KineticsProblem(cs, rxns, state0, (0.0, tend); equilibrium_solver = nothing)
     ks = KineticsSolver(; ode_solver = Rodas5P(), reltol = 1.0e-7, abstol = 1.0e-10)
     return (; cs, state0, kp, sol = integrate(kp, ks))

@@ -80,19 +80,18 @@ cement, `C95SF05` 5 % silica fume.
 const CLINKER = (C3S = 0.65, C2S = 0.11, C3A = 0.11, C4AF = 0.08)
 const BLAINE  = 380.0u"m^2/kg"
 
-# Orientation bins for the hydrate-foam self-consistent scheme. The paper uses
-# 20; this page uses 8, which moves the percolation threshold by well under a
-# percent of hydration degree and is what keeps the build tractable — the page
-# performs of the order of a hundred four-scale homogenizations, each one a
-# self-consistent fixed point over these bins. `scripts/44_*.jl` runs the full 20.
-const NTHETA = 8
+# Orientation bins for the hydrate-foam self-consistent scheme — the 20 of the
+# paper. This costs almost nothing: a four-scale homogenization at this size runs
+# in under 10 ms once compiled, and the page's cost is dominated by the hydration
+# ODE (about 40 s per mix), not by the micromechanics.
+const NTHETA = 20
 
 hydrate(; wb, filler = 0.035, silica = 0.0) = run_hydration(;
     wb, clinker = CLINKER, gypsum = 0.046, filler, silica,
     blaine = BLAINE, tend = 90 * 86400.0,
 )
 
-const TIMES = 10 .^ range(log10(0.05 * 86400), log10(90 * 86400); length = 20)
+const TIMES = 10 .^ range(log10(0.05 * 86400), log10(90 * 86400); length = 40)
 run0 = hydrate(; wb = 0.5)
 nothing # hide
 ```
@@ -141,20 +140,55 @@ end
 
 Two features of that set are worth pointing out.
 
-**Sulfate sequencing.** C₃A and C₄AF each drive *two* reactions: one consuming
-gypsum to form ettringite, one forming hydrogarnet without it. The Parrot &
-Killoh rate of the phase is split between them by a smooth switch on the gypsum
-still present, reproducing the rule of [Lavergne2018](@cite) — ettringite while
-sulfate lasts, then the sulfate-free product — while staying differentiable.
+**The aluminate cascade.** Each aluminate drives *several* competing reactions,
+taken in a fixed order of priority — thirteen reactions in all:
 
-Gypsum is consumed but is not itself a *kinetic* species, so the gate reads an
-amount the integrator does not carry directly. That works because the ODE state
-holds the reaction extents ξ, from which the residual reconstructs every species
-before evaluating the rates. It is worth knowing that this is what makes reaction
-sequencing expressible at all: this chapter is the reason ChemistryLab acquired
-it. Without it the gate never closes, and an earlier draft formed 0.44 mol of
-ettringite out of 0.27 mol of gypsum — expanding the paste and driving the
-chemical shrinkage negative, with the solver reporting success throughout.
+| phase | priority order |
+|---|---|
+| C₃A | gypsum → AFt, then calcite → monocarboaluminate, then ettringite → AFm, then C₃AH₆ |
+| C₄AF | **C₃S then C₂S → siliceous hydrogarnet**, then gypsum → AFt, then calcite, then ettringite, then C₃AH₆ |
+
+Two of those orderings are easy to get wrong. Monocarboaluminate comes **before**
+monosulfoaluminate, and the *dominant* route for C₄AF is the siliceous hydrogarnet
+consuming the silicates — not the sulfate route. The deduction of the C₃S and C₂S
+eaten there, which the reference performs by hand on the silicate targets, is
+automatic here: C₃S is a kinetic species, so that consumption enters its own
+degree of reaction and hence its own rate.
+
+The reference realizes the cascade by calling every reaction at each step with the
+*remainder* of the phase's increment, each taking what its scarcest co-reactant
+allows. The continuous analog is a partition of unity, `wᵢ` built from smooth
+availability gates `gᵢ = xᵢ/(xᵢ+ε)`, with `Σ wᵢ = 1` so the phase's total rate is
+conserved whichever routes are open.
+
+!!! note "No callbacks, and that is deliberate"
+    Because each rate is proportional to `x` as the co-reactant runs out, the
+    stock decays exponentially towards zero and cannot cross it — measured worst
+    excursion over a 90-day run, refined around depletion, −1.7×10⁻¹⁶ mol. A
+    `ContinuousCallback` on "gypsum exhausted" would be rooted on a quantity that
+    never reaches zero, and would switch the rate discontinuously, which is what a
+    Rosenbrock method handles worst.
+
+    The one thing the smooth form does not encode is the reference's *absolute*
+    priority of C₃A over C₄AF for the shared sulfate. It does not matter here:
+    C₃A's rate is far faster early on and C₄AF's silicate routes are open ahead of
+    its sulfate route, so C₃A takes 3 × 0.0891 = 0.267 of the 0.2672 mol of
+    gypsum available and the C₄AF sulfate route stays at zero. The priority
+    *emerges from the kinetics*. Worth re-checking for a clinker in which C₄AF
+    outpaces C₃A.
+
+The gates read amounts of species that are not themselves *kinetic* — gypsum,
+calcite, ettringite. That works because the ODE state holds the reaction extents
+ξ, from which the residual reconstructs every species before evaluating the rates,
+and it is what makes reaction sequencing expressible at all: this chapter is the
+reason ChemistryLab acquired it. Without it the gates never close, and an earlier
+draft formed 0.44 mol of ettringite out of 0.27 mol of gypsum — expanding the
+paste and driving the chemical shrinkage negative, with the solver reporting
+success throughout.
+
+One substitution to declare: the paper's Fe-siliceous hydrogarnet C₆AFS₂.₁₈H₁₉ is
+not in CEMDATA18. `C3AFS0.84H4.32` is the available analog, of different
+stoichiometry.
 
 **Gel water.** CEMDATA18 and [Lavergne2018](@cite) do not draw the boundary of
 "C-S-H" in the same place, and ignoring the difference changes the answer by a
@@ -333,7 +367,7 @@ fixed points.
 
 ```@example blended
 sens = [(k, ForwardDiff.derivative(
-            x -> lavergne_paste_moduli(merge(f28, Dict(k => x)); N = 6).E, f28[k]))
+            x -> lavergne_paste_moduli(merge(f28, Dict(k => x)); N = 12).E, f28[k]))
         for k in keys(f28) if f28[k] > 1.0e-3]
 sort!(sens; by = last, rev = true)
 

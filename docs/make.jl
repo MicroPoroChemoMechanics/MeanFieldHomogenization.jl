@@ -204,6 +204,7 @@ makedocs(;
         "Applications" => [
             "applications/cement_paste.md",
             "applications/hydrating_blended_paste.md",
+            "applications/ionic_hydrating_paste.md",
             "applications/cement_paste_diffusion.md",
             "applications/strength.md",
             "applications/itz_concrete.md",
