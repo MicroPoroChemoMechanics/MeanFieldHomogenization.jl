@@ -45,12 +45,19 @@ What the ionic route buys, and the stoichiometric one cannot give at all:
 - a **setting threshold**: below percolation the self-consistent fixed point
   collapses and the model reports a zero modulus, which is physical.
 
-!!! note "Requires ChemistryLab ≥ 0.7.1"
-    Before that release a re-speciation could start outside the feasible set of
-    its own equality constraint, and a full ordinary Portland cement returned an
-    assemblage demanding 174 % of the sulfate present — while reporting a
-    residual of `1.4e-2`, because the residual was normalized by the 34 mol water
-    budget and a 0.465 mol violation on 0.27 mol of sulfate disappeared into it.
+!!! note "Requires ChemistryLab ≥ 0.9 — and the compositions here are proved optimal"
+    `speciated_states` passes every instant to `DualEquilibriumSolver`, which
+    solves the KKT system and returns a certificate. The Gibbs problem is convex —
+    an ideal mixing entropy plus terms linear in the amounts of the pure phases,
+    over a polyhedron — so its minimiser is unique, and stationarity of the
+    interior species together with the component balance and undersaturation of
+    every absent phase **prove** global optimality. Every instant below is
+    certified, with an element balance between 1e-11 and 1e-13 mol.
+
+    The interior-point solver alone would not support that claim: on this
+    package's calcite reference it returns pH 6.96 against a certified 9.90, and
+    it rarely reports convergence at all, so its return code cannot distinguish
+    the two.
 
 ## 1. Building the chemical system
 
@@ -133,6 +140,10 @@ nothing # hide
     interior-point solve starts outside its own feasible set. Solved instead
     from a cold guess, `φ(bₑ)` returns no hydrates at all and a pore solution at
     pH 6, while the run itself computed 2.2 mol of C-S-H.
+
+    The certifying solve that follows removes the *consequence* of a poor start,
+    but not the need for a good one: it too is a Newton method, and it is given
+    the interior-point answer as its neighbourhood.
 
 ```@example ionic
 p_pH = plot(
@@ -275,9 +286,13 @@ has not percolated, and the model says so rather than returning a small number.
 
 ## Limitations
 
-- The modulus at 28 days, near 16 GPa, is on the low side for a w/b = 0.50 paste,
-  where 18–22 GPa is usual. The trend and the ordering are right; the level is
-  not calibrated against experiment here.
+- The modulus at 28 days, near 16 GPa, sits at the low end of the published
+  range for a w/b = 0.50 paste. It is not an artefact of the chemistry: the mean
+  degree of hydration comes out at 0.833 at 28 days, and the pore space of the
+  RVE — capillary water 0.177 plus the chemical-shrinkage void 0.071, i.e.
+  0.2476 — agrees with the Powers estimate `(w/c − 0.36ᾱ)/(w/c + 0.32) = 0.244`
+  to 1.5 %. What is not calibrated here is the micromechanical level: the phase
+  moduli of Table 5 and the four-scale morphology, against measured stiffness.
 - The C-S-H is represented by the CEMDATA18 `Jennite` end-member, normalized per
   silicon. A real C-S-H is a solid solution of varying Ca/Si; using the CSHQ
   solid solution in a coupled solve is not exercised by the package's tests.

@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.4.4 — certified equilibria in the ionic chapter
+
+`src/` is untouched.
+
+`docs/Project.toml` requires `ChemistryLab = "0.9"`, whose `speciated_states`
+certifies every instant it replays against the KKT conditions. The Gibbs problem
+is convex, so those conditions are sufficient: the compositions the ionic chapter
+reports are now **proved** to be the global optimum rather than accepted from an
+interior-point iteration that stops on `MaxIters`. Measured on this chapter's own
+OPC, every replayed instant is certified with an element balance between 1e-11
+and 1e-13 mol, the six-hour instant having stood at 6.9e-2 mol before.
+
+The visible consequence is that the no-limestone mix of §4 now behaves as the
+chemistry says it should: the ettringite peaks at 6 hours and is depleted to
+nothing, the AFm settling at the sulfate budget, with the porosity and the
+elastic modulus monotone across all forty instants.
+
+`docs/Project.toml` also drops the patch level from the `OptimaSolver` bound,
+`"0.2.7"` becoming `"0.2"`, and loses a comment block that had drifted between the
+two entries and hid `ChemistryLab` from view. `TensND = "0.3.5"` in
+`Project.toml` keeps its patch level, and should: versions up to 0.3.3 rotate
+incorrectly, which this package relies on being fixed.
+
 ## v0.4.3 — the ionic chapter on ChemistryLab's public API
 
 **`src/` is untouched.** This release moves `scripts/common/ionic_hydration.jl`

@@ -21,17 +21,8 @@ Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
 
 [compat]
-ChemistryLab = "0.8"
-# The ionic chapter needs `speciated_states`, public since ChemistryLab 0.8.0.
-# It previously reached into that package's internals, which is how a CI build
-# could resolve a version without them and turn every `@example` into a page of
-# code with no output and no visible error, `warnonly = true` swallowing the
-# `UndefVarError`.
-#
-# The equilibrium back-end of the ionic chapter. Keep in step with the bound
-# ChemistryLab itself declares, or the docs env silently resolves an older
-# OptimaOptimizer without `use_fd_hessian`/`nullspace_step`.
-OptimaSolver = "0.2.7"
+ChemistryLab = "0.9"
+OptimaSolver = "0.3"
 
 [sources]
 MeanFieldHomogenization = {path = ".."}

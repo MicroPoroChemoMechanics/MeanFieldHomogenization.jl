@@ -15,10 +15,8 @@
 #  The micromechanics (`lavergne_model.jl`) is reused unchanged: only the
 #  chemistry differs.
 #
-#  Requires ChemistryLab ≥ 0.7.1 (before it, a re-speciation could start outside
-#  the feasible set of its own equality constraint and the full OPC returned an
-#  assemblage demanding 174 % of the sulfate present) and an equilibrium
-#  back-end, here OptimaSolver.
+#  Requires ChemistryLab ≥ 0.9, whose `speciated_states` certifies every instant
+#  against the KKT conditions, and an equilibrium back-end, here OptimaSolver.
 # =============================================================================
 
 using ChemistryLab
@@ -33,9 +31,9 @@ const IONIC_CEMDATA = joinpath(pkgdir(ChemistryLab), "data", "cemdata18-thermofu
 # was used to isolate what made it hard, and they are kept because reproducing an
 # intermediate is the fastest way to localize a regression.
 #
-# All four run with ChemistryLab >= 0.7.1. `:opc` over 28 days: 202 accepted
-# steps, retcode Success, pore solution at pH 12.58, sulfate and aluminum
-# budgets closing on the last digit.
+# All four run with ChemistryLab >= 0.9. `:opc` over 28 days: 202 accepted steps,
+# retcode Success, pore solution at pH 12.52-12.58, every replayed instant
+# CERTIFIED optimal with an element balance between 1e-11 and 1e-13 mol.
 const IONIC_SYSTEMS = Dict(
     :silicates => (
         anhydrous = ["C3S", "C2S"],
@@ -73,18 +71,24 @@ peaks around 6 hours and converts to monosulphate once the sulfate is spent, the
 AFm settling at exactly the sulfate budget. That is the whole point of this
 second model, and what `lavergne_hydration.jl` has to encode by hand.
 
-This needs ChemistryLab ≥ 0.7.1. Before it, a re-speciation could start outside
-the feasible set of its own equality constraint, and the full OPC returned an
-assemblage demanding 174 % of the sulfate present while reporting a residual of
-1.4e-2 — the residual being normalized by the 34 mol water budget, which hid a
-0.465 mol violation on the 0.27 mol of sulfate.
+This needs ChemistryLab ≥ 0.9, which certifies each replayed speciation. Before
+0.7.1 a re-speciation could start outside the feasible set of its own equality
+constraint, and the full OPC returned an assemblage demanding 174 % of the
+sulfate present.
 
-!!! danger "Judge these runs on the pH, not on the retcode"
-    `EXACT_HESSIAN` looks like it helps and is wrong: it tightens the reported
-    element balance while collapsing the pore solution from pH 12.06 to 5.54. A
-    pure phase has `∂μ/∂n = 0` exactly, so flooring the Hessian diagonal does
-    move the minerals, but to a point of *higher* Gibbs energy with katoite
-    replacing the AFm. The pH and the element budgets are the physical tells.
+!!! note "The reported compositions are certified"
+    From ChemistryLab 0.9, `speciated_states` passes each instant to
+    `DualEquilibriumSolver`, which solves the KKT system and returns a proof: the
+    Gibbs problem is convex, so stationarity of the interior species, the
+    component balance, and undersaturation of every absent phase are together
+    sufficient for **global** optimality. On this OPC every replayed instant is
+    certified, with an element balance between 1e-11 and 1e-13 mol.
+
+    That matters because the interior-point solver alone is not reliable here. On
+    the package's own calcite reference it returns pH 6.96 where the certified
+    answer is 9.90, and it misses a trace species by 147 %; it also rarely reports
+    convergence at all, so its return code cannot be used to tell the two cases
+    apart.
 """
 const IONIC_DEFAULT_SYSTEM = :opc
 
