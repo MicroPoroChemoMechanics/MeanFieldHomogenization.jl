@@ -28,6 +28,23 @@ using OptimaSolver
 using OrderedCollections
 using SciMLBase
 
+# This model calls three internals of ChemistryLab, two of which appeared only in
+# 0.7.1. Fail loudly here rather than at the first speciation: with
+# `warnonly = true` a Documenter build turns the resulting `UndefVarError` into a
+# page of code with no output and no visible error, which is how a chapter can
+# look built and be empty.
+for f in (:_equilibrium_subsystem, :_budget_clip!, :_restore_feasibility!)
+    isdefined(ChemistryLab, f) || error(
+        """
+        ionic_hydration.jl needs ChemistryLab ≥ 0.7.1 (`ChemistryLab.$f` is missing).
+        Without the feasibility guards a full OPC re-speciation starts outside the
+        feasible set of its own equality constraint and returns an assemblage
+        demanding 174 % of the sulfate present. Widen the environment, do not
+        remove this check.
+        """
+    )
+end
+
 const IONIC_CEMDATA = joinpath(pkgdir(ChemistryLab), "data", "cemdata18-thermofun.json")
 
 # Four systems. `:opc` is the model; the three smaller ones are the ladder that

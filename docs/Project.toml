@@ -16,12 +16,20 @@ OptimaSolver = "24efeca9-a785-406e-adb3-83609348bee7"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
+SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
 
 [compat]
-ChemistryLab = "0.7"
+ChemistryLab = "0.7.1"
+# The ionic chapter calls `_budget_clip!` and `_restore_feasibility!`, which
+# appeared in ChemistryLab 0.7.1. A bound of "0.7" also admits 0.7.0, where they
+# do not exist: locally the dev copy hides that, while CI resolves 0.7.0 from the
+# registry and every `@example` of the chapter throws `UndefVarError` — which
+# `warnonly = true` turns into a page of code with no output and no visible
+# error. Pin the patch, not just the minor.
+#
 # The equilibrium back-end of the ionic chapter. Keep in step with the bound
 # ChemistryLab itself declares, or the docs env silently resolves an older
 # OptimaOptimizer without `use_fd_hessian`/`nullspace_step`.
