@@ -26,24 +26,6 @@ using DynamicQuantities
 using OrdinaryDiffEq
 using OptimaSolver
 using OrderedCollections
-using SciMLBase
-
-# This model calls three internals of ChemistryLab, two of which appeared only in
-# 0.7.1. Fail loudly here rather than at the first speciation: with
-# `warnonly = true` a Documenter build turns the resulting `UndefVarError` into a
-# page of code with no output and no visible error, which is how a chapter can
-# look built and be empty.
-for f in (:_equilibrium_subsystem, :_budget_clip!, :_restore_feasibility!)
-    isdefined(ChemistryLab, f) || error(
-        """
-        ionic_hydration.jl needs ChemistryLab ≥ 0.7.1 (`ChemistryLab.$f` is missing).
-        Without the feasibility guards a full OPC re-speciation starts outside the
-        feasible set of its own equality constraint and returns an assemblage
-        demanding 174 % of the sulfate present. Widen the environment, do not
-        remove this check.
-        """
-    )
-end
 
 const IONIC_CEMDATA = joinpath(pkgdir(ChemistryLab), "data", "cemdata18-thermofun.json")
 
@@ -268,75 +250,16 @@ end
 """
     speciated_states(run, times) -> Vector{ChemicalState}
 
-The **speciated** compositions at `times`, computed sequentially with a warm
-start.
+The **speciated** compositions at `times`, delegated to ChemistryLab.
 
-[`state_at`](@ref) deliberately does not replay the re-speciation — the
-redistribution performed by the equilibrium solve is not recoverable from the
-stoichiometry — so it returns the purely kinetic reconstruction, which for this
-model is meaningless: all the calcium in solution and not one hydrate. The
-equilibrium partition is recovered here the way the solver computed it, by
-solving `φ(bₑ)` on the sub-system with the element totals carried by the ODE
-state.
-
-The sequence matters. Solved from a cold guess, `φ(bₑ)` does not converge for this
-system: the H⁺ component of `bₑ` reaches −14 mol, and an interior-point method
-started from pure water lands nowhere near it — the first attempt at this function
-reported no hydrates at all and a pore solution at pH 6, while the run itself had
-computed 2.2 mol of C-S-H and 2.8 mol of portlandite. Walking the instants in
-order and carrying the previous speciation as the guess fixes it, which is exactly
-what `respeciate!` does inside the run.
+This used to be reimplemented here against three private internals of that
+package. It is now [`ChemistryLab.speciated_states`](@ref), public since 0.8.0,
+which is where it belongs: the guards it needs — a warm start capped at the
+element budget and projected back into `{Aₑn = bₑ, n ≥ 0}`, and a back-end
+instance that has not been used by the integration — are properties of the
+coupling, not of this chapter.
 """
-function speciated_states(run, times)
-    kp, sol = run.kp, run.sol
-    p = sol.prob.p
-    sub = ChemistryLab._equilibrium_subsystem(kp.system, kp.idx_equilibrium)
-    subnm = symbol.(sub.species)
-    es = EquilibriumSolver(sub, kp.activity_model, OptimaOptimizer())
-
-    issorted(times) || throw(ArgumentError("`times` must be ascending: the solves warm-start"))
-
-    # Cold start for the first instant: the initial composition of the partition.
-    guess = [max(p.n_eq_init[j], 1.0e-10) for j in eachindex(p.n_eq_init)]
-
-    Ae = Float64.(sub.SM.A)
-
-    out = ChemicalState[]
-    for t in times
-        u = sol(t)
-        be = collect(u[1:(p.n_be)])
-        # Carry the previous speciation onto this instant's element totals before
-        # solving. The warm start is the equilibrium of the PREVIOUS `bₑ`, so once
-        # an element has been spent — the sulfate of an OPC, after the gypsum is
-        # gone — it demands more of it than now exists and the solve starts
-        # outside its own feasible set. Without these two the full OPC returned an
-        # assemblage claiming 174 % of the sulfate present; with them the AFm
-        # settles at exactly the sulfate budget. Both are inert on a guess that is
-        # already feasible, which is the ordinary case.
-        ChemistryLab._budget_clip!(guess, Ae, be)
-        ChemistryLab._restore_feasibility!(guess, Ae, be)
-        eq = SciMLBase.solve(
-            es, ChemicalState(sub, [g * u"mol" for g in guess]; T = p.T_q[], P = p.P_q[]);
-            b = be
-        )
-        guess = [max(ustrip(us"mol", x), 1.0e-10) for x in eq.n]
-
-        n = zeros(Float64, length(kp.system.species))
-        for (j, idx) in enumerate(kp.idx_equilibrium)
-            n[idx] = ustrip(us"mol", eq.n[j])
-        end
-        for (j, idx) in enumerate(kp.idx_kinetic)
-            n[idx] = max(u[p.n_be + j], 0.0)
-        end
-        push!(
-            out, ChemicalState(
-                kp.system; T = p.T * u"K", P = p.P * u"Pa",
-                n = [x * u"mol" for x in n]
-            )
-        )
-    end
-    return out
-end
+speciated_states(run, times) = ChemistryLab.speciated_states(run.sol, run.kp; times = times)
 
 """
     ionic_fraction_history(run, times; gel_water = GEL_WATER_PER_CSH)

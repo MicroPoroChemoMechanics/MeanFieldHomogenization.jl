@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.4.3 — the ionic chapter on ChemistryLab's public API
+
+**`src/` is untouched.** This release moves `scripts/common/ionic_hydration.jl`
+off three private internals of ChemistryLab and onto `speciated_states`, public
+since ChemistryLab 0.8.0, and fixes a dependency that was never declared.
+
+- **`speciated_states` is now delegated**, not reimplemented. The guards the
+  replay needs — a warm start capped at the element budget and projected back
+  into `{Aₑn = bₑ, n ≥ 0}`, and a back-end instance the integration has not
+  used — belong to the coupling, not to a chapter.
+- **`using SciMLBase` is gone** from `ionic_hydration.jl`, and with it a real
+  portability bug: SciMLBase was never declared in `docs/Project.toml` and only
+  resolved transitively, so the script ran on one machine and failed on another
+  with `Package SciMLBase not found in current path`. It was never an OS
+  difference, only two Manifests disagreeing about an undeclared dependency.
+- **`docs/Project.toml`** now requires `ChemistryLab = "0.8"`.
+- **Diagrams**: the two cement chapters were missing the
+  `%%{init: {"flowchart": {"useMaxWidth": false}} }%%` directive every other
+  diagram in this documentation carries. Without it mermaid stretches the `<svg>`
+  to the full column and the `max-width` rule in `custom.css` has nothing to act
+  on, which is why their boxes came out oversized.
+
 ## v0.4.2 — coupling to ChemistryLab.jl (documentation and scripts only)
 
 **`src/` is untouched by this release.** It exists so the two new Applications
