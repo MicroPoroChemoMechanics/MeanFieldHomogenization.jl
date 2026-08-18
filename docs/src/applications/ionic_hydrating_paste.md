@@ -49,7 +49,7 @@ What the ionic route buys, and the stoichiometric one cannot give at all:
     `speciated_states` passes every instant to `DualEquilibriumSolver`, which
     solves the KKT system and returns a certificate. The Gibbs problem is convex —
     an ideal mixing entropy plus terms linear in the amounts of the pure phases,
-    over a polyhedron — so its minimiser is unique, and stationarity of the
+    over a polyhedron — so its minimizer is unique, and stationarity of the
     interior species together with the component balance and undersaturation of
     every absent phase **prove** global optimality. Every instant below is
     certified, with an element balance between 1e-11 and 1e-13 mol.
@@ -143,7 +143,7 @@ nothing # hide
 
     The certifying solve that follows removes the *consequence* of a poor start,
     but not the need for a good one: it too is a Newton method, and it is given
-    the interior-point answer as its neighbourhood.
+    the interior-point answer as its neighborhood.
 
 ```@example ionic
 p_pH = plot(
@@ -287,7 +287,7 @@ has not percolated, and the model says so rather than returning a small number.
 ## Limitations
 
 - The modulus at 28 days, near 16 GPa, sits at the low end of the published
-  range for a w/b = 0.50 paste. It is not an artefact of the chemistry: the mean
+  range for a w/b = 0.50 paste. It is not an artifact of the chemistry: the mean
   degree of hydration comes out at 0.833 at 28 days, and the pore space of the
   RVE — capillary water 0.177 plus the chemical-shrinkage void 0.071, i.e.
   0.2476 — agrees with the Powers estimate `(w/c − 0.36ᾱ)/(w/c + 0.32) = 0.244`
