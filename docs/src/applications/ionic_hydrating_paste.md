@@ -212,7 +212,196 @@ Nothing in the code distinguishes the two cases. The free energy does. The
 previous chapter has to encode this ordering by hand, as a cascade of priority
 gates — and would have to be re-derived for a mix it was not written for.
 
-## 5. Porosity, and what it is referred to
+## 5. Calorimetry
+
+### What is computed, and why it is not the heat of the reactions
+
+The heat is taken from the **enthalpy of the whole system**, following
+Eqs. (17)–(21) of Lavergne et al. (2018): for a quasi-static isobaric process the
+released heat balances the change of enthalpy, and the enthalpy of the system is
+the sum over species of the molar enthalpies of formation,
+
+```math
+-\delta Q \;=\; \mathrm{d}H
+\;=\; \Bigl(\sum_i n_i\,C^\circ_{p,i}(T)\Bigr)\mathrm{d}T
+\;+\; \sum_i \Delta_f H_i(P,T)\,\mathrm{d}n_i ,
+\qquad
+\Delta_f H_i(P,T) = \Delta_f H_i(P,T_0) + \int_{T_0}^{T}\!C^\circ_{p,i}\,\mathrm{d}\theta .
+```
+
+At fixed temperature this collapses to `Q(t) = H(t_0) - H(t)`. Enthalpy is a
+state function, so reactants, ions and hydrates are each counted once and **no
+reaction stoichiometry has to be written down** — which matters here, because the
+hydrates are not produced by any reaction the model declares.
+
+That last point is the whole difficulty of doing calorimetry on this model, and
+it is worth stating plainly. `ChemistryLab.heat_rate` sums `rᵢ(−Δ_r H^\circ_i)`
+over the *kinetic* reactions, and that is correct for the previous chapter, whose
+reactions produce the hydrates directly. Here the kinetic reactions only dissolve
+the clinker into ions; the hydrates are precipitated by the Gibbs minimization,
+whose heat that sum cannot see. Driving a semi-adiabatic cell from it put the
+temperature rise at 207 K.
+
+Nor can the enthalpy be read from the composition the integrator carries: under
+partial equilibrium that composition comes from an in-run, warm-started
+minimization which is **not certified**, and a single hydrate is worth hundreds
+of kilojoules. Read that way the curve came out at 12.7, 145, 1174, 936 and
+631 J/g at 1 h, 6 h, 12 h, 1 d and 2 d — heat that rises and then falls, which no
+calorimeter has ever measured. [`ChemistryLab.heat_release`](https://micropochemomechanics.github.io/ChemistryLab.jl/stable/)
+therefore reads the **certified** speciations of §3, the same ones every other
+figure in this chapter uses.
+
+```@example ionic
+# The certified replay is the expensive part, so it is done once and handed to
+# both the calorimetry and the semi-adiabatic cell below.
+states_c = ChemistryLab.speciated_states(run_calcite.sol, run_calcite.kp; times = TIMES)
+states_n = ChemistryLab.speciated_states(run_nolime.sol, run_nolime.kp; times = TIMES)
+
+t_cal, Q_c, qd_c = heat_release(run_calcite.sol, run_calcite.kp; times = TIMES, states = states_c)
+_,     Q_n, qd_n = heat_release(run_nolime.sol,  run_nolime.kp;  times = TIMES, states = states_n)
+BINDER_G = 1000.0                       # the runs simulate 1 kg of binder
+@printf "monotone: calcite %s, no limestone %s\n" all(diff(Q_c) .>= -1e-9) all(diff(Q_n) .>= -1e-9)
+```
+
+### Isothermal calorimetry at 20 °C
+
+```@example ionic
+p_Q = plot(;
+    xscale = :log10, xlabel = "time [days]", ylabel = "Q [J / g of binder]",
+    title = "Heat released, isothermal at 20 °C", legend = :topleft, size = (760, 420),
+)
+plot!(p_Q, t_cal ./ 86400, Q_c ./ BINDER_G; lw = 2, color = 1, label = "with 3.5 % calcite")
+plot!(p_Q, t_cal ./ 86400, Q_n ./ BINDER_G; lw = 2, color = 2, ls = :dash, label = "no limestone")
+p_Q
+```
+
+```@example ionic
+p_q = plot(;
+    xscale = :log10, xlabel = "time [days]", ylabel = "q̇ [mW / g of binder]",
+    title = "Heat rate", legend = :topright, size = (760, 420),
+)
+plot!(p_q, t_cal ./ 86400, qd_c ./ BINDER_G .* 1000; lw = 2, color = 1, label = "with 3.5 % calcite")
+plot!(p_q, t_cal ./ 86400, qd_n ./ BINDER_G .* 1000; lw = 2, color = 2, ls = :dash, label = "no limestone")
+p_q
+```
+
+```@example ionic
+for (lbl, Q, qd) in (("with 3.5 % calcite", Q_c, qd_c), ("no limestone", Q_n, qd_n))
+    j = argmax(qd)
+    @printf "%-20s  Q: %5.1f (1 d)  %5.1f (3 d)  %5.1f (7 d)  %5.1f (28 d) J/g   peak %.2f mW/g at %.2f h\n" lbl (
+        Q[argmin(abs.(t_cal .- 86400))] / BINDER_G
+    ) (Q[argmin(abs.(t_cal .- 3 * 86400))] / BINDER_G) (
+        Q[argmin(abs.(t_cal .- 7 * 86400))] / BINDER_G
+    ) (Q[end] / BINDER_G) (qd[j] / BINDER_G * 1000) (t_cal[j] / 3600)
+end
+```
+
+The 28-day figures, 420 J/g with limestone against 405 J/g without, are the
+ordinary range for a CEM I. The limestone raises the heat slightly rather than
+diluting it, because the carbonate is not inert here: it converts the aluminate
+to monocarboaluminate and stabilizes the ettringite (§4), and both reactions are
+exothermic. Substituting *more* limestone would eventually reverse the sign of
+that effect, which is the trade the LC³ literature is about.
+
+### The semi-adiabatic cell
+
+A Langavant test (NF EN 196-9) lets the heat raise the temperature of the sample
+against the losses of the vessel. Lavergne et al. (2018) write the loss as their
+Eq. (23),
+
+```math
+C_{\rm tot}(t)\,\frac{\mathrm{d}T}{\mathrm{d}t} \;=\; \dot q(t) \;-\; \varphi(T-T_{\rm env}),
+\qquad
+\varphi(\Delta T) \;=\; a\,\Delta T + b\,\Delta T^2 ,
+```
+
+and the numbers below are theirs, for the plain-cement mix `C100` of their
+Table 11 at w/b = 0.5:
+
+| quantity | value | source |
+|---|---|---|
+| binder / dry sand / water | 371 g / 1113 g / 196 g | Table 11, `C100` |
+| calorimeter vessel `C_vessel` | 380 J/K | §4.1 — see the note below |
+| sand heat capacity | 812 J/K | `Qtz` of CEMDATA18, 0.73 J/(g·K) |
+| loss coefficient `a` | 75 J/(h·K) = 0.0208 W/K | Eq. (23), NF EN 196-9 calibration |
+| loss coefficient `b` | 0.260 J/(h·K²) = 7.22e-5 W/K² | Eq. (23) |
+
+The sand takes no part in the chemistry; it is there, as the paper says, "to
+avoid large temperatures", and enters only through its heat capacity. The paste's
+own `Σᵢ nᵢ C°_{p,i}(T)` — about 900 J/K at 28 days — comes from the database at
+each instant, so it is not counted twice.
+
+!!! note "The vessel heat capacity is read as 380 J/K, not 380 kJ/K"
+    The paper prints "about 380 kJ/K", and that cannot be the figure its own
+    results correspond to. Its Table 11 mix holds 371 g of binder releasing some
+    420 J/g, i.e. about 156 kJ; against 380 kJ/K the temperature would rise by
+    0.4 K, where the test reports tens of kelvin. The rest of the setup is
+    consistent with joules — sand and water alone contribute roughly 1.6 kJ/K —
+    so 380 J/K puts the total near 2.1 kJ/K and the adiabatic rise near 75 K,
+    which is the order the measurements show. It is read as 380 J/K here, and
+    this note is deliberate: the alternative is to change a published number in
+    silence.
+
+```@example ionic
+C_VESSEL, C_SAND = 380.0, 812.0                  # J/K
+A_LOSS, B_LOSS   = 75.0 / 3600, 0.260 / 3600     # W/K, W/K²
+M_BINDER         = 371.0                         # g, Lavergne Table 11 `C100`
+φ(ΔT) = A_LOSS * ΔT + B_LOSS * ΔT^2
+
+function langavant(t, qdot_per_g, states; T_env = 293.15)
+    T = fill(T_env, length(t))
+    for i in 2:length(t)
+        # the paste of the C100 mix, from the 1 kg run scaled to 371 g
+        C_paste = ustrip(us"J/K", heat_capacity(states[i])) * M_BINDER / 1000
+        C_tot = C_VESSEL + C_SAND + C_paste
+        q = qdot_per_g[i] * M_BINDER                      # W
+        T[i] = T[i - 1] + (t[i] - t[i - 1]) * (q - φ(T[i - 1] - T_env)) / C_tot
+    end
+    return T
+end
+
+T_c = langavant(t_cal, qd_c ./ BINDER_G, states_c)
+T_n = langavant(t_cal, qd_n ./ BINDER_G, states_n)
+nothing # hide
+```
+
+```@example ionic
+p_T = plot(;
+    xscale = :log10, xlabel = "time [days]", ylabel = "T − T_env [K]",
+    title = "Semi-adiabatic cell (NF EN 196-9)", legend = :topleft, size = (760, 420),
+)
+plot!(p_T, t_cal ./ 86400, T_c .- 293.15; lw = 2, color = 1, label = "with 3.5 % calcite")
+plot!(p_T, t_cal ./ 86400, T_n .- 293.15; lw = 2, color = 2, ls = :dash, label = "no limestone")
+p_T
+```
+
+```@example ionic
+for (lbl, T, Q, st) in (("with 3.5 % calcite", T_c, Q_c, states_c),
+                        ("no limestone", T_n, Q_n, states_n))
+    j = argmax(T)
+    C_tot = C_VESSEL + C_SAND + ustrip(us"J/K", heat_capacity(st[end])) * M_BINDER / 1000
+    @printf "%-20s  ΔT max %.1f K at %.1f h    adiabatic ΔT(28 d) %.1f K\n" lbl (T[j] - 293.15) (
+        t_cal[j] / 3600
+    ) (Q[end] / BINDER_G * M_BINDER / C_tot)
+end
+```
+
+A rise of about 19 K at roughly one day, against an adiabatic 75 K: the sand and
+the losses absorb three quarters of the heat, which is what the test is designed
+to do.
+
+!!! warning "One approximation, and it is in the direction you would expect"
+    The heat rate above is the one measured at 20 °C. The temperature reached in
+    the cell accelerates the reactions — Parrot–Killoh carries an Arrhenius
+    factor with `Ea` of 42, 21, 54 and 32 kJ/mol for C₃S, C₂S, C₃A and C₄AF — and
+    that feedback is **not** included here, so the peak is reached later and is
+    lower than a fully coupled calculation would give. Lavergne et al. close the
+    loop with an equivalent-age argument. Doing it here needs the heat source
+    inside the ODE, which under partial equilibrium requires differentiating the
+    equilibrium map; `ChemistryLab` currently refuses that combination with a
+    warning rather than returning the 207 K it would otherwise produce.
+
+## 6. Porosity, and what it is referred to
 
 The porosity of a setting binder is not `V_liquid / V_total`: the denominator
 shrinks with the reactions, while a sealed specimen keeps the volume it was cast
@@ -235,7 +424,7 @@ the saturation falls from 0.93 to 0.80 while the chemical shrinkage grows to
 7.1 % of the fresh volume — within a tenth of a percent of the 7.2 % the
 stoichiometric route gives, by a completely independent path.
 
-## 6. Elastic modulus
+## 7. Elastic modulus
 
 The volume fractions go into the same four-scale model as the previous chapter,
 unchanged.

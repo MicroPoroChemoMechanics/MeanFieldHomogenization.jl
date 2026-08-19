@@ -1,5 +1,47 @@
 # Changelog
 
+## v0.4.5 — calorimetry in the ionic chapter
+
+`src/` is untouched. This release exists because the documentation is deployed on
+a tag: the chapter below cannot be published without one.
+
+`docs/Project.toml` requires `ChemistryLab = "0.10"` and `OptimaSolver = "0.4"`.
+
+### Heat of hydration, from the certified compositions
+
+`applications/ionic_hydrating_paste.md` gains a calorimetry section for the same
+two mixes it already compares, the CEM I 52.5 N of Lavergne et al. (2018) with
+and without its 3.5 % limestone. Cumulative heat and heat rate come from
+`ChemistryLab.heat_release`, i.e. from the drop in system enthalpy across the
+**certified** speciations the rest of the chapter uses — Eqs. (17)–(21) of that
+paper, with reactants, ions and hydrates each counted once and no reaction
+stoichiometry to write down. That matters here because the hydrates are not
+produced by any reaction the model declares: they are precipitated by the Gibbs
+minimization.
+
+Isothermal at 20 °C, per gram of binder: 185, 288, 347 and 420 J/g at 1, 3, 7 and
+28 days with the limestone, against 184, 279, 336 and 405 J/g without, the heat
+rate peaking at 4.8 and 5.0 mW/g. The limestone *raises* the heat slightly rather
+than diluting it, because the carbonate is not inert — it converts the aluminate
+to monocarboaluminate and stabilizes the ettringite, and both reactions are
+exothermic.
+
+The NF EN 196-9 (Langavant) cell is then integrated on that heat with the
+published calibration of Lavergne et al. §4.1 — vessel 380 J/K, sand 812 J/K from
+the `Qtz` entry of CEMDATA18, losses `a = 75 J/(h·K)` and `b = 0.260 J/(h·K²)`,
+on their Table 11 `C100` mix. It reaches 19.1 K above ambient at 22 h, against an
+adiabatic 74.5 K: the sand and the losses absorb three quarters of the heat, which
+is what the test is designed to do. The one approximation — the acceleration of
+the kinetics by the temperature rise is not fed back — is stated in the chapter,
+along with why: under partial equilibrium the heat source inside the ODE would
+require differentiating the equilibrium map, and `ChemistryLab` now refuses that
+combination with a warning rather than returning the 207 K it would otherwise
+produce.
+
+`scripts/common/ionic_hydration.jl` gains `binder_mass` and `calorimeter`
+arguments, and `lavergne_semiadiabatic()`, which builds that cell with the
+published numbers.
+
 ## v0.4.4 — certified equilibria in the ionic chapter
 
 `src/` is untouched.

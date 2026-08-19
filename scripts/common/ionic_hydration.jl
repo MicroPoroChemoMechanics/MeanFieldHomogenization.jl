@@ -212,14 +212,22 @@ const IONIC_CALIBRATION = Dict(
 )
 
 """
-    run_ionic_hydration(; wb, clinker, gypsum, filler, blaine, tend) -> NamedTuple
+    run_ionic_hydration(; wb, clinker, gypsum, filler, blaine, tend,
+                        binder_mass, calorimeter) -> NamedTuple
 
-Integrate the coupled problem for 1 kg of binder: dissolution kinetics on the six
-anhydrous phases, Gibbs minimization on everything else, once per accepted step.
+Integrate the coupled problem: dissolution kinetics on the six anhydrous phases,
+Gibbs minimization on everything else, once per accepted step.
 
-Returns `(; cs, state0, kp, sol)`. The activity model is `HKFActivityModel` on
-both halves — a cement pore solution sits at I ≈ 0.1–0.7 mol/kg, where the dilute
-model every shipped example uses is not defensible.
+`binder_mass` is the mass of binder simulated (1 kg by default, so every extensive
+result is per kilogram of binder). `calorimeter`, when given, couples the thermal
+balance into the same ODE: `IsothermalCalorimeter` integrates the heat at fixed
+temperature, `SemiAdiabaticCalorimeter` lets the temperature follow the balance
+and feeds it back into the Arrhenius factor of every dissolution law.
+
+Returns `(; cs, state0, kp, sol, calorimeter)`. The activity model is
+`HKFActivityModel` on both halves — a cement pore solution sits at
+I ≈ 0.1–0.7 mol/kg, where the dilute model every shipped example uses is not
+defensible.
 """
 function run_ionic_hydration(;
         wb = 0.5,
@@ -228,27 +236,121 @@ function run_ionic_hydration(;
         blaine = 380.0u"m^2/kg", tend = 90 * 86400.0,
         reltol = 1.0e-7, abstol = 1.0e-10,
         system::Symbol = IONIC_DEFAULT_SYSTEM,
+        binder_mass = 1.0u"kg",
+        calorimeter = nothing,
     )
     cs = build_ionic_system(system)
     nmv = symbol.(cs.species)
     f_clinker = 1.0 - gypsum - filler
 
-    state0 = ChemicalState(cs)
+    mb = ustrip(us"kg", binder_mass)
+    T0 = calorimeter === nothing ? 293.15u"K" : _calorimeter_T0(calorimeter)
+
+    state0 = ChemicalState(cs; T = T0)
     for (nm, w) in pairs(clinker)
-        string(nm) in nmv && set_quantity!(state0, string(nm), (f_clinker * w)u"kg")
+        string(nm) in nmv && set_quantity!(state0, string(nm), (mb * f_clinker * w)u"kg")
     end
-    gypsum > 0 && "Gp" in nmv && set_quantity!(state0, "Gp", gypsum * u"kg")
-    filler > 0 && "Cal" in nmv && set_quantity!(state0, "Cal", filler * u"kg")
-    set_quantity!(state0, "H2O@", wb * u"kg")
+    gypsum > 0 && "Gp" in nmv && set_quantity!(state0, "Gp", (mb * gypsum)u"kg")
+    filler > 0 && "Cal" in nmv && set_quantity!(state0, "Cal", (mb * filler)u"kg")
+    set_quantity!(state0, "H2O@", (mb * wb)u"kg")
 
     model = HKFActivityModel()
-    kp = KineticsProblem(
-        cs, ionic_reactions(cs; wb, blaine, system), state0, (0.0, tend);
-        activity_model = model,
-        equilibrium_solver = EquilibriumSolver(cs, model, OptimaOptimizer()),
-    )
+    kp = if calorimeter === nothing
+        KineticsProblem(
+            cs, ionic_reactions(cs; wb, blaine, system), state0, (0.0, tend);
+            activity_model = model,
+            equilibrium_solver = EquilibriumSolver(cs, model, OptimaOptimizer()),
+        )
+    else
+        KineticsProblem(
+            cs, ionic_reactions(cs; wb, blaine, system), state0, (0.0, tend);
+            activity_model = model,
+            equilibrium_solver = EquilibriumSolver(cs, model, OptimaOptimizer()),
+            calorimeter = calorimeter,
+        )
+    end
     ks = KineticsSolver(; ode_solver = Rodas5P(), reltol = reltol, abstol = abstol)
-    return (; cs, state0, kp, system, sol = integrate(kp, ks))
+    return (; cs, state0, kp, system, calorimeter, sol = integrate(kp, ks))
+end
+
+_calorimeter_T0(cal::IsothermalCalorimeter) = cal.T
+_calorimeter_T0(cal::SemiAdiabaticCalorimeter) = cal.T0
+
+# ── calorimetry, after Lavergne et al. (2018) §4.1 ───────────────────────────
+
+"""
+    LAVERGNE_MIX_C100
+
+Mix proportions of the plain-cement semi-adiabatic test of Lavergne et al.
+(2018), Table 11, at w/b = 0.5: 371 g of binder, 1113 g of dry sand, 196 g of
+water. The sand is there to keep the temperature rise moderate, as NF EN 196-9
+prescribes; it takes no part in the chemistry and enters only through its heat
+capacity.
+"""
+const LAVERGNE_MIX_C100 = (binder = 0.371u"kg", sand = 1.113u"kg", water = 0.196u"kg")
+
+"""
+    LAVERGNE_LOSS_A, LAVERGNE_LOSS_B
+
+Calibration of the calorimeter's heat loss, Lavergne et al. (2018) Eq. (23):
+`φ(ΔT) = a ΔT + b ΔT²`, with `a = 75 J/(h·K)` and `b = 0.260 J/(h·K²)` from the
+NF EN 196-9 calibration. Converted here to watts.
+"""
+const LAVERGNE_LOSS_A = 75.0 / 3600            # W/K
+const LAVERGNE_LOSS_B = 0.260 / 3600           # W/K²
+
+"""
+    LAVERGNE_VESSEL_CP
+
+Heat capacity of the calorimeter vessel, **380 J/K**.
+
+The paper prints "about 380 kJ/K", and that cannot be the figure its own results
+correspond to. Its Table 11 mix holds 371 g of binder, which releases of order
+350 J/g, so about 130 kJ in total; against 380 kJ/K the temperature would rise by
+0.3 K, where the test reports tens of kelvin. The rest of the setup is consistent
+with joules: sand and water alone contribute roughly 1.7 kJ/K, so a vessel of
+380 J/K puts the total near 2 kJ/K and the adiabatic rise near 60 K, which is the
+order the measurements show. It is read as 380 J/K here, and this note is
+deliberate: the alternative is to change a published number in silence.
+"""
+const LAVERGNE_VESSEL_CP = 380.0               # J/K
+
+const _SAND_CP_PER_KG = Ref{Float64}(NaN)
+
+"""
+    sand_heat_capacity(mass) -> Float64
+
+Heat capacity [J/K] of `mass` of quartz sand, from the `Qtz` entry of CEMDATA18
+rather than from a remembered figure.
+"""
+function sand_heat_capacity(mass)
+    if isnan(_SAND_CP_PER_KG[])
+        q = first(s for s in build_species(IONIC_CEMDATA) if symbol(s) == "Qtz")
+        cp = ustrip(us"J/K/mol", q[:Cp⁰](T = 293.15, P = 1.0e5, unit = true))
+        _SAND_CP_PER_KG[] = cp / ustrip(us"kg/mol", q[:M])
+    end
+    return _SAND_CP_PER_KG[] * ustrip(us"kg", mass)
+end
+
+"""
+    lavergne_semiadiabatic(; mix = LAVERGNE_MIX_C100, T0 = 293.15u"K", T_env = T0)
+
+The NF EN 196-9 device of Lavergne et al. (2018), as a `SemiAdiabaticCalorimeter`.
+
+`Cp` here is what the ODE does NOT compute for itself: the vessel and the inert
+sand. The paste's own heat capacity is `Σᵢ nᵢ Cp⁰ᵢ(T)`, which `ChemistryLab` adds
+at every step from the database, so it must not be counted twice.
+"""
+function lavergne_semiadiabatic(;
+        mix = LAVERGNE_MIX_C100, T0 = 293.15u"K", T_env = T0,
+    )
+    Cp_fixed = LAVERGNE_VESSEL_CP + sand_heat_capacity(mix.sand)
+    return SemiAdiabaticCalorimeter(;
+        Cp = Cp_fixed * u"J/K",
+        heat_loss = ΔT -> LAVERGNE_LOSS_A * ΔT + LAVERGNE_LOSS_B * ΔT^2,
+        T_env = T_env,
+        T0 = T0,
+    )
 end
 
 """

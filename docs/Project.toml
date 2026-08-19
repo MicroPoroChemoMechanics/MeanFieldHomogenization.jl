@@ -21,8 +21,8 @@ Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
 
 [compat]
-ChemistryLab = "0.9"
-OptimaSolver = "0.3"
+ChemistryLab = "0.10"
+OptimaSolver = "0.4"
 
 [sources]
 MeanFieldHomogenization = {path = ".."}
