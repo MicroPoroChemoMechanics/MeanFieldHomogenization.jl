@@ -18,7 +18,7 @@ keywords:
   - "poromechanics"
   - "finite elements"
   - "automatic differentiation"
-version: 0.4.5
+version: 0.4.6
 date-released: '2026-08-19'
 doi: "10.5281/zenodo.21884243"
 url: "https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl"

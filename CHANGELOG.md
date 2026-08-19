@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.4.6 — the ionic chapter is now certified end to end
+
+`src/` is untouched. This is a documentation release, and it exists for the same
+reason v0.4.5 did: the documentation is deployed on a tag, so the corrections below
+cannot be published without one.
+
+`docs/Project.toml` now requires `ChemistryLab = "0.11"`, which is where the fix
+lives.
+
+### One instant in forty was not certified, and the chapter said otherwise
+
+`applications/ionic_hydrating_paste.md` asserts that every replayed instant is
+proved optimal. That was false as published: the FIRST of the forty sampled
+instants, `t = 4320 s`, fell back to an uncertified interior-point composition
+holding 56 interior species where the answer has 25. ChemistryLab 0.11.0 walks the
+warm-start chain up to the first requested instant, which certifies it — stationarity
+9.1e-13, element balance 6.1e-15 mol — so the claim is now true rather than weakened.
+
+The 28-day heat of the limestone paste moves from 420.2 to 420.3 J/g, which is the
+size of the error the silent fallback was hiding. Every other figure of the chapter
+is unchanged: 404.8 J/g without limestone, ΔT of 19.1 and 18.6 K, the ettringite
+depletion, the porosity table.
+
+### A pointer to the chemistry on its own
+
+Sections 1 to 6 of that chapter are chemistry, and they are now also published by
+ChemistryLab.jl as *The full Portland cement, through its pore solution*, backed by
+`scripts/ionic_hydration.jl` there. A reader who does not need the elastic modulus
+of §7 is sent to it.
+
 ## v0.4.5 — calorimetry in the ionic chapter
 
 `src/` is untouched. This release exists because the documentation is deployed on

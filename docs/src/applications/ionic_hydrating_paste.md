@@ -16,6 +16,14 @@ The micromechanics is identical — the same four-scale model of
 Only the chemistry differs, which is what makes the two chapters comparable
 term by term.
 
+!!! note "The chemistry alone, without the mechanics"
+    Sections 1 to 6 below are chemistry: the assemblage, the pore solution, the
+    calorimetry, the porosity. That part is also published on its own as
+    *The full Portland cement, through its pore solution* in
+    [ChemistryLab.jl](https://micropochemomechanics.github.io/ChemistryLab.jl/stable/),
+    whose `scripts/ionic_hydration.jl` carries the same model. Read that page if
+    the elastic modulus of §7 is not what you are after.
+
 ```mermaid
 %%{init: {"flowchart": {"useMaxWidth": false, "nodeSpacing": 26, "rankSpacing": 34}} }%%
 flowchart TB
