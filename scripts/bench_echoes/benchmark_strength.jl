@@ -1,9 +1,9 @@
 # =============================================================================
-#  benchmark_pichler.jl — cross-validation of the Pichler & Hellmich (2011)
+#  benchmark_strength.jl — cross-validation of the Pichler & Hellmich (2011)
 #  three-scale cement-paste / mortar strength model against the echoes C++
 #  Pichler & Hellmich (CCR 2011) reference.
 #
-#  The Julia model is the SHARED implementation `scripts/common/pichler_model.jl`,
+#  The Julia model is the SHARED implementation `scripts/common/quasibrittle_strength.jl`,
 #  built entirely on the public MeanFieldHomogenization API : the multi-bin
 #  Self-Consistent hydrate foam is assembled with several non-coaxial
 #  `TISymmetrize` families whose EXACT azimuthal average (`TensTI{4,T,8}`,
@@ -13,7 +13,7 @@
 #  chain (multi-bin SC + MT + MT).
 #
 #  Elastic moduli (k, μ, E) are validated to 1 %; the strength `fc` to 2 %.
-#  Sweeps a (w/c, α) grid, compares against `py_pichler`, and writes a CSV.
+#  Sweeps a (w/c, α) grid, compares against `py_strength_reference`, and writes a CSV.
 # =============================================================================
 
 import Pkg
@@ -23,7 +23,7 @@ using PyCall
 using Printf
 using LinearAlgebra
 
-include(joinpath(@__DIR__, "..", "common", "pichler_model.jl"))
+include(joinpath(@__DIR__, "..", "common", "quasibrittle_strength.jl"))
 
 # ── echoes Python reference (verbatim from the CCR2011 script) ──────────────
 py"""
@@ -53,7 +53,7 @@ def disc_theta(ntheta):
             [math.pi / 2 * i / (ntheta - 1) for i in range(ntheta)],
             [math.pi / 2 * (i + 0.5) / (ntheta - 1) for i in range(0, ntheta - 1)] + [math.pi / 2])
 
-def py_pichler(wc, alpha=-1., sc=0., omega=10000., ntheta=20):
+def py_strength_reference(wc, alpha=-1., sc=0., omega=10000., ntheta=20):
     if alpha < 0.: alpha = alphamax(wc)
     if alpha == 0.: return [True, 0., 0., 0., 0.]
     fclin = f_clin(wc, alpha)
@@ -135,7 +135,7 @@ def py_pichler(wc, alpha=-1., sc=0., omega=10000., ntheta=20):
     return [True, k, mu, float(E), float(mfc)]
 """
 
-const py_pichler = py"py_pichler"
+const py_strength_reference = py"py_strength_reference"
 
 # ── Row comparison ──────────────────────────────────────────────────────────
 _relerr(a, b) = abs(b) < 1.0e-12 ? abs(a - b) : abs(a - b) / abs(b)
@@ -168,7 +168,7 @@ rows = NamedTuple[]
 for wc in WCS
     αs = range(0.05, αmax(wc) * (1 - 1.0e-9); length = N_α)
     for α in αs
-        py = py_pichler(wc, α, 0.0, ω_aspect, NTHETA)
+        py = py_strength_reference(wc, α, 0.0, ω_aspect, NTHETA)
         py[1] || continue                       # skip physically invalid points
         _, k_py, mu_py, E_py, fc_py = py
         jl = try
@@ -196,7 +196,7 @@ n_pass = count(r -> r.pass, rows)
 # ── CSV export ──────────────────────────────────────────────────────────────
 figdir = joinpath(@__DIR__, "figures")
 isdir(figdir) || mkpath(figdir)
-csv_path = joinpath(figdir, "benchmark_pichler.csv")
+csv_path = joinpath(figdir, "benchmark_strength.csv")
 open(csv_path, "w") do io
     println(io, "wc,alpha,k_jl,k_py,mu_jl,mu_py,E_jl,E_py,fc_jl,fc_py,pass")
     for r in rows

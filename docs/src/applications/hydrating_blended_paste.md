@@ -16,7 +16,7 @@ The chemistry is carried by
 [ChemistryLab.jl](https://github.com/MicroPoroChemoMechanics/ChemistryLab.jl),
 a sibling package of this one. Neither package depends on the other: the
 coupling lives entirely in this chapter and in
-`scripts/common/lavergne_hydration.jl`.
+`scripts/common/stoichiometric_hydration.jl`.
 
 ```mermaid
 %%{init: {"flowchart": {"useMaxWidth": false, "nodeSpacing": 26, "rankSpacing": 34}} }%%
@@ -64,8 +64,8 @@ using Plots
 gr()  # headless backend; GKSwstype is set to "100" in make.jl
 
 const SCRIPTS = joinpath(pkgdir(MeanFieldHomogenization), "scripts")
-include(joinpath(SCRIPTS, "common", "lavergne_model.jl"))
-include(joinpath(SCRIPTS, "common", "lavergne_hydration.jl"))
+include(joinpath(SCRIPTS, "common", "paste_micromechanics.jl"))
+include(joinpath(SCRIPTS, "common", "stoichiometric_hydration.jl"))
 nothing # hide
 ```
 
@@ -293,7 +293,7 @@ Phase stiffnesses are those of its Table 5 — clinker 130 GPa, portlandite
 C-S-H at 25 GPa, the median of the high- and low-density values.
 
 ```@example blended
-E_of(f) = lavergne_paste_moduli(f; N = NTHETA).E
+E_of(f) = paste_moduli(f; N = NTHETA).E
 E_hist = [E_of(f) for f in fs]
 
 p_perc = plot(
@@ -369,7 +369,7 @@ fixed points.
 
 ```@example blended
 sens = [(k, ForwardDiff.derivative(
-            x -> lavergne_paste_moduli(merge(f28, Dict(k => x)); N = 12).E, f28[k]))
+            x -> paste_moduli(merge(f28, Dict(k => x)); N = 12).E, f28[k]))
         for k in keys(f28) if f28[k] > 1.0e-3]
 sort!(sens; by = last, rev = true)
 
@@ -410,12 +410,12 @@ extra ODE solve.
 
 ## Reproducing this chapter
 
-`scripts/44_lavergne_hydration_micromechanics.jl` runs the same model
+`scripts/44_stoichiometric_hydration_micromechanics.jl` runs the same model
 standalone, with 20 orientation bins, and writes the figures to
 `scripts/figures/`. Unlike the other scripts it activates `docs/` rather than the
 repository root, because it needs ChemistryLab and OrdinaryDiffEq:
 
 ```
 julia --project=docs -e 'using Pkg; Pkg.instantiate()'
-julia scripts/44_lavergne_hydration_micromechanics.jl
+julia scripts/44_stoichiometric_hydration_micromechanics.jl
 ```

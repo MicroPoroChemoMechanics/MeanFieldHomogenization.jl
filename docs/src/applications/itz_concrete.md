@@ -22,7 +22,7 @@ stiffness does that cost? Microstructural model of
 
 The paste scale is the one used in [Quasi-brittle strength](strength.md) — the
 hydrate foam and cement paste model of [pichler2011](@cite), shared as
-[`scripts/common/pichler_model.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/common/pichler_model.jl).
+[`scripts/common/quasibrittle_strength.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/common/quasibrittle_strength.jl).
 The new ingredient is the fourth phase geometry: **coated** aggregates.
 
 | Scale | RVE | Phases | Scheme |

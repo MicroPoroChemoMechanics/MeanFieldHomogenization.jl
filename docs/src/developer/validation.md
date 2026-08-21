@@ -13,7 +13,7 @@ ones also ship `*_python.json` dumps so they run without an Echoes install.
 | `benchmark.jl` | ``\mathbb P``, ``\Delta\mathbb S`` (residues, DECUHR), ``\partial\mathbb P/\partial\mathbb C`` | machine (aniso), ~1e-6 (iso) |
 | `benchmark_nlayers.jl` | n-layer averages ``\alpha_k, \beta_k``, local fields | 1e-6 |
 | `benchmark_porous.jl` | porous moduli, 10 schemes × 2 shapes × 7 porosities | 1e-6 |
-| `benchmark_pichler.jl` | mortar ``k, \mu, E`` + strength ``f_c`` [pichler2011](@cite) | 1 % / 2 % |
+| `benchmark_strength.jl` | mortar ``k, \mu, E`` + strength ``f_c`` [pichler2011](@cite) | 1 % / 2 % |
 | `benchmark_hill_derivative.jl` | ``\partial\mathbb P/\partial\mathbb C`` (ISO, ORTHO) | 1e-5 / 1e-4 |
 
 ## Agreement measured

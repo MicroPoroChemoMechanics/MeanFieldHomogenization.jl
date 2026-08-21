@@ -543,7 +543,7 @@ instability on those paths.
 |---|---|
 | MeanFieldHomogenization suite | **7154 / 7154** |
 | TensND suite | green (AD 63/63, TI/ORTHO projections 89/89, NLopt 46/46) |
-| `benchmark_pichler` | **24 / 24** |
+| `benchmark_strength` | **24 / 24** |
 | `benchmark_hill_derivative` | **17 / 17** |
 | `benchmark_nlayers` | §1-4, local constraints at 5.8e-16 |
 | `benchmark_porous` | 134 / 140 — **identical to the pre-campaign commit**, figure for figure |

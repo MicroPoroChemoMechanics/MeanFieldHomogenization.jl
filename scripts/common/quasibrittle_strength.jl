@@ -1,5 +1,5 @@
 # =============================================================================
-#  pichler_model.jl — shared Pichler & Hellmich (2011) three-scale model.
+#  quasibrittle_strength.jl — shared Pichler & Hellmich (2011) three-scale model.
 #
 #    Pichler, B. and Hellmich, C. (2011), "Upscaling quasi-brittle strength of
 #    cement paste and mortar : a multi-scale engineering mechanics model",
@@ -7,7 +7,7 @@
 #    https://doi.org/10.1016/j.cemconres.2011.01.010
 #
 #  Included by `scripts/40_multiscale_strength.jl` (plots / tables) and
-#  `scripts/bench_echoes/benchmark_pichler.jl` (cross-validation against the
+#  `scripts/bench_echoes/benchmark_strength.jl` (cross-validation against the
 #  echoes Python reference).  Built ENTIRELY on the public MeanFieldHomogenization API :
 #
 #  * Hydrate Foam (HF)  — Self-Consistent over NTHETA needle families
@@ -165,7 +165,7 @@ extract_kμ(arr::AbstractArray) = k_mu(TensND.proj_tens(Val(:ISO), arr)[1])
 # `M = S_mo : dC : S_mo` (compliance pull-back of the sensitivity), and
 # `fc = 1/√(M₃₃₃₃ · 2μ²/f_θ)` where `f_θ` is the volume fraction of the
 # perturbed hydrate family (bin θ = 0) in the mortar.
-function pichler_strength(
+function quasibrittle_strength(
         arr_C_mo::AbstractArray, arr_dC::AbstractArray,
         μh::Real, f_θ::Real
     )
@@ -195,6 +195,6 @@ function compute_point(wc, α_p; sc = 0.0, N::Int = NTHETA, ω::Real = ω_aspect
     f_θ = fhyd_in_mortar * polar_orientation_bins(N)[1].weight
     # The criterion is expressed in terms of the iso stiffness parameter
     # `2μ` : `d/d(2μ) = (1/2)·d/dμ`.
-    fc = pichler_strength(arr_C_mo, arr_dC_mo ./ 2, μ_hyd_ref, f_θ)
+    fc = quasibrittle_strength(arr_C_mo, arr_dC_mo ./ 2, μ_hyd_ref, f_θ)
     return (; K_mo, μ_mo, E_mo, fc)
 end

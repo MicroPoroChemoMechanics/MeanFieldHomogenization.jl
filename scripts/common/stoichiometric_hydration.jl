@@ -1,8 +1,8 @@
 # =============================================================================
-#  lavergne_hydration.jl — the ChemistryLab half of the Lavergne et al. (2018)
+#  stoichiometric_hydration.jl — the ChemistryLab half of the Lavergne et al. (2018)
 #  chain: binder composition → α(t) → moles → volume fractions.
 #
-#  Shared by `scripts/44_lavergne_hydration_micromechanics.jl` and by the
+#  Shared by `scripts/44_stoichiometric_hydration_micromechanics.jl` and by the
 #  Applications chapter `docs/src/applications/hydrating_blended_paste.md`.
 #
 #  Requires ChemistryLab.jl and OrdinaryDiffEq, neither of which is a dependency
@@ -19,14 +19,14 @@ using OrderedCollections
 const CEMDATA = joinpath(pkgdir(ChemistryLab), "data", "cemdata18-thermofun.json")
 
 # Phase families the micromechanical model consumes. Keys must match
-# `LAVERGNE_HYDRATES`, `LAVERGNE_INCLUSIONS` and `LAVERGNE_PORES` of
-# `lavergne_model.jl`; `volume_fractions` refuses to put a species in two.
+# `PASTE_HYDRATES`, `PASTE_INCLUSIONS` and `PASTE_PORES` of
+# `paste_micromechanics.jl`; `volume_fractions` refuses to put a species in two.
 # The AFm and hydrogarnet families each gather two phases. That is faithful
 # rather than lazy: Table 5 of Lavergne et al. gives monosulfo- and
 # monocarboaluminate the same (42.3 GPa, 0.324), and C₃AH₆ and the siliceous
 # hydrogarnet the same (22.4 GPa, 0.25), so the micromechanics cannot tell them
 # apart anyway.
-const LAVERGNE_GROUPS = [
+const PASTE_PHASE_GROUPS = [
     "anhydrous" => ["C3S", "C2S", "C3A", "C4AF"],
     "gypsum" => "Gp",
     "calcite" => "Cal",
@@ -60,7 +60,29 @@ function build_cement_system()
 end
 
 """
-    hydration_reactions(cs; wb, blaine, humidity) -> Vector{Reaction}
+    STOICH_INDUCTION_PHASES, stoich_induction
+
+The dormant period of the clinker silicates, `β(t) = 1 - exp(-(t/τ)^m)` with
+`τ = 5 h`, `m = 2.5`, **on by default** — the same factor and the same values the
+ionic route uses, so the two chapters remain comparable.
+
+That comparability is the point. `IONIC_CALIBRATION` exists so the two routes
+differ only in *what forms*, not in *how fast*; adding a dormant period to one and
+not the other would break exactly that. See `common/ionic_hydration.jl` for why the
+factor is needed and why the values are round.
+
+`waller` is deliberately excluded: its sigmoid already vanishes as `t → 0`, so an
+SCM entered through it carries its own onset delay.
+"""
+const STOICH_INDUCTION_PHASES = ("C3S", "C2S")
+
+@doc (@doc STOICH_INDUCTION_PHASES)
+stoich_induction(τ = 5.0 * 3600.0, m = 2.5) =
+    t -> -expm1(-(max(t, zero(t)) / τ)^m)
+
+"""
+    hydration_reactions(cs; wb, blaine, humidity, c4af_priority, induction,
+                        induction_phases) -> Vector{Reaction}
 
 The reaction set, with a Parrot–Killoh rate on each clinker phase and a Waller
 rate on the silica.
@@ -72,10 +94,10 @@ so hand-written 4/3 and 103/30 coefficients leave a residual.
 ## The aluminate cascade
 
 C₃A and C₄AF each drive **several** competing reactions, taken in a fixed order
-of priority. `hydrationDIM_CTOA4.py` implements this by calling every reaction at
-each time step with the *remainder* of the phase's kinetic increment, each
-reaction taking what its scarcest co-reactant allows and passing the rest on
-(`Reaction.react`). Depletion is never tested; it is absorbed by that clipping.
+of priority. The scheme this follows calls every reaction in turn, at each time
+step, with the *remainder* of the phase's kinetic increment: each reaction takes
+what its scarcest co-reactant allows and passes the rest on. Depletion is never
+tested for explicitly; it is absorbed by that clipping.
 
 The continuous analog used here is a **partition of unity** over the routes.
 With `gᵢ = xᵢ/(xᵢ+ε)` a smooth availability gate on the co-reactant of route `i`,
@@ -148,11 +170,25 @@ the C₄AF sulfate route left at zero. The priority *emerges from the kinetics*
 rather than being imposed. Worth re-checking if the clinker composition is changed
 to something where C₄AF outpaces C₃A.
 """
-function hydration_reactions(cs; wb, blaine, humidity = nothing, c4af_priority::Symbol = :silicate_first)
+function hydration_reactions(
+        cs; wb, blaine, humidity = nothing, c4af_priority::Symbol = :silicate_first,
+        induction = stoich_induction(), induction_phases = STOICH_INDUCTION_PHASES,
+    )
     s(n) = cs[n]
     α_max = powers_alpha_max(wb)
-    pk(p, n) = parrot_killoh_avrami(p, n; α_max, blaine, humidity)
     wrap(f) = KineticFunc(f, (T = 293.15u"K", P = 1.0e5u"Pa"), u"mol/s")
+
+    # The dormant period, on the silicates only. `waller` below is left untouched:
+    # its sigmoid α(t) = 1/(1 + (τ/t)^n) already vanishes as t → 0, so the silica
+    # fume carries its own onset delay in its own τ and damping it again would count
+    # the delay twice.
+    β(n) = (induction !== nothing && n in induction_phases) ? induction : (_t -> 1.0)
+    pk(p, n) = begin
+        base = parrot_killoh_avrami(p, n; α_max, blaine, humidity)
+        g = β(n)
+        induction === nothing || !(n in induction_phases) ? base :
+            wrap((T, P, t, nn, lna, n0) -> g(t) * base(T, P, t, nn, lna, n0))
+    end
 
     # Mole scale of the availability gates, not a tolerance: it sets how sharply
     # a route closes as its co-reactant runs out.
@@ -306,6 +342,7 @@ function run_hydration(;
         gypsum = 0.046, filler = 0.035, silica = 0.0,
         blaine = 380.0u"m^2/kg", tend = 90 * 86400.0, humidity = nothing,
         c4af_priority::Symbol = :silicate_first,
+        induction = stoich_induction(), induction_phases = STOICH_INDUCTION_PHASES,
     )
     cs = build_cement_system()
     f_clinker = 1.0 - gypsum - filler - silica
@@ -320,7 +357,9 @@ function run_hydration(;
     silica > 0 && set_quantity!(state0, "Amor-Sl", silica * u"kg")
     set_quantity!(state0, "H2O@", wb * u"kg")
 
-    rxns = hydration_reactions(cs; wb, blaine, humidity, c4af_priority)
+    rxns = hydration_reactions(
+        cs; wb, blaine, humidity, c4af_priority, induction, induction_phases
+    )
     kp = KineticsProblem(cs, rxns, state0, (0.0, tend); equilibrium_solver = nothing)
     ks = KineticsSolver(; ode_solver = Rodas5P(), reltol = 1.0e-7, abstol = 1.0e-10)
     return (; cs, state0, kp, sol = integrate(kp, ks))
@@ -354,7 +393,7 @@ const GEL_WATER_PER_CSH = 4.0 - 2.1     # mol H2O per mol of Si, from C1.7SH4
     fraction_history(run, times; gel_water = GEL_WATER_PER_CSH)
         -> (times, Vector{Dict{String,Float64}})
 
-Volume fractions of the phase families of `LAVERGNE_GROUPS` at each instant, in
+Volume fractions of the phase families of `PASTE_PHASE_GROUPS` at each instant, in
 the sealed-curing convention: referred to the initial paste volume, with the
 chemical shrinkage appearing as a `"void"` phase.
 
@@ -368,7 +407,7 @@ function fraction_history(run, times; gel_water = GEL_WATER_PER_CSH)
     fs = Vector{Dict{String, Float64}}(undef, length(times))
     for (i, t) in enumerate(times)
         st = state_at(run.sol, run.kp, t; ξ = ξ[1:i, :])
-        f = volume_fractions(st, LAVERGNE_GROUPS; reference = run.state0)
+        f = volume_fractions(st, PASTE_PHASE_GROUPS; reference = run.state0)
         d = Dict{String, Float64}(k => v for (k, v) in f)
 
         if gel_water > 0

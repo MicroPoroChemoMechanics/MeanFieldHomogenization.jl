@@ -1,5 +1,5 @@
 # =============================================================================
-#  44_lavergne_hydration_micromechanics.jl
+#  44_stoichiometric_hydration_micromechanics.jl
 #
 #  Elastic properties of a hydrating blended cement paste, with the volume
 #  fractions COMPUTED BY THE CHEMISTRY rather than correlated.
@@ -24,8 +24,8 @@
 #  out of a kinetics ODE and a molar-volume balance, so the composition of the
 #  binder — not just its water content — reaches the effective modulus.
 #
-#  The model itself lives in `scripts/common/lavergne_model.jl` (micromechanics)
-#  and `scripts/common/lavergne_hydration.jl` (chemistry).
+#  The model itself lives in `scripts/common/paste_micromechanics.jl` (micromechanics)
+#  and `scripts/common/stoichiometric_hydration.jl` (chemistry).
 #
 #  ENVIRONMENT — unlike every other script here, this one activates `docs/`
 #  rather than the repository root: it needs ChemistryLab.jl and OrdinaryDiffEq,
@@ -35,7 +35,7 @@
 #  is all the setup required.
 #
 #  Usage:
-#    julia scripts/44_lavergne_hydration_micromechanics.jl
+#    julia scripts/44_stoichiometric_hydration_micromechanics.jl
 # =============================================================================
 
 import Pkg
@@ -48,8 +48,8 @@ using Printf
 using Plots
 gr()
 
-include(joinpath(@__DIR__, "common", "lavergne_model.jl"))
-include(joinpath(@__DIR__, "common", "lavergne_hydration.jl"))
+include(joinpath(@__DIR__, "common", "paste_micromechanics.jl"))
+include(joinpath(@__DIR__, "common", "stoichiometric_hydration.jl"))
 
 # ── §1  Formulations ────────────────────────────────────────────────────────
 #
@@ -129,7 +129,7 @@ for (name, mix) in MIXES
     @info "Homogenizing $name…"
     r = hydrate(mix)
     _, f = fraction_history(r, TIMES)
-    E = [lavergne_paste_moduli(fi; N = NTHETA).E for fi in f]
+    E = [paste_moduli(fi; N = NTHETA).E for fi in f]
     results[name] = E
     plot!(p_E, TIMES ./ 86400, E; lw = 2, label = name)
 end
@@ -148,7 +148,7 @@ for k in keys(f28)
     g(x) = begin
         f = Dict{String, Any}(kk => vv for (kk, vv) in f28)
         f[k] = x
-        lavergne_paste_moduli(f; N = 8).E
+        paste_moduli(f; N = 8).E
     end
     sens[k] = ForwardDiff.derivative(g, f28[k])
 end

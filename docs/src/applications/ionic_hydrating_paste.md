@@ -12,7 +12,7 @@ decides which hydrates are stable and in what amounts. No sequencing rule is
 written anywhere.
 
 The micromechanics is identical — the same four-scale model of
-[`lavergne_model.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/common/lavergne_model.jl).
+[`paste_micromechanics.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/common/paste_micromechanics.jl).
 Only the chemistry differs, which is what makes the two chapters comparable
 term by term.
 
@@ -77,8 +77,8 @@ using MeanFieldHomogenization, TensND, Printf, Plots
 gr()
 
 const SCRIPTS = joinpath(dirname(dirname(pathof(MeanFieldHomogenization))), "scripts", "common")
-include(joinpath(SCRIPTS, "lavergne_model.jl"))
-include(joinpath(SCRIPTS, "lavergne_hydration.jl"))
+include(joinpath(SCRIPTS, "paste_micromechanics.jl"))
+include(joinpath(SCRIPTS, "stoichiometric_hydration.jl"))
 include(joinpath(SCRIPTS, "ionic_hydration.jl"))
 
 cs = build_ionic_system(:opc)
@@ -211,8 +211,8 @@ Two different histories out of one model:
   carbonate reacts with the aluminate to form monocarboaluminate, so the
   sulfate is never called upon to feed an AFm and the AFt is stabilized. This is
   the well-known limestone effect.
-- **Without limestone**, the ettringite peaks at 6 hours and is then **depleted**
-  — down to a tenth of its peak by 1.5 days, and to nothing by 28 days. Once the
+- **Without limestone**, the ettringite peaks around 8 hours and is then
+  **depleted** — down to a tenth of its peak by 1.5 days, and to nothing by 28 days. Once the
   gypsum is exhausted the AFt is the only sulfate reservoir left, and the
   remaining aluminate converts it into monosulphate.
 
@@ -438,14 +438,14 @@ The volume fractions go into the same four-scale model as the previous chapter,
 unchanged.
 
 ```@example ionic
-E_ionic = [lavergne_paste_moduli(f; N = NTHETA_LAVERGNE).E for f in fracs]
+E_ionic = [paste_moduli(f; N = NTHETA_PASTE).E for f in fracs]
 
 run_stoich = run_hydration(;
     wb = 0.5, clinker = CLINKER, gypsum = 0.046, filler = 0.035,
     silica = 0.0, tend = TEND,
 )
 _, fracs_stoich = fraction_history(run_stoich, TIMES)
-E_stoich = [lavergne_paste_moduli(f; N = NTHETA_LAVERGNE).E for f in fracs_stoich]
+E_stoich = [paste_moduli(f; N = NTHETA_PASTE).E for f in fracs_stoich]
 
 p_E = plot(
     td, E_ionic; xscale = :log10, lw = 2, label = "ionic (this chapter)",
@@ -483,13 +483,24 @@ has not percolated, and the model says so rather than returning a small number.
 
 ## Limitations
 
-- The modulus at 28 days, near 16 GPa, sits at the low end of the published
-  range for a w/b = 0.50 paste. It is not an artifact of the chemistry: the mean
-  degree of hydration comes out at 0.833 at 28 days, and the pore space of the
-  RVE — capillary water 0.177 plus the chemical-shrinkage void 0.071, i.e.
-  0.2476 — agrees with the Powers estimate `(w/c − 0.36ᾱ)/(w/c + 0.32) = 0.244`
-  to 1.5 %. What is not calibrated here is the micromechanical level: the phase
-  moduli of Table 5 and the four-scale morphology, against measured stiffness.
+- The modulus at 28 days sits at the low end of the published range for a
+  w/b = 0.50 paste, and that is not an artifact of the chemistry. The figures
+  below are **computed rather than quoted**, because an earlier version of this
+  page asserted them in prose and they had drifted — a mean degree of hydration
+  of 0.833 against the 0.815 the model now gives, and a modulus "near 16 GPa"
+  against 15.2. A number stated in prose beside a model that keeps changing is a
+  number that will be wrong eventually.
+
+```@example ionic
+ᾱ_28 = mean_degree_of_hydration(run_calcite.sol, run_calcite.kp; times = [TEND])[1]
+powers = (0.5 - 0.36 * ᾱ_28) / (0.5 + 0.32)
+@printf "modulus at 28 d      %6.2f GPa\n" E_ionic[end]
+@printf "mean degree of hydr. %6.3f\n" ᾱ_28
+@printf "RVE pore space       %6.4f   (Powers estimate %.4f)\n" poro[end].total powers
+```
+
+  What is not calibrated here is the micromechanical level: the phase moduli of
+  Table 5 and the four-scale morphology, against measured stiffness.
 - The C-S-H is represented by the CEMDATA18 `Jennite` end-member, normalized per
   silicon. A real C-S-H is a solid solution of varying Ca/Si; using the CSHQ
   solid solution in a coupled solve is not exercised by the package's tests.

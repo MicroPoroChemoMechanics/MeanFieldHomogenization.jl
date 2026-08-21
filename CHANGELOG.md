@@ -1,5 +1,87 @@
 # Changelog
 
+## v0.5.0 — a dormant period before setting, and no proper names in the code
+
+### Breaking changes
+
+Nothing in `src/` changed, and no exported name was touched. The minor bump is
+for a **change of results**: the two hydration chapters print different early-age
+numbers than v0.4.6 did, and the setting time they report moves by five hours.
+Below 1.0 the resolver treats a minor bump as breaking regardless, so a
+downstream `[compat] MeanFieldHomogenization = "0.4"` must be widened.
+
+**Requires ChemistryLab 0.12.** `docs/Project.toml` now pins
+`ChemistryLab = "0.12"`: the dormant period below is passed through that package's
+`induction` keyword, which 0.11 does not have.
+
+### Parrott & Killoh has no dormant period, and the micromechanics felt it
+
+ChemistryLab 0.12 adds an induction factor `β(t) = 1 - exp(-(t/τ)^m)` on the
+clinker silicates, because `parrot_killoh_avrami` floors its Avrami argument so
+the ODE can leave `ξ = 0` at all — which means the clinker starts hydrating the
+instant the water does. Measured against a real CEM I calorimetry record there,
+the unmodified model had released 23.8 J/g by 2.7 h where the calorimeter saw 4.7.
+
+Here the consequence is not a heat curve, it is a **reported result**.
+`paste_moduli` returns setting as a genuine zero of the self-consistent fixed
+point — below percolation the hydrate foam has no stiffness and the model says so
+rather than returning a small number — and a model that hydrates from `t = 0`
+crosses that threshold too early:
+
+| | setting (first non-zero modulus) |
+|--- |--- |
+| without the dormant period (v0.4.6 behavior) | 13.7 h |
+| with it (this release) | **18.9 h** |
+
+Both `scripts/common/` helpers carry it, and with the same `τ = 5 h`, `m = 2.5` on
+the silicates only. That symmetry is deliberate: `IONIC_CALIBRATION` exists so the
+ionic and stoichiometric routes differ in *what forms*, not in *how fast*, and
+adding a dormant period to one alone would have broken exactly the comparison the
+two chapters are built on. `waller` is excluded throughout — its sigmoid
+`α(t) = 1/(1 + (τ/t)^n)` already vanishes as `t → 0`, so an SCM entered through it
+carries its own onset delay and damping it again would count the delay twice. The
+aluminate is excluded too: it reacts within minutes of wetting.
+
+Long-age results are unaffected. The mean degree of hydration at 28 days and the
+porosity come out the same with and without the dormant period, which is what one
+would expect of a delay of a few hours in a 28-day calculation.
+
+### Proper names out of the code, references kept
+
+Author names have no business in file names or identifiers; they belong in the
+bibliography. So:
+
+| was | is |
+|--- |--- |
+| `scripts/common/lavergne_model.jl` | `scripts/common/paste_micromechanics.jl` |
+| `scripts/common/lavergne_hydration.jl` | `scripts/common/stoichiometric_hydration.jl` |
+| `scripts/44_lavergne_hydration_micromechanics.jl` | `scripts/44_stoichiometric_hydration_micromechanics.jl` |
+| `scripts/common/pichler_model.jl` | `scripts/common/quasibrittle_strength.jl` |
+| `scripts/bench_echoes/benchmark_pichler.jl` | `scripts/bench_echoes/benchmark_strength.jl` |
+| `lavergne_paste_moduli`, `lavergne_concrete_moduli` | `paste_moduli`, `concrete_moduli` |
+| `lavergne_semiadiabatic` | `semiadiabatic_cell` |
+| `NTHETA_LAVERGNE` | `NTHETA_PASTE` |
+| `LAVERGNE_HYDRATES`, `_INCLUSIONS`, `_PORES`, `_E_NU` | `PASTE_HYDRATES`, `PASTE_INCLUSIONS`, `PASTE_PORES`, `PASTE_E_NU` |
+| `LAVERGNE_GROUPS` | `PASTE_PHASE_GROUPS` |
+| `LAVERGNE_MIX_C100`, `_VESSEL_CP`, `_LOSS_A`, `_LOSS_B` | `CALORIMETRY_MIX_C100`, `_VESSEL_CP`, `_LOSS_A`, `_LOSS_B` |
+| `pichler_strength` | `quasibrittle_strength` |
+| `py_pichler` | `py_strength_reference` |
+
+The bibliography keys `Lavergne2018` and `pichler2011`, and every citation in
+prose, are untouched — that is where the names belong. Every rename is a `git mv`,
+so the history follows the files. None of this touches `src/`: it was all example
+material, which is why the API is unchanged.
+
+Earlier CHANGELOG sections still name the old files. They are the record of what
+was released at the time and are left alone.
+
+### Also
+
+- A docstring in the stoichiometric helper named a private, unpublished script
+  when describing how the aluminate cascade passes each phase's kinetic remainder
+  from one reaction to the next. It now describes the mechanism without naming the
+  file.
+
 ## v0.4.6 — the ionic chapter is now certified end to end
 
 `src/` is untouched. This is a documentation release, and it exists for the same

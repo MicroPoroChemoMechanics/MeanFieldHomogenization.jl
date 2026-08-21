@@ -4,9 +4,9 @@
 #  Elastic properties of a hydrating ordinary Portland cement paste, with the
 #  phase assemblage DECIDED BY THE THERMODYNAMICS rather than written down.
 #
-#  This is the counterpart to `44_lavergne_hydration_micromechanics.jl`. The
+#  This is the counterpart to `44_stoichiometric_hydration_micromechanics.jl`. The
 #  micromechanics is identical — the same four-scale SC/SC/MT/MT model, the same
-#  `lavergne_model.jl` — and only the chemistry differs:
+#  `paste_micromechanics.jl` — and only the chemistry differs:
 #
 #    44   clinker → aggregated solid→solid reactions with stated products,
 #         and a hand-written priority cascade deciding which forms when.
@@ -61,8 +61,8 @@ using Printf
 using Plots
 gr()
 
-include(joinpath(@__DIR__, "common", "lavergne_model.jl"))
-include(joinpath(@__DIR__, "common", "lavergne_hydration.jl"))
+include(joinpath(@__DIR__, "common", "paste_micromechanics.jl"))
+include(joinpath(@__DIR__, "common", "stoichiometric_hydration.jl"))
 include(joinpath(@__DIR__, "common", "ionic_hydration.jl"))
 
 # ── §1  Formulation ─────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ results45 = map(MIXES45) do (label, filler)
     )
     @printf "  %d accepted steps, retcode = %s\n" length(r.sol.t) r.sol.retcode
     t, f, ph, po = ionic_fraction_history(r, TIMES45)
-    E = [lavergne_paste_moduli(fi; N = NTHETA_LAVERGNE).E for fi in f]
+    E = [paste_moduli(fi; N = NTHETA_PASTE).E for fi in f]
     return (; label, filler, run = r, times = t, fracs = f, pH = ph, poro = po, E)
 end
 println()
@@ -130,7 +130,7 @@ run44 = run_hydration(;
     silica = 0.0, tend = TEND45,
 )
 _, fr44 = fraction_history(run44, TIMES45)
-E44 = [lavergne_paste_moduli(f; N = NTHETA_LAVERGNE).E for f in fr44]
+E44 = [paste_moduli(f; N = NTHETA_PASTE).E for f in fr44]
 
 # ── §5  Report ──────────────────────────────────────────────────────────────
 
@@ -197,8 +197,10 @@ p_pH = plot(
     title = "pH — not available from model 44", ylims = (11.5, 13.5),
 )
 
-p_seq = plot(; xscale = :log10, xlabel = "time [days]", ylabel = "volume fraction",
-    title = "aluminates, as a result (calcite stabilises AFt)", legend = :topleft)
+p_seq = plot(;
+    xscale = :log10, xlabel = "time [days]", ylabel = "volume fraction",
+    title = "aluminates, as a result (calcite stabilises AFt)", legend = :topleft
+)
 for (i, r) in enumerate(results45)
     ls = i == 1 ? :solid : :dash
     for (lbl, key, c) in (("AFt", "AFt", 1), ("AFm", "AFm", 2))

@@ -6,13 +6,13 @@
 #  467-476, https://doi.org/10.1016/j.cemconres.2011.01.010.
 #
 #  This is the DEMO / PLOT front-end.  The model itself lives in
-#  `scripts/common/pichler_model.jl` and is built entirely on the public
+#  `scripts/common/quasibrittle_strength.jl` and is built entirely on the public
 #  MeanFieldHomogenization API : a multi-bin Self-Consistent hydrate foam whose several
 #  non-coaxial `TISymmetrize` needle families are averaged EXACTLY about the
 #  global axis (`TensTI{4,T,8}`), then two Mori-Tanaka stages (CP, MO).  The
 #  strength sensitivity is one ForwardDiff pass through the whole chain —
 #  reproducing Fig. 4 of the paper.  Cross-validated against echoes in
-#  `scripts/bench_echoes/benchmark_pichler.jl` (moduli 1 %, fc 2 %).
+#  `scripts/bench_echoes/benchmark_strength.jl` (moduli 1 %, fc 2 %).
 # =============================================================================
 
 import Pkg
@@ -23,7 +23,7 @@ using Plots
 
 default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
 
-include(joinpath(@__DIR__, "common", "pichler_model.jl"))
+include(joinpath(@__DIR__, "common", "quasibrittle_strength.jl"))
 
 println("="^78)
 println("Multi-scale upscaling of cement-paste / mortar (Pichler-Hellmich 2011)")

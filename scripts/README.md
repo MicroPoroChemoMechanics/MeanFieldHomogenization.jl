@@ -5,9 +5,9 @@ Each is self-contained (`Pkg.activate(joinpath(@__DIR__, ".."))`) and, where
 relevant, states the reference benchmark it reproduces.
 
 Shared code lives in [`common/`](common/) — currently the Pichler-Hellmich
-three-scale model (`common/pichler_model.jl`), used by both the demo script
+three-scale model (`common/quasibrittle_strength.jl`), used by both the demo script
 `41_multiscale_strength.jl` and the cross-check
-`bench_echoes/benchmark_pichler.jl`.
+`bench_echoes/benchmark_strength.jl`.
 
 ## Numbering blocks
 
@@ -84,10 +84,10 @@ three-scale model (`common/pichler_model.jl`), used by both the demo script
 | Script | reference / topic | Notes |
 |---|---|---|
 | `40_porous_strength_criterion.jl` | — | porous strength criterion |
-| `41_multiscale_strength.jl` | Pichler et al. (CCR 2011) | full 3-scale + strength (ω=1e4). Cross-checked in `bench_echoes/benchmark_pichler.jl` (moduli 1 %, fc 2 %) |
+| `41_multiscale_strength.jl` | Pichler et al. (CCR 2011) | full 3-scale + strength (ω=1e4). Cross-checked in `bench_echoes/benchmark_strength.jl` (moduli 1 %, fc 2 %) |
 | `42_cementpaste_iso.jl` | Pichler et al. (CCR 2011), ISO | elasticity-only ISO variant (**ω=100**, αmax·(1−1e-3)) |
 | `43_secant_elastoplasticity.jl` | Suquet (1997) / Ponte Castañeda (1991); Gurson (1977) | **published tutorial** — modified secant method on a porous plastic solid: n-shell composite sphere + SC + `ForwardDiff` second moments; ported from echoes `echoes_tests/elastoplasticity_porous.py` |
-| `44_lavergne_hydration_micromechanics.jl` | Lavergne et al. (CCR 2018) | **chemistry-driven** four-scale SC/SC/MT/MT paste: volume fractions computed by ChemistryLab (Parrot-Killoh + Waller + molar volumes) instead of a Powers correlation. Activates `docs/`, not the repo root. Backs `applications/hydrating_blended_paste.md` |
+| `44_stoichiometric_hydration_micromechanics.jl` | Lavergne et al. (CCR 2018) | **chemistry-driven** four-scale SC/SC/MT/MT paste: volume fractions computed by ChemistryLab (Parrot-Killoh + Waller + molar volumes) instead of a Powers correlation. Activates `docs/`, not the repo root. Backs `applications/hydrating_blended_paste.md` |
 
 ### 50–59 Viscoelasticity & ALV
 | Script | reference / topic | Notes |

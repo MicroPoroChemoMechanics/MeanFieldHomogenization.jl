@@ -22,7 +22,7 @@ read the partial of the final `C_mo`. Both routes agree to the tolerances of
 [Cross-validation](../developer/validation.md).
 
 The code below is the model of
-[`scripts/common/pichler_model.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/common/pichler_model.jl),
+[`scripts/common/quasibrittle_strength.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/common/quasibrittle_strength.jl),
 reproduced inline.
 
 ## Constants and volume fractions
@@ -168,7 +168,7 @@ final array — one pass through the whole three-scale chain.
 ```@example strength
 extract_kμ(arr) = k_mu(TensND.proj_tens(Val(:ISO), arr)[1])
 
-function pichler_strength(arr_C_mo, arr_dC, μh, f_θ)
+function quasibrittle_strength(arr_C_mo, arr_dC, μh, f_θ)
     # `arr_C_mo` (value) and `arr_dC` (∂/∂μ) are 3×3×3×3 arrays; wrap them as
     # `Tens` and use intrinsic TensND algebra — the effective compliance is the
     # full inverse and the pull-back is one double contraction, no index loops.
@@ -188,7 +188,7 @@ function compute_point(wc, α_p; sc = 0.0, N = NTHETA, ω = ω_aspect)
     E_mo, _ = E_nu(iso_stiffness(K_mo, μ_mo))
     f_θ = f_hyd(wc, α_p) * (1 - fh_san(wc, sc)) * polar_orientation_bins(N)[1].weight
     # criterion uses the iso parameter 2μ: d/d(2μ) = (1/2) d/dμ
-    fc = pichler_strength(arr_C, arr_dC ./ 2, μ_hyd_ref, f_θ)
+    fc = quasibrittle_strength(arr_C, arr_dC ./ 2, μ_hyd_ref, f_θ)
     return (; K_mo, μ_mo, E_mo, fc)
 end
 

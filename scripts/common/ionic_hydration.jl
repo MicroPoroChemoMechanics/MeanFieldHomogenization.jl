@@ -1,18 +1,18 @@
 # =============================================================================
 #  ionic_hydration.jl — hydration by dissolution into IONS and precipitation
-#  driven by thermodynamics, as the counterpart to `lavergne_hydration.jl`.
+#  driven by thermodynamics, as the counterpart to `stoichiometric_hydration.jl`.
 #
 #  Shared by `scripts/45_ionic_hydration_micromechanics.jl` and the Applications
 #  chapter `docs/src/applications/ionic_hydrating_paste.md`.
 #
-#  The difference with `lavergne_hydration.jl` is where the products come from.
+#  The difference with `stoichiometric_hydration.jl` is where the products come from.
 #  There, aggregated solid → solid reactions state the products in advance, and a
 #  hand-written priority cascade decides which of them forms when. Here the
 #  clinker only dissolves — into Ca²⁺, SiO₂, AlO₂⁻, FeO₂⁻, SO₄²⁻, CO₃²⁻, H⁺ —
 #  and a Gibbs minimization decides, at every accepted step, which hydrates are
 #  stable and in what amounts. No sequencing rule is written anywhere.
 #
-#  The micromechanics (`lavergne_model.jl`) is reused unchanged: only the
+#  The micromechanics (`paste_micromechanics.jl`) is reused unchanged: only the
 #  chemistry differs.
 #
 #  Requires ChemistryLab ≥ 0.9, whose `speciated_states` certifies every instant
@@ -69,7 +69,7 @@ holding at pH 12.58. The aluminate sequence comes out of the free-energy
 minimization with no sequencing rule written anywhere — ettringite forms early,
 peaks around 6 hours and converts to monosulphate once the sulfate is spent, the
 AFm settling at exactly the sulfate budget. That is the whole point of this
-second model, and what `lavergne_hydration.jl` has to encode by hand.
+second model, and what `stoichiometric_hydration.jl` has to encode by hand.
 
 This needs ChemistryLab ≥ 0.9, which certifies each replayed speciation. Before
 0.7.1 a re-speciation could start outside the feasible set of its own equality
@@ -96,7 +96,7 @@ const IONIC_ANHYDROUS = IONIC_SYSTEMS[IONIC_DEFAULT_SYSTEM].anhydrous
 const IONIC_HYDRATES = IONIC_SYSTEMS[IONIC_DEFAULT_SYSTEM].hydrates
 
 # Same phase families as the stoichiometric model, so the two are comparable
-# term by term through `lavergne_model.jl`.
+# term by term through `paste_micromechanics.jl`.
 const IONIC_GROUPS = [
     "anhydrous" => ["C3S", "C2S", "C3A", "C4AF"],
     "gypsum" => "Gp",
@@ -140,7 +140,8 @@ function build_ionic_system(system::Symbol = IONIC_DEFAULT_SYSTEM)
 end
 
 """
-    ionic_reactions(cs; wb, blaine, calibration = IONIC_CALIBRATION) -> Vector{KineticReaction}
+    ionic_reactions(cs; wb, blaine, calibration, induction, induction_phases)
+        -> Vector{KineticReaction}
 
 Congruent dissolution of each anhydrous phase into the primary aqueous species,
 with a Parrot–Killoh rate scaled by a per-phase calibration factor.
@@ -156,7 +157,12 @@ one would be a fabrication. What the calibration factors buy is that the degrees
 of hydration follow those of the stoichiometric model, so the two chapters differ
 only in *what forms*, not in *how fast* — which is the comparison worth making.
 """
-function ionic_reactions(cs; wb, blaine, system::Symbol = IONIC_DEFAULT_SYSTEM, calibration = IONIC_CALIBRATION)
+function ionic_reactions(
+        cs; wb, blaine, system::Symbol = IONIC_DEFAULT_SYSTEM,
+        calibration = IONIC_CALIBRATION,
+        induction = ionic_induction(),
+        induction_phases = IONIC_INDUCTION_PHASES,
+    )
     nmv = symbol.(cs.species)
     prim = [p for p in ("Ca+2", "SiO2@", "AlO2-", "FeO2-", "SO4-2", "CO3-2", "H2O@", "H+") if p in nmv]
     α_max = powers_alpha_max(wb)
@@ -184,9 +190,10 @@ function ionic_reactions(cs; wb, blaine, system::Symbol = IONIC_DEFAULT_SYSTEM, 
         end
 
         f = get(calibration, a, 1.0)
+        β = (induction !== nothing && a in induction_phases) ? induction : (_t -> 1.0)
         rate = haskey(pk_of, a) ?
             KineticFunc(
-                (T, P, t, n, lna, n0) -> f * base(T, P, t, n, lna, n0),
+                (T, P, t, n, lna, n0) -> f * β(t) * base(T, P, t, n, lna, n0),
                 (T = 293.15u"K", P = 1.0e5u"Pa"), u"mol/s",
             ) : base
 
@@ -195,6 +202,50 @@ function ionic_reactions(cs; wb, blaine, system::Symbol = IONIC_DEFAULT_SYSTEM, 
     end
     return out
 end
+
+"""
+    IONIC_INDUCTION_TAU, IONIC_INDUCTION_M, IONIC_INDUCTION_PHASES
+
+The dormant period of the clinker silicates, as a factor
+`β(t) = 1 - exp(-(t/τ)^m)` on their dissolution rate. **On by default.**
+
+Parrot–Killoh has no induction period: `parrot_killoh_avrami` floors its Avrami
+argument at `PK_AVRAMI_SEED` so the ODE can leave `ξ = 0` at all, which means the
+clinker starts hydrating the instant the water does. Measured against a real CEM I
+isothermal-calorimetry record in ChemistryLab's `scripts/hydration_calibration.jl`,
+that released 23.8 J/g by 2.7 h where the calorimeter saw 4.7, and the model then
+ran some 60 J/g behind from one day onwards.
+
+# Why this chapter cares, and it is not only about heat
+
+Volume fractions drive the micromechanics here, and a model that hydrates from
+`t = 0` crosses the percolation threshold too early. `paste_moduli`
+reports setting as a genuine zero of the self-consistent fixed point, so the
+**setting time** this chapter prints moves when the dormant period is added. It is
+a reported result, not an input.
+
+`τ = 5 h` and `m = 2.5` are round on purpose: three independent routes in that
+calibration put the dormancy at 5 to 5.6 h, while its own identifiability analysis
+shows `τ` correlated with the alite rate constant at 0.994 — so the timescale is
+well determined and its precision is not. Applied to the **silicates only**: the
+aluminate reacts within minutes of wetting.
+"""
+const IONIC_INDUCTION_TAU = 5.0 * 3600.0
+
+@doc (@doc IONIC_INDUCTION_TAU)
+const IONIC_INDUCTION_M = 2.5
+
+@doc (@doc IONIC_INDUCTION_TAU)
+const IONIC_INDUCTION_PHASES = ("C3S", "C2S")
+
+"""
+    ionic_induction(τ = IONIC_INDUCTION_TAU, m = IONIC_INDUCTION_M) -> Function
+
+The default dormant-period factor. Pass `induction = nothing` to
+[`run_ionic_hydration`](@ref) for the published Parrot–Killoh behavior.
+"""
+ionic_induction(τ = IONIC_INDUCTION_TAU, m = IONIC_INDUCTION_M) =
+    t -> -expm1(-(max(t, zero(t)) / τ)^m)
 
 """
     IONIC_CALIBRATION
@@ -238,6 +289,8 @@ function run_ionic_hydration(;
         system::Symbol = IONIC_DEFAULT_SYSTEM,
         binder_mass = 1.0u"kg",
         calorimeter = nothing,
+        induction = ionic_induction(),
+        induction_phases = IONIC_INDUCTION_PHASES,
     )
     cs = build_ionic_system(system)
     nmv = symbol.(cs.species)
@@ -257,13 +310,15 @@ function run_ionic_hydration(;
     model = HKFActivityModel()
     kp = if calorimeter === nothing
         KineticsProblem(
-            cs, ionic_reactions(cs; wb, blaine, system), state0, (0.0, tend);
+            cs, ionic_reactions(cs; wb, blaine, system, induction, induction_phases),
+            state0, (0.0, tend);
             activity_model = model,
             equilibrium_solver = EquilibriumSolver(cs, model, OptimaOptimizer()),
         )
     else
         KineticsProblem(
-            cs, ionic_reactions(cs; wb, blaine, system), state0, (0.0, tend);
+            cs, ionic_reactions(cs; wb, blaine, system, induction, induction_phases),
+            state0, (0.0, tend);
             activity_model = model,
             equilibrium_solver = EquilibriumSolver(cs, model, OptimaOptimizer()),
             calorimeter = calorimeter,
@@ -279,7 +334,7 @@ _calorimeter_T0(cal::SemiAdiabaticCalorimeter) = cal.T0
 # ── calorimetry, after Lavergne et al. (2018) §4.1 ───────────────────────────
 
 """
-    LAVERGNE_MIX_C100
+    CALORIMETRY_MIX_C100
 
 Mix proportions of the plain-cement semi-adiabatic test of Lavergne et al.
 (2018), Table 11, at w/b = 0.5: 371 g of binder, 1113 g of dry sand, 196 g of
@@ -287,20 +342,20 @@ water. The sand is there to keep the temperature rise moderate, as NF EN 196-9
 prescribes; it takes no part in the chemistry and enters only through its heat
 capacity.
 """
-const LAVERGNE_MIX_C100 = (binder = 0.371u"kg", sand = 1.113u"kg", water = 0.196u"kg")
+const CALORIMETRY_MIX_C100 = (binder = 0.371u"kg", sand = 1.113u"kg", water = 0.196u"kg")
 
 """
-    LAVERGNE_LOSS_A, LAVERGNE_LOSS_B
+    CALORIMETRY_LOSS_A, CALORIMETRY_LOSS_B
 
 Calibration of the calorimeter's heat loss, Lavergne et al. (2018) Eq. (23):
 `φ(ΔT) = a ΔT + b ΔT²`, with `a = 75 J/(h·K)` and `b = 0.260 J/(h·K²)` from the
 NF EN 196-9 calibration. Converted here to watts.
 """
-const LAVERGNE_LOSS_A = 75.0 / 3600            # W/K
-const LAVERGNE_LOSS_B = 0.260 / 3600           # W/K²
+const CALORIMETRY_LOSS_A = 75.0 / 3600            # W/K
+const CALORIMETRY_LOSS_B = 0.26 / 3600           # W/K²
 
 """
-    LAVERGNE_VESSEL_CP
+    CALORIMETRY_VESSEL_CP
 
 Heat capacity of the calorimeter vessel, **380 J/K**.
 
@@ -313,7 +368,7 @@ with joules: sand and water alone contribute roughly 1.7 kJ/K, so a vessel of
 order the measurements show. It is read as 380 J/K here, and this note is
 deliberate: the alternative is to change a published number in silence.
 """
-const LAVERGNE_VESSEL_CP = 380.0               # J/K
+const CALORIMETRY_VESSEL_CP = 380.0               # J/K
 
 const _SAND_CP_PER_KG = Ref{Float64}(NaN)
 
@@ -333,7 +388,7 @@ function sand_heat_capacity(mass)
 end
 
 """
-    lavergne_semiadiabatic(; mix = LAVERGNE_MIX_C100, T0 = 293.15u"K", T_env = T0)
+    semiadiabatic_cell(; mix = CALORIMETRY_MIX_C100, T0 = 293.15u"K", T_env = T0)
 
 The NF EN 196-9 device of Lavergne et al. (2018), as a `SemiAdiabaticCalorimeter`.
 
@@ -341,13 +396,13 @@ The NF EN 196-9 device of Lavergne et al. (2018), as a `SemiAdiabaticCalorimeter
 sand. The paste's own heat capacity is `Σᵢ nᵢ Cp⁰ᵢ(T)`, which `ChemistryLab` adds
 at every step from the database, so it must not be counted twice.
 """
-function lavergne_semiadiabatic(;
-        mix = LAVERGNE_MIX_C100, T0 = 293.15u"K", T_env = T0,
+function semiadiabatic_cell(;
+        mix = CALORIMETRY_MIX_C100, T0 = 293.15u"K", T_env = T0,
     )
-    Cp_fixed = LAVERGNE_VESSEL_CP + sand_heat_capacity(mix.sand)
+    Cp_fixed = CALORIMETRY_VESSEL_CP + sand_heat_capacity(mix.sand)
     return SemiAdiabaticCalorimeter(;
         Cp = Cp_fixed * u"J/K",
-        heat_loss = ΔT -> LAVERGNE_LOSS_A * ΔT + LAVERGNE_LOSS_B * ΔT^2,
+        heat_loss = ΔT -> CALORIMETRY_LOSS_A * ΔT + CALORIMETRY_LOSS_B * ΔT^2,
         T_env = T_env,
         T0 = T0,
     )
@@ -375,7 +430,7 @@ Volume fractions of the phase families of `IONIC_GROUPS` at each instant, plus
 the pore-solution pH — which the stoichiometric model cannot produce at all.
 
 The sealed-curing convention and the gel-water transfer are those of
-`lavergne_hydration.jl`, so the two models are directly comparable.
+`stoichiometric_hydration.jl`, so the two models are directly comparable.
 """
 function ionic_fraction_history(run, times; gel_water = GEL_WATER_PER_CSH)
     V_ref = volume(run.state0).total
