@@ -20,7 +20,7 @@ term by term.
     Sections 1 to 6 below are chemistry: the assemblage, the pore solution, the
     calorimetry, the porosity. That part is also published on its own as
     *The full Portland cement, through its pore solution* in
-    [ChemistryLab.jl](https://micropochemomechanics.github.io/ChemistryLab.jl/stable/),
+    [ChemistryLab.jl](https://microporochemomechanics.github.io/ChemistryLab.jl/stable/),
     whose `scripts/ionic_hydration.jl` carries the same model. Read that page if
     the elastic modulus of §7 is not what you are after.
 
@@ -255,7 +255,7 @@ partial equilibrium that composition comes from an in-run, warm-started
 minimization which is **not certified**, and a single hydrate is worth hundreds
 of kilojoules. Read that way the curve came out at 12.7, 145, 1174, 936 and
 631 J/g at 1 h, 6 h, 12 h, 1 d and 2 d — heat that rises and then falls, which no
-calorimeter has ever measured. [`ChemistryLab.heat_release`](https://micropochemomechanics.github.io/ChemistryLab.jl/stable/)
+calorimeter has ever measured. [`ChemistryLab.heat_release`](https://microporochemomechanics.github.io/ChemistryLab.jl/stable/)
 therefore reads the **certified** speciations of §3, the same ones every other
 figure in this chapter uses.
 
