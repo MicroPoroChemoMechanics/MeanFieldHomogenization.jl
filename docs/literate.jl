@@ -68,12 +68,45 @@ const PUBLISHED_SCRIPTS = [
 # `manual/fe_inclusions.md` and
 # `applications/recycled_aggregate.md`.
 
+"""
+    check_pkg_markers()
+
+Fail loudly if a published script carries a bare `Pkg.activate` — the one
+mistake that breaks the whole build rather than a single page. Cheap enough to
+run on every build.
+
+The box at the top of this file explains what it costs to find this out the
+expensive way: on 2026-07-30 a single missing marker failed 125 `@example`
+blocks across 18 pages, most of them in files nobody had touched.
+"""
+function check_pkg_markers()
+    offenders = String[]
+    for (script, _) in PUBLISHED_SCRIPTS
+        path = joinpath(SCRIPTS_DIR, script)
+        isfile(path) || continue
+        for line in eachline(path)
+            occursin(r"^\s*(import\s+Pkg|Pkg\.activate)", line) &&
+                !occursin("#jl", line) &&
+                push!(offenders, "$script: $(strip(line))")
+        end
+    end
+    isempty(offenders) || error(
+        "Published scripts carry a bare `Pkg.activate` (missing the `#jl` marker).\n" *
+            "This would switch the active project mid-build and break every @example\n" *
+            "block in the documentation, not just these pages:\n  " *
+            join(offenders, "\n  ")
+    )
+    return nothing
+end
+
 function build_tutorial_pages()
+    check_pkg_markers()
     mkpath(TUTORIAL_MD_DIR)
     mkpath(NOTEBOOK_DIR)
     mkpath(CLEAN_SCRIPT_DIR)
     for (script, page) in PUBLISHED_SCRIPTS
         src = joinpath(SCRIPTS_DIR, script)
+        isfile(src) || error("docs/literate.jl: published script not found: $src")
         Literate.markdown(src, TUTORIAL_MD_DIR; documenter = true, name = page)
         Literate.notebook(src, NOTEBOOK_DIR; name = page)
         Literate.script(src, CLEAN_SCRIPT_DIR; name = page)

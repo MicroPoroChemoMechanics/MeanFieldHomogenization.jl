@@ -27,7 +27,7 @@
 # [cluster model](@ref th-cluster) and the [interaction tensors](@ref th-interaction).
 
 import Pkg                                                          #jl
-Pkg.activate(joinpath(@__DIR__, ".."); io = devnull)                 #jl
+Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
 
 using MeanFieldHomogenization
 using TensND

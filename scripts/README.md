@@ -1,8 +1,41 @@
 # `scripts/` — MeanFieldHomogenization.jl demos & validation
 
 Numbered demonstration / validation scripts, grouped in blocks by theme.
-Each is self-contained (`Pkg.activate(joinpath(@__DIR__, ".."))`) and, where
-relevant, states the reference benchmark it reproduces.
+Each is self-contained and, where relevant, states the reference benchmark it
+reproduces.
+
+## Which environment a script activates
+
+Every script here activates **`docs/`**:
+
+```julia
+import Pkg                                                          #jl
+Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)         #jl
+```
+
+That is deliberate, and it is not the package's own environment. Most of these
+scripts use `Plots`, and several use `SymPy`, `Symbolics` or `DECUHR` — none of
+which the package environment can load: `Plots` is not a dependency of
+`MeanFieldHomogenization` at all, and the other three are *weak* dependencies, so
+they are unavailable from `Project.toml` too. Activating `..` therefore only ever
+worked by falling back to whatever the machine happened to have in its global
+environment: on a fresh clone, `julia scripts/30_average_nlayers.jl` failed on
+`using Plots`.
+
+`docs/` is the one environment in this repository guaranteed to load everything a
+published script uses — that is precisely what lets Literate execute the notebook
+version of the same file. Running standalone and running inside the build are
+then the same statement, instead of two that can drift apart.
+
+The four finite-element scripts are the exception: `Ferrite`, `FerriteGmsh` and
+`Gmsh` are not in `docs/` either, so `81`, `83`, `88` and `89` activate and
+instantiate [`scripts/fe/`](fe/) instead, keeping `gmsh_jll` out of every
+documentation build.
+
+The three cross-validation scripts that `pyimport("echoes")` through `PyCall`
+(`15`, `52`, `60`) need a Python environment with `echoes` installed, and depend
+on the machine whichever project is active. They are validation harnesses, not
+demos.
 
 Shared code lives in [`common/`](common/) — currently the Pichler-Hellmich
 three-scale model (`common/quasibrittle_strength.jl`), used by both the demo script

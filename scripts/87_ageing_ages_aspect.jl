@@ -18,7 +18,7 @@
 # ``J_E^{\hom}(t, t')``, and the point of the figure is how differently.
 
 import Pkg                                                          #jl
-Pkg.activate(joinpath(@__DIR__, ".."); io = devnull)                 #jl
+Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
 
 using MeanFieldHomogenization
 using TensND

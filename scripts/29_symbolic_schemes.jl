@@ -21,7 +21,7 @@
 # Self-consistent (hand-derived) · **§7** Symbolics.jl bonus.
 
 import Pkg                                                          #jl
-Pkg.activate(joinpath(@__DIR__, ".."); io = devnull)                  #jl
+Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                  #jl
 
 using MeanFieldHomogenization
 using TensND

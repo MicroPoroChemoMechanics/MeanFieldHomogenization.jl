@@ -27,7 +27,7 @@
 # Theory: [Layered spheroid](../../theory/layered_spheroid.md).
 
 import Pkg                                                          #jl
-Pkg.activate(joinpath(@__DIR__, ".."); io = devnull)                 #jl
+Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
 
 using MeanFieldHomogenization
 using MeanFieldHomogenization.LayeredSpheroids: local_temperature, local_gradient, local_flux

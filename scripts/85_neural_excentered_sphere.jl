@@ -105,7 +105,7 @@
 # ![Learning curves](../../assets/nn/excentered_training_curve.png)
 
 import Pkg                                                          #jl
-Pkg.activate(joinpath(@__DIR__, ".."); io = devnull)                 #jl
+Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
 
 using MeanFieldHomogenization
 using TensND

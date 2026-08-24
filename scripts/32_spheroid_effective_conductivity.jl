@@ -19,7 +19,7 @@
 #     scalar Laplace equation.
 
 import Pkg                                                          #jl
-Pkg.activate(joinpath(@__DIR__, ".."); io = devnull)                 #jl
+Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
 
 using MeanFieldHomogenization
 using MeanFieldHomogenization.LayeredSpheroids: spheroid_ba_ratios, coupling_matrices

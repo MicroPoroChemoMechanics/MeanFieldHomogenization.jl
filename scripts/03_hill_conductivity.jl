@@ -14,7 +14,7 @@
 # =============================================================================
 
 import Pkg
-Pkg.activate(joinpath(@__DIR__, ".."); io = devnull)
+Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)
 
 using MeanFieldHomogenization
 using TensND
