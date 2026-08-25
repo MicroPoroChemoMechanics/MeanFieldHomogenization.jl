@@ -105,7 +105,7 @@ end
 # blocks. A symbolic frame therefore cannot be honored — say so, rather than
 # letting `_basis_matrix` fail on `Float64(::Sym)` several frames deeper.
 function _alv_check_numeric_frame(basis)
-    is_hard_numeric(eltype(basis)) || throw(
+    return is_hard_numeric(eltype(basis)) || throw(
         ArgumentError(
             "laminate_alv: the ageing-viscoelastic kernel is a numerical " *
                 "Volterra discretization and needs a numeric frame; got a " *
