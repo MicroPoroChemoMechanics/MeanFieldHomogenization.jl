@@ -152,27 +152,20 @@ end
     @test ForwardDiff.derivative(d1, 0.8) ≈ _fd(d1, 0.8; h = 1.0e-4) rtol = 1.0e-4
 end
 
-@testset "ForwardDiff — a TILTED laminate (blocked upstream, in TensND)" begin
-    # Every other test here uses the canonical frame. A tilted one does NOT
-    # currently differentiate, and the obstruction is entirely upstream: it
-    # involves no laminate code at all.
+@testset "ForwardDiff — a TILTED laminate" begin
+    # Every other test here uses the canonical frame. A tilted one exercises a
+    # different storage path entirely, and used to be BLOCKED — not by anything
+    # in the laminate, but upstream:
     #
     #   TensND.KM(TensISO{4,3,Dual}, RotatedBasis{3,Float64})  →  9×9, not 6×6
     #
     # Writing a structured tensor about a non-canonical axis leaves minor-
-    # antisymmetric round-off of order 1e-16, so `Tensors.issymmetric` says no
-    # and the components land on the 81-component `Tensor` instead of the
-    # 36-component `SymmetricTensor`. `TensND._store_symmetric` (`src/tens.jl`)
-    # absorbs exactly that residue — but its tolerant method is written
-    # `T <: AbstractFloat`, and `ForwardDiff.Dual` is not. Its own docstring
-    # justifies the exact branch by "there is no round-off to absorb", which is
-    # true of a symbolic or rational element type and false of a `Dual`.
-    #
-    # The fix belongs in TensND (`_store_symmetric` should key on `ApproxType`,
-    # which that package already defines as
-    # `Union{AbstractFloat, Complex{<:AbstractFloat}, ForwardDiff.Dual}`), so it
-    # is recorded here rather than worked around: `@test_broken` will fail
-    # loudly, and this testset can be promoted, the day it lands.
+    # antisymmetric round-off of order 1e-16, so the components landed on the
+    # 81-component `Tensor` instead of the 36-component `SymmetricTensor`.
+    # `TensND._store_symmetric` absorbs exactly that residue, but its tolerant
+    # method was keyed on `AbstractFloat`, which `ForwardDiff.Dual` is not.
+    # Fixed in TensND 0.3.6 by keying it on `ApproxType` instead — the union
+    # that package already defined for precisely this distinction.
     tilted(x) = begin
         lam = Laminate(; normal = (1, 1, 1))
         add_layer!(lam, :A, Dict(:C => _isod(2.0, x)); thickness = 0.3)
@@ -180,11 +173,17 @@ end
         return TensND.get_data(homogenize(lam, Laminated(), :C))[5]   # 2·C₂₃₂₃
     end
 
-    # The value itself is fine — only the derivative is blocked.
+    # The value: the out-of-plane shear is an exact harmonic mean, whatever the
+    # frame — so it is known in closed form and pins the tilted path itself.
     @test tilted(0.8) ≈ 2 / (0.3 / 0.8 + 0.7 / 0.2) rtol = 1.0e-12
-    @test_broken try
-        isapprox(ForwardDiff.derivative(tilted, 0.8), _fd(tilted, 0.8); rtol = RTOL_AD)
-    catch
-        false
+    @test ForwardDiff.derivative(tilted, 0.8) ≈ _fd(tilted, 0.8) rtol = RTOL_AD
+
+    # …and a thickness, whose derivative also moves the volume fractions.
+    tilted_h(h) = begin
+        lam = Laminate(; normal = (0.3, -0.7, 0.2))
+        add_layer!(lam, :A, Dict(:C => _isod(2.0, 0.8)); thickness = h)
+        add_layer!(lam, :B, Dict(:C => _isod(0.5, 0.2)); thickness = 0.7)
+        return TensND.get_data(homogenize(lam, Laminated(), :C))[5]
     end
+    @test ForwardDiff.derivative(tilted_h, 0.3) ≈ _fd(tilted_h, 0.3) rtol = RTOL_AD
 end

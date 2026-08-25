@@ -90,6 +90,21 @@ transversely isotropic may still come back generic, which loses nothing.
   `fraction` across layers is rejected. Neither exists, and neither could exist
   for a symbolic or `Dual` thickness. The prose now describes what the code does.
 
+### ForwardDiff now reaches through a tilted frame
+
+Checking the frame paths for non-regression turned up a defect that was neither
+new nor in this package: `ForwardDiff` could not differentiate a laminate whose
+normal is not `e₃` at all. `TensND.KM` of a `Dual`-valued `TensISO` in a
+`RotatedBasis` returned a 9×9 matrix instead of 6×6, because
+`TensND._store_symmetric` keyed its round-off tolerance on `AbstractFloat` and a
+`Dual` is not one.
+
+**Requires TensND 0.3.6**, where that is fixed; `[compat]` moves from `"0.3.5"`
+to `"0.3.6"` accordingly — a lower bound at patch level, because the fix is a
+patch release and the laminate genuinely needs it. `test_laminate_dual_compat.jl`
+gains the tilted case, on a modulus and on a thickness, against central
+differences.
+
 ### Compatibility
 
 No exported name was added or removed and no numerical result changed: `1.0*x`
