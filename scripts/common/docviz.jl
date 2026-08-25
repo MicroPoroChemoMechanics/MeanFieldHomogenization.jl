@@ -612,14 +612,47 @@ function shape_traces(
 end
 
 """
+    box_mesh(xspan, yspan, zspan) -> (V, F)
+
+The eight vertices and twelve triangles of an axis-aligned box.  Used to give
+a laminate layer an actual *volume*: two horizontal faces read as a pair of
+floating planes, not as a layer of matter.
+"""
+function box_mesh(xspan, yspan, zspan)
+    x0, x1 = xspan
+    y0, y1 = yspan
+    z0, z1 = zspan
+    V = Matrix{Float64}(undef, 3, 8)
+    n = 0
+    for z in (z0, z1), y in (y0, y1), x in (x0, x1)
+        V[:, n += 1] = [x, y, z]
+    end
+    # 0-based indices, as `mesh_trace` expects: two triangles per face.
+    F = reshape(
+        [0, 1, 3, 0, 3, 2,      # z = z0
+            4, 5, 7, 4, 7, 6,      # z = z1
+            0, 1, 5, 0, 5, 4,      # y = y0
+            2, 3, 7, 2, 7, 6,      # y = y1
+            0, 2, 6, 0, 6, 4,      # x = x0
+            1, 3, 7, 1, 7, 5],     # x = x1
+        3, 12
+    )
+    return V, F
+end
+
+"""
     laminate_traces(thicknesses; kwargs...)
 
 An exploded stack of layers with its normal — the periodic multilayer cell of
 [`theory/laminate.md`](@ref th-laminate-pinv).
+
+Each layer is drawn as a **solid box**.  It used to be two horizontal faces,
+which reads as a stack of planes rather than of matter, and hides the very
+thing the figure is about: the layer thicknesses.
 """
 function laminate_traces(
         thicknesses;
-        width::Real = 2.0, colors = nothing, opacity::Real = 0.9,
+        width::Real = 2.0, colors = nothing, opacity::Real = 0.95,
         normal::Bool = true, gap::Real = 0.0,
     )
     t = Float64.(collect(thicknesses))
@@ -628,12 +661,11 @@ function laminate_traces(
     z = -sum(t) / 2
     for (k, tk) in enumerate(t)
         z0, z1 = z, z + tk
-        for zz in (z0, z1)                       # top and bottom faces
-            X = [-width / 2 width / 2; -width / 2 width / 2]
-            Y = [-width / 2 -width / 2; width / 2 width / 2]
-            Z = fill(zz, 2, 2)
-            push!(traces, surface_trace(X, Y, Z; color = cols[mod1(k, length(cols))], opacity = opacity))
-        end
+        V, F = box_mesh((-width / 2, width / 2), (-width / 2, width / 2), (z0, z1))
+        push!(
+            traces,
+            mesh_trace(V, F; color = cols[mod1(k, length(cols))], opacity = opacity)
+        )
         z = z1 + gap
     end
     if normal
