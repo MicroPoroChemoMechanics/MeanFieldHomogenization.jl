@@ -53,6 +53,10 @@ import ..Core
 using ..Core
 const MFH_Core = Core
 
+# `is_hard_numeric` — the numeric/symbolic split used throughout the package.
+# NOT `T <: Real`: `Symbolics.Num` subtypes `Real` and answers no comparison.
+using ..Elliptic: is_hard_numeric
+
 import ..Core: AbstractHomogenizationCell, AbstractParameter,
     homogenize, validate_cell, _evaluate, get_param, set_param,
     cell_member_names, cell_container_property, cell_set_property,

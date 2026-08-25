@@ -68,11 +68,25 @@ end
 
 @inline function _parallel(a, b)
     T = promote_type(eltype(a), eltype(b))
-    T <: Real || return false
+    # `is_hard_numeric`, not `T <: Real`: `Symbolics.Num` subtypes `Real` and
+    # answers no comparison, so it belongs on the symbolic side.
+    is_hard_numeric(T) || return _parallel_exact(a, b)
     da = sqrt(sum(x -> x^2, a))
     db = sqrt(sum(x -> x^2, b))
     (da > 0 && db > 0) || return false
     return isapprox(abs(sum(a .* b)), da * db; rtol = 1.0e-12, atol = 1.0e-14)
+end
+
+# Symbolic axes: `‖a‖‖b‖ − |a·b| = 0` is a question no symbolic backend answers
+# reliably (it needs the sign of a root of an expression), so collinearity is
+# decided STRUCTURALLY — the two axes are the same expression, up to an overall
+# sign. Conservative by construction: never a false positive, so a laminate that
+# *is* transversely isotropic may still be returned as a generic `Tens`, which
+# is lossless. Without this a symbolic `TensTI` layer could never be recognized
+# as coaxial with the laminate normal, even when written with the same symbols.
+@inline function _parallel_exact(a, b)
+    all(i -> isequal(a[i], b[i]), eachindex(a)) && return true
+    return all(i -> isequal(a[i], -b[i]), eachindex(a))
 end
 
 _ti_about(::TensND.TensISO{4, 3}, n) = true
@@ -132,6 +146,29 @@ function _all_ti(lam::Laminate, prop::Symbol, ::Val{2})
 end
 
 """
+    _frame_axis(basis, ::Type{Tel}) -> NTuple{3,Tel}
+
+The layer normal, in the element type of the **result** rather than of the
+frame.
+
+A `TensTI` axis is geometry, but `TensND` converts it to the element type of the
+tensor's *data* (`map(T, n)`), so a `Float64` `1.0` read off a
+`CanonicalBasis{3,Float64}` comes back as a symbolic `1.0` — and, the components
+being rebuilt from the Walpole basis of axis `n`, that factor multiplies every
+coefficient of the answer. Reading a canonical frame exactly, whatever its own
+element type, is what keeps a symbolic laminate free of stray floats.
+
+A genuinely oblique numeric frame still yields floating-point axis components,
+which is correct: the geometry itself is floating point.
+"""
+@inline _frame_axis(::TensND.CanonicalBasis{3}, ::Type{Tel}) where {Tel} =
+    (zero(Tel), zero(Tel), one(Tel))
+@inline function _frame_axis(basis::TensND.AbstractBasis{3}, ::Type{Tel}) where {Tel}
+    n = MFH_Core._basis_col(basis, 3)
+    return ntuple(i -> convert(Tel, n[i]), 3)
+end
+
+"""
     _wrap4(lam, prop, M6) -> AbstractTens{4,3}
 
 Turn the effective Kelvin-Mandel matrix (expressed in the layer frame) back
@@ -147,7 +184,8 @@ into a TensND tensor, picking the tightest **exact** type:
 function _wrap4(lam::Laminate, prop::Symbol, M6::AbstractMatrix)
     if _all_ti(lam, prop, Val(4))
         ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆ = TensND.ti_params_from_KM(M6)
-        return TensND.TensTI{4}(ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆, laminate_normal(lam))
+        n = _frame_axis(lam.basis, eltype(M6))
+        return TensND.TensTI{4}(ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆, n)
     end
     return TensND.inv_KM(Matrix(M6), lam.basis)
 end
@@ -163,7 +201,7 @@ function _wrap2(lam::Laminate, prop::Symbol, M3::AbstractMatrix)
     if _all_ti(lam, prop, Val(2))
         a = (M3[1, 1] + M3[2, 2]) / 2
         b = M3[3, 3]
-        return TensND.TensTI{2}(a, b, laminate_normal(lam))
+        return TensND.TensTI{2}(a, b, _frame_axis(lam.basis, eltype(M3)))
     end
     return TensND.Tens(Matrix(M3), lam.basis)
 end
@@ -374,8 +412,9 @@ function interface_jump(lam::Laminate, k::Integer, E; property::Symbol = :C)
     nloc = (0, 0, 1)                       # `n` is the third axis OF THAT FRAME
     t = SVector{3}(ntuple(i -> sum(Σarr[i, j] * nloc[j] for j in 1:3), 3))
     jump_local = _interface_jump_local(itf, t)
-    # back to canonical components
-    R = MFH_Core._basis_matrix(lam.basis)
+    # back to canonical components — `_frame_matrix`, not `_basis_matrix`:
+    # the latter pins the frame to `Float64` and `Float64(::Sym)` throws.
+    R = MFH_Core._frame_matrix(lam.basis)
     return ntuple(i -> sum(R[i, j] * jump_local[j] for j in 1:3), 3)
 end
 

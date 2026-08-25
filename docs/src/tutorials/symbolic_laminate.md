@@ -3,7 +3,9 @@
 A laminate is the one microstructure in this package whose effective behavior
 is **exact**, so it is also the one whose closed forms the code can *derive*
 rather than merely reproduce. `TensND` being generic in its element type, the
-whole laminate kernel runs on **SymPy** `Sym` unchanged — and what comes out is
+whole laminate cell runs on **SymPy** `Sym` unchanged — nothing has to be
+declared for it, the moduli, the fractions and the frame all carry their own
+type — and what comes out is
 the classical result of [backus1962](@cite), in the form
 [Voigt and Reuss](@ref th-homogenization) would lead one to expect: some
 coefficients are **arithmetic** averages across the layers, others are
@@ -29,7 +31,7 @@ f₂ = 1 - f₁
 
 iso_lame(λ, μ) = TensISO{3}(3(λ + 2μ / 3), 2μ)      # (3κ, 2μ) from (λ, μ)
 
-lam = Laminate(; T = Sym, normal = (0, 0, 1))
+lam = Laminate(; normal = (0, 0, 1))
 add_layer!(lam, :A, Dict(:C => iso_lame(λ₁, μ₁)); fraction = f₁)
 add_layer!(lam, :B, Dict(:C => iso_lame(λ₂, μ₂)); fraction = f₂)
 nothing # hide
@@ -151,7 +153,7 @@ over three terms, still describe the answer exactly.
 ```@example tutsymlam
 @syms λ₃::positive μ₃::positive f₂ₛ::positive
 
-lam3 = Laminate(; T = Sym, normal = (0, 0, 1))
+lam3 = Laminate(; normal = (0, 0, 1))
 add_layer!(lam3, :A, Dict(:C => iso_lame(λ₁, μ₁)); fraction = f₁)
 add_layer!(lam3, :B, Dict(:C => iso_lame(λ₂, μ₂)); fraction = f₂ₛ)
 add_layer!(lam3, :C, Dict(:C => iso_lame(λ₃, μ₃)); fraction = 1 - f₁ - f₂ₛ)
@@ -193,7 +195,7 @@ structure collapses to the two elementary means:
 ```@example tutsymlam
 @syms k₁::positive k₂::positive
 
-lamK = Laminate(; T = Sym, normal = (0, 0, 1))
+lamK = Laminate(; normal = (0, 0, 1))
 add_layer!(lamK, :A, Dict(:K => TensISO{3}(k₁)); fraction = f₁)
 add_layer!(lamK, :B, Dict(:K => TensISO{3}(k₂)); fraction = f₂)
 K = simplify.(components(homogenize(lamK, Laminated(), :K)))
@@ -217,7 +219,7 @@ what a primal interface does:
 ```@example tutsymlam
 @syms kn::positive L::positive
 
-lamI = Laminate(; T = Sym, normal = (0, 0, 1))
+lamI = Laminate(; normal = (0, 0, 1))
 add_layer!(lamI, :A, Dict(:C => iso_lame(λ₁, μ₁)); thickness = f₁ * L,
            interface = SpringInterface(kn, zero(kn)))
 add_layer!(lamI, :B, Dict(:C => iso_lame(λ₂, μ₂)); thickness = f₂ * L)
@@ -231,9 +233,54 @@ MI = KM(homogenize(lamI, Laminated(), :C))
 compliance simply joins the sum of the layer compliances — and the ``1/L``
 shows the size effect explicitly, an interface *density*.
 
+## A tilted laminate, still symbolic
+
+The frame is not confined to the canonical one, and not confined to floating
+point either. A **symbolic normal** is completed into an orthonormal
+``(\underline{\ell}, \underline{m}, \hat{\underline{n}})`` by plain
+Gram-Schmidt — no trigonometry and no `atan2`, so the frame stays as readable as
+the normal it came from:
+
+```@example tutsymlam
+θ = symbols("theta", real = true)
+
+lam_tilt = Laminate(; normal = (0, sin(θ), cos(θ)))
+add_layer!(lam_tilt, :A, Dict(:C => iso_lame(λ₁, μ₁)); fraction = f₁)
+add_layer!(lam_tilt, :B, Dict(:C => iso_lame(λ₂, μ₂)); fraction = f₂)
+
+C_tilt = homogenize(lam_tilt, Laminated(), :C)
+(type = typeof(C_tilt), axis = simplify.(TensND.axis(C_tilt)))
+```
+
+The type is still an exact `TensTI`, and the axis is the normal we asked for.
+The physics, meanwhile, has not moved at all: the five Walpole coefficients are
+**identical** to those of the canonical stack — only the axis they are attached
+to has changed. That is frame covariance, stated as an identity rather than
+checked to a tolerance:
+
+```@example tutsymlam
+C_flat = homogenize(lam, Laminated(), :C)
+all(iszero, simplify.(collect(TensND.get_data(C_tilt)) .- collect(TensND.get_data(C_flat))))
+```
+
+The in-plane pair is fixed by Gram-Schmidt against a reference axis. Which one is
+physically immaterial — the answer above is invariant under rotation about
+``\underline{n}`` — but it must not be parallel to ``\underline{n}``. A numeric
+normal chooses the safest reference itself, by comparing components; a symbolic
+one cannot answer that comparison and falls back to ``\underline{e}_1``, so name
+another when the normal may lie along it:
+
+```@example tutsymlam
+lam_e1 = Laminate(; normal = (cos(θ), 0, sin(θ)), in_plane = (0, 1, 0))
+simplify.(collect(laminate_normal(lam_e1)))
+```
+
+ZYZ Euler angles work symbolically too — `Laminate(; euler_angles = (θ, 0, 0))`
+describes the same stack.
+
 ## Why this works at all
 
-Two implementation choices, invisible numerically, are what let the kernel run
+Three implementation choices, invisible numerically, are what let the cell run
 symbolically at all — and a page like this one is how they stay honest:
 
 - the pseudo-inverse is the **cofactor inverse** of the ``3\times3``
@@ -241,7 +288,11 @@ symbolically at all — and a page like this one is how they stay honest:
   evaluable (nor `ForwardDiff`-differentiable);
 - every intermediate is an `SMatrix`, never an `MMatrix` —
   `MMatrix{6,6,T}(undef)` cannot even be *constructed* for a non-`isbits`
-  element type such as `Sym`.
+  element type such as `Sym`;
+- the **frame** is read for its axis exactly. A `TensTI` converts its axis to
+  the element type of its data and rebuilds its components from the Walpole
+  basis of that axis, so a canonical frame read as `(0.0, 0.0, 1.0)` would put a
+  symbolic `1.0` in front of every coefficient above. It is read as `(0, 0, 1)`.
 
 The same code therefore serves `Float64` production runs, `ForwardDiff.Dual`
 sensitivities and the closed forms above, with no separate symbolic path to

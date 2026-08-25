@@ -16,6 +16,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
+using SymPy
 
 const _ISO_L(k, μ) = TensISO{3}(3k, 2μ)
 
@@ -93,6 +94,80 @@ end
     @test_throws ArgumentError Laminate(; normal = (0, 0, 1), euler_angles = (0.1,))
     @test_throws ArgumentError Laminate(; normal = (0, 0, 0))
     @test_throws ArgumentError Laminate(; normal = (0, 1))
+    # `in_plane` only makes sense with `normal`: the other two routes already
+    # fix the whole frame, so accepting it there would silently ignore it.
+    @test_throws ArgumentError Laminate(; euler_angles = (0.3,), in_plane = (1, 0, 0))
+    @test_throws ArgumentError Laminate(; in_plane = (1, 0, 0))
+    @test_throws ArgumentError Laminate(; normal = (1, 1, 1), in_plane = (1, 0))
+end
+
+@testset "Laminate — `in_plane` fixes the in-plane axis" begin
+    # The physics never sees this choice (the result is invariant under rotation
+    # about `n`), but the STORED frame does, and an anisotropic interface given
+    # as a plain matrix is read in it — so it has to be honored exactly.
+    lam = Laminate(; normal = (0, 0, 1), in_plane = (1, 1, 0))
+    R = MeanFieldHomogenization.Core._basis_matrix(laminate_basis(lam))
+    @test R[:, 1] ≈ [1, 1, 0] ./ sqrt(2) atol = 1.0e-12
+    @test R[:, 3] ≈ [0, 0, 1] atol = 1.0e-12
+    @test R' * R ≈ I atol = 1.0e-12
+    @test det(R) ≈ 1 atol = 1.0e-12
+
+    # Asking for the canonical normal WITH a reference axis is a genuine
+    # request for a rotated frame, so it must not short-circuit to canonical.
+    @test !(laminate_basis(lam) isa TensND.CanonicalBasis)
+    @test laminate_basis(Laminate(; normal = (0, 0, 1))) isa TensND.CanonicalBasis
+end
+
+@testset "Laminate — the canonical frame follows the declared element type" begin
+    # `T` is a floor for the thicknesses AND the element type of a canonical
+    # frame. The two ways of asking for `n = e₃` must agree, or the axis of the
+    # returned `TensTI` differs between them — which is exactly how a `Float64`
+    # `1.0` used to end up multiplying every coefficient of a symbolic result.
+    @test eltype(laminate_basis(Laminate())) === Float64
+    @test eltype(laminate_basis(Laminate(; normal = (0, 0, 1)))) === Float64
+    @test eltype(laminate_basis(Laminate(; T = BigFloat))) === Float64   # Real ⇒ Float64
+    @test typeof(laminate_basis(Laminate(; T = Sym, normal = (0, 0, 1)))) ===
+        typeof(laminate_basis(Laminate(; T = Sym)))
+    @test eltype(laminate_basis(Laminate(; T = Sym))) <: Sym
+end
+
+@testset "Laminate — a symbolic frame" begin
+    θ = symbols("theta", real = true)
+
+    # From a symbolic normal. Gram-Schmidt against `e₁` by default: purely
+    # algebraic, so the frame stays as readable as the normal it came from.
+    lam = Laminate(; normal = (0, sin(θ), cos(θ)))
+    b = laminate_basis(lam)
+    @test b isa TensND.RotatedBasis
+    @test eltype(b) <: Sym
+    R = MeanFieldHomogenization.Core._frame_matrix(b)
+    @test all(iszero, simplify.(R' * R - I))          # orthonormal
+    @test iszero(simplify(det(R) - 1))                # right-handed
+    @test all(iszero, simplify.(R[:, 3] - [0, sin(θ), cos(θ)]))   # 3rd axis is n̂
+    @test all(iszero, simplify.(collect(laminate_normal(lam)) - [0, sin(θ), cos(θ)]))
+
+    # An explicit reference, which is what a normal along e₁ needs.
+    lamP = Laminate(; normal = (cos(θ), 0, sin(θ)), in_plane = (0, 1, 0))
+    RP = MeanFieldHomogenization.Core._frame_matrix(laminate_basis(lamP))
+    @test all(iszero, simplify.(RP' * RP - I))
+    @test all(iszero, simplify.(RP[:, 1] - [0, 1, 0]))
+
+    # Symbolic ZYZ angles, the other route.
+    lamE = Laminate(; euler_angles = (θ, 0, 0))
+    @test laminate_basis(lamE) isa TensND.RotatedBasis
+    @test eltype(laminate_basis(lamE)) <: Sym
+    @test all(iszero, simplify.(collect(laminate_normal(lamE)) - [sin(θ), 0, cos(θ)]))
+
+    # `_basis_matrix` pins to Float64 and would throw here; `_frame_matrix` is
+    # the accessor the laminate paths must use.
+    @test_throws Exception MeanFieldHomogenization.Core._basis_matrix(b)
+
+    # `show` has neither a `float` nor a `round` to apply to a symbolic axis.
+    add_layer!(lam, :A, Dict(:C => _ISO_L(2.0, 0.8)); fraction = 0.4)
+    add_layer!(lam, :B, Dict(:C => _ISO_L(0.5, 0.2)); fraction = 0.6)
+    str = sprint(show, MIME"text/plain"(), lam)
+    @test occursin("theta", str)
+    @test occursin("2 layer(s)", str)
 end
 
 @testset "Laminate — validation" begin

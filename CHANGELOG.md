@@ -1,5 +1,104 @@
 # Changelog
 
+## v0.5.1 — a symbolic laminate is symbolic all the way down, frame included
+
+### A stray `1.0` in an exact answer
+
+A bilayer of symbolic isotropic layers used to come back as
+
+```
+C₃₃₃₃ = 1.0/(f/(k_A + 4*mu_A/3) - (f - 1)/(k_B + 4*mu_B/3))
+C₂₃₂₃ = 1.0*mu_A*mu_B/(f*mu_B + mu_A*(1 - f))
+```
+
+That `1.0` is a `Float64` in a calculation that has no business containing one,
+and it came from the **frame**, not from the kernel. `Laminate(; normal = (0,0,1))`
+built a `CanonicalBasis{3,Float64}`; `_wrap4` read its third column as
+`(0.0, 0.0, 1.0)`; and a `TensTI` converts its axis to the element type of its
+*data* and rebuilds its components from the Walpole basis of that axis — so the
+float came back as a symbolic `1.0` in front of every coefficient.
+
+It was invisible to every existing test, and necessarily so: `Sym(1.0) == Sym(1)`
+is `true`, so no `simplify(… - …) == 0` check can see it. The regression test
+added here asserts `is_Integer` on the axis instead.
+
+A canonical frame is now read for its axis **exactly** — `(0, 0, 1)` — whatever
+its own element type, and the declared floor `T` sets that element type, so
+`Laminate(; T = Sym)` and `Laminate(; T = Sym, normal = (0, 0, 1))` finally agree.
+Neither form is required any more: symbolic moduli, thicknesses and frames are
+all carried by ordinary construction, and `T` goes back to being what it says it
+is — a floor.
+
+An obliquely oriented *numeric* frame still contributes floating-point axis
+components. That is correct: the geometry itself is floating point.
+
+### A symbolic frame
+
+`normal` and `euler_angles` now accept symbolic components, so
+`Laminate(; normal = (0, sin(θ), cos(θ)))` and `Laminate(; euler_angles = (θ, 0, 0))`
+are ordinary laminates. Previously an explicit `basis = …` was the only route,
+and the docstrings said so.
+
+A symbolic normal is completed into `(ℓ, m, n̂)` by plain Gram-Schmidt against a
+reference axis — no trigonometry and no `atan2`, so the frame stays as readable
+as the normal it came from, and the result is `tsimplify`'d once at construction
+rather than leaving `sin(θ)/√(sin²θ + cos²θ)` to resurface in every component.
+
+The in-plane pair has to be *chosen*, and non-degenerately. A numeric normal
+picks whichever canonical axis is least aligned with `n̂` — a comparison, which
+can never degenerate. A symbolic normal cannot answer that comparison, so it
+falls back to `e₁`, and the new keyword
+
+```julia
+Laminate(; normal = (cos(θ), 0, sin(θ)), in_plane = (0, 1, 0))
+```
+
+names another reference when the normal may lie along `e₁`. The choice is
+physically immaterial — the effective property is invariant under rotation about
+`n`, and the test suite states that as a symbolic identity rather than to a
+tolerance — but it is not automatable. `in_plane` goes with `normal` only;
+`euler_angles` and `basis` already fix the whole frame, and passing it there now
+raises rather than being ignored.
+
+### Coaxiality without a tolerance
+
+`_parallel` answered `false` for every non-`Real` element type, so a symbolic
+`TensTI` layer was never recognized as coaxial with the laminate normal and the
+exact `TensTI` return degraded to a generic `Tens`. Collinearity of symbolic axes
+is now decided **structurally** — the same expression, up to an overall sign.
+Conservative by construction, never a false positive: a laminate that *is*
+transversely isotropic may still come back generic, which loses nothing.
+
+### Smaller repairs on the same path
+
+- `show` applied `round(float(x))` to the normal, which a symbolic frame has
+  neither of.
+- `interface_jump` rotated back to canonical components through `_basis_matrix`,
+  which pins the frame to `Float64`; it now uses the new element-type-preserving
+  `Core._frame_matrix`. `_basis_matrix` is untouched — its other callers
+  (cubature, multipole sums, axis permutations) do want `Float64`.
+- `_compute_period` seeded the sum with `zero(T)` of the *declared* floor, so a
+  symbolic stack computed `0.0 + h₁ + h₂`. SymPy absorbs that leading float;
+  `Symbolics.Num` need not. It now sums from the first thickness, which is what
+  its own docstring already promised.
+- `laminate_alv` is a trapezoidal Volterra discretization on a grid of times and
+  is numerical by construction. It now says so, with an `ArgumentError` naming
+  the elastic `Laminated` scheme, instead of failing several frames deeper on
+  `Float64(::Sym)`.
+- Two docstrings promised checks the code does not perform — that
+  `validate_laminate` verifies `Σ f ≈ 1`, and that mixing `thickness` and
+  `fraction` across layers is rejected. Neither exists, and neither could exist
+  for a symbolic or `Dual` thickness. The prose now describes what the code does.
+
+### Compatibility
+
+No exported name was added or removed and no numerical result changed: `1.0*x`
+and `x` are the same number. Two things did change type, both of them fixes:
+`Laminate(; T = Sym, normal = (0, 0, 1))` now yields a `CanonicalBasis{3,Sym}`
+where it yielded a `CanonicalBasis{3,Float64}`, and a symbolic laminate of TI
+layers now returns a `TensTI` where it returned a `Tens`. Code that dispatched on
+either would see the difference.
+
 ## v0.5.0 — a dormant period before setting, and no proper names in the code
 
 ### Breaking changes

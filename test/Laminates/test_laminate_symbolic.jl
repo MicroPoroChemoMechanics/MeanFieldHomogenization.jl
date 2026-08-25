@@ -19,6 +19,7 @@ using MeanFieldHomogenization
 using TensND
 using StaticArrays
 using SymPy
+import LinearAlgebra
 
 const MFHC_S = MeanFieldHomogenization.Core
 
@@ -148,6 +149,108 @@ if LAM_HAS_SYMBOLICS
     end
 else
     @info "Symbolics.jl not available — skipping the second symbolic backend"
+end
+
+@testset "Symbolic — the frame must not contaminate the result" begin
+    # THE regression test for the stray `1.0`.
+    #
+    # A `TensTI` converts its axis to the element type of its DATA, and the
+    # components are rebuilt from the Walpole basis of that axis. So an axis read
+    # off a `CanonicalBasis{3,Float64}` — `(0.0, 0.0, 1.0)` — became
+    # `(Sym(0.0), Sym(0.0), Sym(1.0))` and put a `1.0` in front of every
+    # coefficient of an otherwise exact answer:
+    #
+    #     C₂₃₂₃ = 1.0*mu_A*mu_B/(f*mu_B + mu_A*(1 - f))
+    #
+    # Note that `Sym(1.0) == Sym(1)` is `true`, so no `simplify(… - …) == 0`
+    # test can see this: `1.0*x - x` IS zero. `is_Integer` is what distinguishes
+    # the exact `1` from the float `1.0`, which is why the assertion is on the
+    # axis rather than on the coefficients.
+    @syms k_A::positive mu_A::positive k_B::positive mu_B::positive f::positive
+
+    for lam in (
+            Laminate(; normal = (0, 0, 1)),      # no `T = Sym` — the reported form
+            Laminate(),
+            Laminate(; T = Sym, normal = (0, 0, 1)),
+            Laminate(; T = Sym),
+        )
+        add_layer!(lam, :A, Dict(:C => TensISO{3}(3k_A, 2mu_A)); fraction = f)
+        add_layer!(lam, :B, Dict(:C => TensISO{3}(3k_B, 2mu_B)); fraction = 1 - f)
+        C = homogenize(lam, Laminated(), :C)
+
+        @test C isa TensND.TensTI{4}
+        @test eltype(C) <: Sym
+        # exact `0`, `0`, `1` — not `0.0`, `0.0`, `1.0`
+        @test all(x -> x.is_Integer, TensND.axis(C))
+
+        a = get_array(C)
+        @test iszero(simplify(a[2, 3, 2, 3] - mu_A * mu_B / (f * mu_B + (1 - f) * mu_A)))
+        # …and the user-visible symptom itself: no float in the printed form.
+        @test !occursin("1.0", string(simplify(a[2, 3, 2, 3])))
+        @test !occursin("1.0", string(simplify(a[3, 3, 3, 3])))
+    end
+end
+
+@testset "Symbolic — a laminate with a symbolic normal" begin
+    # The frame is completed by Gram-Schmidt against `e₁`, purely algebraically,
+    # so no `atan2` ever appears and the answer stays as readable as the normal.
+    @syms κ₁::positive μ₁::positive κ₂::positive μ₂::positive f₁::positive
+    θ = symbols("theta", real = true)
+
+    mklam(frame_kw) = begin
+        lam = Laminate(; frame_kw...)
+        add_layer!(lam, :A, Dict(:C => TensISO{3}(3κ₁, 2μ₁)); fraction = f₁)
+        add_layer!(lam, :B, Dict(:C => TensISO{3}(3κ₂, 2μ₂)); fraction = 1 - f₁)
+        return lam
+    end
+
+    C0 = homogenize(mklam((T = Sym,)), Laminated(), :C)
+    for kw in (
+            (normal = (0, sin(θ), cos(θ)),),
+            (normal = (cos(θ), 0, sin(θ)), in_plane = (0, 1, 0)),
+            (euler_angles = (θ, 0, 0),),
+        )
+        lam = mklam(kw)
+        C = homogenize(lam, Laminated(), :C)
+        @test C isa TensND.TensTI{4}
+        @test eltype(C) <: Sym
+        # The axis moved; the Walpole coefficients did NOT. That is the whole
+        # content of frame covariance, and it holds symbolically.
+        @test all(
+            iszero,
+            simplify.(collect(TensND.get_data(C)) .- collect(TensND.get_data(C0)))
+        )
+        # …and the frame really is an orthonormal, right-handed one about `n`.
+        R = MeanFieldHomogenization.Core._frame_matrix(laminate_basis(lam))
+        @test all(iszero, simplify.(R' * R - LinearAlgebra.I))
+        @test iszero(simplify(LinearAlgebra.det(R) - 1))
+        @test all(iszero, simplify.(collect(TensND.axis(C)) .- R[:, 3]))
+    end
+end
+
+@testset "Symbolic — a TI layer about a symbolic axis is recognized" begin
+    # `_parallel` used to answer `false` for every non-`Real` element type, so a
+    # symbolic TI layer was never seen as coaxial and the exact `TensTI` return
+    # degraded to a generic `Tens`. The symbolic branch decides collinearity
+    # structurally — conservative, never a false positive.
+    @syms a₁::positive a₂::positive a₃::positive a₅::positive a₆::positive
+    @syms μ::positive κ::positive f₁::positive
+    θ = symbols("theta", real = true)
+    n = (Sym(0), sin(θ), cos(θ))
+
+    lam = Laminate(; normal = n)
+    add_layer!(lam, :A, Dict(:C => TensTI{4}(a₁, a₂, a₃, a₅, a₆, n)); fraction = f₁)
+    add_layer!(lam, :B, Dict(:C => TensISO{3}(3κ, 2μ)); fraction = 1 - f₁)
+    @test homogenize(lam, Laminated(), :C) isa TensND.TensTI{4}
+
+    # A TI layer about a DIFFERENT symbolic axis must still fall through.
+    lam2 = Laminate(; normal = n)
+    add_layer!(
+        lam2, :A, Dict(:C => TensTI{4}(a₁, a₂, a₃, a₅, a₆, (sin(θ), Sym(0), cos(θ))));
+        fraction = f₁
+    )
+    add_layer!(lam2, :B, Dict(:C => TensISO{3}(3κ, 2μ)); fraction = 1 - f₁)
+    @test !(homogenize(lam2, Laminated(), :C) isa TensND.TensTI)
 end
 
 @testset "Symbolic — through the Laminate cell itself" begin

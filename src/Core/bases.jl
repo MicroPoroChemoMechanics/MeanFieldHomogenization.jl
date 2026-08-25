@@ -54,23 +54,25 @@ The returned element type follows the basis element type.
 end
 
 """
-    _normalize_euler(angles) -> NTuple{3, <:AbstractFloat}
+    _normalize_euler(angles) -> NTuple{3}
 
-Pad a ZYZ Euler-angle tuple of length 0–3 to a full triple, promoting
-every entry to a common floating-point type.  Missing trailing angles
-default to `0`.  Accepts heterogeneous tuples (`Int`, `Irrational`,
-`Float32/64`, `Dual`, …) thanks to `promote_type` + `float`.
+Pad a ZYZ Euler-angle tuple of length 0–3 to a full triple, promoting every
+entry to one common type.  Missing trailing angles default to `0`.  Accepts
+heterogeneous tuples (`Int`, `Irrational`, `Float32/64`, `Dual`, …) thanks to
+`promote_type` + `float`, and **symbolic** ones (`Sym`, `Num`), which keep their
+own type rather than being forced through `Float64`.
 
 ```
 _normalize_euler(())                 == (0.0, 0.0, 0.0)
 _normalize_euler((π/2,))             == (π/2, 0.0, 0.0)       # Float64
 _normalize_euler((π, 0, 0))          == (π, 0.0, 0.0)          # Irrational → Float
 _normalize_euler((0, 1, 2))          == (0.0, 1.0, 2.0)
+_normalize_euler((θ, 0, 0))          == (θ, Sym(0), Sym(0))    # symbolic θ
 ```
 
 A tuple of length > 3 raises `ArgumentError`.
 """
-function _normalize_euler(angles::Tuple{Vararg{Real}})
+function _normalize_euler(angles::Tuple{Vararg{Number}})
     n = length(angles)
     n > 3 && throw(
         ArgumentError(
@@ -80,62 +82,96 @@ function _normalize_euler(angles::Tuple{Vararg{Real}})
     if n == 0
         return (0.0, 0.0, 0.0)
     end
-    T_promoted = float(promote_type(map(typeof, angles)...))
-    T = T_promoted <: AbstractFloat ? T_promoted : Float64
-    padded = ntuple(i -> i ≤ n ? T(angles[i]) : zero(T), 3)
-    return padded
+    T_promoted = promote_type(map(typeof, angles)...)
+    # `float` is what turns an `Int` or an `Irrational` angle into a usable one;
+    # it is meaningless on a symbolic type, and `Symbolics.Num` subtypes `Real`
+    # without being convertible from `Float64`, so `is_hard_numeric` — not
+    # `<: Real` — is what decides here.
+    T = if is_hard_numeric(T_promoted)
+        Tf = float(T_promoted)
+        Tf <: AbstractFloat ? Tf : Float64
+    else
+        T_promoted
+    end
+    return ntuple(i -> i ≤ n ? convert(T, angles[i]) : zero(T), 3)
 end
 
 # Convenience forwarding methods for common concrete-type patterns.
 _normalize_euler(::Tuple{}) = (0.0, 0.0, 0.0)
 
 """
-    _frame_from_normal(n) -> AbstractBasis
+    _frame_from_normal(n; T = nothing, in_plane = nothing) -> AbstractBasis
 
 Complete a normal vector `n` into an orthonormal frame `(ℓ, m, n̂)` whose
-**third** axis is `n̂ = n/‖n‖`, by Gram-Schmidt against whichever canonical
-axis is least aligned with `n̂`. Returns a `CanonicalBasis` when `n` is
-exactly the third canonical axis, so the common laminate needs no rotation at
-all.
+**third** axis is `n̂ = n/‖n‖`, by Gram-Schmidt against a reference axis.
+Returns a `CanonicalBasis` when `n` is exactly the third canonical axis, so the
+common laminate needs no rotation at all.
 
-The in-plane pair `(ℓ, m)` is chosen discretely and the effective property of
-a laminate is invariant under rotation about its normal, so this choice never
-leaks into a gradient — but pass an explicit basis if the frame itself has to
-be differentiable.
+`T` is the element-type floor of the cell the frame belongs to, and it decides
+the element type of that `CanonicalBasis` short-circuit alone: a symbolic cell
+keeps a symbolic canonical frame, whose axes are the exact `0` and `1` rather
+than `0.0` and `1.0`. That distinction is not cosmetic — a `TensTI` converts its
+axis to the element type of its *data*, so a `Float64` `1.0` reappears as a
+symbolic `1.0` multiplying every coefficient of the result.
 
-Requires a `Real` element type: the axis selection is a comparison, which a
-symbolic normal cannot answer. Build the basis explicitly in that case.
+`in_plane` is the reference axis Gram-Schmidt orthogonalizes against, i.e. what
+fixes `ℓ` in the plane of the layers; it must not be parallel to `n̂`. Left
+unset, a **numeric** normal picks whichever canonical axis is least aligned with
+`n̂`, which can never degenerate; a **symbolic** normal cannot answer that
+comparison, so it falls back to `e₁` and the caller must pass another reference
+when `n̂ ∥ e₁`.
+
+The effective property of a laminate is invariant under rotation about its
+normal, so this choice never changes the physics and never leaks into a
+gradient — but pass an explicit basis if the frame itself has to be
+differentiable.
 """
-function _frame_from_normal(nvec)
+function _frame_from_normal(nvec; T = nothing, in_plane = nothing)
     length(nvec) == 3 ||
         throw(ArgumentError("a laminate normal has 3 components; got $(length(nvec))"))
-    T0 = promote_type(typeof(nvec[1]), typeof(nvec[2]), typeof(nvec[3]))
-    T0 <: Real || throw(
-        ArgumentError(
-            "_frame_from_normal needs a Real normal (the in-plane axis choice is a " *
-                "comparison); pass an explicit `basis = …` for a symbolic frame"
-        )
+    in_plane === nothing || length(in_plane) == 3 || throw(
+        ArgumentError("`in_plane` is a 3-component axis; got $(length(in_plane))")
     )
-    T = _floatlike(T0)
-    n = SVector{3, T}(T(nvec[1]), T(nvec[2]), T(nvec[3]))
+    Tn = _floatlike(promote_type(typeof(nvec[1]), typeof(nvec[2]), typeof(nvec[3])))
+    n = SVector{3, Tn}(ntuple(i -> convert(Tn, nvec[i]), 3))
+    # The split is `is_hard_numeric`, NOT `Tn <: Real`: `Symbolics.Num` subtypes
+    # `Real` yet answers no comparison, so a `Real` guard would let it through
+    # and fail deep inside `argmin`.
+    if !is_hard_numeric(Tn)
+        n̂ = n / sqrt(n ⋅ n)
+        ref = in_plane === nothing ? (1, 0, 0) : in_plane
+        return _gram_schmidt_frame(n̂, SVector{3, Tn}(ntuple(i -> convert(Tn, ref[i]), 3)))
+    end
     nrm = sqrt(n ⋅ n)
     nrm > 0 || throw(ArgumentError("a laminate normal must be non-zero"))
     n̂ = n / nrm
     # The canonical laminate (n = e₃) keeps the canonical basis: exact, and it
     # lets the kernel skip the Bond rotation entirely.
-    n̂ == SVector{3, T}(0, 0, 1) && return TensND.CanonicalBasis{3, _basis_eltype(T)}()
-    k = argmin(abs.(n̂))
-    a = SVector{3, T}(ntuple(i -> i == k ? one(T) : zero(T), 3))
+    if in_plane === nothing && n̂ == SVector{3, Tn}(0, 0, 1)
+        return TensND.CanonicalBasis{3, _basis_eltype(T === nothing ? Tn : T)}()
+    end
+    a = if in_plane === nothing
+        k = argmin(abs.(n̂))
+        SVector{3, Tn}(ntuple(i -> i == k ? one(Tn) : zero(Tn), 3))
+    else
+        SVector{3, Tn}(ntuple(i -> convert(Tn, in_plane[i]), 3))
+    end
+    return _gram_schmidt_frame(n̂, a)
+end
+
+# Shared completion, once `n̂` is normalized and the in-plane reference chosen.
+# `(ℓ̂, m̂, n̂)` is right-handed: ℓ̂ × m̂ = n̂.
+function _gram_schmidt_frame(n̂::SVector{3, T}, a::SVector{3, T}) where {T}
     ℓ = a - (a ⋅ n̂) * n̂
     ℓ̂ = ℓ / sqrt(ℓ ⋅ ℓ)
-    m̂ = n̂ × ℓ̂                       # (ℓ̂, m̂, n̂) right-handed: ℓ̂ × m̂ = n̂
-    R = zeros(T, 3, 3)
-    @inbounds for i in 1:3
-        R[i, 1] = ℓ̂[i]
-        R[i, 2] = m̂[i]
-        R[i, 3] = n̂[i]
-    end
-    return TensND.RotatedBasis(R)
+    m̂ = n̂ × ℓ̂
+    R = [ifelse(j == 1, ℓ̂[i], ifelse(j == 2, m̂[i], n̂[i])) for i in 1:3, j in 1:3]
+    # `tsimplify` is the identity on every numeric element type, so this costs
+    # the numeric path nothing. On a symbolic one it is what turns
+    # `sin(θ)/√(sin²θ + cos²θ)` back into `sin(θ)` — worth doing ONCE here
+    # rather than leaving the normalization to resurface in every component of
+    # every result, and in `show`.
+    return TensND.RotatedBasis(TensND.tsimplify(R))
 end
 
 """
@@ -144,14 +180,34 @@ end
 Build the default TensND basis associated with a set of ZYZ Euler
 angles: `CanonicalBasis{3,_basis_eltype(T)}` when all (normalized)
 angles are zero, `RotatedBasis(normalized...)` otherwise.  Accepts any
-tuple of length 0–3 with heterogeneous `Real` entries — see
-[`_normalize_euler`](@ref).
+tuple of length 0–3 with heterogeneous `Number` entries, symbolic ones
+included — see [`_normalize_euler`](@ref).
 """
-function _default_basis(::Type{T}, euler_angles::Tuple{Vararg{Real}}) where {T}
-    Tbasis = _basis_eltype(T)
+function _default_basis(::Type{T}, euler_angles::Tuple{Vararg{Number}}) where {T}
     normalized = _normalize_euler(euler_angles)
+    # A symbolic angle set carries its own element type; forcing the declared
+    # floor would put a `Float64` frame under symbolic data, which is exactly
+    # what makes a `1.0` reappear in an otherwise exact result.
+    Tbasis = _basis_eltype(promote_type(T, eltype(normalized)))
     return all(iszero, normalized) ? TensND.CanonicalBasis{3, Tbasis}() :
         TensND.RotatedBasis(normalized...)
+end
+
+"""
+    _frame_matrix(basis) -> Matrix
+
+The 3×3 (or 2×2) rotation matrix of a TensND basis, **keeping the basis element
+type** — columns are the local axes expressed in the canonical frame.
+
+The counterpart of [`_basis_matrix`](@ref), which pins the result to `Float64`
+because its callers feed purely numerical kernels (cubature, multipole sums,
+axis permutations). Anything that has to survive a symbolic frame — the laminate
+does — must go through this one instead: `Float64(::Sym)` throws.
+"""
+function _frame_matrix(basis::TensND.AbstractBasis)
+    E = TensND.vecbasis(basis, :cov)
+    d = size(E, 1)
+    return [E[i, j] for i in 1:d, j in 1:d]
 end
 
 # ─── Basis-permutation helpers ────────────────────────────────────────────────
@@ -168,7 +224,8 @@ end
 
 Extract the 3×3 (or 2×2) rotation matrix associated with a TensND basis
 as a `Matrix{Float64}` — columns are the local axes expressed in the
-canonical frame.
+canonical frame.  See [`_frame_matrix`](@ref) for the element-type-preserving
+variant.
 """
 function _basis_matrix(basis::TensND.AbstractBasis)
     E = TensND.vecbasis(basis, :cov)

@@ -50,17 +50,32 @@ layer_volume_fraction(lam, :A)      # 0.3
 
 ### The frame
 
-Give **one** of:
+Give **at most one** of:
 
-- `normal = (nx, ny, nz)` — completed into an orthonormal `(ℓ, m, n̂)`. The
-  default `(0, 0, 1)` yields a `CanonicalBasis` and the kernel then skips the
-  frame rotation entirely;
+- `normal = (nx, ny, nz)` — completed into an orthonormal `(ℓ, m, n̂)`;
 - `euler_angles = (θ, ϕ, ψ)` — ZYZ angles, as everywhere else in the package;
-- `basis = …` — an explicit `TensND` basis whose third axis is the normal
-  (the only route for a symbolic frame).
+- `basis = …` — an explicit `TensND` basis whose third axis is the normal.
 
-The result is invariant under rotation about `n`, so the discrete choice of
-the in-plane pair never leaks into a gradient.
+The default is the canonical frame `n = e₃`, for which the kernel skips the
+frame rotation entirely.
+
+All three routes accept **symbolic** components, and so does the element type of
+the frame itself: `Laminate(; normal = (0, sin(θ), cos(θ)))` and
+`Laminate(; euler_angles = (θ, 0, 0))` are ordinary laminates.
+
+The result is invariant under rotation about `n`, so the choice of the in-plane
+pair is physically immaterial and never leaks into a gradient. It still has to be
+*made*, and it has to be non-degenerate. A numeric normal picks whichever
+canonical axis is least aligned with `n̂` — a comparison, which can never
+degenerate. A symbolic normal cannot answer that comparison, so it falls back to
+`e₁`; when the normal may itself lie along `e₁`, name another reference:
+
+```julia
+lam = Laminate(; normal = (cos(θ), 0, sin(θ)), in_plane = (0, 1, 0))
+```
+
+`in_plane` goes with `normal` only — `euler_angles` and `basis` already fix the
+whole frame.
 
 ## Elasticity and transport
 
@@ -223,10 +238,41 @@ a volume fraction: it also moves the period, hence the interface size effect.
 The kernel is generic in the number type: the pseudo-inverse is a cofactor
 inverse (never an SVD) and every intermediate is an `SMatrix` (never an
 `MMatrix`, which cannot even be constructed for a symbolic element type). A
-`Laminate{Sym}` therefore produces the closed forms directly —
+laminate of symbolic layers therefore produces the closed forms directly —
 `scripts/38_laminate_symbolic.jl` derives Backus (1962) that way — and
 `ForwardDiff` traverses moduli, thicknesses, interface compliances and nested
 scales alike.
+
+Nothing has to be declared for this: symbolic moduli, thicknesses and *frames*
+are all carried by ordinary construction. `T` remains available as an
+element-type **floor**, and it is what a canonical frame takes its own element
+type from, so `Laminate(; T = Sym)` and `Laminate(; T = Sym, normal = (0, 0, 1))`
+agree — but neither is required to obtain an exact symbolic answer.
+
+```julia
+using SymPy
+@syms k_A::positive mu_A::positive k_B::positive mu_B::positive f::positive
+
+lam = Laminate(; normal = (0, 0, 1))
+add_layer!(lam, :A, Dict(:C => iso_stiffness(k_A, mu_A)); fraction = f)
+add_layer!(lam, :B, Dict(:C => iso_stiffness(k_B, mu_B)); fraction = 1 - f)
+
+C = get_array(homogenize(lam, Laminated(), :C))
+simplify(C[2, 3, 2, 3])     # mu_A*mu_B/(f*mu_B + mu_A*(1 - f))
+```
+
+!!! note "Why the frame's element type matters"
+    A `TensTI` converts its axis to the element type of its *data*, and its
+    components are rebuilt from the Walpole basis of that axis. An axis read off
+    a `Float64` frame as `(0.0, 0.0, 1.0)` therefore reappears as a symbolic
+    `1.0` multiplying **every** coefficient of the result. A canonical frame is
+    consequently read exactly — `(0, 0, 1)` — whatever its own element type. An
+    obliquely oriented numeric frame still contributes floating-point axis
+    components, which is correct: the geometry itself is floating point.
+
+Ageing viscoelasticity is the one part that stays numerical: `laminate_alv`
+discretizes Volterra operators on a grid of times, so it rejects a symbolic
+frame rather than pretending otherwise.
 
 ## Ageing viscoelasticity
 

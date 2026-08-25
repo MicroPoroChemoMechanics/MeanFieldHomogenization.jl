@@ -7,6 +7,11 @@
 #  That preamble is the whole reason this file exists: it used to be copied by
 #  hand into every page that wanted an interactive figure.
 #
+#  It also has to wait for MathJax. Both bundles are UMD and both are fetched
+#  while require.js is live, so they compete for its single anonymous `define`
+#  slot and the loser is silently dropped: reloading a page that had a figure
+#  *and* formulas showed one or the other, never both. See `_plotly_html`.
+#
 #  Include it with
 #
 #      include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
@@ -118,11 +123,24 @@ function _plotly_html(uid, height, data, layout)
           var data = [$data];
           var layout = $layout;
           function draw(Plotly) { Plotly.newPlot("$uid", data, layout); }
-          if (window.Plotly) { draw(window.Plotly); }
-          else if (window.require) {
+          function load() {
+            if (window.Plotly) { draw(window.Plotly); return; }
+            if (!window.require) { return; }
             require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
             require(["plotly_mfh"], draw);
           }
+          // Ask require.js for plotly only once MathJax has finished, so the two
+          // UMD bundles never contend for the anonymous `define` slot (see the
+          // file header). The deadline keeps the figure on a page where MathJax
+          // never arrives at all.
+          var started = false, waited = 0;
+          function once() { if (!started) { started = true; load(); } }
+          (function poll() {
+            var startup = window.MathJax && window.MathJax.startup;
+            if (startup && startup.promise) { startup.promise.then(once, once); return; }
+            if ((waited += 50) >= 5000) { once(); return; }
+            setTimeout(poll, 50);
+          })();
         })();
         </script>
         """

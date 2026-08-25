@@ -84,27 +84,37 @@ mutable struct Laminate{T <: Number, B <: TensND.AbstractBasis{3}} <:
 end
 
 """
-    Laminate(; normal = (0, 0, 1), euler_angles = nothing, basis = nothing,
-             T = Float64)
+    Laminate(; normal = nothing, euler_angles = nothing, basis = nothing,
+             in_plane = nothing, T = Float64)
 
 Construct an empty laminate. Layers are added next with [`add_layer!`](@ref).
 
-The frame is given in exactly one of three ways (or defaulted):
+The frame is given in at most one of three ways, and defaults to the canonical
+one (`n = e₃`), for which the kernel skips the frame rotation entirely:
 
 - `normal = (nx, ny, nz)` — completed into `(ℓ, m, n̂)` by
-  `Core._frame_from_normal`; the default `(0, 0, 1)` yields a
-  `CanonicalBasis`, and the kernel then skips the frame rotation entirely;
-- `euler_angles = (θ, ϕ, ψ)` — ZYZ angles, as everywhere else in the package;
-- `basis = …` — an explicit `TensND` basis whose third axis is the normal
-  (the only route available for a symbolic frame).
+  `Core._frame_from_normal`. The components may be **symbolic**;
+- `euler_angles = (θ, ϕ, ψ)` — ZYZ angles, as everywhere else in the package,
+  symbolic ones included;
+- `basis = …` — an explicit `TensND` basis whose third axis is the normal.
+
+`in_plane` fixes `ℓ` in the plane of the layers, by Gram-Schmidt against it. It
+goes with `normal` only. The effective property is invariant under rotation
+about `n`, so the choice is physically immaterial — but it must not be parallel
+to `n`. A numeric normal picks the safest reference on its own; a symbolic one
+cannot (the choice is a comparison) and falls back to `e₁`, so pass `in_plane`
+when the normal may be along `e₁`.
 
 `T` declares the element-type floor of the thicknesses; like an `RVE`'s, it is
-a floor and not a constraint — a wider thickness is stored as such.
+a floor and not a constraint — a wider thickness is stored as such. It also
+sets the element type of a canonical frame, which is why
+`Laminate(; T = Sym, normal = (0, 0, 1))` and `Laminate(; T = Sym)` agree.
 """
 function Laminate(;
         normal = nothing,
         euler_angles = nothing,
         basis = nothing,
+        in_plane = nothing,
         T::Type{<:Number} = Float64
     )
     n_given = count(!isnothing, (normal, euler_angles, basis))
@@ -114,6 +124,13 @@ function Laminate(;
                 "to define the frame; got $(n_given)"
         )
     )
+    in_plane === nothing || normal !== nothing || throw(
+        ArgumentError(
+            "Laminate: `in_plane` fixes the in-plane axis of a frame built from " *
+                "`normal = …`; it has no meaning with `euler_angles` or `basis`, " *
+                "which already fix the whole frame"
+        )
+    )
     b = if basis !== nothing
         basis isa TensND.AbstractBasis{3} ||
             throw(ArgumentError("Laminate: `basis` must be a 3-D TensND basis"))
@@ -121,7 +138,7 @@ function Laminate(;
     elseif euler_angles !== nothing
         MFH_Core._default_basis(T, euler_angles isa Tuple ? euler_angles : (euler_angles,))
     elseif normal !== nothing
-        MFH_Core._frame_from_normal(normal)
+        MFH_Core._frame_from_normal(normal; T = T, in_plane = in_plane)
     else
         TensND.CanonicalBasis{3, MFH_Core._basis_eltype(T)}()
     end
@@ -144,12 +161,15 @@ Laminate{T}(; kw...) where {T <: Number} = Laminate(; T = T, kw...)
 
 Append a layer to the top of the stack.
 
-Give **exactly one** of `thickness` (an absolute height, so the period grows
-with the stack) or `fraction` (a share of the total, i.e. of the *final*
-period — [`validate_laminate`](@ref) then checks `Σ f ≈ 1` rather than
-silently rescaling). Mixing the two forms across layers is rejected: with
-imperfect interfaces the absolute period is physically meaningful, so a
-half-specified stack would be ambiguous.
+Give **exactly one** of `thickness` (an absolute height) or `fraction`. Both are
+stored in the same place: a fraction is simply a thickness in a cell whose
+period is `1`, and `layer_volume_fraction` derives `f_i = h_i / L` either way.
+Nothing rescales the stack for you, and nothing checks that the fractions sum to
+one — that check cannot be made for a symbolic or `Dual` thickness, and making
+it only for `Real` ones would be a rule that silently comes and goes. Mixing the
+two forms across layers is therefore *possible* but means what it says: the
+period is the plain sum, so with imperfect interfaces — which enter with the
+weight `1/L` — read `laminate_period` before trusting a mixed stack.
 
 `interface` is the condition **on top of** this layer; the last layer's
 interface closes the cell onto the first by periodicity. The five types of
@@ -181,13 +201,16 @@ function add_layer!(
     return lam
 end
 
-# Total period `L = Σ h_i`, seeded with `zero(T)` so that the result carries
-# the effective element type (a `Dual` as soon as one thickness is a `Dual`)
-# and, for a symbolic laminate, stays `h₁ + h₂` rather than `0.0 + h₁ + h₂`.
+# Total period `L = Σ h_i`, summed from the FIRST thickness rather than from a
+# `zero(T)` of the declared floor. The result then carries the effective element
+# type (a `Dual` as soon as one thickness is a `Dual`) and, for a symbolic
+# laminate, reads `h₁ + h₂` rather than `0.0 + h₁ + h₂` — SymPy absorbs that
+# leading float, `Symbolics.Num` does not.
 function _compute_period(lam::Laminate{T}) where {T}
-    L = zero(T)
-    for name in lam.layer_names
-        L = L + lam.thicknesses[name]
+    isempty(lam.layer_names) && return zero(T)
+    L = lam.thicknesses[lam.layer_names[1]]
+    for k in 2:length(lam.layer_names)
+        L = L + lam.thicknesses[lam.layer_names[k]]
     end
     return L
 end
@@ -318,8 +341,7 @@ Base.eltype(::Type{<:Laminate{T}}) where {T} = T
     validate_laminate(lam)
 
 Sanity-check the cell: at least one layer, one interface per layer,
-non-negative thicknesses, a strictly positive period, and volume fractions
-summing to one.
+non-negative thicknesses and a strictly positive period.
 
 The requirement that `validate_rve` imposes and this one cannot — a
 registered matrix phase — is exactly why [`validate_cell`](@ref) exists.
@@ -404,12 +426,16 @@ end
 #  Pretty printing
 # =============================================================================
 
+# Rounding is for reading a numeric frame; a symbolic component has neither a
+# `float` nor a `round`, and printing it verbatim is what one wants anyway.
+_show_axis_component(x) = is_hard_numeric(x) ? round(float(x); digits = 4) : x
+
 function Base.show(io::IO, ::MIME"text/plain", lam::Laminate{T}) where {T}
     Te = eltype(lam)
     tag = Te === T ? "$T" : "$T → $Te"
     n = laminate_normal(lam)
     println(io, "Laminate{$tag} with ", layer_count(lam), " layer(s)")
-    println(io, "  normal : (", join(map(x -> round(float(x); digits = 4), n), ", "), ")")
+    println(io, "  normal : (", join(map(_show_axis_component, n), ", "), ")")
     println(io, "  period : ", laminate_period(lam))
     for (k, name) in enumerate(lam.layer_names)
         h = lam.thicknesses[name]

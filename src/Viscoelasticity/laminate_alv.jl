@@ -100,6 +100,21 @@ function _alv_kron_time(W::AbstractMatrix, B::AbstractMatrix)
     return out
 end
 
+# The ALV kernel is numerical by construction: a trapezoidal Volterra
+# discretization on a grid of times, assembled into dense `zeros(Float64, …)`
+# blocks. A symbolic frame therefore cannot be honored — say so, rather than
+# letting `_basis_matrix` fail on `Float64(::Sym)` several frames deeper.
+function _alv_check_numeric_frame(basis)
+    is_hard_numeric(eltype(basis)) || throw(
+        ArgumentError(
+            "laminate_alv: the ageing-viscoelastic kernel is a numerical " *
+                "Volterra discretization and needs a numeric frame; got a " *
+                "$(eltype(basis)) basis. Evaluate the frame first, or use the " *
+                "elastic `Laminated` scheme, which is symbolic end to end."
+        )
+    )
+end
+
 """
     laminate_alv(lam, ::Val{order}; times, property) -> Matrix
 
@@ -116,6 +131,7 @@ function laminate_alv(lam::Laminates.Laminate, ::Val{4}; times, property::Symbol
     names = Laminates.layer_names(lam)
     n = length(times)
     basis = Laminates.laminate_basis(lam)
+    _alv_check_numeric_frame(basis)
     rotate = !(basis isa TensND.CanonicalBasis)
     Q = rotate ? MFH_Core._bond6(MFH_Core._basis_matrix(basis)) : nothing
 

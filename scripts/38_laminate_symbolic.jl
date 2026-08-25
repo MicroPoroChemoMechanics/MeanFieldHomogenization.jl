@@ -151,23 +151,56 @@ d_itf = simplify(1 / Chi[3, 3] - (f₁ / (λ₁ + 2μ₁) + f₂ / (λ₂ + 2μ�
 # ── §5  Through the Laminate cell itself ─────────────────────────────────────
 #
 # Not just the bare kernel: the cell (property dicts, derived fractions, the
-# exact-TI return ladder) carries symbolic entries end to end.
+# frame, the exact-TI return ladder) carries symbolic entries end to end. Note
+# that NOTHING is declared — no `T = Sym`: the moduli, the fractions and the
+# frame each carry their own element type, and the canonical frame is read for
+# its axis exactly, as `(0, 0, 1)` and not `(0.0, 0.0, 1.0)`. Were it not, that
+# float would reappear as a symbolic `1.0` in front of every coefficient below,
+# because a `TensTI` rebuilds its components from the Walpole basis of its axis.
 
 @syms κ₁::positive κ₂::positive
-lam = Laminate(; T = Sym)
+lam = Laminate(; normal = (0, 0, 1))
 add_layer!(lam, :A, Dict(:C => TensISO{3}(3κ₁, 2μ₁)); fraction = f₁)
 add_layer!(lam, :B, Dict(:C => TensISO{3}(3κ₂, 2μ₂)); fraction = f₂)
 Csym = homogenize(lam, Laminated(), :C)
 
-println("\n§5  `homogenize` on a Laminate{Sym}")
+println("\n§5  `homogenize` on a symbolic Laminate")
 println("─"^78)
 println("  returned type : ", typeof(Csym))
 println("  (isotropic layers ⇒ EXACTLY transversely isotropic about n)")
+@printf "  axis          : %s   (exact integers, not 0.0 / 1.0)\n" string(TensND.axis(Csym))
 Msym = KM(Csym)
 lame(κ, μ) = κ - 2μ / 3
 @printf "  1/C₃₃₃₃ − ⟨1/(λ+2μ)⟩ = %s\n" string(
     simplify(1 / Msym[3, 3] - (f₁ / (lame(κ₁, μ₁) + 2μ₁) + f₂ / (lame(κ₂, μ₂) + 2μ₂)))
 )
+@printf "  C₂₃₂₃                 = %s\n" string(simplify(Msym[4, 4] / 2))
+
+# ── §5b  A symbolic FRAME, not just symbolic moduli ──────────────────────────
+#
+# The normal itself may be symbolic. It is completed into an orthonormal
+# (ℓ, m, n̂) by plain Gram-Schmidt against a reference axis — no trigonometry and
+# no atan2, so the frame stays as readable as the normal it came from. The
+# in-plane reference defaults to e₁ and is overridable with `in_plane = …`; the
+# choice is physically immaterial, the answer being invariant under rotation
+# about n.
+
+θ = symbols("theta", real = true)
+lam_tilt = Laminate(; normal = (0, sin(θ), cos(θ)))
+add_layer!(lam_tilt, :A, Dict(:C => TensISO{3}(3κ₁, 2μ₁)); fraction = f₁)
+add_layer!(lam_tilt, :B, Dict(:C => TensISO{3}(3κ₂, 2μ₂)); fraction = f₂)
+Ctilt = homogenize(lam_tilt, Laminated(), :C)
+
+println("\n§5b  A symbolic normal")
+println("─"^78)
+println("  returned type : ", typeof(Ctilt))
+@printf "  axis          : %s\n" string(simplify.(TensND.axis(Ctilt)))
+same = all(
+    iszero,
+    simplify.(collect(TensND.get_data(Ctilt)) .- collect(TensND.get_data(Csym)))
+)
+@printf "  same Walpole coefficients as the canonical stack : %s\n" string(same)
+println("  (frame covariance, as an identity rather than a tolerance)")
 
 # ── §6  Conduction ───────────────────────────────────────────────────────────
 

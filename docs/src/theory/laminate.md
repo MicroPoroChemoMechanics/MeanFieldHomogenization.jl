@@ -319,6 +319,24 @@ layer (`TensTI{4,T,8}`, what the exact rotation-group average produces, with
 qualify, because the five-coefficient Walpole read-off would silently discard
 that content. Such a laminate returns the generic tensor, losslessly.
 
+Coaxiality with ``\underline{n}`` is likewise settled without a tolerance when
+the axes are symbolic: two axes count as collinear when they are the *same
+expression*, up to an overall sign. That is conservative — a laminate that is
+transversely isotropic may still come back as the generic tensor, which loses
+nothing — but it is never wrong, whereas
+``\lVert a\rVert\lVert b\rVert - \lvert a\cdot b\rvert = 0`` is a question
+no symbolic backend answers reliably.
+
+!!! note "The axis is read exactly"
+    The returned `TensTI` converts its axis to the element type of its **data**
+    and rebuilds its components from the Walpole basis of that axis. A canonical
+    frame is therefore read as ``(0, 0, 1)`` and not ``(0.0, 0.0, 1.0)``,
+    whatever the element type of the frame itself: the float would otherwise
+    reappear as a symbolic ``1.0`` multiplying every coefficient of an answer
+    that is exact. An obliquely oriented numeric frame does contribute
+    floating-point axis components — correctly so, the geometry being floating
+    point.
+
 ### Bilayer of isotropic layers
 
 For ``N=2`` isotropic layers of Lamé coefficients ``(\lambda_i,\mu_i)`` the

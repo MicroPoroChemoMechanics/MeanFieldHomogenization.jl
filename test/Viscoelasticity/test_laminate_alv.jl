@@ -18,6 +18,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+using SymPy
 
 const ATOL_LALV = 1.0e-9
 
@@ -177,4 +178,30 @@ end
         Dict(:C => Homogenized(_heaviside_laminate(), Laminated())); fraction = 0.2
     )
     @test has_visco_property(rve, :C)
+end
+
+@testset "ALV laminate — a symbolic frame is refused, not mishandled" begin
+    # The ALV kernel is a trapezoidal Volterra discretization on a grid of
+    # times, assembled into dense `Float64` blocks: a symbolic frame has no
+    # meaning here. Say so, rather than failing several frames deeper on
+    # `Float64(::Sym)`. (The elastic `Laminated` scheme, which IS symbolic end
+    # to end, is what the message points at.)
+    θ = symbols("theta", real = true)
+    lam = Laminate(; normal = (0, sin(θ), cos(θ)))
+    add_layer!(lam, :A, Dict(:C => heaviside_law(_isoa(2.0, 0.8))); thickness = 0.3)
+    add_layer!(lam, :B, Dict(:C => heaviside_law(_isoa(0.5, 0.2))); thickness = 0.7)
+    err = try
+        homogenize_alv(lam, Laminated(), :C; times = 0.0:1.0:2.0)
+        nothing
+    catch e
+        e
+    end
+    @test err isa ArgumentError
+    @test occursin("numeric frame", sprint(showerror, err))
+
+    # A numeric oblique frame still works, at order 4.
+    lam4 = Laminate(; normal = (1, 1, 1))
+    add_layer!(lam4, :A, Dict(:C => heaviside_law(_isoa(2.0, 0.8))); thickness = 0.3)
+    add_layer!(lam4, :B, Dict(:C => heaviside_law(_isoa(0.5, 0.2))); thickness = 0.7)
+    @test homogenize_alv(lam4, Laminated(), :C; times = 0.0:1.0:2.0) isa AbstractMatrix
 end

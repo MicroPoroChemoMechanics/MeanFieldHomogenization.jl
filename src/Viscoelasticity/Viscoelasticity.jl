@@ -42,6 +42,8 @@ const MFH_Core = Core
 import ..Elasticity
 import ..Elasticity: tens_UA, tens_VA, tens_IA, Ellipsoid, Spheroid
 import ..Cracks
+using ..Elliptic: is_hard_numeric
+
 using ..Cracks: EllipticCrack, RibbonCrack, PennyCrack,
     crack_basis, crack_normal, aspect_ratio,
     semi_minor, semi_major
