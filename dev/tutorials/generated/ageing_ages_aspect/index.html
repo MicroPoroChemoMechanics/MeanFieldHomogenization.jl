@@ -28,11 +28,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("aa-rve", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <h2 id="Two-ageing-creep-laws"><a class="docs-heading-anchor" href="#Two-ageing-creep-laws">Two ageing creep laws</a><a id="Two-ageing-creep-laws-1"></a><a class="docs-heading-anchor-permalink" href="#Two-ageing-creep-laws" title="Permalink"></a></h2><p>Each phase creeps in two additive parts: a <strong>relaxing elastic</strong> term whose amplitude decays with the <em>loading age</em> <span>$t&#39;$</span> — this is the ageing — and a <strong>logarithmic creep</strong> term in the elapsed duration <span>$t - t&#39;$</span>. Written on the spherical and deviatoric projectors <span>$\mathbb J$</span> and <span>$\mathbb K$</span>, a compliance is <code>TensISO{3}(a, b)</code> with <span>$a$</span> the <span>$\mathbb J$</span> coefficient and <span>$b$</span> the <span>$\mathbb K$</span> one.</p><pre><code class="language-julia hljs"># Matrix: E = 1, ν = 0.2.
@@ -174,4 +187,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../alv_schemes/">« Ageing viscoelastic schemes side by side</a><a class="docs-footer-nextpage" href="../alv_sensitivities/">Derivatives through the ageing-viscoelastic pipeline »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 25 August 2026 17:17">Tuesday 25 August 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../alv_schemes/">« Ageing viscoelastic schemes side by side</a><a class="docs-footer-nextpage" href="../alv_sensitivities/">Derivatives through the ageing-viscoelastic pipeline »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 25 August 2026 20:09">Tuesday 25 August 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -358,11 +358,24 @@ colorscale:"RdBu", reversescale:true,colorbar:{title:"φ (%)"}}];
 scene:{xaxis:{title:"log₁₀ ωs"}, yaxis:{title:"log₁₀ ωp"},
        zaxis:{title:"φ_elas (%)"}}};
   function draw(Plotly) { Plotly.newPlot("surf-phi-elas", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <pre><code class="language-julia hljs">plotly_surface(logω, logω, Zd; title = &quot;Diffusion percolation threshold φ_diff (%)&quot;,
@@ -376,11 +389,24 @@ colorscale:"RdBu", reversescale:true,colorbar:{title:"φ (%)"}}];
 scene:{xaxis:{title:"log₁₀ ωs"}, yaxis:{title:"log₁₀ ωp"},
        zaxis:{title:"φ_diff (%)"}}};
   function draw(Plotly) { Plotly.newPlot("surf-phi-diff", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <p>The thin oblate solid (<span>$\omega_s = 0.013$</span>) percolates at a tiny solid fraction, so the skeleton carries load up to <span>$\varphi^{\rm elas} \approx 93\%$</span> (early set, low <span>$\alpha$</span>), while the prolate pores give <span>$\varphi^{\rm diff} \approx 66\%$</span> (late disconnection, high <span>$\alpha$</span>): the two thresholds are well separated, which is what reproduces both the early set and the late diffusivity drop. The gel sits at <span>$\varphi^{\rm elas} \approx 64\%$</span> and <span>$\varphi^{\rm diff} \approx 17\%$</span>, so at <span>$\varphi_{HD} = 0.24$</span> it is simultaneously load-bearing and diffusive — the prolate gel pores are what keep <span>$\boldsymbol{D}_{HD} &gt; 0$</span>.</p><div class="admonition is-info" id="Numerical-agreement-with-Echoes-b94c97cf0d135ac4"><header class="admonition-header">Numerical agreement with Echoes<a class="admonition-anchor" href="#Numerical-agreement-with-Echoes-b94c97cf0d135ac4" title="Permalink"></a></header><div class="admonition-body"><p>Evaluated with the compiled Echoes library, <span>$\varphi^{\rm elas}$</span> and <span>$\varphi^{\rm diff}$</span> at these points coincide with the values above to the third decimal (identical Poisson ratio at the elastic root), confirming that <code>MeanFieldHomogenization</code> and Echoes share the same Hill/dual-Hill kernels.</p></div></div><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
@@ -388,4 +414,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ionic_hydrating_paste/">« Hydration through the pore solution</a><a class="docs-footer-nextpage" href="../strength/">Quasi-brittle strength of cement paste and mortar »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 25 August 2026 17:17">Tuesday 25 August 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ionic_hydrating_paste/">« Hydration through the pore solution</a><a class="docs-footer-nextpage" href="../strength/">Quasi-brittle strength of cement paste and mortar »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 25 August 2026 20:09">Tuesday 25 August 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

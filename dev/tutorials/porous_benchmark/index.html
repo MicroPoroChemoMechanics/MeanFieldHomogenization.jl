@@ -29,11 +29,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("pb-rve-spheres", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <pre><code class="language-julia hljs">plotly_scene(rve_traces(; n = 70, semi_axes = (0.075, 0.075, 0.015), seed = 7,
@@ -56,11 +69,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("pb-rve-oblate", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <h2 id="Extracting-effective-moduli"><a class="docs-heading-anchor" href="#Extracting-effective-moduli">Extracting effective moduli</a><a id="Extracting-effective-moduli-1"></a><a class="docs-heading-anchor-permalink" href="#Extracting-effective-moduli" title="Permalink"></a></h2><p>The homogenized stiffness is expected to be isotropic here (spherical solid and pore geometry), so it can be read back directly with <code>k_mu</code> — as in the <a href="../first_estimate/">first tutorial</a>. Some schemes can return a result with tiny numerical anisotropy (e.g. from an iterative solve that has not fully converged); dispatching to <code>best_fit_iso</code> first — the best isotropic projection of the tensor — keeps the extraction robust without changing the answer on already-isotropic input:</p><pre><code class="language-julia hljs">extract_kμ(C::TensND.TensISO{4, 3}) = k_mu(C)
@@ -149,4 +175,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../porous_materials/">« Porous materials and the self-consistent trap</a><a class="docs-footer-nextpage" href="../transport/">Transport properties »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 25 August 2026 17:17">Tuesday 25 August 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../porous_materials/">« Porous materials and the self-consistent trap</a><a class="docs-footer-nextpage" href="../transport/">Transport properties »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 25 August 2026 20:09">Tuesday 25 August 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

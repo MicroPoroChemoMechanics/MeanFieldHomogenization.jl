@@ -24,11 +24,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-triaxial", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <p>A <strong>spheroid</strong> has an axis of revolution. <code>Spheroid</code> takes the single aspect ratio <span>$\omega$</span>, fixes the two equatorial semi-axes to 1, and lets the <code>Ellipsoid</code> constructor do the sorting — which is worth watching, because it is what every closed form downstream assumes:</p><pre><code class="language-julia hljs">oblate, prolate = Spheroid(0.2), Spheroid(5.0)
@@ -57,11 +70,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-oblate", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <pre><code class="language-julia hljs">plotly_scene(shape_traces(prolate); uid = &quot;zoo-prolate&quot;, height = 420,
@@ -88,11 +114,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-prolate", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <h2 id="Degenerate-limits"><a class="docs-heading-anchor" href="#Degenerate-limits">Degenerate limits</a><a id="Degenerate-limits-1"></a><a class="docs-heading-anchor-permalink" href="#Degenerate-limits" title="Permalink"></a></h2><p>Sending a semi-axis to <code>Inf</code> or <code>0</code> leaves the ellipsoid family and lands on a dedicated type — the redirection table is in <a href="../ellipsoidal_inclusions/#man-ellipsoidal-inclusions">Ellipsoidal inclusions</a>. The three shapes it produces are the ones below.</p><p>An <strong>infinite cylinder</strong> is <code>Ellipsoid(Inf, b, c)</code>: the fiber limit, unbounded along its axis. Only the transverse semi-axes are stored, since the Hill tensor no longer depends on the length.</p><pre><code class="language-julia hljs">cyl = Cylinder(1.5, 0.8)
@@ -120,11 +159,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-cylinder", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <p>A <strong>penny-shaped crack</strong> is <code>Ellipsoid(a, a, 0)</code>: zero volume, finite surface, and therefore a <em>density</em> rather than a volume fraction. Its normal <span>$\hat{\underline{n}}$</span> is the third column of its frame, and it is the direction everything about a crack is written in.</p><pre><code class="language-julia hljs">pc = PennyCrack(1.0)
@@ -158,11 +210,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-penny", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <p>Tilting a crack is a matter of Euler angles, and the frame carries the orientation into every tensor built from it:</p><pre><code class="language-julia hljs">tilted = EllipticCrack(1.0, 0.4; euler_angles = (π / 4, π / 3))
@@ -196,11 +261,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-elliptic-crack", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <p>A <strong>ribbon crack</strong> is the remaining limit, <code>Ellipsoid(Inf, b, 0)</code> — a tunnel crack, flat <em>and</em> unbounded:</p><pre><code class="language-julia hljs">rb = RibbonCrack(0.5)
@@ -227,11 +305,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-ribbon", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <h2 id="Composite-inclusions"><a class="docs-heading-anchor" href="#Composite-inclusions">Composite inclusions</a><a id="Composite-inclusions-1"></a><a class="docs-heading-anchor-permalink" href="#Composite-inclusions" title="Permalink"></a></h2><p>A layered pattern has <strong>no Hill tensor</strong>: the strain is not uniform inside it, so Eshelby&#39;s result does not apply. What does exist is its volume-averaged concentration tensor, delivered by the Hervé–Zaoui recurrences, and that is enough for every scheme (<a href="../../theory/layered_sphere/">Layered spheres</a>).</p><pre><code class="language-julia hljs">ls = LayeredSphere(
@@ -259,11 +350,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-layered-sphere", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <p>The <strong>confocal spheroid</strong> is the anisotropic counterpart: the layer boundaries share their foci rather than their center, which is what keeps the transfer matrices tractable (<a href="../../theory/layered_spheroid/">Layered spheroids</a>). Confocal means <span>$\text{axis}^2 - \text{disk}^2$</span> is the same for every layer, so the inner shells are <em>more</em> elongated than the outer ones.</p><pre><code class="language-julia hljs">focal² = 0.27
@@ -292,11 +396,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-layered-spheroid", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <h2 id="Beyond-the-catalog"><a class="docs-heading-anchor" href="#Beyond-the-catalog">Beyond the catalog</a><a id="Beyond-the-catalog-1"></a><a class="docs-heading-anchor-permalink" href="#Beyond-the-catalog" title="Permalink"></a></h2><p>Nothing in the schemes requires an ellipsoid. A morphology answers one of the three gates and becomes a first-class citizen — the <a href="../custom_inclusions/#man-custom-inclusions">custom-inclusion contract</a>. The <strong>supersphere</strong> <span>$|x|^p + |y|^p + |z|^p = 1$</span> is the usual stand-in for that case: convex, close to a sphere, and with no closed-form Hill tensor whatsoever.</p><pre><code class="language-julia hljs">X, Y, Z = supersphere_surface(0.3, 1.0, 1.0, 1.0)
@@ -316,11 +433,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-supersphere", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <p>A <strong>laminate</strong> is the other extreme: a periodic stack, exact rather than estimated, handled by its own algebra (<a href="../laminates/#man-laminates">Laminates</a>).</p><pre><code class="language-julia hljs">plotly_scene(laminate_traces([0.30, 0.15, 0.40, 0.15]);
@@ -356,11 +486,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-laminate", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <h2 id="What-a-scheme-actually-sees"><a class="docs-heading-anchor" href="#What-a-scheme-actually-sees">What a scheme actually sees</a><a id="What-a-scheme-actually-sees-1"></a><a class="docs-heading-anchor-permalink" href="#What-a-scheme-actually-sees" title="Permalink"></a></h2><p>None of the above is what a real material looks like. A scheme sees a <em>population</em>: many inclusions, each treated as if alone in a reference medium. The realization below — 70 non-overlapping spheres inside a cell, drawn with a fixed seed — is the picture behind a volume fraction.</p><pre><code class="language-julia hljs">plotly_scene(rve_traces(; n = 70, semi_axes = (0.055, 0.055, 0.055));
@@ -382,11 +525,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-rve-spheres", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <p>Flatten the inclusions and the same picture becomes a cracked medium, where the amount is a density and no volume is involved:</p><pre><code class="language-julia hljs">plotly_scene(rve_traces(; n = 70, semi_axes = (0.10, 0.10, 0.004), seed = 2024);
@@ -408,11 +564,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-rve-cracks", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <p>Align them and the effective behavior turns transversely isotropic — same density, different tensor:</p><pre><code class="language-julia hljs">plotly_scene(rve_traces(; n = 70, semi_axes = (0.10, 0.10, 0.004), seed = 2024,
@@ -435,11 +604,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("zoo-rve-cracks-aligned", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <p>Both crack populations are worked out, numbers included, in <a href="../../tutorials/generated/crack_distributions/#tut-crack-distributions">Crack distributions: isotropic or parallel</a>.</p><h2 id="See-also"><a class="docs-heading-anchor" href="#See-also">See also</a><a id="See-also-1"></a><a class="docs-heading-anchor-permalink" href="#See-also" title="Permalink"></a></h2><ul><li><a href="../ellipsoidal_inclusions/#man-ellipsoidal-inclusions">Ellipsoidal inclusions</a> — constructors and degenerate-limit redirections</li><li><a href="../cylindrical_inclusions/#man-cylindrical-inclusions">Cylindrical inclusions</a>, <a href="../cracks/#man-cracks">Cracks</a></li><li><a href="../custom_inclusions/#man-custom-inclusions">Custom inclusions</a>, <a href="../fe_inclusions/#man-fe-inclusions">finite elements</a>, <a href="../neural_inclusions/#man-neural-inclusions">neural surrogates</a></li><li><code>scripts/common/docviz.jl</code> — the figure helpers used on this page, reusable in your own scripts</li></ul><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
@@ -447,4 +629,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../installation/">« Installation</a><a class="docs-footer-nextpage" href="../ellipsoidal_inclusions/">Ellipsoidal inclusions »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 25 August 2026 17:17">Tuesday 25 August 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../installation/">« Installation</a><a class="docs-footer-nextpage" href="../ellipsoidal_inclusions/">Ellipsoidal inclusions »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 25 August 2026 20:09">Tuesday 25 August 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

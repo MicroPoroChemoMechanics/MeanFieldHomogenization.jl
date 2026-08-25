@@ -37,11 +37,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("man-ellipsoid", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <p>Every other spheroid and the degenerate limits below are drawn side by side in <a href="../inclusion_gallery/#man-inclusion-gallery">The inclusion zoo</a>.</p><h2 id="Degenerate-limits"><a class="docs-heading-anchor" href="#Degenerate-limits">Degenerate limits</a><a id="Degenerate-limits-1"></a><a class="docs-heading-anchor-permalink" href="#Degenerate-limits" title="Permalink"></a></h2><p>When an <code>Ellipsoid</code> constructor receives a real semi-axis equal to <code>Inf</code> or <code>0</code>, it returns the appropriate dedicated type:</p><table><tr><th style="text-align: right">Call</th><th style="text-align: right">Returned type</th><th style="text-align: right">See</th></tr><tr><td style="text-align: right"><code>Ellipsoid(Inf, b, c)</code> with <code>b, c &gt; 0</code></td><td style="text-align: right"><code>Cylinder</code></td><td style="text-align: right"><a href="../cylindrical_inclusions/">cylindrical inclusions</a></td></tr><tr><td style="text-align: right"><code>Ellipsoid(a, b, 0)</code> with <code>a, b &gt; 0</code></td><td style="text-align: right"><code>EllipticCrack</code></td><td style="text-align: right"><a href="../cracks/">cracks</a></td></tr><tr><td style="text-align: right"><code>Ellipsoid(Inf, b, 0)</code> with <code>b &gt; 0</code></td><td style="text-align: right"><code>RibbonCrack</code></td><td style="text-align: right"><a href="../cracks/">cracks</a></td></tr><tr><td style="text-align: right"><code>Ellipsoid(Inf, Inf, c)</code></td><td style="text-align: right"><code>ArgumentError</code> (slab, out of scope)</td><td style="text-align: right"></td></tr><tr><td style="text-align: right"><code>Ellipsoid(a, 0, 0)</code></td><td style="text-align: right"><code>ArgumentError</code> (needle, out of scope)</td><td style="text-align: right"></td></tr></table><p>The detection is active only for real element types; with symbolic types (<code>SymPy.Sym</code>, <code>Symbolics.Num</code>) call the dedicated constructor (<code>Cylinder</code>, <code>EllipticCrack</code>, <code>RibbonCrack</code>) explicitly.</p><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
@@ -49,4 +62,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../inclusion_gallery/">« The inclusion zoo</a><a class="docs-footer-nextpage" href="../cylindrical_inclusions/">Cylindrical inclusions »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 25 August 2026 17:17">Tuesday 25 August 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../inclusion_gallery/">« The inclusion zoo</a><a class="docs-footer-nextpage" href="../cylindrical_inclusions/">Cylindrical inclusions »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 25 August 2026 20:09">Tuesday 25 August 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

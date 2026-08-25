@@ -37,11 +37,24 @@ scene:{aspectmode:"data",
        yaxis:{title:"y",visible:true},
        zaxis:{title:"z",visible:true}}};
   function draw(Plotly) { Plotly.newPlot("man-cylinder", data, layout); }
-  if (window.Plotly) { draw(window.Plotly); }
-  else if (window.require) {
+  function load() {
+    if (window.Plotly) { draw(window.Plotly); return; }
+    if (!window.require) { return; }
     require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
     require(["plotly_mfh"], draw);
   }
+  // Ask require.js for plotly only once MathJax has finished, so the two
+  // UMD bundles never contend for the anonymous `define` slot (see the
+  // file header). The deadline keeps the figure on a page where MathJax
+  // never arrives at all.
+  var started = false, waited = 0;
+  function once() { if (!started) { started = true; load(); } }
+  (function poll() {
+    var startup = window.MathJax && window.MathJax.startup;
+    if (startup && startup.promise) { startup.promise.then(once, once); return; }
+    if ((waited += 50) >= 5000) { once(); return; }
+    setTimeout(poll, 50);
+  })();
 })();
 </script>
 <p>The length shown is a drawing convenience only: the cylinder is the <span>$a \to \infty$</span> limit, and no closed form below depends on how much of it is displayed.</p><h2 id="Redirection-from-Ellipsoid"><a class="docs-heading-anchor" href="#Redirection-from-Ellipsoid">Redirection from <code>Ellipsoid</code></a><a id="Redirection-from-Ellipsoid-1"></a><a class="docs-heading-anchor-permalink" href="#Redirection-from-Ellipsoid" title="Permalink"></a></h2><p>Passing an infinite or zero semi-axis to the <code>Ellipsoid</code> constructor redirects to the appropriate dedicated type — the caller does not have to switch constructors manually:</p><table><tr><th style="text-align: right">Call</th><th style="text-align: right">Returned type</th></tr><tr><td style="text-align: right"><code>Ellipsoid(Inf, 2.0, 1.0)</code></td><td style="text-align: right"><code>Cylinder{EllipticCylindrical}</code></td></tr><tr><td style="text-align: right"><code>Ellipsoid(1.0, 1.0, Inf)</code></td><td style="text-align: right"><code>Cylinder{CircularCylindrical}</code></td></tr><tr><td style="text-align: right"><code>Ellipsoid(2.0, 1.0, 0.0)</code></td><td style="text-align: right"><code>EllipticCrack{EllipticShape}</code></td></tr><tr><td style="text-align: right"><code>Ellipsoid(1.0, 1.0, 0.0)</code></td><td style="text-align: right"><code>EllipticCrack{Penny}</code></td></tr><tr><td style="text-align: right"><code>Ellipsoid(Inf, 1.0, 0.0)</code></td><td style="text-align: right"><code>RibbonCrack</code></td></tr><tr><td style="text-align: right"><code>Ellipsoid(Inf, Inf, 1.0)</code></td><td style="text-align: right"><code>ArgumentError</code></td></tr><tr><td style="text-align: right"><code>Ellipsoid(2.0, 0.0, 0.0)</code></td><td style="text-align: right"><code>ArgumentError</code></td></tr></table><p>As for ellipsoids, the detection is active only for real element types (see <a href="../ellipsoidal_inclusions/">Ellipsoidal inclusions</a>).</p><h2 id="Hill-tensor"><a class="docs-heading-anchor" href="#Hill-tensor">Hill tensor</a><a id="Hill-tensor-1"></a><a class="docs-heading-anchor-permalink" href="#Hill-tensor" title="Permalink"></a></h2><pre><code class="language-julia hljs">using TensND
@@ -61,4 +74,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ellipsoidal_inclusions/">« Ellipsoidal inclusions</a><a class="docs-footer-nextpage" href="../cracks/">Cracks »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 25 August 2026 17:17">Tuesday 25 August 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ellipsoidal_inclusions/">« Ellipsoidal inclusions</a><a class="docs-footer-nextpage" href="../cracks/">Cracks »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 25 August 2026 20:09">Tuesday 25 August 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
