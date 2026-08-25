@@ -108,3 +108,12 @@ code:not([class]) {
         max-width: none !important;
     }
 }
+
+/* Hide the raw LaTeX while the MathJax bundle is still downloading; see
+ * `mathjax-flash.js`, which sets and clears the `mathjax-pending` mark.
+ * `visibility`, not `display`: the box keeps its space, so the page does not
+ * jump when the typeset output takes the LaTeX's place. */
+html.mathjax-pending .math-container,
+html.mathjax-pending span.raw-math {
+    visibility: hidden;
+}
