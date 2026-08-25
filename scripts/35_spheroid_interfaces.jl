@@ -196,7 +196,7 @@ _draw_streamlines!(p_q, s_pro, _coord_prolate, PRO_KM, vcat(-4.0:0.4:-0.2, 0.2:0
 _outline!(p_q, PRO_A_IN, PRO_B_IN)
 _outline!(p_q, PRO_A_OUT, PRO_B_OUT)
 
-p_local = plot(p_T, p_q; layout = (1, 2), size = (1250, 600))
+p_local = plot(p_T, p_q; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1250, 600))
 p_local
 
 # The shell conducts fifteen times better than the matrix, so the flux is drawn
@@ -275,7 +275,7 @@ end
 
 p_off = _streamplot(0.0; title = "β = 0  (perfect interface, insulating particle)")
 p_on = _streamplot(3.0; title = "β = 3  (highly conducting interface)")
-p_pair = plot(p_off, p_on; layout = (1, 2), size = (1250, 520))
+p_pair = plot(p_off, p_on; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1250, 520))
 p_pair
 
 # ### How much does the skin carry?

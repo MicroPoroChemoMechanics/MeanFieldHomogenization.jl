@@ -235,7 +235,7 @@ for name in SCHEME_NAMES
     )
 end
 
-fig = plot(p_elastic, p_perm; layout = (1, 2), size = (1500, 700))
+fig = plot(p_elastic, p_perm; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1500, 700))
 
 mkpath(joinpath(@__DIR__, "figures"))
 out = joinpath(@__DIR__, "figures", "15_cracks_iso_interface.png")

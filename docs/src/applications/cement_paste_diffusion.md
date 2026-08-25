@@ -234,7 +234,7 @@ function plot_model(model, title)
         plot!(pE, a, E; label = "w/c=$wc", lw = 2)
         plot!(pD, a, max.(D, 1.0e-8); label = "w/c=$wc", lw = 2)
     end
-    return plot(pE, pD; layout = (1, 2), size = (960, 400))
+    return plot(pE, pD; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1000, 450))
 end
 
 plot_model(engineering_model, "Engineering model")
@@ -422,7 +422,7 @@ pD = plot(; xlabel = "α", ylabel = "D_hom / D_bulk", yscale = :log10,
 plot!(pD, ae, max.(De, 1.0e-8); label = "engineering", lw = 2, ls = :dash)
 plot!(pD, ad, max.(Dd, 1.0e-8); label = "detailed", lw = 2)
 
-plot(pE, pD; layout = (1, 2), size = (960, 400))
+plot(pE, pD; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1000, 450))
 ```
 
 ## Percolation diagrams: role of the inclusion shapes
@@ -548,7 +548,7 @@ end
 
 plot(threshold_panel(Ze, "Elastic φ_elas (%)"),
     threshold_panel(Zd, "Diffusion φ_diff (%)");
-    layout = (1, 2), size = (980, 420))
+    layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1000, 450))
 ```
 
 The same two threshold maps as **interactive 3D surfaces** over

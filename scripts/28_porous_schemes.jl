@@ -132,7 +132,7 @@ for (scheme, label, color, ls) in SCHEMES
 end
 
 p_full = plot(
-    p_k, p_μ; layout = (1, 2), size = (1400, 600),
+    p_k, p_μ; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1400, 600),
     plot_title = "Porous benchmark (spheres) — MeanFieldHomogenization v0.4"
 )
 
@@ -176,7 +176,7 @@ for (scheme, label, color, ls) in SCHEMES
 end
 
 p_full2 = plot(
-    p_k2, p_μ2; layout = (1, 2), size = (1400, 600),
+    p_k2, p_μ2; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1400, 600),
     plot_title = "Porous benchmark (oblate + iso-symmetrize) — MeanFieldHomogenization v0.4"
 )
 figpath2 = joinpath(figdir, "28_porous_schemes_oblate.png")

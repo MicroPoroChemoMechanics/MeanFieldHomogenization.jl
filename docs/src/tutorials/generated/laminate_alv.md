@@ -131,7 +131,7 @@ p2 = plot(
     title = "in the plane of the layers", legend = :topright
 )
 
-plot(p1, p2; layout = (1, 2), size = (900, 350))
+plot(p1, p2; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (900, 350))
 ````
 
 ## Transport

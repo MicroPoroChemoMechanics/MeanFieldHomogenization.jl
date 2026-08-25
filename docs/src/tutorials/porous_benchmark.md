@@ -112,7 +112,7 @@ p_μ = plot(; xlabel = "φ (porosity)", ylabel = "μ_hom", xlims = (0, 1), ylims
 for (scheme, label, color, ls) in SCHEMES
     sweep!(p_k, p_μ, scheme, label, color, ls, φs)
 end
-plot(p_k, p_μ; layout = (1, 2), size = (1400, 600), plot_title = "Porous benchmark (spheres)")
+plot(p_k, p_μ; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1400, 600), plot_title = "Porous benchmark (spheres)")
 ```
 
 All schemes start at the solid's moduli and part ways in between:
@@ -152,7 +152,7 @@ for (scheme, label, color, ls) in SCHEMES
         build_kw = (; ω_s = ω_oblate, ω_p = ω_oblate, sym_s = IsoSymmetrize(), sym_p = IsoSymmetrize()),
     )
 end
-plot(p_k2, p_μ2; layout = (1, 2), size = (1400, 600), plot_title = "Porous benchmark (oblate + iso-symmetrize)")
+plot(p_k2, p_μ2; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1400, 600), plot_title = "Porous benchmark (oblate + iso-symmetrize)")
 ```
 
 ## Numerical summary

@@ -112,7 +112,7 @@ for (i, (name, _)) in enumerate(paths_to_run)
     plot!(p_μ, τ, μ; label = name, color = colors[i], linewidth = 2)
 end
 
-fig = plot(p_k, p_μ; layout = (1, 2), size = (1400, 600))
+fig = plot(p_k, p_μ; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1400, 600))
 mkpath(joinpath(@__DIR__, "figures"))
 out = joinpath(@__DIR__, "figures", "24_differential_loading_paths.png")
 savefig(fig, out)

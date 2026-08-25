@@ -310,7 +310,7 @@ for wc in wc_list
     plot!(pfc, ak, fcs; lw = 2)
 end
 
-plot(pk, pμ, pfc; layout = (1, 3), size = (1050, 340),
+plot(pk, pμ, pfc; layout = (1, 3), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1200, 430),
     plot_title = "Cement paste (s/c = 0)")
 ```
 

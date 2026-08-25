@@ -203,7 +203,8 @@ panels = map(AGES) do tp
     p
 end
 
-p_all = plot(panels...; layout = (1, 3), size = (1080, 400), bottom_margin = 5Plots.mm)
+p_all = plot(panels...; layout = (1, 3), size = (1080, 440),
+    left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, titlefontsize = 9)
 ````
 
 Three things are worth naming in that figure.

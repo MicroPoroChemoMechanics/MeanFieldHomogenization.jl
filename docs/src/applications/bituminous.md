@@ -206,7 +206,7 @@ function plot_mix(x_opt, states, title)
         plot!(pδ, ωs, [rad2deg(angle(Em(im * ω))) for ω in ωs]; c = c, lw = 2)
         scatter!(pδ, ωs, [rad2deg(angle(E_e(im * ω))) for ω in ωs]; c = c, ms = 2.5, markerstrokewidth = 0)
     end
-    return plot(pE, pδ; layout = (1, 2), size = (980, 400), plot_title = title)
+    return plot(pE, pδ; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1000, 450), plot_title = title)
 end
 
 plot_mix(x_HMA, (("H0", E_BH0, E_EH0), ("H3", E_BH3, E_EH3), ("H9", E_BH9, E_EH9)),

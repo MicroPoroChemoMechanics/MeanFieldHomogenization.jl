@@ -120,7 +120,7 @@ plot!(p2, Ls, c12_perf; lw = 2, ls = :dash, label = "perfect bonding")
 # A thin cell is dominated by its interfaces; a thick one forgets them. The
 # spring softens (compliance added), the membrane stiffens (stiffness added).
 
-plot(p1, p2; layout = (1, 2), size = (900, 350))
+plot(p1, p2; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (900, 350))
 
 # ## Transport: Kapitza and the conductive surface layer
 #

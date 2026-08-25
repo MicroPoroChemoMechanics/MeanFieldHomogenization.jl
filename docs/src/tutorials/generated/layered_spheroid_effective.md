@@ -340,7 +340,7 @@ for (i, ϖ) in enumerate(CV_OMEGAS)
     scatter!(p_cv_a, 3:CV_NMAX, max.(cv_a[ϖ], 1.0e-17); label = lbl, marker = markers[i], ms = 4)
     scatter!(p_cv_t, 3:CV_NMAX, max.(cv_t[ϖ], 1.0e-17); label = lbl, marker = markers[i], ms = 4)
 end
-p_cv = plot(p_cv_a, p_cv_t; layout = (1, 2), size = (1200, 500))
+p_cv = plot(p_cv_a, p_cv_t; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1200, 500))
 p_cv
 ````
 

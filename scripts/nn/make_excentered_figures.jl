@@ -152,7 +152,7 @@ hline!(p_rel, [0.0]; lc = :black, lw = 0.6, label = "")
 
 savefig(
     plot(
-        p_abs, p_rel; layout = (1, 2), size = (1150, 470),
+        p_abs, p_rel; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1150, 470),
         plot_title = "Surrogate against the finite elements it replaces " *
             "(nradial = $(MESH.nradial), R/a = $(MESH.radius_ratio))",
         plot_titlefontsize = 11,

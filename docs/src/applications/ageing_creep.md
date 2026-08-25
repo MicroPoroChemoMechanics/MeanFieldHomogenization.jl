@@ -216,7 +216,7 @@ end
 
 plot(creep_panel(:layers, "model = :layers"),
     creep_panel(:whole_pores, "model = :whole_pores");
-    layout = (2, 1), size = (760, 820))
+    layout = (2, 1), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (860, 880))
 ```
 
 Three observations, all reproducing [sanahuja2013](@cite):

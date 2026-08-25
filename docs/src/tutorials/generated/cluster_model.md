@@ -36,6 +36,8 @@ using TensND
 using Printf
 using Plots
 gr()
+
+default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
 ````
 
 Matrix: `k = 1`, `μ = 0.4` (hence `ν = 0.3`, the value used throughout the
@@ -225,7 +227,8 @@ for c in (0.0, 1.5, 3.0)
     @printf "   %.1f     %.10f   %.10f   %.2e\n" c A[1, 2, 1, 2] B[1, 2, 1, 2] maximum(abs.(A .- B))
 end
 
-p_full = plot(p1, p2, p3; layout = (1, 3), size = (1500, 430))
+p_full = plot(p1, p2, p3; layout = (1, 3), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm,
+    size = (1500, 520), titlefontsize = 9)
 p_full
 ````
 

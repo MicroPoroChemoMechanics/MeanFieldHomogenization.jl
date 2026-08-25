@@ -170,7 +170,7 @@ want("schematic") && let
         figure_schematic(0.0; title = "α = 0 — concentric"),
         figure_schematic(0.6; title = "α = 0.6"),
         figure_schematic(1.0; title = "α = 1 — tangency, by definition"),
-        layout = (1, 3), size = (1150, 420), titlefontsize = 10,
+        layout = (1, 3), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1150, 420), titlefontsize = 10,
         plot_title = "a_c = a·w^(1/3),   d = α (a − a_c)" *
             "      (here w = $W_CORE, so a_c/a = $(round(cbrt(W_CORE), digits = 3)))",
         plot_titlefontsize = 11,
@@ -207,7 +207,7 @@ want("mesh") && let
         ); zoom = 1.25, title = "α = 0.8", legend = false
     )
     savefig(
-        plot(full, zoom0, zoom8; layout = (1, 3), size = (1300, 460)),
+        plot(full, zoom0, zoom8; layout = (1, 3), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1300, 460)),
         joinpath(OUT, "axi_mesh.png")
     )
     rep = fe_axi_mesh_report(
@@ -399,7 +399,7 @@ want("contrast") && let
     )
     hline!(rel, [0.0]; lc = :black, lw = 0.6, label = "")
     savefig(
-        plot(plt, rel; layout = (1, 2), size = (1150, 470)),
+        plot(plt, rel; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1150, 470)),
         joinpath(OUT, "axi_contrast.png")
     )
 

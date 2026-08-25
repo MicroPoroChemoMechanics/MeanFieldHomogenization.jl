@@ -10,6 +10,20 @@ using MeanFieldHomogenization
 # the Applications pages fail to render.
 ENV["GKSwstype"] = "100"
 
+# Composite panels crop their outer labels unless the margins are explicit — a
+# big enough canvas is not enough on its own. The Literate scripts each set
+# their own left/bottom margins; setting the defaults once here extends the same
+# treatment to the hand-written `@example` pages, which never picked up that
+# idiom. Must come before `literate.jl`, whose notebook pass runs the scripts.
+using Plots
+Plots.gr()
+Plots.default(;
+    left_margin = 6Plots.mm,
+    bottom_margin = 6Plots.mm,
+    right_margin = 4Plots.mm,
+    top_margin = 3Plots.mm,
+)
+
 # Generates the Gallery pages (+ companion notebooks/scripts) from the
 # curated `scripts/` demos before `makedocs` runs, so the generated markdown
 # exists when `pages` below references it. Must run after the GKSwstype
@@ -58,7 +72,7 @@ makedocs(;
         canonical = "https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl",
         repolink = "https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl",
         edit_link = "main",
-        assets = ["assets/favicon.ico", "assets/custom.css"],
+        assets = ["assets/favicon.ico", "assets/custom.css", "assets/mathjax-flash.js"],
         prettyurls = (get(ENV, "CI", nothing) == "true"),
         collapselevel = 1,
         mathengine = Documenter.MathJax3(),

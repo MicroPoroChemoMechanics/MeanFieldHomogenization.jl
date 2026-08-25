@@ -252,7 +252,7 @@ end
 
 fig = plot(
     p_creep, p_relax;
-    layout = (1, 2), size = (1400, 600)
+    layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1400, 600)
 )
 
 mkpath(joinpath(@__DIR__, "figures"))

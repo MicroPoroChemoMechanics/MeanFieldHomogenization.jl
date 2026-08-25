@@ -44,6 +44,8 @@ using Printf
 using Plots
 gr()
 
+default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
+
 Random.seed!(20260810)
 ````
 
@@ -181,7 +183,8 @@ p3 = plot(
 scatter!(p3, [0.4], [0.310]; ms = 6, marker = :star5, label = "paper, φ = 0.4")
 p3
 
-p_full = plot(p1, p2, p3; layout = (1, 3), size = (1500, 450))
+p_full = plot(p1, p2, p3; layout = (1, 3), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm,
+    size = (1500, 520), titlefontsize = 9)
 p_full
 ````
 

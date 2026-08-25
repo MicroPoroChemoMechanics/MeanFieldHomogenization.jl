@@ -34,6 +34,8 @@ using Printf
 using Plots
 gr()
 
+default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
+
 # ## §1 The interface stiffness across aspect ratios
 #
 # `κs` and `μs` are the surface bulk and shear moduli, with the dimension of a
@@ -164,7 +166,8 @@ p3 = plot(
 vline!(p3, [1.0]; color = :black, ls = :dashdot, label = "sphere")
 p3
 
-p_full = plot(p1, p2, p3; layout = (1, 3), size = (1500, 450))
+p_full = plot(p1, p2, p3; layout = (1, 3), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm,
+    size = (1500, 520), titlefontsize = 9)
 p_full
 
 const figdir = joinpath(@__DIR__, "figures")                        #jl

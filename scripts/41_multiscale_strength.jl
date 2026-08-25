@@ -62,7 +62,7 @@ for wc in wcs
 end
 
 p_full = plot(
-    p1, p2, p3, p4; layout = (2, 2), size = (1000, 800),
+    p1, p2, p3, p4; layout = (2, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1000, 800),
     plot_title = "Multi-scale strength upscaling (Pichler-Hellmich 2011)"
 )
 

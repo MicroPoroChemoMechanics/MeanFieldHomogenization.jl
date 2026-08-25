@@ -111,7 +111,7 @@ for wc in wcs
     plot!(p2, x, yμ, marker = :+, lw = 1.5)
 end
 
-p = plot(p1, p2; layout = (2, 1), size = (800, 700), plot_title = "ISO Pichler cement paste (ω = $ω_iso)")
+p = plot(p1, p2; layout = (2, 1), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (800, 700), plot_title = "ISO Pichler cement paste (ω = $ω_iso)")
 figdir = joinpath(@__DIR__, "figures")
 isdir(figdir) || mkdir(figdir)
 figpath = joinpath(figdir, "42_cementpaste_iso.png")

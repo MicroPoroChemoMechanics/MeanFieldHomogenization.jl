@@ -47,6 +47,8 @@ using Printf
 using Plots
 gr()
 
+default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
+
 # ## Setup
 #
 # An insulating core (`k₁ ≈ 0`) isolates the interface contribution: whatever
@@ -151,7 +153,7 @@ p2 = _panel(PRO, kt_pro, "Prolate — transverse", "k_t^eq / k_m")
 p3 = _panel(OBL, ka_obl, "Oblate — axial", "k_a^eq / k_m")
 p4 = _panel(PRO, ka_pro, "Prolate — axial", "k_a^eq / k_m")
 
-p_full = plot(p1, p2, p3, p4; layout = (2, 2), size = (1250, 900))
+p_full = plot(p1, p2, p3, p4; layout = (2, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1250, 900))
 p_full
 
 # ## Effect on the effective conductivity of a composite

@@ -33,7 +33,10 @@ end
 
 plt = plot(
     ηrange, Bll, label = "B_ll", xlabel = "η = b/a",
-    ylabel = "component of 𝐁", title = "COD tensor — isotropic matrix",
+    ## The mathematical-bold 𝐁 has no glyph in the default GR font and comes
+    ## out as a tofu box on the axis. Plain ASCII here; the tensor is named in
+    ## the title.
+    ylabel = "component of B", title = "COD tensor B — isotropic matrix",
     lw = 2
 )
 plot!(plt, ηrange, Bmm, label = "B_mm", lw = 2)

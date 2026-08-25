@@ -217,7 +217,7 @@ savefig(
 p_full = figure_slice(mesh_crack; title = "Section y = 0", size = (430, 400))
 p_zoom = figure_slice(mesh_crack; zoom = 1.6, title = "zoom on the crack", size = (430, 400))
 savefig(
-    plot(p_full, p_zoom; layout = (1, 2), size = (900, 420)),
+    plot(p_full, p_zoom; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (900, 420)),
     joinpath(OUT, "mesh_slice.png")
 )
 
@@ -231,7 +231,7 @@ savefig(
             mesh_crack; half = 1.8, outer = false,
             title = "zoom: crack and the cut behind it", size = (460, 440)
         );
-        layout = (1, 2), size = (980, 460)
+        layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (980, 460)
     ),
     joinpath(OUT, "mesh_3d.png")
 )

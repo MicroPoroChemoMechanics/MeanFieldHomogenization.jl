@@ -58,7 +58,12 @@ panels = [
     panel("penny crack\nω → 0", :sienna; ρt = 0.95, ρa = 0.035),
 ]
 
-shape_strip = plot(panels...; layout = (1, 6), size = (900, 170), top_margin = 3Plots.mm)
+# Six panels in a row leave 150 px each, too narrow for the two-line titles.
+# These sketches carry no axes (`framestyle = :none`), so the page-wide margins
+# set in `make.jl` would only eat into the drawing: zero them out here.
+shape_strip = plot(panels...; layout = (2, 3), size = (900, 460),
+    left_margin = 0Plots.mm, bottom_margin = 0Plots.mm,
+    right_margin = 0Plots.mm, top_margin = 3Plots.mm)
 ```
 
 ```@example hillshapes

@@ -186,7 +186,7 @@ hline!(p2, [1.0]; lw = 1, color = :black, linestyle = :dot, label = "σ∞")
 vline!(p2, [R]; lw = 1, color = :black, linestyle = :dash, label = "r = R")
 
 p_full = plot(
-    p1, p2; layout = (1, 2), size = (1400, 500),
+    p1, p2; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1400, 500),
     plot_title = "Local bulk stress profile in n-layer sphere"
 )
 

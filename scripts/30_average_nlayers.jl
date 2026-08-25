@@ -195,7 +195,8 @@ p3 = bar(
 )
 
 p_full = plot(
-    p1, p2, p3; layout = (1, 3), size = (1500, 450),
+    p1, p2, p3; layout = (1, 3), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm,
+    size = (1500, 520), titlefontsize = 9,
     plot_title = "n-layer sphere ($n layers, R=$R) — average localizations"
 )
 p_full

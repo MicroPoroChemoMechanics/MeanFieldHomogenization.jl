@@ -84,7 +84,7 @@ for ((name, _, color), (_, τ, k, μ)) in zip(paths_to_run, results)
     plot!(p_k, τ, k; label = name, color = color, lw = 2)
     plot!(p_μ, τ, μ; label = name, color = color, lw = 2)
 end
-plot(p_k, p_μ; layout = (1, 2), size = (900, 420))
+plot(p_k, p_μ; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1400, 600))
 ```
 
 All four curves start together — in the dilute limit, the order in which
