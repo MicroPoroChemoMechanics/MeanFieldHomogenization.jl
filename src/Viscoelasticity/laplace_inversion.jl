@@ -714,7 +714,7 @@ function _dehoog_blocks(order, times, ratio::Real)
 end
 
 # One node set — one pass over `F` — per scale block.  With an explicit `T` the
-# user asked for a single block covering everything, so we honour that and warn
+# user asked for a single block covering everything, so we honor that and warn
 # about any time the node set cannot resolve.
 function _invert_grid(F, times::AbstractVector{<:Real}, method::DeHoog)
     S = _scalar_float(_worktype(float(first(times))))

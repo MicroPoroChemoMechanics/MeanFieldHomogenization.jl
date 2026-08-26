@@ -40,7 +40,7 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
   of a homogenized stiffness, not a scheme.
 - `MeanFieldHomogenization.Viscoelasticity`  — linear viscoelasticity by two routes:
   the ageing time-domain one through Volterra operators (`homogenize_alv`), and
-  the non-ageing Laplace-Carson one (`homogenize_lc`), with a catalogue of
+  the non-ageing Laplace-Carson one (`homogenize_lc`), with a catalog of
   rheological models, numerical Laplace inversion, and the exact Kelvin ↔
   Maxwell conversion joining them.
 - `MeanFieldHomogenization.CustomInclusions` — the user-defined inclusion contract:

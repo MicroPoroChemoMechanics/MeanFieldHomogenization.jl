@@ -72,7 +72,7 @@ using SpecialFunctions: gamma, expintx
 
 # ── The Laplace-Carson half (non-ageing) ────────────────────────────────────
 # `laplace_inversion.jl` depends on nothing from this package, so it goes
-# first; the rheology catalogue then needs it for its fallbacks, and
+# first; the rheology catalog then needs it for its fallbacks, and
 # `rheology_iso.jl` needs `ViscoLaw` from `visco_law.jl` for the bridge.
 include("laplace_inversion.jl")
 include("mittag_leffler.jl")

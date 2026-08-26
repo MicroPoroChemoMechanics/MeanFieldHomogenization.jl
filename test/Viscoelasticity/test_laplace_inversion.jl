@@ -177,7 +177,7 @@ end
 end
 
 @testset "the tail is controlled in absolute, not relative, terms" begin
-    # Documented behaviour, not a defect: once the function has decayed far
+    # Documented behavior, not a defect: once the function has decayed far
     # below its own scale, the relative error is unbounded while the absolute
     # one still meets the method's promise.
     F(p) = 3 / (p + 1)
