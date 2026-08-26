@@ -136,9 +136,11 @@ struct PronyCreep{T} <: AbstractRheology
                     "got $(length(J)) and $(length(tau))"
             )
         )
-        _plain_value(J_0) > 0 || throw(
-            ArgumentError(
-                "PronyCreep: the instantaneous compliance J_0 must be positive; got $J_0"
+        _checkable(J_0) && (
+            _plain_value(J_0) > 0 || throw(
+                ArgumentError(
+                    "PronyCreep: the instantaneous compliance J_0 must be positive; got $J_0"
+                )
             )
         )
         Jc, tc = _sort_and_merge(J, tau, merge_tol, "PronyCreep")
@@ -149,7 +151,7 @@ end
 # ── Constructors: validate, sort, merge ─────────────────────────────────────
 
 function PronyRelaxation(
-        E_inf::Real, E::AbstractVector{<:Real}, tau::AbstractVector{<:Real};
+        E_inf::Number, E::AbstractVector{<:Number}, tau::AbstractVector{<:Number};
         merge_tol::Real = PRONY_MERGE_TOL
     )
     T = promote_type(typeof(E_inf), eltype(E), eltype(tau), Float64)
@@ -157,8 +159,8 @@ function PronyRelaxation(
 end
 
 function PronyCreep(
-        J_0::Real, J::AbstractVector{<:Real}, tau::AbstractVector{<:Real},
-        phi::Real = 0.0; merge_tol::Real = PRONY_MERGE_TOL
+        J_0::Number, J::AbstractVector{<:Number}, tau::AbstractVector{<:Number},
+        phi::Number = 0.0; merge_tol::Real = PRONY_MERGE_TOL
     )
     T = promote_type(typeof(J_0), eltype(J), eltype(tau), typeof(phi), Float64)
     return PronyCreep{T}(T(J_0), collect(T, J), collect(T, tau), T(phi); merge_tol)
@@ -178,6 +180,12 @@ it bisects in would be empty.
 """
 function _sort_and_merge(w::Vector{T}, tau::Vector{T}, merge_tol::Real, who::AbstractString) where {T}
     isempty(tau) && return w, tau
+    # A symbolic spectrum cannot be sorted, merged or validated: `τ₁ < τ₂` is an
+    # expression, not a decision.  It is taken as given, in the order written —
+    # which is the only thing that can be meant by an ordering of symbols, and
+    # is enough for `carson_relaxation` and `relaxation`.  The *conversion*
+    # (`maxwell_to_kelvin`) does need real ordering and refuses it explicitly.
+    _checkable(first(tau)) || return w, tau
     all(>(0), tau) || throw(
         ArgumentError("$who: every relaxation/retardation time must be strictly positive")
     )
@@ -222,10 +230,10 @@ carson_creep(m::PronyCreep, p) =
     init = zero(p * one(eltype(m.J)))
 )
 
-relaxation(m::PronyRelaxation, t::Real; method = nothing) =
+relaxation(m::PronyRelaxation, t::Number; method = nothing) =
     m.E_inf + sum((E * exp(-t / τ) for (E, τ) in zip(m.E, m.tau)); init = zero(t * one(eltype(m.E))))
 
-creep(m::PronyCreep, t::Real; method = nothing) =
+creep(m::PronyCreep, t::Number; method = nothing) =
     m.J_0 + m.phi * t +
     sum((J * (1 - exp(-t / τ)) for (J, τ) in zip(m.J, m.tau)); init = zero(t * one(eltype(m.J))))
 
@@ -236,19 +244,31 @@ glassy_modulus(m::PronyCreep) = one(m.J_0) / m.J_0
 equilibrium_modulus(m::PronyCreep) =
     is_fluid(m) ? zero(m.J_0) : one(m.J_0) / (m.J_0 + sum(m.J; init = zero(m.J_0)))
 
-is_fluid(m::PronyRelaxation) = m.E_inf ≤ PRONY_FLUID_TOL * glassy_modulus(m)
-is_fluid(m::PronyCreep) = m.phi > PRONY_FLUID_TOL * glassy_modulus(m) / _time_scale(m)
+is_fluid(m::PronyRelaxation) = _checkable(m.E_inf) &&
+    m.E_inf ≤ PRONY_FLUID_TOL * glassy_modulus(m)
+is_fluid(m::PronyCreep) = _checkable(m.phi) &&
+    m.phi > PRONY_FLUID_TOL * glassy_modulus(m) / _time_scale(m)
 
 # The fluidity has units of 1/(modulus × time), so testing it against a modulus
 # needs a time to compare with; the longest retardation time is the natural one.
 _time_scale(m::PronyCreep) = isempty(m.tau) ? one(m.J_0) : last(m.tau)
 
-# The other transform of each type is the derived one: it goes through the
-# conversion rather than through a numerical inversion, so it stays exact.
-carson_creep(m::PronyRelaxation, p) = carson_creep(maxwell_to_kelvin(m), p)
-creep(m::PronyRelaxation, t::Real; method = nothing) = creep(maxwell_to_kelvin(m), t)
-carson_relaxation(m::PronyCreep, p) = carson_relaxation(kelvin_to_maxwell(m), p)
-relaxation(m::PronyCreep, t::Real; method = nothing) = relaxation(kelvin_to_maxwell(m), t)
+# The other transform of each type is the derived one.  It goes through the
+# conversion rather than through a numerical inversion, so it stays exact — and
+# the conversion is what turns `J*` into a *partial-fraction* form rather than
+# the quotient `1/R*`, which is what makes the time function a closed-form sum.
+#
+# On a symbolic spectrum the conversion cannot run (it bisects between poles),
+# but `J* = 1/R*` is exact and symbolic, so that is the answer there.  Only the
+# *time* function genuinely needs the conversion, and it says so.
+carson_creep(m::PronyRelaxation, p) = _numeric_spectrum(m.tau) ?
+    carson_creep(maxwell_to_kelvin(m), p) : one(p) / carson_relaxation(m, p)
+
+carson_relaxation(m::PronyCreep, p) = _numeric_spectrum(m.tau) ?
+    carson_relaxation(kelvin_to_maxwell(m), p) : one(p) / carson_creep(m, p)
+
+creep(m::PronyRelaxation, t::Number; method = nothing) = creep(maxwell_to_kelvin(m), t)
+relaxation(m::PronyCreep, t::Number; method = nothing) = relaxation(kelvin_to_maxwell(m), t)
 
 Base.length(m::PronyRelaxation) = length(m.E)
 Base.length(m::PronyCreep) = length(m.J)
@@ -498,6 +518,7 @@ true
 See also [`kelvin_to_maxwell`](@ref), [`prony_fit_creep`](@ref).
 """
 function maxwell_to_kelvin(m::PronyRelaxation{T}; rtol::Real = 1.0e-14) where {T}
+    _require_numeric_spectrum(m.tau, "maxwell_to_kelvin")
     n = length(m.E)
     n == 0 && return PronyCreep(one(T) / m.E_inf, T[], T[], zero(T))
 
@@ -595,6 +616,7 @@ julia> length(r), isapprox(equilibrium_modulus(r), 0.0; atol = 1e-12)
 See also [`maxwell_to_kelvin`](@ref), [`prony_fit_relaxation`](@ref).
 """
 function kelvin_to_maxwell(k::PronyCreep{T}; rtol::Real = 1.0e-14) where {T}
+    _require_numeric_spectrum(k.tau, "kelvin_to_maxwell")
     n = length(k.J)
     fluid = is_fluid(k)
     E_glassy = one(T) / k.J_0
@@ -642,7 +664,37 @@ end
 
 # ── Shared diagnostics ──────────────────────────────────────────────────────
 
+"""
+    _require_numeric_spectrum(tau, who)
+
+Refuse a symbolic spectrum, with the reason.
+
+The conversion locates the roots of a Stieltjes function by **bisection**
+between consecutive poles.  That needs a real ordering of the times and a real
+sign test, neither of which a symbolic `τ` provides — so this is a genuine
+limitation rather than a missing method, and saying so beats failing later
+inside the bracketing with `TypeError: non-boolean (Num)`.
+
+The transforms themselves (`carson_relaxation`, `carson_creep` on the chain the
+model was *given* in) stay fully symbolic.
+"""
+_numeric_spectrum(tau) = isempty(tau) || _checkable(first(tau))
+
+function _require_numeric_spectrum(tau, who::AbstractString)
+    _numeric_spectrum(tau) || throw(
+        ArgumentError(
+            "$who: the conversion locates its roots by bisection between " *
+                "consecutive relaxation times, which needs a numeric spectrum — " *
+                "the times here are symbolic. The transform of the chain you " *
+                "already have (`carson_relaxation` / `carson_creep`) is symbolic " *
+                "and exact; only the change of representation needs numbers."
+        )
+    )
+    return nothing
+end
+
 function _warn_ill_conditioned(tau, who::AbstractString)
+    _numeric_spectrum(tau) || return nothing
     for j in 1:(length(tau) - 1)
         lo, hi = _plain_value(tau[j]), _plain_value(tau[j + 1])
         if hi - lo ≤ 1.0e3 * PRONY_MERGE_TOL * lo

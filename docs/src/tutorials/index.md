@@ -95,4 +95,5 @@ API is on the [particle-assembly manual page](@ref man-assemblies).
 | :--- | :--- |
 | [Symbolic spheres](symbolic_spheres.md) | the same tensor algebra on `SymPy` / `Symbolics` expressions: Eshelby/Hill tensors and the closed-form estimates |
 | [Symbolic laminates: arithmetic and harmonic averages](symbolic_laminate.md) | the one microstructure whose effective behavior is a closed form, derived symbolically |
+| [Symbolic viscoelasticity](symbolic_viscoelasticity.md) | models with symbolic parameters, and symbolic Laplace-Carson inversion: the Burgers relaxation function *derived* rather than transcribed, and precisely where the symbolic route stops |
 | [Multiscale chaining: explicit and declarative, side by side](generated/laminate_multiscale.md) | the two ways of chaining scales, the same answer, and the `ForwardDiff` pass that goes through both |

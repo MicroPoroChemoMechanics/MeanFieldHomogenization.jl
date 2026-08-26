@@ -218,6 +218,7 @@ makedocs(;
             "Interoperability and tools" => [
                 "tutorials/symbolic_spheres.md",
                 "tutorials/symbolic_laminate.md",
+                "tutorials/symbolic_viscoelasticity.md",
                 "tutorials/generated/laminate_multiscale.md",
             ],
         ],

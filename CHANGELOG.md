@@ -158,6 +158,52 @@ costs a third fewer scheme evaluations, and it is the one way to use
 `SelfConsistent(algorithm = NewtonDefault())` on this route, whose `ForwardDiff`
 Jacobian cannot carry a `Dual` over a complex scalar.
 
+### Symbolic parameters, and symbolic inversion
+
+The catalog is generic in its scalar type, but its constructors were not: they
+validate `0 < k < h < 1`, `τ > 0` and so on, and a `Symbolics.Num` makes those
+comparisons *expressions* rather than `Bool`s. Every validation is now guarded
+by `Elliptic.is_hard_numeric` — the same predicate the elliptic integrals have
+used since that confusion first bit — so a symbolic model simply is not
+validated, and
+
+```julia
+@variables E∞ E₁ τ₁ p
+carson_relaxation(zener_maxwell(E∞, E₁, τ₁), p)
+```
+
+returns an exact expression. `SymPy.Sym` works too, which needed the model type
+parameters relaxed from `T <: Real` to `T <: Number` (`Sym` is not `<: Real`).
+
+The one operation that genuinely cannot take symbols is the Kelvin ⇄ Maxwell
+conversion: it locates its roots by bisection between consecutive poles, which
+needs a real ordering and a real sign test. It now refuses with that reason
+instead of failing later inside the bracketing, and `carson_creep` on a
+symbolic Prony chain falls back on the exact `J* = 1/R*` rather than
+propagating the refusal.
+
+With `SymPy` loaded, `inverse_laplace` and `inverse_carson` accept a **symbolic
+time**, which means something different from a numeric one: not the value there
+but the function. They hand the transform to SymPy and return `R(t)` or `J(t)`
+in closed form. That is how the Burgers relaxation function — the `cosh`/`sinh`
+expression that serves as this package's numerical oracle — is now *derived*
+rather than transcribed.
+
+Where that route stops is worth stating, because it is not where one would
+guess. A rational exponent inverts exactly; the Cole-Cole model at `α = 1/2`
+has a genuine closed form in `erfc` and SymPy finds it. A **symbolic** exponent
+does not work, and fails in the worst way — SymPy returns `nan`, which would
+propagate silently — so the extension warns. A sum of several fractional powers
+(Huet-Sayegh, 2S2P1D) is left unevaluated, and is warned about too. Neither is
+a gap here: those inverses are Mittag-Leffler functions or worse, which is
+exactly why the four numerical quadratures exist.
+
+!!! note
+    `Symbolics` exports its own `inverse_laplace` — a five-argument transform
+    for solving ODEs — so `using MeanFieldHomogenization, Symbolics` makes the
+    bare name ambiguous and it must be qualified. `inverse_carson`, the one
+    used for anything in the catalog, is unaffected.
+
 ### Documentation
 
 New: a theory page on the Laplace-Carson route (including the interlacing
@@ -166,7 +212,9 @@ catalog, a manual page on choosing an inversion algorithm, an API page, and
 three tutorials generated from `scripts/63`, `64` and `65` — the Kelvin ⇄
 Maxwell conversion with the interlacing drawn, the four inversion algorithms
 measured against four exact pairs, and the model gallery with master curves,
-Cole-Cole and Black diagrams.
+Cole-Cole and Black diagrams. A hand-written page covers the symbolic route
+(`scripts/66` is its terser twin, deliberately unpublished: SymPy costs ~45 s
+of build time per page).
 
 `scripts/61_freq_vs_time.jl` now compares **three** routes rather than two, and
 separates the discrepancies instead of merely bounding them: the trapezoidal
@@ -530,7 +578,7 @@ changed, so nothing downstream needs adjusting.
   computed quantity), a setting threshold at 11.6 h where the self-consistent
   fixed point collapses because the solid has not percolated, and an aluminate
   sequence that changes with the mix without a line of code changing — with
-  3.5 % calcite the carbonate stabilises the ettringite and it survives to
+  3.5 % calcite the carbonate stabilizes the ettringite and it survives to
   28 days, without limestone it peaks at 6 hours and is depleted to nothing.
 
 ### Scripts

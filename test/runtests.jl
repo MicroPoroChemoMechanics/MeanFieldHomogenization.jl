@@ -36,6 +36,17 @@ catch
     false
 end
 
+# Both symbolic backends, for `test_symbolic_rheology.jl`.  They are in
+# `test/Project.toml`, so this is a guard against a broken PyCall/SymPy install
+# rather than against a missing dependency — a `Sym` needs a working Python,
+# which is the one thing in this suite that can fail for reasons outside Julia.
+const HAS_SYMBOLIC_BACKENDS = try
+    @eval import SymPy, Symbolics
+    true
+catch
+    false
+end
+
 # Load Lux / Optimisers / Zygote so the `MeanFieldHomogenizationLuxExt` extension activates.
 # Only *training* a neural surrogate needs them: loading a committed model,
 # running it through every scheme and differentiating it need nothing beyond the
@@ -229,6 +240,8 @@ Random.seed!(20260723)
         include("Viscoelasticity/test_prony.jl")
         include("Viscoelasticity/test_rheology.jl")
         include("Viscoelasticity/test_rheology_iso.jl")
+        HAS_SYMBOLIC_BACKENDS &&
+            include("Viscoelasticity/test_symbolic_rheology.jl")
         include("Viscoelasticity/test_symmetrize_alv.jl")
         include("Viscoelasticity/test_laminate_alv.jl")
         include("Viscoelasticity/test_visco_law.jl")

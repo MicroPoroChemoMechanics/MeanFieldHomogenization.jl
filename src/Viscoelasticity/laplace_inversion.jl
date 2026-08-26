@@ -543,6 +543,21 @@ of `F` is a homogenization scheme.
 
 Throws `DomainError` for `t ≤ 0`: every method places its nodes at `O(1/t)`.
 
+!!! note "Name clash with Symbolics.jl"
+    `Symbolics` exports a function also called `inverse_laplace` — a
+    five-argument symbolic transform, `inverse_laplace(expr, F, s, f, t)`, used
+    for solving ODEs. The two are different functions, so
+    `using MeanFieldHomogenization, Symbolics` makes the bare name ambiguous
+    and Julia refuses it. Qualify whichever you mean:
+
+    ```julia
+    MeanFieldHomogenization.inverse_laplace(F, t)     # this one
+    Symbolics.inverse_laplace(expr, F, s, f, t)       # theirs
+    ```
+
+    [`inverse_carson`](@ref) — the one to use for anything in the rheology
+    catalog — is not affected.
+
 !!! warning "Accuracy is absolute, not relative, in the tail"
     Every algorithm here controls the error against the *scale of `f`*, not
     against `f(t)` at the point asked for.  Once `f` has decayed many orders of

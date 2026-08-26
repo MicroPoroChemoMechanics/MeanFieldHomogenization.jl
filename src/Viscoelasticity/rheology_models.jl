@@ -27,14 +27,14 @@ modulus of a bituminous binder, for instance.
 Being its own Laplace-Carson transform is not an accident: it is the property
 that makes the Carson convention the natural one in viscoelasticity.
 """
-struct Spring{T <: Real} <: AbstractRheology
+struct Spring{T <: Number} <: AbstractRheology
     E::T
 end
 
 carson_relaxation(m::Spring, p) = m.E * one(p)
 carson_creep(m::Spring, p) = one(p) / m.E
-relaxation(m::Spring, t::Real; method = nothing) = m.E * one(t)
-creep(m::Spring, t::Real; method = nothing) = one(t) / m.E
+relaxation(m::Spring, t::Number; method = nothing) = m.E * one(t)
+creep(m::Spring, t::Number; method = nothing) = one(t) / m.E
 glassy_modulus(m::Spring) = m.E
 equilibrium_modulus(m::Spring) = m.E
 
@@ -48,13 +48,13 @@ Its relaxation function is `η δ(t)`, a distribution rather than a function, so
 which would be infinite.  A dashpot is meant to be assembled with springs
 ([`MaxwellUnit`](@ref), [`burgers`](@ref)), not loaded on its own.
 """
-struct Dashpot{T <: Real} <: AbstractRheology
+struct Dashpot{T <: Number} <: AbstractRheology
     η::T
 end
 
 carson_relaxation(m::Dashpot, p) = p * m.η
 carson_creep(m::Dashpot, p) = one(p) / (p * m.η)
-creep(m::Dashpot, t::Real; method = nothing) = t / m.η
+creep(m::Dashpot, t::Number; method = nothing) = t / m.η
 equilibrium_modulus(m::Dashpot) = zero(m.η)
 
 _dirac_error(who) = throw(
@@ -65,7 +65,7 @@ _dirac_error(who) = throw(
     )
 )
 
-relaxation(::Dashpot, ::Real; method = nothing) = _dirac_error("Dashpot")
+relaxation(::Dashpot, ::Number; method = nothing) = _dirac_error("Dashpot")
 glassy_modulus(::Dashpot) = _dirac_error("Dashpot")
 
 """
@@ -83,10 +83,10 @@ Equivalent to `PronyRelaxation(0, [E], [η/E])`, and that is what
 [`kelvin_to_maxwell`](@ref) and friends produce; this type exists so the
 physical parameters `(E, η)` can be given directly.
 """
-struct MaxwellUnit{T <: Real} <: AbstractRheology
+struct MaxwellUnit{T <: Number} <: AbstractRheology
     E::T
     η::T
-    MaxwellUnit(E::Real, η::Real) = (
+    MaxwellUnit(E::Number, η::Number) = (
         T = promote_type(typeof(E), typeof(η), Float64);
         new{T}(T(E), T(η))
     )
@@ -96,8 +96,8 @@ relaxation_time(m::MaxwellUnit) = m.η / m.E
 
 carson_relaxation(m::MaxwellUnit, p) = (τ = relaxation_time(m); m.E * p * τ / (1 + p * τ))
 carson_creep(m::MaxwellUnit, p) = one(p) / m.E + one(p) / (p * m.η)
-relaxation(m::MaxwellUnit, t::Real; method = nothing) = m.E * exp(-t / relaxation_time(m))
-creep(m::MaxwellUnit, t::Real; method = nothing) = one(t) / m.E + t / m.η
+relaxation(m::MaxwellUnit, t::Number; method = nothing) = m.E * exp(-t / relaxation_time(m))
+creep(m::MaxwellUnit, t::Number; method = nothing) = one(t) / m.E + t / m.η
 glassy_modulus(m::MaxwellUnit) = m.E
 equilibrium_modulus(m::MaxwellUnit) = zero(m.E)
 
@@ -115,10 +115,10 @@ The strain is bounded but the *instantaneous* response is rigid, so the
 relaxation function again carries a Dirac and [`relaxation`](@ref) throws.  Put
 it in series with a spring — [`zener_kelvin`](@ref) — for a usable solid.
 """
-struct KelvinUnit{T <: Real} <: AbstractRheology
+struct KelvinUnit{T <: Number} <: AbstractRheology
     E::T
     η::T
-    KelvinUnit(E::Real, η::Real) = (
+    KelvinUnit(E::Number, η::Number) = (
         T = promote_type(typeof(E), typeof(η), Float64);
         new{T}(T(E), T(η))
     )
@@ -128,11 +128,11 @@ retardation_time(m::KelvinUnit) = m.η / m.E
 
 carson_relaxation(m::KelvinUnit, p) = m.E * (one(p) + p * retardation_time(m))
 carson_creep(m::KelvinUnit, p) = one(p) / (m.E * (one(p) + p * retardation_time(m)))
-creep(m::KelvinUnit, t::Real; method = nothing) =
+creep(m::KelvinUnit, t::Number; method = nothing) =
     (one(t) - exp(-t / retardation_time(m))) / m.E
 equilibrium_modulus(m::KelvinUnit) = m.E
 
-relaxation(::KelvinUnit, ::Real; method = nothing) = _dirac_error("KelvinUnit")
+relaxation(::KelvinUnit, ::Number; method = nothing) = _dirac_error("KelvinUnit")
 glassy_modulus(::KelvinUnit) = _dirac_error("KelvinUnit")
 
 # ── Standard solid and Burgers: named Prony chains ──────────────────────────
@@ -157,7 +157,7 @@ J_1 = \\frac{1}{E_\\infty} - J_0, \\qquad
 \\tau^{K}_1 = \\tau_1\\,\\frac{E_\\infty + E_1}{E_\\infty}.
 ```
 """
-zener_maxwell(E_inf::Real, E_1::Real, tau_1::Real) =
+zener_maxwell(E_inf::Number, E_1::Number, tau_1::Number) =
     PronyRelaxation(E_inf, [E_1], [tau_1])
 
 """
@@ -174,7 +174,7 @@ J(t) = \\frac{1}{E_{\\rm glassy}}
 
 See [`zener_maxwell`](@ref) and [`kelvin_to_maxwell`](@ref).
 """
-zener_kelvin(E_glassy::Real, E_delayed::Real, tau_1::Real) =
+zener_kelvin(E_glassy::Number, E_delayed::Number, tau_1::Number) =
     PronyCreep(one(E_glassy) / E_glassy, [one(E_delayed) / E_delayed], [tau_1])
 
 """
@@ -198,7 +198,7 @@ is validated (`test/Viscoelasticity/test_prony.jl`).
 Parameter names follow the ECHOES reference
 `tests/python/creep/fluage_echoes_ijss2013_jsanahuja_relaxBurgers.py`.
 """
-burgers(k_s::Real, eta_s::Real, k_p::Real, eta_p::Real) =
+burgers(k_s::Number, eta_s::Number, k_p::Number, eta_p::Number) =
     PronyCreep(one(k_s) / k_s, [one(k_p) / k_p], [eta_p / k_p], one(eta_s) / eta_s)
 
 # ── Fractional elements ─────────────────────────────────────────────────────
@@ -223,12 +223,15 @@ The transform has a branch cut along the negative real axis, which the Talbot
 contours enclose rather than cross — [`FixedTalbot`](@ref) inverts it at
 `1e-12`, no special handling needed.
 """
-struct ScottBlair{T <: Real} <: AbstractRheology
+struct ScottBlair{T <: Number} <: AbstractRheology
     V::T
     α::T
 
-    function ScottBlair(V::Real, α::Real)
-        0 < α < 1 || throw(ArgumentError("ScottBlair: α must lie in (0,1); got $α"))
+    function ScottBlair(V::Number, α::Number)
+        _checkable(α) && (
+            0 < α < 1 ||
+                throw(ArgumentError("ScottBlair: α must lie in (0,1); got $α"))
+        )
         T = promote_type(typeof(V), typeof(α), Float64)
         return new{T}(T(V), T(α))
     end
@@ -236,9 +239,9 @@ end
 
 carson_relaxation(m::ScottBlair, p) = m.V * p^m.α
 carson_creep(m::ScottBlair, p) = one(p) / (m.V * p^m.α)
-relaxation(m::ScottBlair, t::Real; method = nothing) =
+relaxation(m::ScottBlair, t::Number; method = nothing) =
     m.V * t^(-m.α) / gamma(1 - m.α)
-creep(m::ScottBlair, t::Real; method = nothing) =
+creep(m::ScottBlair, t::Number; method = nothing) =
     t^m.α / (m.V * gamma(1 + m.α))
 equilibrium_modulus(m::ScottBlair) = zero(m.V)
 glassy_modulus(::ScottBlair) = _dirac_error("ScottBlair")
@@ -252,15 +255,17 @@ Two springpots in **series**:
 By convention `α > β`, so the `α` element is the stiffer one at short times.
 A fluid.
 """
-struct FractionalMaxwell{T <: Real} <: AbstractRheology
+struct FractionalMaxwell{T <: Number} <: AbstractRheology
     V_a::T
     α::T
     V_b::T
     β::T
 
-    function FractionalMaxwell(V_a::Real, α::Real, V_b::Real, β::Real)
-        (0 ≤ β < α ≤ 1) || throw(
-            ArgumentError("FractionalMaxwell: need 0 ≤ β < α ≤ 1; got α = $α, β = $β")
+    function FractionalMaxwell(V_a::Number, α::Number, V_b::Number, β::Number)
+        _checkable(α, β) && (
+            (0 ≤ β < α ≤ 1) || throw(
+                ArgumentError("FractionalMaxwell: need 0 ≤ β < α ≤ 1; got α = $α, β = $β")
+            )
         )
         T = promote_type(typeof(V_a), typeof(α), typeof(V_b), typeof(β), Float64)
         return new{T}(T(V_a), T(α), T(V_b), T(β))
@@ -285,15 +290,17 @@ Two springpots in **parallel**:
 With `β = 0` the slow element is a spring and the model is a solid of
 equilibrium modulus `V_b`.
 """
-struct FractionalKelvin{T <: Real} <: AbstractRheology
+struct FractionalKelvin{T <: Number} <: AbstractRheology
     V_a::T
     α::T
     V_b::T
     β::T
 
-    function FractionalKelvin(V_a::Real, α::Real, V_b::Real, β::Real)
-        (0 ≤ β < α ≤ 1) || throw(
-            ArgumentError("FractionalKelvin: need 0 ≤ β < α ≤ 1; got α = $α, β = $β")
+    function FractionalKelvin(V_a::Number, α::Number, V_b::Number, β::Number)
+        _checkable(α, β) && (
+            (0 ≤ β < α ≤ 1) || throw(
+                ArgumentError("FractionalKelvin: need 0 ≤ β < α ≤ 1; got α = $α, β = $β")
+            )
         )
         T = promote_type(typeof(V_a), typeof(α), typeof(V_b), typeof(β), Float64)
         return new{T}(T(V_a), T(α), T(V_b), T(β))
@@ -323,15 +330,21 @@ The time-domain form needs `MittagLeffler.jl` (a weak dependency); without it,
 [`relaxation`](@ref) falls back to numerically inverting the closed-form
 transform above, which costs a little accuracy and nothing else.
 """
-struct FractionalZener{T <: Real} <: AbstractRheology
+struct FractionalZener{T <: Number} <: AbstractRheology
     E_inf::T
     E_0::T
     tau::T
     α::T
 
-    function FractionalZener(E_inf::Real, E_0::Real, tau::Real, α::Real)
-        0 < α ≤ 1 || throw(ArgumentError("FractionalZener: α must lie in (0,1]; got $α"))
-        tau > 0 || throw(ArgumentError("FractionalZener: tau must be positive; got $tau"))
+    function FractionalZener(E_inf::Number, E_0::Number, tau::Number, α::Number)
+        _checkable(α) && (
+            0 < α ≤ 1 ||
+                throw(ArgumentError("FractionalZener: α must lie in (0,1]; got $α"))
+        )
+        _checkable(tau) && (
+            tau > 0 ||
+                throw(ArgumentError("FractionalZener: tau must be positive; got $tau"))
+        )
         T = promote_type(typeof(E_inf), typeof(E_0), typeof(tau), typeof(α), Float64)
         return new{T}(T(E_inf), T(E_0), T(tau), T(α))
     end
@@ -344,7 +357,7 @@ end
 glassy_modulus(m::FractionalZener) = m.E_0
 equilibrium_modulus(m::FractionalZener) = m.E_inf
 
-function relaxation(m::FractionalZener, t::Real; method = default_inversion(m))
+function relaxation(m::FractionalZener, t::Number; method = default_inversion(m))
     iszero(t) && return m.E_0
     ml = _mittag_leffler(m.α, one(m.α), -(t / m.tau)^m.α)
     ml === nothing && return inverse_carson(p -> carson_relaxation(m, p), t, method)
@@ -384,17 +397,22 @@ therefore has ``\\lambda_0 < 0``: the benchmark of
 `β = 0.98`, and `α ∈ (-1, 0)` is the usual range — it is `α + 1` that must be
 positive, not `α`.
 """
-struct Rabotnov{T <: Real} <: AbstractRheology
+struct Rabotnov{T <: Number} <: AbstractRheology
     mu_0::T
     lambda_0::T
     α::T
     β::T
 
-    function Rabotnov(mu_0::Real, lambda_0::Real, α::Real, β::Real)
-        β > 0 || throw(ArgumentError("Rabotnov: β must be positive; got $β"))
-        α > -1 || throw(
-            ArgumentError(
-                "Rabotnov: α must exceed -1 (the kernel is built on E_{α+1,1}); got $α"
+    function Rabotnov(mu_0::Number, lambda_0::Number, α::Number, β::Number)
+        _checkable(β) && (
+            β > 0 ||
+                throw(ArgumentError("Rabotnov: β must be positive; got $β"))
+        )
+        _checkable(α) && (
+            α > -1 || throw(
+                ArgumentError(
+                    "Rabotnov: α must exceed -1 (the kernel is built on E_{α+1,1}); got $α"
+                )
             )
         )
         T = promote_type(typeof(mu_0), typeof(lambda_0), typeof(α), typeof(β), Float64)
@@ -407,7 +425,7 @@ carson_relaxation(m::Rabotnov, p) =
 glassy_modulus(m::Rabotnov) = m.mu_0
 equilibrium_modulus(m::Rabotnov) = m.mu_0 * (1 + m.lambda_0 / m.β)
 
-function relaxation(m::Rabotnov, t::Real; method = default_inversion(m))
+function relaxation(m::Rabotnov, t::Number; method = default_inversion(m))
     iszero(t) && return m.mu_0
     a = m.α + 1
     ml = _mittag_leffler(a, one(a), -m.β * t^a)
@@ -432,7 +450,7 @@ E^{*}(p) = E_{00} + \\frac{E_0 - E_{00}}
 A **solid**: unlike [`Model2S2P1D`](@ref) there is no series dashpot, so the
 strain stays bounded.
 """
-struct HuetSayegh{T <: Real} <: AbstractRheology
+struct HuetSayegh{T <: Number} <: AbstractRheology
     E00::T
     E0::T
     δ::T
@@ -440,11 +458,16 @@ struct HuetSayegh{T <: Real} <: AbstractRheology
     k::T
     h::T
 
-    function HuetSayegh(E00::Real, E0::Real, δ::Real, τ::Real, k::Real, h::Real)
-        0 < k < h < 1 || throw(
-            ArgumentError("HuetSayegh: need 0 < k < h < 1; got k = $k, h = $h")
+    function HuetSayegh(E00::Number, E0::Number, δ::Number, τ::Number, k::Number, h::Number)
+        _checkable(k, h) && (
+            0 < k < h < 1 || throw(
+                ArgumentError("HuetSayegh: need 0 < k < h < 1; got k = $k, h = $h")
+            )
         )
-        τ > 0 || throw(ArgumentError("HuetSayegh: τ must be positive; got $τ"))
+        _checkable(τ) && (
+            τ > 0 ||
+                throw(ArgumentError("HuetSayegh: τ must be positive; got $τ"))
+        )
         T = promote_type(
             typeof(E00), typeof(E0), typeof(δ), typeof(τ), typeof(k), typeof(h), Float64
         )
@@ -502,7 +525,7 @@ series dashpot `β` makes the model a **fluid**.
     pure rename with no numerical change; the twelve calibrated parameter sets
     carry over argument for argument.
 """
-struct Model2S2P1D{T <: Real} <: AbstractRheology
+struct Model2S2P1D{T <: Number} <: AbstractRheology
     E00::T
     E0::T
     δ::T
@@ -512,13 +535,21 @@ struct Model2S2P1D{T <: Real} <: AbstractRheology
     β::T
 
     function Model2S2P1D(
-            E00::Real, E0::Real, δ::Real, τ_E::Real, k::Real, h::Real, β::Real
+            E00::Number, E0::Number, δ::Number, τ_E::Number, k::Number, h::Number, β::Number
         )
-        0 < k < h < 1 || throw(
-            ArgumentError("Model2S2P1D: need 0 < k < h < 1; got k = $k, h = $h")
+        _checkable(k, h) && (
+            0 < k < h < 1 || throw(
+                ArgumentError("Model2S2P1D: need 0 < k < h < 1; got k = $k, h = $h")
+            )
         )
-        τ_E > 0 || throw(ArgumentError("Model2S2P1D: τ_E must be positive; got $τ_E"))
-        β > 0 || throw(ArgumentError("Model2S2P1D: β must be positive; got $β"))
+        _checkable(τ_E) && (
+            τ_E > 0 ||
+                throw(ArgumentError("Model2S2P1D: τ_E must be positive; got $τ_E"))
+        )
+        _checkable(β) && (
+            β > 0 ||
+                throw(ArgumentError("Model2S2P1D: β must be positive; got $β"))
+        )
         T = promote_type(
             typeof(E00), typeof(E0), typeof(δ), typeof(τ_E),
             typeof(k), typeof(h), typeof(β), Float64
@@ -549,7 +580,7 @@ The dimensionless creep kernel ``\\varphi(t)`` in the time domain,
 
 the exact term-by-term counterpart of [`carson_creep_kernel`](@ref).
 """
-creep_kernel(m::Model2S2P1D, t::Real) =
+creep_kernel(m::Model2S2P1D, t::Number) =
     one(t) + m.δ * (t / m.τ_E)^m.k / gamma(m.k + 1) +
     (t / m.τ_E)^m.h / gamma(m.h + 1) + t / (m.β * m.τ_E)
 
@@ -581,13 +612,16 @@ This is the non-ageing skeleton of the ageing law
 `E`, `C` and `τ` depend on the loading age, belongs to the
 [time-domain route](@ref man-viscoelasticity) instead.
 """
-struct LogarithmicCreep{T <: Real} <: AbstractRheology
+struct LogarithmicCreep{T <: Number} <: AbstractRheology
     E::T
     C::T
     τ::T
 
-    function LogarithmicCreep(E::Real, C::Real, τ::Real)
-        τ > 0 || throw(ArgumentError("LogarithmicCreep: τ must be positive; got $τ"))
+    function LogarithmicCreep(E::Number, C::Number, τ::Number)
+        _checkable(τ) && (
+            τ > 0 ||
+                throw(ArgumentError("LogarithmicCreep: τ must be positive; got $τ"))
+        )
         T = promote_type(typeof(E), typeof(C), typeof(τ), Float64)
         return new{T}(T(E), T(C), T(τ))
     end
@@ -596,7 +630,7 @@ end
 carson_creep(m::LogarithmicCreep, p) =
     one(p) / m.E + expintx(1, p * m.τ) / m.C
 carson_relaxation(m::LogarithmicCreep, p) = one(p) / carson_creep(m, p)
-creep(m::LogarithmicCreep, t::Real; method = nothing) =
+creep(m::LogarithmicCreep, t::Number; method = nothing) =
     one(t) / m.E + log1p(t / m.τ) / m.C
 glassy_modulus(m::LogarithmicCreep) = m.E
 equilibrium_modulus(m::LogarithmicCreep) = zero(m.E)

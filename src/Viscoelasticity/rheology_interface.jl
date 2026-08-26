@@ -49,6 +49,28 @@ abstract type AbstractTensorRheology end
 
 const AnyRheology = Union{AbstractRheology, AbstractTensorRheology}
 
+"""
+    _checkable(xs...) -> Bool
+
+Whether every argument is a scalar on which a comparison returns an honest
+`Bool`, so a validation may run at all.
+
+`T <: Real` is **not** this predicate: `Symbolics.Num` is `<: Real` yet `<`
+returns a symbolic expression, and `SymPy.Sym` is not even `<: Real`.  The
+model constructors below therefore validate their parameters only when the
+values are hard numeric, and stay silent on symbolic ones — which is what lets
+
+```julia
+@variables E∞ E₁ τ₁
+m = zener_maxwell(E∞, E₁, τ₁)
+```
+
+build a model whose transform is an exact symbolic expression.  The guard is
+`MeanFieldHomogenization.Elliptic.is_hard_numeric`, reused rather than
+reinvented; see its docstring for the four times that confusion has bitten.
+"""
+@inline _checkable(xs...) = all(x -> is_hard_numeric(typeof(x)), xs)
+
 # ── The five generics ───────────────────────────────────────────────────────
 
 """
@@ -88,8 +110,8 @@ Falls back to numerically inverting [`carson_relaxation`](@ref) with
 answered analytically by [`glassy_modulus`](@ref) — the inversion itself has a
 pole there.
 """
-function relaxation(model::AnyRheology, t::Real; method = default_inversion(model))
-    iszero(t) && return glassy_modulus(model)
+function relaxation(model::AnyRheology, t::Number; method = default_inversion(model))
+    (_checkable(t) && iszero(t)) && return glassy_modulus(model)
     return inverse_carson(p -> carson_relaxation(model, p), t, method)
 end
 
@@ -102,8 +124,8 @@ at `t = 0`.
 Falls back to numerically inverting [`carson_creep`](@ref); models with a closed
 form override it.
 """
-function creep(model::AnyRheology, t::Real; method = default_inversion(model))
-    iszero(t) && return inv(glassy_modulus(model))
+function creep(model::AnyRheology, t::Number; method = default_inversion(model))
+    (_checkable(t) && iszero(t)) && return inv(glassy_modulus(model))
     return inverse_carson(p -> carson_creep(model, p), t, method)
 end
 
@@ -118,7 +140,7 @@ Its modulus `abs(E*)` is the *norm* of the complex modulus and its argument
 [`loss_modulus`](@ref) and [`loss_factor`](@ref) name the usual derived
 quantities.
 """
-complex_modulus(model::AnyRheology, ω::Real) = carson_relaxation(model, im * ω)
+complex_modulus(model::AnyRheology, ω::Number) = carson_relaxation(model, im * ω)
 
 # ── Derived dynamic quantities ──────────────────────────────────────────────
 
@@ -127,14 +149,14 @@ complex_modulus(model::AnyRheology, ω::Real) = carson_relaxation(model, im * ω
 
 ``E'(\\omega) = \\Re E^{*}(\\omega)`` — the in-phase, elastically stored part.
 """
-storage_modulus(model::AnyRheology, ω::Real) = _realpart(complex_modulus(model, ω))
+storage_modulus(model::AnyRheology, ω::Number) = _realpart(complex_modulus(model, ω))
 
 """
     loss_modulus(model, ω)
 
 ``E''(\\omega) = \\Im E^{*}(\\omega)`` — the out-of-phase, dissipated part.
 """
-loss_modulus(model::AbstractRheology, ω::Real) = imag(complex_modulus(model, ω))
+loss_modulus(model::AbstractRheology, ω::Number) = imag(complex_modulus(model, ω))
 
 """
     loss_factor(model, ω)
@@ -142,7 +164,7 @@ loss_modulus(model::AbstractRheology, ω::Real) = imag(complex_modulus(model, ω
 ``\\tan\\delta = E''/E'`` — the phase angle's tangent.  Non-negative for any
 passive material, which makes it a cheap sanity check on a fitted spectrum.
 """
-function loss_factor(model::AbstractRheology, ω::Real)
+function loss_factor(model::AbstractRheology, ω::Number)
     E = complex_modulus(model, ω)
     return imag(E) / real(E)
 end
@@ -184,7 +206,8 @@ carries a term linear in `t`, which in the Carson domain is the pole `φ/p` of
 [`kelvin_to_maxwell`](@ref) and [`maxwell_to_kelvin`](@ref) look for a root in
 the outermost interval.
 """
-is_fluid(model::AnyRheology) = iszero(equilibrium_modulus(model))
+is_fluid(model::AnyRheology) = _checkable(equilibrium_modulus(model)) &&
+    iszero(equilibrium_modulus(model))
 
 """
     default_inversion(model) -> AbstractLaplaceInversion
