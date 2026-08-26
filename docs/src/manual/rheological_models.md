@@ -54,6 +54,8 @@ method and are differentiable — see
 
 ### Elementary elements
 
+![The three elementary elements: a spring of stiffness ``E``, a dashpot of viscosity ``\eta``, and the parabolic element (springpot, Scott-Blair element) of modulus ``V`` and order ``\alpha``. The arc drawn inside the last one is its creep function, flat onto the axis at ``\alpha = 0`` and straight at ``\alpha = 1``.](../assets/rheology/elements.svg)
+
 | | ``J(t)`` | ``R(t)`` | ``R^{*}(p)`` |
 |:---|:---|:---|:---|
 | [`Spring`](@ref)`(E)` | ``1/E`` | ``E`` | ``E`` |
@@ -66,6 +68,8 @@ with ``\tau = \eta/E`` in both cases. [`Dashpot`](@ref) and
 `relaxation` and `glassy_modulus` **throw** on them rather than return a wrong
 number — assemble them with a spring first.
 
+![The two two-element units: `MaxwellUnit` puts the spring and the dashpot in series, `KelvinUnit` puts them in parallel.](../assets/rheology/maxwell_kelvin_units.svg)
+
 ### Discrete spectra
 
 [`PronyRelaxation`](@ref) and [`PronyCreep`](@ref) are the workhorses:
@@ -76,6 +80,10 @@ R(t) = E_\infty + \sum_i E_i\,e^{-t/\tau_i},
 J(t) = J_0 + \sum_i J_i\bigl(1 - e^{-t/\tau_i}\bigr) + \varphi\,t .
 ```
 
+![`PronyRelaxation(E_inf, E, tau)`: an equilibrium spring ``E_\infty`` in parallel with ``N`` Maxwell branches, the ``i``-th carrying a spring ``E_i`` and a dashpot ``\eta_i = E_i\tau_i``.](../assets/rheology/prony_relaxation.svg)
+
+![`PronyCreep(J_0, J, tau, phi)`: an instantaneous spring ``1/J_0`` in series with ``N`` Kelvin cells and, when the material is a fluid, a final dashpot of fluidity ``\varphi``.](../assets/rheology/prony_creep.svg)
+
 `E_inf == 0` means a fluid; so does `phi > 0` on the creep side. The two are
 converted into one another **exactly** by [`maxwell_to_kelvin`](@ref) and
 [`kelvin_to_maxwell`](@ref) — see [the theory](@ref th-interlacing) for why that
@@ -83,6 +91,10 @@ is robust and [the tutorial](@ref tut-kelvin-maxwell) for what it looks like.
 
 Named special cases: [`zener_maxwell`](@ref) and [`zener_kelvin`](@ref) (the
 standard linear solid, both ways round) and [`burgers`](@ref).
+
+![The standard linear solid written both ways: `zener_maxwell` as an equilibrium spring in parallel with one Maxwell branch, `zener_kelvin` as an instantaneous spring in series with one Kelvin cell. Same material, two parameterizations.](../assets/rheology/zener.svg)
+
+![`burgers(k_s, η_s, k_p, η_p)`: a Maxwell unit in series with a Kelvin cell. The series dashpot never stops, so the model is a fluid.](../assets/rheology/burgers.svg)
 
 ```@example rheo
 b = burgers(1.0, 3.0, 2.0, 6.0)       # k_s, η_s, k_p, η_p
@@ -94,6 +106,8 @@ r = kelvin_to_maxwell(b)
 
 A single exponential spans one decade; real polymers and bitumen relax over six
 or more. The fractional elements broaden the spectrum without adding branches.
+
+![The fractional family: two parabolic elements in series (`FractionalMaxwell`) or in parallel (`FractionalKelvin`), and the fractional Zener, in which a spring ``E_0 - E_\infty`` in series with a parabolic element of order ``\alpha`` sits in parallel with the equilibrium spring ``E_\infty``.](../assets/rheology/fractional.svg)
 
 | | ``R^{*}(p)`` | notes |
 |:---|:---|:---|
@@ -142,6 +156,9 @@ E^{*}(p) = E_{00} + \frac{E_0 - E_{00}}{\varphi^{*}(p)},
 
 with the bracketed series-dashpot term present in 2S2P1D and absent in
 Huet-Sayegh — which is exactly the difference between a fluid and a solid.
+
+![Huet-Sayegh and 2S2P1D. The denominator ``\varphi^{*}`` is a sum of compliances, so the branch is a spring ``E_0 - E_{00}`` in series with two parabolic elements of orders ``k`` and ``h``, the whole in parallel with ``E_{00}``. 2S2P1D adds one linear dashpot ``\beta`` in series inside that branch — the "1D" of the name, and what turns the solid into a fluid.](../assets/rheology/huet_sayegh_2s2p1d.svg)
+
 `E00` is the **static** modulus and `E0` the **glassy** one, following
 Di Benedetto and Olard and the ECHOES sources; `0 < k < h < 1`.
 

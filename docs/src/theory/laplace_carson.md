@@ -126,6 +126,8 @@ not divide, it deconvolves. [`YoungPoisson`](@ref) carries that caveat.
 
 ## [Interlacing: why Kelvin ⇄ Maxwell is exact](@id th-interlacing)
 
+![The two chains the conversion moves between: the generalized Maxwell chain, which carries the relaxation function ``R(t)`` on its face, and the generalized Kelvin chain, which carries the creep function ``J(t)``. The retardation times ``\sigma_j`` interlace the relaxation times ``\tau_j``, which is what isolates every root before any arithmetic is done.](../assets/rheology/kelvin_maxwell_conversion.svg)
+
 A generalized Maxwell chain and a generalized Kelvin chain describe the same
 material. Since
 

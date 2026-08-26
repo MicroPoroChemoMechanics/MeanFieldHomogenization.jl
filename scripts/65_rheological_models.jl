@@ -37,6 +37,16 @@ gr()  # headless backend; GKSwstype is set to "100" before Literate runs
 # branches. All four are exact in all four functions, because
 # [`maxwell_to_kelvin`](@ref) supplies whichever chain the model was not given
 # in.
+#
+# ![The three elementary elements the whole catalog is assembled from: a
+# spring, a dashpot, and the parabolic element of §2. The arc drawn in the last
+# one is its creep function.](../../assets/rheology/elements.svg)
+#
+# ![The standard linear solid, written both ways.](../../assets/rheology/zener.svg)
+#
+# ![`burgers(k_s, η_s, k_p, η_p)`: a Maxwell unit in series with a Kelvin cell.
+# The series dashpot never stops, so the model is a
+# fluid.](../../assets/rheology/burgers.svg)
 
 ts = exp10.(range(-2, 3; length = 300))
 
@@ -76,6 +86,10 @@ end
 # [`FractionalZener`](@ref) — the Cole-Cole model — replaces the single
 # exponential of a Zener element by a Mittag-Leffler function, broadening the
 # transition without adding branches.
+#
+# ![The fractional family: two parabolic elements in series or in parallel, and
+# the fractional Zener, whose branch is a spring in series with a parabolic
+# element of order ``\alpha``.](../../assets/rheology/fractional.svg)
 
 p_fractional = plot(
     xscale = :log10, yscale = :log10, xlabel = "t", ylabel = "R(t)",
@@ -103,6 +117,13 @@ end
 # reference model for bituminous binders and mixtures.
 # [`HuetSayegh`](@ref) is the same object without the series dashpot, hence a
 # solid rather than a fluid.
+#
+# ![Both networks, with the symbols of the constructors. The denominator of
+# ``E^{*}`` is a sum of compliances, so the branch reads as a chain in series:
+# the spring ``E_0 - E_{00}``, two parabolic elements of orders ``k`` and ``h``,
+# and — in 2S2P1D only — the linear dashpot ``\beta``, which is the "1D" of the
+# name and what turns the solid into a
+# fluid.](../../assets/rheology/huet_sayegh_2s2p1d.svg)
 #
 # The natural way to look at either is not `R(t)` but the **complex modulus**
 # `E*(ω)`, which is what a dynamic test measures. Two conventional plots:

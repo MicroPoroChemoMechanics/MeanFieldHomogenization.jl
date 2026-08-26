@@ -232,6 +232,7 @@ makedocs(;
             "applications/recycled_aggregate.md",
             "applications/bituminous.md",
             "applications/ageing_creep.md",
+            "applications/lamellar_clay.md",
         ],
         # MeanFieldHomogenization *inside* a finite-element code — the exact
         # opposite of `manual/fe_inclusions.md`, which is the FE solver inside

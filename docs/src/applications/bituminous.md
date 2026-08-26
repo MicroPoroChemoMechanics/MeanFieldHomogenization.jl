@@ -34,6 +34,8 @@ with ``E_{00}`` the static modulus and ``E_0`` the glassy one. This is
 [rheological model library](@ref man-rheological-models) — the page used to
 define its own struct, and no longer needs to.
 
+![The 2S2P1D network, with the symbols of the formula above. The denominator is a sum of compliances, so it reads directly as a chain in series: the spring ``E_0 - E_{00}``, two parabolic elements of orders ``k`` and ``h`` weighted by ``\delta``, and the linear dashpot ``\beta`` — that last one being the "1D" of the name and the reason the binder is a fluid. The whole branch sits in parallel with the static spring ``E_{00}``, whose Huet-Sayegh form (same network, no dashpot) is drawn above it.](../assets/rheology/huet_sayegh_2s2p1d.svg)
+
 !!! note "The parameter sets are unchanged"
     The inline struct this page carried named its fields the other way round
     (`E0` for the static modulus, `Einf` for the glassy one), but its formula

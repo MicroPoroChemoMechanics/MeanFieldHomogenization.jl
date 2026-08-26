@@ -26,6 +26,14 @@
 # This page shows what [`maxwell_to_kelvin`](@ref) and
 # [`kelvin_to_maxwell`](@ref) do, why the structure of the problem makes them
 # unconditionally robust, and checks them against two independent closed forms.
+#
+# ![The two chains, drawn with the names the constructors use. On the left a
+# `PronyRelaxation`: an equilibrium spring ``E_\infty`` in parallel with
+# Maxwell branches ``(E_i, \eta_i = E_i\tau_i)``. On the right the
+# `PronyCreep` it converts to: an instantaneous spring ``1/J_0`` in series with
+# Kelvin cells ``(1/J_j, \sigma_j/J_j)``. The retardation times ``\sigma_j``
+# interlace the relaxation times ``\tau_j``, which is the whole reason the
+# conversion is robust.](../../assets/rheology/kelvin_maxwell_conversion.svg)
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)         #jl
