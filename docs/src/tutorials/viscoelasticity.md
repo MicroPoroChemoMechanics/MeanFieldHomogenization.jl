@@ -15,10 +15,14 @@ G^*(\omega) = G_\infty + G_d\,\frac{i\omega\tau}{1+i\omega\tau},
 ```
 
 real (elastic) at ``\omega \to 0`` and again at ``\omega \to \infty``,
-complex in between. Building an RVE with complex-valued
-`iso_stiffness` and calling [`homogenize`](@ref) exactly as
-before propagates that complex modulus through the homogenization
-algebra — every scheme is `Complex{Float64}`-safe:
+complex in between. That is the Laplace-Carson transform of
+``G_\infty + G_d e^{-t/\tau}`` evaluated at ``p = i\omega``, and the
+[model library](@ref man-rheological-models) knows it as
+[`zener_maxwell`](@ref) — so it is written below with
+[`iso_rheology`](@ref) rather than by hand. Building an RVE with the resulting
+complex-valued stiffness and calling [`homogenize`](@ref) exactly as before
+propagates that complex modulus through the homogenization algebra — every
+scheme is `Complex{Float64}`-safe:
 
 ```@example tutvisco
 using MeanFieldHomogenization
@@ -27,17 +31,18 @@ using LinearAlgebra
 using Plots
 gr()  # headless backend; GKSwstype is set to "100" in make.jl
 
-maxwell_G(ω; G_inf, G_d, τ = 1.0) = G_inf + G_d * (im * ω * τ) / (1 + im * ω * τ)
+## One model per phase: an elastic bulk channel, a standard-solid shear one.
+PHASE_M = iso_rheology(Spring(30.0), zener_maxwell(10.0, 5.0, 1.0))
+PHASE_I = iso_rheology(Spring(80.0), zener_maxwell(30.0, 15.0, 1.0))
 
 const f_inc = 0.3
 ωs = exp10.(range(-2, 2; length = 40))
 
 function C_eff_at(ω, scheme)
-    G_m = maxwell_G(ω; G_inf = 10.0, G_d = 5.0)
-    G_i = maxwell_G(ω; G_inf = 30.0, G_d = 15.0)
+    p = im * ω
     r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => iso_stiffness(ComplexF64(30.0), G_m)))
-    add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness(ComplexF64(80.0), G_i)); fraction = f_inc)
+    add_matrix!(r, Ellipsoid(1.0), Dict(:C => carson_relaxation(PHASE_M, p)))
+    add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(PHASE_I, p)); fraction = f_inc)
     _, μ = k_mu(homogenize(r, scheme, :C))
     return μ
 end
@@ -74,7 +79,10 @@ interaction.
     One gap, in the complex plane only:
     `SelfConsistent(algorithm = NewtonDefault())` builds its Jacobian
     with `ForwardDiff`, which cannot carry a `Dual` over a complex
-    scalar. The default Anderson solver is the complex-capable path.
+    scalar. The default Anderson solver is the complex-capable path — and
+    so is the [Laplace-Carson route](@ref man-laplace-inversion) with
+    [`GaverStehfest`](@ref), whose Carson variables are all **real**, so the
+    Newton solver never meets a complex number in the first place.
 
 ## A first taste of time-domain ageing viscoelasticity
 
@@ -108,6 +116,31 @@ here `40×40` since each of the 20 time steps carries a `2×2` iso
 block), not a single tensor — reading effective moduli back out of it,
 handling cracks in ALV, and differentiating through the whole pipeline
 are covered in full in the
-[Viscoelasticity manual](../manual/viscoelasticity.md). The next two
-tutorials return to elastic problems and build up to differentiating
-`homogenize` itself.
+[Viscoelasticity manual](../manual/viscoelasticity.md).
+
+## …and back to the time domain
+
+The frequency route above stops at ``E^*(\omega)``. For a **non-ageing**
+material the answer can be brought back into the time domain without the
+Volterra machinery at all, by inverting the transform numerically:
+
+```@example tutvisco
+cell(p) = begin
+    r = RVE(:M)
+    add_matrix!(r, Ellipsoid(1.0), Dict(:C => carson_relaxation(PHASE_M, p)))
+    add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(PHASE_I, p)); fraction = f_inc)
+    r
+end
+
+μ_t = [k_mu(C)[2] for C in homogenize_lc(cell, MoriTanaka(), :C; times = [0.05, 0.5, 5.0])]
+```
+
+That is [`homogenize_lc`](@ref), and it is the subject of three further
+tutorials: the [model catalog](@ref tut-rheological-models), the
+[exact Kelvin ⇄ Maxwell conversion](@ref tut-kelvin-maxwell), and
+[how to choose an inversion algorithm](@ref tut-laplace-inversion). The
+[three-route comparison](@ref tut-freq-vs-time) then checks this route, the
+frequency one and the ageing one against each other on the same composite.
+
+The next two tutorials return to elastic problems and build up to
+differentiating `homogenize` itself.

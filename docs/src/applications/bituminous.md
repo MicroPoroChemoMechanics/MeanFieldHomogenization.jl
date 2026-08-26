@@ -21,12 +21,31 @@ support introduced for the cement-paste chapters, here with complex moduli).
 
 ## 2S2P1D binder model
 
-The bitumen complex Young's modulus in the Laplace domain (``p = i\omega``):
+The bitumen complex Young's modulus in the Laplace-Carson domain
+(``p = i\omega``):
 
 ```math
-E^*(p) = E_0 + \frac{E_\infty - E_0}
-  {1 + \delta\,(p\tau_E)^{-k} + (p\tau_E)^{-h} + (p\beta\tau_E)^{-1}}.
+E^*(p) = E_{00} + \frac{E_0 - E_{00}}
+  {1 + \delta\,(p\tau_E)^{-k} + (p\tau_E)^{-h} + (p\beta\tau_E)^{-1}},
 ```
+
+with ``E_{00}`` the static modulus and ``E_0`` the glassy one. This is
+[`Model2S2P1D`](@ref) from the
+[rheological model library](@ref man-rheological-models) — the page used to
+define its own struct, and no longer needs to.
+
+!!! note "The parameter sets are unchanged"
+    The inline struct this page carried named its fields the other way round
+    (`E0` for the static modulus, `Einf` for the glassy one), but its formula
+    and its positional order were already the literature's. Switching to
+    [`Model2S2P1D`](@ref) is therefore a pure rename: every one of the twelve
+    calibrated sets below is copied argument for argument, and every number on
+    this page is bit-identical to what it was.
+
+    One consequence worth having: `E00 = 1e-7` was a numerical device to keep
+    ``E^*(0)`` away from zero. A genuinely fluid binder, `E00 = 0`, is now
+    legitimate — the fluid branch is handled exactly by
+    [`kelvin_to_maxwell`](@ref).
 
 ```@example bitumen
 using MeanFieldHomogenization
@@ -35,27 +54,21 @@ using LinearAlgebra
 using Plots
 gr()  # headless backend; GKSwstype is set to "100" in make.jl
 
-struct Mod2S2P1D
-    E0::Float64; Einf::Float64; δ::Float64; τE::Float64; k::Float64; h::Float64; β::Float64
-end
-(m::Mod2S2P1D)(p) = m.E0 + (m.Einf - m.E0) /
-    (1 + m.δ * (p * m.τE)^(-m.k) + (p * m.τE)^(-m.h) + 1 / (p * m.β * m.τE))
-
 # Hot-mix asphalt (HMA) — binders and experimental mix curves, ageing H0/H3/H9
-E_BH0 = Mod2S2P1D(1e-7, 1000.0, 2.2, 1.94507827e-3, 0.22, 0.63, 50.0)
-E_BH3 = Mod2S2P1D(1e-7, 1000.0, 2.12, 2.88910275e-3, 0.22, 0.611998586, 146.0)
-E_BH9 = Mod2S2P1D(1e-7, 1000.0, 2.85, 7.07911122e-3, 0.22, 0.61430255, 178.0)
-E_EH0 = Mod2S2P1D(86.3470095, 26000.0, 2.52254414, 0.834764484, 0.22, 0.65, 43.3031679)
-E_EH3 = Mod2S2P1D(20.0, 24362.0, 2.6, 2.6604, 0.199, 0.65, 900.0)
-E_EH9 = Mod2S2P1D(20.0, 24470.541, 2.73135009, 4.95748334, 0.175991713, 0.60, 900.0)
+E_BH0 = Model2S2P1D(1e-7, 1000.0, 2.2, 1.94507827e-3, 0.22, 0.63, 50.0)
+E_BH3 = Model2S2P1D(1e-7, 1000.0, 2.12, 2.88910275e-3, 0.22, 0.611998586, 146.0)
+E_BH9 = Model2S2P1D(1e-7, 1000.0, 2.85, 7.07911122e-3, 0.22, 0.61430255, 178.0)
+E_EH0 = Model2S2P1D(86.3470095, 26000.0, 2.52254414, 0.834764484, 0.22, 0.65, 43.3031679)
+E_EH3 = Model2S2P1D(20.0, 24362.0, 2.6, 2.6604, 0.199, 0.65, 900.0)
+E_EH9 = Model2S2P1D(20.0, 24470.541, 2.73135009, 4.95748334, 0.175991713, 0.60, 900.0)
 
 # Warm-mix asphalt (WMA) — binders and experimental mix curves, ageing W0/W3/W6
-E_BW0 = Mod2S2P1D(1e-7, 1000.0, 3.12, 9.49532017e-3, 0.22, 0.608684147, 101.0)
-E_BW3 = Mod2S2P1D(6.81e-6, 1000.0, 4.2, 3.209694e-2, 0.22, 0.55078753664, 393.0)
-E_BW6 = Mod2S2P1D(2.1e-4, 1000.0, 4.6, 3.78112337e-1, 0.22, 0.555320631, 808.0)
-E_EW0 = Mod2S2P1D(100.0, 21071.0, 2.4, 0.95, 0.207, 0.62, 9.45)
-E_EW3 = Mod2S2P1D(57.0, 20974.0, 2.6, 7.3168, 0.199, 0.59, 900.0)
-E_EW6 = Mod2S2P1D(100.0, 22290.0, 2.6, 89.095, 0.199, 0.59, 900.0)
+E_BW0 = Model2S2P1D(1e-7, 1000.0, 3.12, 9.49532017e-3, 0.22, 0.608684147, 101.0)
+E_BW3 = Model2S2P1D(6.81e-6, 1000.0, 4.2, 3.209694e-2, 0.22, 0.55078753664, 393.0)
+E_BW6 = Model2S2P1D(2.1e-4, 1000.0, 4.6, 3.78112337e-1, 0.22, 0.555320631, 808.0)
+E_EW0 = Model2S2P1D(100.0, 21071.0, 2.4, 0.95, 0.207, 0.62, 9.45)
+E_EW3 = Model2S2P1D(57.0, 20974.0, 2.6, 7.3168, 0.199, 0.59, 900.0)
+E_EW6 = Model2S2P1D(100.0, 22290.0, 2.6, 89.095, 0.199, 0.59, 900.0)
 nothing # hide
 ```
 
@@ -107,7 +120,7 @@ function Ehom(X, E_b)
         fl[a] *= (1 + e_film[a] / (size_agg[a] * 0.5))^3
     end
     k_B = 2500.0
-    μ_B(p) = 3k_B / (9k_B / E_b(p) - 1)
+    μ_B(p) = 3k_B / (9k_B / carson_relaxation(E_b, p) - 1)
 
     function f(p)
         Cb = iso_stiffness(ComplexF64(k_B), μ_B(p))
@@ -199,12 +212,12 @@ function plot_mix(x_opt, states, title)
         legend = false, framestyle = :box)
     for ((name, E_b, E_e), c) in zip(states, cols)
         Em = Ehom(x_opt, E_b)
-        plot!(pE, ωs, [abs(E_b(im * ω)) for ω in ωs]; ls = :dash, c = c, lw = 1.5, label = "binder $name")
+        plot!(pE, ωs, [abs(complex_modulus(E_b, ω)) for ω in ωs]; ls = :dash, c = c, lw = 1.5, label = "binder $name")
         plot!(pE, ωs, [abs(Em(im * ω)) for ω in ωs]; c = c, lw = 2, label = "mix $name (model)")
-        scatter!(pE, ωs, [abs(E_e(im * ω)) for ω in ωs]; c = c, ms = 2.5, markerstrokewidth = 0, label = "")
-        plot!(pδ, ωs, [rad2deg(angle(E_b(im * ω))) for ω in ωs]; ls = :dash, c = c, lw = 1.5)
+        scatter!(pE, ωs, [abs(complex_modulus(E_e, ω)) for ω in ωs]; c = c, ms = 2.5, markerstrokewidth = 0, label = "")
+        plot!(pδ, ωs, [rad2deg(angle(complex_modulus(E_b, ω))) for ω in ωs]; ls = :dash, c = c, lw = 1.5)
         plot!(pδ, ωs, [rad2deg(angle(Em(im * ω))) for ω in ωs]; c = c, lw = 2)
-        scatter!(pδ, ωs, [rad2deg(angle(E_e(im * ω))) for ω in ωs]; c = c, ms = 2.5, markerstrokewidth = 0)
+        scatter!(pδ, ωs, [rad2deg(angle(complex_modulus(E_e, ω))) for ω in ωs]; c = c, ms = 2.5, markerstrokewidth = 0)
     end
     return plot(pE, pδ; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1000, 450), plot_title = title)
 end
@@ -222,3 +235,58 @@ In both mixes the ageing states shift the master curve toward higher stiffness
 and lower phase angle as the binder hardens — the model tracks the experimental
 curves across the whole frequency range with a single calibrated parameter set
 per mix.
+
+## Back to the time domain
+
+Everything above lives in the frequency domain, which is where the material is
+*measured*. A pavement, though, is loaded by a wheel passing over it — a
+transient, not a sinusoid — so what a structural calculation needs is the
+relaxation modulus ``E^{\hom}(t)``.
+
+That is one call. [`homogenize_lc`](@ref) takes the same three-scale cell
+builder used above, evaluates it at whatever Carson variables the inversion
+algorithm asks for, and returns the time-domain answer directly:
+
+```@example bitumen
+E_of_t(x_opt, E_b, times; method = FixedTalbot(24)) =
+    inverse_carson(Ehom(x_opt, E_b), times, method)
+
+t_grid = exp10.(range(-6, 4; length = 60))
+E_H0 = E_of_t(x_HMA, E_BH0, t_grid)
+E_H9 = E_of_t(x_HMA, E_BH9, t_grid)
+
+pt = plot(
+    t_grid, real.(E_H0);
+    xscale = :log10, yscale = :log10, lw = 2.5, c = 1,
+    xlabel = "t  (s)", ylabel = "E_hom(t)  (MPa)", label = "HMA, state H0",
+    title = "Relaxation modulus of the mix", legend = :bottomleft,
+)
+plot!(pt, t_grid, real.(E_H9); lw = 2.5, c = 3, label = "HMA, state H9 (aged)")
+```
+
+Note what is *not* here: no time grid was needed to get the value at
+``t = 10^{-3}``, no Volterra operator was assembled, and no time-marching took
+place. Each point costs 24 evaluations of the three-scale chain and nothing
+else — the transform carries the whole memory of the material.
+
+The ageing states separate the same way they do on the master curve, only read
+from the other end: the aged binder gives a stiffer mix at every time, and the
+gap widens as the load becomes slower.
+
+!!! tip "Which inversion, and why it matters here"
+    Every point costs `N` full three-scale homogenizations — a
+    self-consistent scheme nested inside two Mori-Tanaka estimates — so the
+    choice is a real one:
+
+    * [`FixedTalbot`](@ref)`(24)`, used above, is the most accurate;
+    * [`GaverStehfest`](@ref)`(16)` needs a third fewer evaluations *and*
+      keeps them all at **real** `p`, so the whole chain runs in real rather
+      than complex arithmetic. It costs about five significant digits, which
+      is well inside the uncertainty on any calibrated binder;
+    * [`DeHoog`](@ref) shares one node set across a block of times, which pays
+      off precisely on a ten-decade grid like this one.
+
+    See [the inversion manual](@ref man-laplace-inversion). The 2S2P1D
+    transform has a branch cut at the origin, from its ``(p\tau)^{-k}`` terms;
+    that is not an obstacle for any of them — the Talbot contours are designed
+    to wrap around exactly such a singularity.

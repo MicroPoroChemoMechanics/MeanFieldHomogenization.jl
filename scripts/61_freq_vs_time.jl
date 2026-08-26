@@ -1,27 +1,26 @@
-# # Frequency or time? Two routes to the same viscoelastic composite
+# # [Frequency or time? Three routes to the same viscoelastic composite](@id tut-freq-vs-time)
 #
 # `MeanFieldHomogenization` reaches the effective behavior of a linear viscoelastic
-# composite by two entirely separate roads:
+# composite by three entirely separate roads:
 #
 # - the **frequency route** — replace every modulus by its complex counterpart
 #   and call [`homogenize`](@ref) unchanged, as in the
 #   [viscoelastic composites tutorial](../viscoelasticity.md);
 # - the **time route** — [`homogenize_alv`](@ref), which discretizes the
 #   Volterra operators on a time grid and never leaves the time domain, as in
-#   the [ageing creep application](../../applications/ageing_creep.md).
+#   the [ageing creep application](../../applications/ageing_creep.md);
+# - the **Laplace-Carson route** — [`homogenize_lc`](@ref), which does the same
+#   and then inverts the answer back to the time domain numerically.
 #
 # They share no code. For a **non-ageing** material the correspondence principle
-# says they must nevertheless agree, and this page checks that they do —
-# quantitatively, and with the discretization error made visible.
+# says all three must nevertheless agree, and this page checks that they do —
+# quantitatively, and with each source of discrepancy identified rather than
+# merely bounded.
 #
-# ## Why no numerical Laplace inversion is needed
+# ## Which way the transform runs
 #
-# The natural-looking comparison — invert the frequency answer back to the time
-# domain — would require a numerical inverse Laplace transform, an ill-posed
-# operation whose stability would then be the subject of the page instead of the
-# physics. The transform runs the easy way round here: the time route produces a
-# sampled relaxation function ``\mu^{\hom}(t)``, and its **Laplace–Carson
-# transform**
+# The forward direction is easy: the time route produces a sampled relaxation
+# function ``\mu^{\hom}(t)``, and its **Laplace-Carson transform**
 #
 # ```math
 # \mu^{*}(p) \;=\; p\int_{0}^{\infty}\mu^{\hom}(t)\,e^{-pt}\,\mathrm{d}t,
@@ -29,7 +28,13 @@
 # ```
 #
 # is a plain quadrature. Evaluated at ``p = i\omega`` it is exactly what the
-# frequency route computes directly.
+# frequency route computes directly, and §4 compares the two that way.
+#
+# The reverse direction — inverting the frequency answer back into the time
+# domain — is genuinely ill-posed, which is why this page used to stop at two
+# routes. It is now available: §6 runs it with
+# [`inverse_carson`](@ref) and lands on the time route's own curve, so the
+# comparison closes in both directions.
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
@@ -58,38 +63,23 @@ gr()  # headless backend; GKSwstype is set to "100" before Literate runs
 # that the truncated time grid can actually reach — the one requirement of the
 # comparison below.
 #
-# The Laplace–Carson transform of such a kernel is elementary,
+# The Laplace-Carson transform of such a kernel is elementary,
 # ``\mathrm{LC}\{a + b\,e^{-t/\tau}\}(p) = a + b\,\dfrac{p\tau}{1+p\tau}``,
 # which is what feeds the frequency route.
 
-struct StandardSolid
-    k∞::Float64
-    k_d::Float64
-    τk::Float64
-    μ∞::Float64
-    μ_d::Float64
-    τμ::Float64
-end
+# A standard solid in each channel is [`zener_maxwell`](@ref), and
+# [`iso_rheology`](@ref) pairs the two into an isotropic fourth-order model. The
+# point of describing the material this way is that **one object serves all
+# three routes**: `carson_relaxation(z, p)` is the transformed stiffness the
+# frequency and Laplace-Carson routes need, and `ViscoLaw(z)` is the
+# time-domain kernel the ageing route needs. Nothing has to be written twice,
+# so the three routes are guaranteed to be comparing the same material.
 
-k_of(z::StandardSolid, t) = z.k∞ + z.k_d * exp(-t / z.τk)
-μ_of(z::StandardSolid, t) = z.μ∞ + z.μ_d * exp(-t / z.τμ)
+standard_solid(k∞, k_d, τk, μ∞, μ_d, τμ) =
+    iso_rheology(zener_maxwell(k∞, k_d, τk), zener_maxwell(μ∞, μ_d, τμ))
 
-## Time-domain kernel R(t, t') = R(t - t') — non-ageing, hence the difference.
-relaxation_law(z::StandardSolid) = ViscoLaw(
-    (t, tp) -> t < tp ? TensISO{3}(0.0, 0.0) :
-        TensISO{3}(3 * k_of(z, t - tp), 2 * μ_of(z, t - tp)),
-    :relaxation,
-)
-
-## Laplace-Carson transform of the same kernel, in closed form.
-lc(a, b, τ, p) = a + b * p * τ / (1 + p * τ)
-stiffness_star(z::StandardSolid, p) = TensISO{3}(
-    3 * lc(z.k∞, z.k_d, z.τk, p),
-    2 * lc(z.μ∞, z.μ_d, z.τμ, p),
-)
-
-const Z_MATRIX = StandardSolid(30.0, 20.0, 1.0, 10.0, 8.0, 0.7)
-const Z_INCL = StandardSolid(80.0, 10.0, 2.0, 30.0, 5.0, 1.5)
+const Z_MATRIX = standard_solid(30.0, 20.0, 1.0, 10.0, 8.0, 0.7)
+const Z_INCL = standard_solid(80.0, 10.0, 2.0, 30.0, 5.0, 1.5)
 const F_INCL = 0.3
 
 # ## §2 The frequency route
@@ -101,9 +91,9 @@ const F_INCL = 0.3
 function mu_frequency(ω)
     p = im * ω
     rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => stiffness_star(Z_MATRIX, p)))
+    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_MATRIX, p)))
     add_phase!(
-        rve, :I, Ellipsoid(1.0), Dict(:C => stiffness_star(Z_INCL, p));
+        rve, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_INCL, p));
         fraction = F_INCL
     )
     return TensND.get_data(homogenize(rve, MoriTanaka()))[2] / 2
@@ -132,9 +122,9 @@ end
 
 function mu_relaxation(times)
     rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => relaxation_law(Z_MATRIX)))
+    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => ViscoLaw(Z_MATRIX)))
     add_phase!(
-        rve, :I, Ellipsoid(1.0), Dict(:C => relaxation_law(Z_INCL));
+        rve, :I, Ellipsoid(1.0), Dict(:C => ViscoLaw(Z_INCL));
         fraction = F_INCL
     )
     R̃ = homogenize_alv(rve, MoriTanaka(), :C; times = times)
@@ -224,13 +214,141 @@ end
 # The factor is 4 to two digits: the entire gap between the frequency and the
 # time route is the trapezoidal error, and the two implementations agree in the
 # continuum limit.
+
+# ## §6 The third route: inverting the frequency answer
 #
+# Everything so far ran the transform the *easy* way. The reverse direction is
+# now available too: [`homogenize_lc`](@ref) evaluates the same Mori-Tanaka
+# estimate at the Carson variables an inversion algorithm asks for, and hands
+# back ``\mu^{\hom}(t)`` directly.
+#
+# Note what is *not* needed: no time grid, no Volterra operator, no trapezoidal
+# rule. The answer at `t = 7` costs a couple of dozen elastic homogenizations
+# and nothing else, whereas the time route has to march the whole history up to
+# `t = 7` to get there.
+
+function cell_lc(p)
+    rve = RVE(:M)
+    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_MATRIX, p)))
+    add_phase!(
+        rve, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_INCL, p));
+        fraction = F_INCL
+    )
+    return rve
+end
+
+probe_times = [0.05, 0.2, 1.0, 3.0, 10.0, 30.0]
+μ_lc = [
+    TensND.get_data(C)[2] / 2
+        for C in homogenize_lc(cell_lc, MoriTanaka(), :C; times = probe_times)
+]
+
+# The three inversion algorithms should agree with *each other* far more
+# closely than any of them agrees with the discretized time route, because they
+# are approximating the same exact quantity while the time route approximates a
+# different one.
+
+μ_lc_gs = [
+    TensND.get_data(C)[2] / 2
+        for C in homogenize_lc(
+        cell_lc, MoriTanaka(), :C; times = probe_times, method = GaverStehfest(16)
+    )
+]
+μ_lc_dh = [
+    TensND.get_data(C)[2] / 2
+        for C in homogenize_lc(
+        cell_lc, MoriTanaka(), :C; times = probe_times, method = DeHoog()
+    )
+]
+
+interp_time(t) = begin
+    i = clamp(searchsortedlast(times, t), 1, length(times) - 1)
+    θ = (t - times[i]) / (times[i + 1] - times[i])
+    (1 - θ) * μ_t[i] + θ * μ_t[i + 1]
+end
+
+@printf("\n     t     μ (time route)   μ (LC/Talbot)   LC/GS − Talbot   LC/deHoog − Talbot   time − LC\n")
+for (i, t) in enumerate(probe_times)
+    @printf(
+        "%7.2f   %13.7f   %13.7f   %14.2e   %18.2e   %9.2e\n",
+        t, interp_time(t), μ_lc[i],
+        abs(μ_lc_gs[i] - μ_lc[i]) / μ_lc[i],
+        abs(μ_lc_dh[i] - μ_lc[i]) / μ_lc[i],
+        abs(interp_time(t) - μ_lc[i]) / μ_lc[i]
+    )
+end
+
+# The last three columns are the point of the whole page. Reading them right to
+# left:
+#
+# * **`time − LC`** is the *trapezoidal* error of the time route on this grid —
+#   the same quantity §5 showed converging at order 2. It is by far the largest
+#   discrepancy (`8e-4` at `t = 0.05`) and it is a property of the time route
+#   alone. It shrinks to `3e-13` by `t = 30`, not because the quadrature
+#   improves but because the relaxation function has reached its plateau and
+#   there is nothing left to integrate badly.
+# * **`LC/deHoog − Talbot`**, a flat `1e-9` across five decades of time, is the
+#   *inversion* error. Two completely different quadratures — a Hankel contour
+#   and an accelerated Fourier series on a Bromwich line — landing on the same
+#   number to nine digits is a strong statement that both have converged.
+# * **`LC/GS − Talbot`**, between `1e-8` and `3e-6`, is
+#   [`GaverStehfest`](@ref)'s own budget: it buys five to eight digits instead
+#   of twelve, in exchange for evaluating the scheme at **real** `p` only, which
+#   keeps the whole sweep in real arithmetic.
+#
+# So the errors separate cleanly and each is attributable — which is a far more
+# useful statement than "the three routes agree to a millesimal", and a much
+# better test: a regression in any one of the three would move exactly one
+# column.
+
+## Log time axis: the whole relaxation happens in the first two decades, and a
+## linear axis would pile every probe point against the left edge.
+p3 = plot(
+    times[2:end], μ_t[2:end];
+    xscale = :log10, lw = 2, color = :black,
+    label = "time route (ALV, Δt = $(round(times[2] - times[1], digits = 3)))",
+    xlabel = "t", ylabel = "μ_hom(t)", legend = :topright,
+    title = "Back in the time domain, three ways"
+)
+scatter!(
+    p3, probe_times, μ_lc;
+    marker = :circle, ms = 7, color = :crimson, markerstrokewidth = 0,
+    label = "Laplace-Carson + FixedTalbot"
+)
+scatter!(
+    p3, probe_times, μ_lc_gs;
+    marker = :diamond, ms = 5, color = :seagreen, markerstrokewidth = 0,
+    label = "…+ GaverStehfest (real p)"
+)
+
+p4 = plot(
+    probe_times, abs.(μ_lc_dh .- μ_lc) ./ μ_lc;
+    xscale = :log10, yscale = :log10, lw = 2, marker = :circle, color = :royalblue,
+    label = "inversion error (deHoog vs Talbot)",
+    xlabel = "t", ylabel = "relative difference", legend = :right,
+    title = "the two error sources, separated"
+)
+plot!(
+    p4, probe_times, abs.(μ_lc_gs .- μ_lc) ./ μ_lc;
+    lw = 2, marker = :diamond, color = :seagreen, label = "GaverStehfest budget"
+)
+plot!(
+    p4, probe_times, [abs(interp_time(t) - μ_lc[i]) / μ_lc[i] for (i, t) in enumerate(probe_times)];
+    lw = 2, marker = :square, color = :black, label = "trapezoidal error of the time route"
+)
+
+plt3 = plot(
+    p3, p4; layout = (1, 2), size = (1050, 420),
+    left_margin = 5Plots.mm, bottom_margin = 5Plots.mm
+)
+plt3
+
 # !!! note "This only works because the material does not age"
-#     The correspondence principle requires ``\mathbb{R}(t, t')`` to depend on
-#     ``t - t'`` alone. When a phase solidifies progressively, ``t`` and ``t'``
-#     enter independently, the Laplace–Carson transform no longer factorizes the
-#     convolution, and the frequency route simply ceases to exist — which is why
-#     [`homogenize_alv`](@ref) is not a redundant second implementation. See the
+#     Both transform routes need ``\mathbb{R}(t, t')`` to depend on ``t - t'``
+#     alone. When a phase solidifies progressively, ``t`` and ``t'`` enter
+#     independently, the Laplace-Carson transform no longer factorizes the
+#     convolution, and *two of the three routes simply cease to exist* — which
+#     is why [`homogenize_alv`](@ref) is not a redundant implementation. See the
 #     [ageing creep application](../../applications/ageing_creep.md) for a case
 #     where only the time route applies.
 
@@ -238,5 +356,8 @@ const figdir = joinpath(@__DIR__, "figures")                        #jl
 isdir(figdir) || mkdir(figdir)                                       #jl
 figpath = joinpath(figdir, "61_freq_vs_time.png")                    #jl
 savefig(plt, figpath)                                                #jl
+figpath3 = joinpath(figdir, "61_three_routes.png")                   #jl
+savefig(plt3, figpath3)                                              #jl
 display(plt)                                                         #jl
-@printf "\nSaved : %s\n" figpath                                     #jl
+display(plt3)                                                        #jl
+@printf "\nSaved : %s\n        %s\n" figpath figpath3                #jl

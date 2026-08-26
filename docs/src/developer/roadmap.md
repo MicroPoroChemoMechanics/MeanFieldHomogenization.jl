@@ -65,7 +65,22 @@ subtle — exactly which pieces of a cited paper are and are not implemented.
 - Native Anderson acceleration with memory > 1, replacing the current
   `AndersonDefault` (currently Picard with relaxation, memory = 1).
 - Optional structured `TensTI{4,T,8}` fast path for the ALV TI schemes.
-- Viscoelastic constitutive laws in the Laplace–Carson domain.
+- **Viscoelasticity in the Laplace-Carson domain — shipped in v0.6.0.** The
+  non-ageing half of the viscoelasticity module: four numerical inverse-Laplace
+  algorithms generic in the number type (so `ForwardDiff` traverses them, which
+  `InverseLaplace.jl` cannot), a catalog of rheological models each exposing
+  ``J(t)``, ``R(t)``, ``J^{*}(p)`` and ``R^{*}(p)``, the exact
+  generalized-Kelvin ⇄ generalized-Maxwell conversion by root interlacing, and
+  [`homogenize_lc`](@ref) tying them together. See
+  [the theory](@ref th-laplace-carson), the
+  [model manual](@ref man-rheological-models) and the
+  [inversion manual](@ref man-laplace-inversion). Still open on that side:
+  - **anisotropic tensor pairings.** Only [`IsoRheology`](@ref) exists; a
+    transversely isotropic model would need six scalar channels and the
+    corresponding `TensTI` assembly.
+  - **ageing models in the catalog.** `LogarithmicCreep` is the non-ageing
+    skeleton of a law that is normally written with age-dependent `E`, `C` and
+    `τ`; expressing that family would need a second, two-argument interface.
 - **Finite-element coupling, remaining pieces.** The Gauss-point contract,
   `HomogenizedElastic`, `MicrocrackedMaterial`, the Ferrite glue — including
   the coupled ``(\underline{u}, p)`` element — the poroelastic parameters, the

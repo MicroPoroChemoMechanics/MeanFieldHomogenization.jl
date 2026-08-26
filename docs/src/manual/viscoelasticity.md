@@ -42,6 +42,24 @@ law_M = ViscoLaw(R_iso, :relaxation)
 
 ### 1.2 Pre-built constructors
 
+The shortest route to a non-ageing law is not to write a kernel at all, but to
+take a model from the [rheological library](@ref man-rheological-models) and let
+`ViscoLaw` build the kernel:
+
+```julia
+m = iso_rheology(zener_maxwell(30.0, 20.0, 1.0), zener_maxwell(10.0, 8.0, 0.7))
+law = ViscoLaw(m)          # (t, t') ↦ R(t - t'), ready for `homogenize_alv`
+```
+
+The same object also drives the [Laplace-Carson route](@ref man-laplace-inversion)
+through `carson_relaxation(m, p)`, so a non-ageing material need only be
+described once and the two routes are guaranteed to be comparing the same
+thing — which is what the [three-route check](@ref tut-freq-vs-time) relies on.
+
+The hand-written constructors below remain the way to build an **ageing**
+kernel, which no model in the library can express.
+
+
 ```julia
 # `maxwell_iso(K, μ, τ_K, τ_μ)` —  R = 3K·e^{-t/τ_K} 𝕁 + 2μ·e^{-t/τ_μ} 𝕂
 law_max = maxwell_iso(5.0, 2.0, 1.0, 0.5)
@@ -480,17 +498,20 @@ a central finite difference at `rtol ≤ 1e-7`.
 | `57_ageing_creep_cracks.jl` | seven crack-aware ALV schemes, penny-crack RVE | — |
 | `52_rabotnov_mittag_leffler.jl` | Rabotnov / Mittag-Leffler closed form, [barthelemyIJES2019](@cite) §5 | `rtol ≤ 1.3e-3` at `n_times = 200` |
 
-An external Python module exposing a Mittag-Leffler / Rabotnov kernel is
-callable from Julia via PyCall :
+The Rabotnov kernel needed by that benchmark used to come from an external
+Python module through PyCall, which made the script machine-dependent. It no
+longer does — [`Rabotnov`](@ref) is in the
+[model library](@ref man-rheological-models):
 
 ```julia
-using PyCall
-ml_dir = raw"/path/to/mittag_leffler"   # directory of the Python module
-pushfirst!(PyVector(pyimport("sys")."path"), ml_dir)
-ml_mod = pyimport("mittag_leffler")
-I_Rabotnov(t, α, β) = Float64(ml_mod.I_Rabotnov(t, α, β)[])
-# … then use `I_Rabotnov` inside a Julia `ViscoLaw` closure
+I_Rabotnov(t, α, β) = relaxation(Rabotnov(1.0, 1.0, α, β), t) - 1.0
 ```
+
+The reason this needs nothing special is that the kernel's Laplace-Carson
+transform is elementary, ``R^{*}(p) = \mu_0(1 + \lambda_0/(p^{\alpha+1}+\beta))``,
+with no Mittag-Leffler function in it at all. Loading `MittagLeffler.jl` (a weak
+dependency) switches on the closed-form *time* value; without it the numerical
+inversion of that transform supplies the same number to about `1e-10`.
 
 Random-RVE cross-checks vs the reference implementation live in
 `scripts/bench_echoes/benchmark.jl` (relative error `≤ 1e-8` on the

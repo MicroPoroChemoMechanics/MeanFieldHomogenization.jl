@@ -22,10 +22,22 @@
 #  available analytically (eqs. (35)–(43) of @barthelemyIJES2019).
 #
 #  This script computes the homogenized effective shear via
-#  `homogenize_alv` and overlays the closed-form curves.  The
-#  Mittag-Leffler implementation is borrowed from the ECHOES Python
-#  test suite via PyCall (no Julia-native ML library is currently a
-#  dependency of `MeanFieldHomogenization`).
+#  `homogenize_alv` and overlays the closed-form curves.
+#
+#  The Mittag-Leffler function used to come from the ECHOES Python test suite
+#  through PyCall, which made this script machine-dependent.  It no longer
+#  does.  Two things replaced it:
+#
+#    * `MittagLeffler.jl` (a weak dependency) when it is loaded — the
+#      `Rabotnov` model then evaluates `E_{α+1,1}` directly, and `α ∈ (-1,0)`
+#      here puts the order in `(0,1)` where that package is reliable;
+#    * otherwise the numerical inversion of the model's **closed-form**
+#      Laplace-Carson transform,
+#
+#          R*(p) = μ₀ (1 + λ₀ / (p^{α+1} + β)),
+#
+#      which involves no special function at all.  The two agree to ~1e-10,
+#      and this script prints the comparison.
 #
 #  Usage  : julia --project scripts/52_rabotnov_mittag_leffler.jl
 #  Output : scripts/figures/52_rabotnov_mittag_leffler.png
@@ -38,25 +50,20 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using Printf
-using PyCall
+using MittagLeffler
 using Plots
 
 default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
 
-# ─── Mittag-Leffler from an external Python reference module ────────────────
-#  Point `MITTAG_LEFFLER_DIR` at a directory containing a `mittag_leffler`
-#  Python module exposing `ml(z, alpha, beta)`.
+# ─── The Rabotnov kernel, from the model library ────────────────────────────
+#  I_Rabotnov(τ, α, β) = (1 − E_{α+1,1}(−β τ^{α+1})) / β
+#
+#  This is the shear channel of a `Rabotnov` model with μ₀ = 1 and λ₀ = 1, so
+#  the library evaluates it — through `MittagLeffler.jl` when it is available,
+#  and by inverting the closed-form transform when it is not.
 
-const ECHOES_ML_DIR = get(ENV, "MITTAG_LEFFLER_DIR", "")
-
-isempty(ECHOES_ML_DIR) || pushfirst!(PyVector(pyimport("sys")."path"), ECHOES_ML_DIR)
-const _ml_mod = pyimport("mittag_leffler")
-
-# PyCall returns a numpy 0-d array (`fill(value)`-like) for the scalar
-# Mittag-Leffler call.  Index into it to pull the Float64 out.
-@inline _to_f64(x) = isa(x, AbstractArray) ? Float64(x[]) : Float64(x)
-
-I_Rabotnov(t, α, β) = _to_f64(_ml_mod.I_Rabotnov(t, α, β))
+I_Rabotnov(t, α, β) = t ≤ 0 ? 0.0 :
+    (relaxation(Rabotnov(1.0, 1.0, α, β), t) - 1.0)
 
 # ─── Fractional Maxwell matrix law  (Eq. (5) of @barthelemyIJES2019) ───────
 

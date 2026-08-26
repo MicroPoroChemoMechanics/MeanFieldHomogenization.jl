@@ -2,11 +2,15 @@
 #  51_frequency_sweep_viscoelastic.jl
 #
 #  Frequency sweep on a 2-phase viscoelastic RVE using the Mori-Tanaka and
-#  self-consistent schemes. Each phase has a Maxwell-model relaxation
-#  spectrum: G(ω) = G_∞ + G_d * iωτ / (1 + iωτ).
+#  self-consistent schemes.  Each phase is a standard solid in each channel,
+#  built with `iso_rheology(zener_maxwell(...), zener_maxwell(...))` from the
+#  rheological model library.
 #
 #  The script demonstrates that every scheme is `Complex{Float64}`-safe and
 #  produces the expected viscoelastic effective-modulus curves.
+#
+#  For the same composite taken all the way back to the time domain — and the
+#  three-route cross-check that goes with it — see `61_freq_vs_time.jl`.
 # =============================================================================
 
 import Pkg
@@ -17,14 +21,12 @@ using TensND
 using Printf
 using Plots
 
-# Maxwell-model complex shear modulus: G*(ω) = G_∞ + G_d · iωτ / (1 + iωτ)
-function maxwell_G(ω; G_inf = 10.0, G_d = 5.0, τ = 1.0)
-    iωτ = im * ω * τ
-    return G_inf + G_d * iωτ / (1 + iωτ)
-end
-
-# Build the iso 4th-order stiffness from K and G
-iso_C(K, G) = TensISO{3}(3K, 2G)
+# One model per phase: an elastic bulk channel and a standard-solid shear
+# channel.  `carson_relaxation(m, im * ω)` is then the complex stiffness the
+# schemes consume — the same object would also give `ViscoLaw(m)` for the
+# time-domain route.
+const PHASE_M = iso_rheology(Spring(30.0), zener_maxwell(10.0, 5.0, 1.0))
+const PHASE_I = iso_rheology(Spring(80.0), zener_maxwell(30.0, 15.0, 1.0))
 
 const f_inc = 0.3
 ωs = exp10.(range(-2, 2; length = 60))
@@ -33,15 +35,12 @@ y_sc = Vector{ComplexF64}(undef, length(ωs))
 
 # Same Maxwell spectrum on both phases but different baseline moduli
 for (i, ω) in enumerate(ωs)
-    G_m = maxwell_G(ω; G_inf = 10.0, G_d = 5.0, τ = 1.0)
-    G_i = maxwell_G(ω; G_inf = 30.0, G_d = 15.0, τ = 1.0)
-    K_m = ComplexF64(30.0)
-    K_i = ComplexF64(80.0)
+    p = im * ω
     rve = RVE(:M)                                # nothing to declare: the moduli
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => iso_C(K_m, G_m)))   # carry the
-    add_phase!(                                  # complex part, the fraction stays real
-        rve, :I, Ellipsoid(1.0),
-        Dict(:C => iso_C(K_i, G_i)); fraction = f_inc
+    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => carson_relaxation(PHASE_M, p)))
+    add_phase!(                                  # carry the complex part, the
+        rve, :I, Ellipsoid(1.0),                 # fraction stays real
+        Dict(:C => carson_relaxation(PHASE_I, p)); fraction = f_inc
     )
     y_mt[i] = get_array(homogenize(rve, MoriTanaka()))[1, 2, 1, 2]    # shear-like component
     y_sc[i] = get_array(homogenize(rve, SelfConsistent(; abstol = 1.0e-10, maxiters = 200)))[1, 2, 1, 2]

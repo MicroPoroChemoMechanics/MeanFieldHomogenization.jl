@@ -38,8 +38,11 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
   medium with a homogeneous solid phase: Biot tensor and modulus, drained ↔
   undrained conversion, Skempton tensor, effective stresses. A post-processor
   of a homogenized stiffness, not a scheme.
-- `MeanFieldHomogenization.Viscoelasticity`  — ageing linear viscoelasticity through
-  Volterra operators, available to every scheme.
+- `MeanFieldHomogenization.Viscoelasticity`  — linear viscoelasticity by two routes:
+  the ageing time-domain one through Volterra operators (`homogenize_alv`), and
+  the non-ageing Laplace-Carson one (`homogenize_lc`), with a catalogue of
+  rheological models, numerical Laplace inversion, and the exact Kelvin ↔
+  Maxwell conversion joining them.
 - `MeanFieldHomogenization.CustomInclusions` — the user-defined inclusion contract:
   `CustomInclusion` and `check_inclusion_interface`.
 - `MeanFieldHomogenization.FiniteElements`   — inclusions whose response comes out of a
@@ -350,6 +353,27 @@ export dilute_concentration_alv_order2, dilute_contribution_alv_order2
 export homogenize_alv_order2
 export cod_kernel_alv, compliance_contribution_alv, delta_compliance_alv
 export stiffness_contribution_alv, stiffness_contribution_alv_at, delta_stiffness_alv
+
+# ── Viscoelasticity (Laplace-Carson, non-ageing) ────────────────────────────
+export AbstractLaplaceInversion, GaverStehfest, FixedTalbot, TalbotTrefethen, DeHoog
+export DEFAULT_INVERSION
+export inverse_laplace, inverse_carson, inverse_carson_rate
+export AbstractRheology, AbstractTensorRheology
+export carson_relaxation, carson_creep, relaxation, creep, complex_modulus
+export storage_modulus, loss_modulus, loss_factor
+export glassy_modulus, equilibrium_modulus, is_fluid, default_inversion
+export PronyRelaxation, PronyCreep, PRONY_MERGE_TOL, PRONY_FLUID_TOL
+export maxwell_to_kelvin, kelvin_to_maxwell
+export prony_fit_relaxation, prony_fit_creep
+export Spring, Dashpot, MaxwellUnit, KelvinUnit
+export relaxation_time, retardation_time
+export zener_maxwell, zener_kelvin, burgers
+export ScottBlair, FractionalMaxwell, FractionalKelvin, FractionalZener, Rabotnov
+export HuetSayegh, Model2S2P1D, creep_kernel, carson_creep_kernel, creep_kernel_law
+export LogarithmicCreep
+export AbstractIsoPairing, BulkShear, YoungPoisson, IsoRheology
+export iso_rheology, iso_rheology_E_nu
+export homogenize_lc
 
 # ── Constitutive : MFH as a Gauss-point law inside an FE code ───────────────
 export AbstractMFHMaterial, AbstractMaterialState, NoState

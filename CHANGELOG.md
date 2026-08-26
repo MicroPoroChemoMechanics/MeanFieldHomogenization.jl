@@ -1,5 +1,189 @@
 # Changelog
 
+## v0.6.0 — the Laplace-Carson half of viscoelasticity
+
+The viscoelasticity module could only go one way. It carried a complete
+*ageing* time-domain pipeline — Volterra operators, structured kernels, every
+scheme — and, for the non-ageing case, nothing at all: the correspondence
+principle was available in the sense that all the schemes happen to be
+complex-safe, so users evaluated a complex modulus at `p = iω` by hand and
+called `homogenize`. That ad-hoc pattern was duplicated in two scripts and
+three documentation pages, `Mod2S2P1D` was redefined inline in the bituminous
+application with no source and no tests, and there was no way to get back into
+the time domain at all. `scripts/61_freq_vs_time.jl` even carried a section
+titled "Why no numerical Laplace inversion is needed".
+
+This release supplies the missing half, and the section title has changed.
+
+### Numerical inverse Laplace transforms, that autodiff survives
+
+Four algorithms, all generic in the number type: `GaverStehfest`,
+`FixedTalbot` (the default), `TalbotTrefethen` and `DeHoog`, behind
+`inverse_laplace`, `inverse_carson` and `inverse_carson_rate`. They accept a
+scalar, a `TensND` tensor of any symmetry class, or a `6×6` Mandel matrix, and
+the symmetry class of the result is the class the transform returns — axis
+included.
+
+`ForwardDiff` goes through all four: with respect to model parameters, with
+respect to `t`, nested, and over `Complex{Dual}` on the contour methods. That
+requirement is the reason none of this delegates to `InverseLaplace.jl`, the
+only registered package for the job: its entry points are annotated
+`t::AbstractFloat`, and `ForwardDiff.Dual` is `<: Real` but not
+`<: AbstractFloat`, so a `Dual` is refused before any arithmetic happens. Its
+`Weeks` method is hard-coded to `Float64` and pulls FFTW, and its Stehfest
+coefficients are `BigFloat`.
+
+Three things the measurements contradicted, and which are documented as
+measured rather than as expected:
+
+- **Branch cuts are not the obstacle.** The Talbot contours are Hankel-shaped —
+  they wrap *around* the negative real axis rather than crossing it, which is
+  what they were designed for. Every fractional model inverts at `1e-12`.
+- **Oscillation is.** A rotating phase is invisible to a method whose nodes are
+  all real; `GaverStehfest` returns O(1) error on `sin(ωt)/ω` where
+  `FixedTalbot` returns `1e-12`.
+- **The error is absolute, not relative.** Every method controls its error
+  against the scale of `f`, so once a relaxation function has decayed many
+  decades below its initial value the relative error is unbounded while the
+  absolute one still holds. This is intrinsic, and it is why a viscoelastic
+  *solid* — with a plateau `E_∞ > 0` — is the comfortable case.
+
+The Gaver-Stehfest weights are computed once in exact `Rational{BigInt}`
+arithmetic and converted to the working type on demand, so `BigFloat` genuinely
+buys precision: at `N = 34` the error is `1e-14` where `Float64` is at `1e5`.
+
+`DeHoog`'s nodes do not depend on `t`, which allows one pass over the transform
+to serve several times — but only over a window spanning a factor of about
+three, because its accuracy depends on `t/T` alone. Rather than leave that as a
+trap, the grid form sorts the times, splits them into scale blocks and gives
+each its own node set. A 200-point grid over seven decades then costs ~500
+transform evaluations instead of 6600, at uniform accuracy.
+
+### The exact Kelvin ⇄ Maxwell conversion
+
+`maxwell_to_kelvin` and `kelvin_to_maxwell` convert a generalized Maxwell chain
+into the exactly equivalent generalized Kelvin chain and back, so that
+`J*(p) R*(p) = 1` identically.
+
+The reference implementation of this idea (`Kelvin2Maxwell.py` in ECHOES) does
+it symbolically: expand `R*(p)∏(1+pτᵢ)` into a polynomial and root-find. That
+is exact on paper and ill-conditioned in practice — real relaxation spectra
+carry dozens of branches over six to ten decades, and such a polynomial cannot
+be formed in floating point without losing its roots.
+
+The implementation here uses the structure instead. In the retardation-time
+variable `σ = -1/p` the transform becomes a Stieltjes function, strictly
+monotone between consecutive poles, so its zeros **interlace** the input times:
+one in each gap, plus one beyond the last pole exactly when the material is a
+solid. Every unknown is isolated before any arithmetic happens, bisection in
+`log σ` cannot fail whatever the spread, and the residues come out positive by
+construction rather than by luck. The round trip stays at `1e-15` out to twenty
+branches spread over six decades.
+
+The bracketing tables are deliberately *not* symmetric between the two
+directions — relaxation → creep has no root below the first pole, creep →
+relaxation does — which is also why a fluid Kelvin chain of `n` branches
+converts to `n+1` Maxwell branches. Both facts are asserted in the tests.
+
+`ForwardDiff` traverses the conversion, by the implicit function theorem: the
+bisection runs on values only, and a single Newton step taken in the full `Dual`
+type transports the derivatives exactly.
+
+Three independent oracles pin it down, chosen so that no single mistake could
+satisfy all of them: the reciprocity identity at machine precision, the
+analytic Zener relations printed by the Python reference, and the closed-form
+`cosh`/`sinh` Burgers relaxation function — which exercises the whole fluid
+path (degenerate-branch detection, the unbounded outermost bracket, both
+residue signs) and matches to `1e-16`.
+
+`prony_fit_relaxation` / `prony_fit_creep` fit a chain to an *arbitrary*
+transform by collocation, with a non-negativity constraint by default. That is
+not only a matter of passivity: on a fractional Zener model the constrained fit
+is three times more accurate on the master curve than the unconstrained one,
+which puts half its moduli below zero.
+
+### A catalog of rheological models
+
+Every model exposes all four functions — `relaxation`, `creep`,
+`carson_relaxation`, `carson_creep` — whichever one it was defined by, plus
+`complex_modulus`, `glassy_modulus`, `equilibrium_modulus` and `is_fluid`. A
+new model is complete once `carson_relaxation` is written; the rest follows
+from exact algebra or numerical inversion.
+
+Shipped: `Spring`, `Dashpot`, `MaxwellUnit`, `KelvinUnit`, `PronyRelaxation`,
+`PronyCreep`, `zener_maxwell`, `zener_kelvin`, `burgers`, `ScottBlair`,
+`FractionalMaxwell`, `FractionalKelvin`, `FractionalZener`, `Rabotnov`,
+`HuetSayegh`, `Model2S2P1D`, `LogarithmicCreep`.
+
+Two of these turned out to need less machinery than expected:
+
+- **Rabotnov's Carson transform is elementary.** The kernel is normally written
+  with a Mittag-Leffler function; its transform is
+  `μ₀(1 + λ₀/(p^{α+1} + β))`, with no special function in it. That is what let
+  `scripts/52_rabotnov_mittag_leffler.jl` drop `PyCall` and its dependence on
+  an external Python module — the script is now self-contained, and still
+  reproduces the closed form to `1.3e-3`.
+- **2S2P1D is exact in both domains.** Because `LC{tᵃ} = Γ(a+1)p⁻ᵃ`, the
+  denominator of the 2S2P1D transform is the transform of an ordinary function
+  of time, term by term. So one model object is *simultaneously* an exact
+  Laplace-Carson model and an exact Volterra model — `creep_kernel`,
+  `carson_creep_kernel` and `creep_kernel_law` expose the three views — and the
+  two homogenization routes can be compared on it with no approximation on the
+  input side.
+
+`MittagLeffler.jl` is a new weak dependency supplying closed-form time values
+for the two fractional kernels that have one. It is deliberately restricted to
+`0 < a ≤ 1`: v1.0.0 of that package silently returns `1.0` for `1 < a < 2` at
+small `|z|` — `mittleff(1.3, 1.0, -0.5)` gives `1.0` where the series gives
+`0.633` — and the extension declines that band rather than propagate it.
+Nothing depends on the extension: without it the numerical inversion of the
+closed-form transform supplies the same numbers to `1e-10`.
+
+### One object, both routes
+
+`iso_rheology(k_model, μ_model)` lifts two scalar models to an isotropic
+fourth-order model. That single object then yields `carson_relaxation(m, p)`
+for the transform route **and** `ViscoLaw(m)` for the ageing time-domain one,
+so a non-ageing material is described exactly once and the two pipelines are
+guaranteed to be comparing the same thing.
+
+`homogenize_lc(build_cell, scheme, prop; p)` or `; times` is the driver:
+it evaluates the cell at whatever Carson variables the inversion asks for, runs
+the ordinary elastic `homogenize`, and — in the `times` form — inverts the
+answer back to the time domain. Any cell works, nested chains included.
+
+Choosing `GaverStehfest` there has a consequence beyond accuracy: its Carson
+variables are all **real**, so the whole sweep runs in real arithmetic. That
+costs a third fewer scheme evaluations, and it is the one way to use
+`SelfConsistent(algorithm = NewtonDefault())` on this route, whose `ForwardDiff`
+Jacobian cannot carry a `Dual` over a complex scalar.
+
+### Documentation
+
+New: a theory page on the Laplace-Carson route (including the interlacing
+theorem and its two asymmetric bracketing tables), a manual page for the model
+catalog, a manual page on choosing an inversion algorithm, an API page, and
+three tutorials generated from `scripts/63`, `64` and `65` — the Kelvin ⇄
+Maxwell conversion with the interlacing drawn, the four inversion algorithms
+measured against four exact pairs, and the model gallery with master curves,
+Cole-Cole and Black diagrams.
+
+`scripts/61_freq_vs_time.jl` now compares **three** routes rather than two, and
+separates the discrepancies instead of merely bounding them: the trapezoidal
+error of the time route (`8e-4`), the inversion error (`1e-9`, flat across five
+decades of time) and the Gaver-Stehfest budget (`1e-8` to `3e-6`) each occupy
+their own column, so a regression in any one of the three would move exactly
+one of them.
+
+`docs/src/applications/bituminous.md` no longer defines its own 2S2P1D struct.
+The migration is numerically empty — the inline struct's field *names* were the
+reverse of the literature's, but its formula and positional order already
+matched, so all twelve calibrated parameter sets carry over argument for
+argument and the page still reproduces the ECHOES reference values. It gains a
+closing section that inverts the mix's effective modulus back into the time
+domain, which is what a structural calculation under a passing wheel actually
+needs.
+
 ## v0.5.1 — a symbolic laminate is symbolic all the way down, frame included
 
 ### A stray `1.0` in an exact answer

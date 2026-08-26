@@ -25,8 +25,9 @@ infinite cylinders (2D/3D, isotropic/anisotropic/TI-coaxial), crack-opening-
 displacement tensors with stress and displacement intensity factors for
 flat cracks, second-order Hill tensors for transport problems (closed-form
 for any matrix anisotropy), composite `n`-layer spheres and confocal
-spheroids with imperfect interfaces, periodic laminates, ageing linear
-viscoelasticity, and the classical mean-field schemes built on top of them
+spheroids with imperfect interfaces, periodic laminates, linear viscoelasticity
+(both ageing in the time domain and non-ageing in Laplace-Carson), and the
+classical mean-field schemes built on top of them
 (Voigt/Reuss, dilute, Mori–Tanaka, Maxwell, Ponte Castañeda–Willis,
 self-consistent, asymmetric self-consistent, differential) — all under a common
 abstraction hierarchy, a shared numerical core, and a central dispatch
@@ -77,7 +78,7 @@ section of the docs.
 | `MeanFieldHomogenization.FiniteElements` | Inclusions whose response comes out of a finite-element resolution of the Eshelby problem — elliptical crack (3-D) and sphere with an off-center core (axisymmetric Fourier) — behind a two-backend contract. |
 | `MeanFieldHomogenization.NeuralInclusions` | Inclusions whose response comes out of a trained network, with the sampling and fitting machinery; differentiable in the morphology, where a finite-element solve is not. |
 | `MeanFieldHomogenization.Schemes` | The cell abstraction (`RVE`, `Laminate` and `ParticleAssembly` beside it) and `homogenize`; declarative multiscale chaining (`Homogenized`, `NestedParameter`); bounds, dilute, Mori–Tanaka, self-consistent (+ asymmetric), PCW, Maxwell, differential, cluster model, equivalent inclusion; exact vs. best-fit symmetrization; `ForwardDiff` sensitivities. |
-| `MeanFieldHomogenization.Viscoelasticity` | Ageing linear viscoelasticity via Volterra operators, with structured ISO/TI/orthotropic kernel storage — every scheme, cracks and layered spheres included. |
+| `MeanFieldHomogenization.Viscoelasticity` | Linear viscoelasticity by two independent routes: **ageing** in the time domain via Volterra operators, with structured ISO/TI/orthotropic kernel storage — every scheme, cracks and layered spheres included — and **non-ageing** in the **Laplace-Carson** domain, with four autodiff-capable inverse-Laplace algorithms, a catalog of rheological models (Prony chains, Burgers, springpots, Huet-Sayegh, 2S2P1D…) and the exact generalized-Kelvin ⇄ generalized-Maxwell conversion. |
 
 ## Installation
 

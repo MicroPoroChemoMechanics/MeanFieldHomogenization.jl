@@ -32,10 +32,12 @@ The four finite-element scripts are the exception: `Ferrite`, `FerriteGmsh` and
 instantiate [`scripts/fe/`](fe/) instead, keeping `gmsh_jll` out of every
 documentation build.
 
-The three cross-validation scripts that `pyimport("echoes")` through `PyCall`
-(`15`, `52`, `60`) need a Python environment with `echoes` installed, and depend
+The two cross-validation scripts that `pyimport("echoes")` through `PyCall`
+(`15`, `60`) need a Python environment with `echoes` installed, and depend
 on the machine whichever project is active. They are validation harnesses, not
-demos.
+demos. (`52` used to be a third: it reached for a Python Mittag-Leffler module,
+and no longer needs to — the Rabotnov kernel is in the model library, whose
+Laplace-Carson transform involves no special function.)
 
 Shared code lives in [`common/`](common/) — currently the Pichler-Hellmich
 three-scale model (`common/quasibrittle_strength.jl`), used by both the demo script
@@ -52,7 +54,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | 30–39 | Layered n-layer sphere / spheroid, periodic multilayer |
 | 40–49 | Strength & multiscale (Pichler-Hellmich, Lavergne) |
 | 50–59 | Viscoelasticity & ALV |
-| 60–69 | ALV cracks, interfaces & cross-validations |
+| 60–69 | ALV cracks, interfaces, cross-validations & the Laplace-Carson route |
 | 70–79 | Symmetrization showcases |
 | 80–89 | Custom (user-defined) inclusions, finite-element and neural-surrogate coupling |
 | 90–99 | Interacting particle assemblies: EIM & cluster model |
@@ -126,8 +128,8 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | Script | reference / topic | Notes |
 |---|---|---|
 | `50_visco_law_basics.jl` | `visco_law` | Maxwell/Kelvin kernels |
-| `51_frequency_sweep_viscoelastic.jl` | complex moduli | frequency sweep |
-| `52_rabotnov_mittag_leffler.jl` | Rabotnov / Mittag-Leffler | Rabotnov closed form |
+| `51_frequency_sweep_viscoelastic.jl` | complex moduli | frequency sweep, built on `iso_rheology` + `zener_maxwell` |
+| `52_rabotnov_mittag_leffler.jl` | Rabotnov / Mittag-Leffler | Rabotnov closed form; PyCall-free since the `Rabotnov` model landed |
 | `53_ageing_creep_solid.jl` | solidifying creep | ALV creep |
 | `54_ageing_creep_ellipsoid2.jl` | ellipsoid-2 creep | ALV creep |
 | `55_ageing_creep_dirichlet_chains.jl` | Granger creep | ageing creep (Granger–Bažant 1995 law) |
@@ -136,12 +138,15 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | `58_alv_kernel_types.jl` | — | structured ALV kernel types |
 | `59_alv_sensitivities.jl` | — | **published tutorial** — `ForwardDiff` through the ALV pipeline: `set_param` lens vs closure capture, joint gradient, relaxation-time sensitivity, all validated against central finite differences |
 
-### 60+ ALV cracks, cross-validations / symmetrization
+### 60+ ALV cracks, cross-validations, the Laplace-Carson route / symmetrization
 | Script | reference / topic | Notes |
 |---|---|---|
 | `60_alv_cracks_interface.jl` | crack + interface creep | finite interface stiffness |
-| `61_freq_vs_time.jl` | Sanahuja (2013) trapezoidal Volterra | **published tutorial** — complex-modulus route vs. `homogenize_alv`, cross-checked through a forward Laplace-Carson transform; O(Δt²) agreement. Ported from echoes `creep/comparison_freq_time.py` |
+| `61_freq_vs_time.jl` | Sanahuja (2013) trapezoidal Volterra | **published tutorial** — the **three** routes on one composite: complex moduli, `homogenize_alv`, and `homogenize_lc`. O(Δt²) agreement forward, and the reverse direction now closed by numerical inversion, with the trapezoidal error, the inversion error and the Gaver-Stehfest budget separated column by column. Ported from echoes `creep/comparison_freq_time.py` |
 | `62_alv_schemes.jl` | Barthélémy et al. (2019), IJES 144, 103104 | **published tutorial** — Dilute / Mori-Tanaka / Maxwell / PCW on one ageing creep test; the aspect-ratio sweep at fixed fraction; the collapse MT = Maxwell = PCW when the distribution shape equals the inclusion shape, and the PCW admissibility limit when it does not |
+| `63_kelvin_maxwell.jl` | echoes `Abderrahim/Kelvin2Maxwell.py` | **published tutorial** — the exact generalized-Kelvin ⇄ generalized-Maxwell conversion: the interlacing that isolates every root before any arithmetic, the round trip staying at `1e-15` out to twenty branches (where the symbolic route fails), and two independent closed forms — the Zener relations and the Burgers `cosh`/`sinh` relaxation — as oracles |
+| `64_laplace_inversion.jl` | Abate & Valkó; de Hoog et al.; Trefethen et al. | **published tutorial** — the four inversion algorithms measured on four exact pairs; branch cuts are fine and oscillation is what separates them; the Gaver-Stehfest optimum and why more terms is worse; `ForwardDiff` straight through |
+| `65_rheological_models.jl` | Di Benedetto & Olard (2S2P1D); Huet-Sayegh | **published tutorial** — the model catalog in one place: classical chains, the fractional family, the bituminous models with master curves, Cole-Cole and Black diagrams, and the exact 2S2P1D pair in both domains |
 | `70_symmetrization_showcase.jl` | `symmetrize` / `.paramsym` | **exact rotation average vs best-fit projection** on a non-major-symmetric concentration tensor |
 
 ### 80–89 Custom inclusions, finite elements & neural surrogates

@@ -220,6 +220,15 @@ Random.seed!(20260723)
     end
 
     @testset "Viscoelasticity" begin
+        # The Laplace-Carson half (non-ageing) first: it depends on nothing
+        # from the ALV pipeline, whereas `test_rheology_iso.jl` closes the loop
+        # by checking that the two routes agree.
+        include("Viscoelasticity/test_laplace_inversion.jl")
+        include("Viscoelasticity/test_laplace_inversion_ad.jl")
+        include("Viscoelasticity/test_laplace_tensor.jl")
+        include("Viscoelasticity/test_prony.jl")
+        include("Viscoelasticity/test_rheology.jl")
+        include("Viscoelasticity/test_rheology_iso.jl")
         include("Viscoelasticity/test_symmetrize_alv.jl")
         include("Viscoelasticity/test_laminate_alv.jl")
         include("Viscoelasticity/test_visco_law.jl")

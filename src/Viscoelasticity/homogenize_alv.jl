@@ -2,10 +2,14 @@
 #  homogenize_alv.jl — public dispatcher routing ViscoLaw properties
 #  through the ALV homogenization pipeline.
 #
-#  Usage : `homogenize(rve, scheme, :C; times = T)` where `T` is a
-#  `Vector{<:Real}` of monotonically increasing time points.  The
-#  function detects whether `phase_property(rve, _, :C) isa ViscoLaw`
-#  and, if so, calls `homogenize_alv` instead of the elastic pipeline.
+#  Usage : `homogenize_alv(rve, scheme, :C; times = T)`, with `T` a
+#  `Vector{<:Real}` of monotonically increasing time points.
+#
+#  Note there is **no** auto-routing: `homogenize` does not inspect the phase
+#  properties and dispatch here on finding a `ViscoLaw`.  The entry point is
+#  explicit, deliberately — `has_visco_property` below is a helper for user
+#  code and for the guards, not a dispatch hook.  The Laplace-Carson route is
+#  equally explicit, through `homogenize_lc`.
 # =============================================================================
 
 """

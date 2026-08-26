@@ -1,5 +1,20 @@
 # [Ageing linear viscoelasticity (ALV)](@id th-viscoelasticity)
 
+!!! tip "If the material does not age, there is a cheaper route"
+    Everything on this page treats a kernel ``\mathbb{R}(t, t')`` in which `t`
+    and `t'` enter **independently**, which is what forces the Volterra
+    operators to be discretized directly. When the kernel depends on `t - t'`
+    alone the constitutive law is a convolution, a transform turns it into a
+    product, and the whole problem reduces to an elastic one at each Carson
+    variable — see [the Laplace-Carson route](@ref th-laplace-carson).
+
+    The two algebras are worth contrasting explicitly. Creep and relaxation are
+    related by ``\int_0^t \mathbb{R}(t-s):\mathrm{d}\mathbb{J}(s) =
+    \mathbb{I}`` here — a convolution, discretized below into the inverse of a
+    block-triangular matrix — and by the pointwise reciprocal
+    ``\mathbb{J}^{*}(p) : \mathbb{R}^{*}(p) = \mathbb{I}`` there. That single
+    difference is the whole cost and the whole benefit of each route.
+
 Everything in the elastic part of this documentation — the Eshelby problem, the
 Hill polarization tensor, the concentration and contribution tensors, the
 schemes built on them — carries over to **ageing linear viscoelasticity**

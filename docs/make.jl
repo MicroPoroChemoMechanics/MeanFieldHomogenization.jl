@@ -110,6 +110,7 @@ makedocs(;
                 "theory/layered_sphere.md",
                 "theory/layered_spheroid.md",
                 "theory/laminate.md",
+                "theory/laplace_carson.md",
                 "theory/viscoelasticity.md",
             ],
             "N-body models" => [
@@ -144,6 +145,8 @@ makedocs(;
             "Beyond elasticity" => [
                 "manual/conductivity.md",
                 "manual/viscoelasticity.md",
+                "manual/rheological_models.md",
+                "manual/laplace_inversion.md",
                 "manual/poromechanics.md",
             ],
             "Differentiation" => [
@@ -197,6 +200,9 @@ makedocs(;
             ],
             "Beyond elasticity" => [
                 "tutorials/viscoelasticity.md",
+                "tutorials/generated/rheological_models.md",
+                "tutorials/generated/kelvin_maxwell.md",
+                "tutorials/generated/laplace_inversion.md",
                 "tutorials/generated/freq_vs_time.md",
                 "tutorials/generated/alv_schemes.md",
                 "tutorials/generated/ageing_ages_aspect.md",
@@ -285,6 +291,7 @@ makedocs(;
             "api/constitutive.md",
             "api/assemblies.md",
             "api/viscoelasticity.md",
+            "api/laplace_carson.md",
             "api/sensitivities.md",
         ],
         "References" => "references.md",
