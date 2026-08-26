@@ -36,35 +36,18 @@ function _ell_E_agm(m::T) where {T <: Number}
 end
 
 # ─── Which scalar types can be *compared* ────────────────────────────────────
-
-"""
-    is_hard_numeric(::Type) -> Bool
-
-Whether comparisons on that scalar type yield an honest `Bool`, so a value of it
-may drive `if`, `&&` or a tolerance test.
-
-**`T <: Real` is not this predicate**, and assuming it was has caused the same
-bug four times in this package: `Symbolics.Num <: Real`, yet `<`, `≈` and
-`iszero` on a `Num` return *symbolic* expressions, and using one in a boolean
-context throws `TypeError: non-boolean (Num) used in boolean context`.
-`ForwardDiff.Dual` is also `<: Real` and *does* compare to a `Bool`, so the two
-cannot be separated by `<: Real` either way.
-
-The list is therefore explicit and closed, and the default is the safe answer:
-an unknown scalar type is assumed *not* comparable, which pushes callers onto
-their structural (`isequal`) branch. Add a type here only after checking that
-its `<` really returns a `Bool`.
-
-Known consumers: `_agm_converged` here, `Core._sort_axes_and_basis`,
-`Core._classify_shape_2d/3d`, `Cracks._classify_crack`,
-`Cracks._is_unit_alignment`, `Cracks._elliptic_CS`.
-"""
-is_hard_numeric(::Type{<:AbstractFloat}) = true
-is_hard_numeric(::Type{<:Integer}) = true
-is_hard_numeric(::Type{<:Rational}) = true
-is_hard_numeric(::Type{ForwardDiff.Dual{T, V, N}}) where {T, V, N} = is_hard_numeric(V)
-is_hard_numeric(::Type) = false
-is_hard_numeric(x) = is_hard_numeric(typeof(x))
+#
+# `is_hard_numeric` used to be defined here. It is a predicate on scalar TYPES
+# with nothing elliptic about it, and TensND — which owns `ApproxType`, its
+# tolerance-side companion — is its natural home, so it now lives in
+# `TensND/src/array_utils.jl` and is re-exported by this module for the eight
+# sub-modules that reach it through `using ..Elliptic`.
+#
+# Known consumers: `_agm_converged` below, `Core._sort_axes_and_basis`,
+# `Core._classify_shape_2d/3d`, `Cracks._classify_crack`,
+# `Cracks._is_unit_alignment`, `Cracks._elliptic_CS`, `Laminates._parallel`,
+# `Laminates.add_layer!` / `validate_laminate`, `Schemes.validate_rve`,
+# `Viscoelasticity._checkable`.
 
 # ─── Tolerances — tuned per scalar type ──────────────────────────────────────
 

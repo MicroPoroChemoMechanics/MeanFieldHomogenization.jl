@@ -14,8 +14,6 @@ Contents
 - `traits.jl`             : algorithm and material-symmetry traits
 - `bases.jl`              : helpers around `TensND` bases
 - `tensor_helpers.jl`     : low-level utilities (`_δ`, `_C_array`, Voigt)
-- `rotational_average.jl` : exact SO(3) / azimuthal averages (ISO, TI) of
-                             minor-symmetric tensors, incl. Mandel-block forms
 - `moduli.jl`             : modulus extractors for the common symmetry classes
 - `newton_potential.jl`   : Newton potentials (2D / 3D)
 - `green_kernel.jl`       : closed-form 3×3 inverse (`_inv3`)
@@ -53,7 +51,6 @@ include("cells.jl")
 include("traits.jl")
 include("bases.jl")
 include("tensor_helpers.jl")
-include("rotational_average.jl")
 include("moduli.jl")
 include("newton_potential.jl")
 include("green_kernel.jl")
@@ -92,9 +89,17 @@ export MaterialSymmetry, IsotropicSym, TransverselyIsotropicSym,
 export extract_iso_moduli, extract_ti_moduli, extract_iso_conductivity
 
 # Exact rotation-group averages (public — used by Schemes, ALV and users)
+# Exact SO(3) / azimuthal averages of minor-symmetric tensors, and their
+# Kelvin-Mandel block forms. They used to live in `Core/rotational_average.jl`;
+# being pure tensor algebra with nothing homogenization-specific about them
+# they now belong to TensND (`src/tens_rotational_average.jl`), together with
+# the non-major-symmetric Walpole read-off `ti8_params_from_KM` that the
+# laminate localization needs. Re-exported here so that every call site of the
+# form `Core.isotropify(...)` keeps working unchanged.
 export isotropify, transverse_isotropify
 export ti_average_mandel66, iso_average_mandel66
 export mandel66_minor, array_from_mandel66
+export ti8_params_from_KM, KM_from_ti8_params
 
 # Newton potentials (public — used downstream and in tests)
 export newton_potential_3d, newton_potential_2d, newton_potential_3d_cylinder
@@ -109,7 +114,9 @@ export KM_IP, KM_OP
 export plane_pinv, plane_pinv2, flat_hill, acoustic_tensor, compliance_op_block
 export laminate_stiffness, laminate_conductivity
 export laminate_strain_localization, laminate_stress_localization
+export laminate_stress_strain_localization, laminate_strain_stress_localization
 export laminate_gradient_localization, laminate_flux_localization
+export laminate_flux_gradient_localization, laminate_gradient_flux_localization
 
 # Localization & contribution (generics; methods added at top level and in Cracks)
 export strain_strain_loc, stress_strain_loc, strain_stress_loc, stress_stress_loc

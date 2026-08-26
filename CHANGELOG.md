@@ -1,5 +1,107 @@
 # Changelog
 
+## v0.7.0 — a laminate answers the localization generics, exactly
+
+### Breaking changes
+
+- **`TensND` compat moves to `"0.4"`.** Three groups of functions have moved up
+  into `TensND`, where they belong: the exact rotation-group averages
+  (`isotropify`, `transverse_isotropify`, `mandel66_minor`,
+  `array_from_mandel66`, `ti_average_mandel66`, `iso_average_mandel66`), the
+  best-fit projections (`best_fit_iso`, `best_fit_ti`, `best_fit_ortho`) and the
+  scalar-type predicate `is_hard_numeric`. All of them are re-exported from the
+  same names as before — `MeanFieldHomogenization.isotropify`,
+  `Core.isotropify`, `Schemes.best_fit_ti`, `Elliptic.is_hard_numeric` all still
+  resolve — so no user code changes. Under 1.0 Julia's resolver nevertheless
+  treats a minor bump as breaking, hence this one.
+- Nothing else changed in meaning. The four localization generics gained
+  `Laminate` methods; the pre-existing `layer_*_localization` names are
+  untouched and remain exported.
+
+### A `Laminate` answers `strain_strain_loc` & co.
+
+A laminate is a *cell*, not an `AbstractInclusion`, so the
+`(incl, ℂ₁, ℂ₀)` signature of the localization generics did not apply to it and
+it exposed its own `layer_strain_localization` / `layer_stress_localization`
+instead. Those two are the strain-driven and stress-driven tensors; the two
+*mixed* ones existed nowhere, and they are exactly what a Levin-type
+post-processing of a laminate needs — `Σ_i f_i σ⁰_i : 𝔸_i` is built from
+`ℂ_i : 𝔸_i`, not from `𝔸_i`.
+
+All eight generics now have a `Laminate` method, keyed on a layer **name** in
+place of the reference-medium pair, the same shape as
+`strain_strain_loc(::LayeredSphere, ℂ₀; layer)`:
+
+```julia
+strain_strain_loc(lam, :LAYER)      # 𝔸ᵢ      — same object as layer_strain_localization
+stress_strain_loc(lam, :LAYER)      # ℂᵢ:𝔸ᵢ   — new, Σ fᵢ · = ℂʰᵒᵐ
+strain_stress_loc(lam, :LAYER)      # 𝔸ᵢ:𝕊ʰᵒᵐ — new, Σ fᵢ · = 𝕊ʰᵒᵐ
+stress_stress_loc(lam, :LAYER)      # 𝔹ᵢ
+```
+
+plus `gradient_gradient_loc`, `flux_gradient_loc`, `gradient_flux_loc` and
+`flux_flux_loc` at order 2. Two kernels back them in
+`Core/laminate_algebra.jl` at each order, inverting `ℂʰᵒᵐ` through the
+cofactor `_inv_km6` and never through an LU, so all eight stay exact under
+`ForwardDiff.Dual` and evaluable symbolically.
+
+The sum rules `Σ fᵢ 𝔸ᵢ = 𝕀`, `Σ fᵢ 𝔹ᵢ = 𝕀`, `Σ fᵢ ℂᵢ:𝔸ᵢ = ℂʰᵒᵐ` and
+`Σ fᵢ 𝔸ᵢ:𝕊ʰᵒᵐ = 𝕊ʰᵒᵐ` hold for perfect and dual interfaces and are asserted;
+with a primal (spring, Kapitza) interface part of the macroscopic strain is
+carried by the displacement jumps and the strain-side rules do not close — that
+too is now asserted, so the caveat cannot rot.
+
+### The localization tensors keep their symmetry class
+
+They used to come back as a fully generic `Tens{4,3}`: 81 components and no
+structure, although a laminate of layers all transversely isotropic about its
+own normal has localization tensors that are transversely isotropic about that
+same normal — evidently so, and for the same structural reason the effective
+stiffness already exploited.
+
+The reason was narrow: the effective-property path goes through `_wrap4`, which
+reads the five Walpole coefficients off the layer-frame matrix, whereas the
+localization path went straight to `inv_KM`. `_wrap4` could not simply be
+reused, because `TensND.ti_params_from_KM` *projects* onto the
+**major-symmetric** span — and `𝔸ᵢ = 𝕀 + ℙᵢ:(ℂʰᵒᵐ − ℂᵢ)` is a product of
+major-symmetric tensors, which is not one. Fed a concentration tensor it would
+have replaced `ℓ₃` and `ℓ₄` by their half-sum and reported the result as exact.
+
+The new `TensND.ti8_params_from_KM` is the read-off on the whole
+axially-invariant subspace, so `_wrap4_general` now returns an exact
+`TensTI{4,T,6}` — `ℓ₇` and `ℓ₈` being structurally zero here — and the order-2
+localizations go through the existing `_wrap2` and return `TensTI{2,T,2}`.
+
+What that buys is not tidiness. A `TensTI` carries six coefficients where a
+`Tens` carries 81; products and inverses become a 2×2 Walpole matrix and two
+scalars; and a symbolic derivation that used to be written in Kelvin-Mandel
+matrices because the tensors had lost their class can now be written in tensor
+notation and runs in under a second where it took minutes.
+
+### `scripts/46_lamellar_porous_swelling.jl`
+
+The two-scale model of Dormieux, Lemarchand & Sanahuja, *Comportement
+macroscopique des matériaux poreux à microstructure en feuillets*, C. R.
+Mécanique **334** (2006) 304-310, derived symbolically end to end. The
+interfoliar space of a clay particle is a laminate layer with a normal
+stiffness alone — singular, hence regularized and taken to the limit — the
+platelets are incompressible (`kₛ → ∞`), and the assembly of randomly oriented
+particles and macropores is closed by the self-consistent scheme, its
+orientation integral being the exact `isotropify` rather than a quadrature.
+Equations (5) to (18) of the article come out of the code; none of them is an
+input.
+
+### Fixed
+
+- **A `Symbolics.Num` volume fraction crashed the cell.** `add_layer!`,
+  `validate_laminate` and `validate_rve` guarded a negative amount with
+  `h isa Real && h < 0`. `Num <: Real`, so `h < 0` returned a `Num` and the
+  `if` threw `TypeError: non-boolean (Num) used in boolean context`. `SymPy.Sym`
+  is not `<: Real` and short-circuited, which is why every symbolic test passed:
+  the suite only exercised `Num` through the bare kernel, never through the
+  cell. The guards now go through `is_hard_numeric`, the predicate the rest of
+  those files already used for exactly this distinction.
+
 ## v0.6.0 — the Laplace-Carson half of viscoelasticity
 
 The viscoelasticity module could only go one way. It carried a complete

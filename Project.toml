@@ -1,6 +1,6 @@
 name = "MeanFieldHomogenization"
 uuid = "c1e5f8a3-7b2d-4a6c-9e4f-3b8a2c5d7e9f"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Jean-François Barthélémy <jean-francois.barthelemy@cerema.fr>"]
 
 [deps]
@@ -74,7 +74,7 @@ SpecialFunctions = "2"
 StaticArrays = "1"
 SymPy = "2"
 Symbolics = "6, 7"
-TensND = "0.3.6"
+TensND = "0.4"
 Tensors = "1"
 Zygote = "0.7"
 julia = "1.12"

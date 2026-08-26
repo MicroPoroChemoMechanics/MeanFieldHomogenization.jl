@@ -38,6 +38,11 @@ module Elliptic
 import Elliptic as _Elliptic
 import ForwardDiff
 
+# `is_hard_numeric` is a predicate on scalar TYPES, not on elliptic integrals:
+# it lives in TensND, next to `ApproxType`, and is re-exported here because
+# every sub-module of this package reaches it through `using ..Elliptic`.
+using TensND: is_hard_numeric
+
 include("api.jl")
 include("agm.jl")
 include("carlson.jl")

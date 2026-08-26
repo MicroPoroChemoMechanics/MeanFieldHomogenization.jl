@@ -39,6 +39,18 @@ MeanFieldHomogenization.Laminates.layer_flux_localization
 MeanFieldHomogenization.Laminates.interface_jump
 ```
 
+A layer also answers the package-wide localization generics —
+[`strain_strain_loc`](@ref MeanFieldHomogenization.strain_strain_loc),
+[`stress_strain_loc`](@ref MeanFieldHomogenization.stress_strain_loc),
+[`strain_stress_loc`](@ref MeanFieldHomogenization.strain_stress_loc),
+[`stress_stress_loc`](@ref MeanFieldHomogenization.stress_stress_loc) and their
+four transport twins — called as `strain_strain_loc(lam, :LAYER)`. Since a
+laminate has neither a matrix nor a reference medium, the layer *name* takes
+the place of the `(ℂ₁, ℂ₀)` pair of the inclusion signature. Two of the eight
+(`𝔸^{σε}` and `𝔸^{εσ}`) exist only under those names; the other six are
+synonyms of the `layer_*` functions above. See
+[API — Localization & contribution](@ref api-localization).
+
 ## Parameter lenses
 
 ```@docs
@@ -72,8 +84,12 @@ MeanFieldHomogenization.Core.laminate_stiffness
 MeanFieldHomogenization.Core.laminate_conductivity
 MeanFieldHomogenization.Core.laminate_strain_localization
 MeanFieldHomogenization.Core.laminate_stress_localization
+MeanFieldHomogenization.Core.laminate_stress_strain_localization
+MeanFieldHomogenization.Core.laminate_strain_stress_localization
 MeanFieldHomogenization.Core.laminate_gradient_localization
 MeanFieldHomogenization.Core.laminate_flux_localization
+MeanFieldHomogenization.Core.laminate_flux_gradient_localization
+MeanFieldHomogenization.Core.laminate_gradient_flux_localization
 ```
 
 ## The cell contract and declarative nesting

@@ -784,12 +784,14 @@ function validate_rve(rve::RVE)
         throw(ArgumentError("RVE has no matrix phase :$(rve.matrix_name); call add_matrix! first"))
     for (name, a) in rve.amounts
         v = amount_value(a)
-        if v isa Real && v < 0
+        # `is_hard_numeric`, not `v isa Real`: `Symbolics.Num` subtypes `Real`
+        # and answers no comparison — see the same guard in `add_layer!`.
+        if is_hard_numeric(v) && v < 0
             throw(ArgumentError("phase :$(name) has negative amount $(v)"))
         end
     end
     fm = matrix_volume_fraction(rve)
-    if fm isa Real && fm < 0
+    if is_hard_numeric(fm) && fm < 0
         @warn "RVE has matrix volume fraction $(fm) < 0 — total inclusion volume fraction exceeds 1"
     end
     return rve

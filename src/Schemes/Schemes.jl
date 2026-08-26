@@ -36,6 +36,10 @@ import ..Core: AbstractHomogenizationCell, AbstractParameter,
 
 # Forward declarations of inclusion types we touch from the other sub-modules
 # (loaded earlier than Schemes by `MeanFieldHomogenization.jl`).
+# `is_hard_numeric` — the numeric/symbolic split used throughout the package.
+# NOT `T <: Real`: `Symbolics.Num` subtypes `Real` and answers no comparison.
+using ..Elliptic: is_hard_numeric
+
 import ..Elasticity: Ellipsoid, hill_tensor
 import ..Cracks
 import ..Core: compliance_contribution, delta_compliance, delta_resistivity,

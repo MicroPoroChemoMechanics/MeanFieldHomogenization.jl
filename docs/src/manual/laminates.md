@@ -213,6 +213,32 @@ layer_flux_localization(lam, :A)
 laminate_hill(lam, :A)                   # (ℙ_A, ℚ_A), the two Hill tensors
 ```
 
+A layer also answers the package-wide localization generics, under the same
+names used for every inclusion — with the layer *name* in place of the
+`(ℂ₁, ℂ₀)` pair, a laminate having neither a matrix nor a reference medium:
+
+```julia
+strain_strain_loc(lam, :A)               # 𝔸_A      — same object as above
+stress_strain_loc(lam, :A)               # ℂ_A : 𝔸_A,          Σ f · = ℂ^hom
+strain_stress_loc(lam, :A)               # 𝔸_A : 𝕊^hom,        Σ f · = 𝕊^hom
+stress_stress_loc(lam, :A)               # 𝔹_A
+gradient_gradient_loc(lam, :A)           # and the four transport twins
+flux_gradient_loc(lam, :A)
+gradient_flux_loc(lam, :A)
+flux_flux_loc(lam, :A)
+```
+
+The two mixed tensors `ℂ_i : 𝔸_i` and `𝔸_i : 𝕊^hom` have no `layer_*` name;
+they are what a Levin-type post-processing of a laminate needs. All eight go
+through the same cofactor block algebra as the effective property, so they are
+exact under `ForwardDiff.Dual` and evaluable symbolically.
+
+!!! note "Primal interfaces break the strain-side sum rules"
+    `Σ_i f_i 𝔸_i = 𝕀` and `Σ_i f_i ℂ_i:𝔸_i = ℂ^hom` hold for perfect and dual
+    (membrane) interfaces. With a primal one (spring, Kapitza) part of the
+    macroscopic strain is carried by the displacement jumps, so the layer
+    strains no longer average to `E` — see [`interface_jump`](@ref).
+
 ## Sensitivities
 
 Two lenses are specific to a laminate, on top of the shared

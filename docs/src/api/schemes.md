@@ -77,8 +77,8 @@ symmetry, unlike the exact rotation-group averages
 major-symmetric, and the difference is worked through in
 [Symmetrization showcase](../tutorials/generated/symmetrization.md).
 
-```@docs
-best_fit_iso
-best_fit_ti
-best_fit_ortho
-```
+`best_fit_iso(t)`, `best_fit_ti(t, axis)` and `best_fit_ortho(t, frame)` live
+in **`TensND`**, next to the `proj_tens` machinery they wrap, and are
+re-exported here because turning a scheme result into publishable parameters is
+part of this package's surface. See the TensND documentation for their
+docstrings.

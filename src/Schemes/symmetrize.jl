@@ -92,48 +92,20 @@ end
 # =============================================================================
 #  Best-fit projections (reporting / parameter extraction only)
 # =============================================================================
+#
+#  `best_fit_iso` / `best_fit_ti` / `best_fit_ortho` were three one-line
+#  wrappers over `TensND.proj_tens(…)[1]` and have moved to TensND itself,
+#  next to `proj_tens` and the `*_params_from_KM` conversions they belong with.
+#  They are re-exported here because they are part of this package's reporting
+#  surface — `best_fit_ti(C, n)` is how a scheme result is turned into
+#  publishable TI parameters, the analog of echoes' `.paramsym(sym = TI)`.
+#
+#  The distinction with the block above is the one thing not to get wrong, and
+#  it is worth restating at the point of use: `_apply_symmetrize` averages,
+#  these fit. Inside a scheme kernel the orientation average is
+#  `Core.transverse_isotropify` / `Core.isotropify`, which keep `ℓ₃ ≠ ℓ₄` and
+#  the antisymmetric azimuthal couplings a concentration tensor carries;
+#  `best_fit_ti` forces major symmetry and drops them, silently. Never call it
+#  from a kernel.
 
-"""
-    best_fit_iso(t::AbstractTens{4,3}) -> TensND.TensISO{4}
-    best_fit_iso(t::AbstractTens{2,3}) -> TensND.TensISO{2}
-
-Orthogonal (Frobenius) projection of `t` onto the isotropic basis — thin
-wrapper over `TensND.proj_tens``(Val(:ISO), t)`, TensND's canonical
-"paramsym"-style extraction. For minor-symmetric tensors this coincides with
-the exact SO(3) average [`MeanFieldHomogenization.Core.isotropify`](@ref) (the isotropic subspace is
-`{𝕁, 𝕂}` either way).
-"""
-best_fit_iso(t::TensND.AbstractTens) = TensND.proj_tens(Val(:ISO), t)[1]
-
-"""
-    best_fit_ti(t::AbstractTens{4,3}, axis) -> TensND.TensTI{4,T,5}
-    best_fit_ti(t::AbstractTens{2,3}, axis) -> TensND.TensTI{2,T,2}
-
-Orthogonal (Frobenius) projection of `t` onto the **major-symmetric** TI
-(Walpole) span about `axis` — thin wrapper over `TensND.proj_tens``(
-Val(:TI), t, axis)`, the analog of echoes' `.paramsym(sym=TI)` parameter
-extraction. Numerically identical to the previous in-house implementation
-(exact azimuthal average then forced major symmetry), verified to ~1e-11.
-
-!!! warning
-    This is a reporting utility, NOT the orientation average : it forces
-    major symmetry (ℓ₃+ℓ₄)/2 and drops the antisymmetric azimuthal
-    couplings.  Inside scheme kernels use `_apply_symmetrize` /
-    [`MeanFieldHomogenization.Core.transverse_isotropify`](@ref) instead.
-"""
-best_fit_ti(t::TensND.AbstractTens{4, 3}, axis) = TensND.proj_tens(Val(:TI), t, axis)[1]
-best_fit_ti(t::TensND.AbstractTens{2, 3}, axis) = TensND.proj_tens(Val(:TI), t, axis)[1]
-
-"""
-    best_fit_ortho(t::AbstractTens{4,3}, frame) -> TensND.TensOrtho
-    best_fit_ortho(t::AbstractTens{2,3}, frame) -> Matrix
-
-Orthogonal (Frobenius) projection of `t` onto the orthotropic span in the
-given material `frame` — thin wrapper over `TensND.proj_tens``(
-Val(:ORTHO), t, frame)`, the analog of echoes' `.paramsym(sym=ORTHO)`.
-There was previously no orthotropic parameter extraction in MeanFieldHomogenization.jl;
-this closes that gap using the TI/ORTHO projection machinery already tested
-in TensND (`test/test_tens_projection.jl`).
-"""
-best_fit_ortho(t::TensND.AbstractTens{4, 3}, frame) = TensND.proj_tens(Val(:ORTHO), t, frame)[1]
-best_fit_ortho(t::TensND.AbstractTens{2, 3}, frame) = TensND.proj_tens(Val(:ORTHO), t, frame)[1]
+using TensND: best_fit_iso, best_fit_ti, best_fit_ortho

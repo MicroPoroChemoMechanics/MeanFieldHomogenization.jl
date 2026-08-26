@@ -190,7 +190,12 @@ function add_layer!(
         )
     )
     h = thickness !== nothing ? thickness : fraction
-    if h isa Real && h < 0
+    # `is_hard_numeric`, not `h isa Real`: `Symbolics.Num` subtypes `Real` and
+    # answers no comparison, so `h < 0` would return a `Num` and the `if` would
+    # throw `TypeError: non-boolean (Num) used in boolean context`. `SymPy.Sym`
+    # is not `<: Real` and short-circuited, which is why this only ever bit the
+    # Symbolics backend.
+    if is_hard_numeric(h) && h < 0
         throw(ArgumentError("layer :$(name) has negative thickness $(h)"))
     end
     lam.layers[name] = Layer(properties)
@@ -359,12 +364,12 @@ function validate_laminate(lam::Laminate)
     )
     for name in lam.layer_names
         h = lam.thicknesses[name]
-        if h isa Real && h < 0
+        if is_hard_numeric(h) && h < 0
             throw(ArgumentError("layer :$(name) has negative thickness $(h)"))
         end
     end
     L = laminate_period(lam)
-    if L isa Real && L ≤ 0
+    if is_hard_numeric(L) && L ≤ 0
         throw(ArgumentError("Laminate period must be > 0; got $(L)"))
     end
     return lam

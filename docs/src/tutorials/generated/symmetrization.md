@@ -8,11 +8,11 @@ The didactic centerpiece of the symmetrization overhaul: the difference
 between the two mechanisms `echoes` (and now `MeanFieldHomogenization`) provide, on a
 **non-major-symmetric** strain-concentration tensor.
 
-- **(B) exact rotation-group average** — [`MeanFieldHomogenization.Core.transverse_isotropify`](@ref) /
+- **(B) exact rotation-group average** — `transverse_isotropify` (re-exported from `TensND`) /
   `IsoSymmetrize` / `TISymmetrize` inside scheme kernels. Preserves the
   full axially-invariant content (`TensTI{4,T,8}`): ``\ell_3 \neq \ell_4``
   and the antisymmetric azimuthal couplings ``\ell_7``, ``\ell_8``.
-- **(A) best-fit projection** — [`best_fit_ti`](@ref). Forces major
+- **(A) best-fit projection** — `best_fit_ti` (likewise from `TensND`). Forces major
   symmetry (`TensTI{4,T,5}`), the `echoes` `.paramsym(sym=TI)` reporting
   form.
 

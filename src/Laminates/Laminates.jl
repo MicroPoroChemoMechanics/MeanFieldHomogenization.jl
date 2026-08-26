@@ -62,6 +62,14 @@ import ..Core: AbstractHomogenizationCell, AbstractParameter,
     cell_member_names, cell_container_property, cell_set_property,
     Homogenized, NestedParameter, nested, resolve_property
 
+# The package-wide localization generics, declared bodyless in
+# `Core/abstractions.jl`. A laminate is a cell, not an inclusion, so the
+# methods added here are keyed on a layer NAME rather than on a `(C₁, C₀)`
+# pair — the same shape as `strain_strain_loc(::LayeredSphere, C₀; layer)`.
+import ..Core: strain_strain_loc, stress_strain_loc, strain_stress_loc,
+    stress_stress_loc, gradient_gradient_loc, flux_gradient_loc,
+    gradient_flux_loc, flux_flux_loc
+
 # The five interface models are shared with the layered sphere and spheroid:
 # a planar interface is the curvature-free case of a spherical one, so the
 # types, their fields and their conventions carry over unchanged.

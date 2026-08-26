@@ -33,7 +33,12 @@ end
 function _rot_axis(n, φ)
     nv = collect(n) ./ norm(collect(n))
     K = [0 -nv[3] nv[2]; nv[3] 0 -nv[1]; -nv[2] nv[1] 0]
-    return I(3) .+ sin(φ) .* K .+ (1 - cos(φ)) .* (K * K)
+    # `Matrix(1.0I, 3, 3) + …`, NOT `I(3) .+ …`: on Julia 1.14-DEV a broadcast
+    # against `I(3)::Diagonal{Bool}` preserves the `Diagonal` structure and
+    # silently DROPS every off-diagonal entry, so the "rotation" came back
+    # diagonal (det 0.596) and the quadrature oracle was wrong while the code
+    # under test was right. Ordinary `+` on a dense matrix is version-proof.
+    return Matrix(1.0I, 3, 3) + sin(φ) * K + (1 - cos(φ)) * (K * K)
 end
 
 function _rotate4(arr, R)
@@ -158,6 +163,40 @@ end
             abs,
             MC.ti_average_mandel66(M, nax) .- MC.mandel66_minor(_ti_oracle(arr, nax))
         ) < 1.0e-12
+    end
+
+    @testset "isotropify — Walpole fast path == generic array path" begin
+        # `isotropify(::TensTI{4})` reads the two invariants off the Walpole
+        # coefficients instead of materializing 81 components. The generic
+        # method is the oracle; it is reached here through `Tens`, whose array
+        # carries no structure to dispatch on.
+        nax = (0.3, -0.5, 0.81)
+        nax = nax ./ sqrt(sum(abs2, nax))
+        cases = (
+            TensND.TensTI{4}(1.3, 2.1, 0.7, 1.7, 0.4, nax),               # N = 5
+            TensND.TensTI{4}(1.3, 2.1, 0.7, -0.4, 1.7, 0.9, nax),         # N = 6
+            # N = 8: ℓ₇, ℓ₈ must contribute to neither invariant.
+            TensND.TensTI{4}(1.3, 2.1, 0.7, -0.4, 1.7, 0.9, 0.55, -0.22, nax),
+        )
+        for t in cases
+            fast = TensND.get_data(MC.isotropify(t))
+            gen = TensND.get_data(MC.isotropify(TensND.Tens(TensND.get_array(t))))
+            @test fast[1] ≈ gen[1] atol = 1.0e-12
+            @test fast[2] ≈ gen[2] atol = 1.0e-12
+        end
+
+        # The two tensors whose average is known by inspection.
+        Id4 = TensND.tens_Id4(Val(3), Val(Float64))
+        J4 = TensND.tens_J4(Val(3), Val(Float64))
+        for (t, want) in ((Id4, (1.0, 1.0)), (J4, (1.0, 0.0)))
+            d = TensND.get_data(MC.isotropify(TensND.fromISO(t, nax)))
+            @test d[1] ≈ want[1] atol = 1.0e-14
+            @test d[2] ≈ want[2] atol = 1.0e-14
+        end
+
+        # An isotropic tensor is its own average, at both orders.
+        @test TensND.get_data(MC.isotropify(TensND.TensISO{3}(2.0, 5.0))) == (2.0, 5.0)
+        @test TensND.get_data(MC.isotropify(TensND.TensISO{3}(3.0))) == (3.0,)
     end
 
     @testset "ForwardDiff through the averages" begin

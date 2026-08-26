@@ -147,6 +147,25 @@ if LAM_HAS_SYMBOLICS
         d66 = Symbolics.simplify(Ch[6, 6] / 2 - (f₁ * μ₁ + f₂ * μ₂); expand = true)
         @test isequal(d66, 0)
     end
+
+    # The CELL, not just the kernel, on `Symbolics.Num`. `Num <: Real` while
+    # `SymPy.Sym` is not, so the `h isa Real && h < 0` guards in `add_layer!` /
+    # `validate_laminate` / `validate_rve` used to reach `h < 0`, get a `Num`
+    # back and throw `TypeError: non-boolean (Num) used in boolean context`.
+    # The guards now go through `is_hard_numeric`.
+    @eval @testset "Symbolic — Symbolics.jl fractions through the cell" begin
+        Symbolics.@variables κ₁ μ₁ κ₂ μ₂ f₁
+        lam = Laminate(; T = Symbolics.Num)
+        add_layer!(lam, :A, Dict(:C => TensISO{3}(3κ₁, 2μ₁)); fraction = f₁)
+        add_layer!(lam, :B, Dict(:C => TensISO{3}(3κ₂, 2μ₂)); fraction = 1 - f₁)
+        @test validate_laminate(lam) === lam
+        @test isequal(Symbolics.simplify(laminate_period(lam) - 1), 0)
+
+        rve = RVE(:M; T = Symbolics.Num)
+        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(3κ₁, 2μ₁)))
+        add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3κ₂, 2μ₂)); fraction = f₁)
+        @test MeanFieldHomogenization.Schemes.validate_rve(rve) === rve
+    end
 else
     @info "Symbolics.jl not available — skipping the second symbolic backend"
 end
@@ -274,4 +293,56 @@ end
 
     # Voigt and Reuss stay symbolic too.
     @test simplify(KM(homogenize(lam, Voigt(), :C))[6, 6] / 2 - (f₁ * μ₁ + (1 - f₁) * μ₂)) == 0
+end
+
+
+@testset "Symbolic — the four localization generics on a laminate" begin
+    # The two mixed tensors are new; the identities that define them must hold
+    # as exact symbolic zeros, not as tolerances.
+    #
+    # Two choices keep this cheap enough to belong in a test suite. The
+    # comparison is made on the Walpole coefficients rather than on the 6×6
+    # Kelvin-Mandel matrices — a laminate of isotropic layers returns
+    # localization tensors that are exactly `TensTI{4,T,6}`, so six scalars
+    # describe each of them. And only ONE layer is symbolic: the compliance
+    # `𝕊ʰᵒᵐ`, which the two stress-side tensors carry, is a rational function of
+    # every modulus, and asking SymPy to simplify it in four free moduli at once
+    # costs minutes for nothing the extra freedom would establish.
+    @syms κ₁::positive μ₁::positive f₁::positive
+    κ₂ = Sym(1)
+    μ₂ = Sym(1) / 2
+
+    lam = Laminate(; normal = (0, 0, 1))
+    add_layer!(lam, :A, Dict(:C => TensISO{3}(3κ₁, 2μ₁)); fraction = f₁)
+    add_layer!(lam, :B, Dict(:C => TensISO{3}(3κ₂, 2μ₂)); fraction = 1 - f₁)
+
+    Ch = homogenize(lam, Laminated(), :C)
+    Sh = inv(Ch)
+    @test Ch isa TensND.TensTI{4, <:Sym, 5}        # major-symmetric
+
+    # `tsimplify` on the difference of two tensors: exact zero on every
+    # canonical coefficient. (It used to be a silent no-op on structured
+    # tensors — see the TensND v0.4.0 changelog.)
+    zero_tens(X) = all(iszero, TensND.get_data(tsimplify(X)))
+
+    A = strain_strain_loc(lam, :A)
+    C_A = TensISO{3}(3κ₁, 2μ₁)
+    @test A isa TensND.TensTI{4, <:Sym, 6}         # NOT major-symmetric
+    @test zero_tens(A - layer_strain_localization(lam, :A))
+    @test zero_tens(stress_stress_loc(lam, :A) - layer_stress_localization(lam, :A))
+    @test zero_tens(stress_strain_loc(lam, :A) - C_A ⊡ A)
+    @test zero_tens(strain_stress_loc(lam, :A) - A ⊡ Sh)
+    @test zero_tens(stress_stress_loc(lam, :A) - stress_strain_loc(lam, :A) ⊡ Sh)
+
+    # The two strain-side sum rules. The stress-side ones follow from them by
+    # right-multiplication with `𝕊ʰᵒᵐ` and are covered numerically.
+    Id4 = TensND.tens_Id4(Val(3), Val(Sym))
+    wsum(g) = f₁ * g(:A) + (1 - f₁) * g(:B)
+    @test zero_tens(wsum(nm -> strain_strain_loc(lam, nm)) - Id4)
+    @test zero_tens(wsum(nm -> stress_strain_loc(lam, nm)) - Ch)
+
+    # The one closed form worth reading off: the macroscopic in-plane strain
+    # reaches every layer unchanged, so ℓ₅ of 𝔸ᵢ — the in-plane deviatoric
+    # coefficient — is exactly 1.
+    @test iszero(tsimplify(TensND.get_ℓ(A)[5] - 1))
 end

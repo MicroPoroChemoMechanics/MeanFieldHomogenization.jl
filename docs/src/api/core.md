@@ -32,7 +32,17 @@ best-fit projections in [API — Schemes](schemes.md). See
 [Symmetrization showcase](../tutorials/generated/symmetrization.md) for
 the comparison between the two.
 
-```@docs
-MeanFieldHomogenization.Core.isotropify
-MeanFieldHomogenization.Core.transverse_isotropify
-```
+These live in **`TensND`** — they are pure tensor algebra, with nothing
+homogenization-specific about them — and are re-exported by this package, so
+`MeanFieldHomogenization.isotropify` and `Core.isotropify` both resolve to
+them:
+
+| Name | What it returns |
+| :--- | :--- |
+| `isotropify(t)` | the exact SO(3) average, `TensISO{4}` or `TensISO{2}` |
+| `transverse_isotropify(t, n)` | the exact azimuthal average about `n`, `TensTI{4,T,8}` or `TensTI{2,T,3}` — `ℓ₃ ≠ ℓ₄` and the antisymmetric couplings `ℓ₇`, `ℓ₈` are preserved |
+| `mandel66_minor(arr)` / `array_from_mandel66(M)` | 6×6 Kelvin-Mandel ↔ 3×3×3×3, minor-symmetrizing, no major symmetry assumed |
+| `ti8_params_from_KM(M)` / `KM_from_ti8_params(p)` | the eight Walpole coefficients of an axially-invariant tensor about `e₃`, read off exactly — the non-major-symmetric counterpart of `TensND.ti_params_from_KM` |
+| `ti_average_mandel66(M, n)` / `iso_average_mandel66(M)` | the same averages, on a 6×6 block rather than on a tensor (the ageing-viscoelastic Volterra path) |
+
+See the TensND documentation for the full docstrings.

@@ -234,6 +234,114 @@ end
     @test maximum(abs, Matrix(KM(Q ⊡ P))) < ATOL_LAM
 end
 
+@testset "Laminate — the four localization generics" begin
+    rng = MersenneTwister(1004)
+    Cs = [_rand_stiffness(rng) for _ in 1:3]
+    Ks = [Tens(Symmetric(randn(rng, 3, 3) * 0.1 + 3.0I)) for _ in 1:3]
+    hs = [0.2, 0.45, 0.35]
+    lam = Laminate(; normal = (0.0, 0.6, 0.8))
+    for i in 1:3
+        add_layer!(lam, Symbol("L", i), Dict(:C => Cs[i], :K => Ks[i]); thickness = hs[i])
+    end
+    names = layer_names(lam)
+    fs = [layer_volume_fraction(lam, nm) for nm in names]
+    Ch = homogenize(lam, Laminated(), :C)
+    Kh = homogenize(lam, Laminated(), :K)
+    Sh = inv(Ch)
+    Rh = inv(Kh)
+    Id4 = Matrix(1.0I, 6, 6)
+    Id2 = Matrix(1.0I, 3, 3)
+
+    # The two aliases are the very same object as the `layer_*` names.
+    for (i, nm) in enumerate(names)
+        @test Matrix(KM(strain_strain_loc(lam, nm))) ==
+            Matrix(KM(layer_strain_localization(lam, nm)))
+        @test Matrix(KM(stress_stress_loc(lam, nm))) ==
+            Matrix(KM(layer_stress_localization(lam, nm)))
+        @test Matrix(gradient_gradient_loc(lam, nm)) ==
+            Matrix(layer_gradient_localization(lam, nm))
+        @test Matrix(flux_flux_loc(lam, nm)) == Matrix(layer_flux_localization(lam, nm))
+
+        # The two mixed tensors, against their definitions.
+        A = strain_strain_loc(lam, nm)
+        @test Matrix(KM(stress_strain_loc(lam, nm))) ≈ Matrix(KM(Cs[i] ⊡ A)) atol = ATOL_LAM
+        @test Matrix(KM(strain_stress_loc(lam, nm))) ≈ Matrix(KM(A ⊡ Sh)) atol = ATOL_LAM
+        @test Matrix(KM(stress_stress_loc(lam, nm))) ≈
+            Matrix(KM(stress_strain_loc(lam, nm) ⊡ Sh)) atol = ATOL_LAM
+
+        a = gradient_gradient_loc(lam, nm)
+        @test Matrix(flux_gradient_loc(lam, nm)) ≈ Matrix(Ks[i] ⋅ a) atol = ATOL_LAM
+        @test Matrix(gradient_flux_loc(lam, nm)) ≈ Matrix(a ⋅ Rh) atol = ATOL_LAM
+    end
+
+    # The four sum rules, at both orders.
+    _sum(g) = sum(fs[i] * g(names[i]) for i in eachindex(names))
+    @test Matrix(KM(_sum(nm -> strain_strain_loc(lam, nm)))) ≈ Id4 atol = ATOL_LAM
+    @test Matrix(KM(_sum(nm -> stress_stress_loc(lam, nm)))) ≈ Id4 atol = ATOL_LAM
+    @test Matrix(KM(_sum(nm -> stress_strain_loc(lam, nm)))) ≈
+        Matrix(KM(Ch)) atol = ATOL_LAM
+    @test Matrix(KM(_sum(nm -> strain_stress_loc(lam, nm)))) ≈
+        Matrix(KM(Sh)) atol = ATOL_LAM
+    @test Matrix(_sum(nm -> gradient_gradient_loc(lam, nm))) ≈ Id2 atol = ATOL_LAM
+    @test Matrix(_sum(nm -> flux_flux_loc(lam, nm))) ≈ Id2 atol = ATOL_LAM
+    @test Matrix(_sum(nm -> flux_gradient_loc(lam, nm))) ≈ Matrix(Kh) atol = ATOL_LAM
+    @test Matrix(_sum(nm -> gradient_flux_loc(lam, nm))) ≈ Matrix(Rh) atol = ATOL_LAM
+
+    # The symmetry class of the answer, which is the point of `_wrap4_general`.
+    #
+    # A laminate of layers all TI about its own normal has localization tensors
+    # TI about that same normal — but NOT major-symmetric, `𝔸ᵢ` being a product
+    # of major-symmetric tensors. So the exact type is `TensTI{4,T,6}`, and the
+    # 5-coefficient read-off `_wrap4` uses for the effective stiffness would
+    # silently replace `ℓ₃` and `ℓ₄` by their half-sum.
+    lam_ti = Laminate(; normal = (0.0, 0.6, 0.8))
+    add_layer!(lam_ti, :A, Dict(:C => _iso(3.0, 1.2), :K => TensISO{3}(2.0)); fraction = 0.35)
+    add_layer!(lam_ti, :B, Dict(:C => _iso(0.7, 0.3), :K => TensISO{3}(0.4)); fraction = 0.65)
+
+    @test homogenize(lam_ti, Laminated(), :C) isa TensND.TensTI{4, Float64, 5}
+    for g in (strain_strain_loc, stress_strain_loc, strain_stress_loc, stress_stress_loc)
+        A = g(lam_ti, :A)
+        @test A isa TensND.TensTI{4, Float64, 6}
+        @test collect(TensND.axis(A)) ≈ [0.0, 0.6, 0.8]
+        # ℓ₇ and ℓ₈ are structurally zero — the six-coefficient Walpole span is
+        # closed under product and inverse — so nothing is dropped by N = 6.
+        p8 = TensND.ti8_params_from_KM(Matrix(KM(A, laminate_basis(lam_ti))))
+        @test abs(p8[7]) < ATOL_LAM
+        @test abs(p8[8]) < ATOL_LAM
+        # ℓ₃ ≠ ℓ₄: the tensor really is outside the major-symmetric span, so a
+        # 5-coefficient read-off would have been lossy rather than merely tight.
+        ℓ = TensND.get_ℓ(A)
+        @test abs(ℓ[3] - ℓ[4]) > 1.0e-3
+    end
+    for g in (gradient_gradient_loc, flux_gradient_loc, gradient_flux_loc, flux_flux_loc)
+        @test g(lam_ti, :A) isa TensND.TensTI{2, Float64, 2}
+    end
+
+    # An anisotropic layer breaks it, structurally, and an unstructured tensor
+    # is returned rather than a wrong TI claim.
+    lam_gen = Laminate(; normal = (0, 0, 1))
+    add_layer!(lam_gen, :A, Dict(:C => _rand_stiffness(MersenneTwister(7))); fraction = 0.4)
+    add_layer!(lam_gen, :B, Dict(:C => _iso(0.7, 0.3)); fraction = 0.6)
+    @test !(strain_strain_loc(lam_gen, :A) isa TensND.TensTI)
+
+    # A primal (spring) interface carries part of the macroscopic strain in the
+    # displacement jumps, so the STRAIN-side rule is expected to fail while the
+    # stress-side one still holds — this is the documented caveat, asserted.
+    lam_s = Laminate(; normal = (0, 0, 1))
+    add_layer!(
+        lam_s, :A, Dict(:C => _iso(3.0, 1.2)); thickness = 0.4,
+        interface = SpringInterface(0.5, 0.3)
+    )
+    add_layer!(lam_s, :B, Dict(:C => _iso(0.7, 0.3)); thickness = 0.6)
+    fs_s = [layer_volume_fraction(lam_s, nm) for nm in layer_names(lam_s)]
+    As_s = [strain_strain_loc(lam_s, nm) for nm in layer_names(lam_s)]
+    Bs_s = [stress_stress_loc(lam_s, nm) for nm in layer_names(lam_s)]
+    @test !isapprox(
+        Matrix(KM(sum(fs_s[i] * As_s[i] for i in 1:2))), Id4; atol = 1.0e-6
+    )
+    @test Matrix(KM(sum(fs_s[i] * Bs_s[i] for i in 1:2))) ≈ Id4 atol = ATOL_LAM
+end
+
 @testset "Laminate — the exact-TI claim, class by class" begin
     # The result is transversely isotropic about `n` **only** when every layer
     # is isotropic or major-symmetric TI about that same axis. Anything else —

@@ -393,6 +393,32 @@ stays differentiable and symbolically evaluable.
     return C6 * laminate_strain_localization(C6, Chom6; opinv = opinv) * _inv_km6(Chom6)
 end
 
+"""
+    laminate_stress_strain_localization(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
+
+Mixed localization tensor of one layer, `𝔸^{σε}_i = ℂ_i : 𝔸_i`, mapping the
+**macroscopic strain** to the layer stress: `σ_i = 𝔸^{σε}_i : E`. It weights to
+the effective stiffness, `Σ_i f_i 𝔸^{σε}_i = ℂ^{hom}`, which is the mean-field
+identity `ℂ^{hom} = ⟨ℂ : 𝔸⟩` written layer by layer.
+
+No inverse of `ℂ^{hom}` is formed, unlike [`laminate_stress_localization`](@ref).
+"""
+@inline function laminate_stress_strain_localization(C6, Chom6; opinv = plane_pinv)
+    return C6 * laminate_strain_localization(C6, Chom6; opinv = opinv)
+end
+
+"""
+    laminate_strain_stress_localization(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
+
+Mixed localization tensor of one layer, `𝔸^{εσ}_i = 𝔸_i : (ℂ^{hom})^{-1}`,
+mapping the **macroscopic stress** to the layer strain: `ε_i = 𝔸^{εσ}_i : Σ`,
+with `Σ_i f_i 𝔸^{εσ}_i = (ℂ^{hom})^{-1}`. The inverse goes through
+[`_inv_km6`](@ref), never `inv(::SMatrix{6,6})`.
+"""
+@inline function laminate_strain_stress_localization(C6, Chom6; opinv = plane_pinv)
+    return laminate_strain_localization(C6, Chom6; opinv = opinv) * _inv_km6(Chom6)
+end
+
 # ── Conduction (order 2) ────────────────────────────────────────────────────
 #
 # A second-order property needs no Mandel weights: in the frame (ℓ, m, n) the
@@ -469,4 +495,27 @@ Flux localization tensor of one layer,
 """
 @inline function laminate_flux_localization(K3, Khom3; opinv = plane_pinv2)
     return K3 * laminate_gradient_localization(K3, Khom3; opinv = opinv) * _inv3(Khom3)
+end
+
+"""
+    laminate_flux_gradient_localization(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
+
+Mixed transport localization of one layer, `𝐀^{qg}_i = 𝐊_i · 𝐀_i`, mapping the
+**macroscopic gradient** to the layer flux, with `Σ_i f_i 𝐀^{qg}_i = 𝐊^{hom}`.
+Order-2 twin of [`laminate_stress_strain_localization`](@ref).
+"""
+@inline function laminate_flux_gradient_localization(K3, Khom3; opinv = plane_pinv2)
+    return K3 * laminate_gradient_localization(K3, Khom3; opinv = opinv)
+end
+
+"""
+    laminate_gradient_flux_localization(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
+
+Mixed transport localization of one layer, `𝐀^{gq}_i = 𝐀_i · (𝐊^{hom})^{-1}`,
+mapping the **macroscopic flux** to the layer gradient, with
+`Σ_i f_i 𝐀^{gq}_i = (𝐊^{hom})^{-1}`. Order-2 twin of
+[`laminate_strain_stress_localization`](@ref).
+"""
+@inline function laminate_gradient_flux_localization(K3, Khom3; opinv = plane_pinv2)
+    return laminate_gradient_localization(K3, Khom3; opinv = opinv) * _inv3(Khom3)
 end
