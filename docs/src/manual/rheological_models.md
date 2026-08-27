@@ -56,12 +56,12 @@ method and are differentiable — see
 
 ![The three elementary elements: a spring of stiffness ``E``, a dashpot of viscosity ``\eta``, and the parabolic element (springpot, Scott-Blair element) of modulus ``V`` and order ``\alpha``. The arc drawn inside the last one is its creep function, flat onto the axis at ``\alpha = 0`` and straight at ``\alpha = 1``.](../assets/rheology/elements.svg)
 
-| | ``J(t)`` | ``R(t)`` | ``R^{*}(p)`` |
-|:---|:---|:---|:---|
-| [`Spring`](@ref)`(E)` | ``1/E`` | ``E`` | ``E`` |
-| [`Dashpot`](@ref)`(η)` | ``t/\eta`` | ``\eta\,\delta(t)`` | ``p\eta`` |
-| [`MaxwellUnit`](@ref)`(E, η)` | ``1/E + t/\eta`` | ``E e^{-t/\tau}`` | ``E\,\dfrac{p\tau}{1+p\tau}`` |
-| [`KelvinUnit`](@ref)`(E, η)` | ``(1-e^{-t/\tau})/E`` | Dirac | ``E(1+p\tau)`` |
+| | ``J(t)`` | ``J^{*}(p)`` | ``R(t)`` | ``R^{*}(p)`` |
+|:---|:---|:---|:---|:---|
+| [`Spring`](@ref)`(E)` | ``1/E`` | ``1/E`` | ``E`` | ``E`` |
+| [`Dashpot`](@ref)`(η)` | ``t/\eta`` | ``\dfrac{1}{p\eta}`` | ``\eta\,\delta(t)`` | ``p\eta`` |
+| [`MaxwellUnit`](@ref)`(E, η)` | ``1/E + t/\eta`` | ``\dfrac{1}{E}\,\left(1+\dfrac{1}{p\tau}\right)`` | ``E e^{-t/\tau}`` | ``E\,\dfrac{p\tau}{1+p\tau}`` |
+| [`KelvinUnit`](@ref)`(E, η)` | ``(1-e^{-t/\tau})/E`` | ``\dfrac{1}{E(1+p\tau)}`` | ``E + \eta\,\delta(t)`` | ``E(1+p\tau)`` |
 
 with ``\tau = \eta/E`` in both cases. [`Dashpot`](@ref) and
 [`KelvinUnit`](@ref) have a Dirac impulse for a relaxation function, so
