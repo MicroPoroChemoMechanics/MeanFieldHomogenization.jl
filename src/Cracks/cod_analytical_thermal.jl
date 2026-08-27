@@ -49,7 +49,7 @@ b = 4 / (3 · k₀ · 𝓔_η) ,   𝓔_η = 𝓔(√(1-η²))
 ```
 
 with ``\\mathcal E_\\eta`` the complete elliptic integral of the second
-kind ([Abramowitz & Stegun 1972](@cite abramowitz1972)). Penny-crack
+kind ([abramowitz1972](@cite)). Penny-crack
 limit ``\\eta=1``: ``b = 8/(3\\pi k_0)``, which is the surface average of
 the textbook jump ``[\\![T]\\!](r) = \\frac{4\\sigma_n a}{\\pi k_0}
 \\sqrt{1-r^2/a^2}`` divided by ``a``.
@@ -79,8 +79,8 @@ The 2-D counterpart of the elliptic formula: the contour integral
 collapses to the single direction ``\\hat{\\mathbf m}`` and the shape
 coefficient is ``\\chi^{\\mathcal R} = \\pi/4`` instead of
 ``\\chi^{\\mathcal E} = 2/3``
-([Sevostianov & Kachanov 2002](@cite sevostianov2002),
- [Kachanov 2018](@cite kachanov2018)).
+([sevostianov2002](@cite),
+ [kachanov2018](@cite)).
 """
 function _cod_iso_ribbon_thermal(c::RibbonCrack{T}, k₀) where {T <: Number}
     return T(π) / (T(2) * k₀)
@@ -155,7 +155,7 @@ ellipticity. Reduces to ``4/(3k_0\\mathcal E_\\eta)`` for
 
 Being a 2×2 eigenvalue problem, this is closed form and **type-generic** —
 `ForwardDiff.Dual` and symbolic scalars included. It replaces the
-``\\mathbf K_0^{-1/2}`` route of [Giraud et al. 2019](@cite giraudMOM2019),
+``\\mathbf K_0^{-1/2}`` route of [giraudMOM2019](@cite),
 which is equivalent but needs `eigen` on a 3×3 and `svdvals`, and so is
 restricted to `Float64`. Derived in
 `scripts/16_cod_symbolic_thermal.jl`.

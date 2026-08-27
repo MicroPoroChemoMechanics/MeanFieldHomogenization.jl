@@ -51,10 +51,35 @@ when touching it:
   iteration.
 
 
-## Sub-module responsibilities
+## What each sub-module is for
+
+| Module | Responsibility |
+| :--- | :--- |
+| [`MeanFieldHomogenization.Elliptic`](@ref) | Type-generic Legendre and Carlson elliptic integrals (`ForwardDiff`/`Sym` compatible). |
+| [`MeanFieldHomogenization.Core`](@ref) | Abstractions, traits, shared numerics (Green/Newton kernels, Masson residue algorithm, DECUHR seam). |
+| [`MeanFieldHomogenization.Elasticity`](@ref) | Hill polarization tensor for ellipsoidal inclusions and infinite cylinders (2D/3D, iso/aniso/TI-coaxial). |
+| [`MeanFieldHomogenization.Cracks`](@ref) | Crack-opening-displacement (COD) tensor, compliance contribution, stress/displacement intensity factors. |
+| [`MeanFieldHomogenization.Conductivity`](@ref) | Second-order Hill tensor for transport problems (diffusion, conduction, Darcy flow), closed form for any matrix anisotropy. |
+| [`MeanFieldHomogenization.LayeredSpheres`](@ref) | `n`-layer composite spheres (Hervé–Zaoui, Christensen–Lo), five interface types, volume-average and pointwise localization. |
+| [`MeanFieldHomogenization.LayeredSpheroids`](@ref) | `n`-layer confocal spheroids, conduction, Kapitza / surface-conductive interfaces, series or quadrature evaluation. |
+| [`MeanFieldHomogenization.Laminates`](@ref) | Periodic multilayer cell: no matrix, no Eshelby problem — an *exact* solution in elasticity and transport, same imperfect interfaces, per-layer localization. |
+| [`MeanFieldHomogenization.Schemes`](@ref) | RVE container and `homogenize`; Voigt, Reuss, Dilute, Mori–Tanaka, Maxwell, PCW, self-consistent, asymmetric SC, differential, cluster model, equivalent inclusion; exact vs. best-fit symmetrization; `ForwardDiff` sensitivities. |
+| [`MeanFieldHomogenization.Interactions`](@ref) | Two-inclusion interaction tensor ``\mathbb{T}^{ab}`` and the Green operator of the reference — closed forms for balls and disks, cubature for the anisotropic case. |
+| [`MeanFieldHomogenization.Assemblies`](@ref) | `ParticleAssembly`: the cell that carries positions, its generators and boundary treatments — what the two N-body schemes act on. |
+| [`MeanFieldHomogenization.Poromechanics`](@ref) | Biot coefficient tensor and skeleton modulus of a porous or cracked microstructure, for saturated and drained responses. |
+| [`MeanFieldHomogenization.Constitutive`](@ref) | The Gauss-point contract: a microstructure exposed to a finite-element code as a material law returning stress, tangent and updated state. |
+| [`MeanFieldHomogenization.Viscoelasticity`](@ref) | Ageing linear viscoelasticity via Volterra operators — every scheme, cracks and layered spheres included. |
+| [`MeanFieldHomogenization.CustomInclusions`](@ref) | The user-defined inclusion contract: `CustomInclusion` (callback-driven) and `check_inclusion_interface`. |
+| [`MeanFieldHomogenization.FiniteElements`](@ref) | Inclusions whose response comes out of a finite-element solve of the Eshelby problem, behind a backend contract (`Ferrite` or `Gridap`). |
+| [`MeanFieldHomogenization.NeuralInclusions`](@ref) | Inclusions whose response comes out of a trained network, with the sampling and fitting machinery; differentiable in the morphology. |
+
+The table below says the same thing from the other side: not what a
+sub-module is for, but what it puts in the namespace.
+
+## What each sub-module exports
 
 | Sub-module         | Exports                                                                                            |
-| ------------------ | -------------------------------------------------------------------------------------------------- |
+| :----------------- | :------------------------------------------------------------------------------------------------- |
 | `Elliptic`         | type-generic elliptic integrals (`ell_K`, `ell_E`, `ell_F`, `ell_RF`, `ell_RD`)                     |
 | `Core`             | abstractions, traits, `_resolve_algo`, Newton potentials, Green kernel helpers, Kelvin dipole field, exact ISO/TI rotation averages, moduli extractors |
 | `Elasticity`       | `Ellipsoid`, `Cylinder`, auxiliary tensors, `hill_tensor` + 3D/2D kernels                           |

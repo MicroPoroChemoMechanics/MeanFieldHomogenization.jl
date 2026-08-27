@@ -48,3 +48,19 @@ Run the test suite with:
 ```shell
 julia --project=. -e 'using Pkg; Pkg.test()'
 ```
+
+## Citation
+
+If you use MeanFieldHomogenization.jl in your work, please cite the following:
+
+```bibtex
+@software{meanfieldhomogenization_jl,
+  author = {Barthélémy, Jean-François},
+  title  = {MeanFieldHomogenization.jl: Mean-field homogenization of heterogeneous materials},
+  doi    = {10.5281/zenodo.21884243},
+  url    = {https://doi.org/10.5281/zenodo.21884243},
+}
+```
+
+`CITATION.cff` in the repository root carries the same metadata in a
+machine-readable form.

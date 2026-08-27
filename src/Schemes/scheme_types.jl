@@ -72,8 +72,8 @@ struct Laminated <: HomogenizationScheme end
 Dilute scheme: ``\\mathbb{C}_{\\mathrm{eff}} = \\mathbb{C}_0 + \\sum_i f_i \\mathbb N_i``
 where ``\\mathbb N_i = (\\mathbb{C}_i - \\mathbb{C}_0):\\mathbb{A}_{\\varepsilon\\varepsilon}^{(i)}``
 is the size-independent stiffness contribution
-([Eshelby 1957](@cite eshelby1957);
-[Kachanov & Sevostianov 2018](@cite kachanov2018)).
+([eshelby1957](@cite);
+[kachanov2018](@cite)).
 """
 struct Dilute <: HomogenizationScheme end
 
@@ -89,8 +89,8 @@ struct DiluteDual <: HomogenizationScheme end
 """
     MoriTanaka() <: HomogenizationScheme
 
-Mori-Tanaka scheme ([Mori & Tanaka 1973](@cite mori1973);
-[Christensen 1990](@cite christensen1990)).
+Mori-Tanaka scheme ([mori1973](@cite);
+[christensen1990](@cite)).
 """
 struct MoriTanaka <: HomogenizationScheme end
 
@@ -122,7 +122,7 @@ struct PonteCastanedaWillis <: HomogenizationScheme end
 """
     ClusterModel(; cluster_radius = nothing, kwargs...) <: HomogenizationScheme
 
-Cluster model of [Molinari & El Mouden 1996](@cite molinari1996): an N-body
+Cluster model of [molinari1996](@cite): an N-body
 scheme in which the mean strain of every inclusion is solved for, accounting
 for the pairwise interaction with every neighbor inside a cluster of radius
 `R_c`, on top of the interaction with the matrix.
@@ -158,7 +158,7 @@ ClusterModel(; kwargs...) = ClusterModel(NamedTuple(kwargs))
     EquivalentInclusion(; order = 0, kwargs...) <: HomogenizationScheme
 
 Equivalent inclusion method in the variational (Galerkin) form of
-[Brisard et al. 2014](@cite brisard2014) — a Galerkin discretization of the
+[brisard2014](@cite) — a Galerkin discretization of the
 weak form of the Lippmann-Schwinger equation, with the polarization taken
 piecewise constant over each inclusion at `order = 0`.
 
@@ -183,8 +183,8 @@ than every inhomogeneity — see [`eim_bound_type`](@ref MeanFieldHomogenization
 
 Brisard et al. note in their §3.1 that at `order = 0` their influence
 pseudotensors coincide with the interaction tensors of
-[Berveiller et al. 1987](@cite berveiller1987) and
-[Molinari & El Mouden 1996](@cite molinari1996); the two schemes of this
+[berveiller1987](@cite) and
+[molinari1996](@cite); the two schemes of this
 package accordingly share [`interaction_tensor`](@ref MeanFieldHomogenization.Interactions.interaction_tensor) and agree on a periodic
 assembly with the same cutoff.
 """
@@ -298,7 +298,7 @@ space used by the [`DifferentialScheme`](@ref) scheme. Concrete subtypes:
 - [`Path`](@ref) — explicit per-phase trajectory as a callable
   `τ -> f(τ)` (auto-differentiated by `ForwardDiff`); the natural API
   for the multi-phase incorporation-sequence ODE
-  ([Norris 1985](@cite norris1985); the user's hand-written DEM note).
+  ([norris1985](@cite); the user's hand-written DEM note).
 """
 abstract type DifferentialTrajectory end
 
@@ -383,7 +383,7 @@ Path(first::Pair{Symbol}, rest::Pair{Symbol}...) = Path(Dict(first, rest...))
                          alg = nothing, formulation = :stiffness, kwargs...)
 
 Differential scheme : integrates the Norris ODE on the fictitious
-incorporation time `τ ∈ [0, 1]` ([Norris 1985](@cite norris1985)) :
+incorporation time `τ ∈ [0, 1]` ([norris1985](@cite)) :
 
 ```math
 \\frac{\\mathrm d \\mathbb{C}^{hom}}{\\mathrm d \\tau}

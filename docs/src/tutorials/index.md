@@ -57,7 +57,7 @@ carries positions — rather than an `RVE`. Both are built on the same
 two-inclusion interaction tensor.
 
 | Tutorial | What it shows |
-|---|---|
+|:--|:--|
 | [The cluster model on cubic arrays](generated/cluster_model.md) | Molinari & El Mouden (1996): convergence in cluster radius, the exact degeneracy onto Mori-Tanaka when the cluster is empty, comparison with the one-site schemes, the bulk modulus that stays exactly Mori-Tanaka whatever the arrangement, and SC vs BCC vs FCC porous arrays |
 | [Chaining scales through an N-body scheme](generated/multiscale_assemblies.md) | the declarative multiscale seam with an assembly on either side, and why chaining two N-body estimates needs the *anisotropic* Green operator: a cluster estimate on a cubic array is cubic, not isotropic. Three scales end to end, plus a sensitivity across them |
 | [The equivalent inclusion method](generated/eim_assembly.md) | Brisard, Dormieux & Sab (2014), Table 1: 160 circular pores in a circular SVE, plane strain — the `p = 0` bound reproduced by Monte-Carlo, against the Hashin-Shtrikman bound it improves on and the finite-element value it bounds |

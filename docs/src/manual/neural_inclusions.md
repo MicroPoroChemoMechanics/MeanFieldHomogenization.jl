@@ -6,7 +6,7 @@ families, the layered patterns and the
 [finite-element inclusions](@ref man-fe-inclusions).
 
 | Type | Entry gate | For |
-|---|---|---|
+|:--|:--|:--|
 | [`NeuralHillInclusion`](@ref MeanFieldHomogenization.NeuralHillInclusion) | A — the Hill tensor | a morphology that has a Hill tensor |
 | [`NeuralLocalizationInclusion`](@ref MeanFieldHomogenization.NeuralLocalizationInclusion) | B — both localization tensors | an internally heterogeneous morphology, which has none |
 
@@ -69,7 +69,7 @@ the *distinct over equal* semi-axis ratio, so ``\omega > 1`` is prolate and
 ``\omega < 1`` oblate.
 
 | Model | Predicts | Features | Domain | Network | Samples | Worst error |
-|---|---|---|---|---|---|---|
+|:--|:--|:--|:--|:--|:--|:--|
 | `spheroid_hill_iso_elastic` | ``2\mu_0\mathbb P``, `TensTI{4,·,5}` | `log_aspect`, `nu0` | ``\omega \in [1/20, 20]``, ``\nu_0 \in [0, 0.49]`` | 2→48→48→5 | 6000 / 1500 | `3.1e-3` |
 | `spheroid_hill_iso_conduction` | ``k_0\boldsymbol P``, `TensTI{2,·,2}` | `log_aspect` | ``\omega \in [1/20, 20]`` | 1→32→32→2 | 3000 / 800 | `2.1e-4` |
 | `triaxial_hill_iso_elastic` | ``2\mu_0\mathbb P``, `TensOrtho` | `log_r2`, `log_r32`, `nu0` | ``a_2/a_1,\, a_3/a_2 \in [1/20, 1/1.05]``, ``\nu_0 \in [0, 0.49]`` | 3→64→64→9 | 12000 / 3000 | `6.7e-3` |
@@ -151,7 +151,7 @@ for a few thousand samples and a few thousand parameters, which is seconds of
 wall time:
 
 | Option | Default | Note |
-|---|---|---|
+|:--|:--|:--|
 | `hidden` | `[32, 32]` | input and output widths follow from the box and the specification |
 | `activation` | `:tanh` | must be smooth; `:softplus` is the alternative, and there is deliberately no ReLU |
 | `epochs` / `batchsize` | `4000` / `128` | `batchsize = 0` means full batch |

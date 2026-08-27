@@ -36,7 +36,7 @@
 Average surface stiffness ``\\mathbb{C}^{int}`` of a spheroidal nanoinclusion
 carrying a Gurtin-Murdoch interface of surface bulk modulus `κs` and surface
 shear modulus `μs`
-([Dormieux, Lemarchand & Brisard 2016](@cite dormieux2016), Eq. 72).
+([dormieux2016](@cite)).
 
 `spheroid` is an `Ellipsoid` of revolution with in-plane semi-axis `a` and
 polar semi-axis `c`; the aspect ratio is ``X = c/a``, oblate for ``X < 1`` and
@@ -62,7 +62,7 @@ Limiting cases are handled exactly: the spherical case ``X = 1`` — where the
 closed form has a removable singularity — is evaluated from its Taylor series,
 and reproduces the isotropic tensor
 ``2(6\\mu_s+\\kappa_s)/(5R)\\,\\mathbb K + (4\\kappa_s/R)\\,\\mathbb{J}`` of the
-paper's Eq. (74).
+same reference.
 """
 function surface_stiffness(ell::Ellipsoid{3}, κs, μs)
     a, c, axis = _spheroid_axes(ell)
@@ -81,7 +81,7 @@ end
     equivalent_particle(C_I, spheroid, κs, μs) -> AbstractTens
 
 Stiffness of the *equivalent particle* — the nanoinclusion `C_I` together with
-its interface — of [Dormieux et al. 2016](@cite dormieux2016):
+its interface — of [dormieux2016](@cite):
 
 ```math
 \\mathbb{C}^{eq}_I = \\mathbb{C}_I + \\mathbb{C}^{int} .

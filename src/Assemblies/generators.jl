@@ -53,7 +53,7 @@ Build a [`ParticleAssembly`](@ref) on the simple-cubic (`:sc`), body-centered
 Give exactly one of `fraction` (total volume fraction of the spheres) or
 `radius`. `cutoff` is forwarded to `PeriodicBox`; the default of three periods
 sits inside the convergence plateau reported by
-[Molinari & El Mouden 1996](@cite molinari1996).
+[molinari1996](@cite).
 
 `particle_properties` may be a single property dictionary — applied to every
 site — or a vector of dictionaries, one per site of the motif, which is how a
@@ -124,7 +124,7 @@ end
 
 Build a `ParticleAssembly` of `n` equal, non-overlapping spheres (`dim = 3`) or
 disks (`dim = 2`) by the hard-particle Metropolis algorithm used by
-[Brisard et al. 2014](@cite brisard2014), §5.
+[brisard2014](@cite), §5.
 
 The particles start on a regular lattice and are then shuffled by `cycles`
 sweeps of trial moves, the move amplitude being re-tuned every 50 sweeps to

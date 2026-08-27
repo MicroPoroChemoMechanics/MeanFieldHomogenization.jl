@@ -165,7 +165,7 @@ Real-space Green operator of an arbitrary anisotropic elastic medium,
   {\\partial x_j\\, \\partial x_l}(\\underline{x})\\Big]_{(ij)(kl)} ,
 ```
 
-with the leading minus of the [Brisard et al. 2023](@cite brisard2023)
+with the leading minus of the [brisard2023](@cite)
 convention, exactly as in the isotropic closed form.
 
 The second gradient is taken with `ForwardDiff` through the line integral of
@@ -289,7 +289,7 @@ end
 Real-space Green operator ``\\mathbb{G}^0`` of an infinite medium of reference
 property `P₀`, evaluated at `x ≠ 0` — the regular kernel of the
 Lippmann-Schwinger equation, which the package writes in the sign convention
-of [Brisard et al. 2023](@cite brisard2023), Eq. (9):
+of [brisard2023](@cite):
 
 ```math
 \\boldsymbol{\\varepsilon}(\\underline{x}) = \\boldsymbol{E}

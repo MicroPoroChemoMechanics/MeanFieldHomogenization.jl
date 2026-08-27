@@ -25,8 +25,8 @@ H = k (n̂ ⊗ˢ B ⊗ˢ n̂),   k = 3/4  (elliptic)  or  k = 2/π  (ribbon).
 ```
 
 Dispatches on the crack type
-([Kachanov 1992](@cite kachanov1992),
- [Barthélémy et al. 2021](@cite barthelemyIJES2021)).
+([kachanov1992](@cite),
+ [barthelemyIJES2021](@cite)).
 
 !!! note
     The pair [`compliance_from_cod`](@ref) / [`cod_from_compliance`](@ref)

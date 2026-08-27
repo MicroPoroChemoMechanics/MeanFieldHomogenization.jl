@@ -57,7 +57,7 @@ with ``\mathbb S_0 = \mathbb C_0^{-1}``.  The four functions exposed by
 MeanFieldHomogenization are:
 
 | Function                                     | Return value                               |
-| -------------------------------------------- | ------------------------------------------ |
+| :------------------------------------------- | :----------------------------------------- |
 | [`strain_strain_loc`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\varepsilon\varepsilon}``     |
 | [`stress_strain_loc`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\sigma\varepsilon}``          |
 | [`strain_stress_loc`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\varepsilon\sigma}``          |
@@ -65,8 +65,7 @@ MeanFieldHomogenization are:
 
 ## Contribution tensors
 
-The **stiffness contribution tensor** ([Kachanov & Sevostianov
-2018](@cite kachanov2018)) is
+The **stiffness contribution tensor** ([kachanov2018](@cite)) is
 
 ```math
 \mathbb N = (\mathbb C_1 - \mathbb C_0) : \mathbb A_{\varepsilon\varepsilon},
@@ -129,7 +128,7 @@ Every routine above has a 2-tensor analog, triggered by dispatch on
 `::AbstractTens{2,3}` matrices:
 
 | Elasticity                           | Conductivity                           |
-| ------------------------------------ | -------------------------------------- |
+| :----------------------------------- | :------------------------------------- |
 | `strain_strain_loc`                  | [`gradient_gradient_loc`](@ref)        |
 | `stress_strain_loc`                  | [`flux_gradient_loc`](@ref)            |
 | `strain_stress_loc`                  | [`gradient_flux_loc`](@ref)            |

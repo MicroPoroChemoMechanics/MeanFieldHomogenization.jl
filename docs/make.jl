@@ -1,9 +1,11 @@
 using Documenter
 using DocumenterCitations
-# Renders the ```mermaid blocks of the home page. The diagram's source is the
-# page itself, so the architecture picture is edited by editing text — no
-# regenerated asset to keep in sync.
-using DocumenterMermaid
+# VitePress renders the site from the Markdown that Documenter emits. Math is
+# typeset at build time into static SVG (see `docs/src/.vitepress/mathjax-plugin.ts`),
+# so no MathJax bundle is ever fetched by the reader's browser; the ```mermaid
+# blocks are rendered by `vitepress-plugin-mermaid`, declared in
+# `docs/package.json`, which is why DocumenterMermaid is no longer a dependency.
+using DocumenterVitepress
 using MeanFieldHomogenization
 
 # GR needs a headless display driver on CI runners; without this the figures in
@@ -36,6 +38,33 @@ bib = CitationBibliography(
     style = :numeric,
 )
 
+# ── Stopgap: CitationSiteNode in the Markdown writer ─────────────────────────
+# DocumenterCitations 1.5 wraps every expanded citation in a `CitationSiteNode`,
+# whose only purpose is to give the citation an HTML anchor so the bibliography
+# can link back to it. Its own docstring calls it "transparent in any output
+# format other than HTML", and both the LaTeX writer and MDFlatten implement it
+# as "render my children".
+#
+# DocumenterVitepress 0.3.5 ships a DocumenterCitations extension, but it covers
+# only `BibliographyNode`. With no method for `CitationSiteNode`, the writer
+# falls through to its generic branch, which prints `Markdown.plain(element)` —
+# so every one of this manual's citations came out as the literal text
+# `DocumenterCitations.CitationSiteNode("kachanov1992-cite-1")`.
+#
+# The same one-line treatment as the other non-HTML writers. Remove this once
+# DocumenterVitepress covers the node upstream.
+function DocumenterVitepress.render(
+        io::IO,
+        mime::MIME"text/plain",
+        node::Documenter.MarkdownAST.Node,
+        ::DocumenterCitations.CitationSiteNode,
+        page,
+        doc;
+        kwargs...,
+    )
+    return DocumenterVitepress.render(io, mime, node, node.children, page, doc; kwargs...)
+end
+
 DocMeta.setdocmeta!(
     MeanFieldHomogenization,
     :DocTestSetup,
@@ -43,8 +72,111 @@ DocMeta.setdocmeta!(
     recursive = true,
 )
 
+# ── Stopgap: heading anchors that contain LaTeX ──────────────────────────────
+# DocumenterVitepress builds each heading as `## <text> {#<slug>}`, where the
+# slug is Documenter's anchor label passed through its own
+# `sanitized_anchor_label` — whose comment says "vitepress doesn't like special
+# markdown characters in the id slug", but which only strips `[ ] ( ) *`.
+#
+# A heading such as `## The COD tensor ``\boldsymbol{B}``` yields the slug
+# `The-COD-tensor-\boldsymbol{B}`. VitePress's `{#...}` parser rejects the
+# backslash and the braces, so it treats the whole suffix as *text*: the heading
+# renders as "The COD tensor {#The-COD-tensor-\boldsymbol{B}}", the formula is
+# dropped, and the same garbage lands in the "On this page" outline. Twenty-three
+# headings across seven pages were affected.
+#
+# Stripping those characters from the slug is safe here: nothing links to those
+# anchors (checked against every `](…#…)` destination in the generated Markdown),
+# and this narrows to headings only, leaving docstring anchors — which legitimately
+# carry braces, are emitted as raw `<a id=…>`, and *are* linked to — untouched.
+#
+# Remove once `sanitized_anchor_label` covers these characters upstream.
+function DocumenterVitepress.render(
+        io::IO,
+        mime::MIME"text/plain",
+        node::Documenter.MarkdownAST.Node,
+        header::Documenter.AnchoredHeader,
+        page,
+        doc;
+        kwargs...,
+    )
+    anchor = header.anchor
+    label = DocumenterVitepress.sanitized_anchor_label(anchor)
+    id = replace(replace(label, r"[\\{}]" => ""), " " => "-")
+    heading = first(node.children)
+    println(io)
+    print(io, "#"^(heading.element.level), " ")
+    heading_iob = IOBuffer()
+    DocumenterVitepress.render(heading_iob, mime, node, heading.children, page, doc; kwargs...)
+    print(io, rstrip(String(take!(heading_iob))))
+    print(io, " {#$(id)}")
+    if haskey(kwargs, :inventory)
+        item = DocumenterVitepress.InventoryItem(
+            name = anchor.id,
+            domain = "std",
+            role = "label",
+            dispname = DocumenterVitepress._get_inventory_dispname(
+                anchor.id, Documenter.MDFlatten.mdflatten(anchor.node)
+            ),
+            priority = -1,
+            uri = DocumenterVitepress._get_inventory_uri(doc, page, id),
+        )
+        push!(kwargs[:inventory], item)
+    end
+    println(io)
+    return nothing
+end
+
+# ── Stopgap: ordered lists start at 2, and swallow their first item ──────────
+# DocumenterVitepress numbers ordered-list items with `bullet(i) = "$(i+1). "`,
+# but `enumerate` is already 1-based: every ordered list in the manual came out
+# numbered from 2. It also emits no blank line before the list.
+#
+# Together those two produce the damage seen on the References page. A list whose
+# first marker is `2.` cannot interrupt a paragraph — CommonMark allows that only
+# for a list starting at `1.` — so, with no blank line to separate them, the first
+# entry was absorbed into the preceding prose as plain text and the list began at
+# `3.`. Eighteen ordered lists across the manual were affected; not one of them
+# started at 1.
+#
+# Remove once the numbering is fixed upstream.
+function DocumenterVitepress.render(
+        io::IO,
+        mime::MIME"text/plain",
+        node::Documenter.MarkdownAST.Node,
+        list::Documenter.MarkdownAST.List,
+        page,
+        doc;
+        kwargs...,
+    )
+    bullet(i) = list.type === :ordered ? "$(i). " : "- "
+    println(io)
+    iob = IOBuffer()
+    for (i, item) in enumerate(node.children)
+        DocumenterVitepress.render(
+            iob, mime, item, item.children, page, doc; prenewline = false, kwargs...
+        )
+        eachline = split(String(take!(iob)), '\n')
+        # Continuation lines must line up with the text, i.e. under the marker's
+        # full width. Upstream hard-codes two spaces, which fits `- ` but not
+        # `1. `: a display equation inside an ordered item fell out of the list,
+        # splitting it in two and restarting the numbering.
+        pad = " "^length(bullet(i))
+        eachline[2:end] .= pad .* eachline[2:end]
+        final_string = join(eachline, '\n')
+        endswith(final_string, '\n') || (final_string *= "\n")
+        print(io, bullet(i))
+        print(io, final_string)
+    end
+    return nothing
+end
+
 makedocs(;
-    clean = false,
+    # `clean = false` was kept here from the first commit, with no stated
+    # reason. It let pages deleted from the source survive in `build/` and go
+    # on being deployed: four of them were still on the site when this was
+    # found. Nothing writes into `build/` before `makedocs`, so wiping it
+    # costs nothing.
     modules = [
         MeanFieldHomogenization,
         MeanFieldHomogenization.Elliptic,
@@ -68,21 +200,17 @@ makedocs(;
     remotes = nothing,
     authors = "Jean-François Barthélémy",
     sitename = "MeanFieldHomogenization.jl",
-    format = Documenter.HTML(;
-        canonical = "https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl",
-        repolink = "https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl",
-        edit_link = "main",
-        assets = ["assets/favicon.ico", "assets/custom.css", "assets/mathjax-flash.js"],
-        prettyurls = (get(ENV, "CI", nothing) == "true"),
-        collapselevel = 1,
-        mathengine = Documenter.MathJax3(),
-        # The interactive Plotly 3D percolation surfaces in the cement-paste
-        # diffusion chapter embed their data inline, exceeding the 200 KiB
-        # default; raise the ceiling for those pages.
-        size_threshold = 3_000_000,
-        size_threshold_warn = 1_500_000,
-        # The interactive 3D surfaces embed their data as inline HTML; allow it.
-        example_size_threshold = 2_000_000,
+    # The favicon and the logo are picked up automatically from `docs/src/assets`,
+    # and the sidebar is derived from `pages` below, so neither needs declaring
+    # here. There is no page-size ceiling to raise either: the inline data of the
+    # interactive 3D figures goes through Vite rather than through Documenter's
+    # `size_threshold` guard.
+    format = DocumenterVitepress.MarkdownVitepress(;
+        repo = "https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl",
+        devbranch = "main",
+        devurl = "dev",
+        deploy_url = "https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl",
+        description = "Mean-field homogenization of heterogeneous materials in Julia",
     ),
     plugins = [bib],
     pages = [
@@ -94,24 +222,53 @@ makedocs(;
         # layered inclusions, laminates, viscoelasticity), then the N-body
         # models, and finally the appendices — pages that support the rest but
         # are written in its language rather than the other way round.
+        # Grouped by what a chapter *is about*, not by how it is derived. The
+        # order follows the dependency chain: the Eshelby problem and the
+        # tensors it produces, then the schemes built on them, then the three
+        # ways the problem is generalized — a richer pattern in place of the
+        # ellipsoid, a different physics, a different time dependence — then
+        # periodic homogenization, which is a different construction entirely,
+        # and finally the N-body models that drop the one-site picture.
         "Theory" => [
             "theory/index.md",
             "theory/notation.md",
-            "Foundations" => [
+            "Foundations — the Eshelby problem" => [
                 "theory/eshelby_problem.md",
                 "theory/hill_tensors.md",
                 "theory/localization.md",
-                "theory/homogenization.md",
             ],
-            "Schemes and specializations" => [
+            "Homogenization schemes" => [
+                "theory/homogenization.md",
                 "theory/differential_scheme.md",
-                "theory/cod_tensors.md",
-                "theory/thermal_cracks.md",
+            ],
+            # A layered sphere or a confocal spheroid is not an inclusion with a
+            # Hill tensor: it is a *pattern* whose generalized Eshelby problem is
+            # solved for its average concentration tensor. Any pattern admitting
+            # that treatment belongs here.
+            "The generalized Eshelby problem — morphological patterns" => [
                 "theory/layered_sphere.md",
                 "theory/layered_spheroid.md",
-                "theory/laminate.md",
+            ],
+            # A crack is a degenerate ellipsoid, so it stays close to the
+            # foundations rather than joining the composite patterns.
+            "Cracks" => [
+                "theory/cod_tensors.md",
+                "theory/thermal_cracks.md",
+            ],
+            "Extension to conductivity" => [
+                "theory/conductivity.md",
+            ],
+            # Two distinct extensions: the correspondence principle, which maps a
+            # non-ageing problem onto an elastic one, and the ageing case, where
+            # no such map exists and the Eshelby problem itself is generalized.
+            "Extension to viscoelasticity" => [
                 "theory/laplace_carson.md",
                 "theory/viscoelasticity.md",
+            ],
+            # NOT a morphological pattern: the laminate result comes out of
+            # periodic homogenization, a construction of its own.
+            "Periodic homogenization" => [
+                "theory/laminate.md",
             ],
             "N-body models" => [
                 "theory/interaction_tensors.md",
@@ -139,8 +296,13 @@ makedocs(;
             "Cells and schemes" => [
                 "manual/schemes.md",
                 "manual/particle_assemblies.md",
-                "manual/laminates.md",
                 "manual/multiscale.md",
+            ],
+            # Separated from the schemes for the same reason as in Theory: a
+            # laminate is the closed form of a periodic problem, not a cell
+            # holding inclusions.
+            "Periodic homogenization" => [
+                "manual/laminates.md",
             ],
             "Beyond elasticity" => [
                 "manual/conductivity.md",
@@ -234,6 +396,15 @@ makedocs(;
             "applications/ageing_creep.md",
             "applications/lamellar_clay.md",
         ],
+        # Getting work into and out of MeanFieldHomogenization. These are companions to
+        # the library rather than chapters about it, which is why they sit
+        # together at the end of the user-facing material instead of
+        # interrupting the manual.
+        "Tools and migration" => [
+            "tools/from_echoes.md",
+            "tools/echoes2mfh.md",
+            "tools/mfhstudio.md",
+        ],
         # MeanFieldHomogenization *inside* a finite-element code — the exact
         # opposite of `manual/fe_inclusions.md`, which is the FE solver inside
         # MeanFieldHomogenization. Kept as its own top-level section so the two
@@ -256,15 +427,6 @@ makedocs(;
                 "fe_coupling/thick_cylinder.md",
                 "fe_coupling/arma2011.md",
             ],
-        ],
-        # Getting work into and out of MeanFieldHomogenization. These are companions to
-        # the library rather than chapters about it, which is why they sit
-        # together at the end of the user-facing material instead of
-        # interrupting the manual.
-        "Tools and migration" => [
-            "tools/from_echoes.md",
-            "tools/echoes2mfh.md",
-            "tools/mfhstudio.md",
         ],
         "Developer" => [
             "developer/architecture.md",
@@ -301,8 +463,12 @@ makedocs(;
     warnonly = true,
 )
 
-deploydocs(;
+# DocumenterVitepress writes a real directory per version rather than the
+# symlinks Documenter used, so it needs its own `deploydocs`.
+DocumenterVitepress.deploydocs(;
     repo = "github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl.git",
+    target = joinpath(@__DIR__, "build"),
+    branch = "gh-pages",
     devbranch = "main",
     push_preview = false,
 )

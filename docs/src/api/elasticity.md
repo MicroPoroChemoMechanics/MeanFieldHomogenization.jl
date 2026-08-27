@@ -22,7 +22,7 @@ MeanFieldHomogenization.Core.eshelby_tensor
 MeanFieldHomogenization.Elasticity.iso_stiffness
 ```
 
-## Nanoinclusion interfaces (Dormieux, Lemarchand & Brisard 2016)
+## Nanoinclusion interfaces
 
 ```@docs
 surface_stiffness

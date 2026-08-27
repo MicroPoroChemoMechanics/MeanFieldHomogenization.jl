@@ -27,7 +27,7 @@ For each inclusion the **dilute strain concentration tensor**
 ``\mathbb A_\mathrm{dil}^{(i)}`` and the **size-independent stiffness
 contribution** ``\mathbb N_i = (\mathbb C_i - \mathbb C_0):
 \mathbb A_\mathrm{dil}^{(i)}`` are the natural building blocks
-([Kachanov & Sevostianov 2018](@cite kachanov2018)). The dual
+([kachanov2018](@cite)). The dual
 **compliance contribution** ``\mathbb H_i = (\mathbb S_i - \mathbb S_0):
 \mathbb A_\sigma^{(i)}`` is more natural for cracks (whose stiffness
 contribution is the rank-1 limit of a divergent eigenvalue).
@@ -35,8 +35,8 @@ contribution is the rank-1 limit of a divergent eigenvalue).
 ## Bounds
 
 | Scheme | Formula |
-| --- | --- |
-| **Voigt** | ``\langle \mathbb C \rangle = \sum_i f_i \mathbb C_i`` (upper bound, [Hill 1965](@cite hill1965)) |
+| :-- | :-- |
+| **Voigt** | ``\langle \mathbb C \rangle = \sum_i f_i \mathbb C_i`` (upper bound, [hill1965](@cite)) |
 | **Reuss** | ``\langle \mathbb S \rangle^{-1}`` (lower bound) |
 
 Cracks are ignored in both bounds: their volume contribution vanishes in
@@ -48,12 +48,12 @@ Writing ``\mathbb N_\Sigma = \sum_i f_i \mathbb N_i`` for the total dilute
 stiffness contribution and ``\mathbb S_0 = \mathbb C_0^{-1}``:
 
 | Scheme | Effective stiffness |
-| --- | --- |
+| :-- | :-- |
 | **Dilute** | ``\mathbb C_0 + \mathbb N_\Sigma`` (first order in ``f``) |
 | **DiluteDual** | ``\big(\mathbb S_0 + \sum_i f_i \mathbb H_i\big)^{-1}`` |
-| **Mori-Tanaka** | ``\mathbb C_0 + \mathbb N_\Sigma : \big(f_m\,\mathbb I + \sum_i f_i \mathbb A_\mathrm{dil}^{(i)}\big)^{-1}`` ([Mori-Tanaka 1973](@cite mori1973), [Christensen 1990](@cite christensen1990)) |
+| **Mori-Tanaka** | ``\mathbb C_0 + \mathbb N_\Sigma : \big(f_m\,\mathbb I + \sum_i f_i \mathbb A_\mathrm{dil}^{(i)}\big)^{-1}`` ([mori1973](@cite), [christensen1990](@cite)) |
 | **Maxwell** | ``\mathbb C_0 + \mathbb N_\Sigma : (\mathbb I - \mathbb P_d : \mathbb N_\Sigma)^{-1}`` with ``\mathbb P_d`` the Hill tensor of the *outer distribution shape* |
-| **PCW** | identical algebraic form, distribution-shape-aware ensemble interpretation ([Ponte-Castañeda & Willis 1995](@cite ponte1995)) |
+| **PCW** | identical algebraic form, distribution-shape-aware ensemble interpretation ([ponte1995](@cite)) |
 
 ### The second shape: Maxwell and PCW
 
@@ -69,7 +69,7 @@ reads it as a safety ellipsoid around each inclusion:
 The **distribution shape** is stored at the RVE level (default: unit
 sphere ⇒ Mori-Tanaka limit). Any `AbstractInclusion` can be used; the
 hierarchy [`AbstractDistributionShape`](@ref) leaves room for a future
-`PairwiseDistribution` extension following [Willis 1982](@cite willis1982).
+`PairwiseDistribution` extension following [willis1982](@cite).
 
 ## Iterative schemes
 
@@ -81,8 +81,8 @@ a fixed point:
 ![No phase plays the role of a matrix: the reference medium is the effective medium being sought (from the Echoes book [echoes](@cite))](../assets/schemes/rve_self_consistent.png)
 
 | Scheme | Iteration |
-| --- | --- |
-| **SelfConsistent** ([McLaughlin 1977](@cite mclaughlin1977)) | ``\mathbb C^{(n+1)} = \big(\sum_i f_i \mathbb C_i : \mathbb A_\mathrm{dil}^{(i)}(\mathbb C^{(n)})\big) : \big(\sum_i f_i \mathbb A_\mathrm{dil}^{(i)}(\mathbb C^{(n)})\big)^{-1}`` |
+| :-- | :-- |
+| **SelfConsistent** ([mclaughlin1977](@cite)) | ``\mathbb C^{(n+1)} = \big(\sum_i f_i \mathbb C_i : \mathbb A_\mathrm{dil}^{(i)}(\mathbb C^{(n)})\big) : \big(\sum_i f_i \mathbb A_\mathrm{dil}^{(i)}(\mathbb C^{(n)})\big)^{-1}`` |
 | **AsymmetricSelfConsistent** | switches between stiffness- and compliance-form iteration based on the matrix-vs-Voigt-bound contrast |
 
 The default solver is a damped Picard fixed point (Anderson with memory
@@ -94,7 +94,7 @@ non-linear algorithm (`NewtonRaphson()`, `TrustRegion()`,
 ## Differential scheme
 
 The **DifferentialScheme** integrates the multi-phase Norris ODE
-([Norris 1985](@cite norris1985)) on a fictitious incorporation time
+([norris1985](@cite)) on a fictitious incorporation time
 ``\tau \in [0, 1]``,
 
 ```math
@@ -129,9 +129,9 @@ on a [`ParticleAssembly`](@ref) instead, and share one ingredient, the
 [two-inclusion interaction tensor](@ref th-interaction) ``\mathbb{T}^{ab}``.
 
 | Scheme | Unknowns | Reference |
-| --- | --- | --- |
-| **ClusterModel** | mean strain of every family, from ``\sum_K \mathbb{M}_{IK} : \mathbb{A}^K = \mathbb{I}`` — see [the cluster model](@ref th-cluster) | [Molinari & El Mouden 1996](@cite molinari1996) |
-| **EquivalentInclusion** | polarization of every inclusion, from a Galerkin discretization of the weak Lippmann-Schwinger equation — see [the equivalent inclusion method](@ref th-eim) | [Brisard et al. 2014](@cite brisard2014) |
+| :-- | :-- | :-- |
+| **ClusterModel** | mean strain of every family, from ``\sum_K \mathbb{M}_{IK} : \mathbb{A}^K = \mathbb{I}`` — see [the cluster model](@ref th-cluster) | [molinari1996](@cite) |
+| **EquivalentInclusion** | polarization of every inclusion, from a Galerkin discretization of the weak Lippmann-Schwinger equation — see [the equivalent inclusion method](@ref th-eim) | [brisard2014](@cite) |
 
 The two are the *same* linear system on a periodic assembly and differ only in
 how the far field is closed. Both degenerate **exactly** onto Mori-Tanaka when

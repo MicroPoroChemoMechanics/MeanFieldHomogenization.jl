@@ -36,7 +36,7 @@ in a matrix `C₀`.  For a dilute family of inclusions of volume fraction
     uniform `C₁` does exist. This is what lets a layered or finite-element
     inclusion reach the schemes through gate B alone.
 
-See [Kachanov & Sevostianov (2018)](@cite kachanov2018).
+See [kachanov2018](@cite).
 """
 function stiffness_contribution(
         incl::AbstractInclusion,
@@ -62,7 +62,7 @@ compliance correction is `ΔS_eff = f × H` — see [`delta_compliance`](@ref).
     [`is_homogeneous_inclusion`](@ref MeanFieldHomogenization.Core.is_homogeneous_inclusion) is `false`; the exact identity
     `H = A_εσ - S₀ : A_σσ = (A_εε - S₀ : A_σε) : S₀` is used instead.
 
-See [Kachanov & Sevostianov (2018)](@cite kachanov2018).
+See [kachanov2018](@cite).
 """
 function compliance_contribution(
         incl::AbstractInclusion,

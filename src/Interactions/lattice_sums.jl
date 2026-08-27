@@ -30,7 +30,7 @@ what a receiver needs when summing over its *own* family of images.
 
 Enumerating a ball rather than a box is what makes the truncated lattice sum
 converge — see the file header and
-[Molinari & El Mouden 1996](@cite molinari1996), App. B.
+[molinari1996](@cite), App. B.
 """
 function periodic_images(r::AbstractVector, L::Real, R_c::Real; skip_self::Bool = false)
     d = length(r)

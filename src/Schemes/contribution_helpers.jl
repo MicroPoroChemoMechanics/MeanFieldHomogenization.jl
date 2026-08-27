@@ -25,7 +25,7 @@
     _phase_stress_strain_average(rve, name, prop, P₀, A_dil; kw...)
 
 Average stress per unit remote strain of phase `name`, `⟨C:ε⟩_r` — the **B**
-concentration tensor of [Barthélémy (2022)](@cite echoes), as opposed to the
+concentration tensor of [echoes](@cite), as opposed to the
 strain concentration tensor **A** (`A_dil`).
 
 The two must be kept distinct. `⟨C:ε⟩_r = C_r : ⟨ε⟩_r` requires **both**:

@@ -1,7 +1,7 @@
-# # The equivalent inclusion method: Brisard et al. (2014), Table 1
+# # The equivalent inclusion method, against a published table
 #
 # The variational form of the equivalent inclusion method
-# ([Brisard, Dormieux & Sab 2014](https://doi.org/10.1016/j.ijsolstr.2013.10.037))
+# ([brisard2013bc](@cite))
 # is a Galerkin discretization of the weak Lippmann-Schwinger equation. At order
 # `p = 0` the polarization is constant over each inclusion and the unknowns solve
 #
@@ -15,8 +15,8 @@
 # ``\mathbb{P}_\Omega`` being the Hill tensor of the statistical volume element
 # itself — the term that implements their mixed boundary conditions and removes
 # any need for periodization. The package shares the sign convention of
-# [Brisard, Bertin & Legoll (2023)](https://doi.org/10.1016/j.cma.2023.116389),
-# so this is their Eq. (37) transcribed with nothing flipped: the self term is
+# [brisard2023](@cite),
+# so this is transcribed with nothing flipped: the self term is
 # ``\mathbb{T}^{aa} = +\mathbb{P}_a`` and every block carries a plus.
 #
 # Because the method minimizes a Hashin-Shtrikman functional over a

@@ -19,7 +19,7 @@ Analytical Hill tensor of an infinite elliptic (or circular) cylinder
 of transverse semi-axes ``b\\ge c>0`` embedded in an isotropic matrix
 ``\\mathbb C_0 = 3k\\,\\mathbb J + 2\\mu\\,\\mathbb K``, obtained by
 passing to the limit ``a\\to\\infty`` of the prolate spheroid
-expressions ([Mura 1987](@cite mura1987), §11.22). In the cylinder
+expressions ([mura1987](@cite), §11.22). In the cylinder
 frame ``(\\hat{\\mathbf e}_1,\\hat{\\mathbf e}_2,\\hat{\\mathbf e}_3)``
 the first row and column of ``\\mathbb P^{\\text{cyl}}`` vanish: no
 polarization is transmitted along the cylinder axis.

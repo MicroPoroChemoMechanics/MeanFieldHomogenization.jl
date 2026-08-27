@@ -1,6 +1,6 @@
 # # The cluster model on cubic arrays
 #
-# The cluster model of [Molinari & El Mouden (1996)](https://doi.org/10.1016/0020-7683(95)00275-8)
+# The cluster model of [molinari1996](@cite)
 # solves for the mean strain of *every* inclusion, accounting for the pairwise
 # interaction with each neighbor inside a cluster of radius `R_c`. Unlike the
 # one-site schemes it therefore sees **where** the inclusions are, which is why
@@ -20,10 +20,9 @@
 # ```
 #
 # whose self counterpart is ``\mathbb{T}^{aa} = +\mathbb{P}`` — the package follows
-# the sign convention of [Brisard, Bertin & Legoll (2023)](https://doi.org/10.1016/j.cma.2023.116389),
-# Eq. (9), for which the Green operator maps a polarization onto *minus* the induced
-# field. Molinari's own convention is the opposite one, so the formulas below are his
-# with that flip already applied. Theory: the
+# the sign convention of [brisard2023](@cite), for which the Green operator maps a
+# polarization onto *minus* the induced field. The opposite convention is used in
+# [molinari1996](@cite), so the formulas below carry that flip already applied. Theory: the
 # [cluster model](@ref th-cluster) and the [interaction tensors](@ref th-interaction).
 
 import Pkg                                                          #jl
@@ -199,7 +198,7 @@ p3
 #
 # On a periodic assembly the two N-body schemes of the package are the *same*
 # linear system — the identity Brisard et al. (2014) state in their §3.1, their
-# order-zero influence pseudotensors being the interaction tensors of Molinari &
+# order-zero influence pseudotensors being the interaction tensors of
 # El Mouden. They agree to machine precision, which is the acceptance gate of
 # both implementations.
 

@@ -143,7 +143,12 @@ let n = 5, f = FPORE
         title = "Composite sphere: void core (f = $f) and $n plastic shells"
     )
 end
+````
 
+The same geometry, parameterized by the shell moduli rather than fixed, is
+what the secant iteration below rebuilds at every step:
+
+````@example secant_elastoplasticity
 function porous_sphere(μs, f)
     n = length(μs)
     T = eltype(μs)

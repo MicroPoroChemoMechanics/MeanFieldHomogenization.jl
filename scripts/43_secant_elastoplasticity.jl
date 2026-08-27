@@ -138,6 +138,9 @@ let n = 5, f = FPORE
     )
 end
 
+# The same geometry, parameterized by the shell moduli rather than fixed, is
+# what the secant iteration below rebuilds at every step:
+
 function porous_sphere(μs, f)
     n = length(μs)
     T = eltype(μs)

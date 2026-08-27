@@ -21,7 +21,7 @@
 
 Hill polarization tensor of a 3-D ellipsoid in an arbitrarily
 anisotropic matrix, evaluated by the adaptive 2-D DECUHR cubature of
-[Espelid & Genz 1994](@cite espelid1994) called through `Integrals.jl`
+[espelid1994](@cite) called through `Integrals.jl`
 (`DecuhrAlgorithm`).  ForwardDiff-compatible — `alpha = 0.0` is
 supplied explicitly so the integrand is treated as smooth (no vertex
 singularity) and `DecuhrAlgorithm` bypasses the Float64-only

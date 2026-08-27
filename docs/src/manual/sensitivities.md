@@ -57,7 +57,7 @@ differentiate against. Four concrete lens kinds are shipped, plus a
 `sensitivity(f, x₀)` closure fallback for everything else.
 
 | Helper                          | Kind                                | Underlying type             |
-| ------------------------------- | ----------------------------------- | --------------------------- |
+| :------------------------------ | :---------------------------------- | :-------------------------- |
 | `amount(:I)`                    | volume fraction or crack density    | `AmountParameter`           |
 | `property(:I, :C, :bulk)`       | scalar coefficient of a tensor      | `PropertyParameter`         |
 | `geometry(:I, :semi_axes, 3)`   | scalar geometry field               | `GeometryParameter`         |
@@ -67,7 +67,7 @@ Named selectors recognized by `property` (other symbols fall back to a
 positional `Int` index into `get_data(tensor)`):
 
 | Tensor type    | Named selectors                                      |
-| -------------- | ---------------------------------------------------- |
+| :------------- | :--------------------------------------------------- |
 | `TensISO{2}`   | `:scalar`, `:λ`                                      |
 | `TensISO{4,3}` | `:bulk`, `:K`, `:α` ; `:shear`, `:μ`, `:β`           |
 | `TensTI{2}`    | `:transverse`, `:a` ; `:axial`, `:b`                 |
@@ -161,7 +161,7 @@ is, on average, isotropic. The `symmetrize` keyword on `add_matrix!` /
 localization tensor onto the corresponding symmetry class:
 
 | Symmetrize value           | Meaning                                                     | Result class |
-| -------------------------- | ----------------------------------------------------------- | ------------ |
+| :------------------------- | :---------------------------------------------------------- | :----------- |
 | `:none` (default)          | inclusion at its declared orientation                       | as input     |
 | `:iso`                     | uniform spatial distribution (Reynolds avg over `SO(3)`)    | `TensISO`    |
 | `:ti` / `TISymmetrize(n)`  | uniform azimuthal distribution around axis `n` (default ez) | `TensTI(n)`  |

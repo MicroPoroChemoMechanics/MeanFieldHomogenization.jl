@@ -55,7 +55,7 @@ B_nn = 8(1−ν²)/(3E) · 1/𝓔_η
 with ``\\mathcal K_\\eta = \\mathcal K(\\sqrt{1-\\eta^{2}})`` and
 ``\\mathcal E_\\eta = \\mathcal E(\\sqrt{1-\\eta^{2}})`` the complete
 elliptic integrals of first and second kind
-([Abramowitz & Stegun 1972](@cite abramowitz1972)). Circular penny
+([abramowitz1972](@cite)). Circular penny
 limit ``\\eta=1``: ``B_{nn} = 16(1-\\nu^{2})/(3\\pi E)``,
 ``B_{mm}=B_{\\ell\\ell}=B_{nn}/(1-\\nu/2)``.
 """
@@ -75,8 +75,8 @@ end
 
 Closed-form COD tensor of a ribbon (tunnel) crack in an isotropic
 matrix.  Ribbon limit of the elliptic closed form
-(see [Kachanov 1993](@cite kachanov1993),
- [Sevostianov & Kachanov 2002](@cite sevostianov2002)).
+(see [kachanov1993](@cite),
+ [sevostianov2002](@cite)).
 """
 function _cod_iso_ribbon(c::RibbonCrack, E::Number, ν::Number)
     T = promote_type(typeof(E), typeof(ν))
@@ -104,9 +104,9 @@ Closed-form COD tensor of an elliptic crack in a transversely
 isotropic matrix whose TI axis is aligned with the crack normal
 ``\\hat{\\mathbf n}``. Expressions are given in the engineering
 parameterization ``(E,\\nu_{1},\\nu_{2},H,\\Gamma)`` of
-[Hoenig 1978](@cite hoenig1978),
-[Kanaun & Levin 2009](@cite kanaun2009),
-[Barthélémy et al. 2021](@cite barthelemyIJES2021); the auxiliary scalar
+[hoenig1978](@cite),
+[kanaun2009](@cite),
+[barthelemyIJES2021](@cite); the auxiliary scalar
 ``\\sigma_\\gamma`` is defined in `_ti_sigma_gamma`. Reduces to the
 isotropic case for ``\\nu_{1}=\\nu_{2}=\\nu``, ``H=\\Gamma=1``.
 """
@@ -135,8 +135,8 @@ end
 
 Closed-form COD tensor of a ribbon crack in an aligned TI matrix,
 ribbon limit of the elliptic TI closed form
-([Hoenig 1978](@cite hoenig1978),
- [Barthélémy et al. 2021](@cite barthelemyIJES2021)).
+([hoenig1978](@cite),
+ [barthelemyIJES2021](@cite)).
 """
 function _cod_ti_ribbon(c::RibbonCrack, E::Number, H::Number, ν₁::Number, ν₂::Number, Γ::Number)
     T = promote_type(typeof(E), typeof(H), typeof(ν₁), typeof(ν₂), typeof(Γ))

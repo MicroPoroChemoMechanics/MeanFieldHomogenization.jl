@@ -17,8 +17,8 @@ P(A, 3λI + 2μK) = U^A/(λ+2μ) + (V^A − U^A)/μ .
 Uses the Kelvin–Mandel forms of ``\\mathbb U^{\\mathbf A}`` and
 ``\\mathbb V^{\\mathbf A}`` (see [`tens_UA`](@ref), [`tens_VA`](@ref))
 and produces the most specific TensND type compatible with the
-ellipsoid symmetry ([Willis 1977](@cite willis1977),
-[Mura 1987](@cite mura1987)).
+ellipsoid symmetry ([willis1977](@cite),
+[mura1987](@cite)).
 """
 function _hill_3d_iso(ell::Ellipsoid{3, Spherical}, C₀)
     T = promote_type(eltype(ell.semi_axes), eltype(C₀))

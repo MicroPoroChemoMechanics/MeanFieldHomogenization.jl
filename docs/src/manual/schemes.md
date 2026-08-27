@@ -1,4 +1,4 @@
-# [Homogenization schemes — user manual](@id man-schemes)
+# [Homogenization schemes](@id man-schemes)
 
 The `MeanFieldHomogenization.Schemes` module provides ten classical mean-field
 homogenization schemes plus a [`RVE`](@ref) container holding the
@@ -45,7 +45,7 @@ elasticity) or `property = :K` (conductivity). Iterative schemes also
 accept `abstol`, `maxiters`, `damping`, `verbose`.
 
 | Long form | Short / ECHOES code |
-| --- | --- |
+| :-- | :-- |
 | `:voigt` | `:v`, `:V`, `:Voigt`, `:VOIGT` |
 | `:reuss` | `:r`, `:R` … |
 | `:dilute` | `:dil`, `:DIL` |

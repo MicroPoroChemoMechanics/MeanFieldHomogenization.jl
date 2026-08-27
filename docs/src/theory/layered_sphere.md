@@ -9,7 +9,7 @@ of [christensenLo1979](@cite)); imperfect interfaces follow
 physics:
 
 | Elasticity (primal / dual)                   | Conductivity (primal / dual)                    |
-| -------------------------------------------- | ----------------------------------------------- |
+| :------------------------------------------- | :---------------------------------------------- |
 | `SpringInterface(kn, kt)`                    | `KapitzaInterface(ρ)`                           |
 | `MembraneInterface(κs, μs)` (Gurtin-Murdoch) | `SurfaceConductiveInterface(ks)` (Barthélémy-Bignonnet 2020) |
 

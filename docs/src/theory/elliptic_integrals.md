@@ -101,7 +101,7 @@ subtype.
 ## Dispatch table
 
 | Scalar type          | Backend                                          |
-| -------------------- | ------------------------------------------------ |
+| :------------------- | :----------------------------------------------- |
 | `Float64`            | `Elliptic.jl` (GSL C binding, fastest)           |
 | `ForwardDiff.Dual`   | pure-Julia AGM / Carlson (derivatives work)      |
 | `BigFloat`, generic  | AGM / Carlson                                    |

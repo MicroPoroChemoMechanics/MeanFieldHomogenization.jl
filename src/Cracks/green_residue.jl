@@ -12,8 +12,8 @@
 
 Per-``\\varphi`` kernel of the crack-plane line integral that produces
 the COD tensor of an anisotropic matrix, evaluated by Cauchy residues
-([Masson 2008](@cite masson2008) adapted to the crack limit, with the
-limit-algorithm construction of [Barthélémy 2009](@cite barthelemyIJSS2009)).
+([masson2008](@cite) adapted to the crack limit, with the
+limit-algorithm construction of [barthelemyIJSS2009](@cite)).
 Float64 only.
 """
 function _Qnn_star_residue(

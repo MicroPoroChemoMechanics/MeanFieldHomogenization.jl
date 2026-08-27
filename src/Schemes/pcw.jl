@@ -17,7 +17,7 @@
 PCW homogenization for property `:p`. In the single-shape case
 (`UniformDistribution`), the result coincides with
 [`Maxwell`](@ref) but the docstring and reference differ —
-[Ponte-Castañeda & Willis 1995](@cite ponte1995) frames the formula in
+[ponte1995](@cite) frames the formula in
 terms of an ensemble average over a distribution function rather than a
 single effective inclusion.
 

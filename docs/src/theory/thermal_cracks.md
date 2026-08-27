@@ -5,28 +5,21 @@ Transposition of
 2nd-order (conductivity / diffusion / Darcy) problem, where the driving field
 is a vector rather than a symmetric 2-tensor.
 
-## Elasticity ↔ Conductivity — correspondence table
+## What is specific to a crack
 
-The table below is a *literal* dictionary: every entry on the right is the
-entry on the left with the symbols substituted, no sign changed. That is only
-true because the stress analog is taken to be **minus** the flux,
-``\boldsymbol\sigma \equiv -\underline{q} = \boldsymbol{K}_0\cdot\nabla T``, which is
-the convention fixed in
-[Elasticity and transport: one set of formulas](@ref th-notation-sigma-q):
-``\boldsymbol\sigma\cdot\underline{n}`` is then, in both theories, what the
-exterior transmits to the interior across a surface. Read the rows with that
-substitution in mind and no minus sign is ever needed.
+The general elasticity ↔ conductivity dictionary — fields, fluxes, moduli, Hill
+and localization tensors — is stated once in
+[Extension to conductivity](@ref th-conductivity), together with the
+``\boldsymbol\sigma \equiv -\underline{q}`` convention that makes every row of
+it sign-free. Only the rows below are proper to the flat-inclusion limit, and
+they are the reason this chapter exists at all.
 
 | Elasticity (4-tensor problem)                                    | Conductivity (2-tensor problem)                                         |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Displacement ``\underline{u}`` — 1-tensor                            | Temperature ``T`` — scalar                                              |
-| Stress ``\boldsymbol\sigma = \mathbb C:\boldsymbol\varepsilon``  | ``\boldsymbol\sigma \equiv -\underline{q} = \boldsymbol{K}_0\cdot\nabla T`` (see below)|
-| Stiffness ``\mathbb C`` — 4-tensor, 21 independent components    | Conductivity ``\boldsymbol{K}_0`` — 2-tensor, 6 independent components       |
-| Hill tensor ``\mathbb P`` — 4-tensor                             | Hill tensor ``\boldsymbol{P}`` — 2-tensor                                    |
+| :--------------------------------------------------------------- | :---------------------------------------------------------------------- |
 | COD tensor ``\boldsymbol{B}`` — **2-tensor** (6 components)           | COD scalar ``b`` — **scalar** (1 component)                             |
 | Kachanov factorization ``\mathbb H = k\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}``, ``k=3/4`` (elliptic), ``k=2/\pi`` (ribbon) | Rank-1 factorization ``\boldsymbol{R} = k\,b\,\underline{n}\otimes\underline{n}``, same ``k`` |
 | Dilute contribution ``\Delta\mathbb S = (4\pi/3)\varepsilon^{3\mathrm d}\mathbb H`` (elliptic), ``= \pi\varepsilon^{2\mathrm d}\mathbb H`` (ribbon) | Dilute contribution ``\Delta\boldsymbol{R} = (4\pi/3)\varepsilon^{3\mathrm d}\boldsymbol{R}`` (elliptic), ``= \pi\varepsilon^{2\mathrm d}\boldsymbol{R}`` (ribbon) |
-| Sextic acoustic polynomial (Masson 2008)                         | Quadratic acoustic form ``\underline{\xi}\cdot\boldsymbol{K}_0\cdot\underline{\xi}`` → **analytical** |
+| Sextic acoustic polynomial [masson2008](@cite)                   | Quadratic acoustic form ``\underline{\xi}\cdot\boldsymbol{K}_0\cdot\underline{\xi}`` → **analytical** |
 | Stress intensity factors ``K_I, K_{II}, K_{III}``                | Heat-flux intensity factor ``K_T`` — scalar (mode I analog only)      |
 | Displacement intensity factor ``\underline{N}``                | Temperature intensity factor — scalar ``[T]_\text{avg}``                |
 
@@ -51,13 +44,13 @@ Same geometric families as in the elasticity chapter:
 ## Hill tensor Taylor expansion and block-matrix limit
 
 Mirror of the elasticity derivation of
-[Barthélémy (2009)](@cite barthelemyIJSS2009).  For a flat ellipsoidal
+[barthelemyIJSS2009](@cite).  For a flat ellipsoidal
 inclusion of aspect ratio ``\omega\to 0``, the 2nd-order Hill tensor is
 computed via the formula
 ``\boldsymbol{P}(\boldsymbol{A},\boldsymbol{K}_0)
 = \boldsymbol{K}_0^{-1/2}\cdot\boldsymbol{I}^{\boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}}
   \cdot\boldsymbol{K}_0^{-1/2}``
-([Giraud et al. 2019](@cite giraudMOM2019)), where
+([giraudMOM2019](@cite)), where
 ``\boldsymbol{I}^{\boldsymbol{B}}`` is assembled in the eigenbasis of
 ``\boldsymbol{B}^T\boldsymbol{B}`` (right singular vectors of
 ``\boldsymbol{B} = \boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}``).  As ``\omega\to 0``:
@@ -309,7 +302,7 @@ which reduces to ``b = \pi/(2 k_0)`` for an isotropic matrix.
 
 Historically these formulas were obtained by the square-root change of variable
 ``\tilde{\underline{x}} = \boldsymbol{K}_0^{-1/2}\underline{x}``
-([Giraud et al. 2019](@cite giraudMOM2019)), which maps the problem to an
+([giraudMOM2019](@cite)), which maps the problem to an
 isotropic one with a *transformed crack shape*: with
 ``\tilde{\boldsymbol{A}} = \boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}`` and its
 singular values ``\sigma_1\ge\sigma_2\ge\sigma_3 = 0``, the transformed aspect
@@ -362,8 +355,8 @@ resistivity of the cracked conductor is obtained via
 ```
 
 These reduce to the Sevostianov–Kachanov expressions
-(see [Sevostianov & Kachanov (2002)](@cite sevostianov2002),
- [Kachanov (2018)](@cite kachanov2018)).
+(see [sevostianov2002](@cite),
+ [kachanov2018](@cite)).
 
 ## Intensity factors
 

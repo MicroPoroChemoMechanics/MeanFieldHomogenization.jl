@@ -54,7 +54,7 @@ end
 """
     _evaluate(rve, scheme::DifferentialScheme, ::Val{p}; kw...) -> AbstractTens
 
-Differential scheme for property `:p` ([Norris 1985](@cite norris1985)).
+Differential scheme for property `:p` ([norris1985](@cite)).
 Integrates the multi-phase incorporation-sequence ODE on `τ ∈ [0, 1]`
 with the SciML `OrdinaryDiffEq.solve` driver (default `Tsit5`), in the
 stiffness or the compliance variable according to the scheme's

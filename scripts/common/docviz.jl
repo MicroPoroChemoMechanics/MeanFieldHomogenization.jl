@@ -1,16 +1,15 @@
 # =============================================================================
 #  docviz.jl — shared 3-D figure helpers for the demo scripts and the docs.
 #
-#  Documenter pages load require.js (AMD), so plotly.js must be pulled in
-#  *through* require.js — a plain global `<script>`/`Plotly` would be swallowed
-#  by the AMD loader and never define the global, leaving the figure blank.
-#  That preamble is the whole reason this file exists: it used to be copied by
-#  hand into every page that wanted an interactive figure.
+#  The docs are rendered by VitePress, which bundles plotly.js itself
+#  (`plotly.js-gl3d-dist-min`, declared in `docs/package.json`) and exposes a
+#  single drawing entry point, `window.mfhPlotly`, from
+#  `docs/src/.vitepress/theme/index.ts`. A figure therefore emits nothing but a
+#  container and a one-line call — see `_plotly_html`.
 #
-#  It also has to wait for MathJax. Both bundles are UMD and both are fetched
-#  while require.js is live, so they compete for its single anonymous `define`
-#  slot and the loser is silently dropped: reloading a page that had a figure
-#  *and* formulas showed one or the other, never both. See `_plotly_html`.
+#  Standalone `julia scripts/NN_*.jl` runs write the same HTML; opening one
+#  outside the docs needs a `window.mfhPlotly` of its own, which is the price of
+#  having a single emitter for both uses.
 #
 #  Include it with
 #
@@ -21,9 +20,9 @@
 #  build directory rather than at the script.
 #
 #  Everything here emits a `Base.HTML`, which Documenter embeds verbatim as the
-#  output of the block.  The plot data are inlined, so keep an eye on the page
-#  budget: `docs/make.jl` allows 2 MB per example and warns at 1.5 MB per page.
-#  The knobs that matter are the mesh resolution (`nu`, `nv`) and `DIGITS`.
+#  output of the block.  The plot data are inlined and then travel through Vite,
+#  so keep an eye on their size: the knobs that matter are the mesh resolution
+#  (`nu`, `nv`) and `DIGITS`.
 # =============================================================================
 
 using MeanFieldHomogenization
@@ -112,36 +111,20 @@ function plotly_surface(
     )
 end
 
-# The shared `<div>` + require.js preamble.  Every emitter above funnels here so
-# that the AMD dance is written exactly once.
+# The shared container + drawing call.  Every emitter above funnels here so that
+# the contract with the VitePress theme is written exactly once.
+#
+# The writer wraps `text/html` output containing a `<script>` in
+# `<ClientOnly v-exec-scripts v-html=…>`; because `v-html` assigns `innerHTML`,
+# which never runs scripts, the directive re-creates each one on mount — and
+# again on every client-side navigation, so a figure reached through the sidebar
+# draws just like one reached by a full page load.
 function _plotly_html(uid, height, data, layout)
     return Base.HTML(
         """
         <div id="$uid" style="width:100%;height:$(height)px;"></div>
         <script>
-        (function () {
-          var data = [$data];
-          var layout = $layout;
-          function draw(Plotly) { Plotly.newPlot("$uid", data, layout); }
-          function load() {
-            if (window.Plotly) { draw(window.Plotly); return; }
-            if (!window.require) { return; }
-            require.config({paths: {plotly_mfh: "https://cdn.plot.ly/plotly-2.35.2.min"}});
-            require(["plotly_mfh"], draw);
-          }
-          // Ask require.js for plotly only once MathJax has finished, so the two
-          // UMD bundles never contend for the anonymous `define` slot (see the
-          // file header). The deadline keeps the figure on a page where MathJax
-          // never arrives at all.
-          var started = false, waited = 0;
-          function once() { if (!started) { started = true; load(); } }
-          (function poll() {
-            var startup = window.MathJax && window.MathJax.startup;
-            if (startup && startup.promise) { startup.promise.then(once, once); return; }
-            if ((waited += 50) >= 5000) { once(); return; }
-            setTimeout(poll, 50);
-          })();
-        })();
+        window.mfhPlotly("$uid", [$data], $layout);
         </script>
         """
     )
@@ -588,20 +571,30 @@ function shape_traces(
     return traces
 end
 
+# Azimuth at which a cutaway starts. Plotly's default camera looks down on the
+# +x +y octant, i.e. azimuth 45°, so a cutaway must *remove* the sector around
+# 45° for the opening to face the reader. Drawing `[0, 1.5π]` removes
+# `[270°, 360°]`, which faces away: every layered figure then showed nothing but
+# the outermost shell, a uniform blob. Starting at 90° removes `[0°, 90°]`,
+# centered on the camera, and the whole stack of shells is on show.
+const CUT_START = π / 2
+
 function shape_traces(
         ls::MeanFieldHomogenization.LayeredSphere;
         colors = nothing, cutaway::Bool = true,
-        opacity::Real = 0.85, nu::Integer = 41, nv::Integer = 21,
+        opacity::Real = 1.0, nu::Integer = 41, nv::Integer = 21,
     )
     radii = Float64.(ls.radii)
     cols = colors === nothing ? _layer_colors(length(radii)) : colors
     traces = String[]
-    # Drawn from the outside in, each shell cut open over half its azimuth so
-    # the inner ones stay visible — the flat picture of the recurrence.
+    # Every shell cut open over the same quarter of its azimuth, so the inner
+    # ones stay visible — the flat picture of the recurrence. Opaque on purpose:
+    # six translucent nested surfaces blend into one muddy color.
+    u0 = cutaway ? CUT_START : 0.0
     umax = cutaway ? 1.5π : 2π
     for (k, r) in enumerate(radii)
         f = (u, v) -> (r * cos(v) * cos(u), r * cos(v) * sin(u), r * sin(v))
-        X, Y, Z = param_surface(f, range(0, umax; length = nu), range(-π / 2, π / 2; length = nv))
+        X, Y, Z = param_surface(f, range(u0, u0 + umax; length = nu), range(-π / 2, π / 2; length = nv))
         push!(traces, surface_trace(X, Y, Z; color = cols[mod1(k, length(cols))], opacity = opacity))
     end
     return traces
@@ -610,11 +603,12 @@ end
 function shape_traces(
         sp::MeanFieldHomogenization.LayeredSpheroid;
         colors = nothing, cutaway::Bool = true,
-        opacity::Real = 0.8, nu::Integer = 41, nv::Integer = 21,
+        opacity::Real = 1.0, nu::Integer = 41, nv::Integer = 21,
     )
     N = length(sp.q)
     cols = colors === nothing ? _layer_colors(N) : colors
     R = rotation_from_axis(sp.axis)
+    u0 = cutaway ? CUT_START : 0.0   # see CUT_START above
     umax = cutaway ? 1.5π : 2π
     traces = String[]
     for k in 1:N
@@ -623,7 +617,7 @@ function shape_traces(
             p = (disk * cos(v) * cos(u), disk * cos(v) * sin(u), ax * sin(v))
             return Tuple(R * collect(Float64, p))
         end
-        X, Y, Z = param_surface(f, range(0, umax; length = nu), range(-π / 2, π / 2; length = nv))
+        X, Y, Z = param_surface(f, range(u0, u0 + umax; length = nu), range(-π / 2, π / 2; length = nv))
         push!(traces, surface_trace(X, Y, Z; color = cols[mod1(k, length(cols))], opacity = opacity))
     end
     return traces

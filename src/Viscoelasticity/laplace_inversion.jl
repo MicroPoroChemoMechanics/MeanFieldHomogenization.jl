@@ -295,6 +295,20 @@ const DEFAULT_INVERSION = FixedTalbot(24)
 
 const _StructuredTens = Union{TensND.TensISO, TensND.TensTI, TensND.TensOrtho}
 
+"""
+    _realpart(x)
+
+Discard the imaginary part left over by a numerical inversion, whatever the
+container.  Every inversion method here evaluates the transform on complex
+nodes, so a real-valued original comes back with an imaginary residue of the
+order of the quadrature error; the caller wants the real object back, not a
+complex one.
+
+The tensor methods rebuild through `TensND._rebuild` rather than through
+`get_array`, which is what keeps a `TensISO`/`TensTI`/`TensOrtho` in its own
+class with its axis or frame intact — dropping to a generic `Tens` would lose
+the symmetry the scheme just established.
+"""
 _realpart(x::Real) = x
 _realpart(x::Number) = real(x)
 _realpart(M::AbstractMatrix) = real.(M)

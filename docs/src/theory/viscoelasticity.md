@@ -358,7 +358,7 @@ those classes are **closed** under Volterra product and inverse. That closure is
 what makes compact storage possible:
 
 | Class | Stored components | Full ``6n\times 6n`` | Storage cost | Closure operation |
-|-------|-------------------|----------------------|--------------|-------------------|
+|:------|:------------------|:---------------------|:-------------|:------------------|
 | ISO | ``(\alpha,\beta)`` | ``36n^2`` | **``2n^2``** (18×) | scalar Volterra products / inverses |
 | TI | ``(\ell_1,\dots,\ell_6)`` | ``36n^2`` | **``6n^2``** (6×) | ``(2n\times 2n)`` block-Volterra + 2 scalars |
 | ORTHO | ``(o_1,\dots,o_{12})`` | ``36n^2`` | **``12n^2``** (3×) | ``(3n\times 3n)`` block-Volterra + 3 scalars |

@@ -145,7 +145,7 @@ Two features of that set are worth pointing out.
 taken in a fixed order of priority — thirteen reactions in all:
 
 | phase | priority order |
-|---|---|
+|:--|:--|
 | C₃A | gypsum → AFt, then calcite → monocarboaluminate, then ettringite → AFm, then C₃AH₆ |
 | C₄AF | **C₃S then C₂S → siliceous hydrogarnet**, then gypsum → AFt, then calcite, then ettringite, then C₃AH₆ |
 
@@ -196,7 +196,7 @@ stoichiometry.
 factor of two:
 
 | | C-S-H per mole of Si | molar volume | water held inside |
-|---|---|---|---|
+|:--|:--|:--|:--|
 | CEMDATA18 (Jennite) | (SiO₂)(CaO)₁.₆₆₇(H₂O)₂.₁ | 78.4 cm³/mol | structural only |
 | [Lavergne2018](@cite) | C₁.₇SH₄ | 108.3 cm³/mol | structural **+ gel** |
 
