@@ -33,7 +33,7 @@ abstract type AbstractAssemblyBoundary end
 """
     MixedBC(shape) <: AbstractAssemblyBoundary
 
-Mixed boundary conditions of [Brisard et al. 2014](@cite brisard2014): the
+Mixed boundary conditions of [brisard2014](@cite): the
 statistical volume element `shape` — which **must be an ellipsoid**, since the
 derivation leans on Eshelby's theorem for the domain itself — is embedded in an
 infinite medium of the matrix stiffness, subject to a uniform strain at
@@ -58,7 +58,7 @@ MixedBC(radius::Real) = MixedBC(Elasticity.Ellipsoid(radius))
     PeriodicBox(period; cutoff = 3 * period) <: AbstractAssemblyBoundary
 
 Periodic elementary representative volume of
-[Molinari & El Mouden 1996](@cite molinari1996): the cubic cell of side
+[molinari1996](@cite): the cubic cell of side
 `period` tiles space, each particle carrying a family of periodic images, and
 the interaction sums are truncated to the images lying within `cutoff` of the
 receiver.

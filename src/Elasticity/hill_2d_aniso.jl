@@ -8,9 +8,8 @@
 
 Hill polarization tensor of a 2-D ellipse in an arbitrarily
 anisotropic plane-strain matrix.  The 1-D integral on the unit circle
-``S^{1}`` — the 2-D specialization of the [Willis 1977](@cite
-willis1977) form — is evaluated in closed form through a Cauchy
-residue reduction inspired by [Masson 2008](@cite masson2008); when
+``S^{1}`` — the 2-D specialization of the [willis1977](@cite) form — is evaluated in closed form through a Cauchy
+residue reduction inspired by [masson2008](@cite); when
 the acoustic-tensor eigenvalues nearly coincide the code falls back to
 the direct QuadGK quadrature of the integrand.
 """

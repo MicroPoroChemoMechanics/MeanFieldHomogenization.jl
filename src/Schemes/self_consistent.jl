@@ -38,7 +38,7 @@
     _evaluate(rve, sc::SelfConsistent, ::Val{p}; kw...) -> AbstractTens
 
 Self-consistent scheme for property `:p`
-([McLaughlin 1977](@cite mclaughlin1977)). Iterates
+([mclaughlin1977](@cite)). Iterates
 
 ```math
 \\mathbb C^{(n+1)} = \\Big(\\sum_i f_i\\,\\mathbb C_i \\!:\\! \\mathbb A_\\mathrm{dil}^{(i)}(\\mathbb C^{(n)})\\Big)

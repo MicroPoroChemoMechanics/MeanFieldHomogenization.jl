@@ -226,8 +226,9 @@ run the model.
     and sand), only **five numbers** — the TI parameters — flow between scales.
 
 The bridge between the two views is the TI parameterization: extract the five
-parameters of a tensor with [`best_fit_ti`](@ref), and rebuild a `TensTI` from
-five numbers.
+parameters of a tensor with `best_fit_ti` — one of the
+[symmetry projections](../api/schemes.md#Symmetry-projections) re-exported from
+`TensND` — and rebuild a `TensTI` from five numbers.
 
 ```@example strength
 const ez = (0.0, 0.0, 1.0)

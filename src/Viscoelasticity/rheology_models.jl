@@ -92,6 +92,15 @@ struct MaxwellUnit{T <: Number} <: AbstractRheology
     )
 end
 
+"""
+    relaxation_time(m::MaxwellUnit) -> Number
+
+The time constant `τ = η / E` of a Maxwell unit: the time over which its stress
+decays to `1/e` of its initial value under a held strain.  It is the sole shape
+parameter of the unit's relaxation function, `R(t) = E exp(-t/τ)`.
+
+See [`retardation_time`](@ref) for the Kelvin counterpart.
+"""
 relaxation_time(m::MaxwellUnit) = m.η / m.E
 
 carson_relaxation(m::MaxwellUnit, p) = (τ = relaxation_time(m); m.E * p * τ / (1 + p * τ))
@@ -124,6 +133,17 @@ struct KelvinUnit{T <: Number} <: AbstractRheology
     )
 end
 
+"""
+    retardation_time(m::KelvinUnit) -> Number
+
+The time constant `τ = η / E` of a Kelvin unit: the time over which its strain
+reaches `1 - 1/e` of the asymptotic value under a held stress.  It is the sole
+shape parameter of the unit's creep function, `J(t) = (1 - exp(-t/τ)) / E`.
+
+The expression matches [`relaxation_time`](@ref), but the two are not
+interchangeable: one describes a decay of stress, the other an approach to a
+bounded strain.
+"""
 retardation_time(m::KelvinUnit) = m.η / m.E
 
 carson_relaxation(m::KelvinUnit, p) = m.E * (one(p) + p * retardation_time(m))

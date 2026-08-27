@@ -1,6 +1,6 @@
 # [The cluster model](@id th-cluster)
 
-[Molinari & El Mouden 1996](@cite molinari1996). An N-body scheme: the mean strain of
+[molinari1996](@cite). An N-body scheme: the mean strain of
 every inclusion is solved for, accounting for the pairwise interaction with each
 neighbor inside a cluster, on top of the interaction with the matrix.
 
@@ -12,7 +12,7 @@ Notation as on [the conventions page](@ref th-notation); the interaction tensor
 
 Take the matrix as reference, ``\mathbb{C}_0 = \mathbb{C}_m``, and assume the strain
 uniform in each inclusion. Averaging the Lippmann-Schwinger equation over inclusion
-``I`` gives their Eq. (13),
+``I`` gives
 
 ```math
 \boldsymbol{\varepsilon}^I = \boldsymbol{\varepsilon}^0
@@ -21,7 +21,7 @@ uniform in each inclusion. Averaging the Lippmann-Schwinger equation over inclus
 ```
 
 and relating ``\boldsymbol{\varepsilon}^0`` to the macroscopic strain
-``\boldsymbol{E}`` through the average of the same equation yields their Eq. (21),
+``\boldsymbol{E}`` through the average of the same equation yields
 
 ```math
 \boldsymbol{\varepsilon}^I = \boldsymbol{E}
@@ -114,7 +114,7 @@ which is the Mori-Tanaka system term by term.
 
 !!! note "An exact degeneracy, not an approximation"
     With `cluster_radius = 0` the cluster model **is** [`MoriTanaka`](@ref), as an
-    algebraic identity — Appendix C of [Molinari & El Mouden 1996](@cite molinari1996).
+    algebraic identity — Appendix C of [molinari1996](@cite).
     The test suite checks it to machine precision, for one family and for two, in
     elasticity and in conduction. It is the sharpest available statement that the
     assembly of ``\mathbb{M}`` is right.

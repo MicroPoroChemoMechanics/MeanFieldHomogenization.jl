@@ -41,7 +41,7 @@
     _pair_multipole(incl_a, incl_b, r, P₀; order=2, kw...) -> AbstractTens
 
 Interaction tensor between two general ellipsoids by the truncated multipole
-expansion of [Brisard et al. 2014](@cite brisard2014), §4.2.
+expansion of [brisard2014](@cite), §4.2.
 
 `order = 0` keeps the leading (point-dipole) term `V_b 𝔾⁰(r)`; `order = 2`
 adds the second-moment correction, which is the first non-vanishing one

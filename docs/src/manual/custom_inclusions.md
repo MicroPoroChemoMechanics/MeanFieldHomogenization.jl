@@ -37,7 +37,7 @@ package can turn into one. The amount lives on the RVE, not on the geometry.
 Implement the lowest level you can reach; everything above is derived.
 
 | Gate | What you supply | What you get |
-|---|---|---|
+|:--|:--|:--|
 | **A** | `hill_tensor(incl, P₀)` | the 8 localization tensors, the 4 contribution tensors, every scheme |
 | **B** | `strain_strain_loc(incl, P₁, P₀)` — plus `stress_strain_loc` if the inclusion is heterogeneous | the derived localizations, the contributions, every scheme |
 | **C** | the contribution tensors themselves | the contribution-based schemes (see the caveat below) |

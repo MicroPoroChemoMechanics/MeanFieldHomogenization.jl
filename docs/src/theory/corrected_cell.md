@@ -218,7 +218,7 @@ trying to compute. Linearity resolves the circularity. Writing
 three problems on the same mesh:
 
 | Family | Boundary condition | Yields |
-|---|---|---|
+|:--|:--|:--|
 | **traction**, ``\boldsymbol\Sigma^{(i)}\cdot\underline{n} = \underline{e}_i`` | ``\underline{u}\big\|_{\partial\Omega} = (\mathbb S_0:\boldsymbol\Sigma^{(i)})\cdot\underline{x}`` | columns of ``\boldsymbol{B}_s`` |
 | **dipole**, unit intensity ``\underline{e}_m`` | ``\underline{u}\big\|_{\partial\Omega} = -b\,S_f\bigl(\nabla\mathbb G:\mathbb C_0\cdot\underline{n}\bigr)\cdot\underline{e}_m`` | columns of ``\boldsymbol{B}_u`` |
 

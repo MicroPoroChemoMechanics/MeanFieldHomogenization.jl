@@ -90,7 +90,7 @@ subtle — exactly which pieces of a cited paper are and are not implemented.
   - the **consolidation column** of [barthelemyARMA2011](@cite) § 3.1, models
     M1/M2/M3 — the case where a family actually *closes* during the loading.
     Everything it needs is shipped; it is a driver, not a capability.
-  - the paper's **Eq. (12) permeability**, whose matrix concentration factor
+  - the paper's **self-consistent permeability**, whose matrix concentration factor
     (order-2 Hill tensor of the effective medium) the simpler estimate in
     `fracture_permeability` omits. It is worth ≈ 55× on the ARMA microstructure
     — the [well test](@ref fe-arma2011-scope) quantifies exactly what it costs.

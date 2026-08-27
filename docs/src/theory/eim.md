@@ -1,11 +1,11 @@
 # [The equivalent inclusion method](@id th-eim)
 
-[Brisard, Dormieux & Sab 2014](@cite brisard2014). A Galerkin discretization of the
+[brisard2014](@cite). A Galerkin discretization of the
 weak form of the Lippmann-Schwinger equation, with the polarization taken piecewise
 polynomial over the inclusions. Unlike every other scheme of the package it also
 delivers a **rigorous bound** on the apparent stiffness.
 
-Where [Moschovidis & Mura 1975](@cite moschovidis1975) discretized the *strong* form by
+Where [moschovidis1975](@cite) discretized the *strong* form by
 Taylor expansion and collocation, the variational form discretizes the *weak* one — and
 inherits the extremum property of the Hashin-Shtrikman principle.
 
@@ -16,7 +16,7 @@ Notation as on [the conventions page](@ref th-notation); the interaction tensor
 ## Variational form
 
 The modified Lippmann-Schwinger equation of
-[Brisard et al. 2013](@cite brisard2013bc), posed on an **ellipsoidal** statistical
+[brisard2013bc](@cite), posed on an **ellipsoidal** statistical
 volume element ``\Omega`` embedded in an infinite medium of the matrix stiffness, has
 the weak form: find ``\boldsymbol{\tau} \in \mathcal{V}`` such that
 ``a(\boldsymbol{\tau},\boldsymbol{\varpi}) = \ell(\boldsymbol{\varpi})`` for every
@@ -51,8 +51,7 @@ Take the polarization piecewise polynomial of degree ``p`` over each inclusion,
    (\underline{x}-\underline{x}_a)^k_\bullet\, \boldsymbol{\tau}^k_a ,
 ```
 
-with ``\chi_a`` the indicator function of ``\Omega_a``. The discrete problem is their
-Eq. (37). At ``p = 0`` — one constant polarization per inclusion — dividing by
+with ``\chi_a`` the indicator function of ``\Omega_a``. This is their discrete problem. At ``p = 0`` — one constant polarization per inclusion — dividing by
 ``|\Omega_a|`` gives
 
 ```math
@@ -75,18 +74,18 @@ and
 \boldsymbol{\tau}_a``.
 
 !!! note "Transcribed verbatim"
-    The package shares Brisard's sign convention (see the
-    [convention note](@ref th-interaction)), so the system above is his Eq. (37) with
-    nothing flipped: his self term ``|\Omega_a|^{-1}S^{00}_a`` is ``+\mathbb{P}_a``,
+    The package shares the sign convention of [brisard2023](@cite) (see the
+    [convention note](@ref th-interaction)), so the system above is transcribed with
+    nothing flipped: the self term ``|\Omega_a|^{-1}S^{00}_a`` is ``+\mathbb{P}_a``,
     which is ``\mathbb{T}^{aa}``, and every block carries a plus. It is the *cluster
-    model* page, transcribing Molinari, that has a flip to declare.
+    model* page that has a flip to declare.
 
 ## Relation to the cluster model
 
 Brisard et al. observe in their §3.1 that at ``k = l = 0`` their influence
 pseudotensors *coincide* with the interaction tensors of
-[Berveiller et al. 1987](@cite berveiller1987) and
-[Molinari & El Mouden 1996](@cite molinari1996). The two schemes of this package
+[berveiller1987](@cite) and
+[molinari1996](@cite). The two schemes of this package
 accordingly share [`interaction_tensor`](@ref), and differ only in how the far field is
 closed:
 
@@ -133,12 +132,12 @@ estimate improves monotonically as ``p`` grows (the trial space only gets larger
 mixed contrasts give no bound at all. [`eim_bound_type`](@ref) reports which case holds.
 
 Taking the polarization constant *and equal* across all inclusions instead recovers the
-classical [Hashin & Shtrikman 1962](@cite hashin1962) bounds; letting it vary from one
+classical [hashin1962](@cite) bounds; letting it vary from one
 inclusion to the next is what sharpens them.
 
 ## Reference results
 
-[Brisard et al. 2014](@cite brisard2014), Table 1 — plane strain, ``N = 160`` circular
+[brisard2014](@cite), Table 1 — plane strain, ``N = 160`` circular
 pores of radius ``a`` in a circular SVE of radius ``R = 20a``, porosity ``\phi = 0.4``,
 ``\nu_0 = 0.3``, 1000 realizations:
 
@@ -163,7 +162,7 @@ Their Table 2, in 3D with polydisperse spherical pores (``N = 20/40/140`` of rad
 
 ## Slender fibers in conduction
 
-[Martin et al. 2023](@cite martin2023) specialize the method to slender cylinders in
+[martin2023](@cite) specialize the method to slender cylinders in
 steady conduction, taking the polarization polynomial in the *axial* coordinate and
 constant across the section. Their interaction coefficients reduce, after a multipole
 step, to nested one-dimensional integrals along the two axes, and their self-influence

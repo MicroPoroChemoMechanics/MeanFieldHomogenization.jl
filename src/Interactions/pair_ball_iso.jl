@@ -51,8 +51,8 @@
 Closed-form interaction tensor between two non-overlapping balls of radii `a`
 (receiver) and `b` (source) whose centers are separated by the vector `r`, in
 an isotropic elastic reference `C₀`
-([Molinari & El Mouden 1996](@cite molinari1996), App. A;
-[Berveiller et al. 1987](@cite berveiller1987)).
+([molinari1996](@cite), App. A;
+[berveiller1987](@cite)).
 
 Returned in the sign convention of [`interaction_tensor`](@ref): contracting
 with a uniform polarization of the source ball gives *minus* the average
@@ -147,8 +147,8 @@ end
 
 Two-dimensional conduction counterpart, for two disks of radii `a` and `b`.
 Same exactness argument as in 3D — `V_b = π b²` times the plane Green
-operator. This is *literally* Eq. (26) of
-[Brisard et al. 2023](@cite brisard2023),
+operator. This is *literally* the plane form given by
+[brisard2023](@cite),
 
 ```math
 \\boldsymbol{T}^{ab} = \\frac{b^{2}}{2\\sigma_0 R^{2}}

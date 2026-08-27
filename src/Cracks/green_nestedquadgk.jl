@@ -13,7 +13,7 @@
 
 ForwardDiff-compatible evaluation of the crack-plane kernel via
 nested 1-D QuadGK adaptive quadrature — used in the ``\\omega \\to 0``
-limit algorithm of [Barthélémy 2009](@cite barthelemyIJSS2009).
+limit algorithm of [barthelemyIJSS2009](@cite).
 """
 function _Qnn_star_nestedquadgk(
         C::AbstractArray{TC, 4},

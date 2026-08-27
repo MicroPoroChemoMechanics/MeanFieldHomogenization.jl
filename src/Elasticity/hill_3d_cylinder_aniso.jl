@@ -17,10 +17,10 @@
 Hill polarization tensor of an infinite cylinder in an arbitrarily
 anisotropic matrix, evaluated by a single adaptive 1-D quadrature over
 the transverse unit circle. At the cylinder limit ``a\\to\\infty`` the
-Masson polynomial ([Masson 2008](@cite masson2008)) degenerates (one
+Masson polynomial ([masson2008](@cite)) degenerates (one
 root runs to infinity) so the residue path is replaced by a direct
-QuadGK quadrature of the [Willis 1977](@cite willis1977) integrand
-([Mura 1987](@cite mura1987), §11.22). ForwardDiff-compatible.
+QuadGK quadrature of the [willis1977](@cite) integrand
+([mura1987](@cite), §11.22). ForwardDiff-compatible.
 """
 function _hill_3d_cylinder_aniso(
         cyl::Cylinder, C₀;

@@ -193,10 +193,10 @@ the Mori-Tanaka bulk modulus" is an isotropic-matrix statement. The one remainin
 is **plane-strain elasticity with an anisotropic reference**, which needs the Stroh
 formalism and raises an `ArgumentError` naming the limitation.
 
-!!! warning "Two sign conventions exist; the package uses Brisard's"
+!!! warning "Two sign conventions exist"
     ``\mathbb{T}^{aa} = +\mathbb{P}``, i.e. the self term **is** the Hill tensor
-    ([Brisard, Bertin & Legoll 2023](https://doi.org/10.1016/j.cma.2023.116389),
-    Eq. (9)). Molinari & El Mouden (1996) and Berveiller et al. (1987) use the
+    ([brisard2023](@cite)), which is the convention this package follows.
+    [molinari1996](@cite) and [berveiller1987](@cite) use the
     opposite sign, so any formula transcribed from them must be flipped. See
     [interaction tensors](@ref th-interaction).
 
@@ -299,7 +299,7 @@ asking for one raises a message that names the lens to use instead. It has no
 
 ## Nano-interfaces: the equivalent particle
 
-[Dormieux, Lemarchand & Brisard 2016](@cite dormieux2016) is a different kind of result:
+[dormieux2016](@cite) is a different kind of result:
 it needs no new scheme. A spheroidal nanoinclusion together with its Gurtin-Murdoch
 interface behaves as a single particle of stiffness
 ``\mathbb C^{eq} = \mathbb C_I + \mathbb C^{int}``, after which the classical

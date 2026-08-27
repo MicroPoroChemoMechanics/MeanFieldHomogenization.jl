@@ -59,10 +59,10 @@ elasticity, gradient of the temperature in conduction. Its self counterpart is
 `P₀` may be a 4th-order stiffness (elasticity) or a 2nd-order conductivity
 tensor; dispatch selects the corresponding formulation, in 2D or 3D. Two
 balls (3D) or two disks (2D) in an isotropic reference are evaluated by the
-closed form of [Molinari & El Mouden 1996](@cite molinari1996) and
-[Berveiller et al. 1987](@cite berveiller1987), which is **exact at any
+closed form of [molinari1996](@cite) and
+[berveiller1987](@cite), which is **exact at any
 separation**; other geometries use the truncated multipole expansion of
-[Brisard et al. 2014](@cite brisard2014), §4.2.
+[brisard2014](@cite), §4.2.
 
 `method` selects the back-end explicitly: `:analytical`, `:multipole`,
 `:quadrature`, or `:auto` (default).
@@ -72,10 +72,10 @@ This is the shared numerical ingredient of both N-body models in the package,
 (2014), §3.1, note that their influence pseudotensors of order `k = l = 0`
 coincide with the interaction tensors of Molinari & El Mouden.
 
-!!! warning "Molinari's convention is the opposite one"
-    The package follows [Brisard et al. 2023](@cite brisard2023), Eq. (9), for
-    which ``\\mathbb{T}^{aa} = +\\mathbb{P}``. Molinari & El Mouden (1996) and
-    Berveiller et al. (1987) use ``\\Gamma^{II} = -\\mathbb{P}``, so a formula
+!!! warning "Two sign conventions exist"
+    The package follows [brisard2023](@cite), for
+    which ``\\mathbb{T}^{aa} = +\\mathbb{P}``. [molinari1996](@cite) and
+    [berveiller1987](@cite) use ``\\Gamma^{II} = -\\mathbb{P}``, so a formula
     taken from them — their Appendix A table in particular — must be flipped
     before it is compared with anything here.
 
@@ -110,11 +110,11 @@ algorithm, the DECUHR and nested-QuadGK cubatures, in 2D and 3D, for elasticity
 and for conduction. Keyword arguments are forwarded to `hill_tensor`.
 
 That the self term is *plus* the Hill tensor is the whole reason the package
-follows [Brisard et al. 2023](@cite brisard2023) rather than Molinari's
+follows [brisard2023](@cite) rather than Molinari's
 opposite sign: it makes the N-body kernels and the one-site schemes share one
 object, and it is why the cluster model collapses onto Mori-Tanaka when the
 cluster is reduced to a single inclusion
-([Molinari & El Mouden 1996](@cite molinari1996), App. C).
+([molinari1996](@cite), App. C).
 """
 self_interaction_tensor(incl::MFH_Core.AbstractInclusion, P₀::TensND.AbstractTens; kw...) =
     Elasticity.hill_tensor(incl, P₀; kw...)

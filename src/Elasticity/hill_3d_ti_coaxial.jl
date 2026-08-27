@@ -3,7 +3,7 @@
 #  spheroidal inclusion coaxial with a transversely isotropic matrix.
 #
 #  Implements the closed-form formula derived in
-#  [Barthélémy 2020](@cite barthelemyIJES2020_hilltrans) (eqs. 49–58 of the post-print)
+#  [barthelemyIJES2020_hilltrans](@cite) (eqs. 49–58 of the post-print)
 #  for the Walpole-basis components `(P₁, P₂, P₃, P₅, P₆)` of the Hill
 #  tensor of a spheroid (prolate or oblate) whose axis is parallel to
 #  the symmetry axis of a TI elastic matrix.
@@ -18,7 +18,7 @@
 #  with axis equal to the common symmetry axis of `C₀` and the
 #  spheroid.  When the matrix is in fact isotropic, the formula
 #  recovers the classical Eshelby–Mura result
-#  ([Mura 1987](@cite mura1987)).
+#  ([mura1987](@cite)).
 # =============================================================================
 
 # ── Elliptic-integral helpers — single argument η ----------------------------
@@ -235,7 +235,7 @@ generic residue/DECUHR backend.
 `TensTI{4, Float64, 5}` (major-symmetric Walpole tensor) with axis equal
 to the matrix's TI axis.
 
-Reference: [Barthélémy 2020](@cite barthelemyIJES2020_hilltrans).
+Reference: [barthelemyIJES2020_hilltrans](@cite).
 """
 function _hill_3d_ti_coaxial(ell::Ellipsoid{3, Oblate}, C₀::TensND.TensTI{4, T, 5}) where {T}
     a, _, c = ell.semi_axes

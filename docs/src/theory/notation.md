@@ -103,8 +103,7 @@ Two consequences worth keeping in mind while reading the code:
 
 The second convention that must be fixed once is the sign of the Green
 operator, since two incompatible ones are current in the literature. This
-documentation follows [Brisard, Bertin & Legoll 2023](@cite brisard2023),
-Eq. (9):
+documentation follows [brisard2023](@cite):
 
 ```math
 \boldsymbol{\varepsilon}(\underline{x}) = \boldsymbol{E}

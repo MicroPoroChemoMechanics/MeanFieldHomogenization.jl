@@ -51,7 +51,7 @@ redirects to the appropriate dedicated type — the caller does not
 have to switch constructors manually:
 
 | Call | Returned type |
-| --- | --- |
+| :-- | :-- |
 | `Ellipsoid(Inf, 2.0, 1.0)` | `Cylinder{EllipticCylindrical}` |
 | `Ellipsoid(1.0, 1.0, Inf)` | `Cylinder{CircularCylindrical}` |
 | `Ellipsoid(2.0, 1.0, 0.0)` | `EllipticCrack{EllipticShape}` |

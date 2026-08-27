@@ -5,7 +5,7 @@
 # boundary and the polarization field of the Lippmann-Schwinger equation acquires
 # a singular part carried by that boundary.
 #
-# [Dormieux, Lemarchand & Brisard (2016)](https://doi.org/10.1061/(ASCE)NM.2153-5477.0000104)
+# [dormieux2016](@cite)
 # show that averaging this singular part over the particle turns it into an
 # ordinary stiffness,
 #
@@ -79,14 +79,14 @@ p1
 # `(X²-1)⁻²` and cancel); the implementation switches to a series there, so the
 # spherical case is exact rather than merely close.
 
-println("Spherical limit X = 1, their Eq. (74):")
+println("Spherical limit X = 1, closed form:")
 R = 1.0
 A = get_array(surface_stiffness(Ellipsoid(R), κs, μs))
 @printf "  C_1111 = %.6f   vs  8(κs+μs)/(5R) = %.6f\n" A[1, 1, 1, 1] 8 * (κs + μs) / (5R)
 @printf "  C_1122 = %.6f   vs  2(3κs-2μs)/(5R) = %.6f\n" A[1, 1, 2, 2] 2 * (3κs - 2μs) / (5R)
 @printf "  C_1313 = %.6f   vs  (κs+6μs)/(5R) = %.6f\n" A[1, 3, 1, 3] (κs + 6μs) / (5R)
 
-println("\nAsymptotic oblate limit X → 0 (platelet), their Eq. (76):")
+println("\nAsymptotic oblate limit X → 0 (platelet):")
 c = 1.0e-6
 B = get_array(surface_stiffness(Ellipsoid(1.0, 1.0, c), κs, μs))
 @printf "  c·C_1111 = %.6f   vs  3(κs+μs)/2 = %.6f\n" c * B[1, 1, 1, 1] 3 * (κs + μs) / 2
@@ -94,7 +94,7 @@ B = get_array(surface_stiffness(Ellipsoid(1.0, 1.0, c), κs, μs))
 @printf "  c·C_1212 = %.6f   vs  3μs/2      = %.6f\n" c * B[1, 2, 1, 2] 3μs / 2
 @printf "  c·C_3333 = %.3e  (vanishes: a platelet stiffens only in its plane)\n" c * B[3, 3, 3, 3]
 
-println("\nAsymptotic prolate limit X → ∞ (nanofiber), their Eq. (78):")
+println("\nAsymptotic prolate limit X → ∞ (nanofiber):")
 D = get_array(surface_stiffness(Ellipsoid(1.0e6, 1.0, 1.0), κs, μs))
 @printf "  axial   C = %.6f   vs  3π(κs+μs)/(4a) = %.6f\n" D[1, 1, 1, 1] 3π * (κs + μs) / (4a)
 @printf "  C_1111/C_1122 = %.6f   vs  3 (compared with atomistics in the paper)\n" D[2, 2, 2, 2] / D[2, 2, 3, 3]
@@ -102,7 +102,7 @@ D = get_array(surface_stiffness(Ellipsoid(1.0e6, 1.0, 1.0), κs, μs))
 # ## §3 The size effect
 #
 # ``\mathbb{C}^{\mathrm{int}} \propto 1/\rho`` under a homothety of ratio ``\rho``
-# (their Eq. 50), so the interface matters for small particles and disappears for
+# under a homothety, so the interface matters for small particles and disappears for
 # large ones. Feeding the equivalent particle to Mori-Tanaka makes that visible
 # directly on the effective moduli.
 

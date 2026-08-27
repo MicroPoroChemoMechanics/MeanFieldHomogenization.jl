@@ -39,7 +39,7 @@
     _evaluate(asm::ParticleAssembly, scheme::ClusterModel, ::Val{p}; kw...) -> AbstractTens
 
 Cluster-model homogenization of property `:p` over a particle assembly
-([Molinari & El Mouden 1996](@cite molinari1996)).
+([molinari1996](@cite)).
 
 Elasticity (4th-order property) and conduction (2nd-order property) go through
 the same code: the only difference is the order of the tensors being solved

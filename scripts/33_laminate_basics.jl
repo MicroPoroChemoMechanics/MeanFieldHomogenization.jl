@@ -46,7 +46,7 @@ Cᵉᶠᶠ = homogenize(lam, Laminated(), :C)
 println("effective stiffness : ", typeof(Cᵉᶠᶠ))
 println(Cᵉᶠᶠ)
 
-# ## Against the closed form of Backus (1962)
+# ## Against the closed form of a periodic multilayer
 #
 # For isotropic layers the general formula collapses to averages of simple
 # functions of the Lamé coefficients — a harmonic mean across the layers, an

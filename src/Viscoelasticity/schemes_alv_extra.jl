@@ -274,7 +274,7 @@ end
 
 Differential homogenization in ageing linear viscoelasticity, solved
 as a SciML ODE on the fictitious incorporation time `τ ∈ [0, 1]`
-([Norris 1985](@cite norris1985); user's hand-written DEM note) :
+([norris1985](@cite); user's hand-written DEM note) :
 
 ```math
 \\frac{\\mathrm d \\tilde{\\mathbb C}}{\\mathrm d \\tau}

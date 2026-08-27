@@ -1,4 +1,4 @@
-# [Viscoelastic homogenization — user manual](@id man-viscoelasticity)
+# [Viscoelastic homogenization](@id man-viscoelasticity)
 
 The ALV (ageing linear viscoelastic) pipeline reuses the [`RVE`](@ref)
 machinery of the elastic side: replace each phase property by a
@@ -225,7 +225,7 @@ of one extra scalar Volterra inverse per direction.
 Limits, all exercised in the test suite :
 
 | Interface | Behavior                                  |
-|-----------|--------------------------------------------|
+|:----------|:-------------------------------------------|
 | `Rn = Rt = nothing`   | traction-free penny — `B̃` unchanged |
 | `Rn, Rt → 0`          | recovers traction-free                |
 | `Rn, Rt → ∞` (rigid)  | `B̃_eff → 0`, cracks behave as bonded |
@@ -262,7 +262,7 @@ matrix-only interface stiffness is in
 `scripts/15_cracks_iso_interface.jl`.
 
 | Scheme                         | Crack treatment                                     |
-|--------------------------------|-----------------------------------------------------|
+|:-------------------------------|:----------------------------------------------------|
 | `Voigt`, `Reuss`               | ignored (zero-volume convention)                    |
 | `Dilute`, `DiluteDual`         | additive `+ ΔC_cracks`                              |
 | `MoriTanaka`, `Maxwell`, `PCW` | virtual phase with `A = 0`, `N = ΔC`, `f = 1`       |

@@ -101,7 +101,7 @@ follow. Orientation averaging is applied by the scheme afterwards.
 constructor:
 
 | Keyword | Default | Meaning |
-|---|---|---|
+|:--|:--|:--|
 | `radius_ratio` | `5.0` | `R/a`. Five is enough *because* the boundary condition is corrected. |
 | `htipdiv` | `12.0` | element size at the crack front, `b/htipdiv`. |
 | `order` | `2` | displacement interpolation order (1 or 2). |

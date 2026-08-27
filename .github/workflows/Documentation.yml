@@ -14,7 +14,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # timeout-minutes: 120
+    # The VitePress pass runs after Documenter's, so the job is longer than it
+    # was; a bound keeps a hung build from occupying a runner indefinitely.
+    timeout-minutes: 150
     permissions:
       actions: write
       pull-requests: read
@@ -22,11 +24,27 @@ jobs:
       statuses: write
       pages: write
     steps:
+      # Full history, so `git tag` is complete. DocumenterVitepress decides
+      # whether a tagged build should also become `stable` by checking for a
+      # higher release tag; with the default shallow checkout it sees no tags,
+      # answers "none higher", and would overwrite `stable` even when re-tagging
+      # the docs of an older release.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: julia-actions/setup-julia@v3
         with:
           version: '1'
       - uses: julia-actions/cache@v3
+      # Node itself comes from NodeJS_20_jll, which the Julia depot cache above
+      # already covers; this caches only what `npm install` fetches for the
+      # VitePress build (MathJax, mermaid, plotly), keyed on the manifest that
+      # determines it.
+      - uses: actions/cache@v4
+        with:
+          path: docs/node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('docs/package.json') }}
+          restore-keys: ${{ runner.os }}-npm-
       # The Pkg server intermittently advertises a General tree hash that its
       # CDN then answers with a 404, which kills the first `Pkg.add` of a cold
       # depot before any of this repository's code runs.  Install the registry

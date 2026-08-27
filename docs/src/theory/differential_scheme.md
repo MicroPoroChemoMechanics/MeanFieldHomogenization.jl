@@ -5,7 +5,7 @@ The differential (or incremental) scheme builds the composite by
 inclusion phase is added to the current effective medium, which is
 re-homogenized before the next increment. This page derives the
 resulting ODE for an arbitrary number of phases and an arbitrary
-incorporation trajectory ([Norris 1985](@cite norris1985)).
+incorporation trajectory ([norris1985](@cite)).
 
 ## Incorporation process
 

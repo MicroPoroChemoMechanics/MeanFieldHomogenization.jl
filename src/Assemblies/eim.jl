@@ -36,7 +36,7 @@
     _evaluate(asm::ParticleAssembly, scheme::EquivalentInclusion, ::Val{p}; kw...) -> AbstractTens
 
 Equivalent-inclusion homogenization of property `:p` over a particle assembly
-([Brisard et al. 2014](@cite brisard2014)).
+([brisard2014](@cite)).
 
 Only `order = 0` (piecewise-constant polarization) is implemented; higher
 orders need the influence *pseudotensors* of the paper's Appendix C, which are
@@ -162,7 +162,7 @@ rigorous bound on the apparent stiffness of the assembly, and which one:
 - `:none`  — the contrasts have mixed signs, and the estimate is only an
   estimate.
 
-This is the extremum property of [Brisard et al. 2014](@cite brisard2014),
+This is the extremum property of [brisard2014](@cite),
 §3.2, inherited from the Hashin-Shtrikman variational principle. It also
 implies that the estimate improves monotonically with the polarization order.
 

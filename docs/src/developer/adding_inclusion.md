@@ -37,7 +37,7 @@ what that gate does *not* unlock.
 Pick a supertype first:
 
 | Supertype | When |
-|---|---|
+|:--|:--|
 | [`AbstractEllipsoidalInclusion`](@ref) | solid ellipsoids and their degenerate limits |
 | [`AbstractCrack`](@ref) | flat, zero-volume objects measured by a density |
 | [`AbstractLayeredInclusion`](@ref) | internally layered patterns |
@@ -46,7 +46,7 @@ Pick a supertype first:
 Then implement — but only two of these are actually *load-bearing*:
 
 | Function | Returns | Status |
-|---|---|---|
+|:--|:--|:--|
 | [`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait) | a `Type` | **required.** Holy-style tag. For a flat object it is more than decoration: the crack algebra (``\mathbb H`` from the COD tensor, and the Budiansky prefactors) is keyed on it — `EllipticShape` / `Penny` buy the elliptical convention, `Ribbon` the ribbon one (see level 2). |
 | [`is_homogeneous_inclusion`](@ref) | `Bool` | **defaults to `true`**; override it — and mind level 1 — when the inclusion has no single uniform property. The scheme kernels branch on it. |
 | [`dimension`](@ref MeanFieldHomogenization.Core.dimension) | `Int` | accessor. No kernel reads it, but downstream code and scripts do. Already defined for every `AbstractCrack`. |
@@ -197,7 +197,7 @@ compliance_contribution(incl, K₀; kw...)     # 𝐑 (transport flavour of ℍ)
 ### Elasticity ↔ transport correspondence
 
 | Elasticity (order 4) | Transport (order 2) |
-|---|---|
+|:--|:--|
 | `strain_strain_loc` | `gradient_gradient_loc` |
 | `stress_strain_loc` | `flux_gradient_loc` |
 | `strain_stress_loc` | `gradient_flux_loc` |

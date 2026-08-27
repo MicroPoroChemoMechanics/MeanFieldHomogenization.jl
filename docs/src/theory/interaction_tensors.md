@@ -13,8 +13,8 @@ for order 2, blackboard bold for order 4. Two symbols are introduced here.
 | ``\mathbb{G}^0`` / ``\boldsymbol{G}^0`` | Green operator of the reference | order 4 | order 2 |
 | ``\mathbb{T}^{ab}`` / ``\boldsymbol{T}^{ab}`` | interaction tensor of two inclusions | order 4 | order 2 |
 
-[Molinari & El Mouden 1996](@cite molinari1996) write the interaction tensor
-``\Gamma^{IJ}`` and [Brisard et al. 2014](@cite brisard2014) write it ``T^{kl}_{ab}``;
+[molinari1996](@cite) write the interaction tensor
+``\Gamma^{IJ}`` and [brisard2014](@cite) write it ``T^{kl}_{ab}``;
 the letter ``\mathbb{T}`` is kept here because a Greek capital carries no order in this
 typeface convention.
 
@@ -32,8 +32,8 @@ between the two columns.
 With a homogeneous reference ``\mathbb{C}_0`` and the polarization
 ``\boldsymbol{\tau} = (\mathbb{C}-\mathbb{C}_0):\boldsymbol{\varepsilon}``, the local
 problem is equivalent to the integral equation of
-[Zeller & Dederichs 1973](@cite zeller1973), written here in the sign convention of
-[Brisard, Bertin & Legoll 2023](@cite brisard2023), Eq. (9):
+[zeller1973](@cite), written here in the sign convention of
+[brisard2023](@cite):
 
 ```math
 \boldsymbol{\varepsilon}(\underline{x}) = \boldsymbol{E}
@@ -76,7 +76,7 @@ and the transform of the whole is
 \qquad (\underline{k} \ne \underline{0}) ,
 ```
 
-which is [Brisard et al. 2023](@cite brisard2023), Eq. (11): a **positive
+which is the convention of [brisard2023](@cite): a **positive
 semi-definite** operator. The regular part averages to zero over any ball centered on
 the source, so the whole interior average is the Dirac term
 ``\boldsymbol{1}/(3\sigma_0)`` — which is exactly ``\boldsymbol{P}`` of a sphere.
@@ -111,13 +111,13 @@ so the one-inclusion case is exactly the
 [cluster-model page](@ref th-cluster).
 
 !!! warning "Molinari and Berveiller use the opposite sign"
-    The package follows [Brisard, Bertin & Legoll 2023](@cite brisard2023), Eq. (9):
+    The package follows [brisard2023](@cite):
     the Green operator maps a polarization onto **minus** the induced field, its
     Fourier symbol ``\sigma_0^{-1}\underline{k}\otimes\underline{k}/\|\underline{k}\|^2``
     is positive, and ``\mathbb{T}^{aa} = +\mathbb{P}``, coherent with the Hill tensor.
 
-    [Molinari & El Mouden 1996](@cite molinari1996) and
-    [Berveiller et al. 1987](@cite berveiller1987) write instead
+    [molinari1996](@cite) and
+    [berveiller1987](@cite) write instead
     ``\boldsymbol{\varepsilon}^I = \boldsymbol{\varepsilon}^0 +
     \sum_J \Gamma^{IJ}:\delta\mathbb{C}^J:\boldsymbol{\varepsilon}^J``, so their
     ``\Gamma^{IJ}`` is the **opposite** of ``\mathbb{T}^{IJ}`` and their self term is
@@ -160,10 +160,10 @@ Let ``\underline{n} = \underline{r}/R`` be the unit vector along the line of cen
 \rho^2 = \frac{a^2+b^2}{R^2} .
 ```
 
-— note the sign of ``\kappa``: [Molinari & El Mouden 1996](@cite molinari1996) write
+— note the sign of ``\kappa``: [molinari1996](@cite) write
 ``-b^3/(12R^3\mu(1-\nu))``, and the flip to this package's convention is applied here,
 once. In the frame whose third axis is ``\underline{n}``
-(their App. A; [Berveiller et al. 1987](@cite berveiller1987)):
+(their App. A; [berveiller1987](@cite)):
 
 ```math
 \begin{aligned}
@@ -239,8 +239,8 @@ out entirely:
 \quad (2\text{D}).
 ```
 
-The two-dimensional form is **literally** Eq. (26) of
-[Brisard et al. 2023](@cite brisard2023) — same sign, same prefactor — and the test
+The two-dimensional form is taken **literally** from
+[brisard2023](@cite) — same sign, same prefactor — and the test
 suite checks it component by component. It is the sharpest available statement that
 the package and its normative reference share one convention.
 
@@ -280,7 +280,7 @@ arrangement.
 ## General ellipsoids
 
 Beyond balls the series does not terminate, and
-[Brisard et al. 2014](@cite brisard2014), §4.2, expand the regular part of the kernel
+[brisard2014](@cite), §4.2, expand the regular part of the kernel
 about the line of centers. In moment form, with ``\boldsymbol{M}^2`` the normalized
 second moment of a region about its centroid — for an ellipsoid of semi-axes
 ``(\rho_1,\dots,\rho_d)``,
@@ -373,10 +373,10 @@ interaction becomes a lattice sum, truncated to a cluster of radius ``R_c``:
 
 Summed over all of ``\mathbb{Z}^d`` the series is only conditionally convergent and the
 summation order has to be prescribed — the difficulty
-[Brisard et al. 2023](@cite brisard2023) meet around their Eq. (28), where a naive
+[brisard2023](@cite) meet, where a naive
 real-space lattice sum needs a heuristic correction. The cluster truncation above does
 not have that problem, and Appendix B of
-[Molinari & El Mouden 1996](@cite molinari1996) says why: the kernel integrates to zero
+[molinari1996](@cite) says why: the kernel integrates to zero
 over the exterior of a sphere centered on the receiver,
 
 ```math

@@ -1,14 +1,15 @@
 # docs/literate.jl
 #
 # Runs Literate.jl over the `scripts/` demos that are published as tutorial
-# pages. Produces, per script, three artifacts:
+# pages. Produces, per script:
 #
 #   - a Documenter-ready markdown page  -> docs/src/tutorials/generated/
 #     (executed by Documenter itself via `@example` when `makedocs` runs —
 #     Literate's `markdown(...; documenter=true)` leaves `execute=false`)
-#   - a pre-run Jupyter notebook        -> docs/generated_notebooks/
 #   - a cleaned standalone .jl script   -> docs/generated_scripts/
 #     (markup-only lines stripped, `#jl` directives resolved)
+#   - optionally, a pre-run Jupyter notebook -> docs/generated_notebooks/
+#     — off by default, see NOTEBOOKS below
 #
 # Called from `docs/make.jl` *before* `makedocs`, so the generated markdown
 # exists when Documenter's `pages` list references it.
@@ -102,17 +103,36 @@ function check_pkg_markers()
     return nothing
 end
 
+# ── NOTEBOOKS ────────────────────────────────────────────────────────────────
+# The notebook pass *executes* every published script, and on this manual that
+# costs more wall clock than the whole rest of the build put together. It was
+# generating an artifact nothing consumed: no page links to
+# `docs/generated_notebooks/`, no workflow uploads it, and the directory is
+# gitignored, so the notebooks never left the machine that built them. They are
+# therefore off by default.
+#
+# `MFH_DOCS_NOTEBOOKS=1` turns the pass back on — that is all that is needed to
+# get the pre-run notebooks back, unchanged.
+#
+# To actually *publish* them, three things are missing, none of them here:
+#   1. write them under `docs/src/` (Documenter only copies what is in `src`),
+#      e.g. `docs/src/notebooks/`;
+#   2. link to each one from its tutorial page, so a reader can reach it;
+#   3. set `MFH_DOCS_NOTEBOOKS=1` in `.github/workflows/Documentation.yml`,
+#      or the deployed site links to files the CI never produced.
+const BUILD_NOTEBOOKS = get(ENV, "MFH_DOCS_NOTEBOOKS", "0") == "1"
+
 function build_tutorial_pages()
     check_pkg_markers()
     mkpath(TUTORIAL_MD_DIR)
-    mkpath(NOTEBOOK_DIR)
     mkpath(CLEAN_SCRIPT_DIR)
+    BUILD_NOTEBOOKS && mkpath(NOTEBOOK_DIR)
     for (script, page) in PUBLISHED_SCRIPTS
         src = joinpath(SCRIPTS_DIR, script)
         isfile(src) || error("docs/literate.jl: published script not found: $src")
         Literate.markdown(src, TUTORIAL_MD_DIR; documenter = true, name = page)
-        Literate.notebook(src, NOTEBOOK_DIR; name = page)
         Literate.script(src, CLEAN_SCRIPT_DIR; name = page)
+        BUILD_NOTEBOOKS && Literate.notebook(src, NOTEBOOK_DIR; name = page)
     end
     return nothing
 end

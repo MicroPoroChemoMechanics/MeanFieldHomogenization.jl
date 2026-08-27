@@ -19,7 +19,7 @@ and inclusion/crack phases, each with a geometry and property dictionary,
 homogenized by a named scheme. Only the surface syntax differs.
 
 | Echoes (Python) | MeanFieldHomogenization (Julia) |
-|---|---|
+|:--|:--|
 | `from echoes import *` | `using MeanFieldHomogenization, TensND` |
 | `rve(matrix="SOLID")` | `RVE(:SOLID)` |
 | `myrve["SOLID"] = ellipsoid(shape=spheroidal(1.), symmetrize=[ISO], prop={"C": stiff_kmu(k, μ)})` | `add_matrix!(rve, Spheroid(1.0), Dict(:C => iso_stiffness(k, μ)); symmetrize = IsoSymmetrize())` |

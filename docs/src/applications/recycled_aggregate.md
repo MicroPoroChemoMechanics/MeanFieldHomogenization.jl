@@ -460,7 +460,7 @@ arrives only when a scheme actually asks for a tensor. With both stacks loaded,
 pinned once solved: comparing the two means building two inclusions.
 
 | | [`FerriteBackend`](@ref) | [`GridapBackend`](@ref) |
-|---|---|---|
+|:--|:--|:--|
 | Loads | `Ferrite, FerriteGmsh, Gmsh` | `Gridap, GridapGmsh` |
 | States the problem as | an element assembly loop | a weak form |
 | Discretization | explicit element loop | weak form, `∫( Eᵐ(v) ⋅ D ⋅ Eᵐ(u) ρ )dΩ` |

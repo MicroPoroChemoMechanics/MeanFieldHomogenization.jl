@@ -225,7 +225,7 @@ gates — and would have to be re-derived for a mix it was not written for.
 ### What is computed, and why it is not the heat of the reactions
 
 The heat is taken from the **enthalpy of the whole system**, following
-Eqs. (17)–(21) of Lavergne et al. (2018): for a quasi-static isobaric process the
+[Lavergne2018](@cite): for a quasi-static isobaric process the
 released heat balances the change of enthalpy, and the enthalpy of the system is
 the sum over species of the molar enthalpies of formation,
 
@@ -314,8 +314,7 @@ that effect, which is the trade the LC³ literature is about.
 ### The semi-adiabatic cell
 
 A Langavant test (NF EN 196-9) lets the heat raise the temperature of the sample
-against the losses of the vessel. Lavergne et al. (2018) write the loss as their
-Eq. (23),
+against the losses of the vessel. [Lavergne2018](@cite) writes the loss as
 
 ```math
 C_{\rm tot}(t)\,\frac{\mathrm{d}T}{\mathrm{d}t} \;=\; \dot q(t) \;-\; \varphi(T-T_{\rm env}),
@@ -327,12 +326,12 @@ and the numbers below are theirs, for the plain-cement mix `C100` of their
 Table 11 at w/b = 0.5:
 
 | quantity | value | source |
-|---|---|---|
+|:--|:--|:--|
 | binder / dry sand / water | 371 g / 1113 g / 196 g | Table 11, `C100` |
 | calorimeter vessel `C_vessel` | 380 J/K | §4.1 — see the note below |
 | sand heat capacity | 812 J/K | `Qtz` of CEMDATA18, 0.73 J/(g·K) |
-| loss coefficient `a` | 75 J/(h·K) = 0.0208 W/K | Eq. (23), NF EN 196-9 calibration |
-| loss coefficient `b` | 0.260 J/(h·K²) = 7.22e-5 W/K² | Eq. (23) |
+| loss coefficient `a` | 75 J/(h·K) = 0.0208 W/K | NF EN 196-9 calibration |
+| loss coefficient `b` | 0.260 J/(h·K²) = 7.22e-5 W/K² | NF EN 196-9 calibration |
 
 The sand takes no part in the chemistry; it is there, as the paper says, "to
 avoid large temperatures", and enters only through its heat capacity. The paste's

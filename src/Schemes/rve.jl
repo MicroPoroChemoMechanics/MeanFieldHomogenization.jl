@@ -18,7 +18,7 @@
 #  outer envelope of the phase distribution; this is stored in the
 #  `distribution_shape` field through an `AbstractDistributionShape`
 #  hierarchy that allows future extension to pairwise distributions
-#  ([Willis 1982](@cite willis1982)) without breaking the public API.
+#  ([willis1982](@cite)) without breaking the public API.
 # =============================================================================
 
 # =============================================================================
@@ -227,7 +227,7 @@ Currently a single concrete subtype is shipped:
 
 Future extension (placeholder, *not* implemented in this PR): a
 `PairwiseDistribution` carrying a per-pair `(i, j) ↦ shape` mapping
-([Willis 1982](@cite willis1982)).  Adding it will only require a new
+([willis1982](@cite)).  Adding it will only require a new
 concrete subtype + matching `_evaluate(rve, ::Maxwell|::PonteCastanedaWillis, …)`
 methods — no public-API change.
 """
