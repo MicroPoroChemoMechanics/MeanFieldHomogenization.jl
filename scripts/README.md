@@ -39,7 +39,7 @@ demos. (`52` used to be a third: it reached for a Python Mittag-Leffler module,
 and no longer needs to — the Rabotnov kernel is in the model library, whose
 Laplace-Carson transform involves no special function.)
 
-Shared code lives in [`common/`](common/) — currently the Pichler-Hellmich
+Shared code lives in [`common/`](common/) — currently the quasi-brittle strength
 three-scale model (`common/quasibrittle_strength.jl`), used by both the demo script
 `41_multiscale_strength.jl` and the cross-check
 `bench_echoes/benchmark_strength.jl`.
@@ -52,7 +52,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | 10–19 | Cracks & COD (16–19 reserved for future conductive / resistive conduction cracks) |
 | 20–29 | Elastic homogenization schemes |
 | 30–39 | Layered n-layer sphere / spheroid, periodic multilayer |
-| 40–49 | Strength & multiscale (Pichler-Hellmich, Lavergne) |
+| 40–49 | Strength & multiscale |
 | 50–59 | Viscoelasticity & ALV |
 | 60–69 | ALV cracks, interfaces, cross-validations & the Laplace-Carson route |
 | 70–79 | Symmetrization showcases |
@@ -119,11 +119,11 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | Script | reference / topic | Notes |
 |---|---|---|
 | `40_porous_strength_criterion.jl` | — | porous strength criterion |
-| `41_multiscale_strength.jl` | Pichler et al. (CCR 2011) | full 3-scale + strength (ω=1e4). Cross-checked in `bench_echoes/benchmark_strength.jl` (moduli 1 %, fc 2 %) |
-| `42_cementpaste_iso.jl` | Pichler et al. (CCR 2011), ISO | elasticity-only ISO variant (**ω=100**, αmax·(1−1e-3)) |
+| `41_multiscale_strength.jl` | quasi-brittle strength (CCR 2011) | full 3-scale + strength (ω=1e4). Cross-checked in `bench_echoes/benchmark_strength.jl` (moduli 1 %, fc 2 %) |
+| `42_cementpaste_iso.jl` | quasi-brittle strength (CCR 2011), ISO | elasticity-only ISO variant (**ω=100**, αmax·(1−1e-3)) |
 | `43_secant_elastoplasticity.jl` | Suquet (1997) / Ponte Castañeda (1991); Gurson (1977) | **published tutorial** — modified secant method on a porous plastic solid: n-shell composite sphere + SC + `ForwardDiff` second moments; ported from echoes `echoes_tests/elastoplasticity_porous.py` |
 | `44_stoichiometric_hydration_micromechanics.jl` | Lavergne et al. (CCR 2018) | **chemistry-driven** four-scale SC/SC/MT/MT paste: volume fractions computed by ChemistryLab (Parrot-Killoh + Waller + molar volumes) instead of a Powers correlation. Activates `docs/`, not the repo root. Backs `applications/hydrating_blended_paste.md` |
-| `46_lamellar_porous_swelling.jl` | Dormieux, Lemarchand & Sanahuja, C. R. Mécanique **334** (2006) 304-310, [doi:10.1016/j.crme.2006.03.008](https://doi.org/10.1016/j.crme.2006.03.008) | **SymPy, not in the gallery.** Two-scale clay/CSH model derived symbolically: the particle is a `Laminate` whose interfoliar layer has a normal stiffness alone (singular ⇒ regularized then `tlimit`), the platelets are incompressible (`kₛ → ∞`), the assembly of randomly oriented particles + macropores is closed by the self-consistent scheme with `isotropify` as the exact orientation average. Recovers (5)-(18) of the article, including `μᵃᶜ`, `νᵃᶜ`, `g(φ)` and the `φ = 1/4` percolation threshold. Numeric cross-check against `SelfConsistent()`, figure in `figures/`. Backs `applications/lamellar_clay.md`, which derives the same model without the checking layer |
+| `46_lamellar_porous_swelling.jl` | lamellar swelling model, C. R. Mécanique **334** (2006) 304-310, [doi:10.1016/j.crme.2006.03.008](https://doi.org/10.1016/j.crme.2006.03.008) | **SymPy, not in the gallery.** Two-scale clay/CSH model derived symbolically: the particle is a `Laminate` whose interfoliar layer has a normal stiffness alone (singular ⇒ regularized then `tlimit`), the platelets are incompressible (`kₛ → ∞`), the assembly of randomly oriented particles + macropores is closed by the self-consistent scheme with `isotropify` as the exact orientation average. Recovers (5)-(18) of the article, including `μᵃᶜ`, `νᵃᶜ`, `g(φ)` and the `φ = 1/4` percolation threshold. Numeric cross-check against `SelfConsistent()`, figure in `figures/`. Backs `applications/lamellar_clay.md`, which derives the same model without the checking layer |
 
 ### 50–59 Viscoelasticity & ALV
 | Script | reference / topic | Notes |
@@ -143,7 +143,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | Script | reference / topic | Notes |
 |---|---|---|
 | `60_alv_cracks_interface.jl` | crack + interface creep | finite interface stiffness |
-| `61_freq_vs_time.jl` | Sanahuja (2013) trapezoidal Volterra | **published tutorial** — the **three** routes on one composite: complex moduli, `homogenize_alv`, and `homogenize_lc`. O(Δt²) agreement forward, and the reverse direction now closed by numerical inversion, with the trapezoidal error, the inversion error and the Gaver-Stehfest budget separated column by column. Ported from echoes `creep/comparison_freq_time.py` |
+| `61_freq_vs_time.jl` | trapezoidal Volterra (2013) | **published tutorial** — the **three** routes on one composite: complex moduli, `homogenize_alv`, and `homogenize_lc`. O(Δt²) agreement forward, and the reverse direction now closed by numerical inversion, with the trapezoidal error, the inversion error and the Gaver-Stehfest budget separated column by column. Ported from echoes `creep/comparison_freq_time.py` |
 | `62_alv_schemes.jl` | Barthélémy et al. (2019), IJES 144, 103104 | **published tutorial** — Dilute / Mori-Tanaka / Maxwell / PCW on one ageing creep test; the aspect-ratio sweep at fixed fraction; the collapse MT = Maxwell = PCW when the distribution shape equals the inclusion shape, and the PCW admissibility limit when it does not |
 | `63_kelvin_maxwell.jl` | echoes `Abderrahim/Kelvin2Maxwell.py` | **published tutorial** — the exact generalized-Kelvin ⇄ generalized-Maxwell conversion: the interlacing that isolates every root before any arithmetic, the round trip staying at `1e-15` out to twenty branches (where the symbolic route fails), and two independent closed forms — the Zener relations and the Burgers `cosh`/`sinh` relaxation — as oracles |
 | `64_laplace_inversion.jl` | Abate & Valkó; de Hoog et al.; Trefethen et al. | **published tutorial** — the four inversion algorithms measured on four exact pairs; branch cuts are fine and oscillation is what separates them; the Gaver-Stehfest optimum and why more terms is worse; `ForwardDiff` straight through |
@@ -199,8 +199,8 @@ the opposite, so anything transcribed from his papers is flipped on the way in.
 | `90_pair_interaction_tensor.jl` | Molinari & El Mouden (1996) App. A; Berveiller et al. (1987) | the shared kernel 𝕋^{ab}: transverse isotropy about the line of centers, the vanishing isotropic part, 𝕋^{aa} = +ℙ (the Brisard sign convention), R⁻³ decay and the ρ² correction, the three back-ends against each other, and the spherical-cutoff lattice sum |
 | `91_cluster_cubic_arrays.jl` | Molinari & El Mouden (1996), Figs. 3, 5, 6, 16 | **published tutorial** (`cluster_model`): convergence in cluster radius and the exact Mori-Tanaka degeneracy at R_c = 0, comparison with SC / differential / MT, the bulk modulus that stays exactly Mori-Tanaka, cubic anisotropy, SC vs BCC vs FCC porous arrays, and the EIM ≡ cluster identity |
 | `92_multiscale_assemblies.jl` | — | **published tutorial** (`multiscale_assemblies`): an assembly as the inner and as the outer cell of the declarative multiscale seam, the cubic anisotropy a cluster estimate produces (and the bulk modulus that stays exactly Mori-Tanaka), a three-level chain that needs the anisotropic Green operator, a nested sensitivity, and the cost of an anisotropic reference |
-| `93_eim_disk_assembly_2d.jl` | Brisard, Dormieux & Sab (2014), Table 1 | **published tutorial** (`eim_assembly`): 160 circular pores at φ = 0.4 in a circular SVE of radius 20a, plane strain, ν₀ = 0.3 — reproduces the p = 0 row (0.310 μ₀) by Monte-Carlo, with the HS bound and the FEM reference for scale |
-| `96_nano_spheroids.jl` (published under *Inclusions*, not here: no N-body content) | Dormieux, Lemarchand & Brisard (2016), Eqs. (72)–(78) | **published tutorial** (`nano_spheroids`): the interface stiffness ℂ^int across aspect ratios, its three limiting cases (sphere, platelet, nanofiber) reproduced exactly, and the size effect it produces through an ordinary Mori-Tanaka estimate |
+| `93_eim_disk_assembly_2d.jl` | equivalent inclusion method, Table 1 | **published tutorial** (`eim_assembly`): 160 circular pores at φ = 0.4 in a circular SVE of radius 20a, plane strain, ν₀ = 0.3 — reproduces the p = 0 row (0.310 μ₀) by Monte-Carlo, with the HS bound and the FEM reference for scale |
+| `96_nano_spheroids.jl` (published under *Inclusions*, not here: no N-body content) | equivalent particle, Lemarchand & Brisard (2016), Eqs. (72)–(78) | **published tutorial** (`nano_spheroids`): the interface stiffness ℂ^int across aspect ratios, its three limiting cases (sphere, platelet, nanofiber) reproduced exactly, and the size effect it produces through an ordinary Mori-Tanaka estimate |
 
 Numbers 94, 95 and 97–99 are free. What is deliberately **not** covered:
 Table 2 of Brisard et al. (polydisperse spheres at φ = 0.45) needs a polydisperse
@@ -215,7 +215,7 @@ which is not implemented — see `docs/src/developer/roadmap.md`.
   symmetric content preserved). `best_fit_ti` (→ `TensTI{4,T,5}`) is the
   echoes `.paramsym(sym=TI)` reporting projection — never used in kernels.
   `70_symmetrization_showcase.jl` demonstrates the difference.
-- **Water/air TINY = 1e-3.** The Pichler scripts regularize the exactly-zero
+- **Water/air TINY = 1e-3.** The strength scripts regularize the exactly-zero
   echoes water/air stiffness with a small positive `TINY`, which selects the
   physical (percolating) Self-Consistent branch. Expect a matching small
   offset from echoes near α→0. The ISO variant (`42_cementpaste_iso.jl`) uses
@@ -224,7 +224,7 @@ which is not implemented — see `docs/src/developer/roadmap.md`.
   iso variant uses ω = 100 (both faithful to their echoes originals).
 
 ## Not yet ported
-Biaxial strength envelope (Pichler et al., CCR 2013) and the multi-model
+Biaxial strength envelope (CCR 2013) and the multi-model
 `E(w/c)` comparison — future ports.
 
 ## Literate.jl convention (pilot, 2026-07-24)

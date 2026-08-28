@@ -63,7 +63,7 @@ The four production cross-checks against echoes:
 | `benchmark.jl` | Hill P / crack ΔS (residue, DECUHR) | P, ΔS on 5+3 cases | ~1e-6 (iso), machine (aniso) |
 | `benchmark_nlayers.jl` | n-layer sphere reference | n-layer sphere averages / local fields | 1e-6 |
 | `benchmark_porous.jl` | porous benchmark | porous SC / MT moduli | 1e-6 |
-| `benchmark_strength.jl` | Pichler et al. (CCR 2011) mortar model | k, μ, E (mortar) + strength fc | **moduli 1 %, fc 2 %** |
+| `benchmark_strength.jl` | quasi-brittle mortar model (CCR 2011) | k, μ, E (mortar) + strength fc | **moduli 1 %, fc 2 %** |
 | `benchmark_hill_derivative.jl` | Hill-derivative reference | ∂P/∂C (ISO analytical, ORTHO NUMINT3D) | ISO ~1e-15, ORTHO ~1e-6 |
 
 `benchmark_hill_derivative.jl` compares the reference analytical / numerical

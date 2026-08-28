@@ -57,7 +57,7 @@ function bulk_at(f, scheme)
     return k
 end
 
-fs = collect(range(0.0, 0.5; length = 20))
+fs = collect(range(0.0, 0.5; length = 61))
 plt = plot(;
     xlabel = "porosity f", ylabel = "k_eff",
     legend = :topright, framestyle = :box, size = (760, 480),

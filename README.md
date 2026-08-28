@@ -15,41 +15,45 @@
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.21884243-blue)](https://doi.org/10.5281/zenodo.21884243)
 
-`MeanFieldHomogenization.jl` is a Julia framework for **mean-field homogenization**
-of heterogeneous materials: it predicts effective elastic, transport and
-viscoelastic properties from the properties, shapes, orientations and
-volume fractions of the phases in a microstructure.
+`MeanFieldHomogenization.jl` predicts the effective elastic, transport and
+viscoelastic properties of a heterogeneous material from the properties, shapes,
+orientations and volume fractions of its phases.
 
-It provides Hill polarization tensors for ellipsoidal inclusions and
-infinite cylinders (2D/3D, isotropic/anisotropic/TI-coaxial), crack-opening-
-displacement tensors with stress and displacement intensity factors for
-flat cracks, second-order Hill tensors for transport problems (closed-form
-for any matrix anisotropy), composite `n`-layer spheres and confocal
-spheroids with imperfect interfaces, periodic laminates, linear viscoelasticity
-(both ageing in the time domain and non-ageing in Laplace-Carson), and the
-classical mean-field schemes built on top of them
-(Voigt/Reuss, dilute, Mori–Tanaka, Maxwell, Ponte Castañeda–Willis,
-self-consistent, asymmetric self-consistent, differential) — all under a common
-abstraction hierarchy, a shared numerical core, and a central dispatch
-mechanism.
+Given a reference medium and an inclusion shape, it builds the Hill polarization
+tensor **P** (Eshelby's result), derives the localization tensor of each phase,
+and assembles a homogenization scheme — dilute, Mori–Tanaka, self-consistent,
+differential, PCW, or the classical bounds — into an effective stiffness or
+conductivity. That chain is the whole library: one abstraction hierarchy, a
+shared numerical core, and forward-mode automatic differentiation throughout.
 
-Two directions go beyond that one-site picture:
+Everything else is that chain generalized in one direction at a time:
 
-- **N-body schemes.** Given the positions of the inclusions, the cluster model
-  (Molinari & El Mouden) and the equivalent inclusion method (Brisard, Dormieux
-  & Sab) resolve the pairwise interaction through the two-inclusion interaction
-  tensor instead of averaging it, on a `ParticleAssembly` cell; both degenerate
-  exactly onto Mori–Tanaka when the interaction is switched off.
-- **Homogenization as a constitutive law.** A microstructure per Gauss point,
+- **a richer morphology in place of the ellipsoid** — composite `n`-layer
+  spheres and confocal spheroids with imperfect interfaces, whose *generalized*
+  Eshelby problem gives an average concentration tensor where no Hill tensor
+  exists;
+- **a degenerate one** — flat cracks, described by an opening-displacement
+  tensor and intensity factors rather than by a volume fraction;
+- **a different physics** — heat conduction, diffusion, Darcy flow and electric
+  conduction are the same problem at order two, and the Hill tensor is then
+  analytical at any matrix anisotropy;
+- **a different time dependence** — a transform maps a non-ageing problem back
+  onto an elastic one, while the ageing case generalizes the Eshelby problem
+  itself, with moduli becoming Volterra operators;
+- **a periodic problem rather than an inclusion problem** — the periodic
+  multilayer, reached by interface algebra;
+- **no one-site assumption at all** — given the positions of the inclusions, the
+  cluster model and the equivalent inclusion method resolve the pairwise
+  interaction instead of averaging it, and both degenerate exactly onto
+  Mori–Tanaka when it is switched off;
+- **homogenization as a constitutive law** — a microstructure per Gauss point,
   handing a structural finite-element code a stress, a consistent tangent, the
-  Biot coefficients and a permeability that follows the crack apertures — the
-  role an MFront behavior or an Abaqus UMAT plays.
+  Biot coefficients and a permeability that follows the crack apertures.
 
 The package is geared toward prototyping: forward-mode automatic
 differentiation (`ForwardDiff`) and symbolic simplification (`SymPy`,
-`Symbolics`) are first-class, not afterthoughts, and every scheme has
-`ForwardDiff` sensitivities with respect to fractions, moduli, and
-inclusion geometry.
+`Symbolics`) are first-class, and every scheme carries sensitivities with
+respect to fractions, moduli and inclusion geometry.
 
 A gallery of full micromechanical models built on the package —
 hydrating cement paste, chloride diffusivity, the interfacial transition
@@ -146,12 +150,32 @@ B = cod_tensor(PennyCrack(1.0), C₀)
 K₀ = TensISO{3}(5.0)
 P_cond = hill_tensor(Ellipsoid(1.0), K₀)
 
-# A porous material, 10 % spherical voids, homogenized by Mori-Tanaka
+# A porous material, 30 % spherical voids, through every scheme
 rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C₀))
-add_phase!(rve, :V, Ellipsoid(1.0), Dict(:C => iso_stiffness(0.01, 0.005)); fraction = 0.1)
-k_eff, μ_eff = k_mu(homogenize(rve, MoriTanaka(), :C))
+add_matrix!(rve, Ellipsoid(1.0), Dict(:C => iso_stiffness(90.0, 30.0)))
+add_phase!(rve, :V, Ellipsoid(1.0), Dict(:C => iso_stiffness(0.01, 0.005)); fraction = 0.3)
+
+for scheme in (Voigt(), Reuss(), MoriTanaka(), DiluteDual(),
+               AsymmetricSelfConsistent(; select_best = true),
+               DifferentialScheme(; nsteps = 100))
+    k, μ = k_mu(homogenize(rve, scheme, :C))
+    println(rpad(nameof(typeof(scheme)), 26), " k = ", round(k, digits = 2), " GPa")
+end
 ```
+
+```
+Voigt                      k = 63.0 GPa
+Reuss                      k = 0.03 GPa
+MoriTanaka                 k = 37.62 GPa
+DiluteDual                 k = 45.58 GPa
+AsymmetricSelfConsistent   k = 24.22 GPa
+DifferentialScheme         k = 32.45 GPa
+```
+
+Voigt and Reuss bracket the others; the three estimates between them differ by
+how much of the load each void is assumed to see. The
+[documentation home page](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/)
+plots the same comparison across the whole porosity range.
 
 Every entry point accepts `method = :auto | :residues | :decuhr` and
 the keyword tuple `(abstol, reltol, maxiters)`; every entry point also

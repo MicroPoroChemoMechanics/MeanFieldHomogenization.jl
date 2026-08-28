@@ -30,7 +30,7 @@ and relating ``\boldsymbol{\varepsilon}^0`` to the macroscopic strain
 ```
 
 !!! warning "The paper's own sign is the opposite one"
-    Molinari & El Mouden write these two equations with a ``+`` in front of the
+    [molinari1996](@cite) writes these two equations with a ``+`` in front of the
     interaction sum, because their ``\Gamma^{IJ}`` is the opposite of this package's
     ``\mathbb{T}^{IJ}`` (their self term is ``\Gamma^{II} = -\mathbb{P}_0``). The
     equations above are theirs with that single flip applied — see the
@@ -83,7 +83,7 @@ linear system whose unknowns are order-4 tensors:
 ```
 
 A **single** expression covers both the diagonal and the off-diagonal block, which is
-the practical dividend of the Brisard sign convention: in Molinari's own convention the
+the practical dividend of the convention adopted here: in the opposite one the
 two cases carry opposite signs and have to be written separately.
 
 The matrix localization follows from the strain average rule and the effective

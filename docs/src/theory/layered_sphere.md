@@ -11,7 +11,7 @@ physics:
 | Elasticity (primal / dual)                   | Conductivity (primal / dual)                    |
 | :------------------------------------------- | :---------------------------------------------- |
 | `SpringInterface(kn, kt)`                    | `KapitzaInterface(ρ)`                           |
-| `MembraneInterface(κs, μs)` (Gurtin-Murdoch) | `SurfaceConductiveInterface(ks)` (Barthélémy-Bignonnet 2020) |
+| `MembraneInterface(κs, μs)` (surface elasticity, [dormieux2016](@cite)) | `SurfaceConductiveInterface(ks)` (Barthélémy-Bignonnet 2020) |
 
 ## Convention
 

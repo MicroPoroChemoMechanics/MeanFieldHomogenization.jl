@@ -41,7 +41,7 @@
     Multipole <: AbstractAlgorithm
 
 Truncated multipole expansion of a two-inclusion interaction integral
-(Brisard, Dormieux & Sab 2014, §4.2): the regular part of the Green operator
+(brisard2014, §4.2): the regular part of the Green operator
 is Taylor-expanded about the line of centers and the resulting monomials are
 integrated over the two regions in closed form. Exact for balls; an
 asymptotic series in `(size / separation)` for a general ellipsoid.

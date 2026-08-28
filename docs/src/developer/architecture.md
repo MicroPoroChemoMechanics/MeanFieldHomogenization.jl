@@ -85,7 +85,7 @@ sub-module is for, but what it puts in the namespace.
 | `Elasticity`       | `Ellipsoid`, `Cylinder`, auxiliary tensors, `hill_tensor` + 3D/2D kernels                           |
 | `Cracks`           | `EllipticCrack`, `RibbonCrack`, `cod_tensor`, `sif`, `dif`, and the crack methods of the contribution generics |
 | `Conductivity`     | additional `_kernel` methods for 2nd-order transport tensors                                        |
-| `LayeredSpheres`   | `LayeredSphere`, Hervé-Zaoui recurrences, five interface types, localization fields                 |
+| `LayeredSpheres`   | `LayeredSphere`, Hervé–Zaoui recurrences, five interface types, localization fields                 |
 | `LayeredSpheroids` | `LayeredSpheroid` (confocal, conduction)                                                            |
 | `Laminates`        | `Laminate`, the interface algebra, per-layer localization, the ALV twin                              |
 | `Interactions`     | Green operator of the reference and the two-inclusion interaction tensor (closed forms, cubature, periodic sums) |

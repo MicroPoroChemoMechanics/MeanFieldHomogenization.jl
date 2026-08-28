@@ -1,7 +1,7 @@
 # =============================================================================
-#  benchmark_strength.jl — cross-validation of the Pichler & Hellmich (2011)
+#  benchmark_strength.jl — cross-validation of the quasi-brittle strength model (2011)
 #  three-scale cement-paste / mortar strength model against the echoes C++
-#  Pichler & Hellmich (CCR 2011) reference.
+#  quasi-brittle strength reference.
 #
 #  The Julia model is the SHARED implementation `scripts/common/quasibrittle_strength.jl`,
 #  built entirely on the public MeanFieldHomogenization API : the multi-bin
@@ -158,7 +158,7 @@ const WCS = (0.25, 0.35, 0.5, 0.65)
 const N_α = 6
 
 println("="^92)
-println("Pichler & Hellmich (2011) — Julia (public API) vs echoes C++ cross-validation")
+println("Quasi-brittle strength — Julia (public API) vs echoes C++ cross-validation")
 println("(NTHETA = $NTHETA, ω = $ω_aspect ; tol : moduli 1 %, fc 2 %)")
 println("="^92)
 @printf "%5s %6s | %8s %8s | %8s %8s | %8s %8s | %8s %8s | %5s\n" "wc" "α" "k_jl" "k_py" "μ_jl" "μ_py" "E_jl" "E_py" "fc_jl" "fc_py" "pass"

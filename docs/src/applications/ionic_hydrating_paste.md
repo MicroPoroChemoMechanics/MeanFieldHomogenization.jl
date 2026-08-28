@@ -110,7 +110,7 @@ mole, which is what drives the pore solution to pH 12.5 and above.
 
 ## 2. Running the coupling
 
-The formulation is the CEM I 52.5 N of Lavergne et al. (2018), Table 9, so the
+The formulation is the CEM I 52.5 N of [Lavergne2018](@cite), so the
 numbers can be put beside the previous chapter's: Bogue composition
 C₃S 65 / C₂S 11 / C₃A 11 / C₄AF 8, gypsum 4.6 %, calcite 3.5 %, Blaine
 380 m²/kg, w/b = 0.50.
@@ -402,7 +402,7 @@ to do.
     the cell accelerates the reactions — Parrot–Killoh carries an Arrhenius
     factor with `Ea` of 42, 21, 54 and 32 kJ/mol for C₃S, C₂S, C₃A and C₄AF — and
     that feedback is **not** included here, so the peak is reached later and is
-    lower than a fully coupled calculation would give. Lavergne et al. close the
+    lower than a fully coupled calculation would give. The reference close the
     loop with an equivalent-age argument. Doing it here needs the heat source
     inside the ODE, which under partial equilibrium requires differentiating the
     equilibrium map; `ChemistryLab` currently refuses that combination with a

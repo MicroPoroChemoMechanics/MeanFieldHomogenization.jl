@@ -5,7 +5,7 @@
 #  by `trapezoidal_matrix`.  The Volterra product is the regular matrix
 #  product (`*`); the Volterra inverse is `volterra_inverse`.
 #
-#  Reference: Sanahuja IJSS 2013 ; Barthélémy-Giraud-Sanahuja-Sevostianov
+#  Reference: sanahuja2013 ; barthelemyIJSS2016 in docs/src/references.bib
 #  IJES 2019 §3 ; ECHOES manual ch07_viscoelasticity (`viscoelasticity_time.qmd`).
 # =============================================================================
 

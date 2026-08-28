@@ -10,7 +10,7 @@
 #
 #  entirely: both `B` and `M` follow from `C_hom`, `C_s` and the Lagrangian
 #  porosity `φ`, without any additional homogenization step.  These are the
-#  relations of Dormieux-Kondo-Ulm (2006), quoted as eq. (2) of
+#  poroelastic relations quoted as eq. (2) of
 #  Barthélémy & Daniel (ARMA 2011).
 #
 #  The whole file is pure tensor algebra on TensND objects — no Eshelby

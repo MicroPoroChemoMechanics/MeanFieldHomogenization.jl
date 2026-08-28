@@ -15,7 +15,7 @@ kernel of `MeanFieldHomogenization.Interactions`:
 
 - [`ClusterModel`](@ref) — Molinari & El Mouden (1996), solving for the mean
   strain of every inclusion inside a cluster of neighbors;
-- [`EquivalentInclusion`](@ref) — Brisard, Dormieux & Sab (2014), a Galerkin
+- [`EquivalentInclusion`](@ref) — [brisard2014](@cite), a Galerkin
   discretization of the weak Lippmann-Schwinger equation, which additionally
   delivers a rigorous bound on the apparent stiffness.
 
@@ -28,7 +28,7 @@ Contents
 - `block_solve.jl`   : linear systems whose unknowns are tensors, flattened
                         onto the Kelvin-Mandel basis
 - `cluster_model.jl` : the Molinari & El Mouden kernel
-- `eim.jl`           : the Brisard, Dormieux & Sab kernel
+- `eim.jl`           : the equivalent-inclusion kernel
 - `as_rve.jl`        : `RVE(asm)` — forget the positions, keep the fractions,
                         which is what makes every one-site scheme of the
                         package available on an assembly

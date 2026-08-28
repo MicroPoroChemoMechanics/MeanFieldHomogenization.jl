@@ -3,7 +3,7 @@
 #
 #  The two-scale micromechanical model of
 #
-#    L. Dormieux, E. Lemarchand, J. Sanahuja,
+#    Reference: dormieux2006feuillets in docs/src/references.bib
 #    "Comportement macroscopique des materiaux poreux a microstructure en
 #     feuillets", C. R. Mecanique 334 (2006) 304-310,
 #    doi:10.1016/j.crme.2006.03.008
@@ -84,7 +84,7 @@ end
 section(title) = (println("\n", title); println("─"^79))
 
 println("="^79)
-println("Lamellar porous material — Dormieux, Lemarchand & Sanahuja (2006)")
+println("Lamellar porous material — swelling clays")
 println("symbolic derivation, C. R. Mecanique 334 (2006) 304-310")
 println("="^79)
 

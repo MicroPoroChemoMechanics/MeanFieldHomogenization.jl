@@ -1,7 +1,7 @@
 # =============================================================================
-#  surface_stiffness.jl — the *equivalent particle* of Dormieux, Lemarchand &
-#  Brisard (2016): a nanoinclusion together with its Gurtin-Murdoch interface
-#  stresses, condensed into a single stiffness tensor.
+#  surface_stiffness.jl — the *equivalent particle* (reference: dormieux2016 in
+#  docs/src/references.bib): a nanoinclusion together with its surface-elasticity
+#  interface stresses, condensed into a single stiffness tensor.
 #
 #  When the interface energy is of the same order as the bulk energy — the
 #  nanocomposite regime — the stress vector is discontinuous across the
@@ -179,7 +179,7 @@ _spheroid_axes(ell::Ellipsoid{3, Oblate}) =
 
 _spheroid_axes(ell::Ellipsoid{3}) = throw(
     ArgumentError(
-        "surface_stiffness: the interface stiffness of Dormieux et al. (2016) is " *
+        "surface_stiffness: the surface interface stiffness is " *
             "derived for spheroids; got semi-axes $(ell.semi_axes), which are " *
             "triaxial and have no transversely isotropic interface tensor."
     )

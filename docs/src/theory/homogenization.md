@@ -93,7 +93,7 @@ non-linear algorithm (`NewtonRaphson()`, `TrustRegion()`,
 
 ## Differential scheme
 
-The **DifferentialScheme** integrates the multi-phase Norris ODE
+The **DifferentialScheme** integrates the multi-phase incorporation ODE
 ([norris1985](@cite)) on a fictitious incorporation time
 ``\tau \in [0, 1]``,
 

@@ -110,7 +110,7 @@ so the one-inclusion case is exactly the
 [`self_interaction_tensor`](@ref) and the Mori-Tanaka limit on the
 [cluster-model page](@ref th-cluster).
 
-!!! warning "Molinari and Berveiller use the opposite sign"
+!!! warning "Two sign conventions exist"
     The package follows [brisard2023](@cite):
     the Green operator maps a polarization onto **minus** the induced field, its
     Fourier symbol ``\sigma_0^{-1}\underline{k}\otimes\underline{k}/\|\underline{k}\|^2``
@@ -303,7 +303,7 @@ the closed forms are validated against.
 
 Everything above assumes an isotropic reference, whose Green operator is a closed
 form. That is not a restriction of the method, only of the kernel, and it is lifted by
-the line integral of Barnett (1972) and Willis (1975): for an arbitrary anisotropic
+the Barnett line integral of Barnett (1972) and Willis (1975): for an arbitrary anisotropic
 stiffness the displacement Green function is
 
 ```math

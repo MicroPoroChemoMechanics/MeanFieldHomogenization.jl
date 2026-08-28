@@ -82,7 +82,7 @@ and
 
 ## Relation to the cluster model
 
-Brisard et al. observe in their §3.1 that at ``k = l = 0`` their influence
+[brisard2014](@cite) observes that at ``k = l = 0`` the influence
 pseudotensors *coincide* with the interaction tensors of
 [berveiller1987](@cite) and
 [molinari1996](@cite). The two schemes of this package

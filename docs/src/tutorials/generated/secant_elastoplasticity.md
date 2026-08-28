@@ -120,7 +120,7 @@ the outer radius being 1.
 !!! note "A void is a very soft solid, not an empty one"
     The shell recurrence inverts a transfer matrix layer by layer, which is
     singular for an exactly zero stiffness. The core is therefore given a
-    small positive modulus — the same `TINY` convention the Pichler scripts
+    small positive modulus — the same `TINY` convention the strength scripts
     use for water and air (`scripts/README.md`). At ``10^{-8} k_s`` its effect
     on the results below is far under the plotting resolution.
 

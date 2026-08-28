@@ -92,7 +92,7 @@ homogenize(rve, MoriTanaka(), :C)
 That is the point of the contract: only `cod_tensor` is implemented, and
 because the type subtypes `AbstractCrack` with a standard
 [`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait), ℍ, ℕ, 𝐑, 𝐍_K, the bundled
-pair and the four `delta_*` with their Budiansky ``4\pi/3`` prefactor all
+pair and the four `delta_*` with their ``4\pi/3`` Budiansky-O'Connell prefactor all
 follow. Orientation averaging is applied by the scheme afterwards.
 
 ### Discretization

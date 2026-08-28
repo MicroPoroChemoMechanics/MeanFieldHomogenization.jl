@@ -1,7 +1,7 @@
 # =============================================================================
-#  quasibrittle_strength.jl — shared Pichler & Hellmich (2011) three-scale model.
+#  quasibrittle_strength.jl — shared three-scale quasi-brittle strength model.
 #
-#    Pichler, B. and Hellmich, C. (2011), "Upscaling quasi-brittle strength of
+#    Reference: pichler2011 in docs/src/references.bib — "Upscaling quasi-brittle strength of
 #    cement paste and mortar : a multi-scale engineering mechanics model",
 #    Cement and Concrete Research 41, 467-476.
 #    https://doi.org/10.1016/j.cemconres.2011.01.010
@@ -32,7 +32,7 @@ using ForwardDiff
 using TensND
 using LinearAlgebra
 
-# ── Physical constants (Pichler & Hellmich 2011) ───────────────────────────
+# ── Physical constants (quasi-brittle strength model) ───────────────────────────
 const ρ_w = 1.0
 const ρ_clin = 3.15;  const d_clin = ρ_clin / ρ_w
 const ρ_hyd = 2.073; const d_hyd = ρ_hyd / ρ_w
@@ -63,7 +63,7 @@ fh_san(wc, sc) = sc / d_san / (1 / d_clin + wc + sc / d_san)
 #
 # `μ_b0` is the shear modulus of the FIRST family (θ = 0, axis ‖ ez); it may
 # be a `ForwardDiff.Dual` — the derivative of the whole chain with respect to
-# it is the Pichler strength sensitivity.  All other families stay at
+# it is the strength sensitivity.  All other families stay at
 # `μ_hyd_ref`.
 function build_hf(wc, α_p, μ_b0; N::Int = NTHETA, ω::Real = ω_aspect)
     fclin = f_clin(wc, α_p)
@@ -160,7 +160,7 @@ end
 # stiffness-role interpretation of the resulting (α,β) = (3k,2μ) coefficients.
 extract_kμ(arr::AbstractArray) = k_mu(TensND.proj_tens(Val(:ISO), arr)[1])
 
-# ── Strength criterion (Pichler & Hellmich 2011) ───────────────────────────
+# ── Strength criterion (quasi-brittle model) ───────────────────────────
 #
 # `M = S_mo : dC : S_mo` (compliance pull-back of the sensitivity), and
 # `fc = 1/√(M₃₃₃₃ · 2μ²/f_θ)` where `f_θ` is the volume fraction of the
