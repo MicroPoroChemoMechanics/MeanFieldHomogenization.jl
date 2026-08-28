@@ -122,7 +122,7 @@ is what makes the cross-check below possible.
 ## Generators
 
 ```julia
-# Molinari & El Mouden's cubic arrays. All sites of a Bravais lattice are
+# Cubic arrays. All sites of a Bravais lattice are
 # equivalent, so the system collapses to one unknown.
 asm = cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_i); fraction = 0.3)
 asm = cubic_lattice(:fcc, Dict(:C => C_m), Dict(:C => C_i); fraction = 0.4, cutoff = 4.0)
@@ -131,7 +131,7 @@ max_packing_fraction(:bcc)              # 0.6802 — where spheres touch
 # A two-material motif: their BCC array of alternating voids and rigid spheres.
 cubic_lattice(:bcc, Dict(:C => C_m), [Dict(:C => C_i), Dict(:C => C_void)]; fraction = 0.2)
 
-# Brisard's hard-particle Metropolis microstructures, in a periodic box …
+# Hard-particle Metropolis microstructures, in a periodic box …
 using Random
 asm = random_assembly(32, Dict(:C => C_m), Dict(:C => C_i);
                       fraction = 0.3, rng = MersenneTwister(1), cycles = 20_000)
@@ -215,7 +215,7 @@ softer, `:none` for mixed contrasts.
 ## Cross-checking the two schemes
 
 On a periodic assembly with the same cutoff the two are the *same* linear system and
-agree to machine precision — the identity Brisard et al. state in their §3.1:
+agree to machine precision — the identity stated in [brisard2014](@cite):
 
 ```julia
 asm = cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_i); fraction = 0.25, cutoff = 3.0)

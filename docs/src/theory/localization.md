@@ -97,7 +97,7 @@ the reference medium. Resolving the pairwise interaction explicitly replaces
 
 ## Cracks (Kachanov convention)
 
-For flat cracks the Budiansky density convention is used instead of a
+For flat cracks the crack-density convention (Budiansky–O'Connell) is used instead of a
 volume fraction.  The same entry points apply, with the density
 ``\varepsilon`` replacing ``f``, and the compliance contribution built from the
 crack-opening-displacement tensor ``\boldsymbol B`` and the crack normal

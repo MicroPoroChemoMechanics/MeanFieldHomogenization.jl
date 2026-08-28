@@ -1,6 +1,6 @@
 # =============================================================================
 #  pair_multipole.jl — interaction tensor of two general ellipsoids by a
-#  truncated multipole expansion (Brisard, Dormieux & Sab 2014, §4.2).
+#  truncated multipole expansion (brisard2014, §4.2).
 #
 #  For a region Ω of volume V, centroid at the origin and normalized second
 #  moment

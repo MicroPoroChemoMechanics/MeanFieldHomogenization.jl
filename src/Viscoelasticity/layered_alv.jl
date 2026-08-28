@@ -10,7 +10,7 @@
 #  thus a `(2n × 2n)` block matrix.
 #
 #  Reference : Hervé & Zaoui 1993 (elastic) ; ECHOES manual ch07
-#  §"n-layer ALV" ; Sanahuja IJSS 2013.
+#  §"n-layer ALV" ; sanahuja2013.
 #
 #  This file delivers BOTH the **bulk (Y₀ harmonic)** and the
 #  **shear (Y₂ harmonic)** ALV recurrences, plus the corresponding
@@ -346,7 +346,7 @@ interface transitions ([`bulk_amplitude_seq_alv`](@ref)).  Stable
 for arbitrary modulus contrasts (pores, step-activated layers …).
 
 Reference : Hervé-Zaoui 1993 (elastic) ; ECHOES manual ch07
-§"n-layer ALV bulk recurrence" ; Sanahuja IJSS 2013.
+§"n-layer ALV bulk recurrence" ; sanahuja2013.
 """
 function bulk_localization_alv(
         sphere::LayeredSphere{T, N},
@@ -413,7 +413,7 @@ end
 #  4×4 diagonal blocks, allowing `volterra_inverse(_; block_size = 4)`
 #  to invert it via block forward-substitution.
 #
-#  Reference : Hervé-Zaoui 1993 (elastic) ; Sanahuja IJSS 2013 ALV
+#  Reference : herve1993 (elastic) ; sanahuja2013 ALV
 #  generalization ; ECHOES manual ch07 §"Layered sphere ALV".
 # =============================================================================
 

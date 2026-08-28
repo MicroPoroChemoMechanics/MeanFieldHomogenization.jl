@@ -5,7 +5,7 @@
 #  An ALV kernel `M̃(t,t')` stored as a `(6n × 6n)` block matrix of memory
 #  has 36 n² Float64 entries.  In iso / TI / ortho form the same kernel
 #  is exactly described by 2 / 6 / 12 `n × n` matrices respectively
-#  (Sanahuja IJSS 2013 ; Barthélémy IJES 2019).  The structured types
+#  (sanahuja2013 ; barthelemyIJES2019).  The structured types
 #  defined here keep that compact storage **plus** the AbstractMatrix
 #  interface, so iso / TI / ortho ALV operators can flow through Julia
 #  generic matrix code while preserving:

@@ -176,7 +176,7 @@ T(\underline{x}) = \frac{\partial G}{\partial x_k}(\underline{x})\,M_k
 These are [`green_gradient_iso`](@ref MeanFieldHomogenization.Core.green_gradient_iso) and
 [`dipole_displacement_iso`](@ref MeanFieldHomogenization.Core.dipole_displacement_iso).
 They are also why the reference medium must be **isotropic**: for arbitrary
-anisotropy ``\nabla\mathbb G`` would come from the Willis angular integral, or
+anisotropy ``\nabla\mathbb G`` would come from the Willis integral, or
 from the Pan–Chou closed form in the transversely isotropic case, neither of
 which is implemented.
 

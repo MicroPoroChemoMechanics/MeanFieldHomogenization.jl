@@ -1,6 +1,6 @@
 # =============================================================================
 #  trapezoidal.jl — discrete representation of a Stieltjes / Volterra
-#  integral on a time grid via the trapezoidal rule of Sanahuja 2013.
+#  integral on a time grid via the trapezoidal rule of sanahuja2013.
 #
 #  Given a kernel `f(t, t')` (scalar, tensor, or 6×6 matrix), build the
 #  lower-block-triangular matrix `M` of size `(B·n) × (B·n)` such that

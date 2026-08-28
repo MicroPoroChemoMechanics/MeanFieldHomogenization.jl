@@ -1,5 +1,5 @@
 # =============================================================================
-#  eim.jl — the variational equivalent inclusion method of Brisard, Dormieux
+#  eim.jl — the variational equivalent inclusion method (brisard2014; Brisard
 #  & Sab (2014), at order p = 0 (polarization constant over each inclusion).
 #
 #  The method is a Galerkin discretization of the weak form of the modified

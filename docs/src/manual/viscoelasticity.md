@@ -79,7 +79,7 @@ duration `t − t'` (basic linear viscoelasticity is the special case
 where it depends only on `t − t'`):
 
 ```julia
-# Sanahuja-style solidification : volume fraction of "active" gel grows
+# solidification-type ageing : volume fraction of "active" gel grows
 # with t' as `f_∞ · t'^α / (1 + t'^α)`.
 const α_age = 4.0
 const f_∞   = 0.3

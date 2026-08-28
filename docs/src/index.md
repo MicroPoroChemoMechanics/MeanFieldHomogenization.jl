@@ -80,25 +80,44 @@ machinery of the [Echoes](https://jfbarthelemy.github.io/echoes/) C++/Python
 codebase; see [From Echoes to MeanFieldHomogenization](@ref tools-from-echoes)
 for the translation guide.
 
-## Quick example
+## A first calculation
 
-```julia
-using MeanFieldHomogenization, TensND
+A porous solid, and every scheme the package ships, against the bounds that
+frame them. The void is given a small but non-zero stiffness, which is what
+lets the self-consistent branch stay on the physical solution:
 
-# Isotropic matrix, bulk/shear moduli (k, μ) = (30, 10) GPa
-C₀ = iso_stiffness(30.0, 10.0)
+```@example home
+using MeanFieldHomogenization, TensND, Plots
+gr()  # headless backend; GKSwstype is set to "100" in make.jl
 
-# Hill polarization tensor for a spherical inclusion
-P = hill_tensor(Ellipsoid(1.0), C₀)
+C_solid = iso_stiffness(90.0, 30.0)     # GPa
+C_void  = iso_stiffness(0.01, 0.005)
 
-# A porous material, 10 % spherical voids, homogenized by Mori-Tanaka
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C₀))
-add_phase!(rve, :V, Ellipsoid(1.0), Dict(:C => iso_stiffness(0.01, 0.005)); fraction = 0.1)
-k_eff, μ_eff = k_mu(homogenize(rve, MoriTanaka(), :C))
+function bulk(f, scheme)
+    r = RVE(:M)
+    add_matrix!(r, Ellipsoid(1.0), Dict(:C => C_solid))
+    f > 0 && add_phase!(r, :V, Ellipsoid(1.0), Dict(:C => C_void); fraction = f)
+    return first(k_mu(homogenize(r, scheme, :C)))
+end
+
+fs = range(0.0, 0.5; length = 61)
+schemes = ("Voigt" => Voigt(),
+           "Reuss" => Reuss(),
+           "Mori-Tanaka" => MoriTanaka(),
+           "Dilute (dual)" => DiluteDual(),
+           "Self-consistent" => AsymmetricSelfConsistent(; abstol = 1.0e-10,
+                                                           maxiters = 200,
+                                                           select_best = true),
+           "Differential" => DifferentialScheme(; nsteps = 100))
+
+plt = plot(; xlabel = "porosity f", ylabel = "effective bulk modulus k [GPa]",
+             legend = :topright, framestyle = :box, size = (760, 470))
+for (name, s) in schemes
+    plot!(plt, fs, [bulk(f, s) for f in fs]; label = name, lw = 2)
+end
+plt
 ```
 
-Every entry point differentiates through `ForwardDiff` and accepts symbolic
-(`SymPy`/`Symbolics`) coefficients out of the box — see
-[Derivatives and sensitivities](tutorials/sensitivities.md) and
-[Symbolic spheres](tutorials/symbolic_spheres.md).
+Voigt and Reuss bracket the others; the three estimates between them differ by
+how much of the load each void is assumed to see. [Porous materials](@ref tut-porous-materials) works through why the standard self-consistent scheme fails on
+this problem and what replaces it.

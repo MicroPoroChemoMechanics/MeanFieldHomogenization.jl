@@ -61,7 +61,7 @@ E(m) = K(m)\;\bigl(1 - \tfrac{1}{2}\textstyle\sum_{n \ge 0} 2^n c_n^2\bigr).
 Eight to twelve iterations are typically enough to reach `Float64`
 precision; `BigFloat` needs only a few more.
 
-## Carlson's symmetric forms
+## Carlson symmetric forms
 
 Incomplete integrals are delegated to Carlson's symmetric integrals
 (Carlson 1995, *Numerical computation of real or complex elliptic

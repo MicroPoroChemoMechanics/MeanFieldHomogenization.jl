@@ -1,7 +1,7 @@
 # =============================================================================
 #  42_cementpaste_iso.jl
 #
-#  Simplified ELASTICITY-ONLY variant of the Pichler & Hellmich (2011)
+#  Simplified ELASTICITY-ONLY variant of the quasi-brittle strength (2011)
 #  cement-paste / mortar model.
 #
 #  Differences from the full strength model (`41_multiscale_strength.jl`) :
@@ -86,7 +86,7 @@ end
 kμ(C) = k_mu(best_fit_iso(C))
 
 println("="^70)
-println("Cement-paste / mortar elasticity — ISO Pichler variant (ω = $ω_iso)")
+println("Cement-paste / mortar elasticity — ISO variant (ω = $ω_iso)")
 println("="^70)
 
 const wcs = [0.157, 0.25, 0.35, 0.5, 0.65, 0.8]
@@ -111,7 +111,7 @@ for wc in wcs
     plot!(p2, x, yμ, marker = :+, lw = 1.5)
 end
 
-p = plot(p1, p2; layout = (2, 1), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (800, 700), plot_title = "ISO Pichler cement paste (ω = $ω_iso)")
+p = plot(p1, p2; layout = (2, 1), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (800, 700), plot_title = "ISO cement paste (ω = $ω_iso)")
 figdir = joinpath(@__DIR__, "figures")
 isdir(figdir) || mkdir(figdir)
 figpath = joinpath(figdir, "42_cementpaste_iso.png")

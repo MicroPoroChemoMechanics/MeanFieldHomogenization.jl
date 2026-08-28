@@ -4,7 +4,7 @@
 #  A uniform spatial distribution of spheroid axes can be represented by a
 #  finite set of polar-angle families, each exactly averaged over its
 #  azimuthal orbit about the global axis (`TISymmetrize(axis)`), with
-#  solid-angle weights.  This is the classical Pichler-Hellmich (2011)
+#  solid-angle weights.  This is the classical quasi-brittle strength ([pichler2011](@cite))
 #  discretization of hydrate-needle orientations (echoes' per-bin
 #  `symmetrize=[TI]` phases).
 # =============================================================================
@@ -13,7 +13,7 @@
     polar_orientation_bins(N) -> Vector{@NamedTuple{θ, weight}}
 
 Discretize the polar angle `θ ∈ [0, π/2]` into `N` families with
-solid-angle weights on the hemisphere, following the Pichler-Hellmich
+solid-angle weights on the hemisphere, following the quasi-brittle strength model of [pichler2011](@cite)
 (2011) / echoes `disc_theta` convention :
 
 - family angles `θ_i = (π/2)·(i−1)/(N−1)` (endpoints included),

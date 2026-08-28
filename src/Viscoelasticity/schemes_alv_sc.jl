@@ -11,7 +11,7 @@
 #  estimate `C̃_m` itself.  Picard iteration with optional damping;
 #  convergence on the Frobenius norm of the residual `C̃_{m+1} − C̃_m`.
 #
-#  Reference: Sanahuja IJSS 2013 §3.2 ; Barthélémy et al. IJES 2019 §4 ;
+#  Reference: sanahuja2013 §3.2 ; barthelemyIJES2019 §4 ;
 #  ECHOES manual `viscoelasticity_time.qmd` § "SC ALV scheme".
 # =============================================================================
 

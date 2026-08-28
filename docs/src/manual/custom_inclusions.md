@@ -173,7 +173,7 @@ fall back to finite differences there.
 Subtyping [`AbstractCrack`](@ref) and declaring the right
 [`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait) is the most economical case
 in the whole package: **one** method unlocks the entire chain — ℍ, ℕ, 𝐑, 𝐍_K,
-the bundled pair, and the four `delta_*` with their Budiansky prefactor.
+the bundled pair, and the four `delta_*` with their Budiansky-O'Connell prefactor.
 
 ```julia
 struct MyCrack{T, B <: TensND.AbstractBasis} <: MeanFieldHomogenization.AbstractCrack{T}

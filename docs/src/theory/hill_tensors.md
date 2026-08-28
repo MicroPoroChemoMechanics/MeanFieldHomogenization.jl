@@ -433,7 +433,7 @@ Implementation: `src/Elasticity/hill_3d_ti_coaxial.jl`.
 ### Anisotropic matrix, cylinder limit
 
 `Cylinder` is a first-class inclusion type here (extension over Echoes). For
-an arbitrarily anisotropic matrix the Masson residue algorithm does **not**
+an arbitrarily anisotropic matrix the residue algorithm does **not**
 apply: it rests on the six complex roots of the acoustic polynomial along
 ``\underline{\xi}_3``, and at the cylinder limit one root escapes to infinity,
 degenerating the polynomial.
@@ -466,7 +466,7 @@ plane-strain problem — the cylinder is the 3-D realization of the 2-D ellipse.
 Plane strain is handled directly (extension over Echoes), integrating over
 the unit circle ``\underline{\xi}\in S^{1}`` with a ``1/(2\pi)`` prefactor in
 place of ``1/(4\pi)``. The isotropic case is analytical; the anisotropic one
-uses the Masson residue reduction on the line integral.
+uses the residue reduction on the line integral.
 
 ## Hill tensor in conductivity
 

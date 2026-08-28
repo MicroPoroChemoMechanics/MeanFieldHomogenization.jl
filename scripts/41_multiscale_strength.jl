@@ -2,7 +2,7 @@
 #  41_multiscale_strength.jl  (was 28_*)
 #
 #  Three-scale upscaling of cement-paste / mortar elasticity and quasi-brittle
-#  strength — Pichler & Hellmich (2011), Cement and Concrete Research 41,
+#  strength — quasi-brittle model, Cement and Concrete Research 41,
 #  467-476, https://doi.org/10.1016/j.cemconres.2011.01.010.
 #
 #  This is the DEMO / PLOT front-end.  The model itself lives in
@@ -26,7 +26,7 @@ default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
 include(joinpath(@__DIR__, "common", "quasibrittle_strength.jl"))
 
 println("="^78)
-println("Multi-scale upscaling of cement-paste / mortar (Pichler-Hellmich 2011)")
+println("Multi-scale upscaling of cement-paste / mortar")
 println("(NTHETA = $NTHETA, ω = $ω_aspect)")
 println("="^78)
 
@@ -63,7 +63,7 @@ end
 
 p_full = plot(
     p1, p2, p3, p4; layout = (2, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1000, 800),
-    plot_title = "Multi-scale strength upscaling (Pichler-Hellmich 2011)"
+    plot_title = "Multi-scale strength upscaling"
 )
 
 figdir = joinpath(@__DIR__, "figures")

@@ -130,7 +130,7 @@ checking that the shape you described is the shape you meant.
 
 The screenshot shows the porous benchmark after pressing **Run** — a solid
 matrix ``(k, \mu) = (72, 32)`` with spherical pores swept over
-``\varphi \in [0, 0.9]``. The numbers reproduce the reference values captured
+``\varphi \in [0, 0.9]``. The numbers reproduce the Budiansky–O'Connell values captured
 from Echoes 1.0 (see [From Echoes to MeanFieldHomogenization](@ref tools-from-echoes)).
 
 Two conventions the interface removes rather than documents:
