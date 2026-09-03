@@ -239,9 +239,9 @@ function homogenize_alv(
     B = _alv_property_order(Laminates.layer_property(lam, first(names), prop), first(times)) == 4 ? 6 : 3
     Ss = [
         volterra_inverse(
-                _trapezoidal_relaxation(Laminates.layer_property(lam, nm, prop), times, B);
-                block_size = B
-            ) for nm in names
+            _trapezoidal_relaxation(Laminates.layer_property(lam, nm, prop), times, B);
+            block_size = B
+        ) for nm in names
     ]
     fs = [Laminates.layer_volume_fraction(lam, nm) for nm in names]
     return volterra_inverse(sum(fs[i] * Ss[i] for i in eachindex(Ss)); block_size = B)

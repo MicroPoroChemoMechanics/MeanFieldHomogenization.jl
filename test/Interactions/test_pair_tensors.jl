@@ -277,9 +277,9 @@ end
     B = get_array(interaction_tensor(_ball(1.0), _ball(0.8), Rot * r, C₀))
     RA = [
         sum(
-                Rot[i, p] * Rot[j, q] * Rot[k, s] * Rot[l, t] * A[p, q, s, t]
+            Rot[i, p] * Rot[j, q] * Rot[k, s] * Rot[l, t] * A[p, q, s, t]
                 for p in 1:3, q in 1:3, s in 1:3, t in 1:3
-            ) for i in 1:3, j in 1:3, k in 1:3, l in 1:3
+        ) for i in 1:3, j in 1:3, k in 1:3, l in 1:3
     ]
     @test maximum(abs.(B .- RA)) < 1.0e-12 * maximum(abs.(A))
 end

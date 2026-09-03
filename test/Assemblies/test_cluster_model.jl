@@ -98,13 +98,13 @@ end
     μ_mt = _mu(homogenize(_mt_rve(f, _Crigid()), MoriTanaka(), :C))
     vals = [
         _mu(
-                homogenize(
-                    cubic_lattice(
-                        :sc, Dict(:C => _Cm()), Dict(:C => _Crigid());
-                        fraction = f, cutoff = c
-                    ), ClusterModel(), :C
-                )
-            ) for c in (0.5, 2.0, 3.0, 4.0)
+            homogenize(
+                cubic_lattice(
+                    :sc, Dict(:C => _Cm()), Dict(:C => _Crigid());
+                    fraction = f, cutoff = c
+                ), ClusterModel(), :C
+            )
+        ) for c in (0.5, 2.0, 3.0, 4.0)
     ]
     @test vals[1] ≈ μ_mt rtol = RTOL_EXACT          # no neighbor inside 0.5 period
     plateau = vals[2:end]
@@ -134,13 +134,13 @@ end
     f = 0.3
     μ = Dict(
         kind => _mu(
-                homogenize(
-                    cubic_lattice(
-                        kind, Dict(:C => _Cm()), Dict(:C => _Cvoid());
-                        fraction = f, cutoff = 3.0
-                    ), ClusterModel(), :C
-                )
-            ) for kind in (:sc, :bcc, :fcc)
+            homogenize(
+                cubic_lattice(
+                    kind, Dict(:C => _Cm()), Dict(:C => _Cvoid());
+                    fraction = f, cutoff = 3.0
+                ), ClusterModel(), :C
+            )
+        ) for kind in (:sc, :bcc, :fcc)
     )
     @test μ[:sc] < μ[:bcc]
     @test μ[:sc] < μ[:fcc]

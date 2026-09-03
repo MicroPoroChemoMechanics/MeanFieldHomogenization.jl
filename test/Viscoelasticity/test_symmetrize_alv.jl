@@ -171,9 +171,9 @@ end
         let n = size(M, 1) ÷ 3
             [
                 begin
-                        B = M[(3i - 2):(3i), (3j - 2):(3j)]
-                        maximum(abs, B - (tr(B) / 3) * I(3)) / max(abs(tr(B) / 3), 1.0e-12)
-                    end for i in 1:n, j in 1:n
+                    B = M[(3i - 2):(3i), (3j - 2):(3j)]
+                    maximum(abs, B - (tr(B) / 3) * I(3)) / max(abs(tr(B) / 3), 1.0e-12)
+                end for i in 1:n, j in 1:n
             ]
         end
     )

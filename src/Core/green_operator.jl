@@ -107,15 +107,15 @@ function _green_operator_iso(μ, ν, x::AbstractVector)
     # H[i,j,k,l] = ∂²G_ij/∂x_k∂x_l
     H = @inbounds [
         A * (
-                c * δ(i, j) * (3 * n[k] * n[l] - δ(k, l))
+            c * δ(i, j) * (3 * n[k] * n[l] - δ(k, l))
                 + δ(i, k) * δ(j, l) + δ(i, l) * δ(j, k)
                 - 3 * (
-                    δ(i, l) * n[j] * n[k] + δ(j, l) * n[i] * n[k]
+                δ(i, l) * n[j] * n[k] + δ(j, l) * n[i] * n[k]
                     + δ(i, k) * n[j] * n[l] + δ(j, k) * n[i] * n[l]
                     + δ(k, l) * n[i] * n[j]
-                )
-                + 15 * n[i] * n[j] * n[k] * n[l]
             )
+                + 15 * n[i] * n[j] * n[k] * n[l]
+        )
             for i in 1:3, j in 1:3, k in 1:3, l in 1:3
     ]
     # 𝔾⁰_ijkl = -[H_{ik,jl}]_{(ij)(kl)} — the double index swap is what turns
@@ -264,15 +264,15 @@ function _green_operator_iso_2d(μ, ν, x::AbstractVector)
     δ = (i, j) -> _δ(i, j, T)
     H = @inbounds [
         A * (
-                c * δ(i, j) * (2 * n[k] * n[l] - δ(k, l))
+            c * δ(i, j) * (2 * n[k] * n[l] - δ(k, l))
                 + δ(i, k) * δ(j, l) + δ(i, l) * δ(j, k)
                 - 2 * (
-                    δ(i, l) * n[j] * n[k] + δ(j, l) * n[i] * n[k]
+                δ(i, l) * n[j] * n[k] + δ(j, l) * n[i] * n[k]
                     + δ(i, k) * n[j] * n[l] + δ(j, k) * n[i] * n[l]
                     + δ(k, l) * n[i] * n[j]
-                )
-                + 8 * n[i] * n[j] * n[k] * n[l]
             )
+                + 8 * n[i] * n[j] * n[k] * n[l]
+        )
             for i in 1:2, j in 1:2, k in 1:2, l in 1:2
     ]
     return SArray{Tuple{2, 2, 2, 2}}(

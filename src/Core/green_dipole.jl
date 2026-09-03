@@ -68,9 +68,9 @@ function _green_gradient_iso(μ, ν, x::AbstractVector)
     return SArray{Tuple{3, 3, 3}}(
         @inbounds [
             A * (
-                    -c * δ(i, j) * n[k] + δ(i, k) * n[j] + δ(j, k) * n[i] -
+                -c * δ(i, j) * n[k] + δ(i, k) * n[j] + δ(j, k) * n[i] -
                     3 * n[i] * n[j] * n[k]
-                )
+            )
                 for i in 1:3, j in 1:3, k in 1:3
         ]
     )

@@ -132,10 +132,10 @@ function self_consistent_alv_newton(
         C_phases_i = [view(C, 1:6i, 1:6i) for C in C_phases_full]
         crack_data_i = [
             (
-                    g, ε, sym,
-                    Rn === nothing ? nothing : Rn[1:i, 1:i],
-                    Rt === nothing ? nothing : Rt[1:i, 1:i],
-                )
+                g, ε, sym,
+                Rn === nothing ? nothing : Rn[1:i, 1:i],
+                Rt === nothing ? nothing : Rt[1:i, 1:i],
+            )
                 for (g, ε, sym, Rn, Rt) in crack_data_full
         ]
         Id_i = _identity_alv(i, Tp)
