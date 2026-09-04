@@ -37,6 +37,18 @@ Nothing in the exported API changes name or meaning.
   `_to_amount` rather than the intended message. The corner is now well defined
   for any caller, not only for the one path that checked it beforehand.
 
+### Dependencies
+
+- **AMD is bounded to `0.5.1 - 0.5.3` in the test, docs and benchmark
+  environments.** AMD 0.5.4, published on 2026-09-04, removed `SS_Int`;
+  `SparseColumnPivotedQR`'s AMD extension calls it and bounds AMD only at
+  `"0.5.1"`, so any fresh resolve picks 0.5.4 and `LinearSolve` — hence
+  `OrdinaryDiffEq`, hence this package — fails to precompile. Nothing here is at
+  fault and nothing here can avoid the clash. AMD is not a dependency of the
+  package: the bound constrains nothing downstream, only the environments built
+  here. Remove it once AMD restores the binding or SparseColumnPivotedQR
+  tightens its own bound.
+
 
 ## v0.8.0 — the matrix role leaves the RVE
 
