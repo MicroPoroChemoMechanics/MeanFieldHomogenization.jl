@@ -49,6 +49,12 @@ Nothing in the exported API changes name or meaning.
   here. Remove it once AMD restores the binding or SparseColumnPivotedQR
   tightens its own bound.
 
+  One check cannot be reached by that bound: Aqua's `persistent_tasks`
+  instantiates a throwaway package from this package's `Project.toml` alone, so
+  it resolves AMD freely and hits the same wall. It is marked `@test_broken`
+  until upstream is fixed — which makes it fail the day it starts passing, so
+  the bounds do not get forgotten.
+
 
 ## v0.8.0 — the matrix role leaves the RVE
 
