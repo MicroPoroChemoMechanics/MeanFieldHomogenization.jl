@@ -204,6 +204,68 @@ end
     @test_throws ArgumentError homogenize(rve, SelfConsistent(; init = :nope), :C)
 end
 
+@testset "the error paths say what to do instead" begin
+    # Each of these is a message a user can actually hit, so each is pinned.
+    S = MeanFieldHomogenization.Schemes
+
+    # A `Remainder` carries no value: reading one must fail by name rather than
+    # quietly return something.
+    @test_throws ArgumentError S.amount_value(Remainder())
+    @test_throws ArgumentError S.scale_by_amount(Remainder(), C_A)
+
+    # Closure coercion, including the spelling variants.
+    @test S._to_closure(:strict) isa StrictFractions
+    @test S._to_closure(:complement) isa ComplementFraction
+    @test S._to_closure(:rest) isa ComplementFraction
+    @test S._to_closure(:rescale) isa RescaledFractions
+    @test S._to_closure(:normalize) isa RescaledFractions
+    @test S._to_closure(nothing) === nothing
+    @test S._to_closure(StrictFractions()) isa StrictFractions
+    @test_throws ArgumentError S._to_closure(:bogus)
+
+    # `on_negative` takes two values and says so.
+    @test_throws ArgumentError ComplementFraction(:bogus)
+    @test ComplementFraction(:error).on_negative === :error
+
+    # A fraction Symbol other than `:rest` is a typo, not a feature.
+    rve = RVE()
+    @test_throws ArgumentError add_phase!(
+        rve, :A, Ellipsoid(1.0), Dict(:C => C_A); fraction = :bogus
+    )
+
+    # Rescaling needs something to divide by.
+    empty_rel = RVE(; closure = :rescale)
+    add_phase!(empty_rel, :A, Ellipsoid(1.0), Dict(:C => C_A); fraction = 0.0)
+    @test_throws ArgumentError validate_rve(empty_rel)
+
+    # Setting the complement's amount is refused: it has none to set.
+    comp = _two_phase_rest()
+    @test_throws ArgumentError S.set_amount!(comp, :A, 0.5)
+    @test_throws ArgumentError set_param(
+        comp, MeanFieldHomogenization.AmountParameter(:A), 0.5
+    )
+end
+
+@testset "set_amount! keeps the cached fraction sum in step" begin
+    # The cache is what every scheme reads through `volume_fraction`; a mutator
+    # that moved an amount without refreshing it would go unnoticed until a
+    # homogenization silently used the old fraction.
+    S = MeanFieldHomogenization.Schemes
+    rve = _two_phase_rest()
+    @test volume_fraction(rve, :A) ≈ 0.4
+
+    S.set_amount!(rve, :B, 0.25)
+    @test volume_fraction(rve, :B) ≈ 0.25
+    @test volume_fraction(rve, :A) ≈ 0.75          # the complement followed
+    @test remainder_volume_fraction(rve) ≈ 0.75
+
+    # A crack density moves nothing: it is outside the unit sum.
+    add_phase!(rve, :CR, PennyCrack(1.0), Dict(:C => C_A); density = 0.05)
+    S.set_amount!(rve, :CR, 0.11)
+    @test crack_density(rve, :CR) ≈ 0.11
+    @test volume_fraction(rve, :A) ≈ 0.75
+end
+
 @testset "the removed API is gone" begin
     rve = _two_phase_rest()
     @test !hasfield(typeof(rve), :matrix_name)

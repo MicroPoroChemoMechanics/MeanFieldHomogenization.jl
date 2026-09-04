@@ -444,9 +444,9 @@ Fields:
 - `closure` — the [`AbstractFractionClosure`](@ref) turning the declared
   fractions into the ones the schemes use; `nothing` until inferred.
 - `rest_name` — the phase declared `fraction = :rest`, if any.
-- `f_sum` — cached `Σ f`, maintained by [`add_phase!`](@ref) and
-  [`set_amount!`](@ref). Do not write `amounts` directly: that would leave
-  the cache stale.
+- `f_sum` — cached `Σ f`, maintained by [`add_phase!`](@ref) and by
+  `set_amount!`. Do not write `amounts` directly: that would leave the cache
+  stale.
 
 `T` is the *declared* amount element type, i.e. a **floor for
 promotion**, not a constraint: it seeds `zero`/`one` for an RVE whose

@@ -109,6 +109,24 @@ import ForwardDiff as FD
         @test _project_matrix(C_ti, sym_def) isa TensND.TensISO{4, 3}
         sym_ti = TISymmetrize((0.0, 0.0, 1.0); reference_projection = :ti)
         @test _project_matrix(C_ti, sym_ti) isa TensND.TensTI{4, Float64, 5}
+
+        # The axis-free form: e₃ by default, and the keyword still honored.
+        @test TISymmetrize().axis == (0.0, 0.0, 1.0)
+        @test TISymmetrize(; reference_projection = :none).reference_projection === :none
+        # And the vector form, which coerces to the tuple.
+        @test TISymmetrize([0.0, 0.0, 1.0]).axis == (0.0, 0.0, 1.0)
+    end
+
+    @testset "symmetrize coercion accepts every documented spelling" begin
+        S = MeanFieldHomogenization.Schemes
+        @test S._to_symmetrize(nothing) isa NoSymmetrize
+        @test S._to_symmetrize(:none) isa NoSymmetrize
+        @test S._to_symmetrize(:iso) isa IsoSymmetrize
+        @test S._to_symmetrize(:ISO) isa IsoSymmetrize
+        @test S._to_symmetrize(:ti) isa TISymmetrize
+        @test S._to_symmetrize(:TI) isa TISymmetrize
+        @test S._to_symmetrize(IsoSymmetrize()) isa IsoSymmetrize
+        @test_throws ArgumentError S._to_symmetrize(:bogus)
     end
 
     @testset "RVE-level symmetrize integration — porous oblate ⇒ iso C_eff" begin
