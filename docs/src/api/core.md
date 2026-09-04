@@ -1,18 +1,27 @@
 # [API — Core](@id api-core)
 
 ```@docs
+MeanFieldHomogenization
 MeanFieldHomogenization.Core
 MeanFieldHomogenization.AbstractInclusion
 MeanFieldHomogenization.AbstractEllipsoidalInclusion
 MeanFieldHomogenization.AbstractCrack
 MeanFieldHomogenization.AbstractLayeredInclusion
 MeanFieldHomogenization.AbstractAlgorithm
+MeanFieldHomogenization.Core.Auto
 MeanFieldHomogenization.Analytical
 MeanFieldHomogenization.Residue
 MeanFieldHomogenization.DECUHR
+MeanFieldHomogenization.NestedQuadGK
 MeanFieldHomogenization.CylinderQuadrature
+MeanFieldHomogenization.Core.Multipole
 MeanFieldHomogenization.MaterialSymmetry
 MeanFieldHomogenization.material_symmetry
+MeanFieldHomogenization.IsotropicSym
+MeanFieldHomogenization.TransverselyIsotropicSym
+MeanFieldHomogenization.OrthotropicSym
+MeanFieldHomogenization.GeneralAnisotropicSym
+MeanFieldHomogenization.Core.extract_iso_conductivity
 MeanFieldHomogenization.Core.extract_iso_moduli
 MeanFieldHomogenization.Core.extract_ti_moduli
 MeanFieldHomogenization.Core.newton_potential_3d

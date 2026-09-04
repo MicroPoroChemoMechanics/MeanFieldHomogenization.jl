@@ -21,6 +21,10 @@ mfhstudio(no_browser = true) # stay in the terminal
 mfhstudio(check = true)      # verify the Julia side and exit
 ```
 
+```@docs
+mfhstudio
+```
+
 `mfhstudio` blocks the REPL, like `Pluto.run()`, until the studio stops:
 Ctrl-C in the REPL shuts the server and its Julia sidecar down cleanly. Pass
 `wait = false` to keep working while the studio runs — it returns the process

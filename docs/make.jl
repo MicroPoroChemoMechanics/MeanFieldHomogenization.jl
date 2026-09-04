@@ -477,7 +477,17 @@ makedocs(;
         ],
         "References" => "references.md",
     ],
-    warnonly = true,
+    # Only exported names have to appear on a curated page: the internals in
+    # the eighteen sub-modules above are documented for the reader of the
+    # source, not for the site. Same setting as TensND and DECUHR.
+    checkdocs = :exports,
+    # NOT `warnonly = true`. A blanket exemption is why a `[`set_amount!`](@ref)
+    # pointing at an undocumented internal reached CI as a VitePress "dead
+    # link" with a Rollup stack trace instead of a named file and line.
+    # `:docs_block` stays exempt because DocumenterCitations' `@bibliography`
+    # handling and the re-exported TensND names trip it; everything else —
+    # cross-references, doctests, example blocks — is now an error.
+    warnonly = [:docs_block],
 )
 
 # DocumenterVitepress writes a real directory per version rather than the
