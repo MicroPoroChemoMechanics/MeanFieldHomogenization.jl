@@ -31,8 +31,8 @@ using MeanFieldHomogenization, TensND
 k_s, μ_s, φ = 20.0, 12.0, 0.2
 C_s = TensISO{3}(3k_s, 2μ_s)
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_s))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_s); fraction = :rest)
 add_phase!(rve, :P, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0e-9, 1.0e-9));
            fraction = φ)
 
@@ -44,8 +44,8 @@ Spherical pores give ``\boldsymbol{B} = b\,\boldsymbol{1}`` with the familiar
 ``b = 1 - k^{\rm hom}/k_s``. Aligned cracks do not:
 
 ```@example poro
-rve_c = RVE(:M)
-add_matrix!(rve_c, Ellipsoid(1.0), Dict(:C => C_s))
+rve_c = RVE()
+add_phase!(rve_c, :M, Ellipsoid(1.0), Dict(:C => C_s); fraction = :rest)
 add_phase!(rve_c, :CR, PennyCrack(1.0), Dict(:C => C_s); density = 0.08)
 
 B = biot_tensor(homogenize(rve_c, MoriTanaka()), C_s)

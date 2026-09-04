@@ -71,8 +71,8 @@ An RVE carries its conduction properties under the `:K` key, and every scheme
 works unchanged:
 
 ```julia
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(20.0)); fraction = 0.3)
 
 K_MT = homogenize(rve, MoriTanaka(), :K)

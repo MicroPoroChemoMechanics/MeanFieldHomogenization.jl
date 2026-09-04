@@ -53,6 +53,7 @@ include("rve.jl")
 include("symmetrize.jl")
 include("orientation.jl")
 include("scheme_types.jl")
+include("matrix_role.jl")
 include("homogenize.jl")
 include("contribution_helpers.jl")
 include("voigt.jl")
@@ -74,16 +75,18 @@ include("sensitivities.jl")
 
 # ── Exports ────────────────────────────────────────────────────────────────
 # Data model
-export AbstractAmount, VolumeFraction, CrackDensity
+export AbstractAmount, VolumeFraction, CrackDensity, Remainder
+export AbstractFractionClosure, StrictFractions, ComplementFraction, RescaledFractions
+export remainder_phase_name, remainder_volume_fraction, phase_names
 export AbstractDistributionShape, UniformDistribution
 export AbstractSymmetrize, NoSymmetrize, IsoSymmetrize, TISymmetrize
 export AbstractHomogenizationCell, Homogenized, NestedParameter, nested
 export Phase, RVE
-export add_matrix!, add_phase!
-export matrix_phase, inclusion_phase_names
-export phase_property, phase_property_raw, matrix_property
+export add_phase!
+export inclusion_phase_names
+export phase_property, phase_property_raw
 export validate_cell
-export volume_fraction, crack_density, matrix_volume_fraction
+export volume_fraction, crack_density
 export phase_symmetrize
 export validate_rve, promote_rve
 export best_fit_ti, best_fit_iso, best_fit_ortho
@@ -102,7 +105,7 @@ export homogenize, differential_path
 export crack_family_compliances, crack_family_residual
 export fracture_permeability
 
-# Sensitivities — lentilles paramétriques + wrappers ForwardDiff (extension)
+# Sensitivities — parameter lenses + ForwardDiff wrappers (extension)
 export AbstractParameter, AmountParameter, PropertyParameter,
     GeometryParameter, DistributionShapeParameter
 export amount, property, geometry, shape_param

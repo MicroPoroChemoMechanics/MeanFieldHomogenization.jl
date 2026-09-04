@@ -47,25 +47,27 @@ Currently the iso path only.  For non-iso phases (TI, ortho), use
 function self_consistent_alv_newton(
         rve::RVE, prop::Symbol;
         times::AbstractVector{<:Real},
+        matrix::Union{Nothing, Symbol} = nothing,
         abstol::Real = 1.0e-10,
         reltol::Real = 1.0e-8,
         maxiters_per_row::Int = 30,
         verbose::Bool = false
     )
-    C_M_law = matrix_property(rve, prop)
+    m = host_phase_name(rve, matrix, "self_consistent_alv_newton")
+    C_M_law = phase_property(rve, m, prop)
     C_M_law isa ViscoLaw ||
         throw(ArgumentError("self_consistent_alv_newton: matrix property is not a ViscoLaw"))
 
     n = length(times)
-    f_M = matrix_volume_fraction(rve)
-    incl_names = inclusion_phase_names(rve)
+    f_M = volume_fraction(rve, m)
+    incl_names = inclusion_phase_names(rve, m)
 
     C_M_full = _trapezoidal_relaxation(C_M_law, times, 6)
 
     # Eltype-generic containers (`ForwardDiff.Dual` moduli, fractions or
     # geometry parameters must flow through — no `Float64` hard-coding).
     C_phases_full = Matrix[C_M_full]
-    geometries = Any[rve.phases[rve.matrix_name].geometry]
+    geometries = Any[rve.phases[m].geometry]
     fractions = [f_M]
     symmetrizes = AbstractSymmetrize[NoSymmetrize()]
 

@@ -4,32 +4,46 @@
 #  `biot.jl` is deliberately RVE-free: it is tensor algebra, and stays usable
 #  on a `C_hom` obtained from anywhere (a laminate, a particle assembly, an
 #  experiment).  The methods here only spare the caller from writing
-#  `matrix_property(rve, :C)` by hand and from getting the porosity wrong.
+#  `phase_property(rve, solid, :C)` by hand and from getting the porosity wrong.
 # =============================================================================
 
 """
-    biot_tensor(rve::RVE, C_hom; property = :C) -> Tens{2,3}
+    biot_tensor(rve::RVE, C_hom; solid = nothing, property = :C) -> Tens{2,3}
 
-[`biot_tensor`](@ref) with the solid stiffness read from the RVE's **matrix**
-phase, which is what plays the role of the homogeneous solid phase in
-microporomechanics.
+[`biot_tensor`](@ref) with the skeleton stiffness read from the phase that
+plays the homogeneous solid of microporomechanics.
 
-Equivalent to `biot_tensor(C_hom, matrix_property(rve, property))`.
+`solid` names that phase. Left unset it is the one taking up the volume
+complement, which is the usual reading of a porous RVE; an RVE that designates
+none has to be told, because no container can know which of its phases is the
+skeleton.
 """
 biot_tensor(
-    rve::Schemes.RVE, C_hom::TensND.AbstractTens{4, 3}; property::Symbol = :C
-) = biot_tensor(C_hom, Schemes.matrix_property(rve, property))
+    rve::Schemes.RVE, C_hom::TensND.AbstractTens{4, 3};
+    solid::Union{Nothing, Symbol} = nothing, property::Symbol = :C
+) = biot_tensor(
+    C_hom,
+    Schemes.phase_property(
+        rve, Schemes.host_phase_name(rve, solid, "biot_tensor"), property
+    )
+)
 
 """
-    poroelastic_parameters(rve::RVE, C_hom, φ; property = :C) -> NamedTuple
+    poroelastic_parameters(rve::RVE, C_hom, φ; solid = nothing, property = :C) -> NamedTuple
 
-[`poroelastic_parameters`](@ref) with the solid stiffness read from the RVE's
-matrix phase.
+[`poroelastic_parameters`](@ref) with the skeleton stiffness read from the
+phase that plays the homogeneous solid — see [`biot_tensor`](@ref) for `solid`.
 """
 poroelastic_parameters(
     rve::Schemes.RVE, C_hom::TensND.AbstractTens{4, 3}, φ::Number;
-    property::Symbol = :C
-) = poroelastic_parameters(C_hom, Schemes.matrix_property(rve, property), φ)
+    solid::Union{Nothing, Symbol} = nothing, property::Symbol = :C
+) = poroelastic_parameters(
+    C_hom,
+    Schemes.phase_property(
+        rve, Schemes.host_phase_name(rve, solid, "poroelastic_parameters"), property
+    ),
+    φ
+)
 
 """
     pore_volume_fraction(rve::RVE, names) -> Number

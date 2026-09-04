@@ -436,7 +436,7 @@ def _cell_from_node(node: dict) -> Cell:
         geom = parse_geometry(p.get("geometry", "")) or Geometry()
         ph = Phase(
             name=p.get("name", "PHASE"),
-            is_matrix=bool(p.get("is_matrix")),
+            amount_kind=("rest" if p.get("is_matrix") else p.get("amount_kind", "fraction")),
             geometry=geom,
             properties=parse_properties(p.get("properties", "")),
         )

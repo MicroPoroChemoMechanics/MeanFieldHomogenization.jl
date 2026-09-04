@@ -38,8 +38,11 @@ using Plots
 gr()
 
 function build_mortar()
-    rve = RVE(:PASTE)
-    add_matrix!(rve, Spheroid(1.0), Dict(:C => kelvin_iso(12.0, 8.0, [20.0], [12.0], [2.0], [2.0])))
+    rve = RVE()
+    add_phase!(
+        rve, :PASTE, Spheroid(1.0), Dict(:C => kelvin_iso(12.0, 8.0, [20.0], [12.0], [2.0], [2.0]));
+        fraction = :rest
+    )
     add_phase!(
         rve, :SAND, Spheroid(1.0), Dict(:C => heaviside_law(iso_stiffness(40.0, 30.0)));
         fraction = 0.35
@@ -119,7 +122,7 @@ Deleting it costs nothing but a best-effort re-reading of the code.
    "phases": [
     {
      "amount": 0.1,
-     "amount_kind": "fraction",
+     "amount_kind": "rest",
      "geometry": {
       "args": {
        "omega": 1.0
@@ -128,7 +131,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
       "kind": "spheroid",
       "layers": []
      },
-     "is_matrix": true,
      "name": "PASTE",
      "properties": [
       {
@@ -165,7 +167,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
       "kind": "spheroid",
       "layers": []
      },
-     "is_matrix": false,
      "name": "SAND",
      "properties": [
       {

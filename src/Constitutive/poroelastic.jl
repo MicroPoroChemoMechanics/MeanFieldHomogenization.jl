@@ -199,7 +199,11 @@ end
 function _poro_parameters(m::FracturedPoroelasticRock, open, cache)
     return cached!(cache, (objectid(m), :poro, open)) do
         C_hom, _ = _cracked_state_tensors(m.mech, open, cache)
-        C_s = _to_canonical(Schemes.matrix_property(m.mech.rve, m.mech.property))
+        # The skeleton is the reference medium the MECHANICAL scheme chose:
+        # that is where the information lives now, not on the RVE.
+        C_s = _to_canonical(
+            Schemes.reference_property(m.mech.rve, m.mech.scheme, m.mech.property)
+        )
         (C_hom, Poromechanics.poroelastic_parameters(C_hom, C_s, m.porosity_ref))
     end
 end

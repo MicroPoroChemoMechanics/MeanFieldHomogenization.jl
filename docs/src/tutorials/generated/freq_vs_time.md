@@ -96,8 +96,8 @@ the result.
 ````@example freq_vs_time
 function mu_frequency(ω)
     p = im * ω
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_MATRIX, p)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_MATRIX, p)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_INCL, p));
         fraction = F_INCL
@@ -129,8 +129,8 @@ parts ``\alpha = 3k`` and ``\beta = 2\mu``, so the row sums of ``\beta`` give
 
 ````@example freq_vs_time
 function mu_relaxation(times)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => ViscoLaw(Z_MATRIX)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => ViscoLaw(Z_MATRIX)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => ViscoLaw(Z_INCL));
         fraction = F_INCL
@@ -244,8 +244,8 @@ and nothing else, whereas the time route has to march the whole history up to
 
 ````@example freq_vs_time
 function cell_lc(p)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_MATRIX, p)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_MATRIX, p)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_INCL, p));
         fraction = F_INCL

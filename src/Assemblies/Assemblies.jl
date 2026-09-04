@@ -52,11 +52,11 @@ import ..Schemes
 using ..Schemes: HomogenizationScheme, ClusterModel, EquivalentInclusion,
     AbstractParameter, MoriTanaka
 
-# Extend rather than shadow: `add_matrix!`, `matrix_property` and
-# `matrix_volume_fraction` are `Schemes` generics, and an assembly is just
-# another cell answering them.
-import ..Schemes: add_matrix!, matrix_property, matrix_volume_fraction,
-    get_param, set_param
+# `add_matrix!`, `matrix_property` and `matrix_volume_fraction` are declared
+# HERE, not in `Schemes`: an `RVE` has no matrix to speak of — which phase is a
+# reference medium is stated on the scheme — while a `ParticleAssembly` does,
+# structurally, because both N-body models are written against one.
+import ..Schemes: get_param, set_param
 
 include("assembly.jl")
 include("generators.jl")
@@ -69,7 +69,8 @@ include("parameters.jl")
 # ── The cell and its parts ──────────────────────────────────────────────────
 export ParticleAssembly, Particle
 export AbstractAssemblyBoundary, MixedBC, PeriodicBox
-export add_particle!
+export add_matrix!, add_particle!
+export matrix_property, matrix_volume_fraction
 export particle_names, particle, particle_center, particle_geometry
 export particle_property, particle_family, family_labels
 export particle_volume, particle_volume_fraction, inclusion_volume_fraction

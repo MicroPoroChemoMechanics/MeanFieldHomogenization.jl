@@ -41,8 +41,8 @@ _cmp(a, b; atol = ATOL_NLS, rtol = RTOL_NLS) =
     isapprox(get_array(a), get_array(b); atol = atol, rtol = rtol)
 
 @testset "SelfConsistent — NonlinearSolve algorithms agree with built-ins" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -59,8 +59,8 @@ end
 
 @testset "AsymmetricSelfConsistent — NonlinearSolve, stiffness branch" begin
     # Matrix-soft / inclusion-stiff selects the stiffness-form iteration.
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -73,8 +73,8 @@ end
 @testset "AsymmetricSelfConsistent — NonlinearSolve, compliance branch" begin
     # Matrix-stiff / inclusion-soft (porous-like) selects the
     # compliance-form iteration.
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(90.0, 30.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(90.0, 30.0)); fraction = :rest)
     add_phase!(
         rve, :V, Ellipsoid(1.0), Dict(:C => TensISO{3}(0.01, 0.005));
         fraction = 0.2
@@ -85,8 +85,8 @@ end
 end
 
 @testset "SelfConsistent — NonlinearSolve, conductivity" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:K => TensISO{3}(5.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(5.0)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(20.0)); fraction = 0.25)
     K_anderson = homogenize(rve, SelfConsistent(), :K)
     K_tr = homogenize(rve, SelfConsistent(; algorithm = TrustRegion()), :K)
@@ -94,8 +94,8 @@ end
 end
 
 @testset "SelfConsistent — AutoNonlinear resolves to the SciML backend" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -108,15 +108,15 @@ end
     # directly (the extension is process-global and cannot be unloaded
     # once `using NonlinearSolve` has run in this session).
     step = C -> MeanFieldHomogenization.Schemes._sc_step(rve, C, :C)
-    C_m = MeanFieldHomogenization.Schemes.matrix_property(rve, :C)
+    C_m = phase_property(rve, :M, :C)
     C_fallback = MeanFieldHomogenization.Schemes._solve_sc(NewtonDefault(), step, C_m)
     C_newton = homogenize(rve, SelfConsistent(; algorithm = NewtonDefault()))
     @test _cmp(C_fallback, C_newton)
 end
 
 @testset "SelfConsistent — ForwardDiff through NonlinearSolve (IFT lift)" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -125,20 +125,20 @@ end
 
     # Central finite-difference ground truth (independent of any solver).
     function f_modulus(K_I)
-        r = RVE(:M)
-        add_matrix!(r, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+        r = RVE()
+        add_phase!(r, :SOLID, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
         add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(K_I, 20.0)); fraction = 0.3)
         return idxC(homogenize(r, SelfConsistent()))
     end
     function f_fraction(f)
-        r = RVE(:M)
-        add_matrix!(r, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+        r = RVE()
+        add_phase!(r, :SOLID, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
         add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0)); fraction = f)
         return idxC(homogenize(r, SelfConsistent()))
     end
     function f_matrix_shear(μ_M)
-        r = RVE(:M)
-        add_matrix!(r, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, μ_M)))
+        r = RVE()
+        add_phase!(r, :SOLID, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, μ_M)); fraction = :rest)
         add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0)); fraction = 0.3)
         return idxC(homogenize(r, SelfConsistent()))
     end
@@ -170,18 +170,15 @@ end
 @testset "SelfConsistent — NonlinearSolve, non-spherical IsoSymmetrize regression" begin
     # Strength-criterion recipe (09_strength_criteria.md / 12_nonlinear_solvers.md):
     # oblate spheroid solid + pore, IsoSymmetrize'd, differentiated w.r.t.
-    # the SOLID's own shear modulus — so `x0 = matrix_property(rve, p)`
+    # the SOLID's own shear modulus — so a seed taken from that phase
     # is ITSELF Dual-typed from the very first SC iterate (unlike the
     # inclusion-modulus / fraction cases above, where only the residual
     # promotes to Dual while `x0` stays real).
     k_s, TINY, ω_aspect, φ_value = 1.0e6, 1.0e-12, 0.1, 0.15
 
     function C_hom_iso_2vec(μs::T, scheme) where {T}
-        r = RVE(:SOLID; T = T)
-        add_matrix!(
-            r, Spheroid(ω_aspect), Dict(:C => iso_stiffness(convert(T, k_s), μs));
-            symmetrize = IsoSymmetrize()
-        )
+        r = RVE(; T = T)
+        add_phase!(r, :SOLID, Spheroid(ω_aspect), Dict(:C => iso_stiffness(convert(T, k_s), μs)); fraction = :rest, symmetrize = IsoSymmetrize())
         add_phase!(
             r, :PORE, Spheroid(ω_aspect),
             Dict(:C => iso_stiffness(convert(T, TINY), convert(T, TINY)));

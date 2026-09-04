@@ -68,15 +68,15 @@ end
 end
 
 @testset "Schemes — single-layer phase ≡ spherical Ellipsoid phase" begin
-    r_lay = RVE(:M)
-    add_matrix!(r_lay, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M))
+    r_lay = RVE()
+    add_phase!(r_lay, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M); fraction = :rest)
     add_phase!(
         r_lay, :I, LayeredSphere((1.0,), (C_I,)), Dict(:C => C_I);
         fraction = 0.25
     )
 
-    r_ell = RVE(:M)
-    add_matrix!(r_ell, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M))
+    r_ell = RVE()
+    add_phase!(r_ell, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M); fraction = :rest)
     add_phase!(r_ell, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_I); fraction = 0.25)
 
     for scheme in (MoriTanaka(), SelfConsistent(), Dilute(), DifferentialScheme())
@@ -95,8 +95,8 @@ end
     s = LayeredSphere((0.8, 1.0), (C_core, C_shell))
 
     function eff(prop, scheme)
-        r = RVE(:M)
-        add_matrix!(r, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M))
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M); fraction = :rest)
         add_phase!(r, :I, s, Dict(:C => prop); fraction = 0.3)
         return k_mu(homogenize(r, scheme, :C))
     end
@@ -116,8 +116,8 @@ end
     s = LayeredSphere((0.9, 1.0), (TensISO{3}(1.0e-9), TensISO{3}(50.0)))
 
     function eff(prop)
-        r = RVE(:M)
-        add_matrix!(r, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M))
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M); fraction = :rest)
         add_phase!(r, :I, s, Dict(:K => prop); fraction = 0.3)
         return tr(Array(homogenize(r, MoriTanaka(), :K))) / 3
     end
@@ -131,14 +131,14 @@ end
     @test eff(TensISO{3}(1.0e-9)) ≈ ref rtol = 1.0e-10
 
     # Single layer ≡ spherical Ellipsoid.
-    r_lay = RVE(:M)
-    add_matrix!(r_lay, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M))
+    r_lay = RVE()
+    add_phase!(r_lay, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M); fraction = :rest)
     add_phase!(
         r_lay, :I, LayeredSphere((1.0,), (TensISO{3}(5.0),)), Dict(:K => TensISO{3}(5.0));
         fraction = 0.25
     )
-    r_ell = RVE(:M)
-    add_matrix!(r_ell, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M))
+    r_ell = RVE()
+    add_phase!(r_ell, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M); fraction = :rest)
     add_phase!(
         r_ell, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => TensISO{3}(5.0));
         fraction = 0.25
@@ -153,14 +153,14 @@ end
     s = LayeredSphere((0.8, 1.0), (C_core, C_shell))
 
     function eff_layered()
-        r = RVE(:M)
-        add_matrix!(r, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M))
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M); fraction = :rest)
         add_phase!(r, :I, s, Dict(:C => C_core); fraction = 0.3)
         return k_mu(homogenize(r, MoriTanaka(), :C))
     end
     function eff_homog(C)
-        r = RVE(:M)
-        add_matrix!(r, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M))
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M); fraction = :rest)
         add_phase!(r, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C); fraction = 0.3)
         return k_mu(homogenize(r, MoriTanaka(), :C))
     end

@@ -106,7 +106,8 @@ _positional(ex::Expr) = [a for a in ex.args[2:end] if !(a isa Expr && a.head in 
 
 """
 Recognize an RVE builder: a function whose body creates an `RVE` and fills it
-with `add_matrix!` / `add_phase!` calls. This is the shape the emitter writes
+with `add_phase!` calls (and, for scripts written before v0.8, `add_matrix!`).
+This is the shape the emitter writes
 and the shape the hand-written demos use.
 """
 function recognize_builder(ex)
@@ -124,15 +125,19 @@ function recognize_builder(ex)
 
     for st in ex.args[2].args
         st isa LineNumberNode && continue
-        # rve = RVE(:SOLID)
+        # rve = RVE()
         if st isa Expr && st.head === :(=) && _iscall(st.args[2], :RVE)
             var = String(st.args[1])
             a = _positional(st.args[2])
+            # Pre-0.8 scripts named the matrix here. Kept so the studio can
+            # still open them; scripts written since carry no such name.
             isempty(a) || (matrix = replace(string(a[1]), ":" => ""))
-            # `RVE(:M; T = ComplexF64)` — the element type is part of the model
+            # `RVE(; T = ComplexF64)` — the element type is part of the model
             rve_opts = _kwargs(st.args[2])
             found = true
         elseif _iscall(st, :add_matrix!)
+            # Legacy, pre-0.8: `add_matrix!(rve, geom, props)`. Read only —
+            # the emitter never writes it any more.
             a = _positional(st)
             length(a) >= 3 || continue
             push!(
@@ -147,13 +152,16 @@ function recognize_builder(ex)
         elseif _iscall(st, :add_phase!)
             a = _positional(st)
             length(a) >= 4 || continue
+            opts = _kwargs(st)
             push!(
                 phases, Dict{String, Any}(
                     "name" => replace(string(a[2]), ":" => ""),
-                    "is_matrix" => false,
+                    # `fraction = :rest` is what marks the phase taking up the
+                    # volume complement — the successor of the matrix flag.
+                    "is_matrix" => get(opts, "fraction", nothing) == ":rest",
                     "geometry" => string(a[3]),
                     "properties" => string(a[4]),
-                    "options" => _kwargs(st),
+                    "options" => opts,
                 )
             )
         end

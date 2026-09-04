@@ -66,8 +66,8 @@ nothing # hide
 
 ```@example tutporousbench
 function build_rve(φ; ω_s = 1.0, ω_p = 1.0, sym_s = nothing, sym_p = nothing)
-    r = RVE(:SOLID)
-    add_matrix!(r, Spheroid(ω_s), Dict(:C => C_s); symmetrize = sym_s)
+    r = RVE()
+    add_phase!(r, :SOLID, Spheroid(ω_s), Dict(:C => C_s); fraction = :rest, symmetrize = sym_s)
     add_phase!(r, :PORE, Spheroid(ω_p), Dict(:C => C_p); fraction = φ, symmetrize = sym_p)
     return r
 end

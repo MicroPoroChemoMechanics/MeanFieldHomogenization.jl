@@ -52,15 +52,15 @@ C_void = TensISO{3}(3 * 1.0e-9, 2 * 1.0e-9)
 
 inner = cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_i); fraction = 0.3, cutoff = 2.0)
 
-outer = RVE(:M)
-add_matrix!(outer, Ellipsoid(1.0), Dict(:C => Homogenized(inner, ClusterModel())))
+outer = RVE()
+add_phase!(outer, :M, Ellipsoid(1.0), Dict(:C => Homogenized(inner, ClusterModel())); fraction = :rest)
 add_phase!(outer, :F, Ellipsoid(1.0), Dict(:C => C_f); fraction = 0.2)
 
 C_two_scale = homogenize(outer, MoriTanaka(), :C)
 
 ## The same thing by hand, to show the seam introduces nothing of its own.
-ref = RVE(:M)
-add_matrix!(ref, Ellipsoid(1.0), Dict(:C => homogenize(inner, ClusterModel(), :C)))
+ref = RVE()
+add_phase!(ref, :M, Ellipsoid(1.0), Dict(:C => homogenize(inner, ClusterModel(), :C)); fraction = :rest)
 add_phase!(ref, :F, Ellipsoid(1.0), Dict(:C => C_f); fraction = 0.2)
 
 @printf "declarative : C1111 = %.10f\n" get_array(C_two_scale)[1, 1, 1, 1]
@@ -72,8 +72,8 @@ add_phase!(ref, :F, Ellipsoid(1.0), Dict(:C => C_f); fraction = 0.2)
 # The other direction: a particle of the assembly is a composite in its own
 # right. Nothing changes but where the `Homogenized` sits.
 
-sub = RVE(:S)
-add_matrix!(sub, Ellipsoid(1.0), Dict(:C => C_i))
+sub = RVE()
+add_phase!(sub, :S, Ellipsoid(1.0), Dict(:C => C_i); fraction = :rest)
 add_phase!(sub, :n, Ellipsoid(1.0), Dict(:C => C_f); fraction = 0.25)
 
 asm = ParticleAssembly(; boundary = PeriodicBox(1.0; cutoff = 2.0))
@@ -93,8 +93,8 @@ println("\n  f      C_1212/μ_m   (C_1111-C_1122)/2μ_m   ratio      κ/κ_MT")
 for f in (0.1, 0.2, 0.3, 0.4)
     a1 = cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_i); fraction = f, cutoff = 2.0)
     C1 = homogenize(a1, ClusterModel(), :C)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = f)
     Cmt = homogenize(rve, MoriTanaka(), :C)
     @printf " %.1f     %.5f      %.5f             %.4f     %.12f\n" f (μ_of(C1) / μ_m) (μ2_of(C1) / μ_m) (μ_of(C1) / μ2_of(C1)) (κ_of(C1) / κ_of(Cmt))
@@ -117,8 +117,8 @@ lvl2 = ParticleAssembly(; boundary = PeriodicBox(1.0; cutoff = 1.5))
 add_matrix!(lvl2, Dict(:C => Homogenized(lvl1, ClusterModel())))
 add_particle!(lvl2, :q, (0.0, 0.0, 0.0), Ellipsoid(0.25), Dict(:C => C_f))
 
-lvl3 = RVE(:T)
-add_matrix!(lvl3, Ellipsoid(1.0), Dict(:C => Homogenized(lvl2, ClusterModel())))
+lvl3 = RVE()
+add_phase!(lvl3, :T, Ellipsoid(1.0), Dict(:C => Homogenized(lvl2, ClusterModel())); fraction = :rest)
 add_phase!(lvl3, :v, Ellipsoid(1.0), Dict(:C => C_void); fraction = 0.05)
 
 C1 = homogenize(lvl1, ClusterModel(), :C)

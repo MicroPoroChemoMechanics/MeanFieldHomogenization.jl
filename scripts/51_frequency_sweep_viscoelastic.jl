@@ -36,8 +36,8 @@ y_sc = Vector{ComplexF64}(undef, length(ωs))
 # Same Maxwell spectrum on both phases but different baseline moduli
 for (i, ω) in enumerate(ωs)
     p = im * ω
-    rve = RVE(:M)                                # nothing to declare: the moduli
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => carson_relaxation(PHASE_M, p)))
+    rve = RVE()                                # nothing to declare: the moduli
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => carson_relaxation(PHASE_M, p)); fraction = :rest)
     add_phase!(                                  # carry the complex part, the
         rve, :I, Ellipsoid(1.0),                 # fraction stays real
         Dict(:C => carson_relaxation(PHASE_I, p)); fraction = f_inc

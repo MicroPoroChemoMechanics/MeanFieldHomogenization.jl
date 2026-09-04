@@ -122,8 +122,8 @@ f = 0.15
 function mt_with_interface(radius; with_interface = true)
     sph = Ellipsoid(radius)
     C_eq = with_interface ? equivalent_particle(C_i, sph, κs * 1.0e-9, μs * 1.0e-9) : C_i
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :nano, sph, Dict(:C => C_eq); fraction = f)
     return get_array(homogenize(rve, MoriTanaka(), :C))[1, 2, 1, 2]
 end
@@ -161,8 +161,8 @@ for X in Xs2
     a0 = (1.0e-8^3 / X)^(1 / 3)
     ell = X < 1 ? Ellipsoid(a0, a0, X * a0) : Ellipsoid(X * a0, a0, a0)
     C_eq = equivalent_particle(C_i, ell, κs * 1.0e-9, μs * 1.0e-9)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :nano, ell, Dict(:C => C_eq); fraction = f, symmetrize = :iso)
     push!(μ_shape, get_array(homogenize(rve, MoriTanaka(), :C))[1, 2, 1, 2])
 end

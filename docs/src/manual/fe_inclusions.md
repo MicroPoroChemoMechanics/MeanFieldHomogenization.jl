@@ -82,8 +82,8 @@ C₀ = iso_stiffness(0.8333, 0.3846)                 # E = 1, ν = 0.3
 B_fe = cod_tensor(crack, C₀)
 B_an = cod_tensor(EllipticCrack(1.0, 0.25), C₀)    # closed form, for comparison
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C₀))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
 add_phase!(rve, :cracks, crack, Dict(:C => C₀); density = 0.05,
            symmetrize = IsoSymmetrize())
 homogenize(rve, MoriTanaka(), :C)

@@ -37,8 +37,8 @@ _mu(C) = get_array(C)[1, 2, 1, 2]
 _kappa(C) = (A = get_array(C); sum(A[i, i, j, j] for i in 1:3, j in 1:3) / 9)
 
 function _mt_rve(f, Ci; Cm = _Cm())
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => Cm))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => Cm); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => Ci); fraction = f)
     return rve
 end
@@ -59,8 +59,8 @@ end
         :bcc, Dict(:C => _Cm()), [Dict(:C => _Ci()), Dict(:C => _Cvoid())];
         fraction = 0.2, cutoff = 0.0
     )
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => _Cm()))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => _Cm()); fraction = :rest)
     add_phase!(rve, :I1, Ellipsoid(1.0), Dict(:C => _Ci()); fraction = 0.1)
     add_phase!(rve, :I2, Ellipsoid(1.0), Dict(:C => _Cvoid()); fraction = 0.1)
     C_cl = get_array(homogenize(asm, ClusterModel(), :C))
@@ -167,8 +167,8 @@ end
     # once and dispatches on the tensor order alone.
     asm = cubic_lattice(:sc, Dict(:K => K_m), Dict(:K => K_i); fraction = f, cutoff = 0.0)
     K_cl = get_array(homogenize(asm, ClusterModel(), :K))
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:K => K_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => K_m); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:K => K_i); fraction = f)
     K_mt = get_array(homogenize(rve, MoriTanaka(), :K))
     @test maximum(abs.(K_cl .- K_mt)) < RTOL_EXACT * maximum(abs.(K_mt))

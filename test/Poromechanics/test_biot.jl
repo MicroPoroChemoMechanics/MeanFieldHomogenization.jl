@@ -13,8 +13,8 @@ const CS_PORO = TensISO{3}(3 * KS_PORO, 2 * MUS_PORO)
 _k_mt_porous(ks, μs, φ) = 4 * μs * ks * (1 - φ) / (4 * μs + 3 * ks * φ)
 
 function _porous_rve(φ; C_s = CS_PORO)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_s))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_s); fraction = :rest)
     add_phase!(
         rve, :P, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0e-9, 1.0e-9));
         fraction = φ
@@ -74,8 +74,8 @@ end
     # tensor by the major symmetry of s_s and C_hom. Checked on a genuinely
     # anisotropic C_hom (aligned penny cracks), where a wrong contraction order
     # would show up.
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => CS_PORO))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => CS_PORO); fraction = :rest)
     add_phase!(rve, :CR, PennyCrack(1.0), Dict(:C => CS_PORO); density = 0.08)
     C_hom = homogenize(rve, MoriTanaka())
 
@@ -149,8 +149,8 @@ end
 end
 
 @testset "pore_volume_fraction" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => CS_PORO))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => CS_PORO); fraction = :rest)
     add_phase!(rve, :P1, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0e-9, 1.0e-9)); fraction = 0.1)
     add_phase!(rve, :P2, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0e-9, 1.0e-9)); fraction = 0.05)
     add_phase!(rve, :SOLID, Ellipsoid(1.0), Dict(:C => CS_PORO); fraction = 0.2)

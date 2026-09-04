@@ -115,8 +115,8 @@ function uniaxial_creep(R_eff, n)
 end
 
 function creep_composite(f, ω, times)
-    r = RVE(:M)
-    add_matrix!(r, Spheroid(1.0), Dict(:C => law_s))
+    r = RVE()
+    add_phase!(r, :M, Spheroid(1.0), Dict(:C => law_s); fraction = :rest)
     add_phase!(r, :I, Spheroid(ω), Dict(:C => law_i); fraction = f)
     R = homogenize_alv(r, MoriTanaka(), :C; times = times)
     return uniaxial_creep(R, length(times))

@@ -60,8 +60,8 @@ function C_paste_iso(wc, α; sc = 0.0, ω = ω_iso)
     C_tiny() = TensISO{3}(3 * TINY, 2 * TINY)
 
     # Hydrate foam : ISO-symmetrized needle + water + air, self-consistent.
-    rve_hf = RVE(:HYD)
-    add_matrix!(rve_hf, Spheroid(ω), Dict(:C => TensISO{3}(3 * K_hyd, 2 * μ_hyd)); symmetrize = :iso)
+    rve_hf = RVE()
+    add_phase!(rve_hf, :HYD, Spheroid(ω), Dict(:C => TensISO{3}(3 * K_hyd, 2 * μ_hyd)); fraction = :rest, symmetrize = :iso)
     add_phase!(rve_hf, :HYDi, Spheroid(ω), Dict(:C => TensISO{3}(3 * K_hyd, 2 * μ_hyd)); fraction = fthyd, symmetrize = :iso)
     add_phase!(rve_hf, :W, Ellipsoid(1.0), Dict(:C => C_tiny()); fraction = ftw, symmetrize = :iso)
     add_phase!(rve_hf, :AIR, Ellipsoid(1.0), Dict(:C => C_tiny()); fraction = ftair, symmetrize = :iso)
@@ -71,14 +71,14 @@ function C_paste_iso(wc, α; sc = 0.0, ω = ω_iso)
     )
 
     # Cement paste : MT(HF, clinker).
-    rve_cp = RVE(:HF)
-    add_matrix!(rve_cp, Ellipsoid(1.0), Dict(:C => C_hf))
+    rve_cp = RVE()
+    add_phase!(rve_cp, :HF, Ellipsoid(1.0), Dict(:C => C_hf); fraction = :rest)
     add_phase!(rve_cp, :CLIN, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * K_clin, 2 * μ_clin)); fraction = fclin)
     C_cp = homogenize(rve_cp, MoriTanaka(), :C)
 
     # Mortar : MT(CP, sand).
-    rve_mo = RVE(:CP)
-    add_matrix!(rve_mo, Ellipsoid(1.0), Dict(:C => C_cp))
+    rve_mo = RVE()
+    add_phase!(rve_mo, :CP, Ellipsoid(1.0), Dict(:C => C_cp); fraction = :rest)
     add_phase!(rve_mo, :SAN, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * K_san, 2 * μ_san)); fraction = fhsan)
     return homogenize(rve_mo, MoriTanaka(), :C)
 end

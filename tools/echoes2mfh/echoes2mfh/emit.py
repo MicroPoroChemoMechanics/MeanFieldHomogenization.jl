@@ -265,11 +265,12 @@ class Emitter:
             self._w("# a complex element type is all that is needed.")
         args = ", ".join(rve.params)
         self._w(f"function {rve.builder_name}({args})")
-        ctor = (
-            f"RVE(:{rve.matrix_name}; T = ComplexF64)"
-            if rve.complex_valued
-            else f"RVE(:{rve.matrix_name})"
-        )
+        # No phase name here: an RVE designates no matrix. Echoes' matrix
+        # becomes the phase taking up the volume complement, which is exactly
+        # what a matrix-based scheme picks up when it names none — so the
+        # translated script reproduces Echoes' semantics without the schemes
+        # having to be rewritten.
+        ctor = "RVE(; T = ComplexF64)" if rve.complex_valued else "RVE()"
         self._w(f"{IND}rve = {ctor}")
         for pd in rve.phases:
             self._phase(pd, rve)
@@ -285,11 +286,8 @@ class Emitter:
             opts.append(f"symmetrize = {pd.symmetrize}")
 
         if pd.is_matrix:
-            tail = ("; " + ", ".join(opts)) if opts else ""
-            self._w(f"{IND}add_matrix!(rve, {geom}, {props}{tail})")
-            return
-
-        if pd.amount:
+            opts.insert(0, "fraction = :rest")
+        elif pd.amount:
             kind, expr = pd.amount
             opts.insert(0, f"{kind} = {expr.code}")
         line = f"{IND}add_phase!(rve, :{pd.name}, {geom}, {props}; " + ", ".join(opts) + ")"

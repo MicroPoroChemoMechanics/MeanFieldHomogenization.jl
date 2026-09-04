@@ -92,8 +92,8 @@ supports both: `:whole_pores` (``N`` separate spherical inclusions) and `:layers
 
 ```@example creep
 function build_rve_whole_pores(N, α, t0; fixed)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => make_R0()))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => make_R0()); fraction = :rest)
     add_phase!(rve, :PORE, Ellipsoid(1.0), Dict(:C => heaviside_law(C_p)); fraction = fp)
     t_sets = setting_times(N, α)
     for i in 1:N
@@ -104,8 +104,8 @@ function build_rve_whole_pores(N, α, t0; fixed)
 end
 
 function build_rve_layers(N, α, t0; fixed)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => make_R0()))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => make_R0()); fraction = :rest)
     t_sets = setting_times(N, α)
     f_layers = vcat([fp], fill(finf / N, N))        # pore innermost, shells outward
     cumulative = cumsum(f_layers)
@@ -168,8 +168,8 @@ const C_0_el, C_1_el = TensISO{3}(3k0, 2μ0), TensISO{3}(3k1, 2μ1)
 layer_stiffness(t, t_set) = t ≥ t_set ? C_1_el : C_p
 
 function build_elastic_rve(N, α, t, model)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_0_el))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_0_el); fraction = :rest)
     t_sets = setting_times(N, α)
     if model === :layers
         cumulative = cumsum(vcat([fp], fill(finf / N, N)))

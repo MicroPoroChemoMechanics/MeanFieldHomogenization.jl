@@ -117,8 +117,8 @@ end
 # ─── Build RVE — whole-pores topology ───────────────────────────────────────
 
 function build_rve_whole_pores(N::Int, α::Real, t_0::Real; fixed::Bool)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => make_R0()))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => make_R0()); fraction = :rest)
     # Pore
     add_phase!(
         rve, :PORE, Ellipsoid(1.0, 1.0, 1.0),
@@ -147,8 +147,8 @@ end
 # innermost solidifying shell carries `t_set = lT[0]` (earliest).
 
 function build_rve_layers(N::Int, α::Real, t_0::Real; fixed::Bool)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => make_R0()))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => make_R0()); fraction = :rest)
 
     t_sets = solidification_setting_times(N, α)
 
@@ -278,8 +278,8 @@ const C_1_el = TensISO{3}(3 * k1, 2 * μ1)
 layer_stiffness(t::Real, t_set::Real) = (t ≥ t_set) ? C_1_el : C_p_tens
 
 function build_elastic_rve_whole_pores(N::Int, α::Real, t::Real)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_0_el))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_0_el); fraction = :rest)
     add_phase!(
         rve, :PORE, Ellipsoid(1.0, 1.0, 1.0),
         Dict(:C => C_p_tens); fraction = fp
@@ -295,8 +295,8 @@ function build_elastic_rve_whole_pores(N::Int, α::Real, t::Real)
 end
 
 function build_elastic_rve_layers(N::Int, α::Real, t::Real)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_0_el))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_0_el); fraction = :rest)
     t_sets = solidification_setting_times(N, α)
     f_layers = vcat([fp], fill(finf / N, N))
     cumulative = cumsum(f_layers)

@@ -50,8 +50,8 @@ stiffness, that varies smoothly.
 
 ```@example tutporous
 function bulk_at(f, scheme)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => C_solid))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C_solid); fraction = :rest)
     f > 0 && add_phase!(r, :V, Ellipsoid(1.0), Dict(:C => C_void); fraction = f)
     k, _ = k_mu(homogenize(r, scheme, :C))
     return k

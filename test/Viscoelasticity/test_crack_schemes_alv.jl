@@ -22,8 +22,8 @@ function _setup_crack_elastic(; k_M = 5.0, μ_M = 2.0, ε = 0.1, n_times = 4)
 end
 
 _build_alv(ctx) = let
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => ctx.law_M))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => ctx.law_M); fraction = :rest)
     add_phase!(
         rve, :CRACK, ctx.crack, Dict(:C => ctx.law_M);
         density = ctx.ε, symmetrize = :iso
@@ -32,8 +32,8 @@ _build_alv(ctx) = let
 end
 
 _build_el(ctx) = let
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => ctx.C_M_t))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => ctx.C_M_t); fraction = :rest)
     add_phase!(
         rve, :CRACK, ctx.crack, Dict(:C => ctx.C_M_t);
         density = ctx.ε, symmetrize = :iso
@@ -78,8 +78,8 @@ end
     # 1) At very low density, SC ≈ Dilute (perturbative).
     times = ctx.times
     rve_low = let
-        r = RVE(:M)
-        add_matrix!(r, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => ctx.law_M))
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => ctx.law_M); fraction = :rest)
         add_phase!(
             r, :CRACK, ctx.crack, Dict(:C => ctx.law_M);
             density = 0.001, symmetrize = :iso

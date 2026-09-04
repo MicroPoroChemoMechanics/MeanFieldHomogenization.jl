@@ -42,8 +42,8 @@ km, μm = 10.0, 5.0
 ki, μi = 40.0, 20.0
 
 for f in (0.05, 0.1, 0.2, 0.3, 0.4)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(3km, 2μm)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3km, 2μm)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3ki, 2μi));
         fraction = f
@@ -69,8 +69,8 @@ println()
 # We take k_pore, μ_pore = 1e-6 (numerically tiny but non-zero) to keep the
 # stiffness invertible at every iteration.
 function porous_iso(f, scheme)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0, 1.0)))   # 3k=1, 2μ=1
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0, 1.0)); fraction = :rest)   # 3k=1, 2μ=1
     f > 0 && add_phase!(
         rve, :PORE, Ellipsoid(1.0),
         Dict(:C => TensISO{3}(1.0e-6, 1.0e-6)); fraction = f

@@ -17,8 +17,8 @@ const k_m, μ_m = 30.0, 10.0
 const k_i, μ_i = 60.0, 20.0
 
 function build(f)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_i, μ_i)); fraction = f)
     return rve
 end

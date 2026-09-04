@@ -44,8 +44,11 @@ gr()
 # memoizes it for the duration of the call.
 
 function build_porous()
-    rve = RVE(:SOLID)
-    add_matrix!(rve, Spheroid(1.0), Dict(:C => iso_stiffness(2.0, 0.8)))
+    rve = RVE()
+    add_phase!(
+        rve, :SOLID, Spheroid(1.0), Dict(:C => iso_stiffness(2.0, 0.8));
+        fraction = :rest
+    )
     add_phase!(
         rve, :PORE, Spheroid(1.0), Dict(:C => iso_stiffness(1.0e-6, 1.0e-6));
         fraction = 0.25
@@ -140,7 +143,7 @@ Deleting it costs nothing but a best-effort re-reading of the code.
    "phases": [
     {
      "amount": 0.1,
-     "amount_kind": "fraction",
+     "amount_kind": "rest",
      "geometry": {
       "args": {
        "omega": 1.0
@@ -149,7 +152,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
       "kind": "spheroid",
       "layers": []
      },
-     "is_matrix": true,
      "name": "SOLID",
      "properties": [
       {
@@ -182,7 +184,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
       "kind": "spheroid",
       "layers": []
      },
-     "is_matrix": false,
      "name": "PORE",
      "properties": [
       {

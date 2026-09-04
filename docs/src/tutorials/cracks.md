@@ -67,8 +67,8 @@ for whichever scheme is requested:
 
 ```@example tutcracks
 function build(ρ)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => C0))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C0); fraction = :rest)
     add_phase!(r, :CRACK, PennyCrack(1.0), Dict(:C => C0); density = ρ, symmetrize = IsoSymmetrize())
     return r
 end

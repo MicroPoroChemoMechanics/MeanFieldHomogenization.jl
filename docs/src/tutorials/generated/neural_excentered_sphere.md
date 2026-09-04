@@ -186,8 +186,8 @@ and every scheme that consumes them works.
 
 ````@example neural_excentered_sphere
 function rve_of(incl, f)
-    r = RVE(:paste)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => C0))
+    r = RVE()
+    add_phase!(r, :paste, Ellipsoid(1.0), Dict(:C => C0); fraction = :rest)
     add_phase!(r, :rca, incl, Dict(:C => C0); fraction = f)
     return r
 end

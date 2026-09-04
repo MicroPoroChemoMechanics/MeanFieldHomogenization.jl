@@ -80,15 +80,15 @@ result to the next.
 
 ```julia
 # scale 0 — the hydrate foam
-foam = RVE(:PORE)
-add_matrix!(foam, Ellipsoid(1.0), Dict(:C => C_pore))
+foam = RVE()
+add_phase!(foam, :PORE, Ellipsoid(1.0), Dict(:C => C_pore); fraction = :rest)
 add_phase!(foam, :hyd, Spheroid(1.0, 0.02), Dict(:C => C_hyd);
            fraction = 0.7, symmetrize = :iso)
 C_foam = homogenize(foam, SelfConsistent(), :C)
 
 # scale 1 — the cement paste, built ON that result
-paste = RVE(:FOAM)
-add_matrix!(paste, Ellipsoid(1.0), Dict(:C => C_foam))
+paste = RVE()
+add_phase!(paste, :FOAM, Ellipsoid(1.0), Dict(:C => C_foam); fraction = :rest)
 add_phase!(paste, :clinker, Ellipsoid(1.0), Dict(:C => C_clin); fraction = 0.2)
 C_paste = homogenize(paste, MoriTanaka(), :C)
 ```
@@ -108,14 +108,13 @@ object, and the evaluation order is deduced from the graph rather than
 imposed.
 
 ```julia
-foam = RVE(:PORE)
-add_matrix!(foam, Ellipsoid(1.0), Dict(:C => C_pore))
+foam = RVE()
+add_phase!(foam, :PORE, Ellipsoid(1.0), Dict(:C => C_pore); fraction = :rest)
 add_phase!(foam, :hyd, Spheroid(1.0, 0.02), Dict(:C => C_hyd);
            fraction = 0.7, symmetrize = :iso)
 
-paste = RVE(:FOAM)
-add_matrix!(paste, Ellipsoid(1.0),
-            Dict(:C => Homogenized(foam, SelfConsistent())))   # ← the seam
+paste = RVE()
+add_phase!(paste, :FOAM, Ellipsoid(1.0), Dict(:C => Homogenized(foam, SelfConsistent())); fraction = :rest)   # ← the seam
 add_phase!(paste, :clinker, Ellipsoid(1.0), Dict(:C => C_clin); fraction = 0.2)
 
 C_paste = homogenize(paste, MoriTanaka(), :C)   # resolves `foam` on the way
@@ -151,7 +150,7 @@ microstructure once instead of twice.
 
 ```julia
 h = Homogenized(foam, SelfConsistent())
-add_matrix!(paste, Ellipsoid(1.0), Dict(:C => h, :K => h))
+add_phase!(paste, :FOAM, Ellipsoid(1.0), Dict(:C => h, :K => h); fraction = :rest)
 ```
 
 ### Cost, and the memoization

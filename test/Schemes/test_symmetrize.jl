@@ -97,18 +97,36 @@ import ForwardDiff as FD
         @test TensND.get_array(Kp2)[2, 1] ≈ -0.6
     end
 
-    @testset "TISymmetrize — matrix_projection option" begin
+    @testset "TISymmetrize — reference_projection option" begin
         sym_def = TISymmetrize((0.0, 0.0, 1.0))
-        @test sym_def.matrix_projection === :iso
-        sym_none = TISymmetrize((0.0, 0.0, 1.0); matrix_projection = :none)
-        @test sym_none.matrix_projection === :none
-        @test_throws ArgumentError TISymmetrize((0.0, 0.0, 1.0); matrix_projection = :foo)
+        @test sym_def.reference_projection === :iso
+        sym_none = TISymmetrize((0.0, 0.0, 1.0); reference_projection = :none)
+        @test sym_none.reference_projection === :none
+        @test_throws ArgumentError TISymmetrize((0.0, 0.0, 1.0); reference_projection = :foo)
         # _project_matrix behavior
         C_ti = TensND.TensTI{4, Float64, 5}((10.0, 6.0, 2.0, 3.0, 4.0), (0.0, 0.0, 1.0))
         @test _project_matrix(C_ti, sym_none) === C_ti
         @test _project_matrix(C_ti, sym_def) isa TensND.TensISO{4, 3}
-        sym_ti = TISymmetrize((0.0, 0.0, 1.0); matrix_projection = :ti)
+        sym_ti = TISymmetrize((0.0, 0.0, 1.0); reference_projection = :ti)
         @test _project_matrix(C_ti, sym_ti) isa TensND.TensTI{4, Float64, 5}
+
+        # The axis-free form: e₃ by default, and the keyword still honored.
+        @test TISymmetrize().axis == (0.0, 0.0, 1.0)
+        @test TISymmetrize(; reference_projection = :none).reference_projection === :none
+        # And the vector form, which coerces to the tuple.
+        @test TISymmetrize([0.0, 0.0, 1.0]).axis == (0.0, 0.0, 1.0)
+    end
+
+    @testset "symmetrize coercion accepts every documented spelling" begin
+        S = MeanFieldHomogenization.Schemes
+        @test S._to_symmetrize(nothing) isa NoSymmetrize
+        @test S._to_symmetrize(:none) isa NoSymmetrize
+        @test S._to_symmetrize(:iso) isa IsoSymmetrize
+        @test S._to_symmetrize(:ISO) isa IsoSymmetrize
+        @test S._to_symmetrize(:ti) isa TISymmetrize
+        @test S._to_symmetrize(:TI) isa TISymmetrize
+        @test S._to_symmetrize(IsoSymmetrize()) isa IsoSymmetrize
+        @test_throws ArgumentError S._to_symmetrize(:bogus)
     end
 
     @testset "RVE-level symmetrize integration — porous oblate ⇒ iso C_eff" begin
@@ -117,8 +135,8 @@ import ForwardDiff as FD
         # un-symmetrized result for sphere geometry (sanity check).
         C_s = TensISO{3}(216.0, 64.0)
         C_p = TensISO{3}(3.0e-6, 2.0e-6)
-        rve = RVE(:M)
-        add_matrix!(rve, Spheroid(0.2), Dict(:C => C_s); symmetrize = :iso)
+        rve = RVE()
+        add_phase!(rve, :M, Spheroid(0.2), Dict(:C => C_s); fraction = :rest, symmetrize = :iso)
         add_phase!(
             rve, :PORE, Spheroid(0.2), Dict(:C => C_p);
             fraction = 0.3, symmetrize = :iso
@@ -135,8 +153,8 @@ import ForwardDiff as FD
         # stiffness inherits a TI structure around ez (axisymmetric).
         C_m = TensISO{3}(216.0, 64.0)
         C_i = TensISO{3}(3.0e-6, 2.0e-6)
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(
             rve, :I, Spheroid(0.2), Dict(:C => C_i);
             fraction = 0.2, symmetrize = TISymmetrize((0.0, 0.0, 1.0))
@@ -156,12 +174,12 @@ import ForwardDiff as FD
         # its contribution strictly unchanged.
         C_m = TensISO{3}(3 * 20.0, 2 * 12.0)
         C_i = TensISO{3}(3 * 80.0, 2 * 50.0)
-        rve1 = RVE(:M)
-        add_matrix!(rve1, Ellipsoid(1.0), Dict(:C => C_m))
+        rve1 = RVE()
+        add_phase!(rve1, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(rve1, :I, Spheroid(5.0), Dict(:C => C_i); fraction = 0.2)
         C_ref = homogenize(rve1, MoriTanaka(), :C)
-        rve2 = RVE(:M)
-        add_matrix!(rve2, Ellipsoid(1.0), Dict(:C => C_m))
+        rve2 = RVE()
+        add_phase!(rve2, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(
             rve2, :I, Spheroid(5.0), Dict(:C => C_i);
             fraction = 0.2, symmetrize = TISymmetrize((0.0, 0.0, 1.0))
@@ -178,15 +196,15 @@ import ForwardDiff as FD
         # must converge (in O(Δθ²)) to the single ISO-symmetrized phase.
         C_m = TensISO{3}(3 * 20.0, 2 * 12.0)
         C_i = TensISO{3}(3 * 80.0, 2 * 50.0)
-        rve_iso = RVE(:M)
-        add_matrix!(rve_iso, Ellipsoid(1.0), Dict(:C => C_m))
+        rve_iso = RVE()
+        add_phase!(rve_iso, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(rve_iso, :I, Spheroid(5.0), Dict(:C => C_i); fraction = 0.15, symmetrize = :iso)
         Aiso = TensND.get_array(homogenize(rve_iso, MoriTanaka(), :C))
         ez = (0.0, 0.0, 1.0)
         errs = Float64[]
         for nθ in (10, 20)
-            rve_bins = RVE(:M)
-            add_matrix!(rve_bins, Ellipsoid(1.0), Dict(:C => C_m))
+            rve_bins = RVE()
+            add_phase!(rve_bins, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
             edges = range(0, π / 2; length = nθ + 1)
             for k in 1:nθ
                 θm, θp = edges[k], edges[k + 1]
@@ -213,8 +231,8 @@ import ForwardDiff as FD
         C_i = TensISO{3}(3 * 80.0, 2 * 50.0)
         θs = (0.0, π / 4, π / 2)
         build = x -> begin
-            rv = RVE(:M)
-            add_matrix!(rv, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 20.0 * x, 2 * 12.0 * x)))
+            rv = RVE()
+            add_phase!(rv, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 20.0 * x, 2 * 12.0 * x)); fraction = :rest)
             for (k, θ) in enumerate(θs)
                 add_phase!(
                     rv, Symbol(:I, k),

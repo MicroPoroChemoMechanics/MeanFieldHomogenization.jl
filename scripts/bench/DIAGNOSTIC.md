@@ -123,7 +123,7 @@ has an isotropic matrix **and** an isotropic phase property, so
 
 **Status**: tier 1 preserves current behavior — the bundles concerned fall back
 to the two separate calls when `P₀_proj !== P₀` (the guard is object identity,
-covering `NoSymmetrize` **and** `TISymmetrize(matrix_projection = :none)`).
+covering `NoSymmetrize` **and** `TISymmetrize(reference_projection = :none)`).
 Unifying them is tier 2, not yet applied.
 
 ---

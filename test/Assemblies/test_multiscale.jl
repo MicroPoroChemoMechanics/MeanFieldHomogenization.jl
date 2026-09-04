@@ -33,21 +33,21 @@ _idx(C) = get_array(C)[1, 2, 1, 2]
 
 @testset "Multiscale — assembly as the inner cell of an RVE" begin
     inner = cubic_lattice(:sc, Dict(:C => _Cm()), Dict(:C => _Ci()); fraction = 0.3, cutoff = 2.0)
-    outer = RVE(:M)
-    add_matrix!(outer, Ellipsoid(1.0), Dict(:C => Homogenized(inner, ClusterModel())))
+    outer = RVE()
+    add_phase!(outer, :M, Ellipsoid(1.0), Dict(:C => Homogenized(inner, ClusterModel())); fraction = :rest)
     add_phase!(outer, :F, Ellipsoid(1.0), Dict(:C => _Cf()); fraction = 0.2)
     C_nested = get_array(homogenize(outer, MoriTanaka(), :C))
 
     # The same thing done by hand, in two steps.
-    ref = RVE(:M)
-    add_matrix!(ref, Ellipsoid(1.0), Dict(:C => homogenize(inner, ClusterModel(), :C)))
+    ref = RVE()
+    add_phase!(ref, :M, Ellipsoid(1.0), Dict(:C => homogenize(inner, ClusterModel(), :C)); fraction = :rest)
     add_phase!(ref, :F, Ellipsoid(1.0), Dict(:C => _Cf()); fraction = 0.2)
     @test maximum(abs.(C_nested .- get_array(homogenize(ref, MoriTanaka(), :C)))) ≈ 0.0 atol = 1.0e-14
 end
 
 @testset "Multiscale — assembly as the outer cell" begin
-    sub = RVE(:S)
-    add_matrix!(sub, Ellipsoid(1.0), Dict(:C => _Ci()))
+    sub = RVE()
+    add_phase!(sub, :S, Ellipsoid(1.0), Dict(:C => _Ci()); fraction = :rest)
     add_phase!(sub, :n, Ellipsoid(1.0), Dict(:C => _Cf()); fraction = 0.25)
 
     asm = ParticleAssembly(; boundary = PeriodicBox(1.0; cutoff = 2.0))
@@ -83,8 +83,8 @@ end
     @test all(isfinite, C2)
     @test C2[1, 1, 1, 1] > C1[1, 1, 1, 1]        # a stiff particle stiffens it
 
-    lvl3 = RVE(:T)
-    add_matrix!(lvl3, Ellipsoid(1.0), Dict(:C => Homogenized(lvl2, ClusterModel())))
+    lvl3 = RVE()
+    add_phase!(lvl3, :T, Ellipsoid(1.0), Dict(:C => Homogenized(lvl2, ClusterModel())); fraction = :rest)
     add_phase!(lvl3, :v, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0e-9, 1.0e-9)); fraction = 0.05)
     C3 = get_array(homogenize(lvl3, MoriTanaka(), :C))
     @test all(isfinite, C3)
@@ -93,8 +93,8 @@ end
 
 @testset "Multiscale — introspection and the raw accessor" begin
     inner = cubic_lattice(:sc, Dict(:C => _Cm()), Dict(:C => _Ci()); fraction = 0.2, cutoff = 1.0)
-    outer = RVE(:M)
-    add_matrix!(outer, Ellipsoid(1.0), Dict(:C => Homogenized(inner, ClusterModel())))
+    outer = RVE()
+    add_phase!(outer, :M, Ellipsoid(1.0), Dict(:C => Homogenized(inner, ClusterModel())); fraction = :rest)
     add_phase!(outer, :F, Ellipsoid(1.0), Dict(:C => _Cf()); fraction = 0.2)
     @test MeanFieldHomogenization.Core.has_nested_property(outer, :C)
 
@@ -105,7 +105,7 @@ end
 
     # The raw accessor must NOT resolve — that is what type inspections rely on.
     @test MeanFieldHomogenization.Core.cell_container_property(outer, :M, :C) isa Homogenized
-    @test matrix_property(outer, :C) isa TensND.AbstractTens    # the resolving one does
+    @test phase_property(outer, :M, :C) isa TensND.AbstractTens  # the resolving one does
 
     # An assembly nested under an *iterative* outer scheme: the memoization of
     # `Homogenized` is what keeps the inner cell from being re-homogenized on
@@ -115,8 +115,8 @@ end
 
 @testset "Multiscale — nested sensitivity through the scales" begin
     inner = cubic_lattice(:sc, Dict(:C => _Cm()), Dict(:C => _Ci()); fraction = 0.3, cutoff = 2.0)
-    outer = RVE(:M)
-    add_matrix!(outer, Ellipsoid(1.0), Dict(:C => Homogenized(inner, ClusterModel())))
+    outer = RVE()
+    add_phase!(outer, :M, Ellipsoid(1.0), Dict(:C => Homogenized(inner, ClusterModel())); fraction = :rest)
     add_phase!(outer, :F, Ellipsoid(1.0), Dict(:C => _Cf()); fraction = 0.2)
 
     # A modulus of the assembly's own matrix, two scales down.

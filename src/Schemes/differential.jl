@@ -90,7 +90,7 @@ ks = [k_mu(C)[1] for C in Cs]
 function differential_path(
         rve::RVE, scheme::DifferentialScheme, property::Symbol; kw...
     )
-    validate_rve(rve)
+    validate_cell(rve, scheme)
     return _differential_states(rve, scheme, property; kw...)
 end
 
@@ -100,13 +100,14 @@ function _differential_states(rve::RVE, scheme::DifferentialScheme, prop::Symbol
     reltol = get(scheme.options, :reltol, 1.0e-6)
     alg = get(scheme.options, :alg, nothing)
     formulation = _diff_formulation(scheme)
-    paths = _resolve_paths(scheme.trajectory, rve, nsteps)
-    P_matrix = matrix_property(rve, prop)
+    m = matrix_name(scheme, rve)
+    paths = _resolve_paths(scheme.trajectory, rve, nsteps, m)
+    P_matrix = phase_property(rve, m, prop)
     # The compliance form integrates S = C⁻¹ and inverts back on the way out,
     # so the caller always receives the declared property.
     P_init = formulation === :compliance ? inv(P_matrix) : P_matrix
     τ, states = _diff_integrate_ode(
-        rve, paths, prop, P_init;
+        rve, paths, prop, m, P_init;
         nsteps, abstol, reltol, alg, formulation,
         solver_kwargs = _diff_solver_kwargs(scheme.options), kw...
     )
@@ -120,6 +121,7 @@ function _diff_integrate_ode(
         rve::RVE,
         paths::AbstractDict{Symbol},
         prop::Symbol,
+        matrix::Symbol,
         P_init::TensND.AbstractTens;
         nsteps::Int = 100,
         abstol::Real = 1.0e-8,
@@ -136,7 +138,21 @@ function _diff_integrate_ode(
     # through its scalar inputs).
     solid_names = Symbol[]
     crack_names = Symbol[]
-    incl = inclusion_phase_names(rve)
+    incl = inclusion_phase_names(rve, matrix)
+    # The scheme integrates every non-matrix phase from zero up to its declared
+    # amount, so each of them needs one. The phase taking up the volume
+    # complement has none — it is whatever the others leave — and is only
+    # meaningful here as the matrix itself.
+    for name in incl
+        rve.amounts[name] isa Remainder && throw(
+            ArgumentError(
+                "DifferentialScheme integrates each phase up to its declared amount, " *
+                    "and phase :$(name) carries the volume complement instead of one. " *
+                    "Either name it as the scheme's matrix — " *
+                    "DifferentialScheme(:$(name)) — or give it an explicit fraction."
+            )
+        )
+    end
     T_target = isempty(incl) ? Float64 :
         promote_type((typeof(amount_value(rve.amounts[name])) for name in incl)...)
     targets = Dict{Symbol, T_target}()
@@ -169,7 +185,7 @@ function _diff_integrate_ode(
     # kernels actually produce, read off the same probe that fixes the state
     # layout.
     dual = formulation === :compliance
-    proto, T_contrib = _diff_state_proto(rve, P_init, prop, dual; kw...)
+    proto, T_contrib = _diff_state_proto(rve, P_init, prop, matrix, dual; kw...)
     sym_tag = _symmetry_tag(proto)
     x0 = _diff_initial_state(sym_tag, P_init, proto)
     T_state = promote_type(eltype(x0), T_target, T_contrib)
@@ -303,8 +319,10 @@ end
 # The same probe also reports the eltype the kernels produce (second
 # return value), which is what the ODE state must be able to hold — see
 # `T_contrib` in `_diff_integrate_ode`.
-function _diff_state_proto(rve::RVE, P_init::TensND.AbstractTens, prop::Symbol, dual::Bool; kw...)
-    incl = inclusion_phase_names(rve)
+function _diff_state_proto(
+        rve::RVE, P_init::TensND.AbstractTens, prop::Symbol, matrix::Symbol, dual::Bool; kw...
+    )
+    incl = inclusion_phase_names(rve, matrix)
     T_contrib = eltype(P_init)
     isempty(incl) && return P_init, T_contrib
     proto = P_init

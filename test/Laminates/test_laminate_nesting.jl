@@ -36,8 +36,8 @@ function _inner_laminate(μA = 0.8)
 end
 
 function _outer(prop_value; kw...)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => _ison(1.0, 0.4), :K => TensISO{3}(1.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => _ison(1.0, 0.4), :K => TensISO{3}(1.0)); fraction = :rest)
     add_phase!(
         rve, :agg, Ellipsoid(1.0), prop_value;
         fraction = 0.3, symmetrize = :iso, kw...
@@ -56,8 +56,8 @@ end
 end
 
 @testset "Nesting — RVE in laminate (the other direction)" begin
-    inner = RVE(:M)
-    add_matrix!(inner, Ellipsoid(1.0), Dict(:C => _ison(3.0, 1.2)))
+    inner = RVE()
+    add_phase!(inner, :M, Ellipsoid(1.0), Dict(:C => _ison(3.0, 1.2)); fraction = :rest)
     add_phase!(inner, :pore, Ellipsoid(1.0), Dict(:C => _ison(1.0e-9, 1.0e-9)); fraction = 0.2)
 
     lam_d = Laminate(; normal = (0, 0, 1))
@@ -75,8 +75,8 @@ end
 @testset "Nesting — a three-level chain" begin
     # scale 0: an RVE ; scale 1: a laminate containing it ; scale 2: an RVE
     # containing that laminate.
-    inner = RVE(:M)
-    add_matrix!(inner, Ellipsoid(1.0), Dict(:C => _ison(3.0, 1.2)))
+    inner = RVE()
+    add_phase!(inner, :M, Ellipsoid(1.0), Dict(:C => _ison(3.0, 1.2)); fraction = :rest)
     add_phase!(inner, :pore, Ellipsoid(1.0), Dict(:C => _ison(1.0e-9, 1.0e-9)); fraction = 0.2)
 
     mid_d = Laminate(; normal = (0, 0, 1))
@@ -107,8 +107,8 @@ end
 
     # An explicit `property` reads a different key from the inner cell.
     h2 = Homogenized(lam, Laminated(); property = :K)
-    rve2 = RVE(:M)
-    add_matrix!(rve2, Ellipsoid(1.0), Dict(:X => TensISO{3}(1.0)))
+    rve2 = RVE()
+    add_phase!(rve2, :M, Ellipsoid(1.0), Dict(:X => TensISO{3}(1.0)); fraction = :rest)
     add_phase!(rve2, :agg, Ellipsoid(1.0), Dict(:X => h2); fraction = 0.3, symmetrize = :iso)
     @test homogenize(rve2, MoriTanaka(), :X) ≈
         homogenize(_outer(Dict(:K => homogenize(lam, Laminated(), :K))), MoriTanaka(), :K)
@@ -211,11 +211,11 @@ end
 @testset "Nesting — the cycle guard" begin
     deep = _ison(1.0, 0.4)
     for _ in 1:(MFHC_N.MAX_NESTING + 3)
-        r = RVE(:M)
-        add_matrix!(r, Ellipsoid(1.0), Dict(:C => deep))
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => deep); fraction = :rest)
         deep = Homogenized(r, Voigt())
     end
-    top = RVE(:M)
-    add_matrix!(top, Ellipsoid(1.0), Dict(:C => deep))
+    top = RVE()
+    add_phase!(top, :M, Ellipsoid(1.0), Dict(:C => deep); fraction = :rest)
     @test_throws ErrorException homogenize(top, Voigt(), :C)
 end

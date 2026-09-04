@@ -48,8 +48,8 @@ C_binder = iso(1.0, 0.4)
 K_solid, K_pore, K_stiff, K_binder = TensISO{3}(2.0), TensISO{3}(1.0e-9), TensISO{3}(0.3), TensISO{3}(1.0)
 
 function micro_cell(; φ = 0.2)
-    r = RVE(:SOLID)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => C_solid, :K => K_solid))
+    r = RVE()
+    add_phase!(r, :SOLID, Ellipsoid(1.0), Dict(:C => C_solid, :K => K_solid); fraction = :rest)
     add_phase!(r, :pore, Ellipsoid(1.0), Dict(:C => C_pore, :K => K_pore); fraction = φ)
     return r
 end
@@ -66,8 +66,8 @@ function explicit_chain(; φ = 0.2, f_lay = 0.4, f_agg = 0.3)
     add_layer!(meso, :STIFF, Dict(:C => C_stiff); fraction = 1 - f_lay)
     C_meso = homogenize(meso, Laminated(), :C)
 
-    macro_rve = RVE(:BINDER)
-    add_matrix!(macro_rve, Ellipsoid(1.0), Dict(:C => C_binder))
+    macro_rve = RVE()
+    add_phase!(macro_rve, :BINDER, Ellipsoid(1.0), Dict(:C => C_binder); fraction = :rest)
     add_phase!(
         macro_rve, :agg, Ellipsoid(1.0), Dict(:C => C_meso);
         fraction = f_agg, symmetrize = :iso
@@ -91,8 +91,8 @@ function declarative_model(; φ = 0.2, f_lay = 0.4, f_agg = 0.3)
     )
     add_layer!(meso, :STIFF, Dict(:C => C_stiff); fraction = 1 - f_lay)
 
-    macro_rve = RVE(:BINDER)
-    add_matrix!(macro_rve, Ellipsoid(1.0), Dict(:C => C_binder))
+    macro_rve = RVE()
+    add_phase!(macro_rve, :BINDER, Ellipsoid(1.0), Dict(:C => C_binder); fraction = :rest)
     add_phase!(
         macro_rve, :agg, Ellipsoid(1.0),
         Dict(:C => Homogenized(meso, Laminated()));                    # ← scale 2 → 3
@@ -128,16 +128,16 @@ Against a central finite difference through the explicit chain:
 
 ````@example laminate_multiscale
 function μ_macro_explicit(x)
-    C_micro = let r = RVE(:SOLID)
-        add_matrix!(r, Ellipsoid(1.0), Dict(:C => iso(3.0, x / 2)))
+    C_micro = let r = RVE()
+        add_phase!(r, :SOLID, Ellipsoid(1.0), Dict(:C => iso(3.0, x / 2)); fraction = :rest)
         add_phase!(r, :pore, Ellipsoid(1.0), Dict(:C => C_pore); fraction = 0.2)
         homogenize(r, MoriTanaka(), :C)
     end
     meso = Laminate(; normal = (0, 0, 1))
     add_layer!(meso, :POROUS, Dict(:C => C_micro); fraction = 0.4)
     add_layer!(meso, :STIFF, Dict(:C => C_stiff); fraction = 0.6)
-    m = RVE(:BINDER)
-    add_matrix!(m, Ellipsoid(1.0), Dict(:C => C_binder))
+    m = RVE()
+    add_phase!(m, :BINDER, Ellipsoid(1.0), Dict(:C => C_binder); fraction = :rest)
     add_phase!(
         m, :agg, Ellipsoid(1.0), Dict(:C => homogenize(meso, Laminated(), :C));
         fraction = 0.3, symmetrize = :iso
@@ -176,8 +176,8 @@ add_layer!(meso, :POROUS, Dict(:C => h_micro, :K => h_micro); fraction = 0.4)
 add_layer!(meso, :STIFF, Dict(:C => C_stiff, :K => K_stiff); fraction = 0.6)
 
 h_meso = Homogenized(meso, Laminated())
-macro_rve = RVE(:BINDER)
-add_matrix!(macro_rve, Ellipsoid(1.0), Dict(:C => C_binder, :K => K_binder))
+macro_rve = RVE()
+add_phase!(macro_rve, :BINDER, Ellipsoid(1.0), Dict(:C => C_binder, :K => K_binder); fraction = :rest)
 add_phase!(
     macro_rve, :agg, Ellipsoid(1.0), Dict(:C => h_meso, :K => h_meso);
     fraction = 0.3, symmetrize = :iso
@@ -205,8 +205,8 @@ t_sc = @elapsed homogenize(declarative_model(), SelfConsistent(), :C)
 
 C_sc_d = homogenize(declarative_model(), SelfConsistent(), :C)
 C_sc_x = let
-    m = RVE(:BINDER)
-    add_matrix!(m, Ellipsoid(1.0), Dict(:C => C_binder))
+    m = RVE()
+    add_phase!(m, :BINDER, Ellipsoid(1.0), Dict(:C => C_binder); fraction = :rest)
     meso_x = Laminate(; normal = (0, 0, 1))
     add_layer!(
         meso_x, :POROUS, Dict(:C => homogenize(micro_cell(), MoriTanaka(), :C));

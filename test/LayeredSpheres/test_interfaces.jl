@@ -110,8 +110,8 @@ end
     Cagg = iso_stiffness_E_nu(70.0, 0.2)
     agg = LayeredSphere((1.0,), (Cagg,); interfaces = (MembraneInterface(5.0, 3.0),))
     for (f, E_echoes) in ((0.1, 32.92649594), (0.5, 47.94244729))
-        r = RVE(:CEMENT)
-        add_matrix!(r, Ellipsoid(1.0), Dict(:C => C₀))
+        r = RVE()
+        add_phase!(r, :CEMENT, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
         add_phase!(r, :AGG, agg, Dict(:C => Cagg); fraction = f)
         @test E_nu(homogenize(r, MoriTanaka(), :C))[1] ≈ E_echoes rtol = 1.0e-7
     end

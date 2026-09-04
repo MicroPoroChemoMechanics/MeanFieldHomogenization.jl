@@ -127,8 +127,8 @@ times = collect(range(0.0, 5.0; length = 50))
 # Inclusions : aligned spheroids (oblate ratio 0.5), elastic
 C_I = TensISO{3}(60.0, 20.0)
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => law_M))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 0.5),
             Dict(:C => heaviside_law(C_I));
             fraction = 0.2)
@@ -282,8 +282,8 @@ function K_iso_order2(t, tp)
 end
 law_κ = ViscoLaw(K_iso_order2, :relaxation)
 
-rve_κ = RVE(:M)
-add_matrix!(rve_κ, Ellipsoid(1.0), Dict(:K => law_κ))
+rve_κ = RVE()
+add_phase!(rve_κ, :M, Ellipsoid(1.0), Dict(:K => law_κ); fraction = :rest)
 add_phase!(rve_κ, :I, Ellipsoid(1.0), Dict(:K => heaviside_law(TensISO{2,3}(5.0)));
             fraction = 0.3)
 
@@ -428,8 +428,8 @@ effective properties wrt RVE parameters are direct.
 using ForwardDiff
 
 # Build the RVE once with a Float64 placeholder fraction.
-rve_base = RVE(:M)
-add_matrix!(rve_base, Ellipsoid(1.0), Dict(:C => law_M))
+rve_base = RVE()
+add_phase!(rve_base, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
 add_phase!(rve_base, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(TensISO{3}(60.0, 20.0)));
             fraction = 0.20)
 
@@ -456,8 +456,8 @@ function eff_mu_vs_μM(μ_M)
     function R(t, tp)
         TensISO{3}(15.0, 2 * μ_M * (0.5 + 1.5 * exp(-(t - tp) / 0.5)))
     end
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => ViscoLaw(R, :relaxation)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => ViscoLaw(R, :relaxation)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(TensISO{3}(60.0, 20.0)));
                 fraction = 0.20)
     R̃ = homogenize_alv(rve, MoriTanaka(), :C; times = times)
@@ -473,8 +473,8 @@ dμ_dμM = ForwardDiff.derivative(eff_mu_vs_μM, 1.0)
 ```julia
 function eff_mu_vs_p(p)
     f, k_M, μ_M = p
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => maxwell_iso(k_M, μ_M, 1.0, 0.5)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => maxwell_iso(k_M, μ_M, 1.0, 0.5)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(TensISO{3}(60.0, 20.0)));
                 fraction = 0.20)
     rve_f = set_param(rve, AmountParameter(:I), f)

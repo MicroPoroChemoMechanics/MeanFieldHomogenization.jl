@@ -48,11 +48,13 @@ WITH_JULIA = "--julia" in sys.argv
 # ---------------------------------------------------------------------------
 
 
-def test_matrix_has_no_amount():
-    """MFH derives it as 1 - Σ f and raises if it is set."""
+def test_the_rest_phase_carries_no_numeric_amount():
+    """MFH derives it as 1 - Σ f and refuses to have it set."""
     src = generate(default_model(), embed_model=False)
-    add_matrix = next(l for l in src.splitlines() if "add_matrix!" in l)
-    assert "fraction" not in add_matrix
+    assert "fraction = :rest" in src
+    # And the constructor names no matrix: an RVE designates none.
+    assert "RVE()" in src
+    assert "add_matrix!" not in src
 
 
 def test_physical_moduli_not_raw_tensiso():
@@ -264,7 +266,7 @@ def _layered_spheroid_model() -> Model:
         layers=[layer(0.3, 1.0), layer(0.7, 5.0)],
     )
     c = Cell(name="r", matrix_name="M", phases=[
-        Phase(name="M", is_matrix=True, properties=[
+        Phase(name="M", amount_kind="rest", properties=[
             Property(key=":K", source="builder", builder="TensISO{3}",
                      form="iso_conduction", args={"k": 2.0})]),
         Phase(name="I", amount=0.2, geometry=g, properties=[]),
@@ -309,7 +311,7 @@ def test_conductivity_builder_has_the_right_arity():
 
 def test_orientation_reaches_the_generated_call():
     c = Cell(name="r", matrix_name="M", phases=[
-        Phase(name="M", is_matrix=True, properties=[Property()]),
+        Phase(name="M", amount_kind="rest", properties=[Property()]),
         Phase(name="I", amount=0.2, geometry=Geometry(
             kind="spheroid", args={"omega": 0.3}, euler_angles=[0.7, 1.1])),
     ])
@@ -319,7 +321,7 @@ def test_orientation_reaches_the_generated_call():
 
 def test_a_single_angle_gets_the_tuple_comma():
     c = Cell(name="r", matrix_name="M", phases=[
-        Phase(name="M", is_matrix=True, properties=[Property()]),
+        Phase(name="M", amount_kind="rest", properties=[Property()]),
         Phase(name="I", amount=0.2, geometry=Geometry(
             kind="spheroid", args={"omega": 0.3}, euler_angles=[1.2])),
     ])
@@ -329,7 +331,7 @@ def test_a_single_angle_gets_the_tuple_comma():
 def test_angles_are_floats_like_every_other_size():
     """A bare `0` next to `1.1` would make the tuple `Tuple{Int, Float64}`."""
     c = Cell(name="r", matrix_name="M", phases=[
-        Phase(name="M", is_matrix=True, properties=[Property()]),
+        Phase(name="M", amount_kind="rest", properties=[Property()]),
         Phase(name="I", amount=0.2, geometry=Geometry(
             kind="ellipsoid", args={"a": 2, "b": 1, "c": 0.5},
             euler_angles=[0, 1.1, 0.3])),
@@ -352,7 +354,7 @@ def test_geometry_sizes_are_floats():
                                    "builder": "iso_stiffness", "args": {"k": 30, "mu": 12}}},
     ])
     c = Cell(name="r", matrix_name="M", phases=[
-        Phase(name="M", is_matrix=True, properties=[Property()]),
+        Phase(name="M", amount_kind="rest", properties=[Property()]),
         Phase(name="I", amount=1, geometry=g),
     ])
     src = generate(Model(cells=[c]), embed_model=False)
@@ -453,7 +455,7 @@ def test_a_layer_carries_the_multiscale_seam():
     """A layer property may be a `Homogenized`, and the topological order has
     to see it — otherwise the script calls a builder before defining it."""
     inner = Cell(name="foam", matrix_name="SOLID", phases=[
-        Phase(name="SOLID", is_matrix=True,
+        Phase(name="SOLID", amount_kind="rest",
               properties=[Property(args={"k": 72.0, "mu": 32.0})]),
         Phase(name="PORE", amount=0.3,
               properties=[Property(args={"k": 1e-6, "mu": 1e-6})]),
@@ -574,13 +576,13 @@ def test_sensitivities_do_not_pull_in_plots():
 
 def _two_scale() -> Model:
     inner = Cell(name="foam", matrix_name="SOLID", phases=[
-        Phase(name="SOLID", is_matrix=True,
+        Phase(name="SOLID", amount_kind="rest",
               properties=[Property(args={"k": 72.0, "mu": 32.0})]),
         Phase(name="PORE", amount=0.3,
               properties=[Property(args={"k": 1e-6, "mu": 1e-6})]),
     ])
     outer = Cell(name="paste", matrix_name="FOAM", phases=[
-        Phase(name="FOAM", is_matrix=True, properties=[
+        Phase(name="FOAM", amount_kind="rest", properties=[
             Property(key=":C", source="cell", cell=inner.id, scheme="SelfConsistent",
                      scheme_options={"abstol": 1e-10}),
         ]),
@@ -702,7 +704,7 @@ def test_session_serves_a_catalog_when_the_sidecar_is_dead():
     assert cat["schemes"] and cat["geometries"]
     assert s.catalog_error, "the failure must be reported, not swallowed"
     # and the model still generates a script
-    assert "add_matrix!" in s.script()
+    assert "add_phase!" in s.script()
 
 
 def test_startup_failure_is_diagnosed_not_dumped():

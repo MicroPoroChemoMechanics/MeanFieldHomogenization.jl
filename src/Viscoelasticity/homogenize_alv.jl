@@ -354,8 +354,10 @@ function homogenize_alv(
         rve::RVE, scheme::HomogenizationScheme,
         prop::Symbol; times::AbstractVector{<:Real}, kw...
     )
-    # 1. Matrix kernel.
-    C_M_law = matrix_property(rve, prop)
+    # 1. Matrix kernel.  `homogenize_alv` does not go through `homogenize`, so
+    #    it resolves the scheme's reference medium itself.
+    m = matrix_name(scheme, rve)
+    C_M_law = phase_property(rve, m, prop)
     C_M_law isa ViscoLaw ||
         throw(ArgumentError("homogenize_alv: matrix property $prop is not a ViscoLaw"))
 
@@ -369,12 +371,12 @@ function homogenize_alv(
     end
 
     C_0 = _trapezoidal_relaxation(C_M_law, times, 6)
-    f_M = matrix_volume_fraction(rve)
+    f_M = volume_fraction(rve, m)
 
     # 2. Loop on inclusions, separating SOLIDS (`VolumeFraction`) from
     #    CRACKS (`CrackDensity`).  Cracks contribute ΔC̃_crack to the
     #    numerator of the schemes (no volume → no denominator effect).
-    incl_names = inclusion_phase_names(rve)
+    incl_names = inclusion_phase_names(rve, m)
     # Allow `fractions` to carry whatever element type the RVE amounts
     # store — typically `Float64` but also `ForwardDiff.Dual` for autodiff
     # sensitivities via `set_param(rve, AmountParameter(...), Dual(...))`.
@@ -450,7 +452,7 @@ function homogenize_alv(
     return _homogenize_alv_dispatch(
         rve, scheme, prop, times,
         C_0, C_phases, A_duts, contribs,
-        H_phases, fractions, f_M;
+        H_phases, fractions, f_M, m;
         crack_data = crack_data,
         ΔC_cracks_M = ΔC_cracks_M,
         ΔJ_cracks_M = ΔJ_cracks_M,
@@ -639,7 +641,7 @@ end
 function _homogenize_alv_dispatch(
         ::RVE, ::Voigt, ::Symbol, ::AbstractVector,
         C_0, C_phases, A_duts, contribs,
-        H_phases, fractions, f_M; kw...
+        H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     # Voigt ignores cracks (zero-volume convention, mirroring elastic
     # `Schemes/voigt.jl`).  Result depends only on solid volume fractions.
@@ -664,7 +666,7 @@ end
 function _homogenize_alv_dispatch(
         ::RVE, ::Reuss, ::Symbol, ::AbstractVector,
         C_0, C_phases, A_duts, contribs,
-        H_phases, fractions, f_M; kw...
+        H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     # Reuss ignores cracks (same convention as elastic `Schemes/reuss.jl`).
     iso = _try_iso_pairs(C_phases)
@@ -688,7 +690,7 @@ end
 function _homogenize_alv_dispatch(
         ::RVE, ::Dilute, ::Symbol, ::AbstractVector,
         C_0, C_phases, A_duts, contribs,
-        H_phases, fractions, f_M; kw...
+        H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     if !_has_cracks(kw)
         iso_contribs = _try_iso_pairs(contribs)
@@ -718,7 +720,7 @@ end
 function _homogenize_alv_dispatch(
         ::RVE, ::DiluteDual, ::Symbol, ::AbstractVector,
         C_0, C_phases, A_duts, contribs,
-        H_phases, fractions, f_M; kw...
+        H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     # The dual scheme accumulates in COMPLIANCE space, but the per-phase
     # data collected upstream are the STIFFNESS contributions Ñ.  Map them
@@ -766,7 +768,7 @@ end
 function _homogenize_alv_dispatch(
         ::RVE, ::MoriTanaka, ::Symbol, ::AbstractVector,
         C_0, C_phases, A_duts, contribs,
-        H_phases, fractions, f_M; kw...
+        H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     if !_has_cracks(kw)
         iso_contribs = _try_iso_pairs(contribs)
@@ -823,15 +825,15 @@ function _homogenize_alv_dispatch(
 end
 
 function _homogenize_alv_dispatch(
-        rve::RVE, ::Maxwell, ::Symbol,
+        rve::RVE, ::Maxwell, prop::Symbol,
         times::AbstractVector,
         C_0, C_phases, A_duts, contribs,
-        H_phases, fractions, f_M; kw...
+        H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     # The Hill kernel is built on the RVE's *distribution shape*, as in the
     # elastic `Schemes.maxwell` — not on a hard-coded sphere, which would make
     # the same scheme answer differently on the elastic and the ALV path.
-    C_M_law = matrix_property(rve, :C)
+    C_M_law = phase_property(rve, matrix, prop)
     H_0 = hill_kernel(rve.distribution_shape.shape, C_M_law, times)
     if !_has_cracks(kw)
         iso_contribs = _try_iso_pairs(contribs)
@@ -870,7 +872,7 @@ function _homogenize_alv_dispatch(
         rve::RVE, sc::SelfConsistent, prop::Symbol,
         times::AbstractVector,
         C_0, C_phases, A_duts, contribs,
-        H_phases, fractions, f_M; kw...
+        H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     # SC reads cracks directly from the RVE; strip the pre-aggregated
     # crack kwargs that were meant for the simpler scheme dispatchers.
@@ -882,7 +884,7 @@ function _homogenize_alv_dispatch(
         kw
     )
     return self_consistent_alv(
-        rve, prop; times = times,
+        rve, prop; times = times, matrix = matrix,
         sc.options..., kw_filt...
     )
 end
@@ -894,7 +896,7 @@ function _homogenize_alv_dispatch(
         rve::RVE, asc::AsymmetricSelfConsistent, prop::Symbol,
         times::AbstractVector,
         C_0, C_phases, A_duts, contribs,
-        H_phases, fractions, f_M; kw...
+        H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     kw_filt = Iterators.filter(
         p -> !(
@@ -904,7 +906,7 @@ function _homogenize_alv_dispatch(
         kw
     )
     return asymmetric_self_consistent_alv(
-        rve, prop; times = times,
+        rve, prop; times = times, matrix = matrix,
         asc.options..., kw_filt...
     )
 end
@@ -913,12 +915,12 @@ end
 # the single-shape case, but uses the `rve.distribution_shape` for the
 # Hill kernel instead of a fixed sphere.
 function _homogenize_alv_dispatch(
-        rve::RVE, ::PonteCastanedaWillis, ::Symbol,
+        rve::RVE, ::PonteCastanedaWillis, prop::Symbol,
         times::AbstractVector,
         C_0, C_phases, A_duts, contribs,
-        H_phases, fractions, f_M; kw...
+        H_phases, fractions, f_M, matrix::Symbol; kw...
     )
-    C_M_law = matrix_property(rve, :C)
+    C_M_law = phase_property(rve, matrix, prop)
     dist = rve.distribution_shape
     dist isa UniformDistribution ||
         throw(ArgumentError("PCW-ALV: only UniformDistribution is currently supported"))
@@ -958,10 +960,10 @@ function _homogenize_alv_dispatch(
         rve::RVE, sch::DifferentialScheme, prop::Symbol,
         times::AbstractVector,
         C_0, C_phases, A_duts, contribs,
-        H_phases, fractions, f_M; kw...
+        H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     return differential_alv(
-        rve, prop; times = times,
+        rve, prop; times = times, matrix = matrix,
         _diff_alv_options(sch)...
     )
 end

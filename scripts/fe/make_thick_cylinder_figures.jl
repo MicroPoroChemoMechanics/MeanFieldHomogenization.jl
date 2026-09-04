@@ -106,8 +106,8 @@ end
 
 # ── 1. linear composite, against Lamé ────────────────────────────────────────
 
-rve_lin = RVE(:M)
-add_matrix!(rve_lin, Ellipsoid(1.0), Dict(:C => C_MATRIX))
+rve_lin = RVE()
+add_phase!(rve_lin, :M, Ellipsoid(1.0), Dict(:C => C_MATRIX); fraction = :rest)
 add_phase!(rve_lin, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 120.0, 2 * 80.0)); fraction = 0.25)
 mat_lin = HomogenizedElastic(rve_lin, MoriTanaka())
 k_h, μ_h = k_mu(stiffness(mat_lin))
@@ -179,8 +179,8 @@ savefig(
 
 # ── 3. crack closure front, as a GIF ─────────────────────────────────────────
 
-rve_cr = RVE(:M)
-add_matrix!(rve_cr, Ellipsoid(1.0), Dict(:C => C_MATRIX))
+rve_cr = RVE()
+add_phase!(rve_cr, :M, Ellipsoid(1.0), Dict(:C => C_MATRIX); fraction = :rest)
 add_phase!(rve_cr, :Fx, PennyCrack(1.0; euler_angles = (π / 2, 0.0)), Dict(:C => C_MATRIX); density = 0.15)
 add_phase!(rve_cr, :Fy, PennyCrack(1.0; euler_angles = (π / 2, π / 2)), Dict(:C => C_MATRIX); density = 0.15)
 mat_cr = MicrocrackedMaterial(rve_cr, MoriTanaka(); ω₀ = (2.0e-3, 2.0e-3))

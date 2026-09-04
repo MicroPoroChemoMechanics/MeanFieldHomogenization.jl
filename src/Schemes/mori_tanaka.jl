@@ -25,25 +25,26 @@ Mori-Tanaka scheme for property `:p`
 the matrix property tensor — 4th order for elasticity (`:C`), 2nd order
 for conductivity (`:K`).
 """
-function _evaluate(rve::RVE, ::MoriTanaka, ::Val{p}; kw...) where {p}
-    P₀ = matrix_property(rve, p)
-    return _mt_dispatch(rve, P₀, Val(p); kw...)
+function _evaluate(rve::RVE, scheme::MoriTanaka, ::Val{p}; kw...) where {p}
+    m = matrix_name(scheme, rve)
+    P₀ = phase_property(rve, m, p)
+    return _mt_dispatch(rve, P₀, m, Val(p); kw...)
 end
 
-_mt_dispatch(rve, C₀::TensND.AbstractTens{4, 3}, ::Val{p}; kw...) where {p} =
-    _mt_4(rve, C₀, Val(p); kw...)
-_mt_dispatch(rve, K₀::TensND.AbstractTens{2, 3}, ::Val{p}; kw...) where {p} =
-    _mt_2(rve, K₀, Val(p); kw...)
+_mt_dispatch(rve, C₀::TensND.AbstractTens{4, 3}, m::Symbol, ::Val{p}; kw...) where {p} =
+    _mt_4(rve, C₀, m, Val(p); kw...)
+_mt_dispatch(rve, K₀::TensND.AbstractTens{2, 3}, m::Symbol, ::Val{p}; kw...) where {p} =
+    _mt_2(rve, K₀, m, Val(p); kw...)
 
 # ── 4th-order (elasticity) ──────────────────────────────────────────────────
-function _mt_4(rve, C₀::TensND.AbstractTens{4, 3}, ::Val{p}; kw...) where {p}
-    f_m = matrix_volume_fraction(rve)
+function _mt_4(rve, C₀::TensND.AbstractTens{4, 3}, m::Symbol, ::Val{p}; kw...) where {p}
+    f_m = volume_fraction(rve, m)
     Iref = _identity_like(C₀)
     A_avg = f_m * Iref          # ⟨A_dil⟩, matrix carries A_dil = I
     Nsum = zero(C₀)
-    for name in inclusion_phase_names(rve)
+    for name in inclusion_phase_names(rve, m)
         a = rve.amounts[name]
-        if a isa VolumeFraction
+        if !(a isa CrackDensity)
             # Apply per-phase orientation symmetrize via the bundled helper,
             # which shares the single localization solve between `A_dil` and
             # the contribution `N` (they used to be computed independently,
@@ -53,7 +54,7 @@ function _mt_4(rve, C₀::TensND.AbstractTens{4, 3}, ::Val{p}; kw...) where {p}
             # using a phase property that does not represent them, and the
             # helper symmetrizes the PRODUCT (C_i − C₀):A, not just A.
             A_dil, N = _phase_dilute_and_contribution(rve, name, p, C₀; kw...)
-            A_avg += scale_by_amount(a, A_dil)
+            A_avg += volume_fraction(rve, name) * A_dil
             Nsum += N
         else  # CrackDensity — ECHOES `B · A^{-1}` form.
             # Strain-Stress contribution: A_crack = ε·sym(H_c)·C₀.
@@ -71,16 +72,16 @@ function _mt_4(rve, C₀::TensND.AbstractTens{4, 3}, ::Val{p}; kw...) where {p}
 end
 
 # ── 2nd-order (conductivity) ────────────────────────────────────────────────
-function _mt_2(rve, K₀::TensND.AbstractTens{2, 3}, ::Val{p}; kw...) where {p}
-    f_m = matrix_volume_fraction(rve)
+function _mt_2(rve, K₀::TensND.AbstractTens{2, 3}, m::Symbol, ::Val{p}; kw...) where {p}
+    f_m = volume_fraction(rve, m)
     Iref = _identity_like(K₀)
     A_avg = f_m * Iref
     Nsum = zero(K₀)
-    for name in inclusion_phase_names(rve)
+    for name in inclusion_phase_names(rve, m)
         a = rve.amounts[name]
-        if a isa VolumeFraction
+        if !(a isa CrackDensity)
             A_dil, N = _phase_dilute_and_contribution(rve, name, p, K₀; kw...)
-            A_avg += scale_by_amount(a, A_dil)
+            A_avg += volume_fraction(rve, name) * A_dil
             Nsum += N
         else  # CrackDensity — ECHOES `B · A^{-1}` form.
             R, N = _phase_compliance_and_contribution(rve, name, p, K₀; kw...)

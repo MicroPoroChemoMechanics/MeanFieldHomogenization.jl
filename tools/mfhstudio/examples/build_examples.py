@@ -80,7 +80,7 @@ def porous_schemes() -> Model:
     single scheme with the box unticked and the negative modulus shows, which
     is the useful signal that the estimate has left its range.
     """
-    solid = Phase(name="SOLID", is_matrix=True, properties=[iso(72.0, 32.0)])
+    solid = Phase(name="SOLID", amount_kind="rest", properties=[iso(72.0, 32.0)])
     pore = Phase(name="PORE", amount=0.1, properties=[void()])
     c = Cell(name="rve", matrix_name="SOLID", phases=[solid, pore])
     m = Model(title="porous_schemes", cells=[c], root_cell=c.id)
@@ -124,7 +124,7 @@ def cracked_solid() -> Model:
     result is transversely isotropic, which is why `k` is not asked for here
     without a reporting projection.
     """
-    solid = Phase(name="SOLID", is_matrix=True, properties=[iso(72.0, 32.0)])
+    solid = Phase(name="SOLID", amount_kind="rest", properties=[iso(72.0, 32.0)])
     cracks = Phase(
         name="CRACKS", amount_kind="density", amount=0.1, symmetrize="iso",
         geometry=Geometry(kind="penny_crack", args={"a": 1.0}),
@@ -160,7 +160,7 @@ def coated_inclusion() -> Model:
     interface between two shells can be imperfect; here they are perfect and
     the interest is in the coating alone.
     """
-    matrix = Phase(name="MATRIX", is_matrix=True, properties=[iso(20.0, 8.0)])
+    matrix = Phase(name="MATRIX", amount_kind="rest", properties=[iso(20.0, 8.0)])
     coated = Phase(
         name="COATED", amount=0.2,
         geometry=Geometry(kind="layered_sphere", args={}, layers=[
@@ -200,7 +200,7 @@ def conductivity_fibers() -> Model:
     fibers — with no orientation average, so the effective conductivity is
     transversely isotropic and the plot follows components, not a scalar.
     """
-    matrix = Phase(name="MATRIX", is_matrix=True, properties=[cond(1.0)])
+    matrix = Phase(name="MATRIX", amount_kind="rest", properties=[cond(1.0)])
     fibers = Phase(
         name="FIBERS", amount=0.2,
         geometry=Geometry(kind="spheroid", args={"omega": 10.0}),
@@ -237,11 +237,11 @@ def two_scales() -> Model:
     with a `nested` lens, in one pass.
     """
     inner = Cell(name="foam", matrix_name="GEL", phases=[
-        Phase(name="GEL", is_matrix=True, properties=[iso(20.0, 9.0)]),
+        Phase(name="GEL", amount_kind="rest", properties=[iso(20.0, 9.0)]),
         Phase(name="GELPORE", amount=0.28, properties=[void()]),
     ], ui={"x": 40, "y": 40})
     outer = Cell(name="paste", matrix_name="FOAM", phases=[
-        Phase(name="FOAM", is_matrix=True, properties=[
+        Phase(name="FOAM", amount_kind="rest", properties=[
             Property(key=":C", source="cell", cell=inner.id,
                      scheme="SelfConsistent", scheme_options={}),
         ]),
@@ -348,7 +348,7 @@ def laminate_multiscale() -> Model:
     this is what you get.
     """
     inner = Cell(name="porous", matrix_name="SOLID", phases=[
-        Phase(name="SOLID", is_matrix=True, properties=[iso(2.0, 0.8)]),
+        Phase(name="SOLID", amount_kind="rest", properties=[iso(2.0, 0.8)]),
         Phase(name="PORE", amount=0.25, properties=[void()]),
     ], ui={"x": 40, "y": 40})
     lam = Cell(name="lam", kind="laminate", ui={"x": 320, "y": 100}, layers=[
@@ -390,7 +390,7 @@ def ageing_creep() -> Model:
     follow. `(1, 1)` is the uniaxial creep response.
     """
     paste = Phase(
-        name="PASTE", is_matrix=True,
+        name="PASTE", amount_kind="rest",
         properties=[Property(
             key=":C", builder="kelvin_iso", form="kelvin_iso",
             args={"k0": 12.0, "mu0": 8.0, "k1": 20.0, "mu1": 12.0,
@@ -434,7 +434,7 @@ def sensitivities() -> Model:
     `get_param` reads it off the cell — so the amounts and moduli entered in
     Scales are where the derivative is taken, and nothing is typed twice.
     """
-    solid = Phase(name="SOLID", is_matrix=True, properties=[iso(72.0, 32.0)])
+    solid = Phase(name="SOLID", amount_kind="rest", properties=[iso(72.0, 32.0)])
     pore = Phase(name="PORE", amount=0.2, properties=[void()])
     c = Cell(name="rve", matrix_name="SOLID", phases=[solid, pore])
     m = Model(title="sensitivities", cells=[c], root_cell=c.id)

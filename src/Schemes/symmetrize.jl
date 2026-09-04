@@ -60,7 +60,7 @@ of a phase declaring the orientation distribution `sym`.
 - `NoSymmetrize` : passthrough.
 - `IsoSymmetrize` : isotropic average of `P₀` (the inclusion's Hill tensor
   in an isotropic matrix always has an analytical branch).
-- `TISymmetrize` : controlled by `sym.matrix_projection` :
+- `TISymmetrize` : controlled by `sym.reference_projection` :
     * `:iso` (default) — isotropic average of `P₀`.  Approximation whenever
       `P₀` is not isotropic ; exact at the isotropic fixed point of the SC
       iteration (where the reference converges to its isotropic average).
@@ -83,7 +83,7 @@ preserved.
 _project_matrix(P₀::TensND.AbstractTens, ::NoSymmetrize) = P₀
 _project_matrix(P₀::TensND.AbstractTens, ::IsoSymmetrize) = MFH_Core.isotropify(P₀)
 function _project_matrix(P₀::TensND.AbstractTens, sym::TISymmetrize)
-    mp = sym.matrix_projection
+    mp = sym.reference_projection
     mp === :none && return P₀
     mp === :ti && return best_fit_ti(P₀, sym.axis)
     return MFH_Core.isotropify(P₀)

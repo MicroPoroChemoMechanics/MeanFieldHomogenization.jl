@@ -94,8 +94,8 @@ C_solid = iso_stiffness(90.0, 30.0)     # GPa
 C_void  = iso_stiffness(0.01, 0.005)
 
 function bulk(f, scheme)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => C_solid))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C_solid); fraction = :rest)
     f > 0 && add_phase!(r, :V, Ellipsoid(1.0), Dict(:C => C_void); fraction = f)
     return first(k_mu(homogenize(r, scheme, :C)))
 end

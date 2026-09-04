@@ -278,8 +278,8 @@ matrix = iso_rheology(Spring(2500.0), Model2S2P1D(1e-7, 1000.0, 2.2, 1.945e-3, 0
 aggreg = iso_rheology(Spring(30000.0), Spring(22000.0))
 
 function cell(p)
-    rve = RVE(:MASTIC)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => carson_relaxation(matrix, p)))
+    rve = RVE()
+    add_phase!(rve, :MASTIC, Ellipsoid(1.0), Dict(:C => carson_relaxation(matrix, p)); fraction = :rest)
     add_phase!(rve, :AGG, Ellipsoid(1.0), Dict(:C => carson_relaxation(aggreg, p));
                fraction = 0.35)
     return rve

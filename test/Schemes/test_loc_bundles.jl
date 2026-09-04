@@ -170,8 +170,8 @@ end
     C_m = TensISO{3}(30.0, 10.0)
     C33_m = TensND.get_array(C_m)[3, 3, 3, 3]
 
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :CRACK, PennyCrack(1.0), Dict(:C => C_m); density = 0.1)
 
     Cmt = homogenize(rve, MoriTanaka())
@@ -180,8 +180,8 @@ end
 
     # MT → Dilute as the crack density vanishes.
     function build(ε)
-        r = RVE(:M)
-        add_matrix!(r, Ellipsoid(1.0), Dict(:C => C_m))
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(r, :CRACK, PennyCrack(1.0), Dict(:C => C_m); density = ε)
         return r
     end
@@ -191,8 +191,8 @@ end
 
     @testset "conductivity crack phase" begin
         K_m = TensISO{3}(2.0)
-        r = RVE(:M)
-        add_matrix!(r, Ellipsoid(1.0), Dict(:K => K_m))
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:K => K_m); fraction = :rest)
         add_phase!(r, :CRACK, PennyCrack(1.0), Dict(:K => K_m); density = 0.1)
         Kmt = homogenize(r, MoriTanaka(); property = :K)
         @test all(isfinite, TensND.get_array(Kmt))
@@ -211,8 +211,8 @@ end
     θ = π / 4
     axis = (sin(θ), 0.0, cos(θ))
 
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(
         rve, :I, Spheroid(5.0; euler_angles = (θ, 0.0, 0.0)), Dict(:C => C_ti);
         fraction = 0.1, symmetrize = TISymmetrize(axis)
@@ -246,8 +246,8 @@ end
 
     @testset "ForwardDiff through the slow branch" begin
         function build(x)
-            r = RVE(:M)
-            add_matrix!(r, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 20.0 * x, 2 * 12.0 * x)))
+            r = RVE()
+            add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 20.0 * x, 2 * 12.0 * x)); fraction = :rest)
             add_phase!(
                 r, :I, Spheroid(5.0; euler_angles = (θ, 0.0, 0.0)), Dict(:C => C_ti);
                 fraction = 0.1, symmetrize = TISymmetrize(axis)
@@ -293,8 +293,8 @@ end
     @test maximum(abs, _vals(C_proj) .- _vals(C_tri)) > 1.0        # really differs
 
     @testset "crack phase, 4th order" begin
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_tri))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_tri); fraction = :rest)
         add_phase!(
             rve, :CR, PennyCrack(1.0), Dict(:C => C_tri);
             density = 0.08, symmetrize = :iso
@@ -330,8 +330,8 @@ end
         K_aniso = TensND.Tens([3.0 0.5 0.3; 0.5 2.0 0.2; 0.3 0.2 1.5])
         symK = MeanFieldHomogenization.Schemes.IsoSymmetrize()
         K_proj = MeanFieldHomogenization.Schemes._project_matrix(K_aniso, symK)
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:K => K_aniso))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => K_aniso); fraction = :rest)
         add_phase!(
             rve, :I, Spheroid(0.3), Dict(:K => TensISO{3}(20.0));
             fraction = 0.2, symmetrize = :iso

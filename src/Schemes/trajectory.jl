@@ -8,7 +8,7 @@
 #
 #       f_α(τ) ∈ [0, 1],  f_α(0) = 0,  f_α(1) = 1.
 #
-#  `_resolve_paths` returns, for every non-matrix phase, the pair
+#  `_resolve_paths` returns, for every phase other than `matrix`, the pair
 #  `(f, df)` of callables (`f(τ)` is the effective amount ratio,
 #  `df(τ)` its derivative).  The differential ODE then assembles the
 #  Norris RHS from `dφ_α/dτ` (Sherman-Morrison-inverted from the
@@ -17,7 +17,7 @@
 # =============================================================================
 
 """
-    _resolve_paths(traj::DifferentialTrajectory, rve::RVE, nsteps::Int)
+    _resolve_paths(traj::DifferentialTrajectory, rve::RVE, nsteps::Int, matrix::Symbol)
         -> Dict{Symbol, NamedTuple{(:f, :df), Tuple{Function, Function}}}
 
 Build per-phase callables `f_α(τ)` and `df_α(τ)` for each non-matrix
@@ -29,9 +29,9 @@ function _resolve_paths end
 
 # ── Proportional ────────────────────────────────────────────────────────────
 
-function _resolve_paths(::Proportional, rve::RVE, nsteps::Int)
+function _resolve_paths(::Proportional, rve::RVE, nsteps::Int, matrix::Symbol)
     out = Dict{Symbol, @NamedTuple{f::Function, df::Function}}()
-    for name in inclusion_phase_names(rve)
+    for name in inclusion_phase_names(rve, matrix)
         out[name] = (; f = τ -> τ, df = τ -> 1.0)
     end
     return out
@@ -39,8 +39,8 @@ end
 
 # ── Sequential ──────────────────────────────────────────────────────────────
 
-function _resolve_paths(s::Sequential, rve::RVE, nsteps::Int)
-    inc_names = inclusion_phase_names(rve)
+function _resolve_paths(s::Sequential, rve::RVE, nsteps::Int, matrix::Symbol)
+    inc_names = inclusion_phase_names(rve, matrix)
     Set(s.order) == Set(inc_names) ||
         throw(
         ArgumentError(
@@ -73,8 +73,8 @@ end
 #
 # Discrete vector → piecewise-linear callable on `range(0, 1; length = N+1)`.
 
-function _resolve_paths(c::CustomPath, rve::RVE, nsteps::Int)
-    inc_names = inclusion_phase_names(rve)
+function _resolve_paths(c::CustomPath, rve::RVE, nsteps::Int, matrix::Symbol)
+    inc_names = inclusion_phase_names(rve, matrix)
     out = Dict{Symbol, @NamedTuple{f::Function, df::Function}}()
     for name in inc_names
         haskey(c.path, name) ||
@@ -122,8 +122,8 @@ end
 
 # ── Path (functional) ───────────────────────────────────────────────────────
 
-function _resolve_paths(p::Path, rve::RVE, nsteps::Int)
-    inc_names = inclusion_phase_names(rve)
+function _resolve_paths(p::Path, rve::RVE, nsteps::Int, matrix::Symbol)
+    inc_names = inclusion_phase_names(rve, matrix)
     out = Dict{Symbol, @NamedTuple{f::Function, df::Function}}()
     for name in inc_names
         haskey(p.path, name) ||

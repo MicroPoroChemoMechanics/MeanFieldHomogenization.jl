@@ -26,15 +26,15 @@ const RTOL_MX = 1.0e-9
 
 @testset "Maxwell / PCW — sanity (single-phase)" begin
     C_m = TensISO{3}(30.0, 10.0)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     @test homogenize(rve, Maxwell()) ≈ C_m
     @test homogenize(rve, PonteCastanedaWillis()) ≈ C_m
 end
 
 @testset "Maxwell ≡ PCW with UniformDistribution" begin
-    rve = RVE(:M; distribution_shape = Ellipsoid(1.0, 1.0, 0.5))
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 0.5), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE(; distribution_shape = Ellipsoid(1.0, 1.0, 0.5))
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 0.5), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, 0.5),
         Dict(:C => TensISO{3}(60.0, 20.0)); fraction = 0.3
@@ -43,8 +43,8 @@ end
 end
 
 @testset "Maxwell — bracketed by Voigt/Reuss" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -61,8 +61,8 @@ end
 @testset "Maxwell ≡ MT when distribution shape = inclusion shape (iso sphere)" begin
     # When all inclusions and the outer distribution have the same spherical
     # shape, Maxwell coincides with Mori-Tanaka by construction.
-    rve = RVE(:M; distribution_shape = Ellipsoid(1.0))   # sphere outer
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))   # sphere outer
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -73,8 +73,8 @@ end
 @testset "Maxwell — distribution shape induces anisotropy" begin
     # Oblate outer (1, 1, 0.3) + iso phases → effective tensor shows TI
     # symmetry (axial vs transverse components differ).
-    rve = RVE(:M; distribution_shape = Ellipsoid(1.0, 1.0, 0.3))
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE(; distribution_shape = Ellipsoid(1.0, 1.0, 0.3))
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -85,8 +85,8 @@ end
 end
 
 @testset "Maxwell / PCW — conductivity" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:K => TensISO{3}(2.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(2.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(8.0));
         fraction = 0.3
@@ -102,8 +102,8 @@ end
 @testset "Maxwell — ForwardDiff sensitivity" begin
     f_max(f) = begin
         DT = typeof(f)
-        rve = RVE(:M; T = DT)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+        rve = RVE(; T = DT)
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
             fraction = f
@@ -117,11 +117,8 @@ end
 
 @testset "Maxwell / PCW — Complex moduli" begin
     δ = 0.05
-    rve = RVE(:M)
-    add_matrix!(
-        rve, Ellipsoid(1.0),
-        Dict(:C => TensISO{3}(30.0 + δ * im, 10.0 + 0.5δ * im))
-    )
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0 + δ * im, 10.0 + 0.5δ * im)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0),
         Dict(:C => TensISO{3}(60.0 + δ * im, 20.0 + 0.5δ * im));
@@ -135,14 +132,14 @@ end
     end
 
     # Im → 0 limit
-    rve_re = RVE(:M)
-    add_matrix!(rve_re, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve_re = RVE()
+    add_phase!(rve_re, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve_re, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
     )
-    rve_0 = RVE(:M)
-    add_matrix!(rve_0, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0 + 0im, 10.0 + 0im)))
+    rve_0 = RVE()
+    add_phase!(rve_0, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0 + 0im, 10.0 + 0im)); fraction = :rest)
     add_phase!(
         rve_0, :I, Ellipsoid(1.0),
         Dict(:C => TensISO{3}(60.0 + 0im, 20.0 + 0im)); fraction = 0.3
@@ -156,8 +153,8 @@ end
 end
 
 @testset "Maxwell / PCW — Symbol shortcuts (lowercase canonical)" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3

@@ -42,7 +42,8 @@ Two concrete cells ship with `MeanFieldHomogenization`:
 
 A new cell type must provide
 
-- `validate_cell(cell)` — structural sanity check, called by `homogenize`;
+- `validate_cell(cell)` — structural sanity check, called by `homogenize`
+  (optionally `validate_cell(cell, scheme)` for scheme-dependent requirements);
 - at least one `_evaluate(cell, scheme, ::Val{property}; kw...)` method;
 - [`cell_member_names`](@ref), [`cell_container_property`](@ref) and
   [`cell_set_property`](@ref) to take part in declarative nesting and in the
@@ -90,12 +91,19 @@ function homogenize end
 
 """
     validate_cell(cell)
+    validate_cell(cell, scheme)
 
 Structural sanity check of a homogenization cell, called by
 [`homogenize`](@ref) before evaluation. `validate_cell(::RVE)` forwards to
-`validate_rve` (which additionally requires a registered matrix phase — the
-one requirement that does *not* generalize), `validate_cell(::Laminate)` to
-`validate_laminate`.
+`validate_rve`, `validate_cell(::Laminate)` to `validate_laminate`.
+
+The two-argument form additionally checks what only the *scheme* can require.
+A matrix-based estimate cannot be evaluated until one phase is designated as
+its reference medium, whereas the bounds and the self-consistent scheme
+distinguish no phase and accept a cell that designates none — so the
+requirement belongs here, keyed on the scheme, and not in the cell's own
+structural check. It defaults to the one-argument form, so a cell or a scheme
+that has nothing extra to say need not implement it.
 """
 function validate_cell end
 
@@ -190,8 +198,8 @@ inner = Laminate(; normal = (0, 0, 1))
 add_layer!(inner, :A, Dict(:C => C_A); fraction = 0.4)
 add_layer!(inner, :B, Dict(:C => C_B); fraction = 0.6)
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_matrix))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_matrix); fraction = :rest)
 add_phase!(rve, :agg, Ellipsoid(1.0),
            Dict(:C => Homogenized(inner, Laminated())); fraction = 0.3)
 

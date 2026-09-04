@@ -33,14 +33,14 @@ const RTOL_DIFF = 1.0e-8
 
 @testset "Differential — sanity (single-phase)" begin
     C_m = TensISO{3}(30.0, 10.0)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     @test homogenize(rve, DifferentialScheme()) ≈ C_m
 end
 
 @testset "Differential — bracketed by Voigt/Reuss" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -52,8 +52,8 @@ end
 end
 
 @testset "Differential — trajectory invariance for single-inclusion RVE" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -72,8 +72,8 @@ end
 end
 
 @testset "Differential — multi-phase Proportional vs Sequential (dilute limit)" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I1, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.01
@@ -103,8 +103,8 @@ end
 end
 
 @testset "Differential — CustomPath validation errors" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -121,8 +121,8 @@ end
     @test_throws ArgumentError homogenize(rve, DifferentialScheme(; trajectory = bad_mono, nsteps = 100))
 
     # Missing phase
-    rve2 = RVE(:M)
-    add_matrix!(rve2, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve2 = RVE()
+    add_phase!(rve2, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve2, :I1, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.1
@@ -136,8 +136,8 @@ end
 end
 
 @testset "Differential — Path (functional) trajectory" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -155,8 +155,8 @@ end
 end
 
 @testset "Differential — Path validation errors" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -187,8 +187,8 @@ end
     # The adaptive ODE solver controls integration step via abstol/reltol,
     # so `nsteps` (now `saveat` density) should not affect the final
     # result beyond solver tolerance.
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -201,8 +201,8 @@ end
 @testset "Differential — `abstol` / `reltol` kwargs are forwarded" begin
     # Loose tolerances should give a slightly different result than
     # tight ones — but both should be finite and within Voigt/Reuss.
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -216,8 +216,8 @@ end
 end
 
 @testset "Differential — crack RVE reduces stiffness monotonically" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :CRACK, PennyCrack(1.0), Dict(:C => TensISO{3}(30.0, 10.0));
         density = 0.05
@@ -228,8 +228,8 @@ end
 end
 
 @testset "Differential — conductivity" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:K => TensISO{3}(2.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(2.0)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(8.0)); fraction = 0.3)
     Kv = get_array(homogenize(rve, Voigt(); property = :K))[1, 1]
     Kr = get_array(homogenize(rve, Reuss(); property = :K))[1, 1]
@@ -245,8 +245,8 @@ end
 @testset "Differential — ForwardDiff sensitivity to f" begin
     f_diff(f) = begin
         DT = typeof(f)
-        rve = RVE(:M; T = DT)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+        rve = RVE(; T = DT)
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
             fraction = f
@@ -274,8 +274,8 @@ end
 
         # (a) property of an INCLUSION phase
         f_prop = ki -> begin
-            rve = RVE(:M)
-            add_matrix!(rve, Ellipsoid(1.0), Dict(:C => iso(10.0, 5.0)))
+            rve = RVE()
+            add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso(10.0, 5.0)); fraction = :rest)
             add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => iso(ki, 20.0)); fraction = 0.3)
             return idx(homogenize(rve, sch))
         end
@@ -283,8 +283,8 @@ end
 
         # (b) GEOMETRY of an inclusion phase (aspect ratio)
         f_geom = ω -> begin
-            rve = RVE(:M)
-            add_matrix!(rve, Ellipsoid(1.0), Dict(:C => iso(10.0, 5.0)))
+            rve = RVE()
+            add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso(10.0, 5.0)); fraction = :rest)
             add_phase!(
                 rve, :I, Spheroid(ω), Dict(:C => iso(40.0, 20.0));
                 fraction = 0.2, symmetrize = :iso
@@ -295,8 +295,8 @@ end
 
         # (c) semi-axis of a CRACK family (the crack-density kernel)
         f_crack = b -> begin
-            rve = RVE(:M)
-            add_matrix!(rve, Ellipsoid(1.0), Dict(:C => iso(10.0, 5.0)))
+            rve = RVE()
+            add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso(10.0, 5.0)); fraction = :rest)
             add_phase!(
                 rve, :crk, EllipticCrack(1.0, b), Dict{Symbol, Any}();
                 density = 0.05, symmetrize = :iso
@@ -307,8 +307,8 @@ end
 
         # (d) conductivity — same story on the 2-tensor state layout
         f_cond = ki -> begin
-            rve = RVE(:M)
-            add_matrix!(rve, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)))
+            rve = RVE()
+            add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)); fraction = :rest)
             add_phase!(rve, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(ki)); fraction = 0.3)
             return get_array(homogenize(rve, sch, :K))[1, 1]
         end
@@ -317,8 +317,8 @@ end
         # (e) TI running medium (aligned spheroid, no orientation average):
         #     the state is the 5-component TI layout, not the iso one.
         f_ti = ki -> begin
-            rve = RVE(:M)
-            add_matrix!(rve, Ellipsoid(1.0), Dict(:C => iso(10.0, 5.0)))
+            rve = RVE()
+            add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso(10.0, 5.0)); fraction = :rest)
             add_phase!(rve, :I, Spheroid(4.0), Dict(:C => iso(ki, 20.0)); fraction = 0.2)
             return idx(homogenize(rve, sch))
         end
@@ -329,14 +329,14 @@ end
     #     the amounts of the outer RVE carry the `Dual` at all.
     @testset "nested cell (multiscale lens)" begin
         function outer()
-            micro = RVE(:SOLID)
-            add_matrix!(micro, Ellipsoid(1.0), Dict(:C => iso(3.0, 1.2)))
+            micro = RVE()
+            add_phase!(micro, :SOLID, Ellipsoid(1.0), Dict(:C => iso(3.0, 1.2)); fraction = :rest)
             add_phase!(
                 micro, :pore, Ellipsoid(1.0), Dict(:C => iso(1.0e-9, 1.0e-9));
                 fraction = 0.2
             )
-            rve = RVE(:BINDER)
-            add_matrix!(rve, Ellipsoid(1.0), Dict(:C => iso(1.0, 0.4)))
+            rve = RVE()
+            add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso(1.0, 0.4)); fraction = :rest)
             add_phase!(
                 rve, :agg, Ellipsoid(1.0),
                 Dict(:C => Homogenized(micro, MoriTanaka()));
@@ -369,8 +369,8 @@ end
 end
 
 @testset "Differential — Symbol shortcuts" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -401,22 +401,22 @@ end
     end
 
     @testset "ellipsoid (elasticity)" begin
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = 0.3)
         @test agree(rve, :C) < 1.0e-9
     end
 
     @testset "ellipsoid (conductivity)" begin
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)); fraction = :rest)
         add_phase!(rve, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(10.0)); fraction = 0.3)
         @test agree(rve, :K) < 1.0e-9
     end
 
     @testset "oblate spheroid (TI running medium)" begin
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(rve, :I, Spheroid(0.2), Dict(:C => C_i); fraction = 0.2)
         @test agree(rve, :C) < 1.0e-9
     end
@@ -425,22 +425,22 @@ end
     # dual kernel goes through `ℍ = −𝕊 : 𝐍 : 𝕊`.
     @testset "layered sphere (elasticity + conductivity)" begin
         s = LayeredSphere((0.8, 1.0), (TensISO{3}(3 * 80.0, 2 * 35.0), TensISO{3}(3 * 5.0, 2 * 2.0)))
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(rve, :I, s, Dict(:C => C_i); fraction = 0.3)
         @test agree(rve, :C) < 1.0e-9
 
         sk = LayeredSphere((0.8, 1.0), (TensISO{3}(0.1), TensISO{3}(20.0)))
-        rk = RVE(:M)
-        add_matrix!(rk, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)))
+        rk = RVE()
+        add_phase!(rk, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)); fraction = :rest)
         add_phase!(rk, :I, sk, Dict(:K => TensISO{3}(10.0)); fraction = 0.3)
         @test agree(rk, :K) < 1.0e-9
     end
 
     # Randomly oriented cracks: the running medium stays isotropic.
     @testset "penny cracks (iso orientation average)" begin
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(rve, :CR, PennyCrack(1.0), Dict(:C => C_m); density = 0.15, symmetrize = :iso)
         @test agree(rve, :C) < 1.0e-8
     end
@@ -466,8 +466,8 @@ end
     # for an anisotropic reference (the residue path degenerates at the
     # isotropic start — see `Core/dispatch.jl`).
     @testset "aligned triaxial ellipsoid" begin
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(rve, :I, Ellipsoid(1.0, 0.6, 0.3), Dict(:C => C_i); fraction = 0.2)
         C = homogenize(rve, DifferentialScheme(), :C)
         @test all(isfinite, get_array(C))
@@ -479,8 +479,8 @@ end
     end
 
     for geom in (Spheroid(0.2), Spheroid(3.0))
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(rve, :I, geom, Dict(:C => C_i); fraction = 0.2)
         C = homogenize(rve, DifferentialScheme(), :C)
         @test all(isfinite, get_array(C))
@@ -494,8 +494,8 @@ end
 end
 
 @testset "Differential — invalid formulation" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0)); fraction = 0.2)
     @test_throws ArgumentError homogenize(rve, DifferentialScheme(; formulation = :bogus), :C)
 end
@@ -521,8 +521,8 @@ end
 @testset "Differential — trajectory pair constructors" begin
     C_m = TensISO{3}(30.0, 10.0)
     C_i = TensISO{3}(60.0, 20.0)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :I1, Ellipsoid(1.0), Dict(:C => C_i); fraction = 0.15)
     add_phase!(rve, :I2, Ellipsoid(1.0), Dict(:C => C_i); fraction = 0.15)
 
@@ -545,8 +545,8 @@ end
 
 @testset "Differential — differential_path" begin
     C_m = TensISO{3}(30.0, 10.0)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0)); fraction = 0.3)
     sch = DifferentialScheme(; nsteps = 20)
     τ, Cs = differential_path(rve, sch, :C)
@@ -582,8 +582,8 @@ end
     C_i = TensISO{3}(3 * 50.0, 2 * 20.0)
     tol = (abstol = 1.0e-12, reltol = 1.0e-10)
 
-    mixed = RVE(:M)
-    add_matrix!(mixed, Ellipsoid(1.0), Dict(:C => C_m))
+    mixed = RVE()
+    add_phase!(mixed, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(mixed, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = 0.3)
     add_phase!(mixed, :CR, PennyCrack(1.0), Dict(:C => C_m); density = 0.15, symmetrize = :iso)
 
@@ -591,12 +591,12 @@ end
         mixed, DifferentialScheme(; trajectory = Sequential(:I, :CR), tol...), :C
     )
 
-    solid = RVE(:M)
-    add_matrix!(solid, Ellipsoid(1.0), Dict(:C => C_m))
+    solid = RVE()
+    add_phase!(solid, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(solid, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = 0.3)
     C_solid = homogenize(solid, DifferentialScheme(; tol...), :C)
-    cracked = RVE(:M)
-    add_matrix!(cracked, Ellipsoid(1.0), Dict(:C => C_solid))
+    cracked = RVE()
+    add_phase!(cracked, :M, Ellipsoid(1.0), Dict(:C => C_solid); fraction = :rest)
     add_phase!(cracked, :CR, PennyCrack(1.0), Dict(:C => C_solid); density = 0.15, symmetrize = :iso)
     C_two_stage = homogenize(cracked, DifferentialScheme(; tol...), :C)
 
@@ -605,8 +605,8 @@ end
 
     # A crack-only RVE has no solid increment, so the correction vanishes
     # identically and the crack ODE is the plain dC/dε.
-    crack_only = RVE(:M)
-    add_matrix!(crack_only, Ellipsoid(1.0), Dict(:C => C_m))
+    crack_only = RVE()
+    add_phase!(crack_only, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(crack_only, :CR, PennyCrack(1.0), Dict(:C => C_m); density = 0.15, symmetrize = :iso)
     @test all(isfinite, get_array(homogenize(crack_only, DifferentialScheme(; tol...), :C)))
 

@@ -14,15 +14,20 @@ them against Echoes 1.0.
 
 ## API translation table
 
-Both libraries share the same mental model: an RVE holding a matrix phase
-and inclusion/crack phases, each with a geometry and property dictionary,
-homogenized by a named scheme. Only the surface syntax differs.
+Both libraries share the same mental model: an RVE holding phases, each with a
+geometry and a property dictionary, homogenized by a named scheme. They differ
+on one point besides syntax. Echoes names the matrix when the RVE is built,
+`rve(matrix="SOLID")`; MeanFieldHomogenization does not, because the same
+microstructure is a matrix/inclusion composite under Mori–Tanaka and a
+matrix-free aggregate under the self-consistent scheme. The phase that takes up
+the volume complement is declared `fraction = :rest`, and a matrix-based scheme
+picks it up unless it names another — so a translated script behaves the same.
 
 | Echoes (Python) | MeanFieldHomogenization (Julia) |
 |:--|:--|
 | `from echoes import *` | `using MeanFieldHomogenization, TensND` |
-| `rve(matrix="SOLID")` | `RVE(:SOLID)` |
-| `myrve["SOLID"] = ellipsoid(shape=spheroidal(1.), symmetrize=[ISO], prop={"C": stiff_kmu(k, μ)})` | `add_matrix!(rve, Spheroid(1.0), Dict(:C => iso_stiffness(k, μ)); symmetrize = IsoSymmetrize())` |
+| `rve(matrix="SOLID")` | `RVE()` |
+| `myrve["SOLID"] = ellipsoid(shape=spheroidal(1.), symmetrize=[ISO], prop={"C": stiff_kmu(k, μ)})` | `add_phase!(rve, :SOLID, Spheroid(1.0), Dict(:C => iso_stiffness(k, μ)); fraction = :rest, symmetrize = IsoSymmetrize())` |
 | `myrve["PORE"] = ellipsoid(...)` then `myrve["PORE"].fraction = φ` | `add_phase!(rve, :PORE, Spheroid(1.0), Dict(:C => ...); fraction = φ, symmetrize = IsoSymmetrize())` |
 | `crack(shape=spheroidal(ω), density=d, symmetrize=[ISO], prop={"C": tZ4})` | `add_phase!(rve, :CRACK, PennyCrack(1.0), Dict(:C => C0); density = d, symmetrize = IsoSymmetrize())` |
 | `stiff_kmu(k, μ)` | `iso_stiffness(k, μ)` |
@@ -96,8 +101,8 @@ C_s = iso_stiffness(ks, mus)
 C_p = iso_stiffness(kp, mup)
 
 function build_rve(φ)
-    r = RVE(:SOLID)
-    add_matrix!(r, Spheroid(1.0), Dict(:C => C_s); symmetrize = IsoSymmetrize())
+    r = RVE()
+    add_phase!(r, :SOLID, Spheroid(1.0), Dict(:C => C_s); fraction = :rest, symmetrize = IsoSymmetrize())
     add_phase!(r, :PORE, Spheroid(1.0), Dict(:C => C_p); fraction = φ, symmetrize = IsoSymmetrize())
     return r
 end

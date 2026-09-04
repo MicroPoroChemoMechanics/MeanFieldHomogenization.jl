@@ -68,8 +68,8 @@ const law_I = ViscoLaw(Ji_const, :creep)
 # ─── homogenization helpers ────────────────────────────────────────────────
 
 function build_rve(omega, f)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => law_M))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => law_M); fraction = :rest)
     sh = omega == 1.0 ? Ellipsoid(1.0, 1.0, 1.0) : Spheroid(omega)
     # Mirrors the ECHOES `symmetrize=[ISO]` keyword: orientation-average
     # the inclusion's stiffness contribution to iso form.
@@ -124,8 +124,8 @@ plt = plot(
 function elastic_compliance(omega, f, t, sch::HomogenizationScheme)
     C_M_arr = inv(Js(t, t))   # 6×6
     C_M_t = best_fit_iso(TensND.Tens(MeanFieldHomogenization.Core.array_from_mandel66(C_M_arr)))
-    rve_e = RVE(:M)
-    add_matrix!(rve_e, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M_t))
+    rve_e = RVE()
+    add_phase!(rve_e, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M_t); fraction = :rest)
     sh = omega == 1.0 ? Ellipsoid(1.0, 1.0, 1.0) : Spheroid(omega)
     C_I_t = TensISO{3}(3.0e6, 2.0e6)
     add_phase!(

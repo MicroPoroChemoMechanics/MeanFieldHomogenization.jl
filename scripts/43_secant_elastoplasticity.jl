@@ -167,8 +167,8 @@ end
 
 function kmu_hom(μs, f)
     C_ref = TensISO{3}(3 * eltype(μs)(KS), 2 * μs[1])
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_ref))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_ref); fraction = :rest)
     add_phase!(rve, :I, porous_sphere(μs, f), Dict(:C => C_ref); fraction = 1.0)
     return collect(k_mu(homogenize(rve, SelfConsistent(), :C)))
 end

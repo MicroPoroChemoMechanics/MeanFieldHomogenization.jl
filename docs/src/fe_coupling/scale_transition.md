@@ -84,8 +84,8 @@ with `get_array`.
 using MeanFieldHomogenization, TensND
 
 C₀ = TensISO{3}(3 * 30.0, 2 * 18.0)
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C₀))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
 add_phase!(rve, :F, PennyCrack(1.0; euler_angles = (π / 4, 0.0)), Dict(:C => C₀);
            density = 0.08)
 

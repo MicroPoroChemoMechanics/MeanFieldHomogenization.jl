@@ -302,10 +302,13 @@ class CodeGen:
     def _rve_body(self, c: Cell) -> None:
         opts = c.rve_options or {}
         tail = ("; " + ", ".join(f"{k} = {v}" for k, v in sorted(opts.items()))) if opts else ""
-        self.w(f"{IND}rve = RVE(:{c.matrix_name}{tail})")
-        matrix = c.matrix()
-        if matrix is not None:
-            self._emit_phase(matrix, c)
+        # No phase name on the constructor: an RVE designates no matrix. The
+        # phase whose amount is "rest" is emitted first, as it reads best, but
+        # the order carries no meaning.
+        self.w(f"{IND}rve = RVE({tail})")   # `tail` is "" or "; k = v, ..." 
+        rest = c.remainder()
+        if rest is not None:
+            self._emit_phase(rest, c)
         for ph in c.inclusions():
             self._emit_phase(ph, c)
         self.w(f"{IND}return rve")
@@ -375,14 +378,13 @@ class CodeGen:
                 + {"iso": "IsoSymmetrize()", "ti": "TISymmetrize()"}[ph.symmetrize]
             )
 
-        if ph.is_matrix:
-            # No amount: MFH derives the matrix fraction as 1 - Σ f_inclusions
-            # and raises if it is set explicitly.
-            tail = ("; " + ", ".join(opts)) if opts else ""
-            self._call(f"add_matrix!(rve, {geom}, {props}{tail})")
-            return
-
-        opts.insert(0, f"{ph.amount_kind} = {self._amount(ph)}")
+        # One declaration for every phase. `fraction = :rest` marks the one
+        # that takes up the volume the others leave; a matrix-based scheme
+        # picks it up as its reference medium unless it names another.
+        if ph.amount_kind == "rest":
+            opts.insert(0, "fraction = :rest")
+        else:
+            opts.insert(0, f"{ph.amount_kind} = {self._amount(ph)}")
         self._call(f"add_phase!(rve, :{ph.name}, {geom}, {props}; " + ", ".join(opts) + ")")
 
     def _call(self, line: str) -> None:

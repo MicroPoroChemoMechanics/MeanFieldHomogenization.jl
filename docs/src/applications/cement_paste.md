@@ -94,11 +94,8 @@ is what makes the paste set.
 
 ```@example paste
 function C_porous_sc(φ, ω)
-    r = RVE(:SOLID)
-    add_matrix!(
-        r, Ellipsoid(1.0, 1.0, ω), Dict(:C => C_sol);
-        symmetrize = IsoSymmetrize()
-    )
+    r = RVE()
+    add_phase!(r, :OUTER, Ellipsoid(1.0, 1.0, ω), Dict(:C => C_sol); fraction = :rest, symmetrize = IsoSymmetrize())
     add_phase!(
         r, :PORE, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_zero);
         fraction = φ
@@ -138,8 +135,8 @@ function C_paste(wc, α)
     f_inc < 1.0e-12 && return C_out
 
     # Step 1 — core-shell inclusion: anhydrous grains in inner hydrates.
-    r1 = RVE(:INNER)
-    add_matrix!(r1, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_inner))
+    r1 = RVE()
+    add_phase!(r1, :INNER, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_inner); fraction = :rest)
     add_phase!(
         r1, :ANH, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_anhyd);
         fraction = v.fa / f_inc
@@ -147,8 +144,8 @@ function C_paste(wc, α)
     C_comp = homogenize(r1, MoriTanaka(), :C)
 
     # Step 2 — composite inclusions in the outer matrix.
-    r2 = RVE(:OUTER)
-    add_matrix!(r2, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_out))
+    r2 = RVE()
+    add_phase!(r2, :OUTER, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_out); fraction = :rest)
     add_phase!(
         r2, :INC, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_comp);
         fraction = f_inc
@@ -236,16 +233,16 @@ function C_paste_undrained(wc, α)
     f_inc = v.fa + v.fi
     f_inc < 1.0e-12 && return C_out_u
 
-    r1 = RVE(:INNER)
-    add_matrix!(r1, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_inner_u))
+    r1 = RVE()
+    add_phase!(r1, :INNER, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_inner_u); fraction = :rest)
     add_phase!(
         r1, :ANH, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_anhyd);
         fraction = v.fa / f_inc
     )
     C_comp = homogenize(r1, MoriTanaka(), :C)
 
-    r2 = RVE(:OUTER)
-    add_matrix!(r2, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_out_u))
+    r2 = RVE()
+    add_phase!(r2, :OUTER, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_out_u); fraction = :rest)
     add_phase!(
         r2, :INC, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_comp);
         fraction = f_inc
@@ -294,8 +291,8 @@ function C_paste_composite(wc, α)
     Ra < 1.0e-6 && return nothing      # no anhydrous core left (α → 1)
 
     sphere = LayeredSphere((Ra, 1.0), (C_anhyd, C_inner))
-    r = RVE(:OUTER)
-    add_matrix!(r, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_out))
+    r = RVE()
+    add_phase!(r, :OUTER, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_out); fraction = :rest)
     add_phase!(r, :INC, sphere, Dict(:C => C_anhyd); fraction = f_inc)
     return homogenize(r, MoriTanaka(), :C)
 end

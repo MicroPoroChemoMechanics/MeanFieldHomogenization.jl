@@ -22,8 +22,8 @@ const k_void, μ_void = 0.01, 0.005
 fs = collect(range(0.0, 0.5; length = 20))
 
 function bulk_at(f, scheme)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_solid, μ_solid)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_solid, μ_solid)); fraction = :rest)
     f > 0 && add_phase!(
         rve, :V, Ellipsoid(1.0),
         Dict(:C => TensISO{3}(k_void, μ_void)); fraction = f

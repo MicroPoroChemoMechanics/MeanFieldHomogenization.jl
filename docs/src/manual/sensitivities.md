@@ -36,8 +36,8 @@ Practical consequences:
 ```julia
 using MeanFieldHomogenization, ForwardDiff, TensND
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0),
             Dict(:C => TensISO{3}(60.0, 20.0)); fraction = 0.2)
 
@@ -100,8 +100,8 @@ can be differentiated through a user-supplied closure:
 
 ```julia
 ∂α = sensitivity(0.3) do α
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0, α, α^2),
                 Dict(:C => TensISO{3}(60.0, 20.0)); fraction = 0.2)
     return get_array(homogenize(rve, MoriTanaka(), :C))[1, 1, 1, 1]
@@ -156,8 +156,8 @@ need the intermediate Jacobians.
 ## Symmetrize and orientation distributions
 
 A thin oblate spheroid with a *uniform spatial distribution of orientations*
-is, on average, isotropic. The `symmetrize` keyword on `add_matrix!` /
-`add_phase!` declares such a distribution, so the kernel projects the phase
+is, on average, isotropic. The `symmetrize` keyword on [`add_phase!`](@ref)
+declares such a distribution, so the kernel projects the phase
 localization tensor onto the corresponding symmetry class:
 
 | Symmetrize value           | Meaning                                                     | Result class |
@@ -167,8 +167,8 @@ localization tensor onto the corresponding symmetry class:
 | `:ti` / `TISymmetrize(n)`  | uniform azimuthal distribution around axis `n` (default ez) | `TensTI(n)`  |
 
 ```julia
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(216.0, 64.0)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(216.0, 64.0)); fraction = :rest)
 # Oblate inclusions with a uniform-in-orientation distribution: the
 # effective stiffness is iso even though each individual inclusion is TI.
 add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 0.2),

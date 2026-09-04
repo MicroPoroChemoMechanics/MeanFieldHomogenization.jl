@@ -195,8 +195,8 @@ end
     C_I_t = TensISO{3}(3 * 10.0, 2 * 4.0)
     C_I_law = heaviside_law(C_I_t)
 
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M_law))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M_law); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_I_law);
         fraction = 0.2

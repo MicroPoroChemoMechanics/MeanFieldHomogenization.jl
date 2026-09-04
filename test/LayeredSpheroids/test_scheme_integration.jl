@@ -24,12 +24,12 @@ const K_I = TensISO{3}(20.0)
     ell = Ellipsoid(ω, 1.0, 1.0)   # semi-axes sorted, longest ends up on ê₁ — matches `sph`'s axis
 
     for scheme in (Dilute(), MoriTanaka())
-        r_sph = RVE(:M)
-        add_matrix!(r_sph, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M))
+        r_sph = RVE()
+        add_phase!(r_sph, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M); fraction = :rest)
         add_phase!(r_sph, :I, sph, Dict(:K => K_I); fraction = 0.15)
 
-        r_ell = RVE(:M)
-        add_matrix!(r_ell, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M))
+        r_ell = RVE()
+        add_phase!(r_ell, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M); fraction = :rest)
         add_phase!(r_ell, :I, ell, Dict(:K => K_I); fraction = 0.15)
 
         K_sph = homogenize(r_sph, scheme, :K)
@@ -41,12 +41,12 @@ end
 @testset "LayeredSpheroid — independent of the declared phase property" begin
     sph = LayeredSpheroid((3.0,), (1.0,), (K_I,); Nseries = 6)
 
-    r_a = RVE(:M)
-    add_matrix!(r_a, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M))
+    r_a = RVE()
+    add_phase!(r_a, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M); fraction = :rest)
     add_phase!(r_a, :I, sph, Dict(:K => K_I); fraction = 0.15)
 
-    r_b = RVE(:M)
-    add_matrix!(r_b, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M))
+    r_b = RVE()
+    add_phase!(r_b, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M); fraction = :rest)
     add_phase!(r_b, :I, sph, Dict(:K => TensISO{3}(1.0e-4)); fraction = 0.15)
 
     K_a = homogenize(r_a, MoriTanaka(), :K)

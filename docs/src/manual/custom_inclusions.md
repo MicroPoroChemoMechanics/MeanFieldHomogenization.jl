@@ -60,8 +60,8 @@ blob = CustomInclusion((3.0, 1.0, 1.0);
     basis       = MeanFieldHomogenization.inclusion_basis(ell),
     hill_tensor = (P₀; kw...) -> hill_tensor(ell, P₀; kw...))
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)); fraction = :rest)
 add_phase!(rve, :I, blob, Dict(:C => iso_stiffness(60.0, 20.0)); fraction = 0.25)
 
 homogenize(rve, MoriTanaka(), :C)
@@ -71,7 +71,7 @@ The same object works in conduction — feed the RVE a `:K` property and the
 callback receives a 2nd-order tensor:
 
 ```julia
-add_matrix!(rve, Ellipsoid(1.0), Dict(:K => TensISO{3}(2.0)))
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(2.0)); fraction = :rest)
 ```
 
 !!! note "Callbacks must accept kw..."

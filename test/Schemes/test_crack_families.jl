@@ -27,8 +27,8 @@ _g(t) = get_array(TensND.change_tens(t, CANON_FAM))
 # anisotropic, so the correction factor cannot be hidden by an isotropic
 # `C_hom` commuting with everything.
 function _fractured_rve(; densities = (0.06, 0.05, 0.04), C_s = CS_FAM)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_s))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_s); fraction = :rest)
     # ZYZ Euler angles: θ tilts the crack normal away from e₃, φ is the azimuth.
     add_phase!(rve, :F1, PennyCrack(1.0; euler_angles = (0.0, 0.0)), Dict(:C => C_s); density = densities[1])
     add_phase!(rve, :F2, PennyCrack(1.0; euler_angles = (π / 4, 0.0)), Dict(:C => C_s); density = densities[2])
@@ -106,8 +106,8 @@ end
 
 @testset "a single family reproduces the total" begin
     # With one family the decomposition must return the whole crack part.
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => CS_FAM))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => CS_FAM); fraction = :rest)
     add_phase!(rve, :F, PennyCrack(1.0), Dict(:C => CS_FAM); density = 0.07)
     sc = SelfConsistent(; abstol = 1.0e-14, reltol = 1.0e-14, maxiters = 5000)
     C_hom = homogenize(rve, sc)
@@ -131,8 +131,8 @@ end
     C_s = CS_FAM
 
     # Symmetrized families have no single normal: refuse rather than mislead.
-    rve_sym = RVE(:M)
-    add_matrix!(rve_sym, Ellipsoid(1.0), Dict(:C => C_s))
+    rve_sym = RVE()
+    add_phase!(rve_sym, :M, Ellipsoid(1.0), Dict(:C => C_s); fraction = :rest)
     add_phase!(
         rve_sym, :F, PennyCrack(1.0), Dict(:C => C_s);
         density = 0.05, symmetrize = :iso
@@ -141,8 +141,8 @@ end
     @test_throws ArgumentError crack_family_compliances(rve_sym, MoriTanaka(), C_sym)
 
     # Mori-Tanaka with a solid inclusion beside the cracks is out of scope.
-    rve_mixed = RVE(:M)
-    add_matrix!(rve_mixed, Ellipsoid(1.0), Dict(:C => C_s))
+    rve_mixed = RVE()
+    add_phase!(rve_mixed, :M, Ellipsoid(1.0), Dict(:C => C_s); fraction = :rest)
     add_phase!(rve_mixed, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 60.0, 2 * 30.0)); fraction = 0.2)
     add_phase!(rve_mixed, :F, PennyCrack(1.0), Dict(:C => C_s); density = 0.05)
     C_mixed = homogenize(rve_mixed, MoriTanaka())

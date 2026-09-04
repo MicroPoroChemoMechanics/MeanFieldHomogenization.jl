@@ -68,8 +68,8 @@ const FRACTION = 0.3
 elastic_law(C) = ViscoLaw((t, tp) -> (t < tp ? zero(C) : C), :relaxation)
 
 function build_rve(aspect_ratio)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => law_M))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, aspect_ratio), Dict(:C => elastic_law(C_I));
         fraction = FRACTION, symmetrize = :iso
@@ -78,8 +78,8 @@ function build_rve(aspect_ratio)
 end
 
 function matrix_only()
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => law_M))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
     return rve
 end
 ````
@@ -227,8 +227,8 @@ The remedy is to declare the distribution shape the morphology actually has:
 
 ````@example alv_schemes
 let α = 0.01
-    rve = RVE(:M; distribution_shape = UniformDistribution(Ellipsoid(1.0, 1.0, α)))
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => law_M))
+    rve = RVE(; distribution_shape = UniformDistribution(Ellipsoid(1.0, 1.0, α)))
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, α), Dict(:C => elastic_law(C_I));
         fraction = FRACTION, symmetrize = :iso

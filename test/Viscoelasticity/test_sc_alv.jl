@@ -10,11 +10,8 @@ using LinearAlgebra
 const _to_mandel = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66
 
 @testset "self_consistent_alv — elastic limit (Heaviside)" begin
-    rve = RVE(:M)
-    add_matrix!(
-        rve, Ellipsoid(1.0, 1.0, 1.0),
-        Dict(:C => heaviside_law(TensISO{3}(30.0, 8.0)))
-    )
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(TensISO{3}(30.0, 8.0))); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, 1.0),
         Dict(:C => heaviside_law(TensISO{3}(60.0, 16.0)));
@@ -29,8 +26,8 @@ const _to_mandel = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66
     )
 
     # Reference: elastic SC.
-    rve_e = RVE(:M)
-    add_matrix!(rve_e, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => TensISO{3}(30.0, 8.0)))
+    rve_e = RVE()
+    add_phase!(rve_e, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => TensISO{3}(30.0, 8.0)); fraction = :rest)
     add_phase!(
         rve_e, :I, Ellipsoid(1.0, 1.0, 1.0),
         Dict(:C => TensISO{3}(60.0, 16.0)); fraction = 0.2
@@ -49,11 +46,8 @@ const _to_mandel = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66
 end
 
 @testset "self_consistent_alv — homogenize_alv dispatch (SelfConsistent)" begin
-    rve = RVE(:M)
-    add_matrix!(
-        rve, Ellipsoid(1.0, 1.0, 1.0),
-        Dict(:C => maxwell_iso(10.0, 4.0, 1.0, 0.5))
-    )
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => maxwell_iso(10.0, 4.0, 1.0, 0.5)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, 1.0),
         Dict(:C => heaviside_law(TensISO{3}(60.0, 16.0)));
@@ -86,11 +80,8 @@ end
 @testset "self_consistent_alv — single-phase trivial fixed point" begin
     # If only the matrix exists (no inclusions), SC should return the
     # matrix kernel itself at the first iteration.
-    rve = RVE(:M)
-    add_matrix!(
-        rve, Ellipsoid(1.0, 1.0, 1.0),
-        Dict(:C => maxwell_iso(10.0, 4.0, 1.0, 0.5))
-    )
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => maxwell_iso(10.0, 4.0, 1.0, 0.5)); fraction = :rest)
     times = collect(0.0:0.5:2.0)
     C_alv = self_consistent_alv(
         rve, :C; times = times, abstol = 1.0e-12,

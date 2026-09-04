@@ -20,11 +20,12 @@ stiffness one is the rank-1 limit of a divergent eigenvalue.
 
 Reference: [kachanov2018](@cite).
 """
-function _evaluate(rve::RVE, ::DiluteDual, ::Val{p}; kw...) where {p}
-    P₀ = matrix_property(rve, p)
+function _evaluate(rve::RVE, scheme::DiluteDual, ::Val{p}; kw...) where {p}
+    m = matrix_name(scheme, rve)
+    P₀ = phase_property(rve, m, p)
     S₀ = inv(P₀)
     ΔS = zero(S₀)
-    for name in inclusion_phase_names(rve)
+    for name in inclusion_phase_names(rve, m)
         ΔS += _phase_compliance_contribution(rve, name, p, P₀; kw...)
     end
     return inv(S₀ + ΔS)

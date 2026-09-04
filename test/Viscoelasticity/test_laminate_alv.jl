@@ -171,8 +171,8 @@ end
     @test has_visco_property(lam, :C)
     @test !has_visco_property(_elastic_laminate(), :C)
     # ... and through a declaratively nested cell, without resolving it.
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => heaviside_law(_isoa(1.0, 0.4))))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => heaviside_law(_isoa(1.0, 0.4))); fraction = :rest)
     add_phase!(
         rve, :agg, Ellipsoid(1.0),
         Dict(:C => Homogenized(_heaviside_laminate(), Laminated())); fraction = 0.2

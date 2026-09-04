@@ -75,7 +75,11 @@ is the size-independent stiffness contribution
 ([eshelby1957](@cite);
 [kachanov2018](@cite)).
 """
-struct Dilute <: HomogenizationScheme end
+struct Dilute{M} <: HomogenizationScheme
+    matrix::M
+end
+Dilute(matrix::Union{Nothing, Symbol}) = Dilute{typeof(matrix)}(matrix)
+Dilute(; matrix::Union{Nothing, Symbol} = nothing) = Dilute(matrix)
 
 """
     DiluteDual() <: HomogenizationScheme
@@ -84,7 +88,11 @@ Dual dilute scheme on the compliance:
 ``\\mathbb S_{\\mathrm{eff}} = \\mathbb S_0 + \\sum_i f_i \\mathbb H_i``,
 returning ``\\mathbb{C}_{\\mathrm{eff}} = \\mathbb S_{\\mathrm{eff}}^{-1}``.
 """
-struct DiluteDual <: HomogenizationScheme end
+struct DiluteDual{M} <: HomogenizationScheme
+    matrix::M
+end
+DiluteDual(matrix::Union{Nothing, Symbol}) = DiluteDual{typeof(matrix)}(matrix)
+DiluteDual(; matrix::Union{Nothing, Symbol} = nothing) = DiluteDual(matrix)
 
 """
     MoriTanaka() <: HomogenizationScheme
@@ -92,7 +100,11 @@ struct DiluteDual <: HomogenizationScheme end
 Mori-Tanaka scheme ([mori1973](@cite);
 [christensen1990](@cite)).
 """
-struct MoriTanaka <: HomogenizationScheme end
+struct MoriTanaka{M} <: HomogenizationScheme
+    matrix::M
+end
+MoriTanaka(matrix::Union{Nothing, Symbol}) = MoriTanaka{typeof(matrix)}(matrix)
+MoriTanaka(; matrix::Union{Nothing, Symbol} = nothing) = MoriTanaka(matrix)
 
 """
     Maxwell() <: HomogenizationScheme
@@ -100,7 +112,11 @@ struct MoriTanaka <: HomogenizationScheme end
 Maxwell homogenization, using the RVE's distribution shape as the
 reference for the Hill polarization tensor.
 """
-struct Maxwell <: HomogenizationScheme end
+struct Maxwell{M} <: HomogenizationScheme
+    matrix::M
+end
+Maxwell(matrix::Union{Nothing, Symbol}) = Maxwell{typeof(matrix)}(matrix)
+Maxwell(; matrix::Union{Nothing, Symbol} = nothing) = Maxwell(matrix)
 
 """
     PonteCastanedaWillis() <: HomogenizationScheme
@@ -108,7 +124,11 @@ struct Maxwell <: HomogenizationScheme end
 Ponte-Castañeda & Willis 1995 scheme — distribution-shape-aware
 generalization of Mori-Tanaka.
 """
-struct PonteCastanedaWillis <: HomogenizationScheme end
+struct PonteCastanedaWillis{M} <: HomogenizationScheme
+    matrix::M
+end
+PonteCastanedaWillis(matrix::Union{Nothing, Symbol}) = PonteCastanedaWillis{typeof(matrix)}(matrix)
+PonteCastanedaWillis(; matrix::Union{Nothing, Symbol} = nothing) = PonteCastanedaWillis(matrix)
 
 # ── N-body schemes (act on a `ParticleAssembly`, not on an `RVE`) ────────────
 #
@@ -247,22 +267,44 @@ Pass `algorithm = AutoNonlinear()` explicitly to opt in.
 struct AutoNonlinear end
 
 """
-    SelfConsistent(; algorithm = AndersonDefault(), kwargs...) <: HomogenizationScheme
+    SelfConsistent(; algorithm = AndersonDefault(), init = nothing, kwargs...) <: HomogenizationScheme
 
-Self-consistent scheme. The `algorithm` selects the non-linear solver;
-default is the built-in Anderson acceleration. Any solver from the
-SciML `NonlinearSolve.jl` package can be passed once `using NonlinearSolve`
-activates the weak extension `MeanFieldHomogenizationNonlinearSolveExt`.
+Self-consistent scheme — the morphology in which **no phase is a matrix**, so
+this scheme carries no reference-medium field at all and runs on an RVE that
+designates none.
+
+The `algorithm` selects the non-linear solver; default is the built-in Anderson
+acceleration. Any solver from the SciML `NonlinearSolve.jl` package can be
+passed once `using NonlinearSolve` activates the weak extension
+`MeanFieldHomogenizationNonlinearSolveExt`.
+
+`init` is the starting iterate. Unset, it is the phase taking up the volume
+complement when the RVE names one, and the Voigt average otherwise — the latter
+being what lets an RVE with no complement phase be solved at all. It also
+accepts `:voigt`, `:reuss`, a phase name, or an explicit tensor. A phase named
+`:voigt` or `:reuss` wins over the keyword: a phase name is the caller's data.
+
+!!! note "The seed picks the path, not the answer"
+    Away from percolation the fixed point is unique and every seed reaches it:
+    measured over a porous RVE at `f ∈ {0.1, 0.3, 0.45, 0.6}` and a stiff one at
+    `f ∈ {0.1, 0.3, 0.5, 0.7}`, a Voigt seed and a phase seed agree to `1e-9` or
+    better. They part only next to the porous percolation threshold (`f = 0.49`,
+    `0.52`), where the stiffness has collapsed to `~1e-4` against a solid at
+    `72` and the damped Picard crawls along a degenerate fixed point;
+    `NewtonDefault` agrees to `1e-7` even there. On a deeply percolated oblate
+    RVE the Voigt start also makes `TrustRegion` stop where the
+    finite-difference IFT Jacobian is exactly singular. Hence the default above.
 
 Standard kwargs forwarded to the solver: `abstol`, `reltol`,
 `maxiters`, `damping`, `verbose`.
 """
-struct SelfConsistent{A, K <: NamedTuple} <: HomogenizationScheme
+struct SelfConsistent{A, I, K <: NamedTuple} <: HomogenizationScheme
     algorithm::A
+    init::I
     options::K
 end
-SelfConsistent(; algorithm = AndersonDefault(), kwargs...) =
-    SelfConsistent(algorithm, NamedTuple(kwargs))
+SelfConsistent(; algorithm = AndersonDefault(), init = nothing, kwargs...) =
+    SelfConsistent(algorithm, init, NamedTuple(kwargs))
 
 """
     AsymmetricSelfConsistent(; algorithm = AndersonDefault(), kwargs...) <: HomogenizationScheme
@@ -272,12 +314,16 @@ space depending on the matrix-vs-Voigt-bound contrast, providing a
 better behavior than [`SelfConsistent`](@ref) in matrix-stiff /
 inclusion-soft regimes.
 """
-struct AsymmetricSelfConsistent{A, K <: NamedTuple} <: HomogenizationScheme
+struct AsymmetricSelfConsistent{A, M, I, K <: NamedTuple} <: HomogenizationScheme
     algorithm::A
+    matrix::M
+    init::I
     options::K
 end
-AsymmetricSelfConsistent(; algorithm = AndersonDefault(), kwargs...) =
-    AsymmetricSelfConsistent(algorithm, NamedTuple(kwargs))
+AsymmetricSelfConsistent(
+    matrix::Union{Nothing, Symbol} = nothing;
+    algorithm = AndersonDefault(), init = nothing, kwargs...
+) = AsymmetricSelfConsistent(algorithm, matrix, init, NamedTuple(kwargs))
 
 # ── Differential scheme + trajectories ───────────────────────────────────────
 
@@ -424,11 +470,14 @@ along the chosen `trajectory`.
 - `kwargs...` — any other keyword is forwarded verbatim to
   `OrdinaryDiffEq.solve` (`maxiters`, `dtmax`, `dt`, `callback`, …).
 """
-struct DifferentialScheme{P <: DifferentialTrajectory, K <: NamedTuple} <: HomogenizationScheme
+struct DifferentialScheme{P <: DifferentialTrajectory, M, K <: NamedTuple} <:
+    HomogenizationScheme
     trajectory::P
+    matrix::M
     options::K
 end
-DifferentialScheme(;
+DifferentialScheme(
+    matrix::Union{Nothing, Symbol} = nothing;
     trajectory = Proportional(),
     nsteps::Int = 100,
     abstol::Real = 1.0e-8,
@@ -439,5 +488,6 @@ DifferentialScheme(;
 ) =
     DifferentialScheme(
     trajectory,
+    matrix,
     (; nsteps, abstol, reltol, alg, formulation, kwargs...)
 )

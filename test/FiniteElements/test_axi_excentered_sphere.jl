@@ -209,11 +209,11 @@ end
     sph = LayeredSphere((cbrt(AX_W), 1.0), (AX_C_CORE, AX_C_SHELL))
 
     for scheme in (Dilute(), MoriTanaka(), Maxwell(), PonteCastanedaWillis())
-        rve_fe = RVE(:m)
-        add_matrix!(rve_fe, Ellipsoid(1.0), Dict(:C => AX_C_MAT))
+        rve_fe = RVE()
+        add_phase!(rve_fe, :m, Ellipsoid(1.0), Dict(:C => AX_C_MAT); fraction = :rest)
         add_phase!(rve_fe, :i, incl, Dict(:C => AX_C_MAT); fraction = 0.2)
-        rve_ex = RVE(:m)
-        add_matrix!(rve_ex, Ellipsoid(1.0), Dict(:C => AX_C_MAT))
+        rve_ex = RVE()
+        add_phase!(rve_ex, :m, Ellipsoid(1.0), Dict(:C => AX_C_MAT); fraction = :rest)
         add_phase!(rve_ex, :i, sph, Dict(:C => AX_C_MAT); fraction = 0.2)
         # The finite-element estimate is isotropic in *content* but not in
         # type, so both are projected before comparison.
@@ -229,11 +229,11 @@ end
     # `Reuss` are not merely available, they are *exact*: no finite-element
     # solve is involved at all.
     for scheme in (Voigt(), Reuss())
-        rve_fe = RVE(:m)
-        add_matrix!(rve_fe, Ellipsoid(1.0), Dict(:C => AX_C_MAT))
+        rve_fe = RVE()
+        add_phase!(rve_fe, :m, Ellipsoid(1.0), Dict(:C => AX_C_MAT); fraction = :rest)
         add_phase!(rve_fe, :i, incl, Dict(:C => AX_C_MAT); fraction = 0.2)
-        rve_ex = RVE(:m)
-        add_matrix!(rve_ex, Ellipsoid(1.0), Dict(:C => AX_C_MAT))
+        rve_ex = RVE()
+        add_phase!(rve_ex, :m, Ellipsoid(1.0), Dict(:C => AX_C_MAT); fraction = :rest)
         add_phase!(rve_ex, :i, sph, Dict(:C => AX_C_MAT); fraction = 0.2)
         @test k_mu(homogenize(rve_fe, scheme, :C))[1] ≈
             k_mu(homogenize(rve_ex, scheme, :C))[1] rtol = 1.0e-12
@@ -255,8 +255,8 @@ end
     for (tag, geom) in ((:fe, incl), (:exact, sph)), scheme in
             (SelfConsistent(), AsymmetricSelfConsistent())
 
-        rve = RVE(:m)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => AX_C_MAT))
+        rve = RVE()
+        add_phase!(rve, :m, Ellipsoid(1.0), Dict(:C => AX_C_MAT); fraction = :rest)
         add_phase!(rve, :i, geom, Dict(:C => AX_C_MAT); fraction = 0.25)
         res[(tag, nameof(typeof(scheme)))] =
             k_mu(MeanFieldHomogenization.Core.isotropify(homogenize(rve, scheme, :C)))

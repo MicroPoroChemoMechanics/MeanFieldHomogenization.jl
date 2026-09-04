@@ -31,8 +31,8 @@ function _eff_mu_final(rve, scheme)
 end
 
 function _build_rve_base(f::Real)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => _build_law_M(1.0, 1.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => _build_law_M(1.0, 1.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(_C_INC));
         fraction = f
@@ -59,8 +59,8 @@ end
 
 @testset "ALV sensitivities — d/dμ_M via closure" begin
     function eff_mu_vs_μM(μ_M)
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => _build_law_M(1.0, μ_M)))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => _build_law_M(1.0, μ_M)); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(_C_INC));
             fraction = 0.2
@@ -78,8 +78,8 @@ end
 @testset "ALV sensitivities — gradient over (f, k_M, μ_M)" begin
     function eff_mu_vs_fkμ(p::AbstractVector)
         f, k_M, μ_M = p
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => _build_law_M(k_M, μ_M)))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => _build_law_M(k_M, μ_M)); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(_C_INC));
             fraction = 0.2
@@ -100,8 +100,8 @@ end
 
 @testset "ALV sensitivities — d/dτ_K (relaxation time inside kernel)" begin
     function eff_mu_vs_τK(τ_K)
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => _build_law_M(1.0, 1.0, τ_K, 0.5)))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => _build_law_M(1.0, 1.0, τ_K, 0.5)); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(_C_INC));
             fraction = 0.2
@@ -145,8 +145,8 @@ end
 
 @testset "ALV sensitivities — d/dω geometry (aspect ratio) MT + SC" begin
     function eff_mu_vs_ω(ω, scheme; symmetrize = :none)
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => _build_law_M(1.0, 1.0)))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => _build_law_M(1.0, 1.0)); fraction = :rest)
         add_phase!(
             rve, :I, Spheroid(ω), Dict(:C => heaviside_law(_C_INC));
             fraction = 0.2, symmetrize = symmetrize
@@ -197,8 +197,8 @@ const _ALV2_SCHEMES = (
 
 @testset "ALV order-2 sensitivities — d/dK_phase (every order-2 scheme)" begin
     function eff_K(k, sch)
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:K => _law_K(1.0)))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => _law_K(1.0)); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0), Dict(:K => heaviside_law(TensISO{3}(k)));
             fraction = 0.2
@@ -221,8 +221,8 @@ end
 # actually performs (see `_maybe_symmetrize_alv2`).
 @testset "ALV order-2 sensitivities — d/dω geometry (every order-2 scheme)" begin
     function eff_K_ω(ω, sch)
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:K => _law_K(1.0)))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => _law_K(1.0)); fraction = :rest)
         add_phase!(
             rve, :I, Spheroid(ω), Dict(:K => heaviside_law(TensISO{3}(10.0)));
             fraction = 0.2, symmetrize = :iso
@@ -250,8 +250,8 @@ end
         moduli = which === :inner ?
             (TensISO{3}(3x, 2 * 5.0), TensISO{3}(3 * 20.0, 2 * 8.0)) :
             (TensISO{3}(3 * 30.0, 2 * 5.0), TensISO{3}(3x, 2 * 8.0))
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => _build_law_M(1.0, 1.0)))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => _build_law_M(1.0, 1.0)); fraction = :rest)
         add_phase!(
             rve, :I, LayeredSphere((0.6, 1.0), moduli),
             Dict(:C => heaviside_law(_C_INC)); fraction = 0.2

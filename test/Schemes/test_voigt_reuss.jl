@@ -27,8 +27,8 @@ const RTOL_VR = 1.0e-10
 
 @testset "Voigt / Reuss — sanity (single-phase RVE)" begin
     C_m = TensISO{3}(30.0, 10.0)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     @test homogenize(rve, Voigt()) ≈ C_m
     @test homogenize(rve, Reuss()) ≈ C_m
 end
@@ -37,8 +37,8 @@ end
     C_m = TensISO{3}(30.0, 10.0)              # 3k=30, 2μ=10
     C_i = TensISO{3}(60.0, 20.0)
     f = 0.3
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = f)
 
     # Voigt: arithmetic mean
@@ -62,8 +62,8 @@ end
         km, μm = 1.0 + 5rand(), 0.5 + 3rand()
         ki, μi = 1.0 + 5rand(), 0.5 + 3rand()
         f = 0.05 + 0.85rand()
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(3km, 2μm)))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3km, 2μm)); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3ki, 2μi));
             fraction = f
@@ -78,8 +78,8 @@ end
 
 @testset "Voigt / Reuss — cracks are ignored" begin
     C_m = TensISO{3}(30.0, 10.0)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :CRACK, PennyCrack(1.0), Dict(:C => C_m); density = 0.1)
     # No CrackDensity contribution → effective C = matrix C
     @test homogenize(rve, Voigt()) ≈ C_m
@@ -90,8 +90,8 @@ end
     K_m = TensISO{3}(2.0)   # iso 2nd-order conductivity (eigenvalue 2)
     K_i = TensISO{3}(8.0)   # iso 2nd-order conductivity (eigenvalue 8)
     f = 0.25
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:K => K_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => K_m); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:K => K_i); fraction = f)
 
     Kv = homogenize(rve, Voigt(); property = :K)
@@ -108,8 +108,8 @@ end
 
     f_voigt(f) = begin
         DT = typeof(f)
-        rve = RVE(:M; T = DT)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(C_m_arr...)))
+        rve = RVE(; T = DT)
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(C_m_arr...)); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(C_i_arr...));
             fraction = f
@@ -129,8 +129,8 @@ end
     C_m = TensISO{3}(30.0 + δ * im, 10.0 + 0.5δ * im)
     C_i = TensISO{3}(60.0 + δ * im, 20.0 + 0.5δ * im)
     f = 0.3
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = f)
 
     Cv = homogenize(rve, Voigt())
@@ -141,15 +141,15 @@ end
     @test all(isfinite, get_array(Cr))
 
     # Im → 0 limit
-    rve_re = RVE(:M)
-    add_matrix!(rve_re, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve_re = RVE()
+    add_phase!(rve_re, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve_re, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = f
     )
 
-    rve_0 = RVE(:M)
-    add_matrix!(rve_0, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0 + 0im, 10.0 + 0im)))
+    rve_0 = RVE()
+    add_phase!(rve_0, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0 + 0im, 10.0 + 0im)); fraction = :rest)
     add_phase!(
         rve_0, :I, Ellipsoid(1.0),
         Dict(:C => TensISO{3}(60.0 + 0im, 20.0 + 0im)); fraction = f
@@ -168,8 +168,8 @@ end
 @testset "Voigt / Reuss — Symbol shortcuts" begin
     C_m = TensISO{3}(30.0, 10.0)
     C_i = TensISO{3}(60.0, 20.0)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = 0.3)
 
     @test homogenize(rve, :Voigt) ≈ homogenize(rve, Voigt())

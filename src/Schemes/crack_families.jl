@@ -119,13 +119,14 @@ function crack_family_compliances(
 end
 
 function crack_family_compliances(
-        rve::RVE, ::MoriTanaka,
+        rve::RVE, scheme::MoriTanaka,
         C_hom::TensND.AbstractTens{4, 3}; property::Symbol = :C, kw...
     )
+    m = matrix_name(scheme, rve)
     names = _crack_family_names(rve)
     solid_inclusions = [
-        n for n in inclusion_phase_names(rve)
-            if rve.amounts[n] isa VolumeFraction
+        n for n in inclusion_phase_names(rve, m)
+            if !(rve.amounts[n] isa CrackDensity)
     ]
     isempty(solid_inclusions) || throw(
         ArgumentError(
@@ -140,7 +141,7 @@ function crack_family_compliances(
     # `C_MT = c_s : (𝕀 + ℍ:c_s)⁻¹` for a matrix + cracks RVE, hence
     # `S_MT = (𝕀 + ℍ:c_s) : s_s = s_s + ℍ`: no correction factor at all, and the
     # contributions are evaluated in the MATRIX, not in `C_hom`.
-    C_s = matrix_property(rve, property)
+    C_s = phase_property(rve, m, property)
     families = Dict{Symbol, Any}(
         name => _crack_family_H(rve, name, property, C_s; kw...) for name in names
     )
@@ -186,7 +187,7 @@ end
 # per-family law has no meaning (see the docstring above).
 function _crack_family_names(rve::RVE)
     names = Symbol[]
-    for name in inclusion_phase_names(rve)
+    for name in rve.phase_names
         rve.amounts[name] isa CrackDensity || continue
         sym = phase_symmetrize(rve, name)
         sym isa NoSymmetrize || throw(

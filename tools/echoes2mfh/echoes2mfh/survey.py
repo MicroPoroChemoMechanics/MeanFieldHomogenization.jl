@@ -34,7 +34,7 @@ FEATURES = {
 
 # Which MFH feature answers each Echoes feature. Empty means "no counterpart".
 MFH_TARGET = {
-    "rve": "RVE / add_matrix! / add_phase!",
+    "rve": "RVE / add_phase!",
     "homogenize": "homogenize",
     "homogenize_visco": "homogenize_alv",
     "homogenize_derivative": "derivative / gradient / jacobian (ForwardDiff)",

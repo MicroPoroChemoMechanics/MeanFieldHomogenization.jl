@@ -370,12 +370,12 @@ const TINY = TensISO{3}(3.0e-12, 2.0e-12)
 # The macropores are declared as the "matrix" phase and the particles as the
 # inclusion phase. For a self-consistent scheme the distinction is immaterial —
 # the average runs over every phase, matrix included — but the initial estimate
-# is `matrix_property(rve, :C)`, and seeding the fixed point with the isotropic
+# is the reference phase's property, and seeding the fixed point with the isotropic
 # pore rather than with the transversely isotropic particle is what keeps the
 # running estimate a `TensISO` from the first iterate to the last.
 function sc_numeric(Πv, φv)
-    rve = RVE(:MACROPORE)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TINY); symmetrize = :iso)
+    rve = RVE()
+    add_phase!(rve, :MACROPORE, Ellipsoid(1.0), Dict(:C => TINY); fraction = :rest, symmetrize = :iso)
     add_phase!(
         rve, :PARTICLE, Ellipsoid(1.0), Dict(:C => Cpar_sym_num(Πv));
         fraction = 1 - φv, symmetrize = :iso

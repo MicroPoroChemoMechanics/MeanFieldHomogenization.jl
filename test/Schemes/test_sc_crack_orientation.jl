@@ -25,8 +25,8 @@ const CS_SCO = TensISO{3}(3 * 30.0, 2 * 18.0)
 const CANON_SCO = TensND.CanonicalBasis{3, Float64}()
 
 function _cracked_rve(fams)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => CS_SCO))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => CS_SCO); fraction = :rest)
     for (i, (θ, d)) in enumerate(fams)
         add_phase!(
             rve, Symbol("F", i), PennyCrack(1.0; euler_angles = (θ, 0.0)),

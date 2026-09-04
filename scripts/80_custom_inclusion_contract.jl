@@ -101,8 +101,8 @@ println("="^78)
 # ## The schemes cannot tell them apart
 
 function rve_with(geom, prop_m, prop_i, key)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(key => prop_m))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(key => prop_m); fraction = :rest)
     add_phase!(r, :I, geom, Dict(key => prop_i); fraction = 0.25)
     return r
 end
@@ -172,8 +172,8 @@ flat = CustomInclusion(
 )
 
 function cracked(geom, ε)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => C₀))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
     add_phase!(r, :cr, geom, Dict(:C => C₀); density = ε)
     return r
 end
@@ -193,8 +193,8 @@ end
 # medium (isotropic by default).
 
 function oriented(geom_at, nbins, f)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => C₀))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
     for (i, bin) in enumerate(polar_orientation_bins(nbins))
         add_phase!(
             r, Symbol(:I, i), geom_at(bin.θ), Dict(:C => C₁);

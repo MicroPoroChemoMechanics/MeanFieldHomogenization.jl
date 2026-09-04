@@ -68,8 +68,8 @@ const k_m, μ_m = 30.0, 10.0
 const k_i, μ_i = 300.0, 100.0    # 10x contrast — enough to make Picard work
 
 function build_rve(; f = 0.3)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_i, μ_i)); fraction = f)
     return rve
 end
@@ -136,8 +136,8 @@ end
 println("\n  Cross-check (central finite difference, solver-independent ground truth):")
 h = 1.0e-5
 function f_modulus(K_I)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)))
+    r = RVE()
+    add_phase!(r, :SOLID, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)); fraction = :rest)
     add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(K_I, μ_i)); fraction = 0.3)
     return idxC(homogenize(r, SelfConsistent()))
 end
@@ -165,12 +165,8 @@ const φ_value = 0.15
 
 function _C_hom_iso_2vec(μs::Real, scheme)
     T = typeof(μs)
-    r = RVE(:SOLID; T = T)
-    add_matrix!(
-        r, Spheroid(ω_aspect),
-        Dict(:C => TensISO{3}(convert(T, 3 * k_s), 2 * μs));
-        symmetrize = :iso
-    )
+    r = RVE(; T = T)
+    add_phase!(r, :SOLID, Spheroid(ω_aspect), Dict(:C => TensISO{3}(convert(T, 3 * k_s), 2 * μs)); fraction = :rest, symmetrize = :iso)
     add_phase!(
         r, :PORE, Spheroid(ω_aspect),
         Dict(:C => TensISO{3}(convert(T, 3 * TINY), convert(T, 2 * TINY)));

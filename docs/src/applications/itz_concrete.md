@@ -81,10 +81,10 @@ function hydrate_foam(wc, α; N = N_BINS, ω = ω_needle)
     C_fluid = TensISO{3}(3TINY, 2TINY)
     ez = (0.0, 0.0, 1.0)
 
-    rve = RVE(:M)
+    rve = RVE()
     ## Zero-volume matrix phase: a self-consistent seed only, since the
     ## inclusion fractions already sum to 1.
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_hyd); symmetrize = :iso)
+    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => C_hyd); fraction = :rest, symmetrize = :iso)
     for (i, bin) in enumerate(polar_orientation_bins(N))
         add_phase!(
             rve, Symbol(:HYD, i), Spheroid(ω; euler_angles = (bin.θ, 0.0, 0.0)),
@@ -113,8 +113,8 @@ requires.
 ```@example itz
 C_hf = best_fit_ti(hydrate_foam(WC, ALPHA), (0.0, 0.0, 1.0))
 
-rve_cp = RVE(:HF)
-add_matrix!(rve_cp, Ellipsoid(1.0), Dict(:C => C_hf))
+rve_cp = RVE()
+add_phase!(rve_cp, :HF, Ellipsoid(1.0), Dict(:C => C_hf); fraction = :rest)
 add_phase!(
     rve_cp, :CLIN, Ellipsoid(1.0),
     Dict(:C => TensISO{3}(3K_clin, 2μ_clin)); fraction = f_clin(WC, ALPHA),
@@ -135,8 +135,8 @@ the same scheme used everywhere else on this page.
 ```@example itz
 function itz_stiffness(C_cp, φ)
     φ ≤ 0 && return C_cp
-    rve = RVE(:CP)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_cp))
+    rve = RVE()
+    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => C_cp); fraction = :rest)
     add_phase!(rve, :PORE, Ellipsoid(1.0), Dict(:C => TensISO{3}(0.0, 0.0)); fraction = φ)
     return homogenize(rve, MoriTanaka(), :C)
 end
@@ -167,8 +167,8 @@ const F_AGG = fh_san(WC, SC_RATIO)
 
 function E_concrete(φ_itz, t_over_R)
     coated = LayeredSphere((1.0, 1.0 + t_over_R), (C_SAN, itz_stiffness(C_cp, φ_itz)))
-    rve = RVE(:CP)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_cp))
+    rve = RVE()
+    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => C_cp); fraction = :rest)
     add_phase!(
         rve, :AGG, coated, Dict(:C => C_SAN);
         fraction = F_AGG * (1 + t_over_R)^3,

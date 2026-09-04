@@ -29,8 +29,8 @@ println("MeanFieldHomogenization — autodiff sensitivities tour")
 println("="^78)
 
 # 2-phase RVE with spherical inclusions ──────────────────────────────────────
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
 add_phase!(
     rve, :I, Ellipsoid(1.0),
     Dict(:C => TensISO{3}(60.0, 20.0));
@@ -91,8 +91,8 @@ bulk = C -> begin
     return s / 9
 end
 for f in (0.05, 0.1, 0.2, 0.3, 0.4)
-    rve_f = RVE(:M)
-    add_matrix!(rve_f, Ellipsoid(1.0), Dict(:C => TensISO{3}(3k_m, 2μ_m)))
+    rve_f = RVE()
+    add_phase!(rve_f, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3k_m, 2μ_m)); fraction = :rest)
     add_phase!(rve_f, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3k_i, 2μ_i)); fraction = f)
     ∂_ad = derivative(rve_f, MoriTanaka(), amount(:I); indexer = bulk)
     D = ζm + (1 - f) * Δk
@@ -103,8 +103,8 @@ end
 # ── 7) sensitivity() — closure fallback for cases the lenses cannot express ─
 println("\n[7] sensitivity(closure) — generic fallback:")
 f_eval = K_inc -> begin
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => TensISO{3}(3k_m, 2μ_m)))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3k_m, 2μ_m)); fraction = :rest)
     add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(K_inc, 2μ_i)); fraction = 0.2)
     return bulk(homogenize(r, MoriTanaka()))
 end

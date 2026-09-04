@@ -53,8 +53,8 @@ C_ti() = TensTI{4}(20.0, 30.0, 4.0, 5.0, 8.0, (0.0, 0.0, 1.0))
 
 """Two-phase isotropic RVE with spherical inclusions."""
 function rve_iso2(; f = 0.3)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_matrix_iso()))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_matrix_iso()); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_incl_iso()); fraction = f)
     return rve
 end
@@ -62,8 +62,8 @@ end
 """Anisotropic (triclinic) matrix + triaxial ellipsoid — forces the
 anisotropic Hill branch inside a scheme."""
 function rve_aniso_matrix(; f = 0.2)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_tri()))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_tri()); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(3.0, 2.0, 1.0), Dict(:C => C_incl_iso()); fraction = f)
     return rve
 end
@@ -71,8 +71,8 @@ end
 """Porous oblate spheroid, both phases `symmetrize = :iso`
 — test/Schemes/test_symmetrize.jl:114-131."""
 function rve_porous_oblate_isosym(; f = 0.2)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_solid_iso()))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_solid_iso()); fraction = :rest)
     add_phase!(
         rve, :P, Spheroid(0.2), Dict(:C => C_pore_iso());
         fraction = f, symmetrize = :iso
@@ -84,8 +84,8 @@ end
 The flagship de-duplication case: `nθ` phases, each needing one Hill solve
 that is currently computed twice."""
 function rve_theta_binned(nθ::Int)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_matrix_iso()))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_matrix_iso()); fraction = :rest)
     ez = (0.0, 0.0, 1.0)
     edges = range(0, π / 2; length = nθ + 1)
     for k in 1:nθ
@@ -104,8 +104,8 @@ end
 """Three non-coaxial TI phases inside SC — test/Schemes/test_symmetrize.jl:208-240.
 Exercises the third duplication instance (`_phase_stress_strain_average`)."""
 function rve_multi_axis_ti(x = 1.0)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 20.0 * x, 2 * 12.0 * x)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 20.0 * x, 2 * 12.0 * x)); fraction = :rest)
     for (k, θ) in enumerate((0.0, π / 4, π / 2))
         add_phase!(
             rve, Symbol(:I, k),
@@ -119,16 +119,16 @@ end
 
 """Penny-crack RVE — test/Schemes/test_one_shot.jl:71-86 style."""
 function rve_crack(; C_m = C_solid_iso(), density = 0.1)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :Cr, PennyCrack(1.0), Dict(:C => C_pore_iso()); density = density)
     return rve
 end
 
 """Porous RVE for the self-consistent percolation cases — scripts/28."""
 function rve_porous_sc(; φ = 0.3, shape = 1.0)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_solid_iso()))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_solid_iso()); fraction = :rest)
     add_phase!(rve, :P, Spheroid(shape), Dict(:C => C_pore_iso()); fraction = φ)
     return rve
 end

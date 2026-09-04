@@ -1,15 +1,17 @@
 # =============================================================================
-#  test_sensitivities.jl — Cross-check FD vs autodiff sur tous les schémas.
+#  test_sensitivities.jl — cross-check of finite differences against autodiff
+#  on every scheme.
 #
-#  Pour chaque schéma livrable (Voigt, Reuss, Dilute, DiluteDual, MoriTanaka,
-#  Maxwell, PCW, SC, ASC, Differential), pour chaque type de lentille
-#  applicable, vérifie :
-#   * derivative(rve, scheme, p; indexer)        coïncide avec un FD à pas h,
-#   * gradient(rve, scheme, ps; indexer)         coïncide avec [derivative]_i,
-#   * jacobian(rve, scheme, ps)                  retourne la bonne taille.
+#  For each shipped scheme (Voigt, Reuss, Dilute, DiluteDual, MoriTanaka,
+#  Maxwell, PCW, SC, ASC, Differential) and each applicable lens type, checks
+#  that:
+#   * derivative(rve, scheme, p; indexer)   agrees with a finite difference
+#                                           of step h,
+#   * gradient(rve, scheme, ps; indexer)    agrees with [derivative]_i,
+#   * jacobian(rve, scheme, ps)             has the right shape.
 #
-#  Tolérance laxiste pour les schémas itératifs (point fixe à abstol ≈ 1e-10
-#  ⇒ erreur résiduelle de l'ordre de abstol/h).
+#  The tolerance is loose for the iterative schemes: a fixed point solved to
+#  abstol ≈ 1e-10 leaves a residual error of order abstol/h.
 # =============================================================================
 
 using Test
@@ -20,13 +22,13 @@ using ForwardDiff
 const RTOL_CLOSED = 1.0e-6
 const RTOL_ITER = 1.0e-4
 
-# Référence FD centrée
+# Centered finite-difference reference
 _fd_centered(f, x, h) = (f(x + h) - f(x - h)) / (2h)
 
-# RVE sphère 2-phase de référence
+# Reference two-phase spherical RVE
 function _ref_rve(; f = 0.25)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0),
         Dict(:C => TensISO{3}(60.0, 20.0)); fraction = f
@@ -34,15 +36,15 @@ function _ref_rve(; f = 0.25)
     return rve
 end
 
-# Indexer canonique : C[1,1,1,1]
+# Canonical indexer: C[1,1,1,1]
 const idxC = C -> get_array(C)[1, 1, 1, 1]
 
-# Schémas closed-form (rtol serré)
+# Closed-form schemes (tight rtol)
 const _CLOSED_SCHEMES = (
     Voigt(), Reuss(), Dilute(), DiluteDual(),
     MoriTanaka(), Maxwell(), PonteCastanedaWillis(),
 )
-# Schémas itératifs/différentiels (rtol large)
+# Iterative / differential schemes (loose rtol)
 const _ITER_SCHEMES = (
     SelfConsistent(; abstol = 1.0e-12, maxiters = 200),
     AsymmetricSelfConsistent(; abstol = 1.0e-12, maxiters = 200),
@@ -128,8 +130,8 @@ end
     D = ζm + (1 - f) * Δk
     ∂k_∂f_ref = Δk * ζm * (ζm + Δk) / D^2
 
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(3k_m, 2μ_m)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3k_m, 2μ_m)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3k_i, 2μ_i));
         fraction = f
@@ -200,8 +202,8 @@ end
     # 2 nested MT calls: inner ≡ a sub-RVE inside the matrix of an outer RVE
     function build_mortar(K_inner)
         # Inner RVE
-        rve1 = RVE(:M)
-        add_matrix!(rve1, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+        rve1 = RVE()
+        add_phase!(rve1, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
         add_phase!(
             rve1, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(K_inner, 20.0));
             fraction = 0.3
@@ -216,17 +218,17 @@ end
 end
 
 # =============================================================================
-#  Inclusion utilizateur — démontrer l'extensibilité automatique
+#  User-defined inclusion — showing that extensibility is automatic
 # =============================================================================
 #
-#  On définit ici un type d'inclusion utilizateur minimal `Blob` réutilizant le
-#  noyau `Sphere` pour le `hill_tensor`. La sensibilité au champ `radius` doit
-#  fonctionner sans modification de `parameters.jl` — seule la réflexion via
-#  `_replace_geom_field` est nécessaire.
+#  A minimal user-defined inclusion type `Blob` is declared here, reusing the
+#  `Sphere` kernel for its `hill_tensor`. Sensitivity with respect to the
+#  `radius` field must work without any change to `parameters.jl` — only the
+#  reflection through `_replace_geom_field` is needed.
 
-# Étendre `MeanFieldHomogenization.Schemes._replace_geom_field` n'est PAS nécessaire ici
-# car `Blob` a un constructeur paramétrique auto-généré compatible avec le
-# fallback @generated.
+# Extending `MeanFieldHomogenization.Schemes._replace_geom_field` is NOT needed
+# here, because `Blob` has an auto-generated parametric constructor compatible
+# with the @generated fallback.
 struct Blob{T <: Number, B} <: MeanFieldHomogenization.AbstractEllipsoidalInclusion{3, T}
     radius::T
     basis::B
@@ -250,9 +252,9 @@ MeanFieldHomogenization.eshelby_tensor(b::Blob, C₀; kw...) =
     MeanFieldHomogenization.eshelby_tensor(Ellipsoid(b.radius, b.radius, b.radius), C₀; kw...)
 
 @testset "User-defined inclusion (Blob) — geometry derivative works without code change" begin
-    rve = RVE(:M)
+    rve = RVE()
     basis = TensND.CanonicalBasis{3, Float64}()
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :B, Blob{Float64, typeof(basis)}(1.0, basis),
         Dict(:C => TensISO{3}(60.0, 20.0)); fraction = 0.2

@@ -292,8 +292,8 @@ end
     n = length(times)
     f_I = 0.2
 
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_M)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_M)); fraction = :rest)
     add_phase!(
         rve, :I, sphere, Dict(:C => heaviside_law(C_M));
         fraction = f_I
@@ -364,8 +364,8 @@ end
     n = length(times)
 
     law_M = maxwell_iso(10.0, 4.0, 1.0, 0.5)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => law_M))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => law_M); fraction = :rest)
     add_phase!(rve, :I, sphere, Dict(:C => law_M); fraction = 0.2)
 
     C_alv = homogenize_alv(rve, Dilute(), :C; times = times)

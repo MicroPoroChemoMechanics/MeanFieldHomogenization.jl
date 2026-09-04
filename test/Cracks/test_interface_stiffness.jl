@@ -121,15 +121,15 @@ end
     law_K = ViscoLaw((t, tp) -> 1.0 + 0.5 * exp(-(t - tp)), :relaxation)
 
     # Two RVEs with same crack density, one TF, one with finite Rn = Rt = law_K
-    rve_TF = RVE(:M)
-    add_matrix!(rve_TF, Ellipsoid(1.0), Dict(:C => law_M))
+    rve_TF = RVE()
+    add_phase!(rve_TF, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
     add_phase!(
         rve_TF, :CRACK, PennyCrack(1.0), Dict(:C => law_M);
         density = 0.05, symmetrize = :iso
     )
 
-    rve_IS = RVE(:M)
-    add_matrix!(rve_IS, Ellipsoid(1.0), Dict(:C => law_M))
+    rve_IS = RVE()
+    add_phase!(rve_IS, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
     add_phase!(
         rve_IS, :CRACK, PennyCrack(1.0),
         Dict(:C => law_M, :Rn => law_K, :Rt => law_K);
@@ -150,8 +150,8 @@ end
 
     # K → ∞ recovers the matrix without crack effect
     law_huge = ViscoLaw((t, tp) -> 1.0e10, :relaxation)
-    rve_rigid = RVE(:M)
-    add_matrix!(rve_rigid, Ellipsoid(1.0), Dict(:C => law_M))
+    rve_rigid = RVE()
+    add_phase!(rve_rigid, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
     add_phase!(
         rve_rigid, :CRACK, PennyCrack(1.0),
         Dict(:C => law_M, :Rn => law_huge, :Rt => law_huge);

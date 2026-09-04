@@ -17,14 +17,14 @@ using LinearAlgebra
     law_I = heaviside_law(K_I_t)
 
     # Elastic reference
-    rve_el = RVE(:M)
-    add_matrix!(rve_el, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M_t))
+    rve_el = RVE()
+    add_phase!(rve_el, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M_t); fraction = :rest)
     add_phase!(rve_el, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_I_t); fraction = 0.2)
     K_el = TensND.get_array(homogenize(rve_el, MoriTanaka(), :K))
 
     # ALV
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => law_M))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => law_M); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => law_I); fraction = 0.2)
     K_alv = homogenize_alv_order2(rve, MoriTanaka(), :K; times = times)
 
@@ -49,13 +49,13 @@ end
     law_I = heaviside_law(K_I_t)
     omega = 0.5
 
-    rve_el = RVE(:M)
-    add_matrix!(rve_el, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M_t))
+    rve_el = RVE()
+    add_phase!(rve_el, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M_t); fraction = :rest)
     add_phase!(rve_el, :I, Spheroid(omega), Dict(:K => K_I_t); fraction = 0.3)
     K_el = TensND.get_array(homogenize(rve_el, MoriTanaka(), :K))
 
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => law_M))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => law_M); fraction = :rest)
     add_phase!(rve, :I, Spheroid(omega), Dict(:K => law_I); fraction = 0.3)
     K_alv = homogenize_alv_order2(rve, MoriTanaka(), :K; times = times)
     @test isapprox(K_alv[1:3, 1:3], K_el; atol = 1.0e-12)
@@ -71,14 +71,14 @@ end
     f_I = 0.25
 
     function _setup_alv()
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => law_M))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => law_M); fraction = :rest)
         add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => law_I); fraction = f_I)
         return rve
     end
     function _setup_el()
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M_t))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M_t); fraction = :rest)
         add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_I_t); fraction = f_I)
         return rve
     end

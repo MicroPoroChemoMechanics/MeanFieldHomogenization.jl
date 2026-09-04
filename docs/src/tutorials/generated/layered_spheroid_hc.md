@@ -181,8 +181,8 @@ const OMEGA_PLATE = 0.1
 
 function _khom(β)
     s = _particle(OMEGA_PLATE, β)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K0))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K0); fraction = :rest)
     add_phase!(rve, :I, s, Dict(:K => KC); fraction = FRAC)
     K = homogenize(rve, MoriTanaka(), :K)
     return real(K[1, 1]), real(K[3, 3])

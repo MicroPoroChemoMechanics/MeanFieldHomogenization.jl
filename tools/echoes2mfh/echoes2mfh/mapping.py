@@ -478,7 +478,7 @@ REFUSED: dict[str, Refusal] = {
     "inv_perm6": Refusal("see `perm6`"),
     "import_rve": Refusal(
         "reads an Echoes-specific .rve data file",
-        "rebuild the RVE with add_matrix!/add_phase! from the same data",
+        "rebuild the RVE with add_phase! from the same data",
     ),
 }
 

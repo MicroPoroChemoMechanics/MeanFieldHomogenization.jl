@@ -159,8 +159,8 @@ end
     law_K = ViscoLaw((t, tp) -> TensISO{3}(1.0 * (1.0 + exp(-(t - tp)))), :relaxation)
 
     function eff(sch, sym)
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:K => law_K))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => law_K); fraction = :rest)
         add_phase!(
             rve, :I, Spheroid(5.0), Dict(:K => heaviside_law(TensISO{3}(10.0)));
             fraction = 0.2, symmetrize = sym

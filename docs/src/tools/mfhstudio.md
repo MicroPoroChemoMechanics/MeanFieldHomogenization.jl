@@ -135,9 +135,9 @@ from Echoes 1.0 (see [From Echoes to MeanFieldHomogenization](@ref tools-from-ec
 
 Two conventions the interface removes rather than documents:
 
-- The matrix phase has **no amount field**. MeanFieldHomogenization derives it as
-  ``1 - \sum f_{\text{inclusions}}`` and raises if it is set, so offering the
-  field would only invite an error.
+- A phase whose amount is set to **rest** has no value field. MeanFieldHomogenization
+  derives it as ``1 - \sum f`` and refuses to have it set, so offering the field
+  would only invite an error.
 - Moduli are entered as physical ``(k, \mu)`` or ``(E, \nu)`` and emitted
   through [`iso_stiffness`](@ref). The raw `TensISO{3}` constructor, which
   takes ``(3k, 2\mu)``, never appears.
@@ -455,7 +455,7 @@ A script the studio wrote carries its model in a trailing comment block and
 reopens exactly. Any other script — a hand-written demo from `scripts/`, an
 `echoes2mfh` translation — is parsed by the Julia side using `Meta.parse`, the
 real parser, and matched against the vocabulary the generator emits: a builder
-function per scale, filled with `add_matrix!` / `add_phase!` for an RVE or with
+function per scale, filled with `add_phase!` for an RVE or with
 `add_layer!` for a laminate. Code outside that vocabulary — including a cell
 assembled at top level rather than inside a builder — is not claimed.
 
@@ -487,7 +487,7 @@ generator passes through untouched.
 
 Read-back has a shape worth understanding, because it is easy to expect more of
 it than it promises. The studio recognizes the vocabulary it *writes*: one
-builder function per scale, filled with `add_matrix!` / `add_phase!` or with
+builder function per scale, filled with `add_phase!` or with
 `add_layer!`. A script written that way comes back as an editable model even
 after its trailing model block is deleted. A script that builds its cells at top
 level — which is how the demos under `scripts/` are written, and how most people

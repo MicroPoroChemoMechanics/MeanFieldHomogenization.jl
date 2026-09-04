@@ -25,8 +25,8 @@ C_I2 = TensISO{3}(3 * 0.5, 2 * 0.2)         # phase I2 : compliant, 0.1× the ma
 F1, F2 = 0.2, 0.2                            # target volume fractions
 
 function build_rve()
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_M))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_M); fraction = :rest)
     add_phase!(rve, :I1, Ellipsoid(1.0), Dict(:C => C_I1); fraction = F1)
     add_phase!(rve, :I2, Ellipsoid(1.0), Dict(:C => C_I2); fraction = F2)
     return rve

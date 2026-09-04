@@ -54,8 +54,8 @@ end
     # Echoes reference value D_eff/D_cp = 0.9979 at f = 0.2, D_itz/D_cp = 50
     # (here the shell conductivity k_shell = 50).
     f_inc = 0.2 * 1.01^3
-    rve = RVE(:CEMENT)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)))
+    rve = RVE()
+    add_phase!(rve, :CEMENT, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)); fraction = :rest)
     add_phase!(rve, :AGG, s, Dict(:K => TensISO{3}(1.0)); fraction = f_inc)
     D_eff = tr(Array(homogenize(rve, MoriTanaka(), :K))) / 3
     @test D_eff ≈ 0.9979 rtol = 1.0e-3
@@ -74,8 +74,8 @@ end
             (Ragg,), (Diso(0.0),);
             interfaces = (SurfaceConductiveInterface(α),)
         )
-        r = RVE(:CEMENT)
-        add_matrix!(r, Ellipsoid(1.0), Dict(:D => Diso(1.0)))
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:D => Diso(1.0)); fraction = :rest)
         add_phase!(r, :AGG, agg, Dict(:D => Diso(1.0)); fraction = f)
         return tr(Array(homogenize(r, MoriTanaka(), :D))) / 3
     end
@@ -94,8 +94,8 @@ end
         (1.0, 1.5), (Diso(0.0), Diso(3.0));
         interfaces = (SurfaceConductiveInterface(2.0), PerfectInterface())
     )
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:D => Diso(1.0)))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:D => Diso(1.0)); fraction = :rest)
     add_phase!(r, :AGG, s, Dict(:D => Diso(1.0)); fraction = 0.3)
     @test tr(Array(homogenize(r, MoriTanaka(), :D))) / 3 ≈ 1.4458111702 rtol = 1.0e-8
 end

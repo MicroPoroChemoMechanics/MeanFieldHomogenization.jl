@@ -26,6 +26,16 @@ homogenize(asm, ClusterModel(), :C)
 homogenize(asm, EquivalentInclusion(), :C)
 ```
 
+!!! note "Why an assembly has a matrix and an RVE does not"
+    [`add_matrix!`](@ref) exists here and nowhere else. For an [`RVE`](@ref),
+    being a matrix is a *modeling* choice — the same phases are a
+    matrix/inclusion composite under Mori–Tanaka and a matrix-free aggregate
+    under the self-consistent scheme — so the reference medium is named on the
+    scheme (see [Who is the matrix?](@ref man-who-is-the-matrix)). For an
+    assembly it is *structural*: both N-body models resolve pairwise
+    interactions between particles embedded in one reference medium, and
+    without it there is nothing to embed them in.
+
 Volume fractions are **derived**, never stored — `f_a = |Ω_a| / |Ω|` — so the geometry
 and the fractions cannot disagree. This is the one place where an assembly differs
 from an `RVE` in kind rather than in detail: on an `RVE` the inclusion *size* is
@@ -254,8 +264,8 @@ to an assembly.
 ```julia
 # An assembly as the INNER cell: a composite whose matrix is itself particulate.
 inner = cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_i); fraction = 0.3)
-outer = RVE(:M)
-add_matrix!(outer, Ellipsoid(1.0), Dict(:C => Homogenized(inner, ClusterModel())))
+outer = RVE()
+add_phase!(outer, :M, Ellipsoid(1.0), Dict(:C => Homogenized(inner, ClusterModel())); fraction = :rest)
 add_phase!(outer, :F, Ellipsoid(1.0), Dict(:C => C_f); fraction = 0.2)
 homogenize(outer, MoriTanaka(), :C)
 
@@ -310,8 +320,8 @@ concentration rule applies unchanged:
 sph = Ellipsoid(0.01)                    # 10 nm particles
 C_eq = equivalent_particle(C_i, sph, κs, μs)
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
 add_phase!(rve, :nano, sph, Dict(:C => C_eq); fraction = 0.15)
 homogenize(rve, MoriTanaka(), :C)        # the paper's extended Mori-Tanaka
 ```
