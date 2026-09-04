@@ -2,6 +2,9 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+# Imported, not `using`: this file runs before the ones that load SymPy in the
+# full suite, and both packages export a variable-declaration macro.
+import Symbolics
 
 # =============================================================================
 #  test_alv_kernel_types.jl — `ALVKernelISO / ALVKernelTI / ALVKernelOrtho`
@@ -195,4 +198,44 @@ end
     K_inv = volterra_inverse(K)
     M_inv = volterra_inverse(M; block_size = 6)
     @test isapprox(Matrix(K_inv), M_inv; atol = 1.0e-9)
+end
+
+
+@testset "ALV kernels — division by a symbolic scalar keeps the kernel type" begin
+    # `AbstractALVKernel <: AbstractMatrix`, and Symbolics defines
+    # `/(::AbstractArray{<:Real}, ::Num)`. Against the package's own
+    # `/(::ALVKernel*, ::Number)` neither signature is more specific, so this
+    # used to raise an ambiguity `MethodError`. The Symbolics extension settles
+    # it in favor of the package's method; what follows is what that buys:
+    # a kernel back, not a bare matrix, with its axes intact.
+    n = 3
+    Symbolics.@variables c
+
+    K_iso = ALVKernelISO(_alvk_rand_lt(n), _alvk_rand_lt(n))
+    Q_iso = K_iso / c
+    @test Q_iso isa ALVKernelISO
+    @test isequal(Symbolics.value.(Q_iso.α), Symbolics.value.(K_iso.α ./ c))
+    @test isequal(Symbolics.value.(Q_iso.β), Symbolics.value.(K_iso.β ./ c))
+
+    K_ti = ALVKernelTI(ntuple(_ -> _alvk_rand_lt(n), 6); axis = (0.0, 1.0, 0.0))
+    Q_ti = K_ti / c
+    @test Q_ti isa ALVKernelTI
+    @test Q_ti.axis == K_ti.axis
+    for k in 1:6
+        @test isequal(Symbolics.value.(Q_ti.ℓ[k]), Symbolics.value.(K_ti.ℓ[k] ./ c))
+    end
+
+    K_or = ALVKernelOrtho(ntuple(_ -> _alvk_rand_lt(n), 12))
+    Q_or = K_or / c
+    @test Q_or isa ALVKernelOrtho
+    @test Q_or.axes == K_or.axes
+    for k in 1:12
+        @test isequal(Symbolics.value.(Q_or.o[k]), Symbolics.value.(K_or.o[k] ./ c))
+    end
+
+    # And the value it stands for: substituting a number reproduces the plain
+    # numeric division, block for block.
+    val = 2.5
+    num = Symbolics.value.(Symbolics.substitute.(Q_iso.α, (Dict(c => val),)))
+    @test isapprox(Float64.(num), K_iso.α ./ val; atol = 1.0e-12)
 end
