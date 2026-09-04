@@ -55,6 +55,8 @@ struct LayeredSpheroid{T <: Real, N, Q <: Number, Cs, Is} <:
     axis::NTuple{3, T}      # unit vector: symmetry (revolution) axis
 end
 
+# At least one layer is required — the runtime check this replaces said so. In
+# the type, it also binds `T`, which the empty tuple left unbound.
 """
     LayeredSpheroid(axis_radii, disk_radii, moduli; interfaces, Nseries = 5,
                      axis = (0., 0., 1.))
@@ -72,8 +74,6 @@ truncation 𝒩 (only odd degrees `1,…,2𝒩-1` are kept, by symmetry);
 `axis` the unit vector giving the spheroid's revolution axis in the
 global frame.
 """
-# At least one layer is required — the runtime check this replaces said so. In
-# the type, it also binds `T`, which the empty tuple left unbound.
 function LayeredSpheroid(
         axis_radii::Tuple{T, Vararg{T, M}}, disk_radii::Tuple{T, Vararg{T, M}},
         moduli::Cs;
