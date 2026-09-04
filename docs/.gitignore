@@ -10,3 +10,4 @@ src/.vitepress/cache/
 src/.vitepress/dist/
 
 Manifest.toml
+Manifest.toml.bak

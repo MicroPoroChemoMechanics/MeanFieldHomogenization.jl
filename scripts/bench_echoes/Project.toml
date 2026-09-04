@@ -7,6 +7,7 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
 
+
 [sources]
 MeanFieldHomogenization = {path = "../.."}
 TensND = {path = "../../../TensND.jl"}

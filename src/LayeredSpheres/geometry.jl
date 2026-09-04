@@ -47,11 +47,17 @@ struct LayeredSphere{T <: Number, N, Cs, Is} <: MFH_Core.AbstractLayeredInclusio
     interfaces::Is
 end
 
+# `Tuple{T, Vararg{T, M}}` rather than `NTuple{N, T}`: the latter also matches
+# the empty tuple, where `T` is bound by nothing at all — a signature Julia
+# accepts and can never dispatch on. One layer at least is required anyway, so
+# the type now says so, and the empty case keeps its message through the method
+# just below.
 function LayeredSphere(
-        radii::NTuple{N, T},
+        radii::Tuple{T, Vararg{T, M}},
         moduli::Cs;
-        interfaces::Is = ntuple(_ -> PerfectInterface{MFH_Core._floatlike(T)}(), Val(N)),
-    ) where {T <: Number, N, Cs, Is}
+        interfaces::Is = ntuple(_ -> PerfectInterface{MFH_Core._floatlike(T)}(), Val(M + 1)),
+    ) where {T <: Number, M, Cs, Is}
+    N = M + 1
     # Validate ascending radii for Real types (skip for symbolic).
     if T <: Real
         any(radii[k] ≤ 0 for k in 1:N) &&
@@ -71,6 +77,10 @@ function LayeredSphere(
         radii_f, moduli, interfaces
     )
 end
+
+LayeredSphere(::Tuple{}, moduli; kwargs...) = throw(
+    ArgumentError("LayeredSphere requires at least one layer; got no radius")
+)
 
 # ── Accessors ────────────────────────────────────────────────────────────────
 

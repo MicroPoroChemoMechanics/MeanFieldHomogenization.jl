@@ -355,9 +355,11 @@ function _replace_geom_field(
         geom::Ellipsoid{dim, S, T, B},
         ::Val{:semi_axes},
         ::Nothing,
-        value::NTuple{dim, Tv}
-    ) where {dim, S, T, B, Tv}
-    Tnew = promote_type(T, Tv)
+        value::NTuple{dim}
+    ) where {dim, S, T, B}
+    # `eltype` rather than a `Tv` type parameter: as a parameter it was bound by
+    # nothing when `dim` was zero. For a homogeneous tuple the two agree exactly.
+    Tnew = promote_type(T, eltype(value))
     new_axes = ntuple(k -> convert(Tnew, value[k]), dim)
     return Ellipsoid(new_axes..., geom.basis)
 end

@@ -1,5 +1,42 @@
 # Changelog
 
+## v0.8.1 — Aqua.jl, and the dispatch defects it found
+
+MeanFieldHomogenization is now checked by
+[Aqua.jl](https://github.com/JuliaTesting/Aqua.jl) on every run of the test
+suite: method ambiguities, type parameters bound by nothing, undefined exports,
+dependency hygiene, type piracy, and tasks left running at load. All eight
+checks pass on the package as it stands, across the eighteen sub-modules and
+nine extensions, with nothing exempted. Getting there fixed real defects.
+Nothing in the exported API changes name or meaning.
+
+### Bug fixes
+
+- **`algo = :nestedquadgk` on a cylinder in an isotropic matrix raised an
+  ambiguity `MethodError`** instead of taking the closed form. The four other
+  algorithm names each had a rule saying the isotropic cylinder is analytical;
+  this one had been left out, so the call fell between the generic `Val` rule
+  and the cylinder rule with neither more specific than the other.
+
+- **Dividing an ALV kernel by a `Symbolics.Num` was ambiguous.** An
+  `AbstractALVKernel` is an `AbstractMatrix`, and Symbolics defines
+  `/(::AbstractArray{<:Real}, ::Num)`; against the package's own
+  `/(::ALVKernel*, ::Number)` neither signature wins. Symbolic viscoelastic
+  parameters therefore failed on a plain division. The resolution lives in the
+  Symbolics extension, where it belongs, and keeps the kernel's structure
+  rather than degrading it to a bare matrix.
+
+- **Five signatures had a type parameter bound by nothing.** `NTuple{N, T}` also
+  matches the empty tuple, which leaves `T` undetermined. `LayeredSphere`,
+  `LayeredSpheroid` and `_replace_geom_field` now require what they always
+  meant — at least one layer, at least one semi-axis — and the zero-layer case
+  keeps its `ArgumentError` message through an explicit method instead of
+  reaching an undispatchable signature.
+
+- **`add_phase!` with neither `fraction` nor `density`** hit an ambiguity in
+  `_to_amount` rather than the intended message. The corner is now well defined
+  for any caller, not only for the one path that checked it beforehand.
+
 ## v0.8.0 — the matrix role leaves the RVE
 
 An `RVE` used to require a matrix. Every one of them, whatever scheme was going

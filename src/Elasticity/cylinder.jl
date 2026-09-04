@@ -208,6 +208,8 @@ MFH_Core._resolve_algo(::Val, ::Cylinder, ::TensND.TensISO) = MFH_Core.Analytica
 MFH_Core._resolve_algo(::Val{:auto}, ::Cylinder, ::TensND.TensISO) = MFH_Core.Analytical()
 MFH_Core._resolve_algo(::Val{:residues}, ::Cylinder, ::TensND.TensISO) = MFH_Core.Analytical()
 MFH_Core._resolve_algo(::Val{:decuhr}, ::Cylinder, ::TensND.TensISO) = MFH_Core.Analytical()
+MFH_Core._resolve_algo(::Val{:nestedquadgk}, ::Cylinder, ::TensND.TensISO) =
+    MFH_Core.Analytical()
 
 # Anisotropic matrix → dedicated 1D `CylinderQuadrature`.  The acoustic
 # polynomial used by the residue algorithm degenerates for a cylinder

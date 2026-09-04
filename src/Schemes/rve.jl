@@ -588,6 +588,13 @@ whatever the others leave — see [`AbstractFractionClosure`](@ref).
 """
 _to_amount(::Type{T}, ::Nothing, density) where {T <: Number} =
     CrackDensity(_amount_promote(T, density))
+# Neither of the two methods below is more specific when both arguments are
+# `nothing`, so that corner was an ambiguity. `add_phase!` rejects it earlier
+# with the same message; this makes the corner well defined for any other caller
+# rather than leaving it to dispatch.
+_to_amount(::Type{<:Number}, ::Nothing, ::Nothing) = throw(
+    ArgumentError("specify exactly one of `fraction=…` or `density=…`")
+)
 _to_amount(::Type{<:Number}, ::Remainder, ::Nothing) = Remainder()
 function _to_amount(::Type{<:Number}, fraction::Symbol, ::Nothing)
     fraction === :rest && return Remainder()
