@@ -1,4 +1,5 @@
 using Test
+using Aqua
 using MeanFieldHomogenization
 using Random
 
@@ -64,7 +65,42 @@ end
 # reproducible locally instead of depending on the draw.
 Random.seed!(20260723)
 
+"""
+    aqua_persistent_tasks(m::Module) -> Bool
+
+`Aqua.test_persistent_tasks` in a child process with default bounds checking.
+
+The check precompiles a synthetic package that depends on `m` and waits for a
+sentinel written from that package's module body. Julia writes no
+precompilation cache when `--check-bounds` is forced, so the body never runs,
+the sentinel never appears, and the check fails for a reason that says nothing
+about `m`. `Pkg.test()` forces the flag by default.
+
+Running it in a child with `--check-bounds=auto` keeps both halves: the test
+suite proper still runs with bounds checking on, and the check still runs.
+"""
+function aqua_persistent_tasks(m::Module)
+    code = """
+    using Aqua, $(nameof(m)), Test
+    @testset "persistent_tasks" begin
+        Aqua.test_persistent_tasks($(nameof(m)))
+    end
+    """
+    cmd = `$(first(Base.julia_cmd())) --check-bounds=auto --startup-file=no --project=$(Base.active_project()) -e $code`
+    return success(run(ignorestatus(cmd)))
+end
+
 @testset "MeanFieldHomogenization" begin
+    # Ambiguities, unbound type parameters, undefined exports, dependency
+    # hygiene, type piracy and tasks left running at load. Nothing is exempted:
+    # every default check passes on the package as it stands, across all
+    # eighteen sub-modules and nine extensions.
+    @testset "Aqua" begin
+        # `persistent_tasks` is run apart, see `aqua_persistent_tasks` above.
+        Aqua.test_all(MeanFieldHomogenization; persistent_tasks = false)
+        @test aqua_persistent_tasks(MeanFieldHomogenization)
+    end
+
     @testset "Elliptic" begin
         include("Elliptic/test_elliptic.jl")
     end

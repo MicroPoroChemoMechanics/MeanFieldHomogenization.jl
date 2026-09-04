@@ -21,7 +21,7 @@ keywords:
   - "viscoelasticity"
   - "Laplace-Carson transform"
   - "Prony series"
-version: "0.8.0"
+version: "0.8.1"
 date-released: "2026-09-04"
 doi: "10.5281/zenodo.21884243"
 url: "https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl"

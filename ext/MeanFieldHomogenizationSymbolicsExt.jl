@@ -38,4 +38,26 @@ const _Ell = MeanFieldHomogenization.Elliptic
 Symbolics.@register_symbolic _Ell.ell_K(m)
 Symbolics.@register_symbolic _Ell.ell_E(m)
 
+# ──────────────────────────────────────────────────────────────────────────────
+#  Dividing an ALV kernel by a symbolic scalar
+#
+#  `AbstractALVKernel{T} <: AbstractMatrix{T}`, and Symbolics defines
+#  `/(::AbstractArray{<:Real}, ::Num)`. Against the package's own
+#  `/(::ALVKernel*, ::Number)` neither signature wins — one is more specific on
+#  the left, the other on the right — so `kernel / num` was an ambiguity.
+#
+#  The package's method is the one that means something: it divides the stored
+#  blocks and hands back a kernel. Symbolics' generic array method would return
+#  a bare matrix and lose the kernel's structure and axes. The methods below say
+#  so. They live here rather than in `src/` because Symbolics is a weak
+#  dependency: without it loaded there is no `Num` and no ambiguity to resolve.
+# ──────────────────────────────────────────────────────────────────────────────
+
+const _V = MeanFieldHomogenization.Viscoelasticity
+
+Base.:/(A::_V.ALVKernelISO, c::Symbolics.Num) = invoke(/, Tuple{_V.ALVKernelISO, Number}, A, c)
+Base.:/(A::_V.ALVKernelTI, c::Symbolics.Num) = invoke(/, Tuple{_V.ALVKernelTI, Number}, A, c)
+Base.:/(A::_V.ALVKernelOrtho, c::Symbolics.Num) =
+    invoke(/, Tuple{_V.ALVKernelOrtho, Number}, A, c)
+
 end

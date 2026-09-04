@@ -72,13 +72,16 @@ truncation 𝒩 (only odd degrees `1,…,2𝒩-1` are kept, by symmetry);
 `axis` the unit vector giving the spheroid's revolution axis in the
 global frame.
 """
+# At least one layer is required — the runtime check this replaces said so. In
+# the type, it also binds `T`, which the empty tuple left unbound.
 function LayeredSpheroid(
-        axis_radii::NTuple{N, T}, disk_radii::NTuple{N, T}, moduli::Cs;
-        interfaces::Is = ntuple(_ -> PerfectInterface{T}(), Val(N)),
+        axis_radii::Tuple{T, Vararg{T, M}}, disk_radii::Tuple{T, Vararg{T, M}},
+        moduli::Cs;
+        interfaces::Is = ntuple(_ -> PerfectInterface{T}(), Val(M + 1)),
         Nseries::Int = 5,
         axis::Tuple = (0.0, 0.0, 1.0),
-    ) where {N, T <: Real, Cs, Is}
-    N ≥ 1 || throw(ArgumentError("LayeredSpheroid requires at least one layer"))
+    ) where {M, T <: Real, Cs, Is}
+    N = M + 1
     for ℓ in 1:N
         axis_radii[ℓ] > 0 && disk_radii[ℓ] > 0 ||
             throw(ArgumentError("LayeredSpheroid semi-axes must be strictly positive"))
@@ -111,6 +114,10 @@ function LayeredSpheroid(
         prolate, focal, c, q, moduli, interfaces, Nseries, (T(n[1]), T(n[2]), T(n[3]))
     )
 end
+
+LayeredSpheroid(::Tuple{}, ::Tuple{}, moduli; kwargs...) = throw(
+    ArgumentError("LayeredSpheroid requires at least one layer")
+)
 
 """
     layered_spheroid_from_fractions(ω, outer_axis_radius, layer_fractions, moduli;
