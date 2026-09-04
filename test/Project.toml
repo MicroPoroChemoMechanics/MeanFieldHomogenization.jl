@@ -1,5 +1,4 @@
 [deps]
-AMD = "14f7f29c-3bd6-536c-9a0b-7339e30b5a3e"
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 DECUHR = "d5c0ea0e-a2e6-4e56-a5f3-17f3ec7c9d22"
 Elliptic = "b305315f-e792-5b7a-8f41-49f472929428"
@@ -23,12 +22,3 @@ TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
 Tensors = "48a634ad-e948-5137-8d70-aa71f2a747f4"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
-
-[compat]
-# AMD 0.5.4 removed `SS_Int`, which `SparseColumnPivotedQR`'s AMD extension
-# calls; `SparseColumnPivotedQR` bounds AMD at "0.5.1", so a fresh resolve picks
-# 0.5.4 and `LinearSolve` — hence `OrdinaryDiffEq`, hence this package — fails to
-# precompile. Nothing here is at fault and nothing here can be changed to avoid
-# it; the bound holds AMD at the last working version. Remove it once AMD
-# restores the binding or SparseColumnPivotedQR tightens its own bound.
-AMD = "0.5.1 - 0.5.3"

@@ -1,5 +1,4 @@
 [deps]
-AMD = "14f7f29c-3bd6-536c-9a0b-7339e30b5a3e"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -8,14 +7,6 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
 
-[compat]
-# AMD 0.5.4 removed `SS_Int`, which `SparseColumnPivotedQR`'s AMD extension
-# calls; `SparseColumnPivotedQR` bounds AMD at "0.5.1", so a fresh resolve picks
-# 0.5.4 and `LinearSolve` — hence `OrdinaryDiffEq`, hence this package — fails to
-# precompile. This manifest is committed as the benchmark baseline, so the bound
-# is what keeps a regenerated baseline usable. Remove it once AMD restores the
-# binding or SparseColumnPivotedQR tightens its own bound.
-AMD = "0.5.1 - 0.5.3"
 
 [sources]
 MeanFieldHomogenization = {path = "../.."}

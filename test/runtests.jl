@@ -98,18 +98,7 @@ end
     @testset "Aqua" begin
         # `persistent_tasks` is run apart, see `aqua_persistent_tasks` above.
         Aqua.test_all(MeanFieldHomogenization; persistent_tasks = false)
-        # Broken, and not by anything in this package. The check instantiates a
-        # throwaway package from this package's `Project.toml` *alone* — Aqua
-        # says so in its own docstring — so the `AMD = "0.5.1 - 0.5.3"` bound
-        # that `test/Project.toml` carries never reaches it, and the broken
-        # AMD 0.5.4 comes back. Bounding it there would mean making AMD a
-        # dependency of the package itself, which it is not and should not
-        # become to work around someone else's release.
-        #
-        # `@test_broken` rather than a deletion: the day AMD is fixed this turns
-        # into an "Unexpectedly Pass" failure, which is the signal to restore
-        # `@test` here and drop every AMD bound in this repository.
-        @test_broken aqua_persistent_tasks(MeanFieldHomogenization)
+        @test aqua_persistent_tasks(MeanFieldHomogenization)
     end
 
     @testset "Elliptic" begin
