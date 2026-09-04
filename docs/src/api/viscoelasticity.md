@@ -14,6 +14,7 @@ CurrentModule = MeanFieldHomogenization.Viscoelasticity
 AbstractViscoLaw
 ViscoLaw
 visco_mode
+VALID_VISCO_MODES
 visco_eval
 maxwell_relaxation
 kelvin_creep
@@ -149,6 +150,10 @@ dilute_dual_alv_order2
 mori_tanaka_alv_order2
 maxwell_alv_order2
 homogenize_alv_order2
+dilute_concentration_alv_order2
+dilute_contribution_alv_order2
+iso_order2_params_from_blocks
+iso_order2_blocks_from_params
 ```
 
 ## Structured ALV kernel types

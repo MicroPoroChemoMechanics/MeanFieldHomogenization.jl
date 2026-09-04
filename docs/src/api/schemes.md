@@ -101,3 +101,12 @@ in **`TensND`**, next to the `proj_tens` machinery they wrap, and are
 re-exported here because turning a scheme result into publishable parameters is
 part of this package's surface. See the TensND documentation for their
 docstrings.
+
+## Orientation distributions
+
+Discretizing a continuous orientation distribution into a finite set of phases,
+the alternative to declaring a `symmetrize` on a single one.
+
+```@docs
+polar_orientation_bins
+```

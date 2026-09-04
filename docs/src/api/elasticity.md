@@ -10,6 +10,7 @@ MeanFieldHomogenization.Triaxial
 MeanFieldHomogenization.Circular
 MeanFieldHomogenization.Elasticity.Elliptic
 MeanFieldHomogenization.Ellipsoid
+MeanFieldHomogenization.Spheroid
 MeanFieldHomogenization.Cylinder
 MeanFieldHomogenization.CylindricalShape
 MeanFieldHomogenization.CircularCylindrical

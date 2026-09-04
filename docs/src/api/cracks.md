@@ -16,6 +16,15 @@ MeanFieldHomogenization.Cracks.with_conductivity
 MeanFieldHomogenization.cod_tensor
 MeanFieldHomogenization.B_tensor
 MeanFieldHomogenization.Cracks.crack_density_factor
+MeanFieldHomogenization.Cracks.CrackShape
+MeanFieldHomogenization.Cracks.EllipticShape
+MeanFieldHomogenization.Cracks.Penny
+MeanFieldHomogenization.Cracks.Ribbon
+MeanFieldHomogenization.crack_basis
+MeanFieldHomogenization.crack_normal
+MeanFieldHomogenization.semi_major
+MeanFieldHomogenization.semi_minor
+MeanFieldHomogenization.aspect_ratio
 MeanFieldHomogenization.sif
 MeanFieldHomogenization.dif
 MeanFieldHomogenization.compliance_from_cod
