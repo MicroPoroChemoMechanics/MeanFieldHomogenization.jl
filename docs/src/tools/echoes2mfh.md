@@ -36,8 +36,8 @@ and the translation:
 
 ```julia
 function build_ver(f)
-    rve = RVE(:SOLID)
-    add_matrix!(rve, Spheroid(1.0), Dict(:C => Cs); symmetrize = IsoSymmetrize())
+    rve = RVE()
+    add_phase!(rve, :SOLID, Spheroid(1.0), Dict(:C => Cs); fraction = :rest, symmetrize = IsoSymmetrize())
     add_phase!(
         rve, :PORE, Spheroid(1.0), Dict(:C => Cp);
         fraction = f, symmetrize = IsoSymmetrize()
@@ -124,7 +124,7 @@ The correspondence was checked numerically to ``9 \times 10^{-16}``.
 The complex twins (`rvec`, `ellipsoidc`, `tensorc`, …) exist only because the
 C++ templates are instantiated separately for real and complex scalars. Julia's
 constructors are generic over the scalar type, so the suffix drops and the RVE
-is declared `RVE(:SOLID; T = ComplexF64)`.
+is declared `RVE(; T = ComplexF64)`.
 
 ## Coverage
 

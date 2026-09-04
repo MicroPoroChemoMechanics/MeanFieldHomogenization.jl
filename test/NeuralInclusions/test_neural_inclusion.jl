@@ -48,8 +48,8 @@ _nn_k11(K) = get_array(K)[1, 1]
 
 "Two-phase RVE whose inclusion geometry is `geom`."
 function _nn_rve(geom, prop_m, prop_i, key; kwargs...)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(key => prop_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(key => prop_m); fraction = :rest)
     add_phase!(rve, :I, geom, Dict(key => prop_i); kwargs...)
     return rve
 end
@@ -296,8 +296,8 @@ end
     tol = NN_SCHEME_SLACK * NI.worst_error(NN_ELASTIC.provenance)
     ω = 0.35
     function oriented(build, nbins, f)
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => NN_C_M))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => NN_C_M); fraction = :rest)
         for (i, bin) in enumerate(polar_orientation_bins(nbins))
             add_phase!(
                 rve, Symbol(:I, i), build(bin.θ), Dict(:C => NN_C_I);
@@ -329,8 +329,8 @@ end
         (1.0, 1.0, a3); elastic = NN_ELASTIC, guard = :none
     )
     function rve_of(a3)
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => NN_C_M))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => NN_C_M); fraction = :rest)
         add_phase!(rve, :I, build(a3), Dict(:C => NN_C_I); fraction = 0.2)
         return rve
     end
@@ -355,8 +355,8 @@ end
         # rather than merely finite.
         an = ForwardDiff.derivative(
             a3 -> begin
-                rve = RVE(:M)
-                add_matrix!(rve, Ellipsoid(1.0), Dict(:C => NN_C_M))
+                rve = RVE()
+                add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => NN_C_M); fraction = :rest)
                 add_phase!(rve, :I, Ellipsoid(1.0, 1.0, a3), Dict(:C => NN_C_I); fraction = 0.2)
                 idx(homogenize(rve, Dilute()))
             end, ω
@@ -609,8 +609,8 @@ end
                 shape_params = (; eccentricity = α, core_fraction = 0.5),
                 fractions = (0.5, 0.5), properties = (NN_C_I, C2), guard = :none
             )
-            r = RVE(:M)
-            add_matrix!(r, Ellipsoid(1.0), Dict(:C => NN_C_M))
+            r = RVE()
+            add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => NN_C_M); fraction = :rest)
             add_phase!(r, :I, i, Dict(:C => NN_C_M); fraction = 0.3)
             return r
         end

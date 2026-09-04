@@ -354,8 +354,8 @@ want("contrast") && let
                 1.0, (C_AGG, C2); core_fraction = W_CORE, eccentricity = α,
                 nradial = 20, radius_ratio = 4.0
             )
-            rve = RVE(:m)
-            add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C₀))
+            rve = RVE()
+            add_phase!(rve, :m, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
             add_phase!(rve, :rca, incl, Dict(:C => C₀); fraction = fracs)
             k, μ = k_mu(iso(homogenize(rve, MoriTanaka(), :C)))
             push!(vals, 9k * μ / (3k + μ) / E_paste)
@@ -368,8 +368,8 @@ want("contrast") && let
     for c in contrasts
         C2 = ce(c * E_paste, ν_paste)
         sph = LayeredSphere((cbrt(W_CORE), 1.0), (C_AGG, C2))
-        rve = RVE(:m)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C₀))
+        rve = RVE()
+        add_phase!(rve, :m, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
         add_phase!(rve, :rca, sph, Dict(:C => C₀); fraction = fracs)
         k, μ = k_mu(iso(homogenize(rve, MoriTanaka(), :C)))
         push!(exact, 9k * μ / (3k + μ) / E_paste)

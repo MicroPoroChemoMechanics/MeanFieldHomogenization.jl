@@ -126,11 +126,8 @@ function engineering_model(wc, α = -1.0)
     ft < 1.0e-10 && return (nothing, nothing)
 
     # Level I — hydrate foam (SC): HYD taken as the reference matrix.
-    foam = RVE(:HYD)
-    add_matrix!(
-        foam, Ellipsoid(1.0, 1.0, ω_h), Dict(:C => C_hyd, :D => D_hyd);
-        symmetrize = IsoSymmetrize()
-    )
+    foam = RVE()
+    add_phase!(foam, :HYD, Ellipsoid(1.0, 1.0, ω_h), Dict(:C => C_hyd, :D => D_hyd); fraction = :rest, symmetrize = IsoSymmetrize())
     add_phase!(
         foam, :CAP, Ellipsoid(1.0, 1.0, ω_cp), Dict(:C => Z4, :D => D_bulk);
         fraction = _fcp / ft, symmetrize = IsoSymmetrize()
@@ -144,8 +141,8 @@ function engineering_model(wc, α = -1.0)
     # computed unconditionally; only the stiffness is gated on percolation — as
     # in the Echoes reference, whose `C_foam.k` returns NaN below the threshold
     # and thus falls through to the same clinker-diluted diffusion.
-    paste = RVE(:FOAM)
-    add_matrix!(paste, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_foam, :D => D_foam))
+    paste = RVE()
+    add_phase!(paste, :FOAM, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_foam, :D => D_foam); fraction = :rest)
     add_phase!(
         paste, :CLINKER, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_anhyd, :D => Z2);
         fraction = _fa
@@ -174,15 +171,14 @@ function engineering_declarative(wc, α = -1.0)
     _fa, _fh, _fcp = fa(wc, α), fh(wc, α), fcp(wc, α)
     ft = _fh + _fcp
 
-    foam = RVE(:HYD)
-    add_matrix!(foam, Ellipsoid(1.0, 1.0, ω_h), Dict(:C => C_hyd, :D => D_hyd);
-        symmetrize = IsoSymmetrize())
+    foam = RVE()
+    add_phase!(foam, :HYD, Ellipsoid(1.0, 1.0, ω_h), Dict(:C => C_hyd, :D => D_hyd); fraction = :rest, symmetrize = IsoSymmetrize())
     add_phase!(foam, :CAP, Ellipsoid(1.0, 1.0, ω_cp), Dict(:C => Z4, :D => D_bulk);
         fraction = _fcp / ft, symmetrize = IsoSymmetrize())
 
     h = Homogenized(foam, SelfConsistent())          # answers :C AND :D
-    paste = RVE(:FOAM)
-    add_matrix!(paste, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => h, :D => h))
+    paste = RVE()
+    add_phase!(paste, :FOAM, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => h, :D => h); fraction = :rest)
     add_phase!(paste, :CLINKER, Ellipsoid(1.0, 1.0, 1.0),
         Dict(:C => C_anhyd, :D => Z2); fraction = _fa)
     return paste
@@ -264,11 +260,8 @@ const C_crystal = iso_stiffness_E_nu(42.3, 0.324)   # portlandite
 const D_gel = Diso(0.025)
 
 function homogenize_csh(φ)
-    gel = RVE(:BRICK)
-    add_matrix!(
-        gel, Ellipsoid(1.0, 1.0, ω_s), Dict(:C => C_brick, :D => Z2);
-        symmetrize = IsoSymmetrize()
-    )
+    gel = RVE()
+    add_phase!(gel, :BRICK, Ellipsoid(1.0, 1.0, ω_s), Dict(:C => C_brick, :D => Z2); fraction = :rest, symmetrize = IsoSymmetrize())
     add_phase!(
         gel, :PORE, Ellipsoid(1.0, 1.0, ω_p), Dict(:C => Z4, :D => D_gel);
         fraction = φ, symmetrize = IsoSymmetrize()
@@ -296,8 +289,8 @@ spherical micro-crystals.
 const ω_LD = 0.14
 
 function inner_layer_props()
-    r = RVE(:CSH)
-    add_matrix!(r, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_HD, :D => D_HD))
+    r = RVE()
+    add_phase!(r, :CSH, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_HD, :D => D_HD); fraction = :rest)
     add_phase!(
         r, :CRYSTAL, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_crystal, :D => Z2);
         fraction = η
@@ -315,11 +308,8 @@ function outer_layer_props(wc, α)
     φ_scp = _fscp / f_tot
 
     # Step 1 — oblate LD-C-S-H foam + spherical small capillary pores.
-    r1 = RVE(:LDCSH)
-    add_matrix!(
-        r1, Ellipsoid(1.0, 1.0, ω_LD), Dict(:C => C_LD, :D => D_LD);
-        symmetrize = IsoSymmetrize()
-    )
+    r1 = RVE()
+    add_phase!(r1, :LDCSH, Ellipsoid(1.0, 1.0, ω_LD), Dict(:C => C_LD, :D => D_LD); fraction = :rest, symmetrize = IsoSymmetrize())
     add_phase!(
         r1, :SCP, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => Z4, :D => D_bulk);
         fraction = φ_scp
@@ -329,8 +319,8 @@ function outer_layer_props(wc, α)
 
     # Step 2 — outer C-S-H + spherical micro-crystals.
     η_out = η * _fohp / (_fohp + _fscp)
-    r2 = RVE(:CSH)
-    add_matrix!(r2, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C1, :D => D1))
+    r2 = RVE()
+    add_phase!(r2, :CSH, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C1, :D => D1); fraction = :rest)
     add_phase!(
         r2, :CRYSTAL, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_crystal, :D => Z2);
         fraction = η_out
@@ -376,14 +366,14 @@ function detailed_model(wc, α = -1.0)
     sphere_C = LayeredSphere(radii, (C_anhyd, iso_C(C_inner), iso_C(C_outer)))
     sphere_D = LayeredSphere(radii, (Z2, iso_D(D_inner), iso_D(D_outer)))
 
-    rC = RVE(:PASTE)
-    add_matrix!(rC, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_LD))   # SC: reference only
+    rC = RVE()
+    add_phase!(rC, :PASTE, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_LD); fraction = :rest)   # SC: reference only
     add_phase!(rC, :LAYERS, sphere_C, Dict(:C => C_anhyd); fraction = f_layers)
     add_phase!(rC, :LCP, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => Z4); fraction = _flcp)
     C_cp = homogenize(rC, SelfConsistent(), :C)
 
-    rD = RVE(:PASTE)
-    add_matrix!(rD, Ellipsoid(1.0, 1.0, 1.0), Dict(:D => D_LD))
+    rD = RVE()
+    add_phase!(rD, :PASTE, Ellipsoid(1.0, 1.0, 1.0), Dict(:D => D_LD); fraction = :rest)
     add_phase!(rD, :LAYERS, sphere_D, Dict(:D => D_bulk); fraction = f_layers)
     add_phase!(rD, :LCP, Ellipsoid(1.0, 1.0, 1.0), Dict(:D => D_bulk); fraction = _flcp)
     D_cp = homogenize(rD, SelfConsistent(), :D)

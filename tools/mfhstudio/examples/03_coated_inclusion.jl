@@ -38,8 +38,11 @@ using Plots
 gr()
 
 function build_rve()
-    rve = RVE(:MATRIX)
-    add_matrix!(rve, Spheroid(1.0), Dict(:C => iso_stiffness(20.0, 8.0)))
+    rve = RVE()
+    add_phase!(
+        rve, :MATRIX, Spheroid(1.0), Dict(:C => iso_stiffness(20.0, 8.0));
+        fraction = :rest
+    )
     add_phase!(
         rve, :COATED, LayeredSphere((0.7, 1.0), (iso_stiffness(60.0, 30.0), iso_stiffness(5.0, 2.0))), Dict(:C => iso_stiffness(60.0, 30.0));
         fraction = 0.2
@@ -127,7 +130,7 @@ Deleting it costs nothing but a best-effort re-reading of the code.
    "phases": [
     {
      "amount": 0.1,
-     "amount_kind": "fraction",
+     "amount_kind": "rest",
      "geometry": {
       "args": {
        "omega": 1.0
@@ -136,7 +139,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
       "kind": "spheroid",
       "layers": []
      },
-     "is_matrix": true,
      "name": "MATRIX",
      "properties": [
       {
@@ -214,7 +216,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
        }
       ]
      },
-     "is_matrix": false,
      "name": "COATED",
      "properties": [
       {

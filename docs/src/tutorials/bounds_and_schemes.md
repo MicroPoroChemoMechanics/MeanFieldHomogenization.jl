@@ -63,8 +63,8 @@ C_m = iso_stiffness(30.0, 10.0)   # matrix
 C_i = iso_stiffness(60.0, 20.0)   # stiffer inclusion
 
 function build(f)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => C_m))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     f > 0 && add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = f)
     return r
 end

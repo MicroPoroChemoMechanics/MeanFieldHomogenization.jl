@@ -89,8 +89,8 @@ data as **phase properties** so the dispatcher picks them up
 automatically :
 
 ```julia
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C₀, :K => K₀))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀, :K => K₀); fraction = :rest)
 add_phase!(rve, :CRACK, PennyCrack(1.0),
             Dict(:C => C₀,
                   :K_interface => TensISO{3}(5.0),  # elastic interface

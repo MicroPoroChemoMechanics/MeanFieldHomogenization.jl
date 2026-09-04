@@ -157,8 +157,8 @@ function homogenize_shear(
     )
     times = vcat(0.0, 10 .^ range(-8, log10(t_max); length = n))
 
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => law_matrix))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => law_matrix); fraction = :rest)
     if contrast === :rigid
         C_inc = 1.0e6 * TensISO{3}(3 * k_0, 2 * μ_0)
     elseif contrast === :pore

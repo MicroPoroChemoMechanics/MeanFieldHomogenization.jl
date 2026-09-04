@@ -19,18 +19,37 @@ NoSymmetrize
 IsoSymmetrize
 TISymmetrize
 phase_symmetrize
-add_matrix!
 add_phase!
-matrix_phase
+phase_names
 inclusion_phase_names
 phase_property
-matrix_property
 volume_fraction
 crack_density
-matrix_volume_fraction
+remainder_phase_name
+remainder_volume_fraction
 phase_property_raw
 validate_rve
 promote_rve
+```
+
+## Fraction closures
+
+```@docs
+Remainder
+AbstractFractionClosure
+StrictFractions
+ComplementFraction
+RescaledFractions
+```
+
+## The matrix role
+
+```@docs
+MeanFieldHomogenization.Schemes.matrix_name
+MeanFieldHomogenization.Schemes.reference_property
+MeanFieldHomogenization.Schemes.requires_matrix
+MeanFieldHomogenization.Schemes.scheme_matrix
+MeanFieldHomogenization.Schemes.host_phase_name
 ```
 
 ## Schemes

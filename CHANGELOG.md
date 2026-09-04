@@ -1,5 +1,119 @@
 # Changelog
 
+## v0.8.0 — the matrix role leaves the RVE
+
+An `RVE` used to require a matrix. Every one of them, whatever scheme was going
+to consume it — including the self-consistent scheme, whose whole premise is
+that *no* phase surrounds the others. `RVE(:M)` fixed the matrix name before a
+single phase existed, `add_matrix!` declared it differently from every other
+phase, and a polycrystal could not be written down at all without inventing a
+matrix for it.
+
+Reading the code showed why the notion resisted: one name, `matrix_name`, was
+carrying three independent things.
+
+1. **The phase whose fraction is derived**, `1 - Σ f`. Pure bookkeeping, and
+   legitimate for any scheme.
+2. **The reference medium** localization tensors are computed in. A property of
+   the *model*, not of the microstructure: the same phases are a
+   matrix/inclusion composite under Mori-Tanaka and a matrix-free aggregate
+   under the self-consistent scheme.
+3. **The homogeneous solid** of microporomechanics — a constitutive reading
+   again, and not necessarily the same phase.
+
+They are now stated separately, and each where it belongs.
+
+### Breaking changes
+
+- **`RVE(:M)` and `add_matrix!(::RVE, …)` are removed.** An RVE is built empty
+  and every phase is declared the same way:
+
+  ```julia
+  rve = RVE()
+  add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
+  add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = 0.3)
+  ```
+
+  `fraction = :rest` marks the phase taking up the volume complement. It says
+  nothing about morphology, and an RVE may have none.
+
+- **The reference medium is named on the scheme**: `MoriTanaka(:M)`,
+  `Dilute(matrix = :M)`, and likewise `DiluteDual`, `Maxwell`,
+  `PonteCastanedaWillis`, `DifferentialScheme`, `AsymmetricSelfConsistent`.
+  Named nothing, a scheme takes the `:rest` phase; with no such phase it raises
+  an error listing the candidates rather than guessing, because a different
+  matrix is a different composite. **Existing calls keep working**: on a
+  migrated RVE, `MoriTanaka()` resolves to what used to be the matrix.
+
+- **`SelfConsistent` has no matrix at all**, and neither do `Voigt` and `Reuss`.
+  An RVE whose fractions all sum to one — a polycrystal, a granular aggregate —
+  is now expressible, and `validate_rve` accepts it:
+
+  ```julia
+  poly = RVE(; closure = :strict)
+  add_phase!(poly, :A, Ellipsoid(1.0), Dict(:C => C_A); fraction = 0.4)
+  add_phase!(poly, :B, Ellipsoid(1.0), Dict(:C => C_B); fraction = 0.6)
+  homogenize(poly, SelfConsistent(), :C)
+  ```
+
+- **Fraction closures.** How the declared fractions are made to sum to one is
+  now explicit, through `closure =` on the constructor:
+  `StrictFractions` (they must already sum to one), `ComplementFraction` (one
+  phase absorbs `1 - Σ f`, the historical behavior), `RescaledFractions` (they
+  are relative proportions: `2, 3, 5` reads as `0.2, 0.3, 0.5`). Inferred when
+  not given. Crack densities take no part in any of them.
+
+- **`SelfConsistent(; init = …)`.** With no phase distinguished the fixed point
+  needs a seed of its own. Unset, it is the `:rest` phase when the RVE names one
+  — the historical seed, so every existing number is unchanged — and the Voigt
+  average otherwise, which is what makes a matrix-free RVE solvable. It also
+  accepts `:voigt`, `:reuss`, a phase name or an explicit tensor.
+
+  Making `:voigt` the blanket default was measured and rejected: across a porous
+  RVE at `f ∈ {0.1, 0.3, 0.45, 0.6}` and a stiff one at `f ∈ {0.1, 0.3, 0.5,
+  0.7}` the two seeds agree to `1e-9` or better, and on a deeply percolated
+  oblate configuration the Voigt start makes `TrustRegion` stop where the
+  finite-difference IFT Jacobian is exactly singular. No advantage, one
+  drawback.
+
+- **Removed for `RVE`**: `matrix_phase`, `matrix_property`,
+  `matrix_volume_fraction`, and the one-argument `inclusion_phase_names(rve)`.
+  Use `phase_property(rve, name, key)`, `volume_fraction(rve, name)`,
+  `remainder_volume_fraction(rve)`, `phase_names(rve)` and
+  `inclusion_phase_names(rve, matrix)`. The three names **survive for
+  `ParticleAssembly`**, where a matrix is structural rather than a modeling
+  choice: both N-body models resolve interactions between particles embedded in
+  one reference medium.
+
+- **`biot_tensor(rve, …)` and `poroelastic_parameters(rve, …)` gain `solid =`**,
+  naming the phase that plays the homogeneous solid. Unset, it is the `:rest`
+  phase, so existing calls are unaffected.
+
+- **`TISymmetrize(; matrix_projection)` is renamed `reference_projection`.** It
+  always described the projection of the reference medium, never of a matrix
+  phase.
+
+- **Voigt and Reuss now honor the `symmetrize` of every phase**, the former
+  matrix included; it used to enter the bounds unprojected while the inclusions
+  were projected. A no-op for an isotropic matrix — which every shipped example
+  has — and a correction otherwise. The ageing-viscoelastic self-consistent
+  path had the same asymmetry, hard-coding `NoSymmetrize()` for the matrix, and
+  is corrected with it.
+
+### Fixed
+
+- `homogenize_alv` computed the Maxwell and PCW bodies against
+  `matrix_property(rve, :C)` with the property **hard-coded**, ignoring the
+  `prop` it had been given: both were wrong for `:K`.
+- Three test files placed `using SymPy` inside a `@testset` body, where it runs
+  *after* the `@syms` in the same block has already been macro-expanded. They
+  only worked because an earlier file in the suite had leaked `SymPy` into
+  `Main`, and could not be run on their own.
+- `promote_rve` had no method for the new complement amount.
+- The spelling checker scanned `docs/node_modules`, burying real hits under
+  hundreds of vendored ones — and its documented `convert . --to us` would have
+  rewritten third-party packages in place.
+
 ## v0.7.0 — a laminate answers the localization generics, exactly
 
 ### Breaking changes

@@ -433,13 +433,14 @@ function _homogenize_alv_order2(
         rve::RVE, scheme::HomogenizationScheme,
         prop::Symbol; times::AbstractVector{<:Real}, kw...
     )
-    K_M_law = matrix_property(rve, prop)
+    m = matrix_name(scheme, rve)
+    K_M_law = phase_property(rve, m, prop)
     K_M_law isa ViscoLaw ||
         throw(ArgumentError("homogenize_alv_order2: matrix property $prop is not a ViscoLaw"))
     K_0 = _trapezoidal_relaxation(K_M_law, times, 3)
-    f_M = matrix_volume_fraction(rve)
+    f_M = volume_fraction(rve, m)
 
-    incl_names = inclusion_phase_names(rve)
+    incl_names = inclusion_phase_names(rve, m)
     # `fractions` must carry whatever element type the RVE amounts store —
     # typically `Float64` but also `ForwardDiff.Dual` for autodiff
     # sensitivities via `set_param(rve, AmountParameter(...), Dual(...))`.
@@ -499,7 +500,7 @@ function _homogenize_alv_order2(
     return _homogenize_alv2_dispatch(
         rve, scheme, prop, times,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law; kw...
+        fractions, f_M, K_M_law, m; kw...
     )
 end
 
@@ -508,7 +509,7 @@ end
 function _homogenize_alv2_dispatch(
         ::RVE, ::Voigt, ::Symbol, ::AbstractVector,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law; kw...
+        fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
     return voigt_alv_order2(K_phases, [f_M; fractions])
 end
@@ -516,7 +517,7 @@ end
 function _homogenize_alv2_dispatch(
         ::RVE, ::Reuss, ::Symbol, ::AbstractVector,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law; kw...
+        fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
     return reuss_alv_order2(K_phases, [f_M; fractions])
 end
@@ -524,7 +525,7 @@ end
 function _homogenize_alv2_dispatch(
         ::RVE, ::Dilute, ::Symbol, ::AbstractVector,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law; kw...
+        fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
     return dilute_alv_order2(K_0, contribs, fractions)
 end
@@ -532,7 +533,7 @@ end
 function _homogenize_alv2_dispatch(
         ::RVE, ::DiluteDual, ::Symbol, ::AbstractVector,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law; kw...
+        fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
     # The dual scheme accumulates in RESISTIVITY space, but `contribs`
     # carries the conductivity contributions Ñ.  Map them with the exact
@@ -550,7 +551,7 @@ end
 function _homogenize_alv2_dispatch(
         ::RVE, ::MoriTanaka, ::Symbol, ::AbstractVector,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law; kw...
+        fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
     return mori_tanaka_alv_order2(K_0, A_duts, contribs, fractions, f_M)
 end
@@ -559,7 +560,7 @@ function _homogenize_alv2_dispatch(
         rve::RVE, ::Maxwell, ::Symbol,
         times::AbstractVector,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law; kw...
+        fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
     # Default distribution shape: spherical
     H_0 = hill_kernel_order2(Spheroid(1.0), K_M_law, times)
@@ -570,10 +571,10 @@ function _homogenize_alv2_dispatch(
         rve::RVE, sch::DifferentialScheme, prop::Symbol,
         times::AbstractVector,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law; kw...
+        fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
     return differential_alv_order2(
-        rve, prop; times = times,
+        rve, prop; times = times, matrix = matrix,
         _diff_alv_options(sch)...
     )
 end
@@ -611,6 +612,7 @@ or carry an isotropic orientation average.
 function differential_alv_order2(
         rve::RVE, prop::Symbol;
         times::AbstractVector{<:Real},
+        matrix::Union{Nothing, Symbol} = nothing,
         nsteps::Int = 100,
         trajectory = nothing,
         abstol::Real = 1.0e-8,
@@ -626,7 +628,8 @@ function differential_alv_order2(
                 ":compliance; got :$(formulation)"
         )
     )
-    K_M_law = matrix_property(rve, prop)
+    m = host_phase_name(rve, matrix, "differential_alv_order2")
+    K_M_law = phase_property(rve, m, prop)
     K_M_law isa ViscoLaw ||
         throw(ArgumentError("differential_alv_order2: matrix property is not a ViscoLaw"))
     K_0 = _trapezoidal_relaxation(K_M_law, times, 3)
@@ -642,14 +645,22 @@ function differential_alv_order2(
     n = length(times)
 
     solid_data = NamedTuple[]
-    for name in inclusion_phase_names(rve)
+    for name in inclusion_phase_names(rve, m)
         amt = rve.amounts[name]
-        amt isa VolumeFraction ||
+        amt isa CrackDensity &&
             throw(
             ArgumentError(
                 "differential_alv_order2: phase :$(name) carries a crack " *
                     "density; order-2 ALV cracks are not supported by the " *
                     "differential scheme."
+            )
+        )
+        amt isa Schemes.Remainder &&
+            throw(
+            ArgumentError(
+                "differential_alv_order2: phase :$(name) carries the volume " *
+                    "complement and so has no target to integrate up to; name it " *
+                    "as the matrix, or give it an explicit fraction."
             )
         )
         ph = rve.phases[name]
@@ -669,8 +680,8 @@ function differential_alv_order2(
     end
 
     paths = trajectory === nothing ?
-        _resolve_paths_alv(Schemes.Proportional(), rve, nsteps) :
-        _resolve_paths_alv(trajectory, rve, nsteps)
+        _resolve_paths_alv(Schemes.Proportional(), rve, nsteps, m) :
+        _resolve_paths_alv(trajectory, rve, nsteps, m)
 
     # State eltype: the matrix law, the phase laws and the targets are not
     # the only inputs the RHS touches — it also rebuilds the order-2 ALV Hill

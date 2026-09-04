@@ -9,8 +9,8 @@ const CANON_MAT = TensND.CanonicalBasis{3, Float64}()
 _g(t::TensND.AbstractTens) = get_array(TensND.change_tens(t, CANON_MAT))
 
 function _composite_rve(; f = 0.2)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => CS_MAT))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => CS_MAT); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 90.0, 2 * 60.0));
         fraction = f
@@ -22,8 +22,8 @@ end
 # returned in a rotated basis. This is what catches a material that hands raw
 # components to an FE code.
 function _tilted_rve(; d = 0.08)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => CS_MAT))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => CS_MAT); fraction = :rest)
     add_phase!(
         rve, :F, PennyCrack(1.0; euler_angles = (π / 4, 0.0)), Dict(:C => CS_MAT);
         density = d

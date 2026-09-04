@@ -47,9 +47,10 @@ rve = RVE(asm)                          # …and here it is, to look at
 `matrix_geometry` is the shape the matrix phase is given. An assembly has no
 matrix shape of its own, so it defaults to a **ball** (a disk in 2D) — the
 neutral, orientation-free choice, and the one the one-site scripts of the
-package use. It is only ever read by the schemes that localize the matrix
-like any other phase, the self-consistent family; `MoriTanaka`, `Dilute` and
-the bounds never look at it.
+package use. It is read by the schemes that localize
+every phase alike — the self-consistent family and the bounds — and ignored by
+`MoriTanaka`, `Dilute`, `Maxwell` and `PCW`, which need the matrix *property*
+only.
 
 `distribution_shape` is forwarded to the `RVE` constructor and is what
 [`PonteCastanedaWillis`](@ref MeanFieldHomogenization.Schemes.PonteCastanedaWillis)
@@ -83,9 +84,15 @@ function Schemes.RVE(
     # centers may be plain while radii are dual, and it is the radii that the
     # fractions depend on.
     T = promote_type(Float64, eltype(fracs))
-    rve = Schemes.RVE(asm.matrix_name; T = T, distribution_shape = distribution_shape)
+    rve = Schemes.RVE(; T = T, distribution_shape = distribution_shape)
+    # The assembly's matrix becomes the RVE's complementary phase, which is
+    # what a matrix-based scheme picks up when it names none. So
+    # `homogenize(asm, MoriTanaka(), :C)` keeps meaning what it meant, and
+    # `MoriTanaka(:P3)` — a particle as the reference medium — becomes sayable.
     geom_m = matrix_geometry === nothing ? _matrix_ball(asm) : matrix_geometry
-    Schemes.add_matrix!(rve, geom_m, copy(asm.matrix_properties))
+    Schemes.add_phase!(
+        rve, asm.matrix_name, geom_m, copy(asm.matrix_properties); fraction = :rest
+    )
     for (nm, f) in zip(names, fracs)
         Schemes.add_phase!(
             rve, nm, particle_geometry(asm, nm),

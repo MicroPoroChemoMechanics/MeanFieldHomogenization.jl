@@ -13,9 +13,9 @@ _ε33(e) = from_tensors(
 )
 
 function _poro_rve(; d = 0.1, conductive = true)
-    rve = RVE(:M)
+    rve = RVE()
     props = Dict(:C => C0_PO, :K => TensISO{3}(KS_PO))
-    add_matrix!(rve, Ellipsoid(1.0), props)
+    add_phase!(rve, :M, Ellipsoid(1.0), props; fraction = :rest)
     geom = conductive ? ConductiveCrack(1.0; conductivity = CF_PO) : PennyCrack(1.0)
     add_phase!(rve, :F, geom, props; density = d)
     return rve

@@ -37,8 +37,8 @@ _BR_μ(C) = get_array(C)[1, 2, 1, 2]
 
 # The RVE a user would have written by hand for the same microstructure.
 function _BR_hand_rve(f, C_m, C_i; geom = Ellipsoid(1.0))
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :I, geom, Dict(:C => C_i); fraction = f)
     return rve
 end
@@ -53,12 +53,14 @@ const _BR_ONE_SITE = (
     rve = RVE(asm)
     m = asm.matrix_name
     @test rve isa RVE
-    # One phase per particle, keeping the particle's own name, plus the matrix.
-    @test rve.matrix_name === m
+    # One phase per particle, keeping the particle's own name, plus the
+    # assembly's matrix — which becomes the RVE's complementary phase, since
+    # an RVE designates no matrix of its own.
+    @test remainder_phase_name(rve) === m
     @test sort(setdiff(rve.phase_names, [m])) == sort(particle_names(asm))
     # The fractions carried over are the assembly's DERIVED ones.
-    @test matrix_volume_fraction(rve) ≈ matrix_volume_fraction(asm) rtol = 1.0e-12
-    @test 1 - matrix_volume_fraction(rve) ≈ inclusion_volume_fraction(asm) rtol = 1.0e-12
+    @test volume_fraction(rve, m) ≈ matrix_volume_fraction(asm) rtol = 1.0e-12
+    @test 1 - remainder_volume_fraction(rve) ≈ inclusion_volume_fraction(asm) rtol = 1.0e-12
     # The matrix keeps its properties and gets a ball by default.
     @test rve.phases[m].properties[:C] == _BR_Cm()
     @test rve.phases[m].geometry isa Ellipsoid{3}
@@ -106,8 +108,8 @@ end
 @testset "RVE(asm) — conduction" begin
     asm = cubic_lattice(:sc, Dict(:K => _BR_Km()), Dict(:K => _BR_Ki()); fraction = 0.25)
     f = inclusion_volume_fraction(asm)
-    ref = RVE(:M)
-    add_matrix!(ref, Ellipsoid(1.0), Dict(:K => _BR_Km()))
+    ref = RVE()
+    add_phase!(ref, :M, Ellipsoid(1.0), Dict(:K => _BR_Km()); fraction = :rest)
     add_phase!(ref, :I, Ellipsoid(1.0), Dict(:K => _BR_Ki()); fraction = f)
     for s in (MoriTanaka(), SelfConsistent(), DifferentialScheme())
         a = get_array(homogenize(asm, s, :K))
@@ -133,12 +135,12 @@ end
     add_particle!(asm, :b, (3.0, 0.0), Ellipsoid(1.0, 1.0), Dict(:C => C_i))
 
     rve = RVE(asm)
-    @test rve.phases[asm.matrix_name].geometry isa Ellipsoid{2}   # a disk, not a ball
+    @test rve.phases[remainder_phase_name(rve)].geometry isa Ellipsoid{2}  # a disk, not a ball
     f = inclusion_volume_fraction(asm)
     @test f ≈ 2 * π * 1.0^2 / (π * 10.0^2) rtol = 1.0e-12         # 2 disks in the SVE
 
-    ref = RVE(:M)
-    add_matrix!(ref, Ellipsoid(1.0, 1.0), Dict(:C => C_m))
+    ref = RVE()
+    add_phase!(ref, :M, Ellipsoid(1.0, 1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(ref, :I, Ellipsoid(1.0, 1.0), Dict(:C => C_i); fraction = f)
     for s in (Voigt(), Reuss())
         a = get_array(homogenize(asm, s, :C))
@@ -180,7 +182,7 @@ end
     asm = cubic_lattice(:sc, Dict(:C => _BR_Cm()), Dict(:C => _BR_Ci()); fraction = 0.3)
     # `matrix_geometry` reaches the conversion …
     rve = RVE(asm; matrix_geometry = Ellipsoid(3.0, 1.0, 1.0))
-    @test collect(rve.phases[asm.matrix_name].geometry.semi_axes) == [3.0, 1.0, 1.0]
+    @test collect(rve.phases[remainder_phase_name(rve)].geometry.semi_axes) == [3.0, 1.0, 1.0]
     # … and through `homogenize`. It is read by the schemes that localize the
     # matrix like any other phase, so the self-consistent answer must move
     # while Mori-Tanaka (which never looks at it) must not.
@@ -225,8 +227,8 @@ end
     # lazily through the one-site path exactly as it does through the N-body
     # one — same nested cache, same result as computing it in two steps.
     C_m, C_i = _BR_Cm(), _BR_Ci()
-    inner = RVE(:m)
-    add_matrix!(inner, Ellipsoid(1.0), Dict(:C => C_m))
+    inner = RVE()
+    add_phase!(inner, :m, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(inner, :f, Ellipsoid(1.0), Dict(:C => C_i); fraction = 0.4)
 
     asm = ParticleAssembly(; boundary = PeriodicBox(1.0))

@@ -286,8 +286,8 @@ end
 
 let
     f = 0.05
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_iso))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_iso); fraction = :rest)
     add_phase!(rve, :PORE, Ellipsoid(1.0), Dict(:C => TensISO{3}(0.0, 0.0)); fraction = f)
 
     k_eff, μ_eff = k_mu(homogenize(rve, Dilute(), :C))

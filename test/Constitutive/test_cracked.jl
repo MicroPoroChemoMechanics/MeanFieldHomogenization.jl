@@ -14,8 +14,8 @@ _ε33(e) = from_tensors(
 )
 
 function _cracked_rve(θs, ds)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C0_CR))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C0_CR); fraction = :rest)
     for (i, (θ, d)) in enumerate(zip(θs, ds))
         add_phase!(
             rve, Symbol("F", i), PennyCrack(1.0; euler_angles = (θ, 0.0)),
@@ -158,8 +158,8 @@ end
 end
 
 @testset "guards" begin
-    rve_nocrack = RVE(:M)
-    add_matrix!(rve_nocrack, Ellipsoid(1.0), Dict(:C => C0_CR))
+    rve_nocrack = RVE()
+    add_phase!(rve_nocrack, :M, Ellipsoid(1.0), Dict(:C => C0_CR); fraction = :rest)
     add_phase!(rve_nocrack, :I, Ellipsoid(1.0), Dict(:C => C0_CR); fraction = 0.1)
     @test_throws ArgumentError MicrocrackedMaterial(rve_nocrack, MoriTanaka())
 

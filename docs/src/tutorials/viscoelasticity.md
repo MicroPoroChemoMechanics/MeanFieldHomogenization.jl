@@ -40,8 +40,8 @@ const f_inc = 0.3
 
 function C_eff_at(ω, scheme)
     p = im * ω
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => carson_relaxation(PHASE_M, p)))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => carson_relaxation(PHASE_M, p)); fraction = :rest)
     add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(PHASE_I, p)); fraction = f_inc)
     _, μ = k_mu(homogenize(r, scheme, :C))
     return μ
@@ -72,8 +72,8 @@ interaction.
 !!! note "Nothing to declare on the RVE"
     Complex-valued homogenization needs no element type on the RVE: the
     moduli carry the complex part, the volume fraction stays real, and
-    the two are promoted where they meet. `RVE(:M)` is enough — the
-    `RVE{ComplexF64}(:M)` / `RVE(:M; T = ComplexF64)` forms only declare
+    the two are promoted where they meet. `RVE()` is enough — the
+    `RVE{ComplexF64}()` / `RVE(; T = ComplexF64)` forms only declare
     a *floor* for the amounts and give the same numbers.
 
     One gap, in the complex plane only:
@@ -102,8 +102,8 @@ function R_iso(t, tp)
 end
 law_M = ViscoLaw(R_iso, :relaxation)
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => law_M))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(iso_stiffness(60.0, 20.0))); fraction = 0.2)
 
 times = collect(range(0.0, 5.0; length = 20))
@@ -126,8 +126,8 @@ Volterra machinery at all, by inverting the transform numerically:
 
 ```@example tutvisco
 cell(p) = begin
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => carson_relaxation(PHASE_M, p)))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => carson_relaxation(PHASE_M, p)); fraction = :rest)
     add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(PHASE_I, p)); fraction = f_inc)
     r
 end

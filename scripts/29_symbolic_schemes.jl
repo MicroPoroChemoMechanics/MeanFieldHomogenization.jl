@@ -107,10 +107,10 @@ println("\n  Dilute estimate (explicit tensor algebra):")
 println("    k_dil = ", k_dil)
 println("    μ_dil = ", μ_dil)
 
-# Cross-check against the scheme API. The ordinary `RVE(:M)` takes a symbolic
+# Cross-check against the scheme API. The ordinary `RVE()` takes a symbolic
 # fraction as it comes — the declared element type is only a promotion floor.
-rve = RVE(:M)
-add_matrix!(rve, sphere, Dict(:C => C0))
+rve = RVE()
+add_phase!(rve, :M, sphere, Dict(:C => C0); fraction = :rest)
 add_phase!(rve, :I, sphere, Dict(:C => Ci); fraction = f)
 
 kD, μD = k_mu(homogenize(rve, Dilute(), :C))
@@ -241,8 +241,8 @@ end
 # ── Numerical cross-check vs. the API on a genuinely numeric RVE ─────────
 println("\n  Numerical cross-check vs. homogenize(..., SelfConsistent(), :C):")
 k0n, μ0n, fn = 30.0, 15.0, 0.2
-rve_por_num = RVE(:M)
-add_matrix!(rve_por_num, Ellipsoid(1.0), Dict(:C => iso_stiffness(k0n, μ0n)))
+rve_por_num = RVE()
+add_phase!(rve_por_num, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(k0n, μ0n)); fraction = :rest)
 add_phase!(rve_por_num, :V, Ellipsoid(1.0), Dict(:C => iso_stiffness(1.0e-6, 1.0e-6)); fraction = fn)
 k_sc_num, μ_sc_num = k_mu(homogenize(rve_por_num, AsymmetricSelfConsistent(; abstol = 1.0e-12, maxiters = 200, select_best = true), :C))
 

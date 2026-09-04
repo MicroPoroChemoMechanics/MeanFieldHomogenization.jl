@@ -24,8 +24,8 @@ using Printf
 const k_m, μ_m = 30.0, 10.0
 const k_i, μ_i = 60.0, 20.0
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_i, μ_i)); fraction = 0.3)
 
 C_picard = homogenize(rve, SelfConsistent())                                  # built-in damped Picard (default)
@@ -203,8 +203,8 @@ d_tr     = derivative(rve, SelfConsistent(; algorithm = TrustRegion()), property
 ```@example tutnls
 # Central finite difference — a solver-independent ground truth.
 function f_modulus(K_I)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)))
+    r = RVE()
+    add_phase!(r, :SOLID, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)); fraction = :rest)
     add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(K_I, μ_i)); fraction = 0.3)
     return idxC(homogenize(r, SelfConsistent()))
 end
@@ -244,8 +244,8 @@ const ω_aspect = 0.1
 const φ_value = 0.15
 
 function C_hom_iso_2vec(μs::T, scheme) where {T}
-    r = RVE(:SOLID; T = T)
-    add_matrix!(r, Spheroid(ω_aspect), Dict(:C => iso_stiffness(convert(T, k_s), μs)); symmetrize = IsoSymmetrize())
+    r = RVE(; T = T)
+    add_phase!(r, :SOLID, Spheroid(ω_aspect), Dict(:C => iso_stiffness(convert(T, k_s), μs)); fraction = :rest, symmetrize = IsoSymmetrize())
     add_phase!(r, :PORE, Spheroid(ω_aspect), Dict(:C => iso_stiffness(convert(T, TINY), convert(T, TINY)));
                fraction = convert(T, φ_value), symmetrize = IsoSymmetrize())
     C = homogenize(r, scheme, :C)

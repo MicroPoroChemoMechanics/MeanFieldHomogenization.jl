@@ -131,6 +131,7 @@ Random.seed!(20260723)
 
     @testset "Schemes" begin
         include("Schemes/test_rve.jl")
+        include("Schemes/test_matrix_role.jl")
         include("Schemes/test_dispatch.jl")
         include("Schemes/test_voigt_reuss.jl")
         include("Schemes/test_one_shot.jl")

@@ -104,12 +104,12 @@ k_dil
 ```
 
 To confirm this by-hand derivation against the package's own scheme API, the
-ordinary `RVE(:M)` is enough — a symbolic fraction is stored as it comes,
+ordinary `RVE()` is enough — a symbolic fraction is stored as it comes,
 without conversion:
 
 ```@example tutsymsph
-rve = RVE(:M)
-add_matrix!(rve, sphere, Dict(:C => C0))
+rve = RVE()
+add_phase!(rve, :M, sphere, Dict(:C => C0); fraction = :rest)
 add_phase!(rve, :I, sphere, Dict(:C => Ci); fraction = f)
 
 kD, μD = k_mu(homogenize(rve, Dilute(), :C))
@@ -229,8 +229,8 @@ substituting numbers:
 
 ```@example tutsymsph
 k0n, μ0n, fn = 30.0, 15.0, 0.2
-rve_num = RVE(:M)
-add_matrix!(rve_num, Ellipsoid(1.0), Dict(:C => iso_stiffness(k0n, μ0n)))
+rve_num = RVE()
+add_phase!(rve_num, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(k0n, μ0n)); fraction = :rest)
 add_phase!(rve_num, :V, Ellipsoid(1.0), Dict(:C => iso_stiffness(1.0e-6, 1.0e-6)); fraction = fn)
 k_sc_num, μ_sc_num = k_mu(homogenize(rve_num, AsymmetricSelfConsistent(; abstol = 1.0e-12, maxiters = 200, select_best = true), :C))
 

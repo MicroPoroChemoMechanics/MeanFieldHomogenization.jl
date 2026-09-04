@@ -86,8 +86,8 @@ The law is piecewise linear: within a branch the tangent is exactly
 is split at the crossing.
 
 ```julia
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C₀))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
 add_phase!(rve, :F1, PennyCrack(1.0), Dict(:C => C₀); density = 0.1)
 
 mat = MicrocrackedMaterial(rve, MoriTanaka(); ω₀ = (1.0e-3,))
@@ -135,7 +135,7 @@ function MicrocrackedMaterial(
 end
 
 _crack_phase_names(rve) = Tuple(
-    n for n in Schemes.inclusion_phase_names(rve)
+    n for n in Schemes.phase_names(rve)
         if rve.amounts[n] isa Schemes.CrackDensity
 )
 
@@ -234,12 +234,14 @@ end
 function _rve_with_open(m::MicrocrackedMaterial, open)
     rve = m.rve
     kept = Schemes.RVE(
-        rve.matrix_name; T = eltype(m.ω₀),
-        distribution_shape = rve.distribution_shape
+        ; T = eltype(m.ω₀),
+        distribution_shape = rve.distribution_shape,
+        closure = rve.closure
     )
-    mp = rve.phases[rve.matrix_name]
-    Schemes.add_matrix!(kept, mp.geometry, mp.properties)
-    for name in Schemes.inclusion_phase_names(rve)
+    # One uniform pass: every phase is rebuilt with the amount it carried, the
+    # complement included. Nothing here needs to know which phase a scheme will
+    # later call its matrix.
+    for name in Schemes.phase_names(rve)
         idx = findfirst(==(name), m.families)
         idx !== nothing && !open[idx] && continue
         p = rve.phases[name]
@@ -248,6 +250,12 @@ function _rve_with_open(m::MicrocrackedMaterial, open)
             Schemes.add_phase!(
                 kept, name, p.geometry, p.properties;
                 density = Schemes.amount_value(a),
+                symmetrize = Schemes.phase_symmetrize(rve, name)
+            )
+        elseif a isa Schemes.Remainder
+            Schemes.add_phase!(
+                kept, name, p.geometry, p.properties;
+                fraction = :rest,
                 symmetrize = Schemes.phase_symmetrize(rve, name)
             )
         else

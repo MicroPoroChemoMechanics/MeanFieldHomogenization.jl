@@ -38,12 +38,8 @@ const φ_value = 0.15
 # by the SOLID shear modulus `μs` (so that ForwardDiff can differentiate).
 function _C_hom_iso_2vec(μs::Real, ks, φ, scheme)
     T = typeof(μs)
-    rve = RVE(:SOLID; T = T)
-    add_matrix!(
-        rve, Spheroid(ω_aspect),
-        Dict(:C => TensISO{3}(convert(T, 3 * ks), 2 * μs));
-        symmetrize = :iso
-    )
+    rve = RVE(; T = T)
+    add_phase!(rve, :SOLID, Spheroid(ω_aspect), Dict(:C => TensISO{3}(convert(T, 3 * ks), 2 * μs)); fraction = :rest, symmetrize = :iso)
     add_phase!(
         rve, :PORE, Spheroid(ω_aspect),
         Dict(:C => TensISO{3}(convert(T, 3 * TINY), convert(T, 2 * TINY)));

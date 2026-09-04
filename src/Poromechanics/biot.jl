@@ -159,9 +159,9 @@ julia> using MeanFieldHomogenization, TensND
 
 julia> C_s = TensISO{3}(3 * 20.0, 2 * 12.0);   # k_s = 20, μ_s = 12
 
-julia> rve = RVE(:M);
+julia> rve = RVE();
 
-julia> add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_s));
+julia> add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_s); fraction = :rest);
 
 julia> add_phase!(rve, :P, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0e-9, 1.0e-9));
                   fraction = 0.2);

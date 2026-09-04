@@ -24,8 +24,8 @@ in a rotated basis, and a material handed to an FE code must speak the global
 frame (see [`to_tensors`](@ref)).
 
 ```julia
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 30.0, 2 * 18.0)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 30.0, 2 * 18.0)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 90.0, 2 * 60.0)); fraction = 0.2)
 
 mat = HomogenizedElastic(rve, MoriTanaka())

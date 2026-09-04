@@ -44,7 +44,7 @@ function homogenize(
         cell::AbstractHomogenizationCell, scheme::HomogenizationScheme,
         property::Symbol; kw...
     )
-    validate_cell(cell)
+    validate_cell(cell, scheme)
     # The scope spans the WHOLE evaluation, iterative solvers included: a
     # self-consistent loop reads the phase properties once per iteration, and
     # without the memoization a declaratively nested cell would be

@@ -16,8 +16,8 @@ C1_law() = maxwell_iso(k1, μ1, η1, γ1)
 C_p = TensISO{3}(3 * kp, 2 * μp)
 
 function build_rve(N::Int)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C0_law()))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C0_law()); fraction = :rest)
     add_phase!(
         rve, :PORE, Ellipsoid(1.0, 1.0, 1.0),
         Dict(:C => heaviside_law(C_p)); fraction = 0.1

@@ -81,13 +81,9 @@ function build_hf(wc, α_p, μ_b0; N = NTHETA, ω = ω_aspect)
 
     T = typeof(μ_b0)
     ez = (0.0, 0.0, 1.0)
-    rve = RVE(:M; T = T)
+    rve = RVE(; T = T)
     # Zero-volume matrix = SC seed only (Σ inclusion fractions = 1).
-    add_matrix!(
-        rve, Ellipsoid(1.0),
-        Dict(:C => TensISO{3}(convert(T, 3K_hyd_ref), convert(T, 2μ_hyd_ref)));
-        symmetrize = :iso
-    )
+    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => TensISO{3}(convert(T, 3K_hyd_ref), convert(T, 2μ_hyd_ref))); fraction = :rest, symmetrize = :iso)
     for (i, bin) in enumerate(polar_orientation_bins(N))
         μ_h = i == 1 ? μ_b0 : convert(T, μ_hyd_ref)
         add_phase!(
@@ -118,8 +114,8 @@ sand grains in the paste matrix (MO).
 ```@example strength
 function build_cp(wc, α_p, C_hf)
     T = eltype(C_hf)
-    rve = RVE(:HF; T = T)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_hf))
+    rve = RVE(; T = T)
+    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => C_hf); fraction = :rest)
     add_phase!(
         rve, :CLIN, Ellipsoid(1.0),
         Dict(:C => TensISO{3}(convert(T, 3K_clin), convert(T, 2μ_clin)));
@@ -130,8 +126,8 @@ end
 
 function build_mo(wc, sc, C_cp)
     T = eltype(C_cp)
-    rve = RVE(:CP; T = T)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_cp))
+    rve = RVE(; T = T)
+    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => C_cp); fraction = :rest)
     add_phase!(
         rve, :SAN, Ellipsoid(1.0),
         Dict(:C => TensISO{3}(convert(T, 3K_san), convert(T, 2μ_san)));
@@ -358,14 +354,14 @@ port directly:
 ```@example strength
 function cp_mo_declarative(wc, sc, α_p, C_hf)
     T = eltype(C_hf)
-    cp = RVE(:HF; T = T)
-    add_matrix!(cp, Ellipsoid(1.0), Dict(:C => C_hf))
+    cp = RVE(; T = T)
+    add_phase!(cp, :HF, Ellipsoid(1.0), Dict(:C => C_hf); fraction = :rest)
     add_phase!(cp, :CLIN, Ellipsoid(1.0),
         Dict(:C => TensISO{3}(convert(T, 3K_clin), convert(T, 2μ_clin)));
         fraction = f_clin(wc, α_p))
 
-    mo = RVE(:CP; T = T)
-    add_matrix!(mo, Ellipsoid(1.0), Dict(:C => Homogenized(cp, MoriTanaka())))
+    mo = RVE(; T = T)
+    add_phase!(mo, :CP, Ellipsoid(1.0), Dict(:C => Homogenized(cp, MoriTanaka())); fraction = :rest)
     add_phase!(mo, :SAN, Ellipsoid(1.0),
         Dict(:C => TensISO{3}(convert(T, 3K_san), convert(T, 2μ_san)));
         fraction = fh_san(wc, sc))

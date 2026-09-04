@@ -64,8 +64,8 @@ nn_incl(α, w, e2) = NeuralLocalizationInclusion(
 iso(C) = MeanFieldHomogenization.Core.isotropify(C)
 
 function young(incl)
-    r = RVE(:paste)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => C0))
+    r = RVE()
+    add_phase!(r, :paste, Ellipsoid(1.0), Dict(:C => C0); fraction = :rest)
     add_phase!(r, :rca, incl, Dict(:C => C0); fraction = FRAC)
     k, μ = k_mu(iso(homogenize(r, MoriTanaka(), :C)))
     return 9k * μ / (3k + μ) / E0

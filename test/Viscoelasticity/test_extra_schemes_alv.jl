@@ -28,11 +28,8 @@ function _setup_2phase_elastic(;
 end
 
 function _build_alv(ctx)
-    rve = RVE(:M)
-    add_matrix!(
-        rve, Ellipsoid(1.0, 1.0, 1.0),
-        Dict(:C => heaviside_law(ctx.C_M_t))
-    )
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(ctx.C_M_t)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, 1.0),
         Dict(:C => heaviside_law(ctx.C_I_t)); fraction = ctx.f_I
@@ -41,8 +38,8 @@ function _build_alv(ctx)
 end
 
 function _build_el(ctx)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => ctx.C_M_t))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => ctx.C_M_t); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => ctx.C_I_t);
         fraction = ctx.f_I
@@ -149,8 +146,8 @@ end
     # elastic limit.
     law_M = maxwell_iso(20.0, 8.0, 2.0, 1.5)
     t = collect(range(0.0, 2.0; length = 5))
-    aged = RVE(:M)
-    add_matrix!(aged, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => law_M))
+    aged = RVE()
+    add_phase!(aged, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => law_M); fraction = :rest)
     add_phase!(
         aged, :I, Ellipsoid(1.0, 1.0, 1.0),
         Dict(:C => heaviside_law(ctx.C_I_t)); fraction = 0.25
@@ -173,12 +170,12 @@ end
     n = length(times)
     sch = DifferentialScheme(; abstol = 1.0e-12, reltol = 1.0e-10)
 
-    rve_alv = RVE(:M)
-    add_matrix!(rve_alv, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_M_t)))
+    rve_alv = RVE()
+    add_phase!(rve_alv, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_M_t)); fraction = :rest)
     add_phase!(rve_alv, :I, sphere, Dict(:C => heaviside_law(C_I_t)); fraction = 0.3)
 
-    rve_el = RVE(:M)
-    add_matrix!(rve_el, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M_t))
+    rve_el = RVE()
+    add_phase!(rve_el, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M_t); fraction = :rest)
     add_phase!(rve_el, :I, sphere, Dict(:C => C_I_t); fraction = 0.3)
 
     C_alv = homogenize_alv(rve_alv, sch, :C; times = times)
@@ -190,15 +187,15 @@ end
     times = collect(range(0.0, 1.0; length = 4))
     n = length(times)
 
-    rve_alv = RVE(:M)
-    add_matrix!(rve_alv, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_M_t)))
+    rve_alv = RVE()
+    add_phase!(rve_alv, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_M_t)); fraction = :rest)
     add_phase!(
         rve_alv, :CR, PennyCrack(1.0), Dict(:C => heaviside_law(C_M_t));
         density = 0.1, symmetrize = :iso
     )
 
-    rve_el = RVE(:M)
-    add_matrix!(rve_el, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M_t))
+    rve_el = RVE()
+    add_phase!(rve_el, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M_t); fraction = :rest)
     add_phase!(rve_el, :CR, PennyCrack(1.0), Dict(:C => C_M_t); density = 0.1, symmetrize = :iso)
 
     C_alv = homogenize_alv(rve_alv, DifferentialScheme(), :C; times = times)
@@ -217,14 +214,14 @@ end
     times = collect(range(0.0, 1.0; length = 4))
 
     # Aligned (non-spherical) inclusion.
-    aligned = RVE(:M)
-    add_matrix!(aligned, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_M_t)))
+    aligned = RVE()
+    add_phase!(aligned, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_M_t)); fraction = :rest)
     add_phase!(aligned, :I, Spheroid(0.2), Dict(:C => heaviside_law(C_I_t)); fraction = 0.2)
     @test_throws ArgumentError homogenize_alv(aligned, DifferentialScheme(), :C; times = times)
 
     # …accepted with an isotropic orientation average.
-    randomized = RVE(:M)
-    add_matrix!(randomized, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_M_t)))
+    randomized = RVE()
+    add_phase!(randomized, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_M_t)); fraction = :rest)
     add_phase!(
         randomized, :I, Spheroid(0.2), Dict(:C => heaviside_law(C_I_t));
         fraction = 0.2, symmetrize = :iso
@@ -233,16 +230,16 @@ end
         (6 * length(times), 6 * length(times))
 
     # A crack without isotropic orientation average leaks its TI contribution.
-    cracked = RVE(:M)
-    add_matrix!(cracked, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_M_t)))
+    cracked = RVE()
+    add_phase!(cracked, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_M_t)); fraction = :rest)
     add_phase!(cracked, :CR, PennyCrack(1.0), Dict(:C => heaviside_law(C_M_t)); density = 0.1)
     @test_throws ArgumentError homogenize_alv(cracked, DifferentialScheme(), :C; times = times)
 
     # A non-isotropic ALV matrix is refused outright.
     n̂ = (0.0, 0.0, 1.0)
     C_TI = TensND.TensTI{4, Float64, 5}((20.0, 30.0, 10.0, 8.0, 9.0), n̂)
-    ti_matrix = RVE(:M)
-    add_matrix!(ti_matrix, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_TI)))
+    ti_matrix = RVE()
+    add_phase!(ti_matrix, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_TI)); fraction = :rest)
     add_phase!(
         ti_matrix, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_I_t));
         fraction = 0.2
@@ -259,15 +256,15 @@ end
         formulation = form, abstol = 1.0e-12, reltol = 1.0e-10
     )
 
-    rve_alv = RVE(:M)
-    add_matrix!(rve_alv, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => heaviside_law(K_M_t)))
+    rve_alv = RVE()
+    add_phase!(rve_alv, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => heaviside_law(K_M_t)); fraction = :rest)
     add_phase!(
         rve_alv, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => heaviside_law(K_I_t));
         fraction = 0.3
     )
 
-    rve_el = RVE(:M)
-    add_matrix!(rve_el, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M_t))
+    rve_el = RVE()
+    add_phase!(rve_el, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M_t); fraction = :rest)
     add_phase!(rve_el, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_I_t); fraction = 0.3)
     K_ref = Array(homogenize(rve_el, sch(:stiffness), :K))
 
@@ -300,8 +297,8 @@ end
     n = length(times)
 
     function build(dist; alv)
-        rve = RVE(:M; distribution_shape = UniformDistribution(dist))
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => alv ? heaviside_law(C_M) : C_M))
+        rve = RVE(; distribution_shape = UniformDistribution(dist))
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => alv ? heaviside_law(C_M) : C_M); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0, 1.0, 0.1),
             Dict(:C => alv ? heaviside_law(C_I) : C_I);

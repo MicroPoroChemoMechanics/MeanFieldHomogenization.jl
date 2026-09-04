@@ -86,8 +86,8 @@ const law_I = make_iso_law(Jk_inc, Jg_inc)
 # ─── homogenization helper ─────────────────────────────────────────────────
 
 function build_rve(omega, frac)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => law_M))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => law_M); fraction = :rest)
     sh = omega == 1.0 ? Ellipsoid(1.0, 1.0, 1.0) : Spheroid(omega)
     add_phase!(rve, :I, sh, Dict(:C => law_I); fraction = frac)
     return rve

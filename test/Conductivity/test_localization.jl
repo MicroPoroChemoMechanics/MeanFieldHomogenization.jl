@@ -2,6 +2,8 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+using SymPy   # top level on purpose: `@syms` below is expanded before any
+# `using` nested in a @testset body would have run.
 
 # =============================================================================
 #  Localization and contribution tensors for conductivity (2nd order).
@@ -94,7 +96,6 @@ end
 end
 
 @testset "Conductivity — SymPy genericity" begin
-    using SymPy
     @syms ka kb
     K₀ = TensISO{3}(ka)
     K₁ = TensISO{3}(kb)

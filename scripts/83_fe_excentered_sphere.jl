@@ -166,15 +166,15 @@ for α in (0.0, 0.4, 0.8)
         1.0, (C_AGG, C_MORTAR); core_fraction = W, eccentricity = α,
         nradial = 20, radius_ratio = 4.0
     )
-    rve = RVE(:paste)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_PASTE))
+    rve = RVE()
+    add_phase!(rve, :paste, Ellipsoid(1.0), Dict(:C => C_PASTE); fraction = :rest)
     add_phase!(rve, :rca, incl, Dict(:C => C_PASTE); fraction = 0.4)
     k, μ = k_mu(iso(homogenize(rve, MoriTanaka(), :C)))
     @printf("  %5.2f   %10.4f   %10.4f   %10.4f\n", α, k, μ, 9k * μ / (3k + μ))
 end
 
-rve = RVE(:paste)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_PASTE))
+rve = RVE()
+add_phase!(rve, :paste, Ellipsoid(1.0), Dict(:C => C_PASTE); fraction = :rest)
 add_phase!(rve, :rca, sph, Dict(:C => C_PASTE); fraction = 0.4)
 kx, μx = k_mu(homogenize(rve, MoriTanaka(), :C))
 @printf(

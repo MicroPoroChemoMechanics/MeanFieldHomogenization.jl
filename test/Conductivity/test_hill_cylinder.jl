@@ -33,7 +33,7 @@ using TensND
         @test H[1, 1] ≈ 0.0 atol = 1.0e-14
         @test H[1, 2] ≈ 0.0 atol = 1.0e-14
         @test H[1, 3] ≈ 0.0 atol = 1.0e-14
-        # Cohérence avec la limite d'un ellipsoïde très allongé
+        # Consistency with the limit of a very elongated ellipsoid
         ell_big = Ellipsoid(1.0e8, 2.0, 1.0)
         Href = hill_tensor(ell_big, K_aniso)
         @test H[2, 2] ≈ Href[2, 2] rtol = 1.0e-10

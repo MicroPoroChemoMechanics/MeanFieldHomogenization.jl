@@ -6,23 +6,23 @@ import MeanFieldHomogenization.Viscoelasticity: _is_ortho_block, _is_ti_block, _
     _try_iso_pairs, _try_ti_tuples, _try_ortho_tuples, _ortho_pair, _ortho_blocks
 
 # =============================================================================
-#  test_ortho_dispatch_alv.jl — chemins rapides ORTHO de `_homogenize_alv_dispatch`
-#  (`src/Viscoelasticity/homogenize_alv.jl`).
+#  test_ortho_dispatch_alv.jl — the ORTHO fast paths of
+#  `_homogenize_alv_dispatch` (`src/Viscoelasticity/homogenize_alv.jl`).
 #
-#  `test_ortho_alv.jl` teste les primitives ortho (`voigt_alv_ortho`, …) en les
-#  appelant directement, mais tous ses RVE sont isotropes : comme iso ⊂ TI ⊂
-#  ortho, le dispatcher prend alors le raccourci iso et les branches ortho de
-#  `_homogenize_alv_dispatch` ne sont jamais exécutées.
+#  `test_ortho_alv.jl` exercises the ortho primitives (`voigt_alv_ortho`, …) by
+#  calling them directly, but every RVE it builds is isotropic: since
+#  iso ⊂ TI ⊂ ortho, the dispatcher then takes the iso shortcut and the ortho
+#  branches of `_homogenize_alv_dispatch` are never executed.
 #
-#  Ici on construit un RVE franchement orthotrope (ni iso ni TI) pour forcer
-#  `_try_iso_pairs` et `_try_ti_tuples` à rendre `nothing` et faire tomber le
-#  dispatcher sur `_try_ortho_tuples`.
+#  This file builds a genuinely orthotropic RVE (neither iso nor TI) to force
+#  `_try_iso_pairs` and `_try_ti_tuples` to return `nothing`, so that the
+#  dispatcher falls through to `_try_ortho_tuples`.
 # =============================================================================
 
 const _ORTHO_FRAME = TensND.CanonicalBasis{3, Float64}()
 
-# Tenseur orthotrope franc : les trois modules normaux et les trois modules de
-# cisaillement sont tous distincts, donc ni isotrope ni TI autour d'aucun axe.
+# A genuinely orthotropic tensor: the three normal moduli and the three shear
+# moduli are all distinct, so it is neither isotropic nor TI about any axis.
 _ortho_tensor(s) = TensND.TensOrtho(
     20.0s, 8.0s, 6.0s,       # C11, C12, C13
     30.0s, 7.0s, 40.0s,      # C22, C23, C33
@@ -31,11 +31,8 @@ _ortho_tensor(s) = TensND.TensOrtho(
 )
 
 function _ortho_rve(; fraction = 0.25)
-    rve = RVE(:M)
-    add_matrix!(
-        rve, Ellipsoid(1.0, 1.0, 1.0),
-        Dict(:C => heaviside_law(_ortho_tensor(1.0)))
-    )
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(_ortho_tensor(1.0))); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, 1.0),
         Dict(:C => heaviside_law(_ortho_tensor(2.0)));
@@ -49,8 +46,8 @@ end
     M_M = trapezoidal_matrix(heaviside_law(_ortho_tensor(1.0)), times)
     M_I = trapezoidal_matrix(heaviside_law(_ortho_tensor(2.0)), times)
 
-    # Prérequis du test : sans ça le dispatcher partirait sur le chemin iso ou
-    # TI et les branches visées resteraient mortes.
+    # Precondition of this test: without it the dispatcher would take the iso
+    # or the TI path and the branches under test would stay dead.
     @test !_is_iso_block(M_M)
     @test !_is_ti_block(M_M)
     @test _is_ortho_block(M_M)
@@ -63,8 +60,8 @@ end
     @test length(o) == 2
     @test length(o[1]) == 12
 
-    # `_try_ortho_tuples` doit rendre `nothing` dès qu'une seule matrice sort
-    # de la forme ortho.
+    # `_try_ortho_tuples` must return `nothing` as soon as a single matrix
+    # leaves the ortho form.
     M_bad = copy(M_M)
     M_bad[1, 4] += 1.0
     @test !_is_ortho_block(M_bad)
@@ -112,8 +109,8 @@ end
         C = homogenize_alv(rve, scheme, :C; times = times)
         @test size(C) == (6n, 6n)
         @test all(isfinite, C)
-        # La forme ortho est stable par ces schémas : phases ortho coaxiales
-        # ⇒ résultat ortho dans le même repère matériel.
+        # These schemes preserve the ortho form: coaxial ortho phases give an
+        # ortho result in the same material frame.
         @test _is_ortho_block(C)
         @test !_is_iso_block(C)
     end

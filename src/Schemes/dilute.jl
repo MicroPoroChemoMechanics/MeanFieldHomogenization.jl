@@ -24,10 +24,11 @@ elliptic crack, `π` for a ribbon crack).
 References: [eshelby1957](@cite),
 [kachanov2018](@cite).
 """
-function _evaluate(rve::RVE, ::Dilute, ::Val{p}; kw...) where {p}
-    C₀ = matrix_property(rve, p)
+function _evaluate(rve::RVE, scheme::Dilute, ::Val{p}; kw...) where {p}
+    m = matrix_name(scheme, rve)
+    C₀ = phase_property(rve, m, p)
     ΔC = zero(C₀)
-    for name in inclusion_phase_names(rve)
+    for name in inclusion_phase_names(rve, m)
         ΔC += _phase_stiffness_contribution(rve, name, p, C₀; kw...)
     end
     return C₀ + ΔC

@@ -22,8 +22,8 @@ gr()  # headless backend; GKSwstype is set to "100" in make.jl
 D_solid = TensISO{3}(0.1)
 D_pore = TensISO{3}(1.0)
 
-rve = RVE(:SOLID)
-add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => D_solid))
+rve = RVE()
+add_phase!(rve, :SOLID, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => D_solid); fraction = :rest)
 add_phase!(
     rve, :PORE, Ellipsoid(1.0, 1.0, 0.1), Dict(:K => D_pore);
     fraction = 0.2, symmetrize = IsoSymmetrize()
@@ -59,8 +59,8 @@ spherical ones.
 
 ```@example transport
 function D_eff_porous(φ, ω; scheme = SelfConsistent())
-    r = RVE(:SOLID)
-    add_matrix!(r, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => TensISO{3}(0.1)))
+    r = RVE()
+    add_phase!(r, :CEMENT, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => TensISO{3}(0.1)); fraction = :rest)
     add_phase!(
         r, :PORE, Ellipsoid(1.0, 1.0, ω), Dict(:K => TensISO{3}(1.0));
         fraction = φ, symmetrize = IsoSymmetrize()
@@ -136,8 +136,8 @@ pores aligned on ``e_3``, and the effective tensor becomes transversely
 isotropic:
 
 ```@example transport
-r = RVE(:SOLID)
-add_matrix!(r, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => TensISO{3}(0.1)))
+r = RVE()
+add_phase!(r, :CEMENT, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => TensISO{3}(0.1)); fraction = :rest)
 add_phase!(
     r, :PORE, Ellipsoid(1.0, 1.0, 0.05), Dict(:K => TensISO{3}(1.0));
     fraction = 0.15
@@ -156,8 +156,8 @@ through-thickness diagonal components fan apart as ``\varphi`` grows:
 
 ```@example transport
 function D_aniso_components(φ; ω = 0.05)
-    r = RVE(:SOLID)
-    add_matrix!(r, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => TensISO{3}(0.1)))
+    r = RVE()
+    add_phase!(r, :CEMENT, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => TensISO{3}(0.1)); fraction = :rest)
     add_phase!(
         r, :PORE, Ellipsoid(1.0, 1.0, ω), Dict(:K => TensISO{3}(1.0));
         fraction = φ
@@ -199,8 +199,8 @@ const Ragg, eITZ = 5.0e3, 50.0    # µm
 
 function D_itz(f, d_itz)
     f_inc = f * (1 + eITZ / Ragg)^3
-    r = RVE(:CEMENT)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)))
+    r = RVE()
+    add_phase!(r, :CEMENT, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)); fraction = :rest)
     agg = LayeredSphere((Ragg, Ragg + eITZ), (TensISO{3}(0.0), TensISO{3}(d_itz)))
     add_phase!(r, :AGG, agg, Dict(:K => TensISO{3}(1.0)); fraction = f_inc)
     return tr(Array(homogenize(r, MoriTanaka(), :K))) / 3
@@ -249,8 +249,8 @@ function D_dualdisc(f, d_itz)
     α = d_itz * eITZ                                   # transmissivity D_s·e
     agg = LayeredSphere((Ragg,), (TensISO{3}(0.0),);
         interfaces = (SurfaceConductiveInterface(α),))
-    r = RVE(:CEMENT)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)))
+    r = RVE()
+    add_phase!(r, :CEMENT, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)); fraction = :rest)
     add_phase!(r, :AGG, agg, Dict(:K => TensISO{3}(1.0)); fraction = f)
     return tr(Array(homogenize(r, MoriTanaka(), :K))) / 3
 end
@@ -288,11 +288,8 @@ rebuilt — which is the basis of cross-property correlations
 [sevostianov2002](@cite):
 
 ```@example transport
-r2 = RVE(:SOLID)
-add_matrix!(
-    r2, Ellipsoid(1.0, 1.0, 1.0),
-    Dict(:C => TensISO{3}(30.0, 12.0), :K => TensISO{3}(0.1))
-)
+r2 = RVE()
+add_phase!(r2, :SOLID, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => TensISO{3}(30.0, 12.0), :K => TensISO{3}(0.1)); fraction = :rest)
 add_phase!(
     r2, :PORE, Ellipsoid(1.0, 1.0, 0.1),
     Dict(:C => TensISO{3}(1.0e-9, 1.0e-9), :K => TensISO{3}(1.0));

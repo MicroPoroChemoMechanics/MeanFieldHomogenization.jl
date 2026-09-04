@@ -97,10 +97,10 @@ function _phase_stiffness_contribution(
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
-    if a isa VolumeFraction
+    if !(a isa CrackDensity)
         P_i = phase_property(rve, name, prop)
         N = MFH_Core.stiffness_contribution(geom, P_i, P₀_proj; kw...)
-        return scale_by_amount(a, _apply_symmetrize(N, sym))
+        return volume_fraction(rve, name) * _apply_symmetrize(N, sym)
     else  # CrackDensity
         K_int = _crack_interface_K4(rve, name)
         N = MFH_Core.stiffness_contribution(
@@ -119,10 +119,10 @@ function _phase_stiffness_contribution(
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
-    if a isa VolumeFraction
+    if !(a isa CrackDensity)
         P_i = phase_property(rve, name, prop)
         N = MFH_Core.conductivity_contribution(geom, P_i, P₀_proj; kw...)
-        return scale_by_amount(a, _apply_symmetrize(N, sym))
+        return volume_fraction(rve, name) * _apply_symmetrize(N, sym)
     else
         α_int = _crack_interface_α(rve, name)
         N = MFH_Core.conductivity_contribution(
@@ -183,7 +183,7 @@ function _phase_compliance_contribution(
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
-    if a isa VolumeFraction
+    if !(a isa CrackDensity)
         P_i = phase_property(rve, name, prop)
         H = if MFH_Core.is_homogeneous_inclusion(geom)
             compliance_contribution(geom, P_i, P₀_proj; kw...)
@@ -191,7 +191,7 @@ function _phase_compliance_contribution(
             S₀ = inv(P₀_proj)
             -(S₀ ⊡ MFH_Core.stiffness_contribution(geom, P_i, P₀_proj; kw...) ⊡ S₀)
         end
-        return scale_by_amount(a, _apply_symmetrize(H, sym))
+        return volume_fraction(rve, name) * _apply_symmetrize(H, sym)
     else
         K_int = _crack_interface_K4(rve, name)
         H = compliance_contribution(geom, P₀_proj; K_interface = K_int, kw...)
@@ -207,7 +207,7 @@ function _phase_compliance_contribution(
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
-    if a isa VolumeFraction
+    if !(a isa CrackDensity)
         P_i = phase_property(rve, name, prop)
         R = if MFH_Core.is_homogeneous_inclusion(geom)
             MFH_Core.resistivity_contribution(geom, P_i, P₀_proj; kw...)
@@ -215,7 +215,7 @@ function _phase_compliance_contribution(
             R₀ = inv(P₀_proj)
             -(R₀ ⋅ MFH_Core.conductivity_contribution(geom, P_i, P₀_proj; kw...) ⋅ R₀)
         end
-        return scale_by_amount(a, _apply_symmetrize(R, sym))
+        return volume_fraction(rve, name) * _apply_symmetrize(R, sym)
     else
         α_int = _crack_interface_α(rve, name)
         R = compliance_contribution(geom, P₀_proj; α_interface = α_int, kw...)
@@ -321,7 +321,7 @@ has_layer_average(::_Layered) = true
 
 "Whether every inclusion phase of `rve` can enter a Voigt / Reuss bound."
 _bounds_available(rve::RVE) =
-    all(has_layer_average(rve.phases[n].geometry) for n in inclusion_phase_names(rve))
+    all(has_layer_average(rve.phases[n].geometry) for n in rve.phase_names)
 
 """
     _phase_voigt_property(rve, name, prop, ref) -> AbstractTens
@@ -393,11 +393,10 @@ function _phase_dilute_and_contribution(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
-    a = rve.amounts[name]
     A_raw, N_raw = MFH_Core.loc_and_stiffness(geom, P_i, P₀_proj; kw...)
     return (
         _apply_symmetrize(A_raw, sym),
-        scale_by_amount(a, _apply_symmetrize(N_raw, sym)),
+        volume_fraction(rve, name) * _apply_symmetrize(N_raw, sym),
     )
 end
 
@@ -409,11 +408,10 @@ function _phase_dilute_and_contribution(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
-    a = rve.amounts[name]
     A_raw, N_raw = MFH_Core.loc_and_stiffness(geom, P_i, P₀_proj; kw...)
     return (
         _apply_symmetrize(A_raw, sym),
-        scale_by_amount(a, _apply_symmetrize(N_raw, sym)),
+        volume_fraction(rve, name) * _apply_symmetrize(N_raw, sym),
     )
 end
 

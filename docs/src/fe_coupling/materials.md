@@ -31,8 +31,8 @@ safe.
 using MeanFieldHomogenization, TensND
 
 C₀ = TensISO{3}(3 * 30.0, 2 * 18.0)          # matrix: k = 30, μ = 18
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C₀))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 90.0, 2 * 60.0));
            fraction = 0.2)
 

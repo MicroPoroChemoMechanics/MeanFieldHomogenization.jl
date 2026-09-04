@@ -105,7 +105,7 @@ No additional registry is required: every dependency (`TensND.jl`,
 `OrdinaryDiffEq.jl`, `Elliptic.jl`, `Polynomials.jl`, `PolynomialRoots.jl`,
 `QuadGK.jl`, `Tensors.jl`, …) resolves from General as well.
 
-Seven package extensions activate on weak dependencies, each optional:
+Nine package extensions activate on weak dependencies, each optional:
 
 - [`DECUHR.jl`](https://github.com/MicroPoroChemoMechanics/DECUHR.jl) +
   `Integrals.jl` — adaptive cubature backend (`method = :decuhr`); the
@@ -116,6 +116,13 @@ Seven package extensions activate on weak dependencies, each optional:
   instead of the built-in Anderson/Newton iteration, with exact
   `ForwardDiff` sensitivities through the fixed point either way.
 - `SymPy.jl` — symbolic closed forms for the elliptic integrals.
+- `Symbolics.jl` — the same, for `Symbolics.Num`: the elliptic integrals are
+  registered as opaque symbolic calls, so an expression stays readable instead
+  of unrolling sixty nested `sqrt` of the generic AGM recursion.
+- `MittagLeffler.jl` — closed-form time-domain values for the fractional
+  rheological models. Not an enabler: without it their Laplace-Carson
+  transforms are elementary and the numerical inversion covers the time domain
+  to about `1e-12`; the extension sharpens that and cross-checks it.
 - `Ferrite.jl` + `FerriteGmsh.jl` + `Gmsh.jl` — the reference finite-element
   backend, serving both `FEEllipticCrack` and `FEExcenteredSphere`.
 - `Gridap.jl` + `GridapGmsh.jl` — a second backend, serving both morphologies
@@ -151,8 +158,8 @@ K₀ = TensISO{3}(5.0)
 P_cond = hill_tensor(Ellipsoid(1.0), K₀)
 
 # A porous material, 30 % spherical voids, through every scheme
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => iso_stiffness(90.0, 30.0)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(90.0, 30.0)); fraction = :rest)
 add_phase!(rve, :V, Ellipsoid(1.0), Dict(:C => iso_stiffness(0.01, 0.005)); fraction = 0.3)
 
 for scheme in (Voigt(), Reuss(), MoriTanaka(), DiluteDual(),

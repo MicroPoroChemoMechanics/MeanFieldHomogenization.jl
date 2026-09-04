@@ -46,8 +46,11 @@ gr()
 # memoizes it for the duration of the call.
 
 function build_foam()
-    rve = RVE(:GEL)
-    add_matrix!(rve, Spheroid(1.0), Dict(:C => iso_stiffness(20.0, 9.0)))
+    rve = RVE()
+    add_phase!(
+        rve, :GEL, Spheroid(1.0), Dict(:C => iso_stiffness(20.0, 9.0));
+        fraction = :rest
+    )
     add_phase!(
         rve, :GELPORE, Spheroid(1.0), Dict(:C => iso_stiffness(1.0e-6, 1.0e-6));
         fraction = 0.28
@@ -56,8 +59,11 @@ function build_foam()
 end
 
 function build_paste()
-    rve = RVE(:FOAM)
-    add_matrix!(rve, Spheroid(1.0), Dict(:C => Homogenized(build_foam(), SelfConsistent())))
+    rve = RVE()
+    add_phase!(
+        rve, :FOAM, Spheroid(1.0), Dict(:C => Homogenized(build_foam(), SelfConsistent()));
+        fraction = :rest
+    )
     add_phase!(
         rve, :CLINKER, Spheroid(1.0), Dict(:C => iso_stiffness(112.0, 50.0));
         fraction = 0.15
@@ -145,7 +151,7 @@ Deleting it costs nothing but a best-effort re-reading of the code.
    "phases": [
     {
      "amount": 0.1,
-     "amount_kind": "fraction",
+     "amount_kind": "rest",
      "geometry": {
       "args": {
        "omega": 1.0
@@ -154,7 +160,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
       "kind": "spheroid",
       "layers": []
      },
-     "is_matrix": true,
      "name": "GEL",
      "properties": [
       {
@@ -187,7 +192,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
       "kind": "spheroid",
       "layers": []
      },
-     "is_matrix": false,
      "name": "GELPORE",
      "properties": [
       {
@@ -234,7 +238,7 @@ Deleting it costs nothing but a best-effort re-reading of the code.
    "phases": [
     {
      "amount": 0.1,
-     "amount_kind": "fraction",
+     "amount_kind": "rest",
      "geometry": {
       "args": {
        "omega": 1.0
@@ -243,7 +247,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
       "kind": "spheroid",
       "layers": []
      },
-     "is_matrix": true,
      "name": "FOAM",
      "properties": [
       {
@@ -276,7 +279,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
       "kind": "spheroid",
       "layers": []
      },
-     "is_matrix": false,
      "name": "CLINKER",
      "properties": [
       {

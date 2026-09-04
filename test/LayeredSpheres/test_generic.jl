@@ -3,6 +3,8 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
+using SymPy   # top level on purpose: `@syms` below is expanded before any
+# `using` nested in a @testset body would have run.
 
 # =============================================================================
 #  Type-genericity tests for LayeredSphere: ForwardDiff.Dual + Sym.
@@ -37,7 +39,6 @@ end
 end
 
 @testset "LayeredSphere — Symbolic (SymPy) bulk single-layer" begin
-    using SymPy
     @syms kk0 mm0 kk1 mm1
     C₀ = TensISO{3}(3 * kk0, 2 * mm0)
     C₁ = TensISO{3}(3 * kk1, 2 * mm1)
@@ -49,7 +50,6 @@ end
 end
 
 @testset "LayeredSphere — Symbolic conductivity single-layer" begin
-    using SymPy
     @syms ka kb
     s = LayeredSphere((Sym(1),), (TensISO{3}(kb),))
     α_sym = MeanFieldHomogenization.LayeredSpheres._cond_localization(s, ka)[1]

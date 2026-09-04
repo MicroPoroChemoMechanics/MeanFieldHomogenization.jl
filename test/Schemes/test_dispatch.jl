@@ -69,14 +69,14 @@ end
     @test MeanFieldHomogenization.Schemes.SCHEME_ALIAS[:PCW] === PonteCastanedaWillis
 
     # Unknown alias raises a clear error
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     @test_throws ArgumentError homogenize(rve, :bogus)
 end
 
 @testset "homogenize — unknown Symbol fallback" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     @test_throws ArgumentError homogenize(rve, :not_a_scheme)
     @test_throws ArgumentError homogenize(rve, :foobar)
 end

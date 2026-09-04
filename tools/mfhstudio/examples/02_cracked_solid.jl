@@ -39,8 +39,11 @@ using Plots
 gr()
 
 function build_rve()
-    rve = RVE(:SOLID)
-    add_matrix!(rve, Spheroid(1.0), Dict(:C => iso_stiffness(72.0, 32.0)))
+    rve = RVE()
+    add_phase!(
+        rve, :SOLID, Spheroid(1.0), Dict(:C => iso_stiffness(72.0, 32.0));
+        fraction = :rest
+    )
     add_phase!(
         rve, :CRACKS, PennyCrack(1.0), Dict(:C => iso_stiffness(1.0e-6, 1.0e-6));
         density = 0.1, symmetrize = IsoSymmetrize()
@@ -129,7 +132,7 @@ Deleting it costs nothing but a best-effort re-reading of the code.
    "phases": [
     {
      "amount": 0.1,
-     "amount_kind": "fraction",
+     "amount_kind": "rest",
      "geometry": {
       "args": {
        "omega": 1.0
@@ -138,7 +141,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
       "kind": "spheroid",
       "layers": []
      },
-     "is_matrix": true,
      "name": "SOLID",
      "properties": [
       {
@@ -171,7 +173,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
       "kind": "penny_crack",
       "layers": []
      },
-     "is_matrix": false,
      "name": "CRACKS",
      "properties": [
       {

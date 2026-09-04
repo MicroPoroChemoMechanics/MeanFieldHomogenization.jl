@@ -56,8 +56,8 @@ end
     C_I_0 = visco_eval(law_I, t_0, t_0)
 
     build(prop_M, prop_I) = let
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => prop_M))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => prop_M); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => prop_I);
             fraction = f_I
@@ -85,8 +85,8 @@ end
     times = [t_0, 0.9]
 
     build(prop_M, prop_I) = let
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => prop_M))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => prop_M); fraction = :rest)
         add_phase!(
             rve, :I, Spheroid(0.2), Dict(:C => prop_I);
             fraction = 0.15, symmetrize = :iso
@@ -116,8 +116,8 @@ end
     C_M_0 = visco_eval(law_M, t_0, t_0)
 
     build(prop) = let
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => prop))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => prop); fraction = :rest)
         add_phase!(
             rve, :CRACK, PennyCrack(1.0), Dict(:C => prop);
             density = ε, symmetrize = :iso
@@ -148,8 +148,8 @@ end
     times = [t_0, 1.0, 1.7]
 
     build(prop_M, prop_I) = let
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => prop_M))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => prop_M); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => prop_I);
             fraction = 0.3
@@ -204,11 +204,8 @@ end
     layer_glassy(t, t_set) = t ≥ t_set ? C_1 : C_p
 
     build_whole(t; elastic) = let
-        rve = RVE(:M)
-        add_matrix!(
-            rve, Ellipsoid(1.0, 1.0, 1.0),
-            Dict(:C => elastic ? visco_eval(law_M, t, t) : law_M)
-        )
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => elastic ? visco_eval(law_M, t, t) : law_M); fraction = :rest)
         add_phase!(
             rve, :PORE, Ellipsoid(1.0, 1.0, 1.0),
             Dict(:C => elastic ? C_p : heaviside_law(C_p)); fraction = fp
@@ -225,11 +222,8 @@ end
     end
 
     build_layers(t; elastic) = let
-        rve = RVE(:M)
-        add_matrix!(
-            rve, Ellipsoid(1.0, 1.0, 1.0),
-            Dict(:C => elastic ? visco_eval(law_M, t, t) : law_M)
-        )
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => elastic ? visco_eval(law_M, t, t) : law_M); fraction = :rest)
         cumulative = cumsum(vcat([fp], fill(finf / N, N)))
         radii = ntuple(k -> cumulative[k]^(1 / 3), N + 1)
         moduli = ntuple(N + 1) do k

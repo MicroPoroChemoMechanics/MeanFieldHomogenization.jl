@@ -35,15 +35,15 @@ const RTOL_SC = 1.0e-8
 
 @testset "SelfConsistent — sanity (single-phase)" begin
     C_m = TensISO{3}(30.0, 10.0)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     @test homogenize(rve, SelfConsistent()) ≈ C_m
     @test homogenize(rve, AsymmetricSelfConsistent()) ≈ C_m
 end
 
 @testset "SelfConsistent — bracketed by Voigt/Reuss" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -56,8 +56,8 @@ end
 end
 
 @testset "SelfConsistent — fixed-point self-consistency" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -72,8 +72,8 @@ end
     # ASC ≡ SC here because BOTH phases are spheres, i.e. share one Hill
     # tensor — not because the stiffness form was selected. See the testset
     # "ASC ≡ SC iff every phase shares one Hill tensor" below.
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -84,8 +84,8 @@ end
 
 @testset "AsymmetricSelfConsistent — uses compliance form when matrix is stiff" begin
     # Soft inclusion in stiff matrix → ASC switches to compliance-form
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3.0, 1.0));
         fraction = 0.3
@@ -99,8 +99,8 @@ end
 end
 
 @testset "SelfConsistent — conductivity" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:K => TensISO{3}(2.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(2.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(8.0));
         fraction = 0.3
@@ -114,8 +114,8 @@ end
 @testset "SelfConsistent — ForwardDiff sensitivity to f" begin
     f_sc(f) = begin
         DT = typeof(f)
-        rve = RVE(:M; T = DT)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+        rve = RVE(; T = DT)
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
             fraction = f
@@ -131,8 +131,8 @@ end
     # Since v0.7.0 ForwardDiff is a strong dependency and the built-in
     # `NewtonDefault` SC solver ships with the package — quadratic
     # convergence on iso / TI / ortho canonical components.
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -143,15 +143,15 @@ end
 end
 
 @testset "SelfConsistent — NewtonDefault ForwardDiff sensitivity (non-matrix phase)" begin
-    # Regression test: `x0 = matrix_property(rve, p)` can stay `Float64`
+    # Regression test: a `Float64` seed can meet `Dual` phase properties
     # while `step(x0)` promotes to `Dual` internally, whenever the
     # differentiated parameter lives on a phase OTHER than the one `x0`
     # is built from (an inclusion modulus, or any volume fraction). This
     # used to crash `_solve_sc(::NewtonDefault, …)` (`Tref` was derived
     # from `eltype(p0)` alone); it must now match a central finite
     # difference for every such parameter.
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -168,14 +168,14 @@ end
     )
 
     function f_modulus(K_I)
-        r = RVE(:M)
-        add_matrix!(r, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
         add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(K_I, 20.0)); fraction = 0.3)
         return idxC(homogenize(r, SelfConsistent(; algorithm = NewtonDefault())))
     end
     function f_fraction(f)
-        r = RVE(:M)
-        add_matrix!(r, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
         add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0)); fraction = f)
         return idxC(homogenize(r, SelfConsistent(; algorithm = NewtonDefault())))
     end
@@ -188,8 +188,8 @@ end
 end
 
 @testset "SelfConsistent / ASC — Symbol shortcuts" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
@@ -224,8 +224,8 @@ end
     @test C_i isa TensND.TensTI{4, Float64, 5}
 
     function build(sym)
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(
             rve, :agg, Ellipsoid(1.0), Dict(:C => C_i);
             fraction = 0.3, symmetrize = sym
@@ -234,7 +234,7 @@ end
     end
 
     # The branch this test exists to cover.
-    @test MeanFieldHomogenization.Schemes._asc_use_stiffness(build(:iso), :C) == false
+    @test MeanFieldHomogenization.Schemes._asc_use_stiffness(build(:iso), :C, :M) == false
 
     tol = (abstol = 1.0e-13, maxiters = 600)
     C_asc = homogenize(build(:iso), AsymmetricSelfConsistent(; tol...), :C)
@@ -270,8 +270,8 @@ end
     tol = (abstol = 1.0e-13, maxiters = 800)
 
     function build(mshape, ishape; sym = :none)
-        r = RVE(:M)
-        add_matrix!(r, mshape, Dict(:C => C_m))
+        r = RVE()
+        add_phase!(r, :M, mshape, Dict(:C => C_m); fraction = :rest)
         add_phase!(r, :I, ishape, Dict(:C => C_i); fraction = 0.3, symmetrize = sym)
         return r
     end
@@ -280,9 +280,9 @@ end
     function sum_fA(rve, C)
         tot = zero(C)
         for name in keys(rve.phases)
-            f = name == rve.matrix_name ?
-                MeanFieldHomogenization.Schemes.matrix_volume_fraction(rve) :
-                MeanFieldHomogenization.Schemes.amount_value(rve.amounts[name])
+            # One accessor for every phase: the closure has already resolved
+            # the complement, so no phase needs a case of its own.
+            f = volume_fraction(rve, name)
             tot += f * MeanFieldHomogenization.Schemes._phase_dilute_concentration(rve, name, :C, C)
         end
         return tot

@@ -182,8 +182,8 @@ end
     # A scheme that needs a matrix must say so rather than dispatch elsewhere.
     @test_throws ErrorException homogenize(lam, MoriTanaka(), :C)
     # ... and symmetrically, `Laminated` on an RVE.
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => _ISO_L(2.0, 0.8)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => _ISO_L(2.0, 0.8)); fraction = :rest)
     @test_throws ErrorException homogenize(rve, Laminated(), :C)
 end
 

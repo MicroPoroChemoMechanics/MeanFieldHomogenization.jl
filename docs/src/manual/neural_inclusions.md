@@ -50,8 +50,8 @@ using MeanFieldHomogenization
 s = load_surrogate(model_path("spheroid_hill_iso_elastic"))
 incl = NeuralHillInclusion((1.0, 1.0, 0.4); elastic = s)     # an oblate spheroid, ω = 0.4
 
-rve = RVE(:m)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)))
+rve = RVE()
+add_phase!(rve, :m, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)); fraction = :rest)
 add_phase!(rve, :i, incl, Dict(:C => iso_stiffness(60.0, 20.0)); fraction = 0.2)
 homogenize(rve, MoriTanaka(), :C)
 ```

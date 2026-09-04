@@ -57,8 +57,8 @@ C_stiff = iso_stiffness(60.0, 20.0)
 C_soft = iso_stiffness(5.0, 2.0)
 
 function build(f_total)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => C_m))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(r, :STIFF, Ellipsoid(1.0), Dict(:C => C_stiff); fraction = f_total / 2)
     add_phase!(r, :SOFT, Ellipsoid(1.0), Dict(:C => C_soft); fraction = f_total / 2)
     return r
@@ -155,8 +155,8 @@ phase:
 
 ```@example tutdiff
 function cracked(ε)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => C_m))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(r, :CR, PennyCrack(1.0), Dict(:C => C_m); density = ε, symmetrize = :iso)
     return r
 end

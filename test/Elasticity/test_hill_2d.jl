@@ -5,20 +5,20 @@ using LinearAlgebra
 import MeanFieldHomogenization.Elasticity: _hill_2d_iso, _hill_2d_aniso
 
 # =============================================================================
-#  test_hill_2d.jl — tenseur de Hill 2D, forme fermée isotrope et quadrature
-#  anisotrope.
+#  test_hill_2d.jl — 2-D Hill tensor: isotropic closed form and anisotropic
+#  quadrature.
 #
-#  Les deux chemins sont atteints depuis le MÊME appel `hill_tensor(ell, C₀)` :
-#  `_hill_2d_iso` quand `C₀` est un `TensISO{4,2}`, `_hill_2d_aniso` sinon.
-#  Ils doivent donc coïncider quand `C₀` est isotrope mais stocké sous forme
-#  générique — c'est le verrou principal de ce fichier.
+#  Both paths are reached from the SAME `hill_tensor(ell, C₀)` call:
+#  `_hill_2d_iso` when `C₀` is a `TensISO{4,2}`, `_hill_2d_aniso` otherwise.
+#  They must therefore agree when `C₀` is isotropic but stored in the generic
+#  form — that agreement is what this file is mainly here to lock down.
 #
-#  Référence externe : Mura (1987) eq. 11.22, tenseur d'Eshelby du cylindre
-#  elliptique, avec P = S : C₀⁻¹.  Convention du paquet :
-#  C₀ = TensISO{2}(α, β), α = 3k, β = 2μ, déformation plane ⇒ ν = (α-β)/(2α).
+#  External reference: Mura (1987) eq. 11.22, Eshelby tensor of the elliptic
+#  cylinder, with P = S : C₀⁻¹.  Package convention:
+#  C₀ = TensISO{2}(α, β), α = 3k, β = 2μ, plane strain ⇒ ν = (α-β)/(2α).
 # =============================================================================
 
-# Même tenseur, exprimé en `Tens` générique : force le routage anisotrope.
+# The same tensor as a generic `Tens`: forces the anisotropic routing.
 function _as_generic(C)
     A = zeros(2, 2, 2, 2)
     for i in 1:2, j in 1:2, p in 1:2, q in 1:2
@@ -27,8 +27,8 @@ function _as_generic(C)
     return TensND.Tens(A)
 end
 
-# Mura (1987) eq. 11.22 — cylindre elliptique, demi-axes (a, b), déformation
-# plane, coefficient de Poisson ν.
+# Mura (1987) eq. 11.22 — elliptic cylinder, semi-axes (a, b), plane strain,
+# Poisson's ratio ν.
 function _mura_S(a, b, nu)
     s = 1 / (2 * (1 - nu))
     ab = (a + b)^2
@@ -57,7 +57,7 @@ end
 
 _maxdiff(P, Q) = maximum(abs(P[i, j, p, q] - Q[i, j, p, q]) for i in 1:2, j in 1:2, p in 1:2, q in 1:2)
 
-@testset "hill 2D — forme fermée isotrope vs Mura (1987)" begin
+@testset "hill 2D — isotropic closed form vs Mura (1987)" begin
     for (k, mu) in ((5.0, 2.0), (1.0, 1.0), (10.0, 0.5), (0.5, 4.0))
         for rho in (1.0, 0.8, 0.5, 0.2)
             ell = Ellipsoid(1.0, rho)
@@ -75,11 +75,11 @@ end
     end
 end
 
-@testset "hill 2D — les deux chemins coïncident sur le même C₀" begin
-    # Régression : la forme fermée `_hill_2d_iso` et la quadrature générale
-    # `_hill_2d_aniso` partent du même appel `hill_tensor` et doivent donner
-    # le même tenseur.  Elles divergeaient de ~1e-2 avant correction de la
-    # forme fermée.
+@testset "hill 2D — both paths agree on the same C₀" begin
+    # Regression: the `_hill_2d_iso` closed form and the general
+    # `_hill_2d_aniso` quadrature start from the same `hill_tensor` call and
+    # must return the same tensor.  They differed by ~1e-2 before the closed
+    # form was fixed.
     for (k, mu) in ((5.0, 2.0), (2.0, 3.0), (10.0, 0.5)), rho in (1.0, 0.7, 0.4)
         ell = Ellipsoid(1.0, rho)
         C = TensISO{2}(3k, 2mu)
@@ -87,10 +87,10 @@ end
     end
 end
 
-@testset "hill 2D — symétries et signe" begin
+@testset "hill 2D — symmetries and sign" begin
     for rho in (1.0, 0.6)
         P = hill_tensor(Ellipsoid(1.0, rho), TensISO{2}(15.0, 4.0))
-        # Symétrie majeure et symétries mineures.
+        # Major and minor symmetries.
         for i in 1:2, j in 1:2, p in 1:2, q in 1:2
             @test P[i, j, p, q] ≈ P[p, q, i, j] atol = 1.0e-12
             @test P[i, j, p, q] ≈ P[j, i, p, q] atol = 1.0e-12
@@ -112,10 +112,10 @@ end
             isfinite(P_inf[i, j, p, q])
                 for i in 1:2, j in 1:2, p in 1:2, q in 1:2
         )
-        # La branche `isinf` doit être la limite continue de la branche
-        # générale.
+        # The `isinf` branch must be the continuous limit of the general
+        # branch.
         @test _maxdiff(P_inf, P_big) < 1.0e-9
-        # Incompressibilité : la partie sphérique de P s'annule.
+        # Incompressibility: the spherical part of P vanishes.
         @test abs(P_inf[1, 1, 1, 1] + P_inf[1, 1, 2, 2]) < 1.0e-12
     end
 end
@@ -124,7 +124,7 @@ end
     k, mu = 5.0, 2.0
     P = hill_tensor(Ellipsoid(1.0, 1.0), TensISO{2}(3k, 2mu))
     @test P isa TensND.TensISO{4, 2}
-    # Valeurs propres fermées : P_J = 1/(3k+2μ), P_K = (3k+4μ)/(4μ(3k+2μ)).
+    # Closed-form eigenvalues: P_J = 1/(3k+2μ), P_K = (3k+4μ)/(4μ(3k+2μ)).
     PJ, PK = TensND.get_data(P)
     @test PJ ≈ 1 / (3k + 2mu)
     @test PK ≈ (3k + 4mu) / (4mu * (3k + 2mu))

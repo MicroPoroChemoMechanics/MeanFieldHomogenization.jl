@@ -20,8 +20,8 @@ using ForwardDiff
 using TensND
 using LinearAlgebra
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness(60.0, 20.0)); fraction = 0.2)
 
 idxC = C -> get_array(C)[1, 1, 1, 1]
@@ -55,8 +55,8 @@ closure and passing it to [`sensitivity`](@ref):
 
 ```@example tutsens
 f_eval = K_inc -> begin
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 30.0, 2 * 10.0)))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 30.0, 2 * 10.0)); fraction = :rest)
     add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(K_inc, 2 * 20.0)); fraction = 0.2)
     return idxC(homogenize(r, MoriTanaka()))
 end
@@ -90,8 +90,8 @@ k_i, μ_i = 40.0, 20.0
 bulk = C -> sum(get_array(C)[i, i, j, j] for i in 1:3, j in 1:3) / 9
 
 for f in (0.05, 0.1, 0.2, 0.3, 0.4)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => iso_stiffness(k_m, μ_m)))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(k_m, μ_m)); fraction = :rest)
     add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness(k_i, μ_i)); fraction = f)
     ∂_ad = derivative(r, MoriTanaka(), amount(:I); indexer = bulk)
     D = ζm + (1 - f) * Δk

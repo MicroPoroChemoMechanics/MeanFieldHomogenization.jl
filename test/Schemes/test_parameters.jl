@@ -1,9 +1,9 @@
 # =============================================================================
-#  test_parameters.jl — Lentilles paramétriques (get_param / set_param).
+#  test_parameters.jl — parameter lenses (get_param / set_param).
 #
-#  Vérifie le round-trip get_param ∘ set_param sur chaque sous-type
-#  d'AbstractParameter, la promotion correcte du type d'élément du RVE,
-#  et l'absence de mutation de l'instance d'origine.
+#  Checks the get_param ∘ set_param round trip on every AbstractParameter
+#  subtype, the correct promotion of the RVE's element type, and that the
+#  original instance is left unmutated.
 # =============================================================================
 
 using Test
@@ -12,8 +12,8 @@ using TensND
 using ForwardDiff
 
 @testset "AmountParameter — round-trip & type promotion" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.2
@@ -37,33 +37,33 @@ using ForwardDiff
     @test get_param(rve2, p_f) ≈ 0.3
     @test eltype(rve2) === Float64
     # The cached matrix fraction must follow (it is a field, not a recomputation)
-    @test matrix_volume_fraction(rve2) ≈ 0.7
+    @test remainder_volume_fraction(rve2) ≈ 0.7
 
     # set_param promotes amount eltype to Dual when value is Dual
     dx = ForwardDiff.Dual{Nothing, Float64, 1}(0.2, ForwardDiff.Partials((1.0,)))
     rve3 = set_param(rve, p_f, dx)
     @test eltype(rve3) <: ForwardDiff.Dual
-    @test matrix_volume_fraction(rve3) isa ForwardDiff.Dual
-    @test ForwardDiff.partials(matrix_volume_fraction(rve3))[1] ≈ -1.0
+    @test remainder_volume_fraction(rve3) isa ForwardDiff.Dual
+    @test ForwardDiff.partials(remainder_volume_fraction(rve3))[1] ≈ -1.0
 
     # CrackDensity is preserved as CrackDensity, not VolumeFraction
     rve4 = set_param(rve, p_e, 0.15)
     @test get_param(rve4, p_e) ≈ 0.15
     @test rve4.amounts[:C] isa CrackDensity
     # A crack density does not enter the unit sum, so the cache is unchanged
-    @test matrix_volume_fraction(rve4) ≈ 0.8
+    @test remainder_volume_fraction(rve4) ≈ 0.8
 
     # Original is untouched (no mutation)
     @test get_param(rve, p_f) ≈ 0.2
-    @test matrix_volume_fraction(rve) ≈ 0.8
+    @test remainder_volume_fraction(rve) ≈ 0.8
 
     # Setting matrix amount must error
     @test_throws ArgumentError set_param(rve, p_M, 0.5)
 end
 
 @testset "PropertyParameter — TensISO selectors" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.2
@@ -87,8 +87,8 @@ end
 end
 
 @testset "PropertyParameter — error on unknown selector" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.2
@@ -99,11 +99,8 @@ end
 end
 
 @testset "GeometryParameter — Ellipsoid semi_axes" begin
-    rve = RVE(:M)
-    add_matrix!(
-        rve, Ellipsoid(2.0, 1.5, 1.0),
-        Dict(:C => TensISO{3}(30.0, 10.0))
-    )
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(2.0, 1.5, 1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, 0.5),
         Dict(:C => TensISO{3}(60.0, 20.0)); fraction = 0.2
@@ -134,8 +131,8 @@ end
     # shape's* answer. A sphere whose third axis is set to 0.2 must become
     # oblate and homogenize as such.
     mk(geom) = begin
-        r = RVE(:SOLID)
-        add_matrix!(r, Spheroid(1.0), Dict(:C => iso_stiffness(72.0, 32.0)))
+        r = RVE()
+        add_phase!(r, :SOLID, Spheroid(1.0), Dict(:C => iso_stiffness(72.0, 32.0)); fraction = :rest)
         add_phase!(
             r, :PORE, geom, Dict(:C => iso_stiffness(1.0e-6, 1.0e-6));
             fraction = 0.1
@@ -165,8 +162,8 @@ end
 
 @testset "DistributionShapeParameter — UniformDistribution(Ellipsoid)" begin
     shape = Ellipsoid(2.0, 1.0, 0.5)
-    rve = RVE(:M; distribution_shape = shape)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE(; distribution_shape = shape)
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.2
@@ -183,8 +180,8 @@ end
 end
 
 @testset "_set_many — batch composition" begin
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.2

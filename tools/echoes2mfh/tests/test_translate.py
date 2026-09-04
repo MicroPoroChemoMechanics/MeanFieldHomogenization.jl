@@ -47,8 +47,10 @@ def Chom(f):
 def test_rve_becomes_a_builder():
     out = translate(PROUS)
     assert "function build_ver(f)" in out
-    assert "rve = RVE(:SOLID)" in out
-    assert "add_matrix!(rve, Spheroid(1.0), Dict(:C => Cs)" in out
+    assert "rve = RVE()" in out
+    # Wrapped by the 92-column emitter, so assert on the pieces.
+    assert "rve, :SOLID, Spheroid(1.0), Dict(:C => Cs);" in out
+    assert "fraction = :rest, symmetrize = IsoSymmetrize()" in out
     assert "fraction = f" in out
 
 
@@ -401,7 +403,7 @@ ver=rvec(matrix="M")
 ver["M"]=ellipsoidc(shape=spherical,prop={"C":stiff_kmu(1.,1.)})
 """
     out = translate(src)
-    assert "RVE(:M; T = ComplexF64)" in out
+    assert "RVE(; T = ComplexF64)" in out
 
 
 def test_complex_suffix_drops_on_constructors():

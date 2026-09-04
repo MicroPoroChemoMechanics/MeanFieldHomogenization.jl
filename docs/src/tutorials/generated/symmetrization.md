@@ -82,8 +82,8 @@ tilted-needle phase. The exact average is what the scheme kernels use.
 
 ````@example symmetrization
 function homogenise_with(symmode)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C₀))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
     add_phase!(
         rve, :I, incl, Dict(:C => C₁);
         fraction = 0.2, symmetrize = symmode

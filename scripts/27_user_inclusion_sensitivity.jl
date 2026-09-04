@@ -65,8 +65,8 @@ println("="^78)
 println("MeanFieldHomogenization — sensitivity on a user-defined inclusion type (MyBlob)")
 println("="^78)
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
 add_phase!(
     rve, :B, MyBlob(1.0, 0.2, basis),
     Dict(:C => TensISO{3}(60.0, 20.0));
@@ -85,8 +85,8 @@ const idxC = C -> get_array(C)[1, 1, 1, 1]
 
 # ── (3) Cross-check via finite differences ─────────────────────────────────
 function f_eval_e(de)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         r, :B, MyBlob(1.0, 0.2 + de, basis),
         Dict(:C => TensISO{3}(60.0, 20.0));
@@ -110,8 +110,8 @@ println("\n[4] gradient on [f_B, radius, eccentricity] :")
 # ── (5) sensitivity() with a fully user-defined closure ───────────────────
 println("\n[5] sensitivity(closure) on a composite parameter (radius and eccentricity):")
 f_composed = α -> begin
-    r2 = RVE(:M)
-    add_matrix!(r2, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    r2 = RVE()
+    add_phase!(r2, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         r2, :B, MyBlob(α, α / 5, basis),
         Dict(:C => TensISO{3}(60.0, 20.0));

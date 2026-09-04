@@ -90,8 +90,8 @@ const F_INCL = 0.3
 
 function mu_frequency(ω)
     p = im * ω
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_MATRIX, p)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_MATRIX, p)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_INCL, p));
         fraction = F_INCL
@@ -121,8 +121,8 @@ end
 # ``2\mu^{\hom}(t_i)`` directly.
 
 function mu_relaxation(times)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => ViscoLaw(Z_MATRIX)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => ViscoLaw(Z_MATRIX)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => ViscoLaw(Z_INCL));
         fraction = F_INCL
@@ -228,8 +228,8 @@ end
 # `t = 7` to get there.
 
 function cell_lc(p)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_MATRIX, p)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_MATRIX, p)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(Z_INCL, p));
         fraction = F_INCL

@@ -52,8 +52,8 @@ end
 const C_INC = TensISO{3}(3 * 10.0, 2 * 4.0)
 
 function build_rve_base(f::Real)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => build_law_M(1.0, 1.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => build_law_M(1.0, 1.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0),
         Dict(:C => heaviside_law(C_INC));
@@ -104,8 +104,8 @@ end
 # and the whole Volterra assembly follows.
 
 function eff_mu_vs_μM(μ_M::Real)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => build_law_M(1.0, μ_M)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => build_law_M(1.0, μ_M)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(C_INC));
         fraction = 0.2
@@ -127,8 +127,8 @@ dμ_dμM_FD = (eff_mu_vs_μM(μM₀ + h) - eff_mu_vs_μM(μM₀ - h)) / (2h)
 
 function eff_mu_vs_fkμ(p::AbstractVector)
     f, k_M, μ_M = p
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => build_law_M(k_M, μ_M)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => build_law_M(k_M, μ_M)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(C_INC));
         fraction = 0.2
@@ -159,8 +159,8 @@ end
 # anyway.
 
 function eff_mu_vs_τK(τ_K::Real)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => build_law_M(1.0, 1.0, τ_K, 0.5)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => build_law_M(1.0, 1.0, τ_K, 0.5)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(C_INC));
         fraction = 0.2

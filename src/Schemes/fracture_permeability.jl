@@ -115,19 +115,25 @@ _as_conductivity_tensor(k::Number) = TensND.TensISO{3}(k)
 _as_conductivity_tensor(K::TensND.AbstractTens{2, 3}) = K
 
 """
-    fracture_permeability(rve::RVE; property = :K, kw...) -> Tens{2,3}
+    fracture_permeability(rve::RVE; solid = nothing, property = :K, kw...) -> Tens{2,3}
 
-[`fracture_permeability`](@ref) reading the matrix conductivity, the
+[`fracture_permeability`](@ref) reading the solid conductivity, the
 [`ConductiveCrack`](@ref MeanFieldHomogenization.Cracks.ConductiveCrack) families and their densities straight off an
 [`RVE`](@ref).
 
 Phases that are not conductive cracks are ignored — a fracture network model has
 no use for them, and silently folding them in would be worse than saying so.
+
+`solid` names the phase that plays the intact skeleton; left unset, it is the
+phase absorbing the volume complement.
 """
-function fracture_permeability(rve::RVE; property::Symbol = :K, kw...)
-    K_s = matrix_property(rve, property)
+function fracture_permeability(
+        rve::RVE; solid::Union{Nothing, Symbol} = nothing, property::Symbol = :K, kw...
+    )
+    s = host_phase_name(rve, solid, "fracture_permeability")
+    K_s = phase_property(rve, s, property)
     cracks, densities = Any[], Any[]
-    for name in inclusion_phase_names(rve)
+    for name in inclusion_phase_names(rve, s)
         geom = rve.phases[name].geometry
         geom isa Cracks.ConductiveCrack || continue
         push!(cracks, geom)

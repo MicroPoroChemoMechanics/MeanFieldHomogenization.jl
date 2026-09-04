@@ -242,7 +242,9 @@ export spheroid_state_sequence, spheroid_ba_ratios, get_layer
 export ell_K, ell_E, ell_F, ell_RF, ell_RD
 
 # ── Schemes : RVE + amounts + distribution shape + symmetrize ───────────────
-export AbstractAmount, VolumeFraction, CrackDensity
+export AbstractAmount, VolumeFraction, CrackDensity, Remainder
+export AbstractFractionClosure, StrictFractions, ComplementFraction, RescaledFractions
+export remainder_phase_name, remainder_volume_fraction, phase_names
 export AbstractDistributionShape, UniformDistribution
 export AbstractSymmetrize, NoSymmetrize, IsoSymmetrize, TISymmetrize
 export isotropify, transverse_isotropify
@@ -250,10 +252,10 @@ export ti_average_mandel66, iso_average_mandel66
 export best_fit_ti, best_fit_iso, best_fit_ortho
 export polar_orientation_bins
 export Phase, RVE
-export add_matrix!, add_phase!
-export matrix_phase, inclusion_phase_names
-export phase_property, phase_property_raw, matrix_property
-export volume_fraction, crack_density, matrix_volume_fraction
+export add_phase!
+export inclusion_phase_names
+export phase_property, phase_property_raw
+export volume_fraction, crack_density
 export phase_symmetrize
 export validate_rve, promote_rve
 
@@ -284,7 +286,8 @@ export ThicknessParameter, InterfaceParameter, thickness, interface_param
 # ── Assemblies : the positional cell of the N-body schemes ──────────────────
 export ParticleAssembly, Particle
 export AbstractAssemblyBoundary, MixedBC, PeriodicBox
-export add_particle!
+export add_matrix!, add_particle!
+export matrix_property, matrix_volume_fraction
 export particle_names, particle, particle_center, particle_geometry
 export particle_property, particle_family, family_labels
 export particle_volume, particle_volume_fraction, inclusion_volume_fraction

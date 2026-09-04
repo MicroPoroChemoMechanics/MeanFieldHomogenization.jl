@@ -16,19 +16,20 @@ using LinearAlgebra
 using Plots
 gr()  # headless backend; GKSwstype is set to "100" in make.jl
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness(60.0, 20.0)); fraction = 0.2)
 rve
 ```
 
-`RVE(:M)` creates an empty container named after its matrix phase
-(`:M` here — any `Symbol` works). [`add_matrix!`](@ref) and
-[`add_phase!`](@ref) then attach a **geometry** (here `Ellipsoid(1.0)`,
-a unit sphere) and a **property dictionary** to each phase. The
-inclusion additionally carries a **volume fraction** — `fraction = 0.2`
-means 20 % of the RVE by volume, the matrix implicitly filling the
-rest.
+`RVE()` creates an empty container; [`add_phase!`](@ref) then attaches a
+**geometry** (here `Ellipsoid(1.0)`, a unit sphere), a **property dictionary**
+and an **amount** to each phase. `fraction = 0.2` means 20 % of the RVE by
+volume; `fraction = :rest` means "whatever the others leave", here 80 %.
+
+Note that nothing so far says which phase is a matrix — that is the scheme's
+to decide, and `MoriTanaka()` below takes the `:rest` phase because it is the
+only candidate. See [Who is the matrix?](@ref man-who-is-the-matrix).
 
 ### A storage convention worth knowing
 
@@ -96,8 +97,8 @@ k_mt, _ = k_mu(homogenize(rve, MoriTanaka(), :C))
 
 ```@example tut1st
 function build(f)
-    r = RVE(:M)
-    add_matrix!(r, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)); fraction = :rest)
     add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness(60.0, 20.0)); fraction = f)
     return r
 end

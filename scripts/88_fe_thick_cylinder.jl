@@ -82,8 +82,8 @@ const C_MATRIX = TensISO{3}(3 * 30.0, 2 * 18.0)        # k = 30 GPa, μ = 18 GPa
 
 "Stiff spherical inclusions — an isotropic composite, so Lamé applies."
 function composite_rve(f = 0.25)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_MATRIX))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_MATRIX); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 120.0, 2 * 80.0));
         fraction = f
@@ -93,8 +93,8 @@ end
 
 "Two crack families, normal to `e₁` and `e₂`, which close under compression."
 function cracked_rve(d = 0.15)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_MATRIX))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_MATRIX); fraction = :rest)
     add_phase!(
         rve, :Fx, PennyCrack(1.0; euler_angles = (π / 2, 0.0)),
         Dict(:C => C_MATRIX); density = d

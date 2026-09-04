@@ -57,8 +57,8 @@ const MU_F = 1.0e-9                                # fluid viscosity, MPa·s
 "The two vertical fracture families of Table 2, dip 90°, azimuths 22.5°/157.5°."
 function welltest_rve(conductivity = COND0)
     props = Dict(:C => C_SOLID, :K => TensISO{3}(K_MATRIX))
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), props)
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), props; fraction = :rest)
     for (i, φ) in enumerate(AZIMUTH)
         add_phase!(
             rve, Symbol("F", i),

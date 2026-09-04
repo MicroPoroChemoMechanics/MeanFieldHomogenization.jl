@@ -41,8 +41,8 @@ p = plot(;
 for (sch, col, ls) in schemes
     ys = Float64[]
     for f in fs
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)); fraction = :rest)
         if f > 0
             add_phase!(
                 rve, :I, Ellipsoid(1.0),
@@ -65,8 +65,8 @@ display(p)
 println("Saved : ", figpath)
 
 @printf("\nf = 0.30 :\n")
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_i, μ_i)); fraction = 0.3)
 for (sch, _, _) in schemes
     @printf("  %-30s : %.4f\n", string(typeof(sch).name.name), effective_bulk(rve, sch))

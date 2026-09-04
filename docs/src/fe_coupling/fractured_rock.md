@@ -22,8 +22,8 @@ using MeanFieldHomogenization, TensND
 C₀, kₛ, C_f = TensISO{3}(3 * 30.0, 2 * 18.0), 1.0e-18, 4.0e-18
 props = Dict(:C => C₀, :K => TensISO{3}(kₛ))
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), props)
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), props; fraction = :rest)
 add_phase!(rve, :F, ConductiveCrack(1.0; conductivity = C_f), props; density = 0.1)
 
 mat   = FracturedPoroelasticRock(rve, MoriTanaka(); ω₀ = (1.0e-3,), k_matrix = kₛ)

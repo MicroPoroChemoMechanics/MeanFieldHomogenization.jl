@@ -115,7 +115,8 @@ expressed in the **global** frame.
 sphere = CustomInclusion((1.0, 1.0, 1.0);
     hill_tensor = (C₀; kw...) -> hill_tensor(Ellipsoid(1.0, 1.0, 1.0), C₀; kw...))
 
-rve = RVE(:m, Dict(:C => iso_stiffness(10.0, 6.0)))
+rve = RVE()
+add_phase!(rve, :m, Ellipsoid(1.0), Dict(:C => iso_stiffness(10.0, 6.0)); fraction = :rest)
 add_phase!(rve, :i, sphere, Dict(:C => iso_stiffness(1.0, 0.5)); fraction = 0.2)
 homogenize(rve, MoriTanaka(), :C)
 ```

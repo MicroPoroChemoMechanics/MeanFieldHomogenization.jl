@@ -21,7 +21,7 @@ flavor. A new scheme slots in beside them:
    `SCHEME_ALIAS` (`src/Schemes/homogenize.jl`) if you want
    `homogenize(rve, :myscheme, :C)` to work.
 3. Implement `_evaluate(rve, ::MyScheme, ::Val{p}; kw...)`. Provide **one
-   method per tensor order** — dispatch on the order of `matrix_property(rve, p)`
+   method per tensor order** — dispatch on the order of `reference_property(rve, scheme, p)`
    — so the scheme serves elasticity and transport from one implementation, as
    `_mt_dispatch` does in `mori_tanaka.jl`.
 4. **Go through `contribution_helpers.jl`.** Never call

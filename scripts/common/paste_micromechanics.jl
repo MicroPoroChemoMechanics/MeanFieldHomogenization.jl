@@ -142,8 +142,8 @@ function build_hydrates(f; T = _fT(f))
     total = sum(values(f_h))
     _val(total) > 0 || return nothing         # nothing has precipitated yet
 
-    rve = RVE(:SEED; T = T)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => _stiff("C-S-H", T)); symmetrize = :iso)
+    rve = RVE(; T = T)
+    add_phase!(rve, :PASTE, Ellipsoid(1.0), Dict(:C => _stiff("C-S-H", T)); fraction = :rest, symmetrize = :iso)
     for name in PASTE_HYDRATES
         frac = f_h[name] / total
         _val(frac) > 0 || continue
@@ -170,8 +170,8 @@ function build_foam(f, C_hyd; N::Int = NTHETA_PASTE, ω::Real = ω_hyd, K_water 
     _val(total) > 0 || error("the hydrate foam is empty")
 
     ez = (0.0, 0.0, 1.0)
-    rve = RVE(:SEED; T = T)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_hyd); symmetrize = :iso)
+    rve = RVE(; T = T)
+    add_phase!(rve, :PASTE, Ellipsoid(1.0), Dict(:C => C_hyd); fraction = :rest, symmetrize = :iso)
 
     for bin in polar_orientation_bins(N)
         add_phase!(
@@ -205,8 +205,8 @@ end
 # ── Scale 3: the cement paste, Mori-Tanaka on the foam ──────────────────────
 function build_paste(f, C_foam)
     T = promote_type(_fT(f), eltype(C_foam))
-    rve = RVE(:FOAM; T = T)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_foam))
+    rve = RVE(; T = T)
+    add_phase!(rve, :PASTE, Ellipsoid(1.0), Dict(:C => C_foam); fraction = :rest)
     for name in PASTE_INCLUSIONS
         frac = convert(T, get(f, name, 0.0))
         _val(frac) > 0 || continue
@@ -220,8 +220,8 @@ end
 # ── Scale 4: concrete, Mori-Tanaka on the paste ─────────────────────────────
 function build_concrete(C_paste, f_aggregate, f_air)
     T = eltype(C_paste)
-    rve = RVE(:PASTE; T = T)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_paste))
+    rve = RVE(; T = T)
+    add_phase!(rve, :PASTE, Ellipsoid(1.0), Dict(:C => C_paste); fraction = :rest)
     f_aggregate > 0 && add_phase!(
         rve, :AGG, Ellipsoid(1.0), Dict(:C => _stiff("aggregate")); fraction = f_aggregate
     )

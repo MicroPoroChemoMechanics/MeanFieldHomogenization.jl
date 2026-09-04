@@ -372,6 +372,10 @@ _promote_amount(a::VolumeFraction{T}, ::Type{Tnew}) where {T, Tnew} =
     VolumeFraction{Tnew}(convert(Tnew, a.value))
 _promote_amount(a::CrackDensity{T}, ::Type{Tnew}) where {T, Tnew} =
     CrackDensity{Tnew}(convert(Tnew, a.value))
+# A `Remainder` carries no value, hence no element type to promote: it stays
+# itself, and the fraction it stands for takes the element type of the sum it
+# is subtracted from.
+_promote_amount(a::Remainder, ::Type) = a
 
 """
     _rebuild_rve(rve; phases=rve.phases, amounts=rve.amounts,
@@ -405,12 +409,15 @@ function _rebuild_rve(
     # Property / geometry / distribution-shape lenses leave the amounts alone,
     # which is the common case under autodiff — carry the cached fraction over
     # instead of summing the dict again.
-    f_matrix = (new_amounts === rve.amounts && T === _declared_eltype(rve)) ?
-        rve.f_matrix : _compute_matrix_volume_fraction(new_amounts, T)
+    f_sum = (new_amounts === rve.amounts && T === _declared_eltype(rve)) ?
+        rve.f_sum : _compute_fraction_sum(new_amounts, T)
+    # `rest_name` always carries over: no lens changes the *type* of an amount
+    # (`set_param` preserves `VolumeFraction` / `CrackDensity` explicitly), so
+    # the phase absorbing the complement cannot move under one.
     return RVE{T, S}(
-        rve.matrix_name, copy(rve.phase_names),
+        copy(rve.phase_names),
         phases, new_amounts,
-        symmetrize, distribution_shape, f_matrix,
+        symmetrize, distribution_shape, rve.closure, rve.rest_name, f_sum,
     )
 end
 
@@ -442,22 +449,28 @@ end
 # ── AmountParameter ──────────────────────────────────────────────────────────
 
 function get_param(rve::RVE, p::AmountParameter)
-    p.phase === rve.matrix_name &&
-        return matrix_volume_fraction(rve)
     haskey(rve.amounts, p.phase) ||
         throw(ArgumentError("phase :$(p.phase) has no amount in RVE"))
-    return amount_value(rve.amounts[p.phase])
+    a = rve.amounts[p.phase]
+    # The complement has no declared value; its resolved one is the natural
+    # reading. Every other amount reports what was DECLARED, not what the
+    # closure resolves it to — this is the inverse of `set_param`, and under
+    # `RescaledFractions` the two differ (see `volume_fraction`).
+    a isa Remainder && return remainder_volume_fraction(rve)
+    return amount_value(a)
 end
 
 function set_param(rve::RVE, p::AmountParameter, value)
-    p.phase === rve.matrix_name && throw(
-        ArgumentError(
-            "matrix amount is implicit (1 - Σ f_inc); differentiate w.r.t. an inclusion amount instead"
-        )
-    )
     haskey(rve.amounts, p.phase) ||
         throw(ArgumentError("phase :$(p.phase) has no amount in RVE"))
     old = rve.amounts[p.phase]
+    old isa Remainder && throw(
+        ArgumentError(
+            "phase :$(p.phase) takes up the volume complement (1 - Σ f) and has no " *
+                "declared amount to differentiate; differentiate with respect to an " *
+                "explicit amount instead."
+        )
+    )
     v = _amount_promote(_declared_eltype(rve), value)
     new_amount = old isa VolumeFraction ? VolumeFraction(v) : CrackDensity(v)
     new_amounts = _amounts_with_replacement(rve.amounts, p.phase, new_amount)

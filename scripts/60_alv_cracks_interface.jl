@@ -137,8 +137,8 @@ const law_Rn = ViscoLaw(R_n_kernel, :relaxation)
 const law_Rt = ViscoLaw(R_t_kernel, :relaxation)
 
 function julia_creep_response(scheme)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => law_M))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
     add_phase!(
         rve, :CRACK, PennyCrack(1.0),
         Dict(:C => law_M, :Rn => law_Rn, :Rt => law_Rt);

@@ -69,6 +69,7 @@ mirroring the reference ASC form.  Returns the
 function asymmetric_self_consistent_alv(
         rve::RVE, prop::Symbol;
         times::AbstractVector{<:Real},
+        matrix::Union{Nothing, Symbol} = nothing,
         abstol::Real = 1.0e-10,
         reltol::Real = 1.0e-8,
         maxiters::Int = 200,
@@ -76,15 +77,16 @@ function asymmetric_self_consistent_alv(
         verbose::Bool = false,
         select_best::Bool = false
     )
-    C_M_law = matrix_property(rve, prop)
+    m = host_phase_name(rve, matrix, "asymmetric_self_consistent_alv")
+    C_M_law = phase_property(rve, m, prop)
     C_M_law isa ViscoLaw ||
         throw(ArgumentError("asymmetric_self_consistent_alv: matrix property is not a ViscoLaw"))
     C_M = _trapezoidal_relaxation(C_M_law, times, 6)
-    incl_names = inclusion_phase_names(rve)
+    incl_names = inclusion_phase_names(rve, m)
     # Eltype-generic containers (Dual-safe — see schemes_alv_sc.jl).
     C_phases = Matrix[]
     geometries = Any[]
-    fractions = typeof(matrix_volume_fraction(rve))[]   # eltype of the RVE amounts
+    fractions = typeof(volume_fraction(rve, m))[]   # eltype of the RVE amounts
     symmetrizes = AbstractSymmetrize[]
     crack_data = Tuple{
         Any, Any, AbstractSymmetrize,
@@ -306,6 +308,7 @@ otherwise instead of returning a wrong answer.
 function differential_alv(
         rve::RVE, prop::Symbol;
         times::AbstractVector{<:Real},
+        matrix::Union{Nothing, Symbol} = nothing,
         nsteps::Int = 100,
         trajectory = nothing,
         abstol::Real = 1.0e-8,
@@ -321,7 +324,8 @@ function differential_alv(
                 ":compliance; got :$(formulation)"
         )
     )
-    C_M_law = matrix_property(rve, prop)
+    m = host_phase_name(rve, matrix, "differential_alv")
+    C_M_law = phase_property(rve, m, prop)
     C_M_law isa ViscoLaw ||
         throw(ArgumentError("differential_alv: matrix property is not a ViscoLaw"))
     C_M_full = _trapezoidal_relaxation(C_M_law, times, 6)
@@ -339,7 +343,7 @@ function differential_alv(
     # Per-phase data : split solids vs cracks.
     solid_data = NamedTuple[]
     crack_data = NamedTuple[]
-    for name in inclusion_phase_names(rve)
+    for name in inclusion_phase_names(rve, m)
         ph = rve.phases[name]
         amt = rve.amounts[name]
         if amt isa Schemes.VolumeFraction
@@ -403,8 +407,8 @@ function differential_alv(
 
     # Trajectory : default proportional path.
     paths = trajectory === nothing ?
-        _resolve_paths_alv(Schemes.Proportional(), rve, nsteps) :
-        _resolve_paths_alv(trajectory, rve, nsteps)
+        _resolve_paths_alv(Schemes.Proportional(), rve, nsteps, m) :
+        _resolve_paths_alv(trajectory, rve, nsteps, m)
 
     # ODE state and parameters — the state carries the promoted eltype of
     # every input (Dual-safe, cf. `_alv_promoted_eltype`).
@@ -540,7 +544,7 @@ end
 #    `_resolve_paths` (which now returns callables, not vectors) ──────────────
 function _resolve_paths_alv(
         trajectory::Schemes.DifferentialTrajectory,
-        rve::RVE, nsteps::Int
+        rve::RVE, nsteps::Int, matrix::Symbol
     )
-    return Schemes._resolve_paths(trajectory, rve, nsteps)
+    return Schemes._resolve_paths(trajectory, rve, nsteps, matrix)
 end

@@ -161,8 +161,8 @@ if LAM_HAS_SYMBOLICS
         @test validate_laminate(lam) === lam
         @test isequal(Symbolics.simplify(laminate_period(lam) - 1), 0)
 
-        rve = RVE(:M; T = Symbolics.Num)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(3κ₁, 2μ₁)))
+        rve = RVE(; T = Symbolics.Num)
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3κ₁, 2μ₁)); fraction = :rest)
         add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3κ₂, 2μ₂)); fraction = f₁)
         @test MeanFieldHomogenization.Schemes.validate_rve(rve) === rve
     end

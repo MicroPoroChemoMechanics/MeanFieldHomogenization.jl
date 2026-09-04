@@ -103,8 +103,8 @@ end
     Zi = iso_rheology(zener_maxwell(8.0, 4.0, 0.3), zener_maxwell(5.0, 2.5, 0.4))
     f = 0.25
     function cell(p)
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => carson_relaxation(Zm, p)))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => carson_relaxation(Zm, p)); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(Zi, p)); fraction = f
         )
@@ -130,8 +130,8 @@ end
     Zi = iso_rheology(zener_maxwell(8.0, 4.0, 0.3), zener_maxwell(5.0, 2.5, 0.4))
     f = 0.25
     function cell(p)
-        rve = RVE(:M)
-        add_matrix!(rve, Ellipsoid(1.0), Dict(:C => carson_relaxation(Zm, p)))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => carson_relaxation(Zm, p)); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(Zi, p)); fraction = f
         )
@@ -157,8 +157,8 @@ end
     @test maximum(abs.(μ_talbot .- μ_gs) ./ μ_talbot) < 1.0e-4
 
     T = vcat(0.0, exp10.(range(-3, log10(12.0); length = 220)))
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => ViscoLaw(Zm)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => ViscoLaw(Zm)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => ViscoLaw(Zi)); fraction = f)
     Rt = homogenize_alv(rve, MoriTanaka(), :C; times = T)
     _, β = iso_params_from_blocks(Rt)
@@ -178,8 +178,8 @@ end
         Zi = iso_rheology(Spring(8.0), Spring(5.0))
         Zm = iso_rheology(m_k, m_μ)
         cell(p) = begin
-            rve = RVE{typeof(f)}(:M)
-            add_matrix!(rve, Ellipsoid(1.0), Dict(:C => carson_relaxation(Zm, p)))
+            rve = RVE{typeof(f)}()
+            add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => carson_relaxation(Zm, p)); fraction = :rest)
             add_phase!(
                 rve, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(Zi, p));
                 fraction = f

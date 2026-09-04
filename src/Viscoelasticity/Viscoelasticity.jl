@@ -60,9 +60,8 @@ using ..Schemes: RVE, HomogenizationScheme, Laminated, Voigt, Reuss, Dilute, Dil
     Proportional, Sequential, CustomPath, Path,
     UniformDistribution,
     AndersonDefault, NewtonDefault,
-    matrix_phase,
-    inclusion_phase_names, matrix_property, phase_property,
-    volume_fraction, matrix_volume_fraction,
+    inclusion_phase_names, phase_names, phase_property,
+    volume_fraction, matrix_name, host_phase_name,
     AbstractSymmetrize, NoSymmetrize, IsoSymmetrize, TISymmetrize,
     phase_symmetrize,
     VolumeFraction, CrackDensity, amount_value

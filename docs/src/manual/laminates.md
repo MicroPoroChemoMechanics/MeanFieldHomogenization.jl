@@ -322,8 +322,8 @@ declaratively with [`Homogenized`](@ref) — in either direction. See
 [Multiscale models](@ref man-multiscale).
 
 ```julia
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_matrix))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_matrix); fraction = :rest)
 add_phase!(rve, :agg, Ellipsoid(1.0),
            Dict(:C => Homogenized(lam, Laminated())); fraction = 0.3)
 homogenize(rve, MoriTanaka(), :C)

@@ -156,21 +156,21 @@ end
     C_eq = equivalent_particle(C_i, sph, κs, μs)
     @test get_array(C_eq) ≈ get_array(C_i) .+ get_array(surface_stiffness(sph, κs, μs)) rtol = 1.0e-14
 
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :nano, sph, Dict(:C => C_eq); fraction = f)
     C_nano = get_array(homogenize(rve, MoriTanaka(), :C))
 
-    rve0 = RVE(:M)
-    add_matrix!(rve0, Ellipsoid(1.0), Dict(:C => C_m))
+    rve0 = RVE()
+    add_phase!(rve0, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve0, :bulk, sph, Dict(:C => C_i); fraction = f)
     C_bulk = get_array(homogenize(rve0, MoriTanaka(), :C))
     # A positive surface energy stiffens the composite, and the effect is a
     # size effect: it must shrink as the particle grows.
     @test C_nano[1, 2, 1, 2] > C_bulk[1, 2, 1, 2]
     big = Ellipsoid(1.0)
-    rve1 = RVE(:M)
-    add_matrix!(rve1, Ellipsoid(1.0), Dict(:C => C_m))
+    rve1 = RVE()
+    add_phase!(rve1, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve1, :nano, big, Dict(:C => equivalent_particle(C_i, big, κs, μs)); fraction = f)
     C_big = get_array(homogenize(rve1, MoriTanaka(), :C))
     @test abs(C_big[1, 2, 1, 2] - C_bulk[1, 2, 1, 2]) <

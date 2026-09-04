@@ -16,7 +16,7 @@
 #    the global axis (echoes' per-bin `symmetrize=[TI]`), preserving the
 #    non-major-symmetric content of the concentration tensors
 #    (`TensTI{4,T,8}`), plus water and air.  The reference medium of each
-#    family is iso-projected (`matrix_projection = :iso` default), exact at
+#    family is iso-projected (`reference_projection = :iso` default), exact at
 #    the isotropic SC fixed point — echoes computes the per-bin localization
 #    in the converged iso `C_hf` in the same way.
 #  * Cement Paste (CP)  — Mori-Tanaka (HF matrix + clinker).
@@ -76,15 +76,11 @@ function build_hf(wc, α_p, μ_b0; N::Int = NTHETA, ω::Real = ω_aspect)
 
     T = typeof(μ_b0)
     ez = (0.0, 0.0, 1.0)
-    rve = RVE(:M; T = T)
+    rve = RVE(; T = T)
     # Zero-volume matrix phase = SC seed only (Σ inclusion fractions = 1).
     # `symmetrize = :iso` keeps its (weightless) localization on the
     # analytical iso branch whatever the running estimate's type.
-    add_matrix!(
-        rve, Ellipsoid(1.0),
-        Dict(:C => TensISO{3}(convert(T, 3 * K_hyd_ref), convert(T, 2 * μ_hyd_ref)));
-        symmetrize = :iso
-    )
+    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => TensISO{3}(convert(T, 3 * K_hyd_ref), convert(T, 2 * μ_hyd_ref))); fraction = :rest, symmetrize = :iso)
     for (i, bin) in enumerate(polar_orientation_bins(N))
         μ_h = i == 1 ? μ_b0 : convert(T, μ_hyd_ref)
         add_phase!(
@@ -115,8 +111,8 @@ end
 function build_cp(wc, α_p, C_hf::TensND.AbstractTens)
     fclin = f_clin(wc, α_p)
     T = eltype(C_hf)
-    rve = RVE(:HF; T = T)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_hf))
+    rve = RVE(; T = T)
+    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => C_hf); fraction = :rest)
     add_phase!(
         rve, :CLIN, Ellipsoid(1.0),
         Dict(:C => TensISO{3}(convert(T, 3 * K_clin), convert(T, 2 * μ_clin)));
@@ -129,8 +125,8 @@ end
 function build_mo(wc, sc, C_cp::TensND.AbstractTens)
     fsan = fh_san(wc, sc)
     T = eltype(C_cp)
-    rve = RVE(:CP; T = T)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_cp))
+    rve = RVE(; T = T)
+    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => C_cp); fraction = :rest)
     add_phase!(
         rve, :SAN, Ellipsoid(1.0),
         Dict(:C => TensISO{3}(convert(T, 3 * K_san), convert(T, 2 * μ_san)));

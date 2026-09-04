@@ -66,10 +66,61 @@ function _evaluate(rve::RVE, sc::SelfConsistent, ::Val{p}; kw...) where {p}
     # The eigenvalue guard `_sc_pd_guard` prevents the iteration
     # from collapsing to the trivial percolated fixed point at moderate
     # density.
-    P_init = matrix_property(rve, p)
+    P_init = _sc_initial(sc.init, rve, p; kw...)
     solver_kw, step_kw = _split_sc_kwargs(kw)
     step = C -> _sc_step(rve, C, p; step_kw...)
     return _solve_sc(sc.algorithm, step, P_init; sc.options..., solver_kw...)
+end
+
+"""
+    _sc_initial(init, rve, prop; kw...) -> AbstractTens
+
+Starting iterate of the self-consistent fixed point.
+
+The self-consistent morphology distinguishes no phase, so the seed cannot come
+from "the matrix" the way it did while an RVE was required to have one. It is
+stated on the scheme instead:
+
+- `:voigt` — the Voigt average of the phases. Always defined, positive definite
+  by construction, and it needs no phase to be singled out, which is what makes
+  a matrix-free RVE solvable at all.
+- `:reuss` — the Reuss average.
+- a phase name — that phase's property. This is what versions up to 0.7 used
+  implicitly through the matrix; pass it to reproduce an older number exactly.
+- a tensor — an explicit guess, the natural form when restarting from the
+  previous step of a constitutive loop.
+
+A phase named `:voigt` or `:reuss` wins over the keyword: a phase name is the
+caller's data, a keyword is ours.
+"""
+function _sc_initial(init::Symbol, rve::RVE, prop::Symbol; kw...)
+    haskey(rve.phases, init) && return phase_property(rve, init, prop)
+    init === :voigt && return _evaluate(rve, Voigt(), Val(prop); kw...)
+    init === :reuss && return _evaluate(rve, Reuss(), Val(prop); kw...)
+    throw(
+        ArgumentError(
+            "init = :$(init) names neither a phase of this RVE " *
+                "($(rve.phase_names)) nor one of :voigt, :reuss"
+        )
+    )
+end
+_sc_initial(init::TensND.AbstractTens, ::RVE, ::Symbol; kw...) = init
+# The default, and why it is what it is.
+#
+# `:voigt` is the seed that needs no phase to be singled out, and it is what
+# makes a matrix-free RVE solvable at all — so it is the fallback. It is not the
+# blanket default, because measuring it against the historical seed (the phase
+# taking up the complement, which is what the matrix used to be) showed no
+# advantage and one drawback: across a porous RVE at f ∈ {0.1, 0.3, 0.45, 0.6}
+# and a stiff one at f ∈ {0.1, 0.3, 0.5, 0.7} the two agree to 1e-9 or better,
+# and on a deeply percolated oblate configuration the Voigt start makes
+# `TrustRegion` stop where the finite-difference IFT Jacobian is exactly
+# singular, which the phase seed does not. Equivalent where it matters, worse in
+# one corner: not a default worth taking.
+function _sc_initial(::Nothing, rve::RVE, prop::Symbol; kw...)
+    r = remainder_phase_name(rve)
+    r === nothing && return _evaluate(rve, Voigt(), Val(prop); kw...)
+    return phase_property(rve, r, prop)
 end
 
 # Solver-only kwargs are intercepted at this level and never forwarded
@@ -113,13 +164,18 @@ end
 """
     _sc_solid_averages(rve, P_n, prop; kw...) -> (A_avg, CA_avg)
 
-Volume-weighted dilute-concentration and stress-average accumulators over the
-phases that carry a [`VolumeFraction`](@ref) — the matrix included — evaluated
-in the reference medium `P_n`:
+Volume-weighted dilute-concentration and stress-average accumulators over every
+phase that carries volume, evaluated in the reference medium `P_n`:
 
 ```
 A_avg  = Σ_α f_α ⟨A_α(P_n)⟩          CA_avg = Σ_α f_α ⟨C_α : A_α(P_n)⟩
 ```
+
+`f_α` is the *resolved* fraction: the RVE's fraction closure has already turned
+a [`Remainder`](@ref) into `1 - Σ f` and, under [`RescaledFractions`](@ref),
+renormalized the declared ones. No phase is distinguished — which is the whole
+point of the self-consistent morphology, and what lets it run on an RVE that
+designates no matrix at all.
 
 `CrackDensity` phases are skipped: their strain concentration is singular and
 they are collected by [`_sc_crack_total`](@ref) instead.
@@ -130,13 +186,8 @@ function _sc_solid_averages(
     A_avg = zero(P_n)
     CA_avg = zero(P_n)
     for name in rve.phase_names
-        if name === rve.matrix_name
-            f = matrix_volume_fraction(rve)
-        else
-            a = rve.amounts[name]
-            a isa VolumeFraction || continue
-            f = amount_value(a)
-        end
+        rve.amounts[name] isa CrackDensity && continue
+        f = volume_fraction(rve, name)
         A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, P_n; kw...)
         A_avg += f * A_dil
         CA_avg += f * CA
@@ -218,7 +269,7 @@ function _sc_crack_total(
     )
     H_total = zero(P_n)
     has_cracks = false
-    for name in inclusion_phase_names(rve)
+    for name in rve.phase_names
         rve.amounts[name] isa CrackDensity || continue
         H_total += _phase_compliance_contribution(rve, name, prop, P_n; kw...)
         has_cracks = true
@@ -764,10 +815,11 @@ entered, and the iteration itself needs nothing beyond the localization
 tensors that `SelfConsistent` also requires.
 """
 function _evaluate(rve::RVE, asc::AsymmetricSelfConsistent, ::Val{p}; kw...) where {p}
-    if _asc_use_stiffness(rve, p; kw...)
-        return _asc_iterate_stiffness(rve, asc, Val(p); kw...)
+    m = matrix_name(asc, rve)
+    if _asc_use_stiffness(rve, p, m; kw...)
+        return _asc_iterate_stiffness(rve, asc, m, Val(p); kw...)
     else
-        return _asc_iterate_compliance(rve, asc, Val(p); kw...)
+        return _asc_iterate_compliance(rve, asc, m, Val(p); kw...)
     end
 end
 
@@ -784,11 +836,11 @@ end
 # the dilute estimate answers the same question from the very tensors ASC
 # already requires, so the scheme stays available: nothing in the asymmetric
 # self-consistent algorithm itself depends on a bound.
-function _asc_use_stiffness(rve::RVE, prop::Symbol; kw...)
+function _asc_use_stiffness(rve::RVE, prop::Symbol, m::Symbol; kw...)
     if any(a isa CrackDensity for a in values(rve.amounts))
         return false
     end
-    P₀ = matrix_property(rve, prop)
+    P₀ = phase_property(rve, m, prop)
     probe = _bounds_available(rve) ? Voigt() : Dilute()
     return _frob_sq(_evaluate(rve, probe, Val(prop); kw...)) ≥ _frob_sq(P₀)
 end
@@ -803,35 +855,36 @@ _frob_sq(t::TensND.AbstractTens) = sum(abs2, get_array(t))
 # C_m). This is the C++ reference's `evaluate_dilute(X)` body.
 
 function _asc_iterate_stiffness(
-        rve::RVE, asc::AsymmetricSelfConsistent,
+        rve::RVE, asc::AsymmetricSelfConsistent, m::Symbol,
         ::Val{p}; kw...
     ) where {p}
-    C_m = matrix_property(rve, p)
+    C_m = phase_property(rve, m, p)
     solver_kw, step_kw = _split_sc_kwargs(kw)
-    step = C_n -> _asc_step_stiffness(rve, p, C_m, C_n; step_kw...)
-    return _solve_sc(asc.algorithm, step, C_m; asc.options..., solver_kw...)
+    step = C_n -> _asc_step_stiffness(rve, p, m, C_m, C_n; step_kw...)
+    x0 = asc.init === nothing ? C_m : _sc_initial(asc.init, rve, p; kw...)
+    return _solve_sc(asc.algorithm, step, x0; asc.options..., solver_kw...)
 end
 
-function _asc_step_stiffness(rve::RVE, prop::Symbol, C_m, C_n; kw...)
-    return _asc_step_stiffness_dispatch(rve, prop, C_m, C_n; kw...)
+function _asc_step_stiffness(rve::RVE, prop::Symbol, m::Symbol, C_m, C_n; kw...)
+    return _asc_step_stiffness_dispatch(rve, prop, m, C_m, C_n; kw...)
 end
 
 function _asc_step_stiffness_dispatch(
-        rve::RVE, prop::Symbol,
+        rve::RVE, prop::Symbol, m::Symbol,
         C_m::TensND.AbstractTens{4, 3},
         C_n::TensND.AbstractTens{4, 3}; kw...
     )
     Δ = zero(C_n)
-    for name in inclusion_phase_names(rve)
+    for name in inclusion_phase_names(rve, m)
         a = rve.amounts[name]
-        a isa VolumeFraction || continue   # cracks not supported in stiffness form
-        f = amount_value(a)
-        # Asymétrie propre à l'ASC : la localization se calcule dans le milieu
-        # de référence courant `C_n`, mais la contribution se mesure contre la
-        # MATRICE `C_m`.  On ne peut donc pas appeler
-        # `_phase_stiffness_contribution`, qui utilize la même référence pour
-        # les deux.  Le tenseur B (⟨C:A⟩) traite les inclusions hétérogènes et
-        # symétrise le produit ; le terme en C_m réutilize ⟨A⟩.
+        a isa CrackDensity && continue   # cracks not supported in stiffness form
+        f = volume_fraction(rve, name)
+        # The asymmetry that defines the ASC: localization is computed in the
+        # CURRENT reference `C_n`, but the contribution is measured against the
+        # MATRIX `C_m`.  `_phase_stiffness_contribution` cannot be used here —
+        # it uses one and the same reference for both.  The B tensor (⟨C:A⟩)
+        # handles heterogeneous inclusions and symmetrizes the product; the
+        # `C_m` term reuses ⟨A⟩.
         A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, C_n; kw...)
         Δ += f * (CA - C_m ⊡ A_dil)
     end
@@ -839,15 +892,15 @@ function _asc_step_stiffness_dispatch(
 end
 
 function _asc_step_stiffness_dispatch(
-        rve::RVE, prop::Symbol,
+        rve::RVE, prop::Symbol, m::Symbol,
         K_m::TensND.AbstractTens{2, 3},
         K_n::TensND.AbstractTens{2, 3}; kw...
     )
     Δ = zero(K_n)
-    for name in inclusion_phase_names(rve)
+    for name in inclusion_phase_names(rve, m)
         a = rve.amounts[name]
-        a isa VolumeFraction || continue
-        f = amount_value(a)
+        a isa CrackDensity && continue
+        f = volume_fraction(rve, name)
         A_dil, KA = _phase_dilute_and_stress_average(rve, name, prop, K_n; kw...)
         Δ += f * (KA - K_m ⋅ A_dil)
     end
@@ -866,22 +919,23 @@ end
 # stays in stiffness space and the same `_solve_sc` driver is reused.
 
 function _asc_iterate_compliance(
-        rve::RVE, asc::AsymmetricSelfConsistent,
+        rve::RVE, asc::AsymmetricSelfConsistent, m::Symbol,
         ::Val{p}; kw...
     ) where {p}
-    C_m = matrix_property(rve, p)
+    C_m = phase_property(rve, m, p)
     S_m = inv(C_m)
     solver_kw, step_kw = _split_sc_kwargs(kw)
-    step = C_n -> _asc_step_compliance(rve, p, C_m, S_m, C_n; step_kw...)
-    return _solve_sc(asc.algorithm, step, C_m; asc.options..., solver_kw...)
+    step = C_n -> _asc_step_compliance(rve, p, m, C_m, S_m, C_n; step_kw...)
+    x0 = asc.init === nothing ? C_m : _sc_initial(asc.init, rve, p; kw...)
+    return _solve_sc(asc.algorithm, step, x0; asc.options..., solver_kw...)
 end
 
-function _asc_step_compliance(rve::RVE, prop::Symbol, C_m, S_m, C_n; kw...)
-    return _asc_step_compliance_dispatch(rve, prop, C_m, S_m, C_n; kw...)
+function _asc_step_compliance(rve::RVE, prop::Symbol, m::Symbol, C_m, S_m, C_n; kw...)
+    return _asc_step_compliance_dispatch(rve, prop, m, C_m, S_m, C_n; kw...)
 end
 
 function _asc_step_compliance_dispatch(
-        rve::RVE, prop::Symbol,
+        rve::RVE, prop::Symbol, m::Symbol,
         C_m::TensND.AbstractTens{4, 3},
         S_m::TensND.AbstractTens{4, 3},
         C_n::TensND.AbstractTens{4, 3}; kw...
@@ -889,14 +943,14 @@ function _asc_step_compliance_dispatch(
     S_n = inv(C_n)
     A_avg = zero(C_n)
     CA_avg = zero(C_n)
-    for name in inclusion_phase_names(rve)
+    for name in inclusion_phase_names(rve, m)
         a = rve.amounts[name]
         # Volume-fraction inclusions: standard A_εε.
         # Crack densities: the strain concentration is singular; their
         # "compliance contribution" is the natural object instead and is
         # added directly to S^{n+1} via `compliance_contribution`.
-        if a isa VolumeFraction
-            f = amount_value(a)
+        if !(a isa CrackDensity)
+            f = volume_fraction(rve, name)
             # `⟨C:A⟩`, NOT `C ⊡ ⟨A⟩`: the orientation average does not commute
             # with the tensor product, so the product has to be formed on the
             # RAW localization tensor and averaged afterwards — which is what
@@ -916,9 +970,9 @@ function _asc_step_compliance_dispatch(
     end
     S_new = S_m + (A_avg - S_m ⊡ CA_avg) ⊡ S_n
     # Crack contributions add directly to the compliance.
-    for name in inclusion_phase_names(rve)
+    for name in inclusion_phase_names(rve, m)
         a = rve.amounts[name]
-        a isa VolumeFraction && continue
+        a isa CrackDensity || continue
         H = _phase_compliance_contribution(rve, name, prop, C_n; kw...)
         S_new += H
     end
@@ -926,7 +980,7 @@ function _asc_step_compliance_dispatch(
 end
 
 function _asc_step_compliance_dispatch(
-        rve::RVE, prop::Symbol,
+        rve::RVE, prop::Symbol, m::Symbol,
         K_m::TensND.AbstractTens{2, 3},
         R_m::TensND.AbstractTens{2, 3},
         K_n::TensND.AbstractTens{2, 3}; kw...
@@ -934,10 +988,10 @@ function _asc_step_compliance_dispatch(
     R_n = inv(K_n)
     A_avg = zero(K_n)
     KA_avg = zero(K_n)
-    for name in inclusion_phase_names(rve)
+    for name in inclusion_phase_names(rve, m)
         a = rve.amounts[name]
-        a isa VolumeFraction || continue
-        f = amount_value(a)
+        a isa CrackDensity && continue
+        f = volume_fraction(rve, name)
         # `⟨K·A⟩`, not `K ⋅ ⟨A⟩` — see the order-4 dispatch above.
         A_dil, KA = _phase_dilute_and_stress_average(rve, name, prop, K_n; kw...)
         A_avg += f * A_dil

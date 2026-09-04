@@ -123,8 +123,8 @@ using LinearAlgebra
     @testset "drop-in replacement in the schemes" begin
         ε = 0.05
         function chom(geom, scheme; kw...)
-            r = RVE(:M)
-            add_matrix!(r, Ellipsoid(1.0), Dict(:C => C₀_fe))
+            r = RVE()
+            add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C₀_fe); fraction = :rest)
             add_phase!(r, :cr, geom, Dict(:C => C₀_fe); density = ε, kw...)
             return homogenize(r, scheme, :C)
         end
@@ -171,14 +171,14 @@ using LinearAlgebra
     @testset "iterative schemes work under IsoSymmetrize" begin
         # Parallel FE cracks make the self-consistent iterate transversely
         # isotropic — out of scope, and refused explicitly.
-        rve_par = RVE(:M)
-        add_matrix!(rve_par, Ellipsoid(1.0), Dict(:C => C₀_fe))
+        rve_par = RVE()
+        add_phase!(rve_par, :M, Ellipsoid(1.0), Dict(:C => C₀_fe); fraction = :rest)
         add_phase!(rve_par, :cr, crack4, Dict(:C => C₀_fe); density = 0.05)
         @test_throws ArgumentError homogenize(rve_par, SelfConsistent(), :C)
 
         # Isotropically averaged, the reference stays isotropic and it runs.
-        rve_iso = RVE(:M)
-        add_matrix!(rve_iso, Ellipsoid(1.0), Dict(:C => C₀_fe))
+        rve_iso = RVE()
+        add_phase!(rve_iso, :M, Ellipsoid(1.0), Dict(:C => C₀_fe); fraction = :rest)
         add_phase!(
             rve_iso, :cr, crack4, Dict(:C => C₀_fe);
             density = 0.05, symmetrize = IsoSymmetrize()

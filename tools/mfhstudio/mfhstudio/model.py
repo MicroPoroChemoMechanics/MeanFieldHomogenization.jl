@@ -105,11 +105,13 @@ class Geometry:
 @dataclass
 class Phase:
     name: str = "PHASE"
-    is_matrix: bool = False
     geometry: Geometry = field(default_factory=Geometry)
     properties: list = field(default_factory=list)  # list[Property]
-    #: ("fraction" | "density", value-or-parameter-name); ignored for the matrix,
-    #: whose amount MFH derives as 1 - Σ f_inclusions and refuses to be set.
+    #: "fraction" | "density" | "rest". "rest" is the phase that takes up the
+    #: volume the others leave, 1 - Σ f; `amount` is then ignored. It replaces
+    #: the old `is_matrix` flag, which conflated two independent things: being
+    #: the leftover (bookkeeping, this field) and being a scheme's reference
+    #: medium (a modeling choice, now named on the scheme).
     amount_kind: str = "fraction"
     amount: Any = 0.1
     symmetrize: str = "none"
@@ -126,10 +128,10 @@ class Phase:
     def from_dict(d: dict) -> "Phase":
         return Phase(
             name=d.get("name", "PHASE"),
-            is_matrix=bool(d.get("is_matrix", False)),
+            # Files written before v0.8 carry `is_matrix`; read it as "rest".
+            amount_kind=("rest" if d.get("is_matrix") else d.get("amount_kind", "fraction")),
             geometry=Geometry.from_dict(d.get("geometry", {})),
             properties=[Property.from_dict(p) for p in d.get("properties", [])],
-            amount_kind=d.get("amount_kind", "fraction"),
             amount=d.get("amount", 0.1),
             symmetrize=d.get("symmetrize", "none"),
         )
@@ -271,11 +273,16 @@ class Cell:
         """
         return self.layers if self.is_laminate() else self.phases
 
+    def remainder(self) -> Optional[Phase]:
+        """The phase taking up the volume complement, if the cell names one."""
+        return next((p for p in self.phases if p.amount_kind == "rest"), None)
+
     def matrix(self) -> Optional[Phase]:
-        return next((p for p in self.phases if p.is_matrix), None)
+        """What a matrix-based scheme uses when it names no phase itself."""
+        return self.remainder()
 
     def inclusions(self) -> list:
-        return [p for p in self.phases if not p.is_matrix]
+        return [p for p in self.phases if p.amount_kind != "rest"]
 
     def to_dict(self) -> dict:
         return {
@@ -889,7 +896,7 @@ class Model:
 def default_model() -> Model:
     """The porous benchmark, which is the shortest useful thing to open on."""
     solid = Phase(
-        name="SOLID", is_matrix=True,
+        name="SOLID", amount_kind="rest",
         geometry=Geometry(kind="spheroid", args={"omega": 1.0}),
         properties=[
             Property(key=":C", builder="iso_stiffness", form="iso_kmu",
@@ -897,7 +904,7 @@ def default_model() -> Model:
         ],
     )
     pore = Phase(
-        name="PORE", is_matrix=False,
+        name="PORE",
         geometry=Geometry(kind="spheroid", args={"omega": 1.0}),
         properties=[
             Property(key=":C", builder="iso_stiffness", form="void",

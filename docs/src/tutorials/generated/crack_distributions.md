@@ -78,8 +78,8 @@ keeps the single orientation carried by the crack's own frame.
 
 ````@example crack_distributions
 function rve_isotropic(ε)
-    r = RVE(:SOLID)
-    add_matrix!(r, Spheroid(1.0), Dict(:C => C₀))
+    r = RVE()
+    add_phase!(r, :SOLID, Spheroid(1.0), Dict(:C => C₀); fraction = :rest)
     add_phase!(
         r, :CRACK, PennyCrack(1.0), Dict(:C => C₀);
         density = ε, symmetrize = IsoSymmetrize()
@@ -88,8 +88,8 @@ function rve_isotropic(ε)
 end
 
 function rve_parallel(ε; angles = (π / 4, π / 3))
-    r = RVE(:SOLID)
-    add_matrix!(r, Spheroid(1.0), Dict(:C => C₀))
+    r = RVE()
+    add_phase!(r, :SOLID, Spheroid(1.0), Dict(:C => C₀); fraction = :rest)
     add_phase!(
         r, :CRACK, PennyCrack(1.0; euler_angles = angles), Dict(:C => C₀);
         density = ε

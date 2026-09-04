@@ -44,6 +44,7 @@ Returns the converged effective relaxation matrix.
 function self_consistent_alv(
         rve::RVE, prop::Symbol;
         times::AbstractVector{<:Real},
+        matrix::Union{Nothing, Symbol} = nothing,
         abstol::Real = 1.0e-10,
         reltol::Real = 1.0e-8,
         maxiters::Int = 200,
@@ -52,17 +53,18 @@ function self_consistent_alv(
         select_best::Bool = false
     )
     # 1. Discretize every phase's kernel once.
-    C_M_law = matrix_property(rve, prop)
+    m = host_phase_name(rve, matrix, "self_consistent_alv")
+    C_M_law = phase_property(rve, m, prop)
     C_M_law isa ViscoLaw ||
         throw(ArgumentError("self_consistent_alv: matrix property is not a ViscoLaw"))
     C_0 = _trapezoidal_relaxation(C_M_law, times, 6)
-    f_M = matrix_volume_fraction(rve)
-    incl_names = inclusion_phase_names(rve)
+    f_M = volume_fraction(rve, m)
+    incl_names = inclusion_phase_names(rve, m)
     # Containers are eltype-generic : volume fractions, crack densities and
     # geometry-derived tensors may carry `ForwardDiff.Dual` (or any Number)
     # coefficients — no `Float64` hard-coding on any AD-reachable path.
     C_phases = Matrix[C_0]
-    geometries = Any[rve.phases[rve.matrix_name].geometry]
+    geometries = Any[rve.phases[m].geometry]
     fractions = [f_M]
     symmetrizes = AbstractSymmetrize[NoSymmetrize()]
     # crack_data tuple: (geom, density, sym, Rn_mat::Union{Nothing, Matrix},

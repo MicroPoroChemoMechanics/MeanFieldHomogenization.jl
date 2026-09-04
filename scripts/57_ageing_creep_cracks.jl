@@ -65,8 +65,8 @@ const law_M = ViscoLaw(R_M, :relaxation)
 # ─── RVE construction ──────────────────────────────────────────────────────
 
 function build_rve(d)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => law_M))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => law_M); fraction = :rest)
     add_phase!(
         rve, :CRACK, PennyCrack(1.0), Dict(:C => law_M);
         density = d, symmetrize = :iso

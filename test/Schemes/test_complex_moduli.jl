@@ -8,8 +8,8 @@
 #   * preserves causality (Im(C_eff[1111]) ≥ -tol).
 #
 #  Complex moduli need NO declaration on the RVE: the volume fraction stays
-#  real, the element types are promoted where the values meet.  `RVE(:M)`,
-#  `RVE{ComplexF64}(:M)` and `RVE(:M; T = ComplexF64)` must all give the same
+#  real, the element types are promoted where the values meet.  `RVE()`,
+#  `RVE{ComplexF64}()` and `RVE(; T = ComplexF64)` must all give the same
 #  numbers here — that equivalence is asserted below.
 #
 #  Assertions are deliberately NOT wrapped in try/catch: a scheme that stops
@@ -39,8 +39,8 @@ complex_schemes() = [
 ]
 
 function _two_phase_rve(C_m, C_i, f; kw...)
-    rve = RVE(:M; kw...)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_m))
+    rve = RVE(; kw...)
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = f)
     return rve
 end
@@ -73,8 +73,8 @@ end
     f_inc = 0.3
 
     rve_plain = _two_phase_rve(C_m, C_i, f_inc)                       # nothing declared
-    rve_param = let r = RVE{ComplexF64}(:M)                           # parametric form
-        add_matrix!(r, Ellipsoid(1.0), Dict(:C => C_m))
+    rve_param = let r = RVE{ComplexF64}()                           # parametric form
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = f_inc)
         r
     end

@@ -22,8 +22,8 @@ const k_s, μ_s = 90.0, 30.0     # stiff inclusion
 const k_w, μ_w = 5.0, 2.0       # soft inclusion
 
 function build(f1, f2)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(k_m, μ_m)); fraction = :rest)
     f1 > 0 && add_phase!(
         rve, :STIFF, Ellipsoid(1.0),
         Dict(:C => TensISO{3}(k_s, μ_s)); fraction = f1

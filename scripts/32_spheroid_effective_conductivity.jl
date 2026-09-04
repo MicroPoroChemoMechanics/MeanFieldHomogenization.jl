@@ -106,8 +106,8 @@ layer_volume_fraction(s3, 1), layer_volume_fraction(s3, 2)
 # phase property is accepted for signature compatibility but ignored — the real
 # moduli live in the layers.
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K0))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K0); fraction = :rest)
 add_phase!(rve, :I, s, Dict(:K => K1); fraction = 0.15)
 
 get_array(homogenize(rve, MoriTanaka(), :K))
@@ -146,8 +146,8 @@ _ec_particle(ϖ, ρ; N = EC_N) = LayeredSpheroid(
 )
 
 function _ec_series(ϖ, ρ, scheme)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => EC_KMAT))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => EC_KMAT); fraction = :rest)
     add_phase!(rve, :I, _ec_particle(ϖ, ρ), Dict(:K => EC_KINC); fraction = EC_FRAC)
     return homogenize(rve, scheme, :K)[1, 1]
 end
@@ -157,8 +157,8 @@ function _ec_equiv(ϖ, ρ, scheme)
     A = gradient_gradient_loc(p, EC_KINC, EC_KMAT)
     B = flux_gradient_loc(p, EC_KINC, EC_KMAT)
     Keq = TensND.TensTI{2}(B[2, 2] / A[2, 2], B[1, 1] / A[1, 1], EC_AXIS)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => EC_KMAT))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => EC_KMAT); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(ϖ, 1.0, 1.0), Dict(:K => Keq); fraction = EC_FRAC)
     return homogenize(rve, scheme, :K)[1, 1]
 end

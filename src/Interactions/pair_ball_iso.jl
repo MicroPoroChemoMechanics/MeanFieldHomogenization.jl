@@ -182,9 +182,9 @@ function _laplacian_green_operator_iso_2d(μ, ν, x::AbstractVector)
     return SArray{Tuple{2, 2, 2, 2}}(
         @inbounds [
             A * (
-                (δ(i, k) * δ(j, l) + δ(i, l) * δ(j, k)) / 2 - δ(i, j) * δ(k, l) / 2
+                    (δ(i, k) * δ(j, l) + δ(i, l) * δ(j, k)) / 2 - δ(i, j) * δ(k, l) / 2
                     - (2 * n[i] * n[j] - δ(i, j)) * (2 * n[k] * n[l] - δ(k, l))
-            )
+                )
                 for i in 1:2, j in 1:2, k in 1:2, l in 1:2
         ]
     )

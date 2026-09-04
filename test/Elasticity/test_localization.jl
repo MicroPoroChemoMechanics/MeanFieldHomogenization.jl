@@ -3,6 +3,8 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
+using SymPy   # top level on purpose: `@syms` below is expanded before any
+# `using` nested in a @testset body would have run.
 
 # =============================================================================
 #  Localization tensors for ellipsoids (dilute Eshelby).
@@ -86,7 +88,6 @@ end
 end
 
 @testset "Localization — symbolic propagation (SymPy)" begin
-    using SymPy
     @syms k0 m0 kk1 mm1
     C₀ = TensISO{3}(3k0, 2m0)
     C₁ = TensISO{3}(3kk1, 2mm1)

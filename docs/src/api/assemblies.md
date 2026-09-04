@@ -9,6 +9,7 @@ MeanFieldHomogenization.Assemblies
 ```@docs
 ParticleAssembly
 Particle
+add_matrix!
 add_particle!
 validate_assembly
 ```
@@ -30,6 +31,8 @@ RVE(::MeanFieldHomogenization.Assemblies.ParticleAssembly)
 ## Accessors
 
 ```@docs
+matrix_property
+matrix_volume_fraction
 particle_names
 particle
 particle_center

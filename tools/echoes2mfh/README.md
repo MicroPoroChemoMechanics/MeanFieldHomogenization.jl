@@ -48,8 +48,8 @@ hand-written MFH demos are organized:
 
 ```julia
 function build_ver(f, omega)
-    rve = RVE(:SOLID)
-    add_matrix!(rve, Spheroid(1.0), Dict(:C => Cs); symmetrize = IsoSymmetrize())
+    rve = RVE()
+    add_phase!(rve, :SOLID, Spheroid(1.0), Dict(:C => Cs); fraction = :rest, symmetrize = IsoSymmetrize())
     add_phase!(
         rve, :PORE, Spheroid(omega), Dict(:C => Cp);
         fraction = f, symmetrize = IsoSymmetrize()
@@ -180,7 +180,7 @@ constructs need code in `extract.py`/`emit.py`.
   `ellipsoidc`, `tensorc`, …) because its C++ templates are instantiated
   separately for real and complex scalars. Julia's constructors are generic
   over the scalar type, so the suffix simply drops and the RVE is declared
-  `RVE(:M; T = ComplexF64)`.
+  `RVE(; T = ComplexF64)`.
 - **`tensor(...)`** is transcribed from the Echoes C++ sources and checked
   numerically against TensND (agreement ~9·10⁻¹⁶). Echoes dispatches on the
   parameter-list length (`tensor_builder.h:466`):

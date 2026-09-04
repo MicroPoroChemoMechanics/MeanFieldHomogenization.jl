@@ -1,36 +1,82 @@
 # [Homogenization schemes](@id man-schemes)
 
 The `MeanFieldHomogenization.Schemes` module provides ten classical mean-field
-homogenization schemes plus a [`RVE`](@ref) container holding the
-matrix and inclusion phases with their geometries, properties and
-volume fractions or crack densities.
+homogenization schemes plus a [`RVE`](@ref) container holding the phases with
+their geometries, properties and volume fractions or crack densities.
 
 ## Building an RVE
 
-An `RVE` is the morphological picture, written down: one phase declared as the
-matrix, any number of inclusion phases with their geometry, properties and
-amount. This is the Mori–Tanaka morphology — a matrix carrying ellipsoids,
-cracks and coated spheres, in whatever mix.
+An `RVE` is the morphological picture, written down: phases, each with a
+geometry, properties and an amount. **No phase is singled out.** Whether one of
+them acts as a matrix is not a property of the microstructure but of the model
+applied to it, and it is stated on the scheme — see
+[Who is the matrix?](@ref man-who-is-the-matrix) below.
 
-![Matrix carrying ellipsoids and coated spheres — the morphology an `RVE` with a matrix phase describes (from the Echoes book [echoes](@cite))](../assets/schemes/rve_mori_tanaka.png)
+![Matrix carrying ellipsoids and coated spheres — the morphology Mori–Tanaka reads into an RVE (from the Echoes book [echoes](@cite))](../assets/schemes/rve_mori_tanaka.png)
 
 ```julia
 using MeanFieldHomogenization, TensND
 
-rve = RVE(:M)                                            # matrix is named :M
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0),
+           Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 0.5),
            Dict(:C => TensISO{3}(60.0, 20.0)); fraction = 0.2)
 add_phase!(rve, :CRACK, PennyCrack(1.0),
            Dict(:C => TensISO{3}(30.0, 10.0)); density  = 0.05)
 ```
 
-Volume fractions are stored at the RVE level (not on the inclusions),
-so a single inclusion remains usable for localization-tensor
-calculations without any RVE machinery
-([`hill_tensor`](@ref), [`strain_strain_loc`](@ref), …). The matrix
-volume fraction is implicit (`1 - Σ f_inc`); crack densities are
-excluded from that sum.
+`fraction = :rest` declares the phase that takes up the volume the others
+leave, `1 - Σ f`. It is pure bookkeeping — it says nothing about morphology —
+and an RVE may equally well have none, with every fraction given explicitly.
+
+Volume fractions are stored at the RVE level (not on the inclusions), so a
+single inclusion remains usable for localization-tensor calculations without
+any RVE machinery ([`hill_tensor`](@ref), [`strain_strain_loc`](@ref), …).
+Crack densities are excluded from the unit sum: a flat crack's volume vanishes
+in the penny limit while its density stays finite.
+
+### [Who is the matrix?](@id man-who-is-the-matrix)
+
+Three independent things used to travel together under the name "matrix". They
+are now stated separately.
+
+**The phase that takes up the complement** is bookkeeping, declared on the
+phase with `fraction = :rest`. Which fractions are given and which is derived
+is governed by the RVE's [`AbstractFractionClosure`](@ref):
+
+```julia
+RVE()                       # inferred: ComplementFraction() if a phase says
+                            # `fraction = :rest`, StrictFractions() otherwise
+RVE(; closure = :strict)    # the declared fractions must already sum to 1
+RVE(; closure = :rescale)   # they are relative proportions: 2, 3, 5 → 0.2, 0.3, 0.5
+```
+
+**The reference medium** — the infinite medium each inclusion is embedded in —
+is a modeling choice, and belongs to the scheme:
+
+```julia
+homogenize(rve, MoriTanaka(:M), :C)   # :M is the reference medium
+homogenize(rve, MoriTanaka(:I), :C)   # so is :I — a different composite
+homogenize(rve, MoriTanaka(), :C)     # unnamed: the `:rest` phase, if there is one
+```
+
+Naming nothing works only when the RVE designates a complement phase; otherwise
+the scheme errors and lists the candidates, because guessing would silently
+return a different composite. Which schemes need one:
+
+| Needs a reference medium | Does not |
+| --- | --- |
+| `Dilute`, `DiluteDual`, `MoriTanaka`, `Maxwell`, `PonteCastanedaWillis`, `DifferentialScheme`, `AsymmetricSelfConsistent` | `Voigt`, `Reuss`, `SelfConsistent`, `Laminated` |
+
+**The homogeneous solid** of microporomechanics is a third notion again, and
+[`biot_tensor`](@ref) / [`poroelastic_parameters`](@ref) take it as `solid =`.
+
+!!! note "A `ParticleAssembly` does keep a matrix"
+    [`add_matrix!`](@ref) still exists, on
+    [`ParticleAssembly`](@ref MeanFieldHomogenization.Assemblies.ParticleAssembly)
+    only. There it is structural rather than a modeling choice: both N-body
+    models are written against a reference medium the particles sit in.
 
 ## Calling a scheme
 
@@ -81,8 +127,8 @@ Mori–Tanaka, which is the quickest way to check that the option is wired
 correctly.
 
 ```julia
-rve = RVE(:M; distribution_shape = Ellipsoid(1.0, 1.0, 0.3))   # oblate outer
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+rve = RVE(; distribution_shape = Ellipsoid(1.0, 1.0, 0.3))   # oblate outer
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
            fraction = 0.3)
 homogenize(rve, Maxwell())
@@ -96,9 +142,23 @@ breaking the public API — see
 ## Iterative solvers
 
 The self-consistent schemes describe the other morphology: no phase is a matrix,
-every phase is embedded in the medium being sought. `add_matrix!` still names one
-phase, but the scheme ignores that role — which is why a polycrystal or a
-granular assembly is homogenized this way and not by Mori–Tanaka.
+every phase is embedded in the medium being sought — which is why a polycrystal
+or a granular assembly is homogenized this way and not by Mori–Tanaka.
+`SelfConsistent` has no reference-medium field at all, and an RVE whose
+fractions are all declared needs no complement phase either:
+
+```julia
+poly = RVE(; closure = :strict)
+add_phase!(poly, :A, Ellipsoid(1.0), Dict(:C => C_A); fraction = 0.4)
+add_phase!(poly, :B, Ellipsoid(1.0), Dict(:C => C_B); fraction = 0.6)
+homogenize(poly, SelfConsistent(), :C)
+```
+
+The fixed point has to start somewhere, and with no phase distinguished the
+seed is stated on the scheme: `init` accepts `:voigt`, `:reuss`, a phase name or
+an explicit tensor. Unset, it is the `:rest` phase when there is one and the
+Voigt average otherwise — the latter is what lets the RVE above be solved at
+all.
 
 ![A tessellation in which no phase surrounds the others (from the Echoes book [echoes](@cite))](../assets/schemes/rve_self_consistent.png)
 
@@ -201,9 +261,8 @@ ks = [k_mu(C)[1] for C in Cs]
 
 ```julia
 δ = 0.05
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0),
-            Dict(:C => TensISO{3}(30.0 + δ * im, 10.0 + 0.5δ * im)))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0 + δ * im, 10.0 + 0.5δ * im)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0),
            Dict(:C => TensISO{3}(60.0 + δ * im, 20.0 + 0.5δ * im));
            fraction = 0.3)
@@ -228,8 +287,8 @@ function R_iso(t, tp)
 end
 law_M = ViscoLaw(R_iso, :relaxation)
 
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => law_M))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0),
             Dict(:C => heaviside_law(TensISO{3}(60.0, 20.0)));
             fraction = 0.20)
@@ -247,8 +306,8 @@ ECHOES validation).
 ```julia
 using ForwardDiff
 df = ForwardDiff.derivative(0.3) do f
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
                fraction = f)
     KM(homogenize(rve, MoriTanaka()))[1, 1]
@@ -262,13 +321,13 @@ inclusion geometry.
 
 Amounts (volume fractions, crack densities), moduli and geometries each
 carry their own element type, promoted only where the values meet. A
-plain `RVE(:M)` therefore accepts a `ForwardDiff.Dual` fraction, a
+plain `RVE()` therefore accepts a `ForwardDiff.Dual` fraction, a
 complex one, a symbolic one, and phases whose amounts have *different*
 element types:
 
 ```julia
-rve = RVE(:M)
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_complex))   # complex moduli
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_complex); fraction = :rest)   # complex moduli
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_complex);
            fraction = 0.3)                                # real fraction
 add_phase!(rve, :J, Ellipsoid(1.0), Dict(:C => C1);
@@ -276,7 +335,7 @@ add_phase!(rve, :J, Ellipsoid(1.0), Dict(:C => C1);
 ```
 
 The type parameter of `RVE{T,S}` is a **floor for promotion**, not a
-cast: `RVE{ComplexF64}(:M)` (or the equivalent `RVE(:M; T = ComplexF64)`)
+cast: `RVE{ComplexF64}()` (or the equivalent `RVE(; T = ComplexF64)`)
 widens narrower amounts to `ComplexF64`, but an amount wider than `T` is
 stored as it comes, never narrowed. `eltype(rve)` reports the effective
 element type, `eltype(typeof(rve))` the declared floor, and

@@ -170,8 +170,8 @@ end
 
 @testset "fracture_permeability from an RVE" begin
     ks, C₀ = 1.0e-6, TensISO{3}(3 * 30.0, 2 * 18.0)
-    rve = RVE(:M)
-    add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C₀, :K => TensISO{3}(ks)))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀, :K => TensISO{3}(ks)); fraction = :rest)
     add_phase!(
         rve, :F, ConductiveCrack(1.0; conductivity = 1.0e-3),
         Dict(:C => C₀, :K => TensISO{3}(ks)); density = 0.05
@@ -180,8 +180,8 @@ end
     @test K[1, 1] > ks
     @test K[3, 3] ≈ ks rtol = 1.0e-6
 
-    rve_plain = RVE(:M)
-    add_matrix!(rve_plain, Ellipsoid(1.0), Dict(:C => C₀, :K => TensISO{3}(ks)))
+    rve_plain = RVE()
+    add_phase!(rve_plain, :M, Ellipsoid(1.0), Dict(:C => C₀, :K => TensISO{3}(ks)); fraction = :rest)
     add_phase!(rve_plain, :F, PennyCrack(1.0), Dict(:C => C₀, :K => TensISO{3}(ks)); density = 0.05)
     @test_throws ArgumentError fracture_permeability(rve_plain)
 end

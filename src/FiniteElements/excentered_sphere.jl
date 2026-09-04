@@ -124,7 +124,8 @@ incl = FEExcenteredSphere(1.0, (C_core, C_shell);
 
 A, B = fe_axi_localization(incl, C₀)          # both tensors, one solve
 
-rve = RVE(:m, Dict(:C => C₀))
+rve = RVE()
+add_phase!(rve, :m, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
 add_phase!(rve, :rca, incl, Dict(:C => C₀); fraction = 0.3)
 homogenize(rve, MoriTanaka(), :C)
 ```

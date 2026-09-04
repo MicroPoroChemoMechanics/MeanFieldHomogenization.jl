@@ -107,6 +107,134 @@ Whether the amount counts towards the matrix-fraction complement
 _sums_to_unit(::VolumeFraction) = true
 _sums_to_unit(::CrackDensity) = false
 
+"""
+    Remainder() <: AbstractAmount
+
+Marker amount of the phase whose volume fraction is *derived* rather than
+declared — the one that takes up whatever the others leave.
+
+It carries no value: under [`ComplementFraction`](@ref) the value is
+`1 - Σ f`, a property of the RVE and not of the phase. Read the resolved
+number with [`volume_fraction`](@ref); `amount_value` deliberately throws,
+so a loop that assumed every amount carries a number fails by name instead
+of silently skipping the phase.
+
+Its element type is `Union{}`, which promotes away: an RVE holding a
+`Remainder` next to `Float64` and `ForwardDiff.Dual` fractions has exactly
+the `eltype` it would have without it.
+"""
+struct Remainder <: AbstractAmount{Union{}} end
+
+_sums_to_unit(::Remainder) = false      # it *is* the complement, it feeds no sum
+
+amount_value(::Remainder) = throw(
+    ArgumentError(
+        "a Remainder amount carries no declared value — it is the volume left " *
+            "over by the other phases. Read the resolved number with " *
+            "`volume_fraction(rve, name)`."
+    )
+)
+
+scale_by_amount(::Remainder, X) = throw(
+    ArgumentError(
+        "a Remainder amount cannot scale a tensor on its own; weight by " *
+            "`volume_fraction(rve, name)` instead."
+    )
+)
+
+# =============================================================================
+#  Fraction closure: how the declared volume fractions are made to sum to one
+# =============================================================================
+
+"""
+    AbstractFractionClosure
+
+How an [`RVE`](@ref) turns the volume fractions the caller *declared* into the
+fractions the schemes *use*. Three concrete policies ship:
+
+- [`ComplementFraction`](@ref) — one phase, declared `fraction = :rest`,
+  absorbs `1 - Σ f`;
+- [`RescaledFractions`](@ref) — every declared fraction is divided by their
+  sum, so relative proportions may be given;
+- [`StrictFractions`](@ref) — the declared fractions must already sum to one.
+
+The policy is inferred when it is not given: `ComplementFraction()` as soon as
+a phase is declared with `fraction = :rest`, `StrictFractions()` otherwise.
+
+[`CrackDensity`](@ref) never takes part. A flat crack has no volume, so it is
+outside the unit-sum constraint, is never renormalized, and is never absorbed
+into a complement.
+"""
+abstract type AbstractFractionClosure end
+
+"""
+    StrictFractions(; atol = 1e-10) <: AbstractFractionClosure
+
+The declared volume fractions must sum to one within `atol`; anything else is
+an error naming the sum. The default policy for an RVE in which no phase is
+declared with `fraction = :rest` — a polycrystal, a granular aggregate, any
+microstructure in which no phase is a leftover.
+"""
+struct StrictFractions{T <: Real} <: AbstractFractionClosure
+    atol::T
+end
+StrictFractions(; atol::Real = 1.0e-10) = StrictFractions(atol)
+
+"""
+    ComplementFraction(; on_negative = :warn) <: AbstractFractionClosure
+
+The single phase declared `fraction = :rest` takes the volume the others leave,
+`1 - Σ f`.
+
+`on_negative` says what happens when that complement comes out negative, i.e.
+when the declared inclusion fractions already exceed one: `:warn` (default,
+the historical behavior — a non-physical RVE is still useful for symbolic or
+`ForwardDiff` exploration) or `:error`.
+"""
+struct ComplementFraction <: AbstractFractionClosure
+    on_negative::Symbol
+    function ComplementFraction(on_negative::Symbol)
+        on_negative in (:warn, :error) || throw(
+            ArgumentError(
+                "ComplementFraction.on_negative must be :warn or :error; " *
+                    "got :$(on_negative)"
+            )
+        )
+        return new(on_negative)
+    end
+end
+ComplementFraction(; on_negative::Symbol = :warn) = ComplementFraction(on_negative)
+
+"""
+    RescaledFractions() <: AbstractFractionClosure
+
+Every declared volume fraction is divided by their sum, so that only their
+*ratios* matter: `2, 3, 5` and `0.2, 0.3, 0.5` describe the same RVE.
+
+No phase may then be declared `fraction = :rest` — there is no complement left
+to absorb. The rescaling is a plain division, so it differentiates: under this
+policy `∂C/∂f_i` is the derivative along the normalized simplex, and raising
+one fraction lowers the others.
+"""
+struct RescaledFractions <: AbstractFractionClosure end
+
+# Coercer for the `closure` kwarg: `nothing` means "infer at declaration time".
+_to_closure(::Nothing) = nothing
+_to_closure(c::AbstractFractionClosure) = c
+function _to_closure(s::Symbol)
+    s === :strict     && return StrictFractions()
+    s === :complement && return ComplementFraction()
+    s === :rest       && return ComplementFraction()
+    s === :rescale    && return RescaledFractions()
+    s === :normalize  && return RescaledFractions()
+    throw(
+        ArgumentError(
+            "unknown closure Symbol :$(s); expected :strict, :complement or " *
+                ":rescale (or pass an AbstractFractionClosure for non-default options)"
+        )
+    )
+end
+
 # =============================================================================
 #  Symmetrize: orientation-distribution projection of a phase's contribution
 # =============================================================================
@@ -156,7 +284,7 @@ the inclusion's actual shape.
 struct IsoSymmetrize <: AbstractSymmetrize end
 
 """
-    TISymmetrize(axis = (0, 0, 1); matrix_projection = :iso) <: AbstractSymmetrize
+    TISymmetrize(axis = (0, 0, 1); reference_projection = :iso) <: AbstractSymmetrize
 
 The localization tensor is averaged **exactly** over rotations about `axis`
 (uniaxial uniform distribution).  The average preserves the full
@@ -164,7 +292,7 @@ axially-invariant structure — including the non-major-symmetric components
 of concentration tensors — and returns a `TensND.TensTI{4,T,8}`
 (resp. `TensTI{2,T,3}` at 2nd order).
 
-`matrix_projection` controls how the *reference medium* is pre-projected
+`reference_projection` controls how the *reference medium* is pre-projected
 before the localization tensor of this phase is computed :
 
 - `:iso` (default) — project the reference to its isotropic average.  Every
@@ -180,22 +308,22 @@ before the localization tensor of this phase is computed :
 """
 struct TISymmetrize{T <: Number} <: AbstractSymmetrize
     axis::NTuple{3, T}
-    matrix_projection::Symbol
-    function TISymmetrize(axis::NTuple{3, T}, matrix_projection::Symbol) where {T <: Number}
-        matrix_projection in (:iso, :none, :ti) || throw(
+    reference_projection::Symbol
+    function TISymmetrize(axis::NTuple{3, T}, reference_projection::Symbol) where {T <: Number}
+        reference_projection in (:iso, :none, :ti) || throw(
             ArgumentError(
-                "matrix_projection must be :iso, :none or :ti; got :$(matrix_projection)"
+                "reference_projection must be :iso, :none or :ti; got :$(reference_projection)"
             )
         )
-        return new{T}(axis, matrix_projection)
+        return new{T}(axis, reference_projection)
     end
 end
-TISymmetrize(axis::NTuple{3, <:Number}; matrix_projection::Symbol = :iso) =
-    TISymmetrize(axis, matrix_projection)
-TISymmetrize(; matrix_projection::Symbol = :iso) =
-    TISymmetrize((0.0, 0.0, 1.0), matrix_projection)
-TISymmetrize(axis::AbstractVector; matrix_projection::Symbol = :iso) =
-    TISymmetrize(NTuple{3}(Tuple(axis)), matrix_projection)
+TISymmetrize(axis::NTuple{3, <:Number}; reference_projection::Symbol = :iso) =
+    TISymmetrize(axis, reference_projection)
+TISymmetrize(; reference_projection::Symbol = :iso) =
+    TISymmetrize((0.0, 0.0, 1.0), reference_projection)
+TISymmetrize(axis::AbstractVector; reference_projection::Symbol = :iso) =
+    TISymmetrize(NTuple{3}(Tuple(axis)), reference_projection)
 
 # Coercer for kwargs : accept a Symbol shortcut, an `AbstractSymmetrize`, or
 # nothing (no projection).
@@ -291,28 +419,34 @@ Phase(geometry::AbstractInclusion, properties::AbstractDict) =
     Phase(geometry, Dict{Symbol, Any}(properties...))
 
 # =============================================================================
-#  RVE: ordered collection of phases + matrix tag + distribution shape
+#  RVE: ordered collection of phases + fraction closure + distribution shape
 # =============================================================================
 
 """
     RVE{T<:Number, S<:Union{Nothing,AbstractDistributionShape}}
 
-Multi-phase representative volume element. Fields:
+Multi-phase representative volume element — a **description of a
+microstructure**, and nothing more. No phase is singled out: which one, if any,
+plays the reference medium of a homogenization scheme is stated on that scheme
+(see [`matrix_name`](@ref)), because the same RVE is a matrix/inclusion
+composite under Mori-Tanaka and a matrix-free aggregate under the
+self-consistent scheme.
 
-- `matrix_name::Symbol` — name of the phase that plays the role of the
-  matrix (its amount is implicit, computed as `1 - Σ_inc f_inc`).
-- `phase_names::Vector{Symbol}` — phases in insertion order (the matrix
-  is the first entry).
+Fields:
+
+- `phase_names::Vector{Symbol}` — phases in declaration order.
 - `phases::Dict{Symbol,Phase}` — geometry + properties of each phase.
-- `amounts::Dict{Symbol,AbstractAmount}` — volume fraction or crack
-  density of each non-matrix phase. Each entry keeps its own element
-  type. The matrix entry, if present, is ignored when computing
-  `matrix_volume_fraction`.
+- `amounts::Dict{Symbol,AbstractAmount}` — [`VolumeFraction`](@ref),
+  [`CrackDensity`](@ref) or [`Remainder`](@ref) of each phase. Each entry
+  keeps its own element type.
 - `distribution_shape::S` — outer envelope used by Maxwell / PCW;
   defaults to a unit sphere wrapped in [`UniformDistribution`](@ref).
-- `f_matrix` — cached `1 - Σ f_inc`, maintained by [`add_phase!`](@ref)
-  and read by [`matrix_volume_fraction`](@ref). Do not write `amounts`
-  directly: that would leave the cache stale.
+- `closure` — the [`AbstractFractionClosure`](@ref) turning the declared
+  fractions into the ones the schemes use; `nothing` until inferred.
+- `rest_name` — the phase declared `fraction = :rest`, if any.
+- `f_sum` — cached `Σ f`, maintained by [`add_phase!`](@ref) and
+  [`set_amount!`](@ref). Do not write `amounts` directly: that would leave
+  the cache stale.
 
 `T` is the *declared* amount element type, i.e. a **floor for
 promotion**, not a constraint: it seeds `zero`/`one` for an RVE whose
@@ -323,8 +457,8 @@ rather than converted down. Amounts, moduli and geometries therefore
 each carry their own element type, promoted only where the values meet:
 
 ```julia
-rve = RVE(:M)                                          # nothing to declare
-add_matrix!(rve, Ellipsoid(1.0), Dict(:C => C_complex))    # complex moduli
+rve = RVE()                                          # nothing to declare
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_complex); fraction = :rest)    # complex moduli
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_complex);
            fraction = 0.3)                             # real fraction
 add_phase!(rve, :J, Ellipsoid(1.0), Dict(:C => C1);
@@ -338,69 +472,92 @@ floor `T`.
 Construction is two-step:
 
 ```julia
-rve = RVE(:M; distribution_shape = nothing)   # or RVE{ComplexF64}(:M)
-add_matrix!(rve, ellipsoid_matrix, Dict(:C => C0))
+rve = RVE(; distribution_shape = nothing)   # or RVE{ComplexF64}()
+add_phase!(rve, :M, ellipsoid_matrix, Dict(:C => C0); fraction = :rest)
 add_phase!(rve, :I1, ellipsoid_inc, Dict(:C => C1); fraction = 0.2)
 add_phase!(rve, :CRACK, penny_crack, Dict(:C => C0); density = 0.05)
 ```
 
-See also [`add_matrix!`](@ref), [`add_phase!`](@ref),
-[`matrix_volume_fraction`](@ref), [`validate_rve`](@ref).
+See also [`add_phase!`](@ref), [`volume_fraction`](@ref),
+[`AbstractFractionClosure`](@ref), [`validate_rve`](@ref).
 """
 mutable struct RVE{T <: Number, S <: Union{Nothing, AbstractDistributionShape}} <:
     AbstractHomogenizationCell
-    matrix_name::Symbol
     phase_names::Vector{Symbol}
     phases::Dict{Symbol, Phase}
     amounts::Dict{Symbol, AbstractAmount}
     symmetrize::Dict{Symbol, AbstractSymmetrize}
     distribution_shape::S
-    # Cached `1 - Σ f_inc`. Heterogeneous amounts make the sum's element type
-    # a runtime property, so recomputing it per call costs three boxed
-    # temporaries — measurable on the sub-µs schemes, which call it once per
-    # `homogenize`. `add_phase!` (the only writer of `amounts` on a live RVE)
-    # refreshes it with the very same loop, so the arithmetic and the dict
-    # iteration order are unchanged and the value stays bit-identical.
-    f_matrix::Any
+    # `nothing` means "not yet decided": the policy is inferred at declaration
+    # time (see `AbstractFractionClosure`) and frozen from then on.
+    closure::Union{Nothing, AbstractFractionClosure}
+    # Derived index, not a role: the single phase carrying a `Remainder`, if
+    # any. Kept so the invariant "at most one" is O(1) to enforce and so the
+    # hot accessors need no dict scan.
+    rest_name::Union{Nothing, Symbol}
+    # Cached `Σ f` over the amounts that take part in the unit sum.
+    # Heterogeneous amounts make the sum's element type a runtime property, so
+    # recomputing it per call costs three boxed temporaries — measurable on the
+    # sub-µs schemes, which read it once per `homogenize`. `add_phase!` (the
+    # only writer of `amounts` on a live RVE) refreshes it with the very same
+    # loop, so the arithmetic and the dict iteration order are unchanged.
+    #
+    # It stores Σ, not `1 - Σ`: `ComplementFraction` wants `1 - Σ`, `Rescale`
+    # and `Strict` want Σ, and `one(f_sum) - f_sum` reproduces the historical
+    # value bit for bit — the unit is taken from the accumulator, so a symbolic
+    # RVE still yields `1 - f` and not `1.0 - f`.
+    f_sum::Any
 end
 
 """
-    RVE(matrix_name::Symbol; T = Float64, distribution_shape = nothing)
-    RVE{T}(matrix_name::Symbol; distribution_shape = nothing)
+    RVE(; T = Float64, distribution_shape = nothing, closure = nothing)
+    RVE{T}(; distribution_shape = nothing, closure = nothing)
 
-Construct an empty RVE. The matrix phase is referenced by `matrix_name`
-but **not** added — call [`add_matrix!`](@ref) next.
+Construct an empty RVE, then declare every phase with [`add_phase!`](@ref) —
+including the one taking up the volume complement, `fraction = :rest`:
 
-The two forms are strictly equivalent; both are optional. `T` declares
+```julia
+rve = RVE()
+add_phase!(rve, :cem, Ellipsoid(1.0), Dict(:C => C_cem); fraction = :rest)
+add_phase!(rve, :agg, Ellipsoid(1.0), Dict(:C => C_agg); fraction = 0.4)
+
+homogenize(rve, MoriTanaka(:cem), :C)   # :cem is the reference medium
+homogenize(rve, SelfConsistent(), :C)   # no phase is
+```
+
+`closure` selects the [`AbstractFractionClosure`](@ref); left unset it is
+inferred. The two constructor forms are strictly equivalent; both are
+optional. `T` declares
 the amount element-type *floor* (default `Float64`) and is only needed
 to force a wider type on amounts that are themselves narrow — complex
 moduli, `ForwardDiff.Dual` or symbolic amounts propagate on their own,
 without declaration (see [`RVE`](@ref)).
 """
-function RVE(
-        matrix_name::Symbol;
+function RVE(;
         T::Type{<:Number} = Float64,
-        distribution_shape = nothing
+        distribution_shape = nothing,
+        closure = nothing
     )
     ds = _to_distribution_shape(distribution_shape)
     return RVE{T, typeof(ds)}(
-        matrix_name,
         Symbol[],
         Dict{Symbol, Phase}(),
         Dict{Symbol, AbstractAmount}(),
         Dict{Symbol, AbstractSymmetrize}(),
         ds,
-        one(T),
+        _to_closure(closure),
+        nothing,
+        zero(T),
     )
 end
 
-RVE{T}(matrix_name::Symbol; distribution_shape = nothing) where {T <: Number} =
-    RVE(matrix_name; T = T, distribution_shape = distribution_shape)
+RVE{T}(; distribution_shape = nothing, closure = nothing) where {T <: Number} =
+    RVE(; T = T, distribution_shape = distribution_shape, closure = closure)
 
 function RVE{T, S}(
-        matrix_name::Symbol; distribution_shape = nothing
+        ; distribution_shape = nothing, closure = nothing
     ) where {T <: Number, S <: Union{Nothing, AbstractDistributionShape}}
-    rve = RVE(matrix_name; T = T, distribution_shape = distribution_shape)
+    rve = RVE(; T = T, distribution_shape = distribution_shape, closure = closure)
     rve isa RVE{T, S} || throw(
         ArgumentError(
             "distribution_shape yields $(typeof(rve.distribution_shape)), not the requested $S"
@@ -414,13 +571,34 @@ end
 
 Store `v` as an amount value under the declared floor `T`: widened to
 `promote_type(T, typeof(v))`, never narrowed down to `T`. This is what
-lets a `Dual` or complex amount live in a plain `RVE(:M)`.
+lets a `Dual` or complex amount live in a plain `RVE()`.
 """
 _amount_promote(::Type{T}, v::Number) where {T <: Number} =
     convert(promote_type(T, typeof(v)), v)
 # Non-`Number` scalars (symbolic backends that do not subtype `Number`)
 # are stored verbatim rather than rejected.
 _amount_promote(::Type{<:Number}, v) = v
+
+"""
+    _to_amount(::Type{T}, fraction, density) -> AbstractAmount
+
+Turn the `fraction=` / `density=` kwargs of [`add_phase!`](@ref) into a stored
+amount. `fraction = :rest` (or `Remainder()`) declares the phase that takes up
+whatever the others leave — see [`AbstractFractionClosure`](@ref).
+"""
+_to_amount(::Type{T}, ::Nothing, density) where {T <: Number} =
+    CrackDensity(_amount_promote(T, density))
+_to_amount(::Type{<:Number}, ::Remainder, ::Nothing) = Remainder()
+function _to_amount(::Type{<:Number}, fraction::Symbol, ::Nothing)
+    fraction === :rest && return Remainder()
+    throw(
+        ArgumentError(
+            "unknown fraction Symbol :$(fraction); expected :rest, or a number"
+        )
+    )
+end
+_to_amount(::Type{T}, fraction, ::Nothing) where {T <: Number} =
+    VolumeFraction(_amount_promote(T, fraction))
 
 """
     eltype(rve::RVE) -> Type
@@ -459,7 +637,7 @@ Base.convert(::Type{RVE{T}}, rve::RVE) where {T <: Number} =
 # =============================================================================
 
 """
-    add_matrix!(rve, geometry, properties::AbstractDict; symmetrize = nothing)
+    add_phase!(rve, :M, geometry, properties::AbstractDict; fraction = :rest, symmetrize = nothing)
 
 Register the matrix phase. Must be called before any [`add_phase!`](@ref).
 The matrix has no explicit amount (its volume fraction is implicit).
@@ -468,19 +646,27 @@ Pass a `symmetrize = :iso | :ti | TISymmetrize(axis) | NoSymmetrize()` kwarg
 to declare an orientation-distribution projection of the matrix's
 localization tensor (see [`AbstractSymmetrize`](@ref)).
 """
-function add_matrix!(
-        rve::RVE, geometry::AbstractInclusion, properties::AbstractDict;
-        symmetrize = nothing
+
+# Register `name` as the phase absorbing the volume complement, enforcing the
+# two invariants that make the closure well posed: at most one such phase, and
+# not under a policy that leaves no complement to absorb.
+function _claim_remainder!(rve::RVE, name::Symbol)
+    rve.rest_name === nothing || throw(
+        ArgumentError(
+            "phase :$(rve.rest_name) already absorbs the volume complement, and an " *
+                "RVE has at most one. Give :$(name) an explicit fraction, or build " *
+                "the RVE with `closure = :rescale` to renormalize relative proportions."
+        )
     )
-    name = rve.matrix_name
-    haskey(rve.phases, name) &&
-        throw(ArgumentError("matrix phase :$(name) already registered"))
-    rve.phases[name] = Phase(geometry, properties)
-    pushfirst!(rve.phase_names, name)
-    sym = _to_symmetrize(symmetrize)
-    if !(sym isa NoSymmetrize)
-        rve.symmetrize[name] = sym
-    end
+    rve.closure isa RescaledFractions && throw(
+        ArgumentError(
+            "closure = RescaledFractions() rescales the declared fractions to unit " *
+                "sum, so there is no complement for :$(name) to absorb; drop " *
+                "`fraction = :rest`."
+        )
+    )
+    rve.closure === nothing && (rve.closure = ComplementFraction())
+    rve.rest_name = name
     return rve
 end
 
@@ -497,7 +683,7 @@ solid inhomogeneities) or `density` (for cracks) must be supplied;
 Both `fraction` and `density` are stored under the RVE's declared
 element-type floor `T`: widened to `promote_type(T, typeof(value))`,
 never narrowed. A complex, `ForwardDiff.Dual` or symbolic amount is
-therefore accepted by a plain `RVE(:M)`, and phases may carry amounts of
+therefore accepted by a plain `RVE()`, and phases may carry amounts of
 different element types.
 
 The optional `symmetrize` kwarg declares an orientation-distribution
@@ -514,21 +700,17 @@ function add_phase!(
         fraction = nothing, density = nothing,
         symmetrize = nothing
     ) where {T}
-    name === rve.matrix_name &&
-        throw(ArgumentError("name :$(name) is reserved for the matrix phase"))
     haskey(rve.phases, name) &&
         throw(ArgumentError("phase :$(name) is already registered"))
     (fraction === nothing) == (density === nothing) &&
         throw(ArgumentError("specify exactly one of `fraction=…` or `density=…`"))
 
+    amount = _to_amount(T, fraction, density)
+    amount isa Remainder && _claim_remainder!(rve, name)
     rve.phases[name] = Phase(geometry, properties)
     push!(rve.phase_names, name)
-    rve.amounts[name] = if fraction !== nothing
-        VolumeFraction(_amount_promote(T, fraction))
-    else
-        CrackDensity(_amount_promote(T, density))
-    end
-    rve.f_matrix = _compute_matrix_volume_fraction(rve.amounts, T)
+    rve.amounts[name] = amount
+    rve.f_sum = _compute_fraction_sum(rve.amounts, T)
     sym = _to_symmetrize(symmetrize)
     if !(sym isa NoSymmetrize)
         rve.symmetrize[name] = sym
@@ -587,15 +769,21 @@ function set_amount!(rve::RVE{T}, name::Symbol, value) where {T}
     haskey(rve.amounts, name) ||
         throw(ArgumentError("no phase named :$(name) carries an amount in this RVE"))
     old = rve.amounts[name]
+    old isa Remainder && throw(
+        ArgumentError(
+            "phase :$(name) takes up the volume complement and has no declared " *
+                "amount to set; change an explicit fraction instead."
+        )
+    )
     new = if old isa VolumeFraction
         VolumeFraction(_amount_promote(T, value))
     else
         CrackDensity(_amount_promote(T, value))
     end
     rve.amounts[name] = new
-    # Only a volume fraction can move the implicit matrix fraction.
+    # Only a volume fraction can move the sum the closure is applied to.
     if _sums_to_unit(new)
-        rve.f_matrix = _compute_matrix_volume_fraction(rve.amounts, T)
+        rve.f_sum = _compute_fraction_sum(rve.amounts, T)
     end
     return rve
 end
@@ -637,25 +825,29 @@ end
 #  Accessors
 # =============================================================================
 
-"""
-    matrix_phase(rve::RVE) -> Phase
-
-Return the matrix `Phase`. Errors if the matrix has not been registered
-(call [`add_matrix!`](@ref) first).
-"""
-function matrix_phase(rve::RVE)
-    haskey(rve.phases, rve.matrix_name) ||
-        throw(ArgumentError("matrix phase :$(rve.matrix_name) is not yet registered — call add_matrix! first"))
-    return rve.phases[rve.matrix_name]
-end
 
 """
-    inclusion_phase_names(rve::RVE) -> Vector{Symbol}
+    phase_names(rve::RVE) -> Vector{Symbol}
 
-Names of the non-matrix phases in insertion order.
+Names of **every** phase, in declaration order. This is what a scheme that
+distinguishes no phase — the self-consistent family, the bounds — iterates
+over; schemes built on a reference medium use
+[`inclusion_phase_names`](@ref) instead.
 """
-inclusion_phase_names(rve::RVE) =
-    Symbol[n for n in rve.phase_names if n != rve.matrix_name]
+phase_names(rve::RVE) = rve.phase_names
+
+"""
+    inclusion_phase_names(rve::RVE, matrix::Symbol) -> Vector{Symbol}
+
+Names of the phases other than `matrix`, in declaration order — the phases a
+matrix-based scheme localizes in its reference medium.
+
+The phase to exclude has to be named: the reference medium is a property of the
+*scheme*, and an RVE holds no such designation of its own. Use
+[`phase_names`](@ref) for the schemes that distinguish none.
+"""
+inclusion_phase_names(rve::RVE, matrix::Symbol) =
+    Symbol[n for n in rve.phase_names if n != matrix]
 
 """
     phase_property(rve, name::Symbol, key::Symbol) -> AbstractTens
@@ -694,25 +886,62 @@ function phase_property_raw(rve::RVE, name::Symbol, key::Symbol)
     return p.properties[key]
 end
 
-"""
-    matrix_property(rve, key::Symbol) -> AbstractTens
-
-Shortcut for `phase_property(rve, rve.matrix_name, key)`.
-"""
-matrix_property(rve::RVE, key::Symbol) = phase_property(rve, rve.matrix_name, key)
 
 """
     volume_fraction(rve, name::Symbol) -> Number
 
-Volume fraction of phase `name`. Returns a zero of the phase's own
-element type (promoted with the RVE floor) if the phase carries a
-[`CrackDensity`](@ref) instead of a [`VolumeFraction`](@ref).
+Volume fraction of phase `name`, **as the schemes see it**: the RVE's
+[`AbstractFractionClosure`](@ref) has already been applied, so a
+[`Remainder`](@ref) reads as `1 - Σ f` and, under
+[`RescaledFractions`](@ref), a declared fraction reads as its renormalized
+value. This is the one accessor a scheme should use.
+
+The *declared* value — what a parameter lens round-trips — is
+`get_param(rve, AmountParameter(name))` instead. The two differ under
+`RescaledFractions`, and only there.
+
+A [`CrackDensity`](@ref) phase reads as zero: a flat crack carries no volume.
 """
 function volume_fraction(rve::RVE{T}, name::Symbol) where {T}
-    name === rve.matrix_name && return matrix_volume_fraction(rve)
+    haskey(rve.amounts, name) ||
+        throw(ArgumentError("no phase named :$(name) in RVE"))
     a = rve.amounts[name]
-    return a isa VolumeFraction ? amount_value(a) : zero(promote_type(T, eltype(a)))
+    a isa CrackDensity && return zero(promote_type(T, eltype(a)))
+    a isa Remainder && return remainder_volume_fraction(rve)
+    return _closure_scale(_closure(rve), amount_value(a), rve.f_sum)
 end
+
+# Under `RescaledFractions` a declared fraction is divided by their sum; every
+# other policy uses it as declared. A plain division, so it differentiates.
+_closure_scale(::RescaledFractions, v, s) = v / s
+_closure_scale(::AbstractFractionClosure, v, _s) = v
+
+"""
+    remainder_volume_fraction(rve::RVE) -> Number
+
+The volume left over by the declared fractions, `1 - Σ f` — what the phase
+declared `fraction = :rest` takes up.
+
+[`CrackDensity`](@ref) entries do not contribute: a flat crack's volume
+vanishes in the penny limit while its density stays finite.
+
+This is a read of the cached `f_sum` field plus one subtraction, not a
+recomputation. The unit comes from the accumulator rather than from the
+declared floor, so a symbolic RVE yields `1 - f` and not `1.0 - f`.
+"""
+remainder_volume_fraction(rve::RVE) = one(rve.f_sum) - rve.f_sum
+
+"""
+    remainder_phase_name(rve::RVE) -> Union{Nothing, Symbol}
+
+The phase declared `fraction = :rest`, or `nothing` when the RVE designates
+none.
+"""
+remainder_phase_name(rve::RVE) = rve.rest_name
+
+# The effective policy: `nothing` means none was declared and no phase claimed
+# a complement, which is exactly the strict case.
+_closure(rve::RVE) = rve.closure === nothing ? StrictFractions() : rve.closure
 
 """
     crack_density(rve, name::Symbol) -> Number
@@ -736,35 +965,17 @@ Defaults to [`NoSymmetrize`](@ref) if none was set.
 phase_symmetrize(rve::RVE, name::Symbol) =
     get(rve.symmetrize, name, NoSymmetrize())
 
-"""
-    matrix_volume_fraction(rve::RVE) -> Number
 
-Implicit matrix volume fraction `1 - Σ_inc f_inc` (only
-[`VolumeFraction`](@ref) entries contribute; [`CrackDensity`](@ref)
-entries are ignored).
-
-The value is cached on the RVE and refreshed by [`add_phase!`](@ref);
-this is a read of the `f_matrix` field, not a recomputation.
-
-The accumulator behind it is seeded with `zero(T)` (the declared floor)
-and then promoted by the stored amounts, so the result carries the
-effective element type — `Dual` as soon as one fraction is `Dual`,
-`Complex` as soon as one is complex. The unit is taken from the
-accumulator rather than from `T`, so a symbolic RVE yields `1 - f` and
-not `1.0 - f`.
-"""
-matrix_volume_fraction(rve::RVE) = rve.f_matrix
-
-# Recomputation behind the `f_matrix` cache. Only `add_phase!` and
+# Recomputation behind the `f_sum` cache. Only `add_phase!`, `set_amount!` and
 # `_rebuild_rve` call it — never a scheme.
-function _compute_matrix_volume_fraction(amounts::AbstractDict, ::Type{T}) where {T}
-    f_inc = zero(T)
+function _compute_fraction_sum(amounts::AbstractDict, ::Type{T}) where {T}
+    f = zero(T)
     for (_, a) in amounts
         if _sums_to_unit(a)
-            f_inc = f_inc + amount_value(a)
+            f = f + amount_value(a)
         end
     end
-    return one(f_inc) - f_inc
+    return f
 end
 
 # =============================================================================
@@ -774,15 +985,17 @@ end
 """
     validate_rve(rve::RVE)
 
-Sanity-check the RVE: matrix registered, all amounts non-negative, sum
-of `VolumeFraction` entries ≤ 1.  Throws `ArgumentError` on
-hard failures; emits `@warn` if `f_inc > 1` (non-physical RVE — useful
-for symbolic / Dual exploration but flagged).
+Sanity-check the RVE: at least one phase, no negative amount, and the
+fraction-closure policy satisfied. Throws `ArgumentError` on hard failures;
+emits `@warn` for a negative complement under the default
+`ComplementFraction(on_negative = :warn)` — a non-physical RVE stays useful
+for symbolic or `Dual` exploration, but is flagged.
 """
 function validate_rve(rve::RVE)
-    haskey(rve.phases, rve.matrix_name) ||
-        throw(ArgumentError("RVE has no matrix phase :$(rve.matrix_name); call add_matrix! first"))
+    isempty(rve.phase_names) &&
+        throw(ArgumentError("RVE has no phase; call add_phase! first"))
     for (name, a) in rve.amounts
+        a isa Remainder && continue      # no declared value to check
         v = amount_value(a)
         # `is_hard_numeric`, not `v isa Real`: `Symbolics.Num` subtypes `Real`
         # and answers no comparison — see the same guard in `add_layer!`.
@@ -790,9 +1003,63 @@ function validate_rve(rve::RVE)
             throw(ArgumentError("phase :$(name) has negative amount $(v)"))
         end
     end
-    fm = matrix_volume_fraction(rve)
-    if is_hard_numeric(fm) && fm < 0
-        @warn "RVE has matrix volume fraction $(fm) < 0 — total inclusion volume fraction exceeds 1"
+    _validate_closure(_closure(rve), rve)
+    return rve
+end
+
+"""
+    _validate_closure(closure, rve) -> RVE
+
+Check the RVE against its fraction-closure policy. Each policy has exactly one
+way to be ill-posed, and the message says how to reach a well-posed RVE rather
+than only what is wrong.
+"""
+function _validate_closure(c::StrictFractions, rve::RVE)
+    rve.rest_name === nothing || throw(
+        ArgumentError(
+            "closure = StrictFractions(), but phase :$(rve.rest_name) is declared " *
+                "with `fraction = :rest`"
+        )
+    )
+    s = rve.f_sum
+    if is_hard_numeric(s) && abs(s - one(s)) > c.atol
+        throw(
+            ArgumentError(
+                "volume fractions sum to $(s), not 1 (atol = $(c.atol)). Declare one " *
+                    "phase with `fraction = :rest` to absorb the complement, or build " *
+                    "the RVE with `closure = :rescale` to renormalize relative " *
+                    "proportions."
+            )
+        )
+    end
+    return rve
+end
+
+function _validate_closure(c::ComplementFraction, rve::RVE)
+    rve.rest_name === nothing && throw(
+        ArgumentError(
+            "closure = ComplementFraction(), but no phase is declared with " *
+                "`fraction = :rest`"
+        )
+    )
+    f = remainder_volume_fraction(rve)
+    if is_hard_numeric(f) && f < 0
+        msg = "phase :$(rve.rest_name) takes up the volume complement 1 - Σ f = " *
+            "$(f) < 0 — the declared fractions already exceed 1"
+        c.on_negative === :error ? throw(ArgumentError(msg)) : @warn msg
+    end
+    return rve
+end
+
+function _validate_closure(::RescaledFractions, rve::RVE)
+    s = rve.f_sum
+    if is_hard_numeric(s) && s <= zero(s)
+        throw(
+            ArgumentError(
+                "closure = RescaledFractions() needs a strictly positive fraction " *
+                    "sum to divide by; got Σ f = $(s)"
+            )
+        )
     end
     return rve
 end
@@ -832,16 +1099,23 @@ function Base.show(io::IO, ::MIME"text/plain", rve::RVE{T, S}) where {T, S}
     Te = eltype(rve)
     tag = Te === T ? "$T" : "$T → $Te"
     println(io, "RVE{$tag} with ", length(rve.phase_names), " phase(s)")
-    println(io, "  matrix : :$(rve.matrix_name)")
+    # Every phase is shown the same way, with the fraction the schemes will
+    # actually use. No phase is singled out as "the matrix": which one plays
+    # the reference medium is the scheme's business, not the RVE's.
     for name in rve.phase_names
-        name === rve.matrix_name && continue
         a = rve.amounts[name]
-        kind = a isa VolumeFraction ? "f" : "ε"
-        println(io, "  inclusion : :$(name)   $kind = $(amount_value(a))")
+        if a isa CrackDensity
+            println(io, "  phase :$(name)   ε = $(amount_value(a))")
+        elseif a isa Remainder
+            println(io, "  phase :$(name)   f = $(volume_fraction(rve, name))  (rest)")
+        else
+            println(io, "  phase :$(name)   f = $(volume_fraction(rve, name))")
+        end
     end
+    println(io, "  closure : ", _closure(rve))
     print(io, "  distribution_shape : ", rve.distribution_shape)
     return
 end
 
 Base.show(io::IO, rve::RVE{T}) where {T} =
-    print(io, "RVE{$T}(:$(rve.matrix_name), $(length(rve.phase_names)) phases)")
+    print(io, "RVE{$T}(", length(rve.phase_names), " phases)")

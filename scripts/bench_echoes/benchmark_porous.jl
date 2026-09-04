@@ -102,10 +102,10 @@ function _build_rve(
         scheme, φ; ω_s = 1.0, ω_p = 1.0,
         sym_s = nothing, sym_p = nothing
     )
-    rve = RVE(:SOLID)
+    rve = RVE()
     geom_s = Spheroid(ω_s)
     geom_p = Spheroid(ω_p)
-    add_matrix!(rve, geom_s, Dict(:C => C_s); symmetrize = sym_s)
+    add_phase!(rve, :SOLID, geom_s, Dict(:C => C_s); fraction = :rest, symmetrize = sym_s)
     add_phase!(
         rve, :PORE, geom_p, Dict(:C => C_p);
         fraction = φ, symmetrize = sym_p
