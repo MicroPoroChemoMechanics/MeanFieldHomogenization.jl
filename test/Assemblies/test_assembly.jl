@@ -130,7 +130,7 @@ end
         d = sqrt(
             sum(
                 let t = abs(ci[k] - cj[k])
-                        min(t, 1.0 - t)^2
+                    min(t, 1.0 - t)^2
                 end for k in 1:3
             )
         )
