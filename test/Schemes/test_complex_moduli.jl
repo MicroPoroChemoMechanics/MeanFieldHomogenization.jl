@@ -74,8 +74,8 @@ end
     C_i = TensISO{3}(60.0 + δ * im, 20.0 + 0.5δ * im)
     f_inc = 0.3
 
-    rve_plain = _two_phase_rve(C_m, C_i, f_inc)                       # nothing declared
-    rve_param = let r = RVE{ComplexF64}()                           # parametric form
+    rve_plain = _two_phase_rve(C_m, C_i, f_inc)                       # no `T` declared
+    rve_param = let r = RVE{ComplexF64}(; distribution_shape = Ellipsoid(1.0))  # parametric form
         add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
         add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = f_inc)
         r
