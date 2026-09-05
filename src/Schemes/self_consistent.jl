@@ -721,6 +721,19 @@ _sc_residual_norm(a::TensND.AbstractTens, b::TensND.AbstractTens) =
 # as its canonical ones.
 _sc_frobenius(t::TensND.AbstractTens) = sqrt(sum(abs2, get_array(t)))
 
+# `‖rebuild(prototype, v)‖_F`, or `nothing` when the class cannot be rebuilt
+# from those components at all. Not every symmetry class accepts every
+# coordinate vector — a rebuild that validates its argument rejects the
+# canonical unit vectors, which are semi-definite — so this is a normal answer
+# rather than an error, and one guarded call site serves both probes below.
+function _sc_basis_norm(prototype::TensND.AbstractTens, v::AbstractVector)
+    return try
+        _scalar_value(_sc_frobenius(_rebuild_from_data(prototype, v)))
+    catch
+        return nothing
+    end
+end
+
 """
     _sc_param_weights(prototype) -> (w::Vector{Float64}, isometric::Bool)
 
@@ -752,19 +765,6 @@ than assumed: `isometric = false` (with unit weights) is returned when the
 probe fails — the general `Mandel66` fallback among others — and the caller
 then measures the tensor norm directly instead.
 """
-# `‖rebuild(prototype, v)‖_F`, or `nothing` when the class cannot be rebuilt
-# from those components at all. Not every symmetry class accepts every
-# coordinate vector — a rebuild that validates its argument rejects the
-# canonical unit vectors, which are semi-definite — so this is a normal answer
-# rather than an error, and one guarded call site serves both probes below.
-function _sc_basis_norm(prototype::TensND.AbstractTens, v::AbstractVector)
-    return try
-        _scalar_value(_sc_frobenius(_rebuild_from_data(prototype, v)))
-    catch
-        return nothing
-    end
-end
-
 function _sc_param_weights(prototype::TensND.AbstractTens)
     L = length(TensND.get_data(prototype))
     ones_w = ones(Float64, L)

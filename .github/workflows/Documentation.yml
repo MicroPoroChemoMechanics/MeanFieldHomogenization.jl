@@ -83,6 +83,12 @@ jobs:
             using Pkg
             Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()
+      # Documenter only reports a name listed in an `@docs` block with no
+      # docstring after it has executed every `@example` and Literate script,
+      # which is an hour and a half into the build. The same condition is
+      # decidable from the loaded module in seconds, so decide it first.
+      - name: Check every @docs entry is documented
+        run: julia --project=docs/ .github/scripts/check_docs_blocks.jl
       - name: Build and deploy
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
