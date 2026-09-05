@@ -721,6 +721,19 @@ _sc_residual_norm(a::TensND.AbstractTens, b::TensND.AbstractTens) =
 # as its canonical ones.
 _sc_frobenius(t::TensND.AbstractTens) = sqrt(sum(abs2, get_array(t)))
 
+# `‖rebuild(prototype, v)‖_F`, or `nothing` when the class cannot be rebuilt
+# from those components at all. Not every symmetry class accepts every
+# coordinate vector — a rebuild that validates its argument rejects the
+# canonical unit vectors, which are semi-definite — so this is a normal answer
+# rather than an error, and one guarded call site serves both probes below.
+function _sc_basis_norm(prototype::TensND.AbstractTens, v::AbstractVector)
+    return try
+        _scalar_value(_sc_frobenius(_rebuild_from_data(prototype, v)))
+    catch
+        return nothing
+    end
+end
+
 """
     _sc_param_weights(prototype) -> (w::Vector{Float64}, isometric::Bool)
 
@@ -759,22 +772,16 @@ function _sc_param_weights(prototype::TensND.AbstractTens)
     for i in 1:L
         e = zeros(Float64, L)
         e[i] = 1.0
-        w[i] = try
-            _scalar_value(_sc_frobenius(_rebuild_from_data(prototype, e)))
-        catch
-            return (ones_w, false)
-        end
+        wi = _sc_basis_norm(prototype, e)
+        (wi === nothing || !isfinite(wi) || wi ≤ 0) && return (ones_w, false)
+        w[i] = wi
     end
-    all(x -> isfinite(x) && x > 0, w) || return (ones_w, false)
     # Orthogonality probe: a vector with pairwise-distinct entries, so that a
     # non-zero cross term `2 qᵢ qⱼ ⟨Eᵢ, Eⱼ⟩` cannot cancel out by symmetry.
     q = Float64[i for i in 1:L]
-    lhs = try
-        _scalar_value(_sc_frobenius(_rebuild_from_data(prototype, q)))^2
-    catch
-        return (ones_w, false)
-    end
-    isapprox(lhs, sum(abs2, q .* w); rtol = 1.0e-10) || return (ones_w, false)
+    nq = _sc_basis_norm(prototype, q)
+    nq === nothing && return (ones_w, false)
+    isapprox(nq^2, sum(abs2, q .* w); rtol = 1.0e-10) || return (ones_w, false)
     return (w, true)
 end
 

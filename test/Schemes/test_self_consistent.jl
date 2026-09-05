@@ -322,3 +322,74 @@ end
         @test gaps[2] > gaps[1]
     end
 end
+
+@testset "SelfConsistent — select_best tracks the best iterate, on every solver" begin
+    # `select_best` returns the smallest-residual iterate seen rather than the
+    # last one. It is a Picard notion, but `NewtonDefault` implements it too and
+    # nothing exercised that pair: the branch was reachable and untested, and a
+    # caller may legitimately write it.
+    C_s = iso_stiffness(30.0, 20.0)
+    C_w = iso_stiffness(1.0e-6, 1.0e-6)
+    rve = RVE()
+    add_phase!(rve, :S, Ellipsoid(1.0), Dict(:C => C_s); fraction = :rest)
+    add_phase!(rve, :P, Ellipsoid(1.0), Dict(:C => C_w); fraction = 0.3)
+
+    ref = homogenize(rve, SelfConsistent(; abstol = 0.0, reltol = 1.0e-14, maxiters = 5_000), :C)
+    for algo in (AndersonDefault(), NewtonDefault())
+        # Converged: best and last iterate agree with the reference.
+        C = homogenize(
+            rve, SelfConsistent(; algorithm = algo, select_best = true, maxiters = 200), :C
+        )
+        @test k_mu(C)[1] ≈ k_mu(ref)[1] rtol = 1.0e-6
+
+        # Cut short on purpose: the loop cannot converge, so the returned value
+        # is the best iterate rather than whatever the last step happened to be.
+        C_short = homogenize(
+            rve, SelfConsistent(;
+                algorithm = algo, abstol = 0.0, reltol = 1.0e-14,
+                maxiters = 3, select_best = true
+            ), :C
+        )
+        @test all(isfinite, get_array(C_short))
+        @test k_mu(C_short)[1] > 0
+    end
+end
+
+@testset "SelfConsistent — the isometric parametrization and its fallback" begin
+    # `abstol` bounds the Frobenius norm of the tensor for every solver, and
+    # what converts one into the other is the weight vector below. The identity
+    # holds only if the class basis is orthogonal, which the code checks rather
+    # than assumes — so both halves of that contract are pinned here.
+    S = MeanFieldHomogenization.Schemes
+    frob(t) = sqrt(sum(abs2, get_array(t)))
+
+    C_iso = iso_stiffness(30.0, 20.0)
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_iso); fraction = :rest)
+    add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 0.2), Dict(:C => iso_stiffness(120.0, 80.0)); fraction = 0.2)
+    C_ti = homogenize(rve, MoriTanaka(), :C)
+
+    for T in (C_iso, C_ti)
+        w, isometric = S._sc_param_weights(T)
+        @test isometric
+        L = length(TensND.get_data(T))
+        @test length(w) == L
+        @test all(>(0), w)
+        # ‖w ⊙ p‖₂ == ‖rebuild(p)‖_F, on a vector aligned with no single axis.
+        q = Float64[1 / (i + 1) for i in 1:L]
+        @test sqrt(sum(abs2, q .* w)) ≈ frob(S._rebuild_from_data(T, q)) rtol = 1.0e-12
+    end
+
+    # The deviatoric basis tensor is not a unit tensor: an isotropic stiffness
+    # weights (α, β) by (1, √5). This is the whole reason the plain Euclidean
+    # norm of the components understated the tensor norm.
+    w_iso, _ = S._sc_param_weights(C_iso)
+    @test w_iso[1] ≈ 1.0 rtol = 1.0e-12
+    @test w_iso[2] ≈ sqrt(5) rtol = 1.0e-12
+
+    # The fallback: a coordinate vector the class cannot be rebuilt from is a
+    # normal answer (`nothing`), not an exception — that is what lets the
+    # caller degrade to measuring the tensor directly instead of failing.
+    @test S._sc_basis_norm(C_ti, [1.0, 2.0, 3.0]) === nothing
+    @test S._sc_basis_norm(C_ti, collect(1.0:length(TensND.get_data(C_ti)))) isa Real
+end
