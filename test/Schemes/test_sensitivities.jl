@@ -27,7 +27,7 @@ _fd_centered(f, x, h) = (f(x + h) - f(x - h)) / (2h)
 
 # Reference two-phase spherical RVE
 function _ref_rve(; f = 0.25)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0),

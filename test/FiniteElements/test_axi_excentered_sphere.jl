@@ -209,10 +209,10 @@ end
     sph = LayeredSphere((cbrt(AX_W), 1.0), (AX_C_CORE, AX_C_SHELL))
 
     for scheme in (Dilute(), MoriTanaka(), Maxwell(), PonteCastanedaWillis())
-        rve_fe = RVE()
+        rve_fe = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve_fe, :m, Ellipsoid(1.0), Dict(:C => AX_C_MAT); fraction = :rest)
         add_phase!(rve_fe, :i, incl, Dict(:C => AX_C_MAT); fraction = 0.2)
-        rve_ex = RVE()
+        rve_ex = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve_ex, :m, Ellipsoid(1.0), Dict(:C => AX_C_MAT); fraction = :rest)
         add_phase!(rve_ex, :i, sph, Dict(:C => AX_C_MAT); fraction = 0.2)
         # The finite-element estimate is isotropic in *content* but not in

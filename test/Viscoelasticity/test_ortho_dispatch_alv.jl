@@ -31,7 +31,7 @@ _ortho_tensor(s) = TensND.TensOrtho(
 )
 
 function _ortho_rve(; fraction = 0.25)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(_ortho_tensor(1.0))); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, 1.0),

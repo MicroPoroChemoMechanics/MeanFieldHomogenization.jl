@@ -22,7 +22,7 @@ using ForwardDiff
     rve = RVE()
     @test rve isa RVE{Float64}
     @test isempty(rve.phase_names)
-    @test rve.distribution_shape isa UniformDistribution
+    @test rve.distribution_shape === nothing
 
     # Matrix
     C₀ = TensISO{3}(30.0, 10.0)
@@ -84,10 +84,13 @@ end
 end
 
 @testset "RVE — distribution_shape coercion" begin
-    # Default → UniformDistribution(Ellipsoid(1.0))
+    # Unset stays unset. A sphere used to be supplied here, which erased the
+    # difference between "I declare a spherical distribution" and "I declare
+    # none" — and the two are different statements, because a sphere makes
+    # Maxwell and PCW collapse onto Mori-Tanaka.
     rve_default = RVE()
-    @test rve_default.distribution_shape isa UniformDistribution
-    @test rve_default.distribution_shape.shape isa Ellipsoid
+    @test rve_default.distribution_shape === nothing
+    @test RVE(; distribution_shape = nothing).distribution_shape === nothing
 
     # AbstractInclusion auto-wrapped
     ell = Ellipsoid(2.0, 1.0, 1.0)

@@ -825,7 +825,7 @@ function _homogenize_alv_dispatch(
 end
 
 function _homogenize_alv_dispatch(
-        rve::RVE, ::Maxwell, prop::Symbol,
+        rve::RVE, scheme::Maxwell, prop::Symbol,
         times::AbstractVector,
         C_0, C_phases, A_duts, contribs,
         H_phases, fractions, f_M, matrix::Symbol; kw...
@@ -833,8 +833,12 @@ function _homogenize_alv_dispatch(
     # The Hill kernel is built on the RVE's *distribution shape*, as in the
     # elastic `Schemes.maxwell` — not on a hard-coded sphere, which would make
     # the same scheme answer differently on the elastic and the ALV path.
+    #
+    # `homogenize_alv` does not go through `validate_cell`, so the requirement
+    # is resolved here as well; otherwise an undeclared shape would surface as
+    # a `nothing` field access rather than as the explanatory error.
     C_M_law = phase_property(rve, matrix, prop)
-    H_0 = hill_kernel(rve.distribution_shape.shape, C_M_law, times)
+    H_0 = hill_kernel(Schemes.distribution_shape(rve, scheme).shape, C_M_law, times)
     if !_has_cracks(kw)
         iso_contribs = _try_iso_pairs(contribs)
         if iso_contribs !== nothing && _is_iso_block(C_0) && _is_iso_block(H_0)
@@ -915,13 +919,13 @@ end
 # the single-shape case, but uses the `rve.distribution_shape` for the
 # Hill kernel instead of a fixed sphere.
 function _homogenize_alv_dispatch(
-        rve::RVE, ::PonteCastanedaWillis, prop::Symbol,
+        rve::RVE, scheme::PonteCastanedaWillis, prop::Symbol,
         times::AbstractVector,
         C_0, C_phases, A_duts, contribs,
         H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     C_M_law = phase_property(rve, matrix, prop)
-    dist = rve.distribution_shape
+    dist = Schemes.distribution_shape(rve, scheme)
     dist isa UniformDistribution ||
         throw(ArgumentError("PCW-ALV: only UniformDistribution is currently supported"))
     H_d = hill_kernel(dist.shape, C_M_law, times)

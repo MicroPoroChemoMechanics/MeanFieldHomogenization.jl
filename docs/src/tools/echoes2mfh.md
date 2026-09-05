@@ -63,8 +63,15 @@ whatever the script varies. Note that `ver["SOLID"].fraction = 1 - f` is
 **Solver options moved into the scheme.** Echoes passes `epsrel`, `maxnb` and
 `select_best` as loose `homogenize` keywords; MFH attaches them to the scheme
 instance, so `scheme=SC, epsrel=1e-10, maxnb=300, select_best=True` becomes
-`SelfConsistent(; abstol = 1.0e-10, maxiters = 300, select_best = true)`.
+`SelfConsistent(; reltol = 1.0e-10, abstol = 0.0, maxiters = 300, select_best = true)`.
 Keywords a given scheme does not read are dropped rather than passed on.
+
+`epsrel` becomes `reltol`, and it comes with `abstol = 0.0`. Echoes' fixed
+point stopped on `‖X - X_old‖ > epsrel · ‖X_old‖`, with no absolute term;
+MFH's test is the additive `abstol + reltol · ‖x‖`, so switching the absolute
+term off is what reproduces the original stop exactly. Leaving it at its
+`1e-12` default would make a tight request such as `epsrel = 1e-15` stop
+*earlier* than Echoes did, on the absolute term instead of the relative one.
 
 **Accumulate-in-a-loop became a comprehension.** `k = []` followed by
 `for x in xs: k.append(f(x))` becomes `k = [f(x) for x in xs]`, and when

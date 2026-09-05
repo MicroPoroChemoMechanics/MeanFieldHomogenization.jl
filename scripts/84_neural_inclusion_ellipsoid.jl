@@ -403,7 +403,7 @@ nn = NeuralHillInclusion(
 )
 
 function rve_with(geom, prop_m, prop_i, key; kw...)
-    r = RVE()
+    r = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(r, :M, Ellipsoid(1.0), Dict(key => prop_m); fraction = :rest)
     add_phase!(r, :I, geom, Dict(key => prop_i); fraction = 0.25, kw...)
     return r
@@ -469,7 +469,7 @@ end
 # the native answer to the surrogate's own accuracy.
 
 function oriented(build, nbins, f)
-    r = RVE()
+    r = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C_M); fraction = :rest)
     for (i, bin) in enumerate(polar_orientation_bins(nbins))
         add_phase!(
@@ -509,7 +509,7 @@ C_nn = homogenize(oriented(nn_at, 12, 0.2), MoriTanaka(), :C)
 idx = C -> get_array(C)[1, 1, 1, 1]
 
 function rve_of(a3, geom_of)
-    r = RVE()
+    r = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C_M); fraction = :rest)
     add_phase!(r, :I, geom_of(a3), Dict(:C => C_I); fraction = 0.2)
     return r

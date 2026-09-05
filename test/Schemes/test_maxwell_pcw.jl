@@ -13,6 +13,7 @@
 #   7. ForwardDiff sensitivity to f.
 #   8. Complex moduli (frequency-domain).
 #   9. Symbol shortcuts.
+#  10. An undeclared distribution shape is refused rather than defaulted.
 # =============================================================================
 
 using Test
@@ -26,7 +27,7 @@ const RTOL_MX = 1.0e-9
 
 @testset "Maxwell / PCW — sanity (single-phase)" begin
     C_m = TensISO{3}(30.0, 10.0)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     @test homogenize(rve, Maxwell()) ≈ C_m
     @test homogenize(rve, PonteCastanedaWillis()) ≈ C_m
@@ -43,7 +44,7 @@ end
 end
 
 @testset "Maxwell — bracketed by Voigt/Reuss" begin
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
@@ -85,7 +86,7 @@ end
 end
 
 @testset "Maxwell / PCW — conductivity" begin
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(2.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(8.0));
@@ -102,7 +103,7 @@ end
 @testset "Maxwell — ForwardDiff sensitivity" begin
     f_max(f) = begin
         DT = typeof(f)
-        rve = RVE(; T = DT)
+        rve = RVE(; T = DT, distribution_shape = Ellipsoid(1.0))
         add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
@@ -117,7 +118,7 @@ end
 
 @testset "Maxwell / PCW — Complex moduli" begin
     δ = 0.05
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0 + δ * im, 10.0 + 0.5δ * im)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0),
@@ -132,13 +133,13 @@ end
     end
 
     # Im → 0 limit
-    rve_re = RVE()
+    rve_re = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve_re, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve_re, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
     )
-    rve_0 = RVE()
+    rve_0 = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve_0, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0 + 0im, 10.0 + 0im)); fraction = :rest)
     add_phase!(
         rve_0, :I, Ellipsoid(1.0),
@@ -153,7 +154,7 @@ end
 end
 
 @testset "Maxwell / PCW — Symbol shortcuts (lowercase canonical)" begin
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
@@ -167,4 +168,43 @@ end
     @test homogenize(rve, :PCW) ≈ homogenize(rve, PonteCastanedaWillis())
     @test homogenize(rve, :ponte_castaneda_willis) ≈
         homogenize(rve, PonteCastanedaWillis())
+end
+
+@testset "Maxwell / PCW — an undeclared distribution shape is refused" begin
+    # A spherical distribution makes both schemes coincide *exactly* with
+    # Mori-Tanaka. Supplying one by default therefore answered a scheme whose
+    # purpose is a non-spherical distribution with the estimate it generalizes,
+    # silently. The shape is still the RVE's — it is microstructure, a
+    # two-point statistic — it simply has no default.
+    bare = RVE()
+    add_phase!(bare, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
+    add_phase!(bare, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0)); fraction = 0.3)
+
+    @test bare.distribution_shape === nothing
+    for sch in (Maxwell(), PonteCastanedaWillis(), :maxwell, :pcw)
+        @test_throws ArgumentError homogenize(bare, sch)
+    end
+    # The message has to name the degeneracy, not merely report a missing field.
+    msg = try
+        homogenize(bare, PonteCastanedaWillis())
+    catch e
+        sprint(showerror, e)
+    end
+    @test occursin("distribution", msg)
+    @test occursin("Mori-Tanaka", msg)
+
+    # Every other scheme reads no distribution shape and is unaffected.
+    for sch in (Voigt(), Reuss(), MoriTanaka(), Dilute(), DiluteDual(), SelfConsistent())
+        @test all(isfinite, get_array(homogenize(bare, sch)))
+    end
+
+    # Declaring the sphere explicitly restores the historical answer, and the
+    # degeneracy onto Mori-Tanaka is now an asserted property rather than a
+    # silent one.
+    sph = RVE(; distribution_shape = Ellipsoid(1.0))
+    add_phase!(sph, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
+    add_phase!(sph, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0)); fraction = 0.3)
+    C_mt = homogenize(sph, MoriTanaka())
+    @test homogenize(sph, Maxwell()) ≈ C_mt
+    @test homogenize(sph, PonteCastanedaWillis()) ≈ C_mt
 end

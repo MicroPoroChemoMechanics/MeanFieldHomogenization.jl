@@ -63,7 +63,7 @@ const law_I = make_law(Ri)
 
 # Build the RVE for a given inclusion shape.
 function build_rve(omega, frac)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:Y => law_M); fraction = :rest)
     sh = omega == 1.0 ? Ellipsoid(1.0, 1.0, 1.0) : Spheroid(omega)
     add_phase!(rve, :I, sh, Dict(:Y => law_I); fraction = frac)

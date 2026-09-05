@@ -31,7 +31,7 @@ function _eff_mu_final(rve, scheme)
 end
 
 function _build_rve_base(f::Real)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => _build_law_M(1.0, 1.0)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(_C_INC));
@@ -197,7 +197,7 @@ const _ALV2_SCHEMES = (
 
 @testset "ALV order-2 sensitivities — d/dK_phase (every order-2 scheme)" begin
     function eff_K(k, sch)
-        rve = RVE()
+        rve = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => _law_K(1.0)); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0), Dict(:K => heaviside_law(TensISO{3}(k)));
@@ -221,7 +221,7 @@ end
 # actually performs (see `_maybe_symmetrize_alv2`).
 @testset "ALV order-2 sensitivities — d/dω geometry (every order-2 scheme)" begin
     function eff_K_ω(ω, sch)
-        rve = RVE()
+        rve = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => _law_K(1.0)); fraction = :rest)
         add_phase!(
             rve, :I, Spheroid(ω), Dict(:K => heaviside_law(TensISO{3}(10.0)));

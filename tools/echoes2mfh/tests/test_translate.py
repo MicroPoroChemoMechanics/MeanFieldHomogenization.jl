@@ -86,9 +86,42 @@ C=homogenize(prop="C",rve=ver,scheme=SC,epsrel=1.e-10,maxnb=300,select_best=True
 """
     out = translate(src)
     assert "SelfConsistent(;" in out
-    assert "abstol = 1.0e-10" in out
+    # `epsrel` is RELATIVE: it becomes `reltol`, never `abstol`. Echoes' fixed
+    # point had no absolute term at all, so `abstol` is switched off with it —
+    # left at MFH's `1e-12` default it would decide the stop instead, and the
+    # tighter the `epsrel` asked for, the more surely it would.
+    assert "reltol = 1.0e-10" in out
+    assert "abstol = 0.0" in out
+    assert "abstol = 1.0e-10" not in out
     assert "maxiters = 300" in out
     assert "select_best = true" in out
+
+
+def test_maxwell_declares_the_distribution_shape():
+    """MFH gives the distribution shape no default: undeclared, Maxwell and PCW
+    raise rather than collapsing onto Mori-Tanaka in silence. Echoes' own
+    `ver.self()` is a unit sphere, so that is what reproduces the original run."""
+    src = """
+from echoes import *
+ver=rve(matrix="M")
+ver["M"]=ellipsoid(shape=spherical,prop={"C":stiff_kmu(1.,1.)})
+C=homogenize(prop="C",rve=ver,scheme=MAX)
+"""
+    out = translate(src)
+    assert "RVE(; distribution_shape = Ellipsoid(1.0))" in out
+    assert "Maxwell()" in out
+
+
+def test_scheme_that_reads_no_distribution_leaves_the_rve_bare():
+    src = """
+from echoes import *
+ver=rve(matrix="M")
+ver["M"]=ellipsoid(shape=spherical,prop={"C":stiff_kmu(1.,1.)})
+C=homogenize(prop="C",rve=ver,scheme=MT)
+"""
+    out = translate(src)
+    assert "rve = RVE()" in out
+    assert "distribution_shape" not in out
 
 
 def test_scheme_without_solver_options_stays_bare():

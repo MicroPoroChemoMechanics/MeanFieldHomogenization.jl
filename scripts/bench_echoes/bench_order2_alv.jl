@@ -65,7 +65,7 @@ const py_Ri = py"py_Ri"
 
 # Build comparable Julia / ECHOES homogenize calls -----------------------
 function julia_run(omega, T, sch, frac)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:Y => law_M); fraction = :rest)
     add_phase!(
         rve, :I,

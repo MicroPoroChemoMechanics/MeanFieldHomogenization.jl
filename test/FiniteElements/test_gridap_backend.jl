@@ -136,7 +136,7 @@ end
 
 @testset "Drop-in in the schemes (Gridap)" begin
     incl = gx_incl(GridapBackend(), (GX_C_CORE, GX_C_SHELL); eccentricity = 0.3)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :m, Ellipsoid(1.0), Dict(:C => GX_C_MAT); fraction = :rest)
     add_phase!(rve, :rca, incl, Dict(:C => GX_C_MAT); fraction = 0.25)
     Cmt = homogenize(rve, MoriTanaka(), :C)

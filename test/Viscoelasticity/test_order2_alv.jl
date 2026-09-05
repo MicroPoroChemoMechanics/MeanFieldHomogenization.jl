@@ -71,13 +71,13 @@ end
     f_I = 0.25
 
     function _setup_alv()
-        rve = RVE()
+        rve = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => law_M); fraction = :rest)
         add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => law_I); fraction = f_I)
         return rve
     end
     function _setup_el()
-        rve = RVE()
+        rve = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_M_t); fraction = :rest)
         add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K_I_t); fraction = f_I)
         return rve

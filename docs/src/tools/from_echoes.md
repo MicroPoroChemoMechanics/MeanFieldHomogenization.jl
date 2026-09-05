@@ -39,7 +39,7 @@ picks it up unless it names another — so a translated script behaves the same.
 | `SC`, `ASC` | [`SelfConsistent`](@ref), [`AsymmetricSelfConsistent`](@ref) |
 | `MAX`, `PCW` | [`Maxwell`](@ref), [`PonteCastanedaWillis`](@ref) |
 | `DIFF` | [`DifferentialScheme`](@ref) |
-| `homogenize(prop="C", rve=myrve, scheme=MT, epsrel=1e-6, maxnb=300, select_best=True)` | `homogenize(rve, MoriTanaka(), :C; abstol = 1e-6, maxiters = 300, select_best = true)` |
+| `homogenize(prop="C", rve=myrve, scheme=MT, epsrel=1e-6, maxnb=300, select_best=True)` | `homogenize(rve, MoriTanaka(), :C; reltol = 1e-6, abstol = 0, maxiters = 300, select_best = true)` |
 | `C.k`, `C.mu` | `k_mu(C)` |
 | `np.trace(K.array) / 3.` | `tr(Array(homogenize(rve, scheme, :K))) / 3` |
 | `.paramsym(sym=TI)` | `best_fit_ti` |
@@ -55,8 +55,9 @@ Two conventions worth flagging for a smooth transition:
 - **Symbol-string vs. type-instance schemes.** Echoes selects a scheme via
   a module-level constant (`MT`, `SC`, …) passed to `homogenize`; MFH uses a
   scheme **type instance** (`MoriTanaka()`, `SelfConsistent(; kwargs...)`),
-  which is also how solver options (`abstol`, `maxiters`, `select_best`)
-  attach directly to the scheme rather than as loose `homogenize` keywords.
+  which is also how solver options (`abstol`, `reltol`, `maxiters`,
+  `select_best`) attach directly to the scheme rather than as loose
+  `homogenize` keywords.
   A `Symbol` shortcut (`:mt`, `:sc`, …) is also accepted — see
   [the schemes manual](../manual/schemes.md) for the full alias table.
 
@@ -199,7 +200,7 @@ MFH, computed live, against those captured references:
 mfh_schemes = Dict(
     "MT" => MoriTanaka(),
     "DIFF" => DifferentialScheme(; nsteps = 300),
-    "SC" => SelfConsistent(; abstol = 1.0e-6, maxiters = 300, select_best = true),
+    "SC" => SelfConsistent(; reltol = 1.0e-6, abstol = 0.0, maxiters = 300, select_best = true),
 )
 
 _relerr(a, b) = abs(b) < 1.0e-9 ? abs(a - b) : abs(a - b) / abs(b)

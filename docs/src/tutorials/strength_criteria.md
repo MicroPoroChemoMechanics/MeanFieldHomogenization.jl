@@ -55,7 +55,7 @@ that homogenizes and reads back `(k_hom, μ_hom)` gives both at once:
 
 ```@example tutstrength
 function k_mu_hom(μ_s::T, scheme) where {T}
-    r = RVE(; T = T)
+    r = RVE(; T = T, distribution_shape = Ellipsoid(1.0))
     add_phase!(r, :SOLID, Spheroid(ω), Dict(:C => iso_stiffness(convert(T, k_s), μ_s)); fraction = :rest, symmetrize = IsoSymmetrize())
     add_phase!(r, :PORE, Spheroid(ω), Dict(:C => iso_stiffness(convert(T, TINY), convert(T, TINY)));
                fraction = convert(T, φ), symmetrize = IsoSymmetrize())

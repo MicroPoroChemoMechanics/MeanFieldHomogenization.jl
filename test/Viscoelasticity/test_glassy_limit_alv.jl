@@ -56,7 +56,7 @@ end
     C_I_0 = visco_eval(law_I, t_0, t_0)
 
     build(prop_M, prop_I) = let
-        rve = RVE()
+        rve = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => prop_M); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => prop_I);
@@ -85,7 +85,7 @@ end
     times = [t_0, 0.9]
 
     build(prop_M, prop_I) = let
-        rve = RVE()
+        rve = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => prop_M); fraction = :rest)
         add_phase!(
             rve, :I, Spheroid(0.2), Dict(:C => prop_I);
@@ -116,7 +116,7 @@ end
     C_M_0 = visco_eval(law_M, t_0, t_0)
 
     build(prop) = let
-        rve = RVE()
+        rve = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => prop); fraction = :rest)
         add_phase!(
             rve, :CRACK, PennyCrack(1.0), Dict(:C => prop);
@@ -148,7 +148,7 @@ end
     times = [t_0, 1.0, 1.7]
 
     build(prop_M, prop_I) = let
-        rve = RVE()
+        rve = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => prop_M); fraction = :rest)
         add_phase!(
             rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => prop_I);

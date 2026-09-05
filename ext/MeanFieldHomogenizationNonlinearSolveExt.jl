@@ -124,6 +124,17 @@ the root problem `F(p) = 0` on the canonical symmetry components `p`
 [`NewtonDefault`](@ref)), with the positive-definite guard applied
 before every `step` evaluation.
 
+`abstol` and `reltol` are measured in the **Frobenius norm of the tensor**, as
+they are for the two built-in solvers — the weights of `S._sc_param_weights`
+turn the canonical components into that norm, and they are passed as the
+`internalnorm` of a `NormTerminationMode` rather than applied to the unknowns
+themselves. That distinction matters: rescaling the unknowns would also rescale
+the trust region, which is not invariant under it, and in the percolated regime
+that moves where the algorithm stops. Without either, the same `abstol` would
+express a stricter requirement in one symmetry class than in another. SciML's
+test is `‖Δ‖ ≤ abstol` or `‖Δ‖ ≤ reltol · ‖Δ + u‖`, the `max` form of the
+additive convention the built-in solvers use.
+
 `abstol`, `reltol`, `maxiters` are forwarded to `NonlinearSolve.solve`.
 `damping` and `select_best` are Picard-only concepts (relaxation /
 best-iterate tracking) with no SciML equivalent and are accepted but
@@ -147,6 +158,24 @@ function S._solve_sc(
     residual_vec = _nls_residual(step, x0, ε_pos)
     rebuild = p -> S._tens_from_param_vec(x0, p)
     p0 = S._tens_to_param_vec(x0)
+    # `abstol` has to mean the same thing here as it does for the two built-in
+    # solvers, namely a bound on the Frobenius norm of the tensor. The weights
+    # of `S._sc_param_weights` convert one into the other, and they are applied
+    # to the *norm* rather than to the unknowns: rescaling the unknowns would
+    # also rescale the trust region, which is not invariant under it, and in
+    # the percolated regime that moves where the algorithm stops — onto the
+    # plateau of the positive-definiteness guard, where the residual is large
+    # and its Jacobian identically zero. Measuring differently is safe;
+    # searching differently is not.
+    w_nls, _isometric = S._sc_param_weights(x0)
+    _wnorm(v) = sqrt(sum(abs2, w_nls .* v))
+    # `NormTerminationMode` keeps BOTH tolerances — `‖Δ‖ ≤ abstol` or
+    # `‖Δ‖ ≤ reltol · ‖Δ + u‖` — which is `max` where the package's own contract
+    # writes `+`, i.e. the same test to within a factor of two. `AbsNorm…` would
+    # have measured in the right norm but made `reltol` inert here, and silently
+    # dropping a documented knob on one solver is exactly the kind of divergence
+    # between algorithms this release exists to remove.
+    term = NonlinearSolve.NormTerminationMode(_wnorm)
     # `eltype(p0)` alone does not always detect Dual-ness: when the
     # differentiated parameter lives on a phase other than the one `x0`
     # is built from (e.g. an *inclusion* modulus or a volume fraction,
@@ -170,7 +199,10 @@ function S._solve_sc(
         #    autodiff (ForwardDiff, single layer) computes its own
         #    Jacobian — correct and fast since no user Dual is present.
         prob = NonlinearProblem((p, _) -> residual_vec(p), collect(float.(p0)))
-        sol = NonlinearSolve.solve(prob, algo; abstol = abstol, reltol = reltol, maxiters = maxiters)
+        sol = NonlinearSolve.solve(
+            prob, algo; abstol = abstol, reltol = reltol, maxiters = maxiters,
+            termination_condition = term
+        )
         NonlinearSolve.SciMLBase.successful_retcode(sol) ||
             @debug "NonlinearSolve SC solver did not report success" retcode = sol.retcode
         return rebuild(sol.u)
@@ -197,7 +229,10 @@ function S._solve_sc(
         Jfd(p) = _fd_jacobian(Fval, p)
         nf = NonlinearFunction((p, _) -> Fval(p); jac = (p, _) -> Jfd(p))
         prob = NonlinearProblem(nf, u0)
-        sol = NonlinearSolve.solve(prob, algo; abstol = abstol, reltol = reltol, maxiters = maxiters)
+        sol = NonlinearSolve.solve(
+            prob, algo; abstol = abstol, reltol = reltol, maxiters = maxiters,
+            termination_condition = term
+        )
         NonlinearSolve.SciMLBase.successful_retcode(sol) ||
             @debug "NonlinearSolve SC solver (primal/IFT) did not report success" retcode = sol.retcode
         pstar = sol.u

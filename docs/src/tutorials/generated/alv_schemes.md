@@ -68,7 +68,7 @@ const FRACTION = 0.3
 elastic_law(C) = ViscoLaw((t, tp) -> (t < tp ? zero(C) : C), :relaxation)
 
 function build_rve(aspect_ratio)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, aspect_ratio), Dict(:C => elastic_law(C_I));
@@ -78,7 +78,7 @@ function build_rve(aspect_ratio)
 end
 
 function matrix_only()
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
     return rve
 end

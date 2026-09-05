@@ -102,7 +102,7 @@ function _build_rve(
         scheme, φ; ω_s = 1.0, ω_p = 1.0,
         sym_s = nothing, sym_p = nothing
     )
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     geom_s = Spheroid(ω_s)
     geom_p = Spheroid(ω_p)
     add_phase!(rve, :SOLID, geom_s, Dict(:C => C_s); fraction = :rest, symmetrize = sym_s)
