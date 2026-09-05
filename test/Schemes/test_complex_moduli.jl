@@ -39,7 +39,9 @@ complex_schemes() = [
 ]
 
 function _two_phase_rve(C_m, C_i, f; kw...)
-    rve = RVE(; kw...)
+    # The scheme list includes Maxwell and PCW, which read the distribution
+    # shape and no longer default it. A unit sphere is what they used to get.
+    rve = RVE(; distribution_shape = Ellipsoid(1.0), kw...)
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_i); fraction = f)
     return rve
