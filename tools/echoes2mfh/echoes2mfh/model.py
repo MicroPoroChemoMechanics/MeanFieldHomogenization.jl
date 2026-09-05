@@ -134,6 +134,13 @@ class RVEDef(Node):
     #: built from Echoes' `rvec`, the complex-scalar twin of `rve`. Julia needs
     #: no separate family -- only a complex element type.
     complex_valued: bool = False
+    #: True when some `homogenize` on this RVE uses MAX or PCW. Those two read
+    #: the distribution shape, and MFH no longer supplies a default one: an
+    #: undeclared shape raises rather than quietly collapsing the scheme onto
+    #: Mori-Tanaka. Echoes' own default is the unit sphere carried by
+    #: `ver.self()`, so that is what the builder has to declare to reproduce
+    #: the original run.
+    needs_distribution_shape: bool = False
 
 
 @dataclass

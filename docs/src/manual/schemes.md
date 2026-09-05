@@ -88,7 +88,10 @@ C_sc    = homogenize(rve, SelfConsistent(; abstol = 1e-12, maxiters = 200))
 
 Every scheme takes the optional kwarg `property = :C` (default,
 elasticity) or `property = :K` (conductivity). Iterative schemes also
-accept `abstol`, `maxiters`, `damping`, `verbose`.
+accept `abstol`, `reltol`, `maxiters`, `damping`, `verbose` and
+`select_best` — see [Solver tolerances](@ref Solver-tolerances) for what
+they mean and, in particular, for why `reltol` is usually the one that
+decides when the iteration stops.
 
 | Long form | Short / ECHOES code |
 | :-- | :-- |
@@ -122,10 +125,6 @@ ellipsoid around each inclusion, forbidding closer approach:
 | :---: | :---: |
 | ![Cluster of inclusions replaced by an equivalent inclusion Ω](../assets/schemes/rve_maxwell.png) | ![Each inclusion inside its own distribution ellipsoid](../assets/schemes/rve_pcw.png) |
 
-A spherical distribution shape — the default — makes both collapse onto
-Mori–Tanaka, which is the quickest way to check that the option is wired
-correctly.
-
 ```julia
 rve = RVE(; distribution_shape = Ellipsoid(1.0, 1.0, 0.3))   # oblate outer
 add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
@@ -138,6 +137,51 @@ The `distribution_shape` field is wrapped in `UniformDistribution`. A
 future `PairwiseDistribution` (Willis 1982) can be added without
 breaking the public API — see
 [`AbstractDistributionShape`](@ref).
+
+### It belongs to the RVE, and it has no default
+
+Two questions that look alike, and answer differently.
+
+**Why is it on the RVE and not on the scheme?** Because it is microstructure.
+The distribution ellipsoid describes the ellipsoidal symmetry of the two-point
+statistics of the actual medium [ponte1995](@cite) — a measurable property of
+the material, like a phase's shape or its volume fraction. That is what
+separates it from the matrix, which left the RVE in v0.8.0: naming a reference
+medium is a *modeling* decision, and the same microstructure is a
+matrix/inclusion composite under Mori–Tanaka and a matrix-free aggregate under
+the self-consistent scheme. No such thing is true here. The spatial statistics
+of an RVE do not change according to which scheme is about to read them.
+
+**Then why do only two schemes read it?** For the same reason [`Voigt`](@ref)
+reads no shape at all: a cruder estimate uses less of the microstructure. Being
+ignored by nine schemes out of eleven is the normal condition of microstructural
+data, not a sign that the field is in the wrong place.
+
+!!! warning "An undeclared distribution shape is an error"
+    Where the field does differ from a phase geometry is that it has no
+    harmless default. A **spherical** distribution makes Maxwell and PCW
+    coincide *exactly* with Mori–Tanaka. Supplying one silently — which is what
+    this field used to do — therefore answered the scheme whose whole purpose is
+    a non-spherical distribution with the estimate it generalizes, and said
+    nothing about it.
+
+    So an RVE that declares none raises, the way a matrix-based scheme raises
+    when no phase can play the reference medium:
+
+    ```julia
+    rve = RVE()                                    # no distribution declared
+    homogenize(rve, PonteCastanedaWillis())        # ArgumentError, naming the collapse
+    ```
+
+    A spherical distribution remains a perfectly legitimate modeling choice. It
+    just has to be the caller's:
+
+    ```julia
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
+    homogenize(rve, PonteCastanedaWillis()) ≈ homogenize(rve, MoriTanaka())   # true, and now on purpose
+    ```
+
+    This is also the quickest way to check that the option is wired correctly.
 
 ## Iterative solvers
 
@@ -195,6 +239,50 @@ All three are `ForwardDiff`-compatible — differentiating `homogenize` through 
 `NonlinearSolve` algorithm uses an implicit-function-theorem lift, so no nested
 `Dual`s ever form (see [`derivative`](@ref) and the
 [Nonlinear solvers tutorial](../tutorials/nonlinear_solvers.md)).
+
+### Solver tolerances
+
+Every iterative solver in the package stops on the additive SciML convention
+
+```math
+\lVert x^{(n+1)} - x^{(n)} \rVert \;\le\; \texttt{abstol} + \texttt{reltol}\cdot\lVert x^{(n)} \rVert ,
+```
+
+with `‖·‖` the **Frobenius norm of the tensor** — the same quantity whatever the
+symmetry class and whatever the `algorithm`, so that one `abstol` expresses one
+requirement.
+
+| Family | `abstol` | `reltol` | `maxiters` |
+| :--- | ---: | ---: | ---: |
+| [`SelfConsistent`](@ref), [`AsymmetricSelfConsistent`](@ref) | `1e-12` | `1e-8` | `100` |
+| ALV (ageing-viscoelastic) counterparts | `1e-10` | `1e-8` | `200` |
+| [`DifferentialScheme`](@ref) (forwarded to `OrdinaryDiffEq`) | `1e-8` | `1e-6` | → `solve` |
+| [`hill_tensor`](@ref) cubature backends | `1e-8` | `1e-6` | `10^6` |
+
+!!! warning "`abstol` alone will not tighten a stiffness iteration"
+    A stiffness carries a physical magnitude — tens of GPa — so
+    `reltol · ‖C‖` is of order `1e-7` at the default `reltol`. Lowering
+    `abstol` to `1e-15` and leaving `reltol` alone therefore changes nothing:
+    the relative term still decides. Tighten **both**, or set `abstol = 0` for
+    a purely relative test:
+
+    ```julia
+    SelfConsistent(; abstol = 0.0, reltol = 1e-14, maxiters = 50_000)
+    ```
+
+    This matters wherever a converged value is read off rather than plotted —
+    percolation thresholds above all, where the fixed point slows down and a
+    loose tolerance returns a small positive stiffness that merely tracks the
+    tolerance itself.
+
+`abstol = 0` is also the exact translation of Echoes' `epsrel`, whose fixed
+point tested `‖X - X_old‖ > epsrel · ‖X_old‖` and had no absolute term at all
+(see [Coming from Echoes](../tools/from_echoes.md)).
+
+`select_best` returns the best iterate seen rather than the last one — worth
+having when Picard oscillates around a high-contrast fixed point. Non-convergence
+is reported through `@debug`, not `@warn`: set
+`JULIA_DEBUG=MeanFieldHomogenization` or pass `verbose = true` to surface it.
 
 ## Differential scheme
 

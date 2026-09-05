@@ -1,5 +1,119 @@
 # Changelog
 
+## v0.9.0 — what a tolerance asks for, and what a distribution shape is
+
+Two things that were quietly not what they looked like.
+
+`abstol` was the only tolerance the manual named, and 54 call sites across the
+documentation, the scripts and the test suite passed it alone — believing they
+were tightening a self-consistent iteration. They were not. `reltol` has always
+existed and has always been honored, the stopping test being the additive SciML
+convention `‖Δx‖ ≤ abstol + reltol · ‖x‖`; and because a stiffness carries a
+physical magnitude, `reltol · ‖C‖ ≈ 1e-7` at the default `reltol = 1e-8`
+decides every one of those calls. `abstol = 1e-15` bought nothing.
+
+And `PonteCastanedaWillis()` on an RVE that declared no distribution shape
+returned Mori-Tanaka. Exactly Mori-Tanaka: a spherical distribution — the value
+the field defaulted to — makes the formula degenerate onto the very estimate the
+scheme exists to generalize. It said nothing about it.
+
+### Breaking changes
+
+- **Maxwell and PCW refuse an undeclared distribution shape.** `RVE()` now
+  keeps `nothing` instead of inventing a unit sphere, and the two schemes that
+  read the field raise an `ArgumentError` naming the collapse rather than
+  performing it. Declaring the sphere restores the previous number exactly:
+
+  ```julia
+  rve = RVE(; distribution_shape = Ellipsoid(1.0))
+  homogenize(rve, PonteCastanedaWillis()) ≈ homogenize(rve, MoriTanaka())   # true, and now on purpose
+  ```
+
+  The check is resolved in `validate_cell(rve, scheme)`, so it fires before any
+  kernel runs, and `homogenize_alv` performs it too — that path does not share
+  the validation. The new trait is `requires_distribution_shape(scheme)` and the
+  resolver is `distribution_shape(rve, scheme)`, mirroring `requires_matrix` /
+  `matrix_name` from v0.8.0.
+
+  **The field stays on the `RVE`.** It was tempting to move it onto the schemes
+  that read it, as the matrix role moved in v0.8.0, but the two are not alike.
+  The matrix was never microstructure — naming a reference medium is a modeling
+  decision, and the same phases are a matrix/inclusion composite under
+  Mori-Tanaka and a matrix-free aggregate under the self-consistent scheme. The
+  distribution ellipsoid *is* microstructure: the ellipsoidal symmetry of the
+  medium's two-point statistics. That nine schemes out of eleven ignore it is
+  the ordinary condition of microstructural data — `Voigt` ignores every phase
+  geometry too — and not a sign that it sits in the wrong place. What it lacked
+  was not a home but a default, and it no longer has one.
+
+- **`abstol` now means the same thing for every solver.** It bounds the
+  **Frobenius norm of the tensor**, whatever the `algorithm` and whatever the
+  symmetry class. It used to bound that norm under `AndersonDefault` and an
+  unweighted sum over canonical components under `NewtonDefault` and the
+  `NonlinearSolve` algorithms — quantities that differ by a class-dependent
+  factor, `√5` on the deviatoric component of an isotropic stiffness and `√3`
+  on a conductivity. On the same first iterate of a porous self-consistent
+  solve, Picard reported `‖Δ‖ = 59.354` and Newton `‖F‖ = 46.655`; they now
+  both report `59.354`.
+
+  `NewtonDefault` reaches it by working in the isometric parametrization of
+  `_sc_param_weights` — Newton is invariant under a diagonal rescaling of its
+  unknowns, so the iterates are untouched and only the stopping test and the
+  Armijo condition change metric. The `NonlinearSolve` path instead receives
+  the weights as the `internalnorm` of a `NormTerminationMode`, because a trust
+  region is *not* invariant under such a rescaling: rescaling its unknowns moved
+  where it stopped in the percolated regime, onto the plateau of the
+  positive-definiteness guard where the residual is large and its Jacobian
+  identically zero. Measuring differently is safe; searching differently is not.
+  `NormTerminationMode` keeps both tolerances (`‖Δ‖ ≤ abstol` or
+  `‖Δ‖ ≤ reltol · ‖Δ + u‖`), so `reltol` now bites on a SciML algorithm the way
+  it always did on the built-in ones: asking for `reltol = 1e-2` against
+  `1e-8` on a porous solve moves the answer by `0.29` under `TrustRegion` and
+  `0.52` under `NewtonDefault`, where before the two could not be compared.
+
+  Measured effect on results across porous and stiff RVEs at
+  `f ∈ {0.1, 0.3, 0.5}`, three solvers, elasticity and conductivity: `2.9e-13`
+  at worst, and nothing at all for `AndersonDefault`. Superlinear solvers
+  overshoot their tolerance by orders of magnitude, so the guarantee matters
+  where a solve stops early, not where it converges.
+
+  The convergence comparator is `≤` everywhere; `AndersonDefault` used `<`.
+
+### Fixed
+
+- **The Echoes migration mapped `epsrel` onto `abstol`.** Echoes' fixed point
+  tested `‖X - X_old‖ > epsrel · ‖X_old‖` — purely relative, with no absolute
+  term (`epsabs` is a quadrature option there, never a scheme one). The
+  translation therefore turned a relative requirement into an absolute one and
+  left MFH's own `reltol` at its default, where it silently took over.
+  `echoes2mfh` now emits `reltol`, together with `abstol = 0.0` so that a tight
+  request such as `epsrel = 1e-15` is not overridden by the `1e-12` default.
+  The `from_echoes` table is corrected with it.
+
+- **MFH Studio advertised the wrong defaults.** Its `OPTION_DEFAULTS` table was
+  flat, so it reported the ODE solver's `1e-8` / `1e-6` for `SelfConsistent`,
+  whose solver actually uses `1e-12` / `1e-8` — a wrong number in the one place
+  a user looks to find out what they are overriding. Defaults are now per
+  scheme.
+
+- `get_param` / `set_param` on a distribution-shape lens now say that the RVE
+  declares no shape, instead of reporting a type mismatch against `Nothing`.
+
+### Documentation
+
+- A **Solver tolerances** section in the schemes manual: the stopping test, the
+  defaults per scheme family, and why `abstol` alone will not tighten a
+  stiffness iteration. `reltol` and `select_best` are listed wherever the kwarg
+  lists were incomplete — the manual, `_evaluate(::SelfConsistent)`, and
+  `AsymmetricSelfConsistent`, which named no tolerance at all.
+- The percolation-threshold presets of the crack-distribution tutorial ask for
+  what they meant (`abstol = 0.0, reltol = 1e-14`). The published thresholds are
+  unchanged: `9/16` and `ε ≈ 1.158` were already converged far past the stopping
+  test, and re-measuring at `reltol = 1e-15` moves them by `6e-9`. The `1.13e-6`
+  residual against `9/16` is the linear extrapolation's, not the solver's.
+- The distribution-shape section of the manual states which schemes read the
+  field, why the others do not, and why it has no default.
+
 ## v0.8.1 — Aqua.jl, and the dispatch defects it found
 
 MeanFieldHomogenization is now checked by

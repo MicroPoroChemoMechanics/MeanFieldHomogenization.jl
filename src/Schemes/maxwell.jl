@@ -22,7 +22,7 @@ that a future `PairwiseDistribution` (Willis 1982) can plug in by
 adding a new method without touching the public API.
 """
 function _evaluate(rve::RVE, scheme::Maxwell, ::Val{p}; kw...) where {p}
-    return _maxwell(rve, rve.distribution_shape, matrix_name(scheme, rve), Val(p); kw...)
+    return _maxwell(rve, distribution_shape(rve, scheme), matrix_name(scheme, rve), Val(p); kw...)
 end
 
 function _maxwell(rve::RVE, ds::UniformDistribution, m::Symbol, ::Val{p}; kw...) where {p}

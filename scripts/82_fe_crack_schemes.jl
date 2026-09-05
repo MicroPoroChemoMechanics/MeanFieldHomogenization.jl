@@ -42,7 +42,7 @@ check_inclusion_interface(fe; amount = :density)
 # ## Parallel cracks: the effective stiffness against crack density
 
 function cracked(geom, ε; kw...)
-    r = RVE()
+    r = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
     add_phase!(r, :cr, geom, Dict(:C => C₀); density = ε, kw...)
     return r

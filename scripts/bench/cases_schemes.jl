@@ -58,7 +58,7 @@ bcase(
     "schemes/mt.conductivity.iso2";
     group = :schemes, tags = [:mt, :dedup, :conductivity],
     setup = () -> begin
-        rve = RVE()
+        rve = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(2.0)); fraction = :rest)
         add_phase!(rve, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(20.0)); fraction = 0.25)
         rve

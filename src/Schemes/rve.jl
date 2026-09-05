@@ -348,6 +348,13 @@ end
 Supertype for the *outer envelope* of the phase distribution used by the
 [`Maxwell`](@ref) and [`PonteCastanedaWillis`](@ref) schemes.
 
+It is a field of the [`RVE`](@ref) rather than of those schemes because it is
+**microstructure**: the ellipsoidal symmetry of the medium's two-point
+statistics ([ponte1995](@cite)), a measurable property like a phase's shape.
+That is what distinguishes it from the reference medium, which is a modeling
+decision and therefore lives on the scheme. It has no default, though — see
+[`distribution_shape`](@ref).
+
 Currently a single concrete subtype is shipped:
 
 - [`UniformDistribution`](@ref) — a single shape applied to every
@@ -364,9 +371,12 @@ abstract type AbstractDistributionShape end
 """
     UniformDistribution(shape::AbstractInclusion) <: AbstractDistributionShape
 
-Single distribution shape applied to every inclusion phase. The default
-constructor `UniformDistribution()` returns a unit sphere (isotropic
-distribution, recovers Mori-Tanaka in the limit `P_d = P_inc`).
+Single distribution shape applied to every inclusion phase. The argument-free
+constructor `UniformDistribution()` returns a unit sphere — an isotropic
+distribution, which makes [`Maxwell`](@ref) and [`PonteCastanedaWillis`](@ref)
+coincide exactly with Mori-Tanaka. That is a legitimate choice and has to be
+made explicitly: an `RVE` given no distribution shape keeps `nothing` and those
+two schemes raise rather than assume a sphere.
 """
 struct UniformDistribution{S <: AbstractInclusion} <: AbstractDistributionShape
     shape::S
@@ -381,15 +391,23 @@ Return the inclusion describing the (single) distribution envelope.
 distribution_shape_of(d::UniformDistribution) = d.shape
 
 """
-    _to_distribution_shape(x) -> AbstractDistributionShape
+    _to_distribution_shape(x) -> Union{Nothing, AbstractDistributionShape}
 
 Coerce `x` to a concrete `AbstractDistributionShape`. Accepts:
 
-- `nothing` → `UniformDistribution(Ellipsoid(1.0))` (default sphere),
+- `nothing` → `nothing`, i.e. **no distribution declared**,
 - an `AbstractInclusion` → wrapped as `UniformDistribution(x)`,
 - an `AbstractDistributionShape` → passed through.
+
+`nothing` used to be coerced to a unit sphere here, which erased the
+difference between a caller who declared a spherical distribution and one who
+declared none at all. The two are not the same statement: a sphere makes
+[`Maxwell`](@ref) and [`PonteCastanedaWillis`](@ref) coincide with
+Mori-Tanaka, so silently supplying one turned "I forgot" into a scheme that
+quietly returned the estimate it was meant to generalize. Keeping `nothing`
+lets [`distribution_shape`](@ref) say so instead.
 """
-_to_distribution_shape(::Nothing) = UniformDistribution()
+_to_distribution_shape(::Nothing) = nothing
 _to_distribution_shape(s::AbstractInclusion) = UniformDistribution(s)
 _to_distribution_shape(s::AbstractDistributionShape) = s
 
@@ -439,8 +457,11 @@ Fields:
 - `amounts::Dict{Symbol,AbstractAmount}` — [`VolumeFraction`](@ref),
   [`CrackDensity`](@ref) or [`Remainder`](@ref) of each phase. Each entry
   keeps its own element type.
-- `distribution_shape::S` — outer envelope used by Maxwell / PCW;
-  defaults to a unit sphere wrapped in [`UniformDistribution`](@ref).
+- `distribution_shape::S` — outer envelope used by Maxwell / PCW, wrapped in
+  [`UniformDistribution`](@ref); `nothing` when the caller declared none, which
+  is the default. Only those two schemes read it, the way only some schemes
+  read a phase's geometry — but unlike a geometry it has no harmless default,
+  so they raise rather than assume one (see [`distribution_shape`](@ref)).
 - `closure` — the [`AbstractFractionClosure`](@ref) turning the declared
   fractions into the ones the schemes use; `nothing` until inferred.
 - `rest_name` — the phase declared `fraction = :rest`, if any.
@@ -1120,7 +1141,11 @@ function Base.show(io::IO, ::MIME"text/plain", rve::RVE{T, S}) where {T, S}
         end
     end
     println(io, "  closure : ", _closure(rve))
-    print(io, "  distribution_shape : ", rve.distribution_shape)
+    ds = rve.distribution_shape
+    print(
+        io, "  distribution_shape : ",
+        ds === nothing ? "none declared (Maxwell / PCW will ask for one)" : ds
+    )
     return
 end
 

@@ -64,11 +64,42 @@ const OPTION_KEY_CONSTANTS = Dict(
     "DifferentialScheme" => :_DIFF_RESERVED_OPTIONS,
 )
 
-const OPTION_DEFAULTS = Dict(
-    :abstol => 1.0e-8, :reltol => 1.0e-6, :maxiters => 100,
+# Defaults are **per scheme family**, because they genuinely differ: the
+# self-consistent solvers stop at `1e-12 / 1e-8` while the differential scheme
+# hands `1e-8 / 1e-6` to `OrdinaryDiffEq`. A single flat table reported the
+# ODE numbers for every scheme, so the panel showed `abstol = 1e-8` as the
+# default of `SelfConsistent` when the solver actually uses `1e-12` — a wrong
+# number in the one place a user looks to find out what they are overriding.
+const OPTION_DEFAULTS_COMMON = Dict{Symbol, Any}(
     :damping => 0.0, :select_best => false, :verbose => false,
     :nsteps => 100, :formulation => "stiffness",
 )
+
+const OPTION_DEFAULTS_BY_SCHEME = Dict(
+    # `Schemes._solve_sc(::AndersonDefault, …)` / `(::NewtonDefault, …)`
+    "SelfConsistent" => Dict{Symbol, Any}(
+        :abstol => 1.0e-12, :reltol => 1.0e-8, :maxiters => 100,
+    ),
+    "AsymmetricSelfConsistent" => Dict{Symbol, Any}(
+        :abstol => 1.0e-12, :reltol => 1.0e-8, :maxiters => 100,
+    ),
+    # `DifferentialScheme(; …)`, forwarded to `solve`
+    "DifferentialScheme" => Dict{Symbol, Any}(
+        :abstol => 1.0e-8, :reltol => 1.0e-6,
+    ),
+)
+
+"""
+    option_default(S, key) -> Any
+
+Documented default of option `key` for scheme `S`, or `nothing` when the
+scheme does not publish one.
+"""
+function option_default(S::Type, key::Symbol)
+    per = get(OPTION_DEFAULTS_BY_SCHEME, String(nameof(S)), nothing)
+    per !== nothing && haskey(per, key) && return per[key]
+    return get(OPTION_DEFAULTS_COMMON, key, nothing)
+end
 
 """
     consumed_options(S) -> Vector{Symbol}
@@ -101,7 +132,7 @@ function scheme_entry(S::Type)
         push!(
             opts, Dict(
                 "name" => String(k),
-                "default" => get(OPTION_DEFAULTS, k, nothing),
+                "default" => option_default(S, k),
                 "editable" => !(k in OPAQUE_OPTIONS),
             )
         )

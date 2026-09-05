@@ -26,7 +26,7 @@ method `_pcw(rve, ::PairwiseDistribution, …)` without touching this
 file or the public API.
 """
 function _evaluate(rve::RVE, scheme::PonteCastanedaWillis, ::Val{p}; kw...) where {p}
-    return _pcw(rve, rve.distribution_shape, matrix_name(scheme, rve), Val(p); kw...)
+    return _pcw(rve, distribution_shape(rve, scheme), matrix_name(scheme, rve), Val(p); kw...)
 end
 
 function _pcw(rve::RVE, ds::UniformDistribution, m::Symbol, ::Val{p}; kw...) where {p}

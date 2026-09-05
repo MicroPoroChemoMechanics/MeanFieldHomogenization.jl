@@ -42,7 +42,10 @@ ComplementFraction
 RescaledFractions
 ```
 
-## The matrix role
+## What a scheme requires of the RVE
+
+The reference medium is named on the scheme; the distribution shape is declared
+on the RVE. Both are resolved before any kernel runs, and neither is guessed.
 
 ```@docs
 MeanFieldHomogenization.Schemes.matrix_name
@@ -50,6 +53,18 @@ MeanFieldHomogenization.Schemes.reference_property
 MeanFieldHomogenization.Schemes.requires_matrix
 MeanFieldHomogenization.Schemes.scheme_matrix
 MeanFieldHomogenization.Schemes.host_phase_name
+MeanFieldHomogenization.Schemes.distribution_shape
+MeanFieldHomogenization.Schemes.requires_distribution_shape
+```
+
+## The self-consistent solvers
+
+Internal, but the normative statement of what `abstol` and `reltol` ask for —
+see [Solver tolerances](../manual/schemes.md#Solver-tolerances) for the prose.
+
+```@docs
+MeanFieldHomogenization.Schemes._solve_sc
+MeanFieldHomogenization.Schemes._sc_param_weights
 ```
 
 ## Schemes

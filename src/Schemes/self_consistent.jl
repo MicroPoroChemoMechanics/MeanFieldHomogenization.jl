@@ -49,8 +49,11 @@ with the dilute concentration tensor evaluated against the current
 estimate `C^{(n)}` itself (rather than the matrix property).
 
 The solver algorithm is selected by `sc.algorithm`; convergence kwargs
-in `sc.options` (`abstol`, `maxiters`, `damping`, `verbose`) override
-their defaults. External algorithms from `NonlinearSolve.jl` are
+in `sc.options` (`abstol`, `reltol`, `maxiters`, `damping`, `verbose`,
+`select_best`) override their defaults. The stopping test is the additive
+SciML convention `‖Δx‖ ≤ abstol + reltol · ‖x‖`, so `reltol` (default `1e-8`)
+is what binds on a stiffness of physical magnitude — see [`_solve_sc`](@ref)
+for the full contract. External algorithms from `NonlinearSolve.jl` are
 supported via the weak extension `MeanFieldHomogenizationNonlinearSolveExt`.
 
 Cracks are not natively handled by this stiffness-form SC (the strain
@@ -368,6 +371,20 @@ Convergence is declared when `‖x_new − x_old‖ ≤ abstol + reltol · ‖x_
 `abstol = 0` to require purely relative convergence). Default values:
 `abstol = 1e-12`, `reltol = 1e-8`.
 
+`‖·‖` is the **Frobenius norm of the tensor**, for every solver, so that a
+given `abstol` expresses one requirement regardless of `algorithm` and of the
+symmetry class the fixed point lives in. The Picard loop measures it directly;
+the Newton path reaches it by working in the isometric parametrization of
+[`_sc_param_weights`](@ref); the `NonlinearSolve` path passes those same
+weights to SciML as the `internalnorm` of its termination condition, leaving
+the unknowns alone — a trust region is not invariant under a rescaling of
+them, and moving its metric moves where it stops.
+
+Because a stiffness carries a physical magnitude, `reltol · ‖x‖` dominates the
+sum at the defaults above: tightening `abstol` alone does not tighten the
+iteration. Set both, or `abstol = 0`, when a converged value is read off
+rather than plotted.
+
 When `select_best = true`, the solver tracks the best iterate seen
 during the loop (smallest residual on the value field) and returns it
 at the end. Useful for high-contrast iterations where Picard
@@ -469,15 +486,26 @@ function _solve_sc(
     # is idempotent), and the starting point is then a strictly better iterate
     # than `x0` at no extra cost.
     x_seed = _sc_newton_seed(x0, step)
-    p0 = _tens_to_param_vec(x_seed)
+    # Work in the *isometric* parametrization, so that `‖F‖` and `‖p‖` below
+    # are the Frobenius norms of the tensors they stand for — the same quantity
+    # the Picard loop tests, rather than an unweighted sum over canonical
+    # components that means something different in every symmetry class.
+    w, isometric = _sc_param_weights(x_seed)
+    p0 = w .* _tens_to_param_vec(x_seed)
     L = length(p0)
-    rebuild = p -> _tens_from_param_vec(x_seed, p)
+    rebuild = p -> _tens_from_param_vec(x_seed, p ./ w)
     ε_pos = _sc_pd_eps(x_seed)
     residual_vec = function (p)
         x_in = _sc_pd_guard_apply(rebuild(p), ε_pos)
         x_out = step(x_in)
-        return _tens_to_param_vec(x_out) .- _tens_to_param_vec(x_in)
+        return w .* (_tens_to_param_vec(x_out) .- _tens_to_param_vec(x_in))
     end
+    # With an orthogonal class basis the Euclidean norm of the scaled vector
+    # *is* the Frobenius norm. Where the probe failed (unit weights) fall back
+    # to measuring the tensors themselves: exact too, only more costly.
+    _nrm_r = isometric ? (r, p) -> sqrt(sum(abs2, r)) :
+        (r, p) -> _sc_residual_norm(rebuild(p .+ r), rebuild(p))
+    _nrm_p = isometric ? p -> sqrt(sum(abs2, p)) : p -> _sc_frobenius(rebuild(p))
     # `eltype(p0)` alone is not always enough to know whether `Dual`s are
     # in play: when the differentiated parameter lives on a phase other
     # than the one `x0` is built from (e.g. differentiating w.r.t. an
@@ -500,12 +528,12 @@ function _solve_sc(
     p_best = copy(p); resid_best = Inf
     for iter in 1:maxiters
         MFH_Core._bump!(MFH_Core.SC_ITERATIONS)
-        norm_r = sqrt(sum(abs2, r))
-        norm_p = sqrt(sum(abs2, p))
-        tol_eff = abstol + reltol * norm_p
+        norm_r = _nrm_r(r, p)
+        norm_p = _nrm_p(p)
+        tol_eff = abstol + reltol * _scalar_value(norm_p)
         verbose && @info "SC-Newton iter $iter : ‖F‖ = $norm_r   tol = $tol_eff"
-        if select_best && norm_r < resid_best
-            resid_best = norm_r
+        if select_best && _scalar_value(norm_r) < resid_best
+            resid_best = _scalar_value(norm_r)
             p_best .= p
         end
         if norm_r ≤ tol_eff
@@ -529,7 +557,7 @@ function _solve_sc(
         for _ in 1:30
             p_new = p .+ α_step .* δ
             r_new = residual_vec(p_new)
-            if sqrt(sum(abs2, r_new)) ≤ (1 - 1.0e-4 * α_step) * norm_r
+            if _nrm_r(r_new, p_new) ≤ (1 - 1.0e-4 * α_step) * norm_r
                 p .= p_new
                 r .= r_new
                 accepted = true
@@ -688,6 +716,68 @@ _rebuild_from_data(t::TensND.AbstractTens, p) =
 _sc_residual_norm(a::TensND.AbstractTens, b::TensND.AbstractTens) =
     sqrt(sum(abs2, get_array(a) .- get_array(b)))
 
+# Frobenius norm of a tensor, from its stored array. Basis-independent for an
+# orthonormal frame, so a rotated tensor's local components give the same value
+# as its canonical ones.
+_sc_frobenius(t::TensND.AbstractTens) = sqrt(sum(abs2, get_array(t)))
+
+"""
+    _sc_param_weights(prototype) -> (w::Vector{Float64}, isometric::Bool)
+
+Per-component weights making the Euclidean norm of the Newton / SciML parameter
+vector equal the **Frobenius norm of the tensor it encodes**, so that `abstol`
+and `reltol` express the same requirement whatever the `algorithm` and whatever
+the symmetry class.
+
+The canonical components are coordinates in a basis of the symmetry class
+(`(α, β)` on `(𝕁, 𝕂)` for `TensISO`, the Walpole coefficients for `TensTI`, …).
+Those bases are *orthogonal* but not orthonormal — `‖𝕁‖_F = 1` while
+`‖𝕂‖_F = √5` — so the plain Euclidean norm of the component vector understates
+the tensor norm, and understates it by a class-dependent factor. Scaling
+component `i` by `wᵢ = ‖rebuild(eᵢ)‖_F` restores the isometry exactly:
+
+```math
+\\lVert w \\odot p \\rVert_2 = \\lVert \\mathrm{rebuild}(p) \\rVert_F .
+```
+
+Newton is invariant under a diagonal rescaling of its unknowns — `J` becomes
+`W J W⁻¹`, the step `W δ`, and the iterate `W(p + δ)` — so the root and the
+sequence of iterates are untouched; only the norm the stopping test and the
+Armijo condition are measured in changes. A trust-region method is *not*
+invariant, and there the rescaling additionally puts its region in a
+physically meaningful metric.
+
+The isometry needs the class basis to be orthogonal, which is checked rather
+than assumed: `isometric = false` (with unit weights) is returned when the
+probe fails — the general `Mandel66` fallback among others — and the caller
+then measures the tensor norm directly instead.
+"""
+function _sc_param_weights(prototype::TensND.AbstractTens)
+    L = length(TensND.get_data(prototype))
+    ones_w = ones(Float64, L)
+    w = Vector{Float64}(undef, L)
+    for i in 1:L
+        e = zeros(Float64, L)
+        e[i] = 1.0
+        w[i] = try
+            _scalar_value(_sc_frobenius(_rebuild_from_data(prototype, e)))
+        catch
+            return (ones_w, false)
+        end
+    end
+    all(x -> isfinite(x) && x > 0, w) || return (ones_w, false)
+    # Orthogonality probe: a vector with pairwise-distinct entries, so that a
+    # non-zero cross term `2 qᵢ qⱼ ⟨Eᵢ, Eⱼ⟩` cannot cancel out by symmetry.
+    q = Float64[i for i in 1:L]
+    lhs = try
+        _scalar_value(_sc_frobenius(_rebuild_from_data(prototype, q)))^2
+    catch
+        return (ones_w, false)
+    end
+    isapprox(lhs, sum(abs2, q .* w); rtol = 1.0e-10) || return (ones_w, false)
+    return (w, true)
+end
+
 # Initial zero residual with eltype matching `x0` (Dual-preserving).
 _sc_residual_zero(x0::TensND.AbstractTens) = zero(real(eltype(x0)))
 
@@ -718,10 +808,10 @@ end
 # coefficient of order ‖∂step/∂x‖ — partials converge as fast as the
 # value only if the contraction is well-behaved, which is not guaranteed
 # for ill-conditioned SC iterations).
-_sc_converged(r::Real, abstol::Real) = r < abstol
+_sc_converged(r::Real, abstol::Real) = r ≤ abstol
 function _sc_converged(r, abstol::Real)
-    hasfield(typeof(r), :value) || return float(r) < abstol
-    abs(_scalar_value(getfield(r, :value))) < abstol || return false
+    hasfield(typeof(r), :value) || return float(r) ≤ abstol
+    abs(_scalar_value(getfield(r, :value))) ≤ abstol || return false
     if hasfield(typeof(r), :partials)
         p = getfield(r, :partials)
         # `partials` is a `ForwardDiff.Partials{N,T}` wrapper; iterate values.

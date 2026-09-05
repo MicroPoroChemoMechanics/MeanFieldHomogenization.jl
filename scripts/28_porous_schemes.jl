@@ -39,7 +39,7 @@ const C_p = TensISO{3}(3 * k_p, 2 * μ_p)
 # loop, matching the reference's behavior at the percolation
 # threshold.
 function build_rve(::Any, φ; ω_s = 1.0, ω_p = 1.0, sym_s = nothing, sym_p = nothing)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     geom_s = Spheroid(ω_s)
     geom_p = Spheroid(ω_p)
     add_phase!(rve, :SOLID, geom_s, Dict(:C => C_s); fraction = :rest, symmetrize = sym_s)

@@ -155,9 +155,15 @@ come out wrong.
 
 Solver options follow the scheme rather than `homogenize`, and the list offered
 for each scheme is read from the scheme itself — `SelfConsistent` shows
-`abstol`, `maxiters`, `damping`, `select_best`; `DifferentialScheme` shows
-`nsteps` and `formulation`. The interface cannot fall behind MeanFieldHomogenization
-because it never hard-codes that list.
+`abstol`, `reltol`, `maxiters`, `damping`, `select_best`, `verbose`;
+`DifferentialScheme` shows `nsteps` and `formulation`. The interface cannot
+fall behind MeanFieldHomogenization because it never hard-codes that list.
+
+The default shown beside each option is the one the scheme actually uses, and
+it is not the same for every scheme: the self-consistent solvers stop at
+`abstol = 1e-12`, `reltol = 1e-8`, while `DifferentialScheme` hands
+`1e-8` / `1e-6` to `OrdinaryDiffEq`. Overriding `abstol` alone rarely changes
+anything — see [Solver tolerances](../manual/schemes.md#Solver-tolerances).
 
 ## Layered inclusions
 

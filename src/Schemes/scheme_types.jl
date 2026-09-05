@@ -295,8 +295,13 @@ accepts `:voigt`, `:reuss`, a phase name, or an explicit tensor. A phase named
     RVE the Voigt start also makes `TrustRegion` stop where the
     finite-difference IFT Jacobian is exactly singular. Hence the default above.
 
-Standard kwargs forwarded to the solver: `abstol`, `reltol`,
-`maxiters`, `damping`, `verbose`.
+Standard kwargs forwarded to the solver: `abstol`, `reltol`, `maxiters`,
+`damping`, `verbose`, `select_best`. Convergence is declared when
+`‖Δx‖ ≤ abstol + reltol · ‖x‖` (defaults `abstol = 1e-12`, `reltol = 1e-8`);
+pass `abstol = 0` for a purely relative test. Because the stiffness carries a
+physical magnitude, it is `reltol` and not `abstol` that binds in the usual
+case — see [`_solve_sc`](@ref) and the
+[schemes manual](../manual/schemes.md#Solver-tolerances).
 """
 struct SelfConsistent{A, I, K <: NamedTuple} <: HomogenizationScheme
     algorithm::A
@@ -313,6 +318,13 @@ Asymmetric self-consistent scheme: iterates in stiffness or compliance
 space depending on the matrix-vs-Voigt-bound contrast, providing a
 better behavior than [`SelfConsistent`](@ref) in matrix-stiff /
 inclusion-soft regimes.
+
+`algorithm` and `init` mean exactly what they do for [`SelfConsistent`](@ref),
+and the same solver kwargs apply — `abstol`, `reltol`, `maxiters`, `damping`,
+`verbose`, `select_best`, with the same `‖Δx‖ ≤ abstol + reltol · ‖x‖` test and
+the same defaults. Unlike `SelfConsistent` it does carry a reference medium,
+because deciding between the stiffness and the compliance form is a comparison
+against that phase.
 """
 struct AsymmetricSelfConsistent{A, M, I, K <: NamedTuple} <: HomogenizationScheme
     algorithm::A

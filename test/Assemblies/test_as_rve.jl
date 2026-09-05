@@ -37,11 +37,18 @@ _BR_μ(C) = get_array(C)[1, 2, 1, 2]
 
 # The RVE a user would have written by hand for the same microstructure.
 function _BR_hand_rve(f, C_m, C_i; geom = Ellipsoid(1.0))
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :I, geom, Dict(:C => C_i); fraction = f)
     return rve
 end
+
+# Maxwell and PCW read the distribution shape and no longer default it, so the
+# assembly side of the comparison has to declare the same sphere the hand-built
+# RVE above does. An assembly carries no such statistical descriptor of its own.
+_BR_dist_kw(s) =
+    MeanFieldHomogenization.Schemes.requires_distribution_shape(s) ?
+    (; distribution_shape = Ellipsoid(1.0)) : (;)
 
 const _BR_ONE_SITE = (
     Voigt(), Reuss(), Dilute(), DiluteDual(), MoriTanaka(), Maxwell(),
@@ -76,7 +83,7 @@ end
     ref = _BR_hand_rve(f, _BR_Cm(), _BR_Ci())
     for s in _BR_ONE_SITE
         @testset "$(nameof(typeof(s)))" begin
-            a = get_array(homogenize(asm, s, :C))
+            a = get_array(homogenize(asm, s, :C; _BR_dist_kw(s)...))
             b = get_array(homogenize(ref, s, :C))
             @test maximum(abs.(a .- b)) < 1.0e-12 * maximum(abs.(b))
         end

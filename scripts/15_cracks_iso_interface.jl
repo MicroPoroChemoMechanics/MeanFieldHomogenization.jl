@@ -128,7 +128,7 @@ const JULIA_SCHEME_OBJ = Dict(
 )
 
 function _build_rve_elastic(d::Real)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_s); fraction = :rest)
     add_phase!(
         rve, :CRACK, PennyCrack(1.0), Dict(:C => C_s);
@@ -138,7 +138,7 @@ function _build_rve_elastic(d::Real)
 end
 
 function _build_rve_conduction(d::Real)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => K_s); fraction = :rest)
     # Thin spheroid (aspect ratio ω) with high conductivity ; volume
     # fraction ↔ density translation : f ≈ (4π/3) · ε · ω.

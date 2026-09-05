@@ -28,7 +28,7 @@ function _setup_2phase_elastic(;
 end
 
 function _build_alv(ctx)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(ctx.C_M_t)); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, 1.0),
@@ -38,7 +38,7 @@ function _build_alv(ctx)
 end
 
 function _build_el(ctx)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => ctx.C_M_t); fraction = :rest)
     add_phase!(
         rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => ctx.C_I_t);
@@ -97,7 +97,7 @@ end
 end
 
 @testset "PCW vs Maxwell — equivalence in single-shape case" begin
-    # PCW with default UniformDistribution(unit sphere) ≡ Maxwell with
+    # PCW with a declared unit-sphere distribution ≡ Maxwell with the same
     # spherical distribution shape.
     ctx = _setup_2phase_elastic()
     rve = _build_alv(ctx)

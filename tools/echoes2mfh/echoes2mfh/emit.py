@@ -270,7 +270,21 @@ class Emitter:
         # what a matrix-based scheme picks up when it names none — so the
         # translated script reproduces Echoes' semantics without the schemes
         # having to be rewritten.
-        ctor = "RVE(; T = ComplexF64)" if rve.complex_valued else "RVE()"
+        ctor_kw = ["T = ComplexF64"] if rve.complex_valued else []
+        if rve.needs_distribution_shape:
+            # Maxwell and PCW read it, and MFH gives it no default: an
+            # undeclared shape raises rather than collapsing the scheme onto
+            # Mori-Tanaka in silence. Echoes' `ver.self()` is a unit sphere
+            # unless the script set one, so declaring it here reproduces the
+            # original run exactly -- and makes the degeneracy visible.
+            ctor_kw.append("distribution_shape = Ellipsoid(1.0)")
+        ctor = f"RVE(; {', '.join(ctor_kw)})" if ctor_kw else "RVE()"
+        if rve.needs_distribution_shape:
+            self._w(
+                f"{IND}# Spherical distribution: Echoes' default. It makes "
+                "Maxwell and PCW"
+            )
+            self._w(f"{IND}# coincide with Mori-Tanaka -- state a spheroid to part them.")
         self._w(f"{IND}rve = {ctor}")
         for pd in rve.phases:
             self._phase(pd, rve)

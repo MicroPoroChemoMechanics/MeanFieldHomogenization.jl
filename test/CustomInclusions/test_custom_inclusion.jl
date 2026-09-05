@@ -36,7 +36,7 @@ _ci_k11(K) = get_array(K)[1, 1]
 
 "Build a two-phase RVE whose inclusion geometry is `geom`."
 function _ci_rve_with(geom, prop_m, prop_i, key; kwargs...)
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(key => prop_m); fraction = :rest)
     add_phase!(rve, :I, geom, Dict(key => prop_i); kwargs...)
     return rve

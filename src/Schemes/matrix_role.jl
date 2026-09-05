@@ -124,6 +124,58 @@ function host_phase_name(rve::RVE, declared::Union{Nothing, Symbol}, who::Abstra
     return r
 end
 
+# ── The distribution shape a scheme requires of the RVE ─────────────────────
+#
+# Same shape of contract as the matrix above, for a different reason. The
+# distribution shape is *not* a modeling choice that belongs on the scheme: it
+# is a two-point statistic of the microstructure (Willis 1982), which is why it
+# stays a field of the `RVE` alongside the phase geometries. What it shares with
+# the matrix is that a scheme needing it cannot be evaluated until it is
+# decided, and that guessing produces a different composite rather than a
+# rounding difference.
+
+"""
+    requires_distribution_shape(scheme) -> Bool
+
+Whether `scheme` builds its estimate on the shape of the spatial distribution
+of the inclusions, and therefore cannot be evaluated until the RVE declares one.
+
+`true` for [`Maxwell`](@ref) and [`PonteCastanedaWillis`](@ref); `false` for
+every other scheme, which ignores the field the way [`Voigt`](@ref) ignores a
+phase's geometry.
+"""
+requires_distribution_shape(::HomogenizationScheme) = false
+requires_distribution_shape(::Union{Maxwell, PonteCastanedaWillis}) = true
+
+"""
+    distribution_shape(rve, scheme) -> AbstractDistributionShape
+
+The outer envelope of the spatial distribution that `scheme` reads off `rve`.
+
+An RVE that declares none is an error, and deliberately so. A spherical
+distribution — the value this used to default to — makes both
+[`Maxwell`](@ref) and [`PonteCastanedaWillis`](@ref) reduce **exactly** to
+Mori-Tanaka. Supplying one silently therefore answered a scheme whose whole
+purpose is a non-spherical distribution with the estimate it generalizes, and
+did so without a word. A sphere remains a perfectly legitimate choice; it just
+has to be the caller's, not the container's.
+"""
+function distribution_shape(rve::RVE, scheme::HomogenizationScheme)
+    ds = rve.distribution_shape
+    ds === nothing && throw(
+        ArgumentError(
+            "$(nameof(typeof(scheme))) needs the shape of the spatial " *
+                "distribution of the inclusions — the two-point statistics its " *
+                "estimate is built on — and this RVE declares none. Declare it on " *
+                "the RVE, e.g. `RVE(; distribution_shape = Spheroid(0.3))`. " *
+                "A spherical distribution is a legitimate choice, but it makes " *
+                "this scheme coincide exactly with Mori-Tanaka, so it has to be " *
+                "stated: `RVE(; distribution_shape = Ellipsoid(1.0))`."
+        )
+    )
+    return ds
+end
+
 """
     reference_property(rve, scheme, key::Symbol) -> AbstractTens
 
@@ -142,14 +194,16 @@ validate_cell(cell::AbstractHomogenizationCell, ::HomogenizationScheme) =
 """
     validate_cell(rve::RVE, scheme) -> RVE
 
-[`validate_rve`](@ref) plus the one requirement that is the scheme's and not
-the RVE's: a matrix-based estimate must be able to name its reference medium.
-Resolving it here means the caller gets the explanatory
-[`matrix_name`](@ref) error before any kernel runs, rather than a
+[`validate_rve`](@ref) plus the requirements that are the scheme's and not the
+RVE's: a matrix-based estimate must be able to name its reference medium, and a
+distribution-aware estimate must find a declared distribution shape. Resolving
+both here means the caller gets the explanatory [`matrix_name`](@ref) /
+[`distribution_shape`](@ref) error before any kernel runs, rather than a
 `KeyError` deep inside an iteration.
 """
 function validate_cell(rve::RVE, scheme::HomogenizationScheme)
     validate_rve(rve)
     requires_matrix(scheme) && matrix_name(scheme, rve)
+    requires_distribution_shape(scheme) && distribution_shape(rve, scheme)
     return rve
 end

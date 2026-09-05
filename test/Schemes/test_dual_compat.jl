@@ -31,7 +31,7 @@ const RTOL_AD = 1.0e-5
             # declared element type is only a promotion floor. The explicit
             # `T = DT` form stays covered by test_rve.jl and the per-scheme
             # files (test_voigt_reuss.jl, test_self_consistent.jl, …).
-            rve = RVE()
+            rve = RVE(; distribution_shape = Ellipsoid(1.0))
             add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
             add_phase!(
                 rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
@@ -59,7 +59,7 @@ end
 
     for sch in schemes
         f_eff(α) = begin
-            rve = RVE()
+            rve = RVE(; distribution_shape = Ellipsoid(1.0))
             add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(α, 10.0)); fraction = :rest)
             add_phase!(
                 rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));

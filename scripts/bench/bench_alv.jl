@@ -58,7 +58,7 @@ function _build_setup(n::Int; transversely_isotropic::Bool = false)
     end
     law_M = ViscoLaw(R_iso, :relaxation)
 
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => law_M); fraction = :rest)
 
     C_I_t = TensISO{3}(60.0, 20.0)

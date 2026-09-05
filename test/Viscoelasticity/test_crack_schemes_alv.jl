@@ -22,7 +22,7 @@ function _setup_crack_elastic(; k_M = 5.0, μ_M = 2.0, ε = 0.1, n_times = 4)
 end
 
 _build_alv(ctx) = let
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => ctx.law_M); fraction = :rest)
     add_phase!(
         rve, :CRACK, ctx.crack, Dict(:C => ctx.law_M);
@@ -32,7 +32,7 @@ _build_alv(ctx) = let
 end
 
 _build_el(ctx) = let
-    rve = RVE()
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => ctx.C_M_t); fraction = :rest)
     add_phase!(
         rve, :CRACK, ctx.crack, Dict(:C => ctx.C_M_t);

@@ -537,24 +537,35 @@ end
 
 # ── DistributionShapeParameter ───────────────────────────────────────────────
 
-function get_param(rve::RVE, p::DistributionShapeParameter)
+# A lens on a shape the RVE never declared is a different mistake from a lens
+# on a distribution kind that has no scalar fields, and deserves a different
+# message: the first is fixed on the constructor, the second cannot be fixed
+# at all.
+function _uniform_distribution_or_throw(rve::RVE)
     ds = rve.distribution_shape
+    ds === nothing && throw(
+        ArgumentError(
+            "this RVE declares no distribution shape, so there is no parameter " *
+                "to read or set. Declare one on the constructor, e.g. " *
+                "`RVE(; distribution_shape = Spheroid(0.3))`."
+        )
+    )
     ds isa UniformDistribution || throw(
         ArgumentError(
             "distribution shape parameter only supported for UniformDistribution; got $(typeof(ds))"
         )
     )
+    return ds
+end
+
+function get_param(rve::RVE, p::DistributionShapeParameter)
+    ds = _uniform_distribution_or_throw(rve)
     val = getfield(ds.shape, p.field)
     return p.index === nothing ? val : val[p.index]
 end
 
 function set_param(rve::RVE, p::DistributionShapeParameter, value)
-    ds = rve.distribution_shape
-    ds isa UniformDistribution || throw(
-        ArgumentError(
-            "distribution shape parameter only supported for UniformDistribution; got $(typeof(ds))"
-        )
-    )
+    ds = _uniform_distribution_or_throw(rve)
     new_shape = _replace_geom_field(ds.shape, Val(p.field), p.index, value)
     new_ds = UniformDistribution(new_shape)
     return _rebuild_rve(rve; distribution_shape = new_ds)

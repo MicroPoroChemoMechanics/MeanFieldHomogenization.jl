@@ -170,12 +170,20 @@ Theory gives both thresholds, independently of the matrix Poisson ratio:
 
 Reading them off the numerics needs one precaution: the fixed point converges
 ever more slowly near a threshold, so just past it the solver returns a small
-positive `k` that is not converged and merely tracks `abstol`. Extrapolate the
-linear decay from the region where the answer is tolerance-independent instead.
+positive `k` that is not converged and merely tracks the solver tolerance.
+Extrapolate the linear decay from the region where the answer is
+tolerance-independent instead.
+
+The tolerance has to be asked for correctly, and this is the place where it
+shows. The stopping test is `‖Δx‖ ≤ abstol + reltol · ‖x‖`, so an `abstol`
+alone buys nothing while `reltol` sits at its `1e-8` default: the relative
+term still decides. Here the requirement really is relative — the stiffness
+collapses by orders of magnitude across the threshold — so `abstol` goes to
+zero and `reltol` carries the request.
 
 ````@example crack_distributions
-const SC_TIGHT = SelfConsistent(; abstol = 1.0e-15, maxiters = 50_000, select_best = true)
-const ASC_TIGHT = AsymmetricSelfConsistent(; abstol = 1.0e-15, maxiters = 50_000, select_best = true)
+const SC_TIGHT = SelfConsistent(; abstol = 0.0, reltol = 1.0e-14, maxiters = 50_000, select_best = true)
+const ASC_TIGHT = AsymmetricSelfConsistent(; abstol = 0.0, reltol = 1.0e-14, maxiters = 50_000, select_best = true)
 
 function percolation_threshold(scheme, ε₁, ε₂)
     k₁ = kμ_iso(rve_isotropic(ε₁), scheme)[1]

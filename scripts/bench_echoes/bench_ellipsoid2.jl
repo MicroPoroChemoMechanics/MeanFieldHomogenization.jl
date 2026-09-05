@@ -153,7 +153,7 @@ for sch_name in ("MT", "DIFF", "SC", "ASC", "MAX", "PCW")
     for omega in (1.0, 0.1)
         for f in (0.0, 0.4)
             R̃_jl_eff = let
-                rve = RVE()
+                rve = RVE(; distribution_shape = Ellipsoid(1.0))
                 add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => law_M); fraction = :rest)
                 sh = omega == 1.0 ? Ellipsoid(1.0, 1.0, 1.0) : Spheroid(omega)
                 add_phase!(

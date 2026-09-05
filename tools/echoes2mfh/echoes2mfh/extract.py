@@ -1331,6 +1331,8 @@ class Extractor:
         scheme = self._scheme(scheme_node, kw)
         # Remember what the localization tensors read afterwards refer to.
         self._current_scheme = scheme
+        if rve is not None and scheme.startswith(("Maxwell", "PonteCastanedaWillis")):
+            rve.needs_distribution_shape = True
 
         if flavour == "alv":
             times = kw.get("time_series")
@@ -1358,6 +1360,13 @@ class Extractor:
         for ekw, mkw in mapping.SOLVER_KW_RENAME.items():
             if ekw in kw and mkw in spec.solver_kw:
                 opts.append(f"{mkw} = {self.tr.translate(kw[ekw])}")
+        # Echoes' iterative stop is purely relative, so a faithful translation
+        # of `epsrel` must also switch MFH's absolute term off. Left at its
+        # `1e-12` default it would silently dominate `abstol + reltol * ‖x‖`
+        # whenever the caller asked for a tight `epsrel` — exactly the case
+        # (`epsrel = 1e-15`) where the number was chosen to matter.
+        if "epsrel" in kw and "epsabs" not in kw and "abstol" in spec.solver_kw:
+            opts.append("abstol = 0.0")
         if node.id == "DIFF" and "maxnb" in kw:
             opts = [f"nsteps = {self.tr.translate(kw['maxnb'])}"]
         return f"{spec.ctor}(; {', '.join(opts)})" if opts else f"{spec.ctor}()"

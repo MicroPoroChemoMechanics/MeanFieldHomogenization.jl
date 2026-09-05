@@ -60,8 +60,16 @@ SCHEMES: dict[str, SchemeSpec] = {
 }
 
 # Echoes `homogenize` keyword -> MFH scheme-constructor keyword.
+#
+# `epsrel` is a *relative* tolerance and becomes `reltol`, not `abstol`: the
+# Echoes fixed point stopped on `‖X - X_old‖ > epsrel * ‖X_old‖`, with no
+# absolute term at all. Mapping it onto `abstol` translated a relative
+# requirement into an absolute one and, worse, left MFH's own `reltol` at its
+# default, where it silently dominated the sum `abstol + reltol * ‖x‖`.
+# `epsabs` never reaches `homogenize` in Echoes (it is a quadrature option of
+# `set_param_eshelby`), but it is accepted here for symmetry.
 SOLVER_KW_RENAME: dict[str, str] = {
-    "epsrel": "abstol",
+    "epsrel": "reltol",
     "epsabs": "abstol",
     "maxnb": "maxiters",
     "select_best": "select_best",
