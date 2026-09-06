@@ -1,5 +1,205 @@
 # Changelog
 
+## v0.10.0 — the field at a point, and `kn` finally meaning stiffness
+
+The n-layer sphere was solved completely — Hervé–Zaoui recurrences for both
+harmonics, perfect and imperfect interfaces, elasticity and transport — but
+only the per-layer *averages* were reachable. `scripts/31_local_nlayers.jl`
+said so in its own header: the deviatoric profile "needs the per-radius
+evaluation of the 4×4 shear-recurrence state vector, which is not yet exposed
+by MeanFieldHomogenization", and worked around it by importing private symbols
+and restricting itself to hydrostatic loading. The material was all there; the
+reconstruction was not.
+
+It is now, and while cross-checking it against the C++ reference a second
+thing surfaced: `SpringInterface(kn, kt)` stored *compliances* under names that
+everywhere else in mechanics mean stiffnesses.
+
+### Pointwise localization in an n-layer sphere
+
+`local_strain_strain_loc(sphere, C₀, x)` returns `𝔸(x)` with
+`ε(x) = 𝔸(x) : ε∞`, at any point — inside any layer **and** in the surrounding
+matrix — with perfect, spring or Gurtin–Murdoch membrane interfaces. The three
+other couplings follow the package's existing naming, so an arbitrary remote
+strain **or** stress is a matter of picking the right one:
+`local_stress_strain_loc`, `local_strain_stress_loc`, `local_stress_stress_loc`.
+`local_strain`, `local_stress` and `local_displacement` give the fields for one
+loading; the transport twins are `local_gradient_gradient_loc` and its three
+siblings, plus `local_temperature`, `local_gradient`, `local_flux`.
+
+The configuration is rotation-invariant about the center, so `𝔸(x)` is
+transversely isotropic about `n = x/r` and carries no major symmetry: it comes
+back as a `TensND.TensTI{4,T,6}` — six Walpole coefficients and an axis, in
+closed form, never an 81-component array. Points are given either as a
+Cartesian vector or as `(r, θ, φ)`.
+
+Two details that are not decoration:
+
+- **`side`.** Exactly on an interface the field has two limits, and with a
+  spring or a membrane they genuinely differ — that difference *is* the
+  interface law. Every entry point takes `side = :inner | :outer`, and
+  `get_layer(sphere, r; side)` says which region that resolves to.
+- **`LayeredSphereFields(sphere, C₀)`.** Solves the recurrence once. The
+  `(sphere, C₀)` forms re-solve it on every call, which a field map over
+  thousands of points pays for in full.
+
+`shell_localization(fields, k)` recovers `(α_k, β_k)` from the same cached
+amplitudes, so the pointwise and averaged routes cannot drift apart. That is
+not a claim: averaging `𝔸(x)` over a shell reproduces
+`_layer_avg_dev_shear_factor` exactly, mode 1 contributing `a_k`, modes 3 and 4
+nothing pointwise, and mode 2 the `21/5 (3κ+μ)/μ` term. The whole field is
+validated against Echoes' `loc_eE` / `loc_eS` / `loc_sE` / `loc_sS` to `1e-14`
+on perfect, spring and membrane interfaces alike, and independently against
+`div σ = 0`, `ε = sym ∇u`, and the closed-form exterior field of a single
+sphere. `scripts/bench_echoes/benchmark_nlayers.jl` carries that cross-check as
+a rerunnable benchmark (§5, worst discrepancy `8.4e-13` over the four couplings,
+three interface families and ten points spanning every region), and no longer
+reaches into the recurrence for its stress profile.
+
+The `LayeredSpheroid` gained the matching vocabulary — `get_layer(…; side)`,
+`LayeredSpheroidTransportFields`, a remote gradient given as a vector, and the
+four `local_*_*_loc` couplings — so the two inclusion families are asked the
+same questions the same way even though they will never share an
+implementation. Its localization tensor is a general `Tens{2,3}`: a confocal
+spheroid is not rotation-invariant about the field point.
+
+`cumulative_strain_average` now integrates a truncated layer exactly, and the
+stress and transport averages that had no counterpart are there:
+`layer_stress_average`, `sphere_stress_average`, `layer_gradient_average`,
+`sphere_gradient_average`, `layer_flux_average`.
+
+The layered-spheroid theory page now **derives** its chart instead of quoting
+it: `TensND`'s symbolic spheroidal coordinate system rebuilds the Lamé
+coefficients, the frame and the volume element of Appendix A of
+[barthelemyBignonnetIJES2020] at documentation-build time, and checks the
+harmonicity of `Pₙᵐ(p) Pₙᵐ(q) cos mφ` — for `m = 0, 1`, which conduction uses,
+and for `m = 2`, which the elastic counterpart will.
+
+### Breaking changes
+
+- **`SpringInterface(kn, kt)` now takes stiffnesses.** It used to store the
+  numbers it was given as compliances, so `[u] = kn σ`, which inverts every
+  limit: perfect bonding was `kn = 0` and a free surface `kn → ∞`. Both are now
+  the other way round, matching the universal meaning of a spring stiffness and
+  matching Echoes' `PRIMALDISC`, which accepts the same numbers. **Existing code
+  passing compliances silently computes a different interface** — it does not
+  error.
+
+  The type still *stores* compliances, now named `sn`, `st`, because a perfect
+  interface is then the exact zero `sn = st = 0` rather than an infinity, which
+  keeps the near-perfect regime representable in `ForwardDiff.Dual` and in the
+  symbolic types. Both spellings read and write:
+
+  ```julia
+  itf = SpringInterface(50.0, 20.0)        # stiffnesses
+  itf.kn, itf.kt                           # (50.0, 20.0)
+  itf.sn, itf.st                           # (0.02, 0.05)
+  SpringInterface(; sn = 0.02, st = 0.05)  # the same interface
+  ```
+
+  To port: either invert your numbers, or switch the call to the keyword form
+  `SpringInterface(; sn = …, st = …)` and keep them. The one-argument
+  `SpringInterface(k)` still means "normal spring, tangentially bonded", now
+  with `k` a normal stiffness and `st = 0`. Accessors `spring_stiffnesses` and
+  `spring_compliances` are exported; `interface_param(i, :kn)` and
+  `interface_param(i, :sn)` both differentiate, giving reciprocal
+  sensitivities. `AnisotropicSpringInterface` is unchanged — its field was
+  always honestly named `compliance`.
+
+- **A minor bump is breaking for the resolver.** Downstream packages bounded on
+  `"0.9"` must widen to `"0.10"`.
+
+### Fixed
+
+- **`ForwardDiff` through a single layer's modulus.** `_bulk_promote` was typed
+  `NTuple{N, <:Any}`, which binds *one* element type, so a stack with one
+  `Dual` layer among `Float64` ones raised a `MethodError` — while making every
+  layer dual worked, which is why no test caught it. Differentiating
+  `strain_strain_loc(sphere, C₀; layer = k)` with respect to one phase now
+  works.
+- **`ForwardDiff` through a single interface radius.** `LayeredSphere` required
+  a homogeneous radii tuple, so `LayeredSphere((r₁, 2.0), …)` with `r₁::Dual`
+  was a `MethodError`. Mixed-eltype radii are promoted.
+- **`_shear_M_matrix`'s docstring** claimed rows 3–4 were `τ = σ/μ`; they are
+  the physical tractions, as the file header always said.
+- **The theory page** still stated `β_k = a_k` for the layer shear
+  localization, dropping the mode-2 term that the code has carried since it was
+  found to matter by 1–50 % on genuine multi-layer stacks.
+- **`cumulative_strain_average` was wrong whenever the ball cut a layer part
+  way through.** It weighted the *full-layer* average by the *truncated*
+  volume, which is exact only where the field is uniform inside a layer — and
+  the mode-2 term makes it vary as `r²`. On a three-layer sphere the error
+  reached **6 %** at mid-layer radii and was **exactly zero at every interface
+  radius**, which is precisely where the test suite evaluated it. The fix is
+  closed-form, not a quadrature: the truncated shell average is
+  `_layer_avg_dev_shear_factor` evaluated at the cut radius. Results at
+  `r = r_k` are unchanged to machine precision, and the new test compares
+  eleven radii against the pointwise field integrated by a 3-point
+  Gauss–Legendre rule that is exact for this integrand.
+- **A `LayeredSpheroid` diverged away from the particle, and raising `Nseries`
+  made it worse.** At 100 particle radii the axial gradient read `-3.4e24`
+  instead of `1` with `Nseries = 12`; `Nseries = 20` was already wrong at ten
+  radii. Two independent defects, each verified separately.
+
+  *The `Q` Legendre functions were run by an upward recurrence.* `Qₙ` is the
+  **minimal** solution of the three-term recurrence — `|Qₙ/Pₙ| ~ ρ^{-(2n+1)}`
+  with `ρ = |x + √(x²−1)|` — so going upward amplifies the seed's rounding
+  error by `ρ^{2n}`. Against the same recurrence evaluated at 600 bits,
+  `Q₁₅(5)` was wrong by a relative `1.3e13` and `Q₁₅(50)` by `7.9e26`, for
+  **prolate as well as oblate**. `Q` is now obtained by Miller's downward
+  recurrence, normalized on an exact low-degree closed form, with derivatives
+  from the identity `(x²−1) dQₙᵐ/dx = n x Qₙᵐ − (n+m) Qₙ₋₁ᵐ` rather than from a
+  second unstable recurrence.
+
+  The direction is chosen from `ρ`, which governs both methods in opposite
+  senses: upward is kept when `ρ ≈ 1` — a nearly degenerate spheroid, where
+  `Q` barely decays and Miller would need thousands of steps. Getting that
+  backwards is not benign: forcing Miller at `ρ = 1.017` (a 1:60 flat disc)
+  silently returned a `Q` good to only `2e-7`, and with it a single-layer
+  spheroid that no longer matched its closed-form Eshelby value.
+
+  *The far-field condition was recovered instead of imposed.* In the matrix
+  every growing amplitude above degree 1 vanishes identically, or the
+  temperature would blow up at infinity. The core amplitudes are solved to make
+  exactly that true, but recomputing the matrix block through the layer
+  transfer reintroduced the linear solve's `O(1e-17)` residue — which
+  `P_{2r-1}(q) ~ q^{2r-1}` then amplified past `1e40`. It is now written down.
+
+  Both are pre-existing. The shipped documentation and tests never strayed into
+  the affected region, which is why nothing caught them; the new
+  `test/LayeredSpheroids/test_legendre_stability.jl` checks `Q` against a
+  600-bit run of the **original** upward recurrence — an outside reference, not
+  the new algorithm in wider precision — and pins the `Nseries`-independence of
+  the far field.
+- **An oblate `LayeredSpheroid` returned `NaN` for its local field on the
+  revolution axis.** At `|p| = 1` the confocal chart degenerates and `h_p` is
+  infinite; dividing a real number by `Inf` gives the correct `0`, but an
+  oblate particle carries a **complex** `q`, and Julia's complex division
+  `z / (Inf + 0im)` yields `NaN + NaN im`. The `NaN` then survived even a
+  purely axial loading, through `H_trans * NaN` with `H_trans = 0`. The term is
+  now written `∂T/∂p · p̄ / (c q̄ₚ)` — algebraically identical, regular on the
+  axis — and the on-axis value matches the `p → 1` limit to `1e-9`.
+
+  A *transverse* loading exactly on the axis carries two further `0/0`,
+  `T_t / h_φ` and `∂T_t/∂p · p̄`. Both are **removable exactly**, with no
+  asymptotic expansion: the `P¹` table is seeded `P₁¹(p) = -√(1-p²)`, i.e. the
+  Condon-Shortley convention `P¹ₙ = -p̄ P′ₙ`, so the `p̄` of the numerator
+  cancels the `p̄` of `h_φ` identically; and the Legendre equation removes the
+  second derivative from the other term. Both then need only the ordinary
+  Legendre table. The removal is checked three ways, because a wrong one would
+  still look plausible: the on-axis value is the limit of the values around it,
+  it is **independent of the azimuth** — which is undefined on the axis, and is
+  what a wrong coefficient would break — and it points along the remote
+  gradient, as the reflection symmetry requires.
+- **`_shear_M_matrix_alv`'s docstring described a formulation the code does not
+  use.** It announced a `τ = σ/μ` scaling whose rows 3–4 "no longer carry an
+  explicit `μ` factor" and a perfect-interface jump `τ_rr⁺ = (μ⁻/μ⁺) τ_rr⁻`
+  handled by `volterra_divide`. The code is in `σ` form (`blocks[3,1] = 4 M_μ`),
+  its perfect interface is the identity, and no `volterra_divide` appears in any
+  interface helper. The docstring now describes the actual state vector and
+  says where the Volterra inverse of `μ` really occurs — which also means a
+  layer with vanishing shear modulus is not admissible on that path.
+
 ## v0.9.0 — what a tolerance asks for, and what a distribution shape is
 
 Two things that were quietly not what they looked like.

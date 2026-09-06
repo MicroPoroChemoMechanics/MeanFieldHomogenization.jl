@@ -55,15 +55,20 @@ using Random
 using PyCall
 using Plots
 
-# Internal helpers reused for the local-bulk profile (mirrors script 32).
-import MeanFieldHomogenization.LayeredSpheres: _iso_bulk_shear, _bulk_state_seq,
-    _bulk_extract_AB, _shear_M_matrix, _layer_avg_dev_shear_factor
+# The pointwise field is public API since v0.10.0, so the local-stress section
+# no longer reaches into the recurrence.  Two internals remain, and only for §2,
+# which cross-checks the recurrence against an independent 8×8 direct solve —
+# that check exists precisely to be written in terms of the raw fundamental
+# matrix rather than the API it validates.
+import MeanFieldHomogenization.LayeredSpheres: _shear_M_matrix,
+    _layer_avg_dev_shear_factor
 
 # ─── Python-side wrappers ────────────────────────────────────────────────────
 
 py"""
 import echoes
 import numpy as np
+from echoes import rot6, sphere_nlayers, NODISC, PRIMALDISC, DUALDISC
 
 def py_stiff_kmu(K, mu):
     return echoes.stiff_kmu(float(K), float(mu))
@@ -89,6 +94,38 @@ def py_layer_fraction(spn, k):
 
 def py_loc_sS(spn, r, theta, phi):
     return np.asarray(spn.loc_sS(r, theta, phi))
+
+# The four pointwise localizations, rows rotated to the CANONICAL basis.
+# ECHOES returns rows in the local spherical basis (e_theta, e_phi, e_r);
+# rot6(theta, phi) brings them back to global Cartesian, which is what
+# MeanFieldHomogenization returns.  `layer` is 0-based, -1 = auto.
+def py_loc_all(spn, r, theta, phi, layer):
+    P = rot6(theta, phi)
+    kw = {} if layer < 0 else {"layer": layer}
+    return (np.asarray(P @ spn.loc_eE(r, theta, phi, **kw)),
+            np.asarray(P @ spn.loc_sE(r, theta, phi, **kw)),
+            np.asarray(P @ spn.loc_eS(r, theta, phi, **kw)),
+            np.asarray(P @ spn.loc_sS(r, theta, phi, **kw)))
+
+# Interface descriptors are built ENTIRELY on the Python side.  Handing a
+# Julia vector of `[NODISC]` lists across PyCall converts the enum members to
+# plain integers and ECHOES then silently returns NaN rather than raising, so
+# the tag is passed as a string and the list is assembled here.
+def _itf(tag, p1, p2):
+    if tag == "perfect":
+        return [NODISC]
+    if tag == "spring":
+        return [float(p1), float(p2), PRIMALDISC]
+    if tag == "membrane":
+        return [float(p1), float(p2), DUALDISC]
+    raise ValueError("unknown interface tag " + str(tag))
+
+def py_make_nlayers_itf(radii, props, ref, tags, p1s, p2s):
+    interf = [_itf(t, a, b) for t, a, b in zip(tags, p1s, p2s)]
+    spn = sphere_nlayers(radii=np.asarray(radii, dtype=float),
+                         prop={"C": props}, interf_prop={"C": interf})
+    spn.set_ref("C", ref)
+    return spn
 """
 
 const py_stiff_kmu = py"py_stiff_kmu"
@@ -98,6 +135,8 @@ const py_eE_total = py"py_eE"
 const py_sE_total = py"py_sE"
 const py_layer_frac = py"py_layer_fraction"
 const py_loc_sS = py"py_loc_sS"
+const py_loc_all = py"py_loc_all"
+const py_make_nlayers_itf = py"py_make_nlayers_itf"
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -336,39 +375,17 @@ const sphere_loc_jl = LayeredSphere(
 )
 const spn_loc_py = py_make_nlayers(radii_loc, C_layers_loc_py, C_ref_loc_py)
 
-# Bulk-profile evaluator — copy of script 32 helper for self-containment.
-function bulk_AB(sphere::LayeredSphere{T, N}, C₀::TensISO{4, 3}) where {T, N}
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
-    inside, s_mat = _bulk_state_seq(sphere, κ₀, μ₀)
-    radii = sphere.radii
-    A_inf, B_inf = _bulk_extract_AB(radii[N], κ₀, μ₀, s_mat[1], s_mat[2])
-    inv_A_inf = 1 / A_inf
-    AB = ntuple(N) do k
-        κ_k, μ_k = _iso_bulk_shear(sphere.moduli[k])
-        Ak, Bk = _bulk_extract_AB(radii[k], κ_k, μ_k, inside[k][1], inside[k][2])
-        (Ak * inv_A_inf, Bk * inv_A_inf)
-    end
-    return AB, B_inf * inv_A_inf
-end
+# Radial stress profile straight from the public pointwise API.  This used to
+# reach into `_bulk_state_seq` / `_bulk_extract_AB` and re-derive the (A, B)
+# coefficients by hand, and it covered the hydrostatic part only because the
+# deviatoric amplitudes were not exposed.  Both limitations are gone.
+const sol_loc_jl = LayeredSphereFields(sphere_loc_jl, C_ref_loc_jl)
 
-function bulk_stresses(
-        sphere::LayeredSphere{T, N}, C₀::TensISO{4, 3}, r;
-        ε_v::Real = 1.0
-    ) where {T, N}
-    AB, B_inf = bulk_AB(sphere, C₀)
-    radii = sphere.radii
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
-    if r ≤ radii[N]
-        k = findfirst(rk -> r ≤ rk, collect(radii))::Int
-        Ak, Bk = AB[k]
-        κ_k, μ_k = _iso_bulk_shear(sphere.moduli[k])
-        σ_rr = 3 * κ_k * Ak * ε_v - 4 * μ_k * Bk * ε_v / r^3
-        σ_θθ = 3 * κ_k * Ak * ε_v + 2 * μ_k * Bk * ε_v / r^3
-    else
-        σ_rr = 3 * κ₀ * ε_v - 4 * μ₀ * (B_inf * ε_v) / r^3
-        σ_θθ = 3 * κ₀ * ε_v + 2 * μ₀ * (B_inf * ε_v) / r^3
-    end
-    return σ_rr, σ_θθ
+"Radial and hoop stress at radius `r` under a remote hydrostatic strain `ε_v 𝟙`."
+function bulk_stresses(sol, r; ε_v::Real = 1.0)
+    # At (r, 0, 0) the first canonical axis is radial and the other two are hoop.
+    σ = local_stress(sol, [r, 0.0, 0.0], ε_v * TensISO{3}(1.0))
+    return σ[1, 1], σ[2, 2]
 end
 
 # Far-field hydrostatic strain ε_v ⇒ remote uniaxial in *each* direction.
@@ -386,7 +403,7 @@ const lr_check = collect(range(0.05 * R_inner, 5 * (R_inner + ep_layer); length 
 σ_rr_py = similar(lr_check); σ_θθ_py = similar(lr_check)
 
 for (i, r) in enumerate(lr_check)
-    σrr, σθθ = bulk_stresses(sphere_loc_jl, C_ref_loc_jl, r; ε_v = ε_v)
+    σrr, σθθ = bulk_stresses(sol_loc_jl, r; ε_v = ε_v)
     σ_rr_jl[i] = σrr; σ_θθ_jl[i] = σθθ
     # ECHOES at (r, θ=0, φ=0) — local frame has e_z radial, so σ_rr ↔ Voigt index 3.
     M = py_loc_sS(spn_loc_py, r, 0.0, 0.0)
@@ -419,6 +436,91 @@ plot!(
 hline!(p_loc, [1.0]; lw = 1, color = :black, linestyle = :dot, label = "σ∞")
 vline!(p_loc, [R_inner]; lw = 1, color = :black, linestyle = :dash, label = "")
 vline!(p_loc, [R_inner + ep_layer]; lw = 1, color = :black, linestyle = :dash, label = "")
+
+# =============================================================================
+#  §5  POINTWISE localization tensors — the four couplings, three interface
+#      families.  This is the check that pins `LayeredSpheres/localfields.jl`
+#      against an independent implementation: whole 6×6 Kelvin-Mandel matrices,
+#      inside every layer, in the matrix, and exactly ON an interface with the
+#      region forced on both sides.
+#
+#      Conventions reconciled here: ECHOES returns rows in the local spherical
+#      basis, hence the `rot6(θ, φ)` on the Python side; and its `PRIMALDISC`
+#      takes interface STIFFNESSES, the same convention as `SpringInterface`
+#      since v0.10.0, so the same numbers go to both.
+# =============================================================================
+
+println("\n" * "="^78)
+println("§5  Pointwise localization — loc_eE / loc_sE / loc_eS / loc_sS")
+println("="^78)
+
+const KN_SPRING, KT_SPRING = 47.6, 27.1
+const KS_MEMB, MS_MEMB = 1.3, 0.7
+const P_PERF = PerfectInterface{Float64}()
+
+# (label, Julia interfaces, Python tags, first parameters, second parameters)
+const ITF_CASES = (
+    ("perfect ", (P_PERF, P_PERF), ["perfect", "perfect"], [0.0, 0.0], [0.0, 0.0]),
+    (
+        "spring  ",
+        (SpringInterface(KN_SPRING, KT_SPRING), P_PERF),
+        ["spring", "perfect"], [KN_SPRING, 0.0], [KT_SPRING, 0.0],
+    ),
+    (
+        "membrane",
+        (P_PERF, MembraneInterface(KS_MEMB, MS_MEMB)),
+        ["perfect", "membrane"], [0.0, KS_MEMB], [0.0, MS_MEMB],
+    ),
+)
+
+# (r, θ, φ, layer)  — `layer` is 0-based ECHOES / `nothing` = let both decide.
+const LOC_POINTS = (
+    (0.4 * R_inner, 0.7, 0.9, nothing),
+    (0.999 * R_inner, 1.2, -0.4, nothing),
+    (0.5 * (R_inner + radii_loc[2]), 0.3, 2.1, nothing),
+    (0.9999 * radii_loc[2], 2.4, 0.15, nothing),
+    (1.3 * radii_loc[2], 1.0, 0.6, nothing),
+    (4.0 * radii_loc[2], 0.45, -1.3, nothing),
+    (R_inner, 0.7, 0.9, 0),          # on the inner interface, inside
+    (R_inner, 0.7, 0.9, 1),          # on the inner interface, outside
+    (radii_loc[2], 0.7, 0.9, 1),     # on the outer interface, inside
+    (radii_loc[2], 0.7, 0.9, 2),     # on the outer interface, matrix side
+)
+
+@printf "  %-9s  %10s  %10s  %10s  %10s\n" "interface" "loc_eE" "loc_sE" "loc_eS" "loc_sS"
+println("  " * "-"^58)
+
+worst_loc = 0.0
+for (label, itf_jl, tags, p1s, p2s) in ITF_CASES
+    sph = LayeredSphere(
+        (R_inner, radii_loc[2]),
+        (TensISO{3}(3 * K_i, 2 * μ_i), TensISO{3}(3 * K_itz, 2 * μ_itz));
+        interfaces = itf_jl,
+    )
+    sol = LayeredSphereFields(sph, C_ref_loc_jl)
+    spn = py_make_nlayers_itf(radii_loc, C_layers_loc_py, C_ref_loc_py, tags, p1s, p2s)
+
+    w = zeros(4)
+    for (r, θ, φ, lay) in LOC_POINTS
+        py_lay = lay === nothing ? -1 : lay
+        jl_lay = lay === nothing ? nothing : lay + 1        # Julia is 1-based
+        ref = py_loc_all(spn, r, θ, φ, py_lay)
+        got = (
+            Matrix(KM(local_strain_strain_loc(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(KM(local_stress_strain_loc(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(KM(local_strain_stress_loc(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(KM(local_stress_stress_loc(sol, r, θ, φ; layer = jl_lay))),
+        )
+        for q in 1:4
+            scale = max(1.0, maximum(abs, ref[q]))
+            w[q] = max(w[q], maximum(abs, got[q] .- ref[q]) / scale)
+        end
+    end
+    global worst_loc = max(worst_loc, maximum(w))
+    @printf "  %-9s  %10.2e  %10.2e  %10.2e  %10.2e\n" label w[1] w[2] w[3] w[4]
+end
+@printf "\n  worst pointwise discrepancy over all cases : %.3e\n" worst_loc
+println(worst_loc < 1.0e-11 ? "  PASS" : "  FAIL — investigate before releasing")
 
 const figdir = joinpath(@__DIR__, "figures")
 isdir(figdir) || mkdir(figdir)

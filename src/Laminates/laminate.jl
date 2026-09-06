@@ -64,7 +64,7 @@ Construction is two-step, mirroring `RVE`:
 lam = Laminate(; normal = (0, 0, 1))
 add_layer!(lam, :A, Dict(:C => C_A); fraction = 0.4)
 add_layer!(lam, :B, Dict(:C => C_B); fraction = 0.6,
-           interface = SpringInterface(1.0e-3, 2.0e-3))
+           interface = SpringInterface(1.0e3, 5.0e2))
 homogenize(lam, Laminated(), :C)
 ```
 

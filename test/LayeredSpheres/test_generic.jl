@@ -56,3 +56,30 @@ end
     expected = 3 * ka / (2 * ka + kb)
     @test simplify(α_sym - expected) == 0
 end
+
+@testset "LayeredSphere — pointwise field with a symbolic radius" begin
+    # A symbolic radius cannot be located by comparison (`SymPy.Sym` is not
+    # even `<: Real`), so the region has to be named.  Refusing with a message
+    # that says so is the contract; the reconstruction itself stays symbolic.
+    C₀ = TensISO{3}(3 * 100.0, 2 * 70.0)
+    C₁ = TensISO{3}(3 * 250.0, 2 * 180.0)
+    C₂ = TensISO{3}(3 * 60.0, 2 * 30.0)
+    sphere = LayeredSphere((1.0, 2.0), (C₁, C₂))
+    sol = LayeredSphereFields(sphere, C₀)
+
+    SymPy.@syms r_sym::positive
+    @test_throws ArgumentError local_strain_strain_loc(sol, r_sym, 0.4, 0.9)
+    @test_throws ArgumentError get_layer(sphere, r_sym)
+
+    # With the layer named, the whole reconstruction goes through symbolically.
+    A = local_strain_strain_loc(sol, r_sym, 0.4, 0.9; layer = 2)
+    @test eltype(A) <: Sym
+    ℓ = TensND.get_ℓ(A)
+    @test length(ℓ) == 6
+    # Substituting a numeric radius must reproduce the numeric evaluation.
+    A_num = local_strain_strain_loc(sol, 1.5, 0.4, 0.9; layer = 2)
+    ℓ_num = TensND.get_ℓ(A_num)
+    for i in 1:6
+        @test Float64(subs(ℓ[i], Dict(r_sym => Sym(3) // 2))) ≈ ℓ_num[i] rtol = 1.0e-12
+    end
+end

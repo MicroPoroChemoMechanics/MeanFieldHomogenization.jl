@@ -162,16 +162,19 @@ solving `M(r; κ, μ) · x = state`.
 end
 
 """
-    _shear_state_seq(sphere, C₀) -> NTuple{N, state⁻}, state⁺_N
+    _shear_probe_seq(sphere, C₀) -> (inside_a, inside_b, sa, sb, λa, λb, TP)
 
-Propagate two linearly-independent probe state vectors from the core
-outward through every interface and every intermediate layer, then
-form the linear combination that matches the remote far-field
-`(a_{N+1}, b_{N+1}) = (1, 0)`.  Returns the composite state sequence
-inside every layer (at its inner-interface radius `r_{k}⁻`) and the
-state on the matrix side of the outer interface (`r_N⁺`).
+Propagate the two linearly-independent probe state vectors from the core
+outward through every interface and every intermediate layer, and return
+them together with the combination coefficients `(λa, λb)` that match the
+remote far-field `(a_{N+1}, b_{N+1}) = (1, 0)`.
+
+Shared by [`_shear_state_seq`](@ref) (which forms the composite states)
+and [`_shear_amplitude_seq`](@ref) (which forms the per-layer mode
+amplitudes).  Splitting the two lets the amplitude path keep the
+regularity zeros `c₁ = d₁ = 0` exactly instead of re-solving for them.
 """
-function _shear_state_seq(sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}) where {T, N}
+function _shear_probe_seq(sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}) where {T, N}
     κμ = _bulk_layer_moduli(sphere)
     κ₀, μ₀ = _iso_bulk_shear(C₀)
     TP = _bulk_promote(sphere, κμ, κ₀, μ₀)
@@ -209,10 +212,68 @@ function _shear_state_seq(sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3
     det_ab = aa * bb - ab * ba
     λa = bb / det_ab
     λb = -ab / det_ab
+    return inside_a, inside_b, sa, sb, λa, λb, TP
+end
 
+"""
+    _shear_state_seq(sphere, C₀) -> NTuple{N, state⁻}, state⁺_N
+
+Composite state sequence inside every layer (at its outer-interface
+radius `r_k⁻`) and the state on the matrix side of the outer interface
+(`r_N⁺`), normalized to a unit remote deviatoric far-field.
+"""
+function _shear_state_seq(sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}) where {T, N}
+    inside_a, inside_b, sa, sb, λa, λb, _ = _shear_probe_seq(sphere, C₀)
     states = ntuple(k -> λa * inside_a[k] + λb * inside_b[k], N)
     s_matrix = λa * sa + λb * sb
     return states, s_matrix
+end
+
+"""
+    _shear_amplitude_seq(sphere, C₀) -> NTuple{N+1, NTuple{4, TP}}
+
+Per-region mode amplitudes `(a, b, c, d)` of the four Love /
+Christensen-Lo modes `(r, r³, 1/r⁴, 1/r²)`, for `k = 1..N` the layers and
+`k = N+1` the surrounding matrix, under a unit remote deviatoric strain.
+
+Both end regions carry amplitudes that are known **exactly** and are
+therefore written down rather than recovered from a linear solve:
+
+- the core has `c₁ = d₁ = 0` (regularity at the origin) and
+  `(a₁, b₁) = (λa, λb)`, the very combination
+  [`_shear_probe_seq`](@ref) solved for;
+- the matrix has `(a, b) = (1, 0)` by the far-field normalization.
+
+Re-extracting those four zeros through `M(r) \\ state` would instead leave
+`O(eps)` residues, and a spurious `c ~ eps` is amplified by `1/r⁴` without
+bound as `r → 0` — the pointwise field in the core would lose all its
+digits near the center.  Only the genuinely unknown amplitudes are solved
+for: `(a, b, c, d)` in layers `2..N`, and `(c, d)` in the matrix.
+"""
+function _shear_amplitude_seq(
+        sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}
+    ) where {T, N}
+    inside_a, inside_b, sa, sb, λa, λb, TP = _shear_probe_seq(sphere, C₀)
+    κμ = _bulk_layer_moduli(sphere)
+    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    radii = sphere.radii
+    z = zero(TP)
+
+    s_matrix = λa * sa + λb * sb
+    (_, _, c₀, d₀) = _shear_extract_amplitudes(TP(radii[N]), TP(κ₀), TP(μ₀), s_matrix)
+
+    return ntuple(Val(N + 1)) do k
+        if k == 1
+            (λa, λb, z, z)
+        elseif k ≤ N
+            (κk, μk) = κμ[k]
+            state = λa * inside_a[k] + λb * inside_b[k]
+            amp = _shear_extract_amplitudes(TP(radii[k]), TP(κk), TP(μk), state)
+            (amp[1], amp[2], amp[3], amp[4])
+        else
+            (one(TP), z, c₀, d₀)
+        end
+    end
 end
 
 """

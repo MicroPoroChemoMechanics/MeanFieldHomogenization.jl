@@ -177,7 +177,21 @@ Seeding at ``r_1^-`` uses the two regular modes (``a_1 = 1, b_1 = 0``
 and ``a_1 = 0, b_1 = 1``; the two singular amplitudes ``c_1 = d_1 = 0``
 are forced by regularity at the origin).  Propagating both probes and
 solving a 2×2 linear system for the matrix-side far-field ``(a_∞, b_∞)
-= (1, 0)`` yields the per-layer localization ``β_k = a_k``.
+= (1, 0)`` yields the per-layer amplitudes.
+
+The layer localization is **not** the mode-1 amplitude alone.  Mode 2 has
+an ``r^3`` displacement profile, so it integrates to a non-zero deviatoric
+strain over a shell of finite thickness, whereas modes 3 and 4 average to
+zero pointwise:
+
+```math
+β_k = a_k + b_k\,\frac{21}{5}\,\frac{3κ_k + μ_k}{μ_k}\,
+      \frac{r_k^5 - r_{k-1}^5}{r_k^3 - r_{k-1}^3}.
+```
+
+Dropping the mode-2 term is invisible on degenerate configurations
+(vanishing core, core ≡ shell, single layer) and wrong by 1–50 % on a
+genuine multi-layer stack.
 
 For ``N = 1`` the recurrence reduces to the classical Eshelby single-
 sphere result; for ``N ≥ 2`` it reproduces the [christensenLo1979](@cite)
@@ -197,3 +211,66 @@ Three volume-average flavors are provided:
 
 All three cover the deviatoric part for any ``N ≥ 1`` via the shear
 recurrence above.
+
+
+## [Pointwise fields](@id th-layered-sphere-pointwise)
+
+The recurrences above already carry everything needed to evaluate the field
+**at a point**, in any layer and in the matrix; only the reconstruction was
+missing.  Write ``\underline n = \underline x/r``,
+``\boldsymbol p = \underline n\otimes\underline n``,
+``\boldsymbol q = \mathbf 1 - \boldsymbol p``.
+
+**Spherical part.** ``\underline u = f(r)\,\underline n`` with
+``f = \tilde A r + \tilde B/r^2``, hence
+``\boldsymbol\varepsilon = f'\,\boldsymbol p + (f/r)\,\boldsymbol q``.
+
+**Deviatoric part.** The general — non-axisymmetric — ``\ell = 2`` solution is
+
+```math
+\underline u = g(r)\,(\boldsymbol\varepsilon^{\infty\mathrm d}\cdot\underline n)
+             + h(r)\,(\underline n\cdot\boldsymbol\varepsilon^{\infty\mathrm d}\cdot\underline n)\,\underline n,
+```
+
+which is the ``u_r = U P_2``, ``u_θ = W\,\mathrm dP_2/\mathrm dθ`` convention
+above through ``U = 2(g+h)``, ``W = g``.  Differentiating with
+``\partial n_i/\partial x_j = (δ_{ij} - n_i n_j)/r`` gives, with
+``s = \underline n\cdot\boldsymbol\varepsilon^{\infty\mathrm d}\cdot\underline n``,
+
+```math
+\boldsymbol\varepsilon = \frac{g}{r}\,\boldsymbol\varepsilon^{\infty\mathrm d}
+ + G_2\,(\boldsymbol\varepsilon^{\infty\mathrm d}\cdot\underline n\otimes\underline n)^{\mathrm s}
+ + G_3\,s\,\boldsymbol p + G_4\,s\,\mathbf 1,
+\qquad
+\begin{aligned}
+G_2 &= g' - g/r + 2h/r,\\
+G_3 &= h' - 3h/r,\\
+G_4 &= h/r.
+\end{aligned}
+```
+
+Every generator is transversely isotropic about ``\underline n`` — the
+configuration is rotation-invariant about the center — so the pointwise
+localization tensor ``\mathbb A(x)``, defined by
+``\boldsymbol\varepsilon(x) = \mathbb A(x):\boldsymbol\varepsilon^\infty``,
+is a `TensTI{4,T,6}`: six Walpole coefficients and an axis, with **no major
+symmetry**.
+
+Averaging ``\mathbb A(x)`` over directions and over a shell returns exactly
+the ``(α_k, β_k)`` above — mode 1 contributes ``a_k``, modes 3 and 4
+contribute nothing pointwise, and mode 2 contributes
+``7 b_k r^2 (3κ_k+μ_k)/μ_k``, whose shell average is the ``21/5`` factor.
+[`shell_localization`](@ref) exposes that identity from the same cached
+amplitudes, so the pointwise and averaged routes cannot drift apart.
+
+The transport problem is the ``Y_1`` analog: ``T = f(r)\,(\underline
+n\cdot\nabla T^\infty)`` and
+``\nabla T = [\,f'\,\boldsymbol p + (f/r)\,\boldsymbol q\,]\cdot\nabla T^\infty``,
+a second-order transversely isotropic tensor.
+
+Everything is validated pointwise against the C++ reference (Echoes'
+`loc_eE`, `loc_eS`, `loc_sE`, `loc_sS`) to ``10^{-14}``, perfect, spring and
+Gurtin–Murdoch membrane interfaces alike.
+
+See the worked example with figures:
+[n-layer sphere: pointwise fields](@ref).

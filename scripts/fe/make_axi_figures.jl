@@ -11,7 +11,7 @@
 #
 #  Section names: schematic, mesh, convergence, contrast, conductivity, cost.
 #  Passing any
-#  of them regenerates only those figures and leaves `axi_results.md` alone,
+#  of them regenerates only those figures and leaves `axi_results.md.in` alone,
 #  which is what you want while iterating on a plot.
 #
 #  Outputs (committed):
@@ -20,7 +20,7 @@
 #      docs/src/assets/fe/axi_convergence.png
 #      docs/src/assets/fe/axi_contrast.png
 #      docs/src/assets/fe/axi_conductivity.png
-#      docs/src/assets/fe/axi_results.md      (tables, pasted into the page)
+#      docs/src/assets/fe/axi_results.md.in   (tables, pasted into the page)
 # =============================================================================
 
 import Pkg
@@ -494,6 +494,6 @@ want("cost") && let
 end
 
 SECTIONS === nothing ?
-    write(joinpath(OUT, "axi_results.md"), String(take!(report))) :
-    @info "partial run ($(join(ARGS, ", "))) — axi_results.md left untouched"
+    write(joinpath(OUT, "axi_results.md.in"), String(take!(report))) :
+    @info "partial run ($(join(ARGS, ", "))) — axi_results.md.in left untouched"
 println("wrote ", OUT)

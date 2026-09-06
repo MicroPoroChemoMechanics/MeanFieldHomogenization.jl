@@ -18,6 +18,9 @@ const MFH_Core = Core
 
 import ..Elasticity   # for single-layer shear delegation to `Ellipsoid`
 
+# `is_hard_numeric` — the numeric/symbolic split used throughout the package.
+using ..Elliptic: is_hard_numeric
+
 # Core-level generics we extend (strain_strain_loc etc. are declared in
 # Core/abstractions.jl so every sub-module can attach methods uniformly).
 import ..Core: strain_strain_loc, stress_strain_loc, strain_stress_loc,
@@ -33,6 +36,7 @@ include("bulk_recurrence.jl")    # bulk state-vector transfer + localization
 include("shear_recurrence.jl")   # multi-layer shear stub
 include("conductivity.jl")       # Y₁-harmonic conductivity state-vector
 include("averages.jl")
+include("localfields.jl")     # pointwise u, ε, σ, T, ∇T, flux reconstruction
 include("scheme_integration.jl") # concentration tensors → mean-field schemes
 
 # ── Localization / contribution overrides for LayeredSphere ─────────────────
@@ -141,10 +145,25 @@ end
 # ── Exports ─────────────────────────────────────────────────────────────────
 export LayeredSphere, AbstractInterface, PerfectInterface
 export SpringInterface, MembraneInterface
+export spring_compliances, spring_stiffnesses
 export KapitzaInterface, SurfaceConductiveInterface
 export layer_count, layer_radius, layer_modulus, layer_interface,
     layer_volume_fraction, outer_radius
 export layer_strain_average, sphere_strain_average, cumulative_strain_average
+export layer_stress_average, sphere_stress_average
+export layer_gradient_average, sphere_gradient_average, layer_flux_average
+# Pointwise fields.  `get_layer` and the `local_*` names below are declared
+# HERE and extended by `LayeredSpheroids`, which imports them rather than
+# declaring rival bindings — same arrangement as `layer_count` & friends.
+export get_layer
+export LayeredSphereFields, LayeredSphereTransportFields
+export region_stiffness, shell_localization
+export local_strain_strain_loc, local_stress_strain_loc,
+    local_strain_stress_loc, local_stress_stress_loc
+export local_strain, local_stress, local_displacement
+export local_gradient_gradient_loc, local_flux_gradient_loc,
+    local_gradient_flux_loc, local_flux_flux_loc
+export local_temperature, local_gradient, local_flux
 export layer_stiffness_average, layer_compliance_average,
     layer_conductivity_average, layer_resistivity_average
 

@@ -132,8 +132,16 @@ pressure amplitude `P_1 = 1`.
     return ntuple(k -> _iso_bulk_shear(layer_modulus(sphere, k)), Val(N))
 end
 
+# `κμ` is deliberately typed `Tuple{Vararg{Any, N}}` and NOT `NTuple{N, <:Any}`:
+# the latter is `Tuple{S, S, …}` with ONE element type, so it fails to match the
+# moment the per-layer moduli differ in type — which is precisely what
+# `ForwardDiff` produces when a single layer's modulus is the differentiation
+# variable and the others stay `Float64`. Before this signature was widened,
+# `ForwardDiff.derivative(p -> strain_strain_loc(sphere_with_one_Dual_layer, …), p)`
+# died in a `MethodError`, while making *every* layer dual worked — an AD gap
+# invisible to any test that differentiates the whole stack at once.
 @inline function _bulk_promote(
-        ::LayeredSphere{T, N}, κμ::NTuple{N, <:Any},
+        ::LayeredSphere{T, N}, κμ::Tuple{Vararg{Any, N}},
         κ₀, μ₀
     ) where {T, N}
     return promote_type(

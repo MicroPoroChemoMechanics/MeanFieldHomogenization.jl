@@ -84,7 +84,7 @@ end
     C_M = TensISO{3}(30.0, 8.0)
     C_1 = TensISO{3}(60.0, 16.0)
     C_2 = TensISO{3}(90.0, 24.0)
-    intf = SpringInterface(0.05)
+    intf = SpringInterface(; sn = 0.05)
     sphere = LayeredSphere(
         (0.5, 1.0), (C_1, C_2);
         interfaces = (intf, PerfectInterface())
@@ -185,7 +185,7 @@ end
     C_M = TensISO{3}(30.0, 8.0)
     C_1 = TensISO{3}(60.0, 16.0)
     C_2 = TensISO{3}(90.0, 24.0)
-    intf = SpringInterface(0.05, 0.07)
+    intf = SpringInterface(; sn = 0.05, st = 0.07)
     sphere = LayeredSphere(
         (0.5, 1.0), (C_1, C_2);
         interfaces = (intf, PerfectInterface())

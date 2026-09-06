@@ -56,15 +56,17 @@ ref = bilayer()
 
 ## The primal interface acts out of plane only
 
-`SpringInterface(kn, kt)` carries **compliances**: `kn = kt = 0` is perfect
-bonding, `k → ∞` decouples the layers.
+`SpringInterface(kn, kt)` takes the interface **stiffnesses**; the keyword
+form `SpringInterface(; sn, st)` takes the matching compliances, which is
+what the type stores. `sn = st = 0` is perfect bonding, and growing the
+compliance decouples the layers.
 
 ````@example laminate_interfaces
 println("\nspring interface (kn = kt)")
 println("       kn        C₃₃₃₃        C₁₂₁₂")
 println("─"^42)
 for kn in (0.0, 1.0e-3, 1.0e-2, 1.0e-1, 1.0e0, 1.0e2)
-    cell = bilayer(; itf = SpringInterface(kn, kn))
+    cell = bilayer(; itf = SpringInterface(; sn = kn, st = kn))
     @printf "  %8.1e  %10.6f  %10.6f\n" kn C₃₃(cell) C₁₂(cell)
 end
 println("  → C₁₂₁₂ never moves: a spring is invisible in the plane.")
@@ -81,7 +83,7 @@ series:
 
 ````@example laminate_interfaces
 kn = 5.0e-2
-lam = bilayer(; itf = SpringInterface(kn, kn))
+lam = bilayer(; itf = SpringInterface(; sn = kn, st = kn))
 λ(k, μ) = k - 2μ / 3
 series = 0.3 / (λ(k₁, μ₁) + 2μ₁) + 0.7 / (λ(k₂, μ₂) + 2μ₂)
 @printf "\nexact check : 1/C₃₃₃₃ = %.10f   series + kn/L = %.10f\n" 1 / C₃₃(lam) (series + kn)
@@ -112,7 +114,7 @@ With an interface, the correction decays like `1/L`.
 ````@example laminate_interfaces
 Ls = 10 .^ range(-1.5, 2.5; length = 60)
 kn_fixed = 5.0e-2
-c33_spring = [C₃₃(bilayer(; itf = SpringInterface(kn_fixed, kn_fixed), L = L)) for L in Ls]
+c33_spring = [C₃₃(bilayer(; itf = SpringInterface(; sn = kn_fixed, st = kn_fixed), L = L)) for L in Ls]
 c33_perf = [C₃₃(bilayer(; L = L)) for L in Ls]
 
 p1 = plot(
@@ -169,7 +171,7 @@ shows up as a *discontinuity*, not as a strain.
 
 ````@example laminate_interfaces
 E = Tens([0.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 1.0e-3])     # pure normal strain
-lam = bilayer(; itf = SpringInterface(1.0e-2, 0.0))
+lam = bilayer(; itf = SpringInterface(; sn = 1.0e-2, st = 0.0))
 jump = interface_jump(lam, 1, E)
 Σ33 = Matrix(components(homogenize(lam, Laminated(), :C) ⊡ E))[3, 3]
 @printf "\nunder E₃₃ = 1e-3 : Σ₃₃ = %.6e,  [u] = (%.2e, %.2e, %.3e)\n" Σ33 jump[1] jump[2] jump[3]

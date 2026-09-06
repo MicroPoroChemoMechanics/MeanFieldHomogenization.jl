@@ -29,7 +29,7 @@ _blk(M, i, nc = 6) = M[(nc * (i - 1) + 1):(nc * i), (nc * (i - 1) + 1):(nc * i)]
 
 function _elastic_laminate(; kn = 0.0, κs = 0.0)
     lam = Laminate(; normal = (0, 0, 1))
-    itf1 = kn == 0 ? PerfectInterface() : SpringInterface(kn, kn / 2)
+    itf1 = kn == 0 ? PerfectInterface() : SpringInterface(; sn = kn, st = kn / 2)
     itf2 = κs == 0 ? PerfectInterface() : MembraneInterface(κs, κs / 2)
     add_layer!(lam, :A, Dict(:C => _isoa(2.0, 0.8)); thickness = 0.3, interface = itf1)
     add_layer!(lam, :B, Dict(:C => _isoa(0.5, 0.2)); thickness = 0.7, interface = itf2)
@@ -38,7 +38,7 @@ end
 
 function _heaviside_laminate(; kn = 0.0, κs = 0.0)
     lam = Laminate(; normal = (0, 0, 1))
-    itf1 = kn == 0 ? PerfectInterface() : SpringInterface(kn, kn / 2)
+    itf1 = kn == 0 ? PerfectInterface() : SpringInterface(; sn = kn, st = kn / 2)
     itf2 = κs == 0 ? PerfectInterface() : MembraneInterface(κs, κs / 2)
     add_layer!(
         lam, :A, Dict(:C => heaviside_law(_isoa(2.0, 0.8)));

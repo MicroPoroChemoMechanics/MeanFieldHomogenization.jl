@@ -32,9 +32,9 @@ _fd(f, x; h = FD_H) = (f(x + h) - f(x - h)) / (2h)
 
 # The reference cell, rebuilt from scratch for each finite-difference point so
 # that nothing is shared between evaluations.
-function _cell(; hA = 0.3, hB = 0.7, μA = 0.8, kn = 0.0, kt = 0.0, κs = 0.0, μs = 0.0)
+function _cell(; hA = 0.3, hB = 0.7, μA = 0.8, sn = 0.0, st = 0.0, κs = 0.0, μs = 0.0)
     lam = Laminate(; normal = (0, 0, 1))
-    itf = (kn == 0 && kt == 0) ? PerfectInterface() : SpringInterface(kn, kt)
+    itf = (sn == 0 && st == 0) ? PerfectInterface() : SpringInterface(; sn = sn, st = st)
     itf2 = (κs == 0 && μs == 0) ? PerfectInterface() : MembraneInterface(κs, μs)
     add_layer!(
         lam, :A, Dict(:C => _isod(2.0, μA), :K => TensISO{3}(2.0));
@@ -70,17 +70,30 @@ end
 end
 
 @testset "AD — interface compliance and surface moduli" begin
-    # A spring compliance: only the interface carries the `Dual`, while the
+    # A spring interface: only the interface carries the `Dual`, while the
     # layers and thicknesses stay `Float64`.
-    lam = _cell(; kn = 1.0e-2, kt = 5.0e-3)
+    sn0, st0 = 1.0e-2, 5.0e-3
+    lam = _cell(; sn = sn0, st = st0)
+
+    ad_sn = derivative(lam, Laminated(), interface_param(1, :sn); indexer = _C33)
+    @test ad_sn ≈ _fd(x -> _C33(homogenize(_cell(; sn = x, st = st0), Laminated(), :C)), sn0) rtol = RTOL_AD
+    @test ad_sn < 0                                    # a softer interface softens the stack
+
+    ad_st = derivative(lam, Laminated(), interface_param(1, :st); indexer = C -> Matrix(KM(C))[4, 4])
+    @test ad_st ≈ _fd(
+        x -> Matrix(KM(homogenize(_cell(; sn = sn0, st = x), Laminated(), :C)))[4, 4], st0
+    ) rtol = RTOL_AD
+
+    # The stiffness spelling differentiates too, and the chain rule through
+    # `sn = 1/kn` pins the two against each other: ∂C/∂kn = −sn² ∂C/∂sn.  This
+    # is what makes `interface_param(i, :kn)` and `interface_param(i, :sn)` both
+    # legitimate rather than one of them a silent alias of the other.
     ad_kn = derivative(lam, Laminated(), interface_param(1, :kn); indexer = _C33)
-    @test ad_kn ≈ _fd(x -> _C33(homogenize(_cell(; kn = x, kt = 5.0e-3), Laminated(), :C)), 1.0e-2) rtol = RTOL_AD
-    @test ad_kn < 0                                    # a softer interface softens the stack
+    @test ad_kn ≈ -sn0^2 * ad_sn rtol = 1.0e-10
+    @test ad_kn > 0                                    # a stiffer interface stiffens the stack
 
     ad_kt = derivative(lam, Laminated(), interface_param(1, :kt); indexer = C -> Matrix(KM(C))[4, 4])
-    @test ad_kt ≈ _fd(
-        x -> Matrix(KM(homogenize(_cell(; kn = 1.0e-2, kt = x), Laminated(), :C)))[4, 4], 5.0e-3
-    ) rtol = RTOL_AD
+    @test ad_kt ≈ -st0^2 * ad_st rtol = 1.0e-10
 
     # A membrane surface modulus (the second interface of the cell).
     lamm = _cell(; κs = 0.07, μs = 0.04)
@@ -93,15 +106,15 @@ end
 @testset "AD — thickness carries the interface size effect" begin
     # With a spring interface the thickness derivative differs from the pure
     # volume-fraction one: changing hA also changes L, hence the 1/L weight.
-    lam = _cell(; kn = 5.0e-2)
+    lam = _cell(; sn = 5.0e-2)
     ad = derivative(lam, Laminated(), thickness(:A); indexer = _C33)
-    @test ad ≈ _fd(x -> _C33(homogenize(_cell(; hA = x, kn = 5.0e-2), Laminated(), :C)), 0.3) rtol = RTOL_AD
+    @test ad ≈ _fd(x -> _C33(homogenize(_cell(; hA = x, sn = 5.0e-2), Laminated(), :C)), 0.3) rtol = RTOL_AD
 
     # Scaling the whole cell changes nothing without interfaces …
     f_perf = s -> _C33(homogenize(_cell(; hA = 0.3s, hB = 0.7s), Laminated(), :C))
     @test abs(_fd(f_perf, 1.0)) < 1.0e-9
     # … but is a genuine size effect with one.
-    f_spring = s -> _C33(homogenize(_cell(; hA = 0.3s, hB = 0.7s, kn = 5.0e-2), Laminated(), :C))
+    f_spring = s -> _C33(homogenize(_cell(; hA = 0.3s, hB = 0.7s, sn = 5.0e-2), Laminated(), :C))
     @test abs(_fd(f_spring, 1.0)) > 1.0e-3
 end
 
@@ -122,15 +135,15 @@ end
 end
 
 @testset "AD — gradient over several lenses at once" begin
-    lam = _cell(; kn = 1.0e-2)
-    ps = [thickness(:A), property(:A, :C, :shear), interface_param(1, :kn)]
+    lam = _cell(; sn = 1.0e-2)
+    ps = [thickness(:A), property(:A, :C, :shear), interface_param(1, :sn)]
     # Qualified: `gradient` is exported by Tensors, Ferrite, Symbolics and
     # Zygote too, all of which are loaded by the time the full suite runs.
     g = MeanFieldHomogenization.gradient(lam, Laminated(), ps; indexer = _C33)
     @test length(g) == 3
-    @test g[1] ≈ _fd(x -> _C33(homogenize(_cell(; hA = x, kn = 1.0e-2), Laminated(), :C)), 0.3) rtol = RTOL_AD
-    @test g[2] ≈ _fd(x -> _C33(homogenize(_cell(; μA = x / 2, kn = 1.0e-2), Laminated(), :C)), 1.6) rtol = RTOL_AD
-    @test g[3] ≈ _fd(x -> _C33(homogenize(_cell(; kn = x), Laminated(), :C)), 1.0e-2) rtol = RTOL_AD
+    @test g[1] ≈ _fd(x -> _C33(homogenize(_cell(; hA = x, sn = 1.0e-2), Laminated(), :C)), 0.3) rtol = RTOL_AD
+    @test g[2] ≈ _fd(x -> _C33(homogenize(_cell(; μA = x / 2, sn = 1.0e-2), Laminated(), :C)), 1.6) rtol = RTOL_AD
+    @test g[3] ≈ _fd(x -> _C33(homogenize(_cell(; sn = x), Laminated(), :C)), 1.0e-2) rtol = RTOL_AD
 end
 
 @testset "AD — the lenses that must refuse" begin
@@ -141,6 +154,11 @@ end
     @test_throws ArgumentError set_param(lam, amount(:A), 0.5)
     @test_throws ArgumentError get_param(lam, thickness(:Z))
     @test_throws ArgumentError get_param(lam, interface_param(1, :nope))
+    # A spring stores compliances and exposes stiffnesses, so its parameter set
+    # is {kn, kt, sn, st}; anything else must be refused on the WRITE path too,
+    # not only on the read one.
+    @test_throws ArgumentError set_param(lam, interface_param(1, :nope), 1.0)
+    @test_throws ArgumentError set_param(lam, interface_param(1, :κs), 1.0)
 end
 
 @testset "AD — anisotropic layers, second derivative" begin

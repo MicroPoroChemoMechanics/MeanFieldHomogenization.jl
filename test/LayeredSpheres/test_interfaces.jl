@@ -17,7 +17,7 @@ using LinearAlgebra
     α_perfect = MeanFieldHomogenization.LayeredSpheres._bulk_localization(s_perfect, κ₀, μ₀)
 
     # k → 0 ≡ perfect interface (normal-only)
-    intf_tight = (SpringInterface(1.0e-14), PerfectInterface{Float64}())
+    intf_tight = (SpringInterface(; sn = 1.0e-14), PerfectInterface{Float64}())
     s_tight = LayeredSphere((0.5, 1.0), (C₁, C₀); interfaces = intf_tight)
     α_tight = MeanFieldHomogenization.LayeredSpheres._bulk_localization(s_tight, κ₀, μ₀)
     for k in 1:2
@@ -25,7 +25,7 @@ using LinearAlgebra
     end
 
     # k → ∞ : core decoupled → core bulk localization → 0
-    intf_loose = (SpringInterface(1.0e9), PerfectInterface{Float64}())
+    intf_loose = (SpringInterface(; sn = 1.0e9), PerfectInterface{Float64}())
     s_loose = LayeredSphere((0.5, 1.0), (C₁, C₀); interfaces = intf_loose)
     α_loose = MeanFieldHomogenization.LayeredSpheres._bulk_localization(s_loose, κ₀, μ₀)
     @test abs(α_loose[1]) < 1.0e-6
@@ -41,7 +41,7 @@ end
     for k in ks
         s = LayeredSphere(
             (0.5, 1.0), (C₁, C₀);
-            interfaces = (SpringInterface(k), PerfectInterface{Float64}())
+            interfaces = (SpringInterface(; sn = k), PerfectInterface{Float64}())
         )
         push!(αs, MeanFieldHomogenization.LayeredSpheres._bulk_localization(s, κ₀, μ₀)[1])
     end
@@ -50,13 +50,33 @@ end
     end
 end
 
-@testset "SpringInterface(kn, kt) two-compliance constructor" begin
-    s_norm = SpringInterface(0.01)         # convenience (kt = 0)
-    s_full = SpringInterface(0.01, 0.02)   # two compliances
-    @test s_norm.kn ≈ 0.01
-    @test s_norm.kt == 0.0
-    @test s_full.kn ≈ 0.01
-    @test s_full.kt ≈ 0.02
+@testset "SpringInterface — stiffness and compliance spellings agree" begin
+    # `kn`, `kt` are STIFFNESSES; `sn`, `st` the stored compliances.  The two
+    # spellings must name the same interface, in both directions.
+    s_norm = SpringInterface(; sn = 0.01)              # tangentially bonded
+    s_full = SpringInterface(; sn = 0.01, st = 0.02)
+    @test s_norm.sn ≈ 0.01
+    @test s_norm.st == 0.0                             # bonded ⇒ exact zero
+    @test s_norm.kn ≈ 100.0
+    @test isinf(s_norm.kt)                             # bonded ⇒ infinite stiffness
+    @test s_full.sn ≈ 0.01
+    @test s_full.st ≈ 0.02
+    @test s_full.kn ≈ 100.0
+    @test s_full.kt ≈ 50.0
+
+    @test SpringInterface(100.0, 50.0) == s_full       # positional = stiffnesses
+    @test SpringInterface(; kn = 100.0, kt = 50.0) == s_full
+    @test SpringInterface(100.0) == s_norm             # one argument ⇒ bonded
+    @test spring_compliances(s_full) == (s_full.sn, s_full.st)
+    @test all(spring_stiffnesses(s_full) .≈ (100.0, 50.0))
+    @test Set(propertynames(s_full)) == Set((:kn, :kt, :sn, :st))
+
+    # A perfect interface is an exact zero in compliance, not an Inf in
+    # stiffness — which is what keeps the near-perfect regime differentiable.
+    @test SpringInterface(; sn = 0.0, st = 0.0) == SpringInterface(Inf, Inf)
+
+    @test_throws ArgumentError SpringInterface(; kn = 1.0, sn = 1.0)
+    @test_throws ArgumentError SpringInterface(; kt = 1.0)
 end
 
 @testset "MembraneInterface — Gurtin-Murdoch bulk limit" begin
@@ -120,7 +140,7 @@ end
 @testset "SpringInterface eltype inference" begin
     s = LayeredSphere(
         (0.5, 1.0), (TensISO{3}(1.0, 1.0), TensISO{3}(1.0, 1.0));
-        interfaces = (SpringInterface(0.01), PerfectInterface{Float64}())
+        interfaces = (SpringInterface(; sn = 0.01), PerfectInterface{Float64}())
     )
     @test layer_interface(s, 1) isa SpringInterface
     @test layer_interface(s, 2) isa PerfectInterface

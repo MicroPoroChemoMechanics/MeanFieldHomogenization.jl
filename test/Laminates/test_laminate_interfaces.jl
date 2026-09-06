@@ -61,7 +61,7 @@ end
     ref = homogenize(_bilayer(), Laminated(), :C)
     refK = homogenize(_bilayer(), Laminated(), :K)
 
-    @test homogenize(_bilayer(; itf1 = SpringInterface(0.0, 0.0)), Laminated(), :C) ≈ ref
+    @test homogenize(_bilayer(; itf1 = SpringInterface(; sn = 0.0, st = 0.0)), Laminated(), :C) ≈ ref
     @test homogenize(_bilayer(; itf1 = MembraneInterface(0.0, 0.0)), Laminated(), :C) ≈ ref
     @test homogenize(_bilayer(; itf1 = KapitzaInterface(0.0)), Laminated(), :K) ≈ refK
     @test homogenize(
@@ -69,14 +69,14 @@ end
     ) ≈ refK
 
     # An elastic interface leaves transport alone and vice versa.
-    @test homogenize(_bilayer(; itf1 = SpringInterface(1.0e-1, 1.0e-1)), Laminated(), :K) ≈ refK
+    @test homogenize(_bilayer(; itf1 = SpringInterface(; sn = 1.0e-1, st = 1.0e-1)), Laminated(), :K) ≈ refK
     @test homogenize(_bilayer(; itf1 = KapitzaInterface(1.0e-1)), Laminated(), :C) ≈ ref
 end
 
 @testset "Interfaces — O1: spring enters the out-of-plane law, exactly" begin
     kn, kt = 0.013, 0.021
     L = 1.0
-    lam = _bilayer(; itf1 = SpringInterface(kn, kt), itf2 = SpringInterface(2kn, 3kt))
+    lam = _bilayer(; itf1 = SpringInterface(; sn = kn, st = kt), itf2 = SpringInterface(; sn = 2kn, st = 3kt))
     Ch = homogenize(lam, Laminated(), :C)
     b = laminate_basis(lam)
 
@@ -119,7 +119,7 @@ end
 @testset "Interfaces — the 1/L size effect" begin
     kn, kt = 0.05, 0.05
     ref = Matrix(KM(homogenize(_bilayer(), Laminated(), :C)))
-    itf = SpringInterface(kn, kt)
+    itf = SpringInterface(; sn = kn, st = kt)
 
     C1 = Matrix(KM(homogenize(_bilayer(; itf1 = itf, scale = 1.0), Laminated(), :C)))
     C2 = Matrix(KM(homogenize(_bilayer(; itf1 = itf, scale = 2.0), Laminated(), :C)))
@@ -138,13 +138,13 @@ end
 @testset "Interfaces — spring softens monotonically, and decouples" begin
     prev = Inf
     for kn in (1.0e-4, 1.0e-3, 1.0e-2, 1.0e-1, 1.0e0, 1.0e2)
-        lam = _bilayer(; itf1 = SpringInterface(kn, kn))
+        lam = _bilayer(; itf1 = SpringInterface(; sn = kn, st = kn))
         C33 = Matrix(KM(homogenize(lam, Laminated(), :C)))[3, 3]
         @test C33 < prev                       # strictly softer as kn grows
         prev = C33
     end
     # kn → ∞: the layers decouple, the cell carries no normal stress.
-    lam = _bilayer(; itf1 = SpringInterface(1.0e12, 1.0e12))
+    lam = _bilayer(; itf1 = SpringInterface(; sn = 1.0e12, st = 1.0e12))
     Ch = homogenize(lam, Laminated(), :C)
     @test norm(_acoustic_i(Ch, laminate_basis(lam))) < 1.0e-8
     # ... but the in-plane stiffness is untouched (O2 again).
@@ -153,7 +153,7 @@ end
 
 @testset "Interfaces — the displacement jump" begin
     kn, kt = 1.0e-2, 3.0e-3
-    lam = _bilayer(; itf1 = SpringInterface(kn, kt))
+    lam = _bilayer(; itf1 = SpringInterface(; sn = kn, st = kt))
     Ch = homogenize(lam, Laminated(), :C)
 
     # Pure normal macroscopic strain: the jump is normal, of size kn·Σ₃₃.
@@ -233,7 +233,7 @@ end
     kn, kt = 0.013, 0.021
     𝕂 = SMatrix{3, 3}(Diagonal([kt, kt, kn]))          # (ℓ, m, n) frame
     a = homogenize(_bilayer(; itf1 = AnisotropicSpringInterface(𝕂)), Laminated(), :C)
-    b0 = homogenize(_bilayer(; itf1 = SpringInterface(kn, kt)), Laminated(), :C)
+    b0 = homogenize(_bilayer(; itf1 = SpringInterface(; sn = kn, st = kt)), Laminated(), :C)
     @test Matrix(KM(a)) ≈ Matrix(KM(b0)) atol = ATOL_ITF
 
     κs, μs = 0.07, 0.04
@@ -308,7 +308,7 @@ end
     @test abs(M[4, 4] - M[5, 5]) > 1.0e-6          # genuinely not TI
 
     # ... while the scalar interface types keep the TI claim.
-    @test homogenize(_bilayer(; itf1 = SpringInterface(1.0e-2, 2.0e-2)), Laminated(), :C) isa
+    @test homogenize(_bilayer(; itf1 = SpringInterface(; sn = 1.0e-2, st = 2.0e-2)), Laminated(), :C) isa
         TensND.TensTI{4}
     @test homogenize(_bilayer(; itf1 = MembraneInterface(0.07, 0.04)), Laminated(), :C) isa
         TensND.TensTI{4}

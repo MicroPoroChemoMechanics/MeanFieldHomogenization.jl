@@ -330,7 +330,7 @@ end
     lam_s = Laminate(; normal = (0, 0, 1))
     add_layer!(
         lam_s, :A, Dict(:C => _iso(3.0, 1.2)); thickness = 0.4,
-        interface = SpringInterface(0.5, 0.3)
+        interface = SpringInterface(; sn = 0.5, st = 0.3)
     )
     add_layer!(lam_s, :B, Dict(:C => _iso(0.7, 0.3)); thickness = 0.6)
     fs_s = [layer_volume_fraction(lam_s, nm) for nm in layer_names(lam_s)]

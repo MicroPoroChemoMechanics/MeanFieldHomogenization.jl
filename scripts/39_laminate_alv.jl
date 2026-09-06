@@ -140,7 +140,7 @@ k_perp = Mk[3, 3]
 lam_i = Laminate(; normal = (0, 0, 1))
 add_layer!(
     lam_i, :BINDER, Dict(:C => law_binder); thickness = f_binder,
-    interface = SpringInterface(5.0e-2, 5.0e-2)
+    interface = SpringInterface(; sn = 5.0e-2, st = 5.0e-2)
 )
 add_layer!(lam_i, :REINF, Dict(:C => law_reinf); thickness = f_reinf)
 Mi = homogenize_alv(lam_i, Laminated(), :C; times = ts)

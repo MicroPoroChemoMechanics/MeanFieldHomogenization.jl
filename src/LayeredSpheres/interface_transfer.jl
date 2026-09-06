@@ -14,7 +14,8 @@
 # State vector: s = (u_r, σ_rr).
 #
 #   PerfectInterface    : J = I
-#   SpringInterface     : J = [1  kn ;  0  1]     (bulk uses kn only)
+#   SpringInterface     : J = [1  1/kn ; 0  1]    (bulk uses kn only;
+#                                                  kn is a STIFFNESS)
 #   MembraneInterface   : J = [1   0 ; 4κs/r²  1] (bulk uses κs only)
 #   (Thermal analogs live in `conductivity.jl`.)
 
@@ -38,7 +39,8 @@ end
 # Spring: primal (displacement jump), bulk uses kn only.
 function _bulk_interface_T(intf::SpringInterface, κ, μ, r)
     T = promote_type(eltype(intf), typeof(κ), typeof(μ), typeof(r))
-    return T[one(T) T(intf.kn); zero(T) one(T)]
+    sn, _ = spring_compliances(intf)
+    return T[one(T) T(sn); zero(T) one(T)]
 end
 
 # Surface-elastic membrane: dual (traction jump), bulk uses κs only.
@@ -54,15 +56,15 @@ end
 # State vector: S = (U, V, σ_rr, σ_rθ).
 # These are imposed at the radius r_k of the interface.  Perfect = I.
 #
-# For SpringInterface the displacement components jump (normal → kn,
-# tangential → kt) while tractions are continuous:
-#   U⁺ = U⁻ + kn · σ_rr⁻
-#   V⁺ = V⁻ + kt · σ_rθ⁻
+# For SpringInterface the displacement components jump while tractions are
+# continuous.  `kn`, `kt` are STIFFNESSES, so the jump carries their inverse:
+#   U⁺ = U⁻ + σ_rr⁻ / kn
+#   V⁺ = V⁻ + σ_rθ⁻ / kt
 # In matrix form:
-#   J = [ 1  0  kn  0 ;
-#         0  1  0   kt;
-#         0  0  1   0 ;
-#         0  0  0   1 ]
+#   J = [ 1  0  1/kn  0   ;
+#         0  1  0     1/kt;
+#         0  0  1     0   ;
+#         0  0  0     1   ]
 #
 # For MembraneInterface the traction components jump:
 #   σ_rr⁺ = σ_rr⁻  +  f1(κs, μs, r) · U  +  f2(κs, μs, r) · V
@@ -90,9 +92,10 @@ end
 function _shear_interface_T(intf::SpringInterface, κ, μ, r)
     T = promote_type(eltype(intf), typeof(κ), typeof(μ), typeof(r))
     M = Matrix{T}(LinearAlgebra.I, 4, 4)
-    # State order: (U, V, τ_rr, τ_rθ).  U jumps by kn · τ_rr, V by kt · τ_rθ.
-    M[1, 3] = T(intf.kn)
-    M[2, 4] = T(intf.kt)
+    # State order: (U, W, σ_rr, σ_rθ).  U jumps by σ_rr/kn, W by σ_rθ/kt.
+    sn, st = spring_compliances(intf)
+    M[1, 3] = T(sn)
+    M[2, 4] = T(st)
     return M
 end
 

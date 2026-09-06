@@ -226,7 +226,7 @@ end
     add_layer!(lam, :A, Dict(:C => _ISO_L(2.0, 0.8)); thickness = 0.3)
     add_layer!(
         lam, :B, Dict(:C => _ISO_L(0.5, 0.2)); thickness = 0.7,
-        interface = SpringInterface(1.0e-3, 2.0e-3)
+        interface = SpringInterface(; sn = 1.0e-3, st = 2.0e-3)
     )
     s = sprint(show, MIME"text/plain"(), lam)
     @test occursin("Laminate{Float64}", s)

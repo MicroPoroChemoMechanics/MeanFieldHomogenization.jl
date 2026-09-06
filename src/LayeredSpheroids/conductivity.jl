@@ -202,6 +202,18 @@ function spheroid_state_sequence(s::LayeredSpheroid{T, N, Q}, k₀raw, trans::Bo
     for ℓ in 1:N
         X[ℓ + 1] = S[ℓ] * X1
     end
+
+    # The far-field condition IS `A_matrix = Ainf`: apart from the imposed
+    # uniform remote field at degree 1, every GROWING amplitude in the matrix
+    # vanishes identically, or the temperature would blow up at infinity.
+    # `X1` was solved to make `S[N][1:𝒩,1:𝒩] * X1[1:𝒩]` equal `Ainf`, so
+    # recomputing that product only reintroduces the linear solve's residual —
+    # `O(1e-17)` instead of the exact zero.  Harmless in the near field, fatal
+    # away from the particle: those residues multiply `P_{2r-1}(q) ~ q^{2r-1}`,
+    # so at `Nseries = 12` and 500 particle radii a `1e-26` amplitude is
+    # amplified past `1e40`, and raising `Nseries` made it worse rather than
+    # better.  Write the boundary condition down instead of recovering it.
+    @views X[N + 1][1:𝒩] .= Ainf
     return X
 end
 

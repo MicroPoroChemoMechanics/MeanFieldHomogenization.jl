@@ -143,15 +143,21 @@ by periodicity.
 ```julia
 lam = Laminate(; normal = (0, 0, 1))
 add_layer!(lam, :A, Dict(:C => C_A); thickness = 0.3,
-           interface = SpringInterface(1.0e-3, 2.0e-3))    # compliances
+           interface = SpringInterface(1.0e3, 5.0e2))      # stiffnesses
 add_layer!(lam, :B, Dict(:C => C_B); thickness = 0.7,
            interface = MembraneInterface(0.07, 0.04))
 ```
 
-!!! note "The spring fields are compliances"
-    `SpringInterface(kn, kt)` follows the `LayeredSpheres` convention:
-    ``[\![\underline u]\!] = \boldsymbol{\mathcal K}\cdot(\boldsymbol\sigma\cdot\underline n)``, so `kn = kt = 0` is perfect bonding and `k → ∞`
-    decouples the layers.
+!!! note "Stiffnesses in, compliances stored"
+    `SpringInterface(kn, kt)` takes **stiffnesses** — traction per unit
+    opening — matching Echoes' `PRIMALDISC`, so `kn, kt → ∞` is perfect
+    bonding and `k → 0` decouples the layers. The type *stores* the
+    compliances ``[\![\underline u]\!] = \boldsymbol{\mathcal K}\cdot(\boldsymbol\sigma\cdot\underline n)``,
+    reachable as `itf.sn`, `itf.st` and settable with
+    `SpringInterface(; sn, st)`, because a perfect interface is then the exact
+    zero `sn = st = 0` rather than an infinity — the near-perfect regime stays
+    differentiable. `interface_param(i, :kn)` and `interface_param(i, :sn)`
+    both work and give reciprocal sensitivities.
 
 ### Anisotropic interfaces
 

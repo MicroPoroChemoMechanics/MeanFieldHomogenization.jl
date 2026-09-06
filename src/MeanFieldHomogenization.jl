@@ -227,16 +227,31 @@ export delta_stiffness, delta_conductivity, delta_compliance, delta_resistivity
 # ── LayeredSphere (Hervé-Zaoui / Hervé-Luanco / Gurtin-Murdoch / Kapitza) ────
 export LayeredSphere, AbstractInterface, PerfectInterface
 export SpringInterface, MembraneInterface
+export spring_compliances, spring_stiffnesses
 export KapitzaInterface, SurfaceConductiveInterface
 export layer_count, layer_radius, layer_modulus, layer_interface,
     layer_volume_fraction, outer_radius
 export layer_strain_average, sphere_strain_average, cumulative_strain_average
+export layer_stress_average, sphere_stress_average
+export layer_gradient_average, sphere_gradient_average, layer_flux_average
+# Pointwise fields.  Declared in `LayeredSpheres` and extended by
+# `LayeredSpheroids`, hence listed once, here — see the `Laminates` note below
+# for the same arrangement applied to `layer_count` & friends.
+export get_layer
+export LayeredSphereFields, LayeredSphereTransportFields
+export region_stiffness, shell_localization
+export local_strain_strain_loc, local_stress_strain_loc,
+    local_strain_stress_loc, local_stress_stress_loc
+export local_strain, local_stress, local_displacement
+export local_gradient_gradient_loc, local_flux_gradient_loc,
+    local_gradient_flux_loc, local_flux_flux_loc
+export local_temperature, local_gradient, local_flux
 
 # ── LayeredSpheroid (Barthélémy-Bignonnet confocal spheroid, conduction) ─────
 export LayeredSpheroid, layered_spheroid_from_fractions
 export layer_q, layer_semiaxes, outer_semiaxes
-export local_temperature, local_gradient, local_flux
-export spheroid_state_sequence, spheroid_ba_ratios, get_layer
+export spheroid_state_sequence, spheroid_ba_ratios
+export LayeredSpheroidTransportFields
 
 # ── Elliptic integrals (type-generic) ────────────────────────────────────────
 export ell_K, ell_E, ell_F, ell_RF, ell_RD

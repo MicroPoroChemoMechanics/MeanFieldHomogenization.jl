@@ -98,6 +98,7 @@ function _iface_param_volterra(p::ViscoLaw, times::AbstractVector, n::Int)
     return trapezoidal_matrix(p, times)
 end
 
+
 # ── Bulk (2n × 2n, mode-major) ALV interface transfer matrices ─────────────
 #
 # State vector (mode-major) : s = (u_r-block ; σ_rr-block) of size 2n × m.
@@ -113,7 +114,8 @@ layer Volterra moduli `(M_κ, M_μ)` are passed in for type promotion.
 
 Supports the same interface types as the elastic counterpart:
 [`PerfectInterface`](@ref), [`SpringInterface`](@ref) (primal,
-displacement jump driven by `kn`), and [`MembraneInterface`](@ref)
+displacement jump driven by the compliance `1/kn`), and
+[`MembraneInterface`](@ref)
 (dual, traction jump driven by `κs`).  Each elastic scalar parameter
 may also be a [`ViscoLaw`](@ref) — in that case the jump is itself
 ageing and the corresponding block is the parameter's trapezoidal
@@ -131,7 +133,7 @@ function _bulk_interface_T_alv(
         intf::SpringInterface, M_κ, M_μ, r,
         times::AbstractVector, n::Int
     )
-    M_kn = _iface_param_volterra(intf.kn, times, n)
+    M_kn = _iface_param_volterra(intf.sn, times, n)   # stored COMPLIANCE
     T = promote_type(eltype(M_κ), eltype(M_μ), eltype(M_kn))
     Id = Matrix{T}(I, n, n)
     M = zeros(T, 2 * n, 2 * n)
@@ -222,8 +224,9 @@ function _bulk_transition_alv(
     R³ = R^3
     R⁴ = R^4
     Sb = 3 .* M_κ_b .+ 4 .* M_μ_b
-    M_kn = _iface_param_volterra(intf.kn, times, n)
-    # Numerators (`u_b = u_a + kn σ_a`, `σ_b = σ_a` → augmented bulk transition).
+    M_kn = _iface_param_volterra(intf.sn, times, n)   # stored COMPLIANCE
+    # Numerators (`u_b = u_a + σ_a/kn`, `σ_b = σ_a` → augmented bulk transition;
+    # `M_kn` already holds the COMPLIANCE block `1/kn`).
     num11 = 3 .* M_κ_a .+ 4 .* M_μ_b .+ (12 / R) .* (M_μ_b * (M_κ_a * M_kn))
     num12 = (4 / R³) .* (M_μ_b .- M_μ_a) .- (16 / R⁴) .* (M_μ_b * (M_μ_a * M_kn))
     num21 = (-3 * R³) .* (M_κ_a .- M_κ_b) .+ (9 * R²) .* (M_κ_a * (M_κ_b * M_kn))
@@ -420,21 +423,23 @@ end
 """
     _shear_M_matrix_alv(r, M_κ, M_μ, n) -> Matrix{T}  (4n × 4n, time-major)
 
-ALV fundamental matrix for the deviatoric Y₂ harmonic, in
-**τ-scaling** : the state vector is `(U, V, τ_rr, τ_rθ)` with
-`τ = σ / μ` (per-layer normalization).  Rows 3 and 4 of the matrix
-no longer carry an explicit `μ` factor; all entries are functions of
-the modulus ratio `M_x = M_κ ∘ M_μ^{-vol}` and the radius only.
-This keeps every entry `O(1)` for **any** physically-admissible
-modulus (including pores `κ ≈ μ ≈ 0`), so the 4×4 diagonal blocks
-in the time-major layout are well-conditioned and
-`volterra_inverse(_; block_size = 4)` is stable in Float64.
+ALV fundamental matrix for the deviatoric Y₂ harmonic.  The state
+vector is `(U, W, σ_rr, σ_rθ)` carrying the **physical** traction
+amplitudes, exactly as in the elastic `LayeredSpheres._shear_M_matrix`:
+rows 3 and 4 are polynomials in `(M_κ, M_μ)` — `blocks[3,1] = 4 M_μ`,
+`blocks[4,4] = 3 M_κ / r³` — and are continuous across a perfect
+interface, which is why
+[`_shear_interface_T_alv`](@ref)`(::PerfectInterface, …)` is the
+identity and needs no modulus conversion.
 
-The price for this stability is a non-trivial perfect-interface
-jump: continuity of the *physical* `σ_rr` translates to
-`τ_rr_+ = (μ_-/μ_+) τ_rr_-` across the interface.  The interface
-helper [`_shear_interface_T_alv`](@ref) handles that conversion
-via [`volterra_divide`](@ref).
+Block for block this is the elastic matrix with the scalar `x = κ/μ`
+replaced by the Volterra ratio `M_μ^{-vol} ∘ M_κ` applied **on the
+left**.  That inverse appears in three entries of the `U`/`W` rows
+(`blocks[1,2]`, `blocks[2,2]`, `blocks[1,4]`), each formed by
+[`volterra_left_divide`](@ref)`(M_μ, …)` rather than by materializing
+`M_μ^{-vol}`.  A layer with a vanishing shear modulus is therefore
+**not** admissible here: `volterra_left_divide` requires
+`M_μ[t,t] ≠ 0` at every time step.
 
 Each scalar entry of the elastic 4×4 matrix becomes an `n × n`
 Volterra matrix; entries are arranged in **time-major** layout
@@ -579,8 +584,8 @@ function _shear_interface_T_alv(
         M_κ_a, M_μ_a, M_κ_b, M_μ_b,
         r, times::AbstractVector, n::Int
     )
-    M_kn = _iface_param_volterra(intf.kn, times, n)
-    M_kt = _iface_param_volterra(intf.kt, times, n)
+    M_kn = _iface_param_volterra(intf.sn, times, n)   # stored COMPLIANCE
+    M_kt = _iface_param_volterra(intf.st, times, n)   # stored COMPLIANCE
     T = promote_type(
         eltype(M_μ_a), eltype(M_μ_b),
         eltype(M_kn), eltype(M_kt)
@@ -595,7 +600,7 @@ function _shear_interface_T_alv(
     blocks[2, 2] = Id
     blocks[3, 3] = Id
     blocks[4, 4] = Id
-    # σ-state: U⁺ = U⁻ + kn · σ_rr⁻ ; V⁺ = V⁻ + kt · σ_rθ⁻.
+    # σ-state: U⁺ = U⁻ + σ_rr⁻/kn ; V⁺ = V⁻ + σ_rθ⁻/kt (blocks are compliances).
     blocks[1, 3] = T.(M_kn)
     blocks[2, 4] = T.(M_kt)
     return _assemble_4n_time_major(blocks, n)
