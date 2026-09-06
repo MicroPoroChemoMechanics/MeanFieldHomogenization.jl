@@ -186,3 +186,60 @@ end
         @test get_array(g(s, K0, q, p, φ)) ≈ get_array(g(f, q, p, φ))
     end
 end
+
+@testset "local fields — an OBLATE particle, whose coordinate is complex" begin
+    # An oblate spheroid carries a genuinely COMPLEX confocal coordinate
+    # `q = i τ`.  `get_layer` compares `abs(q)`, an ordinary real, so it must
+    # work — a symbolic guard placed on `typeof(q)` instead of `typeof(abs(q))`
+    # would refuse every oblate particle, and no prolate test would notice.
+    a, t = 1.0, 2.0                      # revolution semi-axis short ⇒ oblate
+    cbar = sqrt(t^2 - a^2)
+    s = LayeredSpheroid(
+        (a,), (t,), (TensISO{3}(1.0e-6),);         # near-insulating core
+        interfaces = (SurfaceConductiveInterface(3.0),), Nseries = 5,
+    )
+    k₀ = TensISO{3}(1.0)
+    @test eltype(s.q) <: Complex
+
+    # (x, z) → (q, p) for oblate coordinates, as the tutorial does it.
+    function coord_oblate(x, z)
+        d = x^2 + z^2 - cbar^2
+        u = (d + sqrt(d^2 + 4 * cbar^2 * z^2)) / (2 * cbar^2)
+        τ = sqrt(max(u, 0.0))
+        p = τ > 1.0e-12 ? clamp(z / (cbar * τ), -1.0, 1.0) : 0.0
+        return im * τ, p
+    end
+
+    q_in, p_in = coord_oblate(0.3, 0.2)           # inside the particle
+    q_out, p_out = coord_oblate(3.0, 2.5)         # out in the matrix
+    @test get_layer(s, q_in) == 1
+    @test get_layer(s, q_out) == 2
+
+    for (q, p) in ((q_in, p_in), (q_out, p_out))
+        u = local_flux(s, k₀, q, p, 0.0; H_axial = 1.0, H_trans = 0.0)
+        @test all(isfinite, real.(collect(u)))
+        T = local_temperature(s, k₀, q, p, 0.0; H_axial = 1.0, H_trans = 0.0)
+        @test isfinite(real(T))
+    end
+
+    # ON the revolution axis (p = ±1) the chart is singular: `h_p` is infinite
+    # and `h_φ` vanishes.  The AXIAL field is regular there and must come out
+    # finite — it used to be `NaN`, because `h_p = Inf` and the oblate `q` is
+    # COMPLEX, and `z / (Inf + 0im)` is `NaN + NaN im` where the real division
+    # would have given `0`.  The value must also match the `p → 1` limit.
+    τ30 = 30.0 / cbar
+    g_axis = collect(local_gradient(s, k₀, im * τ30, 1.0, 0.0; H_axial = 1.0, H_trans = 0.0))
+    @test all(isfinite, real.(g_axis))
+    g_near = collect(
+        local_gradient(s, k₀, im * τ30, 0.999999, 0.0; H_axial = 1.0, H_trans = 0.0)
+    )
+    @test real.(g_axis) ≈ real.(g_near) atol = 1.0e-6
+    # At that distance the remote gradient is essentially recovered.
+    @test real.(g_axis) ≈ [0.0, 0.0, 1.0] atol = 1.0e-3
+
+    # A TRANSVERSE loading on the axis is a genuine `0/0` whose limit this
+    # implementation does not carry; it must refuse rather than return `NaN`.
+    @test_throws ArgumentError local_gradient(
+        s, k₀, im * τ30, 1.0, 0.3; H_axial = 0.0, H_trans = 1.0
+    )
+end

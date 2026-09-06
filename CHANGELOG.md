@@ -102,6 +102,21 @@ stress and transport averages that had no counterpart are there:
 - **A minor bump is breaking for the resolver.** Downstream packages bounded on
   `"0.9"` must widen to `"0.10"`.
 
+### Known limitation
+
+- **The oblate `LayeredSpheroid` transport series loses accuracy far from the
+  particle, and *more* series terms make it worse.** With `Nseries = 3` the
+  axial gradient is right to `1e-4` at every distance tested; with `Nseries = 5`
+  it is still right at `z = 100` but reads `0.55` at `z = 200` and `−88` at
+  `z = 400`; with `Nseries = 8` it is already wrong at `z = 50`, and with
+  `Nseries = 12` at `z = 10`. The prolate path, whose `q` is real, is stable
+  throughout the same sweep. This is catastrophic cancellation in the complex
+  Legendre recurrences — `P_n(iτ)` and `Q_n(iτ)` grow and decay like `τ^n` — and
+  it is **pre-existing**, not introduced here. Nothing in the shipped
+  documentation or tests strays into the affected region, but raising `Nseries`
+  to improve accuracy currently does the opposite, silently. Fixing it needs
+  scaled Legendre functions and is deliberately not attempted in this release.
+
 ### Fixed
 
 - **`ForwardDiff` through a single layer's modulus.** `_bulk_promote` was typed
@@ -129,6 +144,17 @@ stress and transport averages that had no counterpart are there:
   `r = r_k` are unchanged to machine precision, and the new test compares
   eleven radii against the pointwise field integrated by a 3-point
   Gauss–Legendre rule that is exact for this integrand.
+- **An oblate `LayeredSpheroid` returned `NaN` for its local field on the
+  revolution axis.** At `|p| = 1` the confocal chart degenerates and `h_p` is
+  infinite; dividing a real number by `Inf` gives the correct `0`, but an
+  oblate particle carries a **complex** `q`, and Julia's complex division
+  `z / (Inf + 0im)` yields `NaN + NaN im`. The `NaN` then survived even a
+  purely axial loading, through `H_trans * NaN` with `H_trans = 0`. The term is
+  now written `∂T/∂p · p̄ / (c q̄ₚ)` — algebraically identical, regular on the
+  axis — and the on-axis value matches the `p → 1` limit to `1e-9`. A
+  *transverse* loading exactly on the axis is a genuine `0/0` whose limit this
+  implementation does not carry; it now refuses with a message naming the
+  remedy instead of returning `NaN`.
 - **`_shear_M_matrix_alv`'s docstring described a formulation the code does not
   use.** It announced a `τ = σ/μ` scaling whose rows 3–4 "no longer carry an
   explicit `μ` factor" and a perfect-interface jump `τ_rr⁺ = (μ⁻/μ⁺) τ_rr⁻`

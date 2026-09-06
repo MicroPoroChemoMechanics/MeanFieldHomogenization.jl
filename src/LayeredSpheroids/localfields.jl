@@ -34,9 +34,13 @@ as [`get_layer`](@ref)`(::LayeredSphere, r)`; it matters for a
 function get_layer(s::LayeredSpheroid{T, N}, q; side::Symbol = :outer) where {T, N}
     side === :outer || side === :inner ||
         throw(ArgumentError("get_layer: `side` must be :outer or :inner, got $(side)"))
-    # Same refusal as the sphere: a symbolic coordinate answers an undecidable
-    # comparison with a plain `false` and would silently land in region 1.
-    is_hard_numeric(typeof(q)) || throw(
+    # Same refusal as the sphere: an undecidable comparison would land silently
+    # in region 1 rather than raise.  The predicate is on `abs(q)`, NOT on `q`:
+    # an OBLATE spheroid carries a genuinely COMPLEX confocal coordinate, whose
+    # modulus is an ordinary real and orders perfectly well — which is exactly
+    # what the loop below compares.  Guarding `typeof(q)` instead would refuse
+    # every oblate particle.
+    is_hard_numeric(typeof(abs(q))) || throw(
         ArgumentError(
             "get_layer: a symbolic coordinate cannot be located by comparison " *
                 "(got $(typeof(q)))"
@@ -157,10 +161,47 @@ function _local_grad_spheroid(
     dTt_dp = s.c * sum(dP1p[r] * (At[r] * P1q[r] + Bt[r] * Q1q[r]) for r in 1:𝒩)
 
     e_q, e_p, e_φ = _base_fond(q, p, φ)
-    h_q, h_p, h_φ = _metric(s.c, q, p)
+    qb = sqrt(q^2 - 1)
+    pb = sqrt(1 - p^2)
+    qp = sqrt(q^2 - p^2)
+    h_q = s.c * qp / qb
+    h_φ = s.c * qb * pb
+    # `∂T/∂p / h_p` is written as `∂T/∂p · p̄ / (c q̄ₚ)`: algebraically the same
+    # thing, since `h_p = c q̄ₚ / p̄`, but regular on the revolution axis.  There
+    # `p̄ = 0`, so `h_p` is infinite; dividing a REAL number by `Inf` gives the
+    # correct `0`, but an OBLATE spheroid carries a complex `q`, and Julia's
+    # complex division `z / (Inf + 0im)` returns `NaN + NaN im`.  That is what
+    # made every on-axis evaluation of an oblate particle a silent `NaN`.
+    inv_hp = pb / (s.c * qp)
 
-    g_axial = (dTa_dq / h_q) .* e_q .+ (dTa_dp / h_p) .* e_p
-    g_trans_r = (dTt_dq / h_q) .* e_q .+ (dTt_dp / h_p) .* e_p   # radial-type part
+    g_axial = (dTa_dq / h_q) .* e_q .+ (dTa_dp * inv_hp) .* e_p
+
+    # On the revolution axis (`|p| = 1`) the `(q, p, φ)` chart degenerates:
+    # `h_φ = c q̄ p̄` vanishes and the azimuth is undefined.  The AXIAL field is
+    # perfectly regular there — `h_p → ∞` simply switches its `e_p` term off —
+    # but the transverse expression contains `T_t / h_φ`, a genuine `0/0`
+    # (`P¹_n` vanishes on the axis like `p̄`).  Evaluating it produced a `NaN`
+    # that then contaminated the result even for a purely axial loading,
+    # through `H_trans * NaN = NaN` with `H_trans = 0`.
+    #
+    # So the transverse branch is computed only when it is actually loaded, and
+    # on the axis it refuses instead of returning the `0/0`: its limit is
+    # finite but obtaining it needs the `P¹_n` asymptotics near `p = ±1`, which
+    # this implementation does not carry.  Evaluating at `|p| < 1` approaches
+    # that limit smoothly.
+    if iszero(H_trans)
+        g = H_axial .* g_axial
+        return real(g[1]), real(g[2]), real(g[3])
+    end
+    iszero(1 - p^2) && throw(
+        ArgumentError(
+            "local_gradient: a transverse loading cannot be evaluated exactly " *
+                "on the revolution axis (p = $(p)); the (q, p, φ) chart is " *
+                "singular there. Use |p| < 1 — the limit is approached smoothly."
+        )
+    )
+
+    g_trans_r = (dTt_dq / h_q) .* e_q .+ (dTt_dp * inv_hp) .* e_p   # radial-type part
     g_trans = cos(φ) .* g_trans_r .- (sin(φ) * Tt / h_φ) .* e_φ
 
     g = H_axial .* g_axial .+ H_trans .* g_trans
