@@ -232,6 +232,8 @@ export KapitzaInterface, SurfaceConductiveInterface
 export layer_count, layer_radius, layer_modulus, layer_interface,
     layer_volume_fraction, outer_radius
 export layer_strain_average, sphere_strain_average, cumulative_strain_average
+export layer_stress_average, sphere_stress_average
+export layer_gradient_average, sphere_gradient_average, layer_flux_average
 # Pointwise fields.  Declared in `LayeredSpheres` and extended by
 # `LayeredSpheroids`, hence listed once, here — see the `Laminates` note below
 # for the same arrangement applied to `layer_count` & friends.

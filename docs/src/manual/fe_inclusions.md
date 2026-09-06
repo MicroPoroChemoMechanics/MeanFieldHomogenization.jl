@@ -158,7 +158,7 @@ are tracked in `docs/src/developer/roadmap.md`.
 ## Reproducing this page
 
 ```shell
-julia scripts/fe/make_doc_figures.jl     # figures + docs/src/assets/fe/results.md
+julia scripts/fe/make_doc_figures.jl     # figures + docs/src/assets/fe/results.md.in
 julia scripts/81_fe_crack_eshelby.jl     # the validation, live
 julia scripts/82_fe_crack_schemes.jl     # the crack inside the schemes
 ```

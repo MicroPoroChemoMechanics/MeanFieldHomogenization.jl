@@ -51,7 +51,10 @@ nothing pointwise, and mode 2 the `21/5 (3κ+μ)/μ` term. The whole field is
 validated against Echoes' `loc_eE` / `loc_eS` / `loc_sE` / `loc_sS` to `1e-14`
 on perfect, spring and membrane interfaces alike, and independently against
 `div σ = 0`, `ε = sym ∇u`, and the closed-form exterior field of a single
-sphere.
+sphere. `scripts/bench_echoes/benchmark_nlayers.jl` carries that cross-check as
+a rerunnable benchmark (§5, worst discrepancy `8.4e-13` over the four couplings,
+three interface families and ten points spanning every region), and no longer
+reaches into the recurrence for its stress profile.
 
 The `LayeredSpheroid` gained the matching vocabulary — `get_layer(…; side)`,
 `LayeredSpheroidTransportFields`, a remote gradient given as a vector, and the
@@ -59,6 +62,11 @@ four `local_*_*_loc` couplings — so the two inclusion families are asked the
 same questions the same way even though they will never share an
 implementation. Its localization tensor is a general `Tens{2,3}`: a confocal
 spheroid is not rotation-invariant about the field point.
+
+`cumulative_strain_average` now integrates a truncated layer exactly, and the
+stress and transport averages that had no counterpart are there:
+`layer_stress_average`, `sphere_stress_average`, `layer_gradient_average`,
+`sphere_gradient_average`, `layer_flux_average`.
 
 ### Breaking changes
 
@@ -110,6 +118,25 @@ spheroid is not rotation-invariant about the field point.
 - **The theory page** still stated `β_k = a_k` for the layer shear
   localization, dropping the mode-2 term that the code has carried since it was
   found to matter by 1–50 % on genuine multi-layer stacks.
+- **`cumulative_strain_average` was wrong whenever the ball cut a layer part
+  way through.** It weighted the *full-layer* average by the *truncated*
+  volume, which is exact only where the field is uniform inside a layer — and
+  the mode-2 term makes it vary as `r²`. On a three-layer sphere the error
+  reached **6 %** at mid-layer radii and was **exactly zero at every interface
+  radius**, which is precisely where the test suite evaluated it. The fix is
+  closed-form, not a quadrature: the truncated shell average is
+  `_layer_avg_dev_shear_factor` evaluated at the cut radius. Results at
+  `r = r_k` are unchanged to machine precision, and the new test compares
+  eleven radii against the pointwise field integrated by a 3-point
+  Gauss–Legendre rule that is exact for this integrand.
+- **`_shear_M_matrix_alv`'s docstring described a formulation the code does not
+  use.** It announced a `τ = σ/μ` scaling whose rows 3–4 "no longer carry an
+  explicit `μ` factor" and a perfect-interface jump `τ_rr⁺ = (μ⁻/μ⁺) τ_rr⁻`
+  handled by `volterra_divide`. The code is in `σ` form (`blocks[3,1] = 4 M_μ`),
+  its perfect interface is the identity, and no `volterra_divide` appears in any
+  interface helper. The docstring now describes the actual state vector and
+  says where the Volterra inverse of `μ` really occurs — which also means a
+  layer with vanishing shear modulus is not admissible on that path.
 
 ## v0.9.0 — what a tolerance asks for, and what a distribution shape is
 

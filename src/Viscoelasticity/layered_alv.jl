@@ -423,21 +423,23 @@ end
 """
     _shear_M_matrix_alv(r, M_κ, M_μ, n) -> Matrix{T}  (4n × 4n, time-major)
 
-ALV fundamental matrix for the deviatoric Y₂ harmonic, in
-**τ-scaling** : the state vector is `(U, V, τ_rr, τ_rθ)` with
-`τ = σ / μ` (per-layer normalization).  Rows 3 and 4 of the matrix
-no longer carry an explicit `μ` factor; all entries are functions of
-the modulus ratio `M_x = M_κ ∘ M_μ^{-vol}` and the radius only.
-This keeps every entry `O(1)` for **any** physically-admissible
-modulus (including pores `κ ≈ μ ≈ 0`), so the 4×4 diagonal blocks
-in the time-major layout are well-conditioned and
-`volterra_inverse(_; block_size = 4)` is stable in Float64.
+ALV fundamental matrix for the deviatoric Y₂ harmonic.  The state
+vector is `(U, W, σ_rr, σ_rθ)` carrying the **physical** traction
+amplitudes, exactly as in the elastic `LayeredSpheres._shear_M_matrix`:
+rows 3 and 4 are polynomials in `(M_κ, M_μ)` — `blocks[3,1] = 4 M_μ`,
+`blocks[4,4] = 3 M_κ / r³` — and are continuous across a perfect
+interface, which is why
+[`_shear_interface_T_alv`](@ref)`(::PerfectInterface, …)` is the
+identity and needs no modulus conversion.
 
-The price for this stability is a non-trivial perfect-interface
-jump: continuity of the *physical* `σ_rr` translates to
-`τ_rr_+ = (μ_-/μ_+) τ_rr_-` across the interface.  The interface
-helper [`_shear_interface_T_alv`](@ref) handles that conversion
-via [`volterra_divide`](@ref).
+Block for block this is the elastic matrix with the scalar `x = κ/μ`
+replaced by the Volterra ratio `M_μ^{-vol} ∘ M_κ` applied **on the
+left**.  That inverse appears in three entries of the `U`/`W` rows
+(`blocks[1,2]`, `blocks[2,2]`, `blocks[1,4]`), each formed by
+[`volterra_left_divide`](@ref)`(M_μ, …)` rather than by materializing
+`M_μ^{-vol}`.  A layer with a vanishing shear modulus is therefore
+**not** admissible here: `volterra_left_divide` requires
+`M_μ[t,t] ≠ 0` at every time step.
 
 Each scalar entry of the elastic 4×4 matrix becomes an `n × n`
 Volterra matrix; entries are arranged in **time-major** layout

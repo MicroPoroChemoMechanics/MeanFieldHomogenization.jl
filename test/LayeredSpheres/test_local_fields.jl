@@ -464,3 +464,138 @@ end
     sol0₁ = LayeredSphereTransportFields(LayeredSphere((1.0,), (TensISO{3}(0.0),)), K₀)
     @test collect(local_gradient(sol0₁, [0.5, 0.0, 0.0], ∇T∞)) ≈ 1.5 .* ∇T∞ rtol = 1.0e-13
 end
+
+# =============================================================================
+#  Averages rebuilt from the pointwise field.
+#
+#  `cumulative_strain_average` used to weight the FULL-layer average by the
+#  TRUNCATED volume, which is exact only where the field is uniform inside a
+#  layer — and the mode-2 term makes it vary as r².  The error reached 6 % at
+#  mid-layer radii and vanished at every interface radius, which is exactly
+#  where the old tests evaluated it.  The oracle below is the pointwise field
+#  itself, integrated with a 3-point Gauss-Legendre rule that is EXACT because
+#  `β_local(r)·r²` is a degree-4 polynomial inside a layer.
+# =============================================================================
+
+const LF_GLX = (-sqrt(3 / 5), 0.0, sqrt(3 / 5))
+const LF_GLW = (5 / 9, 8 / 9, 5 / 9)
+
+"Ball average of the pointwise strain over radius `r_max`, integrated layer by layer."
+function _ball_strain_average(sol, radii, r_max, ε∞)
+    num = nothing
+    vol = 0.0
+    for k in 1:(length(radii) - 1)
+        ra, rb = radii[k], min(r_max, radii[k + 1])
+        rb ≤ ra && break
+        mid, half = (ra + rb) / 2, (rb - ra) / 2
+        for (ξ, w) in zip(LF_GLX, LF_GLW)
+            r = mid + half * ξ
+            A = isotropify(local_strain_strain_loc(sol, [r, 0.0, 0.0]; side = :inner))
+            c = w * half * r^2
+            num = num === nothing ? c * (A ⊡ ε∞) : num + c * (A ⊡ ε∞)
+        end
+        vol += (rb^3 - ra^3) / 3
+        rb ≥ r_max && break
+    end
+    return (1 / vol) * num
+end
+
+@testset "averages — cumulative average is exact inside a layer" begin
+    sph = LayeredSphere((1.0, 2.0, 3.5), (LF_C₁, LF_C₂, LF_C₃))
+    sol = LayeredSphereFields(sph, LF_C₀)
+    radii = (0.0, 1.0, 2.0, 3.5)
+
+    for r in (0.4, 0.7, 1.0, 1.2, 1.37, 1.7, 2.0, 2.4, 2.9, 3.2, 3.5)
+        got = cumulative_strain_average(sph, LF_C₀, LF_ε∞, r)
+        ref = _ball_strain_average(sol, radii, r, LF_ε∞)
+        @test get_array(got) ≈ get_array(ref) rtol = 1.0e-13
+    end
+
+    # The interface radii must be untouched by the fix.
+    @test get_array(cumulative_strain_average(sph, LF_C₀, LF_ε∞, 3.5)) ≈
+        get_array(sphere_strain_average(sph, LF_C₀, LF_ε∞)) rtol = 1.0e-13
+    @test get_array(cumulative_strain_average(sph, LF_C₀, LF_ε∞, 1.0)) ≈
+        get_array(layer_strain_average(sph, LF_C₀, LF_ε∞, 1)) rtol = 1.0e-13
+
+    # And a mid-layer radius must genuinely differ from the volume-scaled
+    # full-layer average — otherwise this testset proves nothing.
+    naive = let r = 1.37
+        vol1 = 1.0^3
+        vol2 = r^3 - 1.0^3
+        (
+            vol1 * layer_strain_average(sph, LF_C₀, LF_ε∞, 1) +
+                vol2 * layer_strain_average(sph, LF_C₀, LF_ε∞, 2)
+        ) / (vol1 + vol2)
+    end
+    exact = cumulative_strain_average(sph, LF_C₀, LF_ε∞, 1.37)
+    @test maximum(abs, get_array(naive) .- get_array(exact)) /
+        maximum(abs, get_array(exact)) > 1.0e-2
+end
+
+@testset "averages — stress and transport" begin
+    sph = LayeredSphere((1.0, 2.0, 3.5), (LF_C₁, LF_C₂, LF_C₃))
+    sol = LayeredSphereFields(sph, LF_C₀)
+
+    # Definitional, then against the scheme-facing route, which assembles
+    # Σ f_k ℂ_k : A_k independently.
+    for k in 1:3
+        @test layer_stress_average(sph, LF_C₀, LF_ε∞, k) ≈
+            layer_modulus(sph, k) ⊡ layer_strain_average(sph, LF_C₀, LF_ε∞, k)
+    end
+    @test get_array(sphere_stress_average(sph, LF_C₀, LF_ε∞)) ≈
+        get_array(stress_strain_loc(sph, LF_C₁, LF_C₀) ⊡ LF_ε∞) rtol = 1.0e-13
+
+    # Against the pointwise field, layer 2.
+    ra, rb = 1.0, 2.0
+    mid, half = (ra + rb) / 2, (rb - ra) / 2
+    num = nothing
+    for (ξ, w) in zip(LF_GLX, LF_GLW)
+        r = mid + half * ξ
+        A = isotropify(local_strain_strain_loc(sol, [r, 0.0, 0.0]; side = :inner))
+        c = w * half * r^2
+        σ = LF_C₂ ⊡ (A ⊡ LF_ε∞)
+        num = num === nothing ? c * σ : num + c * σ
+    end
+    @test get_array(layer_stress_average(sph, LF_C₀, LF_ε∞, 2)) ≈
+        get_array((3 / (rb^3 - ra^3)) * num) rtol = 1.0e-13
+
+    # A membrane interface carries a surface stress that belongs to neither
+    # bulk: the two routes must then DISAGREE, and agree without it.
+    sm = LayeredSphere(
+        (1.0, 2.0), (LF_C₁, LF_C₂);
+        interfaces = (PerfectInterface{Float64}(), MembraneInterface(1.3, 0.7))
+    )
+    gap = maximum(
+        abs,
+        get_array(sphere_stress_average(sm, LF_C₀, LF_ε∞)) .-
+            get_array(stress_strain_loc(sm, LF_C₁, LF_C₀) ⊡ LF_ε∞)
+    )
+    @test gap > 1.0e-2
+
+    # Transport.
+    K₀ = TensISO{3}(2.0)
+    sphK = LayeredSphere((1.0, 2.0), (TensISO{3}(20.0), TensISO{3}(0.5)))
+    G = [0.3, -0.7, 1.0]
+    for k in 1:2
+        A = gradient_gradient_loc(sphK, K₀; layer = k)
+        @test collect(layer_gradient_average(sphK, K₀, G, k)) ≈
+            [sum(A[i, j] * G[j] for j in 1:3) for i in 1:3] rtol = 1.0e-14
+    end
+    A3 = gradient_gradient_loc(sphK, TensISO{3}(20.0), K₀)
+    @test collect(sphere_gradient_average(sphK, K₀, G)) ≈
+        [sum(A3[i, j] * G[j] for j in 1:3) for i in 1:3] rtol = 1.0e-14
+    @test collect(layer_flux_average(sphK, K₀, G, 1)) ≈
+        -20.0 .* collect(layer_gradient_average(sphK, K₀, G, 1)) rtol = 1.0e-14
+
+    # The mean gradient is constant inside a layer: the 1/r² mode is present
+    # (B̃ ≠ 0) but contributes nothing to the directional average.
+    solK = LayeredSphereTransportFields(sphK, K₀)
+    @test abs(solK.AB[2][2]) > 1.0e-2
+    tr3(r) = let a = get_array(local_gradient_gradient_loc(solK, [r, 0.0, 0.0]; side = :inner))
+        (a[1, 1] + a[2, 2] + a[3, 3]) / 3
+    end
+    for rs in ((0.1, 0.5, 0.99), (1.01, 1.5, 1.99), (2.5, 6.0, 40.0))
+        vals = tr3.(rs)
+        @test maximum(vals) - minimum(vals) < 1.0e-14
+    end
+end
