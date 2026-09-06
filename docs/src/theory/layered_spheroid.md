@@ -16,6 +16,12 @@ transfer per mode therefore becomes a truncated series with a
     used here is specific to the scalar Laplace equation and does not carry over
     to the vector elastic problem.
 
+    Whoever writes it should start from
+    [the roadmap's checklist](@ref dev-elastic-spheroid): the elastic route
+    reuses these same spheroidal harmonics, and with them four numerical traps
+    that this module shipped once each and that effective-property validation
+    does not catch.
+
 ## Confocal spheroidal coordinates
 
 Prolate spheroidal coordinates ``(\varphi, p, q)`` about the revolution axis

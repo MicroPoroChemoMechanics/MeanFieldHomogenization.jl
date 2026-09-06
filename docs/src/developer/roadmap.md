@@ -116,6 +116,97 @@ subtle — exactly which pieces of a cited paper are and are not implemented.
   heterogeneous case the second type exists for); an anisotropic reference
   medium, which needs a feature set describing it.
 
+## [The elastic layered spheroid — read this before starting](@id dev-elastic-spheroid)
+
+The confocal multi-layer spheroid exists **in conduction only**. The harmonic
+solution it rests on ([barthelemyBignonnetIJES2020](@cite)) is specific to the
+scalar Laplace equation and does not carry over to the vector elastic problem.
+Whoever writes the elastic counterpart will nonetheless reuse the *same*
+spheroidal harmonics, and therefore inherits the numerical traps this module
+already fell into. They cost real debugging, they are invisible to the
+validations one naturally writes first, and they are collected here for that
+reason.
+
+### The route
+
+Papkovich–Neuber displacement potentials reduce the Navier equation to
+**harmonic** potentials, and harmonic functions separate in spheroidal
+coordinates — so the machinery in `LayeredSpheroids/legendre.jl` is directly
+reusable. That is exactly the route
+[duanRSPA2005](@cite) takes for a spheroidal inhomogeneity **with an
+interphase**: three fundamental solutions from Papkovich–Neuber potentials and
+spheroidal harmonic expansions. It is the closest published starting point.
+
+Two things to settle before writing code:
+
+- **Fix the Papkovich–Neuber gauge.** The representation
+  ``2μ \underline u = -\nabla(φ + \underline r·\underline ψ) + 4(1-ν)\underline ψ``
+  is *not* unique — one component of ``\underline ψ`` can generally be dropped.
+  Leave the redundancy in and the interface system is singular or, worse,
+  merely ill-conditioned, which looks like a convergence problem rather than a
+  modeling one.
+- **Confocal or similar?** The conduction module stacks *confocal* surfaces,
+  which is what makes the transfer clean. Check what the interface geometry in
+  the elastic reference actually is before assuming the layer bookkeeping
+  transfers; a similar-shape stack is a different problem.
+
+An alternative worth weighing is the multipole route of
+[kushch2013](@cite), which handles spheroids in elasticity without the
+Papkovich–Neuber gauge question, at the price of its own machinery.
+
+### The four traps, each of which shipped once
+
+1. **Never run `Qₙ` upward.** `Qₙ` is the *minimal* solution of the Legendre
+   three-term recurrence: upward, the seed's rounding error picks up the
+   dominant `Pₙ` and is amplified by `ρ^{2n}`, `ρ = |x + √(x²−1)|`. Measured
+   against the same recurrence at 600 bits, an upward `Q₁₅(5)` was wrong by a
+   relative `1.3e13`. Use `legendre_odd`, which already chooses the direction
+   from `ρ` — and note the choice runs **both ways**: Miller's downward
+   recurrence is the wrong answer when `ρ ≈ 1` (a nearly degenerate spheroid),
+   where it needs thousands of steps and upward loses nothing. Forcing Miller
+   there returned a `Q` good to only `2e-7`.
+
+2. **Impose regularity, never recover it.** In the matrix every growing
+   amplitude above the degree carried by the remote field vanishes
+   *identically*. Recomputing that block through the layer transfer leaves the
+   linear solve's `O(1e-17)` residue, and `P_{2r-1}(q) ~ q^{2r-1}` amplifies it
+   past `1e40` a few hundred radii out. Elasticity makes this **worse**, not
+   better: Papkovich–Neuber carries a scalar *and* a vector potential, so there
+   are several families of growing modes to zero out rather than one. The same
+   applies at the core, where the singular amplitudes must be written down as
+   exact zeros — see `_shear_amplitude_seq` in `LayeredSpheres`.
+
+3. **An oblate spheroid carries a complex `q`.** Anything that tests, branches
+   on, or divides by a coordinate must cope with `Complex`. Two live examples:
+   a guard written `is_hard_numeric(typeof(q))` refuses every oblate particle,
+   because it is `abs(q)` that is ordered; and `z / (Inf + 0im)` is
+   `NaN + NaN im` where the real division would have given `0`, which turned
+   every on-axis evaluation into a silent `NaN`.
+
+4. **The chart is singular on the revolution axis.** At `|p| = 1`, `h_p` is
+   infinite and `h_φ` vanishes. Terms must be rearranged to stay regular
+   (multiply by `p̄` rather than divide by `h_p`), and whatever genuinely
+   remains `0/0` should refuse rather than return `NaN`.
+
+### How to validate it
+
+The conduction module was validated against the C++ reference on **effective
+properties** and passed — while carrying traps 1 and 2. Integral quantities
+sample the field only near the particle and at low truncation; they do not
+certify the field that produces them. So:
+
+- check the **pointwise** field, not only the averages;
+- check it **far** from the particle, where the growing modes bite;
+- check that the answer does **not depend on `Nseries`** — that single test
+  would have caught both trap 1 and trap 2 at once;
+- reduce to the closed form in every degenerate limit, **including extreme
+  aspect ratios** (a 1:60 flat disc is where `ρ → 1` and the recurrence choice
+  flips);
+- validate special functions against an **outside** reference. Evaluating the
+  new algorithm in wider precision only confirms itself; the reference used in
+  `test/LayeredSpheroids/test_legendre_stability.jl` is the *original* upward
+  recurrence at 600 bits, where the instability does not bite.
+
 ## N-body schemes — remaining pieces
 
 The equivalent inclusion method and the cluster model are shipped; this is the
