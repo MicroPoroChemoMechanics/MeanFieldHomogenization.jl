@@ -131,6 +131,12 @@ end
 
 Temperature gradient `∇T` at `(q, p, φ)` (own frame, real Cartesian
 triple), under the same remote loading as [`local_temperature`](@ref).
+
+Valid on the revolution axis (`|p| = 1`) as well, where the `(q, p, φ)` chart
+itself degenerates: the two `0/0` the naive expression carries there are
+removed exactly, using `P¹ₙ = -√(1-p²) P′ₙ` and the Legendre equation, so the
+value on the axis is the limit of the values around it and — as it must be —
+independent of the azimuth, which is undefined there.
 """
 function local_gradient(
         s::LayeredSpheroid{T, N}, k₀, q, p, φ; H_axial = 1.0, H_trans = 0.0,
@@ -150,22 +156,21 @@ function _local_grad_spheroid(
     P0p, dP0p = legendre_odd(:P0, p, 𝒩)
     P0q, dP0q = legendre_odd(:P0, q, 𝒩)
     Q0q, dQ0q = legendre_odd(:Q0, q, 𝒩)
-    P1p, dP1p = legendre_odd(:P1p, p, 𝒩)
+    P1p, _ = legendre_odd(:P1p, p, 𝒩)
     P1q, dP1q = legendre_odd(:P1, q, 𝒩)
     Q1q, dQ1q = legendre_odd(:Q1, q, 𝒩)
 
     dTa_dq = s.c * sum(P0p[r] * (Aa[r] * dP0q[r] + Ba[r] * dQ0q[r]) for r in 1:𝒩)
     dTa_dp = s.c * sum(dP0p[r] * (Aa[r] * P0q[r] + Ba[r] * Q0q[r]) for r in 1:𝒩)
-    Tt = s.c * sum(P1p[r] * (At[r] * P1q[r] + Bt[r] * Q1q[r]) for r in 1:𝒩)
+    # The transverse radial factor, shared by all three transverse terms.
+    Wt = ntuple(r -> At[r] * P1q[r] + Bt[r] * Q1q[r], 𝒩)
     dTt_dq = s.c * sum(P1p[r] * (At[r] * dP1q[r] + Bt[r] * dQ1q[r]) for r in 1:𝒩)
-    dTt_dp = s.c * sum(dP1p[r] * (At[r] * P1q[r] + Bt[r] * Q1q[r]) for r in 1:𝒩)
 
     e_q, e_p, e_φ = _base_fond(q, p, φ)
     qb = sqrt(q^2 - 1)
     pb = sqrt(1 - p^2)
     qp = sqrt(q^2 - p^2)
     h_q = s.c * qp / qb
-    h_φ = s.c * qb * pb
     # `∂T/∂p / h_p` is written as `∂T/∂p · p̄ / (c q̄ₚ)`: algebraically the same
     # thing, since `h_p = c q̄ₚ / p̄`, but regular on the revolution axis.  There
     # `p̄ = 0`, so `h_p` is infinite; dividing a REAL number by `Inf` gives the
@@ -176,33 +181,37 @@ function _local_grad_spheroid(
 
     g_axial = (dTa_dq / h_q) .* e_q .+ (dTa_dp * inv_hp) .* e_p
 
-    # On the revolution axis (`|p| = 1`) the `(q, p, φ)` chart degenerates:
-    # `h_φ = c q̄ p̄` vanishes and the azimuth is undefined.  The AXIAL field is
-    # perfectly regular there — `h_p → ∞` simply switches its `e_p` term off —
-    # but the transverse expression contains `T_t / h_φ`, a genuine `0/0`
-    # (`P¹_n` vanishes on the axis like `p̄`).  Evaluating it produced a `NaN`
-    # that then contaminated the result even for a purely axial loading,
-    # through `H_trans * NaN = NaN` with `H_trans = 0`.
+    # ── The transverse part, regular on the revolution axis ─────────────────
     #
-    # So the transverse branch is computed only when it is actually loaded, and
-    # on the axis it refuses instead of returning the `0/0`: its limit is
-    # finite but obtaining it needs the `P¹_n` asymptotics near `p = ±1`, which
-    # this implementation does not carry.  Evaluating at `|p| < 1` approaches
-    # that limit smoothly.
-    if iszero(H_trans)
-        g = H_axial .* g_axial
-        return real(g[1]), real(g[2]), real(g[3])
-    end
-    iszero(1 - p^2) && throw(
-        ArgumentError(
-            "local_gradient: a transverse loading cannot be evaluated exactly " *
-                "on the revolution axis (p = $(p)); the (q, p, φ) chart is " *
-                "singular there. Use |p| < 1 — the limit is approached smoothly."
-        )
-    )
+    # At `|p| = 1` the chart degenerates: `h_φ = c q̄ p̄` vanishes and the
+    # azimuth is undefined.  Written naively the transverse field carries two
+    # `0/0` there, `T_t / h_φ` and `∂T_t/∂p · p̄`.  Both are removable exactly,
+    # with no asymptotic expansion, because the `P¹` table is seeded
+    # `P₁¹(p) = -√(1-p²)` — the Condon-Shortley convention
+    #
+    #     P¹ₙ(p) = -p̄ P′ₙ(p)
+    #
+    # — so the `p̄` of the numerator cancels the `p̄` of `h_φ` identically; and
+    # because the Legendre equation `(1-p²) P″ₙ = 2p P′ₙ - n(n+1) Pₙ` removes
+    # the second derivative from the other term:
+    #
+    #     T_t / h_φ           = -(1/q̄)  Σ_r P′ₙ(p) W_r,
+    #     ∂T_t/∂p · p̄/(c q̄ₚ) =  (1/q̄ₚ) Σ_r [n(n+1) Pₙ(p) - p P′ₙ(p)] W_r.
+    #
+    # Both need only the ORDINARY Legendre table, already computed above, and
+    # both are finite at every `p`.  The rearrangement is not merely tidier: on
+    # the axis it is what makes the answer independent of the azimuth `φ`,
+    # which is undefined there.  `P′ₙ(±1) = ±ⁿ⁺¹ n(n+1)/2` makes the two
+    # coefficients exactly opposite, and the `e_q` term vanishes because
+    # `P¹ₙ(±1) = 0`; a formulation that got either factor wrong would return a
+    # field on the axis that depended on how the point was addressed.
+    tt_over_hφ = -sum(dP0p[r] * Wt[r] for r in 1:𝒩) / qb
+    dtt_dp_over_hp = sum(
+        ((2r - 1) * 2r * P0p[r] - p * dP0p[r]) * Wt[r] for r in 1:𝒩
+    ) / qp
 
-    g_trans_r = (dTt_dq / h_q) .* e_q .+ (dTt_dp * inv_hp) .* e_p   # radial-type part
-    g_trans = cos(φ) .* g_trans_r .- (sin(φ) * Tt / h_φ) .* e_φ
+    g_trans_r = (dTt_dq / h_q) .* e_q .+ dtt_dp_over_hp .* e_p
+    g_trans = cos(φ) .* g_trans_r .- (sin(φ) * tt_over_hφ) .* e_φ
 
     g = H_axial .* g_axial .+ H_trans .* g_trans
     return real(g[1]), real(g[2]), real(g[3])

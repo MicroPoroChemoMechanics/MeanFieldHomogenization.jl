@@ -69,6 +69,84 @@ downstream routine — Legendre recurrences, coupling integrals, transfer
 matrices — is written generically over `Q <: Number`. **No branch is ever taken
 on prolate versus oblate.**
 
+## [The chart, checked rather than quoted](@id th-spheroid-chart)
+
+Everything above is Appendix A of [barthelemyBignonnetIJES2020](@cite). Rather
+than transcribe it, the block below rebuilds it: `TensND` ships the prolate
+spheroidal chart as a symbolic coordinate system, so the metric, the frame and
+the harmonicity of the series are **derived at documentation-build time** from
+the position map alone.
+
+```@example spheroidal
+using TensND, SymPy
+Spheroidal = coorsys_spheroidal()
+ϕ, p, q = getcoords(Spheroidal)
+c = symbols("c", positive = true)
+getOM(Spheroidal)            # the position map (A.1)
+```
+
+The Lamé coefficients `(χ_ϕ, χ_p, χ_q)` come out of the chart, not out of the
+paper:
+
+```@example spheroidal
+Lame(Spheroidal)
+```
+
+and they are (A.6). The check compares the **squares** — `SymPy` will not
+recombine ``\sqrt{A/B}`` with ``\sqrt A/\sqrt B`` unless it is told the signs,
+so the difference of the radicals themselves does not reduce to zero even
+though they are equal on the domain:
+
+```@example spheroidal
+χ = Lame(Spheroidal)
+χ_ref = (
+    c * sqrt(1 - p^2) * sqrt(q^2 - 1),
+    c * sqrt((q^2 - p^2) / (1 - p^2)),
+    c * sqrt((q^2 - p^2) / (q^2 - 1)),
+)
+[simplify(χ[i]^2 - χ_ref[i]^2) for i in 1:3]
+```
+
+The volume element (A.7), `dΩ = χ_ϕ χ_p χ_q dϕ dp dq = c³ (q² − p²) dϕ dp dq`,
+follows immediately and *does* reduce:
+
+```@example spheroidal
+simplify(prod(χ) - c^3 * (q^2 - p^2))
+```
+
+and the orthonormal frame `(e_ϕ, e_p, e_q)` of (A.6) is the chart's own:
+
+```@example spheroidal
+normalized_basis(Spheroidal)
+```
+
+### Why the series is a series of harmonics
+
+The whole construction rests on one fact: the products
+``P_n^m(p)\,P_n^m(q)\,\cos m\varphi`` are harmonic. That is what makes a
+truncated sum of them an admissible temperature field, and it is checked here
+directly, by applying the chart's Laplacian:
+
+```@example spheroidal
+Δ = [
+    (n, m, simplify(LAPLACE(
+        sympy.assoc_legendre(n, m, p) * sympy.assoc_legendre(n, m, q) * cos(m * ϕ),
+        Spheroidal,
+    )))
+    for (n, m) in ((1, 0), (2, 0), (3, 0), (1, 1), (2, 1), (3, 1), (2, 2), (3, 2))
+]
+```
+
+!!! tip "Orders 0 and 1 are what conduction uses — order 2 is for later"
+    A remote gradient excites only ``m = 0`` (axial) and ``m = 1``
+    (transverse), which is why `legendre.jl` implements exactly those two.
+    ``m = 2`` is verified above because the **elastic** counterpart will need
+    it: a remote transverse shear carries a ``\cos 2\varphi`` dependence, and
+    Papkovich–Neuber expands each of its potentials in the very same spheroidal
+    harmonics ([duanRSPA2005](@cite)). Adding order 2 to `legendre.jl` is then
+    three seed tables — the stability machinery below is order-generic and
+    comes for free. See [the roadmap's checklist](@ref dev-elastic-spheroid).
+
 ## Boundary value problem
 
 ``N`` confocal layers of isotropic conductivity ``k_\ell``, separated by

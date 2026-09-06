@@ -184,9 +184,15 @@ Papkovich–Neuber gauge question, at the price of its own machinery.
    every on-axis evaluation into a silent `NaN`.
 
 4. **The chart is singular on the revolution axis.** At `|p| = 1`, `h_p` is
-   infinite and `h_φ` vanishes. Terms must be rearranged to stay regular
-   (multiply by `p̄` rather than divide by `h_p`), and whatever genuinely
-   remains `0/0` should refuse rather than return `NaN`.
+   infinite and `h_φ` vanishes. Every `0/0` the naive expressions carry there
+   turned out to be *removable*, and removable exactly — no asymptotics — once
+   the convention `P¹ₙ = -p̄ P′ₙ` is used to cancel the `p̄` of `h_φ` and the
+   Legendre equation is used to eliminate `P″ₙ`. Expect the same in elasticity,
+   and expect the same trap: the naive form returns a plausible-looking `NaN`
+   or, worse, a finite number. **The check that catches a wrong removal is that
+   the field on the axis must not depend on the azimuth `φ`**, which is
+   undefined there — a wrong coefficient makes it depend on how the point was
+   addressed.
 
 ### How to validate it
 

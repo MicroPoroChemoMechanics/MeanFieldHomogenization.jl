@@ -237,9 +237,30 @@ end
     # At that distance the remote gradient is essentially recovered.
     @test real.(g_axis) ≈ [0.0, 0.0, 1.0] atol = 1.0e-3
 
-    # A TRANSVERSE loading on the axis is a genuine `0/0` whose limit this
-    # implementation does not carry; it must refuse rather than return `NaN`.
-    @test_throws ArgumentError local_gradient(
-        s, k₀, im * τ30, 1.0, 0.3; H_axial = 0.0, H_trans = 1.0
-    )
+    # A TRANSVERSE loading on the axis is a removable `0/0`, and the value is
+    # now returned rather than refused.  Three independent checks, because a
+    # wrong removal would still look plausible:
+    for (lab, sph, qv) in (("oblate", s, im * τ30),)
+        g_ax = collect(
+            local_gradient(sph, k₀, qv, 1.0, 0.4; H_axial = 0.0, H_trans = 1.0)
+        )
+        @test all(isfinite, real.(g_ax))
+        # (i) it is the limit of the off-axis values;
+        g_near = collect(
+            local_gradient(sph, k₀, qv, 0.999999, 0.4; H_axial = 0.0, H_trans = 1.0)
+        )
+        @test real.(g_ax) ≈ real.(g_near) atol = 1.0e-4
+        # (ii) it does not depend on the azimuth, which is undefined on the
+        #      axis — the check that a wrong removal fails;
+        for φ in (0.0, 0.7, 1.9, 3.5)
+            g_φ = collect(
+                local_gradient(sph, k₀, qv, 1.0, φ; H_axial = 0.0, H_trans = 1.0)
+            )
+            @test real.(g_φ) ≈ real.(g_ax) rtol = 1.0e-12
+        end
+        # (iii) under a remote gradient along ê₁, a point on the axis is fixed
+        #       by the reflection y → -y, so the field there is along ê₁ only.
+        @test abs(real(g_ax[2])) < 1.0e-12
+        @test abs(real(g_ax[3])) < 1.0e-12
+    end
 end

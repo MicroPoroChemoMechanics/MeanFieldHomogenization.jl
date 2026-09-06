@@ -68,6 +68,13 @@ stress and transport averages that had no counterpart are there:
 `layer_stress_average`, `sphere_stress_average`, `layer_gradient_average`,
 `sphere_gradient_average`, `layer_flux_average`.
 
+The layered-spheroid theory page now **derives** its chart instead of quoting
+it: `TensND`'s symbolic spheroidal coordinate system rebuilds the Lamé
+coefficients, the frame and the volume element of Appendix A of
+[barthelemyBignonnetIJES2020] at documentation-build time, and checks the
+harmonicity of `Pₙᵐ(p) Pₙᵐ(q) cos mφ` — for `m = 0, 1`, which conduction uses,
+and for `m = 2`, which the elastic counterpart will.
+
 ### Breaking changes
 
 - **`SpringInterface(kn, kt)` now takes stiffnesses.** It used to store the
@@ -171,10 +178,19 @@ stress and transport averages that had no counterpart are there:
   `z / (Inf + 0im)` yields `NaN + NaN im`. The `NaN` then survived even a
   purely axial loading, through `H_trans * NaN` with `H_trans = 0`. The term is
   now written `∂T/∂p · p̄ / (c q̄ₚ)` — algebraically identical, regular on the
-  axis — and the on-axis value matches the `p → 1` limit to `1e-9`. A
-  *transverse* loading exactly on the axis is a genuine `0/0` whose limit this
-  implementation does not carry; it now refuses with a message naming the
-  remedy instead of returning `NaN`.
+  axis — and the on-axis value matches the `p → 1` limit to `1e-9`.
+
+  A *transverse* loading exactly on the axis carries two further `0/0`,
+  `T_t / h_φ` and `∂T_t/∂p · p̄`. Both are **removable exactly**, with no
+  asymptotic expansion: the `P¹` table is seeded `P₁¹(p) = -√(1-p²)`, i.e. the
+  Condon-Shortley convention `P¹ₙ = -p̄ P′ₙ`, so the `p̄` of the numerator
+  cancels the `p̄` of `h_φ` identically; and the Legendre equation removes the
+  second derivative from the other term. Both then need only the ordinary
+  Legendre table. The removal is checked three ways, because a wrong one would
+  still look plausible: the on-axis value is the limit of the values around it,
+  it is **independent of the azimuth** — which is undefined on the axis, and is
+  what a wrong coefficient would break — and it points along the remote
+  gradient, as the reflection symmetry requires.
 - **`_shear_M_matrix_alv`'s docstring described a formulation the code does not
   use.** It announced a `τ = σ/μ` scaling whose rows 3–4 "no longer carry an
   explicit `μ` factor" and a perfect-interface jump `τ_rr⁺ = (μ⁻/μ⁺) τ_rr⁻`
