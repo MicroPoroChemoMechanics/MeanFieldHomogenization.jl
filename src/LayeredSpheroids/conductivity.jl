@@ -104,8 +104,14 @@ function _J_int(
         M::AbstractMatrix, dual::Bool, trans::Bool,
     ) where {Qx}
     𝒩 = length(P)
-    J = _J_ext(k, P, Qf, dP, dQ)
-    Tm = eltype(J)
+    # `coef` carries the interface parameter (Kapitza resistance / surface
+    # conductance), so it must enter the element type: `eltype(_J_ext(...))`
+    # alone knows only about `k` and the Legendre tables, and a `Dual` `coef`
+    # written into a `Float64` buffer is a `MethodError` — which is what made
+    # every sensitivity with respect to an interface parameter unreachable.
+    J0 = _J_ext(k, P, Qf, dP, dQ)
+    Tm = promote_type(eltype(J0), typeof(coef), eltype(M))
+    J = convert(Matrix{Tm}, J0)
     MP = zeros(Tm, 𝒩, 𝒩)
     MQ = zeros(Tm, 𝒩, 𝒩)
     for r in 1:𝒩
@@ -179,7 +185,17 @@ function spheroid_state_sequence(s::LayeredSpheroid{T, N, Q}, k₀raw, trans::Bo
     k₀ = _as_scalar_k(k₀raw)
     tables = _spheroid_tables(s)
     𝒩 = s.Nseries
-    Qk = promote_type(Q, typeof(k₀))
+    # The layer conductivities and the interface parameters belong in this
+    # promotion just as much as `q` and `k₀` do: `_J_ext`/`_J_int` widen locally
+    # to whatever `kℓ` and `eltype(intf)` are, and a narrower buffer here then
+    # refuses to store the widened transfer matrix. That is what made a single
+    # `ForwardDiff.Dual` layer conductivity — or any sensitivity with respect to
+    # a Kapitza resistance or a surface conductance — a `MethodError`.
+    Qk = promote_type(
+        Q, typeof(k₀),
+        ntuple(ℓ -> typeof(tables.k_layers[ℓ]), Val(N))...,
+        interfaces_eltype(s.interfaces)
+    )
 
     R = Vector{Matrix{Qk}}(undef, N)
     for ℓ in 1:N

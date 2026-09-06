@@ -1,5 +1,80 @@
 # Changelog
 
+## v0.10.1 — sensitivities with respect to interface parameters
+
+A composite inclusion is usually designed at its interface: the coating
+stiffness, the interfacial thermal resistance, the surface conductance are the
+knobs an optimizer wants to turn. None of them was differentiable. Asking
+`ForwardDiff` for the sensitivity of an effective property to a spring
+stiffness, a membrane surface modulus, a Kapitza resistance or a surface
+conductance raised `MethodError: no method matching Float64(::Dual)` — in
+`LayeredSphere` and `LayeredSpheroid` alike, in elasticity and in conduction.
+
+The cause was a single omission repeated across the package. Every solver sizes
+its state buffers from a `promote_type` over the geometry, the layer moduli and
+the matrix moduli; the interface parameters were left out of that promotion.
+The transfer matrices widen correctly on their own — they already promote
+`eltype(intf)` locally — so the widened result then met a buffer too narrow to
+hold it. Nothing in the suite asked for such a derivative, so nothing noticed.
+
+### Fixed
+
+- **Interface parameters are differentiable**, for `SpringInterface` (`kn`,
+  `kt`, and the stored compliances `sn`, `st`), `MembraneInterface` (`κs`,
+  `μs`), `KapitzaInterface` and `SurfaceConductiveInterface`, on both
+  `LayeredSphere` and `LayeredSpheroid`. A new `interfaces_eltype` helper
+  carries the interfaces into the outer promotion at every site.
+- **`MembraneInterface(κs, μs)` promotes its two arguments.** The default inner
+  constructor bound one type across both, so differentiating with respect to
+  the surface dilatation alone failed at construction.
+- **`LayeredSpheroid` state buffers include the layer conductivities.** They
+  were promoted from `q` and the matrix conductivity only, so a single `Dual`
+  layer among `Float64` ones threw. `LayeredSphere` had had this fixed; the
+  spheroid had not.
+- **`_J_int` types its coupling blocks from `coef`**, the factor that carries
+  the interface parameter, instead of from the diagonal block alone.
+- **Mixed-eltype semi-axes.** `LayeredSpheroid` and
+  `layered_spheroid_from_fractions` bound a single element type across every
+  semi-axis and every volume fraction, making one `Dual` boundary among
+  `Float64` ones a `MethodError`. Both now promote, as `LayeredSphere` already
+  did.
+- **`layered_spheroid_from_fractions` no longer loses the derivative.**
+  The confocal parameter of an inner layer is located by bisection, and a
+  bisection decides by sign tests, which carry no derivative: the result came
+  back with zero partials — silently, since the value was right. Two Newton
+  steps in the full element type restore `∂x/∂D = -1/(3x²+C)`, exactly the
+  implicit function theorem's answer for `x³ + Cx + D = 0`.
+
+### Added
+
+- **Symbolic `LayeredSpheroid`.** The element type was bound to `Real`, which
+  excludes `SymPy.Sym`. It is now `Number`, the geometric validations are gated
+  on `is_hard_numeric`, and `_q_recurrence_plan` returns the plain upward
+  Legendre recurrence on an exact type — Miller's downward variant exists only
+  to control floating-point cancellation, and an exact type has none. A
+  symbolic solve now yields a closed form in the semi-axes and conductivities,
+  and substituting numbers into it reproduces the `Float64` answer to `1e-16`.
+
+  Because the sign of `axis² − disk²` is undecidable on a symbol, and SymPy
+  answers `false` to a comparison it cannot settle, a symbolic spheroid
+  requires an explicit `prolate = true | false`.
+- Tests: `test/LayeredSpheres/test_interface_sensitivity.jl` and
+  `test/LayeredSpheroids/test_ad.jl`. Every derivative is checked against a
+  central difference, and the interface cases additionally assert the
+  derivative is non-zero — a silent zero being the failure mode the bisection
+  fix guards against. `LayeredSpheroid` had no type-genericity test at all.
+
+### Documentation
+
+- Corrected a claim this package made in three places: that the spheroidal
+  harmonic decomposition "is specific to the scalar Laplace equation and does
+  not carry over to the vector elastic problem". Barthélémy & Bignonnet
+  (IJES 2020, §2.1) say the opposite — the transfer-matrix formalism was
+  imported *from* elasticity (Hervé & Zaoui 1993, Hervé-Luanco 2014). The
+  obstruction to an elastic `LayeredSpheroid` is geometric: confocal surfaces
+  are not homothetic, so harmonic degrees couple, and in elasticity they couple
+  across perfect interfaces too.
+
 ## v0.10.0 — the field at a point, and `kn` finally meaning stiffness
 
 The n-layer sphere was solved completely — Hervé–Zaoui recurrences for both

@@ -105,6 +105,26 @@ using it anyway at `ρ = 1.017` (a 1:60 flat disc) silently returned a
 `Q` accurate to only `2e-7`.
 """
 function _q_recurrence_plan(x, Nmax::Int, ::Type{Tx}) where {Tx}
+    # Miller's downward recurrence exists for one reason: to keep floating-point
+    # cancellation from swamping the minimal solution. An exact element type has
+    # no cancellation to control, and the upward recurrence — the plain
+    # three-term identity — is then exact. It is also the only branch a symbolic
+    # type can take at all: `eps`, `isfinite` and `ceil(Int, ·)` are all
+    # meaningless on a `Sym`.
+    #
+    # The predicate is on `real(Tx)`, and neither `Tx` nor `float(Tx)` will do:
+    #
+    #   * an oblate spheroid carries `q = iτ`, so `Tx` is `Complex{Float64}`,
+    #     which is NOT hard numeric — testing `Tx` itself sends every oblate
+    #     case down the upward branch and hands back the `7.9e26` errors this
+    #     recurrence plan exists to prevent;
+    #   * `float(Sym) === Float64` (Base derives it from `typeof(float(zero(T)))`,
+    #     and SymPy answers with a `Float64`), so `float(Tx)` reports a symbolic
+    #     type as numeric and lets `ceil(Int, ·)` throw further down.
+    #
+    # `real` separates the two cleanly: `real(Complex{Float64}) === Float64`
+    # while `real(Sym) === Sym`.
+    is_hard_numeric(real(Tx)) || return (:upward, 0)
     ε = eps(real(float(Tx)))
     budget = log(1 / ε)                       # nats of precision available
     ρ = abs(x + sqrt(x^2 - one(x)))

@@ -147,7 +147,8 @@ function _cond_state_seq(sphere::LayeredSphere{T, N}, k₀) where {T, N}
     k_layers = _cond_layer_moduli(sphere)
     TP = promote_type(
         T, typeof(k₀),
-        ntuple(k -> typeof(k_layers[k]), N)...
+        ntuple(k -> typeof(k_layers[k]), N)...,
+        interfaces_eltype(sphere.interfaces)
     )
     radii = sphere.radii
 
@@ -182,7 +183,8 @@ function _cond_localization(sphere::LayeredSphere{T, N}, k₀) where {T, N}
     k_layers = _cond_layer_moduli(sphere)
     TP = promote_type(
         T, typeof(k₀),
-        ntuple(k -> typeof(k_layers[k]), N)...
+        ntuple(k -> typeof(k_layers[k]), N)...,
+        interfaces_eltype(sphere.interfaces)
     )
     inside_states, s_matrix = _cond_state_seq(sphere, k₀)
     radii = sphere.radii
@@ -221,7 +223,10 @@ picks up the surface term.
 """
 function _cond_surface_flux(sphere::LayeredSphere{T, N}, k₀) where {T, N}
     k_layers = _cond_layer_moduli(sphere)
-    TP = promote_type(T, typeof(k₀), ntuple(k -> typeof(k_layers[k]), N)...)
+    TP = promote_type(
+        T, typeof(k₀), ntuple(k -> typeof(k_layers[k]), N)...,
+        interfaces_eltype(sphere.interfaces)
+    )
     inside_states, s_matrix = _cond_state_seq(sphere, k₀)
     radii = sphere.radii
     A_inf, _ = _cond_extract_AB(TP(radii[N]), TP(k₀), s_matrix[1], s_matrix[2])

@@ -141,13 +141,14 @@ end
 # died in a `MethodError`, while making *every* layer dual worked — an AD gap
 # invisible to any test that differentiates the whole stack at once.
 @inline function _bulk_promote(
-        ::LayeredSphere{T, N}, κμ::Tuple{Vararg{Any, N}},
+        sphere::LayeredSphere{T, N}, κμ::Tuple{Vararg{Any, N}},
         κ₀, μ₀
     ) where {T, N}
     return promote_type(
         T, typeof(κ₀), typeof(μ₀),
         ntuple(k -> typeof(κμ[k][1]), N)...,
-        ntuple(k -> typeof(κμ[k][2]), N)...
+        ntuple(k -> typeof(κμ[k][2]), N)...,
+        interfaces_eltype(sphere.interfaces)
     )
 end
 
