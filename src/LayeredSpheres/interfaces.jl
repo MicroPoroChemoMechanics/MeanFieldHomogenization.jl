@@ -187,6 +187,13 @@ struct MembraneInterface{T <: Number} <: AbstractInterface{T}
     μs::T
 end
 
+# The default inner constructor binds a single `T` across both surface moduli,
+# so `MembraneInterface(κs::Dual, 0.5)` — differentiating with respect to the
+# surface dilatation alone, the most natural sensitivity to ask of a membrane —
+# was a `MethodError`. Promote instead, as `SpringInterface` already does.
+MembraneInterface(κs::Number, μs::Number) =
+    (T = promote_type(typeof(κs), typeof(μs)); MembraneInterface{T}(T(κs), T(μs)))
+
 """
     KapitzaInterface{T}(resistance::T)
 
@@ -218,3 +225,21 @@ end
 
 Base.eltype(::AbstractInterface{T}) where {T} = T
 Base.eltype(::Type{<:AbstractInterface{T}}) where {T} = T
+
+"""
+    interfaces_eltype(interfaces) -> Type
+
+Element type common to a tuple of interface conditions, `Union{}` for an empty
+tuple (the neutral element of `promote_type`).
+
+Every solver in this package sizes its state buffers from a `promote_type` over
+the geometry, the layer moduli and the matrix moduli. The interface parameters
+belong in that promotion too: the transfer matrices widen locally to
+`promote_type(eltype(intf), …)`, so a `ForwardDiff.Dual` spring stiffness or
+Kapitza resistance produces a widened state vector that a narrower buffer then
+refuses to store. Feeding this helper into the outer promotion is what makes
+sensitivities with respect to interface parameters work.
+"""
+@inline interfaces_eltype(interfaces::Tuple) =
+    promote_type(map(eltype, interfaces)...)
+@inline interfaces_eltype(::Tuple{}) = Union{}

@@ -624,7 +624,10 @@ function LayeredSphereTransportFields(
     ) where {T, N}
     k_layers = _cond_layer_moduli(sphere)
     k₀ = _iso_scalar(K₀)
-    TP = promote_type(T, typeof(k₀), ntuple(k -> typeof(k_layers[k]), N)...)
+    TP = promote_type(
+        T, typeof(k₀), ntuple(k -> typeof(k_layers[k]), N)...,
+        interfaces_eltype(sphere.interfaces)
+    )
     radii = sphere.radii
 
     inside, s_matrix = _cond_state_seq(sphere, k₀)

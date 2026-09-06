@@ -3,10 +3,13 @@
 
 Isotropic `n`-layer confocal spheroidal composite inclusion (core +
 concentric confocal shells), **conduction only** (thermal / electric /
-Darcy — no elastic counterpart: the harmonic solution of
-Barthélémy & Bignonnet, IJES 2020, is specific to the scalar Laplace
-equation and does not carry over to the vector elastic problem). Public
-entry points: [`LayeredSpheroid`](@ref),
+Darcy). There is no elastic counterpart yet, but not for want of a
+formalism: Barthélémy & Bignonnet (IJES 2020, §2.1) state that they
+imported the transfer-matrix method *from* elasticity (Hervé & Zaoui
+1993; Hervé & Luanco 2014) into conduction. What does not carry over is
+GEOMETRIC — confocal surfaces are not homothetic, so the harmonic degrees
+couple, and in elasticity they couple even across a perfect interface.
+Public entry points: [`LayeredSpheroid`](@ref),
 [`layered_spheroid_from_fractions`](@ref).
 
 Like [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere),
@@ -32,7 +35,8 @@ using ..Core
 const MFH_Core = Core
 
 import ..LayeredSpheres: PerfectInterface, KapitzaInterface, SurfaceConductiveInterface,
-    AbstractInterface, layer_conductivity_average, layer_resistivity_average,
+    AbstractInterface, interfaces_eltype,
+    layer_conductivity_average, layer_resistivity_average,
     layer_count, layer_modulus, layer_interface, layer_volume_fraction
 # Pointwise-field generics are declared by `LayeredSpheres` (included first) and
 # extended here, so a single binding carries both inclusion families.

@@ -11,10 +11,22 @@ independently; on a spheroid it couples them.** The sphere's ``2\times 2``
 transfer per mode therefore becomes a truncated series with a
 ``2\mathcal{N}\times 2\mathcal{N}`` transfer matrix per interface.
 
-!!! note "No elastic counterpart"
-    Unlike [`LayeredSphere`](@ref), there is none. The harmonic decomposition
-    used here is specific to the scalar Laplace equation and does not carry over
-    to the vector elastic problem.
+!!! note "No elastic counterpart yet"
+    Unlike [`LayeredSphere`](@ref), this module solves conduction only. The
+    obstruction is not that the method is tied to the scalar Laplace equation —
+    Barthélémy & Bignonnet say the opposite, that they imported the
+    transfer-matrix formalism *from* elasticity
+    [barthelemyBignonnetIJES2020](@cite), following Hervé & Zaoui
+    [herve1993](@cite) and Hervé & Luanco [herveLuanco2014](@cite).
+
+    What does not carry over is geometric. Concentric spheres are homothetic,
+    so one harmonic degree never talks to another; confocal spheroids are not,
+    and the metric ``h^2 = 1/(c^2(q^2-p^2))`` leaves factors ``p, p^2`` behind
+    once the denominators are cleared, shifting ``n \to n\pm1, n\pm2``. In
+    conduction that coupling appears only at an imperfect interface — which is
+    why the blocks below are diagonal in the perfect case. In elasticity it
+    appears at every interface, perfect ones included, so the transfer matrices
+    are banded from the outset.
 
     Whoever writes it should start from
     [the roadmap's checklist](@ref dev-elastic-spheroid): the elastic route

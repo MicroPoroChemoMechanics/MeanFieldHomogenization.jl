@@ -229,6 +229,7 @@ end
         include("LayeredSpheres/test_christensen.jl")
         include("LayeredSpheres/test_local_fields.jl")
         include("LayeredSpheres/test_generic.jl")
+        include("LayeredSpheres/test_interface_sensitivity.jl")
         include("LayeredSpheres/test_scheme_integration.jl")
     end
 
@@ -252,6 +253,7 @@ end
         include("LayeredSpheroids/test_scheme_integration.jl")
         include("LayeredSpheroids/test_legendre_stability.jl")
         include("LayeredSpheroids/test_local_fields.jl")
+        include("LayeredSpheroids/test_ad.jl")
     end
 
     # `Poromechanics` post-processes a homogenized stiffness, so it only needs

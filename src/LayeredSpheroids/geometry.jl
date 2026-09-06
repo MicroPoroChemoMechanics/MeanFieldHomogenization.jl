@@ -27,8 +27,8 @@
     LayeredSpheroid{T, N, Q, Cs, Is} <: AbstractLayeredInclusion{3, T}
 
 Isotropic `N`-layer confocal spheroidal composite inclusion (core +
-concentric confocal shells), conduction only (no elastic counterpart —
-see the `LayeredSpheroids` module docstring). Type
+concentric confocal shells), conduction only (no elastic counterpart
+*yet* — see the `LayeredSpheroids` module docstring). Type
 parameters:
 
 - `T` — element type of the geometric scalars (radii, focal distance).
@@ -43,7 +43,7 @@ disk_radii, moduli; interfaces, Nseries, axis)` for the common case, or
 [`layered_spheroid_from_fractions`](@ref) to specify layers by volume
 fraction.
 """
-struct LayeredSpheroid{T <: Real, N, Q <: Number, Cs, Is} <:
+struct LayeredSpheroid{T <: Number, N, Q <: Number, Cs, Is} <:
     MFH_Core.AbstractLayeredInclusion{3, T}
     prolate::Bool
     focal::T                # real focal distance |c| > 0
@@ -59,7 +59,7 @@ end
 # the type, it also binds `T`, which the empty tuple left unbound.
 """
     LayeredSpheroid(axis_radii, disk_radii, moduli; interfaces, Nseries = 5,
-                     axis = (0., 0., 1.))
+                     axis = (0., 0., 1.), prolate = nothing)
 
 Build an `N`-layer confocal spheroid from the per-layer **axis**
 (revolution) and **disk** (transverse) semi-axes — ascending, confocal
@@ -73,6 +73,23 @@ conductivities; `interfaces::NTuple{N}` of [`AbstractInterface`](@ref)
 truncation 𝒩 (only odd degrees `1,…,2𝒩-1` are kept, by symmetry);
 `axis` the unit vector giving the spheroid's revolution axis in the
 global frame.
+
+The semi-axes may carry any element type: `Float64`, `BigFloat`,
+`ForwardDiff.Dual` — mixed across the two tuples, so a single layer boundary
+can be the differentiation variable — or a symbolic scalar.
+
+`prolate` declares the family explicitly. Leave it at `nothing` for a numeric
+element type and the sign of `axis² - disk²` decides. It is **required** for a
+symbolic one: that sign is undecidable on a symbol, and SymPy answers `false`
+to a comparison it cannot settle, so guessing would silently pick a family.
+On a numeric type it is still checked: a hint that contradicts the semi-axes
+throws, since every layer is verified to belong to the declared family.
+
+!!! note "Symbolic support is prolate only"
+    An oblate spheroid carries `q = iτ`, so its confocal parameter is a
+    `Complex{T}` — and Julia's `Complex{T}` requires `T <: Real`, which
+    `SymPy.Sym` is not. `Symbolics.Num` is `<: Real` and builds, but Symbolics
+    has no `sym_lu` for a `Matrix{Complex{Num}}`. Prolate works with both.
 """
 function LayeredSpheroid(
         axis_radii::Tuple{T, Vararg{T, M}}, disk_radii::Tuple{T, Vararg{T, M}},
@@ -80,27 +97,52 @@ function LayeredSpheroid(
         interfaces::Is = ntuple(_ -> PerfectInterface{T}(), Val(M + 1)),
         Nseries::Int = 5,
         axis::Tuple = (0.0, 0.0, 1.0),
-    ) where {M, T <: Real, Cs, Is}
+        prolate::Union{Bool, Nothing} = nothing,
+    ) where {M, T <: Number, Cs, Is}
+    prolate_hint = prolate
     N = M + 1
-    for ℓ in 1:N
-        axis_radii[ℓ] > 0 && disk_radii[ℓ] > 0 ||
-            throw(ArgumentError("LayeredSpheroid semi-axes must be strictly positive"))
-        axis_radii[ℓ] ≈ disk_radii[ℓ] &&
-            throw(ArgumentError("LayeredSpheroid: layer $ℓ has aspect ratio 1 (use LayeredSphere)"))
+    # Every check below is an ORDER comparison on user data. On a symbolic
+    # element type those are undecidable — SymPy answers `false` to a comparison
+    # it cannot settle, which would turn a silent wrong answer into a thrown
+    # error or, worse, the reverse. Validate when the type admits comparison,
+    # and let the caller carry the responsibility otherwise (`prolate` becomes a
+    # required keyword in that case; see below).
+    checkable = is_hard_numeric(T)
+    if checkable
+        for ℓ in 1:N
+            axis_radii[ℓ] > 0 && disk_radii[ℓ] > 0 ||
+                throw(ArgumentError("LayeredSpheroid semi-axes must be strictly positive"))
+            axis_radii[ℓ] ≈ disk_radii[ℓ] &&
+                throw(ArgumentError("LayeredSpheroid: layer $ℓ has aspect ratio 1 (use LayeredSphere)"))
+        end
+        for ℓ in 1:(N - 1)
+            (axis_radii[ℓ] < axis_radii[ℓ + 1] && disk_radii[ℓ] < disk_radii[ℓ + 1]) ||
+                throw(ArgumentError("LayeredSpheroid radii must be strictly ascending"))
+        end
     end
-    for ℓ in 1:(N - 1)
-        (axis_radii[ℓ] < axis_radii[ℓ + 1] && disk_radii[ℓ] < disk_radii[ℓ + 1]) ||
-            throw(ArgumentError("LayeredSpheroid radii must be strictly ascending"))
-    end
-    focal2_1 = axis_radii[1]^2 - disk_radii[1]^2
-    prolate = focal2_1 > 0
     focal2s = ntuple(ℓ -> axis_radii[ℓ]^2 - disk_radii[ℓ]^2, Val(N))
-    any(prolate ? (f -> f ≤ 0) : (f -> f ≥ 0), focal2s) &&
-        throw(ArgumentError("LayeredSpheroid: layers must share the same prolate/oblate type"))
+    prolate = if prolate_hint !== nothing
+        prolate_hint
+    elseif checkable
+        focal2s[1] > 0
+    else
+        throw(
+            ArgumentError(
+                "LayeredSpheroid: with a symbolic element type the sign of " *
+                    "`axis² - disk²` cannot be decided; pass `prolate = true/false`"
+            )
+        )
+    end
+    if checkable
+        any(prolate ? (f -> f ≤ 0) : (f -> f ≥ 0), focal2s) &&
+            throw(ArgumentError("LayeredSpheroid: layers must share the same prolate/oblate type"))
+    end
     focal_ref = sqrt(abs(focal2s[N]))
-    for ℓ in 1:N
-        isapprox(sqrt(abs(focal2s[ℓ])), focal_ref; rtol = sqrt(eps(T)) * 10) ||
-            throw(ArgumentError("LayeredSpheroid: layers are not confocal (focal distance $ℓ ≠ focal distance $N)"))
+    if checkable
+        for ℓ in 1:N
+            isapprox(sqrt(abs(focal2s[ℓ])), focal_ref; rtol = sqrt(eps(float(real(T)))) * 10) ||
+                throw(ArgumentError("LayeredSpheroid: layers are not confocal (focal distance $ℓ ≠ focal distance $N)"))
+        end
     end
     focal = focal_ref
     Q = prolate ? T : Complex{T}
@@ -118,6 +160,22 @@ end
 LayeredSpheroid(::Tuple{}, ::Tuple{}, moduli; kwargs...) = throw(
     ArgumentError("LayeredSpheroid requires at least one layer")
 )
+
+# Mixed-eltype semi-axes — promote across BOTH tuples, then delegate to the
+# homogeneous method above. That method binds a single `T` across every
+# semi-axis of both tuples, so `LayeredSpheroid((a₁::Dual, 2.0), (b₁::Dual, b₂), …)`
+# — differentiating with respect to ONE layer boundary, the most natural
+# sensitivity to ask of a coated inclusion — used to be a `MethodError`, while
+# differentiating with respect to all of them at once worked. The counterpart of
+# `LayeredSphere`'s promoting constructor.
+function LayeredSpheroid(
+        axis_radii::Tuple{Number, Vararg{Number, M}},
+        disk_radii::Tuple{Number, Vararg{Number, M}},
+        moduli; kwargs...
+    ) where {M}
+    T = promote_type(map(typeof, axis_radii)..., map(typeof, disk_radii)...)
+    return LayeredSpheroid(map(T, axis_radii), map(T, disk_radii), moduli; kwargs...)
+end
 
 """
     layered_spheroid_from_fractions(ω, outer_axis_radius, layer_fractions, moduli;
@@ -174,6 +232,23 @@ function layered_spheroid_from_fractions(
     return LayeredSpheroid(axis_radii, disk_radii, moduli; interfaces, Nseries, axis)
 end
 
+# Mixed-eltype arguments — promote, then delegate. Same reason as the promoting
+# `LayeredSpheroid` constructor above: the method it delegates to binds one `T`
+# across `ω`, the outer semi-axis AND every volume fraction, so asking for the
+# sensitivity to a single fraction, or to the aspect ratio alone, was a
+# `MethodError`.
+function layered_spheroid_from_fractions(
+        ω::Number, outer_axis_radius::Number,
+        layer_fractions::Tuple{Number, Vararg{Number, M}}, moduli; kwargs...
+    ) where {M}
+    T = promote_type(
+        typeof(ω), typeof(outer_axis_radius), map(typeof, layer_fractions)...
+    )
+    return layered_spheroid_from_fractions(
+        T(ω), T(outer_axis_radius), map(T, layer_fractions), moduli; kwargs...
+    )
+end
+
 """
     _bisect_cubic_root(D, lo, hi; C = -1, tol = ...) -> x
 
@@ -197,7 +272,19 @@ function _bisect_cubic_root(D::T, lo::T, hi::T; C::T = -one(T), tol = eps(T)^(3 
             a, fa = m, fm
         end
     end
-    return (a + b) / 2
+    x = (a + b) / 2
+    # Bisection decides every step by a SIGN TEST, and a sign test carries no
+    # derivative: on a `ForwardDiff.Dual` the returned midpoint inherits the
+    # partials of the bracket — zeros — so the sensitivity of a layer boundary
+    # to the volume fractions or to the aspect ratio came out as a silent zero.
+    # Two Newton steps in the full element type repair it. The value is already
+    # converged, so they move it by roundoff; the partials become
+    # `∂x/∂D = -1/(3x² + C)`, which is exactly what the implicit function theorem
+    # gives for `x³ + Cx + D = 0`. No knowledge of the AD type is needed.
+    for _ in 1:2
+        x = x - (x^3 + C * x + D) / (3 * x^2 + C)
+    end
+    return x
 end
 
 # ── Accessors ────────────────────────────────────────────────────────────────
