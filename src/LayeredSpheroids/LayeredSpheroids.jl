@@ -43,6 +43,9 @@ import ..LayeredSpheres: get_layer, local_temperature, local_gradient, local_flu
 import ..Core: gradient_gradient_loc, flux_gradient_loc, gradient_flux_loc, flux_flux_loc,
     conductivity_contribution, resistivity_contribution, is_homogeneous_inclusion
 
+# `is_hard_numeric` — the numeric/symbolic split used throughout the package.
+using ..Elliptic: is_hard_numeric
+
 include("legendre.jl")
 include("coupling.jl")
 include("geometry.jl")

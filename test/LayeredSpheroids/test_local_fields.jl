@@ -165,3 +165,24 @@ end
     @test get_layer(s, 0.5 * q₁; side = :inner) == 1
     @test_throws ArgumentError get_layer(s, q₁; side = :both)
 end
+
+@testset "local fields — the (spheroid, k₀) entry points" begin
+    # Every cached-object method has an `(s, k₀, …)` twin that rebuilds the
+    # recurrence; they must agree, and both are part of the public surface.
+    s = _two_layer_spheroid()
+    f = LayeredSpheroidTransportFields(s, K0)
+    q, p, φ = 1.5, 0.4, 0.7
+    G = [0.3, -0.7, 1.0]
+
+    @test local_temperature(s, K0, q, p, φ, G) ≈ local_temperature(f, q, p, φ, G)
+    @test collect(local_gradient(s, K0, q, p, φ, G)) ≈
+        collect(local_gradient(f, q, p, φ, G))
+    @test collect(local_flux(s, K0, q, p, φ, G)) ≈ collect(local_flux(f, q, p, φ, G))
+
+    for g in (
+            local_gradient_gradient_loc, local_flux_gradient_loc,
+            local_gradient_flux_loc, local_flux_flux_loc,
+        )
+        @test get_array(g(s, K0, q, p, φ)) ≈ get_array(g(f, q, p, φ))
+    end
+end

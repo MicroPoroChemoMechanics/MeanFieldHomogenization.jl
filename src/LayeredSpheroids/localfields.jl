@@ -34,6 +34,14 @@ as [`get_layer`](@ref)`(::LayeredSphere, r)`; it matters for a
 function get_layer(s::LayeredSpheroid{T, N}, q; side::Symbol = :outer) where {T, N}
     side === :outer || side === :inner ||
         throw(ArgumentError("get_layer: `side` must be :outer or :inner, got $(side)"))
+    # Same refusal as the sphere: a symbolic coordinate answers an undecidable
+    # comparison with a plain `false` and would silently land in region 1.
+    is_hard_numeric(typeof(q)) || throw(
+        ArgumentError(
+            "get_layer: a symbolic coordinate cannot be located by comparison " *
+                "(got $(typeof(q)))"
+        )
+    )
     k = 1
     if side === :outer
         while k ≤ N && abs(q) ≥ abs(s.q[k])

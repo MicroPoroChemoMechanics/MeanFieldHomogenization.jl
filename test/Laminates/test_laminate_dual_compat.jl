@@ -154,6 +154,11 @@ end
     @test_throws ArgumentError set_param(lam, amount(:A), 0.5)
     @test_throws ArgumentError get_param(lam, thickness(:Z))
     @test_throws ArgumentError get_param(lam, interface_param(1, :nope))
+    # A spring stores compliances and exposes stiffnesses, so its parameter set
+    # is {kn, kt, sn, st}; anything else must be refused on the WRITE path too,
+    # not only on the read one.
+    @test_throws ArgumentError set_param(lam, interface_param(1, :nope), 1.0)
+    @test_throws ArgumentError set_param(lam, interface_param(1, :κs), 1.0)
 end
 
 @testset "AD — anisotropic layers, second derivative" begin
