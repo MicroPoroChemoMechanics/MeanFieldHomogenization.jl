@@ -8,6 +8,12 @@ using LinearAlgebra
 #  in confocal prolate spheroidal coordinates, derived and checked here rather
 #  than quoted.
 #
+#  WHAT IS AND IS NOT A RESULT HERE. `div σ = 0` is neither: Papkovich–Neuber
+#  with harmonic potentials satisfies Navier identically, classically. That
+#  check is a self-test of the chart and of the operator wiring. The results are
+#  the closed-form operators, and the banding argument that decides how the
+#  transfer matrices are written.
+#
 #  WHY THIS FILE EXISTS. The elastic n-layer confocal spheroid needs `u` and
 #  `σ·e_q` expressed on the Papkovich–Neuber potentials, in the spheroidal
 #  frame, because those are what the interface conditions match. Duan, Yi,
@@ -94,6 +100,11 @@ const _PT = Dict(
 )
 _at_point(e) = expand(subs(e, _PT...))
 
+"Impose harmonicity, atomize the derivatives, land on the rational point. The
+composition is the cheap stand-in for `simplify`, which does not terminate on
+these expressions."
+_reduce(e) = simplify(_at_point(_atomize(_impose_harmonic(e))))
+
 "Papkovich–Neuber, Duan (2.2), in the case-I gauge `φ₁ = φ₂ = 0`."
 _pn_displacement(φ₀, φ₃) =
     (GRAD(φ₀ + _z * φ₃, _S) - 4 * (1 - _ν) * φ₃ * _e₃) / (2 * _μ)
@@ -164,6 +175,116 @@ end
         @test iszero(simplify(_at_point(_atomize(uc[3] - u_q_ref))))
     end
 
+    @testset "the stress has a compact coordinate-free form" begin
+        # Writing σ out in the chart gives a ten-line expression that is exact
+        # and unusable. The structure behind it is one line. With
+        # `Φ = φ₀ + z φ₃` and `φ₃` harmonic, `∇²Φ = 2 ∂_z φ₃`, hence
+        #
+        #     tr ε = -(1 - 2ν) ∂_z φ₃ / μ,
+        #     σ = -2ν (∂_z φ₃) 𝟏 + ∇∇Φ - 4(1 - ν) sym(ê₃ ⊗ ∇φ₃).
+        #
+        # Every spheroidal component is then a projection of this, which is how
+        # the theory page presents it — an equation a reader can hold, and the
+        # chart doing the bookkeeping.
+        Φ = _φ₀ + _z * _φ₃
+        u = (GRAD(Φ, _S) - 4 * (1 - _ν) * _φ₃ * _e₃) / (2 * _μ)
+        ε = SYMGRAD(u, _S)
+        ∇φ₃ = GRAD(_φ₃, _S)
+        ∂zφ₃ = ∇φ₃ ⋅ _e₃
+
+        @test iszero(_reduce(tr(ε) + (1 - 2 * _ν) * ∂zφ₃ / _μ))
+
+        σ_def = _λ * tr(ε) * one(ε) + 2 * _μ * ε
+        σ_cf = -2 * _ν * ∂zφ₃ * one(ε) + HESS(Φ, _S) -
+            2 * (1 - _ν) * (_e₃ ⊗ ∇φ₃ + ∇φ₃ ⊗ _e₃)
+        cd, cc = components_canon(σ_def), components_canon(σ_cf)
+        for i in 1:3, j in i:3
+            @test iszero(_reduce(cd[i, j] - cc[i, j]))
+        end
+    end
+
+    @testset "Cartesian derivatives in (p, q)" begin
+        # `∂_z` and `∂_ρ` on the chart. These are what the interface conditions
+        # are written on — see the next testset for why not `∂_p`, `∂_q`.
+        f = SymFunction("f_probe")(_p, _q)
+        ∇f = GRAD(f, _S)
+        eρ = Tens([cos(_ϕ), sin(_ϕ), Sym(0)])
+        w2 = _q^2 - _p^2
+
+        ∂z_ref = (_q * (1 - _p^2) * diff(f, _p) + _p * (_q^2 - 1) * diff(f, _q)) / (_c * w2)
+        ∂ρ_ref = sqrt(1 - _p^2) * sqrt(_q^2 - 1) *
+            (-_p * diff(f, _p) + _q * diff(f, _q)) / (_c * w2)
+
+        atom_f(e) = foldl(
+            (a, d) -> subs(a, d[1] => d[2]), (
+                (diff(f, _p, 1, _q, 1), symbols("f11")), (diff(f, _p), symbols("f10")),
+                (diff(f, _q), symbols("f01")), (f, symbols("f00")),
+            ); init = e
+        )
+        red_f(e) = simplify(expand(subs(atom_f(e), _PT...)))
+        @test iszero(red_f(∇f ⋅ _e₃ - ∂z_ref))
+        @test iszero(red_f(∇f ⋅ eρ - ∂ρ_ref))
+    end
+
+    @testset "which multipliers keep the coupling banded" begin
+        # A confocal interface is a surface `q = const`, so the conditions must
+        # hold for every `p`, and each side's potentials are Legendre series in
+        # `p`. Whether the transfer matrix comes out BANDED or TRIANGULAR is
+        # decided by which multiplier acts on `P_n(p)`:
+        #
+        #   (1 - p²) P_n′ = n(n+1)/(2n+1) (P_{n-1} - P_{n+1})   — reach 1
+        #   p P_n         = [(n+1) P_{n+1} + n P_{n-1}]/(2n+1)  — reach 1
+        #   p² P_n, (1-p²) P_n, p(1-p²) P_n′                    — reach 2
+        #   P_n′,  p P_n′                                       — reach GROWS with n
+        #
+        # `U_q` contains no `p`-derivative at all, so it is banded as it stands.
+        # `U_p` carries a bare `∂_p Φ` and is triangular; weighting it by
+        # `(1 - p²)` — shared geometry across a confocal interface, and the
+        # weight for which the `P_n′` are orthogonal — makes it banded too.
+        #
+        # The Cartesian frame is not a way round this: `∂_z` happens to package
+        # `∂_p` as `(1 - p²) ∂_p`, but `∂_ρ` carries `p ∂_p`, and
+        # `p P_n′ = n P_n + P_{n-1}′` puts the bare derivative straight back.
+        P(n) = sympy.legendre(n, _p)
+        for n in 1:5
+            @test iszero(
+                simplify(
+                    expand(
+                        (1 - _p^2) * diff(P(n), _p) -
+                            Sym(n) * (n + 1) // (2n + 1) * (P(n - 1) - P(n + 1))
+                    )
+                )
+            )
+            @test iszero(
+                simplify(
+                    expand(
+                        _p * P(n) - (Sym(n + 1) * P(n + 1) + Sym(n) * P(n - 1)) // (2n + 1)
+                    )
+                )
+            )
+        end
+        # Reach, measured rather than asserted: how far from `n` a multiplier
+        # actually spreads the degrees.
+        proj(e, k) = simplify(integrate(expand(e) * P(k) * Sym(2k + 1) // 2, (_p, -1, 1)))
+        function reach(mult, n)
+            e = expand(mult(n))
+            d = Int(sympy.degree(e, gen = _p))
+            hit = [k for k in 0:d if !iszero(proj(e, k))]
+            return isempty(hit) ? 0 : maximum(abs.(hit .- n))
+        end
+        for n in 3:5
+            @test reach(m -> (1 - _p^2) * diff(P(m), _p), n) == 1
+            @test reach(m -> _p * P(m), n) == 1
+            @test reach(m -> _p^2 * P(m), n) == 2
+            @test reach(m -> (1 - _p^2) * P(m), n) == 2
+            @test reach(m -> _p * (1 - _p^2) * diff(P(m), _p), n) == 2
+        end
+        # The two that are NOT banded: their reach grows with the degree, which
+        # is exactly what makes the matrix triangular instead.
+        @test reach(m -> diff(P(m), _p), 5) == 5
+        @test reach(m -> _p * diff(P(m), _p), 6) == 6
+    end
+
     @testset "equilibrium at an exact rational point, for explicit potentials" begin
         for (φ₀, φ₃) in (
                 (_p * _q, Sym(0)),                                   # potential part alone
@@ -178,10 +299,13 @@ end
     end
 
     @testset "equilibrium holds identically, for ANY harmonic pair" begin
-        # The strong statement, and the reason the representation is admissible:
-        # `div σ = 0` follows from the harmonicity of `φ₀` and `φ₃` alone. This
-        # is Papkovich–Neuber re-derived in the spheroidal chart, not quoted
-        # from Love (1927).
+        # NOT a result: Papkovich–Neuber with harmonic potentials satisfies
+        # Navier identically, classically and without reference to coordinates.
+        # This is a self-test of the toolchain that produces every expression
+        # above — the chart, the `GRAD`/`SYMGRAD`/`DIV` wiring, the gauge as
+        # transcribed from Duan (2.2), the λ ↔ ν conversion. A non-zero residual
+        # here would mean the operators are wrong, which is why it earns its
+        # place despite costing the bulk of this file's runtime.
         d = components_canon(DIV(_pn_stress(_φ₀, _φ₃), _S))
         for i in 1:3
             @test iszero(_at_point(_atomize(_impose_harmonic(d[i]))))

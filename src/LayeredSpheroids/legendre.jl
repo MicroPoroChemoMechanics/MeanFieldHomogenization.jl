@@ -322,20 +322,56 @@ ODD degrees `1, 3, …, 2·Nseries − 1`, as length-`Nseries` `Vector`s
 - `:Q1`  — `Qₙ¹(x)`  (m=1, q branch, |x|>1)
 """
 function legendre_odd(kind::Symbol, x, Nseries::Int)
-    Nmax = 2 * Nseries - 1
-    tab, dtab = if kind === :P0
-        _P0_table(x, Nmax)
-    elseif kind === :Q0
-        _Q0_table(x, Nmax)
-    elseif kind === :P1
-        _P1_table(x, Nmax)
-    elseif kind === :P1p
-        _P1p_table(x, Nmax)
-    elseif kind === :Q1
-        _Q1_table(x, Nmax)
-    else
-        throw(ArgumentError("legendre_odd: unknown kind $kind"))
-    end
-    idx = 2:2:(2 * Nseries)
+    return legendre_degrees(kind, x, 1:2:(2 * Nseries - 1))
+end
+
+"""
+    legendre_table(kind::Symbol, x, Nmax::Int) -> (vals, derivs)
+
+Values and derivatives of the requested Legendre kind at **every** degree
+`0, 1, …, Nmax`, as length-`Nmax + 1` `Vector`s (index `n + 1` ↔ degree `n`).
+
+`kind ∈ (:P0, :Q0, :P1, :P1p, :Q1)`:
+- `:P0`  — `Pₙ(x)`   (m = 0, any branch)
+- `:Q0`  — `Qₙ(x)`   (m = 0, q branch, `|x| > 1`)
+- `:P1`  — `Pₙ¹(x)`  (m = 1, q branch, `|x| > 1`)
+- `:P1p` — `Pₙ¹(x)`  (m = 1, p branch, `|x| ≤ 1`)
+- `:Q1`  — `Qₙ¹(x)`  (m = 1, q branch, `|x| > 1`)
+"""
+function legendre_table(kind::Symbol, x, Nmax::Int)
+    kind === :P0 && return _P0_table(x, Nmax)
+    kind === :Q0 && return _Q0_table(x, Nmax)
+    kind === :P1 && return _P1_table(x, Nmax)
+    kind === :P1p && return _P1p_table(x, Nmax)
+    kind === :Q1 && return _Q1_table(x, Nmax)
+    throw(ArgumentError("legendre_table: unknown kind $kind"))
+end
+
+"""
+    legendre_degrees(kind::Symbol, x, degrees) -> (vals, derivs)
+
+Values and derivatives at an arbitrary set of `degrees`, in the order given.
+
+Conduction needs the odd degrees alone, which is what
+[`legendre_odd`](@ref) selects. Elasticity does not: the case-I Papkovich–Neuber
+potentials split by parity — `φ₀` on the even degrees, `φ₃` on the odd ones —
+so the degree list is part of the problem rather than a property of the module.
+The underlying tables are built for `0:maximum(degrees)` either way, the
+recurrences being what they are, so asking for a sparse set costs nothing extra.
+
+!!! note "`Qₙ` depends on the highest degree requested"
+    `Pₙ` grows upward and is bit-identical whatever `Nmax` is asked for. `Qₙ` is
+    the *minimal* solution and is built by Miller's downward recurrence, which
+    starts above the highest degree requested and normalizes on a closed form —
+    so the arithmetic path, and with it the last couple of bits, depends on
+    `Nmax`. Two calls with different degree sets agree to a few ulp, never
+    bit-for-bit.
+"""
+function legendre_degrees(kind::Symbol, x, degrees)
+    isempty(degrees) && throw(ArgumentError("legendre_degrees: empty degree set"))
+    minimum(degrees) ≥ 0 ||
+        throw(ArgumentError("legendre_degrees: degrees must be non-negative"))
+    tab, dtab = legendre_table(kind, x, maximum(degrees))
+    idx = [n + 1 for n in degrees]
     return tab[idx], dtab[idx]
 end

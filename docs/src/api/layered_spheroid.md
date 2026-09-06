@@ -23,4 +23,6 @@ MeanFieldHomogenization.LayeredSpheroids.spheroid_ba_ratios
 MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroidTransportFields
 MeanFieldHomogenization.LayeredSpheroids.coupling_matrices
 MeanFieldHomogenization.LayeredSpheroids.legendre_odd
+MeanFieldHomogenization.LayeredSpheroids.legendre_table
+MeanFieldHomogenization.LayeredSpheroids.legendre_degrees
 ```

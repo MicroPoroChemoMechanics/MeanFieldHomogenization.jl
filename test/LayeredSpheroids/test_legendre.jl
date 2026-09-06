@@ -76,3 +76,50 @@ end
     @test eltype(P0b) == BigFloat
     @test P0b[1] ≈ xb
 end
+
+@testset "legendre_degrees — arbitrary degree sets" begin
+    LSpd = MeanFieldHomogenization.LayeredSpheroids
+    x = 1.7
+
+    # Slicing is exact: the reference table is built at the SAME `Nmax` the
+    # slicer uses, so any difference would be a bookkeeping error, not roundoff.
+    for kind in (:P0, :Q0, :P1, :P1p, :Q1)
+        xx = kind === :P1p ? 0.4 : x
+        for degs in ([0, 2, 4, 6], [1, 3, 5, 7], [3], [5, 2, 0])
+            tab, dtab = LSpd.legendre_table(kind, xx, maximum(degs))
+            v, d = LSpd.legendre_degrees(kind, xx, degs)
+            @test v == [tab[n + 1] for n in degs]
+            @test d == [dtab[n + 1] for n in degs]
+        end
+    end
+
+    # `legendre_odd` is now a thin wrapper; it must not have moved.
+    for kind in (:P0, :Q0, :P1, :Q1), 𝒩 in (1, 4, 9)
+        vo, dvo = LSpd.legendre_odd(kind, x, 𝒩)
+        vd, dvd = LSpd.legendre_degrees(kind, x, 1:2:(2𝒩 - 1))
+        @test vo == vd
+        @test dvo == dvd
+    end
+
+    @testset "the Q tables depend on Nmax, at roundoff" begin
+        # Not a defect, and worth pinning so nobody "fixes" it: `Pₙ` grows with
+        # the upward recurrence and is bit-identical whatever `Nmax` is asked
+        # for, but `Qₙ` is the MINIMAL solution and is built by Miller's
+        # downward recurrence, which starts above the highest degree requested
+        # and normalizes on a closed form. Change `Nmax` and the arithmetic path
+        # changes with it. The two agree to a few ulp, never bit-for-bit.
+        for kind in (:Q0, :Q1)
+            t6, _ = LSpd.legendre_table(kind, x, 6)
+            t7, _ = LSpd.legendre_table(kind, x, 7)
+            @test t6 != t7[1:7]
+            @test t6 ≈ t7[1:7] rtol = 1.0e-14
+        end
+        p6, _ = LSpd.legendre_table(:P0, x, 6)
+        p7, _ = LSpd.legendre_table(:P0, x, 7)
+        @test p6 == p7[1:7]
+    end
+
+    @test_throws ArgumentError LSpd.legendre_degrees(:P0, x, Int[])
+    @test_throws ArgumentError LSpd.legendre_degrees(:P0, x, [-1, 2])
+    @test_throws ArgumentError LSpd.legendre_table(:nope, x, 3)
+end
