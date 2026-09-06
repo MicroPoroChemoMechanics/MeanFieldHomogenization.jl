@@ -44,8 +44,8 @@ compliant interfacial transition zone, and the matrix at infinity.
 ````@example layered_sphere_local_fields
 _stiff_Enu(E, ν) = TensISO{3}(3E / (3 * (1 - 2ν)), 2E / (2 * (1 + ν)))
 
-const C₀ = _stiff_Enu(30.0, 0.30)      # matrix
-const Cᵢ = _stiff_Enu(100.0, 0.20)     # core (aggregate)
+const C₀ = _stiff_Enu(30.0, 0.3)      # matrix
+const Cᵢ = _stiff_Enu(100.0, 0.2)     # core (aggregate)
 const Cₛ = _stiff_Enu(10.0, 0.35)      # ITZ shell
 
 const R = 1.0                          # core radius
@@ -76,7 +76,7 @@ rs = range(1.0e-6, 4 * Rₛ; length = 600)
 σrr_h = [radial_hoop(sol, r, ε∞_hyd)[1] for r in rs]
 σθθ_h = [radial_hoop(sol, r, ε∞_hyd)[2] for r in rs]
 
-σ_far = 3 * (30.0 / (3 * (1 - 2 * 0.30))) * εᵥ   # 3K₀ εᵥ
+σ_far = 3 * (30.0 / (3 * (1 - 2 * 0.3))) * εᵥ   # 3K₀ εᵥ
 
 println("Hydrostatic far field, σ∞ᵢᵢ = 3K₀εᵥ = ", round(σ_far; digits = 4))
 @printf "  %-9s  %12s  %12s\n" "r" "σ_rr" "σ_θθ"
@@ -206,7 +206,7 @@ zs = range(-2.6Rₛ, 2.6Rₛ; length = 220)
 vm = [
     let r = hypot(x, z)
         r < 1.0e-9 ? von_mises(local_stress(sol, [0.0, 0.0, 0.0], ε∞_dev)) :
-        von_mises(local_stress(sol, [x, 0.0, z], ε∞_dev))
+            von_mises(local_stress(sol, [x, 0.0, z], ε∞_dev))
     end
         for z in zs, x in xs
 ]
