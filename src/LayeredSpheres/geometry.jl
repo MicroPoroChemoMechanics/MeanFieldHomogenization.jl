@@ -82,6 +82,19 @@ LayeredSphere(::Tuple{}, moduli; kwargs...) = throw(
     ArgumentError("LayeredSphere requires at least one layer; got no radius")
 )
 
+# Mixed-eltype radii — promote, then delegate to the homogeneous method above.
+# The signature above binds a single `T` across every radius, so
+# `LayeredSphere((r₁, 2.0), …)` with `r₁::ForwardDiff.Dual` used to be a
+# `MethodError`: differentiating with respect to ONE interface radius, the most
+# natural sensitivity to ask of a coated inclusion, was out of reach while
+# differentiating with respect to all of them at once worked. Promoting here
+# costs nothing and keeps that door open for `Dual`, `BigFloat` and symbolic
+# radii alike.
+function LayeredSphere(radii::Tuple{Number, Vararg{Number}}, moduli; kwargs...)
+    T = promote_type(map(typeof, radii)...)
+    return LayeredSphere(map(T, radii), moduli; kwargs...)
+end
+
 # ── Accessors ────────────────────────────────────────────────────────────────
 
 """

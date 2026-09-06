@@ -418,7 +418,7 @@ fractions, physically meaningful.
 
 | | primal (field jump) | dual (surface stiffness) |
 | :--- | :--- | :--- |
-| elasticity | `SpringInterface(kn, kt)` | `MembraneInterface(κs, μs)` |
+| elasticity | `SpringInterface(kn, kt)` (stiffnesses) | `MembraneInterface(κs, μs)` |
 | transport | `KapitzaInterface(ρ)` | `SurfaceConductiveInterface(ks)` |
 
 Unlike the spherical case, **nothing forces these to be isotropic**. The

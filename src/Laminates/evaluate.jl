@@ -572,8 +572,10 @@ function interface_jump(lam::Laminate, k::Integer, E; property::Symbol = :C)
 end
 
 _interface_jump_local(::PerfectInterface, t) = zero(t)
-_interface_jump_local(itf::SpringInterface, t) =
-    SVector(itf.kt * t[1], itf.kt * t[2], itf.kn * t[3])
+function _interface_jump_local(itf::SpringInterface, t)
+    sn, st = spring_compliances(itf)      # stored `kn`, `kt` are stiffnesses
+    return SVector(st * t[1], st * t[2], sn * t[3])
+end
 _interface_jump_local(::MembraneInterface, t) = zero(t)
 _interface_jump_local(::KapitzaInterface, t) = zero(t)
 _interface_jump_local(::SurfaceConductiveInterface, t) = zero(t)

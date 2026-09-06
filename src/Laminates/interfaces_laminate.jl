@@ -66,8 +66,8 @@ Imperfect interface of spring type with a **full compliance tensor**:
 ```
 
 the traction staying continuous. Generalizes [`SpringInterface`](@ref), whose
-two scalars describe the isotropic case
-`𝕂 = kn n⊗n + kt (δ − n⊗n)`; here `𝕂` is any symmetric second-order
+two **stiffnesses** describe the isotropic case
+`𝕂 = n⊗n/kn + (δ − n⊗n)/kt`; here `𝕂` is any symmetric second-order
 compliance, so the normal and the two tangential directions may each have
 their own compliance and be coupled.
 
@@ -176,10 +176,11 @@ Contribution of one interface to `⟨ℙ⟩` (before the `1/L` weight), in the
 layer frame and in Kelvin-Mandel form. Non-zero for the primal (field-jump)
 types only.
 
-For [`SpringInterface`](@ref)`(kn, kt)` — whose fields are *compliances* —
-the jump `[u] = 𝕂·(σ·n)` with `𝕂 = kn n⊗n + kt (δ − n⊗n)` contributes the
-added strain `(𝕂·(σ·n)) ⊗ˢ n`, i.e. the out-of-plane block
-`diag(kn, kt/2, kt/2)` in Mandel slots. The halving of the tangential term is
+For [`SpringInterface`](@ref)`(kn, kt)` — whose fields are *stiffnesses* —
+the jump `[u] = 𝕂·(σ·n)` with the compliance
+`𝕂 = n⊗n/kn + (δ − n⊗n)/kt` contributes the added strain
+`(𝕂·(σ·n)) ⊗ˢ n`, i.e. the out-of-plane block
+`diag(1/kn, 1/(2kt), 1/(2kt))` in Mandel slots. The halving of the tangential term is
 the symmetrized product, and it is produced by
 `Core.compliance_op_block` — the very helper that turns `𝐊⁻¹` into `ℙ`, so
 the "interface = zero-thickness layer" statement is literal in the code.
@@ -189,8 +190,9 @@ compliance tensor.
 _interface_P(::PerfectInterface, basis, ::Type{T}) where {T} = zero(SMatrix{6, 6, T})
 
 function _interface_P(itf::SpringInterface, basis, ::Type{T}) where {T}
-    kn = convert(T, itf.kn)
-    kt = convert(T, itf.kt)
+    sn, st = spring_compliances(itf)          # stored `kn`, `kt` are stiffnesses
+    kn = convert(T, sn)
+    kt = convert(T, st)
     z = zero(T)
     𝕂 = SMatrix{3, 3, T}(kt, z, z, z, kt, z, z, z, kn)   # (ℓ, m, n) frame
     return MFH_Core._op_embed(MFH_Core.compliance_op_block(𝕂))

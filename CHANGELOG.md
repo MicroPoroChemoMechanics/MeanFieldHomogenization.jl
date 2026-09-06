@@ -1,5 +1,116 @@
 # Changelog
 
+## v0.10.0 — the field at a point, and `kn` finally meaning stiffness
+
+The n-layer sphere was solved completely — Hervé–Zaoui recurrences for both
+harmonics, perfect and imperfect interfaces, elasticity and transport — but
+only the per-layer *averages* were reachable. `scripts/31_local_nlayers.jl`
+said so in its own header: the deviatoric profile "needs the per-radius
+evaluation of the 4×4 shear-recurrence state vector, which is not yet exposed
+by MeanFieldHomogenization", and worked around it by importing private symbols
+and restricting itself to hydrostatic loading. The material was all there; the
+reconstruction was not.
+
+It is now, and while cross-checking it against the C++ reference a second
+thing surfaced: `SpringInterface(kn, kt)` stored *compliances* under names that
+everywhere else in mechanics mean stiffnesses.
+
+### Pointwise localization in an n-layer sphere
+
+`local_strain_strain_loc(sphere, C₀, x)` returns `𝔸(x)` with
+`ε(x) = 𝔸(x) : ε∞`, at any point — inside any layer **and** in the surrounding
+matrix — with perfect, spring or Gurtin–Murdoch membrane interfaces. The three
+other couplings follow the package's existing naming, so an arbitrary remote
+strain **or** stress is a matter of picking the right one:
+`local_stress_strain_loc`, `local_strain_stress_loc`, `local_stress_stress_loc`.
+`local_strain`, `local_stress` and `local_displacement` give the fields for one
+loading; the transport twins are `local_gradient_gradient_loc` and its three
+siblings, plus `local_temperature`, `local_gradient`, `local_flux`.
+
+The configuration is rotation-invariant about the center, so `𝔸(x)` is
+transversely isotropic about `n = x/r` and carries no major symmetry: it comes
+back as a `TensND.TensTI{4,T,6}` — six Walpole coefficients and an axis, in
+closed form, never an 81-component array. Points are given either as a
+Cartesian vector or as `(r, θ, φ)`.
+
+Two details that are not decoration:
+
+- **`side`.** Exactly on an interface the field has two limits, and with a
+  spring or a membrane they genuinely differ — that difference *is* the
+  interface law. Every entry point takes `side = :inner | :outer`, and
+  `get_layer(sphere, r; side)` says which region that resolves to.
+- **`LayeredSphereFields(sphere, C₀)`.** Solves the recurrence once. The
+  `(sphere, C₀)` forms re-solve it on every call, which a field map over
+  thousands of points pays for in full.
+
+`shell_localization(fields, k)` recovers `(α_k, β_k)` from the same cached
+amplitudes, so the pointwise and averaged routes cannot drift apart. That is
+not a claim: averaging `𝔸(x)` over a shell reproduces
+`_layer_avg_dev_shear_factor` exactly, mode 1 contributing `a_k`, modes 3 and 4
+nothing pointwise, and mode 2 the `21/5 (3κ+μ)/μ` term. The whole field is
+validated against Echoes' `loc_eE` / `loc_eS` / `loc_sE` / `loc_sS` to `1e-14`
+on perfect, spring and membrane interfaces alike, and independently against
+`div σ = 0`, `ε = sym ∇u`, and the closed-form exterior field of a single
+sphere.
+
+The `LayeredSpheroid` gained the matching vocabulary — `get_layer(…; side)`,
+`LayeredSpheroidTransportFields`, a remote gradient given as a vector, and the
+four `local_*_*_loc` couplings — so the two inclusion families are asked the
+same questions the same way even though they will never share an
+implementation. Its localization tensor is a general `Tens{2,3}`: a confocal
+spheroid is not rotation-invariant about the field point.
+
+### Breaking changes
+
+- **`SpringInterface(kn, kt)` now takes stiffnesses.** It used to store the
+  numbers it was given as compliances, so `[u] = kn σ`, which inverts every
+  limit: perfect bonding was `kn = 0` and a free surface `kn → ∞`. Both are now
+  the other way round, matching the universal meaning of a spring stiffness and
+  matching Echoes' `PRIMALDISC`, which accepts the same numbers. **Existing code
+  passing compliances silently computes a different interface** — it does not
+  error.
+
+  The type still *stores* compliances, now named `sn`, `st`, because a perfect
+  interface is then the exact zero `sn = st = 0` rather than an infinity, which
+  keeps the near-perfect regime representable in `ForwardDiff.Dual` and in the
+  symbolic types. Both spellings read and write:
+
+  ```julia
+  itf = SpringInterface(50.0, 20.0)        # stiffnesses
+  itf.kn, itf.kt                           # (50.0, 20.0)
+  itf.sn, itf.st                           # (0.02, 0.05)
+  SpringInterface(; sn = 0.02, st = 0.05)  # the same interface
+  ```
+
+  To port: either invert your numbers, or switch the call to the keyword form
+  `SpringInterface(; sn = …, st = …)` and keep them. The one-argument
+  `SpringInterface(k)` still means "normal spring, tangentially bonded", now
+  with `k` a normal stiffness and `st = 0`. Accessors `spring_stiffnesses` and
+  `spring_compliances` are exported; `interface_param(i, :kn)` and
+  `interface_param(i, :sn)` both differentiate, giving reciprocal
+  sensitivities. `AnisotropicSpringInterface` is unchanged — its field was
+  always honestly named `compliance`.
+
+- **A minor bump is breaking for the resolver.** Downstream packages bounded on
+  `"0.9"` must widen to `"0.10"`.
+
+### Fixed
+
+- **`ForwardDiff` through a single layer's modulus.** `_bulk_promote` was typed
+  `NTuple{N, <:Any}`, which binds *one* element type, so a stack with one
+  `Dual` layer among `Float64` ones raised a `MethodError` — while making every
+  layer dual worked, which is why no test caught it. Differentiating
+  `strain_strain_loc(sphere, C₀; layer = k)` with respect to one phase now
+  works.
+- **`ForwardDiff` through a single interface radius.** `LayeredSphere` required
+  a homogeneous radii tuple, so `LayeredSphere((r₁, 2.0), …)` with `r₁::Dual`
+  was a `MethodError`. Mixed-eltype radii are promoted.
+- **`_shear_M_matrix`'s docstring** claimed rows 3–4 were `τ = σ/μ`; they are
+  the physical tractions, as the file header always said.
+- **The theory page** still stated `β_k = a_k` for the layer shear
+  localization, dropping the mode-2 term that the code has carried since it was
+  found to matter by 1–50 % on genuine multi-layer stacks.
+
 ## v0.9.0 — what a tolerance asks for, and what a distribution shape is
 
 Two things that were quietly not what they looked like.

@@ -80,6 +80,8 @@ import ..Core: strain_strain_loc, stress_strain_loc, strain_stress_loc,
 # already imports them from `LayeredSpheres` for exactly this reason.
 # Declaring rival bindings here would make the names ambiguous at `using
 # MeanFieldHomogenization`.
+import ..LayeredSpheres: spring_compliances, spring_stiffnesses,
+    _spring_from_compliances
 import ..LayeredSpheres: AbstractInterface, PerfectInterface, SpringInterface,
     MembraneInterface, KapitzaInterface, SurfaceConductiveInterface,
     layer_count, layer_interface, layer_volume_fraction

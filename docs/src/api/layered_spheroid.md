@@ -5,6 +5,12 @@
 `LayeredSpheres` — see [API — LayeredSphere](layered_sphere.md)
 for their docstrings; they apply unchanged to `LayeredSpheroid`.
 
+So are the pointwise-field generics `get_layer`, `local_temperature`,
+`local_gradient`, `local_flux` and the four `local_*_*_loc` couplings: one
+binding carries both inclusion families, and **all** their docstrings — the
+sphere's methods and the spheroid's — are rendered together on that same
+page.
+
 ```@docs
 MeanFieldHomogenization.LayeredSpheroids
 MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid
@@ -14,10 +20,7 @@ MeanFieldHomogenization.LayeredSpheroids.layer_semiaxes
 MeanFieldHomogenization.LayeredSpheroids.outer_semiaxes
 MeanFieldHomogenization.LayeredSpheroids.spheroid_state_sequence
 MeanFieldHomogenization.LayeredSpheroids.spheroid_ba_ratios
-MeanFieldHomogenization.LayeredSpheroids.get_layer
-MeanFieldHomogenization.LayeredSpheroids.local_temperature
-MeanFieldHomogenization.LayeredSpheroids.local_gradient
-MeanFieldHomogenization.LayeredSpheroids.local_flux
+MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroidTransportFields
 MeanFieldHomogenization.LayeredSpheroids.coupling_matrices
 MeanFieldHomogenization.LayeredSpheroids.legendre_odd
 ```

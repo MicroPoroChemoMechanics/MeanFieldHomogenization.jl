@@ -37,9 +37,15 @@ thickness(layer::Symbol) = ThicknessParameter(layer)
     InterfaceParameter(index::Int, field::Symbol)
     interface_param(index::Int, field::Symbol)
 
-Lens on one scalar field of the `index`-th interface of a [`Laminate`](@ref)
-— `:kn`, `:kt` (spring compliances), `:κs`, `:μs` (surface moduli),
-`:resistance` (Kapitza), `:conductance` (surface-conductive).
+Lens on one scalar parameter of the `index`-th interface of a
+[`Laminate`](@ref) — `:kn`, `:kt` (spring **stiffnesses**) or equivalently
+`:sn`, `:st` (the matching compliances, which is what
+[`SpringInterface`](@ref) stores); `:κs`, `:μs` (surface moduli);
+`:resistance` (Kapitza); `:conductance` (surface-conductive).
+
+Differentiating with respect to `:kn` and with respect to `:sn` are both
+legitimate and give reciprocal sensitivities; pick the one your model is
+parameterized on.
 
 Interface `index` sits **on top of** layer `index` in stacking order.
 """
@@ -87,14 +93,17 @@ end
 
 function MFH_Core.get_param(lam::Laminate, p::InterfaceParameter)
     itf = layer_interface(lam, p.index)
-    fields = fieldnames(typeof(itf))
-    p.field in fields || throw(
+    # `propertynames`, not `fieldnames`: a `SpringInterface` stores compliances
+    # and exposes the stiffnesses `:kn`, `:kt` as conversions, and both must be
+    # addressable as parameters.
+    props = propertynames(itf)
+    p.field in props || throw(
         ArgumentError(
-            "interface $(p.index) is a $(nameof(typeof(itf))), which has no field " *
-                ":$(p.field); available: $(isempty(fields) ? "none" : join(fields, ", "))"
+            "interface $(p.index) is a $(nameof(typeof(itf))), which has no parameter " *
+                ":$(p.field); available: $(isempty(props) ? "none" : join(props, ", "))"
         )
     )
-    return getfield(itf, p.field)
+    return getproperty(itf, p.field)
 end
 
 function MFH_Core.set_param(lam::Laminate, p::InterfaceParameter, value)
@@ -121,15 +130,33 @@ function _replace_interface_field(itf::AbstractInterface, field::Symbol, value)
     )
     vals = map(f -> f === field ? value : getfield(itf, f), fields)
     T = promote_type(map(typeof, vals)...)
-    return (nameof(typeof(itf)) |> _interface_ctor)(map(x -> convert(T, x), vals)...)
+    # Rebuild through the type-parameterized constructor, which always takes the
+    # STORED fields in declaration order.  Going through the bare name would
+    # feed a `SpringInterface`'s compliances to its stiffness constructor.
+    return Base.typename(typeof(itf)).wrapper{T}(map(x -> convert(T, x), vals)...)
 end
 
-_interface_ctor(name::Symbol) =
-    name === :SpringInterface ? SpringInterface :
-    name === :MembraneInterface ? MembraneInterface :
-    name === :KapitzaInterface ? KapitzaInterface :
-    name === :SurfaceConductiveInterface ? SurfaceConductiveInterface :
-    throw(ArgumentError("interface type $(name) carries no differentiable scalar field"))
+# A spring stores compliances; setting a stiffness sets the reciprocal, and
+# `ForwardDiff` differentiates straight through the `inv`.
+function _replace_interface_field(itf::SpringInterface, field::Symbol, value)
+    sn, st = spring_compliances(itf)
+    if field === :kn
+        sn = inv(value)
+    elseif field === :kt
+        st = inv(value)
+    elseif field === :sn
+        sn = value
+    elseif field === :st
+        st = value
+    else
+        throw(
+            ArgumentError(
+                "SpringInterface has no parameter :$(field); available: kn, kt, sn, st"
+            )
+        )
+    end
+    return _spring_from_compliances(sn, st)
+end
 
 # ── AmountParameter: rejected, with a pointer ───────────────────────────────
 

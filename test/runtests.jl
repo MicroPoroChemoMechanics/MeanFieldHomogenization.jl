@@ -227,6 +227,7 @@ end
         include("LayeredSpheres/test_incompressible.jl")
         include("LayeredSpheres/test_conductivity.jl")
         include("LayeredSpheres/test_christensen.jl")
+        include("LayeredSpheres/test_local_fields.jl")
         include("LayeredSpheres/test_generic.jl")
         include("LayeredSpheres/test_scheme_integration.jl")
     end

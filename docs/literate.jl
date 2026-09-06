@@ -37,6 +37,7 @@ const CLEAN_SCRIPT_DIR = joinpath(@__DIR__, "generated_scripts")
 const PUBLISHED_SCRIPTS = [
     "02_hill_elasticity.jl" => "hill_tensors",
     "30_average_nlayers.jl" => "layered_sphere",
+    "31_local_nlayers.jl" => "layered_sphere_local_fields",
     "32_spheroid_effective_conductivity.jl" => "layered_spheroid_effective",
     "33_laminate_basics.jl" => "laminate",
     "34_laminate_interfaces.jl" => "laminate_interfaces",

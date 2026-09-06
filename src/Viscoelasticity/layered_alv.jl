@@ -98,6 +98,7 @@ function _iface_param_volterra(p::ViscoLaw, times::AbstractVector, n::Int)
     return trapezoidal_matrix(p, times)
 end
 
+
 # ── Bulk (2n × 2n, mode-major) ALV interface transfer matrices ─────────────
 #
 # State vector (mode-major) : s = (u_r-block ; σ_rr-block) of size 2n × m.
@@ -113,7 +114,8 @@ layer Volterra moduli `(M_κ, M_μ)` are passed in for type promotion.
 
 Supports the same interface types as the elastic counterpart:
 [`PerfectInterface`](@ref), [`SpringInterface`](@ref) (primal,
-displacement jump driven by `kn`), and [`MembraneInterface`](@ref)
+displacement jump driven by the compliance `1/kn`), and
+[`MembraneInterface`](@ref)
 (dual, traction jump driven by `κs`).  Each elastic scalar parameter
 may also be a [`ViscoLaw`](@ref) — in that case the jump is itself
 ageing and the corresponding block is the parameter's trapezoidal
@@ -131,7 +133,7 @@ function _bulk_interface_T_alv(
         intf::SpringInterface, M_κ, M_μ, r,
         times::AbstractVector, n::Int
     )
-    M_kn = _iface_param_volterra(intf.kn, times, n)
+    M_kn = _iface_param_volterra(intf.sn, times, n)   # stored COMPLIANCE
     T = promote_type(eltype(M_κ), eltype(M_μ), eltype(M_kn))
     Id = Matrix{T}(I, n, n)
     M = zeros(T, 2 * n, 2 * n)
@@ -222,8 +224,9 @@ function _bulk_transition_alv(
     R³ = R^3
     R⁴ = R^4
     Sb = 3 .* M_κ_b .+ 4 .* M_μ_b
-    M_kn = _iface_param_volterra(intf.kn, times, n)
-    # Numerators (`u_b = u_a + kn σ_a`, `σ_b = σ_a` → augmented bulk transition).
+    M_kn = _iface_param_volterra(intf.sn, times, n)   # stored COMPLIANCE
+    # Numerators (`u_b = u_a + σ_a/kn`, `σ_b = σ_a` → augmented bulk transition;
+    # `M_kn` already holds the COMPLIANCE block `1/kn`).
     num11 = 3 .* M_κ_a .+ 4 .* M_μ_b .+ (12 / R) .* (M_μ_b * (M_κ_a * M_kn))
     num12 = (4 / R³) .* (M_μ_b .- M_μ_a) .- (16 / R⁴) .* (M_μ_b * (M_μ_a * M_kn))
     num21 = (-3 * R³) .* (M_κ_a .- M_κ_b) .+ (9 * R²) .* (M_κ_a * (M_κ_b * M_kn))
@@ -579,8 +582,8 @@ function _shear_interface_T_alv(
         M_κ_a, M_μ_a, M_κ_b, M_μ_b,
         r, times::AbstractVector, n::Int
     )
-    M_kn = _iface_param_volterra(intf.kn, times, n)
-    M_kt = _iface_param_volterra(intf.kt, times, n)
+    M_kn = _iface_param_volterra(intf.sn, times, n)   # stored COMPLIANCE
+    M_kt = _iface_param_volterra(intf.st, times, n)   # stored COMPLIANCE
     T = promote_type(
         eltype(M_μ_a), eltype(M_μ_b),
         eltype(M_kn), eltype(M_kt)
@@ -595,7 +598,7 @@ function _shear_interface_T_alv(
     blocks[2, 2] = Id
     blocks[3, 3] = Id
     blocks[4, 4] = Id
-    # σ-state: U⁺ = U⁻ + kn · σ_rr⁻ ; V⁺ = V⁻ + kt · σ_rθ⁻.
+    # σ-state: U⁺ = U⁻ + σ_rr⁻/kn ; V⁺ = V⁻ + σ_rθ⁻/kt (blocks are compliances).
     blocks[1, 3] = T.(M_kn)
     blocks[2, 4] = T.(M_kt)
     return _assemble_4n_time_major(blocks, n)

@@ -34,6 +34,11 @@ const MFH_Core = Core
 import ..LayeredSpheres: PerfectInterface, KapitzaInterface, SurfaceConductiveInterface,
     AbstractInterface, layer_conductivity_average, layer_resistivity_average,
     layer_count, layer_modulus, layer_interface, layer_volume_fraction
+# Pointwise-field generics are declared by `LayeredSpheres` (included first) and
+# extended here, so a single binding carries both inclusion families.
+import ..LayeredSpheres: get_layer, local_temperature, local_gradient, local_flux,
+    local_gradient_gradient_loc, local_flux_gradient_loc,
+    local_gradient_flux_loc, local_flux_flux_loc
 
 import ..Core: gradient_gradient_loc, flux_gradient_loc, gradient_flux_loc, flux_flux_loc,
     conductivity_contribution, resistivity_contribution, is_homogeneous_inclusion
@@ -51,5 +56,6 @@ export layer_count, layer_q, layer_modulus, layer_interface, layer_semiaxes,
     layer_volume_fraction, outer_semiaxes
 export local_temperature, local_gradient, local_flux
 export spheroid_state_sequence, spheroid_ba_ratios, get_layer
+export LayeredSpheroidTransportFields
 
 end # module
