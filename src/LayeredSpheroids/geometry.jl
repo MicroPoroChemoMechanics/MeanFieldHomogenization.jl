@@ -84,6 +84,12 @@ symbolic one: that sign is undecidable on a symbol, and SymPy answers `false`
 to a comparison it cannot settle, so guessing would silently pick a family.
 On a numeric type it is still checked: a hint that contradicts the semi-axes
 throws, since every layer is verified to belong to the declared family.
+
+!!! note "Symbolic support is prolate only"
+    An oblate spheroid carries `q = iτ`, so its confocal parameter is a
+    `Complex{T}` — and Julia's `Complex{T}` requires `T <: Real`, which
+    `SymPy.Sym` is not. `Symbolics.Num` is `<: Real` and builds, but Symbolics
+    has no `sym_lu` for a `Matrix{Complex{Num}}`. Prolate works with both.
 """
 function LayeredSpheroid(
         axis_radii::Tuple{T, Vararg{T, M}}, disk_radii::Tuple{T, Vararg{T, M}},

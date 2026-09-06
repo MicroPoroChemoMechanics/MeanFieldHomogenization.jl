@@ -5,6 +5,11 @@ using LinearAlgebra
 using ForwardDiff
 using SymPy   # top level on purpose: `@syms` is expanded before a `using`
 # nested in a `@testset` body would have run.
+import Symbolics   # `import`, deliberately, NOT `using`: SymPy and Symbolics both
+# export `@syms`, and `runtests.jl` includes every file into the same `Main`, so a
+# bare `using` here breaks the files that rely on SymPy's export. Same convention
+# as `test/Cracks/test_cod_symbolic.jl`.
+const _Sy = Symbolics
 
 const LSpd = MeanFieldHomogenization.LayeredSpheroids
 
@@ -211,4 +216,31 @@ end
         # It really depends on the symbols — not a constant that slipped through.
         @test !isempty(intersect(SymPy.free_symbols(expr), [a₁ᶜ, a₂ᶜ, k₁ᶜ, k₂ᶜ]))
     end
+
+    @testset "oblate is out of reach symbolically, and why" begin
+        # `q = iτ`, so an oblate spheroid's confocal parameter is `Complex{T}`
+        # — and Julia's `Complex{T}` requires `T <: Real`, which `SymPy.Sym` is
+        # not. This is a language-level constraint on the representation, not a
+        # missing method here; lifting it means carrying `τ` real and branching
+        # on prolate/oblate instead of relying on the complex substitution.
+        # Pinned as a test so the day it changes, it is noticed.
+        @test_throws TypeError LayeredSpheroid(
+            (Sym(1), Sym(2)), (sqrt(Sym(5)) / 2, sqrt(Sym(17)) / 2),
+            (_K(k₁ᶜ), _K(k₂ᶜ)); prolate = false, Nseries = 1
+        )
+    end
+end
+
+@testset "LayeredSpheroid — Symbolics.Num" begin
+    _Sy.@variables nk₁ nk₂
+    # `Num <: Real`, unlike `Sym`, so the same prolate path is open to it.
+    s = LayeredSpheroid(
+        (1.0, 2.0), (sqrt(0.75), sqrt(3.75)),
+        (_K(nk₁), _K(nk₂)); Nseries = 1
+    )
+    X = LSpd.spheroid_state_sequence(s, 2.0, false)
+    @test eltype(X[1]) === _Sy.Num
+    v = _Sy.value(_Sy.substitute(X[1][1], Dict(nk₁ => 1.0, nk₂ => 5.0)))
+    sf = LayeredSpheroid(_AX_P, _DK_P, (_K(1.0), _K(5.0)); Nseries = 1)
+    @test Float64(v) ≈ _probe(sf, 2.0, false) rtol = 1.0e-12
 end

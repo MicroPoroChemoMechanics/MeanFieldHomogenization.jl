@@ -58,6 +58,12 @@ hold it. Nothing in the suite asked for such a derivative, so nothing noticed.
   Because the sign of `axis² − disk²` is undecidable on a symbol, and SymPy
   answers `false` to a comparison it cannot settle, a symbolic spheroid
   requires an explicit `prolate = true | false`.
+
+  Prolate only, and the limit is structural rather than an omission: an oblate
+  spheroid carries `q = iτ`, so its confocal parameter is a `Complex{T}`, and
+  Julia's `Complex{T}` requires `T <: Real` — which `SymPy.Sym` is not.
+  `Symbolics.Num` is `<: Real` and gets further, but Symbolics has no `sym_lu`
+  for a `Matrix{Complex{Num}}`. Both facts are pinned by tests.
 - Tests: `test/LayeredSpheres/test_interface_sensitivity.jl` and
   `test/LayeredSpheroids/test_ad.jl`. Every derivative is checked against a
   central difference, and the interface cases additionally assert the
