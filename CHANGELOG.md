@@ -102,21 +102,6 @@ stress and transport averages that had no counterpart are there:
 - **A minor bump is breaking for the resolver.** Downstream packages bounded on
   `"0.9"` must widen to `"0.10"`.
 
-### Known limitation
-
-- **The oblate `LayeredSpheroid` transport series loses accuracy far from the
-  particle, and *more* series terms make it worse.** With `Nseries = 3` the
-  axial gradient is right to `1e-4` at every distance tested; with `Nseries = 5`
-  it is still right at `z = 100` but reads `0.55` at `z = 200` and `−88` at
-  `z = 400`; with `Nseries = 8` it is already wrong at `z = 50`, and with
-  `Nseries = 12` at `z = 10`. The prolate path, whose `q` is real, is stable
-  throughout the same sweep. This is catastrophic cancellation in the complex
-  Legendre recurrences — `P_n(iτ)` and `Q_n(iτ)` grow and decay like `τ^n` — and
-  it is **pre-existing**, not introduced here. Nothing in the shipped
-  documentation or tests strays into the affected region, but raising `Nseries`
-  to improve accuracy currently does the opposite, silently. Fixing it needs
-  scaled Legendre functions and is deliberately not attempted in this release.
-
 ### Fixed
 
 - **`ForwardDiff` through a single layer's modulus.** `_bulk_promote` was typed
@@ -144,6 +129,41 @@ stress and transport averages that had no counterpart are there:
   `r = r_k` are unchanged to machine precision, and the new test compares
   eleven radii against the pointwise field integrated by a 3-point
   Gauss–Legendre rule that is exact for this integrand.
+- **A `LayeredSpheroid` diverged away from the particle, and raising `Nseries`
+  made it worse.** At 100 particle radii the axial gradient read `-3.4e24`
+  instead of `1` with `Nseries = 12`; `Nseries = 20` was already wrong at ten
+  radii. Two independent defects, each verified separately.
+
+  *The `Q` Legendre functions were run by an upward recurrence.* `Qₙ` is the
+  **minimal** solution of the three-term recurrence — `|Qₙ/Pₙ| ~ ρ^{-(2n+1)}`
+  with `ρ = |x + √(x²−1)|` — so going upward amplifies the seed's rounding
+  error by `ρ^{2n}`. Against the same recurrence evaluated at 600 bits,
+  `Q₁₅(5)` was wrong by a relative `1.3e13` and `Q₁₅(50)` by `7.9e26`, for
+  **prolate as well as oblate**. `Q` is now obtained by Miller's downward
+  recurrence, normalized on an exact low-degree closed form, with derivatives
+  from the identity `(x²−1) dQₙᵐ/dx = n x Qₙᵐ − (n+m) Qₙ₋₁ᵐ` rather than from a
+  second unstable recurrence.
+
+  The direction is chosen from `ρ`, which governs both methods in opposite
+  senses: upward is kept when `ρ ≈ 1` — a nearly degenerate spheroid, where
+  `Q` barely decays and Miller would need thousands of steps. Getting that
+  backwards is not benign: forcing Miller at `ρ = 1.017` (a 1:60 flat disc)
+  silently returned a `Q` good to only `2e-7`, and with it a single-layer
+  spheroid that no longer matched its closed-form Eshelby value.
+
+  *The far-field condition was recovered instead of imposed.* In the matrix
+  every growing amplitude above degree 1 vanishes identically, or the
+  temperature would blow up at infinity. The core amplitudes are solved to make
+  exactly that true, but recomputing the matrix block through the layer
+  transfer reintroduced the linear solve's `O(1e-17)` residue — which
+  `P_{2r-1}(q) ~ q^{2r-1}` then amplified past `1e40`. It is now written down.
+
+  Both are pre-existing. The shipped documentation and tests never strayed into
+  the affected region, which is why nothing caught them; the new
+  `test/LayeredSpheroids/test_legendre_stability.jl` checks `Q` against a
+  600-bit run of the **original** upward recurrence — an outside reference, not
+  the new algorithm in wider precision — and pins the `Nseries`-independence of
+  the far field.
 - **An oblate `LayeredSpheroid` returned `NaN` for its local field on the
   revolution axis.** At `|p| = 1` the confocal chart degenerates and `h_p` is
   infinite; dividing a real number by `Inf` gives the correct `0`, but an

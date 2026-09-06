@@ -250,6 +250,7 @@ end
         include("LayeredSpheroids/test_coupling.jl")
         include("LayeredSpheroids/test_conductivity.jl")
         include("LayeredSpheroids/test_scheme_integration.jl")
+        include("LayeredSpheroids/test_legendre_stability.jl")
         include("LayeredSpheroids/test_local_fields.jl")
     end
 
