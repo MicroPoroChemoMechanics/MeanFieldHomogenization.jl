@@ -222,6 +222,9 @@ end
             # supershape -- no solve, and kept at level 2, so it costs seconds.
             # It needs only gmsh, but rides the same guard.
             include("FiniteElements/test_cell_mesh.jl")
+            # And the corrected solve on it, against the exact spherical pore
+            # in both physics. Level 2, so about twenty-five seconds.
+            include("FiniteElements/test_cell_solve.jl")
             if HAS_GRIDAP
                 include("FiniteElements/test_gridap_backend.jl")
             else

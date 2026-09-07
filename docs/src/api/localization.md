@@ -121,6 +121,34 @@ MeanFieldHomogenization.FiniteElements.fe_crack_stiffness
 MeanFieldHomogenization.FiniteElements.fe_crack_mean_jump
 ```
 
+### The three-dimensional cell
+
+Eight methods for the third cell family. Two things distinguish it from the
+crack's: the geometry is **quadratic**, the mid-edge nodes of the inclusion
+boundary having been moved onto the exact shape, and one contract serves two
+physics — a scalar temperature and a vector displacement — with only the
+material and the two averages differing.
+
+```@docs
+MeanFieldHomogenization.FiniteElements._build_gmsh_cell_model
+MeanFieldHomogenization.FiniteElements._snap_cell_surface_to_shape!
+MeanFieldHomogenization.FiniteElements._snap_cell_surface_to_sphere!
+MeanFieldHomogenization.FiniteElements.fe_cell_grid
+MeanFieldHomogenization.FiniteElements.fe_cell_counts
+MeanFieldHomogenization.FiniteElements.fe_cell_space
+MeanFieldHomogenization.FiniteElements.fe_cell_dof_split
+MeanFieldHomogenization.FiniteElements.fe_cell_set_dirichlet!
+MeanFieldHomogenization.FiniteElements.fe_cell_stiffness
+MeanFieldHomogenization.FiniteElements.fe_cell_mean_gradient
+MeanFieldHomogenization.FiniteElements.fe_cell_mean_strain
+MeanFieldHomogenization.FiniteElements._cell_close_dipole
+MeanFieldHomogenization.FiniteElements._cell_conduction_localization
+MeanFieldHomogenization.FiniteElements._cell_elastic_localization
+MeanFieldHomogenization.FiniteElements._cell_kelvin_basis
+MeanFieldHomogenization.FiniteElements._cell_outer_radius
+MeanFieldHomogenization.FiniteElements._cell_solver
+```
+
 ### Elliptical crack (3-D)
 
 ```@docs

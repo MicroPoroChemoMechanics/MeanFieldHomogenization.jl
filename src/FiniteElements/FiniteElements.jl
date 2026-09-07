@@ -69,6 +69,7 @@ include("axi_driver.jl")
 
 # The three-dimensional cell around a non-ellipsoidal shape: geometry first.
 include("cell_gmsh_geometry.jl")
+include("cell_driver.jl")
 
 # ─── Sensitivity is not available through a finite-element geometry ──────────
 #

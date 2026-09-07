@@ -311,3 +311,127 @@ element sits above the crack carries `n = -e₃` and contributes `+u`.
 """
 fe_crack_mean_jump(bk::FEBackend, space, u, S_f, b) =
     _no_backend_method("fe_crack_mean_jump", bk)
+
+# ─── The cell contract ───────────────────────────────────────────────────────
+#
+#  Eight more methods, for the three-dimensional cell around a non-ellipsoidal
+#  shape.  Between the two families above in width: one field over one region,
+#  as the crack has, but two physics — a scalar temperature and a vector
+#  displacement — sharing every function except the two that know what is being
+#  integrated.
+#
+#  As in the other two families, the inclusion is **not meshed**. A pore's
+#  boundary is naturally flux-free in conduction and traction-free in
+#  elasticity, so the meshed region is the matrix shell alone and the inclusion
+#  surface is simply a piece of boundary with nothing prescribed on it.
+
+"""
+    fe_cell_grid(backend, shape, opts)
+
+Backend-native mesh of the cell around `shape`, carrying the cell set
+`"matrix"` and the boundary sets `"inclusion"` and `"outer"` of
+[`_build_gmsh_cell_model`](@ref).
+
+The mesh is **second order with a curved boundary**: the mid-edge nodes of the
+inclusion surface have been moved onto the exact shape, so the geometric
+interpolation must be quadratic too. A backend that silently used a linear
+geometry here would throw away the whole gain and report a plausible wrong
+answer.
+"""
+fe_cell_grid(b::FEBackend, shape, opts) = _no_backend_method("fe_cell_grid", b)
+
+"""
+    fe_cell_counts(backend, grid) -> (; ncells, nnodes, area_inclusion, area_outer)
+
+Mesh diagnostics: cell and node counts, and the area of each boundary set. The
+outer area is compared against ``4\\pi R^2`` — it is what says the outer
+surface was snapped onto the sphere rather than left a polyhedron.
+"""
+fe_cell_counts(b::FEBackend, grid) = _no_backend_method("fe_cell_counts", b)
+
+"""
+    fe_cell_space(backend, grid, order, ncomp) -> space
+
+`ncomp` scalar Lagrange fields of degree `order` on `grid` — `ncomp = 1` for
+conduction, `3` for elasticity — with a quadrature exact to degree
+`2 * order`, a facet quadrature of the same degree, and a **quadratic geometric
+interpolation** to follow the curved boundary.
+
+The dof numbering must span the whole space, with no Dirichlet elimination: the
+driver splits the dofs itself so that one factorization serves all twelve
+right-hand sides.
+"""
+fe_cell_space(b::FEBackend, grid, order, ncomp) =
+    _no_backend_method("fe_cell_space", b)
+
+"""
+    fe_cell_dof_split(backend, space) -> (ndofs, free, presc)
+
+Total dof count and the two index vectors, `presc` being the dofs of the
+`"outer"` boundary and nothing else. The inclusion surface carries no condition
+at all — that is what makes it a pore.
+"""
+fe_cell_dof_split(b::FEBackend, space) = _no_backend_method("fe_cell_dof_split", b)
+
+"""
+    fe_cell_set_dirichlet!(backend, space, u, f) -> u
+
+Write `u[d] = f(x_d)[k]` for every dof `d` of the `"outer"` boundary, `x_d`
+being its node and `k` its component; for a scalar field `f` returns a number.
+
+Called once per right-hand side and **must not touch the matrix**: the driver
+assembles and factorizes once, then calls this twelve times.
+"""
+fe_cell_set_dirichlet!(b::FEBackend, space, u, f) =
+    _no_backend_method("fe_cell_set_dirichlet!", b)
+
+"""
+    fe_cell_stiffness(backend, space, material) -> AbstractMatrix
+
+Stiffness over the whole dof numbering, over the matrix region:
+
+```
+conduction   K = ∫ ∇v ⋅ 𝐊 ⋅ ∇u dΩ         `material` a 3×3 matrix
+elasticity   K = ∫ ε(v) : ℂ : ε(u) dΩ      `material` a SymmetricTensor{4,3}
+```
+
+Two methods on one name, told apart by the type of `material`. Both are
+**isotropic**: the corrected boundary condition uses a closed-form dipole field,
+and the driver refuses anything else long before reaching here, so a backend may
+work from the scalar or from `(λ, μ)` instead of from the full object.
+"""
+fe_cell_stiffness(b::FEBackend, space, material) =
+    _no_backend_method("fe_cell_stiffness", b)
+
+"""
+    fe_cell_mean_gradient(backend, space, u, V) -> NTuple{3}
+
+``\\langle \\nabla T \\rangle`` over the **inclusion**, as the surface integral
+``\\frac{1}{V}\\int_{\\partial\\mathcal I} T\\,\\underline n\\,\\mathrm dS``,
+with `V` the volume of the inclusion.
+
+The inclusion is not meshed, so its average is reached through the divergence
+theorem on its boundary — which is also why it costs nothing beyond the solve.
+
+**On the sign.** The normal a backend reports on a facet set points out of the
+*meshed* region, hence **into** the pore, so it is the opposite of the
+inclusion's own outward normal. The minus sign belongs here, and it is the same
+one the crack and axisymmetric drivers carry in two different places for the
+same reason. Getting it wrong is not invisible: the corrected answer then
+carries exactly twice the truncation bias instead of none.
+"""
+fe_cell_mean_gradient(b::FEBackend, space, u, V) =
+    _no_backend_method("fe_cell_mean_gradient", b)
+
+"""
+    fe_cell_mean_strain(backend, space, u, V) -> NTuple{6}
+
+``\\langle \\varepsilon \\rangle`` over the inclusion in Kelvin-Mandel, as
+``\\frac{1}{V}\\int_{\\partial\\mathcal I}
+(\\underline u \\otimes \\underline n)^{\\mathrm s}\\,\\mathrm dS``.
+
+Same normal convention, and the same minus sign, as
+[`fe_cell_mean_gradient`](@ref).
+"""
+fe_cell_mean_strain(b::FEBackend, space, u, V) =
+    _no_backend_method("fe_cell_mean_strain", b)
