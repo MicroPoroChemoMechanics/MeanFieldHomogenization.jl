@@ -207,13 +207,3 @@ function dipole_temperature_iso(K₀, x::AbstractVector, M)
     dG = green_gradient_iso2(K₀, x)
     return dG[1] * M[1] + dG[2] * M[2] + dG[3] * M[3]
 end
-
-"""
-    extract_iso_conductivity(K₀::TensISO{2,3}) -> k₀
-
-The single conductivity of an isotropic second-order tensor. The TensND
-convention for `TensISO{2,3}` is ``\\boldsymbol K_0 = k_0\\,\\boldsymbol 1``, so
-`K₀.data` holds `(k₀,)` — the same access the Hill-tensor kernels in
-`Conductivity/` use.
-"""
-extract_iso_conductivity(K₀::TensND.TensISO{2, 3}) = K₀.data[1]

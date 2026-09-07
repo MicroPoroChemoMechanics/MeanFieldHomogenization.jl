@@ -149,6 +149,26 @@ MeanFieldHomogenization.FiniteElements._cell_outer_radius
 MeanFieldHomogenization.FiniteElements._cell_solver
 ```
 
+### Superspherical and superspheroidal pore
+
+The inclusion type. It enters as a **heterogeneous** inclusion, which for a
+cavity is the truthful answer rather than a convenience: `is_homogeneous_inclusion`
+asks whether a single ``\mathbb C_1`` describes the interior, and `inv(0)` is
+meaningless. The package's exact identities then take over, and with a cavity's
+stress-side localization being *identically* zero they collapse to
+``\mathbb N = -\mathbb C_0:\mathbb A`` and
+``\mathbb H = \mathbb A:\mathbb S_0`` — the right answer for a pore, with no
+``\mathbb C_1`` anywhere in it. So the phase property handed to `add_phase!` is
+genuinely ignored, and no contribution tensor is overridden.
+
+```@docs
+MeanFieldHomogenization.FESupershapePore
+MeanFieldHomogenization.SupershapePoreShape
+MeanFieldHomogenization.fe_cell_localization
+MeanFieldHomogenization.fe_cell_mesh_report
+MeanFieldHomogenization.FiniteElements._fe_frame
+```
+
 ### Elliptical crack (3-D)
 
 ```@docs
@@ -201,7 +221,6 @@ MeanFieldHomogenization.Core.green_gradient_iso
 MeanFieldHomogenization.Core.dipole_displacement_iso
 MeanFieldHomogenization.Core.green_gradient_iso2
 MeanFieldHomogenization.Core.dipole_temperature_iso
-MeanFieldHomogenization.Core.extract_iso_conductivity
 ```
 
 ## Neural-surrogate inclusions

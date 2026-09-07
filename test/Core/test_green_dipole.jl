@@ -100,7 +100,7 @@ end
     pts = ([0.3, -0.7, 1.1], [1.0, 0.0, 0.0], [-2.0, 3.0, -1.5], [0.01, 0.02, -0.03])
 
     @testset "against the closed form" begin
-        @test extract_iso_conductivity(K₀) == k₀
+        @test _MFHC.extract_iso_conductivity(K₀) == k₀
         for x in pts
             r = norm(x)
             @test collect(green_gradient_iso2(K₀, x)) ≈ -x ./ (4π * k₀ * r^3)

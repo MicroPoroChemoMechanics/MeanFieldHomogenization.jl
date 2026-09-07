@@ -120,6 +120,12 @@ outer sphere: a pore is not meshed at all, its boundary being naturally
 flux-free in conduction and traction-free in elasticity. That is why the volume
 is built from two surface loops with the outer one first — the inclusion is a
 hole.
+
+`cavity_volume` is the volume of the body the solve **actually sees**, measured
+on the curved boundary once it has been snapped. Normalizing a localization
+tensor by the *exact* volume while solving on the meshed one would fold a
+geometry error into the answer with nothing to reveal it; reporting both is what
+makes that error visible instead.
 """
 function _build_gmsh_cell_model(
         gmsh, shape::AbstractSuperShape, opts::FECellMeshOptions = FECellMeshOptions()
@@ -169,7 +175,13 @@ function _build_gmsh_cell_model(
         _snap_cell_surface_to_sphere!(gmsh, R, CELL_TAG_OUTER)
     end
 
-    return (; R, inner, outer, h_in = hin, h_out = hout, snap)
+    cavity_volume = if opts.order > 1
+        fe_cell_curved_volume(gmsh, CELL_TAG_INCLUSION)
+    else
+        mesh_volume(inner)
+    end
+
+    return (; R, inner, outer, h_in = hin, h_out = hout, snap, cavity_volume)
 end
 
 function _add_discrete_surface!(gmsh, surf::TriSurface, tag::Integer, tag_offset::Integer)

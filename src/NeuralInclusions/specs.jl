@@ -312,7 +312,7 @@ _class_frame(::Union{HillTI, HillTI2}, geom) =
 # is transversely isotropic about a direction the outer shape says nothing about.
 # The convention is therefore the package's usual one — **column 3 of the
 # inclusion basis is the axis** — the same column `FEExcenteredSphere` solves
-# about (`FiniteElements._axi_frame`) and the same one that carries a crack's
+# about (`FiniteElements._fe_frame`) and the same one that carries a crack's
 # normal. A wrong choice here does not pass silently: `components` measures the
 # projection residual.
 _class_frame(::Union{StrainLocTI, StressLocTI}, geom) =

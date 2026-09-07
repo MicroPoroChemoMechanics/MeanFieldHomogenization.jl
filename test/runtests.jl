@@ -225,6 +225,9 @@ end
             # And the corrected solve on it, against the exact spherical pore
             # in both physics. Level 2, so about twenty-five seconds.
             include("FiniteElements/test_cell_solve.jl")
+            # And the inclusion type built on it, through the schemes in both
+            # physics. About thirty seconds.
+            include("FiniteElements/test_supershape_pore.jl")
             if HAS_GRIDAP
                 include("FiniteElements/test_gridap_backend.jl")
             else

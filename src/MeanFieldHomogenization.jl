@@ -172,7 +172,7 @@ export MaterialSymmetry, IsotropicSym, TransverselyIsotropicSym,
 export material_symmetry, dimension, inclusion_basis, shape_trait, shape_tensor
 export eshelby_tensor
 export green_gradient_iso, dipole_displacement_iso, green_operator_iso
-export green_gradient_iso2, dipole_temperature_iso, extract_iso_conductivity
+export green_gradient_iso2, dipole_temperature_iso
 export green_operator_aniso, green_operator, green_function_aniso
 export gauss_legendre_nodes
 
@@ -212,6 +212,8 @@ export FEBackend, AutoBackend, FerriteBackend, GridapBackend
 export FEEllipticCrack, FEMeshOptions, fe_cod_breakdown, fe_mesh_report
 export FEExcenteredSphere, FEAxiMeshOptions
 export FECellMeshOptions, fe_cell_size_estimate
+export FESupershapePore, SupershapePoreShape
+export fe_cell_localization, fe_cell_mesh_report
 export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_localization, fe_axi_breakdown, fe_axi_mesh_report
 

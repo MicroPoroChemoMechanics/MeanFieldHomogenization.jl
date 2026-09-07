@@ -49,6 +49,8 @@ export FEBackend, AutoBackend, FerriteBackend, GridapBackend
 export FEMeshOptions, FEEllipticCrack, fe_cod_breakdown, fe_mesh_report
 export FEAxiMeshOptions, FEExcenteredSphere
 export FECellMeshOptions, fe_cell_size_estimate
+export FESupershapePore, SupershapePoreShape
+export fe_cell_localization, fe_cell_mesh_report
 export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_breakdown, fe_axi_mesh_report, fe_axi_localization
 
@@ -70,6 +72,7 @@ include("axi_driver.jl")
 # The three-dimensional cell around a non-ellipsoidal shape: geometry first.
 include("cell_gmsh_geometry.jl")
 include("cell_driver.jl")
+include("supershape_pore.jl")
 
 # ─── Sensitivity is not available through a finite-element geometry ──────────
 #
@@ -84,7 +87,7 @@ include("cell_driver.jl")
 #  geometry to `Float64` on entry, so a `ForwardDiff.Dual` loses its
 #  perturbation at the door.  Refusing is the only honest option.
 
-const _FEGeometry = Union{FEEllipticCrack, FEExcenteredSphere}
+const _FEGeometry = Union{FEEllipticCrack, FEExcenteredSphere, FESupershapePore}
 
 _no_fe_sensitivity(geom, name) = error(
     "analytic sensitivity is not available through `$(nameof(typeof(geom)))`: " *
