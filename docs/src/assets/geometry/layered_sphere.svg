@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 306" width="460" height="306"
+     role="img" aria-labelledby="ttl dsc">
+  <title id="ttl">Concentric n-layer sphere in an unbounded matrix</title>
+  <desc id="dsc">A core of radius r1, concentric shells up to radius rN, embedded in an
+  unbounded matrix of stiffness C0 and loaded by a remote uniform strain E.</desc>
+
+  <style>
+    .edge  { stroke: #1f2933; fill: none; }
+    .txt   { fill: #1f2933; font: 13px ui-sans-serif, system-ui, sans-serif; }
+    .sub   { fill: #52606d; font: 11px ui-sans-serif, system-ui, sans-serif; }
+    .bg    { fill: #eef2f6; }
+    .s1    { fill: #d7e8fa; }
+    .s2    { fill: #b3d3f2; }
+    .s3    { fill: #93c0ea; }
+    .sN    { fill: #6ea9df; }
+    .rule  { stroke: #52606d; fill: none; }
+    .head  { fill: #52606d; }
+    /* One palette, deliberately. Served as an image, an SVG resolves
+       prefers-color-scheme against the OPERATING SYSTEM, not the site's theme
+       toggle, so a dark variant would fire on a light page as readily as on a
+       dark one. A self-contained figure with its own neutral panel reads
+       correctly under both site themes. */
+  </style>
+
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9.5" refY="5"
+            markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+      <path class="head" d="M 0 0 L 10 5 L 0 10 z"/>
+    </marker>
+  </defs>
+
+  <!-- unbounded matrix: the dashed frame says "continues beyond" -->
+  <rect class="bg" x="8" y="8" width="444" height="290" rx="6"/>
+  <rect class="edge" x="8" y="8" width="444" height="290" rx="6"
+        stroke-width="1.1" stroke-dasharray="7 5"/>
+  <text class="txt" x="24" y="32" font-style="italic">&#8450;&#8320;</text>
+  <text class="sub" x="24" y="48">matrix, unbounded</text>
+
+  <g transform="translate(140,158)">
+    <!-- shells, outermost first so each one paints over the last -->
+    <circle class="sN" r="108"/>
+    <circle class="s3" r="88"/>
+    <circle class="s2" r="68"/>
+    <circle class="s1" r="40"/>
+    <circle class="edge" r="108" stroke-width="1.4"/>
+    <circle class="edge" r="88"  stroke-width="1"   stroke-dasharray="4 4"/>
+    <circle class="edge" r="68"  stroke-width="1.4"/>
+    <circle class="edge" r="40"  stroke-width="1.4"/>
+
+    <!-- which annulus is which, read upwards from the core -->
+    <text class="txt" x="0" y="-16" text-anchor="middle">1</text>
+    <text class="txt" x="0" y="-50" text-anchor="middle">2</text>
+    <text class="txt" x="0" y="-94" text-anchor="middle">N</text>
+
+    <!-- radii, measured along one horizontal ray -->
+    <path class="rule" stroke-width="0.9" d="M 0 0 H 108"/>
+    <path class="rule" stroke-width="1.1"
+          d="M 40 -5 V 5   M 68 -5 V 5   M 108 -5 V 5"/>
+    <circle class="head" r="2.4"/>
+    <text class="txt" x="40"  y="24" text-anchor="middle" font-size="12"
+          font-style="italic">r<tspan font-size="8.5" dy="3">1</tspan></text>
+    <text class="txt" x="68"  y="24" text-anchor="middle" font-size="12"
+          font-style="italic">r<tspan font-size="8.5" dy="3">2</tspan></text>
+    <text class="txt" x="108" y="24" text-anchor="middle" font-size="12"
+          font-style="italic">r<tspan font-size="8.5" dy="3">N</tspan></text>
+  </g>
+
+  <!-- remote loading -->
+  <g class="rule" stroke-width="1.6">
+    <path d="M 306 106 L 396 70"  marker-end="url(#ah)"/>
+    <path d="M 306 158 L 402 158" marker-end="url(#ah)"/>
+    <path d="M 306 210 L 396 246" marker-end="url(#ah)"/>
+  </g>
+  <text class="txt" x="316" y="146" font-style="italic">u&#818; = E&#183;x&#818;</text>
+  <text class="sub" x="316" y="184">as |x&#818;| &#8594; &#8734;</text>
+</svg>

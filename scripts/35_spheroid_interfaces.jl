@@ -225,7 +225,7 @@ const OBL_SEEDS = vcat(-3.6:0.45:-0.2, 0.2:0.45:3.6)
 const OBL_ZEDGE = 3.3
 
 # Inverting `x = c̄√(1+τ²)√(1-p²)`, `z = c̄ τ p` gives a quadratic in `u = τ²`:
-# ``c̄²u² + u(c̄² - x² - z²) - z² = 0``.
+# ``\bar c^2 u^2 + u(\bar c^2 - x^2 - z^2) - z^2 = 0``.
 
 function _coord_oblate(x, z)
     d = x^2 + z^2 - OBL_CBAR^2

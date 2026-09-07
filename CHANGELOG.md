@@ -1,5 +1,101 @@
 # Changelog
 
+## v0.11.0 — the elastic confocal spheroid, case I
+
+`LayeredSpheroid` solved conduction and nothing else. It now solves the
+axisymmetric elastic problem too — a remote strain `diag(εt, εt, εa)` about the
+spheroid's axis, through any number of confocal layers.
+
+This is a derivation rather than a port, and the theory page
+`theory/layered_spheroid_elasticity.md` carries it in full because it is not in
+the literature. The pieces exist separately and none of them is the piece
+needed: Duan et al. (2005) give the Papkovich–Neuber representation for a
+*uniform* spheroid and refer to Love (1927) for the operators themselves;
+Barthélémy & Bignonnet (IJES 2020) build the confocal *multilayer* transfer
+matrices but for the scalar Laplace equation. The displacement and stress
+operators in the spheroidal frame are in neither.
+
+### Added
+
+- **`spheroid_elastic_coefficients`, `spheroid_core_strain`,
+  `AxisymmetricCase`.** Case I of the three elementary problems: the gauge
+  `φ₁ = φ₂ = 0`, both potentials of order `m = 0`, the fields axisymmetric —
+  `u_φ` and `σ_φq` coming out zero structurally rather than by assumption.
+- **`legendre_table`, `legendre_degrees`.** The degree set is now part of the
+  problem: elasticity splits the case-I potentials by parity, `φ₀` on the even
+  degrees and `φ₃` on the odd, where conduction needed only the odd ones.
+
+### Why it is one global system and not a chain of transfer matrices
+
+Confocal surfaces are not homothetic, so the harmonic degrees couple — and
+unlike conduction, where that happens only at an imperfect interface, here they
+couple across a perfect one too. There is no `2𝒩 × 2𝒩` block to chain. What is
+assembled instead is four scalar conditions per interface, projected on the
+Legendre degrees by Gauss quadrature, which is *exact*: each condition is a
+polynomial in `p` once the shared radicals are cleared.
+
+Whether the coupling is banded or triangular is decided by which multiplier
+acts on `Pₙ(p)`. A bare `Pₙ′` reaches every lower degree; `(1-p²)Pₙ′` and `p Pₙ`
+reach one, `p²Pₙ` two. `U_q` carries no `p`-derivative and is banded as it
+stands, `U_p` carries a bare one and is weighted by `(1-p²)` — shared geometry
+across a confocal interface, and the weight for which the `Pₙ′` are orthogonal.
+That weighting is what makes truncation legitimate.
+
+### What it is checked against
+
+- **Eshelby**, to `1e-15` for aspect ratios 1.5 to 20.
+- **The collapse of the series**: a single inclusion excites exactly two
+  interior coefficients, degree 2 of `φ₀` and degree 1 of `φ₃`, which is what
+  makes it an exact oracle rather than a converged approximation.
+- **The chaining**: a shell carrying the core's own moduli changes the answer
+  by `1e-15`.
+- ForwardDiff through geometry and moduli, `BigFloat`, linearity in the remote
+  strain.
+
+### Two measured limits, pinned as tests
+
+- The system is **over-determined by one row per interface**, and those rows are
+  redundant rather than conflicting: the residual comes out at `1e-16` for a
+  single inclusion. It is returned, as a diagnostic.
+- **`Float64` gives out before the truncation does**, at about `Nseries = 12`.
+  Past there the least-squares conditioning takes over from truncation error,
+  the residual stops falling, and the answer parts company with a 256-bit one.
+  Raise the element type, not the truncation. This is the elastic counterpart
+  of Barthélémy & Bignonnet's appendix C; the elastic blocks are wider, so it
+  arrives sooner.
+
+### What is refused, and why
+
+- **Cases II and III** — transverse and longitudinal shear, needing orders
+  `m = 2` and `m = 1`. Until they land there is no full stiffness tensor.
+- **Imperfect interfaces.** Not an omission: a uniform spring law puts an *odd*
+  power of the metric factor `w = √(q²-p²)` into the matching condition, which
+  stops it being a polynomial identity in `p` and destroys both the exactness
+  of the projection and the banding. A perfect interface escapes this because
+  every geometric factor is shared and cancels; a compliance is a new length
+  scale that does not. The workable route is a thin confocal interphase — an
+  extra layer, already handled — but the two are not interchangeable: a
+  confocal shell is exactly `ω` times thicker at the equator than at the pole,
+  so it models a compliance that varies along the interface.
+- **Oblate spheroids**, whose confocal parameter is complex and against which
+  nothing here has been checked.
+
+Each is an explicit `ArgumentError` saying so, rather than a silent
+approximation.
+
+### Documentation
+
+- New theory page, with every derivation executed at build time and printing
+  zeros: the representation and its gauge, the closed-form displacement
+  operators, the coordinate-free stress, the Hessian in the spheroidal frame,
+  the tractions, the four interface conditions, the banding argument with its
+  counter-examples, and the solver's validation tables.
+- `theory/layered_sphere.md`: the two-column figure table rendered broken, and
+  the three-phase model is a *scheme* built on the composite-sphere solution
+  rather than a statement of it. Replaced by one vector figure of the pattern
+  itself. Also fixes a combining circumflex inside math, which MathJax cannot
+  compose, and two unicode superscripts.
+
 ## v0.10.1 — sensitivities with respect to interface parameters
 
 A composite inclusion is usually designed at its interface: the coating

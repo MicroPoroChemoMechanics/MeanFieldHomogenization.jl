@@ -25,17 +25,19 @@ with **layer ``k`` occupying** ``r_{k-1} \le r < r_k``.  Layer 1 is the
 core, layer ``N`` is the outermost shell, and the composite sphere is
 embedded in an infinite matrix for ``r > r_N``.
 
-| The generalized Eshelby problem | The ``N = 2`` case: three-phase model |
-| :---: | :---: |
-| ![Concentric layered inclusion in an infinite matrix, loaded remotely](../assets/geometry/eshelby_generalized.png) | ![Pore, shell of stiffness ℂˢ, infinite medium of stiffness ℂʰᵒᵐ](../assets/geometry/three_phase_model.png) |
+![Concentric n-layer sphere in an unbounded matrix, under a remote uniform strain](../assets/geometry/layered_sphere.svg)
 
-The left-hand figure is what the recurrences below solve — a layered pattern in
-an infinite reference medium. The right-hand one is the historical special case:
-take ``N = 2``, a void core and a solid shell, and make the reference medium the
-*unknown* effective one, and the fixed point is Christensen–Lo. Because the
-strain is **not** uniform inside such a pattern, it has no Hill tensor at all;
-what it does have is a volume-averaged concentration tensor, and that is what
-every scheme consumes.
+That is the whole problem the recurrences below solve: a concentric pattern in
+an unbounded reference medium ``\mathbb C_0``, loaded by a remote uniform
+strain. Because the strain is **not** uniform inside such a pattern, it has no
+Hill tensor at all; what it does have is a volume-averaged concentration
+tensor, and that is what every scheme consumes.
+
+The three-phase model of Christensen & Lo [christensenLo1979](@cite) is one
+*use* of this solution rather than a variant of it — take ``N = 2`` and let the
+reference medium be the unknown effective one, and the fixed point is their
+result. That is a property of the scheme, not of the pattern, so it lives with
+the schemes.
 
 An interactive view of the layered geometry is in
 [The inclusion zoo](@ref man-inclusion-gallery).
@@ -103,16 +105,16 @@ discontinuity** (traction / flux jump).  All limit to
 ## Conductivity recurrence (Y₁ harmonic)
 
 Under a remote uniform temperature gradient, the temperature field
-has a Y₁ dependence.  The state vector ``\mathbf s(r) = (T̂, q̂_n)``
+has a Y₁ dependence.  The state vector ``\mathbf s(r) = (\hat T, \hat q_n)``
 (amplitudes projected onto the remote gradient direction) propagates
 through a 2×2 transfer matrix ``T_{cond} = M(r_\mathrm{out}) M(r_\mathrm{in})^{-1}``
-with ``M(r) = \begin{pmatrix}r & 1/r² \\ -k & 2k/r³\end{pmatrix}``.
+with ``M(r) = \begin{pmatrix} r & 1/r^2 \\ -k & 2k/r^3 \end{pmatrix}``.
 
 Interface jumps for conductivity are given above (Kapitza primal,
 SurfaceConductive dual, matching the structural pattern of their
 elastic analogs).  The per-layer gradient localization
 ``α_k = A_k/A_∞`` reduces, in the single-layer case, to the classical
-`3 k_0 / (2 k_0 + k_1)` of Maxwell-type composites.
+``3k_0/(2k_0 + k_1)`` of Maxwell-type composites.
 
 ## Type genericity & incompressibility
 
