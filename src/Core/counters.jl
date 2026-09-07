@@ -44,9 +44,13 @@ const LAYER_RECURRENCES = Ref(0)
 """
     COUNT_INTEGRAND
 
-When `true`, [`_maybe_count`](@ref) wraps quadrature integrands so that every
+When `true`, `_maybe_count` wraps quadrature integrands so that every
 evaluation bumps [`INTEGRAND_EVALS`](@ref).  **Off by default** — the wrapper
 lives in the innermost loop and must not be active during a timed run.
+
+(A plain code span rather than a cross-reference: `_maybe_count` has no
+definition in the package any more, so an `@ref` to it would fail the moment
+this docstring were listed on an API page.)
 """
 const COUNT_INTEGRAND = Ref(false)
 

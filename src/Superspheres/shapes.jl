@@ -43,7 +43,7 @@ Sevostianov–Giraud–Chen–Grgic literature these shapes come from, so
     [`shape_exponent`](@ref) is what converts.
 
 A `Supersphere` is a *shape*, not yet an inclusion: it has no closed-form
-Eshelby solution. It becomes a phase of an [`RVE`](@ref) through the
+Eshelby solution. It becomes a phase of an [`RVE`](@ref MeanFieldHomogenization.Schemes.RVE) through the
 finite-element or surrogate-backed inclusion built on it.
 """
 struct Supersphere{T <: Number} <: AbstractSuperShape{T}

@@ -2,7 +2,7 @@
 
 The superspherical and superspheroidal shape family: closed-form geometry, with
 no mesh and no solver involved. What turns one of these shapes into a phase of
-an [`RVE`](@ref) is a finite-element solve of its Eshelby problem, or a
+an [`RVE`](@ref MeanFieldHomogenization.Schemes.RVE) is a finite-element solve of its Eshelby problem, or a
 surrogate trained on those solves.
 
 The exponent is ``2p``, not ``p`` — see the warning on

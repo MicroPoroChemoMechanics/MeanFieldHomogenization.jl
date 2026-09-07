@@ -102,7 +102,7 @@ end
 """
     _cell_outer_radius(shape, opts) -> R
 
-`radius_ratio` times the shape's [`bounding_radius`](@ref) — see
+`radius_ratio` times the shape's [`bounding_radius`](@ref MeanFieldHomogenization.Superspheres.bounding_radius) — see
 [`FECellMeshOptions`](@ref) for why it is not `a`.
 """
 _cell_outer_radius(shape::AbstractSuperShape, opts::FECellMeshOptions) =
@@ -455,7 +455,7 @@ splitting every 6-node triangle into ``\\texttt{sub}^2`` flat sub-triangles
 through the quadratic map and summing the signed cones from the origin.
 
 This is what measures the gain from snapping the boundary: the flat
-[`mesh_volume`](@ref) cannot see a curved boundary at all, and would report the
+[`mesh_volume`](@ref MeanFieldHomogenization.Superspheres.mesh_volume) cannot see a curved boundary at all, and would report the
 same number before and after.
 """
 function fe_cell_curved_volume(gmsh, tag::Integer; sub::Integer = 8)

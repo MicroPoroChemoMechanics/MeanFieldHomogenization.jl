@@ -67,7 +67,7 @@ A supersphere in an isotropic matrix is **cubic**, so its compliance
 contribution has three independent constants and not two. A superspheroid is
 transversely isotropic about ``\\underline e_3``. Neither class is projected
 onto by default: the raw tensors come out, and
-[`cubic_residual`](@ref) is the free error bar on the cubic case — the distance
+[`cubic_residual`](@ref MeanFieldHomogenization.Elasticity.cubic_residual) is the free error bar on the cubic case — the distance
 to a class the answer belongs to by group theory is discretization error and
 nothing else.
 

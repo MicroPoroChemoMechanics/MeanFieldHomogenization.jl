@@ -16,7 +16,7 @@ which interpolate between the sphere (``p = 1``), the octahedron or double cone
 **These are not ellipsoids and have no closed-form Eshelby solution**, which is
 the whole reason they are here: they are the family the package's
 non-ellipsoidal routes were built for. A shape becomes a phase of an
-[`RVE`](@ref) either through a finite-element solve of its Eshelby problem or
+[`RVE`](@ref MeanFieldHomogenization.Schemes.RVE) either through a finite-element solve of its Eshelby problem or
 through a surrogate trained on those solves.
 
 This file holds the geometry alone — closed-form level set, radial map, normals,
