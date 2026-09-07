@@ -221,6 +221,11 @@ end
         obl = LayeredSpheroid((1.0,), (sqrt(1.0 + 0.25),), (C₁,); Nseries = 4)
         @test_throws ArgumentError LSel.spheroid_elastic_coefficients(obl, C₀, εa, εt)
 
+        # An internal invariant, unreachable through the public API but worth
+        # keeping: it is what will catch a typo when cases II and III are wired
+        # in beside `:core`, `:shell` and `:matrix`.
+        @test_throws ArgumentError LSel._case1_modes(4, :nonsense)
+
         # Imperfect interfaces need their jump terms added to the four
         # conditions; refusing beats returning the perfect-interface answer.
         c = sqrt(1 - (1 / 1.5)^2)
