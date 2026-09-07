@@ -37,6 +37,7 @@ include("hill_2d_aniso.jl")
 include("surface_stiffness.jl")
 include("api.jl")
 include("param_conversions.jl")
+include("cubic.jl")
 
 # ── TI-coaxial dispatch refinement ──────────────────────────────────────────
 # Inject specialized resolution for TI matrix + coaxial spheroid; falls back
@@ -76,6 +77,8 @@ export Cylinder, CylindricalShape, CircularCylindrical, EllipticCylindrical
 export tens_IA, tens_UA, tens_VA
 export hill_tensor
 export surface_stiffness, equivalent_particle
+export best_fit_cubic, cubic_parameters, cubic_residual, cubic_anisotropy
+export cubic_stiffness
 export k_mu, iso_stiffness, E_nu, iso_stiffness_E_nu
 export hoenig_params, hoenig_stiffness
 
