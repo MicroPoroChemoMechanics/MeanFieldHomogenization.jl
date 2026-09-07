@@ -1,5 +1,159 @@
 # Changelog
 
+## v0.12.0 — superspheres, from the shape to a differentiable phase
+
+A shape family with **no closed-form Eshelby solution** now reaches every
+scheme, in both physics, either by solving one finite-element cell or by
+evaluating a network trained on those solves. Along the way the package gained
+the symmetry class that family lives in, a third finite-element cell family, and
+two documentation pages the layered inclusions had been missing.
+
+The family is `|x/a|^{2p} + |y/a|^{2p} + |z/a|^{2p} ≤ 1` and its axisymmetric
+sibling: the sphere at `p = 1`, the octahedron or double cone at `p = 1/2`, a
+**concave** body with conical points below that, the cube or cylinder as
+`p → ∞`.
+
+### The geometry, and why it is meshable at all
+
+These bodies are star-shaped about their center for *every* `p > 0`, concave
+ones included, and the level set is positively homogeneous of degree `2p`, so
+the distance from the center to the surface in a given direction is a **closed
+form** rather than a root find. That is what makes pushing a subdivided sphere
+onto the surface a viable meshing strategy, and what makes the whole geometry
+differentiate cleanly in the shape parameters.
+
+The surface is discretized from a subdivided **octahedron**, for three reasons
+at once: its face edges lie exactly in the coordinate planes, so an octant is
+native; for a concave `p` those same planes are where the surface creases, so
+mesh edges land on the creases rather than straddling them; and there is no
+polar degeneracy. And the octahedron *is* the `p = 1/2` supersphere, which makes
+that value a **bit-exact** oracle — volume to `2e-16`, every angle 60 degrees.
+
+### The cell, and the correction that makes it usable
+
+The third cell family, after the flat crack and the axisymmetric core-shell
+sphere: a shell of matrix between the shape and an outer sphere, meshed through
+gmsh's *discrete* entities because no CAD kernel represents the surface. Eight
+backend generics, `fe_cell_*`, with a Ferrite implementation; a curved
+second-order boundary whose mid-edge nodes are snapped onto the exact shape.
+
+Validated against the **exact spherical pore** in both physics, which a
+supersphere at `p = 1` is: `1.15e-3` in conduction against `A = 3/2`, `1.48e-3`
+in elasticity against `[I − S]⁻¹`, at level 3.
+
+Four things the tests pin that matter more than the accuracy figure. The
+**uncorrected** error does not converge — refining takes the corrected error
+from `9.0e-3` to `1.2e-3` while the uncorrected one moves only from `4.0e-2` to
+`3.3e-2`, it being a truncation bias and not a discretization error. The
+corrected answer **no longer depends on where the cell is cut**: flat at about
+`9e-3` across `R/a = 2.5…5` where the uncorrected one falls `6.3e-2 → 1.6e-2`.
+The dipole diagnostic decays like `R^-2.96` against `-3` from theory. And the
+**wrong sign roughly doubles** the bias instead of removing it, which is the
+signature to recognize.
+
+### A cavity is a *heterogeneous* inclusion, and that is not a trick
+
+`FESupershapePore` declares `is_homogeneous_inclusion = false`, because that
+flag asks whether a single `C₁` describes the interior and for a cavity
+`inv(C₁)` is meaningless. The package's own exact identities then take over, and
+with a cavity's stress-side localization identically zero they collapse to
+`N = -C₀:A` and `H = A:S₀` — the right answer, with no `C₁` in it, and not one
+contribution tensor overridden. Declaring a cavity *homogeneous* instead would
+send every scheme down `(C₁ - C₀):A` with whatever soft-but-not-zero stiffness
+the phase carries, for a percent-level error nothing reveals.
+
+### And then it becomes cheap and differentiable
+
+`StrainLocCubic` is the neural class for a cube-symmetric localization tensor:
+**three** components against `StrainLocTI`'s six, because a tensor with the minor
+symmetries and cubic symmetry is major-symmetric automatically and has no
+antisymmetric content to drop. `FESupershapePore(shape; elastic = s)` hands a
+trained network to the very type that would otherwise mesh and solve —
+everything else unchanged, no backend loaded, no assembly performed.
+
+**The pore then differentiates in its own morphology**, which no finite-element
+inclusion can: their solve runs in `Float64` and memoizes on the reference alone,
+so the derivative would be a silent zero and the package refuses the request.
+Two new hooks make it work for a type that holds a shape *object* rather than
+its scalars — `Schemes._geom_field` reads and `_replace_geom_field` rebuilds,
+both through `pore_shape_params` so the name sets cannot drift.
+
+No trained model ships: generating one is a dataset of finite-element solves and
+belongs in a script. The suite runs the whole path against a synthetic
+closed-form cubic teacher instead, derivative against a central difference
+included.
+
+### Added
+
+- `Supersphere`, `Superspheroid` and their closed-form geometry —
+  `level_set`, `radial_distance`, `surface_point`, `outward_normal`,
+  `shape_volume`, `projected_area`, `equivalent_sphere_radius`,
+  `diagonal_radius`, `edge_radius`, `bounding_radius`, `inner_radius`,
+  `shape_exponent`, `is_concave` / `is_convex` / `is_sphere`.
+- `TriSurface` and the surface mesher: `octant_patch`, `unit_octahedron`,
+  `project_to_shape!`, `shape_surface`, `relax_surface!`, `mesh_area`,
+  `mesh_volume`, `edge_lengths`, `mesh_quality`.
+- `FECellMeshOptions`, `fe_cell_size_estimate`, `fe_cell_curved_volume`,
+  `fe_cell_meshed_volume`, `fe_available_gb`, and the eight `fe_cell_*` backend
+  generics with their Ferrite implementation.
+- `FESupershapePore`, `fe_cell_localization`, `fe_cell_mesh_report`,
+  `has_surrogate`, `pore_shape_params`.
+- `green_gradient_iso2` and `dipole_temperature_iso` — the transport
+  counterpart of the Kelvin dipole, which the package had for elasticity only.
+- `cubic_residual` and `CubicSym`; `StrainLocCubic`.
+
+### Fixed, and found by porting
+
+The port doubled as an audit of the prototype it came from, and of this package.
+
+- **A validation that could not run.** Without an inner constructor Julia
+  generates `Supersphere(a::T, p::T)`, more specific than the checked
+  `Supersphere(::Number, ::Number)`, so a negative semi-axis was accepted
+  silently.
+- **`0 × Inf = NaN` in the outward normal** wherever a coordinate vanishes and
+  `2p < 1`: the fallback then returned the **zero vector**, on the axes and the
+  coordinate planes — exactly where a subdivided octahedron puts its nodes. The
+  non-smooth cases are named now rather than computed.
+- **"The real fix is to refine" was false.** The snapping limitation *grows*
+  with refinement — 6, 37, 73 nodes at levels 2, 3, 4 for `p = 0.35` — because
+  the curvature at a conical point is unbounded. What is stable is the
+  fraction. And what triggers it is unbounded curvature, **not** sharpness: the
+  octahedron has edges and vertices everywhere and needs no snapping at all.
+- **Relaxation is a trade, not an improvement**: it equalizes edge lengths and
+  degrades the smallest angle. Both measured, both documented.
+- **The meshed area converges from above for a concave shape** and from below
+  for a convex one.
+- `Core/counters.jl` referenced a `_maybe_count` that no longer exists — a
+  dangling cross-reference that would have broken the documentation build the
+  day that docstring was listed.
+
+### Documentation
+
+- `manual/fe_inclusions.md` and `manual/neural_inclusions.md` **restructured on
+  one rule**: the principle, then the syntax common to every case, then the
+  cases. The first was a page about the elliptical crack with the general
+  principle reduced to a pointer; it now carries what a finite-element inclusion
+  *is*, the three steps shared by all of them, the shared refusals, and two
+  questions that come up for any new morphology — how to mesh a shape with no
+  CAD representation, and why a cavity must declare itself heterogeneous.
+- A new `manual/layered_inclusions.md`: the layered families had three theory
+  pages and two API pages and **no usage page**, the only inclusion family for
+  which the gallery sent a reader wanting to *use* one to a derivation.
+- A new `manual/index.md`, the reading path the Manual lacked while Theory,
+  Tutorials and FE coupling each had one.
+- The gallery wrote the supersphere as `|x|^p + …`, called it "convex, close to
+  a sphere", and drew it at a `p` that made it deeply concave. Corrected to the
+  `2p` convention, with the factor of two between the two conventions stated.
+
+### Dependencies
+
+- **`TensND = "0.5"`**, for `TensCubic`. The cubic symmetry class — three
+  constants and a cube frame — was developed upstream rather than here, so this
+  package now carries only what a homogenization package adds on top: a name for
+  the projection residual, and the symmetry trait, which is honest only now that
+  a storage type exists behind it.
+
+
 ## v0.11.0 — the elastic confocal spheroid, from nothing to a mean-field phase
 
 `LayeredSpheroid` solved conduction and nothing else. It now solves
