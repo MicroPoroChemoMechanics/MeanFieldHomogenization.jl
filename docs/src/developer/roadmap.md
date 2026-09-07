@@ -96,15 +96,21 @@ subtle — exactly which pieces of a cited paper are and are not implemented.
     — the [well test](@ref fe-arma2011-scope) quantifies exactly what it costs.
   - drivers for Gridap, FEniCSx and an Abaqus-shaped UMAT.
 - Finite-element inclusions, behind the `FEBackend` contract
-  (`MeanFieldHomogenizationFerriteExt`, `MeanFieldHomogenizationGridapExt`), both with the
+  (`MeanFieldHomogenizationFerriteExt`, `MeanFieldHomogenizationGridapExt`), all with the
   first-order corrected boundary condition of
   [adessinaIJES2017](@cite) and an
   isotropic reference medium: the **elliptical crack** in 3-D tetrahedra
-  (3 + 3 crack declination) and the **sphere with an off-center core** in
-  axisymmetric Fourier elements (the general polarization fixed point).
+  (3 + 3 crack declination), the **sphere with an off-center core** in
+  axisymmetric Fourier elements (the general polarization fixed point), and a
+  **superspherical or superspheroidal cavity** on a three-dimensional cell with
+  a curved boundary (the pore declination, in both physics on one mesh).
   Open extensions — anisotropic reference medium (Pan-Chou or Barnett-Willis
   Green gradient); more than one inclusion, or a non-spherical envelope, in the
-  axisymmetric cell.
+  axisymmetric cell; transport for the crack; **solid** supershape inclusions,
+  which would need the inclusion meshed too and would enter gate B with two
+  measured tensors; and the **octant** for the supershape cell, worth a factor
+  of 8 in degrees of freedom by cubic symmetry and what the concave range needs
+  to be affordable one level finer.
 - Neural-surrogate inclusions (`NeuralHillInclusion`,
   `NeuralLocalizationInclusion`), with the sampling, fitting and serialization
   machinery; the optimizer is the weak-dependency extension
@@ -113,8 +119,13 @@ subtle — exactly which pieces of a cited paper are and are not implemented.
   "automatic differentiation through the solve", which the finite-element
   inclusions cannot offer: a surrogate *is* differentiable in the morphology.
   Open extensions — a surrogate trained on `fe_axi_localization` (gate B, the
-  heterogeneous case the second type exists for); an anisotropic reference
-  medium, which needs a feature set describing it.
+  heterogeneous case the second type exists for); a surrogate trained on
+  `fe_cell_localization`, which is the case where one is worth most, a
+  supershape being indexed by a parameter one wants to differentiate in and the
+  finite-element route refusing to be differentiated at all — it needs a
+  **cubic output specification** first, the class having three constants and no
+  TensND storage type; an anisotropic reference medium, which needs a feature
+  set describing it.
 
 ## [The elastic layered spheroid — what is left](@id dev-elastic-spheroid)
 

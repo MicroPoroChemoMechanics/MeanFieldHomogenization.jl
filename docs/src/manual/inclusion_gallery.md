@@ -142,15 +142,40 @@ plotly_scene(shape_traces(sp); uid = "zoo-layered-spheroid", height = 460,
 Nothing in the schemes requires an ellipsoid. A morphology answers one of the
 three gates and becomes a first-class citizen — the
 [custom-inclusion contract](@ref man-custom-inclusions). The **supersphere**
-``|x|^p + |y|^p + |z|^p = 1`` is the usual stand-in for that case: convex, close
-to a sphere, and with no closed-form Hill tensor whatsoever.
+
+```math
+|x/a|^{2p} + |y/a|^{2p} + |z/a|^{2p} \le 1
+```
+
+is the family the package's non-ellipsoidal routes were built for. It has no
+closed-form Hill tensor at any ``p`` but the sphere, and it spans a wide range
+of morphologies from one parameter: ``p = 1`` is the sphere, ``p = 1/2`` the
+regular octahedron, ``p < 1/2`` a **concave** body with conical points on the
+axes, and ``p \to \infty`` the cube.
+
+!!! warning "Two conventions for `p`, differing by a factor of two"
+    The implicit exponent is ``2p``, after the
+    Sevostianov–Giraud–Chen–Grgic literature, and that is what
+    [`Supersphere`](@ref MeanFieldHomogenization.Superspheres.Supersphere) and
+    [`shape_exponent`](@ref MeanFieldHomogenization.Superspheres.shape_exponent)
+    use. The plotting helper `supersphere_surface` in
+    `scripts/common/docviz.jl` takes the **exponent itself**, so its sphere is
+    at `2.0` and the figure below, drawn at `0.6`, shows ``p = 0.3``.
 
 ```@example zoo
-X, Y, Z = supersphere_surface(0.3, 1.0, 1.0, 1.0)
+X, Y, Z = supersphere_surface(0.6, 1.0, 1.0, 1.0)
 plotly_scene([surface_trace(X, Y, Z; color = "#f0ad4e", opacity = 0.9)];
     uid = "zoo-supersphere", height = 440,
-    title = "Supersphere, p = 0.3 — a shape with no Hill tensor")
+    title = "Supersphere, p = 0.3 — concave, with conical points on the axes")
 ```
+
+A cavity of this shape reaches every scheme through
+[`FESupershapePore`](@ref MeanFieldHomogenization.FESupershapePore), which
+solves it on a truncated cell — see
+[finite-element inclusions](@ref man-fe-inclusions). Its compliance
+contribution is **cubic**, so it has three independent constants and not two;
+that third constant is real, and measured
+[far above its own error bar](@ref api-cubic).
 
 A **laminate** is the other extreme: a periodic stack, exact rather than
 estimated, handled by its own algebra ([Laminates](@ref man-laminates)).

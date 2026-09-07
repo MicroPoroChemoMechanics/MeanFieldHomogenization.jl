@@ -22,14 +22,15 @@ response happens to come out of a mesh. Once built, it goes into an
 [`RVE`](@ref) like any other, every scheme accepts it, and nothing downstream
 knows a solver was involved.
 
-Two are shipped, and the same machinery serves both:
+Three are shipped, and the same machinery serves all of them:
 
 | Type | Morphology | Discretization | What it supplies |
 |:--|:--|:--|:--|
 | [`FEEllipticCrack`](@ref MeanFieldHomogenization.FEEllipticCrack) | flat elliptical crack | 3-D tetrahedra | the crack-opening tensor 𝐁 |
 | [`FEExcenteredSphere`](@ref MeanFieldHomogenization.FEExcenteredSphere) | sphere with an off-center spherical core | axisymmetric Fourier modes | both localization tensors |
+| [`FESupershapePore`](@ref MeanFieldHomogenization.FESupershapePore) | superspherical or superspheroidal **cavity** | 3-D tetrahedra, curved boundary | the strain-side tensor, in both physics |
 
-The general principle and the shared syntax come first below; the two
+The general principle and the shared syntax come first below; the three
 morphologies, and the ones not yet written, come after.
 
 ## The principle: a finite cell, and why it must be corrected
@@ -156,6 +157,30 @@ run.
     Isotropy is tested on the tensor's *content*, not on its TensND type, so an
     iterate arriving as a `TensCanonical` with isotropic content is accepted.
 
+### Reading the answer: the symmetry class is a free error bar
+
+When the morphology and the matrix leave a symmetry group invariant, the answer
+belongs to the corresponding class **by group theory** — so its distance to that
+class is discretization error and nothing else. That is an error estimate which
+costs nothing and assumes nothing: no reference solution appears in it.
+
+A supersphere in an isotropic matrix is cubic, and
+[`cubic_residual`](@ref) measures exactly that distance while
+[`cubic_anisotropy`](@ref) measures the departure from isotropy *inside* the
+class. Read together they separate a real morphological effect from a mesh
+artifact: an artifact would break the symmetry, a real anisotropy lives inside
+it. For a cavity at ``p = 0.6``, level 2, the residual is ``5\times10^{-3}``
+and the anisotropy an order of magnitude above it.
+
+Two consequences of the same group theory are worth knowing. A tensor with the
+minor symmetries and cubic symmetry is automatically **major-symmetric**, so a
+localization tensor — which in general has none — recovers it here. And at
+**order two the cubic class is the isotropic class**, which is why a
+cube-symmetric pore has a single scalar resistivity contribution while its
+compliance contribution needs three constants, and why a conduction computation
+on such a shape carries no anisotropy signal whatever the shape does in
+elasticity.
+
 ### What none of them can do
 
 - **Isotropic matrix only**, for the reason given above. An anisotropic
@@ -189,6 +214,31 @@ subtypes `AbstractCustomInclusion`, declares its
 [`FECache`](@ref MeanFieldHomogenization.FECache), and implements the one
 response function of its entry gate. [Adding a new
 inclusion](@ref dev-adding-inclusion) is the leveled contract, gate by gate.
+
+Two questions come up for almost any new shape, so they are answered here
+rather than inside a case.
+
+*My shape has no CAD representation.* Then do not look for one. Build the
+surface analytically in Julia and hand it to gmsh as a **discrete** entity —
+nodes and triangles, no parametrization — and let it mesh the volume between
+that surface and the outer boundary. It leaves the given surface meshes
+untouched, which is the division of labor wanted: the boundary is yours, the
+interior is the mesher's. That is how the supersphere is done, and the same
+route works for anything star-shaped about its center.
+
+*My inclusion is a cavity.* Then declare
+`is_homogeneous_inclusion` **false** and supply an exactly zero stress-side
+localization. That reads as a paradox — a cavity is uniformly empty, so surely
+it is homogeneous — but the flag asks whether a single ``\mathbb C_1``
+describes the interior, and for a cavity ``\mathrm{inv}(\mathbb C_1)`` is
+meaningless. Answering `false` routes every contribution tensor through the
+package's exact identities, which for a zero stress side collapse to
+``\mathbb N = -\mathbb C_0:\mathbb A`` and
+``\mathbb H = \mathbb A:\mathbb S_0``. Answering `true` instead sends the
+schemes down ``(\mathbb C_1 - \mathbb C_0):\mathbb A`` with whatever
+soft-but-not-zero stiffness the phase happens to carry, and the answer then
+carries a percent-level error that has nothing to do with the mesh and that
+nothing reveals.
 
 ## The morphologies shipped today
 
@@ -272,6 +322,73 @@ knobs and [A recycled-concrete aggregate](@ref app-recycled-aggregate) for the
 worked application, where the same correction is used in its general
 polarization-fixed-point form.
 
+### A superspherical or superspheroidal cavity
+
+[`FESupershapePore`](@ref MeanFieldHomogenization.FESupershapePore) is the
+non-ellipsoidal case, and the only one of the three that serves **both
+physics** from one object and one mesh. The shape comes from
+[`Supersphere`](@ref MeanFieldHomogenization.Superspheres.Supersphere) or
+[`Superspheroid`](@ref MeanFieldHomogenization.Superspheres.Superspheroid), and
+the exponent is ``2p``: ``p = 1`` the sphere, ``p = 1/2`` the octahedron,
+``p < 1/2`` concave with conical points on the axes.
+
+```julia
+pore = FESupershapePore(Supersphere(1.0, 0.6);
+                        opts = FECellMeshOptions(; level = 3, radius_ratio = 3.0))
+
+rve = RVE()
+add_phase!(rve, :m, Ellipsoid(1.0), Dict(:C => C₀, :K => K₀); fraction = :rest)
+add_phase!(rve, :pores, pore, Dict(:C => C₀, :K => K₀); fraction = 0.05)
+homogenize(rve, MoriTanaka(), :C)      # and :K, on the same mesh
+```
+
+The phase property is a **placeholder and is ignored** — see the cavity
+paragraph under [Adding your own morphology](@ref) above — so pass the matrix's
+own stiffness and nothing is lost. Replacing it by something absurd changes the
+contribution tensor by less than ``10^{-12}`` relative, which the test suite
+checks.
+
+| Keyword of [`FECellMeshOptions`](@ref MeanFieldHomogenization.FECellMeshOptions) | Default | Meaning |
+|:--|:--|:--|
+| `radius_ratio` | `4.0` | outer radius over the shape's **bounding** radius |
+| `level` | `4` | inclusion surface subdivision: ``8\cdot4^{\text{level}}`` triangles |
+| `outer_level` | `3` | outer sphere subdivision — not a free knob, see below |
+| `relax` | `60` | tangential relaxation sweeps on the inclusion surface |
+| `max_dofs`, `min_free_gb` | `200_000`, `6.0` | refuse a solve this machine cannot afford |
+
+Four things about this cell are worth knowing before turning the knobs.
+
+**`radius_ratio` multiplies the bounding radius, not ``a``.** For an elongated
+superspheroid the two differ by the aspect ratio, and using ``a`` lets the outer
+boundary come within ``1.2c`` of the body — where the exact spheroid gate falls
+from ``10^{-5}`` to ``5.7\times10^{-3}``. For a supersphere with ``p \le 1`` the
+bounding radius *is* ``a``, so the literature's ``R/a`` convention is preserved
+exactly where the literature uses it.
+
+**`outer_level` is not a resolution trade-off.** At `outer_level = 2` the outer
+boundary carries 128 curved triangles, which does not resolve the ``1/r^2``
+dipole term of the corrected condition: the exact spherical-pore gate then
+stalls at ``-2.6\times10^{-4}``. Level 3 takes it to ``-6.9\times10^{-6}``.
+
+**The boundary is curved, and it matters by a factor of about 16 in cost.**
+`setOrder(2)` puts every mid-edge node at the midpoint of a straight segment —
+it cannot do better, the surface having been handed to gmsh as a discrete
+entity — so those nodes are pushed radially onto the exact shape afterwards,
+taking the geometry error from ``O(h^2)`` to ``O(h^3)``.
+[`fe_cell_mesh_report`](@ref) reports three volumes so the gain is visible: for
+a sphere at level 2 the flat triangulation is off by 8.5 %, the curved boundary
+the solve actually sees by 0.23 %.
+
+**A strongly concave shape makes that snapping back off, and refining does not
+fix it.** At a conical point the curvature is unbounded, so the nodes nearest it
+must stay short of the exact surface or they invert a neighboring element. The
+report's `limited` count says how many did. It *grows* with refinement — 6 nodes
+at level 2, 37 at level 3, 73 at level 4 for ``p = 0.35`` — while staying a few
+percent of the surface; that fraction is the number to watch. A large fraction
+means the level really is too coarse for that ``p``. What triggers it is
+unbounded curvature and **not** sharpness: the octahedron has edges and vertices
+everywhere and needs no snapping at all, its faces being flat.
+
 ## Morphologies still to come
 
 Named here so that the boundary of what exists is explicit:
@@ -283,7 +400,19 @@ Named here so that the boundary of what exists is explicit:
 - **more than one inclusion, or a non-spherical envelope**, in the
   axisymmetric cell;
 - **transport** for the crack: the elliptical-crack driver solves elasticity
-  only, and the conduction problem would need its own resolution.
+  only, and the conduction problem would need its own resolution;
+- a **surrogate trained on the cell**, which is what would make a supershape
+  cheap *and* differentiable in its own morphology — the one thing a
+  finite-element inclusion cannot offer. See
+  [neural-surrogate inclusions](@ref man-neural-inclusions);
+- **solid** supershape inclusions. The cell is set up for a cavity: it meshes
+  the matrix shell alone and leaves the inclusion boundary free, which is what
+  makes the stress-side localization exactly zero. A solid inclusion would have
+  to be meshed too, and would enter through gate B with two measured tensors,
+  as the off-center core does;
+- the **octant**. Cubic symmetry allows meshing one eighth of the cell, worth a
+  factor of 8 in degrees of freedom and far more in factorization cost. It is
+  what the concave range needs to be affordable at level 4.
 
 These are tracked in the [roadmap](@ref dev-roadmap).
 

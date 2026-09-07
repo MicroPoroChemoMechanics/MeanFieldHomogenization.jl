@@ -157,6 +157,13 @@ is checked against the geometry at construction, because the analytic teacher
 returns a *different* tensor class for each and the components would otherwise
 mean something else.
 
+The classes above are the ones a *surrogate* can be declared with today. A
+cube-symmetric morphology — a supersphere, a cubic array — belongs to the
+**cubic** class, which has three constants and no TensND storage type; its
+algebra is available as [`best_fit_cubic`](@ref) and its companions, but there
+is no `HillCubic` specification yet. That is what a surrogate trained on the
+supershape cell would need first.
+
 **3. Which features, and over what box.** Use logarithms of shape ratios — an
 aspect ratio's interesting range spans decades, and only the logarithm makes ``\omega``
 and ``1/\omega`` symmetric. Add `:nu0` for a `DimensionlessHill` order-4 surrogate;
@@ -258,6 +265,15 @@ which a heterogeneous inclusion cannot otherwise serve.
 
 No trained model ships for this type yet; it is the seam for surrogates trained
 on [`fe_axi_localization`](@ref MeanFieldHomogenization.fe_axi_localization).
+
+The other teacher waiting for a student is the **supershape cell**,
+[`fe_cell_localization`](@ref). A cavity there is the *easy* case for gate B —
+its stress-side tensor is identically zero, so only one surrogate per physics is
+needed rather than a pair — and it is the case where a surrogate is worth most:
+the finite-element route refuses to be differentiated in the morphology, and
+differentiating in ``p`` is exactly what one wants of a shape family indexed by
+``p``. What is missing is a cubic output specification, as noted under decision
+2 above.
 
 ## Limitations
 
