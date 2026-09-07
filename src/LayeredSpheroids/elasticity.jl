@@ -252,8 +252,16 @@ function spheroid_elastic_coefficients(
     for ℓ in 1:N
         layer_interface(s, ℓ) isa PerfectInterface || throw(
             ArgumentError(
-                "spheroid_elastic_coefficients: only PerfectInterface is " *
-                    "supported so far; got $(typeof(layer_interface(s, ℓ))) at layer $ℓ"
+                "spheroid_elastic_coefficients: only PerfectInterface is supported; " *
+                    "got $(typeof(layer_interface(s, ℓ))) at layer $ℓ. A uniform " *
+                    "spring or membrane law does not fit this formulation — see " *
+                    "the theory page — because it puts an ODD power of the metric " *
+                    "factor w = √(q²-p²) into the matching condition, which stops " *
+                    "it being a polynomial identity in p. Model the imperfection " *
+                    "as a thin confocal interphase instead: that is an extra " *
+                    "layer, which this solver already handles. Note that a " *
+                    "confocal shell is ω times thicker at the equator than at " *
+                    "the pole, ω being the aspect ratio."
             )
         )
     end

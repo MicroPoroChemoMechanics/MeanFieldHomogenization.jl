@@ -374,6 +374,21 @@ end
         @test iszero(_reduce(_c^2 * w2^2 * sc[2, 3] / (pb * qb) - T_p))
     end
 
+    @testset "a confocal shell is ω times thicker at the equator" begin
+        # The reason an imperfect interface does not fit this formulation, put
+        # geometrically. The normal thickness of a confocal shell is `χ_q dq`,
+        # and `χ_q` is not constant along the surface: the ratio between its
+        # value at the equator and at the pole is exactly the aspect ratio. A
+        # confocal interphase therefore models a compliance that VARIES along
+        # the interface, not a uniform spring.
+        χ = Lame(_S)
+        pole = simplify(subs(χ[3], _p => 1))
+        equator = simplify(subs(χ[3], _p => 0))
+        @test iszero(simplify(pole - _c))
+        @test iszero(simplify(equator - _c * _q / sqrt(_q^2 - 1)))
+        @test iszero(simplify(equator / pole - _q / sqrt(_q^2 - 1)))
+    end
+
     @testset "equilibrium at an exact rational point, for explicit potentials" begin
         for (φ₀, φ₃) in (
                 (_p * _q, Sym(0)),                                   # potential part alone

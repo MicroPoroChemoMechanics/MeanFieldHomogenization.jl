@@ -67,5 +67,6 @@ export layer_count, layer_q, layer_modulus, layer_interface, layer_semiaxes,
 export local_temperature, local_gradient, local_flux
 export spheroid_state_sequence, spheroid_ba_ratios, get_layer
 export LayeredSpheroidTransportFields
+export AxisymmetricCase, spheroid_elastic_coefficients, spheroid_core_strain
 
 end # module

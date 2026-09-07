@@ -251,6 +251,8 @@ export local_temperature, local_gradient, local_flux
 export LayeredSpheroid, layered_spheroid_from_fractions
 export layer_q, layer_semiaxes, outer_semiaxes
 export spheroid_state_sequence, spheroid_ba_ratios
+# Elastic case I (axisymmetric): Papkovich–Neuber in the confocal chart.
+export AxisymmetricCase, spheroid_elastic_coefficients, spheroid_core_strain
 export LayeredSpheroidTransportFields
 
 # ── Elliptic integrals (type-generic) ────────────────────────────────────────

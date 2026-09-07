@@ -456,6 +456,50 @@ Raise the element type, not the truncation. The conduction solver records the
 same limit after [barthelemyBignonnetIJES2020](@cite) appendix C; the elastic
 blocks are wider, so it arrives sooner.
 
+## [Imperfect interfaces, and why they do not fit](@id th-spheroid-imperfect)
+
+The conduction solver takes a Kapitza resistance or a surface conductance
+directly. The elastic one does not, and the reason is structural rather than a
+missing feature.
+
+Take a spring law, `[u_q] = s_n\,\sigma_{qq}`. Substituting the two verified
+forms `u_q = \bar q\,U_q/(2\mu c w)` and `\sigma_{qq} = T_q/(c^2w^4)`:
+
+```math
+\frac{U_q^{+}}{\mu^{+}} - \frac{U_q^{-}}{\mu^{-}}
+   \;=\; \frac{2\,s_n\,T_q}{c\,\bar q\,w^{3}} .
+```
+
+``w^{3} = (q^2-p^2)^{3/2}`` is an **odd** power of the metric factor. No
+rearrangement removes it: clearing it from one side plants it on the other. The
+condition therefore stops being a polynomial identity in ``p``, and with it go
+both the exactness of the Gauss projection and
+[the banding](@ref th-spheroid-banding) that makes truncation legitimate. A
+perfect interface escapes this because every geometric factor there is *shared*
+and cancels; a compliance is a new length scale that does not.
+
+**The route that does work is a thin interphase** — an extra confocal layer,
+which the solver already handles. But the two are not interchangeable, and the
+difference is worth seeing. The normal thickness of a confocal shell is
+``\chi_q\,\mathrm dq`` with ``\chi_q = c\,w/\bar q``, so
+
+```math
+\frac{\text{thickness at the equator}}{\text{thickness at the pole}}
+  = \frac{q}{\sqrt{q^2-1}} = \omega ,
+```
+
+exactly the aspect ratio. A confocal coating on a 1:5 spheroid is five times
+thicker around its waist than at its tips. That is "confocal surfaces are not
+homothetic" stated in millimeters, and it means a confocal interphase models a
+compliance that **varies along the interface** rather than a uniform spring.
+
+```@example spheroid_elastic
+χ = Lame(S)
+[simplify(subs(χ[3], p => 1)),                       # pole
+ simplify(subs(χ[3], p => 0)),                       # equator
+ simplify(subs(χ[3], p => 0) / subs(χ[3], p => 1) - q / sqrt(q^2 - 1))]
+```
+
 ## What comes next
 
 The remaining sequence is in [the roadmap](@ref dev-elastic-spheroid): order
