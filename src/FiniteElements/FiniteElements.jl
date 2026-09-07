@@ -49,7 +49,7 @@ export FEBackend, AutoBackend, FerriteBackend, GridapBackend
 export FEMeshOptions, FEEllipticCrack, fe_cod_breakdown, fe_mesh_report
 export FEAxiMeshOptions, FEExcenteredSphere
 export FECellMeshOptions, fe_cell_size_estimate
-export FESupershapePore, SupershapePoreShape
+export FESupershapePore, SupershapePoreShape, has_surrogate, pore_shape_params
 export fe_cell_localization, fe_cell_mesh_report
 export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_breakdown, fe_axi_mesh_report, fe_axi_localization
@@ -87,7 +87,10 @@ include("supershape_pore.jl")
 #  geometry to `Float64` on entry, so a `ForwardDiff.Dual` loses its
 #  perturbation at the door.  Refusing is the only honest option.
 
-const _FEGeometry = Union{FEEllipticCrack, FEExcenteredSphere, FESupershapePore}
+# `FESupershapePore` is deliberately absent: it refuses sensitivity only when it
+# is answering from a mesh, and decides per object in `supershape_pore.jl`,
+# because a surrogate-backed one *is* differentiable.
+const _FEGeometry = Union{FEEllipticCrack, FEExcenteredSphere}
 
 _no_fe_sensitivity(geom, name) = error(
     "analytic sensitivity is not available through `$(nameof(typeof(geom)))`: " *

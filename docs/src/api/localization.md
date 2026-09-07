@@ -166,6 +166,11 @@ MeanFieldHomogenization.FESupershapePore
 MeanFieldHomogenization.SupershapePoreShape
 MeanFieldHomogenization.fe_cell_localization
 MeanFieldHomogenization.fe_cell_mesh_report
+MeanFieldHomogenization.has_surrogate
+MeanFieldHomogenization.pore_shape_params
+MeanFieldHomogenization.FiniteElements._pore_surrogate_response
+MeanFieldHomogenization.FiniteElements._rebuild_pore_shape
+MeanFieldHomogenization.Schemes._geom_field
 MeanFieldHomogenization.FiniteElements._fe_frame
 ```
 

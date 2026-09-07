@@ -98,7 +98,121 @@ struct FESupershapePore{
     mesh::FECellMeshOptions
     cache::FECache
     backend::FEBackend
+    # A trained surrogate replaces the solve, one per physics. Typed `Any`
+    # rather than `NeuralSurrogate` on purpose: `NeuralInclusions` is included
+    # *after* this module, so naming that type here would be circular. The
+    # evaluation goes through `_pore_surrogate_response`, which this module
+    # declares and that one gives a method to.
+    elastic::Any
+    transport::Any
+    guard::Symbol
 end
+
+"""
+    _pore_surrogate_response(surrogate, pore, P₀) -> AbstractTens
+
+Evaluate a trained surrogate in place of the finite-element solve. Declared
+here and implemented in `NeuralInclusions`, the only module that knows what a
+`NeuralSurrogate` is and which is included later.
+"""
+_pore_surrogate_response(surrogate, pore, P₀) = error(
+    "no surrogate evaluation is available for $(typeof(surrogate)): a " *
+        "`FESupershapePore` takes a `NeuralSurrogate` in `elastic` or `transport`."
+)
+
+"""
+    has_surrogate(pore, order) -> Bool
+
+Whether this pore answers order-`order` physics from a network rather than from
+a mesh — `4` elasticity, `2` transport.
+
+It is the question that decides whether the response can be **differentiated
+with respect to the morphology**. A finite-element solve cannot be: it runs in
+`Float64` and memoizes on the reference medium alone, so the derivative would
+come back a silent zero and the package refuses it outright. A surrogate can,
+and for a shape family indexed by a single parameter `p` that is most of the
+reason to train one.
+"""
+has_surrogate(s::FESupershapePore, order::Integer) =
+    (order == 4 ? s.elastic : s.transport) !== nothing
+
+"""
+    pore_shape_params(pore) -> NamedTuple
+
+The morphology parameters by name: `(; a, p)` for a supersphere,
+`(; a, c, p)` for a superspheroid.
+
+One list serving two purposes, which is why it is a function rather than a
+convention written twice: it is what a surrogate names as its **features**, and
+it is what the sensitivity API differentiates with respect to.
+"""
+pore_shape_params(s::FESupershapePore{<:Any, <:Supersphere}) =
+    (; a = s.shape.a, p = s.shape.p)
+pore_shape_params(s::FESupershapePore{<:Any, <:Superspheroid}) =
+    (; a = s.shape.a, c = s.shape.c, p = s.shape.p)
+
+"""
+    _rebuild_pore_shape(shape, Val(name), value) -> shape
+
+The shape with one named parameter replaced. What makes a surrogate-backed pore
+differentiable in its own morphology: the sensitivity API rebuilds the geometry
+with a `ForwardDiff.Dual` in place of one parameter, and everything downstream
+promotes.
+"""
+_rebuild_pore_shape(sh::Supersphere, ::Val{:a}, v) = Supersphere(v, sh.p)
+_rebuild_pore_shape(sh::Supersphere, ::Val{:p}, v) = Supersphere(sh.a, v)
+_rebuild_pore_shape(sh::Superspheroid, ::Val{:a}, v) = Superspheroid(v, sh.c, sh.p)
+_rebuild_pore_shape(sh::Superspheroid, ::Val{:c}, v) = Superspheroid(sh.a, v, sh.p)
+_rebuild_pore_shape(sh::Superspheroid, ::Val{:p}, v) = Superspheroid(sh.a, sh.c, v)
+_rebuild_pore_shape(sh, ::Val{name}, _v) where {name} = throw(
+    ArgumentError(
+        "`$(nameof(typeof(sh)))` has no shape parameter :$name; it has " *
+            "$(join(fieldnames(typeof(sh)), ", "))"
+    )
+)
+
+# ─── Sensitivity, when and only when a surrogate answers ─────────────────────
+#
+#  `FiniteElements.jl` refuses sensitivity through a finite-element solve, and
+#  must: the solve runs in `Float64` and memoizes on the reference medium alone,
+#  so the derivative would come back a silent zero. A surrogate has neither
+#  problem -- it is a smooth function of its inputs and nothing is cached -- and
+#  differentiating a shape family indexed by `p` is most of the reason to train
+#  one. So this type is excluded from the blanket refusal and decides per
+#  object.
+
+# The reader side of the sensitivity API. This type holds a shape *object*, not
+# its scalars, so `getfield` would not find `:p`; the two sides go through
+# `pore_shape_params` so they cannot drift apart.
+function Schemes._geom_field(g::FESupershapePore, name::Symbol)
+    ps = pore_shape_params(g)
+    haskey(ps, name) || throw(
+        ArgumentError(
+            "`FESupershapePore` has no shape parameter :$name; it has " *
+                "$(join(keys(ps), ", "))"
+        )
+    )
+    return getproperty(ps, name)
+end
+
+function Schemes._replace_geom_field(
+        g::FESupershapePore, ::Val{name}, ::Nothing, value
+    ) where {name}
+    (has_surrogate(g, 4) || has_surrogate(g, 2)) || _no_fe_sensitivity(g, name)
+    return FESupershapePore(
+        _rebuild_pore_shape(g.shape, Val(name), value);
+        opts = g.mesh, basis = g.basis, backend = g.backend,
+        elastic = g.elastic, transport = g.transport, guard = g.guard,
+    )
+end
+
+Schemes._replace_geom_field(g::FESupershapePore, ::Val{name}, ::Int, _value) where {name} =
+    throw(
+    ArgumentError(
+        "`FESupershapePore` has no indexed geometry field; its parameters are " *
+            "$(join(keys(pore_shape_params(g)), ", "))"
+    )
+)
 
 function FESupershapePore(
         shape::AbstractSuperShape{T};
@@ -106,10 +220,15 @@ function FESupershapePore(
         basis::Union{Nothing, TensND.AbstractBasis} = nothing,
         euler_angles::Tuple{Vararg{Real}} = (),
         backend::FEBackend = AutoBackend(),
+        elastic = nothing,
+        transport = nothing,
+        guard::Symbol = :warn,
     ) where {T}
+    guard in (:warn, :error, :none) ||
+        throw(ArgumentError("`guard` must be :warn, :error or :none, got :$guard"))
     bas = basis === nothing ? Core._default_basis(Float64, euler_angles) : basis
     return FESupershapePore{T, typeof(shape), typeof(bas)}(
-        shape, bas, opts, FECache(), backend
+        shape, bas, opts, FECache(), backend, elastic, transport, guard
     )
 end
 
@@ -163,7 +282,11 @@ single solve even under an orientation average.
 fe_cell_localization(s::FESupershapePore, P₀::TensND.AbstractTens) =
     _fe_cell_cached(s, P₀)
 
-function _fe_cell_cached(s::FESupershapePore, P₀::TensND.AbstractTens)
+# A surrogate answers in microseconds and depends on nothing a cache would
+# amortize, so memoizing it would add a dictionary lookup and a stale entry to
+# worry about, and nothing else.
+function _fe_cell_cached(s::FESupershapePore, P₀::TensND.AbstractTens{O, 3}) where {O}
+    has_surrogate(s, O) && return _fe_cell_run(s, P₀)
     return get!(() -> _fe_cell_run(s, P₀), s.cache.tensors, _fe_cache_key(P₀))
 end
 
@@ -187,6 +310,7 @@ function _fe_cell_setup(s::FESupershapePore, ncomp::Int)
 end
 
 function _fe_cell_run(s::FESupershapePore, C₀::TensND.AbstractTens{4, 3})
+    s.elastic === nothing || return _pore_surrogate_response(s.elastic, s, C₀)
     μ, ν = _fe_iso_moduli(C₀; what = "`FESupershapePore`")
     R = _fe_frame(s)
     backend, space, built = _fe_cell_setup(s, 3)
@@ -200,6 +324,7 @@ function _fe_cell_run(s::FESupershapePore, C₀::TensND.AbstractTens{4, 3})
 end
 
 function _fe_cell_run(s::FESupershapePore, K₀::TensND.AbstractTens{2, 3})
+    s.transport === nothing || return _pore_surrogate_response(s.transport, s, K₀)
     k₀ = _fe_iso_scalar(K₀; what = "`FESupershapePore`")
     R = _fe_frame(s)
     backend, space, built = _fe_cell_setup(s, 1)

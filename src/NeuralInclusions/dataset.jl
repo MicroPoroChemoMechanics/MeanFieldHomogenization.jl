@@ -371,6 +371,20 @@ end
 
 _reference_medium(::Union{HillISO2, HillTI2}, ::SampleBox, _x_full) = TensND.TensISO{3}(1.0)
 
+# A **cavity**'s strain localization is dimensionless -- degree 0 in the moduli
+# -- and depends on the reference through ν₀ alone, so the same isotropic
+# reference at unit shear modulus serves. That is exactly the case
+# `StrainLocCubic` exists for: a cube-symmetric pore.
+#
+# There is deliberately no method for `StrainLocTI` / `StressLocTI`. Those
+# describe *heterogeneous* morphologies, which carry their constituents inside
+# themselves, so scaling the reference alone changes the contrast and changes
+# the answer; their features have to be contrast ratios and the reference has to
+# be built from them. Guessing one here would train on corrupted labels, which
+# is the one failure this file exists to prevent.
+_reference_medium(::StrainLocCubic, box::SampleBox, x_full) =
+    _iso_ref(x_full[feature_index(box, :nu0)])
+
 # ─── Scaling fitted on the training set ──────────────────────────────────────
 
 """

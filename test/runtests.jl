@@ -200,6 +200,11 @@ end
     # keeps this testset deterministic and independent of the Lux stack.
     @testset "NeuralInclusions" begin
         include("NeuralInclusions/test_neural_inclusion.jl")
+        # The cubic localization class and the surrogate that stands in for a
+        # supershape cell. The teacher is synthetic -- a closed-form cubic
+        # tensor -- so no mesh and no solve appear anywhere; the fit itself is
+        # guarded by `NN_HAS_LUX` like the others.
+        include("NeuralInclusions/test_cubic_surrogate.jl")
     end
 
     # Superspherical and superspheroidal geometry. Pure closed forms, no mesh

@@ -188,8 +188,7 @@ export newton_potential_3d_cylinder
 export tens_IA, tens_UA, tens_VA
 export hill_tensor
 export surface_stiffness, equivalent_particle
-export best_fit_cubic, cubic_parameters, cubic_residual, cubic_anisotropy
-export cubic_stiffness
+export cubic_residual, CubicSym
 export k_mu, iso_stiffness, E_nu, iso_stiffness_E_nu
 export hoenig_params, hoenig_stiffness
 
@@ -212,7 +211,7 @@ export FEBackend, AutoBackend, FerriteBackend, GridapBackend
 export FEEllipticCrack, FEMeshOptions, fe_cod_breakdown, fe_mesh_report
 export FEExcenteredSphere, FEAxiMeshOptions
 export FECellMeshOptions, fe_cell_size_estimate
-export FESupershapePore, SupershapePoreShape
+export FESupershapePore, SupershapePoreShape, has_surrogate, pore_shape_params
 export fe_cell_localization, fe_cell_mesh_report
 export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_localization, fe_axi_breakdown, fe_axi_mesh_report
@@ -222,7 +221,7 @@ export NeuralHillInclusion, NeuralLocalizationInclusion, NeuralShape
 export NeuralSurrogate, Provenance, worst_error
 export save_surrogate, load_surrogate, model_path, shipped_models
 export HillISO, HillTI, HillOrtho, HillISO2, HillTI2
-export StrainLocTI, StressLocTI
+export StrainLocTI, StressLocTI, StrainLocCubic
 
 # ── Superspherical and superspheroidal morphologies ──────────────────────────
 export AbstractSuperShape, Supersphere, Superspheroid

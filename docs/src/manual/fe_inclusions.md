@@ -165,9 +165,8 @@ class is discretization error and nothing else. That is an error estimate which
 costs nothing and assumes nothing: no reference solution appears in it.
 
 A supersphere in an isotropic matrix is cubic, and
-[`cubic_residual`](@ref) measures exactly that distance while
-[`cubic_anisotropy`](@ref) measures the departure from isotropy *inside* the
-class. Read together they separate a real morphological effect from a mesh
+[`cubic_residual`](@ref) measures exactly that distance, while TensND's
+`cubic_anisotropy` measures the departure from isotropy *inside* the class. Read together they separate a real morphological effect from a mesh
 artifact: an artifact would break the symmetry, a real anisotropy lives inside
 it. For a cavity at ``p = 0.6``, level 2, the residual is ``5\times10^{-3}``
 and the anisotropy an order of magnitude above it.
@@ -192,7 +191,9 @@ elasticity.
   `derivative(..., geometry(...))` request on these types instead of answering
   it wrongly. Use a finite difference over freshly constructed inclusions — or a
   [neural surrogate](@ref man-neural-inclusions), which is differentiable by
-  construction and is trained on exactly these solves.
+  construction and is trained on exactly these solves. The superspherical pore
+  takes one directly, and then the refusal lifts: see
+  [`has_surrogate`](@ref MeanFieldHomogenization.has_surrogate).
 - **P2 interpolation at most** on tetrahedra: Ferrite provides no cubic
   Lagrange element there.
 
@@ -344,7 +345,10 @@ homogenize(rve, MoriTanaka(), :C)      # and :K, on the same mesh
 
 The phase property is a **placeholder and is ignored** — see the cavity
 paragraph under [Adding your own morphology](@ref) above — so pass the matrix's
-own stiffness and nothing is lost. Replacing it by something absurd changes the
+own stiffness and nothing is lost. The same object answers from a
+**network** instead of a mesh when one is handed to it,
+`FESupershapePore(shape; elastic = s)`, with everything else unchanged; that is
+the only way to differentiate the response with respect to ``p``. Replacing it by something absurd changes the
 contribution tensor by less than ``10^{-12}`` relative, which the test suite
 checks.
 
@@ -401,10 +405,11 @@ Named here so that the boundary of what exists is explicit:
   axisymmetric cell;
 - **transport** for the crack: the elliptical-crack driver solves elasticity
   only, and the conduction problem would need its own resolution;
-- a **surrogate trained on the cell**, which is what would make a supershape
-  cheap *and* differentiable in its own morphology — the one thing a
-  finite-element inclusion cannot offer. See
-  [neural-surrogate inclusions](@ref man-neural-inclusions);
+- a **trained model** for the cell. The route exists —
+  `FESupershapePore(shape; elastic = s)` swaps the solve for a network, and the
+  pore then differentiates in `p`, which no finite-element inclusion can — but
+  generating the model is a dataset of finite-element solves and no model
+  ships. See [neural-surrogate inclusions](@ref man-neural-inclusions);
 - **solid** supershape inclusions. The cell is set up for a cavity: it meshes
   the matrix shell alone and leaves the inclusion boundary free, which is what
   makes the stress-side localization exactly zero. A solid inclusion would have

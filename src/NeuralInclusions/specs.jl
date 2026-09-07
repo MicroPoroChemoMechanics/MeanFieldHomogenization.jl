@@ -103,10 +103,28 @@ them dimensionless: `𝔸_εε` is of degree 0 in the moduli, `𝔸_σε` of deg
 """
 struct StressLocTI <: AbstractHillClass end
 
+"""
+Cubic strain localization tensor: the **three** components `(α, β, γ)` of a
+`TensCubic` on the projectors `(𝕁, 𝔼, 𝕋)`, for a morphology left invariant by
+the octahedral group — a supersphere, a cubic array.
+
+Three and not six, where [`StrainLocTI`](@ref) needs six for the same object one
+class up. A localization tensor has **no major symmetry** in general, which is
+exactly why the TI case cannot use the five-component major-symmetric Walpole
+form; but a tensor with the minor symmetries and cubic symmetry *is*
+major-symmetric automatically, the three projectors being symmetric. So nothing
+is dropped here: the class simply has no antisymmetric content to lose.
+
+Dimensionless, like its TI sibling: `𝔸_εε` is of degree 0 in the reference
+moduli.
+"""
+struct StrainLocCubic <: AbstractHillClass end
+
 const _CLASS_NAMES = Dict{Symbol, AbstractHillClass}(
     :iso => HillISO(), :ti => HillTI(), :ortho => HillOrtho(),
     :iso2 => HillISO2(), :ti2 => HillTI2(),
     :loc_ti => StrainLocTI(), :stress_loc_ti => StressLocTI(),
+    :loc_cubic => StrainLocCubic(),
 )
 const _NAMES_CLASS = Dict{Any, Symbol}(typeof(v) => k for (k, v) in _CLASS_NAMES)
 
@@ -139,6 +157,7 @@ ncomponents(::HillOrtho) = 9
 ncomponents(::HillISO2) = 1
 ncomponents(::HillTI2) = 2
 ncomponents(::Union{StrainLocTI, StressLocTI}) = 6
+ncomponents(::StrainLocCubic) = 3
 
 """
     tensor_order(class) -> Int
@@ -147,7 +166,9 @@ ncomponents(::Union{StrainLocTI, StressLocTI}) = 6
 generics are declared per order, so this is what decides which physics a
 surrogate serves.
 """
-tensor_order(::Union{HillISO, HillTI, HillOrtho, StrainLocTI, StressLocTI}) = 4
+tensor_order(
+    ::Union{HillISO, HillTI, HillOrtho, StrainLocTI, StressLocTI, StrainLocCubic}
+) = 4
 tensor_order(::Union{HillISO2, HillTI2}) = 2
 
 """
@@ -179,6 +200,9 @@ build(::HillTI2, c, axis) = TensND.TensTI{2}(c[1], c[2], axis)
 
 build(::Union{StrainLocTI, StressLocTI}, c, axis) =
     TensND.TensTI{4}(c[1], c[2], c[3], c[4], c[5], c[6], axis)
+
+# The cube frame is a TensND basis, like `HillOrtho`'s material frame.
+build(::StrainLocCubic, c, frame) = TensND.TensCubic(c[1], c[2], c[3], frame)
 
 build(::HillOrtho, c, frame) = Core._make_ortho(
     eltype(c), c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], nothing, frame
@@ -226,6 +250,11 @@ end
 _project(::Union{HillISO, HillISO2}, P, _frame) = TensND.proj_tens(Val(:ISO), P)
 _project(::Union{HillTI, HillTI2}, P, axis) = TensND.proj_tens(Val(:TI), P, axis)
 _project(::HillOrtho, P, frame) = TensND.proj_tens(Val(:ORTHO), P, frame)
+
+# Unlike the TI localization classes below, this one needs no special treatment:
+# `proj_tens(Val(:CUBIC), …)` already returns the full class, there being no
+# major-symmetric sub-form to fall short of.
+_project(::StrainLocCubic, P, frame) = TensND.proj_tens(Val(:CUBIC), P, frame)
 
 # `proj_tens(Val(:TI), …)` returns the *five*-component major-symmetric form, so
 # it cannot serve a localization tensor. `Core.transverse_isotropify` is the exact
@@ -318,6 +347,11 @@ _class_frame(::Union{HillTI, HillTI2}, geom) =
 _class_frame(::Union{StrainLocTI, StressLocTI}, geom) =
     Core._basis_col(Core.inclusion_basis(geom), 3)
 
+# The cube axes are the inclusion's own basis, all three columns of it — a cube
+# has no distinguished direction to single out, which is the whole difference
+# from the TI case above.
+_class_frame(::StrainLocCubic, geom) = Core.inclusion_basis(geom)
+
 # ─── Material coefficients ───────────────────────────────────────────────────
 
 """
@@ -369,6 +403,7 @@ dimensionless_scale(::Union{HillISO2, HillTI2}, K₀::TensND.TensISO{2, 3}) =
 # `FEExcenteredSphere`). Which is exactly why the features of such a surrogate
 # have to be contrast *ratios* rather than absolute moduli.
 dimensionless_scale(::StrainLocTI, ::TensND.TensISO{4, 3}) = 1
+dimensionless_scale(::StrainLocCubic, ::TensND.TensISO{4, 3}) = 1
 dimensionless_scale(::StressLocTI, C₀::TensND.TensISO{4, 3}) =
     inv(TensND.get_data(C₀)[2])
 
@@ -383,7 +418,9 @@ _iso_only(P₀) = throw(
     )
 )
 
-material_coeffs(::Union{StrainLocTI, StressLocTI}, ::TensND.AbstractTens) = throw(
+material_coeffs(
+    ::Union{StrainLocTI, StressLocTI, StrainLocCubic}, ::TensND.AbstractTens
+) = throw(
     ArgumentError(
         "a localization tensor has no affine decomposition on shape-only tensors: " *
             "the structure `ℙ = d·𝕌ᴬ + 𝕍ᴬ/μ₀` belongs to the Hill tensor of an " *

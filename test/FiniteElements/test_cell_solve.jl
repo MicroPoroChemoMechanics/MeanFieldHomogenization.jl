@@ -143,8 +143,11 @@ end
         A = TensND.Tens(TensND.inv_KM(e.A))
         @test cubic_residual(A) < 5.0e-3
         # And it is *not* isotropic: that is the third constant the literature's
-        # two-constant fits discard.
-        @test abs(cubic_anisotropy(A)) > 10 * cubic_residual(A)
+        # two-constant fits discard. The anisotropy is read on the cubic
+        # *projection*, which is the honest way to ask it of a computed tensor
+        # -- `cubic_anisotropy` is defined on the class, not on anything.
+        @test abs(TensND.cubic_anisotropy(best_fit_cubic(A, TensND.CanonicalBasis{3, Float64}()))) >
+            10 * cubic_residual(A)
 
         sc = FE.fe_cell_space(_B, g.grid, 2, 1)
         c = FE._cell_conduction_localization(_B, sc, 1.0, V)

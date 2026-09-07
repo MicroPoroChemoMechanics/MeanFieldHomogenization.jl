@@ -157,12 +157,14 @@ is checked against the geometry at construction, because the analytic teacher
 returns a *different* tensor class for each and the components would otherwise
 mean something else.
 
-The classes above are the ones a *surrogate* can be declared with today. A
-cube-symmetric morphology — a supersphere, a cubic array — belongs to the
-**cubic** class, which has three constants and no TensND storage type; its
-algebra is available as [`best_fit_cubic`](@ref) and its companions, but there
-is no `HillCubic` specification yet. That is what a surrogate trained on the
-supershape cell would need first.
+A cube-symmetric morphology — a supersphere, a cubic array — belongs to the
+**cubic** class, and `StrainLocCubic` is its specification: three components,
+against six for `StrainLocTI`. Three and not six is not a simplification. A
+localization tensor has **no major symmetry** in general, which is exactly why
+the transversely isotropic case cannot use the five-component major-symmetric
+Walpole form; but a tensor with the minor symmetries and cubic symmetry *is*
+major-symmetric automatically, so the class has no antisymmetric content to
+drop.
 
 **3. Which features, and over what box.** Use logarithms of shape ratios — an
 aspect ratio's interesting range spans decades, and only the logarithm makes ``\omega``
@@ -248,7 +250,7 @@ than the generic one, on a network of the same size, because it does not spend
 capacity fitting a dependence that is exactly known, as
 [described above](@ref man-neural-affine).
 
-## Still to come: heterogeneous morphologies
+## Heterogeneous morphologies
 
 [`NeuralLocalizationInclusion`](@ref MeanFieldHomogenization.NeuralLocalizationInclusion)
 takes gate B, the only way in for a morphology with no Hill tensor. Since
@@ -266,14 +268,46 @@ which a heterogeneous inclusion cannot otherwise serve.
 No trained model ships for this type yet; it is the seam for surrogates trained
 on [`fe_axi_localization`](@ref MeanFieldHomogenization.fe_axi_localization).
 
-The other teacher waiting for a student is the **supershape cell**,
-[`fe_cell_localization`](@ref). A cavity there is the *easy* case for gate B —
-its stress-side tensor is identically zero, so only one surrogate per physics is
-needed rather than a pair — and it is the case where a surrogate is worth most:
-the finite-element route refuses to be differentiated in the morphology, and
-differentiating in ``p`` is exactly what one wants of a shape family indexed by
-``p``. What is missing is a cubic output specification, as noted under decision
-2 above.
+## A surrogate in place of a finite-element cell
+
+A **cavity** is the easy case for gate B — its stress-side localization is
+identically zero, so *one* surrogate per physics suffices rather than a pair —
+and it is the case where a surrogate is worth most. So it does not go through
+`NeuralLocalizationInclusion` at all: it is handed to the very type that would
+otherwise mesh and solve.
+
+```julia
+pore = FESupershapePore(Supersphere(1.0, 0.6); elastic = s)
+fe_cell_localization(pore, C₀)      # microseconds, no mesh, no backend loaded
+```
+
+Everything else is unchanged: the same type, the same contract, the same
+schemes, the same exactly-zero stress side.
+[`has_surrogate`](@ref MeanFieldHomogenization.has_surrogate) says which route a
+given object takes, and
+[`pore_shape_params`](@ref MeanFieldHomogenization.pore_shape_params) lists the
+names a surrogate may use as features — `:a`, `:p`, and `:c` for a
+superspheroid.
+
+**And it becomes differentiable in its own morphology**, which is most of the
+reason to train one. The finite-element route refuses that request outright: its
+solve runs in `Float64` and memoizes on the reference medium alone, so the
+derivative would come back a silent zero. A surrogate has neither problem, and
+for a shape family indexed by a single exponent it is exactly the derivative one
+wants:
+
+```julia
+derivative(rve, Dilute(), geometry(:pores, :p))
+```
+
+The same call on a meshed pore raises, and the suite pins both halves of that
+contrast.
+
+No trained model ships for this route either: generating one is a dataset of
+finite-element solves, which belongs in a script rather than in a test suite.
+What the suite does check, against a synthetic closed-form cubic teacher, is the
+whole path — dataset, fit, decode, inclusion, schemes, and the derivative
+against a central difference.
 
 ## Limitations
 

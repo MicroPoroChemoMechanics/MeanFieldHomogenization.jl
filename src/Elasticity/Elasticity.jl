@@ -77,8 +77,7 @@ export Cylinder, CylindricalShape, CircularCylindrical, EllipticCylindrical
 export tens_IA, tens_UA, tens_VA
 export hill_tensor
 export surface_stiffness, equivalent_particle
-export best_fit_cubic, cubic_parameters, cubic_residual, cubic_anisotropy
-export cubic_stiffness
+export cubic_residual, CubicSym
 export k_mu, iso_stiffness, E_nu, iso_stiffness_E_nu
 export hoenig_params, hoenig_stiffness
 

@@ -118,14 +118,18 @@ subtle — exactly which pieces of a cited paper are and are not implemented.
   validated against the analytic ellipsoid. This is also the answer to
   "automatic differentiation through the solve", which the finite-element
   inclusions cannot offer: a surrogate *is* differentiable in the morphology.
+  `StrainLocCubic` covers the cube-symmetric case in three components — three
+  and not `StrainLocTI`'s six, a cubic tensor being major-symmetric
+  automatically — and `FESupershapePore(shape; elastic = s)` swaps a network for
+  the solve, which is also what makes the pore differentiable in its own shape
+  exponent where the mesh cannot be.
   Open extensions — a surrogate trained on `fe_axi_localization` (gate B, the
-  heterogeneous case the second type exists for); a surrogate trained on
-  `fe_cell_localization`, which is the case where one is worth most, a
-  supershape being indexed by a parameter one wants to differentiate in and the
-  finite-element route refusing to be differentiated at all — it needs a
-  **cubic output specification** first, the class having three constants and no
-  TensND storage type; an anisotropic reference medium, which needs a feature
-  set describing it.
+  heterogeneous case the second type exists for); a **trained model** for the
+  supershape cell, which is a dataset of finite-element solves rather than a
+  capability gap; a `_reference_medium` for `StrainLocTI` / `StressLocTI`,
+  deliberately absent because a heterogeneous morphology's reference has to be
+  built from contrast features and guessing it would train on corrupted labels;
+  an anisotropic reference medium, which needs a feature set describing it.
 
 ## [The elastic layered spheroid — what is left](@id dev-elastic-spheroid)
 
