@@ -308,6 +308,91 @@ function _Q1_table(x::Tx, Nmax::Int) where {Tx}
 end
 
 """
+    _P2p_table(x, Nmax) -> (tab, dtab)
+
+`Pₙ²(x)`, order `m = 2`, on the `p` branch (`|p| ≤ 1`), seeded with
+`P₂²(p) = 3(1-p²)` — Ferrers' convention, whose `(-1)^m` is `+1` here, matching
+[`_P1p_table`](@ref)'s `P₁¹(p) = -√(1-p²)`.
+
+`P₀² = P₁² = 0`, and the three-term recurrence is **singular at `n = m-1`**
+(its leading coefficient `n-m+1` vanishes there), so the seed has to reach
+`n = m`. Growth then starts from `n = 2`, where the coefficient is `1`.
+"""
+function _P2p_table(x::Tx, Nmax::Int) where {Tx}
+    z = zero(Tx)
+    tab = Tx[z, z, 3 * (one(Tx) - x^2)]
+    dtab = Tx[z, z, -6 * x]
+    return _legendre_grow!(tab, dtab, Nmax, 2, x)
+end
+
+"""
+    _P2_table(x, Nmax) -> (tab, dtab)
+
+`Pₙ²(x)`, order `m = 2`, on the `q` branch (`|x| > 1`), seeded with
+`P₂²(q) = 3(q²-1)` — Hobson's convention, matching [`_P1_table`](@ref).
+"""
+function _P2_table(x::Tx, Nmax::Int) where {Tx}
+    z = zero(Tx)
+    tab = Tx[z, z, 3 * (x^2 - one(Tx))]
+    dtab = Tx[z, z, 6 * x]
+    return _legendre_grow!(tab, dtab, Nmax, 2, x)
+end
+
+"""
+    _Q2_table(x, Nmax) -> (tab, dtab)
+
+`Qₙ²(x)`, order `m = 2`, `q` branch. Seeded on the three closed forms
+
+    Q₀² = 2x/(x²-1),   Q₁² = 2/(x²-1),   Q₂² = 3(x²-1) arccoth x - 3x + 2x/(x²-1),
+
+which the recurrence relates exactly. All three are needed: `Q₀²` and `Q₁²`
+satisfy the recurrence's degenerate relation at `n = m-1` rather than stepping
+through it, so growth can only start at `n = m = 2`.
+
+Direction is chosen as everywhere else in this file — `Qₙ` is the minimal
+solution, so upward is only safe for a nearly degenerate spheroid. Miller's
+downward pass is normalized on `Q₂²`, the lowest degree it can legitimately
+anchor on.
+
+!!! note "The `Q₂²` seed cancels at large `q`, and that is where it does not matter"
+    `3(x²-1) arccoth x` and `-3x` agree to leading order — both are `3x` — so
+    the seed loses about `log₁₀(3x/Q₂²)` digits, which is roughly `4.6` at
+    `q = 12` and shows up as a uniform `2e-12` across all degrees. It is
+    uniform because it is a *normalization* error, not an instability: measured
+    against the original upward recurrence at 600 bits, every degree carries the
+    same relative error.
+
+    Large `q` means a nearly **spherical** spheroid (`ω = q/√(q²-1) → 1`), which
+    is the regime one would hand to `LayeredSphere` instead; at `q = 2.5` the
+    seed is accurate to `6e-15`. The elastic solver's own `Float64` floor is
+    `1e-7`, four orders coarser, so a series expansion in `1/x` would buy
+    nothing here.
+"""
+function _Q2_table(x::Tx, Nmax::Int) where {Tx}
+    ax = _arccoth(x)
+    x2m1 = x^2 - one(Tx)
+    q0 = 2 * x / x2m1
+    q1 = 2 / x2m1
+    q2 = 3 * x2m1 * ax - 3 * x + 2 * x / x2m1
+    tab_low = Tx[q0, q1, q2]
+    # `(x²-1) dQₙᵐ/dx = n x Qₙᵐ - (n+m) Qₙ₋₁ᵐ` gives `dQ₂²`; the two below it
+    # are differentiated directly, the identity being degenerate there.
+    dtab_low = Tx[
+        -2 * (x^2 + one(Tx)) / x2m1^2,
+        -4 * x / x2m1^2,
+        (2 * x * q2 - 4 * q1) / x2m1,
+    ]
+    Nmax ≤ 2 && return (tab_low[1:(Nmax + 1)], dtab_low[1:(Nmax + 1)])
+    dir, k = _q_recurrence_plan(x, Nmax, Tx)
+    if dir === :upward
+        return _legendre_grow!(copy(tab_low), copy(dtab_low), Nmax, 2, x)
+    end
+    tab = _Q_values_miller(x, Nmax, 2, 2, q2, k)
+    dtab = _Q_derivatives(tab, x, 2, dtab_low)
+    return tab, dtab
+end
+
+"""
     legendre_odd(kind::Symbol, x, Nseries::Int) -> (vals, derivs)
 
 Values and derivatives of the requested Legendre kind at the `Nseries`
@@ -337,6 +422,9 @@ Values and derivatives of the requested Legendre kind at **every** degree
 - `:P1`  — `Pₙ¹(x)`  (m = 1, q branch, `|x| > 1`)
 - `:P1p` — `Pₙ¹(x)`  (m = 1, p branch, `|x| ≤ 1`)
 - `:Q1`  — `Qₙ¹(x)`  (m = 1, q branch, `|x| > 1`)
+- `:P2`  — `Pₙ²(x)`  (m = 2, q branch, `|x| > 1`)
+- `:P2p` — `Pₙ²(x)`  (m = 2, p branch, `|x| ≤ 1`)
+- `:Q2`  — `Qₙ²(x)`  (m = 2, q branch, `|x| > 1`)
 """
 function legendre_table(kind::Symbol, x, Nmax::Int)
     kind === :P0 && return _P0_table(x, Nmax)
@@ -344,6 +432,9 @@ function legendre_table(kind::Symbol, x, Nmax::Int)
     kind === :P1 && return _P1_table(x, Nmax)
     kind === :P1p && return _P1p_table(x, Nmax)
     kind === :Q1 && return _Q1_table(x, Nmax)
+    kind === :P2 && return _P2_table(x, Nmax)
+    kind === :P2p && return _P2p_table(x, Nmax)
+    kind === :Q2 && return _Q2_table(x, Nmax)
     throw(ArgumentError("legendre_table: unknown kind $kind"))
 end
 
