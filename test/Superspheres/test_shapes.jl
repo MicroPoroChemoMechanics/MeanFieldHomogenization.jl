@@ -10,6 +10,9 @@ using Test
 using MeanFieldHomogenization
 using LinearAlgebra: norm
 import ForwardDiff
+import SymPy
+import TensND
+using SymPy: Sym
 
 const _UNIT(v) = v ./ norm(v)
 
@@ -240,5 +243,72 @@ end
                 [1.0, 0.4],
             ),
         )
+    end
+end
+
+# The two branches a shape takes when its own parameters stop being ordinary
+# numbers. They are not defensive code: the first is how the geometry
+# differentiates in its morphology, and the second is how it refuses when it
+# cannot. Both were reachable and neither was exercised, which a coverage
+# report is good at finding and a test suite is not.
+@testset "Supersphere / Superspheroid — non-numeric element types" begin
+    @testset "the spheroid normal on a symbolic element type" begin
+        # A `Dual` *compares*, so an AD element type still takes the hard
+        # branch with its case analysis. The soft branch is for the genuinely
+        # symbolic type, where the comparisons are undecidable and the case
+        # analysis has to be skipped. It must still return the same normal
+        # wherever the hard branch has no case to make -- away from the axis
+        # and away from the equator.
+        n = _UNIT((0.6, 0.3, 0.7))
+        for (a, c, p) in ((1.0, 1.5, 0.7), (1.0, 0.6, 1.4), (1.0, 2.0, 1.0))
+            hard = Superspheroid(a, c, p)
+            nu = outward_normal(hard, surface_point(hard, n))
+
+            soft = Superspheroid(Sym(a), Sym(c), Sym(p))
+            @test TensND.is_hard_numeric(eltype(hard))
+            @test !TensND.is_hard_numeric(eltype(soft))
+            nv = outward_normal(soft, surface_point(soft, Sym.(n)))
+            @test all(Float64.(float.(nv)) .≈ nu)
+        end
+    end
+
+    @testset "the spheroid normal differentiates in the shape parameters" begin
+        # `Dual` takes the hard branch, and that branch has to carry the
+        # derivative through its own case analysis. The supersphere had this
+        # test; the spheroid did not.
+        n = _UNIT((0.6, 0.3, 0.7))
+        J = ForwardDiff.jacobian(
+            q -> collect(
+                outward_normal(
+                    Superspheroid(q[1], q[2], 0.7),
+                    surface_point(Superspheroid(q[1], q[2], 0.7), n)
+                )
+            ),
+            [1.0, 1.5],
+        )
+        @test all(isfinite, J)
+        @test !iszero(J)
+
+        # Against a central difference, on the component the aspect ratio moves
+        # most: the normal is a direction, so this is the honest check that the
+        # case analysis did not drop a term.
+        nz(c) = outward_normal(
+            Superspheroid(1.0, c, 0.7), surface_point(Superspheroid(1.0, c, 0.7), n)
+        )[3]
+        h = 1.0e-6
+        @test ForwardDiff.derivative(nz, 1.5) ≈ (nz(1.5 + h) - nz(1.5 - h)) / 2h rtol = 1.0e-5
+    end
+
+    @testset "a predicate refuses rather than answering wrongly" begin
+        # `is_sphere` is `p == 1`. On a symbolic `p` SymPy cannot decide that,
+        # and an undecidable comparison there returns `false` instead of
+        # raising -- so the guard has to raise first, or a symbolic supersphere
+        # would silently report itself as never spherical.
+        p = SymPy.symbols("p", positive = true)
+        s = Supersphere(Sym(1), p)
+        @test !TensND.is_hard_numeric(eltype(s))
+        @test_throws ArgumentError is_sphere(s)
+        @test_throws ArgumentError is_concave(s)
+        @test_throws ArgumentError is_convex(s)
     end
 end

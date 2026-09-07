@@ -46,6 +46,7 @@ mesh exists to be handed to a mesher, which wants floating point.
 ```@docs
 MeanFieldHomogenization.Superspheres.TriSurface
 MeanFieldHomogenization.Superspheres.node_count
+MeanFieldHomogenization.Superspheres.triangle_count
 MeanFieldHomogenization.Superspheres.octant_patch
 MeanFieldHomogenization.Superspheres.unit_octahedron
 MeanFieldHomogenization.Superspheres.project_to_shape!

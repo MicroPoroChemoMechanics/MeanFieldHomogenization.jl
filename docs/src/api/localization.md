@@ -242,6 +242,7 @@ MeanFieldHomogenization.NeuralLocalizationInclusion
 MeanFieldHomogenization.NeuralInclusions.NeuralShape
 MeanFieldHomogenization.NeuralInclusions.StrainLocTI
 MeanFieldHomogenization.NeuralInclusions.StressLocTI
+MeanFieldHomogenization.NeuralInclusions.StrainLocCubic
 ```
 
 ### The surrogate
