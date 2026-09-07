@@ -207,6 +207,7 @@ end
     # what everything built on those shapes assumes.
     @testset "Superspheres" begin
         include("Superspheres/test_shapes.jl")
+        include("Superspheres/test_surface_mesh.jl")
     end
 
     # Finite-element inclusions: skipped when the Ferrite stack is unavailable

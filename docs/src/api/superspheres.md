@@ -27,3 +27,32 @@ MeanFieldHomogenization.Superspheres.shape_volume
 MeanFieldHomogenization.Superspheres.projected_area
 MeanFieldHomogenization.Superspheres.equivalent_sphere_radius
 ```
+
+## The triangulated surface
+
+No CAD kernel can represent `|x|^{2p} + |y|^{2p} + |z|^{2p} = a^{2p}`, so the
+surface is discretized here and handed to a mesher as a *discrete* entity. What
+it is discretized from is a subdivided **octahedron**, for three reasons at
+once: its face edges lie exactly in the coordinate planes, so an octant is
+native and cubic symmetry is exploitable with no tolerance offset; for a concave
+``p < 1/2`` those same planes are where the surface creases, so mesh edges land
+on the creases rather than straddling them; and there is no polar degeneracy.
+And the octahedron *is* the ``p = 1/2`` supersphere, which makes that value a
+bit-exact oracle rather than a converging one.
+
+Unlike the geometry above, this part is deliberately **not** type-generic: a
+mesh exists to be handed to a mesher, which wants floating point.
+
+```@docs
+MeanFieldHomogenization.Superspheres.TriSurface
+MeanFieldHomogenization.Superspheres.node_count
+MeanFieldHomogenization.Superspheres.octant_patch
+MeanFieldHomogenization.Superspheres.unit_octahedron
+MeanFieldHomogenization.Superspheres.project_to_shape!
+MeanFieldHomogenization.Superspheres.shape_surface
+MeanFieldHomogenization.Superspheres.relax_surface!
+MeanFieldHomogenization.Superspheres.mesh_area
+MeanFieldHomogenization.Superspheres.mesh_volume
+MeanFieldHomogenization.Superspheres.edge_lengths
+MeanFieldHomogenization.Superspheres.mesh_quality
+```
