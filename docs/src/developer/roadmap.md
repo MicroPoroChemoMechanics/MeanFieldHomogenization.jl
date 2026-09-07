@@ -148,9 +148,18 @@ Two questions this section used to pose as open are settled:
   `legendre.jl` extended to orders ``m = 1`` and ``m = 2``, which is a matter
   of seed tables — the recurrences and the stability machinery are already
   order-generic, and `legendre_degrees` takes the degree list as an argument.
-  Only with all three does a full transversely isotropic concentration tensor
-  exist, and with it the path into the mean-field schemes that
-  `scheme_integration.jl` currently offers in conduction alone.
+  Case I fixes only the four coefficients of the axisymmetric block; these two
+  fix the remaining shear pair.
+- **Per-layer strain averages.** `spheroid_core_strain` gives the core, one
+  region out of ``N``; a scheme needs the average over the whole pattern,
+  weighted by the confocal volumes. The counterpart exists for the layered
+  sphere (`sphere_strain_average`) and on this module's conduction side
+  (`layer_gradient_average`).
+- **Assembly and wiring** of those into a `TensTI{4}` and into
+  `scheme_integration.jl`, which offers the conduction case alone. The three
+  are independent of one another, and none is obstructed — they are work, not a
+  wall. [The theory page](@ref th-spheroid-elastic-scheme) sets out the
+  counting.
 - Case III carries **two rigid-body rotations**, and Duan attributes to their
   omission the error in Riccardi & Montheillet (1999). Equilibrium is automatic
   under Papkovich–Neuber, so the question there is the *completeness* of the

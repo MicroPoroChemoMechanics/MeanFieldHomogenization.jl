@@ -12,10 +12,10 @@ matched, and the solver those add up to.
     number of confocal layers, with **perfect** interfaces. Delivered and
     checked against Eshelby.
 
-    **Cases II and III** — transverse and longitudinal shear, needing orders
-    ``m = 2`` and ``m = 1``. Until they land there is no full stiffness tensor,
-    and `LayeredSpheroid` still feeds the mean-field schemes in conduction
-    only.
+    **Not yet a mean-field phase.** `LayeredSpheroid` feeds the homogenization
+    schemes in conduction only, and three things stand between case I and doing
+    the same in elasticity — see
+    [what a scheme needs](@ref th-spheroid-elastic-scheme).
 
     **Imperfect interfaces** do not fit this formulation at all, and
     [the reason is structural](@ref th-spheroid-imperfect) rather than a
@@ -469,6 +469,38 @@ factor ``3`` per unit of ``\mathcal N``. In `Float64` that stops paying at
 Raise the element type, not the truncation. The conduction solver records the
 same limit after [barthelemyBignonnetIJES2020](@cite) appendix C; the elastic
 blocks are wider, so it arrives sooner.
+
+## [What a homogenization scheme still needs](@id th-spheroid-elastic-scheme)
+
+A mean-field scheme consumes an inclusion's **volume-averaged strain
+concentration tensor** ``\mathbb A``, defined by
+``\langle\boldsymbol\varepsilon\rangle = \mathbb A : \boldsymbol E``, averaged
+over the whole composite inclusion. For a spheroid ``\mathbb A`` is transversely
+isotropic about the axis, and the six-dimensional space of symmetric
+second-order tensors splits into three subspaces it does not mix:
+
+| subspace | dim | loading | what it fixes |
+|:--|:--:|:--|:--|
+| axisymmetric — ``\underline e_3\otimes\underline e_3``, ``\mathbf 1 - \underline e_3\otimes\underline e_3`` | 2 | **case I** | a ``2\times2`` block |
+| transverse shear — ``\varepsilon_{11}-\varepsilon_{22}``, ``2\varepsilon_{12}`` | 2 | **case II** | one scalar |
+| longitudinal shear — ``2\varepsilon_{13}``, ``2\varepsilon_{23}`` | 2 | **case III** | one scalar |
+
+So case I fixes four of the six coefficients, and only the four that live in the
+axisymmetric block. Three things are therefore still missing, and they are
+independent of one another:
+
+1. **Cases II and III**, for the two shear coefficients. Both need `legendre.jl`
+   extended to orders ``m = 1`` and ``m = 2``.
+2. **Per-layer strain averages.** `spheroid_core_strain` returns the strain in
+   the **core**, which is one region out of ``N``. A scheme needs the average
+   over the whole pattern, weighted by the confocal volumes — the counterpart
+   of `sphere_strain_average` for the layered sphere, and of
+   `layer_gradient_average` on this module's own conduction side.
+3. **Assembly and wiring**, turning those into a `TensND.TensTI{4}` and
+   plugging it in where `scheme_integration.jl` does the conduction case.
+
+None of the three is obstructed the way an imperfect interface is; they are work
+rather than a wall.
 
 ## [Imperfect interfaces, and why they do not fit](@id th-spheroid-imperfect)
 
