@@ -2,7 +2,7 @@
 
 [`LayeredSpheroid`](@ref) is an ``N``-layer confocal spheroidal composite
 inclusion — a core plus concentric confocal shells — embedded in an infinite
-isotropic matrix, in **conduction only** (thermal, electric, Darcy). It follows
+isotropic matrix, in **conduction** (thermal, electric, Darcy). It follows
 [barthelemyBignonnetIJES2020](@cite), which extends the layered-sphere
 recurrence of [herve1993](@cite) to spheroids.
 
@@ -11,28 +11,25 @@ independently; on a spheroid it couples them.** The sphere's ``2\times 2``
 transfer per mode therefore becomes a truncated series with a
 ``2\mathcal{N}\times 2\mathcal{N}`` transfer matrix per interface.
 
-!!! note "No elastic counterpart yet"
-    Unlike [`LayeredSphere`](@ref), this module solves conduction only. The
-    obstruction is not that the method is tied to the scalar Laplace equation —
-    Barthélémy & Bignonnet say the opposite, that they imported the
-    transfer-matrix formalism *from* elasticity
-    [barthelemyBignonnetIJES2020](@cite), following Hervé & Zaoui
+!!! note "The elastic problem is on its own page"
+    The axisymmetric elastic case is solved in
+    [The elastic confocal spheroid](@ref th-spheroid-elasticity), on the same
+    chart and reusing the same Legendre machinery. It was never barred by the
+    method being tied to the scalar Laplace equation — Barthélémy & Bignonnet
+    say the opposite, that they imported the transfer-matrix formalism *from*
+    elasticity [barthelemyBignonnetIJES2020](@cite), following Hervé & Zaoui
     [herve1993](@cite) and Hervé & Luanco [herveLuanco2014](@cite).
 
-    What does not carry over is geometric. Concentric spheres are homothetic,
-    so one harmonic degree never talks to another; confocal spheroids are not,
-    and the metric ``h^2 = 1/(c^2(q^2-p^2))`` leaves factors ``p, p^2`` behind
-    once the denominators are cleared, shifting ``n \to n\pm1, n\pm2``. In
-    conduction that coupling appears only at an imperfect interface — which is
-    why the blocks below are diagonal in the perfect case. In elasticity it
-    appears at every interface, perfect ones included, so the transfer matrices
-    are banded from the outset.
-
-    Whoever writes it should start from
-    [the roadmap's checklist](@ref dev-elastic-spheroid): the elastic route
-    reuses these same spheroidal harmonics, and with them four numerical traps
-    that this module shipped once each and that effective-property validation
-    does not catch.
+    What genuinely does not carry over is geometric, and it changes the shape
+    of the answer. Concentric spheres are homothetic, so one harmonic degree
+    never talks to another; confocal spheroids are not, and the metric
+    ``h^2 = 1/(c^2(q^2-p^2))`` leaves factors ``p, p^2`` behind once the
+    denominators are cleared, shifting ``n \to n\pm1, n\pm2``. In conduction
+    that coupling appears only at an imperfect interface — which is why the
+    blocks below are diagonal in the perfect case. In elasticity it appears at
+    every interface, perfect ones included, so there is no per-interface
+    transfer matrix to chain at all: the elastic solver assembles one global
+    system instead.
 
 ## Confocal spheroidal coordinates
 

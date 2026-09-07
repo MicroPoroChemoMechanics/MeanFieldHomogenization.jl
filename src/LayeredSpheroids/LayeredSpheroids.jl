@@ -2,14 +2,17 @@
     MeanFieldHomogenization.LayeredSpheroids
 
 Isotropic `n`-layer confocal spheroidal composite inclusion (core +
-concentric confocal shells), **conduction only** (thermal / electric /
-Darcy). There is no elastic counterpart yet, but not for want of a
-formalism: Barthélémy & Bignonnet (IJES 2020, §2.1) state that they
-imported the transfer-matrix method *from* elasticity (Hervé & Zaoui
-1993; Hervé & Luanco 2014) into conduction. What does not carry over is
-GEOMETRIC — confocal surfaces are not homothetic, so the harmonic degrees
-couple, and in elasticity they couple even across a perfect interface.
-Public entry points: [`LayeredSpheroid`](@ref),
+concentric confocal shells), in **conduction** (thermal / electric /
+Darcy) and in **axisymmetric elasticity**
+([`spheroid_elastic_coefficients`](@ref), case I of Duan et al. 2005, with
+perfect interfaces).
+
+The two do not share a solver shape. Confocal surfaces are not homothetic, so
+the harmonic degrees couple — in conduction only at an imperfect interface,
+which is why its blocks are diagonal in the perfect case, but in elasticity at
+every interface. There is no per-interface transfer matrix to chain on the
+elastic side; `elasticity.jl` assembles one global system instead. Public
+entry points: [`LayeredSpheroid`](@ref),
 [`layered_spheroid_from_fractions`](@ref).
 
 Like [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere),
@@ -24,6 +27,12 @@ interfaces — reused from [`LayeredSpheres`](@ref
 MeanFieldHomogenization.LayeredSpheres) — couple different harmonic degrees, unlike
 the sphere, requiring the truncated series machinery of
 `legendre.jl` / `coupling.jl`.
+
+That path into the schemes is **conduction only**, and stays so until the two
+remaining elastic elementary problems (transverse and longitudinal shear,
+orders `m = 2` and `m = 1`) are written: a full transversely isotropic
+concentration tensor takes all three. The elastic entry points return the
+harmonic amplitudes and the core strain, not a concentration tensor.
 """
 module LayeredSpheroids
 

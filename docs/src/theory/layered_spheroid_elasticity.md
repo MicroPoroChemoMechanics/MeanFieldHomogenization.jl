@@ -1,15 +1,27 @@
 # [The elastic confocal spheroid — Papkovich–Neuber in `(ϕ, p, q)`](@id th-spheroid-elasticity)
 
-[The confocal spheroid](@ref th-layered-spheroid) is solved here for
-**conduction** only. This page builds the elastic groundwork: the
-Papkovich–Neuber representation in the same chart, the displacement and stress
-operators it produces, and the structural fact that decides what the transfer
-matrices look like.
+[The confocal spheroid](@ref th-layered-spheroid) solves conduction. This page
+solves the **axisymmetric elastic** problem in the same chart: the
+Papkovich–Neuber representation and its gauge, the displacement and stress
+operators it produces, the structural fact that decides how the conditions are
+matched, and the solver those add up to.
 
-!!! warning "Work in progress"
-    What is on this page is derived and checked. The transfer matrices
-    themselves are not written yet — see
-    [the roadmap](@ref dev-elastic-spheroid) for the sequence.
+!!! note "What this covers, and what it does not"
+    **Case I** — a remote strain ``\mathrm{diag}(\varepsilon_t,
+    \varepsilon_t, \varepsilon_a)`` about the spheroid's axis, through any
+    number of confocal layers, with **perfect** interfaces. Delivered and
+    checked against Eshelby.
+
+    **Cases II and III** — transverse and longitudinal shear, needing orders
+    ``m = 2`` and ``m = 1``. Until they land there is no full stiffness tensor,
+    and `LayeredSpheroid` still feeds the mean-field schemes in conduction
+    only.
+
+    **Imperfect interfaces** do not fit this formulation at all, and
+    [the reason is structural](@ref th-spheroid-imperfect) rather than a
+    missing feature. **Oblate** spheroids are refused: their confocal
+    parameter is complex, and nothing here has been checked against a
+    reference for it.
 
 ## Why this is a derivation and not a transcription
 
@@ -54,7 +66,9 @@ gauge is fixed problem by problem:
 The rotations in case III are not decoration: Duan attributes to their omission
 the error in Riccardi & Montheillet (1999).
 
-**This page covers case I.**
+**Case I is what follows.** The gauge is the simplest of the three, and the one
+whose fields are axisymmetric — which turns out to give two structural checks
+for free.
 
 ## Case I — the operators
 
@@ -502,9 +516,19 @@ compliance that **varies along the interface** rather than a uniform spring.
 
 ## What comes next
 
-The remaining sequence is in [the roadmap](@ref dev-elastic-spheroid): order
-``m = 2`` in `legendre.jl`, then cases II and III, then the banded transfer
-matrices for perfect interfaces — validated against
-`hill_tensor(Spheroid(ω), C₀)` and against the collapse of the series to a
-handful of coefficients when no interphase is present — and finally imperfect
-interfaces.
+Cases II and III, and nothing else — imperfect interfaces are not a matter of
+sequencing but of the obstruction above.
+
+Both need `legendre.jl` extended to orders ``m = 1`` and ``m = 2``, which is a
+matter of seed tables: the recurrence and its stability machinery are already
+order-generic, and `legendre_degrees` already takes the degree list as an
+argument rather than assuming a parity. Case III additionally carries **two
+rigid-body rotations**, and Duan attributes to their omission the error in
+Riccardi & Montheillet (1999) — so that is where a symbolic check earns the
+most, the completeness of the representation under the chosen gauge being the
+question rather than equilibrium, which is automatic.
+
+Only once all three are in place does a full transversely isotropic stiffness
+tensor exist, and with it the path into the mean-field schemes that the
+conduction side already has. [The roadmap](@ref dev-elastic-spheroid) collects
+the numerical traps that apply throughout.
