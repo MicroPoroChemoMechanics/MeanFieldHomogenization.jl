@@ -35,6 +35,8 @@ module FiniteElements
 
 using TensND
 
+using ..Superspheres
+
 import LinearAlgebra
 import Tensors
 
@@ -42,10 +44,12 @@ import ..Core
 import ..Cracks
 import ..Schemes
 
-export FECache, fe_assembly_count, fe_reset!
+export FECache, fe_assembly_count, fe_reset!, fe_available_gb
 export FEBackend, AutoBackend, FerriteBackend, GridapBackend
 export FEMeshOptions, FEEllipticCrack, fe_cod_breakdown, fe_mesh_report
 export FEAxiMeshOptions, FEExcenteredSphere
+export FECellMeshOptions, fe_cell_size_estimate
+export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_breakdown, fe_axi_mesh_report, fe_axi_localization
 
 include("common.jl")
@@ -62,6 +66,9 @@ include("axi_gmsh_geometry.jl")
 include("axi_fourier.jl")
 include("axi_algebra.jl")
 include("axi_driver.jl")
+
+# The three-dimensional cell around a non-ellipsoidal shape: geometry first.
+include("cell_gmsh_geometry.jl")
 
 # ─── Sensitivity is not available through a finite-element geometry ──────────
 #

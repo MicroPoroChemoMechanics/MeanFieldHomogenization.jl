@@ -218,6 +218,10 @@ end
         @testset "FiniteElementInclusions" begin
             include("FiniteElements/test_ferrite_crack.jl")
             include("FiniteElements/test_axi_excentered_sphere.jl")
+            # Geometry and meshing of the three-dimensional cell around a
+            # supershape -- no solve, and kept at level 2, so it costs seconds.
+            # It needs only gmsh, but rides the same guard.
+            include("FiniteElements/test_cell_mesh.jl")
             if HAS_GRIDAP
                 include("FiniteElements/test_gridap_backend.jl")
             else

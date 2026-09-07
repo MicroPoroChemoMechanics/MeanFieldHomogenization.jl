@@ -140,20 +140,23 @@ include("localization.jl")
 include("contribution.jl")
 
 # ─── Sub-modules that build on the generic algebra above ────────────────────
+# `Superspheres` holds the shape family itself; the finite-element cell that
+# solves one lives in `FiniteElements` with the other two cell families, so
+# the shapes must be in scope first.
+include("Superspheres/Superspheres.jl")
 include("CustomInclusions/CustomInclusions.jl")
 include("FiniteElements/FiniteElements.jl")
 include("NeuralInclusions/NeuralInclusions.jl")
-include("Superspheres/Superspheres.jl")
 # `Constitutive` turns a whole cell + scheme into a Gauss-point material law, so
 # it comes after every inclusion family a microstructure may hold. It is the
 # mirror image of `FiniteElements`: there the FE code is inside MFH, here MFH is
 # inside the FE code.
 include("Constitutive/Constitutive.jl")
 
+using .Superspheres
 using .CustomInclusions
 using .FiniteElements
 using .NeuralInclusions
-using .Superspheres
 using .Constitutive
 
 # ─── MFH Studio launcher ─────────────────────────────────────────────────────
@@ -204,10 +207,12 @@ export sif, dif
 export CustomInclusion, CustomShape, check_inclusion_interface
 
 # ── Finite-element inclusions (need a backend extension) ─────────────────────
-export FECache, fe_assembly_count, fe_reset!
+export FECache, fe_assembly_count, fe_reset!, fe_available_gb
 export FEBackend, AutoBackend, FerriteBackend, GridapBackend
 export FEEllipticCrack, FEMeshOptions, fe_cod_breakdown, fe_mesh_report
 export FEExcenteredSphere, FEAxiMeshOptions
+export FECellMeshOptions, fe_cell_size_estimate
+export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_localization, fe_axi_breakdown, fe_axi_mesh_report
 
 # ── Neural-network (surrogate) inclusions ────────────────────────────────────

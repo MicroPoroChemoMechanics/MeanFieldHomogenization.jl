@@ -144,6 +144,28 @@ MeanFieldHomogenization.FiniteElements.tensor_order
 MeanFieldHomogenization.FiniteElements.ExcenteredSphereShape
 ```
 
+### The three-dimensional cell around a non-ellipsoidal shape
+
+The third cell family. The inclusion surface has no CAD representation, so it is
+built analytically by [`shape_surface`](@ref
+MeanFieldHomogenization.Superspheres.shape_surface) and handed to gmsh as a
+*discrete* entity; the interior size follows an exact radial law, the cell being
+star-shaped about its center.
+
+Two volume measures rather than one, and the difference is the point: the flat
+[`mesh_volume`](@ref MeanFieldHomogenization.Superspheres.mesh_volume) cannot
+see a curved boundary at all, so
+[`fe_cell_curved_volume`](@ref) is what shows what snapping the mid-edge nodes
+onto the exact shape actually bought.
+
+```@docs
+MeanFieldHomogenization.FECellMeshOptions
+MeanFieldHomogenization.fe_cell_size_estimate
+MeanFieldHomogenization.fe_cell_curved_volume
+MeanFieldHomogenization.fe_cell_meshed_volume
+MeanFieldHomogenization.fe_available_gb
+```
+
 ### Green function of the corrected boundary condition
 
 ```@docs
