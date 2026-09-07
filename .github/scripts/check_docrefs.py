@@ -92,13 +92,49 @@ def defined_names(files):
     return names
 
 
+MODULE = re.compile(r"^module\s+(\w+)\s*$", re.M)
+
+
+def declared_module(files):
+    """The module a directory declares, or `None` if it declares none.
+
+    Two layouts have to be told apart, and getting it wrong makes the check
+    useless in opposite ways.
+
+    `MeanFieldHomogenization/src/Superspheres/` declares `module Superspheres`,
+    so its files really are a separate namespace and a reference out of it needs
+    qualifying. `ChemistryLab/src/equilibrium/` declares nothing: its files are
+    `include`d straight into the one top-level module, so every name in the
+    package is in reach and there is nothing to qualify. Treating the second
+    layout as if it were the first reports every cross-directory reference as
+    broken -- 37 of them, all false.
+
+    Note it is the *module* name that matters, not the directory's: a
+    `using ..X` names the module.
+    """
+    for path in files:
+        m = MODULE.search(open(path, encoding="utf-8").read())
+        if m:
+            return m.group(1)
+    return None
+
+
 def main(root="src"):
-    groups = {}
+    groups = collections.defaultdict(list)
+    groups["<top level>"] = sorted(glob.glob(os.path.join(root, "*.jl")))
     for entry in sorted(os.listdir(root)):
         path = os.path.join(root, entry)
-        if os.path.isdir(path):
-            groups[entry] = sorted(glob.glob(path + "/**/*.jl", recursive=True))
-    groups["<top level>"] = sorted(glob.glob(os.path.join(root, "*.jl")))
+        if not os.path.isdir(path):
+            continue
+        files = sorted(glob.glob(path + "/**/*.jl", recursive=True))
+        if not files:
+            continue
+        name = declared_module(files)
+        if name is None:
+            groups["<top level>"].extend(files)
+        else:
+            groups[name].extend(files)
+    groups = dict(groups)
 
     defs = {name: defined_names(files) for name, files in groups.items()}
 
