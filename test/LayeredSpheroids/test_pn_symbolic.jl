@@ -285,6 +285,95 @@ end
         @test reach(m -> _p * diff(P(m), _p), 6) == 6
     end
 
+    @testset "the Hessian in the spheroidal frame" begin
+        # Extracted from the chart, not quoted. With `w² = q² - p²`,
+        # `p̄² = 1 - p²`, `q̄² = q² - 1`:
+        #
+        #   (∇F)_p     = p̄ F_p / (c w),            (∇F)_q = q̄ F_q / (c w)
+        #   (∇∇F)_qq   = q̄² F_qq /(c²w²) + p̄²(q F_q - p F_p)/(c²w⁴)
+        #   (∇∇F)_pq   = p̄ q̄ [ F_pq/w² + (p F_q - q F_p)/w⁴ ] / c²
+        #   (∇∇F)_φφ   = (q F_q - p F_p)/(c²w²)
+        #
+        # These are what turn the coordinate-free stress into the traction
+        # components the interface conditions match.
+        F = SymFunction("F_hess")(_p, _q)
+        𝐞 = normalized_basis(_S)
+        H = components(HESS(F, _S), 𝐞, (:cont, :cont))
+        G = components(GRAD(F, _S), 𝐞, (:cont,))
+        pb, qb, w2 = sqrt(1 - _p^2), sqrt(_q^2 - 1), _q^2 - _p^2
+
+        atomF(e) = foldl(
+            (a, d) -> subs(a, d[1] => d[2]), [
+                (diff(F, _p, 2), symbols("h20")), (diff(F, _p, 1, _q, 1), symbols("h11")),
+                (diff(F, _q, 2), symbols("h02")), (diff(F, _p), symbols("h10")),
+                (diff(F, _q), symbols("h01")),
+            ]; init = e
+        )
+        redF(e) = simplify(expand(subs(atomF(e), _PT...)))
+
+        @test iszero(redF(G[2] - pb * diff(F, _p) / (_c * sqrt(w2))))
+        @test iszero(redF(G[3] - qb * diff(F, _q) / (_c * sqrt(w2))))
+        @test iszero(
+            redF(
+                H[3, 3] - (
+                    qb^2 * diff(F, _q, 2) / (_c^2 * w2) +
+                        pb^2 * (_q * diff(F, _q) - _p * diff(F, _p)) / (_c^2 * w2^2)
+                )
+            )
+        )
+        @test iszero(
+            redF(
+                H[2, 3] - pb * qb * (
+                    diff(F, _p, 1, _q, 1) / w2 +
+                        (_p * diff(F, _q) - _q * diff(F, _p)) / w2^2
+                ) / _c^2
+            )
+        )
+        @test iszero(
+            redF(H[1, 1] - (_q * diff(F, _q) - _p * diff(F, _p)) / (_c^2 * w2))
+        )
+    end
+
+    @testset "the tractions on a confocal surface" begin
+        # The four quantities a perfect interface at `q = qℓ` matches. Every
+        # purely geometric factor is SHARED across a confocal interface, so it
+        # cancels; what is left is what must be continuous:
+        #
+        #   u:  U_q/μ  and  (1-p²) U_p/μ      (the `(1-p²)` makes it banded)
+        #   t:  T_q    and  (1-p²) T_p        (traction carries no 1/μ: with
+        #                                      Papkovich–Neuber, σ has no μ)
+        #
+        # with, writing Φ = φ₀ + c p q φ₃,
+        #
+        #   U_p = ∂_p Φ - 4 c q (1-ν) φ₃
+        #   U_q = ∂_q Φ - 4 c p (1-ν) φ₃
+        #   T_q = q̄²w² Φ_qq + p̄²(q Φ_q - p Φ_p)
+        #         - 2ν c w²(q p̄² φ₃_p + p q̄² φ₃_q) - 4(1-ν) c p q̄² w² φ₃_q
+        #   T_p = w² Φ_pq + p Φ_q - q Φ_p - 2(1-ν) c w²(q φ₃_q + p φ₃_p)
+        #
+        # `T_q = c²w⁴ σ_qq` and `T_p = c²w⁴ σ_pq/(p̄q̄)`. `T_q` holds for HARMONIC
+        # potentials — the compact form of σ rests on `∇²Φ = 2∂_z φ₃`.
+        𝐞 = normalized_basis(_S)
+        pb, qb, w2 = sqrt(1 - _p^2), sqrt(_q^2 - 1), _q^2 - _p^2
+        Φ = _φ₀ + _c * _p * _q * _φ₃
+        σ = _pn_stress(_φ₀, _φ₃)
+        sc = components(σ, 𝐞, (:cont, :cont))
+        uc = components(_pn_displacement(_φ₀, _φ₃), 𝐞, (:cont,))
+
+        U_p = diff(Φ, _p) - 4 * _c * _q * (1 - _ν) * _φ₃
+        U_q = diff(Φ, _q) - 4 * _c * _p * (1 - _ν) * _φ₃
+        @test iszero(_reduce(uc[2] - pb * U_p / (2 * _μ * _c * sqrt(w2))))
+        @test iszero(_reduce(uc[3] - qb * U_q / (2 * _μ * _c * sqrt(w2))))
+
+        T_q = qb^2 * w2 * diff(Φ, _q, 2) + pb^2 * (_q * diff(Φ, _q) - _p * diff(Φ, _p)) -
+            2 * _ν * _c * w2 * (_q * pb^2 * diff(_φ₃, _p) + _p * qb^2 * diff(_φ₃, _q)) -
+            4 * (1 - _ν) * _c * _p * qb^2 * w2 * diff(_φ₃, _q)
+        T_p = w2 * diff(Φ, _p, 1, _q, 1) + _p * diff(Φ, _q) - _q * diff(Φ, _p) -
+            2 * (1 - _ν) * _c * w2 * (_q * diff(_φ₃, _q) + _p * diff(_φ₃, _p))
+        @test iszero(_reduce(_c^2 * w2^2 * sc[3, 3] - T_q))
+        @test iszero(_reduce(_c^2 * w2^2 * sc[2, 3] / (pb * qb) - T_p))
+    end
+
     @testset "equilibrium at an exact rational point, for explicit potentials" begin
         for (φ₀, φ₃) in (
                 (_p * _q, Sym(0)),                                   # potential part alone

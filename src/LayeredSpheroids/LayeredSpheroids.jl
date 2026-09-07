@@ -28,12 +28,14 @@ the sphere, requiring the truncated series machinery of
 module LayeredSpheroids
 
 using LinearAlgebra
+using QuadGK
 using TensND
 
 import ..Core
 using ..Core
 const MFH_Core = Core
 
+import ..LayeredSpheres: _iso_bulk_shear
 import ..LayeredSpheres: PerfectInterface, KapitzaInterface, SurfaceConductiveInterface,
     AbstractInterface, interfaces_eltype,
     layer_conductivity_average, layer_resistivity_average,
@@ -53,7 +55,8 @@ using ..Elliptic: is_hard_numeric
 include("legendre.jl")
 include("coupling.jl")
 include("geometry.jl")
-include("conductivity.jl")       # confocal-harmonic transfer-matrix recurrence
+include("conductivity.jl")     # confocal-harmonic transfer-matrix recurrence
+include("elasticity.jl")         # elastic case I: Papkovich-Neuber, banded
 include("localfields.jl")        # pointwise T, ∇T, flux reconstruction
 include("scheme_integration.jl") # concentration tensors → mean-field schemes
 
