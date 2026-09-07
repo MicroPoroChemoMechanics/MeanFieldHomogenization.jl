@@ -42,15 +42,15 @@ const LSpn = MeanFieldHomogenization.LayeredSpheroids
 
     @testset "it reproduces the case-I closed forms" begin
         worst = 0.0
-        for pot in (0, 3), kind in (:P, :Q)
+        for pot in (0, 3), reg in (:regular, :irregular)
             degs = pot == 0 ? (0:2:6) : (1:2:7)
             for n in degs, (p, q) in ((0.37, 1.6), (-0.81, 1.15), (0.05, 4.2))
                 pb, qb, w = sqrt(1 - p^2), sqrt(q^2 - 1), sqrt(q^2 - p^2)
                 u, t = LSpn.mode_fields(
-                    LSpn.PNMode(pot, kind, n, 0, :cos), 0.0, p, q, c, μ, ν, Float64
+                    LSpn.PNMode(pot, reg, n, 0, :cos), 0.0, p, q, c, μ, ν, Float64
                 )
                 Pv, Pd = LSpn.legendre_degrees(:P0, p, n:n)
-                Rv, Rd = LSpn.legendre_degrees(kind === :P ? :P0 : :Q0, q, n:n)
+                Rv, Rd = LSpn.legendre_degrees(reg === :regular ? :P0 : :Q0, q, n:n)
                 ddR = (2q * Rd[1] - n * (n + 1) * Rv[1]) / (1 - q^2)
                 Uq, Up, Tq, Tp = pot == 0 ?
                     LSpn._case1_phi0_terms(Pv[1], Pd[1], Rv[1], Rd[1], ddR, p, q) :
@@ -69,9 +69,9 @@ const LSpn = MeanFieldHomogenization.LayeredSpheroids
     end
 
     @testset "case-I axisymmetry comes out of the evaluator, not of an assumption" begin
-        for pot in (0, 3), kind in (:P, :Q), n in (1, 2, 3, 4)
+        for pot in (0, 3), reg in (:regular, :irregular), n in (1, 2, 3, 4)
             u, t = LSpn.mode_fields(
-                LSpn.PNMode(pot, kind, n, 0, :cos), 1.1, 0.4, 1.7, c, μ, ν, Float64
+                LSpn.PNMode(pot, reg, n, 0, :cos), 1.1, 0.4, 1.7, c, μ, ν, Float64
             )
             @test iszero(u[1])
             @test iszero(t[1])
@@ -85,22 +85,22 @@ const LSpn = MeanFieldHomogenization.LayeredSpheroids
         for m in (1, 2), pot in (0, 1, 2, 3), trig in (:cos, :sin)
             n = max(m, 2)
             u1, t1 = LSpn.mode_fields(
-                LSpn.PNMode(pot, :Q, n, m, trig), 0.3, 0.4, 1.7, c, μ, ν, Float64
+                LSpn.PNMode(pot, :irregular, n, m, trig), 0.3, 0.4, 1.7, c, μ, ν, Float64
             )
             u2, t2 = LSpn.mode_fields(
-                LSpn.PNMode(pot, :Q, n, m, trig), 0.3 + 0.7, 0.4, 1.7, c, μ, ν, Float64
+                LSpn.PNMode(pot, :irregular, n, m, trig), 0.3 + 0.7, 0.4, 1.7, c, μ, ν, Float64
             )
             @test all(isfinite, u1) && all(isfinite, t1)
             @test any(k -> !isapprox(u1[k], u2[k]; atol = 1.0e-14), 1:3) ||
                 any(k -> !isapprox(t1[k], t2[k]; atol = 1.0e-14), 1:3)
         end
         @test_throws ArgumentError LSpn.mode_fields(
-            LSpn.PNMode(0, :Q, 3, 3, :cos), 0.0, 0.4, 1.7, c, μ, ν, Float64
+            LSpn.PNMode(0, :irregular, 3, 3, :cos), 0.0, 0.4, 1.7, c, μ, ν, Float64
         )
     end
 
     @testset "generic over the element type" begin
-        md = LSpn.PNMode(3, :Q, 3, 1, :cos)
+        md = LSpn.PNMode(3, :irregular, 3, 1, :cos)
         f(x) = LSpn.mode_fields(md, 0.3, 0.4, x, c, μ, ν, typeof(x))[2][3]
         d = ForwardDiff.derivative(f, 1.7)
         fd = (f(1.7 + 1.0e-7) - f(1.7 - 1.0e-7)) / 2.0e-7

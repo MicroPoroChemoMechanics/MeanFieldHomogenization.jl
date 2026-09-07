@@ -43,19 +43,91 @@ So they are derived below, from the chart, and every claim is checked by a
 `@example` block rather than asserted. The heavier checks live in
 `test/LayeredSpheroids/test_pn_symbolic.jl`, which runs in CI.
 
-## The representation
+## The representation, and one set of operators for all three problems
 
 With ``\mu`` the shear modulus and ``\nu`` Poisson's ratio, Papkovich–Neuber
-writes the displacement on four harmonic potentials
-``\varphi_0, \varphi_1, \varphi_2, \varphi_3``:
+writes the displacement on four harmonic potentials. Collecting the last three
+into ``\underline\varphi = (\varphi_1,\varphi_2,\varphi_3)`` and writing
+``\Phi = \varphi_0 + \underline x\cdot\underline\varphi``:
 
 ```math
-2\mu\,\underline u \;=\; \nabla\!\left(\varphi_0 + x\varphi_1 + y\varphi_2 + z\varphi_3\right)
-\;-\; 4(1-\nu)\,(\varphi_1, \varphi_2, \varphi_3),
+2\mu\,\underline u = \nabla\Phi - 4(1-\nu)\,\underline\varphi .
 ```
 
-which is Duan's (2.2). The representation is redundant by one function, and the
-gauge is fixed problem by problem:
+**The stress follows in closed form, and this is what makes the three elementary
+problems share one implementation.** Each ``\varphi_i`` being harmonic,
+``\nabla^2\Phi = 2\operatorname{div}\underline\varphi``, so the trace collapses
+and
+
+```math
+\operatorname{tr}\boldsymbol\varepsilon
+   = -\frac{1-2\nu}{\mu}\operatorname{div}\underline\varphi,
+\qquad
+\boxed{\;\boldsymbol\sigma = -2\nu\,(\operatorname{div}\underline\varphi)\,\mathbf 1
+ + \nabla\nabla\Phi - 4(1-\nu)\,\operatorname{sym}(\nabla\underline\varphi).\;}
+```
+
+Nothing in either statement refers to a particular case. Checked for four
+*arbitrary* harmonic potentials — in the Cartesian chart, where no metric factor
+can hide anything:
+
+```@example spheroid_elastic
+using TensND, SymPy, LinearAlgebra
+S = coorsys_spheroidal()
+ϕ, p, q = getcoords(S)
+c = symbols("c", positive = true)
+μ = symbols("mu", positive = true)
+ν = symbols("nu", real = true)
+λ = 2μ * ν / (1 - 2ν)
+nothing # hide
+```
+
+```@example spheroid_elastic
+Cart = coorsys_cartesian()
+X, Y, Z = getcoords(Cart)
+f = ntuple(i -> SymFunction("f$(i-1)")(X, Y, Z), 4)
+φv = Tens([f[2], f[3], f[4]])
+Φc = f[1] + X * f[2] + Y * f[3] + Z * f[4]
+uc = (GRAD(Φc, Cart) - 4 * (1 - ν) * φv) / (2μ)
+εc = SYMGRAD(uc, Cart)
+PTc = Dict(X => Sym(2)//7, Y => Sym(3)//5, Z => Sym(11)//9, μ => Sym(7)//3, ν => Sym(1)//4)
+atomc(e) = foldl((a, g) -> subs(a, g[1] => g[2]),
+    [(diff(f[i], v...), symbols("w$(i)_$(join(string.(v)))"))
+     for i in 1:4 for v in ((X, 2), (Y, 2), (X, 1, Y, 1), (X, 1, Z, 1), (Y, 1, Z, 1),
+                            (X,), (Y,), (Z,))] ∪ [(f[i], symbols("w$(i)_0")) for i in 1:4];
+    init = e)
+harmc(e) = foldl((a, g) -> subs(a, diff(g, Z, 2) => -diff(g, X, 2) - diff(g, Y, 2)), f; init = e)
+simplify(expand(subs(atomc(harmc(tr(εc) + (1 - 2ν) * DIV(φv, Cart) / μ)), PTc...)))
+```
+
+Zero — and `test/LayeredSpheroids/test_pn_symbolic.jl` carries the same check on
+all six components of ``\boldsymbol\sigma``.
+
+### The series, in the notation of Barthélémy & Bignonnet
+
+The conduction page expands the temperature as
+[barthelemyBignonnetIJES2020](@cite) does, and elasticity keeps that convention:
+in layer ``\ell``,
+
+```math
+\varphi_i^{(\ell)} = \sum_{n,m} P_n^m(p)\Big\{
+   \big[a^{i,m}_{\ell,n}P_n^m(q) + b^{i,m}_{\ell,n}Q_n^m(q)\big]\cos m\varphi
+ + \big[c^{i,m}_{\ell,n}P_n^m(q) + d^{i,m}_{\ell,n}Q_n^m(q)\big]\sin m\varphi\Big\}.
+```
+
+``P_n^m(p)P_n^m(q)`` has a finite limit as ``q\to1`` and is a **regular**
+harmonic; ``P_n^m(p)Q_n^m(q)`` blows up on the focal segment and is an
+**irregular** one. A core carries only regular harmonics, the matrix only
+irregular ones plus the remote field. So a letter encodes
+*(regularity, azimuthal parity)* — ``a`` regular-cos, ``b`` irregular-cos, ``c``
+regular-sin, ``d`` irregular-sin — and the superscript ``i`` is the extra index
+elasticity needs, conduction having a single field where this has four
+potentials.
+
+### The gauge
+
+The representation is redundant by one function, and the gauge is fixed problem
+by problem, after [duanRSPA2005](@cite):
 
 | | remote loading | active potentials | order ``m`` |
 |:--|:--|:--|:--:|
@@ -78,14 +150,6 @@ chart's own abbreviations
 with ``z = c\,p\,q``.
 
 ```@example spheroid_elastic
-using TensND, SymPy, LinearAlgebra
-S = coorsys_spheroidal()
-ϕ, p, q = getcoords(S)
-c = symbols("c", positive = true)
-μ = symbols("mu", positive = true)
-ν = symbols("nu", real = true)
-λ = 2μ * ν / (1 - 2ν)
-
 e₃ = Tens([Sym(0), Sym(0), Sym(1)])
 φ₀ = SymFunction("phi0")(p, q)
 φ₃ = SymFunction("phi3")(p, q)
@@ -417,6 +481,34 @@ Zero, as the theorem requires — and only the axial component is shown, to keep
 the build short. `test/LayeredSpheroids/test_pn_symbolic.jl` checks the other
 two, together with the chart itself and equilibrium for explicit harmonics.
 
+## [One evaluator, and the cases as data](@id th-spheroid-one-evaluator)
+
+The boxed stress refers to no particular case, so neither does the code. A
+single routine turns one harmonic mode into ``\underline u`` and the traction
+``\boldsymbol\sigma\cdot\underline e_q``; what distinguishes the three problems
+is which modes are in the list, at which order ``m``, and what the remote field
+is. Cases II and III therefore need no new derivation.
+
+Two things make that practical.
+
+**A mode is a product, so its derivatives are products.** A term
+``P_n^m(p)\,R_n^m(q)\,T(m\varphi)`` has nothing in it to differentiate: the
+``p`` and ``q`` factors come from the Legendre tables, their second derivatives
+from the associated Legendre equation, and the azimuthal factor is a sine or a
+cosine. What *does* need differentiating is ``\Phi``, because
+``\underline x\cdot\underline\varphi`` multiplies a mode by a coordinate. That
+one product is carried by a **second-order jet** — value, gradient and Hessian
+traveling together, with `*` implementing Leibniz — rather than by
+`ForwardDiff`, which would have to nest inside a solve that is itself
+differentiated when one asks for a sensitivity.
+
+**The check is a cross-check, not a self-test.** Case I has closed-form
+operators of its own, and those were validated against Eshelby. The generic path
+reproduces them to ``7\cdot10^{-15}`` over both potentials, both regularities,
+degrees ``0`` to ``7`` and three points, and returns ``u_\varphi`` and
+``\sigma_{\varphi q}`` as exact zeros. Two independent routes agreeing is worth
+considerably more than either one agreeing with itself.
+
 ## [The solver, and what it is checked against](@id th-spheroid-elastic-solver)
 
 `spheroid_elastic_coefficients` assembles the four conditions at every
@@ -466,9 +558,16 @@ factor ``3`` per unit of ``\mathcal N``. In `Float64` that stops paying at
 | 12 | ``2.3\!\cdot\!10^{-7}`` | ``2.3\!\cdot\!10^{-7}`` | ``6\!\cdot\!10^{-16}`` |
 | 16 | ``5.9\!\cdot\!10^{-8}`` *(stalls)* | ``2.8\!\cdot\!10^{-9}`` | ``3\!\cdot\!10^{-9}`` |
 
-Raise the element type, not the truncation. The conduction solver records the
-same limit after [barthelemyBignonnetIJES2020](@cite) appendix C; the elastic
-blocks are wider, so it arrives sooner.
+Raise the element type, not the truncation.
+
+**This is not an empirical accident: it is the published criterion.**
+[barthelemyBignonnetIJES2020](@cite) appendix C asks for
+``\max\!\left(0.8\,(2\mathcal N - 1),\, 16\right)`` significant digits, so
+double precision stops sufficing once ``0.8(2\mathcal N-1) > 16``, that is at
+``\mathcal N = 11``. The measurement above puts the departure between
+``\mathcal N = 12`` and ``14`` — the rule is a step or two conservative, as a
+criterion should be, and it is the same mechanism: what runs out is the accuracy
+of the coupling between degrees, not anything about elasticity.
 
 ## [What a homogenization scheme still needs](@id th-spheroid-elastic-scheme)
 
@@ -544,6 +643,43 @@ compliance that **varies along the interface** rather than a uniform spring.
 [simplify(subs(χ[3], p => 1)),                       # pole
  simplify(subs(χ[3], p => 0)),                       # equator
  simplify(subs(χ[3], p => 0) / subs(χ[3], p => 1) - q / sqrt(q^2 - 1))]
+```
+
+## [Appendix — the two formulas from BB2020 this page leans on](@id th-spheroid-elastic-appendix)
+
+Recalled because the argument above uses them, not for completeness; the chart
+itself is on [the conduction page](@ref th-spheroid-chart).
+
+**Orthogonality (appendix B).** The projections that turn a matching condition
+into equations are Legendre projections, and two orthogonality relations do the
+work — the plain one for a condition already free of ``p``-derivatives, and the
+weighted one that
+[the tangential condition](@ref th-spheroid-banding) is built around:
+
+```math
+\int_{-1}^{1} P_n(p)\,P_m(p)\,\mathrm dp = \frac{2}{2n+1}\,\delta_{nm},
+\qquad
+\int_{-1}^{1} (1-p^2)\,P_n'(p)\,P_m'(p)\,\mathrm dp = \frac{2n(n+1)}{2n+1}\,\delta_{nm}.
+```
+
+The second is why ``1-p^2`` is the *natural* weight there rather than a
+convenient one.
+
+**Precision (appendix C).** Keeping ``\mathcal N`` terms means a highest degree
+of ``2\mathcal N - 1``, and the coupling between degrees has to be computed to
+
+```math
+\max\!\left(0.8\,(2\mathcal N - 1),\; 16\right)\ \text{significant digits}
+```
+
+which is what [the ceiling measured above](@ref th-spheroid-elastic-solver)
+runs into. Both relations, checked:
+
+```@example spheroid_elastic
+[simplify(integrate(P(3) * P(3), (p, -1, 1)) - Sym(2) // 7),
+ simplify(integrate(P(2) * P(4), (p, -1, 1))),
+ simplify(integrate((1 - p^2) * diff(P(3), p)^2, (p, -1, 1)) - Sym(2 * 3 * 4) // 7),
+ simplify(integrate((1 - p^2) * diff(P(2), p) * diff(P(4), p), (p, -1, 1)))]
 ```
 
 ## What comes next

@@ -97,29 +97,73 @@ function _coord_jets(ϕ, p, q, c)
 end
 
 """
-    PNMode(potential, kind, n, m, trig)
+    PNMode(potential, regularity, n, m, trig)
 
 One harmonic mode of one Papkovich–Neuber potential.
 
 - `potential ∈ 0:3` — which of `φ₀, φ₁, φ₂, φ₃` it belongs to.
-- `kind ∈ (:P, :Q)` — the `q`-dependence: `Pₙᵐ(q)`, regular on the focal
-  segment, or `Qₙᵐ(q)`, decaying at infinity.
+- `regularity ∈ (:regular, :irregular)` — the `q`-dependence, in Barthélémy &
+  Bignonnet's own words (2020, §2): `Pₙᵐ(p)Pₙᵐ(q)` has a finite limit as
+  `q → 1` and is a **regular** harmonic, `Pₙᵐ(p)Qₙᵐ(q)` blows up there and is
+  an **irregular** one. A core admits only regular harmonics, the matrix only
+  irregular ones plus the remote field.
 - `n`, `m` — degree and order.
 - `trig ∈ (:cos, :sin)` — the azimuthal factor `cos mφ` or `sin mφ`.
+
+## Amplitude naming
+
+Barthélémy & Bignonnet write the series of layer `ℓ` as
+
+    Σ Pₙᵐ(p) { [aᵐ_{ℓ,n} Pₙᵐ(q) + bᵐ_{ℓ,n} Qₙᵐ(q)] cos mφ
+             + [cᵐ_{ℓ,n} Pₙᵐ(q) + dᵐ_{ℓ,n} Qₙᵐ(q)] sin mφ }
+
+so `a, b, c, d` mean *regular-cos, irregular-cos, regular-sin, irregular-sin* —
+see [`bb_letter`](@ref). Conduction has one field; elasticity has four
+potentials, so the letters carry a potential index as well,
+`a^{i,m}_{ℓ,n} … d^{i,m}_{ℓ,n}`.
+
+!!! warning "A letter encodes `(regularity, trig)`, never a potential"
+    An earlier version of this module labeled case I's four families
+    `:A, :B, :C, :D` for `(φ₀, reg), (φ₀, irr), (φ₃, reg), (φ₃, irr)`. That
+    collides with the convention above, where `c` and `d` are the *sine*
+    families. The pair is carried explicitly here for that reason.
 """
 struct PNMode
     potential::Int
-    kind::Symbol
+    regularity::Symbol
     n::Int
     m::Int
     trig::Symbol
 end
 
-"Legendre kind symbols for the `p` and `q` branches at order `m`."
-@inline function _branch_kinds(m::Int, kind::Symbol)
-    m == 0 && return (:P0, kind === :P ? :P0 : :Q0)
-    m == 1 && return (:P1p, kind === :P ? :P1 : :Q1)
-    m == 2 && return (:P2p, kind === :P ? :P2 : :Q2)
+"""
+    bb_letter(mode) -> Symbol
+
+Barthélémy & Bignonnet's amplitude letter for a mode: `:a` regular-cos, `:b`
+irregular-cos, `:c` regular-sin, `:d` irregular-sin. The potential index rides
+alongside as a superscript and is not part of the letter.
+"""
+function bb_letter(mode::PNMode)
+    reg = mode.regularity === :regular
+    cs = mode.trig === :cos
+    reg && cs && return :a
+    !reg && cs && return :b
+    reg && return :c
+    return :d
+end
+
+"""
+    _branch_kinds(m, regularity) -> (p_branch, q_branch)
+
+Legendre table symbols for the two branches at order `m`. The `p` branch is
+always of the first kind (`|p| ≤ 1`); the `q` branch is `Pₙᵐ` for a regular
+harmonic, `Qₙᵐ` for an irregular one.
+"""
+@inline function _branch_kinds(m::Int, regularity::Symbol)
+    reg = regularity === :regular
+    m == 0 && return (:P0, reg ? :P0 : :Q0)
+    m == 1 && return (:P1p, reg ? :P1 : :Q1)
+    m == 2 && return (:P2p, reg ? :P2 : :Q2)
     throw(ArgumentError("PNMode: order m = $m is not tabulated (0, 1, 2 only)"))
 end
 
@@ -144,7 +188,7 @@ The mode's own potential as a jet: `Pₙᵐ(p) Rₙᵐ(q) T(mφ)` with all nine
 derivatives, each a product of tabulated univariate pieces.
 """
 function _mode_jet(mode::PNMode, ϕ, p, q, ::Type{T}) where {T}
-    kp, kq = _branch_kinds(mode.m, mode.kind)
+    kp, kq = _branch_kinds(mode.m, mode.regularity)
     n, m = mode.n, mode.m
     Pv, Pd = legendre_degrees(kp, T(p), n:n)
     Rv, Rd = legendre_degrees(kq, T(q), n:n)
