@@ -118,11 +118,12 @@ subtle — exactly which pieces of a cited paper are and are not implemented.
 
 ## [The elastic layered spheroid — what is left](@id dev-elastic-spheroid)
 
-**Case I is done.** The axisymmetric elastic confocal spheroid is solved and
-validated in `LayeredSpheroids/elasticity.jl`; the derivation, which is not in
-the literature, is on
-[its theory page](@ref th-spheroid-elasticity). What follows is what remains,
-and the traps that apply to it.
+**The elastic confocal spheroid is solved**, all three elementary problems,
+prolate and oblate, with perfect interfaces: the axisymmetric case in
+`LayeredSpheroids/elasticity.jl` and the two shear cases in
+`LayeredSpheroids/elastic_cases.jl`. The derivation, which is not in the
+literature, is on [its theory page](@ref th-spheroid-elasticity). What follows
+is what remains, and the traps that apply to it.
 
 Two questions this section used to pose as open are settled:
 
