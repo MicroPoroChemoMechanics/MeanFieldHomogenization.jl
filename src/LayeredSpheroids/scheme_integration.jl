@@ -204,8 +204,9 @@ confocal spheroid, `⟨ε⟩ = 𝔸 : E`, ready for a mean-field scheme.
 of degrees kept per harmonic family; a single homogeneous spheroid is exact at
 any `D` and reproduces Eshelby, a layered one converges geometrically.
 
-Only the default axis `ê₃` and perfect interfaces are supported — see
-[`spheroid_strain_concentration`](@ref).
+Prolate and oblate alike, an oblate spheroid going through the complex
+substitution `q = iτ`. Only the default axis `ê₃` and perfect interfaces are
+supported — see [`spheroid_strain_concentration`](@ref).
 """
 function strain_strain_loc(
         s::LayeredSpheroid{T, N},

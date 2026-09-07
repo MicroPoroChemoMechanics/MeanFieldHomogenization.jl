@@ -249,13 +249,6 @@ function _solve_elastic(
         s::LayeredSpheroid{T, N, Q}, C₀, case::ElasticCase, remote;
         D::Int = 6, ngauss::Int = 0, ϕ₀ = 0.37,
     ) where {T, N, Q}
-    s.prolate || throw(
-        ArgumentError(
-            "elastic confocal spheroid: oblate is not supported — the confocal " *
-                "parameter is complex there and nothing has been checked against " *
-                "a reference for it"
-        )
-    )
     for ℓ in 1:N
         layer_interface(s, ℓ) isa PerfectInterface || throw(
             ArgumentError(
@@ -270,8 +263,12 @@ function _solve_elastic(
 
     κμ = ntuple(k -> _iso_bulk_shear(layer_modulus(s, k)), Val(N))
     κ₀, μ₀ = _iso_bulk_shear(C₀)
+    # `Q` itself, not `real(Q)`: an oblate spheroid carries `q = iτ` and
+    # `c = -i c̄`, and the whole solve goes through in `Complex` arithmetic — the
+    # same substitution the conduction side uses. Discarding the imaginary part
+    # is what made oblate unsupported.
     Tp = promote_type(
-        T, real(Q), typeof(κ₀), typeof(μ₀), typeof(ϕ₀),
+        T, Q, typeof(κ₀), typeof(μ₀), typeof(ϕ₀),
         ntuple(k -> typeof(κμ[k][1]), N)..., ntuple(k -> typeof(κμ[k][2]), N)...,
         interfaces_eltype(s.interfaces), typeof(last(first(remote)))
     )
@@ -283,8 +280,8 @@ function _solve_elastic(
     tdegs = collect(0:(2D + 1))
     n_gauss = ngauss > 0 ? ngauss : 6D + 12
     xg, wg = QuadGK.gauss(_quad_eltype(Tp), n_gauss)
-    c = real(s.c)
-    qs = ntuple(k -> real(s.q[k]), Val(N))
+    c = s.c
+    qs = s.q
 
     regs = Vector{Any}(undef, N + 1)
     regs[1] = (:regular,)
@@ -394,7 +391,7 @@ function _surface_moment(
 end
 
 "Confocal volume up to `q`: `(4π/3) c³ q(q²-1)`, and `0` at `q = 1`."
-@inline _confocal_volume(q, c) = 4 * oftype(float(q), π) / 3 * c^3 * q * (q^2 - one(q))
+@inline _confocal_volume(q, c) = abs(4 * π / 3 * c^3 * q * (q^2 - one(q)))
 
 """
     _avg_strain(groups, amps, q_out, q_in, c, μ, ν, ::Type{T}; kw...) -> 3×3
@@ -420,11 +417,39 @@ function _avg_strain(
         groups, amps, q_out, q_in, c, μ, ν, ::Type{T}; kw...
     ) where {T}
     E = _surface_moment(groups, amps, q_out, c, μ, ν, T; kw...)
-    if q_in > one(q_in) + eps(float(real(T)))
+    # `abs`, not `>`: the degenerate inner limit is `q = 1` for a prolate
+    # spheroid and `q = 0` for an oblate one (`q = iτ` with `τ → 0`), and
+    # `dS ∝ q̄ = √(q²-1)` vanishes at both.
+    if abs(_confocal_volume(q_in, c)) > eps(float(real(T)))
         E = E .- _surface_moment(groups, amps, q_in, c, μ, ν, T; kw...)
     end
     return E ./ (_confocal_volume(q_out, c) - _confocal_volume(q_in, c))
 end
+
+"""
+    _realify(M, ::Type{T}) -> Matrix
+
+Drop a numerically zero imaginary part, or refuse.
+
+An oblate spheroid is solved through the complex substitution `q = iτ`,
+`c = -i c̄`, so every intermediate is `Complex` while the answer is real. The
+imaginary part comes out at `1e-16` relative; anything larger means the
+substitution has been misapplied somewhere, and returning half an answer would
+be worse than stopping.
+"""
+function _realify(M::AbstractMatrix{<:Complex}, ::Type{T}) where {T}
+    scale = maximum(abs ∘ real, M)
+    tol = 1000 * eps(real(float(T))) * max(scale, one(scale))
+    maximum(abs ∘ imag, M) ≤ tol || throw(
+        ArgumentError(
+            "elastic confocal spheroid: the oblate substitution left an " *
+                "imaginary part of $(maximum(abs ∘ imag, M)) against a real scale " *
+                "of $scale — that is a bug, not a tolerance to widen"
+        )
+    )
+    return real.(M)
+end
+_realify(M::AbstractMatrix, ::Type) = M
 
 """
     _basis_loadings(::Type{T}) -> Vector{Tuple{case, args, E}}
@@ -495,12 +520,12 @@ function spheroid_strain_concentration(
     # same defect v0.10.1 fixed on the conduction side: a single `Dual` layer
     # among `Float64` ones then meets a `Float64` buffer and throws.
     Tp = promote_type(
-        T, real(Q), typeof(κ₀), typeof(μ₀),
+        T, Q, typeof(κ₀), typeof(μ₀),
         ntuple(k -> typeof(κμ[k][1]), N)..., ntuple(k -> typeof(κμ[k][2]), N)...,
         interfaces_eltype(s.interfaces)
     )
-    c = real(s.c)
-    q_N = real(s.q[N])
+    c = s.c
+    q_N = s.q[N]
     κN, μN = κμ[N]
     νN = _poisson(κN, μN)
 
@@ -517,7 +542,7 @@ function spheroid_strain_concentration(
         Yc[:, k] .= KM(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εav[i, j])))
         resids[k] = r.residual
     end
-    return (; A = inv_KM(Yc * inv(Xc)), residuals = resids)
+    return (; A = inv_KM(_realify(Yc * inv(Xc), Tp)), residuals = real.(resids))
 end
 
 """
@@ -548,12 +573,12 @@ function spheroid_layer_strain_concentration(
     κ₀, μ₀ = _iso_bulk_shear(C₀)
     κμ = ntuple(k -> _iso_bulk_shear(layer_modulus(s, k)), Val(N))
     Tp = promote_type(
-        T, real(Q), typeof(κ₀), typeof(μ₀),
+        T, Q, typeof(κ₀), typeof(μ₀),
         ntuple(k -> typeof(κμ[k][1]), N)..., ntuple(k -> typeof(κμ[k][2]), N)...,
         interfaces_eltype(s.interfaces)
     )
-    c = real(s.c)
-    qs = ntuple(k -> real(s.q[k]), Val(N))
+    c = s.c
+    qs = s.q
 
     loads = _basis_loadings(Tp)
     Xc = Matrix{Tp}(undef, 6, 6)
@@ -580,8 +605,8 @@ function spheroid_layer_strain_concentration(
 
     iX = inv(Xc)
     return (;
-        A = inv_KM(Yt * iX),
-        layers = ntuple(ℓ -> inv_KM(Yl[ℓ] * iX), Val(N)),
-        residuals = resids,
+        A = inv_KM(_realify(Yt * iX, Tp)),
+        layers = ntuple(ℓ -> inv_KM(_realify(Yl[ℓ] * iX, Tp)), Val(N)),
+        residuals = real.(resids),
     )
 end

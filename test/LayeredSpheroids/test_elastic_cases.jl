@@ -177,6 +177,67 @@ end
         @test any(!iszero, tirr)                    # arccoth q, essential
     end
 
+    @testset "oblate, through the complex substitution" begin
+        # An oblate spheroid carries `q = iτ` and `c = -i c̄`, so the whole solve
+        # runs in `Complex` arithmetic while the answer is real — the same
+        # substitution the conduction side uses. Two things must hold: the
+        # imaginary part is numerically zero, and the answer is Eshelby.
+        #
+        # No frame rotation here, unlike prolate: an oblate spheroid's distinct
+        # semi-axis is the SHORT one, so `Ellipsoid(1, 1, ω)` already carries it
+        # on ê₃ and the two conventions agree.
+        for ω in (0.7, 0.4, 0.2)
+            a = 1.0
+            b = a / ω
+            s = LayeredSpheroid((a,), (b,), (C₁,); Nseries = 5)
+            @test !s.prolate
+            r = spheroid_strain_concentration(s, C₀; D = 5)
+            A = get_array(r.A)
+            @test eltype(A) <: Real                     # `_realify` did its job
+            Ar = get_array(strain_strain_loc(Ellipsoid(1.0, 1.0, ω), C₁, C₀))
+            @test maximum(abs, A .- Ar) < 1.0e-11 * maximum(abs, Ar)
+            @test maximum(r.residuals) < 1.0e-10
+        end
+    end
+
+    @testset "oblate: layered, averages, and into the schemes" begin
+        ω = 0.5
+        a = 1.0
+        cbar = sqrt((a / ω)^2 - a^2)
+        axs = (0.85, 1.0)
+        s = LayeredSpheroid(
+            axs, map(x -> sqrt(x^2 + cbar^2), axs), (C₁, _Ce(0.5, 0.3)); Nseries = 6
+        )
+        @test !s.prolate
+        r = LSec.spheroid_layer_strain_concentration(s, C₀; D = 6)
+        @test eltype(get_array(r.A)) <: Real
+        f = [layer_volume_fraction(s, k) for k in eachindex(r.layers)]
+        Asum = sum(f[k] .* get_array(r.layers[k]) for k in eachindex(r.layers))
+        At = get_array(r.A)
+        @test maximum(abs, Asum .- At) < 200 * maximum(r.residuals) * maximum(abs, At)
+
+        # a fictitious oblate shell must still be invisible
+        s1 = LayeredSpheroid((a,), (sqrt(a^2 + cbar^2),), (C₁,); Nseries = 6)
+        s2 = LayeredSpheroid(
+            axs, map(x -> sqrt(x^2 + cbar^2), axs), (C₁, C₁); Nseries = 6
+        )
+        A1 = get_array(spheroid_strain_concentration(s1, C₀; D = 6).A)
+        A2 = get_array(spheroid_strain_concentration(s2, C₀; D = 6).A)
+        @test maximum(abs, A2 .- A1) < 1.0e-11 * maximum(abs, A1)
+
+        # and it must reach the schemes, degenerating onto the equivalent
+        # Ellipsoid for a single layer
+        r1 = RVE()
+        add_phase!(r1, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C₀); fraction = :rest)
+        add_phase!(r1, :I, s1, Dict(:C => C₁); fraction = 0.2)
+        r2 = RVE()
+        add_phase!(r2, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C₀); fraction = :rest)
+        add_phase!(r2, :I, Ellipsoid(1.0, 1.0, ω), Dict(:C => C₁); fraction = 0.2)
+        B1 = get_array(homogenize(r1, MoriTanaka(), :C))
+        B2 = get_array(homogenize(r2, MoriTanaka(), :C))
+        @test maximum(abs, B1 .- B2) < 1.0e-10 * maximum(abs, B2)
+    end
+
     @testset "into the schemes: one layer degenerates onto the Ellipsoid" begin
         for ω in (1.5, 3.0), scheme in (Dilute(), MoriTanaka())
             a = 1.0
@@ -212,8 +273,6 @@ end
     @testset "what is refused, and says why" begin
         ω = 1.5
         c = sqrt(1 - (1 / ω)^2)
-        obl = LayeredSpheroid((1.0,), (sqrt(1 + 0.25),), (C₁,); Nseries = 4)
-        @test_throws ArgumentError spheroid_strain_concentration(obl, C₀)
         imp = LayeredSpheroid(
             (1.0,), (sqrt(1 - c^2),), (C₁,);
             interfaces = (SpringInterface(10.0, 5.0),), Nseries = 4
