@@ -240,10 +240,10 @@ Both live in [`MeanFieldHomogenization.FiniteElements`](@ref) and both take the 
 route: a finite-element resolution of the Eshelby problem, plugged in through
 the contract, with nothing downstream aware of it.
 
-| Page | Morphology | Gate |
+| Page | Covers | Gate |
 | :--- | :--- | :--- |
-| [Finite-element inclusions](@ref man-fe-inclusions) | elliptical crack, 3-D tetrahedra | the crack algebra, from `cod_tensor` alone |
-| [A recycled-concrete aggregate](@ref app-recycled-aggregate) | sphere with an off-center core | B, both localization tensors |
+| [Finite-element inclusions](@ref man-fe-inclusions) | the principle, the shared syntax, and both shipped morphologies | the crack algebra from `cod_tensor` alone, or B |
+| [A recycled-concrete aggregate](@ref app-recycled-aggregate) | the off-center core, worked end to end | B, both localization tensors |
 
 ## See also
 

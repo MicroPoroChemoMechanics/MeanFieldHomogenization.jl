@@ -6,40 +6,214 @@
     **inside** a finite-element code, as a constitutive law at each Gauss point,
     see [Finite-element coupling](@ref fe-coupling).
 
-When a morphology has no closed-form Eshelby solution, its response can be
-computed numerically and fed to the schemes through the
-[custom-inclusion contract](@ref man-custom-inclusions). `MeanFieldHomogenization` ships
-one such inclusion: [`FEEllipticCrack`](@ref MeanFieldHomogenization.FEEllipticCrack),
-whose crack-opening-displacement tensor comes out of a `Ferrite.jl` solve.
+## What this is
+
+A mean-field scheme never sees a shape. What it asks of each phase is a
+**tensor**: how much of the macroscopic loading that phase actually feels. For
+an ellipsoid that tensor has a closed form, and the package evaluates it
+directly. For a morphology that has no closed form — a crack of finite
+thickness, a grain with an off-center core, a shape that is not an ellipsoid at
+all — the same tensor can be *computed*, once, by a finite-element solve of a
+single inclusion in its matrix, and then handed to the schemes exactly as a
+closed form would be.
+
+That is what a finite-element inclusion is: an ordinary inclusion object whose
+response happens to come out of a mesh. Once built, it goes into an
+[`RVE`](@ref) like any other, every scheme accepts it, and nothing downstream
+knows a solver was involved.
+
+Two are shipped, and the same machinery serves both:
+
+| Type | Morphology | Discretization | What it supplies |
+|:--|:--|:--|:--|
+| [`FEEllipticCrack`](@ref MeanFieldHomogenization.FEEllipticCrack) | flat elliptical crack | 3-D tetrahedra | the crack-opening tensor 𝐁 |
+| [`FEExcenteredSphere`](@ref MeanFieldHomogenization.FEExcenteredSphere) | sphere with an off-center spherical core | axisymmetric Fourier modes | both localization tensors |
+
+The general principle and the shared syntax come first below; the two
+morphologies, and the ones not yet written, come after.
+
+## The principle: a finite cell, and why it must be corrected
+
+The Eshelby problem is posed in an *infinite* matrix, and a mesh is finite. Cut
+the matrix off at a ball of radius ``R`` and impose the remote loading on that
+ball, and the answer is wrong by a term that decays only like ``(a/R)^3``:
+reaching a percent would need ``R \approx 20a``, which in three dimensions is
+``8000`` times the volume to mesh.
+
+The fix is not a bigger ball. An inclusion in a remote field radiates, to
+leading order, like an elastic **dipole** whose moment is proportional to its
+own polarization. Add that dipole's own far field to the displacement imposed on
+``\partial\Omega``, and the leading truncation term cancels; the moment is not
+known in advance, so it is found by a small fixed point — the solve and the
+moment refine each other in a handful of iterations. With the correction in
+place ``R = 4a`` to ``5a`` is enough.
+
+This is the first-order corrected boundary condition of
+[adessinaIJES2017](@cite). It is set out in full, with the fixed point and the
+closed-form dipole fields, in
+[The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell);
+what it buys, measured against the closed form, is in
+[Validating a finite-element crack](@ref tut-fe-crack).
+
+One consequence of using a closed-form dipole is worth stating up front,
+because it constrains every use: the dipole is the **Kelvin** solution, which
+exists in closed form for an *isotropic* matrix. The reference medium must
+therefore be isotropic, and an anisotropic ``\mathbb C_0`` is refused rather
+than silently projected.
+
+## The general syntax
+
+Three steps, identical for both types and for any type added later.
+
+### 1. Load a backend
+
+The package holds the physics — the cell, the dipole correction, the fixed
+point, the algebra. What it does *not* hold is the discretization: meshes,
+element spaces, assembly and quadrature come from a finite-element library,
+loaded as a weak dependency.
 
 ```julia
 using MeanFieldHomogenization
 import Ferrite, FerriteGmsh, Gmsh      # activates MeanFieldHomogenizationFerriteExt
 ```
 
-Either backend serves it — `import Gridap, GridapGmsh` and
-`backend = GridapBackend()` instead. With neither loaded the type still exists,
-but every solve raises an informative error.
+`Gridap` serves both morphologies too — `import Gridap, GridapGmsh`, then pass
+`backend = GridapBackend()`. With neither library loaded the inclusion types
+still exist and can be constructed; only the solve errors, and it says which
+`import` is missing.
 
-!!! note "This page is static"
-    Nothing here is computed at documentation-build time. The figures and the
-    numbers are produced once by `scripts/fe/make_doc_figures.jl` and
-    committed; the live demonstrations are `scripts/81_fe_crack_eshelby.jl` and
-    `scripts/82_fe_crack_schemes.jl`.
+### 2. Build the inclusion
 
-## The method
+Geometry first, then the mesh as keyword arguments. Every finite-element
+inclusion takes its discretization this way, with defaults that already work:
 
-The finite-size bias, the dipole correction and the 3 + 3 fixed point this
-type runs are stated once in
-[The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell).
-What that buys, measured, is in
-[Validating a finite-element crack](@ref tut-fe-crack).
+```julia
+crack = FEEllipticCrack(1.0, 0.25; htipdiv = 12.0)          # a, b, mesh knobs
+```
 
-## The mesh
+Nothing is meshed yet. The mesh is built, assembled and factorized on the
+**first** solve, and kept afterwards.
 
-A ball of matrix around an elliptical slit, refined in a torus hugging the
-crack front — where the displacement field has its square-root singularity —
-and coarsening to ``R/3`` on the outer boundary.
+### 3. Use it like any other inclusion
+
+```julia
+C₀ = iso_stiffness(0.8333, 0.3846)                 # E = 1, ν = 0.3
+
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
+add_phase!(rve, :cracks, crack, Dict(:C => C₀); density = 0.05,
+           symmetrize = IsoSymmetrize())
+homogenize(rve, MoriTanaka(), :C)
+```
+
+That is the whole point of the [custom-inclusion
+contract](@ref man-custom-inclusions): the inclusion implements *one* response
+function, and everything else — the other localization tensors, the
+contribution tensors, orientation averaging, the bounds — is derived by the
+package from that one. The tensor can also be asked for on its own, which is
+what a validation script does:
+
+```julia
+B_fe = cod_tensor(crack, C₀)                       # from the mesh
+B_an = cod_tensor(EllipticCrack(1.0, 0.25), C₀)    # closed form, to compare
+```
+
+### Diagnostics, common to all of them
+
+```julia
+fe_assembly_count(crack)      # factorizations actually performed
+fe_reset!(crack)              # drop the mesh and every memoized tensor
+```
+
+and one mesh report per family — [`fe_mesh_report`](@ref
+MeanFieldHomogenization.fe_mesh_report) for the crack,
+[`fe_axi_mesh_report`](@ref MeanFieldHomogenization.fe_axi_mesh_report) for the
+axisymmetric cell — each printing the counts and the geometric checks that
+matter for that mesh.
+
+### Cost, and why repeated use is cheap
+
+One evaluation is one assembly, one factorization and a few solves. Results are
+**memoized on the reference medium, expressed in the inclusion's own frame**,
+which has a useful consequence: a whole family of *orientations* of the same
+inclusion in the same matrix shares a single finite-element resolution.
+
+So one-shot schemes (`Dilute`, `MoriTanaka`, `Maxwell`,
+`PonteCastanedaWillis`) cost exactly one solve — including an orientation
+average under `IsoSymmetrize`. Iterative schemes (`SelfConsistent`,
+`DifferentialScheme`) move the reference medium at every step and pay one solve
+per distinct ``\mathbb C_0``: usable, but expect a handful of assemblies per
+run.
+
+!!! note "Iterative schemes need `IsoSymmetrize`"
+    An iterative scheme re-evaluates the inclusion in its *current estimate*.
+    For a family of parallel cracks, or a single oriented inclusion, that
+    estimate is transversely isotropic — and the isotropic-only boundary
+    correction refuses it, with an error saying so rather than quietly
+    substituting a projection. Add `symmetrize = IsoSymmetrize()` to the phase
+    and the scheme hands the kernel an isotropic reference at every iteration.
+
+    Isotropy is tested on the tensor's *content*, not on its TensND type, so an
+    iterate arriving as a `TensCanonical` with isotropic content is accepted.
+
+### What none of them can do
+
+- **Isotropic matrix only**, for the reason given above. An anisotropic
+  ``\mathbb C_0`` raises an `ArgumentError`.
+- **No automatic differentiation through the solve.** The sparse factorization
+  is `Float64`-only, and the cache is keyed on the reference medium alone, so a
+  `ForwardDiff.Dual` would lose its perturbation at the door and the derivative
+  would come back as a silent zero. The package therefore *refuses* a
+  `derivative(..., geometry(...))` request on these types instead of answering
+  it wrongly. Use a finite difference over freshly constructed inclusions — or a
+  [neural surrogate](@ref man-neural-inclusions), which is differentiable by
+  construction and is trained on exactly these solves.
+- **P2 interpolation at most** on tetrahedra: Ferrite provides no cubic
+  Lagrange element there.
+
+## Adding your own morphology
+
+Two seams, and it is worth knowing which one a new case needs.
+
+**A new discretization library** implements [`FEBackend`](@ref
+MeanFieldHomogenization.FEBackend): nine generics for the axisymmetric family
+(`fe_axi_grid`, `fe_axi_mode`, `fe_axi_stiffness`, …) and seven for the crack
+family (`fe_crack_grid`, `fe_crack_stiffness`, …). Each has a fallback that
+names the offending backend, so a partial implementation fails informatively
+rather than by `MethodError`. Nothing else in the package needs to know the
+backend exists.
+
+**A new morphology** is a custom inclusion that happens to solve a cell: it
+subtypes `AbstractCustomInclusion`, declares its
+[`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait), holds an
+[`FECache`](@ref MeanFieldHomogenization.FECache), and implements the one
+response function of its entry gate. [Adding a new
+inclusion](@ref dev-adding-inclusion) is the leveled contract, gate by gate.
+
+## The morphologies shipped today
+
+### A flat elliptical crack
+
+[`FEEllipticCrack`](@ref MeanFieldHomogenization.FEEllipticCrack) supplies the
+crack-opening-displacement tensor 𝐁 and nothing else. Because it subtypes
+`AbstractCrack` with a standard `shape_trait`, ℍ, ℕ, 𝐑, 𝐍_K, the bundled pair
+and the four `delta_*` with their ``4\pi/3`` Budiansky–O'Connell prefactor all
+follow from that single tensor.
+
+| Keyword | Default | Meaning |
+|:--|:--|:--|
+| `radius_ratio` | `5.0` | ``R/a``. Five is enough *because* the boundary condition is corrected. |
+| `htipdiv` | `12.0` | element size at the crack front, ``b/\texttt{htipdiv}``. |
+| `order` | `2` | displacement interpolation order (1 or 2). |
+
+```julia
+fe_mesh_report(crack)         # cells, dofs, welded front pairs, lip areas vs πab
+fe_cod_breakdown(crack, C₀)   # B_s, B_u, B_inf — bypasses the cache
+```
+
+The mesh is a ball of matrix around an elliptical slit, refined in a torus
+hugging the crack front — where the displacement has its square-root
+singularity — and coarsening to ``R/3`` on the outer boundary.
 
 ![Three-dimensional view of the mesh](../assets/fe/mesh_3d.png)
 
@@ -71,89 +245,53 @@ Two details are worth stating, because both cost real debugging time in the
   the mid-side nodes.
 
 Straight tetrahedra with a P2 displacement field, then — subparametric, and
-capped at P2 because Ferrite provides no cubic Lagrange element on tetrahedra.
+capped at P2 for the reason listed above.
 
-## Using it
+### A sphere with an off-center core
 
-```julia
-crack = FEEllipticCrack(1.0, 0.25; htipdiv = 12.0)
-
-C₀ = iso_stiffness(0.8333, 0.3846)                 # E = 1, ν = 0.3
-B_fe = cod_tensor(crack, C₀)
-B_an = cod_tensor(EllipticCrack(1.0, 0.25), C₀)    # closed form, for comparison
-
-rve = RVE()
-add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
-add_phase!(rve, :cracks, crack, Dict(:C => C₀); density = 0.05,
-           symmetrize = IsoSymmetrize())
-homogenize(rve, MoriTanaka(), :C)
-```
-
-That is the point of the contract: only `cod_tensor` is implemented, and
-because the type subtypes `AbstractCrack` with a standard
-[`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait), ℍ, ℕ, 𝐑, 𝐍_K, the bundled
-pair and the four `delta_*` with their ``4\pi/3`` Budiansky-O'Connell prefactor all
-follow. Orientation averaging is applied by the scheme afterwards.
-
-### Discretization
-
-[`FEMeshOptions`](@ref MeanFieldHomogenization.FEMeshOptions) — passed as keywords to the
-constructor:
-
-| Keyword | Default | Meaning |
-|:--|:--|:--|
-| `radius_ratio` | `5.0` | `R/a`. Five is enough *because* the boundary condition is corrected. |
-| `htipdiv` | `12.0` | element size at the crack front, `b/htipdiv`. |
-| `order` | `2` | displacement interpolation order (1 or 2). |
-
-### Diagnostics
+[`FEExcenteredSphere`](@ref MeanFieldHomogenization.FEExcenteredSphere) is the
+*heterogeneous* case, and it enters through gate B: being internally
+heterogeneous it has no Hill tensor, so it supplies both localization tensors
+directly. Its constituents live in the geometry object, core first then shell,
+and the `Dict` handed to `add_phase!` is a placeholder the kernel ignores.
 
 ```julia
-fe_mesh_report(crack)         # cells, dofs, welded front pairs, lip areas vs πab
-fe_cod_breakdown(crack, C₀)   # B_s, B_u, B_inf — bypasses the cache
-fe_assembly_count(crack)      # factorizations actually performed
-fe_reset!(crack)              # drop the mesh and the memoized tensors
+C_core, C_shell = iso_stiffness(20.0, 12.0), iso_stiffness(6.0, 4.0)
+incl = FEExcenteredSphere(1.0, (C_core, C_shell);
+                          core_fraction = 0.5, eccentricity = 0.4)
+A, B = fe_axi_localization(incl, C₀)          # both tensors, one solve
 ```
 
-## Cost and memoization
+`eccentricity` is normalized by the largest offset that keeps the core inside,
+so it runs over ``[0, 1)``; `core_fraction` is the core's volume fraction
+within the inclusion. Because the geometry is axisymmetric, the cell is meshed
+in the **meridian half-plane** and the azimuthal dependence is carried by
+Fourier modes — a two-dimensional mesh for a three-dimensional answer. See
+[`FEAxiMeshOptions`](@ref MeanFieldHomogenization.FEAxiMeshOptions) for the
+knobs and [A recycled-concrete aggregate](@ref app-recycled-aggregate) for the
+worked application, where the same correction is used in its general
+polarization-fixed-point form.
 
-One evaluation is one assembly, one factorization and six solves. Results are
-**memoized on the reference medium expressed in the crack's own frame**, which
-has a useful consequence: a whole family of orientations of the same crack in
-the same isotropic matrix shares a single finite-element resolution.
+## Morphologies still to come
 
-One-shot schemes (`Dilute`, `MoriTanaka`, `Maxwell`, `PonteCastanedaWillis`)
-therefore cost exactly one solve — including under `IsoSymmetrize` over an
-orientation distribution. Iterative schemes (`SelfConsistent`,
-`DifferentialScheme`) change the reference medium at every step and pay one
-solve per distinct `C₀`: usable, but expensive (8 assemblies for a typical
-self-consistent run).
+Named here so that the boundary of what exists is explicit:
 
-!!! note "Iterative schemes need IsoSymmetrize"
-    An iterative scheme re-evaluates the crack in the *current estimate*. For a
-    family of **parallel** cracks that estimate is transversely isotropic, and
-    the isotropic-only boundary correction refuses it — with an error saying
-    so, rather than silently substituting an isotropic projection. Adding
-    `symmetrize = IsoSymmetrize()` to the phase makes the scheme hand the
-    kernel an isotropic reference at every iteration.
+- **an anisotropic reference medium**, which needs a Green-gradient model
+  (Pan–Chou or Barnett–Willis) in place of the closed-form Kelvin dipole. This
+  single restriction is what forces `IsoSymmetrize()` under every iterative
+  scheme;
+- **more than one inclusion, or a non-spherical envelope**, in the
+  axisymmetric cell;
+- **transport** for the crack: the elliptical-crack driver solves elasticity
+  only, and the conduction problem would need its own resolution.
 
-    Isotropy is tested on the tensor's *content*, not its TensND type, so an
-    iterate arriving as a `TensCanonical` with isotropic content is accepted.
+These are tracked in the [roadmap](@ref dev-roadmap).
 
-## Limitations
-
-- **Isotropic matrix only** — the corrected boundary condition uses the
-  closed-form Kelvin dipole. An anisotropic `C₀` raises an `ArgumentError`.
-- **Elasticity only** — the transport problem would need its own
-  finite-element resolution.
-- **No automatic differentiation** through the solve: the sparse factorization
-  is `Float64`-only. Use finite differences for sensitivities.
-- **P2 maximum** on tetrahedra (Ferrite provides no cubic Lagrange element
-  there).
-
-These, along with the general 6 + 6 scheme for solid inclusions (the
-excentered-core sphere of the 2017 paper) and Fourier axisymmetric elements,
-are tracked in `docs/src/developer/roadmap.md`.
+!!! note "This page is static"
+    Nothing here is computed at documentation-build time. The figures and the
+    numbers are produced once by `scripts/fe/make_doc_figures.jl` and
+    committed; the live demonstrations are `scripts/81_fe_crack_eshelby.jl` and
+    `scripts/82_fe_crack_schemes.jl`.
 
 ## Reproducing this page
 
@@ -165,9 +303,11 @@ julia scripts/82_fe_crack_schemes.jl     # the crack inside the schemes
 
 ## See also
 
-- [A recycled-concrete aggregate](@ref app-recycled-aggregate) — the same
-  correction on a *solid* inclusion, in its general polarization-fixed-point
-  form, on a two-dimensional axisymmetric Fourier mesh.
-- [Custom inclusions](@ref man-custom-inclusions) — the contract this
-  implements.
-- [Adding a new inclusion](@ref dev-adding-inclusion) — the full developer contract.
+- [Custom inclusions](@ref man-custom-inclusions) — the contract these
+  implement, and its three entry gates.
+- [Adding a new inclusion](@ref dev-adding-inclusion) — the full developer
+  contract.
+- [Neural-surrogate inclusions](@ref man-neural-inclusions) — how to make one
+  of these solves cheap, and differentiable.
+- [A recycled-concrete aggregate](@ref app-recycled-aggregate) — the
+  axisymmetric case, worked end to end.

@@ -40,7 +40,7 @@ are exact, so the pipeline can be held to a closed form before being pointed at
 something unknown. `scripts/84_neural_inclusion_ellipsoid.jl` is that check,
 [published as a tutorial](@ref tut-index).
 
-## Using a shipped model
+## The general syntax: evaluating a surrogate
 
 Three lines:
 
@@ -57,37 +57,88 @@ homogenize(rve, MoriTanaka(), :C)
 ```
 
 Gate A means every scheme works, in elasticity and in transport, and so do
-orientation averaging and the sensitivity API. `shipped_models()` lists what is
-available.
+orientation averaging and the sensitivity API. That is the whole surface: a
+surrogate is an ordinary inclusion whose response happens to be a network.
 
-### The four committed models
+`shipped_models()` lists the trained models available; the ones committed
+today are described [further down](@ref man-neural-models).
 
-Trained by `scripts/nn/train_models.jl` against the **analytic** Hill tensor, so
-the labels are exact and the error below is the fit's alone. All were fitted on
-a Halton sample with a held-out set drawn from the same sequence; ``\omega`` is
-the *distinct over equal* semi-axis ratio, so ``\omega > 1`` is prolate and
-``\omega < 1`` oblate.
+## The domain guard
 
-| Model | Predicts | Features | Domain | Network | Samples | Worst error |
-|:--|:--|:--|:--|:--|:--|:--|
-| `spheroid_hill_iso_elastic` | ``2\mu_0\mathbb P``, `TensTI{4,·,5}` | `log_aspect`, `nu0` | ``\omega \in [1/20, 20]``, ``\nu_0 \in [0, 0.49]`` | 2→48→48→5 | 6000 / 1500 | `3.1e-3` |
-| `spheroid_hill_iso_conduction` | ``k_0\boldsymbol P``, `TensTI{2,·,2}` | `log_aspect` | ``\omega \in [1/20, 20]`` | 1→32→32→2 | 3000 / 800 | `2.1e-4` |
-| `triaxial_hill_iso_elastic` | ``2\mu_0\mathbb P``, `TensOrtho` | `log_r2`, `log_r32`, `nu0` | ``a_2/a_1,\, a_3/a_2 \in [1/20, 1/1.05]``, ``\nu_0 \in [0, 0.49]`` | 3→64→64→9 | 12000 / 3000 | `6.7e-3` |
-| `spheroid_hill_iso_affine` | ``\mathbb U^{\boldsymbol A}`` and ``\mathbb V^{\boldsymbol A}``, `TensTI{4,·,5}` | `log_aspect` | ``\omega \in [1/20, 20]``, **any** ``\nu_0`` | 1→48→48→10 | 6000 / 1500 | `2.6e-4` |
+A network interpolates. Inside its box it is as good as its recorded error says;
+outside it is unbounded and carries no diagnostic. The box therefore travels with
+the weights and is checked on every evaluation:
 
-"Worst error" is `worst_error(s.provenance)`: the largest error over the held-out
-set, in the ∞-norm of the component vector relative to its own magnitude. It is
-the number a tolerance should be derived from — the test suite does exactly that
-rather than hard-coding a literal, so a retraining cannot silently loosen a
-threshold. Per-component diagnostics are in
-`src/NeuralInclusions/models/training_report.md`.
+```julia
+incl = NeuralHillInclusion((1.0, 1.0, 1e-4); elastic = s, guard = :error)
+hill_tensor(incl, C₀)   # ArgumentError: :log_aspect is outside the box
+```
 
-Note the last row: the affine factorization is **twelve times more accurate**
-than the generic one, on a network of the same size, because it does not spend
-capacity fitting a dependence that is exactly known. See
-[below](@ref man-neural-affine).
+`guard` is `:warn` (default), `:error` or `:none`.
 
-## Training your own
+## What is exact, and what is fitted
+
+Only what is genuinely unknown is learned. Three properties are enforced by
+construction and hold to machine precision *however badly* the network is
+trained:
+
+- **Zero contrast.** Gate A supplies ``\mathbb P``, and the package evaluates
+  ``\mathbb A_{\varepsilon\varepsilon} =
+  [\mathbb I + \mathbb P:(\mathbb C_1-\mathbb C_0)]^{-1}`` exactly, so
+  ``\mathbb C_1 = \mathbb C_0 \Rightarrow \mathbb A = \mathbb I``. The eight
+  localization tensors also stay exactly consistent with one another — which a
+  surrogate predicting ``\mathbb A`` could not guarantee.
+  ``\mathbb A_{\varepsilon\varepsilon}`` has **no major symmetry**, so it needs
+  the 6-component transversely isotropic form where ``\mathbb P`` needs 5; for
+  an oblate spheroid its major-symmetry defect is around 10 %, and forcing it
+  onto the 5-component form loses a few percent.
+- **Homogeneity.** ``\mathbb P(\lambda\mathbb C_0) = \mathbb P(\mathbb C_0)/\lambda``.
+  The network never sees an absolute modulus, only the shape and ``\nu_0``.
+- **Symmetry class, major symmetry and frame.** The decoder emits a structured
+  TensND type from the right number of components, in the inclusion's own frame;
+  the orientation is never an input.
+
+### [Removing the Poisson ratio from the inputs](@id man-neural-affine)
+
+This is the **shape/moduli factorization** of
+[Hill polarization tensors](@ref th-hill-tensors), regrouped. That page states
+
+```math
+\mathbb P\bigl(\boldsymbol A,\, 3\lambda_0\mathbb I + 2\mu_0\mathbb K\bigr)
+= \frac{1}{\lambda_0 + 2\mu_0}\,\mathbb U^{\boldsymbol A}
++ \frac{1}{\mu_0}\bigl(\mathbb V^{\boldsymbol A} - \mathbb U^{\boldsymbol A}\bigr),
+```
+
+with the geometric auxiliaries [`tens_UA`](@ref MeanFieldHomogenization.tens_UA)
+and [`tens_VA`](@ref MeanFieldHomogenization.tens_VA) depending on the **shape
+alone**. Collecting the two terms on ``\mathbb U^{\boldsymbol A}`` and
+``\mathbb V^{\boldsymbol A}`` gives
+
+```math
+\mathbb P = d\,\mathbb U^{\boldsymbol A} + \frac{1}{\mu_0}\,\mathbb V^{\boldsymbol A},
+\qquad d = \frac{1}{\lambda_0 + 2\mu_0} - \frac{1}{\mu_0},
+```
+
+which is affine in the two material scalars ``(d, 1/\mu_0)``.
+[`AffineHill`](@ref MeanFieldHomogenization.AffineHill) exploits it: the network predicts
+those two tensors — twice the components, one fewer input — and the decoder
+contracts them with the exact coefficients. The whole material dependence becomes
+algebra, and the surrogate is valid at *any* ``\nu_0``, including values no label was
+generated at.
+
+Nothing shape-specific is reimplemented to get there. Both tensors live in the
+same symmetry class as ``\mathbb P``, so their components are recovered from two teacher
+evaluations at two Poisson ratios by solving the 2×2 system componentwise. In
+transport the decomposition has a single term and the material dependence is
+exact with no material input at all.
+
+Prefer `AffineHill` whenever the reference medium is isotropic: same cost, one
+input fewer, an order of magnitude more accurate. Prefer
+[`DimensionlessHill`](@ref MeanFieldHomogenization.DimensionlessHill) when you will need to
+transfer the recipe to an anisotropic matrix or to a localization pair, where no
+affine structure exists.
+
+## The general syntax: training your own
 
 Four decisions, then one call. The
 [tutorial](@ref tut-index) walks the same ground with a schematic of the network
@@ -163,82 +214,34 @@ the standardization of both ends, and a per-component `:log` transform wherever
 the dynamic range calls for it — which is the case of the oblate Walpole
 components, several of which grow like ``1/\omega`` as the particle flattens.
 
-## What is exact, and what is fitted
+## [The models shipped today](@id man-neural-models)
 
-Only what is genuinely unknown is learned. Three properties are enforced by
-construction and hold to machine precision *however badly* the network is
-trained:
+Trained by `scripts/nn/train_models.jl` against the **analytic** Hill tensor, so
+the labels are exact and the error below is the fit's alone. All were fitted on
+a Halton sample with a held-out set drawn from the same sequence; ``\omega`` is
+the *distinct over equal* semi-axis ratio, so ``\omega > 1`` is prolate and
+``\omega < 1`` oblate.
 
-- **Zero contrast.** Gate A supplies ``\mathbb P``, and the package evaluates
-  ``\mathbb A_{\varepsilon\varepsilon} =
-  [\mathbb I + \mathbb P:(\mathbb C_1-\mathbb C_0)]^{-1}`` exactly, so
-  ``\mathbb C_1 = \mathbb C_0 \Rightarrow \mathbb A = \mathbb I``. The eight
-  localization tensors also stay exactly consistent with one another — which a
-  surrogate predicting ``\mathbb A`` could not guarantee.
-  ``\mathbb A_{\varepsilon\varepsilon}`` has **no major symmetry**, so it needs
-  the 6-component transversely isotropic form where ``\mathbb P`` needs 5; for
-  an oblate spheroid its major-symmetry defect is around 10 %, and forcing it
-  onto the 5-component form loses a few percent.
-- **Homogeneity.** ``\mathbb P(\lambda\mathbb C_0) = \mathbb P(\mathbb C_0)/\lambda``.
-  The network never sees an absolute modulus, only the shape and ``\nu_0``.
-- **Symmetry class, major symmetry and frame.** The decoder emits a structured
-  TensND type from the right number of components, in the inclusion's own frame;
-  the orientation is never an input.
+| Model | Predicts | Features | Domain | Network | Samples | Worst error |
+|:--|:--|:--|:--|:--|:--|:--|
+| `spheroid_hill_iso_elastic` | ``2\mu_0\mathbb P``, `TensTI{4,·,5}` | `log_aspect`, `nu0` | ``\omega \in [1/20, 20]``, ``\nu_0 \in [0, 0.49]`` | 2→48→48→5 | 6000 / 1500 | `3.1e-3` |
+| `spheroid_hill_iso_conduction` | ``k_0\boldsymbol P``, `TensTI{2,·,2}` | `log_aspect` | ``\omega \in [1/20, 20]`` | 1→32→32→2 | 3000 / 800 | `2.1e-4` |
+| `triaxial_hill_iso_elastic` | ``2\mu_0\mathbb P``, `TensOrtho` | `log_r2`, `log_r32`, `nu0` | ``a_2/a_1,\, a_3/a_2 \in [1/20, 1/1.05]``, ``\nu_0 \in [0, 0.49]`` | 3→64→64→9 | 12000 / 3000 | `6.7e-3` |
+| `spheroid_hill_iso_affine` | ``\mathbb U^{\boldsymbol A}`` and ``\mathbb V^{\boldsymbol A}``, `TensTI{4,·,5}` | `log_aspect` | ``\omega \in [1/20, 20]``, **any** ``\nu_0`` | 1→48→48→10 | 6000 / 1500 | `2.6e-4` |
 
-### [Removing the Poisson ratio from the inputs](@id man-neural-affine)
+"Worst error" is `worst_error(s.provenance)`: the largest error over the held-out
+set, in the ∞-norm of the component vector relative to its own magnitude. It is
+the number a tolerance should be derived from — the test suite does exactly that
+rather than hard-coding a literal, so a retraining cannot silently loosen a
+threshold. Per-component diagnostics are in
+`src/NeuralInclusions/models/training_report.md`.
 
-This is the **shape/moduli factorization** of
-[Hill polarization tensors](@ref th-hill-tensors), regrouped. That page states
+Note the last row: the affine factorization is **twelve times more accurate**
+than the generic one, on a network of the same size, because it does not spend
+capacity fitting a dependence that is exactly known, as
+[described above](@ref man-neural-affine).
 
-```math
-\mathbb P\bigl(\boldsymbol A,\, 3\lambda_0\mathbb I + 2\mu_0\mathbb K\bigr)
-= \frac{1}{\lambda_0 + 2\mu_0}\,\mathbb U^{\boldsymbol A}
-+ \frac{1}{\mu_0}\bigl(\mathbb V^{\boldsymbol A} - \mathbb U^{\boldsymbol A}\bigr),
-```
-
-with the geometric auxiliaries [`tens_UA`](@ref MeanFieldHomogenization.tens_UA)
-and [`tens_VA`](@ref MeanFieldHomogenization.tens_VA) depending on the **shape
-alone**. Collecting the two terms on ``\mathbb U^{\boldsymbol A}`` and
-``\mathbb V^{\boldsymbol A}`` gives
-
-```math
-\mathbb P = d\,\mathbb U^{\boldsymbol A} + \frac{1}{\mu_0}\,\mathbb V^{\boldsymbol A},
-\qquad d = \frac{1}{\lambda_0 + 2\mu_0} - \frac{1}{\mu_0},
-```
-
-which is affine in the two material scalars ``(d, 1/\mu_0)``.
-[`AffineHill`](@ref MeanFieldHomogenization.AffineHill) exploits it: the network predicts
-those two tensors — twice the components, one fewer input — and the decoder
-contracts them with the exact coefficients. The whole material dependence becomes
-algebra, and the surrogate is valid at *any* ``\nu_0``, including values no label was
-generated at.
-
-Nothing shape-specific is reimplemented to get there. Both tensors live in the
-same symmetry class as ``\mathbb P``, so their components are recovered from two teacher
-evaluations at two Poisson ratios by solving the 2×2 system componentwise. In
-transport the decomposition has a single term and the material dependence is
-exact with no material input at all.
-
-Prefer `AffineHill` whenever the reference medium is isotropic: same cost, one
-input fewer, an order of magnitude more accurate. Prefer
-[`DimensionlessHill`](@ref MeanFieldHomogenization.DimensionlessHill) when you will need to
-transfer the recipe to an anisotropic matrix or to a localization pair, where no
-affine structure exists.
-
-## The domain guard
-
-A network interpolates. Inside its box it is as good as its recorded error says;
-outside it is unbounded and carries no diagnostic. The box therefore travels with
-the weights and is checked on every evaluation:
-
-```julia
-incl = NeuralHillInclusion((1.0, 1.0, 1e-4); elastic = s, guard = :error)
-hill_tensor(incl, C₀)   # ArgumentError: :log_aspect is outside the box
-```
-
-`guard` is `:warn` (default), `:error` or `:none`.
-
-## Heterogeneous morphologies
+## Still to come: heterogeneous morphologies
 
 [`NeuralLocalizationInclusion`](@ref MeanFieldHomogenization.NeuralLocalizationInclusion)
 takes gate B, the only way in for a morphology with no Hill tensor. Since
