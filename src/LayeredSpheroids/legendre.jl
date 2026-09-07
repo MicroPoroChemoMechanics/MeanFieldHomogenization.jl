@@ -56,9 +56,9 @@ end
 
 Grow the value/derivative tables `tab`, `dtab` (1-indexed, `tab[k+1]` =
 degree-`k` value) up to degree `Nmax` (inclusive) by the upward
-recurrence [`_legendre_next`](@ref) / [`_legendre_next_der`](@ref),
+recurrence `_legendre_next` / `_legendre_next_der`,
 order `m`. `tab` and `dtab` must already hold their required seed
-degrees (2 seeds for the standard case, 3 for [`_Q1_table`](@ref)'s
+degrees (2 seeds for the standard case, 3 for `_Q1_table`'s
 special low-degree closed forms).
 """
 function _legendre_grow!(tab::Vector{Tx}, dtab::Vector{Tx}, Nmax::Int, m::Int, x) where {Tx}
@@ -154,7 +154,7 @@ end
 `Qₙᵐ(x)` for `n = 0, …, Nmax` by Miller's downward recurrence, normalized so
 that degree `n_norm` equals the exact closed form `q_norm`.
 
-The recurrence is [`_legendre_next`](@ref) solved for the lower neighbor,
+The recurrence is `_legendre_next` solved for the lower neighbor,
 
     Qₙ₋₁ = ((2n+1) x Qₙ − (n−m+1) Qₙ₊₁) / (n+m),
 
@@ -312,7 +312,7 @@ end
 
 `Pₙ²(x)`, order `m = 2`, on the `p` branch (`|p| ≤ 1`), seeded with
 `P₂²(p) = 3(1-p²)` — Ferrers' convention, whose `(-1)^m` is `+1` here, matching
-[`_P1p_table`](@ref)'s `P₁¹(p) = -√(1-p²)`.
+`_P1p_table`'s `P₁¹(p) = -√(1-p²)`.
 
 `P₀² = P₁² = 0`, and the three-term recurrence is **singular at `n = m-1`**
 (its leading coefficient `n-m+1` vanishes there), so the seed has to reach
@@ -329,7 +329,7 @@ end
     _P2_table(x, Nmax) -> (tab, dtab)
 
 `Pₙ²(x)`, order `m = 2`, on the `q` branch (`|x| > 1`), seeded with
-`P₂²(q) = 3(q²-1)` — Hobson's convention, matching [`_P1_table`](@ref).
+`P₂²(q) = 3(q²-1)` — Hobson's convention, matching `_P1_table`.
 """
 function _P2_table(x::Tx, Nmax::Int) where {Tx}
     z = zero(Tx)

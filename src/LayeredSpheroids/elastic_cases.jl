@@ -358,7 +358,7 @@ The unnormalized surface moment on one confocal surface,
 \\qquad \\mathrm dS = c^2\\,\\bar q\\,w\\,\\mathrm dp\\,\\mathrm d\\varphi .
 ```
 
-Averages are built from these by [`_avg_strain`](@ref); nothing here is divided
+Averages are built from these by `_avg_strain`; nothing here is divided
 by a volume, so the same routine serves a shell and the whole inclusion.
 """
 function _surface_moment(
@@ -490,8 +490,8 @@ confocal spheroid in an infinite isotropic matrix `C₀`, defined by
 `⟨ε⟩ = 𝔸 : E` over the whole composite inclusion.
 
 This is what a mean-field scheme consumes. It is assembled from **six** solves,
-one per independent remote strain — [`_basis_loadings`](@ref) lists them — each
-averaged by the surface integral of [`_avg_strain`](@ref). The result is
+one per independent remote strain — `_basis_loadings` lists them — each
+averaged by the surface integral of `_avg_strain`. The result is
 returned as a general fourth-order tensor rather than a `TensTI{4}`: it *is*
 transversely isotropic about the spheroid's axis, but the tests check that
 rather than the type asserting it, and `𝔸` has no major symmetry to exploit.
