@@ -201,6 +201,13 @@ end
         include("NeuralInclusions/test_neural_inclusion.jl")
     end
 
+    # Superspherical and superspheroidal geometry. Pure closed forms, no mesh
+    # and no solver, so this runs unconditionally and in seconds — and it is
+    # what everything built on those shapes assumes.
+    @testset "Superspheres" begin
+        include("Superspheres/test_shapes.jl")
+    end
+
     # Finite-element inclusions: skipped when the Ferrite stack is unavailable
     # (it is a weak dependency), and slow when it is — the crack cases mesh a
     # ball and factorize a ~10⁵-dof system, while the axisymmetric ones are

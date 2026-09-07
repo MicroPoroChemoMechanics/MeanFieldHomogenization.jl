@@ -143,6 +143,7 @@ include("contribution.jl")
 include("CustomInclusions/CustomInclusions.jl")
 include("FiniteElements/FiniteElements.jl")
 include("NeuralInclusions/NeuralInclusions.jl")
+include("Superspheres/Superspheres.jl")
 # `Constitutive` turns a whole cell + scheme into a Gauss-point material law, so
 # it comes after every inclusion family a microstructure may hold. It is the
 # mirror image of `FiniteElements`: there the FE code is inside MFH, here MFH is
@@ -152,6 +153,7 @@ include("Constitutive/Constitutive.jl")
 using .CustomInclusions
 using .FiniteElements
 using .NeuralInclusions
+using .Superspheres
 using .Constitutive
 
 # ─── MFH Studio launcher ─────────────────────────────────────────────────────
@@ -211,6 +213,13 @@ export NeuralSurrogate, Provenance, worst_error
 export save_surrogate, load_surrogate, model_path, shipped_models
 export HillISO, HillTI, HillOrtho, HillISO2, HillTI2
 export StrainLocTI, StressLocTI
+
+# ── Superspherical and superspheroidal morphologies ──────────────────────────
+export AbstractSuperShape, Supersphere, Superspheroid
+export shape_exponent, is_concave, is_convex, is_sphere
+export level_set, radial_distance, surface_point, outward_normal
+export diagonal_radius, edge_radius, bounding_radius, inner_radius
+export shape_volume, projected_area, equivalent_sphere_radius
 export DimensionlessHill, AffineHill
 export SampleBox, Dataset, generate_dataset, fit_scaling
 export TrainingOptions, train_surrogate, assemble_surrogate
