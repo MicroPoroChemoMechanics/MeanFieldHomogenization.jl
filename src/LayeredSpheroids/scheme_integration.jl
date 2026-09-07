@@ -1,8 +1,9 @@
 # =============================================================================
 #  scheme_integration.jl — plug a `LayeredSpheroid` into the mean-field
-#  schemes (conduction only, and deliberately: a full transversely isotropic
-#  concentration tensor needs all three elastic elementary problems, and only
-#  case I is written — see `elasticity.jl`).
+#  schemes, in conduction and in elasticity. The elastic entries live at the
+#  bottom of this file and go through `elastic_cases.jl`, which needs all three
+#  elementary problems: case I alone would give only the axisymmetric block of
+#  the concentration tensor.
 #
 #  Exactly as for `LayeredSphere` (see `LayeredSpheres/scheme_integration.jl`),
 #  a composite spheroid has NO Hill tensor: what the schemes need is its

@@ -28,14 +28,11 @@ MeanFieldHomogenization.LayeredSpheres) — couple different harmonic degrees, u
 the sphere, requiring the truncated series machinery of
 `legendre.jl` / `coupling.jl`.
 
-That path into the schemes is **conduction only**. Three independent things
-stand between case I and doing the same in elasticity: the two remaining
-elementary problems (transverse and longitudinal shear, orders `m = 2` and
-`m = 1`, which fix the shear coefficients case I cannot reach); per-layer
-strain averages, `spheroid_core_strain` giving the core alone where a scheme
-needs the whole pattern; and the assembly of those into a `TensTI{4}`. The
-elastic entry points return harmonic amplitudes and the core strain, not a
-concentration tensor.
+That path into the schemes now works in **elasticity** too, prolate and oblate
+alike: [`spheroid_strain_concentration`](@ref) assembles the full transversely
+isotropic concentration tensor from the three elementary problems, and
+`strain_strain_loc` / `stiffness_contribution` hand it to the schemes. Only
+perfect interfaces, and only the default axis `ê₃`.
 """
 module LayeredSpheroids
 

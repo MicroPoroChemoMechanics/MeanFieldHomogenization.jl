@@ -7,21 +7,20 @@ operators it produces, the structural fact that decides how the conditions are
 matched, and the solver those add up to.
 
 !!! note "What this covers, and what it does not"
-    **Case I** — a remote strain ``\mathrm{diag}(\varepsilon_t,
-    \varepsilon_t, \varepsilon_a)`` about the spheroid's axis, through any
-    number of confocal layers, with **perfect** interfaces. Delivered and
-    checked against Eshelby.
+    **All three elementary problems**, so the full transversely isotropic strain
+    concentration tensor exists and the mean-field schemes consume it — see
+    [the solver](@ref th-spheroid-elastic-solver) and
+    [what a scheme needs](@ref th-spheroid-elastic-scheme). **Prolate and
+    oblate** alike, the latter through the complex substitution
+    ``q = i\tau``, ``c = -i\bar c``, exactly as on the conduction side.
 
-    **Not yet a mean-field phase.** `LayeredSpheroid` feeds the homogenization
-    schemes in conduction only, and three things stand between case I and doing
-    the same in elasticity — see
-    [what a scheme needs](@ref th-spheroid-elastic-scheme).
+    Case I is the one **derived in full** below, because its operators are the
+    ones written out here; cases II and III reuse them unchanged and differ
+    only in their mode lists.
 
-    **Imperfect interfaces** do not fit this formulation at all, and
-    [the reason is structural](@ref th-spheroid-imperfect) rather than a
-    missing feature. **Oblate** spheroids are refused: their confocal
-    parameter is complex, and nothing here has been checked against a
-    reference for it.
+    **Perfect interfaces only**, and the default axis ``\underline e_3``. The
+    interface restriction is not a gap to be filled:
+    [it is structural](@ref th-spheroid-imperfect).
 
 ## Why this is a derivation and not a transcription
 
@@ -509,12 +508,56 @@ degrees ``0`` to ``7`` and three points, and returns ``u_\varphi`` and
 ``\sigma_{\varphi q}`` as exact zeros. Two independent routes agreeing is worth
 considerably more than either one agreeing with itself.
 
+### [No rigid-body rotations are needed](@id th-spheroid-no-rotation)
+
+Duan adds two to case III and attributes to their omission the error in
+Riccardi & Montheillet (1999). They are not needed here, and the reason is that
+the **full** four-potential set already spans them. A rotation about
+``\underline e_2`` is
+
+```math
+\varphi_1 = A\,z,\qquad \varphi_3 = -A\,x
+\quad\Longrightarrow\quad
+\underline u \propto (z,\,0,\,-x),
+```
+
+the **antisymmetric** combination of the very two potentials whose *symmetric*
+combination, ``\varphi_1 = \alpha z`` with ``\varphi_3 = +\alpha x``, is the
+remote shear itself. Duan's extra unknowns are an artifact of a gauge that drops
+one of the two, not a physical requirement. A rotation carries no strain, so its
+traction must vanish identically — which is how the test states it — and the
+Eshelby oracle confirms the whole thing: case III lands on the analytic answer
+with no rotation in the unknown list.
+
+### [Two things that are not optional](@id th-spheroid-not-optional)
+
+Both were found by the oracle disagreeing, and both are easy to get wrong.
+
+**Degree ``0`` of ``\varphi_0``.** Only its *regular* part is a constant and
+therefore inert; the irregular one is ``P_0(p)Q_0(q) = \operatorname{arccoth} q``,
+an essential mode. Dropping it does not merely lose accuracy — it makes the
+case-I system **genuinely inconsistent**, least-squares residual ``10^{-1}``
+instead of ``10^{-16}``, and the answer out by 10%. Its regular counterpart is
+an exactly zero column, which the solver filters rather than tolerates:
+``Float64`` QR survived it, a `ForwardDiff.Dual` element type did not.
+
+**Parity.** Each case's remote field fixes the admissible parity of ``\Phi``
+under ``p \to -p``, and the potentials inherit one parity each — ``\varphi_0``
+even and ``\varphi_3`` odd in case I, and so on, a mode picking up
+``(-1)^{n+m}``. Admitting both parities does not just waste columns: it splices
+in the *other* problem of the same order, the one whose remote field is odd
+where this one's is even, and the truncated system then leaks between them.
+
 ## [The solver, and what it is checked against](@id th-spheroid-elastic-solver)
 
-`spheroid_elastic_coefficients` assembles the four conditions at every
-interface and solves once, globally. There is no per-interface transfer matrix
-to chain: the degrees couple, so the natural object is one system rather than a
-product of ``2\mathcal N \times 2\mathcal N`` blocks.
+`spheroid_strain_concentration` runs six solves and assembles the tensor;
+`spheroid_elastic_coefficients` is the case-I-only entry, kept because its
+independent closed forms are what the generic path is checked against.
+
+Each solve assembles the conditions at **every** interface at once and solves
+globally. There is no per-interface transfer matrix to chain: the degrees
+couple, so the natural object is one system rather than a product of
+``2\mathcal N\times2\mathcal N`` blocks.
 
 The projections onto the Legendre degrees are computed by Gauss–Legendre
 quadrature in ``p``. That is **exact**, not approximate — each condition is a
@@ -522,29 +565,38 @@ polynomial in ``p`` once the shared radicals are cleared, so a rule with enough
 nodes integrates it to the last bit. Banding is what bounds the truncation
 error, not how the matrix is built.
 
-Each region contributes ``4\mathcal N - 1`` amplitudes and each interface
-``4\mathcal N`` conditions, degree ``0`` of ``\varphi_0`` being a constant
-potential that moves nothing. The system is therefore over-determined by one row
-per interface, and those rows are **redundant rather than conflicting**: for a
-single inclusion the least-squares residual comes out at ``10^{-16}``. That
-residual is returned, and it is a diagnostic — if it stops being small for a
-single inclusion, something upstream is wrong.
+The azimuth needs no quadrature at all: every field component of a given case
+carries **one** azimuthal harmonic, the same on both sides of an interface, so
+it divides out of a matching condition and a single generic ``\varphi`` suffices.
+
+The system is over-determined, and the extra rows are **redundant rather than
+conflicting**: for a single inclusion the least-squares residual comes out at
+``10^{-16}``. That residual is returned as a diagnostic — if it stops being
+small for a single inclusion, something upstream is wrong, which is exactly how
+the two defects in
+[the previous section](@ref th-spheroid-not-optional) announced themselves.
 
 ### The oracle
 
-A single homogeneous spheroid must be Eshelby, and its interior series must
-collapse to the two coefficients a uniform strain can carry — degree ``2`` of
-``\varphi_0`` and degree ``1`` of ``\varphi_3``. Both hold:
+A single homogeneous spheroid must be Eshelby — on **all 81 components** of the
+concentration tensor, not on one scalar — and its interior series must collapse
+to the handful of coefficients a uniform strain can carry. Both hold, prolate
+and oblate:
 
-| ``\omega`` | interior coefficients ``\ne 0`` | ``\varepsilon_a`` vs Eshelby | ``\varepsilon_t`` vs Eshelby |
-|:--|:--:|:--|:--|
-| 1.5 | 2 | ``8\!\cdot\!10^{-16}`` | ``9\!\cdot\!10^{-16}`` |
-| 2 | 2 | ``1\!\cdot\!10^{-15}`` | ``1\!\cdot\!10^{-15}`` |
-| 5 | 2 | ``7\!\cdot\!10^{-15}`` | ``8\!\cdot\!10^{-14}`` |
-| 20 | 2 | ``5\!\cdot\!10^{-15}`` | ``2\!\cdot\!10^{-14}`` |
+| ``\omega`` | | max discrepancy vs Eshelby | residual |
+|:--|:--|:--|:--|
+| 1.5, 2, 4, 10 | prolate | ``8\cdot10^{-15}`` | ``\le 2\cdot10^{-14}`` |
+| 0.7, 0.4, 0.2 | oblate | ``6\cdot10^{-15}`` | ``\le 2\cdot10^{-15}`` |
 
-A shell given the core's own moduli changes the answer by ``10^{-15}``, which is
-what certifies the chaining.
+For an oblate spheroid every intermediate is complex and the answer real; the
+imaginary part comes out at ``8\cdot10^{-17}`` relative, and the code refuses
+rather than truncates if it does not.
+
+Then, on the assembly rather than on one solve: a shell given the core's own
+moduli changes the answer by ``10^{-15}``, which certifies the chaining; the two
+members of each shear pair agree, which nothing enforces; and through
+`homogenize`, a single-layer spheroid degenerates onto the equivalent
+`Ellipsoid` to ``2\cdot10^{-15}`` under both Dilute and Mori–Tanaka.
 
 ### Where `Float64` gives out
 
@@ -569,37 +621,55 @@ double precision stops sufficing once ``0.8(2\mathcal N-1) > 16``, that is at
 criterion should be, and it is the same mechanism: what runs out is the accuracy
 of the coupling between degrees, not anything about elasticity.
 
-## [What a homogenization scheme still needs](@id th-spheroid-elastic-scheme)
+## [What a homogenization scheme gets](@id th-spheroid-elastic-scheme)
 
-A mean-field scheme consumes an inclusion's **volume-averaged strain
-concentration tensor** ``\mathbb A``, defined by
-``\langle\boldsymbol\varepsilon\rangle = \mathbb A : \boldsymbol E``, averaged
-over the whole composite inclusion. For a spheroid ``\mathbb A`` is transversely
+A scheme consumes an inclusion's **volume-averaged strain concentration
+tensor** ``\mathbb A``, defined by
+``\langle\boldsymbol\varepsilon\rangle = \mathbb A : \boldsymbol E`` over the
+whole composite inclusion. For a spheroid ``\mathbb A`` is transversely
 isotropic about the axis, and the six-dimensional space of symmetric
 second-order tensors splits into three subspaces it does not mix:
 
-| subspace | dim | loading | what it fixes |
+| subspace | dim | loading | fixes |
 |:--|:--:|:--|:--|
 | axisymmetric — ``\underline e_3\otimes\underline e_3``, ``\mathbf 1 - \underline e_3\otimes\underline e_3`` | 2 | **case I** | a ``2\times2`` block |
 | transverse shear — ``\varepsilon_{11}-\varepsilon_{22}``, ``2\varepsilon_{12}`` | 2 | **case II** | one scalar |
 | longitudinal shear — ``2\varepsilon_{13}``, ``2\varepsilon_{23}`` | 2 | **case III** | one scalar |
 
-So case I fixes four of the six coefficients, and only the four that live in the
-axisymmetric block. Three things are therefore still missing, and they are
-independent of one another:
+Six solves — the two members of each subspace, which are the same problem
+rotated about the axis — fill all six coefficients. That the two members of a
+pair agree is a check the assembly gets for free, and nothing in it enforces
+that agreement.
 
-1. **Cases II and III**, for the two shear coefficients. Both need `legendre.jl`
-   extended to orders ``m = 1`` and ``m = 2``.
-2. **Per-layer strain averages.** `spheroid_core_strain` returns the strain in
-   the **core**, which is one region out of ``N``. A scheme needs the average
-   over the whole pattern, weighted by the confocal volumes — the counterpart
-   of `sphere_strain_average` for the layered sphere, and of
-   `layer_gradient_average` on this module's own conduction side.
-3. **Assembly and wiring**, turning those into a `TensND.TensTI{4}` and
-   plugging it in where `scheme_integration.jl` does the conduction case.
+### Averaging without per-layer bookkeeping
 
-None of the three is obstructed the way an imperfect interface is; they are work
-rather than a wall.
+The average is taken by the **divergence theorem**, which reduces it to a
+surface integral on a confocal boundary:
+
+```math
+\langle\boldsymbol\varepsilon\rangle\,V
+   = \oint_{q=q_N}\operatorname{sym}(\underline u\otimes\underline e_q)\,\mathrm dS,
+\qquad \mathrm dS = c^2\,\bar q\,w\,\mathrm dp\,\mathrm d\varphi .
+```
+
+With perfect interfaces ``\underline u`` is continuous, so the *interior*
+boundaries cancel in pairs and only the outer surface survives — whatever
+``N`` is, and with no volume integral anywhere. A **single layer's** average is
+the difference of the two moments on its own boundaries, which is what a
+stiffness contribution tensor needs:
+
+```math
+\mathbb N_C = \sum_k f_k\,(\mathbb C_k - \mathbb C_0):\mathbb A_k ,
+```
+
+irrecoverable from the total alone, the layers having different moduli. The
+inner term drops out on its own for the core: the confocal surface degenerates
+to the focal segment there and ``\mathrm dS \propto \bar q`` vanishes with it.
+
+The two routes — layers from differences of their own boundary moments, the
+total from one moment on the outer boundary — are independent, so
+``\sum_k f_k\mathbb A_k = \mathbb A`` is a check rather than a restatement. It
+holds to the truncation accuracy.
 
 ## [Imperfect interfaces, and why they do not fit](@id th-spheroid-imperfect)
 
@@ -684,19 +754,18 @@ runs into. Both relations, checked:
 
 ## What comes next
 
-Cases II and III, and nothing else — imperfect interfaces are not a matter of
-sequencing but of the obstruction above.
+Not cases II and III — they are in. What is left is smaller and none of it is
+obstructed the way an imperfect interface is:
 
-Both need `legendre.jl` extended to orders ``m = 1`` and ``m = 2``, which is a
-matter of seed tables: the recurrence and its stability machinery are already
-order-generic, and `legendre_degrees` already takes the degree list as an
-argument rather than assuming a parity. Case III additionally carries **two
-rigid-body rotations**, and Duan attributes to their omission the error in
-Riccardi & Montheillet (1999) — so that is where a symbolic check earns the
-most, the completeness of the representation under the chosen gauge being the
-question rather than equilibrium, which is automatic.
+- **Pointwise fields.** The solver returns the harmonic amplitudes, so
+  ``\underline u``, ``\boldsymbol\varepsilon`` and ``\boldsymbol\sigma`` at a
+  point are a matter of summing modes — the conduction side already offers
+  that through `local_temperature` and its siblings.
+- **An arbitrary axis.** The elementary problems are written about
+  ``\underline e_3``; a spheroid tilted in the global frame needs the result
+  rotated, which the solver does not yet do for you.
+- **A stiffness rather than a strain concentration.** `stiffness_contribution`
+  is assembled layer by layer; the compliance-side twin is not written.
 
-Only once all three are in place does a full transversely isotropic stiffness
-tensor exist, and with it the path into the mean-field schemes that the
-conduction side already has. [The roadmap](@ref dev-elastic-spheroid) collects
-the numerical traps that apply throughout.
+[The roadmap](@ref dev-elastic-spheroid) carries the numerical traps that apply
+throughout.

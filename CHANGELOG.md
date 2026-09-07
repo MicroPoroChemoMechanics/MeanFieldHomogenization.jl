@@ -1,5 +1,126 @@
 # Changelog
 
+## v0.12.0 — a layered confocal spheroid is a mean-field phase, elastically
+
+`LayeredSpheroid` fed the homogenization schemes in conduction only. It now
+feeds them in **elasticity** too, prolate and oblate, with any number of
+confocal layers: `spheroid_strain_concentration` assembles the full
+transversely isotropic strain concentration tensor, and `strain_strain_loc` /
+`stiffness_contribution` hand it to `homogenize`.
+
+v0.11.0 had case I alone, which fixes only the axisymmetric block of that
+tensor. The two shear cases are in now, and with them the six coefficients a
+scheme needs.
+
+### One evaluator, and the cases as data
+
+The three elementary problems of Duan et al. (2005) differ in which potentials
+are active, at which order, and what the remote field is — not in their
+operators. Written on all four Papkovich–Neuber potentials,
+
+    2μ u = ∇Φ - 4(1-ν) φ⃗,   σ = -2ν (div φ⃗) 𝟙 + ∇∇Φ - 4(1-ν) sym(∇φ⃗)
+
+with `Φ = φ₀ + x⃗·φ⃗`, and both statements verified symbolically for four
+arbitrary harmonic potentials. So there is one evaluator, and cases II and III
+needed no new derivation.
+
+A mode is a product of three univariate functions, so all its derivatives are
+products of tabulated pieces; only `Φ` needs Leibniz, and a second-order **jet**
+carries value, gradient and Hessian through that product exactly, in any element
+type, without nesting `ForwardDiff` inside a solve that may itself be
+differentiated.
+
+### Averaging without per-layer bookkeeping
+
+The divergence theorem reduces the volume average to a surface integral on a
+confocal boundary. With perfect interfaces the displacement is continuous, so
+the interior boundaries cancel in pairs and only the outer surface survives —
+whatever `N` is, with no volume integral anywhere. A single layer's average is
+the difference of the two moments on its own boundaries, which is what
+`stiffness_contribution` needs and what the total alone cannot give.
+
+The two routes are independent, so `Σ f_k 𝔸_k = 𝔸` is a check rather than a
+restatement.
+
+### Validated on all 81 components
+
+| | discrepancy vs Eshelby | residual |
+|:--|:--|:--|
+| prolate, `ω = 1.5, 2, 4, 10` | `8e-15` | `≤ 2e-14` |
+| oblate, `ω = 0.7, 0.4, 0.2` | `6e-15` | `≤ 2e-15` |
+
+Plus, on the assembly rather than one solve: a shell carrying the core's own
+moduli changes nothing (`7e-16`); the two members of each shear pair agree,
+which nothing enforces; transverse isotropy holds to the truncation accuracy;
+and through `homogenize`, a single-layer spheroid degenerates onto the
+equivalent `Ellipsoid` to `2e-15` under both Dilute and Mori–Tanaka.
+
+### Three findings, two of them corrections
+
+- **No rigid-body rotations are needed.** Duan adds two to case III and
+  attributes to their omission the error in Riccardi & Montheillet (1999). With
+  the *full* four-potential set the rotation is already spanned: it is the
+  antisymmetric combination of the two potentials whose symmetric combination is
+  the remote shear. Duan's extra unknowns are an artifact of a gauge that drops
+  one of them. Pinned as a test — that combination carries no traction — and
+  confirmed by the oracle.
+- **Degree 0 of `φ₀` is not optional.** Only its *regular* part is an inert
+  constant; the irregular one is `arccoth q`, essential. Dropping it makes the
+  case-I system genuinely inconsistent — residual `1e-1` instead of `1e-16`,
+  and 10% error — while cases II and III stay exact.
+- **Parity is part of the answer.** Admitting both parities splices in the
+  *other* problem of the same order, the one whose remote field is odd where
+  this one's is even, and the truncated system leaks between them.
+
+### Added
+
+- `spheroid_strain_concentration`, `spheroid_layer_strain_concentration`,
+  `TransverseShearCase`, `LongitudinalShearCase`, and `strain_strain_loc` /
+  `stiffness_contribution` methods for `LayeredSpheroid`.
+- `PNMode`, `ModeGroup`, `mode_fields`, `bb_letter` — the generic evaluator.
+- Legendre order `m = 2` (`:P2`, `:P2p`, `:Q2`), which case II needs. Two
+  structural points the lower orders did not expose: the three-term recurrence
+  is **singular at `n = m-1`**, so the seed must reach `n = m`; and the `Q₂²`
+  seed cancels at large `q`, which is documented rather than worked around — it
+  is a uniform normalization error, not an instability, and large `q` means a
+  nearly spherical spheroid.
+
+### Notation
+
+The module now follows Barthélémy & Bignonnet (2020) throughout: **regular**
+harmonics `Pₙᵐ(p)Pₙᵐ(q)` against **irregular** ones `Pₙᵐ(p)Qₙᵐ(q)`, and the
+amplitude letters `a, b, c, d` meaning regular-cos, irregular-cos, regular-sin,
+irregular-sin. That exposed a clash with this module's earlier `:A :B :C :D`
+labels, where `C` and `D` meant a different *potential* rather than the sine
+families; `PNMode` carries `(regularity, trig)` explicitly now. Conduction has
+one field, so elasticity adds a potential index: `a^{i,m}_{ℓ,n}`.
+
+### Fixed
+
+- **`Jet2` could not multiply across element types**, so a `ForwardDiff.Dual`
+  modulus on a `Float64` geometry was a `MethodError`. Promotion added, and the
+  cause fixed at source.
+- **The promotion omitted the layer moduli** — the very defect v0.10.1 fixed on
+  the conduction side, reproduced here and caught by the tests.
+- **An exactly zero column** (the regular degree-0 constant) is now filtered
+  rather than tolerated: `Float64` QR survived it, `Dual` raised
+  `SingularException`.
+
+### Still out of reach, and why
+
+**Imperfect interfaces do not fit this formulation.** A uniform spring or
+membrane law puts an *odd* power of the metric factor `w = √(q²-p²)` into the
+matching condition, so it stops being a polynomial identity in `p` and takes
+both the exactness of the projection and the banding with it. A perfect
+interface escapes this only because every geometric factor there is shared
+across a confocal surface and cancels; a compliance is a new length scale that
+does not. The workable route is a thin confocal interphase — an extra layer,
+already handled — but not an equivalent one: such a shell is exactly `ω` times
+thicker at the equator than at the pole.
+
+Also outstanding, and merely work: pointwise fields, an arbitrary axis, and a
+compliance-side contribution tensor.
+
 ## v0.11.0 — the elastic confocal spheroid, case I
 
 `LayeredSpheroid` solved conduction and nothing else. It now solves the

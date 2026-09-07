@@ -144,29 +144,31 @@ Two questions this section used to pose as open are settled:
 
 ### What remains
 
-- **Cases II and III**, transverse and longitudinal shear. Both need
-  `legendre.jl` extended to orders ``m = 1`` and ``m = 2``, which is a matter
-  of seed tables — the recurrences and the stability machinery are already
-  order-generic, and `legendre_degrees` takes the degree list as an argument.
-  Case I fixes only the four coefficients of the axisymmetric block; these two
-  fix the remaining shear pair.
-- **Per-layer strain averages.** `spheroid_core_strain` gives the core, one
-  region out of ``N``; a scheme needs the average over the whole pattern,
-  weighted by the confocal volumes. The counterpart exists for the layered
-  sphere (`sphere_strain_average`) and on this module's conduction side
-  (`layer_gradient_average`).
-- **Assembly and wiring** of those into a `TensTI{4}` and into
-  `scheme_integration.jl`, which offers the conduction case alone. The three
-  are independent of one another, and none is obstructed — they are work, not a
-  wall. [The theory page](@ref th-spheroid-elastic-scheme) sets out the
-  counting.
-- Case III carries **two rigid-body rotations**, and Duan attributes to their
-  omission the error in Riccardi & Montheillet (1999). Equilibrium is automatic
-  under Papkovich–Neuber, so the question there is the *completeness* of the
-  representation under the chosen gauge — that is where a symbolic check pays.
-- **Oblate spheroids**, whose confocal parameter is complex. The conduction
-  side handles them through the substitution ``q \to i\tau``; the elastic
-  solver refuses them until there is a reference to check against.
+All three elementary problems are in, prolate and oblate, and the strain
+concentration tensor reaches the mean-field schemes. What is left is smaller:
+
+- **Pointwise fields.** The solver returns harmonic amplitudes, so `u`, `ε` and
+  `σ` at a point are a matter of summing modes — the conduction side already
+  offers that through `local_temperature` and its siblings.
+- **An arbitrary axis.** The elementary problems are written about `ê₃`;
+  `spheroid_strain_concentration` refuses a tilted spheroid rather than
+  rotating the result for you.
+- **A compliance-side contribution tensor**, the twin of
+  `stiffness_contribution`.
+
+Two findings from this development are worth carrying forward, both of which
+the Eshelby oracle caught and neither of which is obvious:
+
+- **No rigid-body rotations are needed**, despite [duanRSPA2005](@cite) adding
+  two to case III and blaming their omission for the error in Riccardi &
+  Montheillet (1999). The full four-potential set already spans them — the
+  rotation is the *antisymmetric* combination of the two potentials whose
+  symmetric combination is the remote shear.
+- **Degree 0 of `φ₀` is essential and parity is not optional.** Only the
+  regular part of degree 0 is an inert constant; the irregular one is
+  `arccoth q`. Dropping it, or admitting both parities, does not cost accuracy —
+  it makes the system inconsistent or splices in the other problem of the same
+  order. [The theory page](@ref th-spheroid-not-optional) sets both out.
 
 ### What will not happen
 
