@@ -149,6 +149,9 @@ MeanFieldHomogenization.FiniteElements.ExcenteredSphereShape
 ```@docs
 MeanFieldHomogenization.Core.green_gradient_iso
 MeanFieldHomogenization.Core.dipole_displacement_iso
+MeanFieldHomogenization.Core.green_gradient_iso2
+MeanFieldHomogenization.Core.dipole_temperature_iso
+MeanFieldHomogenization.Core.extract_iso_conductivity
 ```
 
 ## Neural-surrogate inclusions

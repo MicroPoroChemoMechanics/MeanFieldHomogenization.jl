@@ -91,3 +91,65 @@ const _MFHC = MeanFieldHomogenization.Core
         @test d ≈ fd rtol = 1.0e-6
     end
 end
+
+# ─── The transport counterpart ───────────────────────────────────────────────
+
+@testset "conduction Green gradient and dipole" begin
+    k₀ = 2.5
+    K₀ = TensND.TensISO{3}(k₀)
+    pts = ([0.3, -0.7, 1.1], [1.0, 0.0, 0.0], [-2.0, 3.0, -1.5], [0.01, 0.02, -0.03])
+
+    @testset "against the closed form" begin
+        @test extract_iso_conductivity(K₀) == k₀
+        for x in pts
+            r = norm(x)
+            @test collect(green_gradient_iso2(K₀, x)) ≈ -x ./ (4π * k₀ * r^3)
+            # A bare scalar is accepted too, and agrees.
+            @test green_gradient_iso2(k₀, x) ≈ green_gradient_iso2(K₀, x)
+        end
+        @test_throws DomainError green_gradient_iso2(K₀, [0.0, 0.0, 0.0])
+        @test_throws DomainError dipole_temperature_iso(K₀, [0.0, 0.0, 0.0], [1.0, 0, 0])
+    end
+
+    @testset "the dipole field" begin
+        M = [1.0, 2.0, -0.5]
+        for x in pts
+            r = norm(x)
+            @test dipole_temperature_iso(K₀, x, M) ≈ -dot(M, x) / (4π * k₀ * r^3)
+            # It is the gradient contracted with the moment, by definition.
+            @test dipole_temperature_iso(K₀, x, M) ≈ dot(green_gradient_iso2(K₀, x), M)
+        end
+        # Linear in the moment, and inverse in the conductivity.
+        x = pts[1]
+        @test dipole_temperature_iso(K₀, x, 3 .* M) ≈ 3 * dipole_temperature_iso(K₀, x, M)
+        @test dipole_temperature_iso(TensND.TensISO{3}(2k₀), x, M) ≈
+            dipole_temperature_iso(K₀, x, M) / 2
+        # And it decays as 1/r², which is what makes it the leading correction
+        # to a truncated cell.
+        @test dipole_temperature_iso(K₀, 2 .* x, M) / dipole_temperature_iso(K₀, x, M) ≈ 1 / 4
+        @test dipole_temperature_iso(K₀, 10 .* x, M) / dipole_temperature_iso(K₀, x, M) ≈
+            1 / 100
+    end
+
+    @testset "it is harmonic away from the source" begin
+        # A free oracle: the dipole field must satisfy Laplace's equation, and
+        # nothing in its derivation was asked to enforce that.
+        M = [0.7, -1.3, 0.4]
+        for x in pts[1:3]
+            H = ForwardDiff.hessian(y -> dipole_temperature_iso(K₀, y, M), x)
+            @test abs(LinearAlgebra.tr(H)) < 1.0e-8 * norm(H)
+        end
+    end
+
+    @testset "differentiation" begin
+        M = [1.0, 2.0, -0.5]
+        x = pts[1]
+        # In the conductivity: T ∝ 1/k₀, so ∂T/∂k₀ = -T/k₀.
+        f = k -> dipole_temperature_iso(k, x, M)
+        @test ForwardDiff.derivative(f, k₀) ≈ -f(k₀) / k₀
+        # In position: the gradient of the dipole temperature is finite and the
+        # field is homogeneous of degree -2, so x·∇T = -2T (Euler).
+        g = ForwardDiff.gradient(y -> dipole_temperature_iso(K₀, y, M), x)
+        @test dot(x, g) ≈ -2 * dipole_temperature_iso(K₀, x, M)
+    end
+end

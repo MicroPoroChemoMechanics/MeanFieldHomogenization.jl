@@ -169,6 +169,7 @@ export MaterialSymmetry, IsotropicSym, TransverselyIsotropicSym,
 export material_symmetry, dimension, inclusion_basis, shape_trait, shape_tensor
 export eshelby_tensor
 export green_gradient_iso, dipole_displacement_iso, green_operator_iso
+export green_gradient_iso2, dipole_temperature_iso, extract_iso_conductivity
 export green_operator_aniso, green_operator, green_function_aniso
 export gauss_legendre_nodes
 
