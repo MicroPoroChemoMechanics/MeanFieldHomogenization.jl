@@ -58,6 +58,7 @@ import ..LayeredSpheres: get_layer, local_temperature, local_gradient, local_flu
     local_gradient_gradient_loc, local_flux_gradient_loc,
     local_gradient_flux_loc, local_flux_flux_loc
 
+import ..Core: strain_strain_loc, stiffness_contribution
 import ..Core: gradient_gradient_loc, flux_gradient_loc, gradient_flux_loc, flux_flux_loc,
     conductivity_contribution, resistivity_contribution, is_homogeneous_inclusion
 
@@ -69,7 +70,8 @@ include("coupling.jl")
 include("geometry.jl")
 include("conductivity.jl")     # confocal-harmonic transfer-matrix recurrence
 include("pn_modes.jl")           # one PN harmonic mode -> u and traction
-include("elasticity.jl")         # elastic case I: Papkovich-Neuber, banded
+include("elasticity.jl")         # elastic case I closed forms (cross-check reference)
+include("elastic_cases.jl")     # the three elementary problems -> concentration
 include("localfields.jl")        # pointwise T, ∇T, flux reconstruction
 include("scheme_integration.jl") # concentration tensors → mean-field schemes
 
@@ -81,5 +83,6 @@ export local_temperature, local_gradient, local_flux
 export spheroid_state_sequence, spheroid_ba_ratios, get_layer
 export LayeredSpheroidTransportFields
 export AxisymmetricCase, spheroid_elastic_coefficients, spheroid_core_strain
+export TransverseShearCase, LongitudinalShearCase, spheroid_strain_concentration
 
 end # module

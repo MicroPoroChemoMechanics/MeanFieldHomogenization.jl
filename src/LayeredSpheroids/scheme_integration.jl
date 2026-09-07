@@ -182,3 +182,66 @@ function Core.loc_and_stress_average(
         k₀ * TensND.TensTI{2}(βt, βa, s.axis),
     )
 end
+
+# ── Elasticity ──────────────────────────────────────────────────────────────
+#
+#  Same contract as the conduction entries above and as `LayeredSphere`'s: a
+#  composite spheroid has no Hill tensor, so what the schemes consume is its
+#  volume-averaged concentration tensor, and `C₁` is IGNORED — the moduli of a
+#  composite live in its layers (`layer_modulus`), not in a single phase tensor.
+#
+#  Case I alone would give only the axisymmetric block; all three elementary
+#  problems together give the six coefficients, which is why these arrive with
+#  `elastic_cases.jl` and not before.
+
+"""
+    strain_strain_loc(s::LayeredSpheroid, C₁, C₀; D = 6, kw...) -> Tens{4,3}
+
+Volume-averaged strain concentration tensor `𝔸` of an elastic `n`-layer
+confocal spheroid, `⟨ε⟩ = 𝔸 : E`, ready for a mean-field scheme.
+
+`C₁` is accepted for signature compatibility and **ignored**. `D` is the number
+of degrees kept per harmonic family; a single homogeneous spheroid is exact at
+any `D` and reproduces Eshelby, a layered one converges geometrically.
+
+Only the default axis `ê₃` and perfect interfaces are supported — see
+[`spheroid_strain_concentration`](@ref).
+"""
+function strain_strain_loc(
+        s::LayeredSpheroid{T, N},
+        ::TensND.AbstractTens{4, 3},
+        C₀::TensND.TensISO{4, 3};
+        D::Int = 6, kw...,
+    ) where {T, N}
+    MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
+    return spheroid_strain_concentration(s, C₀; D, kw...).A
+end
+
+"""
+    stiffness_contribution(s::LayeredSpheroid, C₁, C₀; D = 6, kw...) -> Tens{4,3}
+
+Size-independent **stiffness contribution tensor** of a composite spheroid,
+
+```math
+\\mathbb N_C = \\sum_k f_k\\,(\\mathbb C_k - \\mathbb C_0) : \\mathbb A_k .
+```
+
+Assembled layer by layer, because a composite spheroid is heterogeneous and the
+`(ℂ₁ - ℂ₀) : 𝔸` of a homogeneous inhomogeneity does not apply. The per-layer
+`𝔸_k` come from [`spheroid_layer_strain_concentration`](@ref); the total `𝔸`
+alone cannot give this, the layers having different moduli. `C₁` is ignored.
+"""
+function MFH_Core.stiffness_contribution(
+        s::LayeredSpheroid{T, N},
+        ::TensND.AbstractTens{4, 3},
+        C₀::TensND.TensISO{4, 3};
+        D::Int = 6, kw...,
+    ) where {T, N}
+    MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
+    r = spheroid_layer_strain_concentration(s, C₀; D, kw...)
+    acc = layer_volume_fraction(s, 1) * ((layer_modulus(s, 1) - C₀) ⊡ r.layers[1])
+    for k in 2:N
+        acc += layer_volume_fraction(s, k) * ((layer_modulus(s, k) - C₀) ⊡ r.layers[k])
+    end
+    return acc
+end

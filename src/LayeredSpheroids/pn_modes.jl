@@ -46,9 +46,19 @@ Base.:-(a::Jet2{T}, b::Jet2{T}) where {T} = a + (-b)
 Base.:*(s::Number, a::Jet2{T}) where {T} = Jet2{T}(s * a.v, s .* a.d, s .* a.h)
 Base.:*(a::Jet2, s::Number) = s * a
 
+Base.convert(::Type{Jet2{T}}, a::Jet2{T}) where {T} = a
+Base.convert(::Type{Jet2{T}}, a::Jet2) where {T} =
+    Jet2{T}(T(a.v), T.(a.d), T.(a.h))
+Base.promote_rule(::Type{Jet2{A}}, ::Type{Jet2{B}}) where {A, B} = Jet2{promote_type(A, B)}
+
 # Leibniz. The Hessian slots are ordered (φφ, pp, qq, φp, φq, pq), so the
 # mixed ones pair the two distinct first derivatives.
 const _MIX = ((1, 1), (2, 2), (3, 3), (1, 2), (1, 3), (2, 3))
+
+function Base.:*(a::Jet2, b::Jet2)
+    T = promote_type(eltype(a), eltype(b))
+    return convert(Jet2{T}, a) * convert(Jet2{T}, b)
+end
 
 function Base.:*(a::Jet2{T}, b::Jet2{T}) where {T}
     v = a.v * b.v
@@ -68,8 +78,7 @@ The Cartesian coordinates as jets in `(φ, p, q)`:
 `x = c p̄ q̄ cos φ`, `y = c p̄ q̄ sin φ`, `z = c p q`, with `p̄ = √(1-p²)`,
 `q̄ = √(q²-1)`. These are what multiply `φ₁, φ₂, φ₃` inside `Φ`.
 """
-function _coord_jets(ϕ, p, q, c)
-    T = promote_type(typeof(ϕ), typeof(p), typeof(q), typeof(c))
+function _coord_jets(ϕ, p, q, c, ::Type{T}) where {T}
     z0 = zero(T)
     pb, qb = sqrt(one(T) - T(p)^2), sqrt(T(q)^2 - one(T))
     # ρ = c p̄ q̄ and its derivatives; p̄' = -p/p̄, q̄' = q/q̄
@@ -287,7 +296,7 @@ function mode_fields(mode::PNMode, ϕ, p, q, c, μ, ν, ::Type{T}) where {T}
     Φj = if i == 0
         jφ
     else
-        _coord_jets(ϕ, p, q, c)[i] * jφ
+        _coord_jets(ϕ, p, q, c, T)[i] * jφ
     end
     gΦ = _chart_grad(Φj, p, q, c)
     H = _chart_hess(Φj, p, q, c)
