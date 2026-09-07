@@ -255,6 +255,7 @@ end
         include("LayeredSpheroids/test_local_fields.jl")
         include("LayeredSpheroids/test_ad.jl")
         include("LayeredSpheroids/test_pn_symbolic.jl")
+        include("LayeredSpheroids/test_pn_modes.jl")
         include("LayeredSpheroids/test_elasticity.jl")
     end
 

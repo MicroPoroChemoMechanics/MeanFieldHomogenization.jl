@@ -68,6 +68,7 @@ include("legendre.jl")
 include("coupling.jl")
 include("geometry.jl")
 include("conductivity.jl")     # confocal-harmonic transfer-matrix recurrence
+include("pn_modes.jl")           # one PN harmonic mode -> u and traction
 include("elasticity.jl")         # elastic case I: Papkovich-Neuber, banded
 include("localfields.jl")        # pointwise T, ∇T, flux reconstruction
 include("scheme_integration.jl") # concentration tensors → mean-field schemes
