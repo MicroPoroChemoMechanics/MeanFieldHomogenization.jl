@@ -301,12 +301,14 @@ makedocs(;
         # Same principle: the inclusion families first, then the cells and
         # schemes that consume them, then what goes beyond elasticity.
         "Manual" => [
+            "manual/index.md",
             "manual/installation.md",
             "Inclusions" => [
                 "manual/inclusion_gallery.md",
                 "manual/ellipsoidal_inclusions.md",
                 "manual/cylindrical_inclusions.md",
                 "manual/cracks.md",
+                "manual/layered_inclusions.md",
                 "manual/custom_inclusions.md",
                 "manual/fe_inclusions.md",
                 "manual/neural_inclusions.md",
