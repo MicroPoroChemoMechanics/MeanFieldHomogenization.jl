@@ -116,45 +116,74 @@ subtle — exactly which pieces of a cited paper are and are not implemented.
   heterogeneous case the second type exists for); an anisotropic reference
   medium, which needs a feature set describing it.
 
-## [The elastic layered spheroid — read this before starting](@id dev-elastic-spheroid)
+## [The elastic layered spheroid — what is left](@id dev-elastic-spheroid)
 
-The confocal multi-layer spheroid exists **in conduction only**. The harmonic
-solution it rests on ([barthelemyBignonnetIJES2020](@cite)) is specific to the
-scalar Laplace equation and does not carry over to the vector elastic problem.
-Whoever writes the elastic counterpart will nonetheless reuse the *same*
-spheroidal harmonics, and therefore inherits the numerical traps this module
-already fell into. They cost real debugging, they are invisible to the
-validations one naturally writes first, and they are collected here for that
-reason.
+**Case I is done.** The axisymmetric elastic confocal spheroid is solved and
+validated in `LayeredSpheroids/elasticity.jl`; the derivation, which is not in
+the literature, is on
+[its theory page](@ref th-spheroid-elasticity). What follows is what remains,
+and the traps that apply to it.
 
-### The route
+Two questions this section used to pose as open are settled:
 
-Papkovich–Neuber displacement potentials reduce the Navier equation to
-**harmonic** potentials, and harmonic functions separate in spheroidal
-coordinates — so the machinery in `LayeredSpheroids/legendre.jl` is directly
-reusable. That is exactly the route
-[duanRSPA2005](@cite) takes for a spheroidal inhomogeneity **with an
-interphase**: three fundamental solutions from Papkovich–Neuber potentials and
-spheroidal harmonic expansions. It is the closest published starting point.
+- **The Papkovich–Neuber gauge.** The representation
+  ``2\mu\,\underline u = \nabla(\varphi_0 + x\varphi_1 + y\varphi_2 + z\varphi_3)
+  - 4(1-\nu)(\varphi_1, \varphi_2, \varphi_3)``
+  is redundant by one function, and the gauge is fixed **problem by problem**
+  after [duanRSPA2005](@cite): case I takes ``\varphi_1 = \varphi_2 = 0``, case
+  II takes ``\varphi_0, \varphi_3`` at ``m = 2`` with ``(\varphi_1,\varphi_2)``
+  from a single ``\Psi`` at ``m = 1``, case III takes ``\varphi_0, \varphi_3``
+  at ``m = 1`` and ``\varphi_1`` at ``m = 0``. Leaving the redundancy in makes
+  the interface system singular, or merely ill-conditioned, which reads as a
+  convergence problem rather than a modeling one.
+- **Confocal, and that is the whole difficulty.** The surfaces are confocal,
+  not similar, so they are not homothetic and the harmonic degrees couple —
+  across a *perfect* interface too, unlike conduction. There is no
+  per-interface transfer matrix to chain; the solver assembles one global
+  system.
 
-Two things to settle before writing code:
+### What remains
 
-- **Fix the Papkovich–Neuber gauge.** The representation
-  ``2μ \underline u = -\nabla(φ + \underline r·\underline ψ) + 4(1-ν)\underline ψ``
-  is *not* unique — one component of ``\underline ψ`` can generally be dropped.
-  Leave the redundancy in and the interface system is singular or, worse,
-  merely ill-conditioned, which looks like a convergence problem rather than a
-  modeling one.
-- **Confocal or similar?** The conduction module stacks *confocal* surfaces,
-  which is what makes the transfer clean. Check what the interface geometry in
-  the elastic reference actually is before assuming the layer bookkeeping
-  transfers; a similar-shape stack is a different problem.
+All three elementary problems are in, prolate and oblate, and the strain
+concentration tensor reaches the mean-field schemes. What is left is smaller:
 
-An alternative worth weighing is the multipole route of
-[kushch2013](@cite), which handles spheroids in elasticity without the
-Papkovich–Neuber gauge question, at the price of its own machinery.
+- **Pointwise fields.** The solver returns harmonic amplitudes, so `u`, `ε` and
+  `σ` at a point are a matter of summing modes — the conduction side already
+  offers that through `local_temperature` and its siblings.
+- **An arbitrary axis.** The elementary problems are written about `ê₃`;
+  `spheroid_strain_concentration` refuses a tilted spheroid rather than
+  rotating the result for you.
+- **A compliance-side contribution tensor**, the twin of
+  `stiffness_contribution`.
+
+Two findings from this development are worth carrying forward, both of which
+the Eshelby oracle caught and neither of which is obvious:
+
+- **No rigid-body rotations are needed**, despite [duanRSPA2005](@cite) adding
+  two to case III and blaming their omission for the error in Riccardi &
+  Montheillet (1999). The full four-potential set already spans them — the
+  rotation is the *antisymmetric* combination of the two potentials whose
+  symmetric combination is the remote shear.
+- **Degree 0 of `φ₀` is essential and parity is not optional.** Only the
+  regular part of degree 0 is an inert constant; the irregular one is
+  `arccoth q`. Dropping it, or admitting both parities, does not cost accuracy —
+  it makes the system inconsistent or splices in the other problem of the same
+  order. [The theory page](@ref th-spheroid-not-optional) sets both out.
+
+### What will not happen
+
+**Imperfect interfaces do not fit this formulation**, and it is worth not
+attempting them: a uniform spring or membrane law puts an *odd* power of the
+metric factor ``w = \sqrt{q^2-p^2}`` into the matching condition, so it stops
+being a polynomial identity in ``p``, and the exactness of the projection and
+the banding go with it. A perfect interface escapes this only because every
+geometric factor there is shared across a confocal surface and cancels.
+[The theory page](@ref th-spheroid-imperfect) sets this out, along with why a
+thin confocal interphase is not a substitute — such a shell is exactly
+``\omega`` times thicker at the equator than at the pole.
 
 ### The four traps, each of which shipped once
+
 
 1. **Never run `Qₙ` upward.** `Qₙ` is the *minimal* solution of the Legendre
    three-term recurrence: upward, the seed's rounding error picks up the

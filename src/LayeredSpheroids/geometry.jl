@@ -1,6 +1,7 @@
 # =============================================================================
 #  geometry.jl — concrete type `LayeredSpheroid` (n-layer confocal
-#  spheroidal composite inclusion, isotropic conduction only).
+#  spheroidal composite inclusion, isotropic; conduction and axisymmetric
+#  elasticity).
 #
 #  Confocal layers share a single focal distance `c`: for prolate
 #  spheroids (revolution/axis semi-axis `a` > disk/transverse semi-axis
@@ -27,8 +28,9 @@
     LayeredSpheroid{T, N, Q, Cs, Is} <: AbstractLayeredInclusion{3, T}
 
 Isotropic `N`-layer confocal spheroidal composite inclusion (core +
-concentric confocal shells), conduction only (no elastic counterpart
-*yet* — see the `LayeredSpheroids` module docstring). Type
+concentric confocal shells). Carries the geometry for both physics —
+conduction and axisymmetric elasticity; the `moduli` tuple holds
+`TensISO{2,3}` conductivities or `TensISO{4,3}` stiffnesses accordingly. Type
 parameters:
 
 - `T` — element type of the geometric scalars (radii, focal distance).

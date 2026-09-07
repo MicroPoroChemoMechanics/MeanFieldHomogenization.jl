@@ -265,6 +265,7 @@ makedocs(;
             "The generalized Eshelby problem — morphological patterns" => [
                 "theory/layered_sphere.md",
                 "theory/layered_spheroid.md",
+                "theory/layered_spheroid_elasticity.md",
             ],
             # A crack is a degenerate ellipsoid, so it stays close to the
             # foundations rather than joining the composite patterns.

@@ -2,14 +2,17 @@
     MeanFieldHomogenization.LayeredSpheroids
 
 Isotropic `n`-layer confocal spheroidal composite inclusion (core +
-concentric confocal shells), **conduction only** (thermal / electric /
-Darcy). There is no elastic counterpart yet, but not for want of a
-formalism: Barthélémy & Bignonnet (IJES 2020, §2.1) state that they
-imported the transfer-matrix method *from* elasticity (Hervé & Zaoui
-1993; Hervé & Luanco 2014) into conduction. What does not carry over is
-GEOMETRIC — confocal surfaces are not homothetic, so the harmonic degrees
-couple, and in elasticity they couple even across a perfect interface.
-Public entry points: [`LayeredSpheroid`](@ref),
+concentric confocal shells), in **conduction** (thermal / electric /
+Darcy) and in **axisymmetric elasticity**
+([`spheroid_elastic_coefficients`](@ref), case I of Duan et al. 2005, with
+perfect interfaces).
+
+The two do not share a solver shape. Confocal surfaces are not homothetic, so
+the harmonic degrees couple — in conduction only at an imperfect interface,
+which is why its blocks are diagonal in the perfect case, but in elasticity at
+every interface. There is no per-interface transfer matrix to chain on the
+elastic side; `elasticity.jl` assembles one global system instead. Public
+entry points: [`LayeredSpheroid`](@ref),
 [`layered_spheroid_from_fractions`](@ref).
 
 Like [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere),
@@ -24,16 +27,24 @@ interfaces — reused from [`LayeredSpheres`](@ref
 MeanFieldHomogenization.LayeredSpheres) — couple different harmonic degrees, unlike
 the sphere, requiring the truncated series machinery of
 `legendre.jl` / `coupling.jl`.
+
+That path into the schemes now works in **elasticity** too, prolate and oblate
+alike: [`spheroid_strain_concentration`](@ref) assembles the full transversely
+isotropic concentration tensor from the three elementary problems, and
+`strain_strain_loc` / `stiffness_contribution` hand it to the schemes. Only
+perfect interfaces, and only the default axis `ê₃`.
 """
 module LayeredSpheroids
 
 using LinearAlgebra
+using QuadGK
 using TensND
 
 import ..Core
 using ..Core
 const MFH_Core = Core
 
+import ..LayeredSpheres: _iso_bulk_shear
 import ..LayeredSpheres: PerfectInterface, KapitzaInterface, SurfaceConductiveInterface,
     AbstractInterface, interfaces_eltype,
     layer_conductivity_average, layer_resistivity_average,
@@ -44,6 +55,7 @@ import ..LayeredSpheres: get_layer, local_temperature, local_gradient, local_flu
     local_gradient_gradient_loc, local_flux_gradient_loc,
     local_gradient_flux_loc, local_flux_flux_loc
 
+import ..Core: strain_strain_loc, stiffness_contribution
 import ..Core: gradient_gradient_loc, flux_gradient_loc, gradient_flux_loc, flux_flux_loc,
     conductivity_contribution, resistivity_contribution, is_homogeneous_inclusion
 
@@ -53,7 +65,10 @@ using ..Elliptic: is_hard_numeric
 include("legendre.jl")
 include("coupling.jl")
 include("geometry.jl")
-include("conductivity.jl")       # confocal-harmonic transfer-matrix recurrence
+include("conductivity.jl")     # confocal-harmonic transfer-matrix recurrence
+include("pn_modes.jl")           # one PN harmonic mode -> u and traction
+include("elasticity.jl")         # elastic case I closed forms (cross-check reference)
+include("elastic_cases.jl")     # the three elementary problems -> concentration
 include("localfields.jl")        # pointwise T, ∇T, flux reconstruction
 include("scheme_integration.jl") # concentration tensors → mean-field schemes
 
@@ -64,5 +79,7 @@ export layer_count, layer_q, layer_modulus, layer_interface, layer_semiaxes,
 export local_temperature, local_gradient, local_flux
 export spheroid_state_sequence, spheroid_ba_ratios, get_layer
 export LayeredSpheroidTransportFields
+export AxisymmetricCase, spheroid_elastic_coefficients, spheroid_core_strain
+export TransverseShearCase, LongitudinalShearCase, spheroid_strain_concentration
 
 end # module

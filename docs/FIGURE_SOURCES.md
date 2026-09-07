@@ -15,10 +15,17 @@ that way.
 | :--- | :--- | :--- |
 | `eshelby_inclusion.png` | Echoes book, `img/eshelbypbincl.png` | Eshelby *inclusion* problem: eigenstrain τ, `u = 0` at ∞ |
 | `eshelby_inhomogeneity.png` | Echoes book, `img/eshelbypb.png` | Eshelby *inhomogeneity* problem: ℂᴵ in ℂ, remote `u = E·x` |
-| `eshelby_generalized.png` | Echoes book, `img/eshelbygenpb.png` | Generalized problem: concentric layered inclusion in an infinite matrix |
+| `layered_sphere.svg` | hand-authored, this repository | Concentric `n`-layer sphere in an unbounded matrix ℂ₀, remote `u = E·x`; replaces `eshelby_generalized.png`, which was a low-resolution raster |
 | `crack_frame.svg` | Echoes book, `img/crack.svg` (rendered from `img/crack.asy`) | Elliptical crack with its frame (ℓ, m, n) and `a`, `b = ηa`, `c = ωa` |
 | `layered_ellipsoid.png` | earlier talk of the author's | N-layer confocal ellipsoid, domains Ω₁…Ω_{N+1}, interfaces I₁…I_N |
-| `three_phase_model.png` | `echoes_cpp/olddoc/ppt/3phases.svg`, cropped and reduced to 64 colors | Christensen–Lo three-phase pattern: pore + shell ℂˢ + infinite ℂʰᵒᵐ |
+
+`eshelby_generalized.png` and `three_phase_model.png` are no longer used. The
+first was replaced by `layered_sphere.svg` — vector, legible at any size, and
+self-contained: it carries its own neutral panel rather than a
+`prefers-color-scheme` variant, because an SVG served as an image resolves
+that query against the operating system, not against the site's theme toggle. The second was dropped rather than redrawn: the three-phase model
+is a *scheme* built on the composite-sphere solution, not a statement of that
+problem, so a figure of it did not belong on the theory page for the pattern.
 
 To re-render `crack_frame.svg` from Asymptote: in `img/crack.asy`, keep the
 `settings.outformat = "svg"; settings.render = 0;` lines active, then `asy crack.asy`.
