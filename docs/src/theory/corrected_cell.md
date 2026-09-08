@@ -133,9 +133,9 @@ polarization:
 | | solid inclusion | crack | cavity |
 | :--- | :--- | :--- | :--- |
 | unknown | ``\mathbb X`` on the Kelvin basis | ``\boldsymbol{B}_\infty`` | ``\mathbb A`` itself |
-| solves | 6 + 6, or 2 + 2 per Fourier mode | 3 + 3 | 6 + 6, or 3 + 3 in transport |
+| solves | 6 + 6, or 2 + 2 per Fourier mode | 3 + 3 | 6 + 6, or 2 + 2 and 1 + 1 per mode |
 | closes on | ``\mathbb A = \mathbb A^E + \mathbb A^p:\mathbb X`` | ``\boldsymbol{B}_\infty = (1 - \boldsymbol{B}_u)^{-1}\boldsymbol{B}_s`` | ``\mathbb A = (\mathbb I - \mathbb A_u\mathbb F)^{-1}\mathbb A_s`` |
-| used by | [`FEExcenteredSphere`](@ref app-recycled-aggregate) | [`FEEllipticCrack`](@ref man-fe-inclusions) | [`FESupershapePore`](@ref man-fe-inclusions) |
+| used by | [`FEExcenteredSphere`](@ref app-recycled-aggregate) | [`FEEllipticCrack`](@ref man-fe-inclusions) | [`FESupershapePore`](@ref man-fe-inclusions), [`FEAxiSupershapePore`](@ref app-concave-pores) |
 
 In the axisymmetric case each fixed point lives *inside* one Fourier mode,
 since the dipole of a modal polarization radiates in the same mode — so
@@ -247,6 +247,80 @@ that bounds the mesh, which differs from it by a percent at usable refinements.
 The diagnostic is ``\|\mathbb A_u \mathbb F\|``, which is
 ``O\!\left((a/R)^3\right)`` — measured at a log-log slope of ``-2.96`` against
 ``-3`` from theory.
+
+### Or two dimensions, when the body is a solid of revolution
+
+An octant divides the cost by eight. Separating the azimuth into Fourier modes
+divides it by orders of magnitude, and for an axisymmetric cavity that is the
+route [`FEAxiSupershapePore`](@ref app-concave-pores) takes. Each mode is a
+problem on the **meridian half-plane**, and the modes do not couple, so a
+macroscopic loading excites exactly one of them:
+
+| loading | mode | what it yields |
+|:--|:--|:--|
+| ``\varepsilon = (\underline e_1\otimes\underline e_1 + \underline e_2\otimes\underline e_2)/\sqrt2``, ``\underline e_3\otimes\underline e_3`` | 0 | a ``2\times2`` block |
+| ``\varepsilon = \underline e_1 \otimes^{\mathrm s} \underline e_3`` | 1 | a scalar |
+| ``\varepsilon = \underline e_1\otimes\underline e_1 - \underline e_2\otimes\underline e_2`` | 2 | a scalar |
+| ``\nabla T = \underline e_3`` / ``\underline e_1`` | 0 / 1 | a scalar each |
+
+Three from the ``2\times2`` block, one from mode 1, one from mode 2: exactly the
+**five** constants of a transversely isotropic compliance contribution, with
+modes 0 and 1 giving the **two** of the resistivity. The count is not a
+coincidence to be checked afterwards — it is the same representation theory in
+both places.
+
+The fixed point lives *inside* one mode, since the dipole of a modal
+polarization radiates in the same mode, so ``\mathbb X`` is ``2\times2`` for
+mode 0 and a scalar for modes 1 and 2.
+
+**And the averaging changes.** A cavity has no interior, so ``\langle
+\varepsilon\rangle_{\mathcal D}`` is a boundary integral — over the meridian
+trace of the wall, with the measure ``\rho\,\mathrm dl``.
+
+There is a tempting way round it. The divergence identity on the matrix,
+
+```math
+\int_{\mathcal M} \varepsilon(\underline u)\,\mathrm dV
+  = \oint_{\partial\Omega} (\underline u \otimes \underline n)^{\mathrm s}\,\mathrm dS
+  - \oint_{\partial\mathcal D} (\underline u \otimes \underline n_{\mathcal D})^{\mathrm s}\,\mathrm dS ,
+```
+
+gives the cavity average from the volume average over the matrix plus an outer
+term that is *analytic*, the datum there being imposed. It reuses only machinery
+that already exists. It is also **numerically hopeless**: it obtains
+``V_{\mathcal D}`` as the difference of ``V_\Omega`` and ``V_{\mathcal M}``,
+whose ratio is ``(R/a)^3``. Two digits go at ``R/a = 4`` and more as the cell
+grows — the opposite of what a larger cell is for. Measured before it was
+abandoned: the implied cavity volume is 2.9 % wrong at ``V_\Omega/V_{\mathcal D}
+= 8`` and 9.2 % at 216, with the localization error tracking it, and convergence
+of ``O(h)`` where the direct route gives more.
+
+One consequence of that route is worth keeping even after abandoning it:
+**normalize by the volume the meshed wall actually encloses**, not by the closed
+form. Integrating over one boundary and dividing by another's volume leaves a
+systematic error of the geometry's own size, and refining removes none of it
+because it shrinks both together.
+
+### Two exact answers, and why they are exact
+
+Two numbers from this construction are worth reading as statements rather than
+as measurements.
+
+**Transverse isotropy holds to round-off.** For an axisymmetric cavity,
+``\mathbb A_{1212} = (\mathbb A_{1111} - \mathbb A_{1122})/2`` and the
+normal-to-shear block vanishes, both to ``10^{-16}`` and at any refinement,
+because the modes are decoded straight onto the Kelvin basis. It is therefore a
+free check that the three modes, the azimuthal projections, the boundary
+integral and the reassembly are simultaneously right — which is more than any
+one of them could establish alone.
+
+**Conduction on a sphere is exact, and does not improve with refinement.** The
+exterior perturbation of a spherical cavity *is* a pure dipole, so the corrected
+boundary condition has no higher multipole left to truncate: the answer sits at
+``5\times10^{-6}`` of ``3/2`` and stays there. In elasticity, where higher
+multipoles do exist, what remains is truncation and the radius sweep says so —
+the uncorrected answer falls as ``R^{-2.85}``, the ``(a/R)^3`` signature, and
+the corrected one as ``R^{-5}``.
 
 ### One eighth of the cell
 

@@ -223,7 +223,7 @@ export NeuralHillInclusion, NeuralLocalizationInclusion, NeuralShape
 export NeuralSurrogate, Provenance, worst_error
 export save_surrogate, load_surrogate, model_path, shipped_models
 export HillISO, HillTI, HillOrtho, HillISO2, HillTI2
-export StrainLocTI, StressLocTI, StrainLocCubic, GradLocISO2
+export StrainLocTI, StressLocTI, StrainLocCubic, GradLocISO2, GradLocTI2
 
 # ── Superspherical and superspheroidal morphologies ──────────────────────────
 export AbstractSuperShape, Supersphere, Superspheroid

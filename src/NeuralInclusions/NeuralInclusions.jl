@@ -75,7 +75,8 @@ export NeuralSurrogate, Provenance, worst_error
 export save_surrogate, load_surrogate, model_path, shipped_models
 
 # The physics of the output
-export HillISO, HillTI, HillOrtho, HillISO2, HillTI2, StrainLocCubic, GradLocISO2
+export HillISO, HillTI, HillOrtho, HillISO2, HillTI2, StrainLocCubic
+export GradLocISO2, GradLocTI2
 export StrainLocTI, StressLocTI
 export DimensionlessHill, AffineHill
 

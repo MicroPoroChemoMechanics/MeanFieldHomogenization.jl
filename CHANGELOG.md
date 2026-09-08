@@ -1,5 +1,138 @@
 # Changelog
 
+## v0.13.0 — the concave pore, axisymmetric
+
+The 0.12.0 release treated the **cubic** member of the supershape family
+completely: a three-dimensional cell in an octant, trained models, a comparison
+against Chen *et al.* (2015). This one treats the **axisymmetric** member, and
+it is the paper with the tables:
+
+> Sevostianov, Chen, Giraud & Grgic, *Compliance and resistivity contribution
+> tensors of axisymmetric concave pores*, International Journal of Engineering
+> Science **101** (2016) 14-28.
+
+Its shape is `Superspheroid(a, aγ, p)` without conversion, and being a solid of
+revolution it asks for a different tool: the fields separate into Fourier modes
+in the azimuth, so each mode is a **two-dimensional** problem on the meridian
+half-plane. Where the octant divides the three-dimensional cost by eight, this
+divides it by orders of magnitude — three assemblies and eight solves on a
+triangle mesh.
+
+### The mode count is the answer, not a coincidence
+
+Mode 0 gives a `2×2` block, modes 1 and 2 a scalar each. Three plus one plus one
+is exactly the five constants of a transversely isotropic compliance
+contribution, with modes 0 and 1 giving the two of the resistivity. Nothing had
+to be written for the decoding: `_AXI_Q` and `_axi_assemble_66` already did it,
+and the same representation theory sits on both sides of the equality.
+
+### Two numbers that are statements rather than measurements
+
+**Transverse isotropy holds to `1e-16`** — `A₁₂₁₂ = (A₁₁₁₁ − A₁₁₂₂)/2`, and the
+normal-to-shear block exactly zero — at *any* refinement, because the modes
+decode straight onto the Kelvin basis. It is therefore a free check that the
+three modes, the azimuthal projections, the boundary integral and the reassembly
+are simultaneously right, which no one of them could establish alone.
+
+**Conduction on a sphere is exact to `5e-6` and does not improve with
+refinement**, because the exterior perturbation of a spherical cavity *is* a pure
+dipole: the corrected condition has no higher multipole left to truncate.
+
+Validated against the exact spheroidal cavity, which the package already knows
+in closed form — in **canonical** components throughout, `Spheroid` sorting its
+semi-axes and permuting its frame:
+
+| `c/a` | conduction | elasticity |
+|:--|--:|--:|
+| 0.5 oblate | 4 digits | `1.8e-4` |
+| 1.0 sphere | 5 digits | `2.3e-5` |
+| 2.0 prolate | 5 digits | `1.5e-5` |
+
+What remains in elasticity is truncation and the radius sweep says so:
+uncorrected falls as `R^-2.85`, the `(a/R)³` signature, corrected as `R^-5` —
+a factor 10 better at `R/a = 2.5` and 113 at `R/a = 8`. That sweep is also the
+only test that proves the dipole sign, a wrong one leaving twice the bias.
+
+### The route that looked cleverer, and the reason it is not
+
+A cavity has no interior, so `⟨ε⟩_D` cannot come from `fe_axi_average`. It comes
+from the wall — a line integral on the meridian trace, `fe_axi_pore_boundary`,
+the tenth method of the axisymmetric contract and the only one a solid inclusion
+does not need.
+
+That was avoided first. The divergence identity on the matrix gives `⟨ε⟩_D` from
+the volume average plus an outer term that is analytic, reusing only tested code
+and adding no generic. It is algebraically exact and numerically hopeless: it
+obtains `V_D` as the difference of `V_Ω` and `V_M`, whose ratio is `(R/a)³`.
+Measured before it was abandoned — the implied cavity volume 2.9 % wrong at
+`V_Ω/V_D = 8`, 5.8 % at 64, 9.2 % at 216, with the localization error tracking
+it, and convergence of `O(h)` where the core-shell cell gets `O(h²)`. The error
+**grew with the cell radius**, which is the opposite of what a larger cell is
+for. It is recorded in the driver's header because the trap is attractive.
+
+One consequence of that detour survives it: **normalize by the volume the meshed
+wall encloses**, not by the closed form. Integrating over one boundary and
+dividing by another's volume leaves a systematic error of the geometry's own
+size that refinement never removes, because refining shrinks both together.
+Fixing it took the spherical gate in conduction from `9.1e-4` to `5.0e-6`.
+
+### The mesh, and the two corners
+
+The meridian profile has **two** corners for a concave shape, and the source
+already said which: "the equatorial plane is the crease; the two poles are the
+conical points". So it is cut into two splines meeting at the equator, with the
+poles as curve endpoints — a corner interior to a spline is a corner rounded off
+— and the sampling clusters at both ends, a uniform step in the parameter
+spending its points where the profile is flat.
+
+The parametrization `ρ = a t^{1/m}`, `z = c (1−t)^{1/m}` satisfies the level set
+identically, so no root find and no quadrature enter the geometry, and the tests
+check that `level_set` returns zero on every sampled point rather than assuming
+it.
+
+### And the surrogate, because otherwise there is no sensitivity
+
+`GradLocTI2` is the transport class an axisymmetric cavity needs: two components,
+`R₁₁` and `R₃₃`, where the supersphere's is isotropic and needs one. Same
+argument as `GradLocISO2` in 0.12.0 — `HillTI2` has the same two components and
+a different dimension, so reusing it would divide every prediction by `k₀`.
+
+Elasticity uses `StrainLocTI`, and that raised a real design question.
+`_reference_medium` has **no** method for that class, deliberately, because it
+also serves *heterogeneous* morphologies which carry their constituents inside
+themselves — guessing there would train on corrupted labels. A cavity has no
+constituent and is of degree 0 in the reference, so the class is perfectly
+usable; what is missing is not a method but a *statement*. Hence a `reference`
+keyword on `generate_dataset`: the caller declares what the class cannot decide,
+which is the opposite of correcting silently.
+
+### Added
+
+- `FEAxiSupershapePore` and `AxiSupershapePoreShape`, with
+  `fe_axi_pore_localization`, `fe_axi_pore_breakdown` and
+  `fe_axi_pore_mesh_report`.
+- `fe_axi_pore_boundary` — the tenth generic of the axisymmetric backend
+  contract, with a Ferrite implementation.
+- `GradLocTI2`, and a `reference` keyword on `generate_dataset`.
+- `FEAxiMeshOptions(; nprofile)`, read by the axisymmetric pore alone.
+- Two trained models, `axi_supershape_pore_conduction` and
+  `axi_supershape_pore_elastic`.
+
+### Changed
+
+- `scripts/89_fe_supersphere_pore.jl` is now **`scripts/89_fe_concave_pores.jl`**
+  and covers both families and both papers. One script and one application page
+  for one subject: the 80-89 block is full, and a second page beside the first
+  would have said the same things twice.
+- `_axi_setup` and `_axi_mode_setup` are no longer typed on
+  `FEExcenteredSphere`. They read `.cache.setup`, `.backend` and `.mesh.order`
+  and nothing else, so every axisymmetric morphology is served by the same code;
+  the rest of the driver stays typed per morphology, the constituents, the
+  averaging sets and the fixed point genuinely differing.
+- `fe_axi_grid_counts` reports the region sets the grid actually has. It asked
+  for three unconditionally, and a cavity has one.
+
+
 ## v0.12.0 — superspheres, from the shape to a differentiable phase
 
 A shape family with **no closed-form Eshelby solution** now reaches every

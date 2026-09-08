@@ -644,16 +644,19 @@ function FiniteElements._check_pore_surrogate(
         )
     )
     cls = hill_class(s)
-    ok = order == 4 ? cls isa Union{StrainLocCubic, StrainLocTI} : cls isa GradLocISO2
+    ok = order == 4 ? cls isa Union{StrainLocCubic, StrainLocTI} :
+        cls isa Union{GradLocISO2, GradLocTI2}
     ok || throw(
         ArgumentError(
             "class :$(class_name(cls)) cannot serve the `$which` slot of an " *
                 "`FESupershapePore`: that slot carries a *localization* tensor of a " *
                 "cavity, which is of degree 0 in the reference moduli. Use " *
                 (
-                order == 4 ? "`StrainLocCubic` (or `StrainLocTI`)." :
-                    "`GradLocISO2` — `HillISO2` has the same one component but " *
-                    "divides by `k₀`, so it would be silently wrong away from `k₀ = 1`."
+                order == 4 ? "`StrainLocCubic` for a supersphere, `StrainLocTI` " *
+                    "for a superspheroid." :
+                    "`GradLocISO2` (cubic) or `GradLocTI2` (axisymmetric) — the " *
+                    "`Hill*` classes of the same shape carry a different dimension " *
+                    "and would divide by `k₀`, silently wrong away from `k₀ = 1`."
             )
         )
     )
@@ -670,8 +673,15 @@ function FiniteElements._check_pore_surrogate(
     return nothing
 end
 
+# Both pore types, and nothing else: they share the whole surrogate contract —
+# `pore_shape_params`, `guard`, the class frame — and differ only in how they
+# would have solved for the answer had no surrogate been attached.
+const _PoreWithSurrogate = Union{
+    FiniteElements.FESupershapePore, FiniteElements.FEAxiSupershapePore,
+}
+
 FiniteElements._pore_surrogate_response(
-    s::NeuralSurrogate, pore::FiniteElements.FESupershapePore, P₀::TensND.AbstractTens
+    s::NeuralSurrogate, pore::_PoreWithSurrogate, P₀::TensND.AbstractTens
 ) = s(
     raw_features(pore, s, P₀), P₀, _class_frame(hill_class(s), pore); guard = pore.guard
 )
@@ -680,7 +690,7 @@ FiniteElements._pore_surrogate_response(
 # for a superspheroid. Going through `pore_shape_params` rather than
 # `getfield` keeps the two lists — features and sensitivity handles — the same
 # one by construction.
-function _shape_param(pore::FiniteElements.FESupershapePore, name::Symbol)
+function _shape_param(pore::_PoreWithSurrogate, name::Symbol)
     ps = FiniteElements.pore_shape_params(pore)
     return haskey(ps, name) ? getproperty(ps, name) : nothing
 end

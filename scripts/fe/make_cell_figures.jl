@@ -11,7 +11,7 @@
 #
 #  Outputs (committed):
 #      docs/src/assets/fe/cell_mesh_3d.png
-#      docs/src/assets/fe/cell_mesh_octant.png
+#      docs/src/assets/fe/axi_pore_mesh.png
 #      docs/src/assets/fe/cell_results.md.in    (tables, pasted into the pages)
 # =============================================================================
 
@@ -198,6 +198,79 @@ want("cost") && let
         ) (3 * rep.nnodes) err t
         @printf "  level %d %-7s err %.2e  %.1f s\n" lvl (oct ? "octant" : "whole") err t
         flush(stdout)
+    end
+    println(report)
+end
+
+# ─── The axisymmetric cavity ─────────────────────────────────────────────────
+
+"""
+The meridian half-plane of a superspheroidal cavity: the triangle mesh, the
+cavity wall in red, and the axis in blue.
+
+Two-dimensional, so this is the whole computational domain and not a slice of
+one — which is the point of the figure.
+"""
+function figure_axi(shape, opts; kw...)
+    b = FE.FerriteBackend()
+    grid = FE.fe_axi_grid(b, FEAxiSupershapePore(shape; opts))
+    X, Y = Float64[], Float64[]
+    for ci in 1:Ferrite.getncells(grid)
+        c = Ferrite.getcoordinates(grid, ci)
+        append!(X, [c[1][1], c[2][1], c[3][1], c[1][1], NaN])
+        append!(Y, [c[1][2], c[2][2], c[3][2], c[1][2], NaN])
+    end
+    R = opts.radius_ratio * bounding_radius(shape)
+    plt = plot(;
+        aspect_ratio = 1, legend = false, xlabel = "ρ / a", ylabel = "z / a",
+        xlims = (-0.05R, 1.05R), ylims = (-1.05R, 1.05R), kw...,
+    )
+    plot!(plt, X, Y; lc = :grey70, lw = 0.3)
+    # The exact profile, both halves, from the closed form rather than the mesh.
+    prof = FE._superspheroid_meridian(shape, 200)
+    ρ = [q[1] for q in prof]
+    z = [q[2] for q in prof]
+    plot!(plt, vcat(ρ, reverse(ρ)), vcat(z, -reverse(z)); lc = :crimson, lw = 2)
+    plot!(plt, [0.0, 0.0], [-R, R]; lc = :steelblue, lw = 2)
+    return plt, grid
+end
+
+want("axi") && let
+    println("── figure: the axisymmetric cavity ────────────────────────────")
+    o = FEAxiMeshOptions(; nradial = 20, radius_ratio = 4.0)
+    p1, g1 = figure_axi(
+        Superspheroid(1.0, 1.0, 0.35), o;
+        title = "p = 0.35, c/a = 1", size = (330, 440),
+    )
+    p2, g2 = figure_axi(
+        Superspheroid(1.0, 0.4, 0.4), o;
+        title = "p = 0.40, c/a = 0.4", size = (330, 440),
+    )
+    p3, _ = figure_axi(
+        Superspheroid(1.0, 2.0, 0.8), o;
+        title = "p = 0.80, c/a = 2", size = (330, 440),
+    )
+    savefig(
+        plot(
+            p1, p2, p3; layout = (1, 3), left_margin = 6Plots.mm,
+            bottom_margin = 6Plots.mm, size = (990, 440),
+        ),
+        joinpath(OUT, "axi_pore_mesh.png"),
+    )
+    println("wrote ", joinpath(OUT, "axi_pore_mesh.png"))
+
+    println(report, "### The axisymmetric cell (nradial = 20, R/a = 4)\n")
+    println(report, "| shape | cells | matrix volume, measured / exact |")
+    println(report, "|---|---|---|")
+    for (lbl, sh) in (
+            ("p = 0.35, c/a = 1", Superspheroid(1.0, 1.0, 0.35)),
+            ("p = 0.40, c/a = 0.4", Superspheroid(1.0, 0.4, 0.4)),
+            ("p = 0.80, c/a = 2", Superspheroid(1.0, 2.0, 0.8)),
+        )
+        r = fe_axi_pore_mesh_report(FEAxiSupershapePore(sh; opts = o))
+        @printf report "| %s | %d | %.4f / %.4f (%+.2f %%) |\n" lbl r.ncells (
+            r.volume_matrix
+        ) r.volume_matrix_exact (100 * r.volume_error)
     end
     println(report)
 end

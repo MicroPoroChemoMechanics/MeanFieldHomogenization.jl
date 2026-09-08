@@ -1,11 +1,13 @@
-# # A concave superspherical pore, against the literature
+# # Concave pores, against the literature
 #
-# `FESupershapePore` is the package's non-ellipsoidal cavity: a shape with no
-# closed-form Eshelby solution, reached by solving one finite-element cell — and
-# since this release, one *eighth* of a cell, which is what makes a sweep over
-# the shape exponent affordable at all.
+# Two families, two papers, one script. A **supersphere** is cubic and reached
+# by a three-dimensional cell in an octant; a **superspheroid** is transversely
+# isotropic and reached by a two-dimensional Fourier cell on the meridian
+# half-plane. Neither has a closed-form Eshelby solution.
 #
-# This script reproduces what can be reproduced from
+# ## Part 1 — the supersphere, against Chen et al. (2015)
+#
+# This part reproduces what can be reproduced from
 #
 # > Chen, Sevostianov, Giraud & Grgic, *Evaluation of the effective elastic and
 # > conductive properties of a material containing concave pores*, International
@@ -200,4 +202,141 @@ println("below 0.2, which is not physical for a pore.")
 @printf "%-8s %14s\n" "p" "their η(p)"
 for p in (0.18, 0.20, 0.22, 0.25, 0.30)
     @printf "%-8.2f %14.6f\n" p eta_paper(p)
+end
+
+# ## Part 2 — the superspheroid, against Sevostianov et al. (2016)
+#
+# The axisymmetric companion, and the only one of the two papers to **tabulate**
+# its numbers:
+#
+# > Sevostianov, Chen, Giraud & Grgic, *Compliance and resistivity contribution
+# > tensors of axisymmetric concave pores*, International Journal of Engineering
+# > Science **101** (2016) 14–28, `doi:10.1016/j.ijengsci.2015.12.005`.
+#
+# Their shape, Eq. (1.2), is
+#
+# ```math
+# \frac{(x_1^2+x_2^2)^p}{a^{2p}} + \frac{|x_3|^{2p}}{a^{2p}\gamma^{2p}} = 1 ,
+# ```
+#
+# which is `(ρ/a)^{2p} + (|z|/(aγ))^{2p} = 1` — exactly `Superspheroid(a, aγ, p)`.
+# The study is at `a = γ = 1`, so `Superspheroid(1, 1, p)`, and the answer is
+# transversely isotropic: five constants for ℍ, two for ℝ.
+#
+# ### The material, which the paper does not state
+#
+# No modulus appears anywhere in it. The values below are **inferred** from its
+# own `p = 1` row, where the body is an exact sphere and Eq. (3.9) applies:
+# `H₁₁₁₁/(−H₁₁₂₂) = (9+5ν₀)/(1+5ν₀)` gives `ν₀ = 0.330`, and `ν₀ = 1/3` with
+# `E₀ = 1` reproduces all five components and both resistivities to 0.06 % —
+# which is their own finite-element error. Presented as an inference, not as a
+# datum.
+
+const ν₀_axi = 1 / 3
+const E₀_axi = 1.0
+const C₀_axi = iso_stiffness(
+    E₀_axi / (3 * (1 - 2ν₀_axi)), E₀_axi / (2 * (1 + ν₀_axi))
+)
+const K₀_axi = TensISO{3}(1.0)
+
+const AXI = FEAxiMeshOptions(; nradial = 28, radius_ratio = 6.0)
+
+# A subset of their Table B.1 and B.4, for comparison. Seven of eighteen rows,
+# spanning the concave range they study and their `p = 1` control.
+const THEIR_H = Dict(          # p => (H₁₁₁₁, H₁₁₂₂, H₁₁₃₃, H₃₃₃₃, H₁₃₁₃)
+    0.30 => (1.819960, -0.420280, -0.783590, 7.405500, 2.558693),
+    0.40 => (1.894290, -0.434329, -0.681435, 4.065400, 1.506599),
+    0.50 => (1.937640, -0.451064, -0.611918, 2.916446, 1.323735),
+    0.60 => (1.963770, -0.466431, -0.568153, 2.456980, 1.269780),
+    0.70 => (1.979451, -0.477634, -0.541160, 2.241809, 1.258690),
+    0.85 => (1.993319, -0.489852, -0.515269, 2.081938, 1.250837),
+    1.00 => (2.001203, -0.498053, -0.498057, 2.001212, 1.249900),
+)
+const THEIR_R = Dict(          # p => (R₁₁, R₃₃)
+    0.30 => (1.64000000, 3.939221), 0.40 => (1.52899800, 2.289616),
+    0.50 => (1.50630000, 1.832213), 0.60 => (1.50589500, 1.662567),
+    0.70 => (1.50912600, 1.587973), 0.85 => (1.50890400, 1.523779),
+    1.00 => (1.50124400, 1.496256),
+)
+
+"Compliance and resistivity contribution of the axisymmetric cavity."
+function axi_contributions(p)
+    pore = FEAxiSupershapePore(Superspheroid(1.0, 1.0, p); opts = AXI)
+    return (
+        H = compliance_contribution(pore, C₀_axi, C₀_axi),
+        R = resistivity_contribution(pore, K₀_axi, K₀_axi),
+        pore,
+    )
+end
+
+println("\n", "="^78)
+println("The sphere is the control, and it is exact")
+println("-"^78)
+println("At p = 1 the body is a sphere, whose contribution tensors the package")
+println("knows in closed form. Nothing about the paper enters this row.")
+let
+    c = axi_contributions(1.0)
+    Hm = Matrix(KM(c.H))
+    Rm = Matrix(get_array(c.R))
+    # Eq. (3.9) of the paper, which is the classical result.
+    HG = 10 * (1 - ν₀_axi) / (7 - 5ν₀_axi)
+    G₀ = E₀_axi / (2 * (1 + ν₀_axi))
+    h1111 = 3 * (1 - ν₀_axi) * (9 + 5ν₀_axi) / (4 * (7 - 5ν₀_axi) * (1 + ν₀_axi) * G₀)
+    @printf "H1111 = %.6f   closed form %.6f   rel %.2e\n" Hm[1, 1] h1111 abs(Hm[1, 1] - h1111) / h1111
+    @printf "k0 R11 = %.6f  closed form %.6f   rel %.2e\n" Rm[1, 1] 1.5 abs(Rm[1, 1] - 1.5) / 1.5
+    @printf "transverse isotropy of H: |H1212 - (H1111-H1122)/2| / H1111 = %.2e\n" (
+        abs(Hm[6, 6] / 2 - (Hm[1, 1] - Hm[1, 2]) / 2) / abs(Hm[1, 1])
+    )
+end
+
+println("\n", "="^78)
+println("Compliance contribution against their Table B.1")
+println("-"^78)
+@printf "%-6s %-22s %-22s %s\n" "p" "H1111  (this / theirs)" "H3333  (this / theirs)" "H1313  (this / theirs)"
+const AXI_MEASURED = Dict{Float64, Any}()
+for p in sort(collect(keys(THEIR_H)))
+    c = axi_contributions(p)
+    AXI_MEASURED[p] = c
+    H = Matrix(KM(c.H))
+    t = THEIR_H[p]
+    # Kelvin-Mandel carries a factor 2 on the shear block.
+    @printf "%-6.2f %8.4f /%8.4f     %8.4f /%8.4f     %8.4f /%8.4f\n" p H[1, 1] t[1] H[3, 3] t[4] H[5, 5] / 2 t[5]
+    flush(stdout)
+end
+
+println("\n", "="^78)
+println("Resistivity contribution against their Table B.4")
+println("-"^78)
+@printf "%-6s %-20s %-20s\n" "p" "R11 (this / theirs)" "R33 (this / theirs)"
+for p in sort(collect(keys(THEIR_R)))
+    R = Matrix(get_array(AXI_MEASURED[p].R))
+    t = THEIR_R[p]
+    @printf "%-6.2f %8.4f /%8.4f    %8.4f /%8.4f\n" p R[1, 1] t[1] R[3, 3] t[2]
+end
+
+println("\n", "="^78)
+println("What the correction buys, and the proof of its sign")
+println("-"^78)
+println("The uncorrected answer drifts as (a/R)^3; the corrected one does not.")
+println("A wrong sign would leave twice the bias instead of none.")
+@printf "%-8s %-14s %-14s %s\n" "R/a" "corrected" "uncorrected" "ratio"
+let
+    # The sphere again, where the exact answer is known.
+    SJ = (1 + ν₀_axi) / (3 * (1 - ν₀_axi))
+    SK = 2 * (4 - 5ν₀_axi) / (15 * (1 - ν₀_axi))
+    v = [1.0, 1, 1, 0, 0, 0]
+    J = v * v' / 3
+    Kd = Matrix(1.0I, 6, 6) - J
+    Aex = inv(Matrix(1.0I, 6, 6) - (SJ * J + SK * Kd))
+    for rr in (2.5, 4.0, 6.0, 8.0)
+        pore = FEAxiSupershapePore(
+            Superspheroid(1.0, 1.0, 1.0);
+            opts = FEAxiMeshOptions(; nradial = 20, radius_ratio = rr)
+        )
+        b = fe_axi_pore_breakdown(pore, C₀_axi)
+        ec = norm(Matrix(KM(b.A)) - Aex) / norm(Aex)
+        eu = norm(Matrix(KM(b.A_uncorrected)) - Aex) / norm(Aex)
+        @printf "%-8.1f %-14.2e %-14.2e %.0fx\n" rr ec eu eu / ec
+        flush(stdout)
+    end
 end

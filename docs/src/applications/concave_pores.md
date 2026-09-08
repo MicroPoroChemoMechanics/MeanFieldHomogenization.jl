@@ -22,7 +22,7 @@ linear fit departs from its own anchors inside the range it claims.
 !!! note "This page is static"
     The figures and the numbers are produced once by
     `scripts/fe/make_cell_figures.jl` and committed; the live demonstration is
-    `scripts/89_fe_supersphere_pore.jl`.
+    `scripts/89_fe_concave_pores.jl`.
 
 ## The cell, and why one eighth of it is enough
 
@@ -136,16 +136,73 @@ centroid values on flat triangles. What can be said is on the table above: the
 control row bounds this chain's own error, and the signal is three orders of
 magnitude above it.
 
-## The axisymmetric companion
+## The axisymmetric companion, and the only tabulated data of the two
 
 [sevostianovIJES2016](@cite) is the same team's study of the **axisymmetric**
-concave pore — a superspheroid rather than a supersphere, transversely isotropic
-rather than cubic — and it is the only one of the two to tabulate its numbers.
-Reproducing it needs a different tool: the fields of a solid of revolution
-separate into Fourier modes, so five two-dimensional problems replace six
-three-dimensional ones, exactly as for the
-[recycled aggregate](@ref app-recycled-aggregate). That cell is not built yet,
-and this page does not pretend otherwise.
+concave pore. Its shape, Eq. (1.2),
+
+```math
+\frac{(x_1^2+x_2^2)^p}{a^{2p}} + \frac{|x_3|^{2p}}{a^{2p}\gamma^{2p}} = 1 ,
+```
+
+is `Superspheroid(a, aγ, p)` without conversion, studied at `a = γ = 1`. Being a
+solid of revolution it is transversely isotropic — five constants for ℍ, two for
+ℝ — and it is the only one of the two papers to **tabulate** its numbers, which
+makes it a target of a different nature from Chen *et al.*'s figures.
+
+!!! warning "Two conventions for `p`"
+    On this page `p` is the concavity exponent of the shape, with `2p` the
+    exponent of the level set. It is **not** the confocal angular coordinate of
+    [the layered spheroid](@ref th-layered-spheroid), nor the mode-1 nodal
+    unknown of the axisymmetric solver. Coordinates here are cylindrical
+    ``(\rho, \theta, z)`` throughout, and the aspect ratio is written `c/a`.
+
+### It needs a different tool, and gets one
+
+The fields separate into Fourier modes in the azimuth, so each mode is a
+**two-dimensional** problem on the meridian half-plane — the same reduction as
+for the [recycled aggregate](@ref app-recycled-aggregate), and where the octant
+divides the three-dimensional cost by eight this divides it by orders of
+magnitude. [`FEAxiSupershapePore`](@ref man-fe-inclusions) is that cell, and the
+mode count delivers exactly the five constants: a ``2\times2`` block from mode
+0, a scalar from mode 1, a scalar from mode 2.
+
+Two of its numbers are statements rather than measurements, and they are what
+license reading the rest. **Transverse isotropy holds to ``10^{-16}``** at any
+refinement, being structural rather than converged, which checks the three
+modes, the azimuthal projections, the boundary integral and the Kelvin
+reassembly simultaneously. And **conduction on a sphere is exact to
+``5\times10^{-6}``** and does not improve with refinement, a spherical cavity's
+exterior perturbation being a pure dipole with no higher multipole left to
+truncate.
+
+### The material the paper does not state
+
+No modulus appears anywhere in it. What follows uses `E₀ = 1`, `ν₀ = 1/3`,
+`k₀ = 1`, **inferred** from its own `p = 1` row: there the body is an exact
+sphere, Eq. (3.9) applies, and `H₁₁₁₁/(−H₁₁₂₂) = (9+5ν₀)/(1+5ν₀)` gives
+`ν₀ = 0.330`. With `ν₀ = 1/3` all five components and both resistivities come
+back to 0.06 %, which is their own finite-element error. It is an inference and
+is presented as one.
+
+### Four corrections to the paper's formulas
+
+Its tables are self-consistent; its closed forms are not, and each of these is
+checked on the `p = 1` row where the answer is known.
+
+1. **`V*(p)` in Eqs. (3.10)–(3.11) is the *normalized* volume** `3g(p) =
+   V*/(4π/3)`, not the volume of Eq. (1.3). With the true volume,
+   `H₃₃₃₃(p=1)` comes out 0.477 instead of 2.001 — a factor `4π/3`.
+2. **A factor of four on the shear components.** `H₁₃₁₃` and `H₁₂₁₂` as printed
+   in Eq. (3.5) give 5.0 for the sphere instead of 1.25.
+3. **A sign.** Eq. (3.5) writes `H₁₂₁₂ ≡ (H₁₁₁₁ + H₁₁₂₂)/2`; it must be a
+   difference. On their own Table B.1 at `p = 1`, the minus gives 1.2496 and the
+   plus 0.7516.
+4. Eq. (3.10) is internally inconsistent between `H₁₂₁₂`, written in tensor
+   convention, and `H₁₃₁₃`, written in the other.
+
+None of this touches the tabulated values, which is why the tables are the
+target and the formulas are not.
 
 ## One limitation, stated
 
@@ -161,7 +218,7 @@ set.
 
 ```shell
 julia scripts/fe/make_cell_figures.jl        # figures + docs/src/assets/fe/cell_results.md.in
-julia scripts/89_fe_supersphere_pore.jl      # the comparison, live
+julia scripts/89_fe_concave_pores.jl      # the comparison, live
 ```
 
 ## See also

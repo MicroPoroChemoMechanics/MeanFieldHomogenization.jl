@@ -171,6 +171,13 @@ MeanFieldHomogenization.pore_shape_params
 MeanFieldHomogenization.FiniteElements._pore_surrogate_response
 MeanFieldHomogenization.FiniteElements._rebuild_pore_shape
 MeanFieldHomogenization.Schemes._geom_field
+MeanFieldHomogenization.FEAxiSupershapePore
+MeanFieldHomogenization.AxiSupershapePoreShape
+MeanFieldHomogenization.fe_axi_pore_localization
+MeanFieldHomogenization.fe_axi_pore_breakdown
+MeanFieldHomogenization.fe_axi_pore_mesh_report
+MeanFieldHomogenization.fe_axi_pore_boundary
+MeanFieldHomogenization.FiniteElements._superspheroid_meridian
 MeanFieldHomogenization.FiniteElements._fe_frame
 ```
 
@@ -244,6 +251,7 @@ MeanFieldHomogenization.NeuralInclusions.StrainLocTI
 MeanFieldHomogenization.NeuralInclusions.StressLocTI
 MeanFieldHomogenization.NeuralInclusions.StrainLocCubic
 MeanFieldHomogenization.NeuralInclusions.GradLocISO2
+MeanFieldHomogenization.NeuralInclusions.GradLocTI2
 ```
 
 ### The surrogate

@@ -70,12 +70,27 @@ const NU_LO, NU_HI = 0.0, 0.45
 
 pore_geometry(x) = FESupershapePore(Supersphere(1.0, x[1]); opts = CELL)
 
+# ─── The axisymmetric family ─────────────────────────────────────────────────
+#
+# A two-dimensional solve per Fourier mode, so `radius_ratio = 6` is affordable
+# and worth it: what the corrected condition leaves is truncation, and the sweep
+# in `89_fe_concave_pores.jl` measures it at 1.1e-3 for `R/a = 4` against
+# 1.5e-4 for 6. The teacher's own accuracy is the ceiling on the surrogate's.
+const AXI = FEAxiMeshOptions(; nradial = 24, radius_ratio = 6.0)
+
+# `a` is not a feature: the localization of a cavity is scale-free, so only the
+# aspect ratio `c/a` and the exponent matter. The shape is built at `a = 1` and
+# the features are `(c, p)`.
+axi_geometry(x) = FEAxiSupershapePore(Superspheroid(1.0, x[1], x[2]); opts = AXI)
+
+const C_LO, C_HI = 0.5, 2.0
+
 elastic_response(g, C₀) = strain_strain_loc(g, C₀, C₀)
 transport_response(g, K₀) = gradient_gradient_loc(g, K₀, K₀)
 
 function train_and_save(
         name, spec, box, geometry, response, teacher, n, nval, opts;
-        notes = "", atol::Real
+        notes = "", atol::Real, reference = nothing
     )
     println("\n", "="^78)
     println("training `", name, "` — ", n, " + ", nval, " finite-element solves")
@@ -91,7 +106,7 @@ function train_and_save(
     # the concave end, and 3e-3 is still three orders below what a wrong class
     # would leave.
     t = @elapsed train, val = NI.generate_dataset(
-        geometry, response, spec, box, n; nvalidation = nval, atol
+        geometry, response, spec, box, n; nvalidation = nval, atol, reference
     )
     @printf "dataset: %.1f s for %d samples (%.2f s each)\n" t (n + nval) t / (n + nval)
     flush(stdout)
@@ -142,4 +157,58 @@ want("elastic") && train_and_save(
     atol = 2.5e-2,
     notes = "𝑨_εε of a superspherical cavity on (𝕁, 𝔼, 𝕋); dimensionless, so " *
         "the inputs are the shape exponent and the reference Poisson ratio",
+)
+
+# ─── 3. The axisymmetric cavity, transport ───────────────────────────────────
+#
+#  Two components, `R₁₁` and `R₃₃`, because a body of revolution distinguishes
+#  its axis — where the supersphere's transport localization is isotropic and
+#  needs one.
+
+want("axi_conduction") && train_and_save(
+    "axi_supershape_pore_conduction",
+    NI.DimensionlessHill(GradLocTI2()),
+    NI.SampleBox([:c, :p], [C_LO, P_LO], [C_HI, P_HI]),
+    axi_geometry, transport_response,
+    "gradient_gradient_loc(FEAxiSupershapePore, TensISO{2}) — Fourier axi, " *
+        "nradial = $(AXI.nradial), R/a = $(AXI.radius_ratio)",
+    # `R₃₃` is the demanding component: it ranges over a factor of three across
+    # this box and steepens in the flat-and-concave corner, where a thin oblate
+    # cavity with conical points is nearly a crack pierced by a needle. `R₁₁`
+    # barely moves. So the sample count is set by the harder of the two.
+    500, 150,
+    NI.TrainingOptions(; hidden = [48, 48], epochs = 25_000, batchsize = 64),
+    # The class residual of the axisymmetric teacher is far smaller than the
+    # three-dimensional one's: transverse isotropy is *structural* here — the
+    # Fourier modes decode straight onto the Kelvin basis — so the projection
+    # residual is round-off, and what `atol` guards against is a wrong axis.
+    atol = 1.0e-6,
+    notes = "𝑨_∇∇ of a superspheroidal cavity, TI about the revolution axis; " *
+        "scale-free in k₀, so the features are the aspect ratio and the exponent",
+)
+
+# ─── 4. The axisymmetric cavity, elasticity ──────────────────────────────────
+#
+#  Six components, not five: a localization tensor has no major symmetry, and
+#  `StrainLocTI` carries the six Walpole coefficients for exactly that reason.
+#
+#  This is the class whose reference medium the package deliberately refuses to
+#  guess, because the same class also serves *heterogeneous* morphologies that
+#  carry their constituents inside themselves. A cavity does not, and is of
+#  degree 0 in the reference — so the caller states it, which is what the
+#  `reference` keyword is for.
+
+want("axi_elastic") && train_and_save(
+    "axi_supershape_pore_elastic",
+    NI.DimensionlessHill(StrainLocTI()),
+    NI.SampleBox([:c, :p, :nu0], [C_LO, P_LO, NU_LO], [C_HI, P_HI, NU_HI]),
+    axi_geometry, elastic_response,
+    "strain_strain_loc(FEAxiSupershapePore, TensISO{4}) — Fourier axi, " *
+        "nradial = $(AXI.nradial), R/a = $(AXI.radius_ratio)",
+    600, 180,
+    NI.TrainingOptions(; hidden = [48, 48], epochs = 20_000, batchsize = 64),
+    atol = 1.0e-6,
+    reference = (box, x) -> NI._iso_ref(x[NI.feature_index(box, :nu0)]),
+    notes = "𝔸_εε of a superspheroidal cavity on the six Walpole coefficients " *
+        "about the revolution axis; the reference is stated rather than guessed",
 )

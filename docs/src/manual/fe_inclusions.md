@@ -29,6 +29,7 @@ Three are shipped, and the same machinery serves all of them:
 | [`FEEllipticCrack`](@ref MeanFieldHomogenization.FEEllipticCrack) | flat elliptical crack | 3-D tetrahedra | the crack-opening tensor 𝐁 |
 | [`FEExcenteredSphere`](@ref MeanFieldHomogenization.FEExcenteredSphere) | sphere with an off-center spherical core | axisymmetric Fourier modes | both localization tensors |
 | [`FESupershapePore`](@ref MeanFieldHomogenization.FESupershapePore) | superspherical or superspheroidal **cavity** | 3-D tetrahedra, curved boundary | the strain-side tensor, in both physics |
+| [`FEAxiSupershapePore`](@ref MeanFieldHomogenization.FEAxiSupershapePore) | superspheroidal **cavity**, axisymmetric | axisymmetric Fourier modes | the strain-side tensor, in both physics |
 
 The general principle and the shared syntax come first below; the three
 morphologies, and the ones not yet written, come after.
@@ -409,6 +410,45 @@ percent of the surface; that fraction is the number to watch. A large fraction
 means the level really is too coarse for that ``p``. What triggers it is
 unbounded curvature and **not** sharpness: the octahedron has edges and vertices
 everywhere and needs no snapping at all, its faces being flat.
+
+### A superspheroidal cavity, in two dimensions
+
+[`FEAxiSupershapePore`](@ref MeanFieldHomogenization.FEAxiSupershapePore) solves
+the *axisymmetric* member of the same shape family, and it is the cheapest
+inclusion in the package: the fields of a solid of revolution separate into
+Fourier modes in the azimuth, so each mode is a two-dimensional problem on the
+meridian half-plane.
+
+```julia
+pore = FEAxiSupershapePore(Superspheroid(1.0, 2.0, 0.7);
+                           opts = FEAxiMeshOptions(; nradial = 24, radius_ratio = 6.0))
+```
+
+Everything downstream is unchanged — the same gate B, the same exactly-zero
+stress side, the same `Dict` placeholder for the phase property. What differs is
+what you get for the cost:
+
+- the answer is **transversely isotropic**, five constants in elasticity and two
+  in transport, and the mode count delivers exactly that: a ``2\times2`` block
+  from mode 0, a scalar from mode 1, a scalar from mode 2;
+- ``A_{1212} = (A_{1111} - A_{1122})/2`` holds to ``10^{-16}`` at **any**
+  refinement, being a structural identity of the class rather than a converged
+  result;
+- conduction on a sphere is exact to ``5\times10^{-6}``, a spherical cavity's
+  exterior perturbation being a pure dipole with no higher multipole for the
+  corrected condition to truncate.
+
+Two things to know before turning the knobs. `radius_ratio` multiplies the
+**bounding radius**, as for the three-dimensional cell, so an elongated shape
+does not end up with its boundary at ``1.2c``. And what remains after the
+correction in elasticity is **truncation, not discretization**: refining
+`nradial` past 20 changes little, while going from ``R/a = 4`` to ``6`` divides
+the error by seven. `fe_axi_pore_breakdown` returns the uncorrected answer
+beside the corrected one, which is how to see that.
+
+The derivation is in [the pore declination](@ref th-corrected-cell); the
+comparison against the literature is in
+[concave pores](@ref app-concave-pores).
 
 ## Morphologies still to come
 
