@@ -330,7 +330,43 @@ function _solve_elastic(
     # is both the fix and better conditioning, and it catches any other null
     # direction a future case might introduce.
     keep = [j for j in axes(A, 2) if any(!iszero, @view A[:, j])]
-    solk = A[:, keep] \ rhs
+    Ak = A[:, keep]
+    # ── Column equilibration, and why the solve needs it ────────────────────
+    #
+    #  The columns are amplitudes of Papkovich–Neuber potentials evaluated at
+    #  the interface, so a *growing* mode of degree `n` scales like `qⁿ` and a
+    #  decaying one like `q^{-n-1}`. As the spheroid approaches a sphere the
+    #  focal distance goes to zero and `q → ∞`, so the column magnitudes span
+    #  `q^{2n+1}`: at `ω = 0.999`, `q ≈ 22` and degrees to 9, that is `10²⁵`,
+    #  and the QR has nothing left to work with. Measured against the
+    #  closed-form Eshelby result on a single layer — where the confocal
+    #  machinery must reproduce it exactly — the answer was good to `3e-15` at
+    #  `|1-ω| ≥ 0.3` and a *total* loss at `1e-3`, while conduction on the
+    #  identical chart stayed at `1e-15`.
+    #
+    #  The degeneracy is in the basis's normalization, not in the problem: as
+    #  `q → ∞` the spheroidal harmonics tend to spherical ones, which are
+    #  perfectly independent. So scaling each column to unit norm — a change of
+    #  unknowns, exact in exact arithmetic — is the remedy rather than a
+    #  tolerance, and it is the one that minimizes the 2-norm condition number
+    #  over all diagonal column scalings to within `√n` (van der Sluis).
+    #
+    #  **Columns only.** Equilibrating rows would reweight the residual of an
+    #  overdetermined least squares and so change which solution is returned;
+    #  scaling columns only reparameterizes the unknowns and cannot.
+    #
+    #  Skipped for a symbolic element type: the arithmetic there is exact, so
+    #  there is nothing to condition, and a symbolic column norm would blow up
+    #  every expression downstream of it.
+    if is_hard_numeric(real(eltype(Ak)))
+        cscale = [sqrt(sum(abs2, @view Ak[:, j])) for j in axes(Ak, 2)]
+        for j in axes(Ak, 2)
+            @views Ak[:, j] ./= cscale[j]
+        end
+        solk = (Ak \ rhs) ./ cscale
+    else
+        solk = Ak \ rhs
+    end
     sol = zeros(Tp, size(A, 2))
     sol[keep] .= solk
     nr = sqrt(sum(abs2, rhs))
