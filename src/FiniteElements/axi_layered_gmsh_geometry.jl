@@ -55,6 +55,10 @@ Physical-group name of layer `ℓ`, counted from the core. The matrix keeps
 """
 axi_layer_set(ℓ::Integer) = "layer$(ℓ)"
 
+# The shape a backend matches on to find the layer sets of a grid without being
+# told how many there are. Kept beside the name it has to agree with.
+const AXI_LAYER_SET_PATTERN = r"^layer([0-9]+)$"
+
 """
     _layer_size_caps(axis_radii, disk_radii, R, h_in) -> Vector{Float64}
 
