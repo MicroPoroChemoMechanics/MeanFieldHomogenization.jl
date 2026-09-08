@@ -58,11 +58,14 @@ MeanFieldHomogenization.check_inclusion_interface
 
 ## Finite-element inclusions
 
-Requires a finite-element backend: `Ferrite`, `FerriteGmsh` and `Gmsh`, or —
-for the axisymmetric morphology — `Gridap` and `GridapGmsh`. Two morphologies,
-one method: see [Finite-element inclusions](@ref man-fe-inclusions) for the
-elliptical crack and [A recycled-concrete aggregate](@ref app-recycled-aggregate)
-for the sphere with an off-center core.
+Requires a finite-element backend: `Ferrite`, `FerriteGmsh` and `Gmsh` serve
+every morphology, while `Gridap` and `GridapGmsh` serve the crack and the
+axisymmetric ones. **Four morphologies, one method** — the same corrected finite
+Eshelby cell and the same entry into the schemes:
+[Finite-element inclusions](@ref man-fe-inclusions) for the elliptical crack,
+[A recycled-concrete aggregate](@ref app-recycled-aggregate) for the sphere with
+an off-center core, and [Concave pores](@ref app-concave-pores) for the
+superspherical and superspheroidal cavities.
 
 ```@docs
 MeanFieldHomogenization.FiniteElements
@@ -171,6 +174,13 @@ MeanFieldHomogenization.pore_shape_params
 MeanFieldHomogenization.FiniteElements._pore_surrogate_response
 MeanFieldHomogenization.FiniteElements._rebuild_pore_shape
 MeanFieldHomogenization.Schemes._geom_field
+MeanFieldHomogenization.FEAxiSupershapePore
+MeanFieldHomogenization.AxiSupershapePoreShape
+MeanFieldHomogenization.fe_axi_pore_localization
+MeanFieldHomogenization.fe_axi_pore_breakdown
+MeanFieldHomogenization.fe_axi_pore_mesh_report
+MeanFieldHomogenization.fe_axi_pore_boundary
+MeanFieldHomogenization.FiniteElements._superspheroid_meridian
 MeanFieldHomogenization.FiniteElements._fe_frame
 ```
 
@@ -244,6 +254,7 @@ MeanFieldHomogenization.NeuralInclusions.StrainLocTI
 MeanFieldHomogenization.NeuralInclusions.StressLocTI
 MeanFieldHomogenization.NeuralInclusions.StrainLocCubic
 MeanFieldHomogenization.NeuralInclusions.GradLocISO2
+MeanFieldHomogenization.NeuralInclusions.GradLocTI2
 ```
 
 ### The surrogate

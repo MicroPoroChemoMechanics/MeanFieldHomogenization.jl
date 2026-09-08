@@ -24,10 +24,12 @@ solved. Ferrite bakes the constrained dof list into the `ConstraintHandler` at
 `close!` time; re-pointing `bcref` and calling `update!` refills the
 inhomogeneities in place, with no reassembly and no refactorization.
 """
-struct AxiModeSetup{D, C}
+struct AxiModeSetup{D, C, F}
     ncomp::Int
     dh::D
     cv::C
+    # Only a cavity uses these: `⟨ε⟩_D` of a pore is a boundary integral.
+    fv::F
     perm::Vector{Int}
     ch::Ferrite.ConstraintHandler
     bcref::Base.RefValue{Any}
@@ -59,12 +61,39 @@ function FE.fe_axi_grid(::FE.FerriteBackend, incl::MeanFieldHomogenization.FEExc
     return grid
 end
 
+function FE.fe_axi_grid(
+        ::FE.FerriteBackend, incl::MeanFieldHomogenization.FEAxiSupershapePore
+    )
+    opts = incl.mesh
+    R = opts.radius_ratio * Float64(MeanFieldHomogenization.bounding_radius(incl.shape))
+    # `h_in` is set from the transverse semi-axis, as for the core-shell model,
+    # so `nradial` keeps the same meaning across the two morphologies.
+    h_in = Float64(incl.shape.a) / opts.nradial
+    h_out = opts.coarsening * h_in
+    gmsh.initialize()
+    local grid
+    try
+        gmsh.option.setNumber("General.Terminal", 0)
+        FE._build_gmsh_axi_pore_model(
+            gmsh, incl.shape, R, h_in, h_out, opts.nprofile, opts.tip_refine
+        )
+        grid = FerriteGmsh.togrid()
+    finally
+        gmsh.finalize()
+    end
+    return grid
+end
+
+# `haskey` rather than the three names unconditionally: a cavity has one region,
+# and asking for a cellset that does not exist is an error rather than an empty
+# answer.
 FE.fe_axi_grid_counts(::FE.FerriteBackend, grid) = (;
     ncells = Ferrite.getncells(grid),
     nnodes = Ferrite.getnnodes(grid),
     ncells_by_set = Dict(
         s => length(Ferrite.getcellset(grid, s)) for
             s in (FE.AXI_SET_CORE, FE.AXI_SET_SHELL, FE.AXI_SET_MATRIX)
+            if haskey(Ferrite.getcellsets(grid), s)
     ),
 )
 
@@ -91,6 +120,8 @@ function FE.fe_axi_mode(::FE.FerriteBackend, grid, order::Int, ncomp::Int, axis_
     ip_geo = Ferrite.Lagrange{Ferrite.RefTriangle, 1}()
     qr = Ferrite.QuadratureRule{Ferrite.RefTriangle}(2 * order + 1)
     cv = Ferrite.CellValues(qr, ip, ip_geo)
+    fqr = Ferrite.FacetQuadratureRule{Ferrite.RefTriangle}(2 * order + 1)
+    fv = Ferrite.FacetValues(fqr, ip, ip_geo)
 
     dh = Ferrite.DofHandler(grid)
     for f in fields
@@ -128,7 +159,7 @@ function FE.fe_axi_mode(::FE.FerriteBackend, grid, order::Int, ncomp::Int, axis_
 
     presc = sort!(union(collect(ch.prescribed_dofs), axis))
     free = setdiff(1:Ferrite.ndofs(dh), presc)
-    return AxiModeSetup(ncomp, dh, cv, perm, ch, bcref, axis, presc, free)
+    return AxiModeSetup(ncomp, dh, cv, fv, perm, ch, bcref, axis, presc, free)
 end
 
 FE.fe_axi_dof_split(::FE.FerriteBackend, ms::AxiModeSetup) =
@@ -217,3 +248,68 @@ function FE.fe_axi_average(::FE.FerriteBackend, ms::AxiModeSetup, Dmap, u, Bop, 
     end
     return prim ./ V, dual ./ V, 2π * V
 end
+
+"""
+Line integral of `(ū ⊗ n)ˢ` on the meridian trace of a cavity wall, with the
+measure `ρ dl` and no normalization. See the generic for why this exists and why
+the divergence identity is not used instead.
+
+The facet interpolation is the same as the cell's, so `ū` is exact on the trace
+to the order of the discretization; the spline that carries the profile is what
+sets the geometry error, and the mesh report is what measures it.
+"""
+function FE.fe_axi_pore_boundary(
+        ::FE.FerriteBackend, ms::AxiModeSetup, u::AbstractVector, dofmap, proj, set
+    )
+    nb = Ferrite.getnbasefunctions(ms.fv)
+    ncyl = zeros(6)
+    acc = zeros(length(proj(zeros(6))))
+    grid = Ferrite.get_grid(ms.dh)
+    r2 = sqrt(2.0)
+    # The volume the *meshed* wall actually encloses, by the same quadrature:
+    # `V = (1/3)∮ x·n_D dS` with `n_D` outward from the cavity, which in the
+    # meridian plane is `-(ρ n_ρ + z n_z)` against the facet normal. It has to
+    # be this and not the closed form, or the average is normalized by one
+    # volume and integrated over the boundary of another — a systematic error
+    # of the geometry's own size that no refinement removes, because refining
+    # shrinks both together.
+    vol = 0.0
+    for facet in Ferrite.FacetIterator(ms.dh, Ferrite.getfacetset(grid, set))
+        Ferrite.reinit!(ms.fv, facet)
+        ue = u[Ferrite.celldofs(facet)[ms.perm]]
+        coords = Ferrite.getcoordinates(facet)
+        for q in 1:Ferrite.getnquadpoints(ms.fv)
+            ρ = Ferrite.spatial_coordinate(ms.fv, q, coords)[1]
+            nrm = Ferrite.getnormal(ms.fv, q)
+            dΓ = Ferrite.getdetJdV(ms.fv, q) * ρ
+            # The solved unknowns are the *mapped* ones; `dofmap` takes them
+            # back to `(ū_ρ, ū_θ, ū_z)`, which is what a tensor product needs.
+            usol = ntuple(ms.ncomp) do c
+                v = 0.0
+                for i in 1:nb
+                    v += Ferrite.shape_value(ms.fv, q, i) * ue[(c - 1) * nb + i]
+                end
+                v
+            end
+            ūρ = ūθ = ūz = 0.0
+            for c in 1:ms.ncomp
+                ūρ += dofmap[1, c] * usol[c]
+                ūθ += dofmap[2, c] * usol[c]
+                ūz += dofmap[3, c] * usol[c]
+            end
+            nρ, nz = nrm[1], nrm[2]
+            ncyl[1] = ūρ * nρ
+            ncyl[2] = 0.0                       # the facet normal has no azimuthal part
+            ncyl[3] = ūz * nz
+            ncyl[4] = r2 * (ūθ * nz) / 2
+            ncyl[5] = r2 * (ūρ * nz + ūz * nρ) / 2
+            ncyl[6] = r2 * (ūθ * nρ) / 2
+            acc .+= proj(ncyl) .* dΓ
+            vol -= (ρ * nρ + coords_z(ms.fv, q, coords) * nz) * dΓ
+        end
+    end
+    return acc, 2π * vol / 3
+end
+
+"The `z` of a facet quadrature point — spelled out so the line above stays readable."
+coords_z(fv, q, coords) = Ferrite.spatial_coordinate(fv, q, coords)[2]

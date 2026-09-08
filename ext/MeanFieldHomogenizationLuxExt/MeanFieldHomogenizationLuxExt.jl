@@ -127,7 +127,7 @@ function NI.train_surrogate(
         )
     )
 
-    scaling = NI.fit_scaling(train)
+    scaling = NI.fit_scaling(train; log_threshold = options.log_threshold)
     Xt = _standardize_inputs(train.X, scaling)
     Yt = _standardize_targets(train.Z, scaling)
     Xv = _standardize_inputs(validation.X, scaling)

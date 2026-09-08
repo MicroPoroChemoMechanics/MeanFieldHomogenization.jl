@@ -1,5 +1,265 @@
 # Changelog
 
+## v0.13.0 — the concave pore, axisymmetric
+
+The 0.12.0 release treated the **cubic** member of the supershape family
+completely: a three-dimensional cell in an octant, trained models, a comparison
+against Chen *et al.* (2015). This one treats the **axisymmetric** member, and
+it is the paper with the tables:
+
+> Sevostianov, Chen, Giraud & Grgic, *Compliance and resistivity contribution
+> tensors of axisymmetric concave pores*, International Journal of Engineering
+> Science **101** (2016) 14-28.
+
+Its shape is `Superspheroid(a, aγ, p)` without conversion, and being a solid of
+revolution it asks for a different tool: the fields separate into Fourier modes
+in the azimuth, so each mode is a **two-dimensional** problem on the meridian
+half-plane. Where the octant divides the three-dimensional cost by eight, this
+divides it by orders of magnitude — three assemblies and eight solves on a
+triangle mesh.
+
+### The mode count is the answer, not a coincidence
+
+Mode 0 gives a `2×2` block, modes 1 and 2 a scalar each. Three plus one plus one
+is exactly the five constants of a transversely isotropic compliance
+contribution, with modes 0 and 1 giving the two of the resistivity. Nothing had
+to be written for the decoding: `_AXI_Q` and `_axi_assemble_66` already did it,
+and the same representation theory sits on both sides of the equality.
+
+### Two numbers that are statements rather than measurements
+
+**Transverse isotropy holds to `1e-16`** — `A₁₂₁₂ = (A₁₁₁₁ − A₁₁₂₂)/2`, and the
+normal-to-shear block exactly zero — at *any* refinement, because the modes
+decode straight onto the Kelvin basis. It is therefore a free check that the
+three modes, the azimuthal projections, the boundary integral and the reassembly
+are simultaneously right, which no one of them could establish alone.
+
+**Conduction on a sphere is exact to `5e-6` and does not improve with
+refinement**, because the exterior perturbation of a spherical cavity *is* a pure
+dipole: the corrected condition has no higher multipole left to truncate.
+
+Validated against the exact spheroidal cavity, which the package already knows
+in closed form — in **canonical** components throughout, `Spheroid` sorting its
+semi-axes and permuting its frame:
+
+| `c/a` | conduction | elasticity |
+|:--|--:|--:|
+| 0.5 oblate | 4 digits | `1.8e-4` |
+| 1.0 sphere | 5 digits | `2.3e-5` |
+| 2.0 prolate | 5 digits | `1.5e-5` |
+
+What remains in elasticity is truncation and the radius sweep says so:
+uncorrected falls as `R^-2.85`, the `(a/R)³` signature, corrected as `R^-5` —
+a factor 10 better at `R/a = 2.5` and 113 at `R/a = 8`. That sweep is also the
+only test that proves the dipole sign, a wrong one leaving twice the bias.
+
+### The route that looked cleverer, and the reason it is not
+
+A cavity has no interior, so `⟨ε⟩_D` cannot come from `fe_axi_average`. It comes
+from the wall — a line integral on the meridian trace, `fe_axi_pore_boundary`,
+the tenth method of the axisymmetric contract and the only one a solid inclusion
+does not need.
+
+That was avoided first. The divergence identity on the matrix gives `⟨ε⟩_D` from
+the volume average plus an outer term that is analytic, reusing only tested code
+and adding no generic. It is algebraically exact and numerically hopeless: it
+obtains `V_D` as the difference of `V_Ω` and `V_M`, whose ratio is `(R/a)³`.
+Measured before it was abandoned — the implied cavity volume 2.9 % wrong at
+`V_Ω/V_D = 8`, 5.8 % at 64, 9.2 % at 216, with the localization error tracking
+it, and convergence of `O(h)` where the core-shell cell gets `O(h²)`. The error
+**grew with the cell radius**, which is the opposite of what a larger cell is
+for. It is recorded in the driver's header because the trap is attractive.
+
+One consequence of that detour survives it: **normalize by the volume the meshed
+wall encloses**, not by the closed form. Integrating over one boundary and
+dividing by another's volume leaves a systematic error of the geometry's own
+size that refinement never removes, because refining shrinks both together.
+Fixing it took the spherical gate in conduction from `9.1e-4` to `5.0e-6`.
+
+### The mesh, and the two corners
+
+The meridian profile has **two** corners for a concave shape, and the source
+already said which: "the equatorial plane is the crease; the two poles are the
+conical points". So it is cut into two splines meeting at the equator, with the
+poles as curve endpoints — a corner interior to a spline is a corner rounded off
+— and the sampling clusters at both ends, a uniform step in the parameter
+spending its points where the profile is flat.
+
+The parametrization `ρ = a t^{1/m}`, `z = c (1−t)^{1/m}` satisfies the level set
+identically, so no root find and no quadrature enter the geometry, and the tests
+check that `level_set` returns zero on every sampled point rather than assuming
+it.
+
+### A graded mesh at the crease, worth 1.2 % on the answer
+
+Uniform elements along the meridian were not enough, and the symptom was
+specific: `R₃₃` — mode 0, the field pushed along the axis — stopped converging
+while `R₁₁` from mode 1 converged cleanly. A concave superspheroid closes at the
+equator as a **wedge**: at `p = 0.3, c/a = 0.6` the half-gap is `0.0012a` where a
+uniform element is `0.031a`, so the elements nearest the crease straddled a gap
+twenty-five times thinner than themselves. Grading the element size linearly in
+the distance to the two corners — gated on `is_concave`, a convex profile needing
+none of it — took the refinement increment from `4.4e-3` / `3.7e-3` to `3.8e-4` /
+`1.9e-4`, and the ungraded value was **1.2 % wrong**, not merely unconverged.
+
+The hypothesis that a concave enough `p` has no admissible mesh at all, and would
+need extrapolation, was **measured and refuted**: the minimum mesh angle stays
+between 33.8° and 39.5° all the way down to `p = 0.20`, with refinement
+increments of `1e-4` to `1e-3`. There is no floor, no degenerate element and no
+Richardson step. What the measurement did find is the subject of the next
+section.
+
+### Where the surrogate error actually came from
+
+The first axisymmetric models were mediocre — `2.3e-2` worst case, where the
+analytic-teacher models reach `1e-4` — and none of the three obvious levers
+helped. More samples bought a factor 1.7 and then stalled; the graded mesh above
+bought nothing on the fit, because it corrects the teacher's *value* rather than
+its *shape*; narrowing the sample box made the worst case **worse** while the rms
+improved, which is what a few extreme samples carrying the maximum looks like.
+
+The cause was in neither the mesh nor the network. `R₃₃` runs from `1.66` at
+`p = 0.6` to `15.0` at `p = 0.20`, near-diverging as the body tends to a crack
+pierced by a needle, and two defaults were calibrated for quantities that do not
+do that:
+
+- `fit_scaling`'s `log_threshold` of 30 declined to fit the output in `log`,
+  because a factor of nine is not decades. With identity scaling the loss is
+  dominated by the large values and the relative error elsewhere is whatever is
+  left over. Hence `TrainingOptions(; log_threshold)`, set to 5 for these two
+  models: `2.3e-2` → `7.1e-3`.
+- A `SampleBox` is **linear**, so the feature *is* the sampling law. Uniform in
+  `p`, most of the budget lands where the response is flat. Hence the `:log_p`
+  feature beside `:p` (and `:log_aspect` read off a pore's own parameters):
+  `7.1e-3` → `3.7e-3`, with `R₁₁` at `2.0e-4`.
+
+A factor of six on the transport model, none of it from a bigger network. Both
+knobs are now named and documented rather than implicit in a default, which is
+the point: the defaults were not wrong, they were calibrated on a different kind
+of quantity.
+
+The elastic model was a different story, and the useful part of it is that three
+measurements each ruled out a lever rather than fixing one.
+
+Its box is three-dimensional and `ℓ₁` runs from 1.4 to 63 across it. The teacher
+was excluded first: its own mesh convergence is `1.5e-3` between `nradial` 8 and
+20, forty times below the fit. Raising the sample count from 780 to 1800 then
+improved **every** rms by a factor 1.2 to 2.3 while the reported maximum *rose* —
+because a held-out set 2.2 times larger reaches further into the tail. Widening
+the network to `[96, 96, 96]` did the opposite: better maximum, worse rms
+everywhere. Neither is the limit.
+
+The limit is a **near-singular corner of the sample box**. The ten worst held-out
+points all have `p ≤ 0.41`, `c/a ≤ 0.9` and `ν₀ ≥ 0.39`: a flattened, strongly
+concave cavity in a nearly incompressible matrix, where the localization reaches
+18 to 34 times the identity against 2 for a sphere. That is the near-crack limit,
+and no amount of sampling repairs a divergence. It is documented with its
+coordinates rather than removed by narrowing the box.
+
+**So the metric was the thing to fix.** A maximum over a heavy-tailed
+distribution is not a summary of it and is not comparable between runs of
+different size — which is exactly how it sent this work after the wrong lever.
+`validate_surrogate` now returns the whole distribution of block errors and
+`report_surrogate` prints rms, median, p90 and p99 beside the maximum. For the
+elastic model: max `6.3e-2`, but rms `6.4e-3`, median `3.0e-3`, p90 `6.6e-3` —
+which is the accuracy over the domain where it will be used, and comparable to
+the analytic-teacher models.
+
+Two more results of that diagnosis. `ℓ₃` and `ℓ₄` pass within `2e-4` of **zero**
+inside the box, so their per-component relative error is not a measure of the fit
+near that crossing; `report_surrogate` flags such a row instead of printing a
+number that reads as one. And a finite-element dataset is now **cached** between
+runs, keyed on everything the labels depend on: the 1800-solve set took 7752
+seconds to build and 0.1 second to reuse, which is what made three fit
+experiments affordable at all.
+
+### Against the paper's own tables, all thirty-five rows
+
+Their Table B.1 (eighteen rows, five components) and Table B.4 (seventeen rows,
+two) are transcribed in full and plotted against the cell, in `E₀ℍ` and `k₀𝑹` as
+they report them. The material is nowhere in the paper and is **inferred** from
+its own `p = 1` row, where the body is an exact sphere: `E₀ = 1`, `ν₀ = 1/3`,
+`k₀ = 1`, residual 0.06 %.
+
+**Four of the five compliance components and the axial resistivity agree across
+the whole range.** `H₃₃₃₃` is the demanding one — it runs from 2.00 at the sphere
+to 27.7 at `p = 0.20` — and agrees to 0.72 % at worst, 0.19 % at the most concave
+row. That is two independent finite-element formulations, theirs
+three-dimensional on a million nodes and this one two-dimensional on sixty
+thousand, landing on the same five-constant tensor for a shape family with no
+closed form.
+
+Three things do not agree, and they are of three kinds.
+
+`k₀R₁₁` disagrees in **trend**: theirs rises with concavity, ours falls, 37 % at
+`p = 0.20`. Ours was checked before it was published — invariant to six figures
+across `radius_ratio` from 4 to 10 and `nradial` from 20 to 28 — and then checked
+*again* by a route with nothing in common, the three-dimensional octant cell on
+the same shape, which lands 0.13 % away and converges towards it from below.
+Their own control row is 0.08 % off at the sphere, where the answer is `3/2`
+exactly.
+
+Their transverse block **reverses direction** below `p = 0.30` (`H₁₁₁₁` 1.8878,
+then 1.8080, then 1.8200) where ours is monotone; and their `H₁₃₁₃` at
+`p = 0.65` is identical to six decimals to their `p = 0.60` row, on the very row
+their own Table B.3 flags with its largest change in that column.
+
+The same comparison carries a counter-check that runs the other way, and it is
+in the docs for that reason: on `H₃₃₃₃` *our* octant at level 4 is 4 % below our
+two-dimensional value and still climbing, while theirs is 0.16 % from it.
+Three-dimensional meshes converge from below on that component; their mesh got
+there and our level 4 did not.
+
+### And the surrogate, because otherwise there is no sensitivity
+
+`GradLocTI2` is the transport class an axisymmetric cavity needs: two components,
+`R₁₁` and `R₃₃`, where the supersphere's is isotropic and needs one. Same
+argument as `GradLocISO2` in 0.12.0 — `HillTI2` has the same two components and
+a different dimension, so reusing it would divide every prediction by `k₀`.
+
+Elasticity uses `StrainLocTI`, and that raised a real design question.
+`_reference_medium` has **no** method for that class, deliberately, because it
+also serves *heterogeneous* morphologies which carry their constituents inside
+themselves — guessing there would train on corrupted labels. A cavity has no
+constituent and is of degree 0 in the reference, so the class is perfectly
+usable; what is missing is not a method but a *statement*. Hence a `reference`
+keyword on `generate_dataset`: the caller declares what the class cannot decide,
+which is the opposite of correcting silently.
+
+### Added
+
+- `FEAxiSupershapePore` and `AxiSupershapePoreShape`, with
+  `fe_axi_pore_localization`, `fe_axi_pore_breakdown` and
+  `fe_axi_pore_mesh_report`.
+- `fe_axi_pore_boundary` — the tenth generic of the axisymmetric backend
+  contract, with a Ferrite implementation.
+- `GradLocTI2`, and a `reference` keyword on `generate_dataset`.
+- `TrainingOptions(; log_threshold)`, forwarded to `fit_scaling`, and the
+  `:log_p` feature (with `:log_aspect` extended to a meshed pore).
+- `FEAxiMeshOptions(; nprofile, tip_refine)`, read by the axisymmetric pore
+  alone.
+- Two trained models, `axi_supershape_pore_conduction` (max `3.7e-3`) and
+  `axi_supershape_pore_elastic` (rms `6.4e-3`, p90 `6.6e-3`, max `6.3e-2` at one
+  near-crack point).
+- `validate_surrogate` returns `block_errors`, `block_rms`, `block_median`,
+  `block_p90` and `block_p99`; `report_surrogate` prints them and flags a
+  component that changes sign over the held-out set.
+
+### Changed
+
+- `scripts/89_fe_supersphere_pore.jl` is now **`scripts/89_fe_concave_pores.jl`**
+  and covers both families and both papers. One script and one application page
+  for one subject: the 80-89 block is full, and a second page beside the first
+  would have said the same things twice.
+- `_axi_setup` and `_axi_mode_setup` are no longer typed on
+  `FEExcenteredSphere`. They read `.cache.setup`, `.backend` and `.mesh.order`
+  and nothing else, so every axisymmetric morphology is served by the same code;
+  the rest of the driver stays typed per morphology, the constituents, the
+  averaging sets and the fixed point genuinely differing.
+- `fe_axi_grid_counts` reports the region sets the grid actually has. It asked
+  for three unconditionally, and a cavity has one.
+
+
 ## v0.12.0 — superspheres, from the shape to a differentiable phase
 
 A shape family with **no closed-form Eshelby solution** now reaches every

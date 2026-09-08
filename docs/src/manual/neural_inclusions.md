@@ -239,6 +239,8 @@ the *distinct over equal* semi-axis ratio, so ``\omega > 1`` is prolate and
 | `spheroid_hill_iso_affine` | ``\mathbb U^{\boldsymbol A}`` and ``\mathbb V^{\boldsymbol A}``, `TensTI{4,·,5}` | `log_aspect` | ``\omega \in [1/20, 20]``, **any** ``\nu_0`` | 1→48→48→10 | 6000 / 1500 | `2.6e-4` |
 | `supershape_pore_conduction` | ``\boldsymbol A_{\nabla\nabla}``, `TensISO{2}` | `p` | ``p \in [0.35, 2.5]`` | 1→24→24→1 | 120 / 40 | `1.5e-3` |
 | `supershape_pore_elastic` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensCubic` | `p`, `nu0` | ``p \in [0.35, 2.5]``, ``\nu_0 \in [0, 0.45]`` | 2→48→48→3 | 480 / 140 | `2.1e-2` |
+| `axi_supershape_pore_conduction` | ``\boldsymbol A_{\nabla\nabla}``, `TensTI{2,·,2}` | `log_aspect`, `log_p` | ``c/a \in [0.5, 2]``, ``p \in [0.25, 1.5]`` | 2→48→48→2 | 500 / 150 | `3.7e-3` |
+| `axi_supershape_pore_elastic` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensTI{4,·,6}` | `log_aspect`, `log_p`, `nu0` | same, and ``\nu_0 \in [0, 0.45]`` | 3→64→64→6 | 1400 / 400 | `6.3e-2` |
 
 "Worst error" is `worst_error(s.provenance)`: the largest error over the held-out
 set, in the ∞-norm of the component vector relative to its own magnitude. It is
@@ -247,16 +249,50 @@ rather than hard-coding a literal, so a retraining cannot silently loosen a
 threshold. Per-component diagnostics are in
 `src/NeuralInclusions/models/training_report.md`.
 
-**The last two rows are not like the others, and the gap is not a failure of
-the fit.** Every model above them learns from an *analytic* Hill tensor, so its
-labels are exact and the quoted error is the network's alone. The two
-supershape models learn from a **finite-element cell**, whose own departure
-from the symmetry class reaches ``1.5\times10^{-2}`` at ``p = 0.35`` — and does
-not improve with refinement, the field at the conical points being singular.
-Their worst case is therefore the mesh's, not the network's: the rms error is an
-order of magnitude smaller, and the training report carries both. A denser
-sample makes the worst case *rise*, because it reaches further into the concave
-corner; sampling less would hide that rather than fix it.
+**The last four rows are not like the others**: they learn from a
+**finite-element cell** rather than from an analytic Hill tensor, so their error
+is not all the network's. Which part of it is depends on the family, and the two
+cases are worth keeping apart.
+
+For the **cubic** pair the worst case is the *teacher's*. A cell solve departs
+from cubic symmetry by ``1.5\times10^{-2}`` at ``p = 0.35`` and does not improve
+with refinement, the field at the conical points being singular; the rms error is
+an order of magnitude below the worst case, and the training report carries both.
+A denser sample makes the worst case *rise*, because it reaches further into the
+concave corner; sampling less would hide that rather than fix it.
+
+For the **axisymmetric** pair it is the *fit's*, transverse isotropy being
+structural there. Two things earned the transport model's accuracy, and neither
+was a bigger network. The teacher first: a concave superspheroid closes at the
+equator as a wedge, and elements that straddle a gap twenty-five times thinner
+than themselves put ``R_{33}`` **1.2 %** off — hence the graded meridian mesh.
+Then the fit, where two defaults had to be stated rather than inherited.
+``R_{33}`` runs from ``1.66`` at ``p = 0.6`` to ``15.0`` at ``p = 0.20``,
+near-diverging as the body tends to a crack pierced by a needle, so
+`log_threshold = 5` is needed for the output to be fitted in ``\log`` at all, and
+the features are `log_p` and `log_aspect` because a `SampleBox` is linear and the
+feature therefore *is* the sampling law. Measured, one lever at a time:
+``2.3\times10^{-2}`` → ``7.1\times10^{-3}`` → ``3.7\times10^{-3}``.
+
+!!! warning "The last row's `6.3e-2` is one point, and the column is the wrong
+    number to read"
+    The axisymmetric **elastic** model has a median block error of
+    ``3.0\times10^{-3}`` and a p90 of ``6.6\times10^{-3}``; its quoted worst case
+    is a *single* held-out point in the near-crack corner of the box — flattened
+    (``c/a \le 0.9``), strongly concave (``p \le 0.41``) and nearly
+    incompressible (``\nu_0 \ge 0.39``), where ``\mathbb A_{\varepsilon\varepsilon}``
+    reaches 18 to 34 times the identity against 2 for a sphere.
+
+    Neither more data nor more capacity moves it: going from 780 to 1800 samples
+    improved every rms by 1.2 to 2.3 while *raising* the maximum, because a
+    larger held-out set reaches further into the tail — so a maximum is not
+    comparable between runs of different size. Widening the network improved the
+    maximum and degraded every rms. The tail belongs to a near-singular corner of
+    the sample box, and it is documented here rather than removed by narrowing
+    the box. `report_surrogate` prints rms, median, p90 and p99 beside the
+    maximum for exactly this reason, and the per-component figures for
+    ``\ell_3`` and ``\ell_4`` carry a flag because those two change sign inside
+    the box.
 
 Note the affine row: the affine factorization is **twelve times more accurate**
 than the generic one, on a network of the same size, because it does not spend
@@ -316,12 +352,22 @@ derivative(rve, Dilute(), geometry(:pores, :p))
 The same call on a meshed pore raises, and the suite pins both halves of that
 contrast.
 
-**Two models ship for this route**, `supershape_pore_conduction` and
-`supershape_pore_elastic`, trained by `scripts/nn/train_supershape.jl` against
-the octant cell — which is what makes a training set of several hundred
-finite-element solves a matter of minutes rather than hours. Their accuracy is
-bounded by the teacher's own, not by the fit; see
-[the table above](@ref man-neural-models).
+**Four models ship for this route**, all trained by
+`scripts/nn/train_supershape.jl`: two for the **cubic** supersphere against the
+octant cell, and two for the **axisymmetric** superspheroid against the
+[Fourier cell](@ref man-fe-inclusions). Reducing the teacher is what makes a
+training set of several hundred finite-element solves a matter of minutes rather
+than hours — the octant divides the three-dimensional cost by eight, and going
+to two dimensions divides it again by orders of magnitude.
+
+The two families are limited by different things, and the distinction matters
+when reading [the table above](@ref man-neural-models). The **cubic** models are
+bounded by the teacher: a whole-cell solve departs from cubic symmetry by
+``1.5\times10^{-2}`` at ``p = 0.35`` and does not improve with refinement, the
+field at the conical points being singular. The **axisymmetric** models are not:
+transverse isotropy there is *structural*, the Fourier modes decoding straight
+onto the Kelvin basis, so the class residual is round-off and the quoted error is
+the fit's own.
 
 The suite additionally checks the whole path against a *synthetic* closed-form
 cubic teacher — dataset, fit, decode, inclusion, schemes, and the derivative

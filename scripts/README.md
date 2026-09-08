@@ -278,7 +278,7 @@ See `docs/literate.jl` for the generator entry point and
 classification of all 41 scripts.
 
 ## 88 — MeanFieldHomogenization *inside* a finite-element code
-| `89_fe_supersphere_pore.jl` | Chen, Sevostianov, Giraud & Grgic (2015), IJES 97, 60-68 | a **concave superspherical cavity** by finite elements, in an **octant**: the closed-form volume against `shape_volume`, the resistivity contribution against their `η(p)`, and the compliance contribution on its **three** cubic constants — where their two-constant isotropic form, and their own data, carry no anisotropy at all. Also shows that their linear fit for `η` is non-monotone and goes negative below `p = 0.2` |
+| `89_fe_concave_pores.jl` | Chen, Sevostianov, Giraud & Grgic (2015), IJES 97, 60-68 | a **concave superspherical cavity** by finite elements, in an **octant**: the closed-form volume against `shape_volume`, the resistivity contribution against their `η(p)`, and the compliance contribution on its **three** cubic constants — where their two-constant isotropic form, and their own data, carry no anisotropy at all. Also shows that their linear fit for `η` is non-monotone and goes negative below `p = 0.2` |
 
 `88_fe_thick_cylinder.jl` is the other direction of the 80-89 block: not an
 inclusion whose response comes from a finite-element solve, but a whole

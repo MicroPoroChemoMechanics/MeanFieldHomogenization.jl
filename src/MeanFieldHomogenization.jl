@@ -215,13 +215,15 @@ export FESupershapePore, SupershapePoreShape, has_surrogate, pore_shape_params
 export fe_cell_localization, fe_cell_mesh_report
 export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_localization, fe_axi_breakdown, fe_axi_mesh_report
+export FEAxiSupershapePore, AxiSupershapePoreShape
+export fe_axi_pore_localization, fe_axi_pore_breakdown, fe_axi_pore_mesh_report
 
 # ── Neural-network (surrogate) inclusions ────────────────────────────────────
 export NeuralHillInclusion, NeuralLocalizationInclusion, NeuralShape
 export NeuralSurrogate, Provenance, worst_error
 export save_surrogate, load_surrogate, model_path, shipped_models
 export HillISO, HillTI, HillOrtho, HillISO2, HillTI2
-export StrainLocTI, StressLocTI, StrainLocCubic, GradLocISO2
+export StrainLocTI, StressLocTI, StrainLocCubic, GradLocISO2, GradLocTI2
 
 # ── Superspherical and superspheroidal morphologies ──────────────────────────
 export AbstractSuperShape, Supersphere, Superspheroid

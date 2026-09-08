@@ -40,7 +40,13 @@ struct AxiSetup{B, G}
     modes::Dict{Tuple{Symbol, Int}, Any}
 end
 
-function _axi_setup(incl::FEExcenteredSphere)
+# Deliberately untyped: these two read `.cache.setup`, `.backend` and
+# `.mesh.order` and nothing else, so every axisymmetric morphology is served by
+# the same code. A `Union` here would have to name a type this file is included
+# before, and an abstract supertype would fight the inclusion hierarchy for no
+# gain. The rest of the driver *is* typed per morphology, because the
+# constituents, the averaging sets and the fixed point genuinely differ.
+function _axi_setup(incl)
     if incl.cache.setup === nothing
         b = _resolve_backend(incl.backend)
         incl.cache.setup = AxiSetup(b, fe_axi_grid(b, incl), Dict{Tuple{Symbol, Int}, Any}())
@@ -52,7 +58,7 @@ end
 _axi_mode_shape(physics::Symbol, m::Int) = physics === :elasticity ?
     (_axi_ncomp(m), _axi_axis_zeros(m)) : (1, m == 0 ? () : (1,))
 
-function _axi_mode_setup(incl::FEExcenteredSphere, physics::Symbol, m::Int)
+function _axi_mode_setup(incl, physics::Symbol, m::Int)
     s = _axi_setup(incl)
     return get!(s.modes, (physics, m)) do
         ncomp, axis_zeros = _axi_mode_shape(physics, m)

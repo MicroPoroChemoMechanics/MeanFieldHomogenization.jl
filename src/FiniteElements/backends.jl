@@ -211,6 +211,38 @@ fe_axi_stiffness(b::FEBackend, mode, Dmap, Bop) =
     _no_backend_method("fe_axi_stiffness", b)
 
 """
+    fe_axi_pore_boundary(backend, mode, u, dofmap, proj, set) -> Vector
+
+Line integral of `(ū ⊗ n)ˢ` on the meridian trace of a **cavity** wall,
+projected onto the Fourier mode, with the measure `ρ dl` and **unnormalized**.
+`n` is the facet normal, outward from the matrix and therefore *into* the
+cavity, so the caller supplies the sign.
+
+The tenth method of the axisymmetric contract, and the only one a cavity needs
+that a solid inclusion does not. A cavity has no interior to integrate over, so
+`⟨ε⟩_D` has to come from its boundary — exactly as `fe_cell_mean_strain` does in
+three dimensions.
+
+**Not** by the divergence identity on the matrix. That route is algebraically
+exact and numerically hopeless: it computes `V_D` as the difference of `V_Ω` and
+`V_M`, whose ratio is `(R/a)³`, so it loses two digits at `R/a = 4` and more as
+the cell grows. Measured: the implied cavity volume is 2.9 % off at
+`V_Ω/V_D = 8` and 9.2 % off at 216, and the localization error tracks it.
+
+`dofmap` is `_axi_dof_map(m)`, needed here and not in `fe_axi_stiffness` because
+`Bop` already folds it in: the boundary term uses the raw
+`(ū_ρ, ū_θ, ū_z)` while the solved unknowns are the mapped ones.
+
+The amplitude is returned in the same Kelvin ordering as `_axi_B_elast` produces
+— `(ρρ, θθ, zz, √2 θz, √2 ρz, √2 ρθ)` — so the same `proj` applies. Its `θθ`
+entry is identically zero, the facet normal having no azimuthal component; the
+metric term that `ε_θθ` carries has no counterpart in a tensor product, and the
+trace identity `u_ρn_ρ + u_θn_θ = u₁n₁ + u₂n₂` is what makes that consistent.
+"""
+fe_axi_pore_boundary(b::FEBackend, mode, u, dofmap, proj, set) =
+    _no_backend_method("fe_axi_pore_boundary", b)
+
+"""
     fe_axi_average(backend, mode, Dmap, u, Bop, proj, sets) -> (prim, dual, V)
 
 Volume averages over `∪ sets` of the generalized strain and of the associated

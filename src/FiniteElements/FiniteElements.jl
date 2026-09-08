@@ -10,6 +10,8 @@ contract is enough to reach every scheme.
 |---|---|---|---|
 | [`FEEllipticCrack`](@ref) | flat elliptical crack | 3-D tetrahedra | COD tensor → crack algebra |
 | [`FEExcenteredSphere`](@ref) | sphere with an off-center spherical core | axisymmetric Fourier | B — the two localization tensors |
+| [`FESupershapePore`](@ref) | superspherical cavity, cube-symmetric | 3-D tetrahedra, whole cell or one octant | B — the strain side alone, the stress side being zero |
+| [`FEAxiSupershapePore`](@ref) | superspheroidal cavity, a solid of revolution | axisymmetric Fourier | B — the strain side alone |
 
 Both use the *finite Eshelby cell with a first-order corrected boundary
 condition* of Adessina, Barthélémy, Lavergne & Ben Fraj, *Int. J. Eng. Sci.*
@@ -20,16 +22,21 @@ far field to the imposed boundary displacement.
 The types, the Fourier operators, the boundary data and the algebra of the
 corrected boundary condition all live here. What a package extension supplies
 is only the **discretization** — a mesh, scalar Lagrange spaces, an assembly
-and a quadrature — through the nine generics of [`FEBackend`](@ref).
+and a quadrature — through the generics of [`FEBackend`](@ref), which come in
+three groups: the crack, the axisymmetric contract (ten methods, the tenth being
+`fe_axi_pore_boundary`, needed by a cavity alone since it has no interior to
+average over) and the three-dimensional cell.
 
-Two backends exist, and both serve both morphologies:
-[`FerriteBackend`](@ref) (`import Ferrite, FerriteGmsh, Gmsh`) and
-[`GridapBackend`](@ref) (`import Gridap, GridapGmsh`). An inclusion built
-without naming one takes [`AutoBackend`](@ref) and picks at its first solve;
-with neither loaded, that solve errors informatively.
+Two backends exist: [`FerriteBackend`](@ref)
+(`import Ferrite, FerriteGmsh, Gmsh`), which implements all three groups, and
+[`GridapBackend`](@ref) (`import Gridap, GridapGmsh`), which implements the crack
+and the axisymmetric ones. An inclusion built without naming one takes
+[`AutoBackend`](@ref) and picks at its first solve; with neither loaded, that
+solve errors informatively.
 
-See `docs/src/manual/fe_inclusions.md` and
-`docs/src/applications/recycled_aggregate.md`.
+See `docs/src/manual/fe_inclusions.md`,
+`docs/src/applications/recycled_aggregate.md` and
+`docs/src/applications/concave_pores.md`.
 """
 module FiniteElements
 
@@ -53,6 +60,9 @@ export FESupershapePore, SupershapePoreShape, has_surrogate, pore_shape_params
 export fe_cell_localization, fe_cell_mesh_report
 export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_breakdown, fe_axi_mesh_report, fe_axi_localization
+export fe_axi_pore_boundary
+export FEAxiSupershapePore, AxiSupershapePoreShape
+export fe_axi_pore_localization, fe_axi_pore_breakdown, fe_axi_pore_mesh_report
 
 include("common.jl")
 include("backends.jl")
@@ -68,6 +78,9 @@ include("axi_gmsh_geometry.jl")
 include("axi_fourier.jl")
 include("axi_algebra.jl")
 include("axi_driver.jl")
+include("axi_pore_gmsh_geometry.jl")
+include("axi_pore_driver.jl")
+include("axi_supershape_pore.jl")
 
 # The three-dimensional cell around a non-ellipsoidal shape: geometry first.
 include("cell_gmsh_geometry.jl")

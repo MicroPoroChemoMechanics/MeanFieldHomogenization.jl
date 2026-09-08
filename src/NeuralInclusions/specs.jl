@@ -138,12 +138,33 @@ nothing divides out; the Hill tensor is of degree −1, so `k₀` does. Reusing
 """
 struct GradLocISO2 <: AbstractHillClass end
 
+"""
+Gradient localization tensor of a cavity in transport, **transversely
+isotropic**: the two components `(a, b)` of `TensTI{2}` about the axis, for
+`gradient_gradient_loc` on an axisymmetric morphology.
+
+Two where [`GradLocISO2`](@ref) has one, because a body of revolution
+distinguishes its axis: a superspheroidal pore has `R₁₁ ≠ R₃₃` for every
+aspect ratio but the sphere.
+
+Distinct from [`HillTI2`](@ref) for the same reason `GradLocISO2` is distinct
+from `HillISO2`, and it is worth repeating because the two are otherwise
+interchangeable in shape: `𝑨_∇∇` is of degree **0** in the reference
+conductivity while the Hill tensor is of degree −1, so reusing `HillTI2` would
+divide every prediction by `k₀` and be silently wrong away from `k₀ = 1`.
+
+The axis is column 3 of the inclusion basis, the package's usual convention and
+the one the axisymmetric solver revolves about.
+"""
+struct GradLocTI2 <: AbstractHillClass end
+
 const _CLASS_NAMES = Dict{Symbol, AbstractHillClass}(
     :iso => HillISO(), :ti => HillTI(), :ortho => HillOrtho(),
     :iso2 => HillISO2(), :ti2 => HillTI2(),
     :loc_ti => StrainLocTI(), :stress_loc_ti => StressLocTI(),
     :loc_cubic => StrainLocCubic(),
     :grad_loc_iso2 => GradLocISO2(),
+    :grad_loc_ti2 => GradLocTI2(),
 )
 const _NAMES_CLASS = Dict{Any, Symbol}(typeof(v) => k for (k, v) in _CLASS_NAMES)
 
@@ -178,6 +199,7 @@ ncomponents(::HillTI2) = 2
 ncomponents(::Union{StrainLocTI, StressLocTI}) = 6
 ncomponents(::StrainLocCubic) = 3
 ncomponents(::GradLocISO2) = 1
+ncomponents(::GradLocTI2) = 2
 
 """
     tensor_order(class) -> Int
@@ -189,7 +211,7 @@ surrogate serves.
 tensor_order(
     ::Union{HillISO, HillTI, HillOrtho, StrainLocTI, StressLocTI, StrainLocCubic}
 ) = 4
-tensor_order(::Union{HillISO2, HillTI2, GradLocISO2}) = 2
+tensor_order(::Union{HillISO2, HillTI2, GradLocISO2, GradLocTI2}) = 2
 
 """
     tensor_order(t::AbstractTens) -> Int
@@ -216,7 +238,7 @@ frame (a TensND basis) for `HillOrtho`, and ignored for the isotropic ones.
 build(::HillISO, c, _frame) = TensND.TensISO{3}(c[1], c[2])
 build(::HillTI, c, axis) = TensND.TensTI{4}(c[1], c[2], c[3], c[4], c[5], axis)
 build(::Union{HillISO2, GradLocISO2}, c, _frame) = TensND.TensISO{3}(c[1])
-build(::HillTI2, c, axis) = TensND.TensTI{2}(c[1], c[2], axis)
+build(::Union{HillTI2, GradLocTI2}, c, axis) = TensND.TensTI{2}(c[1], c[2], axis)
 
 build(::Union{StrainLocTI, StressLocTI}, c, axis) =
     TensND.TensTI{4}(c[1], c[2], c[3], c[4], c[5], c[6], axis)
@@ -269,7 +291,8 @@ end
 
 _project(::Union{HillISO, HillISO2, GradLocISO2}, P, _frame) =
     TensND.proj_tens(Val(:ISO), P)
-_project(::Union{HillTI, HillTI2}, P, axis) = TensND.proj_tens(Val(:TI), P, axis)
+_project(::Union{HillTI, HillTI2, GradLocTI2}, P, axis) =
+    TensND.proj_tens(Val(:TI), P, axis)
 _project(::HillOrtho, P, frame) = TensND.proj_tens(Val(:ORTHO), P, frame)
 
 # Unlike the TI localization classes below, this one needs no special treatment:
@@ -365,7 +388,7 @@ _class_frame(::Union{HillTI, HillTI2}, geom) =
 # about (`FiniteElements._fe_frame`) and the same one that carries a crack's
 # normal. A wrong choice here does not pass silently: `components` measures the
 # projection residual.
-_class_frame(::Union{StrainLocTI, StressLocTI}, geom) =
+_class_frame(::Union{StrainLocTI, StressLocTI, GradLocTI2}, geom) =
     Core._basis_col(Core.inclusion_basis(geom), 3)
 
 # The cube axes are the inclusion's own basis, all three columns of it — a cube
@@ -425,7 +448,7 @@ dimensionless_scale(::Union{HillISO2, HillTI2}, K₀::TensND.TensISO{2, 3}) =
 # have to be contrast *ratios* rather than absolute moduli.
 dimensionless_scale(::StrainLocTI, ::TensND.TensISO{4, 3}) = 1
 dimensionless_scale(::StrainLocCubic, ::TensND.TensISO{4, 3}) = 1
-dimensionless_scale(::GradLocISO2, ::TensND.TensISO{2, 3}) = 1
+dimensionless_scale(::Union{GradLocISO2, GradLocTI2}, ::TensND.TensISO{2, 3}) = 1
 dimensionless_scale(::StressLocTI, C₀::TensND.TensISO{4, 3}) =
     inv(TensND.get_data(C₀)[2])
 
@@ -441,7 +464,7 @@ _iso_only(P₀) = throw(
 )
 
 material_coeffs(
-    ::Union{StrainLocTI, StressLocTI, StrainLocCubic, GradLocISO2},
+    ::Union{StrainLocTI, StressLocTI, StrainLocCubic, GradLocISO2, GradLocTI2},
     ::TensND.AbstractTens
 ) = throw(
     ArgumentError(

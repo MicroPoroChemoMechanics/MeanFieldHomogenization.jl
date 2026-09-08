@@ -273,6 +273,19 @@ it for `1.0e-8` rejects a perfectly good label. Raise it to the accuracy the
 teacher actually has — for the octant cell at level 3 that is a few times
 `1.0e-5` — and keep it tight enough that a wrong class or a wrong frame, which
 misses by orders of magnitude more, still fails loudly.
+
+`reference` overrides how the reference medium is built, as
+`reference(box, x_full) -> AbstractTens`. The default dispatches on the class,
+and for most classes that is the only sensible thing. It is **not** for
+`StrainLocTI` and `StressLocTI`: those describe the *localization* of a
+morphology, and whether the reference can be recovered from the features at all
+depends on the morphology and not on the class. A heterogeneous one carries its
+constituents inside itself, so scaling the reference changes the contrast and
+changes the answer — guessing there would train on corrupted labels, which is
+the failure this file exists to prevent. A **cavity** has no constituent and is
+of degree 0 in the reference, so the same class is perfectly usable, and the
+caller is the one who knows which case they are in. Hence a keyword rather than
+a method: it puts the statement where the knowledge is.
 """
 function generate_dataset(
         geometry,
@@ -282,14 +295,15 @@ function generate_dataset(
         n::Integer;
         nvalidation::Integer = 0,
         atol::Real = 1.0e-8,
+        reference = nothing,
     )
     _check_box(spec, box)
     Xt = sample_box(box, n)
     Xv = nvalidation > 0 ? sample_box(box, nvalidation; offset = n) :
         Matrix{Float64}(undef, length(box), 0)
     return (
-        Dataset(Xt, _label(geometry, response, spec, box, Xt; atol), copy(box.names)),
-        Dataset(Xv, _label(geometry, response, spec, box, Xv; atol), copy(box.names)),
+        Dataset(Xt, _label(geometry, response, spec, box, Xt; atol, reference), copy(box.names)),
+        Dataset(Xv, _label(geometry, response, spec, box, Xv; atol, reference), copy(box.names)),
     )
 end
 
@@ -320,7 +334,7 @@ _shape_rows(box::SampleBox) = findall(!=(:nu0), box.names)
 
 function _label(
         geometry, response, spec::AbstractOutputSpec, box::SampleBox, X::AbstractMatrix;
-        atol::Real = 1.0e-8
+        atol::Real = 1.0e-8, reference = nothing
     )
     n = size(X, 2)
     Z = Matrix{Float64}(undef, noutputs(spec), n)
@@ -328,16 +342,18 @@ function _label(
     for j in 1:n
         geom = geometry(collect(view(X, rows, j)))
         frame = _class_frame(spec.class, geom)
-        Z[:, j] .= _label_one(response, spec, box, geom, frame, view(X, :, j); atol)
+        Z[:, j] .=
+            _label_one(response, spec, box, geom, frame, view(X, :, j); atol, reference)
     end
     return Z
 end
 
 function _label_one(
         response, spec::DimensionlessHill, box::SampleBox, geom, frame, x_full;
-        atol::Real = 1.0e-8
+        atol::Real = 1.0e-8, reference = nothing
     )
-    P₀ = _reference_medium(spec.class, box, x_full)
+    P₀ = reference === nothing ? _reference_medium(spec.class, box, x_full) :
+        reference(box, x_full)
     P = response(geom, P₀)
     return collect(Float64, components(spec.class, P, frame; atol)) .*
         dimensionless_scale(spec.class, P₀)
@@ -345,7 +361,15 @@ end
 
 function _label_one(
         response, spec::AffineHill, _box::SampleBox, geom, frame, _x_full;
-        atol::Real = 1.0e-8
+        atol::Real = 1.0e-8, reference = nothing
+    )
+    reference === nothing || throw(
+        ArgumentError(
+            "`reference` has no meaning for an `AffineHill` surrogate: the whole " *
+                "point of the affine factorization is that it evaluates the teacher " *
+                "at references *it* chooses, so that the material dependence comes " *
+                "out exact rather than fitted."
+        )
     )
     class = spec.class
     nc = ncomponents(class)
@@ -407,9 +431,12 @@ _reference_medium(::StrainLocCubic, box::SampleBox, x_full) =
     _iso_ref(x_full[feature_index(box, :nu0)])
 
 # Transport, and it needs no `nu0`: a cavity's gradient localization is
-# scale-free in `k₀` and has a single component, so the shape alone determines
-# it and the reference is the identity.
-_reference_medium(::GradLocISO2, ::SampleBox, _) = TensND.TensISO{3}(1.0)
+# scale-free in `k₀`, so the shape alone determines it and the reference is the
+# identity. Two components instead of one when the morphology has an axis, and
+# neither class is ambiguous about its reference — unlike `HillTI2`, whose
+# dimension is different.
+_reference_medium(::Union{GradLocISO2, GradLocTI2}, ::SampleBox, _) =
+    TensND.TensISO{3}(1.0)
 
 # ─── Scaling fitted on the training set ──────────────────────────────────────
 
@@ -512,6 +539,13 @@ function validate_surrogate(s::NeuralSurrogate, data::Dataset)
     maxe = zeros(Float64, nz)
     sqe = zeros(Float64, nz)
     block = 0.0
+    # Every sample's block error, kept rather than reduced on the fly. A maximum
+    # over a heavy-tailed distribution is not a summary of it, and it is not even
+    # comparable between runs: a held-out set 2.2 times larger reaches further
+    # into the tail, so the maximum rises while every rms falls. Measured on the
+    # axisymmetric elastic pore, and it cost an afternoon of chasing the wrong
+    # lever — hence the quantiles below.
+    blocks = zeros(Float64, n)
     for j in 1:n
         ẑ = predict_components(s, view(data.X, :, j))
         num = 0.0
@@ -525,11 +559,19 @@ function validate_surrogate(s::NeuralSurrogate, data::Dataset)
             num = max(num, d)
             den = max(den, abs(z))
         end
-        block = max(block, num / max(den, global_rms))
+        blocks[j] = num / max(den, global_rms)
+        block = max(block, blocks[j])
     end
     rms = sqrt.(sqe ./ n)
+    sorted = sort(blocks)
+    quantile_at(q) = sorted[clamp(ceil(Int, q * n), 1, n)]
     return (;
         max_rel_error = maxe, rms_rel_error = rms,
         max_block_error = block, worst = block,
+        block_errors = blocks,
+        block_rms = sqrt(sum(abs2, blocks) / n),
+        block_median = quantile_at(0.5),
+        block_p90 = quantile_at(0.9),
+        block_p99 = quantile_at(0.99),
     )
 end

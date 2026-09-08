@@ -28,6 +28,16 @@ Discretization settings of an axisymmetric finite-element inclusion.
 | `nradial` | `24` | element size inside the inclusion, as `a / nradial`. |
 | `coarsening` | `6.0` | ratio of the element size at the outer boundary to the size inside the inclusion. |
 | `order` | `2` | polynomial order of the displacement / temperature interpolation (1 or 2). |
+| `nprofile` | `61` | points sampled on a quarter of the meridian profile — [`FEAxiSupershapePore`](@ref) only. |
+| `tip_refine` | `16` | element size at the profile's two corners, as a divisor of `h_in` — the same pore only. |
+
+!!! warning "Grading and `nradial` compound"
+    On a concave profile the two knobs multiply rather than add: at `p = 0.20`
+    and `R/a = 6`, `nradial = 20` meshes 68 000 cells, `nradial = 28` 130 000
+    and `nradial = 40` 267 000 — the last exceeding a 6 GB budget in elasticity.
+    Refine `radius_ratio` before `nradial`: what remains after the dipole
+    correction is truncation, and `nradial = 20` is already past its plateau
+    (going to 28 leaves `H₁₁₁₁` and `R₁₁` unchanged to six figures).
 
 The mesh is two-dimensional (the meridian half-plane), so refining is cheap:
 `nradial = 40` on a triangle mesh still solves in a fraction of a second.
@@ -37,8 +47,19 @@ struct FEAxiMeshOptions
     nradial::Float64
     coarsening::Float64
     order::Int
+    # Read by `FEAxiSupershapePore` alone: the number of points sampled on one
+    # quarter of the meridian profile. The core-shell model has no use for it,
+    # its profile being two circle arcs. They are spline controls and not mesh
+    # vertices, so a generous value costs nothing.
+    nprofile::Int
+    # Also the axisymmetric pore's alone: how much finer than `h_in` the
+    # elements become at the two corners of a concave meridian profile. It is
+    # the analog of the crack mesher's tip refinement, and for the same
+    # reason — a concave superspheroid is a wedge at its equator.
+    tip_refine::Float64
     function FEAxiMeshOptions(;
-            radius_ratio = 4.0, nradial = 24, coarsening = 6.0, order = 2
+            radius_ratio = 4.0, nradial = 24, coarsening = 6.0, order = 2,
+            nprofile = 61, tip_refine = 16.0
         )
         order in (1, 2) || throw(
             ArgumentError(
@@ -51,8 +72,13 @@ struct FEAxiMeshOptions
         nradial > 0 || throw(ArgumentError("`nradial` must be positive, got $nradial"))
         coarsening ≥ 1 ||
             throw(ArgumentError("`coarsening` must be at least 1, got $coarsening"))
+        nprofile ≥ 3 ||
+            throw(ArgumentError("`nprofile` must be at least 3, got $nprofile"))
+        tip_refine ≥ 1 ||
+            throw(ArgumentError("`tip_refine` must be at least 1, got $tip_refine"))
         return new(
-            Float64(radius_ratio), Float64(nradial), Float64(coarsening), Int(order)
+            Float64(radius_ratio), Float64(nradial), Float64(coarsening),
+            Int(order), Int(nprofile), Float64(tip_refine)
         )
     end
 end
