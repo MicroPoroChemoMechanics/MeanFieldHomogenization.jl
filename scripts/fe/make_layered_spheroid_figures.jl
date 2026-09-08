@@ -140,16 +140,12 @@ want("validation") && let
     #     through the sphere. The sphere is not in the confocal family, so it is
     #     approached rather than reached, and both branches of the analytic
     #     solution are exercised on one curve.
-    # The sweep deliberately stops short of the sphere on the *elastic* side.
-    # `LayeredSpheroid`'s elastic branch loses precision as the confocal chart
-    # degenerates (`focal → 0`, `q → ∞`): on a single layer, where the answer is
-    # the closed-form Eshelby result, it is exact to `3e-15` at `ω = 0.7` and
-    # `1e-9` at `1.3`, but `1.6e-3` at `0.9`, `5e-2` at `0.95` and a total loss
-    # at `0.999`. Transport on the identical chart stays at `1e-15` throughout,
-    # so this is the elastic algebra and not the geometry. Including those points
-    # in an agreement table would measure that failure and call it ours.
+    # One sweep for both physics now. The elastic branch used to be excluded
+    # near the sphere, where the confocal chart degenerates and its system's
+    # columns spanned `q^{2n+1}`; equilibrating them moved the usable range from
+    # `|1 - ω| ≥ 0.3` to `1e-3`, so the same abscissae serve both.
     ωs = [0.3, 0.4, 0.5, 0.65, 0.8, 0.9, 1.1, 1.25, 1.5, 2.0, 2.5, 3.0]
-    ωs_el = [0.3, 0.4, 0.5, 0.6, 0.7, 1.4, 1.7, 2.0, 2.5, 3.0]
+    ωs_el = ωs
     fe11, fe33, an11, an33 = Float64[], Float64[], Float64[], Float64[]
     for ω in ωs
         ar, dr = confocal_layer_radii(ω, 1.0, (0.3, 0.7))
@@ -322,9 +318,11 @@ want("validation") && let
     #
     #  A one-layer confocal spheroid *is* a homogeneous spheroid, so its answer
     #  is the closed-form Eshelby result and the confocal machinery has to
-    #  reproduce it exactly. On the elastic branch it does — until the chart
-    #  degenerates. This panel is the measurement, and it is the reason the
-    #  agreement table above excludes `|ω − 1| < 0.3` in elasticity.
+    #  reproduce it exactly. This panel is where the elastic branch's near-sphere
+    #  defect was measured, and it is now the record that column equilibration
+    #  removed it: from a total loss at `|1 - ω| = 1e-3` to `4e-9`, machine
+    #  precision down to `1e-2`, and a residual limit only at `1e-4` where the
+    #  spread reaches `q^{19} ≈ 10³⁵` and even transport is at `8e-10`.
     println("── figure: the analytic elastic branch near the sphere ────────")
     ωn = [0.999, 0.99, 0.97, 0.95, 0.9, 0.85, 0.8, 0.7, 0.6, 1.05, 1.1, 1.2, 1.3, 1.6]
     de, dc = Float64[], Float64[]
@@ -393,7 +391,7 @@ want("validation") && let
     @printf report "| spheres, free radii | %.1e | %.1e |\n" maximum(ds) sort(ds)[length(ds) ÷ 2]
     for (k, lbl) in enumerate(labels4)
         d = abs.(feE[k] .- anE[k]) ./ abs.(anE[k])
-        @printf report "| confocal, `%s`, |ω−1| ≥ 0.3 | %.1e | %.1e |\n" lbl maximum(d) sort(d)[length(d) ÷ 2]
+        @printf report "| confocal, `%s`, ω ∈ [0.3, 3] | %.1e | %.1e |\n" lbl maximum(d) sort(d)[length(d) ÷ 2]
     end
     println(
         report,

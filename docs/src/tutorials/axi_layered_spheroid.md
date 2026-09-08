@@ -98,7 +98,7 @@ count and freely chosen radii without assuming the confocal relation anywhere.
 
 The top row is conduction and the bottom row elasticity; the right-hand panels
 collect the deviations. Everything is below ``1.1\times10^{-3}``, with medians
-around ``10^{-4}``:
+around ``10^{-4}``, over the whole sweep in both physics:
 
 Two layers. Conduction: `k₁/k₀ = 5`, `k₂/k₀ = 2`. Elasticity: `E₁/E₀ = 4`, `ν₁ = 0.2`, `E₂/E₀ = 1.5`, `ν₂ = 0.3`, `ν₀ = 0.25`.
 
@@ -107,9 +107,9 @@ Two layers. Conduction: `k₁/k₀ = 5`, `k₂/k₀ = 2`. Elasticity: `E₁/E₀
 | confocal, `A₁₁`, ω ∈ [0.3, 3] | 5.5e-04 | 1.3e-04 |
 | confocal, `A₃₃`, ω ∈ [0.3, 3] | 5.4e-04 | 1.0e-04 |
 | spheres, free radii | 1.8e-04 | 1.4e-04 |
-| confocal, `A₁₁₁₁`, |ω−1| ≥ 0.3 | 5.8e-04 | 1.1e-04 |
-| confocal, `A₃₃₃₃`, |ω−1| ≥ 0.3 | 5.2e-04 | 7.7e-05 |
-| confocal, `A₁₃₁₃`, |ω−1| ≥ 0.3 | 1.1e-03 | 1.1e-04 |
+| confocal, `A₁₁₁₁`, ω ∈ [0.3, 3] | 6.4e-04 | 1.6e-04 |
+| confocal, `A₃₃₃₃`, ω ∈ [0.3, 3] | 5.6e-04 | 1.5e-04 |
+| confocal, `A₁₃₁₃`, ω ∈ [0.3, 3] | 1.1e-03 | 1.7e-04 |
 | confocal, `𝔸_σε` — no reference | — | — |
 | spheres, elasticity, `𝔸_εε` | 1.7e-04 | 1.2e-04 |
 | spheres, elasticity, `𝔸_σε` | 9.5e-05 | 7.4e-05 |
@@ -123,34 +123,34 @@ heterogeneous, so ``\mathbb A_{\sigma\varepsilon}`` is not
 ``\mathbb C_1`` — it is measured on the same solve, and it agrees with
 `LayeredSphere` to ``9.5\times10^{-5}``.
 
-### Why the elastic sweep stops short of the sphere
+### What this comparison found in the analytic solution
 
-The elastic panels have a gap in ``\omega`` between 0.7 and 1.4, and it is not
-an oversight. A one-layer confocal spheroid **is** a homogeneous spheroid, so
-the closed-form Eshelby result is its answer and the confocal machinery has to
-reproduce it exactly. Transport does, everywhere. Elasticity does not, once the
-chart degenerates — as ``\omega \to 1`` the focal distance goes to zero and the
-confocal parameter to infinity:
+The elastic sweep above covers the sphere, and for a while it could not. A
+one-layer confocal spheroid **is** a homogeneous spheroid, so the closed-form
+Eshelby result is its answer and the confocal machinery has to reproduce it at
+every aspect ratio. It did not: the error went from ``3\times10^{-15}`` at
+``|1-\omega| \ge 0.3`` to a **total loss** at ``10^{-3}``, while conduction on
+the identical chart stayed at ``10^{-15}``.
 
-![The analytic elastic branch against the closed-form spheroid, approaching the sphere](../assets/fe/layered_spheroid_analytic_near_sphere.png)
+![One confocal layer against the closed-form spheroid, approaching the sphere](../assets/fe/layered_spheroid_analytic_near_sphere.png)
 
 One confocal layer is a homogeneous spheroid, so the closed-form Eshelby result is the reference and the confocal machinery must reproduce it exactly. Transport does, everywhere. Elasticity does not, once the chart degenerates (`focal → 0`, `q → ∞`).
 
 | `ω` | elasticity | transport, same chart |
 |---|---:|---:|
-| 0.999 | 1.0e+00 | 4.3e-12 |
-| 0.990 | 7.7e-01 | 1.4e-14 |
-| 0.970 | 4.0e-01 | 1.2e-14 |
-| 0.950 | 5.3e-02 | 3.5e-15 |
-| 0.900 | 1.6e-03 | 1.8e-15 |
-| 0.850 | 1.8e-06 | 4.5e-16 |
-| 0.800 | 3.8e-08 | 7.7e-16 |
-| 0.700 | 2.6e-15 | 1.8e-16 |
-| 0.600 | 7.7e-15 | 3.5e-16 |
-| 1.050 | 8.3e-02 | 4.4e-15 |
-| 1.100 | 9.2e-02 | 1.8e-15 |
-| 1.200 | 8.4e-07 | 9.9e-16 |
-| 1.300 | 1.2e-09 | 3.5e-16 |
+| 0.999 | 3.8e-09 | 4.3e-12 |
+| 0.990 | 6.0e-13 | 1.4e-14 |
+| 0.970 | 2.5e-13 | 1.2e-14 |
+| 0.950 | 4.3e-14 | 3.5e-15 |
+| 0.900 | 3.1e-15 | 1.8e-15 |
+| 0.850 | 2.3e-15 | 4.5e-16 |
+| 0.800 | 4.3e-15 | 7.7e-16 |
+| 0.700 | 2.3e-15 | 1.8e-16 |
+| 0.600 | 7.6e-15 | 3.5e-16 |
+| 1.050 | 3.7e-14 | 4.4e-15 |
+| 1.100 | 1.6e-14 | 1.8e-15 |
+| 1.200 | 6.3e-15 | 9.9e-16 |
+| 1.300 | 4.7e-15 | 3.5e-16 |
 | 1.600 | 1.1e-14 | 1.8e-16 |
 
 ### Against the closed forms
@@ -162,28 +162,49 @@ Two layers. Conduction: `k₁/k₀ = 5`, `k₂/k₀ = 2`. Elasticity: `E₁/E₀
 | confocal, `A₁₁`, ω ∈ [0.3, 3] | 5.5e-04 | 1.3e-04 |
 | confocal, `A₃₃`, ω ∈ [0.3, 3] | 5.4e-04 | 1.0e-04 |
 | spheres, free radii | 1.8e-04 | 1.4e-04 |
-| confocal, `A₁₁₁₁`, |ω−1| ≥ 0.3 | 5.8e-04 | 1.1e-04 |
-| confocal, `A₃₃₃₃`, |ω−1| ≥ 0.3 | 5.2e-04 | 7.7e-05 |
-| confocal, `A₁₃₁₃`, |ω−1| ≥ 0.3 | 1.1e-03 | 1.1e-04 |
+| confocal, `A₁₁₁₁`, ω ∈ [0.3, 3] | 6.4e-04 | 1.6e-04 |
+| confocal, `A₃₃₃₃`, ω ∈ [0.3, 3] | 5.6e-04 | 1.5e-04 |
+| confocal, `A₁₃₁₃`, ω ∈ [0.3, 3] | 1.1e-03 | 1.7e-04 |
 | confocal, `𝔸_σε` — no reference | — | — |
 | spheres, elasticity, `𝔸_εε` | 1.7e-04 | 1.2e-04 |
 | spheres, elasticity, `𝔸_σε` | 9.5e-05 | 7.4e-05 |
 
-The finite-element cell converges cleanly to the limit — as ``\omega \to 1``
-with the volume fractions held, a confocal layered spheroid tends to a
-*concentric layered sphere*, which `LayeredSphere` solves exactly, and the cell
-approaches it as ``9.2\times10^{-4}`` at ``\omega = 0.99`` against the analytic
-branch's ``0.79``. So the discrepancy belongs to the analytic elastic branch,
-and including those abscissae in an agreement table would measure that and call
-it the mesh's.
+The cause was not the geometry and not the layer coupling — one layer already
+showed it, and both the prolate and the oblate family failed. The columns of the
+elastic system are amplitudes of Papkovich–Neuber potentials at the interface,
+so a growing mode of degree ``n`` scales like ``q^n`` and a decaying one like
+``q^{-n-1}``. As the spheroid approaches a sphere the focal distance goes to
+zero and ``q \to \infty``, so the column magnitudes span ``q^{2n+1}`` — about
+``10^{25}`` at ``\omega = 0.999`` with degrees up to nine, and the solve has
+nothing left to work with.
 
-This is worth stating plainly because it is the reason to have two independent
-routes at all: the failure changes no strain-side result away from the sphere,
-it is invisible in transport, and no test in the suite covered the elastic
-near-sphere limit — so nothing caught it until a finite-element cell was asked
-the same question.
+The degeneracy is in the basis's **normalization**, not in the problem: as
+``q \to \infty`` the spheroidal harmonics tend to spherical ones, which are
+perfectly independent. So the solve now scales each column to unit norm before
+the factorization — a change of unknowns, exact in exact arithmetic, and the
+scaling that minimizes the 2-norm condition number over all diagonal choices to
+within ``\sqrt n``. Columns only: equilibrating rows would reweight an
+overdetermined least squares and change *which* solution comes back.
 
+| ``\|1-\omega\|`` | before | after |
+|---:|---:|---:|
+| ``3\times10^{-1}`` | `3e-15` | `2e-15` |
+| ``10^{-1}`` | `1.6e-3` | `3e-15` |
+| ``5\times10^{-2}`` | `5.4e-2` | `4e-14` |
+| ``10^{-2}`` | `7.7e-1` | `6e-13` |
+| ``10^{-3}`` | `1.0e+0` | `4e-9` |
 
+A residual limit remains at ``|1-\omega| = 10^{-4}``, where the spread reaches
+``q^{19} \approx 10^{35}`` and even the transport branch is only at
+``8\times10^{-10}``. Past what a diagonal scaling can repair, and stated rather
+than hidden.
+
+Nothing caught this before: the failure changes no strain-side result away from
+the sphere, it is invisible in transport, and no test covered the elastic
+near-sphere limit. It surfaced because a finite-element cell was asked the same
+question about the same body — which is the whole reason to have two independent
+routes, and there is now a regression test on the one-layer oracle at every
+aspect ratio.
 
 ## Replaying it with your own radii
 

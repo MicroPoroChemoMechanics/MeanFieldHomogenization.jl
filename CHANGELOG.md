@@ -93,31 +93,43 @@ signature of a wrong quantity rather than a coarse mesh. The generic now refuses
 instead, in both physics. Nothing in the suite exercised that path, so nothing
 was relying on the wrong answer.
 
-**The analytic elastic confocal spheroid fails as it approaches the sphere.**
-A one-layer confocal spheroid *is* a homogeneous spheroid, so the closed-form
-Eshelby result is its answer. Measured against it, on a single layer:
+**The analytic elastic confocal spheroid was losing precision as it approached
+the sphere, and now does not.** A one-layer confocal spheroid *is* a homogeneous
+spheroid, so the closed-form Eshelby result is its answer. Measured against it:
 
-| `\|1 − ω\|` | elasticity | transport, same chart |
-|---:|---:|---:|
-| 0.3 | `3e-15` | `2e-16` |
-| 0.1 | `1.6e-3` | `2e-15` |
-| 0.05 | `5.4e-2` | `3e-15` |
-| 0.03 | `4.0e-1` | `1e-14` |
-| 0.001 | `1.0e+0` | `4e-12` |
+| `\|1 − ω\|` | before | after | transport, same chart |
+|---:|---:|---:|---:|
+| 0.3 | `3e-15` | `2e-15` | `2e-16` |
+| 0.1 | `1.6e-3` | `3e-15` | `2e-15` |
+| 0.05 | `5.4e-2` | `4e-14` | `3e-15` |
+| 0.01 | `7.7e-1` | `6e-13` | `1e-14` |
+| 0.001 | `1.0e+0` | `4e-9` | `4e-12` |
 
-Transport on the identical chart is exact throughout, so this is the elastic
-algebra losing precision as the chart degenerates — `focal → 0`, `q → ∞` — and
-not the geometry. It is not the layer coupling either, since one layer already
-shows it, nor the oblate substitution, since both families fail. The
-finite-element cell converges to the right limit on the same geometries
-(`9.2e-4` at `ω = 0.99`, against the analytic branch's `0.79`).
+Not the geometry — transport on the identical chart was always exact — not the
+layer coupling, since one layer already showed it, and not the oblate
+substitution, since both families failed. The columns of the elastic system are
+amplitudes of Papkovich–Neuber potentials at the interface, so a growing mode of
+degree `n` scales like `qⁿ` and a decaying one like `q^{-n-1}`; as the focal
+distance goes to zero the magnitudes span `q^{2n+1}`, about `10²⁵` at
+`ω = 0.999` with degrees to nine.
 
-This one is **not fixed** — a conditioning failure in a harmonic-series solution
-is not something to patch blind — but it is measured, plotted and documented,
-and the tutorial's agreement tables exclude `|ω − 1| < 0.3` in elasticity for
-this reason rather than silently. Nothing caught it before because the failure
-changes no strain-side result away from the sphere, is invisible in transport,
-and no test covered the elastic near-sphere limit.
+The degeneracy is in the basis's **normalization**, not the problem: as `q → ∞`
+the spheroidal harmonics tend to spherical ones, which are perfectly
+independent. So the solve equilibrates its columns before factorizing — a change
+of unknowns, exact in exact arithmetic, and the scaling that minimizes the
+2-norm condition number over all diagonal choices to within `√n`. **Columns
+only**: equilibrating rows would reweight an overdetermined least squares and
+change which solution is returned. Skipped for symbolic element types, where the
+arithmetic is exact and a symbolic column norm would blow up every expression
+downstream.
+
+The usable range moves from `|1 − ω| ≥ 0.3` to `10⁻³`. A residual limit remains
+at `10⁻⁴`, where the spread reaches `q¹⁹ ≈ 10³⁵` and even transport is at
+`8e-10` — past what a diagonal scaling can repair, and stated rather than
+hidden. Nothing caught the defect before because it changes no strain-side
+result away from the sphere, is invisible in transport, and no test covered the
+elastic near-sphere limit; there is now a regression test on the one-layer
+oracle at every aspect ratio, in both physics.
 
 ### `AnchoredHill`, and the measurement that says not yet
 
@@ -178,6 +190,9 @@ as the layers' moduli agree, which is a far closer baseline.
   `ℂ₁ : 𝔸_εε` — wrong by order one for such an inclusion, and the docstring had
   said so all along. Affects `LayeredSpheroid` in elasticity, the one type that
   declared itself heterogeneous without supplying its own method.
+- The elastic confocal spheroid's solve equilibrates its columns, which restores
+  the closed-form limit near the sphere: from a total loss at `|1 − ω| = 10⁻³`
+  to `4e-9`, and machine precision down to `10⁻²`.
 
 
 ## v0.13.0 — the concave pore, axisymmetric

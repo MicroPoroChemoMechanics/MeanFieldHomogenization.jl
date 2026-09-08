@@ -312,3 +312,99 @@ end
         @test Float64(get_array(rb.A)[3, 3, 3, 3]) ≈ get_array(rf.A)[3, 3, 3, 3] rtol = 1.0e-8
     end
 end
+
+# =============================================================================
+#  The near-sphere limit, which nothing covered until a finite-element cell was
+#  pointed at the same body.
+#
+#  A one-layer confocal spheroid *is* a homogeneous spheroid, so the closed-form
+#  Eshelby result is its answer and the confocal machinery has to reproduce it
+#  at **every** aspect ratio. It did not: the columns of the elastic system are
+#  amplitudes of Papkovich–Neuber potentials at the interface, so a growing mode
+#  of degree `n` scales like `qⁿ` and a decaying one like `q^{-n-1}`. As the
+#  spheroid approaches a sphere the focal distance goes to zero and `q → ∞`, so
+#  the column magnitudes span `q^{2n+1}` — about `10²⁵` at `ω = 0.999` with
+#  degrees to 9 — and the solve had nothing left to work with.
+#
+#  Measured before and after equilibrating those columns:
+#
+#      |1 - ω|      before        after
+#      3e-1         3e-15         2e-15
+#      1e-1         1.6e-3        3e-15
+#      5e-2         5.4e-2        4e-14
+#      3e-2         4.0e-1        2e-13
+#      1e-2         7.7e-1        6e-13
+#      1e-3         1.0e+0        4e-9
+#
+#  Transport on the identical chart was always at `1e-15`, which is what said
+#  the geometry was innocent and the elastic algebra was not.
+# =============================================================================
+
+@testset "the elastic confocal spheroid approaching the sphere" begin
+    _nsk(t) = Matrix(KM(TensND.change_tens(t, TensND.CanonicalBasis{3, Float64}())))
+    C1 = iso_stiffness(4.0 / (3 * (1 - 2 * 0.2)), 4.0 / (2 * (1 + 0.2)))
+    C₀ = iso_stiffness(1.0 / (3 * (1 - 2 * 0.25)), 1.0 / (2 * (1 + 0.25)))
+    K1, K₀ = TensISO{3}(5.0), TensISO{3}(1.0)
+
+    @testset "one layer reproduces the closed form at every aspect ratio" begin
+        # Both families, and right up to `|1 - ω| = 1e-3`. The tolerance loosens
+        # only where the scaling itself runs out: at `|1 - ω| = 1e-4` the spread
+        # is `q^{19} ≈ 10³⁵`, past what any diagonal choice can repair, and even
+        # transport is only at `8e-10` there.
+        for (ω, tol) in (
+                (0.5, 1.0e-12), (0.7, 1.0e-12), (0.9, 1.0e-12), (0.95, 1.0e-11),
+                (0.97, 1.0e-11), (0.99, 1.0e-10), (0.999, 1.0e-7),
+                (1.05, 1.0e-11), (1.1, 1.0e-12), (1.3, 1.0e-12), (2.0, 1.0e-12),
+            )
+            ar, dr = confocal_layer_radii(ω, 1.0, (1.0,))
+            an = _nsk(strain_strain_loc(LayeredSpheroid(ar, dr, (C1,)), C₀, C₀))
+            ex = _nsk(strain_strain_loc(Spheroid(ω), C1, C₀))
+            @test norm(an - ex) / norm(ex) < tol
+        end
+    end
+
+    @testset "and so does transport, on the same chart" begin
+        # The control that localized the defect: same geometry, same confocal
+        # parameter, and it was always exact. If a future change breaks one
+        # branch and not the other, this pair says which.
+        for ω in (0.5, 0.9, 0.99, 0.999, 1.1, 2.0)
+            ar, dr = confocal_layer_radii(ω, 1.0, (1.0,))
+            an = Matrix(
+                TensND.get_array(
+                    TensND.change_tens(
+                        gradient_gradient_loc(LayeredSpheroid(ar, dr, (K1,)), K₀, K₀),
+                        TensND.CanonicalBasis{3, Float64}(),
+                    )
+                )
+            )
+            ex = Matrix(
+                TensND.get_array(
+                    TensND.change_tens(
+                        gradient_gradient_loc(Spheroid(ω), K1, K₀),
+                        TensND.CanonicalBasis{3, Float64}(),
+                    )
+                )
+            )
+            @test norm(an - ex) / norm(ex) < 1.0e-9
+        end
+    end
+
+    @testset "two layers converge to the limit sphere" begin
+        # As `ω → 1` with the volume fractions held, a confocal layered spheroid
+        # tends to a *concentric layered sphere* of the same fractions, which
+        # `LayeredSphere` solves exactly. So the sphere is an independent judge
+        # of the limit, and the convergence has to be first order in `1 - ω`.
+        Cs = (C1, iso_stiffness(1.5 / (3 * (1 - 2 * 0.3)), 1.5 / (2 * (1 + 0.3))))
+        Es = _nsk(strain_strain_loc(LayeredSphere((cbrt(0.3), 1.0), Cs), C₀, C₀))
+        prev = Inf
+        for ω in (0.9, 0.95, 0.99, 0.999)
+            ar, dr = confocal_layer_radii(ω, 1.0, (0.3, 0.7))
+            A = _nsk(strain_strain_loc(LayeredSpheroid(ar, dr, Cs), C₀, C₀))
+            d = norm(A - Es) / norm(Es)
+            @test d < 1.0e-2
+            @test d < prev          # monotone, which a conditioning failure is not
+            prev = d
+        end
+        @test prev < 2.0e-4         # `8.1e-5` measured at ω = 0.999
+    end
+end
