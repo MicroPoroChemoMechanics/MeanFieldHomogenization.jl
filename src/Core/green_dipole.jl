@@ -137,3 +137,73 @@ end
 
 _as_matrix3(P::AbstractMatrix) = P
 _as_matrix3(P::TensND.AbstractTens{2, 3}) = TensND.components_canon(P)
+
+# ─── The transport counterpart ───────────────────────────────────────────────
+#
+#  The same construction one tensor order down, for the scalar conduction
+#  problem: `G = 1/(4πk₀r)` in place of the Kelvin solution, a vector moment in
+#  place of a tensor one, and a temperature in place of a displacement.  It is
+#  what makes a finite conduction cell behave like an infinite medium, and it is
+#  needed by any non-ellipsoidal morphology solved in transport.
+
+"""
+    green_gradient_iso2(K₀::TensISO{2,3}, x) -> SVector{3}
+    green_gradient_iso2(k₀::Number, x) -> SVector{3}
+
+Gradient ``\\partial G/\\partial x_k`` of the Green function of an isotropic
+conducting matrix of conductivity ``k_0``, evaluated at ``x \\ne 0``.
+
+With ``r = \\|x\\|``,
+
+```math
+G(x) = \\frac{1}{4\\pi k_0 r},
+\\qquad
+\\frac{\\partial G}{\\partial x_k} = -\\frac{x_k}{4\\pi k_0 r^3} .
+```
+
+Throws a `DomainError` at the origin. Type-generic.
+
+See also [`dipole_temperature_iso`](@ref), and
+[`green_gradient_iso`](@ref) for the elastic case this mirrors.
+"""
+green_gradient_iso2(K₀::TensND.TensISO{2, 3}, x::AbstractVector) =
+    green_gradient_iso2(extract_iso_conductivity(K₀), x)
+
+function green_gradient_iso2(k₀::Number, x::AbstractVector)
+    r2 = x[1]^2 + x[2]^2 + x[3]^2
+    iszero(r2) && throw(
+        DomainError(x, "the conduction Green function is singular at the origin")
+    )
+    c = -inv(4 * π * k₀ * r2 * sqrt(r2))
+    return SVector{3}(c * x[1], c * x[2], c * x[3])
+end
+
+"""
+    dipole_temperature_iso(K₀, x, M) -> Number
+
+Temperature at `x` radiated in an infinite isotropic conducting matrix by a
+point **polarization** of vector moment `M`,
+
+```math
+T(x) = \\frac{\\partial G}{\\partial x_k}(x)\\, M_k
+     = -\\frac{\\underline M \\cdot \\underline x}{4\\pi k_0 r^3} .
+```
+
+`M` has the dimension of a flux times a volume: an inclusion of volume
+``V_{\\mathcal I}`` carrying a uniform polarization ``\\underline\\pi`` (that is,
+``\\underline q = -\\boldsymbol K_0 \\cdot \\nabla T + \\underline\\pi`` inside
+it) radiates with ``\\underline M = V_{\\mathcal I}\\,\\underline\\pi``.
+
+**On the sign.** It is the one that follows from the two definitions above, and
+it is worth measuring rather than trusting: a wrong sign leaves the *corrected*
+answer carrying exactly **twice** the truncation bias instead of none, which
+looks like a mesh that will not converge rather than like an algebra mistake.
+The factor of two is the signature, and it is what a test should flip on
+purpose to see.
+
+See also [`dipole_displacement_iso`](@ref).
+"""
+function dipole_temperature_iso(K₀, x::AbstractVector, M)
+    dG = green_gradient_iso2(K₀, x)
+    return dG[1] * M[1] + dG[2] * M[2] + dG[3] * M[3]
+end

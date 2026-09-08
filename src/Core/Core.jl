@@ -106,6 +106,7 @@ export newton_potential_3d, newton_potential_2d, newton_potential_3d_cylinder
 
 # Real-space Kelvin Green gradient / dipole far field (isotropic matrix)
 export green_gradient_iso, dipole_displacement_iso
+export green_gradient_iso2, dipole_temperature_iso
 export green_operator_iso, green_operator_aniso, green_operator
 export green_function_aniso, gauss_legendre_nodes
 

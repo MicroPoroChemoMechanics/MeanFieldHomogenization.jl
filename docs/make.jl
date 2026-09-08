@@ -53,20 +53,20 @@ bib = CitationBibliography(
 # `docs/Project.toml` is the only edit needed — this method starts applying again
 # on its own.
 if isdefined(DocumenterCitations, :CitationSiteNode)
-# DocumenterCitations 1.5 wraps every expanded citation in a `CitationSiteNode`,
-# whose only purpose is to give the citation an HTML anchor so the bibliography
-# can link back to it. Its own docstring calls it "transparent in any output
-# format other than HTML", and both the LaTeX writer and MDFlatten implement it
-# as "render my children".
-#
-# DocumenterVitepress 0.3.5 ships a DocumenterCitations extension, but it covers
-# only `BibliographyNode`. With no method for `CitationSiteNode`, the writer
-# falls through to its generic branch, which prints `Markdown.plain(element)` —
-# so every one of this manual's citations came out as the literal text
-# `DocumenterCitations.CitationSiteNode("kachanov1992-cite-1")`.
-#
-# The same one-line treatment as the other non-HTML writers. Remove this once
-# DocumenterVitepress covers the node upstream.
+    # DocumenterCitations 1.5 wraps every expanded citation in a `CitationSiteNode`,
+    # whose only purpose is to give the citation an HTML anchor so the bibliography
+    # can link back to it. Its own docstring calls it "transparent in any output
+    # format other than HTML", and both the LaTeX writer and MDFlatten implement it
+    # as "render my children".
+    #
+    # DocumenterVitepress 0.3.5 ships a DocumenterCitations extension, but it covers
+    # only `BibliographyNode`. With no method for `CitationSiteNode`, the writer
+    # falls through to its generic branch, which prints `Markdown.plain(element)` —
+    # so every one of this manual's citations came out as the literal text
+    # `DocumenterCitations.CitationSiteNode("kachanov1992-cite-1")`.
+    #
+    # The same one-line treatment as the other non-HTML writers. Remove this once
+    # DocumenterVitepress covers the node upstream.
     function DocumenterVitepress.render(
             io::IO,
             mime::MIME"text/plain",
@@ -301,12 +301,14 @@ makedocs(;
         # Same principle: the inclusion families first, then the cells and
         # schemes that consume them, then what goes beyond elasticity.
         "Manual" => [
+            "manual/index.md",
             "manual/installation.md",
             "Inclusions" => [
                 "manual/inclusion_gallery.md",
                 "manual/ellipsoidal_inclusions.md",
                 "manual/cylindrical_inclusions.md",
                 "manual/cracks.md",
+                "manual/layered_inclusions.md",
                 "manual/custom_inclusions.md",
                 "manual/fe_inclusions.md",
                 "manual/neural_inclusions.md",
@@ -411,6 +413,7 @@ makedocs(;
             "applications/strength.md",
             "applications/itz_concrete.md",
             "applications/recycled_aggregate.md",
+            "applications/concave_pores.md",
             "applications/bituminous.md",
             "applications/ageing_creep.md",
             "applications/lamellar_clay.md",
@@ -467,6 +470,7 @@ makedocs(;
             "api/localization.md",
             "api/layered_sphere.md",
             "api/layered_spheroid.md",
+            "api/superspheres.md",
             "api/laminate.md",
             "api/interactions.md",
             "api/schemes.md",

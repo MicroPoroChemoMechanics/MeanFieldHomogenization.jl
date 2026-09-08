@@ -514,11 +514,22 @@ end
 
 # ── GeometryParameter ────────────────────────────────────────────────────────
 
+"""
+    _geom_field(geom, name) -> value
+
+Read a named geometry parameter. `getfield` by default, and overridable, which
+is what lets a geometry expose parameters that are not literal fields — a type
+holding a shape *object* rather than its scalars, say. The reader and the
+rebuilder, `_replace_geom_field`, must agree on the same name set or a
+derivative silently differentiates the wrong thing.
+"""
+_geom_field(geom, name::Symbol) = getfield(geom, name)
+
 function get_param(rve::RVE, p::GeometryParameter)
     haskey(rve.phases, p.phase) ||
         throw(ArgumentError("no phase named :$(p.phase) in RVE"))
     geom = rve.phases[p.phase].geometry
-    val = getfield(geom, p.field)
+    val = _geom_field(geom, p.field)
     return p.index === nothing ? val : val[p.index]
 end
 

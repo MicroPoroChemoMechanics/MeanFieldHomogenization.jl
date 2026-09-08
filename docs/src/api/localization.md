@@ -121,6 +121,59 @@ MeanFieldHomogenization.FiniteElements.fe_crack_stiffness
 MeanFieldHomogenization.FiniteElements.fe_crack_mean_jump
 ```
 
+### The three-dimensional cell
+
+Eight methods for the third cell family. Two things distinguish it from the
+crack's: the geometry is **quadratic**, the mid-edge nodes of the inclusion
+boundary having been moved onto the exact shape, and one contract serves two
+physics — a scalar temperature and a vector displacement — with only the
+material and the two averages differing.
+
+```@docs
+MeanFieldHomogenization.FiniteElements._build_gmsh_cell_model
+MeanFieldHomogenization.FiniteElements._snap_cell_surface_to_shape!
+MeanFieldHomogenization.FiniteElements._snap_cell_surface_to_sphere!
+MeanFieldHomogenization.FiniteElements.fe_cell_grid
+MeanFieldHomogenization.FiniteElements.fe_cell_counts
+MeanFieldHomogenization.FiniteElements.fe_cell_space
+MeanFieldHomogenization.FiniteElements.fe_cell_dof_split
+MeanFieldHomogenization.FiniteElements.fe_cell_set_dirichlet!
+MeanFieldHomogenization.FiniteElements.fe_cell_stiffness
+MeanFieldHomogenization.FiniteElements.fe_cell_mean_gradient
+MeanFieldHomogenization.FiniteElements.fe_cell_mean_strain
+MeanFieldHomogenization.FiniteElements._cell_close_dipole
+MeanFieldHomogenization.FiniteElements._cell_conduction_localization
+MeanFieldHomogenization.FiniteElements._cell_elastic_localization
+MeanFieldHomogenization.FiniteElements._cell_kelvin_basis
+MeanFieldHomogenization.FiniteElements._cell_outer_radius
+MeanFieldHomogenization.FiniteElements._cell_solver
+```
+
+### Superspherical and superspheroidal pore
+
+The inclusion type. It enters as a **heterogeneous** inclusion, which for a
+cavity is the truthful answer rather than a convenience: `is_homogeneous_inclusion`
+asks whether a single ``\mathbb C_1`` describes the interior, and `inv(0)` is
+meaningless. The package's exact identities then take over, and with a cavity's
+stress-side localization being *identically* zero they collapse to
+``\mathbb N = -\mathbb C_0:\mathbb A`` and
+``\mathbb H = \mathbb A:\mathbb S_0`` — the right answer for a pore, with no
+``\mathbb C_1`` anywhere in it. So the phase property handed to `add_phase!` is
+genuinely ignored, and no contribution tensor is overridden.
+
+```@docs
+MeanFieldHomogenization.FESupershapePore
+MeanFieldHomogenization.SupershapePoreShape
+MeanFieldHomogenization.fe_cell_localization
+MeanFieldHomogenization.fe_cell_mesh_report
+MeanFieldHomogenization.has_surrogate
+MeanFieldHomogenization.pore_shape_params
+MeanFieldHomogenization.FiniteElements._pore_surrogate_response
+MeanFieldHomogenization.FiniteElements._rebuild_pore_shape
+MeanFieldHomogenization.Schemes._geom_field
+MeanFieldHomogenization.FiniteElements._fe_frame
+```
+
 ### Elliptical crack (3-D)
 
 ```@docs
@@ -144,11 +197,35 @@ MeanFieldHomogenization.FiniteElements.tensor_order
 MeanFieldHomogenization.FiniteElements.ExcenteredSphereShape
 ```
 
+### The three-dimensional cell around a non-ellipsoidal shape
+
+The third cell family. The inclusion surface has no CAD representation, so it is
+built analytically by [`shape_surface`](@ref
+MeanFieldHomogenization.Superspheres.shape_surface) and handed to gmsh as a
+*discrete* entity; the interior size follows an exact radial law, the cell being
+star-shaped about its center.
+
+Two volume measures rather than one, and the difference is the point: the flat
+[`mesh_volume`](@ref MeanFieldHomogenization.Superspheres.mesh_volume) cannot
+see a curved boundary at all, so
+[`fe_cell_curved_volume`](@ref) is what shows what snapping the mid-edge nodes
+onto the exact shape actually bought.
+
+```@docs
+MeanFieldHomogenization.FECellMeshOptions
+MeanFieldHomogenization.fe_cell_size_estimate
+MeanFieldHomogenization.fe_cell_curved_volume
+MeanFieldHomogenization.fe_cell_meshed_volume
+MeanFieldHomogenization.fe_available_gb
+```
+
 ### Green function of the corrected boundary condition
 
 ```@docs
 MeanFieldHomogenization.Core.green_gradient_iso
 MeanFieldHomogenization.Core.dipole_displacement_iso
+MeanFieldHomogenization.Core.green_gradient_iso2
+MeanFieldHomogenization.Core.dipole_temperature_iso
 ```
 
 ## Neural-surrogate inclusions
@@ -165,6 +242,8 @@ MeanFieldHomogenization.NeuralLocalizationInclusion
 MeanFieldHomogenization.NeuralInclusions.NeuralShape
 MeanFieldHomogenization.NeuralInclusions.StrainLocTI
 MeanFieldHomogenization.NeuralInclusions.StressLocTI
+MeanFieldHomogenization.NeuralInclusions.StrainLocCubic
+MeanFieldHomogenization.NeuralInclusions.GradLocISO2
 ```
 
 ### The surrogate

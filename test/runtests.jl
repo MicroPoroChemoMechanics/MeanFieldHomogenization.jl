@@ -125,6 +125,7 @@ end
         include("Elasticity/test_hill_nestedquadgk_oblate.jl")
         include("Elasticity/test_hill_ti_coaxial.jl")
         include("Elasticity/test_param_conversions.jl")
+        include("Elasticity/test_cubic.jl")
         include("Elasticity/test_surface_stiffness.jl")
     end
 
@@ -199,6 +200,19 @@ end
     # keeps this testset deterministic and independent of the Lux stack.
     @testset "NeuralInclusions" begin
         include("NeuralInclusions/test_neural_inclusion.jl")
+        # The cubic localization class and the surrogate that stands in for a
+        # supershape cell. The teacher is synthetic -- a closed-form cubic
+        # tensor -- so no mesh and no solve appear anywhere; the fit itself is
+        # guarded by `NN_HAS_LUX` like the others.
+        include("NeuralInclusions/test_cubic_surrogate.jl")
+    end
+
+    # Superspherical and superspheroidal geometry. Pure closed forms, no mesh
+    # and no solver, so this runs unconditionally and in seconds — and it is
+    # what everything built on those shapes assumes.
+    @testset "Superspheres" begin
+        include("Superspheres/test_shapes.jl")
+        include("Superspheres/test_surface_mesh.jl")
     end
 
     # Finite-element inclusions: skipped when the Ferrite stack is unavailable
@@ -207,8 +221,23 @@ end
     # two-dimensional and cost a fraction of that.
     if HAS_FERRITE
         @testset "FiniteElementInclusions" begin
+            # The octant's parity algebra and shape guard: closed form, no
+            # mesh and no solve, so it runs first and costs nothing.
+            include("FiniteElements/test_cell_octant_algebra.jl")
             include("FiniteElements/test_ferrite_crack.jl")
             include("FiniteElements/test_axi_excentered_sphere.jl")
+            # Geometry and meshing of the three-dimensional cell around a
+            # supershape -- no solve, and kept at level 2, so it costs seconds.
+            # It needs only gmsh, but rides the same guard.
+            include("FiniteElements/test_cell_mesh.jl")
+            # And the corrected solve on it, against the exact spherical pore
+            # in both physics. Level 2, so about twenty-five seconds.
+            include("FiniteElements/test_cell_solve.jl")
+            # And the same solve on one eighth of the cell.
+            include("FiniteElements/test_cell_octant.jl")
+            # And the inclusion type built on it, through the schemes in both
+            # physics. About thirty seconds.
+            include("FiniteElements/test_supershape_pore.jl")
             if HAS_GRIDAP
                 include("FiniteElements/test_gridap_backend.jl")
             else

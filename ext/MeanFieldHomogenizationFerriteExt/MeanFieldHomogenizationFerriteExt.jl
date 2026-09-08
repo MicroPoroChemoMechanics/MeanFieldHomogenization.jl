@@ -40,5 +40,6 @@ const FE = MeanFieldHomogenization.FiniteElements
 
 include("crack_backend.jl")
 include("axi_backend.jl")
+include("cell_backend.jl")
 
 end # module

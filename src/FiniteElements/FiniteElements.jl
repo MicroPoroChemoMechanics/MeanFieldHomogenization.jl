@@ -35,6 +35,8 @@ module FiniteElements
 
 using TensND
 
+using ..Superspheres
+
 import LinearAlgebra
 import Tensors
 
@@ -42,10 +44,14 @@ import ..Core
 import ..Cracks
 import ..Schemes
 
-export FECache, fe_assembly_count, fe_reset!
+export FECache, fe_assembly_count, fe_reset!, fe_available_gb
 export FEBackend, AutoBackend, FerriteBackend, GridapBackend
 export FEMeshOptions, FEEllipticCrack, fe_cod_breakdown, fe_mesh_report
 export FEAxiMeshOptions, FEExcenteredSphere
+export FECellMeshOptions, fe_cell_size_estimate
+export FESupershapePore, SupershapePoreShape, has_surrogate, pore_shape_params
+export fe_cell_localization, fe_cell_mesh_report
+export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_breakdown, fe_axi_mesh_report, fe_axi_localization
 
 include("common.jl")
@@ -63,6 +69,12 @@ include("axi_fourier.jl")
 include("axi_algebra.jl")
 include("axi_driver.jl")
 
+# The three-dimensional cell around a non-ellipsoidal shape: geometry first.
+include("cell_gmsh_geometry.jl")
+include("cell_octant.jl")
+include("cell_driver.jl")
+include("supershape_pore.jl")
+
 # ─── Sensitivity is not available through a finite-element geometry ──────────
 #
 #  `Schemes._replace_geom_field` rebuilds a geometry by copying every
@@ -76,6 +88,9 @@ include("axi_driver.jl")
 #  geometry to `Float64` on entry, so a `ForwardDiff.Dual` loses its
 #  perturbation at the door.  Refusing is the only honest option.
 
+# `FESupershapePore` is deliberately absent: it refuses sensitivity only when it
+# is answering from a mesh, and decides per object in `supershape_pore.jl`,
+# because a surrogate-backed one *is* differentiable.
 const _FEGeometry = Union{FEEllipticCrack, FEExcenteredSphere}
 
 _no_fe_sensitivity(geom, name) = error(

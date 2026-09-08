@@ -26,8 +26,14 @@ end
 
 # ─── Material matrices in the local frame ────────────────────────────────────
 
-"Rotation matrix whose columns are the inclusion's local axes in global coordinates."
-_axi_frame(incl) = hcat(Core._frame_columns(Core.inclusion_basis(incl))...)
+"""
+    _fe_frame(incl) -> 3×3
+
+Rotation matrix whose columns are the inclusion's local axes in global
+coordinates. Shared by every finite-element inclusion: each one solves in its
+own frame and rotates the result out.
+"""
+_fe_frame(incl) = hcat(Core._frame_columns(Core.inclusion_basis(incl))...)
 
 "Components of a 4th-order tensor in the local frame, as a 3×3×3×3 array."
 function _to_local4(P::TensND.AbstractTens{4, 3}, R)
@@ -109,7 +115,7 @@ function _axi_check_ti2(M::AbstractMatrix{Float64}, what::AbstractString; rtol =
 end
 
 """
-    _axi_iso_moduli(P₀) -> (μ, ν)
+    _fe_iso_moduli(P₀; rtol, what) -> (μ, ν)
 
 Shear modulus and Poisson ratio of the reference medium, refusing anything
 that is not isotropic in *content* — the corrected boundary condition uses the
@@ -124,13 +130,16 @@ and `AsymmetricSelfConsistent` on a perfectly legitimate isotropic problem.
 Genuine anisotropy, the case the guard exists for, is orders of magnitude
 larger; `IsoSymmetrize` remains the answer for it.
 """
-function _axi_iso_moduli(C₀::TensND.AbstractTens{4, 3}; rtol = 1.0e-4)
+function _fe_iso_moduli(
+        C₀::TensND.AbstractTens{4, 3}; rtol = 1.0e-4,
+        what::AbstractString = "this inclusion",
+    )
     C_iso = Core.isotropify(C₀)
     A, Aiso = Core._C_array(C₀), Core._C_array(C_iso)
     dev = maximum(abs, A .- Aiso)
     dev ≤ rtol * max(maximum(abs, Aiso), eps()) || throw(
         ArgumentError(
-            "`FEExcenteredSphere` supports an isotropic reference medium only " *
+            "$what supports an isotropic reference medium only " *
                 "(the corrected boundary condition uses the closed-form Kelvin " *
                 "dipole field). The reference deviates from isotropy by " *
                 "$(round(dev / maximum(abs, Aiso) * 100, sigdigits = 3)) %. Add " *
@@ -142,13 +151,16 @@ function _axi_iso_moduli(C₀::TensND.AbstractTens{4, 3}; rtol = 1.0e-4)
     return Float64(E / (2 * (1 + ν))), Float64(ν)
 end
 
-function _axi_iso_scalar(K₀::TensND.AbstractTens{2, 3}; rtol = 1.0e-4)
+function _fe_iso_scalar(
+        K₀::TensND.AbstractTens{2, 3}; rtol = 1.0e-4,
+        what::AbstractString = "this inclusion",
+    )
     M = TensND.components_canon(K₀)
     k = (M[1, 1] + M[2, 2] + M[3, 3]) / 3
     dev = maximum(abs, M .- k .* LinearAlgebra.I(3))
     dev ≤ rtol * max(abs(k), eps()) || throw(
         ArgumentError(
-            "`FEExcenteredSphere` supports an isotropic reference medium only; " *
+            "$what supports an isotropic reference medium only; " *
                 "the reference conductivity deviates by " *
                 "$(round(dev / abs(k) * 100, sigdigits = 3)) %."
         )
@@ -157,8 +169,12 @@ function _axi_iso_scalar(K₀::TensND.AbstractTens{2, 3}; rtol = 1.0e-4)
 end
 
 # ─── Memoization key ─────────────────────────────────────────────────────────
+#
+#  Rounded to 12 significant digits, and shared: an iterative scheme presents a
+#  reference that differs in the last bits between iterations that are, for the
+#  purposes of a finite-element solve, the same reference.
 
-_axi_cache_key(P₀::TensND.AbstractTens{4, 3}) =
+_fe_cache_key(P₀::TensND.AbstractTens{4, 3}) =
     map(x -> round(x, sigdigits = 12), Tuple(Core._C_array(P₀)))
-_axi_cache_key(P₀::TensND.AbstractTens{2, 3}) =
+_fe_cache_key(P₀::TensND.AbstractTens{2, 3}) =
     map(x -> round(x, sigdigits = 12), Tuple(TensND.components_canon(P₀)))

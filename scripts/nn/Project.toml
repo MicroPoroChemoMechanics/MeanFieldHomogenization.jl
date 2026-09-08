@@ -26,3 +26,7 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [sources]
 MeanFieldHomogenization = {path = "../.."}
+# TensND is pinned to the working clone for the same reason as the package
+# itself: 0.5 is not in the registry yet, and without this the environment
+# resolves 0.4 and fails on `TensCubic`.
+TensND = {path = "../../../TensND.jl"}

@@ -120,8 +120,8 @@ Full corrected solve in elasticity: the three modes, the fixed point, and the
 two localization tensors reassembled in the global frame.
 """
 function _axi_run_elastic(incl::FEExcenteredSphere, C₀::TensND.AbstractTens{4, 3})
-    μ, ν = _axi_iso_moduli(C₀)
-    R = _axi_frame(incl)
+    μ, ν = _fe_iso_moduli(C₀; what = "`FEExcenteredSphere`")
+    R = _fe_frame(incl)
     C0_66 = Core.mandel66_minor(_to_local4(C₀, R))
     Dmap = [
         AXI_SET_CORE => _axi_check_ti(
@@ -170,8 +170,8 @@ Full corrected solve in transport: modes 0 and 1, the fixed point, and the two
 localization tensors reassembled in the global frame.
 """
 function _axi_run_cond(incl::FEExcenteredSphere, K₀::TensND.AbstractTens{2, 3})
-    k₀ = _axi_iso_scalar(K₀)
-    R = _axi_frame(incl)
+    k₀ = _fe_iso_scalar(K₀; what = "`FEExcenteredSphere`")
+    R = _fe_frame(incl)
     Dmap = [
         AXI_SET_CORE => _axi_check_ti2(_to_local2(incl.props[1], R), "the core"),
         AXI_SET_SHELL => _axi_check_ti2(_to_local2(incl.props[2], R), "the shell"),
@@ -214,7 +214,7 @@ _axi_run(incl, P₀::TensND.AbstractTens{2, 3}) = _axi_run_cond(incl, P₀)
 function _fe_axi_localization(
         incl::FEExcenteredSphere, P₀::TensND.AbstractTens; kw...
     )
-    res = get!(() -> _axi_run(incl, P₀), incl.cache.tensors, _axi_cache_key(P₀))
+    res = get!(() -> _axi_run(incl, P₀), incl.cache.tensors, _fe_cache_key(P₀))
     return res.A, res.B
 end
 

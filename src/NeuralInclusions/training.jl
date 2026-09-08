@@ -187,6 +187,8 @@ component_labels(::HillTI) = [:ℓ₁, :ℓ₂, :ℓ₃, :ℓ₅, :ℓ₆]
 component_labels(::HillISO2) = [:p]
 component_labels(::HillTI2) = [:a, :b]
 component_labels(::Union{StrainLocTI, StressLocTI}) = [:ℓ₁, :ℓ₂, :ℓ₃, :ℓ₄, :ℓ₅, :ℓ₆]
+component_labels(::StrainLocCubic) = [:α, :β, :γ]
+component_labels(::GradLocISO2) = [:a]
 component_labels(::HillOrtho) =
     [:C₁₁, :C₂₂, :C₃₃, :C₁₂, :C₁₃, :C₂₃, :C₄₄, :C₅₅, :C₆₆]
 

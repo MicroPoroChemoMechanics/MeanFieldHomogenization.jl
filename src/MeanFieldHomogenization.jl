@@ -140,6 +140,10 @@ include("localization.jl")
 include("contribution.jl")
 
 # ─── Sub-modules that build on the generic algebra above ────────────────────
+# `Superspheres` holds the shape family itself; the finite-element cell that
+# solves one lives in `FiniteElements` with the other two cell families, so
+# the shapes must be in scope first.
+include("Superspheres/Superspheres.jl")
 include("CustomInclusions/CustomInclusions.jl")
 include("FiniteElements/FiniteElements.jl")
 include("NeuralInclusions/NeuralInclusions.jl")
@@ -149,6 +153,7 @@ include("NeuralInclusions/NeuralInclusions.jl")
 # inside the FE code.
 include("Constitutive/Constitutive.jl")
 
+using .Superspheres
 using .CustomInclusions
 using .FiniteElements
 using .NeuralInclusions
@@ -167,6 +172,7 @@ export MaterialSymmetry, IsotropicSym, TransverselyIsotropicSym,
 export material_symmetry, dimension, inclusion_basis, shape_trait, shape_tensor
 export eshelby_tensor
 export green_gradient_iso, dipole_displacement_iso, green_operator_iso
+export green_gradient_iso2, dipole_temperature_iso
 export green_operator_aniso, green_operator, green_function_aniso
 export gauss_legendre_nodes
 
@@ -182,6 +188,7 @@ export newton_potential_3d_cylinder
 export tens_IA, tens_UA, tens_VA
 export hill_tensor
 export surface_stiffness, equivalent_particle
+export cubic_residual, CubicSym
 export k_mu, iso_stiffness, E_nu, iso_stiffness_E_nu
 export hoenig_params, hoenig_stiffness
 
@@ -199,10 +206,14 @@ export sif, dif
 export CustomInclusion, CustomShape, check_inclusion_interface
 
 # ── Finite-element inclusions (need a backend extension) ─────────────────────
-export FECache, fe_assembly_count, fe_reset!
+export FECache, fe_assembly_count, fe_reset!, fe_available_gb
 export FEBackend, AutoBackend, FerriteBackend, GridapBackend
 export FEEllipticCrack, FEMeshOptions, fe_cod_breakdown, fe_mesh_report
 export FEExcenteredSphere, FEAxiMeshOptions
+export FECellMeshOptions, fe_cell_size_estimate
+export FESupershapePore, SupershapePoreShape, has_surrogate, pore_shape_params
+export fe_cell_localization, fe_cell_mesh_report
+export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_localization, fe_axi_breakdown, fe_axi_mesh_report
 
 # ── Neural-network (surrogate) inclusions ────────────────────────────────────
@@ -210,7 +221,19 @@ export NeuralHillInclusion, NeuralLocalizationInclusion, NeuralShape
 export NeuralSurrogate, Provenance, worst_error
 export save_surrogate, load_surrogate, model_path, shipped_models
 export HillISO, HillTI, HillOrtho, HillISO2, HillTI2
-export StrainLocTI, StressLocTI
+export StrainLocTI, StressLocTI, StrainLocCubic, GradLocISO2
+
+# ── Superspherical and superspheroidal morphologies ──────────────────────────
+export AbstractSuperShape, Supersphere, Superspheroid
+export shape_exponent, is_concave, is_convex, is_sphere
+export has_coordinate_mirrors, check_coordinate_mirrors
+export level_set, radial_distance, surface_point, outward_normal
+export diagonal_radius, edge_radius, bounding_radius, inner_radius
+export shape_volume, projected_area, equivalent_sphere_radius
+export TriSurface, node_count, triangle_count
+export octant_patch, unit_octahedron, project_to_shape!, shape_surface, relax_surface!
+export mesh_area, mesh_volume, edge_lengths, mesh_quality
+export boundary_chains, patch_corners
 export DimensionlessHill, AffineHill
 export SampleBox, Dataset, generate_dataset, fit_scaling
 export TrainingOptions, train_surrogate, assemble_surrogate

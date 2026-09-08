@@ -242,8 +242,17 @@ the contract, with nothing downstream aware of it.
 
 | Page | Covers | Gate |
 | :--- | :--- | :--- |
-| [Finite-element inclusions](@ref man-fe-inclusions) | the principle, the shared syntax, and both shipped morphologies | the crack algebra from `cod_tensor` alone, or B |
+| [Finite-element inclusions](@ref man-fe-inclusions) | the principle, the shared syntax, and the three shipped morphologies | the crack algebra from `cod_tensor` alone, or B |
 | [A recycled-concrete aggregate](@ref app-recycled-aggregate) | the off-center core, worked end to end | B, both localization tensors |
+
+A cavity is the case where gate B is at its simplest and most exact: its
+stress-side localization is **identically zero**, so the package's own
+contribution identities collapse to ``\mathbb N = -\mathbb C_0:\mathbb A``
+and ``\mathbb H = \mathbb A:\mathbb S_0`` with no ``\mathbb C_1`` in them at
+all. Declaring `is_homogeneous_inclusion` **false** is what reaches that route —
+the flag asks whether a single ``\mathbb C_1`` describes the interior, and
+`inv(0)` is meaningless. See
+[`FESupershapePore`](@ref MeanFieldHomogenization.FESupershapePore).
 
 ## See also
 
