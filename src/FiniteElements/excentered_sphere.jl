@@ -28,6 +28,7 @@ Discretization settings of an axisymmetric finite-element inclusion.
 | `nradial` | `24` | element size inside the inclusion, as `a / nradial`. |
 | `coarsening` | `6.0` | ratio of the element size at the outer boundary to the size inside the inclusion. |
 | `order` | `2` | polynomial order of the displacement / temperature interpolation (1 or 2). |
+| `nprofile` | `61` | points sampled on a quarter of the meridian profile — [`FEAxiSupershapePore`](@ref) only. |
 
 The mesh is two-dimensional (the meridian half-plane), so refining is cheap:
 `nradial = 40` on a triangle mesh still solves in a fraction of a second.
@@ -37,8 +38,14 @@ struct FEAxiMeshOptions
     nradial::Float64
     coarsening::Float64
     order::Int
+    # Read by `FEAxiSupershapePore` alone: the number of points sampled on one
+    # quarter of the meridian profile. The core-shell model has no use for it,
+    # its profile being two circle arcs. They are spline controls and not mesh
+    # vertices, so a generous value costs nothing.
+    nprofile::Int
     function FEAxiMeshOptions(;
-            radius_ratio = 4.0, nradial = 24, coarsening = 6.0, order = 2
+            radius_ratio = 4.0, nradial = 24, coarsening = 6.0, order = 2,
+            nprofile = 61
         )
         order in (1, 2) || throw(
             ArgumentError(
@@ -51,8 +58,11 @@ struct FEAxiMeshOptions
         nradial > 0 || throw(ArgumentError("`nradial` must be positive, got $nradial"))
         coarsening ≥ 1 ||
             throw(ArgumentError("`coarsening` must be at least 1, got $coarsening"))
+        nprofile ≥ 3 ||
+            throw(ArgumentError("`nprofile` must be at least 3, got $nprofile"))
         return new(
-            Float64(radius_ratio), Float64(nradial), Float64(coarsening), Int(order)
+            Float64(radius_ratio), Float64(nradial), Float64(coarsening),
+            Int(order), Int(nprofile)
         )
     end
 end

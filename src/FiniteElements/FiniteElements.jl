@@ -53,6 +53,9 @@ export FESupershapePore, SupershapePoreShape, has_surrogate, pore_shape_params
 export fe_cell_localization, fe_cell_mesh_report
 export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_breakdown, fe_axi_mesh_report, fe_axi_localization
+export fe_axi_pore_boundary
+export FEAxiSupershapePore, AxiSupershapePoreShape
+export fe_axi_pore_localization, fe_axi_pore_breakdown, fe_axi_pore_mesh_report
 
 include("common.jl")
 include("backends.jl")
@@ -68,6 +71,9 @@ include("axi_gmsh_geometry.jl")
 include("axi_fourier.jl")
 include("axi_algebra.jl")
 include("axi_driver.jl")
+include("axi_pore_gmsh_geometry.jl")
+include("axi_pore_driver.jl")
+include("axi_supershape_pore.jl")
 
 # The three-dimensional cell around a non-ellipsoidal shape: geometry first.
 include("cell_gmsh_geometry.jl")

@@ -226,6 +226,8 @@ end
             include("FiniteElements/test_cell_octant_algebra.jl")
             include("FiniteElements/test_ferrite_crack.jl")
             include("FiniteElements/test_axi_excentered_sphere.jl")
+            # The axisymmetric cavity: two-dimensional, so seconds.
+            include("FiniteElements/test_axi_supershape_pore.jl")
             # Geometry and meshing of the three-dimensional cell around a
             # supershape -- no solve, and kept at level 2, so it costs seconds.
             # It needs only gmsh, but rides the same guard.

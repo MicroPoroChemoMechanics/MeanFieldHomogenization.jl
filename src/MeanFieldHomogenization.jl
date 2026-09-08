@@ -215,6 +215,8 @@ export FESupershapePore, SupershapePoreShape, has_surrogate, pore_shape_params
 export fe_cell_localization, fe_cell_mesh_report
 export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_localization, fe_axi_breakdown, fe_axi_mesh_report
+export FEAxiSupershapePore, AxiSupershapePoreShape
+export fe_axi_pore_localization, fe_axi_pore_breakdown, fe_axi_pore_mesh_report
 
 # ── Neural-network (surrogate) inclusions ────────────────────────────────────
 export NeuralHillInclusion, NeuralLocalizationInclusion, NeuralShape
