@@ -23,12 +23,6 @@ Tensors = "48a634ad-e948-5137-8d70-aa71f2a747f4"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
-# Every dependency of the test environment carries a bound, and every bound that
-# also appears in the root `Project.toml` repeats it verbatim.  Two reasons.  A
-# test run that resolves freely turns an upstream release into a red suite with
-# no change of ours behind it; and CompatHelper, which watches this file
-# (`subdirs` in `.github/workflows/CompatHelper.yml`), opens one pull request per
-# unbounded dependency until each has an entry.
 [compat]
 Aqua = "0.8"
 DECUHR = "0.2"
@@ -40,13 +34,6 @@ Gmsh = "0.3"
 Integrals = "5"
 LinearAlgebra = "1"
 Lux = "1"
-# The package under test is put on the load path by `Pkg.test`, so this bound is
-# never used to pick a version — it exists only so CompatHelper stops opening a
-# pull request asking for one.  It is deliberately open across the whole 0.x
-# series: pinning the current minor (`"0.8"`) would make the test environment
-# fail to resolve the day the package is bumped to 0.9, with "empty intersection
-# between MeanFieldHomogenization@0.9.0 and project compatibility 0.8".  Widen to
-# `"0, 1"` when 1.0 is released.
 MeanFieldHomogenization = "0"
 MittagLeffler = "1"
 NonlinearSolve = "4"
@@ -56,7 +43,7 @@ SpecialFunctions = "2"
 StaticArrays = "1"
 SymPy = "2"
 Symbolics = "6, 7"
-TensND = "0.4"
+TensND = "0.4, 0.5"
 Tensors = "1"
 Test = "1"
 Zygote = "0.7"
