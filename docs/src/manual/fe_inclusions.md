@@ -358,9 +358,26 @@ checks.
 | `level` | `4` | inclusion surface subdivision: ``8\cdot4^{\text{level}}`` triangles |
 | `outer_level` | `3` | outer sphere subdivision — not a free knob, see below |
 | `relax` | `60` | tangential relaxation sweeps on the inclusion surface |
+| `octant` | `false` | mesh one **eighth** of the cell — see below |
 | `max_dofs`, `min_free_gb` | `200_000`, `6.0` | refuse a solve this machine cannot afford |
 
-Four things about this cell are worth knowing before turning the knobs.
+Five things about this cell are worth knowing before turning the knobs.
+
+**`octant = true` meshes one eighth of it, and the answer is the same.** The
+condition is that the three coordinate planes be mirror planes of the shape —
+[`has_coordinate_mirrors`](@ref MeanFieldHomogenization.Superspheres.has_coordinate_mirrors),
+weaker than cubic symmetry, and true of both families here. It is worth a factor
+of eight in degrees of freedom and more in factorization cost: a concave shape
+at ``p = 0.3`` reaches level 4 in about 70 000 dofs and half a minute, where the
+full cell needed some 360 000 and would not fit on a 16 GB machine at all.
+
+Two consequences worth expecting. The stiffness is assembled once but factorized
+**four** times in elasticity and three in transport, one per parity class of the
+load cases — on a matrix eight times smaller, so the cost still falls sharply.
+And the couplings that symmetry forbids come out **exactly zero** instead of as
+mesh noise: the full cell finds the normal-to-shear block of ``\mathbb A`` at a
+few percent of the norm, the octant at zero. The derivation is in
+[the pore declination](@ref th-corrected-cell).
 
 **`radius_ratio` multiplies the bounding radius, not ``a``.** For an elongated
 superspheroid the two differ by the aspect ratio, and using ``a`` lets the outer
@@ -415,9 +432,6 @@ Named here so that the boundary of what exists is explicit:
   makes the stress-side localization exactly zero. A solid inclusion would have
   to be meshed too, and would enter through gate B with two measured tensors,
   as the off-center core does;
-- the **octant**. Cubic symmetry allows meshing one eighth of the cell, worth a
-  factor of 8 in degrees of freedom and far more in factorization cost. It is
-  what the concave range needs to be affordable at level 4.
 
 These are tracked in the [roadmap](@ref dev-roadmap).
 

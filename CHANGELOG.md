@@ -29,6 +29,67 @@ mesh edges land on the creases rather than straddling them; and there is no
 polar degeneracy. And the octahedron *is* the `p = 1/2` supersphere, which makes
 that value a **bit-exact** oracle — volume to `2e-16`, every angle 60 degrees.
 
+### One eighth of the cell, and the answer is the same
+
+The cell around a supershape is now meshed as an **octant** when asked
+(`FECellMeshOptions(; octant = true)`), and that is what turns the concave range
+from unaffordable into routine: at `p = 0.3` level 4 costs about 70 000 degrees
+of freedom and half a minute, where the whole cell needed some 360 000 and
+brought a 16 GB machine down.
+
+The licensing condition is **not** cubic symmetry. It is that the three
+coordinate planes be mirror planes of the shape — the group
+`{diag(±1,±1,±1)}` of order 8 — which a superspheroid satisfies without being
+cubic at all. `has_coordinate_mirrors` records it as a trait defaulting to
+`false`, so a new shape opts in deliberately; `check_coordinate_mirrors` audits
+a candidate numerically, and is explicitly *not* the guard, because a sampling
+that passes is a weak guarantee while a missing trait is a loud error.
+
+Three things came for free and are worth naming, because they are why this was
+cheap. The caps already existed — `octant_patch` was written for this, its face
+edges lying exactly in the coordinate planes. Snapping preserves the planes
+**exactly**: both passes scale a node radially, and `r * 0.0 == 0.0` in floating
+point, mid-edge nodes included. And `fe_cell_curved_volume` already returns
+`V/8`, integrating `⅓∮x·n` over the cap alone while the flat faces pass through
+the origin.
+
+What had to be built is the three flat faces. The obvious construction — a
+structured grid between the two boundary traces — needs them to carry the same
+number of nodes, which would force `level == outer_level` and throw the saving
+away, `outer_level` being a floor set by resolving the dipole term. Meshing each
+face as an **unstructured** planar region makes the question vanish instead of
+answering it. The boundary is assembled in Julia as a single deduplicated node
+list, so watertightness is a property of the data structure and is asserted by a
+divergence identity **before** any mesher runs — measured at `1.4e-16`.
+
+### The part that decides whether an octant is admissible at all
+
+The corrected boundary condition adds a dipole field to the remote one. If the
+two did not transform alike under a reflection, no single plane condition could
+serve both. They do:
+
+    R u(Rx; Π) = u(x; RΠR),    T(Rx; M) = T(x; RM),
+
+which is exactly the law obeyed by `E·x` and `M·x`. The driver drives both
+families with the same Kelvin tensor, so remote load and dipole share a parity
+for every case — and the test that checks it finds the two sides **bit-equal**,
+not equal to a tolerance.
+
+Two consequences the implementation depends on. The six elastic load cases fall
+into **four** parity classes and the three transport ones into three, so the
+stiffness is assembled once and factorized four (resp. three) times on a matrix
+eight times smaller. And an octant average is **not** one eighth of the whole:
+reflecting the surface integral gives `8·P_χ(I_oct)`, so the components whose
+parity differs from the load case cancel *between* octants rather than vanishing
+in each. Multiplying by eight without projecting would keep them at full
+amplitude. The upside is that the couplings symmetry forbids come out exactly
+zero, where the full cell finds them at a few percent of the norm.
+
+The trap to remember: `V` is the volume of the **whole** cavity in both modes,
+because the dipole moment is that of the entire inclusion; only the surface
+average sees the eighth. Dividing everywhere weakens the correction eightfold,
+which reads as a mesh that will not converge.
+
 ### The cell, and the correction that makes it usable
 
 The third cell family, after the flat crack and the axisymmetric core-shell
@@ -78,10 +139,24 @@ Two new hooks make it work for a type that holds a shape *object* rather than
 its scalars — `Schemes._geom_field` reads and `_replace_geom_field` rebuilds,
 both through `pore_shape_params` so the name sets cannot drift.
 
-No trained model ships: generating one is a dataset of finite-element solves and
-belongs in a script. The suite runs the whole path against a synthetic
-closed-form cubic teacher instead, derivative against a central difference
-included.
+**Two trained models ship**, one per physics, produced by
+`scripts/nn/train_supershape.jl` — and they exist only because the octant makes
+780 finite-element solves cost about three minutes (0.19 s and 0.26 s each). `GradLocISO2` is the transport
+class they needed: a second-order tensor invariant under the octahedral group is
+isotropic, so a cavity that takes three constants in elasticity takes **one**
+here. `HillISO2` has the same single component and a different dimension, and
+reusing it would have divided every prediction by `k₀`; the constructor now
+refuses that, along with a wrong tensor order and a feature the shape cannot
+supply, at construction rather than at the first solve.
+
+Their accuracy is **teacher-limited, and quoted as such**: worst held-out error
+`1.5e-3` in transport and `2.1e-2` in elasticity, against an rms an order of
+magnitude smaller, because the cell's own departure from the symmetry class
+reaches `1.5e-2` at `p = 0.35` and does not improve with refinement. Adding
+samples makes the worst case *rise*, a denser sample reaching further into the
+concave corner — so `generate_dataset` grew an `atol`, since its default of
+`1e-8` belongs to an analytic teacher and rejects a perfectly good measured
+label.
 
 ### Added
 
@@ -100,7 +175,17 @@ included.
   `has_surrogate`, `pore_shape_params`.
 - `green_gradient_iso2` and `dipole_temperature_iso` — the transport
   counterpart of the Kelvin dipole, which the package had for elasticity only.
-- `cubic_residual` and `CubicSym`; `StrainLocCubic`.
+- `cubic_residual` and `CubicSym`; `StrainLocCubic` and `GradLocISO2`.
+- `has_coordinate_mirrors` and `check_coordinate_mirrors` — the trait that
+  licenses an octant, and its numerical audit.
+- `boundary_chains` and `patch_corners` — the ordered boundary of an octant
+  patch, found from the mesh rather than from the subdivision lattice, so it
+  survives relaxation and projection.
+- `FECellMeshOptions(; octant = true)`, and an `atol` on `generate_dataset`.
+- Two trained models, `supershape_pore_conduction` and
+  `supershape_pore_elastic`, with `scripts/nn/train_supershape.jl` that produces
+  them and `scripts/89_fe_supersphere_pore.jl` that exercises the family against
+  the literature.
 
 ### Fixed, and found by porting
 
@@ -128,6 +213,19 @@ The port doubled as an audit of the prototype it came from, and of this package.
   day that docstring was listed.
 
 ### Documentation
+
+- A new application page, `applications/concave_pores.md`, reproducing what can
+  be reproduced from [Chen, Sevostianov, Giraud & Grgic, IJES 97 (2015)] and
+  stating plainly where this package disagrees: a supersphere is **cubic**, and
+  their two-constant isotropic approximation — and their own data — carry no
+  anisotropy at all. Their linear fit for `η` is also non-monotone inside its
+  own range and negative below `p = 0.2`. The control that licenses saying so is
+  the sphere, where the true anisotropy is zero and this chain's spurious one is
+  below `5e-5`.
+- `theory/corrected_cell.md` gained **the pore declination**, the section two
+  places in the repository already pointed at without it existing, and the
+  octant's parity argument with it. The declinations table now has three columns
+  rather than two.
 
 - `manual/fe_inclusions.md` and `manual/neural_inclusions.md` **restructured on
   one rule**: the principle, then the syntax common to every case, then the

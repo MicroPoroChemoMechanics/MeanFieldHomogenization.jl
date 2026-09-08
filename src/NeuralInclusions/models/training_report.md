@@ -76,3 +76,37 @@ Per-component diagnostics (a structurally vanishing component such as `ℓ₃(�
 | `ℓ₅(𝕍)` | 7.152e-05 | 2.893e-05 |
 | `ℓ₆(𝕍)` | 4.424e-05 | 1.311e-05 |
 
+## `supershape_pore_conduction`
+
+- features: `p`
+- network: MLP(1→24→24→1, tanh, tanh, identity)
+- samples: 120 train, 40 held out
+- worst held-out error, relative to the tensor magnitude: **1.474e-03**
+
+| component | max rel. err | rms rel. err |
+| --- | ---: | ---: |
+| `a` | 1.474e-03 | 4.404e-04 |
+
+## `supershape_pore_elastic`
+
+- features: `p`, `nu0`
+- network: MLP(2→48→48→3, tanh, tanh, identity)
+- samples: 480 train, 140 held out
+- worst held-out error, relative to the tensor magnitude: **2.060e-02**
+
+| component | max rel. err | rms rel. err |
+| --- | ---: | ---: |
+| `α` | 1.983e-02 | 2.877e-03 |
+| `β` | 1.993e-02 | 2.356e-03 |
+| `γ` | 8.970e-03 | 1.167e-03 |
+
+**These two are teacher-limited, and that is the point of quoting them.** Unlike
+every model above, whose teacher is an analytic Hill tensor and whose error is
+the fit's alone, these learn from a finite-element cell. Its own departure from
+the symmetry class reaches `1.5e-2` at `p = 0.35` — and does *not* improve with
+refinement, the field at the conical points being singular. So the worst-case
+figures above are the mesh's, not the network's: the rms columns, one order
+smaller, are what the fit contributes over most of the domain. Adding samples
+makes the worst case *rise* rather than fall, because a denser sample reaches
+further into the concave corner; that is a property of the teacher, and hiding
+it by sampling less would be dishonest.

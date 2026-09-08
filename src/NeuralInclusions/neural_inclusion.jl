@@ -618,6 +618,58 @@ Schemes._layer_reuss(i::NeuralLocalizationInclusion, ref::TensND.AbstractTens) =
 #  family indexed by a single exponent `p` that is most of the reason to train
 #  one.
 
+"""
+Construction-time validation of a surrogate attached to an `FESupershapePore`.
+
+Three things a wrong attachment would otherwise reveal only at the first solve,
+as a `MethodError` or as a tensor of the wrong class:
+
+* **the order** — elasticity is 4, transport 2;
+* **the class** — it has to be a *localization* class. In transport that means
+  [`GradLocISO2`](@ref) specifically: `HillISO2` and `HillTI2` carry the same
+  single component and a different dimension, so `decode` would divide the
+  prediction by `k₀` and be wrong at every `k₀ ≠ 1`. A cavity's stress side is
+  identically zero, so `StressLocTI` has nothing to predict either;
+* **the features** — every one of them has to be a shape parameter the pore can
+  supply, or `:nu0`.
+"""
+function FiniteElements._check_pore_surrogate(
+        s::NeuralSurrogate, order::Int, which::Symbol, shape
+    )
+    tensor_order(s) == order || throw(
+        ArgumentError(
+            "the `$which` surrogate predicts an order-$(tensor_order(s)) tensor " *
+                "(class :$(class_name(hill_class(s)))) but the `$which` slot of an " *
+                "`FESupershapePore` serves order-$order physics."
+        )
+    )
+    cls = hill_class(s)
+    ok = order == 4 ? cls isa Union{StrainLocCubic, StrainLocTI} : cls isa GradLocISO2
+    ok || throw(
+        ArgumentError(
+            "class :$(class_name(cls)) cannot serve the `$which` slot of an " *
+                "`FESupershapePore`: that slot carries a *localization* tensor of a " *
+                "cavity, which is of degree 0 in the reference moduli. Use " *
+                (
+                order == 4 ? "`StrainLocCubic` (or `StrainLocTI`)." :
+                    "`GradLocISO2` — `HillISO2` has the same one component but " *
+                    "divides by `k₀`, so it would be silently wrong away from `k₀ = 1`."
+            )
+        )
+    )
+    allowed = (propertynames(FiniteElements.pore_shape_params(shape))..., :nu0)
+    for f in s.features
+        f in allowed || throw(
+            ArgumentError(
+                "the `$which` surrogate wants feature `:$f`, which an " *
+                    "`FESupershapePore` around $(nameof(typeof(shape))) cannot " *
+                    "supply. Available: $(join(string.(allowed), ", "))."
+            )
+        )
+    end
+    return nothing
+end
+
 FiniteElements._pore_surrogate_response(
     s::NeuralSurrogate, pore::FiniteElements.FESupershapePore, P₀::TensND.AbstractTens
 ) = s(

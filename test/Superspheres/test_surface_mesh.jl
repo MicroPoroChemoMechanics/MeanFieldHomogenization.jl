@@ -204,3 +204,25 @@ _unit3t(v) = v ./ sqrt(v[1]^2 + v[2]^2 + v[3]^2)
         @test mesh_volume(biased) > 0
     end
 end
+
+@testset "relaxation leaves a node alone when it cannot be moved" begin
+    # Two guards in `relax_surface!` that a well-formed mesh never reaches, and
+    # which therefore need asking for. Both say the same thing: a node with
+    # nothing usable to move toward stays exactly where it was.
+    s = Supersphere(1.0, 0.8)
+
+    # A density that vanishes everywhere makes the weighted centroid undefined.
+    # The node must be left in place, not moved to `NaN`.
+    a = shape_surface(s, 2; relax = 0)
+    b = shape_surface(s, 2; relax = 0)
+    relax_surface!(b, s; iterations = 3, density = _ -> 0.0)
+    @test all(all(isfinite, p) for p in b.nodes)
+    @test b.nodes == a.nodes
+
+    # And the ordinary path does move things, so the test above is not vacuous.
+    c = shape_surface(s, 2; relax = 0)
+    relax_surface!(c, s; iterations = 3)
+    @test c.nodes != a.nodes
+    @test mesh_quality(c).hmax / mesh_quality(c).hmin <
+        mesh_quality(a).hmax / mesh_quality(a).hmin
+end

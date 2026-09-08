@@ -237,6 +237,8 @@ the *distinct over equal* semi-axis ratio, so ``\omega > 1`` is prolate and
 | `spheroid_hill_iso_conduction` | ``k_0\boldsymbol P``, `TensTI{2,·,2}` | `log_aspect` | ``\omega \in [1/20, 20]`` | 1→32→32→2 | 3000 / 800 | `2.1e-4` |
 | `triaxial_hill_iso_elastic` | ``2\mu_0\mathbb P``, `TensOrtho` | `log_r2`, `log_r32`, `nu0` | ``a_2/a_1,\, a_3/a_2 \in [1/20, 1/1.05]``, ``\nu_0 \in [0, 0.49]`` | 3→64→64→9 | 12000 / 3000 | `6.7e-3` |
 | `spheroid_hill_iso_affine` | ``\mathbb U^{\boldsymbol A}`` and ``\mathbb V^{\boldsymbol A}``, `TensTI{4,·,5}` | `log_aspect` | ``\omega \in [1/20, 20]``, **any** ``\nu_0`` | 1→48→48→10 | 6000 / 1500 | `2.6e-4` |
+| `supershape_pore_conduction` | ``\boldsymbol A_{\nabla\nabla}``, `TensISO{2}` | `p` | ``p \in [0.35, 2.5]`` | 1→24→24→1 | 120 / 40 | `1.5e-3` |
+| `supershape_pore_elastic` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensCubic` | `p`, `nu0` | ``p \in [0.35, 2.5]``, ``\nu_0 \in [0, 0.45]`` | 2→48→48→3 | 480 / 140 | `2.1e-2` |
 
 "Worst error" is `worst_error(s.provenance)`: the largest error over the held-out
 set, in the ∞-norm of the component vector relative to its own magnitude. It is
@@ -245,7 +247,18 @@ rather than hard-coding a literal, so a retraining cannot silently loosen a
 threshold. Per-component diagnostics are in
 `src/NeuralInclusions/models/training_report.md`.
 
-Note the last row: the affine factorization is **twelve times more accurate**
+**The last two rows are not like the others, and the gap is not a failure of
+the fit.** Every model above them learns from an *analytic* Hill tensor, so its
+labels are exact and the quoted error is the network's alone. The two
+supershape models learn from a **finite-element cell**, whose own departure
+from the symmetry class reaches ``1.5\times10^{-2}`` at ``p = 0.35`` — and does
+not improve with refinement, the field at the conical points being singular.
+Their worst case is therefore the mesh's, not the network's: the rms error is an
+order of magnitude smaller, and the training report carries both. A denser
+sample makes the worst case *rise*, because it reaches further into the concave
+corner; sampling less would hide that rather than fix it.
+
+Note the affine row: the affine factorization is **twelve times more accurate**
 than the generic one, on a network of the same size, because it does not spend
 capacity fitting a dependence that is exactly known, as
 [described above](@ref man-neural-affine).
@@ -303,11 +316,17 @@ derivative(rve, Dilute(), geometry(:pores, :p))
 The same call on a meshed pore raises, and the suite pins both halves of that
 contrast.
 
-No trained model ships for this route either: generating one is a dataset of
-finite-element solves, which belongs in a script rather than in a test suite.
-What the suite does check, against a synthetic closed-form cubic teacher, is the
-whole path — dataset, fit, decode, inclusion, schemes, and the derivative
-against a central difference.
+**Two models ship for this route**, `supershape_pore_conduction` and
+`supershape_pore_elastic`, trained by `scripts/nn/train_supershape.jl` against
+the octant cell — which is what makes a training set of several hundred
+finite-element solves a matter of minutes rather than hours. Their accuracy is
+bounded by the teacher's own, not by the fit; see
+[the table above](@ref man-neural-models).
+
+The suite additionally checks the whole path against a *synthetic* closed-form
+cubic teacher — dataset, fit, decode, inclusion, schemes, and the derivative
+against a central difference — because that is the one teacher whose labels are
+exact, so a failure there is unambiguously the pipeline's.
 
 ## Limitations
 

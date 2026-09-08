@@ -164,3 +164,24 @@ const _K0 = TensND.TensISO{3}(1.0)
         @test fe_assembly_count(p2) == 1
     end
 end
+
+@testset "every shape parameter can be rebuilt, not only the exponent" begin
+    # `_rebuild_pore_shape` is what makes a surrogate-backed pore differentiable
+    # in its morphology, and it has to cover the whole of `pore_shape_params` --
+    # otherwise a sensitivity request on `:a` or `:c` would raise at the point
+    # where the derivative is wanted rather than where the model was built.
+    FEi = MeanFieldHomogenization.FiniteElements
+    sph = Supersphere(2.0, 0.6)
+    @test propertynames(FEi.pore_shape_params(sph)) == (:a, :p)
+    @test FEi._rebuild_pore_shape(sph, Val(:a), 3.0) == Supersphere(3.0, 0.6)
+    @test FEi._rebuild_pore_shape(sph, Val(:p), 1.4) == Supersphere(2.0, 1.4)
+
+    spd = Superspheroid(1.0, 2.0, 0.7)
+    @test propertynames(FEi.pore_shape_params(spd)) == (:a, :c, :p)
+    @test FEi._rebuild_pore_shape(spd, Val(:a), 1.5) == Superspheroid(1.5, 2.0, 0.7)
+    @test FEi._rebuild_pore_shape(spd, Val(:c), 3.0) == Superspheroid(1.0, 3.0, 0.7)
+    @test FEi._rebuild_pore_shape(spd, Val(:p), 1.1) == Superspheroid(1.0, 2.0, 1.1)
+
+    # A name that is not a shape parameter is refused by name, not by MethodError.
+    @test_throws ArgumentError FEi._rebuild_pore_shape(sph, Val(:nope), 1.0)
+end

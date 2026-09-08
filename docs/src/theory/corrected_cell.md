@@ -130,12 +130,12 @@ which is *linear* in ``P`` and solves in closed form:
 Two declinations are implemented, and they differ only in what carries the
 polarization:
 
-| | solid inclusion | crack |
-| :--- | :--- | :--- |
-| unknown | ``\mathbb X`` on the Kelvin basis | ``\boldsymbol{B}_\infty`` |
-| solves | 6 + 6, or 2 + 2 per Fourier mode | 3 + 3 |
-| closes on | ``\mathbb A = \mathbb A^E + \mathbb A^p:\mathbb X`` | ``\boldsymbol{B}_\infty = (1 - \boldsymbol{B}_u)^{-1}\boldsymbol{B}_s`` |
-| used by | [`FEExcenteredSphere`](@ref app-recycled-aggregate) | [`FEEllipticCrack`](@ref man-fe-inclusions) |
+| | solid inclusion | crack | cavity |
+| :--- | :--- | :--- | :--- |
+| unknown | ``\mathbb X`` on the Kelvin basis | ``\boldsymbol{B}_\infty`` | ``\mathbb A`` itself |
+| solves | 6 + 6, or 2 + 2 per Fourier mode | 3 + 3 | 6 + 6, or 3 + 3 in transport |
+| closes on | ``\mathbb A = \mathbb A^E + \mathbb A^p:\mathbb X`` | ``\boldsymbol{B}_\infty = (1 - \boldsymbol{B}_u)^{-1}\boldsymbol{B}_s`` | ``\mathbb A = (\mathbb I - \mathbb A_u\mathbb F)^{-1}\mathbb A_s`` |
+| used by | [`FEExcenteredSphere`](@ref app-recycled-aggregate) | [`FEEllipticCrack`](@ref man-fe-inclusions) | [`FESupershapePore`](@ref man-fe-inclusions) |
 
 In the axisymmetric case each fixed point lives *inside* one Fourier mode,
 since the dipole of a modal polarization radiates in the same mode — so
@@ -179,6 +179,124 @@ They are also why the reference medium must be **isotropic**: for arbitrary
 anisotropy ``\nabla\mathbb G`` would come from the Willis integral, or
 from the Pan–Chou closed form in the transversely isotropic case, neither of
 which is implemented.
+
+## The pore declination
+
+### A cavity is its own polarization source
+
+The general fixed point above needs the polarization of the inclusion, and for a
+cavity that quantity is not something extra to compute: it *is* the answer.
+A cavity carries no stress, so
+
+```math
+\underline{\underline{P}}
+  = \langle \underline{\underline\sigma}
+      - \mathbb C_0 : \underline{\underline\varepsilon} \rangle_{\mathcal D}
+  = -\,\mathbb C_0 : \langle \underline{\underline\varepsilon} \rangle_{\mathcal D}
+  = -\,\mathbb C_0 : \mathbb A : \underline{\underline E},
+```
+
+the very tensor being measured. So the two-stage construction — solve for
+``\mathbb A^E``, solve for ``\mathbb A^p``, then invert for ``\mathbb X`` —
+collapses. Writing ``\mathbb A_s`` for the response to the remote field alone
+and ``\mathbb A_u`` for the response to a unit dipole, the loop closes in one
+inversion:
+
+```math
+\boxed{\;\mathbb A = (\mathbb I - \mathbb A_u\,\mathbb F)^{-1}\,\mathbb A_s\;},
+\qquad
+\mathbb F = -\,V_{\mathcal D}\,\mathbb C_0
+\quad\text{(elasticity)},\qquad
+\boldsymbol F = -\,k_0 V_{\mathcal D}\,\boldsymbol 1
+\quad\text{(transport)} .
+```
+
+There is no ``\mathbb C_1`` anywhere in it, which is the point: `inv(C₁)` is
+meaningless for a cavity, and this is why
+[`FESupershapePore`](@ref man-fe-inclusions) declares itself a *heterogeneous*
+inclusion and lets the package's exact identities collapse to ``\mathbb N =
+-\mathbb C_0 : \mathbb A`` and ``\mathbb H = \mathbb A : \mathbb S_0``.
+
+### The two signs, and why they are not inconsistent
+
+``\mathbb F`` carries a minus in both physics, and the transport one looks like
+it should not. It is structural. Elasticity pairs
+``\underline{\underline\sigma} = +\,\mathbb C_0 : \underline{\underline\varepsilon}``
+with a polarization ``\underline{\underline P}``, while transport pairs
+``\underline q = -\,k_0 \underline\nabla T``: splitting the flux as
+``-\underline q = k_0\underline\nabla T + \underline{\pi}'`` gives
+``\underline{\pi}' = -\underline{\pi}``, and it is ``\underline{\pi}'`` that
+belongs with the temperature ``T = \underline\nabla G\cdot \underline M``.
+
+The failure mode is worth remembering, because it does not look like a sign
+error. **A wrong sign leaves exactly twice the truncation bias instead of
+none** — the correction is applied backwards, so it adds what it should have
+subtracted. The result still converges under refinement, just to the wrong
+place, and only a radius sweep exposes it.
+
+### What is solved, and on what volume
+
+Zero traction on the cavity wall in elasticity, zero normal flux in transport.
+Nothing is meshed inside: the cell is a shell of matrix between the shape and
+the outer sphere. Two consequences the implementation leans on — the
+**stress-side localization is identically zero**, so gate B is served by one
+tensor rather than two; and the normalizing volume is the **curved** volume of
+the cavity, `fe_cell_curved_volume`, not the volume of the flat triangulation
+that bounds the mesh, which differs from it by a percent at usable refinements.
+
+The diagnostic is ``\|\mathbb A_u \mathbb F\|``, which is
+``O\!\left((a/R)^3\right)`` — measured at a log-log slope of ``-2.96`` against
+``-3`` from theory.
+
+### One eighth of the cell
+
+Whenever the three coordinate planes are mirror planes of the shape — the
+condition
+[`has_coordinate_mirrors`](@ref MeanFieldHomogenization.Superspheres.has_coordinate_mirrors)
+records, weaker than cubic symmetry and satisfied by both shipped families — the
+cell is invariant under the group ``\{\operatorname{diag}(\pm1,\pm1,\pm1)\}`` of
+order 8, and an **octant** carries the whole answer.
+
+Each Kelvin load case is an eigenvector of that group: writing
+``\mathbb R_k \underline{\underline E} \mathbb R_k = \chi_k
+\underline{\underline E}``, uniqueness gives ``\underline u(\mathbb R_k
+\underline x) = \chi_k \mathbb R_k \underline u(\underline x)``, so on the plane
+``x_k = 0``
+
+| ``\chi_k`` | condition | pinned |
+|:--|:--|:--|
+| ``+1`` | symmetry | the normal displacement ``u_k`` |
+| ``-1`` | antisymmetry | the tangential ones ``u_l,\ l\neq k`` |
+
+with the complementary tractions vanishing of their own accord. In transport,
+``\chi_k = +1`` needs nothing at all and ``\chi_k = -1`` needs ``T = 0``. The
+six elastic cases fall into **four** parity classes and the three transport ones
+into three, so the octant assembles the stiffness once and factorizes it four
+(resp. three) times on a matrix eight times smaller.
+
+**The dipole correction obeys the same law**, and that is what makes the whole
+scheme compatible with an eighth of the cell rather than only its uncorrected
+part. From the closed forms above, ``\mathbb R\,\underline u(\mathbb R
+\underline x; \mathbb \Pi) = \underline u(\underline x; \mathbb R \mathbb \Pi
+\mathbb R)``, exactly the law obeyed by ``\underline{\underline E}\cdot
+\underline x``; since the driver drives both families with the same Kelvin
+tensor, remote load and dipole share a ``\chi`` for every case.
+
+One trap, and it is not a factor of eight. Reflecting the surface integral over
+the eight octants gives
+
+```math
+\int_{\partial I} (\underline u \otimes \underline n)^{\mathrm s}\,\mathrm dS
+  = \sum_{g} \chi(g)\, g\, I_{\text{oct}}\, g
+  = 8\,\mathbb P_\chi (I_{\text{oct}}),
+```
+
+so the components whose parity differs from the load case **cancel between
+octants** rather than vanishing in each. They are not small in
+``I_{\text{oct}}``; they are spurious, and multiplying by eight without
+projecting keeps them at full amplitude. The Kelvin basis diagonalizes the group
+action, so ``\mathbb P_\chi`` is a diagonal mask — and the couplings it removes
+are exactly the ones a full cell finds only as mesh noise.
 
 ## The crack declination (3 + 3)
 

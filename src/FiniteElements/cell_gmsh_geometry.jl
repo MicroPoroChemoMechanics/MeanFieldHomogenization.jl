@@ -79,6 +79,16 @@ from ``10^{-5}`` to ``5.7\\times10^{-3}``. For a supersphere with ``p \\le 1``
 the bounding radius **is** ``a``, so the literature's ``R/a`` convention is
 preserved exactly where the literature uses it.
 
+`octant = true` meshes **one eighth** of the cell, which is exact whenever the
+three coordinate planes are mirror planes of the shape — see
+[`has_coordinate_mirrors`](@ref MeanFieldHomogenization.Superspheres.has_coordinate_mirrors),
+a weaker condition than cubic symmetry that both shipped families satisfy. It is
+worth a factor of eight in degrees of freedom and more in factorization cost.
+The default is `false` because the mesh changes, so every reference number in
+the documentation and the regression tests would move with it; and because
+`max_dofs` then counts the dofs of *this* solve, the peak being one
+factorization out of the four (three in transport) the parity classes require.
+
 **`max_dofs` and `min_free_gb` are not performance knobs.** See
 [`fe_available_gb`](@ref): they exist because an out-of-memory kill takes the
 session with it.
@@ -96,6 +106,7 @@ Base.@kwdef struct FECellMeshOptions
     optimize::Bool = true
     max_dofs::Int = 200_000
     min_free_gb::Float64 = 6.0
+    octant::Bool = false
     verbose::Bool = false
 end
 
@@ -132,6 +143,9 @@ function _build_gmsh_cell_model(
     )
     opts.order ≥ 1 || throw(ArgumentError("order must be ≥ 1, got $(opts.order)"))
     R = _cell_outer_radius(shape, opts)
+    if opts.octant
+        return _build_gmsh_cell_model_octant(gmsh, shape, R, opts)
+    end
     inner = shape_surface(shape, opts.level; relax = opts.relax)
     outer = unit_octahedron(opts.outer_level)
     for i in eachindex(outer.nodes)
@@ -181,7 +195,10 @@ function _build_gmsh_cell_model(
         mesh_volume(inner)
     end
 
-    return (; R, inner, outer, h_in = hin, h_out = hout, snap, cavity_volume)
+    return (;
+        R, inner, outer, h_in = hin, h_out = hout, snap, cavity_volume,
+        octant = false, closure_defect = 0.0,
+    )
 end
 
 function _add_discrete_surface!(gmsh, surf::TriSurface, tag::Integer, tag_offset::Integer)
@@ -248,8 +265,8 @@ function fe_cell_size_estimate(
         shape::AbstractSuperShape, opts::FECellMeshOptions = FECellMeshOptions()
     )
     R = _cell_outer_radius(shape, opts)
-    inner = shape_surface(shape, opts.level; relax = opts.relax)
-    outer = unit_octahedron(opts.outer_level)
+    inner = shape_surface(shape, opts.level; octant = opts.octant, relax = opts.relax)
+    outer = opts.octant ? octant_patch(opts.outer_level) : unit_octahedron(opts.outer_level)
     hin = opts.h_in === nothing ? mesh_quality(inner).hmean : opts.h_in
     # `outer` is unscaled here, unlike in `_build_gmsh_cell_model` where its
     # nodes have already been multiplied by R.
@@ -264,6 +281,11 @@ function fe_cell_size_estimate(
         h = hin + (hout - hin) * clamp((r - a) / (R - a), 0, 1)^opts.grading
         acc += 4π * r^2 * ((R - r0) / n) / vtet(h)
     end
+    # An octant meshes one eighth of the shell. Forgetting this makes the budget
+    # guard refuse a run the machine could take comfortably — and the estimator
+    # already over-predicts threefold, so a further factor of eight would leave
+    # it useless.
+    opts.octant && (acc /= 8)
     ntets = round(Int, acc)
     np1 = round(Int, ntets / 5.5)              # about 5.5 tetrahedra per node in 3-D
     np2 = np1 + round(Int, 1.15 * ntets)       # one node per edge, about 7 edges per node / 2

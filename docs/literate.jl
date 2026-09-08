@@ -64,8 +64,9 @@ const PUBLISHED_SCRIPTS = [
     "96_nano_spheroids.jl" => "nano_spheroids",
 ]
 
-# `81_fe_crack_eshelby.jl`, `82_fe_crack_schemes.jl` and
-# `83_fe_excentered_sphere.jl` are deliberately *not* published: they mesh and
+# `81_fe_crack_eshelby.jl`, `82_fe_crack_schemes.jl`,
+# `83_fe_excentered_sphere.jl` and `89_fe_supersphere_pore.jl` are
+# deliberately *not* published: they mesh and
 # factorize (up to a 2·10⁵-dof system, several times over, for the crack), so a
 # gallery page would add minutes to every documentation build and pull
 # `gmsh_jll` into the docs environment.  They are standalone scripts, run from

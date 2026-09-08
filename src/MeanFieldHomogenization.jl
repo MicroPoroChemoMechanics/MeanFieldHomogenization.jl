@@ -221,17 +221,19 @@ export NeuralHillInclusion, NeuralLocalizationInclusion, NeuralShape
 export NeuralSurrogate, Provenance, worst_error
 export save_surrogate, load_surrogate, model_path, shipped_models
 export HillISO, HillTI, HillOrtho, HillISO2, HillTI2
-export StrainLocTI, StressLocTI, StrainLocCubic
+export StrainLocTI, StressLocTI, StrainLocCubic, GradLocISO2
 
 # ── Superspherical and superspheroidal morphologies ──────────────────────────
 export AbstractSuperShape, Supersphere, Superspheroid
 export shape_exponent, is_concave, is_convex, is_sphere
+export has_coordinate_mirrors, check_coordinate_mirrors
 export level_set, radial_distance, surface_point, outward_normal
 export diagonal_radius, edge_radius, bounding_radius, inner_radius
 export shape_volume, projected_area, equivalent_sphere_radius
 export TriSurface, node_count, triangle_count
 export octant_patch, unit_octahedron, project_to_shape!, shape_surface, relax_surface!
 export mesh_area, mesh_volume, edge_lengths, mesh_quality
+export boundary_chains, patch_corners
 export DimensionlessHill, AffineHill
 export SampleBox, Dataset, generate_dataset, fit_scaling
 export TrainingOptions, train_surrogate, assemble_surrogate

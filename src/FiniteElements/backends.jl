@@ -373,6 +373,16 @@ at all — that is what makes it a pore.
 """
 fe_cell_dof_split(b::FEBackend, space) = _no_backend_method("fe_cell_dof_split", b)
 
+# Octant variants. `nothing` is the full cell and falls straight through, so the
+# two paths share one call site in the driver; a parity class is the octant, and
+# a backend that has not implemented it says so rather than quietly ignoring it.
+fe_cell_dof_split(b::FEBackend, space, ::Nothing) = fe_cell_dof_split(b, space)
+fe_cell_dof_split(b::FEBackend, space, χ) = _no_backend_method("fe_cell_dof_split", b)
+fe_cell_set_dirichlet!(b::FEBackend, space, u, f, ::Nothing) =
+    fe_cell_set_dirichlet!(b, space, u, f)
+fe_cell_set_dirichlet!(b::FEBackend, space, u, f, χ) =
+    _no_backend_method("fe_cell_set_dirichlet!", b)
+
 """
     fe_cell_set_dirichlet!(backend, space, u, f) -> u
 

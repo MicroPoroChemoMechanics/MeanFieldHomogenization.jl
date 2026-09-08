@@ -15,6 +15,8 @@ MeanFieldHomogenization.Superspheres.Supersphere
 MeanFieldHomogenization.Superspheres.Superspheroid
 MeanFieldHomogenization.Superspheres.shape_exponent
 MeanFieldHomogenization.Superspheres.is_concave
+MeanFieldHomogenization.Superspheres.has_coordinate_mirrors
+MeanFieldHomogenization.Superspheres.check_coordinate_mirrors
 MeanFieldHomogenization.Superspheres.level_set
 MeanFieldHomogenization.Superspheres.radial_distance
 MeanFieldHomogenization.Superspheres.surface_point
@@ -56,4 +58,6 @@ MeanFieldHomogenization.Superspheres.mesh_area
 MeanFieldHomogenization.Superspheres.mesh_volume
 MeanFieldHomogenization.Superspheres.edge_lengths
 MeanFieldHomogenization.Superspheres.mesh_quality
+MeanFieldHomogenization.Superspheres.boundary_chains
+MeanFieldHomogenization.Superspheres.patch_corners
 ```

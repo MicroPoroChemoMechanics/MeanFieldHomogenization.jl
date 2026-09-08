@@ -20,6 +20,12 @@ struct FerriteCellSpace{D, C, F}
     presc::Vector{Int}
     free::Vector{Int}
     ncomp::Int
+    # Octant only: `plane[k][l]` are the dofs of component `l` on the plane
+    # xₖ = 0, and `sym` caches the pinned set of each parity class as it is
+    # first asked for. Empty on a full cell, which is how the two paths stay
+    # one code.
+    plane::Vector{Vector{Vector{Int}}}
+    sym::Dict{NTuple{3, Int8}, @NamedTuple{presc::Vector{Int}, free::Vector{Int}, zeros::Vector{Int}}}
 end
 
 # ─── Mesh ────────────────────────────────────────────────────────────────────
@@ -87,26 +93,100 @@ function FE.fe_cell_space(::FE.FerriteBackend, grid, order::Int, ncomp::Int)
     cv = Ferrite.CellValues(qr, ip, ip_geo)
     fv = Ferrite.FacetValues(fqr, ip, ip_geo)
 
-    name = ncomp == 1 ? :T : :u
+    name_ = ncomp == 1 ? :T : :u
     dh = Ferrite.DofHandler(grid)
-    Ferrite.add!(dh, name, ip)
+    Ferrite.add!(dh, name_, ip)
     Ferrite.close!(dh)
 
     bcref = Base.RefValue{Any}(ncomp == 1 ? (_ -> 0.0) : (_ -> (0.0, 0.0, 0.0)))
     ch = Ferrite.ConstraintHandler(dh)
     outer = Ferrite.getfacetset(grid, FE.CELL_SET_OUTER)
     if ncomp == 1
-        Ferrite.add!(ch, Ferrite.Dirichlet(name, outer, (x, _t) -> bcref[](x)))
+        Ferrite.add!(ch, Ferrite.Dirichlet(name_, outer, (x, _t) -> bcref[](x)))
     else
         Ferrite.add!(
-            ch, Ferrite.Dirichlet(name, outer, (x, _t) -> Ferrite.Vec{3}(Tuple(bcref[](x))))
+            ch, Ferrite.Dirichlet(name_, outer, (x, _t) -> Ferrite.Vec{3}(Tuple(bcref[](x))))
         )
     end
     Ferrite.close!(ch)
 
     presc = sort!(collect(ch.prescribed_dofs))
     free = setdiff(1:Ferrite.ndofs(dh), presc)
-    return FerriteCellSpace(dh, cv, fv, grid, ch, bcref, presc, free, ncomp)
+
+    # One `ConstraintHandler` per plane *and per component*, never one for the
+    # three planes together. A node on the z axis lies on both x = 0 and y = 0,
+    # so under an antisymmetric class its `u_z` would be constrained twice;
+    # taking the union in Julia keeps the result independent of Ferrite's policy
+    # on duplicates. Within a single plane the components are disjoint, so no
+    # duplicate can arise there.
+    plane = Vector{Vector{Int}}[]
+    for k in 1:3
+        name = FE.CELL_SET_PLANE[k]
+        haskey(Ferrite.getfacetsets(grid), name) || break
+        set = Ferrite.getfacetset(grid, name)
+        comps = Vector{Int}[]
+        for l in 1:ncomp
+            chl = Ferrite.ConstraintHandler(dh)
+            if ncomp == 1
+                Ferrite.add!(chl, Ferrite.Dirichlet(name_, set, (_x, _t) -> 0.0))
+            else
+                Ferrite.add!(
+                    chl, Ferrite.Dirichlet(name_, set, (_x, _t) -> 0.0, [l])
+                )
+            end
+            Ferrite.close!(chl)
+            push!(comps, sort!(collect(chl.prescribed_dofs)))
+        end
+        push!(plane, comps)
+    end
+
+    return FerriteCellSpace(
+        dh, cv, fv, grid, ch, bcref, presc, free, ncomp, plane,
+        Dict{NTuple{3, Int8}, @NamedTuple{presc::Vector{Int}, free::Vector{Int}, zeros::Vector{Int}}}(),
+    )
+end
+
+"""
+Dofs pinned by the mirror conditions of the parity class `χ`, and the resulting
+free/prescribed split.
+
+On the plane xₖ = 0: `χ[k] == +1` is a symmetry, pinning the **normal**
+component; `χ[k] == -1` is an antisymmetry, pinning the **tangential** ones. In
+transport there is one component, and only `χ[k] == -1` pins anything — a
+symmetric mode needs nothing, zero normal flux being the natural condition.
+"""
+function _cell_sym(s::FerriteCellSpace, χ::NTuple{3, Int8})
+    return get!(s.sym, χ) do
+        z = Int[]
+        for k in 1:length(s.plane)
+            if s.ncomp == 1
+                χ[k] == -1 && append!(z, s.plane[k][1])
+            elseif χ[k] == 1
+                append!(z, s.plane[k][k])
+            else
+                for l in 1:3
+                    l == k || append!(z, s.plane[k][l])
+                end
+            end
+        end
+        unique!(sort!(z))
+        pr = unique!(sort!(vcat(s.presc, z)))
+        (; presc = pr, free = setdiff(1:Ferrite.ndofs(s.dh), pr), zeros = z)
+    end
+end
+
+FE.fe_cell_dof_split(b::FE.FerriteBackend, s::FerriteCellSpace, χ::NTuple{3, Int8}) =
+    (Ferrite.ndofs(s.dh), _cell_sym(s, χ).free, _cell_sym(s, χ).presc)
+
+function FE.fe_cell_set_dirichlet!(
+        b::FE.FerriteBackend, s::FerriteCellSpace, u, f, χ::NTuple{3, Int8}
+    )
+    FE.fe_cell_set_dirichlet!(b, s, u, f)
+    # The plane wins on the edge it shares with the outer boundary. It may: the
+    # parity law makes the imposed datum satisfy the mirror condition there
+    # exactly, so this overwrites a value that is already zero.
+    u[_cell_sym(s, χ).zeros] .= 0
+    return u
 end
 
 FE.fe_cell_dof_split(::FE.FerriteBackend, s::FerriteCellSpace) =

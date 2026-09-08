@@ -120,11 +120,30 @@ moduli.
 """
 struct StrainLocCubic <: AbstractHillClass end
 
+"""
+Gradient localization tensor of a cavity in transport: the **single** component
+of an isotropic 2nd-order tensor, for `gradient_gradient_loc`.
+
+One component, whatever the shape's symmetry class, because a second-order
+tensor invariant under the octahedral group is *isotropic* — the same fact that
+leaves the cubic class with no eigenstructure to key an orientation on. So a
+supersphere, which needs three constants in elasticity, needs one here, and the
+frame is irrelevant.
+
+Distinct from [`HillISO2`](@ref), which has the same one component and a
+different dimension. `𝑨_∇∇` is of degree **0** in the reference conductivity, so
+nothing divides out; the Hill tensor is of degree −1, so `k₀` does. Reusing
+`HillISO2` for a localization tensor would therefore divide the prediction by
+`k₀` and be silently wrong at every `k₀ ≠ 1` — see [`dimensionless_scale`](@ref).
+"""
+struct GradLocISO2 <: AbstractHillClass end
+
 const _CLASS_NAMES = Dict{Symbol, AbstractHillClass}(
     :iso => HillISO(), :ti => HillTI(), :ortho => HillOrtho(),
     :iso2 => HillISO2(), :ti2 => HillTI2(),
     :loc_ti => StrainLocTI(), :stress_loc_ti => StressLocTI(),
     :loc_cubic => StrainLocCubic(),
+    :grad_loc_iso2 => GradLocISO2(),
 )
 const _NAMES_CLASS = Dict{Any, Symbol}(typeof(v) => k for (k, v) in _CLASS_NAMES)
 
@@ -158,6 +177,7 @@ ncomponents(::HillISO2) = 1
 ncomponents(::HillTI2) = 2
 ncomponents(::Union{StrainLocTI, StressLocTI}) = 6
 ncomponents(::StrainLocCubic) = 3
+ncomponents(::GradLocISO2) = 1
 
 """
     tensor_order(class) -> Int
@@ -169,7 +189,7 @@ surrogate serves.
 tensor_order(
     ::Union{HillISO, HillTI, HillOrtho, StrainLocTI, StressLocTI, StrainLocCubic}
 ) = 4
-tensor_order(::Union{HillISO2, HillTI2}) = 2
+tensor_order(::Union{HillISO2, HillTI2, GradLocISO2}) = 2
 
 """
     tensor_order(t::AbstractTens) -> Int
@@ -195,7 +215,7 @@ frame (a TensND basis) for `HillOrtho`, and ignored for the isotropic ones.
 """
 build(::HillISO, c, _frame) = TensND.TensISO{3}(c[1], c[2])
 build(::HillTI, c, axis) = TensND.TensTI{4}(c[1], c[2], c[3], c[4], c[5], axis)
-build(::HillISO2, c, _frame) = TensND.TensISO{3}(c[1])
+build(::Union{HillISO2, GradLocISO2}, c, _frame) = TensND.TensISO{3}(c[1])
 build(::HillTI2, c, axis) = TensND.TensTI{2}(c[1], c[2], axis)
 
 build(::Union{StrainLocTI, StressLocTI}, c, axis) =
@@ -247,7 +267,8 @@ function components(
     return data
 end
 
-_project(::Union{HillISO, HillISO2}, P, _frame) = TensND.proj_tens(Val(:ISO), P)
+_project(::Union{HillISO, HillISO2, GradLocISO2}, P, _frame) =
+    TensND.proj_tens(Val(:ISO), P)
 _project(::Union{HillTI, HillTI2}, P, axis) = TensND.proj_tens(Val(:TI), P, axis)
 _project(::HillOrtho, P, frame) = TensND.proj_tens(Val(:ORTHO), P, frame)
 
@@ -330,7 +351,7 @@ For the TI classes the *column* carrying the symmetry axis is derived from the
 semi-axes — column 1 for a prolate spheroid, column 3 for an oblate one, which
 is what the analytic kernels of `Elasticity._hill_3d_iso` use.
 """
-_class_frame(::Union{HillISO, HillISO2}, _geom) = nothing
+_class_frame(::Union{HillISO, HillISO2, GradLocISO2}, _geom) = nothing
 _class_frame(::HillOrtho, geom) = Core.inclusion_basis(geom)
 
 _class_frame(::Union{HillTI, HillTI2}, geom) =
@@ -404,6 +425,7 @@ dimensionless_scale(::Union{HillISO2, HillTI2}, K₀::TensND.TensISO{2, 3}) =
 # have to be contrast *ratios* rather than absolute moduli.
 dimensionless_scale(::StrainLocTI, ::TensND.TensISO{4, 3}) = 1
 dimensionless_scale(::StrainLocCubic, ::TensND.TensISO{4, 3}) = 1
+dimensionless_scale(::GradLocISO2, ::TensND.TensISO{2, 3}) = 1
 dimensionless_scale(::StressLocTI, C₀::TensND.TensISO{4, 3}) =
     inv(TensND.get_data(C₀)[2])
 
@@ -419,7 +441,8 @@ _iso_only(P₀) = throw(
 )
 
 material_coeffs(
-    ::Union{StrainLocTI, StressLocTI, StrainLocCubic}, ::TensND.AbstractTens
+    ::Union{StrainLocTI, StressLocTI, StrainLocCubic, GradLocISO2},
+    ::TensND.AbstractTens
 ) = throw(
     ArgumentError(
         "a localization tensor has no affine decomposition on shape-only tensors: " *

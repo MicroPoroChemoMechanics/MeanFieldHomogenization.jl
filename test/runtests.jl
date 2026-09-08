@@ -221,6 +221,9 @@ end
     # two-dimensional and cost a fraction of that.
     if HAS_FERRITE
         @testset "FiniteElementInclusions" begin
+            # The octant's parity algebra and shape guard: closed form, no
+            # mesh and no solve, so it runs first and costs nothing.
+            include("FiniteElements/test_cell_octant_algebra.jl")
             include("FiniteElements/test_ferrite_crack.jl")
             include("FiniteElements/test_axi_excentered_sphere.jl")
             # Geometry and meshing of the three-dimensional cell around a
@@ -230,6 +233,8 @@ end
             # And the corrected solve on it, against the exact spherical pore
             # in both physics. Level 2, so about twenty-five seconds.
             include("FiniteElements/test_cell_solve.jl")
+            # And the same solve on one eighth of the cell.
+            include("FiniteElements/test_cell_octant.jl")
             # And the inclusion type built on it, through the schemes in both
             # physics. About thirty seconds.
             include("FiniteElements/test_supershape_pore.jl")

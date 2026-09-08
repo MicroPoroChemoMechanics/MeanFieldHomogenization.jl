@@ -264,6 +264,15 @@ What the labels are depends on `spec`:
   Poisson ratios, and the shape tensors `𝕌ᴬ`, `𝕍ᴬ` are recovered by solving the
   exact 2×2 affine system componentwise. `ν₀` must *not* be in the box: the
   whole point is that it is not a degree of freedom.
+
+`atol` is the residual a label may leave when projected onto the class, and the
+default of `1.0e-8` is right for an **analytic** teacher, which lands in its
+class to round-off. A teacher that *solves* something does not: a finite-element
+cell measures a tensor carrying the discretization error of its mesh, and asking
+it for `1.0e-8` rejects a perfectly good label. Raise it to the accuracy the
+teacher actually has — for the octant cell at level 3 that is a few times
+`1.0e-5` — and keep it tight enough that a wrong class or a wrong frame, which
+misses by orders of magnitude more, still fails loudly.
 """
 function generate_dataset(
         geometry,
@@ -272,14 +281,15 @@ function generate_dataset(
         box::SampleBox,
         n::Integer;
         nvalidation::Integer = 0,
+        atol::Real = 1.0e-8,
     )
     _check_box(spec, box)
     Xt = sample_box(box, n)
     Xv = nvalidation > 0 ? sample_box(box, nvalidation; offset = n) :
         Matrix{Float64}(undef, length(box), 0)
     return (
-        Dataset(Xt, _label(geometry, response, spec, box, Xt), copy(box.names)),
-        Dataset(Xv, _label(geometry, response, spec, box, Xv), copy(box.names)),
+        Dataset(Xt, _label(geometry, response, spec, box, Xt; atol), copy(box.names)),
+        Dataset(Xv, _label(geometry, response, spec, box, Xv; atol), copy(box.names)),
     )
 end
 
@@ -309,7 +319,8 @@ end
 _shape_rows(box::SampleBox) = findall(!=(:nu0), box.names)
 
 function _label(
-        geometry, response, spec::AbstractOutputSpec, box::SampleBox, X::AbstractMatrix
+        geometry, response, spec::AbstractOutputSpec, box::SampleBox, X::AbstractMatrix;
+        atol::Real = 1.0e-8
     )
     n = size(X, 2)
     Z = Matrix{Float64}(undef, noutputs(spec), n)
@@ -317,34 +328,38 @@ function _label(
     for j in 1:n
         geom = geometry(collect(view(X, rows, j)))
         frame = _class_frame(spec.class, geom)
-        Z[:, j] .= _label_one(response, spec, box, geom, frame, view(X, :, j))
+        Z[:, j] .= _label_one(response, spec, box, geom, frame, view(X, :, j); atol)
     end
     return Z
 end
 
 function _label_one(
-        response, spec::DimensionlessHill, box::SampleBox, geom, frame, x_full
+        response, spec::DimensionlessHill, box::SampleBox, geom, frame, x_full;
+        atol::Real = 1.0e-8
     )
     P₀ = _reference_medium(spec.class, box, x_full)
     P = response(geom, P₀)
-    return collect(Float64, components(spec.class, P, frame)) .*
+    return collect(Float64, components(spec.class, P, frame; atol)) .*
         dimensionless_scale(spec.class, P₀)
 end
 
-function _label_one(response, spec::AffineHill, _box::SampleBox, geom, frame, _x_full)
+function _label_one(
+        response, spec::AffineHill, _box::SampleBox, geom, frame, _x_full;
+        atol::Real = 1.0e-8
+    )
     class = spec.class
     nc = ncomponents(class)
     if tensor_order(class) == 2
         # A single term: ℙ_K = 𝕍ᴬ/k₀, so one call at unit conductivity is exact.
         K₀ = TensND.TensISO{3}(1.0)
-        return collect(Float64, components(class, response(geom, K₀), frame))
+        return collect(Float64, components(class, response(geom, K₀), frame; atol))
     end
     # Two reference media expose the two shape tensors: for each component,
     #     c(ν) = d(ν)·U + m(ν)·W,
     # a 2×2 system whose right-hand sides are two `response` evaluations.
     C_a, C_b = _iso_ref(_AFFINE_NU[1]), _iso_ref(_AFFINE_NU[2])
-    c_a = components(class, response(geom, C_a), frame)
-    c_b = components(class, response(geom, C_b), frame)
+    c_a = components(class, response(geom, C_a), frame; atol)
+    c_b = components(class, response(geom, C_b), frame; atol)
     (d_a, m_a) = material_coeffs(class, C_a)
     (d_b, m_b) = material_coeffs(class, C_b)
     det = d_a * m_b - d_b * m_a
@@ -376,14 +391,25 @@ _reference_medium(::Union{HillISO2, HillTI2}, ::SampleBox, _x_full) = TensND.Ten
 # reference at unit shear modulus serves. That is exactly the case
 # `StrainLocCubic` exists for: a cube-symmetric pore.
 #
-# There is deliberately no method for `StrainLocTI` / `StressLocTI`. Those
-# describe *heterogeneous* morphologies, which carry their constituents inside
-# themselves, so scaling the reference alone changes the contrast and changes
-# the answer; their features have to be contrast ratios and the reference has to
-# be built from them. Guessing one here would train on corrupted labels, which
-# is the one failure this file exists to prevent.
+# There is deliberately no method for `StrainLocTI` / `StressLocTI`. Those are
+# used here for *heterogeneous* morphologies, which carry their constituents
+# inside themselves, so scaling the reference alone changes the contrast and
+# changes the answer; their features have to be contrast ratios and the
+# reference has to be built from them. Guessing one here would train on
+# corrupted labels, which is the one failure this file exists to prevent.
+#
+# The restriction is on the *morphology*, not on the class. A transversely
+# isotropic **cavity** — a superspheroidal pore — is of degree 0 in the
+# reference just as the cubic one is, and would take the same method as
+# `StrainLocCubic`. It has none yet only because nothing generates such a
+# dataset: see the roadmap.
 _reference_medium(::StrainLocCubic, box::SampleBox, x_full) =
     _iso_ref(x_full[feature_index(box, :nu0)])
+
+# Transport, and it needs no `nu0`: a cavity's gradient localization is
+# scale-free in `k₀` and has a single component, so the shape alone determines
+# it and the reference is the identity.
+_reference_medium(::GradLocISO2, ::SampleBox, _) = TensND.TensISO{3}(1.0)
 
 # ─── Scaling fitted on the training set ──────────────────────────────────────
 

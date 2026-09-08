@@ -125,6 +125,63 @@ parameter ``p`` that names the shape. See the warning on [`Supersphere`](@ref).
 shape_exponent(s::AbstractSuperShape) = 2 * s.p
 
 """
+    has_coordinate_mirrors(s) -> Bool
+
+Whether the three coordinate planes are mirror planes of `s`.
+
+This is **the** condition that licenses meshing one octant of a cell built
+around `s`, and it is weaker than cubic symmetry: it asks for the group
+`{diag(±1,±1,±1)}` of order 8 and nothing more. A [`Superspheroid`](@ref) has
+it — its level set depends only on `√(x²+y²)` and `|z|` — without having
+octahedral symmetry at all. What `O_h` adds is the symmetry *class of the
+measured tensor*, not the validity of the subdivision.
+
+The default is `false`, deliberately. A new shape has to opt in by adding a
+method, because a default of `true` would turn an oversight into an answer that
+is wrong and plausible. [`check_coordinate_mirrors`](@ref) audits a candidate
+numerically before its method is written; it is not a substitute for the trait.
+
+Two prerequisites go with it, and they are the caller's to keep: the shape is
+centered on the origin with the outer boundary concentric, and the reference
+medium shares the same mirrors. The second is free today because the corrected
+cell only accepts an isotropic reference; an anisotropic one would have to be
+orthotropic in the shape's own axes.
+"""
+has_coordinate_mirrors(::AbstractSuperShape) = false
+has_coordinate_mirrors(::Supersphere) = true
+has_coordinate_mirrors(::Superspheroid) = true
+
+"""
+    check_coordinate_mirrors(s; ndirs = 2000, atol = 1.0e-13) -> Bool
+
+Numerical audit of [`has_coordinate_mirrors`](@ref): `radial_distance` must be
+invariant under each of the three reflections, over a deterministic sweep of
+directions.
+
+An **audit, not a guard**. A finite sample can miss a localized defect, and
+letting this function decide would do exactly what the trait exists to prevent:
+correct silently. Use it when writing a `has_coordinate_mirrors` method for a
+new shape, and as a test on the shapes already shipped.
+"""
+function check_coordinate_mirrors(
+        s::AbstractSuperShape{T}; ndirs::Integer = 2000, atol::Real = 1.0e-13
+    ) where {T}
+    _require_comparable(T, "check_coordinate_mirrors")
+    n = max(3, round(Int, sqrt(ndirs / 2)))
+    for i in 1:n, j in 1:(2n)
+        θ = π * (i - 0.5) / n
+        φ = 2π * (j - 0.5) / (2n)
+        u = (sin(θ) * cos(φ), sin(θ) * sin(φ), cos(θ))
+        r = radial_distance(s, u)
+        for k in 1:3
+            v = ntuple(l -> l == k ? -u[l] : u[l], 3)
+            abs(radial_distance(s, v) - r) ≤ atol * max(one(r), abs(r)) || return false
+        end
+    end
+    return true
+end
+
+"""
     is_concave(s) -> Bool
     is_convex(s)  -> Bool
     is_sphere(s)  -> Bool

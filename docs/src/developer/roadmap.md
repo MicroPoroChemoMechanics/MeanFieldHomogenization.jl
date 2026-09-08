@@ -108,9 +108,7 @@ subtle — exactly which pieces of a cited paper are and are not implemented.
   Green gradient); more than one inclusion, or a non-spherical envelope, in the
   axisymmetric cell; transport for the crack; **solid** supershape inclusions,
   which would need the inclusion meshed too and would enter gate B with two
-  measured tensors; and the **octant** for the supershape cell, worth a factor
-  of 8 in degrees of freedom by cubic symmetry and what the concave range needs
-  to be affordable one level finer.
+  measured tensors.
 - Neural-surrogate inclusions (`NeuralHillInclusion`,
   `NeuralLocalizationInclusion`), with the sampling, fitting and serialization
   machinery; the optimizer is the weak-dependency extension

@@ -342,6 +342,89 @@ function relax_surface!(
     return surf
 end
 
+"""
+    patch_corners(surf) -> NTuple{3, Int}
+
+The three axis vertices of an [`octant_patch`](@ref), ordered by the axis each
+one lies on.
+
+They are the nodes carrying `constraint == 4`: pinned, because each is shared by
+two coordinate planes and may move along neither.
+"""
+function patch_corners(surf::TriSurface)
+    idx = findall(==(Int8(4)), surf.constraint)
+    length(idx) == 3 || throw(
+        ArgumentError(
+            "expected 3 pinned nodes (`constraint == 4`), found $(length(idx)): " *
+                "`patch_corners` describes a single octant patch, not a closed surface"
+        )
+    )
+    axis(i) = argmax(ntuple(k -> abs(surf.nodes[i][k]), 3))
+    order = sortperm(collect(axis(i) for i in idx))
+    return (idx[order[1]], idx[order[2]], idx[order[3]])
+end
+
+"""
+    boundary_chains(surf) -> NTuple{3, Vector{Int}}
+
+The three ordered boundary chains of an [`octant_patch`](@ref); `chains[k]` is
+the one lying in the plane ``x_k = 0``, running between the two pinned corners
+that bound it and including both.
+
+Found from the mesh rather than from the subdivision lattice — a boundary edge
+is one belonging to a single triangle — so it survives
+[`relax_surface!`](@ref) and [`project_to_shape!`](@ref), neither of which
+preserves the barycentric indexing.
+
+This is what lets an octant cell be sewn together exactly: the chain is shared,
+node for node, between the curved patch and the flat face that meets it, so the
+two carry the *same* nodes rather than two discretizations of one curve.
+"""
+function boundary_chains(surf::TriSurface)
+    seen = Dict{NTuple{2, Int}, Int}()
+    for (a, b, c) in surf.tris, e in ((a, b), (b, c), (c, a))
+        k = minmax(e[1], e[2])
+        seen[k] = get(seen, k, 0) + 1
+    end
+    border = [e for (e, n) in seen if n == 1]
+    isempty(border) && throw(ArgumentError("surface has no boundary: it is closed"))
+
+    nbr = Dict{Int, Vector{Int}}()
+    for (a, b) in border
+        push!(get!(nbr, a, Int[]), b)
+        push!(get!(nbr, b, Int[]), a)
+    end
+
+    corners = patch_corners(surf)
+    chains = ntuple(_ -> Int[], 3)
+    for k in 1:3
+        # The chain in the plane xₖ = 0 joins the two corners that are *not* on
+        # axis k, and every node along it has that coordinate exactly zero.
+        ends = [c for c in corners if iszero(surf.nodes[c][k])]
+        length(ends) == 2 || throw(
+            ArgumentError("plane $k does not carry exactly two pinned corners")
+        )
+        chain = chains[k]
+        prev, cur = 0, ends[1]
+        push!(chain, cur)
+        while cur != ends[2]
+            nxt = 0
+            for c in nbr[cur]
+                c == prev && continue
+                iszero(surf.nodes[c][k]) || continue
+                nxt = c
+                break
+            end
+            nxt == 0 && throw(
+                ArgumentError("boundary chain in plane $k is broken at node $cur")
+            )
+            push!(chain, nxt)
+            prev, cur = cur, nxt
+        end
+    end
+    return chains
+end
+
 function _adjacency(surf::TriSurface)
     adj = [Set{Int}() for _ in 1:node_count(surf)]
     for (a, b, c) in surf.tris

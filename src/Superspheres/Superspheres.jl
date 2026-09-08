@@ -39,12 +39,14 @@ using ..Elliptic: is_hard_numeric
 
 export AbstractSuperShape, Supersphere, Superspheroid
 export shape_exponent, is_concave, is_convex, is_sphere
+export has_coordinate_mirrors, check_coordinate_mirrors
 export level_set, radial_distance, surface_point, outward_normal
 export diagonal_radius, edge_radius, bounding_radius, inner_radius
 export shape_volume, projected_area, equivalent_sphere_radius
 export TriSurface, node_count, triangle_count
 export octant_patch, unit_octahedron, project_to_shape!, shape_surface, relax_surface!
 export mesh_area, mesh_volume, edge_lengths, mesh_quality
+export boundary_chains, patch_corners
 
 include("shapes.jl")
 include("surface_mesh.jl")

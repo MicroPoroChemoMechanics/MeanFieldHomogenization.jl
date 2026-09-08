@@ -24,7 +24,7 @@ octahedral group invariant, the answer belongs to the class **by group theory**,
 so this distance is bounded by the discretization error and by nothing else: no
 reference solution appears in it. What lives *inside* the class, and is
 therefore not measured here, is
-[`cubic_anisotropy`](@ref MeanFieldHomogenization.Elasticity.cubic_anisotropy).
+`TensND.cubic_anisotropy`.
 Read together they separate a real morphological anisotropy from a numerical
 artifact — an artifact breaks the symmetry, a real anisotropy does not.
 

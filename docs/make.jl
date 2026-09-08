@@ -413,6 +413,7 @@ makedocs(;
             "applications/strength.md",
             "applications/itz_concrete.md",
             "applications/recycled_aggregate.md",
+            "applications/concave_pores.md",
             "applications/bituminous.md",
             "applications/ageing_creep.md",
             "applications/lamellar_clay.md",

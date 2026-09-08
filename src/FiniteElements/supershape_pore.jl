@@ -121,6 +121,19 @@ _pore_surrogate_response(surrogate, pore, P₀) = error(
 )
 
 """
+    _check_pore_surrogate(s, order, which, shape)
+
+Validate a surrogate handed to [`FESupershapePore`](@ref) at **construction**.
+
+Declared here and specialized in `NeuralInclusions`, the same seam as
+`_pore_surrogate_response`. The fallback accepts anything, so a caller may still
+supply an object of their own; what it must not do is let a surrogate of the
+wrong order, class or feature set through to be discovered as a `MethodError` at
+the first solve.
+"""
+_check_pore_surrogate(_s, _order, _which, _shape) = nothing
+
+"""
     has_surrogate(pore, order) -> Bool
 
 Whether this pore answers order-`order` physics from a network rather than from
@@ -146,10 +159,11 @@ One list serving two purposes, which is why it is a function rather than a
 convention written twice: it is what a surrogate names as its **features**, and
 it is what the sensitivity API differentiates with respect to.
 """
-pore_shape_params(s::FESupershapePore{<:Any, <:Supersphere}) =
-    (; a = s.shape.a, p = s.shape.p)
-pore_shape_params(s::FESupershapePore{<:Any, <:Superspheroid}) =
-    (; a = s.shape.a, c = s.shape.c, p = s.shape.p)
+pore_shape_params(shape::Supersphere) = (; a = shape.a, p = shape.p)
+pore_shape_params(shape::Superspheroid) = (; a = shape.a, c = shape.c, p = shape.p)
+# The pore delegates: the names are a property of the shape, and the constructor
+# has to check a surrogate's features before a pore exists to ask.
+pore_shape_params(s::FESupershapePore) = pore_shape_params(s.shape)
 
 """
     _rebuild_pore_shape(shape, Val(name), value) -> shape
@@ -226,6 +240,8 @@ function FESupershapePore(
     ) where {T}
     guard in (:warn, :error, :none) ||
         throw(ArgumentError("`guard` must be :warn, :error or :none, got :$guard"))
+    _check_pore_surrogate(elastic, 4, :elastic, shape)
+    _check_pore_surrogate(transport, 2, :transport, shape)
     bas = basis === nothing ? Core._default_basis(Float64, euler_angles) : basis
     return FESupershapePore{T, typeof(shape), typeof(bas)}(
         shape, bas, opts, FECache(), backend, elastic, transport, guard
@@ -310,25 +326,32 @@ function _fe_cell_setup(s::FESupershapePore, ncomp::Int)
 end
 
 function _fe_cell_run(s::FESupershapePore, C₀::TensND.AbstractTens{4, 3})
-    s.elastic === nothing || return _pore_surrogate_response(s.elastic, s, C₀)
+    # Before the surrogate branch, not after it. The corrected cell is derived
+    # for an isotropic reference, and a surrogate is *trained* against one, so
+    # an anisotropic `ℂ₀` is out of contract on either route. Checking only on
+    # the meshed one let a surrogate without `:nu0` among its features accept
+    # one in silence.
     μ, ν = _fe_iso_moduli(C₀; what = "`FESupershapePore`")
+    s.elastic === nothing || return _pore_surrogate_response(s.elastic, s, C₀)
     R = _fe_frame(s)
     backend, space, built = _fe_cell_setup(s, 3)
     L = _to_local4(C₀, R)
     Cloc = Tensors.SymmetricTensor{4, 3}((i, j, k, l) -> L[i, j, k, l])
     r = _cell_elastic_localization(
-        backend, space, Cloc, μ, ν, built.cavity_volume
+        backend, space, Cloc, μ, ν, built.cavity_volume; octant = s.mesh.octant
     )
     s.cache.assemblies += 1
     return _from_local66(r.A, R)
 end
 
 function _fe_cell_run(s::FESupershapePore, K₀::TensND.AbstractTens{2, 3})
-    s.transport === nothing || return _pore_surrogate_response(s.transport, s, K₀)
     k₀ = _fe_iso_scalar(K₀; what = "`FESupershapePore`")
+    s.transport === nothing || return _pore_surrogate_response(s.transport, s, K₀)
     R = _fe_frame(s)
     backend, space, built = _fe_cell_setup(s, 1)
-    r = _cell_conduction_localization(backend, space, k₀, built.cavity_volume)
+    r = _cell_conduction_localization(
+        backend, space, k₀, built.cavity_volume; octant = s.mesh.octant
+    )
     s.cache.assemblies += 1
     return _from_local33(collect(r.A), R)
 end
@@ -390,14 +413,18 @@ function fe_cell_mesh_report(s::FESupershapePore)
     return (;
         counts.ncells, counts.nnodes,
         counts.area_inclusion, counts.area_outer,
-        area_outer_exact = 4π * built.R^2,
+        # An octant carries one eighth of the outer sphere, and its inclusion
+        # surface is one eighth of the body's.
+        area_outer_exact = (built.octant ? π / 2 : 4π) * built.R^2,
+        octant = built.octant,
+        closure_defect = built.closure_defect,
         R = built.R, h_in = built.h_in, h_out = built.h_out,
         snap = built.snap,
         volume_exact = Vex,
-        volume_flat = mesh_volume(built.inner),
+        volume_flat = (built.octant ? 8 : 1) * mesh_volume(built.inner),
         volume_curved = built.cavity_volume,
         volume_error = (built.cavity_volume - Vex) / Vex,
-        surface_triangles = triangle_count(built.inner),
+        surface_triangles = (built.octant ? 8 : 1) * triangle_count(built.inner),
         inclusion_quality = mesh_quality(built.inner),
     )
 end
