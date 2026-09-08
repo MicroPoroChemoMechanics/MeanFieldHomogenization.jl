@@ -113,16 +113,20 @@ function FE.fe_axi_grid(
     return grid
 end
 
-# Every region the grid actually has. The three fixed names of the core-shell
-# model plus however many layers a layered spheroid brought — asking for a set
-# the grid does not carry is what the `haskey` guard is for, and an unbounded
-# layer count is why the list is built rather than written out.
-_axi_region_names(grid) = [
-    s for s in vcat(
-            [FE.AXI_SET_CORE, FE.AXI_SET_SHELL, FE.AXI_SET_MATRIX],
-            [FE.axi_layer_set(ℓ) for ℓ in 1:32],
-        ) if haskey(Ferrite.getcellsets(grid), s)
-]
+# Every region the grid actually has, read off the grid rather than guessed: the
+# three fixed names of the core-shell model, plus every set whose name matches
+# the layer pattern. Enumerating candidate indices up to a bound would work
+# until someone asked for one layer more than the bound, and would then drop
+# that layer from the counts silently.
+function _axi_region_names(grid)
+    have = keys(Ferrite.getcellsets(grid))
+    fixed = [
+        s for s in (FE.AXI_SET_CORE, FE.AXI_SET_SHELL, FE.AXI_SET_MATRIX) if s in have
+    ]
+    lay = [s for s in have if !isnothing(match(FE.AXI_LAYER_SET_PATTERN, s))]
+    sort!(lay; by = s -> parse(Int, match(FE.AXI_LAYER_SET_PATTERN, s)[1]))
+    return vcat(fixed, lay)
+end
 
 FE.fe_axi_grid_counts(::FE.FerriteBackend, grid) = (;
     ncells = Ferrite.getncells(grid),

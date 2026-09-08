@@ -167,6 +167,28 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
         end
     end
 
+    @testset "one layer is the degenerate case, and it is the plain spheroid" begin
+        # `N = 1` exercises a different path in the mesher — no annulus loop at
+        # all, the core bounded by its own profile and the axis through it — and
+        # it has an exact reference: a homogeneous spheroid, whose Hill tensor
+        # is closed form. Both physics.
+        for (a, c) in ((0.5, 1.0), (1.0, 0.4), (1.0, 1.0))
+            K₀, k1 = TensISO{3}(1.0), TensISO{3}(4.0)
+            fe = FEAxiLayeredSpheroid((c,), (a,), (k1,); opts = _als_opts(16, 6.0))
+            @test layer_count(fe) == 1
+            @test only(layer_volumes(fe)) ≈ 4π / 3 * a^2 * c
+            A = _als_m(gradient_gradient_loc(fe, K₀, K₀))
+            ex = _als_m(gradient_gradient_loc(Spheroid(c / a), k1, K₀))
+            @test norm(A - ex) / norm(ex) < 1.0e-3
+
+            C₀, C1 = _als_C(1.0, 0.25), _als_C(4.0, 0.2)
+            fe4 = FEAxiLayeredSpheroid((c,), (a,), (C1,); opts = _als_opts(14, 6.0))
+            A4 = _als_k(strain_strain_loc(fe4, C₀, C₀))
+            ex4 = _als_k(strain_strain_loc(Spheroid(c / a), C1, C₀))
+            @test norm(A4 - ex4) / norm(ex4) < 2.0e-3
+        end
+    end
+
     @testset "a small core is meshed, not swallowed by one element" begin
         # `h_in` is set from the *outer* semi-axis, so a core an order of
         # magnitude smaller than the shell has a generous gap to its
