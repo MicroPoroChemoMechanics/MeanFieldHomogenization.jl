@@ -1,0 +1,18 @@
+### The meridian mesh (nradial = 16, R/a = 3)
+
+| geometry | layers | cells | worst layer volume error |
+|---|---:|---:|---:|
+| confocal prolate, 2 layers | 2 | 5985 | 4.8e-04 |
+| confocal oblate, 3 layers | 3 | 7947 | 7.2e-04 |
+| free radii, aspect reverses | 2 | 7550 | 9.4e-04 |
+
+### Against the closed forms
+
+Conduction, two layers, `k₁/k₀ = 5`, `k₂/k₀ = 2`.
+
+| slice | worst deviation | median deviation |
+|---|---:|---:|
+| confocal, `A₁₁`, ω ∈ [0.3, 3] | 5.5e-04 | 1.3e-04 |
+| confocal, `A₃₃`, ω ∈ [0.3, 3] | 5.4e-04 | 1.0e-04 |
+| spheres, free radii | 1.8e-04 | 1.4e-04 |
+

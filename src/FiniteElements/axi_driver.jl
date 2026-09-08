@@ -69,7 +69,7 @@ end
 # ─── One mode, both problems ─────────────────────────────────────────────────
 
 """
-    _axi_solve_mode(backend, mode, Dmap, Bop, proj, nload, bc_E, bc_p)
+    _axi_solve_mode(backend, mode, Dmap, Bop, proj, nload, bc_E, bc_p, sets)
         -> (𝔸ᴱ, 𝔹ᴱ, 𝔸ᵖ, 𝔹ᵖ, V)
 
 Assemble one mode, factorize **once**, and run the `nload` affine problems
@@ -79,13 +79,18 @@ boundary data of load `j` as a function of the boundary point.
 The single factorization is the reason the Dirichlet data is applied by
 [`fe_axi_set_dirichlet!`](@ref) into a plain vector rather than baked into the
 operator: only the right-hand side changes from one load to the next.
+
+`sets` names the regions the inclusion average runs over — two for the
+core-shell sphere, `N` for a layered spheroid. It is an argument and not a
+default because a default naming the core-shell regions would be silently
+wrong for every other morphology: the average would be taken over regions the
+grid does not have, or over a subset of the inclusion.
 """
-function _axi_solve_mode(backend, mode, Dmap, Bop, proj, nload, bc_E, bc_p)
+function _axi_solve_mode(backend, mode, Dmap, Bop, proj, nload, bc_E, bc_p, sets)
     K = fe_axi_stiffness(backend, mode, Dmap, Bop)
     ndofs, free, presc = fe_axi_dof_split(backend, mode)
     F = LinearAlgebra.lu(K[free, free])
     Kfp = K[free, presc]
-    sets = (AXI_SET_CORE, AXI_SET_SHELL)
 
     function solve_with(f)
         u = zeros(ndofs)
@@ -149,6 +154,7 @@ function _axi_run_elastic(incl::FEExcenteredSphere, C₀::TensND.AbstractTens{4,
             v -> _axi_project(m, v), nload,
             j -> (x -> _axi_bc_affine(m, j, x[1], x[2])),
             (j, V) -> (x -> _axi_bc_dipole(m, j, x[1], x[2], μ, ν, V)),
+            (AXI_SET_CORE, AXI_SET_SHELL),
         )
         cols = m == 0 ? (1:2) : m == 1 ? (3:3) : (5:5)
         Qm = _AXI_Q[:, cols]
@@ -193,6 +199,7 @@ function _axi_run_cond(incl::FEExcenteredSphere, K₀::TensND.AbstractTens{2, 3}
             g -> _axi_project_cond(m, g), 1,
             _j -> (x -> (_axi_bc_affine_cond(m, x[1], x[2]),)),
             (_j, V) -> (x -> (_axi_bc_dipole_cond(m, x[1], x[2], k₀, V),)),
+            (AXI_SET_CORE, AXI_SET_SHELL),
         )
         A, B, X = _axi_correct(A_E, B_E, A_p, B_p, fill(k₀, 1, 1))
         (; m, A_E, B_E, A_p, B_p, A, B, X, V)

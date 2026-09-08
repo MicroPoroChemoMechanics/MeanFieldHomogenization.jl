@@ -23,7 +23,7 @@
 Version of the on-disk surrogate format. Bumped when a field changes meaning;
 [`load_surrogate`](@ref) refuses a newer major version rather than guessing.
 """
-const SURROGATE_FORMAT = v"1.1.0"
+const SURROGATE_FORMAT = v"1.2.0"
 
 """
     MODEL_DIR
@@ -122,6 +122,12 @@ function _to_dict(s::NeuralSurrogate)
         "input" => Dict("shift" => s.x_shift, "scale" => s.x_scale),
         "output" => Dict(
             "spec" => string(spec_name(s.output)),
+            # `baseline` appears only for an anchored specification. A reader of
+            # an older file finds none, and `output_spec` says so rather than
+            # inventing one — the minor bump is for this field alone.
+            "baseline" => let b = spec_baseline(s.output)
+                b === nothing ? nothing : string(b)
+            end,
             "class" => string(class_name(s.output.class)),
             "kind" => string.(s.y_kind),
             "shift" => s.y_shift,
@@ -159,7 +165,10 @@ function load_surrogate(path::AbstractString)
     _check_format(get(d, :format, nothing), path)
 
     net = _net_from(d.network)
-    spec = output_spec(Symbol(d.output.spec), Symbol(d.output.class))
+    spec = output_spec(
+        Symbol(d.output.spec), Symbol(d.output.class),
+        get(d.output, :baseline, nothing),
+    )
     p = d.provenance
     prov = Provenance(;
         teacher = p.teacher, nsamples = p.nsamples, nvalidation = p.nvalidation,

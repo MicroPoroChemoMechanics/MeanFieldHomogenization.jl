@@ -12,6 +12,7 @@ contract is enough to reach every scheme.
 | [`FEExcenteredSphere`](@ref) | sphere with an off-center spherical core | axisymmetric Fourier | B — the two localization tensors |
 | [`FESupershapePore`](@ref) | superspherical cavity, cube-symmetric | 3-D tetrahedra, whole cell or one octant | B — the strain side alone, the stress side being zero |
 | [`FEAxiSupershapePore`](@ref) | superspheroidal cavity, a solid of revolution | axisymmetric Fourier | B — the strain side alone |
+| [`FEAxiLayeredSpheroid`](@ref) | `N` nested coaxial spheroids, free semi-axes | axisymmetric Fourier | B — both localization tensors |
 
 Both use the *finite Eshelby cell with a first-order corrected boundary
 condition* of Adessina, Barthélémy, Lavergne & Ben Fraj, *Int. J. Eng. Sci.*
@@ -50,6 +51,9 @@ import Tensors
 import ..Core
 import ..Cracks
 import ..Schemes
+# The interface types, so a layered inclusion can name the ones it does not
+# implement rather than accepting them silently.
+import ..LayeredSpheres
 
 export FECache, fe_assembly_count, fe_reset!, fe_available_gb
 export FEBackend, AutoBackend, FerriteBackend, GridapBackend
@@ -57,6 +61,8 @@ export FEMeshOptions, FEEllipticCrack, fe_cod_breakdown, fe_mesh_report
 export FEAxiMeshOptions, FEExcenteredSphere
 export FECellMeshOptions, fe_cell_size_estimate
 export FESupershapePore, SupershapePoreShape, has_surrogate, pore_shape_params
+export check_nested_spheroids, axi_layer_set
+export FEAxiLayeredSpheroid, LayeredSpheroidShape, layer_volumes, layer_fractions
 export fe_cell_localization, fe_cell_mesh_report
 export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_breakdown, fe_axi_mesh_report, fe_axi_localization
@@ -79,8 +85,10 @@ include("axi_fourier.jl")
 include("axi_algebra.jl")
 include("axi_driver.jl")
 include("axi_pore_gmsh_geometry.jl")
+include("axi_layered_gmsh_geometry.jl")
 include("axi_pore_driver.jl")
 include("axi_supershape_pore.jl")
+include("axi_layered_spheroid.jl")
 
 # The three-dimensional cell around a non-ellipsoidal shape: geometry first.
 include("cell_gmsh_geometry.jl")

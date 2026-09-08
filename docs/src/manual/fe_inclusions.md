@@ -30,6 +30,7 @@ Three are shipped, and the same machinery serves all of them:
 | [`FEExcenteredSphere`](@ref MeanFieldHomogenization.FEExcenteredSphere) | sphere with an off-center spherical core | axisymmetric Fourier modes | both localization tensors |
 | [`FESupershapePore`](@ref MeanFieldHomogenization.FESupershapePore) | superspherical or superspheroidal **cavity** | 3-D tetrahedra, curved boundary | the strain-side tensor, in both physics |
 | [`FEAxiSupershapePore`](@ref MeanFieldHomogenization.FEAxiSupershapePore) | superspheroidal **cavity**, axisymmetric | axisymmetric Fourier modes | the strain-side tensor, in both physics |
+| [`FEAxiLayeredSpheroid`](@ref MeanFieldHomogenization.FEAxiLayeredSpheroid) | `N` nested coaxial spheroids, free semi-axes | axisymmetric Fourier modes | both localization tensors, in both physics |
 
 The general principle and the shared syntax come first below; the three
 morphologies, and the ones not yet written, come after.
@@ -455,6 +456,77 @@ beside the corrected one, which is how to see that.
 The derivation is in [the pore declination](@ref th-corrected-cell); the
 comparison against the literature is in
 [concave pores](@ref app-concave-pores).
+
+### An `N`-layer spheroid, and the two exact families that check it
+
+[`FEAxiLayeredSpheroid`](@ref MeanFieldHomogenization.FEAxiLayeredSpheroid)
+solves `N` nested coaxial spheroids in an isotropic matrix. Layers are given by
+their **semi-axes**, per layer, ascending — the same `(axis_radii, disk_radii)`
+pair
+[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroid) takes, in the
+same order — so one description builds the finite-element object and the analytic
+one:
+
+```julia
+ar, dr = confocal_layer_radii(2.0, 1.0, (0.3, 0.7))   # ω = 2, core 30 % of the volume
+K = (TensISO{3}(5.0), TensISO{3}(2.0))
+fe  = FEAxiLayeredSpheroid(ar, dr, K)
+ana = LayeredSpheroid(ar, dr, K)                      # the same body, in closed form
+```
+
+Nothing in the finite-element type knows what *confocal* means, and that is the
+design: handed `confocal_layer_radii` it is the body the closed form solves,
+handed anything else it is a nest no closed form covers.
+
+```julia
+# An oblate core inside a prolate shell. Nested, axisymmetric, and outside every
+# confocal family — which is the case the finite elements exist for.
+FEAxiLayeredSpheroid((0.4, 1.4), (0.9, 1.0), K)
+```
+
+Nesting is checked at construction by
+[`check_nested_spheroids`](@ref MeanFieldHomogenization.check_nested_spheroids):
+two coaxial concentric ellipses are nested if and only if **both** semi-axes
+grow outwards, so it is two comparisons per layer. Worth doing rather than
+trusting — a violation is not a wrong answer but a self-intersecting geometry
+that gmsh rejects from inside its own pipeline, naming neither the layer nor the
+semi-axis.
+
+**What it is checked against.** The space of nested spheroids is crossed by two
+independent exact families, meeting only at the equal-radii sphere:
+
+| slice | closed form | agreement |
+|:--|:--|--:|
+| confocal, prolate | `LayeredSpheroid` | `3\times10^{-5}` |
+| confocal, oblate | `LayeredSpheroid` | `2\times10^{-4}` |
+| concentric spheres, **free** radii | `LayeredSphere` | `1\times10^{-4}` |
+| equal moduli | the homogeneous spheroid's Hill tensor | `3\times10^{-5}` |
+
+Both branches of the confocal family are exercised deliberately: the oblate one
+runs the analytic computation in complex arithmetic, through the substitution
+``c \to -i\bar c``, ``q \to i\tau``, and relies on an exact cancellation of the
+imaginary part — a prolate-only comparison would validate the easy half. And the
+sphere slice is what covers an arbitrary layer count and arbitrary radii without
+assuming anything confocal.
+
+Off those slices the guarantees are each layer's meshed volume against the
+closed form ``4\pi a^2c/3`` — available for *any* semi-axes — and mesh
+convergence. That is stated rather than implied: a nest whose layers have
+different aspect ratios has no analytic counterpart in this package or, as far
+as we know, anywhere.
+
+**What is not implemented is the imperfect interface.** The axisymmetric
+formulation has no displacement- or temperature-jump term at all — the only jump
+in the package is the three-dimensional crack's — so a spring, membrane, Kapitza
+or surface-conductive layer is refused **by name** at construction rather than
+accepted and ignored.
+
+Being heterogeneous, the inclusion enters through gate B with **both**
+localization tensors, measured on the same solve: the stress side is not
+``\mathbb C_1 : \mathbb A_{\varepsilon\varepsilon}`` for any single
+``\mathbb C_1``. `Voigt` and `Reuss` work because the internal volume fractions
+are a closed form of the semi-axes, and
+[`layer_fractions`](@ref MeanFieldHomogenization.layer_fractions) returns them.
 
 ## Morphologies still to come
 

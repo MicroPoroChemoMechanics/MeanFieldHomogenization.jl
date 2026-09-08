@@ -87,13 +87,48 @@ end
 # `haskey` rather than the three names unconditionally: a cavity has one region,
 # and asking for a cellset that does not exist is an error rather than an empty
 # answer.
+function FE.fe_axi_grid(
+        ::FE.FerriteBackend, incl::MeanFieldHomogenization.FEAxiLayeredSpheroid
+    )
+    opts = incl.mesh
+    n = length(incl.axis_radii)
+    # `h_in` from the *outer* transverse semi-axis, so `nradial` keeps the same
+    # meaning as for the other axisymmetric morphologies; the mesher then caps
+    # it per layer against the layer's own thickness.
+    a_out = incl.disk_radii[n]
+    R = opts.radius_ratio * max(a_out, incl.axis_radii[n])
+    h_in = a_out / opts.nradial
+    h_out = opts.coarsening * h_in
+    gmsh.initialize()
+    local grid
+    try
+        gmsh.option.setNumber("General.Terminal", 0)
+        FE._build_gmsh_axi_layered_model(
+            gmsh, incl.axis_radii, incl.disk_radii, R, h_in, h_out, opts.nprofile
+        )
+        grid = FerriteGmsh.togrid()
+    finally
+        gmsh.finalize()
+    end
+    return grid
+end
+
+# Every region the grid actually has. The three fixed names of the core-shell
+# model plus however many layers a layered spheroid brought — asking for a set
+# the grid does not carry is what the `haskey` guard is for, and an unbounded
+# layer count is why the list is built rather than written out.
+_axi_region_names(grid) = [
+    s for s in vcat(
+            [FE.AXI_SET_CORE, FE.AXI_SET_SHELL, FE.AXI_SET_MATRIX],
+            [FE.axi_layer_set(ℓ) for ℓ in 1:32],
+        ) if haskey(Ferrite.getcellsets(grid), s)
+]
+
 FE.fe_axi_grid_counts(::FE.FerriteBackend, grid) = (;
     ncells = Ferrite.getncells(grid),
     nnodes = Ferrite.getnnodes(grid),
     ncells_by_set = Dict(
-        s => length(Ferrite.getcellset(grid, s)) for
-            s in (FE.AXI_SET_CORE, FE.AXI_SET_SHELL, FE.AXI_SET_MATRIX)
-            if haskey(Ferrite.getcellsets(grid), s)
+        s => length(Ferrite.getcellset(grid, s)) for s in _axi_region_names(grid)
     ),
 )
 

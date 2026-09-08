@@ -210,6 +210,10 @@ end
         # guessed, the two scaling knobs, and the two shipped models. No fit
         # here at all -- the machinery around one is what was silent when wrong.
         include("NeuralInclusions/test_axi_surrogate.jl")
+        # The anchored output specification: exactness on the face where its
+        # baseline is the answer, and the encode/decode round trip that keeps
+        # training and prediction in one space. No fit here.
+        include("NeuralInclusions/test_anchored_spec.jl")
     end
 
     # Superspherical and superspheroidal geometry. Pure closed forms, no mesh
@@ -233,6 +237,11 @@ end
             include("FiniteElements/test_axi_excentered_sphere.jl")
             # The axisymmetric cavity: two-dimensional, so seconds.
             include("FiniteElements/test_axi_supershape_pore.jl")
+            # The N-layer spheroid, against the two exact families that cross
+            # the space of nested spheroids: confocal (`LayeredSpheroid`, both
+            # the prolate and the oblate branch) and concentric spheres of free
+            # radii (`LayeredSphere`).
+            include("FiniteElements/test_axi_layered_spheroid.jl")
             # Geometry and meshing of the three-dimensional cell around a
             # supershape -- no solve, and kept at level 2, so it costs seconds.
             # It needs only gmsh, but rides the same guard.

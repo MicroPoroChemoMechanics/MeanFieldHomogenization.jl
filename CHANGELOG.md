@@ -1,5 +1,134 @@
 # Changelog
 
+## v0.14.0 — the layered spheroid, meshed; and an anchored surrogate
+
+Two pieces, and the honest result of one of them is that it does not pay yet.
+
+### `N` nested spheroids by Fourier axisymmetric finite elements
+
+`FEAxiLayeredSpheroid` solves `N` coaxial, concentric spheroids in an isotropic
+matrix on the meridian half-plane. It is the **solid** declination of the
+corrected finite Eshelby cell, so unlike the cavity both outputs of the fixed
+point are used: `𝔹 ≠ 0`, and that second output *is* gate B's stress side. The
+cavity was the easy case.
+
+**Layers are given by their semi-axes, freely.** The same
+`(axis_radii, disk_radii)` pair `LayeredSpheroid` takes, in the same order, so
+one description builds the finite-element object and the analytic one:
+
+```julia
+ar, dr = confocal_layer_radii(2.0, 1.0, (0.3, 0.7))
+fe  = FEAxiLayeredSpheroid(ar, dr, K)
+ana = LayeredSpheroid(ar, dr, K)          # the same body, in closed form
+```
+
+Nothing in the type knows what *confocal* means. Handed
+`confocal_layer_radii` it is the body the closed form solves; handed anything
+else — an oblate core inside a prolate shell, say — it is a nest no closed form
+covers, which is the case it exists for. `confocal_layer_radii` was extracted
+out of `layered_spheroid_from_fractions` for exactly this reason: a cross-check
+is worth nothing if the two solvers are handed two transcriptions of a geometry
+instead of one geometry.
+
+### Two exact families, and they are orthogonal
+
+The space of nested spheroids is two parameters per layer, and it is crossed by
+**two** independent closed forms that meet only at the equal-radii sphere:
+
+| slice | closed form | conduction | elasticity |
+|:--|:--|--:|--:|
+| confocal, prolate | `LayeredSpheroid` | `3e-4` | `3e-5` |
+| confocal, oblate | `LayeredSpheroid` | `5e-4` | `2e-4` |
+| concentric spheres, **free** radii | `LayeredSphere` | `1e-4` | `5e-4` |
+| equal moduli | the homogeneous spheroid's Hill tensor | `3e-5` | — |
+
+Both branches of the confocal family are exercised deliberately: the oblate one
+runs the analytic computation in complex arithmetic, through `c → -ic̄`,
+`q → iτ`, and relies on an exact cancellation of the imaginary part. A
+prolate-only comparison validates the easy half. And the sphere slice covers an
+arbitrary layer count and arbitrary radii without assuming anything confocal —
+which is what makes the free-radii route trustworthy at all.
+
+The stress side is checked too, and it is not derivable: the inclusion is
+heterogeneous, so `𝔸_σε ≠ ℂ₁ : 𝔸_εε` for any single `ℂ₁`. Measured on the same
+solve, it agrees with `LayeredSphere` to `4e-5`.
+
+### What refuses, and why each refusal exists
+
+- **Nesting.** Two coaxial concentric ellipses are nested if and only if both
+  semi-axes grow outwards, so `check_nested_spheroids` is two comparisons per
+  layer. A violation is not a wrong answer but a self-intersecting geometry,
+  which gmsh rejects from deep inside its own pipeline naming neither the layer
+  nor the semi-axis — measured, while writing the mesher.
+- **Imperfect interfaces**, by name. The axisymmetric formulation has no
+  displacement- or temperature-jump term at all; the only jump in the package is
+  the three-dimensional crack's. Accepting a `KapitzaInterface` and ignoring it
+  would be the silent kind of wrong.
+- **Mixed tensor orders** across layers, and a bound of the other physics: one
+  object per physics.
+
+### The element size is bounded by the thinnest layer, not by `nradial`
+
+With free semi-axes two boundaries can come arbitrarily close, and an element
+spanning a whole layer leaves it unresolved while the mesh looks perfectly
+reasonable. So each boundary's size is capped at a third of its distance to its
+neighbors. That is the same failure the concave superspheroid's wedge showed in
+0.13.0, where an unresolved gap left `R₃₃` 1.2 % wrong and converging in
+appearance only.
+
+### `AnchoredHill`, and the measurement that says not yet
+
+A new output specification: the network predicts `𝕄 = 𝔸_b⁻¹ : 𝔸` against a
+closed-form baseline and the decoder returns `𝔸_b : 𝕄`, so the answer is exact
+wherever the baseline is. The same idea as `AffineHill`, which is twelve times
+more accurate than the generic form on a network of the same size because it
+does not spend capacity on a dependence already known — applied to a shape
+family rather than to the material dependence.
+
+The algebra stays in the **Walpole basis**: `inv` and the double contraction on
+transversely isotropic tensors, a closed-form 2×2 inverse plus two scalars. A
+component-wise ratio in Kelvin-Mandel mixes the transverse block and
+manufactures sign changes that are an artifact of the reading — measured, and
+the reason this is a specification and not a division.
+
+**And on the superspheroidal cavity it does not pay.** Judged on the decoded
+tensor: rms `1.30e-2` against `5.31e-3`, median `9.16e-3` against `2.64e-3`,
+for 14 % gained on the extreme maximum. The reason is structural — near the
+exact face `𝕄 ≈ 𝕀`, whose off-diagonal Walpole components are zero, so the
+anchored target has zeros by construction exactly where the anchor is perfect.
+What decides is the baseline's **proximity**, not its existence: `p = 0.25` is
+far from `p = 1`. It is recorded here so the experiment is not repeated, and the
+machinery ships because a layered spheroid's homogeneous limit is reached as soon
+as the layers' moduli agree, which is a far closer baseline.
+
+### Added
+
+- `FEAxiLayeredSpheroid`, `LayeredSpheroidShape`, `layer_volumes`,
+  `layer_fractions`, `check_nested_spheroids`, `axi_layer_set`, and a
+  `layer_count` method.
+- `confocal_layer_radii`, extracted from `layered_spheroid_from_fractions` so
+  the geometry has one source.
+- `AnchoredHill`, `anchor_baselines`, `anchor_tensor`, `encode`,
+  `spec_baseline`; surrogate file format 1.2.0 carries the baseline's name, and
+  a file written without one is refused rather than guessed.
+- A tutorial, `A layered spheroid, meshed`, with the meridian meshes and the
+  comparison against both closed forms.
+
+### Changed
+
+- `_axi_solve_mode` takes the region list as an argument. It was
+  `(AXI_SET_CORE, AXI_SET_SHELL)` in the body — right for one morphology and
+  silently wrong for any other, since the average would run over regions the
+  grid does not have.
+- `fe_axi_grid_counts` builds its region list from the grid instead of naming
+  three fixed sets.
+- The dataset cache is keyed on the output specification too: an anchored label
+  is a different label for the same solve.
+- `check_docs_blocks.jl` checks both directions — every documented export must
+  appear in a `@docs` block, which is what `checkdocs = :exports` demands and
+  what failed two doc builds.
+
+
 ## v0.13.0 — the concave pore, axisymmetric
 
 The 0.12.0 release treated the **cubic** member of the supershape family

@@ -180,24 +180,30 @@ function LayeredSpheroid(
 end
 
 """
-    layered_spheroid_from_fractions(ω, outer_axis_radius, layer_fractions, moduli;
-                                     interfaces, Nseries = 5, axis = (0., 0., 1.))
+    confocal_layer_radii(ω, outer_axis_radius, layer_fractions) -> (axis_radii, disk_radii)
 
-Convenience constructor specifying layers by volume fraction: build an
-`N`-layer confocal spheroid of given
-outer aspect ratio `ω` (`> 1` prolate, `< 1` oblate) and outer axis
-semi-axis `outer_axis_radius`, with each layer occupying the prescribed
-fraction of the total volume (`layer_fractions`, normalized to sum 1,
-core first). Inner confocal parameters are found by bisection on the
-volume relation `V(q) ∝ |q(q²-1)|` (eq:xLeg / spheroid_volume).
+The per-layer semi-axes of an `N`-layer **confocal** spheroid of outer aspect
+ratio `ω` (`> 1` prolate, `< 1` oblate) and outer axis semi-axis
+`outer_axis_radius`, each layer occupying the prescribed fraction of the total
+volume (core first, normalized to sum 1). Inner confocal parameters come from
+bisection on the volume relation `V(q) ∝ |q(q²-1)|`.
+
+Returned in the argument order [`LayeredSpheroid`](@ref) takes — axis
+(revolution) semi-axes first, transverse second — so the same pair builds the
+analytic inclusion and a finite-element one, and the two cannot describe
+different bodies. That is the whole reason this is a function rather than a
+step inside a constructor: a finite-element cross-check of the analytic
+solution is only worth anything if both are handed the *same* geometry.
 """
-function layered_spheroid_from_fractions(
-        ω::T, outer_axis_radius::T, layer_fractions::NTuple{N, T}, moduli::Cs;
-        interfaces::Is = ntuple(_ -> PerfectInterface{T}(), Val(N)),
-        Nseries::Int = 5,
-        axis::Tuple = (0.0, 0.0, 1.0),
-    ) where {N, T <: Real, Cs, Is}
-    ω ≈ 1 && throw(ArgumentError("layered_spheroid_from_fractions: ω ≈ 1 (use LayeredSphere)"))
+function confocal_layer_radii(
+        ω::T, outer_axis_radius::T, layer_fractions::NTuple{N, T}
+    ) where {N, T <: Real}
+    ω ≈ 1 && throw(
+        ArgumentError(
+            "confocal_layer_radii: ω ≈ 1 is a sphere, which has no focal " *
+                "distance and no confocal family — use concentric spheres instead"
+        )
+    )
     ftot = sum(layer_fractions)
     f = layer_fractions ./ ftot
 
@@ -231,6 +237,31 @@ function layered_spheroid_from_fractions(
     disk_radii = ntuple(
         ℓ -> prolate ? focal * sqrt(qs[ℓ]^2 - 1) : focal * sqrt(qs[ℓ]^2 + 1), Val(N)
     )
+    return axis_radii, disk_radii
+end
+
+"""
+    layered_spheroid_from_fractions(ω, outer_axis_radius, layer_fractions, moduli;
+                                     interfaces, Nseries = 5, axis = (0., 0., 1.))
+
+Convenience constructor specifying layers by volume fraction: build an
+`N`-layer confocal spheroid of given outer aspect ratio `ω` (`> 1` prolate,
+`< 1` oblate) and outer axis semi-axis `outer_axis_radius`, with each layer
+occupying the prescribed fraction of the total volume (`layer_fractions`,
+normalized to sum 1, core first).
+
+The geometry itself comes from [`confocal_layer_radii`](@ref), so the same
+semi-axes are available to build a finite-element counterpart of this
+inclusion.
+"""
+function layered_spheroid_from_fractions(
+        ω::T, outer_axis_radius::T, layer_fractions::NTuple{N, T}, moduli::Cs;
+        interfaces::Is = ntuple(_ -> PerfectInterface{T}(), Val(N)),
+        Nseries::Int = 5,
+        axis::Tuple = (0.0, 0.0, 1.0),
+    ) where {N, T <: Real, Cs, Is}
+    axis_radii, disk_radii =
+        confocal_layer_radii(ω, outer_axis_radius, layer_fractions)
     return LayeredSpheroid(axis_radii, disk_radii, moduli; interfaces, Nseries, axis)
 end
 

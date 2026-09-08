@@ -364,6 +364,9 @@ makedocs(;
                 "tutorials/generated/layered_spheroid_effective.md",
                 "tutorials/generated/layered_spheroid_interfaces.md",
                 "tutorials/generated/layered_spheroid_hc.md",
+                # The finite-element counterpart of the three pages above,
+                # calibrated against them and then taken past what they cover.
+                "tutorials/axi_layered_spheroid.md",
                 "tutorials/generated/nano_spheroids.md",
                 "tutorials/generated/laminate.md",
                 "tutorials/generated/laminate_interfaces.md",

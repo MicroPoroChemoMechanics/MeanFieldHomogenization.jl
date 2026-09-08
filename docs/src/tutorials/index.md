@@ -37,6 +37,7 @@ and the one where the choice of scheme matters most.
 | [Layered spheroids: geometry and effective conductivity](generated/layered_spheroid_effective.md) | the confocal `n`-layer spheroid, the equivalent particle, harmonic-series accuracy |
 | [Imperfect interfaces: what they do to the local fields](generated/layered_spheroid_interfaces.md) | pointwise temperature and flux, streamlines, conductance sweep, 3-D view |
 | [Highly conducting interfaces](generated/layered_spheroid_hc.md) | equivalent conductivity of an HC-coated particle vs aspect ratio |
+| [A layered spheroid, meshed](axi_layered_spheroid.md) | the same body by Fourier axisymmetric finite elements: calibrated against the two closed forms, then taken to nests neither covers |
 | [Nanocomposites: the equivalent particle](generated/nano_spheroids.md) | a Gurtin-Murdoch interface condensed into a particle stiffness, its three limiting shapes reproduced exactly, and the size effect it produces through an ordinary Mori-Tanaka estimate — no new scheme needed |
 | [Periodic multilayer: the exact laminate solution](generated/laminate.md) | a cell with no matrix and no Eshelby problem: the exact effective tensor, per-layer localization, the bounds it saturates |
 | [Imperfect interfaces in a laminate, and the size effect](generated/laminate_interfaces.md) | the four interface models on a planar interface, and the interface *density* that makes the period matter |

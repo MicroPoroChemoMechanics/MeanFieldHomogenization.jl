@@ -60,12 +60,14 @@ MeanFieldHomogenization.check_inclusion_interface
 
 Requires a finite-element backend: `Ferrite`, `FerriteGmsh` and `Gmsh` serve
 every morphology, while `Gridap` and `GridapGmsh` serve the crack and the
-axisymmetric ones. **Four morphologies, one method** — the same corrected finite
+axisymmetric ones. **Five morphologies, one method** — the same corrected finite
 Eshelby cell and the same entry into the schemes:
 [Finite-element inclusions](@ref man-fe-inclusions) for the elliptical crack,
 [A recycled-concrete aggregate](@ref app-recycled-aggregate) for the sphere with
-an off-center core, and [Concave pores](@ref app-concave-pores) for the
-superspherical and superspheroidal cavities.
+an off-center core, [Concave pores](@ref app-concave-pores) for the
+superspherical and superspheroidal cavities, and
+[A layered spheroid, meshed](@ref tut-axi-layered-spheroid) for `N` nested
+spheroids.
 
 ```@docs
 MeanFieldHomogenization.FiniteElements
@@ -175,6 +177,13 @@ MeanFieldHomogenization.FiniteElements._pore_surrogate_response
 MeanFieldHomogenization.FiniteElements._rebuild_pore_shape
 MeanFieldHomogenization.Schemes._geom_field
 MeanFieldHomogenization.FEAxiSupershapePore
+MeanFieldHomogenization.FEAxiLayeredSpheroid
+MeanFieldHomogenization.FiniteElements.LayeredSpheroidShape
+MeanFieldHomogenization.check_nested_spheroids
+MeanFieldHomogenization.axi_layer_set
+MeanFieldHomogenization.layer_volumes
+MeanFieldHomogenization.layer_fractions
+MeanFieldHomogenization.confocal_layer_radii
 MeanFieldHomogenization.AxiSupershapePoreShape
 MeanFieldHomogenization.fe_axi_pore_localization
 MeanFieldHomogenization.fe_axi_pore_breakdown
@@ -282,6 +291,11 @@ MeanFieldHomogenization.HillISO2
 MeanFieldHomogenization.HillTI2
 MeanFieldHomogenization.NeuralInclusions.AbstractOutputSpec
 MeanFieldHomogenization.DimensionlessHill
+MeanFieldHomogenization.AnchoredHill
+MeanFieldHomogenization.NeuralInclusions.anchor_baselines
+MeanFieldHomogenization.NeuralInclusions.anchor_tensor
+MeanFieldHomogenization.NeuralInclusions.encode
+MeanFieldHomogenization.NeuralInclusions.spec_baseline
 MeanFieldHomogenization.AffineHill
 MeanFieldHomogenization.NeuralInclusions.ncomponents
 MeanFieldHomogenization.NeuralInclusions.tensor_order
