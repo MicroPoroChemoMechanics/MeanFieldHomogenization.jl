@@ -106,6 +106,29 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
         @test_throws ArgumentError FEAxiLayeredSpheroid((0.5, 1.4), (1.1, 1.0), K)
     end
 
+    @testset "the generic stress side refuses a heterogeneous inclusion" begin
+        # `stress_strain_loc`'s generic evaluates `ℂ₁ : 𝔸_εε`, which needs a
+        # single uniform stiffness. Its docstring has said so since the contract
+        # was written; nothing enforced it, and `LayeredSpheroid` — which
+        # declares itself heterogeneous and supplies no elastic stress side —
+        # was quietly getting a value wrong by 110 %. Found by comparing a
+        # finite-element cell that measures *both* sides against the analytic
+        # solution of the same body: only the stress side disagreed, uniformly
+        # at every aspect ratio, which is a wrong quantity and not a coarse mesh.
+        ar, dr = confocal_layer_radii(2.0, 1.0, (0.3, 0.7))
+        Cs = (_als_C(4.0, 0.2), _als_C(1.5, 0.3))
+        C₀ = _als_C(1.0, 0.25)
+        @test_throws ArgumentError stress_strain_loc(
+            LayeredSpheroid(ar, dr, Cs), C₀, C₀
+        )
+        # The types that do supply one are unaffected — and a homogeneous
+        # inclusion still gets the generic, which is correct for it.
+        @test stress_strain_loc(Ellipsoid(1.0, 1.0, 2.0), Cs[1], C₀) isa
+            TensND.AbstractTens{4, 3}
+        fe = FEAxiLayeredSpheroid(ar, dr, Cs; opts = _als_opts(10, 4.0))
+        @test stress_strain_loc(fe, C₀, C₀) isa TensND.AbstractTens{4, 3}
+    end
+
     @testset "a sensitivity is refused, not answered with a zero" begin
         # The solve runs in `Float64` and memoizes on the reference medium
         # alone, so a derivative with respect to a layer radius would come back
