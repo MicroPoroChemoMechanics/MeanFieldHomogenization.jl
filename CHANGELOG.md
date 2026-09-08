@@ -76,6 +76,49 @@ neighbors. That is the same failure the concave superspheroid's wedge showed in
 0.13.0, where an unresolved gap left `R₃₃` 1.2 % wrong and converging in
 appearance only.
 
+### Two bugs the comparison found, both of them older than this release
+
+Solving one body two ways is worth having, and here is what it bought.
+
+**The generic stress side was answering for inclusions it cannot serve.**
+`stress_strain_loc`'s generic evaluates `ℂ₁ : 𝔸_εε`, which needs a single
+uniform stiffness, and its docstring has warned since the contract was written
+that a type declaring `is_homogeneous_inclusion == false` **must** supply its
+own. Nothing enforced it, and `LayeredSpheroid` — which declares itself
+heterogeneous and implements no elastic stress side — was quietly getting a
+value wrong by **110 %**, uniformly at every aspect ratio. It surfaced the
+moment a finite-element cell that measures *both* sides was pointed at the same
+body: only the stress side disagreed, and by a constant factor, which is the
+signature of a wrong quantity rather than a coarse mesh. The generic now refuses
+instead, in both physics. Nothing in the suite exercised that path, so nothing
+was relying on the wrong answer.
+
+**The analytic elastic confocal spheroid fails as it approaches the sphere.**
+A one-layer confocal spheroid *is* a homogeneous spheroid, so the closed-form
+Eshelby result is its answer. Measured against it, on a single layer:
+
+| `\|1 − ω\|` | elasticity | transport, same chart |
+|---:|---:|---:|
+| 0.3 | `3e-15` | `2e-16` |
+| 0.1 | `1.6e-3` | `2e-15` |
+| 0.05 | `5.4e-2` | `3e-15` |
+| 0.03 | `4.0e-1` | `1e-14` |
+| 0.001 | `1.0e+0` | `4e-12` |
+
+Transport on the identical chart is exact throughout, so this is the elastic
+algebra losing precision as the chart degenerates — `focal → 0`, `q → ∞` — and
+not the geometry. It is not the layer coupling either, since one layer already
+shows it, nor the oblate substitution, since both families fail. The
+finite-element cell converges to the right limit on the same geometries
+(`9.2e-4` at `ω = 0.99`, against the analytic branch's `0.79`).
+
+This one is **not fixed** — a conditioning failure in a harmonic-series solution
+is not something to patch blind — but it is measured, plotted and documented,
+and the tutorial's agreement tables exclude `|ω − 1| < 0.3` in elasticity for
+this reason rather than silently. Nothing caught it before because the failure
+changes no strain-side result away from the sphere, is invisible in transport,
+and no test covered the elastic near-sphere limit.
+
 ### `AnchoredHill`, and the measurement that says not yet
 
 A new output specification: the network predicts `𝕄 = 𝔸_b⁻¹ : 𝔸` against a
@@ -127,6 +170,14 @@ as the layers' moduli agree, which is a far closer baseline.
 - `check_docs_blocks.jl` checks both directions — every documented export must
   appear in a `@docs` block, which is what `checkdocs = :exports` demands and
   what failed two doc builds.
+
+### Fixed
+
+- The generic `stress_strain_loc` and `flux_gradient_loc` refuse an inclusion
+  whose `is_homogeneous_inclusion` is `false`, instead of returning
+  `ℂ₁ : 𝔸_εε` — wrong by order one for such an inclusion, and the docstring had
+  said so all along. Affects `LayeredSpheroid` in elasticity, the one type that
+  declared itself heterogeneous without supplying its own method.
 
 
 ## v0.13.0 — the concave pore, axisymmetric

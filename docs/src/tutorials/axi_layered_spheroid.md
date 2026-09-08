@@ -96,24 +96,94 @@ The middle panel is **concentric spheres of arbitrary radii**, against
 confocal at all, which is what makes it valuable: it covers an arbitrary layer
 count and freely chosen radii without assuming the confocal relation anywhere.
 
-The right panel collects the deviations. Everything is below
-``6\times10^{-4}``, with medians around ``10^{-4}``:
+The top row is conduction and the bottom row elasticity; the right-hand panels
+collect the deviations. Everything is below ``1.1\times10^{-3}``, with medians
+around ``10^{-4}``:
 
-Conduction, two layers, `k₁/k₀ = 5`, `k₂/k₀ = 2`.
+Two layers. Conduction: `k₁/k₀ = 5`, `k₂/k₀ = 2`. Elasticity: `E₁/E₀ = 4`, `ν₁ = 0.2`, `E₂/E₀ = 1.5`, `ν₂ = 0.3`, `ν₀ = 0.25`.
 
 | slice | worst deviation | median deviation |
 |---|---:|---:|
 | confocal, `A₁₁`, ω ∈ [0.3, 3] | 5.5e-04 | 1.3e-04 |
 | confocal, `A₃₃`, ω ∈ [0.3, 3] | 5.4e-04 | 1.0e-04 |
 | spheres, free radii | 1.8e-04 | 1.4e-04 |
+| confocal, `A₁₁₁₁`, |ω−1| ≥ 0.3 | 5.8e-04 | 1.1e-04 |
+| confocal, `A₃₃₃₃`, |ω−1| ≥ 0.3 | 5.2e-04 | 7.7e-05 |
+| confocal, `A₁₃₁₃`, |ω−1| ≥ 0.3 | 1.1e-03 | 1.1e-04 |
+| confocal, `𝔸_σε` — no reference | — | — |
+| spheres, elasticity, `𝔸_εε` | 1.7e-04 | 1.2e-04 |
+| spheres, elasticity, `𝔸_σε` | 9.5e-05 | 7.4e-05 |
 
-Elasticity behaves the same way — ``3\times10^{-5}`` on the confocal prolate
-case, ``2\times10^{-4}`` oblate, ``5\times10^{-4}`` on the spheres — and there
-the **stress-side** tensor is checked too. The inclusion is heterogeneous, so
-``\mathbb A_{\sigma\varepsilon}`` is not ``\mathbb C_1 :
-\mathbb A_{\varepsilon\varepsilon}`` for any single ``\mathbb C_1``: it is
-measured on the same solve, and it agrees with `LayeredSphere` to
-``4\times10^{-5}``.
+Two panels are worth a second look. The conduction components **cross at**
+``\omega = 1``, where the body is a sphere and the response is isotropic —
+nothing in the cell enforces that, so the crossing is a free control. And the
+bottom-middle panel carries **both sides of gate B**: the inclusion is
+heterogeneous, so ``\mathbb A_{\sigma\varepsilon}`` is not
+``\mathbb C_1 : \mathbb A_{\varepsilon\varepsilon}`` for any single
+``\mathbb C_1`` — it is measured on the same solve, and it agrees with
+`LayeredSphere` to ``9.5\times10^{-5}``.
+
+### Why the elastic sweep stops short of the sphere
+
+The elastic panels have a gap in ``\omega`` between 0.7 and 1.4, and it is not
+an oversight. A one-layer confocal spheroid **is** a homogeneous spheroid, so
+the closed-form Eshelby result is its answer and the confocal machinery has to
+reproduce it exactly. Transport does, everywhere. Elasticity does not, once the
+chart degenerates — as ``\omega \to 1`` the focal distance goes to zero and the
+confocal parameter to infinity:
+
+![The analytic elastic branch against the closed-form spheroid, approaching the sphere](../assets/fe/layered_spheroid_analytic_near_sphere.png)
+
+One confocal layer is a homogeneous spheroid, so the closed-form Eshelby result is the reference and the confocal machinery must reproduce it exactly. Transport does, everywhere. Elasticity does not, once the chart degenerates (`focal → 0`, `q → ∞`).
+
+| `ω` | elasticity | transport, same chart |
+|---|---:|---:|
+| 0.999 | 1.0e+00 | 4.3e-12 |
+| 0.990 | 7.7e-01 | 1.4e-14 |
+| 0.970 | 4.0e-01 | 1.2e-14 |
+| 0.950 | 5.3e-02 | 3.5e-15 |
+| 0.900 | 1.6e-03 | 1.8e-15 |
+| 0.850 | 1.8e-06 | 4.5e-16 |
+| 0.800 | 3.8e-08 | 7.7e-16 |
+| 0.700 | 2.6e-15 | 1.8e-16 |
+| 0.600 | 7.7e-15 | 3.5e-16 |
+| 1.050 | 8.3e-02 | 4.4e-15 |
+| 1.100 | 9.2e-02 | 1.8e-15 |
+| 1.200 | 8.4e-07 | 9.9e-16 |
+| 1.300 | 1.2e-09 | 3.5e-16 |
+| 1.600 | 1.1e-14 | 1.8e-16 |
+
+### Against the closed forms
+
+Two layers. Conduction: `k₁/k₀ = 5`, `k₂/k₀ = 2`. Elasticity: `E₁/E₀ = 4`, `ν₁ = 0.2`, `E₂/E₀ = 1.5`, `ν₂ = 0.3`, `ν₀ = 0.25`.
+
+| slice | worst deviation | median deviation |
+|---|---:|---:|
+| confocal, `A₁₁`, ω ∈ [0.3, 3] | 5.5e-04 | 1.3e-04 |
+| confocal, `A₃₃`, ω ∈ [0.3, 3] | 5.4e-04 | 1.0e-04 |
+| spheres, free radii | 1.8e-04 | 1.4e-04 |
+| confocal, `A₁₁₁₁`, |ω−1| ≥ 0.3 | 5.8e-04 | 1.1e-04 |
+| confocal, `A₃₃₃₃`, |ω−1| ≥ 0.3 | 5.2e-04 | 7.7e-05 |
+| confocal, `A₁₃₁₃`, |ω−1| ≥ 0.3 | 1.1e-03 | 1.1e-04 |
+| confocal, `𝔸_σε` — no reference | — | — |
+| spheres, elasticity, `𝔸_εε` | 1.7e-04 | 1.2e-04 |
+| spheres, elasticity, `𝔸_σε` | 9.5e-05 | 7.4e-05 |
+
+The finite-element cell converges cleanly to the limit — as ``\omega \to 1``
+with the volume fractions held, a confocal layered spheroid tends to a
+*concentric layered sphere*, which `LayeredSphere` solves exactly, and the cell
+approaches it as ``9.2\times10^{-4}`` at ``\omega = 0.99`` against the analytic
+branch's ``0.79``. So the discrepancy belongs to the analytic elastic branch,
+and including those abscissae in an agreement table would measure that and call
+it the mesh's.
+
+This is worth stating plainly because it is the reason to have two independent
+routes at all: the failure changes no strain-side result away from the sphere,
+it is invisible in transport, and no test in the suite covered the elastic
+near-sphere limit — so nothing caught it until a finite-element cell was asked
+the same question.
+
+
 
 ## Replaying it with your own radii
 
