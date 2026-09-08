@@ -23,7 +23,18 @@ Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
 
 [compat]
-ChemistryLab = "0.14"
+# Widened for ChemistryLab 0.15, which is breaking only in two places this
+# documentation does not touch: `build_solid_solutions` returns six solid
+# solution phases instead of five (the CSHQ gains its alkali end-members
+# `KSiOH`/`NaSiOH`, and `C3(AF)S0.84H` is added), and `HKFActivityModel` gained
+# a field, so a *positional* construction of the struct no longer matches. The
+# ionic-hydration chapter builds its model with the keyword constructor,
+# `HKFActivityModel()`, and never calls `build_solid_solutions`, so no figure
+# and no number here changes.
+#
+# Both bounds are kept, not just the new one: 0.14 still resolves while 0.15 is
+# unregistered, so this file is correct on either side of the registration.
+ChemistryLab = "0.14, 0.15"
 DECUHR = "0.2"
 Documenter = "1.17"
 # Bounded on the major only, deliberately: the 1.x ceiling belongs to
