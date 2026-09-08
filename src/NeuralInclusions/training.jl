@@ -188,6 +188,14 @@ function report_surrogate(
         println(io, signflip[i] ? "   (crosses zero — read the block figure)" : "")
     end
     @printf(io, "  worst relative to the tensor magnitude: %.3e\n", v.max_block_error)
+    # The distribution, not only its maximum. The worst point of a near-singular
+    # corner of the sample box tells you about that corner; the quantiles tell
+    # you what the model does where it will actually be used, and unlike the
+    # maximum they are comparable between runs of different size.
+    @printf(
+        io, "  block error: rms %.3e   median %.3e   p90 %.3e   p99 %.3e\n",
+        v.block_rms, v.block_median, v.block_p90, v.block_p99
+    )
     if any(signflip)
         println(
             io, "  note: ", count(signflip), " of ", nz,

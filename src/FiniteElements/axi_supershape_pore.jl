@@ -233,7 +233,11 @@ the pore's own frame — so a whole family of *orientations* of the same shape i
 the same matrix shares one solve.
 """
 function fe_axi_pore_localization(s::FEAxiSupershapePore, P₀::TensND.AbstractTens{O, 3}) where {O}
-    has_surrogate(s, O) && return _axi_pore_run(s, P₀).A
+    # No `.A` here: with a surrogate attached, `_axi_pore_run_*` returns the
+    # tensor itself rather than the solve's named tuple — the same contract as
+    # `fe_cell_localization` in the three-dimensional pore. Asking for `.A`
+    # made every shipped axisymmetric model unusable.
+    has_surrogate(s, O) && return _axi_pore_run(s, P₀)
     r = get!(() -> _axi_pore_run(s, P₀), s.cache.tensors, _fe_cache_key(P₀))
     return r isa TensND.AbstractTens ? r : r.A
 end

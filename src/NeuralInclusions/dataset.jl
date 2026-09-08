@@ -539,6 +539,13 @@ function validate_surrogate(s::NeuralSurrogate, data::Dataset)
     maxe = zeros(Float64, nz)
     sqe = zeros(Float64, nz)
     block = 0.0
+    # Every sample's block error, kept rather than reduced on the fly. A maximum
+    # over a heavy-tailed distribution is not a summary of it, and it is not even
+    # comparable between runs: a held-out set 2.2 times larger reaches further
+    # into the tail, so the maximum rises while every rms falls. Measured on the
+    # axisymmetric elastic pore, and it cost an afternoon of chasing the wrong
+    # lever — hence the quantiles below.
+    blocks = zeros(Float64, n)
     for j in 1:n
         ẑ = predict_components(s, view(data.X, :, j))
         num = 0.0
@@ -552,11 +559,19 @@ function validate_surrogate(s::NeuralSurrogate, data::Dataset)
             num = max(num, d)
             den = max(den, abs(z))
         end
-        block = max(block, num / max(den, global_rms))
+        blocks[j] = num / max(den, global_rms)
+        block = max(block, blocks[j])
     end
     rms = sqrt.(sqe ./ n)
+    sorted = sort(blocks)
+    quantile_at(q) = sorted[clamp(ceil(Int, q * n), 1, n)]
     return (;
         max_rel_error = maxe, rms_rel_error = rms,
         max_block_error = block, worst = block,
+        block_errors = blocks,
+        block_rms = sqrt(sum(abs2, blocks) / n),
+        block_median = quantile_at(0.5),
+        block_p90 = quantile_at(0.9),
+        block_p99 = quantile_at(0.99),
     )
 end

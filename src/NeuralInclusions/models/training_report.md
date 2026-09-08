@@ -118,8 +118,52 @@ it by sampling less would be dishonest.
 - samples: 500 train, 150 held out
 - output scaling: `log` on both rows (`log_threshold = 5`)
 - worst held-out error, relative to the tensor magnitude: **3.724e-03**
+- block error over the held-out set: rms `4.538e-04`, median `1.299e-04`,
+  p90 `4.246e-04`, p99 `2.496e-03`
 
 | component | max rel. err | rms rel. err |
 | --- | ---: | ---: |
 | `a` | 2.018e-04 | 5.325e-05 |
 | `b` | 3.724e-03 | 4.227e-04 |
+
+## `axi_supershape_pore_elastic`
+
+- features: `log_aspect`, `log_p`, `nu0`
+- network: MLP(3→64→64→6, tanh, tanh, identity)
+- samples: 1400 train, 400 held out
+- output scaling: `log_threshold = 5`
+- worst held-out error, relative to the tensor magnitude: **6.264e-02**
+- block error over the held-out set: rms `6.363e-03`, median `3.016e-03`,
+  p90 `6.575e-03`, p99 `2.775e-02`
+
+| component | max rel. err | rms rel. err | |
+| --- | ---: | ---: | --- |
+| `ℓ₁` | 6.533e-02 | 4.169e-03 | |
+| `ℓ₂` | 1.566e-02 | 1.895e-03 | |
+| `ℓ₃` | 8.572e-02 | 7.243e-03 | crosses zero |
+| `ℓ₄` | 5.192e-02 | 5.085e-03 | crosses zero |
+| `ℓ₅` | 2.608e-03 | 5.945e-04 | |
+| `ℓ₆` | 4.023e-02 | 2.838e-03 | |
+
+**Read the distribution, not the maximum, and here is why.** The worst case is a
+*single* held-out point; the median is `3.0e-03` and the p90 `6.6e-03`, which is
+the accuracy over the domain where the model will be used. Three measurements
+established that, and each ruled out a lever:
+
+- raising the sample count from 780 to 1800 improved **every** rms by a factor
+  1.2 to 2.3 while the maximum *rose*, because a held-out set 2.2 times larger
+  reaches further into the tail. A maximum is not comparable between runs of
+  different size;
+- widening the network to `[96, 96, 96]` improved the maximum to `4.97e-02` and
+  degraded every rms. Capacity is not the limit either;
+- the ten worst points all have `p ≤ 0.41`, `c/a ≤ 0.9` and `ν₀ ≥ 0.39` — a
+  flattened, strongly concave cavity in a nearly incompressible matrix, where
+  `ℓ₁` reaches 18 to 34 against 2 for the sphere. That is the near-crack limit,
+  and the response genuinely near-diverges there.
+
+So the tail belongs to a near-singular corner of the box, not to the fit. It is
+documented rather than removed by narrowing the box, which would hide it.
+
+**`ℓ₃` and `ℓ₄` change sign inside the box**, passing within `2e-04` of zero, so
+their per-component relative columns are not a measure of the fit near that
+crossing — the block figures are. `report_surrogate` flags this.

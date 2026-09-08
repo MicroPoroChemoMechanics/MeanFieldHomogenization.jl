@@ -138,19 +138,40 @@ knobs are now named and documented rather than implicit in a default, which is
 the point: the defaults were not wrong, they were calibrated on a different kind
 of quantity.
 
-The elastic model needed something else, and measuring said which. Its box is
-three-dimensional and `ℓ₁` runs from 1.4 to 63 across it — near-diverging in the
-flat-and-concave corner, where the cavity is nearly a crack pierced by a needle —
-so 600 samples is 8.4 points per dimension and it showed. The teacher was ruled
-out first: its own mesh convergence is `1.5e-3` between `nradial` 8 and 20, forty
-times below the fit, so the samples were the limit and the count was raised.
+The elastic model was a different story, and the useful part of it is that three
+measurements each ruled out a lever rather than fixing one.
 
-Two side effects of that diagnosis are worth having. `ℓ₃` and `ℓ₄` pass within
-`2e-4` of **zero** inside the box, so their per-component *relative* error is not
-a meaningful number there — the block-norm figure is the one to read, and the
-report now says so. And a finite-element dataset is now **cached** between runs,
-keyed on everything the labels depend on, so iterating on a fit costs minutes
-instead of the hour the solves take.
+Its box is three-dimensional and `ℓ₁` runs from 1.4 to 63 across it. The teacher
+was excluded first: its own mesh convergence is `1.5e-3` between `nradial` 8 and
+20, forty times below the fit. Raising the sample count from 780 to 1800 then
+improved **every** rms by a factor 1.2 to 2.3 while the reported maximum *rose* —
+because a held-out set 2.2 times larger reaches further into the tail. Widening
+the network to `[96, 96, 96]` did the opposite: better maximum, worse rms
+everywhere. Neither is the limit.
+
+The limit is a **near-singular corner of the sample box**. The ten worst held-out
+points all have `p ≤ 0.41`, `c/a ≤ 0.9` and `ν₀ ≥ 0.39`: a flattened, strongly
+concave cavity in a nearly incompressible matrix, where the localization reaches
+18 to 34 times the identity against 2 for a sphere. That is the near-crack limit,
+and no amount of sampling repairs a divergence. It is documented with its
+coordinates rather than removed by narrowing the box.
+
+**So the metric was the thing to fix.** A maximum over a heavy-tailed
+distribution is not a summary of it and is not comparable between runs of
+different size — which is exactly how it sent this work after the wrong lever.
+`validate_surrogate` now returns the whole distribution of block errors and
+`report_surrogate` prints rms, median, p90 and p99 beside the maximum. For the
+elastic model: max `6.3e-2`, but rms `6.4e-3`, median `3.0e-3`, p90 `6.6e-3` —
+which is the accuracy over the domain where it will be used, and comparable to
+the analytic-teacher models.
+
+Two more results of that diagnosis. `ℓ₃` and `ℓ₄` pass within `2e-4` of **zero**
+inside the box, so their per-component relative error is not a measure of the fit
+near that crossing; `report_surrogate` flags such a row instead of printing a
+number that reads as one. And a finite-element dataset is now **cached** between
+runs, keyed on everything the labels depend on: the 1800-solve set took 7752
+seconds to build and 0.1 second to reuse, which is what made three fit
+experiments affordable at all.
 
 ### Against the paper's own tables, all thirty-five rows
 
@@ -217,8 +238,12 @@ which is the opposite of correcting silently.
   `:log_p` feature (with `:log_aspect` extended to a meshed pore).
 - `FEAxiMeshOptions(; nprofile, tip_refine)`, read by the axisymmetric pore
   alone.
-- Two trained models, `axi_supershape_pore_conduction` and
-  `axi_supershape_pore_elastic`.
+- Two trained models, `axi_supershape_pore_conduction` (max `3.7e-3`) and
+  `axi_supershape_pore_elastic` (rms `6.4e-3`, p90 `6.6e-3`, max `6.3e-2` at one
+  near-crack point).
+- `validate_surrogate` returns `block_errors`, `block_rms`, `block_median`,
+  `block_p90` and `block_p99`; `report_surrogate` prints them and flags a
+  component that changes sign over the held-out set.
 
 ### Changed
 
