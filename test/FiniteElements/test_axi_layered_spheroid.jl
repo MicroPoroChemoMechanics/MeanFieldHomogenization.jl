@@ -106,6 +106,18 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
         @test_throws ArgumentError FEAxiLayeredSpheroid((0.5, 1.4), (1.1, 1.0), K)
     end
 
+    @testset "a sensitivity is refused, not answered with a zero" begin
+        # The solve runs in `Float64` and memoizes on the reference medium
+        # alone, so a derivative with respect to a layer radius would come back
+        # a silent zero. The type has to be named in the refusal union: without
+        # that, the request falls through to a generic that hands one back.
+        ar, dr = confocal_layer_radii(2.0, 1.0, (0.3, 0.7))
+        fe = FEAxiLayeredSpheroid(ar, dr, (TensISO{3}(5.0), TensISO{3}(2.0)))
+        Sch = MeanFieldHomogenization.Schemes
+        @test_throws Exception Sch._replace_geom_field(fe, Val(:axis_radii), nothing, 1.0)
+        @test_throws Exception Sch._replace_geom_field(fe, Val(:disk_radii), 1, 1.0)
+    end
+
     @testset "the object declares itself" begin
         ar, dr = confocal_layer_radii(2.0, 1.0, (0.3, 0.7))
         K = (TensISO{3}(5.0), TensISO{3}(2.0))

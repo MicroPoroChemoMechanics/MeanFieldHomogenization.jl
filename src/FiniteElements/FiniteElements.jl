@@ -109,10 +109,15 @@ include("supershape_pore.jl")
 #  geometry to `Float64` on entry, so a `ForwardDiff.Dual` loses its
 #  perturbation at the door.  Refusing is the only honest option.
 
-# `FESupershapePore` is deliberately absent: it refuses sensitivity only when it
-# is answering from a mesh, and decides per object in `supershape_pore.jl`,
-# because a surrogate-backed one *is* differentiable.
-const _FEGeometry = Union{FEEllipticCrack, FEExcenteredSphere}
+# `FESupershapePore` and `FEAxiSupershapePore` are deliberately absent: they
+# refuse sensitivity only when answering from a mesh, and decide per object in
+# their own files, because a surrogate-backed one *is* differentiable.
+# `FEAxiLayeredSpheroid` has no surrogate route yet, so it refuses
+# unconditionally — and it has to be named here, or the request falls through to
+# a generic that would hand back a zero.
+const _FEGeometry = Union{
+    FEEllipticCrack, FEExcenteredSphere, FEAxiLayeredSpheroid,
+}
 
 _no_fe_sensitivity(geom, name) = error(
     "analytic sensitivity is not available through `$(nameof(typeof(geom)))`: " *
