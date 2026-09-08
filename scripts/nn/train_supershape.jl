@@ -36,11 +36,22 @@ using TensND
 using Printf
 using LinearAlgebra
 
+import SHA                              # keys the dataset cache
+import Serialization                    # and stores it
+
 import Lux, Optimisers, Zygote           # loads MeanFieldHomogenizationLuxExt
 import Ferrite, FerriteGmsh, Gmsh        # loads MeanFieldHomogenizationFerriteExt
 
 const NI = MeanFieldHomogenization.NeuralInclusions
 const OUT = NI.MODEL_DIR
+
+# Where the finite-element datasets are kept between runs. A scratch directory,
+# so nothing measurement-shaped is left inside the repository; `MFH_NN_CACHE`
+# overrides it and `MFH_NN_FORCE=1` regenerates regardless.
+const CACHE_DIR = get(
+    ENV, "MFH_NN_CACHE", joinpath(tempdir(), "mfh_nn_datasets"),
+)
+const FORCE = get(ENV, "MFH_NN_FORCE", "0") == "1"
 
 const SECTIONS = isempty(ARGS) ? nothing : Set(ARGS)
 want(name) = SECTIONS === nothing || name in SECTIONS
@@ -76,14 +87,34 @@ pore_geometry(x) = FESupershapePore(Supersphere(1.0, x[1]); opts = CELL)
 # and worth it: what the corrected condition leaves is truncation, and the sweep
 # in `89_fe_concave_pores.jl` measures it at 1.1e-3 for `R/a = 4` against
 # 1.5e-4 for 6. The teacher's own accuracy is the ceiling on the surrogate's.
-const AXI = FEAxiMeshOptions(; nradial = 24, radius_ratio = 6.0)
+#
+# `nradial` is modest because the profile grading does the work. Uniform
+# elements left `R₃₃` — the mode-0 answer, which loads across the equatorial
+# wedge of a concave shape — not converging at all: increments of 4.4e-3 then
+# 3.7e-3 refining 12 → 20 → 32. Graded, the same sequence gives 3.8e-4 then
+# 1.9e-4, and `nradial = 14` already sits 4e-4 from the converged value. A
+# surrogate cannot be better than its teacher, and the first version of this
+# model was not: 1.37e-2 worst case, all of it inherited.
+const AXI = FEAxiMeshOptions(; nradial = 14, radius_ratio = 6.0, tip_refine = 16.0)
 
 # `a` is not a feature: the localization of a cavity is scale-free, so only the
 # aspect ratio `c/a` and the exponent matter. The shape is built at `a = 1` and
 # the features are `(c, p)`.
-axi_geometry(x) = FEAxiSupershapePore(Superspheroid(1.0, x[1], x[2]); opts = AXI)
+# The shape features arrive as logarithms, which is what makes the sampling
+# geometric; `a = 1` because a cavity's localization is scale-free.
+axi_geometry(x) = FEAxiSupershapePore(
+    Superspheroid(1.0, exp(x[1]), exp(x[2])); opts = AXI
+)
 
 const C_LO, C_HI = 0.5, 2.0
+# The axisymmetric box stops at `p = 1.5`: past it `R₃₃` moves by a couple of
+# per cent, so sampling further spends the budget where nothing happens. It
+# reaches down to 0.25, which is inside the range Sevostianov et al. study —
+# and the teacher is measured to converge there, increments of 8e-4 at
+# `p = 0.20` with a minimum mesh angle of 35°, so there is no floor to respect.
+const AXI_P_LO, AXI_P_HI = 0.25, 1.5
+const AXI_LP_LO, AXI_LP_HI = log(AXI_P_LO), log(AXI_P_HI)
+const AXI_LC_LO, AXI_LC_HI = log(C_LO), log(C_HI)
 
 elastic_response(g, C₀) = strain_strain_loc(g, C₀, C₀)
 transport_response(g, K₀) = gradient_gradient_loc(g, K₀, K₀)
@@ -105,10 +136,35 @@ function train_and_save(
     # at the conical points, not the mesh density. So the threshold is set by
     # the concave end, and 3e-3 is still three orders below what a wrong class
     # would leave.
-    t = @elapsed train, val = NI.generate_dataset(
-        geometry, response, spec, box, n; nvalidation = nval, atol, reference
-    )
-    @printf "dataset: %.1f s for %d samples (%.2f s each)\n" t (n + nval) t / (n + nval)
+    # The dataset is finite-element solves — 56 minutes for the axisymmetric
+    # elastic model — so it is cached beside the run and reused. The key is
+    # everything the labels depend on; change the box, the sample count, the
+    # teacher string or the tolerance and a stale cache is not read. `CACHE_DIR`
+    # is a scratch directory, never the repository: these files are measurement
+    # residue, not artifacts.
+    key = bytes2hex(
+        SHA.sha1(
+            string(
+                name, "|", n, "|", nval, "|", atol, "|", teacher, "|",
+                box.names, "|", box.lo, "|", box.hi, "|",
+                reference === nothing ? "none" : "ref",
+            ),
+        ),
+    )[1:12]
+    cache = joinpath(CACHE_DIR, "$(name)_$(key).jls")
+    local train, val
+    if isfile(cache) && !FORCE
+        t = @elapsed ((train, val) = Serialization.deserialize(cache))
+        @printf "dataset: reused cache (%s) in %.1f s\n" basename(cache) t
+    else
+        t = @elapsed ((train, val) = NI.generate_dataset(
+            geometry, response, spec, box, n; nvalidation = nval, atol, reference
+        ))
+        @printf "dataset: %.1f s for %d samples (%.2f s each)\n" t (n + nval) t / (n + nval)
+        mkpath(CACHE_DIR)
+        Serialization.serialize(cache, (train, val))
+        println("cached to ", cache)
+    end
     flush(stdout)
     s = NI.train_surrogate(spec, box, train, val; options = opts, teacher_name = teacher, notes)
     NI.report_surrogate(s, val; labels = NI.component_labels(NI.hill_class(spec)))
@@ -168,16 +224,28 @@ want("elastic") && train_and_save(
 want("axi_conduction") && train_and_save(
     "axi_supershape_pore_conduction",
     NI.DimensionlessHill(GradLocTI2()),
-    NI.SampleBox([:c, :p], [C_LO, P_LO], [C_HI, P_HI]),
+    NI.SampleBox([:log_aspect, :log_p], [AXI_LC_LO, AXI_LP_LO], [AXI_LC_HI, AXI_LP_HI]),
     axi_geometry, transport_response,
     "gradient_gradient_loc(FEAxiSupershapePore, TensISO{2}) — Fourier axi, " *
         "nradial = $(AXI.nradial), R/a = $(AXI.radius_ratio)",
-    # `R₃₃` is the demanding component: it ranges over a factor of three across
+    # `R₃₃` is the demanding component: it runs over a factor of nine across
     # this box and steepens in the flat-and-concave corner, where a thin oblate
     # cavity with conical points is nearly a crack pierced by a needle. `R₁₁`
-    # barely moves. So the sample count is set by the harder of the two.
+    # barely moves. So the sample count is set by the harder of the two — and so
+    # is the sampling law, which is why the features are `:log_aspect` and
+    # `:log_p` rather than `:c` and `:p`. A `SampleBox` is linear, so a uniform
+    # box in `p` spends most of its budget where nothing happens: measured,
+    # 7.1e-3 worst case uniform against 3.7e-3 geometric, same everything else.
     500, 150,
-    NI.TrainingOptions(; hidden = [48, 48], epochs = 25_000, batchsize = 64),
+    # `log_threshold = 5`: `R₃₃` runs from 1.66 at `p = 0.6` to 15.0 at
+    # `p = 0.20` — a factor of nine, and a near-divergence as the body tends to
+    # a crack pierced by a needle. The default of 30 declines a log fit there,
+    # and with identity scaling the loss is carried by the large values while
+    # the relative error at the other end is whatever remains. Measured: 1.4e-2
+    # worst case without it.
+    NI.TrainingOptions(;
+        hidden = [48, 48], epochs = 25_000, batchsize = 64, log_threshold = 5.0
+    ),
     # The class residual of the axisymmetric teacher is far smaller than the
     # three-dimensional one's: transverse isotropy is *structural* here — the
     # Fourier modes decode straight onto the Kelvin basis — so the projection
@@ -201,12 +269,24 @@ want("axi_conduction") && train_and_save(
 want("axi_elastic") && train_and_save(
     "axi_supershape_pore_elastic",
     NI.DimensionlessHill(StrainLocTI()),
-    NI.SampleBox([:c, :p, :nu0], [C_LO, P_LO, NU_LO], [C_HI, P_HI, NU_HI]),
+    NI.SampleBox(
+        [:log_aspect, :log_p, :nu0],
+        [AXI_LC_LO, AXI_LP_LO, NU_LO], [AXI_LC_HI, AXI_LP_HI, NU_HI],
+    ),
     axi_geometry, elastic_response,
     "strain_strain_loc(FEAxiSupershapePore, TensISO{4}) — Fourier axi, " *
         "nradial = $(AXI.nradial), R/a = $(AXI.radius_ratio)",
-    600, 180,
-    NI.TrainingOptions(; hidden = [48, 48], epochs = 20_000, batchsize = 64),
+    # A three-dimensional box, and `ℓ₁` runs from 1.4 to 63 across it — a factor
+    # of 46, near-diverging in the flat-and-concave corner where the cavity is
+    # nearly a crack pierced by a needle. 600 samples is 8.4 points per
+    # dimension, and it showed: 4.0e-2 worst block error where the transport
+    # model on a two-dimensional box reaches 3.7e-3. The teacher is not the
+    # limit — its own mesh convergence is 1.5e-3 between `nradial` 8 and 20,
+    # forty times below the fit — so the samples are.
+    1400, 400,
+    NI.TrainingOptions(;
+        hidden = [64, 64], epochs = 20_000, batchsize = 64, log_threshold = 5.0
+    ),
     atol = 1.0e-6,
     reference = (box, x) -> NI._iso_ref(x[NI.feature_index(box, :nu0)]),
     notes = "𝔸_εε of a superspheroidal cavity on the six Walpole coefficients " *

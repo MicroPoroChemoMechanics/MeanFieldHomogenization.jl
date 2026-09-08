@@ -110,3 +110,16 @@ smaller, are what the fit contributes over most of the domain. Adding samples
 makes the worst case *rise* rather than fall, because a denser sample reaches
 further into the concave corner; that is a property of the teacher, and hiding
 it by sampling less would be dishonest.
+
+## `axi_supershape_pore_conduction`
+
+- features: `log_aspect`, `log_p`
+- network: MLP(2→48→48→2, tanh, tanh, identity)
+- samples: 500 train, 150 held out
+- output scaling: `log` on both rows (`log_threshold = 5`)
+- worst held-out error, relative to the tensor magnitude: **3.724e-03**
+
+| component | max rel. err | rms rel. err |
+| --- | ---: | ---: |
+| `a` | 2.018e-04 | 5.325e-05 |
+| `b` | 3.724e-03 | 4.227e-04 |

@@ -247,16 +247,30 @@ rather than hard-coding a literal, so a retraining cannot silently loosen a
 threshold. Per-component diagnostics are in
 `src/NeuralInclusions/models/training_report.md`.
 
-**The last two rows are not like the others, and the gap is not a failure of
-the fit.** Every model above them learns from an *analytic* Hill tensor, so its
-labels are exact and the quoted error is the network's alone. The two
-supershape models learn from a **finite-element cell**, whose own departure
-from the symmetry class reaches ``1.5\times10^{-2}`` at ``p = 0.35`` — and does
-not improve with refinement, the field at the conical points being singular.
-Their worst case is therefore the mesh's, not the network's: the rms error is an
-order of magnitude smaller, and the training report carries both. A denser
-sample makes the worst case *rise*, because it reaches further into the concave
-corner; sampling less would hide that rather than fix it.
+**The last four rows are not like the others**: they learn from a
+**finite-element cell** rather than from an analytic Hill tensor, so their error
+is not all the network's. Which part of it is depends on the family, and the two
+cases are worth keeping apart.
+
+For the **cubic** pair the worst case is the *teacher's*. A cell solve departs
+from cubic symmetry by ``1.5\times10^{-2}`` at ``p = 0.35`` and does not improve
+with refinement, the field at the conical points being singular; the rms error is
+an order of magnitude below the worst case, and the training report carries both.
+A denser sample makes the worst case *rise*, because it reaches further into the
+concave corner; sampling less would hide that rather than fix it.
+
+For the **axisymmetric** pair it is the *fit's*, transverse isotropy being
+structural there. Two things earned the accuracy, and neither was a bigger
+network. The teacher first: a concave superspheroid closes at the equator as a
+wedge, and elements that straddle a gap twenty-five times thinner than themselves
+put ``R_{33}`` **1.2 %** off — hence the graded meridian mesh. Then the fit, where
+two defaults had to be stated rather than inherited. ``R_{33}`` runs from
+``1.66`` at ``p = 0.6`` to ``15.0`` at ``p = 0.20``, near-diverging as the body
+tends to a crack pierced by a needle, so `log_threshold = 5` is needed for the
+output to be fitted in ``\log`` at all, and the features are `log_p` and
+`log_aspect` because a `SampleBox` is linear and the feature therefore *is* the
+sampling law. Measured, one lever at a time: ``2.3\times10^{-2}`` →
+``7.1\times10^{-3}`` → ``3.7\times10^{-3}``.
 
 Note the affine row: the affine factorization is **twelve times more accurate**
 than the generic one, on a network of the same size, because it does not spend
@@ -316,12 +330,22 @@ derivative(rve, Dilute(), geometry(:pores, :p))
 The same call on a meshed pore raises, and the suite pins both halves of that
 contrast.
 
-**Two models ship for this route**, `supershape_pore_conduction` and
-`supershape_pore_elastic`, trained by `scripts/nn/train_supershape.jl` against
-the octant cell — which is what makes a training set of several hundred
-finite-element solves a matter of minutes rather than hours. Their accuracy is
-bounded by the teacher's own, not by the fit; see
-[the table above](@ref man-neural-models).
+**Four models ship for this route**, all trained by
+`scripts/nn/train_supershape.jl`: two for the **cubic** supersphere against the
+octant cell, and two for the **axisymmetric** superspheroid against the
+[Fourier cell](@ref man-fe-inclusions). Reducing the teacher is what makes a
+training set of several hundred finite-element solves a matter of minutes rather
+than hours — the octant divides the three-dimensional cost by eight, and going
+to two dimensions divides it again by orders of magnitude.
+
+The two families are limited by different things, and the distinction matters
+when reading [the table above](@ref man-neural-models). The **cubic** models are
+bounded by the teacher: a whole-cell solve departs from cubic symmetry by
+``1.5\times10^{-2}`` at ``p = 0.35`` and does not improve with refinement, the
+field at the conical points being singular. The **axisymmetric** models are not:
+transverse isotropy there is *structural*, the Fourier modes decoding straight
+onto the Kelvin basis, so the class residual is round-off and the quoted error is
+the fit's own.
 
 The suite additionally checks the whole path against a *synthetic* closed-form
 cubic teacher — dataset, fit, decode, inclusion, schemes, and the derivative

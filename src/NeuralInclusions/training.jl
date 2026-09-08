@@ -42,6 +42,13 @@ struct TrainingOptions
     patience::Int
     seed::Int
     verbose::Bool
+    # Dynamic range above which a positive output row is fitted in `log`.
+    # Passed to `fit_scaling`, whose default of 30 was calibrated on components
+    # that span decades. A quantity spanning a single order of magnitude but
+    # *near-diverging* at one edge of the box needs a lower one: with identity
+    # scaling the loss is dominated by the large values and the relative error
+    # elsewhere is whatever is left over.
+    log_threshold::Float64
 end
 
 function TrainingOptions(;
@@ -54,6 +61,7 @@ function TrainingOptions(;
         patience::Integer = 250,
         seed::Integer = 20260730,
         verbose::Bool = true,
+        log_threshold::Real = 30.0,
     )
     all(>(0), hidden) || throw(ArgumentError("hidden widths must be positive"))
     epochs > 0 || throw(ArgumentError("`epochs` must be positive"))
@@ -61,6 +69,8 @@ function TrainingOptions(;
     0 < learning_rate || throw(ArgumentError("`learning_rate` must be positive"))
     0 < decay ≤ 1 || throw(ArgumentError("`decay` must lie in (0, 1]"))
     patience > 0 || throw(ArgumentError("`patience` must be positive"))
+    log_threshold > 1 ||
+        throw(ArgumentError("`log_threshold` must exceed 1, got $log_threshold"))
     # Reject an unknown activation here rather than at evaluation time. The
     # table holds smooth functions only, on purpose: a kink in the activation is
     # a kink in ℙ, hence a wrong sensitivity — a silent error, not a crash.
@@ -72,7 +82,8 @@ function TrainingOptions(;
     )
     return TrainingOptions(
         collect(Int, hidden), activation, Int(epochs), Int(batchsize),
-        Float64(learning_rate), Float64(decay), Int(patience), Int(seed), verbose
+        Float64(learning_rate), Float64(decay), Int(patience), Int(seed), verbose,
+        Float64(log_threshold)
     )
 end
 
@@ -165,11 +176,25 @@ function report_surrogate(
         io, "surrogate :", spec_name(s.output), "/:", class_name(s.output.class),
         " — ", nsamples(data), " held-out samples"
     )
+    # A component that changes sign inside the held-out set has no scale of its
+    # own to be relative to: near its zero crossing any absolute error is an
+    # arbitrarily large relative one, and the column then says nothing about the
+    # fit. Flagged rather than hidden — the block figure is the one to read for
+    # those, and a reader who is not told will read the column anyway.
+    signflip = [!all(>(0), view(data.Z, i, :)) && !all(<(0), view(data.Z, i, :)) for i in 1:nz]
     println(io, "  component        max rel.err     rms rel.err")
     for i in 1:nz
-        @printf(io, "  %-14s   %10.3e      %10.3e\n", names[i], v.max_rel_error[i], v.rms_rel_error[i])
+        @printf(io, "  %-14s   %10.3e      %10.3e", names[i], v.max_rel_error[i], v.rms_rel_error[i])
+        println(io, signflip[i] ? "   (crosses zero — read the block figure)" : "")
     end
     @printf(io, "  worst relative to the tensor magnitude: %.3e\n", v.max_block_error)
+    if any(signflip)
+        println(
+            io, "  note: ", count(signflip), " of ", nz,
+            " components change sign over the held-out set, so their relative",
+        )
+        println(io, "  columns are not a measure of the fit there.")
+    end
     return v
 end
 

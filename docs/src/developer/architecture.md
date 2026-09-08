@@ -94,7 +94,7 @@ sub-module is for, but what it puts in the namespace.
 | `Poromechanics`    | Biot coefficient tensor and skeleton modulus of a porous or cracked cell                            |
 | `Viscoelasticity`  | ageing linear viscoelasticity (Volterra pipeline, ALV variant of every scheme)                      |
 | `CustomInclusions` | the user-defined inclusion contract: `CustomInclusion`, `check_inclusion_interface`                 |
-| `FiniteElements`   | inclusions solved by finite elements (`FEEllipticCrack`, `FEExcenteredSphere`); the physics lives here, the discretization in a backend extension (`MeanFieldHomogenizationFerriteExt`, `MeanFieldHomogenizationGridapExt`) |
+| `FiniteElements`   | inclusions solved by finite elements (`FEEllipticCrack`, `FEExcenteredSphere`, `FESupershapePore`, `FEAxiSupershapePore`); the physics lives here, the discretization in a backend extension (`MeanFieldHomogenizationFerriteExt`, `MeanFieldHomogenizationGridapExt`) |
 | `NeuralInclusions` | inclusions answered by a trained network, with the sampling/fitting machinery; the training optimizer lives in `MeanFieldHomogenizationLuxExt` |
 | `Constitutive`     | the Gauss-point contract of the [finite-element coupling](@ref fe-coupling): `material_response`, the shipped materials, the state types; the Ferrite glue in `MeanFieldHomogenizationFerriteMaterialExt` |
 

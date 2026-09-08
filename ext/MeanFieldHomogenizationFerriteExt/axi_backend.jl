@@ -74,7 +74,9 @@ function FE.fe_axi_grid(
     local grid
     try
         gmsh.option.setNumber("General.Terminal", 0)
-        FE._build_gmsh_axi_pore_model(gmsh, incl.shape, R, h_in, h_out, opts.nprofile)
+        FE._build_gmsh_axi_pore_model(
+            gmsh, incl.shape, R, h_in, h_out, opts.nprofile, opts.tip_refine
+        )
         grid = FerriteGmsh.togrid()
     finally
         gmsh.finalize()

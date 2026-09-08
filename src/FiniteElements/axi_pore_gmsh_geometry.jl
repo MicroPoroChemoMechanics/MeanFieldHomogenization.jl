@@ -81,16 +81,17 @@ end
 Build and mesh the meridian half-plane: one region of matrix between the
 superspheroidal cavity and the outer circle of radius `R`.
 
-Element size is `h_in` on the cavity wall and `h_out` on the outer boundary,
-gmsh interpolating in between — per-point sizing, exactly as
-`_build_gmsh_axi_model`, with no background field.
+Element size is `h_out` on the outer boundary and **graded** along the cavity
+wall: `h_in` in the middle of the profile, down to `h_in / tip_refine` at its two
+corners. Per-point sizing, as in `_build_gmsh_axi_model`, with no background
+field — but not uniform, for the reason set out at the grading itself.
 
 The gmsh **module** is passed in rather than imported, and the caller owns
 `initialize` / `finalize`.
 """
 function _build_gmsh_axi_pore_model(
         gmsh, shape::Superspheroid, R::Float64, h_in::Float64, h_out::Float64,
-        nprofile::Integer = 61,
+        nprofile::Integer = 61, tip_refine::Real = 16.0,
     )
     gmsh.model.add("mfh_axi_supershape_pore")
     geo = gmsh.model.geo
@@ -98,24 +99,50 @@ function _build_gmsh_axi_pore_model(
 
     prof = _superspheroid_meridian(shape, nprofile)      # equator → pole
 
+    # Graded element size along the profile, and this is not cosmetic. A
+    # concave superspheroid is a **wedge** at its equator: at `c/a = 0.5`,
+    # `p = 0.4` the half-gap one per cent in from the equator is `0.0012 a`,
+    # against `h_in = 0.031 a` at `nradial = 32`. One element then spans the
+    # whole wedge, the geometry is unresolved, and the component that loads
+    # across it — `R₃₃`, the mode-0 answer — stops converging: measured
+    # increments of `4.4e-3` then `3.7e-3` refining 12 → 20 → 32, while `R₁₁`
+    # fell as `4e-4` then `1.5e-4` on the same meshes.
+    #
+    # `min(ρ, z)` is the local feature size, vanishing at the equator (where the
+    # wedge closes) and at the pole (where the cone tips), and `O(a)` in
+    # between. The same idea as the crack mesher's tip refinement, for the same
+    # reason.
+    # And only for a **concave** shape, which is not a heuristic. Near the
+    # equator the profile is `z ≈ c(1 − ρ/a)^{1/m}`: for `m < 1` the exponent
+    # exceeds one, so it comes in *tangent* to the equatorial plane and closes as
+    # a wedge; for `m > 1` it arrives with infinite slope, which is the smooth
+    # case a circle exhibits at `m = 2`. The pole behaves the same way. So the
+    # grading is needed exactly when `2p < 1` — `is_concave` — and applying it to
+    # a convex profile buys nothing and costs a ninefold element count.
+    graded = is_concave(shape)
+    hscale = max(Float64(shape.a), Float64(shape.c))
+    hfloor = graded ? h_in / tip_refine : h_in
+    hprof(ρ, z) = graded ?
+        clamp(2 * h_in * min(ρ, z) / hscale, hfloor, h_in) : h_in
+
     # Center of the outer arcs.
     c_out = geo.addPoint(0.0, 0.0, 0.0, h_out)
 
     # Axis points, top to bottom. The cavity's poles are at ±c, not ±a.
     p_out_t = geo.addPoint(0.0, R, 0.0, h_out)
-    p_inc_t = geo.addPoint(0.0, c, 0.0, h_in)
-    p_inc_b = geo.addPoint(0.0, -c, 0.0, h_in)
+    p_inc_t = geo.addPoint(0.0, c, 0.0, hfloor)
+    p_inc_b = geo.addPoint(0.0, -c, 0.0, hfloor)
     p_out_b = geo.addPoint(0.0, -R, 0.0, h_out)
 
     # Equator points.
     p_out_e = geo.addPoint(R, 0.0, 0.0, h_out)
-    p_inc_e = geo.addPoint(prof[1][1], 0.0, 0.0, h_in)
+    p_inc_e = geo.addPoint(prof[1][1], 0.0, 0.0, hfloor)
 
     # Interior control points of the profile, upper and lower half. They are
     # spline controls, not mesh vertices: only the endpoints of a curve are
     # meshed, so a generous sampling costs nothing.
-    up = [geo.addPoint(ρ, z, 0.0, h_in) for (ρ, z) in prof[2:(end - 1)]]
-    lo = [geo.addPoint(ρ, -z, 0.0, h_in) for (ρ, z) in prof[2:(end - 1)]]
+    up = [geo.addPoint(ρ, z, 0.0, hprof(ρ, z)) for (ρ, z) in prof[2:(end - 1)]]
+    lo = [geo.addPoint(ρ, -z, 0.0, hprof(ρ, z)) for (ρ, z) in prof[2:(end - 1)]]
 
     # Axis segments, oriented downwards.
     l_ax_t = geo.addLine(p_out_t, p_inc_t)

@@ -243,20 +243,76 @@ const AXI = FEAxiMeshOptions(; nradial = 28, radius_ratio = 6.0)
 
 # A subset of their Table B.1 and B.4, for comparison. Seven of eighteen rows,
 # spanning the concave range they study and their `p = 1` control.
+# Table B.1 in full, all eighteen rows, transcribed from the paper. Their own
+# mesh-convergence check is Table B.3, and it is the honest yardstick for any
+# comparison: between their two meshes the components move by up to 2.50 % at
+# `p = 0.30` (on `H₁₁₃₃`) and 0.4 % on `H₃₃₃₃`, so agreement closer than that
+# is agreement to within their own resolution.
 const THEIR_H = Dict(          # p => (H₁₁₁₁, H₁₁₂₂, H₁₁₃₃, H₃₃₃₃, H₁₃₁₃)
+    0.20 => (1.887796, -0.477459, -0.964299, 27.731870, 8.024717),
+    0.25 => (1.808015, -0.419517, -0.842265, 12.354200, 3.654240),
     0.30 => (1.819960, -0.420280, -0.783590, 7.405500, 2.558693),
+    0.33 => (1.840120, -0.421878, -0.739390, 5.895420, 1.901430),
+    0.35 => (1.854860, -0.424255, -0.720632, 5.217026, 1.742868),
     0.40 => (1.894290, -0.434329, -0.681435, 4.065400, 1.506599),
+    0.45 => (1.918003, -0.443068, -0.642262, 3.352013, 1.388400),
     0.50 => (1.937640, -0.451064, -0.611918, 2.916446, 1.323735),
+    0.55 => (1.952870, -0.459580, -0.587291, 2.639410, 1.289338),
     0.60 => (1.963770, -0.466431, -0.568153, 2.456980, 1.269780),
+    0.65 => (1.973077, -0.472413, -0.553477, 2.332502, 1.269780),
     0.70 => (1.979451, -0.477634, -0.541160, 2.241809, 1.258690),
+    0.75 => (1.984812, -0.482264, -0.531049, 2.174690, 1.252894),
+    0.80 => (1.989424, -0.486274, -0.522567, 2.122560, 1.251279),
     0.85 => (1.993319, -0.489852, -0.515269, 2.081938, 1.250837),
+    0.90 => (1.996558, -0.492969, -0.508869, 2.049180, 1.250650),
+    0.95 => (1.999258, -0.496250, -0.501454, 2.027340, 1.250050),
     1.00 => (2.001203, -0.498053, -0.498057, 2.001212, 1.249900),
 )
+
+# Their Table B.3, the relative change between their two meshes, kept alongside
+# so a discrepancy can be compared against their own uncertainty rather than
+# against zero. Same column order as `THEIR_H`, in percent.
+const THEIR_H_MESH_PCT = Dict(
+    0.20 => (0.21, 0.46, 0.17, 0.41, 0.42),
+    0.25 => (0.07, 0.18, 1.32, 0.43, 0.33),
+    0.30 => (0.33, 0.42, 2.50, 0.10, 0.83),
+    0.33 => (0.02, 0.06, 1.47, 0.44, 0.31),
+    0.35 => (0.01, 0.04, 0.11, 0.40, 0.27),
+    0.40 => (0.00, 0.01, 0.13, 0.40, 0.16),
+    0.45 => (0.00, 0.00, 0.11, 0.29, 0.07),
+    0.50 => (0.01, 0.00, 0.11, 0.21, 0.06),
+    0.55 => (0.01, 0.01, 0.07, 0.16, 0.02),
+    0.60 => (0.01, 0.01, 0.05, 0.08, 0.02),
+    0.65 => (0.02, 0.02, 0.04, 0.05, 0.91),
+    0.70 => (0.01, 0.01, 0.02, 0.03, 0.18),
+    0.75 => (0.01, 0.01, 0.04, 0.04, 0.23),
+    0.80 => (0.01, 0.01, 0.02, 0.02, 0.22),
+    0.85 => (0.01, 0.01, 0.02, 0.02, 0.11),
+    0.90 => (0.01, 0.01, 0.01, 0.01, 0.06),
+    0.95 => (0.27, 0.03, 0.02, 0.02, 0.02),
+    1.00 => (0.00, 0.00, 0.00, 0.00, 0.04),
+)
+
+# Table B.4 in full, seventeen rows — they report `p = 0.35` here where the
+# compliance table also carries `p = 0.33`.
 const THEIR_R = Dict(          # p => (R₁₁, R₃₃)
-    0.30 => (1.64000000, 3.939221), 0.40 => (1.52899800, 2.289616),
-    0.50 => (1.50630000, 1.832213), 0.60 => (1.50589500, 1.662567),
-    0.70 => (1.50912600, 1.587973), 0.85 => (1.50890400, 1.523779),
-    1.00 => (1.50124400, 1.496256),
+    0.20 => (2.024681, 15.1971865),
+    0.25 => (1.715557, 6.631911),
+    0.30 => (1.640000, 3.939221),
+    0.35 => (1.548567, 2.823389),
+    0.40 => (1.528998, 2.289616),
+    0.45 => (1.511922, 1.999021),
+    0.50 => (1.506300, 1.832213),
+    0.55 => (1.505546, 1.728305),
+    0.60 => (1.505895, 1.662567),
+    0.65 => (1.507544, 1.616467),
+    0.70 => (1.509126, 1.587973),
+    0.75 => (1.509902, 1.559419),
+    0.80 => (1.509923, 1.539122),
+    0.85 => (1.508904, 1.523779),
+    0.90 => (1.507043, 1.509388),
+    0.95 => (1.507253, 1.505122),
+    1.00 => (1.501244, 1.496256),
 )
 
 "Compliance and resistivity contribution of the axisymmetric cavity."
@@ -292,15 +348,25 @@ end
 println("\n", "="^78)
 println("Compliance contribution against their Table B.1")
 println("-"^78)
-@printf "%-6s %-22s %-22s %s\n" "p" "H1111  (this / theirs)" "H3333  (this / theirs)" "H1313  (this / theirs)"
+@printf "%-6s %-22s %-22s %-22s %s\n" "p" "H1111  (this/theirs)" "H3333  (this/theirs)" "H1313  (this/theirs)" "worst dev / their mesh"
+# One solve per `p`, reused by both tables. Their two tables do not carry the
+# same abscissae — B.1 has `p = 0.33`, B.4 has `p = 0.35` — so the union is
+# solved once and each table reads the rows it has.
+const AXI_P = sort(collect(union(keys(THEIR_H), keys(THEIR_R))))
 const AXI_MEASURED = Dict{Float64, Any}()
+for p in AXI_P
+    AXI_MEASURED[p] = axi_contributions(p)
+end
 for p in sort(collect(keys(THEIR_H)))
-    c = axi_contributions(p)
-    AXI_MEASURED[p] = c
-    H = Matrix(KM(c.H))
+    H = Matrix(KM(AXI_MEASURED[p].H))
     t = THEIR_H[p]
     # Kelvin-Mandel carries a factor 2 on the shear block.
-    @printf "%-6.2f %8.4f /%8.4f     %8.4f /%8.4f     %8.4f /%8.4f\n" p H[1, 1] t[1] H[3, 3] t[4] H[5, 5] / 2 t[5]
+    mine = (H[1, 1], H[1, 2], H[1, 3], H[3, 3], H[5, 5] / 2)
+    dev = maximum(abs(mine[i] - t[i]) / abs(t[i]) for i in 1:5)
+    # The same five, as their own mesh study reports them: a deviation below
+    # this is a deviation inside their resolution.
+    theirs = maximum(THEIR_H_MESH_PCT[p]) / 100
+    @printf "%-6.2f %8.4f /%8.4f     %8.4f /%8.4f     %8.4f /%8.4f     %5.2f %% (%.2f %%)\n" p H[1, 1] t[1] H[3, 3] t[4] H[5, 5] / 2 t[5] (100 * dev) (100 * theirs)
     flush(stdout)
 end
 
@@ -311,7 +377,25 @@ println("-"^78)
 for p in sort(collect(keys(THEIR_R)))
     R = Matrix(get_array(AXI_MEASURED[p].R))
     t = THEIR_R[p]
-    @printf "%-6.2f %8.4f /%8.4f    %8.4f /%8.4f\n" p R[1, 1] t[1] R[3, 3] t[2]
+    @printf "%-6.2f %8.4f /%8.4f (%+6.2f %%)   %8.4f /%8.4f (%+6.2f %%)\n" p R[1, 1] t[1] (
+        100 * (R[1, 1] - t[1]) / t[1]
+    ) R[3, 3] t[2] (100 * (R[3, 3] - t[2]) / t[2])
+end
+
+# The two tables, as delimited text, so the figure generator plots exactly the
+# numbers this run produced rather than a transcription of them.
+let path = joinpath(tempdir(), "axi_vs_sevostianov.csv")
+    open(path, "w") do io
+        println(io, "p,H1111,H1122,H1133,H3333,H1313,R11,R33")
+        for p in AXI_P
+            H = Matrix(KM(AXI_MEASURED[p].H))
+            R = Matrix(get_array(AXI_MEASURED[p].R))
+            @printf io "%.2f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f\n" p H[1, 1] H[1, 2] H[1, 3] H[3, 3] (
+                H[5, 5] / 2
+            ) R[1, 1] R[3, 3]
+        end
+    end
+    println("\nwrote ", path)
 end
 
 println("\n", "="^78)

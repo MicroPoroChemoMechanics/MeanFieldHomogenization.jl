@@ -438,9 +438,15 @@ what you get for the cost:
   exterior perturbation being a pure dipole with no higher multipole for the
   corrected condition to truncate.
 
-Two things to know before turning the knobs. `radius_ratio` multiplies the
+Three things to know before turning the knobs. `radius_ratio` multiplies the
 **bounding radius**, as for the three-dimensional cell, so an elongated shape
-does not end up with its boundary at ``1.2c``. And what remains after the
+does not end up with its boundary at ``1.2c``. The meridian profile is **graded**
+towards its two corners for a concave shape — `nprofile` sets how finely it is
+sampled, `tip_refine` how much the elements shrink at the equatorial crease and
+the poles — because a concave superspheroid closes at the equator as a wedge
+whose half-gap is a fraction of a percent of ``a``, and uniform elements there put
+``R_{33}`` **1.2 %** off while ``R_{11}`` converges cleanly. A convex profile is
+meshed uniformly, needing none of it. And what remains after the
 correction in elasticity is **truncation, not discretization**: refining
 `nradial` past 20 changes little, while going from ``R/a = 4`` to ``6`` divides
 the error by seven. `fe_axi_pore_breakdown` returns the uncorrected answer

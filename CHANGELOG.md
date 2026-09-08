@@ -90,6 +90,105 @@ identically, so no root find and no quadrature enter the geometry, and the tests
 check that `level_set` returns zero on every sampled point rather than assuming
 it.
 
+### A graded mesh at the crease, worth 1.2 % on the answer
+
+Uniform elements along the meridian were not enough, and the symptom was
+specific: `R₃₃` — mode 0, the field pushed along the axis — stopped converging
+while `R₁₁` from mode 1 converged cleanly. A concave superspheroid closes at the
+equator as a **wedge**: at `p = 0.3, c/a = 0.6` the half-gap is `0.0012a` where a
+uniform element is `0.031a`, so the elements nearest the crease straddled a gap
+twenty-five times thinner than themselves. Grading the element size linearly in
+the distance to the two corners — gated on `is_concave`, a convex profile needing
+none of it — took the refinement increment from `4.4e-3` / `3.7e-3` to `3.8e-4` /
+`1.9e-4`, and the ungraded value was **1.2 % wrong**, not merely unconverged.
+
+The hypothesis that a concave enough `p` has no admissible mesh at all, and would
+need extrapolation, was **measured and refuted**: the minimum mesh angle stays
+between 33.8° and 39.5° all the way down to `p = 0.20`, with refinement
+increments of `1e-4` to `1e-3`. There is no floor, no degenerate element and no
+Richardson step. What the measurement did find is the subject of the next
+section.
+
+### Where the surrogate error actually came from
+
+The first axisymmetric models were mediocre — `2.3e-2` worst case, where the
+analytic-teacher models reach `1e-4` — and none of the three obvious levers
+helped. More samples bought a factor 1.7 and then stalled; the graded mesh above
+bought nothing on the fit, because it corrects the teacher's *value* rather than
+its *shape*; narrowing the sample box made the worst case **worse** while the rms
+improved, which is what a few extreme samples carrying the maximum looks like.
+
+The cause was in neither the mesh nor the network. `R₃₃` runs from `1.66` at
+`p = 0.6` to `15.0` at `p = 0.20`, near-diverging as the body tends to a crack
+pierced by a needle, and two defaults were calibrated for quantities that do not
+do that:
+
+- `fit_scaling`'s `log_threshold` of 30 declined to fit the output in `log`,
+  because a factor of nine is not decades. With identity scaling the loss is
+  dominated by the large values and the relative error elsewhere is whatever is
+  left over. Hence `TrainingOptions(; log_threshold)`, set to 5 for these two
+  models: `2.3e-2` → `7.1e-3`.
+- A `SampleBox` is **linear**, so the feature *is* the sampling law. Uniform in
+  `p`, most of the budget lands where the response is flat. Hence the `:log_p`
+  feature beside `:p` (and `:log_aspect` read off a pore's own parameters):
+  `7.1e-3` → `3.7e-3`, with `R₁₁` at `2.0e-4`.
+
+A factor of six on the transport model, none of it from a bigger network. Both
+knobs are now named and documented rather than implicit in a default, which is
+the point: the defaults were not wrong, they were calibrated on a different kind
+of quantity.
+
+The elastic model needed something else, and measuring said which. Its box is
+three-dimensional and `ℓ₁` runs from 1.4 to 63 across it — near-diverging in the
+flat-and-concave corner, where the cavity is nearly a crack pierced by a needle —
+so 600 samples is 8.4 points per dimension and it showed. The teacher was ruled
+out first: its own mesh convergence is `1.5e-3` between `nradial` 8 and 20, forty
+times below the fit, so the samples were the limit and the count was raised.
+
+Two side effects of that diagnosis are worth having. `ℓ₃` and `ℓ₄` pass within
+`2e-4` of **zero** inside the box, so their per-component *relative* error is not
+a meaningful number there — the block-norm figure is the one to read, and the
+report now says so. And a finite-element dataset is now **cached** between runs,
+keyed on everything the labels depend on, so iterating on a fit costs minutes
+instead of the hour the solves take.
+
+### Against the paper's own tables, all thirty-five rows
+
+Their Table B.1 (eighteen rows, five components) and Table B.4 (seventeen rows,
+two) are transcribed in full and plotted against the cell, in `E₀ℍ` and `k₀𝑹` as
+they report them. The material is nowhere in the paper and is **inferred** from
+its own `p = 1` row, where the body is an exact sphere: `E₀ = 1`, `ν₀ = 1/3`,
+`k₀ = 1`, residual 0.06 %.
+
+**Four of the five compliance components and the axial resistivity agree across
+the whole range.** `H₃₃₃₃` is the demanding one — it runs from 2.00 at the sphere
+to 27.7 at `p = 0.20` — and agrees to 0.72 % at worst, 0.19 % at the most concave
+row. That is two independent finite-element formulations, theirs
+three-dimensional on a million nodes and this one two-dimensional on sixty
+thousand, landing on the same five-constant tensor for a shape family with no
+closed form.
+
+Three things do not agree, and they are of three kinds.
+
+`k₀R₁₁` disagrees in **trend**: theirs rises with concavity, ours falls, 37 % at
+`p = 0.20`. Ours was checked before it was published — invariant to six figures
+across `radius_ratio` from 4 to 10 and `nradial` from 20 to 28 — and then checked
+*again* by a route with nothing in common, the three-dimensional octant cell on
+the same shape, which lands 0.13 % away and converges towards it from below.
+Their own control row is 0.08 % off at the sphere, where the answer is `3/2`
+exactly.
+
+Their transverse block **reverses direction** below `p = 0.30` (`H₁₁₁₁` 1.8878,
+then 1.8080, then 1.8200) where ours is monotone; and their `H₁₃₁₃` at
+`p = 0.65` is identical to six decimals to their `p = 0.60` row, on the very row
+their own Table B.3 flags with its largest change in that column.
+
+The same comparison carries a counter-check that runs the other way, and it is
+in the docs for that reason: on `H₃₃₃₃` *our* octant at level 4 is 4 % below our
+two-dimensional value and still climbing, while theirs is 0.16 % from it.
+Three-dimensional meshes converge from below on that component; their mesh got
+there and our level 4 did not.
+
 ### And the surrogate, because otherwise there is no sensitivity
 
 `GradLocTI2` is the transport class an axisymmetric cavity needs: two components,
@@ -114,7 +213,10 @@ which is the opposite of correcting silently.
 - `fe_axi_pore_boundary` — the tenth generic of the axisymmetric backend
   contract, with a Ferrite implementation.
 - `GradLocTI2`, and a `reference` keyword on `generate_dataset`.
-- `FEAxiMeshOptions(; nprofile)`, read by the axisymmetric pore alone.
+- `TrainingOptions(; log_threshold)`, forwarded to `fit_scaling`, and the
+  `:log_p` feature (with `:log_aspect` extended to a meshed pore).
+- `FEAxiMeshOptions(; nprofile, tip_refine)`, read by the axisymmetric pore
+  alone.
 - Two trained models, `axi_supershape_pore_conduction` and
   `axi_supershape_pore_elastic`.
 

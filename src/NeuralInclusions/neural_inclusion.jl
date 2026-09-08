@@ -75,6 +75,7 @@ One raw (unstandardized) feature of `incl` under reference medium `P₀`.
 | `:log_aspect` | `log(distinct axis / equal axes)` of a spheroid | `> 0` prolate, `< 0` oblate, `0` sphere |
 | `:log_r2` | `log(a₂/a₁)` of a sorted ellipsoid | `≤ 0` |
 | `:log_r32` | `log(a₃/a₂)` of a sorted ellipsoid | `≤ 0` |
+| `:log_p` | `log` of a supershape's concavity exponent | `< 0` concave, `0` the ellipsoidal control |
 | `:nu0` | Poisson ratio of the isotropic reference medium | |
 
 Three conventions here are load-bearing, and each of them is a bug if broken.
@@ -82,6 +83,15 @@ Three conventions here are load-bearing, and each of them is a bug if broken.
 **The logarithm** is not cosmetic: an aspect ratio's interesting range spans
 decades, and `ω` and `1/ω` are the same amount of anisotropy, which only the
 logarithm makes symmetric.
+
+**A `SampleBox` is linear, so the feature *is* the sampling law.** That is the
+whole reason `:log_p` exists beside `:p`, which a pore also exposes. The
+resistivity contribution of an axisymmetric concave cavity runs from `1.66` at
+`p = 0.6` to `15.0` at `p = 0.20`, near-diverging as the body tends to a crack
+pierced by a needle. Uniform in `p`, most of the sample budget lands where the
+response is flat and almost none where it turns over; uniform in `log p` it is
+spread evenly over the variation. The choice belongs to the study, not to the
+feature: `:p` remains available for a box whose response is well behaved.
 
 **`:log_aspect` is measured on the *distinct* axis**, not on a fixed slot.
 Semi-axes are stored sorted descending (as `Ellipsoid` does), so a prolate
@@ -97,6 +107,18 @@ to a triangular wedge that no `SampleBox` can express.
 _feature(::Val{:log_aspect}, incl, _P₀) = log(_spheroid_ratio(_axes(incl)))
 _feature(::Val{:log_r2}, incl, _P₀) = (a = _axes(incl); log(a[2] / a[1]))
 _feature(::Val{:log_r32}, incl, _P₀) = (a = _axes(incl); log(a[3] / a[2]))
+
+# Derived shape features of a **pore**, and the reason they exist rather than
+# `:p` and `:c` alone. A `SampleBox` is a linear box, so the feature *is* the
+# sampling law. `R₃₃` of an axisymmetric cavity runs from 1.66 at `p = 0.6` to
+# 15.0 at `p = 0.20`, near-diverging as the body tends to a crack pierced by a
+# needle: uniform in `p` spends most of the budget where nothing happens and
+# starves the end where everything does. Uniform in `log p` does not.
+#
+# `:log_aspect` gets a pore-specific method further down, next to the other
+# `pore_shape_params` readers, so that a superspheroid and a spheroid are
+# described by the same feature name with zero at the equiaxed case in both.
+_feature(::Val{:log_p}, incl, _P₀) = log(_shape_param(incl, :p))
 
 function _feature(::Val{:nu0}, _incl, P₀::TensND.TensISO{4, 3})
     _, nu = Elasticity.E_nu(P₀)
@@ -660,7 +682,14 @@ function FiniteElements._check_pore_surrogate(
             )
         )
     )
-    allowed = (propertynames(FiniteElements.pore_shape_params(shape))..., :nu0)
+    # The shape's own parameters, `:nu0`, and the derived features computed from
+    # them — a linear `SampleBox` makes the feature the sampling law, so a
+    # logarithm is sometimes the only way to spend the samples where the
+    # response varies.
+    allowed = (
+        propertynames(FiniteElements.pore_shape_params(shape))...,
+        :nu0, :log_p, :log_aspect,
+    )
     for f in s.features
         f in allowed || throw(
             ArgumentError(
@@ -694,3 +723,10 @@ function _shape_param(pore::_PoreWithSurrogate, name::Symbol)
     ps = FiniteElements.pore_shape_params(pore)
     return haskey(ps, name) ? getproperty(ps, name) : nothing
 end
+
+# `:log_aspect` on a pore. The generic method reads the semi-axes off
+# `inclusion_basis`/`semi_axes`, which a meshed pore does not carry, so it is
+# read off the shape parameters instead — `log(c/a)`, the same distinct-over-equal
+# convention as for a spheroid, zero at the equiaxed case.
+_feature(::Val{:log_aspect}, pore::_PoreWithSurrogate, _P₀) =
+    log(_shape_param(pore, :c) / _shape_param(pore, :a))
