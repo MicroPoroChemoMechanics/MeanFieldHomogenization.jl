@@ -463,7 +463,7 @@ comparison against the literature is in
 solves `N` nested coaxial spheroids in an isotropic matrix. Layers are given by
 their **semi-axes**, per layer, ascending — the same `(axis_radii, disk_radii)`
 pair
-[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroid) takes, in the
+[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid) takes, in the
 same order — so one description builds the finite-element object and the analytic
 one:
 

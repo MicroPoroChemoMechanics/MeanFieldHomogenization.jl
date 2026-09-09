@@ -15,7 +15,7 @@ package already carries. The method is
 ## Why mesh a body that has a closed form
 
 Because most of them do not. The confocal multilayer spheroid has an analytic
-solution — [`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroid),
+solution — [`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid),
 in both physics — and a nest of spheroids with **freely chosen** semi-axes has
 none. The finite-element cell covers both, which means the case with a closed
 form is not a demonstration but a **calibration**: it is where the solver can be
@@ -28,7 +28,7 @@ fix how much to trust the cell. Then the geometry no closed form reaches.
 
 Layers are given by their **semi-axes**, per layer, ascending: the same
 `(axis_radii, disk_radii)` pair
-[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroid) takes, in the
+[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid) takes, in the
 same order. One call produces them and both inclusions consume them:
 
 ```julia
@@ -83,7 +83,7 @@ sphere:
 
 The left panel sweeps the outer aspect ratio from ``\omega = 0.3`` to ``3``,
 **oblate through the sphere to prolate**, against
-[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroid). Both branches
+[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid). Both branches
 of that solution are exercised on one curve, and deliberately: the oblate branch
 runs the whole computation in complex arithmetic — the substitution
 ``c \to -i\bar c``, ``q \to i\tau`` — and relies on an exact cancellation of the
@@ -92,7 +92,7 @@ the easy one. The two components cross at ``\omega = 1``, where the body is a
 sphere and the response is isotropic; nothing in the cell enforces that.
 
 The middle panel is **concentric spheres of arbitrary radii**, against
-[`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSphere). This slice is not
+[`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere). This slice is not
 confocal at all, which is what makes it valuable: it covers an arbitrary layer
 count and freely chosen radii without assuming the confocal relation anywhere.
 
@@ -343,7 +343,7 @@ finite-element cell implements `PerfectInterface` only. …
 That is the next piece of work, and it is a whole one: a new backend generic,
 node duplication on the interface trace, and the local normal/tangent frame
 along a curved meridian. Note that the analytic side is not complete either —
-[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroid) supports
+[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid) supports
 Kapitza and surface-conductive interfaces in conduction, but
 **`PerfectInterface` only** in elasticity — so an imperfect interface on a
 spheroid in elasticity is a case with no reference at all, which is exactly where

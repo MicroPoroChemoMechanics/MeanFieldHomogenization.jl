@@ -126,7 +126,7 @@ names neither the layer nor the semi-axis.
 
 `disk_radii` are the transverse semi-axes and `axis_radii` those along the
 revolution axis — the argument order
-[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroid) uses.
+[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid) uses.
 
 Consecutive layers must be **strictly** ascending in both semi-axes. Two
 coinciding boundaries pass every containment argument and carry no volume, but

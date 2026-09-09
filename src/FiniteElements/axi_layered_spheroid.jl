@@ -33,8 +33,8 @@ Fourier axisymmetric finite elements on the meridian half-plane.
 
 `axis_radii[ℓ]` and `disk_radii[ℓ]` are layer `ℓ`'s semi-axes along and across
 the revolution axis, **ascending**, core first — the argument order of
-[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroid), so
-[`confocal_layer_radii`](@ref MeanFieldHomogenization.confocal_layer_radii)
+[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid), so
+[`confocal_layer_radii`](@ref MeanFieldHomogenization.LayeredSpheroids.confocal_layer_radii)
 feeds both. `props` is one isotropic modulus tensor per layer: `Tens{4,3}` for
 elasticity, `Tens{2,3}` for transport, and the order chosen fixes the object's
 physics.
