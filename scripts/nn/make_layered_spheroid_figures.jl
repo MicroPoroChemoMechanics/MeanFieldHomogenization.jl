@@ -96,8 +96,13 @@ cdiff(f, ω, w, h) = (f(ω, w + h) - f(ω, w - h)) / 2h
 const H_AN = 1.0e-4
 const H_FE = 2.0e-2
 
-const OMEGAS = (1.25, 2.0, 3.0)
-const WS = collect(range(0.24, 0.66, length = 7))       # inside the box [0.20, 0.70]
+# The trained box is `c/a ∈ [1.25, 3]`, `w ∈ [0.20, 0.70]`. The figure sweeps
+# **inside** it, because a fit is least constrained at the boundary of its own
+# sample and its *slope* is what suffers first there. That is not hidden: the
+# boundary is measured separately below, at `c/a = EDGE_OMEGA`, and reported.
+const OMEGAS = (1.4, 2.0, 2.6)
+const EDGE_OMEGA = 3.0
+const WS = collect(range(0.24, 0.66, length = 7))
 
 println("the three routes, values and derivatives …")
 const _D() = Dict{Float64, Vector{Float64}}()
@@ -116,6 +121,14 @@ for ω in OMEGAS
     @printf("  c/a = %.2f done\n", ω)
     flush(stdout)
 end
+
+# ─── The box boundary, measured rather than avoided ──────────────────────────
+
+println("the box boundary at c/a = $EDGE_OMEGA …")
+const D_an_edge = [cdiff(A_an, EDGE_OMEGA, w, H_AN) for w in WS]
+const D_nn_edge = [ForwardDiff.derivative(w -> A_nn(EDGE_OMEGA, w), w) for w in WS]
+const V_an_edge = [A_an(EDGE_OMEGA, w) for w in WS]
+const V_nn_edge = [A_nn(EDGE_OMEGA, w) for w in WS]
 
 # ─── Cost ────────────────────────────────────────────────────────────────────
 
@@ -222,13 +235,20 @@ open(joinpath(OUT, "layered_spheroid_comparison.md"), "w") do io
     println(io, "Confocal prolate layers, `E₁/E₀ = $R1`, `E₂/E₀ = $R2`, `ν = $NU`,")
     println(io, "`nradial = $(MESH.nradial)`, `R/a = $(MESH.radius_ratio)`; the core fraction `w`")
     println(io, "swept over `[$(round(first(WS); digits = 2)), $(round(last(WS); digits = 2))]`")
-    println(io, "at `c/a ∈ {1.25, 2, 3}`. The closed form is the reference where it exists.\n")
+    println(io, "at `c/a ∈ {1.4, 2, 2.6}`, inside the trained box `[1.25, 3]`.")
+    println(io, "The closed form is the reference where it exists.\n")
     println(io, "| Quantity | vs the closed form, worst over the sweep |")
     println(io, "| --- | ---: |")
     @printf(io, "| `(𝔸_εε)₁₁₁₁`, finite elements | %.2f %% |\n", mx(V_fe, V_an))
     @printf(io, "| `(𝔸_εε)₁₁₁₁`, surrogate | %.2f %% |\n", mx(V_nn, V_an))
     @printf(io, "| `∂(𝔸_εε)₁₁₁₁/∂w`, differenced cell | %.3f %% |\n", mx(D_fe, D_an))
     @printf(io, "| `∂(𝔸_εε)₁₁₁₁/∂w`, surrogate | %.1f %% |\n", mx(D_nn, D_an))
+    println(io)
+    @printf(
+        io, "At the box boundary `c/a = %.1f`, the same two quantities: value %.2f %%, derivative %.1f %%.\n",
+        EDGE_OMEGA,
+        maximum(pct(V_nn_edge, V_an_edge)), maximum(pct(D_nn_edge, D_an_edge))
+    )
     println(io)
     println(io, "| Quantity with no closed form | surrogate vs the cell, worst |")
     println(io, "| --- | ---: |")
@@ -247,4 +267,8 @@ println("wrote ", joinpath(OUT, "layered_spheroid_comparison.md"))
 @printf(
     "\nvalues: cell %.3f %%, surrogate %.3f %%\nderivative: cell %.4f %%, surrogate %.2f %%\n",
     mx(V_fe, V_an), mx(V_nn, V_an), mx(D_fe, D_an), mx(D_nn, D_an)
+)
+@printf(
+    "at the boundary c/a = %.1f: value %.2f %%, derivative %.1f %%\n",
+    EDGE_OMEGA, maximum(pct(V_nn_edge, V_an_edge)), maximum(pct(D_nn_edge, D_an_edge))
 )

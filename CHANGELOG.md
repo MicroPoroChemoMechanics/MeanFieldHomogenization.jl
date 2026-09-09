@@ -49,8 +49,15 @@ contrasts in `[0.5, 4]`; `guard = :error` refuses a query outside the box.
 
 Read the **block error**, not the worst component: two of the six components of
 `𝔸_εε` change sign over the held-out set, so their relative columns measure
-nothing there. rms `7.3e-3`, median `3.6e-3`, p90 `1.0e-2`, worst `2.8e-2`; the
-stress side crosses no zero and is uniform, worst `2.1e-2`.
+nothing there. On 700 training solves and 100 held out: rms `2.4e-3`, median
+`1.6e-3`, p90 `4.0e-3`, worst `8.5e-3`; the stress side crosses no zero and is
+uniform, worst `9.4e-3`.
+
+The sample count was measured rather than guessed. At 400 solves the block rms
+was `7.3e-3`; at 700 it is `2.4e-3` — a factor of three for a factor of 1.75 in
+samples, so the gain is **superlinear** and 400 points genuinely under-sampled a
+box of four features. The checkpointing below is what made that experiment
+affordable: the first 400 solves were reused, not repeated.
 
 ### The derivative costs ten times the value, and that is arithmetic
 
