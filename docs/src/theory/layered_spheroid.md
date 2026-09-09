@@ -251,9 +251,9 @@ Accumulating ``S_\ell = R_\ell\cdots R_1``, imposing regularity at the core
 every layer's coefficients. This is what
 [`spheroid_state_sequence`](@ref MeanFieldHomogenization.LayeredSpheroids.spheroid_state_sequence)
 computes, and what
-[`local_temperature`](@ref MeanFieldHomogenization.LayeredSpheroids.local_temperature),
-[`local_gradient`](@ref MeanFieldHomogenization.LayeredSpheroids.local_gradient) and
-[`local_flux`](@ref MeanFieldHomogenization.LayeredSpheroids.local_flux) reconstruct
+[`local_temperature`](@ref MeanFieldHomogenization.LayeredSpheres.local_temperature),
+[`local_gradient`](@ref MeanFieldHomogenization.LayeredSpheres.local_gradient) and
+[`local_flux`](@ref MeanFieldHomogenization.LayeredSpheres.local_flux) reconstruct
 pointwise from.
 
 ## Volume-averaged concentration tensors
