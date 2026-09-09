@@ -100,7 +100,42 @@ function stress_strain_loc(
         C₀::TensND.AbstractTens{4, 3};
         kw...
     )
+    _no_generic_stress_side(incl, "stress_strain_loc", "C₁ : A_εε")
     return C₁ ⊡ strain_strain_loc(incl, C₁, C₀; kw...)
+end
+
+"""
+    _no_generic_stress_side(incl, generic, formula)
+
+Refuse the generic stress-side formula for an inclusion that declares itself
+internally heterogeneous.
+
+The warning above this has been in the docstring since the contract was written;
+this enforces it. Without the check the generic returns a number — and for a
+heterogeneous inclusion that number is wrong, by order one rather than by a
+little: measured on a two-layer confocal spheroid, `C₀ : A_εε` differs from the
+inclusion's actual average stress by 110 %.
+
+That is exactly the failure this package guards everywhere else, and it went
+unnoticed because a wrong stress side changes no *strain*-side result, so every
+test of the strain side keeps passing. It surfaced when a finite-element cell
+that measures both sides was compared against the analytic solution of the same
+body, and only the stress side disagreed — uniformly, at every aspect ratio,
+which is the signature of a wrong quantity rather than a coarse mesh.
+"""
+function _no_generic_stress_side(incl, generic::AbstractString, formula::AbstractString)
+    Core.is_homogeneous_inclusion(incl) && return nothing
+    return throw(
+        ArgumentError(
+            "`$generic` has no generic form for `$(nameof(typeof(incl)))`: it " *
+                "declares `is_homogeneous_inclusion == false`, so there is no " *
+                "single stiffness for which `$formula` holds, and its average " *
+                "stress has to be assembled from the local fields. The type must " *
+                "supply its own method — `LayeredSphere`, `FEExcenteredSphere` " *
+                "and `FEAxiLayeredSpheroid` do. Returning the generic value here " *
+                "would be wrong by order one, not by a discretization error."
+        )
+    )
 end
 
 """
@@ -207,6 +242,7 @@ function flux_gradient_loc(
         K₀::TensND.AbstractTens{2, 3};
         kw...
     )
+    _no_generic_stress_side(incl, "flux_gradient_loc", "K₁ ⋅ A_∇∇")
     return K₁ ⋅ gradient_gradient_loc(incl, K₁, K₀; kw...)
 end
 

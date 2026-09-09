@@ -5,6 +5,11 @@
 #   reverse  — every **exported** name that carries a docstring is listed in
 #              some `@docs` block, which is what `checkdocs = :exports` demands.
 #
+# and a third, on the cross-references inside docstrings:
+#
+#   qualified — a `@ref Mod.name` written in a docstring must name the module
+#               that **defines** `name`.
+#
 # The reverse one is the subtler failure: a new exported type with a good
 # docstring and no `@docs` entry is reported as a missing docstring *and* makes
 # every bare `@ref` to it unresolvable, so the build fails on a cross-reference
@@ -136,6 +141,64 @@ function unlisted_exports()
     return sort(bad; by = t -> (string(t[1]), string(t[2])))
 end
 
+"""
+    unqualified_module_refs() -> Vector
+
+Cross-references in `src/` docstrings whose module path is not the one that
+**defines** the name.
+
+Documenter resolves a docstring's `@ref` starting from that docstring's own
+module, and its fallback in `Main` is allowed only for a *fully qualified* name.
+So `@ref MeanFieldHomogenization.LayeredSpheroid`, written in a docstring that
+lives in `FiniteElements`, fails: the binding is re-exported at the top level but
+defined in `LayeredSpheroids`, and Documenter refuses the fallback rather than
+guess. The same text in a plain `.md` page resolves in `Main` and is fine.
+
+That asymmetry is why this checks **`src/` only**. Applied to `docs/`, the rule
+flags twenty references Documenter accepts, and a check that reports
+non-problems is worse than no check.
+
+`check_docrefs.py` covers the *unqualified* refs; this covers the qualified
+ones, which is the gap that let a build fail on three of them.
+"""
+function unqualified_module_refs()
+    resolve(path) = begin
+        parts = Symbol.(split(path, "."))
+        obj = MFH
+        parts[1] === :MeanFieldHomogenization || return nothing
+        for q in parts[2:end]
+            (obj isa Module && isdefined(obj, q)) || return nothing
+            obj = getfield(obj, q)
+        end
+        obj
+    end
+    # Only what has an unambiguous defining module; a `@ref` to a method
+    # signature or to an alias is left to Documenter.
+    owner(o) = (o isa Module || o isa Function || o isa Type) ? parentmodule(o) : nothing
+
+    out = Tuple{String, Int, String, String}[]
+    for (dir, _, files) in walkdir(joinpath(pkgdir(MFH), "src")), f in files
+        endswith(f, ".jl") || continue
+        path = joinpath(dir, f)
+        for (i, line) in enumerate(eachline(path))
+            for m in eachmatch(
+                    r"@ref (MeanFieldHomogenization\.[A-Za-z0-9_.!]*[A-Za-z0-9_!])", line
+                )
+                p = m.captures[1]
+                obj = resolve(p)
+                obj === nothing && continue
+                own = owner(obj)
+                own === nothing && continue
+                written = join(split(p, ".")[1:(end - 1)], ".")
+                expected = replace(string(own), "Main." => "")
+                written == expected ||
+                    push!(out, (relpath(path, pkgdir(MFH)), i, p, expected))
+            end
+        end
+    end
+    return out
+end
+
 bad, n = scan()
 println("checked $n names in @docs blocks across ", length(MODS), " modules")
 isempty(bad) ? println("OK: every one carries a docstring") :
@@ -149,4 +212,16 @@ isempty(missing_entry) ? println("OK: every documented export is listed in a @do
         foreach(t -> println("  ", t[1], ".", t[2]), missing_entry)
 )
 
-exit(isempty(bad) && isempty(missing_entry) ? 0 : 1)
+qual = unqualified_module_refs()
+isempty(qual) ? println("OK: every qualified @ref in a docstring names its defining module") :
+    (
+    println("NOT THE DEFINING MODULE ($(length(qual))):");
+        foreach(
+        t -> println(
+            "  ", t[1], ":", t[2], "  ", t[3], "  → ", t[4], ".",
+            split(t[3], ".")[end],
+        ), qual,
+    )
+)
+
+exit(isempty(bad) && isempty(missing_entry) && isempty(qual) ? 0 : 1)

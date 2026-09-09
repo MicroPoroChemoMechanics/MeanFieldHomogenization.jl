@@ -212,6 +212,8 @@ export FEEllipticCrack, FEMeshOptions, fe_cod_breakdown, fe_mesh_report
 export FEExcenteredSphere, FEAxiMeshOptions
 export FECellMeshOptions, fe_cell_size_estimate
 export FESupershapePore, SupershapePoreShape, has_surrogate, pore_shape_params
+export check_nested_spheroids, axi_layer_set
+export FEAxiLayeredSpheroid, LayeredSpheroidShape, layer_volumes, layer_fractions
 export fe_cell_localization, fe_cell_mesh_report
 export fe_cell_curved_volume, fe_cell_meshed_volume
 export fe_axi_localization, fe_axi_breakdown, fe_axi_mesh_report
@@ -236,7 +238,7 @@ export TriSurface, node_count, triangle_count
 export octant_patch, unit_octahedron, project_to_shape!, shape_surface, relax_surface!
 export mesh_area, mesh_volume, edge_lengths, mesh_quality
 export boundary_chains, patch_corners
-export DimensionlessHill, AffineHill
+export DimensionlessHill, AnchoredHill, AffineHill
 export SampleBox, Dataset, generate_dataset, fit_scaling
 export TrainingOptions, train_surrogate, assemble_surrogate
 export validate_surrogate, report_surrogate, component_labels
@@ -273,7 +275,7 @@ export local_gradient_gradient_loc, local_flux_gradient_loc,
 export local_temperature, local_gradient, local_flux
 
 # ── LayeredSpheroid (Barthélémy-Bignonnet confocal spheroid, conduction) ─────
-export LayeredSpheroid, layered_spheroid_from_fractions
+export LayeredSpheroid, layered_spheroid_from_fractions, confocal_layer_radii
 export layer_q, layer_semiaxes, outer_semiaxes
 export spheroid_state_sequence, spheroid_ba_ratios
 # Elastic case I (axisymmetric): Papkovich–Neuber in the confocal chart.

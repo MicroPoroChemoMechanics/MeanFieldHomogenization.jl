@@ -73,7 +73,7 @@ include("localfields.jl")        # pointwise T, ∇T, flux reconstruction
 include("scheme_integration.jl") # concentration tensors → mean-field schemes
 
 # ── Exports ─────────────────────────────────────────────────────────────────
-export LayeredSpheroid, layered_spheroid_from_fractions
+export LayeredSpheroid, layered_spheroid_from_fractions, confocal_layer_radii
 export layer_count, layer_q, layer_modulus, layer_interface, layer_semiaxes,
     layer_volume_fraction, outer_semiaxes
 export local_temperature, local_gradient, local_flux

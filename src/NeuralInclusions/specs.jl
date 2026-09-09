@@ -562,6 +562,75 @@ struct AffineHill{C <: AbstractHillClass} <: AbstractOutputSpec
     class::C
 end
 
+"""
+    AnchoredHill(class, baseline::Symbol)
+
+The network predicts the components of `𝕄 = 𝔸_b⁻¹ : 𝔸`, where `𝔸_b` is a
+**closed-form baseline** named by `baseline`. The decoder returns `𝔸_b : 𝕄`, so
+the answer is exact wherever the baseline is exact, and the network only ever
+learns the departure from it.
+
+This is the same idea as [`AffineHill`](@ref) — do not spend capacity on a
+dependence that is already known — applied to a different kind of knowledge.
+`AffineHill` factors out the *material* dependence exactly; `AnchoredHill`
+factors out a whole *shape family* on which a closed form exists.
+
+**When it pays, and when it does not — measured, so nobody repeats the
+experiment.** The gain depends on how *close* the baseline is, not on its
+existence.
+
+On the axisymmetric superspheroidal cavity it does **not** pay. A superspheroid
+at `p = 1` is a spheroid, so an entire face of that box is exact — but the box
+reaches `p = 0.25`, which is far from it, and judged on the decoded tensor the
+anchored fit is worse: rms `1.30e-2` against `5.31e-3`, median `9.16e-3` against
+`2.64e-3`, gaining only 14 % on the extreme maximum. The reason is structural
+and worth knowing: near the exact face `𝕄 ≈ 𝕀`, whose off-diagonal Walpole
+components are **zero**, so the anchored target has zeros by construction
+exactly where the anchor is perfect, and uniform relative effort in `𝕄` is not
+uniform in `𝔸`.
+
+Where it should pay is a baseline that is *near* over the whole box — a layered
+spheroid, whose homogeneous limit is reached as soon as the layers' moduli
+agree, so moderate contrast is a genuinely small departure and `𝕄` stays close
+to `𝕀` throughout.
+
+**The algebra stays in the Walpole basis**, which is the whole reason this is a
+specification and not a division. `𝔸_b⁻¹ : 𝔸` is formed with `inv` and the
+double contraction on transversely isotropic tensors — a closed-form 2×2 inverse
+plus two scalars — where a component-wise ratio would mix the transverse block
+and manufacture sign changes that are an artifact of the reading.
+
+Available baselines are the keys of [`anchor_baselines`](@ref).
+"""
+struct AnchoredHill{C <: AbstractHillClass} <: AbstractOutputSpec
+    class::C
+    baseline::Symbol
+    function AnchoredHill(class::C, baseline::Symbol) where {C <: AbstractHillClass}
+        baseline in anchor_baselines() || throw(
+            ArgumentError(
+                "unknown anchor baseline :$baseline; available: " *
+                    join(anchor_baselines(), ", ")
+            )
+        )
+        return new{C}(class, baseline)
+    end
+end
+
+"""
+    anchor_baselines() -> Tuple{Symbol}
+
+The baselines [`AnchoredHill`](@ref) can name. A baseline must be a closed form
+of the same symmetry class as the surrogate's, computable from the *features*
+alone plus the reference medium — otherwise it could not be evaluated at
+prediction time, when no solve is available.
+
+- `:spheroid_cavity` — the exact cavity of revolution,
+  `𝔸_b = (𝕀 − ℙ : ℂ₀)⁻¹`, with the aspect ratio read off the features. Exact for
+  a superspheroid at `p = 1`, and for a layered spheroid whose layers share the
+  matrix's moduli.
+"""
+anchor_baselines() = (:spheroid_cavity,)
+
 hill_class(spec::AbstractOutputSpec) = spec.class
 
 """
@@ -572,6 +641,7 @@ How many shape tensors the network predicts per component: `1` for
 [`material_coeffs`](@ref) — 2 in elasticity, 1 in transport.
 """
 nterms(::DimensionlessHill) = 1
+nterms(::AnchoredHill) = 1
 nterms(spec::AffineHill) = tensor_order(spec.class) == 4 ? 2 : 1
 
 """
@@ -588,23 +658,44 @@ Whether the feature set has to carry `ν₀`. False for [`AffineHill`](@ref),
 whose material dependence is exact, and for any transport surrogate.
 """
 needs_nu(spec::DimensionlessHill) = tensor_order(spec.class) == 4
+needs_nu(spec::AnchoredHill) = tensor_order(spec.class) == 4
 needs_nu(::AffineHill) = false
 
 spec_name(::DimensionlessHill) = :dimensionless
+spec_name(::AnchoredHill) = :anchored
 spec_name(::AffineHill) = :affine
+
+"""
+    spec_baseline(spec) -> Union{Symbol, Nothing}
+
+The anchor baseline's name, or `nothing` for a specification that has none.
+Serialized beside the class so a saved model round-trips.
+"""
+spec_baseline(::AbstractOutputSpec) = nothing
+spec_baseline(spec::AnchoredHill) = spec.baseline
 
 """
     output_spec(name::Symbol, class::Symbol) -> AbstractOutputSpec
 
 Rebuild an output specification from its serialized names.
 """
-function output_spec(name::Symbol, class::Symbol)
+function output_spec(name::Symbol, class::Symbol, baseline = nothing)
     c = hill_class(class)
     name === :dimensionless && return DimensionlessHill(c)
     name === :affine && return AffineHill(c)
+    if name === :anchored
+        baseline === nothing && throw(
+            ArgumentError(
+                "an :anchored output specification needs its baseline; the saved " *
+                    "model carries none, so it predates the field or was written by hand"
+            )
+        )
+        return AnchoredHill(c, Symbol(baseline))
+    end
     return throw(
         ArgumentError(
-            "unknown output specification :$name; expected :dimensionless or :affine"
+            "unknown output specification :$name; expected :dimensionless, " *
+                ":anchored or :affine"
         )
     )
 end
@@ -618,11 +709,117 @@ frame given.
 `z` has length [`noutputs`](@ref); for [`AffineHill`](@ref) it is read as a
 `ncomponents × nterms` column-major block, one column per shape tensor.
 """
-function decode(spec::DimensionlessHill, z::AbstractVector, P₀, frame)
+function decode(spec::DimensionlessHill, z::AbstractVector, P₀, frame, _x = nothing, _f = nothing)
     return build(spec.class, z ./ dimensionless_scale(spec.class, P₀), frame)
 end
 
-function decode(spec::AffineHill, z::AbstractVector, P₀, frame)
+"""
+    anchor_tensor(spec, x, features, P₀, frame) -> AbstractTens
+
+The baseline tensor of an [`AnchoredHill`](@ref) specification at feature vector
+`x`. Evaluated from the features alone, so it is available at prediction time.
+"""
+function anchor_tensor(spec::AnchoredHill, x, features, P₀, frame)
+    return _anchor(Val(spec.baseline), spec.class, x, features, P₀, frame)
+end
+
+# The aspect ratio a baseline needs, taken from whichever feature carries it.
+# `:log_aspect` is the one the shipped surrogates use; `:aspect` is accepted so a
+# study may sample it linearly. Distinct-over-equal in both cases, so the sphere
+# is `1` (or `0` in the logarithm) either way.
+function _anchor_aspect(x, features)
+    for (name, f) in ((:log_aspect, exp), (:aspect, identity))
+        i = findfirst(==(name), features)
+        i === nothing || return f(x[i])
+    end
+    return throw(
+        ArgumentError(
+            "an :spheroid_cavity anchor needs an aspect-ratio feature — " *
+                ":log_aspect or :aspect — and this surrogate consumes " *
+                "$(Tuple(features)). The baseline has to be computable from the " *
+                "features alone, since at prediction time there is no solve to read " *
+                "the geometry from."
+        )
+    )
+end
+
+"""
+    _anchor(::Val{:spheroid_cavity}, class, x, features, P₀, frame)
+
+The exact cavity of revolution: `𝔸_b = (𝕀 − ℙ : ℂ₀)⁻¹` in elasticity, and its
+second-order counterpart in transport, with `ℙ` the closed-form Hill tensor of
+`Spheroid(c/a)`.
+
+Exact for a superspheroid at `p = 1`, and for a layered spheroid whose layers
+share the matrix's moduli. Both are faces of the sample boxes those surrogates
+are trained on, which is the point: on such a face the network has nothing left
+to learn and the answer is the closed form.
+"""
+function _anchor(::Val{:spheroid_cavity}, class, x, features, P₀, frame)
+    c = _anchor_aspect(x, features)
+    sph = Elasticity.Spheroid(c)
+    P = hill_tensor(sph, P₀)
+    Ab = _cavity_localization(P, P₀)
+    # `Spheroid(ω)` puts its axis of revolution on `ez` when oblate and on `ex`
+    # when prolate — the semi-axes are sorted and the basis permuted. So the
+    # baseline is read in **its own** frame and rebuilt in the caller's, rather
+    # than contracted against a frame it does not share.
+    #
+    # And that frame is *not* `_class_frame(class, sph)`. A localization class
+    # takes column 3 by convention, which is right for the morphology being
+    # learned — a pore whose axis is `e₃` by construction — and wrong for the
+    # baseline, an `Ellipsoid` whose distinct axis is wherever sorting put it.
+    # Using the class convention here makes the projection residual explode for
+    # every prolate shape and nothing at all for oblate ones, which is how the
+    # mistake hides.
+    axis = Core._basis_col(
+        Core.inclusion_basis(sph), _spheroid_axis_index(_axes(sph))
+    )
+    return build(class, components(class, Ab, axis), frame)
+end
+
+# `𝔸 = (𝕀 − ℙ:ℂ₀)⁻¹` — the cavity limit of `strain_strain_loc`, with the
+# operator the order demands: `⊡` in elasticity, `⋅` in transport.
+_cavity_localization(P::TensND.AbstractTens{4, 3}, C₀::TensND.AbstractTens{4, 3}) =
+    inv(_identity_4sym(promote_type(eltype(P), eltype(C₀))) - (P ⊡ C₀))
+_cavity_localization(P::TensND.AbstractTens{2, 3}, K₀::TensND.AbstractTens{2, 3}) =
+    inv(_identity_2(promote_type(eltype(P), eltype(K₀))) - (P ⋅ K₀))
+
+# The same asymmetry on the way back: contracting the baseline with what the
+# network predicted.
+_anchor_apply(A::TensND.AbstractTens{4, 3}, M::TensND.AbstractTens{4, 3}) = A ⊡ M
+_anchor_apply(A::TensND.AbstractTens{2, 3}, M::TensND.AbstractTens{2, 3}) = A ⋅ M
+
+function decode(spec::AnchoredHill, z::AbstractVector, P₀, frame, x, features)
+    # `𝔸 = 𝔸_b : 𝕄`, both transversely isotropic, so `dcontract` is Walpole's
+    # 2×2 product plus two scalars — closed form, and differentiable.
+    M = build(spec.class, z, frame)
+    return _anchor_apply(anchor_tensor(spec, x, features, P₀, frame), M)
+end
+
+"""
+    encode(spec, tensor, P₀, frame, x, features; atol) -> Vector
+
+The inverse of [`decode`](@ref): the components a *label* must carry for this
+specification. Used when building a dataset, and it is what keeps training and
+prediction in the same space — an anchored surrogate whose labels were the raw
+components would be silently wrong everywhere.
+"""
+function encode(
+        spec::DimensionlessHill, t, P₀, frame, _x = nothing, _f = nothing;
+        atol::Real = 1.0e-8
+    )
+    return collect(Float64, components(spec.class, t, frame; atol)) .*
+        dimensionless_scale(spec.class, P₀)
+end
+
+function encode(spec::AnchoredHill, t, P₀, frame, x, features; atol::Real = 1.0e-8)
+    Ab = anchor_tensor(spec, x, features, P₀, frame)
+    M = _anchor_apply(inv(Ab), t)
+    return collect(Float64, components(spec.class, M, frame; atol))
+end
+
+function decode(spec::AffineHill, z::AbstractVector, P₀, frame, _x = nothing, _f = nothing)
     nc = ncomponents(spec.class)
     coeffs = material_coeffs(spec.class, P₀)
     c = ntuple(nc) do i

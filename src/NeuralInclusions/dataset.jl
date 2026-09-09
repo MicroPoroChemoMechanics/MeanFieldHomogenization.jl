@@ -348,15 +348,20 @@ function _label(
     return Z
 end
 
+# Both `DimensionlessHill` and `AnchoredHill` label the same way — one solve,
+# then `encode` — and that is deliberate: the label of an anchored surrogate is
+# a *transform* of the same response, so the specification is the only thing
+# that differs and the two can never drift apart. Labeling an anchored
+# surrogate with raw components instead would train it in a space its decoder
+# does not read, and every prediction would be wrong without a single error.
 function _label_one(
-        response, spec::DimensionlessHill, box::SampleBox, geom, frame, x_full;
-        atol::Real = 1.0e-8, reference = nothing
+        response, spec::Union{DimensionlessHill, AnchoredHill}, box::SampleBox,
+        geom, frame, x_full; atol::Real = 1.0e-8, reference = nothing
     )
     P₀ = reference === nothing ? _reference_medium(spec.class, box, x_full) :
         reference(box, x_full)
     P = response(geom, P₀)
-    return collect(Float64, components(spec.class, P, frame; atol)) .*
-        dimensionless_scale(spec.class, P₀)
+    return encode(spec, P, P₀, frame, x_full, box.names; atol)
 end
 
 function _label_one(

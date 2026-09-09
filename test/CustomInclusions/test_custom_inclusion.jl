@@ -346,14 +346,17 @@ end
     end
 
     # `SelfConsistent` consumes the stress average: there the complete
-    # inclusion reproduces `LayeredSphere` while the partial one is off by
-    # several percent.
+    # inclusion reproduces `LayeredSphere`.
     @test get_array(homogenize(ok, SelfConsistent(), :C)) ≈
         get_array(homogenize(ref, SelfConsistent(), :C)) rtol = 1.0e-10
-    @test !isapprox(
-        get_array(homogenize(bad, SelfConsistent(), :C)),
-        get_array(homogenize(ref, SelfConsistent(), :C)); rtol = 1.0e-3
-    )
+    # And the partial one is now **refused** rather than answered wrongly. It
+    # used to come back off by several percent, which this test recorded; the
+    # generic `stress_strain_loc` no longer applies `ℂ₁ : 𝔸_εε` to an inclusion
+    # that declares itself heterogeneous, because that formula needs a single
+    # uniform stiffness. Refusing is what the contract's docstring always said
+    # should happen, and a few percent is exactly the size of error that passes
+    # for a modeling choice.
+    @test_throws ArgumentError homogenize(bad, SelfConsistent(), :C)
 
     # A heterogeneous inclusion with no layer-wise average has no property to
     # enter the bounds: a bound averages the *constituent* properties, which

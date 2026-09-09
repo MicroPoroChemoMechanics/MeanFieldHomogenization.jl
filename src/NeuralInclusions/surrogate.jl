@@ -253,7 +253,10 @@ function (s::NeuralSurrogate)(
     x̂ = (x_raw .- s.x_shift) ./ s.x_scale
     ŷ = s.net(x̂)
     z = map(invert_transform, s.y_kind, ŷ .* s.y_scale .+ s.y_shift)
-    return decode(s.output, z, P₀, frame)
+    # `x_raw` and the feature names go through too: an anchored specification
+    # evaluates its baseline from the features, and it is the only place that
+    # information is still available.
+    return decode(s.output, z, P₀, frame, x_raw, s.features)
 end
 
 """

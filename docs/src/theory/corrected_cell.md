@@ -135,7 +135,7 @@ polarization:
 | unknown | ``\mathbb X`` on the Kelvin basis | ``\boldsymbol{B}_\infty`` | ``\mathbb A`` itself |
 | solves | 6 + 6, or 2 + 2 per Fourier mode | 3 + 3 | 6 + 6, or 2 + 2 and 1 + 1 per mode |
 | closes on | ``\mathbb A = \mathbb A^E + \mathbb A^p:\mathbb X`` | ``\boldsymbol{B}_\infty = (1 - \boldsymbol{B}_u)^{-1}\boldsymbol{B}_s`` | ``\mathbb A = (\mathbb I - \mathbb A_u\mathbb F)^{-1}\mathbb A_s`` |
-| used by | [`FEExcenteredSphere`](@ref app-recycled-aggregate) | [`FEEllipticCrack`](@ref man-fe-inclusions) | [`FESupershapePore`](@ref man-fe-inclusions), [`FEAxiSupershapePore`](@ref app-concave-pores) |
+| used by | [`FEExcenteredSphere`](@ref app-recycled-aggregate), [`FEAxiLayeredSpheroid`](@ref tut-axi-layered-spheroid) | [`FEEllipticCrack`](@ref man-fe-inclusions) | [`FESupershapePore`](@ref man-fe-inclusions), [`FEAxiSupershapePore`](@ref app-concave-pores) |
 
 In the axisymmetric case each fixed point lives *inside* one Fourier mode,
 since the dipole of a modal polarization radiates in the same mode — so
@@ -300,6 +300,21 @@ One consequence of that route is worth keeping even after abandoning it:
 form. Integrating over one boundary and dividing by another's volume leaves a
 systematic error of the geometry's own size, and refining removes none of it
 because it shrinks both together.
+
+!!! note "The solid declination in two dimensions, and its region count"
+    An `N`-layer spheroid is the *solid* declination of the same correction —
+    ``𝔹ᴱ`` and ``𝔹ᵖ`` are not zero, and both outputs of the fixed point are
+    used, the second being gate B's stress side. So the cavity was the easy
+    case: it degenerates the correction to
+    ``𝕃 = (𝕀 − 𝕃_u𝔽)^{-1}𝕃_s`` with one useful output, where a heterogeneous
+    inclusion carries the pair.
+
+    Nothing else changes. The same three modes, the same two families of
+    boundary data, the same single factorization per mode — and the inclusion
+    average runs over `N` regions instead of two, which is the only place the
+    layer count appears at all. The dipole's moment is that of the **outer**
+    boundary, the inclusion being seen from outside: on a multilayer, using an
+    inner layer's volume gives an answer that is almost right.
 
 ### Two exact answers, and why they are exact
 

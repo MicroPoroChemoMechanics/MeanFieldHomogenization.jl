@@ -65,6 +65,13 @@ import JSON3
 using Printf: @printf, @sprintf
 
 import ..Core
+# `hill_tensor` and the two identity helpers live at the package's top level,
+# in `localization.jl`, which is included before this module. `AnchoredHill`
+# needs them to evaluate a closed-form baseline, and importing them keeps the
+# convention single-sourced rather than re-deriving the identity here.
+import ..hill_tensor
+import .._identity_4sym
+import .._identity_2
 import ..FiniteElements
 import ..Elasticity
 import ..Schemes
@@ -78,7 +85,7 @@ export save_surrogate, load_surrogate, model_path, shipped_models
 export HillISO, HillTI, HillOrtho, HillISO2, HillTI2, StrainLocCubic
 export GradLocISO2, GradLocTI2
 export StrainLocTI, StressLocTI
-export DimensionlessHill, AffineHill
+export DimensionlessHill, AnchoredHill, AffineHill
 
 # The learning system
 export SampleBox, Dataset, generate_dataset, fit_scaling

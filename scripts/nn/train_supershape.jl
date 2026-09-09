@@ -147,7 +147,12 @@ function train_and_save(
             string(
                 name, "|", n, "|", nval, "|", atol, "|", teacher, "|",
                 box.names, "|", box.lo, "|", box.hi, "|",
-                reference === nothing ? "none" : "ref",
+                reference === nothing ? "none" : "ref", "|",
+                # The output specification belongs in the key: an anchored label
+                # is a *different label* for the same solve, so a cache keyed
+                # without it would hand the wrong targets to the wrong decoder
+                # and produce a model wrong everywhere without erroring once.
+                NI.spec_name(spec), "|", NI.spec_baseline(spec),
             ),
         ),
     )[1:12]
