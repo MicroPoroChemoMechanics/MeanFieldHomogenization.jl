@@ -540,11 +540,6 @@ Named here so that the boundary of what exists is explicit:
   axisymmetric cell;
 - **transport** for the crack: the elliptical-crack driver solves elasticity
   only, and the conduction problem would need its own resolution;
-- a **trained model** for the cell. The route exists —
-  `FESupershapePore(shape; elastic = s)` swaps the solve for a network, and the
-  pore then differentiates in `p`, which no finite-element inclusion can — but
-  generating the model is a dataset of finite-element solves and no model
-  ships. See [neural-surrogate inclusions](@ref man-neural-inclusions);
 - **solid** supershape inclusions. The cell is set up for a cavity: it meshes
   the matrix shell alone and leaves the inclusion boundary free, which is what
   makes the stress-side localization exactly zero. A solid inclusion would have

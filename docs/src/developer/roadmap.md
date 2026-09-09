@@ -1,62 +1,18 @@
 # [Roadmap](@id dev-roadmap)
 
-What is shipped, what is open, and — for the two areas where the boundary is
-subtle — exactly which pieces of a cited paper are and are not implemented.
-
-## Shipped
-
-- Mean-field schemes: Voigt/Reuss bounds, dilute, Mori–Tanaka, Maxwell,
-  Ponte-Castañeda-Willis, self-consistent (Anderson + Newton),
-  asymmetric self-consistent, differential.
-- **Periodic multilayer** (`Laminate` + the `Laminated` scheme): a matrix-free,
-  deterministic cell with an *exact* solution, in elasticity and transport,
-  with the four imperfect-interface models and an ageing-viscoelastic twin.
-  Saturates Voigt in the plane of the layers and Reuss across them.
-- **The homogenization-cell abstraction** (`AbstractHomogenizationCell`) and
-  **declarative multiscale chaining** (`Homogenized`, `NestedParameter`): a
-  multiscale model as one object, differentiable end to end in a single
-  `ForwardDiff` pass, with a call-scoped memoization.
-- Representative volume element (RVE) assembly and effective-property
-  pipelines mirroring the reference C++ RVE assembly.
-- Concentric multi-layer sphere (`LayeredSphere` via
-  [`AbstractLayeredInclusion`](@ref)): Hervé-Zaoui bulk / shear /
-  conductivity recurrences, five interface types (perfect, spring,
-  membrane, Kapitza, surface-conductive), volume-average and pointwise
-  localization fields.
-- Ageing linear viscoelasticity (ALV): time-domain Volterra pipeline for
-  every scheme, structured ISO/TI/ortho fast paths, ALV cracks and the
-  ALV layered sphere (bulk **and** shear recurrences).
-- Exact rotation-group symmetrization (ISO / TI) of concentration tensors,
-  preserving non-major-symmetric content (`TensTI{4,T,8}`), for arbitrary
-  multi-axis orientation distributions inside every scheme kernel.
-- User-defined inclusions and algorithms: a leveled, documented contract
-  ([Adding a new inclusion](@ref dev-adding-inclusion)), the neutral
-  [`AbstractCustomInclusion`](@ref) branch, the callback-driven
-  [`CustomInclusion`](@ref MeanFieldHomogenization.CustomInclusion), the
-  [`check_inclusion_interface`](@ref MeanFieldHomogenization.check_inclusion_interface)
-  conformance checker, and `shape_trait`-based inheritance of the crack
-  algebra (a user crack needs only `cod_tensor`).
-- Real-space Kelvin Green gradient and dipole far field for an isotropic
-  matrix ([`green_gradient_iso`](@ref MeanFieldHomogenization.Core.green_gradient_iso),
-  [`dipole_displacement_iso`](@ref MeanFieldHomogenization.Core.dipole_displacement_iso)) —
-  the boundary correction that makes a finite numerical Eshelby cell behave
-  like an infinite medium.
-- ForwardDiff sensitivities across all elastic and ALV schemes (fractions,
-  moduli, and inclusion geometry).
-- NonlinearSolve.jl backend for the self-consistent fixed point
-  (`MeanFieldHomogenizationNonlinearSolveExt`): any SciML algorithm
-  (`NewtonRaphson`, `TrustRegion`, …) can solve `SelfConsistent` /
-  `AsymmetricSelfConsistent`, through an implicit-function-theorem lift
-  that keeps `derivative`/`gradient`/`jacobian` exact and free of nested
-  `ForwardDiff.Dual`s regardless of algorithm.
+What is left to do, and — for the two areas where the boundary is subtle —
+exactly which pieces of a cited paper are and are not implemented. What the
+package already does is described in the [manual](@ref man-index) and the
+[theory pages](@ref th-index).
 
 ## Open
 
 - Extended-COD crack model in conduction: resistive cracks (linear-spring
   analog) **and** conductive cracks (elastic-membrane analog), via a
   tensorial conduction COD.
-- Multi-layer extensions: coated cylinders, anisotropic per-layer moduli,
-  excentered spheres.
+- Multi-layer extensions: coated cylinders, anisotropic per-layer moduli, and
+  an *analytic* excentered sphere (only the finite-element route reaches that
+  morphology).
 - Laminate extensions: viscoelastic *interface* laws (the interface types
   carry `Number` fields today, so an ageing interface needs a different
   carrier), and `Homogenized` inside an ALV chain (the inner result would have
@@ -65,101 +21,50 @@ subtle — exactly which pieces of a cited paper are and are not implemented.
 - Native Anderson acceleration with memory > 1, replacing the current
   `AndersonDefault` (currently Picard with relaxation, memory = 1).
 - Optional structured `TensTI{4,T,8}` fast path for the ALV TI schemes.
-- **Viscoelasticity in the Laplace-Carson domain — shipped in v0.6.0.** The
-  non-ageing half of the viscoelasticity module: four numerical inverse-Laplace
-  algorithms generic in the number type (so `ForwardDiff` traverses them, which
-  `InverseLaplace.jl` cannot), a catalog of rheological models each exposing
-  ``J(t)``, ``R(t)``, ``J^{*}(p)`` and ``R^{*}(p)``, the exact
-  generalized-Kelvin ⇄ generalized-Maxwell conversion by root interlacing, and
-  [`homogenize_lc`](@ref) tying them together. See
-  [the theory](@ref th-laplace-carson), the
-  [model manual](@ref man-rheological-models) and the
-  [inversion manual](@ref man-laplace-inversion). Still open on that side:
+- **Laplace-Carson viscoelasticity** (see [the theory](@ref th-laplace-carson)
+  and the [model manual](@ref man-rheological-models)):
   - **anisotropic tensor pairings.** Only [`IsoRheology`](@ref) exists; a
     transversely isotropic model would need six scalar channels and the
     corresponding `TensTI` assembly.
   - **ageing models in the catalog.** `LogarithmicCreep` is the non-ageing
     skeleton of a law that is normally written with age-dependent `E`, `C` and
     `τ`; expressing that family would need a second, two-argument interface.
-- **Finite-element coupling, remaining pieces.** The Gauss-point contract,
-  `HomogenizedElastic`, `MicrocrackedMaterial`, the Ferrite glue — including
-  the coupled ``(\underline{u}, p)`` element — the poroelastic parameters, the
-  fractured permeability, the `FracturedPoroelasticRock` material and the
-  [ARMA 2011 well test](@ref fe-arma2011) are shipped (see
-  [Finite-element coupling](@ref fe-coupling)). Still open:
+- **Finite-element coupling** (see
+  [Finite-element coupling](@ref fe-coupling)):
   - the **consolidation column** of [barthelemyARMA2011](@cite) § 3.1, models
     M1/M2/M3 — the case where a family actually *closes* during the loading.
-    Everything it needs is shipped; it is a driver, not a capability.
+    Nothing new is needed for it: it is a driver, not a capability.
   - the paper's **self-consistent permeability**, whose matrix concentration factor
     (order-2 Hill tensor of the effective medium) the simpler estimate in
     `fracture_permeability` omits. It is worth ≈ 55× on the ARMA microstructure
     — the [well test](@ref fe-arma2011-scope) quantifies exactly what it costs.
   - drivers for Gridap, FEniCSx and an Abaqus-shaped UMAT.
-- Finite-element inclusions, behind the `FEBackend` contract
-  (`MeanFieldHomogenizationFerriteExt`, `MeanFieldHomogenizationGridapExt`), all with the
-  first-order corrected boundary condition of
-  [adessinaIJES2017](@cite) and an
-  isotropic reference medium: the **elliptical crack** in 3-D tetrahedra
-  (3 + 3 crack declination), the **sphere with an off-center core** in
-  axisymmetric Fourier elements (the general polarization fixed point), and a
-  **superspherical or superspheroidal cavity** on a three-dimensional cell with
-  a curved boundary (the pore declination, in both physics on one mesh).
-  Open extensions — anisotropic reference medium (Pan-Chou or Barnett-Willis
-  Green gradient); more than one inclusion, or a non-spherical envelope, in the
-  axisymmetric cell; transport for the crack; **solid** supershape inclusions,
-  which would need the inclusion meshed too and would enter gate B with two
-  measured tensors.
-- Neural-surrogate inclusions (`NeuralHillInclusion`,
-  `NeuralLocalizationInclusion`), with the sampling, fitting and serialization
-  machinery; the optimizer is the weak-dependency extension
-  `MeanFieldHomogenizationLuxExt`, evaluation needs nothing extra. Four models ship,
-  validated against the analytic ellipsoid. This is also the answer to
-  "automatic differentiation through the solve", which the finite-element
-  inclusions cannot offer: a surrogate *is* differentiable in the morphology.
-  `StrainLocCubic` covers the cube-symmetric case in three components — three
-  and not `StrainLocTI`'s six, a cubic tensor being major-symmetric
-  automatically — and `FESupershapePore(shape; elastic = s)` swaps a network for
-  the solve, which is also what makes the pore differentiable in its own shape
-  exponent where the mesh cannot be.
-  Open extensions — a surrogate trained on `fe_axi_localization` (gate B, the
-  heterogeneous case the second type exists for); a **trained model** for the
-  supershape cell, which is a dataset of finite-element solves rather than a
-  capability gap; a `_reference_medium` for `StrainLocTI` / `StressLocTI`,
-  deliberately absent because a heterogeneous morphology's reference has to be
-  built from contrast features and guessing it would train on corrupted labels;
-  an anisotropic reference medium, which needs a feature set describing it.
+- **Finite-element inclusions**, behind the `FEBackend` contract (see
+  [FE inclusions](@ref man-fe-inclusions)):
+  - an **anisotropic reference medium**. The corrected boundary data needs
+    ``\nabla\mathbb G``, which `green_function_aniso` does not expose — the
+    Pan-Chou closed form in the transversely isotropic case, or a differentiated
+    Barnett-Willis integral, would.
+  - more than one inclusion, or a **non-spherical envelope**, in the
+    axisymmetric cell.
+  - **transport for the crack**, the 3 + 3 declination being elastic only.
+  - **solid** supershape inclusions, which would need the inclusion meshed too
+    and would enter gate B with two measured tensors.
+- **Neural-surrogate inclusions** (see
+  [Neural-surrogate inclusions](@ref man-neural-inclusions)):
+  - a `_reference_medium` for `StrainLocTI` / `StressLocTI`, deliberately
+    absent because a heterogeneous morphology's reference has to be built from
+    contrast features and guessing it would train on corrupted labels.
+  - an **anisotropic reference medium**, which needs a feature set describing
+    it.
 
 ## [The elastic layered spheroid — what is left](@id dev-elastic-spheroid)
 
-**The elastic confocal spheroid is solved**, all three elementary problems,
-prolate and oblate, with perfect interfaces: the axisymmetric case in
-`LayeredSpheroids/elasticity.jl` and the two shear cases in
-`LayeredSpheroids/elastic_cases.jl`. The derivation, which is not in the
-literature, is on [its theory page](@ref th-spheroid-elasticity). What follows
-is what remains, and the traps that apply to it.
-
-Two questions this section used to pose as open are settled:
-
-- **The Papkovich–Neuber gauge.** The representation
-  ``2\mu\,\underline u = \nabla(\varphi_0 + x\varphi_1 + y\varphi_2 + z\varphi_3)
-  - 4(1-\nu)(\varphi_1, \varphi_2, \varphi_3)``
-  is redundant by one function, and the gauge is fixed **problem by problem**
-  after [duanRSPA2005](@cite): case I takes ``\varphi_1 = \varphi_2 = 0``, case
-  II takes ``\varphi_0, \varphi_3`` at ``m = 2`` with ``(\varphi_1,\varphi_2)``
-  from a single ``\Psi`` at ``m = 1``, case III takes ``\varphi_0, \varphi_3``
-  at ``m = 1`` and ``\varphi_1`` at ``m = 0``. Leaving the redundancy in makes
-  the interface system singular, or merely ill-conditioned, which reads as a
-  convergence problem rather than a modeling one.
-- **Confocal, and that is the whole difficulty.** The surfaces are confocal,
-  not similar, so they are not homothetic and the harmonic degrees couple —
-  across a *perfect* interface too, unlike conduction. There is no
-  per-interface transfer matrix to chain; the solver assembles one global
-  system.
+The derivation, which is not in the literature, is on
+[its theory page](@ref th-spheroid-elasticity); this section is what remains of
+the module and the traps that apply to it.
 
 ### What remains
-
-All three elementary problems are in, prolate and oblate, and the strain
-concentration tensor reaches the mean-field schemes. What is left is smaller:
 
 - **Pointwise fields.** The solver returns harmonic amplitudes, so `u`, `ε` and
   `σ` at a point are a matter of summing modes — the conduction side already
@@ -168,21 +73,10 @@ concentration tensor reaches the mean-field schemes. What is left is smaller:
   `spheroid_strain_concentration` refuses a tilted spheroid rather than
   rotating the result for you.
 - **A compliance-side contribution tensor**, the twin of
-  `stiffness_contribution`.
-
-Two findings from this development are worth carrying forward, both of which
-the Eshelby oracle caught and neither of which is obvious:
-
-- **No rigid-body rotations are needed**, despite [duanRSPA2005](@cite) adding
-  two to case III and blaming their omission for the error in Riccardi &
-  Montheillet (1999). The full four-potential set already spans them — the
-  rotation is the *antisymmetric* combination of the two potentials whose
-  symmetric combination is the remote shear.
-- **Degree 0 of `φ₀` is essential and parity is not optional.** Only the
-  regular part of degree 0 is an inert constant; the irregular one is
-  `arccoth q`. Dropping it, or admitting both parities, does not cost accuracy —
-  it makes the system inconsistent or splices in the other problem of the same
-  order. [The theory page](@ref th-spheroid-not-optional) sets both out.
+  `stiffness_contribution`. The stress-side localization is what it needs:
+  `strain_strain_loc` reaches the schemes, `stress_strain_loc` does not exist
+  for a `LayeredSpheroid`, and the generic `compliance_contribution` is written
+  in terms of it.
 
 ### What will not happen
 
@@ -197,7 +91,6 @@ thin confocal interphase is not a substitute — such a shell is exactly
 ``\omega`` times thicker at the equator than at the pole.
 
 ### The four traps, each of which shipped once
-
 
 1. **Never run `Qₙ` upward.** `Qₙ` is the *minimal* solution of the Legendre
    three-term recurrence: upward, the seed's rounding error picks up the
@@ -258,26 +151,19 @@ certify the field that produces them. So:
 
 ## N-body schemes — remaining pieces
 
-The equivalent inclusion method and the cluster model are shipped; this is the
-detail of what their references contain and the implementation does not.
-See [the theory page](@ref th-interaction) for the shared interaction kernel.
-What is left open, and what has since been closed:
+This is the detail of what the references of the equivalent inclusion method
+and of the cluster model contain and the implementation does not. See
+[the theory page](@ref th-interaction) for the shared interaction kernel.
 
-- ~~**Anisotropic reference media.**~~ **Done.** The Barnett line integral of
-  `echoes_cpp/tests/python/Green/Green.jl` was ported to `Core/green_aniso.jl`,
-  so three-dimensional elasticity and conduction now accept any anisotropy —
-  which is what makes it possible to chain one N-body estimate into another
-  scale, since a cluster estimate on a cubic array is itself anisotropic. Two
-  things remain open here:
-    - **plane-strain elasticity** with an anisotropic reference, which needs the
-      Stroh formalism rather than the Barnett integral, and is refused with a
-      message naming the limitation;
-    - **cost**. The anisotropic operator is a quadrature differentiated twice
-      with forward-mode AD: ~1.5 ms per interaction tensor against ~0.6 µs for
-      the isotropic closed form. Deriving the second gradient of the line
-      integral analytically (the classical route) would recover most of that,
-      and would matter for assemblies of more than a few dozen particles in an
-      anisotropic reference.
+- **Plane-strain elasticity with an anisotropic reference**, which needs the
+  Stroh formalism rather than the Barnett line integral of `Core/green_aniso.jl`,
+  and is refused with a message naming the limitation.
+- **The cost of the anisotropic operator.** It is a quadrature differentiated
+  twice with forward-mode AD: ~1.5 ms per interaction tensor against ~0.6 µs for
+  the isotropic closed form. Deriving the second gradient of the line integral
+  analytically (the classical route) would recover most of that, and would
+  matter for assemblies of more than a few dozen particles in an anisotropic
+  reference.
 - **Polarization orders `p ≥ 1`** ([brisard2014](@cite)), which need the
   influence *pseudotensors* of their Appendix C — not tensors, with their own
   change-of-basis machinery, generated by the authors with a computer algebra
