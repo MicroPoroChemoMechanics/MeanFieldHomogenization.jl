@@ -97,8 +97,21 @@ function geometry(x)
     ), (C1, C2)
 end
 
-const SPEC_A = NI.DimensionlessHill(NI.StrainLocTI())
-const SPEC_B = NI.DimensionlessHill(NI.StressLocTI())
+# `MFH_NN_SPEC=anchored` learns `𝕄 = 𝔸_b⁻¹ : 𝔸` against the homogeneous spheroid
+# at the layers' mean modulus, which is exact on the whole face `r₁ = r₂` of the
+# box. Measured on these very labels, that removes a factor of 1.8 from the
+# spread the strain side must cover and 5.6 from the stress side.
+const SPEC_KIND = get(ENV, "MFH_NN_SPEC", "dimensionless")
+SPEC_KIND in ("dimensionless", "anchored") ||
+    error("MFH_NN_SPEC is \"dimensionless\" or \"anchored\", got \"$SPEC_KIND\"")
+_spec(class) = SPEC_KIND == "anchored" ?
+    NI.AnchoredHill(class, :layered_spheroid) : NI.DimensionlessHill(class)
+const SPEC_A = _spec(NI.StrainLocTI())
+const SPEC_B = _spec(NI.StressLocTI())
+
+# The revolution axis of the cell, which is the frame every label is expressed
+# in — `_class_frame` of a localization class reads column 3.
+const FRAME = (0.0, 0.0, 1.0)
 
 # Deliberately not through `generate_dataset`: one solve returns **both**
 # tensors, and the generic path would mesh and factorize a second time per
@@ -246,6 +259,21 @@ const FE_SECONDS = let
 end
 @printf("\none cold finite-element evaluation: %.2f s\n", FE_SECONDS)
 
+# The checkpoint holds the **dimensionless** components, which at fixed `ℂ₀`
+# represent `𝔸` faithfully and invertibly. So changing the output specification
+# re-encodes the labels already on disk rather than re-solving for them: the 700
+# finite-element solves serve both specifications.
+function reencode(Z, X, class, spec)
+    spec isa NI.DimensionlessHill && return Z
+    sc = NI.dimensionless_scale(class, C0)
+    out = similar(Z)
+    for j in axes(Z, 2)
+        t = NI.build(class, collect(view(Z, :, j)) ./ sc, FRAME)
+        out[:, j] .= NI.encode(spec, t, C0, FRAME, collect(view(X, :, j)), BOX.names)
+    end
+    return out
+end
+
 function fit(name, spec, ZT, ZV; notes)
     println("\n", "="^78)
     println("training `$name`")
@@ -269,16 +297,21 @@ function fit(name, spec, ZT, ZV; notes)
     return s, history, val
 end
 
-const SUFFIX = FAMILY == "prolate" ? "" : "_oblate"
+const SUFFIX = (FAMILY == "prolate" ? "" : "_oblate") *
+    (SPEC_KIND == "anchored" ? "_anchored" : "")
 
 sA, hA, valA = fit(
-    "layered_spheroid_strain" * SUFFIX, SPEC_A, ZAt, ZAv;
+    "layered_spheroid_strain" * SUFFIX, SPEC_A,
+    reencode(ZAt, Xt, NI.StrainLocTI(), SPEC_A),
+    reencode(ZAv, Xv, NI.StrainLocTI(), SPEC_A);
     notes = "𝔸_εε of a two-layer confocal spheroid, from axisymmetric Fourier " *
         "finite elements; features (log ω, w, log E₁/E₀, log E₂/E₀) at ν = 0.2, " *
         "$FAMILY branch",
 )
 sB, hB, valB = fit(
-    "layered_spheroid_stress" * SUFFIX, SPEC_B, ZBt, ZBv;
+    "layered_spheroid_stress" * SUFFIX, SPEC_B,
+    reencode(ZBt, Xt, NI.StressLocTI(), SPEC_B),
+    reencode(ZBv, Xv, NI.StressLocTI(), SPEC_B);
     notes = "𝔸_σε of the same morphology, divided by 2μ₀ — it is of degree +1 " *
         "in the moduli where 𝔸_εε is of degree 0. The analytic type supplies " *
         "no counterpart: this half of gate B exists only through the cell",

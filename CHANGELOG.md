@@ -92,10 +92,50 @@ staircase was a real suspicion — checked on 25 values, the cell count grows
 smoothly from 10 066 to 12 336 and the differenced cell matches the exact
 derivative to `1e-4`.
 
+### The anchored baseline for this morphology, and it does not pay either
+
+`AnchoredHill` gained a second baseline, `:layered_spheroid`: the **homogeneous**
+spheroid at the layers' mean modulus, `𝔸_b = (𝕀 + ℙ:(ℂ̄ − ℂ₀))⁻¹` with
+`ℂ̄ = r̄ ℂ₀`. It is exact on the whole face `r₁ = r₂` of the sample box — a
+layered spheroid whose layers agree *is* a homogeneous one — which is a
+three-dimensional face where `:spheroid_cavity` is exact at a single point. For
+a stress class the baseline is `ℂ̄ : 𝔸_b`, not `𝔸_b`: `𝔸_σε` is of degree one in
+the moduli where `𝔸_εε` is of degree zero.
+
+0.14.0 recorded that the anchored specification did not pay on the
+superspheroidal cavity, and hoped a layered spheroid's closer baseline would
+change that. **Measured, it does not.** Both were trained on the same 700
+labels — the checkpointing makes a change of specification a re-encoding rather
+than a re-solve — and judged on the decoded tensor over a 175-point grid
+covering all four features, against the closed form:
+
+| strain side | value median | value p90 | derivative median | derivative p90 |
+|:--|--:|--:|--:|--:|
+| dimensionless | `1.47e-3` | `1.00e-2` | `2.04e-2` | `2.30e-1` |
+| anchored | `1.35e-3` | `3.53e-2` | `2.17e-2` | `2.40e-1` |
+
+Marginally better at the median, **3.5× worse at p90**, and worse on the
+derivative at every quantile. The reason is the one 0.14.0 identified and is
+structural rather than a matter of tuning: near the exact face `𝕄 ≈ 𝕀`, whose
+off-diagonal Walpole components are zero, so the anchored target carries zeros
+by construction exactly where the anchor is perfect, and the tail pays for it.
+
+Worth recording separately: the anchored pair's held-out **block** error was
+*better* on both sides — `2.23e-3` against `2.44e-3` on the strain side, and
+`6.60e-4` against `1.89e-3` on the stress side. A block error over 100 Halton
+points is not accuracy over a dense grid, and the tail is where they part.
+
+The baseline ships anyway, tested and exact on its face, for the same reason the
+machinery shipped in 0.14.0: so the measurement is reproducible and the
+experiment is not repeated. The shipped models stay `DimensionlessHill`.
+
 ### Added
 
 - `layered_spheroid_strain` and `layered_spheroid_stress`, trained on the cell:
   both sides of gate B, one solve per sample.
+- The `:layered_spheroid` anchor baseline, and `component_labels` for an
+  `AnchoredHill` — without which a shipped output specification could not be
+  reported on at all.
 - `scripts/94_fe_neural_layered_spheroid.jl`, the whole computation end to end —
   the two ways of building a nest, the mesh report, the cell against both closed
   forms, the near-sphere failure the comparison found, the surrogate, the
