@@ -3,6 +3,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
+import Symbolics
 
 const LSec = MeanFieldHomogenization.LayeredSpheroids
 
@@ -339,6 +340,59 @@ end
 #  Transport on the identical chart was always at `1e-15`, which is what said
 #  the geometry was innocent and the elastic algebra was not.
 # =============================================================================
+
+@testset "the column equilibration of the elastic solve" begin
+    # Unit tests on `_equilibrated_solve`, the helper the near-sphere accuracy
+    # rests on. Two claims, both absolute rather than comparative — a claim of
+    # the form "better than `\\`" would depend on the machine's LU.
+    LSeq = MeanFieldHomogenization.LayeredSpheroids
+
+    @testset "it is a change of unknowns, so a well-scaled solve is untouched" begin
+        A = [2.0 1.0 0.5; 1.0 3.0 0.25; 0.5 0.25 4.0]
+        b = [1.0, -2.0, 0.5]
+        @test LSeq._equilibrated_solve(A, b) ≈ A \ b rtol = 1.0e-12
+        # Overdetermined, which is the shape the real system has.
+        Ao = [1.0 0.0; 0.0 1.0; 1.0 1.0]
+        bo = [1.0, 2.0, 3.0]
+        @test LSeq._equilibrated_solve(Ao, bo) ≈ Ao \ bo rtol = 1.0e-12
+        # Complex entries: an oblate spheroid carries `q = iτ`, and `real` of
+        # the element type is what decides, so this must take the scaled path.
+        Ac = ComplexF64[2 1im; -1im 3]
+        bc = ComplexF64[1, 1im]
+        @test LSeq._equilibrated_solve(Ac, bc) ≈ Ac \ bc rtol = 1.0e-12
+    end
+
+    @testset "and it recovers the solution of a badly column-scaled system" begin
+        # Columns spanning 24 orders of magnitude, which is the situation near
+        # the sphere. The exact solution is known by construction.
+        B = [2.0 1.0; 1.0 3.0]
+        d = [1.0e-12, 1.0e12]
+        A = B * Diagonal(d)
+        xex = [1.0, 1.0] ./ d          # so that A * xex == B * [1, 1]
+        b = B * [1.0, 1.0]
+        x = LSeq._equilibrated_solve(A, b)
+        @test x ≈ xex rtol = 1.0e-10
+    end
+
+    @testset "an exact element type takes the plain solve" begin
+        # Nothing to condition, and a symbolic column norm would blow up every
+        # expression downstream — so the helper must not compute one. `Num` is
+        # `<: Real` yet not comparable, which is exactly what `is_hard_numeric`
+        # is for, and `real(Num) === Num`.
+        @test !MeanFieldHomogenization.Elliptic.is_hard_numeric(real(Symbolics.Num))
+        α = Symbolics.variable(:α)
+        A = Symbolics.Num[1 0; 1 α]
+        b = Symbolics.Num[2, 3]
+        x = LSeq._equilibrated_solve(A, b)
+        # Substituting a value must give the numeric solution of the same
+        # system — which says the fallback solved it and did not merely return.
+        xn = [
+            Float64(Symbolics.value(Symbolics.substitute(xi, Dict(α => 4.0))))
+                for xi in x
+        ]
+        @test xn ≈ [1.0 0.0; 1.0 4.0] \ [2.0, 3.0] rtol = 1.0e-12
+    end
+end
 
 @testset "the elastic confocal spheroid approaching the sphere" begin
     _nsk(t) = Matrix(KM(TensND.change_tens(t, TensND.CanonicalBasis{3, Float64}())))
