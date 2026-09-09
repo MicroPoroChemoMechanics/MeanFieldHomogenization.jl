@@ -134,7 +134,7 @@ polarization:
 | :--- | :--- | :--- | :--- |
 | unknown | ``\mathbb X`` on the Kelvin basis | ``\boldsymbol{B}_\infty`` | ``\mathbb A`` itself |
 | solves | 6 + 6, or 2 + 2 per Fourier mode | 3 + 3 | 6 + 6, or 2 + 2 and 1 + 1 per mode |
-| closes on | ``\mathbb A = \mathbb A^E + \mathbb A^p:\mathbb X`` | ``\boldsymbol{B}_\infty = (1 - \boldsymbol{B}_u)^{-1}\boldsymbol{B}_s`` | ``\mathbb A = (\mathbb I - \mathbb A_u\mathbb F)^{-1}\mathbb A_s`` |
+| closes on | ``\mathbb A = \mathbb A^E + \mathbb A^p:\mathbb X`` | ``\boldsymbol{B}_\infty = (\boldsymbol{1} - \boldsymbol{B}_u)^{-1}\cdot\boldsymbol{B}_s`` | ``\mathbb A = (\mathbb I - \mathbb A_u:\mathbb F)^{-1}:\mathbb A_s`` |
 | used by | [`FEExcenteredSphere`](@ref app-recycled-aggregate), [`FEAxiLayeredSpheroid`](@ref tut-axi-layered-spheroid) | [`FEEllipticCrack`](@ref man-fe-inclusions) | [`FESupershapePore`](@ref man-fe-inclusions), [`FEAxiSupershapePore`](@ref app-concave-pores) |
 
 In the axisymmetric case each fixed point lives *inside* one Fourier mode,
@@ -203,7 +203,7 @@ and ``\mathbb A_u`` for the response to a unit dipole, the loop closes in one
 inversion:
 
 ```math
-\boxed{\;\mathbb A = (\mathbb I - \mathbb A_u\,\mathbb F)^{-1}\,\mathbb A_s\;},
+\boxed{\;\mathbb A = (\mathbb I - \mathbb A_u:\mathbb F)^{-1}:\mathbb A_s\;},
 \qquad
 \mathbb F = -\,V_{\mathcal D}\,\mathbb C_0
 \quad\text{(elasticity)},\qquad
@@ -244,7 +244,7 @@ tensor rather than two; and the normalizing volume is the **curved** volume of
 the cavity, `fe_cell_curved_volume`, not the volume of the flat triangulation
 that bounds the mesh, which differs from it by a percent at usable refinements.
 
-The diagnostic is ``\|\mathbb A_u \mathbb F\|``, which is
+The diagnostic is ``\|\mathbb A_u : \mathbb F\|``, which is
 ``O\!\left((a/R)^3\right)`` — measured at a log-log slope of ``-2.96`` against
 ``-3`` from theory.
 
@@ -306,7 +306,7 @@ because it shrinks both together.
     ``𝔹ᴱ`` and ``𝔹ᵖ`` are not zero, and both outputs of the fixed point are
     used, the second being gate B's stress side. So the cavity was the easy
     case: it degenerates the correction to
-    ``𝕃 = (𝕀 − 𝕃_u𝔽)^{-1}𝕃_s`` with one useful output, where a heterogeneous
+    ``𝕃 = (𝕀 − 𝕃_u:𝔽)^{-1}:𝕃_s`` with one useful output, where a heterogeneous
     inclusion carries the pair.
 
     Nothing else changes. The same three modes, the same two families of
@@ -435,7 +435,7 @@ its response to the crack's own far field. Superposing,
 ```math
 \underline{U} = \boldsymbol{B}_s\cdot\underline{t} + \boldsymbol{B}_u\cdot\underline{U}
 \qquad\Longrightarrow\qquad
-\underline{U} = (\boldsymbol{1} - \boldsymbol{B}_u)^{-1}\,\boldsymbol{B}_s\cdot\underline{t} ,
+\underline{U} = (\boldsymbol{1} - \boldsymbol{B}_u)^{-1}\cdot\boldsymbol{B}_s\cdot\underline{t} ,
 ```
 
 so the infinite-medium COD tensor follows in **one step** — no iteration:

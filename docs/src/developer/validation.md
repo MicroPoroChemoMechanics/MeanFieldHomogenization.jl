@@ -41,7 +41,7 @@ Conventions and formulation choices, not numerical error — do not "fix" them.
 | Divergence | Nature | Explained in |
 | :--- | :--- | :--- |
 | Elliptic crack ``\mathbb H`` | normalization, see below | [COD tensors](../theory/cod_tensors.md) |
-| MT on a cracked RVE | ``\mathbb B\cdot\mathbb A^{-1}`` vs additive closure; both agree with PCW at low density | [Viscoelasticity](../manual/viscoelasticity.md) |
+| MT on a cracked RVE | ``\mathbb B : \mathbb A^{-1}`` vs additive closure; both agree with PCW at low density | [Viscoelasticity](../manual/viscoelasticity.md) |
 | ASC, porous oblate | Echoes' compliance-form ASC converges to another branch | `benchmark_porous.jl` |
 | DifferentialScheme, porous ``\varphi \ge 0.5`` | pre-existing gap, 2.6e-3 → 6.2e-2, reproducible | `benchmark_porous.jl` |
 | Strength ``f_c`` (2 %) | water/air regularized to a small positive stiffness | [Strength](../applications/strength.md) |

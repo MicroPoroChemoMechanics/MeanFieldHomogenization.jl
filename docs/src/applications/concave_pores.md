@@ -1,4 +1,4 @@
-# [Concave pores, and where the literature and this package disagree](@id app-concave-pores)
+# [Concave pores: superspheres and superspheroids](@id app-concave-pores)
 
 A **supersphere**
 
@@ -14,10 +14,13 @@ harzburgite. It has no Eshelby solution, so it is exactly the morphology
 [`FESupershapePore`](@ref man-fe-inclusions) exists for.
 
 [chenIJES2015](@cite) studied it by finite elements and condensed the result
-into a single scalar. This page reproduces what can be reproduced — and the
-agreement is exact where the answer is known — then states two places where it
-disagrees: their approximation is isotropic where the shape is cubic, and their
-linear fit departs from its own anchors inside the range it claims.
+into a single scalar — the only published data for this shape family, and what
+makes any comparison possible at all. This page reports what the package
+computes on the same shapes: the agreement is exact where the answer is known,
+and two quantities come out differently. One is the anisotropy, which their
+scalar summary does not set out to carry; the other is a fit in ``p``, read
+pointwise rather than over the range it summarizes. The numbers below are ours,
+and the published values are quoted as they stand.
 
 !!! note "This page is static"
     The figures and the numbers are produced once by
@@ -40,7 +43,10 @@ The left panel is the whole cell of a concave shape at ``p = 0.35``, cut away so
 the cavity is visible; the right panel is the same cell as an eighth, with the
 three flat faces that had to be built in gray.
 
-## Where we agree
+## What can be checked exactly
+
+Two of the three checks below are against their published work, and both pass;
+that is the headline of this section.
 
 **The volume, to machine precision.** Their Eq. (2.7) and the closed form this
 package derives independently agree to ``7\times10^{-16}`` over the whole range,
@@ -52,15 +58,17 @@ the octahedron.
 ``1.3\times10^{-4}`` at level 3, and ``9.7\times10^{-6}`` at level 4, which the
 octant makes affordable. This is the control for everything else on this page.
 
-**Their ``\eta`` near the sphere.** Their fit is anchored there and is exact
-there, so the two agree to ``1.3\times10^{-4}`` at ``p = 1`` and to 2 % at
-``p = 0.7``.
+**Their ``\eta`` near the sphere.** The fit is anchored at the sphere, where the
+answer is exact, so the two agree to ``1.3\times10^{-4}`` at ``p = 1`` and to 2 %
+at ``p = 0.7``.
 
-## Where their fit leaves its own anchors
+## The scalar fit in ``p``, read pointwise
 
-``\eta(p)`` is a **linear** fit in ``p``, pinned at ``p = 1`` where it is exact
-and at ``p = 0.2`` where they take the effect to vanish. Away from those two
-points:
+``\eta(p)`` is a **linear** fit in ``p``, pinned at ``p = 1``, where it is exact,
+and at ``p = 0.2``, where the effect is taken to vanish. A straight line through
+two points is an economical summary, chosen for the use their paper makes of it;
+what follows compares it with the pointwise values computed here, which is a
+harsher test than it was designed for:
 
 | ``p`` | ``k_0 R`` here | their ``\eta(p)`` | difference |
 |---:|---:|---:|---:|
@@ -72,27 +80,31 @@ points:
 | 1.50 | 1.5111 | 1.7923 | −16 % |
 | 2.50 | 1.5400 | 2.6065 | −41 % |
 
-The two convex rows are outside what the paper claims — it restricts the fit to
-``p < 1`` — but the concave ones are inside it. Two further consequences of
-pinning a straight line at ``p = 0.2``: ``\eta`` is **non-monotone** within the
-claimed range (zero at ``0.2`` by construction, ``3.46`` just above at ``0.30``),
-and **negative** below it, which is not physical for a pore.
+The two convex rows lie outside the stated range of validity — the fit is
+restricted to ``p < 1`` — so they are given for context only. Two further
+properties follow from pinning a straight line at ``p = 0.2``, and they are worth
+knowing before reusing the expression outside its intended role: read pointwise,
+``\eta`` is **non-monotone** near the lower anchor (zero at ``0.2`` by
+construction, ``3.46`` just above at ``0.30``), and it changes sign below
+``0.2``, so it should not be extrapolated there.
 
-## Where we disagree, and it is not numerical
+## The cubic anisotropy, measured on its own three invariants
 
-**A supersphere is cubic, and their approximation is isotropic.** Their
+**A supersphere is cubic, and two constants cannot express that.** The
+octahedral group leaves *three* invariants for a fourth-order tensor with the
+minor symmetries, and below ``p = 1/2`` the third is not a small correction.
 Eq. (2.19) writes the compliance contribution on the isotropic basis
-``(\mathbb J, \mathbb K)`` — two constants. The octahedral group leaves *three*
-invariants for a fourth-order tensor with the minor symmetries, and the third is
-not a small correction below ``p = 1/2``. Their own Fig. 4 data carries no
-anisotropy either: the ratio ``H_{1111}/H_{1212}`` stays at the isotropic value
-to about 1 % across their whole range.
+``(\mathbb J, \mathbb K)`` — two constants, an entirely usual way to condense
+such a result and enough for the scalar that paper sets out to report — and its
+Fig. 4 data is isotropic to about 1 % on the ratio ``H_{1111}/H_{1212}`` across
+the whole range. So the third invariant is not a quantity to be compared: it is
+one the published study does not undertake to deliver, and one this package can
+add to it.
 
 This package measures the three separately, because `TensND.TensCubic` is a
 storage class in its own right and the octant makes the cubic structure exact
-rather than approximate: the couplings
-symmetry forbids come out identically zero instead of as mesh noise at a few
-percent of the norm.
+rather than approximate: the couplings symmetry forbids come out identically zero
+instead of as mesh noise at a few percent of the norm.
 
 | ``p`` | ``H_{1111}`` | ``H_{1122}`` | ``H_{1212}`` | anisotropy |
 |---:|---:|---:|---:|---:|
@@ -130,13 +142,15 @@ accurate**, because the parity projection removes couplings that the whole cell
 carries as noise. At ``p = 0.35`` it also needs **no** snapping fallback where
 the whole cell backs off on 37 nodes.
 
-**Why it cannot be settled from the paper itself.** Their values exist only as
-figures, their elements are linear tetrahedra, and their surface integral uses
-centroid values on flat triangles. What can be said is on the table above: the
-control row bounds this chain's own error, and the signal is three orders of
-magnitude above it.
+**What the paper allows us to conclude, and what it does not.** Their values are
+published as figures rather than tables, on linear tetrahedra with a surface
+integral built from centroid values on flat triangles, so the anisotropy cannot be
+read back out of them to be compared component by component. What can be said is
+on the table above, and it concerns this chain alone: the control row bounds its
+own spurious anisotropy, and the measured signal is three orders of magnitude
+above it.
 
-## The axisymmetric companion, and the only tabulated data of the two
+## The axisymmetric companion, where the data is tabulated
 
 [sevostianovIJES2016](@cite) is the same team's study of the **axisymmetric**
 concave pore. Its shape, Eq. (1.2),
@@ -148,7 +162,8 @@ concave pore. Its shape, Eq. (1.2),
 is `Superspheroid(a, aγ, p)` without conversion, studied at `a = γ = 1`. Being a
 solid of revolution it is transversely isotropic — five constants for ℍ, two for
 ℝ — and it is the only one of the two papers to **tabulate** its numbers, which
-makes it a target of a different nature from Chen *et al.*'s figures.
+makes a component-by-component comparison possible where Chen *et al.*'s figures
+allow only a comparison of trends.
 
 !!! warning "Two conventions for `p`"
     On this page `p` is the concavity exponent of the shape, with `2p` the
@@ -198,33 +213,39 @@ reassembly simultaneously. And **conduction on a sphere is exact to
 exterior perturbation being a pure dipole with no higher multipole left to
 truncate.
 
-### The material the paper does not state
+### The reference moduli, inferred
 
-No modulus appears anywhere in it. What follows uses `E₀ = 1`, `ν₀ = 1/3`,
+The paper reports dimensionless quantities and states no modulus, so one has to
+be recovered before the tables can be compared. What follows uses
+`E₀ = 1`, `ν₀ = 1/3`,
 `k₀ = 1`, **inferred** from its own `p = 1` row: there the body is an exact
 sphere, Eq. (3.9) applies, and `H₁₁₁₁/(−H₁₁₂₂) = (9+5ν₀)/(1+5ν₀)` gives
 `ν₀ = 0.330`. With `ν₀ = 1/3` all five components and both resistivities come
 back to 0.06 %, which is their own finite-element error. It is an inference and
 is presented as one.
 
-### Four corrections to the paper's formulas
+### The closed forms, and the conventions to read them with
 
-Its tables are self-consistent; its closed forms are not, and each of these is
-checked on the `p = 1` row where the answer is known.
+Its tables are self-consistent, and it is the tables this page compares against.
+Reproducing the *printed closed forms* literally does not return those tables, so
+four readings have to be adopted for the two to agree; each is checked on the
+`p = 1` row, where the answer is known independently. They are recorded here to
+save the next reader the same detective work, not as a criticism of a paper whose
+data is sound.
 
-1. **`V*(p)` in Eqs. (3.10)–(3.11) is the *normalized* volume** `3g(p) =
-   V*/(4π/3)`, not the volume of Eq. (1.3). With the true volume,
-   `H₃₃₃₃(p=1)` comes out 0.477 instead of 2.001 — a factor `4π/3`.
-2. **A factor of four on the shear components.** `H₁₃₁₃` and `H₁₂₁₂` as printed
-   in Eq. (3.5) give 5.0 for the sphere instead of 1.25.
-3. **A sign.** Eq. (3.5) writes `H₁₂₁₂ ≡ (H₁₁₁₁ + H₁₁₂₂)/2`; it must be a
-   difference. On their own Table B.1 at `p = 1`, the minus gives 1.2496 and the
-   plus 0.7516.
-4. Eq. (3.10) is internally inconsistent between `H₁₂₁₂`, written in tensor
-   convention, and `H₁₃₁₃`, written in the other.
+1. **`V*(p)` in Eqs. (3.10)–(3.11) is to be read as the *normalized* volume**
+   `3g(p) = V*/(4π/3)`, not as the volume of Eq. (1.3). Read as the volume
+   itself, `H₃₃₃₃(p=1)` comes out 0.477 instead of 2.001 — a factor `4π/3`.
+2. **A factor of four on the shear components.** Evaluated as printed, `H₁₃₁₃`
+   and `H₁₂₁₂` from Eq. (3.5) give 5.0 for the sphere where 1.25 is expected.
+3. **A sign.** Eq. (3.5) reads `H₁₂₁₂ ≡ (H₁₁₁₁ + H₁₁₂₂)/2`; the difference is
+   what matches the tables. On their own Table B.1 at `p = 1`, the minus gives
+   1.2496 and the plus 0.7516.
+4. Eq. (3.10) appears to mix the two shear conventions, `H₁₂₁₂` being written in
+   the tensor one and `H₁₃₁₃` in the other.
 
-None of this touches the tabulated values, which is why the tables are the
-target and the formulas are not.
+None of this affects the tabulated values, which is why the tables are what this
+page compares against and the closed forms are not.
 
 ### The two tables, superimposed
 
@@ -239,8 +260,9 @@ tabulated ones. The panel axes carry those factors; the prose below writes
 The last panel is the comparison itself — every deviation on one logarithmic
 axis — and the only place their **Table B.3** appears: the largest relative
 change between *their* two meshes at each ``p``, plotted as its own curve. That
-is their published resolution, and it is the yardstick a deviation should be read
-against; nothing is drawn on their tabulated values that they did not put there.
+is their own published estimate of their resolution, and it is the fairest
+yardstick a deviation can be read against; nothing is drawn on their tabulated
+values that they did not put there.
 
 ![This package against Sevostianov et al. (2016), all seven components](../assets/fe/axi_vs_sevostianov.png)
 
@@ -257,7 +279,7 @@ two independent finite-element formulations — theirs three-dimensional on a
 million-node mesh, ours two-dimensional on sixty thousand — land on the same
 five-constant tensor over a shape family with no closed form.
 
-### Three disagreements, of three different kinds
+### Three differences, of three different kinds
 
 **One is a trend, not an amplitude.** Their ``k_0R_{11}`` *rises* with concavity
 — 1.5012 at the sphere, 1.6400 at ``p = 0.30``, 2.0247 at ``p = 0.20`` — where
@@ -268,14 +290,15 @@ radius — and `nradial` from 20 to 28, ``k_0R_{11}`` at ``p = 0.20`` is
 **1.28298 in all eight configurations**, unchanged to six figures, with
 ``H_{1111}`` stable to ``10^{-5}`` and ``H_{3333}`` to ``4\times10^{-4}``.
 
-Before anything else: **we are solving their body, exactly.** Their Table C.1
+Before anything else: **the two computations are solving the same body.** Their
+Table C.1
 gives the dimensionless volume ``3g(p)`` in closed form at four values, and the
 package's own closed form matches all four to machine precision — ``1/10`` at
 ``p = 1/4``, ``8/35`` at ``1/3``, ``1/2`` at ``1/2``, ``1`` at the sphere,
-residuals below ``4\times10^{-16}``. Whatever the disagreement is, it is not a
-disagreement about the shape.
+residuals below ``4\times10^{-16}``. Whatever the difference is, it is not a
+difference of geometry.
 
-Nor can it be a normalization. ``\mathbb H`` and ``\boldsymbol R`` are
+Nor can it be a matter of normalization. ``\mathbb H`` and ``\boldsymbol R`` are
 normalized by the same cavity volume, so an error there would move **every**
 component by one common factor — and ``H_{3333}`` and ``k_0R_{33}`` agree with
 their tables to 0.7 % and 1.6 %. A factor that leaves those alone while moving
@@ -290,13 +313,14 @@ contributes 2. Our 1.28 and their 2.02 sit either side of that pair, so the
 question is which of the two features carries the limit — not which curve is
 obviously wrong.
 
-One thing does settle: at ``p = 1`` the body is an exact sphere, where
-``k_0R_{11} = 3/2``. We give 1.500000 and they give 1.501244, so their own
-control row is 0.08 % off — the size of their finite-element error, and the
-same figure their Table B.3 reports.
+One reference point is available to both: at ``p = 1`` the body is an exact
+sphere, where ``k_0R_{11} = 3/2``. We obtain 1.500000 and their table gives
+1.501244, i.e. within 0.08 % of the exact value — consistent with the
+finite-element resolution their own Table B.3 reports, and far too small to
+account for the 37 %.
 
-And one more thing settles it, which is that the package can solve the same
-shape **twice, by two routes with nothing in common**: the Fourier cell on a
+What does bear on the question is that the package can solve the same shape
+**twice, by two routes with nothing in common**: the Fourier cell on a
 meridian mesh, and the three-dimensional octant cell of the supersphere
 section, on tetrahedra. At ``p = 0.30``:
 
@@ -309,17 +333,17 @@ section, on tetrahedra. At ``p = 0.30``:
 
 The octant gives ``k_0R_{11} = 1.36066``, **0.13 % from the two-dimensional
 value** and rising towards it as the level increases. Two independent
-discretizations of ours meet; theirs is 17 % from both. And the octant is not a
-variant of the Fourier cell: different mesher, different elements, different
+discretizations of ours meet, and the tabulated value sits 17 % from both. The
+octant is not a variant of the Fourier cell: different mesher, different elements, different
 assembly, and no azimuthal modes anywhere — so a fault in the mode-1 transport
 operator, the one place a ``k_0R_{11}``-only error could hide, would have to be
 reproduced by a code that has no modes. That same operator is what the exact
 oblate and prolate spheroid gates exercise, since ``R_{11} \ne R_{33}`` there
 and both are closed-form.
 
-### What we think, said as a judgment
+### The transverse resistivity, and what we make of it
 
-Their ``k_0R_{11}`` column has a property worth naming: over
+Their ``k_0R_{11}`` column has a property worth noting: over
 ``p \in [0.55, 0.95]`` it is **flat to 0.3 %** — 1.5055, 1.5059, 1.5075,
 1.5091, 1.5099, 1.5099, 1.5089, 1.5070, 1.5073 — while over the very same rows
 their own ``k_0R_{33}`` falls by 14 % and their ``H_{3333}`` by 22 %. It also
@@ -327,33 +351,39 @@ sits *above* their sphere value throughout, and wiggles non-monotonically inside
 that band. Ours rises smoothly over the same interval, 1.452 to 1.497, and lands
 on 1.500000 at the sphere.
 
-A quantity that does not move while its siblings move 20 % looks like one that
-was not resolved, with the concave rows at ``p \le 0.35`` being where their mesh
-finally reacted. That is our reading, and it is a judgment rather than a proof:
-what would settle it beyond this package is a third implementation, and none is
-published for this shape family — which is the reason their paper exists.
+We have no established explanation for the difference. The most economical one
+we can think of is that the transverse resistivity is the most demanding of the
+seven quantities for a three-dimensional mesh, so it is where two discretizations
+would be expected to part company first — but that is a conjecture, not a result,
+and nothing here proves that our value is the converged one either. What would
+settle the question is a third, independent implementation, and none is published
+for this shape family, which is precisely what makes their study valuable.
 
 The same table carries its own counter-check, and that one runs in *their*
 favor. On ``H_{3333}`` their 7.4055 is 0.16 % from our two-dimensional value,
 while our own octant at level 4 gives 7.0775 — 4 % below, and still climbing.
-Three-dimensional meshes converge slowly **from below** on that component; their
-million-node mesh got there and our level 4 has not. Which is consistent with
-the transverse block being where their mesh has the hardest job, and with the
+Three-dimensional meshes converge slowly **from below** on that component: their
+million-node mesh has got there and our level 4 has not, which is a point in
+favor of their discretization. It is also consistent with the transverse block
+being the harder part of the problem for a three-dimensional mesh, and with the
 reversal appearing exactly at ``p \le 0.30``.
 
-**One is a non-monotonicity in their table.** Below ``p = 0.30`` their
-transverse block reverses direction: ``H_{1111}`` is 1.8878 at ``p = 0.20``,
+**One is a change of direction in the transverse block.** Below ``p = 0.30`` the
+tabulated values reverse: ``H_{1111}`` is 1.8878 at ``p = 0.20``,
 falls to 1.8080 at ``p = 0.25``, then rises again to 1.8200 at ``p = 0.30``,
 and ``H_{1122}`` and ``H_{1133}`` do the same. Ours is monotone throughout. The
 deviation reaches 14.5 %, 17.4 % and 15.0 % at ``p = 0.20``, and it appears
 exactly where a three-dimensional mesh has to resolve six conical points that a
-meridian mesh resolves as two corners on a curve.
+meridian mesh sees as two corners on a curve — which is a difference of method
+before it is a difference of result.
 
-**And one looks like a transcription.** Their ``H_{1313}`` at ``p = 0.65`` is
-1.269780 — identical to six decimals to their ``p = 0.60`` row. Their own Table
-B.3 flags that same row with 0.91 %, the largest change in that column, and
-``p = 0.30``, where we differ by 11.6 %, carries its second largest at 0.83 %.
-Both are rows their own mesh study had already marked.
+**And one row is not usable for comparison.** ``H_{1313}`` is listed as 1.269780
+at ``p = 0.65`` and again, to six decimals, at ``p = 0.60``; we set that row
+aside rather than read a deviation from it. Table B.3 marks the same row with
+0.91 %, the largest change in that column, and ``p = 0.30``, where the two
+differ by 11.6 %, carries its second largest at 0.83 % — their own mesh study had
+already identified both as the least settled, which is exactly the information
+one needs to read a comparison honestly.
 
 ## One limitation, and it belongs to one of the two families
 

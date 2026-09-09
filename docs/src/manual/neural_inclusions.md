@@ -274,8 +274,7 @@ the features are `log_p` and `log_aspect` because a `SampleBox` is linear and th
 feature therefore *is* the sampling law. Measured, one lever at a time:
 ``2.3\times10^{-2}`` → ``7.1\times10^{-3}`` → ``3.7\times10^{-3}``.
 
-!!! warning "The last row's `6.3e-2` is one point, and the column is the wrong
-    number to read"
+!!! warning "The last row's `6.3e-2` is one point, and the wrong number to read"
     The axisymmetric **elastic** model has a median block error of
     ``3.0\times10^{-3}`` and a p90 of ``6.6\times10^{-3}``; its quoted worst case
     is a *single* held-out point in the near-crack corner of the box — flattened
