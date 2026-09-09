@@ -500,7 +500,24 @@ function NeuralLocalizationInclusion(
     )
     T = Core._floatlike(promote_type(typeof.(semi_axes)...))
     b0 = basis === nothing ? Core._default_basis(T, euler_angles) : basis
-    axes_, b = _canonical_axes(map(T, semi_axes), b0)
+    # **Not** `_canonical_axes` here, unlike `NeuralHillInclusion` above, and the
+    # asymmetry is the whole correctness argument. Sorting the semi-axes
+    # descending exists to match `Ellipsoid`, the analytic teacher of a *Hill*
+    # surrogate, which returns its components in the sorted frame. A
+    # *localization* surrogate's teacher is a finite-element cell, whose frame is
+    # unsorted and whose response axis is **column 3** by the package's
+    # convention — the column `_class_frame` reads for every localization class,
+    # and the one `FiniteElements._fe_frame` solves about.
+    #
+    # Sorting would move that axis: `(1, 1, ω)` with `ω > 1` sorts to `(ω, 1, 1)`
+    # and permutes the basis so the revolution axis lands in column 1, while
+    # `_class_frame` still reads column 3. The decoded tensor is then transversely
+    # isotropic about an equatorial direction. It stayed hidden because every
+    # localization surrogate shipped before the layered spheroid was trained on a
+    # *sphere* (`FEExcenteredSphere`), where the sort is the identity, and because
+    # the projection residual that catches a wrong axis is measured on the
+    # encoding path, not on decoding.
+    axes_, b = map(T, semi_axes), b0
     el = strain === nothing ? nothing : (strain, stress)
     tr = gradient === nothing ? nothing : (gradient, flux)
     vals = values(shape_params)

@@ -290,3 +290,31 @@ microcracked solid whose cracks close — and needs only `Ferrite` (no gmsh).
 Figures for the documentation come from
 `scripts/fe/make_thick_cylinder_figures.jl`, run by hand; the pages are static
 so no documentation build re-runs a finite-element solve.
+
+## 94 — the layered spheroid, end to end
+
+`94_fe_neural_layered_spheroid.jl` is the whole computation behind
+[`FEAxiLayeredSpheroid`](../docs/src/tutorials/axi_layered_spheroid.md) in one
+runnable file: the two ways of building a nest (confocal, and free semi-axes),
+the mesh report, the Fourier cell against **both** closed forms that cross this
+space (`LayeredSpheroid` in prolate and oblate, `LayeredSphere` at arbitrary
+radii), the near-sphere failure the comparison found inside the analytic
+solution, the trained surrogate against the cell, both in the schemes, and the
+derivative by the core fraction that the cell refuses.
+
+    julia --project=scripts/fe scripts/94_fe_neural_layered_spheroid.jl
+
+The number falls in the 90-99 range although the script has no N-body content:
+the 30-39 and 80-89 blocks are both full. `96_nano_spheroids.jl` is the same
+case and sets the precedent.
+
+Sections 5 to 7 need the two surrogates `layered_spheroid_strain` and
+`layered_spheroid_stress`, trained by
+`scripts/nn/train_layered_spheroid.jl 600 150` (750 finite-element solves, about
+eighty minutes on two cores). Without them the script runs and reports which
+sections it skipped, rather than failing.
+
+Figures for the documentation come from
+`scripts/fe/make_layered_spheroid_figures.jl` and
+`scripts/nn/make_layered_spheroid_figures.jl`, both run by hand. The tutorial
+page is static: no documentation build meshes or trains anything.

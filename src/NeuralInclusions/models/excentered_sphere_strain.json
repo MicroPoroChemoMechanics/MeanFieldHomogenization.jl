@@ -22,7 +22,7 @@
             0.00013457021964484662
         ],
         "created": "2026-07-30 15:55",
-        "notes": "𝔸_εε of a sphere with an off-centre core, from axisymmetric Fourier finite elements; features (α, w, log E₂/E₀) at ν = 0.2 and E₁/E₀ = 3.5"
+        "notes": "𝔸_εε of a sphere with an off-center core, from axisymmetric Fourier finite elements; features (α, w, log E₂/E₀) at ν = 0.2 and E₁/E₀ = 3.5"
     },
     "format": "1.1.0",
     "features": [

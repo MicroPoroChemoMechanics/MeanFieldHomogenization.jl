@@ -31,6 +31,17 @@ using Literate
 
 const SCRIPTS_DIR = joinpath(@__DIR__, "..", "scripts")
 const TUTORIAL_MD_DIR = joinpath(@__DIR__, "src", "tutorials", "generated")
+const APPLICATION_MD_DIR = joinpath(@__DIR__, "src", "applications", "generated")
+
+# A generated page whose subject is **one published result** belongs under
+# Applications, not Tutorials: a tutorial teaches how to drive the library,
+# whereas these exist to reproduce a particular paper's numbers and are read for
+# the comparison. Listed by page name, so the routing is visible here rather
+# than implied by the navigation in `make.jl`.
+const APPLICATION_PAGES = Set(["cluster_model", "eim_assembly"])
+
+"Where a generated page is written, by what it is for."
+page_md_dir(page) = page in APPLICATION_PAGES ? APPLICATION_MD_DIR : TUTORIAL_MD_DIR
 const NOTEBOOK_DIR = joinpath(@__DIR__, "generated_notebooks")
 const CLEAN_SCRIPT_DIR = joinpath(@__DIR__, "generated_scripts")
 
@@ -127,12 +138,13 @@ const BUILD_NOTEBOOKS = get(ENV, "MFH_DOCS_NOTEBOOKS", "0") == "1"
 function build_tutorial_pages()
     check_pkg_markers()
     mkpath(TUTORIAL_MD_DIR)
+    mkpath(APPLICATION_MD_DIR)
     mkpath(CLEAN_SCRIPT_DIR)
     BUILD_NOTEBOOKS && mkpath(NOTEBOOK_DIR)
     for (script, page) in PUBLISHED_SCRIPTS
         src = joinpath(SCRIPTS_DIR, script)
         isfile(src) || error("docs/literate.jl: published script not found: $src")
-        Literate.markdown(src, TUTORIAL_MD_DIR; documenter = true, name = page)
+        Literate.markdown(src, page_md_dir(page); documenter = true, name = page)
         Literate.script(src, CLEAN_SCRIPT_DIR; name = page)
         BUILD_NOTEBOOKS && Literate.notebook(src, NOTEBOOK_DIR; name = page)
     end

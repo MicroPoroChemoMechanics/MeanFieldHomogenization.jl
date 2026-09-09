@@ -857,3 +857,53 @@ if NN_HAS_LUX
         @test maximum(abs, P_nn .- P_ex) ≤ 0.05 * maximum(abs, P_ex)
     end
 end
+
+@testset "NeuralInclusions — the localization frame is column 3, prolate included" begin
+    # A regression test on a bug that bit **prolate shapes only**, which is why
+    # nothing above caught it: every other gate-B test on this page uses
+    # `(1, 1, 0.4)` — oblate, hence already sorted descending, hence an identity
+    # permutation — and every localization surrogate shipped before the layered
+    # spheroid was trained on a *sphere*, where the sort is the identity too.
+    #
+    # A localization class reads **column 3** of the inclusion basis, because the
+    # morphology it describes may be a sphere whose response is transversely
+    # isotropic about a direction the outer shape does not name. Sorting the
+    # semi-axes descending — which a Hill surrogate needs, to match the frame its
+    # `Ellipsoid` teacher returns — moves that column: `(1, 1, ω)` with `ω > 1`
+    # sorts to `(ω, 1, 1)` and the revolution axis lands in column 1. The decoded
+    # tensor was then transversely isotropic about an equatorial direction, and
+    # nothing threw, the projection residual being measured when *encoding*.
+    box = NI.SampleBox([:log_aspect], [-log(20)], [log(20)])
+    sA = _nn_untrained(NI.DimensionlessHill(NI.StrainLocTI()), box)
+    sB = _nn_untrained(NI.DimensionlessHill(NI.StressLocTI()), box; seed = 99)
+
+    for ω in (2.5, 0.4, 1.0)                     # prolate, oblate, sphere
+        incl = NeuralLocalizationInclusion(
+            (1.0, 1.0, ω); strain = sA, stress = sB, guard = :none
+        )
+        # The semi-axes are kept in the order given, deliberately.
+        @test incl.semi_axes == (1.0, 1.0, ω)
+        # The aspect feature is unaffected either way: `_spheroid_ratio` looks
+        # for the distinct axis instead of trusting a position.
+        @test NI._feature(Val(:log_aspect), incl, NN_C_M) ≈ log(ω)
+        # The axis is e₃ whatever the aspect ratio.
+        @test NI._class_frame(NI.StrainLocTI(), incl) == (0.0, 0.0, 1.0)
+        @test NI._class_frame(NI.StressLocTI(), incl) == (0.0, 0.0, 1.0)
+
+        # And the decoded tensors really are transversely isotropic about it:
+        # `components` measures the projection residual and throws above `atol`,
+        # so reaching six components at 1e-10 is the assertion.
+        axis = NI._class_frame(NI.StrainLocTI(), incl)
+        A = strain_strain_loc(incl, NN_C_I, NN_C_M)
+        B = stress_strain_loc(incl, NN_C_I, NN_C_M)
+        @test length(collect(NI.components(NI.StrainLocTI(), A, axis; atol = 1.0e-10))) == 6
+        @test length(collect(NI.components(NI.StressLocTI(), B, axis; atol = 1.0e-10))) == 6
+    end
+
+    # The asymmetry with the Hill type is intended, not an oversight: its teacher
+    # returns components in the sorted frame, so it must keep sorting.
+    sh = _nn_untrained(NI.DimensionlessHill(NI.HillTI()), _NN_SPHEROID_BOX4)
+    @test NeuralHillInclusion(
+        (1.0, 1.0, 2.5); elastic = sh, guard = :none
+    ).semi_axes == (2.5, 1.0, 1.0)
+end

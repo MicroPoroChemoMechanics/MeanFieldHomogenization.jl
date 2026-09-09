@@ -1,18 +1,7 @@
-# Environment for training neural-surrogate inclusions.
-#
-# `Lux`, `Optimisers` and `Zygote` are *weak* dependencies of `MeanFieldHomogenization`
-# (they back `MeanFieldHomogenizationLuxExt`), so they are not loadable from the package's
-# own environment — hence this small dedicated project, which the training
-# script activates and instantiates on first run. `Ferrite`/`FerriteGmsh`/`Gmsh`
-# are here too: `train_excentered.jl` uses the finite-element solve as its
-# teacher.
-#
-# Note the asymmetry with `scripts/fe/`: the finite-element scripts need their
-# environment to *run at all*, whereas here only `train_models.jl` does.  Script
-# 84 loads the committed models and needs nothing but the package.
 [deps]
 Ferrite = "c061ca5d-56c9-439f-9c0e-210fe06d3992"
 FerriteGmsh = "4f95f4f8-b27c-4ae5-9a39-ea55e634e36b"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 Gmsh = "705231aa-382f-11e9-3f0c-b7cb4346fdeb"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Lux = "b2108857-7c20-44ae-9111-449ecde12c47"
@@ -28,7 +17,4 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [sources]
 MeanFieldHomogenization = {path = "../.."}
-# TensND is pinned to the working clone for the same reason as the package
-# itself: 0.5 is not in the registry yet, and without this the environment
-# resolves 0.4 and fails on `TensCubic`.
 TensND = {path = "../../../TensND.jl"}

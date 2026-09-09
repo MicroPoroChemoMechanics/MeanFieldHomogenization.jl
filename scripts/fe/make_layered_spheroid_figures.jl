@@ -162,14 +162,14 @@ want("validation") && let
         flush(stdout)
     end
     p1 = plot(;
-        title = "confocal, 2 layers: A_∇∇ against LayeredSpheroid",
-        xlabel = "outer aspect ratio ω", ylabel = "component",
+        title = "confocal, 2 layers: 𝐀_∇∇ against LayeredSpheroid",
+        xlabel = "outer aspect ratio ω", ylabel = "component of 𝐀_∇∇",
         titlefontsize = 9, legend = :best,
     )
-    plot!(p1, ωs, an11; lc = :steelblue, lw = 2, label = "A₁₁ analytic")
-    scatter!(p1, ωs, fe11; mc = :steelblue, ms = 4, msw = 0, label = "A₁₁ finite elements")
-    plot!(p1, ωs, an33; lc = :crimson, lw = 2, label = "A₃₃ analytic")
-    scatter!(p1, ωs, fe33; mc = :crimson, ms = 4, msw = 0, marker = :diamond, label = "A₃₃ finite elements")
+    plot!(p1, ωs, an11; lc = :steelblue, lw = 2, label = "𝐀₁₁ analytic")
+    scatter!(p1, ωs, fe11; mc = :steelblue, ms = 4, msw = 0, label = "𝐀₁₁ finite elements")
+    plot!(p1, ωs, an33; lc = :crimson, lw = 2, label = "𝐀₃₃ analytic")
+    scatter!(p1, ωs, fe33; mc = :crimson, ms = 4, msw = 0, marker = :diamond, label = "𝐀₃₃ finite elements")
 
     # (b) Concentric spheres of free radii, against LayeredSphere: the slice
     #     that covers arbitrary radii without assuming anything confocal.
@@ -190,7 +190,7 @@ want("validation") && let
     end
     p2 = plot(;
         title = "concentric spheres, free radii: against LayeredSphere",
-        xlabel = "core radius / outer radius", ylabel = "A_∇∇",
+        xlabel = "core radius / outer radius", ylabel = "𝐀_∇∇",
         titlefontsize = 9, legend = :best,
     )
     plot!(p2, fr, sa; lc = :steelblue, lw = 2, label = "analytic")
@@ -204,12 +204,12 @@ want("validation") && let
     plot!(
         p3, ωs, max.(100 .* abs.(fe11 .- an11) ./ abs.(an11), 1.0e-4);
         lc = :steelblue, lw = 1.5, marker = :circle, ms = 3, msw = 0, mc = :steelblue,
-        label = "confocal A₁₁ (vs ω)",
+        label = "confocal 𝐀₁₁ (vs ω)",
     )
     plot!(
         p3, ωs, max.(100 .* abs.(fe33 .- an33) ./ abs.(an33), 1.0e-4);
         lc = :crimson, lw = 1.5, marker = :diamond, ms = 3, msw = 0,
-        label = "confocal A₃₃ (vs ω)",
+        label = "confocal 𝐀₃₃ (vs ω)",
     )
     plot!(
         p3, fr, max.(100 .* abs.(sf .- sa) ./ abs.(sa), 1.0e-4);
@@ -224,7 +224,7 @@ want("validation") && let
     #  elasticity — the generic that used to answer was wrong by 110 %.
     C₀ = Ciso(1.0, 0.25)
     Cs = (Ciso(4.0, 0.2), Ciso(1.5, 0.3))
-    labels4 = ("A₁₁₁₁", "A₃₃₃₃", "A₁₃₁₃")
+    labels4 = ("𝔸₁₁₁₁", "𝔸₃₃₃₃", "𝔸₁₃₁₃")
     idx4 = ((1, 1), (3, 3), (5, 5))
     feE = [Float64[] for _ in idx4]
     anE = [Float64[] for _ in idx4]
@@ -250,7 +250,7 @@ want("validation") && let
         flush(stdout)
     end
     p4 = plot(;
-        title = "confocal, 2 layers: A_eps-eps against LayeredSpheroid",
+        title = "confocal, 2 layers: 𝔸_εε against LayeredSpheroid",
         xlabel = "outer aspect ratio ω", ylabel = "Kelvin-Mandel component",
         titlefontsize = 9, legend = :best,
     )
@@ -278,14 +278,15 @@ want("validation") && let
         flush(stdout)
     end
     p5 = plot(;
-        title = "spheres, free radii: both sides of gate B",
-        xlabel = "core radius / outer radius", ylabel = "component (1,1)",
+        title = "spheres, free radii: both sides of gate B", legend = :bottomleft,
+        legendfontsize = 7,
+        xlabel = "core radius / outer radius", ylabel = "Kelvin-Mandel component (1,1)",
         titlefontsize = 9, legend = :best,
     )
-    plot!(p5, fr, anA; lc = :steelblue, lw = 2, label = "A_eps-eps analytic")
-    scatter!(p5, fr, feA; mc = :steelblue, ms = 4, msw = 0, label = "A_eps-eps FE")
-    plot!(p5, fr, anB; lc = :crimson, lw = 2, label = "A_sig-eps analytic")
-    scatter!(p5, fr, feB; mc = :crimson, ms = 4, msw = 0, marker = :diamond, label = "A_sig-eps FE")
+    plot!(p5, fr, anA; lc = :steelblue, lw = 2, label = "𝔸_εε analytic")
+    scatter!(p5, fr, feA; mc = :steelblue, ms = 4, msw = 0, label = "𝔸_εε FE")
+    plot!(p5, fr, anB; lc = :crimson, lw = 2, label = "𝔸_σε analytic")
+    scatter!(p5, fr, feB; mc = :crimson, ms = 4, msw = 0, marker = :diamond, label = "𝔸_σε FE")
 
     p6 = plot(;
         title = "|deviation|, elasticity", xlabel = "sweep parameter",
@@ -302,7 +303,7 @@ want("validation") && let
     plot!(
         p6, fr, max.(100 .* abs.(feA .- anA) ./ abs.(anA), 1.0e-4);
         lc = :darkorange, lw = 1.5, marker = :utriangle, ms = 3, msw = 0,
-        label = "spheres A_eps-eps (vs r)",
+        label = "spheres 𝔸_εε (vs r)",
     )
 
     savefig(

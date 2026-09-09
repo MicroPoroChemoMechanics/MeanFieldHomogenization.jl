@@ -379,10 +379,13 @@ makedocs(;
             # the reader knows them. `nano_spheroids` is NOT here: it condenses
             # a single particle's interface into an equivalent stiffness and
             # feeds an ordinary Mori-Tanaka — no N-body content at all.
+            #
+            # `cluster_model` and `eim_assembly` used to sit here and are now
+            # under Applications: each exists to reproduce one paper's numbers
+            # — Molinari & El Mouden's figures and a published table — which is
+            # what an application is, where a tutorial teaches the library.
             "Interacting particle assemblies" => [
-                "tutorials/generated/cluster_model.md",
                 "tutorials/generated/multiscale_assemblies.md",
-                "tutorials/generated/eim_assembly.md",
             ],
             "Beyond elasticity" => [
                 "tutorials/viscoelasticity.md",
@@ -408,18 +411,38 @@ makedocs(;
                 "tutorials/generated/laminate_multiscale.md",
             ],
         ],
+        # Grouped by the material or the result, not by the machinery — a
+        # reader arrives here with a subject in mind. Pages under
+        # `applications/generated/` are built from `scripts/` by Literate,
+        # which is an implementation detail; they sit with the others.
         "Applications" => [
-            "applications/cement_paste.md",
-            "applications/hydrating_blended_paste.md",
-            "applications/ionic_hydrating_paste.md",
-            "applications/cement_paste_diffusion.md",
-            "applications/strength.md",
-            "applications/itz_concrete.md",
-            "applications/recycled_aggregate.md",
-            "applications/concave_pores.md",
-            "applications/bituminous.md",
-            "applications/ageing_creep.md",
-            "applications/lamellar_clay.md",
+            # The largest coherent family, read roughly in order of increasing
+            # coupling: elasticity, then chemistry, then transport, then failure.
+            "Cementitious materials" => [
+                "applications/cement_paste.md",
+                "applications/hydrating_blended_paste.md",
+                "applications/ionic_hydrating_paste.md",
+                "applications/cement_paste_diffusion.md",
+                "applications/itz_concrete.md",
+                "applications/strength.md",
+            ],
+            # Morphology is what these three have in common: an aggregate with
+            # a coating, a concave cavity, a stack of platelets.
+            "Aggregates, pores and layered media" => [
+                "applications/recycled_aggregate.md",
+                "applications/concave_pores.md",
+                "applications/lamellar_clay.md",
+            ],
+            "Time-dependent behavior" => [
+                "applications/ageing_creep.md",
+                "applications/bituminous.md",
+            ],
+            # Both reproduce one paper's published numbers, which is why they
+            # are applications and not tutorials.
+            "Interacting particle assemblies" => [
+                "applications/generated/cluster_model.md",
+                "applications/generated/eim_assembly.md",
+            ],
         ],
         # Getting work into and out of MeanFieldHomogenization. These are companions to
         # the library rather than chapters about it, which is why they sit
