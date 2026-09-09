@@ -162,14 +162,14 @@ want("validation") && let
         flush(stdout)
     end
     p1 = plot(;
-        title = "confocal, 2 layers: 𝐀_∇∇ against LayeredSpheroid",
-        xlabel = "outer aspect ratio ω", ylabel = "component of 𝐀_∇∇",
+        title = "confocal, 2 layers: A_∇∇ against LayeredSpheroid",
+        xlabel = "outer aspect ratio ω", ylabel = "component of A_∇∇",
         titlefontsize = 9, legend = :best,
     )
-    plot!(p1, ωs, an11; lc = :steelblue, lw = 2, label = "𝐀₁₁ analytic")
-    scatter!(p1, ωs, fe11; mc = :steelblue, ms = 4, msw = 0, label = "𝐀₁₁ finite elements")
-    plot!(p1, ωs, an33; lc = :crimson, lw = 2, label = "𝐀₃₃ analytic")
-    scatter!(p1, ωs, fe33; mc = :crimson, ms = 4, msw = 0, marker = :diamond, label = "𝐀₃₃ finite elements")
+    plot!(p1, ωs, an11; lc = :steelblue, lw = 2, label = "A₁₁ analytic")
+    scatter!(p1, ωs, fe11; mc = :steelblue, ms = 4, msw = 0, label = "A₁₁ finite elements")
+    plot!(p1, ωs, an33; lc = :crimson, lw = 2, label = "A₃₃ analytic")
+    scatter!(p1, ωs, fe33; mc = :crimson, ms = 4, msw = 0, marker = :diamond, label = "A₃₃ finite elements")
 
     # (b) Concentric spheres of free radii, against LayeredSphere: the slice
     #     that covers arbitrary radii without assuming anything confocal.
@@ -190,7 +190,7 @@ want("validation") && let
     end
     p2 = plot(;
         title = "concentric spheres, free radii: against LayeredSphere",
-        xlabel = "core radius / outer radius", ylabel = "𝐀_∇∇",
+        xlabel = "core radius / outer radius", ylabel = "A_∇∇",
         titlefontsize = 9, legend = :best,
     )
     plot!(p2, fr, sa; lc = :steelblue, lw = 2, label = "analytic")
@@ -204,12 +204,12 @@ want("validation") && let
     plot!(
         p3, ωs, max.(100 .* abs.(fe11 .- an11) ./ abs.(an11), 1.0e-4);
         lc = :steelblue, lw = 1.5, marker = :circle, ms = 3, msw = 0, mc = :steelblue,
-        label = "confocal 𝐀₁₁ (vs ω)",
+        label = "confocal A₁₁ (vs ω)",
     )
     plot!(
         p3, ωs, max.(100 .* abs.(fe33 .- an33) ./ abs.(an33), 1.0e-4);
         lc = :crimson, lw = 1.5, marker = :diamond, ms = 3, msw = 0,
-        label = "confocal 𝐀₃₃ (vs ω)",
+        label = "confocal A₃₃ (vs ω)",
     )
     plot!(
         p3, fr, max.(100 .* abs.(sf .- sa) ./ abs.(sa), 1.0e-4);
@@ -278,10 +278,9 @@ want("validation") && let
         flush(stdout)
     end
     p5 = plot(;
-        title = "spheres, free radii: both sides of gate B", legend = :bottomleft,
-        legendfontsize = 7,
+        title = "spheres, free radii: both sides of gate B",
         xlabel = "core radius / outer radius", ylabel = "Kelvin-Mandel component (1,1)",
-        titlefontsize = 9, legend = :best,
+        titlefontsize = 9, legend = :bottomleft, legendfontsize = 7,
     )
     plot!(p5, fr, anA; lc = :steelblue, lw = 2, label = "𝔸_εε analytic")
     scatter!(p5, fr, feA; mc = :steelblue, ms = 4, msw = 0, label = "𝔸_εε FE")
