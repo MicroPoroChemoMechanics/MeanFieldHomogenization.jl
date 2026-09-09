@@ -67,13 +67,20 @@ and converged to `1e-9`:
 
 | route | value | derivative |
 |:--|--:|--:|
-| the Fourier cell, centrally differenced | `1e-4` | `5e-5` … `8e-4` |
-| the surrogate | a few `1e-3` | `9 %` … `14 %` |
+| the Fourier cell, centrally differenced | `1e-4` | `5e-5` … `9e-4` |
+| the surrogate, over the whole box | median `1.5e-3`, p90 `1.0e-2` | median `2.0e-2`, p90 `2.3e-1` |
 
 A fit carries a smooth bias of amplitude `ε` varying over a scale `L`, and the
-derivative inherits `ε/L`. Both were measured on a 25-point sweep: the residual
-is `2e-3` and drifts monotonically over `Δw ≈ 0.07`, so its slope is `0.03`
-against a derivative of `0.46`.
+derivative inherits `ε/L`, which is why it trails the value by more than an order
+of magnitude. Read the derivative as a **distribution**, not as one figure: a
+couple of percent typically, much worse near the faces of the box and at the
+strongest contrast pairs.
+
+Its normalization is a decision. Of the 175 grid points, 70 have layers of equal
+modulus — the inclusion is then homogeneous, `𝔸_εε` does not depend on `w`, and
+the exact derivative is identically **zero**. A ratio to it is meaningless, the
+same trap `validate_surrogate` guards against for sign-crossing components, so
+the scale is the rms of the exact derivative over the grid, `0.68`.
 
 Two conclusions, both counter-intuitive enough to be worth recording so the
 experiments are not repeated. **More capacity would not help**: that same sweep
