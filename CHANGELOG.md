@@ -1,5 +1,76 @@
 # Changelog
 
+## v0.14.2 — where the sample count stops paying, and the mesh that produced it
+
+0.14.1 shipped the layered-spheroid surrogates on 1200 finite-element solves and
+recorded that the sample count was the lever that worked, each factor of 1.7
+buying a factor of three in the held-out block error. This release finds where
+that ends, by measuring two further steps instead of extrapolating from one.
+
+### It ends, and three points say so rather than one
+
+| training solves | block rms, `𝔸_εε` | gain | exponent `α` in `rms ∝ N^-α` |
+|--:|--:|--:|--:|
+| 400 | `7.3e-3` | — | — |
+| 700 | `2.4e-3` | 2.98× | 1.95 |
+| 1200 | `7.8e-4` | 3.11× | 2.10 |
+| 2000 | `4.8e-4` | 1.63× | 0.95 |
+| 2800 | `4.0e-4` | 1.22× | 0.59 |
+
+The exponent falls monotonically, `2.10 → 0.95 → 0.59`. The stress side follows,
+`5.5e-4 → 3.3e-4 → 2.8e-4`. The shipped pair is retrained on 2800 and the models
+are better, but only marginally: **beyond about 2000 solves more samples no
+longer buy anything reliable.**
+
+### And the block error nearly told the opposite story
+
+At 2000 solves the held-out block error had already flattened — `α` fell from 2.1
+to 0.95 — which taken alone said the extra solves were wasted. Judged instead
+against the closed form on the dense sweep the tutorial plots, that same step
+bought between 3× and 13× *at the faces of the sampling box*, where a Halton set
+is sparsest and a fit's slope suffers first. The bulk of the box was by then near
+the **teacher's** own floor, the cell being exact only to about `1e-4` itself, so
+the block error saturated while the tail still fell.
+
+From 2000 to 2800 the two metrics finally agree: the worst derivative over the
+sweep improved from 2.5 % to 1.0 %, the worst value went 0.05 % to 0.06 %, and at
+the box face the derivative went 0.8 % to 1.2 %. Those are maxima over
+twenty-one points — order statistics, and noisy — so the mixture is what
+saturation looks like, not a further gain and not a regression.
+
+The lesson generalizes and is the third instance of it in two releases: a block
+error over a hundred Halton points measures the bulk, a dense sweep measures the
+tail, and the tail is what limits what a surrogate is good for. Read both.
+
+**Refining the mesh remains the wrong lever, arithmetically.** The teacher
+reproduces the closed form to about `1e-4` while the fit sits at `4.0e-4`, so the
+fit still dominates by a factor of four: refining would buy a floor that is not
+being reached, while making each solve some 2.5× more expensive *and* discarding
+every label, the checkpoint key including the mesh.
+
+### The mesh the labels were computed on
+
+The tutorial's mesh figure gained a fifth panel, and it is the only one that is
+not an illustration: `nradial = 14`, `R/a = 5`, 11 030 cells at the middle of the
+sampling box. The other four use `nradial = 16` and `R/a = 3` because that reads
+better on a page, so the discretization the shipped surrogates actually learned
+from appeared nowhere.
+
+### Added
+
+- 1600 further finite-element labels, and `layered_spheroid_strain` /
+  `layered_spheroid_stress` retrained on 2800.
+- The training-mesh panel, and the sentence in the tutorial saying which panel
+  is the real one.
+
+### Changed
+
+- `docs/Project.toml` accepts `ChemistryLab` 0.16. The dependency is a
+  documentation one only; 0.16 breaks nothing this documentation touches — the
+  one behavior change is in `solve_certified`, which no page or script here
+  calls, while `powers_alpha_max`, which the hydration scripts do call, is
+  unchanged. Older bounds are kept alongside the new one so the file resolves on
+  either side of a registration.
 ## v0.14.1 — the surrogate for the layered spheroid, and the frame it exposed
 
 0.14.0 shipped the meshed layered spheroid and said its sensitivities would have

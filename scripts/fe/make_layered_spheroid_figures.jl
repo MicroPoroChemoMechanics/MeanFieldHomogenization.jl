@@ -120,10 +120,31 @@ want("mesh") && let
         zoom = Inf, title = "the whole cell, R/a = 3", size = (340, 460),
     )
     push!(panels, ctx)
+    # And the one that is not an illustration: the mesh **every training label
+    # was computed on**. Neither of the settings above is it — the panels use
+    # `nradial = 16, R/a = 3` because that is what reads well on a page — so
+    # without this the reader cannot see the discretization the shipped
+    # surrogates actually learned from.
+    otrain = FEAxiMeshOptions(; nradial = 14, radius_ratio = 5.0)
+    artr, drtr = confocal_layer_radii(2.0, 1.0, (0.4, 0.6))
+    trn, gtr, _ = figure_layers(
+        artr, drtr, otrain;
+        title = "the training mesh\nnradial = 14, R/a = 5", size = (340, 460),
+    )
+    push!(panels, trn)
+    println(
+        report,
+        "\nThe training mesh — `nradial = 14`, `R/a = 5`, at the box's middle " *
+            "(`c/a = 2`, `w = 0.4`) — carries $(Ferrite.getncells(gtr)) cells. " *
+            "Every label of `layered_spheroid_strain` and " *
+            "`layered_spheroid_stress` was computed on that discretization."
+    )
+    @printf("  %-30s %6d cells\n", "the training mesh", Ferrite.getncells(gtr))
     savefig(
         plot(
-            panels...; layout = (1, 4), size = (1360, 460),
-            left_margin = 6Plots.mm, bottom_margin = 6Plots.mm,
+            panels...; layout = (1, 5), size = (1700, 520),
+            left_margin = 6Plots.mm, bottom_margin = 10Plots.mm,
+            top_margin = 4Plots.mm, right_margin = 4Plots.mm,
         ),
         joinpath(OUT, "layered_spheroid_mesh.png"),
     )

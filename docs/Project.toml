@@ -32,9 +32,18 @@ TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
 # `HKFActivityModel()`, and never calls `build_solid_solutions`, so no figure
 # and no number here changes.
 #
-# Both bounds are kept, not just the new one: 0.14 still resolves while 0.15 is
-# unregistered, so this file is correct on either side of the registration.
-ChemistryLab = "0.14, 0.15"
+# Widened again for 0.16, which adds pore-humidity water retention and breaks
+# nothing in the API — its own release notes name this file as the one that has
+# to widen. The single behavior change, `solve_certified` writing the winning
+# candidate's parameters instead of the last one's, is not on any path here:
+# nothing under `docs/` or `scripts/` calls `solve_certified` or
+# `build_solid_solutions`, and `powers_alpha_max`, which the hydration scripts
+# do call, is unchanged.
+#
+# Every bound is kept rather than only the newest: an older one still resolves
+# while a newer one is unregistered, so this file is correct on either side of a
+# registration.
+ChemistryLab = "0.14, 0.15, 0.16"
 DECUHR = "0.2"
 Documenter = "1.17"
 # Bounded on the major only, deliberately: the 1.x ceiling belongs to

@@ -49,7 +49,7 @@ transcription error and calling it a discretization error.
 
 ## The mesh
 
-![The meridian mesh of a layered spheroid: two confocal cases, one with free radii, and the whole cell](../assets/fe/layered_spheroid_mesh.png)
+![The meridian mesh of a layered spheroid: two confocal cases, one with free radii, the whole cell, and the mesh every training label was computed on](../assets/fe/layered_spheroid_mesh.png)
 
 Being two-dimensional, this is the **whole** computational domain and not a
 slice of one. Each layer boundary is drawn in crimson from its own closed form
@@ -72,6 +72,12 @@ The volume column is the check that is available on **any** geometry, confocal
 or not: each layer's meshed volume of revolution against the closed form
 ``4\pi a^2 c/3``. What is left is the linear triangle's chord against a curved
 boundary, and it falls with refinement.
+
+The fifth panel is not an illustration: it is the discretization **every
+training label was computed on** — `nradial = 14`, `R/a = 5`, 11 030 cells at the
+middle of the sampling box. The four to its left use `nradial = 16` and `R/a = 3`
+because that reads better on a page, so without the fifth one the mesh the
+shipped surrogates actually learned from would appear nowhere.
 
 ## Against the two closed forms
 
@@ -337,20 +343,21 @@ The type raises instead. A trained network is the way through, and it is trained
 else — the analytic `LayeredSpheroid` supplies no stress side at all.
 
 ```
-julia --project=scripts/nn scripts/nn/train_layered_spheroid.jl 1200 100
+julia --project=scripts/nn scripts/nn/train_layered_spheroid.jl 2800 100
 ```
 
 Two surrogates come out, `layered_spheroid_strain` and
 `layered_spheroid_stress`, and **one solve fills a column of both** label
 matrices. `𝔸_σε` is not derivable from `𝔸_εε` — the inclusion has more than one
 constituent — so meshing twice to learn two halves of one solve would have
-doubled an hour of finite elements for nothing.
+doubled several hours of finite elements for nothing.
 
 Those hours are also why the script **checkpoints every label as soon as it
 exists** and recomputes only what is missing on a restart. A Halton point
 depends on its index alone, never on the sample count, so the index is a stable
-name for a sample: the set grew 400 → 700 → 1200 and each step reused everything
-already paid for, so 1200 samples cost 1200 solves and not 2300. That is also
+name for a sample: the set grew 400 → 700 → 1200 → 2000 → 2800 and each step reused
+everything already paid for, so 2800 samples cost 2800 solves rather than the
+7100 the five runs would otherwise have needed. That is also
 what made it affordable to try a different output specification on the *same*
 labels — a re-encoding rather than a re-solve. `MFH_NN_MAX_NEW` bounds the new
 solves one process performs per data set, which keeps hours of finite elements a
@@ -447,21 +454,21 @@ The closed form is the reference where it exists.
 | Quantity | vs the closed form, worst over the sweep |
 | --- | ---: |
 | `(𝔸_εε)₁₁₁₁`, finite elements | 0.01 % |
-| `(𝔸_εε)₁₁₁₁`, surrogate | 0.15 % |
+| `(𝔸_εε)₁₁₁₁`, surrogate | 0.06 % |
 | `∂(𝔸_εε)₁₁₁₁/∂w`, differenced cell | 0.087 % |
-| `∂(𝔸_εε)₁₁₁₁/∂w`, surrogate | 4.4 % |
+| `∂(𝔸_εε)₁₁₁₁/∂w`, surrogate | 1.0 % |
 
-At the box boundary `c/a = 3.0`, the same two quantities: value 0.40 %, derivative 10.9 %.
+At the box boundary `c/a = 3.0`, the same two quantities: value 0.10 %, derivative 1.2 %.
 
 | Quantity with no closed form | surrogate vs the cell, worst |
 | --- | ---: |
-| `C₁₁₁₁` of a Mori-Tanaka estimate, `f = 0.30` | 0.06 % |
+| `C₁₁₁₁` of a Mori-Tanaka estimate, `f = 0.30` | 0.02 % |
 
 | Cost of one evaluation | |
 | --- | ---: |
-| finite elements, cold | 2.947 s |
-| surrogate | 3.4 µs |
-| **speed-up** | **863238×** |
+| finite elements, cold | 4.717 s |
+| surrogate | 4.9 µs |
+| **speed-up** | **968308×** |
 
 ### Why the derivative is the hard part, and what actually moved it
 
@@ -478,10 +485,22 @@ assumed:
 | 700 | `1.5e-3` / `1.0e-2` | `2.0e-2` / `2.3e-1` |
 | 1200 | `5.0e-4` / `4.2e-3` | `7.5e-3` / `6.1e-2` |
 
-Every factor of 1.7 in samples buys close to a factor of three, on the value and
-on the derivative alike — the box of four features was simply under-sampled. It
-will stop: the teacher itself reproduces the closed form to about `1e-4`, and the
-block rms is now `7.8e-4`. The worst case over the grid stays near 55 %.
+Up to 1200 solves every factor of 1.7 bought close to a factor of three, on the
+value and on the derivative alike. Beyond that the **held-out block error**
+saturates — its exponent falls `2.10 → 0.95 → 0.59` as the bulk of the box
+reaches the teacher's own floor, the cell being exact only to about `1e-4`
+itself — while the **tail keeps falling for a while longer**: from 1200 to 2000
+solves the worst derivative over the sweep went 4.4 % to 2.5 %, and at the box
+face `c/a = 3` from 10.9 % to 0.8 %.
+
+From 2000 to 2800 both measures agree that little is left: 2.5 % to 1.0 % on the
+worst derivative, 0.05 % to 0.06 % on the worst value, 0.8 % to 1.2 % at the box
+face. Those are maxima over twenty-one points, so a mixture like that is what
+saturation looks like. **Past roughly 2000 solves, more samples stop paying.**
+
+The split is still worth carrying away, because between 1200 and 2000 reading
+either number alone gave the wrong answer: added samples land where a Halton set
+is sparsest — the faces of the box, not the bulk the held-out set measures.
 
 That last normalization is a decision, not a convenience. Of the 175 grid points,
 **70 have layers of equal modulus** — the inclusion is then homogeneous, `𝔸_εε`

@@ -9,18 +9,18 @@ The closed form is the reference where it exists.
 | Quantity | vs the closed form, worst over the sweep |
 | --- | ---: |
 | `(𝔸_εε)₁₁₁₁`, finite elements | 0.01 % |
-| `(𝔸_εε)₁₁₁₁`, surrogate | 0.15 % |
+| `(𝔸_εε)₁₁₁₁`, surrogate | 0.06 % |
 | `∂(𝔸_εε)₁₁₁₁/∂w`, differenced cell | 0.087 % |
-| `∂(𝔸_εε)₁₁₁₁/∂w`, surrogate | 4.4 % |
+| `∂(𝔸_εε)₁₁₁₁/∂w`, surrogate | 1.0 % |
 
-At the box boundary `c/a = 3.0`, the same two quantities: value 0.40 %, derivative 10.9 %.
+At the box boundary `c/a = 3.0`, the same two quantities: value 0.10 %, derivative 1.2 %.
 
 | Quantity with no closed form | surrogate vs the cell, worst |
 | --- | ---: |
-| `C₁₁₁₁` of a Mori-Tanaka estimate, `f = 0.30` | 0.06 % |
+| `C₁₁₁₁` of a Mori-Tanaka estimate, `f = 0.30` | 0.02 % |
 
 | Cost of one evaluation | |
 | --- | ---: |
-| finite elements, cold | 2.947 s |
-| surrogate | 3.4 µs |
-| **speed-up** | **863238×** |
+| finite elements, cold | 4.717 s |
+| surrogate | 4.9 µs |
+| **speed-up** | **968308×** |
