@@ -629,7 +629,7 @@ prediction time, when no solve is available.
   a superspheroid at `p = 1`, and for a layered spheroid whose layers share the
   matrix's moduli.
 """
-anchor_baselines() = (:spheroid_cavity,)
+anchor_baselines() = (:spheroid_cavity, :layered_spheroid)
 
 hill_class(spec::AbstractOutputSpec) = spec.class
 
@@ -784,6 +784,81 @@ _cavity_localization(P::TensND.AbstractTens{4, 3}, C₀::TensND.AbstractTens{4, 
     inv(_identity_4sym(promote_type(eltype(P), eltype(C₀))) - (P ⊡ C₀))
 _cavity_localization(P::TensND.AbstractTens{2, 3}, K₀::TensND.AbstractTens{2, 3}) =
     inv(_identity_2(promote_type(eltype(P), eltype(K₀))) - (P ⋅ K₀))
+
+# The layers' mean modulus, as a multiple of the reference. Every constituent of
+# the shipped layered-spheroid models shares the reference's Poisson ratio, so
+# `ℂᵢ = rᵢ ℂ₀` and the mean over the layers is `r̄ ℂ₀` with `r̄` a scalar the
+# features carry. That is what makes the baseline a closed form in `(c/a, r̄)`
+# rather than something needing the constituents themselves.
+function _anchor_layer_mean(x, features)
+    iw = findfirst(==(:core_fraction), features)
+    i1 = findfirst(==(:log_mu_ratio_1), features)
+    i2 = findfirst(==(:log_mu_ratio_2), features)
+    (iw === nothing || i1 === nothing || i2 === nothing) && throw(
+        ArgumentError(
+            "a :layered_spheroid anchor needs :core_fraction, :log_mu_ratio_1 " *
+                "and :log_mu_ratio_2, and this surrogate consumes " *
+                "$(Tuple(features)). The baseline has to be computable from the " *
+                "features alone, since at prediction time there is no solve to " *
+                "read the geometry from."
+        )
+    )
+    w = x[iw]
+    return w * exp(x[i1]) + (1 - w) * exp(x[i2])
+end
+
+"""
+    _anchor(::Val{:layered_spheroid}, class, x, features, P₀, frame)
+
+The **homogeneous** spheroid at the layers' mean modulus: `𝔸_b = (𝕀 + ℙ:(ℂ̄ − ℂ₀))⁻¹`
+in elasticity and its second-order counterpart in transport, with `ℙ` the
+closed-form Hill tensor of `Spheroid(c/a)` and `ℂ̄ = r̄ ℂ₀`.
+
+Exact on the whole face `r₁ = r₂` of the sample box — a layered spheroid whose
+layers agree *is* a homogeneous one — which is a three-dimensional face rather
+than the single point [`_anchor`](@ref)`(::Val{:spheroid_cavity}, …)` is exact
+on for this morphology. Measured on the shipped labels, it removes a factor of
+1.8 from the spread the network must cover on the strain side and 5.6 on the
+stress side.
+
+For a **stress** class the baseline is `ℂ̄ : 𝔸_b`, not `𝔸_b`: the quantity being
+anchored is `𝔸_σε`, which is of degree one in the moduli where `𝔸_εε` is of
+degree zero, so anchoring it against a strain localization would leave the
+target carrying a modulus and the whole point — a dimensionless correction near
+`𝕀` — would be lost.
+"""
+function _anchor(::Val{:layered_spheroid}, class, x, features, P₀, frame)
+    c = _anchor_aspect(x, features)
+    r̄ = _anchor_layer_mean(x, features)
+    sph = Elasticity.Spheroid(c)
+    P = hill_tensor(sph, P₀)
+    P̄ = r̄ * P₀
+    Ab = _homogeneous_localization(P, P̄, P₀)
+    # Same frame discipline as the cavity anchor: `Spheroid` sorts its semi-axes
+    # and permutes its basis, so the baseline is read in its own axis and rebuilt
+    # in the caller's.
+    axis = Core._basis_col(
+        Core.inclusion_basis(sph), _spheroid_axis_index(_axes(sph))
+    )
+    Bb = _anchor_moduli_side(class, P̄, Ab)
+    return build(class, components(class, Bb, axis), frame)
+end
+
+# `𝔸 = (𝕀 + ℙ:(ℂ̄ − ℂ₀))⁻¹`, the homogeneous-inclusion localization, with the
+# operator the order demands.
+_homogeneous_localization(
+    P::TensND.AbstractTens{4, 3}, C̄::TensND.AbstractTens{4, 3},
+    C₀::TensND.AbstractTens{4, 3},
+) = inv(_identity_4sym(promote_type(eltype(P), eltype(C₀))) + (P ⊡ (C̄ - C₀)))
+_homogeneous_localization(
+    P::TensND.AbstractTens{2, 3}, K̄::TensND.AbstractTens{2, 3},
+    K₀::TensND.AbstractTens{2, 3},
+) = inv(_identity_2(promote_type(eltype(P), eltype(K₀))) + (P ⋅ (K̄ - K₀)))
+
+# A strain or gradient class anchors against the localization itself; a stress
+# class against the localization carrying the mean modulus.
+_anchor_moduli_side(::Union{StrainLocTI, GradLocTI2}, _P̄, Ab) = Ab
+_anchor_moduli_side(::StressLocTI, C̄, Ab) = C̄ ⊡ Ab
 
 # The same asymmetry on the way back: contracting the baseline with what the
 # network predicted.

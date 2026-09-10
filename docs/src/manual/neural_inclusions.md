@@ -241,6 +241,10 @@ the *distinct over equal* semi-axis ratio, so ``\omega > 1`` is prolate and
 | `supershape_pore_elastic` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensCubic` | `p`, `nu0` | ``p \in [0.35, 2.5]``, ``\nu_0 \in [0, 0.45]`` | 2→48→48→3 | 480 / 140 | `2.1e-2` |
 | `axi_supershape_pore_conduction` | ``\boldsymbol A_{\nabla\nabla}``, `TensTI{2,·,2}` | `log_aspect`, `log_p` | ``c/a \in [0.5, 2]``, ``p \in [0.25, 1.5]`` | 2→48→48→2 | 500 / 150 | `3.7e-3` |
 | `axi_supershape_pore_elastic` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensTI{4,·,6}` | `log_aspect`, `log_p`, `nu0` | same, and ``\nu_0 \in [0, 0.45]`` | 3→64→64→6 | 1400 / 400 | `6.3e-2` |
+| `excentered_sphere_strain` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensTI{4,·,6}` | `eccentricity`, `core_fraction`, `log_mu_ratio_2` | ``\alpha \in [0, 0.8]``, ``w \in [0.2, 0.7]``, ``E_2/E_0 \in [0.1, 2]`` | 3→64→64→6 | 1200 / 300 | `6.5e-4` |
+| `excentered_sphere_stress` | ``\mathbb A_{\sigma\varepsilon}/2\mu_0``, `TensTI{4,·,6}` | the same three | the same box | 3→64→64→6 | 1200 / 300 | `6.8e-4` |
+| `layered_spheroid_strain` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensTI{4,·,6}` | `log_aspect`, `core_fraction`, `log_mu_ratio_1`, `log_mu_ratio_2` | ``c/a \in [1.25, 3]``, ``w \in [0.2, 0.7]``, ``E_1/E_0`` and ``E_2/E_0 \in [0.5, 4]`` | 4→64→64→6 | 1200 / 100 | `2.4e-3` |
+| `layered_spheroid_stress` | ``\mathbb A_{\sigma\varepsilon}/2\mu_0``, `TensTI{4,·,6}` | the same four | the same box | 4→64→64→6 | 1200 / 100 | `2.0e-3` |
 
 "Worst error" is `worst_error(s.provenance)`: the largest error over the held-out
 set, in the ∞-norm of the component vector relative to its own magnitude. It is
@@ -249,10 +253,10 @@ rather than hard-coding a literal, so a retraining cannot silently loosen a
 threshold. Per-component diagnostics are in
 `src/NeuralInclusions/models/training_report.md`.
 
-**The last four rows are not like the others**: they learn from a
+**The last eight rows are not like the others**: they learn from a
 **finite-element cell** rather than from an analytic Hill tensor, so their error
-is not all the network's. Which part of it is depends on the family, and the two
-cases are worth keeping apart.
+is not all the network's. Which part of it is depends on the family, and the
+three cases are worth keeping apart.
 
 For the **cubic** pair the worst case is the *teacher's*. A cell solve departs
 from cubic symmetry by ``1.5\times10^{-2}`` at ``p = 0.35`` and does not improve
@@ -273,6 +277,46 @@ near-diverging as the body tends to a crack pierced by a needle, so
 the features are `log_p` and `log_aspect` because a `SampleBox` is linear and the
 feature therefore *is* the sampling law. Measured, one lever at a time:
 ``2.3\times10^{-2}`` → ``7.1\times10^{-3}`` → ``3.7\times10^{-3}``.
+
+For the **heterogeneous** pairs — the sphere with an off-center core, and the
+layered spheroid — the error is the fit's again, transverse isotropy being
+structural there too, and each *pair* is the two sides of gate B rather than two
+physics. ``\mathbb A_{\sigma\varepsilon}`` is not derivable from
+``\mathbb A_{\varepsilon\varepsilon}``: the inclusion has more than one
+constituent, so ``\mathbb A_{\sigma\varepsilon} \neq \mathbb C_1 :
+\mathbb A_{\varepsilon\varepsilon}`` for any single ``\mathbb C_1``, and one
+cell solve returns both — so one solve fills a column of both label matrices.
+
+Two of the six components of ``\mathbb A_{\varepsilon\varepsilon}`` **change
+sign** over the layered spheroid's held-out set, so their relative columns
+measure nothing there and the block error is the number to read: rms
+``7.8\times10^{-4}``, median ``5.2\times10^{-4}``, p90 ``1.3\times10^{-3}``,
+against the ``2.4\times10^{-3}`` worst case in the table.
+
+**The sample count was measured, not guessed**, and it is the lever that worked:
+
+| training solves | block rms, ``\mathbb A_{\varepsilon\varepsilon}`` | block rms, ``\mathbb A_{\sigma\varepsilon}`` |
+|--:|--:|--:|
+| 400 | ``7.3\times10^{-3}`` | ``6.8\times10^{-3}`` |
+| 700 | ``2.4\times10^{-3}`` | ``1.9\times10^{-3}`` |
+| 1200 | ``7.8\times10^{-4}`` | ``5.5\times10^{-4}`` |
+
+Every factor of 1.7 in samples buys a factor of three, so the gain is
+**superlinear** — the signature of a box of four features that was genuinely
+under-sampled, not of an estimator hitting its statistical floor. It will stop:
+the teacher itself reproduces the closed form to about ``10^{-4}``, so that is
+where the sequence ends, and at ``7.8\times10^{-4}`` it is close.
+
+It carries into the derivative, which is what the surrogate exists for. Judged
+against the closed form on a grid covering all four features, the error on
+``\partial(\mathbb A_{\varepsilon\varepsilon})_{1111}/\partial w`` fell from a
+median of 2.0 % and a p90 of 23 % at 700 solves to **0.75 % and 6.1 %** at 1200.
+The worst case stays near 55 %, at the faces of the box and the strongest
+contrast pairs: read the derivative as a distribution, never as one figure.
+
+The pair is the confocal **prolate** slice at ``\nu_0 = 0.2``; the oblate box is
+a second run of the same script, and `guard = :error` refuses a query outside the
+box rather than extrapolating.
 
 !!! warning "The last row's `6.3e-2` is one point, and the wrong number to read"
     The axisymmetric **elastic** model has a median block error of

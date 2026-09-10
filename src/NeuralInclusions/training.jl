@@ -230,9 +230,15 @@ component_labels(::HillOrtho) =
     component_labels(spec::AbstractOutputSpec) -> Vector{Symbol}
 
 Names of the network's outputs. For [`AffineHill`](@ref) the class labels are
-repeated once per shape tensor, suffixed `𝕌` and `𝕍`.
+repeated once per shape tensor, suffixed `𝕌` and `𝕍`; for [`AnchoredHill`](@ref)
+they are the class's, the anchored target living in the same basis.
 """
 component_labels(spec::DimensionlessHill) = component_labels(spec.class)
+
+# An anchored specification learns `𝕄 = 𝔸_b⁻¹ : 𝔸` in the **same** Walpole basis
+# as its class, so the outputs carry the class's names. Without this method a
+# shipped output specification could not be reported on at all.
+component_labels(spec::AnchoredHill) = component_labels(spec.class)
 
 function component_labels(spec::AffineHill)
     base = component_labels(spec.class)

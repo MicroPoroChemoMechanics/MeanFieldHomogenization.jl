@@ -1,5 +1,195 @@
 # Changelog
 
+## v0.14.1 — the surrogate for the layered spheroid, and the frame it exposed
+
+0.14.0 shipped the meshed layered spheroid and said its sensitivities would have
+to come from a surrogate. This is that surrogate — and training it found a bug in
+the machinery that had been waiting for the first *oriented* localization model.
+
+### A localization surrogate on a prolate shape read the wrong axis
+
+`NeuralLocalizationInclusion` sorted its semi-axes descending and permuted the
+basis to match. That is right for a **Hill** surrogate, whose analytic teacher
+`Ellipsoid` returns its components in the sorted frame. It is wrong for a
+**localization** surrogate, whose teacher is a finite-element cell: the cell's
+frame is unsorted, and its response axis is *column 3* by the package's
+convention — the column `_class_frame` reads for every localization class, and
+the one `FiniteElements._fe_frame` solves about.
+
+Sorting moved that column. `(1, 1, ω)` with `ω > 1` sorts to `(ω, 1, 1)`, the
+revolution axis lands in column 1, and `_class_frame` still reads column 3, so
+the decoded tensor came back transversely isotropic about an **equatorial**
+direction. Measured against the cell on the same body: `15 %` on `𝔸_εε` and
+`32 %` on `𝔸_σε`, falling to `5.3e-4` and `3.8e-3` once the sort is removed.
+
+Three reasons it stayed hidden, all three now covered by a test:
+
+- every localization surrogate shipped before this one was trained on a
+  **sphere** (`FEExcenteredSphere`), where the sort is the identity;
+- the gate-B tests used `(1, 1, 0.4)` — **oblate**, hence already descending,
+  hence the identity again;
+- the projection residual that catches a wrong axis is measured when *encoding*
+  a label, not when decoding a prediction, so nothing threw.
+
+**No correct result changes.** The sort is the identity for a sphere and for any
+oblate shape, so only prolate localization inclusions are affected, and for those
+the previous answer was wrong.
+
+### `layered_spheroid_strain` and `layered_spheroid_stress`
+
+Trained **on the cell**, because half of gate B exists nowhere else: the analytic
+`LayeredSpheroid` supplies no stress side. One solve fills a column of both label
+matrices — `𝔸_σε ≠ ℂ₁ : 𝔸_εε` for a heterogeneous inclusion, so meshing twice to
+learn two halves of one solve would have doubled an hour of finite elements.
+
+Every feature is a **contrast ratio**, never an absolute modulus: a heterogeneous
+morphology carries its constituents inside itself. The pair covers the confocal
+**prolate** slice at `ν₀ = 0.2`, `c/a ∈ [1.25, 3]`, `w ∈ [0.2, 0.7]`, both
+contrasts in `[0.5, 4]`; `guard = :error` refuses a query outside the box.
+
+Read the **block error**, not the worst component: two of the six components of
+`𝔸_εε` change sign over the held-out set, so their relative columns measure
+nothing there. On 1200 training solves and 100 held out: rms `7.8e-4`, median
+`5.2e-4`, p90 `1.3e-3`, worst `2.4e-3`; the stress side crosses no zero, worst
+`2.0e-3`.
+
+**The sample count was measured, not guessed**, and it is the lever that worked:
+
+| training solves | block rms, `𝔸_εε` | block rms, `𝔸_σε` |
+|--:|--:|--:|
+| 400 | `7.3e-3` | `6.8e-3` |
+| 700 | `2.4e-3` | `1.9e-3` |
+| 1200 | `7.8e-4` | `5.5e-4` |
+
+Every factor of 1.7 in samples buys a factor of three, so the gain is
+**superlinear** — the signature of four features genuinely under-sampled, not of
+an estimator at its statistical floor. It will stop: the teacher reproduces the
+closed form to about `1e-4`, so that is where the sequence ends, and `7.8e-4` is
+close to it. The checkpointing below is what made the experiment affordable at
+all — each step reused every solve already paid for, so 1200 samples cost 1200
+solves and not 2300.
+
+### The derivative costs ten times the value, and that is arithmetic
+
+On the confocal slice `𝔸_εε` has a closed form, so the derivative has an *exact*
+reference rather than a discretized one. Against it, differenced at `h = 1e-4`
+and converged to `1e-9`:
+
+| route | value | derivative |
+|:--|--:|--:|
+| the Fourier cell, centrally differenced | `1e-4` | `5e-5` … `9e-4` |
+| the surrogate, over the whole box | median `5.0e-4`, p90 `4.2e-3` | median `7.5e-3`, p90 `6.1e-2` |
+
+At 700 solves those last two were `2.0e-2` and `2.3e-1`, so the derivative
+improved by very nearly the same factor as the value — which is the arithmetic
+below working in the useful direction.
+
+A fit carries a smooth bias of amplitude `ε` varying over a scale `L`, and the
+derivative inherits `ε/L`, which is why it trails the value by more than an order
+of magnitude. Read the derivative as a **distribution**, not as one figure: under a percent
+typically, and still near 55 % at worst, at the faces of the box and the
+strongest contrast pairs.
+
+Its normalization is a decision. Of the 175 grid points, 70 have layers of equal
+modulus — the inclusion is then homogeneous, `𝔸_εε` does not depend on `w`, and
+the exact derivative is identically **zero**. A ratio to it is meaningless, the
+same trap `validate_surrogate` guards against for sign-crossing components, so
+the scale is the rms of the exact derivative over the grid, `0.68`.
+
+Two conclusions, both counter-intuitive enough to be worth recording so the
+experiments are not repeated. **More capacity would not help**: that same sweep
+shows no ripple, so the network is not over-fitting and is not capacity-limited;
+what sets the derivative is the bias amplitude, hence the sample count and how
+much of the answer the network must learn at all. And **the cell was innocent**:
+the mesher caps element size per layer and that thickness moves with `w`, so a
+staircase was a real suspicion — checked on 25 values, the cell count grows
+smoothly from 10 066 to 12 336 and the differenced cell matches the exact
+derivative to `1e-4`.
+
+### The anchored baseline for this morphology, and it does not pay either
+
+`AnchoredHill` gained a second baseline, `:layered_spheroid`: the **homogeneous**
+spheroid at the layers' mean modulus, `𝔸_b = (𝕀 + ℙ:(ℂ̄ − ℂ₀))⁻¹` with
+`ℂ̄ = r̄ ℂ₀`. It is exact on the whole face `r₁ = r₂` of the sample box — a
+layered spheroid whose layers agree *is* a homogeneous one — which is a
+three-dimensional face where `:spheroid_cavity` is exact at a single point. For
+a stress class the baseline is `ℂ̄ : 𝔸_b`, not `𝔸_b`: `𝔸_σε` is of degree one in
+the moduli where `𝔸_εε` is of degree zero.
+
+0.14.0 recorded that the anchored specification did not pay on the
+superspheroidal cavity, and hoped a layered spheroid's closer baseline would
+change that. **Measured, it does not.** Both were trained on the same 700
+labels — the checkpointing makes a change of specification a re-encoding rather
+than a re-solve — and judged on the decoded tensor over a 175-point grid
+covering all four features, against the closed form:
+
+| strain side | value median | value p90 | derivative median | derivative p90 |
+|:--|--:|--:|--:|--:|
+| dimensionless | `1.47e-3` | `1.00e-2` | `2.04e-2` | `2.30e-1` |
+| anchored | `1.35e-3` | `3.53e-2` | `2.17e-2` | `2.40e-1` |
+
+Marginally better at the median, **3.5× worse at p90**, and worse on the
+derivative at every quantile. The reason is the one 0.14.0 identified and is
+structural rather than a matter of tuning: near the exact face `𝕄 ≈ 𝕀`, whose
+off-diagonal Walpole components are zero, so the anchored target carries zeros
+by construction exactly where the anchor is perfect, and the tail pays for it.
+
+Worth recording separately: the anchored pair's held-out **block** error was
+*better* on both sides — `2.23e-3` against `2.44e-3` on the strain side, and
+`6.60e-4` against `1.89e-3` on the stress side. A block error over 100 Halton
+points is not accuracy over a dense grid, and the tail is where they part.
+
+The baseline ships anyway, tested and exact on its face, for the same reason the
+machinery shipped in 0.14.0: so the measurement is reproducible and the
+experiment is not repeated. The shipped models stay `DimensionlessHill`.
+
+### Added
+
+- `layered_spheroid_strain` and `layered_spheroid_stress`, trained on the cell:
+  both sides of gate B, one solve per sample.
+- The `:layered_spheroid` anchor baseline, and `component_labels` for an
+  `AnchoredHill` — without which a shipped output specification could not be
+  reported on at all.
+- `scripts/94_fe_neural_layered_spheroid.jl`, the whole computation end to end —
+  the two ways of building a nest, the mesh report, the cell against both closed
+  forms, the near-sphere failure the comparison found, the surrogate, the
+  schemes, and the derivative the cell refuses — and
+  `scripts/nn/make_layered_spheroid_figures.jl` for its figures.
+- The surrogate section of the layered-spheroid tutorial, with the closed form,
+  the cell and the surrogate on one figure, on values and on the derivative.
+
+### Changed
+
+- `NeuralLocalizationInclusion` keeps the semi-axes in the order given instead of
+  sorting them descending, for the reason above. `NeuralHillInclusion` still
+  sorts, and the asymmetry is now asserted by a test rather than implied.
+- `scripts/nn/train_layered_spheroid.jl` **checkpoints every label as soon as it
+  exists** and recomputes only what is missing on a restart — a Halton point
+  depends on its index alone, never on `n`, so the index is a stable name for a
+  sample. `MFH_NN_MAX_NEW` bounds the new solves one process performs per data
+  set, so an hour of finite elements becomes a sequence of short runs. An
+  interrupted run used to lose every sample it had already paid for, which is how
+  this was measured. The held-out offset is a fixed constant instead of `NTRAIN`,
+  so enlarging the training set no longer invalidates the held-out set.
+- **The documentation is reorganized.** A page whose subject is one particular
+  paper is an *application*, not a tutorial, so `cluster_model` (Molinari & El
+  Mouden 1996, Figs. 3, 5, 6 and 16) and `eim_assembly` (the equivalent inclusion
+  method against a published table) moved out of Tutorials; `docs/literate.jl`
+  now routes a generated page to either output directory instead of assuming one.
+  Applications are grouped into four named sections — cementitious materials;
+  aggregates, pores and layered media; time-dependent behavior; interacting
+  particle assemblies — in place of one flat list of thirteen.
+- The `neural_inclusions` manual table lists **all** the shipped models: it was
+  missing `excentered_sphere_strain` and `excentered_sphere_stress`, while its
+  prose spoke of "the last four rows" trained on a cell.
+
+### Fixed
+
+- The frame convention above.
+- The note shipped inside `excentered_sphere_strain.json` carried a UK spelling
+  of *center* while its generator already carried the US one: the artifact had
+  been written before that fix.
+
 ## v0.14.0 — the layered spheroid, meshed; and an anchored surrogate
 
 Two pieces, and the honest result of one of them is that it does not pay yet.

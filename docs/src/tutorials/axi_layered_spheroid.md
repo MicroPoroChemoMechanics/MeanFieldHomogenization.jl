@@ -327,6 +327,219 @@ fractions are a closed form of the semi-axes;
 And the bounds do bracket the estimates, which is checked in the suite rather
 than assumed.
 
+## [The surrogate, and the sensitivity it unlocks](@id tut-axi-layered-spheroid-nn)
+
+Everything above costs a mesh and a factorization per evaluation, and that is
+what forbids a derivative: the solve runs in `Float64` and memoizes on the
+reference medium alone, so a request for `∂/∂w` would come back a silent zero.
+The type raises instead. A trained network is the way through, and it is trained
+**on the cell**, not on a closed form, because half of gate B exists nowhere
+else — the analytic `LayeredSpheroid` supplies no stress side at all.
+
+```
+julia --project=scripts/nn scripts/nn/train_layered_spheroid.jl 1200 100
+```
+
+Two surrogates come out, `layered_spheroid_strain` and
+`layered_spheroid_stress`, and **one solve fills a column of both** label
+matrices. `𝔸_σε` is not derivable from `𝔸_εε` — the inclusion has more than one
+constituent — so meshing twice to learn two halves of one solve would have
+doubled an hour of finite elements for nothing.
+
+Those hours are also why the script **checkpoints every label as soon as it
+exists** and recomputes only what is missing on a restart. A Halton point
+depends on its index alone, never on the sample count, so the index is a stable
+name for a sample: the set grew 400 → 700 → 1200 and each step reused everything
+already paid for, so 1200 samples cost 1200 solves and not 2300. That is also
+what made it affordable to try a different output specification on the *same*
+labels — a re-encoding rather than a re-solve. `MFH_NN_MAX_NEW` bounds the new
+solves one process performs per data set, which keeps hours of finite elements a
+sequence of short runs.
+
+### The box, and why every feature is a ratio
+
+| feature | range | what it is |
+|:--|:--|:--|
+| `log_aspect` | ``c/a \in [1.25, 3]`` | prolate; the oblate family is a second box, trained the same way |
+| `core_fraction` | ``w \in [0.20, 0.70]`` | the core's share of the inclusion's volume, which fixes the confocal radii |
+| `log_mu_ratio_1` | ``E_1/E_0 \in [0.5, 4]`` | the core against the matrix |
+| `log_mu_ratio_2` | ``E_2/E_0 \in [0.5, 4]`` | the shell against the matrix |
+
+Three decisions rather than defaults.
+
+**The features are contrast ratios, never absolute moduli.** A heterogeneous
+morphology carries its constituents inside itself, so its localization depends
+on the reference medium only through the contrasts — which is why one pair of
+files serves any `ℂ₀` at the trained Poisson ratio, and why a network fed
+absolute moduli would be spending capacity on a redundancy.
+
+**The aspect ratio and the moduli enter in `log`, the core fraction linearly.** A
+`SampleBox` is linear, so the feature *is* the sampling law.
+
+**Poisson's ratio is fixed at 0.2 and stated, not swept.** The shipped pair is
+the confocal prolate slice at one Poisson ratio, and `guard = :error` refuses a
+query outside the box instead of extrapolating.
+
+### Using it
+
+The same three lines as any other inclusion. The morphology parameters go in as
+`shape_params` — they are the network's features *and* the fields the sensitivity
+API differentiates — and the constituents as `properties`, which back both the
+contrast features and the `Voigt`/`Reuss` bounds.
+
+```julia
+strain_s = load_surrogate(model_path("layered_spheroid_strain"))
+stress_s = load_surrogate(model_path("layered_spheroid_stress"))
+
+C₁ = iso_stiffness(1.6667, 1.25)             # E₁/E₀ = 3, ν = 0.2
+C₂ = iso_stiffness(0.3333, 0.25)             # E₂/E₀ = 0.6
+
+nn = NeuralLocalizationInclusion(
+    (1.0, 1.0, 2.0);                         # the aspect ratio, as the semi-axes
+    strain = strain_s, stress = stress_s,
+    shape_params = (; core_fraction = 0.4),
+    fractions = (0.4, 0.6),
+    properties = (C₁, C₂),
+    guard = :error,
+)
+```
+
+Both tensors are supplied, so the inclusion enters gate B on the heterogeneous
+branch — exactly as the meshed cell does, and the schemes cannot tell them apart.
+
+!!! warning "The semi-axes are not sorted, and that is deliberate"
+    A localization class reads **column 3** of the inclusion basis as its
+    symmetry axis, because the morphology it describes may be a sphere whose
+    response is transversely isotropic about a direction the outer shape does
+    not name. `NeuralHillInclusion` sorts its semi-axes descending, to match the
+    frame its `Ellipsoid` teacher returns; `NeuralLocalizationInclusion` must
+    **not**, or `(1, 1, ω)` with `ω > 1` would sort to `(ω, 1, 1)`, put the
+    revolution axis in column 1, and decode a tensor transversely isotropic
+    about an equatorial direction. That was a real bug, fixed in 0.14.1 and now
+    asserted by a test — it had stayed hidden because every localization
+    surrogate before this one was trained on a sphere, where the sort is the
+    identity.
+
+### Three routes, and one of them is exact
+
+![The closed form, the Fourier cell and the surrogate, on values and on the derivative](../assets/nn/layered_spheroid_accuracy.png)
+
+The shipped models cover the **confocal** slice, and that is worth using rather
+than hiding: on it `𝔸_εε` has a closed form, so the figure judges the cell and
+the surrogate against an exact answer instead of against each other. Top left,
+the tensor component by all three routes; top right, the deviation each carries;
+bottom left, the derivative with respect to the core fraction, again against the
+exact one; bottom right, the quantity that has **no** closed form — the effective
+stiffness, which needs both sides of gate B.
+
+The reference is the closed form differenced at `h = 1e-4`, and that step is
+measured rather than assumed: the quotient was checked at `1e-2`, `1e-3`, `1e-4`
+and `1e-5` and stops moving at the ninth digit. The surrogate is differentiated
+by `ForwardDiff`, so no step size enters on that side; the cell is centrally
+differenced at `h = 2e-2`, inside a plateau that was also measured.
+
+Confocal prolate layers, `E₁/E₀ = 3.0`, `E₂/E₀ = 0.6`, `ν = 0.2`,
+`nradial = 14`, `R/a = 5.0`; the core fraction `w`
+swept over `[0.24, 0.66]`
+at `c/a ∈ {1.4, 2, 2.6}`, inside the trained box `[1.25, 3]`.
+The closed form is the reference where it exists.
+
+| Quantity | vs the closed form, worst over the sweep |
+| --- | ---: |
+| `(𝔸_εε)₁₁₁₁`, finite elements | 0.01 % |
+| `(𝔸_εε)₁₁₁₁`, surrogate | 0.15 % |
+| `∂(𝔸_εε)₁₁₁₁/∂w`, differenced cell | 0.087 % |
+| `∂(𝔸_εε)₁₁₁₁/∂w`, surrogate | 4.4 % |
+
+At the box boundary `c/a = 3.0`, the same two quantities: value 0.40 %, derivative 10.9 %.
+
+| Quantity with no closed form | surrogate vs the cell, worst |
+| --- | ---: |
+| `C₁₁₁₁` of a Mori-Tanaka estimate, `f = 0.30` | 0.06 % |
+
+| Cost of one evaluation | |
+| --- | ---: |
+| finite elements, cold | 2.947 s |
+| surrogate | 3.4 µs |
+| **speed-up** | **863238×** |
+
+### Why the derivative is the hard part, and what actually moved it
+
+A fit carries a smooth bias of amplitude ``\varepsilon`` varying over a scale
+``L`` in the parameter, and the derivative inherits ``\varepsilon/L``. That ratio
+is why the derivative is worse than the value by more than an order of magnitude,
+and it is not a defect to be tuned away.
+
+What it does respond to is **samples**, and the amount was measured rather than
+assumed:
+
+| training solves | value, median / p90 | derivative, median / p90 |
+|--:|--:|--:|
+| 700 | `1.5e-3` / `1.0e-2` | `2.0e-2` / `2.3e-1` |
+| 1200 | `5.0e-4` / `4.2e-3` | `7.5e-3` / `6.1e-2` |
+
+Every factor of 1.7 in samples buys close to a factor of three, on the value and
+on the derivative alike — the box of four features was simply under-sampled. It
+will stop: the teacher itself reproduces the closed form to about `1e-4`, and the
+block rms is now `7.8e-4`. The worst case over the grid stays near 55 %.
+
+That last normalization is a decision, not a convenience. Of the 175 grid points,
+**70 have layers of equal modulus** — the inclusion is then homogeneous, `𝔸_εε`
+does not depend on `w` at all, and the exact derivative is identically zero. A
+ratio to it is meaningless, the same trap `validate_surrogate` guards against for
+sign-crossing components, so the scale is the rms of the exact derivative over
+the grid, `0.68`.
+
+Read it as a heavy tail rather than as one figure: a couple of percent typically,
+and much worse near the faces of the box and at the strongest contrast pairs.
+That is enough to drive a gradient-based search, and it is not a substitute for
+the closed form where one exists.
+
+!!! note "Two things that would not have helped, both checked"
+    **More capacity.** The fit's residual was swept on a fine grid of 25 values
+    of `w` and is smooth and monotone, with no ripple: the network was never
+    over-fitting, so a wider one would have changed nothing. Samples were the
+    lever, three times over.
+
+    **An anchored baseline.** `AnchoredHill` learns a correction to a closed
+    form instead of the whole tensor, and a layered spheroid has a close one —
+    the homogeneous spheroid at the layers' mean modulus, exact on the whole
+    face `r₁ = r₂`. It was implemented, trained on the very same labels, and
+    **it does not pay**: marginally better at the median, 3.5× worse at p90, and
+    worse on the derivative at every quantile. Near the exact face the target is
+    `𝕄 ≈ 𝕀`, whose off-diagonal Walpole components are zero, so the anchor
+    manufactures zeros exactly where it is perfect and the tail pays. The
+    baseline ships, tested, so the measurement is reproducible; the shipped
+    models stay `DimensionlessHill`.
+
+    **Blaming the reference.** The mesher caps element size at a fraction of each
+    layer's thickness, and that thickness moves with `w`, so a staircase in the
+    cell's response was a real possibility: a differenced cell would then have
+    been measuring its own remeshing. Checked on those same 25 values — the cell
+    count grows smoothly from 10 066 to 12 336, the response has no steps, and
+    the differenced cell agrees with the exact derivative to `1e-4`. The cell is
+    an excellent derivative; it is simply an expensive one.
+
+### So what is the surrogate for
+
+Not for replacing the closed form where one exists. For the two things that have
+none, both in the figure's bottom-right panel:
+
+* the **stress side** `𝔸_σε`, which the analytic `LayeredSpheroid` does not
+  supply — half of gate B exists only through the cell, and therefore only
+  through something trained on it;
+* the nests the confocal family does not contain, where there is no reference to
+  differentiate at all.
+
+And for cost, and for the sensitivity itself: microseconds against seconds, and a
+derivative where the cell refuses to give one rather than return the silent zero
+its memoized `Float64` solve would produce.
+
+The whole computation end to end is `scripts/94_fe_neural_layered_spheroid.jl`;
+the figure and the table above come from
+`scripts/nn/make_layered_spheroid_figures.jl`, both run by hand so that no
+documentation build meshes or trains anything.
+
 ## What is not implemented
 
 **Imperfect interfaces.** The axisymmetric formulation has no displacement- or
@@ -366,10 +579,11 @@ the finite elements would stop calibrating and start providing.
     validity limit: an inward offset of distance `t` self-intersects once `t`
     exceeds the smallest radius of curvature, ``\min(c^2/a,\, a^2/c)``.
 
-**Sensitivities.** The solve runs in `Float64` and memoizes on the reference
-medium, so a derivative with respect to a layer radius would come back a silent
-zero; the type raises instead. A trained surrogate is the route, as it is for
-[the concave pores](@ref app-concave-pores).
+**Sensitivities, from the cell itself.** The solve runs in `Float64` and memoizes
+on the reference medium, so a derivative with respect to a layer radius or a core
+fraction would come back a silent zero; the type raises instead. That is what
+[the surrogate](@ref tut-axi-layered-spheroid-nn) above is for, and the same route
+serves [the concave pores](@ref app-concave-pores).
 
 ## See also
 
