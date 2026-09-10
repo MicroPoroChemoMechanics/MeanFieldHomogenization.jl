@@ -157,7 +157,7 @@ end
 
 Whether `r` is the exact origin, where the `1/r³` and `1/r⁵` mode terms are
 switched off (their amplitudes vanish identically in the core).  Gated on
-[`is_hard_numeric`](@ref) so a symbolic radius always takes the general
+`TensND.is_hard_numeric` so a symbolic radius always takes the general
 branch and keeps its closed form.
 """
 @inline _at_origin(r) = is_hard_numeric(typeof(r)) && iszero(r)

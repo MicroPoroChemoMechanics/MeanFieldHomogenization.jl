@@ -33,6 +33,11 @@
 Work counters incremented by the instrumented seams.  Read them through
 [`read_counters`](@ref) and zero them with [`reset_counters!`](@ref).
 """
+# The signature above lists all seven, but Julia attaches a docstring to the
+# *next expression only*, so this one documents `HILL_CALLS` and the other six
+# carry none.  They are internal and unexported, so nothing renders them and
+# nothing breaks; a reference to one of them from another docstring, however,
+# has nothing to resolve to and must stay a plain code span.
 const HILL_CALLS = Ref(0)
 const COD_CALLS = Ref(0)
 const QUADGK_OUTER = Ref(0)
@@ -45,7 +50,7 @@ const LAYER_RECURRENCES = Ref(0)
     COUNT_INTEGRAND
 
 When `true`, `_maybe_count` wraps quadrature integrands so that every
-evaluation bumps [`INTEGRAND_EVALS`](@ref).  **Off by default** — the wrapper
+evaluation bumps `INTEGRAND_EVALS`.  **Off by default** — the wrapper
 lives in the innermost loop and must not be active during a timed run.
 
 (A plain code span rather than a cross-reference: `_maybe_count` has no
@@ -91,7 +96,7 @@ read_counters() = (;
 """
     _CountingFn(f)
 
-Callable wrapper bumping [`INTEGRAND_EVALS`](@ref) on each call before
+Callable wrapper bumping `INTEGRAND_EVALS` on each call before
 forwarding to `f`.
 
 A `struct` rather than a closure on purpose: a closure returned from a

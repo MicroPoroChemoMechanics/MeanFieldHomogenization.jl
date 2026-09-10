@@ -309,7 +309,7 @@ _no_layer_average(geom, bound) = throw(
 
 Whether the bounds can be evaluated on `geom`: `true` for a homogeneous
 inclusion, whose declared phase property *is* the average, and for a
-heterogeneous one that implements [`_layer_voigt`](@ref) / [`_layer_reuss`](@ref).
+heterogeneous one that implements `_layer_voigt` / `_layer_reuss`.
 
 The point of asking is that a bound needs the internal volume fractions of an
 internally heterogeneous pattern, which the RVE does not carry. Schemes that
