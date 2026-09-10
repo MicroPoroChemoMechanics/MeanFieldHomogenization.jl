@@ -15,8 +15,9 @@
 #
 #  §5 onwards needs the two committed surrogates,
 #  `layered_spheroid_strain.json` and `layered_spheroid_stress.json`, produced
-#  by `scripts/nn/train_layered_spheroid.jl` (750 finite-element solves, about
-#  eighty minutes). Without them the script still runs and says what it skipped.
+#  by `scripts/nn/train_layered_spheroid.jl` (1300 finite-element solves, close
+#  to three hours, and checkpointed so it need not be one sitting). Without them
+#  the script still runs and says which sections it skipped.
 # =============================================================================
 
 import Pkg
@@ -229,7 +230,7 @@ if !all(in(NI.shipped_models()), MODELS)
     println("""
 The two models are not committed, so §5 to §7 are skipped. Produce them with
 
-    julia --project=scripts/nn scripts/nn/train_layered_spheroid.jl 600 150
+    julia --project=scripts/nn scripts/nn/train_layered_spheroid.jl 1200 100
 """)
 else
     strain_s = load_surrogate(model_path(MODELS[1]))

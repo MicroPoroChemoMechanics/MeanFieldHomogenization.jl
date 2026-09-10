@@ -32,7 +32,7 @@
 #  moduli, and the reference medium is just a unit of stress.
 #
 #  Every Poisson ratio is fixed at 0.2 and stated here rather than left
-#  implicit: with them free the box would have six dimensions, and 750 solves
+#  implicit: with them free the box would have six dimensions, and 1200 solves
 #  spread over six dimensions is 3 points per dimension.
 #
 #  ## Prolate only, and that is the confocal family's own restriction
@@ -132,7 +132,7 @@ const FRAME = (0.0, 0.0, 1.0)
 # set (so a run that finishes the training set still gets a full budget for the
 # held-out one), which
 # is the actual protection: it keeps each invocation short instead of trusting a
-# memory cap to survive eighty minutes of meshing. When the budget runs out the
+# memory cap to survive hours of meshing. When the budget runs out the
 # script says what remains and stops without training on a partial set.
 
 const CKPT_DIR = get(ENV, "MFH_NN_CKPT", joinpath(tempdir(), "mfh_nn_datasets"))

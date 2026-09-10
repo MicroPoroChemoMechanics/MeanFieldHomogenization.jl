@@ -49,15 +49,25 @@ contrasts in `[0.5, 4]`; `guard = :error` refuses a query outside the box.
 
 Read the **block error**, not the worst component: two of the six components of
 `𝔸_εε` change sign over the held-out set, so their relative columns measure
-nothing there. On 700 training solves and 100 held out: rms `2.4e-3`, median
-`1.6e-3`, p90 `4.0e-3`, worst `8.5e-3`; the stress side crosses no zero and is
-uniform, worst `9.4e-3`.
+nothing there. On 1200 training solves and 100 held out: rms `7.8e-4`, median
+`5.2e-4`, p90 `1.3e-3`, worst `2.4e-3`; the stress side crosses no zero, worst
+`2.0e-3`.
 
-The sample count was measured rather than guessed. At 400 solves the block rms
-was `7.3e-3`; at 700 it is `2.4e-3` — a factor of three for a factor of 1.75 in
-samples, so the gain is **superlinear** and 400 points genuinely under-sampled a
-box of four features. The checkpointing below is what made that experiment
-affordable: the first 400 solves were reused, not repeated.
+**The sample count was measured, not guessed**, and it is the lever that worked:
+
+| training solves | block rms, `𝔸_εε` | block rms, `𝔸_σε` |
+|--:|--:|--:|
+| 400 | `7.3e-3` | `6.8e-3` |
+| 700 | `2.4e-3` | `1.9e-3` |
+| 1200 | `7.8e-4` | `5.5e-4` |
+
+Every factor of 1.7 in samples buys a factor of three, so the gain is
+**superlinear** — the signature of four features genuinely under-sampled, not of
+an estimator at its statistical floor. It will stop: the teacher reproduces the
+closed form to about `1e-4`, so that is where the sequence ends, and `7.8e-4` is
+close to it. The checkpointing below is what made the experiment affordable at
+all — each step reused every solve already paid for, so 1200 samples cost 1200
+solves and not 2300.
 
 ### The derivative costs ten times the value, and that is arithmetic
 
@@ -68,12 +78,16 @@ and converged to `1e-9`:
 | route | value | derivative |
 |:--|--:|--:|
 | the Fourier cell, centrally differenced | `1e-4` | `5e-5` … `9e-4` |
-| the surrogate, over the whole box | median `1.5e-3`, p90 `1.0e-2` | median `2.0e-2`, p90 `2.3e-1` |
+| the surrogate, over the whole box | median `5.0e-4`, p90 `4.2e-3` | median `7.5e-3`, p90 `6.1e-2` |
+
+At 700 solves those last two were `2.0e-2` and `2.3e-1`, so the derivative
+improved by very nearly the same factor as the value — which is the arithmetic
+below working in the useful direction.
 
 A fit carries a smooth bias of amplitude `ε` varying over a scale `L`, and the
 derivative inherits `ε/L`, which is why it trails the value by more than an order
-of magnitude. Read the derivative as a **distribution**, not as one figure: a
-couple of percent typically, much worse near the faces of the box and at the
+of magnitude. Read the derivative as a **distribution**, not as one figure: under a percent
+typically, and still near 55 % at worst, at the faces of the box and the
 strongest contrast pairs.
 
 Its normalization is a decision. Of the 175 grid points, 70 have layers of equal

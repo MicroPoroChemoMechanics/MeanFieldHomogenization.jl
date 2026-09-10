@@ -337,7 +337,7 @@ The type raises instead. A trained network is the way through, and it is trained
 else — the analytic `LayeredSpheroid` supplies no stress side at all.
 
 ```
-julia --project=scripts/nn scripts/nn/train_layered_spheroid.jl 700 100
+julia --project=scripts/nn scripts/nn/train_layered_spheroid.jl 1200 100
 ```
 
 Two surrogates come out, `layered_spheroid_strain` and
@@ -346,13 +346,15 @@ matrices. `𝔸_σε` is not derivable from `𝔸_εε` — the inclusion has mo
 constituent — so meshing twice to learn two halves of one solve would have
 doubled an hour of finite elements for nothing.
 
-That hour is also why the script **checkpoints every label as soon as it
+Those hours are also why the script **checkpoints every label as soon as it
 exists** and recomputes only what is missing on a restart. A Halton point
 depends on its index alone, never on the sample count, so the index is a stable
-name for a sample: the run that took the set from 400 solves to 700 reused the
-first 400 instead of repeating them. `MFH_NN_MAX_NEW` bounds the new solves one
-process performs per data set, which keeps an hour of finite elements a sequence
-of short runs.
+name for a sample: the set grew 400 → 700 → 1200 and each step reused everything
+already paid for, so 1200 samples cost 1200 solves and not 2300. That is also
+what made it affordable to try a different output specification on the *same*
+labels — a re-encoding rather than a re-solve. `MFH_NN_MAX_NEW` bounds the new
+solves one process performs per data set, which keeps hours of finite elements a
+sequence of short runs.
 
 ### The box, and why every feature is a ratio
 
@@ -445,22 +447,21 @@ The closed form is the reference where it exists.
 | Quantity | vs the closed form, worst over the sweep |
 | --- | ---: |
 | `(𝔸_εε)₁₁₁₁`, finite elements | 0.01 % |
-| `(𝔸_εε)₁₁₁₁`, surrogate | 1.03 % |
+| `(𝔸_εε)₁₁₁₁`, surrogate | 0.15 % |
 | `∂(𝔸_εε)₁₁₁₁/∂w`, differenced cell | 0.087 % |
-| `∂(𝔸_εε)₁₁₁₁/∂w`, surrogate | 25.6 % |
+| `∂(𝔸_εε)₁₁₁₁/∂w`, surrogate | 4.4 % |
 
-At the box boundary `c/a = 3.0`, the same two quantities: value 1.02 %, derivative 17.8 %.
+At the box boundary `c/a = 3.0`, the same two quantities: value 0.40 %, derivative 10.9 %.
 
 | Quantity with no closed form | surrogate vs the cell, worst |
 | --- | ---: |
-| `C₁₁₁₁` of a Mori-Tanaka estimate, `f = 0.30` | 0.34 % |
+| `C₁₁₁₁` of a Mori-Tanaka estimate, `f = 0.30` | 0.06 % |
 
 | Cost of one evaluation | |
 | --- | ---: |
-| finite elements, cold | 4.142 s |
-| surrogate | 4.8 µs |
-| **speed-up** | **854371×** |
-
+| finite elements, cold | 2.947 s |
+| surrogate | 3.4 µs |
+| **speed-up** | **863238×** |
 
 ### Why the derivative is the hard part, and what actually moved it
 
@@ -470,9 +471,17 @@ is why the derivative is worse than the value by more than an order of magnitude
 and it is not a defect to be tuned away.
 
 What it does respond to is **samples**, and the amount was measured rather than
-assumed. Over the whole box — all four features, contrast pairs included —
-the value lands within `1.5e-3` at the median, `1.0e-2` at p90 and `5.0e-2` at
-worst; the derivative within `2.0e-2`, `2.3e-1` and `6.4e-1`.
+assumed:
+
+| training solves | value, median / p90 | derivative, median / p90 |
+|--:|--:|--:|
+| 700 | `1.5e-3` / `1.0e-2` | `2.0e-2` / `2.3e-1` |
+| 1200 | `5.0e-4` / `4.2e-3` | `7.5e-3` / `6.1e-2` |
+
+Every factor of 1.7 in samples buys close to a factor of three, on the value and
+on the derivative alike — the box of four features was simply under-sampled. It
+will stop: the teacher itself reproduces the closed form to about `1e-4`, and the
+block rms is now `7.8e-4`. The worst case over the grid stays near 55 %.
 
 That last normalization is a decision, not a convenience. Of the 175 grid points,
 **70 have layers of equal modulus** — the inclusion is then homogeneous, `𝔸_εε`
@@ -490,9 +499,18 @@ the closed form where one exists.
     **More capacity.** The fit's residual was swept on a fine grid of 25 values
     of `w` and is smooth and monotone, with no ripple: the network was never
     over-fitting, so a wider one would have changed nothing. Samples were the
-    lever, and going from 400 to 700 solves cut the block rms by a factor of
-    three — superlinear, which says 400 points genuinely under-sampled four
-    features.
+    lever, three times over.
+
+    **An anchored baseline.** `AnchoredHill` learns a correction to a closed
+    form instead of the whole tensor, and a layered spheroid has a close one —
+    the homogeneous spheroid at the layers' mean modulus, exact on the whole
+    face `r₁ = r₂`. It was implemented, trained on the very same labels, and
+    **it does not pay**: marginally better at the median, 3.5× worse at p90, and
+    worse on the derivative at every quantile. Near the exact face the target is
+    `𝕄 ≈ 𝕀`, whose off-diagonal Walpole components are zero, so the anchor
+    manufactures zeros exactly where it is perfect and the tail pays. The
+    baseline ships, tested, so the measurement is reproducible; the shipped
+    models stay `DimensionlessHill`.
 
     **Blaming the reference.** The mesher caps element size at a fraction of each
     layer's thickness, and that thickness moves with `w`, so a staircase in the

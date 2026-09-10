@@ -310,8 +310,9 @@ case and sets the precedent.
 
 Sections 5 to 7 need the two surrogates `layered_spheroid_strain` and
 `layered_spheroid_stress`, trained by
-`scripts/nn/train_layered_spheroid.jl 600 150` (750 finite-element solves, about
-eighty minutes on two cores). Without them the script runs and reports which
+`scripts/nn/train_layered_spheroid.jl 1200 100` (1300 finite-element solves,
+close to three hours on two cores — checkpointed, so `MFH_NN_MAX_NEW` splits it
+into as many short runs as you like). Without them the script runs and reports which
 sections it skipped, rather than failing.
 
 Figures for the documentation come from
