@@ -40,10 +40,29 @@ TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
 # `build_solid_solutions`, and `powers_alpha_max`, which the hydration scripts
 # do call, is unchanged.
 #
+# Widened again for 0.17, which adds a Pitzer ion-interaction activity model and
+# has three breaking items, none of which this documentation can reach. Checked
+# rather than assumed, by grep over `docs/`, `scripts/` and `src/`:
+#
+#   * the parameter field `ΔₐG⁰overT` is renamed `ΔₐG⁰overRT`, which breaks a
+#     custom activity model or a hand-built parameter tuple. Neither name occurs
+#     anywhere here, and nothing here defines an activity model: the ionic
+#     hydration script constructs `HKFActivityModel()` with its keyword
+#     constructor and passes it through the `activity_model =` keyword, whose
+#     name is unchanged;
+#   * `PoreHumidity` no longer differentiates its retention law at full
+#     saturation. `PoreHumidity` does not occur here;
+#   * the registry treats a minor bump below 1.0 as breaking whatever the API
+#     did, which is the only reason this line has to move at all.
+#
+# `log_activities` and `water_activity` gained a `kelvin_shift` keyword that
+# defaults to zero, so their existing behavior is unchanged; neither is called
+# here in any case.
+#
 # Every bound is kept rather than only the newest: an older one still resolves
 # while a newer one is unregistered, so this file is correct on either side of a
 # registration.
-ChemistryLab = "0.14, 0.15, 0.16"
+ChemistryLab = "0.14, 0.15, 0.16, 0.17"
 DECUHR = "0.2"
 Documenter = "1.17"
 # Bounded on the major only, deliberately: the 1.x ceiling belongs to
