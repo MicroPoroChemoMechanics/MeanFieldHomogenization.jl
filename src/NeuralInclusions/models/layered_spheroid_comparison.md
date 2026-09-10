@@ -9,11 +9,11 @@ The closed form is the reference where it exists.
 | Quantity | vs the closed form, worst over the sweep |
 | --- | ---: |
 | `(𝔸_εε)₁₁₁₁`, finite elements | 0.01 % |
-| `(𝔸_εε)₁₁₁₁`, surrogate | 0.05 % |
+| `(𝔸_εε)₁₁₁₁`, surrogate | 0.06 % |
 | `∂(𝔸_εε)₁₁₁₁/∂w`, differenced cell | 0.087 % |
-| `∂(𝔸_εε)₁₁₁₁/∂w`, surrogate | 2.5 % |
+| `∂(𝔸_εε)₁₁₁₁/∂w`, surrogate | 1.0 % |
 
-At the box boundary `c/a = 3.0`, the same two quantities: value 0.06 %, derivative 0.8 %.
+At the box boundary `c/a = 3.0`, the same two quantities: value 0.10 %, derivative 1.2 %.
 
 | Quantity with no closed form | surrogate vs the cell, worst |
 | --- | ---: |
@@ -21,6 +21,6 @@ At the box boundary `c/a = 3.0`, the same two quantities: value 0.06 %, derivati
 
 | Cost of one evaluation | |
 | --- | ---: |
-| finite elements, cold | 5.793 s |
-| surrogate | 5.1 µs |
-| **speed-up** | **1127622×** |
+| finite elements, cold | 4.717 s |
+| surrogate | 4.9 µs |
+| **speed-up** | **968308×** |
