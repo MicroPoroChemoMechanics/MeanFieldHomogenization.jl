@@ -243,8 +243,8 @@ the *distinct over equal* semi-axis ratio, so ``\omega > 1`` is prolate and
 | `axi_supershape_pore_elastic` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensTI{4,·,6}` | `log_aspect`, `log_p`, `nu0` | same, and ``\nu_0 \in [0, 0.45]`` | 3→64→64→6 | 1400 / 400 | `6.3e-2` |
 | `excentered_sphere_strain` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensTI{4,·,6}` | `eccentricity`, `core_fraction`, `log_mu_ratio_2` | ``\alpha \in [0, 0.8]``, ``w \in [0.2, 0.7]``, ``E_2/E_0 \in [0.1, 2]`` | 3→64→64→6 | 1200 / 300 | `6.5e-4` |
 | `excentered_sphere_stress` | ``\mathbb A_{\sigma\varepsilon}/2\mu_0``, `TensTI{4,·,6}` | the same three | the same box | 3→64→64→6 | 1200 / 300 | `6.8e-4` |
-| `layered_spheroid_strain` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensTI{4,·,6}` | `log_aspect`, `core_fraction`, `log_mu_ratio_1`, `log_mu_ratio_2` | ``c/a \in [1.25, 3]``, ``w \in [0.2, 0.7]``, ``E_1/E_0`` and ``E_2/E_0 \in [0.5, 4]`` | 4→64→64→6 | 1200 / 100 | `2.4e-3` |
-| `layered_spheroid_stress` | ``\mathbb A_{\sigma\varepsilon}/2\mu_0``, `TensTI{4,·,6}` | the same four | the same box | 4→64→64→6 | 1200 / 100 | `2.0e-3` |
+| `layered_spheroid_strain` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensTI{4,·,6}` | `log_aspect`, `core_fraction`, `log_mu_ratio_1`, `log_mu_ratio_2` | ``c/a \in [1.25, 3]``, ``w \in [0.2, 0.7]``, ``E_1/E_0`` and ``E_2/E_0 \in [0.5, 4]`` | 4→64→64→6 | 2000 / 100 | `1.9e-3` |
+| `layered_spheroid_stress` | ``\mathbb A_{\sigma\varepsilon}/2\mu_0``, `TensTI{4,·,6}` | the same four | the same box | 4→64→64→6 | 2000 / 100 | `1.1e-3` |
 
 "Worst error" is `worst_error(s.provenance)`: the largest error over the held-out
 set, in the ∞-norm of the component vector relative to its own magnitude. It is
@@ -290,8 +290,8 @@ cell solve returns both — so one solve fills a column of both label matrices.
 Two of the six components of ``\mathbb A_{\varepsilon\varepsilon}`` **change
 sign** over the layered spheroid's held-out set, so their relative columns
 measure nothing there and the block error is the number to read: rms
-``7.8\times10^{-4}``, median ``5.2\times10^{-4}``, p90 ``1.3\times10^{-3}``,
-against the ``2.4\times10^{-3}`` worst case in the table.
+``4.8\times10^{-4}``, median ``3.2\times10^{-4}``, p90 ``7.8\times10^{-4}``,
+against the ``1.9\times10^{-3}`` worst case in the table.
 
 **The sample count was measured, not guessed**, and it is the lever that worked:
 
@@ -300,19 +300,22 @@ against the ``2.4\times10^{-3}`` worst case in the table.
 | 400 | ``7.3\times10^{-3}`` | ``6.8\times10^{-3}`` |
 | 700 | ``2.4\times10^{-3}`` | ``1.9\times10^{-3}`` |
 | 1200 | ``7.8\times10^{-4}`` | ``5.5\times10^{-4}`` |
+| 2000 | ``4.8\times10^{-4}`` | ``3.3\times10^{-4}`` |
 
-Every factor of 1.7 in samples buys a factor of three, so the gain is
-**superlinear** — the signature of a box of four features that was genuinely
-under-sampled, not of an estimator hitting its statistical floor. It will stop:
-the teacher itself reproduces the closed form to about ``10^{-4}``, so that is
-where the sequence ends, and at ``7.8\times10^{-4}`` it is close.
+Up to 1200 solves every factor of 1.7 bought a factor of three — the signature of
+four features genuinely under-sampled. From 1200 to 2000 the block error gains
+only 1.6×, because the bulk of the box is by then close to the **teacher's** own
+floor: the cell reproduces the closed form to about ``10^{-4}``.
 
-It carries into the derivative, which is what the surrogate exists for. Judged
-against the closed form on a grid covering all four features, the error on
-``\partial(\mathbb A_{\varepsilon\varepsilon})_{1111}/\partial w`` fell from a
-median of 2.0 % and a p90 of 23 % at 700 solves to **0.75 % and 6.1 %** at 1200.
-The worst case stays near 55 %, at the faces of the box and the strongest
-contrast pairs: read the derivative as a distribution, never as one figure.
+**But the block error is not where the extra solves went**, and reading it alone
+would have said, wrongly, that they were wasted. Judged against the closed form
+on the tutorial's dense sweep, the same step from 1200 to 2000 improved the value
+from 0.15 % to 0.05 %, the derivative from 4.4 % to 2.5 %, and — at the **face**
+of the box, ``c/a = 3``, where a Halton set is sparsest and a fit's slope suffers
+first — the derivative from 10.9 % to **0.8 %**. Added samples land mostly in the
+regions the held-out set barely populates, which is exactly the tail that limits
+what the surrogate is good for. Read the block error for the fit and the dense
+sweep for the tail.
 
 The pair is the confocal **prolate** slice at ``\nu_0 = 0.2``; the oblate box is
 a second run of the same script, and `guard = :error` refuses a query outside the

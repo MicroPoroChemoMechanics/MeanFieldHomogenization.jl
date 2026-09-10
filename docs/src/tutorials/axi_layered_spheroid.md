@@ -343,20 +343,21 @@ The type raises instead. A trained network is the way through, and it is trained
 else — the analytic `LayeredSpheroid` supplies no stress side at all.
 
 ```
-julia --project=scripts/nn scripts/nn/train_layered_spheroid.jl 1200 100
+julia --project=scripts/nn scripts/nn/train_layered_spheroid.jl 2000 100
 ```
 
 Two surrogates come out, `layered_spheroid_strain` and
 `layered_spheroid_stress`, and **one solve fills a column of both** label
 matrices. `𝔸_σε` is not derivable from `𝔸_εε` — the inclusion has more than one
 constituent — so meshing twice to learn two halves of one solve would have
-doubled an hour of finite elements for nothing.
+doubled several hours of finite elements for nothing.
 
 Those hours are also why the script **checkpoints every label as soon as it
 exists** and recomputes only what is missing on a restart. A Halton point
 depends on its index alone, never on the sample count, so the index is a stable
-name for a sample: the set grew 400 → 700 → 1200 and each step reused everything
-already paid for, so 1200 samples cost 1200 solves and not 2300. That is also
+name for a sample: the set grew 400 → 700 → 1200 → 2000 and each step reused
+everything already paid for, so 2000 samples cost 2000 solves rather than the
+4300 the four runs would otherwise have needed. That is also
 what made it affordable to try a different output specification on the *same*
 labels — a re-encoding rather than a re-solve. `MFH_NN_MAX_NEW` bounds the new
 solves one process performs per data set, which keeps hours of finite elements a
@@ -484,10 +485,16 @@ assumed:
 | 700 | `1.5e-3` / `1.0e-2` | `2.0e-2` / `2.3e-1` |
 | 1200 | `5.0e-4` / `4.2e-3` | `7.5e-3` / `6.1e-2` |
 
-Every factor of 1.7 in samples buys close to a factor of three, on the value and
-on the derivative alike — the box of four features was simply under-sampled. It
-will stop: the teacher itself reproduces the closed form to about `1e-4`, and the
-block rms is now `7.8e-4`. The worst case over the grid stays near 55 %.
+Up to 1200 solves every factor of 1.7 bought close to a factor of three, on the
+value and on the derivative alike. Beyond that the **held-out block error**
+saturates — the bulk of the box reaches the teacher's own floor, the cell being
+exact only to about `1e-4` itself — while the **tail keeps falling**: from 1200
+to 2000 solves the worst derivative over the sweep went from 4.4 % to 2.5 %, and
+at the box face `c/a = 3` from 10.9 % to 0.8 %.
+
+That split is worth carrying away, because reading either number alone gives the
+wrong answer. Added samples land where a Halton set is sparsest, which is the
+faces of the box — not the bulk the held-out set measures.
 
 That last normalization is a decision, not a convenience. Of the 175 grid points,
 **70 have layers of equal modulus** — the inclusion is then homogeneous, `𝔸_εε`

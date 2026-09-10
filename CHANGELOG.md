@@ -61,6 +61,15 @@ from appeared nowhere.
 - The training-mesh panel, and the sentence in the tutorial saying which panel
   is the real one.
 
+### Changed
+
+- `docs/Project.toml` accepts `ChemistryLab` 0.16. The dependency is a
+  documentation one only; 0.16 breaks nothing this documentation touches — the
+  one behavior change is in `solve_certified`, which no page or script here
+  calls, while `powers_alpha_max`, which the hydration scripts do call, is
+  unchanged. Older bounds are kept alongside the new one so the file resolves on
+  either side of a registration.
+
 ## v0.14.1 — the surrogate for the layered spheroid, and the frame it exposed
 
 0.14.0 shipped the meshed layered spheroid and said its sensitivities would have
