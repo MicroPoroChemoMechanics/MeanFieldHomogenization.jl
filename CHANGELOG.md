@@ -1,5 +1,66 @@
 # Changelog
 
+## v0.14.2 — how far more samples go, and the metric that nearly hid it
+
+0.14.1 shipped the layered-spheroid surrogates on 1200 finite-element solves and
+recorded that the sample count was the lever that worked, each factor of 1.7 in
+samples buying a factor of three in the block error. This release asks how far
+that goes, and the answer depends entirely on which error you look at.
+
+### The held-out block error saturates. The tail does not.
+
+| training solves | block rms, `𝔸_εε` | exponent `α` in `rms ∝ N^-α` |
+|--:|--:|--:|
+| 400 | `7.3e-3` | — |
+| 700 | `2.4e-3` | 1.95 |
+| 1200 | `7.8e-4` | 2.10 |
+| 2000 | `4.8e-4` | **0.95** |
+
+On that measure the superlinear regime ends: `α` had been stable near 2, which
+predicted `2.8e-4` at 2000 solves, and the measurement is `4.8e-4`. Taken alone
+it says more samples have stopped paying.
+
+Taken alone it is **wrong**, and the same trap caught the anchored specification
+in 0.14.1 from the other side: a block error over 100 Halton points is not
+accuracy over a dense grid. Judged against the closed form on the sweep the
+tutorial plots:
+
+| quantity, worst over the sweep | 1200 | 2000 |
+|:--|--:|--:|
+| `(𝔸_εε)₁₁₁₁` | 0.15 % | **0.05 %** |
+| `∂(𝔸_εε)₁₁₁₁/∂w` | 4.4 % | **2.5 %** |
+| the same value at the box face `c/a = 3` | 0.40 % | **0.06 %** |
+| the same derivative at that face | 10.9 % | **0.8 %** |
+| `C₁₁₁₁` of a Mori-Tanaka estimate | 0.06 % | **0.02 %** |
+
+So the extra solves bought between 3× and **13.6×** exactly where the surrogate
+was weakest — at the **faces** of the sampling box, which is where a Halton set
+is sparsest and where the derivative of a fit suffers first. The bulk of the box
+is near the teacher's own floor, which is why the block rms saturates while the
+tail keeps falling. Read the block error for the fit and the dense sweep for the
+tail; neither substitutes for the other.
+
+**Refining the mesh remains the wrong lever, arithmetically.** The teacher
+reproduces the closed form to about `1e-4` while the fit sits at `4.8e-4`, so the
+fit still dominates by a factor of five: refining would buy a floor that is not
+being reached, while making each solve some 2.5× more expensive *and* discarding
+every label, the checkpoint key including the mesh.
+
+### The mesh the labels were computed on
+
+The tutorial's mesh figure gained a fifth panel, and it is the only one that is
+not an illustration: `nradial = 14`, `R/a = 5`, 11 030 cells at the middle of the
+sampling box. The other four use `nradial = 16` and `R/a = 3` because that reads
+better on a page, so the discretization the shipped surrogates actually learned
+from appeared nowhere.
+
+### Added
+
+- Further finite-element labels, and `layered_spheroid_strain` /
+  `layered_spheroid_stress` retrained on them.
+- The training-mesh panel, and the sentence in the tutorial saying which panel
+  is the real one.
+
 ## v0.14.1 — the surrogate for the layered spheroid, and the frame it exposed
 
 0.14.0 shipped the meshed layered spheroid and said its sensitivities would have

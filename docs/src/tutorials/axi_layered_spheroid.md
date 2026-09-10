@@ -49,7 +49,7 @@ transcription error and calling it a discretization error.
 
 ## The mesh
 
-![The meridian mesh of a layered spheroid: two confocal cases, one with free radii, and the whole cell](../assets/fe/layered_spheroid_mesh.png)
+![The meridian mesh of a layered spheroid: two confocal cases, one with free radii, the whole cell, and the mesh every training label was computed on](../assets/fe/layered_spheroid_mesh.png)
 
 Being two-dimensional, this is the **whole** computational domain and not a
 slice of one. Each layer boundary is drawn in crimson from its own closed form
@@ -72,6 +72,12 @@ The volume column is the check that is available on **any** geometry, confocal
 or not: each layer's meshed volume of revolution against the closed form
 ``4\pi a^2 c/3``. What is left is the linear triangle's chord against a curved
 boundary, and it falls with refinement.
+
+The fifth panel is not an illustration: it is the discretization **every
+training label was computed on** — `nradial = 14`, `R/a = 5`, 11 030 cells at the
+middle of the sampling box. The four to its left use `nradial = 16` and `R/a = 3`
+because that reads better on a page, so without the fifth one the mesh the
+shipped surrogates actually learned from would appear nowhere.
 
 ## Against the two closed forms
 
