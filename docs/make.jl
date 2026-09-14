@@ -188,32 +188,469 @@ function DocumenterVitepress.render(
     return nothing
 end
 
+# The page tree, lifted out of `makedocs` so that the draft pre-flight below
+# builds exactly the same site from exactly the same list.
+# ── THREE PRE-FLIGHTS, BECAUSE THE CHECKS THAT MATTER RUN LAST ───────────────
+#
+# `ExpandBibliography`, `CrossReferences` and `CheckDocument` are among the LAST
+# stages of `makedocs`: they run after every `@example` block of the site has
+# been executed. So a malformed bibliography entry, an `@ref` naming an anchor
+# that does not exist, or an exported name on no curated page does not fail the
+# build in seconds — it fails it once the whole computation has been spent, and
+# terminates "before rendering", so that time buys nothing. In ChemistryLab,
+# whose pages solve chemical equilibria, that cost a 151-minute build and then a
+# 70-minute one. The same three guards are ported here.
+#
+# What is checked here is only what can be checked cheaply. Documenter's own
+# checks still run at the end; these move the common failures to the front.
+
+# ── 1. the bibliography is formatted NOW ─────────────────────────────────────
+#
+# Calls exactly what the late stage calls, so it cannot drift away from what it
+# is guarding. A LaTeX escape the TeX parser does not implement is the usual
+# cause — `CNASH\_ss` threw `ArgumentError: Invalid command: \_ss` and took a
+# three-hour build down at its last stage. Write the character bare inside
+# braces instead.
+let failures = String[]
+    for (key, entry) in bib.entries
+        try
+            DocumenterCitations.format_bibliography_reference(:numeric, entry)
+        catch err
+            push!(failures, "  $key : " * sprint(showerror, err))
+        end
+    end
+    isempty(failures) || error(
+        "docs/src/references.bib has $(length(failures)) entry/entries " *
+            "DocumenterCitations cannot format. This would otherwise kill the " *
+            "build at its LAST stage, after every example has run:\n" *
+            join(failures, "\n")
+    )
+end
+
+# ── 2. the `@ref` anchors written in markdown are resolved NOW ───────────────
+#
+# This complements `.github/scripts/check_docrefs.py`, which covers the other
+# half of the problem: an `@ref` inside a DOCSTRING, resolved in the module that
+# docstring lives in. What is checked here is an `@ref` inside a markdown PAGE,
+# resolved against the `(@id ...)` anchors and the header slugs.
+#
+# Both forms. The explicit one, `[text](@ref some-anchor)`, catches the typo in a
+# hand-written anchor. The bare one, `[Some Heading](@ref)`, resolves against the
+# heading TEXT — slugified and case-sensitively — so a heading renamed or merely
+# recapitalized silently breaks every link to it; three were broken that way in
+# ChemistryLab. A bare ref whose text is a code span is a docstring name instead
+# and is left to Documenter.
+let
+    srcdir = joinpath(@__DIR__, "src")
+    mds = String[]
+    for (root, _, files) in walkdir(srcdir), f in files
+        endswith(f, ".md") && push!(mds, joinpath(root, f))
+    end
+
+    anchors = Set{String}()
+    for f in mds
+        text = read(f, String)
+        for m in eachmatch(r"\(@id\s+([^)]+?)\s*\)", text)
+            push!(anchors, m.captures[1])
+        end
+        # Fenced blocks are removed first: a Julia comment opens with `#` too,
+        # and counting those as headers would invent anchors that mask a typo.
+        prose = replace(text, r"^```.*?^```"ms => "")
+        for m in eachmatch(r"^#+\s+(.+?)\s*$"m, prose)
+            title = m.captures[1]
+            occursin("(@id", title) && continue
+            push!(anchors, replace(strip(title), r"\s+" => "-"))
+        end
+    end
+
+    unresolved = String[]
+    for f in mds
+        text = read(f, String)
+        for m in eachmatch(r"\]\(@ref\s+([^)]+?)\s*\)", text)
+            target = m.captures[1]
+            # No hyphen and no space: a docstring name, which only Documenter
+            # can resolve.
+            occursin('-', target) || continue
+            startswith(target, '`') && continue
+            target in anchors ||
+                push!(unresolved, "  " * relpath(f, srcdir) * " -> @ref " * target)
+        end
+        for m in eachmatch(r"\[([^]]+)\]\(@ref\)", text)
+            label = strip(m.captures[1])
+            startswith(label, '`') && continue
+            slug = replace(label, r"\s+" => "-")
+            slug in anchors ||
+                push!(unresolved, "  " * relpath(f, srcdir) * " -> [" * label * "](@ref)")
+        end
+    end
+    isempty(unresolved) || error(
+        "$(length(unresolved)) cross-reference(s) name an anchor that does not " *
+            "exist. Documenter would report this only at its `CrossReferences` " *
+            "stage, after every example on the site has run:\n" *
+            join(sort(unique(unresolved)), "\n")
+    )
+end
+
+const PAGES = [
+    "Home" => "index.md",
+    # Ordered as a reading path, and grouped so that the standard theory
+    # comes before what is built on top of it: conventions, then the
+    # Eshelby framework and the tools it produces (Hill tensor,
+    # localization, the schemes), then the specializations (cracks,
+    # layered inclusions, laminates, viscoelasticity), then the N-body
+    # models, and finally the appendices — pages that support the rest but
+    # are written in its language rather than the other way round.
+    # Grouped by what a chapter *is about*, not by how it is derived. The
+    # order follows the dependency chain: the Eshelby problem and the
+    # tensors it produces, then the schemes built on them, then the three
+    # ways the problem is generalized — a richer pattern in place of the
+    # ellipsoid, a different physics, a different time dependence — then
+    # periodic homogenization, which is a different construction entirely,
+    # and finally the N-body models that drop the one-site picture.
+    "Theory" => [
+        "theory/index.md",
+        "theory/notation.md",
+        "Foundations — the Eshelby problem" => [
+            "theory/eshelby_problem.md",
+            "theory/hill_tensors.md",
+            "theory/localization.md",
+        ],
+        "Homogenization schemes" => [
+            "theory/homogenization.md",
+            "theory/differential_scheme.md",
+        ],
+        # A layered sphere or a confocal spheroid is not an inclusion with a
+        # Hill tensor: it is a *pattern* whose generalized Eshelby problem is
+        # solved for its average concentration tensor. Any pattern admitting
+        # that treatment belongs here.
+        "The generalized Eshelby problem — morphological patterns" => [
+            "theory/layered_sphere.md",
+            "theory/layered_spheroid.md",
+            "theory/layered_spheroid_elasticity.md",
+        ],
+        # A crack is a degenerate ellipsoid, so it stays close to the
+        # foundations rather than joining the composite patterns.
+        "Cracks" => [
+            "theory/cod_tensors.md",
+            "theory/thermal_cracks.md",
+        ],
+        "Extension to conductivity" => [
+            "theory/conductivity.md",
+        ],
+        # Two distinct extensions: the correspondence principle, which maps a
+        # non-ageing problem onto an elastic one, and the ageing case, where
+        # no such map exists and the Eshelby problem itself is generalized.
+        "Extension to viscoelasticity" => [
+            "theory/laplace_carson.md",
+            "theory/viscoelasticity.md",
+        ],
+        # NOT a morphological pattern: the laminate result comes out of
+        # periodic homogenization, a construction of its own.
+        "Periodic homogenization" => [
+            "theory/laminate.md",
+        ],
+        "N-body models" => [
+            "theory/interaction_tensors.md",
+            "theory/cluster_model.md",
+            "theory/eim.md",
+        ],
+        "Appendices" => [
+            "theory/corrected_cell.md",
+            "theory/elliptic_integrals.md",
+        ],
+    ],
+    # Same principle: the inclusion families first, then the cells and
+    # schemes that consume them, then what goes beyond elasticity.
+    "Manual" => [
+        "manual/index.md",
+        "manual/installation.md",
+        "Inclusions" => [
+            "manual/inclusion_gallery.md",
+            "manual/ellipsoidal_inclusions.md",
+            "manual/cylindrical_inclusions.md",
+            "manual/cracks.md",
+            "manual/layered_inclusions.md",
+            "manual/custom_inclusions.md",
+            "manual/fe_inclusions.md",
+            "manual/neural_inclusions.md",
+        ],
+        "Cells and schemes" => [
+            "manual/schemes.md",
+            "manual/particle_assemblies.md",
+            "manual/multiscale.md",
+        ],
+        # Separated from the schemes for the same reason as in Theory: a
+        # laminate is the closed form of a periodic problem, not a cell
+        # holding inclusions.
+        "Periodic homogenization" => [
+            "manual/laminates.md",
+        ],
+        "Beyond elasticity" => [
+            "manual/conductivity.md",
+            "manual/viscoelasticity.md",
+            "manual/rheological_models.md",
+            "manual/laplace_inversion.md",
+            "manual/poromechanics.md",
+        ],
+        "Differentiation" => [
+            "manual/sensitivities.md",
+        ],
+        "Appendices" => [
+            "manual/elliptic_examples.md",
+        ],
+    ],
+    # One learning path, grouped by theme rather than by how the page
+    # happens to be produced. Pages under `tutorials/generated/` are built
+    # from `scripts/` by Literate (see `docs/literate.jl`); that is an
+    # implementation detail the reader has no reason to care about, so they
+    # sit alongside the hand-written ones.
+    "Tutorials" => [
+        "tutorials/index.md",
+        "Fundamentals" => [
+            "tutorials/first_estimate.md",
+            "tutorials/bounds_and_schemes.md",
+            "tutorials/porous_materials.md",
+            "tutorials/porous_benchmark.md",
+            "tutorials/transport.md",
+            "tutorials/differential_paths.md",
+            "tutorials/differential_loading_paths.md",
+        ],
+        "Inclusions, geometries and orientation" => [
+            "tutorials/generated/hill_tensors.md",
+            "tutorials/cracks.md",
+            "tutorials/generated/crack_distributions.md",
+            "tutorials/fe_crack.md",
+            "tutorials/generated/layered_sphere.md",
+            "tutorials/generated/layered_sphere_local_fields.md",
+            "tutorials/generated/layered_spheroid_effective.md",
+            "tutorials/generated/layered_spheroid_interfaces.md",
+            "tutorials/generated/layered_spheroid_hc.md",
+            # The finite-element counterpart of the three pages above,
+            # calibrated against them and then taken past what they cover.
+            "tutorials/axi_layered_spheroid.md",
+            "tutorials/generated/nano_spheroids.md",
+            "tutorials/generated/laminate.md",
+            "tutorials/generated/laminate_interfaces.md",
+            "tutorials/generated/symmetrization.md",
+            "tutorials/generated/custom_inclusion_contract.md",
+            "tutorials/generated/neural_inclusion.md",
+            "tutorials/generated/neural_excentered_sphere.md",
+        ],
+        # After the inclusion families, since an N-body tutorial assumes
+        # the reader knows them. `nano_spheroids` is NOT here: it condenses
+        # a single particle's interface into an equivalent stiffness and
+        # feeds an ordinary Mori-Tanaka — no N-body content at all.
+        #
+        # `cluster_model` and `eim_assembly` used to sit here and are now
+        # under Applications: each exists to reproduce one paper's numbers
+        # — Molinari & El Mouden's figures and a published table — which is
+        # what an application is, where a tutorial teaches the library.
+        "Interacting particle assemblies" => [
+            "tutorials/generated/multiscale_assemblies.md",
+        ],
+        "Beyond elasticity" => [
+            "tutorials/viscoelasticity.md",
+            "tutorials/generated/rheological_models.md",
+            "tutorials/generated/kelvin_maxwell.md",
+            "tutorials/generated/laplace_inversion.md",
+            "tutorials/generated/freq_vs_time.md",
+            "tutorials/generated/alv_schemes.md",
+            "tutorials/generated/ageing_ages_aspect.md",
+            "tutorials/generated/alv_sensitivities.md",
+            "tutorials/generated/laminate_alv.md",
+        ],
+        "Differentiation and solvers" => [
+            "tutorials/sensitivities.md",
+            "tutorials/strength_criteria.md",
+            "tutorials/nonlinear_solvers.md",
+            "tutorials/generated/secant_elastoplasticity.md",
+        ],
+        "Interoperability and tools" => [
+            "tutorials/symbolic_spheres.md",
+            "tutorials/symbolic_laminate.md",
+            "tutorials/symbolic_viscoelasticity.md",
+            "tutorials/generated/laminate_multiscale.md",
+        ],
+    ],
+    # Grouped by the material or the result, not by the machinery — a
+    # reader arrives here with a subject in mind. Pages under
+    # `applications/generated/` are built from `scripts/` by Literate,
+    # which is an implementation detail; they sit with the others.
+    "Applications" => [
+        # The largest coherent family, read roughly in order of increasing
+        # coupling: elasticity, then chemistry, then transport, then failure.
+        "Cementitious materials" => [
+            "applications/cement_paste.md",
+            "applications/hydrating_blended_paste.md",
+            "applications/ionic_hydrating_paste.md",
+            "applications/cement_paste_diffusion.md",
+            "applications/itz_concrete.md",
+            "applications/strength.md",
+        ],
+        # Morphology is what these three have in common: an aggregate with
+        # a coating, a concave cavity, a stack of platelets.
+        "Aggregates, pores and layered media" => [
+            "applications/recycled_aggregate.md",
+            "applications/concave_pores.md",
+            "applications/lamellar_clay.md",
+        ],
+        "Time-dependent behavior" => [
+            "applications/ageing_creep.md",
+            "applications/bituminous.md",
+        ],
+        # Both reproduce one paper's published numbers, which is why they
+        # are applications and not tutorials.
+        "Interacting particle assemblies" => [
+            "applications/generated/cluster_model.md",
+            "applications/generated/eim_assembly.md",
+        ],
+    ],
+    # Getting work into and out of MeanFieldHomogenization. These are companions to
+    # the library rather than chapters about it, which is why they sit
+    # together at the end of the user-facing material instead of
+    # interrupting the manual.
+    "Tools and migration" => [
+        "tools/from_echoes.md",
+        "tools/echoes2mfh.md",
+        "tools/mfhstudio.md",
+    ],
+    # MeanFieldHomogenization *inside* a finite-element code — the exact
+    # opposite of `manual/fe_inclusions.md`, which is the FE solver inside
+    # MeanFieldHomogenization. Kept as its own top-level section so the two
+    # can never be read as a continuation of one another.
+    # Sorted the way the section is read: the equations first, then how to
+    # build a model with them, then worked models.
+    "Finite-element coupling" => [
+        "fe_coupling/index.md",
+        "Theory" => [
+            "fe_coupling/scale_transition.md",
+            "fe_coupling/poroelastic_coupling.md",
+            "fe_coupling/permeability.md",
+        ],
+        "Manual" => [
+            "fe_coupling/materials.md",
+            "fe_coupling/fractured_rock.md",
+            "fe_coupling/backends.md",
+        ],
+        "Examples" => [
+            "fe_coupling/thick_cylinder.md",
+            "fe_coupling/arma2011.md",
+        ],
+    ],
+    "Developer" => [
+        "developer/architecture.md",
+        "developer/adding_inclusion.md",
+        "developer/adding_algorithm.md",
+        "developer/adding_scheme.md",
+        "developer/testing_conventions.md",
+        "developer/validation.md",
+        "developer/performance_notes.md",
+        "developer/benchmarks.md",
+        "developer/roadmap.md",
+    ],
+    "API" => [
+        "api/elliptic.md",
+        "api/core.md",
+        "api/elasticity.md",
+        "api/cracks.md",
+        "api/conductivity.md",
+        "api/localization.md",
+        "api/layered_sphere.md",
+        "api/layered_spheroid.md",
+        "api/superspheres.md",
+        "api/laminate.md",
+        "api/interactions.md",
+        "api/schemes.md",
+        "api/poromechanics.md",
+        "api/constitutive.md",
+        "api/assemblies.md",
+        "api/viscoelasticity.md",
+        "api/laplace_carson.md",
+        "api/sensitivities.md",
+    ],
+    "References" => "references.md",
+]
+
+# The module list, lifted out for the same reason as `PAGES`: the draft
+# pre-flight must check exactly the modules the real build checks.
+const DOC_MODULES = [
+    MeanFieldHomogenization,
+    MeanFieldHomogenization.Elliptic,
+    MeanFieldHomogenization.Core,
+    MeanFieldHomogenization.Elasticity,
+    MeanFieldHomogenization.Cracks,
+    MeanFieldHomogenization.Conductivity,
+    MeanFieldHomogenization.LayeredSpheres,
+    MeanFieldHomogenization.LayeredSpheroids,
+    MeanFieldHomogenization.Interactions,
+    MeanFieldHomogenization.Schemes,
+    MeanFieldHomogenization.Assemblies,
+    MeanFieldHomogenization.Laminates,
+    MeanFieldHomogenization.Poromechanics,
+    MeanFieldHomogenization.Constitutive,
+    MeanFieldHomogenization.Viscoelasticity,
+    MeanFieldHomogenization.CustomInclusions,
+    MeanFieldHomogenization.FiniteElements,
+    MeanFieldHomogenization.NeuralInclusions,
+]
+
+# ── 3. a DRAFT build, which is the one that closes the class ────────────────
+#
+# `checkdocs` and the cross-reference resolution happen in `CheckDocument`, which
+# runs AFTER `ExpandTemplates` — so an exported name on no curated page is
+# reported once every figure on the site has been drawn, and the build then
+# terminates before rendering. A draft build runs the same pipeline with the
+# `@example` blocks skipped and reaches the same checks in seconds; measured at
+# 24 s on ChemistryLab's site.
+#
+# Two things are turned off in this pass, and both because draft mode breaks
+# them by construction rather than because the source is wrong:
+#
+#   * `cross_references` — the figures on the Gallery and Applications pages are
+#     written by the blocks themselves, so with the blocks skipped every
+#     `![](...)` pointing at one is an invalid local link. The static check
+#     above covers the anchors instead.
+#   * `size_threshold` — an HTML-renderer limit; this site is rendered by
+#     DocumenterVitepress, which has none.
+#
+# `checkdocs` is what this pass exists for, and it stays strict. Its own
+# `CitationBibliography`, because the plugin carries state across a build and the
+# real pass must start from a fresh one.
+let t0 = time()
+    @info "pre-flight: draft build (checks only, no example executed)"
+    mktempdir() do draftdir
+        makedocs(;
+            modules = DOC_MODULES,
+            remotes = nothing,
+            authors = "Jean-François Barthélémy",
+            sitename = "MeanFieldHomogenization.jl",
+            format = Documenter.HTML(;
+                edit_link = nothing, repolink = nothing,
+                size_threshold = nothing, size_threshold_warn = nothing,
+            ),
+            build = draftdir,
+            pages = PAGES,
+            plugins = [
+                CitationBibliography(
+                    joinpath(@__DIR__, "src", "references.bib"); style = :numeric
+                ),
+            ],
+            checkdocs = :exports,
+            warnonly = [:docs_block, :cross_references, :example_block, :linkcheck],
+            draft = true,
+        )
+    end
+    @info "pre-flight: draft build clean" seconds = round(time() - t0; digits = 1)
+end
+
+
 makedocs(;
     # `clean = false` was kept here from the first commit, with no stated
     # reason. It let pages deleted from the source survive in `build/` and go
     # on being deployed: four of them were still on the site when this was
     # found. Nothing writes into `build/` before `makedocs`, so wiping it
     # costs nothing.
-    modules = [
-        MeanFieldHomogenization,
-        MeanFieldHomogenization.Elliptic,
-        MeanFieldHomogenization.Core,
-        MeanFieldHomogenization.Elasticity,
-        MeanFieldHomogenization.Cracks,
-        MeanFieldHomogenization.Conductivity,
-        MeanFieldHomogenization.LayeredSpheres,
-        MeanFieldHomogenization.LayeredSpheroids,
-        MeanFieldHomogenization.Interactions,
-        MeanFieldHomogenization.Schemes,
-        MeanFieldHomogenization.Assemblies,
-        MeanFieldHomogenization.Laminates,
-        MeanFieldHomogenization.Poromechanics,
-        MeanFieldHomogenization.Constitutive,
-        MeanFieldHomogenization.Viscoelasticity,
-        MeanFieldHomogenization.CustomInclusions,
-        MeanFieldHomogenization.FiniteElements,
-        MeanFieldHomogenization.NeuralInclusions,
-    ],
+    modules = DOC_MODULES,
     remotes = nothing,
     authors = "Jean-François Barthélémy",
     sitename = "MeanFieldHomogenization.jl",
@@ -230,285 +667,7 @@ makedocs(;
         description = "Mean-field homogenization of heterogeneous materials in Julia",
     ),
     plugins = [bib],
-    pages = [
-        "Home" => "index.md",
-        # Ordered as a reading path, and grouped so that the standard theory
-        # comes before what is built on top of it: conventions, then the
-        # Eshelby framework and the tools it produces (Hill tensor,
-        # localization, the schemes), then the specializations (cracks,
-        # layered inclusions, laminates, viscoelasticity), then the N-body
-        # models, and finally the appendices — pages that support the rest but
-        # are written in its language rather than the other way round.
-        # Grouped by what a chapter *is about*, not by how it is derived. The
-        # order follows the dependency chain: the Eshelby problem and the
-        # tensors it produces, then the schemes built on them, then the three
-        # ways the problem is generalized — a richer pattern in place of the
-        # ellipsoid, a different physics, a different time dependence — then
-        # periodic homogenization, which is a different construction entirely,
-        # and finally the N-body models that drop the one-site picture.
-        "Theory" => [
-            "theory/index.md",
-            "theory/notation.md",
-            "Foundations — the Eshelby problem" => [
-                "theory/eshelby_problem.md",
-                "theory/hill_tensors.md",
-                "theory/localization.md",
-            ],
-            "Homogenization schemes" => [
-                "theory/homogenization.md",
-                "theory/differential_scheme.md",
-            ],
-            # A layered sphere or a confocal spheroid is not an inclusion with a
-            # Hill tensor: it is a *pattern* whose generalized Eshelby problem is
-            # solved for its average concentration tensor. Any pattern admitting
-            # that treatment belongs here.
-            "The generalized Eshelby problem — morphological patterns" => [
-                "theory/layered_sphere.md",
-                "theory/layered_spheroid.md",
-                "theory/layered_spheroid_elasticity.md",
-            ],
-            # A crack is a degenerate ellipsoid, so it stays close to the
-            # foundations rather than joining the composite patterns.
-            "Cracks" => [
-                "theory/cod_tensors.md",
-                "theory/thermal_cracks.md",
-            ],
-            "Extension to conductivity" => [
-                "theory/conductivity.md",
-            ],
-            # Two distinct extensions: the correspondence principle, which maps a
-            # non-ageing problem onto an elastic one, and the ageing case, where
-            # no such map exists and the Eshelby problem itself is generalized.
-            "Extension to viscoelasticity" => [
-                "theory/laplace_carson.md",
-                "theory/viscoelasticity.md",
-            ],
-            # NOT a morphological pattern: the laminate result comes out of
-            # periodic homogenization, a construction of its own.
-            "Periodic homogenization" => [
-                "theory/laminate.md",
-            ],
-            "N-body models" => [
-                "theory/interaction_tensors.md",
-                "theory/cluster_model.md",
-                "theory/eim.md",
-            ],
-            "Appendices" => [
-                "theory/corrected_cell.md",
-                "theory/elliptic_integrals.md",
-            ],
-        ],
-        # Same principle: the inclusion families first, then the cells and
-        # schemes that consume them, then what goes beyond elasticity.
-        "Manual" => [
-            "manual/index.md",
-            "manual/installation.md",
-            "Inclusions" => [
-                "manual/inclusion_gallery.md",
-                "manual/ellipsoidal_inclusions.md",
-                "manual/cylindrical_inclusions.md",
-                "manual/cracks.md",
-                "manual/layered_inclusions.md",
-                "manual/custom_inclusions.md",
-                "manual/fe_inclusions.md",
-                "manual/neural_inclusions.md",
-            ],
-            "Cells and schemes" => [
-                "manual/schemes.md",
-                "manual/particle_assemblies.md",
-                "manual/multiscale.md",
-            ],
-            # Separated from the schemes for the same reason as in Theory: a
-            # laminate is the closed form of a periodic problem, not a cell
-            # holding inclusions.
-            "Periodic homogenization" => [
-                "manual/laminates.md",
-            ],
-            "Beyond elasticity" => [
-                "manual/conductivity.md",
-                "manual/viscoelasticity.md",
-                "manual/rheological_models.md",
-                "manual/laplace_inversion.md",
-                "manual/poromechanics.md",
-            ],
-            "Differentiation" => [
-                "manual/sensitivities.md",
-            ],
-            "Appendices" => [
-                "manual/elliptic_examples.md",
-            ],
-        ],
-        # One learning path, grouped by theme rather than by how the page
-        # happens to be produced. Pages under `tutorials/generated/` are built
-        # from `scripts/` by Literate (see `docs/literate.jl`); that is an
-        # implementation detail the reader has no reason to care about, so they
-        # sit alongside the hand-written ones.
-        "Tutorials" => [
-            "tutorials/index.md",
-            "Fundamentals" => [
-                "tutorials/first_estimate.md",
-                "tutorials/bounds_and_schemes.md",
-                "tutorials/porous_materials.md",
-                "tutorials/porous_benchmark.md",
-                "tutorials/transport.md",
-                "tutorials/differential_paths.md",
-                "tutorials/differential_loading_paths.md",
-            ],
-            "Inclusions, geometries and orientation" => [
-                "tutorials/generated/hill_tensors.md",
-                "tutorials/cracks.md",
-                "tutorials/generated/crack_distributions.md",
-                "tutorials/fe_crack.md",
-                "tutorials/generated/layered_sphere.md",
-                "tutorials/generated/layered_sphere_local_fields.md",
-                "tutorials/generated/layered_spheroid_effective.md",
-                "tutorials/generated/layered_spheroid_interfaces.md",
-                "tutorials/generated/layered_spheroid_hc.md",
-                # The finite-element counterpart of the three pages above,
-                # calibrated against them and then taken past what they cover.
-                "tutorials/axi_layered_spheroid.md",
-                "tutorials/generated/nano_spheroids.md",
-                "tutorials/generated/laminate.md",
-                "tutorials/generated/laminate_interfaces.md",
-                "tutorials/generated/symmetrization.md",
-                "tutorials/generated/custom_inclusion_contract.md",
-                "tutorials/generated/neural_inclusion.md",
-                "tutorials/generated/neural_excentered_sphere.md",
-            ],
-            # After the inclusion families, since an N-body tutorial assumes
-            # the reader knows them. `nano_spheroids` is NOT here: it condenses
-            # a single particle's interface into an equivalent stiffness and
-            # feeds an ordinary Mori-Tanaka — no N-body content at all.
-            #
-            # `cluster_model` and `eim_assembly` used to sit here and are now
-            # under Applications: each exists to reproduce one paper's numbers
-            # — Molinari & El Mouden's figures and a published table — which is
-            # what an application is, where a tutorial teaches the library.
-            "Interacting particle assemblies" => [
-                "tutorials/generated/multiscale_assemblies.md",
-            ],
-            "Beyond elasticity" => [
-                "tutorials/viscoelasticity.md",
-                "tutorials/generated/rheological_models.md",
-                "tutorials/generated/kelvin_maxwell.md",
-                "tutorials/generated/laplace_inversion.md",
-                "tutorials/generated/freq_vs_time.md",
-                "tutorials/generated/alv_schemes.md",
-                "tutorials/generated/ageing_ages_aspect.md",
-                "tutorials/generated/alv_sensitivities.md",
-                "tutorials/generated/laminate_alv.md",
-            ],
-            "Differentiation and solvers" => [
-                "tutorials/sensitivities.md",
-                "tutorials/strength_criteria.md",
-                "tutorials/nonlinear_solvers.md",
-                "tutorials/generated/secant_elastoplasticity.md",
-            ],
-            "Interoperability and tools" => [
-                "tutorials/symbolic_spheres.md",
-                "tutorials/symbolic_laminate.md",
-                "tutorials/symbolic_viscoelasticity.md",
-                "tutorials/generated/laminate_multiscale.md",
-            ],
-        ],
-        # Grouped by the material or the result, not by the machinery — a
-        # reader arrives here with a subject in mind. Pages under
-        # `applications/generated/` are built from `scripts/` by Literate,
-        # which is an implementation detail; they sit with the others.
-        "Applications" => [
-            # The largest coherent family, read roughly in order of increasing
-            # coupling: elasticity, then chemistry, then transport, then failure.
-            "Cementitious materials" => [
-                "applications/cement_paste.md",
-                "applications/hydrating_blended_paste.md",
-                "applications/ionic_hydrating_paste.md",
-                "applications/cement_paste_diffusion.md",
-                "applications/itz_concrete.md",
-                "applications/strength.md",
-            ],
-            # Morphology is what these three have in common: an aggregate with
-            # a coating, a concave cavity, a stack of platelets.
-            "Aggregates, pores and layered media" => [
-                "applications/recycled_aggregate.md",
-                "applications/concave_pores.md",
-                "applications/lamellar_clay.md",
-            ],
-            "Time-dependent behavior" => [
-                "applications/ageing_creep.md",
-                "applications/bituminous.md",
-            ],
-            # Both reproduce one paper's published numbers, which is why they
-            # are applications and not tutorials.
-            "Interacting particle assemblies" => [
-                "applications/generated/cluster_model.md",
-                "applications/generated/eim_assembly.md",
-            ],
-        ],
-        # Getting work into and out of MeanFieldHomogenization. These are companions to
-        # the library rather than chapters about it, which is why they sit
-        # together at the end of the user-facing material instead of
-        # interrupting the manual.
-        "Tools and migration" => [
-            "tools/from_echoes.md",
-            "tools/echoes2mfh.md",
-            "tools/mfhstudio.md",
-        ],
-        # MeanFieldHomogenization *inside* a finite-element code — the exact
-        # opposite of `manual/fe_inclusions.md`, which is the FE solver inside
-        # MeanFieldHomogenization. Kept as its own top-level section so the two
-        # can never be read as a continuation of one another.
-        # Sorted the way the section is read: the equations first, then how to
-        # build a model with them, then worked models.
-        "Finite-element coupling" => [
-            "fe_coupling/index.md",
-            "Theory" => [
-                "fe_coupling/scale_transition.md",
-                "fe_coupling/poroelastic_coupling.md",
-                "fe_coupling/permeability.md",
-            ],
-            "Manual" => [
-                "fe_coupling/materials.md",
-                "fe_coupling/fractured_rock.md",
-                "fe_coupling/backends.md",
-            ],
-            "Examples" => [
-                "fe_coupling/thick_cylinder.md",
-                "fe_coupling/arma2011.md",
-            ],
-        ],
-        "Developer" => [
-            "developer/architecture.md",
-            "developer/adding_inclusion.md",
-            "developer/adding_algorithm.md",
-            "developer/adding_scheme.md",
-            "developer/testing_conventions.md",
-            "developer/validation.md",
-            "developer/performance_notes.md",
-            "developer/benchmarks.md",
-            "developer/roadmap.md",
-        ],
-        "API" => [
-            "api/elliptic.md",
-            "api/core.md",
-            "api/elasticity.md",
-            "api/cracks.md",
-            "api/conductivity.md",
-            "api/localization.md",
-            "api/layered_sphere.md",
-            "api/layered_spheroid.md",
-            "api/superspheres.md",
-            "api/laminate.md",
-            "api/interactions.md",
-            "api/schemes.md",
-            "api/poromechanics.md",
-            "api/constitutive.md",
-            "api/assemblies.md",
-            "api/viscoelasticity.md",
-            "api/laplace_carson.md",
-            "api/sensitivities.md",
-        ],
-        "References" => "references.md",
-    ],
+    pages = PAGES,
     # Only exported names have to appear on a curated page: the internals in
     # the eighteen sub-modules above are documented for the reader of the
     # source, not for the site. Same setting as TensND and DECUHR.
