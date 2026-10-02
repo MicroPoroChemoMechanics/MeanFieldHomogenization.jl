@@ -183,9 +183,10 @@ plt2
 In mortar, the **Interfacial Transition Zone** is a thin shell (~50 µm) of
 higher-porosity — hence higher-diffusivity — cement paste around each aggregate.
 The reduction in diffusivity caused by the impermeable aggregates can be offset,
-or even reversed, by this more permeable surrounding shell.
+or even reversed, by this more permeable surrounding shell. The morphology is
+drawn below as in the Echoes book [echoes](@cite).
 
-![RVE of a mortar: cement paste matrix with aggregate particles coated by ITZ shells (from the Echoes book [echoes](@cite)).](../assets/veritz.png)
+![RVE of a mortar: cement paste matrix with aggregate particles coated by ITZ shells](../assets/veritz.png)
 
 The aggregate + ITZ is a two-layer [`LayeredSphere`](@ref) — an impermeable core
 (``D = 0``, radius ``R_{\rm agg}``) inside an ITZ shell (thickness ``e_{\rm ITZ}``)

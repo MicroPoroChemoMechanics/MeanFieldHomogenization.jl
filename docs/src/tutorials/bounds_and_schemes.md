@@ -20,7 +20,7 @@ RVE, and the **Reuss** bound a uniform stress:
 
 Both are exact bounds — no assumption on the microstructure's geometry
 is needed — and order every physically realizable effective bulk
-modulus [hill1963](@cite), [hill1965](@cite):
+modulus [hill1963, hill1965](@cite):
 
 ```math
 k_R \le k_{\text{eff}} \le k_V.
@@ -38,7 +38,7 @@ stiffness must satisfy the implicit condition
 \mathbb{C}_{\text{eff}} = \sum_i f_i\,\mathbb{C}_i:\mathbb{A}_i(\mathbb{C}_{\text{eff}}),
 ```
 
-[budiansky1976](@cite), solved by a damped Picard iteration internally
+[budiansky1976](@citet), solved by a damped Picard iteration internally
 (`abstol`, `maxiters` control its convergence). This is the natural
 model for an interpenetrating, polycrystal-like microstructure where no
 phase plays the role of a continuous matrix.

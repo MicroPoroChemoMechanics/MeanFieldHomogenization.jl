@@ -3,15 +3,15 @@
 [`LayeredSphere`](@ref) is an `n`-layer isotropic spherical composite
 inclusion in an infinite isotropic matrix, with per-layer localization, global
 contribution tensors and layer / sphere / cumulative averages. The bulk and
-shear recurrences follow [herve1993](@cite) (generalizing the three-phase model
-of [christensenLo1979](@cite)); imperfect interfaces follow
+shear recurrences follow [herve1993](@citet) (generalizing the three-phase model
+of [christensenLo1979](@citet)); imperfect interfaces follow
 [herveLuanco2014](@cite) — `PerfectInterface` plus one primal/dual pair per
 physics:
 
 | Elasticity (primal / dual)                   | Conductivity (primal / dual)                    |
 | :------------------------------------------- | :---------------------------------------------- |
 | `SpringInterface(kn, kt)`                    | `KapitzaInterface(ρ)`                           |
-| `MembraneInterface(κs, μs)` (surface elasticity, [dormieux2016](@cite)) | `SurfaceConductiveInterface(ks)` (Barthélémy-Bignonnet 2020) |
+| `MembraneInterface(κs, μs)` surface elasticity [dormieux2016](@cite) | `SurfaceConductiveInterface(ks)` [barthelemyBignonnetIJES2020](@cite) |
 
 ## Convention
 
@@ -33,7 +33,7 @@ strain. Because the strain is **not** uniform inside such a pattern, it has no
 Hill tensor at all; what it does have is a volume-averaged concentration
 tensor, and that is what every scheme consumes.
 
-The three-phase model of Christensen & Lo [christensenLo1979](@cite) is one
+The three-phase model of [christensenLo1979](@citet) is one
 *use* of this solution rather than a variant of it — take ``N = 2`` and let the
 reference medium be the unknown effective one, and the fixed point is their
 result. That is a property of the scheme, not of the pattern, so it lives with
@@ -196,8 +196,8 @@ Dropping the mode-2 term is invisible on degenerate configurations
 genuine multi-layer stack.
 
 For ``N = 1`` the recurrence reduces to the classical Eshelby single-
-sphere result; for ``N ≥ 2`` it reproduces the [christensenLo1979](@cite)
-core-shell effective shear modulus and passes the Eshelby consistency tests
+sphere result; for ``N ≥ 2`` it reproduces the core-shell effective shear
+modulus of [christensenLo1979](@citet) and passes the Eshelby consistency tests
 (``N = 2`` with core ≡ shell ↔ single-layer of radius ``r_N``, etc.).
 
 ## Averages (Echoes-style)

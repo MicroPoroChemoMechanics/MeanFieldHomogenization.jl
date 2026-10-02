@@ -35,7 +35,7 @@ Not ``\boldsymbol{\Sigma}``, and not the Biot effective stress, but the
 **Terzaghi** one. The loading ``(\boldsymbol{\Sigma}, p)`` splits into a dry
 problem under ``\boldsymbol{\Sigma}' = \boldsymbol{\Sigma} + p\,\boldsymbol{1}``,
 during which fractures open and close, plus a uniform field carrying no strain
-singularity — which cannot move a flat crack ([barthelemyARMA2011](@cite) § 1.1).
+singularity — which cannot move a flat crack [barthelemyARMA2011; § 1.1](@cite).
 In terms of what the FE code hands over,
 
 ```math

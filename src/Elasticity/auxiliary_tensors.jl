@@ -21,8 +21,7 @@ I^A = (det A)/(4π) ∫_{|ξ|=1} ξ⊗ξ / ‖A·ξ‖³ dS_ξ .
 
 ``\\mathbf I^{\\mathbf A}`` is symmetric with the same eigenvectors as
 ``\\mathbf A`` and with diagonal components ``I_i^{\\mathbf A}``
-satisfying ``\\sum_i I_i^{\\mathbf A} = 1`` (see [kellogg1929](@cite), [eshelby1957](@cite),
-[parnell2016](@cite)).
+satisfying ``\\sum_i I_i^{\\mathbf A} = 1`` [kellogg1929, eshelby1957, parnell2016](@cite).
 """
 function tens_IA(ell::Ellipsoid{3, Spherical})
     T = eltype(ell.semi_axes)

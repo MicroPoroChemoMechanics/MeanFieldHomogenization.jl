@@ -45,9 +45,10 @@ tensor of [Notation](notation.md#Ellipsoid-geometry),
 ```
 
 with ``(\underline{\ell},\underline{m})`` the in-plane unit vectors along the
-major and minor semi-axes ``a\ge b``, and ``\underline{n}`` the unit normal.
+major and minor semi-axes ``a\ge b``, and ``\underline{n}`` the unit normal. The
+frame is drawn below as in the Echoes book [echoes](@cite).
 
-![The crack frame and its semi-axes, before the flat limit is taken (from the Echoes book [echoes](@cite))](../assets/geometry/crack_frame.svg)
+![The crack frame and its semi-axes, before the flat limit is taken](../assets/geometry/crack_frame.svg)
 
 Two families matter, and they are **genuinely different objects**, not two
 regimes of one:
@@ -77,8 +78,7 @@ The normalization is by the **in-plane half-width ``b``** — the minor semi-axi
 of the ellipse, the half-width of the ribbon. This makes ``\boldsymbol{B}``
 **size-independent**: it depends on the crack *shape* (through ``\eta``) and on
 its orientation, never on how big it is. This is the convention of
-[barthelemySifAniso](@cite), following [kachanov1992](@cite),
-[kachanov1993](@cite), and it is the one `MeanFieldHomogenization` implements
+[barthelemySifAniso](@cite), following [kachanov1992, kachanov1993](@citet), and it is the one `MeanFieldHomogenization` implements
 ([`cod_tensor`](@ref), alias [`B_tensor`](@ref)).
 
 ### The shape coefficient ``\chi``
@@ -190,7 +190,7 @@ three sources normalize the **limit** differently, while agreeing on
 | convention | elliptic ``\mathbb{H}^{\mathcal{E}}`` | ribbon ``\mathbb{H}^{\mathcal{R}}`` |
 | :--------- | :------------------------------------ | :---------------------------------- |
 | **`MeanFieldHomogenization`** — limit normalized by ``b``, uniformly | ``\lim (c/b)\,\mathbb{Q}^{-1} = \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` | ``\tfrac{2}{\pi}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` |
-| **Echoes** and [barthelemyMMS2023](@cite) — elliptic normalized by ``a`` | ``\lim \omega\,\mathbb{Q}^{-1} = \tfrac{3\eta}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` | ``\tfrac{2}{\pi}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` |
+| **Echoes** and [barthelemyMMS2023](@citet) — elliptic normalized by ``a`` | ``\lim \omega\,\mathbb{Q}^{-1} = \tfrac{3\eta}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` | ``\tfrac{2}{\pi}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` |
 
 So the two elliptic compliances differ by exactly ``\eta``:
 
@@ -269,7 +269,7 @@ plt
 
 The three curves are straight lines of **slope 1**: the error decays like
 ``\omega``, which is the order of the Taylor term that resolves the limit
-([barthelemyIJSS2009](@cite)). That slope is the real content of the check — a
+[barthelemyIJSS2009](@cite). That slope is the real content of the check — a
 single ``\omega`` would not distinguish a true limit from a coincidence.
 
 !!! note "Two limits of the flattening route"
@@ -291,8 +291,7 @@ derivation symbolically, with the shipped closed forms as its oracles.
 
 With ``\boldsymbol{N}(\underline{\xi}) = \underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi}``
 the **acoustic** (Christoffel) tensor, the two Fourier kernels of the traction
-integral equation on the crack plane are [kunin1983](@cite),
-[kanaun2009](@cite):
+integral equation on the crack plane are [kunin1983, kanaun2009](@cite):
 
 ```math
 \hat{\mathbb{\Gamma}}(\underline{\xi})
@@ -398,7 +397,7 @@ a_3 = \frac{a_1}{\gamma_1\gamma_2}.
 ```
 
 The radical ``\sigma_\gamma`` of the published TI closed form
-([hoenig1978](@cite), [barthelemyIJES2021](@cite)) is therefore nothing but the
+[hoenig1978, barthelemyIJES2021](@cite) is therefore nothing but the
 sum of the two in-plane Stroh roots — it *comes out of* the factorization rather
 than being postulated.
 
@@ -438,7 +437,7 @@ term vanishes by parity, which is why ``\boldsymbol{B}`` is diagonal in the crac
 frame.
 
 !!! note "Why cos² and sin² look exchanged against the literature"
-    [barthelemySifAniso](@cite) defines the very same two quantities as
+    [barthelemySifAniso](@citet) defines the very same two quantities as
     ```math
     \mathcal{C}_\eta = \int_0^{\pi/2}
       \frac{\cos^{2}\vartheta\;\mathrm{d}\vartheta}
@@ -548,18 +547,17 @@ when ``\mathbb{C}_0`` is a `TensISO{4,3}`.
 When the matrix is transversely isotropic with its axis **aligned with the crack
 normal** ``\underline{n}``, ``\boldsymbol{B}`` is still analytical. The closed
 forms use the engineering parameters ``(E,\nu_1,\nu_2,H,\Gamma)`` defined on the
-compliance ``\mathbb{S} = \mathbb{C}^{-1}`` [hoenig1978](@cite),
-[kanaun2009](@cite), [barthelemyIJES2021](@cite), and reduce to the isotropic
+compliance ``\mathbb{S} = \mathbb{C}^{-1}`` [hoenig1978, kanaun2009, barthelemyIJES2021](@cite), and reduce to the isotropic
 case for ``\nu_1=\nu_2=\nu``, ``H=\Gamma=1``. The auxiliary coefficients are
 documented inline in `src/Cracks/cod_analytical.jl`.
 
 The more general cases — a TI axis **not** aligned with the crack normal, or an
-elliptic-orthotropic matrix — are treated in [barthelemyMMS2023](@cite) and
-[barthelemySifAniso](@cite) but are not yet exposed here.
+elliptic-orthotropic matrix — are treated in [barthelemyMMS2023](@citet) and
+[barthelemySifAniso](@citet) but are not yet exposed here.
 
 ### Arbitrary anisotropy — numerical
 
-No closed form exists in general. Following [barthelemyIJSS2009](@cite), the
+No closed form exists in general. Following [barthelemyIJSS2009](@citet), the
 limit ``\omega\to 0`` is resolved by extracting the **first-order term** of the
 Taylor expansion of ``\mathbb{P}`` in ``\omega``; that term has an integral
 representation on the unit circle of the crack plane, evaluated by either
@@ -568,7 +566,7 @@ algorithm trait:
 - **`DECUHR`** — adaptive cubature [espelid1994](@cite), ForwardDiff-safe
   (`src/Cracks/green_decuhr.jl`);
 - **`Residue`** — Cauchy-residue reduction to a 1-D quadrature, as in
-  [masson2008](@cite) adapted to the crack kernel, `Float64` only
+  [masson2008](@citet) adapted to the crack kernel, `Float64` only
   (`src/Cracks/green_residue.jl`).
 
 `method = :auto` always picks a **cubature**, never `Residue`: `DECUHR` when its
@@ -584,7 +582,7 @@ schemes reach at their first step, so it is available on explicit
 [`compliance_contribution`](@ref)`(crack, C₀)` returns ``\mathbb{H}`` itself —
 the *size-independent* contribution, not the dilute correction. Cracks have no
 volume fraction, so the amount of cracking is measured by a **Budiansky crack
-density** [budiansky1976](@cite), [kachanov1993](@cite), and reintroduced by
+density** [budiansky1976, kachanov1993](@cite), and reintroduced by
 [`delta_compliance`](@ref):
 
 | | density | dilute correction |
@@ -599,8 +597,7 @@ Implementation: `src/Cracks/compliance.jl`, dispatching on the crack shape.
 At a point ``\underline{x}^{\star}_{0}`` of the crack front, with in-plane outer
 normal ``\underline{\nu}`` and tangent
 ``\underline{\tau} = \underline{n}\wedge\underline{\nu}``, the asymptotic
-expansions of the jump and the traction read [irwin1957](@cite),
-[kassir1968](@cite), [willis1968](@cite):
+expansions of the jump and the traction read [irwin1957, kassir1968, willis1968](@cite):
 
 ```math
 [\![\underline{u}]\!](\underline{x}^{\star}_{0}+r\underline{\nu})
@@ -615,11 +612,9 @@ expansions of the jump and the traction read [irwin1957](@cite),
 ``\underline{N}`` is the **displacement intensity factor** (DIF) and
 ``\underline{K}`` the **stress intensity factor** (SIF), normalized so that the
 local energy release rate is simply
-``G = \underline{K}\cdot\underline{N}`` [barnett1972](@cite),
-[rice1989](@cite).
+``G = \underline{K}\cdot\underline{N}`` [barnett1972, rice1989](@cite).
 
-The central result of the anisotropic theory [kanaun1981](@cite),
-[kunin1983](@cite), [kanaun2009](@cite) is that SIF and DIF are **purely local**
+The central result of the anisotropic theory [kanaun1981, kunin1983, kanaun2009](@cite) is that SIF and DIF are **purely local**
 and are exchanged by the COD tensor of the **ribbon crack tangent** to the real
 crack at the observation point:
 

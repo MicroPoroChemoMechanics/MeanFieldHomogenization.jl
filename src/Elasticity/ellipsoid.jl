@@ -51,7 +51,7 @@ const _SHAPE_2D = (Circular, Elliptic)
     Ellipsoid{dim, S<:EllipsoidShape, T<:Number, B<:AbstractBasis}
 
 Ellipsoidal inclusion of the Eshelby problem
-([eshelby1957](@cite)). In the Echoes convention, an
+[eshelby1957](@cite). In the Echoes convention, an
 ellipsoid ``\\mathcal E_{\\mathbf A}`` is described by an invertible
 second-order shape tensor ``\\mathbf A`` through
 

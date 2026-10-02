@@ -73,7 +73,7 @@ end
 
 Hill polarization tensor of a 3-D ellipsoid in an arbitrarily
 anisotropic matrix, evaluated by **nested 1-D QuadGK cubature** over the
-unit sphere of the general [willis1977](@cite) integrand.
+unit sphere of the general integrand of [willis1977](@citet).
 ForwardDiff-compatible. Includes axis-sort and power change-of-variable for
 improved convergence on flat or elongated ellipsoids.
 """

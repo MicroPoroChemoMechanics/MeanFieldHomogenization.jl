@@ -18,7 +18,7 @@
 #  outer envelope of the phase distribution; this is stored in the
 #  `distribution_shape` field through an `AbstractDistributionShape`
 #  hierarchy that allows future extension to pairwise distributions
-#  ([willis1982](@cite)) without breaking the public API.
+#  of [willis1982](@citet) without breaking the public API.
 # =============================================================================
 
 # =============================================================================
@@ -350,7 +350,7 @@ Supertype for the *outer envelope* of the phase distribution used by the
 
 It is a field of the [`RVE`](@ref) rather than of those schemes because it is
 **microstructure**: the ellipsoidal symmetry of the medium's two-point
-statistics ([ponte1995](@cite)), a measurable property like a phase's shape.
+statistics [ponte1995](@cite), a measurable property like a phase's shape.
 That is what distinguishes it from the reference medium, which is a modeling
 decision and therefore lives on the scheme. It has no default, though — see
 [`distribution_shape`](@ref).
@@ -362,7 +362,7 @@ Currently a single concrete subtype is shipped:
 
 Future extension (placeholder, *not* implemented in this PR): a
 `PairwiseDistribution` carrying a per-pair `(i, j) ↦ shape` mapping
-([willis1982](@cite)).  Adding it will only require a new
+[willis1982](@cite).  Adding it will only require a new
 concrete subtype + matching `_evaluate(rve, ::Maxwell|::PonteCastanedaWillis, …)`
 methods — no public-API change.
 """

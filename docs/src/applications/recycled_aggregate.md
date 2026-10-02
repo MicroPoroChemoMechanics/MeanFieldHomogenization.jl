@@ -3,7 +3,7 @@
 Recycling concrete means crushing it, and what comes out is not a clean
 aggregate: each grain is an **old natural aggregate wrapped in a shell of
 adhered old mortar**, of uncertain and generally poor quality, and the old
-aggregate is not centered in its shell. [adessinaIJES2017](@cite) homogenized that morphology by
+aggregate is not centered in its shell. [adessinaIJES2017](@citet) homogenized that morphology by
 generalizing the Eshelby problem to an inclusion of arbitrary internal
 structure, solved by finite elements. This page reproduces their study with
 [`FEExcenteredSphere`](@ref), and improves on it in one respect.

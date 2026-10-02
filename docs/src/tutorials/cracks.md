@@ -46,7 +46,7 @@ the dilute compliance correction is
 \mathbb{H} = \tfrac{3}{4}\,\underline{n}\otimes^{\!s}\boldsymbol{B}\otimes^{\!s}\underline{n},
 ```
 
-[kachanov1992](@cite), [kachanov1993](@cite) — ``\mathbb{H}`` is the
+[kachanov1992, kachanov1993](@citet) — ``\mathbb{H}`` is the
 **size-independent compliance contribution tensor**
 ([`compliance_contribution`](@ref)), computed once from `B` and the
 crack normal ``\underline{n}``, and reused unchanged across an entire

@@ -43,7 +43,7 @@ end
 
 2nd-order Hill polarization tensor of an ellipsoid in an arbitrarily
 anisotropic conductor, via the closed-form square-root
-change-of-variable of [giraudMOM2019](@cite)
+change-of-variable of [giraudMOM2019](@citet)
 (equivalent derivation by Green's function in
 [barthelemyTIPM2009](@cite)):
 
@@ -93,7 +93,7 @@ end
 ``\\hat{\\mathbf e}_1``, transverse semi-axes ``b\\ge c>0``) in an
 isotropic conductor ``\\mathbf K_0 = K\\,\\mathbf 1``, obtained from the
 cylinder Newton-potential coefficients
-([mura1987](@cite), §11.22):
+[mura1987; §11.22](@cite):
 
 ```
 P = I^cyl / K ,   with   I₁^cyl = 0,   I₂^cyl = c/(b+c),   I₃^cyl = b/(b+c) .
@@ -123,7 +123,7 @@ end
 arbitrarily anisotropic conductor.  The transverse plane
 ``(\\hat{\\mathbf e}_2,\\hat{\\mathbf e}_3)`` carries the full 2-D
 Hill problem: the ``\\mathbf K^{-1/2}`` transformation of
-[giraudMOM2019](@cite) is applied to the
+[giraudMOM2019](@citet) is applied to the
 transverse 2×2 sub-matrix of ``\\mathbf K_0`` in the cylinder frame;
 the 2-D Newton potentials produce the transverse block, and the axial
 row/column is re-embedded as zero (``P_{1j}=0``).

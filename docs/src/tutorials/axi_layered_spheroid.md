@@ -588,7 +588,7 @@ the finite elements would stop calibrating and start providing.
     resistance per unit area, so its equivalent layer must have **constant
     thickness** — and the inner boundary of a constant-thickness coating on an
     ellipse is the *offset curve*, which is neither confocal, nor similar, nor an
-    ellipse at all. See [barthelemyBignonnetIJES2020](@cite), whose subject is
+    ellipse at all. See [barthelemyBignonnetIJES2020](@citet), whose subject is
     precisely the notion of an equivalent particle.
 
     Shrinking both semi-axes by the same amount does give an ellipse, but its

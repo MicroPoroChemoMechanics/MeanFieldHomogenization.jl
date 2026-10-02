@@ -7,6 +7,18 @@
 - The README and the module docstring described `LayeredSpheroids` as
   conduction only, which it has not been since v0.11.0: they now name the
   elastic confocal spheroid, prolate or oblate, with perfect interfaces.
+- Citations are author-year, as in ChemistryLab: a `[42]` told the reader
+  nothing without a trip to the References page. A citation that is the subject
+  of a sentence or follows a preposition reads "Eshelby (1957) showed", the
+  others "(Eshelby, 1957)", and adjacent ones are grouped in one parenthesis.
+  Hovering a citation still shows the full entry.
+- No citation is left inside a figure caption; the source of a drawing is
+  given in the sentence before it.
+- The Echoes entry cited a version DOI that Zenodo marks as deprecated, dated
+  2022 although that version was issued in 2025. It now cites the concept DOI
+  `10.5281/zenodo.7348758`, the one the Echoes repository gives, which resolves
+  to the current version (v1.0.0, 2026).
+- The key of Parrott and Killoh (1984) misspelled the first author's name.
 
 ## v0.14.2 — where the sample count stops paying, and the mesh that produced it
 

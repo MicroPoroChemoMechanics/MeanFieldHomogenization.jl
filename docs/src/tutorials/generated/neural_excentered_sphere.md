@@ -6,7 +6,7 @@ EditURL = "../../../../scripts/85_neural_excentered_sphere.jl"
 
 The [ellipsoid pilot](neural_inclusion.md) proved the machinery against a
 closed form. This is the case it exists for: the **sphere with an off-center
-core** of [adessinaIJES2017](@cite), whose localization tensors have no
+core** of [adessinaIJES2017](@citet), whose localization tensors have no
 analytic expression and come out of an axisymmetric Fourier finite-element
 solve ([`FEExcenteredSphere`](@ref)).
 

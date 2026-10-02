@@ -90,7 +90,7 @@ For an isotropic medium this reduces to the textbook ``1/M = (b -
 
 !!! warning "Incompressible saturating fluid"
     This expression assumes the pore fluid is **incompressible**, which is the
-    setting of [barthelemyARMA2011](@cite). A fluid of finite bulk modulus
+    setting of [barthelemyARMA2011](@citet). A fluid of finite bulk modulus
     ``k_f`` adds the storage term ``\\varphi/k_f``:
 
     ```math

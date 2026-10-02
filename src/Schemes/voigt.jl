@@ -19,7 +19,7 @@ Phases carrying a [`CrackDensity`](@ref) instead of a
 zero); use a Hill-tensor-aware scheme (e.g. [`Dilute`](@ref) or
 [`MoriTanaka`](@ref)) to capture crack effects.
 
-Reference: [hill1965](@cite).
+Reference: [hill1965](@citet).
 """
 function _evaluate(rve::RVE, ::Voigt, ::Val{p}; kw...) where {p}
     names = _bound_phase_names(rve, "Voigt")

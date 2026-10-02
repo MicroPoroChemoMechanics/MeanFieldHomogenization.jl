@@ -7,8 +7,8 @@ Here the volume fractions are *computed* — by integrating a hydration kinetics
 ODE, applying the reaction stoichiometry, and converting moles to volumes
 through the molar volumes of a thermodynamic database.
 
-The model is that of [Lavergne2018](@cite), whose micromechanical part is close
-to [pichler2011](@cite) — see [Quasi-brittle strength of cement paste and
+The model is that of [Lavergne2018](@citet), whose micromechanical part is close
+to that of [pichler2011](@citet) — see [Quasi-brittle strength of cement paste and
 mortar](@ref app-strength) — but whose volume fractions come from an extended
 Parrot & Killoh hydration model rather than from Powers.
 
@@ -71,7 +71,7 @@ nothing # hide
 
 ## The binder
 
-The reference cement is the CEM I 52.5 N of [Lavergne2018](@cite) (its Table 9):
+The reference cement is the CEM I 52.5 N of [Lavergne2018](@citet) (its Table 9):
 a clinker of Bogue composition C₃S 65 / C₂S 11 / C₃A 11 / C₄AF 8, with 3.5 %
 calcite and 4.6 % gypsum, ground to a Blaine fineness of 380 m²/kg. The blends
 follow the paper's naming — `C85L15` substitutes 15 % limestone filler for
@@ -100,7 +100,7 @@ nothing # hide
 ## Hydration kinetics
 
 Each clinker phase follows Parrot & Killoh in its canonical form
-[ParrotKilloh1984](@cite), `α̇ = min(α̇₁, α̇₂, α̇₃)` — an Avrami nucleation-growth
+[ParrottKilloh1984](@cite), `α̇ = min(α̇₁, α̇₂, α̇₃)` — an Avrami nucleation-growth
 term, a Jander diffusion term and a power law — scaled by the Blaine fineness and
 capped by the Powers water-availability limit `α_max = min(1, w/b / 0.42)`. The
 silica fume does not follow Parrot & Killoh at all: its pozzolanic reaction
@@ -191,14 +191,14 @@ One substitution to declare: the paper's Fe-siliceous hydrogarnet C₆AFS₂.₁
 not in CEMDATA18. `C3AFS0.84H4.32` is the available analog, of different
 stoichiometry.
 
-**Gel water.** CEMDATA18 and [Lavergne2018](@cite) do not draw the boundary of
+**Gel water.** CEMDATA18 and [Lavergne2018](@citet) do not draw the boundary of
 "C-S-H" in the same place, and ignoring the difference changes the answer by a
 factor of two:
 
 | | C-S-H per mole of Si | molar volume | water held inside |
 |:--|:--|:--|:--|
 | CEMDATA18 (Jennite) | (SiO₂)(CaO)₁.₆₆₇(H₂O)₂.₁ | 78.4 cm³/mol | structural only |
-| [Lavergne2018](@cite) | C₁.₇SH₄ | 108.3 cm³/mol | structural **+ gel** |
+| [Lavergne2018](@citet) | C₁.₇SH₄ | 108.3 cm³/mol | structural **+ gel** |
 
 Both conventions are self-consistent; the thermodynamic one is cleaner. But the
 paper's micromechanical parameters — `E_CSH = 25` GPa, aspect ratio 7, and the
@@ -248,8 +248,8 @@ f28 = fraction_history(run0, [28 * 86400.0])[2][1]
 
 ## The four scales
 
-[Lavergne2018](@cite) upscales in four steps (its Fig. 2). The first is what
-distinguishes this model from [pichler2011](@cite), which collapses every hydrate
+[Lavergne2018](@citet) upscales in four steps (its Fig. 2). The first is what
+distinguishes this model from [pichler2011](@citet), which collapses every hydrate
 into a single stiffness: here the hydrate species are merged first, by a
 self-consistent scheme with all phases spherical, and only the *result* is given
 the fibrillar morphology at the foam scale.
@@ -357,7 +357,7 @@ Three things the model gets right, and one it does not.
 - **The absolute level is low.** A w/b = 0.50 paste measures nearer 18–20 GPa at
   28 days than the ~13 GPa here. The single C-S-H stiffness, with no
   high-/low-density distinction, and the drained convention `K_water = 0` both
-  push in that direction; [Lavergne2018](@cite) lists the uniform C-S-H density as
+  push in that direction; [Lavergne2018](@citet) lists the uniform C-S-H density as
   a limitation of its own §5. The purpose of this chapter is the coupling, not a
   calibration.
 
@@ -390,7 +390,7 @@ extra ODE solve.
 
 ## What is not here
 
-- **Compressive strength.** The second half of [Lavergne2018](@cite) upscales
+- **Compressive strength.** The second half of [Lavergne2018](@citet) upscales
   strength from a Von Mises criterion on the hydrate needles, through Kreher's
   lemma over the 20 orientations, plus a statistical treatment of the stress
   fluctuation at the concrete scale — which is how it explains a mortar being

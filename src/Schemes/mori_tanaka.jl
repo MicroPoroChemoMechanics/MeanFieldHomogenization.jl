@@ -20,8 +20,7 @@
     _evaluate(rve, ::MoriTanaka, ::Val{p}; kw...) -> AbstractTens
 
 Mori-Tanaka scheme for property `:p`
-([mori1973](@cite);
-[christensen1990](@cite)). Dispatches on the order of
+[mori1973, christensen1990](@cite). Dispatches on the order of
 the matrix property tensor — 4th order for elasticity (`:C`), 2nd order
 for conductivity (`:K`).
 """

@@ -103,7 +103,7 @@ Two consequences worth keeping in mind while reading the code:
 
 The second convention that must be fixed once is the sign of the Green
 operator, since two incompatible ones are current in the literature. This
-documentation follows [brisard2023](@cite):
+documentation follows [brisard2023](@citet):
 
 ```math
 \boldsymbol{\varepsilon}(\underline{x}) = \boldsymbol{E}
@@ -148,7 +148,7 @@ sharing a single coefficient — hence five independent numbers written
 
 This is the storage used by `TensND.TensTI{4}` and by
 [`hill_tensor`](@ref) on a transversely isotropic matrix
-([walpole1981](@cite), [barthelemyIJES2020_hilltrans](@cite)).
+[walpole1981, barthelemyIJES2020_hilltrans](@cite).
 
 ## Ellipsoid geometry
 

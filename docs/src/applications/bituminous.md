@@ -1,7 +1,7 @@
 # [Viscoelastic complex modulus of a bituminous mixture](@id app-bituminous)
 
 The **complex modulus** ``E^*(\omega)`` of a bituminous mixture through three
-nested scales, following [someCBM2022](@cite). The bitumen is viscoelastic
+nested scales, following [someCBM2022](@citet). The bitumen is viscoelastic
 (2S2P1D); the mineral phases are elastic. Every scheme being `ComplexF64`-safe,
 the correspondence principle amounts to running the homogenization with
 complex-valued stiffnesses.
@@ -12,7 +12,10 @@ complex-valued stiffnesses.
 | 2 | Mortar | mastic matrix + sand | Mori-Tanaka |
 | 3 | Full mix | mortar matrix + coated coarse aggregates + pores | Self-Consistent |
 
-![Three-scale RVE of a bituminous mixture (from [someCBM2022](@cite), via the Echoes book [echoes](@cite)).](../assets/ver_multi_mix.png)
+The three scales are drawn below after [someCBM2022](@citet), as reproduced in
+the Echoes book [echoes](@cite).
+
+![Three-scale RVE of a bituminous mixture](../assets/ver_multi_mix.png)
 
 The coarse aggregates are **coated grains** — a stiff core wrapped in a thin
 mastic film — represented by a two-layer [`LayeredSphere`](@ref) that enters the
@@ -158,7 +161,7 @@ nothing # hide
 ```
 
 The pre-calibrated contact parameters (from the COBYLA fit of the least-aged
-state in [echoes](@cite) — the calibration itself is not repeated here) are used
+state in [echoes](@citet) — the calibration itself is not repeated here) are used
 directly. A check against the Echoes reference at four frequencies:
 
 ```@example bitumen
@@ -186,7 +189,7 @@ J(\alpha,\chi,k_t) = \sum_\omega
 ```
 
 subject to inequality constraints keeping the fit acceptable for the more-aged
-states. [someCBM2022](@cite) minimize it with a derivative-free `COBYLA`
+states. [someCBM2022](@citet) minimize it with a derivative-free `COBYLA`
 routine; their parameters are used directly here rather than re-calibrated:
 
 ```@example bitumen

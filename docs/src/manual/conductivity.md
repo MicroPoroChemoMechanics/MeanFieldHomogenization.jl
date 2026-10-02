@@ -61,7 +61,7 @@ For a **sphere in an isotropic matrix** these are ``\boldsymbol{P} =
     matrix anisotropy**, via the square-root transformation
     ``\boldsymbol{P}(\boldsymbol{A},\boldsymbol{K}) = \boldsymbol{K}^{-1/2}\cdot
     \boldsymbol{I}^{\boldsymbol{A}\cdot\boldsymbol{K}^{-1/2}}\cdot
-    \boldsymbol{K}^{-1/2}`` ([giraudMOM2019](@cite)). Passing an anisotropic
+    \boldsymbol{K}^{-1/2}`` [giraudMOM2019](@cite). Passing an anisotropic
     ``\boldsymbol{K}`` costs no more than an isotropic one — no cubature is
     involved, and the result stays ForwardDiff-compatible.
 
@@ -136,6 +136,6 @@ and [highly conducting interfaces](../tutorials/generated/layered_spheroid_hc.md
 
 Conduction and elasticity are not independent — a microstructure that stiffens a
 material also changes how it conducts. Explicit cross-property correlations for
-two-phase composites are given in [sevostianov2002](@cite); the
+two-phase composites are given in [sevostianov2002](@citet); the
 [Transport properties](../tutorials/transport.md) application page works
 through one.

@@ -150,7 +150,7 @@ nothing # hide
 
 The compliance pull-back ``\boldsymbol{M} = \boldsymbol{S}_{MO}:\partial\mathbb
 C_{MO}/\partial\mu_{\rm hyd}:\boldsymbol{S}_{MO}`` gives the axial term ``M_{3333}``,
-and [pichler2011](@cite)'s criterion reads
+and the criterion of [pichler2011](@citet) reads
 
 ```math
 \frac{f_c}{\sigma^{\rm ult}_{\rm hyd}} = \frac{1}{\sqrt{\,M_{3333}\,2\mu_{\rm hyd}^2 / f_\theta\,}},
@@ -336,7 +336,7 @@ psc
 ```
 
 The absolute strength in MPa is recovered by multiplying by
-``\sigma^{\rm ult}_{\rm hyd}``, which [pichler2011](@cite) calibrate to ≈ 70–90 MPa
+``\sigma^{\rm ult}_{\rm hyd}``, which [pichler2011](@citet) calibrate to ≈ 70–90 MPa
 for typical C-S-H.
 
 ## The same chain, written declaratively

@@ -9,7 +9,7 @@ nanocomposite regime — the stress vector is discontinuous across a particle
 boundary and the polarization field of the Lippmann-Schwinger equation acquires
 a singular part carried by that boundary.
 
-[dormieux2016](@cite)
+[dormieux2016](@citet)
 show that averaging this singular part over the particle turns it into an
 ordinary stiffness,
 

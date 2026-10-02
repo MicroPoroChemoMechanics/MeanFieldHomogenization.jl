@@ -75,7 +75,7 @@ matrices `B̃_n`, `B̃_t` are then post-corrected via the algebraic identity
 B̃_eff = (b · K + B̃^{-1})^{-vol} = B̃ ∘ (𝟙 + b · K ∘ B̃)^{-vol}
 ```
 
-(see [sevostianovIJSS2007](@cite), [barthelemyIJES2019](@cite)) where `b = semi_minor`
+[sevostianovIJSS2007, barthelemyIJES2019](@cite), where `b = semi_minor`
 of the elliptic crack.  Limits :
 
 * `Rn / Rt = nothing` (default) → traction-free penny limit, recovers

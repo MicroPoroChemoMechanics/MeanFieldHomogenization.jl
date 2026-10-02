@@ -36,7 +36,7 @@ flowchart TB
 A closed-form law is written once and fitted to data. A homogenized law is
 *derived* from the microstructure, so the same computation also tells you what
 each phase is doing — and lets the microstructure evolve. That is what makes the
-fractured-reservoir model of [barthelemyARMA2011](@cite) possible: fracture
+fractured-reservoir model of [barthelemyARMA2011](@citet) possible: fracture
 apertures follow the effective stress, and the permeability follows the
 apertures.
 

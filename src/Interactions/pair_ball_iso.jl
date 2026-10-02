@@ -51,8 +51,8 @@
 Closed-form interaction tensor between two non-overlapping balls of radii `a`
 (receiver) and `b` (source) whose centers are separated by the vector `r`, in
 an isotropic elastic reference `C₀`
-([molinari1996](@cite), App. A;
-[berveiller1987](@cite)).
+(Appendix A of [molinari1996](@citet), and
+[berveiller1987](@citet)).
 
 Returned in the sign convention of [`interaction_tensor`](@ref): contracting
 with a uniform polarization of the source ball gives *minus* the average

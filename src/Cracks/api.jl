@@ -101,18 +101,15 @@ where ``b`` is the semi-minor in-plane semi-axis (``b\\ge c\\to 0``).
 with ``\\mathbb H = \\lim_{c/b\\to 0}(c/b)\\,\\mathbb Q^{-1}`` and
 ``\\mathbb Q = \\mathbb C - \\mathbb C:\\mathbb P:\\mathbb C`` the
 second Hill tensor
-([kachanov1992](@cite),
- [sevostianov2002](@cite),
- [barthelemyIJES2021](@cite)).  The elliptic and ribbon
+[kachanov1992, sevostianov2002, barthelemyIJES2021](@cite).  The elliptic and ribbon
 factorizations are related by ``\\mathbf B^{\\mathcal R} =
 \\tfrac{3\\pi}{8}\\,\\lim_{\\eta\\to 0}\\mathbf B^{\\mathcal E}``.
 
 For isotropic or aligned-TI matrices the kernel is analytical
-([hoenig1978](@cite),
- [kanaun2009](@cite));
+[hoenig1978, kanaun2009](@cite);
 for arbitrarily anisotropic matrices the limit ``c/b\\to 0`` is
 resolved numerically through the first-order Taylor term of the Hill
-tensor ([barthelemyIJSS2009](@cite)).
+tensor [barthelemyIJSS2009](@cite).
 
 Alias: [`B_tensor`](@ref).
 """
@@ -148,7 +145,7 @@ Limits :
 * ``\\mathbf K = 0`` (traction-free)        →  `B_eff = B`
 * ``\\mathbf K \\to \\infty`` (rigid bond)   →  `B_eff = 0`
 
-Reference : [sevostianov2002](@cite).
+Reference : [sevostianov2002](@citet).
 """
 function _apply_interface_stiffness(
         B::TensND.AbstractTens{2, 3},

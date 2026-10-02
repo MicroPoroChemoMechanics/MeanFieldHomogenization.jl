@@ -12,9 +12,9 @@
 # ```
 # The two are duals: LC impedes the normal flux, HC adds a tangential
 # short-circuit. Both are the imperfect-interface models of
-# [kushch2015](@cite); the confocal ``N``-layer solution used here is
-# [barthelemyBignonnetIJES2020](@cite), and the surface-conductive model goes
-# back to [miloh1999](@cite).
+# [kushch2015](@citet); the confocal ``N``-layer solution used here is that of
+# [barthelemyBignonnetIJES2020](@citet), and the surface-conductive model goes
+# back to [miloh1999](@citet).
 #
 # **What the script computes.** For an insulating particle carrying an HC
 # interface, the **equivalent particle conductivity**

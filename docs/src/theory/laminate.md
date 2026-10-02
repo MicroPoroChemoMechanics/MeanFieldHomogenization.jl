@@ -260,7 +260,7 @@ Substituting back,
 ```
 
 Written on the ``\mathcal{I}/\mathcal{O}`` partition, this collapses to the
-form of [backus1962](@cite), which is what the implementation evaluates —
+form of [backus1962](@citet), which is what the implementation evaluates —
 four block products and two ``3\times3`` inversions per layer, no
 factorization anywhere:
 
@@ -535,7 +535,7 @@ time block, and the two exact saturations survive the transposition.
 
 ## References
 
-The isotropic bilayer closed form is [backus1962](@cite); the flat-inclusion
-limit of the Hill tensor is discussed in [barthelemyIJES2021](@cite); the
-interface models are those of [herveLuanco2014](@cite), specialized to a
+The isotropic bilayer closed form is that of [backus1962](@citet); the flat-inclusion
+limit of the Hill tensor is discussed in [barthelemyIJES2021](@citet); the
+interface models are those of [herveLuanco2014](@citet), specialized to a
 plane.

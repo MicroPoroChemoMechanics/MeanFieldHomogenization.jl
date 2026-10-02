@@ -65,7 +65,7 @@ MeanFieldHomogenization are:
 
 ## Contribution tensors
 
-The **stiffness contribution tensor** ([kachanov2018](@cite)) is
+The **stiffness contribution tensor** [kachanov2018](@cite) is
 
 ```math
 \mathbb N = (\mathbb C_1 - \mathbb C_0) : \mathbb A_{\varepsilon\varepsilon},

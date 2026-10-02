@@ -4,7 +4,7 @@
 # ``\boldsymbol{B}``, starting from the Fourier Green operator and stopping only
 # where the elliptic integrals appear. Everything in between is done by SymPy.
 #
-# The chain is the one of [barthelemySifAniso](@cite): with
+# The chain is the one of [barthelemySifAniso](@citet): with
 # ``\boldsymbol{N}(\underline{\xi}) = \underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi}``
 # the acoustic (Christoffel) tensor,
 #
@@ -343,7 +343,7 @@ end
 # numerically against `ell_K` / `ell_E`.
 #
 # !!! note "Why cos² and sin² look exchanged against the literature"
-#     [barthelemySifAniso](@cite) defines the same two quantities over the
+#     [barthelemySifAniso](@citet) defines the same two quantities over the
 #     **complementary** angle ``\vartheta = \pi/2-\varphi``, for which the
 #     radical reads ``\sqrt{\cos^{2}\vartheta+\eta^{2}\sin^{2}\vartheta} = \rho``:
 #     there ``\mathcal{C}_\eta`` is the ``\cos^{2}`` integral and

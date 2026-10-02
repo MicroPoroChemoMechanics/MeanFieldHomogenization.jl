@@ -11,7 +11,7 @@ homogenization*: for a solid phase with uniform elastic properties
 \frac{1}{M} = \boldsymbol{1} : \mathbb{S}_{\rm s} : \left(\boldsymbol{B} - \varphi\,\boldsymbol{1}\right),
 ```
 
-the **Biot tensor** and **Biot modulus** ([coussy2004](@cite)) — ``\boldsymbol{B}``
+the **Biot tensor** and **Biot modulus** [coussy2004](@cite) — ``\boldsymbol{B}``
 here, and nowhere else in this documentation, denotes the Biot tensor rather
 than a [crack opening displacement](@ref th-cod-tensors). They enter the constitutive
 law as

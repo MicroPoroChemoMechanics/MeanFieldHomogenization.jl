@@ -60,7 +60,7 @@ it *is* the answer,
 with `ℙ_i` the flat-inclusion Hill tensor of layer `i` and
 `ℚ_i = ℂ_i − ℂ_i:ℙ_i:ℂ_i`. Serves elasticity and transport, and accepts
 imperfect interfaces of spring / membrane / Kapitza / surface-conductive
-type. See the theory page on the laminate and [backus1962](@cite).
+type. See the theory page on the laminate and [backus1962](@citet).
 """
 struct Laminated <: HomogenizationScheme end
 
@@ -72,8 +72,7 @@ struct Laminated <: HomogenizationScheme end
 Dilute scheme: ``\\mathbb{C}_{\\mathrm{eff}} = \\mathbb{C}_0 + \\sum_i f_i \\mathbb N_i``
 where ``\\mathbb N_i = (\\mathbb{C}_i - \\mathbb{C}_0):\\mathbb{A}_{\\varepsilon\\varepsilon}^{(i)}``
 is the size-independent stiffness contribution
-([eshelby1957](@cite);
-[kachanov2018](@cite)).
+[eshelby1957, kachanov2018](@cite).
 """
 struct Dilute{M} <: HomogenizationScheme
     matrix::M
@@ -97,8 +96,7 @@ DiluteDual(; matrix::Union{Nothing, Symbol} = nothing) = DiluteDual(matrix)
 """
     MoriTanaka() <: HomogenizationScheme
 
-Mori-Tanaka scheme ([mori1973](@cite);
-[christensen1990](@cite)).
+Mori-Tanaka scheme [mori1973, christensen1990](@cite).
 """
 struct MoriTanaka{M} <: HomogenizationScheme
     matrix::M
@@ -142,7 +140,7 @@ PonteCastanedaWillis(; matrix::Union{Nothing, Symbol} = nothing) = PonteCastaned
 """
     ClusterModel(; cluster_radius = nothing, kwargs...) <: HomogenizationScheme
 
-Cluster model of [molinari1996](@cite): an N-body
+Cluster model of [molinari1996](@citet): an N-body
 scheme in which the mean strain of every inclusion is solved for, accounting
 for the pairwise interaction with every neighbor inside a cluster of radius
 `R_c`, on top of the interaction with the matrix.
@@ -201,10 +199,10 @@ finite-dimensional space, the estimate is a **rigorous bound** on the apparent
 stiffness whenever the matrix is stiffer (upper bound) or softer (lower bound)
 than every inhomogeneity — see [`eim_bound_type`](@ref MeanFieldHomogenization.Assemblies.eim_bound_type).
 
-Brisard et al. note in their §3.1 that at `order = 0` their influence
+[brisard2014](@citet) note in their §3.1 that at `order = 0` their influence
 pseudotensors coincide with the interaction tensors of
-[berveiller1987](@cite) and
-[molinari1996](@cite); the two schemes of this
+[berveiller1987](@citet) and
+[molinari1996](@citet); the two schemes of this
 package accordingly share [`interaction_tensor`](@ref MeanFieldHomogenization.Interactions.interaction_tensor) and agree on a periodic
 assembly with the same cutoff.
 """
@@ -356,7 +354,7 @@ space used by the [`DifferentialScheme`](@ref) scheme. Concrete subtypes:
 - [`Path`](@ref) — explicit per-phase trajectory as a callable
   `τ -> f(τ)` (auto-differentiated by `ForwardDiff`); the natural API
   for the multi-phase incorporation-sequence ODE
-  ([norris1985](@cite); the user's hand-written DEM note).
+  [norris1985](@cite).
 """
 abstract type DifferentialTrajectory end
 
@@ -441,7 +439,7 @@ Path(first::Pair{Symbol}, rest::Pair{Symbol}...) = Path(Dict(first, rest...))
                          alg = nothing, formulation = :stiffness, kwargs...)
 
 Differential scheme : integrates the Norris ODE on the fictitious
-incorporation time `τ ∈ [0, 1]` ([norris1985](@cite)) :
+incorporation time `τ ∈ [0, 1]` [norris1985](@cite) :
 
 ```math
 \\frac{\\mathrm d \\mathbb{C}^{hom}}{\\mathrm d \\tau}

@@ -1,6 +1,6 @@
 # [Cement paste: chloride diffusivity and elasticity](@id app-cement-paste-diffusion)
 
-Following [achourCBM2020](@cite) — and mirroring the corresponding chapter of
+Following [achourCBM2020](@citet) — and mirroring the corresponding chapter of
 the Echoes book [echoes](@cite) — this page builds a multi-scale micromechanical
 model of Portland cement paste that **simultaneously predicts its elastic moduli
 and its chloride diffusivity** from a single microstructural description, as a
@@ -16,7 +16,7 @@ The self-consistent scheme is used at each scale to capture the **percolation**
 of both the solid skeleton (governing stiffness) and the pore network (governing
 diffusivity). The detailed model assembles a genuine composite sphere — an
 anhydrous core coated by inner- and outer-hydrate shells — which enters the
-scheme through its concentration tensors, exactly as in [echoes](@cite).
+scheme through its concentration tensors, exactly as in Echoes [echoes](@cite).
 
 Because a single [`RVE`](@ref) carries several property keys at once, the *same*
 microstructure is homogenized for stiffness (`:C`, a 4th-order tensor) and for

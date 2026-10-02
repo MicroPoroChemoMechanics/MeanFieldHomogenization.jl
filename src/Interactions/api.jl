@@ -59,7 +59,7 @@ elasticity, gradient of the temperature in conduction. Its self counterpart is
 `P₀` may be a 4th-order stiffness (elasticity) or a 2nd-order conductivity
 tensor; dispatch selects the corresponding formulation, in 2D or 3D. Two
 balls (3D) or two disks (2D) in an isotropic reference are evaluated by the
-closed form of [molinari1996](@cite) and
+closed form of [molinari1996](@citet) and
 [berveiller1987](@cite), which is **exact at any
 separation**; other geometries use the truncated multipole expansion of
 [brisard2014](@cite), §4.2.
@@ -73,9 +73,9 @@ This is the shared numerical ingredient of both N-body models in the package,
 coincide with the interaction tensors of Molinari & El Mouden.
 
 !!! warning "Two sign conventions exist"
-    The package follows [brisard2023](@cite), for
-    which ``\\mathbb{T}^{aa} = +\\mathbb{P}``. [molinari1996](@cite) and
-    [berveiller1987](@cite) use ``\\Gamma^{II} = -\\mathbb{P}``, so a formula
+    The package follows [brisard2023](@citet), for
+    which ``\\mathbb{T}^{aa} = +\\mathbb{P}``. [molinari1996](@citet) and
+    [berveiller1987](@citet) use ``\\Gamma^{II} = -\\mathbb{P}``, so a formula
     taken from them — their Appendix A table in particular — must be flipped
     before it is compared with anything here.
 
@@ -110,11 +110,11 @@ algorithm, the DECUHR and nested-QuadGK cubatures, in 2D and 3D, for elasticity
 and for conduction. Keyword arguments are forwarded to `hill_tensor`.
 
 That the self term is *plus* the Hill tensor is the whole reason the package
-follows [brisard2023](@cite) rather than Molinari's
+follows [brisard2023](@citet) rather than Molinari's
 opposite sign: it makes the N-body kernels and the one-site schemes share one
 object, and it is why the cluster model collapses onto Mori-Tanaka when the
 cluster is reduced to a single inclusion
-([molinari1996](@cite), App. C).
+[molinari1996; App. C](@cite).
 """
 self_interaction_tensor(incl::MFH_Core.AbstractInclusion, P₀::TensND.AbstractTens; kw...) =
     Elasticity.hill_tensor(incl, P₀; kw...)

@@ -4,7 +4,7 @@
 inclusion — a core plus concentric confocal shells — embedded in an infinite
 isotropic matrix, in **conduction** (thermal, electric, Darcy). It follows
 [barthelemyBignonnetIJES2020](@cite), which extends the layered-sphere
-recurrence of [herve1993](@cite) to spheroids.
+recurrence of [herve1993](@citet) to spheroids.
 
 **On a sphere an imperfect interface acts on each harmonic degree
 independently; on a spheroid it couples them.** The sphere's ``2\times 2``
@@ -15,10 +15,9 @@ transfer per mode therefore becomes a truncated series with a
     The axisymmetric elastic case is solved in
     [The elastic confocal spheroid](@ref th-spheroid-elasticity), on the same
     chart and reusing the same Legendre machinery. It was never barred by the
-    method being tied to the scalar Laplace equation — Barthélémy & Bignonnet
+    method being tied to the scalar Laplace equation — [barthelemyBignonnetIJES2020](@citet)
     say the opposite, that they imported the transfer-matrix formalism *from*
-    elasticity [barthelemyBignonnetIJES2020](@cite), following Hervé & Zaoui
-    [herve1993](@cite) and Hervé & Luanco [herveLuanco2014](@cite).
+    elasticity, following [herve1993](@citet) and [herveLuanco2014](@citet).
 
     What genuinely does not carry over is geometric, and it changes the shape
     of the answer. Concentric spheres are homothetic, so one harmonic degree
@@ -80,7 +79,7 @@ on prolate versus oblate.**
 
 ## [The chart, checked rather than quoted](@id th-spheroid-chart)
 
-Everything above is Appendix A of [barthelemyBignonnetIJES2020](@cite). Rather
+Everything above is Appendix A of [barthelemyBignonnetIJES2020](@citet). Rather
 than transcribe it, the block below rebuilds it: `TensND` ships the prolate
 spheroidal chart as a symbolic coordinate system, so the metric, the frame and
 the harmonicity of the series are **derived at documentation-build time** from
@@ -152,7 +151,7 @@ directly, by applying the chart's Laplacian:
     ``m = 2`` is verified above because the **elastic** counterpart will need
     it: a remote transverse shear carries a ``\cos 2\varphi`` dependence, and
     Papkovich–Neuber expands each of its potentials in the very same spheroidal
-    harmonics ([duanRSPA2005](@cite)). Adding order 2 to `legendre.jl` is then
+    harmonics [duanRSPA2005](@cite). Adding order 2 to `legendre.jl` is then
     three seed tables — the stability machinery below is order-generic and
     comes for free. See [the roadmap's checklist](@ref dev-elastic-spheroid).
 
@@ -193,10 +192,9 @@ across the interface and ``q_n`` for the normal flux:
 | **LC** (low-conducting) | ``[\![T]\!] = \rho\,q_n``, flux continuous | [`KapitzaInterface`](@ref)`(ρ)` | couples all degrees |
 | **HC** (highly-conducting) | ``[\![q_n]\!] = -\beta\,\mathrm{div}_S(\nabla_S T)``, temperature continuous | [`SurfaceConductiveInterface`](@ref)`(β)` | couples all degrees |
 
-The LC model is the Kapitza thermal contact resistance [kapitza1941](@cite),
-[benveniste1986](@cite); the HC model is a highly conducting surface layer
+The LC model is the Kapitza thermal contact resistance [kapitza1941, benveniste1986](@cite); the HC model is a highly conducting surface layer
 [miloh1999](@cite). Both are the imperfect-interface models used by
-[kushch2015](@cite) and [barthelemyBignonnetIJES2020](@cite).
+[kushch2015](@citet) and [barthelemyBignonnetIJES2020](@citet).
 
 !!! warning "Sign convention"
     ``\rho`` is a genuine thermal **resistance** and ``\beta`` a genuine surface
@@ -330,7 +328,7 @@ sphere for the size-independent contribution,
 
 ### Equivalent particle
 
-[barthelemyBignonnetIJES2020](@cite) (§4) define the **equivalent particle**: the
+[barthelemyBignonnetIJES2020](@citet) (§4) define the **equivalent particle**: the
 homogeneous, perfectly bonded spheroid of the same shape that homogenizes
 identically. Its conductivity is
 
@@ -356,7 +354,7 @@ exact oracle in `test/LayeredSpheroids/test_conductivity.jl`.
 
 ## Numerical precision: quadrature, not the monomial series
 
-The reference implementation of [barthelemyBignonnetIJES2020](@cite) computes
+The reference implementation of [barthelemyBignonnetIJES2020](@citet) computes
 ``I``, ``J``, ``K``, ``L`` by expanding the products ``P_i(x)P_j(x)`` into
 monomials, with coefficients ``\gamma, \eta, \delta`` built by the recursions of
 the paper's appendix, and summing against

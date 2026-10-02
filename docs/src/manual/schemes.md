@@ -10,9 +10,10 @@ An `RVE` is the morphological picture, written down: phases, each with a
 geometry, properties and an amount. **No phase is singled out.** Whether one of
 them acts as a matrix is not a property of the microstructure but of the model
 applied to it, and it is stated on the scheme — see
-[Who is the matrix?](@ref man-who-is-the-matrix) below.
+[Who is the matrix?](@ref man-who-is-the-matrix) below. The two drawings of this
+page are taken from the Echoes book [echoes](@cite).
 
-![Matrix carrying ellipsoids and coated spheres — the morphology Mori–Tanaka reads into an RVE (from the Echoes book [echoes](@cite))](../assets/schemes/rve_mori_tanaka.png)
+![Matrix carrying ellipsoids and coated spheres — the morphology Mori–Tanaka reads into an RVE](../assets/schemes/rve_mori_tanaka.png)
 
 ```julia
 using MeanFieldHomogenization, TensND
@@ -204,7 +205,7 @@ an explicit tensor. Unset, it is the `:rest` phase when there is one and the
 Voigt average otherwise — the latter is what lets the RVE above be solved at
 all.
 
-![A tessellation in which no phase surrounds the others (from the Echoes book [echoes](@cite))](../assets/schemes/rve_self_consistent.png)
+![A tessellation in which no phase surrounds the others](../assets/schemes/rve_self_consistent.png)
 
 ```julia
 homogenize(rve, SelfConsistent())                            # built-in damped Picard (default)

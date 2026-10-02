@@ -9,10 +9,10 @@
 # ```
 # with ``\rho`` a genuine thermal resistance and ``\beta`` a genuine surface
 # conductance. The LC interface impedes the normal flux; the HC one adds a
-# tangential short-circuit. Both come from [kushch2015](@cite); the confocal
-# ``N``-layer solution used to resolve them is
-# [barthelemyBignonnetIJES2020](@cite), and the surface-conductive model goes
-# back to [miloh1999](@cite).
+# tangential short-circuit. Both come from [kushch2015](@citet); the confocal
+# ``N``-layer solution used to resolve them is that of
+# [barthelemyBignonnetIJES2020](@citet), and the surface-conductive model goes
+# back to [miloh1999](@citet).
 #
 # Effective properties tell you *how much* an interface matters — that is the
 # subject of the two companion pages. This page shows *what it actually does*,

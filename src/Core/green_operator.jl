@@ -56,7 +56,7 @@ matrix `C₀`, evaluated at `x ≠ 0`:
 
 where ``G`` is the Kelvin Green function and the brackets denote
 symmetrization with respect to ``(i,j)`` and ``(k,l)``. The leading minus is
-the convention of [brisard2023](@cite) — see the
+the convention of [brisard2023](@citet) — see the
 file header.
 
 With ``r = \\|x\\|``, ``\\underline{n} = x/r`` and ``A = 1/(16\\pi\\mu(1-\\nu))``,
@@ -186,7 +186,7 @@ Two-dimensional conduction counterpart, from ``G = -\\log r/(2\\pi\\sigma_0)``:
 ```
 
 Multiplied by the area ``\\pi b^2`` of a source disk this is *literally* the
-plane form given by [brisard2023](@cite),
+plane form given by [brisard2023](@citet),
 ``\\boldsymbol{T}^{ab} = \\frac{b^2}{2\\sigma_0 r^2}
   (\\boldsymbol{1} - 2\\,\\underline{n}\\otimes\\underline{n})``, which is the
 sharpest available check that the package and the paper share one convention.

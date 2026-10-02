@@ -1,6 +1,6 @@
 # [Ageing creep of solidifying cementitious materials](@id app-ageing-creep)
 
-The ageing-creep model of [sanahuja2013](@cite): one phase **solidifies
+The ageing-creep model of [sanahuja2013](@citet): one phase **solidifies
 progressively** — as C-S-H does during hydration — so ``\mathbb R^{\rm hom}(t,
 t')`` depends on the observation time ``t`` and the loading time ``t'``
 *independently*. Laplace–Carson no longer applies; the homogenization runs
@@ -84,7 +84,7 @@ nothing # hide
 
 ## Two equivalent RVE topologies
 
-[sanahuja2013](@cite)'s key contribution is that the ``N`` solidifying shells and
+The key contribution of [sanahuja2013](@citet) is that the ``N`` solidifying shells and
 the pore can be packed into a **single composite sphere** instead of ``N+1``
 separate inclusions — reducing ``N+1`` Eshelby problems to one. `MeanFieldHomogenization`
 supports both: `:whole_pores` (``N`` separate spherical inclusions) and `:layers`
@@ -146,7 +146,7 @@ nothing # hide
 
 ## Results
 
-Following [sanahuja2013](@cite), the effective creep is computed for five loading
+Following [sanahuja2013](@citet), the effective creep is computed for five loading
 ages ``t_0`` (history-dependent, solid `+`; frozen, dashed) with both RVE
 topologies, side by side as in the Echoes book. `N = 100` layers are used.
 
@@ -263,6 +263,6 @@ second scatters them independently in the matrix.
     ``t_0 = 2/3``), and the two differ by ``\approx 6.5`` in ``E_0 J``.
 
     That gap is a modeling result, not a discrepancy: the composite-sphere
-    packing of [sanahuja2013](@cite) is an efficient model — one Eshelby problem
+    packing of [sanahuja2013](@citet) is an efficient model — one Eshelby problem
     instead of ``N+1`` — not an exact reformulation of the separate-inclusion
     RVE. Choosing between them is choosing a morphology.

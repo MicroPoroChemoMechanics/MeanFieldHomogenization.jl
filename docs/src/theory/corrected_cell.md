@@ -5,7 +5,7 @@ computed on a **finite** cell — the inclusion inside a ball of matrix of radiu
 ``R`` — and fed to the schemes through the
 [custom-inclusion contract](@ref man-custom-inclusions). The difficulty is that
 Eshelby's problem is posed on an *infinite* medium. This page states the
-first-order correction of [adessinaIJES2017](@cite), which removes the
+first-order correction of [adessinaIJES2017](@citet), which removes the
 truncation bias, in the general form and in the two declinations the package
 implements.
 
@@ -414,7 +414,7 @@ so the *correct* far field is
   \;-\; b\,S_f\,\bigl(\nabla\mathbb G(\underline{x}):\mathbb C_0\cdot\underline{n}\bigr)\cdot\underline{U} .
 ```
 
-The idea of [adessinaIJES2017](@cite) is to put that second term **into the boundary data**.
+The idea of [adessinaIJES2017](@citet) is to put that second term **into the boundary data**.
 
 ### Closing the loop
 

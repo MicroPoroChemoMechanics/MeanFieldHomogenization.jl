@@ -14,7 +14,9 @@ The Representative Volume Element (RVE) consists of:
   ``\mathbb C_i``, geometries ``\mathcal G_i``, and amounts
   ``f_i`` (volume fraction) or ``\varepsilon_i`` (crack density).
 
-![An RVE loaded by ``\underline u = \boldsymbol E\cdot\underline x`` is replaced by a sum of single-inclusion problems in the infinite matrix ``\mathbb C_m``, each loaded by ``\underline u = \boldsymbol E^0\cdot\underline x`` (from the Echoes book [echoes](@cite))](../assets/schemes/rve_decomposition.png)
+The two drawings of this page are taken from the Echoes book [echoes](@cite).
+
+![An RVE loaded by ``\underline u = \boldsymbol E\cdot\underline x`` is replaced by a sum of single-inclusion problems in the infinite matrix ``\mathbb C_0``, each loaded by ``\underline u = \boldsymbol E^0\cdot\underline x``](../assets/schemes/rve_decomposition.png)
 
 That picture *is* the mean-field approximation, and every scheme below is one
 answer to the single question it leaves open: **what is ``\boldsymbol E^0``, and
@@ -27,7 +29,7 @@ For each inclusion the **dilute strain concentration tensor**
 ``\mathbb A_\mathrm{dil}^{(i)}`` and the **size-independent stiffness
 contribution** ``\mathbb N_i = (\mathbb C_i - \mathbb C_0):
 \mathbb A_\mathrm{dil}^{(i)}`` are the natural building blocks
-([kachanov2018](@cite)). The dual
+[kachanov2018](@cite). The dual
 **compliance contribution** ``\mathbb H_i = (\mathbb S_i - \mathbb S_0):
 \mathbb A_\sigma^{(i)}`` is more natural for cracks (whose stiffness
 contribution is the rank-1 limit of a divergent eigenvalue).
@@ -36,7 +38,7 @@ contribution is the rank-1 limit of a divergent eigenvalue).
 
 | Scheme | Formula |
 | :-- | :-- |
-| **Voigt** | ``\langle \mathbb C \rangle = \sum_i f_i \mathbb C_i`` (upper bound, [hill1965](@cite)) |
+| **Voigt** | ``\langle \mathbb C \rangle = \sum_i f_i \mathbb C_i`` (upper bound) [hill1965](@cite) |
 | **Reuss** | ``\langle \mathbb S \rangle^{-1}`` (lower bound) |
 
 Cracks are ignored in both bounds: their volume contribution vanishes in
@@ -51,9 +53,9 @@ stiffness contribution and ``\mathbb S_0 = \mathbb C_0^{-1}``:
 | :-- | :-- |
 | **Dilute** | ``\mathbb C_0 + \mathbb N_\Sigma`` (first order in ``f``) |
 | **DiluteDual** | ``\big(\mathbb S_0 + \sum_i f_i \mathbb H_i\big)^{-1}`` |
-| **Mori-Tanaka** | ``\mathbb C_0 + \mathbb N_\Sigma : \big(f_m\,\mathbb I + \sum_i f_i \mathbb A_\mathrm{dil}^{(i)}\big)^{-1}`` ([mori1973](@cite), [christensen1990](@cite)) |
+| **Mori-Tanaka** | ``\mathbb C_0 + \mathbb N_\Sigma : \big(f_m\,\mathbb I + \sum_i f_i \mathbb A_\mathrm{dil}^{(i)}\big)^{-1}`` [mori1973, christensen1990](@cite) |
 | **Maxwell** | ``\mathbb C_0 + \mathbb N_\Sigma : (\mathbb I - \mathbb P_d : \mathbb N_\Sigma)^{-1}`` with ``\mathbb P_d`` the Hill tensor of the *outer distribution shape* |
-| **PCW** | identical algebraic form, distribution-shape-aware ensemble interpretation ([ponte1995](@cite)) |
+| **PCW** | identical algebraic form, distribution-shape-aware ensemble interpretation [ponte1995](@cite) |
 
 ### The second shape: Maxwell and PCW
 
@@ -69,7 +71,7 @@ reads it as a safety ellipsoid around each inclusion:
 The **distribution shape** is stored at the RVE level (default: unit
 sphere ⇒ Mori-Tanaka limit). Any `AbstractInclusion` can be used; the
 hierarchy [`AbstractDistributionShape`](@ref) leaves room for a future
-`PairwiseDistribution` extension following [willis1982](@cite).
+`PairwiseDistribution` extension following [willis1982](@citet).
 
 ## Iterative schemes
 
@@ -78,11 +80,11 @@ phase does — a polycrystal, a granular assembly, a saturated foam — the
 reference medium has to be the effective medium itself, and the estimate becomes
 a fixed point:
 
-![No phase plays the role of a matrix: the reference medium is the effective medium being sought (from the Echoes book [echoes](@cite))](../assets/schemes/rve_self_consistent.png)
+![No phase plays the role of a matrix: the reference medium is the effective medium being sought](../assets/schemes/rve_self_consistent.png)
 
 | Scheme | Iteration |
 | :-- | :-- |
-| **SelfConsistent** ([mclaughlin1977](@cite)) | ``\mathbb C^{(n+1)} = \big(\sum_i f_i \mathbb C_i : \mathbb A_\mathrm{dil}^{(i)}(\mathbb C^{(n)})\big) : \big(\sum_i f_i \mathbb A_\mathrm{dil}^{(i)}(\mathbb C^{(n)})\big)^{-1}`` |
+| **SelfConsistent** [mclaughlin1977](@cite) | ``\mathbb C^{(n+1)} = \big(\sum_i f_i \mathbb C_i : \mathbb A_\mathrm{dil}^{(i)}(\mathbb C^{(n)})\big) : \big(\sum_i f_i \mathbb A_\mathrm{dil}^{(i)}(\mathbb C^{(n)})\big)^{-1}`` |
 | **AsymmetricSelfConsistent** | switches between stiffness- and compliance-form iteration based on the matrix-vs-Voigt-bound contrast |
 
 The default solver is a damped Picard fixed point (Anderson with memory
@@ -94,7 +96,7 @@ non-linear algorithm (`NewtonRaphson()`, `TrustRegion()`,
 ## Differential scheme
 
 The **DifferentialScheme** integrates the multi-phase incorporation ODE
-([norris1985](@cite)) on a fictitious incorporation time
+[norris1985](@cite) on a fictitious incorporation time
 ``\tau \in [0, 1]``,
 
 ```math
@@ -130,8 +132,8 @@ on a [`ParticleAssembly`](@ref) instead, and share one ingredient, the
 
 | Scheme | Unknowns | Reference |
 | :-- | :-- | :-- |
-| **ClusterModel** | mean strain of every family, from ``\sum_K \mathbb{M}_{IK} : \mathbb{A}^K = \mathbb{I}`` — see [the cluster model](@ref th-cluster) | [molinari1996](@cite) |
-| **EquivalentInclusion** | polarization of every inclusion, from a Galerkin discretization of the weak Lippmann-Schwinger equation — see [the equivalent inclusion method](@ref th-eim) | [brisard2014](@cite) |
+| **ClusterModel** | mean strain of every family, from ``\sum_K \mathbb{M}_{IK} : \mathbb{A}^K = \mathbb{I}`` — see [the cluster model](@ref th-cluster) | [molinari1996](@citet) |
+| **EquivalentInclusion** | polarization of every inclusion, from a Galerkin discretization of the weak Lippmann-Schwinger equation — see [the equivalent inclusion method](@ref th-eim) | [brisard2014](@citet) |
 
 The two are the *same* linear system on a periodic assembly and differ only in
 how the far field is closed. Both degenerate **exactly** onto Mori-Tanaka when

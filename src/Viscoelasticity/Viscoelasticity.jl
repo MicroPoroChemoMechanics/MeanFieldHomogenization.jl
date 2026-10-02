@@ -19,7 +19,7 @@ Ageing linear viscoelastic (ALV) homogenization.  Provides:
   * `hill_kernel` — discrete ALV Hill polarization tensor for an
     ellipsoidal inclusion, isotropic-matrix branch using the
     time-space decoupling formula
-    ([barthelemyIJSS2016](@cite), App. *ALV Hill kernel*).
+    [barthelemyIJSS2016; appendix on the ALV Hill kernel](@cite).
   * Time-domain viscoelastic homogenization schemes (Voigt, Reuss,
     Dilute, DiluteDual, Mori-Tanaka, Maxwell, Self-Consistent),
     plugged into the existing [`homogenize`](@ref MeanFieldHomogenization.Core.homogenize)
@@ -28,7 +28,7 @@ Ageing linear viscoelastic (ALV) homogenization.  Provides:
 All ALV operators are stored as dense `Matrix{T}` of size `(B·n)×(B·n)`
 (`B = 6` for 4-tensor, `B = 1` for scalar) with explicit zeros above
 the block diagonal — this is the convention of
-[sanahuja2013](@cite) and the C++ ECHOES reference.
+[sanahuja2013](@citet) and of the C++ library Echoes.
 """
 module Viscoelasticity
 

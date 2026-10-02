@@ -48,7 +48,7 @@ end
     dilute_concentration_alv(C_E, C_0, P) -> Matrix
 
 Dilute strain concentration kernel `Ã^dil = (𝟙 + P̃ ∘ ΔC̃)^{-vol}`
-([barthelemyIJES2019](@cite) eq. 16).  All inputs are `(6n × 6n)` block
+[barthelemyIJES2019; eq. 16](@cite).  All inputs are `(6n × 6n)` block
 matrices ; the result is also `(6n × 6n)` and lower-block-triangular.
 """
 function dilute_concentration_alv(
@@ -69,7 +69,7 @@ end
     dilute_contribution_alv(C_E, C_0, P) -> Matrix
 
 Dilute strain contribution kernel `Ñ = ΔC̃ ∘ Ã^dil`
-([barthelemyIJES2019](@cite) eq. 17).  This is the size-independent stiffness
+[barthelemyIJES2019; eq. 17](@cite).  This is the size-independent stiffness
 contribution of a single inclusion.
 """
 function dilute_contribution_alv(

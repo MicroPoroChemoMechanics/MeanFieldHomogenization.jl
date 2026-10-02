@@ -16,8 +16,8 @@ porosity `φ`, and closes the poroelastic constitutive law
 \\dot\\varphi = \\boldsymbol{B} : \\dot{\\boldsymbol{E}} + \\frac{\\dot p}{M},
 ```
 
-using the classical poroelastic relations ([coussy2004](@cite)) in the form
-quoted as eq. (2) of [barthelemyARMA2011](@cite). No additional Eshelby problem
+using the classical poroelastic relations [coussy2004](@cite) in the form
+quoted as eq. (2) of [barthelemyARMA2011](@citet). No additional Eshelby problem
 is solved: everything follows from `C_hom`, `C_s` and `φ`.
 
 # Entry points

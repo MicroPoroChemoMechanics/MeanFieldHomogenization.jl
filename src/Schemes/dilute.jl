@@ -21,8 +21,7 @@ contribute via the size-independent stiffness contribution tensor
 weighted by the geometry-specific Budiansky prefactor (`4π/3` for an
 elliptic crack, `π` for a ribbon crack).
 
-References: [eshelby1957](@cite),
-[kachanov2018](@cite).
+References: [eshelby1957, kachanov2018](@citet).
 """
 function _evaluate(rve::RVE, scheme::Dilute, ::Val{p}; kw...) where {p}
     m = matrix_name(scheme, rve)

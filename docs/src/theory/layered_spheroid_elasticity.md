@@ -27,13 +27,11 @@ matched, and the solver those add up to.
 The pieces exist separately, and none of them is the piece needed here.
 
 - A **uniform** spheroid with an interphase or an imperfect interface is
-  published: Duan, Yi, Huang & Wang [duanRSPA2005](@cite) give the
+  published: [duanRSPA2005](@citet) give the
   Papkovich–Neuber representation and the three elementary problems.
 - The **confocal multilayer** transfer-matrix formalism is published, but for
-  the scalar Laplace equation: Barthélémy & Bignonnet
-  [barthelemyBignonnetIJES2020](@cite), itself imported *from* elasticity
-  after Hervé & Zaoui [herve1993](@cite) and Hervé-Luanco
-  [herveLuanco2014](@cite).
+  the scalar Laplace equation: [barthelemyBignonnetIJES2020](@citet), itself imported *from* elasticity
+  after [herve1993](@citet) and [herveLuanco2014](@citet).
 - The **operators** — ``\underline u`` and ``\boldsymbol\sigma`` expressed on
   the potentials, in the spheroidal frame — are in neither. Duan's (2.2) states
   the representation and refers to Love (1927) for the rest.
@@ -105,7 +103,7 @@ all six components of ``\boldsymbol\sigma``.
 ### The series, in the notation of Barthélémy & Bignonnet
 
 The conduction page expands the temperature as
-[barthelemyBignonnetIJES2020](@cite) does, and elasticity keeps that convention:
+[barthelemyBignonnetIJES2020](@citet) does, and elasticity keeps that convention:
 in layer ``\ell``,
 
 ```math
@@ -126,7 +124,7 @@ potentials.
 ### The gauge
 
 The representation is redundant by one function, and the gauge is fixed problem
-by problem, after [duanRSPA2005](@cite):
+by problem, after [duanRSPA2005](@citet):
 
 | | remote loading | active potentials | order ``m`` |
 |:--|:--|:--|:--:|
@@ -613,7 +611,7 @@ factor ``3`` per unit of ``\mathcal N``. In `Float64` that stops paying at
 Raise the element type, not the truncation.
 
 **This is not an empirical accident: it is the published criterion.**
-[barthelemyBignonnetIJES2020](@cite) appendix C asks for
+Appendix C of [barthelemyBignonnetIJES2020](@citet) asks for
 ``\max\!\left(0.8\,(2\mathcal N - 1),\, 16\right)`` significant digits, so
 double precision stops sufficing once ``0.8(2\mathcal N-1) > 16``, that is at
 ``\mathcal N = 11``. The measurement above puts the departure between

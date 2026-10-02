@@ -5,7 +5,7 @@
 # same tools, by replacing each phase with a **linear comparison material**
 # whose modulus is re-estimated from the strain the phase actually sees. This
 # page walks through one such construction — the **modified secant method**
-# ([suquet1997](@cite), [ponteCastaneda1991](@cite)) — on the classical test
+# [suquet1997, ponteCastaneda1991](@cite) — on the classical test
 # case: a porous solid whose matrix is elastic–perfectly plastic, loaded
 # hydrostatically.
 #
@@ -35,7 +35,7 @@
 # ``f_i``. Differentiating ``W`` with respect to ``\mu_i`` — at fixed
 # macroscopic strain, so that only the *explicit* dependence survives — gives
 # the **second moment of the deviatoric strain** in that shell
-# ([kreher1990](@cite), [suquet1997](@cite)):
+# [kreher1990, suquet1997](@cite):
 #
 # ```math
 # \bigl\langle \boldsymbol{\varepsilon}_d\!:\!\boldsymbol{\varepsilon}_d
@@ -259,7 +259,7 @@ plt
 # For a **rigid–perfectly plastic** hollow sphere under hydrostatic loading,
 # limit analysis gives the exact collapse stress ``\Sigma_m = \tfrac{2}{3}
 # \sigma_0\ln(1/f)`` — the hydrostatic point of the Gurson criterion
-# ([gurson1977](@cite)). Refining the radial discretization drives the secant
+# [gurson1977](@cite). Refining the radial discretization drives the secant
 # estimate onto it:
 
 @printf("\nexact rigid-plastic hollow sphere : %.4f σ₀\n", (2 / 3) * log(1 / FPORE))
@@ -276,7 +276,7 @@ end
 # **A single shell reproduces the classical variational estimate.** With
 # ``n = 1`` the second moment is taken over the whole solid at once, which is
 # exactly the linear-comparison construction of the variational / modified
-# secant method ([ponteCastaneda1991](@cite), [suquet1997](@cite)): one uniform
+# secant method [ponteCastaneda1991, suquet1997](@cite): one uniform
 # secant modulus for the entire matrix. The resulting plateau matches
 # ``\tfrac{2}{3}\sigma_0(1-f)/\sqrt{f}`` to five digits — verified here at
 # ``f = 0.05``, ``0.1`` and ``0.3``:

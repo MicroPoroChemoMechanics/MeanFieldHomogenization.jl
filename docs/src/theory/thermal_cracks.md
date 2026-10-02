@@ -50,7 +50,7 @@ computed via the formula
 ``\boldsymbol{P}(\boldsymbol{A},\boldsymbol{K}_0)
 = \boldsymbol{K}_0^{-1/2}\cdot\boldsymbol{I}^{\boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}}
   \cdot\boldsymbol{K}_0^{-1/2}``
-([giraudMOM2019](@cite)), where
+[giraudMOM2019](@cite), where
 ``\boldsymbol{I}^{\boldsymbol{B}}`` is assembled in the eigenbasis of
 ``\boldsymbol{B}^T\boldsymbol{B}`` (right singular vectors of
 ``\boldsymbol{B} = \boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}``).  As ``\omega\to 0``:
@@ -302,7 +302,7 @@ which reduces to ``b = \pi/(2 k_0)`` for an isotropic matrix.
 
 Historically these formulas were obtained by the square-root change of variable
 ``\tilde{\underline{x}} = \boldsymbol{K}_0^{-1/2}\underline{x}``
-([giraudMOM2019](@cite)), which maps the problem to an
+[giraudMOM2019](@cite), which maps the problem to an
 isotropic one with a *transformed crack shape*: with
 ``\tilde{\boldsymbol{A}} = \boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}`` and its
 singular values ``\sigma_1\ge\sigma_2\ge\sigma_3 = 0``, the transformed aspect
@@ -354,9 +354,8 @@ resistivity of the cracked conductor is obtained via
 \qquad\text{(ribbon, }\varepsilon^{2\mathrm d} = Nb^{2}\text{)}.
 ```
 
-These reduce to the Sevostianov–Kachanov expressions
-(see [sevostianov2002](@cite),
- [kachanov2018](@cite)).
+These reduce to the expressions of
+[sevostianov2002, kachanov2018](@citet).
 
 ## Intensity factors
 

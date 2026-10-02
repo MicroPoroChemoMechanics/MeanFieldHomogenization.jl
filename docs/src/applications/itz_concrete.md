@@ -8,7 +8,7 @@ stiffness does that cost? Microstructural model of
 [konigsberger2013](@cite).
 
 !!! note "Scope: the elastic effect only"
-    [konigsberger2013](@cite) go further and use the ITZ to explain the **elastic
+    [konigsberger2013](@citet) go further and use the ITZ to explain the **elastic
     limit** of concrete: the ITZ is where local failure initiates, so the
     macroscopic proportionality limit is reached long before the bulk paste
     fails. That criterion needs two ingredients `MeanFieldHomogenization` does not provide
@@ -21,7 +21,7 @@ stiffness does that cost? Microstructural model of
 ## The three scales
 
 The paste scale is the one used in [Quasi-brittle strength](strength.md) — the
-hydrate foam and cement paste model of [pichler2011](@cite), shared as
+hydrate foam and cement paste model of [pichler2011](@citet), shared as
 [`scripts/common/quasibrittle_strength.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/common/quasibrittle_strength.jl).
 The new ingredient is the fourth phase geometry: **coated** aggregates.
 
@@ -208,7 +208,7 @@ Three readings of the figure:
   stiffness measurements alone: ``t/R`` and ``\varphi_{\rm ITZ}`` trade off
   against each other along the curves.
 
-That last point is the reason [konigsberger2013](@cite) turn to the elastic
+That last point is the reason [konigsberger2013](@citet) turn to the elastic
 *limit* rather than the elastic *modulus*: the ITZ is a far more conspicuous
 feature of where concrete starts to fail than of how stiff it is. Reproducing
 that argument would need the strength machinery listed in the scope note above.

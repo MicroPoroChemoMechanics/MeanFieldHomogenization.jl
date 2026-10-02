@@ -289,7 +289,7 @@ end
 Real-space Green operator ``\\mathbb{G}^0`` of an infinite medium of reference
 property `P₀`, evaluated at `x ≠ 0` — the regular kernel of the
 Lippmann-Schwinger equation, which the package writes in the sign convention
-of [brisard2023](@cite):
+of [brisard2023](@citet):
 
 ```math
 \\boldsymbol{\\varepsilon}(\\underline{x}) = \\boldsymbol{E}

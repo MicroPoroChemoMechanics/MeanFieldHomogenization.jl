@@ -17,7 +17,7 @@ embedded in a reference medium `C₀`.  `C₀` can be a 4th-order stiffness
 the appropriate formulation automatically.
 
 The general expression of the elastic polarization tensor is
-([willis1977](@cite), [mura1987](@cite)):
+[willis1977, mura1987](@cite):
 
 ```
 P(A, C) = (det A)/(4π) ∫_{|ξ|=1} ξ ⊗ˢ (ξ·C·ξ)⁻¹ ⊗ˢ ξ / ‖A·ξ‖³ dS_ξ
@@ -26,7 +26,7 @@ P(A, C) = (det A)/(4π) ∫_{|ξ|=1} ξ ⊗ˢ (ξ·C·ξ)⁻¹ ⊗ˢ ξ / ‖A·
 The isotropic case (`C₀::TensISO`) is evaluated analytically; the
 anisotropic case uses the Cauchy-residue reduction of
 [masson2008](@cite) (trait `Residue`) or the DECUHR
-adaptive cubature of [espelid1994](@cite)
+adaptive cubature of [espelid1994](@citet)
 (trait `DECUHR`). See the `Hill polarization tensors` theory page
 for the full dispatch table and return types.
 """

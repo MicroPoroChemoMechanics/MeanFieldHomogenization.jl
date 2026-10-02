@@ -8,10 +8,10 @@
 COD tensor of an elliptic crack in an arbitrarily anisotropic matrix.
 The limit ``\\omega\\to 0`` of ``\\omega\\,\\mathbb Q^{-1}`` is resolved
 by the first-order Taylor term of the Hill tensor
-([barthelemyIJSS2009](@cite)); the resulting integral
+[barthelemyIJSS2009](@cite); the resulting integral
 on the unit circle of the crack plane is evaluated by `backend`
-(residue reduction [masson2008](@cite) or DECUHR cubature
-[espelid1994](@cite)).
+(residue reduction of [masson2008](@citet) or DECUHR cubature of
+[espelid1994](@citet)).
 """
 function _cod_elliptic_numerical(
         c::EllipticCrack{T}, C₀, backend;

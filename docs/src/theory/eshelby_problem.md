@@ -12,11 +12,12 @@ Fill ``\mathbb{R}^3`` with a homogeneous linear elastic medium of stiffness
 centered at the origin (shape tensor ``\boldsymbol{A}``, semi-axes
 ``a\ge b\ge c``; see [Notation](notation.md#Ellipsoid-geometry)). Prescribe a
 uniform **polarization stress** ``\boldsymbol{\tau}`` inside the ellipsoid and
-zero outside, with no remote loading.
+zero outside, with no remote loading. This problem and the inhomogeneity problem
+below are drawn as in the Echoes book [echoes](@cite).
 
-![The inclusion problem: a uniform polarization inside the ellipsoid, no remote loading (from the Echoes book [echoes](@cite))](../assets/geometry/eshelby_inclusion.png)
+![The inclusion problem: a uniform polarization inside the ellipsoid, no remote loading](../assets/geometry/eshelby_inclusion.png)
 
-[eshelby1957](@cite) showed that the resulting strain field is **uniform inside
+[eshelby1957](@citet) showed that the resulting strain field is **uniform inside
 the ellipsoid**. This is the whole reason mean-field homogenization works, and
 it is specific to the ellipsoid: no other shape has it.
 
@@ -26,7 +27,7 @@ it is specific to the ellipsoid: no other shape has it.
 ```
 
 ``\mathbb{P} = \mathbb{P}(\boldsymbol{A},\mathbb{C})`` is the **Hill
-polarization tensor** [hill1963](@cite), [willis1977](@cite). It depends only on
+polarization tensor** [hill1963, willis1977](@cite). It depends only on
 the ellipsoid's shape and orientation (through ``\boldsymbol{A}``) and on the
 reference medium (through ``\mathbb{C}``) — in particular it is **independent of
 the ellipsoid's size**.
@@ -123,7 +124,7 @@ stiffness ``\mathbb{C}^I``, loaded remotely by ``\underline{u} = \boldsymbol{E}\
 — and it reduces to the inclusion problem above by the equivalent-polarization
 argument of [Localization](localization.md):
 
-![The inhomogeneity problem: a different stiffness inside, remote loading outside (from the Echoes book [echoes](@cite))](../assets/geometry/eshelby_inhomogeneity.png)
+![The inhomogeneity problem: a different stiffness inside, remote loading outside](../assets/geometry/eshelby_inhomogeneity.png)
 
 The step from there to an estimate of effective properties is the subject of the
 next two pages, and it has two parts:

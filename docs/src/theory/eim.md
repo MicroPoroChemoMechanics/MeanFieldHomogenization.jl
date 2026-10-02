@@ -1,11 +1,11 @@
 # [The equivalent inclusion method](@id th-eim)
 
-[brisard2014](@cite). A Galerkin discretization of the
+[brisard2014](@citet). A Galerkin discretization of the
 weak form of the Lippmann-Schwinger equation, with the polarization taken piecewise
 polynomial over the inclusions. Unlike every other scheme of the package it also
 delivers a **rigorous bound** on the apparent stiffness.
 
-Where [moschovidis1975](@cite) discretized the *strong* form by
+Where [moschovidis1975](@citet) discretized the *strong* form by
 Taylor expansion and collocation, the variational form discretizes the *weak* one — and
 inherits the extremum property of the Hashin-Shtrikman principle.
 
@@ -74,7 +74,7 @@ and
 \boldsymbol{\tau}_a``.
 
 !!! note "Transcribed verbatim"
-    The package shares the sign convention of [brisard2023](@cite) (see the
+    The package shares the sign convention of [brisard2023](@citet) (see the
     [convention note](@ref th-interaction)), so the system above is transcribed with
     nothing flipped: the self term ``|\Omega_a|^{-1}S^{00}_a`` is ``+\mathbb{P}_a``,
     which is ``\mathbb{T}^{aa}``, and every block carries a plus. It is the *cluster
@@ -82,10 +82,10 @@ and
 
 ## Relation to the cluster model
 
-[brisard2014](@cite) observes that at ``k = l = 0`` the influence
+[brisard2014](@citet) observes that at ``k = l = 0`` the influence
 pseudotensors *coincide* with the interaction tensors of
-[berveiller1987](@cite) and
-[molinari1996](@cite). The two schemes of this package
+[berveiller1987](@citet) and
+[molinari1996](@citet). The two schemes of this package
 accordingly share [`interaction_tensor`](@ref), and differ only in how the far field is
 closed:
 
@@ -132,12 +132,12 @@ estimate improves monotonically as ``p`` grows (the trial space only gets larger
 mixed contrasts give no bound at all. [`eim_bound_type`](@ref) reports which case holds.
 
 Taking the polarization constant *and equal* across all inclusions instead recovers the
-classical [hashin1962](@cite) bounds; letting it vary from one
+classical bounds of [hashin1962](@citet); letting it vary from one
 inclusion to the next is what sharpens them.
 
 ## Reference results
 
-[brisard2014](@cite), Table 1 — plane strain, ``N = 160`` circular
+[brisard2014](@citet), Table 1 — plane strain, ``N = 160`` circular
 pores of radius ``a`` in a circular SVE of radius ``R = 20a``, porosity ``\phi = 0.4``,
 ``\nu_0 = 0.3``, 1000 realizations:
 
@@ -162,7 +162,7 @@ Their Table 2, in 3D with polydisperse spherical pores (``N = 20/40/140`` of rad
 
 ## Slender fibers in conduction
 
-[martin2023](@cite) specialize the method to slender cylinders in
+[martin2023](@citet) specialize the method to slender cylinders in
 steady conduction, taking the polarization polynomial in the *axial* coordinate and
 constant across the section. Their interaction coefficients reduce, after a multipole
 step, to nested one-dimensional integrals along the two axes, and their self-influence

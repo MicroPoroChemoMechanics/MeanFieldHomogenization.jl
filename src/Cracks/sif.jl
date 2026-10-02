@@ -8,12 +8,9 @@
 Stress intensity factor vector ``\\hat{\\mathbf K}`` at a point of the
 crack front, together with its ``(K_{I},K_{II},K_{III})`` decomposition
 on ``(\\hat{\\mathbf n},\\hat{\\boldsymbol\\nu},\\hat{\\boldsymbol\\tau})``
-([irwin1957](@cite),
- [kassir1968](@cite),
- [willis1968](@cite);
+(after [irwin1957, kassir1968, willis1968](@citet);
  energy release rate identity ``G = \\hat{\\mathbf K}\\cdot\\hat{\\mathbf N}``
- in [barnett1972](@cite),
- [rice1989](@cite)).
+ in [barnett1972, rice1989](@citet)).
 
 For a ribbon crack (``\\hat{\\boldsymbol\\nu}=\\pm\\hat{\\mathbf m}``)
 ``\\hat{\\mathbf K}^{\\mathcal R} = \\sqrt{\\pi b}\\,\\boldsymbol\\Sigma\\cdot\\hat{\\mathbf n}``
@@ -31,8 +28,7 @@ K̂ = (3/8) π^{3/2} √b √(b ‖S† · ŷ₀★‖)
 The central identity
 ``\\hat{\\mathbf K} = \\pi\\,(\\mathbf B^{\\mathcal R})^{-1}\\cdot\\hat{\\mathbf N}``
 is purely local
-([kanaun1981](@cite), [kunin1983](@cite),
- [kanaun2009](@cite)).
+[kanaun1981, kunin1983, kanaun2009](@cite).
 """
 function sif end
 

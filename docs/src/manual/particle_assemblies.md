@@ -205,8 +205,8 @@ formalism and raises an `ArgumentError` naming the limitation.
 
 !!! warning "Two sign conventions exist"
     ``\mathbb{T}^{aa} = +\mathbb{P}``, i.e. the self term **is** the Hill tensor
-    ([brisard2023](@cite)), which is the convention this package follows.
-    [molinari1996](@cite) and [berveiller1987](@cite) use the
+    [brisard2023](@cite), which is the convention this package follows.
+    [molinari1996](@citet) and [berveiller1987](@citet) use the
     opposite sign, so any formula transcribed from them must be flipped. See
     [interaction tensors](@ref th-interaction).
 
@@ -225,7 +225,7 @@ softer, `:none` for mixed contrasts.
 ## Cross-checking the two schemes
 
 On a periodic assembly with the same cutoff the two are the *same* linear system and
-agree to machine precision — the identity stated in [brisard2014](@cite):
+agree to machine precision — the identity stated in [brisard2014](@citet):
 
 ```julia
 asm = cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_i); fraction = 0.25, cutoff = 3.0)
@@ -309,7 +309,7 @@ asking for one raises a message that names the lens to use instead. It has no
 
 ## Nano-interfaces: the equivalent particle
 
-[dormieux2016](@cite) is a different kind of result:
+[dormieux2016](@citet) is a different kind of result:
 it needs no new scheme. A spheroidal nanoinclusion together with its Gurtin-Murdoch
 interface behaves as a single particle of stiffness
 ``\mathbb C^{eq} = \mathbb C_I + \mathbb C^{int}``, after which the classical

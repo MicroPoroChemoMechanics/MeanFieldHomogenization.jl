@@ -13,8 +13,8 @@ for order 2, blackboard bold for order 4. Two symbols are introduced here.
 | ``\mathbb{G}^0`` / ``\boldsymbol{G}^0`` | Green operator of the reference | order 4 | order 2 |
 | ``\mathbb{T}^{ab}`` / ``\boldsymbol{T}^{ab}`` | interaction tensor of two inclusions | order 4 | order 2 |
 
-[molinari1996](@cite) write the interaction tensor
-``\Gamma^{IJ}`` and [brisard2014](@cite) write it ``T^{kl}_{ab}``;
+[molinari1996](@citet) write the interaction tensor
+``\Gamma^{IJ}`` and [brisard2014](@citet) write it ``T^{kl}_{ab}``;
 the letter ``\mathbb{T}`` is kept here because a Greek capital carries no order in this
 typeface convention.
 
@@ -76,7 +76,7 @@ and the transform of the whole is
 \qquad (\underline{k} \ne \underline{0}) ,
 ```
 
-which is the convention of [brisard2023](@cite): a **positive
+which is the convention of [brisard2023](@citet): a **positive
 semi-definite** operator. The regular part averages to zero over any ball centered on
 the source, so the whole interior average is the Dirac term
 ``\boldsymbol{1}/(3\sigma_0)`` — which is exactly ``\boldsymbol{P}`` of a sphere.
@@ -111,13 +111,13 @@ so the one-inclusion case is exactly the
 [cluster-model page](@ref th-cluster).
 
 !!! warning "Two sign conventions exist"
-    The package follows [brisard2023](@cite):
+    The package follows [brisard2023](@citet):
     the Green operator maps a polarization onto **minus** the induced field, its
     Fourier symbol ``\sigma_0^{-1}\underline{k}\otimes\underline{k}/\|\underline{k}\|^2``
     is positive, and ``\mathbb{T}^{aa} = +\mathbb{P}``, coherent with the Hill tensor.
 
-    [molinari1996](@cite) and
-    [berveiller1987](@cite) write instead
+    [molinari1996](@citet) and
+    [berveiller1987](@citet) write instead
     ``\boldsymbol{\varepsilon}^I = \boldsymbol{\varepsilon}^0 +
     \sum_J \Gamma^{IJ}:\delta\mathbb{C}^J:\boldsymbol{\varepsilon}^J``, so their
     ``\Gamma^{IJ}`` is the **opposite** of ``\mathbb{T}^{IJ}`` and their self term is
@@ -160,10 +160,10 @@ Let ``\underline{n} = \underline{r}/R`` be the unit vector along the line of cen
 \rho^2 = \frac{a^2+b^2}{R^2} .
 ```
 
-— note the sign of ``\kappa``: [molinari1996](@cite) write
+— note the sign of ``\kappa``: [molinari1996](@citet) write
 ``-b^3/(12R^3\mu(1-\nu))``, and the flip to this package's convention is applied here,
-once. In the frame whose third axis is ``\underline{n}``
-(their App. A; [berveiller1987](@cite)):
+once. In the frame whose third axis is ``\underline{n}``,
+after their Appendix A and [berveiller1987](@citet):
 
 ```math
 \begin{aligned}
@@ -373,10 +373,10 @@ interaction becomes a lattice sum, truncated to a cluster of radius ``R_c``:
 
 Summed over all of ``\mathbb{Z}^d`` the series is only conditionally convergent and the
 summation order has to be prescribed — the difficulty
-[brisard2023](@cite) meet, where a naive
+[brisard2023](@citet) meet, where a naive
 real-space lattice sum needs a heuristic correction. The cluster truncation above does
 not have that problem, and Appendix B of
-[molinari1996](@cite) says why: the kernel integrates to zero
+[molinari1996](@citet) says why: the kernel integrates to zero
 over the exterior of a sphere centered on the receiver,
 
 ```math

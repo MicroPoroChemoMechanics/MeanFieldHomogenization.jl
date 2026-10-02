@@ -16,8 +16,8 @@
 
 Hill polarization tensor of a 3-D ellipsoid in an arbitrarily
 anisotropic matrix, evaluated by reducing the 2-D surface integral of
-[willis1977](@cite) to a 1-D line quadrature via the
-Cauchy residue theorem of [masson2008](@cite). The inner
+[willis1977](@citet) to a 1-D line quadrature via the
+Cauchy residue theorem of [masson2008](@citet). The inner
 ``\\varphi`` integral is collapsed into a finite sum over the roots of
 the determinant of the acoustic tensor lying inside the unit circle.
 

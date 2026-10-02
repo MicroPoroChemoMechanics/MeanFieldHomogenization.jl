@@ -1,6 +1,6 @@
 # [The cluster model](@id th-cluster)
 
-[molinari1996](@cite). An N-body scheme: the mean strain of
+[molinari1996](@citet). An N-body scheme: the mean strain of
 every inclusion is solved for, accounting for the pairwise interaction with each
 neighbor inside a cluster, on top of the interaction with the matrix.
 
@@ -30,7 +30,7 @@ and relating ``\boldsymbol{\varepsilon}^0`` to the macroscopic strain
 ```
 
 !!! warning "The paper's own sign is the opposite one"
-    [molinari1996](@cite) writes these two equations with a ``+`` in front of the
+    [molinari1996](@citet) writes these two equations with a ``+`` in front of the
     interaction sum, because their ``\Gamma^{IJ}`` is the opposite of this package's
     ``\mathbb{T}^{IJ}`` (their self term is ``\Gamma^{II} = -\mathbb{P}_0``). The
     equations above are theirs with that single flip applied — see the
@@ -114,7 +114,7 @@ which is the Mori-Tanaka system term by term.
 
 !!! note "An exact degeneracy, not an approximation"
     With `cluster_radius = 0` the cluster model **is** [`MoriTanaka`](@ref), as an
-    algebraic identity — Appendix C of [molinari1996](@cite).
+    algebraic identity — Appendix C of [molinari1996](@citet).
     The test suite checks it to machine precision, for one family and for two, in
     elasticity and in conduction. It is the sharpest available statement that the
     assembly of ``\mathbb{M}`` is right.

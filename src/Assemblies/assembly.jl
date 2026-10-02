@@ -33,7 +33,7 @@ abstract type AbstractAssemblyBoundary end
 """
     MixedBC(shape) <: AbstractAssemblyBoundary
 
-Mixed boundary conditions of [brisard2014](@cite): the
+Mixed boundary conditions of [brisard2014](@citet): the
 statistical volume element `shape` — which **must be an ellipsoid**, since the
 derivation leans on Eshelby's theorem for the domain itself — is embedded in an
 infinite medium of the matrix stiffness, subject to a uniform strain at

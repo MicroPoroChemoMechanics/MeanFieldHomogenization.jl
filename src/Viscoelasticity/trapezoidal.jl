@@ -25,7 +25,7 @@ Build the discrete `(B·n) × (B·n)` lower-block-triangular matrix
 representing the Stieltjes integral
 ``y(t_i) = ∫_{t_0}^{t_i} f(t_i, τ) \\, dx(τ)``
 on the time grid `times = (t_0, …, t_{n-1})` using the trapezoidal
-rule of [sanahuja2013](@cite).  `B = 1` for scalar-valued kernels and `B = 6`
+rule of [sanahuja2013](@citet).  `B = 1` for scalar-valued kernels and `B = 6`
 for 4-tensor- or `6×6`-matrix-valued kernels (Mandel form).
 
 The exact block layout is described at the top of `trapezoidal.jl`.

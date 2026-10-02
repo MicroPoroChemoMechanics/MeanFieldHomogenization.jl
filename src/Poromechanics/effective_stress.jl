@@ -27,7 +27,7 @@ defined by ``(\\boldsymbol{\\Sigma}, p)`` splits into
 Step 2 carries no strain singularity, so it cannot change the aperture of a flat
 crack. All the information about the evolution of the pore space is therefore
 contained in step 1, i.e. it depends on the Terzaghi effective stress alone.
-This is the argument of [barthelemyARMA2011](@cite) § 1.1 and the reason why
+This is the argument of [barthelemyARMA2011](@citet) § 1.1 and the reason why
 the constitutive laws of
 [`MeanFieldHomogenization.Constitutive`](@ref MeanFieldHomogenization.Constitutive)
 drive their internal state with `terzaghi_stress` rather than with

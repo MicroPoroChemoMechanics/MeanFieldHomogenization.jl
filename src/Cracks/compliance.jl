@@ -36,9 +36,7 @@ compliance correction ``\\Delta\\mathbb S``:
 ΔS =    π   ε²ᵈ H   (ribbon,   ε²ᵈ = N b²)
 ```
 
-See [kachanov1992](@cite),
-[sevostianov2002](@cite),
-[barthelemyIJES2021](@cite).
+See [kachanov1992, sevostianov2002, barthelemyIJES2021](@citet).
 """
 function compliance_contribution(
         crack::MFH_Core.AbstractCrack,
@@ -155,8 +153,7 @@ size-independent contribution tensor ``\\mathbb H``:
 - Ribbon:   ``\\Delta\\mathbb S = \\pi\\,\\varepsilon^{2\\mathrm d}\\,\\mathbb H``
   with ``\\varepsilon^{2\\mathrm d} = N b^{2}``.
 
-See [budiansky1976](@cite),
-[sevostianov2002](@cite).
+See [budiansky1976, sevostianov2002](@citet).
 """
 delta_compliance(crack::MFH_Core.AbstractCrack, H, ε) =
     crack_density_factor(crack) * ε * H
@@ -196,7 +193,7 @@ user-defined crack inherits the right prefactor for free.  A flat morphology
 with a different density convention overrides this single method rather than
 the four `delta_*` ones.
 
-See [budiansky1976](@cite).
+See [budiansky1976](@citet).
 """
 crack_density_factor(crack::MFH_Core.AbstractCrack) =
     _crack_density_factor(MFH_Core.shape_trait(crack))

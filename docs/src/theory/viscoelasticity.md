@@ -28,9 +28,9 @@ essentially unchanged, provided two substitutions are made systematically:
 | identity ``\mathbb{I}`` | ``H\,\mathbb{I}``, ``H`` the Heaviside function |
 
 This page follows that substitution from the constitutive law to the
-homogenization schemes. The derivations are those of [barthelemyIJSS2016](@cite)
-(the Eshelby problem and the Hill kernel) and [barthelemyIJES2019](@cite)
-(the schemes); the time discretization is that of [sanahuja2013](@cite).
+homogenization schemes. The derivations are those of [barthelemyIJSS2016](@citet)
+(the Eshelby problem and the Hill kernel) and [barthelemyIJES2019](@citet)
+(the schemes); the time discretization is that of [sanahuja2013](@citet).
 
 !!! note "Notation used on this page"
     A kernel is a function of two times ``(t, t')`` — observation time and
@@ -43,7 +43,7 @@ homogenization schemes. The derivations are those of [barthelemyIJSS2016](@cite)
 ## The ageing linear viscoelastic behavior
 
 The strain and stress histories are related by a **Stieltjes integral**
-([barthelemyIJSS2016](@cite)):
+[barthelemyIJSS2016](@cite):
 
 ```math
 \boldsymbol{\varepsilon}(t)
@@ -71,7 +71,7 @@ transform, and the time domain is the only available route.
 
 The relation above is written compactly ``\boldsymbol{\varepsilon} =
 \mathbb{L}\circ\boldsymbol{\sigma}``, extending to tensors the scalar Volterra
-operator ([barthelemyIJSS2016](@cite)). Between two kernels the same
+operator [barthelemyIJSS2016](@cite). Between two kernels the same
 symbol denotes
 
 ```math
@@ -82,7 +82,7 @@ symbol denotes
 
 This product is associative and distributive over addition, but **not
 commutative**: commutativity holds only for non-ageing kernels
-([barthelemyIJSS2016](@cite), citing Maghous & Creus). Every formula below
+[barthelemyIJSS2016; after Maghous and Creus](@cite). Every formula below
 therefore keeps its factors in order, including the apparently scalar ones.
 
 The Heaviside function acts as the identity, ``H\circ X = X``, so the identity
@@ -96,7 +96,7 @@ kernels are Volterra inverses of one another, ``\mathbb{C} =
 ### Discretization: kernels become block matrices
 
 On a time grid ``t_0 < t_1 < \dots < t_n`` the Stieltjes integral is
-approximated by the trapezoidal rule of [sanahuja2013](@cite). Strain and stress
+approximated by the trapezoidal rule of [sanahuja2013](@citet). Strain and stress
 histories become block column vectors, and each kernel a **lower
 block-triangular** matrix ``\widetilde{\mathbb{C}}`` of size
 ``6(n+1)\times 6(n+1)`` whose blocks are
@@ -121,7 +121,7 @@ block-triangular** matrix ``\widetilde{\mathbb{C}}`` of size
 
 The pay-off of this representation is that the Volterra product becomes an
 ordinary matrix product and the Volterra inverse an ordinary matrix inverse
-([sanahuja2013](@cite); [barthelemyIJES2019](@cite), Appendix). In
+[sanahuja2013](@cite), as in the appendix of [barthelemyIJES2019](@citet). In
 `MeanFieldHomogenization` the discretization is [`trapezoidal_matrix`](@ref) and the
 inverse [`volterra_inverse`](@ref).
 
@@ -139,7 +139,7 @@ uniform polarization history ``\boldsymbol{p}(t)``:
 
 with ``\chi_{\mathcal{E}}`` the characteristic function of ``\mathcal{E}``.
 Momentum balance and the decay condition at infinity give
-([barthelemyIJSS2016](@cite))
+[barthelemyIJSS2016](@cite)
 
 ```math
 \mathrm{div}\bigl(\mathbb{C}\circ\boldsymbol{\varepsilon}(\underline{u})\bigr)
@@ -165,7 +165,7 @@ Solving it through the ALV Green kernel yields the central result: the strain is
 ## The Hill polarization kernel
 
 The kernel ``\mathbb{P}`` appearing above is the ALV counterpart of the elastic
-Hill polarization tensor ([barthelemyIJSS2016](@cite)):
+Hill polarization tensor [barthelemyIJSS2016](@cite):
 
 ```math
 \mathbb{P}
@@ -203,7 +203,7 @@ acoustic tensor is diagonal in the
 ``(\underline{\xi}\otimes\underline{\xi},\
 \boldsymbol{1}-\underline{\xi}\otimes\underline{\xi})`` decomposition and can be
 inverted in the Volterra sense analytically. The Hill kernel then **factorizes**
-([barthelemyIJSS2016](@cite), [barthelemyIJES2019](@cite)):
+[barthelemyIJSS2016, barthelemyIJES2019](@cite):
 
 ```math
 \mathbb{P}
@@ -241,7 +241,7 @@ in the Volterra sense, and assembles against [`tens_UA`](@ref) and
 For a **sphere** the geometric tensors are
 ``\mathbb{U}^{\boldsymbol{A}} = \tfrac{1}{3}\mathbb{J} + \tfrac{2}{15}\mathbb{K}``
 and ``\mathbb{V}^{\boldsymbol{A}} = \tfrac{1}{3}\mathbb{I}``, giving the closed
-form ([barthelemyIJSS2016](@cite))
+form [barthelemyIJSS2016](@cite)
 
 ```math
 \mathbb{P}^{\text{sphere}}
@@ -265,7 +265,7 @@ own relaxation kernel ``\mathbb{C}^{\mathcal{E}}``, and the medium is loaded by
 a remote strain history ``\boldsymbol{E}(t)``. Superposing the remote field and
 the response to the fictitious polarization
 ``(\mathbb{C}^{\mathcal{E}}-\mathbb{C}^{0})\circ\boldsymbol{\varepsilon}``
-gives ([barthelemyIJSS2016](@cite))
+gives [barthelemyIJSS2016](@cite)
 
 ```math
 \boldsymbol{\varepsilon}
@@ -302,7 +302,7 @@ in any associative algebra and so survives the loss of commutativity.
 ## Schemes
 
 With concentration kernels in hand, every matrix-based scheme transposes
-term by term ([barthelemyIJES2019](@cite)). Writing ``\varphi_r`` for the volume
+term by term [barthelemyIJES2019](@cite). Writing ``\varphi_r`` for the volume
 fraction of phase ``r`` and ``\mathbb{C}^0`` for the reference kernel, the
 general form is ``\mathbb{C}^{\hom} = \langle\mathbb{C}\circ\mathbb{A}\rangle``,
 or equivalently
@@ -335,7 +335,7 @@ factor looks scalar. All ten schemes are implemented by
 
 ## The n-layer composite sphere
 
-The Hervé–Zaoui ``n``-layer sphere ([herve1993](@cite), see
+The ``n``-layer sphere of [herve1993](@citet) (see
 [Layered spheres](layered_sphere.md)) transposes by the same rule. Its elastic
 construction propagates a state vector across the shells by a product of
 transfer matrices — ``2\times 2`` for the bulk (``Y_0``) harmonic,

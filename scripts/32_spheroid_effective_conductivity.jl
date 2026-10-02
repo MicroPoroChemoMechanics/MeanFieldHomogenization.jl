@@ -3,7 +3,7 @@
 # Every RVE phase seen so far has been a single ellipsoid or a layered *sphere*.
 # [`LayeredSpheroid`](@ref) is an `N`-layer confocal **spheroidal** composite
 # inclusion for conduction (thermal, electric, Darcy), following
-# [barthelemyBignonnetIJES2020](@cite). It plugs into the same
+# [barthelemyBignonnetIJES2020](@citet). It plugs into the same
 # `RVE` / [`homogenize`](@ref) workflow as every other phase.
 #
 # This page covers the geometry, the API, and the two effective quantities it
@@ -114,7 +114,7 @@ get_array(homogenize(rve, MoriTanaka(), :K))
 
 # ## Effective conductivity vs. the interface parameter
 #
-# The benchmark configuration of [kushch2015](@cite): aligned prolate particles
+# The benchmark configuration of [kushch2015](@citet): aligned prolate particles
 # at volume fraction 0.5, conductivity contrast ``10^3``, carrying a single
 # Kapitza (LC) interface, swept over a Biot-type dimensionless number.
 #

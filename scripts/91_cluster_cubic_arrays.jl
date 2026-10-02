@@ -1,6 +1,6 @@
 # # The cluster model on cubic arrays
 #
-# The cluster model of [molinari1996](@cite)
+# The cluster model of [molinari1996](@citet)
 # solves for the mean strain of *every* inclusion, accounting for the pairwise
 # interaction with each neighbor inside a cluster of radius `R_c`. Unlike the
 # one-site schemes it therefore sees **where** the inclusions are, which is why
@@ -20,9 +20,9 @@
 # ```
 #
 # whose self counterpart is ``\mathbb{T}^{aa} = +\mathbb{P}`` — the package follows
-# the sign convention of [brisard2023](@cite), for which the Green operator maps a
+# the sign convention of [brisard2023](@citet), for which the Green operator maps a
 # polarization onto *minus* the induced field. The opposite convention is used in
-# [molinari1996](@cite), so the formulas below carry that flip already applied. Theory: the
+# [molinari1996](@citet), so the formulas below carry that flip already applied. Theory: the
 # [cluster model](@ref th-cluster) and the [interaction tensors](@ref th-interaction).
 
 import Pkg                                                          #jl

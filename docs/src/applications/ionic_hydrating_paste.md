@@ -110,7 +110,7 @@ mole, which is what drives the pore solution to pH 12.5 and above.
 
 ## 2. Running the coupling
 
-The formulation is the CEM I 52.5 N of [Lavergne2018](@cite), so the
+The formulation is the CEM I 52.5 N of [Lavergne2018](@citet), so the
 numbers can be put beside the previous chapter's: Bogue composition
 C₃S 65 / C₂S 11 / C₃A 11 / C₄AF 8, gypsum 4.6 %, calcite 3.5 %, Blaine
 380 m²/kg, w/b = 0.50.
@@ -314,7 +314,7 @@ that effect, which is the trade the LC³ literature is about.
 ### The semi-adiabatic cell
 
 A Langavant test (NF EN 196-9) lets the heat raise the temperature of the sample
-against the losses of the vessel. [Lavergne2018](@cite) writes the loss as
+against the losses of the vessel. [Lavergne2018](@citet) writes the loss as
 
 ```math
 C_{\rm tot}(t)\,\frac{\mathrm{d}T}{\mathrm{d}t} \;=\; \dot q(t) \;-\; \varphi(T-T_{\rm env}),

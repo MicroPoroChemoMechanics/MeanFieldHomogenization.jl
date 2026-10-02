@@ -112,7 +112,7 @@ end
 block matrix ``\widetilde{\mathbb{R}}`` acting on a *strain history* sampled on
 the grid — the trapezoidal representation of the Stieltjes integral
 ``\sigma(t_i) = \int_{t_0}^{t_i}\mathbb{R}(t_i,\tau):\mathrm{d}\varepsilon(\tau)``
-([sanahuja2013](@cite)). Its blocks are *differences* of kernel values, not
+[sanahuja2013](@cite). Its blocks are *differences* of kernel values, not
 kernel values, so reading ``\mathbb{R}^{\hom}(t)`` off a column would be wrong.
 
 The physical extraction is a relaxation test. Applying a **unit strain step at

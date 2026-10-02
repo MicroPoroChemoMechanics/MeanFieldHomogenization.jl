@@ -1,6 +1,6 @@
 # [Multiscale elasticity of a hydrating cement paste](@id app-cement-paste)
 
-Following [sanahuja2007](@cite) — and mirroring the corresponding chapter of
+Following [sanahuja2007](@citet) — and mirroring the corresponding chapter of
 the Echoes book [echoes](@cite) — this page builds a **two-scale micromechanical
 model** of Portland cement paste predicting the effective Young's modulus from
 the water-to-cement ratio ``w/c`` and the hydration degree ``\alpha``.
@@ -13,7 +13,7 @@ The three ingredients are:
   inner/outer core-shell morphology;
 - a **Biot poromechanics correction** turning drained into undrained moduli.
 
-[sanahuja2007](@cite) embed a genuine *composite sphere* (anhydrous core +
+[sanahuja2007](@citet) embed a genuine *composite sphere* (anhydrous core +
 inner-hydrate shell) in the outer matrix. Both forms are available: a
 [`LayeredSphere`](@ref) enters the schemes directly through its concentration
 tensors (last section), while the two-step form below makes each scale
@@ -164,7 +164,7 @@ for wc in (0.25, 0.35, 0.45, 0.55)
 end
 ```
 
-The three predictions of [sanahuja2007](@cite) are reproduced:
+The three predictions of [sanahuja2007](@citet) are reproduced:
 
 - a **setting threshold**: the paste carries no stiffness at low ``\alpha``,
   because the outer phase has not percolated yet;
@@ -267,7 +267,7 @@ hydration degree where the pore network is still well connected. As
 ## Direct composite-sphere form
 
 Because a [`LayeredSphere`](@ref) is a first-class RVE phase, the paste scale
-can also be written exactly as in [sanahuja2007](@cite): one composite
+can also be written exactly as in [sanahuja2007](@citet): one composite
 inclusion made of an anhydrous core coated by the inner hydrates, embedded in
 the outer matrix. The radius ratio follows from the volume-fraction constraint
 

@@ -43,7 +43,7 @@ include("partial.jl")
 
 bib = CitationBibliography(
     joinpath(@__DIR__, "src", "references.bib");
-    style = :numeric,
+    style = :authoryear,
 )
 
 # ── Stopgap: CitationSiteNode in the Markdown writer ─────────────────────────
@@ -220,7 +220,7 @@ end
 let failures = String[]
     for (key, entry) in bib.entries
         try
-            DocumenterCitations.format_bibliography_reference(:numeric, entry)
+            DocumenterCitations.format_bibliography_reference(:authoryear, entry)
         catch err
             push!(failures, "  $key : " * sprint(showerror, err))
         end
@@ -416,7 +416,7 @@ PARTIAL_BUILD || let t0 = time()
                 pages = pages,
                 plugins = [
                     CitationBibliography(
-                        joinpath(@__DIR__, "src", "references.bib"); style = :numeric
+                        joinpath(@__DIR__, "src", "references.bib"); style = :authoryear
                     ),
                 ],
                 checkdocs = :exports,

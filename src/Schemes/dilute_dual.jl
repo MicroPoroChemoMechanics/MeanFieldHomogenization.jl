@@ -18,7 +18,7 @@ preferred form because the crack compliance contribution
 [`compliance_contribution`](@ref)`(crack, C₀)` is finite while the
 stiffness one is the rank-1 limit of a divergent eigenvalue.
 
-Reference: [kachanov2018](@cite).
+Reference: [kachanov2018](@citet).
 """
 function _evaluate(rve::RVE, scheme::DiluteDual, ::Val{p}; kw...) where {p}
     m = matrix_name(scheme, rve)

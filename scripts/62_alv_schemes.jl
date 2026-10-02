@@ -6,7 +6,7 @@
 # one composite and reads the differences off a single scalar: the effective
 # uniaxial creep compliance under a stress step.
 #
-# The morphology is the one of [barthelemyIJES2019](@cite) — a creeping matrix
+# The morphology is the one of [barthelemyIJES2019](@citet) — a creeping matrix
 # reinforced by spheroids of controlled aspect ratio — and the two questions are
 # the ones that separate the schemes: **which reference medium** each one
 # polarizes against, and **what shape** it assumes for the spatial distribution
@@ -202,7 +202,7 @@ end
 # compliance. The cause is geometric, not numerical: the RVE still declares a
 # *spherical* distribution shape, and a sphere cannot host 30 % of 100:1 discs
 # without the enveloping spheres overlapping. This is the admissibility
-# restriction of [ponte1995](@cite), and outside it the estimate carries no
+# restriction of [ponte1995](@citet), and outside it the estimate carries no
 # meaning. Mori-Tanaka is unaffected because it never uses a distribution shape
 # distinct from the inclusion's.
 #

@@ -218,7 +218,7 @@ C_eff = homogenize_alv(rve, MoriTanaka(), :C; times = times)
 ```
 
 The scalar COD kernels `B̃_n`, `B̃_t` are post-corrected by the
-spring-interface construction of [sevostianovIJSS2007](@cite), transposed to
+spring-interface construction of [sevostianovIJSS2007](@citet), transposed to
 the Volterra algebra: crack-face and interface compliances add up, at the cost
 of one extra scalar Volterra inverse per direction.
 

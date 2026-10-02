@@ -123,4 +123,4 @@ orientation distribution:
 For the **time-dependent** (ALV) version with `Rn(t,t')` and
 `Rt(t,t')` ageing interface kernels, see the
 [Viscoelasticity manual](viscoelasticity.md#5-cracks-in-alv).
-References: [sevostianov2002](@cite), [barthelemyIJES2019](@cite).
+References: [sevostianov2002, barthelemyIJES2019](@citet).

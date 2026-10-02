@@ -55,7 +55,7 @@ conductivities(st::PoroFracturedState) = st.C
 """
     FracturedPoroelasticRock(rve, scheme; ω₀, C₀, k_matrix, porosity_ref, kw...)
 
-The saturated fractured rock of [barthelemyARMA2011](@cite): a Gauss-point
+The saturated fractured rock of [barthelemyARMA2011](@citet): a Gauss-point
 material with **two gradients** ``(\\boldsymbol{E}, p)`` and **two fluxes**
 ``(\\boldsymbol{\\Sigma}, \\varphi)``, whose fractures open and close and whose
 permeability follows their apertures.
