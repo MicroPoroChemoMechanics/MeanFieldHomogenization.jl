@@ -30,7 +30,7 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
 - `MeanFieldHomogenization.LayeredSpheres`   — `n`-layer composite spheres with five
   interface types, volume-average and pointwise localization.
 - `MeanFieldHomogenization.LayeredSpheroids` — `n`-layer confocal spheroids in
-  conduction, with imperfect interfaces.
+  conduction, with imperfect interfaces, and in elasticity, with perfect ones.
 - `MeanFieldHomogenization.Schemes`      — RVEs, amounts, symmetrization and the
   homogenization schemes themselves (dilute, Mori–Tanaka, self-consistent,
   PCW, Maxwell, differential).
@@ -274,7 +274,7 @@ export local_gradient_gradient_loc, local_flux_gradient_loc,
     local_gradient_flux_loc, local_flux_flux_loc
 export local_temperature, local_gradient, local_flux
 
-# ── LayeredSpheroid (Barthélémy-Bignonnet confocal spheroid, conduction) ─────
+# ── LayeredSpheroid (Barthélémy-Bignonnet confocal spheroid, conduction and elasticity)
 export LayeredSpheroid, layered_spheroid_from_fractions, confocal_layer_radii
 export layer_q, layer_semiaxes, outer_semiaxes
 export spheroid_state_sequence, spheroid_ba_ratios

@@ -73,7 +73,7 @@ section of the docs.
 | `MeanFieldHomogenization.Cracks` | COD tensor, compliance contribution, SIF and DIF for elliptic / ribbon cracks. |
 | `MeanFieldHomogenization.Conductivity` | 2nd-order Hill tensor for transport problems; closed form for any matrix anisotropy. |
 | `MeanFieldHomogenization.LayeredSpheres` | `n`-layer composite spheres, 5 interface types (perfect, spring, membrane, Kapitza, surface-conductive), volume-average and pointwise localization. |
-| `MeanFieldHomogenization.LayeredSpheroids` | `n`-layer confocal spheroids, conduction, with Kapitza / surface-conductive interfaces, series or quadrature evaluation. |
+| `MeanFieldHomogenization.LayeredSpheroids` | `n`-layer confocal spheroids: conduction with Kapitza / surface-conductive interfaces, series or quadrature evaluation; elasticity, prolate or oblate, with perfect interfaces. |
 | `MeanFieldHomogenization.Laminates` | Periodic **multilayer** cell: parallel layers, no matrix, no Eshelby problem — an *exact* solution in elasticity and transport, with the same 4 imperfect-interface models, per-layer localization and an ageing-viscoelastic twin. |
 | `MeanFieldHomogenization.Interactions` | Two-inclusion interaction tensor and Green operator of the reference medium — exact closed forms for balls and disks, cubature for an anisotropic reference, periodic image sums. |
 | `MeanFieldHomogenization.Assemblies` | `ParticleAssembly`: the cell that carries **positions**, its lattice / random generators and boundary treatments — what the N-body schemes act on. |

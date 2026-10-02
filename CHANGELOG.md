@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Documentation
+
+- The README and the module docstring described `LayeredSpheroids` as
+  conduction only, which it has not been since v0.11.0: they now name the
+  elastic confocal spheroid, prolate or oblate, with perfect interfaces.
+
 ## v0.14.2 — where the sample count stops paying, and the mesh that produced it
 
 0.14.1 shipped the layered-spheroid surrogates on 1200 finite-element solves and
