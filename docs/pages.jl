@@ -29,6 +29,7 @@
 
 pages = [
     "Home" => "index.md",
+    "Getting Started" => "quickstart.md",
     # Ordered as a reading path, and grouped so that the standard theory
     # comes before what is built on top of it: conventions, then the
     # Eshelby framework and the tools it produces (Hill tensor,
@@ -99,7 +100,6 @@ pages = [
     # schemes that consume them, then what goes beyond elasticity.
     "Manual" => [
         "manual/index.md",
-        "manual/installation.md",
         "Inclusions" => [
             "manual/inclusion_gallery.md",
             "manual/ellipsoidal_inclusions.md",
@@ -304,5 +304,6 @@ pages = [
         "api/laplace_carson.md",
         "api/sensitivities.md",
     ],
+    "Nomenclature" => "nomenclature.md",
     "References" => "references.md",
 ]

@@ -31,7 +31,7 @@ order-4 tensor. Its normalization is not unique in the literature, hence the
 ## Geometry
 
 A flat crack is the limit of a flat spheroidal inclusion. Keeping the shape
-tensor of [Notation](notation.md#Ellipsoid-geometry),
+tensor of [Conventions](@ref th-notation-ellipsoid),
 
 ```math
 \boldsymbol{A}

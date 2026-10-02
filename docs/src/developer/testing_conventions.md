@@ -1,5 +1,16 @@
 # [Testing conventions](@id dev-testing-conventions)
 
+## Running the suite
+
+From a clone of the repository, the project is instantiated once before first
+use, and the suite is then run through `Pkg.test`:
+
+```shell
+cd /path/to/MeanFieldHomogenization.jl
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
+julia --project=. -e 'using Pkg; Pkg.test()'
+```
+
 ## Layout
 
 Tests mirror the source tree, one directory per sub-module, aggregated by

@@ -9,7 +9,7 @@ Where [moschovidis1975](@citet) discretized the *strong* form by
 Taylor expansion and collocation, the variational form discretizes the *weak* one — and
 inherits the extremum property of the Hashin-Shtrikman principle.
 
-Notation as on [the conventions page](@ref th-notation); the interaction tensor
+Notation as in the [Nomenclature](@ref nomenclature); the interaction tensor
 ``\mathbb{T}^{ab}`` and the Green operator ``\mathbb{G}^0`` are defined on
 [the interaction page](@ref th-interaction).
 

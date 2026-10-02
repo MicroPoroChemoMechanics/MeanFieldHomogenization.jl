@@ -26,7 +26,7 @@ The zoo splits in three, along the line that matters for the theory:
 The general case: three distinct semi-axes ``a \ge b \ge c``, with the two
 aspect ratios the rest of the documentation uses — the in-plane
 ``\eta = b/a`` and the flatness ``\omega = c/a``
-([Notation](../theory/notation.md#Ellipsoid-geometry)).
+([Conventions](@ref th-notation-ellipsoid)).
 
 ```@example zoo
 ell = Ellipsoid(3.0, 1.5, 0.8)

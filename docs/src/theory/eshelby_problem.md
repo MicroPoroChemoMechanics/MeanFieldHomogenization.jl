@@ -10,7 +10,7 @@ Their closed forms are the subject of the next page,
 Fill ``\mathbb{R}^3`` with a homogeneous linear elastic medium of stiffness
 ``\mathbb{C}``, and single out an ellipsoid ``\mathcal{E}_{\boldsymbol{A}}``
 centered at the origin (shape tensor ``\boldsymbol{A}``, semi-axes
-``a\ge b\ge c``; see [Notation](notation.md#Ellipsoid-geometry)). Prescribe a
+``a\ge b\ge c``; see [Conventions](@ref th-notation-ellipsoid)). Prescribe a
 uniform **polarization stress** ``\boldsymbol{\tau}`` inside the ellipsoid and
 zero outside, with no remote loading. This problem and the inhomogeneity problem
 below are drawn as in the Echoes book [echoes](@cite).

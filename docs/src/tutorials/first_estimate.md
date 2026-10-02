@@ -31,7 +31,7 @@ Note that nothing so far says which phase is a matrix — that is the scheme's
 to decide, and `MoriTanaka()` below takes the `:rest` phase because it is the
 only candidate. See [Who is the matrix?](@ref man-who-is-the-matrix).
 
-### A storage convention worth knowing
+### [A storage convention worth knowing](@id tut-first-estimate-storage)
 
 `iso_stiffness(k, mu)` builds the isotropic stiffness tensor
 from the physical bulk and shear moduli ``k`` and ``\mu``. Internally

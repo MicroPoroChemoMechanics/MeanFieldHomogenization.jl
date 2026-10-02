@@ -408,7 +408,7 @@ When the matrix is transversely isotropic and its symmetry axis is **parallel to
 the spheroid axis**, a fully analytical path exists
 [barthelemyIJES2020_hilltrans](@cite). The Hill tensor is transversely isotropic
 too, hence five Walpole coefficients (see
-[Notation](notation.md#Isotropic-and-transversely-isotropic-bases) — there is no
+[Conventions](@ref th-notation-bases) — there is no
 ``P_4`` because ``\mathbb{P}`` is major-symmetric):
 
 ```math

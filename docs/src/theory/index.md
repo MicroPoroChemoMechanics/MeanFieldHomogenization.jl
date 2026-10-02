@@ -2,9 +2,9 @@
 
 `MeanFieldHomogenization` computes effective properties of heterogeneous materials by
 mean-field homogenization. This section states the theory it implements, in the
-order in which it is built. Every page is self-contained on notation
-([Notation and conventions](notation.md)) and every formula is either cited or
-derived on the page.
+order in which it is built. Every page follows the
+[Conventions](@ref th-notation) and the [Nomenclature](@ref nomenclature), and
+every formula is either cited or derived on the page.
 
 The order below is the dependency chain, and it is worth reading in that order.
 It starts from the Eshelby problem and the tensors it produces, then the schemes
@@ -14,6 +14,11 @@ ellipsoid, a different physics, a different time dependence — followed by
 periodic homogenization, which is a different construction rather than a
 generalization, and finally the N-body models, which drop the one-site
 assumption altogether.
+
+!!! tip "The symbols"
+    Every symbol of these pages is in the [Nomenclature](@ref nomenclature),
+    with its meaning and its unit. Hovering an equation shows the symbols it
+    holds, with their meaning on the page.
 
 ## Foundations: the chain, in one paragraph
 

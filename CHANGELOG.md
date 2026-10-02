@@ -19,6 +19,16 @@
   `10.5281/zenodo.7348758`, the one the Echoes repository gives, which resolves
   to the current version (v1.0.0, 2026).
 - The key of Parrott and Killoh (1984) misspelled the first author's name.
+- A **Getting started** page opens the site: the installation, and one
+  estimate taken from the RVE to the effective moduli with each object defined
+  on the way. It replaces the Manual's installation page; the instructions for
+  running the test suite move to the developer's testing page.
+- A **Nomenclature** page holds the typography of the formulas, the operators
+  and the rules every page and docstring follows for decorations (`hom`, the
+  indices of the reference medium and of a phase, upright labels, the Eshelby
+  tensor). The theory page that held the typography keeps the conventions and
+  is now called *Conventions*. The home page names three reading paths, and the
+  API is visible again in the navigation bar.
 
 ## v0.14.2 — where the sample count stops paying, and the mesh that produced it
 

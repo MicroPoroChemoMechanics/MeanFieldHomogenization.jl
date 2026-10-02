@@ -113,7 +113,7 @@ in-plane projector, the two order-4 projectors are
 
 that is, ``\Pi^{\mathcal{O}} = \mathbb{W}_1+\mathbb{W}_6`` and
 ``\Pi^{\mathcal{I}} = \mathbb{W}_2+\mathbb{W}_5`` in the
-[Walpole basis](@ref th-notation) of axis ``\underline{n}``.
+[Walpole basis](@ref th-notation-bases) of axis ``\underline{n}``.
 
 In Kelvin-Mandel components written in the frame
 ``(\underline{\ell},\underline{m},\underline{n})``, this split is a **pure

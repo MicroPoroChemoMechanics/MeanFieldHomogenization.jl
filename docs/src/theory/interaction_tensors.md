@@ -5,7 +5,7 @@ of a single inclusion in a reference medium. The two N-body schemes need one mor
 the tensor measuring the field one inclusion induces in another. This page defines it,
 gives the closed forms, and states why they are exact.
 
-Notation follows [the conventions page](@ref th-notation): underline for vectors, bold
+Notation follows the [Nomenclature](@ref nomenclature): underline for vectors, bold
 for order 2, blackboard bold for order 4. Two symbols are introduced here.
 
 | Symbol | Object | Elasticity | Conduction |
@@ -178,8 +178,8 @@ T_{3333} &= \kappa\left(-8 + 8\nu + \tfrac{24}{5}\rho^2\right).
 
 This set is transversely isotropic about ``\underline{n}`` and satisfies
 ``T_{1212} = (T_{1111}-T_{1122})/2`` identically, so it is carried **exactly** by five
-Walpole coefficients rather than by an 81-component array — the storage described on
-[the conventions page](@ref th-notation):
+Walpole coefficients rather than by an 81-component array — the storage described in
+[Conventions](@ref th-notation-bases):
 
 ```math
 T_1 = T_{3333},\quad

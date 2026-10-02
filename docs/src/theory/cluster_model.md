@@ -4,7 +4,7 @@
 every inclusion is solved for, accounting for the pairwise interaction with each
 neighbor inside a cluster, on top of the interaction with the matrix.
 
-Notation as on [the conventions page](@ref th-notation); the interaction tensor
+Notation as in the [Nomenclature](@ref nomenclature); the interaction tensor
 ``\mathbb{T}^{IJ}`` and the Green operator are defined on
 [the interaction page](@ref th-interaction).
 

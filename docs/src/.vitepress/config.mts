@@ -28,25 +28,28 @@ const sidebarTemp = {
 }
 
 // DocumenterVitepress mirrors the whole `pages` tree into the navbar, which for
-// this manual means ten dropdowns holding 158 entries — a duplicate of the
-// sidebar that fills the bar edge to edge and pushes the GitHub link off screen.
-// Keep the main reading path as dropdowns, fold the reference material into one
-// "More" menu, and shorten the two labels that were doing the most damage.
+// this manual means a dozen dropdowns holding over 150 entries — a duplicate of
+// the sidebar that fills the bar edge to edge and pushes the GitHub link off
+// screen. Keep the main reading path as dropdowns, fold the companion material
+// into one "More" menu, and shorten the label that was doing the most damage.
+//
+// `API` IS NOT FOLDED, as in ChemistryLab. Folding it there made the docstring
+// reference reachable only through a dropdown labeled something else, which
+// read as the API having been removed from the manual.
 const RENAME: Record<string, string> = {
   'Finite-element coupling': 'FE coupling',
-  'Tools and migration': 'Tools',
 }
-const MORE = ['Developer', 'API', 'References']
+const MORE = ['Tools and migration', 'Developer', 'Nomenclature', 'References']
 
 // Order is the one declared in `pages` — the navbar must not tell a different
-// story from the sidebar. Only two things are done to it: the reference
-// material is folded into one menu, and two long labels are shortened.
+// story from the sidebar. Only two things are done to it: the companion
+// material is folded into one menu, and a long label is shortened.
 function curateNav(items: any[]): any[] {
   const more = items.filter((i) => MORE.includes(i.text))
   const out = items
     .filter((i) => !more.includes(i))
     .map((i) => ({ ...i, text: RENAME[i.text] ?? i.text }))
-  if (more.length) out.push({ text: 'Reference', items: more })
+  if (more.length) out.push({ text: 'More', items: more })
   return out
 }
 

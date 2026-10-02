@@ -1,57 +1,11 @@
-# [Notation and conventions](@id th-notation)
+# [Conventions](@id th-notation)
 
-This page fixes the notation used throughout the documentation. It is
-deliberately short: every symbol that is *not* listed here is redefined on the
-page where it appears.
-
-## Tensor order is carried by the typeface
-
-The convention is that of the
-[Echoes manual](https://jfbarthelemy.github.io/echoes/), so that
-formulas can be compared side by side with it.
-
-| Object | Typeset as | Example |
-| :----- | :--------- | :------ |
-| scalar | italic | ``k``, ``\mu``, ``\nu``, ``\omega``, ``\eta``, ``\chi`` |
-| vector (order 1) | underlined | ``\underline{u}``, ``\underline{n}``, ``\underline{\xi}`` |
-| tensor of order 2 | bold | ``\boldsymbol{A}``, ``\boldsymbol{B}``, ``\boldsymbol{K}``, ``\boldsymbol{\sigma}``, ``\boldsymbol{\varepsilon}`` |
-| tensor of order 4 | blackboard bold | ``\mathbb{C}``, ``\mathbb{P}``, ``\mathbb{Q}``, ``\mathbb{H}``, ``\mathbb{S}`` |
-| set, geometry, shape function | calligraphic | ``\mathcal{E}_{\boldsymbol{A}}``, ``\mathcal{G}_i``, ``\mathcal{T}_a``, ``\mathcal{K}_\eta`` |
-
-One class of object is deliberately outside that table: the **column arrays and
-matrices of an algebraic formalism**, which are not tensors and carry no tensor
-order — the two-component state vector ``\mathbf s(r) = (u_r, \sigma_{rr})`` and
-the transfer matrices ``\mathbf T``, ``\mathbf J`` of the
-[layered sphere](layered_sphere.md), or the column of phase fractions ``[f]``
-and the column of ones ``\mathbf U`` of the
-[differential scheme](differential_scheme.md). They are typeset in **upright
-bold**, with ``\mathbb 1`` the identity matrix of the corresponding size, and
-each page states the size and the entries.
-
-The single most useful thing to remember: **an underline is a vector, bold is
-order 2, blackboard bold is order 4**. This is what makes an expression such as
-
-```math
-\mathbb{H} = \tfrac{3}{4}\,
-\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}
-```
-
-readable at a glance: an order-4 tensor ``\mathbb{H}`` is built from an order-2
-tensor ``\boldsymbol{B}`` and a unit vector ``\underline{n}``.
-
-## Operators
-
-| Operator | Meaning |
-| :------- | :------ |
-| ``\underline{u}\cdot\underline{v}``, ``\boldsymbol{A}\cdot\underline{u}`` | simple contraction (one index) |
-| ``\boldsymbol{A}:\boldsymbol{B}``, ``\mathbb{C}:\boldsymbol{\varepsilon}`` | double contraction (two indices) |
-| ``\underline{u}\otimes\underline{v}`` | tensor product |
-| ``\underline{u}\stackrel{s}{\otimes}\boldsymbol{A}\stackrel{s}{\otimes}\underline{u}`` | symmetrized tensor product (order 4, both symmetries) |
-| ``\boldsymbol{A}\stackrel{s}{\boxtimes}\boldsymbol{B}`` | symmetrized box product |
-| ``\boldsymbol{A}^{\!T}`` | transpose |
-| ``[\![\,\underline{u}\,]\!]`` | jump across an interface, ``\underline{u}^+-\underline{u}^-`` |
-| ``\langle\,\cdot\,\rangle_\Omega`` | volume average over ``\Omega`` |
-| ``\mathrm{d}S_\xi`` | surface element in the ``\underline{\xi}`` parametrization |
+This page fixes the conventions that the formulas of the documentation take for
+granted: the sign under which elasticity and conduction share one set of
+formulas, the sign of the Green operator, the bases in which isotropic and
+transversely isotropic tensors are written, the geometry of an ellipsoid and the
+storage of tensors. The typeface of each kind of object, the operators and the
+list of the symbols are in the [Nomenclature](@ref nomenclature).
 
 ## [Elasticity and transport: one set of formulas](@id th-notation-sigma-q)
 
@@ -121,7 +75,7 @@ semi-definite and its interior average **plus** the Hill tensor,
 of this section. [Interaction tensors](interaction_tensors.md) develops the
 consequences and names the references that use the opposite sign.
 
-## Isotropic and transversely isotropic bases
+## [Isotropic and transversely isotropic bases](@id th-notation-bases)
 
 Any isotropic order-4 tensor is a combination of the spherical and deviatoric
 projectors, with ``\mathbb{I}`` the order-4 identity:
@@ -150,7 +104,7 @@ This is the storage used by `TensND.TensTI{4}` and by
 [`hill_tensor`](@ref) on a transversely isotropic matrix
 [walpole1981, barthelemyIJES2020_hilltrans](@cite).
 
-## Ellipsoid geometry
+## [Ellipsoid geometry](@id th-notation-ellipsoid)
 
 An ellipsoid is described by an invertible order-2 **shape tensor**
 ``\boldsymbol{A}`` such that ``\boldsymbol{A}^{\!T}\!\cdot\boldsymbol{A}`` is
@@ -191,7 +145,7 @@ plotly_scene(shape_traces(Ellipsoid(3.0, 1.5, 0.8)); uid = "notation-ellipsoid",
     height = 430, title = "Semi-axes a ≥ b ≥ c and the principal frame")
 ```
 
-## Storage: Kelvin–Mandel
+## [Storage: Kelvin–Mandel](@id th-notation-storage)
 
 Order-2 and order-4 tensors are stored in the **Kelvin–Mandel** convention
 (orthonormal 6-dimensional basis, off-diagonal components carrying
@@ -199,14 +153,14 @@ Order-2 and order-4 tensors are stored in the **Kelvin–Mandel** convention
 makes a double contraction an ordinary matrix product and a tensor inverse an
 ordinary matrix inverse. The practical consequences when reading printed
 components are spelled out in
-[A storage convention worth knowing](../tutorials/first_estimate.md).
+[A storage convention worth knowing](@ref tut-first-estimate-storage).
 
 ``\mathrm{Mat}(\mathbb{C})`` denotes the ``6\times 6`` Kelvin–Mandel matrix of an
 order-4 tensor, and
 ``\mathrm{Mat}\bigl(\mathbb{C}, \underline{e}^{\boldsymbol{A}}_i\bigr)`` the same
 matrix expressed in the ellipsoid's principal frame.
 
-## Two rules this documentation follows
+## [Two rules this documentation follows](@id th-notation-rules)
 
 **Every symbol is defined where it is used.** A page never relies on a symbol
 introduced only on another page, even at the cost of repeating a definition.
