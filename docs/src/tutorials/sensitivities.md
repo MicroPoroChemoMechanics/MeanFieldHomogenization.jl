@@ -74,7 +74,7 @@ Mori–Tanaka has a known closed-form sensitivity of the effective bulk
 modulus to volume fraction [christensen1990](@cite):
 
 ```math
-\frac{\partial k_{\text{MT}}}{\partial f} =
+\frac{\partial k_{\mathrm{MT}}}{\partial f} =
 \Delta k\;\frac{\zeta_m(\zeta_m+\Delta k)}{D^2},
 \qquad
 \zeta_m = k_m+\tfrac{4}{3}\mu_m,

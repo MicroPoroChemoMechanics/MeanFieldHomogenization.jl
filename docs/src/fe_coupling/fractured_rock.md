@@ -67,8 +67,9 @@ to capture:
 | ``\omega`` | 5.52·10⁻⁴ | 6.35·10⁻⁴ | 7.18·10⁻⁴ |
 | ``k_{11}`` (m²) | 1.11·10⁻¹⁸ | 1.15·10⁻¹⁸ | 1.20·10⁻¹⁸ |
 
-Once a family closes it leaves the intact matrix behind: ``\boldsymbol{B} = 0``,
-``1/M = 0`` and [`transport_property`](@ref) returns `nothing` — the fracture
+Once a family closes it leaves the intact matrix behind: its contributions to
+the Biot tensor and to the inverse Biot modulus vanish, ``\boldsymbol{B} = 0`` and
+``1/M = 0``, and [`transport_property`](@ref) returns `nothing` — the fracture
 carries no flow at all.
 
 !!! warning "Returning nothing is an answer, not a failure"

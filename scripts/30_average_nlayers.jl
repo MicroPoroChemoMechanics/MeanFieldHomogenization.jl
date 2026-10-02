@@ -17,7 +17,7 @@
 # \qquad \text{(perfect interfaces)}
 # ```
 # is reconstructed and cross-checked against the dilute-scheme identity
-# ``\mathbb{C}_{\text{eff}} = \mathbb{C}_0 + f\,\mathbb{N} \iff
+# ``\mathbb{C}^{\mathrm{hom}} = \mathbb{C}_0 + f\,\mathbb{N} \iff
 # \mathbb{N} = \langle(\mathbb{C}_k - \mathbb{C}_0) : \mathbb{A}_{\varepsilon\varepsilon}\rangle``.
 
 import Pkg                                                          #jl

@@ -115,7 +115,7 @@ Substituting the table back, the effective Kelvin-Mandel matrix of an
 ``N``-layer stack of isotropic layers is
 
 ```math
-\mathrm{Mat}(\mathbb{C}^{\hom}) =
+\mathrm{Mat}(\mathbb{C}^{\mathrm{hom}}) =
 \begin{pmatrix}
 E + \tfrac{B^2}{A} + 2F & E + \tfrac{B^2}{A} & \tfrac{B}{A} & 0 & 0 & 0 \\[2pt]
 E + \tfrac{B^2}{A} & E + \tfrac{B^2}{A} + 2F & \tfrac{B}{A} & 0 & 0 & 0 \\[2pt]
@@ -237,7 +237,7 @@ shows the size effect explicitly, an interface *density*.
 
 The frame is not confined to the canonical one, and not confined to floating
 point either. A **symbolic normal** is completed into an orthonormal
-``(\underline{\ell}, \underline{m}, \hat{\underline{n}})`` by plain
+``(\underline{\ell}, \underline{m}, \underline{n})`` by plain
 Gram-Schmidt — no trigonometry and no `atan2`, so the frame stays as readable as
 the normal it came from:
 

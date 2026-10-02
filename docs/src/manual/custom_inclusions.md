@@ -26,7 +26,7 @@ size-independent contribution**:
 ```math
 \Delta \mathbb C = \underbrace{f}_{\text{volume fraction}} \; \mathbb N
 \qquad\text{or}\qquad
-\Delta \mathbb C = \underbrace{\tfrac{4\pi}{3}\,\varepsilon}_{\text{density}} \; \mathbb N
+\Delta \mathbb C = \underbrace{\tfrac{4\pi}{3}\,\varepsilon}_{\mathrm{density}} \; \mathbb N
 ```
 
 Your job is to supply the contribution — or anything upstream of it that the
@@ -100,7 +100,7 @@ add_phase!(rve, :cracks, flat, Dict(:C => C_matrix); density = 0.08)
 
 If no single property represents your inclusion (a coated or layered pattern),
 pass `homogeneous = false`. The scheme kernels then use the exact identities
-instead of ``\langle\mathbb C:\varepsilon\rangle_r = \mathbb C_r:\mathbb A_r``,
+instead of ``\langle\mathbb C:\boldsymbol\varepsilon\rangle_i = \mathbb C_i:\mathbb A_i``,
 which would otherwise give a wrong answer — occasionally with the wrong sign.
 
 The same caveat applies *inside* gate B. The strain localization fixes the

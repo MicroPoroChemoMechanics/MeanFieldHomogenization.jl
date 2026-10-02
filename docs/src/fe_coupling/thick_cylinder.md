@@ -49,7 +49,7 @@ validates the coupling — any defect in the plumbing would show up here:
 
 | mesh | 24×24 | 48×48 | 96×96 |
 |:--|:--|:--|:--|
-| ``\max\lvert u_r - u_r^{\rm Lam\acute{e}}\rvert / \max\lvert u_r^{\rm Lam\acute{e}}\rvert`` | 1.6·10⁻² | 4.3·10⁻³ | 1.1·10⁻³ |
+| ``\max\lvert u_r - u_r^\mathrm{Lam\acute{e}}\rvert / \max\lvert u_r^\mathrm{Lam\acute{e}}\rvert`` | 1.6·10⁻² | 4.3·10⁻³ | 1.1·10⁻³ |
 
 ## Step 2 — cracks that close
 

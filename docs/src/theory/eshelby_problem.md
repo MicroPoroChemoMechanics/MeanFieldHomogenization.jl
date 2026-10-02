@@ -37,17 +37,17 @@ the ellipsoid's size**.
 The same solution is written three ways in the literature. Knowing which is
 which avoids most confusion when comparing formulas across papers.
 
-**Eshelby tensor ``\mathbb{S}``.** Introduce the equivalent *eigenstrain*
+**Eshelby tensor ``\mathbb{S}^{\mathrm{E}}``.** Introduce the equivalent *eigenstrain*
 (stress-free strain) ``\boldsymbol{\varepsilon}^{\star} =
 -\mathbb{C}^{-1}:\boldsymbol{\tau}``. Then
 
 ```math
-\boldsymbol{\varepsilon}(\underline{x}) = \mathbb{S}:\boldsymbol{\varepsilon}^{\star},
+\boldsymbol{\varepsilon}(\underline{x}) = \mathbb{S}^{\mathrm{E}}:\boldsymbol{\varepsilon}^{\star},
 \qquad
-\boxed{\;\mathbb{S} = \mathbb{P}:\mathbb{C}\;}
+\boxed{\;\mathbb{S}^{\mathrm{E}} = \mathbb{P}:\mathbb{C}\;}
 ```
 
-which is Eshelby's original form. ``\mathbb{S}`` is dimensionless;
+which is Eshelby's original form. ``\mathbb{S}^{\mathrm{E}}`` is dimensionless;
 ``\mathbb{P}`` has the dimension of a compliance.
 
 **Second Hill tensor ``\mathbb{Q}``.** Asking for the *stress* inside the
@@ -63,7 +63,7 @@ inclusion rather than the strain gives the dual statement
 becomes flat, which is why the crack theory is built on it rather than on
 ``\mathbb{P}`` — see [Crack opening displacement](cod_tensors.md).
 
-In `MeanFieldHomogenization`, ``\mathbb{P}`` and ``\mathbb{S}`` are [`hill_tensor`](@ref)
+In `MeanFieldHomogenization`, ``\mathbb{P}`` and ``\mathbb{S}^{\mathrm{E}}`` are [`hill_tensor`](@ref)
 and [`eshelby_tensor`](@ref). There is no public accessor for ``\mathbb{Q}``:
 assemble it from ``\mathbb{P}`` when you need it,
 
@@ -99,7 +99,7 @@ inside it, and an order-2 Hill tensor
 ```math
 \nabla T(\underline{x}) = -\,\boldsymbol{P}\cdot\underline{\tau}_q,
 \qquad
-\boldsymbol{s} = \boldsymbol{P}\cdot\boldsymbol{K},
+\boldsymbol{S}^{\mathrm{E}} = \boldsymbol{P}\cdot\boldsymbol{K},
 \qquad
 \boldsymbol{Q} = \boldsymbol{K} - \boldsymbol{K}\cdot\boldsymbol{P}\cdot\boldsymbol{K},
 ```
@@ -120,7 +120,7 @@ See [Conduction and diffusion](@ref man-conductivity) for the call.
 
 A real heterogeneous material is not one ellipsoid in an infinite medium. What
 comes closest is the **inhomogeneity** problem — an ellipsoid of a *different*
-stiffness ``\mathbb{C}^I``, loaded remotely by ``\underline{u} = \boldsymbol{E}\cdot\underline{x}``
+stiffness ``\mathbb{C}_1``, loaded remotely by ``\underline{u} = \boldsymbol{E}\cdot\underline{x}``
 — and it reduces to the inclusion problem above by the equivalent-polarization
 argument of [Localization](localization.md):
 

@@ -21,7 +21,7 @@ Unknowns are the skeleton displacement ``\underline{u}`` and the pore pressure
 closed by the material, which returns **both** fluxes and the permeability:
 
 ```math
-\dot{\boldsymbol{\Sigma}} = \mathbb{C}^{\rm hom} : \dot{\boldsymbol{E}}
+\dot{\boldsymbol{\Sigma}} = \mathbb{C}^{\mathrm{hom}} : \dot{\boldsymbol{E}}
                           - \dot{p}\,\boldsymbol{B},
 \qquad
 \dot{\varphi} = \boldsymbol{B} : \dot{\boldsymbol{E}} + \frac{\dot{p}}{M},
@@ -39,7 +39,7 @@ singularity — which cannot move a flat crack [barthelemyARMA2011; § 1.1](@cit
 In terms of what the FE code hands over,
 
 ```math
-\boldsymbol{\Sigma}' = \mathbb{C}^{\rm hom} : \boldsymbol{E}
+\boldsymbol{\Sigma}' = \mathbb{C}^{\mathrm{hom}} : \boldsymbol{E}
                      + p\,(\boldsymbol{1} - \boldsymbol{B}) ,
 ```
 
@@ -65,14 +65,14 @@ dualized by a test pair ``(\delta\underline{u}, \delta p)``:
 
 ```math
 \begin{aligned}
-\int_\Omega \boldsymbol{\Sigma}_{n+1} : \nabla^{\rm s}\delta\underline{u}
-   \,{\rm d}\Omega
-&= \int_{\Gamma_T} \underline{T}^{\rm g}\cdot\delta\underline{u}\,{\rm d}S ,
+\int_\Omega \boldsymbol{\Sigma}_{n+1} : \nabla^{\mathrm{s}}\delta\underline{u}
+   \,\mathrm{d}\Omega
+&= \int_{\Gamma_T} \underline{T}^{\mathrm{g}}\cdot\delta\underline{u}\,\mathrm{d}S ,
 \\[2pt]
-\int_\Omega (\varphi_{n+1} - \varphi_n)\,\delta p \,{\rm d}\Omega
+\int_\Omega (\varphi_{n+1} - \varphi_n)\,\delta p \,\mathrm{d}\Omega
  + \Delta t \int_\Omega \underline{\nabla}\delta p \cdot
-   \left(\frac{\boldsymbol{K}}{\mu}\cdot\underline{\nabla} p_{n+1}\right){\rm d}\Omega
-&= -\,\Delta t \int_{\Gamma_Q} q^{\rm g}\,\delta p \,{\rm d}S .
+   \left(\frac{\boldsymbol{K}}{\mu}\cdot\underline{\nabla} p_{n+1}\right)\mathrm{d}\Omega
+&= -\,\Delta t \int_{\Gamma_Q} q^{\mathrm{g}}\,\delta p \,\mathrm{d}S .
 \end{aligned}
 ```
 
@@ -85,12 +85,12 @@ plus the Darcy term:
 
 ```math
 \begin{bmatrix}
-\displaystyle\int \nabla^{\rm s}\delta\underline{u} : \mathbb{C}^{\rm hom}
-   : \nabla^{\rm s}\underline{u}
+\displaystyle\int \nabla^{\mathrm{s}}\delta\underline{u} : \mathbb{C}^{\mathrm{hom}}
+   : \nabla^{\mathrm{s}}\underline{u}
 &
--\displaystyle\int (\nabla^{\rm s}\delta\underline{u} : \boldsymbol{B})\, p
+-\displaystyle\int (\nabla^{\mathrm{s}}\delta\underline{u} : \boldsymbol{B})\, p
 \\[6pt]
-\displaystyle\int \delta p\,(\boldsymbol{B} : \nabla^{\rm s}\underline{u})
+\displaystyle\int \delta p\,(\boldsymbol{B} : \nabla^{\mathrm{s}}\underline{u})
 &
 \displaystyle\int \frac{\delta p\, p}{M}
  + \Delta t \int \underline{\nabla}\delta p \cdot

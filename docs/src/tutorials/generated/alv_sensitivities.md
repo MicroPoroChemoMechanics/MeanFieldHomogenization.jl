@@ -8,7 +8,7 @@ EditURL = "../../../../scripts/59_alv_sensitivities.jl"
 *elastic* homogenization. Nothing in that story is specific to elasticity: the
 ALV path is built from the same generic Julia code, so `ForwardDiff` propagates
 a `Dual` straight through the Volterra assembly, the block inversions and the
-scheme, and returns ``\partial \mu^{\hom}/\partial p`` for free — no adjoint,
+scheme, and returns ``\partial \mu^{\mathrm{hom}}/\partial p`` for free — no adjoint,
 no hand-written derivative, no finite difference.
 
 Two patterns cover every case, and every derivative below is validated against
@@ -71,7 +71,7 @@ end
 ````
 
 The scalar being differentiated is the effective shear modulus at the last
-instant, ``\mu^{\hom}(t_n, t_n) = \beta_{nn}/2``, read off the isotropic
+instant, ``\mu^{\mathrm{hom}}(t_n, t_n) = \beta_{nn}/2``, read off the isotropic
 blocks of the effective relaxation operator.
 
 ````@example alv_sensitivities
@@ -82,7 +82,7 @@ function effective_mu_final(rve, scheme)
 end
 ````
 
-## §1 The `set_param` lens — ``\partial \mu^{\hom} / \partial f``
+## §1 The `set_param` lens — ``\partial \mu^{\mathrm{hom}} / \partial f``
 
 The RVE is built once, outside the differentiated function; `set_param`
 substitutes the `Dual` fraction into a copy. Every scheme accepts it,
@@ -109,7 +109,7 @@ for (sch, name) in zip(SCHEMES, SCHEME_NAMES)
 end
 ````
 
-## §2 Closure capture — ``\partial \mu^{\hom} / \partial \mu_M``
+## §2 Closure capture — ``\partial \mu^{\mathrm{hom}} / \partial \mu_M``
 
 A matrix modulus is not an RVE field but an argument of the relaxation kernel.
 Closing it into `build_law_M` is enough: `ForwardDiff` lifts it to a `Dual`
@@ -133,7 +133,7 @@ dμ_dμM_FD = (eff_mu_vs_μM(μM₀ + h) - eff_mu_vs_μM(μM₀ - h)) / (2h)
 @printf "  AD = %+.6e   FD = %+.6e   rel_err = %.2e\n" dμ_dμM_AD dμ_dμM_FD abs(dμ_dμM_AD - dμ_dμM_FD) / abs(dμ_dμM_FD)
 ````
 
-## §3 Both at once — the joint gradient ``\nabla_{(f,\,k_M,\,\mu_M)}\,\mu^{\hom}``
+## §3 Both at once — the joint gradient ``\nabla_{(f,\,k_M,\,\mu_M)}\,\mu^{\mathrm{hom}}``
 
 The two patterns compose: one geometric parameter through the lens, two
 material ones through the closure, in a single `ForwardDiff.gradient` — and
@@ -167,7 +167,7 @@ for (i, name) in enumerate(("f", "k_M", "μ_M"))
 end
 ````
 
-## §4 A relaxation time — ``\partial \mu^{\hom} / \partial \tau_K``
+## §4 A relaxation time — ``\partial \mu^{\mathrm{hom}} / \partial \tau_K``
 
 The derivative that has no elastic counterpart: ``\tau_K`` sets *when* the
 bulk kernel relaxes, and it enters only through an exponential inside the

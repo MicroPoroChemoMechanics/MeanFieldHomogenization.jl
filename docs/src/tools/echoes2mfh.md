@@ -166,7 +166,7 @@ explicitly refused, and any mapping target MFH no longer exports.
   the tool automates.
 - [Cross-validation against Echoes](@ref dev-validation) — the deliberate
   divergences, including the crack-compliance normalization
-  (``\mathbb H_{\text{Echoes}} = \eta\, \mathbb H_{\text{MFH}}``, ``\eta = b/a``),
+  (``\mathbb H_{\mathrm{Echoes}} = \eta\, \mathbb H_{\mathrm{MFH}}``, ``\eta = b/a``),
   which the translator never applies silently.
 - [MFH Studio](@ref tools-mfhstudio) — the graphical builder. It shares this
   tool's code generator, so both write the same style of Julia, and its **Open**

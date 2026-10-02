@@ -9,12 +9,12 @@
 # the acoustic (Christoffel) tensor,
 #
 # ```math
-# \hat{\mathbb{\Gamma}}(\underline{\xi})
+# \hat{\mathbb{G}}^0(\underline{\xi})
 #   = \underline{\xi}\stackrel{s}{\otimes}\boldsymbol{N}^{-1}(\underline{\xi})
 #     \stackrel{s}{\otimes}\underline{\xi},
 # \qquad
 # \hat{\mathbb{Q}}(\underline{\xi})
-#   = \mathbb{C} - \mathbb{C}:\hat{\mathbb{\Gamma}}(\underline{\xi}):\mathbb{C},
+#   = \mathbb{C} - \mathbb{C}:\hat{\mathbb{G}}^0(\underline{\xi}):\mathbb{C},
 # ```
 #
 # ```math
@@ -106,7 +106,7 @@ println()                                                          #jl
 # ## §1 The Fourier Green operator, order 4
 #
 # Built exactly as in `TensND`'s own symbolic tutorials: the acoustic tensor,
-# its inverse, ``\hat{\mathbb{\Gamma}}``, then ``\hat{\mathbb{Q}}``. Note that
+# its inverse, ``\hat{\mathbb{G}}^0``, then ``\hat{\mathbb{Q}}``. Note that
 # ``\hat{\mathbb{Q}}`` already carries the subtraction of the large-``\xi_3``
 # asymptote — which is why the integral of § 4 converges with no *ad hoc*
 # regularization.
@@ -135,7 +135,7 @@ println()                              #jl
 # \underline{n}\cdot\hat{\mathbb{Q}}(\underline{\xi})\cdot\underline{n}
 # = \boldsymbol{A}
 #   - \boldsymbol{V}(\underline{\xi})\cdot\boldsymbol{N}^{-1}(\underline{\xi})
-#     \cdot\boldsymbol{V}^{\mathsf{T}}(\underline{\xi}),
+#     \cdot\boldsymbol{V}^{\!T}(\underline{\xi}),
 # \qquad
 # \boldsymbol{A} = \underline{n}\cdot\mathbb{C}\cdot\underline{n},
 # \qquad
@@ -290,8 +290,8 @@ println()                                                                     #j
 # ### The same result by Cauchy residues
 #
 # The integrand decays like ``\xi_3^{-2}``, so
-# ``\int_{\mathbb{R}} = 2i\pi\sum_{\text{UHP}}\mathrm{Res}`` and
-# ``\hat{\boldsymbol{Q}}^{\star}_{nn} = i\sum_{\text{UHP}}\mathrm{Res}``. This
+# ``\int_{\mathbb{R}} = 2i\pi\sum_{\mathrm{UHP}}\mathrm{Res}`` and
+# ``\hat{\boldsymbol{Q}}^{\star}_{nn} = i\sum_{\mathrm{UHP}}\mathrm{Res}``. This
 # is the route the package's `Residue` back-end takes numerically
 # (`Cracks/green_residue.jl`): there the poles are the roots of the degree-6
 # ``\det\boldsymbol{N}(z)``, here they collapse to the single ``+i\rho``.
@@ -387,7 +387,7 @@ end
     sifaniso_CS(ηv) -> (𝒞, 𝒮)
 
 `𝒞_η` and `𝒮_η` in the published form: over the complementary angle
-``ϑ = π/2 - φ``, so a `cos²` integral for `𝒞` and a `sin²` one for `𝒮`.
+``\vartheta = \pi/2 - \varphi``, so a `cos²` integral for `𝒞` and a `sin²` one for `𝒮`.
 Measuring both forms against the same Legendre reference is what shows the two
 conventions to be one and the same quantity.
 """
@@ -502,7 +502,7 @@ end
 #
 # ```math
 # \det\boldsymbol{N}
-# = \underbrace{C_{2323}\bigl(\xi_3^2+\gamma_3^2\rho^2\bigr)}_{\text{antiplane}}
+# = \underbrace{C_{2323}\bigl(\xi_3^2+\gamma_3^2\rho^2\bigr)}_{\mathrm{antiplane}}
 #   \cdot
 #   \underbrace{C_{3333}C_{2323}\bigl(\xi_3^2+\gamma_1^2\rho^2\bigr)
 #               \bigl(\xi_3^2+\gamma_2^2\rho^2\bigr)}_{\text{in-plane}} .

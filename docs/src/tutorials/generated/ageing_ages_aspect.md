@@ -19,7 +19,7 @@ parameters that fight each other:
   pure morphology and knows nothing about time.
 
 Both act on the same output, the effective uniaxial creep function
-``J_E^{\hom}(t, t')``, and the point of the figure is how differently.
+``J_E^{\mathrm{hom}}(t, t')``, and the point of the figure is how differently.
 
 ````@example ageing_ages_aspect
 using MeanFieldHomogenization
@@ -112,7 +112,7 @@ end
 `homogenize_alv` returns the effective **relaxation** block matrix. Inverting it
 in the Volterra sense gives the creep matrix, and applying a unit uniaxial
 stress step at the first time of the grid gives the axial strain history — which
-is ``J_E^{\hom}(t, t')`` by definition.
+is ``J_E^{\mathrm{hom}}(t, t')`` by definition.
 
 ````@example ageing_ages_aspect
 function uniaxial_creep(R_eff, n)

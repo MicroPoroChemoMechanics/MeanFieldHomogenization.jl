@@ -50,49 +50,55 @@ at each radius ``r_k`` are specified in an `NTuple{N, AbstractInterface}`
 ## Bulk (spherical) recurrence — Hervé-Zaoui 1993
 
 Under a purely hydrostatic remote strain, the displacement in layer
-``k`` is `u_r^{(k)}(r) = A_k r + B_k / r^2`.  To stay regular in the
-**incompressibility limit** ``κ_k → ∞``, the implementation propagates
-the **field-valued state vector** ``\mathbf s(r) = (u_r, σ_{rr})``
+``k`` is ``u_r^{(k)}(r) = A_k r + B_k / r^2``, where ``k_k`` and ``\mu_k``
+denote the bulk and shear moduli of the layer. To stay regular in the
+**incompressibility limit** ``k_k \to \infty``, the implementation propagates
+the **field-valued state vector** ``\mathbf s(r) = (u_r, \sigma_{rr})``
 directly, with the intra-layer transfer
 
 ```math
-\mathbf T(r_\mathrm{out}, r_\mathrm{in}; κ, μ) =
+\mathbf T(r_{\mathrm{out}}, r_{\mathrm{in}}; k, \mu) =
 \begin{pmatrix}
-α\,\dfrac{r_\mathrm{out}}{r_\mathrm{in}} + β\,\left(\dfrac{r_\mathrm{in}}{r_\mathrm{out}}\right)^{\!2}
-& \dfrac{r_\mathrm{out} - r_\mathrm{in}^{3}/r_\mathrm{out}^{2}}{3κ + 4μ}\\[6pt]
-4μβ\left(\dfrac{1}{r_\mathrm{in}} - \dfrac{r_\mathrm{in}^{2}}{r_\mathrm{out}^{3}}\right)
-& α\left(\dfrac{r_\mathrm{in}}{r_\mathrm{out}}\right)^{\!3} + β
+\alpha\,\dfrac{r_{\mathrm{out}}}{r_{\mathrm{in}}} + \beta\,\left(\dfrac{r_{\mathrm{in}}}{r_{\mathrm{out}}}\right)^{\!2}
+& \dfrac{r_{\mathrm{out}} - r_{\mathrm{in}}^{3}/r_{\mathrm{out}}^{2}}{3k + 4\mu}\\[6pt]
+4\mu\beta\left(\dfrac{1}{r_{\mathrm{in}}} - \dfrac{r_{\mathrm{in}}^{2}}{r_{\mathrm{out}}^{3}}\right)
+& \alpha\left(\dfrac{r_{\mathrm{in}}}{r_{\mathrm{out}}}\right)^{\!3} + \beta
 \end{pmatrix},
 ```
 
-where ``α = 4μ/(3κ+4μ) ∈ [0,1]`` and ``β = 3κ/(3κ+4μ) ∈ [0,1]`` with
-``α + β = 1``.  Every entry stays finite as ``κ → ∞`` (hence also for
-``ν → 1/2``), and the per-layer bulk localization ``α_k = A_k/A_∞``
-degenerates smoothly (``α_k → 0`` for an incompressible core).
+where ``\alpha = 4\mu/(3k+4\mu) \in [0,1]`` and ``\beta = 3k/(3k+4\mu) \in [0,1]`` with
+``\alpha + \beta = 1``.  Every entry stays finite as ``k \to \infty`` (hence also for
+``\nu \to 1/2``), and the per-layer bulk localization ``\alpha_k = A_k/A_\infty``
+degenerates smoothly (``\alpha_k \to 0`` for an incompressible core).
 
 The entry-point at ``r = 0^+`` is written in the "pressure amplitude"
-parameterization ``P_1 = 3κ_1 A_1``, so that
+parameterization ``P_1 = 3k_1 A_1``, so that
 
 ```math
-u_r(r_1^-) = \frac{r_1}{3κ_1}\,P_1 \xrightarrow{κ_1 → ∞} 0,\qquad
-σ_{rr}(r_1^-) = P_1.
+u_r(r_1^-) = \frac{r_1}{3k_1}\,P_1 \xrightarrow{k_1 \to \infty} 0,\qquad
+\sigma_{rr}(r_1^-) = P_1.
 ```
 
 ## Interface jump matrices
 
 Each interface type provides a 2×2 (bulk) jump matrix
-``\mathbf J_\text{intf}(r)`` such that
-``\mathbf s(r_k^+) = \mathbf J \cdot \mathbf s(r_k^-)``.
+``\mathbf J(r)`` such that
+``\mathbf s(r_k^+) = \mathbf J \cdot \mathbf s(r_k^-)``. A spring interface is
+parametrized by its normal and tangential stiffnesses ``k_n``, ``k_t``, whose
+inverses ``s_n = 1/k_n``, ``s_t = 1/k_t`` are the compliances, a membrane by its
+surface bulk and shear moduli ``\kappa^{\mathrm s}``, ``\mu^{\mathrm s}``, a
+Kapitza interface by its thermal resistance ``\rho`` and a surface-conductive one
+by its surface conductance ``k^{\mathrm s}``.
 
 ```math
 \begin{aligned}
-\text{Perfect:} &\quad \mathbf J = \mathbf I,\\
-\text{Spring}(k_n, k_t): &\quad \mathbf J = \begin{pmatrix}1 & k_n \\ 0 & 1\end{pmatrix}
-\quad\text{(bulk uses } k_n\text{ only)},\\
-\text{Membrane}(κ_s, μ_s): &\quad \mathbf J = \begin{pmatrix}1 & 0 \\ 4κ_s/r^{2} & 1\end{pmatrix}
-\quad\text{(bulk uses } κ_s\text{ only)},\\
-\text{Kapitza}(ρ): &\quad \mathbf J = \begin{pmatrix}1 & ρ \\ 0 & 1\end{pmatrix},\\
-\text{SurfConductive}(k_s): &\quad \mathbf J = \begin{pmatrix}1 & 0 \\ -n(n{+}1)k_s/r^{2} & 1\end{pmatrix}.
+\text{Perfect:} &\quad \mathbf J = \mathbb 1,\\
+\text{Spring:} &\quad \mathbf J = \begin{pmatrix}1 & s_n \\ 0 & 1\end{pmatrix}
+\quad\text{(the bulk problem uses } s_n\text{ only)},\\
+\text{Membrane:} &\quad \mathbf J = \begin{pmatrix}1 & 0 \\ 4\kappa^{\mathrm s}/r^{2} & 1\end{pmatrix}
+\quad\text{(the bulk problem uses } \kappa^{\mathrm s}\text{ only)},\\
+\text{Kapitza:} &\quad \mathbf J = \begin{pmatrix}1 & \rho \\ 0 & 1\end{pmatrix},\\
+\text{Surface-conductive:} &\quad \mathbf J = \begin{pmatrix}1 & 0 \\ -n(n{+}1)k^{\mathrm s}/r^{2} & 1\end{pmatrix}.
 \end{aligned}
 ```
 
@@ -107,13 +113,14 @@ discontinuity** (traction / flux jump).  All limit to
 Under a remote uniform temperature gradient, the temperature field
 has a Y₁ dependence.  The state vector ``\mathbf s(r) = (\hat T, \hat q_n)``
 (amplitudes projected onto the remote gradient direction) propagates
-through a 2×2 transfer matrix ``T_{cond} = M(r_\mathrm{out}) M(r_\mathrm{in})^{-1}``
-with ``M(r) = \begin{pmatrix} r & 1/r^2 \\ -k & 2k/r^3 \end{pmatrix}``.
+through a 2×2 transfer matrix ``\mathbf T = \mathbf M(r_{\mathrm{out}})\,\mathbf M(r_{\mathrm{in}})^{-1}``
+with ``\mathbf M(r) = \begin{pmatrix} r & 1/r^2 \\ -k & 2k/r^3 \end{pmatrix}``, ``k``
+being here the conductivity of the layer.
 
 Interface jumps for conductivity are given above (Kapitza primal,
 SurfaceConductive dual, matching the structural pattern of their
 elastic analogs).  The per-layer gradient localization
-``α_k = A_k/A_∞`` reduces, in the single-layer case, to the classical
+``\alpha_k = A_k/A_\infty`` reduces, in the single-layer case, to the classical
 ``3k_0/(2k_0 + k_1)`` of Maxwell-type composites.
 
 ## Type genericity & incompressibility
@@ -137,11 +144,11 @@ by wrapping the computation in `ForwardDiff.derivative` /
 
 Under a remote pure-deviatoric strain, the displacement field in an
 isotropic layer has the axisymmetric form
-``u_r = U(r)\,P_2(\cos θ)``, ``u_θ = W(r)\,P_2'(\cos θ)``, and the
-four linearly-independent Navier solutions at ``ℓ = 2`` are parametrized
+``u_r = U(r)\,P_2(\cos\theta)``, ``u_\theta = W(r)\,P_2'(\cos\theta)``, and the
+four linearly-independent Navier solutions at ``\ell = 2`` are parametrized
 by the power-law exponents ``n \in \{1, 3, -4, -2\}`` with material-
 dependent ``U/W`` ratios derived directly from the Navier characteristic
-equation (using ``x = κ/μ``):
+equation (using ``x = k/\mu``):
 
 | Mode | Radial dependence | ``(U, W)``                                  |
 | :--: | :---------------- | :------------------------------------------ |
@@ -151,35 +158,36 @@ equation (using ``x = κ/μ``):
 |  4   | ``r^{-2}``        | ``(3(x+1)/r^2,\ 1/r^2)``                     |
 
 The corresponding traction amplitudes are obtained from Hooke's law
-``σ_{ij} = λ\,δ_{ij}\,\mathrm{tr}(ε) + 2μ\,ε_{ij}``:
+``\sigma_{ij} = \lambda\,\delta_{ij}\,\varepsilon_{kk} + 2\mu\,\varepsilon_{ij}``:
 
 ```math
 \begin{aligned}
-σ_{rr}\text{ amp} &= (λ+2μ)\,U' + \frac{2λ}{r}(U - 3W),\\[2pt]
-σ_{rθ}\text{ amp} &= μ\bigl(W' + (U-W)/r\bigr).
+\sigma_{rr}\text{ amp} &= (\lambda+2\mu)\,U' + \frac{2\lambda}{r}(U - 3W),\\[2pt]
+\sigma_{r\theta}\text{ amp} &= \mu\bigl(W' + (U-W)/r\bigr).
 \end{aligned}
 ```
 
-The state vector ``\mathbf S(r) = (U, W, σ_{rr}, σ_{rθ})`` combines
+The state vector ``\mathbf S(r) = (U, W, \sigma_{rr}, \sigma_{r\theta})`` combines
 displacement and physical traction amplitudes; this form is continuous
-across every perfect interface and rational in ``(κ, μ, r)``, so the
+across every perfect interface and rational in ``(k, \mu, r)``, so the
 recurrence is **type-generic** (supports `Float64`, `BigFloat`,
 `ForwardDiff.Dual`, `SymPy.Sym`, `Symbolics.Num`) and remains regular
-in the incompressibility limit ``κ → ∞``.
+in the incompressibility limit ``k \to \infty``.
 
 Interface jumps at ``r_k``:
 
 - **Perfect**: identity.
-- **Spring**``(k_n, k_t)``:  ``[U] = k_n σ_{rr}``, ``[W] = k_t σ_{rθ}``
-  (traction continuous).
-- **Membrane**``(κ_s, μ_s)``: surface-elastic 2D shell generates a
-  jump in the tractions driven by the surface-stress divergence.
+- **Spring**: ``[\![U]\!] = s_n\,\sigma_{rr} = \sigma_{rr}/k_n``,
+  ``[\![W]\!] = s_t\,\sigma_{r\theta} = \sigma_{r\theta}/k_t``, the traction being
+  continuous.
+- **Membrane**: a surface-elastic shell of moduli ``(\kappa^{\mathrm s}, \mu^{\mathrm s})``
+  generates a jump in the tractions driven by the surface-stress divergence.
 
 Seeding at ``r_1^-`` uses the two regular modes (``a_1 = 1, b_1 = 0``
 and ``a_1 = 0, b_1 = 1``; the two singular amplitudes ``c_1 = d_1 = 0``
 are forced by regularity at the origin).  Propagating both probes and
-solving a 2×2 linear system for the matrix-side far-field ``(a_∞, b_∞)
-= (1, 0)`` yields the per-layer amplitudes.
+solving a 2×2 linear system for the matrix-side far-field
+``(a_\infty, b_\infty) = (1, 0)`` yields the per-layer amplitudes.
 
 The layer localization is **not** the mode-1 amplitude alone.  Mode 2 has
 an ``r^3`` displacement profile, so it integrates to a non-zero deviatoric
@@ -187,7 +195,7 @@ strain over a shell of finite thickness, whereas modes 3 and 4 average to
 zero pointwise:
 
 ```math
-β_k = a_k + b_k\,\frac{21}{5}\,\frac{3κ_k + μ_k}{μ_k}\,
+\beta_k = a_k + b_k\,\frac{21}{5}\,\frac{3k_k + \mu_k}{\mu_k}\,
       \frac{r_k^5 - r_{k-1}^5}{r_k^3 - r_{k-1}^3}.
 ```
 
@@ -196,7 +204,7 @@ Dropping the mode-2 term is invisible on degenerate configurations
 genuine multi-layer stack.
 
 For ``N = 1`` the recurrence reduces to the classical Eshelby single-
-sphere result; for ``N ≥ 2`` it reproduces the core-shell effective shear
+sphere result; for ``N \ge 2`` it reproduces the core-shell effective shear
 modulus of [christensenLo1979](@citet) and passes the Eshelby consistency tests
 (``N = 2`` with core ≡ shell ↔ single-layer of radius ``r_N``, etc.).
 
@@ -211,7 +219,7 @@ Three volume-average flavors are provided:
 - [`cumulative_strain_average`](@ref)`(sphere, C₀, ε∞, r)` — mean
   strain inside the ball of radius ``r``.
 
-All three cover the deviatoric part for any ``N ≥ 1`` via the shear
+All three cover the deviatoric part for any ``N \ge 1`` via the shear
 recurrence above.
 
 
@@ -221,7 +229,7 @@ The recurrences above already carry everything needed to evaluate the field
 **at a point**, in any layer and in the matrix; only the reconstruction was
 missing.  Write ``\underline n = \underline x/r``,
 ``\boldsymbol p = \underline n\otimes\underline n``,
-``\boldsymbol q = \mathbf 1 - \boldsymbol p``.
+``\boldsymbol q = \boldsymbol 1 - \boldsymbol p``.
 
 **Spherical part.** ``\underline u = f(r)\,\underline n`` with
 ``f = \tilde A r + \tilde B/r^2``, hence
@@ -234,15 +242,15 @@ missing.  Write ``\underline n = \underline x/r``,
              + h(r)\,(\underline n\cdot\boldsymbol\varepsilon^{\infty\mathrm d}\cdot\underline n)\,\underline n,
 ```
 
-which is the ``u_r = U P_2``, ``u_θ = W\,\mathrm dP_2/\mathrm dθ`` convention
+which is the ``u_r = U P_2``, ``u_\theta = W\,\mathrm dP_2/\mathrm d\theta`` convention
 above through ``U = 2(g+h)``, ``W = g``.  Differentiating with
-``\partial n_i/\partial x_j = (δ_{ij} - n_i n_j)/r`` gives, with
+``\partial n_i/\partial x_j = (\delta_{ij} - n_i n_j)/r`` gives, with
 ``s = \underline n\cdot\boldsymbol\varepsilon^{\infty\mathrm d}\cdot\underline n``,
 
 ```math
 \boldsymbol\varepsilon = \frac{g}{r}\,\boldsymbol\varepsilon^{\infty\mathrm d}
  + G_2\,(\boldsymbol\varepsilon^{\infty\mathrm d}\cdot\underline n\otimes\underline n)^{\mathrm s}
- + G_3\,s\,\boldsymbol p + G_4\,s\,\mathbf 1,
+ + G_3\,s\,\boldsymbol p + G_4\,s\,\boldsymbol 1,
 \qquad
 \begin{aligned}
 G_2 &= g' - g/r + 2h/r,\\
@@ -253,15 +261,15 @@ G_4 &= h/r.
 
 Every generator is transversely isotropic about ``\underline n`` — the
 configuration is rotation-invariant about the center — so the pointwise
-localization tensor ``\mathbb A(x)``, defined by
-``\boldsymbol\varepsilon(x) = \mathbb A(x):\boldsymbol\varepsilon^\infty``,
+localization tensor ``\mathbb A(\underline x)``, defined by
+``\boldsymbol\varepsilon(\underline x) = \mathbb A(\underline x):\boldsymbol\varepsilon^\infty``,
 is a `TensTI{4,T,6}`: six Walpole coefficients and an axis, with **no major
 symmetry**.
 
-Averaging ``\mathbb A(x)`` over directions and over a shell returns exactly
-the ``(α_k, β_k)`` above — mode 1 contributes ``a_k``, modes 3 and 4
+Averaging ``\mathbb A(\underline x)`` over directions and over a shell returns exactly
+the ``(\alpha_k, \beta_k)`` above — mode 1 contributes ``a_k``, modes 3 and 4
 contribute nothing pointwise, and mode 2 contributes
-``7 b_k r^2 (3κ_k+μ_k)/μ_k``, whose shell average is the ``21/5`` factor.
+``7 b_k r^2 (3k_k+\mu_k)/\mu_k``, whose shell average is the ``21/5`` factor.
 [`shell_localization`](@ref) exposes that identity from the same cached
 amplitudes, so the pointwise and averaged routes cannot drift apart.
 

@@ -128,7 +128,7 @@ C_cp = TensISO{3}(3k_cp, 2μ_cp)
 ## Scale 3: what an ITZ is made of
 
 The ITZ is modeled as the **same paste carrying additional capillary
-porosity** ``\varphi_{\rm ITZ}``, introduced as spherical voids by Mori-Tanaka.
+porosity** ``\varphi_{\mathrm{ITZ}}``, introduced as spherical voids by Mori-Tanaka.
 No empirical stiffness–porosity relation is involved: the softening comes out of
 the same scheme used everywhere else on this page.
 
@@ -157,7 +157,7 @@ its concentration tensors, with no Hill tensor of its own.
 Two bookkeeping points, both easy to get wrong:
 
 - the volume fraction to declare is that of the **whole coated particle**,
-  ``f_{\rm agg}\,(1+t/R)^3``, not of the aggregate core alone;
+  ``f_{\mathrm{agg}}\,(1+t/R)^3``, not of the aggregate core alone;
 - the matrix around it stays the *bulk* paste — the ITZ is already inside the
   inclusion, and counting it twice would double the softening.
 
@@ -197,15 +197,15 @@ plt
 
 Three readings of the figure:
 
-- the loss is **roughly linear** in ``\varphi_{\rm ITZ}`` and grows with
+- the loss is **roughly linear** in ``\varphi_{\mathrm{ITZ}}`` and grows with
   thickness, as one would expect of a thin compliant shell in series with the
   load path;
 - it is **modest for realistic ITZs**: at ``t/R = 0.05`` and
-  ``\varphi_{\rm ITZ} = 0.3`` — a 5 % shell with a third of it porous — concrete
+  ``\varphi_{\mathrm{ITZ}} = 0.3`` — a 5 % shell with a third of it porous — concrete
   stiffness falls by about 11 %. A porous ITZ does not, on its own, explain a
   concrete that is half as stiff as expected;
 - the sensitivity to thickness is what makes the ITZ hard to identify from
-  stiffness measurements alone: ``t/R`` and ``\varphi_{\rm ITZ}`` trade off
+  stiffness measurements alone: ``t/R`` and ``\varphi_{\mathrm{ITZ}}`` trade off
   against each other along the curves.
 
 That last point is the reason [konigsberger2013](@citet) turn to the elastic

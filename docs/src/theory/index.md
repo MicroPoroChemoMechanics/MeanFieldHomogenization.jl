@@ -194,7 +194,7 @@ algebra is not merely analogous but *identical, symbol for symbol*:
 | :--- | :--- | :--- |
 | property | stiffness ``\mathbb{C}`` | conductivity ``\boldsymbol{K}`` |
 | Hill tensor | ``\mathbb{P}(\boldsymbol{A},\mathbb{C})`` (order 4) | ``\boldsymbol{P}(\boldsymbol{A},\boldsymbol{K})`` (order 2) |
-| Eshelby tensor | ``\mathbb{S} = \mathbb{P}:\mathbb{C}`` | ``\boldsymbol{s} = \boldsymbol{P}\cdot\boldsymbol{K}`` |
+| Eshelby tensor | ``\mathbb{S}^{\mathrm{E}} = \mathbb{P}:\mathbb{C}`` | ``\boldsymbol{S}^{\mathrm{E}} = \boldsymbol{P}\cdot\boldsymbol{K}`` |
 | crack descriptor | COD tensor ``\boldsymbol{B}``, compliance ``\mathbb{H}`` | COD scalar ``b``, resistivity ``\boldsymbol{R}`` |
 
 One asymmetry is worth knowing in advance: for an **arbitrarily anisotropic**

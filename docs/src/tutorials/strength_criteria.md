@@ -42,9 +42,9 @@ domain**:
 ```math
 \frac{(\Sigma_m/\sigma_o)^2}{2A} + \frac{(\Sigma_d/\sigma_o)^2}{B} = \frac{1}{1-\varphi},
 \qquad
-A = \Big(\frac{\mu_s}{k_{\text{hom}}}\Big)^{\!2}\frac{\partial k_{\text{hom}}}{\partial\mu_s},
+A = \Big(\frac{\mu_s}{k^{\mathrm{hom}}}\Big)^{\!2}\frac{\partial k^{\mathrm{hom}}}{\partial\mu_s},
 \qquad
-B = \Big(\frac{\mu_s}{\mu_{\text{hom}}}\Big)^{\!2}\frac{\partial \mu_{\text{hom}}}{\partial\mu_s}.
+B = \Big(\frac{\mu_s}{\mu^{\mathrm{hom}}}\Big)^{\!2}\frac{\partial \mu^{\mathrm{hom}}}{\partial\mu_s}.
 ```
 
 ``A`` and ``B`` are **not** independent material data — they are the

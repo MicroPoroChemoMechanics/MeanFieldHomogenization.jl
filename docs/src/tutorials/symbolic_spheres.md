@@ -57,7 +57,7 @@ J + \beta\,\mathbb K`` on the spherical (``\mathbb J``) and deviatoric
 \mathbb P = \frac{1}{3k_0+4\mu_0}\,\mathbb J
           + \frac{3(k_0+2\mu_0)}{5\mu_0(3k_0+4\mu_0)}\,\mathbb K,
 \qquad
-\mathbb S = \mathbb P:\mathbb C_0
+\mathbb S^{\mathrm E} = \mathbb P:\mathbb C_0
           = \frac{3k_0}{3k_0+4\mu_0}\,\mathbb J
           + \frac{6(k_0+2\mu_0)}{5(3k_0+4\mu_0)}\,\mathbb K.
 ```
@@ -83,9 +83,9 @@ S_{\mathbb K} = \frac{2(4-5\nu_0)}{15(1-\nu_0)}.
 The dilute strain concentration tensor and effective stiffness,
 
 ```math
-\mathbb A_{\text{dil}} = \big(\mathbb I + \mathbb P:(\mathbb C_i-\mathbb C_0)\big)^{-1},
+\mathbb A^{\mathrm{dil}} = \big(\mathbb I + \mathbb P:(\mathbb C_i-\mathbb C_0)\big)^{-1},
 \qquad
-\mathbb C_{\text{dil}} = \mathbb C_0 + f\,(\mathbb C_i-\mathbb C_0):\mathbb A_{\text{dil}},
+\mathbb C_{\mathrm{dil}} = \mathbb C_0 + f\,(\mathbb C_i-\mathbb C_0):\mathbb A^{\mathrm{dil}},
 ```
 
 translate directly into TensND tensor algebra — `inv` on a `TensISO` is just
@@ -133,12 +133,12 @@ kMT
 ```
 
 ```math
-k_{\text{MT}} = k_0 + \frac{f(k_i-k_0)A_k}{(1-f)+fA_k},
+k_{\mathrm{MT}} = k_0 + \frac{f(k_i-k_0)A_k}{(1-f)+fA_k},
 \qquad
 A_k = \frac{k_0+4\mu_0/3}{k_i+4\mu_0/3}
 ```
 
-(``A_k`` is the ``\mathbb J``-part of ``\mathbb A_{\text{dil}}`` above.)
+(``A_k`` is the ``\mathbb J``-part of ``\mathbb A^{\mathrm{dil}}`` above.)
 
 ## Two physical limits: porous and rigid
 
@@ -161,9 +161,9 @@ k_dil_rig, kMT_rig
 `kMT_por` is exactly the Hashin–Shtrikman upper bound for a porous solid:
 
 ```math
-k_{\text{MT}}^{\text{por}} = \frac{4\mu_0 k_0(1-f)}{4\mu_0+3k_0f},
+k_{\mathrm{MT}}^{\mathrm{por}} = \frac{4\mu_0 k_0(1-f)}{4\mu_0+3k_0f},
 \qquad
-k_{\text{MT}}^{\text{rig}} = k_0 + \frac{f(3k_0+4\mu_0)}{3(1-f)}.
+k_{\mathrm{MT}}^{\mathrm{rig}} = k_0 + \frac{f(3k_0+4\mu_0)}{3(1-f)}.
 ```
 
 ## Self-consistent: derived by hand, solved with `solve`
@@ -176,7 +176,7 @@ abstol` simply has no meaning for a symbolic residual). So instead of
 calling the API, the self-consistent condition
 
 ```math
-\mathbb C_{\text{eff}} = \sum_i f_i\,\mathbb C_i:\mathbb A_i(\mathbb C_{\text{eff}})
+\mathbb C^{\mathrm{hom}} = \sum_i f_i\,\mathbb C_i:\mathbb A_i(\mathbb C^{\mathrm{hom}})
 ```
 
 is written out by hand for two isotropic spherical phases. It separates into

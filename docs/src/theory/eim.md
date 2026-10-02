@@ -138,7 +138,7 @@ inclusion to the next is what sharpens them.
 ## Reference results
 
 [brisard2014](@citet), Table 1 — plane strain, ``N = 160`` circular
-pores of radius ``a`` in a circular SVE of radius ``R = 20a``, porosity ``\phi = 0.4``,
+pores of radius ``a`` in a circular SVE of radius ``R = 20a``, porosity ``\varphi = 0.4``,
 ``\nu_0 = 0.3``, 1000 realizations:
 
 | order ``p`` | bound on ``\mu^{\mathrm{app}}`` | dofs |
@@ -151,7 +151,7 @@ pores of radius ``a`` in a circular SVE of radius ``R = 20a``, porosity ``\phi =
 with a finite-element reference of ``0.244\,\mu_0`` and a Hashin-Shtrikman upper bound
 of ``0.349\,\mu_0`` — the order-zero estimate already improves on the latter by 11 %.
 Their Table 2, in 3D with polydisperse spherical pores (``N = 20/40/140`` of radii
-``\rho_1``, ``0.7\rho_1``, ``0.4\rho_1``, ``\phi = 0.45``, ``R = 4.56\,\rho_1``) gives
+``\rho_1``, ``0.7\rho_1``, ``0.4\rho_1``, ``\varphi = 0.45``, ``R = 4.56\,\rho_1``) gives
 ``0.381\,\mu_0`` at ``p = 0``. `scripts/93` reproduces the ``p = 0`` row of Table 1.
 
 !!! note "Only order = 0 is implemented"

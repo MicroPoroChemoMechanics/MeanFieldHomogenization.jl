@@ -23,7 +23,7 @@ is needed — and order every physically realizable effective bulk
 modulus [hill1963, hill1965](@cite):
 
 ```math
-k_R \le k_{\text{eff}} \le k_V.
+k_R \le k^{\mathrm{hom}} \le k_V.
 ```
 
 ## Estimates between the bounds
@@ -35,7 +35,7 @@ embedded directly in the *effective* medium itself, and the effective
 stiffness must satisfy the implicit condition
 
 ```math
-\mathbb{C}_{\text{eff}} = \sum_i f_i\,\mathbb{C}_i:\mathbb{A}_i(\mathbb{C}_{\text{eff}}),
+\mathbb{C}^{\mathrm{hom}} = \sum_i f_i\,\mathbb{C}_i:\mathbb{A}_i(\mathbb{C}^{\mathrm{hom}}),
 ```
 
 [budiansky1976](@citet), solved by a damped Picard iteration internally

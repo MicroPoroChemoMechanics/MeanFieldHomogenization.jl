@@ -138,7 +138,7 @@ println()                                                                      #
 #
 # ```math
 # a\,N - (b + a\,\xi_n)^{2} = ac - b^{2}
-# \qquad\text{identically —  every power of } \xi_n \text{ cancels,}
+# \qquad\text{identically: every power of } \xi_n \text{ cancels,}
 # ```
 #
 # so the kernel is a **constant over a quadratic**:

@@ -214,7 +214,7 @@ end
 
 # ## §4 The Eshelby tensor
 #
-# ``\mathbb{S}^{E} = \mathbb{P} : \mathbb{C}_0`` — dimensionless, and for a
+# ``\mathbb{S}^{\mathrm{E}} = \mathbb{P} : \mathbb{C}_0`` — dimensionless, and for a
 # sphere in an isotropic matrix equal to Eshelby's 1957 closed forms
 # [eshelby1957](@cite):
 #
@@ -246,13 +246,13 @@ end
 # property:
 #
 # ```math
-# \mathbb{C}^{\text{eff}} = \mathbb{C}_0
+# \mathbb{C}^{\mathrm{hom}} = \mathbb{C}_0
 #   + f\,\delta\mathbb{C} : \left(\mathbb{I} + \mathbb{P}:\delta\mathbb{C}\right)^{-1},
 # \qquad \delta\mathbb{C} = \mathbb{C}_1 - \mathbb{C}_0 .
 # ```
 #
 # For voids ``\mathbb{C}_1 = 0``, so ``\delta\mathbb{C} = -\mathbb{C}_0`` and the
-# localization tensor collapses to ``(\mathbb{I} - \mathbb{S}^{E})^{-1}``.
+# localization tensor collapses to ``(\mathbb{I} - \mathbb{S}^{\mathrm{E}})^{-1}``.
 # Written out by hand in Mandel storage, at 5 % porosity:
 
 let

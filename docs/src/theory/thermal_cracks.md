@@ -21,7 +21,7 @@ they are the reason this chapter exists at all.
 | Dilute contribution ``\Delta\mathbb S = (4\pi/3)\varepsilon^{3\mathrm d}\mathbb H`` (elliptic), ``= \pi\varepsilon^{2\mathrm d}\mathbb H`` (ribbon) | Dilute contribution ``\Delta\boldsymbol{R} = (4\pi/3)\varepsilon^{3\mathrm d}\boldsymbol{R}`` (elliptic), ``= \pi\varepsilon^{2\mathrm d}\boldsymbol{R}`` (ribbon) |
 | Sextic acoustic polynomial [masson2008](@cite)                   | Quadratic acoustic form ``\underline{\xi}\cdot\boldsymbol{K}_0\cdot\underline{\xi}`` → **analytical** |
 | Stress intensity factors ``K_I, K_{II}, K_{III}``                | Heat-flux intensity factor ``K_T`` — scalar (mode I analog only)      |
-| Displacement intensity factor ``\underline{N}``                | Temperature intensity factor — scalar ``[T]_\text{avg}``                |
+| Displacement intensity factor ``\underline{N}``                | Temperature intensity factor — scalar ``[T]_{\mathrm{avg}}``                |
 
 A scalar ``b`` suffices because ``[T]`` is a scalar and only
 ``\underline{q}\cdot\underline{n}`` produces a jump — there are no sliding or
@@ -52,10 +52,10 @@ computed via the formula
   \cdot\boldsymbol{K}_0^{-1/2}``
 [giraudMOM2019](@cite), where
 ``\boldsymbol{I}^{\boldsymbol{B}}`` is assembled in the eigenbasis of
-``\boldsymbol{B}^T\boldsymbol{B}`` (right singular vectors of
+``\boldsymbol{B}^{\!T}\boldsymbol{B}`` (right singular vectors of
 ``\boldsymbol{B} = \boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}``).  As ``\omega\to 0``:
 
-- The null vector of ``\boldsymbol{B}^T\boldsymbol{B}`` is
+- The null vector of ``\boldsymbol{B}^{\!T}\boldsymbol{B}`` is
   ``\underline{v}_3 = \boldsymbol{K}_0^{1/2}\underline{n}/\sqrt{k_{nn}}``,
   ``k_{nn}=\underline{n}\cdot\boldsymbol{K}_0\underline{n}``.
 - The corresponding Newton potential ``I_3\to 4\pi`` while
@@ -240,7 +240,7 @@ All of these are the two boxed formulas above, evaluated on a more symmetric
 
 ```math
 \boxed{\;
-b_{\text{ell}} = \frac{4}{3\sqrt{\lambda_1}\,\mathcal{E}_{\eta'}}
+b_{\mathrm{ell}} = \frac{4}{3\sqrt{\lambda_1}\,\mathcal{E}_{\eta'}}
 \;},
 \qquad
 \lambda_{1,2} = \frac{\eta^{2}A+C}{2}
@@ -260,7 +260,7 @@ no symmetry assumption, and no need for the numerical
 
 ```math
 \boxed{\;
-b_{\text{ell}}^{\text{iso}} = \frac{4}{3\,k_0\,\mathcal E_\eta}
+b_{\mathrm{ell}}^{\mathrm{iso}} = \frac{4}{3\,k_0\,\mathcal E_\eta}
 \;},
 \qquad
 \mathcal E_\eta = \mathcal E\!\bigl(\sqrt{1-\eta^{2}}\bigr).
@@ -278,21 +278,21 @@ average of the textbook jump of an insulating circular crack,
 **geometric mean**:
 
 ```math
-b_{\text{ell}}^{\text{aligned TI}} = \frac{4}{3\sqrt{k_tk_n}\,\mathcal E_\eta},
+b_{\mathrm{ell}}^{\text{aligned TI}} = \frac{4}{3\sqrt{k_tk_n}\,\mathcal E_\eta},
 \qquad
-b_{\text{penny}}^{\text{aligned TI}} = \frac{8}{3\pi\sqrt{k_tk_n}} .
+b_{\mathrm{penny}}^{\text{aligned TI}} = \frac{8}{3\pi\sqrt{k_tk_n}} .
 ```
 
 ### Ribbon crack — 2D formula
 
-Only the ``(\hat{\underline{m}}, \underline{n})`` transverse block of
+Only the ``(\underline{m}, \underline{n})`` transverse block of
 ``\boldsymbol{K}_0`` enters, since
 ``\hat{Q}^{\star}_{nn}(\underline{m}) = \tfrac12\sqrt{\det\boldsymbol{K}_0\vert_{(\underline{m},\underline{n})}}``:
 
 ```math
 \boxed{\;
-b_{\text{ribbon}}
-= \frac{\pi}{2\,\sqrt{\det\bigl(\boldsymbol{K}_0\vert_{(\hat{\underline{m}},\underline{n})}\bigr)}}
+b_{\mathrm{ribbon}}
+= \frac{\pi}{2\,\sqrt{\det\bigl(\boldsymbol{K}_0\vert_{(\underline{m},\underline{n})}\bigr)}}
 \;}
 ```
 
@@ -324,7 +324,7 @@ COD flows through automatic differentiation and symbolic scalars.
 
 The size-independent **crack resistivity contribution tensor** is
 assembled from the scalar ``b`` and the effective direction
-``\hat{\underline{w}}``:
+``\underline{w}``:
 
 ```math
 \boldsymbol{R}^{\mathcal E} = \tfrac{3}{4}\,b\,\underline{n}\otimes\underline{n}
@@ -374,7 +374,7 @@ so each formula is the elastic one with the symbols substituted.
   ratio exactly as in the elasticity case (``b^\mathcal E/b^\mathcal R``
   replaces ``\boldsymbol{B}^\mathcal E(\boldsymbol{B}^\mathcal R)^{-1}``).
 - **Temperature intensity factor** (scalar):
-  ``[T]_\text{avg} = b\,(\underline{n}\cdot\boldsymbol\sigma^{\infty})``.
+  ``[T]_{\mathrm{avg}} = b\,(\underline{n}\cdot\boldsymbol\sigma^{\infty})``.
 
 See [`sif`](@ref) and [`dif`](@ref) for the full signatures (dispatched
 on ``\boldsymbol{K}_0::\texttt{AbstractTens\{2,3\}}``).

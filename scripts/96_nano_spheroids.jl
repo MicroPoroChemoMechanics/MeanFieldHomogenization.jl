@@ -45,7 +45,7 @@ default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
 κs, μs = 64.0, 51.3          ## Pa·m, graphene (paper, Fig. 3)
 a = 1.0                      ## in-plane semi-axis
 
-## Aspect ratio X = c/a: oblate below 1, prolate above.
+## Aspect ratio X = ω = c/a: oblate below 1, prolate above.
 function Cint_components(X)
     ell = X < 1 ? Ellipsoid(a, a, X * a) : (X > 1 ? Ellipsoid(X * a, a, a) : Ellipsoid(a))
     A = get_array(surface_stiffness(ell, κs, μs))
@@ -63,7 +63,7 @@ end
 
 p1 = plot(
     Xs, Ct; xscale = :log10, yscale = :log10,
-    xlabel = "aspect ratio X = c/a", ylabel = "component of ℂ^int  [Pa]",
+    xlabel = "aspect ratio ω = c/a", ylabel = "component of ℂ^int  [Pa]",
     title = "Interface stiffness of a spheroid", label = "transverse (1111)",
     legend = :bottomleft, lw = 2
 )
@@ -75,8 +75,8 @@ p1
 
 # ## §2 The three limiting cases of the paper
 #
-# The closed form has a removable singularity at `X = 1` (both terms diverge as
-# `(X²-1)⁻²` and cancel); the implementation switches to a series there, so the
+# The closed form has a removable singularity at ``\omega = 1`` (both terms diverge as
+# ``(\omega^2-1)^{-2}`` and cancel); the implementation switches to a series there, so the
 # spherical case is exact rather than merely close.
 
 println("Spherical limit X = 1, closed form:")
@@ -131,7 +131,7 @@ end
 
 p2 = plot(
     radii .* 1.0e9, μ_nano; xscale = :log10,
-    xlabel = "particle radius [nm]", ylabel = "μ_eff  [GPa]",
+    xlabel = "particle radius [nm]", ylabel = "μ^hom  [GPa]",
     title = "Size effect through the equivalent particle",
     label = "with interface", lw = 2, legend = :topright
 )
@@ -159,7 +159,7 @@ end
 
 p3 = plot(
     Xs2, μ_shape; xscale = :log10,
-    xlabel = "aspect ratio X = c/a", ylabel = "μ_eff  [GPa]",
+    xlabel = "aspect ratio ω = c/a", ylabel = "μ^hom  [GPa]",
     title = "Orientation-averaged, fixed volume and fraction",
     label = "with interface", lw = 2, legend = :bottomright
 )

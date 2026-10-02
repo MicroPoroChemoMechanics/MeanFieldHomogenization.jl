@@ -27,12 +27,12 @@ Two ingredients make it work, and both already exist in the package:
 Write the macroscopic strain as ``\boldsymbol{E} = \tfrac{E_v}{3}\boldsymbol{1} +
 \boldsymbol{E}_d`` with ``E_v = \mathrm{tr}\,\boldsymbol{E}`` its volumetric
 part and ``\boldsymbol{E}_d`` its deviator. For an isotropic effective
-behavior of moduli ``(k^{\hom}, \mu^{\hom})`` the macroscopic elastic energy is
+behavior of moduli ``(k^{\mathrm{hom}}, \mu^{\mathrm{hom}})`` the macroscopic elastic energy is
 
 ```math
-W(\boldsymbol{E}) = \tfrac{1}{2}\,\boldsymbol{E}:\mathbb{C}^{\hom}:\boldsymbol{E}
-                  = \tfrac{1}{2}\,k^{\hom} E_v^{2}
-                  + \mu^{\hom}\,\boldsymbol{E}_d\!:\!\boldsymbol{E}_d .
+W(\boldsymbol{E}) = \tfrac{1}{2}\,\boldsymbol{E}:\mathbb{C}^{\mathrm{hom}}:\boldsymbol{E}
+                  = \tfrac{1}{2}\,k^{\mathrm{hom}} E_v^{2}
+                  + \mu^{\mathrm{hom}}\,\boldsymbol{E}_d\!:\!\boldsymbol{E}_d .
 ```
 
 Now let ``\mu_i`` be the shear modulus of shell ``i``, of volume fraction
@@ -46,8 +46,8 @@ the **second moment of the deviatoric strain** in that shell
 \bigr\rangle_i
 \;=\; \frac{1}{f_i}\,\frac{\partial W}{\partial \mu_i}
 \;=\; \frac{1}{f_i}\left(
-  \tfrac{1}{2}\frac{\partial k^{\hom}}{\partial \mu_i}\,E_v^{2}
-  + \frac{\partial \mu^{\hom}}{\partial \mu_i}\,
+  \tfrac{1}{2}\frac{\partial k^{\mathrm{hom}}}{\partial \mu_i}\,E_v^{2}
+  + \frac{\partial \mu^{\mathrm{hom}}}{\partial \mu_i}\,
     \boldsymbol{E}_d\!:\!\boldsymbol{E}_d
 \right).
 ```
@@ -84,7 +84,7 @@ with the secant modulus
     ``\sqrt{3/2} \approx 1.22`` — enough to make a converged estimate look like
     a systematic 20 % overestimate.
 
-The ``n`` shells are coupled through ``\mathbb{C}^{\hom}``, so this is a
+The ``n`` shells are coupled through ``\mathbb{C}^{\mathrm{hom}}``, so this is a
 fixed point on the vector ``(\mu_1,\dots,\mu_n)`` — solved below by direct
 iteration.
 
@@ -187,7 +187,7 @@ end
 ## §2 The secant closure by automatic differentiation
 
 One `ForwardDiff.jacobian` call gives the two rows
-``\partial k^{\hom}/\partial\mu_i`` and ``\partial\mu^{\hom}/\partial\mu_i``
+``\partial k^{\mathrm{hom}}/\partial\mu_i`` and ``\partial\mu^{\mathrm{hom}}/\partial\mu_i``
 at once — the whole nonlinear closure, in one line.
 
 ````@example secant_elastoplasticity
@@ -223,7 +223,7 @@ end
 
 Loading is purely hydrostatic: ``\boldsymbol{E} = \tfrac{E_v}{3}\boldsymbol{1}``,
 so ``\boldsymbol{E}_d = 0`` and the response is read on the mean stress
-``\Sigma_m = k^{\hom} E_v``. Note that plasticity develops all the same: the
+``\Sigma_m = k^{\mathrm{hom}} E_v``. Note that plasticity develops all the same: the
 void makes the *local* strain deviatoric even under a purely volumetric
 macroscopic strain, and it is that local deviator which yields.
 
@@ -256,7 +256,7 @@ end
 ````
 
 The curves show the two regimes: a common elastic branch of slope
-``k^{\hom}``, then a plateau once the whole solid has yielded. Refining the
+``k^{\mathrm{hom}}``, then a plateau once the whole solid has yielded. Refining the
 radial discretization lowers the plateau and converges.
 
 ````@example secant_elastoplasticity

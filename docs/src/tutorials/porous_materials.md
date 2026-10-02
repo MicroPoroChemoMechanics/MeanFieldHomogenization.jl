@@ -37,7 +37,7 @@ unstable and can converge to an unphysical branch.
 
 [`AsymmetricSelfConsistent`](@ref) fixes this by switching to the
 **compliance-form** iteration when the contrast calls for it — solving
-the dual condition on ``\mathbb{S}_{\text{eff}} = \mathbb{C}_{\text{eff}}^{-1}``
+the dual condition on ``\mathbb{S}^{\mathrm{hom}} = (\mathbb{C}^{\mathrm{hom}})^{-1}``
 instead — which remains well-posed for soft inclusions. The
 `select_best = true` keyword additionally keeps the best iterate seen
 during the loop, guarding against the Picard noise that can otherwise

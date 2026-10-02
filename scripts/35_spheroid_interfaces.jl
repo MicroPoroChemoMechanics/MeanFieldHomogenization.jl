@@ -5,9 +5,9 @@
 # ```math
 # \text{LC (Kapitza):}\quad [\![T]\!] = \rho\,q_n,
 # \qquad
-# \text{HC (surface-conductive):}\quad [\![q_n]\!] = -\beta\,\mathrm{div}_S(\nabla_S T),
+# \text{HC (surface-conductive):}\quad [\![q_n]\!] = -k^{\mathrm s}\,\mathrm{div}_S(\nabla_S T),
 # ```
-# with ``\rho`` a genuine thermal resistance and ``\beta`` a genuine surface
+# with ``\rho`` a genuine thermal resistance and ``k^{\mathrm s}`` a genuine surface
 # conductance. The LC interface impedes the normal flux; the HC one adds a
 # tangential short-circuit. Both come from [kushch2015](@citet); the confocal
 # ``N``-layer solution used to resolve them is that of
@@ -21,7 +21,7 @@
 # 1. a two-layer **prolate** particle with a Kapitza (LC) interface at its core,
 #    where the fields are read off directly;
 # 2. an insulating **oblate** particle with a highly-conducting (HC) skin, swept
-#    over ``\beta`` — the configuration of the ECHOES presentation of
+#    over ``k^{\mathrm s}`` — the configuration of the ECHOES presentation of
 #    06/07/2020 — including an animation and an interactive 3-D view.
 #
 # Theory: [Layered spheroid](../../theory/layered_spheroid.md).
@@ -206,8 +206,8 @@ p_local
 # ## Part 2 — An insulating particle with a highly-conducting skin
 #
 # Now the opposite situation, and the one that makes the point: an **insulating**
-# oblate particle wrapped in an HC interface of surface conductance ``\beta``.
-# With no skin the particle is a pure obstacle. As ``\beta`` grows, its skin
+# oblate particle wrapped in an HC interface of surface conductance ``k^{\mathrm s}``.
+# With no skin the particle is a pure obstacle. As ``k^{\mathrm s}`` grows, its skin
 # becomes a preferential path and the particle stops behaving like a hole.
 #
 # Oblate means the revolution semi-axis is the *shorter* one. The two semi-axes
@@ -261,27 +261,27 @@ end
 
 # ### Before and after
 #
-# At `β = 0` the particle is a pure obstacle: the flux parts around it and
+# At k^{\mathrm s} = 0 the particle is a pure obstacle: the flux parts around it and
 # **piles up at the equator**, the bright spots where ``\|\underline{q}\|`` is
-# largest. At `β = 3` that concentration is gone and the streamlines run almost
+# largest. At k^{\mathrm s} = 3 that concentration is gone and the streamlines run almost
 # undisturbed — the skin accepts the flux tangentially, carries it around, and
 # returns it downstream, so the far field barely registers the particle.
 #
 # Note what the lines do *not* show: they trace the **bulk** flux, and inside an
 # insulating core there is none. The current carried by an HC interface is a
 # genuine *surface* current on a layer of zero thickness — it cannot appear as a
-# streamline. Hence the ``\beta``-proportional line width, and hence the need for
+# streamline. Hence the ``k^{\mathrm s}``-proportional line width, and hence the need for
 # the quantitative statement below.
 
-p_off = _streamplot(0.0; title = "β = 0  (perfect interface, insulating particle)")
-p_on = _streamplot(3.0; title = "β = 3  (highly conducting interface)")
+p_off = _streamplot(0.0; title = "kˢ = 0  (perfect interface, insulating particle)")
+p_on = _streamplot(3.0; title = "kˢ = 3  (highly conducting interface)")
 p_pair = plot(p_off, p_on; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1250, 520))
 p_pair
 
 # ### How much does the skin carry?
 #
 # The scalar summary: the equivalent particle conductivity
-# ``\boldsymbol{k}^{eq} = \boldsymbol{B}_\Omega\cdot\boldsymbol{A}_\Omega^{-1}``,
+# ``\boldsymbol{k}^{\mathrm{eq}} = \boldsymbol{B}_\Omega\cdot\boldsymbol{A}_\Omega^{-1}``,
 # where ``\boldsymbol{A}_\Omega`` and ``\boldsymbol{B}_\Omega`` are the
 # volume-averaged gradient and flux concentration tensors of the particle,
 # defined by ``\langle\nabla T\rangle_\Omega =
@@ -301,13 +301,13 @@ end
 
 println("HC interface on an insulating oblate particle (ρ_a=$OBL_A, ρ_t=$OBL_T)")
 println("─"^70)
-@printf "β = 0.0 :  k_t^eq/k_m = %6.3f   k_a^eq/k_m = %6.3f\n" keq_t[1]/OBL_KM keq_a[1]/OBL_KM
-@printf "β = 3.0 :  k_t^eq/k_m = %6.3f   k_a^eq/k_m = %6.3f\n" keq_t[end]/OBL_KM keq_a[end]/OBL_KM
+@printf "kˢ = 0.0 :  k_t^eq/k_m = %6.3f   k_a^eq/k_m = %6.3f\n" keq_t[1]/OBL_KM keq_a[1]/OBL_KM
+@printf "kˢ = 3.0 :  k_t^eq/k_m = %6.3f   k_a^eq/k_m = %6.3f\n" keq_t[end]/OBL_KM keq_a[end]/OBL_KM
 println()
 
 p_keq = plot(
     βs, keq_t ./ OBL_KM; label = "transverse  k_t^eq / k_m", lw = 2.5, color = :steelblue,
-    xlabel = "surface conductance β", ylabel = "k^eq / k_m",
+    xlabel = "surface conductance kˢ", ylabel = "k^eq / k_m",
     title = "Equivalent particle conductivity vs. interface conductance",
     legend = :topleft, size = (760, 460),
 )
@@ -316,13 +316,13 @@ hline!(p_keq, [1.0]; color = :grey, ls = :dash, label = "matrix (k_m)")
 p_keq
 
 # An **insulating** particle whose equivalent conductivity crosses that of the
-# matrix: past ``\beta \approx 0.6`` transversely, the skin more than compensates
+# matrix: past ``k^{\mathrm s} \approx 0.6`` transversely, the skin more than compensates
 # for the hole it wraps.
 
 # ### The sweep, animated
 
 anim = @animate for β in range(0.0, 3.0; length = 10)
-    _streamplot(β; title = @sprintf("HC interface,  β = %.2f", β))
+    _streamplot(β; title = @sprintf("HC interface,  kˢ = %.2f", β))
 end
 ## No output path on purpose: `gif(anim; fps)` writes to a temporary file that
 ## Documenter and the notebook embed directly. A path built from `@__DIR__`

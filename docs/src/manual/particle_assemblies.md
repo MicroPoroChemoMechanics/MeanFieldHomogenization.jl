@@ -312,7 +312,7 @@ asking for one raises a message that names the lens to use instead. It has no
 [dormieux2016](@citet) is a different kind of result:
 it needs no new scheme. A spheroidal nanoinclusion together with its Gurtin-Murdoch
 interface behaves as a single particle of stiffness
-``\mathbb C^{eq} = \mathbb C_I + \mathbb C^{int}``, after which the classical
+``\mathbb C^{\mathrm{eq}} = \mathbb C_I + \mathbb C^{\mathrm{int}}``, after which the classical
 concentration rule applies unchanged:
 
 ```julia
@@ -326,9 +326,10 @@ add_phase!(rve, :nano, sph, Dict(:C => C_eq); fraction = 0.15)
 homogenize(rve, MoriTanaka(), :C)        # the paper's extended Mori-Tanaka
 ```
 
-[`surface_stiffness`](@ref) returns ``\mathbb C^{int}`` for any spheroid, transversely
-isotropic about the symmetry axis, with the platelet (``X \to 0``) and nanofiber
-(``X \to \infty``) limits of the paper reproduced exactly. Since it scales as
+[`surface_stiffness`](@ref) returns ``\mathbb C^{\mathrm{int}}`` for any spheroid, transversely
+isotropic about the symmetry axis, with the platelet (``\omega \to 0``) and nanofiber
+(``\omega \to \infty``) limits of the paper reproduced exactly, ``\omega = c/a`` being
+the aspect ratio. Since it scales as
 `1/size`, the stiffening it produces is a genuine size effect and vanishes for large
 particles.
 

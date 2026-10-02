@@ -9,7 +9,7 @@
 #   - `SpringInterface(kn, kt)` — displacement jump (primal); `kn`/`kt` are
 #     STIFFNESSES on the interface, stored internally as the compliances
 #     `sn = 1/kn`, `st = 1/kt`:
-#     `[u_n] = kn · t_n`, `[u_t] = kt · t_t`.
+#     `[u_n] = t_n / kn = sn · t_n`, `[u_t] = t_t / kt = st · t_t`.
 #   - `MembraneInterface(κs, μs)` — traction jump (dual, surface
 #     elasticity): surface stiffness introduces a jump in the normal
 #     component of the traction proportional to the surface strain.

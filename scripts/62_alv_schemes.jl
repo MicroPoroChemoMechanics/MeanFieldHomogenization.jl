@@ -28,7 +28,7 @@ gr()  # headless backend; GKSwstype is set to "100" before Literate runs
 # which it is loaded — the elementary model of a setting binder:
 #
 # ```math
-# \mathbb{R}^{M}(t, t') = a(t')\,
+# \mathbb{C}_0(t, t') = a(t')\,
 #   \Big( 3k_0\,\mathbb{J} + 2\mu_0\,\mathbb{K} \Big)\,
 #   e^{-(t-t')/\left(\tau\,a(t')\right)},
 # \qquad
@@ -85,12 +85,14 @@ end
 #
 # `homogenize_alv` returns the effective **relaxation** operator as a
 # ``6n \times 6n`` block matrix on the time grid. Its Volterra inverse is the
-# creep operator ``\tilde{\mathbb{J}}``, and the response to a unit uniaxial
-# stress step ``\sigma(t) = H(t)\,\underline{e}_1 \otimes \underline{e}_1`` is
+# creep operator ``\widetilde{\mathbb{L}}``, and the response to a unit uniaxial
+# stress step ``\boldsymbol\sigma(t) = H(t)\,\underline{e}_1 \otimes \underline{e}_1`` is
 # the row sum of its ``(11,11)`` blocks:
 #
 # ```math
-# J^{E}_{\text{eff}}(t_i) = \sum_{j} \big[\tilde{\mathbb{J}}\big]_{11,\,ij} .
+# J^{\mathrm{hom}}(t_i) = \sum_{j} \big[\widetilde{\mathbb{L}}\big]_{11,\,ij} ,
+#
+# ``J^{\mathrm{hom}}`` being the uniaxial creep function of the composite.
 # ```
 
 function uniaxial_creep(R)

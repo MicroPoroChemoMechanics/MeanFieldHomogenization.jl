@@ -29,6 +29,25 @@
   tensor). The theory page that held the typography keeps the conventions and
   is now called *Conventions*. The home page names three reading paths, and the
   API is visible again in the navigation bar.
+- One symbol per quantity across the pages and the published scripts: an
+  effective property is written `^{hom}` (it was written six ways, `eff`
+  included), the reference medium carries the index 0 and a phase its index as
+  a subscript, labels are upright, vectors are underlined without hats, order-2
+  tensors are bold. Each formula of the site now typesets under the
+  documentation's own MathJax configuration.
+- Four formulas said something other than what the code does or than their
+  neighbors on the same page:
+  - the spring interface of the layered sphere wrote the displacement jump as
+    `k_n σ_rr`, `k_n` being the stiffness; it is `σ_rr/k_n`, as the code has it;
+  - `𝔹_i` meant stress per strain on the differential-scheme page and stress per
+    stress on the laminate page; the first is now the `𝔸_{σε}` of the
+    localization page;
+  - `𝕁` was both the spherical projector and the creep kernel, on the same
+    viscoelasticity page; the kernels are now the relaxation `ℂ(t, t')` and the
+    creep `𝕃(t, t')`;
+  - `𝕊` was both the compliance and the Eshelby tensor; the latter is `𝕊ᴱ`.
+- MFH Studio labels the conductivities `k`, as the documentation writes them,
+  instead of `κ`.
 
 ## v0.14.2 — where the sample count stops paying, and the mesh that produced it
 

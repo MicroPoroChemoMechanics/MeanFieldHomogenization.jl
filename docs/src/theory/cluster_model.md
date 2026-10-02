@@ -10,23 +10,25 @@ Notation as in the [Nomenclature](@ref nomenclature); the interaction tensor
 
 ## From the integral equation to a linear system
 
-Take the matrix as reference, ``\mathbb{C}_0 = \mathbb{C}_m``, and assume the strain
+Take the matrix, of stiffness ``\mathbb{C}_0`` and volume fraction ``f_0``, as
+reference, write ``\Delta\mathbb{C}_J = \mathbb{C}_J - \mathbb{C}_0`` for the stiffness
+contrast of inclusion ``J``, and assume the strain
 uniform in each inclusion. Averaging the Lippmann-Schwinger equation over inclusion
 ``I`` gives
 
 ```math
-\boldsymbol{\varepsilon}^I = \boldsymbol{\varepsilon}^0
-  - \sum_J \mathbb{T}^{IJ} : \delta\mathbb{C}^J : \boldsymbol{\varepsilon}^J ,
-\qquad \delta\mathbb{C}^J = \mathbb{C}^J - \mathbb{C}_m ,
+\boldsymbol{\varepsilon}_I = \boldsymbol{E}^0
+  - \sum_J \mathbb{T}^{IJ} : \Delta\mathbb{C}_J : \boldsymbol{\varepsilon}_J ,
+\qquad \Delta\mathbb{C}_J = \mathbb{C}_J - \mathbb{C}_0 ,
 ```
 
-and relating ``\boldsymbol{\varepsilon}^0`` to the macroscopic strain
+and relating ``\boldsymbol{E}^0`` to the macroscopic strain
 ``\boldsymbol{E}`` through the average of the same equation yields
 
 ```math
-\boldsymbol{\varepsilon}^I = \boldsymbol{E}
-  - \sum_J \mathbb{T}^{IJ} : \delta\mathbb{C}^J : \boldsymbol{\varepsilon}^J
-  + \mathbb{E}^0 : \sum_K f_K\, \delta\mathbb{C}^K : \boldsymbol{\varepsilon}^K .
+\boldsymbol{\varepsilon}_I = \boldsymbol{E}
+  - \sum_J \mathbb{T}^{IJ} : \Delta\mathbb{C}_J : \boldsymbol{\varepsilon}_J
+  + \mathbb{E}^0 : \sum_K f_K\, \Delta\mathbb{C}_K : \boldsymbol{\varepsilon}_K .
 ```
 
 !!! warning "The paper's own sign is the opposite one"
@@ -60,7 +62,7 @@ representative volume containing ``N`` inclusions. Each inclusion of the cell ca
 truncated to the images lying within a cluster radius ``R_c`` of the receiver:
 
 ```math
-\bar{\mathbb{T}}_{IK} = \sum_{J \in \mathcal{C}_I \cap \mathcal{F}_K,\; J \ne I}
+\bar{\mathbb{T}}^{IK} = \sum_{J \in \mathcal{C}_I \cap \mathcal{F}_K,\; J \ne I}
    \mathbb{T}^{IJ} ,
 ```
 
@@ -71,15 +73,15 @@ truncated to the images lying within a cluster radius ``R_c`` of the receiver:
 ## The block system
 
 Splitting ``\mathbb{T}^{II}`` out of the sum and writing
-``\boldsymbol{\varepsilon}^K = \mathbb{A}^K : \boldsymbol{E}`` turns the above into a
+``\boldsymbol{\varepsilon}_K = \mathbb{A}_K : \boldsymbol{E}`` turns the above into a
 linear system whose unknowns are order-4 tensors:
 
 ```math
-\sum_K \mathbb{M}_{IK} : \mathbb{A}^K = \mathbb{I} ,
+\sum_K \mathbb{M}_{IK} : \mathbb{A}_K = \mathbb{I} ,
 \qquad
 \boxed{\;\mathbb{M}_{IK} = \delta_{IK}\,\mathbb{I}
-  + \big[\bar{\mathbb{T}}_{IK} + (\delta_{IK} - f_K)\,\mathbb{P}_0\big]
-    : \delta\mathbb{C}_K \;}
+  + \big[\bar{\mathbb{T}}^{IK} + (\delta_{IK} - f_K)\,\mathbb{P}_0\big]
+    : \Delta\mathbb{C}_K \;}
 ```
 
 A **single** expression covers both the diagonal and the off-diagonal block, which is
@@ -90,9 +92,9 @@ The matrix localization follows from the strain average rule and the effective
 stiffness from the stress one:
 
 ```math
-f_m\, \mathbb{A}_m = \mathbb{I} - \sum_I f_I\, \mathbb{A}_I ,
+f_0\, \mathbb{A}_0 = \mathbb{I} - \sum_I f_I\, \mathbb{A}_I ,
 \qquad
-\mathbb{C}^{\mathrm{hom}} = f_m\, \mathbb{C}_m : \mathbb{A}_m
+\mathbb{C}^{\mathrm{hom}} = f_0\, \mathbb{C}_0 : \mathbb{A}_0
   + \sum_I f_I\, \mathbb{C}_I : \mathbb{A}_I .
 ```
 
@@ -105,9 +107,9 @@ than reproducing the tensorial Gauss elimination of the paper.
 Reduce the cluster to its own receiver. Every ``\bar{\mathbb{T}}`` vanishes and
 
 ```math
-\mathbb{M}_{II} = \mathbb{I} + (1-f_I)\,\mathbb{P}_0 : \delta\mathbb{C}_I ,
+\mathbb{M}_{II} = \mathbb{I} + (1-f_I)\,\mathbb{P}_0 : \Delta\mathbb{C}_I ,
 \qquad
-\mathbb{M}_{IK} = -f_K\, \mathbb{P}_0 : \delta\mathbb{C}_K ,
+\mathbb{M}_{IK} = -f_K\, \mathbb{P}_0 : \Delta\mathbb{C}_K ,
 ```
 
 which is the Mori-Tanaka system term by term.

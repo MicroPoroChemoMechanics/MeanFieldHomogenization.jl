@@ -26,12 +26,12 @@ matrix average to come out right and you have Mori–Tanaka; embed each inclusio
 in the *unknown* effective medium and you have the self-consistent scheme.
 
 For each inclusion the **dilute strain concentration tensor**
-``\mathbb A_\mathrm{dil}^{(i)}`` and the **size-independent stiffness
+``\mathbb A_i^{\mathrm{dil}}`` and the **size-independent stiffness
 contribution** ``\mathbb N_i = (\mathbb C_i - \mathbb C_0):
-\mathbb A_\mathrm{dil}^{(i)}`` are the natural building blocks
+\mathbb A_i^{\mathrm{dil}}`` are the natural building blocks
 [kachanov2018](@cite). The dual
 **compliance contribution** ``\mathbb H_i = (\mathbb S_i - \mathbb S_0):
-\mathbb A_\sigma^{(i)}`` is more natural for cracks (whose stiffness
+\mathbb A_{\sigma\sigma,i}`` is more natural for cracks (whose stiffness
 contribution is the rank-1 limit of a divergent eigenvalue).
 
 ## Bounds
@@ -53,7 +53,7 @@ stiffness contribution and ``\mathbb S_0 = \mathbb C_0^{-1}``:
 | :-- | :-- |
 | **Dilute** | ``\mathbb C_0 + \mathbb N_\Sigma`` (first order in ``f``) |
 | **DiluteDual** | ``\big(\mathbb S_0 + \sum_i f_i \mathbb H_i\big)^{-1}`` |
-| **Mori-Tanaka** | ``\mathbb C_0 + \mathbb N_\Sigma : \big(f_m\,\mathbb I + \sum_i f_i \mathbb A_\mathrm{dil}^{(i)}\big)^{-1}`` [mori1973, christensen1990](@cite) |
+| **Mori-Tanaka** | ``\mathbb C_0 + \mathbb N_\Sigma : \big(f_m\,\mathbb I + \sum_i f_i \mathbb A_i^{\mathrm{dil}}\big)^{-1}`` [mori1973, christensen1990](@cite) |
 | **Maxwell** | ``\mathbb C_0 + \mathbb N_\Sigma : (\mathbb I - \mathbb P_d : \mathbb N_\Sigma)^{-1}`` with ``\mathbb P_d`` the Hill tensor of the *outer distribution shape* |
 | **PCW** | identical algebraic form, distribution-shape-aware ensemble interpretation [ponte1995](@cite) |
 
@@ -84,7 +84,7 @@ a fixed point:
 
 | Scheme | Iteration |
 | :-- | :-- |
-| **SelfConsistent** [mclaughlin1977](@cite) | ``\mathbb C^{(n+1)} = \big(\sum_i f_i \mathbb C_i : \mathbb A_\mathrm{dil}^{(i)}(\mathbb C^{(n)})\big) : \big(\sum_i f_i \mathbb A_\mathrm{dil}^{(i)}(\mathbb C^{(n)})\big)^{-1}`` |
+| **SelfConsistent** [mclaughlin1977](@cite) | ``\mathbb C^{(n+1)} = \big(\sum_i f_i \mathbb C_i : \mathbb A_i^{\mathrm{dil}}(\mathbb C^{(n)})\big) : \big(\sum_i f_i \mathbb A_i^{\mathrm{dil}}(\mathbb C^{(n)})\big)^{-1}`` |
 | **AsymmetricSelfConsistent** | switches between stiffness- and compliance-form iteration based on the matrix-vs-Voigt-bound contrast |
 
 The default solver is a damped Picard fixed point (Anderson with memory
@@ -100,8 +100,8 @@ The **DifferentialScheme** integrates the multi-phase incorporation ODE
 ``\tau \in [0, 1]``,
 
 ```math
-\frac{\mathrm d \mathbb C^{hom}}{\mathrm d \tau}
-  = \sum_i \dot\varphi_i \, \mathbb N_i(\mathbb C^{hom}) ,
+\frac{\mathrm d \mathbb C^{\mathrm{hom}}}{\mathrm d \tau}
+  = \sum_i \dot\varphi_i \, \mathbb N_i(\mathbb C^{\mathrm{hom}}) ,
 \qquad
 \dot\varphi_i = \dot f_i + \frac{f_i}{f_0} \sum_j \dot f_j ,
 ```

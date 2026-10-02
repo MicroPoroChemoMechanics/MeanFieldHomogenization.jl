@@ -56,8 +56,8 @@ A_classic = inv(TensISO{3}(1.0) + P ⋅ (K1 - K0))
 
 get_array(A_layered) ≈ get_array(A_classic)
 
-# `Spheroid(ϖ)`'s revolution axis is `ê₁` for prolate (`ϖ > 1`) and `ê₃` for
-# oblate (`ϖ < 1`); `LayeredSpheroid`'s own default axis is `ê₃`, overridable
+# `Spheroid(ϖ)`'s revolution axis is `ê₁` for a prolate spheroid (aspect ratio
+# \omega > 1) and `ê₃` for an oblate one (\omega < 1); `LayeredSpheroid`'s own default axis is `ê₃`, overridable
 # with the `axis` keyword — pass `axis = (1.0, 0.0, 0.0)` when comparing against
 # a prolate `Spheroid`, as above.
 
@@ -65,7 +65,7 @@ get_array(A_layered) ≈ get_array(A_classic)
 #
 # `LayeredSpheroid` reuses [`LayeredSphere`](@ref)'s interface types:
 # [`KapitzaInterface`](@ref)`(ρ)`, a temperature-jump resistance ("LC",
-# low-conducting), and [`SurfaceConductiveInterface`](@ref)`(β)`, a flux-jump
+# low-conducting), and [`SurfaceConductiveInterface`](@ref)`(kₛ)`, a flux-jump
 # surface conductance ("HC", highly-conducting), on top of the default
 # `PerfectInterface`. An exact limit anchors them: an infinitely resistive
 # interface must behave like a fully insulated core.
@@ -123,7 +123,7 @@ get_array(homogenize(rve, MoriTanaka(), :K))
 # homogenization-equivalent to a single homogeneous, perfectly-bonded ellipsoid
 # carrying the anisotropic conductivity
 # ```math
-# \boldsymbol{k}^{eq} = \boldsymbol{B}_\Omega\cdot\boldsymbol{A}_\Omega^{-1},
+# \boldsymbol{k}^{\mathrm{eq}} = \boldsymbol{B}_\Omega\cdot\boldsymbol{A}_\Omega^{-1},
 # ```
 # where ``\boldsymbol{A}_\Omega`` and ``\boldsymbol{B}_\Omega`` are the
 # volume-averaged gradient and flux concentration tensors of the particle,
@@ -209,10 +209,10 @@ p_eff
 
 # ## The equivalent particle itself
 #
-# ``\boldsymbol{k}^{eq}`` is a genuinely **size-dependent** quantity, unlike a
+# ``\boldsymbol{k}^{\mathrm{eq}}`` is a genuinely **size-dependent** quantity, unlike a
 # perfect-interface homogeneous inclusion whose concentration depends on shape
 # only: the interface enters through a surface-to-volume ratio, so
-# ``\boldsymbol{k}^{eq}`` interpolates between the perfect-interface limit (large
+# ``\boldsymbol{k}^{\mathrm{eq}}`` interpolates between the perfect-interface limit (large
 # particles, where the interface becomes negligible) and the decoupled limit
 # (small particles, or strong interface resistance).
 #

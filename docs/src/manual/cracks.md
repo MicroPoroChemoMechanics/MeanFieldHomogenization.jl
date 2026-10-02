@@ -3,7 +3,7 @@
 A crack is an inclusion of **zero volume**: the ``c \to 0`` limit of an
 ellipsoid. Two consequences run through this page — the amount of cracking is a
 *density*, not a volume fraction, and everything is written in the crack's own
-frame ``(\hat{\underline{\ell}}, \hat{\underline{m}}, \hat{\underline{n}})``,
+frame ``(\underline{\ell}, \underline{m}, \underline{n})``,
 whose third vector is the normal.
 
 ```@setup mancracks
@@ -59,11 +59,11 @@ R  = compliance_contribution(pc, K₀)     # R = (3/4) b (ŵ⊗ŵ)
 
 A flat crack carrying a **spring-like interface elasticity** with stiffness
 tensor ``\boldsymbol{K}`` (order 2, ``3\times 3`` symmetric — e.g. isotropic with
-a normal stiffness ``K_n`` and a tangential one ``K_t``) modifies the COD tensor
+a normal stiffness ``k_n`` and a tangential one ``k_t``) modifies the COD tensor
 ``\boldsymbol{B}`` via
 
 ```math
-\boldsymbol{B}_{\text{eff}}
+\boldsymbol{B}^{\mathrm{hom}}
 = \bigl(b\,\boldsymbol{K} + \boldsymbol{B}^{-1}\bigr)^{-1}
 = \boldsymbol{B}\cdot\bigl(\boldsymbol{1} + b\,\boldsymbol{K}\cdot\boldsymbol{B}\bigr)^{-1},
 ```
@@ -72,7 +72,7 @@ where ``b`` is the in-plane half-width, `semi_minor(crack)`. The two limits are
 the familiar ones: ``\boldsymbol{K} = \boldsymbol{0}`` gives a traction-free
 crack (recovering ``\boldsymbol{B}``), and
 ``\boldsymbol{K}\to\infty`` a rigid bond
-(``\boldsymbol{B}_{\text{eff}}\to\boldsymbol{0}``, i.e. no crack at all).
+(``\boldsymbol{B}^{\mathrm{hom}}\to\boldsymbol{0}``, i.e. no crack at all).
 
 ```julia
 # Elasticity : iso interface stiffness K = 5·𝟏

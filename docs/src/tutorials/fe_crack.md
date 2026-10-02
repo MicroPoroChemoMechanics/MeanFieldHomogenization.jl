@@ -39,7 +39,7 @@ three extra solves that share the existing factorization.
 
 The crack front carries a square-root displacement field, so a fixed-order
 element converges slowly — in practice **first order in the element size**
-``h \propto 1/\texttt{htipdiv}``. That regularity is what makes Richardson
+``h \propto 1/\mathrm{htipdiv}``. That regularity is what makes Richardson
 extrapolation to ``h\to 0`` legitimate, and it turns a few-percent raw error
 into a sub-percent verdict.
 

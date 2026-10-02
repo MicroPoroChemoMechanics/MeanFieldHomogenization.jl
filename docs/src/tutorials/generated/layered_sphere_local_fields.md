@@ -12,8 +12,8 @@ Where [`layer_strain_average`](@ref) gives one tensor per layer, the
 pointwise API gives the field itself:
 
 - [`LayeredSphereFields`](@ref)`(sphere, C₀)` — solve the recurrence once;
-- [`local_strain_strain_loc`](@ref)`(sol, x)` — ``\mathbb{A}(x)`` with
-  ``\varepsilon(x) = \mathbb{A}(x):\varepsilon^\infty``, and its three
+- [`local_strain_strain_loc`](@ref)`(sol, x)` — ``\mathbb{A}(\underline x)`` with
+  ``\boldsymbol\varepsilon(\underline x) = \mathbb{A}(\underline x):\boldsymbol\varepsilon^\infty``, and its three
   siblings `local_stress_strain_loc`, `local_strain_stress_loc`,
   `local_stress_stress_loc` for a remote stress;
 - [`local_strain`](@ref), [`local_stress`](@ref),
@@ -21,7 +21,7 @@ pointwise API gives the field itself:
 - [`get_layer`](@ref)`(sphere, r; side)` — which region a radius belongs
   to, and which limit is meant exactly on an interface.
 
-``\mathbb{A}(x)`` is transversely isotropic about ``\underline n = x/r``
+``\mathbb{A}(\underline x)`` is transversely isotropic about ``\underline n = \underline x/r``
 and carries no major symmetry, so it is a `TensTI{4,T,6}`: six Walpole
 scalars and an axis, not an 81-component array.
 
@@ -57,7 +57,7 @@ const sol = LayeredSphereFields(sphere, C₀)
 
 ## Radial profiles under a hydrostatic far field
 
-``\varepsilon^\infty = \varepsilon_v\,\mathbf 1``. The displacement is
+``\boldsymbol\varepsilon^\infty = \varepsilon_v\,\boldsymbol 1``. The displacement is
 purely radial, ``u_r = A_k r + B_k/r^2``, so ``\sigma_{rr}`` is continuous
 across every perfect interface while ``\sigma_{\theta\theta}`` jumps with
 the modulus.
@@ -103,7 +103,7 @@ end
 ## Radial profiles under a deviatoric far field
 
 The deviatoric (``Y_2``) part is what the averaged API could not reach.
-Under a uniaxial ``\varepsilon^\infty = \mathrm{diag}(0,0,1)`` the field is
+Under a uniaxial ``\boldsymbol\varepsilon^\infty = \underline e_3\otimes\underline e_3`` the field is
 no longer radial: it depends on ``\theta`` as well, and both the radial
 and hoop stresses vary along the interface.
 
@@ -225,7 +225,7 @@ end
 
 ## The pointwise field reproduces the layer averages
 
-Averaging ``\mathbb{A}(x)`` over a layer must return the
+Averaging ``\mathbb{A}(\underline x)`` over a layer must return the
 ``(\alpha_k, \beta_k)`` the averaged API reports —
 [`shell_localization`](@ref) exposes that identity from the same cached
 amplitudes, so the two routes cannot drift apart.

@@ -250,7 +250,7 @@ lists when the target is a laminate:
   thickness derivative also carries the size effect, which is usually what one
   wants;
 - **interface field** — one scalar of one interface (``k_n``, ``k_t``,
-  ``\kappa_s``, ``\mu_s``, the Kapitza resistance, the surface conductance).
+  ``\kappa^{\mathrm s}``, ``\mu^{\mathrm s}``, the Kapitza resistance, the surface conductance).
   Interface ``k`` sits on top of layer ``k``.
 
 Conversely a laminate has no *phase amount*: `AmountParameter` raises on one and
@@ -392,9 +392,8 @@ extraction used in [`scripts/62_alv_schemes.jl`](../tutorials/generated/alv_sche
 
 ## Anisotropic properties
 
-Conductivity comes in three forms: isotropic ``\kappa``, transversely
-isotropic ``(\kappa_t, \kappa_a)``, and orthotropic ``(\kappa_1, \kappa_2,
-\kappa_3)``. Stiffness offers isotropic ``(k, \mu)`` or ``(E, \nu)``,
+Conductivity comes in three forms: isotropic ``k``, transversely
+isotropic ``(k_t, k_a)``, and orthotropic ``(k_1, k_2, k_3)``. Stiffness offers isotropic ``(k, \mu)`` or ``(E, \nu)``,
 transversely isotropic Hoenig parameters, and the nine orthotropic constants.
 Anything else is typed as a Julia expression, which the generator passes
 through untouched.

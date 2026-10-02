@@ -8,11 +8,11 @@ The companion of
 [`32_spheroid_effective_conductivity.jl`](layered_spheroid_effective.md),
 which treats the **low-conducting** (Kapitza) interface. Here the interface is
 **highly conducting** — a surface layer of zero thickness and finite surface
-conductance ``\beta``:
+conductance ``k^{\mathrm s}``:
 ```math
 \text{LC:}\quad [\![T]\!] = \rho\,q_n
 \qquad\text{vs.}\qquad
-\text{HC:}\quad [\![q_n]\!] = -\beta\,\mathrm{div}_S(\nabla_S T).
+\text{HC:}\quad [\![q_n]\!] = -k^{\mathrm s}\,\mathrm{div}_S(\nabla_S T).
 ```
 The two are duals: LC impedes the normal flux, HC adds a tangential
 short-circuit. Both are the imperfect-interface models of
@@ -23,7 +23,7 @@ back to [miloh1999](@citet).
 **What the script computes.** For an insulating particle carrying an HC
 interface, the **equivalent particle conductivity**
 ```math
-\boldsymbol{k}^{eq} = \boldsymbol{B}_\Omega\cdot\boldsymbol{A}_\Omega^{-1},
+\boldsymbol{k}^{\mathrm{eq}} = \boldsymbol{B}_\Omega\cdot\boldsymbol{A}_\Omega^{-1},
 ```
 where ``\boldsymbol{A}_\Omega`` and ``\boldsymbol{B}_\Omega`` are the
 volume-averaged concentration tensors of the particle, defined by
@@ -31,13 +31,13 @@ volume-averaged concentration tensors of the particle, defined by
 and ``\langle\boldsymbol{K}\cdot\nabla T\rangle_\Omega =
 \boldsymbol{B}_\Omega\cdot\underline{H}`` under a remote gradient
 ``\underline{H}``. Its transverse and axial components are traced against the
-aspect ratio ``\varpi = \rho_a/\rho_t``, over the oblate (``\varpi<1``) and
-prolate (``\varpi>1``) ranges — the HC counterpart of the four LC figures of
+aspect ratio ``\omega = \rho_a/\rho_t``, over the oblate (``\omega<1``) and
+prolate (``\omega>1``) ranges — the HC counterpart of the four LC figures of
 the reference paper.
 
-Because ``\beta`` carries a length (it is a conductance per unit length, not a
-conductivity), ``k^{eq}`` is **size-dependent**; the natural dimensionless
-group is ``\beta/(k_m\,b)`` with ``b`` a particle radius. The curves below are
+Because ``k^{\mathrm s}`` carries a length (it is a conductance per unit length, not a
+conductivity), ``k^{\mathrm{eq}}`` is **size-dependent**; the natural dimensionless
+group is ``k^{\mathrm s}/(k_m\,b)`` with ``b`` a particle radius. The curves below are
 normalized so that this dependence is explicit.
 
 Theory: [Layered spheroid](../../theory/layered_spheroid.md).
@@ -66,8 +66,9 @@ const K0 = TensISO{3}(KM)
 const KC = TensISO{3}(KCORE)
 ````
 
-Build a one-layer spheroid of aspect ratio `ϖ` at fixed **transverse** radius
-`ρ_t = 1`, carrying an HC interface of surface conductance `β`.
+Build a one-layer spheroid of aspect ratio \omega at fixed **transverse** radius
+\rho_t = 1, carrying an HC interface of surface conductance k^{\mathrm s}
+(the code names them `ϖ` and `β`).
 
 ````@example layered_spheroid_hc
 function _particle(ϖ, β; ρ_t = 1.0)
@@ -95,7 +96,7 @@ end
 
 ## Aspect-ratio sweep
 
-Oblate side ``\varpi \in [10^{-1}, 1]`` and prolate side ``\varpi \in [1, 10]``,
+Oblate side ``\omega \in [10^{-1}, 1]`` and prolate side ``\omega \in [1, 10]``,
 for a range of surface conductances.
 
 ````@example layered_spheroid_hc

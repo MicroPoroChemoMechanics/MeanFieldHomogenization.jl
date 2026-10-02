@@ -24,10 +24,10 @@ merely bounded.
 ## Which way the transform runs
 
 The forward direction is easy: the time route produces a sampled relaxation
-function ``\mu^{\hom}(t)``, and its **Laplace-Carson transform**
+function ``\mu^{\mathrm{hom}}(t)``, and its **Laplace-Carson transform**
 
 ```math
-\mu^{*}(p) \;=\; p\int_{0}^{\infty}\mu^{\hom}(t)\,e^{-pt}\,\mathrm{d}t,
+\mu^{*}(p) \;=\; p\int_{0}^{\infty}\mu^{\mathrm{hom}}(t)\,e^{-pt}\,\mathrm{d}t,
 \qquad p = i\omega,
 ```
 
@@ -109,23 +109,23 @@ end
 ## §3 The time route, and how to read a relaxation function out of it
 
 [`homogenize_alv`](@ref) returns the effective operator as a ``6n \times 6n``
-block matrix ``\widetilde{\mathbb{R}}`` acting on a *strain history* sampled on
+block matrix ``\widetilde{\mathbb{C}}`` acting on a *strain history* sampled on
 the grid — the trapezoidal representation of the Stieltjes integral
-``\sigma(t_i) = \int_{t_0}^{t_i}\mathbb{R}(t_i,\tau):\mathrm{d}\varepsilon(\tau)``
+``\boldsymbol\sigma(t_i) = \int_{t_0}^{t_i}\mathbb{C}(t_i,t'):\mathrm{d}\boldsymbol\varepsilon(t')``
 [sanahuja2013](@cite). Its blocks are *differences* of kernel values, not
-kernel values, so reading ``\mathbb{R}^{\hom}(t)`` off a column would be wrong.
+kernel values, so reading ``\mathbb{C}^{\mathrm{hom}}(t)`` off a column would be wrong.
 
 The physical extraction is a relaxation test. Applying a **unit strain step at
 ``t = 0``** means a history vector whose every time slot holds the same strain,
 so the stress at ``t_i`` is the row sum:
 
 ```math
-\mathbb{R}^{\hom}(t_i) \;=\; \sum_j \widetilde{\mathbb{R}}_{ij}.
+\mathbb{C}^{\mathrm{hom}}(t_i) \;=\; \sum_j \widetilde{\mathbb{C}}_{ij}.
 ```
 
 [`iso_params_from_blocks`](@ref) splits the block matrix into its two isotropic
 parts ``\alpha = 3k`` and ``\beta = 2\mu``, so the row sums of ``\beta`` give
-``2\mu^{\hom}(t_i)`` directly.
+``2\mu^{\mathrm{hom}}(t_i)`` directly.
 
 ````@example freq_vs_time
 function mu_relaxation(times)
@@ -151,7 +151,7 @@ times = collect(range(0.0, 40.0; length = 401))
 
 The grid must be long enough for the plateau to be reached: the tail beyond
 ``T`` is then a constant, and its contribution to the transform is the closed
-form ``\mu^{\hom}(T)\,e^{-pT}`` rather than a truncation error.
+form ``\mu^{\mathrm{hom}}(T)\,e^{-pT}`` rather than a truncation error.
 
 ````@example freq_vs_time
 function mu_from_time(ω, times, μ_t)
@@ -235,7 +235,7 @@ continuum limit.
 Everything so far ran the transform the *easy* way. The reverse direction is
 now available too: [`homogenize_lc`](@ref) evaluates the same Mori-Tanaka
 estimate at the Carson variables an inversion algorithm asks for, and hands
-back ``\mu^{\hom}(t)`` directly.
+back ``\mu^{\mathrm{hom}}(t)`` directly.
 
 Note what is *not* needed: no time grid, no Volterra operator, no trapezoidal
 rule. The answer at `t = 7` costs a couple of dozen elastic homogenizations
@@ -365,7 +365,7 @@ plt3
 ````
 
 !!! note "This only works because the material does not age"
-    Both transform routes need ``\mathbb{R}(t, t')`` to depend on ``t - t'``
+    Both transform routes need ``\mathbb{C}(t, t')`` to depend on ``t - t'``
     alone. When a phase solidifies progressively, ``t`` and ``t'`` enter
     independently, the Laplace-Carson transform no longer factorizes the
     convolution, and *two of the three routes simply cease to exist* — which

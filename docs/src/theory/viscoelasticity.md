@@ -1,18 +1,19 @@
 # [Ageing linear viscoelasticity (ALV)](@id th-viscoelasticity)
 
 !!! tip "If the material does not age, there is a cheaper route"
-    Everything on this page treats a kernel ``\mathbb{R}(t, t')`` in which `t`
-    and `t'` enter **independently**, which is what forces the Volterra
+    Everything on this page treats a kernel ``\mathbb{C}(t, t')`` in which ``t``
+    and ``t'`` enter **independently**, which is what forces the Volterra
     operators to be discretized directly. When the kernel depends on `t - t'`
     alone the constitutive law is a convolution, a transform turns it into a
     product, and the whole problem reduces to an elastic one at each Carson
     variable — see [the Laplace-Carson route](@ref th-laplace-carson).
 
     The two algebras are worth contrasting explicitly. Creep and relaxation are
-    related by ``\int_0^t \mathbb{R}(t-s):\mathrm{d}\mathbb{J}(s) =
-    \mathbb{I}`` here — a convolution, discretized below into the inverse of a
+    related by ``\int_0^t \mathbb{C}(t-s):\mathrm{d}\mathbb{L}(s) =
+    \mathbb{I}`` here, with ``\mathbb{C}`` the relaxation kernel and
+    ``\mathbb{L}`` the creep kernel — a convolution, discretized below into the inverse of a
     block-triangular matrix — and by the pointwise reciprocal
-    ``\mathbb{J}^{*}(p) : \mathbb{R}^{*}(p) = \mathbb{I}`` there. That single
+    ``\mathbb{L}^{*}(p) : \mathbb{C}^{*}(p) = \mathbb{I}`` there. That single
     difference is the whole cost and the whole benefit of each route.
 
 Everything in the elastic part of this documentation — the Eshelby problem, the
@@ -129,12 +130,12 @@ inverse [`volterra_inverse`](@ref).
 
 Consider an ellipsoid ``\mathcal{E}`` of shape tensor ``\boldsymbol{A}``
 embedded in an infinite medium of relaxation kernel ``\mathbb{C}``, carrying a
-uniform polarization history ``\boldsymbol{p}(t)``:
+uniform polarization history ``\boldsymbol{\tau}(t)``:
 
 ```math
 \boldsymbol{\sigma}(\underline{x})
 = \mathbb{C}\circ\boldsymbol{\varepsilon}(\underline{x})
-+ \boldsymbol{p}\,\chi_{\mathcal{E}}(\underline{x}),
++ \boldsymbol{\tau}\,\chi_{\mathcal{E}}(\underline{x}),
 ```
 
 with ``\chi_{\mathcal{E}}`` the characteristic function of ``\mathcal{E}``.
@@ -143,7 +144,7 @@ Momentum balance and the decay condition at infinity give
 
 ```math
 \mathrm{div}\bigl(\mathbb{C}\circ\boldsymbol{\varepsilon}(\underline{u})\bigr)
-- \boldsymbol{p}\cdot\underline{n}\,\delta_{\partial\mathcal{E}} = \underline{0},
+- \boldsymbol{\tau}\cdot\underline{n}\,\delta_{\partial\mathcal{E}} = \underline{0},
 \qquad
 \lim_{\|\underline{x}\|\to\infty}\underline{u}(\underline{x}) = \underline{0},
 ```
@@ -157,9 +158,9 @@ Solving it through the ALV Green kernel yields the central result: the strain is
 
 ```math
 \forall\,\underline{x}\in\mathcal{E}\quad
-\boldsymbol{\varepsilon}(\underline{x}) = -\,\mathbb{P}\circ\boldsymbol{p},
+\boldsymbol{\varepsilon}(\underline{x}) = -\,\mathbb{P}\circ\boldsymbol{\tau},
 \qquad
-\boldsymbol{\sigma}(\underline{x}) = -\,\mathbb{C}\circ\mathbb{P}\circ\boldsymbol{p}.
+\boldsymbol{\sigma}(\underline{x}) = -\,\mathbb{C}\circ\mathbb{P}\circ\boldsymbol{\tau}.
 ```
 
 ## The Hill polarization kernel
@@ -185,14 +186,14 @@ Like its elastic counterpart it depends only on the shape and orientation of the
 ellipsoid and on the reference kernel.
 
 The **Eshelby kernel** follows by the same definition as in elasticity,
-``\mathbb{S} = \mathbb{P}\circ\mathbb{C}``, and relates the uniform strain inside
-``\mathcal{E}`` to a uniform eigenstrain history ``\boldsymbol{\varepsilon}^*``:
+``\mathbb{S}^{\mathrm{E}} = \mathbb{P}\circ\mathbb{C}``, and relates the uniform strain inside
+``\mathcal{E}`` to a uniform eigenstrain history ``\boldsymbol{\varepsilon}^{\star}``:
 
 ```math
 \forall\,\underline{x}\in\mathcal{E}\quad
 \boldsymbol{\varepsilon}(\underline{x})
-= \mathbb{S}\circ\boldsymbol{\varepsilon}^*
-= \mathbb{P}\circ\mathbb{C}\circ\boldsymbol{\varepsilon}^* .
+= \mathbb{S}^{\mathrm{E}}\circ\boldsymbol{\varepsilon}^{\star}
+= \mathbb{P}\circ\mathbb{C}\circ\boldsymbol{\varepsilon}^{\star} .
 ```
 
 ### Isotropic matrix: time and space decouple
@@ -244,12 +245,12 @@ and ``\mathbb{V}^{\boldsymbol{A}} = \tfrac{1}{3}\mathbb{I}``, giving the closed
 form [barthelemyIJSS2016](@cite)
 
 ```math
-\mathbb{P}^{\text{sphere}}
+\mathbb{P}^{\mathrm{sphere}}
 = (3k+4\mu)^{-\circ}\circ
   \Bigl(H\,\mathbb{J}
       + \tfrac{3}{5}\,(k+2\mu)\circ\mu^{-\circ}\,\mathbb{K}\Bigr),
 \qquad
-\mathbb{S}^{\text{sphere}}
+\mathbb{S}^{\mathrm{sphere}}
 = 3\,(3k+4\mu)^{-\circ}\circ
   \Bigl(k\,\mathbb{J} + \tfrac{2}{5}(k+2\mu)\,\mathbb{K}\Bigr).
 ```
@@ -264,24 +265,24 @@ Replace the polarization by a genuine inhomogeneity: the ellipsoid now has its
 own relaxation kernel ``\mathbb{C}^{\mathcal{E}}``, and the medium is loaded by
 a remote strain history ``\boldsymbol{E}(t)``. Superposing the remote field and
 the response to the fictitious polarization
-``(\mathbb{C}^{\mathcal{E}}-\mathbb{C}^{0})\circ\boldsymbol{\varepsilon}``
+``(\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)\circ\boldsymbol{\varepsilon}``
 gives [barthelemyIJSS2016](@cite)
 
 ```math
 \boldsymbol{\varepsilon}
 = \boldsymbol{E}
-- \mathbb{P}\circ(\mathbb{C}^{\mathcal{E}}-\mathbb{C}^{0})
+- \mathbb{P}\circ(\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)
   \circ\boldsymbol{\varepsilon}
 \qquad\Longrightarrow\qquad
-\boldsymbol{\varepsilon} = \mathbb{A}^{\text{dil}}\circ\boldsymbol{E},
+\boldsymbol{\varepsilon} = \mathbb{A}^{\mathrm{dil}}\circ\boldsymbol{E},
 ```
 
 with the **dilute strain concentration kernel**
 
 ```math
-\mathbb{A}^{\text{dil}}
+\mathbb{A}^{\mathrm{dil}}
 = \bigl(H\,\mathbb{I}
-      + \mathbb{P}\circ(\mathbb{C}^{\mathcal{E}}-\mathbb{C}^{0})\bigr)^{-\circ} .
+      + \mathbb{P}\circ(\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)\bigr)^{-\circ} .
 ```
 
 The strain remains uniform inside ``\mathcal{E}``: it depends on time alone. The
@@ -289,9 +290,9 @@ associated **contribution kernel** is
 
 ```math
 \mathbb{N}
-= (\mathbb{C}^{\mathcal{E}}-\mathbb{C}^{0})\circ\mathbb{A}^{\text{dil}}
+= (\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)\circ\mathbb{A}^{\mathrm{dil}}
 = \bigl(\mathbb{P}
-      + (\mathbb{C}^{\mathcal{E}}-\mathbb{C}^{0})^{-\circ}\bigr)^{-\circ},
+      + (\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)^{-\circ}\bigr)^{-\circ},
 ```
 
 the second form following from the identity
@@ -302,27 +303,29 @@ in any associative algebra and so survives the loss of commutativity.
 ## Schemes
 
 With concentration kernels in hand, every matrix-based scheme transposes
-term by term [barthelemyIJES2019](@cite). Writing ``\varphi_r`` for the volume
-fraction of phase ``r`` and ``\mathbb{C}^0`` for the reference kernel, the
-general form is ``\mathbb{C}^{\hom} = \langle\mathbb{C}\circ\mathbb{A}\rangle``,
-or equivalently
+term by term [barthelemyIJES2019](@cite). Writing ``f_i`` for the volume
+fraction of phase ``i``, ``\mathbb{C}_i`` for its relaxation kernel and
+``\mathbb{C}_0`` for the reference kernel, the general form is
+``\mathbb{C}^{\mathrm{hom}} = \langle\mathbb{C}\circ\mathbb{A}\rangle``, or equivalently
 
 ```math
-\mathbb{C}^{\hom}
-= \mathbb{C}^{0}
-+ \sum_r \varphi_r\,(\mathbb{C}^{r}-\mathbb{C}^{0})\circ
-  \langle\mathbb{A}\rangle_r ,
+\mathbb{C}^{\mathrm{hom}}
+= \mathbb{C}_0
++ \sum_i f_i\,(\mathbb{C}_i-\mathbb{C}_0)\circ
+  \langle\mathbb{A}\rangle_i ,
 ```
 
-and the schemes differ only in how ``\langle\mathbb{A}\rangle_r`` is estimated —
-which yields, after substitution:
+and the schemes differ only in how ``\langle\mathbb{A}\rangle_i`` is estimated —
+which yields, after substitution, with ``\mathbb{N}_i`` and
+``\mathbb{A}_i^{\mathrm{dil}}`` the contribution and dilute concentration kernels of
+phase ``i``:
 
 | Scheme | Effective kernel |
 | :----- | :--------------- |
-| **Dilute** / NIA | ``\mathbb{C}^{\hom} = \mathbb{C}^{0} + \sum_r \varphi_r\,\mathbb{N}^{r}`` |
-| **Mori-Tanaka** | ``\mathbb{C}^{\hom} = \mathbb{C}^{0} + \bigl(\sum_r \varphi_r\,\mathbb{N}^{r}\bigr)\circ\bigl((1-\sum_s\varphi_s)H\,\mathbb{I} + \sum_s\varphi_s\,\mathbb{A}^{\text{dil},s}\bigr)^{-\circ}`` |
-| **Maxwell** / PCW | ``(\mathbb{C}^{\hom})^{-\circ} = (\mathbb{C}^{0})^{-\circ} + \bigl((\sum_r \varphi_r\,\mathbb{N}^{r})^{-\circ} - \mathbb{P}_{\Omega}\bigr)^{-\circ}`` |
-| **Self-consistent** | the same equations with ``\mathbb{C}^{0} = \mathbb{C}^{\hom}``, solved iteratively |
+| **Dilute** / NIA | ``\mathbb{C}^{\mathrm{hom}} = \mathbb{C}_0 + \sum_i f_i\,\mathbb{N}_i`` |
+| **Mori-Tanaka** | ``\mathbb{C}^{\mathrm{hom}} = \mathbb{C}_0 + \bigl(\sum_i f_i\,\mathbb{N}_i\bigr)\circ\bigl((1-\sum_j f_j)H\,\mathbb{I} + \sum_j f_j\,\mathbb{A}_j^{\mathrm{dil}}\bigr)^{-\circ}`` |
+| **Maxwell** / PCW | ``(\mathbb{C}^{\mathrm{hom}})^{-\circ} = \mathbb{C}_0^{-\circ} + \bigl((\sum_i f_i\,\mathbb{N}_i)^{-\circ} - \mathbb{P}_{\Omega}\bigr)^{-\circ}`` |
+| **Self-consistent** | the same equations with ``\mathbb{C}_0 = \mathbb{C}^{\mathrm{hom}}``, solved iteratively |
 | **Differential** | inclusions added in infinitesimal increments, re-homogenizing at each step |
 
 ``\mathbb{P}_{\Omega}`` in the Maxwell row is the Hill kernel of the
@@ -340,7 +343,7 @@ The ``n``-layer sphere of [herve1993](@citet) (see
 construction propagates a state vector across the shells by a product of
 transfer matrices — ``2\times 2`` for the bulk (``Y_0``) harmonic,
 ``4\times 4`` for the shear (``Y_2``) one — whose entries are rational
-expressions in the scalar moduli ``(\kappa_i,\mu_i)`` of each layer and in the
+expressions in the scalar moduli ``(k_i,\mu_i)`` of each layer and in the
 layer radii.
 
 In the ALV setting every scalar modulus becomes its ``n\times n`` trapezoidal

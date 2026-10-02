@@ -67,18 +67,18 @@ The non-ageing constitutive law is the Stieltjes convolution
 
 ```math
 \boldsymbol{\sigma}(t) = \int_{-\infty}^{t}
-   \mathbb{R}(t - s) : \mathrm{d}\boldsymbol{\varepsilon}(s),
+   \mathbb{C}(t - s) : \mathrm{d}\boldsymbol{\varepsilon}(s),
 ```
 
 whose Laplace-Carson transform is a plain product,
 
 ```math
-\boldsymbol{\sigma}^{*}(p) = \mathbb{R}^{*}(p) : \boldsymbol{\varepsilon}^{*}(p).
+\boldsymbol{\sigma}^{*}(p) = \mathbb{C}^{*}(p) : \boldsymbol{\varepsilon}^{*}(p).
 ```
 
 Transformed, the field equations of the localization problem — equilibrium,
 compatibility, the interface conditions — are *identical* to those of an
-elastic problem whose stiffness is ``\mathbb{R}^{*}(p)``, with `p` a parameter.
+elastic problem whose stiffness is ``\mathbb{C}^{*}(p)``, with ``p`` a parameter.
 Therefore
 
 > every homogenization scheme, applied at fixed `p` to the transformed moduli,
@@ -94,8 +94,8 @@ unchanged, and the only requirement is that they be generic in the scalar type
 [`homogenize_lc`](@ref) is the thin driver around that observation.
 
 !!! warning "It is the *non-ageing* case only"
-    The step from convolution to product needs the kernel to depend on `t - s`
-    alone. A kernel `R(t, t')` with genuine age dependence has no such
+    The step from convolution to product needs the kernel to depend on ``t - s``
+    alone. A kernel ``\mathbb{C}(t, t')`` with genuine age dependence has no such
     factorization, and no amount of care with the transform recovers it. For
     those materials, [`homogenize_alv`](@ref) is the answer, not this page.
 
@@ -105,14 +105,14 @@ The single most useful consequence of the transform is that creep and
 relaxation, which are related by a convolution in time,
 
 ```math
-\int_0^{t} \mathbb{R}(t-s) : \mathrm{d}\mathbb{J}(s) = \mathbb{I}
+\int_0^{t} \mathbb{C}(t-s) : \mathrm{d}\mathbb{L}(s) = \mathbb{I}
 \qquad\text{for all } t > 0,
 ```
 
 become exact reciprocals in the transform domain:
 
 ```math
-\mathbb{J}^{*}(p) : \mathbb{R}^{*}(p) = \mathbb{I}.
+\mathbb{L}^{*}(p) : \mathbb{C}^{*}(p) = \mathbb{I}.
 ```
 
 That identity is what [`carson_creep`](@ref) exploits as its default

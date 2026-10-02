@@ -62,10 +62,10 @@ effect on a three-layer prolate stack.
 \rho_t = c\sqrt{q^{2}-1},
 \qquad
 \text{aspect ratio}\quad
-\varpi = \frac{\rho_a}{\rho_t} = \frac{q}{\sqrt{q^{2}-1}} > 1 .
+\omega = \frac{\rho_a}{\rho_t} = \frac{q}{\sqrt{q^{2}-1}} > 1 .
 ```
 
-**Oblate spheroids** (``\varpi < 1``) follow by the formal substitution
+**Oblate spheroids** (``\omega < 1``) follow by the formal substitution
 ``c \to -\mathrm{i}\,\bar{c}``, ``q \to \mathrm{i}\,\tau`` with
 ``\bar{c}, \tau`` real, giving
 ``\rho_a = \bar{c}\,\tau`` and ``\rho_t = \bar{c}\sqrt{\tau^{2}+1}``. Every
@@ -190,14 +190,14 @@ across the interface and ``q_n`` for the normal flux:
 | :--- | :-------- | :------------- | :---------------- |
 | **perfect** | ``[\![T]\!]=0``, ``[\![q_n]\!]=0`` | [`PerfectInterface`](@ref) | diagonal |
 | **LC** (low-conducting) | ``[\![T]\!] = \rho\,q_n``, flux continuous | [`KapitzaInterface`](@ref)`(ρ)` | couples all degrees |
-| **HC** (highly-conducting) | ``[\![q_n]\!] = -\beta\,\mathrm{div}_S(\nabla_S T)``, temperature continuous | [`SurfaceConductiveInterface`](@ref)`(β)` | couples all degrees |
+| **HC** (highly-conducting) | ``[\![q_n]\!] = -k^{\mathrm s}\,\mathrm{div}_S(\nabla_S T)``, temperature continuous | [`SurfaceConductiveInterface`](@ref)`(kₛ)` | couples all degrees |
 
 The LC model is the Kapitza thermal contact resistance [kapitza1941, benveniste1986](@cite); the HC model is a highly conducting surface layer
 [miloh1999](@cite). Both are the imperfect-interface models used by
 [kushch2015](@citet) and [barthelemyBignonnetIJES2020](@citet).
 
 !!! warning "Sign convention"
-    ``\rho`` is a genuine thermal **resistance** and ``\beta`` a genuine surface
+    ``\rho`` is a genuine thermal **resistance** and ``k^{\mathrm s}`` a genuine surface
     **conductance**. This is *not* the inverse convention carried by some raw
     `echoes` `interf_prop` values for the low-conducting case.
 
@@ -334,19 +334,19 @@ identically. Its conductivity is
 
 ```math
 \boxed{\;
-\boldsymbol{k}^{eq} = \boldsymbol{B}_\Omega\cdot\boldsymbol{A}_\Omega^{-1}
+\boldsymbol{k}^{\mathrm{eq}} = \boldsymbol{B}_\Omega\cdot\boldsymbol{A}_\Omega^{-1}
 \;}
 ```
 
 with ``\boldsymbol{A}_\Omega`` and ``\boldsymbol{B}_\Omega`` as defined just
 above. Unlike a homogeneous perfect-interface spheroid — whose response depends
-on shape only — ``\boldsymbol{k}^{eq}`` is **size-dependent**, because an
-imperfect interface introduces a length scale (``\rho`` and ``\beta`` are not
+on shape only — ``\boldsymbol{k}^{\mathrm{eq}}`` is **size-dependent**, because an
+imperfect interface introduces a length scale (``\rho`` and ``k^{\mathrm s}`` are not
 dimensionless). Demonstrated in
 `scripts/34_spheroid_equivalent_conductivity.jl`.
 
 When every interface is perfect, only degree 1 survives, the coupling matrices
-drop out, and ``\boldsymbol{k}^{eq}`` reduces to the closed-form nested
+drop out, and ``\boldsymbol{k}^{\mathrm{eq}}`` reduces to the closed-form nested
 recursion of the paper's §3 — built from the classical conduction
 depolarization factors already available through [`tens_IA`](@ref) and
 [`hill_tensor`](@ref) for a single spheroid. That closed form is used as an

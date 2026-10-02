@@ -63,6 +63,12 @@ MeanFieldHomogenization are:
 | [`strain_stress_loc`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\varepsilon\sigma}``          |
 | [`stress_stress_loc`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\sigma\sigma}``               |
 
+For phase ``i`` of an RVE, ``\mathbb A_{\varepsilon\varepsilon}`` computed in the
+reference medium ``\mathbb C_0`` is the dilute concentration tensor written
+``\mathbb A_i^{\mathrm{dil}}`` on the pages of the schemes, and the subscript
+``i`` is appended after a comma when the four are needed for one phase, as in
+``\mathbb A_{\sigma\varepsilon,i}``.
+
 ## Contribution tensors
 
 The **stiffness contribution tensor** [kachanov2018](@cite) is
@@ -74,7 +80,7 @@ The **stiffness contribution tensor** [kachanov2018](@cite) is
 and its dilute-scheme volume average is
 
 ```math
-\Delta\mathbb C_\mathrm{eff} = f \,\mathbb N,
+\Delta\mathbb C^{\mathrm{hom}} = f \,\mathbb N,
 ```
 
 for a dilute family of volume fraction ``f``.  The dual **compliance
@@ -82,7 +88,7 @@ contribution tensor** is
 
 ```math
 \mathbb H = (\mathbb S_1 - \mathbb S_0) : \mathbb A_{\sigma\sigma},\qquad
-\Delta\mathbb S_\mathrm{eff} = f\,\mathbb H.
+\Delta\mathbb S^{\mathrm{hom}} = f\,\mathbb H.
 ```
 
 Functions: [`stiffness_contribution`](@ref),

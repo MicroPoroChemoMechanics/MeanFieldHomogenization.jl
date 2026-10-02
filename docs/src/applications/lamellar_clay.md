@@ -85,15 +85,15 @@ ion concentration ``n_M`` in the macropores. The interfoliar stress is
 therefore purely normal-plus-hydrostatic,
 
 ```math
-\underline{\underline{\sigma}}_f
-   = -p\,\mathbf{1} - \pi^g\,\underline{n} \otimes \underline{n} ,
+\boldsymbol{\sigma}_f
+   = -p\,\boldsymbol{1} - \pi^g\,\underline{n} \otimes \underline{n} ,
 ```
 
 and there is no tangential term at all: that *is* the free sliding.
 
 Linearizing ``\pi^g`` around the reference distance ``h_o`` is the only
 approximation of this step. With ``\varepsilon = \underline{n}\otimes
-\underline{n} : \underline{\underline{\varepsilon}}_f = (h - h_o)/h_o`` the
+\underline{n} : \boldsymbol{\varepsilon}_f = (h - h_o)/h_o`` the
 only strain measure the layer feels,
 
 ```@example lamellar
@@ -133,7 +133,7 @@ stiffness component**,
 ```
 
 positive because the swelling pressure decreases as the platelets move apart,
-and a prestress ``\underline{\underline{\sigma}}^p = -p\,\mathbf{1} - \pi^g_o\,
+and a prestress ``\boldsymbol{\sigma}^p = -p\,\boldsymbol{1} - \pi^g_o\,
 \underline{n}\otimes\underline{n}``. No shear stiffness, no in-plane stiffness:
 a spring, and nothing else.
 
@@ -194,7 +194,7 @@ KM(Cpar)
 ```
 
 Everything the model says about a particle is in that matrix.
-``\mathbb{C}^{par}_{3333} = \Pi``: the normal
+``\mathbb{C}^{\mathrm{par}}_{3333} = \Pi``: the normal
 stiffness of the particle **is** the interfoliar spring, and it does not depend
 on ``f``. The rows and columns 4 and 5 are identically zero: no shear stiffness
 on any plane containing ``\underline{n}`` — the free sliding survives
@@ -214,7 +214,7 @@ coefficients, in the order ``(\ell_1, \ldots, \ell_6)``:
 get_data(A_f)
 ```
 
-### The tensor ``\mathbf{B}_\pi``, and Levin
+### The tensor ``\boldsymbol{B}_\pi``, and Levin
 
 The prestress does not average trivially, and what it averages to is the
 tensor that carries the deviation from Terzaghi's effective stress all the way
@@ -225,7 +225,7 @@ Bπ = tsimplify(f * (nn ⊡ A_f))
 get_data(Bπ)          # (transverse, axial) coefficients of  a nT + b n⊗n
 ```
 
-that is ``\mathbf{B}_\pi = (1-f)\,\mathbf{1} + f\,\underline{n}\otimes
+that is ``\boldsymbol{B}_\pi = (1-f)\,\boldsymbol{1} + f\,\underline{n}\otimes
 \underline{n}`` — the axial coefficient is 1 and the transverse one is
 ``1 - f``. Levin's theorem then gives the particle's state equation; only the
 interfoliar layer is prestressed, so a single term survives:
@@ -238,13 +238,13 @@ a, b = get_data(Σ_pre)                   # transverse and axial coefficients
 ```
 
 Transverse ``-p - (1-f)\pi^g_o``, axial ``-p - \pi^g_o``: that is exactly
-``-p\,\mathbf{1} - \pi^g_o\,\mathbf{B}_\pi``, and the particle's state
+``-p\,\boldsymbol{1} - \pi^g_o\,\boldsymbol{B}_\pi``, and the particle's state
 equation reads
 
 ```math
-\underline{\underline{\Sigma}}
-  = \mathbb{C}^{par} : \underline{\underline{E}}
-  \;-\; p\,\mathbf{1} \;-\; \pi^g_o\,\mathbf{B}_\pi .
+\boldsymbol{\Sigma}
+  = \mathbb{C}^{\mathrm{par}} : \boldsymbol{E}
+  \;-\; p\,\boldsymbol{1} \;-\; \pi^g_o\,\boldsymbol{B}_\pi .
 ```
 
 ## Scale ①: the porous polycrystal
@@ -274,7 +274,7 @@ residual = get_data(C_ac - (1 - φ) * CA)   # two scalars: the 𝕁 and 𝕂 par
 println(typeof(CA), " ⇒ ", length(residual), " scalar equations in (κ, μ)")
 ```
 
-The same average, applied to ``\mathbf{B}_\pi : \mathbb{A}^{par}``, gives the
+The same average, applied to ``\boldsymbol{B}_\pi : \mathbb{A}^{\mathrm{par}}``, gives the
 macroscopic Terzaghi deviation ``g``, which is isotropic and hence a single
 number:
 
@@ -355,9 +355,9 @@ g_ac = tsimplify(sympy.factor(tsubs(gA, x => xs, y => ys)))
 The macroscopic state equation is then
 
 ```math
-\underline{\underline{\Sigma}}
-  = \mathbb{C}^{ac}\!\left(f, \varphi, \mu_s, \Pi\right) : \underline{\underline{E}}
-  \;-\; p\,\mathbf{1} \;-\; g(\varphi)\,\pi^g_o\,\mathbf{1},
+\boldsymbol{\Sigma}
+  = \mathbb{C}^{ac}\!\left(f, \varphi, \mu_s, \Pi\right) : \boldsymbol{E}
+  \;-\; p\,\boldsymbol{1} \;-\; g(\varphi)\,\pi^g_o\,\boldsymbol{1},
 ```
 
 the last term being the departure from Terzaghi's principle — a macroscopic
@@ -398,6 +398,6 @@ Three things are worth stating plainly.
   connected skeleton and the assembly carries no deviatoric stress at all. The
   value ``1/4`` is the scheme's, not nature's, and should be read as indicative.
 - **``g \neq 1`` is a measurable departure from Terzaghi.** An effective stress
-  ``\underline{\underline{\Sigma}} + p\,\mathbf{1}`` still contains
-  ``-g\,\pi^g_o\,\mathbf{1}``: a swelling clay left to itself, at constant pore
+  ``\boldsymbol{\Sigma} + p\,\boldsymbol{1}`` still contains
+  ``-g\,\pi^g_o\,\boldsymbol{1}``: a swelling clay left to itself, at constant pore
   pressure, is under stress.

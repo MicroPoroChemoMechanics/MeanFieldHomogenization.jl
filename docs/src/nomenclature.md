@@ -55,7 +55,7 @@ every page and in every docstring:
   subscript, ``\mathbb{C}_0``, ``\mathbb{C}_i``, ``f_i``, while an effective
   property carries the upright superscript ``\mathrm{hom}``, as in
   ``\mathbb{C}^{\mathrm{hom}}``;
-- every label made of letters is upright and written ``\mathrm{…}``, as in
+- every label made of letters is upright and written with `\mathrm`, as in
   ``\mathbb{A}_i^{\mathrm{dil}}``, ``\mathbb{C}^{\mathrm{iso}}`` or the
   differential ``\mathrm{d}``;
 - ``\mathbb{S}`` is a compliance, and the Eshelby tensor is written

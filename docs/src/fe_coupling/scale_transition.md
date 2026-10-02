@@ -9,7 +9,7 @@ two things from the material, per step:
 \boldsymbol{\sigma}_{n+1}
   = \mathcal{F}\!\left(\boldsymbol{\varepsilon}_{n+1},\, \alpha_n\right),
 \qquad
-\mathbb{C}^{\text{tg}}
+\mathbb{C}^{\mathrm{tg}}
   = \frac{\partial \boldsymbol{\sigma}_{n+1}}{\partial \boldsymbol{\varepsilon}_{n+1}} ,
 ```
 
@@ -24,7 +24,7 @@ The material response *is* a homogenization: the strain drives an RVE, the
 scheme returns its effective stiffness, and
 
 ```math
-\boldsymbol{\sigma} = \mathbb{C}^{\rm hom}(\alpha) : \boldsymbol{\varepsilon} .
+\boldsymbol{\sigma} = \mathbb{C}^{\mathrm{hom}}(\alpha) : \boldsymbol{\varepsilon} .
 ```
 
 All the nonlinearity sits in ``\alpha`` — the crack apertures, the open/closed
@@ -32,14 +32,14 @@ set, a damage variable. Between two events that change ``\alpha``, the law is
 **linear**, so
 
 ```math
-\mathbb{C}^{\text{tg}} = \mathbb{C}^{\rm hom}(\alpha)
+\mathbb{C}^{\mathrm{tg}} = \mathbb{C}^{\mathrm{hom}}(\alpha)
 ```
 
 is exact, not an approximation. No numerical differentiation is needed, and no
 algorithmic tangent has to be derived: the scheme already returns it.
 
 !!! note "This is what makes the coupling affordable"
-    Because ``\mathbb{C}^{\rm hom}`` depends on the state only through a
+    Because ``\mathbb{C}^{\mathrm{hom}}`` depends on the state only through a
     *discrete* configuration (which families are open), the expensive scheme
     solve is shared by every quadrature point in the same configuration — see
     [`MaterialCache`](@ref).
@@ -51,7 +51,7 @@ stress **and** a variation of fluid content:
 
 ```math
 \begin{aligned}
-\dot{\boldsymbol{\Sigma}} &= \mathbb{C}^{\rm hom} : \dot{\boldsymbol{E}} - \dot{p}\,\boldsymbol{B}, \\
+\dot{\boldsymbol{\Sigma}} &= \mathbb{C}^{\mathrm{hom}} : \dot{\boldsymbol{E}} - \dot{p}\,\boldsymbol{B}, \\
 \dot{\varphi}           &= \boldsymbol{B} : \dot{\boldsymbol{E}} + \frac{\dot{p}}{M} .
 \end{aligned}
 ```
@@ -61,7 +61,7 @@ tangent as a set of blocks keyed *flux then gradient*:
 
 | block | value | key |
 |:--|:--|:--|
-| ``\partial\boldsymbol{\Sigma}/\partial\boldsymbol{E}`` | ``\mathbb{C}^{\rm hom}`` | `:σε` |
+| ``\partial\boldsymbol{\Sigma}/\partial\boldsymbol{E}`` | ``\mathbb{C}^{\mathrm{hom}}`` | `:σε` |
 | ``\partial\boldsymbol{\Sigma}/\partial p``         | ``-\boldsymbol{B}``          | `:σp` |
 | ``\partial\varphi/\partial\boldsymbol{E}``           | ``\boldsymbol{B}``           | `:φε` |
 | ``\partial\varphi/\partial p``                   | ``1/M``                  | `:φp` |

@@ -512,16 +512,16 @@ fictitious semi-axes and principal directions are obtained by diagonalizing
 
 ### Isotropic matrix — immediate
 
-If ``\boldsymbol{K} = K\,\boldsymbol{1}`` the prefactor comes straight out:
+If ``\boldsymbol{K} = k_0\,\boldsymbol{1}`` the prefactor comes straight out:
 
 ```math
-\boldsymbol{P}(\boldsymbol{A}, K\,\boldsymbol{1})
-= \frac{\boldsymbol{I}^{\boldsymbol{A}}}{K}.
+\boldsymbol{P}(\boldsymbol{A}, k_0\,\boldsymbol{1})
+= \frac{\boldsymbol{I}^{\boldsymbol{A}}}{k_0}.
 ```
 
 For a sphere, ``\boldsymbol{I}^{\boldsymbol{1}} = \tfrac{1}{3}\boldsymbol{1}``
-gives ``\boldsymbol{P} = \tfrac{1}{3K}\boldsymbol{1}`` and
-``\boldsymbol{s} = \tfrac{1}{3}\boldsymbol{1}`` — independent of ``K``.
+gives ``\boldsymbol{P} = \tfrac{1}{3k_0}\boldsymbol{1}`` and
+``\boldsymbol{S}^{\mathrm{E}} = \tfrac{1}{3}\boldsymbol{1}`` — independent of ``k_0``.
 Implementation: `src/Conductivity/hill_order2_3d.jl`.
 
 ## Dispatch

@@ -62,14 +62,14 @@ an *infinite* matrix, ignoring every other inclusion around it. The
 effective stiffness is a sum of independent contributions:
 
 ```math
-\mathbb{C}_{\text{eff}} = \mathbb{C}_0 + \sum_i f_i\,(\mathbb{C}_i-\mathbb{C}_0):\mathbb{A}_i^{\text{dil}},
+\mathbb{C}^{\mathrm{hom}} = \mathbb{C}_0 + \sum_i f_i\,(\mathbb{C}_i-\mathbb{C}_0):\mathbb{A}_i^{\mathrm{dil}},
 \qquad
-\mathbb{A}_i^{\text{dil}} = \big[\mathbb{I}+\mathbb{P}_i:(\mathbb{C}_i-\mathbb{C}_0)\big]^{-1},
+\mathbb{A}_i^{\mathrm{dil}} = \big[\mathbb{I}+\mathbb{P}_i:(\mathbb{C}_i-\mathbb{C}_0)\big]^{-1},
 ```
 
 where ``\mathbb{P}_i`` is the Hill polarization tensor of inclusion
 ``i`` in the matrix ``\mathbb{C}_0`` ([`hill_tensor`](@ref)) and
-``\mathbb{A}_i^{\text{dil}}`` is its **dilute strain-localization
+``\mathbb{A}_i^{\mathrm{dil}}`` is its **dilute strain-localization
 tensor**: the linear map from the macroscopic strain to the strain
 inside inclusion ``i``. This is exact only in the dilute limit
 ``f_i \to 0`` — at finite volume fraction, inclusions interact and the
@@ -81,7 +81,7 @@ estimate drifts.
 macroscopic strain, but on the *average strain in the matrix*:
 
 ```math
-\mathbb{A}_i^{\text{MT}} = \mathbb{A}_i^{\text{dil}}:\Big(\sum_j f_j\,\mathbb{A}_j^{\text{dil}}\Big)^{-1}.
+\mathbb{A}_i^{\mathrm{MT}} = \mathbb{A}_i^{\mathrm{dil}}:\Big(\sum_j f_j\,\mathbb{A}_j^{\mathrm{dil}}\Big)^{-1}.
 ```
 
 Both schemes are called the same way — only the scheme argument to

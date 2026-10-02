@@ -317,7 +317,7 @@ A Langavant test (NF EN 196-9) lets the heat raise the temperature of the sample
 against the losses of the vessel. [Lavergne2018](@citet) writes the loss as
 
 ```math
-C_{\rm tot}(t)\,\frac{\mathrm{d}T}{\mathrm{d}t} \;=\; \dot q(t) \;-\; \varphi(T-T_{\rm env}),
+C_{\mathrm{tot}}(t)\,\frac{\mathrm{d}T}{\mathrm{d}t} \;=\; \dot q(t) \;-\; \varphi(T-T_{\mathrm{env}}),
 \qquad
 \varphi(\Delta T) \;=\; a\,\Delta T + b\,\Delta T^2 ,
 ```

@@ -246,7 +246,7 @@ All three are `ForwardDiff`-compatible — differentiating `homogenize` through 
 Every iterative solver in the package stops on the additive SciML convention
 
 ```math
-\lVert x^{(n+1)} - x^{(n)} \rVert \;\le\; \texttt{abstol} + \texttt{reltol}\cdot\lVert x^{(n)} \rVert ,
+\lVert x^{(n+1)} - x^{(n)} \rVert \;\le\; \mathrm{abstol} + \mathrm{reltol}\cdot\lVert x^{(n)} \rVert ,
 ```
 
 with `‖·‖` the **Frobenius norm of the tensor** — the same quantity whatever the

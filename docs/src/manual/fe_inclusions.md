@@ -256,7 +256,7 @@ follow from that single tensor.
 | Keyword | Default | Meaning |
 |:--|:--|:--|
 | `radius_ratio` | `5.0` | ``R/a``. Five is enough *because* the boundary condition is corrected. |
-| `htipdiv` | `12.0` | element size at the crack front, ``b/\texttt{htipdiv}``. |
+| `htipdiv` | `12.0` | element size at the crack front, ``b/\mathrm{htipdiv}``. |
 | `order` | `2` | displacement interpolation order (1 or 2). |
 
 ```julia
@@ -357,7 +357,7 @@ checks.
 | Keyword of [`FECellMeshOptions`](@ref MeanFieldHomogenization.FECellMeshOptions) | Default | Meaning |
 |:--|:--|:--|
 | `radius_ratio` | `4.0` | outer radius over the shape's **bounding** radius |
-| `level` | `4` | inclusion surface subdivision: ``8\cdot4^{\text{level}}`` triangles |
+| `level` | `4` | inclusion surface subdivision: ``8\cdot4^{\mathrm{level}}`` triangles |
 | `outer_level` | `3` | outer sphere subdivision — not a free knob, see below |
 | `relax` | `60` | tangential relaxation sweeps on the inclusion surface |
 | `octant` | `false` | mesh one **eighth** of the cell — see below |

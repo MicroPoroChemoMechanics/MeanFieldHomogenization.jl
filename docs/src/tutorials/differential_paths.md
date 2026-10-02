@@ -13,12 +13,12 @@ equation** [norris1985](@cite) over a fictitious incorporation time
 ``\tau \in [0, 1]``:
 
 ```math
-\frac{d\mathbb{C}^{hom}}{d\tau} = \sum_i \dot\varphi_i \, \mathbb{N}_i\big(\mathbb{C}^{hom}\big),
+\frac{\mathrm d\mathbb{C}^{\mathrm{hom}}}{\mathrm d\tau} = \sum_i \dot\varphi_i \, \mathbb{N}_i\big(\mathbb{C}^{\mathrm{hom}}\big),
 \qquad
 \dot\varphi_i = \dot f_i + \frac{f_i}{f_0}\sum_j \dot f_j,
 ```
 
-starting from ``\mathbb{C}^{hom}(\tau=0) = \mathbb{C}_0`` (the matrix) and
+starting from ``\mathbb{C}^{\mathrm{hom}}(\tau=0) = \mathbb{C}_0`` (the matrix) and
 adding inclusions at each step *into the current effective medium*
 rather than into the original matrix. Each increment is itself a dilute
 estimate — so the scheme is, in effect, an infinite sequence of

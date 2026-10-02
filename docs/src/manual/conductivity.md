@@ -49,12 +49,12 @@ K_aniso = TensND.Tens(Matrix(Diagonal([3.2, 0.5, 0.6]))) # orthotropic
 ell = Ellipsoid(3.0, 1.0, 1.0)        # prolate spheroid
 
 P = hill_tensor(ell, K_iso)           # 𝐏(𝐀, 𝐊)
-s = eshelby_tensor(ell, K_iso)        # 𝐬 = 𝐏 ⋅ 𝐊
+S = eshelby_tensor(ell, K_iso)        # Eshelby tensor, P ⋅ K
 ```
 
-For a **sphere in an isotropic matrix** these are ``\boldsymbol{P} =
-\boldsymbol{1}/(3K)`` and ``\boldsymbol{s} = \boldsymbol{1}/3``, independent of
-``K``.
+For a **sphere in an isotropic matrix** ``\boldsymbol{K}_0 = k_0\boldsymbol{1}``
+these are ``\boldsymbol{P} = \boldsymbol{1}/(3k_0)`` and
+``\boldsymbol{S}^{\mathrm{E}} = \boldsymbol{1}/3``, independent of ``k_0``.
 
 !!! tip "Anisotropy is cheap here"
     Unlike the order-4 case, the order-2 Hill tensor has a **closed form for any

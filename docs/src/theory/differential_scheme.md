@@ -65,17 +65,17 @@ medium also removes the phase `i` already present in it:
 \qquad 1 \le i \le N .
 ```
 
-In matrix form, with ``\mathbf U = (1, \dots, 1)^{\mathsf T}``,
+In matrix form, with ``\mathbf U = (1, \dots, 1)^{\!T}``,
 
 ```math
-[\mathrm d f] = \big(\mathbb 1 - [f]\,\mathbf U^{\mathsf T}\big)\,[\mathrm d\varphi] .
+[\mathrm d f] = \big(\mathbb 1 - [f]\,\mathbf U^{\!T}\big)\,[\mathrm d\varphi] .
 ```
 
 The matrix to invert is a rank-one update of the identity, so the
 Sherman-Morrison formula gives the inverse in closed form:
 
 ```math
-[\mathrm d\varphi] = \Big(\mathbb 1 + \frac{[f]\,\mathbf U^{\mathsf T}}{1 - \mathbf U^{\mathsf T}[f]}\Big)[\mathrm d f] ,
+[\mathrm d\varphi] = \Big(\mathbb 1 + \frac{[f]\,\mathbf U^{\!T}}{1 - \mathbf U^{\!T}[f]}\Big)[\mathrm d f] ,
 ```
 
 that is, component-wise,
@@ -100,20 +100,24 @@ medium by phase `i`, each increment being a *dilute* problem posed in
 that medium:
 
 ```math
-\mathbb C^{hom}(t + \mathrm dt) = \mathbb C^{hom}(t)
-   + \sum_{i=1}^{N} \mathrm d\varphi_i \, \mathbb N_i\big(\mathbb C^{hom}(t)\big) ,
+\mathbb C^{\mathrm{hom}}(t + \mathrm dt) = \mathbb C^{\mathrm{hom}}(t)
+   + \sum_{i=1}^{N} \mathrm d\varphi_i \, \mathbb N_i\big(\mathbb C^{\mathrm{hom}}(t)\big) ,
 ```
 
 where ``\mathbb N_i`` is the size-independent **stiffness contribution**
 of phase `i` in the current medium,
 
 ```math
-\mathbb N_i = \mathbb B_i - \mathbb C^{hom} : \mathbb A_i ,
+\mathbb N_i = \mathbb A_{\sigma\varepsilon,i} - \mathbb C^{\mathrm{hom}} : \mathbb A_{\varepsilon\varepsilon,i} ,
 \qquad
-\langle \boldsymbol\sigma \rangle_i = \mathbb B_i : \boldsymbol{E}^\infty ,
+\langle \boldsymbol\sigma \rangle_i = \mathbb A_{\sigma\varepsilon,i} : \boldsymbol{E}^\infty ,
 \quad
-\langle \boldsymbol\varepsilon \rangle_i = \mathbb A_i : \boldsymbol{E}^\infty .
+\langle \boldsymbol\varepsilon \rangle_i = \mathbb A_{\varepsilon\varepsilon,i} : \boldsymbol{E}^\infty ,
 ```
+
+``\mathbb A_{\varepsilon\varepsilon,i}`` and ``\mathbb A_{\sigma\varepsilon,i}`` being the
+strain and stress concentration tensors of phase `i` in the current medium, as
+defined in [Localization](@ref th-localization).
 
 Written this way, ``\mathbb N_i`` needs only the phase's concentration
 tensors — **not** a Hill tensor, and not even a uniform phase property.
@@ -125,13 +129,13 @@ without special-casing. See [Localization](localization.md).
 Hence the ODE integrated by [`DifferentialScheme`](@ref):
 
 ```math
-\frac{\mathrm d \mathbb C^{hom}}{\mathrm d t}
-  = \sum_{i=1}^{N} \dot\varphi_i \, \mathbb N_i(\mathbb C^{hom})
+\frac{\mathrm d \mathbb C^{\mathrm{hom}}}{\mathrm d t}
+  = \sum_{i=1}^{N} \dot\varphi_i \, \mathbb N_i(\mathbb C^{\mathrm{hom}})
   = \sum_{i=1}^{N} \Big(\dot f_i + \frac{f_i \sum_j \dot f_j}{1 - \sum_j f_j}\Big)\,
-    \mathbb N_i(\mathbb C^{hom}) ,
+    \mathbb N_i(\mathbb C^{\mathrm{hom}}) ,
 ```
 
-started from ``\mathbb C^{hom}(0) = \mathbb C_0``. The package
+started from ``\mathbb C^{\mathrm{hom}}(0) = \mathbb C_0``. The package
 parametrizes the incorporation time as ``\tau = t/T \in [0, 1]``.
 
 ### Compliance form
@@ -140,10 +144,10 @@ The same process written on the compliance uses the **compliance
 contribution** ``\mathbb H_i`` of each phase:
 
 ```math
-\frac{\mathrm d \mathbb S^{hom}}{\mathrm d t}
-  = \sum_{i=1}^{N} \dot\varphi_i \, \mathbb H_i(\mathbb S^{hom}) ,
+\frac{\mathrm d \mathbb S^{\mathrm{hom}}}{\mathrm d t}
+  = \sum_{i=1}^{N} \dot\varphi_i \, \mathbb H_i(\mathbb S^{\mathrm{hom}}) ,
 \qquad
-\mathbb H_i = - \mathbb S^{hom} : \mathbb N_i : \mathbb S^{hom} .
+\mathbb H_i = - \mathbb S^{\mathrm{hom}} : \mathbb N_i : \mathbb S^{\mathrm{hom}} .
 ```
 
 The two forms are *exactly* equivalent: the second is the image of the
@@ -163,10 +167,10 @@ homogenize(rve, DifferentialScheme(; formulation = :compliance), :C)  # complian
 
 Flat cracks do not fit the derivation above, and the difference is
 physical rather than technical. A penny-shaped crack of radius `a` and
-aperture `c` has, for an aspect ratio ``X = c/a \to 0``,
+aperture `c` has, for an aspect ratio ``\omega = c/a \to 0``,
 
 ```math
-f_c = \frac{4\pi}{3}\,\varepsilon_c X \;\longrightarrow\; 0 ,
+f_c = \frac{4\pi}{3}\,\varepsilon_c\,\omega \;\longrightarrow\; 0 ,
 \qquad
 \varepsilon_c = \frac{\mathcal N_c\, a^3}{V} = \mathcal O(1) ,
 ```
@@ -199,7 +203,7 @@ mechanical effect. Three consequences for the scheme:
    ```
 
    Both lines are the single rank-one relation
-   ``[\mathrm d g] = (\mathbb 1 - [g]\,\mathbf U_{\mathcal S}^{\mathsf T})[\mathrm d\varphi]``
+   ``[\mathrm d g] = (\mathbb 1 - [g]\,\mathbf U_{\mathcal S}^{\!T})[\mathrm d\varphi]``
    on the stacked amounts ``[g] = (f_i ; \varepsilon_c)``, where
    ``\mathbf U_{\mathcal S}`` carries a `1` on solid entries and a `0` on
    crack entries — the *only* change to the manuscript's derivation. The
@@ -216,9 +220,9 @@ mechanical effect. Three consequences for the scheme:
    and the crack term of the ODE is
 
    ```math
-   \frac{\mathrm d \mathbb C^{hom}}{\mathrm d \tau} \mathrel{+}=
+   \frac{\mathrm d \mathbb C^{\mathrm{hom}}}{\mathrm d \tau} \mathrel{+}=
       \sum_c \dot\varphi_c^\varepsilon \,
-             \Delta\mathbb C^{crack}_c(\mathbb C^{hom}) .
+             \Delta\mathbb C^{\mathrm{crack}}_c(\mathbb C^{\mathrm{hom}}) .
    ```
 
    The crack correction vanishes whenever no solid phase grows at the
@@ -235,7 +239,7 @@ mechanical effect. Three consequences for the scheme:
    self-consistent scheme, because each infinitesimal crack increment is
    introduced into an already-degraded medium.
 
-3. **The compliance form is the natural one.** As ``X \to 0`` the
+3. **The compliance form is the natural one.** As ``\omega \to 0`` the
    crack's strain concentration tensor diverges, so the stiffness
    contribution ``\mathbb N_c`` is a limit of a divergent quantity,
    while the compliance contribution ``\mathbb H_c`` — built from the
@@ -243,9 +247,9 @@ mechanical effect. Three consequences for the scheme:
    — stays finite and is what the package actually computes:
 
    ```math
-   \Delta \mathbb S^{crack}_c = \frac{4\pi}{3}\,\varepsilon_c\,\mathbb H_c ,
+   \Delta \mathbb S^{\mathrm{crack}}_c = \frac{4\pi}{3}\,\varepsilon_c\,\mathbb H_c ,
    \qquad
-   \Delta \mathbb C^{crack}_c = -\,\mathbb C^{hom} : \Delta\mathbb S^{crack}_c : \mathbb C^{hom} ,
+   \Delta \mathbb C^{\mathrm{crack}}_c = -\,\mathbb C^{\mathrm{hom}} : \Delta\mathbb S^{\mathrm{crack}}_c : \mathbb C^{\mathrm{hom}} ,
    ```
 
    with the Budiansky-O'Connell prefactor (`4π/3` for 3D penny and
@@ -379,7 +383,7 @@ canonical components in the smallest symmetry class that estimate can stay in �
 two numbers for an isotropic medium, five to eight for a transversely isotropic
 one, the full Mandel matrix otherwise. A phase whose contribution is less
 symmetric drags the estimate out of the matrix's class at the first step (a
-crack, or simply an aligned spheroid, whose ``\mathbb A_\mathrm{dil}`` is
+crack, or simply an aligned spheroid, whose ``\mathbb A^{\mathrm{dil}}`` is
 transversely isotropic even between two isotropic materials), so the scheme
 probes each contribution once before integrating.
 

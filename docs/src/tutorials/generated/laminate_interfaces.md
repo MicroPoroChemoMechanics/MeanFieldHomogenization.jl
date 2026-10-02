@@ -76,7 +76,7 @@ The out-of-plane law stays exact, with the compliance simply added to the
 series:
 
 ```math
-(\underline{n}\cdot\mathbb{C}^{hom}\cdot\underline{n})^{-1}
+(\underline{n}\cdot\mathbb{C}^{\mathrm{hom}}\cdot\underline{n})^{-1}
  = \sum_i f_i (\underline{n}\cdot\mathbb{C}_i\cdot\underline{n})^{-1}
  + \frac{1}{L}\sum_j \boldsymbol{\mathcal{K}}_j
 ```

@@ -49,11 +49,11 @@ C_zero = TensISO{3}(0.0, 0.0)               # empty pore
 ## Powers hydration model and volume fractions
 
 The Powers model [powers1946](@cite) gives the anhydrous fraction ``f_a`` and
-the total porosity ``f_p``:
+the total porosity ``\varphi``:
 
 ```math
 f_a = \frac{0.32\,(1-\alpha)}{w/c+0.32}, \qquad
-f_p = \frac{w/c-0.17\,\alpha}{w/c+0.32}, \qquad
+\varphi = \frac{w/c-0.17\,\alpha}{w/c+0.32}, \qquad
 \alpha_{\max} = \min\!\left(1,\, \frac{w/c}{0.4175}\right)
 ```
 
@@ -61,7 +61,7 @@ The Tennis-Jennings model [tennis2000](@cite) splits the solid hydrates
 between low- and high-density C-S-H through the mass fraction
 
 ```math
-m_{LD} = 3.017\,\alpha\,w/c - 1.347\,\alpha + 0.538 .
+m_{\mathrm{LD}} = 3.017\,\alpha\,w/c - 1.347\,\alpha + 0.538 .
 ```
 
 ```@example paste
@@ -204,10 +204,10 @@ For a porous medium with a homogeneous isotropic solid of bulk modulus ``k_s``,
 Biot theory gives
 
 ```math
-b = 1 - \frac{k^{hom}}{k_s}, \qquad
+b = 1 - \frac{k^{\mathrm{hom}}}{k_s}, \qquad
 M = \frac{k_s}{b - \varphi}, \qquad
-k^u = k^{hom} + M\,b^2, \qquad
-\mu^u = \mu^{hom} .
+k^u = k^{\mathrm{hom}} + M\,b^2, \qquad
+\mu^u = \mu^{\mathrm{hom}} .
 ```
 
 ```@example paste
@@ -272,7 +272,7 @@ inclusion made of an anhydrous core coated by the inner hydrates, embedded in
 the outer matrix. The radius ratio follows from the volume-fraction constraint
 
 ```math
-\frac{R_a}{R_{\text{ref}}} = \left(\frac{f_a}{f_a+f_i}\right)^{1/3}.
+\frac{R_a}{R_{\mathrm{ref}}} = \left(\frac{f_a}{f_a+f_i}\right)^{1/3}.
 ```
 
 The declared `:C` property of such a phase is irrelevant — the moduli live in

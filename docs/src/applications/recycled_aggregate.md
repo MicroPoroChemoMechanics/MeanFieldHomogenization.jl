@@ -87,7 +87,7 @@ components follow:
 the first column carrying ``\cos m\theta`` and the second ``\sin m\theta``.
 
 **Why the modes do not couple.** The elastic energy is
-``\tfrac12\int \varepsilon : \mathbb C : \varepsilon\; \rho\,\mathrm d\rho\,
+``\tfrac12\int \boldsymbol\varepsilon : \mathbb C : \boldsymbol\varepsilon\; \rho\,\mathrm d\rho\,
 \mathrm d\theta\,\mathrm d z``. A material transversely isotropic about the
 axis has *no* coupling between the ``(\rho\rho,\theta\theta,zz,\rho z)`` group
 and the ``(\rho\theta,\theta z)`` group, so the only azimuthal integrals left
@@ -153,8 +153,8 @@ singular integrands vanish where they would otherwise be sampled.
 
 ## Averaging back to Cartesian
 
-The scheme needs ``\langle\varepsilon\rangle_{\mathcal D}`` and
-``\langle\sigma\rangle_{\mathcal D}`` as Cartesian tensors. The azimuthal
+The scheme needs ``\langle\boldsymbol\varepsilon\rangle_{\mathcal D}`` and
+``\langle\boldsymbol\sigma\rangle_{\mathcal D}`` as Cartesian tensors. The azimuthal
 integration is done analytically. With ``\bar T`` the modal amplitude of a
 symmetric second-order field,
 
@@ -204,7 +204,7 @@ arbitration.
 
 Each mode is assembled once and factorized once; both right-hand-side families
 reuse that factorization. Straight triangles carry a P1 or P2 field (`order`);
-the quadrature is of order ``2\,\texttt{order}+1``, one degree above the
+the quadrature is of order ``2\,\mathrm{order}+1``, one degree above the
 material term, to absorb the ``\rho`` weight.
 
 ## The mesh
@@ -226,8 +226,8 @@ so at ``\alpha = 0.8`` the shell pinches to 4 % of ``a`` at the top pole and
 thickens to 37 % at the bottom. That contrast is the whole physical content of
 the eccentricity.
 
-Element size is ``a/\texttt{nradial}`` on the inclusion, growing to
-``\texttt{coarsening}`` times that at the outer boundary. Because the mesh is
+Element size is ``a/\mathrm{nradial}`` on the inclusion, growing to
+``\mathrm{coarsening}`` times that at the outer boundary. Because the mesh is
 two-dimensional, refining is cheap — `nradial = 40` still solves in a fraction
 of a second.
 
@@ -254,7 +254,7 @@ dipole correction and the Kelvin reassembly all have to be right simultaneously
 for it to pass — and the result must come out **isotropic**, although it is
 assembled from three separate discrete problems.
 
-`w = 0.5`, ``E_{\rm core} = 70``, ``E_{\rm shell} = 2``, ``E_0 = 20`` GPa, all
+`w = 0.5`, ``E_{\mathrm{core}} = 70``, ``E_{\mathrm{shell}} = 2``, ``E_0 = 20`` GPa, all
 Poisson ratios 0.2, `nradial = 24`, `radius_ratio = 4`.
 
 | Tensor | Part | Finite elements | Hervé-Zaoui | Δ |
@@ -345,10 +345,10 @@ against the concentric case, which is the only way to see the effect at all.
 The gray dashed line is the numerical error of the concentric finite-element
 curve against the exact one, an order of magnitude below the signal.
 
-``E_{\rm eff}/E_0``, Mori-Tanaka, aggregate volume fraction 0.4,
-``w = 0.5``, ``E_{\rm core}/E_0 = 3.5``, all Poisson ratios 0.2.
+``E^{\mathrm{hom}}/E_0``, Mori-Tanaka, aggregate volume fraction 0.4,
+``w = 0.5``, ``E_{\mathrm{core}}/E_0 = 3.5``, all Poisson ratios 0.2.
 
-| ``E_{\rm shell}/E_0`` | ``\alpha = 0`` | ``\alpha = 0.4`` | ``\alpha = 0.8`` | ``\alpha = 0`` exact |
+| ``E_{\mathrm{shell}}/E_0`` | ``\alpha = 0`` | ``\alpha = 0.4`` | ``\alpha = 0.8`` | ``\alpha = 0`` exact |
 | ---: | ---: | ---: | ---: | ---: |
 | 0.100 | 0.6457 | 0.6481 | 0.6570 | 0.6459 |
 | 0.211 | 0.8052 | 0.8073 | 0.8146 | 0.8054 |
@@ -361,7 +361,7 @@ The concentric column tracks the exact one to 0.03 % over the whole range,
 which is the validation. Physically: while the shell is the **weak** phase,
 moving the core off center *stiffens* the composite — the eccentric pattern
 short-circuits part of the soft mortar, so the inclusion takes up less strain.
-The effect is worth 1.7 % on ``E_{\rm eff}`` at ``E_{\rm shell}/E_0 = 0.1``,
+The effect is worth 1.7 % on ``E^{\mathrm{hom}}`` at ``E_{\mathrm{shell}}/E_0 = 0.1``,
 vanishes when the shell matches the paste, and changes sign beyond. What the
 eccentricity does *not* do here is make the composite noticeably anisotropic:
 the induced ``\mathbb A_{33}/\mathbb A_{11} - 1`` stays below ``10^{-4}``.
@@ -374,16 +374,16 @@ the induced ``\mathbb A_{33}/\mathbb A_{11} - 1`` stays below ``10^{-4}``.
 abscissa sweeps the reference medium ``k_0/k_2`` over four decades.
 
 The transport counterpart, reading the equivalent conductivity of the particle
-off ``\langle q\rangle = k^{\rm eq}\langle\nabla T\rangle``. The flat black
+off ``\langle q\rangle = k^{\mathrm{eq}}\langle\nabla T\rangle``. The flat black
 line is the concentric particle, whose equivalent conductivity does not depend
 on the medium it is measured in; the eccentricity destroys that property and
 splits the single value into a transverse and an axial one.
 
-``k_{\rm eq}/k_{\rm shell}`` read off
-``\langle q\rangle = k_{\rm eq}\langle\nabla T\rangle`` over the inclusion,
-``k_{\rm core}/k_{\rm shell} = 10``, ``w = 0.5``.
+``k_{\mathrm{eq}}/k_{\mathrm{shell}}`` read off
+``\langle q\rangle = k_{\mathrm{eq}}\langle\nabla T\rangle`` over the inclusion,
+``k_{\mathrm{core}}/k_{\mathrm{shell}} = 10``, ``w = 0.5``.
 
-| ``k_0/k_{\rm shell}`` | ``\alpha = 0`` | ``\alpha = 0.4`` tr. | ``\alpha = 0.4`` ax. | ``\alpha = 0.8`` tr. | ``\alpha = 0.8`` ax. |
+| ``k_0/k_{\mathrm{shell}}`` | ``\alpha = 0`` | ``\alpha = 0.4`` tr. | ``\alpha = 0.4`` ax. | ``\alpha = 0.8`` tr. | ``\alpha = 0.8`` ax. |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 0.01 | 2.7993 | 2.7758 | 2.7681 | 2.7082 | 2.6797 |
 | 0.1 | 2.7993 | 2.7793 | 2.7728 | 2.7212 | 2.6965 |
@@ -396,9 +396,9 @@ concentric composite sphere is a property of the particle alone, independent of
 the medium it is measured in. That is a strong check — it is a theorem, not a
 fitted trend, and the finite-element machinery reproduces it to five digits
 across four decades of ``k_0``. The eccentric particle has no such property:
-its ``k_{\rm eq}`` depends on ``k_0``, and splits into a transverse and an
+its ``k_{\mathrm{eq}}`` depends on ``k_0``, and splits into a transverse and an
 axial value that straddle the concentric one. All curves cross at
-``k_0 = k_{\rm shell}``, where the shell and the matrix are the same material
+``k_0 = k_{\mathrm{shell}}``, where the shell and the matrix are the same material
 and only the core is left to see.
 
 ## Using it

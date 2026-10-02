@@ -21,7 +21,7 @@ scheme through its concentration tensors, exactly as in Echoes [echoes](@cite).
 Because a single [`RVE`](@ref) carries several property keys at once, the *same*
 microstructure is homogenized for stiffness (`:C`, a 4th-order tensor) and for
 diffusivity (`:D`, a 2nd-order tensor). All diffusivities are normalized by the
-bulk-water value ``D_\text{bulk} = 1``.
+bulk-water value ``D_{\mathrm{bulk}} = 1``.
 
 ```@example diffusion
 using MeanFieldHomogenization
@@ -47,7 +47,7 @@ functions of ``w/c`` and ``\alpha`` [achourCBM2020](@cite):
 ```math
 f_a = \frac{1-\alpha}{1+\rho_a\,w/c}, \quad
 f_h = \frac{\kappa_h\,\alpha}{1+\rho_a\,w/c}, \quad
-f_{cp} = 1 - f_a - f_h,
+f_{\mathrm{cp}} = 1 - f_a - f_h,
 ```
 
 with ``\rho_a = 3.13`` (clinker-to-water density ratio) and ``\kappa_h = 2.13``
@@ -60,8 +60,8 @@ is filled:
 
 The Tennis–Jennings correlation [tennis2000](@cite) gives the mass ratio of
 low-density (LD) to total C-S-H, which splits the hydration products into an
-**inner layer** (HD-C-S-H, porosity ``\varphi_{HD} = 0.24``) and an **outer
-layer** (LD-C-S-H, ``\varphi_{LD} = 0.37``), with a fraction ``\eta = 20\%`` of
+**inner layer** (HD-C-S-H, porosity ``\varphi_{\mathrm{HD}} = 0.24``) and an **outer
+layer** (LD-C-S-H, ``\varphi_{\mathrm{LD}} = 0.37``), with a fraction ``\eta = 20\%`` of
 crystalline hydrates (portlandite) in each.
 
 ```@example diffusion
@@ -105,7 +105,7 @@ homogenization steps:
 1. **Level I — hydrate foam** (self-consistent): an aging disordered assemblage
    of hydration products and capillary pores. The hydrates are oblate spheroids
    (``\omega_h = 0.013``) so that the solid percolates at the observed setting
-   degree; the capillary pores are prolate (``\omega_{cp} = 6``) so the pore
+   degree; the capillary pores are prolate (``\omega_{\mathrm{cp}} = 6``) so the pore
    network stays connected throughout hydration.
 2. **Level II — cement paste** (Mori-Tanaka): spherical anhydrous clinker
    inclusions embedded in the hydrate-foam matrix.
@@ -247,8 +247,8 @@ cement-paste assembly at the grain scale.
 Both HD- and LD-C-S-H gels are self-consistent assemblages of **oblate solid
 bricks** (``\omega_s = 0.12``, ``E = 63`` GPa, ``\nu = 0.27``, impervious) and
 **prolate gel pores** (``\omega_p = 1/\omega_s \approx 8.3``,
-``D_{gel} = 0.025\,D_\text{bulk}``). The prolate pore shape is what keeps the
-gel diffusivity non-zero at the HD porosity ``\varphi_{HD} = 0.24``. The gel
+``D_{\mathrm{gel}} = 0.025\,D_{\mathrm{bulk}}``). The prolate pore shape is what keeps the
+gel diffusivity non-zero at the HD porosity ``\varphi_{\mathrm{HD}} = 0.24``. The gel
 properties are fixed (independent of ``w/c`` and ``\alpha``), so they are
 computed once.
 
@@ -281,7 +281,7 @@ C_LD, D_LD = homogenize_csh(φ_LD)
 
 The **inner layer** is a self-consistent mixture of HD-C-S-H gel and spherical
 nano-crystals. The **outer layer** is built in two SC steps: oblate LD-C-S-H
-foam (``\omega_{LD} = 0.14``, the aspect ratio that controls its setting
+foam (``\omega_{\mathrm{LD}} = 0.14``, the aspect ratio that controls its setting
 threshold) mixed with spherical small capillary pores, then folded together with
 spherical micro-crystals.
 
@@ -425,12 +425,12 @@ self-consistent two-phase medium of solid spheroids (aspect ratio ``\omega_s``,
 ``\mathbb C_p = 0``, ``\boldsymbol{D}_p \neq 0``), both thresholds depend only on the
 two shapes, not on the (non-zero) modulus values.
 
-The **diffusion threshold** ``\varphi^{\rm diff}`` — the porosity above which the
+The **diffusion threshold** ``\varphi^{\mathrm{diff}}`` — the porosity above which the
 pore network conducts — follows in closed form from the 2nd-order SC equation at
-``\boldsymbol{D}^{\rm hom}\to 0^+``:
+``\boldsymbol{D}^{\mathrm{hom}}\to 0^+``:
 
 ```math
-\varphi^{\rm diff}
+\varphi^{\mathrm{diff}}
   = \frac{\operatorname{tr}\boldsymbol{Q}_s^{-1}}
          {\operatorname{tr}\boldsymbol{P}_p^{-1} + \operatorname{tr}\boldsymbol{Q}_s^{-1}},
 \qquad
@@ -438,8 +438,8 @@ pore network conducts — follows in closed form from the 2nd-order SC equation 
 \boldsymbol{Q}_s = \boldsymbol{1} - \boldsymbol{P}(\omega_s,\boldsymbol{1}).
 ```
 
-The **elastic threshold** ``\varphi^{\rm elas}`` — the porosity above which the
-solid skeleton loses rigidity, ``\mathbb C^{\rm hom}\to 0^+`` — reduces to a
+The **elastic threshold** ``\varphi^{\mathrm{elas}}`` — the porosity above which the
+solid skeleton loses rigidity, ``\mathbb C^{\mathrm{hom}}\to 0^+`` — reduces to a
 coupled system in the solid fraction ``f_s`` and the Poisson ratio ``\nu`` of the
 SC medium, involving the Hill tensor ``\mathbb P_s = \mathbb P(\omega_s,\mathbb
 C(\nu))`` of the solid and the dual Hill tensor ``\mathbb Q_p = \mathbb C - \mathbb
@@ -455,7 +455,7 @@ f_s (1+\nu)^2 \operatorname{tr}(\mathbb K:\mathbb P_s^{-1})
    = (1-f_s)\operatorname{tr}(\mathbb K:\mathbb Q_p^{-1}),
 ```
 
-with ``\varphi^{\rm elas} = 1 - f_s``. These are exactly the relations of the
+with ``\varphi^{\mathrm{elas}} = 1 - f_s``. These are exactly the relations of the
 Echoes book [echoes](@cite); the two implementations agree to machine precision.
 
 ```@example diffusion
@@ -563,17 +563,17 @@ plotly_surface(logω, logω, Zd; title = "Diffusion percolation threshold φ_dif
 ```
 
 The thin oblate solid (``\omega_s = 0.013``) percolates at a tiny solid
-fraction, so the skeleton carries load up to ``\varphi^{\rm elas} \approx 93\%``
+fraction, so the skeleton carries load up to ``\varphi^{\mathrm{elas}} \approx 93\%``
 (early set, low ``\alpha``), while the prolate pores give
-``\varphi^{\rm diff} \approx 66\%`` (late disconnection, high ``\alpha``): the
+``\varphi^{\mathrm{diff}} \approx 66\%`` (late disconnection, high ``\alpha``): the
 two thresholds are well separated, which is what reproduces both the early set
-and the late diffusivity drop. The gel sits at ``\varphi^{\rm elas} \approx 64\%``
-and ``\varphi^{\rm diff} \approx 17\%``, so at ``\varphi_{HD} = 0.24`` it is
+and the late diffusivity drop. The gel sits at ``\varphi^{\mathrm{elas}} \approx 64\%``
+and ``\varphi^{\mathrm{diff}} \approx 17\%``, so at ``\varphi_{\mathrm{HD}} = 0.24`` it is
 simultaneously load-bearing and diffusive — the prolate gel pores are what keep
-``\boldsymbol{D}_{HD} > 0``.
+``\boldsymbol{D}_{\mathrm{HD}} > 0``.
 
 !!! note "Numerical agreement with Echoes"
-    Evaluated with the compiled Echoes library, ``\varphi^{\rm elas}`` and
-    ``\varphi^{\rm diff}`` at these points coincide with the values above to the
+    Evaluated with the compiled Echoes library, ``\varphi^{\mathrm{elas}}`` and
+    ``\varphi^{\mathrm{diff}}`` at these points coincide with the values above to the
     third decimal (identical Poisson ratio at the elastic root), confirming that
     `MeanFieldHomogenization` and Echoes share the same Hill/dual-Hill kernels.

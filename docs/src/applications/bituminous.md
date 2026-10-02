@@ -185,7 +185,7 @@ curve of the **least-aged** state,
 
 ```math
 J(\alpha,\chi,k_t) = \sum_\omega
-  \left|1 - \frac{E_{\rm mod}(i\omega)}{E_{\rm 2S2P1D}(i\omega)}\right|^2,
+  \left|1 - \frac{E_{\mathrm{mod}}(i\omega)}{E_\mathrm{2S2P1D}(i\omega)}\right|^2,
 ```
 
 subject to inequality constraints keeping the fit acceptable for the more-aged
@@ -246,7 +246,7 @@ per mix.
 Everything above lives in the frequency domain, which is where the material is
 *measured*. A pavement, though, is loaded by a wheel passing over it — a
 transient, not a sinusoid — so what a structural calculation needs is the
-relaxation modulus ``E^{\hom}(t)``.
+relaxation modulus ``E^{\mathrm{hom}}(t)``.
 
 That is one call. [`homogenize_lc`](@ref) takes the same three-scale cell
 builder used above, evaluates it at whatever Carson variables the inversion

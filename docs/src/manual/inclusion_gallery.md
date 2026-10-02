@@ -78,7 +78,7 @@ plotly_scene(shape_traces(cyl); uid = "zoo-cylinder", height = 420,
 
 A **penny-shaped crack** is `Ellipsoid(a, a, 0)`: zero volume, finite surface,
 and therefore a *density* rather than a volume fraction. Its normal
-``\hat{\underline{n}}`` is the third column of its frame, and it is the direction
+``\underline{n}`` is the third column of its frame, and it is the direction
 everything about a crack is written in.
 
 ```@example zoo

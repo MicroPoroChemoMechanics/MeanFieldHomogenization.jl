@@ -138,7 +138,7 @@ ellipsoid, is the average of the displacement jump over the crack surface
 ``S``, spread over the volume ``V``:
 
 ```math
-\boldsymbol{\varepsilon}^{\text{extra}}
+\boldsymbol{\varepsilon}^{\mathrm{extra}}
 = \frac{1}{V}\int_{S} [\![\underline{u}]\!] \stackrel{s}{\otimes}\underline{n}\,\mathrm{d}S
 = \frac{S}{V}\,
   \bigl\langle [\![\underline{u}]\!] \bigr\rangle_{\mathcal{I}}
@@ -195,11 +195,11 @@ three sources normalize the **limit** differently, while agreeing on
 So the two elliptic compliances differ by exactly ``\eta``:
 
 ```math
-\mathbb{H}^{\mathcal{E}}_{\texttt{MeanFieldHomogenization}}
-= \frac{1}{\eta}\;\mathbb{H}^{\mathcal{E}}_{\text{Echoes}},
+\mathbb{H}^{\mathcal{E}}_{\mathrm{MeanFieldHomogenization}}
+= \frac{1}{\eta}\;\mathbb{H}^{\mathcal{E}}_{\mathrm{Echoes}},
 \qquad
-\mathbb{H}^{\mathcal{R}}_{\texttt{MeanFieldHomogenization}}
-= \mathbb{H}^{\mathcal{R}}_{\text{Echoes}} .
+\mathbb{H}^{\mathcal{R}}_{\mathrm{MeanFieldHomogenization}}
+= \mathbb{H}^{\mathcal{R}}_{\mathrm{Echoes}} .
 ```
 
 They coincide for the **penny crack** ``\eta=1``, which is why the discrepancy is
@@ -212,7 +212,7 @@ Measured, not inferred from the papers — Echoes' `crack_compliance` against
 
 | ``\eta`` | 1.0 | 0.7 | 0.5 | 0.3 | 0.1 |
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| ``\mathbb{H}_{\text{Echoes}}/\mathbb{H}_{\texttt{MFH}}`` | 1.0000 | 0.7000 | 0.5000 | 0.3000 | 0.1000 |
+| ``\mathbb{H}_{\mathrm{Echoes}}/\mathbb{H}_{\mathrm{MFH}}`` | 1.0000 | 0.7000 | 0.5000 | 0.3000 | 0.1000 |
 
 On the `MeanFieldHomogenization` side the ``3/4`` is ``\eta``-independent to machine
 precision (``\mathbb{H}_{3333}/B_{33} = 0.750000`` for every ``\eta``).
@@ -294,12 +294,12 @@ the **acoustic** (Christoffel) tensor, the two Fourier kernels of the traction
 integral equation on the crack plane are [kunin1983, kanaun2009](@cite):
 
 ```math
-\hat{\mathbb{\Gamma}}(\underline{\xi})
+\hat{\mathbb{G}}^0(\underline{\xi})
   = \underline{\xi}\stackrel{s}{\otimes}\boldsymbol{N}^{-1}(\underline{\xi})
     \stackrel{s}{\otimes}\underline{\xi},
 \qquad
 \hat{\mathbb{Q}}(\underline{\xi})
-  = \mathbb{C} - \mathbb{C}:\hat{\mathbb{\Gamma}}(\underline{\xi}):\mathbb{C},
+  = \mathbb{C} - \mathbb{C}:\hat{\mathbb{G}}^0(\underline{\xi}):\mathbb{C},
 ```
 
 and the object the crack problem actually needs is the **reduced** transform —
@@ -320,7 +320,7 @@ collapses the order-4 algebra to a 3×3 one,
 ```math
 \underline{n}\cdot\hat{\mathbb{Q}}(\underline{\xi})\cdot\underline{n}
 = \boldsymbol{A} - \boldsymbol{V}(\underline{\xi})\cdot
-  \boldsymbol{N}^{-1}(\underline{\xi})\cdot\boldsymbol{V}^{\mathsf{T}}(\underline{\xi}),
+  \boldsymbol{N}^{-1}(\underline{\xi})\cdot\boldsymbol{V}^{\!T}(\underline{\xi}),
 \qquad
 \boldsymbol{A} = \underline{n}\cdot\mathbb{C}\cdot\underline{n},
 \qquad

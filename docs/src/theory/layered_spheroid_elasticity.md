@@ -60,7 +60,7 @@ and
 \operatorname{tr}\boldsymbol\varepsilon
    = -\frac{1-2\nu}{\mu}\operatorname{div}\underline\varphi,
 \qquad
-\boxed{\;\boldsymbol\sigma = -2\nu\,(\operatorname{div}\underline\varphi)\,\mathbf 1
+\boxed{\;\boldsymbol\sigma = -2\nu\,(\operatorname{div}\underline\varphi)\,\boldsymbol 1
  + \nabla\nabla\Phi - 4(1-\nu)\,\operatorname{sym}(\nabla\underline\varphi).\;}
 ```
 
@@ -240,7 +240,7 @@ behind it is one. Because ``\varphi_3`` is harmonic,
 ```math
 \operatorname{tr}\boldsymbol\varepsilon = -\frac{1-2\nu}{\mu}\,\partial_z\varphi_3,
 \qquad
-\boxed{\;\boldsymbol\sigma = -2\nu\,(\partial_z\varphi_3)\,\mathbf 1
+\boxed{\;\boldsymbol\sigma = -2\nu\,(\partial_z\varphi_3)\,\boldsymbol 1
  + \nabla\nabla\Phi - 4(1-\nu)\,\operatorname{sym}\!\left(\underline e_3\otimes\nabla\varphi_3\right).\;}
 ```
 
@@ -630,7 +630,7 @@ second-order tensors splits into three subspaces it does not mix:
 
 | subspace | dim | loading | fixes |
 |:--|:--:|:--|:--|
-| axisymmetric — ``\underline e_3\otimes\underline e_3``, ``\mathbf 1 - \underline e_3\otimes\underline e_3`` | 2 | **case I** | a ``2\times2`` block |
+| axisymmetric — ``\underline e_3\otimes\underline e_3``, ``\boldsymbol 1 - \underline e_3\otimes\underline e_3`` | 2 | **case I** | a ``2\times2`` block |
 | transverse shear — ``\varepsilon_{11}-\varepsilon_{22}``, ``2\varepsilon_{12}`` | 2 | **case II** | one scalar |
 | longitudinal shear — ``2\varepsilon_{13}``, ``2\varepsilon_{23}`` | 2 | **case III** | one scalar |
 

@@ -56,7 +56,7 @@ with the symbols renamed, and no sign is ever flipped.
 | stress ``\boldsymbol{\sigma}`` — 2-tensor                | ``\boldsymbol{\sigma} \equiv -\underline{q}`` — vector |
 | stiffness ``\mathbb{C}`` — 21 components                 | conductivity ``\boldsymbol{K}`` — 6 components         |
 | Hill tensor ``\mathbb{P}`` — 4-tensor                    | Hill tensor ``\boldsymbol{P}`` — 2-tensor              |
-| Eshelby tensor ``\mathbb{S} = \mathbb{P}:\mathbb{C}``    | ``\boldsymbol{S} = \boldsymbol{P}\cdot\boldsymbol{K}`` |
+| Eshelby tensor ``\mathbb{S}^{\mathrm{E}} = \mathbb{P}:\mathbb{C}``    | ``\boldsymbol{S}^{\mathrm{E}} = \boldsymbol{P}\cdot\boldsymbol{K}`` |
 | localization ``\mathbb{A}``, contribution ``\mathbb{N}`` | ``\boldsymbol{A}``, ``\boldsymbol{N}``                 |
 
 The routine names follow the same rule, and the correspondence is listed in
