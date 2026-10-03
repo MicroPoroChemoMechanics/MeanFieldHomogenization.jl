@@ -14,6 +14,7 @@ const NOMENCLATURE_GROUPS = [
     "Identities and bases", "Stiffness and elastic moduli", "Fields and loading",
     "Geometry and amounts", "Eshelby problem and localization", "Shape and Walpole coefficients", "Conduction", "Cracks",
     "Viscoelasticity", "Interfaces and layered inclusions", "Poromechanics and N-body models",
+    "Strength",
 ]
 
 """

@@ -309,6 +309,6 @@ The frequency route of this page, the time route of
 [Ageing creep of solidifying cementitious materials](@ref app-ageing-creep) and
 the Laplace–Carson route are checked against one another on a non-ageing
 composite in [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time).
-The next application, [The cluster model on cubic arrays](@ref app-cluster-model),
-leaves time dependence for the N-body schemes, in which the positions of the
-inclusions enter the estimate.
+This page closes the applications. The time-dependent behavior of a
+cementitious material, which ages and so does not admit complex moduli, is the
+subject of [Ageing creep of solidifying cementitious materials](@ref app-ageing-creep).

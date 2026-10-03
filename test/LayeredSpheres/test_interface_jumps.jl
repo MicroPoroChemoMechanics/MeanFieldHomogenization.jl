@@ -245,7 +245,7 @@ end
 end
 
 @testset "Interface jumps — Dormieux et al. (2010), self-consistent closed forms" begin
-    # Dormieux, Jeannin & Gland, IJNAMG 34 (2010) 249–271: grains bonded by
+    # Dormieux, Jeannin, Bemer, Le & Sanahuja, IJNAMG 34 (2010) 249–271, grains bonded by
     # springs, and pores, in the self-consistent scheme. The average strain of a
     # grain is read on the outer lip of its interface (their eq. 43), which is
     # `external = true`. Eq. (49) holds for any kₛ, kₙ; eqs. (51)-(52) are

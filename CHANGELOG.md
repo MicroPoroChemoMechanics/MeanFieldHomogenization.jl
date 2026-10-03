@@ -15,7 +15,7 @@
   default, which is the convention of Echoes, of `LayeredSpheroid` and of the
   laminates. The tensors reproduce Echoes to ten digits (inner and outer
   springs, Mori–Tanaka, self-consistent) and the self-consistent closed forms
-  of Dormieux, Jeannin and Gland (2010) for bonded grains. The ALV kernels
+  of Dormieux et al. (2010) for bonded grains. The ALV kernels
   (`strain_strain_loc_alv`, `stiffness_contribution_alv`) had the same gap and
   are fixed the same way. The averages of `averages.jl`
   (`sphere_strain_average`, …) are unchanged: they average over the material,
@@ -79,6 +79,40 @@
   duplicated; the two may differ in the last digit from before.
 
 ### Documentation
+
+- Three applications reproduce published strength models, each with its
+  paper cited at the top and its published values checked on the page:
+  - **The elastic limit of concrete**, after Königsberger, Pichler and
+    Hellmich (2014): ITZ failure and ITZ–aggregate separation around the
+    aggregates. The stress in the ITZ comes from the Hadamard jump conditions
+    written as one tensor equation, with the flat Hill tensors of the laminate
+    cell, rather than component by component; it is also the thin-shell limit
+    of the coated `LayeredSphere`. Every value of the article is recovered,
+    and the elastic limit surface is drawn in principal stress space.
+  - **Friction of a granular medium**, after Maalej, Dormieux and Sanahuja
+    (2009): rigid grains bonded by springs, the self-consistent moduli derived
+    symbolically (their eqs. 39 and 42 come out of the library), and the
+    Drucker–Prager slope by automatic differentiation through the
+    self-consistent solve.
+  - **The strength of a sandstone**, after Dormieux et al. (2010): von Mises
+    grains and Mohr–Coulomb contacts, with eqs. (49) to (54) derived
+    symbolically, and the strength envelopes of the modified secant method.
+- The Applications chapter is organized by subject: general concepts first
+  (interacting particles, morphologies computed by finite elements), then the
+  cementitious materials, the geomaterials and the bituminous mixtures, each
+  page coming after those it builds on, with the transitions rewritten to
+  match.
+- The data these pages take from articles live in `data/literature/*.json`,
+  with their source, location and transcription, instead of in the pages.
+- The title of `konigsberger2013` in the bibliography had the wrong subtitle.
+- The `SelfConsistent` docstring states the floor its positivity guard sets:
+  every component of the iterate is kept above `√eps` times the largest
+  component of the seed, so a solution far below the seed is out of reach and
+  wrong without notice; seed near the expected moduli in that case.
+- A pull request no longer builds the whole site in one job: a draft build of
+  the full tree checks the references, and the pages are built in parallel
+  shards (`docs/shards.jl`); the full build, with a longer time limit, runs on
+  `main` and deploys.
 
 - The README and the module docstring described `LayeredSpheroids` as
   conduction only, which it has not been since v0.11.0: they now name the

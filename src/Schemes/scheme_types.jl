@@ -290,6 +290,17 @@ accepts `:voigt`, `:reuss`, a phase name, or an explicit tensor. A phase named
     RVE the Voigt start also makes `TrustRegion` stop where the
     finite-difference IFT Jacobian is exactly singular. Hence the default above.
 
+!!! warning "The seed also sets a floor"
+    Every solver keeps each component of its iterate above
+    ``\\sqrt{\\epsilon_{\\mathrm{mach}}}`` times the largest component of the seed (and above
+    ``10^{-12}``): the positive-definiteness guard that keeps the iteration off
+    the null fixed point near percolation. A solution with a smaller component
+    is out of reach — the iteration stops on the floor, and the result is wrong
+    without notice. With the default seed of a solid around `1`, that floor is
+    about `1e-8`. When the moduli of the RVE lie far below the seed — soft
+    interfaces, a loose granular assembly — seed with a tensor of the order of
+    the expected solution, for instance `init = iso_stiffness(kt, kt)`.
+
 Standard kwargs forwarded to the solver: `abstol`, `reltol`, `maxiters`,
 `damping`, `verbose`, `select_best`. Convergence is declared when
 ``\\|\\Delta x\\| \\le \\mathrm{abstol} + \\mathrm{reltol}\\,\\|x\\|`` (defaults `abstol = 1e-12`, `reltol = 1e-8`);

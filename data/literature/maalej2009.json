@@ -1,0 +1,44 @@
+{
+  "schema": "mfh-literature/1",
+  "source": {
+    "key": "maalej2009",
+    "doi": "10.1016/j.euromechsol.2008.10.010",
+    "citation": "Maalej, Y., Dormieux, L., Sanahuja, J. (2009). Micromechanical approach to the failure criterion of granular media. European Journal of Mechanics A/Solids 28, 647-653.",
+    "location": "Section 6, p. 653"
+  },
+  "transcription": {
+    "from": "the published article (PDF), Section 6 and Eq. (65), p. 653, read on the page text",
+    "checked_against_source": true,
+    "note": "The same two fitted values drive the Echoes example criterion_granular.py."
+  },
+  "quantities": {
+    "friction_coefficient": {
+      "value": 0.27,
+      "unit": "1",
+      "kind": "fitted",
+      "uncertainty": null,
+      "location": "Section 6, p. 653",
+      "description": "Intergranular friction coefficient alpha of the Mohr-Coulomb interface law |T_t| <= -alpha T_n, fitted by the authors to the macroscopic slope of sands, for both the ductile and the brittle model."
+    },
+    "stiffness_ratio_brittle": {
+      "value": 0.055,
+      "unit": "1",
+      "kind": "fitted",
+      "uncertainty": null,
+      "location": "Section 6, p. 653",
+      "description": "Ratio rho = K_t / K_n of the tangential to the normal stiffness of the contacts in the brittle model, fitted by the authors."
+    },
+    "caquot_kerisel_coefficient": {
+      "value": 0.55,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (65), p. 653",
+      "description": "Coefficient of the empirical rule tan(phi_f) = 0.55 (1 - phi) / phi of Caquot and Kérisel (1956) for uniform rough sands, phi_f the friction angle and phi the porosity, as quoted by the authors."
+    }
+  },
+  "tables": {},
+  "notes": [
+    "Caquot and Kérisel (1956), Traité de Mécanique des Sols (Gauthier-Villars), is cited through this article; the book itself was not consulted."
+  ]
+}

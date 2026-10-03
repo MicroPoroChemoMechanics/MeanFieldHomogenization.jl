@@ -279,6 +279,9 @@ second scatters them independently in the matrix.
 
 The schemes other than Mori–Tanaka on the same time-domain path are compared on
 one composite in [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes).
-The next application, [Viscoelastic complex modulus of a bituminous mixture](@ref app-bituminous),
-treats a non-ageing material, for which the correspondence principle holds and
-the homogenization runs in the frequency domain with complex moduli.
+A non-ageing material, for which the correspondence principle holds and the
+homogenization runs in the frequency domain with complex moduli, is treated in
+[Viscoelastic complex modulus of a bituminous mixture](@ref app-bituminous).
+The next application,
+[Quasi-brittle strength of cement paste and mortar](@ref app-strength),
+returns to the elastic paste and derives its compressive strength.

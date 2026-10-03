@@ -12,11 +12,18 @@ concurrency:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
+  # The full build, and the only one that deploys. It runs on `main`, on tags and
+  # on demand; a pull request is checked instead by the two jobs that follow it,
+  # `preflight` and `pages`, which together cover every executed block and every
+  # cross reference in a fraction of the wall time. Run this one by hand
+  # (`workflow_dispatch`) on a branch when the rendered site itself is in doubt.
   build:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    # The VitePress pass runs after Documenter's, so the job is longer than it
-    # was; a bound keeps a hung build from occupying a runner indefinitely.
-    timeout-minutes: 150
+    # A bound keeps a hung build from occupying a runner indefinitely. It is a
+    # safety net, not a capacity plan: when a build approaches it, the cause is
+    # to be found rather than the number raised.
+    timeout-minutes: 240
     permissions:
       actions: write
       pull-requests: read
@@ -89,8 +96,172 @@ jobs:
       # decidable from the loaded module in seconds, so decide it first.
       - name: Check every @docs entry is documented
         run: julia --project=docs/ .github/scripts/check_docs_blocks.jl
+      # `JULIA_DEBUG=Documenter` makes Documenter name each page as it expands
+      # it. Without it the `ExpandTemplates` stage, where every `@example` block
+      # runs and nearly all the time goes, prints nothing, and a build working
+      # normally cannot be told from one that hangs.
       - name: Build and deploy
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+            JULIA_DEBUG: Documenter
+            OPENBLAS_NUM_THREADS: '1'
+        run: julia --project=docs/ docs/make.jl
+
+  # Pull requests, part one: the draft build of the WHOLE page tree, with every
+  # `@example` skipped. It decides what no shard can -- the cross references
+  # between pages, the page tree, the bibliography, the `@docs` entries -- in
+  # minutes.
+  preflight:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      actions: write # julia-actions/cache prunes the caches it created
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v3
+      # Node itself comes from NodeJS_20_jll, which the Julia depot cache above
+      # already covers; this caches only what `npm install` fetches for the
+      # VitePress build (MathJax, mermaid, plotly), keyed on the manifest that
+      # determines it.
+      - uses: actions/cache@v6
+        with:
+          path: docs/node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('docs/package.json') }}
+          restore-keys: ${{ runner.os }}-npm-
+      # The Pkg server intermittently advertises a General tree hash that its
+      # CDN then answers with a 404, which kills the first `Pkg.add` of a cold
+      # depot before any of this repository's code runs.  Install the registry
+      # up front and fall back to a direct clone when that happens; package
+      # tarballs keep going through the Pkg server either way.
+      - name: Install the General registry
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          regdir = joinpath(first(DEPOT_PATH), "registries")
+          if isdir(joinpath(regdir, "General")) || isfile(joinpath(regdir, "General.tar.gz"))
+              @info "General registry already installed"
+          else
+              try
+                  Pkg.Registry.add("General")
+              catch err
+                  @warn "Pkg server could not serve the registry; cloning from GitHub" err
+                  withenv("JULIA_PKG_SERVER" => "") do
+                      Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/JuliaRegistries/General.git"))
+                  end
+              end
+          end
+      - name: Install dependencies (PyCall/SymPy)
+        run: |
+          julia -e '
+            using Pkg
+            ENV["PYTHON"] = ""
+            Pkg.add("PyCall")
+            Pkg.add("SymPy")
+            Pkg.build("PyCall")
+            using PyCall
+            pyimport_conda("sympy", "sympy")'
+      - name: Install dependencies
+        shell: julia --project=docs/ --color=yes {0}
+        run: |
+            using Pkg
+            Pkg.develop(PackageSpec(path=pwd()))
+            Pkg.instantiate()
+      - name: Check every @docs entry is documented
+        run: julia --project=docs/ .github/scripts/check_docs_blocks.jl
+      - name: Draft build (checks only)
+        env:
+            MFH_DOCS_PREFLIGHT_ONLY: '1'
+        run: julia --project=docs/ docs/make.jl
+
+  # Pull requests, part two: every page, built for real, in shards that run side
+  # by side. The groups and how they are chosen live in `docs/shards.jl`; a page
+  # no group names falls into `rest`. Each shard is a partial build
+  # (`docs/partial.jl`), which demotes cross references to warnings and refuses
+  # to deploy -- the references are the preflight's to check.
+  pages:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [chemistry, cement, applications, viscoelastic, generated, theory-manual, rest]
+    permissions:
+      actions: write # julia-actions/cache prunes the caches it created
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v3
+      # Node itself comes from NodeJS_20_jll, which the Julia depot cache above
+      # already covers; this caches only what `npm install` fetches for the
+      # VitePress build (MathJax, mermaid, plotly), keyed on the manifest that
+      # determines it.
+      - uses: actions/cache@v6
+        with:
+          path: docs/node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('docs/package.json') }}
+          restore-keys: ${{ runner.os }}-npm-
+      # The Pkg server intermittently advertises a General tree hash that its
+      # CDN then answers with a 404, which kills the first `Pkg.add` of a cold
+      # depot before any of this repository's code runs.  Install the registry
+      # up front and fall back to a direct clone when that happens; package
+      # tarballs keep going through the Pkg server either way.
+      - name: Install the General registry
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          regdir = joinpath(first(DEPOT_PATH), "registries")
+          if isdir(joinpath(regdir, "General")) || isfile(joinpath(regdir, "General.tar.gz"))
+              @info "General registry already installed"
+          else
+              try
+                  Pkg.Registry.add("General")
+              catch err
+                  @warn "Pkg server could not serve the registry; cloning from GitHub" err
+                  withenv("JULIA_PKG_SERVER" => "") do
+                      Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/JuliaRegistries/General.git"))
+                  end
+              end
+          end
+      - name: Install dependencies (PyCall/SymPy)
+        run: |
+          julia -e '
+            using Pkg
+            ENV["PYTHON"] = ""
+            Pkg.add("PyCall")
+            Pkg.add("SymPy")
+            Pkg.build("PyCall")
+            using PyCall
+            pyimport_conda("sympy", "sympy")'
+      - name: Install dependencies
+        shell: julia --project=docs/ --color=yes {0}
+        run: |
+            using Pkg
+            Pkg.develop(PackageSpec(path=pwd()))
+            Pkg.instantiate()
+      - name: Pages of shard ${{ matrix.shard }}
+        shell: julia --color=yes {0}
+        run: |
+            # `pwd()`, not a bare relative path: this script runs from a
+            # temporary file, and `include` resolves against the including file.
+            include(joinpath(pwd(), "docs", "pages.jl"))
+            include(joinpath(pwd(), "docs", "shards.jl"))
+            sel = shard_pages("${{ matrix.shard }}", doc_page_leaves(pages))
+            println(join(sel, "\n"))
+            open(ENV["GITHUB_ENV"], "a") do io
+                println(io, "MFH_DOCS_ONLY=", join(sel, ","))
+            end
+      - name: Build the pages of the shard
+        env:
+            JULIA_DEBUG: Documenter
+            OPENBLAS_NUM_THREADS: '1'
         run: julia --project=docs/ docs/make.jl

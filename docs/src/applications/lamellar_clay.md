@@ -416,6 +416,6 @@ The poroelastic law that the library closes for a homogeneous solid phase is
 given in [Poromechanics](@ref manual-poromechanics); the swelling term
 ``g\,\pi^g_o`` is a departure from it, and a prestressed phase such as the
 interfoliar layer requires the Levin route followed on this page. The next
-application, [Ageing creep of solidifying cementitious materials](@ref app-ageing-creep),
-opens the time-dependent family: a phase that solidifies progressively, and an
-effective relaxation kernel that depends on the loading age.
+application, [Friction of a granular medium from its contacts](@ref app-granular-friction),
+keeps interfaces between solid particles but lets them carry a friction law,
+and derives the strength of a sand.

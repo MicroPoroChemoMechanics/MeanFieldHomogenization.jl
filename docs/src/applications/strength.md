@@ -420,10 +420,9 @@ both ways and checks that the derivatives agree with finite differences.
 
 ## Where to go next
 
-This page closes the cementitious family. The lens written above, and the other
-ways of naming a parameter inside a nested chain, are described in
+The lens written above, and the other ways of naming a parameter inside a
+nested chain, are described in
 [Parameter lenses](@ref man-sensitivities-lenses). The next application,
-[A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate),
-returns to the coated aggregate of the ITZ chapter with a core no longer
-centered in its shell, a morphology without closed-form solution whose
-localization tensors are computed by finite elements.
+[The interfacial transition zone in concrete](@ref app-itz-concrete), carries
+the same paste one scale up, into a concrete whose aggregates are coated with
+a more porous paste.

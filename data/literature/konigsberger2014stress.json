@@ -1,0 +1,25 @@
+{
+  "schema": "mfh-literature/1",
+  "source": {
+    "key": "konigsberger2014stress",
+    "doi": "10.1111/jace.12591",
+    "citation": "Königsberger, M., Pichler, B., Hellmich, C. (2014). Micromechanics of ITZ-Aggregate Interaction in Concrete Part I: Stress Concentration. Journal of the American Ceramic Society 97, 535-542.",
+    "location": "Appendix A and Table I, p. 7"
+  },
+  "transcription": {
+    "from": "the published article (PDF), Appendix A and Table I, p. 7, read on the page text",
+    "checked_against_source": true,
+    "note": "The 'typical concrete' of the article: quartz aggregates, a cement paste of w/c = 0.5 at 95 % hydration, and an ITZ whose Young modulus is 85 % of that of the paste with the same Poisson ratio. The same values drive the Echoes example ITZ_Pichler_sphnalyers_JACS2013.py. Only ratios of moduli enter a stress concentration."
+  },
+  "quantities": {
+    "E_aggregate": {"value": 96.0, "unit": "GPa", "kind": "published", "uncertainty": null, "location": "Table I", "description": "Young modulus of the quartz aggregates."},
+    "nu_aggregate": {"value": 0.08, "unit": "1", "kind": "published", "uncertainty": null, "location": "Table I", "description": "Poisson ratio of the quartz aggregates."},
+    "E_paste": {"value": 16.0, "unit": "GPa", "kind": "published", "uncertainty": null, "location": "Table I", "description": "Young modulus of the bulk cement paste."},
+    "nu_paste": {"value": 0.23, "unit": "1", "kind": "published", "uncertainty": null, "location": "Table I", "description": "Poisson ratio of the bulk cement paste."},
+    "E_itz": {"value": 13.6, "unit": "GPa", "kind": "published", "uncertainty": null, "location": "Table I", "description": "Young modulus of the ITZ, 85 % of that of the paste."},
+    "nu_itz": {"value": 0.23, "unit": "1", "kind": "published", "uncertainty": null, "location": "Table I", "description": "Poisson ratio of the ITZ, equal to that of the paste."},
+    "f_aggregate": {"value": 0.65, "unit": "1", "kind": "published", "uncertainty": null, "location": "Appendix A, p. 7", "description": "Volume fraction of the aggregates in concrete."}
+  },
+  "tables": {},
+  "notes": []
+}

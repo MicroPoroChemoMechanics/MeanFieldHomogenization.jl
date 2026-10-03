@@ -26,6 +26,25 @@ real build.
 - **Notebooks.** `MFH_DOCS_NOTEBOOKS=1` also writes the Jupyter notebooks of the
   Literate pages.
 
+## Pull requests
+
+A pull request does not run the full build. Two jobs of
+`.github/workflows/Documentation.yml` replace it: `preflight`, the draft build
+of the whole tree (`MFH_DOCS_PREFLIGHT_ONLY=1`), which checks every reference,
+and `pages`, a matrix of partial builds that run side by side, one per group of
+`docs/shards.jl`. A page belongs to the first group that names it, and to
+`rest` if none does, so a new page is built without being assigned. To build
+one shard locally:
+
+```
+julia -e 'include("docs/pages.jl"); include("docs/shards.jl");
+          println(join(shard_pages("cement", doc_page_leaves(pages)), ","))'
+MFH_DOCS_ONLY=<that list> julia --project=docs docs/make.jl
+```
+
+The full build runs on `main`, on tags and on demand, and is the only one that
+deploys.
+
 ## Previewing the site
 
 The site lands in `docs/build/1`, and its links have no `.html` suffix

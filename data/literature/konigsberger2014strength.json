@@ -1,0 +1,106 @@
+{
+  "schema": "mfh-literature/1",
+  "source": {
+    "key": "konigsberger2014strength",
+    "doi": "10.1111/jace.12606",
+    "citation": "Königsberger, M., Pichler, B., Hellmich, C. (2014). Micromechanics of ITZ-Aggregate Interaction in Concrete Part II: Strength Upscaling. Journal of the American Ceramic Society 97, 543-551.",
+    "location": "Sections II-IV, pp. 3-6"
+  },
+  "transcription": {
+    "from": "the published article (PDF), Sections II-IV, pp. 3-6, read on the page images",
+    "checked_against_source": true,
+    "note": "Results for the typical concrete of the companion Part I (konigsberger2014stress.json). The text layer of the PDF drops the minus signs of Eqs. (9), (14) and of Bvol - Bdev; they are read on the page images."
+  },
+  "quantities": {
+    "Bvol_minus_Bdev": {
+      "value": -0.04038,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "p. 4, before Eq. (9)",
+      "description": "Difference of the spherical and deviatoric traction concentration factors on the aggregate surface."
+    },
+    "sep_uniaxial_compression": {
+      "value": -74.29,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (9)",
+      "description": "Uniaxial compressive elastic limit for ITZ-aggregate separation, in units of the separation strength."
+    },
+    "sep_uniaxial_tension": {
+      "value": 0.8585,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (10)",
+      "description": "Uniaxial tensile elastic limit for ITZ-aggregate separation, in units of the separation strength."
+    },
+    "theta_tension": {
+      "value": 0.111,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (12)",
+      "description": "Zenith angle, in units of pi, where ITZ failure starts under uniaxial tension."
+    },
+    "theta_compression": {
+      "value": 0.328,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (12)",
+      "description": "Zenith angle, in units of pi, where ITZ failure starts under uniaxial compression."
+    },
+    "itz_peak_tension": {
+      "value": 1.1899,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (13)",
+      "description": "Largest principal ITZ stress per unit uniaxial tensile macrostress."
+    },
+    "itz_peak_compression": {
+      "value": -0.2677,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (14)",
+      "description": "Largest principal ITZ stress per unit uniaxial macrostress, under compression (the stress is positive, the macrostress negative)."
+    },
+    "itz_uniaxial_tension": {
+      "value": 0.8404,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (16)",
+      "description": "Uniaxial tensile elastic limit for ITZ failure, in units of the ITZ tensile strength."
+    },
+    "itz_uniaxial_compression": {
+      "value": -3.736,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (16)",
+      "description": "Uniaxial compressive elastic limit for ITZ failure, in units of the ITZ tensile strength."
+    },
+    "sep_biaxial_compression": {
+      "value": -37.14,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (24)",
+      "description": "Symmetric biaxial compressive elastic limit for ITZ-aggregate separation, in units of the separation strength."
+    },
+    "itz_biaxial_compression": {
+      "value": -3.801,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (24)",
+      "description": "Symmetric biaxial compressive elastic limit for ITZ failure, in units of the ITZ tensile strength."
+    }
+  },
+  "tables": {},
+  "notes": []
+}
