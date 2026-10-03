@@ -459,6 +459,10 @@ end
     add_phase!(r, :S, grain, Dict(:C => law); fraction = 0.3)
     @test_throws "is a LayeredSphere" homogenize_alv(r, SelfConsistent(), :C; times)
     @test_throws "is a LayeredSphere" homogenize_alv(r, AsymmetricSelfConsistent(), :C; times)
+    @test_throws "is a LayeredSphere" MeanFieldHomogenization.Viscoelasticity.self_consistent_alv_newton(r, :C; times)
+    # A reference medium with an infinite modulus has no Volterra matrix either.
+    grain = LayeredSphere((0.6, 1.0), (iso_stiffness(5.0, 1.0), iso_stiffness(3.0, 1.5)))
+    @test_throws "reference medium" strain_strain_loc_alv(grain, heaviside_law(iso_stiffness(Inf, 1.0)), times)
 end
 
 @testset "LayeredSphere ALV — creep laws, and the stiffness the bounds average" begin

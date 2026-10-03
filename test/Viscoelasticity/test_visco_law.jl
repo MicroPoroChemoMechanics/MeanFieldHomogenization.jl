@@ -73,6 +73,12 @@ end
     @test α2 ≈ 1 / 30.0   # bulk unchanged (no k branches)
     @test β2 ≈ 1 / 8.0 + (1 / 4.0) * (1 - exp(-1.0))
 
+    # And one on the spherical axis.
+    law2 = kelvin_iso(10.0, 4.0, [5.0], Float64[], [2.0], Float64[])
+    α3, β3 = TensND.get_data(law2(1.0, 0.0))
+    @test α3 ≈ 1 / 30.0 + (1 / 15.0) * (1 - exp(-0.5))
+    @test β3 ≈ 1 / 8.0
+
     # Length mismatch must throw.
     @test_throws ArgumentError kelvin_iso(10.0, 4.0, [1.0], Float64[], [1.0, 2.0], Float64[])
 end

@@ -118,6 +118,15 @@ end
         interfaces = (KapitzaInterface(0.1), KapitzaInterface(0.25))
     )
     @test _iso(gradient_gradient_loc(k2, K₀, K₀))[1] ≈ 1.2105384615384616 rtol = 1.0e-12
+    # Per layer, with Echoes' `layer_eE(l, external, internal)`: the material
+    # average, then the outer and the inner temperature jumps added to it.
+    for (layer, external, internal, ref) in (
+            (1, false, false, 0.3461538461538461), (1, true, false, 0.6346153846153846),
+            (2, false, false, 1.0), (2, true, false, 1.3692111459968601),
+            (2, false, true, 1.0794740973312402), (2, true, true, 1.4486852433281003),
+        )
+        @test _iso(gradient_gradient_loc(k2, K₀; layer, external, internal))[1] ≈ ref rtol = 1.0e-12
+    end
     @test _iso(LS_IJ.flux_gradient_loc(k2, K₀, K₀))[1] ≈ 1.1578461538461537 rtol = 1.0e-12
     rk = RVE()
     add_phase!(rk, :M, Ellipsoid(1.0), Dict(:K => K₀); fraction = 0.6)
