@@ -1,6 +1,16 @@
 # Changelog
 
-## Unreleased
+## v0.14.3 — the interfaces of the layered sphere, and three strength models
+
+The concentration tensors of a `LayeredSphere` with imperfect interfaces were
+wrong, and every scheme consumes them. The opening of a spring interface did not
+strain the composite sphere, so any estimate on spring-bonded grains was off (a
+Mori–Tanaka bulk modulus of 2.30 instead of 1.66 on a two-spring example), and a
+Kapitza interface lowered the resistance it was meant to add. Results computed
+with `SpringInterface` or `KapitzaInterface` on a `LayeredSphere` should be
+recomputed. Both now agree with Echoes to ten digits and with closed forms of the
+literature, which the three new strength applications derive symbolically from
+the library.
 
 ### Fixed
 
@@ -113,7 +123,6 @@
   the full tree checks the references, and the pages are built in parallel
   shards (`docs/shards.jl`); the full build, with a longer time limit, runs on
   `main` and deploys.
-
 - The README and the module docstring described `LayeredSpheroids` as
   conduction only, which it has not been since v0.11.0: they now name the
   elastic confocal spheroid, prolate or oblate, with perfect interfaces.
