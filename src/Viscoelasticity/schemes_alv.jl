@@ -99,7 +99,9 @@ function voigt_alv(
     length(C_phases) == length(fractions) ||
         throw(ArgumentError("voigt_alv: C_phases and fractions length mismatch"))
     isempty(C_phases) && throw(ArgumentError("voigt_alv: at least one phase required"))
-    T = promote_type(eltype(C_phases[1]), eltype(fractions))
+    # Every phase, not the first: one of them may carry dual numbers (the
+    # layers of a layered sphere, differentiated one at a time).
+    T = promote_type(mapreduce(eltype, promote_type, C_phases), eltype(fractions))
     C = zeros(T, size(C_phases[1])...)
     @inbounds for r in eachindex(C_phases)
         @. C += fractions[r] * C_phases[r]

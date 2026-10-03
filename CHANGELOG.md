@@ -6,11 +6,12 @@ The concentration tensors of a `LayeredSphere` with imperfect interfaces were
 wrong, and every scheme consumes them. The opening of a spring interface did not
 strain the composite sphere, so any estimate on spring-bonded grains was off (a
 Mori–Tanaka bulk modulus of 2.30 instead of 1.66 on a two-spring example), and a
-Kapitza interface lowered the resistance it was meant to add. Results computed
-with `SpringInterface` or `KapitzaInterface` on a `LayeredSphere` should be
-recomputed. Both now agree with Echoes to ten digits and with closed forms of the
-literature, which the three new strength applications derive symbolically from
-the library.
+Kapitza interface lowered the resistance it was meant to add. In the aging
+viscoelastic recurrence, a spring between two viscoelastic media composed their
+moduli in the wrong order. Results computed with `SpringInterface` or
+`KapitzaInterface` on a `LayeredSphere` should be recomputed. All now agree with
+Echoes to at least ten digits and with closed forms of the literature, which
+the three new strength applications derive symbolically from the library.
 
 ### Fixed
 
@@ -36,11 +37,13 @@ the library.
   conducted better with the resistance than without, and diverged at
   `ρ = r/k`. It now drops, `[T] = −ρ q_n`, and the concentration tensors match
   Echoes, the Hasselman–Johnson equivalent grain and the spherical limit of the
-  confocal spheroid, which had the right sign all along. The pages wrote the
-  law as `[T] = ρ q_n`, true only for the flux `σ ≡ −q` of the package's
-  dictionary; they now use the physical flux, as does the surface-conductive
-  law, whose sign was flipped the same way in two tutorials and on the spheroid
-  page while the code was right.
+  confocal spheroid, which had the right sign all along. The jump is, as
+  everywhere, the outer value minus the inner one, and the minus sign is that
+  of the dictionary `σ ≡ −q`: the Kapitza law is the analog of the spring law,
+  `[T] = ρ σ_n = −ρ q_n`. The pages wrote `[T] = ρ q_n`, mixing the physical
+  flux with the law written for its analog; they now say where the sign comes
+  from. The surface-conductive law had its sign flipped the same way in two
+  tutorials and on the spheroid page, while the code was right.
 - **An incompressible layer (`k = ∞`) failed** with "matrix contains Infs or
   NaNs" as soon as the sphere had an imperfect interface or a second layer,
   although the theory page promised the limit. Modes 2 and 4 of the deviatoric
@@ -49,6 +52,46 @@ the library.
   from the traction instead of `∞·0`. The pointwise stress of an incompressible
   region, which the strain does not determine, now raises an `ArgumentError`
   instead of returning `NaN`.
+- **A spring interface between two viscoelastic media composed their moduli
+  in the wrong order** in the aging linear viscoelastic (ALV) recurrence of
+  `LayeredSphere`. One of the four terms of the bulk transition across a
+  `SpringInterface` multiplied the Volterra matrices of the inner and outer bulk
+  moduli in reverse order, which is harmless only when they commute: on a
+  uniform time grid with non-aging laws, or when one side is elastic. On a
+  non-uniform grid, a logarithmic one included, or with an aging layer, the
+  bulk concentration tensors and the effective relaxation were wrong, by 0.2 to
+  0.4 % in the cases checked. The defect dates from v0.1.0. With springs or
+  membranes, an aging core and a non-uniform grid, the ALV concentration
+  tensors of the layers and of the whole sphere, with or without the outer
+  interface, and the dilute and Mori–Tanaka estimates now match Echoes to
+  machine precision.
+- **A creep law in a `LayeredSphere` was read as a relaxation.** The ALV
+  recurrences of the layered sphere discretized the laws of its layers and of
+  the matrix without looking at their mode, so a law given in `:creep` mode, a
+  compliance, entered as a stiffness: 5 to 63 % off on a one-layer sphere that
+  the ellipsoid path, which inverts it, got right. Both paths now agree
+  whichever mode each law is given in.
+- **The ALV Voigt and Reuss bounds gave a `LayeredSphere` the stiffness of a
+  dilute estimate** (`C₀ + N`), 34 % and 15 % off Echoes on an aged
+  two-layer sphere. They now take the Voigt and Reuss averages of its layers,
+  as the elastic bounds do, and match Echoes to machine precision.
+- **`kelvin_iso(k₀, μ₀, …)` built a compliance three times too large on the
+  spherical part and twice too large on the deviatoric one**: `1/k₀` and
+  `1/μ₀` where its docstring, its argument names and `maxwell_iso` all mean
+  `1/(3k₀)` and `1/(2μ₀)`, and the same for every Kelvin branch. Its test had
+  pinned the wrong values. It now returns the inverse of
+  `iso_stiffness(k₀, μ₀)` at `t = t′`. Results computed with `kelvin_iso`,
+  MFH Studio's "Kelvin chain" included, change accordingly. The manual's
+  example passed numbers where the branches are vectors.
+- An incompressible layer (`k = ∞`) in the ALV path now raises an
+  `ArgumentError` naming the layer, instead of failing inside a factorization:
+  it has no Volterra matrix, and the elastic functions treat it exactly. The
+  order-2 (conduction, diffusion) ALV path and the ALV self-consistent schemes
+  refuse a `LayeredSphere` by name instead of with a `MethodError`; the
+  docstring of `homogenize_alv` and the manual said the self-consistent scheme
+  accepted it.
+- MFH Studio generated `maxwell_iso(k, μ, τ)` and `kelvin_iso(k, μ, τ)`, which
+  no signature accepts, for a property saved with the older `visco` field.
 - **A layered sphere with an imperfect interface failed on SymPy moduli.**
   `Matrix{T}(I, 4, 4)` holds the logical `True` and `False` when `T` is `Sym`,
   and they refuse to multiply. Once past that, the pivoted solve of the
@@ -115,6 +158,10 @@ the library.
 - The data these pages take from articles live in `data/literature/*.json`,
   with their source, location and transcription, instead of in the pages.
 - The title of `konigsberger2013` in the bibliography had the wrong subtitle.
+- The docstrings of the ALV interface transfers said that an interface
+  parameter could be a `ViscoLaw`. The interface types hold numbers, so an
+  interface is constant in time; the docstrings say so, and the method that
+  would have read an aging parameter, which nothing could reach, is removed.
 - The `SelfConsistent` docstring states the floor its positivity guard sets:
   every component of the iterate is kept above `√eps` times the largest
   component of the seed, so a solution far below the seed is out of reach and

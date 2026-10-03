@@ -109,6 +109,7 @@ function self_consistent_alv(
         # exactly the same reason and with the same two ways out.
         _alv_diff_keeps_iso(ph.geometry, sym, C_r) ||
             _alv_diff_iso_error(name, "the shape or the anisotropy")
+        _alv_sc_refuse_layered(ph.geometry, name, "self_consistent_alv")
         push!(C_phases, C_r)
         push!(geometries, ph.geometry)
         push!(fractions, _amount_value(rve, name))
@@ -175,6 +176,19 @@ function self_consistent_alv(
     @debug "self_consistent_alv: maxiters=$(maxiters) reached without convergence" abstol reltol
     return select_best ? C_best : C_m
 end
+
+# The self-consistent bodies build the Hill kernel of each phase from the shape
+# of an ellipsoid. A layered sphere has none; its contribution comes from the
+# layered-sphere recurrences, which these bodies do not call. Refused by name
+# rather than through a `MethodError` of `tens_UA`.
+_alv_sc_refuse_layered(::Any, ::Symbol, ::AbstractString) = nothing
+_alv_sc_refuse_layered(::LayeredSphere, name::Symbol, scheme::AbstractString) = throw(
+    ArgumentError(
+        "$scheme: phase $name is a LayeredSphere, which this ALV scheme does not " *
+            "support; Dilute, DiluteDual, MoriTanaka, Maxwell, PonteCastanedaWillis, " *
+            "Voigt, Reuss and DifferentialScheme do."
+    )
+)
 
 # ── Shared per-phase dilute concentration for the SC-ALV bodies ─────────────
 #

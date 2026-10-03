@@ -98,6 +98,7 @@ function self_consistent_alv_newton(
         C_r_law = phase_property(rve, name, prop)
         C_r_law isa ViscoLaw ||
             throw(ArgumentError("self_consistent_alv_newton: phase $name property is not a ViscoLaw"))
+        _alv_sc_refuse_layered(ph.geometry, name, "self_consistent_alv_newton")
         push!(C_phases_full, _trapezoidal_relaxation(C_r_law, times, 6))
         push!(geometries, ph.geometry)
         push!(fractions, _amount_value(rve, name))

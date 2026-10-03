@@ -223,6 +223,16 @@ function hill_kernel_order2_at(ell, K_0::AbstractMatrix)
     return P
 end
 
+# A layered sphere has no order-2 recurrence in the ALV setting. Refused by name
+# here rather than through a `MethodError` of `tens_IA` on its geometry.
+hill_kernel_order2_at(::LayeredSphere, ::AbstractMatrix) = throw(
+    ArgumentError(
+        "a LayeredSphere has no order-2 (conduction, diffusion) ALV recurrence: its " *
+            "layers and interfaces are handled by the time-independent conduction path " *
+            "(`homogenize(rve, scheme, :K)`) and by the order-4 ALV path only."
+    )
+)
+
 # ── Generic order-2 ALV algebra (3n × 3n with block_size = 3) ──────────────
 
 """

@@ -58,17 +58,20 @@ end
 
 @testset "ViscoLaw — kelvin_iso (4-tensor) instantaneous + branches" begin
     # Instantaneous-only case (no branches).
+    # The instantaneous compliance is the inverse of the stiffness with the
+    # same bulk and shear moduli, (1/(3k), 1/(2μ)) on (𝕁, 𝕂).
     law0 = kelvin_iso(10.0, 4.0)
     @test visco_mode(law0) == :creep
     α, β = TensND.get_data(law0(0.0, 0.0))
-    @test α ≈ 1 / 10.0   # data is (3K, 2μ) for stiffness; for compliance we put (1/k, 1/μ)
-    @test β ≈ 1 / 4.0
+    @test collect(TensND.get_data(inv(iso_stiffness(10.0, 4.0)))) ≈ [α, β]
+    @test α ≈ 1 / 30.0
+    @test β ≈ 1 / 8.0
 
     # With one Kelvin branch on the shear axis.
     law1 = kelvin_iso(10.0, 4.0, Float64[], [2.0], Float64[], [1.0])
     α2, β2 = TensND.get_data(law1(1.0, 0.0))
-    @test α2 ≈ 1 / 10.0   # bulk unchanged (no k branches)
-    @test β2 ≈ 1 / 4.0 + (1 / 2.0) * (1 - exp(-1.0))
+    @test α2 ≈ 1 / 30.0   # bulk unchanged (no k branches)
+    @test β2 ≈ 1 / 8.0 + (1 / 4.0) * (1 - exp(-1.0))
 
     # Length mismatch must throw.
     @test_throws ArgumentError kelvin_iso(10.0, 4.0, [1.0], Float64[], [1.0, 2.0], Float64[])

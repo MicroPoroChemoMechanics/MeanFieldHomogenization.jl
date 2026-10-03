@@ -56,46 +56,61 @@ function _bulk_layer_moduli_alv(
         times::AbstractVector{<:Real}
     ) where {T, N}
     n = length(times)
-    # Matrix kernel : iso scalar matrices.
-    R0 = C0_law isa ViscoLaw ? trapezoidal_matrix(C0_law, times) : C0_law
+    # Matrix kernel : iso scalar matrices. A law given in `:creep` mode is a
+    # compliance, inverted to the relaxation the recurrences work on.
+    R0 = C0_law isa ViscoLaw ? _trapezoidal_relaxation(C0_law, times, 6) : C0_law
     α0, β0 = iso_params_from_blocks(R0)
     M_κ_0 = α0 ./ 3
     M_μ_0 = β0 ./ 2
 
     # Per-layer kernels.
     layers = ntuple(k -> _layer_iso_volterra(layer_modulus(sphere, k), times), N)
+    # An incompressible or rigid layer has no Volterra matrix: its entries are
+    # infinite, and the recurrences would fail inside a factorization with a
+    # message that names neither the layer nor the cause.
+    for k in 1:N, M in layers[k]
+        any(_nonfinite, M) && throw(
+            ArgumentError(
+                "layer $k of the LayeredSphere has an infinite modulus (k = ∞ or μ = ∞): " *
+                    "the ALV recurrences need the Volterra matrices of the moduli, which it " *
+                    "does not have. The elastic LayeredSphere functions treat k = ∞ exactly."
+            )
+        )
+    end
+    (any(_nonfinite, M_κ_0) || any(_nonfinite, M_μ_0)) &&
+        throw(ArgumentError("the reference medium of the LayeredSphere has an infinite modulus"))
     return layers, M_κ_0, M_μ_0
 end
+
+# A kernel entry that is not a finite number. Only a float can be infinite here:
+# a dual number or a symbolic entry is let through.
+_nonfinite(x) = false
+_nonfinite(x::AbstractFloat) = !isfinite(x)
 
 # Convert a per-layer modulus value (either a `TensISO{4,3}` or a
 # `ViscoLaw` returning `TensISO{4,3}`) to scalar `(M_κ, M_μ)` n×n
 # Volterra matrices.  An elastic `TensISO{4,3}` is implicitly wrapped
-# in a Heaviside law.
+# in a Heaviside law, and a law in `:creep` mode is inverted to its relaxation.
 function _layer_iso_volterra(C, times::AbstractVector{<:Real})
     law = C isa ViscoLaw ? C : heaviside_law(C)
-    R = trapezoidal_matrix(law, times)
+    R = _trapezoidal_relaxation(law, times, 6)
     α, β = iso_params_from_blocks(R)
     return (α ./ 3, β ./ 2)   # (M_κ, M_μ)
 end
 
-# ── Interface parameter promotion (scalar OR ViscoLaw) ─────────────────────
+# ── Interface parameter promotion ──────────────────────────────────────────
 
 """
     _iface_param_volterra(p, times, n) -> Matrix{T}
 
-Promote an interface parameter to its ``n\\times n`` Volterra block.  Scalar
-parameters (constant in time, the elastic limit) become ``p\\,\\mathbb 1_n``;
-genuinely viscoelastic parameters (`p::ViscoLaw` returning a scalar)
-become their trapezoidal ``n\\times n`` matrix.  Lets every interface model
-stack on top of an ageing matrix without code duplication.
+The ``n\\times n`` Volterra block of an interface parameter, ``p\\,\\mathbb 1_n``.
+The parameters of the interfaces are numbers (`SpringInterface{T <: Number}`,
+`MembraneInterface{T <: Number}`), constant in time: an interface does not
+age, whatever the layers on either side of it do.
 """
 function _iface_param_volterra(p::Real, times::AbstractVector, n::Int)
     T = typeof(p)
     return p * Matrix{T}(I, n, n)
-end
-
-function _iface_param_volterra(p::ViscoLaw, times::AbstractVector, n::Int)
-    return trapezoidal_matrix(p, times)
 end
 
 
@@ -116,10 +131,8 @@ Supports the same interface types as the elastic counterpart:
 [`PerfectInterface`](@ref), [`SpringInterface`](@ref) (primal,
 displacement jump driven by the compliance ``s_n = 1/k_n``), and
 [`MembraneInterface`](@ref)
-(dual, traction jump driven by ``\\kappa^{\\mathrm s}``).  Each elastic scalar parameter
-may also be a [`ViscoLaw`](@ref) — in that case the jump is itself
-ageing and the corresponding block is the parameter's trapezoidal
-matrix.
+(dual, traction jump driven by ``\\kappa^{\\mathrm s}``).  The interface parameters are
+constant in time (see `_iface_param_volterra`).
 """
 function _bulk_interface_T_alv(
         ::PerfectInterface, M_κ, M_μ, r,
@@ -228,12 +241,14 @@ function _bulk_transition_alv(
     R⁴ = R^4
     Sb = 3 .* M_κ_b .+ 4 .* M_μ_b
     M_kn = _iface_param_volterra(intf.sn, times, n)   # stored COMPLIANCE
-    # Numerators (`u_b = u_a + σ_a/kn`, `σ_b = σ_a` → augmented bulk transition;
-    # `M_kn` already holds the COMPLIANCE block `1/kn`).
-    num11 = 3 .* M_κ_a .+ 4 .* M_μ_b .+ (12 / R) .* (M_μ_b * (M_κ_a * M_kn))
-    num12 = (4 / R³) .* (M_μ_b .- M_μ_a) .- (16 / R⁴) .* (M_μ_b * (M_μ_a * M_kn))
-    num21 = (-3 * R³) .* (M_κ_a .- M_κ_b) .+ (9 * R²) .* (M_κ_a * (M_κ_b * M_kn))
-    num22 = 3 .* M_κ_b .+ 4 .* M_μ_a .- (12 / R) .* (M_κ_b * (M_μ_a * M_kn))
+    # Numerators (`u_b = u_a + s_n σ_a`, `σ_b = σ_a` → augmented bulk transition;
+    # `M_kn` already holds the COMPLIANCE block `s_n = 1/kn`). Each product is
+    # written in the order of the composition it comes from, outer modulus, then
+    # compliance, then inner modulus: aging moduli do not commute.
+    num11 = 3 .* M_κ_a .+ 4 .* M_μ_b .+ (12 / R) .* (M_μ_b * (M_kn * M_κ_a))
+    num12 = (4 / R³) .* (M_μ_b .- M_μ_a) .- (16 / R⁴) .* (M_μ_b * (M_kn * M_μ_a))
+    num21 = (-3 * R³) .* (M_κ_a .- M_κ_b) .+ (9 * R²) .* (M_κ_b * (M_kn * M_κ_a))
+    num22 = 3 .* M_κ_b .+ 4 .* M_μ_a .- (12 / R) .* (M_κ_b * (M_kn * M_μ_a))
     return (
         volterra_left_divide(Sb, num11; block_size = 1),
         volterra_left_divide(Sb, num12; block_size = 1),
@@ -531,11 +546,9 @@ end
 # State (time-major) : at row (t-1)·4 + i, the i-th component
 # (U, V, σ_rr, σ_rθ) at time t.  Mirror of
 # `LayeredSpheres._shear_interface_T` with each entry of the elastic
-# 4×4 jump matrix promoted to a Volterra n × n block — for scalar
-# (constant-in-time) parameters the resulting (4n × 4n) is block-
-# diagonal in the 4×4 sense; for `ViscoLaw` parameters the off-diagonal
-# (in time) blocks of the parameter's trapezoidal matrix populate the
-# corresponding entries.
+# 4×4 jump matrix promoted to a Volterra n × n block. The parameters being
+# constant in time, the resulting (4n × 4n) is block-diagonal in the 4×4
+# sense.
 
 # Helper: assemble a `(4n × 4n)` time-major block-lower-triangular
 # matrix from a 4×4 array of (n × n) Volterra blocks.  Off-diagonal
@@ -567,11 +580,9 @@ end
 the interface of type `intf` located at radius ``r``.  Time-major
 layout, block-lower-triangular with ``4\\times 4`` diagonal blocks.
 
-For a scalar (elastic) interface the ``4n\\times 4n`` matrix is block-
-diagonal in the ``4\\times 4`` sense (the diagonal blocks repeat the elastic ``4\\times 4``
-jump for every time step).  For an ageing interface (parameters
-`::ViscoLaw`) the corresponding entries also populate sub-diagonal
-``4\\times 4`` blocks, encoding the convolution.
+The interface parameters being constant in time, the ``4n\\times 4n`` matrix is
+block-diagonal in the ``4\\times 4`` sense: the diagonal blocks repeat the elastic
+``4\\times 4`` jump for every time step.
 """
 function _shear_interface_T_alv(
         ::PerfectInterface,
@@ -1020,8 +1031,7 @@ ALV counterpart of the elastic `LayeredSpheres._strain_jump_terms`: the
 ```
 
 over the inner interfaces, and the outer one when `external` is `true`. Each
-jump is ``(\\mathbf J - \\mathbb 1)\\,\\mathbf s`` read on the displacement rows, so an
-ageing spring enters through its own Volterra block.
+jump is ``(\\mathbf J - \\mathbb 1)\\,\\mathbf s`` read on the displacement rows.
 """
 function _strain_jump_terms_alv(
         sphere::LayeredSphere{T, N},

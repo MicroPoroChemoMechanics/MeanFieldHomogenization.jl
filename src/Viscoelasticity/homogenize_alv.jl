@@ -344,10 +344,12 @@ and hence `symmetrize` — does not enter them.
     accept any inclusion shape or orientation.  `SelfConsistent` and
     `DifferentialScheme` evaluate it against their *running* estimate, so
     every inclusion phase must keep that estimate isotropic — either a
-    spherical inclusion with an isotropic phase law (`LayeredSphere`
-    qualifies, its contribution being isotropic by construction), or an
-    isotropic orientation average `symmetrize = :iso`, which is also what
-    randomly oriented inclusions and cracks mean physically.
+    spherical inclusion with an isotropic phase law, or an isotropic
+    orientation average `symmetrize = :iso`, which is also what randomly
+    oriented inclusions and cracks mean physically. A `LayeredSphere`, whose
+    contribution is isotropic by construction, is accepted by
+    `DifferentialScheme` but not yet by the self-consistent schemes, which
+    refuse it by name.
 
     An RVE satisfying neither raises an `ArgumentError` naming the phase,
     rather than reading iso parameters off a matrix that is not isotropic.
@@ -446,6 +448,10 @@ function homogenize_alv(
             )
             A_dut = _maybe_symmetrize_alv(A_dut, sym)
             N_dut = _maybe_symmetrize_alv(N_dut, sym)
+            # A layered sphere has no single stiffness: the Reuss bound takes the
+            # inverse of the average of its layer compliances.
+            scheme isa Reuss && ph.geometry isa LayeredSphere &&
+                (C_r = _layer_reuss_alv(ph.geometry, times))
             push!(C_phases, C_r)
             push!(A_duts, A_dut)
             push!(contribs, N_dut)
@@ -539,15 +545,31 @@ function _inclusion_alv_quantities(
     # the existing `add_phase!` API still works).
     A_dut = strain_strain_loc_alv(sphere, C_M_law, times)
     N_dut = stiffness_contribution_alv(sphere, C_M_law, times)
-    # No single C_r is well-defined for a layered sphere ; expose the
-    # dilute-effective stiffness (C_0 + N_dut) as a representative
-    # monolithic estimate so the Voigt / Reuss code paths still type-check
-    # (they remain non-physical for a layered inclusion).
-    C_r = C_0 .+ N_dut
+    # A layered sphere has no single stiffness. The only consumer of `C_r` is
+    # a bound, and the Voigt bound takes the volume average of the layer
+    # kernels, as the elastic one does (`layer_stiffness_average`); the Reuss
+    # bound replaces it by `_layer_reuss_alv` in `homogenize_alv`.
+    C_r = _layer_voigt_alv(sphere, times)
     # Placeholder Hill kernel (not used by Dilute / MT / Maxwell paths).
     P_r = zeros(eltype(C_0), size(C_0)...)
     return (C_r, A_dut, N_dut, P_r)
 end
+
+# The 6n × 6n relaxation matrices of the layers of a layered sphere, and their
+# volume fractions. A layer stored as an elastic tensor is a Heaviside law.
+function _layer_kernels_alv(sphere::LayeredSphere{T, N}, times) where {T, N}
+    Cs = map(1:N) do k
+        C = layer_modulus(sphere, k)
+        return _trapezoidal_relaxation(C isa ViscoLaw ? C : heaviside_law(C), times, 6)
+    end
+    return Cs, [layer_volume_fraction(sphere, k) for k in 1:N]
+end
+
+# Voigt and Reuss averages of the layer kernels: the stiffness each bound
+# assigns to a layered sphere, as `layer_stiffness_average` and
+# `layer_compliance_average` do in elasticity.
+_layer_voigt_alv(sphere::LayeredSphere, times) = voigt_alv(_layer_kernels_alv(sphere, times)...)
+_layer_reuss_alv(sphere::LayeredSphere, times) = reuss_alv(_layer_kernels_alv(sphere, times)...)
 
 # Convenience: extract the scalar amount value (volume fraction or crack
 # density) from the RVE.  Preserves the element type of the wrapper —

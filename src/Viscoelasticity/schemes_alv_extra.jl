@@ -118,6 +118,7 @@ function asymmetric_self_consistent_alv(
         C_r_law = phase_property(rve, name, prop)
         C_r_law isa ViscoLaw ||
             throw(ArgumentError("asymmetric_self_consistent_alv: phase $name property is not a ViscoLaw"))
+        _alv_sc_refuse_layered(ph.geometry, name, "asymmetric_self_consistent_alv")
         push!(C_phases, _trapezoidal_relaxation(C_r_law, times, 6))
         push!(geometries, ph.geometry)
         push!(fractions, _amount_value(rve, name))

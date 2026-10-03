@@ -70,8 +70,9 @@ kernel, which no model in the library can express.
 # `maxwell_iso(K, μ, τ_K, τ_μ)` —  R = 3K·e^{-t/τ_K} 𝕁 + 2μ·e^{-t/τ_μ} 𝕂
 law_max = maxwell_iso(5.0, 2.0, 1.0, 0.5)
 
-# `kelvin_iso(K_∞, μ_∞, K₀, μ₀, τ_K, τ_μ)` — Kelvin (creep) iso
-law_kel = kelvin_iso(3.0, 1.0, 5.0, 2.0, 1.0, 0.5)
+# `kelvin_iso(k₀, μ₀, k_branches, μ_branches, τ_k, τ_μ)` — Kelvin chain (creep):
+# instantaneous moduli k₀, μ₀, then one Kelvin branch per entry of the vectors
+law_kel = kelvin_iso(3.0, 1.0, [5.0], [2.0], [1.0], [0.5])
 
 # Elastic limit : R(t,t') = C · H(t-t')
 law_el  = heaviside_law(TensISO{3}(15.0, 4.0))
@@ -338,11 +339,12 @@ That splits the schemes in two:
 !!! warning "Reference-updating ALV schemes need an isotropic running medium"
     With `SelfConsistent` or `DifferentialScheme` in ALV, every inclusion
     phase must keep the running estimate isotropic. Two ways to satisfy
-    that: **spherical inclusions** with an isotropic phase law
-    (`LayeredSphere` also qualifies — its contribution is isotropic by
-    construction), or an **isotropic orientation average**,
-    `symmetrize = :iso`, which is also what randomly oriented inclusions or
-    cracks mean physically.
+    that: **spherical inclusions** with an isotropic phase law, or an
+    **isotropic orientation average**, `symmetrize = :iso`, which is also
+    what randomly oriented inclusions or cracks mean physically. A
+    `LayeredSphere`, isotropic by construction, is accepted by
+    `DifferentialScheme`; the self-consistent schemes do not support it yet
+    and say so.
 
     An RVE that satisfies neither raises an explicit `ArgumentError` naming
     the offending phase, rather than silently reading iso parameters off a

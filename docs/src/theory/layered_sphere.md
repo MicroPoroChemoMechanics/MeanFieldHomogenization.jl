@@ -90,7 +90,8 @@ u_r(r_1^-) = \frac{r_1}{3k_1}\,P_1 \xrightarrow{k_1 \to \infty} 0,\qquad
 Each interface type provides a 2×2 (bulk) jump matrix
 ``\mathbf J(r)`` such that
 ``\mathbf s(r_k^+) = \mathbf J \cdot \mathbf s(r_k^-)``, on the state
-``(u_r, \sigma_{rr})`` in elasticity and ``(\hat T, \hat q_n)`` in conduction (§4). A spring interface is
+``(u_r, \sigma_{rr})`` in elasticity and ``(\hat T, \hat q_n)`` in conduction (§4). A jump is
+always the outer value minus the inner one, ``[\![x]\!] = x(r_k^+) - x(r_k^-)``. A spring interface is
 parametrized by its normal and tangential stiffnesses ``k_n``, ``k_t``, whose
 inverses ``s_n = 1/k_n``, ``s_t = 1/k_t`` are the compliances, a membrane by its
 surface bulk and shear moduli ``\kappa^{\mathrm s}``, ``\mu^{\mathrm s}``, a
@@ -115,13 +116,14 @@ discontinuity** (displacement / temperature jump), while
 discontinuity** (traction / flux jump).  All limit to
 `PerfectInterface` when their compliance goes to zero.
 
-The minus sign of the Kapitza matrix comes from the flux. ``\hat q_n`` is the
-outward normal flux, ``\underline q = -k\,\nabla T``, and heat crossing a resistance
-leaves the inner side hotter than the outer one: ``[\![T]\!] = -\rho\,q_n``. In the
-dictionary ``\boldsymbol\sigma \equiv -\underline q`` this is ``[\![T]\!] = \rho\,\sigma_n``, the exact analog of
-the spring law ``[\![u_r]\!] = s_n\,\sigma_{rr}``. With ``+\rho`` the interface would be a
-negative resistance, raising the conductance of the sphere it is meant to
-lower.
+The minus sign of the Kapitza matrix is that of the dictionary
+``\boldsymbol\sigma \equiv -\underline q`` of [Conventions](@ref th-notation-sigma-q). The Kapitza law is
+the exact analog of the spring law ``[\![u_r]\!] = s_n\,\sigma_{rr}``, namely
+``[\![T]\!] = \rho\,\sigma_n``, and the state carries the physical outward normal flux
+``\hat q_n``, with ``\underline q = -k\,\nabla T``: hence ``[\![T]\!] = -\rho\,q_n``. Heat crossing the
+resistance outward leaves the inner side hotter than the outer one. With ``+\rho``
+the interface would be a negative resistance, raising the conductance of the
+sphere it is meant to lower.
 
 ## 4. Conductivity recurrence (Y₁ harmonic)
 
