@@ -269,6 +269,7 @@ end
     @testset "LayeredSpheres" begin
         include("LayeredSpheres/test_bulk.jl")
         include("LayeredSpheres/test_interfaces.jl")
+        include("LayeredSpheres/test_interface_jumps.jl")
         include("LayeredSpheres/test_incompressible.jl")
         include("LayeredSpheres/test_conductivity.jl")
         include("LayeredSpheres/test_christensen.jl")

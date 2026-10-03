@@ -316,16 +316,14 @@ class Emitter:
     def _geometry(self, pd) -> str:
         if pd.kind == "sphere_nlayers":
             radii = _tuple(l.code for l in pd.layers)
-            moduli = pd.props.get("__moduli__")
-            mods = _tuple((moduli.code.split(", ") if moduli and moduli.code else []))
+            mods = _tuple(m.code for m in pd.moduli)
             if pd.interfaces:
                 ifs = _tuple(i.code for i in pd.interfaces)
                 return f"LayeredSphere({radii}, {mods}; interfaces = {ifs})"
             return f"LayeredSphere({radii}, {mods})"
         if pd.kind == "spheroid_nlayers":
             radii = _tuple(l.code for l in pd.layers)
-            mods_e = pd.props.get("__moduli__")
-            mods = _tuple((mods_e.code.split(", ") if mods_e and mods_e.code else []))
+            mods = _tuple(m.code for m in pd.moduli)
             ar = pd.props.get("__aspect_ratio__")
             ns = pd.props.get("__nseries__")
             disk = f"{radii} ./ {ar.code}" if ar else radii

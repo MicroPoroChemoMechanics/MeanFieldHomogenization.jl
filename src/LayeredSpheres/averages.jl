@@ -21,6 +21,10 @@ of a `LayeredSphere` embedded in an isotropic matrix `C₀`, under a
 remote strain `ε∞`.  Returns a symmetric 2-tensor in the canonical
 frame.  Combines the bulk localization ``\\alpha_k`` (hydrostatic part) and
 the shear localization ``\\beta_k`` (deviatoric part).
+
+This is the strain of the layer's **material**: the opening of a
+[`SpringInterface`](@ref) on either side of it is not included.
+[`strain_strain_loc`](@ref)`(sphere, C₀; layer, external, internal)` adds it.
 """
 function layer_strain_average(
         sphere::LayeredSphere{T, N},
@@ -47,6 +51,11 @@ end
 Volume-averaged strain over the whole composite sphere (all layers
 combined): ``\\langle\\boldsymbol{\\varepsilon}\\rangle_\\Omega = \\sum_k f_k\\,\\langle\\boldsymbol{\\varepsilon}\\rangle_k`` where ``f_k`` is the volume fraction
 of layer ``k`` inside the composite sphere.
+
+This is the strain of the **material**, which leaves out the opening of the
+spring interfaces. The strain of the sphere seen from the matrix, which the
+schemes use, includes it: `strain_strain_loc(sphere, C₀, C₀) ⊡ ε∞`. The two
+agree when every interface is perfect or a membrane.
 """
 function sphere_strain_average(
         sphere::LayeredSphere{T, N},
@@ -171,7 +180,17 @@ function layer_stress_average(
         layer::Int,
     ) where {T, N}
     1 ≤ layer ≤ N || throw(BoundsError(sphere, layer))
-    return layer_modulus(sphere, layer) ⊡ layer_strain_average(sphere, C₀, ε∞, layer)
+    C_k = layer_modulus(sphere, layer)
+    κk, μk = _iso_bulk_shear(C_k)
+    _is_incompressible(κk) ||
+        return C_k ⊡ layer_strain_average(sphere, C₀, ε∞, layer)
+    # k = ∞: the volumetric strain vanishes and the mean pressure is read from
+    # the traction (`_layer_pressures`), not from ∞·0.
+    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    α = _bulk_localization(sphere, κ₀, μ₀)
+    P = _layer_pressures(sphere, C₀, α)[layer]
+    β = _shear_localization(sphere, C₀)[layer]
+    return TensISO{3}(P, 2 * μk * β) ⊡ ε∞
 end
 
 """
@@ -226,6 +245,10 @@ end
 
 Volume-averaged temperature gradient over the whole composite sphere,
 ``\\langle\\nabla T\\rangle_\\Omega = \\big(\\sum_k f_k\\,\\alpha_k\\big)\\,\\nabla T^{\\infty}``.
+
+As [`sphere_strain_average`](@ref), an average over the material: the
+temperature jump across a [`KapitzaInterface`](@ref) is left out, and
+[`gradient_gradient_loc`](@ref)`(sphere, K₀, K₀)` includes it.
 """
 function sphere_gradient_average(
         sphere::LayeredSphere{T, N},

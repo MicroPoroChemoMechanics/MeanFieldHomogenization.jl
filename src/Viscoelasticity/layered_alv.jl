@@ -1006,14 +1006,84 @@ end
 # =============================================================================
 
 """
-    strain_strain_loc_alv(sphere, C0_law, times) -> Matrix{T}
+    _strain_jump_terms_alv(sphere, C0_law, times; external = true) -> (Δα, Δβ)
+
+ALV counterpart of the elastic `LayeredSpheres._strain_jump_terms`: the
+``n\\times n`` Volterra blocks the displacement jumps across the
+[`SpringInterface`](@ref)s add to the average strain of the whole sphere, on
+``\\mathbb J`` and ``\\mathbb K``,
+
+```math
+\\Delta\\alpha = \\sum_k \\frac{r_k^2}{R^3}\\,[\\![u_r]\\!]_k\\circ A_\\infty^{-\\circ},
+\\qquad
+\\Delta\\beta = \\sum_k \\frac{r_k^2}{5R^3}\\,\\big([\\![U]\\!]_k + 3[\\![W]\\!]_k\\big),
+```
+
+over the inner interfaces, and the outer one when `external` is `true`. Each
+jump is ``(\\mathbf J - \\mathbb 1)\\,\\mathbf s`` read on the displacement rows, so an
+ageing spring enters through its own Volterra block.
+"""
+function _strain_jump_terms_alv(
+        sphere::LayeredSphere{T, N},
+        C0_law::_ALVReference,
+        times::AbstractVector{<:Real};
+        external::Bool = true,
+    ) where {T, N}
+    n = length(times)
+    radii = sphere.radii
+    R³ = radii[N]^3
+    springs = [k for k in 1:(external ? N : N - 1) if layer_interface(sphere, k) isa SpringInterface]
+    isempty(springs) && return (zeros(T, n, n), zeros(T, n, n))
+
+    layers, M_κ_0, M_μ_0 = _bulk_layer_moduli_alv(sphere, C0_law, times)
+    inside_amps, A_M, _ = bulk_amplitude_seq_alv(sphere, C0_law, times)
+    A_M_inv = volterra_inverse(A_M; block_size = 1)
+    inside_a, inside_b, s_a, s_b = _shear_state_seq_alv(sphere, layers, M_κ_0, M_μ_0, times)
+    a_ab, b_ab = _shear_amp_blocks_alv(radii[N], M_κ_0, M_μ_0, n, hcat(s_a, s_b))
+    λ_a, λ_b = _shear_solve_far_field_alv(
+        a_ab[:, 1:n], a_ab[:, (n + 1):(2n)],
+        b_ab[:, 1:n], b_ab[:, (n + 1):(2n)], n
+    )
+
+    Δα = nothing
+    Δβ = nothing
+    for k in springs
+        intf = layer_interface(sphere, k)
+        r = radii[k]
+        (M_κ_k, M_μ_k) = layers[k]
+        (M_κ_b, M_μ_b) = k < N ? layers[k + 1] : (M_κ_0, M_μ_0)
+        # Bulk: the (u_r; σ_rr) state on the inner side of r_k.
+        A_k, B_k = inside_amps[k]
+        S_b = vcat(r .* A_k .+ (1 / r^2) .* B_k, 3 .* (M_κ_k * A_k) .- (4 / r^3) .* (M_μ_k * B_k))
+        J_b = _bulk_interface_T_alv(intf, M_κ_k, M_μ_k, r, times, n)
+        ju = ((J_b - I) * S_b)[1:n, :]
+        tb = (r^2 / R³) .* (ju * A_M_inv)
+        # Deviatoric: the time-major (U, W, σ_rr, σ_rθ) state, already at unit
+        # remote deviatoric strain.
+        combo = inside_a[k] * λ_a + inside_b[k] * λ_b
+        J_s = _shear_interface_T_alv(intf, M_κ_k, M_μ_k, M_κ_b, M_μ_b, r, times, n)
+        ΔS = (J_s - I) * combo
+        jU = ΔS[1:4:(4n), :]
+        jW = ΔS[2:4:(4n), :]
+        td = (r^2 / (5 * R³)) .* (jU .+ 3 .* jW)
+        Δα = Δα === nothing ? tb : Δα .+ tb
+        Δβ = Δβ === nothing ? td : Δβ .+ td
+    end
+    return Δα, Δβ
+end
+
+"""
+    strain_strain_loc_alv(sphere, C0_law, times; external = true) -> Matrix{T}
 
 ``6n\\times 6n`` block matrix describing the volume-averaged strain-strain
 localization across the **entire** layered sphere under a unit
 Volterra far-field strain.  In iso form this is
 ``\\langle\\widetilde{\\mathbb{A}}\\rangle = \\langle\\alpha\\rangle\\,\\mathbb{J} + \\langle\\beta\\rangle\\,\\mathbb{K}`` with
-``\\langle\\alpha\\rangle = \\sum_k f_k\\,\\alpha_k(t,t')`` and ``\\langle\\beta\\rangle = \\sum_k f_k\\,\\beta_k(t,t')`` (Volterra
-products).
+``\\langle\\alpha\\rangle = \\sum_k f_k\\,\\alpha_k(t,t') + \\Delta\\alpha`` and ``\\langle\\beta\\rangle = \\sum_k f_k\\,\\beta_k(t,t') + \\Delta\\beta`` (Volterra
+products), ``\\Delta\\alpha``, ``\\Delta\\beta`` being the displacement jumps of the spring
+interfaces (`_strain_jump_terms_alv`). `external` decides whether the
+outer interface belongs to the sphere, as in the elastic
+[`strain_strain_loc`](@ref).
 
 This is the analog used by the ALV dilute / MT / Maxwell schemes
 when the inclusion phase is a `LayeredSphere`.
@@ -1021,14 +1091,16 @@ when the inclusion phase is a `LayeredSphere`.
 function strain_strain_loc_alv(
         sphere::LayeredSphere{T, N},
         C0_law::_ALVReference,
-        times::AbstractVector{<:Real}
+        times::AbstractVector{<:Real};
+        external::Bool = true,
     ) where {T, N}
     α_k = bulk_localization_alv(sphere, C0_law, times)
     β_k = shear_localization_alv(sphere, C0_law, times)
     f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
     α_avg = sum(f[k] * α_k[k] for k in 1:N)
     β_avg = sum(f[k] * β_k[k] for k in 1:N)
-    return iso_blocks_from_params(α_avg, β_avg)
+    Δα, Δβ = _strain_jump_terms_alv(sphere, C0_law, times; external)
+    return iso_blocks_from_params(α_avg .+ Δα, β_avg .+ Δβ)
 end
 
 """
@@ -1039,13 +1111,16 @@ sphere relative to its iso ALV matrix `C0_law`.  Iso parameters
 (``\\alpha``-, ``\\beta``-blocks of the assembled matrix) are
 
 ```math
-\\alpha = 3\\sum_k f_k\\,(\\widetilde{k}_k - \\widetilde{k}_0)\\circ\\alpha_k,
+\\alpha = 3\\sum_k f_k\\,(\\widetilde{k}_k - \\widetilde{k}_0)\\circ\\alpha_k - 3\\,\\widetilde{k}_0\\circ\\Delta\\alpha,
 \\qquad
-\\beta = 2\\sum_k f_k\\,(\\widetilde{\\mu}_k - \\widetilde{\\mu}_0)\\circ\\beta_k,
+\\beta = 2\\sum_k f_k\\,(\\widetilde{\\mu}_k - \\widetilde{\\mu}_0)\\circ\\beta_k - 2\\,\\widetilde{\\mu}_0\\circ\\Delta\\beta,
 ```
 
-where ``\\alpha_k``, ``\\beta_k`` are the per-layer localization matrices and ``\\widetilde{k}_k``,
-``\\widetilde{\\mu}_k`` (`M_κ_k`, `M_μ_k`) the per-layer Volterra moduli.
+where ``\\alpha_k``, ``\\beta_k`` are the per-layer localization matrices, ``\\widetilde{k}_k``,
+``\\widetilde{\\mu}_k`` (`M_κ_k`, `M_μ_k`) the per-layer Volterra moduli and ``\\Delta\\alpha``,
+``\\Delta\\beta`` the displacement jumps of the spring interfaces, plus the surface
+stress of the membranes. `external` has the meaning it has in
+[`strain_strain_loc_alv`](@ref).
 
 The dilute-scheme effective stiffness with this inclusion at volume
 fraction ``f`` is ``\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0 + f\\,\\widetilde{\\mathbb{N}}``,
@@ -1054,7 +1129,8 @@ with ``\\widetilde{\\mathbb{N}}`` = `stiffness_contribution_alv(sphere, …)`.
 function stiffness_contribution_alv(
         sphere::LayeredSphere{T, N},
         C0_law::_ALVReference,
-        times::AbstractVector{<:Real}
+        times::AbstractVector{<:Real};
+        external::Bool = true,
     ) where {T, N}
     layers, M_κ_0, M_μ_0 = _bulk_layer_moduli_alv(sphere, C0_law, times)
     α_k = bulk_localization_alv(sphere, C0_law, times)
@@ -1071,8 +1147,12 @@ function stiffness_contribution_alv(
         N_bulk .+= f[k] .* ((M_κ_k - M_κ_0) * α_k[k])
         N_shear .+= f[k] .* ((M_μ_k - M_μ_0) * β_k[k])
     end
-    a_surf, b_surf = _membrane_surface_stress_alv(sphere, C0_law, times)
-    return iso_blocks_from_params(3 .* N_bulk .+ a_surf, 2 .* N_shear .+ b_surf)
+    a_surf, b_surf = _membrane_surface_stress_alv(sphere, C0_law, times; external)
+    Δα, Δβ = _strain_jump_terms_alv(sphere, C0_law, times; external)
+    return iso_blocks_from_params(
+        3 .* N_bulk .+ a_surf .- 3 .* (M_κ_0 * Δα),
+        2 .* N_shear .+ b_surf .- 2 .* (M_μ_0 * Δβ)
+    )
 end
 
 """
@@ -1115,7 +1195,8 @@ b^{\\mathrm{surf}} = \\frac{2}{5}\\,\\bigl(-\\kappa^{\\mathrm s}U + 3\\kappa^{\\
 function _membrane_surface_stress_alv(
         sphere::LayeredSphere{T, N},
         C0_law::_ALVReference,
-        times::AbstractVector{<:Real}
+        times::AbstractVector{<:Real};
+        external::Bool = true,
     ) where {T, N}
     n = length(times)
     radii = sphere.radii
@@ -1143,7 +1224,7 @@ function _membrane_surface_stress_alv(
         b_ab[:, 1:n], b_ab[:, (n + 1):(2n)], n
     )
 
-    for k in 1:N
+    for k in 1:(external ? N : N - 1)
         intf = layer_interface(sphere, k)
         intf isa MembraneInterface || continue
         κs = intf.κs; μs = intf.μs

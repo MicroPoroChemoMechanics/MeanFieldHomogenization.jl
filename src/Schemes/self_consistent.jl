@@ -96,9 +96,30 @@ stated on the scheme instead:
 A phase named `:voigt` or `:reuss` wins over the keyword: a phase name is the
 caller's data, a keyword is ours.
 """
+# The Voigt average is infinite as soon as one phase is rigid or incompressible
+# (an `iso_stiffness(Inf, μ)` layer, say), and an infinite seed makes the first
+# step fail deep inside a linear solve with "matrix contains Infs or NaNs".
+# Say what happened, and what to pass instead.
+function _voigt_seed(rve::RVE, prop::Symbol; kw...)
+    C = _evaluate(rve, Voigt(), Val(prop); kw...)
+    a = TensND.get_array(C)
+    if is_hard_numeric(eltype(a)) && !all(isfinite, a)
+        throw(
+            ArgumentError(
+                "the self-consistent iteration starts from the Voigt average of " *
+                    "the phases, which is infinite here: a phase is rigid or " *
+                    "incompressible. Pass a finite starting point: " *
+                    "`SelfConsistent(init = <tensor>)`, or the name of a phase " *
+                    "with a finite property, as Echoes starts from its matrix."
+            )
+        )
+    end
+    return C
+end
+
 function _sc_initial(init::Symbol, rve::RVE, prop::Symbol; kw...)
     haskey(rve.phases, init) && return phase_property(rve, init, prop)
-    init === :voigt && return _evaluate(rve, Voigt(), Val(prop); kw...)
+    init === :voigt && return _voigt_seed(rve, prop; kw...)
     init === :reuss && return _evaluate(rve, Reuss(), Val(prop); kw...)
     throw(
         ArgumentError(
@@ -122,7 +143,7 @@ _sc_initial(init::TensND.AbstractTens, ::RVE, ::Symbol; kw...) = init
 # one corner: not a default worth taking.
 function _sc_initial(::Nothing, rve::RVE, prop::Symbol; kw...)
     r = remainder_phase_name(rve)
-    r === nothing && return _evaluate(rve, Voigt(), Val(prop); kw...)
+    r === nothing && return _voigt_seed(rve, prop; kw...)
     return phase_property(rve, r, prop)
 end
 

@@ -175,7 +175,7 @@ also accepts a full tensor:
 | `SpringInterface(kn, kt)` | `AnisotropicSpringInterface(𝒦)` — any symmetric 3×3 compliance |
 | `MembraneInterface(κs, μs)` | `AnisotropicMembraneInterface(ℂˢ)` — any in-plane surface stiffness (6 coefficients) |
 | `SurfaceConductiveInterface(ks)` | `AnisotropicSurfaceConductiveInterface(𝐤ˢ)` — any in-plane surface conductivity |
-| `KapitzaInterface(ρ)` | — *already general*: `[T] = ρ qₙ` relates two scalars |
+| `KapitzaInterface(ρ)` | — *already general*: `[T] = −ρ qₙ` relates two scalars |
 
 ```julia
 # a spring with different normal and tangential compliances, and a coupling

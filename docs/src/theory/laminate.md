@@ -436,7 +436,7 @@ texture, so ``\boldsymbol{\mathcal{K}}`` may be any symmetric second-order
 compliance and ``\mathbb{C}^{\mathrm s}`` any 2-D surface stiffness (six independent
 coefficients) — the formulas below are written for the general case, and the
 implementation provides both a scalar and a tensor-valued type per family. The
-primal *transport* condition ``[\![T]\!] = \rho\,q_n`` relates two scalars
+primal *transport* condition ``[\![T]\!] = -\rho\,q_n`` relates two scalars
 and is already general.
 
 ### Primal: a jump of the field

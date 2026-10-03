@@ -17,9 +17,13 @@
 #   Conductivity (thermal / electric / Darcy)
 #   -----------------------------------------
 #   - `KapitzaInterface(ρ)` — temperature jump (primal, interfacial
-#     thermal resistance): `[T] = ρ · q_n`.
+#     thermal resistance): `[T] = -ρ q_n`, the temperature dropping in the
+#     direction of the flux.
 #   - `SurfaceConductiveInterface(ks)` — flux jump (dual, highly
-#     conductive 2D layer): `[q_n] = -divₛ(ks ∇ₛ T)`.
+#     conductive 2D layer): `[q_n] = divₛ(ks ∇ₛ T)`.
+#
+#   `q = -k ∇T` is the flux, `q_n = q·n` its component along the normal n
+#   pointing from the inner side to the outer one, and `[x] = x⁺ - x⁻`.
 #
 #  `PerfectInterface` is the trivial limit of any of them (k→0 for the
 #  primal types, ks→0 / κs=μs=0 for the dual types).
@@ -204,8 +208,19 @@ MembraneInterface(κs::Number, μs::Number) =
     KapitzaInterface{T}(resistance::T)
 
 Thermal imperfect interface with scalar thermal resistance ``\\rho`` (`resistance`):
-``[\\![T]\\!] = \\rho\\,q_n``, with ``q_n`` continuous.  Primal analog of
-[`SpringInterface`](@ref).
+the flux is continuous and the temperature drops across the interface in the
+direction of the flux,
+
+```math
+[\\![q_n]\\!] = 0,
+\\qquad
+[\\![T]\\!] = T^+ - T^- = -\\rho\\,q_n,
+```
+
+with ``\\underline{q} = -k\\,\\nabla T`` the flux and ``q_n = \\underline{q}\\cdot\\underline{n}``, the normal pointing from the
+inner side ``-`` to the outer side ``+``. Primal analog of [`SpringInterface`](@ref):
+in the dictionary ``\\boldsymbol\\sigma \\equiv -\\underline{q}`` it reads ``[\\![T]\\!] = \\rho\\,\\sigma_n``, as
+``[\\![u_n]\\!] = s_n\\,\\sigma_{nn}``.
 """
 struct KapitzaInterface{T <: Number} <: AbstractInterface{T}
     resistance::T

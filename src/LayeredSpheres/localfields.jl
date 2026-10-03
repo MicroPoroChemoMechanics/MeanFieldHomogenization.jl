@@ -283,6 +283,23 @@ function region_stiffness(f::LayeredSphereFields{T, N}, k::Int) where {T, N}
     return TensISO{3}(3 * κ, 2 * μ)
 end
 
+# The pointwise stress is the stiffness applied to the strain, which an
+# incompressible region (k = ∞, zero volumetric strain) turns into ∞·0: its
+# pressure is a field of its own. Refuse rather than return NaN; the averaged
+# stress (`stress_strain_loc`, `layer_stress_average`) is available.
+function _stress_stiffness(f::LayeredSphereFields, k::Int)
+    κ, _ = _region_moduli(f, k)
+    _is_incompressible(κ) && throw(
+        ArgumentError(
+            "the pointwise stress of region $k is not available: the region is " *
+                "incompressible (k = ∞), so its pressure is not a function of its " *
+                "strain. Its average stress is: use `layer_stress_average` or " *
+                "`stress_strain_loc`."
+        )
+    )
+    return region_stiffness(f, k)
+end
+
 # ── Radial scalars ───────────────────────────────────────────────────────────
 
 """
@@ -293,8 +310,12 @@ at radius `r`:
 
 - spherical: ``f/r = \\tilde A + \\tilde B/r^3`` and ``f' = \\tilde A - 2\\tilde B/r^3``;
 - deviatoric: ``g/r``, ``g'``, ``h/r``, ``h'`` with
-  ``g = a r + b(15x+11)r^3 - c/r^4 + d/r^2`` and
-  ``h = -b(6x+17)r^3 + \\tfrac{5}{2}\\,c/r^4 + \\tfrac{3x+1}{2}\\,d/r^2``, ``x = k/\\mu``.
+  ``g = a r + b\\gamma r^3 - c/r^4 + s\\,d/r^2`` and
+  ``h = -b\\delta r^3 + \\tfrac{5}{2}\\,c/r^4 + \\eta\\,d/r^2``, where ``b`` and ``d`` are the
+  amplitudes of modes 2 and 4 scaled by ``s = \\mu/(k + \\mu)`` and
+  ``(\\gamma, \\delta, \\eta) = (15 - 4s, 6 + 11s, \\tfrac{3}{2} - s)`` — that is
+  ``(15x+11, 6x+17, \\tfrac{3x+1}{2})\\,s`` with ``x = k/\\mu``, finite at ``k = \\infty``
+  ([`_shear_mode_coefficients`](@ref)).
 
 The four deviatoric scalars are evaluated as MODE SUMS, never as a division
 of ``g(r)`` by ``r``. In the core ``c = d = 0`` exactly, so each one reduces to a
@@ -308,10 +329,7 @@ forming ``g(r)/r`` would divide two vanishing quantities.
     TR = promote_type(T, typeof(r))
     rr = TR(r)
 
-    x = TR(κ) / TR(μ)
-    γ = 15 * x + 11
-    δ = 6 * x + 17
-    η = (3 * x + 1) / 2
+    sm, γ, δ, η = _shear_mode_coefficients(TR(κ), TR(μ))
 
     r² = rr * rr
     ir³ = _at_origin(rr) ? zero(TR) : one(TR) / (r² * rr)
@@ -325,8 +343,8 @@ forming ``g(r)/r`` would divide two vanishing quantities.
     cc = TR(c)
     dd = TR(d)
 
-    g_over_r = TR(a) + bγ * r² - cc * ir⁵ + dd * ir³
-    gp = TR(a) + 3 * bγ * r² + 4 * cc * ir⁵ - 2 * dd * ir³
+    g_over_r = TR(a) + bγ * r² - cc * ir⁵ + sm * dd * ir³
+    gp = TR(a) + 3 * bγ * r² + 4 * cc * ir⁵ - 2 * sm * dd * ir³
     h_over_r = -bδ * r² + (5 // 2) * cc * ir⁵ + η * dd * ir³
     hp = -3 * bδ * r² - 10 * cc * ir⁵ - 2 * η * dd * ir³
 
@@ -469,7 +487,7 @@ function _local_A_scaled(
     ) where {pre, post}
     A = _local_A(f, r, n, k)
     if pre
-        A = region_stiffness(f, k) ⊡ A
+        A = _stress_stiffness(f, k) ⊡ A
     end
     if post
         A = A ⊡ inv(f.C₀)
@@ -536,7 +554,7 @@ function local_stress(
     )
     r, n = _radial_frame(x)
     k = _resolve_layer(f.sphere, r; side, layer)
-    return region_stiffness(f, k) ⊡ (_local_A(f, r, n, k) ⊡ ε∞)
+    return _stress_stiffness(f, k) ⊡ (_local_A(f, r, n, k) ⊡ ε∞)
 end
 
 function local_stress(
@@ -544,7 +562,7 @@ function local_stress(
     )
     rr, n = _radial_frame(r, θ, φ)
     k = _resolve_layer(f.sphere, rr; side, layer)
-    return region_stiffness(f, k) ⊡ (_local_A(f, rr, n, k) ⊡ ε∞)
+    return _stress_stiffness(f, k) ⊡ (_local_A(f, rr, n, k) ⊡ ε∞)
 end
 
 function _local_u(f::LayeredSphereFields, r, n, k::Int, ε∞)

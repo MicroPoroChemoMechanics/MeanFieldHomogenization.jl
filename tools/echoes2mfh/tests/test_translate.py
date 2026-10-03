@@ -466,6 +466,34 @@ ver["SPN"]=sphere_nlayers(radii=[0.,1.],fraction=1.,prop={"C":[Cp,Cs]})
     assert "LayeredSphere((0.0, 1.0), (Cp, Cs))" in out
 
 
+def test_transport_interfaces_are_kapitza_and_surface_conductive():
+    # One parameter means transport. Echoes' PRIMALDISC scalar is a
+    # conductance, KapitzaInterface takes a resistance.
+    src = """
+from echoes import *
+ver=rve(matrix="M")
+ver["T"]=sphere_nlayers(radii=[1.],fraction=0.3,prop={"K":[5.*tId2]},interf_prop={"K":[[10.,PRIMALDISC]]})
+ver["U"]=sphere_nlayers(radii=[1.],fraction=0.3,prop={"K":[5.*tId2]},interf_prop={"K":[[0.2,DUALDISC]]})
+ver["S"]=sphere_nlayers(radii=[0.5,1.],fraction=0.3,prop={"C":[stiff_kmu(1.,1.),stiff_kmu(2.,1.)]},interf_prop={"C":[[10.,5.,PRIMALDISC],[NODISC]]})
+"""
+    out = translate(src)
+    assert "interfaces = (KapitzaInterface(1 / (10.0)),)" in out
+    assert "interfaces = (SurfaceConductiveInterface(0.2),)" in out
+    assert "interfaces = (SpringInterface(10.0, 5.0), PerfectInterface())" in out
+
+
+def test_layer_moduli_with_commas_stay_one_tuple_entry():
+    # `5.*tId2` becomes `5.0 * one(TensISO{2, 3})`, whose comma used to split
+    # the single modulus into two fragments and drop the tuple.
+    src = """
+from echoes import *
+ver=rve(matrix="M")
+ver["T"]=sphere_nlayers(radii=[1.],fraction=0.3,prop={"K":[5.*tId2]})
+"""
+    out = translate(src)
+    assert "LayeredSphere((1.0,), (5.0 * one(TensISO{2, 3}),))" in out
+
+
 def test_set_radius_becomes_a_builder_parameter():
     src = """
 from echoes import *

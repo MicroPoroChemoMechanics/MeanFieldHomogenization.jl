@@ -107,6 +107,10 @@ class PhaseDef(Node):
     is_matrix: bool = False
     #: layered inclusions only
     layers: list[JuliaExpr] = field(default_factory=list)
+    #: one modulus per layer, kept as separate expressions: a modulus such as
+    #: `5.0 * one(TensISO{2, 3})` contains commas, so it cannot be recovered by
+    #: splitting a joined string
+    moduli: list[JuliaExpr] = field(default_factory=list)
     interfaces: list[JuliaExpr] = field(default_factory=list)
 
 

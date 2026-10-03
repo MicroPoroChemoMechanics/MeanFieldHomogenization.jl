@@ -106,6 +106,21 @@ coated = LayeredSphere(
     convert. Passing a compliance where a stiffness is expected is silent and
     inverts the physics: a very compliant film reads as a very stiff one.
 
+An opening spring adds strain that belongs to no layer. The concentration
+tensor of the whole sphere, which the schemes use, counts it, including the
+opening of the outer interface, as Echoes does. `external = false` leaves that
+last one to the matrix:
+
+```@example layered
+strain_strain_loc(coated, C₀, C₀)                     # what the schemes use
+strain_strain_loc(coated, C₀, C₀; external = false)   # outer opening excluded
+```
+
+The averages of the next section are over the material and count no opening.
+[Layered spheres §7](@ref th-layered-sphere-jumps) derives the jump terms and
+lists the options, per layer included. A Kapitza resistance is treated the
+same way in conduction.
+
 ### 4. Reading inside the inclusion
 
 The layer averages, and the pointwise fields, are the reason to model a pattern

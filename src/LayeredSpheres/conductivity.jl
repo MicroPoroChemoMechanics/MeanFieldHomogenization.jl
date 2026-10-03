@@ -23,9 +23,10 @@
 #  which expands to the four factored coefficients below (all finite
 #  for any `k > 0`).
 #
-#  Interface jumps:
+#  Interface jumps (q̂_n is the outward flux, so heat flowing out of the inner
+#  side across a resistance leaves it hotter than the outer side):
 #     Perfect                       J = I
-#     Kapitza(ρ)                    J = [1  ρ ; 0  1]
+#     Kapitza(ρ)                    J = [1  -ρ ; 0  1]       [T] = -ρ q_n
 #     SurfaceConductive(ks)         J = [1  0 ; -n(n+1) ks/r²  1]  with n=1 ⇒ 2ks/r².
 #
 #  Per-layer gradient localization `α_k = A_k / A_∞`.
@@ -119,9 +120,13 @@ function _cond_interface_T(::PerfectInterface, k_iso, r)
     return T[one(T) zero(T); zero(T) one(T)]
 end
 
+# The state carries the outward flux q̂_n = -k ∂T̂/∂r, so the temperature DROPS
+# across a resistance in the direction of the flux: T̂⁺ = T̂⁻ - ρ q̂_n.  With
+# `+ρ` the interface was a negative resistance, which raised the conductance of
+# the sphere it was meant to lower (and diverged at ρ = r/k).
 function _cond_interface_T(intf::KapitzaInterface, k_iso, r)
     T = promote_type(eltype(intf), typeof(k_iso), typeof(r))
-    return T[one(T) T(intf.resistance); zero(T) one(T)]
+    return T[one(T) -T(intf.resistance); zero(T) one(T)]
 end
 
 function _cond_interface_T(intf::SurfaceConductiveInterface, k_iso, r)
@@ -219,9 +224,10 @@ single impermeable core coated by a surface-conductive shell this reduces to
 ``2k^{\\mathrm s}\\alpha/R``, i.e. the surface conductance is equivalent to adding ``2k^{\\mathrm s}/R`` to
 the enclosed conductivity — reproducing Echoes' `DUALDISC` transmissivity.
 The average **gradient** (concentration ``\\alpha_k``) is unaffected: only the flux
-picks up the surface term.
+picks up the surface term. With `external = false` the outer interface is left
+to the matrix (see [`gradient_gradient_loc`](@ref)).
 """
-function _cond_surface_flux(sphere::LayeredSphere{T, N}, k₀) where {T, N}
+function _cond_surface_flux(sphere::LayeredSphere{T, N}, k₀; external::Bool = true) where {T, N}
     k_layers = _cond_layer_moduli(sphere)
     TP = promote_type(
         T, typeof(k₀), ntuple(k -> typeof(k_layers[k]), N)...,
@@ -232,7 +238,7 @@ function _cond_surface_flux(sphere::LayeredSphere{T, N}, k₀) where {T, N}
     A_inf, _ = _cond_extract_AB(TP(radii[N]), TP(k₀), s_matrix[1], s_matrix[2])
     RN³ = TP(radii[N])^3
     total = zero(TP)
-    for k in 1:N
+    for k in 1:(external ? N : N - 1)
         intf = layer_interface(sphere, k)
         if intf isa SurfaceConductiveInterface
             ks = TP(intf.conductance)
@@ -246,9 +252,11 @@ end
 """
     _effective_conductivity(sphere, k₀) -> k_eff
 
-Effective conductivity of the composite sphere:
-``k^{\\mathrm{hom}} = \\sum_k f_k\\,k_k\\,\\alpha_k`` plus the surface-conduction flux
-[`_cond_surface_flux`](@ref) of any dual (surface-conductive) interface.
+Average flux of the composite sphere per unit remote gradient,
+``\\sum_k f_k\\,k_k\\,\\alpha_k`` plus the surface-conduction flux [`_cond_surface_flux`](@ref) of any
+dual (surface-conductive) interface — the scalar of [`flux_gradient_loc`](@ref),
+not an effective conductivity: that one is its ratio to the average gradient,
+[`gradient_gradient_loc`](@ref).
 """
 function _effective_conductivity(sphere::LayeredSphere{T, N}, k₀) where {T, N}
     α = _cond_localization(sphere, k₀)

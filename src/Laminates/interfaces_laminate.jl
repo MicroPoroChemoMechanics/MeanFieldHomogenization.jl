@@ -21,7 +21,7 @@
 #    * `AnisotropicSurfaceConductiveInterface(𝐤ˢ)` — any in-plane surface
 #      conductivity.
 #
-#  The primal *transport* interface needs no anisotropic form: `[T] = ρ q_n`
+#  The primal *transport* interface needs no anisotropic form: `[T] = -ρ q_n`
 #  relates two scalars, so `KapitzaInterface(ρ)` is already fully general.
 #
 #  ── Primal (spring, Kapitza): a field jump ────────────────────────────────
@@ -133,7 +133,7 @@ tensor; only its in-plane part is used, the surface flux being driven by the
 in-plane gradient. Adds to the effective conductivity with the weight ``1/L``.
 
 There is deliberately **no** anisotropic counterpart of
-[`KapitzaInterface`](@ref): the primal transport condition ``[\\![T]\\!] = \\rho\\,q_n``
+[`KapitzaInterface`](@ref): the primal transport condition ``[\\![T]\\!] = -\\rho\\,q_n``
 relates two scalars, so the single resistance is already fully general.
 """
 struct AnisotropicSurfaceConductiveInterface{T <: Number, K} <: AbstractInterface{T}
@@ -269,7 +269,7 @@ _interface_Cs(::AnisotropicSurfaceConductiveInterface, basis, ::Type{T}) where {
 
 Order-2 analogue of [`_interface_P`](@ref): the contribution of one interface
 to the out-of-plane "compliance" average of a transport problem.
-[`KapitzaInterface`](@ref)`(ρ)` imposes ``[\\![T]\\!] = \\rho\\,q_n``, hence ``\\rho\\,\\underline{n}\\otimes\\underline{n}``. Since
+[`KapitzaInterface`](@ref)`(ρ)` imposes ``[\\![T]\\!] = -\\rho\\,q_n``, hence ``\\rho\\,\\underline{n}\\otimes\\underline{n}``. Since
 both sides of that condition are scalars, no anisotropic counterpart exists
 or is needed.
 """

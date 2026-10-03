@@ -146,6 +146,15 @@ INTERFACE_TYPE: dict[str, str] = {
     "DUALDISC": "MembraneInterface",
 }
 
+# Transport interfaces carry one parameter. Echoes' `PRIMALDISC` scalar is a
+# conductance h, MFH's `KapitzaInterface` a resistance: the extractor writes
+# `1 / h`. The `DUALDISC` scalar is a surface conductance in both.
+INTERFACE_TYPE_TRANSPORT: dict[str, str] = {
+    "NODISC": "PerfectInterface()",
+    "PRIMALDISC": "KapitzaInterface",
+    "DUALDISC": "SurfaceConductiveInterface",
+}
+
 VISCO_LAW_TYPE: dict[str, str] = {
     "CREEP": ":creep",
     "RELAXATION": ":relaxation",

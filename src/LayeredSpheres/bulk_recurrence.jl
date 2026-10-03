@@ -110,6 +110,8 @@ return the coefficients ``(A, B)`` of the layer's local expansion
 """
 @inline function _bulk_extract_AB(r, κ, μ, u, σ)
     T = promote_type(typeof(r), typeof(κ), typeof(μ), typeof(u), typeof(σ))
+    # At k = ∞ exactly the formulas below read ∞/∞ for B: write the limit.
+    _is_incompressible(κ) && return zero(T), T(u) * T(r)^2
     S = 3 * T(κ) + 4 * T(μ)
     A = (4 * T(μ) * T(u) + T(r) * T(σ)) / (T(r) * S)
     B = (3 * T(κ) * T(u) - T(r) * T(σ)) * T(r)^2 / S
@@ -211,9 +213,11 @@ end
 """
     _effective_bulk(sphere, κ₀, μ₀) -> κ_eff
 
-Effective bulk modulus of the composite sphere under hydrostatic
-loading:  ``k^{\\mathrm{hom}} = \\sum_k f_k\\,k_k\\,\\alpha_k`` with
-``f_k = (r_k^3 - r_{k-1}^3)/r_N^3``.
+``\\sum_k f_k\\,k_k\\,\\alpha_k`` with ``f_k = (r_k^3 - r_{k-1}^3)/r_N^3``: the mean pressure in the material of
+the layers per unit remote volumetric strain. It is not an effective bulk
+modulus, which is the ratio of the mean pressure to the mean volumetric strain
+of the sphere, and the latter also carries the jumps of the spring interfaces
+([`strain_strain_loc`](@ref)).
 """
 function _effective_bulk(sphere::LayeredSphere{T, N}, κ₀, μ₀) where {T, N}
     α = _bulk_localization(sphere, κ₀, μ₀)

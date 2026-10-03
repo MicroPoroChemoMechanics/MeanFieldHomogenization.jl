@@ -294,7 +294,10 @@ INTERFACES = [
     },
     {
         "name": "KapitzaInterface", "label": "Kapitza (thermal)",
-        "fields": [{"name": "h", "label": "h", "type": "number", "default": 1.0}],
+        # The field is the RESISTANCE ρ that `KapitzaInterface` takes, not a
+        # conductance h; its internal name stays `h` so that saved models
+        # keep reading back.
+        "fields": [{"name": "h", "label": "ρ (resistance)", "type": "number", "default": 1.0}],
         "order": 2,
     },
     {
@@ -308,7 +311,7 @@ INTERFACES = [
     # rather than a pair of numbers. They exist only on a laminate: a layered
     # sphere's interface is a sphere, where "anisotropic in the interface
     # plane" has no fixed frame to be written in. There is deliberately no
-    # anisotropic Kapitza — `[T] = ρ qₙ` is already fully general.
+    # anisotropic Kapitza — `[T] = −ρ qₙ` is already fully general.
     {
         "name": "AnisotropicSpringInterface", "label": "Spring, anisotropic",
         "laminate_only": True,

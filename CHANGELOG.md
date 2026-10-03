@@ -2,6 +2,74 @@
 
 ## Unreleased
 
+### Fixed
+
+- **The opening of a spring interface did not strain the composite sphere.**
+  The concentration tensor of a `LayeredSphere`, which every scheme consumes,
+  averaged the strain over the material of the layers and so left out the
+  displacement jump across its `SpringInterface`s. The stress side was right,
+  the traction being continuous, so only the strain-average rule broke, and
+  with it every estimate: a two-layer sphere with two springs gave a
+  Mori–Tanaka bulk modulus of 2.30 where the right value is 1.66. The jumps now
+  count, those of the inner interfaces always and that of the outer one by
+  default, which is the convention of Echoes, of `LayeredSpheroid` and of the
+  laminates. The tensors reproduce Echoes to ten digits (inner and outer
+  springs, Mori–Tanaka, self-consistent) and the self-consistent closed forms
+  of Dormieux, Jeannin and Gland (2010) for bonded grains. The ALV kernels
+  (`strain_strain_loc_alv`, `stiffness_contribution_alv`) had the same gap and
+  are fixed the same way. The averages of `averages.jl`
+  (`sphere_strain_average`, …) are unchanged: they average over the material,
+  and their docstrings now say that the opening is not part of it.
+- **A Kapitza interface on a `LayeredSphere` was a negative resistance.** Its
+  jump matrix carried `+ρ` on a state whose flux is the physical
+  `q = −k ∇T`, so the temperature rose in the direction of the flux: a grain
+  conducted better with the resistance than without, and diverged at
+  `ρ = r/k`. It now drops, `[T] = −ρ q_n`, and the concentration tensors match
+  Echoes, the Hasselman–Johnson equivalent grain and the spherical limit of the
+  confocal spheroid, which had the right sign all along. The pages wrote the
+  law as `[T] = ρ q_n`, true only for the flux `σ ≡ −q` of the package's
+  dictionary; they now use the physical flux, as does the surface-conductive
+  law, whose sign was flipped the same way in two tutorials and on the spheroid
+  page while the code was right.
+- **An incompressible layer (`k = ∞`) failed** with "matrix contains Infs or
+  NaNs" as soon as the sphere had an imperfect interface or a second layer,
+  although the theory page promised the limit. Modes 2 and 4 of the deviatoric
+  recurrence are now scaled by `μ/(k + μ)`, which makes every entry affine in
+  that ratio and exact at `k = ∞`; the mean pressure of such a layer is read
+  from the traction instead of `∞·0`. The pointwise stress of an incompressible
+  region, which the strain does not determine, now raises an `ArgumentError`
+  instead of returning `NaN`.
+- **A self-consistent iteration seeded with an infinite Voigt average** (a rigid
+  or incompressible phase) now says so and how to seed it, instead of failing
+  inside a linear solve.
+- **echoes2mfh** translated a transport `PRIMALDISC` interface into a
+  `SpringInterface`, and a transport `DUALDISC` into a `MembraneInterface`: they
+  become `KapitzaInterface(1 / h)` (Echoes gives a conductance) and
+  `SurfaceConductiveInterface`. A layer modulus containing a comma, such as
+  `5.0 * one(TensISO{2, 3})`, was split into two fragments and lost its tuple.
+- **MFH Studio** labeled the Kapitza field `h`, the symbol of a conductance,
+  for the resistance `KapitzaInterface` takes.
+
+### Added
+
+- `external` on the whole-sphere concentration and contribution tensors of
+  `LayeredSphere` (`strain_strain_loc`, `stress_strain_loc`,
+  `stiffness_contribution`, `gradient_gradient_loc`, `flux_gradient_loc`,
+  `conductivity_contribution`, and the ALV kernels): `false` leaves the outer
+  interface to the matrix, both its opening and the surface stress of a
+  membrane, as Echoes' `sphere_eE(n - 1, external = False)` does.
+- `external` and `internal` on the per-layer forms
+  `strain_strain_loc(sphere, C₀; layer)` and
+  `gradient_gradient_loc(sphere, K₀; layer)`, with Echoes' meaning
+  (`layer_eE`); the default stays the average over the material. With
+  `external = true` on every layer the shells partition the sphere.
+
+### Changed
+
+- `stiffness_contribution(sphere::LayeredSphere, C₀)` returns the
+  three-argument tensor `stiffness_contribution(sphere, C₀, C₀)`, which it
+  duplicated; the two may differ in the last digit from before.
+
 ### Documentation
 
 - The README and the module docstring described `LayeredSpheroids` as
