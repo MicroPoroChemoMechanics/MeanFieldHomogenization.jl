@@ -146,15 +146,54 @@ in ``s``: the matrix is finite, and exact, for an incompressible layer
 end
 
 """
+    _shear_M_inverse(r, κ, μ) -> Matrix(4×4)
+
+Closed-form inverse of [`_shear_M_matrix`](@ref). With ``s = \\mu/(k + \\mu)``,
+``\\det\\mathbf M = 350\\,\\mu^2(s + 3)^2/r^4``, which vanishes for no ``s \\in [0, 1]``, and every
+entry of the inverse is a rational function of ``(r, s, \\mu)`` over ``s + 3``
+(derived with SymPy). Inverting in closed form rather than by a pivoted LU keeps
+a symbolic recurrence from swelling: the generic solve on SymPy moduli of a
+single grain with a spring took more than ten minutes.
+"""
+@inline function _shear_M_inverse(r, κ, μ)
+    T = promote_type(typeof(r), typeof(κ), typeof(μ))
+    Tμ = T(μ); Tr = T(r)
+    s = Tμ / (T(κ) + Tμ)
+    d = one(T) / (s + 3)
+    dμ = d / Tμ
+    r² = Tr * Tr
+    r³ = r² * Tr
+    r⁴ = r² * r²
+    r⁵ = r⁴ * Tr
+    Mi = Matrix{T}(undef, 4, 4)
+    Mi[1, 1] = (9 - 5 * s) * d / (5 * Tr)
+    Mi[1, 2] = 9 * (s - 1) * d / (5 * Tr)
+    Mi[1, 3] = 3 * dμ / 10
+    Mi[1, 4] = 3 * s * dμ / 5
+    Mi[2, 1] = -4 * d / (35 * r³)
+    Mi[2, 2] = 8 * d / (35 * r³)
+    Mi[2, 3] = -dμ / (70 * r²)
+    Mi[2, 4] = dμ / (35 * r²)
+    Mi[3, 1] = (3 - 5 * s) * r⁴ * d / 35
+    Mi[3, 2] = 2 * (19 * s - 24) * r⁴ * d / 35
+    Mi[3, 3] = (3 - 5 * s) * r⁵ * dμ / 35
+    Mi[3, 4] = (15 - 4 * s) * r⁵ * dμ / 35
+    Mi[4, 1] = 2 * r² * d / 5
+    Mi[4, 2] = 6 * r² * d / 5
+    Mi[4, 3] = -r³ * dμ / 5
+    Mi[4, 4] = -3 * r³ * dμ / 5
+    return Mi
+end
+
+"""
     _shear_layer_transfer(r_out, r_in, κ, μ) -> Matrix(4×4)
 
 Intra-layer field-to-field transfer ``\\mathbf S(r_{\\mathrm{out}}) = \\mathbf T\\,\\mathbf S(r_{\\mathrm{in}})`` computed
-as ``\\mathbf T = \\mathbf M(r_{\\mathrm{out}})\\,\\mathbf M(r_{\\mathrm{in}})^{-1}``.
+as ``\\mathbf T = \\mathbf M(r_{\\mathrm{out}})\\,\\mathbf M(r_{\\mathrm{in}})^{-1}``, the inverse in closed form
+([`_shear_M_inverse`](@ref)).
 """
 @inline function _shear_layer_transfer(r_out, r_in, κ, μ)
-    M_in = _shear_M_matrix(r_in, κ, μ)
-    M_out = _shear_M_matrix(r_out, κ, μ)
-    return M_out / M_in
+    return _shear_M_matrix(r_out, κ, μ) * _shear_M_inverse(r_in, κ, μ)
 end
 
 """
@@ -178,12 +217,11 @@ end
 
 Given the state ``\\mathbf S = (U, W, \\sigma_{rr}, \\sigma_{r\\theta})`` at radius `r` in a layer of
 moduli ``(k, \\mu)``, return the local mode amplitudes ``(a, b, c, d)`` by
-solving ``\\mathbf M(r; k, \\mu)\\,\\mathbf x = \\mathbf S``.
+solving ``\\mathbf M(r; k, \\mu)\\,\\mathbf x = \\mathbf S`` with the closed-form inverse.
 """
 @inline function _shear_extract_amplitudes(r, κ, μ, state)
     T = promote_type(typeof(r), typeof(κ), typeof(μ), eltype(state))
-    M = _shear_M_matrix(T(r), T(κ), T(μ))
-    return M \ Vector{T}(state)
+    return _shear_M_inverse(T(r), T(κ), T(μ)) * Vector{T}(state)
 end
 
 """

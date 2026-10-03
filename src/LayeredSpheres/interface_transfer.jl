@@ -75,6 +75,12 @@ end
 # 4×4 block-triangular with the linear combination in the lower-left
 # 2×2 block.
 
+# The identity, built from `one(T)`. `Matrix{T}(I, n, n)` converts the Booleans
+# of `I` to `T`, which for SymPy gives the logical atoms `True` and `False`:
+# they refuse to multiply, and the deviatoric recurrence of a sphere with an
+# imperfect interface failed on symbolic moduli.
+@inline _eye(::Type{T}, n::Int) where {T} = T[i == j ? one(T) : zero(T) for i in 1:n, j in 1:n]
+
 """
     _shear_interface_T(intf, κ, μ, r) -> Matrix(4×4)
 
@@ -86,12 +92,12 @@ function _shear_interface_T end
 
 function _shear_interface_T(::PerfectInterface, κ, μ, r)
     T = promote_type(typeof(κ), typeof(μ), typeof(r))
-    return Matrix{T}(LinearAlgebra.I, 4, 4)
+    return _eye(T, 4)
 end
 
 function _shear_interface_T(intf::SpringInterface, κ, μ, r)
     T = promote_type(eltype(intf), typeof(κ), typeof(μ), typeof(r))
-    M = Matrix{T}(LinearAlgebra.I, 4, 4)
+    M = _eye(T, 4)
     # State order: (U, W, σ_rr, σ_rθ).  U jumps by σ_rr/kn, W by σ_rθ/kt.
     sn, st = spring_compliances(intf)
     M[1, 3] = T(sn)
@@ -101,7 +107,7 @@ end
 
 function _shear_interface_T(intf::MembraneInterface, κ, μ, r)
     T = promote_type(eltype(intf), typeof(κ), typeof(μ), typeof(r))
-    M = Matrix{T}(LinearAlgebra.I, 4, 4)
+    M = _eye(T, 4)
     κs = T(intf.κs); μs = T(intf.μs)
     Tr = T(r)
     inv_r² = one(T) / (Tr * Tr)

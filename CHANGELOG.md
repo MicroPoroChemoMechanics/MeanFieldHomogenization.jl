@@ -39,6 +39,14 @@
   from the traction instead of `∞·0`. The pointwise stress of an incompressible
   region, which the strain does not determine, now raises an `ArgumentError`
   instead of returning `NaN`.
+- **A layered sphere with an imperfect interface failed on SymPy moduli.**
+  `Matrix{T}(I, 4, 4)` holds the logical `True` and `False` when `T` is `Sym`,
+  and they refuse to multiply. Once past that, the pivoted solve of the
+  deviatoric recurrence swelled for more than ten minutes on a single grain.
+  The mode matrix is now inverted in closed form (its determinant,
+  `350 μ² (s + 3)² / r⁴`, never vanishes): the symbolic concentration tensors of
+  a spring-bonded grain take about a second, and the numeric recurrence no
+  longer pivots.
 - **A self-consistent iteration seeded with an infinite Voigt average** (a rigid
   or incompressible phase) now says so and how to seed it, instead of failing
   inside a linear solve.

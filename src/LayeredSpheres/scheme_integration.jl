@@ -235,12 +235,12 @@ function _strain_jump_moments(
     jb = ntuple(Val(N)) do k
         (κk, μk) = κμ[k]
         J = _bulk_interface_T(layer_interface(sphere, k), κk, μk, radii[k])
-        radii[k]^2 * ((J - LinearAlgebra.I) * inside_b[k])[1] / A_inf
+        radii[k]^2 * ((J - _eye(eltype(J), size(J, 1))) * inside_b[k])[1] / A_inf
     end
     jd = ntuple(Val(N)) do k
         (κk, μk) = κμ[k]
         J = _shear_interface_T(layer_interface(sphere, k), κk, μk, radii[k])
-        ΔS = (J - LinearAlgebra.I) * states_s[k]
+        ΔS = (J - _eye(eltype(J), size(J, 1))) * states_s[k]
         radii[k]^2 * (ΔS[1] + 3 * ΔS[2]) / 5
     end
     return jb, jd
@@ -303,7 +303,7 @@ function _gradient_jump_moments(sphere::LayeredSphere{T, N}, k₀) where {T, N}
     A_inf, _ = _cond_extract_AB(radii[N], k₀, s_matrix[1], s_matrix[2])
     return ntuple(Val(N)) do k
         J = _cond_interface_T(layer_interface(sphere, k), k_layers[k], radii[k])
-        radii[k]^2 * ((J - LinearAlgebra.I) * inside[k])[1] / A_inf
+        radii[k]^2 * ((J - _eye(eltype(J), size(J, 1))) * inside[k])[1] / A_inf
     end
 end
 
