@@ -2,7 +2,7 @@
     MeanFieldHomogenization.Laminates
 
 Periodic **multilayer** homogenization: a unit cell of parallel layers of
-common normal `n`, with no matrix, no auxiliary Eshelby problem and no
+common normal ``\\underline{n}``, with no matrix, no auxiliary Eshelby problem and no
 reference medium — and an exact analytical solution rather than an estimate.
 
 This is a different kind of microstructure from the one the rest of the
@@ -13,9 +13,9 @@ single out a matrix phase and some do not, but all of them estimate. A
 laminate is **periodic and deterministic**, and its effective behavior
 follows in closed form from two continuity conditions:
 
-- the traction `σ·n` is continuous — the *out-of-plane* stress components;
+- the traction ``\\boldsymbol{\\sigma}\\cdot\\underline{n}`` is continuous — the *out-of-plane* stress components;
 - the in-plane strain is continuous and equal to the macroscopic one, so
-  `ε_i = E + a_i ⊗ˢ n`.
+  ``\\boldsymbol{\\varepsilon}_i = \\boldsymbol{E} + \\underline{a}_i\\stackrel{s}{\\otimes}\\underline{n}``.
 
 The exported [`Laminate`](@ref) is therefore an
 [`AbstractHomogenizationCell`](@ref) alongside `RVE`, solved by the
@@ -31,7 +31,7 @@ Provides:
 - the four imperfect-interface models of `LayeredSpheres`, reused unchanged:
   [`SpringInterface`](@ref) / [`MembraneInterface`](@ref) in elasticity,
   [`KapitzaInterface`](@ref) / [`SurfaceConductiveInterface`](@ref) in
-  transport, each entering with an interface *density* `1/L`;
+  transport, each entering with an interface *density* ``1/L``;
 - per-layer localization ([`layer_strain_localization`](@ref), …), the two
   Hill tensors ([`laminate_hill`](@ref)) and the interface jumps
   ([`interface_jump`](@ref));

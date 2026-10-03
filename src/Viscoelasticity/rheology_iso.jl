@@ -49,7 +49,7 @@ reports.
     ```
 
     is a *pointwise* algebraic identity in the Carson domain only.  In the time
-    domain the same relation is a Volterra quotient: `ν(t)` does not divide,
+    domain the same relation is a Volterra quotient: ``\\nu(t)`` does not divide,
     it deconvolves.  (That is exactly what the ECHOES reference does with
     `V3k = VE · inv(I - 2Vν)` on discretized operators —
     `tests/python/creep/modele2S2P1D.py`.)
@@ -209,22 +209,22 @@ end
     ViscoLaw(model::AbstractTensorRheology; mode = :relaxation, method = default_inversion(model))
     ViscoLaw(model::AbstractRheology;       mode = :relaxation, method = default_inversion(model))
 
-Package a rheological model as a [`ViscoLaw`](@ref) kernel `(t, t') ↦ X`, so
+Package a rheological model as a [`ViscoLaw`](@ref) kernel ``(t, t') \\mapsto X``, so
 that the **ageing** machinery — [`trapezoidal_matrix`](@ref),
 [`volterra_inverse`](@ref), [`homogenize_alv`](@ref) — can consume a model that
 was written in the Laplace-Carson domain.
 
-The kernel produced is of course non-ageing: it depends on `t - t'` only.  That
+The kernel produced is of course non-ageing: it depends on ``t - t'`` only.  That
 is the point.  It lets the same material be pushed through both routes and the
 answers compared, which is what
 [`tutorials/generated/freq_vs_time`](@ref tut-freq-vs-time) does.
 
-`mode = :creep` builds `J(t - t')` instead of `R(t - t')`.
+`mode = :creep` builds ``J(t - t')`` instead of ``R(t - t')``.
 
 !!! note "Cost"
     If the model has no closed-form time value, every entry of the trapezoidal
-    matrix costs one numerical inversion — `N` evaluations of the transform.
-    For an `n`-point grid that is `O(n²N)` transform evaluations.  When the
+    matrix costs one numerical inversion — ``N`` evaluations of the transform.
+    For an ``n``-point grid that is ``O(n^2 N)`` transform evaluations.  When the
     model is a Prony series (or has been fitted to one with
     [`prony_fit_relaxation`](@ref)) the time value is closed-form and the
     inversion never runs.
@@ -267,7 +267,7 @@ Homogenize a **non-ageing** viscoelastic composite through the correspondence
 principle, and — in the second form — bring the answer back to the time domain.
 
 `build_cell(p)` is a closure returning the homogenization cell with every phase
-property evaluated at the Carson variable `p`.  Any cell works: an
+property evaluated at the Carson variable ``p``.  Any cell works: an
 [`RVE`](@ref), a `LayeredSphere`, a `Laminate`, a nested chain of them.  Extra
 keyword arguments are forwarded to [`homogenize`](@ref).
 
@@ -291,7 +291,7 @@ R_of_t = homogenize_lc(cell, MoriTanaka(), :C; times = exp10.(-4:0.1:2))
 
 # Choosing the inversion method
 
-Each time costs one inversion, and each inversion costs `N` full
+Each time costs one inversion, and each inversion costs ``N`` full
 homogenizations, so the choice is a real one:
 
   * [`FixedTalbot`](@ref) (the default) — most accurate, 24 *complex*

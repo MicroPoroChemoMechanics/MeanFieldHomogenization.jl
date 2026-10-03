@@ -1,5 +1,10 @@
 # [Thick-walled cylinder](@id fe-thick-cylinder)
 
+!!! info "Before this page"
+    [Materials](@ref fe-materials), for `HomogenizedElastic` and
+    `MicrocrackedMaterial`, and [Ferrite backend](@ref fe-backends) for the mesh
+    and the element routine of the driver.
+
 The canonical MFront/FEniCS coupling demonstration, run the other way round:
 every Gauss point carries a **microstructure**, and the scheme that upscales it
 supplies the stress and the tangent.
@@ -49,7 +54,7 @@ validates the coupling — any defect in the plumbing would show up here:
 
 | mesh | 24×24 | 48×48 | 96×96 |
 |:--|:--|:--|:--|
-| ``\max\lvert u_r - u_r^{\rm Lam\acute{e}}\rvert / \max\lvert u_r^{\rm Lam\acute{e}}\rvert`` | 1.6·10⁻² | 4.3·10⁻³ | 1.1·10⁻³ |
+| ``\max\lvert u_r - u_r^\mathrm{Lam\acute{e}}\rvert / \max\lvert u_r^\mathrm{Lam\acute{e}}\rvert`` | 1.6·10⁻² | 4.3·10⁻³ | 1.1·10⁻³ |
 
 ## Step 2 — cracks that close
 
@@ -93,3 +98,9 @@ Newton iterations × 2304 points to **four** Mori-Tanaka solves.
 The tangent is exact on every branch, so Newton keeps quadratic convergence
 without any algorithmic tangent being derived: see
 [scale transition](@ref fe-scale-transition).
+
+## Where to go next
+
+[A fractured-reservoir well test](@ref fe-arma2011) adds a fluid to the cracked
+material of step 2: the fracture apertures follow the effective stress, and the
+permeability follows the apertures.

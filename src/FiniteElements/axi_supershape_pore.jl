@@ -42,7 +42,7 @@ A **superspheroidal cavity** solved by axisymmetric Fourier finite elements.
 `shape` is a [`Superspheroid`](@ref MeanFieldHomogenization.Superspheres.Superspheroid);
 its axis of revolution is the third axis of `basis`. The answer is transversely
 isotropic — five constants in elasticity, two in transport — which is exactly
-what the Fourier modes deliver: mode 0 gives a `2×2` block, modes 1 and 2 a
+what the Fourier modes deliver: mode 0 gives a ``2\\times 2`` block, modes 1 and 2 a
 scalar each.
 
 `elastic` and `transport` take a trained surrogate in place of the solve, one
@@ -120,7 +120,7 @@ _axi_mode_cols(m::Int) = m == 0 ? (1:2) : m == 1 ? (3:3) : (5:5)
 
 The corrected solve in elasticity: three modes, the modal fixed point, and the
 transversely isotropic reassembly into the global frame. See the driver's header
-for why `𝔽 = -P₀` carries no `V_D`.
+for why ``\\mathbb{F} = -\\mathbb{C}_0`` carries no ``V_D``.
 """
 function _axi_pore_run_elastic(
         s::FEAxiSupershapePore, C₀::TensND.AbstractTens{4, 3}
@@ -169,8 +169,8 @@ end
 """
     _axi_pore_dipole_norm(block, C0_66) -> Float64
 
-`‖𝕃_u 𝔽‖` on one modal block — the diagnostic to watch rather than the answer.
-It is `O((a/R)³)`, so a log-log slope of `-3` against `R` says the correction is
+``\\|\\mathbb{L}_u\\mathbb{F}\\|`` on one modal block — the diagnostic to watch rather than the answer.
+It is ``O((a/R)^3)``, so a log-log slope of ``-3`` against ``R`` says the correction is
 wired right, and the *corrected* answer falling faster than that says the sign
 is right too.
 """
@@ -182,7 +182,7 @@ end
 """
     _axi_pore_run_cond(pore, K₀) -> NamedTuple
 
-The corrected solve in transport: modes 0 and 1, giving `R₃₃` and `R₁₁`.
+The corrected solve in transport: modes 0 and 1, giving ``R_{33}`` and ``R_{11}``.
 """
 function _axi_pore_run_cond(s::FEAxiSupershapePore, K₀::TensND.AbstractTens{2, 3})
     k₀ = _fe_iso_scalar(K₀; what = "`FEAxiSupershapePore`")
@@ -320,7 +320,7 @@ Schemes._replace_geom_field(
 
 Cell and node counts, and the one comparison that says whether the meridian
 spline resolves the profile: the **measured** revolution volume of the matrix
-against `V_Ω - V_D` in closed form. The gap is the geometry error, and it is the
+against ``V_\\Omega - V_D`` in closed form. The gap is the geometry error, and it is the
 number to watch when `p` goes concave.
 """
 function fe_axi_pore_mesh_report(s::FEAxiSupershapePore)

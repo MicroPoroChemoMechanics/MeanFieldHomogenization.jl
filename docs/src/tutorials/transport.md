@@ -1,10 +1,15 @@
 # [Transport properties](@id tut-transport)
 
+!!! info "Before this page"
+    The tutorial [Porous benchmark: all schemes](@ref tut-porous-benchmark),
+    whose porous medium and schemes are carried over below to a diffusivity,
+    and the theory page [Extension to conductivity](@ref th-conductivity), which
+    states the dictionary between the elastic and the transport problems.
+
 Transport properties — diffusivity, permeability, thermal or electrical
 conductivity — are described by **2nd-order** symmetric tensors. They are
 homogenized with exactly the same machinery as 4th-order elastic properties:
 only the property key passed to [`homogenize`](@ref) changes.
-
 
 ## Homogenizing a 2nd-order property
 
@@ -180,19 +185,24 @@ plt2
 
 ## Effect of the Interfacial Transition Zone (ITZ)
 
+The pores considered so far are homogeneous inclusions; the transport schemes
+accept composite ones as well, of which the aggregate of a mortar is the
+classical example.
+
 In mortar, the **Interfacial Transition Zone** is a thin shell (~50 µm) of
 higher-porosity — hence higher-diffusivity — cement paste around each aggregate.
 The reduction in diffusivity caused by the impermeable aggregates can be offset,
-or even reversed, by this more permeable surrounding shell.
+or even reversed, by this more permeable surrounding shell. The morphology is
+drawn below as in the Echoes book [echoes](@cite).
 
-![RVE of a mortar: cement paste matrix with aggregate particles coated by ITZ shells (from the Echoes book [echoes](@cite)).](../assets/veritz.png)
+![RVE of a mortar: cement paste matrix with aggregate particles coated by ITZ shells](../assets/veritz.png)
 
 The aggregate + ITZ is a two-layer [`LayeredSphere`](@ref) — an impermeable core
-(``D = 0``, radius ``R_{\rm agg}``) inside an ITZ shell (thickness ``e_{\rm ITZ}``)
-— embedded in the cement-paste matrix of reference diffusivity ``D_{cp} = 1`` and
+(``D = 0``, radius ``R_{\mathrm{agg}}``) inside an ITZ shell (thickness ``e_{\mathrm{ITZ}}``)
+— embedded in the cement-paste matrix of reference diffusivity ``D_{\mathrm{cp}} = 1`` and
 homogenized by Mori-Tanaka. Because the composite-sphere inclusion covers
 aggregate *and* shell, its volume fraction exceeds the bare-aggregate fraction
-``f``: ``f_{\rm inc} = f\,(1 + e_{\rm ITZ}/R_{\rm agg})^3``.
+``f``: ``f_{\mathrm{inc}} = f\,(1 + e_{\mathrm{ITZ}}/R_{\mathrm{agg}})^3``.
 
 ```@example transport
 const Ragg, eITZ = 5.0e3, 50.0    # µm
@@ -211,7 +221,7 @@ end
 ```
 
 Sweeping the aggregate fraction for a range of ITZ-to-paste diffusivity ratios
-``D_{\rm itz}/D_{cp}``, against the two classical bounds for purely impenetrable
+``D_{\mathrm{itz}}/D_{\mathrm{cp}}``, against the two classical bounds for purely impenetrable
 spheres (``(1-f)^{3/2}`` and the Maxwell form ``(1-f)/(1+f/2)``):
 
 ```@example transport
@@ -227,22 +237,22 @@ plot!(plt3, fs, [(1 - f) / (1 + 0.5f) for f in fs]; c = :black, ls = :dot, label
 plt3
 ```
 
-The role of the aggregate + ITZ composite depends strongly on ``D_{\rm itz}/D_{cp}``:
-an impermeable ITZ (``\ll 1``) drives ``D^{\rm hom}`` below both impenetrable-sphere
-bounds; near ``D_{\rm itz}/D_{cp} \approx 50`` the two effects nearly cancel and
-``D^{\rm hom} \approx D_{cp}``; a highly permeable ITZ (``\gg 1``) turns the shells
-into a connected fast-transport network that lifts ``D^{\rm hom}`` above the neat
+The role of the aggregate + ITZ composite depends strongly on ``D_{\mathrm{itz}}/D_{\mathrm{cp}}``:
+an impermeable ITZ (``\ll 1``) drives ``D^{\mathrm{hom}}`` below both impenetrable-sphere
+bounds; near ``D_{\mathrm{itz}}/D_{\mathrm{cp}} \approx 50`` the two effects nearly cancel and
+``D^{\mathrm{hom}} \approx D_{\mathrm{cp}}``; a highly permeable ITZ (``\gg 1``) turns the shells
+into a connected fast-transport network that lifts ``D^{\mathrm{hom}}`` above the neat
 paste value.
 
 ### Zero-thickness interface (DUALDISC)
 
-In the limit ``e_{\rm ITZ}\to 0`` the thin, highly-conductive ITZ shell can be
+In the limit ``e_{\mathrm{ITZ}}\to 0`` the thin, highly-conductive ITZ shell can be
 collapsed onto a **zero-thickness surface-conductive interface** carrying a
-tangential surface current ``\underline{q}_s = k_s\,\nabla_{\!s}T`` with
-transmissivity ``k_s = \alpha = D_s\,e_{\rm ITZ}`` — the Echoes book's `DUALDISC`
+tangential surface current ``\underline{q}^{\mathrm s} = k^{\mathrm s}\,\nabla_{\!s}T`` with
+transmissivity ``k^{\mathrm s} = \alpha = D_s\,e_{\mathrm{ITZ}}`` — the Echoes book's `DUALDISC`
 model. This is exactly a [`SurfaceConductiveInterface`](@ref) on a *bare*
 aggregate (a one-layer [`LayeredSphere`](@ref)); it avoids the explicit shell and
-its volume-fraction correction ``f\,(1+e_{\rm ITZ}/R_{\rm agg})^3``:
+its volume-fraction correction ``f\,(1+e_{\mathrm{ITZ}}/R_{\mathrm{agg}})^3``:
 
 ```@example transport
 function D_dualdisc(f, d_itz)
@@ -275,9 +285,9 @@ end
 plt4
 ```
 
-At ``D_{\rm itz}/D_{cp} = 50`` the transmissivity ``k_s = 2500`` gives an
-effective sphere conductivity ``2k_s/R_{\rm agg} = 1 = D_{cp}``, so the aggregate
-becomes transparent and ``D^{\rm hom} = D_{cp}`` at every fraction — the flat
+At ``D_{\mathrm{itz}}/D_{\mathrm{cp}} = 50`` the transmissivity ``k^{\mathrm s} = 2500`` gives an
+effective sphere conductivity ``2k^{\mathrm s}/R_{\mathrm{agg}} = 1 = D_{\mathrm{cp}}``, so the aggregate
+becomes transparent and ``D^{\mathrm{hom}} = D_{\mathrm{cp}}`` at every fraction — the flat
 curve above.
 
 ## Cross-property coupling
@@ -300,3 +310,17 @@ C_eff = homogenize(r2, MoriTanaka(), :C)
 D_eff2 = homogenize(r2, MoriTanaka(), :K)
 (bulk = k_mu(C_eff)[1], diffusivity = tr(Array(D_eff2)) / 3)
 ```
+
+The bulk modulus and the mean diffusivity above come from one microstructure,
+described once and read twice through the property key.
+
+## Where to go next
+
+Every scheme used so far is evaluated in one shot or as a fixed point.
+[The differential scheme and path dependence](@ref tut-differential-paths)
+builds the composite incrementally instead, which makes the order of
+incorporation of the phases a modeling choice. The order-2 calls of the library
+are collected in [Conductivity](@ref man-conductivity) of the manual, and
+[Cement paste: chloride diffusivity and elasticity](@ref app-cement-paste-diffusion)
+applies the cross-property route of the last section to a hydrating cement
+paste.

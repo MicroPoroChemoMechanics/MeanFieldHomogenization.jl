@@ -23,20 +23,20 @@
     stiffness_contribution(incl, C₁, C₀; kw...) -> Tens{4,3}
 
 Size-independent **stiffness contribution tensor**
-`N = (C₁ - C₀) : A_εε` for an `AbstractInclusion` of stiffness `C₁`
+``\\mathbb{N} = (\\mathbb{C}_1 - \\mathbb{C}_0):\\mathbb{A}_{\\varepsilon\\varepsilon}`` for an `AbstractInclusion` of stiffness `C₁`
 in a matrix `C₀`.  For a dilute family of inclusions of volume fraction
-`f`, the effective stiffness correction is
-`ΔC_eff = f × N` — see [`delta_stiffness`](@ref).
+``f``, the effective stiffness correction is
+``\\Delta\\mathbb{C}^{\\mathrm{hom}} = f\\,\\mathbb{N}`` — see [`delta_stiffness`](@ref).
 
 !!! note "Heterogeneous inclusions"
-    `(C₁ - C₀) : A_εε` presupposes a *single* stiffness inside the inclusion.
+    ``(\\mathbb{C}_1 - \\mathbb{C}_0):\\mathbb{A}_{\\varepsilon\\varepsilon}`` presupposes a *single* stiffness inside the inclusion.
     When [`is_homogeneous_inclusion`](@ref MeanFieldHomogenization.Core.is_homogeneous_inclusion) is `false` the exact identity
-    `N = A_σε - C₀ : A_εε` is used instead — it needs no `C₁`, only the two
+    ``\\mathbb{N} = \\mathbb{A}_{\\sigma\\varepsilon} - \\mathbb{C}_0:\\mathbb{A}_{\\varepsilon\\varepsilon}`` is used instead — it needs no `C₁`, only the two
     localization tensors, and reduces to the expression above whenever a
     uniform `C₁` does exist. This is what lets a layered or finite-element
     inclusion reach the schemes through gate B alone.
 
-See [kachanov2018](@cite).
+See [kachanov2018](@citet).
 """
 function stiffness_contribution(
         incl::AbstractInclusion,
@@ -53,16 +53,16 @@ end
     compliance_contribution(incl, C₁, C₀; kw...) -> Tens{4,3}
 
 Size-independent **compliance contribution tensor**
-`H = (S₁ - S₀) : A_σσ` for an `AbstractInclusion` of stiffness `C₁`
-in a matrix `C₀` (`S = C⁻¹`).  For a dilute family, the effective
-compliance correction is `ΔS_eff = f × H` — see [`delta_compliance`](@ref).
+``\\mathbb{H} = (\\mathbb{S}_1 - \\mathbb{S}_0):\\mathbb{A}_{\\sigma\\sigma}`` for an `AbstractInclusion` of stiffness `C₁`
+in a matrix `C₀` (``\\mathbb{S} = \\mathbb{C}^{-1}``).  For a dilute family, the effective
+compliance correction is ``\\Delta\\mathbb{S}^{\\mathrm{hom}} = f\\,\\mathbb{H}`` — see [`delta_compliance`](@ref).
 
 !!! note "Heterogeneous inclusions"
     As for [`stiffness_contribution`](@ref), `inv(C₁)` is meaningless when
     [`is_homogeneous_inclusion`](@ref MeanFieldHomogenization.Core.is_homogeneous_inclusion) is `false`; the exact identity
-    `H = A_εσ - S₀ : A_σσ = (A_εε - S₀ : A_σε) : S₀` is used instead.
+    ``\\mathbb{H} = \\mathbb{A}_{\\varepsilon\\sigma} - \\mathbb{S}_0:\\mathbb{A}_{\\sigma\\sigma} = (\\mathbb{A}_{\\varepsilon\\varepsilon} - \\mathbb{S}_0:\\mathbb{A}_{\\sigma\\varepsilon}):\\mathbb{S}_0`` is used instead.
 
-See [kachanov2018](@cite).
+See [kachanov2018](@citet).
 """
 function compliance_contribution(
         incl::AbstractInclusion,
@@ -84,8 +84,8 @@ end
 """
     delta_stiffness(N, f) -> Tens{4,3}
 
-Dilute **effective stiffness correction** `ΔC = f × N` from the
-size-independent contribution tensor `N` and the volume fraction `f`
+Dilute **effective stiffness correction** ``\\Delta\\mathbb{C} = f\\,\\mathbb{N}`` from the
+size-independent contribution tensor ``\\mathbb{N}`` and the volume fraction ``f``
 of inclusions sharing that contribution.
 """
 delta_stiffness(N::TensND.AbstractTens{4, 3}, f) = f * N
@@ -93,8 +93,8 @@ delta_stiffness(N::TensND.AbstractTens{4, 3}, f) = f * N
 """
     delta_compliance(H, f) -> Tens{4,3}
 
-Dilute **effective compliance correction** `ΔS = f × H` from the
-size-independent contribution tensor `H` and the volume fraction `f`.
+Dilute **effective compliance correction** ``\\Delta\\mathbb{S} = f\\,\\mathbb{H}`` from the
+size-independent contribution tensor ``\\mathbb{H}`` and the volume fraction ``f``.
 (See also the crack-specific methods `delta_compliance(crack, H, ε)`
 which use the Budiansky density convention and apply a geometric
 prefactor.)
@@ -115,11 +115,12 @@ delta_compliance(H::TensND.AbstractTens{4, 3}, f) = f * H
     conductivity_contribution(incl, K₁, K₀; kw...) -> Tens{2,3}
 
 Size-independent **conductivity contribution tensor**
-`N_K = (K₁ - K₀) · A_∇∇` for an `AbstractInclusion` of conductivity
+``\\boldsymbol{N} = (\\boldsymbol{K}_1 - \\boldsymbol{K}_0)\\cdot\\boldsymbol{A}_{\\nabla\\nabla}`` for an `AbstractInclusion` of conductivity
 `K₁` in a matrix `K₀`.  Dilute effective correction:
-`ΔK_eff = f × N_K`.
+``\\Delta\\boldsymbol{K}^{\\mathrm{hom}} = f\\,\\boldsymbol{N}``.
 
-For a heterogeneous inclusion the exact `N_K = A_q∇ - K₀ · A_∇∇` is used
+For a heterogeneous inclusion the exact
+``\\boldsymbol{N} = \\boldsymbol{A}_{q\\nabla} - \\boldsymbol{K}_0\\cdot\\boldsymbol{A}_{\\nabla\\nabla}`` is used
 instead — see [`stiffness_contribution`](@ref).
 """
 function conductivity_contribution(
@@ -137,10 +138,12 @@ end
     resistivity_contribution(incl, K₁, K₀; kw...) -> Tens{2,3}
 
 Size-independent **resistivity contribution tensor**
-`H_R = (R₁ - R₀) · A_qq` for an `AbstractInclusion` (with `R = K⁻¹`).
-Dilute effective correction: `ΔR_eff = f × H_R`.
+``\\boldsymbol{H} = (\\boldsymbol{K}_1^{-1} - \\boldsymbol{K}_0^{-1})\\cdot\\boldsymbol{A}_{qq}``
+for an `AbstractInclusion` (the resistivity is ``\\boldsymbol{K}^{-1}``).
+Dilute effective correction: ``\\Delta(\\boldsymbol{K}^{-1})^{\\mathrm{hom}} = f\\,\\boldsymbol{H}``.
 
-For a heterogeneous inclusion the exact `H_R = (A_∇∇ - R₀ · A_q∇) · R₀` is
+For a heterogeneous inclusion the exact
+``\\boldsymbol{H} = (\\boldsymbol{A}_{\\nabla\\nabla} - \\boldsymbol{K}_0^{-1}\\cdot\\boldsymbol{A}_{q\\nabla})\\cdot\\boldsymbol{K}_0^{-1}`` is
 used instead — see [`compliance_contribution`](@ref).
 """
 function resistivity_contribution(
@@ -162,14 +165,16 @@ end
 """
     delta_conductivity(N_K, f) -> Tens{2,3}
 
-Dilute effective conductivity correction `ΔK = f × N_K`.
+Dilute effective conductivity correction ``\\Delta\\boldsymbol{K} = f\\,\\boldsymbol{N}``,
+with ``\\boldsymbol{N}`` the conductivity contribution `N_K`.
 """
 delta_conductivity(N::TensND.AbstractTens{2, 3}, f) = f * N
 
 """
     delta_resistivity(H_R, f) -> Tens{2,3}
 
-Dilute effective resistivity correction `ΔR = f × H_R`.  Generic
+Dilute effective resistivity correction ``\\Delta(\\boldsymbol{K}^{-1}) = f\\,\\boldsymbol{H}``,
+with ``\\boldsymbol{H}`` the resistivity contribution `H_R`.  Generic
 2-argument method; for cracks, see the 3-argument
 `delta_resistivity(crack, R, ε)` with the Budiansky density prefactor.
 """

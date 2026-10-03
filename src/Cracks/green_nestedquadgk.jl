@@ -13,7 +13,7 @@
 
 ForwardDiff-compatible evaluation of the crack-plane kernel via
 nested 1-D QuadGK adaptive quadrature — used in the ``\\omega \\to 0``
-limit algorithm of [barthelemyIJSS2009](@cite).
+limit algorithm of [barthelemyIJSS2009](@citet).
 """
 function _Qnn_star_nestedquadgk(
         C::AbstractArray{TC, 4},
@@ -63,7 +63,7 @@ end
     _cod_elliptic_nestedquadgk_direct(c, C₀; abstol, reltol, maxiters)
 
 Direct 2-D cubature of the elliptic-crack COD integrand via nested
-1-D QuadGK (outer over φ, inner over α).  Same mathematical kernel as
+1-D QuadGK (outer over ``\\varphi``, inner over ``\\alpha``).  Same mathematical kernel as
 [`_cod_elliptic_decuhr_direct`](@ref); included for comparison with
 the DECUHR-based path.
 """

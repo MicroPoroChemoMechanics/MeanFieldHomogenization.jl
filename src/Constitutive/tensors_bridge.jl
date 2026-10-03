@@ -79,13 +79,13 @@ Abaqus-style interfaces, ordered `(11, 22, 33, 12, 13, 23)`, in the global
 frame.
 
 The two differ by the engineering-shear factor: `voigt_strain` doubles the
-off-diagonal terms (`γ₁₂ = 2ε₁₂`), `voigt_stress` does not. Keeping them as
+off-diagonal terms (``\\gamma_{12} = 2\\varepsilon_{12}``), `voigt_stress` does not. Keeping them as
 separate functions is deliberate — a single `voigt` helper is the classic way to
 lose a factor of two between the strain that goes in and the stress that comes
 out.
 
 Note this is *not* the Kelvin-Mandel convention used internally by TensND and
-`Tensors.jl` (which carries `√2` instead, and is an isometry); Voigt appears
+`Tensors.jl` (which carries ``\\sqrt{2}`` instead, and is an isometry); Voigt appears
 here only at the boundary with codes that demand it, Abaqus-style UMATs above
 all.
 """
@@ -107,7 +107,7 @@ end
     strain_from_voigt(v) -> Tens{2,3}
 
 Inverse of [`voigt_strain`](@ref): rebuild a strain tensor from the six Voigt
-components `(ε₁₁, ε₂₂, ε₃₃, γ₁₂, γ₁₃, γ₂₃)`, halving the engineering shears.
+components ``(\\varepsilon_{11}, \\varepsilon_{22}, \\varepsilon_{33}, \\gamma_{12}, \\gamma_{13}, \\gamma_{23})``, halving the engineering shears.
 """
 function strain_from_voigt(v)
     T = float(eltype(v))
@@ -124,7 +124,7 @@ end
     stress_from_voigt(v) -> Tens{2,3}
 
 Inverse of [`voigt_stress`](@ref): rebuild a stress tensor from
-`(σ₁₁, σ₂₂, σ₃₃, σ₁₂, σ₁₃, σ₂₃)`, with no shear factor.
+``(\\sigma_{11}, \\sigma_{22}, \\sigma_{33}, \\sigma_{12}, \\sigma_{13}, \\sigma_{23})``, with no shear factor.
 """
 function stress_from_voigt(v)
     T = float(eltype(v))

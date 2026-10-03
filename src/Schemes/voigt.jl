@@ -12,14 +12,14 @@
     _evaluate(rve, ::Voigt, ::Val{p}; kw...) -> AbstractTens
 
 Voigt upper bound on the effective property `:p`:
-``\\langle\\mathbb C\\rangle = \\sum_i f_i \\mathbb C_i``.
+``\\langle\\mathbb{C}\\rangle = \\sum_i f_i\\,\\mathbb{C}_i``.
 
 Phases carrying a [`CrackDensity`](@ref) instead of a
 [`VolumeFraction`](@ref) are ignored (their volume contribution is
 zero); use a Hill-tensor-aware scheme (e.g. [`Dilute`](@ref) or
 [`MoriTanaka`](@ref)) to capture crack effects.
 
-Reference: [hill1965](@cite).
+Reference: [hill1965](@citet).
 """
 function _evaluate(rve::RVE, ::Voigt, ::Val{p}; kw...) where {p}
     names = _bound_phase_names(rve, "Voigt")

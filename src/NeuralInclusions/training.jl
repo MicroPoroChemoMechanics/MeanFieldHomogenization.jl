@@ -90,7 +90,7 @@ end
 """
     network_widths(opts, box, spec) -> Vector{Int}
 
-The full `[n_features, hidden…, n_outputs]` architecture implied by the feature
+The full ``[n_{\\mathrm{features}}, h_1, \\dots, n_{\\mathrm{outputs}}]`` architecture implied by the feature
 box and the output specification. Both the fallback and the extension go through
 this, so the network the extension trains is the network the surrogate expects.
 """
@@ -230,7 +230,7 @@ component_labels(::HillOrtho) =
     component_labels(spec::AbstractOutputSpec) -> Vector{Symbol}
 
 Names of the network's outputs. For [`AffineHill`](@ref) the class labels are
-repeated once per shape tensor, suffixed `𝕌` and `𝕍`; for [`AnchoredHill`](@ref)
+repeated once per shape tensor, suffixed with the symbols of ``\\mathbb{U}^{\\boldsymbol{A}}`` and ``\\mathbb{V}^{\\boldsymbol{A}}``; for [`AnchoredHill`](@ref)
 they are the class's, the anchored target living in the same basis.
 """
 component_labels(spec::DimensionlessHill) = component_labels(spec.class)

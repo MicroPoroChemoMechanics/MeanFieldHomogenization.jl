@@ -7,6 +7,67 @@
 - The README and the module docstring described `LayeredSpheroids` as
   conduction only, which it has not been since v0.11.0: they now name the
   elastic confocal spheroid, prolate or oblate, with perfect interfaces.
+- Citations are author-year, as in ChemistryLab: a `[42]` told the reader
+  nothing without a trip to the References page. A citation that is the subject
+  of a sentence or follows a preposition reads "Eshelby (1957) showed", the
+  others "(Eshelby, 1957)", and adjacent ones are grouped in one parenthesis.
+  Hovering a citation still shows the full entry.
+- No citation is left inside a figure caption; the source of a drawing is
+  given in the sentence before it.
+- The Echoes entry cited a version DOI that Zenodo marks as deprecated, dated
+  2022 although that version was issued in 2025. It now cites the concept DOI
+  `10.5281/zenodo.7348758`, the one the Echoes repository gives, which resolves
+  to the current version (v1.0.0, 2026).
+- The key of Parrott and Killoh (1984) misspelled the first author's name.
+- A **Getting started** page opens the site: the installation, and one
+  estimate taken from the RVE to the effective moduli with each object defined
+  on the way. It replaces the Manual's installation page; the instructions for
+  running the test suite move to the developer's testing page.
+- A **Nomenclature** page holds the typography of the formulas, the operators
+  and the rules every page and docstring follows for decorations (`hom`, the
+  indices of the reference medium and of a phase, upright labels, the Eshelby
+  tensor). The theory page that held the typography keeps the conventions and
+  is now called *Conventions*. The home page names three reading paths, and the
+  API is visible again in the navigation bar.
+- One symbol per quantity across the pages and the published scripts: an
+  effective property is written `^{hom}` (it was written six ways, `eff`
+  included), the reference medium carries the index 0 and a phase its index as
+  a subscript, labels are upright, vectors are underlined without hats, order-2
+  tensors are bold. Each formula of the site now typesets under the
+  documentation's own MathJax configuration.
+- Four formulas said something other than what the code does or than their
+  neighbors on the same page:
+  - the spring interface of the layered sphere wrote the displacement jump as
+    `k_n σ_rr`, `k_n` being the stiffness; it is `σ_rr/k_n`, as the code has it;
+  - `𝔹_i` meant stress per strain on the differential-scheme page and stress per
+    stress on the laminate page; the first is now the `𝔸_{σε}` of the
+    localization page;
+  - `𝕁` was both the spherical projector and the creep kernel, on the same
+    viscoelasticity page; the kernels are now the relaxation `ℂ(t, t')` and the
+    creep `𝕃(t, t')`;
+  - `𝕊` was both the compliance and the Eshelby tensor; the latter is `𝕊ᴱ`.
+- MFH Studio labels the conductivities `k`, as the documentation writes them,
+  instead of `κ`.
+- The formulas of the docstrings are written in LaTeX under the same notation,
+  so that the API pages render them and the hints below read them. Docstrings
+  that disagreed with the code are aligned on it: the state vector of the shear
+  recurrence, the type returned by `layer_gradient_average` and by
+  `spheroid_strain_concentration`, and the kinds accepted by `legendre_table`.
+- Hovering an equation shows the symbols it holds, with their meaning on the
+  page, from the new Nomenclature page's source, `docs/nomenclature.toml`. A
+  letter with several meanings (`p`, `φ`, `ω`, `𝔹`) is explained only on the
+  pages where each holds. `test/Documentation` checks the nomenclature and the
+  typography of the formulas of the pages and of the docstrings.
+- Every page opens with a "Before this page" note and closes with a "Where to
+  go next" section, and the H2 sections of the theory pages are numbered. The 188
+  relative `.md` links became `@ref` links on anchors, and the 22 pages that had
+  no title anchor have one. The manual says imperfect interfaces exist for the
+  elastic layered sphere as well as in conduction, and the differential scheme
+  is called `DifferentialScheme()` in its example.
+- The isotropic stiffness is `3λ𝕁 + 2μ𝕀` on the Hill-tensor page; it read
+  `3λ𝕀 + 2μ𝕂`.
+- Documentation builds can be limited: `MFH_DOCS_PREFLIGHT_ONLY=1` runs the checks
+  in under a minute, and `MFH_DOCS_ONLY=<patterns>` builds only the matching pages.
 
 ## v0.14.2 — where the sample count stops paying, and the mesh that produced it
 

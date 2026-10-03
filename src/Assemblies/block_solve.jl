@@ -84,9 +84,9 @@ end
 """
     _solve_tensor_system(blocks, rhs, P₀) -> Vector
 
-Solve `Σ_K 𝕄_{IK} : X_K = B_I` for the tensor unknowns `X_K`.
+Solve ``\\sum_K \\mathbb{M}_{IK}:\\mathbb{X}_K = \\mathbb{B}_I`` for the tensor unknowns ``\\mathbb{X}_K``.
 
-`blocks[i][k]` holds `𝕄_{IK}` and `rhs[i]` holds `B_I`, both as TensND tensors
+`blocks[i][k]` holds ``\\mathbb{M}_{IK}`` and `rhs[i]` holds ``\\mathbb{B}_I``, both as TensND tensors
 of the same order as the reference `P₀`. The result is returned in the same
 representation.
 

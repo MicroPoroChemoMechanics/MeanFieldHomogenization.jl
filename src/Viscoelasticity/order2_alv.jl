@@ -104,8 +104,8 @@ end
 """
     iso_order2_params_from_blocks(M) -> α::Matrix
 
-Decompose a `(3n × 3n)` block matrix whose every 3×3 block is `α[i,j]·𝐈`
-(iso 2-tensor) into the scalar `n × n` Volterra matrix `α`.
+Decompose a ``3n\\times 3n`` block matrix whose every ``3\\times 3`` block is ``\\alpha_{ij}\\,\\boldsymbol{1}``
+(iso 2-tensor) into the scalar ``n\\times n`` Volterra matrix ``\\alpha``.
 """
 function iso_order2_params_from_blocks(M::AbstractMatrix)
     sz = size(M, 1)
@@ -128,8 +128,8 @@ end
 """
     iso_order2_blocks_from_params(α::AbstractMatrix) -> Matrix
 
-Inverse of [`iso_order2_params_from_blocks`](@ref): build a `(3n × 3n)`
-block matrix `α[i,j]·𝐈` per block.
+Inverse of [`iso_order2_params_from_blocks`](@ref): build a ``3n\\times 3n``
+block matrix ``\\alpha_{ij}\\,\\boldsymbol{1}`` per block.
 """
 function iso_order2_blocks_from_params(α::AbstractMatrix)
     n = size(α, 1)
@@ -151,7 +151,7 @@ end
 """
     _is_iso_order2_block(M; tol = 1e-12) -> Bool
 
-Return `true` if every 3×3 block of `M` is `α·𝐈` (iso 2-tensor in 3D).
+Return `true` if every ``3\\times 3`` block of `M` is ``\\alpha\\,\\boldsymbol{1}`` (iso 2-tensor in 3D).
 """
 function _is_iso_order2_block(M::AbstractMatrix; tol::Real = 1.0e-12)
     sz = size(M, 1)
@@ -182,9 +182,10 @@ end
 """
     hill_kernel_order2(ell, K_0_law::ViscoLaw, times) -> Matrix
 
-Build the discrete Hill kernel `P̃` (size `(3n × 3n)`) for an
+Build the discrete Hill kernel ``\\widetilde{\\boldsymbol{P}}`` (size ``3n\\times 3n``) for an
 ellipsoidal inclusion in an isotropic ALV matrix.  Uses the time-space
-decoupling formula  `P̃[block(i,j)] = α₀^{-vol}[i,j] · 𝐈^A`.
+decoupling formula ``[\\widetilde{\\boldsymbol{P}}]_{ij} = \\bigl(\\widetilde{k}_0^{-\\circ}\\bigr)_{ij}\\,\\boldsymbol{I}^{\\boldsymbol{A}}``,
+with ``\\widetilde{\\boldsymbol{K}}_0 = \\widetilde{k}_0\\,\\boldsymbol{1}`` the discretized isotropic reference.
 """
 function hill_kernel_order2(
         ell, K_0_law::ViscoLaw,
@@ -197,7 +198,7 @@ end
     hill_kernel_order2_at(ell, K_0::AbstractMatrix) -> Matrix
 
 Variant of [`hill_kernel_order2`](@ref) taking an already-discretized
-`(3n × 3n)` reference matrix instead of the matrix law — what the
+``3n\\times 3n`` reference matrix instead of the matrix law — what the
 differential scheme needs, its reference being the *running* effective
 medium.  Same `_at` convention as the order-4 crack and layered-sphere
 kernels.
@@ -227,8 +228,10 @@ end
 """
     dilute_concentration_alv_order2(K_E, K_0, P) -> Matrix
 
-Order-2 dilute concentration `Ã^dil = (𝟙 + P̃ ∘ ΔK̃)^{-vol}`,
-all matrices `(3n × 3n)`.
+Order-2 dilute concentration
+``\\widetilde{\\boldsymbol{A}}^{\\mathrm{dil}} = (H\\,\\boldsymbol{1} + \\widetilde{\\boldsymbol{P}}\\circ\\Delta\\widetilde{\\boldsymbol{K}})^{-\\circ}``,
+``\\Delta\\widetilde{\\boldsymbol{K}} = \\widetilde{\\boldsymbol{K}}^{\\mathcal{E}} - \\widetilde{\\boldsymbol{K}}_0``,
+all matrices ``3n\\times 3n``.
 """
 function dilute_concentration_alv_order2(
         K_E::AbstractMatrix, K_0::AbstractMatrix,
@@ -251,7 +254,7 @@ end
 """
     dilute_contribution_alv_order2(K_E, K_0, P) -> Matrix
 
-Order-2 dilute contribution `Ñ = ΔK̃ ∘ Ã^dil`.
+Order-2 dilute contribution ``\\widetilde{\\boldsymbol{N}} = \\Delta\\widetilde{\\boldsymbol{K}}\\circ\\widetilde{\\boldsymbol{A}}^{\\mathrm{dil}}``.
 """
 function dilute_contribution_alv_order2(
         K_E::AbstractMatrix, K_0::AbstractMatrix,
@@ -275,7 +278,7 @@ _alv2_blocks_eltype(mats) = mapreduce(eltype, promote_type, mats; init = Bool)
 """
     voigt_alv_order2(matrices, fractions) -> Matrix
 
-Order-2 Voigt bound: `K̃_eff = Σ_r f_r K̃_r`.
+Order-2 Voigt bound: ``\\widetilde{\\boldsymbol{K}}^{\\mathrm{hom}} = \\sum_i f_i\\,\\widetilde{\\boldsymbol{K}}_i``.
 """
 function voigt_alv_order2(
         matrices::AbstractVector{<:AbstractMatrix},
@@ -311,7 +314,7 @@ end
 """
     dilute_alv_order2(K_0, contribs, fractions) -> Matrix
 
-Order-2 Dilute scheme: `K̃_eff = K̃_0 + Σ_r f_r Ñ_r`.
+Order-2 Dilute scheme: ``\\widetilde{\\boldsymbol{K}}^{\\mathrm{hom}} = \\widetilde{\\boldsymbol{K}}_0 + \\sum_i f_i\\,\\widetilde{\\boldsymbol{N}}_i``.
 """
 function dilute_alv_order2(
         K_0::AbstractMatrix,
@@ -349,7 +352,12 @@ end
     mori_tanaka_alv_order2(K_0, A_duts, contribs, fractions, f_M) -> Matrix
 
 Order-2 Mori-Tanaka:
-   `K̃_eff = K̃_0 + (Σ_r f_r Ñ_r) ∘ (f_0 𝟙 + Σ_s f_s Ã_s)^{-vol}`.
+
+```math
+\\widetilde{\\boldsymbol{K}}^{\\mathrm{hom}} = \\widetilde{\\boldsymbol{K}}_0
+  + \\Bigl(\\sum_i f_i\\,\\widetilde{\\boldsymbol{N}}_i\\Bigr)\\circ
+    \\Bigl(f_0\\,H\\,\\boldsymbol{1} + \\sum_j f_j\\,\\widetilde{\\boldsymbol{A}}_j^{\\mathrm{dil}}\\Bigr)^{-\\circ} .
+```
 """
 function mori_tanaka_alv_order2(
         K_0::AbstractMatrix,
@@ -422,8 +430,8 @@ end
     _homogenize_alv_order2(rve, scheme, prop::Symbol; times) -> Matrix
 
 Internal order-2 ALV pipeline.  Reached from [`homogenize_alv`](@ref)
-when the matrix property law samples to a 3×3 / `TensND.AbstractTens{2,3}`
-value.  Returns the effective `K̃_eff` of size `(3n × 3n)`.
+when the matrix property law samples to a ``3\\times 3`` / `TensND.AbstractTens{2,3}`
+value.  Returns the effective ``\\widetilde{\\boldsymbol{K}}^{\\mathrm{hom}}`` of size ``3n\\times 3n``.
 
 Supports iso ALV matrix + ellipsoidal inclusions of any aspect ratio.
 The result is generally anisotropic (TI for spheroids, ortho for
@@ -598,11 +606,11 @@ end
 
 Order-2 (conductivity / diffusion) counterpart of
 [`differential_alv`](@ref): the same incorporation-sequence ODE on
-`τ ∈ [0, 1]`, integrated on the `(3n × 3n)` ALV conductivity block
+``\\tau \\in [0, 1]``, integrated on the ``3n\\times 3n`` ALV conductivity block
 matrix.
 
-`formulation = :compliance` integrates the resistivity `R̃ = K̃^{-vol}`
-instead, through `H̃_α = −R̃ ∘ Ñ_α ∘ R̃`, and inverts the result.
+`formulation = :compliance` integrates the resistivity ``\\widetilde{\\boldsymbol{R}} = \\widetilde{\\boldsymbol{K}}^{-\\circ}``
+instead, through ``\\widetilde{\\boldsymbol{H}}_i = -\\widetilde{\\boldsymbol{R}}\\circ\\widetilde{\\boldsymbol{N}}_i\\circ\\widetilde{\\boldsymbol{R}}``, and inverts the result.
 
 As in the order-4 case the reference of the ODE is the running
 effective medium, and the order-2 ALV Hill kernel exists for an

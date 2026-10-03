@@ -1,5 +1,11 @@
 # [Hydration through the pore solution](@id app-ionic-hydration)
 
+!!! info "Before this page"
+    [A hydrating blended cement paste, coupled to its chemistry](@ref app-blended-hydration),
+    whose binder, kinetics and four-scale micromechanics are reused here
+    unchanged, and against whose stoichiometric route every result of this page
+    is compared.
+
 The previous chapter, [A hydrating blended cement paste, coupled to its chemistry](@ref app-blended-hydration), computes the elastic
 properties of a cement paste from aggregated solid → solid reactions: each
 reaction *states* its products, and a hand-written priority cascade decides
@@ -110,7 +116,7 @@ mole, which is what drives the pore solution to pH 12.5 and above.
 
 ## 2. Running the coupling
 
-The formulation is the CEM I 52.5 N of [Lavergne2018](@cite), so the
+The formulation is the CEM I 52.5 N of [Lavergne2018](@citet), so the
 numbers can be put beside the previous chapter's: Bogue composition
 C₃S 65 / C₂S 11 / C₃A 11 / C₄AF 8, gypsum 4.6 %, calcite 3.5 %, Blaine
 380 m²/kg, w/b = 0.50.
@@ -222,6 +228,9 @@ gates — and would have to be re-derived for a mix it was not written for.
 
 ## 5. Calorimetry
 
+Besides the assemblage, the certified speciations of §3 fix the enthalpy of the
+system at every instant, and hence the heat that a calorimeter records.
+
 ### What is computed, and why it is not the heat of the reactions
 
 The heat is taken from the **enthalpy of the whole system**, following
@@ -314,10 +323,10 @@ that effect, which is the trade the LC³ literature is about.
 ### The semi-adiabatic cell
 
 A Langavant test (NF EN 196-9) lets the heat raise the temperature of the sample
-against the losses of the vessel. [Lavergne2018](@cite) writes the loss as
+against the losses of the vessel. [Lavergne2018](@citet) writes the loss as
 
 ```math
-C_{\rm tot}(t)\,\frac{\mathrm{d}T}{\mathrm{d}t} \;=\; \dot q(t) \;-\; \varphi(T-T_{\rm env}),
+C_{\mathrm{tot}}(t)\,\frac{\mathrm{d}T}{\mathrm{d}t} \;=\; \dot q(t) \;-\; \varphi(T-T_{\mathrm{env}}),
 \qquad
 \varphi(\Delta T) \;=\; a\,\Delta T + b\,\Delta T^2 ,
 ```
@@ -511,3 +520,15 @@ powers = (0.5 - 0.36 * ᾱ_28) / (0.5 + 0.32)
 - Kinetics are Parrot–Killoh rates applied to the dissolution reactions, with a
   per-phase calibration factor, because no Palandri–Kharaka parameter set is
   published for clinker phases. Inventing one would be a fabrication.
+
+## Where to go next
+
+The cement chapters that follow return to the Powers correlation for the volume
+fractions, and carry the micromechanics to other properties instead.
+[Cement paste: chloride diffusivity and elasticity](@ref app-cement-paste-diffusion)
+homogenizes one multiscale microstructure for its stiffness and its chloride
+diffusivity together, and locates the two percolation thresholds that separate
+the setting from the disconnection of the pores. The chemistry of §1 to §6,
+without the mechanics, is the page *The full Portland cement, through its pore
+solution* of
+[ChemistryLab.jl](https://microporochemomechanics.github.io/ChemistryLab.jl/stable/).

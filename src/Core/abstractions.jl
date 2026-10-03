@@ -120,7 +120,7 @@ element_type(::AbstractInclusion{T}) where {T} = T
     inclusion_basis(incl::AbstractInclusion) -> TensND.AbstractBasis
 
 Local principal basis of the inclusion (principal frame for an
-ellipsoid, ``(\\hat l, \\hat m, \\hat n)`` for a crack, …).  Used by
+ellipsoid, ``(\\underline{\\ell}, \\underline{m}, \\underline{n})`` for a crack, …).  Used by
 downstream algorithms to rotate the matrix stiffness / conductivity
 into the inclusion frame.
 """
@@ -150,10 +150,10 @@ global (canonical) frame.
     the notion is meaningful.
 
 ```math
-\\mathbf A = \\mathbf R \\; \\mathrm{diag}(a_1, a_2, \\dots) \\; \\mathbf R^{\\!T}
+\\boldsymbol{A} = \\boldsymbol{R}\\cdot\\mathrm{diag}(a_1, a_2, \\dots)\\cdot\\boldsymbol{R}^{\\!T}
 ```
 
-where ``\\mathbf R`` is the rotation matrix mapping the canonical frame
+where ``\\boldsymbol{R}`` is the rotation mapping the canonical frame
 onto the inclusion's local basis and the diagonal entries are the
 semi-axes in the order dictated by the local basis.
 
@@ -161,11 +161,11 @@ Conventions for degenerate cases:
 
 | Inclusion               | Diagonal (principal frame)      |
 | ----------------------- | ------------------------------- |
-| `Ellipsoid{3}`          | `(a₁, a₂, a₃)`                  |
-| `Ellipsoid{2}`          | `(a₁, a₂)`                      |
-| `Cylinder`              | `(Inf, b, c)` — axis ``e_1``    |
-| `EllipticCrack`         | `(a, b, 0)`  — normal ``e_3``   |
-| `RibbonCrack`           | `(Inf, b, 0)`                   |
+| `Ellipsoid{3}`          | ``(a_1, a_2, a_3)``             |
+| `Ellipsoid{2}`          | ``(a_1, a_2)``                  |
+| `Cylinder`              | ``(\\infty, b, c)`` — axis ``\\underline{e}_1`` |
+| `EllipticCrack`         | ``(a, b, 0)`` — normal ``\\underline{e}_3``     |
+| `RibbonCrack`           | ``(\\infty, b, 0)``             |
 """
 function shape_tensor end
 
@@ -174,23 +174,25 @@ function shape_tensor end
 
 Eshelby tensor of the inclusion `incl` embedded in a matrix of
 stiffness / conductivity `C₀`, derived from the Hill polarization
-tensor ``\\mathbb P`` (or ``\\mathbf P``) by the relations
+tensor ``\\mathbb{P}`` (or ``\\boldsymbol{P}``) by the relations
 
 ```math
-\\mathbb S = \\mathbb P : \\mathbb C_0
-\\qquad\\text{(order 4, elasticity)}
+\\mathbb{S}^{\\mathrm{E}} = \\mathbb{P}:\\mathbb{C}_0
 ```
 
+in elasticity (order 4), and
+
 ```math
-\\mathbf s = \\mathbf P \\cdot \\mathbf K_0
-\\qquad\\text{(order 2, conductivity / diffusion)}
+\\boldsymbol{S}^{\\mathrm{E}} = \\boldsymbol{P}\\cdot\\boldsymbol{K}_0
 ```
+
+in conductivity / diffusion (order 2).
 
 The appropriate method is selected by dispatch on the order of `C₀`:
 an `AbstractTens{4, 3}` (elasticity) triggers the double contraction
-``\\mathbb P \\;\\underset{s}{:}\\; \\mathbb C_0``, while an
+``\\mathbb{P}:\\mathbb{C}_0``, while an
 `AbstractTens{2, 3}` (conductivity) triggers the simple contraction
-``\\mathbf P \\cdot \\mathbf K_0``.
+``\\boldsymbol{P}\\cdot\\boldsymbol{K}_0``.
 
 All keyword arguments (`method`, `abstol`, `reltol`, `maxiters`) are
 forwarded verbatim to [`hill_tensor`](@ref MeanFieldHomogenization.Elasticity.hill_tensor); see its docstring for the
@@ -217,13 +219,15 @@ function eshelby_tensor end
 Whether the inclusion carries a **single uniform property**, so that the
 mean-field identities of a homogeneous inhomogeneity apply:
 
-```
-⟨C:ε⟩_r = C_r : A_r ,      N_r = (C_r - C₀) : A_r .
+```math
+\\langle\\mathbb{C}:\\boldsymbol{\\varepsilon}\\rangle_i = \\mathbb{C}_i:\\mathbb{A}_i ,
+\\qquad
+\\mathbb{N}_i = (\\mathbb{C}_i - \\mathbb{C}_0):\\mathbb{A}_i .
 ```
 
 `true` for every ellipsoid, cylinder and crack. `false` for internally
 heterogeneous inclusions such as `LayeredSphere`, whose average stress must be
-assembled layer by layer — no single `C_r` represents them, and feeding the
+assembled layer by layer — no single ``\\mathbb{C}_i`` represents them, and feeding the
 phase property into the formulas above gives a wrong answer (it can even come
 out with the opposite sign).
 
@@ -235,7 +239,7 @@ is_homogeneous_inclusion(::AbstractInclusion) = true
 """
     strain_strain_loc(incl, C₁, C₀; kw...)  -> Tens{4,3}
 
-Dilute strain-strain localization tensor `A_εε` (Eshelby).
+Dilute strain-strain localization tensor ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` (Eshelby).
 """
 function strain_strain_loc end
 
@@ -278,9 +282,9 @@ function flux_flux_loc end
     stiffness_contribution(incl, C₁, C₀; kw...) -> Tens{4,3}
     stiffness_contribution(crack, C₀; kw...)   -> Tens{4,3}
 
-Size-independent stiffness contribution tensor `N` of an inclusion in
-a matrix `C₀`.  For a dilute family of volume fraction `f`:
-`ΔC_eff = f · N` (see [`delta_stiffness`](@ref)).
+Size-independent stiffness contribution tensor ``\\mathbb{N}`` of an inclusion in
+a matrix `C₀`.  For a dilute family of volume fraction ``f``:
+``\\Delta\\mathbb{C}^{\\mathrm{hom}} = f\\,\\mathbb{N}`` (see [`delta_stiffness`](@ref)).
 """
 function stiffness_contribution end
 
@@ -306,9 +310,9 @@ function resistivity_contribution end
     compliance_contribution(incl, P₁, P₀; kw...) -> Tens
     compliance_contribution(incl, P₀; kw...)     -> Tens
 
-Size-independent compliance contribution tensor `H` of an inclusion in a
-matrix `P₀`.  For a dilute family of volume fraction `f`:
-`ΔS_eff = f · H` (see [`delta_compliance`](@ref)).
+Size-independent compliance contribution tensor ``\\mathbb{H}`` of an inclusion in a
+matrix `P₀`.  For a dilute family of volume fraction ``f``:
+``\\Delta\\mathbb{S}^{\\mathrm{hom}} = f\\,\\mathbb{H}`` (see [`delta_compliance`](@ref)).
 
 The **two-argument** form is the *flat-object* flavor used by cracks and,
 more generally, by any inclusion registered in an
@@ -325,15 +329,16 @@ function compliance_contribution end
 """
     delta_stiffness(N, f) -> Tens{4,3}
 
-Dilute effective-stiffness correction `ΔC = f · N` from the size-
-independent contribution tensor `N` and the volume fraction `f`.
+Dilute effective-stiffness correction ``\\Delta\\mathbb{C} = f\\,\\mathbb{N}`` from the size-
+independent contribution tensor ``\\mathbb{N}`` and the volume fraction ``f``.
 """
 function delta_stiffness end
 
 """
     delta_conductivity(N_K, f) -> Tens{2,3}
 
-Dilute effective-conductivity correction `ΔK = f · N_K`.
+Dilute effective-conductivity correction ``\\Delta\\boldsymbol{K} = f\\,\\boldsymbol{N}``,
+with ``\\boldsymbol{N}`` the conductivity contribution `N_K`.
 """
 function delta_conductivity end
 
@@ -342,13 +347,14 @@ function delta_conductivity end
     delta_compliance(incl, H, ε)  -> Tens
 
 Dilute effective-compliance correction from the size-independent
-contribution tensor `H`.
+contribution tensor ``\\mathbb{H}``.
 
-The **two-argument** form is the volume-fraction one, `ΔS = f · H`.  The
+The **two-argument** form is the volume-fraction one, ``\\Delta\\mathbb{S} = f\\,\\mathbb{H}``.  The
 **three-argument** form is the *amount × contribution* seam of flat objects:
 it carries the geometric prefactor relating a density-like amount to the
-effective correction (`4π/3` for an elliptical crack of Budiansky density
-`ε³ᵈ = N a b²`, `π` for a ribbon crack of `ε²ᵈ = N b²`).  Every inclusion
+effective correction (``4\\pi/3`` for an elliptical crack of Budiansky density
+``\\varepsilon^{3\\mathrm{d}} = N\\,a\\,b^{2}``, ``\\pi`` for a ribbon crack of
+``\\varepsilon^{2\\mathrm{d}} = N\\,b^{2}``).  Every inclusion
 meant to be registered with a
 [`CrackDensity`](@ref MeanFieldHomogenization.Schemes.CrackDensity) amount must provide
 the three-argument methods of `delta_compliance`, [`delta_stiffness`](@ref),

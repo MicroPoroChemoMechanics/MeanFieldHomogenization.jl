@@ -1,10 +1,16 @@
 # [Viscoelastic homogenization](@id man-viscoelasticity)
 
+!!! info "Before this page"
+    [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity), where the
+    Volterra discretization and the ALV schemes used below are derived, and
+    [Homogenization schemes](@ref man-schemes), whose `RVE` machinery the ALV
+    pipeline reuses.
+
 The ALV (ageing linear viscoelastic) pipeline reuses the [`RVE`](@ref)
 machinery of the elastic side: replace each phase property by a
 [`ViscoLaw`](@ref) and pass a `times` grid to [`homogenize_alv`](@ref).
 
-This manual walks through eight use cases, each runnable as is.
+This manual walks through its use cases, each runnable as is.
 A more elaborate version of every example exists under
 `scripts/50_visco_law_basics.jl` … `scripts/59_alv_sensitivities.jl`.
 
@@ -180,7 +186,7 @@ For TI (axis = e₃), the 4-tensor Walpole parameters
 ℓ = ti_params_from_blocks(C_eff)               # NTuple{6, Matrix}
 ```
 
-## 5. Cracks in ALV
+## [5. Cracks in ALV](@id man-visco-cracks)
 
 ### 5.1 Traction-free penny crack
 
@@ -218,7 +224,7 @@ C_eff = homogenize_alv(rve, MoriTanaka(), :C; times = times)
 ```
 
 The scalar COD kernels `B̃_n`, `B̃_t` are post-corrected by the
-spring-interface construction of [sevostianovIJSS2007](@cite), transposed to
+spring-interface construction of [sevostianovIJSS2007](@citet), transposed to
 the Volterra algebra: crack-face and interface compliances add up, at the cost
 of one extra scalar Volterra inverse per direction.
 
@@ -385,7 +391,7 @@ path that solves the scheme algebra in the **structured** domain :
 
 The classes, their stored components and the cost of each closure operation
 are tabulated in [Symmetry classes and structured
-storage](../theory/viscoelasticity.md#th-visco-classes).
+storage](@ref th-visco-classes).
 
 Detection is heuristic (`_is_iso_block` / `_is_ti_block` /
 `_is_ortho_block`) — the user never asks for a fast path explicitly,
@@ -516,3 +522,16 @@ inversion of that transform supplies the same number to about `1e-10`.
 Random-RVE cross-checks vs the reference implementation live in
 `scripts/bench_echoes/benchmark.jl` (relative error `≤ 1e-8` on the
 Mandel `(1, 1)` block, `≤ 1e-6` on the full matrix).
+
+## Where to go next
+
+[The rheological model library](@ref man-rheological-models) supplies the
+non-ageing laws that `ViscoLaw(m)` turns into kernels, and drives the
+Laplace-Carson route with the same objects. The tutorials
+[Viscoelastic composites](@ref tut-viscoelasticity) and
+[Ageing viscoelastic schemes side by side](@ref tut-alv-schemes) run the
+pipeline of this page,
+[Derivatives through the ageing-viscoelastic pipeline](@ref tut-alv-sensitivities)
+extends section 10, and
+[Ageing creep of solidifying cementitious materials](@ref app-ageing-creep)
+applies it to a solidifying cementitious material.

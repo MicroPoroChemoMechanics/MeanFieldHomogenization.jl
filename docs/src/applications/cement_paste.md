@@ -1,6 +1,14 @@
 # [Multiscale elasticity of a hydrating cement paste](@id app-cement-paste)
 
-Following [sanahuja2007](@cite) — and mirroring the corresponding chapter of
+!!! info "Before this page"
+    [Homogenization schemes](@ref th-homogenization), where the self-consistent
+    and Mori–Tanaka estimates chained below are derived, the tutorial
+    [Porous materials and the self-consistent trap](@ref tut-porous-materials)
+    on the percolation threshold of the self-consistent scheme, which is what
+    makes the paste set, and [Layered inclusions](@ref man-layered) for the
+    composite sphere of the last section.
+
+Following [sanahuja2007](@citet) — and mirroring the corresponding chapter of
 the Echoes book [echoes](@cite) — this page builds a **two-scale micromechanical
 model** of Portland cement paste predicting the effective Young's modulus from
 the water-to-cement ratio ``w/c`` and the hydration degree ``\alpha``.
@@ -13,7 +21,7 @@ The three ingredients are:
   inner/outer core-shell morphology;
 - a **Biot poromechanics correction** turning drained into undrained moduli.
 
-[sanahuja2007](@cite) embed a genuine *composite sphere* (anhydrous core +
+[sanahuja2007](@citet) embed a genuine *composite sphere* (anhydrous core +
 inner-hydrate shell) in the outer matrix. Both forms are available: a
 [`LayeredSphere`](@ref) enters the schemes directly through its concentration
 tensors (last section), while the two-step form below makes each scale
@@ -49,11 +57,11 @@ C_zero = TensISO{3}(0.0, 0.0)               # empty pore
 ## Powers hydration model and volume fractions
 
 The Powers model [powers1946](@cite) gives the anhydrous fraction ``f_a`` and
-the total porosity ``f_p``:
+the total porosity ``\varphi``:
 
 ```math
 f_a = \frac{0.32\,(1-\alpha)}{w/c+0.32}, \qquad
-f_p = \frac{w/c-0.17\,\alpha}{w/c+0.32}, \qquad
+\varphi = \frac{w/c-0.17\,\alpha}{w/c+0.32}, \qquad
 \alpha_{\max} = \min\!\left(1,\, \frac{w/c}{0.4175}\right)
 ```
 
@@ -61,7 +69,7 @@ The Tennis-Jennings model [tennis2000](@cite) splits the solid hydrates
 between low- and high-density C-S-H through the mass fraction
 
 ```math
-m_{LD} = 3.017\,\alpha\,w/c - 1.347\,\alpha + 0.538 .
+m_{\mathrm{LD}} = 3.017\,\alpha\,w/c - 1.347\,\alpha + 0.538 .
 ```
 
 ```@example paste
@@ -124,6 +132,11 @@ threshold in the paper.
 
 ## Scale 1 — cement paste
 
+At the paste scale, the anhydrous grains are first embedded in the inner
+hydrates, and the composite inclusions so obtained are then embedded in the
+outer hydrates, whose stiffness is that of scale 0 at the current porosity
+``\varphi_o``; both steps use the Mori–Tanaka scheme.
+
 ```@example paste
 function C_paste(wc, α)
     v = volume_fractions(wc, α)
@@ -164,7 +177,7 @@ for wc in (0.25, 0.35, 0.45, 0.55)
 end
 ```
 
-The three predictions of [sanahuja2007](@cite) are reproduced:
+The three predictions of [sanahuja2007](@citet) are reproduced:
 
 - a **setting threshold**: the paste carries no stiffness at low ``\alpha``,
   because the outer phase has not percolated yet;
@@ -204,10 +217,10 @@ For a porous medium with a homogeneous isotropic solid of bulk modulus ``k_s``,
 Biot theory gives
 
 ```math
-b = 1 - \frac{k^{hom}}{k_s}, \qquad
+b = 1 - \frac{k^{\mathrm{hom}}}{k_s}, \qquad
 M = \frac{k_s}{b - \varphi}, \qquad
-k^u = k^{hom} + M\,b^2, \qquad
-\mu^u = \mu^{hom} .
+k^u = k^{\mathrm{hom}} + M\,b^2, \qquad
+\mu^u = \mu^{\mathrm{hom}} .
 ```
 
 ```@example paste
@@ -267,12 +280,12 @@ hydration degree where the pore network is still well connected. As
 ## Direct composite-sphere form
 
 Because a [`LayeredSphere`](@ref) is a first-class RVE phase, the paste scale
-can also be written exactly as in [sanahuja2007](@cite): one composite
+can also be written exactly as in [sanahuja2007](@citet): one composite
 inclusion made of an anhydrous core coated by the inner hydrates, embedded in
 the outer matrix. The radius ratio follows from the volume-fraction constraint
 
 ```math
-\frac{R_a}{R_{\text{ref}}} = \left(\frac{f_a}{f_a+f_i}\right)^{1/3}.
+\frac{R_a}{R_{\mathrm{ref}}} = \left(\frac{f_a}{f_a+f_i}\right)^{1/3}.
 ```
 
 The declared `:C` property of such a phase is irrelevant — the moduli live in
@@ -341,3 +354,23 @@ for (wc, col) in ((0.35, 1), (0.55, 2))
 end
 plt
 ```
+
+In this last figure, the solid and dashed curves of one color differ only by
+the morphology assumed at the paste scale. Both start at the same hydration
+degree, since the setting threshold is fixed at scale 0 by the percolation of
+the outer hydrates, which the two forms share.
+
+## Where to go next
+
+The volume fractions of this page come from the Powers and Tennis–Jennings
+correlations. [A hydrating blended cement paste, coupled to its chemistry](@ref app-blended-hydration)
+computes them instead from the hydration kinetics and the stoichiometry of the
+reactions, and feeds them to a four-scale model of the same family.
+[Cement paste: chloride diffusivity and elasticity](@ref app-cement-paste-diffusion)
+keeps the Powers fractions and a three-layer composite sphere, and homogenizes
+the same microstructure for diffusivity as well as for stiffness. The
+recurrences behind [`LayeredSphere`](@ref) are derived in
+[Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere),
+and the Biot coefficients and undrained stiffness written out by hand above are
+computed by the library from a drained stiffness and a homogeneous solid, as
+described in [Poromechanics](@ref manual-poromechanics).

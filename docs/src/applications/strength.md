@@ -1,5 +1,13 @@
 # [Quasi-brittle strength of cement paste and mortar](@id app-strength)
 
+!!! info "Before this page"
+    The tutorial [From derivatives to a strength criterion](@ref tut-strength-criteria),
+    where a strength criterion is obtained from the derivative of the effective
+    moduli with respect to a phase modulus, [Multiscale models](@ref man-multiscale)
+    for the chaining of the three scales, and
+    [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities) for the
+    dual numbers propagated through that chain.
+
 This chapter implements the multi-scale strength-upscaling model of
 [pichler2011](@cite) — and mirrors the corresponding chapter of the Echoes book
 [echoes](@cite). It predicts the macroscopic uniaxial **compressive strength**
@@ -12,14 +20,14 @@ through three nested homogenization scales.
 | 2 | Cement paste (CP) | HF matrix + clinker grains | Mori-Tanaka |
 | 3 | Mortar (MO) | CP matrix + sand grains | Mori-Tanaka |
 
-The criterion needs ``\partial \mathbb C^{\rm hom}_{MO}/\partial
-\mu_{\rm hyd}``, propagated through all three scales. Echoes assembles it by an
+The criterion needs ``\partial \mathbb C^{\mathrm{hom}}_{\mathrm{MO}}/\partial
+\mu_{\mathrm{hyd}}``, propagated through all three scales. Echoes assembles it by an
 explicit chain rule over the five transversely-isotropic parameters of every
 intermediate tensor; here it is a single
 [ForwardDiff](https://github.com/JuliaDiff/ForwardDiff.jl) pass through the
 whole nested chain — make the ``\theta = 0`` family's shear modulus a `Dual`,
 read the partial of the final `C_mo`. Both routes agree to the tolerances of
-[Cross-validation](../developer/validation.md).
+[Cross-validation](@ref dev-validation).
 
 The code below is the model of
 [`scripts/common/quasibrittle_strength.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/common/quasibrittle_strength.jl),
@@ -148,16 +156,16 @@ nothing # hide
 
 ## Strength criterion and the autodiff sensitivity
 
-The compliance pull-back ``\boldsymbol{M} = \boldsymbol{S}_{MO}:\partial\mathbb
-C_{MO}/\partial\mu_{\rm hyd}:\boldsymbol{S}_{MO}`` gives the axial term ``M_{3333}``,
-and [pichler2011](@cite)'s criterion reads
+The compliance pull-back ``\boldsymbol{M} = \boldsymbol{S}_{\mathrm{MO}}:\partial\mathbb
+C_{\mathrm{MO}}/\partial\mu_{\mathrm{hyd}}:\boldsymbol{S}_{\mathrm{MO}}`` gives the axial term ``M_{3333}``,
+and the criterion of [pichler2011](@citet) reads
 
 ```math
-\frac{f_c}{\sigma^{\rm ult}_{\rm hyd}} = \frac{1}{\sqrt{\,M_{3333}\,2\mu_{\rm hyd}^2 / f_\theta\,}},
+\frac{f_c}{\sigma^{\mathrm{ult}}_{\mathrm{hyd}}} = \frac{1}{\sqrt{\,M_{3333}\,2\mu_{\mathrm{hyd}}^2 / f_\theta\,}},
 ```
 
 where ``f_\theta`` is the mortar volume fraction of the perturbed (``\theta=0``)
-hydrate family. The sensitivity ``\partial\mathbb C_{MO}/\partial\mu_{\rm hyd}``
+hydrate family. The sensitivity ``\partial\mathbb C_{\mathrm{MO}}/\partial\mu_{\mathrm{hyd}}``
 is obtained by seeding ``\mu_{b0}`` with a `Dual` and reading the partial of the
 final array — one pass through the whole three-scale chain.
 
@@ -202,11 +210,11 @@ run the model.
 ## Under the hood: the multi-scale chain rule made explicit
 
 !!! note "Two routes to the same derivative"
-    The sensitivity ``\partial\mathbb C_{MO}/\partial\mu_{\rm hyd}`` spans three
+    The sensitivity ``\partial\mathbb C_{\mathrm{MO}}/\partial\mu_{\mathrm{hyd}}`` spans three
     homogenization scales. There are two ways to obtain it, and they are
     mathematically identical:
 
-    - **Direct (used above)** — seed ``\mu_{\rm hyd}`` as a `ForwardDiff.Dual`
+    - **Direct (used above)** — seed ``\mu_{\mathrm{hyd}}`` as a `ForwardDiff.Dual`
       and let it propagate through the *entire nested chain* `build_hf → build_cp
       → build_mo` in one evaluation. The chain rule happens automatically inside
       the dual-number arithmetic; you write no derivatives by hand.
@@ -223,7 +231,7 @@ run the model.
 
 The bridge between the two views is the TI parameterization: extract the five
 parameters of a tensor with `best_fit_ti` — one of the
-[symmetry projections](../api/schemes.md#Symmetry-projections) re-exported from
+[symmetry projections](@ref api-schemes-symmetry) re-exported from
 `TensND` — and rebuild a `TensTI` from five numbers.
 
 ```@example strength
@@ -258,7 +266,7 @@ J_mo = ForwardDiff.jacobian(p -> vec(get_array(build_mo(wc, sc, rebuildTI(p)))),
 ```
 
 The chain rule is now literally a product of these Jacobians — ``\partial\mathbb
-C_{MO}/\partial\mu = J_{MO}\,J_{CP}\,\partial\mathbb C_{HF}/\partial\mu`` — and it
+C_{\mathrm{MO}}/\partial\mu = J_{\mathrm{MO}}\,J_{CP}\,\partial\mathbb C_{HF}/\partial\mu`` — and it
 reproduces the single-pass result to machine precision:
 
 ```@example strength
@@ -281,7 +289,7 @@ hand — three opportunities for error that grow with the number of scales. The
 ## Results — strength and stiffness vs hydration degree
 
 For pure cement paste (``s/c = 0``), the effective bulk and shear moduli and the
-normalized compressive strength ``f_c/\sigma^{\rm ult}_{\rm hyd}`` all rise
+normalized compressive strength ``f_c/\sigma^{\mathrm{ult}}_{\mathrm{hyd}}`` all rise
 monotonically with hydration and fall with ``w/c`` — the trend reported by
 [pichler2011](@cite).
 
@@ -336,7 +344,7 @@ psc
 ```
 
 The absolute strength in MPa is recovered by multiplying by
-``\sigma^{\rm ult}_{\rm hyd}``, which [pichler2011](@cite) calibrate to ≈ 70–90 MPa
+``\sigma^{\mathrm{ult}}_{\mathrm{hyd}}``, which [pichler2011](@citet) calibrate to ≈ 70–90 MPa
 for typical C-S-H.
 
 ## The same chain, written declaratively
@@ -409,3 +417,13 @@ and the inner cells are still solved exactly once per evaluation. The
 three-scale worked example is
 [the multiscale tutorial](@ref tut-laminate-multiscale), which writes one model
 both ways and checks that the derivatives agree with finite differences.
+
+## Where to go next
+
+This page closes the cementitious family. The lens written above, and the other
+ways of naming a parameter inside a nested chain, are described in
+[Parameter lenses](@ref man-sensitivities-lenses). The next application,
+[A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate),
+returns to the coated aggregate of the ITZ chapter with a core no longer
+centered in its shell, a morphology without closed-form solution whose
+localization tensors are computed by finite elements.

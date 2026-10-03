@@ -18,7 +18,7 @@
 """
     Spring(E)
 
-A Hookean spring: `R(t) = E`, `J(t) = 1/E`, `R*(p) = E`.
+A Hookean spring: ``R(t) = E``, ``J(t) = 1/E``, ``R^{*}(p) = E``.
 
 The elastic limit of every other model, and the natural way to give a phase a
 constant modulus in one channel while another channel relaxes — the bulk
@@ -41,9 +41,9 @@ equilibrium_modulus(m::Spring) = m.E
 """
     Dashpot(η)
 
-A Newtonian dashpot: `J(t) = t/η`, `R*(p) = pη`.
+A Newtonian dashpot: ``J(t) = t/\\eta``, ``R^{*}(p) = p\\eta``.
 
-Its relaxation function is `η δ(t)`, a distribution rather than a function, so
+Its relaxation function is ``\\eta\\,\\delta(t)``, a distribution rather than a function, so
 [`relaxation`](@ref) throws for this model — as does [`glassy_modulus`](@ref),
 which would be infinite.  A dashpot is meant to be assembled with springs
 ([`MaxwellUnit`](@ref), [`burgers`](@ref)), not loaded on its own.
@@ -81,7 +81,7 @@ R(t) = E\\,e^{-t/\\tau}, \\qquad J(t) = \\frac{1}{E} + \\frac{t}{\\eta},
 A **fluid**: the stress relaxes to zero and the strain grows without bound.
 Equivalent to `PronyRelaxation(0, [E], [η/E])`, and that is what
 [`kelvin_to_maxwell`](@ref) and friends produce; this type exists so the
-physical parameters `(E, η)` can be given directly.
+physical parameters ``(E, \\eta)`` can be given directly.
 """
 struct MaxwellUnit{T <: Number} <: AbstractRheology
     E::T
@@ -95,9 +95,9 @@ end
 """
     relaxation_time(m::MaxwellUnit) -> Number
 
-The time constant `τ = η / E` of a Maxwell unit: the time over which its stress
-decays to `1/e` of its initial value under a held strain.  It is the sole shape
-parameter of the unit's relaxation function, `R(t) = E exp(-t/τ)`.
+The time constant ``\\tau = \\eta/E`` of a Maxwell unit: the time over which its stress
+decays to ``1/e`` of its initial value under a held strain.  It is the sole shape
+parameter of the unit's relaxation function, ``R(t) = E\\,e^{-t/\\tau}``.
 
 See [`retardation_time`](@ref) for the Kelvin counterpart.
 """
@@ -136,9 +136,9 @@ end
 """
     retardation_time(m::KelvinUnit) -> Number
 
-The time constant `τ = η / E` of a Kelvin unit: the time over which its strain
-reaches `1 - 1/e` of the asymptotic value under a held stress.  It is the sole
-shape parameter of the unit's creep function, `J(t) = (1 - exp(-t/τ)) / E`.
+The time constant ``\\tau = \\eta/E`` of a Kelvin unit: the time over which its strain
+reaches ``1 - 1/e`` of the asymptotic value under a held stress.  It is the sole
+shape parameter of the unit's creep function, ``J(t) = (1 - e^{-t/\\tau})/E``.
 
 The expression matches [`relaxation_time`](@ref), but the two are not
 interchangeable: one describes a decay of stress, the other an approach to a
@@ -174,7 +174,7 @@ branch, the classical closed form
 ```math
 J_0 = \\frac{1}{E_\\infty + E_1}, \\qquad
 J_1 = \\frac{1}{E_\\infty} - J_0, \\qquad
-\\tau^{K}_1 = \\tau_1\\,\\frac{E_\\infty + E_1}{E_\\infty}.
+\\tau^{\\mathrm{K}}_1 = \\tau_1\\,\\frac{E_\\infty + E_1}{E_\\infty}.
 ```
 """
 zener_maxwell(E_inf::Number, E_1::Number, tau_1::Number) =
@@ -188,8 +188,8 @@ modulus `E_glassy` in series with one Kelvin cell of modulus `E_delayed` and
 retardation time `tau_1`.
 
 ```math
-J(t) = \\frac{1}{E_{\\rm glassy}}
-     + \\frac{1}{E_{\\rm delayed}}\\bigl(1 - e^{-t/\\tau_1}\\bigr).
+J(t) = \\frac{1}{E_{\\mathrm{glassy}}}
+     + \\frac{1}{E_{\\mathrm{delayed}}}\\bigl(1 - e^{-t/\\tau_1}\\bigr).
 ```
 
 See [`zener_maxwell`](@ref) and [`kelvin_to_maxwell`](@ref).
@@ -204,8 +204,8 @@ The Burgers model: a Maxwell unit `(k_s, eta_s)` in series with a Kelvin cell
 `(k_p, eta_p)`.
 
 ```math
-J(t) = \\frac{1}{k_s} + \\frac{t}{\\eta_s}
-     + \\frac{1}{k_p}\\bigl(1 - e^{-t k_p/\\eta_p}\\bigr).
+J(t) = \\frac{1}{k_{\\mathrm{s}}} + \\frac{t}{\\eta_{\\mathrm{s}}}
+     + \\frac{1}{k_{\\mathrm{p}}}\\bigl(1 - e^{-t k_{\\mathrm{p}}/\\eta_{\\mathrm{p}}}\\bigr).
 ```
 
 A **fluid**, so [`kelvin_to_maxwell`](@ref) returns a *two*-branch
@@ -227,7 +227,7 @@ burgers(k_s::Number, eta_s::Number, k_p::Number, eta_p::Number) =
     ScottBlair(V, α)
 
 The **springpot** (fractional dashpot, Scott-Blair element), interpolating
-continuously between a spring (`α = 0`) and a dashpot (`α = 1`):
+continuously between a spring (``\\alpha = 0``) and a dashpot (``\\alpha = 1``):
 
 ```math
 R^{*}(p) = V p^{\\alpha}, \\qquad
@@ -235,7 +235,7 @@ R(t) = \\frac{V\\,t^{-\\alpha}}{\\Gamma(1-\\alpha)}, \\qquad
 J(t) = \\frac{t^{\\alpha}}{V\\,\\Gamma(1+\\alpha)} .
 ```
 
-`0 < α < 1`.  The exact pair ``t^{a} \\leftrightarrow \\Gamma(a+1)\\,p^{-a}`` is
+``0 < \\alpha < 1``.  The exact pair ``t^{a} \\leftrightarrow \\Gamma(a+1)\\,p^{-a}`` is
 what makes the power-law terms of [`HuetSayegh`](@ref) and
 [`Model2S2P1D`](@ref) analytic in both domains.
 
@@ -272,7 +272,7 @@ glassy_modulus(::ScottBlair) = _dirac_error("ScottBlair")
 Two springpots in **series**:
 ``R^{*}(p) = \\dfrac{V_a p^{\\alpha}\\,V_b p^{\\beta}}{V_a p^{\\alpha} + V_b p^{\\beta}}``.
 
-By convention `α > β`, so the `α` element is the stiffer one at short times.
+By convention ``\\alpha > \\beta``, so the ``\\alpha`` element is the stiffer one at short times.
 A fluid.
 """
 struct FractionalMaxwell{T <: Number} <: AbstractRheology
@@ -305,10 +305,10 @@ equilibrium_modulus(m::FractionalMaxwell) = zero(m.V_a)
     FractionalKelvin(V_a, α, V_b, β)
 
 Two springpots in **parallel**:
-``R^{*}(p) = V_a p^{\\alpha} + V_b p^{\\beta}``, with `α > β`.
+``R^{*}(p) = V_a p^{\\alpha} + V_b p^{\\beta}``, with ``\\alpha > \\beta``.
 
-With `β = 0` the slow element is a spring and the model is a solid of
-equilibrium modulus `V_b`.
+With ``\\beta = 0`` the slow element is a spring and the model is a solid of
+equilibrium modulus ``V_b``.
 """
 struct FractionalKelvin{T <: Number} <: AbstractRheology
     V_a::T
@@ -342,8 +342,8 @@ R^{*}(p) = E_\\infty + (E_0 - E_\\infty)\\,\\frac{(p\\tau)^{\\alpha}}
 R(t) = E_\\infty + (E_0 - E_\\infty)\\,E_{\\alpha}\\!\\bigl(-(t/\\tau)^{\\alpha}\\bigr),
 ```
 
-with ``E_\\alpha`` the one-parameter Mittag-Leffler function.  `α = 1` recovers
-[`zener_maxwell`](@ref); smaller `α` broadens the relaxation spectrum, which is
+with ``E_\\alpha`` the one-parameter Mittag-Leffler function.  ``\\alpha = 1`` recovers
+[`zener_maxwell`](@ref); smaller ``\\alpha`` broadens the relaxation spectrum, which is
 what makes the model fit polymers and bitumen where a single exponential cannot.
 
 The time-domain form needs `MittagLeffler.jl` (a weak dependency); without it,
@@ -410,12 +410,12 @@ R(t) = \\mu_0\\Bigl(1 + \\lambda_0\\,\\frac{1 - E_{\\alpha+1,1}
     extension loaded, `relaxation` uses the closed form instead — the two agree,
     which is one of the cross-checks in `test/Viscoelasticity/test_rheology.jl`.
 
-`mu_0` is the **glassy** modulus (the ``\\lambda_0`` term vanishes as `p → ∞`)
+`mu_0` is the **glassy** modulus (the ``\\lambda_0`` term vanishes as ``p \\to \\infty``)
 and ``\\mu_0(1 + \\lambda_0/\\beta)`` the equilibrium one.  A passive material
 therefore has ``\\lambda_0 < 0``: the benchmark of
-[barthelemyIJES2019](@cite) §5 uses `μ₀ = 1.7`, `λ₀ = -0.495`, `α = -0.46`,
-`β = 0.98`, and `α ∈ (-1, 0)` is the usual range — it is `α + 1` that must be
-positive, not `α`.
+[barthelemyIJES2019](@cite) §5 uses ``\\mu_0 = 1.7``, ``\\lambda_0 = -0.495``, ``\\alpha = -0.46``,
+``\\beta = 0.98``, and ``\\alpha \\in (-1, 0)`` is the usual range — it is ``\\alpha + 1`` that must be
+positive, not ``\\alpha``.
 """
 struct Rabotnov{T <: Number} <: AbstractRheology
     mu_0::T
@@ -466,7 +466,7 @@ E^{*}(p) = E_{00} + \\frac{E_0 - E_{00}}
       {1 + \\delta\\,(p\\tau)^{-k} + (p\\tau)^{-h}} .
 ```
 
-`E00` is the static modulus, `E0` the glassy one, and `0 < k < h < 1`.
+`E00` is the static modulus, `E0` the glassy one, and ``0 < k < h < 1``.
 A **solid**: unlike [`Model2S2P1D`](@ref) there is no series dashpot, so the
 strain stays bounded.
 """
@@ -514,8 +514,8 @@ E^{*}(p) = E_{00} + \\frac{E_0 - E_{00}}{\\varphi^{*}(p)},
                  + \\frac{1}{\\beta\\, p\\,\\tau_E} .
 ```
 
-`E00` is the static modulus, `E0` the glassy one, `0 < k < h < 1`, and the
-series dashpot `β` makes the model a **fluid**.
+`E00` is the static modulus, `E0` the glassy one, ``0 < k < h < 1``, and the
+series dashpot ``\\beta`` makes the model a **fluid**.
 
 !!! tip "One model, an exact pair in both domains"
     Because ``\\mathcal{LC}\\{t^{a}\\} = \\Gamma(a+1)\\,p^{-a}``, the denominator
@@ -624,12 +624,12 @@ with ``E_1`` the exponential integral.  A **fluid** in the sense that the strain
 grows without bound, though only logarithmically.
 
 The transform is evaluated through `SpecialFunctions.expintx`, the scaled form
-``e^{z}E_1(z)``, so it stays finite for large `pτ` where `exp(pτ)` alone would
+``e^{z}E_1(z)``, so it stays finite for large ``p\\tau`` where ``\\exp(p\\tau)`` alone would
 overflow.
 
 This is the non-ageing skeleton of the ageing law
 `logcompliance` in the ECHOES `ageing_visco_mat.py`; the ageing version, where
-`E`, `C` and `τ` depend on the loading age, belongs to the
+``E``, ``C`` and ``\\tau`` depend on the loading age, belongs to the
 [time-domain route](@ref man-viscoelasticity) instead.
 """
 struct LogarithmicCreep{T <: Number} <: AbstractRheology
@@ -659,17 +659,17 @@ equilibrium_modulus(m::LogarithmicCreep) = zero(m.E)
     creep_kernel_law(m::Model2S2P1D) -> ViscoLaw
 
 The dimensionless 2S2P1D creep kernel ``\\varphi`` packaged as a scalar
-`:creep` [`ViscoLaw`](@ref) `(t, t') ↦ φ(t - t')`, ready for the ageing
+`:creep` [`ViscoLaw`](@ref) ``(t, t') \\mapsto \\varphi(t - t')``, ready for the ageing
 pipeline.
 
 This is the entry point that lets one 2S2P1D object drive **both** routes.  The
 relaxation modulus in the time domain is
 
 ```math
-R = E_{00}\\,\\mathbf{1} + (E_0 - E_{00})\\,\\varphi^{-1},
+R = E_{00}\\,H + (E_0 - E_{00})\\,\\varphi^{-\\circ},
 ```
 
-where ``\\varphi^{-1}`` is the **Volterra** inverse, not the pointwise one:
+where ``\\varphi^{-\\circ}`` is the **Volterra** inverse, not the pointwise one:
 
 ```julia
 m   = Model2S2P1D(1e-7, 1000.0, 2.2, 1.945e-3, 0.22, 0.63, 50.0)

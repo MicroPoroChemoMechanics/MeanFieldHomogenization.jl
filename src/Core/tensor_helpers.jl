@@ -9,7 +9,7 @@
 """
     _δ(i, j, ::Type{T})
 
-Kronecker delta `δᵢⱼ` in element type `T` — returns `one(T)` when
+Kronecker delta ``\\delta_{ij}`` in element type `T` — returns `one(T)` when
 `i == j` and `zero(T)` otherwise.
 """
 @inline _δ(i, j, ::Type{T}) where {T} = i == j ? one(T) : zero(T)

@@ -48,12 +48,12 @@ const AXI_SET_INCLUSION = "inclusion"
 `n` points of the meridian profile from the equator `(a, 0)` to the pole
 `(0, c)`, both included, as `(ρ, z)` pairs.
 
-Exact by construction: the parametrization `ρ = a t^{1/m}`, `z = c(1−t)^{1/m}`
-satisfies `(ρ/a)^m + (z/c)^m = t + (1−t) = 1` for every `t`, so the points lie
+Exact by construction: the parametrization ``\\rho = a\\,t^{1/m}``, ``z = c\\,(1-t)^{1/m}``
+satisfies ``(\\rho/a)^m + (z/c)^m = t + (1-t) = 1`` for every ``t``, so the points lie
 on the surface to round-off and `level_set` returns zero on each — which the
 tests check rather than assume.
 
-The step clusters at both ends, through `t = (1 − cos πs)/2`. Uniform in `t`
+The step clusters at both ends, through ``t = (1 - \\cos\\pi s)/2``. Uniform in ``t``
 would put its points where the profile is flat and starve the two corners, whose
 curvature is unbounded for a concave shape.
 """

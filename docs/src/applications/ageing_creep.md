@@ -1,7 +1,15 @@
 # [Ageing creep of solidifying cementitious materials](@id app-ageing-creep)
 
-The ageing-creep model of [sanahuja2013](@cite): one phase **solidifies
-progressively** — as C-S-H does during hydration — so ``\mathbb R^{\rm hom}(t,
+!!! info "Before this page"
+    [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity), where the
+    time-domain schemes and their Volterra algebra are derived,
+    [Viscoelastic homogenization](@ref man-viscoelasticity) for
+    [`homogenize_alv`](@ref) and the relaxation laws, and the tutorial
+    [Ageing creep: loading age against inclusion shape](@ref tut-ageing-ages-aspect)
+    on the effect of the loading age.
+
+The ageing-creep model of [sanahuja2013](@citet): one phase **solidifies
+progressively** — as C-S-H does during hydration — so the effective relaxation kernel ``\mathbb C^{\mathrm{hom}}(t,
 t')`` depends on the observation time ``t`` and the loading time ``t'``
 *independently*. Laplace–Carson no longer applies; the homogenization runs
 directly in the time domain, through [`homogenize_alv`](@ref).
@@ -84,7 +92,7 @@ nothing # hide
 
 ## Two equivalent RVE topologies
 
-[sanahuja2013](@cite)'s key contribution is that the ``N`` solidifying shells and
+The key contribution of [sanahuja2013](@citet) is that the ``N`` solidifying shells and
 the pore can be packed into a **single composite sphere** instead of ``N+1``
 separate inclusions — reducing ``N+1`` Eshelby problems to one. `MeanFieldHomogenization`
 supports both: `:whole_pores` (``N`` separate spherical inclusions) and `:layers`
@@ -128,7 +136,7 @@ nothing # hide
 
 `homogenize_alv` returns the ``6n\times6n`` block relaxation matrix over the time
 grid; its Volterra inverse (`volterra_inverse`) is the creep-compliance matrix,
-from which the uniaxial creep ``E_0 J^E_{\rm eff}(t,t_0)`` follows.
+from which the uniaxial creep ``E_0 J^{\mathrm{hom}}(t,t_0)`` follows.
 
 ```@example creep
 function uniaxial_creep(R)
@@ -146,11 +154,11 @@ nothing # hide
 
 ## Results
 
-Following [sanahuja2013](@cite), the effective creep is computed for five loading
+Following [sanahuja2013](@citet), the effective creep is computed for five loading
 ages ``t_0`` (history-dependent, solid `+`; frozen, dashed) with both RVE
 topologies, side by side as in the Echoes book. `N = 100` layers are used.
 
-The **elastic reference** ``1/E^{\rm hom}(t)`` (black dotted) is the
+The **elastic reference** ``1/E^{\mathrm{hom}}(t)`` (black dotted) is the
 instantaneous (glassy) compliance of the microstructure frozen at time ``t``:
 every layer past its setting time carries its *elastic* stiffness
 ``\mathbb C_1``, the others are still pores. It is built from the same topology
@@ -233,8 +241,8 @@ Three observations, all reproducing [sanahuja2013](@cite):
 
 ### Elastic cross-check
 
-``J^E_{\rm eff}(t_0, t_0) = 1/E^{\rm hom}(t_0)`` must hold exactly: the
-trapezoidal block ``(1,1)`` of every phase kernel is ``\mathbb R(t_0, t_0)``, its
+``J^{\mathrm{hom}}(t_0, t_0) = 1/E^{\mathrm{hom}}(t_0)`` must hold exactly: the
+trapezoidal block ``(1,1)`` of every phase kernel is ``\mathbb C(t_0, t_0)``, its
 glassy modulus, and the Volterra products, inverses and layered recurrences all
 preserve that block. The two sides below come from disjoint code paths — the
 time-domain ALV pipeline and the elastic Mori–Tanaka estimate — so the agreement
@@ -263,6 +271,14 @@ second scatters them independently in the matrix.
     ``t_0 = 2/3``), and the two differ by ``\approx 6.5`` in ``E_0 J``.
 
     That gap is a modeling result, not a discrepancy: the composite-sphere
-    packing of [sanahuja2013](@cite) is an efficient model — one Eshelby problem
+    packing of [sanahuja2013](@citet) is an efficient model — one Eshelby problem
     instead of ``N+1`` — not an exact reformulation of the separate-inclusion
     RVE. Choosing between them is choosing a morphology.
+
+## Where to go next
+
+The schemes other than Mori–Tanaka on the same time-domain path are compared on
+one composite in [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes).
+The next application, [Viscoelastic complex modulus of a bituminous mixture](@ref app-bituminous),
+treats a non-ageing material, for which the correspondence principle holds and
+the homogenization runs in the frequency domain with complex moduli.

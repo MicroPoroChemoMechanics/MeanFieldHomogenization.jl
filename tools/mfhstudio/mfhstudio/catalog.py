@@ -150,15 +150,15 @@ PROPERTIES = [
         "name": "iso_conduction", "label": "Isotropic conductivity", "order": 2,
         "builder": "TensISO{3}",
         "doc": "A single argument to TensISO{dim} gives the 2nd-order tensor.",
-        "fields": [{"name": "k", "label": "κ", "type": "number", "default": 1.0}],
+        "fields": [{"name": "k", "label": "k", "type": "number", "default": 1.0}],
     },
     {
         "name": "ti_conduction", "label": "Transversely isotropic conductivity",
         "order": 2, "builder": "TensTI2",
-        "doc": "κₜ acts across the axis, κₐ along it.",
+        "doc": "kₜ acts across the axis, kₐ along it.",
         "fields": [
-            {"name": "kt", "label": "κₜ (transverse)", "type": "number", "default": 1.0},
-            {"name": "ka", "label": "κₐ (axial)", "type": "number", "default": 5.0},
+            {"name": "kt", "label": "kₜ (transverse)", "type": "number", "default": 1.0},
+            {"name": "ka", "label": "kₐ (axial)", "type": "number", "default": 5.0},
         ],
         "orientation": 2,
     },
@@ -167,9 +167,9 @@ PROPERTIES = [
         "order": 2, "builder": "TensDiag2",
         "doc": "The three principal conductivities, in the phase's own frame.",
         "fields": [
-            {"name": "k1", "label": "κ₁", "type": "number", "default": 1.0},
-            {"name": "k2", "label": "κ₂", "type": "number", "default": 2.0},
-            {"name": "k3", "label": "κ₃", "type": "number", "default": 5.0},
+            {"name": "k1", "label": "k₁", "type": "number", "default": 1.0},
+            {"name": "k2", "label": "k₂", "type": "number", "default": 2.0},
+            {"name": "k3", "label": "k₃", "type": "number", "default": 5.0},
         ],
         "orientation": 3,
     },
@@ -299,7 +299,7 @@ INTERFACES = [
     },
     {
         "name": "SurfaceConductiveInterface", "label": "Surface conductive",
-        "fields": [{"name": "ks", "label": "κₛ", "type": "number", "default": 1.0}],
+        "fields": [{"name": "ks", "label": "kˢ", "type": "number", "default": 1.0}],
         "order": 2,
     },
     # ── laminate-only, anisotropic ───────────────────────────────────────

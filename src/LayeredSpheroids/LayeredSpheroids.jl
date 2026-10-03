@@ -32,7 +32,7 @@ That path into the schemes now works in **elasticity** too, prolate and oblate
 alike: [`spheroid_strain_concentration`](@ref) assembles the full transversely
 isotropic concentration tensor from the three elementary problems, and
 `strain_strain_loc` / `stiffness_contribution` hand it to the schemes. Only
-perfect interfaces, and only the default axis `ê₃`.
+perfect interfaces, and only the default axis ``\\underline{e}_3``.
 """
 module LayeredSpheroids
 

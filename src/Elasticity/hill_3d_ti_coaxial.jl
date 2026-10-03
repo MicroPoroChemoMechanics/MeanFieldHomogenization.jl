@@ -3,7 +3,7 @@
 #  spheroidal inclusion coaxial with a transversely isotropic matrix.
 #
 #  Implements the closed-form formula derived in
-#  [barthelemyIJES2020_hilltrans](@cite) (eqs. 49–58 of the post-print)
+#  [barthelemyIJES2020_hilltrans](@citet) (eqs. 49–58 of the post-print)
 #  for the Walpole-basis components `(P₁, P₂, P₃, P₅, P₆)` of the Hill
 #  tensor of a spheroid (prolate or oblate) whose axis is parallel to
 #  the symmetry axis of a TI elastic matrix.
@@ -18,7 +18,7 @@
 #  with axis equal to the common symmetry axis of `C₀` and the
 #  spheroid.  When the matrix is in fact isotropic, the formula
 #  recovers the classical Eshelby–Mura result
-#  ([mura1987](@cite)).
+#  [mura1987](@cite).
 # =============================================================================
 
 # ── Elliptic-integral helpers — single argument η ----------------------------
@@ -115,7 +115,7 @@ end
         -> (P1, P2, P3, P5, P6)
 
 Closed-form Walpole-basis coefficients of the Hill tensor for a spheroid
-of aspect ratio `ω = (axial)/(transverse)` coaxial with a transversely
+of aspect ratio ``\\omega`` (axial / transverse semi-axis) coaxial with a transversely
 isotropic matrix specified by the five independent elastic constants.
 
 Element type policy: with
@@ -130,10 +130,10 @@ Element type policy: with
   ratio).
 - if `T` is itself complex (frequency-domain viscoelasticity, harmonic
   problems), the formula is evaluated directly in `T` and the genuinely
-  complex `P_i` are returned unchanged.
+  complex ``P_i`` are returned unchanged.
 
-When the matrix is in fact isotropic (`C1111 = C3333 = λ + 2μ`,
-`C1122 = C1133 = λ`, `C2323 = μ`) the returned coefficients reduce to
+When the matrix is in fact isotropic (``C_{1111} = C_{3333} = \\lambda + 2\\mu``,
+``C_{1122} = C_{1133} = \\lambda``, ``C_{2323} = \\mu``) the returned coefficients reduce to
 the classical Mura formula.
 
 !!! note "Symbolic numbers (SymPy Sym)"
@@ -144,7 +144,7 @@ the classical Mura formula.
     paper, or use the residue/DECUHR backends with substituted
     numerical values.
 
-Reference: [barthelemyIJES2020_hilltrans](@cite), eqs. 49–58.
+Reference: [barthelemyIJES2020_hilltrans](@citet), eqs. 49–58.
 """
 function _hill_ti_walpole(ω, C1111, C1122, C1133, C3333, C2323)
     T = promote_type(
@@ -226,16 +226,16 @@ the test succeeds.  Otherwise the user is silently routed to the
 generic residue/DECUHR backend.
 
 # Arguments
-- `ell::Ellipsoid{3, Oblate}`: oblate spheroid `a = b ≥ c`, axis `e₃`,
-  aspect ratio `ω = c/a`.
-- `ell::Ellipsoid{3, Prolate}`: prolate spheroid `a ≥ b = c`, axis `e₁`,
-  aspect ratio `ω = a/b`.
+- `ell::Ellipsoid{3, Oblate}`: oblate spheroid ``a = b \\ge c``, axis ``\\underline{e}_3``,
+  aspect ratio ``\\omega = c/a``.
+- `ell::Ellipsoid{3, Prolate}`: prolate spheroid ``a \\ge b = c``, axis ``\\underline{e}_1``,
+  aspect ratio ``\\omega = a/b``.
 
 # Returns
 `TensTI{4, Float64, 5}` (major-symmetric Walpole tensor) with axis equal
 to the matrix's TI axis.
 
-Reference: [barthelemyIJES2020_hilltrans](@cite).
+Reference: [barthelemyIJES2020_hilltrans](@citet).
 """
 function _hill_3d_ti_coaxial(ell::Ellipsoid{3, Oblate}, C₀::TensND.TensTI{4, T, 5}) where {T}
     a, _, c = ell.semi_axes

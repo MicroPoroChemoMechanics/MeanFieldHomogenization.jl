@@ -1,5 +1,11 @@
 # [Bounds and classical schemes](@id tut-bounds-and-schemes)
 
+!!! info "Before this page"
+    The tutorial [A first homogenization](@ref tut-first-estimate), whose RVE
+    and dilute and Mori–Tanaka estimates are reused below, and the theory page
+    [Homogenization schemes](@ref th-homogenization), where the bounds and the
+    iterative schemes are written out.
+
 The dilute and Mori–Tanaka estimates of the previous tutorial are two
 points in a much larger family. This page places every classical
 scheme on a single graph, bracketed by the two estimates that **must**
@@ -20,10 +26,10 @@ RVE, and the **Reuss** bound a uniform stress:
 
 Both are exact bounds — no assumption on the microstructure's geometry
 is needed — and order every physically realizable effective bulk
-modulus [hill1963](@cite), [hill1965](@cite):
+modulus [hill1963, hill1965](@cite):
 
 ```math
-k_R \le k_{\text{eff}} \le k_V.
+k_R \le k^{\mathrm{hom}} \le k_V.
 ```
 
 ## Estimates between the bounds
@@ -35,10 +41,10 @@ embedded directly in the *effective* medium itself, and the effective
 stiffness must satisfy the implicit condition
 
 ```math
-\mathbb{C}_{\text{eff}} = \sum_i f_i\,\mathbb{C}_i:\mathbb{A}_i(\mathbb{C}_{\text{eff}}),
+\mathbb{C}^{\mathrm{hom}} = \sum_i f_i\,\mathbb{C}_i:\mathbb{A}_i(\mathbb{C}^{\mathrm{hom}}),
 ```
 
-[budiansky1976](@cite), solved by a damped Picard iteration internally
+[budiansky1976](@citet), solved by a damped Picard iteration internally
 (`abstol`, `maxiters` control its convergence). This is the natural
 model for an interpenetrating, polycrystal-like microstructure where no
 phase plays the role of a continuous matrix.
@@ -47,7 +53,7 @@ phase plays the role of a continuous matrix.
 
 [`DifferentialScheme`](@ref) builds the composite incrementally,
 re-homogenizing after each infinitesimal addition of inclusions — see
-[the dedicated tutorial](differential_paths.md) for the full
+[the dedicated tutorial](@ref tut-differential-paths) for the full
 picture.
 
 ## Putting them on one graph
@@ -106,3 +112,12 @@ mean-field homogenization: the choice of scheme is not a numerical
 detail but a **modeling decision** about the microstructure's topology
 (matrix-inclusion vs. interpenetrating, dilute vs. dense, aligned vs.
 random).
+
+## Where to go next
+
+The inclusions above are stiffer than the matrix, which is the easy case.
+[Porous materials and the self-consistent trap](@ref tut-porous-materials)
+takes the opposite limit, a phase whose stiffness vanishes, where the
+self-consistent iteration stops being reliable and a compliance-form variant
+takes over. The differential scheme, only sketched here, has its own tutorial,
+[The differential scheme and path dependence](@ref tut-differential-paths).

@@ -6,13 +6,14 @@
     _hill_order2_3d_iso(ell::Ellipsoid{3}, K₀) -> AbstractTens{2,3}
 
 2nd-order Hill polarization tensor of an ellipsoid in an isotropic
-conductor ``\\mathbf K_0 = K\\,\\mathbf 1``:
+conductor ``\\boldsymbol{K}_0 = k_0\\,\\boldsymbol{1}``:
 
-```
-P(A, K·1) = I^A / K ,
+```math
+\\boldsymbol{P}(\\boldsymbol{A}, k_0\\,\\boldsymbol{1})
+= \\frac{\\boldsymbol{I}^{\\boldsymbol{A}}}{k_0} ,
 ```
 
-where ``\\mathbf I^{\\mathbf A}`` is the Newton-potential geometric
+where ``\\boldsymbol{I}^{\\boldsymbol{A}}`` is the Newton-potential geometric
 tensor ([`tens_IA`](@ref), [willis1977](@cite)).
 """
 function _hill_order2_3d_iso(ell::Ellipsoid{3, Spherical}, K₀)
@@ -43,19 +44,22 @@ end
 
 2nd-order Hill polarization tensor of an ellipsoid in an arbitrarily
 anisotropic conductor, via the closed-form square-root
-change-of-variable of [giraudMOM2019](@cite)
+change-of-variable of [giraudMOM2019](@citet)
 (equivalent derivation by Green's function in
 [barthelemyTIPM2009](@cite)):
 
-```
-P(A, K) = K⁻¹ᐟ² · I^(A·K⁻¹ᐟ²) · K⁻¹ᐟ² ,
+```math
+\\boldsymbol{P}(\\boldsymbol{A},\\boldsymbol{K})
+= \\boldsymbol{K}^{-1/2}\\cdot
+  \\boldsymbol{I}^{\\boldsymbol{A}\\cdot\\boldsymbol{K}^{-1/2}}\\cdot
+  \\boldsymbol{K}^{-1/2} ,
 ```
 
-where ``\\mathbf I^{\\mathbf A\\cdot\\mathbf K^{-1/2}}`` is the Newton
+where ``\\boldsymbol{I}^{\\boldsymbol{A}\\cdot\\boldsymbol{K}^{-1/2}}`` is the Newton
 potential of the fictitious ellipsoid whose shape tensor is
-``\\mathbf A\\cdot\\mathbf K^{-1/2}`` (semi-axes obtained by
-diagonalizing ``\\mathbf K^{-1/2}\\cdot\\mathbf A^{\\!T}\\!\\cdot
-\\mathbf A\\cdot\\mathbf K^{-1/2}``).
+``\\boldsymbol{A}\\cdot\\boldsymbol{K}^{-1/2}`` (semi-axes obtained by
+diagonalizing ``\\boldsymbol{K}^{-1/2}\\cdot\\boldsymbol{A}^{\\!T}\\!\\cdot
+\\boldsymbol{A}\\cdot\\boldsymbol{K}^{-1/2}``).
 """
 function _hill_order2_3d_aniso(ell::Ellipsoid{3}, K₀)
     T_mat = eltype(K₀)
@@ -90,13 +94,19 @@ end
     _hill_order2_3d_iso(cyl::Cylinder, K₀) -> AbstractTens{2,3}
 
 2nd-order Hill polarization tensor of an infinite cylinder (axis
-``\\hat{\\mathbf e}_1``, transverse semi-axes ``b\\ge c>0``) in an
-isotropic conductor ``\\mathbf K_0 = K\\,\\mathbf 1``, obtained from the
+``\\underline{e}_1``, transverse semi-axes ``b\\ge c>0``) in an
+isotropic conductor ``\\boldsymbol{K}_0 = k_0\\,\\boldsymbol{1}``, obtained from the
 cylinder Newton-potential coefficients
-([mura1987](@cite), §11.22):
+[mura1987; §11.22](@cite):
 
-```
-P = I^cyl / K ,   with   I₁^cyl = 0,   I₂^cyl = c/(b+c),   I₃^cyl = b/(b+c) .
+```math
+\\boldsymbol{P} = \\frac{\\boldsymbol{I}^{\\mathrm{cyl}}}{k_0} ,
+\\qquad
+I_1^{\\mathrm{cyl}} = 0,
+\\quad
+I_2^{\\mathrm{cyl}} = \\frac{c}{b+c},
+\\quad
+I_3^{\\mathrm{cyl}} = \\frac{b}{b+c} .
 ```
 
 ``P_{11} = 0`` expresses that no polarization is transmitted along the
@@ -121,10 +131,10 @@ end
 
 2nd-order Hill polarization tensor of an infinite cylinder in an
 arbitrarily anisotropic conductor.  The transverse plane
-``(\\hat{\\mathbf e}_2,\\hat{\\mathbf e}_3)`` carries the full 2-D
-Hill problem: the ``\\mathbf K^{-1/2}`` transformation of
-[giraudMOM2019](@cite) is applied to the
-transverse 2×2 sub-matrix of ``\\mathbf K_0`` in the cylinder frame;
+``(\\underline{e}_2,\\underline{e}_3)`` carries the full 2-D
+Hill problem: the ``\\boldsymbol{K}^{-1/2}`` transformation of
+[giraudMOM2019](@citet) is applied to the
+transverse 2×2 sub-matrix of ``\\boldsymbol{K}_0`` in the cylinder frame;
 the 2-D Newton potentials produce the transverse block, and the axial
 row/column is re-embedded as zero (``P_{1j}=0``).
 """

@@ -1,5 +1,11 @@
 # [Cylindrical inclusions](@id man-cylindrical-inclusions)
 
+!!! info "Before this page"
+    [Ellipsoidal inclusions](@ref man-ellipsoidal-inclusions), of which the
+    cylinder is the ``a \to \infty`` limit, and
+    [Hill polarization tensors](@ref th-hill-tensors), where the cylindrical
+    case of the Hill tensor is derived.
+
 Infinite cylinders are handled by the dedicated `Cylinder` type —
 a subtype of `AbstractEllipsoidalInclusion{3, T}` that stores only
 the two transverse semi-axes and the local basis (the infinite axis
@@ -61,7 +67,7 @@ have to switch constructors manually:
 | `Ellipsoid(2.0, 0.0, 0.0)` | `ArgumentError` |
 
 As for ellipsoids, the detection is active only for real element types (see
-[Ellipsoidal inclusions](ellipsoidal_inclusions.md)).
+[Ellipsoidal inclusions](@ref man-ellipsoidal-inclusions)).
 
 ## Hill tensor
 
@@ -84,7 +90,7 @@ For a general anisotropic matrix the call
 QuadGK quadrature over the transverse plane.  The `method=:residues`
 option is remapped to the same routine (the residue algorithm is not
 applicable to a cylinder — see
-[theory / Hill polarization tensors](../theory/hill_tensors.md)).
+[theory / Hill polarization tensors](@ref th-hill-tensors)).
 
 ## Conductivity
 
@@ -121,3 +127,10 @@ construction uses structural equality (`isequal(b, c)`) to select the
 circular branch.  For symbolic differentiation at `b = c`, prefer the
 single-argument constructor `Cylinder(b)` which forces the circular
 trait at compile time.
+
+## Where to go next
+
+[Cracks](@ref man-cracks) treats the other degenerate limit of the ellipsoid,
+the flat one, where the amount of inclusion becomes a density. A cylinder
+enters an RVE like any other inclusion, through the `add_phase!` call of
+[Homogenization schemes](@ref man-schemes).

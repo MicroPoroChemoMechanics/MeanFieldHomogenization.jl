@@ -19,7 +19,7 @@
 
 Adaptive 1-D DECUHR (via `Integrals.DecuhrAlgorithm`) evaluation of
 the crack-plane kernel used in the ``\\omega \\to 0`` limit algorithm
-of [barthelemyIJSS2009](@cite).  Integrand is smooth,
+of [barthelemyIJSS2009](@citet).  Integrand is smooth,
 `alpha = 0.0` is forced to keep ForwardDiff compatibility.
 """
 function _Qnn_star_decuhr(
@@ -72,7 +72,7 @@ end
     _cod_elliptic_decuhr_direct(c, C₀; abstol, reltol, maxiters)
 
 Direct 2-D DECUHR cubature (via `Integrals.DecuhrAlgorithm`) over the
-elliptic-crack COD integrand on `(φ, α) ∈ [0, 2π] × [0, π/2]`.
+elliptic-crack COD integrand on ``(\\varphi, \\alpha) \\in [0, 2\\pi]\\times[0, \\pi/2]``.
 Smooth integrand — `alpha = 0.0` forced for ForwardDiff compatibility.
 """
 function _cod_elliptic_decuhr_direct(

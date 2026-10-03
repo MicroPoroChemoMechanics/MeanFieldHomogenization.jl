@@ -47,19 +47,19 @@
     green_operator_iso(C₀::TensISO{4,3}, x) -> Tens{4,3}
 
 Real-space Green operator ``\\mathbb{G}^0`` of an infinite isotropic elastic
-matrix `C₀`, evaluated at `x ≠ 0`:
+matrix `C₀`, evaluated at ``\\underline{x} \\ne \\underline{0}``:
 
 ```math
-\\mathbb{G}^0_{ijkl}(x)
-  = -\\Big[\\frac{\\partial^2 G_{ik}}{\\partial x_j \\partial x_l}(x)\\Big]_{(ij)(kl)} ,
+\\mathbb{G}^0_{ijkl}(\\underline{x})
+  = -\\Big[\\frac{\\partial^2 G_{ik}}{\\partial x_j \\partial x_l}(\\underline{x})\\Big]_{(ij)(kl)} ,
 ```
 
 where ``G`` is the Kelvin Green function and the brackets denote
 symmetrization with respect to ``(i,j)`` and ``(k,l)``. The leading minus is
-the convention of [brisard2023](@cite) — see the
+the convention of [brisard2023](@citet) — see the
 file header.
 
-With ``r = \\|x\\|``, ``\\underline{n} = x/r`` and ``A = 1/(16\\pi\\mu(1-\\nu))``,
+With ``r = \\|\\underline{x}\\|``, ``\\underline{n} = \\underline{x}/r`` and ``A = 1/(16\\pi\\mu(1-\\nu))``,
 the second gradient of the Kelvin solution reads
 
 ```math
@@ -72,8 +72,8 @@ the second gradient of the Kelvin solution reads
     + 15\\, n_i n_j n_k n_l\\Big].
 ```
 
-A uniform polarization ``\\tau`` carried by a volume ``V`` around the origin
-induces the strain ``-V\\,\\mathbb{G}^0(x):\\tau`` at `x` — exact in the far
+A uniform polarization ``\\boldsymbol{\\tau}`` carried by a volume ``V`` around the origin
+induces the strain ``-V\\,\\mathbb{G}^0(\\underline{x}):\\boldsymbol{\\tau}`` at ``\\underline{x}`` — exact in the far
 field, and *exact at any separation* when the source region is a ball, because
 each component of ``\\mathbb{G}^0`` is then averaged over a region where it is
 harmonic.
@@ -133,12 +133,12 @@ end
     green_operator_iso(K₀::TensISO{2,3}, x) -> Tens{2,3}
 
 Conduction counterpart: minus the Hessian of the scalar Green function of an
-infinite isotropic medium of conductivity ``\\sigma_0``,
+infinite isotropic medium of conductivity ``k_0``,
 
 ```math
-\\boldsymbol{G}^0_{ij}(x) = -\\frac{\\partial^2}{\\partial x_i \\partial x_j}
-   \\frac{1}{4\\pi\\sigma_0 r}
- = \\frac{\\delta_{ij} - 3 n_i n_j}{4\\pi\\sigma_0 r^{3}} .
+\\boldsymbol{G}^0_{ij}(\\underline{x}) = -\\frac{\\partial^2}{\\partial x_i \\partial x_j}
+   \\frac{1}{4\\pi k_0 r}
+ = \\frac{\\delta_{ij} - 3 n_i n_j}{4\\pi k_0 r^{3}} .
 ```
 
 It is traceless away from the origin — the isotropic part of the interaction
@@ -179,15 +179,15 @@ end
 """
     green_operator_iso(K₀::TensISO{2,2}, x) -> Tens{2,2}
 
-Two-dimensional conduction counterpart, from ``G = -\\log r/(2\\pi\\sigma_0)``:
+Two-dimensional conduction counterpart, from ``G = -\\log r/(2\\pi k_0)``:
 
 ```math
-\\boldsymbol{G}^0_{ij}(x) = \\frac{\\delta_{ij} - 2 n_i n_j}{2\\pi\\sigma_0 r^{2}} .
+\\boldsymbol{G}^0_{ij}(\\underline{x}) = \\frac{\\delta_{ij} - 2 n_i n_j}{2\\pi k_0 r^{2}} .
 ```
 
 Multiplied by the area ``\\pi b^2`` of a source disk this is *literally* the
-plane form given by [brisard2023](@cite),
-``\\boldsymbol{T}^{ab} = \\frac{b^2}{2\\sigma_0 r^2}
+plane form given by [brisard2023](@citet),
+``\\boldsymbol{T}^{ab} = \\frac{b^2}{2 k_0 r^2}
   (\\boldsymbol{1} - 2\\,\\underline{n}\\otimes\\underline{n})``, which is the
 sharpest available check that the package and the paper share one convention.
 """
@@ -222,7 +222,7 @@ Plane-strain elastic Green operator of an infinite isotropic matrix. The
 two-dimensional Kelvin solution is
 
 ```math
-G_{ij}(x) = \\frac{1}{8\\pi\\mu(1-\\nu)}
+G_{ij}(\\underline{x}) = \\frac{1}{8\\pi\\mu(1-\\nu)}
    \\big[-(3-4\\nu)\\log r\\,\\delta_{ij} + n_i n_j\\big],
 ```
 
@@ -238,7 +238,7 @@ whose second gradient gives
     + 8\\, n_i n_j n_k n_l\\Big],
 ```
 
-with ``A_2 = 1/(8\\pi\\mu(1-\\nu))``. `ν` is the plane-strain Poisson ratio of
+with ``A_2 = 1/(8\\pi\\mu(1-\\nu))``. ``\\nu`` is the plane-strain Poisson ratio of
 the reference medium. The result is symmetrized — and negated, per the
 convention of the file header — exactly as in 3D.
 """

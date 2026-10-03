@@ -140,7 +140,7 @@ lips, in spite of `OpenBoundaryPhysicalGroup` (still true in gmsh 4.15). Left
 alone the crack is effectively half an element longer than asked for, and the
 opening comes out 10-20 % too large. The lips must stay split — that
 discontinuity *is* the crack — so a blanket `removeDuplicateNodes` is not an
-option: only nodes on the ellipse `(x/a)² + (y/b)² = 1`, `z = 0` are merged.
+option: only nodes on the ellipse ``(x/a)^2 + (y/b)^2 = 1``, ``z = 0`` are merged.
 
 Working on the file rather than on the live gmsh model is what makes this
 shared: a node merge is a renumbering of the element connectivity, and every

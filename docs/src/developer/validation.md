@@ -1,9 +1,15 @@
 # [Cross-validation against Echoes](@id dev-validation)
 
+!!! info "Before this page"
+    [From Echoes to MeanFieldHomogenization](@ref tools-from-echoes), for the
+    PyCall setup the cross-checks rely on, and
+    [Testing conventions](@ref dev-testing-conventions), for the oracles of the
+    test suite that these cross-checks complement.
+
 `MeanFieldHomogenization` is a port of the C++ [`Echoes`](@cite echoes) code, so nearly
 every quantity has an independent reference. The cross-checks live in
 `scripts/bench_echoes/` and call Echoes through `PyCall`
-(setup: [From Echoes to MeanFieldHomogenization](../tools/from_echoes.md)); the ALV
+(setup: [From Echoes to MeanFieldHomogenization](@ref tools-from-echoes)); the ALV
 ones also ship `*_python.json` dumps so they run without an Echoes install.
 
 ## Cross-checks
@@ -40,11 +46,11 @@ Conventions and formulation choices, not numerical error — do not "fix" them.
 
 | Divergence | Nature | Explained in |
 | :--- | :--- | :--- |
-| Elliptic crack ``\mathbb H`` | normalization, see below | [COD tensors](../theory/cod_tensors.md) |
-| MT on a cracked RVE | ``\mathbb B : \mathbb A^{-1}`` vs additive closure; both agree with PCW at low density | [Viscoelasticity](../manual/viscoelasticity.md) |
+| Elliptic crack ``\mathbb H`` | normalization, see below | [COD tensors](@ref th-cod-tensors) |
+| MT on a cracked RVE | ``\mathbb B : \mathbb A^{-1}`` vs additive closure; both agree with PCW at low density | [Viscoelasticity](@ref man-viscoelasticity) |
 | ASC, porous oblate | Echoes' compliance-form ASC converges to another branch | `benchmark_porous.jl` |
 | DifferentialScheme, porous ``\varphi \ge 0.5`` | pre-existing gap, 2.6e-3 → 6.2e-2, reproducible | `benchmark_porous.jl` |
-| Strength ``f_c`` (2 %) | water/air regularized to a small positive stiffness | [Strength](../applications/strength.md) |
+| Strength ``f_c`` (2 %) | water/air regularized to a small positive stiffness | [Strength](@ref app-strength) |
 
 `MeanFieldHomogenization` normalizes the crack compliance by the **minor** semi-axis
 ``b``, Echoes by the **major** semi-axis ``a``, so for an in-plane aspect
@@ -63,7 +69,7 @@ decimals, and the ``3/4`` is ``\eta``-independent to machine precision.
     At ``\eta = 1`` both conventions coincide, and a localization term that
     vanishes in every symmetric configuration is invisible to a test suite
     built from those configurations. See
-    [Testing conventions](testing_conventions.md).
+    [Testing conventions](@ref dev-testing-conventions).
 
 ## Running
 
@@ -71,3 +77,10 @@ decimals, and the ``3/4`` is ``\eta``-independent to machine precision.
 import DECUHR, Integrals      # the :decuhr back-end lives in an extension
 include("scripts/bench_echoes/benchmark.jl")
 ```
+
+The other scripts of the first table are run by the same `include`.
+
+## Where to go next
+
+[Performance notes](@ref dev-performance-notes) turns from accuracy to cost:
+what the hot paths do, and where the time goes.

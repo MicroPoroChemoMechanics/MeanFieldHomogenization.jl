@@ -1,6 +1,12 @@
 # [Fractured permeability](@id fe-permeability)
 
-The hydraulic half of a fractured-rock model. A fracture is not an obstacle to
+!!! info "Before this page"
+    [The coupled poroelastic problem](@ref fe-poro-coupling), whose flow balance
+    needs the permeability computed here, and [Conductivity](@ref man-conductivity)
+    with [Thermal cracks](@ref th-thermal-cracks) for the transport problem of an
+    ordinary, insulating crack.
+
+This page computes the hydraulic half of a fractured-rock model. A fracture is not an obstacle to
 flow but the **preferential path** through an almost impermeable matrix, which
 is the opposite of what an ordinary [crack](@ref man-cracks) does in transport.
 
@@ -14,8 +20,9 @@ C = 2\,c\,k_f \qquad (\text{conductivity} \times \text{aperture}).
 ```
 
 With ``\gamma = C/2a``, the contribution ``\boldsymbol{k}`` per unit
-``(4\pi/3)\,d`` in an isotropic matrix ``k_0`` is purely in-plane, ``\underline{n}``
-being the unit normal to the fracture plane:
+``(4\pi/3)\,\varepsilon``, ``\varepsilon = \mathcal{N}a^3`` being the crack density
+of ``\mathcal{N}`` fractures per unit volume, in an isotropic matrix ``k_0`` is
+purely in-plane, ``\underline{n}`` being the unit normal to the fracture plane:
 
 ```math
 \boldsymbol{k} = \frac{\gamma}{1 + \dfrac{\pi\gamma}{4k_0}}
@@ -45,12 +52,14 @@ inherited unchanged — one object serves both physics.
 ## The self-consistent estimate
 
 ```math
-\boldsymbol{K}^{\rm hom} = k_s\,\boldsymbol{1}
-  + \sum_i \frac{4\pi}{3}\,d_i\,\boldsymbol{k}_i(\boldsymbol{K}^{\rm hom})
+\boldsymbol{K}^{\mathrm{hom}} = k_{\mathrm s}\,\boldsymbol{1}
+  + \sum_i \frac{4\pi}{3}\,\varepsilon_i\,\boldsymbol{k}_i(\boldsymbol{K}^{\mathrm{hom}})
 ```
 
-Each family is read **in the effective medium**, which is what lets fractures
-see one another and produces a percolation threshold.
+with ``k_{\mathrm s}`` the conductivity of the intact matrix and
+``\varepsilon_i`` the crack density of family ``i``. Each family is read **in
+the effective medium**, which is what lets fractures see one another and
+produces a percolation threshold.
 
 ```@example perm
 fams = (ConductiveCrack(1.0; conductivity = 1.0e-3, euler_angles = (π/2, 0.0)),
@@ -70,9 +79,16 @@ conducts most — visible in the numbers above.
     *insulating* cracks: its volumetric accumulator
     ``\sum_\alpha f_\alpha\,\boldsymbol{K}_\alpha\cdot\boldsymbol{A}_\alpha``
     drops the ``0\times\infty`` product a flowing crack is, so with ``k_s = 0``
-    it collapses to ``\boldsymbol{K}^{\rm hom} = 0`` for any input. Use a small
+    it collapses to ``\boldsymbol{K}^{\mathrm{hom}} = 0`` for any input. Use a small
     but non-zero matrix conductivity.
 
     A dense, strongly conducting network can also pass the percolation
     threshold, where the estimate diverges; the solver warns rather than
     returning a converged-looking number.
+
+## Where to go next
+
+[Materials](@ref fe-materials) passes from the equations to the code, with the
+contract a material fulfills at each quadrature point. The permeability of this
+page reappears in [Building a fractured-rock material](@ref fe-fractured-rock),
+where it follows the fracture apertures.

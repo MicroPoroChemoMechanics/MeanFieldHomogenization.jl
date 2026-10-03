@@ -34,9 +34,9 @@
 """
     _cond_layer_transfer(r_out, r_in, k_iso) -> Matrix(2×2)
 
-Intra-layer field transfer for the Y₁-harmonic conductivity problem
+Intra-layer field transfer for the ``Y_1``-harmonic conductivity problem
 between radii `r_in` and `r_out` in a layer of scalar conductivity
-`k_iso`.  The closed form below shares `r²`, `r³`, and their
+`k_iso`.  The closed form below shares ``r^2``, ``r^3``, and their
 reciprocals; only one division by `k_iso` appears.
 """
 @inline function _cond_layer_transfer(r_out, r_in, k_iso)
@@ -70,9 +70,9 @@ end
 """
     _cond_seed_state(r_1, k_1) -> Vector(2)
 
-Seed state at `r_1⁻` for a unit amplitude `A_1 = 1` in layer 1
-(core).  `B_1 = 0` from finiteness at the origin, so `T̂(r_1) = r_1`,
-`q̂_n(r_1) = -k_1`.
+Seed state at ``r_1^-`` for a unit amplitude ``A_1 = 1`` in layer 1
+(core).  ``B_1 = 0`` from finiteness at the origin, so ``\\hat T(r_1) = r_1``,
+``\\hat q_n(r_1) = -k_1``.
 """
 @inline function _cond_seed_state(r_1, k_1)
     T = promote_type(typeof(r_1), typeof(k_1))
@@ -82,8 +82,8 @@ end
 """
     _cond_extract_AB(r, k_iso, T̂, q̂n) -> (A, B)
 
-Extract the local-expansion coefficients `(A, B)` in a layer of
-conductivity `k_iso` given the state `(T̂, q̂_n)` at radius `r`.
+Extract the local-expansion coefficients ``(A, B)`` in a layer of
+conductivity `k_iso` given the state ``(\\hat T, \\hat q_n)`` at radius `r`.
 """
 @inline function _cond_extract_AB(r, k_iso, T̂, q̂n)
     T = promote_type(typeof(r), typeof(k_iso), typeof(T̂), typeof(q̂n))
@@ -109,8 +109,8 @@ end
 """
     _cond_interface_T(intf, k_iso, r) -> Matrix(2×2)
 
-Jump matrix for the Y₁-harmonic conductivity state vector
-`(T̂, q̂_n)` at an interface of type `intf` located at radius `r`.
+Jump matrix for the ``Y_1``-harmonic conductivity state vector
+``(\\hat T, \\hat q_n)`` at an interface of type `intf` located at radius `r`.
 """
 function _cond_interface_T end
 
@@ -174,9 +174,9 @@ end
 """
     _cond_localization(sphere, k₀) -> NTuple{N, TP}
 
-Per-layer gradient localization `α_k = A_k / A_∞` under a remote
-uniform gradient.  Reduces, for `N = 1`, to the classical formula
-`α_1 = 3 k_0 / (2 k_0 + k_1)` for a sphere inclusion.
+Per-layer gradient localization ``\\alpha_k = A_k/A_\\infty`` under a remote
+uniform gradient.  Reduces, for ``N = 1``, to the classical formula
+``\\alpha_1 = 3k_0/(2k_0 + k_1)`` for a sphere inclusion.
 """
 function _cond_localization(sphere::LayeredSphere{T, N}, k₀) where {T, N}
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
@@ -206,19 +206,19 @@ end
 
 Extra macroscopic flux carried **tangentially along the surface-conductive
 interfaces** of the composite sphere, per unit remote gradient.  A
-`SurfaceConductiveInterface(kₛ)` at radius `r` supports a surface current
-`kₛ ∇ₛT`; its contribution to the volume-averaged flux of the whole sphere
-(radius `R_N`) is
+`SurfaceConductiveInterface(kₛ)` at radius ``r`` supports a surface current
+``k^{\\mathrm s}\\,\\nabla_{\\mathrm s} T``; its contribution to the volume-averaged flux of the whole sphere
+(radius ``R_N``) is, per unit ``A_\\infty``,
 
-```
-(1/V) ∮ kₛ ∇ₛT dS = 2 kₛ · T̂(r) · r / R_N³   (per unit A∞),
+```math
+\\frac{1}{V}\\oint k^{\\mathrm s}\\,\\nabla_{\\mathrm s} T\\,\\mathrm{d}S = \\frac{2k^{\\mathrm s}\\,\\hat T(r)\\,r}{R_N^3},
 ```
 
-with `T̂(r)` the (continuous) temperature amplitude at the interface.  For a
+with ``\\hat T(r)`` the (continuous) temperature amplitude at the interface.  For a
 single impermeable core coated by a surface-conductive shell this reduces to
-`2kₛ/R · α`, i.e. the surface conductance is equivalent to adding `2kₛ/R` to
+``2k^{\\mathrm s}\\alpha/R``, i.e. the surface conductance is equivalent to adding ``2k^{\\mathrm s}/R`` to
 the enclosed conductivity — reproducing Echoes' `DUALDISC` transmissivity.
-The average **gradient** (concentration `α_k`) is unaffected: only the flux
+The average **gradient** (concentration ``\\alpha_k``) is unaffected: only the flux
 picks up the surface term.
 """
 function _cond_surface_flux(sphere::LayeredSphere{T, N}, k₀) where {T, N}
@@ -247,7 +247,7 @@ end
     _effective_conductivity(sphere, k₀) -> k_eff
 
 Effective conductivity of the composite sphere:
-`k_eff = Σ_k f_k k_k α_k` plus the surface-conduction flux
+``k^{\\mathrm{hom}} = \\sum_k f_k\\,k_k\\,\\alpha_k`` plus the surface-conduction flux
 [`_cond_surface_flux`](@ref) of any dual (surface-conductive) interface.
 """
 function _effective_conductivity(sphere::LayeredSphere{T, N}, k₀) where {T, N}

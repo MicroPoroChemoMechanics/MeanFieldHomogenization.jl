@@ -1,5 +1,11 @@
 # [The differential scheme and path dependence](@id tut-differential-paths)
 
+!!! info "Before this page"
+    The tutorial [Bounds and classical schemes](@ref tut-bounds-and-schemes),
+    where the differential scheme is placed among the other estimates, and the
+    theory page [The differential scheme](@ref th-differential-scheme), where
+    the incorporation equation integrated below is derived.
+
 The differential (or incremental) scheme builds a composite the way
 some real materials are actually made: by adding inclusions a little
 at a time, re-homogenizing after every increment. That construction
@@ -13,12 +19,12 @@ equation** [norris1985](@cite) over a fictitious incorporation time
 ``\tau \in [0, 1]``:
 
 ```math
-\frac{d\mathbb{C}^{hom}}{d\tau} = \sum_i \dot\varphi_i \, \mathbb{N}_i\big(\mathbb{C}^{hom}\big),
+\frac{\mathrm d\mathbb{C}^{\mathrm{hom}}}{\mathrm d\tau} = \sum_i \dot\varphi_i \, \mathbb{N}_i\big(\mathbb{C}^{\mathrm{hom}}\big),
 \qquad
 \dot\varphi_i = \dot f_i + \frac{f_i}{f_0}\sum_j \dot f_j,
 ```
 
-starting from ``\mathbb{C}^{hom}(\tau=0) = \mathbb{C}_0`` (the matrix) and
+starting from ``\mathbb{C}^{\mathrm{hom}}(\tau=0) = \mathbb{C}_0`` (the matrix) and
 adding inclusions at each step *into the current effective medium*
 rather than into the original matrix. Each increment is itself a dilute
 estimate — so the scheme is, in effect, an infinite sequence of
@@ -26,7 +32,7 @@ infinitesimal dilute corrections. The increments ``\dot\varphi_i`` differ
 from the prescribed ``\dot f_i`` because replacing part of the current
 medium also removes the inclusions it already contained; the correction
 is the Sherman-Morrison factor above, derived in
-[The differential scheme](../theory/differential_scheme.md).
+[The differential scheme](@ref th-differential-scheme).
 
 ## Trajectories for multi-phase RVEs
 
@@ -92,7 +98,7 @@ encodes a **construction history**, and for a real composite the
 mixing or loading order is itself a physical modeling choice, not a
 numerical one.
 
-[Comparing loading-path trajectories](differential_loading_paths.md)
+[Comparing loading-path trajectories](@ref tut-differential-loading-paths)
 takes this further: instead of reading off only the endpoint `k_eff` of
 a fraction sweep, it plots ``\mathbb C^{\mathrm{hom}}(\tau)`` for several trajectories —
 including a `Path` schedule — over the whole incorporation history.
@@ -149,7 +155,7 @@ down: their volume fraction vanishes (``f_c \sim \varepsilon_c X \to 0``
 as the aspect ratio ``X \to 0``) while their density stays finite. They
 therefore contribute through ``\varepsilon_c``, are absent from the
 volume balance, and are merely *diluted* by the solid increments — see
-the [theory page](../theory/differential_scheme.md). In practice they
+the [theory page](@ref th-differential-scheme). In practice they
 are declared with `density` and follow the trajectory like any other
 phase:
 
@@ -175,3 +181,13 @@ The differential scheme drives the stiffness towards zero without ever
 reaching it at finite density — no percolation threshold, unlike the
 self-consistent scheme, because each infinitesimal crack increment is
 introduced into an already-degraded medium.
+
+## Where to go next
+
+[Comparing loading-path trajectories](@ref tut-differential-loading-paths)
+follows several trajectories to the same target fractions over the whole
+incorporation history, on a pair of phases contrasted enough for the paths to
+separate visibly. The keywords of [`DifferentialScheme`](@ref) and of the
+trajectory types are collected in [Homogenization schemes](@ref man-schemes) of
+the manual, and the crack density used in the last section is introduced in
+[Cracks and crack density](@ref tut-cracks).

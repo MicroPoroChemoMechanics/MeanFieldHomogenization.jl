@@ -41,9 +41,9 @@
     _pair_multipole(incl_a, incl_b, r, P₀; order=2, kw...) -> AbstractTens
 
 Interaction tensor between two general ellipsoids by the truncated multipole
-expansion of [brisard2014](@cite), §4.2.
+expansion of [brisard2014](@citet), §4.2.
 
-`order = 0` keeps the leading (point-dipole) term `V_b 𝔾⁰(r)`; `order = 2`
+`order = 0` keeps the leading (point-dipole) term ``V_b\\,\\mathbb{G}^0(\\underline{r})``; `order = 2`
 adds the second-moment correction, which is the first non-vanishing one
 because the first moments vanish about the centroids. Accuracy degrades as
 the inclusions approach each other — the expansion parameter is the ratio of
@@ -94,10 +94,10 @@ _as_float_matrix(M::AbstractMatrix{Float64}) = M
 """
     _second_moment(incl) -> Matrix
 
-Normalized second moment `M²_pq = (1/V) ∫_Ω y_p y_q dV` of an inclusion about
+Normalized second moment ``M^2_{pq} = \\frac{1}{V}\\int_\\Omega y_p\\,y_q\\,\\mathrm{d}V`` of an inclusion about
 its centroid, expressed in the global frame. For an ellipsoid of semi-axes
-`(a₁, …, a_d)` it is `Q diag(a₁², …, a_d²) Qᵀ / (d + 2)`, with `Q` the matrix
-whose columns are the principal axes.
+``(a_1, \\dots, a_d)`` it is ``\\mathbf{Q}\\,\\mathrm{diag}(a_1^2, \\dots, a_d^2)\\,\\mathbf{Q}^{T}/(d + 2)``,
+with ``\\mathbf{Q}`` the matrix whose columns are the principal axes.
 """
 function _second_moment(ell::Ellipsoid{dim}) where {dim}
     Q = MFH_Core._basis_matrix(ell.basis)

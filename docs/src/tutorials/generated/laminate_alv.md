@@ -2,7 +2,13 @@
 EditURL = "../../../../scripts/39_laminate_alv.jl"
 ```
 
-# A creeping laminate: the multilayer in ageing viscoelasticity
+# [A creeping laminate: the multilayer in ageing viscoelasticity](@id tut-laminate-alv)
+
+!!! info "Before this page"
+    The tutorial [Periodic multilayer: the exact laminate solution](@ref tut-laminate),
+    whose elastic algebra is transposed here, and the theory page
+    [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity), where the
+    Volterra products that replace the tensor products are defined.
 
 The laminate solution is pure algebra — products of Kelvin-Mandel matrices
 and one inversion restricted to the out-of-plane subspace. Replacing each
@@ -166,6 +172,17 @@ C33i = [blk(Mi, i)[3, 3] for i in eachindex(ts)]
 @printf "\nwith a spring interface : C₃₃₃₃ %.6f → %.6f (was %.6f → %.6f)\n" C33i[1] C33i[end] C33[1] C33[end]
 @printf "  the interface softens the stack at every time : %s\n" all(C33i .< C33)
 ````
+
+The spring interface lowers the out-of-plane stiffness at every time, as the
+series law requires, and leaves the in-plane response unchanged.
+
+## Where to go next
+
+The laminate is the one microstructure whose ageing response needs no scheme.
+[Derivatives through the ageing-viscoelastic pipeline](@ref tut-alv-sensitivities)
+differentiates the Volterra assembly with respect to the parameters of such a
+calculation, and the calls of the laminate cell are documented in
+[Laminates — periodic multilayer cells](@ref man-laminates).
 
 ---
 

@@ -53,7 +53,7 @@ factorization.
 The normalization is the **meridian** measure of the volume the *meshed* wall
 encloses, matching what `fe_axi_average` divides by, and the sign is the facet
 normal's: Ferrite reports it outward from the matrix, hence into the cavity, so
-the accumulated integral is `−∮(u ⊗ n_D)ˢ`.
+the accumulated integral is ``-\\oint(\\underline{u}\\stackrel{s}{\\otimes}\\underline{n}_D)``.
 
 `V_D` is passed in only as the fallback for a wall with no facets, which would
 be a bug elsewhere; the value actually used is measured.

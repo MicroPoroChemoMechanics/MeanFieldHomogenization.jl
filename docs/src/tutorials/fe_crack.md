@@ -1,5 +1,12 @@
 # [Validating a finite-element crack](@id tut-fe-crack)
 
+!!! info "Before this page"
+    The tutorial [Cracks and crack density](@ref tut-cracks), which introduces
+    the closed-form opening tensor ``\boldsymbol{B}`` reproduced below, and the
+    theory page
+    [The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell),
+    where the dipole correction measured on this page is derived.
+
 How much the corrected boundary condition buys, and how close the
 finite-element crack gets to the closed form it is meant to reproduce. The
 method is in
@@ -39,7 +46,7 @@ three extra solves that share the existing factorization.
 
 The crack front carries a square-root displacement field, so a fixed-order
 element converges slowly — in practice **first order in the element size**
-``h \propto 1/\texttt{htipdiv}``. That regularity is what makes Richardson
+``h \propto 1/\mathrm{htipdiv}``. That regularity is what makes Richardson
 extrapolation to ``h\to 0`` legitimate, and it turns a few-percent raw error
 into a sub-percent verdict.
 
@@ -77,10 +84,15 @@ discretization, not a modeling error.
 For reference, the FEniCSx implementation of the same scheme in the `SifAniso`
 study reports ±5 % on ``\boldsymbol{B}_\infty`` at `htipdiv = 12` with P3 elements.
 
+## Where to go next
 
-## See also
+A crack is the flat limit of a single homogeneous inclusion. The next tutorials
+turn to inclusions built of several layers, starting with
+[n-layer sphere: volume-averaged localization tensors](@ref tut-layered-sphere),
+whose concentration tensors follow from an exact recurrence. The
+finite-element cell validated here returns in
+[A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate),
+where the same correction is applied to a solid inclusion in its general form.
 
 - [The finite Eshelby cell](@ref th-corrected-cell) — the method
 - [Finite-element inclusions](@ref man-fe-inclusions) — the commands
-- [A recycled-concrete aggregate](@ref app-recycled-aggregate) — the same
-  correction on a solid inclusion, in its general form

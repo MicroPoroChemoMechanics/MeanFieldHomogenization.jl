@@ -1,5 +1,10 @@
 # [Adding a new inclusion](@id dev-adding-inclusion)
 
+!!! info "Before this page"
+    [Custom inclusions](@ref man-custom-inclusions), the user-facing side of the
+    contract below, and [Architecture](@ref dev-architecture) for where its
+    generics are declared.
+
 This page is the **contract**: everything an inclusion must provide for the
 homogenization schemes to accept it, in elasticity and in transport. It applies
 equally to a new built-in family and to a user-defined morphology living
@@ -304,3 +309,9 @@ kernel.
 5. Add at least one unit test under `test/<SubModule>/` — the strongest form
    is an **equivalence test** against a built-in geometry through every
    scheme, as in `test/CustomInclusions/test_custom_inclusion.jl`.
+
+## Where to go next
+
+[Adding a new algorithm](@ref dev-adding-algorithm) covers the other half of an
+added geometry: a further way of evaluating its Hill tensor, and the dispatch
+rule that selects it.

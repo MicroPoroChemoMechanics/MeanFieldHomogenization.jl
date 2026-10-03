@@ -1,9 +1,14 @@
 # [Performance vs Echoes](@id dev-benchmarks)
 
+!!! info "Before this page"
+    [Performance notes](@ref dev-performance-notes), for the paths timed below,
+    and [Cross-validation against Echoes](@ref dev-validation), for the accuracy
+    of the same runs.
+
 Timings from `scripts/bench_echoes/benchmark.jl`: `@belapsed` on both sides,
 same machine, Echoes called through its Python API. `t(E)/t(J)` > 1 means
 `MeanFieldHomogenization` is faster. Accuracy for the same runs is in
-[Cross-validation](validation.md).
+[Cross-validation](@ref dev-validation).
 
 ## Hill tensor ``\mathbb P``
 
@@ -57,3 +62,7 @@ include("scripts/bench_echoes/benchmark.jl")
 Internal (Julia-only) regression benchmarking is separate: `scripts/bench/`
 holds a 67-case gated suite with a committed baseline and a bitwise checksum
 gate, described in its own `README.md`.
+
+## Where to go next
+
+[Roadmap](@ref dev-roadmap) lists what remains to be implemented.

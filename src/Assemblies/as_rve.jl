@@ -59,9 +59,9 @@ supplied here if that scheme is wanted.
 
 !!! note "One phase per particle"
     The conversion does not merge identical particles. It does not need to:
-    every scheme sums over phases linearly, so `N` identical phases of
-    fraction `f/N` give exactly the same effective property as one phase of
-    fraction `f`. Keeping them apart avoids an equality heuristic on
+    every scheme sums over phases linearly, so ``N`` identical phases of
+    fraction ``f/N`` give exactly the same effective property as one phase of
+    fraction ``f``. Keeping them apart avoids an equality heuristic on
     geometries and preserves the particle names.
 
 !!! warning "There is no way back"

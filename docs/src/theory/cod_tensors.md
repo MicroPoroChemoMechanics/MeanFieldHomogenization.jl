@@ -1,5 +1,12 @@
 # [Crack opening displacement and compliance](@id th-cod-tensors)
 
+!!! info "Before this page"
+    [The Eshelby inclusion problem](@ref th-eshelby-problem) §2, where the
+    tensor ``\mathbb{Q}``, which degenerates in a controlled way as the
+    inclusion flattens, is introduced, and
+    [Localization and contribution tensors](@ref th-localization) §3 for the
+    compliance contribution ``\mathbb{H}`` of a crack and its density.
+
 A crack has no volume, so it cannot be described by a volume fraction and a
 stiffness. It is described instead by **how much it opens** under a given remote
 stress. That is the crack opening displacement tensor ``\boldsymbol{B}``, and
@@ -28,10 +35,10 @@ it, and rebuilding ``\mathbb{H}`` from it avoids inverting a rank-deficient
 order-4 tensor. Its normalization is not unique in the literature, hence the
 *Conventions* section below.
 
-## Geometry
+## 1. Geometry
 
 A flat crack is the limit of a flat spheroidal inclusion. Keeping the shape
-tensor of [Notation](notation.md#Ellipsoid-geometry),
+tensor of [Conventions](@ref th-notation-ellipsoid),
 
 ```math
 \boldsymbol{A}
@@ -45,9 +52,10 @@ tensor of [Notation](notation.md#Ellipsoid-geometry),
 ```
 
 with ``(\underline{\ell},\underline{m})`` the in-plane unit vectors along the
-major and minor semi-axes ``a\ge b``, and ``\underline{n}`` the unit normal.
+major and minor semi-axes ``a\ge b``, and ``\underline{n}`` the unit normal. The
+frame is drawn below as in the Echoes book [echoes](@cite).
 
-![The crack frame and its semi-axes, before the flat limit is taken (from the Echoes book [echoes](@cite))](../assets/geometry/crack_frame.svg)
+![The crack frame and its semi-axes, before the flat limit is taken](../assets/geometry/crack_frame.svg)
 
 Two families matter, and they are **genuinely different objects**, not two
 regimes of one:
@@ -57,7 +65,7 @@ regimes of one:
 | **elliptic** (3-D) | bounded ellipse, semi-axes ``a\ge b`` | ``\eta\in(0,1]`` | [`EllipticCrack`](@ref), [`PennyCrack`](@ref) for ``\eta=1`` |
 | **ribbon** (2-D) | infinite tunnel along ``\underline{\ell}``, half-width ``b`` | ``a\to\infty``, so ``\eta\to 0`` | [`RibbonCrack`](@ref) |
 
-## The COD tensor ``\boldsymbol{B}``
+## 2. The COD tensor ``\boldsymbol{B}``
 
 Under a remote stress ``\boldsymbol{\Sigma}``, the two crack faces separate by
 the displacement jump ``[\![\underline{u}]\!]``. By linearity and the
@@ -77,8 +85,7 @@ The normalization is by the **in-plane half-width ``b``** — the minor semi-axi
 of the ellipse, the half-width of the ribbon. This makes ``\boldsymbol{B}``
 **size-independent**: it depends on the crack *shape* (through ``\eta``) and on
 its orientation, never on how big it is. This is the convention of
-[barthelemySifAniso](@cite), following [kachanov1992](@cite),
-[kachanov1993](@cite), and it is the one `MeanFieldHomogenization` implements
+[barthelemySifAniso](@cite), following [kachanov1992, kachanov1993](@citet), and it is the one `MeanFieldHomogenization` implements
 ([`cod_tensor`](@ref), alias [`B_tensor`](@ref)).
 
 ### The shape coefficient ``\chi``
@@ -131,14 +138,14 @@ computed from the ribbon tensor of the *tangent* ribbon at each front point
 (see *Intensity factors at the crack front* below), so both objects appear in
 the same formula and must not be confused.
 
-## From ``\boldsymbol{B}`` to the compliance ``\mathbb{H}``
+## [3. From ``\boldsymbol{B}`` to the compliance ``\mathbb{H}``](@id th-cod-compliance)
 
 The extra strain a crack contributes, per unit volume of the embedding
 ellipsoid, is the average of the displacement jump over the crack surface
 ``S``, spread over the volume ``V``:
 
 ```math
-\boldsymbol{\varepsilon}^{\text{extra}}
+\boldsymbol{\varepsilon}^{\mathrm{extra}}
 = \frac{1}{V}\int_{S} [\![\underline{u}]\!] \stackrel{s}{\otimes}\underline{n}\,\mathrm{d}S
 = \frac{S}{V}\,
   \bigl\langle [\![\underline{u}]\!] \bigr\rangle_{\mathcal{I}}
@@ -151,7 +158,7 @@ ellipsoid, is the average of the displacement jump over the crack surface
 using the definition of ``\boldsymbol{B}``. Identifying this with
 ``\mathbb{Q}^{-1}:\boldsymbol{\Sigma}``, where
 ``\mathbb{Q} = \mathbb{C}-\mathbb{C}:\mathbb{P}:\mathbb{C}`` is the
-[second Hill tensor](eshelby_problem.md), gives
+[second Hill tensor](@ref th-eshelby-problem), gives
 ``\mathbb{Q}^{-1} = (Sb/V)\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}
 \stackrel{s}{\otimes}\underline{n}``, and hence
 
@@ -190,16 +197,16 @@ three sources normalize the **limit** differently, while agreeing on
 | convention | elliptic ``\mathbb{H}^{\mathcal{E}}`` | ribbon ``\mathbb{H}^{\mathcal{R}}`` |
 | :--------- | :------------------------------------ | :---------------------------------- |
 | **`MeanFieldHomogenization`** — limit normalized by ``b``, uniformly | ``\lim (c/b)\,\mathbb{Q}^{-1} = \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` | ``\tfrac{2}{\pi}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` |
-| **Echoes** and [barthelemyMMS2023](@cite) — elliptic normalized by ``a`` | ``\lim \omega\,\mathbb{Q}^{-1} = \tfrac{3\eta}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` | ``\tfrac{2}{\pi}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` |
+| **Echoes** and [barthelemyMMS2023](@citet) — elliptic normalized by ``a`` | ``\lim \omega\,\mathbb{Q}^{-1} = \tfrac{3\eta}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` | ``\tfrac{2}{\pi}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` |
 
 So the two elliptic compliances differ by exactly ``\eta``:
 
 ```math
-\mathbb{H}^{\mathcal{E}}_{\texttt{MeanFieldHomogenization}}
-= \frac{1}{\eta}\;\mathbb{H}^{\mathcal{E}}_{\text{Echoes}},
+\mathbb{H}^{\mathcal{E}}_{\mathrm{MeanFieldHomogenization}}
+= \frac{1}{\eta}\;\mathbb{H}^{\mathcal{E}}_{\mathrm{Echoes}},
 \qquad
-\mathbb{H}^{\mathcal{R}}_{\texttt{MeanFieldHomogenization}}
-= \mathbb{H}^{\mathcal{R}}_{\text{Echoes}} .
+\mathbb{H}^{\mathcal{R}}_{\mathrm{MeanFieldHomogenization}}
+= \mathbb{H}^{\mathcal{R}}_{\mathrm{Echoes}} .
 ```
 
 They coincide for the **penny crack** ``\eta=1``, which is why the discrepancy is
@@ -212,7 +219,7 @@ Measured, not inferred from the papers — Echoes' `crack_compliance` against
 
 | ``\eta`` | 1.0 | 0.7 | 0.5 | 0.3 | 0.1 |
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| ``\mathbb{H}_{\text{Echoes}}/\mathbb{H}_{\texttt{MFH}}`` | 1.0000 | 0.7000 | 0.5000 | 0.3000 | 0.1000 |
+| ``\mathbb{H}_{\mathrm{Echoes}}/\mathbb{H}_{\mathrm{MFH}}`` | 1.0000 | 0.7000 | 0.5000 | 0.3000 | 0.1000 |
 
 On the `MeanFieldHomogenization` side the ``3/4`` is ``\eta``-independent to machine
 precision (``\mathbb{H}_{3333}/B_{33} = 0.750000`` for every ``\eta``).
@@ -269,7 +276,7 @@ plt
 
 The three curves are straight lines of **slope 1**: the error decays like
 ``\omega``, which is the order of the Taylor term that resolves the limit
-([barthelemyIJSS2009](@cite)). That slope is the real content of the check — a
+[barthelemyIJSS2009](@cite). That slope is the real content of the check — a
 single ``\omega`` would not distinguish a true limit from a coincidence.
 
 !!! note "Two limits of the flattening route"
@@ -279,7 +286,7 @@ single ``\omega`` would not distinguish a true limit from a coincidence.
     cases. Neither affects [`cod_tensor`](@ref), which resolves the limit
     analytically instead of flattening an ellipsoid.
 
-## From the Green operator to ``\boldsymbol{B}``
+## [4. From the Green operator to ``\boldsymbol{B}``](@id th-cod-green)
 
 The closed forms of the next section are usually quoted. They are in fact
 derivable in closed form from the Fourier Green operator, and knowing *where*
@@ -291,16 +298,15 @@ derivation symbolically, with the shipped closed forms as its oracles.
 
 With ``\boldsymbol{N}(\underline{\xi}) = \underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi}``
 the **acoustic** (Christoffel) tensor, the two Fourier kernels of the traction
-integral equation on the crack plane are [kunin1983](@cite),
-[kanaun2009](@cite):
+integral equation on the crack plane are [kunin1983, kanaun2009](@cite):
 
 ```math
-\hat{\mathbb{\Gamma}}(\underline{\xi})
+\hat{\mathbb{G}}^0(\underline{\xi})
   = \underline{\xi}\stackrel{s}{\otimes}\boldsymbol{N}^{-1}(\underline{\xi})
     \stackrel{s}{\otimes}\underline{\xi},
 \qquad
 \hat{\mathbb{Q}}(\underline{\xi})
-  = \mathbb{C} - \mathbb{C}:\hat{\mathbb{\Gamma}}(\underline{\xi}):\mathbb{C},
+  = \mathbb{C} - \mathbb{C}:\hat{\mathbb{G}}^0(\underline{\xi}):\mathbb{C},
 ```
 
 and the object the crack problem actually needs is the **reduced** transform —
@@ -321,7 +327,7 @@ collapses the order-4 algebra to a 3×3 one,
 ```math
 \underline{n}\cdot\hat{\mathbb{Q}}(\underline{\xi})\cdot\underline{n}
 = \boldsymbol{A} - \boldsymbol{V}(\underline{\xi})\cdot
-  \boldsymbol{N}^{-1}(\underline{\xi})\cdot\boldsymbol{V}^{\mathsf{T}}(\underline{\xi}),
+  \boldsymbol{N}^{-1}(\underline{\xi})\cdot\boldsymbol{V}^{\!T}(\underline{\xi}),
 \qquad
 \boldsymbol{A} = \underline{n}\cdot\mathbb{C}\cdot\underline{n},
 \qquad
@@ -398,7 +404,7 @@ a_3 = \frac{a_1}{\gamma_1\gamma_2}.
 ```
 
 The radical ``\sigma_\gamma`` of the published TI closed form
-([hoenig1978](@cite), [barthelemyIJES2021](@cite)) is therefore nothing but the
+[hoenig1978, barthelemyIJES2021](@cite) is therefore nothing but the
 sum of the two in-plane Stroh roots — it *comes out of* the factorization rather
 than being postulated.
 
@@ -421,7 +427,7 @@ the degree-1 homogeneity cancels the ``1/\rho^{2}`` of the two in-plane dyads.
 ```
 
 where, with ``m = 1-\eta^{2}`` the Legendre *parameter* of
-[Elliptic integrals](elliptic_integrals.md),
+[Elliptic integrals](@ref th-elliptic-integrals),
 
 ```math
 \mathcal{K}_\eta = K(1-\eta^{2}),
@@ -438,7 +444,7 @@ term vanishes by parity, which is why ``\boldsymbol{B}`` is diagonal in the crac
 frame.
 
 !!! note "Why cos² and sin² look exchanged against the literature"
-    [barthelemySifAniso](@cite) defines the very same two quantities as
+    [barthelemySifAniso](@citet) defines the very same two quantities as
     ```math
     \mathcal{C}_\eta = \int_0^{\pi/2}
       \frac{\cos^{2}\vartheta\;\mathrm{d}\vartheta}
@@ -497,7 +503,7 @@ longer determines the others. Both integrals become numerical — which is what
 the `Residue` and cubature back-ends do, the first summing residues over the six
 Stroh roots located numerically.
 
-## Closed forms of ``\boldsymbol{B}``
+## 5. Closed forms of ``\boldsymbol{B}``
 
 ### Isotropic matrix
 
@@ -548,18 +554,17 @@ when ``\mathbb{C}_0`` is a `TensISO{4,3}`.
 When the matrix is transversely isotropic with its axis **aligned with the crack
 normal** ``\underline{n}``, ``\boldsymbol{B}`` is still analytical. The closed
 forms use the engineering parameters ``(E,\nu_1,\nu_2,H,\Gamma)`` defined on the
-compliance ``\mathbb{S} = \mathbb{C}^{-1}`` [hoenig1978](@cite),
-[kanaun2009](@cite), [barthelemyIJES2021](@cite), and reduce to the isotropic
+compliance ``\mathbb{S} = \mathbb{C}^{-1}`` [hoenig1978, kanaun2009, barthelemyIJES2021](@cite), and reduce to the isotropic
 case for ``\nu_1=\nu_2=\nu``, ``H=\Gamma=1``. The auxiliary coefficients are
 documented inline in `src/Cracks/cod_analytical.jl`.
 
 The more general cases — a TI axis **not** aligned with the crack normal, or an
-elliptic-orthotropic matrix — are treated in [barthelemyMMS2023](@cite) and
-[barthelemySifAniso](@cite) but are not yet exposed here.
+elliptic-orthotropic matrix — are treated in [barthelemyMMS2023](@citet) and
+[barthelemySifAniso](@citet) but are not yet exposed here.
 
 ### Arbitrary anisotropy — numerical
 
-No closed form exists in general. Following [barthelemyIJSS2009](@cite), the
+No closed form exists in general. Following [barthelemyIJSS2009](@citet), the
 limit ``\omega\to 0`` is resolved by extracting the **first-order term** of the
 Taylor expansion of ``\mathbb{P}`` in ``\omega``; that term has an integral
 representation on the unit circle of the crack plane, evaluated by either
@@ -568,7 +573,7 @@ algorithm trait:
 - **`DECUHR`** — adaptive cubature [espelid1994](@cite), ForwardDiff-safe
   (`src/Cracks/green_decuhr.jl`);
 - **`Residue`** — Cauchy-residue reduction to a 1-D quadrature, as in
-  [masson2008](@cite) adapted to the crack kernel, `Float64` only
+  [masson2008](@citet) adapted to the crack kernel, `Float64` only
   (`src/Cracks/green_residue.jl`).
 
 `method = :auto` always picks a **cubature**, never `Residue`: `DECUHR` when its
@@ -579,12 +584,12 @@ but its acoustic polynomial degenerates when the reference is anisotropic in
 schemes reach at their first step, so it is available on explicit
 `method = :residues` only (`src/Core/dispatch.jl`).
 
-## Dilute correction to the effective compliance
+## 6. Dilute correction to the effective compliance
 
 [`compliance_contribution`](@ref)`(crack, C₀)` returns ``\mathbb{H}`` itself —
 the *size-independent* contribution, not the dilute correction. Cracks have no
 volume fraction, so the amount of cracking is measured by a **Budiansky crack
-density** [budiansky1976](@cite), [kachanov1993](@cite), and reintroduced by
+density** [budiansky1976, kachanov1993](@cite), and reintroduced by
 [`delta_compliance`](@ref):
 
 | | density | dilute correction |
@@ -594,13 +599,12 @@ density** [budiansky1976](@cite), [kachanov1993](@cite), and reintroduced by
 
 Implementation: `src/Cracks/compliance.jl`, dispatching on the crack shape.
 
-## Intensity factors at the crack front
+## 7. Intensity factors at the crack front
 
 At a point ``\underline{x}^{\star}_{0}`` of the crack front, with in-plane outer
 normal ``\underline{\nu}`` and tangent
 ``\underline{\tau} = \underline{n}\wedge\underline{\nu}``, the asymptotic
-expansions of the jump and the traction read [irwin1957](@cite),
-[kassir1968](@cite), [willis1968](@cite):
+expansions of the jump and the traction read [irwin1957, kassir1968, willis1968](@cite):
 
 ```math
 [\![\underline{u}]\!](\underline{x}^{\star}_{0}+r\underline{\nu})
@@ -615,11 +619,9 @@ expansions of the jump and the traction read [irwin1957](@cite),
 ``\underline{N}`` is the **displacement intensity factor** (DIF) and
 ``\underline{K}`` the **stress intensity factor** (SIF), normalized so that the
 local energy release rate is simply
-``G = \underline{K}\cdot\underline{N}`` [barnett1972](@cite),
-[rice1989](@cite).
+``G = \underline{K}\cdot\underline{N}`` [barnett1972, rice1989](@cite).
 
-The central result of the anisotropic theory [kanaun1981](@cite),
-[kunin1983](@cite), [kanaun2009](@cite) is that SIF and DIF are **purely local**
+The central result of the anisotropic theory [kanaun1981, kunin1983, kanaun2009](@cite) is that SIF and DIF are **purely local**
 and are exchanged by the COD tensor of the **ribbon crack tangent** to the real
 crack at the observation point:
 
@@ -700,7 +702,7 @@ K_{III} = |\underline{K}\cdot\underline{\tau}| .
 
 Evaluation: [`sif`](@ref) and [`dif`](@ref) (`src/Cracks/sif.jl`).
 
-## Dispatch
+## 8. Dispatch
 
 | `(crack, C₀)` | `:auto` selects | alternatives | ForwardDiff |
 | :------------ | :-------------- | :----------- | :---------: |
@@ -713,5 +715,14 @@ Entry points: [`cod_tensor`](@ref) / [`B_tensor`](@ref) for ``\boldsymbol{B}``,
 [`delta_compliance`](@ref) for ``\Delta\mathbb{S}``, [`sif`](@ref) /
 [`dif`](@ref) for the front quantities. The transport counterpart — a scalar COD
 and a rank-1 resistivity contribution — is treated in
-[Thermal cracks](thermal_cracks.md), with the same geometric factors ``3/4`` and
+[Thermal cracks](@ref th-thermal-cracks), with the same geometric factors ``3/4`` and
 ``2/\pi``.
+
+## Where to go next
+
+The transport counterpart is the next page,
+[Thermal cracks](@ref th-thermal-cracks), where a single scalar opening replaces
+``\boldsymbol{B}`` and carries all the anisotropy of the matrix. The crack types
+and their densities are written as described in [Cracks](@ref man-cracks), and
+the tutorial [Cracks and crack density](@ref tut-cracks) places cracks in an
+RVE and follows the effective modulus as the density grows.

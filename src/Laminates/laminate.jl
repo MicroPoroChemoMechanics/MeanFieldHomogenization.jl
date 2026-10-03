@@ -31,7 +31,7 @@ Layer(properties::AbstractDict) = Layer(Dict{Symbol, Any}(properties...))
 """
     Laminate{T<:Number, B<:TensND.AbstractBasis{3}} <: AbstractHomogenizationCell
 
-Periodic unit cell of parallel layers normal to `n` — the deterministic,
+Periodic unit cell of parallel layers normal to ``\\underline{n}`` — the deterministic,
 matrix-free counterpart of an [`RVE`](@ref MeanFieldHomogenization.Schemes.RVE), solved
 exactly by [`Laminated`](@ref MeanFieldHomogenization.Schemes.Laminated).
 
@@ -39,21 +39,21 @@ Fields:
 
 - `layer_names::Vector{Symbol}` — layers in **stacking order**;
 - `layers::Dict{Symbol,Layer}` — per-layer property dicts;
-- `thicknesses::Dict{Symbol,Any}` — `h_i`, each keeping its own element type
+- `thicknesses::Dict{Symbol,Any}` — ``h_i``, each keeping its own element type
   (`Float64`, `Dual`, `Sym`, …), exactly as `RVE.amounts` does;
 - `interfaces::Vector{AbstractInterface}` — one per layer; entry `k` is the
   interface **on top of** layer `k`, entry `N` closing the cell back onto
   layer 1 by periodicity;
-- `basis::B` — orthonormal `(ℓ, m, n)`, whose **third** axis is the layer
-  normal. Storing a basis rather than a bare `n` fixes `(ℓ, m)`
+- `basis::B` — orthonormal ``(\\underline{\\ell}, \\underline{m}, \\underline{n})``, whose **third** axis is the layer
+  normal. Storing a basis rather than a bare ``\\underline{n}`` fixes ``(\\underline{\\ell}, \\underline{m})``
   deterministically, which matters for anisotropic layers;
-- `period` — cached `L = Σ h_i`.
+- `period` — cached ``L = \\sum_i h_i``.
 
 Thicknesses rather than fractions are the stored primitive: the physics needs
-both `f_i = h_i/L` and `L`, and one dict gives both. `L` is what carries the
-**size effect** of imperfect interfaces, which enter with weight `1/L` — an
-interface *density*. With perfect interfaces the result depends on the `f_i`
-alone and `L` is irrelevant.
+both ``f_i = h_i/L`` and ``L``, and one dict gives both. ``L`` is what carries the
+**size effect** of imperfect interfaces, which enter with weight ``1/L`` — an
+interface *density*. With perfect interfaces the result depends on the ``f_i``
+alone and ``L`` is irrelevant.
 
 `T` is the declared element-type **floor**, exactly as in [`RVE`](@ref MeanFieldHomogenization.Schemes.RVE): a
 `Dual` or symbolic thickness lives happily in a plain `Laminate()`.
@@ -90,20 +90,20 @@ end
 Construct an empty laminate. Layers are added next with [`add_layer!`](@ref).
 
 The frame is given in at most one of three ways, and defaults to the canonical
-one (`n = e₃`), for which the kernel skips the frame rotation entirely:
+one (``\\underline{n} = \\underline{e}_3``), for which the kernel skips the frame rotation entirely:
 
-- `normal = (nx, ny, nz)` — completed into `(ℓ, m, n̂)` by
+- `normal = (nx, ny, nz)` — completed into ``(\\underline{\\ell}, \\underline{m}, \\underline{n})`` by
   `Core._frame_from_normal`. The components may be **symbolic**;
 - `euler_angles = (θ, ϕ, ψ)` — ZYZ angles, as everywhere else in the package,
   symbolic ones included;
 - `basis = …` — an explicit `TensND` basis whose third axis is the normal.
 
-`in_plane` fixes `ℓ` in the plane of the layers, by Gram-Schmidt against it. It
+`in_plane` fixes ``\\underline{\\ell}`` in the plane of the layers, by Gram-Schmidt against it. It
 goes with `normal` only. The effective property is invariant under rotation
-about `n`, so the choice is physically immaterial — but it must not be parallel
-to `n`. A numeric normal picks the safest reference on its own; a symbolic one
-cannot (the choice is a comparison) and falls back to `e₁`, so pass `in_plane`
-when the normal may be along `e₁`.
+about ``\\underline{n}``, so the choice is physically immaterial — but it must not be parallel
+to ``\\underline{n}``. A numeric normal picks the safest reference on its own; a symbolic one
+cannot (the choice is a comparison) and falls back to ``\\underline{e}_1``, so pass `in_plane`
+when the normal may be along ``\\underline{e}_1``.
 
 `T` declares the element-type floor of the thicknesses; like an `RVE`'s, it is
 a floor and not a constraint — a wider thickness is stored as such. It also
@@ -163,13 +163,13 @@ Append a layer to the top of the stack.
 
 Give **exactly one** of `thickness` (an absolute height) or `fraction`. Both are
 stored in the same place: a fraction is simply a thickness in a cell whose
-period is `1`, and `layer_volume_fraction` derives `f_i = h_i / L` either way.
+period is `1`, and `layer_volume_fraction` derives ``f_i = h_i/L`` either way.
 Nothing rescales the stack for you, and nothing checks that the fractions sum to
 one — that check cannot be made for a symbolic or `Dual` thickness, and making
 it only for `Real` ones would be a rule that silently comes and goes. Mixing the
 two forms across layers is therefore *possible* but means what it says: the
 period is the plain sum, so with imperfect interfaces — which enter with the
-weight `1/L` — read `laminate_period` before trusting a mixed stack.
+weight ``1/L`` — read `laminate_period` before trusting a mixed stack.
 
 `interface` is the condition **on top of** this layer; the last layer's
 interface closes the cell onto the first by periodicity. The five types of
@@ -274,7 +274,7 @@ end
 """
     layer_thickness(lam, name::Symbol) -> Number
 
-Thickness `h_i` of layer `name`.
+Thickness ``h_i`` of layer `name`.
 """
 function layer_thickness(lam::Laminate, name::Symbol)
     haskey(lam.thicknesses, name) ||
@@ -285,7 +285,7 @@ end
 """
     layer_volume_fraction(lam, name::Symbol) -> Number
 
-Volume fraction `f_i = h_i / L` of layer `name`.
+Volume fraction ``f_i = h_i/L`` of layer `name`.
 """
 layer_volume_fraction(lam::Laminate, name::Symbol) =
     layer_thickness(lam, name) / laminate_period(lam)
@@ -293,8 +293,8 @@ layer_volume_fraction(lam::Laminate, name::Symbol) =
 """
     laminate_period(lam) -> Number
 
-Period `L = Σ h_i` of the cell. Imperfect interfaces enter the effective
-property with weight `1/L`, so this is what sets their size effect; with
+Period ``L = \\sum_i h_i`` of the cell. Imperfect interfaces enter the effective
+property with weight ``1/L``, so this is what sets their size effect; with
 perfect interfaces the result is independent of it.
 """
 laminate_period(lam::Laminate) = lam.period
@@ -302,7 +302,7 @@ laminate_period(lam::Laminate) = lam.period
 """
     laminate_basis(lam) -> AbstractBasis
 
-The orthonormal frame `(ℓ, m, n)` of the cell; its third axis is the layer
+The orthonormal frame ``(\\underline{\\ell}, \\underline{m}, \\underline{n})`` of the cell; its third axis is the layer
 normal.
 """
 laminate_basis(lam::Laminate) = lam.basis
@@ -310,7 +310,7 @@ laminate_basis(lam::Laminate) = lam.basis
 """
     laminate_normal(lam) -> NTuple{3}
 
-The layer normal `n`, i.e. the third axis of [`laminate_basis`](@ref),
+The layer normal ``\\underline{n}``, i.e. the third axis of [`laminate_basis`](@ref),
 in canonical components.
 """
 laminate_normal(lam::Laminate) = MFH_Core._basis_col(lam.basis, 3)

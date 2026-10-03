@@ -53,14 +53,14 @@ struct HillISO <: AbstractHillClass end
 
 """
 Transversely isotropic, major-symmetric 4th-order tensor: the five Walpole
-components `(ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆)` of `TensTI{4,·,5}` — the Hill tensor of a
+components ``(\\ell_1, \\ell_2, \\ell_3, \\ell_5, \\ell_6)`` of `TensTI{4,·,5}` — the Hill tensor of a
 spheroid in an isotropic matrix.
 """
 struct HillTI <: AbstractHillClass end
 
 """
 Orthotropic 4th-order tensor: the nine components
-`(C₁₁, C₂₂, C₃₃, C₁₂, C₁₃, C₂₃, C₄₄, C₅₅, C₆₆)` of `TensOrtho` — the Hill
+``(C_{11}, C_{22}, C_{33}, C_{12}, C_{13}, C_{23}, C_{44}, C_{55}, C_{66})`` of `TensOrtho` — the Hill
 tensor of a triaxial ellipsoid in an isotropic matrix.
 """
 struct HillOrtho <: AbstractHillClass end
@@ -69,43 +69,43 @@ struct HillOrtho <: AbstractHillClass end
 struct HillISO2 <: AbstractHillClass end
 
 """
-Transversely isotropic 2nd-order tensor `(a, b)` of `TensTI{2,·,2}` — the
+Transversely isotropic 2nd-order tensor ``(a, b)`` of `TensTI{2,·,2}` — the
 transport Hill tensor of a spheroid.
 """
 struct HillTI2 <: AbstractHillClass end
 
 """
 Transversely isotropic 4th-order tensor **without major symmetry**: the six
-Walpole components `(ℓ₁, …, ℓ₆)` of `TensTI{4,·,6}`, for the *strain-side*
-localization tensor `𝔸_εε` of a morphology axisymmetric about `n`.
+Walpole components ``(\\ell_1, \\dots, \\ell_6)`` of `TensTI{4,·,6}`, for the *strain-side*
+localization tensor ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` of a morphology axisymmetric about ``\\underline{n}``.
 
 Six and not five, because a localization tensor is genuinely not
-major-symmetric: `𝔸_εε = [𝕀 + ℙ:(ℂ₁−ℂ₀)]⁻¹` is the inverse of a product of two
+major-symmetric: ``\\mathbb{A}_{\\varepsilon\\varepsilon} = [\\mathbb{I} + \\mathbb{P}:(\\mathbb{C}_1-\\mathbb{C}_0)]^{-1}`` is the inverse of a product of two
 major-symmetric tensors, which does not commute. For an oblate spheroid at a
-contrast of 2 the defect reaches 10 % and `ℓ₃ ≠ ℓ₄` outright, so projecting onto
+contrast of 2 the defect reaches 10 % and ``\\ell_3 \\ne \\ell_4`` outright, so projecting onto
 the five-component form would lose a few percent.
 
-Six and not eight, because `TensTI{4,·,8}` also carries the couplings `ℓ₇`, `ℓ₈`
+Six and not eight, because `TensTI{4,·,8}` also carries the couplings ``\\ell_7``, ``\\ell_8``
 that are *antisymmetric* in an index pair. A tensor mapping symmetric strains to
-symmetric stresses has `ℓ₇ = ℓ₈ = 0` identically — measured, not assumed.
+symmetric stresses has ``\\ell_7 = \\ell_8 = 0`` identically — measured, not assumed.
 
-`𝔸_εε` is dimensionless, so no scale divides out: see
+``\\mathbb{A}_{\\varepsilon\\varepsilon}`` is dimensionless, so no scale divides out: see
 [`dimensionless_scale`](@ref).
 """
 struct StrainLocTI <: AbstractHillClass end
 
 """
 Same six-component transversely isotropic form as [`StrainLocTI`](@ref), for the
-*stress-side* localization tensor `𝔸_σε`.
+*stress-side* localization tensor ``\\mathbb{A}_{\\sigma\\varepsilon}``.
 
 The two differ only in their physical dimension, and therefore in what makes
-them dimensionless: `𝔸_εε` is of degree 0 in the moduli, `𝔸_σε` of degree +1.
+them dimensionless: ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` is of degree 0 in the moduli, ``\\mathbb{A}_{\\sigma\\varepsilon}`` of degree ``+1``.
 """
 struct StressLocTI <: AbstractHillClass end
 
 """
-Cubic strain localization tensor: the **three** components `(α, β, γ)` of a
-`TensCubic` on the projectors `(𝕁, 𝔼, 𝕋)`, for a morphology left invariant by
+Cubic strain localization tensor: the **three** components ``(\\alpha, \\beta, \\gamma)`` of a
+`TensCubic` on the projectors ``(\\mathbb{J}, \\mathbb{E}, \\mathbb{T})``, for a morphology left invariant by
 the octahedral group — a supersphere, a cubic array.
 
 Three and not six, where [`StrainLocTI`](@ref) needs six for the same object one
@@ -115,7 +115,7 @@ form; but a tensor with the minor symmetries and cubic symmetry *is*
 major-symmetric automatically, the three projectors being symmetric. So nothing
 is dropped here: the class simply has no antisymmetric content to lose.
 
-Dimensionless, like its TI sibling: `𝔸_εε` is of degree 0 in the reference
+Dimensionless, like its TI sibling: ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` is of degree 0 in the reference
 moduli.
 """
 struct StrainLocCubic <: AbstractHillClass end
@@ -131,27 +131,27 @@ supersphere, which needs three constants in elasticity, needs one here, and the
 frame is irrelevant.
 
 Distinct from [`HillISO2`](@ref), which has the same one component and a
-different dimension. `𝑨_∇∇` is of degree **0** in the reference conductivity, so
-nothing divides out; the Hill tensor is of degree −1, so `k₀` does. Reusing
+different dimension. ``\\boldsymbol{A}_{\\nabla\\nabla}`` is of degree **0** in the reference conductivity, so
+nothing divides out; the Hill tensor is of degree ``-1``, so ``k_0`` does. Reusing
 `HillISO2` for a localization tensor would therefore divide the prediction by
-`k₀` and be silently wrong at every `k₀ ≠ 1` — see [`dimensionless_scale`](@ref).
+``k_0`` and be silently wrong at every ``k_0 \\ne 1`` — see [`dimensionless_scale`](@ref).
 """
 struct GradLocISO2 <: AbstractHillClass end
 
 """
 Gradient localization tensor of a cavity in transport, **transversely
-isotropic**: the two components `(a, b)` of `TensTI{2}` about the axis, for
+isotropic**: the two components ``(a, b)`` of `TensTI{2}` about the axis, for
 `gradient_gradient_loc` on an axisymmetric morphology.
 
 Two where [`GradLocISO2`](@ref) has one, because a body of revolution
-distinguishes its axis: a superspheroidal pore has `R₁₁ ≠ R₃₃` for every
+distinguishes its axis: a superspheroidal pore has ``R_{11} \\ne R_{33}`` for every
 aspect ratio but the sphere.
 
 Distinct from [`HillTI2`](@ref) for the same reason `GradLocISO2` is distinct
 from `HillISO2`, and it is worth repeating because the two are otherwise
-interchangeable in shape: `𝑨_∇∇` is of degree **0** in the reference
-conductivity while the Hill tensor is of degree −1, so reusing `HillTI2` would
-divide every prediction by `k₀` and be silently wrong away from `k₀ = 1`.
+interchangeable in shape: ``\\boldsymbol{A}_{\\nabla\\nabla}`` is of degree **0** in the reference
+conductivity while the Hill tensor is of degree ``-1``, so reusing `HillTI2` would
+divide every prediction by ``k_0`` and be silently wrong away from ``k_0 = 1``.
 
 The axis is column 3 of the inclusion basis, the package's usual convention and
 the one the axisymmetric solver revolves about.
@@ -404,9 +404,9 @@ _class_frame(::StrainLocCubic, geom) = Core.inclusion_basis(geom)
 Coefficients of the exact affine decomposition of the Hill tensor on the
 shape-only tensors, for an **isotropic** reference medium:
 
-- order 4: `(d, 1/μ₀)` with `d = 1/(λ₀+2μ₀) − 1/μ₀`, so that
-  `ℙ = d·𝕌ᴬ + (1/μ₀)·𝕍ᴬ`;
-- order 2: `(1/k₀,)`, so that `ℙ_K = 𝕍ᴬ/k₀`.
+- order 4: ``(d, 1/\\mu_0)`` with ``d = 1/(\\lambda_0+2\\mu_0) - 1/\\mu_0``, so that
+  ``\\mathbb{P} = d\\,\\mathbb{U}^{\\boldsymbol{A}} + \\mathbb{V}^{\\boldsymbol{A}}/\\mu_0``;
+- order 2: ``(1/k_0)``, so that ``\\boldsymbol{P} = \\boldsymbol{I}^{\\boldsymbol{A}}/k_0``.
 
 Used by [`AffineHill`](@ref). The number of entries is the number of terms the
 network has to predict per component.
@@ -424,10 +424,10 @@ material_coeffs(::Union{HillISO2, HillTI2}, K₀::TensND.TensISO{2, 3}) =
 """
     dimensionless_scale(class, P₀) -> Number
 
-The modulus by which `ℙ` is multiplied to make it dimensionless — `2μ₀` in
-elasticity, `k₀` in transport. Used by [`DimensionlessHill`](@ref): because
-`ℙ` is homogeneous of degree `−1` in the reference moduli, `scale · ℙ` depends
-on the shape and on `ν₀` alone, and on nothing at all in transport.
+The modulus by which ``\\mathbb{P}`` is multiplied to make it dimensionless — ``2\\mu_0`` in
+elasticity, ``k_0`` in transport. Used by [`DimensionlessHill`](@ref): because
+``\\mathbb{P}`` is homogeneous of degree ``-1`` in the reference moduli, `scale` ``\\cdot\\,\\mathbb{P}`` depends
+on the shape and on ``\\nu_0`` alone, and on nothing at all in transport.
 """
 dimensionless_scale(::Union{HillISO, HillTI, HillOrtho}, C₀::TensND.TensISO{4, 3}) =
     TensND.get_data(C₀)[2]
@@ -535,8 +535,8 @@ abstract type AbstractOutputSpec end
     DimensionlessHill(class)
 
 The network predicts the `ncomponents(class)` components of the
-**dimensionless** Hill tensor `scale · ℙ`. Exact in the scale of the reference
-moduli and in the symmetry class; `ν₀` is an input feature and its dependence
+**dimensionless** Hill tensor `scale` ``\\cdot\\,\\mathbb{P}``. Exact in the scale of the reference
+moduli and in the symmetry class; ``\\nu_0`` is an input feature and its dependence
 is learned.
 
 The general-purpose choice: it needs nothing of the reference medium beyond a
@@ -550,10 +550,10 @@ end
 """
     AffineHill(class)
 
-The network predicts the components of the shape-only tensors `𝕌ᴬ` and `𝕍ᴬ` —
-`nterms(class) · ncomponents(class)` numbers — and the decoder contracts them
+The network predicts the components of the shape-only tensors ``\\mathbb{U}^{\\boldsymbol{A}}`` and ``\\mathbb{V}^{\\boldsymbol{A}}`` —
+`nterms(class)` ``\\times`` `ncomponents(class)` numbers — and the decoder contracts them
 with [`material_coeffs`](@ref). The whole material dependence is then exact:
-`ν₀` is *not* an input, and the surrogate is a function of the shape alone.
+``\\nu_0`` is *not* an input, and the surrogate is a function of the shape alone.
 
 Only available for an isotropic reference medium, which is where the affine
 structure comes from.
@@ -565,8 +565,8 @@ end
 """
     AnchoredHill(class, baseline::Symbol)
 
-The network predicts the components of `𝕄 = 𝔸_b⁻¹ : 𝔸`, where `𝔸_b` is a
-**closed-form baseline** named by `baseline`. The decoder returns `𝔸_b : 𝕄`, so
+The network predicts the components of ``\\mathbb{M} = \\mathbb{A}_{\\mathrm{b}}^{-1}:\\mathbb{A}``, where ``\\mathbb{A}_{\\mathrm{b}}`` is a
+**closed-form baseline** named by `baseline`. The decoder returns ``\\mathbb{A}_{\\mathrm{b}}:\\mathbb{M}``, so
 the answer is exact wherever the baseline is exact, and the network only ever
 learns the departure from it.
 
@@ -580,23 +580,23 @@ experiment.** The gain depends on how *close* the baseline is, not on its
 existence.
 
 On the axisymmetric superspheroidal cavity it does **not** pay. A superspheroid
-at `p = 1` is a spheroid, so an entire face of that box is exact — but the box
-reaches `p = 0.25`, which is far from it, and judged on the decoded tensor the
+at ``p = 1`` is a spheroid, so an entire face of that box is exact — but the box
+reaches ``p = 0.25``, which is far from it, and judged on the decoded tensor the
 anchored fit is worse: rms `1.30e-2` against `5.31e-3`, median `9.16e-3` against
 `2.64e-3`, gaining only 14 % on the extreme maximum. The reason is structural
-and worth knowing: near the exact face `𝕄 ≈ 𝕀`, whose off-diagonal Walpole
+and worth knowing: near the exact face ``\\mathbb{M} \\approx \\mathbb{I}``, whose off-diagonal Walpole
 components are **zero**, so the anchored target has zeros by construction
-exactly where the anchor is perfect, and uniform relative effort in `𝕄` is not
-uniform in `𝔸`.
+exactly where the anchor is perfect, and uniform relative effort in ``\\mathbb{M}`` is not
+uniform in ``\\mathbb{A}``.
 
 Where it should pay is a baseline that is *near* over the whole box — a layered
 spheroid, whose homogeneous limit is reached as soon as the layers' moduli
-agree, so moderate contrast is a genuinely small departure and `𝕄` stays close
-to `𝕀` throughout.
+agree, so moderate contrast is a genuinely small departure and ``\\mathbb{M}`` stays close
+to ``\\mathbb{I}`` throughout.
 
 **The algebra stays in the Walpole basis**, which is the whole reason this is a
-specification and not a division. `𝔸_b⁻¹ : 𝔸` is formed with `inv` and the
-double contraction on transversely isotropic tensors — a closed-form 2×2 inverse
+specification and not a division. ``\\mathbb{A}_{\\mathrm{b}}^{-1}:\\mathbb{A}`` is formed with `inv` and the
+double contraction on transversely isotropic tensors — a closed-form ``2\\times 2`` inverse
 plus two scalars — where a component-wise ratio would mix the transverse block
 and manufacture sign changes that are an artifact of the reading.
 
@@ -625,8 +625,8 @@ alone plus the reference medium — otherwise it could not be evaluated at
 prediction time, when no solve is available.
 
 - `:spheroid_cavity` — the exact cavity of revolution,
-  `𝔸_b = (𝕀 − ℙ : ℂ₀)⁻¹`, with the aspect ratio read off the features. Exact for
-  a superspheroid at `p = 1`, and for a layered spheroid whose layers share the
+  ``\\mathbb{A}_{\\mathrm{b}} = (\\mathbb{I} - \\mathbb{P}:\\mathbb{C}_0)^{-1}``, with the aspect ratio read off the features. Exact for
+  a superspheroid at ``p = 1``, and for a layered spheroid whose layers share the
   matrix's moduli.
 """
 anchor_baselines() = (:spheroid_cavity, :layered_spheroid)
@@ -654,7 +654,7 @@ noutputs(spec::AbstractOutputSpec) = nterms(spec) * ncomponents(spec.class)
 """
     needs_nu(spec) -> Bool
 
-Whether the feature set has to carry `ν₀`. False for [`AffineHill`](@ref),
+Whether the feature set has to carry ``\\nu_0``. False for [`AffineHill`](@ref),
 whose material dependence is exact, and for any transport surrogate.
 """
 needs_nu(spec::DimensionlessHill) = tensor_order(spec.class) == 4
@@ -707,7 +707,7 @@ Turn the network's *untransformed* output `z` into the Hill tensor, in the
 frame given.
 
 `z` has length [`noutputs`](@ref); for [`AffineHill`](@ref) it is read as a
-`ncomponents × nterms` column-major block, one column per shape tensor.
+`ncomponents` ``\\times`` `nterms` column-major block, one column per shape tensor.
 """
 function decode(spec::DimensionlessHill, z::AbstractVector, P₀, frame, _x = nothing, _f = nothing)
     return build(spec.class, z ./ dimensionless_scale(spec.class, P₀), frame)
@@ -746,11 +746,11 @@ end
 """
     _anchor(::Val{:spheroid_cavity}, class, x, features, P₀, frame)
 
-The exact cavity of revolution: `𝔸_b = (𝕀 − ℙ : ℂ₀)⁻¹` in elasticity, and its
-second-order counterpart in transport, with `ℙ` the closed-form Hill tensor of
+The exact cavity of revolution: ``\\mathbb{A}_{\\mathrm{b}} = (\\mathbb{I} - \\mathbb{P}:\\mathbb{C}_0)^{-1}`` in elasticity, and its
+second-order counterpart in transport, with ``\\mathbb{P}`` the closed-form Hill tensor of
 `Spheroid(c/a)`.
 
-Exact for a superspheroid at `p = 1`, and for a layered spheroid whose layers
+Exact for a superspheroid at ``p = 1``, and for a layered spheroid whose layers
 share the matrix's moduli. Both are faces of the sample boxes those surrogates
 are trained on, which is the point: on such a face the network has nothing left
 to learn and the answer is the closed form.
@@ -810,22 +810,22 @@ end
 """
     _anchor(::Val{:layered_spheroid}, class, x, features, P₀, frame)
 
-The **homogeneous** spheroid at the layers' mean modulus: `𝔸_b = (𝕀 + ℙ:(ℂ̄ − ℂ₀))⁻¹`
-in elasticity and its second-order counterpart in transport, with `ℙ` the
-closed-form Hill tensor of `Spheroid(c/a)` and `ℂ̄ = r̄ ℂ₀`.
+The **homogeneous** spheroid at the layers' mean modulus: ``\\mathbb{A}_{\\mathrm{b}} = [\\mathbb{I} + \\mathbb{P}:(\\overline{\\mathbb{C}} - \\mathbb{C}_0)]^{-1}``
+in elasticity and its second-order counterpart in transport, with ``\\mathbb{P}`` the
+closed-form Hill tensor of `Spheroid(c/a)` and ``\\overline{\\mathbb{C}} = \\bar r\\,\\mathbb{C}_0``.
 
-Exact on the whole face `r₁ = r₂` of the sample box — a layered spheroid whose
+Exact on the whole face ``r_1 = r_2`` of the sample box — a layered spheroid whose
 layers agree *is* a homogeneous one — which is a three-dimensional face rather
 than the single point [`_anchor`](@ref)`(::Val{:spheroid_cavity}, …)` is exact
 on for this morphology. Measured on the shipped labels, it removes a factor of
 1.8 from the spread the network must cover on the strain side and 5.6 on the
 stress side.
 
-For a **stress** class the baseline is `ℂ̄ : 𝔸_b`, not `𝔸_b`: the quantity being
-anchored is `𝔸_σε`, which is of degree one in the moduli where `𝔸_εε` is of
+For a **stress** class the baseline is ``\\overline{\\mathbb{C}}:\\mathbb{A}_{\\mathrm{b}}``, not ``\\mathbb{A}_{\\mathrm{b}}``: the quantity being
+anchored is ``\\mathbb{A}_{\\sigma\\varepsilon}``, which is of degree one in the moduli where ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` is of
 degree zero, so anchoring it against a strain localization would leave the
 target carrying a modulus and the whole point — a dimensionless correction near
-`𝕀` — would be lost.
+``\\mathbb{I}`` — would be lost.
 """
 function _anchor(::Val{:layered_spheroid}, class, x, features, P₀, frame)
     c = _anchor_aspect(x, features)

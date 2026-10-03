@@ -24,7 +24,7 @@
     softplus(x)
 
 Smooth positive activation ``\\log(1 + e^x)``, evaluated in the numerically
-stable form ``\\log(1 + e^{-|x|}) + \\max(x, 0)`` so that large `|x|` neither
+stable form ``\\log(1 + e^{-|x|}) + \\max(x, 0)`` so that large ``|x|`` neither
 overflows nor loses the linear branch.
 """
 softplus(x) = log1p(exp(-abs(x))) + max(x, zero(x))
@@ -76,7 +76,7 @@ end
 """
     NNDense(W, b, σ)
 
-One fully connected layer, `x ↦ σ.(W * x + b)`.
+One fully connected layer, ``\\mathbf{x} \\mapsto \\sigma(\\mathbf{W}\\mathbf{x} + \\mathbf{b})``, ``\\sigma`` applied componentwise.
 
 Named `NNDense` rather than `Dense` on purpose: the training extension has
 `Lux.Dense` in scope, and two `Dense` types in one file is a trap.
@@ -135,7 +135,7 @@ n_out(m::MLP) = n_out(last(m.layers))
 """
     layer_widths(m::MLP) -> Vector{Int}
 
-The `[n_in, h₁, …, n_out]` description of the architecture — what the training
+The ``[n_{\\mathrm{in}}, h_1, \\dots, n_{\\mathrm{out}}]`` description of the architecture — what the training
 extension needs to build an isomorphic `Lux.Chain`.
 """
 layer_widths(m::MLP) = [n_in(m); [n_out(l) for l in m.layers]]
@@ -165,10 +165,10 @@ end
     glorot_mlp(rng, widths; hidden = :tanh, output = :identity) -> MLP
 
 Fresh network with Glorot-uniform weights and zero biases: layer `k` draws from
-``\\pm\\sqrt{6/(n_\\mathrm{in}+n_\\mathrm{out})}``, the scaling that keeps the
+``\\pm\\sqrt{6/(n_{\\mathrm{in}}+n_{\\mathrm{out}})}``, the scaling that keeps the
 forward variance roughly constant through a `tanh` stack.
 
-`widths` is `[n_in, h₁, …, n_out]`. Every hidden layer takes the `hidden`
+`widths` is ``[n_{\\mathrm{in}}, h_1, \\dots, n_{\\mathrm{out}}]``. Every hidden layer takes the `hidden`
 activation; the output layer takes `output`, which should stay `:identity` —
 the physical range of a Hill-tensor component is handled by the output
 transform of the surrogate, not by squashing the last layer.

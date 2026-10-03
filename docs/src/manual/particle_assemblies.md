@@ -1,13 +1,16 @@
 # [Particle assemblies and N-body schemes](@id man-assemblies)
 
+!!! info "Before this page"
+    [Two-inclusion interaction tensors](@ref th-interaction),
+    [The cluster model](@ref th-cluster) and
+    [The equivalent inclusion method](@ref th-eim), where the two schemes of this
+    page are derived, and [Homogenization schemes](@ref man-schemes) for the
+    `RVE` an assembly is compared with throughout.
+
 Two schemes of the package resolve the interaction between individual inclusions
 instead of averaging it: [`ClusterModel`](@ref) and [`EquivalentInclusion`](@ref). Both
 need to know *where* the inclusions are, so both act on a
 [`ParticleAssembly`](@ref) rather than on an `RVE`.
-
-Theory: [interaction tensors](@ref th-interaction),
-[the cluster model](@ref th-cluster),
-[the equivalent inclusion method](@ref th-eim).
 
 ## Building an assembly
 
@@ -205,8 +208,8 @@ formalism and raises an `ArgumentError` naming the limitation.
 
 !!! warning "Two sign conventions exist"
     ``\mathbb{T}^{aa} = +\mathbb{P}``, i.e. the self term **is** the Hill tensor
-    ([brisard2023](@cite)), which is the convention this package follows.
-    [molinari1996](@cite) and [berveiller1987](@cite) use the
+    [brisard2023](@cite), which is the convention this package follows.
+    [molinari1996](@citet) and [berveiller1987](@citet) use the
     opposite sign, so any formula transcribed from them must be flipped. See
     [interaction tensors](@ref th-interaction).
 
@@ -225,7 +228,7 @@ softer, `:none` for mixed contrasts.
 ## Cross-checking the two schemes
 
 On a periodic assembly with the same cutoff the two are the *same* linear system and
-agree to machine precision — the identity stated in [brisard2014](@cite):
+agree to machine precision — the identity stated in [brisard2014](@citet):
 
 ```julia
 asm = cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_i); fraction = 0.25, cutoff = 3.0)
@@ -309,10 +312,10 @@ asking for one raises a message that names the lens to use instead. It has no
 
 ## Nano-interfaces: the equivalent particle
 
-[dormieux2016](@cite) is a different kind of result:
+[dormieux2016](@citet) is a different kind of result:
 it needs no new scheme. A spheroidal nanoinclusion together with its Gurtin-Murdoch
 interface behaves as a single particle of stiffness
-``\mathbb C^{eq} = \mathbb C_I + \mathbb C^{int}``, after which the classical
+``\mathbb C^{\mathrm{eq}} = \mathbb C_I + \mathbb C^{\mathrm{int}}``, after which the classical
 concentration rule applies unchanged:
 
 ```julia
@@ -326,13 +329,22 @@ add_phase!(rve, :nano, sph, Dict(:C => C_eq); fraction = 0.15)
 homogenize(rve, MoriTanaka(), :C)        # the paper's extended Mori-Tanaka
 ```
 
-[`surface_stiffness`](@ref) returns ``\mathbb C^{int}`` for any spheroid, transversely
-isotropic about the symmetry axis, with the platelet (``X \to 0``) and nanofiber
-(``X \to \infty``) limits of the paper reproduced exactly. Since it scales as
+[`surface_stiffness`](@ref) returns ``\mathbb C^{\mathrm{int}}`` for any spheroid, transversely
+isotropic about the symmetry axis, with the platelet (``\omega \to 0``) and nanofiber
+(``\omega \to \infty``) limits of the paper reproduced exactly, ``\omega = c/a`` being
+the aspect ratio. Since it scales as
 `1/size`, the stiffening it produces is a genuine size effect and vanishes for large
 particles.
 
-## API
+## Where to go next
 
-See [API — Interactions](@ref api-interactions) and
-[API — Particle assemblies](@ref api-assemblies).
+[Multiscale models](@ref man-multiscale) describes, for every cell type, the
+declarative seam used in the multiscale section above. The tutorial
+[Chaining scales through an N-body scheme](@ref tut-multiscale-assemblies)
+builds such a chain on an assembly, and the applications
+[The cluster model on cubic arrays](@ref app-cluster-model) and
+[The equivalent inclusion method, against a published table](@ref app-eim-assembly)
+reproduce published numbers with the two schemes.
+
+* [API — Interactions](@ref api-interactions) and
+  [API — Particle assemblies](@ref api-assemblies) — the docstrings

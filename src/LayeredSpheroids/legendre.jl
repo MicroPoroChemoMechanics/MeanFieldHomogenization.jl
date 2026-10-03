@@ -81,28 +81,32 @@ end
 """
     _q_recurrence_plan(x, Nmax, Tx) -> (:upward | :downward, k)
 
-Which direction to run the `Q` recurrence, and how many extra degrees Miller
+Which direction to run the ``Q`` recurrence, and how many extra degrees Miller
 needs when it is the downward one.
 
 A single quantity decides, and it decides both ways:
 
-    ρ = |x + √(x²−1)| > 1,    |Qₙ/Pₙ| ~ ρ^{-(2n+1)}.
+```math
+\\rho = \\bigl|x + \\sqrt{x^2-1}\\bigr| > 1,
+\\qquad
+|Q_n/P_n| \\sim \\rho^{-(2n+1)}.
+```
 
-Going **up**, the seed's rounding error picks up the dominant `P` solution and
-is amplified by `ρ^{2n}`; over the `Nmax` degrees needed that costs
-`2 Nmax log ρ` nats of precision.  Going **down**, Miller suppresses that same
-`P` component by `ρ^{-2k}` over `k` steps, so it needs
-`k ≈ log(1/ε) / (2 log ρ)`.
+Going **up**, the seed's rounding error picks up the dominant ``P`` solution and
+is amplified by ``\\rho^{2n}``; over the `Nmax` degrees needed that costs
+``2N_{\\max}\\log\\rho`` nats of precision.  Going **down**, Miller suppresses that same
+``P`` component by ``\\rho^{-2k}`` over ``k`` steps, so it needs
+``k \\approx \\log(1/\\epsilon)/(2\\log\\rho)``.
 
-The two are reciprocal in `log ρ`, so exactly one of them is always cheap:
+The two are reciprocal in ``\\log\\rho``, so exactly one of them is always cheap:
 
-- `ρ` near 1 — a nearly degenerate spheroid, `Q` barely decaying — upward
+- ``\\rho`` near 1 — a nearly degenerate spheroid, ``Q`` barely decaying — upward
   loses almost nothing, while Miller would need thousands of steps;
-- `ρ` well above 1 — upward is hopeless, and Miller converges in a handful.
+- ``\\rho`` well above 1 — upward is hopeless, and Miller converges in a handful.
 
 Getting this backwards is not a small error: capping Miller's step count and
-using it anyway at `ρ = 1.017` (a 1:60 flat disc) silently returned a
-`Q` accurate to only `2e-7`.
+using it anyway at ``\\rho = 1.017`` (a 1:60 flat disc) silently returned a
+``Q`` accurate to only `2e-7`.
 """
 function _q_recurrence_plan(x, Nmax::Int, ::Type{Tx}) where {Tx}
     # Miller's downward recurrence exists for one reason: to keep floating-point
@@ -149,17 +153,19 @@ function _q_recurrence_plan(x, Nmax::Int, ::Type{Tx}) where {Tx}
 end
 
 """
-    _Q_values_miller(x, Nmax, m, n_norm, q_norm) -> Vector
+    _Q_values_miller(x, Nmax, m, n_norm, q_norm, k) -> Vector
 
-`Qₙᵐ(x)` for `n = 0, …, Nmax` by Miller's downward recurrence, normalized so
+``Q_n^m(x)`` for ``n = 0, \\dots, N_{\\max}`` by Miller's downward recurrence, normalized so
 that degree `n_norm` equals the exact closed form `q_norm`.
 
 The recurrence is `_legendre_next` solved for the lower neighbor,
 
-    Qₙ₋₁ = ((2n+1) x Qₙ − (n−m+1) Qₙ₊₁) / (n+m),
+```math
+Q_{n-1} = \\frac{(2n+1)\\,x\\,Q_n - (n-m+1)\\,Q_{n+1}}{n+m},
+```
 
-started at `Nmax + _miller_extra` with `(Qₙ₊₁, Qₙ) = (0, 1)`.  Going down,
-`Q` grows like `ρⁿ`, so the running values are rescaled whenever they get
+started at `Nmax + k` with ``(Q_{n+1}, Q_n) = (0, 1)``.  Going down,
+``Q`` grows like ``\\rho^n``, so the running values are rescaled whenever they get
 large; a global factor is irrelevant, the final normalization removes it.
 """
 function _Q_values_miller(x::Tx, Nmax::Int, m::Int, n_norm::Int, q_norm::Tx, k::Int) where {Tx}
@@ -185,13 +191,13 @@ end
 """
     _Q_derivatives(tab, x, m, dtab_low) -> Vector
 
-Derivatives of `Qₙᵐ` from the exact identity
-`(x² − 1) dQₙᵐ/dx = n x Qₙᵐ − (n + m) Qₙ₋₁ᵐ`, with the low degrees for which
+Derivatives of ``Q_n^m`` from the exact identity
+``(x^2 - 1)\\,\\mathrm{d}Q_n^m/\\mathrm{d}x = n\\,x\\,Q_n^m - (n + m)\\,Q_{n-1}^m``, with the low degrees for which
 that identity is unusable taken from the closed forms in `dtab_low`.
 
-For `m = 1` the identity needs `Q₀¹`, which the tables here carry as a
-placeholder zero (the `m = 1` recurrence is singular at `n = 0` and that entry
-is never used), so degrees `0` and `1` come from `dtab_low`; for `m = 0` only
+For ``m = 1`` the identity needs ``Q_0^1``, which the tables here carry as a
+placeholder zero (the ``m = 1`` recurrence is singular at ``n = 0`` and that entry
+is never used), so degrees `0` and `1` come from `dtab_low`; for ``m = 0`` only
 degree `0` does.
 """
 function _Q_derivatives(tab::Vector{Tx}, x::Tx, m::Int, dtab_low::Vector{Tx}) where {Tx}
@@ -209,8 +215,8 @@ end
 """
     _P0_table(x, Nmax) -> (tab, dtab)
 
-`Pₙ(x)`, `n = 0, …, Nmax`, plain Legendre polynomials (order `m = 0`).
-Valid for any argument (the `p` branch, `|p| ≤ 1`, or the `q` branch).
+``P_n(x)``, ``n = 0, \\dots, N_{\\max}``, plain Legendre polynomials (order ``m = 0``).
+Valid for any argument (the ``p`` branch, ``|p| \\le 1``, or the ``q`` branch).
 """
 function _P0_table(x::Tx, Nmax::Int) where {Tx}
     tab = Tx[one(Tx), x]
@@ -221,9 +227,9 @@ end
 """
     _Q0_table(x, Nmax) -> (tab, dtab)
 
-`Qₙ(x)`, `n = 0, …, Nmax`, Legendre functions of the second kind
-(order `m = 0`). Valid for the `q` branch (`|x| > 1`, real or the
-oblate `iτ` substitute).
+``Q_n(x)``, ``n = 0, \\dots, N_{\\max}``, Legendre functions of the second kind
+(order ``m = 0``). Valid for the ``q`` branch (``|x| > 1``, real or the
+oblate ``\\mathrm{i}\\tau`` substitute).
 """
 function _Q0_table(x::Tx, Nmax::Int) where {Tx}
     ax = _arccoth(x)
@@ -246,9 +252,9 @@ end
 """
     _P1p_table(x, Nmax) -> (tab, dtab)
 
-`Pₙ¹(x)`, `n = 0, …, Nmax`, associated Legendre of the first kind,
-order `m = 1`, on the `p` branch (`|p| ≤ 1`), seeded with
-`P₁¹(p) = -√(1-p²)`.
+``P_n^1(x)``, ``n = 0, \\dots, N_{\\max}``, associated Legendre of the first kind,
+order ``m = 1``, on the ``p`` branch (``|p| \\le 1``), seeded with
+``P_1^1(p) = -\\sqrt{1-p^2}``.
 """
 function _P1p_table(x::Tx, Nmax::Int) where {Tx}
     xb = -sqrt(one(Tx) - x^2)
@@ -260,9 +266,9 @@ end
 """
     _P1_table(x, Nmax) -> (tab, dtab)
 
-`Pₙ¹(x)`, `n = 0, …, Nmax`, associated Legendre of the first kind,
-order `m = 1`, on the `q` branch (`|x| > 1`), seeded with
-`P₁¹(q) = √(q²-1)`.
+``P_n^1(x)``, ``n = 0, \\dots, N_{\\max}``, associated Legendre of the first kind,
+order ``m = 1``, on the ``q`` branch (``|x| > 1``), seeded with
+``P_1^1(q) = \\sqrt{q^2-1}``.
 """
 function _P1_table(x::Tx, Nmax::Int) where {Tx}
     xb = sqrt(x^2 - one(Tx))
@@ -274,10 +280,10 @@ end
 """
     _Q1_table(x, Nmax) -> (tab, dtab)
 
-`Qₙ¹(x)`, `n = 0, …, Nmax`, associated Legendre of the second kind,
-order `m = 1`, on the `q` branch. The recurrence for `m = 1` is
-singular at `n = 0`, so the degrees `0, 1, 2` are seeded from closed
-forms and the upward recurrence resumes from `n = 2`.
+``Q_n^1(x)``, ``n = 0, \\dots, N_{\\max}``, associated Legendre of the second kind,
+order ``m = 1``, on the ``q`` branch. The recurrence for ``m = 1`` is
+singular at ``n = 0``, so the degrees ``0, 1, 2`` are seeded from closed
+forms and the upward recurrence resumes from ``n = 2``.
 """
 function _Q1_table(x::Tx, Nmax::Int) where {Tx}
     ax = _arccoth(x)
@@ -310,13 +316,13 @@ end
 """
     _P2p_table(x, Nmax) -> (tab, dtab)
 
-`Pₙ²(x)`, order `m = 2`, on the `p` branch (`|p| ≤ 1`), seeded with
-`P₂²(p) = 3(1-p²)` — Ferrers' convention, whose `(-1)^m` is `+1` here, matching
-`_P1p_table`'s `P₁¹(p) = -√(1-p²)`.
+``P_n^2(x)``, order ``m = 2``, on the ``p`` branch (``|p| \\le 1``), seeded with
+``P_2^2(p) = 3(1-p^2)`` — Ferrers' convention, whose ``(-1)^m`` is ``+1`` here, matching
+`_P1p_table`'s ``P_1^1(p) = -\\sqrt{1-p^2}``.
 
-`P₀² = P₁² = 0`, and the three-term recurrence is **singular at `n = m-1`**
-(its leading coefficient `n-m+1` vanishes there), so the seed has to reach
-`n = m`. Growth then starts from `n = 2`, where the coefficient is `1`.
+``P_0^2 = P_1^2 = 0``, and the three-term recurrence is **singular at ``n = m-1``**
+(its leading coefficient ``n-m+1`` vanishes there), so the seed has to reach
+``n = m``. Growth then starts from ``n = 2``, where the coefficient is ``1``.
 """
 function _P2p_table(x::Tx, Nmax::Int) where {Tx}
     z = zero(Tx)
@@ -328,8 +334,8 @@ end
 """
     _P2_table(x, Nmax) -> (tab, dtab)
 
-`Pₙ²(x)`, order `m = 2`, on the `q` branch (`|x| > 1`), seeded with
-`P₂²(q) = 3(q²-1)` — Hobson's convention, matching `_P1_table`.
+``P_n^2(x)``, order ``m = 2``, on the ``q`` branch (``|x| > 1``), seeded with
+``P_2^2(q) = 3(q^2-1)`` — Hobson's convention, matching `_P1_table`.
 """
 function _P2_table(x::Tx, Nmax::Int) where {Tx}
     z = zero(Tx)
@@ -341,31 +347,37 @@ end
 """
     _Q2_table(x, Nmax) -> (tab, dtab)
 
-`Qₙ²(x)`, order `m = 2`, `q` branch. Seeded on the three closed forms
+``Q_n^2(x)``, order ``m = 2``, ``q`` branch. Seeded on the three closed forms
 
-    Q₀² = 2x/(x²-1),   Q₁² = 2/(x²-1),   Q₂² = 3(x²-1) arccoth x - 3x + 2x/(x²-1),
+```math
+Q_0^2 = \\frac{2x}{x^2-1},
+\\qquad
+Q_1^2 = \\frac{2}{x^2-1},
+\\qquad
+Q_2^2 = 3(x^2-1)\\,\\mathrm{arccoth}\\,x - 3x + \\frac{2x}{x^2-1},
+```
 
-which the recurrence relates exactly. All three are needed: `Q₀²` and `Q₁²`
-satisfy the recurrence's degenerate relation at `n = m-1` rather than stepping
-through it, so growth can only start at `n = m = 2`.
+which the recurrence relates exactly. All three are needed: ``Q_0^2`` and ``Q_1^2``
+satisfy the recurrence's degenerate relation at ``n = m-1`` rather than stepping
+through it, so growth can only start at ``n = m = 2``.
 
-Direction is chosen as everywhere else in this file — `Qₙ` is the minimal
+Direction is chosen as everywhere else in this file — ``Q_n`` is the minimal
 solution, so upward is only safe for a nearly degenerate spheroid. Miller's
-downward pass is normalized on `Q₂²`, the lowest degree it can legitimately
+downward pass is normalized on ``Q_2^2``, the lowest degree it can legitimately
 anchor on.
 
 !!! note "The `Q₂²` seed cancels at large `q`, and that is where it does not matter"
-    `3(x²-1) arccoth x` and `-3x` agree to leading order — both are `3x` — so
-    the seed loses about `log₁₀(3x/Q₂²)` digits, which is roughly `4.6` at
-    `q = 12` and shows up as a uniform `2e-12` across all degrees. It is
+    ``3(x^2-1)\\,\\mathrm{arccoth}\\,x`` and ``-3x`` agree to leading order — both are ``3x`` — so
+    the seed loses about ``\\log_{10}(3x/Q_2^2)`` digits, which is roughly 4.6 at
+    ``q = 12`` and shows up as a uniform `2e-12` across all degrees. It is
     uniform because it is a *normalization* error, not an instability: measured
     against the original upward recurrence at 600 bits, every degree carries the
     same relative error.
 
-    Large `q` means a nearly **spherical** spheroid (`ω = q/√(q²-1) → 1`), which
-    is the regime one would hand to `LayeredSphere` instead; at `q = 2.5` the
+    Large ``q`` means a nearly **spherical** spheroid (``\\omega = q/\\sqrt{q^2-1} \\to 1``), which
+    is the regime one would hand to `LayeredSphere` instead; at ``q = 2.5`` the
     seed is accurate to `6e-15`. The elastic solver's own `Float64` floor is
-    `1e-7`, four orders coarser, so a series expansion in `1/x` would buy
+    `1e-7`, four orders coarser, so a series expansion in ``1/x`` would buy
     nothing here.
 """
 function _Q2_table(x::Tx, Nmax::Int) where {Tx}
@@ -396,15 +408,15 @@ end
     legendre_odd(kind::Symbol, x, Nseries::Int) -> (vals, derivs)
 
 Values and derivatives of the requested Legendre kind at the `Nseries`
-ODD degrees `1, 3, …, 2·Nseries − 1`, as length-`Nseries` `Vector`s
-(index `r` ↔ degree `2r − 1`).
+ODD degrees ``1, 3, \\dots, 2\\mathcal{N} - 1`` (``\\mathcal{N}`` = `Nseries`), as length-`Nseries` `Vector`s
+(index ``r`` ``\\leftrightarrow`` degree ``2r - 1``).
 
 `kind ∈ (:P0, :Q0, :P1, :P1p, :Q1)`:
-- `:P0`  — `Pₙ(x)`   (m=0, any branch)
-- `:Q0`  — `Qₙ(x)`   (m=0, q branch, |x|>1)
-- `:P1`  — `Pₙ¹(x)`  (m=1, q branch, |x|>1)
-- `:P1p` — `Pₙ¹(x)`  (m=1, p branch, |x|≤1)
-- `:Q1`  — `Qₙ¹(x)`  (m=1, q branch, |x|>1)
+- `:P0`  — ``P_n(x)``   (``m = 0``, any branch)
+- `:Q0`  — ``Q_n(x)``   (``m = 0``, ``q`` branch, ``|x| > 1``)
+- `:P1`  — ``P_n^1(x)``  (``m = 1``, ``q`` branch, ``|x| > 1``)
+- `:P1p` — ``P_n^1(x)``  (``m = 1``, ``p`` branch, ``|x| \\le 1``)
+- `:Q1`  — ``Q_n^1(x)``  (``m = 1``, ``q`` branch, ``|x| > 1``)
 """
 function legendre_odd(kind::Symbol, x, Nseries::Int)
     return legendre_degrees(kind, x, 1:2:(2 * Nseries - 1))
@@ -414,17 +426,17 @@ end
     legendre_table(kind::Symbol, x, Nmax::Int) -> (vals, derivs)
 
 Values and derivatives of the requested Legendre kind at **every** degree
-`0, 1, …, Nmax`, as length-`Nmax + 1` `Vector`s (index `n + 1` ↔ degree `n`).
+``0, 1, \\dots, N_{\\max}``, as length-`Nmax + 1` `Vector`s (index ``n + 1`` ``\\leftrightarrow`` degree ``n``).
 
-`kind ∈ (:P0, :Q0, :P1, :P1p, :Q1)`:
-- `:P0`  — `Pₙ(x)`   (m = 0, any branch)
-- `:Q0`  — `Qₙ(x)`   (m = 0, q branch, `|x| > 1`)
-- `:P1`  — `Pₙ¹(x)`  (m = 1, q branch, `|x| > 1`)
-- `:P1p` — `Pₙ¹(x)`  (m = 1, p branch, `|x| ≤ 1`)
-- `:Q1`  — `Qₙ¹(x)`  (m = 1, q branch, `|x| > 1`)
-- `:P2`  — `Pₙ²(x)`  (m = 2, q branch, `|x| > 1`)
-- `:P2p` — `Pₙ²(x)`  (m = 2, p branch, `|x| ≤ 1`)
-- `:Q2`  — `Qₙ²(x)`  (m = 2, q branch, `|x| > 1`)
+`kind ∈ (:P0, :Q0, :P1, :P1p, :Q1, :P2, :P2p, :Q2)`:
+- `:P0`  — ``P_n(x)``   (``m = 0``, any branch)
+- `:Q0`  — ``Q_n(x)``   (``m = 0``, ``q`` branch, ``|x| > 1``)
+- `:P1`  — ``P_n^1(x)``  (``m = 1``, ``q`` branch, ``|x| > 1``)
+- `:P1p` — ``P_n^1(x)``  (``m = 1``, ``p`` branch, ``|x| \\le 1``)
+- `:Q1`  — ``Q_n^1(x)``  (``m = 1``, ``q`` branch, ``|x| > 1``)
+- `:P2`  — ``P_n^2(x)``  (``m = 2``, ``q`` branch, ``|x| > 1``)
+- `:P2p` — ``P_n^2(x)``  (``m = 2``, ``p`` branch, ``|x| \\le 1``)
+- `:Q2`  — ``Q_n^2(x)``  (``m = 2``, ``q`` branch, ``|x| > 1``)
 """
 function legendre_table(kind::Symbol, x, Nmax::Int)
     kind === :P0 && return _P0_table(x, Nmax)
@@ -445,13 +457,13 @@ Values and derivatives at an arbitrary set of `degrees`, in the order given.
 
 Conduction needs the odd degrees alone, which is what
 [`legendre_odd`](@ref) selects. Elasticity does not: the case-I Papkovich–Neuber
-potentials split by parity — `φ₀` on the even degrees, `φ₃` on the odd ones —
+potentials split by parity — ``\\varphi_0`` on the even degrees, ``\\varphi_3`` on the odd ones —
 so the degree list is part of the problem rather than a property of the module.
 The underlying tables are built for `0:maximum(degrees)` either way, the
 recurrences being what they are, so asking for a sparse set costs nothing extra.
 
 !!! note "`Qₙ` depends on the highest degree requested"
-    `Pₙ` grows upward and is bit-identical whatever `Nmax` is asked for. `Qₙ` is
+    ``P_n`` grows upward and is bit-identical whatever `Nmax` is asked for. ``Q_n`` is
     the *minimal* solution and is built by Miller's downward recurrence, which
     starts above the highest degree requested and normalizes on a closed form —
     so the arithmetic path, and with it the last couple of bits, depends on

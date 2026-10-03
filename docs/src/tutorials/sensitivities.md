@@ -1,5 +1,11 @@
 # [Derivatives and sensitivities](@id tut-sensitivities)
 
+!!! info "Before this page"
+    The tutorial [A first homogenization](@ref tut-first-estimate), whose RVE is
+    differentiated below, and the manual page
+    [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities), where the
+    lenses used here are described in full.
+
 Every scheme in `MeanFieldHomogenization` is ordinary, generic Julia code — no
 finite differences, no symbolic engine, no hand-written Jacobians. That
 means [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl) can
@@ -33,7 +39,7 @@ idxC = C -> get_array(C)[1, 1, 1, 1]
 
 `amount(:I)` is the phase's volume fraction (or crack density), and
 `property(:I, :C, :bulk)` its bulk-modulus coefficient — see
-[the manual](../manual/sensitivities.md#Parameter-lenses) for the full
+[the manual](@ref man-sensitivities-lenses) for the full
 list, including `geometry` (a semi-axis, say) and `shape_param` (a
 distribution-shape field). Several lenses combine into a `gradient`:
 
@@ -74,7 +80,7 @@ Mori–Tanaka has a known closed-form sensitivity of the effective bulk
 modulus to volume fraction [christensen1990](@cite):
 
 ```math
-\frac{\partial k_{\text{MT}}}{\partial f} =
+\frac{\partial k_{\mathrm{MT}}}{\partial f} =
 \Delta k\;\frac{\zeta_m(\zeta_m+\Delta k)}{D^2},
 \qquad
 \zeta_m = k_m+\tfrac{4}{3}\mu_m,
@@ -105,3 +111,12 @@ scheme, not just Mori–Tanaka, `ForwardDiff` derivatives of
 `homogenize` are a reliable building block for anything downstream that
 needs a sensitivity — including, as the next tutorial shows, a
 macroscopic strength criterion built entirely from such derivatives.
+
+## Where to go next
+
+[From derivatives to a strength criterion](@ref tut-strength-criteria) uses these
+derivatives to build a macroscopic strength criterion of a porous solid. The
+same lenses differentiate a time-domain calculation in
+[Derivatives through the ageing-viscoelastic pipeline](@ref tut-alv-sensitivities),
+and the full list of lenses and indexers is given in
+[Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities).

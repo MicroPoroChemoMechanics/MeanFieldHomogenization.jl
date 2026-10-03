@@ -2,7 +2,7 @@
 #  hill_2d_iso.jl — Hill tensor for a 2-D ellipse in an isotropic matrix.
 #
 #  Closed form derived from the Eshelby tensor of an elliptic cylinder,
-#  [mura1987](@cite) eq. 11.22, contracted with `C₀⁻¹`
+#  [mura1987; eq. 11.22](@cite), contracted with `C₀⁻¹`
 #  (`P = S : C₀⁻¹`).  With the package convention
 #  `C₀ = TensISO{2}(α, β) = α·𝕁₂ + β·𝕂₂`, `α = 3k`, `β = 2μ`, plane strain
 #  gives `α = 2(λ+μ)` and `β = 2μ`, hence `ν = (α-β)/(2α)`.
@@ -31,11 +31,11 @@ end
     _hill_2d_iso(ell::Ellipsoid{2}, C₀::TensISO{4,2}) -> AbstractTens{4,2}
 
 Analytical Hill polarization tensor of a 2-D ellipse in an isotropic
-plane-strain matrix ``\\mathbb C_0 = 3k\\,\\mathbb J + 2\\mu\\,\\mathbb K``,
+plane-strain matrix ``\\mathbb{C}_0 = 3k\\,\\mathbb{J} + 2\\mu\\,\\mathbb{K}``,
 obtained from the elliptic-cylinder Eshelby tensor of
-[mura1987](@cite) through ``\\mathbb P = \\mathbb S : \\mathbb C_0^{-1}``.
+[mura1987](@citet) through ``\\mathbb{P} = \\mathbb{S}^{\\mathrm{E}}:\\mathbb{C}_0^{-1}``.
 
-Setting `k = Inf` gives the incompressible limit.
+Setting ``k = \\infty`` (`Inf`) gives the incompressible limit.
 """
 function _hill_2d_iso(ell::Ellipsoid{2, Circular}, C₀)
     T = promote_type(eltype(ell.semi_axes), eltype(C₀))

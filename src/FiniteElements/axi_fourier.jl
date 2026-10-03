@@ -66,9 +66,9 @@ _axi_axis_zeros(m::Int) = m == 0 ? (1,) : m == 1 ? (2, 3) : (1, 2, 3)
 """
     _axi_B_elast(m, N, dNρ, dNz, ρ) -> 6×ncomp matrix
 
-Kelvin-Mandel strain `(ε_ρρ, ε_θθ, ε_zz, γ_θz/√2, γ_ρz/√2, γ_ρθ/√2)` produced
+Kelvin-Mandel strain ``(\\varepsilon_{\\rho\\rho}, \\varepsilon_{\\theta\\theta}, \\varepsilon_{zz}, \\gamma_{\\theta z}/\\sqrt{2}, \\gamma_{\\rho z}/\\sqrt{2}, \\gamma_{\\rho\\theta}/\\sqrt{2})`` produced
 by one scalar shape function acting on each solved component, in Fourier mode
-`m`. The index order matches `mandel66_minor` with `1↦ρ`, `2↦θ`, `3↦z`, so a
+``m``. The index order matches `mandel66_minor` with ``1\\mapsto\\rho``, ``2\\mapsto\\theta``, ``3\\mapsto z``, so a
 transversely isotropic material matrix can be used as is.
 """
 function _axi_B_elast(m::Int, N::Float64, dNρ::Float64, dNz::Float64, ρ::Float64)
@@ -90,7 +90,7 @@ end
 """
     _axi_B_cond(m, N, dNρ, dNz, ρ) -> 3×1 matrix
 
-Cylindrical gradient `(∂ρ t̄, −m t̄/ρ, ∂z t̄)` of one scalar shape function in
+Cylindrical gradient ``(\\partial_\\rho\\bar t, -m\\bar t/\\rho, \\partial_z\\bar t)`` of one scalar shape function in
 Fourier mode `m`.
 """
 _axi_B_cond(m::Int, N::Float64, dNρ::Float64, dNz::Float64, ρ::Float64) =
@@ -146,9 +146,9 @@ end
     _axi_assemble_66(G0, G1, G2) -> 6×6
 
 Kelvin-Mandel matrix of the transversely isotropic 4th-order tensor whose
-mode-0 block is the 2×2 `G0`, whose mode-1 eigenvalue is `G1` and whose mode-2
+mode-0 block is the ``2\\times 2`` `G0`, whose mode-1 eigenvalue is `G1` and whose mode-2
 eigenvalue is `G2`. The two shear modes each appear twice, on the pairs
-`(13, 23)` and `(11−22, 12)`.
+``(13, 23)`` and ``(11-22, 12)``.
 """
 function _axi_assemble_66(G0::AbstractMatrix{Float64}, G1::Float64, G2::Float64)
     Ĝ = zeros(6, 6)
@@ -179,11 +179,11 @@ end
 
 Modal amplitude, in the solved unknowns, of the Kelvin dipole far field
 
-```
-u_i(x) = +(∂G_ij/∂x_k)(x) · M_jk
+```math
+u_i(\\underline{x}) = +\\frac{\\partial G_{ij}}{\\partial x_k}(\\underline{x})\\,M_{jk}
 ```
 
-for a polarization *moment* `M` times the Kelvin basis tensor `mⱼ` of mode `m`
+for a polarization *moment* ``\\boldsymbol{M}`` times the Kelvin basis tensor ``\\boldsymbol{m}_j`` of mode ``m``
 — the same field as `dipole_displacement_iso`, resolved on the cylindrical
 basis.
 
@@ -227,8 +227,8 @@ _axi_bc_affine_cond(m::Int, ρ::Float64, z::Float64) = m == 0 ? z : ρ
 """
     _axi_bc_dipole_cond(m, ρ, z, k₀, M) -> Float64
 
-Modal amplitude of the scalar dipole far field `T = M·x /(4π k₀ r³)` generated
-by a polarization moment `M` along the Cartesian axis of mode `m`.
+Modal amplitude of the scalar dipole far field ``T = \\underline{M}\\cdot\\underline{x}/(4\\pi k_0 r^3)`` generated
+by a polarization moment ``\\underline{M}`` along the Cartesian axis of mode ``m``.
 """
 function _axi_bc_dipole_cond(m::Int, ρ::Float64, z::Float64, k₀::Float64, M::Float64)
     r = sqrt(ρ^2 + z^2)

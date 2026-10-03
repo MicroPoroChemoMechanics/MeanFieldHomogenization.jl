@@ -13,7 +13,7 @@ hero:
   actions:
     - theme: brand
       text: Get started
-      link: /manual/installation
+      link: /quickstart
     - theme: alt
       text: Theory
       link: /theory/
@@ -32,7 +32,7 @@ features:
   - icon: 🧰
     title: Manual
     details: Every inclusion family, cell and scheme, with the call that produces it — from an ellipsoid to a neural surrogate.
-    link: /manual/installation
+    link: /manual/
   - icon: 🎓
     title: Tutorials
     details: The API by worked example, topic by topic, each page runnable end to end.
@@ -120,4 +120,38 @@ plt
 
 Voigt and Reuss bracket the others; the three estimates between them differ by
 how much of the load each void is assumed to see. [Porous materials](@ref tut-porous-materials) works through why the standard self-consistent scheme fails on
-this problem and what replaces it.
+this problem and what replaces it, and [Getting started](@ref getting-started)
+takes a single estimate more slowly, defining each object on the way.
+
+## Reading paths
+
+The documentation is organized by the question each chapter answers.
+[Theory](@ref th-index) explains why an estimate is the right one, the
+[Manual](@ref man-index) describes how each kind of object is written, the
+[Tutorials](@ref tut-index) drive a calculation from start to finish, and the
+Applications build complete models of real materials. Three entry points follow
+from it, depending on what the reader already knows.
+
+**New to mean-field homogenization.** The chapter [Theory](@ref th-index) is
+written for this reader and is best read in the order it states, from
+[The Eshelby inclusion problem](@ref th-eshelby-problem) to
+[Homogenization schemes](@ref th-homogenization), which together contain the
+whole chain that the rest generalizes. The tutorial
+[A first homogenization](@ref tut-first-estimate) then puts it to work.
+
+**Knowing what is to be computed.** [Getting started](@ref getting-started) and
+[Schemes and RVEs](@ref man-schemes) are enough to write a first model; the
+Manual then has one page per morphology, from
+[Ellipsoidal inclusions](@ref man-ellipsoidal-inclusions) to
+[Neural-surrogate inclusions](@ref man-neural-inclusions), and the Applications,
+from [Multiscale elasticity of a hydrating cement paste](@ref app-cement-paste)
+onwards, show complete models.
+
+**Coming from Echoes.** The correspondence between the two libraries, class by
+class, is in [From Echoes to MeanFieldHomogenization](@ref tools-from-echoes),
+and [`echoes2mfh`](@ref tools-echoes2mfh) translates an existing script.
+
+**The symbols.** Every symbol of the formulas is listed in the
+[Nomenclature](@ref nomenclature), with its meaning and its unit. Hovering an
+equation on any page shows the symbols it holds, with their meaning on that
+page.

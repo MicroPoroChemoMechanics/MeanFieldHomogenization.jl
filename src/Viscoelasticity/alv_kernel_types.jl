@@ -30,7 +30,7 @@
 
 Abstract supertype for structured ALV kernel wrappers.  Concrete
 subtypes (`ALVKernelISO`, `ALVKernelTI`, `ALVKernelOrtho`) store the
-symmetry-class parameters compactly and present a `(6n × 6n)`
+symmetry-class parameters compactly and present a ``6n\\times 6n``
 AbstractMatrix view via lazy `getindex`.
 """
 abstract type AbstractALVKernel{T} <: AbstractMatrix{T} end
@@ -41,9 +41,9 @@ abstract type AbstractALVKernel{T} <: AbstractMatrix{T} end
     ALVKernelISO{T}(α::Matrix{T}, β::Matrix{T})
     ALVKernelISO(M::AbstractMatrix)
 
-Iso ALV kernel: stores the two `n × n` Volterra parameter matrices `α`
-and `β` (with `α = 3K(t,t')` and `β = 2μ(t,t')` in Mandel form).
-Materializes as a `(6n × 6n)` block matrix on demand via
+Iso ALV kernel: stores the two ``n\\times n`` Volterra parameter matrices `α`
+and `β` (with ``\\alpha = 3k(t,t')`` and ``\\beta = 2\\mu(t,t')`` in Mandel form).
+Materializes as a ``6n\\times 6n`` block matrix on demand via
 `Matrix(K)` or `getindex`.
 """
 struct ALVKernelISO{T} <: AbstractALVKernel{T}
@@ -70,9 +70,9 @@ ALVKernelISO(M::AbstractMatrix) =
     ALVKernelTI{T}(ℓ::NTuple{6, Matrix{T}}; axis = (0, 0, 1))
     ALVKernelTI(M::AbstractMatrix; axis = (0, 0, 1))
 
-TI ALV kernel: stores the six `n × n` Walpole parameter matrices
-`(ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆)` with the canonical axis (currently only
-`e₃` supported).  Materializes as a `(6n × 6n)` block matrix on demand.
+TI ALV kernel: stores the six ``n\\times n`` Walpole parameter matrices
+``(\\ell_1, \\ell_2, \\ell_3, \\ell_4, \\ell_5, \\ell_6)`` with the canonical axis (currently only
+``\\underline{e}_3`` supported).  Materializes as a ``6n\\times 6n`` block matrix on demand.
 """
 struct ALVKernelTI{T} <: AbstractALVKernel{T}
     ℓ::NTuple{6, Matrix{T}}
@@ -113,10 +113,10 @@ ALVKernelTI(
     ALVKernelOrtho{T}(o::NTuple{12, Matrix{T}}; axes = canonical)
     ALVKernelOrtho(M::AbstractMatrix; axes = canonical)
 
-Ortho ALV kernel: stores the twelve `n × n` parameter matrices of the
-ortho closure (9 entries of the full unsymmetric 3×3 normal block in
+Ortho ALV kernel: stores the twelve ``n\\times n`` parameter matrices of the
+ortho closure (9 entries of the full unsymmetric ``3\\times 3`` normal block in
 Mandel form + 3 shears) with the canonical material frame
-`(e₁, e₂, e₃)`.  Materializes as a `(6n × 6n)` block matrix on demand.
+``(\\underline{e}_1, \\underline{e}_2, \\underline{e}_3)``.  Materializes as a ``6n\\times 6n`` block matrix on demand.
 """
 struct ALVKernelOrtho{T} <: AbstractALVKernel{T}
     o::NTuple{12, Matrix{T}}
@@ -346,7 +346,7 @@ end
 
 Volterra inverse of a structured ALV kernel.  Stays in the same
 symmetry class : iso ↦ iso, TI ↦ TI, ortho ↦ ortho.  Avoids
-materializing the `(6n × 6n)` matrix.
+materializing the ``6n\\times 6n`` matrix.
 """
 function volterra_inverse(K::ALVKernelISO)
     αβ = _iso_inv((K.α, K.β))
@@ -367,7 +367,7 @@ end
     volterra_left_divide(S::AbstractALVKernel, M::AbstractALVKernel)
         -> AbstractALVKernel
 
-Volterra left-divide `T = S^{-vol} ∘ M` within the structured class.
+Volterra left-divide ``T = S^{-\\circ}\\circ M`` within the structured class.
 Auto-promotes mixed inputs (e.g. iso S + TI M) to the more general
 class before solving.
 """

@@ -60,7 +60,7 @@ silently produce a wrong Biot modulus.
 !!! warning "Crack phases carry no volume"
     A [`CrackDensity`](@ref MeanFieldHomogenization.Schemes.CrackDensity) phase
     contributes **zero** here, because a flat crack has no volume: its fraction
-    ``f_i = (4\\pi/3)\\,d_i\\,\\omega_i`` depends on the aspect ratio, which the
+    ``f_i = (4\\pi/3)\\,\\varepsilon_i\\,\\omega_i`` (crack density ``\\varepsilon_i``) depends on the aspect ratio ``\\omega_i``, which the
     crack geometry does not carry and which evolves during a simulation. For a
     fractured medium the porosity must therefore be assembled from the current
     apertures — that is what

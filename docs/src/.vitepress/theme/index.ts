@@ -16,6 +16,8 @@ import SidebarDrawerToggle from '@/SidebarDrawerToggle.vue'
 // __DV_PLUGIN_COMPONENT_IMPORTS__
 
 import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
+// Hovering an equation lists its symbols, with their meaning on the page.
+import { installSymbolHints } from './symbol-hints'
 
 import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css'
 import './style.css' // You could setup your own, or else a default will be copied.
@@ -67,8 +69,9 @@ async function drawPlotly(uid: string, data: unknown[], layout: unknown): Promis
 }
 
 // ── Citation hints ──────────────────────────────────────────────────────────
-// A numeric citation reads as `[42]`, which tells the reader nothing without a
-// trip to the References page. Hovering one pops the full entry instead.
+// An author-year citation, `(Eshelby, 1957)`, names the work but not where it
+// appeared; that needs a trip to the References page. Hovering one pops the
+// full entry instead.
 //
 // The entries are read from the References page itself, fetched once on the
 // first hover and indexed by the anchor DocumenterCitations puts on each item,
@@ -150,7 +153,10 @@ export const Theme: ThemeConfig = {
     // Reachable from the inline scripts of the 3D figures, which are plain
     // (non-module) scripts and so cannot import the bundle themselves.
     if (typeof window !== "undefined") (window as any).mfhPlotly = drawPlotly
-    if (typeof window !== "undefined") installCitationHints(siteData.value.base)
+    if (typeof window !== "undefined") {
+      installCitationHints(siteData.value.base)
+      installSymbolHints()
+    }
     app.component('VersionPicker', VersionPicker);
     app.component('AuthorBadge', AuthorBadge)
     app.component('Authors', Authors)

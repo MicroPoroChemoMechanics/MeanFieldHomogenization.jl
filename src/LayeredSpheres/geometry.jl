@@ -27,7 +27,7 @@ shells) embedded in an infinite matrix.  Type parameters:
 
 - `T` — element type of the radii (`Float64`, `BigFloat`,
   `ForwardDiff.Dual`, `SymPy.Sym`, `Symbolics.Num`, …).
-- `N` — number of layers (≥ 1).
+- `N` — number of layers (``N \\ge 1``).
 - `Cs` — concrete type of the `moduli` NTuple.
 - `Is` — concrete type of the `interfaces` NTuple.
 
@@ -36,9 +36,9 @@ Use the keyword-argument constructor
 interfaces)` for most cases.
 
 ## Convention
-- Radii `(r₁, …, r_N)` are ascending, `r₀ = 0` implicit.
-- Moduli `(C₁, …, C_N)` per layer, layer `k` between `r_{k-1}` and `r_k`.
-- Interfaces `(I_1, …, I_N)` at each radius `r_k`; interface `N` is the
+- Radii ``(r_1, \\dots, r_N)`` are ascending, ``r_0 = 0`` implicit.
+- Moduli ``(\\mathbb{C}_1, \\dots, \\mathbb{C}_N)`` per layer, layer ``k`` between ``r_{k-1}`` and ``r_k``.
+- Interfaces ``(I_1, \\dots, I_N)`` at each radius ``r_k``; interface ``N`` is the
   outer boundary with the matrix.
 """
 struct LayeredSphere{T <: Number, N, Cs, Is} <: MFH_Core.AbstractLayeredInclusion{3, T}
@@ -161,7 +161,7 @@ MFH_Core.shape_trait(::LayeredSphere) = SphericalLayered
     shape_tensor(sphere::LayeredSphere) -> AbstractTens{2,3}
 
 Symmetric 2nd-order shape tensor of the composite sphere, i.e.
-`r_N² · 𝟙` (a ball of radius `r_N`, isotropic).
+``r_N\\,\\boldsymbol{1}`` (a ball of radius ``r_N``, isotropic).
 """
 function MFH_Core.shape_tensor(sphere::LayeredSphere{T}) where {T}
     r = outer_radius(sphere)

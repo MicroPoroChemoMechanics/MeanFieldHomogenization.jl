@@ -58,7 +58,7 @@ defining a new type.
 | `basis` | from `euler_angles` | local frame; for a flat object column 3 is the normal |
 | `euler_angles` | `()` | ZYZ angles, ignored when `basis` is given |
 | `homogeneous` | `true` | value returned by [`is_homogeneous_inclusion`](@ref MeanFieldHomogenization.Core.is_homogeneous_inclusion) |
-| `density_factor` | `nothing` | prefactor of the *amount × contribution* seam; set it (e.g. `4π/3`) to register the phase with a [`CrackDensity`](@ref MeanFieldHomogenization.Schemes.CrackDensity) amount |
+| `density_factor` | `nothing` | prefactor of the *amount × contribution* seam; set it (e.g. ``4\\pi/3``) to register the phase with a [`CrackDensity`](@ref MeanFieldHomogenization.Schemes.CrackDensity) amount |
 
 # Callbacks — pick **one** entry gate
 
@@ -77,12 +77,12 @@ the schemes forward `method`, tolerances, and — for density-based phases —
 
 Gate A yields all eight localization and all four contribution tensors for
 free; gate B yields the derived localizations and the contributions.
-`P₀` is a 4th-order stiffness in elasticity and a 2nd-order conductivity in
+`P₀` is a 4th-order stiffness in elasticity (``\\mathbb{C}_0``) and a 2nd-order conductivity (``\\boldsymbol{K}_0``) in
 transport — a single callback may serve both by dispatching on its argument.
 
 !!! warning "Gate B and heterogeneous inclusions"
     The strain-side localization determines the stress-side one *only* through
-    `A_σε = C₁ : A_εε`, which needs a single uniform `C₁`. If you set
+    ``\\mathbb{A}_{\\sigma\\varepsilon} = \\mathbb{C}_1 : \\mathbb{A}_{\\varepsilon\\varepsilon}``, which needs a single uniform ``\\mathbb{C}_1``. If you set
     `homogeneous = false`, supply `stress_strain_loc` (and `flux_gradient_loc`
     in transport) as well — otherwise the average stress in the inclusion is
     silently wrong, and with it `SelfConsistent` and
@@ -103,7 +103,7 @@ transport — a single callback may serve both by dispatching on its argument.
     `Dilute`, `DiluteDual`, `Maxwell`, `PonteCastanedaWillis` and
     `DifferentialScheme`, but **not** with `MoriTanaka`, `SelfConsistent` or
     `AsymmetricSelfConsistent`, whose kernels also need `A`.  Density-based
-    (flat) phases are unaffected: those kernels reconstruct `A` from `ℍ:C₀`.
+    (flat) phases are unaffected: those kernels reconstruct ``\\mathbb{A}`` from ``\\mathbb{H} : \\mathbb{C}_0``.
 
 Orientation averaging (`IsoSymmetrize` / `TISymmetrize`) is applied by the
 scheme *after* the callback returns, so the returned tensors must be

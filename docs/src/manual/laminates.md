@@ -1,13 +1,16 @@
 # [Laminates — periodic multilayer cells](@id man-laminates)
 
+!!! info "Before this page"
+    [Periodic multilayer — the laminate cell](@ref th-laminate), where the closed
+    forms and the corrected pseudo-inverse argument are set out, and
+    [Multiscale models](@ref man-multiscale) for the cell abstraction a laminate
+    shares with the `RVE`.
+
 A [`Laminate`](@ref) is a periodic unit cell of parallel layers of common
 normal `n`: no matrix, no reference medium, and an **exact** effective
 behavior rather than an estimate. It is an
 [`AbstractHomogenizationCell`](@ref MeanFieldHomogenization.Core.AbstractHomogenizationCell)
 alongside [`RVE`](@ref), solved by the [`Laminated`](@ref) scheme.
-
-The theory, including the closed forms and the corrected pseudo-inverse
-argument, is on the [laminate theory page](@ref th-laminate).
 
 ## Building a cell
 
@@ -339,3 +342,16 @@ homogenize(rve, MoriTanaka(), :C)
     A laminate is homogenized, not embedded. Putting a *laminated inclusion*
     inside a matrix would require its Hill tensor, which is a different
     problem and is not provided.
+
+## Where to go next
+
+[Conductivity](@ref man-conductivity) opens the part of the manual devoted to
+other physics and to time dependence, with the order-2 counterpart of every
+call met so far. The tutorials
+[Periodic multilayer: the exact laminate solution](@ref tut-laminate),
+[Imperfect interfaces in a laminate, and the size effect](@ref tut-laminate-interfaces)
+and
+[A creeping laminate: the multilayer in ageing viscoelasticity](@ref tut-laminate-alv)
+work through the sections of this page, and
+[Symbolic laminates: arithmetic and harmonic averages](@ref tut-symbolic-laminate)
+derives the effective moduli in closed form.

@@ -1,5 +1,10 @@
 # [Adding a new algorithm](@id dev-adding-algorithm)
 
+!!! info "Before this page"
+    [Architecture](@ref dev-architecture), for the `_resolve_algo` / `_kernel`
+    tables extended below, and [Hill polarization tensors](@ref th-hill-tensors)
+    for the algorithms already in them.
+
 An *algorithm* here means a way of evaluating the Hill tensor, or a crack
 quantity, for a given inclusion and a given matrix symmetry — closed form,
 residue reduction, adaptive cubature, and so on. Adding one has two halves:
@@ -80,7 +85,7 @@ The rules currently in force:
 
 State in the docstring whether the algorithm is `ForwardDiff`-compatible, and
 **back the claim with a test**: the dispatch tables in
-[Hill polarization tensors](../theory/hill_tensors.md) are written from those
+[Hill polarization tensors](@ref th-hill-tensors) are written from those
 claims, so an unverified one propagates straight into the manual. A polynomial
 root finder or an in-place `Float64` buffer usually makes an algorithm
 `Float64`-only — that is acceptable, but it must be stated, and `:auto` must not
@@ -89,3 +94,8 @@ route `Dual` inputs to it.
 If the algorithm sits behind a weak dependency, as `DECUHR` does, remember it
 only exists once the extension loads: `import DECUHR, Integrals` is required in
 `test/runtests.jl` and in any benchmark script that exercises it.
+
+## Where to go next
+
+[Adding a homogenization scheme](@ref dev-adding-scheme) moves from the tensors
+of one inclusion to the schemes that consume them.

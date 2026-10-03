@@ -1,9 +1,14 @@
 # [Cracks](@id man-cracks)
 
+!!! info "Before this page"
+    [Crack opening displacement and compliance](@ref th-cod-tensors), where the
+    tensors ``\boldsymbol{B}`` and ``\mathbb{H}`` computed below are derived, and
+    [Thermal cracks](@ref th-thermal-cracks) for their conduction counterparts.
+
 A crack is an inclusion of **zero volume**: the ``c \to 0`` limit of an
 ellipsoid. Two consequences run through this page — the amount of cracking is a
 *density*, not a volume fraction, and everything is written in the crack's own
-frame ``(\hat{\underline{\ell}}, \hat{\underline{m}}, \hat{\underline{n}})``,
+frame ``(\underline{\ell}, \underline{m}, \underline{n})``,
 whose third vector is the normal.
 
 ```@setup mancracks
@@ -24,7 +29,7 @@ plotly_scene(shape_traces(RibbonCrack(0.5)); uid = "man-crack-ribbon", height = 
 
 The full set of shapes, tilted cracks included, is in
 [The inclusion zoo](@ref man-inclusion-gallery); the geometry and the symbols
-are defined in [Crack opening displacement](../theory/cod_tensors.md).
+are defined in [Crack opening displacement](@ref th-cod-tensors).
 
 ```julia
 using MeanFieldHomogenization, TensND
@@ -59,11 +64,11 @@ R  = compliance_contribution(pc, K₀)     # R = (3/4) b (ŵ⊗ŵ)
 
 A flat crack carrying a **spring-like interface elasticity** with stiffness
 tensor ``\boldsymbol{K}`` (order 2, ``3\times 3`` symmetric — e.g. isotropic with
-a normal stiffness ``K_n`` and a tangential one ``K_t``) modifies the COD tensor
+a normal stiffness ``k_n`` and a tangential one ``k_t``) modifies the COD tensor
 ``\boldsymbol{B}`` via
 
 ```math
-\boldsymbol{B}_{\text{eff}}
+\boldsymbol{B}^{\mathrm{hom}}
 = \bigl(b\,\boldsymbol{K} + \boldsymbol{B}^{-1}\bigr)^{-1}
 = \boldsymbol{B}\cdot\bigl(\boldsymbol{1} + b\,\boldsymbol{K}\cdot\boldsymbol{B}\bigr)^{-1},
 ```
@@ -72,7 +77,7 @@ where ``b`` is the in-plane half-width, `semi_minor(crack)`. The two limits are
 the familiar ones: ``\boldsymbol{K} = \boldsymbol{0}`` gives a traction-free
 crack (recovering ``\boldsymbol{B}``), and
 ``\boldsymbol{K}\to\infty`` a rigid bond
-(``\boldsymbol{B}_{\text{eff}}\to\boldsymbol{0}``, i.e. no crack at all).
+(``\boldsymbol{B}^{\mathrm{hom}}\to\boldsymbol{0}``, i.e. no crack at all).
 
 ```julia
 # Elasticity : iso interface stiffness K = 5·𝟏
@@ -122,5 +127,14 @@ orientation distribution:
 
 For the **time-dependent** (ALV) version with `Rn(t,t')` and
 `Rt(t,t')` ageing interface kernels, see the
-[Viscoelasticity manual](viscoelasticity.md#5-cracks-in-alv).
-References: [sevostianov2002](@cite), [barthelemyIJES2019](@cite).
+[Viscoelasticity manual](@ref man-visco-cracks).
+References: [sevostianov2002, barthelemyIJES2019](@citet).
+
+## Where to go next
+
+[Layered inclusions](@ref man-layered) leaves the ellipsoid family for
+composite patterns, which have no Hill tensor. The tutorial
+[Cracks and crack density](@ref tut-cracks) drives the calls above through the
+schemes, and
+[Crack distributions: isotropic or parallel](@ref tut-crack-distributions)
+quantifies the choice between the two self-consistent forms discussed above.

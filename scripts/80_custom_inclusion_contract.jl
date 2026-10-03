@@ -1,4 +1,10 @@
-# # The custom-inclusion contract: three entry gates, one answer
+# # [The custom-inclusion contract: three entry gates, one answer](@id tut-custom-inclusion-contract)
+#
+# !!! info "Before this page"
+#     The tutorial [Hill polarization tensors in practice](@ref tut-hill-tensors),
+#     whose Hill tensor is the first of the three entry gates, and the theory
+#     page [Localization and contribution tensors](@ref th-localization), which
+#     derives every tensor of the contract from that one.
 #
 # `MeanFieldHomogenization` lets an arbitrary morphology take part in every homogenization
 # scheme, in elasticity and in transport, without touching the package. This is
@@ -16,8 +22,9 @@
 # checks that the schemes cannot tell them apart. The point is not the numbers
 # — they are identical by construction — but that *the plumbing is identical*.
 #
-# See the manual page *Custom inclusions* and the developer page
-# *Adding a new inclusion* for the full contract.
+# See the manual page [Custom inclusions](@ref man-custom-inclusions) and the
+# developer page [Adding a new inclusion](@ref dev-adding-inclusion) for the full
+# contract.
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
@@ -228,3 +235,12 @@ println(
 
 # The exact transverse-isotropic average is applied identically in both cases:
 # the custom inclusion never had to know that orientation averaging existed.
+#
+# ## Where to go next
+#
+# The callbacks above return closed-form tensors, but the contract only asks for
+# tensors. [An inclusion whose response is a neural network](@ref tut-neural-inclusion)
+# supplies them from a trained surrogate, through gates A and B, and examines
+# what stays exact whatever the quality of the fit. Morphologies solved by
+# finite elements enter through the same gates, as described in
+# [Finite-element inclusions](@ref man-fe-inclusions).

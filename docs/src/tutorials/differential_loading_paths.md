@@ -1,6 +1,12 @@
 # [Comparing loading-path trajectories](@id tut-differential-loading-paths)
 
-[The differential scheme and path dependence](differential_paths.md) shows
+!!! info "Before this page"
+    The tutorial [The differential scheme and path dependence](@ref tut-differential-paths),
+    which introduces the trajectory keywords compared below, and the theory page
+    [The differential scheme](@ref th-differential-scheme), where each
+    trajectory is drawn in the plane of the fractions.
+
+[The differential scheme and path dependence](@ref tut-differential-paths) shows
 *that* the incorporation order matters, through the endpoint `k_eff` of a
 fraction sweep. This page shows *how* it matters: several trajectories
 racing to the same target fractions, watched the whole way through
@@ -110,3 +116,11 @@ A standalone, plain-Julia version of this comparison — same RVE, same
 four trajectories, writing a PNG instead of embedding it in the docs —
 lives in
 [`scripts/24_differential_loading_paths.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/24_differential_loading_paths.jl).
+
+## Where to go next
+
+Every inclusion of the preceding tutorials is a sphere or a spheroid, whose
+Hill tensor the schemes compute without showing it.
+[Hill polarization tensors in practice](@ref tut-hill-tensors) opens the next
+group of tutorials by computing that tensor explicitly, on several geometries
+and in an anisotropic matrix, and by rebuilding a dilute estimate from it.

@@ -1,4 +1,11 @@
-# # Hill polarization tensors in practice
+# # [Hill polarization tensors in practice](@id tut-hill-tensors)
+#
+# !!! info "Before this page"
+#     The tutorial [A first homogenization](@ref tut-first-estimate), whose
+#     dilute estimate is rebuilt by hand in §5, and the theory pages
+#     [The Eshelby inclusion problem](@ref th-eshelby-problem), which poses the
+#     problem the tensor answers, and [Hill polarization tensors](@ref th-hill-tensors),
+#     where the closed forms checked below are derived.
 #
 # The Hill tensor ``\mathbb{P}`` is the single object every mean-field scheme in
 # this package is built on. It answers Eshelby's question — *given a uniform
@@ -214,7 +221,7 @@ end
 
 # ## §4 The Eshelby tensor
 #
-# ``\mathbb{S}^{E} = \mathbb{P} : \mathbb{C}_0`` — dimensionless, and for a
+# ``\mathbb{S}^{\mathrm{E}} = \mathbb{P} : \mathbb{C}_0`` — dimensionless, and for a
 # sphere in an isotropic matrix equal to Eshelby's 1957 closed forms
 # [eshelby1957](@cite):
 #
@@ -246,13 +253,13 @@ end
 # property:
 #
 # ```math
-# \mathbb{C}^{\text{eff}} = \mathbb{C}_0
+# \mathbb{C}^{\mathrm{hom}} = \mathbb{C}_0
 #   + f\,\delta\mathbb{C} : \left(\mathbb{I} + \mathbb{P}:\delta\mathbb{C}\right)^{-1},
 # \qquad \delta\mathbb{C} = \mathbb{C}_1 - \mathbb{C}_0 .
 # ```
 #
 # For voids ``\mathbb{C}_1 = 0``, so ``\delta\mathbb{C} = -\mathbb{C}_0`` and the
-# localization tensor collapses to ``(\mathbb{I} - \mathbb{S}^{E})^{-1}``.
+# localization tensor collapses to ``(\mathbb{I} - \mathbb{S}^{\mathrm{E}})^{-1}``.
 # Written out by hand in Mandel storage, at 5 % porosity:
 
 let
@@ -293,3 +300,15 @@ let
     k_eff, μ_eff = k_mu(homogenize(rve, Dilute(), :C))
     @printf "  homogenize(rve, Dilute(), :C):  k_eff = %.1f MPa,  μ_eff = %.1f MPa\n" k_eff μ_eff
 end
+
+# The shear modulus returned by `homogenize` is the one assembled by hand above,
+# and the bulk modulus comes with it from the same call.
+#
+# ## Where to go next
+#
+# The oblate spheroid of §1 has a limit that the volume fraction cannot follow:
+# as the aspect ratio vanishes, the inclusion becomes a crack, and
+# [Cracks and crack density](@ref tut-cracks) replaces the fraction by a density
+# and the Hill tensor by the crack opening displacement tensor. Every inclusion
+# family that `hill_tensor` accepts, with its constructor and its options, is
+# listed in [The inclusion zoo](@ref man-inclusion-gallery).

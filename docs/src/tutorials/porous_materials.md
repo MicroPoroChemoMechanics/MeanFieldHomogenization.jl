@@ -1,5 +1,12 @@
 # [Porous materials and the self-consistent trap](@id tut-porous-materials)
 
+!!! info "Before this page"
+    The tutorial [Bounds and classical schemes](@ref tut-bounds-and-schemes),
+    which introduces the self-consistent scheme and the two bounds used below,
+    and the theory page [Homogenization schemes](@ref th-homogenization), where
+    the stiffness and compliance forms of the self-consistent iteration are
+    stated.
+
 Porosity is the simplest microstructure that breaks naive intuition: a
 pore is not "just a very soft inclusion" — it is an inclusion whose
 stiffness may vanish, and several schemes are not built to handle that
@@ -30,14 +37,14 @@ nothing # hide
 [`SelfConsistent`](@ref) embeds every phase directly in the *effective*
 medium — including the pores. As porosity grows, the Picard iteration
 that solves the implicit self-consistent condition (see the
-[previous tutorial](bounds_and_schemes.md)) has to locate an
+[previous tutorial](@ref tut-bounds-and-schemes)) has to locate an
 effective stiffness soft enough to be consistent with soft, connected
 voids; near the percolation threshold the iteration becomes numerically
 unstable and can converge to an unphysical branch.
 
 [`AsymmetricSelfConsistent`](@ref) fixes this by switching to the
 **compliance-form** iteration when the contrast calls for it — solving
-the dual condition on ``\mathbb{S}_{\text{eff}} = \mathbb{C}_{\text{eff}}^{-1}``
+the dual condition on ``\mathbb{S}^{\mathrm{hom}} = (\mathbb{C}^{\mathrm{hom}})^{-1}``
 instead — which remains well-posed for soft inclusions. The
 `select_best = true` keyword additionally keeps the best iterate seen
 during the loop, guarding against the Picard noise that can otherwise
@@ -77,6 +84,12 @@ plt
 `AsymmetricSelfConsistent` and `Differential` sit comfortably between
 the bounds across the whole porosity range, while a naive
 `SelfConsistent` call on this same problem (try it — replace
-`AsymmetricSelfConsistent` above) becomes unreliable as `f` grows. The
-next tutorial pushes this benchmark to its canonical form — porosity up
-to 1 — and runs *every* scheme side by side.
+`AsymmetricSelfConsistent` above) becomes unreliable as `f` grows.
+
+## Where to go next
+
+[Porous benchmark: all schemes](@ref tut-porous-benchmark) pushes this
+benchmark to its canonical form, porosity up to 1, and runs every scheme side
+by side, on spherical and then on flattened pores. The fixed-point iteration
+itself, and the Newton-type solvers that can replace it, are the subject of
+[Nonlinear solvers for the self-consistent fixed point](@ref tut-nonlinear-solvers).

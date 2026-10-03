@@ -1,8 +1,14 @@
 # [Nonlinear solvers for the self-consistent fixed point](@id tut-nonlinear-solvers)
 
-The [self-consistent scheme](bounds_and_schemes.md) is a fixed point
+!!! info "Before this page"
+    The tutorial [Porous materials and the self-consistent trap](@ref tut-porous-materials),
+    where the Picard iteration of the self-consistent scheme is met, and
+    [Derivatives and sensitivities](@ref tut-sensitivities), whose derivatives
+    are checked below through an external solver.
+
+The [self-consistent scheme](@ref tut-bounds-and-schemes) is a fixed point
 ``\mathbb C = \mathrm{step}(\mathbb C)``. Three solver families are available
-(see [Homogenization schemes](../manual/schemes.md)): the default damped Picard
+(see [Homogenization schemes](@ref man-schemes)): the default damped Picard
 [`AndersonDefault`](@ref), the dependency-free [`NewtonDefault`](@ref), and —
 the subject of this page — the weak extension
 `MeanFieldHomogenizationNonlinearSolveExt`, which hands the same fixed point to any
@@ -44,7 +50,7 @@ runtime to `TrustRegion` when the extension is active and to
 branches.
 
 SciML algorithms are opt-in rather than the default (see
-[Homogenization schemes](../manual/schemes.md)): reach for them on
+[Homogenization schemes](@ref man-schemes)): reach for them on
 well-conditioned, high-contrast problems away from a bifurcation, where they can
 be markedly faster.
 
@@ -112,7 +118,7 @@ returns the resulting effective moduli. A self-consistent solution is exactly a
 root ``F(p^\star;\theta) = 0``. The IFT correction is then
 
 ```math
-p^\star_{\text{dual}} = p^\star - \Big(\frac{\partial F}{\partial p}\Big)^{-1} F(p^\star; \theta),
+p^\star_{\mathrm{dual}} = p^\star - \Big(\frac{\partial F}{\partial p}\Big)^{-1} F(p^\star; \theta),
 ```
 
 evaluated with ``p^\star`` the primal root and the residual re-evaluated on the
@@ -158,18 +164,18 @@ p^\star - \Big(\frac{\partial F}{\partial p}\Big)^{-1} F(p^\star;\theta)
 
 **Step 4 — recognize the IFT.** Differentiating ``F(p^\star(\theta);\theta) = 0``
 with respect to ``\theta`` gives
-``\frac{\partial F}{\partial p}\frac{dp^\star}{d\theta} + \frac{\partial F}{\partial\theta} = 0``,
+``\frac{\partial F}{\partial p}\frac{\mathrm dp^\star}{\mathrm d\theta} + \frac{\partial F}{\partial\theta} = 0``,
 i.e.
 
 ```math
-\frac{dp^\star}{d\theta}
+\frac{\mathrm dp^\star}{\mathrm d\theta}
   = -\Big(\frac{\partial F}{\partial p}\Big)^{-1}\frac{\partial F}{\partial\theta} .
 ```
 
 Substituting into step 3,
 
 ```math
-p^\star_{\text{dual}} = p^\star + \varepsilon\,\frac{dp^\star}{d\theta} ,
+p^\star_{\mathrm{dual}} = p^\star + \varepsilon\,\frac{\mathrm dp^\star}{\mathrm d\theta} ,
 ```
 
 which is precisely the `Dual` whose value is the primal root and whose partial
@@ -181,7 +187,7 @@ needed — one linear solve with the Jacobian already available at the root.
     ``0``. The real part of the formula is then
     ``p^\star - (\partial F/\partial p)^{-1}F(p^\star;\theta_0)`` — one extra
     *primal* Newton step. So the returned value can differ from the solver's
-    ``p^\star`` by ``O(\texttt{abstol})``, in the direction of a **better**
+    ``p^\star`` by ``O(\mathrm{abstol})``, in the direction of a **better**
     root. This is benign, but it explains why the value returned through the
     IFT path is not always bit-identical to the one returned by a plain solve.
 The built-in [`NewtonDefault`](@ref) instead differentiates straight
@@ -231,9 +237,9 @@ d_m_tr     = derivative(rve, SelfConsistent(; algorithm = TrustRegion()), proper
 
 ## Strength criterion, revisited
 
-The [capstone tutorial](strength_criteria.md) builds a macroscopic strength
+The [capstone tutorial](@ref tut-strength-criteria) builds a macroscopic strength
 ellipse from `ForwardDiff` derivatives of
-``(k_{\mathrm{hom}}, \mu_{\mathrm{hom}})`` with respect to the solid's shear
+``(k^{\mathrm{hom}}, \mu^{\mathrm{hom}})`` with respect to the solid's shear
 modulus. Swapping the SC solve for a SciML algorithm changes nothing, since
 `derivative` only sees `homogenize`'s public interface:
 
@@ -271,3 +277,12 @@ end
 
 The two solver families produce the same ellipse — the strength criterion is a
 property of the *scheme*, not of how its fixed point happens to be solved.
+
+## Where to go next
+
+The solver is one of the settings of a scheme, and its keywords, together with
+the tolerances shared by the iterative schemes, are listed in
+[Homogenization schemes](@ref man-schemes) of the manual. The next tutorial,
+[Nonlinear homogenization by the secant method](@ref tut-secant-elastoplasticity),
+nests a nonlinear solve of another kind inside the scheme, to treat an
+elastic–perfectly plastic solid.

@@ -18,7 +18,7 @@
 #  outer envelope of the phase distribution; this is stored in the
 #  `distribution_shape` field through an `AbstractDistributionShape`
 #  hierarchy that allows future extension to pairwise distributions
-#  ([willis1982](@cite)) without breaking the public API.
+#  of [willis1982](@citet) without breaking the public API.
 # =============================================================================
 
 # =============================================================================
@@ -33,7 +33,7 @@ subtypes:
 
 - [`VolumeFraction`](@ref) — for solid (ellipsoidal) inclusions and the
   matrix; obeys the unit-sum constraint
-  `f_matrix = 1 - Σ_other VolumeFraction.value`.
+  ``f_0 = 1 - \\sum_i f_i`` over the other `VolumeFraction` values.
 - [`CrackDensity`](@ref) — for flat cracks (Budiansky-O'Connell density);
   does **not** participate in the unit-sum constraint, since the volume
   contribution of a flat crack vanishes in the penny limit while the
@@ -101,7 +101,7 @@ Base.eltype(a::AbstractAmount) = eltype(typeof(a))
     _sums_to_unit(a::AbstractAmount) -> Bool
 
 Whether the amount counts towards the matrix-fraction complement
-`f_matrix = 1 - Σ_phase _sums_to_unit·value`. `true` for
+``f_0 = 1 - \\sum_i f_i``, summed over the phases for which this is `true`. `true` for
 [`VolumeFraction`](@ref), `false` for [`CrackDensity`](@ref).
 """
 _sums_to_unit(::VolumeFraction) = true
@@ -213,7 +213,7 @@ Every declared volume fraction is divided by their sum, so that only their
 
 No phase may then be declared `fraction = :rest` — there is no complement left
 to absorb. The rescaling is a plain division, so it differentiates: under this
-policy `∂C/∂f_i` is the derivative along the normalized simplex, and raising
+policy ``\\partial\\mathbb{C}^{\\mathrm{hom}}/\\partial f_i`` is the derivative along the normalized simplex, and raising
 one fraction lowers the others.
 """
 struct RescaledFractions <: AbstractFractionClosure end
@@ -350,7 +350,7 @@ Supertype for the *outer envelope* of the phase distribution used by the
 
 It is a field of the [`RVE`](@ref) rather than of those schemes because it is
 **microstructure**: the ellipsoidal symmetry of the medium's two-point
-statistics ([ponte1995](@cite)), a measurable property like a phase's shape.
+statistics [ponte1995](@cite), a measurable property like a phase's shape.
 That is what distinguishes it from the reference medium, which is a modeling
 decision and therefore lives on the scheme. It has no default, though — see
 [`distribution_shape`](@ref).
@@ -362,7 +362,7 @@ Currently a single concrete subtype is shipped:
 
 Future extension (placeholder, *not* implemented in this PR): a
 `PairwiseDistribution` carrying a per-pair `(i, j) ↦ shape` mapping
-([willis1982](@cite)).  Adding it will only require a new
+[willis1982](@cite).  Adding it will only require a new
 concrete subtype + matching `_evaluate(rve, ::Maxwell|::PonteCastanedaWillis, …)`
 methods — no public-API change.
 """
@@ -785,7 +785,7 @@ homogenize(rve, SelfConsistent())  # sees the new value
 ```
 
 !!! note "Only volume fractions touch the cache"
-    `f_matrix = 1 - Σ f_inc` sums [`VolumeFraction`](@ref) entries only, so a
+    ``f_0 = 1 - \\sum_i f_i`` sums [`VolumeFraction`](@ref) entries only, so a
     [`CrackDensity`](@ref) write cannot stale it — cracks carry no volume. The
     cache is still recomputed for a volume-fraction write, with the same loop
     [`add_phase!`](@ref) uses, so the value stays bit-identical to what a fresh

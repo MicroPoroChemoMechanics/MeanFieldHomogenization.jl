@@ -51,18 +51,24 @@ const _SHAPE_2D = (Circular, Elliptic)
     Ellipsoid{dim, S<:EllipsoidShape, T<:Number, B<:AbstractBasis}
 
 Ellipsoidal inclusion of the Eshelby problem
-([eshelby1957](@cite)). In the Echoes convention, an
-ellipsoid ``\\mathcal E_{\\mathbf A}`` is described by an invertible
-second-order shape tensor ``\\mathbf A`` through
+[eshelby1957](@cite). In the Echoes convention, an
+ellipsoid ``\\mathcal{E}_{\\boldsymbol{A}}`` is described by an invertible
+second-order shape tensor ``\\boldsymbol{A}`` through
 
-```
-x ∈ E_A  ⇔  x·(Aᵀ·A)⁻¹·x ≤ 1 ,
-Aᵀ·A = Σᵢ ρᵢ² êᵢ^A ⊗ êᵢ^A ,   ρ₁=a ≥ ρ₂=b ≥ ρ₃=c .
+```math
+\\underline{x}\\in\\mathcal{E}_{\\boldsymbol{A}}
+\\iff
+\\underline{x}\\cdot(\\boldsymbol{A}^{\\!T}\\!\\cdot\\boldsymbol{A})^{-1}\\cdot\\underline{x}\\le 1,
+\\qquad
+\\boldsymbol{A}^{\\!T}\\!\\cdot\\boldsymbol{A}
+= \\sum_{i}\\rho_i^{2}\\,\\underline{e}^{\\boldsymbol{A}}_i\\otimes\\underline{e}^{\\boldsymbol{A}}_i,
+\\qquad
+\\rho_1 = a \\ge \\rho_2 = b \\ge \\rho_3 = c .
 ```
 
 `semi_axes` stores the eigenvalues ``\\rho_i`` (sorted in decreasing
 order for real-valued types) and `basis` stores the orthonormal frame
-``(\\hat{\\mathbf e}_i^{\\mathbf A})`` relative to the canonical frame.
+``(\\underline{e}^{\\boldsymbol{A}}_i)`` relative to the canonical frame.
 
 The shape `S` is determined at construction time:
 - 3-D: `Spherical`, `Prolate`, `Oblate`, or `Triaxial`
@@ -145,7 +151,7 @@ _resolve_degenerate_ellipsoid(::NTuple{3, T}, _) where {T} = nothing
     Ellipsoid(a, b, c; euler_angles=(θ,ϕ,ψ))
 
 3-D ellipsoid with semi-axes `a`, `b`, `c` oriented by ZYZ Euler angles
-`(θ, ϕ, ψ)`.
+``(\\theta, \\phi, \\psi)``.
 
 **Input-order convention** (`T <: Real`).  The three semi-axis values
 are interpreted as the lengths along columns 1, 2, 3 of the local
@@ -238,7 +244,7 @@ end
 """
     Ellipsoid(a, b; angle=0.0)
 
-2-D ellipse with semi-axes `a`, `b` and orientation angle `θ` (radians)
+2-D ellipse with semi-axes `a`, `b` and orientation angle ``\\theta`` (`angle`, radians)
 of the local frame w.r.t. the first global axis.  The user's input
 order defines which local axis carries each length; when `T <: Real`
 the stored `semi_axes` are sorted descending and the orientation is
@@ -275,20 +281,20 @@ end
     Spheroid(ω; euler_angles = ())
 
 Convenience constructor for an axisymmetric ellipsoid (spheroid). The
-aspect ratio `ω` is the ratio of the polar semi-axis (along the axis
+aspect ratio ``\\omega`` is the ratio of the polar semi-axis (along the axis
 of revolution) to the equatorial semi-axis:
 
-  * `ω < 1` ⇒ oblate (disc-like, axis of revolution is the *short* axis)
-  * `ω > 1` ⇒ prolate (needle-like, axis of revolution is the *long* axis)
-  * `ω = 1` ⇒ sphere
+  * ``\\omega < 1`` ⇒ oblate (disc-like, axis of revolution is the *short* axis)
+  * ``\\omega > 1`` ⇒ prolate (needle-like, axis of revolution is the *long* axis)
+  * ``\\omega = 1`` ⇒ sphere
 
-The two equatorial semi-axes are fixed to `1`. Eshelby/Hill computations
+The two equatorial semi-axes are fixed to ``1``. Eshelby/Hill computations
 are scale-invariant, so the absolute size of the inclusion has no effect
-on the localization tensor and only `ω` matters.
+on the localization tensor and only ``\\omega`` matters.
 
 Optional `euler_angles` (tuple of length 0–3, ZYZ convention, radians)
-rotate the symmetry axis from `ez`. Without angles, the axis of
-revolution is `ez` (oblate) or `ex` (prolate) — i.e. the result is
+rotate the symmetry axis from ``\\underline{e}_3``. Without angles, the axis of
+revolution is ``\\underline{e}_3`` (oblate) or ``\\underline{e}_1`` (prolate) — i.e. the result is
 strictly equivalent to `Ellipsoid(1, 1, ω; euler_angles)`, with internal
 sorting and basis permutation handled by the regular `Ellipsoid`
 constructor.
@@ -329,13 +335,13 @@ MFH_Core.shape_trait(::Ellipsoid{dim, S}) where {dim, S} = S
     shape_tensor(ell::Ellipsoid) -> AbstractTens{2}
 
 Return the symmetric representative of the 2nd-order shape tensor
-``\\mathbf A = \\mathbf R\\,\\mathrm{diag}(\\rho_i)\\,\\mathbf R^{\\!T}``
+``\\boldsymbol{A} = \\boldsymbol{R}\\cdot\\mathrm{diag}(\\rho_i)\\cdot\\boldsymbol{R}^{\\!T}``
 of `ell`, expressed in the canonical frame.
 
 Note: the Echoes convention
 ([eshelby_hill.qmd](https://jfbarthelemy.github.io/echoes/))
-allows ``\\mathbf A`` to be any invertible 2nd-order tensor — only the
-symmetric product ``\\mathbf A^{\\!T}\\!\\cdot\\mathbf A`` enters any
+allows ``\\boldsymbol{A}`` to be any invertible 2nd-order tensor — only the
+symmetric product ``\\boldsymbol{A}^{\\!T}\\!\\cdot\\boldsymbol{A}`` enters any
 Hill expression. MFH stores the symmetric representative for
 convenience.  See the generic [`shape_tensor`](@ref) docstring for
 conventions.

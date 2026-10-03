@@ -39,7 +39,7 @@
     _evaluate(asm::ParticleAssembly, scheme::ClusterModel, ::Val{p}; kw...) -> AbstractTens
 
 Cluster-model homogenization of property `:p` over a particle assembly
-([molinari1996](@cite)).
+[molinari1996](@cite).
 
 Elasticity (4th-order property) and conduction (2nd-order property) go through
 the same code: the only difference is the order of the tensors being solved
@@ -108,7 +108,7 @@ end
 """
     _family_interaction(asm, rep, label, P₀, L, cutoff, pass) -> AbstractTens
 
-``\\bar{\\mathbb{T}}_{IK}``: the sum of the pairwise interaction tensors between the
+``\\bar{\\mathbb{T}}^{IK}``: the sum of the pairwise interaction tensors between the
 reference particle `rep` of family `I` and every particle of family `label`
 lying inside the cluster — including the periodic images, and excluding `rep`
 itself.
@@ -134,12 +134,12 @@ end
 Assemble the effective property from the per-family localization tensors,
 
 ```math
-\\mathbb{C}^{hom} = f_m\\, \\mathbb{C}_m : \\mathbb{A}_m
+\\mathbb{C}^{\\mathrm{hom}} = f_0\\, \\mathbb{C}_0 : \\mathbb{A}_0
   + \\sum_I f_I\\, \\mathbb{C}_I : \\mathbb{A}_I ,
 ```
 
 with the matrix localization following from the strain average rule,
-``f_m \\mathbb{A}_m = \\mathbb{I} - \\sum_I f_I \\mathbb{A}_I``.
+``f_0\\,\\mathbb{A}_0 = \\mathbb{I} - \\sum_I f_I\\,\\mathbb{A}_I``.
 """
 function _effective_from_localizations(asm, P₀, prop::Symbol, A, reps)
     Id = _identity_like(P₀)

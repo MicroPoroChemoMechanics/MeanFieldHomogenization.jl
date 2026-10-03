@@ -1,16 +1,22 @@
 # [Extension to conductivity](@id th-conductivity)
 
-Everything in the preceding chapters was written for elasticity, where the
+!!! info "Before this page"
+    [The Eshelby inclusion problem](@ref th-eshelby-problem) §3, where the
+    transport form of the inclusion problem is stated, and
+    [Localization and contribution tensors](@ref th-localization) §4 for the
+    order-2 routines named below.
+
+The foundations and the schemes were written above for elasticity, where the
 unknown is a displacement and the constitutive tensor has order four. The same
 machinery solves a second family of problems, in which the unknown is a scalar
 potential and the constitutive tensor has order two. Nothing has to be
 rederived: the Eshelby problem, the Hill tensor, the localization tensors and
 every scheme carry over term by term.
 
-This chapter states the correspondence once, so that the remaining chapters can
+This chapter states the correspondence once, so that the other chapters can
 give their order-2 counterparts in a line instead of arguing for them.
 
-## One problem, several physics
+## 1. One problem, several physics
 
 The order-2 problem is a linear elliptic equation for a scalar potential whose
 gradient drives a flux. Four classical theories are that equation with
@@ -30,7 +36,7 @@ effective ``\boldsymbol{K}^{\mathrm{hom}}`` in the same units. The chemical
 route of a hydrating paste and the permeability of a fractured rock use the same
 `conductivity_contribution` as a heat-conduction estimate.
 
-## The one asymmetry, and how it is removed
+## 2. The one asymmetry, and how it is removed
 
 Hooke's law carries no minus sign; Fourier's and Fick's do. Left alone, that
 single difference makes order-2 and order-4 formulas look as though they
@@ -47,7 +53,7 @@ exterior transmits to the interior across a surface. With that substitution the
 dictionary below is literal: every entry on the right is the entry on the left
 with the symbols renamed, and no sign is ever flipped.
 
-## The dictionary
+## 3. The dictionary
 
 | Elasticity — order 4                                    | Conductivity — order 2                                |
 | :------------------------------------------------------ | :---------------------------------------------------- |
@@ -56,15 +62,15 @@ with the symbols renamed, and no sign is ever flipped.
 | stress ``\boldsymbol{\sigma}`` — 2-tensor                | ``\boldsymbol{\sigma} \equiv -\underline{q}`` — vector |
 | stiffness ``\mathbb{C}`` — 21 components                 | conductivity ``\boldsymbol{K}`` — 6 components         |
 | Hill tensor ``\mathbb{P}`` — 4-tensor                    | Hill tensor ``\boldsymbol{P}`` — 2-tensor              |
-| Eshelby tensor ``\mathbb{S} = \mathbb{P}:\mathbb{C}``    | ``\boldsymbol{S} = \boldsymbol{P}\cdot\boldsymbol{K}`` |
+| Eshelby tensor ``\mathbb{S}^{\mathrm{E}} = \mathbb{P}:\mathbb{C}``    | ``\boldsymbol{S}^{\mathrm{E}} = \boldsymbol{P}\cdot\boldsymbol{K}`` |
 | localization ``\mathbb{A}``, contribution ``\mathbb{N}`` | ``\boldsymbol{A}``, ``\boldsymbol{N}``                 |
 
 The routine names follow the same rule, and the correspondence is listed in
-full under [Conductivity (2nd-order transport)](@ref th-localization): each
+full in [Localization and contribution tensors](@ref th-localization) §4: each
 `strain`/`stress` becomes a `gradient`/`flux`, each `stiffness` a
 `conductivity`, each `compliance` a `resistivity`.
 
-## What transposes untouched, and what does not
+## 4. What transposes untouched, and what does not
 
 **The schemes transpose entirely.** Dilute, Mori-Tanaka, self-consistent,
 differential, the bounds, the N-body models: all of them are written on
@@ -88,7 +94,13 @@ flux jumps, so a single scalar suffices, and it carries all the anisotropy of
 the matrix. That reduction is worked through in
 [Thermal cracks](@ref th-thermal-cracks).
 
-## Where this is used
+## Where to go next
+
+The next chapter changes the time dependence rather than the physics:
+[The Laplace-Carson route](@ref th-laplace-carson) reduces a non-ageing
+viscoelastic problem to an elastic one at each value of a transform variable.
+The order-2 counterparts stated on this page are developed on the following
+pages.
 
 - [Hill polarization tensors](@ref th-hill-tensors) — the closed form of
   ``\boldsymbol{P}`` and its dispatch.

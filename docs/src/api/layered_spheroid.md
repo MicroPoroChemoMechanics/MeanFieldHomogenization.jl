@@ -2,7 +2,7 @@
 
 `layer_count`, `layer_modulus`, `layer_interface` and
 `layer_volume_fraction` are shared generics extended from
-`LayeredSpheres` — see [API — LayeredSphere](layered_sphere.md)
+`LayeredSpheres` — see [API — LayeredSphere](@ref api-layered-sphere)
 for their docstrings; they apply unchanged to `LayeredSpheroid`.
 
 So are the pointwise-field generics `get_layer`, `local_temperature`,

@@ -41,7 +41,7 @@ conductivity × length. It is the quantity that stays finite as the crack
 flattens, and the one field data reports.
 
 Mechanically a flowing crack is an ordinary open crack, so the whole elastic
-branch (`cod_tensor`, ℍ, ℕ, the `delta_*` seam) is inherited unchanged from the
+branch (`cod_tensor`, ``\\mathbb{H}``, ``\\mathbb{N}``, the `delta_*` seam) is inherited unchanged from the
 wrapped [`EllipticCrack`](@ref); only the transport response differs.
 
 ```julia

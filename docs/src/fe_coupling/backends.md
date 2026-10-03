@@ -1,5 +1,11 @@
 # [Ferrite backend](@id fe-backends)
 
+!!! info "Before this page"
+    [Materials](@ref fe-materials), for the contract the helpers below call at
+    each quadrature point, and
+    [The coupled poroelastic problem](@ref fe-poro-coupling) for the equations
+    of the two-field element.
+
 The material contract knows nothing about any finite-element library, so
 coupling to one needs almost no adapter. What Ferrite does *not* provide is
 per-quadrature-point material state, so that bookkeeping — and an element
@@ -80,3 +86,9 @@ state container and an element routine — plus, outside Julia, a way to carry
 `ε` and `σ` across the boundary ([`voigt_strain`](@ref) and
 [`voigt_stress`](@ref) exist for that). Those are on the
 [roadmap](@ref dev-roadmap), not in the package.
+
+## Where to go next
+
+The two examples that follow use these helpers:
+[Thick-walled cylinder](@ref fe-thick-cylinder) with the mechanical element,
+and [A fractured-reservoir well test](@ref fe-arma2011) with the coupled one.

@@ -22,16 +22,16 @@
     volterra_inverse(M::AbstractMatrix; block_size::Int = 6) -> Matrix
 
 Compute the Volterra inverse of a lower-block-triangular matrix
-`M` of size `(B·n) × (B·n)` with `B = block_size`.  The result is also
-lower-block-triangular and satisfies `M * volterra_inverse(M) = H 𝟙`
+`M` of size ``(Bn)\\times(Bn)`` with ``B`` = `block_size`.  The result is also
+lower-block-triangular and satisfies `M * volterra_inverse(M)` ``= H\\,\\mathbb 1``
 (block-diagonal identity).
 
 `block_size` must be a positive divisor of `size(M, 1)` and `size(M, 2)`,
 typically `1` (scalar Volterra kernel) or `6` (4-tensor in Mandel form).
 
-The cost is `O(B³ n²)` flops via block forward-substitution; each
+The cost is ``O(B^3 n^2)`` flops via block forward-substitution; each
 diagonal block is inverted with the dense `inv(...)` of stdlib (so
-`B = 6` costs only a few hundred flops per block).
+``B = 6`` costs only a few hundred flops per block).
 """
 function volterra_inverse(M::AbstractMatrix; block_size::Int = 6)
     B = block_size
@@ -173,7 +173,7 @@ end
 """
     volterra_product(A::AbstractMatrix, B::AbstractMatrix) -> Matrix
 
-Discrete Volterra product `A ∘ B`: a regular matrix multiplication of
+Discrete Volterra product ``A\\circ B``: a regular matrix multiplication of
 two lower-block-triangular matrices, returned as a fresh `Matrix`.
 The result is again lower-block-triangular by construction.
 
@@ -196,10 +196,10 @@ volterra_product(A::AbstractMatrix, B::AbstractMatrix) = A * B
 """
     volterra_divide(M, S; block_size = 1) -> Matrix
 
-Compute `T = M ∘ S^{-vol}` (Volterra-divide) by direct block forward
-substitution on the linear system `T · S = M`.  Numerically stable
+Compute ``T = M\\circ S^{-\\circ}`` (Volterra-divide) by direct block forward
+substitution on the linear system ``T\\circ S = M``.  Numerically stable
 where `M * volterra_inverse(S)` would lose precision through a huge
-intermediate inverse, e.g. for soft-phase moduli (`κ, μ → 0`) or
+intermediate inverse, e.g. for soft-phase moduli (``k, \\mu \\to 0``) or
 step-activated `ViscoLaw` kernels in multi-layer ALV recurrences.
 
 `block_size` must divide `size(M, 1)`; typical values are `1`
@@ -305,13 +305,13 @@ end
 """
     volterra_left_divide(S, M; block_size = 1) -> Matrix
 
-Compute `T = S^{-vol} ∘ M` (Volterra LEFT-divide) by direct forward
-substitution on the linear system `S · T = M`.
+Compute ``T = S^{-\\circ}\\circ M`` (Volterra LEFT-divide) by direct forward
+substitution on the linear system ``S\\circ T = M``.
 
 Use this rather than [`volterra_divide`](@ref) when the closed-form
 algebra requires the inverse on the LEFT of the numerator (e.g. the
 Hervé–Zaoui bulk/shear transition matrices, where
-`T = M_b^{-1} · M_a`).  On a non-uniform time grid Volterra trapezoidal
+``\\mathbf{T} = \\mathbf{M}_b^{-1}\\,\\mathbf{M}_a``).  On a non-uniform time grid Volterra trapezoidal
 matrices do **not** form a commutative algebra, so the order matters
 and right-vs-left divides give different results.
 

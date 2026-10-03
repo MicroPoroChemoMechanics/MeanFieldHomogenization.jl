@@ -1,4 +1,11 @@
-# # n-layer sphere: volume-averaged localization tensors
+# # [n-layer sphere: volume-averaged localization tensors](@id tut-layered-sphere)
+#
+# !!! info "Before this page"
+#     The tutorial [Hill polarization tensors in practice](@ref tut-hill-tensors),
+#     whose dilute estimate built from one localization tensor is extended here
+#     to an inclusion of several layers, and the theory page
+#     [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere),
+#     where the recurrence evaluated below is derived.
 #
 # Volume-averaged strain and stress localization tensors of an isotropic
 # n-layer composite sphere. Uses random per-layer moduli and a random
@@ -17,7 +24,7 @@
 # \qquad \text{(perfect interfaces)}
 # ```
 # is reconstructed and cross-checked against the dilute-scheme identity
-# ``\mathbb{C}_{\text{eff}} = \mathbb{C}_0 + f\,\mathbb{N} \iff
+# ``\mathbb{C}^{\mathrm{hom}} = \mathbb{C}_0 + f\,\mathbb{N} \iff
 # \mathbb{N} = \langle(\mathbb{C}_k - \mathbb{C}_0) : \mathbb{A}_{\varepsilon\varepsilon}\rangle``.
 
 import Pkg                                                          #jl
@@ -35,7 +42,7 @@ default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
 
 # ## Helpers
 
-# ``(E, \nu) \to (3K, 2\mu)`` for direct `TensISO{3}` construction.
+# ``(E, \nu) \to (3k, 2\mu)`` for direct `TensISO{3}` construction.
 function _stiff_Enu(E::Real, ν::Real)
     K = E / (3 * (1 - 2ν))
     μ = E / (2 * (1 + ν))
@@ -201,6 +208,10 @@ p_full = plot(
 )
 p_full
 
+# Each bar is the localization factor of one layer, and the dashed line is their
+# volume-weighted average, which is the factor the inclusion as a whole presents
+# to a scheme.
+#
 # Standalone run also saves the figure to `scripts/figures/`:
 
 const figdir = joinpath(@__DIR__, "figures")                        #jl
@@ -209,3 +220,13 @@ figpath = joinpath(figdir, "30_average_nlayers.png")                  #jl
 savefig(p_full, figpath)                                              #jl
 display(p_full)                                                       #jl
 @printf "\nSaved : %s\n" figpath                                      #jl
+
+# ## Where to go next
+#
+# A layer average says nothing about where, inside a layer, the strain
+# concentrates. [n-layer sphere: pointwise fields](@ref tut-layered-sphere-local-fields)
+# evaluates the strain, stress and displacement at a point of the same kind of
+# sphere, with perfect or imperfect interfaces, and checks that the field
+# averages back to the layer factors computed here. The constructors and the interface laws of
+# [`LayeredSphere`](@ref) are documented in
+# [Layered inclusions](@ref man-layered) of the manual.

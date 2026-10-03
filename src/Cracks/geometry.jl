@@ -8,8 +8,8 @@
     CrackShape
 
 Abstract supertype used as the second type parameter of
-[`EllipticCrack`](@ref).  Concrete subtypes: [`Penny`](@ref) (a == b) and
-[`EllipticShape`](@ref) (a > b).
+[`EllipticCrack`](@ref).  Concrete subtypes: [`Penny`](@ref) (``a = b``) and
+[`EllipticShape`](@ref) (``a > b``).
 """
 abstract type CrackShape end
 
@@ -34,8 +34,8 @@ struct Ribbon end
 """
     EllipticCrack{T, S<:CrackShape, B<:AbstractBasis}
 
-Flat elliptical crack with semi-axes `a ≥ b` oriented by a local basis
-`ℬ = (l̂, m̂, n̂)`.
+Flat elliptical crack with semi-axes ``a \\ge b`` oriented by a local basis
+``(\\underline{\\ell}, \\underline{m}, \\underline{n})``.
 """
 struct EllipticCrack{T <: Number, S <: CrackShape, B <: TensND.AbstractBasis} <:
     MFH_Core.AbstractCrack{T}
@@ -51,8 +51,8 @@ end
 """
     RibbonCrack{T, B<:AbstractBasis}
 
-Ribbon-like (tunnel) crack of half-width `b` along `m̂`, unbounded along
-`l̂`, with normal `n̂`.
+Ribbon-like (tunnel) crack of half-width ``b`` along ``\\underline{m}``, unbounded along
+``\\underline{\\ell}``, with normal ``\\underline{n}``.
 """
 struct RibbonCrack{T <: Number, B <: TensND.AbstractBasis} <: MFH_Core.AbstractCrack{T}
     b::T
@@ -85,7 +85,7 @@ angles.  `euler_angles` accepts tuples of length 0–3 with heterogeneous
 
 **Input-order convention** (`T <: Real`): columns 1 and 2 of the local
 basis carry the user's `a` and `b` respectively; column 3 is the crack
-normal.  The stored semi-axes are sorted so that `a ≥ b` and columns 1
+normal.  The stored semi-axes are sorted so that ``a \\ge b`` and columns 1
 and 2 are permuted when needed to preserve the physical geometry.
 Column 3 (normal) is never touched.
 """
@@ -153,7 +153,8 @@ end
 """
     RibbonCrack(b, R::AbstractMatrix)
 
-Ribbon-like crack with local frame columns `R = [l̂ | m̂ | n̂]`.
+Ribbon-like crack whose local frame ``(\\underline{\\ell}, \\underline{m}, \\underline{n})``
+is given by the columns of `R`.
 """
 function RibbonCrack(b::Tb, R::AbstractMatrix) where {Tb}
     T = MFH_Core._floatlike(Tb)
@@ -207,9 +208,10 @@ MFH_Core.shape_trait(::RibbonCrack) = Ribbon
     shape_tensor(c::EllipticCrack) -> AbstractTens{2,3}
 
 Return the symmetric 2nd-order shape tensor of a flat elliptic (or
-penny-shaped) crack: the diagonal in the local frame `(l̂, m̂, n̂)` is
-`(a, b, 0)` — the zero entry reflects the vanishing extent along the
-crack normal `n̂` (column 3 of the basis).
+penny-shaped) crack: the diagonal in the local frame
+``(\\underline{\\ell}, \\underline{m}, \\underline{n})`` is
+``(a, b, 0)`` — the zero entry reflects the vanishing extent along the
+crack normal ``\\underline{n}`` (column 3 of the basis).
 """
 function MFH_Core.shape_tensor(c::EllipticCrack{T}) where {T}
     D = zeros(T, 3, 3)
@@ -222,8 +224,9 @@ end
     shape_tensor(c::RibbonCrack) -> AbstractTens{2,3}
 
 Return the symmetric 2nd-order shape tensor of a ribbon (tunnel) crack:
-the diagonal in the local frame `(l̂, m̂, n̂)` is `(Inf, b, 0)` — `Inf`
-along the tunnel axis `l̂`, zero along the crack normal `n̂`.
+the diagonal in the local frame ``(\\underline{\\ell}, \\underline{m}, \\underline{n})``
+is `(Inf, b, 0)` — `Inf` along the tunnel axis ``\\underline{\\ell}``, zero along the
+crack normal ``\\underline{n}``.
 """
 function MFH_Core.shape_tensor(c::RibbonCrack{T}) where {T}
     D = zeros(T, 3, 3)
@@ -245,7 +248,7 @@ crack_normal(c::MFH_Core.AbstractCrack) = TensND.tens_basis(c.basis, 3)
 """
     aspect_ratio(c)
 
-Aspect ratio ``η = b/a`` for an elliptical crack, or `zero(T)` for a
+Aspect ratio ``\\eta = b/a`` for an elliptical crack, or `zero(T)` for a
 [`RibbonCrack`](@ref) (limit case).
 """
 aspect_ratio(c::EllipticCrack) = c.b / c.a
@@ -265,8 +268,8 @@ semi_minor(c::RibbonCrack) = c.b
 Everything the anisotropic COD kernels need, expressed **in one single frame**:
 the components of `C₀` in the crack basis `ℬ = crack_basis(c)`, together with
 the crack's own frame vectors *in that same basis* — where they are, by
-construction, the canonical triad ``(\\mathbf e_1, \\mathbf e_2, \\mathbf e_3)``
-with ``\\mathbf e_3 = \\hat{\\mathbf n}``.
+construction, the canonical triad ``(\\underline{e}_1, \\underline{e}_2, \\underline{e}_3)``
+with ``\\underline{e}_3 = \\underline{n}``.
 
 Frame consistency is the whole point. `MFH_Core._frame_columns(ℬ)` returns the
 crack frame in *global* coordinates; combining those with components expressed
@@ -292,9 +295,9 @@ end
 """
     crack_chi(c)
 
-Dimensionless coefficient ``χ`` linking the average crack opening to the
-maximum opening:  ``χ^{\\mathcal E} = 2/3`` for an [`EllipticCrack`](@ref),
-``χ^{\\mathcal R} = π/4`` for a [`RibbonCrack`](@ref).
+Dimensionless coefficient ``\\chi`` linking the average crack opening to the
+maximum opening:  ``\\chi^{\\mathcal{E}} = 2/3`` for an [`EllipticCrack`](@ref),
+``\\chi^{\\mathcal{R}} = \\pi/4`` for a [`RibbonCrack`](@ref).
 """
 crack_chi(::EllipticCrack{T}) where {T <: Number} = T(2) / T(3)
 crack_chi(::RibbonCrack{T}) where {T <: Number} = T(π) / T(4)

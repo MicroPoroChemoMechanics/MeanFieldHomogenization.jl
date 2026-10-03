@@ -34,7 +34,7 @@
 """
     _sym3_inv_acoustic(C₀_arr, ζ) -> NTuple{9}
 
-Inverse of the acoustic tensor `K[i,j] = ζₖ C₀[k,i,j,l] ζₗ` (symmetric, since
+Inverse of the acoustic tensor ``K_{ij} = \\zeta_k\\,(C_0)_{kijl}\\,\\zeta_l`` (symmetric, since
 `C₀` has minor symmetry), in closed form: only the 6 upper-triangle scalars of
 `K` are computed, and its inverse is the scalar adjugate/determinant of a
 symmetric 3×3 matrix — no `Matrix` allocation, no LU factorization, Dual-safe.
@@ -73,7 +73,7 @@ end
 
 Hill polarization tensor of a 3-D ellipsoid in an arbitrarily
 anisotropic matrix, evaluated by **nested 1-D QuadGK cubature** over the
-unit sphere of the general [willis1977](@cite) integrand.
+unit sphere of the general integrand of [willis1977](@citet).
 ForwardDiff-compatible. Includes axis-sort and power change-of-variable for
 improved convergence on flat or elongated ellipsoids.
 """

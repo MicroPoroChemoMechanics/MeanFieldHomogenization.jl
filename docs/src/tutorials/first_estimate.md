@@ -1,5 +1,11 @@
 # [A first homogenization](@id tut-first-estimate)
 
+!!! info "Before this page"
+    [Getting started](@ref getting-started), where the package is installed
+    and a first effective stiffness is read back, and the theory page
+    [Homogenization schemes](@ref th-homogenization), where the dilute and
+    Mori–Tanaka estimates compared below are derived.
+
 Every `MeanFieldHomogenization` computation starts from the same three ingredients:
 a **representative volume element** (RVE) describing the phases, their
 **geometry**, and a **scheme** that turns the RVE into a single
@@ -31,7 +37,7 @@ Note that nothing so far says which phase is a matrix — that is the scheme's
 to decide, and `MoriTanaka()` below takes the `:rest` phase because it is the
 only candidate. See [Who is the matrix?](@ref man-who-is-the-matrix).
 
-### A storage convention worth knowing
+### [A storage convention worth knowing](@id tut-first-estimate-storage)
 
 `iso_stiffness(k, mu)` builds the isotropic stiffness tensor
 from the physical bulk and shear moduli ``k`` and ``\mu``. Internally
@@ -62,14 +68,14 @@ an *infinite* matrix, ignoring every other inclusion around it. The
 effective stiffness is a sum of independent contributions:
 
 ```math
-\mathbb{C}_{\text{eff}} = \mathbb{C}_0 + \sum_i f_i\,(\mathbb{C}_i-\mathbb{C}_0):\mathbb{A}_i^{\text{dil}},
+\mathbb{C}^{\mathrm{hom}} = \mathbb{C}_0 + \sum_i f_i\,(\mathbb{C}_i-\mathbb{C}_0):\mathbb{A}_i^{\mathrm{dil}},
 \qquad
-\mathbb{A}_i^{\text{dil}} = \big[\mathbb{I}+\mathbb{P}_i:(\mathbb{C}_i-\mathbb{C}_0)\big]^{-1},
+\mathbb{A}_i^{\mathrm{dil}} = \big[\mathbb{I}+\mathbb{P}_i:(\mathbb{C}_i-\mathbb{C}_0)\big]^{-1},
 ```
 
 where ``\mathbb{P}_i`` is the Hill polarization tensor of inclusion
 ``i`` in the matrix ``\mathbb{C}_0`` ([`hill_tensor`](@ref)) and
-``\mathbb{A}_i^{\text{dil}}`` is its **dilute strain-localization
+``\mathbb{A}_i^{\mathrm{dil}}`` is its **dilute strain-localization
 tensor**: the linear map from the macroscopic strain to the strain
 inside inclusion ``i``. This is exact only in the dilute limit
 ``f_i \to 0`` — at finite volume fraction, inclusions interact and the
@@ -81,7 +87,7 @@ estimate drifts.
 macroscopic strain, but on the *average strain in the matrix*:
 
 ```math
-\mathbb{A}_i^{\text{MT}} = \mathbb{A}_i^{\text{dil}}:\Big(\sum_j f_j\,\mathbb{A}_j^{\text{dil}}\Big)^{-1}.
+\mathbb{A}_i^{\mathrm{MT}} = \mathbb{A}_i^{\mathrm{dil}}:\Big(\sum_j f_j\,\mathbb{A}_j^{\mathrm{dil}}\Big)^{-1}.
 ```
 
 Both schemes are called the same way — only the scheme argument to
@@ -121,3 +127,11 @@ The two curves coincide as ``f \to 0`` — both schemes agree in the
 dilute limit, as they must — and diverge as ``f`` grows: at finite
 volume fraction the inclusions interact, and Mori–Tanaka, which accounts
 for that, departs from the naive dilute sum.
+
+## Where to go next
+
+The dilute and Mori–Tanaka estimates are two members of a larger family, which
+[Bounds and classical schemes](@ref tut-bounds-and-schemes) places on a single
+graph between the Voigt and Reuss bounds. The syntax of the RVE and of the
+scheme objects used above is collected, call by call, in
+[Homogenization schemes](@ref man-schemes) of the manual.

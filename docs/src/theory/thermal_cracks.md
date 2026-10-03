@@ -1,11 +1,18 @@
 # [Thermal cracks — COD scalar and resistivity contribution](@id th-thermal-cracks)
 
-Transposition of
-[Crack opening displacement and compliance tensors](cod_tensors.md) to the
+!!! info "Before this page"
+    [Crack opening displacement and compliance](@ref th-cod-tensors), whose
+    elastic derivation is transposed here step by step, and
+    [The Eshelby inclusion problem](@ref th-eshelby-problem) §3 for the
+    transport form of the inclusion problem under the convention
+    ``\boldsymbol\sigma \equiv -\underline{q}``.
+
+This page transposes
+[Crack opening displacement and compliance tensors](@ref th-cod-tensors) to the
 2nd-order (conductivity / diffusion / Darcy) problem, where the driving field
 is a vector rather than a symmetric 2-tensor.
 
-## What is specific to a crack
+## 1. What is specific to a crack
 
 The general elasticity ↔ conductivity dictionary — fields, fluxes, moduli, Hill
 and localization tensors — is stated once in
@@ -21,7 +28,7 @@ they are the reason this chapter exists at all.
 | Dilute contribution ``\Delta\mathbb S = (4\pi/3)\varepsilon^{3\mathrm d}\mathbb H`` (elliptic), ``= \pi\varepsilon^{2\mathrm d}\mathbb H`` (ribbon) | Dilute contribution ``\Delta\boldsymbol{R} = (4\pi/3)\varepsilon^{3\mathrm d}\boldsymbol{R}`` (elliptic), ``= \pi\varepsilon^{2\mathrm d}\boldsymbol{R}`` (ribbon) |
 | Sextic acoustic polynomial [masson2008](@cite)                   | Quadratic acoustic form ``\underline{\xi}\cdot\boldsymbol{K}_0\cdot\underline{\xi}`` → **analytical** |
 | Stress intensity factors ``K_I, K_{II}, K_{III}``                | Heat-flux intensity factor ``K_T`` — scalar (mode I analog only)      |
-| Displacement intensity factor ``\underline{N}``                | Temperature intensity factor — scalar ``[T]_\text{avg}``                |
+| Displacement intensity factor ``\underline{N}``                | Temperature intensity factor — scalar ``[T]_{\mathrm{avg}}``                |
 
 A scalar ``b`` suffices because ``[T]`` is a scalar and only
 ``\underline{q}\cdot\underline{n}`` produces a jump — there are no sliding or
@@ -31,7 +38,7 @@ always ``\underline{n}``: the null space of
 ``\underline{n}`` for any ``\boldsymbol{K}_0`` (derivation below), so ``b``
 carries all the matrix anisotropy.
 
-## Crack geometry
+## 2. Crack geometry
 
 Same geometric families as in the elasticity chapter:
 
@@ -41,7 +48,7 @@ Same geometric families as in the elasticity chapter:
 - **Ribbon cracks** (tunnel cracks) of half-width ``b``
   ([`RibbonCrack`](@ref)), infinite along ``\hat{\boldsymbol\ell}``.
 
-## Hill tensor Taylor expansion and block-matrix limit
+## 3. Hill tensor Taylor expansion and block-matrix limit
 
 Mirror of the elasticity derivation of
 [barthelemyIJSS2009](@cite).  For a flat ellipsoidal
@@ -50,12 +57,12 @@ computed via the formula
 ``\boldsymbol{P}(\boldsymbol{A},\boldsymbol{K}_0)
 = \boldsymbol{K}_0^{-1/2}\cdot\boldsymbol{I}^{\boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}}
   \cdot\boldsymbol{K}_0^{-1/2}``
-([giraudMOM2019](@cite)), where
+[giraudMOM2019](@cite), where
 ``\boldsymbol{I}^{\boldsymbol{B}}`` is assembled in the eigenbasis of
-``\boldsymbol{B}^T\boldsymbol{B}`` (right singular vectors of
+``\boldsymbol{B}^{\!T}\boldsymbol{B}`` (right singular vectors of
 ``\boldsymbol{B} = \boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}``).  As ``\omega\to 0``:
 
-- The null vector of ``\boldsymbol{B}^T\boldsymbol{B}`` is
+- The null vector of ``\boldsymbol{B}^{\!T}\boldsymbol{B}`` is
   ``\underline{v}_3 = \boldsymbol{K}_0^{1/2}\underline{n}/\sqrt{k_{nn}}``,
   ``k_{nn}=\underline{n}\cdot\boldsymbol{K}_0\underline{n}``.
 - The corresponding Newton potential ``I_3\to 4\pi`` while
@@ -87,11 +94,11 @@ the elasticity problem).  The limit
 is rank-1 along ``\underline{n}``, with
 ``Y_{nn} = \underline{n}\cdot\boldsymbol\Lambda_1\cdot\underline{n}``.
 
-## From the Green operator to ``b``
+## 4. From the Green operator to ``b``
 
 The section above reached ``\boldsymbol{R}`` by flattening an ellipsoid. This one
 reaches ``b`` from the Fourier kernel instead — the transport twin of
-[From the Green operator to ``\boldsymbol{B}``](cod_tensors.md#From-the-Green-operator-to-B)
+[From the Green operator to ``\boldsymbol{B}``](@ref th-cod-green)
 — and it is the route that substantiates the row *"Quadratic acoustic form →
 analytical"* of the opening table: the order-2 problem has a closed form for
 **every** anisotropy, where elasticity needs its sextic to factorize.
@@ -228,7 +235,7 @@ values of ``\boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}``; the adjugate form need
 one **2×2** eigenvalue problem. That is why the adjugate route is evaluable on
 symbolic scalars, where `eigen` and `svdvals` are not.
 
-## Closed-form COD scalar ``b``
+## 5. Closed-form COD scalar ``b``
 
 All of these are the two boxed formulas above, evaluated on a more symmetric
 ``\boldsymbol{K}_0``. Implementation: `src/Cracks/cod_analytical_thermal.jl`.
@@ -240,7 +247,7 @@ All of these are the two boxed formulas above, evaluated on a more symmetric
 
 ```math
 \boxed{\;
-b_{\text{ell}} = \frac{4}{3\sqrt{\lambda_1}\,\mathcal{E}_{\eta'}}
+b_{\mathrm{ell}} = \frac{4}{3\sqrt{\lambda_1}\,\mathcal{E}_{\eta'}}
 \;},
 \qquad
 \lambda_{1,2} = \frac{\eta^{2}A+C}{2}
@@ -260,7 +267,7 @@ no symmetry assumption, and no need for the numerical
 
 ```math
 \boxed{\;
-b_{\text{ell}}^{\text{iso}} = \frac{4}{3\,k_0\,\mathcal E_\eta}
+b_{\mathrm{ell}}^{\mathrm{iso}} = \frac{4}{3\,k_0\,\mathcal E_\eta}
 \;},
 \qquad
 \mathcal E_\eta = \mathcal E\!\bigl(\sqrt{1-\eta^{2}}\bigr).
@@ -278,21 +285,21 @@ average of the textbook jump of an insulating circular crack,
 **geometric mean**:
 
 ```math
-b_{\text{ell}}^{\text{aligned TI}} = \frac{4}{3\sqrt{k_tk_n}\,\mathcal E_\eta},
+b_{\mathrm{ell}}^{\text{aligned TI}} = \frac{4}{3\sqrt{k_tk_n}\,\mathcal E_\eta},
 \qquad
-b_{\text{penny}}^{\text{aligned TI}} = \frac{8}{3\pi\sqrt{k_tk_n}} .
+b_{\mathrm{penny}}^{\text{aligned TI}} = \frac{8}{3\pi\sqrt{k_tk_n}} .
 ```
 
 ### Ribbon crack — 2D formula
 
-Only the ``(\hat{\underline{m}}, \underline{n})`` transverse block of
+Only the ``(\underline{m}, \underline{n})`` transverse block of
 ``\boldsymbol{K}_0`` enters, since
 ``\hat{Q}^{\star}_{nn}(\underline{m}) = \tfrac12\sqrt{\det\boldsymbol{K}_0\vert_{(\underline{m},\underline{n})}}``:
 
 ```math
 \boxed{\;
-b_{\text{ribbon}}
-= \frac{\pi}{2\,\sqrt{\det\bigl(\boldsymbol{K}_0\vert_{(\hat{\underline{m}},\underline{n})}\bigr)}}
+b_{\mathrm{ribbon}}
+= \frac{\pi}{2\,\sqrt{\det\bigl(\boldsymbol{K}_0\vert_{(\underline{m},\underline{n})}\bigr)}}
 \;}
 ```
 
@@ -302,7 +309,7 @@ which reduces to ``b = \pi/(2 k_0)`` for an isotropic matrix.
 
 Historically these formulas were obtained by the square-root change of variable
 ``\tilde{\underline{x}} = \boldsymbol{K}_0^{-1/2}\underline{x}``
-([giraudMOM2019](@cite)), which maps the problem to an
+[giraudMOM2019](@cite), which maps the problem to an
 isotropic one with a *transformed crack shape*: with
 ``\tilde{\boldsymbol{A}} = \boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}`` and its
 singular values ``\sigma_1\ge\sigma_2\ge\sigma_3 = 0``, the transformed aspect
@@ -320,11 +327,11 @@ COD flows through automatic differentiation and symbolic scalars.
     `fracture_permeability`, whose conduction side does not go through these
     formulas.
 
-## Resistivity contribution ``\boldsymbol{R}`` and dilute correction ``\Delta\boldsymbol{R}``
+## 6. Resistivity contribution ``\boldsymbol{R}`` and dilute correction ``\Delta\boldsymbol{R}``
 
 The size-independent **crack resistivity contribution tensor** is
 assembled from the scalar ``b`` and the effective direction
-``\hat{\underline{w}}``:
+``\underline{w}``:
 
 ```math
 \boldsymbol{R}^{\mathcal E} = \tfrac{3}{4}\,b\,\underline{n}\otimes\underline{n}
@@ -337,7 +344,7 @@ assembled from the scalar ``b`` and the effective direction
 The geometric prefactors ``3/4`` and ``2/\pi`` are the same as in the
 elasticity case (they come from ``cS/V`` evaluated on the ellipsoidal
 and ribbon geometries — see
-[Crack compliance and COD tensor](cod_tensors.md#Crack-compliance-H-and-COD-tensor-B)).
+[Crack compliance and COD tensor](@ref th-cod-compliance)).
 The rank-1 direction is always the crack normal ``\underline{n}``,
 for any conductivity tensor ``\boldsymbol{K}_0``.
 
@@ -354,11 +361,10 @@ resistivity of the cracked conductor is obtained via
 \qquad\text{(ribbon, }\varepsilon^{2\mathrm d} = Nb^{2}\text{)}.
 ```
 
-These reduce to the Sevostianov–Kachanov expressions
-(see [sevostianov2002](@cite),
- [kachanov2018](@cite)).
+These reduce to the expressions of
+[sevostianov2002, kachanov2018](@citet).
 
-## Intensity factors
+## 7. Intensity factors
 
 Thermal analogs of the elastic stress / displacement intensity
 factors:
@@ -375,7 +381,15 @@ so each formula is the elastic one with the symbols substituted.
   ratio exactly as in the elasticity case (``b^\mathcal E/b^\mathcal R``
   replaces ``\boldsymbol{B}^\mathcal E(\boldsymbol{B}^\mathcal R)^{-1}``).
 - **Temperature intensity factor** (scalar):
-  ``[T]_\text{avg} = b\,(\underline{n}\cdot\boldsymbol\sigma^{\infty})``.
+  ``[T]_{\mathrm{avg}} = b\,(\underline{n}\cdot\boldsymbol\sigma^{\infty})``.
 
 See [`sif`](@ref) and [`dif`](@ref) for the full signatures (dispatched
 on ``\boldsymbol{K}_0::\texttt{AbstractTens\{2,3\}}``).
+
+## Where to go next
+
+The dictionary invoked in §1 is stated in full on the next page,
+[Extension to conductivity](@ref th-conductivity), which lists what carries over
+from elasticity to the order-2 problem and the two points where the latter is
+simpler. The scalar ``b`` and the resistivity contribution are called as
+described in the manual page [Conductivity](@ref man-conductivity).

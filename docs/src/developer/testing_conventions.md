@@ -1,5 +1,24 @@
 # [Testing conventions](@id dev-testing-conventions)
 
+!!! info "Before this page"
+    [Architecture](@ref dev-architecture), whose sub-module layout the test tree
+    mirrors.
+
+This page describes how the test suite is run and laid out, which tests catch
+bugs in this package, and how the documentation is checked without a full
+build.
+
+## Running the suite
+
+From a clone of the repository, the project is instantiated once before first
+use, and the suite is then run through `Pkg.test`:
+
+```shell
+cd /path/to/MeanFieldHomogenization.jl
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
+julia --project=. -e 'using Pkg; Pkg.test()'
+```
+
 ## Layout
 
 Tests mirror the source tree, one directory per sub-module, aggregated by
@@ -49,7 +68,7 @@ three kinds:
     to *agree* there. A penny crack has ``\eta = 1``, and at ``\eta = 1`` the
     normalizations of the crack compliance ``\mathbb{H}`` used by
     `MeanFieldHomogenization`, by Echoes and by the literature all coincide (see
-    [Crack opening displacement](../theory/cod_tensors.md), section
+    [Crack opening displacement](@ref th-cod-tensors), section
     *Conventions*). A suite covering only the penny therefore cannot detect a
     wrong ``\eta``-dependence.
 
@@ -109,3 +128,8 @@ browser, with software WebGL enabled — the exact invocation is recorded at the
 end of `docs/check_blocks.jl`. Without those flags plotly.js reports "WebGL is
 not supported by your browser" and every 3-D scene renders as a gray box, which
 looks like a broken figure and is not one.
+
+## Where to go next
+
+[Cross-validation against Echoes](@ref dev-validation) lists the independent
+reference behind most quantities, and the tolerances they are held to.

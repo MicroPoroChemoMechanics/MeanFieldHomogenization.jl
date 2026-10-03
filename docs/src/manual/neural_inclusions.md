@@ -1,5 +1,12 @@
 # [Neural-surrogate inclusions](@id man-neural-inclusions)
 
+!!! info "Before this page"
+    [Custom inclusions](@ref man-custom-inclusions), whose gates A and B a
+    surrogate enters through, [Finite-element inclusions](@ref man-fe-inclusions),
+    the expensive teacher a surrogate replaces, and
+    [Hill polarization tensors](@ref th-hill-tensors) for the shape/moduli
+    factorization exploited below.
+
 A trained network is a fourth way into the
 [custom-inclusion contract](@ref man-custom-inclusions), alongside the analytic
 families, the layered patterns and the
@@ -38,7 +45,7 @@ cannot give:
 The ellipsoid is therefore the *validation* case: the one morphology whose labels
 are exact, so the pipeline can be held to a closed form before being pointed at
 something unknown. `scripts/84_neural_inclusion_ellipsoid.jl` is that check,
-[published as a tutorial](@ref tut-index).
+[published as a tutorial](@ref tut-neural-inclusion).
 
 ## The general syntax: evaluating a surrogate
 
@@ -141,7 +148,7 @@ affine structure exists.
 ## The general syntax: training your own
 
 Four decisions, then one call. The
-[tutorial](@ref tut-index) walks the same ground with a schematic of the network
+[tutorial](@ref tut-neural-inclusion) walks the same ground with a schematic of the network
 and of the fitting loop, and shows the recorded learning curve.
 
 **1. Which tensor, and therefore which gate.** ``\mathbb P`` (gate A) whenever
@@ -458,14 +465,20 @@ julia scripts/84_neural_inclusion_ellipsoid.jl
 Nothing is trained at test or documentation-build time: both load the committed
 JSON, which is what keeps the suite deterministic and the doc build free of Lux.
 
-## See also
+## Where to go next
+
+The inclusion pages end here, and
+[Homogenization schemes](@ref man-schemes) turns to the cells that consume
+inclusions and to the estimates computed on them. The tutorial
+[An inclusion whose response is a neural network](@ref tut-neural-inclusion) is
+the worked pilot — both phases, with the network schematic and the learning
+curve, validated against the closed form — and
+[Replacing a finite-element solve by a neural surrogate](@ref tut-neural-excentered-sphere)
+trains a surrogate on the off-center core of the finite-element page.
 
 - [Custom inclusions](@ref man-custom-inclusions) — the contract and its three
   entry gates
-- [Adding a new inclusion](@ref dev-adding-inclusion) — the leveled developer
-  contract
 - [Finite-element inclusions](@ref man-fe-inclusions) — the expensive teacher a
   surrogate is meant to replace
-- [An inclusion whose response is a neural network](@ref tut-index) — the worked
-  pilot: both phases, with the network schematic and the learning curve,
-  validated against the closed form
+- [Adding a new inclusion](@ref dev-adding-inclusion) — the leveled developer
+  contract

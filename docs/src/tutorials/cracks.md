@@ -1,5 +1,13 @@
 # [Cracks and crack density](@id tut-cracks)
 
+!!! info "Before this page"
+    The tutorial [Hill polarization tensors in practice](@ref tut-hill-tensors),
+    whose flattened spheroid is the volume-bearing ancestor of the crack, and
+    the theory page
+    [Crack opening displacement and compliance](@ref th-cod-tensors), where the
+    tensor ``\boldsymbol{B}`` and the compliance contribution used below are
+    derived.
+
 Cracks are inclusions with **zero volume** — a pore flattened to a
 surface. `MeanFieldHomogenization` handles them with the same [`RVE`](@ref)/
 [`homogenize`](@ref) machinery as ordinary inclusions, but parameterized
@@ -46,7 +54,7 @@ the dilute compliance correction is
 \mathbb{H} = \tfrac{3}{4}\,\underline{n}\otimes^{\!s}\boldsymbol{B}\otimes^{\!s}\underline{n},
 ```
 
-[kachanov1992](@cite), [kachanov1993](@cite) — ``\mathbb{H}`` is the
+[kachanov1992, kachanov1993](@citet) — ``\mathbb{H}`` is the
 **size-independent compliance contribution tensor**
 ([`compliance_contribution`](@ref)), computed once from `B` and the
 crack normal ``\underline{n}``, and reused unchanged across an entire
@@ -77,14 +85,14 @@ crack_density(build(0.05), :CRACK)
 
 `symmetrize = IsoSymmetrize()` declares a **uniform spatial
 distribution of crack orientations** (see the
-[porous benchmark tutorial](porous_benchmark.md) for the same
+[porous benchmark tutorial](@ref tut-porous-benchmark) for the same
 keyword on ordinary inclusions), so the macroscopic effect of an
 isotropically-oriented crack population is itself isotropic.
 
 Note: [`SelfConsistent`](@ref) does not support cracks (its
 strain-localization tensor becomes singular for zero-volume
 inclusions); use [`AsymmetricSelfConsistent`](@ref) instead. See the
-[cracks manual page](../manual/cracks.md) for the full API, including
+[cracks manual page](@ref man-cracks) for the full API, including
 finite interface stiffness (Sevostianov springs).
 
 ## Effective modulus vs. crack density
@@ -113,7 +121,16 @@ Stiffness decreases monotonically with crack density for every scheme,
 as expected — but at different rates: `AsymmetricSelfConsistent`
 degrades fastest because it lets cracks interact through a softening
 effective medium, exactly as the self-consistent porous estimate did
-in [an earlier tutorial](porous_materials.md). Crack density plays
+in [an earlier tutorial](@ref tut-porous-materials). Crack density plays
 the same qualitative role here that porosity played there; what differs
 is the *shape* (a surface rather than a volume) entering the
 localization tensor.
+
+## Where to go next
+
+The cracks above are averaged over all orientations.
+[Crack distributions: isotropic or parallel](@ref tut-crack-distributions)
+compares that rule with a family of parallel cracks at the same density, and
+follows both self-consistent forms to their percolation thresholds. The crack
+shapes, the `density` keyword and the opening laws other than the free crack are
+documented in [Cracks](@ref man-cracks) of the manual.

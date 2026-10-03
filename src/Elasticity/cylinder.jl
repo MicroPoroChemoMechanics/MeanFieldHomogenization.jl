@@ -13,10 +13,10 @@
 
 Abstract supertype for the shape classification of a [`Cylinder`](@ref).
 Sub-traits:
-- [`CircularCylindrical`](@ref) — circular base (`b = c`).
-- [`EllipticCylindrical`](@ref) — elliptic base (`b > c`).
+- [`CircularCylindrical`](@ref) — circular base (``b = c``).
+- [`EllipticCylindrical`](@ref) — elliptic base (``b > c``).
 
-All cylinders are infinite along `e₁` in the inclusion's local basis.
+All cylinders are infinite along ``\\underline{e}_1`` in the inclusion's local basis.
 """
 abstract type CylindricalShape <: EllipsoidShape end
 
@@ -36,15 +36,15 @@ const _SHAPE_CYLINDER = (CircularCylindrical, EllipticCylindrical)
     Cylinder{S<:CylindricalShape, T<:Number, B<:AbstractBasis} <:
         AbstractEllipsoidalInclusion{3, T}
 
-Infinite cylindrical inclusion with transverse semi-axes `(b, c)` (with
-`b ≥ c > 0` when `T <: Real`, or in the caller-provided order when `T` is
+Infinite cylindrical inclusion with transverse semi-axes ``(b, c)`` (with
+``b \\ge c > 0`` when `T <: Real`, or in the caller-provided order when `T` is
 symbolic).  The cylinder axis is the first column of the local `basis`
 — consistent with the [`Prolate`](@ref) convention where the axis of
-revolution is also `e₁`.
+revolution is also ``\\underline{e}_1``.
 
 `S` encodes the cross-section shape:
-- [`CircularCylindrical`](@ref) when `b = c` (transversely isotropic result).
-- [`EllipticCylindrical`](@ref) when `b > c` (orthotropic result).
+- [`CircularCylindrical`](@ref) when ``b = c`` (transversely isotropic result).
+- [`EllipticCylindrical`](@ref) when ``b > c`` (orthotropic result).
 
 `T` can be any `Number` subtype (`Float64`, `ForwardDiff.Dual`, `SymPy.Sym`,
 `Symbolics.Num`, …) — all analytical paths are type-generic.
@@ -72,8 +72,8 @@ end
     Cylinder(b, c; euler_angles=(0,0,0))
 
 Infinite cylinder with transverse semi-axes `b` and `c`.  The cylinder
-axis is oriented by ZYZ Euler angles `(θ, ϕ, ψ)` — the default aligns
-it with the global `e₁`.  `euler_angles` accepts tuples of length 0–3
+axis is oriented by ZYZ Euler angles ``(\\theta, \\phi, \\psi)`` — the default aligns
+it with the global ``\\underline{e}_1``.  `euler_angles` accepts tuples of length 0–3
 with heterogeneous `Real` entries (trailing zeros are implicit).
 
 **Input-order convention** (`T <: Real`): columns 2 and 3 of the local

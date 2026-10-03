@@ -45,7 +45,7 @@ states[c][q] = r.state
 !!! warning "Plane strain only — not plane stress"
     Plane *stress* (``\\sigma_{33} = 0``) requires condensing the out-of-plane
     strain out of the law, which for a general anisotropic
-    ``\\mathbb{C}^{\\rm hom}`` couples all six components and, for a material
+    ``\\mathbb{C}^{\\mathrm{hom}}`` couples all six components and, for a material
     with internal state, has to be solved at every quadrature point. Reusing
     this function for plane stress would silently impose ``\\varepsilon_{33} =
     0`` instead of ``\\sigma_{33} = 0``, which is a different problem — note the
@@ -53,7 +53,7 @@ states[c][q] = r.state
 
 !!! note "Anisotropy is not checked"
     A microstructure whose axes are not aligned with the plane produces a
-    ``\\mathbb{C}^{\\rm hom}`` coupling in-plane and out-of-plane components
+    ``\\mathbb{C}^{\\mathrm{hom}}`` coupling in-plane and out-of-plane components
     (``\\mathbb{C}_{1123}`` and friends). Plane strain remains exact — those
     couplings only feed `σ₃₃` and the out-of-plane shears, which the 2-D
     momentum balance does not see — but the resulting plane problem is then not

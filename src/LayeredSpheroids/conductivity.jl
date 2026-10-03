@@ -49,8 +49,8 @@ convention).
 
 Per-layer scalar conductivities and Legendre value/derivative tables
 (`P0,Q0,dP0,dQ0` for the axial problem, `P1,Q1,dP1,dQ1` for the
-transverse one), each evaluated once at layer `k`'s own confocal
-parameter `q_k`.
+transverse one), each evaluated once at layer ``k``'s own confocal
+parameter ``q_k``.
 """
 function _spheroid_tables(s::LayeredSpheroid{T, N, Q}) where {T, N, Q}
     𝒩 = s.Nseries
@@ -72,8 +72,15 @@ end
 """
     _J_ext(k, P, Qf, dP, dQ) -> Matrix
 
-The `2𝒩 × 2𝒩` diagonal block matrix `𝒥(k,q)` (eq:matJ):
-`[[diag(P) diag(Qf)]; [k·diag(dP) k·diag(dQ)]]`.
+The ``2\\mathcal{N}\\times 2\\mathcal{N}`` diagonal block matrix ``\\mathcal{J}(k,q)`` (eq:matJ),
+with ``P``, ``Q``, ``P'``, ``Q'`` the arguments `P`, `Qf`, `dP`, `dQ`:
+
+```math
+\\mathcal{J}(k,q) = \\begin{pmatrix}
+\\mathrm{diag}(P) & \\mathrm{diag}(Q)\\\\
+k\\,\\mathrm{diag}(P') & k\\,\\mathrm{diag}(Q')
+\\end{pmatrix}.
+```
 """
 function _J_ext(k, P::Vector{Qx}, Qf::Vector{Qx}, dP::Vector{Qx}, dQ::Vector{Qx}) where {Qx}
     𝒩 = length(P)
@@ -91,13 +98,13 @@ end
 """
     _J_int(k, coef, P, Qf, dP, dQ, M, dual, trans) -> Matrix
 
-`𝒥(k,q) + δ𝒥^{LC/HC}`: the diagonal block `_J_ext` plus the full
+``\\mathcal{J}(k,q) + \\delta\\mathcal{J}^{\\mathrm{LC/HC}}``: the diagonal block `_J_ext` plus the full
 coupling perturbation of generic row/column term
-`[δ𝒥]_{rs} = coef·(4r-1)/2·M_{rs}·ℛ_{2s-1}` (`ℛ = P, Qf` for HC,
-`ℛ = dP, dQ` for LC), divided by `(2r-1)(2r)` for the transverse
+``[\\delta\\mathcal{J}]_{rs} = c\\,\\frac{4r-1}{2}\\,M_{rs}\\,\\mathcal{R}_{2s-1}``, ``c`` = `coef` (``\\mathcal{R} = P, Q`` for HC,
+``\\mathcal{R} = P', Q'`` for LC), divided by ``(2r-1)(2r)`` for the transverse
 problem (eq:axiLCdJ/axiHCdJ/transLCdJ/transHCdJ). `dual = true` (HC)
-perturbs the FLUX (lower) block using unprimed `ℛ`; `dual = false`
-(LC) perturbs the TEMPERATURE (upper) block using primed `ℛ`.
+perturbs the FLUX (lower) block using unprimed ``\\mathcal{R}``; `dual = false`
+(LC) perturbs the TEMPERATURE (upper) block using primed ``\\mathcal{R}'``.
 """
 function _J_int(
         k, coef, P::Vector{Qx}, Qf::Vector{Qx}, dP::Vector{Qx}, dQ::Vector{Qx},
@@ -137,10 +144,10 @@ end
 """
     _transition(s, layer, trans, k_next, tables) -> Matrix
 
-Transfer matrix `Rℓ = 𝒥(k_{ℓ+1}, q_ℓ)⁻¹ (𝒥(k_ℓ, q_ℓ) + δ𝒥)`
+Transfer matrix ``R_\\ell = \\mathcal{J}(k_{\\ell+1}, q_\\ell)^{-1}\\,\\bigl(\\mathcal{J}(k_\\ell, q_\\ell) + \\delta\\mathcal{J}\\bigr)``
 (eq:aximat) across the interface at the outer boundary of `layer`.
 `k_next` is the conductivity on the other side (next layer's, or the
-matrix `k₀` if `layer == N`).
+matrix ``k_0`` if `layer == N`).
 """
 function _transition(
         s::LayeredSpheroid{T, N, Q}, layer::Int, trans::Bool, k_next, tables,
@@ -174,11 +181,11 @@ end
 """
     spheroid_state_sequence(s, k₀, trans) -> Vector{Vector}
 
-Series coefficient vectors `Xℓ = [Aℓ; Bℓ]` (eq:AlBlXl), `ℓ = 1, …, N+1`
-(the `(N+1)`-th being the matrix), for the axial (`trans = false`) or
-transverse (`trans = true`) problem in an isotropic matrix `k₀`.
-`B₁ = 0` (core regularity, eq:axiBCbi) and
-`A_{N+1} = (±1, 0, …, 0)` (unit remote field, `+` axial / `−`
+Series coefficient vectors ``X_\\ell = [A_\\ell; B_\\ell]`` (eq:AlBlXl), ``\\ell = 1, \\dots, N+1``
+(the ``(N+1)``-th being the matrix), for the axial (`trans = false`) or
+transverse (`trans = true`) problem in an isotropic matrix ``k_0``.
+``B_1 = 0`` (core regularity, eq:axiBCbi) and
+``A_{N+1} = (\\pm 1, 0, \\dots, 0)`` (unit remote field, ``+`` axial / ``-``
 transverse, eq:axiBCai/eq:transBCai) are imposed exactly.
 """
 function spheroid_state_sequence(s::LayeredSpheroid{T, N, Q}, k₀raw, trans::Bool) where {T, N, Q}
@@ -243,13 +250,13 @@ end
 """
     spheroid_ba_ratios(s, k₀) -> (ba_axial, ba_trans)
 
-The two ratios `b^0_{N+1,1}/a^0_{N+1,1}` and `b^1_{N+1,1}/a^1_{N+1,1}`
+The two ratios ``b^0_{N+1,1}/a^0_{N+1,1}`` and ``b^1_{N+1,1}/a^1_{N+1,1}``
 (eq:axiasb/eq:transasb) driving the volume-averaged concentration
 tensors. Kept in their native (possibly complex, for the oblate
-substitution `q = iτ`) type — casting to real is only valid on the
-FINAL shape-function product (`ba · 𝒯/𝒰(q_N)`, done in
+substitution ``q = \\mathrm{i}\\tau``) type — casting to real is only valid on the
+FINAL shape-function product (``(b/a)\\,\\mathcal{T}(q_N)`` or ``(b/a)\\,\\mathcal{U}(q_N)``, done in
 `spheroid_gradient_gradient` / `spheroid_flux_gradient` /
-`_spheroid_concentration`), never on `ba` alone.
+`_spheroid_concentration`), never on ``b/a`` alone.
 """
 function spheroid_ba_ratios(s::LayeredSpheroid{T, N}, k₀) where {T, N}
     𝒩 = s.Nseries
@@ -264,9 +271,9 @@ end
     spheroid_gradient_gradient(s, k₀) -> (αt, αa)
 
 Real axial/transverse gradient-concentration scalars
-`αₐ = 1 + (b/a)ₐ·𝒯ₐ(q_N)`, `αₜ = 1 + (b/a)ₜ·𝒯ₜ(q_N)`
+``\\alpha_a = 1 + (b/a)|_a\\,\\mathcal{T}_a(q_N)``, ``\\alpha_t = 1 + (b/a)|_t\\,\\mathcal{T}_t(q_N)``
 (eq:avgradTN/eq:transavgradTN, unit remote field), such that
-`⟨∇T⟩_Ω = diag(αₜ, αₜ, αₐ)·∇T∞` in the spheroid's own (axis-aligned)
+``\\langle\\nabla T\\rangle_\\Omega = \\mathrm{diag}(\\alpha_t, \\alpha_t, \\alpha_a)\\cdot\\nabla T^{\\infty}`` in the spheroid's own (axis-aligned)
 frame.
 """
 function spheroid_gradient_gradient(s::LayeredSpheroid{T, N}, k₀) where {T, N}
@@ -281,11 +288,11 @@ end
     spheroid_flux_gradient(s, k₀) -> (βt, βa)
 
 Real axial/transverse flux-concentration scalars
-`βₐ = 1 + (b/a)ₐ·𝒰ₐ(q_N)`, `βₜ = 1 + (b/a)ₜ·𝒰ₜ(q_N)`
+``\\beta_a = 1 + (b/a)|_a\\,\\mathcal{U}_a(q_N)``, ``\\beta_t = 1 + (b/a)|_t\\,\\mathcal{U}_t(q_N)``
 (eq:avuN/eq:transavuN), such that
-`⟨K∇T⟩_Ω = k₀·diag(βₜ, βₜ, βₐ)·∇T∞` in the spheroid's own frame
+``\\langle\\boldsymbol{K}\\cdot\\nabla T\\rangle_\\Omega = k_0\\,\\mathrm{diag}(\\beta_t, \\beta_t, \\beta_a)\\cdot\\nabla T^{\\infty}`` in the spheroid's own frame
 (before any surface-conductive-interface flux correction — none is
-needed here: the HC surface-flux term is already folded into `(b/a)`
+needed here: the HC surface-flux term is already folded into ``(b/a)``
 through the transfer-matrix recurrence, unlike `LayeredSphere` where it
 is a separate additive term).
 """

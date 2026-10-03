@@ -1,13 +1,19 @@
 # [The differential scheme](@id th-differential-scheme)
 
+!!! info "Before this page"
+    [Homogenization schemes](@ref th-homogenization), where the dilute estimate
+    repeated here at each increment is stated, and
+    [Localization and contribution tensors](@ref th-localization) for the
+    contribution tensors ``\mathbb N_i`` and ``\mathbb H_i`` integrated below.
+
 The differential (or incremental) scheme builds the composite by
 *repeated dilute incorporation*: an infinitesimal amount of each
 inclusion phase is added to the current effective medium, which is
 re-homogenized before the next increment. This page derives the
 resulting ODE for an arbitrary number of phases and an arbitrary
-incorporation trajectory ([norris1985](@cite)).
+incorporation trajectory [norris1985](@cite).
 
-## Incorporation process
+## [1. Incorporation process](@id th-differential-incorporation)
 
 The construction is a loop, and the loop is the scheme: what distinguishes it
 from Mori–Tanaka is not the dilute step — that step is the *same* — but the fact
@@ -65,17 +71,17 @@ medium also removes the phase `i` already present in it:
 \qquad 1 \le i \le N .
 ```
 
-In matrix form, with ``\mathbf U = (1, \dots, 1)^{\mathsf T}``,
+In matrix form, with ``\mathbf U = (1, \dots, 1)^{\!T}``,
 
 ```math
-[\mathrm d f] = \big(\mathbb 1 - [f]\,\mathbf U^{\mathsf T}\big)\,[\mathrm d\varphi] .
+[\mathrm d f] = \big(\mathbb 1 - [f]\,\mathbf U^{\!T}\big)\,[\mathrm d\varphi] .
 ```
 
 The matrix to invert is a rank-one update of the identity, so the
 Sherman-Morrison formula gives the inverse in closed form:
 
 ```math
-[\mathrm d\varphi] = \Big(\mathbb 1 + \frac{[f]\,\mathbf U^{\mathsf T}}{1 - \mathbf U^{\mathsf T}[f]}\Big)[\mathrm d f] ,
+[\mathrm d\varphi] = \Big(\mathbb 1 + \frac{[f]\,\mathbf U^{\!T}}{1 - \mathbf U^{\!T}[f]}\Big)[\mathrm d f] ,
 ```
 
 that is, component-wise,
@@ -93,45 +99,49 @@ The derivation above assumes every phase occupies a finite volume.
 Crack families do not, and the balance has to be extended — see the
 section on cracks below.
 
-## The ODE
+## 2. The ODE
 
 The incremental step replaces ``\mathrm d\varphi_i`` of the current
 medium by phase `i`, each increment being a *dilute* problem posed in
 that medium:
 
 ```math
-\mathbb C^{hom}(t + \mathrm dt) = \mathbb C^{hom}(t)
-   + \sum_{i=1}^{N} \mathrm d\varphi_i \, \mathbb N_i\big(\mathbb C^{hom}(t)\big) ,
+\mathbb C^{\mathrm{hom}}(t + \mathrm dt) = \mathbb C^{\mathrm{hom}}(t)
+   + \sum_{i=1}^{N} \mathrm d\varphi_i \, \mathbb N_i\big(\mathbb C^{\mathrm{hom}}(t)\big) ,
 ```
 
 where ``\mathbb N_i`` is the size-independent **stiffness contribution**
 of phase `i` in the current medium,
 
 ```math
-\mathbb N_i = \mathbb B_i - \mathbb C^{hom} : \mathbb A_i ,
+\mathbb N_i = \mathbb A_{\sigma\varepsilon,i} - \mathbb C^{\mathrm{hom}} : \mathbb A_{\varepsilon\varepsilon,i} ,
 \qquad
-\langle \boldsymbol\sigma \rangle_i = \mathbb B_i : \boldsymbol{E}^\infty ,
+\langle \boldsymbol\sigma \rangle_i = \mathbb A_{\sigma\varepsilon,i} : \boldsymbol{E}^\infty ,
 \quad
-\langle \boldsymbol\varepsilon \rangle_i = \mathbb A_i : \boldsymbol{E}^\infty .
+\langle \boldsymbol\varepsilon \rangle_i = \mathbb A_{\varepsilon\varepsilon,i} : \boldsymbol{E}^\infty ,
 ```
+
+``\mathbb A_{\varepsilon\varepsilon,i}`` and ``\mathbb A_{\sigma\varepsilon,i}`` being the
+strain and stress concentration tensors of phase `i` in the current medium, as
+defined in [Localization](@ref th-localization).
 
 Written this way, ``\mathbb N_i`` needs only the phase's concentration
 tensors — **not** a Hill tensor, and not even a uniform phase property.
 It is therefore available for every inclusion family the package
 supports (ellipsoids, cylinders, flat cracks, multi-layer spheres and
 spheroids), which is why the differential scheme accepts all of them
-without special-casing. See [Localization](localization.md).
+without special-casing. See [Localization](@ref th-localization).
 
 Hence the ODE integrated by [`DifferentialScheme`](@ref):
 
 ```math
-\frac{\mathrm d \mathbb C^{hom}}{\mathrm d t}
-  = \sum_{i=1}^{N} \dot\varphi_i \, \mathbb N_i(\mathbb C^{hom})
+\frac{\mathrm d \mathbb C^{\mathrm{hom}}}{\mathrm d t}
+  = \sum_{i=1}^{N} \dot\varphi_i \, \mathbb N_i(\mathbb C^{\mathrm{hom}})
   = \sum_{i=1}^{N} \Big(\dot f_i + \frac{f_i \sum_j \dot f_j}{1 - \sum_j f_j}\Big)\,
-    \mathbb N_i(\mathbb C^{hom}) ,
+    \mathbb N_i(\mathbb C^{\mathrm{hom}}) ,
 ```
 
-started from ``\mathbb C^{hom}(0) = \mathbb C_0``. The package
+started from ``\mathbb C^{\mathrm{hom}}(0) = \mathbb C_0``. The package
 parametrizes the incorporation time as ``\tau = t/T \in [0, 1]``.
 
 ### Compliance form
@@ -140,10 +150,10 @@ The same process written on the compliance uses the **compliance
 contribution** ``\mathbb H_i`` of each phase:
 
 ```math
-\frac{\mathrm d \mathbb S^{hom}}{\mathrm d t}
-  = \sum_{i=1}^{N} \dot\varphi_i \, \mathbb H_i(\mathbb S^{hom}) ,
+\frac{\mathrm d \mathbb S^{\mathrm{hom}}}{\mathrm d t}
+  = \sum_{i=1}^{N} \dot\varphi_i \, \mathbb H_i(\mathbb S^{\mathrm{hom}}) ,
 \qquad
-\mathbb H_i = - \mathbb S^{hom} : \mathbb N_i : \mathbb S^{hom} .
+\mathbb H_i = - \mathbb S^{\mathrm{hom}} : \mathbb N_i : \mathbb S^{\mathrm{hom}} .
 ```
 
 The two forms are *exactly* equivalent: the second is the image of the
@@ -163,10 +173,10 @@ homogenize(rve, DifferentialScheme(; formulation = :compliance), :C)  # complian
 
 Flat cracks do not fit the derivation above, and the difference is
 physical rather than technical. A penny-shaped crack of radius `a` and
-aperture `c` has, for an aspect ratio ``X = c/a \to 0``,
+aperture `c` has, for an aspect ratio ``\omega = c/a \to 0``,
 
 ```math
-f_c = \frac{4\pi}{3}\,\varepsilon_c X \;\longrightarrow\; 0 ,
+f_c = \frac{4\pi}{3}\,\varepsilon_c\,\omega \;\longrightarrow\; 0 ,
 \qquad
 \varepsilon_c = \frac{\mathcal N_c\, a^3}{V} = \mathcal O(1) ,
 ```
@@ -199,7 +209,7 @@ mechanical effect. Three consequences for the scheme:
    ```
 
    Both lines are the single rank-one relation
-   ``[\mathrm d g] = (\mathbb 1 - [g]\,\mathbf U_{\mathcal S}^{\mathsf T})[\mathrm d\varphi]``
+   ``[\mathrm d g] = (\mathbb 1 - [g]\,\mathbf U_{\mathcal S}^{\!T})[\mathrm d\varphi]``
    on the stacked amounts ``[g] = (f_i ; \varepsilon_c)``, where
    ``\mathbf U_{\mathcal S}`` carries a `1` on solid entries and a `0` on
    crack entries — the *only* change to the manuscript's derivation. The
@@ -216,9 +226,9 @@ mechanical effect. Three consequences for the scheme:
    and the crack term of the ODE is
 
    ```math
-   \frac{\mathrm d \mathbb C^{hom}}{\mathrm d \tau} \mathrel{+}=
+   \frac{\mathrm d \mathbb C^{\mathrm{hom}}}{\mathrm d \tau} \mathrel{+}=
       \sum_c \dot\varphi_c^\varepsilon \,
-             \Delta\mathbb C^{crack}_c(\mathbb C^{hom}) .
+             \Delta\mathbb C^{\mathrm{crack}}_c(\mathbb C^{\mathrm{hom}}) .
    ```
 
    The crack correction vanishes whenever no solid phase grows at the
@@ -235,17 +245,17 @@ mechanical effect. Three consequences for the scheme:
    self-consistent scheme, because each infinitesimal crack increment is
    introduced into an already-degraded medium.
 
-3. **The compliance form is the natural one.** As ``X \to 0`` the
+3. **The compliance form is the natural one.** As ``\omega \to 0`` the
    crack's strain concentration tensor diverges, so the stiffness
    contribution ``\mathbb N_c`` is a limit of a divergent quantity,
    while the compliance contribution ``\mathbb H_c`` — built from the
-   crack-opening-displacement tensor, see [COD tensors](cod_tensors.md)
+   crack-opening-displacement tensor, see [COD tensors](@ref th-cod-tensors)
    — stays finite and is what the package actually computes:
 
    ```math
-   \Delta \mathbb S^{crack}_c = \frac{4\pi}{3}\,\varepsilon_c\,\mathbb H_c ,
+   \Delta \mathbb S^{\mathrm{crack}}_c = \frac{4\pi}{3}\,\varepsilon_c\,\mathbb H_c ,
    \qquad
-   \Delta \mathbb C^{crack}_c = -\,\mathbb C^{hom} : \Delta\mathbb S^{crack}_c : \mathbb C^{hom} ,
+   \Delta \mathbb C^{\mathrm{crack}}_c = -\,\mathbb C^{\mathrm{hom}} : \Delta\mathbb S^{\mathrm{crack}}_c : \mathbb C^{\mathrm{hom}} ,
    ```
 
    with the Budiansky-O'Connell prefactor (`4π/3` for 3D penny and
@@ -259,7 +269,7 @@ phases, through ``\varepsilon_c(\tau)``: `Proportional`, `Sequential`
 and the explicit paths all apply to a `CrackDensity` amount, the target
 being the final density instead of the final volume fraction.
 
-## Trajectories
+## 3. Trajectories
 
 With a single inclusion phase the trajectory is immaterial: any
 monotone ``f_1(\tau)`` traverses the same states, and only the final
@@ -267,7 +277,7 @@ fraction matters. With two or more phases, the *order of incorporation*
 is a modeling choice — the effective property at `τ = 1` depends on it.
 Three cases, following the same order as the derivation above.
 
-### 1. Homothetic growth
+### Homothetic growth
 
 All phases grow proportionally, ``f_i(t) = \lambda(t)\, f_i^\infty``
 with ``\lambda(0) = 0``, ``\lambda(T) = 1`` (the default
@@ -285,13 +295,13 @@ This closed form is a useful check on the volume balance alone,
 independently of any tensor algebra; the single-phase case reduces to
 the classical ``\varphi = -\ln(1 - f)``.
 
-### 2. Successive phases
+### Successive phases
 
 Each phase is grown to completion before the next one starts —
 [`Sequential`](@ref), given the incorporation order. Phase `i` owns a
 contiguous slice of `τ` and is frozen outside it.
 
-### 3. Arbitrary trajectory
+### Arbitrary trajectory
 
 The user prescribes ``f_i(\tau)`` for every inclusion phase and
 ``f_0 = 1 - \sum_i f_i`` follows — [`Path`](@ref) for callables
@@ -347,9 +357,9 @@ its own straight line and the first-order term is the same — and they separate
 like ``f`` at finite fractions. The spread is a *feature* of the scheme, not a
 numerical artifact: it is what makes the differential scheme able to represent a
 processing history, and it is measured in
-[Comparing loading-path trajectories](../tutorials/differential_loading_paths.md).
+[Comparing loading-path trajectories](@ref tut-differential-loading-paths).
 
-## Conduction and viscoelasticity
+## 4. Conduction and viscoelasticity
 
 The derivation never used the tensor order: replacing
 ``(\mathbb C, \mathbb N)`` by ``(\boldsymbol{K}, \underline{N}_K)`` gives the
@@ -359,14 +369,14 @@ resistivity form. Both orders are implemented.
 In ageing linear viscoelasticity the same ODE holds on the discrete
 Volterra block matrices, the products being Volterra products
 (`differential_alv` for the relaxation tensor, `differential_alv_order2`
-for conduction) — see [Viscoelasticity](viscoelasticity.md). One
+for conduction) — see [Viscoelasticity](@ref th-viscoelasticity). One
 restriction is specific to ALV: the ALV Hill kernel is built for an
 isotropic reference, and the reference of the differential scheme is its
 *running* medium, so every phase must keep that medium isotropic
 (spherical inclusions, multi-layer spheres, or any shape with
 `symmetrize = :iso`). The ODE raises an explicit error otherwise.
 
-## Numerical resolution
+## 5. Numerical resolution
 
 The ODE is integrated by `OrdinaryDiffEq.solve`, adaptive `Tsit5` by default;
 the algorithm and its tolerances are user-facing — see
@@ -379,7 +389,7 @@ canonical components in the smallest symmetry class that estimate can stay in �
 two numbers for an isotropic medium, five to eight for a transversely isotropic
 one, the full Mandel matrix otherwise. A phase whose contribution is less
 symmetric drags the estimate out of the matrix's class at the first step (a
-crack, or simply an aligned spheroid, whose ``\mathbb A_\mathrm{dil}`` is
+crack, or simply an aligned spheroid, whose ``\mathbb A^{\mathrm{dil}}`` is
 transversely isotropic even between two isotropic materials), so the scheme
 probes each contribution once before integrating.
 
@@ -389,3 +399,13 @@ the acoustic polynomial of the residue method degenerates precisely at the
 isotropic starting point of the integration. That is what `method = :auto`
 selects, and an explicit `method = :residues` on such an RVE raises an error
 saying so.
+
+## Where to go next
+
+The next chapter leaves the ellipsoid for patterns whose inner strain is not
+uniform. [Layered sphere](@ref th-layered-sphere) solves the generalized Eshelby
+problem of a concentric multilayer and supplies its volume-averaged
+concentration tensor, which the schemes of this chapter, the differential one
+included, consume like any other. The path dependence of §3 is measured in the
+tutorials [The differential scheme and path dependence](@ref tut-differential-paths)
+and [Comparing loading-path trajectories](@ref tut-differential-loading-paths).

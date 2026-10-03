@@ -1,10 +1,18 @@
-# # Derivatives through the ageing-viscoelastic pipeline
+# # [Derivatives through the ageing-viscoelastic pipeline](@id tut-alv-sensitivities)
 #
-# [Derivatives and sensitivities](@ref tut-sensitivities) differentiates an
-# *elastic* homogenization. Nothing in that story is specific to elasticity: the
-# ALV path is built from the same generic Julia code, so `ForwardDiff` propagates
+# !!! info "Before this page"
+#     The tutorial [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes),
+#     whose time-domain pipeline is differentiated below, and the manual page
+#     [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities), which
+#     introduces the `set_param` lens of the first pattern; the Volterra
+#     assembly itself is derived in
+#     [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity).
+#
+# An *elastic* homogenization is differentiated in
+# [Derivatives and sensitivities](@ref tut-sensitivities), and nothing in that
+# calculation is specific to elasticity: the ALV path is built from the same generic Julia code, so `ForwardDiff` propagates
 # a `Dual` straight through the Volterra assembly, the block inversions and the
-# scheme, and returns ``\partial \mu^{\hom}/\partial p`` for free — no adjoint,
+# scheme, and returns ``\partial \mu^{\mathrm{hom}}/\partial p`` for free — no adjoint,
 # no hand-written derivative, no finite difference.
 #
 # Two patterns cover every case, and every derivative below is validated against
@@ -63,7 +71,7 @@ function build_rve_base(f::Real)
 end
 
 # The scalar being differentiated is the effective shear modulus at the last
-# instant, ``\mu^{\hom}(t_n, t_n) = \beta_{nn}/2``, read off the isotropic
+# instant, ``\mu^{\mathrm{hom}}(t_n, t_n) = \beta_{nn}/2``, read off the isotropic
 # blocks of the effective relaxation operator.
 
 function effective_mu_final(rve, scheme)
@@ -72,7 +80,7 @@ function effective_mu_final(rve, scheme)
     return β[end, end] / 2
 end
 
-# ## §1 The `set_param` lens — ``\partial \mu^{\hom} / \partial f``
+# ## §1 The `set_param` lens — ``\partial \mu^{\mathrm{hom}} / \partial f``
 #
 # The RVE is built once, outside the differentiated function; `set_param`
 # substitutes the `Dual` fraction into a copy. Every scheme accepts it,
@@ -97,7 +105,7 @@ for (sch, name) in zip(SCHEMES, SCHEME_NAMES)
     @printf "  %-12s  AD = %+.6e   FD = %+.6e   rel_err = %.2e\n" name dμ_df_AD dμ_df_FD rel_err
 end
 
-# ## §2 Closure capture — ``\partial \mu^{\hom} / \partial \mu_M``
+# ## §2 Closure capture — ``\partial \mu^{\mathrm{hom}} / \partial \mu_M``
 #
 # A matrix modulus is not an RVE field but an argument of the relaxation kernel.
 # Closing it into `build_law_M` is enough: `ForwardDiff` lifts it to a `Dual`
@@ -119,7 +127,7 @@ h = 1.0e-5
 dμ_dμM_FD = (eff_mu_vs_μM(μM₀ + h) - eff_mu_vs_μM(μM₀ - h)) / (2h)
 @printf "  AD = %+.6e   FD = %+.6e   rel_err = %.2e\n" dμ_dμM_AD dμ_dμM_FD abs(dμ_dμM_AD - dμ_dμM_FD) / abs(dμ_dμM_FD)
 
-# ## §3 Both at once — the joint gradient ``\nabla_{(f,\,k_M,\,\mu_M)}\,\mu^{\hom}``
+# ## §3 Both at once — the joint gradient ``\nabla_{(f,\,k_M,\,\mu_M)}\,\mu^{\mathrm{hom}}``
 #
 # The two patterns compose: one geometric parameter through the lens, two
 # material ones through the closure, in a single `ForwardDiff.gradient` — and
@@ -151,7 +159,7 @@ for (i, name) in enumerate(("f", "k_M", "μ_M"))
     @printf "  ∂μ/∂%-3s   AD = %+.6e   FD = %+.6e   rel_err = %.2e\n" name ∇AD[i] ∇FD[i] abs(∇AD[i] - ∇FD[i]) / abs(∇FD[i])
 end
 
-# ## §4 A relaxation time — ``\partial \mu^{\hom} / \partial \tau_K``
+# ## §4 A relaxation time — ``\partial \mu^{\mathrm{hom}} / \partial \tau_K``
 #
 # The derivative that has no elastic counterpart: ``\tau_K`` sets *when* the
 # bulk kernel relaxes, and it enters only through an exponential inside the
@@ -179,3 +187,12 @@ dμ_dτK_FD = (eff_mu_vs_τK(τK₀ + h) - eff_mu_vs_τK(τK₀ - h)) / (2h)
 # central-difference truncation error is ``h^2 f'''/6``. The automatic
 # derivative is exact to machine precision; the finite difference is the
 # approximation being checked against it.
+
+# ## Where to go next
+#
+# The four patterns above give the derivative of an effective modulus with
+# respect to the parameters of a time-domain calculation.
+# [Nonlinear homogenization: the secant method on a porous plastic solid](@ref tut-secant-elastoplasticity)
+# puts a derivative of the same kind to use inside a nonlinear closure, and the
+# lenses and indexers themselves are documented in
+# [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities).

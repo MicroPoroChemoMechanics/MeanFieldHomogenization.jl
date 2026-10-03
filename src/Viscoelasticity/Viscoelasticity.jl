@@ -3,32 +3,32 @@
 
 Ageing linear viscoelastic (ALV) homogenization.  Provides:
 
-  * [`ViscoLaw`](@ref) — relaxation `R(t,t')` or creep `J(t,t')` kernel,
+  * [`ViscoLaw`](@ref) — relaxation ``R(t,t')`` or creep ``J(t,t')`` kernel,
     scalar- or 4-tensor-valued, with built-in Maxwell / Kelvin
     constructors.
   * [`trapezoidal_matrix`](@ref) — discretization of the Stieltjes
     integral on a time grid into a lower-block-triangular matrix
-    (`n×n` for scalar, `6n×6n` for 4-tensor in Mandel form).
+    (``n\\times n`` for scalar, ``6n\\times 6n`` for 4-tensor in Mandel form).
   * [`volterra_inverse`](@ref) — block forward-substitution that takes
     a discrete relaxation kernel to the corresponding creep kernel
     (and vice versa).
   * [`iso_params_from_blocks`](@ref) / [`iso_blocks_from_params`](@ref)
     and their `ti_` / `ortho_` counterparts — conversions between
     symmetry-structured per-component scalar matrices and the full
-    `6n×6n` block matrix.
+    ``6n\\times 6n`` block matrix.
   * `hill_kernel` — discrete ALV Hill polarization tensor for an
     ellipsoidal inclusion, isotropic-matrix branch using the
     time-space decoupling formula
-    ([barthelemyIJSS2016](@cite), App. *ALV Hill kernel*).
+    [barthelemyIJSS2016; appendix on the ALV Hill kernel](@cite).
   * Time-domain viscoelastic homogenization schemes (Voigt, Reuss,
     Dilute, DiluteDual, Mori-Tanaka, Maxwell, Self-Consistent),
     plugged into the existing [`homogenize`](@ref MeanFieldHomogenization.Core.homogenize)
     dispatcher whenever a phase carries a `ViscoLaw` property.
 
-All ALV operators are stored as dense `Matrix{T}` of size `(B·n)×(B·n)`
-(`B = 6` for 4-tensor, `B = 1` for scalar) with explicit zeros above
+All ALV operators are stored as dense `Matrix{T}` of size ``(Bn)\\times(Bn)``
+(``B = 6`` for 4-tensor, ``B = 1`` for scalar) with explicit zeros above
 the block diagonal — this is the convention of
-[sanahuja2013](@cite) and the C++ ECHOES reference.
+[sanahuja2013](@citet) and of the C++ library Echoes.
 """
 module Viscoelasticity
 

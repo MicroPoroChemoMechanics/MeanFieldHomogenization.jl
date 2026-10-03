@@ -1,5 +1,19 @@
 # [Scale transition](@id fe-scale-transition)
 
+!!! info "Before this page"
+    [Finite-element coupling](@ref fe-coupling), for the role a homogenized
+    microstructure plays at a quadrature point, and
+    [Homogenization schemes](@ref man-schemes), whose effective stiffness is the
+    material response below. The poroelastic blocks use the Biot coefficients of
+    [Poromechanics](@ref manual-poromechanics).
+
+This page states what a finite-element code asks of a material at each
+quadrature point and how a homogenization scheme answers it: a stress, a
+consistent tangent and an updated state, then the blocks of that tangent when
+the material takes several gradients. It closes on the convention a coupling
+cannot afford to get wrong, the basis in which a TensND tensor stores its
+components.
+
 ## What the FE code needs
 
 At each quadrature point a finite-element code solving a nonlinear problem needs
@@ -9,7 +23,7 @@ two things from the material, per step:
 \boldsymbol{\sigma}_{n+1}
   = \mathcal{F}\!\left(\boldsymbol{\varepsilon}_{n+1},\, \alpha_n\right),
 \qquad
-\mathbb{C}^{\text{tg}}
+\mathbb{C}^{\mathrm{tg}}
   = \frac{\partial \boldsymbol{\sigma}_{n+1}}{\partial \boldsymbol{\varepsilon}_{n+1}} ,
 ```
 
@@ -24,7 +38,7 @@ The material response *is* a homogenization: the strain drives an RVE, the
 scheme returns its effective stiffness, and
 
 ```math
-\boldsymbol{\sigma} = \mathbb{C}^{\rm hom}(\alpha) : \boldsymbol{\varepsilon} .
+\boldsymbol{\sigma} = \mathbb{C}^{\mathrm{hom}}(\alpha) : \boldsymbol{\varepsilon} .
 ```
 
 All the nonlinearity sits in ``\alpha`` — the crack apertures, the open/closed
@@ -32,14 +46,14 @@ set, a damage variable. Between two events that change ``\alpha``, the law is
 **linear**, so
 
 ```math
-\mathbb{C}^{\text{tg}} = \mathbb{C}^{\rm hom}(\alpha)
+\mathbb{C}^{\mathrm{tg}} = \mathbb{C}^{\mathrm{hom}}(\alpha)
 ```
 
 is exact, not an approximation. No numerical differentiation is needed, and no
 algorithmic tangent has to be derived: the scheme already returns it.
 
 !!! note "This is what makes the coupling affordable"
-    Because ``\mathbb{C}^{\rm hom}`` depends on the state only through a
+    Because ``\mathbb{C}^{\mathrm{hom}}`` depends on the state only through a
     *discrete* configuration (which families are open), the expensive scheme
     solve is shared by every quadrature point in the same configuration — see
     [`MaterialCache`](@ref).
@@ -51,7 +65,7 @@ stress **and** a variation of fluid content:
 
 ```math
 \begin{aligned}
-\dot{\boldsymbol{\Sigma}} &= \mathbb{C}^{\rm hom} : \dot{\boldsymbol{E}} - \dot{p}\,\boldsymbol{B}, \\
+\dot{\boldsymbol{\Sigma}} &= \mathbb{C}^{\mathrm{hom}} : \dot{\boldsymbol{E}} - \dot{p}\,\boldsymbol{B}, \\
 \dot{\varphi}           &= \boldsymbol{B} : \dot{\boldsymbol{E}} + \frac{\dot{p}}{M} .
 \end{aligned}
 ```
@@ -61,7 +75,7 @@ tangent as a set of blocks keyed *flux then gradient*:
 
 | block | value | key |
 |:--|:--|:--|
-| ``\partial\boldsymbol{\Sigma}/\partial\boldsymbol{E}`` | ``\mathbb{C}^{\rm hom}`` | `:σε` |
+| ``\partial\boldsymbol{\Sigma}/\partial\boldsymbol{E}`` | ``\mathbb{C}^{\mathrm{hom}}`` | `:σε` |
 | ``\partial\boldsymbol{\Sigma}/\partial p``         | ``-\boldsymbol{B}``          | `:σp` |
 | ``\partial\varphi/\partial\boldsymbol{E}``           | ``\boldsymbol{B}``           | `:φε` |
 | ``\partial\varphi/\partial p``                   | ``1/M``                  | `:φp` |
@@ -97,3 +111,9 @@ global_ = to_tensors(C_hom)[1, 1, 1, 1]        # components an FE code expects
 
 The two differ: the first is expressed in the crack frame, the second in the
 global one.
+
+## Where to go next
+
+[The coupled poroelastic problem](@ref fe-poro-coupling) writes the balance
+equations that consume the four tangent blocks above, and
+[Materials](@ref fe-materials) turns the contract of this page into code.

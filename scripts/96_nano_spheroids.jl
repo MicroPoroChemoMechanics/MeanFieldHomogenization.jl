@@ -1,11 +1,18 @@
-# # Nanocomposites: the equivalent particle
+# # [Nanocomposites: the equivalent particle](@id tut-nano-spheroids)
+#
+# !!! info "Before this page"
+#     The tutorial [The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective),
+#     where an imperfect interface is already condensed into an equivalent
+#     particle, in conduction, and the theory page
+#     [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere),
+#     whose membrane interface is the surface elasticity condensed below.
 #
 # When the interface energy is of the same order as the bulk energy — the
 # nanocomposite regime — the stress vector is discontinuous across a particle
 # boundary and the polarization field of the Lippmann-Schwinger equation acquires
 # a singular part carried by that boundary.
 #
-# [dormieux2016](@cite)
+# [dormieux2016](@citet)
 # show that averaging this singular part over the particle turns it into an
 # ordinary stiffness,
 #
@@ -45,7 +52,7 @@ default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
 κs, μs = 64.0, 51.3          ## Pa·m, graphene (paper, Fig. 3)
 a = 1.0                      ## in-plane semi-axis
 
-## Aspect ratio X = c/a: oblate below 1, prolate above.
+## Aspect ratio X = ω = c/a: oblate below 1, prolate above.
 function Cint_components(X)
     ell = X < 1 ? Ellipsoid(a, a, X * a) : (X > 1 ? Ellipsoid(X * a, a, a) : Ellipsoid(a))
     A = get_array(surface_stiffness(ell, κs, μs))
@@ -63,7 +70,7 @@ end
 
 p1 = plot(
     Xs, Ct; xscale = :log10, yscale = :log10,
-    xlabel = "aspect ratio X = c/a", ylabel = "component of ℂ^int  [Pa]",
+    xlabel = "aspect ratio ω = c/a", ylabel = "component of ℂ^int  [Pa]",
     title = "Interface stiffness of a spheroid", label = "transverse (1111)",
     legend = :bottomleft, lw = 2
 )
@@ -75,8 +82,8 @@ p1
 
 # ## §2 The three limiting cases of the paper
 #
-# The closed form has a removable singularity at `X = 1` (both terms diverge as
-# `(X²-1)⁻²` and cancel); the implementation switches to a series there, so the
+# The closed form has a removable singularity at ``\omega = 1`` (both terms diverge as
+# ``(\omega^2-1)^{-2}`` and cancel); the implementation switches to a series there, so the
 # spherical case is exact rather than merely close.
 
 println("Spherical limit X = 1, closed form:")
@@ -101,8 +108,8 @@ D = get_array(surface_stiffness(Ellipsoid(1.0e6, 1.0, 1.0), κs, μs))
 
 # ## §3 The size effect
 #
-# ``\mathbb{C}^{\mathrm{int}} \propto 1/\rho`` under a homothety of ratio ``\rho``
-# under a homothety, so the interface matters for small particles and disappears for
+# ``\mathbb{C}^{\mathrm{int}} \propto 1/\rho`` under a homothety of ratio ``\rho``,
+# so the interface matters for small particles and disappears for
 # large ones. Feeding the equivalent particle to Mori-Tanaka makes that visible
 # directly on the effective moduli.
 
@@ -131,7 +138,7 @@ end
 
 p2 = plot(
     radii .* 1.0e9, μ_nano; xscale = :log10,
-    xlabel = "particle radius [nm]", ylabel = "μ_eff  [GPa]",
+    xlabel = "particle radius [nm]", ylabel = "μ^hom  [GPa]",
     title = "Size effect through the equivalent particle",
     label = "with interface", lw = 2, legend = :topright
 )
@@ -159,7 +166,7 @@ end
 
 p3 = plot(
     Xs2, μ_shape; xscale = :log10,
-    xlabel = "aspect ratio X = c/a", ylabel = "μ_eff  [GPa]",
+    xlabel = "aspect ratio ω = c/a", ylabel = "μ^hom  [GPa]",
     title = "Orientation-averaged, fixed volume and fraction",
     label = "with interface", lw = 2, legend = :bottomright
 )
@@ -176,3 +183,18 @@ figpath = joinpath(figdir, "96_nano_spheroids.png")                  #jl
 savefig(p_full, figpath)                                             #jl
 display(p_full)                                                      #jl
 @printf "\nSaved : %s\n" figpath                                     #jl
+
+# The last figure sets the three preceding panels side by side: the interface
+# stiffness against the aspect ratio, the size effect on a sphere, and the shape
+# effect at fixed particle volume.
+#
+# ## Where to go next
+#
+# A planar interface carries the same surface elasticity without any particle
+# around it. [Periodic multilayer: the exact laminate solution](@ref tut-laminate)
+# introduces the cell in which such an interface is placed, a stack of layers
+# with no matrix and no Eshelby problem, and
+# [Imperfect interfaces in a laminate, and the size effect](@ref tut-laminate-interfaces)
+# returns to the size effect met here. The syntax of
+# [`equivalent_particle`](@ref) is recalled in
+# [Particle assemblies and N-body schemes](@ref man-assemblies) of the manual.

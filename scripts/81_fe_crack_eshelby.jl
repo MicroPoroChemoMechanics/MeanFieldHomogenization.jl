@@ -12,19 +12,19 @@
 # imposed boundary displacement, the **dipole far field of the open crack**:
 #
 # ```math
-# \mathbf u(\mathbf x) \;\underset{\|\mathbf x\|\to\infty}{\approx}\;
-#   (\mathbb S_0 : \boldsymbol\Sigma)\cdot\mathbf x
-#   \;-\; b\,S_f\,\bigl(\nabla\mathbf G(\mathbf x):\mathbb C_0\cdot\hat{\mathbf n}\bigr)
-#         \cdot\mathbf U ,
-# \qquad \mathbf U = \frac{\langle[\![\mathbf u]\!]\rangle}{b},\quad S_f = \pi a b .
+# \underline u(\underline x) \;\underset{\|\underline x\|\to\infty}{\approx}\;
+#   (\mathbb S_0 : \boldsymbol\Sigma)\cdot\underline x
+#   \;-\; b\,S_f\,\bigl(\nabla\boldsymbol G(\underline x):\mathbb C_0\cdot\underline n\bigr)
+#         \cdot\underline U ,
+# \qquad \underline U = \frac{\langle[\![\underline u]\!]\rangle}{b},\quad S_f = \pi a b .
 # ```
 #
-# Three "traction" solves give the COD tensor ``\mathbf B_s`` of the truncated
-# cell, three "dipole" solves give its response ``\mathbf B_u`` to that far
+# Three "traction" solves give the COD tensor ``\boldsymbol B_s`` of the truncated
+# cell, three "dipole" solves give its response ``\boldsymbol B_u`` to that far
 # field, and the fixed point closes in one step:
 #
 # ```math
-# \mathbf B_\infty = (\mathbf 1 - \mathbf B_u)^{-1}\cdot\mathbf B_s .
+# \boldsymbol B_\infty = (\boldsymbol 1 - \boldsymbol B_u)^{-1}\cdot\boldsymbol B_s .
 # ```
 #
 # Requires `Ferrite`, `FerriteGmsh` and `Gmsh`.

@@ -35,9 +35,9 @@
 """
     _iso_identity(n, T) -> (I_n, I_n)
 
-Iso form of the `(6n × 6n)` block-diagonal identity matrix in the
-`(α, β)` parameter space — both components reduce to the scalar
-`n × n` identity.
+Iso form of the ``6n\\times 6n`` block-diagonal identity matrix in the
+``(\\alpha, \\beta)`` parameter space — both components reduce to the scalar
+``n\\times n`` identity.
 """
 @inline _iso_identity(n::Int, T::Type) = (
     Matrix{T}(LinearAlgebra.I, n, n),
@@ -48,7 +48,7 @@ Iso form of the `(6n × 6n)` block-diagonal identity matrix in the
     _iso_add!(αβ_acc, c, αβ_r) -> αβ_acc
 
 In-place iso-form scalar AXPY: `αβ_acc .+= c · αβ_r` componentwise on
-`(α, β)`.  Returns `αβ_acc` for chaining.
+``(\\alpha, \\beta)``.  Returns `αβ_acc` for chaining.
 """
 @inline function _iso_add!(αβ_acc::Tuple, c::Real, αβ_r::Tuple)
     @. αβ_acc[1] += c * αβ_r[1]
@@ -59,9 +59,9 @@ end
 """
     _iso_prod(a, b) -> (α, β)
 
-Iso-form Volterra product `M_a ∘ M_b`.  Because `𝕁·𝕂 = 𝕂·𝕁 = 0` the
+Iso-form Volterra product ``M_a\\circ M_b``.  Because ``\\mathbb{J}:\\mathbb{K} = \\mathbb{K}:\\mathbb{J} = 0`` the
 cross terms vanish and the product reduces to two independent scalar
-Volterra products `(α_a · α_b, β_a · β_b)`.
+Volterra products ``(\\alpha_a\\circ\\alpha_b, \\beta_a\\circ\\beta_b)``.
 """
 @inline _iso_prod(a::Tuple, b::Tuple) = (a[1] * b[1], a[2] * b[2])
 
@@ -81,7 +81,7 @@ end
     _iso_inv(a) -> (α^{-vol}, β^{-vol})
 
 Iso-form Volterra inverse.  The two components are inverted
-independently as scalar `n × n` Volterra matrices.
+independently as scalar ``n\\times n`` Volterra matrices.
 """
 @inline _iso_inv(a::Tuple) = (
     volterra_inverse(a[1]; block_size = 1),
@@ -91,8 +91,8 @@ independently as scalar `n × n` Volterra matrices.
 """
     _iso_inv!(out, a) -> out
 
-In-place iso-form Volterra inverse: `out[1] .= a[1]^{-vol}` and
-`out[2] .= a[2]^{-vol}` via `volterra_inverse!`.
+In-place iso-form Volterra inverse: `out[i]` receives ``a_i^{-\\circ}``
+(``i = 1, 2``) via `volterra_inverse!`.
 """
 @inline function _iso_inv!(out::Tuple, a::Tuple)
     volterra_inverse!(out[1], a[1]; block_size = 1)
@@ -103,8 +103,8 @@ end
 """
     _iso_left_divide(S, M) -> (S_α^{-vol} · M_α, S_β^{-vol} · M_β)
 
-Iso-form `T = S^{-vol} ∘ M` (left divide).  Both components solve the
-scalar Volterra system `S_x · T_x = M_x` by forward substitution
+Iso-form ``T = S^{-\\circ}\\circ M`` (left divide).  Both components solve the
+scalar Volterra system ``S_x\\circ T_x = M_x`` by forward substitution
 (see [`volterra_left_divide`](@ref)).
 """
 @inline function _iso_left_divide(S::Tuple, M::Tuple)
@@ -119,16 +119,16 @@ end
 """
     _is_iso_block(M::AbstractMatrix; tol = 0) -> Bool
 
-Heuristic: return `true` if the `(6n × 6n)` block matrix `M` is in iso
-form (each 6×6 block is an iso 4-tensor in Mandel form).  The check
-verifies the canonical iso pattern `M_block(i, k=l) = (α + 2β)/3`
-(diag), `(α − β)/3` (off-diag in the 1..3 block), `β` on the 4..6
+Heuristic: return `true` if the ``6n\\times 6n`` block matrix `M` is in iso
+form (each ``6\\times 6`` block is an iso 4-tensor in Mandel form).  The check
+verifies the canonical iso pattern ``(\\mathbf{M}_{ij})_{kk} = (\\alpha + 2\\beta)/3``
+(diag), ``(\\alpha - \\beta)/3`` (off-diag in the 1..3 block), ``\\beta`` on the 4..6
 diagonal, and zero elsewhere — to within absolute tolerance `tol`
 times the maximum modulus of `M`.
 
 Used by `homogenize_alv` to dispatch to the iso fast path automatically.
 
-Allocation-free: extracts `(α, β)` from the canonical block entries
+Allocation-free: extracts ``(\\alpha, \\beta)`` from the canonical block entries
 on the fly without building the parameter matrices.
 """
 function _is_iso_block(M::AbstractMatrix; tol::Real = 1.0e-12)
@@ -171,7 +171,7 @@ end
 """
     _iso_pair(M::AbstractMatrix) -> (α::Matrix, β::Matrix)
 
-Extract the iso `(α, β)` parameter matrices from a `(6n × 6n)` iso
+Extract the iso ``(\\alpha, \\beta)`` parameter matrices from a ``6n\\times 6n`` iso
 block matrix.  Wrapper around [`iso_params_from_blocks`](@ref) returning
 a tuple suitable for the iso scheme primitives above.
 """
@@ -180,7 +180,7 @@ a tuple suitable for the iso scheme primitives above.
 """
     _iso_blocks(αβ::Tuple) -> Matrix
 
-Reassemble a `(6n × 6n)` iso block matrix from an `(α, β)` pair.
+Reassemble a ``6n\\times 6n`` iso block matrix from an ``(\\alpha, \\beta)`` pair.
 Inverse of [`_iso_pair`](@ref).
 """
 @inline _iso_blocks(αβ::Tuple) = iso_blocks_from_params(αβ[1], αβ[2])
@@ -190,7 +190,7 @@ Inverse of [`_iso_pair`](@ref).
 """
     voigt_alv_iso(αβ_phases, fractions) -> (α_eff, β_eff)
 
-Iso-form Voigt bound: `α_eff = Σ_r f_r α_r`, `β_eff = Σ_r f_r β_r`.
+Iso-form Voigt bound: ``\\alpha^{\\mathrm{hom}} = \\sum_i f_i\\,\\alpha_i``, ``\\beta^{\\mathrm{hom}} = \\sum_i f_i\\,\\beta_i``.
 """
 function voigt_alv_iso(αβ_phases::AbstractVector, fractions::AbstractVector)
     length(αβ_phases) == length(fractions) ||
@@ -209,10 +209,10 @@ end
     _promote_iso_eltype(αβ_list, fractions, αβ_0...) -> Type
 
 Promote element types of an iso ALV pipeline : `αβ_list` is a vector of
-`(α, β)` tuples, `fractions` is a numeric vector, optional positional
-`(α, β)` tuples (e.g. the matrix reference) participate in the
+``(\\alpha, \\beta)`` tuples, `fractions` is a numeric vector, optional positional
+``(\\alpha, \\beta)`` tuples (e.g. the matrix reference) participate in the
 promotion.  Used to lift `Tuple{Matrix{Float64}, Matrix{Float64}}` to
-the right element type when sensibilities are run with `Dual` fractions.
+the right element type when sensitivities are run with `Dual` fractions.
 """
 function _promote_iso_eltype(
         αβ_list::AbstractVector, fractions::AbstractVector,
@@ -245,7 +245,8 @@ end
 """
     dilute_alv_iso(αβ_0, contribs_iso, fractions) -> (α_eff, β_eff)
 
-Iso-form Dilute scheme: `αβ_eff = αβ_0 + Σ_r f_r · (Ñ_r in iso form)`.
+Iso-form Dilute scheme: ``\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0 + \\sum_i f_i\\,\\widetilde{\\mathbb{N}}_i``,
+evaluated on the ``(\\alpha, \\beta)`` iso components.
 """
 function dilute_alv_iso(
         αβ_0::Tuple,
@@ -265,8 +266,10 @@ end
 """
     dilute_concentration_alv_iso(αβ_E, αβ_0, αβ_P) -> (α_A, β_A)
 
-Iso-form dilute concentration `Ã^dil = (𝟙 + P̃ ∘ ΔC̃)^{-vol}` reduced
-to two scalar Volterra problems on `(α_E − α_0, β_E − β_0)`.
+Iso-form dilute concentration
+``\\widetilde{\\mathbb{A}}^{\\mathrm{dil}} = (H\\,\\mathbb{I} + \\widetilde{\\mathbb{P}}\\circ\\Delta\\widetilde{\\mathbb{C}})^{-\\circ}``,
+``\\Delta\\widetilde{\\mathbb{C}} = \\widetilde{\\mathbb{C}}^{\\mathcal{E}} - \\widetilde{\\mathbb{C}}_0``, reduced
+to two scalar Volterra problems on ``(\\alpha^{\\mathcal{E}} - \\alpha_0, \\beta^{\\mathcal{E}} - \\beta_0)``.
 """
 function dilute_concentration_alv_iso(αβ_E::Tuple, αβ_0::Tuple, αβ_P::Tuple)
     n = size(αβ_E[1], 1)
@@ -280,7 +283,7 @@ end
 """
     dilute_contribution_alv_iso(αβ_E, αβ_0, αβ_P) -> (α_N, β_N)
 
-Iso-form dilute contribution `Ñ = ΔC̃ ∘ Ã^dil`.
+Iso-form dilute contribution ``\\widetilde{\\mathbb{N}} = \\Delta\\widetilde{\\mathbb{C}}\\circ\\widetilde{\\mathbb{A}}^{\\mathrm{dil}}``.
 """
 function dilute_contribution_alv_iso(αβ_E::Tuple, αβ_0::Tuple, αβ_P::Tuple)
     A_dil = dilute_concentration_alv_iso(αβ_E, αβ_0, αβ_P)
@@ -293,8 +296,14 @@ end
         -> (α_eff, β_eff)
 
 Iso-form Mori-Tanaka:
-  `C̃_eff = C̃_0 + (Σ_r f_r Ñ_r) ∘ (f_0 𝟙 + Σ_s f_s Ã_s)^{-vol}`,
-reduced to two scalar Volterra problems on `(α, β)`.
+
+```math
+\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0
+  + \\Bigl(\\sum_i f_i\\,\\widetilde{\\mathbb{N}}_i\\Bigr)\\circ
+    \\Bigl(f_0\\,H\\,\\mathbb{I} + \\sum_j f_j\\,\\widetilde{\\mathbb{A}}_j^{\\mathrm{dil}}\\Bigr)^{-\\circ},
+```
+
+reduced to two scalar Volterra problems on ``(\\alpha, \\beta)``.
 """
 function mori_tanaka_alv_iso(
         αβ_0::Tuple, A_duts_iso::AbstractVector,
@@ -324,8 +333,16 @@ end
     maxwell_alv_iso(αβ_0, contribs_iso, fractions, αβ_H_0) -> (α_eff, β_eff)
 
 Iso-form Maxwell scheme:
-  `C̃_eff = C̃_0 + Σ̃ ∘ (𝟙 - P̃_d ∘ Σ̃)^{-vol}`,
-reduced to two scalar Volterra problems on `(α, β)`.
+
+```math
+\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0
+  + \\widetilde{\\mathbb{N}}\\circ\\bigl(H\\,\\mathbb{I} - \\widetilde{\\mathbb{P}}_{\\Omega}\\circ\\widetilde{\\mathbb{N}}\\bigr)^{-\\circ},
+\\qquad
+\\widetilde{\\mathbb{N}} = \\sum_i f_i\\,\\widetilde{\\mathbb{N}}_i ,
+```
+
+with ``\\widetilde{\\mathbb{P}}_{\\Omega}`` the Hill kernel of the distribution shape,
+reduced to two scalar Volterra problems on ``(\\alpha, \\beta)``.
 """
 function maxwell_alv_iso(
         αβ_0::Tuple, contribs_iso::AbstractVector,

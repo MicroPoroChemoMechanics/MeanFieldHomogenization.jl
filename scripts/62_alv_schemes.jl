@@ -1,4 +1,10 @@
-# # Ageing viscoelastic schemes side by side
+# # [Ageing viscoelastic schemes side by side](@id tut-alv-schemes)
+#
+# !!! info "Before this page"
+#     The tutorial [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time),
+#     which validates the time route used alone below, and the theory page
+#     [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity), where the
+#     Volterra form of each scheme is derived.
 #
 # Every mean-field scheme `MeanFieldHomogenization` implements in elasticity also exists on
 # the **ageing linear viscoelastic** path, where each modulus becomes a Volterra
@@ -6,7 +12,7 @@
 # one composite and reads the differences off a single scalar: the effective
 # uniaxial creep compliance under a stress step.
 #
-# The morphology is the one of [barthelemyIJES2019](@cite) — a creeping matrix
+# The morphology is the one of [barthelemyIJES2019](@citet) — a creeping matrix
 # reinforced by spheroids of controlled aspect ratio — and the two questions are
 # the ones that separate the schemes: **which reference medium** each one
 # polarizes against, and **what shape** it assumes for the spatial distribution
@@ -28,7 +34,7 @@ gr()  # headless backend; GKSwstype is set to "100" before Literate runs
 # which it is loaded — the elementary model of a setting binder:
 #
 # ```math
-# \mathbb{R}^{M}(t, t') = a(t')\,
+# \mathbb{C}_0(t, t') = a(t')\,
 #   \Big( 3k_0\,\mathbb{J} + 2\mu_0\,\mathbb{K} \Big)\,
 #   e^{-(t-t')/\left(\tau\,a(t')\right)},
 # \qquad
@@ -85,12 +91,14 @@ end
 #
 # `homogenize_alv` returns the effective **relaxation** operator as a
 # ``6n \times 6n`` block matrix on the time grid. Its Volterra inverse is the
-# creep operator ``\tilde{\mathbb{J}}``, and the response to a unit uniaxial
-# stress step ``\sigma(t) = H(t)\,\underline{e}_1 \otimes \underline{e}_1`` is
+# creep operator ``\widetilde{\mathbb{L}}``, and the response to a unit uniaxial
+# stress step ``\boldsymbol\sigma(t) = H(t)\,\underline{e}_1 \otimes \underline{e}_1`` is
 # the row sum of its ``(11,11)`` blocks:
 #
 # ```math
-# J^{E}_{\text{eff}}(t_i) = \sum_{j} \big[\tilde{\mathbb{J}}\big]_{11,\,ij} .
+# J^{\mathrm{hom}}(t_i) = \sum_{j} \big[\widetilde{\mathbb{L}}\big]_{11,\,ij} ,
+#
+# ``J^{\mathrm{hom}}`` being the uniaxial creep function of the composite.
 # ```
 
 function uniaxial_creep(R)
@@ -202,7 +210,7 @@ end
 # compliance. The cause is geometric, not numerical: the RVE still declares a
 # *spherical* distribution shape, and a sphere cannot host 30 % of 100:1 discs
 # without the enveloping spheres overlapping. This is the admissibility
-# restriction of [ponte1995](@cite), and outside it the estimate carries no
+# restriction of [ponte1995](@citet), and outside it the estimate carries no
 # meaning. Mori-Tanaka is unaffected because it never uses a distribution shape
 # distinct from the inclusion's.
 #
@@ -233,3 +241,12 @@ for (nm, p) in (("spheres", plt_sphere), ("ratios", plt_ratio))      #jl
     savefig(p, joinpath(figdir, "62_alv_schemes_$nm.png"))           #jl
 end                                                                  #jl
 @printf "\nSaved : %s/62_alv_schemes_*.png\n" figdir                 #jl
+
+# ## Where to go next
+#
+# The age of the matrix at loading enters every curve above through ``a(t')``,
+# and the aspect ratio through §4.
+# [Ageing creep: loading age against inclusion shape](@ref tut-ageing-ages-aspect)
+# varies the two together on the same output and separates their effects. The
+# laws, the time grids and the reading of a Volterra result are described in
+# [Viscoelastic homogenization](@ref man-viscoelasticity) of the manual.

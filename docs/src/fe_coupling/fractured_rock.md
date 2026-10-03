@@ -1,5 +1,10 @@
 # [Building a fractured-rock material](@id fe-fractured-rock)
 
+!!! info "Before this page"
+    [Materials](@ref fe-materials), for the contract the material below
+    fulfills, and [Fractured permeability](@ref fe-permeability), for the
+    conductive cracks it is built from.
+
 [`FracturedPoroelasticRock`](@ref) is the material of
 [barthelemyARMA2011](@cite): two gradients ``(\boldsymbol{E}, p)`` in, two
 fluxes ``(\boldsymbol{\Sigma}, \varphi)`` out, plus a permeability that follows
@@ -67,11 +72,19 @@ to capture:
 | ``\omega`` | 5.52·10⁻⁴ | 6.35·10⁻⁴ | 7.18·10⁻⁴ |
 | ``k_{11}`` (m²) | 1.11·10⁻¹⁸ | 1.15·10⁻¹⁸ | 1.20·10⁻¹⁸ |
 
-Once a family closes it leaves the intact matrix behind: ``\boldsymbol{B} = 0``,
-``1/M = 0`` and [`transport_property`](@ref) returns `nothing` — the fracture
+Once a family closes it leaves the intact matrix behind: its contributions to
+the Biot tensor and to the inverse Biot modulus vanish, ``\boldsymbol{B} = 0`` and
+``1/M = 0``, and [`transport_property`](@ref) returns `nothing` — the fracture
 carries no flow at all.
 
 !!! warning "Returning nothing is an answer, not a failure"
     A driver that forwards it straight into a mobility gets a `MethodError` at
     the worst possible moment. Test for it — the
     [well test](@ref fe-arma2011) does.
+
+## Where to go next
+
+[Ferrite backend](@ref fe-backends) provides the element routines that call
+this material inside a finite-element loop, and
+[A fractured-reservoir well test](@ref fe-arma2011) runs it on a fractured
+reservoir.

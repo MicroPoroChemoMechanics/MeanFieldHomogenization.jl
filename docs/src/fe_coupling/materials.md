@@ -1,5 +1,9 @@
 # [Materials](@id fe-materials)
 
+!!! info "Before this page"
+    [Scale transition](@ref fe-scale-transition), which states what the contract
+    below must return and the frame rule that governs its output.
+
 A **material** bundles a microstructure, a scheme and its internal state. The FE
 driver builds it once, allocates one state per quadrature point, and calls
 [`material_response`](@ref) in its element loop.
@@ -101,3 +105,10 @@ compliance ([`crack_family_compliances`](@ref MeanFieldHomogenization.Schemes.cr
 Steps are split at every closure and reopening, so the result does not depend on
 how the loading was subdivided. See it at work on the
 [thick-walled cylinder](@ref fe-thick-cylinder).
+
+## Where to go next
+
+[Building a fractured-rock material](@ref fe-fractured-rock) assembles the third
+material of the table, with two gradients, two fluxes and an evolving
+permeability, and [Ferrite backend](@ref fe-backends) wires any of the three
+into an element loop.

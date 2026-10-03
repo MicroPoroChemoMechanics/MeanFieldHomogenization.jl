@@ -33,16 +33,18 @@
 """
     _identity_4sym(::Type{T}) -> TensISO{4,3}
 
-Symmetric 4-tensor identity `𝕀_{ijkl} = ½(δ_{ik}δ_{jl} + δ_{il}δ_{jk})`
-in its most compact `TensISO` form (3D).  `𝕀 ⊡ X = X` for any symmetric
-`Tens{4,3}`.
+Symmetric 4-tensor identity
+``\\mathbb{I}_{ijkl} = \\tfrac{1}{2}(\\delta_{ik}\\delta_{jl} + \\delta_{il}\\delta_{jk})``
+in its most compact `TensISO` form (3D).  ``\\mathbb{I}:\\mathbb{X} = \\mathbb{X}``
+for any symmetric `Tens{4,3}`.
 """
 _identity_4sym(::Type{T}) where {T <: Number} = TensISO{3}(one(T), one(T))
 
 """
     _identity_2(::Type{T}) -> TensISO{2,3}
 
-Identity 2-tensor `δ_{ij}` in 3D (`TensISO{2,3}`).  `𝟙 · x = x` for any
+Identity 2-tensor ``\\boldsymbol{1}`` (components ``\\delta_{ij}``) in 3D
+(`TensISO{2,3}`).  ``\\boldsymbol{1}\\cdot\\underline{x} = \\underline{x}`` for any
 `Tens{2,3}` or 3-vector.
 """
 _identity_2(::Type{T}) where {T <: Number} = TensISO{3}(one(T))
@@ -54,13 +56,14 @@ _identity_2(::Type{T}) where {T <: Number} = TensISO{3}(one(T))
 """
     strain_strain_loc(incl, C₁, C₀; kw...) -> Tens{4,3}
 
-Dilute **strain-strain localization tensor** `A_εε`: connects the
+Dilute **strain-strain localization tensor** ``\\mathbb{A}_{\\varepsilon\\varepsilon}``: connects the
 average strain in an `AbstractInclusion` of stiffness `C₁` to the remote
-strain `ε∞`:
+strain ``\\boldsymbol{\\varepsilon}^{\\infty}``:
 
-```
-ε_inc = A_εε : ε∞,
-A_εε  = [𝕀 + ℙ(incl, C₀) : (C₁ - C₀)]⁻¹.
+```math
+\\boldsymbol{\\varepsilon}_{\\mathrm{inc}} = \\mathbb{A}_{\\varepsilon\\varepsilon}:\\boldsymbol{\\varepsilon}^{\\infty},
+\\qquad
+\\mathbb{A}_{\\varepsilon\\varepsilon} = [\\mathbb{I} + \\mathbb{P}(\\mathrm{incl}, \\mathbb{C}_0):(\\mathbb{C}_1 - \\mathbb{C}_0)]^{-1}.
 ```
 
 Keyword arguments are forwarded to [`hill_tensor`](@ref MeanFieldHomogenization.Elasticity.hill_tensor).
@@ -83,10 +86,11 @@ end
 """
     stress_strain_loc(incl, C₁, C₀; kw...) -> Tens{4,3}
 
-Dilute **stress-strain localization tensor** `A_σε`: `σ_inc = A_σε : ε∞`.
+Dilute **stress-strain localization tensor** ``\\mathbb{A}_{\\sigma\\varepsilon}``:
+``\\boldsymbol{\\sigma}_{\\mathrm{inc}} = \\mathbb{A}_{\\sigma\\varepsilon}:\\boldsymbol{\\varepsilon}^{\\infty}``.
 
 !!! warning "The generic method assumes a homogeneous inclusion"
-    It evaluates `A_σε = C₁ : A_εε`, which holds only when the inclusion
+    It evaluates ``\\mathbb{A}_{\\sigma\\varepsilon} = \\mathbb{C}_1:\\mathbb{A}_{\\varepsilon\\varepsilon}``, which holds only when the inclusion
     carries a **single uniform stiffness**. An internally heterogeneous
     inclusion — one whose [`is_homogeneous_inclusion`](@ref MeanFieldHomogenization.Core.is_homogeneous_inclusion) is `false` — has
     no such `C₁`: its average stress has to be assembled from the local
@@ -113,7 +117,7 @@ internally heterogeneous.
 The warning above this has been in the docstring since the contract was written;
 this enforces it. Without the check the generic returns a number — and for a
 heterogeneous inclusion that number is wrong, by order one rather than by a
-little: measured on a two-layer confocal spheroid, `C₀ : A_εε` differs from the
+little: measured on a two-layer confocal spheroid, ``\\mathbb{C}_0:\\mathbb{A}_{\\varepsilon\\varepsilon}`` differs from the
 inclusion's actual average stress by 110 %.
 
 That is exactly the failure this package guards everywhere else, and it went
@@ -141,8 +145,10 @@ end
 """
     strain_stress_loc(incl, C₁, C₀; kw...) -> Tens{4,3}
 
-Dilute **strain-stress localization tensor** `A_εσ = A_εε : S₀`:
-`ε_inc = A_εσ : σ∞`.  `S₀ = C₀⁻¹` is built internally.
+Dilute **strain-stress localization tensor**
+``\\mathbb{A}_{\\varepsilon\\sigma} = \\mathbb{A}_{\\varepsilon\\varepsilon}:\\mathbb{S}_0``:
+``\\boldsymbol{\\varepsilon}_{\\mathrm{inc}} = \\mathbb{A}_{\\varepsilon\\sigma}:\\boldsymbol{\\sigma}^{\\infty}``.
+``\\mathbb{S}_0 = \\mathbb{C}_0^{-1}`` is built internally.
 """
 function strain_stress_loc(
         incl::AbstractInclusion,
@@ -156,12 +162,13 @@ end
 """
     stress_stress_loc(incl, C₁, C₀; kw...) -> Tens{4,3}
 
-Dilute **stress-stress localization tensor** `A_σσ = A_σε : S₀`:
-`σ_inc = A_σσ : σ∞`.
+Dilute **stress-stress localization tensor**
+``\\mathbb{A}_{\\sigma\\sigma} = \\mathbb{A}_{\\sigma\\varepsilon}:\\mathbb{S}_0``:
+``\\boldsymbol{\\sigma}_{\\mathrm{inc}} = \\mathbb{A}_{\\sigma\\sigma}:\\boldsymbol{\\sigma}^{\\infty}``.
 
-Derived from [`stress_strain_loc`](@ref) rather than from `A_εε` directly, so
+Derived from [`stress_strain_loc`](@ref) rather than from ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` directly, so
 that a heterogeneous inclusion which supplies its own stress-side
-localization gets a correct `A_σσ` for free. For a homogeneous inclusion the
+localization gets a correct ``\\mathbb{A}_{\\sigma\\sigma}`` for free. For a homogeneous inclusion the
 two routes are the same expression (`⊡` is left-associative), hence bitwise
 identical.
 """
@@ -198,12 +205,13 @@ end
 """
     gradient_gradient_loc(incl, K₁, K₀; kw...) -> Tens{2,3}
 
-Dilute **gradient-gradient localization tensor** `A_∇∇` for the 2nd
+Dilute **gradient-gradient localization tensor** ``\\boldsymbol{A}_{\\nabla\\nabla}`` for the 2nd
 order transport problem:
 
-```
-∇T_inc = A_∇∇ · ∇T∞,
-A_∇∇   = [𝟙 + ℙ(incl, K₀) · (K₁ - K₀)]⁻¹.
+```math
+\\nabla T_{\\mathrm{inc}} = \\boldsymbol{A}_{\\nabla\\nabla}\\cdot\\nabla T^{\\infty},
+\\qquad
+\\boldsymbol{A}_{\\nabla\\nabla} = [\\boldsymbol{1} + \\boldsymbol{P}(\\mathrm{incl}, \\boldsymbol{K}_0)\\cdot(\\boldsymbol{K}_1 - \\boldsymbol{K}_0)]^{-1}.
 ```
 
 Conductivity analog of [`strain_strain_loc`](@ref).  Keyword arguments
@@ -224,15 +232,16 @@ end
 """
     flux_gradient_loc(incl, K₁, K₀; kw...) -> Tens{2,3}
 
-Dilute **flux-gradient localization tensor** `A_q∇`: `σ_inc = A_q∇ · ∇T∞`,
-with `σ ≡ -q = K·∇T` the stress analog of the package (see the sign note
-above this block, and the notation page). It is `A_q∇ = K₁ · A_∇∇`, so the
-quantity it produces is `K₁ · ∇T_inc`, i.e. **minus** the flux — exactly what
+Dilute **flux-gradient localization tensor** ``\\boldsymbol{A}_{q\\nabla}``:
+``\\boldsymbol{\\sigma}_{\\mathrm{inc}} = \\boldsymbol{A}_{q\\nabla}\\cdot\\nabla T^{\\infty}``,
+with ``\\boldsymbol{\\sigma} \\equiv -\\underline{q} = \\boldsymbol{K}\\cdot\\nabla T`` the stress analog of the package (see the sign note
+above this block, and the notation page). It is ``\\boldsymbol{A}_{q\\nabla} = \\boldsymbol{K}_1\\cdot\\boldsymbol{A}_{\\nabla\\nabla}``, so the
+quantity it produces is ``\\boldsymbol{K}_1\\cdot\\nabla T_{\\mathrm{inc}}``, i.e. **minus** the flux — exactly what
 makes this the transport twin of [`stress_strain_loc`](@ref), symbol for
 symbol.
 
 !!! warning "The generic method assumes a homogeneous inclusion"
-    The expression `A_q∇ = K₁ · A_∇∇` is valid only for a single uniform
+    The expression ``\\boldsymbol{A}_{q\\nabla} = \\boldsymbol{K}_1\\cdot\\boldsymbol{A}_{\\nabla\\nabla}`` is valid only for a single uniform
     conductivity. A heterogeneous inclusion must supply its own method;
     [`flux_flux_loc`](@ref) then follows.
 """
@@ -249,8 +258,10 @@ end
 """
     gradient_flux_loc(incl, K₁, K₀; kw...) -> Tens{2,3}
 
-Dilute **gradient-flux localization tensor** `A_∇q = A_∇∇ · R₀`
-(with `R₀ = K₀⁻¹`): `∇T_inc = A_∇q · σ∞`, with `σ ≡ -q = K₀·∇T∞` the stress
+Dilute **gradient-flux localization tensor**
+``\\boldsymbol{A}_{\\nabla q} = \\boldsymbol{A}_{\\nabla\\nabla}\\cdot\\boldsymbol{K}_0^{-1}``:
+``\\nabla T_{\\mathrm{inc}} = \\boldsymbol{A}_{\\nabla q}\\cdot\\boldsymbol{\\sigma}^{\\infty}``, with
+``\\boldsymbol{\\sigma} \\equiv -\\underline{q} = \\boldsymbol{K}_0\\cdot\\nabla T^{\\infty}`` the stress
 analog of the package. Transport twin of [`strain_stress_loc`](@ref).
 """
 function gradient_flux_loc(
@@ -265,8 +276,10 @@ end
 """
     flux_flux_loc(incl, K₁, K₀; kw...) -> Tens{2,3}
 
-Dilute **flux-flux localization tensor** `A_qq = A_q∇ · R₀`:
-`σ_inc = A_qq · σ∞`, with `σ ≡ -q` throughout — both sides carry the same
+Dilute **flux-flux localization tensor**
+``\\boldsymbol{A}_{qq} = \\boldsymbol{A}_{q\\nabla}\\cdot\\boldsymbol{K}_0^{-1}``:
+``\\boldsymbol{\\sigma}_{\\mathrm{inc}} = \\boldsymbol{A}_{qq}\\cdot\\boldsymbol{\\sigma}^{\\infty}``, with
+``\\boldsymbol{\\sigma} \\equiv -\\underline{q}`` throughout — both sides carry the same
 convention, so the tensor itself is the one a reader of
 [`stress_stress_loc`](@ref) expects.
 

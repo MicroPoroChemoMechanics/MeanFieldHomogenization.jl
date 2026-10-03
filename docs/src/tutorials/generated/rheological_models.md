@@ -4,6 +4,12 @@ EditURL = "../../../../scripts/65_rheological_models.jl"
 
 # [The rheological model catalog](@id tut-rheological-models)
 
+!!! info "Before this page"
+    The tutorial [Viscoelastic composites](@ref tut-viscoelasticity), where a
+    rheological model first describes a phase, and the theory page
+    [The Laplace-Carson route](@ref th-laplace-carson), which relates the four
+    functions a model answers.
+
 A linear viscoelastic material can be described by any one of four
 functions — the relaxation modulus `R(t)`, the creep compliance `J(t)`, and
 their Laplace-Carson transforms `R*(p)` and `J*(p)` — and the four are
@@ -261,6 +267,20 @@ p_full = plot(
 )
 p_full
 ````
+
+The last figure gathers the six panels drawn above, from the classical chains
+to the Cole-Cole and Black diagrams of the bituminous binders.
+
+## Where to go next
+
+The classical chains of §1 are exact in all four functions because a Maxwell
+chain can be converted into a Kelvin one.
+[Generalized Kelvin ⇄ generalized Maxwell](@ref tut-kelvin-maxwell) examines
+that conversion, and the interlacing property that makes it robust. Every
+model of the catalog, with its parameters, is listed in
+[The rheological model library](@ref man-rheological-models), and the
+bituminous binders of §3 are taken to a mixture in
+[Viscoelastic complex modulus of a bituminous mixture](@ref app-bituminous).
 
 ---
 

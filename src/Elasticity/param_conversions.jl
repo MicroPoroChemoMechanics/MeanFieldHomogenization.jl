@@ -23,7 +23,7 @@
     k_mu(C::TensND.TensISO{4}) -> (k, mu)
 
 Bulk and shear modulus of an isotropic **stiffness** tensor
-`C = 3k·𝕁 + 2μ·𝕂`. For a compliance tensor `S`, use `k_mu(inv(S))`.
+``\\mathbb{C} = 3k\\,\\mathbb{J} + 2\\mu\\,\\mathbb{K}``. For a compliance tensor `S`, use `k_mu(inv(S))`.
 
 For a tensor that is not already a `TensISO`, project first:
 `k_mu(best_fit_iso(C))`.
@@ -36,7 +36,7 @@ end
 """
     iso_stiffness(k, mu) -> TensND.TensISO{4}
 
-Build the isotropic stiffness tensor `C = 3k·𝕁 + 2μ·𝕂` from `(k, μ)` — the
+Build the isotropic stiffness tensor ``\\mathbb{C} = 3k\\,\\mathbb{J} + 2\\mu\\,\\mathbb{K}`` from ``(k, \\mu)`` — the
 reciprocal of [`k_mu`](@ref).
 """
 iso_stiffness(k, mu) = TensND.TensISO{3}(3 * k, 2 * mu)

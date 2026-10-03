@@ -6,8 +6,8 @@
     _hill_order2_2d_iso(ell::Ellipsoid{2}, K₀) -> AbstractTens{2,2}
 
 2nd-order Hill polarization tensor of a 2-D ellipse in an isotropic
-conductor ``\\mathbf K_0 = K\\,\\mathbf 1``, closed form
-``\\mathbf P = \\mathbf I^{\\mathbf A}/K`` specialized to the plane-strain
+conductor ``\\boldsymbol{K}_0 = k_0\\,\\boldsymbol{1}``, closed form
+``\\boldsymbol{P} = \\boldsymbol{I}^{\\boldsymbol{A}}/k_0`` specialized to the plane-strain
 unit circle (prefactor ``1/(2\\pi)``).
 """
 function _hill_order2_2d_iso(ell::Ellipsoid{2, Circular}, K₀)
@@ -31,10 +31,10 @@ end
 
 2nd-order Hill polarization tensor of a 2-D ellipse in an arbitrarily
 anisotropic conductor. Obtained in closed form from the
-``\\mathbf K^{-1/2}`` change-of-variable of
+``\\boldsymbol{K}^{-1/2}`` change-of-variable of
 [giraudMOM2019](@cite) (2-D specialization);
 the code falls back to the nearly-isotropic limit when the acoustic
-denominator ``\\det(\\mathbf K) - k_{12}^{2}`` approaches zero.
+denominator ``\\det(\\boldsymbol{K}) - k_{12}^{2}`` approaches zero.
 """
 function _hill_order2_2d(ell::Ellipsoid{2}, K₀)
     T = promote_type(eltype(ell.semi_axes), eltype(K₀))

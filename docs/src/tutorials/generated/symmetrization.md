@@ -2,10 +2,17 @@
 EditURL = "../../../../scripts/70_symmetrization_showcase.jl"
 ```
 
-# Symmetrization showcase: exact average vs best-fit projection
+# [Symmetrization showcase: exact average vs best-fit projection](@id tut-symmetrization)
 
-The didactic centerpiece of the symmetrization overhaul: the difference
-between the two mechanisms `echoes` (and now `MeanFieldHomogenization`) provide, on a
+!!! info "Before this page"
+    The tutorial [Porous benchmark: all schemes](@ref tut-porous-benchmark),
+    where `IsoSymmetrize()` first averages a population of pores over their
+    orientations, and the section
+    [Isotropic and transversely isotropic bases](@ref th-notation-bases) of the
+    conventions, where the Walpole coefficients printed below are defined.
+
+This page contrasts the two symmetrization mechanisms that
+`MeanFieldHomogenization` provides, as `echoes` does, on a
 **non-major-symmetric** strain-concentration tensor.
 
 - **(B) exact rotation-group average** — `transverse_isotropify` (re-exported from `TensND`) /
@@ -96,6 +103,20 @@ C_ti = homogenise_with(TISymmetrize(n))             # exact azimuthal average
 @printf "MT homogenised C₃₃₃₃ :  iso-average = %.4f   TI(ez)-average = %.4f\n" get_array(C_iso)[3, 3, 3, 3] get_array(C_ti)[3, 3, 3, 3]
 println("\nDone.")
 ````
+
+The two values of ``C_{3333}`` differ because the two averages keep different
+information about the tilted needle: the full rotation group erases its
+orientation, whereas the azimuthal average about ``\underline{e}_z`` retains
+its inclination.
+
+## Where to go next
+
+The averages above act on whatever concentration tensor an inclusion
+supplies, including one the library knows nothing about.
+[The custom-inclusion contract: three entry gates, one answer](@ref tut-custom-inclusion-contract)
+plugs an arbitrary morphology into every scheme and obtains the orientation
+average without further code. The symmetrization types and the projection
+functions are listed in [Symmetry projections](@ref api-schemes-symmetry).
 
 ---
 

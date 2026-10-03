@@ -1,6 +1,13 @@
 # [Hill polarization tensors](@id th-hill-tensors)
 
-The [Eshelby problem](eshelby_problem.md) reduces to computing one object, the
+!!! info "Before this page"
+    [The Eshelby inclusion problem](@ref th-eshelby-problem), which defines
+    ``\mathbb{P}`` and the Eshelby tensor, and the
+    [Walpole basis](@ref th-notation-bases) and
+    [ellipsoid geometry](@ref th-notation-ellipsoid) of the Conventions, in
+    which every closed form below is written.
+
+The [Eshelby problem](@ref th-eshelby-problem) reduces to computing one object, the
 Hill polarization tensor ``\mathbb{P}(\boldsymbol{A},\mathbb{C})``. This page
 gives its closed forms.
 
@@ -85,9 +92,9 @@ every table below.
 The **flat** limits are the ones that need care: ``\mathbb{P}``
 stays finite there, but the object built on it, ``\mathbb{Q}``, degenerates in a
 controlled way — which is why the crack theory is written on ``\mathbb{Q}``
-([Crack opening displacement](cod_tensors.md)).
+([Crack opening displacement](@ref th-cod-tensors)).
 
-## Newton-potential integrals
+## 1. Newton-potential integrals
 
 Three integrals over the unit sphere, depending on ``\boldsymbol{A}`` only,
 factor every analytical Hill formula:
@@ -138,8 +145,8 @@ identity is
   \mathrm{d}S_{\xi}.
 ```
 
-An intrinsic proof is given in [barthelemyIJSS2016](@cite), as an alternative to
-the component reasoning of [mura1987](@cite). Both forms are useful: the
+An intrinsic proof is given in [barthelemyIJSS2016](@citet), as an alternative to
+the component reasoning of [mura1987](@citet). Both forms are useful: the
 ``\underline{\xi}`` form makes the geometry explicit, the ``\underline{\zeta}``
 form is the one that degenerates cleanly in the cylinder limit below.
 
@@ -158,7 +165,7 @@ eigenvectors, so
 ```
 
 The coefficients ``I_i^{\boldsymbol{A}}``, identified with Newton-potential
-integrals [kellogg1929](@cite), [eshelby1957](@cite), [parnell2016](@cite), and
+integrals [kellogg1929, eshelby1957, parnell2016](@cite), and
 the secondary coefficients ``I_{ij}^{\boldsymbol{A}}`` admit closed forms in
 every symmetry class:
 
@@ -210,7 +217,7 @@ and ``I_{22}^{\boldsymbol{A}}=I_{33}^{\boldsymbol{A}}=I_{23}^{\boldsymbol{A}}
 
 !!! warning "Normalization differs from the classical references"
     For writing convenience the coefficients tabulated above are **rescaled**
-    relative to [kellogg1929](@cite) and [eshelby1957](@cite): they differ by a
+    relative to [kellogg1929](@citet) and [eshelby1957](@citet): they differ by a
     factor ``4\pi/3`` for ``I_{ij}^{\boldsymbol{A}}`` with ``i\ne j``, and by
     ``4\pi`` for all the others. The normalization used here is the one that
     makes ``\sum_i I_i^{\boldsymbol{A}} = 1``.
@@ -252,7 +259,7 @@ Always satisfied, and useful as numerical checks [eshelby1957](@cite):
 ### Components of ``\mathbb{U}^{\boldsymbol{A}}`` and ``\mathbb{V}^{\boldsymbol{A}}``
 
 Both are orthotropic along the ellipsoid axes. In the principal frame
-[barthelemyIJSS2016](@cite), [barthelemyIJES2020_hilltrans](@cite):
+[barthelemyIJSS2016, barthelemyIJES2020_hilltrans](@cite):
 
 ```math
 U^{\boldsymbol{A}}_{iiii} = \tfrac{3}{2}\bigl(I_i^{\boldsymbol{A}}-\rho_i^{2}I_{ii}^{\boldsymbol{A}}\bigr),
@@ -280,7 +287,7 @@ V^{\boldsymbol{A}}_{ijij} = V^{\boldsymbol{A}}_{ijji}
 
 **Infinite elliptic cylinder** ``a\to\infty``, axis
 ``\underline{e}^{\boldsymbol{A}}_1``, transverse semi-axes ``b\ge c``
-([mura1987](@cite), §11.22) — substituting the cylinder column above:
+[mura1987; §11.22](@cite) — substituting the cylinder column above:
 
 ```math
 \mathrm{Mat}\bigl(\mathbb{U}^{\mathrm{cyl}}\bigr) =
@@ -314,7 +321,7 @@ its axis**. For the circular cylinder ``b=c`` the non-zero entries reduce to
 ``\mathrm{Mat}(\mathbb{V}^{\mathrm{cyl}})`` to the diagonal
 ``\bigl(0,\tfrac{1}{2},\tfrac{1}{2},\tfrac{1}{2},\tfrac{1}{4},\tfrac{1}{4}\bigr)``.
 
-## Hill tensor in elasticity
+## 2. Hill tensor in elasticity
 
 ### Arbitrary anisotropy
 
@@ -338,15 +345,14 @@ its axis**. For the circular cylinder ``b=c`` the non-zero entries reduce to
      {\|\boldsymbol{A}\cdot\underline{\xi}\|^{3}}\,\mathrm{d}S_{\xi}
 ```
 
-[willis1977](@cite), see also [mura1987](@cite). Inverting the acoustic tensor
+This is the form of [willis1977](@citet); see also [mura1987](@citet). Inverting the acoustic tensor
 ``\underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi}`` pointwise is the source of
 all the computational work: in general no closed form exists and one resorts to
-numerical cubature [ghahremani1977](@cite), [gavazzi1990](@cite),
-[masson2008](@cite). `MeanFieldHomogenization` offers three algorithm traits, mirroring the
+numerical cubature [ghahremani1977, gavazzi1990, masson2008](@cite). `MeanFieldHomogenization` offers three algorithm traits, mirroring the
 Echoes `NUMINT` / `RESIDUES` options:
 
 - **`DECUHR`** — the surface integral is evaluated by the adaptive cubature for
-  singular integrands of [espelid1994](@cite). ForwardDiff-safe. Selected by
+  singular integrands of [espelid1994](@citet). ForwardDiff-safe. Selected by
   `:auto` when its (weak-dependency) extension is loaded.
 - **`NestedQuadGK`** — nested adaptive 1-D quadrature, type-generic and always
   available; the `:auto` choice otherwise, and the one used for `Dual`,
@@ -363,19 +369,18 @@ Echoes `NUMINT` / `RESIDUES` options:
   cubature as the default.
 
 Analytical paths exist in the literature for further anisotropy classes
-([withers1989](@cite), [pouya2000](@cite), [pouya2006](@cite),
-[suvorov2002](@cite)) and are not all implemented yet.
+[withers1989, pouya2000, pouya2006, suvorov2002](@cite) and are not all implemented yet.
 
 ### Isotropic matrix — the shape/moduli factorization
 
 With bulk modulus ``k``, shear modulus ``\mu`` and first Lamé parameter
 ``\lambda = k-2\mu/3``, so that
-``\mathbb{C} = 3k\,\mathbb{J}+2\mu\,\mathbb{K} = 3\lambda\,\mathbb{I}+2\mu\,\mathbb{K}``,
-the general expression collapses to [willis1977](@cite)
+``\mathbb{C} = 3k\,\mathbb{J}+2\mu\,\mathbb{K} = 3\lambda\,\mathbb{J}+2\mu\,\mathbb{I}``,
+the general expression collapses to the form of [willis1977](@citet)
 
 ```math
 \boxed{\;
-\mathbb{P}\bigl(\boldsymbol{A},\,3\lambda\,\mathbb{I}+2\mu\,\mathbb{K}\bigr)
+\mathbb{P}\bigl(\boldsymbol{A},\,3\lambda\,\mathbb{J}+2\mu\,\mathbb{I}\bigr)
 = \frac{1}{\lambda+2\mu}\,\mathbb{U}^{\boldsymbol{A}}
 + \frac{1}{\mu}\,\bigl(\mathbb{V}^{\boldsymbol{A}}-\mathbb{U}^{\boldsymbol{A}}\bigr).
 \;}
@@ -398,7 +403,7 @@ For an **infinite cylinder**, substituting
 ``\mathrm{Mat}(\mathbb{U}^{\mathrm{cyl}})`` and
 ``\mathrm{Mat}(\mathbb{V}^{\mathrm{cyl}})`` gives a closed form with
 ``P^{\mathrm{cyl}}_{1jkl}\equiv 0``, i.e. no polarization along the axis
-([mura1987](@cite), §11.22).
+[mura1987; §11.22](@cite).
 
 Implementation: `src/Elasticity/hill_3d_iso.jl` and
 `src/Elasticity/hill_3d_cylinder_iso.jl`, selected by `method = :auto` when
@@ -410,7 +415,7 @@ When the matrix is transversely isotropic and its symmetry axis is **parallel to
 the spheroid axis**, a fully analytical path exists
 [barthelemyIJES2020_hilltrans](@cite). The Hill tensor is transversely isotropic
 too, hence five Walpole coefficients (see
-[Notation](notation.md#Isotropic-and-transversely-isotropic-bases) — there is no
+[Conventions](@ref th-notation-bases) — there is no
 ``P_4`` because ``\mathbb{P}`` is major-symmetric):
 
 ```math
@@ -420,7 +425,7 @@ too, hence five Walpole coefficients (see
 ```
 
 The five coefficients are closed-form combinations of `acosh` and complex square
-roots (equations 53–58 of [barthelemyIJES2020_hilltrans](@cite)), depending on
+roots [barthelemyIJES2020_hilltrans; eqs. 53–58](@cite), depending on
 the aspect ratio ``\omega`` (axial / transverse) and the five independent
 constants ``(C_{1111}, C_{1122}, C_{1133}, C_{3333}, C_{2323})``.
 
@@ -468,7 +473,12 @@ the unit circle ``\underline{\xi}\in S^{1}`` with a ``1/(2\pi)`` prefactor in
 place of ``1/(4\pi)``. The isotropic case is analytical; the anisotropic one
 uses the residue reduction on the line integral.
 
-## Hill tensor in conductivity
+## 3. Hill tensor in conductivity
+
+The order-2 Hill tensor of the transport problem, defined in
+[The Eshelby inclusion problem](@ref th-eshelby-problem) §3, is built on the
+same integral ``\boldsymbol{I}^{\boldsymbol{A}}`` of §1 and, unlike its elastic
+counterpart, has a closed form at any anisotropy of the reference medium.
 
 ### Arbitrary anisotropy — closed form
 
@@ -505,8 +515,8 @@ for a **fictitious ellipsoid** of shape tensor
 \;}
 ```
 
-This is the transformation derivation of [giraudMOM2019](@cite); an equivalent
-Green's-function derivation is given in [barthelemyTIPM2009](@cite). Since
+This is the transformation derivation of [giraudMOM2019](@citet); an equivalent
+Green's-function derivation is given in [barthelemyTIPM2009](@citet). Since
 ``\boldsymbol{A}\cdot\boldsymbol{K}^{-1/2}`` need not be symmetric, the
 fictitious semi-axes and principal directions are obtained by diagonalizing
 ``\boldsymbol{K}^{-1/2}\cdot\boldsymbol{A}^{\!T}\!\cdot\boldsymbol{A}\cdot
@@ -514,19 +524,22 @@ fictitious semi-axes and principal directions are obtained by diagonalizing
 
 ### Isotropic matrix — immediate
 
-If ``\boldsymbol{K} = K\,\boldsymbol{1}`` the prefactor comes straight out:
+If ``\boldsymbol{K} = k_0\,\boldsymbol{1}`` the prefactor comes straight out:
 
 ```math
-\boldsymbol{P}(\boldsymbol{A}, K\,\boldsymbol{1})
-= \frac{\boldsymbol{I}^{\boldsymbol{A}}}{K}.
+\boldsymbol{P}(\boldsymbol{A}, k_0\,\boldsymbol{1})
+= \frac{\boldsymbol{I}^{\boldsymbol{A}}}{k_0}.
 ```
 
 For a sphere, ``\boldsymbol{I}^{\boldsymbol{1}} = \tfrac{1}{3}\boldsymbol{1}``
-gives ``\boldsymbol{P} = \tfrac{1}{3K}\boldsymbol{1}`` and
-``\boldsymbol{s} = \tfrac{1}{3}\boldsymbol{1}`` — independent of ``K``.
+gives ``\boldsymbol{P} = \tfrac{1}{3k_0}\boldsymbol{1}`` and
+``\boldsymbol{S}^{\mathrm{E}} = \tfrac{1}{3}\boldsymbol{1}`` — independent of ``k_0``.
 Implementation: `src/Conductivity/hill_order2_3d.jl`.
 
-## Dispatch
+## 4. Dispatch
+
+The closed forms above are reached through one entry point, which selects the
+algorithm from the inclusion type and from the type of the reference tensor.
 
 Entry point [`hill_tensor`](@ref); shape tensor via [`shape_tensor`](@ref);
 geometric auxiliaries via [`tens_IA`](@ref), [`tens_UA`](@ref),
@@ -548,4 +561,16 @@ Cylinder shape traits: `CircularCylindrical` when ``b=c`` (transversely
 isotropic response, returned as `TensTI{4}` with axis
 ``\underline{e}^{\boldsymbol{A}}_1``) and `EllipticCylindrical` when ``b>c``
 (orthotropic, returned as `TensOrtho`). Practical usage is covered in the manual
-page [Cylindrical inclusions](../manual/cylindrical_inclusions.md).
+page [Cylindrical inclusions](@ref man-cylindrical-inclusions).
+
+## Where to go next
+
+The Hill tensor is the response of an inclusion to a prescribed polarization.
+The next page, [Localization and contribution tensors](@ref th-localization),
+turns it into the response of an inhomogeneity to a remote load and into the
+contribution of each phase to the effective stiffness. The flat limits
+announced at the top of this page are taken in
+[Crack opening displacement and compliance](@ref th-cod-tensors), and the
+tutorial [Hill polarization tensors in practice](@ref tut-hill-tensors)
+evaluates these closed forms and compares the algorithms of §4 on an
+anisotropic matrix.

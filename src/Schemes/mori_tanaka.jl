@@ -20,8 +20,7 @@
     _evaluate(rve, ::MoriTanaka, ::Val{p}; kw...) -> AbstractTens
 
 Mori-Tanaka scheme for property `:p`
-([mori1973](@cite);
-[christensen1990](@cite)). Dispatches on the order of
+[mori1973, christensen1990](@cite). Dispatches on the order of
 the matrix property tensor — 4th order for elasticity (`:C`), 2nd order
 for conductivity (`:K`).
 """
@@ -97,7 +96,7 @@ end
 """
     _identity_like(P) -> AbstractTens
 
-Identity tensor of the same order/dimension as `P`. Used as the `A_dil`
+Identity tensor of the same order/dimension as `P`. Used as the ``\\mathbb{A}^{\\mathrm{dil}}``
 weight of the matrix in average-strain schemes (Mori-Tanaka,
 self-consistent, …).
 """

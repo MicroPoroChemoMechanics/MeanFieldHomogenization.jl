@@ -35,7 +35,7 @@
     _iso_bulk_shear(C) -> (κ, μ)
 
 Extract (bulk modulus, shear modulus) from an isotropic stiffness
-`TensISO{4,3}`.  TensND stores `(3κ, 2μ)` internally.
+`TensISO{4,3}`.  TensND stores ``(3k, 2\\mu)`` internally.
 """
 function _iso_bulk_shear(C::TensND.TensISO{4, 3})
     α, β = C.data
@@ -57,9 +57,9 @@ _iso_scalar(K::TensND.TensISO{2, 3}) = MFH_Core.extract_iso_conductivity(K)
     _bulk_layer_transfer(r_out, r_in, κ, μ) -> Matrix(2×2)
 
 Intra-layer transfer matrix propagating the state vector
-`s = (u_r, σ_rr)` from radius `r_in` to `r_out` in an isotropic layer
-`(κ, μ)`.  Regular in the incompressibility limit `κ → ∞` (the matrix
-elements are written in the factorized `α, β` form with `α + β = 1`).
+``\\mathbf s = (u_r, \\sigma_{rr})`` from radius `r_in` to `r_out` in an isotropic layer
+``(k, \\mu)``.  Regular in the incompressibility limit ``k \\to \\infty`` (the matrix
+elements are written in the factorized ``\\alpha, \\beta`` form with ``\\alpha + \\beta = 1``).
 """
 @inline function _bulk_layer_transfer(r_out, r_in, κ, μ)
     T = promote_type(typeof(r_out), typeof(r_in), typeof(κ), typeof(μ))
@@ -91,9 +91,9 @@ end
 """
     _bulk_seed_state(r_1, κ_1) -> Vector(2)
 
-Seed state vector at `r = r_1⁻` for layer 1 under a unit "pressure
-amplitude" `P_1 = 1`:  `u_r = r_1 / (3κ_1)`, `σ_rr = 1`.  Finite for any
-`κ_1` including `κ_1 = ∞` (gives `u = 0`).
+Seed state vector at ``r = r_1^-`` for layer 1 under a unit "pressure
+amplitude" ``P_1 = 1``:  ``u_r = r_1/(3k_1)``, ``\\sigma_{rr} = 1``.  Finite for any
+``k_1`` including ``k_1 = \\infty`` (gives ``u_r = 0``).
 """
 @inline function _bulk_seed_state(r_1, κ_1)
     T = promote_type(typeof(r_1), typeof(κ_1))
@@ -103,10 +103,10 @@ end
 """
     _bulk_extract_AB(r, κ, μ, u, σ) -> (A, B)
 
-Given the layer moduli `(κ, μ)` and a state `(u, σ)` at radius `r`,
-return the coefficients `(A, B)` of the layer's local expansion
-`u_r(ρ) = A ρ + B / ρ²`.  Regular for `κ → ∞` (`A → 0`,
-`B → u r²`).
+Given the layer moduli ``(k, \\mu)`` and a state ``(u_r, \\sigma_{rr})`` at radius ``r``,
+return the coefficients ``(A, B)`` of the layer's local expansion
+``u_r(\\rho) = A\\rho + B/\\rho^2``.  Regular for ``k \\to \\infty`` (``A \\to 0``,
+``B \\to u_r r^2``).
 """
 @inline function _bulk_extract_AB(r, κ, μ, u, σ)
     T = promote_type(typeof(r), typeof(κ), typeof(μ), typeof(u), typeof(σ))
@@ -120,12 +120,12 @@ end
     _bulk_state_seq(sphere, κ₀, μ₀) -> NTuple{N, (u, σ)⁻}, (u, σ)⁺_N
 
 Propagate the bulk state vector from the core outward.  Returns the
-sequence of states at each interface `r_k` **on the inside** (layer
-side) for every `k = 1..N`, and the state on the **outside** of `r_N`
+sequence of states at each interface ``r_k`` **on the inside** (layer
+side) for every ``k = 1, \\dots, N``, and the state on the **outside** of ``r_N``
 (matrix side).  Interface jumps are applied via
 `_bulk_interface_T(interface, κ, μ, r)` (defined in
 `interface_transfer.jl`).  The seed state corresponds to a unit
-pressure amplitude `P_1 = 1`.
+pressure amplitude ``P_1 = 1``.
 """
 # Cached tuple of per-layer `(κ, μ)` moduli pairs.
 @inline function _bulk_layer_moduli(sphere::LayeredSphere{T, N}) where {T, N}
@@ -182,8 +182,8 @@ end
 """
     _bulk_localization(sphere, κ₀, μ₀) -> NTuple{N, TP}
 
-Per-layer bulk localization `α_k = A_k / A_∞` for the composite
-sphere.  Regular in the limit `κ_k → ∞` (gives `α_k → 0`, no
+Per-layer bulk localization ``\\alpha_k = A_k/A_\\infty`` for the composite
+sphere.  Regular in the limit ``k_k \\to \\infty`` (gives ``\\alpha_k \\to 0``, no
 volumetric strain in incompressible layer).
 """
 function _bulk_localization(sphere::LayeredSphere{T, N}, κ₀, μ₀) where {T, N}
@@ -212,8 +212,8 @@ end
     _effective_bulk(sphere, κ₀, μ₀) -> κ_eff
 
 Effective bulk modulus of the composite sphere under hydrostatic
-loading:  `κ_eff = Σ_k f_k κ_k α_k` with
-`f_k = (r_k³ - r_{k-1}³) / r_N³`.
+loading:  ``k^{\\mathrm{hom}} = \\sum_k f_k\\,k_k\\,\\alpha_k`` with
+``f_k = (r_k^3 - r_{k-1}^3)/r_N^3``.
 """
 function _effective_bulk(sphere::LayeredSphere{T, N}, κ₀, μ₀) where {T, N}
     α = _bulk_localization(sphere, κ₀, μ₀)

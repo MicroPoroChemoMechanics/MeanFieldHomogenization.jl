@@ -6,7 +6,7 @@ mean, and where each choice bites. The **why** is in
 signatures are in the API section, which the pages here link into rather than
 repeat.
 
-If you have never used the package, [Installation](@ref man-installation) and
+If you have never used the package, [Getting started](@ref getting-started) and
 then [Schemes and RVEs](@ref man-schemes) are the two pages that make everything
 else readable.
 

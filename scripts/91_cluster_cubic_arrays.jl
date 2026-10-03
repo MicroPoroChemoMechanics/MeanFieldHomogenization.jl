@@ -1,6 +1,12 @@
-# # The cluster model on cubic arrays
+# # [The cluster model on cubic arrays](@id app-cluster-model)
 #
-# The cluster model of [molinari1996](@cite)
+# !!! info "Before this page"
+#     [Two-inclusion interaction tensors](@ref th-interaction), on which the
+#     scheme rests, [The cluster model](@ref th-cluster), where it is derived,
+#     and [Particle assemblies and N-body schemes](@ref man-assemblies) for the
+#     assemblies it acts on.
+#
+# The cluster model of [molinari1996](@citet)
 # solves for the mean strain of *every* inclusion, accounting for the pairwise
 # interaction with each neighbor inside a cluster of radius `R_c`. Unlike the
 # one-site schemes it therefore sees **where** the inclusions are, which is why
@@ -20,10 +26,9 @@
 # ```
 #
 # whose self counterpart is ``\mathbb{T}^{aa} = +\mathbb{P}`` — the package follows
-# the sign convention of [brisard2023](@cite), for which the Green operator maps a
+# the sign convention of [brisard2023](@citet), for which the Green operator maps a
 # polarization onto *minus* the induced field. The opposite convention is used in
-# [molinari1996](@cite), so the formulas below carry that flip already applied. Theory: the
-# [cluster model](@ref th-cluster) and the [interaction tensors](@ref th-interaction).
+# [molinari1996](@citet), so the formulas below carry that flip already applied.
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
@@ -220,3 +225,19 @@ figpath = joinpath(figdir, "91_cluster_cubic_arrays.png")            #jl
 savefig(p_full, figpath)                                             #jl
 display(p_full)                                                      #jl
 @printf "\nSaved : %s\n" figpath                                     #jl
+
+# The last figure gathers the panels of §1, §2 and §4 in one row. Read with the
+# bulk-modulus table of §3, they show the cluster estimate departing from
+# Mori-Tanaka through the shear modulus alone, by an amount that depends on the
+# arrangement of the inclusions.
+#
+# ## Where to go next
+#
+# The identity of §5 is the starting point of
+# [The equivalent inclusion method, against a published table](@ref app-eim-assembly),
+# which leaves the periodic array for a random assembly of pores inside a
+# circular statistical volume element and reproduces a published table of the
+# method. The cubic
+# estimate obtained here can itself feed a second scale, which requires the
+# interaction tensor in an anisotropic reference: that is the subject of the
+# tutorial [Chaining scales through an N-body scheme](@ref tut-multiscale-assemblies).

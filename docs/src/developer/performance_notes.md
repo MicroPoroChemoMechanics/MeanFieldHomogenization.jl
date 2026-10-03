@@ -1,5 +1,12 @@
 # [Performance notes](@id dev-performance-notes)
 
+!!! info "Before this page"
+    [Adding a new algorithm](@ref dev-adding-algorithm), for the dispatch
+    between the `Analytical`, `Residue` and cubature paths compared below.
+
+This page describes what keeps the hot paths of the package fast, how their
+cost is measured, and which path dominates a computation.
+
 ## What the hot paths do
 
 - Small-matrix helpers (`_inv3` in `src/Core/green_kernel.jl`,
@@ -23,8 +30,8 @@
 ## Measuring
 
 - `scripts/bench_echoes/` — timings against Echoes:
-  [Performance vs Echoes](benchmarks.md); accuracy:
-  [Cross-validation](validation.md).
+  [Performance vs Echoes](@ref dev-benchmarks); accuracy:
+  [Cross-validation](@ref dev-validation).
 - `scripts/bench/` — Julia-only regression gating: 67 cases, committed
   baseline, bitwise checksum gate (`bench_suite.jl --help`).
 
@@ -62,5 +69,10 @@ Rough ordering, useful for deciding what to optimize:
 | `Analytical` (isotropic, conduction, coaxial TI) | ``O(1)``, no quadrature |
 | `Residue` (3-D anisotropic, `:residues` only) | ~4 ms; one polynomial solve + 1-D quadrature per call. The fastest path, but not the default: it degenerates on a reference anisotropic in type and isotropic in value |
 | `DECUHR` / `NestedQuadGK` (3-D anisotropic `:auto`) | ~11 ms / ~31 ms; adaptive cubature, AD-safe, robust everywhere. `DECUHR` is picked when its extension is loaded |
-| ALV (ageing viscoelasticity) | dominates everything: operators are ``(B n)\times(B n)`` block-triangular matrices, so cost grows with the *square* of the time-grid length. The structured kernel classes (`ALVKernelISO`, `ALVKernelTI`, `ALVKernelOrtho`) exist precisely to cut the storage and the Volterra algebra from ``36n^2`` down to ``2n^2``–``12n^2``; see [Ageing linear viscoelasticity](../theory/viscoelasticity.md). |
+| ALV (ageing viscoelasticity) | dominates everything: operators are ``(B n)\times(B n)`` block-triangular matrices, so cost grows with the *square* of the time-grid length. The structured kernel classes (`ALVKernelISO`, `ALVKernelTI`, `ALVKernelOrtho`) exist precisely to cut the storage and the Volterra algebra from ``36n^2`` down to ``2n^2``–``12n^2``; see [Ageing linear viscoelasticity](@ref th-viscoelasticity). |
 | Spheroid coupling matrices | quadrature backend is `Float64` and converges to machine precision; the `:series` BigFloat backend is an *oracle*, orders of magnitude slower, and should never be a default |
+
+## Where to go next
+
+[Performance vs Echoes](@ref dev-benchmarks) gives the measured timings of
+these paths against the C++ reference.

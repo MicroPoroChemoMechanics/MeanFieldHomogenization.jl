@@ -27,7 +27,7 @@
 Carlson's symmetric elliptic integral of the first kind,
 
 ``R_F(x, y, z) = \\tfrac{1}{2}\\int_0^{\\infty}
-  \\bigl[(t+x)(t+y)(t+z)\\bigr]^{-1/2}\\,dt``.
+  \\bigl[(t+x)(t+y)(t+z)\\bigr]^{-1/2}\\,\\mathrm{d}t``.
 
 Type-generic: the duplication recursion uses only arithmetic and
 square roots, so it extends unchanged to `BigFloat`,
@@ -73,7 +73,7 @@ Carlson's symmetric elliptic integral of the second kind, degenerate in
 `z`:
 
 ``R_D(x, y, z) = \\tfrac{3}{2}\\int_0^{\\infty}
-  \\bigl[(t+z)\\sqrt{(t+x)(t+y)(t+z)}\\bigr]^{-1}\\,dt``.
+  \\bigl[(t+z)\\sqrt{(t+x)(t+y)(t+z)}\\bigr]^{-1}\\,\\mathrm{d}t``.
 
 Same type-generic recursion as [`ell_RF`](@ref) with the additional
 ``(1, 1, 3)``-weighted mean and a running sum that accounts for the

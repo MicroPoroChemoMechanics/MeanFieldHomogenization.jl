@@ -236,7 +236,7 @@ roughly in reading order:
 | Section | Content |
 | --- | --- |
 | [Theory](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/theory/) | the Eshelby/Hill chain — polarization tensor → localization → schemes — its specializations (cracks, layered inclusions, laminates, viscoelasticity) and the N-body models (interaction tensors, cluster model, equivalent inclusion). |
-| [Manual](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/manual/installation/) | installation and a topic-by-topic reference for each inclusion family, cell and scheme. |
+| [Manual](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/manual/) | a topic-by-topic reference for each inclusion family, cell and scheme. |
 | [Tutorials](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/tutorials/) | worked examples: bounds and schemes, layered spheres/spheroids, particle assemblies, viscoelasticity, sensitivities, symbolic computation. |
 | [Applications](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/applications/cement_paste/) | full micromechanical models — cement paste, ITZ concrete, recycled aggregate, bituminous mixtures, strength, ageing creep. |
 | [Finite-element coupling](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/fe_coupling/) | the opposite direction: MFH as a constitutive law inside a structural FE code — scale transition, poroelastic coupling, fractured permeability, worked models. |

@@ -33,25 +33,25 @@
 """
     surface_stiffness(spheroid, κs, μs) -> TensTI{4}
 
-Average surface stiffness ``\\mathbb{C}^{int}`` of a spheroidal nanoinclusion
-carrying a Gurtin-Murdoch interface of surface bulk modulus `κs` and surface
-shear modulus `μs`
-([dormieux2016](@cite)).
+Average surface stiffness ``\\mathbb{C}^{\\mathrm{int}}`` of a spheroidal nanoinclusion
+carrying a Gurtin-Murdoch interface of surface bulk modulus ``\\kappa^{\\mathrm s}`` (`κs`) and surface
+shear modulus ``\\mu^{\\mathrm s}`` (`μs`)
+[dormieux2016](@cite).
 
-`spheroid` is an `Ellipsoid` of revolution with in-plane semi-axis `a` and
-polar semi-axis `c`; the aspect ratio is ``X = c/a``, oblate for ``X < 1`` and
+`spheroid` is an `Ellipsoid` of revolution with in-plane semi-axis ``a`` and
+polar semi-axis ``c``; the aspect ratio is ``X = c/a``, oblate for ``X < 1`` and
 prolate for ``X > 1``. The result is transversely isotropic about the symmetry
 axis, with
 
 ```math
-\\mathbb{C}^{int}_{1111} = \\frac{3X}{16a}(\\kappa_s+\\mu_s)
+C^{\\mathrm{int}}_{1111} = \\frac{3X}{16a}(\\kappa^{\\mathrm s}+\\mu^{\\mathrm s})
   \\left[\\frac{3X^4-4X^2-8}{(X^2-1)^{5/2}}\\arctan\\sqrt{X^2-1}
        + \\frac{8-2X^2+3X^4}{X^2(X^2-1)^2}\\right],
 ```
 
 and four companion components given in the same reference. `κs` and `μs` have
-the dimension of a stiffness times a length, so ``\\mathbb{C}^{int}`` scales as
-`1/a`: the stiffening it produces is a **size** effect, controlled by the
+the dimension of a stiffness times a length, so ``\\mathbb{C}^{\\mathrm{int}}`` scales as
+``1/a``: the stiffening it produces is a **size** effect, controlled by the
 smallest dimension of the particle.
 
 Adding it to the bulk stiffness gives the *equivalent particle* of the paper,
@@ -61,7 +61,7 @@ ordinary inclusion property.
 Limiting cases are handled exactly: the spherical case ``X = 1`` — where the
 closed form has a removable singularity — is evaluated from its Taylor series,
 and reproduces the isotropic tensor
-``2(6\\mu_s+\\kappa_s)/(5R)\\,\\mathbb K + (4\\kappa_s/R)\\,\\mathbb{J}`` of the
+``2(6\\mu^{\\mathrm s}+\\kappa^{\\mathrm s})/(5R)\\,\\mathbb{K} + (4\\kappa^{\\mathrm s}/R)\\,\\mathbb{J}`` of the
 same reference.
 """
 function surface_stiffness(ell::Ellipsoid{3}, κs, μs)
@@ -81,10 +81,10 @@ end
     equivalent_particle(C_I, spheroid, κs, μs) -> AbstractTens
 
 Stiffness of the *equivalent particle* — the nanoinclusion `C_I` together with
-its interface — of [dormieux2016](@cite):
+its interface — of [dormieux2016](@citet):
 
 ```math
-\\mathbb{C}^{eq}_I = \\mathbb{C}_I + \\mathbb{C}^{int} .
+\\mathbb{C}^{\\mathrm{eq}}_I = \\mathbb{C}_I + \\mathbb{C}^{\\mathrm{int}} .
 ```
 
 The paper's central result is that the strain concentration rule and the
@@ -98,9 +98,9 @@ homogenize(rve, MoriTanaka(), :C)
 ```
 
 Note that the strain average rule is unaffected by the interface, but the
-*stress* average rule is not: the interface contributes ``\\mathbb{C}^{int}:
-\\varepsilon_I`` to the macroscopic stress, which is precisely what using
-``\\mathbb{C}^{eq}`` in the scheme accounts for.
+*stress* average rule is not: the interface contributes ``\\mathbb{C}^{\\mathrm{int}}:
+\\boldsymbol{\\varepsilon}_I`` to the macroscopic stress, which is precisely what using
+``\\mathbb{C}^{\\mathrm{eq}}`` in the scheme accounts for.
 """
 equivalent_particle(C_I::TensND.AbstractTens{4, 3}, ell::Ellipsoid{3}, κs, μs) =
     C_I + surface_stiffness(ell, κs, μs)

@@ -1,15 +1,21 @@
 # [The finite Eshelby cell with a corrected boundary condition](@id th-corrected-cell)
 
+!!! info "Before this page"
+    [Localization and contribution tensors](@ref th-localization), whose
+    concentration tensor is what the finite cell returns, and
+    [Crack opening displacement and compliance](@ref th-cod-tensors), whose
+    tensor ``\boldsymbol{B}`` the crack declination computes.
+
 When a morphology has no closed-form Eshelby solution, its response can be
 computed on a **finite** cell — the inclusion inside a ball of matrix of radius
 ``R`` — and fed to the schemes through the
 [custom-inclusion contract](@ref man-custom-inclusions). The difficulty is that
 Eshelby's problem is posed on an *infinite* medium. This page states the
-first-order correction of [adessinaIJES2017](@cite), which removes the
+first-order correction of [adessinaIJES2017](@citet), which removes the
 truncation bias, in the general form and in the two declinations the package
 implements.
 
-## The finite-size bias
+## 1. The finite-size bias
 
 We want the response of an **infinite** medium, but we can only mesh a
 **finite** ball ``\Omega`` of radius ``R``. The obvious boundary condition is
@@ -66,65 +72,71 @@ has to be made large enough for the neglected term to fall below the target
 accuracy. With it, the boundary already knows what the infinite medium would do,
 and `R/a = 5` suffices — the default `radius_ratio` of the finite-element
 backends ([FE inclusions](@ref man-fe-inclusions)) — the price being that
-``\langle p\rangle`` appears on both sides.
+``\langle\boldsymbol\tau\rangle_{\mathcal D}`` appears on both sides.
 
-## The general fixed point
+## 2. The general fixed point
 
 The exact infinite-medium solution is
 
 ```math
-u(x) = E\cdot x + \int_{\mathcal D}\nabla G(x - x') : p(x')\,\mathrm d\Omega',
-\qquad p = \sigma - \mathbb C_0 : \varepsilon ,
+\underline u(\underline x) = \boldsymbol E\cdot\underline x
+  + \int_{\mathcal D}\nabla\boldsymbol G(\underline x - \underline x') : \boldsymbol\tau(\underline x')\,\mathrm d\Omega',
+\qquad \boldsymbol\tau = \boldsymbol\sigma - \mathbb C_0 : \boldsymbol\varepsilon ,
 ```
 
-whose far field, since ``\nabla G(x-x') \to \nabla G(x)`` when
-``\|x\| \gg a``, collapses to a single **force dipole**:
+where ``\boldsymbol G`` is the Green tensor of the reference medium and
+``\boldsymbol\tau`` the polarization. Since
+``\nabla\boldsymbol G(\underline x-\underline x') \to \nabla\boldsymbol G(\underline x)`` when
+``\|\underline x\| \gg a``, the far field collapses to a single **force dipole**:
 
 ```math
-u(x) \;\approx\; E\cdot x + \nabla G(x) : \Bigl(V_{\mathcal D}\,
-      \langle p\rangle_{\mathcal D}\Bigr),
+\underline u(\underline x) \;\approx\; \boldsymbol E\cdot\underline x
+  + \nabla\boldsymbol G(\underline x) : \bigl(V_{\mathcal D}\,\bar{\boldsymbol\tau}\bigr),
 \qquad
-\frac{\bigl\|V_{\mathcal D}\,\nabla G(x):\langle p\rangle\bigr\|}
-     {\|E\cdot x\|} = O\!\left(\frac{V_{\mathcal D}}{\|x\|^{3}}\right).
+\bar{\boldsymbol\tau} = \langle\boldsymbol\tau\rangle_{\mathcal D},
+\qquad
+\frac{\bigl\|V_{\mathcal D}\,\nabla\boldsymbol G(\underline x):\bar{\boldsymbol\tau}\bigr\|}
+     {\|\boldsymbol E\cdot\underline x\|} = O\!\left(\frac{V_{\mathcal D}}{\|\underline x\|^{3}}\right).
 ```
 
-Imposing ``u = E\cdot x`` on a sphere of radius ``R`` therefore leaves an
+Imposing ``\underline u = \boldsymbol E\cdot\underline x`` on a sphere of radius ``R`` therefore leaves an
 ``O\bigl((a/R)^3\bigr)`` bias. Adding the dipole term removes it, at the price of a fixed point,
-because ``\langle p\rangle`` is *itself* an output of the problem.
+because ``\bar{\boldsymbol\tau}`` is *itself* an output of the problem.
 
-Split by linearity into two boundary-value problems on the truncated cell:
+Split by linearity into two boundary-value problems on the truncated cell, the
+first loaded by the remote field and the second by the dipole:
 
 ```math
 \begin{aligned}
-u|_{\partial\Omega} &= E\cdot x
+\underline u|_{\partial\Omega} &= \boldsymbol E\cdot\underline x
   &&\Longrightarrow&
-  \langle\varepsilon^E\rangle_{\mathcal D} &= \mathbb A^E : E, &
-  \langle\sigma^E\rangle_{\mathcal D} &= \mathbb B^E : E, \\
-u|_{\partial\Omega} &= \nabla G(x) : (V_{\mathcal D}\,P)
+  \langle\boldsymbol\varepsilon^{\mathrm E}\rangle_{\mathcal D} &= \mathbb A^{\mathrm E} : \boldsymbol E, &
+  \langle\boldsymbol\sigma^{\mathrm E}\rangle_{\mathcal D} &= \mathbb B^{\mathrm E} : \boldsymbol E, \\
+\underline u|_{\partial\Omega} &= \nabla\boldsymbol G(\underline x) : (V_{\mathcal D}\,\bar{\boldsymbol\tau})
   &&\Longrightarrow&
-  \langle\varepsilon^p\rangle_{\mathcal D} &= \mathbb A^p : P, &
-  \langle\sigma^p\rangle_{\mathcal D} &= \mathbb B^p : P .
+  \langle\boldsymbol\varepsilon^{\tau}\rangle_{\mathcal D} &= \mathbb A^{\tau} : \bar{\boldsymbol\tau}, &
+  \langle\boldsymbol\sigma^{\tau}\rangle_{\mathcal D} &= \mathbb B^{\tau} : \bar{\boldsymbol\tau} .
 \end{aligned}
 ```
 
-Superposing and demanding that ``P`` be the polarization it generates,
+Superposing and demanding that ``\bar{\boldsymbol\tau}`` be the polarization it generates,
 
 ```math
-P = \langle\sigma - \mathbb C_0 : \varepsilon\rangle_{\mathcal D}
-  = (\mathbb B^E - \mathbb C_0 : \mathbb A^E) : E
-  + (\mathbb B^p - \mathbb C_0 : \mathbb A^p) : P ,
+\bar{\boldsymbol\tau} = \langle\boldsymbol\sigma - \mathbb C_0 : \boldsymbol\varepsilon\rangle_{\mathcal D}
+  = (\mathbb B^{\mathrm E} - \mathbb C_0 : \mathbb A^{\mathrm E}) : \boldsymbol E
+  + (\mathbb B^{\tau} - \mathbb C_0 : \mathbb A^{\tau}) : \bar{\boldsymbol\tau} ,
 ```
 
-which is *linear* in ``P`` and solves in closed form:
+which is *linear* in ``\bar{\boldsymbol\tau}`` and solves in closed form:
 
 ```math
 \boxed{\;
-\mathbb X = \bigl[\mathbb I - (\mathbb B^p - \mathbb C_0 : \mathbb A^p)\bigr]^{-1}
-            : (\mathbb B^E - \mathbb C_0 : \mathbb A^E),
+\mathbb X = \bigl[\mathbb I - (\mathbb B^{\tau} - \mathbb C_0 : \mathbb A^{\tau})\bigr]^{-1}
+            : (\mathbb B^{\mathrm E} - \mathbb C_0 : \mathbb A^{\mathrm E}),
 \qquad
-\mathbb A = \mathbb A^E + \mathbb A^p : \mathbb X,
+\mathbb A = \mathbb A^{\mathrm E} + \mathbb A^{\tau} : \mathbb X,
 \qquad
-\mathbb B = \mathbb B^E + \mathbb B^p : \mathbb X. \;}
+\mathbb B = \mathbb B^{\mathrm E} + \mathbb B^{\tau} : \mathbb X. \;}
 ```
 
 Two declinations are implemented, and they differ only in what carries the
@@ -134,7 +146,7 @@ polarization:
 | :--- | :--- | :--- | :--- |
 | unknown | ``\mathbb X`` on the Kelvin basis | ``\boldsymbol{B}_\infty`` | ``\mathbb A`` itself |
 | solves | 6 + 6, or 2 + 2 per Fourier mode | 3 + 3 | 6 + 6, or 2 + 2 and 1 + 1 per mode |
-| closes on | ``\mathbb A = \mathbb A^E + \mathbb A^p:\mathbb X`` | ``\boldsymbol{B}_\infty = (\boldsymbol{1} - \boldsymbol{B}_u)^{-1}\cdot\boldsymbol{B}_s`` | ``\mathbb A = (\mathbb I - \mathbb A_u:\mathbb F)^{-1}:\mathbb A_s`` |
+| closes on | ``\mathbb A = \mathbb A^{\mathrm E} + \mathbb A^{\tau}:\mathbb X`` | ``\boldsymbol{B}_\infty = (\boldsymbol{1} - \boldsymbol{B}_u)^{-1}\cdot\boldsymbol{B}_s`` | ``\mathbb A = (\mathbb I - \mathbb A_u:\mathbb F)^{-1}:\mathbb A_s`` |
 | used by | [`FEExcenteredSphere`](@ref app-recycled-aggregate), [`FEAxiLayeredSpheroid`](@ref tut-axi-layered-spheroid) | [`FEEllipticCrack`](@ref man-fe-inclusions) | [`FESupershapePore`](@ref man-fe-inclusions), [`FEAxiSupershapePore`](@ref app-concave-pores) |
 
 In the axisymmetric case each fixed point lives *inside* one Fourier mode,
@@ -142,45 +154,49 @@ since the dipole of a modal polarization radiates in the same mode — so
 ``\mathbb X`` is ``2\times2`` for mode 0 and a scalar for modes 1 and 2.
 
 
-## The dipole fields, in closed form
+## 3. The dipole fields, in closed form
 
 For an isotropic reference medium both Green functions are closed forms, so the
-boundary data costs nothing. With ``r = \|x\|``, ``\underline{n} = x/r`` and
-``M = V_{\mathcal D} P`` the polarization **moment**, the elastic field is
+boundary data costs nothing. With ``r = \|\underline x\|``, ``\underline{n} = \underline x/r``,
+``\boldsymbol M = V_{\mathcal D}\,\bar{\boldsymbol\tau}`` the polarization **moment**, and
+``\mu_0``, ``\nu_0`` the shear modulus and Poisson ratio of the reference medium,
+the elastic field is
 [`dipole_displacement_iso`](@ref MeanFieldHomogenization.Core.dipole_displacement_iso):
 
 ```math
-u(x) = \frac{\partial G_{ij}}{\partial x_k}(x)\,M_{jk}
-     = \frac{1}{16\pi\mu(1-\nu)r^{2}}
-       \Bigl[-2(1-2\nu)\,M\!\cdot\!\underline{n} + \mathrm{tr}(M)\,\underline{n}
-             - 3(\underline{n}\!\cdot\! M\!\cdot\!\underline{n})\,\underline{n}\Bigr],
+u_i(\underline x) = \frac{\partial G_{ij}}{\partial x_k}(\underline x)\,M_{jk},
+\qquad
+\underline u(\underline x)
+     = \frac{1}{16\pi\mu_0(1-\nu_0)r^{2}}
+       \Bigl[-2(1-2\nu_0)\,\boldsymbol M\!\cdot\!\underline{n} + \mathrm{tr}(\boldsymbol M)\,\underline{n}
+             - 3(\underline{n}\!\cdot\! \boldsymbol M\!\cdot\!\underline{n})\,\underline{n}\Bigr],
 ```
 
 Written out for a symmetric moment, the gradient of the Kelvin solution is
 
 ```math
-G_{ij}(\underline{x}) = \frac{A}{r}\bigl[(3-4\nu)\,\delta_{ij} + n_i n_j\bigr],
+G_{ij}(\underline{x}) = \frac{A}{r}\bigl[(3-4\nu_0)\,\delta_{ij} + n_i n_j\bigr],
 \qquad
 \frac{\partial G_{ij}}{\partial x_k}
-  = \frac{A}{r^{2}}\bigl[-(3-4\nu)\,\delta_{ij}n_k + \delta_{ik}n_j + \delta_{jk}n_i - 3\,n_i n_j n_k\bigr],
-\qquad A = \frac{1}{16\pi\mu(1-\nu)} ,
+  = \frac{A}{r^{2}}\bigl[-(3-4\nu_0)\,\delta_{ij}n_k + \delta_{ik}n_j + \delta_{jk}n_i - 3\,n_i n_j n_k\bigr],
+\qquad A = \frac{1}{16\pi\mu_0(1-\nu_0)} ,
 ```
 
 and the transport one, with ``G = 1/(4\pi k_0 r)``,
 
 ```math
 T(\underline{x}) = \frac{\partial G}{\partial x_k}(\underline{x})\,M_k
-     = -\frac{\boldsymbol M\cdot\underline{x}}{4\pi k_0 r^{3}} .
+     = -\frac{\underline M\cdot\underline{x}}{4\pi k_0 r^{3}} ,
 ```
 
 These are [`green_gradient_iso`](@ref MeanFieldHomogenization.Core.green_gradient_iso) and
 [`dipole_displacement_iso`](@ref MeanFieldHomogenization.Core.dipole_displacement_iso).
 They are also why the reference medium must be **isotropic**: for arbitrary
-anisotropy ``\nabla\mathbb G`` would come from the Willis integral, or
+anisotropy ``\nabla\boldsymbol G`` would come from the Willis integral, or
 from the Pan–Chou closed form in the transversely isotropic case, neither of
 which is implemented.
 
-## The pore declination
+## 4. The pore declination
 
 ### A cavity is its own polarization source
 
@@ -189,15 +205,15 @@ cavity that quantity is not something extra to compute: it *is* the answer.
 A cavity carries no stress, so
 
 ```math
-\underline{\underline{P}}
-  = \langle \underline{\underline\sigma}
-      - \mathbb C_0 : \underline{\underline\varepsilon} \rangle_{\mathcal D}
-  = -\,\mathbb C_0 : \langle \underline{\underline\varepsilon} \rangle_{\mathcal D}
-  = -\,\mathbb C_0 : \mathbb A : \underline{\underline E},
+\bar{\boldsymbol\tau}
+  = \langle \boldsymbol\sigma
+      - \mathbb C_0 : \boldsymbol\varepsilon \rangle_{\mathcal D}
+  = -\,\mathbb C_0 : \langle \boldsymbol\varepsilon \rangle_{\mathcal D}
+  = -\,\mathbb C_0 : \mathbb A : \boldsymbol E,
 ```
 
 the very tensor being measured. So the two-stage construction — solve for
-``\mathbb A^E``, solve for ``\mathbb A^p``, then invert for ``\mathbb X`` —
+``\mathbb A^{\mathrm E}``, solve for ``\mathbb A^{\tau}``, then invert for ``\mathbb X`` —
 collapses. Writing ``\mathbb A_s`` for the response to the remote field alone
 and ``\mathbb A_u`` for the response to a unit dipole, the loop closes in one
 inversion:
@@ -221,12 +237,13 @@ inclusion and lets the package's exact identities collapse to ``\mathbb N =
 
 ``\mathbb F`` carries a minus in both physics, and the transport one looks like
 it should not. It is structural. Elasticity pairs
-``\underline{\underline\sigma} = +\,\mathbb C_0 : \underline{\underline\varepsilon}``
-with a polarization ``\underline{\underline P}``, while transport pairs
-``\underline q = -\,k_0 \underline\nabla T``: splitting the flux as
-``-\underline q = k_0\underline\nabla T + \underline{\pi}'`` gives
-``\underline{\pi}' = -\underline{\pi}``, and it is ``\underline{\pi}'`` that
-belongs with the temperature ``T = \underline\nabla G\cdot \underline M``.
+``\boldsymbol\sigma = +\,\mathbb C_0 : \boldsymbol\varepsilon``
+with a polarization ``\boldsymbol\tau``, while transport pairs
+``\underline q = -\,k_0 \nabla T``: splitting the flux as
+``\underline q = -k_0\nabla T + \underline{\pi}`` makes the polarization of the
+analogy ``\boldsymbol\sigma \equiv -\underline q`` the opposite one,
+``\underline\tau_q = -\underline{\pi}``, and it is ``\underline\tau_q`` that
+belongs with the temperature ``T = \nabla G\cdot \underline M``.
 
 The failure mode is worth remembering, because it does not look like a sign
 error. **A wrong sign leaves exactly twice the truncation bias instead of
@@ -258,9 +275,9 @@ macroscopic loading excites exactly one of them:
 
 | loading | mode | what it yields |
 |:--|:--|:--|
-| ``\varepsilon = (\underline e_1\otimes\underline e_1 + \underline e_2\otimes\underline e_2)/\sqrt2``, ``\underline e_3\otimes\underline e_3`` | 0 | a ``2\times2`` block |
-| ``\varepsilon = \underline e_1 \otimes^{\mathrm s} \underline e_3`` | 1 | a scalar |
-| ``\varepsilon = \underline e_1\otimes\underline e_1 - \underline e_2\otimes\underline e_2`` | 2 | a scalar |
+| ``\boldsymbol\varepsilon = (\underline e_1\otimes\underline e_1 + \underline e_2\otimes\underline e_2)/\sqrt2``, ``\underline e_3\otimes\underline e_3`` | 0 | a ``2\times2`` block |
+| ``\boldsymbol\varepsilon = \underline e_1 \stackrel{s}{\otimes} \underline e_3`` | 1 | a scalar |
+| ``\boldsymbol\varepsilon = \underline e_1\otimes\underline e_1 - \underline e_2\otimes\underline e_2`` | 2 | a scalar |
 | ``\nabla T = \underline e_3`` / ``\underline e_1`` | 0 / 1 | a scalar each |
 
 Three from the ``2\times2`` block, one from mode 1, one from mode 2: exactly the
@@ -274,13 +291,13 @@ polarization radiates in the same mode, so ``\mathbb X`` is ``2\times2`` for
 mode 0 and a scalar for modes 1 and 2.
 
 **And the averaging changes.** A cavity has no interior, so ``\langle
-\varepsilon\rangle_{\mathcal D}`` is a boundary integral — over the meridian
+\boldsymbol\varepsilon\rangle_{\mathcal D}`` is a boundary integral — over the meridian
 trace of the wall, with the measure ``\rho\,\mathrm dl``.
 
 There is a tempting way round it. The divergence identity on the matrix,
 
 ```math
-\int_{\mathcal M} \varepsilon(\underline u)\,\mathrm dV
+\int_{\mathcal M} \boldsymbol\varepsilon(\underline u)\,\mathrm dV
   = \oint_{\partial\Omega} (\underline u \otimes \underline n)^{\mathrm s}\,\mathrm dS
   - \oint_{\partial\mathcal D} (\underline u \otimes \underline n_{\mathcal D})^{\mathrm s}\,\mathrm dS ,
 ```
@@ -303,10 +320,10 @@ because it shrinks both together.
 
 !!! note "The solid declination in two dimensions, and its region count"
     An `N`-layer spheroid is the *solid* declination of the same correction —
-    ``𝔹ᴱ`` and ``𝔹ᵖ`` are not zero, and both outputs of the fixed point are
+    ``\mathbb B^{\mathrm E}`` and ``\mathbb B^{\tau}`` are not zero, and both outputs of the fixed point are
     used, the second being gate B's stress side. So the cavity was the easy
     case: it degenerates the correction to
-    ``𝕃 = (𝕀 − 𝕃_u:𝔽)^{-1}:𝕃_s`` with one useful output, where a heterogeneous
+    ``\mathbb A = (\mathbb I - \mathbb A_u:\mathbb F)^{-1}:\mathbb A_s`` with one useful output, where a heterogeneous
     inclusion carries the pair.
 
     Nothing else changes. The same three modes, the same two families of
@@ -347,9 +364,10 @@ cell is invariant under the group ``\{\operatorname{diag}(\pm1,\pm1,\pm1)\}`` of
 order 8, and an **octant** carries the whole answer.
 
 Each Kelvin load case is an eigenvector of that group: writing
-``\mathbb R_k \underline{\underline E} \mathbb R_k = \chi_k
-\underline{\underline E}``, uniqueness gives ``\underline u(\mathbb R_k
-\underline x) = \chi_k \mathbb R_k \underline u(\underline x)``, so on the plane
+``\boldsymbol R_k\cdot\boldsymbol E\cdot\boldsymbol R_k = \chi_k
+\boldsymbol E``, with ``\boldsymbol R_k`` the reflection across the plane
+``x_k = 0``, uniqueness gives ``\underline u(\boldsymbol R_k\cdot
+\underline x) = \chi_k \boldsymbol R_k\cdot\underline u(\underline x)``, so on the plane
 ``x_k = 0``
 
 | ``\chi_k`` | condition | pinned |
@@ -365,9 +383,9 @@ into three, so the octant assembles the stiffness once and factorizes it four
 
 **The dipole correction obeys the same law**, and that is what makes the whole
 scheme compatible with an eighth of the cell rather than only its uncorrected
-part. From the closed forms above, ``\mathbb R\,\underline u(\mathbb R
-\underline x; \mathbb \Pi) = \underline u(\underline x; \mathbb R \mathbb \Pi
-\mathbb R)``, exactly the law obeyed by ``\underline{\underline E}\cdot
+part. From the closed forms above, ``\boldsymbol R\cdot\underline u(\boldsymbol R\cdot
+\underline x; \boldsymbol M) = \underline u(\underline x; \boldsymbol R\cdot\boldsymbol M
+\cdot\boldsymbol R)``, exactly the law obeyed by ``\boldsymbol E\cdot
 \underline x``; since the driver drives both families with the same Kelvin
 tensor, remote load and dipole share a ``\chi`` for every case.
 
@@ -375,19 +393,19 @@ One trap, and it is not a factor of eight. Reflecting the surface integral over
 the eight octants gives
 
 ```math
-\int_{\partial I} (\underline u \otimes \underline n)^{\mathrm s}\,\mathrm dS
-  = \sum_{g} \chi(g)\, g\, I_{\text{oct}}\, g
-  = 8\,\mathbb P_\chi (I_{\text{oct}}),
+\int_{\partial\mathcal D} (\underline u \otimes \underline n)^{\mathrm s}\,\mathrm dS
+  = \sum_{\boldsymbol g} \chi(\boldsymbol g)\, \boldsymbol g\cdot\boldsymbol I_{\mathrm{oct}}\cdot\boldsymbol g
+  = 8\,\mathbb P_\chi : \boldsymbol I_{\mathrm{oct}},
 ```
 
 so the components whose parity differs from the load case **cancel between
 octants** rather than vanishing in each. They are not small in
-``I_{\text{oct}}``; they are spurious, and multiplying by eight without
+``\boldsymbol I_{\mathrm{oct}}``, the integral over one octant; they are spurious, and multiplying by eight without
 projecting keeps them at full amplitude. The Kelvin basis diagonalizes the group
 action, so ``\mathbb P_\chi`` is a diagonal mask — and the couplings it removes
 are exactly the ones a full cell finds only as mesh noise.
 
-## The crack declination (3 + 3)
+## 5. The crack declination (3 + 3)
 
 ### The crack radiates as an elastic dipole
 
@@ -411,10 +429,10 @@ so the *correct* far field is
 ```math
 \underline{u}(\underline{x})\;\underset{\|\underline{x}\|\to\infty}{\approx}\;
   \boldsymbol{E}\cdot\underline{x}
-  \;-\; b\,S_f\,\bigl(\nabla\mathbb G(\underline{x}):\mathbb C_0\cdot\underline{n}\bigr)\cdot\underline{U} .
+  \;-\; b\,S_f\,\bigl(\nabla\boldsymbol G(\underline{x}):\mathbb C_0\cdot\underline{n}\bigr)\cdot\underline{U} .
 ```
 
-The idea of [adessinaIJES2017](@cite) is to put that second term **into the boundary data**.
+The idea of [adessinaIJES2017](@citet) is to put that second term **into the boundary data**.
 
 ### Closing the loop
 
@@ -427,7 +445,7 @@ three problems on the same mesh:
 | Family | Boundary condition | Yields |
 |:--|:--|:--|
 | **traction**, ``\boldsymbol\Sigma^{(i)}\cdot\underline{n} = \underline{e}_i`` | ``\underline{u}\big\|_{\partial\Omega} = (\mathbb S_0:\boldsymbol\Sigma^{(i)})\cdot\underline{x}`` | columns of ``\boldsymbol{B}_s`` |
-| **dipole**, unit intensity ``\underline{e}_m`` | ``\underline{u}\big\|_{\partial\Omega} = -b\,S_f\bigl(\nabla\mathbb G:\mathbb C_0\cdot\underline{n}\bigr)\cdot\underline{e}_m`` | columns of ``\boldsymbol{B}_u`` |
+| **dipole**, unit intensity ``\underline{e}_m`` | ``\underline{u}\big\|_{\partial\Omega} = -b\,S_f\bigl(\nabla\boldsymbol G:\mathbb C_0\cdot\underline{n}\bigr)\cdot\underline{e}_m`` | columns of ``\boldsymbol{B}_u`` |
 
 ``\boldsymbol{B}_s`` is the COD tensor of the *truncated* cell; ``\boldsymbol{B}_u`` is
 its response to the crack's own far field. Superposing,
@@ -462,3 +480,14 @@ the opening profile:
 \underline{U} = \frac{1}{S_f\,b}\left(\int_{\Gamma^+}\underline{u}\,\mathrm dS - \int_{\Gamma^-}\underline{u}\,\mathrm dS\right).
 ```
 
+## Where to go next
+
+The correction is put to the test in
+[Validating a finite-element crack](@ref tut-fe-crack), which measures what the
+dipole term buys against the closed form of the opening tensor. The pore
+declination of §4 is used by
+[A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate),
+and the calls that run these solves are described in
+[Finite-element inclusions](@ref man-fe-inclusions). The last page of the
+chapter, [Elliptic integrals](@ref th-elliptic-integrals), documents the special
+functions on which the closed forms of the foundations rely.

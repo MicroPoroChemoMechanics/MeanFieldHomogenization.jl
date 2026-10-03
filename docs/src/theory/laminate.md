@@ -1,5 +1,12 @@
 # [Periodic multilayer — the laminate cell](@id th-laminate)
 
+!!! info "Before this page"
+    [Hill polarization tensors](@ref th-hill-tensors), whose flat limit is the
+    layer tensor ``\mathbb{P}_i`` used below, the Voigt and Reuss bounds of
+    [Homogenization schemes](@ref th-homogenization) §2, which the laminate
+    saturates, and the interface models of
+    [Layered sphere](@ref th-layered-sphere) §3, reused here on a plane.
+
 A **laminate** is a periodic stack of parallel layers: a unit cell of
 *periodic* homogenization, with no matrix, no auxiliary Eshelby problem and
 no reference medium. Its effective behavior is **exact and in closed form**,
@@ -19,7 +26,7 @@ The derivation below is written for a general anisotropic stack, in
 elasticity and in transport, with the localization tensors and the imperfect
 interfaces.
 
-## Setting
+## 1. Setting
 
 Layers are bounded by parallel planes of common unit normal ``\underline{n}``.
 The vector plane ``\mathcal{P}\perp\underline{n}`` is spanned by orthonormal
@@ -65,7 +72,7 @@ macroscopic stress is the average
 ``\boldsymbol{\Sigma} = \tfrac{1}{L}\int_0^L
 \boldsymbol{\sigma}(\underline{x}+z\underline{n})\,\mathrm{d}z``.
 
-## The two continuity conditions
+## 2. The two continuity conditions
 
 Invariance in the plane makes every field depend on
 ``\underline{x}\cdot\underline{n}`` alone, so ``\underline{\mathrm{div}}\,
@@ -98,7 +105,7 @@ The two conditions are complementary — three stress components are prescribed
 across the layers, three strain components are prescribed within them — and
 that split is the whole content of the problem.
 
-## In-plane and out-of-plane subspaces
+## 3. In-plane and out-of-plane subspaces
 
 The space of symmetric second-order tensors splits into the tensors *without*
 ``\underline{n}`` and those *with* it. With
@@ -113,7 +120,7 @@ in-plane projector, the two order-4 projectors are
 
 that is, ``\Pi^{\mathcal{O}} = \mathbb{W}_1+\mathbb{W}_6`` and
 ``\Pi^{\mathcal{I}} = \mathbb{W}_2+\mathbb{W}_5`` in the
-[Walpole basis](@ref th-notation) of axis ``\underline{n}``.
+[Walpole basis](@ref th-notation-bases) of axis ``\underline{n}``.
 
 In Kelvin-Mandel components written in the frame
 ``(\underline{\ell},\underline{m},\underline{n})``, this split is a **pure
@@ -151,7 +158,7 @@ every layer, and ``\sigma_{\mathcal{O}}`` is the same in every layer.
     layers, where ``\boldsymbol{K}`` is diagonal — which is exactly why the
     implementation guards it with a test on a *triclinic* stiffness.
 
-## Layer tensors
+## 4. Layer tensors
 
 Injecting ``\boldsymbol{\varepsilon}_i`` into the constitutive law and
 contracting with ``\underline{n}`` gives the traction in terms of
@@ -209,7 +216,7 @@ in-plane **Schur complement** of ``\mathbb{C}_i``. Two consequences used
 throughout: ``\mathbb{P}:\mathbb{C}:\mathbb{P} = \mathbb{P}`` and
 ``\mathbb{Q}:\mathbb{P} = 0``.
 
-## [The pseudo-inverse](@id th-laminate-pinv)
+## [5. The pseudo-inverse](@id th-laminate-pinv)
 
 Averaging the compatibility condition over the cell, ``\langle
 \boldsymbol{\varepsilon}\rangle = \boldsymbol{E}`` requires
@@ -247,34 +254,34 @@ every acoustic tensor ``\boldsymbol{K}_i`` is definite.
     neither `ForwardDiff` nor a symbolic backend, and would in any case be
     wasted on an exactly-rank-3 input.
 
-## Effective stiffness
+## 6. Effective stiffness
 
 Substituting back,
 
 ```math
 \boxed{\;
-\mathbb{C}^{\hom} = \langle\mathbb{Q}\rangle
+\mathbb{C}^{\mathrm{hom}} = \langle\mathbb{Q}\rangle
   + \langle\mathbb{C}:\mathbb{P}\rangle
     : \langle\mathbb{P}\rangle^{\dagger}
     : \langle\mathbb{P}:\mathbb{C}\rangle \; }
 ```
 
 Written on the ``\mathcal{I}/\mathcal{O}`` partition, this collapses to the
-form of [backus1962](@cite), which is what the implementation evaluates —
+form of [backus1962](@citet), which is what the implementation evaluates —
 four block products and two ``3\times3`` inversions per layer, no
 factorization anywhere:
 
 ```math
 \begin{aligned}
-C^{\hom}_{\mathcal{OO}} &= \big\langle C_{\mathcal{OO}}^{-1}\big\rangle^{-1}, \\
-C^{\hom}_{\mathcal{IO}} &= \big\langle C_{\mathcal{IO}}C_{\mathcal{OO}}^{-1}\big\rangle\,
-                            C^{\hom}_{\mathcal{OO}}, \\
-C^{\hom}_{\mathcal{OI}} &= C^{\hom}_{\mathcal{OO}}\,
+C^{\mathrm{hom}}_{\mathcal{OO}} &= \big\langle C_{\mathcal{OO}}^{-1}\big\rangle^{-1}, \\
+C^{\mathrm{hom}}_{\mathcal{IO}} &= \big\langle C_{\mathcal{IO}}C_{\mathcal{OO}}^{-1}\big\rangle\,
+                            C^{\mathrm{hom}}_{\mathcal{OO}}, \\
+C^{\mathrm{hom}}_{\mathcal{OI}} &= C^{\mathrm{hom}}_{\mathcal{OO}}\,
                             \big\langle C_{\mathcal{OO}}^{-1}C_{\mathcal{OI}}\big\rangle, \\
-C^{\hom}_{\mathcal{II}} &= \big\langle C_{\mathcal{II}}
+C^{\mathrm{hom}}_{\mathcal{II}} &= \big\langle C_{\mathcal{II}}
                             - C_{\mathcal{IO}}C_{\mathcal{OO}}^{-1}C_{\mathcal{OI}}\big\rangle
    + \big\langle C_{\mathcal{IO}}C_{\mathcal{OO}}^{-1}\big\rangle\,
-     C^{\hom}_{\mathcal{OO}}\,
+     C^{\mathrm{hom}}_{\mathcal{OO}}\,
      \big\langle C_{\mathcal{OO}}^{-1}C_{\mathcal{OI}}\big\rangle .
 \end{aligned}
 ```
@@ -282,13 +289,13 @@ C^{\hom}_{\mathcal{II}} &= \big\langle C_{\mathcal{II}}
 Two of these are **exact bound saturations**, valid for arbitrary anisotropy:
 
 ```math
-\big(\underline{n}\cdot\mathbb{C}^{\hom}\cdot\underline{n}\big)^{-1}
+\big(\underline{n}\cdot\mathbb{C}^{\mathrm{hom}}\cdot\underline{n}\big)^{-1}
   = \sum_i f_i \big(\underline{n}\cdot\mathbb{C}_i\cdot\underline{n}\big)^{-1}
 \quad\text{(Reuss, out of plane)},
 ```
 
 ```math
-\mathrm{Schur}_{\mathcal{I}}(\mathbb{C}^{\hom})
+\mathrm{Schur}_{\mathcal{I}}(\mathbb{C}^{\mathrm{hom}})
   = \sum_i f_i\, \mathrm{Schur}_{\mathcal{I}}(\mathbb{C}_i)
 \quad\text{(Voigt, in plane)} .
 ```
@@ -344,18 +351,18 @@ formulas above reduce to the classical long-wave average of
 [backus1962](@cite):
 
 ```math
-C^{\hom}_{3333} = \Big\langle \tfrac{1}{\lambda+2\mu}\Big\rangle^{-1},
+C^{\mathrm{hom}}_{3333} = \Big\langle \tfrac{1}{\lambda+2\mu}\Big\rangle^{-1},
 \qquad
-C^{\hom}_{2323} = \Big\langle \tfrac{1}{\mu}\Big\rangle^{-1},
+C^{\mathrm{hom}}_{2323} = \Big\langle \tfrac{1}{\mu}\Big\rangle^{-1},
 \qquad
-C^{\hom}_{1212} = \big\langle \mu \big\rangle,
+C^{\mathrm{hom}}_{1212} = \big\langle \mu \big\rangle,
 ```
 
 ```math
-C^{\hom}_{1133} = \Big\langle \tfrac{1}{\lambda+2\mu}\Big\rangle^{-1}
+C^{\mathrm{hom}}_{1133} = \Big\langle \tfrac{1}{\lambda+2\mu}\Big\rangle^{-1}
                   \Big\langle \tfrac{\lambda}{\lambda+2\mu}\Big\rangle,
 \qquad
-C^{\hom}_{1111} = \Big\langle \tfrac{4\mu(\lambda+\mu)}{\lambda+2\mu}\Big\rangle
+C^{\mathrm{hom}}_{1111} = \Big\langle \tfrac{4\mu(\lambda+\mu)}{\lambda+2\mu}\Big\rangle
   + \Big\langle \tfrac{1}{\lambda+2\mu}\Big\rangle^{-1}
     \Big\langle \tfrac{\lambda}{\lambda+2\mu}\Big\rangle^{2} .
 ```
@@ -365,28 +372,28 @@ arithmetic (Voigt) one — the two saturations above, read off a closed form.
 `scripts/38_laminate_symbolic.jl` derives these from the code itself, with
 `SymPy`.
 
-## Localization
+## 7. Localization
 
-Since ``\boldsymbol{\Sigma} = \mathbb{C}^{\hom}:\boldsymbol{E}``, the layer
+Since ``\boldsymbol{\Sigma} = \mathbb{C}^{\mathrm{hom}}:\boldsymbol{E}``, the layer
 strain follows directly:
 
 ```math
 \boldsymbol{\varepsilon}_i = \mathbb{A}_i : \boldsymbol{E},
 \qquad
-\mathbb{A}_i = \mathbb{I} + \mathbb{P}_i : (\mathbb{C}^{\hom}-\mathbb{C}_i),
+\mathbb{A}_i = \mathbb{I} + \mathbb{P}_i : (\mathbb{C}^{\mathrm{hom}}-\mathbb{C}_i),
 \qquad
 \sum_i f_i\,\mathbb{A}_i = \mathbb{I},
 ```
 
 and the layer stress from
-``\mathbb{B}_i = \mathbb{C}_i : \mathbb{A}_i : (\mathbb{C}^{\hom})^{-1}``,
+``\mathbb{B}_i = \mathbb{C}_i : \mathbb{A}_i : (\mathbb{C}^{\mathrm{hom}})^{-1}``,
 with ``\sum_i f_i\,\mathbb{B}_i = \mathbb{I}``. Because ``\mathbb{P}_i`` is
 out-of-plane, ``\mathbb{A}_i`` has an in-plane block equal to the identity and
 a vanishing in-plane/out-of-plane coupling — the macroscopic in-plane strain
 reaches every layer unchanged, which is the compatibility condition read
 backwards. (These tensors are absent from the original note.)
 
-## Transport
+## 8. Transport
 
 The transposition is immediate: the in-plane gradient is continuous, the
 normal flux is continuous. With ``\boldsymbol{K}_i`` the conductivity (or
@@ -397,16 +404,16 @@ whole algebra carries over with the **one-dimensional** out-of-plane
 subspace, where the pseudo-inverse is a scalar reciprocal:
 
 ```math
-\frac{1}{k^{\hom}_{nn}} = \sum_i \frac{f_i}{k_{i,nn}},
+\frac{1}{k^{\mathrm{hom}}_{nn}} = \sum_i \frac{f_i}{k_{i,nn}},
 \qquad
-K^{\hom}_{\mathcal{II}} = \sum_i f_i\,
+K^{\mathrm{hom}}_{\mathcal{II}} = \sum_i f_i\,
   \Big(K_{i,\mathcal{II}} - \frac{K_{i,\mathcal{I}n}K_{i,n\mathcal{I}}}{k_{i,nn}}\Big)
   + \ldots
 ```
 
 — series across the layers, parallel within them.
 
-## [Imperfect interfaces](@id th-laminate-interfaces)
+## [9. Imperfect interfaces](@id th-laminate-interfaces)
 
 The four interface models of the [layered sphere](@ref th-layered-sphere) are
 reused unchanged; a planar interface is simply the curvature-free case, and
@@ -426,7 +433,7 @@ spherical-harmonic recurrence of the layered sphere only closes if the jump
 conditions share the symmetry of the geometry, which is why its interfaces
 carry two scalars each. A plane has a normal and an arbitrary in-plane
 texture, so ``\boldsymbol{\mathcal{K}}`` may be any symmetric second-order
-compliance and ``\mathbb{C}^{s}`` any 2-D surface stiffness (six independent
+compliance and ``\mathbb{C}^{\mathrm s}`` any 2-D surface stiffness (six independent
 coefficients) — the formulas below are written for the general case, and the
 implementation provides both a scalar and a tensor-valued type per family. The
 primal *transport* condition ``[\![T]\!] = \rho\,q_n`` relates two scalars
@@ -449,60 +456,60 @@ contributes to ``\langle\mathbb{P}\rangle`` **and to nothing else**:
 
 ```math
 \langle\mathbb{P}\rangle \;\longleftarrow\;
-  \sum_i f_i\,\mathbb{P}_i + \frac{1}{L}\sum_j \mathbb{P}^{\rm int}_j ,
+  \sum_i f_i\,\mathbb{P}_i + \frac{1}{L}\sum_j \mathbb{P}^{\mathrm{int}}_j ,
 \qquad
-\mathbb{P}^{\rm int} = \underline{n}\stackrel{s}{\otimes}
+\mathbb{P}^{\mathrm{int}} = \underline{n}\stackrel{s}{\otimes}
   \boldsymbol{\mathcal{K}}\stackrel{s}{\otimes}\underline{n} .
 ```
 
 The out-of-plane oracle therefore becomes, still exactly,
 
 ```math
-\big(\underline{n}\cdot\mathbb{C}^{\hom}\cdot\underline{n}\big)^{-1}
+\big(\underline{n}\cdot\mathbb{C}^{\mathrm{hom}}\cdot\underline{n}\big)^{-1}
   = \sum_i f_i \big(\underline{n}\cdot\mathbb{C}_i\cdot\underline{n}\big)^{-1}
   + \frac{1}{L}\sum_j \boldsymbol{\mathcal{K}}_j ,
 ```
 
-while the in-plane oracle is left untouched. Limits: ``k\to0`` recovers
-perfect bonding, ``k\to\infty`` decouples the layers
-(``\underline{n}\cdot\mathbb{C}^{\hom}\cdot\underline{n}\to\boldsymbol{0}``).
+while the in-plane oracle is left untouched. Limits: ``\boldsymbol{\mathcal{K}}\to\boldsymbol{0}``
+recovers perfect bonding, an unbounded ``\boldsymbol{\mathcal{K}}`` decouples the layers
+(``\underline{n}\cdot\mathbb{C}^{\mathrm{hom}}\cdot\underline{n}\to\boldsymbol{0}``).
 The same statement in transport reads
-``1/k^{\hom}_{nn} = \sum_i f_i/k_{i,nn} + \sum_j \rho_j/L`` — the interfacial
+``1/k^{\mathrm{hom}}_{nn} = \sum_i f_i/k_{i,nn} + \sum_j \rho_j/L`` — the interfacial
 (Kapitza) resistances simply add to the series law.
 
 ### Dual: a surface stiffness
 
 Here the flat geometry does something the sphere does not. A Gurtin-Murdoch
 membrane carries a surface stress
-``\boldsymbol{\sigma}^s = \lambda_s\,\mathrm{tr}(\boldsymbol{\varepsilon}^s)
-\boldsymbol{p} + 2\mu_s\,\boldsymbol{\varepsilon}^s``, and the traction jump
+``\boldsymbol{\sigma}^{\mathrm s} = \lambda^{\mathrm s}\,\mathrm{tr}(\boldsymbol{\varepsilon}^{\mathrm s})
+\boldsymbol{p} + 2\mu^{\mathrm s}\,\boldsymbol{\varepsilon}^{\mathrm s}``, and the traction jump
 it produces is ``[\![\boldsymbol{\sigma}\cdot\underline{n}]\!] =
--\mathrm{div}_s\,\boldsymbol{\sigma}^s``. On a **plane** interface with a
+-\mathrm{div}_s\,\boldsymbol{\sigma}^{\mathrm s}``. On a **plane** interface with a
 uniform in-plane strain this divergence vanishes: *there is no traction jump
 at all*. The surface stress is driven by the in-plane strain, which is
 continuous and equal to ``\boldsymbol{E}``, so it adds straight to the
 macroscopic stress:
 
 ```math
-\mathbb{C}^{\hom} \;\longleftarrow\;
-  \mathbb{C}^{\hom} + \frac{1}{L}\sum_j \mathbb{C}^{s}_j ,
+\mathbb{C}^{\mathrm{hom}} \;\longleftarrow\;
+  \mathbb{C}^{\mathrm{hom}} + \frac{1}{L}\sum_j \mathbb{C}^{\mathrm s}_j ,
 ```
 
-acting in the in-plane block alone. With ``\kappa_s = \lambda_s+\mu_s`` the
+acting in the in-plane block alone. With ``\kappa^{\mathrm s} = \lambda^{\mathrm s}+\mu^{\mathrm s}`` the
 surface dilatation modulus (the convention of `LayeredSpheres` and of Echoes'
-`DUALDISC`), the in-plane Mandel block of ``\mathbb{C}^s`` is
+`DUALDISC`), the in-plane Mandel block of ``\mathbb{C}^{\mathrm s}`` is
 
 ```math
 \begin{pmatrix}
-\kappa_s+\mu_s & \kappa_s-\mu_s & 0\\
-\kappa_s-\mu_s & \kappa_s+\mu_s & 0\\
-0 & 0 & 2\mu_s
+\kappa^{\mathrm s}+\mu^{\mathrm s} & \kappa^{\mathrm s}-\mu^{\mathrm s} & 0\\
+\kappa^{\mathrm s}-\mu^{\mathrm s} & \kappa^{\mathrm s}+\mu^{\mathrm s} & 0\\
+0 & 0 & 2\mu^{\mathrm s}
 \end{pmatrix},
 ```
 
-so ``C^{\hom}_{1212}`` gains exactly ``\mu_s/L`` and the out-of-plane response
+so ``C^{\mathrm{hom}}_{1212}`` gains exactly ``\mu^{\mathrm s}/L`` and the out-of-plane response
 is untouched. In transport, a highly conductive surface layer adds
-``k_s(\boldsymbol{1}-\underline{n}\otimes\underline{n})/L`` to the in-plane
+``k^{\mathrm s}(\boldsymbol{1}-\underline{n}\otimes\underline{n})/L`` to the in-plane
 conductivity.
 
 The two families are therefore *complementary*: the primal one moves the
@@ -510,7 +517,7 @@ out-of-plane law and leaves the in-plane one alone, the dual one does the
 reverse. That is what makes the laminate the sharpest available check of the
 package's interface conventions.
 
-## Ageing viscoelasticity
+## 10. Ageing viscoelasticity
 
 The whole solution is products of Kelvin-Mandel matrices and one inversion
 restricted to the out-of-plane subspace. Replacing each scalar by a
@@ -522,7 +529,7 @@ becomes `volterra_inverse` on the out-of-plane restriction. The elastic limit
 — a Heaviside law per layer — returns the elastic laminate in every diagonal
 time block, and the two exact saturations survive the transposition.
 
-## Relation to the rest of the package
+## 11. Relation to the rest of the package
 
 - ``\mathbb{P}_i`` is the flat limit of the [Hill tensor](@ref th-hill-tensors): a
   laminate is what a stack of infinitely flat inclusions becomes when they
@@ -533,9 +540,25 @@ time block, and the two exact saturations survive the transposition.
 - As an [`AbstractHomogenizationCell`](@ref) it takes part in the multiscale
   chain like any `RVE` — see [Multiscale models](@ref man-multiscale).
 
-## References
+## 12. References
 
-The isotropic bilayer closed form is [backus1962](@cite); the flat-inclusion
-limit of the Hill tensor is discussed in [barthelemyIJES2021](@cite); the
-interface models are those of [herveLuanco2014](@cite), specialized to a
+The isotropic bilayer closed form is that of [backus1962](@citet); the flat-inclusion
+limit of the Hill tensor is discussed in [barthelemyIJES2021](@citet); the
+interface models are those of [herveLuanco2014](@citet), specialized to a
 plane.
+
+## Where to go next
+
+The N-body chapter that follows drops the one-site picture of the
+Eshelby-based schemes:
+[Two-inclusion interaction tensors](@ref th-interaction) introduces the tensor
+through which one inclusion acts on another, the ingredient of both N-body
+models. The exact solution of this page is evaluated in the tutorial
+[Periodic multilayer: the exact laminate solution](@ref tut-laminate), and the
+syntax of a laminate cell is in
+[Laminates — periodic multilayer cells](@ref man-laminates).
+
+- [Imperfect interfaces in a laminate, and the size effect](@ref tut-laminate-interfaces)
+  — the interface density of §9 and the size effect it produces.
+- [A creeping laminate: the multilayer in ageing viscoelasticity](@ref tut-laminate-alv)
+  — the transposition of §10 on a creeping stack.

@@ -1,7 +1,12 @@
 # [The coupled poroelastic problem](@id fe-poro-coupling)
 
-What an FE code has to solve once the material returns two fluxes instead of
-one, and what is integrated in time. The homogenized coefficients themselves —
+!!! info "Before this page"
+    [Scale transition](@ref fe-scale-transition), whose four tangent blocks are
+    assembled below, and [Poromechanics](@ref manual-poromechanics), where the
+    Biot tensor and modulus are obtained from a drained stiffness.
+
+This page sets out what an FE code has to solve once the material returns two
+fluxes instead of one, and what is integrated in time. The homogenized coefficients themselves —
 ``\boldsymbol{B}``, ``M`` — are a property of the microstructure, not of the
 coupling: see [Poromechanics](@ref manual-poromechanics).
 
@@ -21,7 +26,7 @@ Unknowns are the skeleton displacement ``\underline{u}`` and the pore pressure
 closed by the material, which returns **both** fluxes and the permeability:
 
 ```math
-\dot{\boldsymbol{\Sigma}} = \mathbb{C}^{\rm hom} : \dot{\boldsymbol{E}}
+\dot{\boldsymbol{\Sigma}} = \mathbb{C}^{\mathrm{hom}} : \dot{\boldsymbol{E}}
                           - \dot{p}\,\boldsymbol{B},
 \qquad
 \dot{\varphi} = \boldsymbol{B} : \dot{\boldsymbol{E}} + \frac{\dot{p}}{M},
@@ -35,11 +40,11 @@ Not ``\boldsymbol{\Sigma}``, and not the Biot effective stress, but the
 **Terzaghi** one. The loading ``(\boldsymbol{\Sigma}, p)`` splits into a dry
 problem under ``\boldsymbol{\Sigma}' = \boldsymbol{\Sigma} + p\,\boldsymbol{1}``,
 during which fractures open and close, plus a uniform field carrying no strain
-singularity — which cannot move a flat crack ([barthelemyARMA2011](@cite) § 1.1).
+singularity — which cannot move a flat crack [barthelemyARMA2011; § 1.1](@cite).
 In terms of what the FE code hands over,
 
 ```math
-\boldsymbol{\Sigma}' = \mathbb{C}^{\rm hom} : \boldsymbol{E}
+\boldsymbol{\Sigma}' = \mathbb{C}^{\mathrm{hom}} : \boldsymbol{E}
                      + p\,(\boldsymbol{1} - \boldsymbol{B}) ,
 ```
 
@@ -65,14 +70,14 @@ dualized by a test pair ``(\delta\underline{u}, \delta p)``:
 
 ```math
 \begin{aligned}
-\int_\Omega \boldsymbol{\Sigma}_{n+1} : \nabla^{\rm s}\delta\underline{u}
-   \,{\rm d}\Omega
-&= \int_{\Gamma_T} \underline{T}^{\rm g}\cdot\delta\underline{u}\,{\rm d}S ,
+\int_\Omega \boldsymbol{\Sigma}_{n+1} : \nabla^{\mathrm{s}}\delta\underline{u}
+   \,\mathrm{d}\Omega
+&= \int_{\Gamma_T} \underline{T}^{\mathrm{g}}\cdot\delta\underline{u}\,\mathrm{d}S ,
 \\[2pt]
-\int_\Omega (\varphi_{n+1} - \varphi_n)\,\delta p \,{\rm d}\Omega
+\int_\Omega (\varphi_{n+1} - \varphi_n)\,\delta p \,\mathrm{d}\Omega
  + \Delta t \int_\Omega \underline{\nabla}\delta p \cdot
-   \left(\frac{\boldsymbol{K}}{\mu}\cdot\underline{\nabla} p_{n+1}\right){\rm d}\Omega
-&= -\,\Delta t \int_{\Gamma_Q} q^{\rm g}\,\delta p \,{\rm d}S .
+   \left(\frac{\boldsymbol{K}}{\mu}\cdot\underline{\nabla} p_{n+1}\right)\mathrm{d}\Omega
+&= -\,\Delta t \int_{\Gamma_Q} q^{\mathrm{g}}\,\delta p \,\mathrm{d}S .
 \end{aligned}
 ```
 
@@ -85,12 +90,12 @@ plus the Darcy term:
 
 ```math
 \begin{bmatrix}
-\displaystyle\int \nabla^{\rm s}\delta\underline{u} : \mathbb{C}^{\rm hom}
-   : \nabla^{\rm s}\underline{u}
+\displaystyle\int \nabla^{\mathrm{s}}\delta\underline{u} : \mathbb{C}^{\mathrm{hom}}
+   : \nabla^{\mathrm{s}}\underline{u}
 &
--\displaystyle\int (\nabla^{\rm s}\delta\underline{u} : \boldsymbol{B})\, p
+-\displaystyle\int (\nabla^{\mathrm{s}}\delta\underline{u} : \boldsymbol{B})\, p
 \\[6pt]
-\displaystyle\int \delta p\,(\boldsymbol{B} : \nabla^{\rm s}\underline{u})
+\displaystyle\int \delta p\,(\boldsymbol{B} : \nabla^{\mathrm{s}}\underline{u})
 &
 \displaystyle\int \frac{\delta p\, p}{M}
  + \Delta t \int \underline{\nabla}\delta p \cdot
@@ -116,4 +121,8 @@ which is [`mfh_poro_element!`](@ref fe-backends), line for line.
     fluid is not — keeps the pressure block regular. A vanishing ``1/M`` would
     need a Taylor–Hood pair instead.
 
-The worked model is the [ARMA 2011 well test](@ref fe-arma2011).
+## Where to go next
+
+[Fractured permeability](@ref fe-permeability) supplies the permeability
+``\boldsymbol{K}(\omega_i)`` that closes the flow balance above. The worked
+model is the [ARMA 2011 well test](@ref fe-arma2011).

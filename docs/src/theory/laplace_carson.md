@@ -1,5 +1,9 @@
 # [The Laplace-Carson route](@id th-laplace-carson)
 
+!!! info "Before this page"
+    [Homogenization schemes](@ref th-homogenization), whose elastic estimates
+    are evaluated here at each value of the transform variable.
+
 Linear viscoelasticity comes in two flavors, and `MeanFieldHomogenization`
 implements both by entirely separate means.
 
@@ -22,7 +26,7 @@ scheme: the transform route is cheaper and more accurate where it applies, the
 direct route applies always. For a non-ageing material they must agree, and
 [the three-route comparison](@ref tut-freq-vs-time) checks that they do.
 
-## The transform, and why Carson rather than Laplace
+## 1. The transform, and why Carson rather than Laplace
 
 The **Laplace-Carson transform** of a function of time is its Laplace transform
 multiplied by the transform variable:
@@ -61,24 +65,24 @@ The fifth line is the one that does the most work: it is why
 elementary in *both* domains, and hence why 2S2P1D can drive the Volterra route
 and the transform route with no approximation on either side.
 
-## The correspondence principle
+## 2. The correspondence principle
 
 The non-ageing constitutive law is the Stieltjes convolution
 
 ```math
 \boldsymbol{\sigma}(t) = \int_{-\infty}^{t}
-   \mathbb{R}(t - s) : \mathrm{d}\boldsymbol{\varepsilon}(s),
+   \mathbb{C}(t - s) : \mathrm{d}\boldsymbol{\varepsilon}(s),
 ```
 
 whose Laplace-Carson transform is a plain product,
 
 ```math
-\boldsymbol{\sigma}^{*}(p) = \mathbb{R}^{*}(p) : \boldsymbol{\varepsilon}^{*}(p).
+\boldsymbol{\sigma}^{*}(p) = \mathbb{C}^{*}(p) : \boldsymbol{\varepsilon}^{*}(p).
 ```
 
 Transformed, the field equations of the localization problem — equilibrium,
 compatibility, the interface conditions — are *identical* to those of an
-elastic problem whose stiffness is ``\mathbb{R}^{*}(p)``, with `p` a parameter.
+elastic problem whose stiffness is ``\mathbb{C}^{*}(p)``, with ``p`` a parameter.
 Therefore
 
 > every homogenization scheme, applied at fixed `p` to the transformed moduli,
@@ -94,25 +98,25 @@ unchanged, and the only requirement is that they be generic in the scalar type
 [`homogenize_lc`](@ref) is the thin driver around that observation.
 
 !!! warning "It is the *non-ageing* case only"
-    The step from convolution to product needs the kernel to depend on `t - s`
-    alone. A kernel `R(t, t')` with genuine age dependence has no such
+    The step from convolution to product needs the kernel to depend on ``t - s``
+    alone. A kernel ``\mathbb{C}(t, t')`` with genuine age dependence has no such
     factorization, and no amount of care with the transform recovers it. For
     those materials, [`homogenize_alv`](@ref) is the answer, not this page.
 
-## Creep and relaxation: a product here, a convolution there
+## 3. Creep and relaxation: a product here, a convolution there
 
 The single most useful consequence of the transform is that creep and
 relaxation, which are related by a convolution in time,
 
 ```math
-\int_0^{t} \mathbb{R}(t-s) : \mathrm{d}\mathbb{J}(s) = \mathbb{I}
+\int_0^{t} \mathbb{C}(t-s) : \mathrm{d}\mathbb{L}(s) = \mathbb{I}
 \qquad\text{for all } t > 0,
 ```
 
 become exact reciprocals in the transform domain:
 
 ```math
-\mathbb{J}^{*}(p) : \mathbb{R}^{*}(p) = \mathbb{I}.
+\mathbb{L}^{*}(p) : \mathbb{C}^{*}(p) = \mathbb{I}.
 ```
 
 That identity is what [`carson_creep`](@ref) exploits as its default
@@ -124,7 +128,7 @@ Laplace-Carson object: `3k* = E*/(1-2ν*)` is a pointwise identity in `p`, but i
 the time domain the corresponding relation is a Volterra quotient — `ν(t)` does
 not divide, it deconvolves. [`YoungPoisson`](@ref) carries that caveat.
 
-## [Interlacing: why Kelvin ⇄ Maxwell is exact](@id th-interlacing)
+## [4. Interlacing: why Kelvin ⇄ Maxwell is exact](@id th-interlacing)
 
 ![The two chains the conversion moves between: the generalized Maxwell chain, which carries the relaxation function ``R(t)`` on its face, and the generalized Kelvin chain, which carries the creep function ``J(t)``. The retardation times ``\sigma_j`` interlace the relaxation times ``\tau_j``, which is what isolates every root before any arithmetic is done.](../assets/rheology/kelvin_maxwell_conversion.svg)
 
@@ -219,7 +223,7 @@ aesthetic: `Inf` inside a vector that is then sorted, exponentiated and
 differentiated produces `NaN` partials under `ForwardDiff`, whereas `0` behaves
 like any other number.
 
-## Inversion: the hard direction
+## 5. Inversion: the hard direction
 
 Going *to* the transform domain is a quadrature. Coming back is not: the
 transform smooths, so inverting it amplifies whatever is left of the
@@ -269,7 +273,7 @@ fit: on a fractional Zener model the constrained fit is three times more
 accurate on the master curve than the unconstrained one, which puts half its
 moduli below zero.
 
-## Where each piece lives
+## 6. Where each piece lives
 
 | | |
 |:---|:---|
@@ -279,3 +283,16 @@ moduli below zero.
 | fitting a chain to a transform | [`prony_fit_relaxation`](@ref), [`prony_fit_creep`](@ref) |
 | homogenizing on this route | [`homogenize_lc`](@ref) |
 | the ageing alternative | [`homogenize_alv`](@ref) — [theory](@ref th-viscoelasticity) |
+
+## Where to go next
+
+The next page, [Ageing linear viscoelasticity](@ref th-viscoelasticity), treats
+the materials this route cannot, those whose kernel depends on the age at
+loading, by discretizing the Volterra operators directly. The rheological models
+whose transforms are used here are listed in
+[The rheological model library](@ref man-rheological-models).
+
+- [Generalized Kelvin ⇄ generalized Maxwell](@ref tut-kelvin-maxwell) — the
+  exact conversion of §4 carried out on a chain.
+- [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time)
+  — this route checked against the ageing one on a non-ageing material.

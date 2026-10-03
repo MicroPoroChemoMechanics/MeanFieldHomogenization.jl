@@ -33,7 +33,7 @@ abstract type AbstractAssemblyBoundary end
 """
     MixedBC(shape) <: AbstractAssemblyBoundary
 
-Mixed boundary conditions of [brisard2014](@cite): the
+Mixed boundary conditions of [brisard2014](@citet): the
 statistical volume element `shape` — which **must be an ellipsoid**, since the
 derivation leans on Eshelby's theorem for the domain itself — is embedded in an
 infinite medium of the matrix stiffness, subject to a uniform strain at
@@ -66,7 +66,7 @@ receiver.
 The cutoff is a **sphere**, not a box, and that is not cosmetic: Molinari &
 El Mouden's Appendix B proves convergence from the vanishing of the interaction
 kernel integrated over the exterior of a sphere. Their own convergence study
-finds the estimate stable beyond `cutoff ≈ 2 · period`; the default of three
+finds the estimate stable beyond a cutoff of about two periods; the default of three
 periods is comfortably inside that plateau.
 
 `cutoff = 0` reduces every cluster to its own receiver, which is the
@@ -300,7 +300,7 @@ end
 """
     assembly_volume(asm) -> Real
 
-Measure of the cell: the volume of the SVE for [`MixedBC`](@ref), `Lᵈ` for a
+Measure of the cell: the volume of the SVE for [`MixedBC`](@ref), ``L^d`` for a
 [`PeriodicBox`](@ref). It is what turns particle volumes into volume
 fractions.
 """
@@ -324,7 +324,7 @@ particle_volume(asm::ParticleAssembly, name::Symbol) =
 """
     particle_volume_fraction(asm, name) -> Real
 
-Volume fraction `f_a = |Ω_a| / |Ω|` of one particle. Derived from the geometry
+Volume fraction ``f_a = |\\Omega_a|/|\\Omega|`` of one particle. Derived from the geometry
 and the boundary, never stored — so it cannot disagree with the microstructure
 it describes.
 """
@@ -334,7 +334,7 @@ particle_volume_fraction(asm::ParticleAssembly, name::Symbol) =
 """
     inclusion_volume_fraction(asm) -> Real
 
-Total volume fraction of the particles, `Σ_a f_a`.
+Total volume fraction of the particles, ``\\sum_a f_a``.
 """
 inclusion_volume_fraction(asm::ParticleAssembly) =
     sum(particle_volume_fraction(asm, nm) for nm in asm.particle_names; init = 0.0)
@@ -342,7 +342,7 @@ inclusion_volume_fraction(asm::ParticleAssembly) =
 """
     matrix_volume_fraction(asm) -> Real
 
-Volume fraction of the matrix, `1 - Σ_a f_a`.
+Volume fraction of the matrix, ``1 - \\sum_a f_a``.
 """
 matrix_volume_fraction(asm::ParticleAssembly) = 1 - inclusion_volume_fraction(asm)
 

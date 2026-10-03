@@ -33,13 +33,13 @@ Effective conductivity (permeability, diffusivity) of a solid of conductivity
   threshold, and the estimate degenerates.
 - `cracks` — the [`ConductiveCrack`](@ref MeanFieldHomogenization.Cracks.ConductiveCrack) families, each carrying its own
   normal and fracture conductivity.
-- `densities` — the Budiansky crack density ``d_i`` of each family.
+- `densities` — the Budiansky crack density ``\\varepsilon_i`` of each family.
 
 Solves the self-consistent condition
 
 ```math
-\\boldsymbol{K}^{\\rm hom} = k_s\\,\\boldsymbol{1}
-  + \\sum_i \\frac{4\\pi}{3}\\,d_i\\,\\boldsymbol{k}_i(\\boldsymbol{K}^{\\rm hom}) ,
+\\boldsymbol{K}^{\\mathrm{hom}} = k_{\\mathrm s}\\,\\boldsymbol{1}
+  + \\sum_i \\frac{4\\pi}{3}\\,\\varepsilon_i\\,\\boldsymbol{k}_i(\\boldsymbol{K}^{\\mathrm{hom}}) ,
 ```
 
 each family being read **in the effective medium**, which is what lets the

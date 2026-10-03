@@ -1,5 +1,11 @@
 # [Symbolic viscoelasticity: closed forms, derived](@id tut-symbolic-viscoelasticity)
 
+!!! info "Before this page"
+    The tutorial [The rheological model catalog](@ref tut-rheological-models),
+    whose models receive symbolic parameters below, and the theory page
+    [The Laplace-Carson route](@ref th-laplace-carson), where the transform and
+    its inversion are defined.
+
 The [rheology catalog](@ref man-rheological-models) is generic in its scalar
 type, exactly as the tensor algebra is. Two consequences, independent of one
 another:
@@ -200,8 +206,13 @@ zn = zener_maxwell(2.0, 3.0, 1.5)
 ]
 ```
 
-## See also
+## Where to go next
 
-* [the model catalog](@ref man-rheological-models);
-* [choosing a numerical inversion](@ref man-laplace-inversion);
-* [symbolic spheres](@ref tut-symbolic-spheres), for the elastic counterpart.
+The numerical counterpart of the inversion performed here is measured in
+[Choosing a numerical Laplace inversion](@ref tut-laplace-inversion). The last
+tutorial, [Multiscale chaining: explicit and declarative, side by side](@ref tut-laminate-multiscale),
+chains scales and differentiates through them.
+
+- [The rheological model library](@ref man-rheological-models) — the models and their parameters
+- [Numerical Laplace inversion](@ref man-laplace-inversion) — the numerical route
+- [Symbolic spheres: closed forms with SymPy and Symbolics.jl](@ref tut-symbolic-spheres) — the elastic counterpart

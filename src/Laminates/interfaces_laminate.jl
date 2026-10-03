@@ -67,15 +67,15 @@ Imperfect interface of spring type with a **full compliance tensor**:
 
 the traction staying continuous. Generalizes [`SpringInterface`](@ref), whose
 two **stiffnesses** describe the isotropic case
-`𝕂 = n⊗n/kn + (δ − n⊗n)/kt`; here `𝕂` is any symmetric second-order
+``\\boldsymbol{\\mathcal{K}} = \\underline{n}\\otimes\\underline{n}/k_n + (\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n})/k_t``; here ``\\boldsymbol{\\mathcal{K}}`` is any symmetric second-order
 compliance, so the normal and the two tangential directions may each have
 their own compliance and be coupled.
 
-`𝕂` is either a 3×3 matrix — read as components in the **layer frame**
-`(ℓ, m, n)`, the third axis being the normal — or a `TensND` second-order
+``\\boldsymbol{\\mathcal{K}}`` is either a 3×3 matrix — read as components in the **layer frame**
+``(\\underline{\\ell}, \\underline{m}, \\underline{n})``, the third axis being the normal — or a `TensND` second-order
 tensor carrying its own basis, converted on use.
 
-`𝕂 = 0` recovers [`PerfectInterface`](@ref).
+``\\boldsymbol{\\mathcal{K}} = \\boldsymbol{0}`` recovers [`PerfectInterface`](@ref).
 
 ```julia
 # a stiffer normal spring than tangential, plus an in-plane texture
@@ -96,16 +96,16 @@ AnisotropicSpringInterface(K) =
 
 Surface-elastic (Gurtin-Murdoch) interface with a **full in-plane surface
 stiffness**, generalizing [`MembraneInterface`](@ref) — whose two moduli
-`(κs, μs)` describe the isotropic case. A 2-D elastic surface has six
+``(\\kappa^{\\mathrm s}, \\mu^{\\mathrm s})`` describe the isotropic case. A 2-D elastic surface has six
 independent coefficients, all of them available here.
 
-`ℂˢ` is either a 3×3 matrix — the in-plane Kelvin-Mandel block on the basis
-`(ℓ⊗ℓ, m⊗m, √2 ℓ⊗ˢm)`, so that its `[3,3]` entry is `2 C^s_{1212}` — or a
+``\\mathbb{C}^{\\mathrm s}`` is either a 3×3 matrix — the in-plane Kelvin-Mandel block on the basis
+``(\\underline{\\ell}\\otimes\\underline{\\ell}, \\underline{m}\\otimes\\underline{m}, \\sqrt{2}\\,\\underline{\\ell}\\stackrel{s}{\\otimes}\\underline{m})``, so that its `[3,3]` entry is ``2C^{\\mathrm s}_{1212}`` — or a
 `TensND` fourth-order tensor, whose in-plane block in the layer frame is
 taken.
 
 The interfaces being planar there is no traction jump, so this adds directly
-to the effective stiffness, in the in-plane block, with the weight `1/L`.
+to the effective stiffness, in the in-plane block, with the weight ``1/L``.
 
 ```julia
 # an orthotropic membrane: stiffer along ℓ than along m
@@ -128,12 +128,12 @@ Highly conductive 2-D surface layer with a **full in-plane surface
 conductivity**, generalizing [`SurfaceConductiveInterface`](@ref) — whose
 single scalar describes the isotropic case.
 
-`𝐤ˢ` is either a 3×3 matrix in the layer frame or a `TensND` second-order
+``\\boldsymbol{k}^{\\mathrm s}`` is either a 3×3 matrix in the layer frame or a `TensND` second-order
 tensor; only its in-plane part is used, the surface flux being driven by the
-in-plane gradient. Adds to the effective conductivity with the weight `1/L`.
+in-plane gradient. Adds to the effective conductivity with the weight ``1/L``.
 
 There is deliberately **no** anisotropic counterpart of
-[`KapitzaInterface`](@ref): the primal transport condition `[T] = ρ q_n`
+[`KapitzaInterface`](@ref): the primal transport condition ``[\\![T]\\!] = \\rho\\,q_n``
 relates two scalars, so the single resistance is already fully general.
 """
 struct AnisotropicSurfaceConductiveInterface{T <: Number, K} <: AbstractInterface{T}
@@ -172,17 +172,17 @@ end
 """
     _interface_P(itf, basis, ::Type{T}) -> SMatrix{6,6,T}
 
-Contribution of one interface to `⟨ℙ⟩` (before the `1/L` weight), in the
+Contribution of one interface to ``\\langle\\mathbb{P}\\rangle`` (before the ``1/L`` weight), in the
 layer frame and in Kelvin-Mandel form. Non-zero for the primal (field-jump)
 types only.
 
 For [`SpringInterface`](@ref)`(kn, kt)` — whose fields are *stiffnesses* —
-the jump `[u] = 𝕂·(σ·n)` with the compliance
-`𝕂 = n⊗n/kn + (δ − n⊗n)/kt` contributes the added strain
-`(𝕂·(σ·n)) ⊗ˢ n`, i.e. the out-of-plane block
-`diag(1/kn, 1/(2kt), 1/(2kt))` in Mandel slots. The halving of the tangential term is
+the jump ``[\\![\\underline{u}]\\!] = \\boldsymbol{\\mathcal{K}}\\cdot(\\boldsymbol{\\sigma}\\cdot\\underline{n})`` with the compliance
+``\\boldsymbol{\\mathcal{K}} = \\underline{n}\\otimes\\underline{n}/k_n + (\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n})/k_t`` contributes the added strain
+``(\\boldsymbol{\\mathcal{K}}\\cdot(\\boldsymbol{\\sigma}\\cdot\\underline{n}))\\stackrel{s}{\\otimes}\\underline{n}``, i.e. the out-of-plane block
+``\\mathrm{diag}(1/k_n, 1/(2k_t), 1/(2k_t))`` in Mandel slots. The halving of the tangential term is
 the symmetrized product, and it is produced by
-`Core.compliance_op_block` — the very helper that turns `𝐊⁻¹` into `ℙ`, so
+`Core.compliance_op_block` — the very helper that turns ``\\boldsymbol{K}^{-1}`` into ``\\mathbb{P}``, so
 the "interface = zero-thickness layer" statement is literal in the code.
 [`AnisotropicSpringInterface`](@ref) goes through the same helper with a full
 compliance tensor.
@@ -219,16 +219,24 @@ _interface_P(::AnisotropicSurfaceConductiveInterface, basis, ::Type{T}) where {T
 """
     _interface_Cs(itf, basis, ::Type{T}) -> SMatrix{6,6,T}
 
-Contribution of one interface to `ℂ_hom` (before the `1/L` weight), in the
+Contribution of one interface to ``\\mathbb{C}^{\\mathrm{hom}}`` (before the ``1/L`` weight), in the
 layer frame and in Kelvin-Mandel form. Non-zero for the dual (surface
 stiffness) types only.
 
 For [`MembraneInterface`](@ref)`(κs, μs)` — Gurtin-Murdoch surface elasticity
-with `κs = λs + μs` the surface dilatation modulus, matching the convention
+with ``\\kappa^{\\mathrm s} = \\lambda^{\\mathrm s} + \\mu^{\\mathrm s}`` the surface dilatation modulus, matching the convention
 of `LayeredSpheres` and of Echoes' `DUALDISC` — the 2-D surface law
-`σˢ = λs tr(εˢ) p + 2μs εˢ` gives `C^s_1111 = κs + μs`, `C^s_1122 = κs − μs`,
-`C^s_1212 = μs`, hence the in-plane Mandel block
-`[κs+μs κs−μs 0; κs−μs κs+μs 0; 0 0 2μs]`.
+``\\boldsymbol{\\sigma}^{\\mathrm s} = \\lambda^{\\mathrm s}\\,\\mathrm{tr}(\\boldsymbol{\\varepsilon}^{\\mathrm s})\\,\\boldsymbol{p} + 2\\mu^{\\mathrm s}\\,\\boldsymbol{\\varepsilon}^{\\mathrm s}`` gives ``C^{\\mathrm s}_{1111} = \\kappa^{\\mathrm s} + \\mu^{\\mathrm s}``, ``C^{\\mathrm s}_{1122} = \\kappa^{\\mathrm s} - \\mu^{\\mathrm s}``,
+``C^{\\mathrm s}_{1212} = \\mu^{\\mathrm s}``, hence the in-plane Mandel block
+
+```math
+\\begin{pmatrix}
+\\kappa^{\\mathrm s}+\\mu^{\\mathrm s} & \\kappa^{\\mathrm s}-\\mu^{\\mathrm s} & 0\\\\
+\\kappa^{\\mathrm s}-\\mu^{\\mathrm s} & \\kappa^{\\mathrm s}+\\mu^{\\mathrm s} & 0\\\\
+0 & 0 & 2\\mu^{\\mathrm s}
+\\end{pmatrix}.
+```
+
 [`AnisotropicMembraneInterface`](@ref) supplies that block directly.
 """
 _interface_Cs(::PerfectInterface, basis, ::Type{T}) where {T} = zero(SMatrix{6, 6, T})
@@ -261,7 +269,7 @@ _interface_Cs(::AnisotropicSurfaceConductiveInterface, basis, ::Type{T}) where {
 
 Order-2 analogue of [`_interface_P`](@ref): the contribution of one interface
 to the out-of-plane "compliance" average of a transport problem.
-[`KapitzaInterface`](@ref)`(ρ)` imposes `[T] = ρ q_n`, hence `ρ · n⊗n`. Since
+[`KapitzaInterface`](@ref)`(ρ)` imposes ``[\\![T]\\!] = \\rho\\,q_n``, hence ``\\rho\\,\\underline{n}\\otimes\\underline{n}``. Since
 both sides of that condition are scalars, no anisotropic counterpart exists
 or is needed.
 """
@@ -290,7 +298,7 @@ _interface_P2(::AnisotropicMembraneInterface, basis, ::Type{T}) where {T} =
 Order-2 analogue of [`_interface_Cs`](@ref): a highly conductive 2-D surface
 layer carries a surface flux driven by the in-plane gradient, adding its
 conductivity to the effective one. Isotropic for
-[`SurfaceConductiveInterface`](@ref)`(ks)` (`ks (δ − n⊗n)`), arbitrary for
+[`SurfaceConductiveInterface`](@ref)`(ks)` (``k^{\\mathrm s}(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n})``), arbitrary for
 [`AnisotropicSurfaceConductiveInterface`](@ref).
 """
 _interface_Ks(::PerfectInterface, basis, ::Type{T}) where {T} = zero(SMatrix{3, 3, T})
@@ -321,7 +329,7 @@ _interface_Ks(::AnisotropicMembraneInterface, basis, ::Type{T}) where {T} =
     _interface_terms(lam, ::Type{T}, ::Val{4}) -> (P_int, C_surf)
     _interface_terms(lam, ::Type{T}, ::Val{2}) -> (P_int, K_surf)
 
-Sum the interface contributions of a laminate, each weighted by `1/L`.
+Sum the interface contributions of a laminate, each weighted by ``1/L``.
 Returns a pair `(primal, dual)` ready for
 `Core.laminate_stiffness` / `Core.laminate_conductivity`.
 

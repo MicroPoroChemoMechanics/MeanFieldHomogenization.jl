@@ -94,10 +94,10 @@ _cross3(a, b) = (
     octant_patch(level; T = Float64) -> TriSurface
 
 The ``(+,+,+)`` face of the unit octahedron, subdivided `level` times into
-``4^{\\text{level}}`` triangles and projected onto the unit sphere.
+``4^{\\mathrm{level}}`` triangles and projected onto the unit sphere.
 
 Nodes come from the barycentric lattice ``(i, j, k)`` with
-``i + j + k = N = 2^{\\text{level}}``, normalized. A node with ``k = 0``
+``i + j + k = N = 2^{\\mathrm{level}}``, normalized. A node with ``k = 0``
 therefore has ``z`` **exactly** zero — not zero to a tolerance — which is what
 makes the coordinate planes exact symmetry planes of the mesh and an octant
 computation legitimate.
@@ -278,8 +278,8 @@ were established by getting them wrong first.
 With both in place the sweep is a **fixed point** of the ``p = 1/2`` lattice,
 which is the property to keep and is asserted by the tests.
 
-`density(x) -> ρ` biases the average toward high ``ρ``, so nodes cluster where
-``ρ`` is large; pass ``ρ = 1/h`` for a target size field ``h``. The default,
+`density(x) -> ρ` biases the average toward high ``\\rho``, so nodes cluster where
+``\\rho`` is large; pass ``\\rho = 1/h`` for a target size field ``h``. The default,
 `nothing`, equalizes edge lengths.
 """
 function relax_surface!(

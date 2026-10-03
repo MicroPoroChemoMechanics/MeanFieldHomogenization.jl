@@ -1,14 +1,22 @@
 # # [Frequency or time? Three routes to the same viscoelastic composite](@id tut-freq-vs-time)
 #
+# !!! info "Before this page"
+#     The tutorials [Viscoelastic composites](@ref tut-viscoelasticity), where
+#     the three routes are first called, and
+#     [Choosing a numerical Laplace inversion](@ref tut-laplace-inversion), whose
+#     default algorithm runs the third one; the correspondence principle that
+#     makes them agree is stated in
+#     [The Laplace-Carson route](@ref th-laplace-carson).
+#
 # `MeanFieldHomogenization` reaches the effective behavior of a linear viscoelastic
 # composite by three entirely separate roads:
 #
 # - the **frequency route** — replace every modulus by its complex counterpart
 #   and call [`homogenize`](@ref) unchanged, as in the
-#   [viscoelastic composites tutorial](../viscoelasticity.md);
+#   [viscoelastic composites tutorial](@ref tut-viscoelasticity);
 # - the **time route** — [`homogenize_alv`](@ref), which discretizes the
 #   Volterra operators on a time grid and never leaves the time domain, as in
-#   the [ageing creep application](../../applications/ageing_creep.md);
+#   the [ageing creep application](@ref app-ageing-creep);
 # - the **Laplace-Carson route** — [`homogenize_lc`](@ref), which does the same
 #   and then inverts the answer back to the time domain numerically.
 #
@@ -20,10 +28,10 @@
 # ## Which way the transform runs
 #
 # The forward direction is easy: the time route produces a sampled relaxation
-# function ``\mu^{\hom}(t)``, and its **Laplace-Carson transform**
+# function ``\mu^{\mathrm{hom}}(t)``, and its **Laplace-Carson transform**
 #
 # ```math
-# \mu^{*}(p) \;=\; p\int_{0}^{\infty}\mu^{\hom}(t)\,e^{-pt}\,\mathrm{d}t,
+# \mu^{*}(p) \;=\; p\int_{0}^{\infty}\mu^{\mathrm{hom}}(t)\,e^{-pt}\,\mathrm{d}t,
 # \qquad p = i\omega,
 # ```
 #
@@ -31,8 +39,7 @@
 # frequency route computes directly, and §4 compares the two that way.
 #
 # The reverse direction — inverting the frequency answer back into the time
-# domain — is genuinely ill-posed, which is why this page used to stop at two
-# routes. It is now available: §6 runs it with
+# domain — is genuinely ill-posed. §6 runs it with
 # [`inverse_carson`](@ref) and lands on the time route's own curve, so the
 # comparison closes in both directions.
 
@@ -102,23 +109,23 @@ end
 # ## §3 The time route, and how to read a relaxation function out of it
 #
 # [`homogenize_alv`](@ref) returns the effective operator as a ``6n \times 6n``
-# block matrix ``\widetilde{\mathbb{R}}`` acting on a *strain history* sampled on
+# block matrix ``\widetilde{\mathbb{C}}`` acting on a *strain history* sampled on
 # the grid — the trapezoidal representation of the Stieltjes integral
-# ``\sigma(t_i) = \int_{t_0}^{t_i}\mathbb{R}(t_i,\tau):\mathrm{d}\varepsilon(\tau)``
-# ([sanahuja2013](@cite)). Its blocks are *differences* of kernel values, not
-# kernel values, so reading ``\mathbb{R}^{\hom}(t)`` off a column would be wrong.
+# ``\boldsymbol\sigma(t_i) = \int_{t_0}^{t_i}\mathbb{C}(t_i,t'):\mathrm{d}\boldsymbol\varepsilon(t')``
+# [sanahuja2013](@cite). Its blocks are *differences* of kernel values, not
+# kernel values, so reading ``\mathbb{C}^{\mathrm{hom}}(t)`` off a column would be wrong.
 #
 # The physical extraction is a relaxation test. Applying a **unit strain step at
 # ``t = 0``** means a history vector whose every time slot holds the same strain,
 # so the stress at ``t_i`` is the row sum:
 #
 # ```math
-# \mathbb{R}^{\hom}(t_i) \;=\; \sum_j \widetilde{\mathbb{R}}_{ij}.
+# \mathbb{C}^{\mathrm{hom}}(t_i) \;=\; \sum_j \widetilde{\mathbb{C}}_{ij}.
 # ```
 #
 # [`iso_params_from_blocks`](@ref) splits the block matrix into its two isotropic
 # parts ``\alpha = 3k`` and ``\beta = 2\mu``, so the row sums of ``\beta`` give
-# ``2\mu^{\hom}(t_i)`` directly.
+# ``2\mu^{\mathrm{hom}}(t_i)`` directly.
 
 function mu_relaxation(times)
     rve = RVE()
@@ -142,7 +149,7 @@ times = collect(range(0.0, 40.0; length = 401))
 
 # The grid must be long enough for the plateau to be reached: the tail beyond
 # ``T`` is then a constant, and its contribution to the transform is the closed
-# form ``\mu^{\hom}(T)\,e^{-pT}`` rather than a truncation error.
+# form ``\mu^{\mathrm{hom}}(T)\,e^{-pT}`` rather than a truncation error.
 
 function mu_from_time(ω, times, μ_t)
     p = im * ω
@@ -220,7 +227,7 @@ end
 # Everything so far ran the transform the *easy* way. The reverse direction is
 # now available too: [`homogenize_lc`](@ref) evaluates the same Mori-Tanaka
 # estimate at the Carson variables an inversion algorithm asks for, and hands
-# back ``\mu^{\hom}(t)`` directly.
+# back ``\mu^{\mathrm{hom}}(t)`` directly.
 #
 # Note what is *not* needed: no time grid, no Volterra operator, no trapezoidal
 # rule. The answer at `t = 7` costs a couple of dozen elastic homogenizations
@@ -344,12 +351,12 @@ plt3 = plot(
 plt3
 
 # !!! note "This only works because the material does not age"
-#     Both transform routes need ``\mathbb{R}(t, t')`` to depend on ``t - t'``
+#     Both transform routes need ``\mathbb{C}(t, t')`` to depend on ``t - t'``
 #     alone. When a phase solidifies progressively, ``t`` and ``t'`` enter
 #     independently, the Laplace-Carson transform no longer factorizes the
 #     convolution, and *two of the three routes simply cease to exist* — which
 #     is why [`homogenize_alv`](@ref) is not a redundant implementation. See the
-#     [ageing creep application](../../applications/ageing_creep.md) for a case
+#     [ageing creep application](@ref app-ageing-creep) for a case
 #     where only the time route applies.
 
 const figdir = joinpath(@__DIR__, "figures")                        #jl
@@ -361,3 +368,12 @@ savefig(plt3, figpath3)                                              #jl
 display(plt)                                                         #jl
 display(plt3)                                                        #jl
 @printf "\nSaved : %s\n        %s\n" figpath figpath3                #jl
+
+# ## Where to go next
+#
+# Once the matrix ages, the time route is the only one left.
+# [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes) runs four
+# schemes along it on an ageing matrix, and shows where the shape assumed for the
+# spatial distribution of the inclusions decides the answer. The time
+# discretization behind [`homogenize_alv`](@ref) is derived in
+# [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity).

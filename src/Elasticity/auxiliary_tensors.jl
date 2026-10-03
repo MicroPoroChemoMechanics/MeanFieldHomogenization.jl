@@ -12,17 +12,20 @@
     tens_IA(ell::Ellipsoid{3}) -> AbstractTens{2,3}
     tens_IA(ell::Ellipsoid{2}) -> AbstractTens{2,2}
 
-Newton-potential geometric tensor ``\\mathbf I^{\\mathbf A}`` of an
+Newton-potential geometric tensor ``\\boldsymbol{I}^{\\boldsymbol{A}}`` of an
 ellipsoid, defined by
 
-```
-I^A = (det A)/(4π) ∫_{|ξ|=1} ξ⊗ξ / ‖A·ξ‖³ dS_ξ .
+```math
+\\boldsymbol{I}^{\\boldsymbol{A}}
+= \\frac{\\det\\boldsymbol{A}}{4\\pi}
+\\int_{\\|\\underline{\\xi}\\|=1}
+\\frac{\\underline{\\xi}\\otimes\\underline{\\xi}}
+     {\\|\\boldsymbol{A}\\cdot\\underline{\\xi}\\|^{3}}\\,\\mathrm{d}S_{\\xi} .
 ```
 
-``\\mathbf I^{\\mathbf A}`` is symmetric with the same eigenvectors as
-``\\mathbf A`` and with diagonal components ``I_i^{\\mathbf A}``
-satisfying ``\\sum_i I_i^{\\mathbf A} = 1`` (see [kellogg1929](@cite), [eshelby1957](@cite),
-[parnell2016](@cite)).
+``\\boldsymbol{I}^{\\boldsymbol{A}}`` is symmetric with the same eigenvectors as
+``\\boldsymbol{A}`` and with diagonal components ``I_i^{\\boldsymbol{A}}``
+satisfying ``\\sum_i I_i^{\\boldsymbol{A}} = 1`` [kellogg1929, eshelby1957, parnell2016](@cite).
 """
 function tens_IA(ell::Ellipsoid{3, Spherical})
     T = eltype(ell.semi_axes)
@@ -75,20 +78,28 @@ end
     tens_UA(ell::Ellipsoid{3}) -> AbstractTens{4,3}
     tens_UA(ell::Ellipsoid{2}) -> AbstractTens{4,2}
 
-4th-order Newton-potential geometric tensor ``\\mathbb U^{\\mathbf A}``:
+4th-order Newton-potential geometric tensor ``\\mathbb{U}^{\\boldsymbol{A}}``:
 
-```
-U^A = (det A)/(4π) ∫_{|ξ|=1} ξ⊗ξ⊗ξ⊗ξ / ‖A·ξ‖³ dS_ξ .
+```math
+\\mathbb{U}^{\\boldsymbol{A}}
+= \\frac{\\det\\boldsymbol{A}}{4\\pi}
+\\int_{\\|\\underline{\\xi}\\|=1}
+\\frac{\\underline{\\xi}\\otimes\\underline{\\xi}\\otimes
+      \\underline{\\xi}\\otimes\\underline{\\xi}}
+     {\\|\\boldsymbol{A}\\cdot\\underline{\\xi}\\|^{3}}\\,\\mathrm{d}S_{\\xi} .
 ```
 
 In the principal frame, the non-zero Kelvin–Mandel components are
 
-```
-U^A_{iiii} = 3(Iᵢ − ρᵢ² Iᵢᵢ)/2
-U^A_{iijj} = U^A_{ijij} = U^A_{ijji} = (Iⱼ − ρᵢ² Iᵢⱼ)/2 ,   i≠j
+```math
+U^{\\boldsymbol{A}}_{iiii} = \\tfrac{3}{2}\\bigl(I_i^{\\boldsymbol{A}}-\\rho_i^{2}I_{ii}^{\\boldsymbol{A}}\\bigr),
+\\qquad
+U^{\\boldsymbol{A}}_{iijj} = U^{\\boldsymbol{A}}_{ijij} = U^{\\boldsymbol{A}}_{ijji}
+= \\tfrac{1}{2}\\bigl(I_j^{\\boldsymbol{A}}-\\rho_i^{2}I_{ij}^{\\boldsymbol{A}}\\bigr)
+\\quad (i\\ne j),
 ```
 
-with the ``I_i^{\\mathbf A}`` and ``I_{ij}^{\\mathbf A}`` coefficients
+with the ``I_i^{\\boldsymbol{A}}`` and ``I_{ij}^{\\boldsymbol{A}}`` coefficients
 given in the Echoes appendix (tables ``I_i`` / ``I_{ij}``).
 """
 function tens_UA(ell::Ellipsoid{3, Spherical})
@@ -216,16 +227,22 @@ end
     tens_VA(ell::Ellipsoid{3}) -> AbstractTens{4,3}
     tens_VA(ell::Ellipsoid{2}) -> AbstractTens{4,2}
 
-4th-order Newton-potential geometric tensor ``\\mathbb V^{\\mathbf A}``:
+4th-order Newton-potential geometric tensor ``\\mathbb{V}^{\\boldsymbol{A}}``:
 
-```
-V^A = (det A)/(4π) ∫_{|ξ|=1} ξ ⊗ˢ 1 ⊗ˢ ξ / ‖A·ξ‖³ dS_ξ
-    = (1 ⊠ˢ I^A + I^A ⊠ˢ 1)/2 .
+```math
+\\mathbb{V}^{\\boldsymbol{A}}
+= \\frac{\\det\\boldsymbol{A}}{4\\pi}
+\\int_{\\|\\underline{\\xi}\\|=1}
+\\frac{\\underline{\\xi}\\stackrel{s}{\\otimes}\\boldsymbol{1}
+      \\stackrel{s}{\\otimes}\\underline{\\xi}}
+     {\\|\\boldsymbol{A}\\cdot\\underline{\\xi}\\|^{3}}\\,\\mathrm{d}S_{\\xi}
+= \\frac{\\boldsymbol{1}\\stackrel{s}{\\boxtimes}\\boldsymbol{I}^{\\boldsymbol{A}}
+      + \\boldsymbol{I}^{\\boldsymbol{A}}\\stackrel{s}{\\boxtimes}\\boldsymbol{1}}{2} .
 ```
 
-In the principal frame, ``V^{\\mathbf A}_{iiii} = I_i^{\\mathbf A}``
-and ``V^{\\mathbf A}_{ijij} = V^{\\mathbf A}_{ijji}
-= (I_i^{\\mathbf A}+I_j^{\\mathbf A})/4`` for ``i\\ne j``.
+In the principal frame, ``V^{\\boldsymbol{A}}_{iiii} = I_i^{\\boldsymbol{A}}``
+and ``V^{\\boldsymbol{A}}_{ijij} = V^{\\boldsymbol{A}}_{ijji}
+= (I_i^{\\boldsymbol{A}}+I_j^{\\boldsymbol{A}})/4`` for ``i\\ne j``.
 """
 function tens_VA(ell::Ellipsoid{3, Spherical})
     T = eltype(ell.semi_axes)

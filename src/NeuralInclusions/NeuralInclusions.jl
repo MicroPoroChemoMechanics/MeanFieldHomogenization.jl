@@ -9,7 +9,7 @@ analytic families, the layered patterns and
 
 | Type | Entry gate | For |
 |---|---|---|
-| [`NeuralHillInclusion`](@ref) | A — the Hill tensor | a morphology with a Hill tensor: contrast dependence and the `ℂ₁ = ℂ₀ ⟹ 𝔸 = 𝕀` limit stay exact |
+| [`NeuralHillInclusion`](@ref) | A — the Hill tensor | a morphology with a Hill tensor: contrast dependence and the ``\\mathbb{C}_1 = \\mathbb{C}_0 \\Rightarrow \\mathbb{A} = \\mathbb{I}`` limit stay exact |
 | [`NeuralLocalizationInclusion`](@ref) | B — both localization tensors | an internally heterogeneous morphology, which has no Hill tensor |
 
 # Why bother, when the analytic Hill tensor is exact

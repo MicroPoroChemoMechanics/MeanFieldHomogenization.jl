@@ -1,5 +1,10 @@
 # [From Echoes to MeanFieldHomogenization](@id tools-from-echoes)
 
+!!! info "Before this page"
+    [Getting started](@ref getting-started), for the RVE, scheme and
+    `homogenize` sequence that the table below translates, and
+    [Homogenization schemes](@ref man-schemes) for the Julia side of every row.
+
 `MeanFieldHomogenization` (MFH) is a Julia port of **Echoes** [echoes](@cite), the C++
 mean-field homogenization library (with a Python interface) developed at
 Cerema. If you already have Echoes scripts, this page is a direct
@@ -49,7 +54,7 @@ Two conventions worth flagging for a smooth transition:
 - **Both `stiff_kmu`/`iso_stiffness` take *physical* `(k, μ)`.** Where they
   differ is in what the resulting tensor *stores*: MFH's raw
   `TensISO{3}(a, b)` constructor takes the pair `(3k, 2μ)`, not `(k, μ)` —
-  see [the first tutorial](../tutorials/first_estimate.md#A-storage-convention-worth-knowing).
+  see [the first tutorial](@ref tut-first-estimate-storage).
   Building with `iso_stiffness(k, μ)` (as in the table above) sidesteps
   this entirely.
 - **Symbol-string vs. type-instance schemes.** Echoes selects a scheme via
@@ -59,7 +64,7 @@ Two conventions worth flagging for a smooth transition:
   `select_best`) attach directly to the scheme rather than as loose
   `homogenize` keywords.
   A `Symbol` shortcut (`:mt`, `:sc`, …) is also accepted — see
-  [the schemes manual](../manual/schemes.md) for the full alias table.
+  [the schemes manual](@ref man-schemes) for the full alias table.
 
 ## Same problem, both sides
 
@@ -240,8 +245,8 @@ end
 ## [Production cross-checks](@id from-echoes-where-next)
 
 `scripts/bench_echoes/` runs the same PyCall pattern systematically; tolerances
-and measured agreement are in [Cross-validation](../developer/validation.md),
-timings in [Performance vs Echoes](../developer/benchmarks.md).
+and measured agreement are in [Cross-validation](@ref dev-validation),
+timings in [Performance vs Echoes](@ref dev-benchmarks).
 
 Two tutorials carry a captured Echoes reference in the page itself, in the
 literal-data style used above, and are worth reading next because each one turns
@@ -255,3 +260,10 @@ up a place where the two libraries do *not* line up trivially:
 Without Echoes or PyCall, each cross-check has a PyCall-free counterpart:
 committed `*_python.json` dumps, and pure-Julia transcriptions such as
 `scripts/55_ageing_creep_dirichlet_chains.jl`.
+
+## Where to go next
+
+[Translating Echoes scripts: `echoes2mfh`](@ref tools-echoes2mfh) applies the
+correspondence of this page automatically, script by script, and
+[MFH Studio](@ref tools-mfhstudio) writes the Julia side from a graphical
+interface.

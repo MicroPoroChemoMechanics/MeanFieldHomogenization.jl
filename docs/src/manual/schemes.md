@@ -1,5 +1,10 @@
 # [Homogenization schemes](@id man-schemes)
 
+!!! info "Before this page"
+    The theory page [Homogenization schemes](@ref th-homogenization), where each
+    estimate called below is derived, and, for a first reading,
+    [Getting started](@ref getting-started), which builds a first RVE.
+
 The `MeanFieldHomogenization.Schemes` module provides ten classical mean-field
 homogenization schemes plus a [`RVE`](@ref) container holding the phases with
 their geometries, properties and volume fractions or crack densities.
@@ -10,9 +15,10 @@ An `RVE` is the morphological picture, written down: phases, each with a
 geometry, properties and an amount. **No phase is singled out.** Whether one of
 them acts as a matrix is not a property of the microstructure but of the model
 applied to it, and it is stated on the scheme — see
-[Who is the matrix?](@ref man-who-is-the-matrix) below.
+[Who is the matrix?](@ref man-who-is-the-matrix) below. The two drawings of this
+page are taken from the Echoes book [echoes](@cite).
 
-![Matrix carrying ellipsoids and coated spheres — the morphology Mori–Tanaka reads into an RVE (from the Echoes book [echoes](@cite))](../assets/schemes/rve_mori_tanaka.png)
+![Matrix carrying ellipsoids and coated spheres — the morphology Mori–Tanaka reads into an RVE](../assets/schemes/rve_mori_tanaka.png)
 
 ```julia
 using MeanFieldHomogenization, TensND
@@ -89,7 +95,7 @@ C_sc    = homogenize(rve, SelfConsistent(; abstol = 1e-12, maxiters = 200))
 Every scheme takes the optional kwarg `property = :C` (default,
 elasticity) or `property = :K` (conductivity). Iterative schemes also
 accept `abstol`, `reltol`, `maxiters`, `damping`, `verbose` and
-`select_best` — see [Solver tolerances](@ref Solver-tolerances) for what
+`select_best` — see [Solver tolerances](@ref man-schemes-tolerances) for what
 they mean and, in particular, for why `reltol` is usually the one that
 decides when the iteration stops.
 
@@ -204,7 +210,7 @@ an explicit tensor. Unset, it is the `:rest` phase when there is one and the
 Voigt average otherwise — the latter is what lets the RVE above be solved at
 all.
 
-![A tessellation in which no phase surrounds the others (from the Echoes book [echoes](@cite))](../assets/schemes/rve_self_consistent.png)
+![A tessellation in which no phase surrounds the others](../assets/schemes/rve_self_consistent.png)
 
 ```julia
 homogenize(rve, SelfConsistent())                            # built-in damped Picard (default)
@@ -238,14 +244,14 @@ the Picard guard does.
 All three are `ForwardDiff`-compatible — differentiating `homogenize` through a
 `NonlinearSolve` algorithm uses an implicit-function-theorem lift, so no nested
 `Dual`s ever form (see [`derivative`](@ref) and the
-[Nonlinear solvers tutorial](../tutorials/nonlinear_solvers.md)).
+[Nonlinear solvers tutorial](@ref tut-nonlinear-solvers)).
 
-### Solver tolerances
+### [Solver tolerances](@id man-schemes-tolerances)
 
 Every iterative solver in the package stops on the additive SciML convention
 
 ```math
-\lVert x^{(n+1)} - x^{(n)} \rVert \;\le\; \texttt{abstol} + \texttt{reltol}\cdot\lVert x^{(n)} \rVert ,
+\lVert x^{(n+1)} - x^{(n)} \rVert \;\le\; \mathrm{abstol} + \mathrm{reltol}\cdot\lVert x^{(n)} \rVert ,
 ```
 
 with `‖·‖` the **Frobenius norm of the tensor** — the same quantity whatever the
@@ -277,7 +283,7 @@ requirement.
 
 `abstol = 0` is also the exact translation of Echoes' `epsrel`, whose fixed
 point tested `‖X - X_old‖ > epsrel · ‖X_old‖` and had no absolute term at all
-(see [Coming from Echoes](../tools/from_echoes.md)).
+(see [Coming from Echoes](@ref tools-from-echoes)).
 
 `select_best` returns the best iterate seen rather than the last one — worth
 having when Picard oscillates around a high-contrast fixed point. Non-convergence
@@ -288,7 +294,7 @@ is reported through `@debug`, not `@warn`: set
 
 The differential scheme applies the *dilute* step over and over, updating the
 reference medium each time — the loop is drawn in
-[The differential scheme](../theory/differential_scheme.md#Incorporation-process).
+[The differential scheme](@ref th-differential-incorporation).
 Two knobs follow from that loop: how many steps (`nsteps`), and in which order
 the phases are grown (the **trajectory**).
 
@@ -307,7 +313,7 @@ agree in the dilute limit and diverge at finite fractions. Cracks follow
 the trajectory like any other phase, their target being the final
 density; because they carry no volume they enter the volume balance
 differently (see
-[The differential scheme](../theory/differential_scheme.md)).
+[The differential scheme](@ref th-differential-scheme)).
 
 ### Stiffness or compliance
 
@@ -347,6 +353,10 @@ ks = [k_mu(C)[1] for C in Cs]
 
 ## Frequency-domain viscoelasticity
 
+Nothing in the schemes above requires real moduli. Complex ones yield the
+frequency-domain response of a viscoelastic composite, by the correspondence
+principle of [The Laplace-Carson route](@ref th-laplace-carson):
+
 ```julia
 δ = 0.05
 rve = RVE()
@@ -385,11 +395,16 @@ times = collect(range(0.0, 5.0; length = 50))
 C_eff = homogenize_alv(rve, MoriTanaka(), :C; times = times)   # 300 × 300
 ```
 
-See the dedicated [Viscoelasticity manual](viscoelasticity.md) for the
+See the dedicated [Viscoelasticity manual](@ref man-viscoelasticity) for the
 full pipeline (ageing kernels, cracks, sensitivities, fast paths,
 ECHOES validation).
 
 ## Sensitivity (ForwardDiff)
+
+The schemes are equally generic in the number type, so an effective property
+can be differentiated with respect to any input of its RVE. The closure below
+is the minimal form; [Sensitivities](@ref man-sensitivities) describes the
+interface that spares writing it.
 
 ```julia
 using ForwardDiff
@@ -438,3 +453,13 @@ scalar. Use the default Anderson solver in the frequency domain. The
 order-2 anisotropic conductivity kernels
 (`hill_order2_3d`, thermal crack COD) rely on `eigen(Symmetric(·))` and
 are real-only as well.
+
+## Where to go next
+
+An `RVE` holds the fractions of its phases but not their positions;
+[Particle assemblies and N-body schemes](@ref man-assemblies) introduces the
+cell that carries them and the two schemes that read them, and
+[Multiscale models](@ref man-multiscale) chains cells into one another. The
+tutorials [A first homogenization](@ref tut-first-estimate) and
+[Bounds and classical schemes](@ref tut-bounds-and-schemes) compare the schemes
+of this page on worked examples.

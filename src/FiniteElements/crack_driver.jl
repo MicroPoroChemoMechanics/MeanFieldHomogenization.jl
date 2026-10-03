@@ -60,7 +60,7 @@ const _EM_N = (
     _solve_cod_local(crack, C, μ, ν) -> (B_s, B_u, B_inf)
 
 The 3 + 3 corrected scheme, entirely in the crack's local frame. Returns plain
-`3×3` matrices.
+``3\\times 3`` matrices.
 """
 function _solve_cod_local(
         crack::FEEllipticCrack,
@@ -205,11 +205,11 @@ end
 
 Diagnostic view of the corrected solve: the COD tensor of the **finite** cell
 `B_s`, the response `B_u` to the crack's own dipole far field, and the
-infinite-medium result `B_inf = (1 - B_u)⁻¹ B_s`, all in the crack's local
+infinite-medium result ``\\boldsymbol{B}_\\infty = (\\boldsymbol{1} - \\boldsymbol{B}_u)^{-1}\\boldsymbol{B}_s``, all in the crack's local
 frame, plus `B_s` and `B_inf` rotated back to the global frame.
 
 `norm(B_u)` measures how much work the boundary correction is doing; it should
-fall like `(a/R)³`, and `B_inf` — unlike `B_s` — should be insensitive to
+fall like ``(a/R)^3``, and `B_inf` — unlike `B_s` — should be insensitive to
 `radius_ratio`. That contrast is the practical proof that the correction is
 wired correctly.
 
@@ -234,10 +234,10 @@ end
     fe_mesh_report(crack) -> NamedTuple
 
 Mesh diagnostics: cell, node and dof counts, the two lip facet counts and their
-measured areas against the exact `πab`. Builds the discretization if it does
+measured areas against the exact ``\\pi a b``. Builds the discretization if it does
 not exist yet, and caches it.
 
-Both lip areas equaling `πab` is what says the `Crack` plugin split the
+Both lip areas equaling ``\\pi a b`` is what says the `Crack` plugin split the
 surface cleanly *and* the front weld did not glue the lips back together.
 """
 function fe_mesh_report(crack::FEEllipticCrack)

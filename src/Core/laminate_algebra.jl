@@ -61,7 +61,8 @@ using TensND: _KM_rotation
 """
     KM_IP
 
-Kelvin-Mandel slots of the **in-plane** subspace `(ℓ⊗ℓ, m⊗m, √2 ℓ⊗ˢm)` in a
+Kelvin-Mandel slots of the **in-plane** subspace
+``(\\underline{\\ell}\\otimes\\underline{\\ell}, \\underline{m}\\otimes\\underline{m}, \\sqrt{2}\\,\\underline{\\ell}\\stackrel{s}{\\otimes}\\underline{m})`` in a
 frame whose third axis is the layer normal — the components of the strain
 that stay continuous across a laminate's interfaces.
 """
@@ -70,9 +71,10 @@ const KM_IP = SVector(1, 2, 6)
 """
     KM_OP
 
-Kelvin-Mandel slots of the **out-of-plane** subspace `(n⊗n, √2 m⊗ˢn, √2 n⊗ˢℓ)`
+Kelvin-Mandel slots of the **out-of-plane** subspace
+``(\\underline{n}\\otimes\\underline{n}, \\sqrt{2}\\,\\underline{m}\\stackrel{s}{\\otimes}\\underline{n}, \\sqrt{2}\\,\\underline{n}\\stackrel{s}{\\otimes}\\underline{\\ell})``
 — the components of the stress that stay continuous across a laminate's
-interfaces, and the support of the flat-inclusion Hill tensor `ℙ`.
+interfaces, and the support of the flat-inclusion Hill tensor ``\\mathbb{P}``.
 """
 const KM_OP = SVector(3, 4, 5)
 
@@ -85,7 +87,7 @@ const KM_OP = SVector(3, 4, 5)
     _op_block(M) -> SMatrix{3,3}
 
 Out-of-plane block of a 6×6 Kelvin-Mandel matrix, in **slot** indexing
-(rows/columns ordered as the Mandel slots `(3, 4, 5)`, i.e. `(nn, mn, ℓn)`).
+(rows/columns ordered as the Mandel slots ``(3, 4, 5)``, i.e. ``(nn, mn, \\ell n)``).
 No unscaling and no permutation — see [`acoustic_tensor`](@ref) for the
 physical acoustic tensor.
 """
@@ -95,7 +97,7 @@ physical acoustic tensor.
     _ip_block(M) -> SMatrix{3,3}
 
 In-plane block of a 6×6 Kelvin-Mandel matrix, in slot indexing (Mandel slots
-`(1, 2, 6)`, i.e. `(ℓℓ, mm, ℓm)`).
+``(1, 2, 6)``, i.e. ``(\\ell\\ell, mm, \\ell m)``).
 """
 @inline _ip_block(M::AbstractMatrix) = SMatrix{3, 3}(M[KM_IP, KM_IP])
 
@@ -144,16 +146,16 @@ end
 
 Moore-Penrose pseudo-inverse of a 6×6 Kelvin-Mandel matrix whose range and
 kernel are **known** to coincide with the out-of-plane subspace [`KM_OP`] of
-the frame in which it is written — true for `⟨ℙ⟩` and for the out-of-plane
+the frame in which it is written — true for ``\\langle\\mathbb{P}\\rangle`` and for the out-of-plane
 part of any stiffness.
 
 Implemented as a 3×3 cofactor inversion of the `OP` block, embedded back:
 
 ```math
-\\mathrm{Mat}(\\langle\\mathbb P\\rangle^{\\dagger}, \\mathcal B^{*}) =
-\\begin{pmatrix} 0 & 0 \\\\ 0 & P_{\\mathcal O}^{-1}\\end{pmatrix},
+\\mathrm{Mat}(\\langle\\mathbb{P}\\rangle^{\\dagger}, \\mathcal{B}^{*}) =
+\\begin{pmatrix} 0 & 0 \\\\ 0 & P_{\\mathcal{OO}}^{-1}\\end{pmatrix},
 \\qquad
-\\langle\\mathbb P\\rangle^{\\dagger} : \\langle\\mathbb P\\rangle = \\Pi^{\\mathcal O}.
+\\langle\\mathbb{P}\\rangle^{\\dagger} : \\langle\\mathbb{P}\\rangle = \\Pi^{\\mathcal{O}}.
 ```
 
 Never `LinearAlgebra.pinv`: its SVD is differentiable by neither `ForwardDiff`
@@ -165,28 +167,34 @@ input.
 """
     flat_hill(C6) -> SMatrix{6,6}
 
-Hill polarisation tensor `ℙ = n ⊗ˢ 𝐊⁻¹ ⊗ˢ n` of a flat (layer) inclusion of
-Kelvin-Mandel stiffness `C6`, expressed in the layer frame — the limit of the
+Hill polarization tensor
+``\\mathbb{P} = \\underline{n}\\stackrel{s}{\\otimes}\\boldsymbol{K}^{-1}\\stackrel{s}{\\otimes}\\underline{n}``
+of a flat (layer) inclusion of Kelvin-Mandel stiffness `C6`, with
+``\\boldsymbol{K} = \\underline{n}\\cdot\\mathbb{C}\\cdot\\underline{n}`` the acoustic tensor,
+expressed in the layer frame — the limit of the
 Hill tensor of a flat ellipsoid as its smallest aspect ratio tends to zero.
 
-`ℙ` and [`plane_pinv`](@ref) of the stiffness are the **same object**: the
-out-of-plane block of `ℙ` is the matrix inverse of the out-of-plane block of
-`ℂ`, and every other block vanishes. Hence also `ℙ : ℂ : ℙ = ℙ` and
-`ℚ : ℙ = 0` with `ℚ = ℂ − ℂ:ℙ:ℂ` the second Hill tensor.
+``\\mathbb{P}`` and [`plane_pinv`](@ref) of the stiffness are the **same object**: the
+out-of-plane block of ``\\mathbb{P}`` is the matrix inverse of the out-of-plane block of
+``\\mathbb{C}``, and every other block vanishes. Hence also
+``\\mathbb{P}:\\mathbb{C}:\\mathbb{P} = \\mathbb{P}`` and
+``\\mathbb{Q}:\\mathbb{P} = 0`` with ``\\mathbb{Q} = \\mathbb{C} - \\mathbb{C}:\\mathbb{P}:\\mathbb{C}`` the second Hill tensor.
 """
 @inline flat_hill(C6::AbstractMatrix) = plane_pinv(C6)
 
 """
     acoustic_tensor(M) -> SMatrix{3,3}
 
-Acoustic tensor `𝐊 = n · ℂ · n`, i.e. `K_ab = C_{3a3b}`, read off the
+Acoustic tensor ``\\boldsymbol{K} = \\underline{n}\\cdot\\mathbb{C}\\cdot\\underline{n}``,
+i.e. ``K_{ab} = C_{3a3b}``, read off the
 out-of-plane block of a 6×6 Kelvin-Mandel matrix written in a frame whose
-third axis is `n`. Undoes both the Mandel `√2` weights and the `(3, 2, 1)`
+third axis is ``\\underline{n}``. Undoes both the Mandel ``\\sqrt{2}`` weights and the ``(3, 2, 1)``
 index reversal documented at the top of this file.
 
 Used for reporting and for the exact out-of-plane oracle of a laminate,
-`(n · ℂ^{hom} · n)^{-1} = Σ_i f_i (n · ℂ_i · n)^{-1} + Σ_j 𝕂_j / L`; the
-laminate kernel itself never materializes `𝐊`.
+``(\\underline{n}\\cdot\\mathbb{C}^{\\mathrm{hom}}\\cdot\\underline{n})^{-1} = \\sum_i f_i\\,(\\underline{n}\\cdot\\mathbb{C}_i\\cdot\\underline{n})^{-1} + \\sum_j \\boldsymbol{\\mathcal{K}}_j / L``,
+with ``\\boldsymbol{\\mathcal{K}}_j`` the interface compliances; the
+laminate kernel itself never materializes ``\\boldsymbol{K}``.
 """
 @inline function acoustic_tensor(M::AbstractMatrix{T}) where {T}
     B = _op_block(M)
@@ -205,23 +213,29 @@ end
     compliance_op_block(X) -> SMatrix{3,3}
 
 Slot-indexed out-of-plane block of an out-of-plane **compliance** given by its
-physical 3×3 matrix `X` in the frame `(ℓ, m, n)` — the inverse map of
+physical 3×3 matrix `X` in the frame ``(\\underline{\\ell}, \\underline{m}, \\underline{n})`` — the inverse map of
 [`acoustic_tensor`](@ref) on the compliance side:
 
-```
-Ŝ[a, b] = X[π(a), π(b)] / (s_a s_b) ,   π = (3, 2, 1),  s = (1, √2, √2).
+```math
+\\hat{S}_{ab} = \\frac{X_{\\pi(a)\\pi(b)}}{s_a s_b} ,
+\\qquad
+\\pi = (3, 2, 1),
+\\qquad
+s = (1, \\sqrt{2}, \\sqrt{2}).
 ```
 
-Its use is the imperfect interface of spring type, whose compliance `𝕂`
-produces the added strain `(𝕂·(σ·n)) ⊗ˢ n`. `X` may be **any symmetric 3×3
+Its use is the imperfect interface of spring type, whose compliance ``\\boldsymbol{\\mathcal{K}}``
+produces the added strain
+``(\\boldsymbol{\\mathcal{K}}\\cdot(\\boldsymbol{\\sigma}\\cdot\\underline{n}))\\stackrel{s}{\\otimes}\\underline{n}``. `X` may be **any symmetric 3×3
 compliance** — all six entries are used — so an anisotropic interface is
 handled exactly like an isotropic one; the isotropic case
-`𝕂 = k_n\\,n⊗n + k_t\\,(δ − n⊗n)` simply gives the block
-`diag(k_n, k_t/2, k_t/2)`.
+``\\boldsymbol{\\mathcal{K}} = s_n\\,\\underline{n}\\otimes\\underline{n} + s_t\\,(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n})``,
+with ``s_n = 1/k_n`` and ``s_t = 1/k_t``, simply gives the block
+``\\mathrm{diag}(s_n, s_t/2, s_t/2)``.
 
 Note the factor 2 on the tangential entries: a displacement jump enters the
 strain through a *symmetrized* product, so those compliances are halved in
-Mandel slots — exactly as `ℙ` is `𝐊⁻¹` divided, not multiplied, by the Mandel
+Mandel slots — exactly as ``\\mathbb{P}`` is ``\\boldsymbol{K}^{-1}`` divided, not multiplied, by the Mandel
 weights.
 """
 @inline function compliance_op_block(X::AbstractMatrix{T}) where {T}
@@ -319,27 +333,28 @@ symbolic element types alike.
 Effective Kelvin-Mandel stiffness of a periodic laminate, in the layer frame:
 
 ```math
-\\mathbb C^{hom} = \\langle\\mathbb Q\\rangle
- + \\langle\\mathbb C : \\mathbb P\\rangle : \\langle\\mathbb P\\rangle^{\\dagger}
-   : \\langle\\mathbb P : \\mathbb C\\rangle
- + \\sum_j \\mathbb C^{s}_j / L ,
+\\mathbb{C}^{\\mathrm{hom}} = \\langle\\mathbb{Q}\\rangle
+ + \\langle\\mathbb{C}:\\mathbb{P}\\rangle : \\langle\\mathbb{P}\\rangle^{\\dagger}
+   : \\langle\\mathbb{P}:\\mathbb{C}\\rangle
+ + \\sum_j \\mathbb{C}^{\\mathrm s}_j / L ,
 ```
 
-with `⟨·⟩ = Σ_i f_i (·)_i`, `ℙ_i = flat_hill(ℂ_i)` and
-`ℚ_i = ℂ_i − ℂ_i:ℙ_i:ℂ_i` (the in-plane Schur complement of `ℂ_i`).
+with ``\\langle\\cdot\\rangle = \\sum_i f_i\\,(\\cdot)_i``, ``\\mathbb{P}_i`` the flat-inclusion
+Hill tensor of layer ``i`` (`flat_hill`) and
+``\\mathbb{Q}_i = \\mathbb{C}_i - \\mathbb{C}_i:\\mathbb{P}_i:\\mathbb{C}_i`` (the in-plane Schur complement of ``\\mathbb{C}_i``).
 
 Arguments:
 
 - `C6s` — per-layer Kelvin-Mandel stiffnesses in the layer frame;
 - `f` — per-layer volume fractions;
-- `P_int` — `Σ_j ℙ^{int}_j / L`, the primal (spring / Kapitza) interface term,
-  which is out-of-plane-supported and adds to `⟨ℙ⟩` alone;
-- `C_surf` — `Σ_j ℂ^{s}_j / L`, the dual (membrane) surface term, which is
-  in-plane-supported and adds to `ℂ^{hom}` directly, the interfaces being
-  planar (`divₛ σˢ = 0`, hence no traction jump).
+- `P_int` — ``\\sum_j \\mathbb{P}^{\\mathrm{int}}_j / L``, the primal (spring / Kapitza) interface term,
+  which is out-of-plane-supported and adds to ``\\langle\\mathbb{P}\\rangle`` alone;
+- `C_surf` — ``\\sum_j \\mathbb{C}^{\\mathrm s}_j / L``, the dual (membrane) surface term, which is
+  in-plane-supported and adds to ``\\mathbb{C}^{\\mathrm{hom}}`` directly, the interfaces being
+  planar (``\\mathrm{div}_s\\,\\boldsymbol{\\sigma}^{\\mathrm s} = \\underline{0}``, hence no traction jump).
 
 `opinv` / `opinv_avg` are the out-of-plane inversion used for a layer
-stiffness and for the average `⟨ℙ⟩` respectively. They are function arguments
+stiffness and for the average ``\\langle\\mathbb{P}\\rangle`` respectively. They are function arguments
 so that the ageing-viscoelastic laminate reuses this very kernel with the
 Volterra block inversion substituted; Julia specializes on the function type,
 so there is no abstraction cost and only one place where the physics lives.
@@ -371,11 +386,12 @@ end
 """
     laminate_strain_localization(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
 
-Strain localization tensor of one layer, `𝔸_i = 𝕀 + ℙ_i : (ℂ^{hom} − ℂ_i)`,
+Strain localization tensor of one layer,
+``\\mathbb{A}_i = \\mathbb{I} + \\mathbb{P}_i:(\\mathbb{C}^{\\mathrm{hom}} - \\mathbb{C}_i)``,
 in Kelvin-Mandel form. Its in-plane block is the identity and its
 in-plane/out-of-plane coupling block vanishes — the macroscopic in-plane
 strain is transmitted unchanged to every layer. The fractions weight to the
-identity, `Σ_i f_i 𝔸_i = 𝕀`.
+identity, ``\\sum_i f_i\\,\\mathbb{A}_i = \\mathbb{I}``.
 """
 @inline function laminate_strain_localization(C6, Chom6; opinv = plane_pinv)
     return one(SMatrix{6, 6, eltype(Chom6)}) + opinv(C6) * (Chom6 - C6)
@@ -385,8 +401,8 @@ end
     laminate_stress_localization(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
 
 Stress localization tensor of one layer,
-`𝔹_i = ℂ_i : 𝔸_i : (ℂ^{hom})^{-1}`, in Kelvin-Mandel form, with
-`Σ_i f_i 𝔹_i = 𝕀`. The inverse goes through [`_inv_km6`](@ref), so the result
+``\\mathbb{B}_i = \\mathbb{C}_i:\\mathbb{A}_i:(\\mathbb{C}^{\\mathrm{hom}})^{-1}``, in Kelvin-Mandel form, with
+``\\sum_i f_i\\,\\mathbb{B}_i = \\mathbb{I}``. The inverse goes through [`_inv_km6`](@ref), so the result
 stays differentiable and symbolically evaluable.
 """
 @inline function laminate_stress_localization(C6, Chom6; opinv = plane_pinv)
@@ -396,12 +412,14 @@ end
 """
     laminate_stress_strain_localization(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
 
-Mixed localization tensor of one layer, `𝔸^{σε}_i = ℂ_i : 𝔸_i`, mapping the
-**macroscopic strain** to the layer stress: `σ_i = 𝔸^{σε}_i : E`. It weights to
-the effective stiffness, `Σ_i f_i 𝔸^{σε}_i = ℂ^{hom}`, which is the mean-field
-identity `ℂ^{hom} = ⟨ℂ : 𝔸⟩` written layer by layer.
+Mixed localization tensor of one layer,
+``\\mathbb{A}_{\\sigma\\varepsilon,i} = \\mathbb{C}_i:\\mathbb{A}_i``, mapping the
+**macroscopic strain** to the layer stress:
+``\\boldsymbol{\\sigma}_i = \\mathbb{A}_{\\sigma\\varepsilon,i}:\\boldsymbol{E}``. It weights to
+the effective stiffness, ``\\sum_i f_i\\,\\mathbb{A}_{\\sigma\\varepsilon,i} = \\mathbb{C}^{\\mathrm{hom}}``, which is the mean-field
+identity ``\\mathbb{C}^{\\mathrm{hom}} = \\langle\\mathbb{C}:\\mathbb{A}\\rangle`` written layer by layer.
 
-No inverse of `ℂ^{hom}` is formed, unlike [`laminate_stress_localization`](@ref).
+No inverse of ``\\mathbb{C}^{\\mathrm{hom}}`` is formed, unlike [`laminate_stress_localization`](@ref).
 """
 @inline function laminate_stress_strain_localization(C6, Chom6; opinv = plane_pinv)
     return C6 * laminate_strain_localization(C6, Chom6; opinv = opinv)
@@ -410,9 +428,11 @@ end
 """
     laminate_strain_stress_localization(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
 
-Mixed localization tensor of one layer, `𝔸^{εσ}_i = 𝔸_i : (ℂ^{hom})^{-1}`,
-mapping the **macroscopic stress** to the layer strain: `ε_i = 𝔸^{εσ}_i : Σ`,
-with `Σ_i f_i 𝔸^{εσ}_i = (ℂ^{hom})^{-1}`. The inverse goes through
+Mixed localization tensor of one layer,
+``\\mathbb{A}_{\\varepsilon\\sigma,i} = \\mathbb{A}_i:(\\mathbb{C}^{\\mathrm{hom}})^{-1}``,
+mapping the **macroscopic stress** to the layer strain:
+``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_{\\varepsilon\\sigma,i}:\\boldsymbol{\\Sigma}``,
+with ``\\sum_i f_i\\,\\mathbb{A}_{\\varepsilon\\sigma,i} = (\\mathbb{C}^{\\mathrm{hom}})^{-1}``. The inverse goes through
 [`_inv_km6`](@ref), never `inv(::SMatrix{6,6})`.
 """
 @inline function laminate_strain_stress_localization(C6, Chom6; opinv = plane_pinv)
@@ -430,8 +450,8 @@ end
     plane_pinv2(K3) -> SMatrix{3,3}
 
 Order-2 analog of [`plane_pinv`](@ref): the pseudo-inverse of a 3×3
-conductivity-like matrix restricted to the out-of-plane direction `n`, i.e.
-`(1/k_{nn}) n⊗n` in a frame whose third axis is `n`.
+conductivity-like matrix restricted to the out-of-plane direction ``\\underline{n}``, i.e.
+``(1/k_{nn})\\,\\underline{n}\\otimes\\underline{n}`` in a frame whose third axis is ``\\underline{n}``.
 """
 @inline function plane_pinv2(K3::AbstractMatrix{T}) where {T}
     z = zero(T)
@@ -446,12 +466,14 @@ end
 Effective conductivity (or diffusivity, permeability, …) of a periodic
 laminate, in the layer frame — the order-2 transposition of
 [`laminate_stiffness`](@ref), with the in-plane gradient continuous and the
-normal flux continuous. `P_int` collects `Σ_j ρ_j / L · n⊗n` (Kapitza) and
-`K_surf` collects `Σ_j (k^s_j / L)(δ − n⊗n)` (highly conductive surface
+normal flux continuous. `P_int` collects
+``\\sum_j (\\rho_j/L)\\,\\underline{n}\\otimes\\underline{n}`` (Kapitza) and
+`K_surf` collects ``\\sum_j (k^{\\mathrm s}_j/L)(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n})`` (highly conductive surface
 layer).
 
 Because the out-of-plane subspace is one-dimensional, the normal component
-obeys the exact series law `1/k^{hom}_{nn} = Σ_i f_i / k_{i,nn} + Σ_j ρ_j / L`.
+obeys the exact series law
+``1/k^{\\mathrm{hom}}_{nn} = \\sum_i f_i/k_{i,nn} + \\sum_j \\rho_j/L``.
 """
 function laminate_conductivity(
         K3s, f, P_int, K_surf;
@@ -481,7 +503,8 @@ end
     laminate_gradient_localization(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
 
 Gradient localization tensor of one layer in a transport problem,
-`𝐀_i = 𝟏 + 𝐏_i · (𝐊^{hom} − 𝐊_i)`, with `Σ_i f_i 𝐀_i = 𝟏`.
+``\\boldsymbol{A}_i = \\boldsymbol{1} + \\boldsymbol{P}_i\\cdot(\\boldsymbol{K}^{\\mathrm{hom}} - \\boldsymbol{K}_i)``,
+with ``\\sum_i f_i\\,\\boldsymbol{A}_i = \\boldsymbol{1}``.
 """
 @inline function laminate_gradient_localization(K3, Khom3; opinv = plane_pinv2)
     return one(SMatrix{3, 3, eltype(Khom3)}) + opinv(K3) * (Khom3 - K3)
@@ -491,7 +514,8 @@ end
     laminate_flux_localization(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
 
 Flux localization tensor of one layer,
-`𝐁_i = 𝐊_i · 𝐀_i · (𝐊^{hom})^{-1}`, with `Σ_i f_i 𝐁_i = 𝟏`.
+``\\boldsymbol{B}_i = \\boldsymbol{K}_i\\cdot\\boldsymbol{A}_i\\cdot(\\boldsymbol{K}^{\\mathrm{hom}})^{-1}``,
+with ``\\sum_i f_i\\,\\boldsymbol{B}_i = \\boldsymbol{1}``.
 """
 @inline function laminate_flux_localization(K3, Khom3; opinv = plane_pinv2)
     return K3 * laminate_gradient_localization(K3, Khom3; opinv = opinv) * _inv3(Khom3)
@@ -500,8 +524,10 @@ end
 """
     laminate_flux_gradient_localization(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
 
-Mixed transport localization of one layer, `𝐀^{qg}_i = 𝐊_i · 𝐀_i`, mapping the
-**macroscopic gradient** to the layer flux, with `Σ_i f_i 𝐀^{qg}_i = 𝐊^{hom}`.
+Mixed transport localization of one layer,
+``\\boldsymbol{A}_{q\\nabla,i} = \\boldsymbol{K}_i\\cdot\\boldsymbol{A}_i``, mapping the
+**macroscopic gradient** to the layer flux, with
+``\\sum_i f_i\\,\\boldsymbol{A}_{q\\nabla,i} = \\boldsymbol{K}^{\\mathrm{hom}}``.
 Order-2 twin of [`laminate_stress_strain_localization`](@ref).
 """
 @inline function laminate_flux_gradient_localization(K3, Khom3; opinv = plane_pinv2)
@@ -511,9 +537,10 @@ end
 """
     laminate_gradient_flux_localization(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
 
-Mixed transport localization of one layer, `𝐀^{gq}_i = 𝐀_i · (𝐊^{hom})^{-1}`,
+Mixed transport localization of one layer,
+``\\boldsymbol{A}_{\\nabla q,i} = \\boldsymbol{A}_i\\cdot(\\boldsymbol{K}^{\\mathrm{hom}})^{-1}``,
 mapping the **macroscopic flux** to the layer gradient, with
-`Σ_i f_i 𝐀^{gq}_i = (𝐊^{hom})^{-1}`. Order-2 twin of
+``\\sum_i f_i\\,\\boldsymbol{A}_{\\nabla q,i} = (\\boldsymbol{K}^{\\mathrm{hom}})^{-1}``. Order-2 twin of
 [`laminate_strain_stress_localization`](@ref).
 """
 @inline function laminate_gradient_flux_localization(K3, Khom3; opinv = plane_pinv2)

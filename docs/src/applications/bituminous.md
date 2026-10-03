@@ -1,7 +1,14 @@
 # [Viscoelastic complex modulus of a bituminous mixture](@id app-bituminous)
 
+!!! info "Before this page"
+    [The Laplace-Carson route](@ref th-laplace-carson), where the
+    correspondence principle used below is set out,
+    [The rheological model library](@ref man-rheological-models) for the 2S2P1D
+    binder, and [Numerical Laplace inversion](@ref man-laplace-inversion) for
+    the return to the time domain of the last section.
+
 The **complex modulus** ``E^*(\omega)`` of a bituminous mixture through three
-nested scales, following [someCBM2022](@cite). The bitumen is viscoelastic
+nested scales, following [someCBM2022](@citet). The bitumen is viscoelastic
 (2S2P1D); the mineral phases are elastic. Every scheme being `ComplexF64`-safe,
 the correspondence principle amounts to running the homogenization with
 complex-valued stiffnesses.
@@ -12,7 +19,10 @@ complex-valued stiffnesses.
 | 2 | Mortar | mastic matrix + sand | Mori-Tanaka |
 | 3 | Full mix | mortar matrix + coated coarse aggregates + pores | Self-Consistent |
 
-![Three-scale RVE of a bituminous mixture (from [someCBM2022](@cite), via the Echoes book [echoes](@cite)).](../assets/ver_multi_mix.png)
+The three scales are drawn below after [someCBM2022](@citet), as reproduced in
+the Echoes book [echoes](@cite).
+
+![Three-scale RVE of a bituminous mixture](../assets/ver_multi_mix.png)
 
 The coarse aggregates are **coated grains** — a stiff core wrapped in a thin
 mastic film — represented by a two-layer [`LayeredSphere`](@ref) that enters the
@@ -158,7 +168,7 @@ nothing # hide
 ```
 
 The pre-calibrated contact parameters (from the COBYLA fit of the least-aged
-state in [echoes](@cite) — the calibration itself is not repeated here) are used
+state in [echoes](@citet) — the calibration itself is not repeated here) are used
 directly. A check against the Echoes reference at four frequencies:
 
 ```@example bitumen
@@ -182,11 +192,11 @@ curve of the **least-aged** state,
 
 ```math
 J(\alpha,\chi,k_t) = \sum_\omega
-  \left|1 - \frac{E_{\rm mod}(i\omega)}{E_{\rm 2S2P1D}(i\omega)}\right|^2,
+  \left|1 - \frac{E_{\mathrm{mod}}(i\omega)}{E_\mathrm{2S2P1D}(i\omega)}\right|^2,
 ```
 
 subject to inequality constraints keeping the fit acceptable for the more-aged
-states. [someCBM2022](@cite) minimize it with a derivative-free `COBYLA`
+states. [someCBM2022](@citet) minimize it with a derivative-free `COBYLA`
 routine; their parameters are used directly here rather than re-calibrated:
 
 ```@example bitumen
@@ -243,7 +253,7 @@ per mix.
 Everything above lives in the frequency domain, which is where the material is
 *measured*. A pavement, though, is loaded by a wheel passing over it — a
 transient, not a sinusoid — so what a structural calculation needs is the
-relaxation modulus ``E^{\hom}(t)``.
+relaxation modulus ``E^{\mathrm{hom}}(t)``.
 
 That is one call. [`homogenize_lc`](@ref) takes the same three-scale cell
 builder used above, evaluates it at whatever Carson variables the inversion
@@ -292,3 +302,13 @@ gap widens as the load becomes slower.
     transform has a branch cut at the origin, from its ``(p\tau)^{-k}`` terms;
     that is not an obstacle for any of them — the Talbot contours are designed
     to wrap around exactly such a singularity.
+
+## Where to go next
+
+The frequency route of this page, the time route of
+[Ageing creep of solidifying cementitious materials](@ref app-ageing-creep) and
+the Laplace–Carson route are checked against one another on a non-ageing
+composite in [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time).
+The next application, [The cluster model on cubic arrays](@ref app-cluster-model),
+leaves time dependence for the N-body schemes, in which the positions of the
+inclusions enter the estimate.

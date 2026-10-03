@@ -73,17 +73,17 @@
 """
     get_layer(sphere::LayeredSphere, r; side = :outer) -> Int
 
-Index of the region containing the radius `r`: `1, …, N` for the layers,
-`N+1` for the surrounding matrix.
+Index of the region containing the radius `r`: ``1, \\dots, N`` for the layers,
+``N+1`` for the surrounding matrix.
 
-Layer `k` occupies `r_{k-1} ≤ r < r_k`, so a radius strictly between two
-interfaces is unambiguous.  **On** an interface `r = r_k` the field has two
+Layer ``k`` occupies ``r_{k-1} \\le r < r_k``, so a radius strictly between two
+interfaces is unambiguous.  **On** an interface ``r = r_k`` the field has two
 different limits and `side` picks one:
 
-- `side = :outer` (default) — the limit from above, `r_k⁺`: region `k+1`,
-  consistent with the half-open convention `[r_{k-1}, r_k)` used by
+- `side = :outer` (default) — the limit from above, ``r_k^+``: region ``k+1``,
+  consistent with the half-open convention ``[r_{k-1}, r_k)`` used by
   [`layer_volume_fraction`](@ref) and by `LayeredSpheroids.get_layer`;
-- `side = :inner` — the limit from below, `r_k⁻`: region `k`.
+- `side = :inner` — the limit from below, ``r_k^-``: region ``k``.
 
 The distinction is not cosmetic. Across a [`SpringInterface`](@ref) the
 displacement jumps and across a [`MembraneInterface`](@ref) the traction
@@ -91,7 +91,7 @@ jumps, so `local_stress(…, r_k; side = :inner)` and `side = :outer` return
 genuinely different tensors — that difference *is* the interface law, and
 the test suite checks it against the prescribed jump.
 
-Radii beyond `r_N` always give `N+1`, whatever `side`.
+Radii beyond ``r_N`` always give ``N+1``, whatever `side`.
 
 A **symbolic** radius is refused rather than located.  `SymPy.Sym` answers a
 comparison it cannot decide with a plain `false` — `r ≥ 1.0` on a positive
@@ -155,7 +155,7 @@ end
 """
     _at_origin(r) -> Bool
 
-Whether `r` is the exact origin, where the `1/r³` and `1/r⁵` mode terms are
+Whether `r` is the exact origin, where the ``1/r^3`` and ``1/r^5`` mode terms are
 switched off (their amplitudes vanish identically in the core).  Gated on
 `TensND.is_hard_numeric` so a symbolic radius always takes the general
 branch and keeps its closed form.
@@ -171,10 +171,10 @@ branch and keeps its closed form.
 Radius and unit radial direction of a point.  The Cartesian form accepts
 anything `TensND._extract_vec` understands (`Vec{3}`, `NTuple{3}`, an
 `AbstractVector`, a 1st-order `AbstractTens`).  The spherical form uses the
-package-wide convention `θ` = colatitude measured from `e₃`, `φ` = azimuth
-in the `(e₁, e₂)` plane.
+package-wide convention `θ` = colatitude measured from ``\\underline{e}_3``, `φ` = azimuth
+in the ``(\\underline{e}_1, \\underline{e}_2)`` plane.
 
-At `r = 0` the direction is undefined; `(0, 0, 1)` is returned, which is
+At ``r = 0`` the direction is undefined; `(0, 0, 1)` is returned, which is
 harmless because every Walpole coefficient of the field is axis-independent
 there (see [`local_strain_strain_loc`](@ref)).
 """
@@ -198,8 +198,8 @@ end
 
 Precomputed pointwise elastic solution of a [`LayeredSphere`](@ref)
 embedded in the isotropic matrix `C₀`: the per-region amplitudes of the
-spherical mode pair `(Ã, B̃)` and of the four deviatoric Love modes
-`(a, b, c, d)`, for `k = 1..N` the layers and `k = N+1` the matrix, under a
+spherical mode pair ``(\\tilde A, \\tilde B)`` and of the four deviatoric Love modes
+``(a, b, c, d)``, for ``k = 1, \\dots, N`` the layers and ``k = N+1`` the matrix, under a
 unit remote strain.
 
 Build it once and pass it wherever `(sphere, C₀)` is accepted. Every
@@ -207,7 +207,7 @@ Build it once and pass it wherever `(sphere, C₀)` is accepted. Every
 re-runs the whole recurrence on every call — fine for a handful of points,
 wasteful for the thousands a field map needs.
 
-```
+```julia
 sol = LayeredSphereFields(sphere, C₀)
 A   = local_strain_strain_loc(sol, x)
 ```
@@ -291,15 +291,15 @@ end
 The six radial functions the pointwise field is built from, in region `k`
 at radius `r`:
 
-- spherical: `f/r = Ã + B̃/r³` and `f′ = Ã − 2B̃/r³`;
-- deviatoric: `g/r`, `g′`, `h/r`, `h′` with
-  `g = a r + b(15x+11) r³ − c/r⁴ + d/r²` and
-  `h = −b(6x+17) r³ + (5/2) c/r⁴ + ((3x+1)/2) d/r²`, `x = κ/μ`.
+- spherical: ``f/r = \\tilde A + \\tilde B/r^3`` and ``f' = \\tilde A - 2\\tilde B/r^3``;
+- deviatoric: ``g/r``, ``g'``, ``h/r``, ``h'`` with
+  ``g = a r + b(15x+11)r^3 - c/r^4 + d/r^2`` and
+  ``h = -b(6x+17)r^3 + \\tfrac{5}{2}\\,c/r^4 + \\tfrac{3x+1}{2}\\,d/r^2``, ``x = k/\\mu``.
 
 The four deviatoric scalars are evaluated as MODE SUMS, never as a division
-of `g(r)` by `r`. In the core `c = d = 0` exactly, so each one reduces to a
-polynomial in `r²` — finite and accurate all the way down to `r = 0`, where
-forming `g(r)/r` would divide two vanishing quantities.
+of ``g(r)`` by ``r``. In the core ``c = d = 0`` exactly, so each one reduces to a
+polynomial in ``r^2`` — finite and accurate all the way down to ``r = 0``, where
+forming ``g(r)/r`` would divide two vanishing quantities.
 """
 @inline function _radial_scalars(f::LayeredSphereFields{T}, k::Int, r) where {T}
     κ, μ = _region_moduli(f, k)
@@ -338,24 +338,24 @@ end
 """
     local_strain_strain_loc(f_or_sphere, [C₀,] x; side = :outer) -> TensTI{4,3}
 
-Pointwise strain-strain localization tensor `𝔸(x)`, so that the local
-strain under a remote uniform strain `ε∞` is `ε(x) = 𝔸(x) ⊡ ε∞`. Valid at
+Pointwise strain-strain localization tensor ``\\mathbb{A}(\\underline{x})``, so that the local
+strain under a remote uniform strain ``\\boldsymbol{\\varepsilon}^{\\infty}`` is ``\\boldsymbol{\\varepsilon}(\\underline{x}) = \\mathbb{A}(\\underline{x}):\\boldsymbol{\\varepsilon}^{\\infty}``. Valid at
 every point: inside any layer **and** in the surrounding matrix, with
 perfect or imperfect interfaces.
 
 The point `x` is either a Cartesian vector (`Vec{3}`, `NTuple{3}`,
 `AbstractVector`, 1st-order `AbstractTens`) or spherical coordinates given
-as three arguments `(r, θ, φ)`, `θ` the colatitude from `e₃`.
+as three arguments `(r, θ, φ)`, `θ` the colatitude from ``\\underline{e}_3``.
 
-The result is transversely isotropic about `n = x/‖x‖` — the configuration
+The result is transversely isotropic about ``\\underline{n} = \\underline{x}/\\lVert\\underline{x}\\rVert`` — the configuration
 is rotation-invariant about the center — and has **no major symmetry**, so
 it comes back as a general `TensTI{4,T,6}`, six Walpole scalars plus the
 axis, in the canonical basis.
 
-At `x = 0` every Walpole coefficient degenerates to the isotropic pair
-`(Ã₁, a₁)`, so the returned tensor is the same for any axis; `(0,0,1)` is
-used. Note that `a₁` is the **pointwise** core value and differs in general
-from the layer average `β₁`, which folds in the mode-2 term.
+At ``\\underline{x} = \\underline{0}`` every Walpole coefficient degenerates to the isotropic pair
+``(\\tilde A_1, a_1)``, so the returned tensor is the same for any axis; `(0,0,1)` is
+used. Note that ``a_1`` is the **pointwise** core value and differs in general
+from the layer average ``\\beta_1``, which folds in the mode-2 term.
 
 `side` disambiguates a point lying exactly on an interface — see
 [`get_layer`](@ref).
@@ -412,9 +412,9 @@ end
 """
     local_stress_strain_loc(f_or_sphere, [C₀,] x; side = :outer) -> TensTI{4,3}
 
-Pointwise stress-strain localization `ℂ(x) ⊡ 𝔸(x)`: the local stress under
-a remote uniform **strain** `ε∞` is `σ(x) = local_stress_strain_loc(…) ⊡ ε∞`.
-`ℂ(x)` is the stiffness of the region containing `x` (the matrix outside).
+Pointwise stress-strain localization ``\\mathbb{C}(\\underline{x}):\\mathbb{A}(\\underline{x})``: the local stress under
+a remote uniform **strain** ``\\boldsymbol{\\varepsilon}^{\\infty}`` is `σ(x) = local_stress_strain_loc(…) ⊡ ε∞`.
+``\\mathbb{C}(\\underline{x})`` is the stiffness of the region containing `x` (the matrix outside).
 
 Twin of [`local_strain_strain_loc`](@ref); same arguments and conventions.
 """
@@ -423,11 +423,11 @@ function local_stress_strain_loc end
 """
     local_strain_stress_loc(f_or_sphere, [C₀,] x; side = :outer) -> TensTI{4,3}
 
-Pointwise strain-stress localization `𝔸(x) ⊡ 𝕊₀`, `𝕊₀ = C₀⁻¹`: the local
-strain under a remote uniform **stress** `σ∞` is
+Pointwise strain-stress localization ``\\mathbb{A}(\\underline{x}):\\mathbb{S}_0``, ``\\mathbb{S}_0 = \\mathbb{C}_0^{-1}``: the local
+strain under a remote uniform **stress** ``\\boldsymbol{\\sigma}^{\\infty}`` is
 `ε(x) = local_strain_stress_loc(…) ⊡ σ∞`.
 
-Exact because the remote medium is uniform: `ε∞ = 𝕊₀ ⊡ σ∞`.
+Exact because the remote medium is uniform: ``\\boldsymbol{\\varepsilon}^{\\infty} = \\mathbb{S}_0:\\boldsymbol{\\sigma}^{\\infty}``.
 Twin of [`local_strain_strain_loc`](@ref); same arguments and conventions.
 """
 function local_strain_stress_loc end
@@ -435,8 +435,8 @@ function local_strain_stress_loc end
 """
     local_stress_stress_loc(f_or_sphere, [C₀,] x; side = :outer) -> TensTI{4,3}
 
-Pointwise stress-stress localization `ℂ(x) ⊡ 𝔸(x) ⊡ 𝕊₀`: the local stress
-under a remote uniform **stress** `σ∞` is
+Pointwise stress-stress localization ``\\mathbb{C}(\\underline{x}):\\mathbb{A}(\\underline{x}):\\mathbb{S}_0``: the local stress
+under a remote uniform **stress** ``\\boldsymbol{\\sigma}^{\\infty}`` is
 `σ(x) = local_stress_stress_loc(…) ⊡ σ∞`.
 
 Twin of [`local_strain_strain_loc`](@ref); same arguments and conventions.
@@ -492,7 +492,7 @@ function local_strain end
     local_stress(f_or_sphere, [C₀,] x, ε∞; side = :outer) -> Tens{2,3}
 
 Local stress tensor at `x` under the remote uniform strain `ε∞`, i.e.
-`ℂ(x) ⊡ local_strain(…)` with `ℂ(x)` the stiffness of the region containing
+``\\mathbb{C}(\\underline{x}):\\boldsymbol{\\varepsilon}(\\underline{x})``, ``\\boldsymbol{\\varepsilon}(\\underline{x})`` being `local_strain(…)` and ``\\mathbb{C}(\\underline{x})`` the stiffness of the region containing
 the point (the matrix `C₀` outside the composite sphere).
 """
 function local_stress end
@@ -503,12 +503,14 @@ function local_stress end
 Local displacement at `x` under the remote uniform strain `ε∞`:
 
 ```math
-u = \\frac{\\mathrm{tr}\\,ε∞}{3} f(r)\\,n + g(r)\\,(ε∞ᵈ·n) + h(r)\\,(n·ε∞ᵈ·n)\\,n
+\\underline{u} = \\frac{\\mathrm{tr}\\,\\boldsymbol{\\varepsilon}^{\\infty}}{3}\\,f(r)\\,\\underline{n}
+  + g(r)\\,(\\boldsymbol{\\varepsilon}^{\\infty\\mathrm{d}}\\cdot\\underline{n})
+  + h(r)\\,(\\underline{n}\\cdot\\boldsymbol{\\varepsilon}^{\\infty\\mathrm{d}}\\cdot\\underline{n})\\,\\underline{n}
 ```
 
-with `f = Ã r + B̃/r²` and `g`, `h` the deviatoric radial functions of the
-four Love modes. The rigid-body translation is fixed by `u → ε∞·x` at
-infinity, and `u(0) = 0`.
+with ``f = \\tilde A r + \\tilde B/r^2``, ``\\boldsymbol{\\varepsilon}^{\\infty\\mathrm{d}}`` the deviatoric part of ``\\boldsymbol{\\varepsilon}^{\\infty}`` and ``g``, ``h`` the deviatoric radial functions of the
+four Love modes. The rigid-body translation is fixed by ``\\underline{u} \\to \\boldsymbol{\\varepsilon}^{\\infty}\\cdot\\underline{x}`` at
+infinity, and ``\\underline{u}(\\underline{0}) = \\underline{0}``.
 
 Across a [`SpringInterface`](@ref) the displacement is discontinuous; use
 `side` to select the limit (see [`get_layer`](@ref)).
@@ -582,9 +584,9 @@ end
     shell_localization(f::LayeredSphereFields, k) -> (α_k, β_k)
 
 Volume-averaged bulk and shear localization of layer `k`, recovered from
-the cached pointwise amplitudes: `α_k = Ã_k` (the spherical localization is
+the cached pointwise amplitudes: ``\\alpha_k = \\tilde A_k`` (the spherical localization is
 uniform inside a layer) and
-`β_k = a_k + b_k · _layer_avg_dev_shear_factor(r_{k-1}, r_k, κ_k, μ_k)`.
+``\\beta_k = a_k + b_k\\,F_k``, with ``F_k`` = `_layer_avg_dev_shear_factor(r_{k-1}, r_k, κ_k, μ_k)`.
 
 Identical by construction to `_bulk_localization` and `_shear_localization`,
 which is the point: the pointwise reconstruction and the averaged path
@@ -606,8 +608,8 @@ end
 
 Precomputed pointwise transport (thermal / electric / Darcy) solution of a
 [`LayeredSphere`](@ref) in the isotropic matrix `K₀`: the per-region
-amplitudes `(Ã, B̃)` of `T = (Ã r + B̃/r²)(n·∇T∞)`, for `k = 1..N` the layers
-and `k = N+1` the matrix, under a unit remote gradient.
+amplitudes ``(\\tilde A, \\tilde B)`` of ``T = (\\tilde A r + \\tilde B/r^2)\\,(\\underline{n}\\cdot\\nabla T^{\\infty})``, for ``k = 1, \\dots, N`` the layers
+and ``k = N+1`` the matrix, under a unit remote gradient.
 
 Transport twin of [`LayeredSphereFields`](@ref).
 """
@@ -669,13 +671,13 @@ end
 """
     local_gradient_gradient_loc(f_or_sphere, [K₀,] x; side = :outer) -> TensTI{2,3}
 
-Pointwise gradient-gradient localization `𝐀(x)`, so that the local
-temperature gradient under a remote uniform gradient `∇T∞` is
-`∇T(x) = 𝐀(x) · ∇T∞`. Valid in any layer and in the matrix, with perfect,
+Pointwise gradient-gradient localization ``\\boldsymbol{A}(\\underline{x})``, so that the local
+temperature gradient under a remote uniform gradient ``\\nabla T^{\\infty}`` is
+``\\nabla T(\\underline{x}) = \\boldsymbol{A}(\\underline{x})\\cdot\\nabla T^{\\infty}``. Valid in any layer and in the matrix, with perfect,
 Kapitza or surface-conductive interfaces.
 
-`𝐀(x) = f′(r) n⊗n + (f(r)/r)(𝟏 − n⊗n)` is transversely isotropic about
-`n = x/‖x‖` and comes back as a `TensTI{2,T,2}`. Transport twin of
+``\\boldsymbol{A}(\\underline{x}) = f'(r)\\,\\underline{n}\\otimes\\underline{n} + (f(r)/r)(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n})`` is transversely isotropic about
+``\\underline{n} = \\underline{x}/\\lVert\\underline{x}\\rVert`` and comes back as a `TensTI{2,T,2}`. Transport twin of
 [`local_strain_strain_loc`](@ref); same argument forms and same `side`
 convention.
 """
@@ -684,25 +686,25 @@ function local_gradient_gradient_loc end
 """
     local_flux_gradient_loc(f_or_sphere, [K₀,] x; side = :outer) -> TensTI{2,3}
 
-Pointwise flux-gradient localization `−k(x) 𝐀(x)`: the local flux under a
-remote uniform gradient `∇T∞` is `q(x) = local_flux_gradient_loc(…) · ∇T∞`,
-with the Fourier / Fick sign convention `q = −k ∇T`.
+Pointwise flux-gradient localization ``-k(\\underline{x})\\,\\boldsymbol{A}(\\underline{x})``: the local flux under a
+remote uniform gradient ``\\nabla T^{\\infty}`` is `q(x) = local_flux_gradient_loc(…) · ∇T∞`,
+with the Fourier / Fick sign convention ``\\underline{q} = -k\\,\\nabla T``.
 """
 function local_flux_gradient_loc end
 
 """
     local_gradient_flux_loc(f_or_sphere, [K₀,] x; side = :outer) -> TensTI{2,3}
 
-Pointwise gradient-flux localization `𝐀(x) · K₀⁻¹`: the local gradient
-under a remote uniform **flux** `q∞` is `∇T(x) = local_gradient_flux_loc(…) · q∞`.
+Pointwise gradient-flux localization ``\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}``: the local gradient
+under a remote uniform **flux** ``\\underline{q}^{\\infty}`` is `∇T(x) = local_gradient_flux_loc(…) · q∞`.
 """
 function local_gradient_flux_loc end
 
 """
     local_flux_flux_loc(f_or_sphere, [K₀,] x; side = :outer) -> TensTI{2,3}
 
-Pointwise flux-flux localization `−k(x) 𝐀(x) · K₀⁻¹`: the local flux under
-a remote uniform **flux** `q∞` is `q(x) = local_flux_flux_loc(…) · q∞`.
+Pointwise flux-flux localization ``-k(\\underline{x})\\,\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}``: the local flux under
+a remote uniform **flux** ``\\underline{q}^{\\infty}`` is `q(x) = local_flux_flux_loc(…) · q∞`.
 """
 function local_flux_flux_loc end
 
@@ -750,8 +752,8 @@ end
     local_temperature(f_or_sphere, [K₀,] x, ∇T∞; side = :outer) -> Number
 
 Local temperature (or pressure / potential) at `x` under the remote uniform
-gradient `∇T∞`: `T = f(r) (n·∇T∞)`, normalized so that `T → ∇T∞·x` at
-infinity and `T(0) = 0`.
+gradient `∇T∞`: ``T = f(r)\\,(\\underline{n}\\cdot\\nabla T^{\\infty})``, normalized so that ``T \\to \\nabla T^{\\infty}\\cdot\\underline{x}`` at
+infinity and ``T(\\underline{0}) = 0``.
 
 Discontinuous across a [`KapitzaInterface`](@ref); use `side` to pick the
 limit (see [`get_layer`](@ref)).
@@ -770,7 +772,7 @@ function local_gradient end
     local_flux(f_or_sphere, [K₀,] x, ∇T∞; side = :outer) -> Vec{3}
 
 Local flux at `x` under the remote uniform gradient `∇T∞`, with the
-Fourier / Fick convention `q = −k(x) ∇T(x)`, `k(x)` the conductivity of the
+Fourier / Fick convention ``\\underline{q} = -k(\\underline{x})\\,\\nabla T(\\underline{x})``, ``k(\\underline{x})`` the conductivity of the
 region containing the point (the matrix outside).
 """
 function local_flux end

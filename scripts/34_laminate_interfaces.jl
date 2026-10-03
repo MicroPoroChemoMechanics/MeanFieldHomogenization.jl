@@ -1,4 +1,10 @@
-# # Imperfect interfaces in a laminate, and the size effect
+# # [Imperfect interfaces in a laminate, and the size effect](@id tut-laminate-interfaces)
+#
+# !!! info "Before this page"
+#     The tutorial [Periodic multilayer: the exact laminate solution](@ref tut-laminate),
+#     which builds the perfectly bonded cell modified below, and the section
+#     [Imperfect interfaces](@ref th-laminate-interfaces) of the laminate theory
+#     page, where the two additive interface terms are derived.
 #
 # A planar interface is the curvature-free case of the spherical one, so the
 # four interface models of `LayeredSpheres` carry over unchanged — and the
@@ -68,7 +74,7 @@ println("  → C₁₂₁₂ never moves: a spring is invisible in the plane.")
 # series:
 #
 # ```math
-# (\underline{n}\cdot\mathbb{C}^{hom}\cdot\underline{n})^{-1}
+# (\underline{n}\cdot\mathbb{C}^{\mathrm{hom}}\cdot\underline{n})^{-1}
 #  = \sum_i f_i (\underline{n}\cdot\mathbb{C}_i\cdot\underline{n})^{-1}
 #  + \frac{1}{L}\sum_j \boldsymbol{\mathcal{K}}_j
 # ```
@@ -157,3 +163,18 @@ jump = interface_jump(lam, 1, E)
 Σ33 = Matrix(components(homogenize(lam, Laminated(), :C) ⊡ E))[3, 3]
 @printf "\nunder E₃₃ = 1e-3 : Σ₃₃ = %.6e,  [u] = (%.2e, %.2e, %.3e)\n" Σ33 jump[1] jump[2] jump[3]
 @printf "  [u]₃ / (kn Σ₃₃) = %.12f\n" jump[3] / (1.0e-2 * Σ33)
+
+# The last ratio is one: the opening of the spring interface is its normal
+# compliance times the normal stress it transmits.
+#
+# ## Where to go next
+#
+# A laminate is anisotropic by construction, and so is any population of aligned
+# inclusions. [Symmetrization showcase: exact average vs best-fit projection](@ref tut-symmetrization)
+# compares the two ways of extracting an isotropic or transversely isotropic
+# response from such a tensor, the exact average over orientations and the
+# best-fit projection onto a symmetry class. The same interface models on a
+# curved surface are those of
+# [n-layer sphere: pointwise fields](@ref tut-layered-sphere-local-fields), and
+# a stack of clay platelets built on this cell is the subject of
+# [A lamellar porous material: swelling clays and C-S-H](@ref app-lamellar).

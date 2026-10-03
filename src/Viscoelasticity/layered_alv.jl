@@ -30,7 +30,7 @@
 
 Reference medium a layered-sphere ALV kernel is evaluated against:
 either the matrix `ViscoLaw` — the usual case, where the reference is
-fixed and known symbolically — or an already-discretized `(6n × 6n)`
+fixed and known symbolically — or an already-discretized ``6n\\times 6n``
 relaxation matrix.  The latter is what the self-consistent and
 differential schemes need: their reference is the *running* effective
 medium, which exists only as a block matrix.  Same role as the `_at`
@@ -41,7 +41,7 @@ const _ALVReference = Union{ViscoLaw, AbstractMatrix}
 """
     _bulk_layer_moduli_alv(sphere, C0_ref, times) -> (NTuple{N,(M_κ, M_μ)}, M_κ_0, M_μ_0)
 
-Trapezoidal `(n×n)` matrices of `κ(t,t')` and `μ(t,t')` for every
+Trapezoidal ``n\\times n`` matrices of ``k(t,t')`` and ``\\mu(t,t')`` for every
 layer of `sphere` plus the matrix reference `C0_ref` (whose iso
 parameters are extracted from its trapezoidal block matrix, or read
 directly off it when the reference is already a block matrix).
@@ -83,10 +83,10 @@ end
 """
     _iface_param_volterra(p, times, n) -> Matrix{T}
 
-Promote an interface parameter to its `n × n` Volterra block.  Scalar
-parameters (constant in time, the elastic limit) become `p · I_n`;
+Promote an interface parameter to its ``n\\times n`` Volterra block.  Scalar
+parameters (constant in time, the elastic limit) become ``p\\,\\mathbb 1_n``;
 genuinely viscoelastic parameters (`p::ViscoLaw` returning a scalar)
-become their trapezoidal `n × n` matrix.  Lets every interface model
+become their trapezoidal ``n\\times n`` matrix.  Lets every interface model
 stack on top of an ageing matrix without code duplication.
 """
 function _iface_param_volterra(p::Real, times::AbstractVector, n::Int)
@@ -108,15 +108,15 @@ end
 """
     _bulk_interface_T_alv(intf, M_κ, M_μ, r, times, n) -> Matrix{T}
 
-`(2n × 2n)` jump matrix for the **bulk** (Y₀-harmonic) ALV state at
-the interface of type `intf` located at radius `r`.  The adjacent
+``2n\\times 2n`` jump matrix for the **bulk** (``Y_0``-harmonic) ALV state at
+the interface of type `intf` located at radius ``r``.  The adjacent
 layer Volterra moduli `(M_κ, M_μ)` are passed in for type promotion.
 
 Supports the same interface types as the elastic counterpart:
 [`PerfectInterface`](@ref), [`SpringInterface`](@ref) (primal,
-displacement jump driven by the compliance `1/kn`), and
+displacement jump driven by the compliance ``s_n = 1/k_n``), and
 [`MembraneInterface`](@ref)
-(dual, traction jump driven by `κs`).  Each elastic scalar parameter
+(dual, traction jump driven by ``\\kappa^{\\mathrm s}``).  Each elastic scalar parameter
 may also be a [`ViscoLaw`](@ref) — in that case the jump is itself
 ageing and the corresponding block is the parameter's trapezoidal
 matrix.
@@ -185,13 +185,16 @@ end
     _bulk_transition_alv(intf, M_κ_a, M_μ_a, M_κ_b, M_μ_b, R, times, n)
         -> NTuple{4, Matrix}
 
-Closed-form `(2 × 2)` block bulk transition at the interface located
-at radius `R` between the inner layer `(M_κ_a, M_μ_a)` and the outer
-layer `(M_κ_b, M_μ_b)`.  Returns the four `n × n` Volterra blocks
-`(T11, T12, T21, T22)` of the amplitude transition
+Closed-form ``2\\times 2`` block bulk transition at the interface located
+at radius ``R`` between the inner layer `(M_κ_a, M_μ_a)` and the outer
+layer `(M_κ_b, M_μ_b)`.  Returns the four ``n\\times n`` Volterra blocks
+``(T_{11}, T_{12}, T_{21}, T_{22})`` of the amplitude transition
 
-    [A_b]   [T11 T12]   [A_a]
-    [B_b] = [T21 T22] · [B_a]
+```math
+\\begin{bmatrix} A_b \\\\ B_b \\end{bmatrix}
+= \\begin{bmatrix} T_{11} & T_{12} \\\\ T_{21} & T_{22} \\end{bmatrix}
+  \\begin{bmatrix} A_a \\\\ B_a \\end{bmatrix}
+```
 
 Numerically stable for arbitrary modulus contrasts (soft pores in a
 solid matrix, step-activated `ViscoLaw`s, etc.).
@@ -268,16 +271,16 @@ end
     bulk_amplitude_seq_alv(sphere, C0_law, times)
         -> (NTuple{N, (A_k, B_k)}, A_M, B_M)
 
-Forward-propagate the bulk mode amplitudes `(A_k, B_k)` (each an
-`n × n` Volterra matrix) layer by layer using closed-form interface
-transitions.  Core regularity sets `B_1 = 0` and the amplitude seed
-is `A_1 = I_n`.  Returns the inner-layer amplitudes plus the
-matrix-side `(A_M, B_M)`.
+Forward-propagate the bulk mode amplitudes ``(A_k, B_k)`` (each an
+``n\\times n`` Volterra matrix) layer by layer using closed-form interface
+transitions.  Core regularity sets ``B_1 = 0`` and the amplitude seed
+is ``A_1 = \\mathbb 1_n``.  Returns the inner-layer amplitudes plus the
+matrix-side ``(A_{\\infty}, B_{\\infty})`` (`A_M`, `B_M`).
 
 Supports `PerfectInterface`, `SpringInterface` (primal) and
 `MembraneInterface` (dual) — same set as the σ-state recurrence —
-but with no matrix inversion of a fundamental `M(r; κ, μ)`.  The
-only inversions performed are `volterra_divide(_, 3κ + 4μ)` which
+but with no matrix inversion of a fundamental ``\\mathbf{M}(r; k, \\mu)``.  The
+only inversions performed are `volterra_divide` by ``3k + 4\\mu``, which
 remain stable for any non-degenerate modulus.
 """
 function bulk_amplitude_seq_alv(
@@ -336,13 +339,13 @@ end
 """
     bulk_localization_alv(sphere, C0_law, times) -> NTuple{N, Matrix}
 
-Per-layer bulk localization matrices `α_k(t,t')` (`n × n` each), such
-that `<ε_v>_layer_k = ⟨α_k⟩ ∘ ε_v_∞` in the Volterra sense.
+Per-layer bulk localization matrices ``\\alpha_k(t,t')`` (``n\\times n`` each), such
+that ``\\langle\\varepsilon_{\\mathrm{v}}\\rangle_k = \\alpha_k\\circ\\varepsilon_{\\mathrm{v}}^{\\infty}`` in the Volterra sense.
 
-For the bulk Y₀ harmonic, the volume-averaged volumetric strain in
-layer `k` is exactly `3 A_k` (the mode-2 amplitude `B_k` has
-`u_r = B_k/r²` ⇒ traceless contribution).  Therefore
-`α_k = A_k · A_M^{-1}` with `A_M` the matrix-side mode-1 amplitude.
+For the bulk ``Y_0`` harmonic, the volume-averaged volumetric strain in
+layer ``k`` is exactly ``3A_k`` (the mode-2 amplitude ``B_k`` has
+``u_r = B_k/r^2`` ⇒ traceless contribution).  Therefore
+``\\alpha_k = A_k\\circ A_{\\infty}^{-\\circ}`` with ``A_{\\infty}`` the matrix-side mode-1 amplitude.
 
 Implementation : amplitude-space recurrence with closed-form
 interface transitions ([`bulk_amplitude_seq_alv`](@ref)).  Stable
@@ -369,9 +372,9 @@ end
         -> (inside_states::NTuple{N, Matrix}, s_matrix::Matrix)
 
 Backwards-compatible wrapper that exposes the σ-state form of the
-bulk recurrence: at each layer `k`, reconstruct the `2n × n` block
-`(u_r ; σ_rr)` from the per-layer amplitudes via
-`u_r = A_k r_k + B_k / r_k²` and `σ_rr = 3 κ_k A_k - 4 μ_k B_k / r_k³`.
+bulk recurrence: at each layer ``k``, reconstruct the ``2n\\times n`` block
+``(u_r; \\sigma_{rr})`` from the per-layer amplitudes via
+``u_r = A_k r_k + B_k/r_k^2`` and ``\\sigma_{rr} = 3k_k A_k - 4\\mu_k B_k/r_k^3``.
 
 Most users should rely on [`bulk_localization_alv`](@ref) directly.
 This helper is retained for the existing test that asserts the
@@ -423,29 +426,30 @@ end
 """
     _shear_M_matrix_alv(r, M_κ, M_μ, n) -> Matrix{T}  (4n × 4n, time-major)
 
-ALV fundamental matrix for the deviatoric Y₂ harmonic.  The state
-vector is `(U, W, σ_rr, σ_rθ)` carrying the **physical** traction
+ALV fundamental matrix for the deviatoric ``Y_2`` harmonic.  The state
+vector is ``(U, W, \\sigma_{rr}, \\sigma_{r\\theta})`` carrying the **physical** traction
 amplitudes, exactly as in the elastic `LayeredSpheres._shear_M_matrix`:
-rows 3 and 4 are polynomials in `(M_κ, M_μ)` — `blocks[3,1] = 4 M_μ`,
-`blocks[4,4] = 3 M_κ / r³` — and are continuous across a perfect
+rows 3 and 4 are polynomials in ``(\\widetilde{k}, \\widetilde{\\mu})`` (the Volterra
+moduli `M_κ`, `M_μ`) — ``\\mathbf{M}_{31} = 4\\widetilde{\\mu}``,
+``\\mathbf{M}_{44} = 3\\widetilde{k}/r^3`` — and are continuous across a perfect
 interface, which is why
 [`_shear_interface_T_alv`](@ref)`(::PerfectInterface, …)` is the
 identity and needs no modulus conversion.
 
-Block for block this is the elastic matrix with the scalar `x = κ/μ`
-replaced by the Volterra ratio `M_μ^{-vol} ∘ M_κ` applied **on the
-left**.  That inverse appears in three entries of the `U`/`W` rows
-(`blocks[1,2]`, `blocks[2,2]`, `blocks[1,4]`), each formed by
+Block for block this is the elastic matrix with the scalar ``x = k/\\mu``
+replaced by the Volterra ratio ``\\widetilde{\\mu}^{-\\circ}\\circ\\widetilde{k}`` applied **on the
+left**.  That inverse appears in three entries of the ``U``/``W`` rows
+(``\\mathbf{M}_{12}``, ``\\mathbf{M}_{22}``, ``\\mathbf{M}_{14}``), each formed by
 [`volterra_left_divide`](@ref)`(M_μ, …)` rather than by materializing
-`M_μ^{-vol}`.  A layer with a vanishing shear modulus is therefore
+``\\widetilde{\\mu}^{-\\circ}``.  A layer with a vanishing shear modulus is therefore
 **not** admissible here: `volterra_left_divide` requires
-`M_μ[t,t] ≠ 0` at every time step.
+``[\\widetilde{\\mu}]_{tt} \\ne 0`` at every time step.
 
-Each scalar entry of the elastic 4×4 matrix becomes an `n × n`
+Each scalar entry of the elastic ``4\\times 4`` matrix becomes an ``n\\times n``
 Volterra matrix; entries are arranged in **time-major** layout
-(row `(t-1)·4 + i`, col `(s-1)·4 + j` carries the `(t, s)` Volterra
-entry of the `(i, j)` block), so the resulting `4n × 4n` matrix is
-block-lower-triangular with 4×4 diagonal blocks.
+(row ``4(t-1) + i``, col ``4(s-1) + j`` carries the ``(t, s)`` Volterra
+entry of the ``(i, j)`` block), so the resulting ``4n\\times 4n`` matrix is
+block-lower-triangular with ``4\\times 4`` diagonal blocks.
 """
 function _shear_M_matrix_alv(
         r::Real, M_κ::AbstractMatrix, M_μ::AbstractMatrix,
@@ -559,15 +563,15 @@ end
 """
     _shear_interface_T_alv(intf, M_κ, M_μ, r, times, n) -> Matrix{T}
 
-`(4n × 4n)` jump matrix for the **shear** (Y₂-harmonic) ALV state at
-the interface of type `intf` located at radius `r`.  Time-major
-layout, block-lower-triangular with 4×4 diagonal blocks.
+``4n\\times 4n`` jump matrix for the **shear** (``Y_2``-harmonic) ALV state at
+the interface of type `intf` located at radius ``r``.  Time-major
+layout, block-lower-triangular with ``4\\times 4`` diagonal blocks.
 
-For a scalar (elastic) interface the (4n × 4n) matrix is block-
-diagonal in the 4×4 sense (the diagonal blocks repeat the elastic 4×4
+For a scalar (elastic) interface the ``4n\\times 4n`` matrix is block-
+diagonal in the ``4\\times 4`` sense (the diagonal blocks repeat the elastic ``4\\times 4``
 jump for every time step).  For an ageing interface (parameters
 `::ViscoLaw`) the corresponding entries also populate sub-diagonal
-4×4 blocks, encoding the convolution.
+``4\\times 4`` blocks, encoding the convolution.
 """
 function _shear_interface_T_alv(
         ::PerfectInterface,
@@ -645,13 +649,13 @@ end
 """
     _shear_M_inverse_alv(r, M_κ, M_μ, n) -> Matrix{T}    (4n × 4n)
 
-Closed-form `M(r; κ, μ)^{-1}` for the σ-form deviatoric (Y₂)
+Closed-form ``\\mathbf{M}(r; k, \\mu)^{-\\circ}`` for the σ-form deviatoric (``Y_2``)
 fundamental matrix.  Mirrors the reference C++ `set_visco_inv_matrix_dev`
-formula.  The only `n × n` Volterra
-inverses required are `U = (3κ + 4μ)^{-vol}` and `μ^{-vol}` — both
+formula.  The only ``n\\times n`` Volterra
+inverses required are ``U = (3k + 4\\mu)^{-\\circ}`` and ``\\mu^{-\\circ}`` — both
 guaranteed regular for any non-vacuum modulus.  This avoids inverting
-the full `4 × 4` diagonal block of `M(r)`, whose `det` collapses with
-`μ → 0` (soft phases, step-activated layers).
+the full ``4\\times 4`` diagonal block of ``\\mathbf{M}(r)``, whose `det` collapses with
+``\\mu \\to 0`` (soft phases, step-activated layers).
 """
 function _shear_M_inverse_alv(
         r::Real, M_κ::AbstractMatrix, M_μ::AbstractMatrix,
@@ -722,12 +726,12 @@ end
 """
     _shear_layer_transfer_alv(r_out, r_in, M_κ, M_μ, n) -> Matrix{T}
 
-`(4n × 4n)` intra-layer field-to-field transfer
-`S(r_out) = T · S(r_in)` for the deviatoric (Y₂) problem in an ALV
+``4n\\times 4n`` intra-layer field-to-field transfer
+``\\mathbf{S}(r_{\\mathrm{out}}) = \\mathbf{T}\\,\\mathbf{S}(r_{\\mathrm{in}})`` for the deviatoric (``Y_2``) problem in an ALV
 layer with Volterra moduli `(M_κ, M_μ)`.  Uses the closed-form
 [`_shear_M_inverse_alv`](@ref) so the only Volterra inverses are the
-n × n `(3κ + 4μ)^{-vol}` and `μ^{-vol}` — the dense `M(r; κ, μ)^{-1}`
-is never formed (its `4 × 4` diagonal blocks collapse for soft phases).
+``n\\times n`` ``(3k + 4\\mu)^{-\\circ}`` and ``\\mu^{-\\circ}`` — the dense ``\\mathbf{M}(r; k, \\mu)^{-\\circ}``
+is never formed (its ``4\\times 4`` diagonal blocks collapse for soft phases).
 """
 function _shear_layer_transfer_alv(
         r_out::Real, r_in::Real,
@@ -742,11 +746,12 @@ end
 """
     _shear_seed_states_alv(r_1, M_κ_1, M_μ_1, n) -> (probe_a, probe_b)
 
-Two `(4n × n)` probe state matrices at `r = r_1⁻` corresponding to
-amplitudes `(a, b) = (I_n, 0)` and `(0, I_n)` in the core layer (with
-the singular amplitudes `c = d = 0` enforced by finiteness at the
+Two ``4n\\times n`` probe state matrices at ``r = r_1^-`` corresponding to
+amplitudes ``(a, b) = (\\mathbb 1_n, 0)`` and ``(0, \\mathbb 1_n)`` in the core layer (with
+the singular amplitudes ``c = d = 0`` enforced by finiteness at the
 origin).  Each probe is the appropriate "block column" of
-`M(r_1; M_κ_1, M_μ_1)` extracted in time-major form.
+``\\mathbf{M}(r_1; \\widetilde{k}_1, \\widetilde{\\mu}_1)`` extracted in time-major form, with
+``\\widetilde{k}_1``, ``\\widetilde{\\mu}_1`` the core Volterra moduli `M_κ_1`, `M_μ_1`.
 """
 function _shear_seed_states_alv(
         r_1::Real,
@@ -763,13 +768,13 @@ end
 """
     _shear_amp_blocks_alv(r, M_κ, M_μ, n, state) -> (a, b)
 
-Given a `(4n × m)` state matrix in time-major layout and the Volterra
-moduli of the layer at radius `r`, solve `M(r) · x = state` (Volterra
+Given a ``4n\\times m`` state matrix in time-major layout and the Volterra
+moduli of the layer at radius ``r``, solve ``\\mathbf{M}(r)\\,\\mathbf{x}`` = `state` (Volterra
 inverse with `block_size = 4`) and extract the "mode 1" and "mode 2"
-amplitude blocks (`n × m` each).  Modes 3 and 4 are not returned (they
-are not needed for layered-sphere localization since `c = d = 0` for the
+amplitude blocks (``n\\times m`` each).  Modes 3 and 4 are not returned (they
+are not needed for layered-sphere localization since ``c = d = 0`` for the
 core probe construction and the matrix-side normalization only fixes
-`a` and `b`).
+``a`` and ``b``).
 """
 function _shear_amp_blocks_alv(
         r::Real, M_κ::AbstractMatrix, M_μ::AbstractMatrix,
@@ -798,14 +803,18 @@ end
 """
     _shear_solve_far_field_alv(a_a, a_b, b_a, b_b, n) -> (λ_a, λ_b)
 
-Solve the `2n × 2n` Volterra block system
+Solve the ``2n\\times 2n`` Volterra block system
 
-    a_a ∘ λ_a + a_b ∘ λ_b = I_n
-    b_a ∘ λ_a + b_b ∘ λ_b = 0
+```math
+\\begin{aligned}
+a_a\\circ\\lambda_a + a_b\\circ\\lambda_b &= \\mathbb 1_n,\\\\
+b_a\\circ\\lambda_a + b_b\\circ\\lambda_b &= 0,
+\\end{aligned}
+```
 
-for the two `n × n` Volterra matrices `λ_a`, `λ_b` that combine the two
+for the two ``n\\times n`` Volterra matrices ``\\lambda_a``, ``\\lambda_b`` that combine the two
 probes so the matrix-side amplitudes match unit far-field
-`(a, b) = (I_n, 0)`.  Built as a single time-major
+``(a, b) = (\\mathbb 1_n, 0)``.  Built as a single time-major
 `block_size = 2` Volterra inversion.
 """
 function _shear_solve_far_field_alv(
@@ -855,8 +864,8 @@ end
 
 Forward-propagate the two deviatoric probe states from the core
 outward through every layer (perfect interfaces only).  Returns one
-`(4n × n)` matrix per layer at `r_k⁻` (just inside the k-th
-interface) plus the matrix-side states `s_a`, `s_b` at `r_N⁺`.
+``4n\\times n`` matrix per layer at ``r_k^-`` (just inside the ``k``-th
+interface) plus the matrix-side states `s_a`, `s_b` at ``r_N^+``.
 
 `layers` must be the same `(M_κ_k, M_μ_k)` tuple produced by
 `_bulk_layer_moduli_alv`.
@@ -926,16 +935,16 @@ end
 """
     shear_localization_alv(sphere, C0_law, times) -> NTuple{N, Matrix}
 
-Per-layer deviatoric ALV localization matrices `β_k(t,t')` (`n × n`
-each), defined by `<ε_d>_layer_k = ⟨β_k⟩ ∘ ε_d_∞` in the Volterra
-sense — the `n × n` Volterra matrix that maps a unit deviatoric remote
-strain to the volume-averaged deviatoric strain in layer `k`.
+Per-layer deviatoric ALV localization matrices ``\\beta_k(t,t')`` (``n\\times n``
+each), defined by ``\\langle\\varepsilon_{\\mathrm{d}}\\rangle_k = \\beta_k\\circ\\varepsilon_{\\mathrm{d}}^{\\infty}`` in the Volterra
+sense — the ``n\\times n`` Volterra matrix that maps a unit deviatoric remote
+strain to the volume-averaged deviatoric strain in layer ``k``.
 
-The Y₂-harmonic recurrence uses a `(4n × 4n)` time-major fundamental
-matrix per layer, two probe states with seed `(a, b) = (I, 0)` and
-`(0, I)` propagated outward, and a final `(2n × 2n)` Volterra solve
+The ``Y_2``-harmonic recurrence uses a ``4n\\times 4n`` time-major fundamental
+matrix per layer, two probe states with seed ``(a, b) = (\\mathbb 1, 0)`` and
+``(0, \\mathbb 1)`` propagated outward, and a final ``2n\\times 2n`` Volterra solve
 that picks the linear combination matching unit far-field
-`(a_{N+1}, b_{N+1}) = (I, 0)`.  Per-layer `β_k` is the mode-1
+``(a_{N+1}, b_{N+1}) = (\\mathbb 1, 0)``.  Per-layer ``\\beta_k`` is the mode-1
 amplitude block extracted from the combined inside state.
 
 Reference : ECHOES manual ch07 §"n-layer ALV shear recurrence" ;
@@ -999,11 +1008,11 @@ end
 """
     strain_strain_loc_alv(sphere, C0_law, times) -> Matrix{T}
 
-`(6n × 6n)` block matrix describing the volume-averaged strain-strain
+``6n\\times 6n`` block matrix describing the volume-averaged strain-strain
 localization across the **entire** layered sphere under a unit
 Volterra far-field strain.  In iso form this is
-`A_avg = ⟨α⟩ 𝕁 + ⟨β⟩ 𝕂` with
-`⟨α⟩ = Σ_k f_k α_k(t,t')` and `⟨β⟩ = Σ_k f_k β_k(t,t')` (Volterra
+``\\langle\\widetilde{\\mathbb{A}}\\rangle = \\langle\\alpha\\rangle\\,\\mathbb{J} + \\langle\\beta\\rangle\\,\\mathbb{K}`` with
+``\\langle\\alpha\\rangle = \\sum_k f_k\\,\\alpha_k(t,t')`` and ``\\langle\\beta\\rangle = \\sum_k f_k\\,\\beta_k(t,t')`` (Volterra
 products).
 
 This is the analog used by the ALV dilute / MT / Maxwell schemes
@@ -1025,16 +1034,22 @@ end
 """
     stiffness_contribution_alv(sphere, C0_law, times) -> Matrix{T}
 
-`(6n × 6n)` size-independent ALV stiffness contribution of a layered
+``6n\\times 6n`` size-independent ALV stiffness contribution of a layered
 sphere relative to its iso ALV matrix `C0_law`.  Iso parameters
-(α-, β-blocks of the assembled matrix) are
-   `α = 3 Σ_k f_k (M_κ_k − M_κ_0) ∘ α_k`,
-   `β = 2 Σ_k f_k (M_μ_k − M_μ_0) ∘ β_k`,
-where `α_k`, `β_k` are the per-layer localization matrices and `M_κ_k`,
-`M_μ_k` the per-layer Volterra moduli.
+(``\\alpha``-, ``\\beta``-blocks of the assembled matrix) are
+
+```math
+\\alpha = 3\\sum_k f_k\\,(\\widetilde{k}_k - \\widetilde{k}_0)\\circ\\alpha_k,
+\\qquad
+\\beta = 2\\sum_k f_k\\,(\\widetilde{\\mu}_k - \\widetilde{\\mu}_0)\\circ\\beta_k,
+```
+
+where ``\\alpha_k``, ``\\beta_k`` are the per-layer localization matrices and ``\\widetilde{k}_k``,
+``\\widetilde{\\mu}_k`` (`M_κ_k`, `M_μ_k`) the per-layer Volterra moduli.
 
 The dilute-scheme effective stiffness with this inclusion at volume
-fraction `f` is `C̃_eff = C̃_0 + f · stiffness_contribution_alv(sphere, …)`.
+fraction ``f`` is ``\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0 + f\\,\\widetilde{\\mathbb{N}}``,
+with ``\\widetilde{\\mathbb{N}}`` = `stiffness_contribution_alv(sphere, …)`.
 """
 function stiffness_contribution_alv(
         sphere::LayeredSphere{T, N},
@@ -1066,7 +1081,7 @@ end
 Layered-sphere counterpart of
 [`stiffness_contribution_alv_at`](@ref MeanFieldHomogenization.Viscoelasticity.stiffness_contribution_alv_at)
 for cracks: the same size-independent ALV contribution, but against a
-pre-discretized `(6n × 6n)` reference — the *running* effective medium
+pre-discretized ``6n\\times 6n`` reference — the *running* effective medium
 of the differential (or self-consistent) ODE rather than the matrix law.
 
 The reference must be isotropic, as everywhere in the layered-sphere ALV
@@ -1085,14 +1100,16 @@ end
 
 ALV analog of `_membrane_surface_stress`: the Gurtin–Murdoch surface-stress
 contribution of the dual ([`MembraneInterface`](@ref)) interfaces to the
-volume-averaged stress of the layered sphere, as `(n × n)` Volterra blocks in
-the bulk (`𝕁`) and shear (`𝕂`) parts.  The surface moduli `(κs, μs)` are
+volume-averaged stress of the layered sphere, as ``n\\times n`` Volterra blocks in
+the bulk (``\\mathbb{J}``) and shear (``\\mathbb{K}``) parts.  The surface moduli ``(\\kappa^{\\mathrm s}, \\mu^{\\mathrm s})`` are
 elastic (constant in time); they multiply the time-dependent interface
-displacement amplitudes `u_r(r)` (bulk) and `U(r), W(r)` (shear).  See the
-elastic derivation for the coefficients
+displacement amplitudes ``u_r(r)`` (bulk) and ``U(r)``, ``W(r)`` (shear).  See the
+elastic derivation for the coefficients (bulk part `a_surf`, shear part `b_surf`)
 
-```
-bulk :  4 κs · u_r(r)·r / R³ ,   shear:  (2/5)(−κs U + 3κs W + 6μs W)·r / R³ .
+```math
+a^{\\mathrm{surf}} = \\frac{4\\kappa^{\\mathrm s}\\,u_r(r)\\,r}{R^3},
+\\qquad
+b^{\\mathrm{surf}} = \\frac{2}{5}\\,\\bigl(-\\kappa^{\\mathrm s}U + 3\\kappa^{\\mathrm s}W + 6\\mu^{\\mathrm s}W\\bigr)\\,\\frac{r}{R^3} .
 ```
 """
 function _membrane_surface_stress_alv(

@@ -1,5 +1,13 @@
 # [Concave pores: superspheres and superspheroids](@id app-concave-pores)
 
+!!! info "Before this page"
+    [A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate),
+    whose Fourier reduction to the meridian half-plane is reused for the
+    superspheroid, [Finite-element inclusions](@ref man-fe-inclusions) for the
+    two pore types, and
+    [The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell)
+    for the corrected cell and the parity argument behind the octant.
+
 A **supersphere**
 
 ```math
@@ -13,7 +21,7 @@ of the pore shapes that scanning electron microscopy finds in sandstone and in
 harzburgite. It has no Eshelby solution, so it is exactly the morphology
 [`FESupershapePore`](@ref man-fe-inclusions) exists for.
 
-[chenIJES2015](@cite) studied it by finite elements and condensed the result
+[chenIJES2015](@citet) studied it by finite elements and condensed the result
 into a single scalar — the only published data for this shape family, and what
 makes any comparison possible at all. This page reports what the package
 computes on the same shapes: the agreement is exact where the answer is known,
@@ -152,7 +160,7 @@ above it.
 
 ## The axisymmetric companion, where the data is tabulated
 
-[sevostianovIJES2016](@cite) is the same team's study of the **axisymmetric**
+[sevostianovIJES2016](@citet) is the same team's study of the **axisymmetric**
 concave pore. Its shape, Eq. (1.2),
 
 ```math
@@ -329,7 +337,7 @@ section, on tetrahedra. At ``p = 0.30``:
 | Fourier axisymmetric, 2-D | 1.78579 | 7.39345 | **1.36238** | 3.89764 |
 | octant, 3-D, level 3 | 1.76599 | 6.81044 | 1.35528 | 3.62208 |
 | octant, 3-D, level 4 | 1.78023 | 7.07750 | **1.36066** | 3.74200 |
-| [sevostianovIJES2016](@cite) | 1.81996 | 7.40550 | **1.64000** | 3.93922 |
+| [sevostianovIJES2016](@citet) | 1.81996 | 7.40550 | **1.64000** | 3.93922 |
 
 The octant gives ``k_0R_{11} = 1.36066``, **0.13 % from the two-dimensional
 value** and rising towards it as the level increases. Two independent
@@ -409,7 +417,14 @@ julia scripts/fe/make_cell_figures.jl        # figures + docs/src/assets/fe/cell
 julia scripts/89_fe_concave_pores.jl      # the comparison, live
 ```
 
-## See also
+## Where to go next
+
+The two cells of this page are the teachers of the supersphere and superspheroid
+surrogates described in [Neural-surrogate inclusions](@ref man-neural-inclusions),
+which replace the solve inside a scheme. The next application,
+[A lamellar porous material: swelling clays and C-S-H](@ref app-lamellar),
+turns to a morphology solved exactly rather than meshed, a stack of platelets,
+and derives its effective behavior in closed form.
 
 - [The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell)
   — the pore declination, and the octant's parity argument.

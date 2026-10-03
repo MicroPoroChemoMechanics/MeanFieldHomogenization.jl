@@ -2,14 +2,21 @@
 EditURL = "../../../../scripts/43_secant_elastoplasticity.jl"
 ```
 
-# Nonlinear homogenization: the secant method on a porous plastic solid
+# [Nonlinear homogenization: the secant method on a porous plastic solid](@id tut-secant-elastoplasticity)
+
+!!! info "Before this page"
+    The tutorials [Derivatives and sensitivities](@ref tut-sensitivities), whose
+    `ForwardDiff` derivative supplies the closure below, and
+    [Nonlinear solvers for the self-consistent fixed point](@ref tut-nonlinear-solvers),
+    for the scheme that is differentiated; the layered sphere is described in
+    [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere).
 
 Every scheme in `MeanFieldHomogenization` is linear: it maps phase stiffnesses to an
 effective stiffness. A *nonlinear* material can still be treated with those
 same tools, by replacing each phase with a **linear comparison material**
 whose modulus is re-estimated from the strain the phase actually sees. This
 page walks through one such construction — the **modified secant method**
-([suquet1997](@cite), [ponteCastaneda1991](@cite)) — on the classical test
+[suquet1997, ponteCastaneda1991](@cite) — on the classical test
 case: a porous solid whose matrix is elastic–perfectly plastic, loaded
 hydrostatically.
 
@@ -27,27 +34,27 @@ Two ingredients make it work, and both already exist in the package:
 Write the macroscopic strain as ``\boldsymbol{E} = \tfrac{E_v}{3}\boldsymbol{1} +
 \boldsymbol{E}_d`` with ``E_v = \mathrm{tr}\,\boldsymbol{E}`` its volumetric
 part and ``\boldsymbol{E}_d`` its deviator. For an isotropic effective
-behavior of moduli ``(k^{\hom}, \mu^{\hom})`` the macroscopic elastic energy is
+behavior of moduli ``(k^{\mathrm{hom}}, \mu^{\mathrm{hom}})`` the macroscopic elastic energy is
 
 ```math
-W(\boldsymbol{E}) = \tfrac{1}{2}\,\boldsymbol{E}:\mathbb{C}^{\hom}:\boldsymbol{E}
-                  = \tfrac{1}{2}\,k^{\hom} E_v^{2}
-                  + \mu^{\hom}\,\boldsymbol{E}_d\!:\!\boldsymbol{E}_d .
+W(\boldsymbol{E}) = \tfrac{1}{2}\,\boldsymbol{E}:\mathbb{C}^{\mathrm{hom}}:\boldsymbol{E}
+                  = \tfrac{1}{2}\,k^{\mathrm{hom}} E_v^{2}
+                  + \mu^{\mathrm{hom}}\,\boldsymbol{E}_d\!:\!\boldsymbol{E}_d .
 ```
 
 Now let ``\mu_i`` be the shear modulus of shell ``i``, of volume fraction
 ``f_i``. Differentiating ``W`` with respect to ``\mu_i`` — at fixed
 macroscopic strain, so that only the *explicit* dependence survives — gives
 the **second moment of the deviatoric strain** in that shell
-([kreher1990](@cite), [suquet1997](@cite)):
+[kreher1990, suquet1997](@cite):
 
 ```math
 \bigl\langle \boldsymbol{\varepsilon}_d\!:\!\boldsymbol{\varepsilon}_d
 \bigr\rangle_i
 \;=\; \frac{1}{f_i}\,\frac{\partial W}{\partial \mu_i}
 \;=\; \frac{1}{f_i}\left(
-  \tfrac{1}{2}\frac{\partial k^{\hom}}{\partial \mu_i}\,E_v^{2}
-  + \frac{\partial \mu^{\hom}}{\partial \mu_i}\,
+  \tfrac{1}{2}\frac{\partial k^{\mathrm{hom}}}{\partial \mu_i}\,E_v^{2}
+  + \frac{\partial \mu^{\mathrm{hom}}}{\partial \mu_i}\,
     \boldsymbol{E}_d\!:\!\boldsymbol{E}_d
 \right).
 ```
@@ -84,7 +91,7 @@ with the secant modulus
     ``\sqrt{3/2} \approx 1.22`` — enough to make a converged estimate look like
     a systematic 20 % overestimate.
 
-The ``n`` shells are coupled through ``\mathbb{C}^{\hom}``, so this is a
+The ``n`` shells are coupled through ``\mathbb{C}^{\mathrm{hom}}``, so this is a
 fixed point on the vector ``(\mu_1,\dots,\mu_n)`` — solved below by direct
 iteration.
 
@@ -187,7 +194,7 @@ end
 ## §2 The secant closure by automatic differentiation
 
 One `ForwardDiff.jacobian` call gives the two rows
-``\partial k^{\hom}/\partial\mu_i`` and ``\partial\mu^{\hom}/\partial\mu_i``
+``\partial k^{\mathrm{hom}}/\partial\mu_i`` and ``\partial\mu^{\mathrm{hom}}/\partial\mu_i``
 at once — the whole nonlinear closure, in one line.
 
 ````@example secant_elastoplasticity
@@ -223,7 +230,7 @@ end
 
 Loading is purely hydrostatic: ``\boldsymbol{E} = \tfrac{E_v}{3}\boldsymbol{1}``,
 so ``\boldsymbol{E}_d = 0`` and the response is read on the mean stress
-``\Sigma_m = k^{\hom} E_v``. Note that plasticity develops all the same: the
+``\Sigma_m = k^{\mathrm{hom}} E_v``. Note that plasticity develops all the same: the
 void makes the *local* strain deviatoric even under a purely volumetric
 macroscopic strain, and it is that local deviator which yields.
 
@@ -256,7 +263,7 @@ end
 ````
 
 The curves show the two regimes: a common elastic branch of slope
-``k^{\hom}``, then a plateau once the whole solid has yielded. Refining the
+``k^{\mathrm{hom}}``, then a plateau once the whole solid has yielded. Refining the
 radial discretization lowers the plateau and converges.
 
 ````@example secant_elastoplasticity
@@ -278,7 +285,7 @@ plt
 For a **rigid–perfectly plastic** hollow sphere under hydrostatic loading,
 limit analysis gives the exact collapse stress ``\Sigma_m = \tfrac{2}{3}
 \sigma_0\ln(1/f)`` — the hydrostatic point of the Gurson criterion
-([gurson1977](@cite)). Refining the radial discretization drives the secant
+[gurson1977](@cite). Refining the radial discretization drives the secant
 estimate onto it:
 
 ````@example secant_elastoplasticity
@@ -297,7 +304,7 @@ two ends of the sweep are both meaningful.
 **A single shell reproduces the classical variational estimate.** With
 ``n = 1`` the second moment is taken over the whole solid at once, which is
 exactly the linear-comparison construction of the variational / modified
-secant method ([ponteCastaneda1991](@cite), [suquet1997](@cite)): one uniform
+secant method [ponteCastaneda1991, suquet1997](@cite): one uniform
 secant modulus for the entire matrix. The resulting plateau matches
 ``\tfrac{2}{3}\sigma_0(1-f)/\sqrt{f}`` to five digits — verified here at
 ``f = 0.05``, ``0.1`` and ``0.3``:
@@ -323,9 +330,21 @@ from above.
     Nothing above ever evaluated a local field. The second moment of the
     strain in each shell came out of `ForwardDiff.jacobian` applied to a
     self-consistent homogenization — the same sensitivity machinery used in
-    the [sensitivities tutorial](../sensitivities.md) for parameter studies.
+    the [sensitivities tutorial](@ref tut-sensitivities) for parameter studies.
     A nonlinear constitutive law is, from the package's point of view, just
     one more consumer of that derivative.
+
+The figure above gathers the response computed with one and with several
+shells, against the limit that the plateau must reach.
+
+## Where to go next
+
+The secant method reuses the linear schemes of the package, one comparison
+material at a time. The next group of tutorials derives the same estimates
+symbolically, beginning with
+[Symbolic spheres: closed forms with SymPy and Symbolics.jl](@ref tut-symbolic-spheres).
+The sensitivity machinery that the closure relies on is documented in
+[Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities).
 
 ---
 

@@ -8,10 +8,10 @@
     _elliptic_CS(η) -> (𝒞, 𝒮, ℰ)
 
 Angular integrals (paper eq. 1532):
-``\\mathcal C_\\eta = \\int_0^{\\pi/2}\\cos^2\\!\\phi\\,/
-\\sqrt{\\cos^2\\!\\phi+\\eta^2\\sin^2\\!\\phi}\\;\\mathrm d\\phi``,
-likewise ``\\mathcal S_\\eta`` with ``\\sin^2\\!\\phi``, and
-``\\mathcal E_\\eta`` the complete integral of the second kind.
+``\\mathcal{C}_\\eta = \\int_0^{\\pi/2}\\cos^2\\!\\vartheta\\,/
+\\sqrt{\\cos^2\\!\\vartheta+\\eta^2\\sin^2\\!\\vartheta}\\;\\mathrm{d}\\vartheta``,
+likewise ``\\mathcal{S}_\\eta`` with ``\\sin^2\\!\\vartheta``, and
+``\\mathcal{E}_\\eta`` the complete integral of the second kind.
 
 The circular limit ``\\eta = 1`` is a removable ``0/0`` and must be taken
 by the shortcut below. The guard is deliberately **not** restricted to
@@ -43,19 +43,25 @@ end
 """
     _cod_iso_ellipse(c::EllipticCrack, E, ν) -> Tens{2,3}
 
-Closed-form COD tensor ``\\mathbf B`` of an elliptic crack of aspect
+Closed-form COD tensor ``\\boldsymbol{B}`` of an elliptic crack of aspect
 ratio ``\\eta = b/a`` in an isotropic matrix ``(E,\\nu)``:
 
-```
-B_ℓℓ = 8(1−ν²)/(3E) · (1−η²) / ((1−ν−η²) 𝓔_η + ν η² 𝓚_η)
-B_mm = 8(1−ν²)/(3E) · (1−η²) / ((1−(1−ν)η²) 𝓔_η − ν η² 𝓚_η)
-B_nn = 8(1−ν²)/(3E) · 1/𝓔_η
+```math
+\\begin{aligned}
+B_{\\ell\\ell} &= \\frac{8\\,(1-\\nu^{2})}{3E}\\,
+          \\frac{1-\\eta^{2}}
+               {\\bigl(1-\\nu-\\eta^{2}\\bigr)\\mathcal{E}_\\eta + \\nu\\,\\eta^{2}\\,\\mathcal{K}_\\eta},\\\\
+B_{mm} &= \\frac{8\\,(1-\\nu^{2})}{3E}\\,
+          \\frac{1-\\eta^{2}}
+               {\\bigl(1-(1-\\nu)\\eta^{2}\\bigr)\\mathcal{E}_\\eta - \\nu\\,\\eta^{2}\\,\\mathcal{K}_\\eta},\\\\
+B_{nn} &= \\frac{8\\,(1-\\nu^{2})}{3E}\\,\\frac{1}{\\mathcal{E}_\\eta},
+\\end{aligned}
 ```
 
-with ``\\mathcal K_\\eta = \\mathcal K(\\sqrt{1-\\eta^{2}})`` and
-``\\mathcal E_\\eta = \\mathcal E(\\sqrt{1-\\eta^{2}})`` the complete
+with ``\\mathcal{K}_\\eta = \\mathcal{K}(\\sqrt{1-\\eta^{2}})`` and
+``\\mathcal{E}_\\eta = \\mathcal{E}(\\sqrt{1-\\eta^{2}})`` the complete
 elliptic integrals of first and second kind
-([abramowitz1972](@cite)). Circular penny
+[abramowitz1972](@cite). Circular penny
 limit ``\\eta=1``: ``B_{nn} = 16(1-\\nu^{2})/(3\\pi E)``,
 ``B_{mm}=B_{\\ell\\ell}=B_{nn}/(1-\\nu/2)``.
 """
@@ -75,8 +81,7 @@ end
 
 Closed-form COD tensor of a ribbon (tunnel) crack in an isotropic
 matrix.  Ribbon limit of the elliptic closed form
-(see [kachanov1993](@cite),
- [sevostianov2002](@cite)).
+[kachanov1993, sevostianov2002](@cite).
 """
 function _cod_iso_ribbon(c::RibbonCrack, E::Number, ν::Number)
     T = promote_type(typeof(E), typeof(ν))
@@ -102,11 +107,9 @@ end
 
 Closed-form COD tensor of an elliptic crack in a transversely
 isotropic matrix whose TI axis is aligned with the crack normal
-``\\hat{\\mathbf n}``. Expressions are given in the engineering
+``\\underline{n}``. Expressions are given in the engineering
 parameterization ``(E,\\nu_{1},\\nu_{2},H,\\Gamma)`` of
-[hoenig1978](@cite),
-[kanaun2009](@cite),
-[barthelemyIJES2021](@cite); the auxiliary scalar
+[hoenig1978, kanaun2009, barthelemyIJES2021](@cite); the auxiliary scalar
 ``\\sigma_\\gamma`` is defined in `_ti_sigma_gamma`. Reduces to the
 isotropic case for ``\\nu_{1}=\\nu_{2}=\\nu``, ``H=\\Gamma=1``.
 """
@@ -135,8 +138,7 @@ end
 
 Closed-form COD tensor of a ribbon crack in an aligned TI matrix,
 ribbon limit of the elliptic TI closed form
-([hoenig1978](@cite),
- [barthelemyIJES2021](@cite)).
+[hoenig1978, barthelemyIJES2021](@cite).
 """
 function _cod_ti_ribbon(c::RibbonCrack, E::Number, H::Number, ν₁::Number, ν₂::Number, Γ::Number)
     T = promote_type(typeof(E), typeof(H), typeof(ν₁), typeof(ν₂), typeof(Γ))

@@ -22,9 +22,9 @@
                                 maxiters_per_row = 30, verbose = false)
 
 Row-by-row Newton-Raphson SC for ALV with iso phases.  Solves
-`C_eff = ECHOES_step(C_eff)` (the `B · A^{-vol}` body) by marching
-through the time grid, solving a 2i-dimensional Newton problem at each
-row `i` with `ForwardDiff.jacobian` and a backtracking Armijo line
+`C_eff = ECHOES_step(C_eff)` (the ``B\\circ A^{-\\circ}`` body) by marching
+through the time grid, solving a ``2i``-dimensional Newton problem at each
+row ``i`` with `ForwardDiff.jacobian` and a backtracking Armijo line
 search.
 
 # Arguments
@@ -35,7 +35,7 @@ search.
 
 # Keyword arguments
 
-  * `abstol`, `reltol`  — convergence on `‖F_i‖`.
+  * `abstol`, `reltol`  — convergence on ``\\|F_i\\|``.
   * `maxiters_per_row`  — Newton iteration cap per row.
   * `verbose`           — log per-row residuals.
 

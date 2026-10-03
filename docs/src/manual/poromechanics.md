@@ -1,23 +1,28 @@
 # [Poromechanics](@id manual-poromechanics)
 
-Once a scheme has produced a **drained** stiffness ``\mathbb{C}^{\rm hom}``, the
+!!! info "Before this page"
+    [Homogenization schemes](@ref man-schemes), which produces the drained
+    stiffness every formula below starts from, and [Cracks](@ref man-cracks)
+    for the crack family of the second example.
+
+Once a scheme has produced a **drained** stiffness ``\mathbb{C}^{\mathrm{hom}}``, the
 poroelastic law of a saturated medium is closed *without any further
 homogenization*: for a solid phase with uniform elastic properties
-``\mathbb{C}_{\rm s}`` (compliance ``\mathbb{S}_{\rm s} = \mathbb{C}_{\rm s}^{-1}``),
+``\mathbb{C}_{\mathrm{s}}`` (compliance ``\mathbb{S}_{\mathrm{s}} = \mathbb{C}_{\mathrm{s}}^{-1}``),
 
 ```math
-\boldsymbol{B} = \boldsymbol{1} : \left(\mathbb{I} - \mathbb{S}_{\rm s} : \mathbb{C}^{\rm hom}\right),
+\boldsymbol{B} = \boldsymbol{1} : \left(\mathbb{I} - \mathbb{S}_{\mathrm{s}} : \mathbb{C}^{\mathrm{hom}}\right),
 \qquad
-\frac{1}{M} = \boldsymbol{1} : \mathbb{S}_{\rm s} : \left(\boldsymbol{B} - \varphi\,\boldsymbol{1}\right),
+\frac{1}{M} = \boldsymbol{1} : \mathbb{S}_{\mathrm{s}} : \left(\boldsymbol{B} - \varphi\,\boldsymbol{1}\right),
 ```
 
-the **Biot tensor** and **Biot modulus** ([coussy2004](@cite)) — ``\boldsymbol{B}``
+the **Biot tensor** and **Biot modulus** [coussy2004](@cite) — ``\boldsymbol{B}``
 here, and nowhere else in this documentation, denotes the Biot tensor rather
 than a [crack opening displacement](@ref th-cod-tensors). They enter the constitutive
 law as
 
 ```math
-\dot{\boldsymbol{\Sigma}} = \mathbb{C}^{\rm hom} : \dot{\boldsymbol{E}} - \dot{p}\,\boldsymbol{B},
+\dot{\boldsymbol{\Sigma}} = \mathbb{C}^{\mathrm{hom}} : \dot{\boldsymbol{E}} - \dot{p}\,\boldsymbol{B},
 \qquad
 \dot{\varphi} = \boldsymbol{B} : \dot{\boldsymbol{E}} + \frac{\dot{p}}{M} .
 ```
@@ -41,7 +46,7 @@ par = poroelastic_parameters(homogenize(rve, MoriTanaka()), C_s, φ)
 ```
 
 Spherical pores give ``\boldsymbol{B} = b\,\boldsymbol{1}`` with the familiar
-``b = 1 - k^{\rm hom}/k_s``. Aligned cracks do not:
+``b = 1 - k^{\mathrm{hom}}/k_s``. Aligned cracks do not:
 
 ```@example poro
 rve_c = RVE()
@@ -78,15 +83,25 @@ flat crack.
 ## Drained ↔ undrained
 
 ```math
-\mathbb{C}^{\rm u} = \mathbb{C}^{\rm hom} + M\,\boldsymbol{B} \otimes \boldsymbol{B}
+\mathbb{C}^{\mathrm{u}} = \mathbb{C}^{\mathrm{hom}} + M\,\boldsymbol{B} \otimes \boldsymbol{B}
 ```
 
 via [`undrained_stiffness`](@ref) and [`drained_stiffness`](@ref), with
 [`skempton_tensor`](@ref) giving the pore pressure built up by an undrained
-stress increment, ``p = -\boldsymbol{B}^{\rm sk} : \boldsymbol{\Sigma}``.
+stress increment, ``p = -\boldsymbol{B}^{\mathrm{sk}} : \boldsymbol{\Sigma}``.
 
 !!! note "Homogeneous solid phase only"
     These relations need a solid phase with *uniform* elastic properties — a
     rock matrix with pores or fractures. A medium built from two distinct solid
-    constituents needs the general Levin/eigenstrain route, and ``\mathbb{C}_{\rm s}``
+    constituents needs the general Levin/eigenstrain route, and ``\mathbb{C}_{\mathrm{s}}``
     is then not defined.
+
+## Where to go next
+
+[Sensitivities](@ref man-sensitivities) differentiates the effective
+properties of the preceding pages with respect to any input of their RVE. The
+Biot coefficients of this page are the material side of
+[The coupled poroelastic problem](@ref fe-poro-coupling), where a
+finite-element code consumes them, and
+[Multiscale elasticity of a hydrating cement paste](@ref app-cement-paste) uses
+them to pass from drained to undrained moduli.

@@ -62,8 +62,8 @@ heterogeneous tuples (`Int`, `Irrational`, `Float32/64`, `Dual`, …) thanks to
 `promote_type` + `float`, and **symbolic** ones (`Sym`, `Num`), which keep their
 own type rather than being forced through `Float64`.
 
-```
-_normalize_euler(())                 == (0.0, 0.0, 0.0)
+```julia
+_normalize_euler(())               == (0.0, 0.0, 0.0)
 _normalize_euler((π/2,))             == (π/2, 0.0, 0.0)       # Float64
 _normalize_euler((π, 0, 0))          == (π, 0.0, 0.0)          # Irrational → Float
 _normalize_euler((0, 1, 2))          == (0.0, 1.0, 2.0)
@@ -102,8 +102,9 @@ _normalize_euler(::Tuple{}) = (0.0, 0.0, 0.0)
 """
     _frame_from_normal(n; T = nothing, in_plane = nothing) -> AbstractBasis
 
-Complete a normal vector `n` into an orthonormal frame `(ℓ, m, n̂)` whose
-**third** axis is `n̂ = n/‖n‖`, by Gram-Schmidt against a reference axis.
+Complete a normal vector `n` into an orthonormal frame
+``(\\underline{\\ell}, \\underline{m}, \\underline{n})`` whose **third** axis is `n`
+normalized, by Gram-Schmidt against a reference axis.
 Returns a `CanonicalBasis` when `n` is exactly the third canonical axis, so the
 common laminate needs no rotation at all.
 
@@ -115,11 +116,11 @@ axis to the element type of its *data*, so a `Float64` `1.0` reappears as a
 symbolic `1.0` multiplying every coefficient of the result.
 
 `in_plane` is the reference axis Gram-Schmidt orthogonalizes against, i.e. what
-fixes `ℓ` in the plane of the layers; it must not be parallel to `n̂`. Left
+fixes ``\\underline{\\ell}`` in the plane of the layers; it must not be parallel to ``\\underline{n}``. Left
 unset, a **numeric** normal picks whichever canonical axis is least aligned with
-`n̂`, which can never degenerate; a **symbolic** normal cannot answer that
-comparison, so it falls back to `e₁` and the caller must pass another reference
-when `n̂ ∥ e₁`.
+``\\underline{n}``, which can never degenerate; a **symbolic** normal cannot answer that
+comparison, so it falls back to ``\\underline{e}_1`` and the caller must pass another reference
+when ``\\underline{n} \\parallel \\underline{e}_1``.
 
 The effective property of a laminate is invariant under rotation about its
 normal, so this choice never changes the physics and never leaks into a
@@ -242,7 +243,7 @@ end
 
 Return a new 3D basis whose column `k` is the `σ[k]`-th column of
 `basis`.  If `σ` is an odd permutation, the 3rd column is negated to
-preserve a right-handed (det = +1) frame — physically equivalent since
+preserve a right-handed (``\\det = +1``) frame — physically equivalent since
 flipping an axis direction leaves an ellipsoid invariant.
 """
 function _permute_basis_3d(basis::TensND.AbstractBasis, σ::NTuple{3, Int})
@@ -261,7 +262,7 @@ end
 
 Return a new 2D basis: the original basis unchanged when `swap=false`,
 or the basis with columns `(1, 2)` swapped and column 2 negated when
-`swap=true` (preserves det = +1).
+`swap=true` (preserves ``\\det = +1``).
 """
 function _permute_basis_2d(basis::TensND.AbstractBasis, swap::Bool)
     M = _basis_matrix(basis)
@@ -290,11 +291,11 @@ Sort `axes` into descending order and permute the columns of `basis`
 accordingly to preserve the physical geometry of the inclusion.
 
 Supported layouts:
-- `:ellipsoid_3d` — full 3D permutation of `(a, b, c)` over columns 1,2,3.
-- `:ellipsoid_2d` — 2D permutation of `(a, b)` over columns 1,2.
+- `:ellipsoid_3d` — full 3D permutation of ``(a, b, c)`` over columns 1,2,3.
+- `:ellipsoid_2d` — 2D permutation of ``(a, b)`` over columns 1,2.
 - `:cylinder`    — swap columns 2,3 if the two transverse axes are in
   ascending order (column 1 = cylinder axis, fixed).
-- `:crack`       — swap columns 1,2 if `b > a` (column 3 = crack
+- `:crack`       — swap columns 1,2 if ``b > a`` (column 3 = crack
   normal, fixed).
 
 Symbolic or non-Real element types are returned untouched (no
@@ -342,7 +343,7 @@ end
     _permute_basis_cols23(basis) -> RotatedBasis
 
 Swap the 2nd and 3rd columns of a 3D basis (column 1 fixed) and negate
-column 3 to keep det = +1.  Used by `Cylinder`.
+column 3 to keep ``\\det = +1``.  Used by `Cylinder`.
 """
 function _permute_basis_cols23(basis::TensND.AbstractBasis)
     M = _basis_matrix(basis)
@@ -358,7 +359,7 @@ end
     _permute_basis_cols12(basis) -> RotatedBasis
 
 Swap the 1st and 2nd columns of a 3D basis (column 3 fixed) and negate
-column 2 to keep det = +1.  Used by `EllipticCrack`.
+column 2 to keep ``\\det = +1``.  Used by `EllipticCrack`.
 """
 function _permute_basis_cols12(basis::TensND.AbstractBasis)
     M = _basis_matrix(basis)
@@ -382,10 +383,11 @@ classification logic is delegated to a caller-supplied tuple of type
 tags — this keeps `Core` dependency-free from `Elasticity`.
 
 Returns an integer code instead of a type to avoid circular references:
-    1 → equivalent of `Spherical`   (a == b == c)
-    2 → equivalent of `Prolate`     (a > b == c)
-    3 → equivalent of `Oblate`      (a == b > c)
-    4 → equivalent of `Triaxial`    (a > b > c)
+
+- 1 → equivalent of `Spherical` (``a = b = c``)
+- 2 → equivalent of `Prolate` (``a > b = c``)
+- 3 → equivalent of `Oblate` (``a = b > c``)
+- 4 → equivalent of `Triaxial` (``a > b > c``)
 """
 function _classify_shape_3d(::Type{T}, a, b, c) where {T}
     if is_hard_numeric(T)
@@ -411,8 +413,9 @@ end
     _classify_shape_2d(::Type{T}, a, b)
 
 Classify a 2D ellipse from its (already sorted) semi-axes:
-    1 → equivalent of `Circular`  (a == b)
-    2 → equivalent of `Elliptic`  (a > b)
+
+- 1 → equivalent of `Circular` (``a = b``)
+- 2 → equivalent of `Elliptic` (``a > b``)
 """
 function _classify_shape_2d(::Type{T}, a, b) where {T}
     is_equal = is_hard_numeric(T) ? (a - b) ≤ max(a, b) * (1.0e-10 * one(T)) : isequal(a, b)

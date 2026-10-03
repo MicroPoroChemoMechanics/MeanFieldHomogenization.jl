@@ -37,7 +37,7 @@ Discretization settings of an axisymmetric finite-element inclusion.
     and `nradial = 40` 267 000 — the last exceeding a 6 GB budget in elasticity.
     Refine `radius_ratio` before `nradial`: what remains after the dipole
     correction is truncation, and `nradial = 20` is already past its plateau
-    (going to 28 leaves `H₁₁₁₁` and `R₁₁` unchanged to six figures).
+    (going to 28 leaves ``H_{1111}`` and ``R_{11}`` unchanged to six figures).
 
 The mesh is two-dimensional (the meridian half-plane), so refining is cheap:
 `nradial = 40` on a triangle mesh still solves in a fraction of a second.
@@ -98,20 +98,20 @@ center**, resolved by axisymmetric Fourier finite elements.
 | `a` | radius of the whole inclusion |
 | `w = core_fraction` | volume fraction of the core *within the inclusion* |
 | `a_core = a·w^(1/3)` | core radius, fixed by `w` |
-| `α = eccentricity` | offset of the core center, as a fraction of the largest offset that keeps the core inside: `d = α·(a − a_core)` |
+| `α = eccentricity` | offset of the core center, as a fraction of the largest offset that keeps the core inside: ``d = \\alpha\\,(a - a_{\\mathrm{core}})`` |
 
-`α = 0` is the concentric two-layer sphere, for which
+``\\alpha = 0`` is the concentric two-layer sphere, for which
 [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) gives the
 exact Hervé-Zaoui answer — the reference this type is validated against.
-`α → 1` brings the core tangent to the outer surface. The symmetry axis is
+``\\alpha \\to 1`` brings the core tangent to the outer surface. The symmetry axis is
 `axis`; the response is transversely isotropic about it (and isotropic at
-`α = 0`).
+``\\alpha = 0``).
 
 # What it provides
 
 The inclusion is **heterogeneous**, so it enters through gate B of the
 inclusion contract with *both* localization tensors — the strain-side
-`A_εε` and the stress-side `A_σε` (resp. `A_∇∇` and `A_q∇` in transport). All
+``\\mathbb{A}_{\\varepsilon\\varepsilon}`` and the stress-side ``\\mathbb{A}_{\\sigma\\varepsilon}`` (resp. ``\\boldsymbol{A}_{\\nabla\\nabla}`` and ``\\boldsymbol{A}_{q\\nabla}`` in transport). All
 schemes that consume those two follow: `Dilute`, `MoriTanaka`, `Maxwell`,
 `PonteCastanedaWillis`, `SelfConsistent`, `DifferentialScheme`.
 
@@ -245,7 +245,7 @@ core_radius(s::FEExcenteredSphere) = s.a * cbrt(s.core_fraction)
 """
     core_offset(incl) -> Real
 
-Distance from the inclusion center to the core center, `α·(a − a_core)`.
+Distance from the inclusion center to the core center, ``\\alpha\\,(a - a_{\\mathrm{core}})``.
 """
 core_offset(s::FEExcenteredSphere) = s.eccentricity * (s.a - core_radius(s))
 
@@ -286,8 +286,8 @@ Schemes._layer_reuss(s::FEExcenteredSphere, ref::TensND.AbstractTens) =
     fe_axi_localization(incl, P₀) -> (A, B)
 
 The pair of localization tensors of an axisymmetric finite-element inclusion,
-computed in one solve — the strain-side `A_εε` and stress-side `A_σε` in
-elasticity, `A_∇∇` and `A_q∇` in transport.
+computed in one solve — the strain-side ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` and stress-side ``\\mathbb{A}_{\\sigma\\varepsilon}`` in
+elasticity, ``\\boldsymbol{A}_{\\nabla\\nabla}`` and ``\\boldsymbol{A}_{q\\nabla}`` in transport.
 
 Calling the two generics separately returns exactly the same tensors at no
 extra cost: they share the memoized solve.

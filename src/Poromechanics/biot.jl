@@ -25,12 +25,12 @@
 phase of stiffness `C_s`, from its drained homogenized stiffness `C_hom`:
 
 ```math
-\\boldsymbol{B} = \\boldsymbol{1} : \\left(\\mathbb{I} - \\mathbb{S}_{\\rm s} :
-\\mathbb{C}^{\\rm hom}\\right), \\qquad \\mathbb{S}_{\\rm s} = \\mathbb{C}_s^{-1}.
+\\boldsymbol{B} = \\boldsymbol{1} : \\left(\\mathbb{I} - \\mathbb{S}_{\\mathrm s} :
+\\mathbb{C}^{\\mathrm{hom}}\\right), \\qquad \\mathbb{S}_{\\mathrm s} = \\mathbb{C}_{\\mathrm s}^{-1}.
 ```
 
-`\\boldsymbol{B}` is the tensor appearing in the poroelastic law
-``\\dot{\\boldsymbol{\\Sigma}} = \\mathbb{C}^{\\rm hom} : \\dot{\\boldsymbol{E}} -
+``\\boldsymbol{B}`` is the tensor appearing in the poroelastic law
+``\\dot{\\boldsymbol{\\Sigma}} = \\mathbb{C}^{\\mathrm{hom}} : \\dot{\\boldsymbol{E}} -
 \\dot p\\,\\boldsymbol{B}``; it is generally **anisotropic** even when the solid is
 isotropic, because the pore space is not.
 
@@ -38,7 +38,7 @@ Two limits are worth remembering as sanity checks: a homogeneous medium
 (`C_hom == C_s`) gives ``\\boldsymbol{B} = \\boldsymbol{0}``, and a vanishing drained
 stiffness gives ``\\boldsymbol{B} = \\boldsymbol{1}``. For an isotropic medium
 the tensor collapses to ``b\\,\\boldsymbol{1}`` with the familiar
-``b = 1 - k^{\\rm hom}/k_s``.
+``b = 1 - k^{\\mathrm{hom}}/k_{\\mathrm s}``.
 
 !!! note "Homogeneous solid phase only"
     These relations rest on the solid phase having *uniform* elastic
@@ -75,31 +75,31 @@ Inverse **Biot modulus** ``1/M`` (also written ``1/N``) of a porous medium with
 a homogeneous solid phase:
 
 ```math
-\\frac{1}{M} = \\boldsymbol{1} : \\mathbb{S}_{\\rm s} : \\left(\\boldsymbol{B} -
+\\frac{1}{M} = \\boldsymbol{1} : \\mathbb{S}_{\\mathrm s} : \\left(\\boldsymbol{B} -
 \\varphi\\,\\boldsymbol{1}\\right).
 ```
 
 `φ` is the **Lagrangian porosity** of the connected pore space in the reference
 configuration — the volume fraction actually occupied by the fluid, which for a
-fractured medium is the *crack* volume fraction ``\\sum_i (4\\pi/3) d_i
-\\omega_i`` and therefore depends on the current apertures rather than on the
+fractured medium is the *crack* volume fraction ``\\sum_i (4\\pi/3)\\,\\varepsilon_i\\,
+\\omega_i`` (crack density ``\\varepsilon_i``, aspect ratio ``\\omega_i``) and therefore depends on the current apertures rather than on the
 RVE alone (see [`pore_volume_fraction`](@ref)).
 
 For an isotropic medium this reduces to the textbook ``1/M = (b -
-\\varphi)/k_s``.
+\\varphi)/k_{\\mathrm s}``.
 
 !!! warning "Incompressible saturating fluid"
     This expression assumes the pore fluid is **incompressible**, which is the
-    setting of [barthelemyARMA2011](@cite). A fluid of finite bulk modulus
-    ``k_f`` adds the storage term ``\\varphi/k_f``:
+    setting of [barthelemyARMA2011](@citet). A fluid of finite bulk modulus
+    ``k_{\\mathrm f}`` adds the storage term ``\\varphi/k_{\\mathrm f}``:
 
     ```math
-    \\frac{1}{M} = \\boldsymbol{1} : \\mathbb{S}_{\\rm s} :
-    (\\boldsymbol{B} - \\varphi\\,\\boldsymbol{1}) + \\frac{\\varphi}{k_f}.
+    \\frac{1}{M} = \\boldsymbol{1} : \\mathbb{S}_{\\mathrm s} :
+    (\\boldsymbol{B} - \\varphi\\,\\boldsymbol{1}) + \\frac{\\varphi}{k_{\\mathrm f}}.
     ```
 
     Add it yourself if the fluid compressibility matters — the function does
-    not, since it has no way of knowing `k_f`. The distinction is not cosmetic:
+    not, since it has no way of knowing ``k_{\\mathrm f}``. The distinction is not cosmetic:
     with an incompressible fluid and a *compressible* solid the fluid is
     effectively stiffer than the grains, and the Skempton coefficient then
     exceeds one (see [`skempton_tensor`](@ref)).
@@ -184,10 +184,10 @@ end
 """
     undrained_stiffness(C_hom, B, M) -> Tens{4,3}
 
-**Undrained** stiffness ``\\mathbb{C}^{\\rm u} = \\mathbb{C}^{\\rm hom} +
+**Undrained** stiffness ``\\mathbb{C}^{\\mathrm u} = \\mathbb{C}^{\\mathrm{hom}} +
 M\\,\\boldsymbol{B} \\otimes \\boldsymbol{B}``.
 
-It is the tangent stiffness of the closed system, obtained by eliminating `p`
+It is the tangent stiffness of the closed system, obtained by eliminating ``p``
 from the poroelastic law under the undrained condition ``\\dot\\varphi = 0``.
 `M = Inf` (incompressible solid *and* fluid) makes the result infinite, which
 is the correct statement that no volume change is possible.
@@ -204,7 +204,7 @@ end
     drained_stiffness(C_u, B, M) -> Tens{4,3}
 
 Inverse of [`undrained_stiffness`](@ref): recover the drained stiffness
-``\\mathbb{C}^{\\rm hom} = \\mathbb{C}^{\\rm u} - M\\,\\boldsymbol{B} \\otimes
+``\\mathbb{C}^{\\mathrm{hom}} = \\mathbb{C}^{\\mathrm u} - M\\,\\boldsymbol{B} \\otimes
 \\boldsymbol{B}`` from an undrained measurement.
 """
 function drained_stiffness(
@@ -216,28 +216,28 @@ end
 """
     skempton_tensor(C_hom, B, M) -> Tens{2,3}
 
-**Skempton tensor** ``\\boldsymbol{B}^{\\rm sk} = M\\,\\boldsymbol{B} : \\mathbb{S}^{\\rm u}`` (``\\mathbb{S}^{\\rm u} = (\\mathbb{C}^{\\rm u})^{-1}``), which gives
+**Skempton tensor** ``\\boldsymbol{B}^{\\mathrm{sk}} = M\\,\\boldsymbol{B} : \\mathbb{S}^{\\mathrm u}`` (``\\mathbb{S}^{\\mathrm u} = (\\mathbb{C}^{\\mathrm u})^{-1}``), which gives
 the pore pressure built up by an undrained stress increment:
 
 ```math
-p = -\\,\\boldsymbol{B}^{\\rm sk} : \\boldsymbol{\\Sigma} .
+p = -\\,\\boldsymbol{B}^{\\mathrm{sk}} : \\boldsymbol{\\Sigma} .
 ```
 
 Under isotropic compression ``\\boldsymbol{\\Sigma} = -p_0\\,\\boldsymbol{1}``
-this yields ``p = p_0\\,{\\rm tr}\\,\\boldsymbol{B}^{\\rm sk}``, so
-``{\\rm tr}\\,\\boldsymbol{B}^{\\rm sk}`` plays the role of the classical scalar
-Skempton coefficient. In the isotropic case it reduces to ``M b / k^{\\rm u}``,
+this yields ``p = p_0\\,\\mathrm{tr}\\,\\boldsymbol{B}^{\\mathrm{sk}}``, so
+``\\mathrm{tr}\\,\\boldsymbol{B}^{\\mathrm{sk}}`` plays the role of the classical scalar
+Skempton coefficient. In the isotropic case it reduces to ``M b / k^{\\mathrm u}``,
 equivalently
 
 ```math
-B = \\frac{1/k^{\\rm hom} - 1/k_s}
-          {1/k^{\\rm hom} - 1/k_s + \\varphi\\,(1/k_f - 1/k_s)} .
+B = \\frac{1/k^{\\mathrm{hom}} - 1/k_{\\mathrm s}}
+          {1/k^{\\mathrm{hom}} - 1/k_{\\mathrm s} + \\varphi\\,(1/k_{\\mathrm f} - 1/k_{\\mathrm s})} .
 ```
 
 !!! warning "The bound B ≤ 1 does not hold here"
     The familiar ``0 \\le B \\le 1`` assumes a fluid no stiffer than the solid
-    grains, ``k_f \\le k_s``. [`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus) assumes an
-    **incompressible** fluid (``k_f = \\infty``), so with a compressible solid
+    grains, ``k_{\\mathrm f} \\le k_{\\mathrm s}``. [`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus) assumes an
+    **incompressible** fluid (``k_{\\mathrm f} = \\infty``), so with a compressible solid
     the last term above is negative and ``B > 1``: the pore pressure exceeds the
     applied mean stress, because the pore volume is held fixed while the grains
     themselves compress. This is a genuine consequence of the assumption, not a

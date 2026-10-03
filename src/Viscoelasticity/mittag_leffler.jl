@@ -29,20 +29,20 @@ using MittagLeffler        # activates MeanFieldHomogenizationMittagLefflerExt
 ```
 
 !!! warning "The extension declines more than it accepts"
-    `MittagLeffler.jl` v1.0.0 silently returns `1.0` for `1 < a < 2` and small
-    `|z|` — `mittleff(1.3, 1.0, -0.5)` gives `1.0` where the defining series
-    gives `0.6330079`.  The extension therefore answers only for `0 < a ≤ 1`
-    and `b == 1`, the domain checked against that series.
+    `MittagLeffler.jl` v1.0.0 silently returns `1.0` for ``1 < a < 2`` and small
+    ``|z|`` — `mittleff(1.3, 1.0, -0.5)` gives `1.0` where the defining series
+    gives `0.6330079`.  The extension therefore answers only for ``0 < a \\le 1``
+    and ``b = 1``, the domain checked against that series.
 
-    [`FractionalZener`](@ref) (`0 < α ≤ 1`) and [`Rabotnov`](@ref) with the
-    physical `α ∈ (-1, 0)` — whose Mittag-Leffler order `α + 1` then lies in
-    `(0, 1)` — are both inside that domain and get their closed forms.  A
-    Rabotnov kernel with `α > 0` is not, and falls back on the inversion, which
-    agrees with the closed form to about `1e-10` wherever both can be
+    [`FractionalZener`](@ref) (``0 < \\alpha \\le 1``) and [`Rabotnov`](@ref) with the
+    physical ``\\alpha \\in (-1, 0)`` — whose Mittag-Leffler order ``\\alpha + 1`` then lies in
+    ``(0, 1)`` — are both inside that domain and get their closed forms.  A
+    Rabotnov kernel with ``\\alpha > 0`` is not, and falls back on the inversion, which
+    agrees with the closed form to about ``10^{-10}`` wherever both can be
     evaluated.
 
 !!! note "This replaces a PyCall detour"
-    Before this extension, the Rabotnov benchmark reached `E_{a,b}` through
+    Before this extension, the Rabotnov benchmark reached ``E_{a,b}`` through
     `PyCall` and an external Python module living outside the repository
     (`scripts/52_rabotnov_mittag_leffler.jl`, and §11 of the viscoelasticity
     manual).  That is no longer needed: the transform is closed-form and the

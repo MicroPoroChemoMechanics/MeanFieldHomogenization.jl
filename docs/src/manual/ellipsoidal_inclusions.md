@@ -1,8 +1,13 @@
 # [Ellipsoidal inclusions](@id man-ellipsoidal-inclusions)
 
+!!! info "Before this page"
+    [Hill polarization tensors](@ref th-hill-tensors), where the tensor returned
+    by `hill_tensor` below is derived, and, for a first reading,
+    [Getting started](@ref getting-started).
+
 The ellipsoid is the one shape for which the strain is uniform inside the
 inclusion, which is what makes a Hill tensor exist at all
-([The Eshelby inclusion problem](../theory/eshelby_problem.md)). An
+([The Eshelby inclusion problem](@ref th-eshelby-problem)). An
 [`Ellipsoid`](@ref) is built from its semi-axes, in any order — the constructor
 sorts them decreasing and permutes the local frame to match, so ``a \ge b \ge c``
 always holds downstream.
@@ -53,12 +58,20 @@ When an `Ellipsoid` constructor receives a real semi-axis equal to
 
 | Call | Returned type | See |
 | :-- | :-- | :-- |
-| `Ellipsoid(Inf, b, c)` with `b, c > 0` | `Cylinder` | [cylindrical inclusions](cylindrical_inclusions.md) |
-| `Ellipsoid(a, b, 0)` with `a, b > 0` | `EllipticCrack` | [cracks](cracks.md) |
-| `Ellipsoid(Inf, b, 0)` with `b > 0` | `RibbonCrack` | [cracks](cracks.md) |
+| `Ellipsoid(Inf, b, c)` with `b, c > 0` | `Cylinder` | [cylindrical inclusions](@ref man-cylindrical-inclusions) |
+| `Ellipsoid(a, b, 0)` with `a, b > 0` | `EllipticCrack` | [cracks](@ref man-cracks) |
+| `Ellipsoid(Inf, b, 0)` with `b > 0` | `RibbonCrack` | [cracks](@ref man-cracks) |
 | `Ellipsoid(Inf, Inf, c)` | `ArgumentError` (slab, out of scope) | |
 | `Ellipsoid(a, 0, 0)` | `ArgumentError` (needle, out of scope) | |
 
 The detection is active only for real element types; with symbolic
 types (`SymPy.Sym`, `Symbolics.Num`) call the dedicated constructor
 (`Cylinder`, `EllipticCrack`, `RibbonCrack`) explicitly.
+
+## Where to go next
+
+The two families an `Ellipsoid` call redirects to are described next:
+[Cylindrical inclusions](@ref man-cylindrical-inclusions) for the fiber limit,
+then [Cracks](@ref man-cracks) for the flat one. The tutorial
+[Hill polarization tensors in practice](@ref tut-hill-tensors) evaluates the
+tensors of this page across shapes and matrix symmetries.

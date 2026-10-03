@@ -79,7 +79,7 @@ reinvented; see its docstring for the four times that confusion has bitten.
 The **Laplace-Carson relaxation transform** ``R^{*}(p) = p\\,\\hat R(p)`` — the
 one method a model must implement.
 
-`p` may be real (as [`GaverStehfest`](@ref) needs), complex (`p = iω` gives the
+`p` may be real (as [`GaverStehfest`](@ref) needs), complex (``p = i\\omega`` gives the
 complex modulus), or a `ForwardDiff.Dual`, so implementations must stay generic
 in the argument type.
 
@@ -103,10 +103,10 @@ carson_creep(model::AbstractRheology, p) = one(p) / carson_relaxation(model, p)
     relaxation(model, t)
 
 The relaxation function ``R(t)``: the stress response to a unit strain step
-applied at `t = 0`.
+applied at ``t = 0``.
 
 Falls back to numerically inverting [`carson_relaxation`](@ref) with
-[`default_inversion`](@ref); models with a closed form override it.  `t = 0` is
+[`default_inversion`](@ref); models with a closed form override it.  ``t = 0`` is
 answered analytically by [`glassy_modulus`](@ref) — the inversion itself has a
 pole there.
 """
@@ -119,7 +119,7 @@ end
     creep(model, t)
 
 The creep compliance ``J(t)``: the strain response to a unit stress step applied
-at `t = 0`.
+at ``t = 0``.
 
 Falls back to numerically inverting [`carson_creep`](@ref); models with a closed
 form override it.
@@ -135,8 +135,8 @@ end
 The complex modulus ``E^{*}(\\omega) = R^{*}(i\\omega)``, the quantity a
 dynamic-mechanical test measures.
 
-Its modulus `abs(E*)` is the *norm* of the complex modulus and its argument
-`angle(E*)` the phase angle; [`storage_modulus`](@ref),
+Its modulus ``|E^{*}|`` is the *norm* of the complex modulus and its argument
+``\\arg E^{*}`` the phase angle; [`storage_modulus`](@ref),
 [`loss_modulus`](@ref) and [`loss_factor`](@ref) name the usual derived
 quantities.
 """
@@ -177,7 +177,7 @@ end
 ``R(0^{+}) = \\lim_{p\\to\\infty} R^{*}(p)`` — the instantaneous ("glassy")
 modulus.
 
-Closed form for every model in the catalog.  Besides being the `t = 0` value
+Closed form for every model in the catalog.  Besides being the ``t = 0`` value
 of [`relaxation`](@ref), it is the `f_glassy` argument of
 [`inverse_carson_rate`](@ref).
 """
@@ -201,7 +201,7 @@ function equilibrium_modulus end
 dashpot in series with everything else and creeps indefinitely.
 
 The distinction is structural rather than cosmetic: a fluid's creep compliance
-carries a term linear in `t`, which in the Carson domain is the pole `φ/p` of
+carries a term linear in ``t``, which in the Carson domain is the pole ``\\varphi/p`` of
 [`PronyCreep`](@ref), and it is what decides whether
 [`kelvin_to_maxwell`](@ref) and [`maxwell_to_kelvin`](@ref) look for a root in
 the outermost interval.

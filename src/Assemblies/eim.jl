@@ -36,7 +36,7 @@
     _evaluate(asm::ParticleAssembly, scheme::EquivalentInclusion, ::Val{p}; kw...) -> AbstractTens
 
 Equivalent-inclusion homogenization of property `:p` over a particle assembly
-([brisard2014](@cite)).
+[brisard2014](@cite).
 
 Only `order = 0` (piecewise-constant polarization) is implemented; higher
 orders need the influence *pseudotensors* of the paper's Appendix C, which are
@@ -64,7 +64,7 @@ end
 Solve the EIM system for the uniform polarization of every particle.
 
 The system is solved against a *unit* macroscopic loading, so each unknown
-comes out as the operator mapping `E` onto the polarization of one particle
+comes out as the operator mapping ``\\boldsymbol{E}`` onto the polarization of one particle
 rather than as a single polarization — which is what the effective property
 needs, and what makes the local fields available for any loading at no extra
 cost.
@@ -117,7 +117,7 @@ end
 The tensor closing the far field of the assembly: the Hill tensor
 ``\\mathbb{P}_\\Omega`` of the SVE domain under [`MixedBC`](@ref) — Brisard's
 mixed boundary conditions — and the Hill tensor of the inclusion shape under a
-[`PeriodicBox`](@ref), which is Molinari's far-field operator ``\\mathbb E^0``.
+[`PeriodicBox`](@ref), which is Molinari's far-field operator ``\\mathbb{E}^0``.
 
 That single substitution is what makes the two N-body schemes of this package
 coincide on a periodic assembly.
@@ -135,10 +135,10 @@ _far_field_operator(::PeriodicBox, asm, P₀, names; kw...) =
     _eim_effective(asm, P₀, prop, τ, names) -> AbstractTens
 
 Apparent property from the polarizations,
-``\\mathbb{C}^{app} : E = \\mathbb{C}_0 : E + \\sum_a f_a \\boldsymbol{\\tau}_a``.
+``\\mathbb{C}^{\\mathrm{app}}:\\boldsymbol{E} = \\mathbb{C}_0:\\boldsymbol{E} + \\sum_a f_a\\,\\boldsymbol{\\tau}_a``.
 
 Because the solve is carried out against a unit macroscopic loading, each
-`τ_a` is already the *operator* mapping `E` onto the polarization, and the sum
+``\\boldsymbol{\\tau}_a`` is already the *operator* mapping ``\\boldsymbol{E}`` onto the polarization, and the sum
 is assembled directly.
 """
 function _eim_effective(asm, P₀, prop::Symbol, τ, names)
@@ -162,7 +162,7 @@ rigorous bound on the apparent stiffness of the assembly, and which one:
 - `:none`  — the contrasts have mixed signs, and the estimate is only an
   estimate.
 
-This is the extremum property of [brisard2014](@cite),
+This is the extremum property of [brisard2014](@citet),
 §3.2, inherited from the Hashin-Shtrikman variational principle. It also
 implies that the estimate improves monotonically with the polarization order.
 
@@ -213,7 +213,7 @@ Per-family localization tensors of the [`ClusterModel`](@ref) solution,
 together with the representative particle of each family.
 
 `A[k]` maps the macroscopic strain onto the mean strain of family `k`, so the
-mean stress follows as ``\\mathbb{C}_k : \\mathbb{A}_k : E``.
+mean stress follows as ``\\mathbb{C}_k:\\mathbb{A}_k:\\boldsymbol{E}``.
 """
 function cluster_localizations(
         asm::ParticleAssembly, prop::Symbol = :C;

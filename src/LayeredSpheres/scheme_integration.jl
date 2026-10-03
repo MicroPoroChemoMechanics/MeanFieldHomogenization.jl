@@ -34,7 +34,7 @@ Core.is_homogeneous_inclusion(::LayeredSphere) = false
 """
     _layer_iso_pairs(sphere) -> NTuple{N, Tuple}
 
-Per-layer `(α, β)` pairs of the isotropic stiffnesses, i.e. `C_k = α_k 𝕁 + β_k 𝕂`.
+Per-layer ``(3k_k, 2\\mu_k)`` pairs of the isotropic stiffnesses, i.e. ``\\mathbb{C}_k = 3k_k\\,\\mathbb{J} + 2\\mu_k\\,\\mathbb{K}``.
 """
 @inline function _layer_iso_pairs(sphere::LayeredSphere{T, N}) where {T, N}
     return ntuple(k -> TensND.get_data(layer_modulus(sphere, k)), Val(N))
@@ -47,7 +47,7 @@ end
 """
     _layer_localizations(sphere, C₀) -> (α, β, f)
 
-Per-layer bulk (`α_k`) and deviatoric (`β_k`) localization scalars together
+Per-layer bulk (``\\alpha_k``) and deviatoric (``\\beta_k``) localization scalars together
 with the layer volume fractions.
 """
 function _layer_localizations(
@@ -66,19 +66,23 @@ end
 
 Contribution of Gurtin–Murdoch surface stress on the dual
 ([`MembraneInterface`](@ref)) interfaces to the volume-averaged stress of
-the composite sphere, per unit remote strain, split into bulk (`𝕁`) and
-shear (`𝕂`) scalars.  From the average-stress theorem with a coherent
-surface, `⟨σ⟩_Ω = Σ_k f_k C_k:A_k + (1/V) Σ_Γ ∮_Γ σˢ dS`; the surface
-integrals are (with `κs = λs + μs`, `r` the interface radius, `R` the
+the composite sphere, per unit remote strain, split into bulk (``\\mathbb{J}``) and
+shear (``\\mathbb{K}``) scalars.  From the average-stress theorem with a coherent
+surface, ``\\langle\\boldsymbol{\\sigma}\\rangle_\\Omega = \\sum_k f_k\\,\\mathbb{C}_k:\\mathbb{A}_k + \\frac{1}{V}\\sum_\\Gamma\\oint_\\Gamma\\boldsymbol{\\sigma}^{\\mathrm s}\\,\\mathrm{d}S``; the surface
+integrals give, for each membrane interface (with ``\\kappa^{\\mathrm s} = \\lambda^{\\mathrm s} + \\mu^{\\mathrm s}``, ``r`` the interface radius, ``R`` the
 outer radius):
 
-```
-bulk :  4 κs · u_r(r) · r / R³
-shear:  (−6κs U + 18κs W + 36μs W) · r / (5 R³)         (× 3/2, 𝕂-projection)
+```math
+\\begin{aligned}
+a_{\\mathrm{surf}} &= 4\\kappa^{\\mathrm s}\\,u_r(r)\\,r/R^3,\\\\
+b_{\\mathrm{surf}} &= \\tfrac{1}{3}\\,(-6\\kappa^{\\mathrm s} U + 18\\kappa^{\\mathrm s} W + 36\\mu^{\\mathrm s} W)\\,r/(5R^3),
+\\end{aligned}
 ```
 
-`u_r(r)` is the bulk radial amplitude (normalized by the far-field `A∞`);
-`U(r), W(r)` are the deviatoric displacement amplitudes at the interface
+the factor ``1/3`` being the ``\\mathbb{K}``-projection of the
+``\\sigma_{zz} - \\sigma_{xx}`` surface integral.
+``u_r(r)`` is the bulk radial amplitude (normalized by the far-field ``A_\\infty``);
+``U(r)``, ``W(r)`` are the deviatoric displacement amplitudes at the interface
 (already normalized to a unit remote deviatoric far field).
 """
 function _membrane_surface_stress(
@@ -121,8 +125,10 @@ end
 Whole-inclusion **strain concentration tensor** of a composite sphere embedded
 in the isotropic reference `C₀`:
 
-```
-A_Ω = (Σ_k f_k α_k) 𝕁 + (Σ_k f_k β_k) 𝕂 ,   <ε>_Ω = A_Ω : ε∞ .
+```math
+\\mathbb{A}_\\Omega = \\Big(\\sum_k f_k\\,\\alpha_k\\Big)\\,\\mathbb{J} + \\Big(\\sum_k f_k\\,\\beta_k\\Big)\\,\\mathbb{K},
+\\qquad
+\\langle\\boldsymbol{\\varepsilon}\\rangle_\\Omega = \\mathbb{A}_\\Omega:\\boldsymbol{\\varepsilon}^{\\infty}.
 ```
 
 `C₁` is accepted for signature compatibility with the generic
@@ -147,12 +153,15 @@ end
 
 Size-independent **stiffness contribution tensor** of a composite sphere,
 
-```
-N_C = Σ_k f_k (C_k − C₀) : A_k .
+```math
+\\mathbb{N} = \\sum_k f_k\\,(\\mathbb{C}_k - \\mathbb{C}_0):\\mathbb{A}_k,
 ```
 
+plus the Gurtin–Murdoch surface stress of any membrane interface
+(`_membrane_surface_stress`).
+
 Assembled layer by layer: a composite sphere is heterogeneous, so the usual
-`(C₁ − C₀) : A` of a homogeneous inhomogeneity does not apply. `C₁` is ignored,
+``(\\mathbb{C}_1 - \\mathbb{C}_0):\\mathbb{A}`` of a homogeneous inhomogeneity does not apply. `C₁` is ignored,
 as in [`strain_strain_loc`](@ref).
 """
 function stiffness_contribution(
@@ -175,12 +184,13 @@ end
 
 Whole-inclusion **average stress** per unit remote strain,
 
-```
-⟨C:ε⟩_Ω = (Σ_k f_k C_k : A_k) : ε∞ ,
+```math
+\\langle\\mathbb{C}:\\boldsymbol{\\varepsilon}\\rangle_\\Omega = \\Big(\\sum_k f_k\\,\\mathbb{C}_k:\\mathbb{A}_k\\Big):\\boldsymbol{\\varepsilon}^{\\infty},
 ```
 
-assembled layer by layer. This is what the self-consistent and Mori-Tanaka
-kernels need; it is *not* `C₁ : A_Ω`. `C₁` is ignored (see
+assembled layer by layer, plus the Gurtin–Murdoch surface stress of any
+membrane interface (`_membrane_surface_stress`). This is what the self-consistent and Mori-Tanaka
+kernels need; it is *not* ``\\mathbb{C}_1:\\mathbb{A}_\\Omega``. `C₁` is ignored (see
 [`strain_strain_loc`](@ref)).
 
 Consistency: `stiffness_contribution = stress_strain_loc - C₀ : strain_strain_loc`.
@@ -203,7 +213,7 @@ end
     flux_gradient_loc(sphere::LayeredSphere, K₁, K₀; kw...) -> TensISO{2,3}
 
 Conductivity counterpart of [`stress_strain_loc`](@ref):
-`⟨k∇T⟩_Ω = (Σ_k f_k k_k α_k) · ∇T∞`, plus the surface-conduction flux
+``\\langle k\\,\\nabla T\\rangle_\\Omega = \\big(\\sum_k f_k\\,k_k\\,\\alpha_k\\big)\\,\\nabla T^{\\infty}``, plus the surface-conduction flux
 [`_cond_surface_flux`](@ref) of any dual (surface-conductive) interface.
 `K₁` is ignored.
 """
@@ -226,7 +236,7 @@ end
     gradient_gradient_loc(sphere::LayeredSphere, K₁, K₀; kw...) -> TensISO{2,3}
 
 Whole-inclusion **gradient concentration tensor**
-`α_Ω = Σ_k f_k α_k`, the conductivity counterpart of
+``\\alpha_\\Omega = \\sum_k f_k\\,\\alpha_k``, the conductivity counterpart of
 [`strain_strain_loc`](@ref). `K₁` is ignored (see there).
 
 The per-layer form is available as
@@ -261,7 +271,7 @@ end
 """
     layer_stiffness_average(sphere) -> TensISO{4,3}
 
-Voigt (volume) average of the layer stiffnesses, `Σ_k f_k C_k`. This is what
+Voigt (volume) average of the layer stiffnesses, ``\\sum_k f_k\\,\\mathbb{C}_k``. This is what
 the Voigt bound needs for a composite sphere: the declared phase property does
 not represent it.
 """
@@ -277,7 +287,7 @@ end
 """
     layer_compliance_average(sphere) -> TensISO{4,3}
 
-Reuss (volume) average of the layer compliances, `Σ_k f_k C_k⁻¹`.
+Reuss (volume) average of the layer compliances, ``\\sum_k f_k\\,\\mathbb{C}_k^{-1}``.
 """
 function layer_compliance_average(sphere::LayeredSphere{T, N}) where {T, N}
     C_k = _layer_iso_pairs(sphere)
@@ -291,7 +301,7 @@ end
 """
     layer_conductivity_average(sphere) -> TensISO{2,3}
 
-Voigt average of the layer conductivities, `Σ_k f_k k_k`.
+Voigt average of the layer conductivities, ``\\sum_k f_k\\,k_k``.
 """
 function layer_conductivity_average(sphere::LayeredSphere{T, N}) where {T, N}
     k_layers = _cond_layer_moduli(sphere)
@@ -302,7 +312,7 @@ end
 """
     layer_resistivity_average(sphere) -> TensISO{2,3}
 
-Reuss average of the layer resistivities, `Σ_k f_k / k_k`.
+Reuss average of the layer resistivities, ``\\sum_k f_k/k_k``.
 """
 function layer_resistivity_average(sphere::LayeredSphere{T, N}) where {T, N}
     k_layers = _cond_layer_moduli(sphere)

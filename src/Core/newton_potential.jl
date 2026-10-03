@@ -15,11 +15,11 @@
 """
     newton_potential_3d(a, b, c) -> (Iv, IIv)
 
-Newton potential integrals for a 3-D ellipsoid with semi-axes `a ≥ b ≥ c > 0`.
+Newton potential integrals for a 3-D ellipsoid with semi-axes ``a \\ge b \\ge c > 0``.
 
 Returns:
-- `Iv  = (I_a, I_b, I_c)`       with `I_a + I_b + I_c = 4π`
-- `IIv = (I_aa, I_bb, I_cc, I_bc, I_ca, I_ab)`
+- `Iv` ``= (I_a, I_b, I_c)`` with ``I_a + I_b + I_c = 4\\pi``
+- `IIv` ``= (I_{aa}, I_{bb}, I_{cc}, I_{bc}, I_{ca}, I_{ab})``
 
 Two methods are provided:
 - `T<:Real` (includes `Float64`, `ForwardDiff.Dual`): numerically stable case-split
@@ -125,27 +125,27 @@ end
     newton_potential_3d_cylinder(b, c) -> (Iv, IIv)
 
 Newton potential integrals for an infinite cylinder of elliptic cross-section
-with transverse semi-axes `b ≥ c > 0` (cylinder axis = `e₁`, transverse plane
-= `(e₂, e₃)`).
+with transverse semi-axes ``b \\ge c > 0`` (cylinder axis ``\\underline{e}_1``, transverse plane
+``(\\underline{e}_2, \\underline{e}_3)``).
 
-Obtained as the limit `a → ∞` of [`newton_potential_3d`](@ref) — the
-cylinder axis contributes no finite Newton mass (`I_a = I_aa = I_ab = I_ac = 0`)
+Obtained as the limit ``a \\to \\infty`` of [`newton_potential_3d`](@ref) — the
+cylinder axis contributes no finite Newton mass (``I_a = I_{aa} = I_{ab} = I_{ac} = 0``)
 and the transverse potentials collapse to simple rational expressions in
-`(b, c)`.
+``(b, c)``.
 
 Returns:
-- `Iv  = (I_a, I_b, I_c)`       with `I_a + I_b + I_c = 4π`, `I_a = 0`.
-- `IIv = (I_aa, I_bb, I_cc, I_bc, I_ca, I_ab)` with `I_aa = I_ab = I_ac = 0`.
+- `Iv` ``= (I_a, I_b, I_c)`` with ``I_a + I_b + I_c = 4\\pi``, ``I_a = 0``.
+- `IIv` ``= (I_{aa}, I_{bb}, I_{cc}, I_{bc}, I_{ca}, I_{ab})`` with ``I_{aa} = I_{ab} = I_{ac} = 0``.
 
 Two methods are provided:
 - `T<:Real` (includes `Float64`, `ForwardDiff.Dual`): numerically stable
-  case-split via tolerance comparison to pick the circular (`b = c`) or the
-  elliptic (`b > c`) branch.
+  case-split via tolerance comparison to pick the circular (``b = c``) or the
+  elliptic (``b > c``) branch.
 - `T<:Number` (`SymPy.Sym`, `Symbolics.Num`, …): structural equality via
   `isequal` selects the two branches.
 
-Both branches are written as closed-form limits — no `1/(b² − c²)` style
-denominators, so the routine is free of `0/0` indeterminacies at `b = c`
+Both branches are written as closed-form limits — no ``1/(b^2 - c^2)`` style
+denominators, so the routine is free of ``0/0`` indeterminacies at ``b = c``
 and differentiable through `ForwardDiff`.
 """
 function newton_potential_3d_cylinder(b, c)
@@ -208,14 +208,14 @@ end
 """
     newton_potential_2d(a, b) -> (Ia, Ib)
 
-Newton potential integrals for a 2-D ellipse with semi-axes `a ≥ b > 0`.
-Returns `(Ia, Ib)` with `Ia + Ib = 2π`.
+Newton potential integrals for a 2-D ellipse with semi-axes ``a \\ge b > 0``.
+Returns `(Ia, Ib)` ``= (I_a, I_b)`` with ``I_a + I_b = 2\\pi``.
 
 Works for any `T<:Number` including `ForwardDiff.Dual`, `SymPy.Sym`, `Symbolics.Num`.
 
 Formulas:
-- Circle: `Ia = Ib = π`
-- General ellipse: `Ia = 2πb/(a+b)`, `Ib = 2πa/(a+b)`
+- Circle: ``I_a = I_b = \\pi``
+- General ellipse: ``I_a = 2\\pi b/(a+b)``, ``I_b = 2\\pi a/(a+b)``
 """
 function newton_potential_2d(a::T, b::T) where {T <: Real}
     tol = 1.0e-6 * one(T)

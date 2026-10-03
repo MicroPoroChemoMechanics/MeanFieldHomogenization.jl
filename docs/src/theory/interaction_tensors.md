@@ -1,11 +1,17 @@
 # [Two-inclusion interaction tensors](@id th-interaction)
 
+!!! info "Before this page"
+    [Homogenization schemes](@ref th-homogenization) §6, where the two N-body
+    schemes are introduced, and the
+    [sign of the Green operator](@ref th-notation-green-sign) fixed in the
+    Conventions, which this page follows.
+
 Every one-site scheme of the package needs one object: the Hill tensor ``\mathbb{P}``
 of a single inclusion in a reference medium. The two N-body schemes need one more —
 the tensor measuring the field one inclusion induces in another. This page defines it,
 gives the closed forms, and states why they are exact.
 
-Notation follows [the conventions page](@ref th-notation): underline for vectors, bold
+Notation follows the [Nomenclature](@ref nomenclature): underline for vectors, bold
 for order 2, blackboard bold for order 4. Two symbols are introduced here.
 
 | Symbol | Object | Elasticity | Conduction |
@@ -13,8 +19,8 @@ for order 2, blackboard bold for order 4. Two symbols are introduced here.
 | ``\mathbb{G}^0`` / ``\boldsymbol{G}^0`` | Green operator of the reference | order 4 | order 2 |
 | ``\mathbb{T}^{ab}`` / ``\boldsymbol{T}^{ab}`` | interaction tensor of two inclusions | order 4 | order 2 |
 
-[molinari1996](@cite) write the interaction tensor
-``\Gamma^{IJ}`` and [brisard2014](@cite) write it ``T^{kl}_{ab}``;
+[molinari1996](@citet) write the interaction tensor
+``\Gamma^{IJ}`` and [brisard2014](@citet) write it ``T^{kl}_{ab}``;
 the letter ``\mathbb{T}`` is kept here because a Greek capital carries no order in this
 typeface convention.
 
@@ -27,7 +33,7 @@ the dictionary of
 (``\boldsymbol{T}^{ab}``, ``\boldsymbol{G}^0``, ``\boldsymbol{P}``); no sign changes
 between the two columns.
 
-## The Lippmann-Schwinger equation
+## 1. The Lippmann-Schwinger equation
 
 With a homogeneous reference ``\mathbb{C}_0`` and the polarization
 ``\boldsymbol{\tau} = (\mathbb{C}-\mathbb{C}_0):\boldsymbol{\varepsilon}``, the local
@@ -76,7 +82,7 @@ and the transform of the whole is
 \qquad (\underline{k} \ne \underline{0}) ,
 ```
 
-which is the convention of [brisard2023](@cite): a **positive
+which is the convention of [brisard2023](@citet): a **positive
 semi-definite** operator. The regular part averages to zero over any ball centered on
 the source, so the whole interior average is the Dirac term
 ``\boldsymbol{1}/(3\sigma_0)`` — which is exactly ``\boldsymbol{P}`` of a sphere.
@@ -84,7 +90,7 @@ the source, so the whole interior average is the Dirac term
 page to the rest of the package. (The functions of the package evaluate the regular
 part; the Dirac term is what [`self_interaction_tensor`](@ref) carries.)
 
-## Definition
+## 2. Definition
 
 For two inclusions ``\Omega_a`` (receiver) and ``\Omega_b`` (source) whose centers are
 separated by ``\underline{r}``,
@@ -111,13 +117,13 @@ so the one-inclusion case is exactly the
 [cluster-model page](@ref th-cluster).
 
 !!! warning "Two sign conventions exist"
-    The package follows [brisard2023](@cite):
+    The package follows [brisard2023](@citet):
     the Green operator maps a polarization onto **minus** the induced field, its
     Fourier symbol ``\sigma_0^{-1}\underline{k}\otimes\underline{k}/\|\underline{k}\|^2``
     is positive, and ``\mathbb{T}^{aa} = +\mathbb{P}``, coherent with the Hill tensor.
 
-    [molinari1996](@cite) and
-    [berveiller1987](@cite) write instead
+    [molinari1996](@citet) and
+    [berveiller1987](@citet) write instead
     ``\boldsymbol{\varepsilon}^I = \boldsymbol{\varepsilon}^0 +
     \sum_J \Gamma^{IJ}:\delta\mathbb{C}^J:\boldsymbol{\varepsilon}^J``, so their
     ``\Gamma^{IJ}`` is the **opposite** of ``\mathbb{T}^{IJ}`` and their self term is
@@ -126,7 +132,7 @@ so the one-inclusion case is exactly the
     with anything on this page. The closed form below is *their table with the sign
     already flipped*, which is why its ``\kappa`` is positive where theirs is negative.
 
-## Exact closed forms for balls and disks
+## 3. Exact closed forms for balls and disks
 
 The solid mean-value expansion of a smooth field over a ball of radius ``a`` reads
 
@@ -160,10 +166,10 @@ Let ``\underline{n} = \underline{r}/R`` be the unit vector along the line of cen
 \rho^2 = \frac{a^2+b^2}{R^2} .
 ```
 
-— note the sign of ``\kappa``: [molinari1996](@cite) write
+— note the sign of ``\kappa``: [molinari1996](@citet) write
 ``-b^3/(12R^3\mu(1-\nu))``, and the flip to this package's convention is applied here,
-once. In the frame whose third axis is ``\underline{n}``
-(their App. A; [berveiller1987](@cite)):
+once. In the frame whose third axis is ``\underline{n}``,
+after their Appendix A and [berveiller1987](@citet):
 
 ```math
 \begin{aligned}
@@ -178,8 +184,8 @@ T_{3333} &= \kappa\left(-8 + 8\nu + \tfrac{24}{5}\rho^2\right).
 
 This set is transversely isotropic about ``\underline{n}`` and satisfies
 ``T_{1212} = (T_{1111}-T_{1122})/2`` identically, so it is carried **exactly** by five
-Walpole coefficients rather than by an 81-component array — the storage described on
-[the conventions page](@ref th-notation):
+Walpole coefficients rather than by an 81-component array — the storage described in
+[Conventions](@ref th-notation-bases):
 
 ```math
 T_1 = T_{3333},\quad
@@ -262,7 +268,7 @@ the package and its normative reference share one convention.
 terms of the bracket above carry the same overall convention: ``\mathbb{G}^0`` and
 ``\Delta\mathbb{G}^0`` are negated together, never one without the other.
 
-## The vanishing isotropic part
+## 4. The vanishing isotropic part
 
 For any two distinct inclusions,
 
@@ -277,7 +283,7 @@ of cubic symmetry the effective **bulk** modulus is blind to the spatial distrib
 and coincides exactly with the Mori-Tanaka estimate. Only the shear response sees the
 arrangement.
 
-## General ellipsoids
+## 5. General ellipsoids
 
 Beyond balls the series does not terminate, and
 [brisard2014](@cite), §4.2, expand the regular part of the kernel
@@ -299,7 +305,7 @@ formula when both moments are isotropic. `method = :quadrature` integrates the
 definition directly by a product rule — geometry-agnostic, far slower, and the oracle
 the closed forms are validated against.
 
-## Anisotropic reference media
+## 6. Anisotropic reference media
 
 Everything above assumes an isotropic reference, whose Green operator is a closed
 form. That is not a restriction of the method, only of the kernel, and it is lifted by
@@ -360,7 +366,7 @@ reference medium of another scale requires exactly this kernel. Chaining the two
 schemes across scales was impossible without it; see
 [the manual](@ref man-assemblies) and `scripts/92`.
 
-## Periodic images
+## 7. Periodic images
 
 Under a periodic boundary treatment each source carries a family of images and the
 interaction becomes a lattice sum, truncated to a cluster of radius ``R_c``:
@@ -373,10 +379,10 @@ interaction becomes a lattice sum, truncated to a cluster of radius ``R_c``:
 
 Summed over all of ``\mathbb{Z}^d`` the series is only conditionally convergent and the
 summation order has to be prescribed — the difficulty
-[brisard2023](@cite) meet, where a naive
+[brisard2023](@citet) meet, where a naive
 real-space lattice sum needs a heuristic correction. The cluster truncation above does
 not have that problem, and Appendix B of
-[molinari1996](@cite) says why: the kernel integrates to zero
+[molinari1996](@citet) says why: the kernel integrates to zero
 over the exterior of a sphere centered on the receiver,
 
 ```math
@@ -388,6 +394,12 @@ so the neglected images contribute a vanishing amount as ``R_c`` grows. Summing 
 **sphere** of images rather than a box is therefore not a detail but the reason the
 truncation is legitimate.
 
-## API
+## Where to go next
 
-See [API — Interactions](@ref api-interactions).
+The two schemes built on ``\mathbb{T}^{ab}`` follow.
+[The cluster model](@ref th-cluster), the next page, solves for the mean strain
+of every inclusion inside a cluster of neighbors, and
+[The equivalent inclusion method](@ref th-eim) poses the same problem as a
+Galerkin discretization that also yields a rigorous bound. The functions
+evaluating ``\mathbb{T}^{ab}`` are documented in
+[API — Interactions](@ref api-interactions).

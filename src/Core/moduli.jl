@@ -12,7 +12,7 @@
 
 Extract Young's modulus `E` and Poisson's ratio `ν` from an isotropic
 4th-order stiffness `TensISO{4,3}`.  The internal TensND convention is
-``C_0 = 3k\\,\\mathbb J + 2μ\\,\\mathbb K`` i.e. `C₀.data = (3k, 2μ)`.
+``\\mathbb{C}_0 = 3k\\,\\mathbb{J} + 2\\mu\\,\\mathbb{K}`` i.e. `C₀.data = (3k, 2μ)`.
 """
 function extract_iso_moduli(C₀::TensND.TensISO{4, 3})
     α, β = C₀.data           # α = 3k, β = 2μ
@@ -29,7 +29,7 @@ end
 2D plane-strain counterpart of [`extract_iso_moduli`](@ref) for
 `TensISO{4,2}`.  The same 3D formulas are used because the TensND
 storage is dimension-agnostic (`TensISO{4,d}` stores the same
-`(α, β) = (3k, 2μ)` pair).
+``(\\alpha, \\beta) = (3k, 2\\mu)`` pair).
 """
 function extract_iso_moduli(C₀::TensND.TensISO{4, 2})
     α, β = C₀.data
@@ -48,13 +48,13 @@ whose axis of symmetry is `n̂`.  Used by the closed-form COD formulas
 of the `Cracks` sub-module.
 
 The moduli are defined through the compliance tensor
-``\\mathbb S = C_0^{-1}`` as:
+``\\mathbb{S} = \\mathbb{C}_0^{-1}`` as:
 
 * ``E = 1/S_{1111}``
-* ``H = 1/(S_{3333}·E)``
-* ``ν_1 = -E \\cdot S_{1122}``
-* ``ν_2 = -E \\cdot S_{1133}``
-* ``Γ = (1+ν_1)/(2·E·S_{2323})``
+* ``H = 1/(S_{3333}\\,E)``
+* ``\\nu_1 = -E\\,S_{1122}``
+* ``\\nu_2 = -E\\,S_{1133}``
+* ``\\Gamma = (1+\\nu_1)/(2\\,E\\,S_{2323})``
 
 See the package documentation for the full derivation.
 """
@@ -78,7 +78,7 @@ end
     extract_iso_conductivity(K₀::TensISO{2,d}) -> k
 
 Extract the (scalar) conductivity coefficient of an isotropic 2nd-order
-transport tensor `TensISO{2,d}` (``K_0 = k \\cdot \\delta``).
+transport tensor `TensISO{2,d}` (``\\boldsymbol{K}_0 = k_0\\,\\boldsymbol{1}``).
 """
 extract_iso_conductivity(K₀::TensND.TensISO{2, 3}) = K₀.data[1]
 extract_iso_conductivity(K₀::TensND.TensISO{2, 2}) = K₀.data[1]
