@@ -1,12 +1,12 @@
 # [Layered inclusions](@id man-layered)
 
-!!! note "Where the derivations are"
-    This page is about *using* the layered families. The algebra behind them —
-    the Hervé–Zaoui transfer matrices, the confocal spheroidal harmonics, the
-    Papkovich–Neuber elastic solution — is in
+!!! info "Before this page"
     [Layered spheres](@ref th-layered-sphere),
     [Layered spheroids](@ref th-layered-spheroid) and
-    [The elastic layered spheroid](@ref th-spheroid-elasticity).
+    [The elastic layered spheroid](@ref th-spheroid-elasticity), where the
+    algebra behind the two families used below is derived — the Hervé–Zaoui
+    transfer matrices, the confocal spheroidal harmonics and the
+    Papkovich–Neuber elastic solution.
 
 ## What this is
 
@@ -198,12 +198,20 @@ rather than a chain of transfer matrices. `Nseries` sets the truncation.
 - **The exact spherical limit of a confocal spheroid**: the coordinates
   degenerate. Use `LayeredSphere`, or a nearly spherical aspect ratio.
 
-## See also
+## Where to go next
+
+A morphology outside the shipped families enters the schemes through
+[Custom inclusions](@ref man-custom-inclusions), the contract the two layered
+families themselves use through gate B. The tutorials
+[n-layer sphere: volume-averaged localization tensors](@ref tut-layered-sphere)
+and
+[The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective)
+work through both geometries, and
+[The interfacial transition zone in concrete](@ref app-itz-concrete) uses a
+coated sphere for an aggregate and its transition zone.
 
 - [Layered spheres](@ref th-layered-sphere),
   [Layered spheroids](@ref th-layered-spheroid),
-  [The elastic layered spheroid](@ref th-spheroid-elasticity) — the derivations.
+  [The elastic layered spheroid](@ref th-spheroid-elasticity) — the derivations
 - [API — LayeredSphere](@ref api-layered-sphere),
-  [API — LayeredSpheroid](@ref api-layered-spheroid).
-- [Custom inclusions](@ref man-custom-inclusions) — the contract these enter
-  through.
+  [API — LayeredSpheroid](@ref api-layered-spheroid) — the docstrings

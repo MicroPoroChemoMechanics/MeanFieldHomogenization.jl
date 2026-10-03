@@ -1,5 +1,12 @@
 # [Ageing linear viscoelasticity (ALV)](@id th-viscoelasticity)
 
+!!! info "Before this page"
+    [The Laplace-Carson route](@ref th-laplace-carson), which treats the
+    non-ageing case contrasted below, and the elastic chain transposed on this
+    page: [The Eshelby inclusion problem](@ref th-eshelby-problem),
+    [Localization and contribution tensors](@ref th-localization) and
+    [Homogenization schemes](@ref th-homogenization).
+
 !!! tip "If the material does not age, there is a cheaper route"
     Everything on this page treats a kernel ``\mathbb{C}(t, t')`` in which ``t``
     and ``t'`` enter **independently**, which is what forces the Volterra
@@ -41,7 +48,7 @@ homogenization schemes. The derivations are those of [barthelemyIJSS2016](@citet
     tensor inverse. In `MeanFieldHomogenization` these two operations are
     [`volterra_product`](@ref) and [`volterra_inverse`](@ref).
 
-## The ageing linear viscoelastic behavior
+## 1. The ageing linear viscoelastic behavior
 
 The strain and stress histories are related by a **Stieltjes integral**
 [barthelemyIJSS2016](@cite):
@@ -61,9 +68,9 @@ The **non-ageing** case is the special one where the kernels depend on ``t`` and
 ``t'`` only through their difference ``t-t'``. There, and only there, the
 Laplace–Carson correspondence principle applies and the problem reduces to an
 elastic one with complex moduli — the route taken in
-[Viscoelastic composites](../tutorials/viscoelasticity.md) and cross-checked
+[Viscoelastic composites](@ref tut-viscoelasticity) and cross-checked
 against the present one in
-[Frequency or time?](../tutorials/generated/freq_vs_time.md). When a phase
+[Frequency or time?](@ref tut-freq-vs-time). When a phase
 *ages* — its properties evolve with its own maturity, as a hydrating cement
 paste does — ``t`` and ``t'`` enter independently, there is no convolution to
 transform, and the time domain is the only available route.
@@ -126,7 +133,7 @@ ordinary matrix product and the Volterra inverse an ordinary matrix inverse
 `MeanFieldHomogenization` the discretization is [`trapezoidal_matrix`](@ref) and the
 inverse [`volterra_inverse`](@ref).
 
-## The Eshelby problem in ALV
+## 2. The Eshelby problem in ALV
 
 Consider an ellipsoid ``\mathcal{E}`` of shape tensor ``\boldsymbol{A}``
 embedded in an infinite medium of relaxation kernel ``\mathbb{C}``, carrying a
@@ -163,7 +170,7 @@ Solving it through the ALV Green kernel yields the central result: the strain is
 \boldsymbol{\sigma}(\underline{x}) = -\,\mathbb{C}\circ\mathbb{P}\circ\boldsymbol{\tau}.
 ```
 
-## The Hill polarization kernel
+## 3. The Hill polarization kernel
 
 The kernel ``\mathbb{P}`` appearing above is the ALV counterpart of the elastic
 Hill polarization tensor [barthelemyIJSS2016](@cite):
@@ -179,7 +186,7 @@ Hill polarization tensor [barthelemyIJSS2016](@cite):
   \mathrm{d}S_{\underline{\xi}} .
 ```
 
-It differs from the [elastic Hill tensor](hill_tensors.md) in exactly one place:
+It differs from the [elastic Hill tensor](@ref th-hill-tensors) in exactly one place:
 the inverse of the acoustic tensor
 ``\underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi}`` is a **Volterra** inverse.
 Like its elastic counterpart it depends only on the shape and orientation of the
@@ -215,7 +222,7 @@ inverted in the Volterra sense analytically. The Hill kernel then **factorizes**
 
 where ``\mathbb{U}^{\boldsymbol{A}}`` and ``\mathbb{V}^{\boldsymbol{A}}`` are the
 purely **geometric** tensors of the elastic theory
-([Hill polarization tensors](hill_tensors.md)):
+([Hill polarization tensors](@ref th-hill-tensors)):
 
 ```math
 \mathbb{U}^{\boldsymbol{A}} = \frac{\det\boldsymbol{A}}{4\pi}
@@ -259,7 +266,7 @@ An anisotropic reference kernel does not enjoy this decoupling; as in
 elasticity, that is the case where the surface integral must be evaluated
 numerically.
 
-## From the inclusion to the inhomogeneity
+## 4. From the inclusion to the inhomogeneity
 
 Replace the polarization by a genuine inhomogeneity: the ellipsoid now has its
 own relaxation kernel ``\mathbb{C}^{\mathcal{E}}``, and the medium is loaded by
@@ -300,7 +307,7 @@ the second form following from the identity
 = (H\mathbb{I}+\mathbb{X}\circ\mathbb{Y})^{-\circ}\circ\mathbb{X}``, which holds
 in any associative algebra and so survives the loss of commutativity.
 
-## Schemes
+## 5. Schemes
 
 With concentration kernels in hand, every matrix-based scheme transposes
 term by term [barthelemyIJES2019](@cite). Writing ``f_i`` for the volume
@@ -336,10 +343,10 @@ order of the factors is prescribed — even in the isotropic case, where every
 factor looks scalar. All ten schemes are implemented by
 [`homogenize_alv`](@ref).
 
-## The n-layer composite sphere
+## 6. The n-layer composite sphere
 
 The ``n``-layer sphere of [herve1993](@citet) (see
-[Layered spheres](layered_sphere.md)) transposes by the same rule. Its elastic
+[Layered spheres](@ref th-layered-sphere)) transposes by the same rule. Its elastic
 construction propagates a state vector across the shells by a product of
 transfer matrices — ``2\times 2`` for the bulk (``Y_0``) harmonic,
 ``4\times 4`` for the shear (``Y_2``) one — whose entries are rational
@@ -354,7 +361,7 @@ per-layer localization kernels and the imperfect-interface transfers. The
 composite sphere then enters the schemes exactly as in elasticity — through its
 volume-averaged concentration kernel, having no Hill tensor of its own.
 
-## [Symmetry classes and structured storage](@id th-visco-classes)
+## [7. Symmetry classes and structured storage](@id th-visco-classes)
 
 ALV operators inherit the symmetry classes of their elastic counterparts, and
 those classes are **closed** under Volterra product and inverse. That closure is
@@ -371,4 +378,14 @@ with ISO ⊂ TI ⊂ ORTHO ⊂ generic. The types [`ALVKernelISO`](@ref),
 [`ALVKernelTI`](@ref) and [`ALVKernelOrtho`](@ref) wrap these compact
 representations as `AbstractMatrix`, so they flow through generic Julia matrix
 code while preserving both the storage saving and the algebraic closure.
+
+## Where to go next
+
+The next chapter leaves the inclusion problem altogether:
+[Periodic multilayer — the laminate cell](@ref th-laminate) solves a periodic
+stack exactly, and its §10 transposes that solution to ageing viscoelasticity by
+the substitution of this page. The schemes of §5 are compared on one composite
+in the tutorial [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes),
+and the manual page [Viscoelastic homogenization](@ref man-viscoelasticity)
+gives the syntax of [`homogenize_alv`](@ref).
 

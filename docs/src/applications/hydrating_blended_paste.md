@@ -1,5 +1,12 @@
 # [A hydrating blended cement paste, coupled to its chemistry](@id app-blended-hydration)
 
+!!! info "Before this page"
+    [Multiscale elasticity of a hydrating cement paste](@ref app-cement-paste),
+    the correlation-based model this page replaces by a computed chemistry,
+    [Multiscale models](@ref man-multiscale) for the chaining of the four
+    scales, and [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities)
+    for the derivatives of §6.
+
 Every other cement chapter of this documentation starts from a **correlation**:
 a Powers-type formula turns a water-to-cement ratio and a hydration degree into
 volume fractions, and the micromechanics takes it from there. This one does not.
@@ -419,3 +426,15 @@ repository root, because it needs ChemistryLab and OrdinaryDiffEq:
 julia --project=docs -e 'using Pkg; Pkg.instantiate()'
 julia scripts/44_stoichiometric_hydration_micromechanics.jl
 ```
+
+## Where to go next
+
+The reaction set of this page states its products and orders them by hand.
+[Hydration through the pore solution](@ref app-ionic-hydration) keeps the
+binder, the kinetics and the four-scale micromechanics, lets the clinker
+dissolve into ions, and leaves the choice of the hydrates to a Gibbs energy
+minimization, so that the two pages can be compared term by term. The
+compressive strength and the ageing creep, left out of this page, are treated
+without the chemistry in
+[Quasi-brittle strength of cement paste and mortar](@ref app-strength) and
+[Ageing creep of solidifying cementitious materials](@ref app-ageing-creep).

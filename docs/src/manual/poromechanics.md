@@ -1,5 +1,10 @@
 # [Poromechanics](@id manual-poromechanics)
 
+!!! info "Before this page"
+    [Homogenization schemes](@ref man-schemes), which produces the drained
+    stiffness every formula below starts from, and [Cracks](@ref man-cracks)
+    for the crack family of the second example.
+
 Once a scheme has produced a **drained** stiffness ``\mathbb{C}^{\mathrm{hom}}``, the
 poroelastic law of a saturated medium is closed *without any further
 homogenization*: for a solid phase with uniform elastic properties
@@ -90,3 +95,13 @@ stress increment, ``p = -\boldsymbol{B}^{\mathrm{sk}} : \boldsymbol{\Sigma}``.
     rock matrix with pores or fractures. A medium built from two distinct solid
     constituents needs the general Levin/eigenstrain route, and ``\mathbb{C}_{\mathrm{s}}``
     is then not defined.
+
+## Where to go next
+
+[Sensitivities](@ref man-sensitivities) differentiates the effective
+properties of the preceding pages with respect to any input of their RVE. The
+Biot coefficients of this page are the material side of
+[The coupled poroelastic problem](@ref fe-poro-coupling), where a
+finite-element code consumes them, and
+[Multiscale elasticity of a hydrating cement paste](@ref app-cement-paste) uses
+them to pass from drained to undrained moduli.

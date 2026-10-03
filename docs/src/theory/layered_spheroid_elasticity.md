@@ -1,5 +1,11 @@
 # [The elastic confocal spheroid — Papkovich–Neuber in `(ϕ, p, q)`](@id th-spheroid-elasticity)
 
+!!! info "Before this page"
+    [Layered spheroid — confocal harmonic series](@ref th-layered-spheroid),
+    whose chart and Legendre machinery are reused here, and
+    [Layered sphere](@ref th-layered-sphere), whose per-interface transfer
+    matrices have no confocal elastic counterpart.
+
 [The confocal spheroid](@ref th-layered-spheroid) solves conduction. This page
 solves the **axisymmetric elastic** problem in the same chart: the
 Papkovich–Neuber representation and its gauge, the displacement and stress
@@ -22,7 +28,7 @@ matched, and the solver those add up to.
     interface restriction is not a gap to be filled:
     [it is structural](@ref th-spheroid-imperfect).
 
-## Why this is a derivation and not a transcription
+## 1. Why this is a derivation and not a transcription
 
 The pieces exist separately, and none of them is the piece needed here.
 
@@ -40,7 +46,7 @@ So they are derived below, from the chart, and every claim is checked by a
 `@example` block rather than asserted. The heavier checks live in
 `test/LayeredSpheroids/test_pn_symbolic.jl`, which runs in CI.
 
-## The representation, and one set of operators for all three problems
+## 2. The representation, and one set of operators for all three problems
 
 With ``\mu`` the shear modulus and ``\nu`` Poisson's ratio, Papkovich–Neuber
 writes the displacement on four harmonic potentials. Collecting the last three
@@ -139,7 +145,7 @@ the error in Riccardi & Montheillet (1999).
 whose fields are axisymmetric — which turns out to give two structural checks
 for free.
 
-## Case I — the operators
+## 3. Case I — the operators
 
 Write ``\Phi = \varphi_0 + z\,\varphi_3`` for the combined potential, and use the
 chart's own abbreviations
@@ -276,7 +282,7 @@ cd, cc = components_canon(σ), components_canon(σ_cf)
  [reduce_h(cd[i, j] - cc[i, j]) for i in 1:3 for j in i:3]]
 ```
 
-## [Why the tangential condition carries a factor ``1-p^2``](@id th-spheroid-banding)
+## [4. Why the tangential condition carries a factor ``1-p^2``](@id th-spheroid-banding)
 
 This is the structural point, and it is what separates the elastic problem from
 the conduction one.
@@ -365,7 +371,7 @@ loose = [(n, reach(m -> diff(P(m), p), n), reach(m -> p * diff(P(m), p), n)) for
 The first table never strays more than two degrees from ``n``; the second
 reaches degree ``0`` from ``n = 5``.
 
-## [The four quantities a perfect interface matches](@id th-spheroid-interface)
+## [5. The four quantities a perfect interface matches](@id th-spheroid-interface)
 
 Two of the four are displacements and two are tractions. Writing the traction
 out needs the Hessian in the chart, and that too is extracted rather than
@@ -443,7 +449,7 @@ T_p = w2 * diff(Φ, p, 1, q, 1) + p * diff(Φ, q) - q * diff(Φ, p) -
  at_point(c^2 * w2^2 * sc[2, 3] / (pb * qb) - T_p)]
 ```
 
-## [A self-test of the chart, not a result](@id th-spheroid-selftest)
+## [6. A self-test of the chart, not a result](@id th-spheroid-selftest)
 
 That ``\operatorname{div}\boldsymbol\sigma = 0`` is **not** something this page
 establishes. Papkovich–Neuber with harmonic potentials satisfies Navier's
@@ -478,7 +484,7 @@ Zero, as the theorem requires — and only the axial component is shown, to keep
 the build short. `test/LayeredSpheroids/test_pn_symbolic.jl` checks the other
 two, together with the chart itself and equilibrium for explicit harmonics.
 
-## [One evaluator, and the cases as data](@id th-spheroid-one-evaluator)
+## [7. One evaluator, and the cases as data](@id th-spheroid-one-evaluator)
 
 The boxed stress refers to no particular case, so neither does the code. A
 single routine turns one harmonic mode into ``\underline u`` and the traction
@@ -546,7 +552,7 @@ even and ``\varphi_3`` odd in case I, and so on, a mode picking up
 in the *other* problem of the same order, the one whose remote field is odd
 where this one's is even, and the truncated system then leaks between them.
 
-## [The solver, and what it is checked against](@id th-spheroid-elastic-solver)
+## [8. The solver, and what it is checked against](@id th-spheroid-elastic-solver)
 
 `spheroid_strain_concentration` runs six solves and assembles the tensor;
 `spheroid_elastic_coefficients` is the case-I-only entry, kept because its
@@ -619,7 +625,7 @@ double precision stops sufficing once ``0.8(2\mathcal N-1) > 16``, that is at
 criterion should be, and it is the same mechanism: what runs out is the accuracy
 of the coupling between degrees, not anything about elasticity.
 
-## [What a homogenization scheme gets](@id th-spheroid-elastic-scheme)
+## [9. What a homogenization scheme gets](@id th-spheroid-elastic-scheme)
 
 A scheme consumes an inclusion's **volume-averaged strain concentration
 tensor** ``\mathbb A``, defined by
@@ -669,7 +675,7 @@ total from one moment on the outer boundary — are independent, so
 ``\sum_k f_k\mathbb A_k = \mathbb A`` is a check rather than a restatement. It
 holds to the truncation accuracy.
 
-## [Imperfect interfaces, and why they do not fit](@id th-spheroid-imperfect)
+## [10. Imperfect interfaces, and why they do not fit](@id th-spheroid-imperfect)
 
 The conduction solver takes a Kapitza resistance or a surface conductance
 directly. The elastic one does not, and the reason is structural rather than a
@@ -713,7 +719,7 @@ compliance that **varies along the interface** rather than a uniform spring.
  simplify(subs(χ[3], p => 0) / subs(χ[3], p => 1) - q / sqrt(q^2 - 1))]
 ```
 
-## [Appendix — the two formulas from BB2020 this page leans on](@id th-spheroid-elastic-appendix)
+## [11. Appendix — the two formulas from BB2020 this page leans on](@id th-spheroid-elastic-appendix)
 
 Recalled because the argument above uses them, not for completeness; the chart
 itself is on [the conduction page](@ref th-spheroid-chart).
@@ -750,7 +756,7 @@ runs into. Both relations, checked:
  simplify(integrate((1 - p^2) * diff(P(2), p) * diff(P(4), p), (p, -1, 1)))]
 ```
 
-## What comes next
+## 12. What is left to implement
 
 Not cases II and III — they are in. What is left is smaller and none of it is
 obstructed the way an imperfect interface is:
@@ -767,3 +773,13 @@ obstructed the way an imperfect interface is:
 
 [The roadmap](@ref dev-elastic-spheroid) carries the numerical traps that apply
 throughout.
+
+## Where to go next
+
+The next chapter returns to a single ellipsoid, in its flat limit:
+[Crack opening displacement and compliance](@ref th-cod-tensors) describes a
+crack by how much it opens rather than by a volume fraction and a stiffness.
+The finite-element counterpart of the layered spheroid, calibrated against the
+confocal solutions and carried to nested spheroids with freely chosen
+semi-axes, is the tutorial
+[A layered spheroid, meshed](@ref tut-axi-layered-spheroid).

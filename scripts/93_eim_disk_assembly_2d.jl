@@ -1,4 +1,12 @@
-# # The equivalent inclusion method, against a published table
+# # [The equivalent inclusion method, against a published table](@id app-eim-assembly)
+#
+# !!! info "Before this page"
+#     [The equivalent inclusion method](@ref th-eim), where the variational form
+#     and the bounds used below are derived,
+#     [Particle assemblies and N-body schemes](@ref man-assemblies) for random
+#     assemblies and their boundary conditions, and
+#     [The cluster model on cubic arrays](@ref app-cluster-model), whose §5
+#     identifies the two N-body schemes on a periodic array.
 #
 # The variational form of the equivalent inclusion method
 # [brisard2013bc](@cite)
@@ -29,8 +37,6 @@
 # ``\mu^{\mathrm{app}} = 0.310\,\mu_0`` averaged over 1000 realizations, against a
 # finite-element reference of ``0.244\,\mu_0`` and a Hashin-Shtrikman upper bound
 # of ``0.349\,\mu_0``.
-#
-# Theory: [the equivalent inclusion method](@ref th-eim).
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
@@ -180,3 +186,16 @@ figpath = joinpath(figdir, "93_eim_disk_assembly_2d.png")            #jl
 savefig(p_full, figpath)                                             #jl
 display(p_full)                                                      #jl
 @printf "\nSaved : %s\n" figpath                                     #jl
+
+# The last figure gathers the three panels above in one row, the published
+# value being drawn as a dashed line on the left and as a star on the right.
+#
+# ## Where to go next
+#
+# The other rows of the published table, at orders ``p \ge 1``, tighten the bound
+# towards the finite-element value; they are listed in
+# [The equivalent inclusion method](@ref th-eim), with the reason only order
+# zero is implemented. A particle assembly can also take part in a
+# multiscale chain, as the inner or the outer cell, which the tutorial
+# [Chaining scales through an N-body scheme](@ref tut-multiscale-assemblies)
+# shows.

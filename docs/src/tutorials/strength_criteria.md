@@ -1,5 +1,10 @@
 # [From derivatives to a strength criterion](@id tut-strength-criteria)
 
+!!! info "Before this page"
+    The tutorials [Porous benchmark: all schemes](@ref tut-porous-benchmark), for
+    the schemes compared below, and [Derivatives and sensitivities](@ref tut-sensitivities),
+    for the derivatives from which the criterion is assembled.
+
 This capstone tutorial combines the last three pages — porous
 materials, scheme comparison, and automatic differentiation — into a
 single applied result: a macroscopic **strength criterion** for a
@@ -12,7 +17,7 @@ the Echoes book [echoes](@cite).
 The solid and pore are both **oblate spheroids** (aspect ratio
 ``\omega = 0.1``) with a uniform spatial distribution of orientations
 ([`IsoSymmetrize`](@ref), as in the
-[porous benchmark tutorial](porous_benchmark.md)), so the
+[porous benchmark tutorial](@ref tut-porous-benchmark)), so the
 homogenized stiffness is isotropic. The solid is much stiffer than the
 pore, at a fixed porosity ``\varphi = 0.15``:
 
@@ -50,7 +55,7 @@ B = \Big(\frac{\mu_s}{\mu^{\mathrm{hom}}}\Big)^{\!2}\frac{\partial \mu^{\mathrm{
 ``A`` and ``B`` are **not** independent material data — they are the
 sensitivities of the two homogenized moduli to the *solid's own* shear
 modulus, exactly the kind of derivative built up over the
-[previous tutorial](sensitivities.md). Differentiating a closure
+[previous tutorial](@ref tut-sensitivities). Differentiating a closure
 that homogenizes and reads back `(k_hom, μ_hom)` gives both at once:
 
 ```@example tutstrength
@@ -111,10 +116,18 @@ The ellipses differ noticeably between schemes — `SelfConsistent` and
 `AsymmetricSelfConsistent` predict a markedly smaller admissible domain
 than `Mori-Tanaka` or `Maxwell` at this porosity, the same qualitative
 ranking (percolating vs. isolated-pore topology) seen throughout the
-[porous benchmark tutorial](porous_benchmark.md). Mean-field
+[porous benchmark tutorial](@ref tut-porous-benchmark). Mean-field
 homogenization gives the moduli; automatic differentiation gives their
 sensitivities; together they yield a macroscopic strength criterion —
 with no closed-form derivative ever written by hand, and no assumption
 beyond the choice of scheme. For the same construction at three nested
 scales, see
-[Quasi-brittle strength of cement paste and mortar](../applications/strength.md).
+[Quasi-brittle strength of cement paste and mortar](@ref app-strength).
+
+## Where to go next
+
+[Nonlinear solvers for the self-consistent fixed point](@ref tut-nonlinear-solvers)
+revisits the criterion with an external solver for the self-consistent scheme and
+checks that the ellipse does not depend on it. The same construction at three
+nested scales is carried out in
+[Quasi-brittle strength of cement paste and mortar](@ref app-strength).

@@ -1,5 +1,13 @@
 # [Multiscale elasticity of a hydrating cement paste](@id app-cement-paste)
 
+!!! info "Before this page"
+    [Homogenization schemes](@ref th-homogenization), where the self-consistent
+    and Mori–Tanaka estimates chained below are derived, the tutorial
+    [Porous materials and the self-consistent trap](@ref tut-porous-materials)
+    on the percolation threshold of the self-consistent scheme, which is what
+    makes the paste set, and [Layered inclusions](@ref man-layered) for the
+    composite sphere of the last section.
+
 Following [sanahuja2007](@citet) — and mirroring the corresponding chapter of
 the Echoes book [echoes](@cite) — this page builds a **two-scale micromechanical
 model** of Portland cement paste predicting the effective Young's modulus from
@@ -123,6 +131,11 @@ loses connectivity — this is precisely the mechanism that sets the setting
 threshold in the paper.
 
 ## Scale 1 — cement paste
+
+At the paste scale, the anhydrous grains are first embedded in the inner
+hydrates, and the composite inclusions so obtained are then embedded in the
+outer hydrates, whose stiffness is that of scale 0 at the current porosity
+``\varphi_o``; both steps use the Mori–Tanaka scheme.
 
 ```@example paste
 function C_paste(wc, α)
@@ -341,3 +354,23 @@ for (wc, col) in ((0.35, 1), (0.55, 2))
 end
 plt
 ```
+
+In this last figure, the solid and dashed curves of one color differ only by
+the morphology assumed at the paste scale. Both start at the same hydration
+degree, since the setting threshold is fixed at scale 0 by the percolation of
+the outer hydrates, which the two forms share.
+
+## Where to go next
+
+The volume fractions of this page come from the Powers and Tennis–Jennings
+correlations. [A hydrating blended cement paste, coupled to its chemistry](@ref app-blended-hydration)
+computes them instead from the hydration kinetics and the stoichiometry of the
+reactions, and feeds them to a four-scale model of the same family.
+[Cement paste: chloride diffusivity and elasticity](@ref app-cement-paste-diffusion)
+keeps the Powers fractions and a three-layer composite sphere, and homogenizes
+the same microstructure for diffusivity as well as for stiffness. The
+recurrences behind [`LayeredSphere`](@ref) are derived in
+[Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere),
+and the Biot coefficients and undrained stiffness written out by hand above are
+computed by the library from a drained stiffness and a homogeneous solid, as
+described in [Poromechanics](@ref manual-poromechanics).

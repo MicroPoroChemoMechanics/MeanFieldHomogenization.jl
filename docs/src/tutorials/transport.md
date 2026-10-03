@@ -1,10 +1,15 @@
 # [Transport properties](@id tut-transport)
 
+!!! info "Before this page"
+    The tutorial [Porous benchmark: all schemes](@ref tut-porous-benchmark),
+    whose porous medium and schemes are carried over below to a diffusivity,
+    and the theory page [Extension to conductivity](@ref th-conductivity), which
+    states the dictionary between the elastic and the transport problems.
+
 Transport properties — diffusivity, permeability, thermal or electrical
 conductivity — are described by **2nd-order** symmetric tensors. They are
 homogenized with exactly the same machinery as 4th-order elastic properties:
 only the property key passed to [`homogenize`](@ref) changes.
-
 
 ## Homogenizing a 2nd-order property
 
@@ -180,6 +185,10 @@ plt2
 
 ## Effect of the Interfacial Transition Zone (ITZ)
 
+The pores considered so far are homogeneous inclusions; the transport schemes
+accept composite ones as well, of which the aggregate of a mortar is the
+classical example.
+
 In mortar, the **Interfacial Transition Zone** is a thin shell (~50 µm) of
 higher-porosity — hence higher-diffusivity — cement paste around each aggregate.
 The reduction in diffusivity caused by the impermeable aggregates can be offset,
@@ -239,8 +248,8 @@ paste value.
 
 In the limit ``e_{\mathrm{ITZ}}\to 0`` the thin, highly-conductive ITZ shell can be
 collapsed onto a **zero-thickness surface-conductive interface** carrying a
-tangential surface current ``\underline{q}_s = k_s\,\nabla_{\!s}T`` with
-transmissivity ``k_s = \alpha = D_s\,e_{\mathrm{ITZ}}`` — the Echoes book's `DUALDISC`
+tangential surface current ``\underline{q}^{\mathrm s} = k^{\mathrm s}\,\nabla_{\!s}T`` with
+transmissivity ``k^{\mathrm s} = \alpha = D_s\,e_{\mathrm{ITZ}}`` — the Echoes book's `DUALDISC`
 model. This is exactly a [`SurfaceConductiveInterface`](@ref) on a *bare*
 aggregate (a one-layer [`LayeredSphere`](@ref)); it avoids the explicit shell and
 its volume-fraction correction ``f\,(1+e_{\mathrm{ITZ}}/R_{\mathrm{agg}})^3``:
@@ -276,8 +285,8 @@ end
 plt4
 ```
 
-At ``D_{\mathrm{itz}}/D_{\mathrm{cp}} = 50`` the transmissivity ``k_s = 2500`` gives an
-effective sphere conductivity ``2k_s/R_{\mathrm{agg}} = 1 = D_{\mathrm{cp}}``, so the aggregate
+At ``D_{\mathrm{itz}}/D_{\mathrm{cp}} = 50`` the transmissivity ``k^{\mathrm s} = 2500`` gives an
+effective sphere conductivity ``2k^{\mathrm s}/R_{\mathrm{agg}} = 1 = D_{\mathrm{cp}}``, so the aggregate
 becomes transparent and ``D^{\mathrm{hom}} = D_{\mathrm{cp}}`` at every fraction — the flat
 curve above.
 
@@ -301,3 +310,17 @@ C_eff = homogenize(r2, MoriTanaka(), :C)
 D_eff2 = homogenize(r2, MoriTanaka(), :K)
 (bulk = k_mu(C_eff)[1], diffusivity = tr(Array(D_eff2)) / 3)
 ```
+
+The bulk modulus and the mean diffusivity above come from one microstructure,
+described once and read twice through the property key.
+
+## Where to go next
+
+Every scheme used so far is evaluated in one shot or as a fixed point.
+[The differential scheme and path dependence](@ref tut-differential-paths)
+builds the composite incrementally instead, which makes the order of
+incorporation of the phases a modeling choice. The order-2 calls of the library
+are collected in [Conductivity](@ref man-conductivity) of the manual, and
+[Cement paste: chloride diffusivity and elasticity](@ref app-cement-paste-diffusion)
+applies the cross-property route of the last section to a hydrating cement
+paste.

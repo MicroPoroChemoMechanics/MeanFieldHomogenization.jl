@@ -4,6 +4,13 @@ EditURL = "../../../../scripts/63_kelvin_maxwell.jl"
 
 # [Generalized Kelvin ⇄ generalized Maxwell](@id tut-kelvin-maxwell)
 
+!!! info "Before this page"
+    The tutorial [The rheological model catalog](@ref tut-rheological-models),
+    whose classical chains rely on the conversion examined here, and the
+    section [Interlacing: why Kelvin ⇄ Maxwell is exact](@ref th-interlacing)
+    of the Laplace-Carson theory page, which proves the property checked in
+    §2.
+
 A viscoelastic solid can be written two ways. Springs and dashpots in
 *series* branches parallel to an equilibrium spring give a **generalized
 Maxwell** chain, described by a relaxation function; springs and dashpots in
@@ -332,6 +339,18 @@ p_full = plot(
 )
 p_full
 ````
+
+The last figure gathers the six panels drawn above, from the interlacing of
+the two spectra to the chain fitted in §6.
+
+## Where to go next
+
+A partial-fraction decomposition inverts the transform of a chain exactly, but
+does not apply to a model whose transform is not rational.
+[Choosing a numerical Laplace inversion](@ref tut-laplace-inversion) measures
+the four numerical inversions that take over for those models, against exact
+pairs. The chain constructors and the fitting function of §6 are documented in
+[The rheological model library](@ref man-rheological-models).
 
 ---
 

@@ -1,5 +1,11 @@
 # [Finite-element inclusions](@id man-fe-inclusions)
 
+!!! info "Before this page"
+    [Custom inclusions](@ref man-custom-inclusions), whose entry gates every
+    finite-element inclusion implements, and
+    [The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell),
+    where the cell solved below is derived.
+
 !!! note "The opposite coupling"
     This page is about finite elements used **inside** MeanFieldHomogenization,
     to solve one inclusion's Eshelby problem. For MeanFieldHomogenization used
@@ -199,7 +205,7 @@ elasticity.
 - **P2 interpolation at most** on tetrahedra: Ferrite provides no cubic
   Lagrange element there.
 
-## Adding your own morphology
+## [Adding your own morphology](@id man-fe-own-morphology)
 
 Two seams, and it is worth knowing which one a new case needs.
 
@@ -346,7 +352,7 @@ homogenize(rve, MoriTanaka(), :C)      # and :K, on the same mesh
 ```
 
 The phase property is a **placeholder and is ignored** — see the cavity
-paragraph under [Adding your own morphology](@ref) above — so pass the matrix's
+paragraph under [Adding your own morphology](@ref man-fe-own-morphology) above — so pass the matrix's
 own stiffness and nothing is lost. The same object answers from a
 **network** instead of a mesh when one is handed to it,
 `FESupershapePore(shape; elastic = s)`, with everything else unchanged; that is
@@ -562,13 +568,17 @@ julia scripts/81_fe_crack_eshelby.jl     # the validation, live
 julia scripts/82_fe_crack_schemes.jl     # the crack inside the schemes
 ```
 
-## See also
+## Where to go next
+
+A finite-element solve is accurate but neither cheap nor differentiable, and
+[Neural-surrogate inclusions](@ref man-neural-inclusions) removes both
+limitations with a network trained on these solves. The tutorial
+[Validating a finite-element crack](@ref tut-fe-crack) measures the corrected
+cell against the closed form, and
+[A recycled-concrete aggregate](@ref app-recycled-aggregate) works the
+axisymmetric case end to end.
 
 - [Custom inclusions](@ref man-custom-inclusions) — the contract these
-  implement, and its three entry gates.
+  implement, and its three entry gates
 - [Adding a new inclusion](@ref dev-adding-inclusion) — the full developer
-  contract.
-- [Neural-surrogate inclusions](@ref man-neural-inclusions) — how to make one
-  of these solves cheap, and differentiable.
-- [A recycled-concrete aggregate](@ref app-recycled-aggregate) — the
-  axisymmetric case, worked end to end.
+  contract

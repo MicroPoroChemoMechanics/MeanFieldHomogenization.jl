@@ -1,5 +1,11 @@
 # [Two-inclusion interaction tensors](@id th-interaction)
 
+!!! info "Before this page"
+    [Homogenization schemes](@ref th-homogenization) §6, where the two N-body
+    schemes are introduced, and the
+    [sign of the Green operator](@ref th-notation-green-sign) fixed in the
+    Conventions, which this page follows.
+
 Every one-site scheme of the package needs one object: the Hill tensor ``\mathbb{P}``
 of a single inclusion in a reference medium. The two N-body schemes need one more —
 the tensor measuring the field one inclusion induces in another. This page defines it,
@@ -27,7 +33,7 @@ the dictionary of
 (``\boldsymbol{T}^{ab}``, ``\boldsymbol{G}^0``, ``\boldsymbol{P}``); no sign changes
 between the two columns.
 
-## The Lippmann-Schwinger equation
+## 1. The Lippmann-Schwinger equation
 
 With a homogeneous reference ``\mathbb{C}_0`` and the polarization
 ``\boldsymbol{\tau} = (\mathbb{C}-\mathbb{C}_0):\boldsymbol{\varepsilon}``, the local
@@ -84,7 +90,7 @@ the source, so the whole interior average is the Dirac term
 page to the rest of the package. (The functions of the package evaluate the regular
 part; the Dirac term is what [`self_interaction_tensor`](@ref) carries.)
 
-## Definition
+## 2. Definition
 
 For two inclusions ``\Omega_a`` (receiver) and ``\Omega_b`` (source) whose centers are
 separated by ``\underline{r}``,
@@ -126,7 +132,7 @@ so the one-inclusion case is exactly the
     with anything on this page. The closed form below is *their table with the sign
     already flipped*, which is why its ``\kappa`` is positive where theirs is negative.
 
-## Exact closed forms for balls and disks
+## 3. Exact closed forms for balls and disks
 
 The solid mean-value expansion of a smooth field over a ball of radius ``a`` reads
 
@@ -262,7 +268,7 @@ the package and its normative reference share one convention.
 terms of the bracket above carry the same overall convention: ``\mathbb{G}^0`` and
 ``\Delta\mathbb{G}^0`` are negated together, never one without the other.
 
-## The vanishing isotropic part
+## 4. The vanishing isotropic part
 
 For any two distinct inclusions,
 
@@ -277,7 +283,7 @@ of cubic symmetry the effective **bulk** modulus is blind to the spatial distrib
 and coincides exactly with the Mori-Tanaka estimate. Only the shear response sees the
 arrangement.
 
-## General ellipsoids
+## 5. General ellipsoids
 
 Beyond balls the series does not terminate, and
 [brisard2014](@cite), §4.2, expand the regular part of the kernel
@@ -299,7 +305,7 @@ formula when both moments are isotropic. `method = :quadrature` integrates the
 definition directly by a product rule — geometry-agnostic, far slower, and the oracle
 the closed forms are validated against.
 
-## Anisotropic reference media
+## 6. Anisotropic reference media
 
 Everything above assumes an isotropic reference, whose Green operator is a closed
 form. That is not a restriction of the method, only of the kernel, and it is lifted by
@@ -360,7 +366,7 @@ reference medium of another scale requires exactly this kernel. Chaining the two
 schemes across scales was impossible without it; see
 [the manual](@ref man-assemblies) and `scripts/92`.
 
-## Periodic images
+## 7. Periodic images
 
 Under a periodic boundary treatment each source carries a family of images and the
 interaction becomes a lattice sum, truncated to a cluster of radius ``R_c``:
@@ -388,6 +394,12 @@ so the neglected images contribute a vanishing amount as ``R_c`` grows. Summing 
 **sphere** of images rather than a box is therefore not a detail but the reason the
 truncation is legitimate.
 
-## API
+## Where to go next
 
-See [API — Interactions](@ref api-interactions).
+The two schemes built on ``\mathbb{T}^{ab}`` follow.
+[The cluster model](@ref th-cluster), the next page, solves for the mean strain
+of every inclusion inside a cluster of neighbors, and
+[The equivalent inclusion method](@ref th-eim) poses the same problem as a
+Galerkin discretization that also yields a rigorous bound. The functions
+evaluating ``\mathbb{T}^{ab}`` are documented in
+[API — Interactions](@ref api-interactions).

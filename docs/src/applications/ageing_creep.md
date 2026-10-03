@@ -1,5 +1,13 @@
 # [Ageing creep of solidifying cementitious materials](@id app-ageing-creep)
 
+!!! info "Before this page"
+    [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity), where the
+    time-domain schemes and their Volterra algebra are derived,
+    [Viscoelastic homogenization](@ref man-viscoelasticity) for
+    [`homogenize_alv`](@ref) and the relaxation laws, and the tutorial
+    [Ageing creep: loading age against inclusion shape](@ref tut-ageing-ages-aspect)
+    on the effect of the loading age.
+
 The ageing-creep model of [sanahuja2013](@citet): one phase **solidifies
 progressively** — as C-S-H does during hydration — so the effective relaxation kernel ``\mathbb C^{\mathrm{hom}}(t,
 t')`` depends on the observation time ``t`` and the loading time ``t'``
@@ -266,3 +274,11 @@ second scatters them independently in the matrix.
     packing of [sanahuja2013](@citet) is an efficient model — one Eshelby problem
     instead of ``N+1`` — not an exact reformulation of the separate-inclusion
     RVE. Choosing between them is choosing a morphology.
+
+## Where to go next
+
+The schemes other than Mori–Tanaka on the same time-domain path are compared on
+one composite in [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes).
+The next application, [Viscoelastic complex modulus of a bituminous mixture](@ref app-bituminous),
+treats a non-ageing material, for which the correspondence principle holds and
+the homogenization runs in the frequency domain with complex moduli.

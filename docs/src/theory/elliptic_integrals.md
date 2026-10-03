@@ -1,11 +1,15 @@
 # [Elliptic integrals](@id th-elliptic-integrals)
 
+!!! info "Before this page"
+    [Hill polarization tensors](@ref th-hill-tensors), whose Newton-potential
+    integrals for a spheroid are expressed through the functions defined here.
+
 The [`MeanFieldHomogenization.Elliptic`](@ref MeanFieldHomogenization.Elliptic) submodule provides
 type-generic Legendre and Carlson integrals that flow end-to-end through
 automatic differentiation (`ForwardDiff.Dual`), arbitrary precision
 (`BigFloat`) and symbolic scalars (`SymPy.Sym`, `Symbolics.Num`).
 
-## Legendre elliptic integrals
+## 1. Legendre elliptic integrals
 
 Throughout the submodule, `m` denotes the **parameter** (not the modulus),
 with the convention ``m = k^2`` and ``0 \le m < 1``.
@@ -32,7 +36,7 @@ E(\varphi, m) = \int_0^{\varphi}
 
 Both reduce to the complete integrals at ``\varphi = \pi/2``.
 
-## Arithmetic–geometric mean (AGM)
+## 2. Arithmetic–geometric mean (AGM)
 
 For any `Number` subtype other than `Float64`, the complete integrals
 are evaluated using the classical AGM recursion (Abramowitz & Stegun
@@ -61,7 +65,7 @@ E(m) = K(m)\;\bigl(1 - \tfrac{1}{2}\textstyle\sum_{n \ge 0} 2^n c_n^2\bigr).
 Eight to twelve iterations are typically enough to reach `Float64`
 precision; `BigFloat` needs only a few more.
 
-## Carlson symmetric forms
+## 3. Carlson symmetric forms
 
 Incomplete integrals are delegated to Carlson's symmetric integrals
 (Carlson 1995, *Numerical computation of real or complex elliptic
@@ -98,7 +102,7 @@ fifth-order Taylor series in the Carlson invariants ``E_2, E_3`` (and
 no branch cuts, no transcendentals — so it extends to any `Number`
 subtype.
 
-## Dispatch table
+## 4. Dispatch table
 
 | Scalar type          | Backend                                          |
 | :------------------- | :----------------------------------------------- |
@@ -117,7 +121,7 @@ subtype.
     directly to `sympy.elliptic_{k,e,f}`, returning the native closed
     form instead.
 
-## Special cases
+## 5. Special cases
 
 - **``m = 0``**: ``K(0) = E(0) = \pi/2``;
   ``F(\varphi, 0) = E(\varphi, 0) = \varphi``.
@@ -127,7 +131,7 @@ subtype.
 - **``\varphi = \pi/2``**: incomplete integrals coincide with complete
   ones.
 
-## References
+## 6. References
 
 - M. Abramowitz and I.A. Stegun, *Handbook of Mathematical Functions*,
   §17.6, Dover 1972.
@@ -138,3 +142,12 @@ subtype.
 - B.C. Carlson and E.M. Notis, *Algorithms for incomplete elliptic
   integrals*, ACM Transactions on Mathematical Software **7** (1981)
   398–403 — public-domain SLATEC routines `DRF` / `DRD`.
+
+## Where to go next
+
+The submodule is exercised on numerical, automatic-differentiation, arbitrary
+precision and symbolic inputs in
+[Elliptic integrals — examples](@ref man-elliptic-examples), and its entry
+points are listed in [Elliptic integrals — API](@ref api-elliptic). The theory
+chapter closes here; [Getting started](@ref getting-started) and the
+[Manual](@ref man-index) put the whole chain to use.

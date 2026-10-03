@@ -1,5 +1,12 @@
 # [Viscoelastic complex modulus of a bituminous mixture](@id app-bituminous)
 
+!!! info "Before this page"
+    [The Laplace-Carson route](@ref th-laplace-carson), where the
+    correspondence principle used below is set out,
+    [The rheological model library](@ref man-rheological-models) for the 2S2P1D
+    binder, and [Numerical Laplace inversion](@ref man-laplace-inversion) for
+    the return to the time domain of the last section.
+
 The **complex modulus** ``E^*(\omega)`` of a bituminous mixture through three
 nested scales, following [someCBM2022](@citet). The bitumen is viscoelastic
 (2S2P1D); the mineral phases are elastic. Every scheme being `ComplexF64`-safe,
@@ -295,3 +302,13 @@ gap widens as the load becomes slower.
     transform has a branch cut at the origin, from its ``(p\tau)^{-k}`` terms;
     that is not an obstacle for any of them — the Talbot contours are designed
     to wrap around exactly such a singularity.
+
+## Where to go next
+
+The frequency route of this page, the time route of
+[Ageing creep of solidifying cementitious materials](@ref app-ageing-creep) and
+the Laplace–Carson route are checked against one another on a non-ageing
+composite in [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time).
+The next application, [The cluster model on cubic arrays](@ref app-cluster-model),
+leaves time dependence for the N-body schemes, in which the positions of the
+inclusions enter the estimate.

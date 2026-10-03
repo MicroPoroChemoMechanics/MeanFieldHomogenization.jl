@@ -1,5 +1,10 @@
 # [Cracks](@id man-cracks)
 
+!!! info "Before this page"
+    [Crack opening displacement and compliance](@ref th-cod-tensors), where the
+    tensors ``\boldsymbol{B}`` and ``\mathbb{H}`` computed below are derived, and
+    [Thermal cracks](@ref th-thermal-cracks) for their conduction counterparts.
+
 A crack is an inclusion of **zero volume**: the ``c \to 0`` limit of an
 ellipsoid. Two consequences run through this page — the amount of cracking is a
 *density*, not a volume fraction, and everything is written in the crack's own
@@ -24,7 +29,7 @@ plotly_scene(shape_traces(RibbonCrack(0.5)); uid = "man-crack-ribbon", height = 
 
 The full set of shapes, tilted cracks included, is in
 [The inclusion zoo](@ref man-inclusion-gallery); the geometry and the symbols
-are defined in [Crack opening displacement](../theory/cod_tensors.md).
+are defined in [Crack opening displacement](@ref th-cod-tensors).
 
 ```julia
 using MeanFieldHomogenization, TensND
@@ -122,5 +127,14 @@ orientation distribution:
 
 For the **time-dependent** (ALV) version with `Rn(t,t')` and
 `Rt(t,t')` ageing interface kernels, see the
-[Viscoelasticity manual](viscoelasticity.md#5-cracks-in-alv).
+[Viscoelasticity manual](@ref man-visco-cracks).
 References: [sevostianov2002, barthelemyIJES2019](@citet).
+
+## Where to go next
+
+[Layered inclusions](@ref man-layered) leaves the ellipsoid family for
+composite patterns, which have no Hill tensor. The tutorial
+[Cracks and crack density](@ref tut-cracks) drives the calls above through the
+schemes, and
+[Crack distributions: isotropic or parallel](@ref tut-crack-distributions)
+quantifies the choice between the two self-consistent forms discussed above.

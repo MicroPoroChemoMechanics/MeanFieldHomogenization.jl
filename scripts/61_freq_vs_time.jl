@@ -1,14 +1,22 @@
 # # [Frequency or time? Three routes to the same viscoelastic composite](@id tut-freq-vs-time)
 #
+# !!! info "Before this page"
+#     The tutorials [Viscoelastic composites](@ref tut-viscoelasticity), where
+#     the three routes are first called, and
+#     [Choosing a numerical Laplace inversion](@ref tut-laplace-inversion), whose
+#     default algorithm runs the third one; the correspondence principle that
+#     makes them agree is stated in
+#     [The Laplace-Carson route](@ref th-laplace-carson).
+#
 # `MeanFieldHomogenization` reaches the effective behavior of a linear viscoelastic
 # composite by three entirely separate roads:
 #
 # - the **frequency route** — replace every modulus by its complex counterpart
 #   and call [`homogenize`](@ref) unchanged, as in the
-#   [viscoelastic composites tutorial](../viscoelasticity.md);
+#   [viscoelastic composites tutorial](@ref tut-viscoelasticity);
 # - the **time route** — [`homogenize_alv`](@ref), which discretizes the
 #   Volterra operators on a time grid and never leaves the time domain, as in
-#   the [ageing creep application](../../applications/ageing_creep.md);
+#   the [ageing creep application](@ref app-ageing-creep);
 # - the **Laplace-Carson route** — [`homogenize_lc`](@ref), which does the same
 #   and then inverts the answer back to the time domain numerically.
 #
@@ -31,8 +39,7 @@
 # frequency route computes directly, and §4 compares the two that way.
 #
 # The reverse direction — inverting the frequency answer back into the time
-# domain — is genuinely ill-posed, which is why this page used to stop at two
-# routes. It is now available: §6 runs it with
+# domain — is genuinely ill-posed. §6 runs it with
 # [`inverse_carson`](@ref) and lands on the time route's own curve, so the
 # comparison closes in both directions.
 
@@ -349,7 +356,7 @@ plt3
 #     independently, the Laplace-Carson transform no longer factorizes the
 #     convolution, and *two of the three routes simply cease to exist* — which
 #     is why [`homogenize_alv`](@ref) is not a redundant implementation. See the
-#     [ageing creep application](../../applications/ageing_creep.md) for a case
+#     [ageing creep application](@ref app-ageing-creep) for a case
 #     where only the time route applies.
 
 const figdir = joinpath(@__DIR__, "figures")                        #jl
@@ -361,3 +368,12 @@ savefig(plt3, figpath3)                                              #jl
 display(plt)                                                         #jl
 display(plt3)                                                        #jl
 @printf "\nSaved : %s\n        %s\n" figpath figpath3                #jl
+
+# ## Where to go next
+#
+# Once the matrix ages, the time route is the only one left.
+# [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes) runs four
+# schemes along it on an ageing matrix, and shows where the shape assumed for the
+# spatial distribution of the inclusions decides the answer. The time
+# discretization behind [`homogenize_alv`](@ref) is derived in
+# [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity).

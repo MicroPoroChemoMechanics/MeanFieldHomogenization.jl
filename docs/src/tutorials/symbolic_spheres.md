@@ -1,5 +1,11 @@
 # [Symbolic spheres: closed forms with SymPy and Symbolics.jl](@id tut-symbolic-spheres)
 
+!!! info "Before this page"
+    The tutorial [Porous materials and the self-consistent trap](@ref tut-porous-materials),
+    whose numerical sweep is reproduced here from formulas, and the theory page
+    [Homogenization schemes](@ref th-homogenization), which states the estimates
+    that are derived symbolically.
+
 `TensND` is generic in its element type: the same tensor algebra (`⊡`, `inv`,
 projectors, …) runs on `Float64`, on **SymPy.jl** `Sym` and on **Symbolics.jl**
 `Num`. The classical homogenization formulas therefore come out **in closed
@@ -208,7 +214,7 @@ length(sol_por)
 The load-bearing branch must vanish **exactly** at the percolation threshold
 ``f=1/2`` for a random sphere assembly, whatever the matrix moduli — the same
 branch whose collapse causes the numerical instability that [the
-porous-materials tutorial](porous_materials.md) warns about. SymPy's `simplify`
+porous-materials tutorial](@ref tut-porous-materials) warns about. SymPy's `simplify`
 does not collapse the nested `sqrt` left by `solve` at ``f=1/2``, so the check
 is done numerically:
 
@@ -297,4 +303,12 @@ plt
 The self-consistent curve heads to zero as `f → 1/2`, as the percolation
 check predicted; dilute and Mori–Tanaka never "see" the pores connecting and
 stay positive throughout — the picture of [the porous-materials
-tutorial](porous_materials.md), obtained from formulas rather than a sweep.
+tutorial](@ref tut-porous-materials), obtained from formulas rather than a sweep.
+
+## Where to go next
+
+[Symbolic laminates: arithmetic and harmonic averages](@ref tut-symbolic-laminate)
+applies the same generic algebra to the one microstructure whose effective
+behavior is exact, and reads its closed form off the symbolic matrix. The
+time-dependent counterpart, with symbolic rheological parameters, is
+[Symbolic viscoelasticity: closed forms, derived](@ref tut-symbolic-viscoelasticity).

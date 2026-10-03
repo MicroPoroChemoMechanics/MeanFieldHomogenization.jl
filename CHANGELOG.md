@@ -48,6 +48,26 @@
   - `𝕊` was both the compliance and the Eshelby tensor; the latter is `𝕊ᴱ`.
 - MFH Studio labels the conductivities `k`, as the documentation writes them,
   instead of `κ`.
+- The formulas of the docstrings are written in LaTeX under the same notation,
+  so that the API pages render them and the hints below read them. Docstrings
+  that disagreed with the code are aligned on it: the state vector of the shear
+  recurrence, the type returned by `layer_gradient_average` and by
+  `spheroid_strain_concentration`, and the kinds accepted by `legendre_table`.
+- Hovering an equation shows the symbols it holds, with their meaning on the
+  page, from the new Nomenclature page's source, `docs/nomenclature.toml`. A
+  letter with several meanings (`p`, `φ`, `ω`, `𝔹`) is explained only on the
+  pages where each holds. `test/Documentation` checks the nomenclature and the
+  typography of the formulas of the pages and of the docstrings.
+- Every page opens with a "Before this page" note and closes with a "Where to
+  go next" section, and the H2 sections of the theory pages are numbered. The 188
+  relative `.md` links became `@ref` links on anchors, and the 22 pages that had
+  no title anchor have one. The manual says imperfect interfaces exist for the
+  elastic layered sphere as well as in conduction, and the differential scheme
+  is called `DifferentialScheme()` in its example.
+- The isotropic stiffness is `3λ𝕁 + 2μ𝕀` on the Hill-tensor page; it read
+  `3λ𝕀 + 2μ𝕂`.
+- Documentation builds can be limited: `MFH_DOCS_PREFLIGHT_ONLY=1` runs the checks
+  in under a minute, and `MFH_DOCS_ONLY=<patterns>` builds only the matching pages.
 
 ## v0.14.2 — where the sample count stops paying, and the mesh that produced it
 

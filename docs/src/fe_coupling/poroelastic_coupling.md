@@ -1,7 +1,12 @@
 # [The coupled poroelastic problem](@id fe-poro-coupling)
 
-What an FE code has to solve once the material returns two fluxes instead of
-one, and what is integrated in time. The homogenized coefficients themselves —
+!!! info "Before this page"
+    [Scale transition](@ref fe-scale-transition), whose four tangent blocks are
+    assembled below, and [Poromechanics](@ref manual-poromechanics), where the
+    Biot tensor and modulus are obtained from a drained stiffness.
+
+This page sets out what an FE code has to solve once the material returns two
+fluxes instead of one, and what is integrated in time. The homogenized coefficients themselves —
 ``\boldsymbol{B}``, ``M`` — are a property of the microstructure, not of the
 coupling: see [Poromechanics](@ref manual-poromechanics).
 
@@ -116,4 +121,8 @@ which is [`mfh_poro_element!`](@ref fe-backends), line for line.
     fluid is not — keeps the pressure block regular. A vanishing ``1/M`` would
     need a Taylor–Hood pair instead.
 
-The worked model is the [ARMA 2011 well test](@ref fe-arma2011).
+## Where to go next
+
+[Fractured permeability](@ref fe-permeability) supplies the permeability
+``\boldsymbol{K}(\omega_i)`` that closes the flow balance above. The worked
+model is the [ARMA 2011 well test](@ref fe-arma2011).

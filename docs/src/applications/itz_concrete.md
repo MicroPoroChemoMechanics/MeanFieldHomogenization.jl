@@ -1,5 +1,12 @@
 # [The interfacial transition zone in concrete](@id app-itz-concrete)
 
+!!! info "Before this page"
+    [Layered inclusions](@ref man-layered), which explains how a composite
+    sphere enters a scheme as a phase, the recurrences behind it in
+    [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere),
+    and [Homogenization schemes](@ref th-homogenization) for the
+    self-consistent and Mori–Tanaka estimates of the four scales.
+
 Around every aggregate in a concrete there is a thin shell of cement paste that
 is **more porous than the bulk paste**: packing of cement grains against a rigid
 surface leaves more room for water, and the resulting *interfacial transition
@@ -16,11 +23,11 @@ stiffness does that cost? Microstructural model of
     and the Hadamard jump conditions across a plane aggregate/paste interface.
     Only the elastic part of the model is reproduced here. The strength side of
     the same family of models is treated, without an ITZ, in
-    [Quasi-brittle strength](strength.md).
+    [Quasi-brittle strength](@ref app-strength).
 
 ## The three scales
 
-The paste scale is the one used in [Quasi-brittle strength](strength.md) — the
+The paste scale is the one used in [Quasi-brittle strength](@ref app-strength) — the
 hydrate foam and cement paste model of [pichler2011](@citet), shared as
 [`scripts/common/quasibrittle_strength.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/common/quasibrittle_strength.jl).
 The new ingredient is the fourth phase geometry: **coated** aggregates.
@@ -63,7 +70,7 @@ const WC, ALPHA, SC_RATIO = 0.5, 1.0, 3.0
 The hydrate foam is a self-consistent polycrystal of needle-shaped hydrates
 (``\omega = 10^4``) discretized into ``N`` polar orientation bins, plus water
 and air; clinker grains are then embedded by Mori-Tanaka. Derivation and
-cross-check against Echoes: [Quasi-brittle strength](strength.md).
+cross-check against Echoes: [Quasi-brittle strength](@ref app-strength).
 
 ```@example itz
 const N_BINS = 20
@@ -216,3 +223,15 @@ that argument would need the strength machinery listed in the scope note above.
 ```@example itz
 @printf("t/R = 0.05, φ_ITZ = 0.30 → E/E₀ = %.3f\n", E_concrete(0.3, 0.05) / E_ref)
 ```
+
+The ratio printed is the one quoted in the second reading of the figure, for an
+ITZ of thickness ``t/R = 0.05`` carrying an additional porosity of 0.3.
+
+## Where to go next
+
+The paste model used at scales 1 and 2 is derived, and checked against Echoes,
+in [Quasi-brittle strength of cement paste and mortar](@ref app-strength), which
+carries the same chain up to the compressive strength of a mortar through a
+single derivative of its effective stiffness. The two ways of writing such a
+chain, explicit as on this page or as one nested object, are compared in
+[Multiscale models](@ref man-multiscale).

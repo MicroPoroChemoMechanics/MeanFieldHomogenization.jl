@@ -1,4 +1,11 @@
-# # Imperfect interfaces: what they do to the local fields
+# # [Imperfect interfaces: what they do to the local fields](@id tut-layered-spheroid-interfaces)
+#
+# !!! info "Before this page"
+#     The tutorial [The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective),
+#     which builds the confocal particle and its interfaces, and the theory page
+#     [Layered spheroid — confocal harmonic series](@ref th-layered-spheroid),
+#     where the interface conditions and the series of the local fields are
+#     derived.
 #
 # An imperfect interface is a surface of zero thickness that nonetheless changes
 # the physics across it. Two models are available on a [`LayeredSpheroid`](@ref):
@@ -24,7 +31,7 @@
 #    over ``k^{\mathrm s}`` — the configuration of the ECHOES presentation of
 #    06/07/2020 — including an animation and an interactive 3-D view.
 #
-# Theory: [Layered spheroid](../../theory/layered_spheroid.md).
+# Theory: [Layered spheroid](@ref th-layered-spheroid).
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
@@ -379,3 +386,16 @@ savefig(p_keq, joinpath(figdir, "35_interface_effect_keq.png"))       #jl
 gif(anim, joinpath(figdir, "35_interface_effect.gif"); fps = 2, show_msg = false)  #jl
 display(p_local)                                                      #jl
 @printf "\nSaved : %s\n" joinpath(figdir, "35_*.png")                 #jl
+
+# The view is drawn at the largest conductance of the sweep,
+# ``k^{\mathrm s} = 3``, where the skin is the preferential path described
+# above.
+#
+# ## Where to go next
+#
+# The sweep above is made at one aspect ratio.
+# [Highly conducting interfaces: equivalent conductivity vs. aspect ratio](@ref tut-layered-spheroid-hc)
+# follows the equivalent conductivity of a particle with a highly conducting
+# skin from the needle to the disk. The functions that read the temperature,
+# gradient and flux at a point are listed in
+# [Layered inclusions](@ref man-layered) of the manual.

@@ -1,5 +1,12 @@
 # [MFH Studio: building scripts graphically](@id tools-mfhstudio)
 
+!!! info "Before this page"
+    [Getting started](@ref getting-started) and
+    [Homogenization schemes](@ref man-schemes), for the RVE and scheme calls the
+    studio writes, and
+    [Translating Echoes scripts: `echoes2mfh`](@ref tools-echoes2mfh), whose code
+    generator it shares.
+
 MFH Studio is a local web interface that builds MeanFieldHomogenization scripts. It draws
 the shape of the phase being edited, runs the model, and — the part that makes
 it safe to use on existing work — **reads a script back** and preserves
@@ -163,7 +170,7 @@ The default shown beside each option is the one the scheme actually uses, and
 it is not the same for every scheme: the self-consistent solvers stop at
 `abstol = 1e-12`, `reltol = 1e-8`, while `DifferentialScheme` hands
 `1e-8` / `1e-6` to `OrdinaryDiffEq`. Overriding `abstol` alone rarely changes
-anything — see [Solver tolerances](../manual/schemes.md#Solver-tolerances).
+anything — see [Solver tolerances](@ref man-schemes-tolerances).
 
 ## Layered inclusions
 
@@ -388,7 +395,7 @@ lists which phases carry a law, so a run with nothing to age says so rather
 than failing later. `homogenize_alv` returns the effective relaxation operator
 as a ``6n \times 6n`` block matrix; the curve is its Volterra inverse read on
 one Kelvin-Mandel component — `(1, 1)` is the uniaxial creep response, the
-extraction used in [`scripts/62_alv_schemes.jl`](../tutorials/generated/alv_schemes.md).
+extraction used in [`scripts/62_alv_schemes.jl`](@ref tut-alv-schemes).
 
 ## Anisotropic properties
 
@@ -505,11 +512,15 @@ as a form. That is why the
 [worked examples](@ref tools-mfhstudio-examples) exist: they are the same
 models in the shape the studio can hand back.
 
-## See also
+## Where to go next
+
+The companions of the library continue with
+[Finite-element coupling](@ref fe-coupling), where a homogenized microstructure
+becomes the material law of a structural computation.
 
 - [Multiscale models](@ref man-multiscale) — what the seam means and what it
-  costs.
+  costs
 - [Laminates](@ref man-laminates) — the theory behind the stack, and everything
-  the interface does not expose.
+  the interface does not expose
 - [`echoes2mfh`](@ref tools-echoes2mfh) — the Echoes translator, which shares
-  this tool's code generator.
+  this tool's code generator

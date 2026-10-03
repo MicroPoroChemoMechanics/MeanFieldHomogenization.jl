@@ -1,5 +1,11 @@
 # [Numerical Laplace inversion](@id man-laplace-inversion)
 
+!!! info "Before this page"
+    [The Laplace-Carson route](@ref th-laplace-carson), which states the
+    transforms inverted here, and
+    [The rheological model library](@ref man-rheological-models), whose models
+    are the usual input of `inverse_carson`.
+
 Going *to* the Laplace-Carson domain is a quadrature. Coming back is the
 ill-posed direction, and there is no algorithm that is best everywhere. This
 page says which one to reach for and what it will cost you; the
@@ -163,7 +169,12 @@ once, and read the time function off the fit. See
 closed-form in time, exactly convertible to its dual chain, and usable by the
 ageing pipeline — rather than a value at one point.
 
-## See also
+## Where to go next
+
+[Poromechanics](@ref manual-poromechanics) returns to elasticity, and closes
+the poroelastic law of a saturated medium from a drained stiffness. The tutorial
+[Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time)
+sets the inversion route of this page against the two others.
 
 * [the tutorial](@ref tut-laplace-inversion) — every claim on this page,
   measured and plotted;

@@ -37,8 +37,8 @@ MeanFieldHomogenization.Core.shape_tensor
 ## Exact rotation-group averages
 
 Exact averages of a tensor over a rotation group — the *exact* counterpart of the
-best-fit projections in [API — Schemes](schemes.md). See
-[Symmetrization showcase](../tutorials/generated/symmetrization.md) for
+best-fit projections in [API — Schemes](@ref api-schemes). See
+[Symmetrization showcase](@ref tut-symmetrization) for
 the comparison between the two.
 
 These live in **`TensND`** — they are pure tensor algebra, with nothing

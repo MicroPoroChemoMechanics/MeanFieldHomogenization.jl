@@ -1,4 +1,10 @@
-# # Ageing viscoelastic schemes side by side
+# # [Ageing viscoelastic schemes side by side](@id tut-alv-schemes)
+#
+# !!! info "Before this page"
+#     The tutorial [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time),
+#     which validates the time route used alone below, and the theory page
+#     [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity), where the
+#     Volterra form of each scheme is derived.
 #
 # Every mean-field scheme `MeanFieldHomogenization` implements in elasticity also exists on
 # the **ageing linear viscoelastic** path, where each modulus becomes a Volterra
@@ -235,3 +241,12 @@ for (nm, p) in (("spheres", plt_sphere), ("ratios", plt_ratio))      #jl
     savefig(p, joinpath(figdir, "62_alv_schemes_$nm.png"))           #jl
 end                                                                  #jl
 @printf "\nSaved : %s/62_alv_schemes_*.png\n" figdir                 #jl
+
+# ## Where to go next
+#
+# The age of the matrix at loading enters every curve above through ``a(t')``,
+# and the aspect ratio through §4.
+# [Ageing creep: loading age against inclusion shape](@ref tut-ageing-ages-aspect)
+# varies the two together on the same output and separates their effects. The
+# laws, the time grids and the reading of a Volterra result are described in
+# [Viscoelastic homogenization](@ref man-viscoelasticity) of the manual.

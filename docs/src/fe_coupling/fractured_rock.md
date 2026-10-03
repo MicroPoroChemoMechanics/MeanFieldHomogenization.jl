@@ -1,5 +1,10 @@
 # [Building a fractured-rock material](@id fe-fractured-rock)
 
+!!! info "Before this page"
+    [Materials](@ref fe-materials), for the contract the material below
+    fulfills, and [Fractured permeability](@ref fe-permeability), for the
+    conductive cracks it is built from.
+
 [`FracturedPoroelasticRock`](@ref) is the material of
 [barthelemyARMA2011](@cite): two gradients ``(\boldsymbol{E}, p)`` in, two
 fluxes ``(\boldsymbol{\Sigma}, \varphi)`` out, plus a permeability that follows
@@ -76,3 +81,10 @@ carries no flow at all.
     A driver that forwards it straight into a mobility gets a `MethodError` at
     the worst possible moment. Test for it — the
     [well test](@ref fe-arma2011) does.
+
+## Where to go next
+
+[Ferrite backend](@ref fe-backends) provides the element routines that call
+this material inside a finite-element loop, and
+[A fractured-reservoir well test](@ref fe-arma2011) runs it on a fractured
+reservoir.

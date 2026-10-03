@@ -1,5 +1,11 @@
 # # [Ageing creep: loading age against inclusion shape](@id tut-ageing-ages-aspect)
 #
+# !!! info "Before this page"
+#     The tutorial [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes),
+#     which reads a uniaxial creep test off the Volterra matrix as done below,
+#     and the theory page [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity),
+#     where the ageing creep function ``J(t, t')`` is defined.
+#
 # An **ageing** viscoelastic material is one whose creep compliance
 # ``J(t, t')`` depends on the loading time ``t'`` and not only on the elapsed
 # duration ``t - t'``. Concrete is the standard example: a specimen loaded at
@@ -239,12 +245,21 @@ for ω in (0.1, 0.01)
     end
     @printf "ω = %-5s  %s\n" ω join(line, "   ")
 end
+
+# Along each printed line, the ratio barely moves from one loading age to the
+# next.
 #
-# ## See also
+# ## Where to go next
 #
-# * [Ageing viscoelastic schemes side by side](alv_schemes.md) — the same kind of
+# The two parameters above are swept on a coarse grid, whereas the response to a
+# small change of a parameter is better obtained as a derivative.
+# [Derivatives through the ageing-viscoelastic pipeline](@ref tut-alv-sensitivities)
+# differentiates such outputs with `ForwardDiff`, with respect to a volume
+# fraction, a modulus or a relaxation time, through the whole Volterra assembly.
+#
+# * [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes) — the same kind of
 #   test across Dilute / Mori-Tanaka / Maxwell / PCW
-# * [Frequency or time?](freq_vs_time.md) — when the non-ageing frequency route
+# * [Frequency or time?](@ref tut-freq-vs-time) — when the non-ageing frequency route
 #   is enough
 # * [Ageing creep of solidifying cementitious materials](@ref app-ageing-creep) —
 #   an ageing model where the *phase fractions* also evolve

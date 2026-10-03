@@ -2,7 +2,13 @@
 EditURL = "../../../../scripts/33_laminate_basics.jl"
 ```
 
-# Periodic multilayer: the exact laminate solution
+# [Periodic multilayer: the exact laminate solution](@id tut-laminate)
+
+!!! info "Before this page"
+    The tutorial [Bounds and classical schemes](@ref tut-bounds-and-schemes),
+    whose Voigt and Reuss bounds the laminate saturates, and the theory page
+    [Periodic multilayer — the laminate cell](@ref th-laminate), where the
+    exact effective tensor and the layer localization are derived.
 
 A laminate is a periodic unit cell of parallel layers: no matrix, no
 auxiliary Eshelby problem, no reference medium — and an **exact** effective
@@ -171,6 +177,19 @@ be for an isotropic-layer stack.
     abs, collect(TensND.get_data(C_tilt)) .- collect(TensND.get_data(Cᵉᶠᶠ))
 )
 ````
+
+The printed difference measures that invariance: the tilted stack carries the
+coefficients of the stack normal to ``\underline{e}_3``, about a rotated axis.
+
+## Where to go next
+
+Every interface of the cell above is perfect.
+[Imperfect interfaces in a laminate, and the size effect](@ref tut-laminate-interfaces)
+places spring, membrane, Kapitza and surface-conductive interfaces between the
+layers, and shows why the period, and not only the fractions, then enters the
+result. The constructor, the keywords of `add_layer!` and the
+localization functions of the laminate are documented in
+[Laminates — periodic multilayer cells](@ref man-laminates).
 
 ---
 

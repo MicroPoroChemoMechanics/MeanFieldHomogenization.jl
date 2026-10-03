@@ -4,6 +4,14 @@ EditURL = "../../../../scripts/86_crack_distributions.jl"
 
 # [Crack distributions: isotropic or parallel](@id tut-crack-distributions)
 
+!!! info "Before this page"
+    The tutorial [Cracks and crack density](@ref tut-cracks), which declares a
+    crack phase by its density, and the theory pages
+    [Crack opening displacement and compliance](@ref th-cod-tensors), for the
+    compliance contribution of a single crack, and
+    [Homogenization schemes](@ref th-homogenization), for the stiffness and
+    compliance forms of the self-consistent scheme compared below.
+
 The same cracks, the same crack density, two orientation distributions — and
 two different effective media. This is the shortest example that exercises the
 three things a cracked RVE needs: a **density** instead of a volume fraction,
@@ -340,6 +348,18 @@ is at its softest; at ``a = \pi/2`` it lies in the crack plane, where opening
 contributes nothing and the modulus is close to the intact one. The isotropic
 distribution flattens that contrast into a single number — the same amount of
 cracking, spread over every orientation.
+
+## Where to go next
+
+Every estimate above rests on the closed-form opening of a penny crack in an
+infinite matrix. [Validating a finite-element crack](@ref tut-fe-crack) solves
+the same crack by finite elements in a bounded cell, and shows what the
+corrected boundary condition of
+[The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell)
+does to the convergence towards that closed form. The orientation average that
+`IsoSymmetrize()` performs, and how it differs from a best-fit projection onto
+a symmetry class, is the subject of
+[Symmetrization showcase: exact average vs best-fit projection](@ref tut-symmetrization).
 
 ---
 

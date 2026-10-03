@@ -1,5 +1,12 @@
 # [Crack opening displacement and compliance](@id th-cod-tensors)
 
+!!! info "Before this page"
+    [The Eshelby inclusion problem](@ref th-eshelby-problem) §2, where the
+    tensor ``\mathbb{Q}``, which degenerates in a controlled way as the
+    inclusion flattens, is introduced, and
+    [Localization and contribution tensors](@ref th-localization) §3 for the
+    compliance contribution ``\mathbb{H}`` of a crack and its density.
+
 A crack has no volume, so it cannot be described by a volume fraction and a
 stiffness. It is described instead by **how much it opens** under a given remote
 stress. That is the crack opening displacement tensor ``\boldsymbol{B}``, and
@@ -28,7 +35,7 @@ it, and rebuilding ``\mathbb{H}`` from it avoids inverting a rank-deficient
 order-4 tensor. Its normalization is not unique in the literature, hence the
 *Conventions* section below.
 
-## Geometry
+## 1. Geometry
 
 A flat crack is the limit of a flat spheroidal inclusion. Keeping the shape
 tensor of [Conventions](@ref th-notation-ellipsoid),
@@ -58,7 +65,7 @@ regimes of one:
 | **elliptic** (3-D) | bounded ellipse, semi-axes ``a\ge b`` | ``\eta\in(0,1]`` | [`EllipticCrack`](@ref), [`PennyCrack`](@ref) for ``\eta=1`` |
 | **ribbon** (2-D) | infinite tunnel along ``\underline{\ell}``, half-width ``b`` | ``a\to\infty``, so ``\eta\to 0`` | [`RibbonCrack`](@ref) |
 
-## The COD tensor ``\boldsymbol{B}``
+## 2. The COD tensor ``\boldsymbol{B}``
 
 Under a remote stress ``\boldsymbol{\Sigma}``, the two crack faces separate by
 the displacement jump ``[\![\underline{u}]\!]``. By linearity and the
@@ -131,7 +138,7 @@ computed from the ribbon tensor of the *tangent* ribbon at each front point
 (see *Intensity factors at the crack front* below), so both objects appear in
 the same formula and must not be confused.
 
-## From ``\boldsymbol{B}`` to the compliance ``\mathbb{H}``
+## [3. From ``\boldsymbol{B}`` to the compliance ``\mathbb{H}``](@id th-cod-compliance)
 
 The extra strain a crack contributes, per unit volume of the embedding
 ellipsoid, is the average of the displacement jump over the crack surface
@@ -151,7 +158,7 @@ ellipsoid, is the average of the displacement jump over the crack surface
 using the definition of ``\boldsymbol{B}``. Identifying this with
 ``\mathbb{Q}^{-1}:\boldsymbol{\Sigma}``, where
 ``\mathbb{Q} = \mathbb{C}-\mathbb{C}:\mathbb{P}:\mathbb{C}`` is the
-[second Hill tensor](eshelby_problem.md), gives
+[second Hill tensor](@ref th-eshelby-problem), gives
 ``\mathbb{Q}^{-1} = (Sb/V)\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}
 \stackrel{s}{\otimes}\underline{n}``, and hence
 
@@ -279,7 +286,7 @@ single ``\omega`` would not distinguish a true limit from a coincidence.
     cases. Neither affects [`cod_tensor`](@ref), which resolves the limit
     analytically instead of flattening an ellipsoid.
 
-## From the Green operator to ``\boldsymbol{B}``
+## [4. From the Green operator to ``\boldsymbol{B}``](@id th-cod-green)
 
 The closed forms of the next section are usually quoted. They are in fact
 derivable in closed form from the Fourier Green operator, and knowing *where*
@@ -420,7 +427,7 @@ the degree-1 homogeneity cancels the ``1/\rho^{2}`` of the two in-plane dyads.
 ```
 
 where, with ``m = 1-\eta^{2}`` the Legendre *parameter* of
-[Elliptic integrals](elliptic_integrals.md),
+[Elliptic integrals](@ref th-elliptic-integrals),
 
 ```math
 \mathcal{K}_\eta = K(1-\eta^{2}),
@@ -496,7 +503,7 @@ longer determines the others. Both integrals become numerical — which is what
 the `Residue` and cubature back-ends do, the first summing residues over the six
 Stroh roots located numerically.
 
-## Closed forms of ``\boldsymbol{B}``
+## 5. Closed forms of ``\boldsymbol{B}``
 
 ### Isotropic matrix
 
@@ -577,7 +584,7 @@ but its acoustic polynomial degenerates when the reference is anisotropic in
 schemes reach at their first step, so it is available on explicit
 `method = :residues` only (`src/Core/dispatch.jl`).
 
-## Dilute correction to the effective compliance
+## 6. Dilute correction to the effective compliance
 
 [`compliance_contribution`](@ref)`(crack, C₀)` returns ``\mathbb{H}`` itself —
 the *size-independent* contribution, not the dilute correction. Cracks have no
@@ -592,7 +599,7 @@ density** [budiansky1976, kachanov1993](@cite), and reintroduced by
 
 Implementation: `src/Cracks/compliance.jl`, dispatching on the crack shape.
 
-## Intensity factors at the crack front
+## 7. Intensity factors at the crack front
 
 At a point ``\underline{x}^{\star}_{0}`` of the crack front, with in-plane outer
 normal ``\underline{\nu}`` and tangent
@@ -695,7 +702,7 @@ K_{III} = |\underline{K}\cdot\underline{\tau}| .
 
 Evaluation: [`sif`](@ref) and [`dif`](@ref) (`src/Cracks/sif.jl`).
 
-## Dispatch
+## 8. Dispatch
 
 | `(crack, C₀)` | `:auto` selects | alternatives | ForwardDiff |
 | :------------ | :-------------- | :----------- | :---------: |
@@ -708,5 +715,14 @@ Entry points: [`cod_tensor`](@ref) / [`B_tensor`](@ref) for ``\boldsymbol{B}``,
 [`delta_compliance`](@ref) for ``\Delta\mathbb{S}``, [`sif`](@ref) /
 [`dif`](@ref) for the front quantities. The transport counterpart — a scalar COD
 and a rank-1 resistivity contribution — is treated in
-[Thermal cracks](thermal_cracks.md), with the same geometric factors ``3/4`` and
+[Thermal cracks](@ref th-thermal-cracks), with the same geometric factors ``3/4`` and
 ``2/\pi``.
+
+## Where to go next
+
+The transport counterpart is the next page,
+[Thermal cracks](@ref th-thermal-cracks), where a single scalar opening replaces
+``\boldsymbol{B}`` and carries all the anisotropy of the matrix. The crack types
+and their densities are written as described in [Cracks](@ref man-cracks), and
+the tutorial [Cracks and crack density](@ref tut-cracks) places cracks in an
+RVE and follows the effective modulus as the density grows.

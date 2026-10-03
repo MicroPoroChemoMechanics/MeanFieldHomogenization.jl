@@ -1,5 +1,13 @@
 # [Quasi-brittle strength of cement paste and mortar](@id app-strength)
 
+!!! info "Before this page"
+    The tutorial [From derivatives to a strength criterion](@ref tut-strength-criteria),
+    where a strength criterion is obtained from the derivative of the effective
+    moduli with respect to a phase modulus, [Multiscale models](@ref man-multiscale)
+    for the chaining of the three scales, and
+    [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities) for the
+    dual numbers propagated through that chain.
+
 This chapter implements the multi-scale strength-upscaling model of
 [pichler2011](@cite) — and mirrors the corresponding chapter of the Echoes book
 [echoes](@cite). It predicts the macroscopic uniaxial **compressive strength**
@@ -19,7 +27,7 @@ intermediate tensor; here it is a single
 [ForwardDiff](https://github.com/JuliaDiff/ForwardDiff.jl) pass through the
 whole nested chain — make the ``\theta = 0`` family's shear modulus a `Dual`,
 read the partial of the final `C_mo`. Both routes agree to the tolerances of
-[Cross-validation](../developer/validation.md).
+[Cross-validation](@ref dev-validation).
 
 The code below is the model of
 [`scripts/common/quasibrittle_strength.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/common/quasibrittle_strength.jl),
@@ -223,7 +231,7 @@ run the model.
 
 The bridge between the two views is the TI parameterization: extract the five
 parameters of a tensor with `best_fit_ti` — one of the
-[symmetry projections](../api/schemes.md#Symmetry-projections) re-exported from
+[symmetry projections](@ref api-schemes-symmetry) re-exported from
 `TensND` — and rebuild a `TensTI` from five numbers.
 
 ```@example strength
@@ -409,3 +417,13 @@ and the inner cells are still solved exactly once per evaluation. The
 three-scale worked example is
 [the multiscale tutorial](@ref tut-laminate-multiscale), which writes one model
 both ways and checks that the derivatives agree with finite differences.
+
+## Where to go next
+
+This page closes the cementitious family. The lens written above, and the other
+ways of naming a parameter inside a nested chain, are described in
+[Parameter lenses](@ref man-sensitivities-lenses). The next application,
+[A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate),
+returns to the coated aggregate of the ITZ chapter with a core no longer
+centered in its shell, a morphology without closed-form solution whose
+localization tensors are computed by finite elements.

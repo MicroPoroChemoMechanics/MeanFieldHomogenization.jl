@@ -1,5 +1,11 @@
 # [A layered spheroid, meshed](@id tut-axi-layered-spheroid)
 
+!!! info "Before this page"
+    The tutorials [Highly conducting interfaces: equivalent conductivity vs. aspect ratio](@ref tut-layered-spheroid-hc),
+    which closes the closed-form treatment of the confocal spheroid that this
+    page calibrates against, and [Validating a finite-element crack](@ref tut-fe-crack),
+    for the corrected finite-element cell.
+
 `N` nested coaxial spheroids in an isotropic matrix, solved by Fourier
 axisymmetric finite elements — and checked against the two closed forms this
 package already carries. The method is
@@ -604,7 +610,13 @@ fraction would come back a silent zero; the type raises instead. That is what
 [the surrogate](@ref tut-axi-layered-spheroid-nn) above is for, and the same route
 serves [the concave pores](@ref app-concave-pores).
 
-## See also
+## Where to go next
+
+The surrogate of the last section is the first of two uses of a trained network
+in the library; [Replacing a finite-element solve by a neural surrogate](@ref tut-neural-excentered-sphere)
+trains one on a different morphology, the sphere with an eccentric core. The
+cell is also used for an axisymmetric cavity in
+[Concave pores: superspheres and superspheroids](@ref app-concave-pores).
 
 * [The finite Eshelby cell](@ref th-corrected-cell) — the correction, and why
   the solid declination uses both outputs of its fixed point.

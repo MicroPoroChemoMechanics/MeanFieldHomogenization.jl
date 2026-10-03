@@ -1,5 +1,11 @@
 # # [Multiscale chaining: explicit and declarative, side by side](@id tut-laminate-multiscale)
 #
+# !!! info "Before this page"
+#     The tutorial [Periodic multilayer: the exact laminate solution](@ref tut-laminate),
+#     whose cell is one of the three scales chained below, and the manual page
+#     [Multiscale models](@ref man-multiscale), where the two writing styles are
+#     described.
+#
 # A multiscale model chains homogenizations: what one scale computes becomes a
 # phase property at the next. `MeanFieldHomogenization` supports two ways of writing that
 # chain, and they compute the same thing to the last bit.
@@ -201,3 +207,15 @@ C_sc_x = let
     homogenize(m, SelfConsistent(), :C)
 end
 @printf "SC explicit vs declarative : |Δk| = %.2e\n" abs(k_mu(C_sc_x)[1] - k_mu(C_sc_d)[1])
+
+# The last difference is of the order of the rounding error: the two styles
+# build the same three-scale model, and the declarative one solves each nested
+# cell once.
+#
+# ## Where to go next
+#
+# The three-scale model above chains a laminate and a porous cell through
+# Mori-Tanaka. [Chaining scales through an N-body scheme](@ref tut-multiscale-assemblies)
+# puts a particle assembly on either side of the same seam, and the
+# applications chain scales on real materials, the first being
+# [Multiscale elasticity of a hydrating cement paste](@ref app-cement-paste).

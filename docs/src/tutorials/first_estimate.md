@@ -1,5 +1,11 @@
 # [A first homogenization](@id tut-first-estimate)
 
+!!! info "Before this page"
+    [Getting started](@ref getting-started), where the package is installed
+    and a first effective stiffness is read back, and the theory page
+    [Homogenization schemes](@ref th-homogenization), where the dilute and
+    Mori–Tanaka estimates compared below are derived.
+
 Every `MeanFieldHomogenization` computation starts from the same three ingredients:
 a **representative volume element** (RVE) describing the phases, their
 **geometry**, and a **scheme** that turns the RVE into a single
@@ -121,3 +127,11 @@ The two curves coincide as ``f \to 0`` — both schemes agree in the
 dilute limit, as they must — and diverge as ``f`` grows: at finite
 volume fraction the inclusions interact, and Mori–Tanaka, which accounts
 for that, departs from the naive dilute sum.
+
+## Where to go next
+
+The dilute and Mori–Tanaka estimates are two members of a larger family, which
+[Bounds and classical schemes](@ref tut-bounds-and-schemes) places on a single
+graph between the Voigt and Reuss bounds. The syntax of the RVE and of the
+scheme objects used above is collected, call by call, in
+[Homogenization schemes](@ref man-schemes) of the manual.

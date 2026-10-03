@@ -1,6 +1,13 @@
 # [Hill polarization tensors](@id th-hill-tensors)
 
-The [Eshelby problem](eshelby_problem.md) reduces to computing one object, the
+!!! info "Before this page"
+    [The Eshelby inclusion problem](@ref th-eshelby-problem), which defines
+    ``\mathbb{P}`` and the Eshelby tensor, and the
+    [Walpole basis](@ref th-notation-bases) and
+    [ellipsoid geometry](@ref th-notation-ellipsoid) of the Conventions, in
+    which every closed form below is written.
+
+The [Eshelby problem](@ref th-eshelby-problem) reduces to computing one object, the
 Hill polarization tensor ``\mathbb{P}(\boldsymbol{A},\mathbb{C})``. This page
 gives its closed forms.
 
@@ -85,9 +92,9 @@ every table below.
 The **flat** limits are the ones that need care: ``\mathbb{P}``
 stays finite there, but the object built on it, ``\mathbb{Q}``, degenerates in a
 controlled way — which is why the crack theory is written on ``\mathbb{Q}``
-([Crack opening displacement](cod_tensors.md)).
+([Crack opening displacement](@ref th-cod-tensors)).
 
-## Newton-potential integrals
+## 1. Newton-potential integrals
 
 Three integrals over the unit sphere, depending on ``\boldsymbol{A}`` only,
 factor every analytical Hill formula:
@@ -314,7 +321,7 @@ its axis**. For the circular cylinder ``b=c`` the non-zero entries reduce to
 ``\mathrm{Mat}(\mathbb{V}^{\mathrm{cyl}})`` to the diagonal
 ``\bigl(0,\tfrac{1}{2},\tfrac{1}{2},\tfrac{1}{2},\tfrac{1}{4},\tfrac{1}{4}\bigr)``.
 
-## Hill tensor in elasticity
+## 2. Hill tensor in elasticity
 
 ### Arbitrary anisotropy
 
@@ -368,12 +375,12 @@ Analytical paths exist in the literature for further anisotropy classes
 
 With bulk modulus ``k``, shear modulus ``\mu`` and first Lamé parameter
 ``\lambda = k-2\mu/3``, so that
-``\mathbb{C} = 3k\,\mathbb{J}+2\mu\,\mathbb{K} = 3\lambda\,\mathbb{I}+2\mu\,\mathbb{K}``,
+``\mathbb{C} = 3k\,\mathbb{J}+2\mu\,\mathbb{K} = 3\lambda\,\mathbb{J}+2\mu\,\mathbb{I}``,
 the general expression collapses to the form of [willis1977](@citet)
 
 ```math
 \boxed{\;
-\mathbb{P}\bigl(\boldsymbol{A},\,3\lambda\,\mathbb{I}+2\mu\,\mathbb{K}\bigr)
+\mathbb{P}\bigl(\boldsymbol{A},\,3\lambda\,\mathbb{J}+2\mu\,\mathbb{I}\bigr)
 = \frac{1}{\lambda+2\mu}\,\mathbb{U}^{\boldsymbol{A}}
 + \frac{1}{\mu}\,\bigl(\mathbb{V}^{\boldsymbol{A}}-\mathbb{U}^{\boldsymbol{A}}\bigr).
 \;}
@@ -466,7 +473,12 @@ the unit circle ``\underline{\xi}\in S^{1}`` with a ``1/(2\pi)`` prefactor in
 place of ``1/(4\pi)``. The isotropic case is analytical; the anisotropic one
 uses the residue reduction on the line integral.
 
-## Hill tensor in conductivity
+## 3. Hill tensor in conductivity
+
+The order-2 Hill tensor of the transport problem, defined in
+[The Eshelby inclusion problem](@ref th-eshelby-problem) §3, is built on the
+same integral ``\boldsymbol{I}^{\boldsymbol{A}}`` of §1 and, unlike its elastic
+counterpart, has a closed form at any anisotropy of the reference medium.
 
 ### Arbitrary anisotropy — closed form
 
@@ -524,7 +536,10 @@ gives ``\boldsymbol{P} = \tfrac{1}{3k_0}\boldsymbol{1}`` and
 ``\boldsymbol{S}^{\mathrm{E}} = \tfrac{1}{3}\boldsymbol{1}`` — independent of ``k_0``.
 Implementation: `src/Conductivity/hill_order2_3d.jl`.
 
-## Dispatch
+## 4. Dispatch
+
+The closed forms above are reached through one entry point, which selects the
+algorithm from the inclusion type and from the type of the reference tensor.
 
 Entry point [`hill_tensor`](@ref); shape tensor via [`shape_tensor`](@ref);
 geometric auxiliaries via [`tens_IA`](@ref), [`tens_UA`](@ref),
@@ -546,4 +561,16 @@ Cylinder shape traits: `CircularCylindrical` when ``b=c`` (transversely
 isotropic response, returned as `TensTI{4}` with axis
 ``\underline{e}^{\boldsymbol{A}}_1``) and `EllipticCylindrical` when ``b>c``
 (orthotropic, returned as `TensOrtho`). Practical usage is covered in the manual
-page [Cylindrical inclusions](../manual/cylindrical_inclusions.md).
+page [Cylindrical inclusions](@ref man-cylindrical-inclusions).
+
+## Where to go next
+
+The Hill tensor is the response of an inclusion to a prescribed polarization.
+The next page, [Localization and contribution tensors](@ref th-localization),
+turns it into the response of an inhomogeneity to a remote load and into the
+contribution of each phase to the effective stiffness. The flat limits
+announced at the top of this page are taken in
+[Crack opening displacement and compliance](@ref th-cod-tensors), and the
+tutorial [Hill polarization tensors in practice](@ref tut-hill-tensors)
+evaluates these closed forms and compares the algorithms of §4 on an
+anisotropic matrix.

@@ -1,6 +1,12 @@
 # [Fractured permeability](@id fe-permeability)
 
-The hydraulic half of a fractured-rock model. A fracture is not an obstacle to
+!!! info "Before this page"
+    [The coupled poroelastic problem](@ref fe-poro-coupling), whose flow balance
+    needs the permeability computed here, and [Conductivity](@ref man-conductivity)
+    with [Thermal cracks](@ref th-thermal-cracks) for the transport problem of an
+    ordinary, insulating crack.
+
+This page computes the hydraulic half of a fractured-rock model. A fracture is not an obstacle to
 flow but the **preferential path** through an almost impermeable matrix, which
 is the opposite of what an ordinary [crack](@ref man-cracks) does in transport.
 
@@ -79,3 +85,10 @@ conducts most — visible in the numbers above.
     A dense, strongly conducting network can also pass the percolation
     threshold, where the estimate diverges; the solver warns rather than
     returning a converged-looking number.
+
+## Where to go next
+
+[Materials](@ref fe-materials) passes from the equations to the code, with the
+contract a material fulfills at each quadrature point. The permeability of this
+page reappears in [Building a fractured-rock material](@ref fe-fractured-rock),
+where it follows the fracture apertures.

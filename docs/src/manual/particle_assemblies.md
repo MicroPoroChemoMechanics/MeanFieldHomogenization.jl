@@ -1,13 +1,16 @@
 # [Particle assemblies and N-body schemes](@id man-assemblies)
 
+!!! info "Before this page"
+    [Two-inclusion interaction tensors](@ref th-interaction),
+    [The cluster model](@ref th-cluster) and
+    [The equivalent inclusion method](@ref th-eim), where the two schemes of this
+    page are derived, and [Homogenization schemes](@ref man-schemes) for the
+    `RVE` an assembly is compared with throughout.
+
 Two schemes of the package resolve the interaction between individual inclusions
 instead of averaging it: [`ClusterModel`](@ref) and [`EquivalentInclusion`](@ref). Both
 need to know *where* the inclusions are, so both act on a
 [`ParticleAssembly`](@ref) rather than on an `RVE`.
-
-Theory: [interaction tensors](@ref th-interaction),
-[the cluster model](@ref th-cluster),
-[the equivalent inclusion method](@ref th-eim).
 
 ## Building an assembly
 
@@ -333,7 +336,15 @@ the aspect ratio. Since it scales as
 `1/size`, the stiffening it produces is a genuine size effect and vanishes for large
 particles.
 
-## API
+## Where to go next
 
-See [API — Interactions](@ref api-interactions) and
-[API — Particle assemblies](@ref api-assemblies).
+[Multiscale models](@ref man-multiscale) describes, for every cell type, the
+declarative seam used in the multiscale section above. The tutorial
+[Chaining scales through an N-body scheme](@ref tut-multiscale-assemblies)
+builds such a chain on an assembly, and the applications
+[The cluster model on cubic arrays](@ref app-cluster-model) and
+[The equivalent inclusion method, against a published table](@ref app-eim-assembly)
+reproduce published numbers with the two schemes.
+
+* [API — Interactions](@ref api-interactions) and
+  [API — Particle assemblies](@ref api-assemblies) — the docstrings

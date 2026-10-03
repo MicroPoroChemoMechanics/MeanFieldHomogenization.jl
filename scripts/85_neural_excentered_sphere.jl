@@ -1,6 +1,13 @@
-# # Replacing a finite-element solve by a neural surrogate
+# # [Replacing a finite-element solve by a neural surrogate](@id tut-neural-excentered-sphere)
 #
-# The [ellipsoid pilot](neural_inclusion.md) proved the machinery against a
+# !!! info "Before this page"
+#     The tutorial [An inclusion whose response is a neural network](@ref tut-neural-inclusion),
+#     where the surrogate is trained and checked against a closed form, and the
+#     theory page
+#     [The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell),
+#     whose finite-element cell produces the labels learned below.
+#
+# The [ellipsoid pilot](@ref tut-neural-inclusion) proved the machinery against a
 # closed form. This is the case it exists for: the **sphere with an off-center
 # core** of [adessinaIJES2017](@citet), whose localization tensors have no
 # analytic expression and come out of an axisymmetric Fourier finite-element
@@ -250,3 +257,14 @@ end
 # The two columns agree, and neither is zero: the sensitivity of the effective
 # stiffness to how far off center the old aggregate sits is now a quantity one
 # can compute — and optimize against.
+#
+# ## Where to go next
+#
+# Every scheme used so far places one inclusion in a reference medium and
+# accounts for the others on average.
+# [Chaining scales through an N-body scheme](@ref tut-multiscale-assemblies)
+# opens the tutorials on interacting particle assemblies, in which positions are
+# given and the interactions are resolved inclusion by inclusion. The recycled
+# aggregate whose eccentricity is differentiated above is studied with the
+# finite-element cell itself in
+# [A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate).

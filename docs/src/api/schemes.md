@@ -60,7 +60,7 @@ MeanFieldHomogenization.Schemes.requires_distribution_shape
 ## The self-consistent solvers
 
 Internal, but the normative statement of what `abstol` and `reltol` ask for —
-see [Solver tolerances](../manual/schemes.md#Solver-tolerances) for the prose.
+see [Solver tolerances](@ref man-schemes-tolerances) for the prose.
 
 ```@docs
 MeanFieldHomogenization.Schemes._solve_sc
@@ -103,13 +103,13 @@ differential_path
 MeanFieldHomogenization.Schemes.SCHEME_ALIAS
 ```
 
-## Symmetry projections
+## [Symmetry projections](@id api-schemes-symmetry)
 
 Best-fit projection of a tensor onto a symmetry class. These force major
 symmetry, unlike the exact rotation-group averages
 `isotropify` / `transverse_isotropify` (re-exported from `TensND`); the two differ whenever the input is not
 major-symmetric, and the difference is worked through in
-[Symmetrization showcase](../tutorials/generated/symmetrization.md).
+[Symmetrization showcase](@ref tut-symmetrization).
 
 `best_fit_iso(t)`, `best_fit_ti(t, axis)` and `best_fit_ortho(t, frame)` live
 in **`TensND`**, next to the `proj_tens` machinery they wrap, and are

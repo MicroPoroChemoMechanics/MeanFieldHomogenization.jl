@@ -1,11 +1,17 @@
 # [Sensitivities — autodiff via ForwardDiff](@id man-sensitivities)
 
+!!! info "Before this page"
+    [Homogenization schemes](@ref man-schemes), where the RVE and the schemes
+    differentiated below are built, and
+    [Custom inclusions](@ref man-custom-inclusions) for the user-defined types
+    whose fields the lenses reach.
+
 `MeanFieldHomogenization` differentiates `homogenize(rve, scheme)` with respect to any
 scalar input — physical (stiffness coefficients, conductivities), geometric
 (radii, aspect ratios, volume fractions, crack densities, distribution-shape
 envelopes), including fields of user-defined inclusion types.
 
-The whole machinery is a thin convenience layer on top of [ForwardDiff.jl];
+The whole machinery is a thin convenience layer on top of [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl);
 ForwardDiff is shipped as a [weak dependency](https://pkgdocs.julialang.org/v1/creating-packages/#Conditional-loading-of-code-in-packages-(Extensions))
 so the API only activates when you `using ForwardDiff` alongside `MeanFieldHomogenization`.
 
@@ -49,7 +55,7 @@ add_phase!(rve, :I, Ellipsoid(1.0),
 That's it — no closure to write, no manual `set_param`/`homogenize`
 plumbing.
 
-## Parameter lenses
+## [Parameter lenses](@id man-sensitivities-lenses)
 
 The first argument to `derivative`/`gradient`/`jacobian` is an
 `AbstractParameter` *lens* describing the scalar input you want to
@@ -207,3 +213,14 @@ compares every sensitivity against centered finite differences on every scheme,
 plus the Christensen 1990 closed form for `∂k_MT/∂f`: `rtol ≈ 1e-6`
 (closed-form schemes), `rtol ≈ 1e-4` (iterative, limited by the fixed-point
 tolerance rather than the autodiff).
+
+## Where to go next
+
+The tutorial [Derivatives and sensitivities](@ref tut-sensitivities) puts the
+lenses of this page to work,
+[From derivatives to a strength criterion](@ref tut-strength-criteria) derives
+the strength criterion of a porous solid from them, and
+[Quasi-brittle strength of cement paste and mortar](@ref app-strength) carries
+the multiscale chain rule through to a mortar. The manual closes with an
+appendix, [Elliptic integrals — examples](@ref man-elliptic-examples), on the
+special functions behind the closed-form Hill tensors.

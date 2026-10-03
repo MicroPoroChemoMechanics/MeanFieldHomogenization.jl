@@ -1,7 +1,11 @@
 # [Roadmap](@id dev-roadmap)
 
-What is left to do, and — for the two areas where the boundary is subtle —
-exactly which pieces of a cited paper are and are not implemented. What the
+!!! info "Before this page"
+    [Architecture](@ref dev-architecture), for the sub-modules the items below
+    extend.
+
+This page lists what is left to do and, for the two areas where the boundary
+is subtle, exactly which pieces of a cited paper are and are not implemented. What the
 package already does is described in the [manual](@ref man-index) and the
 [theory pages](@ref th-index).
 
@@ -175,3 +179,9 @@ and of the cluster model contain and the implementation does not. See
   integrals are reachable through the `:quadrature` back-end, but the axial
   polynomial enrichment and the finite-element self-influence coefficients are
   not implemented, and `Cylinder` is not accepted by the pair kernel.
+
+## Where to go next
+
+The API chapter follows, starting with
+[Elliptic integrals — API](@ref api-elliptic); [API — Core](@ref api-core)
+documents the abstractions that every sub-module extends.

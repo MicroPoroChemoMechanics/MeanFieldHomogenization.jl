@@ -1,4 +1,12 @@
-# # The n-layer confocal spheroid: geometry and effective conductivity
+# # [The n-layer confocal spheroid: geometry and effective conductivity](@id tut-layered-spheroid-effective)
+#
+# !!! info "Before this page"
+#     The tutorials [n-layer sphere: volume-averaged localization tensors](@ref tut-layered-sphere),
+#     the spherical case of the composite inclusion treated here, and
+#     [Transport properties](@ref tut-transport), for the conduction problem it
+#     is solved in; the theory page
+#     [Layered spheroid — confocal harmonic series](@ref th-layered-spheroid)
+#     derives the series evaluated below.
 #
 # Every RVE phase seen so far has been a single ellipsoid or a layered *sphere*.
 # [`LayeredSpheroid`](@ref) is an `N`-layer confocal **spheroidal** composite
@@ -11,7 +19,7 @@
 # particles, and the **equivalent particle** that reproduces it. What an
 # imperfect interface does to the *local* fields is the subject of the companion
 # page; the confocal-harmonic series behind all of it is on
-# [the theory page](../../theory/layered_spheroid.md).
+# [the theory page](@ref th-layered-spheroid).
 #
 # !!! note "Conduction only"
 #     Unlike [`LayeredSphere`](@ref), `LayeredSpheroid` has **no elastic
@@ -328,3 +336,16 @@ savefig(p_keq, joinpath(figdir, "32_spheroid_keq.png"))               #jl
 savefig(p_cv, joinpath(figdir, "32_spheroid_convergence.png"))        #jl
 display(p_eff)                                                        #jl
 @printf "\nSaved : %s\n" joinpath(figdir, "32_spheroid_*.png")        #jl
+
+# Each marker of the last figure is the relative change of a leading coefficient
+# when one term is added to the series, so the slope of a sequence measures how
+# many terms its aspect ratio needs.
+#
+# ## Where to go next
+#
+# The effective conductivity measures how much an imperfect interface matters,
+# not what it does. [Imperfect interfaces: what they do to the local fields](@ref tut-layered-spheroid-interfaces)
+# reconstructs the temperature and the flux pointwise around a Kapitza and a
+# highly conducting interface, on the same confocal solution. The constructor of
+# [`LayeredSpheroid`](@ref), its interface types and its truncation keyword are
+# documented in [Layered inclusions](@ref man-layered) of the manual.

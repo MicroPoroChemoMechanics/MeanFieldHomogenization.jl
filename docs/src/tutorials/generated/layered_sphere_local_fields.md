@@ -2,7 +2,13 @@
 EditURL = "../../../../scripts/31_local_nlayers.jl"
 ```
 
-# n-layer sphere: pointwise fields
+# [n-layer sphere: pointwise fields](@id tut-layered-sphere-local-fields)
+
+!!! info "Before this page"
+    The tutorial [n-layer sphere: volume-averaged localization tensors](@ref tut-layered-sphere),
+    whose layer averages the pointwise fields must reproduce, and the section
+    [Pointwise fields](@ref th-layered-sphere-pointwise) of the theory page on
+    the layered sphere, where the fields evaluated below are written out.
 
 The strain, stress and displacement **at a point** inside — and outside —
 an n-layer composite sphere, under an arbitrary remote loading, with
@@ -239,6 +245,20 @@ for k in 1:layer_count(sphere)
     @printf "  %d      %14.10f   %14.10f   %14.10f   %14.10f\n" k αp αa βp βa
 end
 ````
+
+The pointwise and averaged columns coincide layer by layer, both being read
+from the same amplitudes of the recurrence.
+
+## Where to go next
+
+A sphere keeps every layer concentric and every field a function of the radius
+and of one angle. [The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective)
+gives up that symmetry for a nest of confocal spheroids, treated first in
+conduction, where the equivalent particle comes out of a harmonic series. The
+core, shell and matrix used above form the three-phase model of an aggregate
+and its interfacial transition zone, whose effect on the stiffness of a
+concrete is measured in
+[The interfacial transition zone in concrete](@ref app-itz-concrete).
 
 ---
 

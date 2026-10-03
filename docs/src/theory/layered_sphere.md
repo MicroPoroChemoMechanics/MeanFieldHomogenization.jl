@@ -1,5 +1,11 @@
 # [Layered sphere — bulk + shear recurrences and imperfect interfaces](@id th-layered-sphere)
 
+!!! info "Before this page"
+    [Localization and contribution tensors](@ref th-localization), whose strain
+    concentration tensor is what a pattern without a Hill tensor supplies
+    instead, and [Homogenization schemes](@ref th-homogenization), which
+    consume it.
+
 [`LayeredSphere`](@ref) is an `n`-layer isotropic spherical composite
 inclusion in an infinite isotropic matrix, with per-layer localization, global
 contribution tensors and layer / sphere / cumulative averages. The bulk and
@@ -13,7 +19,7 @@ physics:
 | `SpringInterface(kn, kt)`                    | `KapitzaInterface(ρ)`                           |
 | `MembraneInterface(κs, μs)` surface elasticity [dormieux2016](@cite) | `SurfaceConductiveInterface(ks)` [barthelemyBignonnetIJES2020](@cite) |
 
-## Convention
+## 1. Convention
 
 Radii are stored in ascending order from the center,
 
@@ -47,7 +53,7 @@ Moduli ``(\mathbb C_1, \ldots, \mathbb C_N)`` are `TensISO{4,3}`
 at each radius ``r_k`` are specified in an `NTuple{N, AbstractInterface}`
 (default all `PerfectInterface`).
 
-## Bulk (spherical) recurrence — Hervé-Zaoui 1993
+## 2. Bulk (spherical) recurrence — Hervé-Zaoui 1993
 
 Under a purely hydrostatic remote strain, the displacement in layer
 ``k`` is ``u_r^{(k)}(r) = A_k r + B_k / r^2``, where ``k_k`` and ``\mu_k``
@@ -79,7 +85,7 @@ u_r(r_1^-) = \frac{r_1}{3k_1}\,P_1 \xrightarrow{k_1 \to \infty} 0,\qquad
 \sigma_{rr}(r_1^-) = P_1.
 ```
 
-## Interface jump matrices
+## 3. Interface jump matrices
 
 Each interface type provides a 2×2 (bulk) jump matrix
 ``\mathbf J(r)`` such that
@@ -108,7 +114,7 @@ discontinuity** (displacement / temperature jump), while
 discontinuity** (traction / flux jump).  All limit to
 `PerfectInterface` when their compliance goes to zero.
 
-## Conductivity recurrence (Y₁ harmonic)
+## 4. Conductivity recurrence (Y₁ harmonic)
 
 Under a remote uniform temperature gradient, the temperature field
 has a Y₁ dependence.  The state vector ``\mathbf s(r) = (\hat T, \hat q_n)``
@@ -123,7 +129,7 @@ elastic analogs).  The per-layer gradient localization
 ``\alpha_k = A_k/A_\infty`` reduces, in the single-layer case, to the classical
 ``3k_0/(2k_0 + k_1)`` of Maxwell-type composites.
 
-## Type genericity & incompressibility
+## 5. Type genericity & incompressibility
 
 The recurrence consists of small-size matrix arithmetic over the
 element type; it is exercised with `Float64`, `BigFloat`,
@@ -140,7 +146,11 @@ and the derivative with respect to any modulus or radius is obtained
 by wrapping the computation in `ForwardDiff.derivative` /
 `ForwardDiff.gradient`.
 
-## Deviatoric (shear) recurrence — `Y₂`-harmonic 4×4 state vector
+## 6. Deviatoric (shear) recurrence — `Y₂`-harmonic 4×4 state vector
+
+The bulk recurrence of §2 covers a hydrostatic remote strain only; the
+deviatoric part of the load calls for a second recurrence, on a four-component
+state vector.
 
 Under a remote pure-deviatoric strain, the displacement field in an
 isotropic layer has the axisymmetric form
@@ -208,7 +218,7 @@ sphere result; for ``N \ge 2`` it reproduces the core-shell effective shear
 modulus of [christensenLo1979](@citet) and passes the Eshelby consistency tests
 (``N = 2`` with core ≡ shell ↔ single-layer of radius ``r_N``, etc.).
 
-## Averages (Echoes-style)
+## 7. Averages (Echoes-style)
 
 Three volume-average flavors are provided:
 
@@ -223,7 +233,7 @@ All three cover the deviatoric part for any ``N \ge 1`` via the shear
 recurrence above.
 
 
-## [Pointwise fields](@id th-layered-sphere-pointwise)
+## [8. Pointwise fields](@id th-layered-sphere-pointwise)
 
 The recurrences above already carry everything needed to evaluate the field
 **at a point**, in any layer and in the matrix; only the reconstruction was
@@ -283,4 +293,15 @@ Everything is validated pointwise against the C++ reference (Echoes'
 Gurtin–Murdoch membrane interfaces alike.
 
 See the worked example with figures:
-[n-layer sphere: pointwise fields](@ref).
+[n-layer sphere: pointwise fields](@ref tut-layered-sphere-local-fields).
+
+## Where to go next
+
+The next page, [Layered spheroid](@ref th-layered-spheroid), solves the same
+problem in conduction for confocal spheroidal layers, on which an imperfect
+interface couples the harmonic degrees that a sphere keeps apart. The
+per-layer localization tensors of §7 are computed on a random multilayer in the
+tutorial
+[n-layer sphere: volume-averaged localization tensors](@ref tut-layered-sphere),
+and the syntax of a layered inclusion is in
+[Layered inclusions](@ref man-layered).

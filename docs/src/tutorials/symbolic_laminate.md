@@ -1,5 +1,11 @@
 # [Symbolic laminates: arithmetic and harmonic averages](@id tut-symbolic-laminate)
 
+!!! info "Before this page"
+    The tutorial [Symbolic spheres: closed forms with SymPy and Symbolics.jl](@ref tut-symbolic-spheres),
+    which introduces the symbolic element types, and the theory page
+    [Periodic multilayer — the laminate cell](@ref th-laminate), where the
+    effective stiffness derived below is established.
+
 A laminate is the one microstructure in this package whose effective behavior
 is **exact**, so it is also the one whose closed forms the code can *derive*
 rather than merely reproduce. `TensND` being generic in its element type, the
@@ -299,3 +305,12 @@ sensitivities and the closed forms above, with no separate symbolic path to
 keep in sync. The regression tests in
 `test/Laminates/test_laminate_symbolic.jl` run the same identities under both
 SymPy and Symbolics.jl.
+
+## Where to go next
+
+[Symbolic viscoelasticity: closed forms, derived](@ref tut-symbolic-viscoelasticity)
+carries the symbolic route to the rheological models, with symbolic parameters
+and a symbolic Laplace-Carson inversion. The numerical laminate, with its
+interfaces and its ageing counterpart, is treated in
+[Periodic multilayer: the exact laminate solution](@ref tut-laminate) and
+[A creeping laminate: the multilayer in ageing viscoelasticity](@ref tut-laminate-alv).

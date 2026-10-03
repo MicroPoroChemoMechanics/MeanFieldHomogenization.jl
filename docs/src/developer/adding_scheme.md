@@ -1,5 +1,10 @@
 # [Adding a homogenization scheme](@id dev-adding-scheme)
 
+!!! info "Before this page"
+    [Adding a new inclusion](@ref dev-adding-inclusion), for the entry gates a
+    scheme kernel may require of an inclusion, and the manual page
+    [Homogenization schemes](@ref man-schemes), which the added scheme joins.
+
 !!! note "Which cell does your scheme serve?"
     `homogenize` accepts any
     [`AbstractHomogenizationCell`](@ref MeanFieldHomogenization.Core.AbstractHomogenizationCell)
@@ -57,3 +62,7 @@ flavor. A new scheme slots in beside them:
     must be listed in `ASSEMBLY_SCHEMES` (`tools/mfhstudio/mfhstudio/model.py`)
     so it is filtered out of its catalog.
 
+## Where to go next
+
+[Testing conventions](@ref dev-testing-conventions) says what the unit test of
+step 8 should assert beyond a smoke test.

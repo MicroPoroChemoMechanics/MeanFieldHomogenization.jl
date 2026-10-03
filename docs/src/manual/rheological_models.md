@@ -1,5 +1,11 @@
 # [The rheological model library](@id man-rheological-models)
 
+!!! info "Before this page"
+    [The Laplace-Carson route](@ref th-laplace-carson), where the
+    correspondence principle and the transforms tabulated below are set out,
+    and [Viscoelastic homogenization](@ref man-viscoelasticity) for the
+    `ViscoLaw` that section 5 builds from a model.
+
 A linear viscoelastic material is described by four equivalent functions — the
 relaxation modulus `R(t)`, the creep compliance `J(t)`, and their
 Laplace-Carson transforms `R*(p)` and `J*(p)`. Which of them is *elementary*
@@ -274,10 +280,14 @@ compute the same thing by disjoint means, which is what
     `O(n²N)` transform evaluations. When the model is a Prony series — or has
     been fitted to one — the time value is closed form and no inversion runs.
 
-## See also
+## Where to go next
+
+[Numerical Laplace inversion](@ref man-laplace-inversion) says which method
+supplies the time values a model does not have in closed form, and at what
+cost. The 2S2P1D model of section 2 is put to work on a real material in
+[Viscoelastic complex modulus of a bituminous mixture](@ref app-bituminous).
 
 * [the model gallery](@ref tut-rheological-models) — every model plotted, with
   master curves, Cole-Cole and Black diagrams;
 * [Kelvin ⇄ Maxwell](@ref tut-kelvin-maxwell) — the exact conversion;
-* [choosing an inversion](@ref man-laplace-inversion);
 * [the theory](@ref th-laplace-carson).

@@ -2,7 +2,14 @@
 EditURL = "../../../../scripts/96_nano_spheroids.jl"
 ```
 
-# Nanocomposites: the equivalent particle
+# [Nanocomposites: the equivalent particle](@id tut-nano-spheroids)
+
+!!! info "Before this page"
+    The tutorial [The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective),
+    where an imperfect interface is already condensed into an equivalent
+    particle, in conduction, and the theory page
+    [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere),
+    whose membrane interface is the surface elasticity condensed below.
 
 When the interface energy is of the same order as the bulk energy — the
 nanocomposite regime — the stress vector is discontinuous across a particle
@@ -108,8 +115,8 @@ D = get_array(surface_stiffness(Ellipsoid(1.0e6, 1.0, 1.0), κs, μs))
 
 ## §3 The size effect
 
-``\mathbb{C}^{\mathrm{int}} \propto 1/\rho`` under a homothety of ratio ``\rho``
-under a homothety, so the interface matters for small particles and disappears for
+``\mathbb{C}^{\mathrm{int}} \propto 1/\rho`` under a homothety of ratio ``\rho``,
+so the interface matters for small particles and disappears for
 large ones. Feeding the equivalent particle to Mori-Tanaka makes that visible
 directly on the effective moduli.
 
@@ -180,6 +187,21 @@ p_full = plot(p1, p2, p3; layout = (1, 3), left_margin = 8Plots.mm, bottom_margi
     size = (1500, 520), titlefontsize = 9)
 p_full
 ````
+
+The last figure sets the three preceding panels side by side: the interface
+stiffness against the aspect ratio, the size effect on a sphere, and the shape
+effect at fixed particle volume.
+
+## Where to go next
+
+A planar interface carries the same surface elasticity without any particle
+around it. [Periodic multilayer: the exact laminate solution](@ref tut-laminate)
+introduces the cell in which such an interface is placed, a stack of layers
+with no matrix and no Eshelby problem, and
+[Imperfect interfaces in a laminate, and the size effect](@ref tut-laminate-interfaces)
+returns to the size effect met here. The syntax of
+[`equivalent_particle`](@ref) is recalled in
+[Particle assemblies and N-body schemes](@ref man-assemblies) of the manual.
 
 ---
 

@@ -1,7 +1,12 @@
 # [The inclusion zoo](@id man-inclusion-gallery)
 
-Every morphology `MeanFieldHomogenization` knows, drawn from the object the code actually
-computes with. The figures below are **interactive** — drag to rotate, scroll to
+!!! info "Before this page"
+    [Getting started](@ref getting-started), where an inclusion is first handed
+    to a scheme, and [The Eshelby inclusion problem](@ref th-eshelby-problem),
+    whose uniformity result separates the three families drawn below.
+
+This page draws every morphology `MeanFieldHomogenization` knows, from the
+object the code actually computes with. The figures below are **interactive** — drag to rotate, scroll to
 zoom — and each one is built by passing the very same inclusion instance that a
 [`hill_tensor`](@ref) or [`homogenize`](@ref) call would receive. There is no
 separate drawing to keep in sync: if a constructor sorts semi-axes or permutes a
@@ -110,7 +115,7 @@ plotly_scene(shape_traces(rb); uid = "zoo-ribbon", height = 420,
 A layered pattern has **no Hill tensor**: the strain is not uniform inside it, so
 Eshelby's result does not apply. What does exist is its volume-averaged
 concentration tensor, delivered by the Hervé–Zaoui recurrences, and that is
-enough for every scheme ([Layered spheres](../theory/layered_sphere.md)).
+enough for every scheme ([Layered spheres](@ref th-layered-sphere)).
 
 ```@example zoo
 ls = LayeredSphere(
@@ -123,7 +128,7 @@ plotly_scene(shape_traces(ls); uid = "zoo-layered-sphere", height = 460,
 
 The **confocal spheroid** is the anisotropic counterpart: the layer boundaries
 share their foci rather than their center, which is what keeps the transfer
-matrices tractable ([Layered spheroids](../theory/layered_spheroid.md)). Confocal
+matrices tractable ([Layered spheroids](@ref th-layered-spheroid)). Confocal
 means ``\text{axis}^2 - \text{disk}^2`` is the same for every layer, so the inner
 shells are *more* elongated than the outer ones.
 
@@ -221,12 +226,17 @@ plotly_scene(rve_traces(; n = 70, semi_axes = (0.10, 0.10, 0.004), seed = 2024,
 Both crack populations are worked out, numbers included, in
 [Crack distributions: isotropic or parallel](@ref tut-crack-distributions).
 
-## See also
+## Where to go next
 
-- [Ellipsoidal inclusions](@ref man-ellipsoidal-inclusions) — constructors and
-  degenerate-limit redirections
-- [Cylindrical inclusions](@ref man-cylindrical-inclusions), [Cracks](@ref man-cracks)
-- [Custom inclusions](@ref man-custom-inclusions), [finite elements](@ref man-fe-inclusions),
-  [neural surrogates](@ref man-neural-inclusions)
-- `scripts/common/docviz.jl` — the figure helpers used on this page, reusable in
-  your own scripts
+The pages that follow take the families of this gallery one at a time, with
+their constructors and the tensors computed from them, starting with
+[Ellipsoidal inclusions](@ref man-ellipsoidal-inclusions) and the redirection of
+its degenerate limits. The figure helpers used above live in
+`scripts/common/docviz.jl` and can be reused in any script.
+
+- [Cylindrical inclusions](@ref man-cylindrical-inclusions) and
+  [Cracks](@ref man-cracks) — the two degenerate limits
+- [Custom inclusions](@ref man-custom-inclusions),
+  [Finite-element inclusions](@ref man-fe-inclusions) and
+  [Neural-surrogate inclusions](@ref man-neural-inclusions) — the morphologies
+  with no closed form

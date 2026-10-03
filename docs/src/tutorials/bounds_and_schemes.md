@@ -1,5 +1,11 @@
 # [Bounds and classical schemes](@id tut-bounds-and-schemes)
 
+!!! info "Before this page"
+    The tutorial [A first homogenization](@ref tut-first-estimate), whose RVE
+    and dilute and Mori–Tanaka estimates are reused below, and the theory page
+    [Homogenization schemes](@ref th-homogenization), where the bounds and the
+    iterative schemes are written out.
+
 The dilute and Mori–Tanaka estimates of the previous tutorial are two
 points in a much larger family. This page places every classical
 scheme on a single graph, bracketed by the two estimates that **must**
@@ -47,7 +53,7 @@ phase plays the role of a continuous matrix.
 
 [`DifferentialScheme`](@ref) builds the composite incrementally,
 re-homogenizing after each infinitesimal addition of inclusions — see
-[the dedicated tutorial](differential_paths.md) for the full
+[the dedicated tutorial](@ref tut-differential-paths) for the full
 picture.
 
 ## Putting them on one graph
@@ -106,3 +112,12 @@ mean-field homogenization: the choice of scheme is not a numerical
 detail but a **modeling decision** about the microstructure's topology
 (matrix-inclusion vs. interpenetrating, dilute vs. dense, aligned vs.
 random).
+
+## Where to go next
+
+The inclusions above are stiffer than the matrix, which is the easy case.
+[Porous materials and the self-consistent trap](@ref tut-porous-materials)
+takes the opposite limit, a phase whose stiffness vanishes, where the
+self-consistent iteration stops being reliable and a compliance-form variant
+takes over. The differential scheme, only sketched here, has its own tutorial,
+[The differential scheme and path dependence](@ref tut-differential-paths).

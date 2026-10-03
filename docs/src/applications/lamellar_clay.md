@@ -1,5 +1,13 @@
 # [A lamellar porous material: swelling clays and C-S-H](@id app-lamellar)
 
+!!! info "Before this page"
+    [Periodic multilayer — the laminate cell](@ref th-laminate), which solves
+    the particle scale exactly, the tutorial
+    [Symbolic laminates: arithmetic and harmonic averages](@ref tut-symbolic-laminate),
+    where the same cell runs on `SymPy` symbols, and
+    [Homogenization schemes](@ref th-homogenization) for the self-consistent
+    closure of the porous polycrystal.
+
 Smectite clays and the calcium silicate hydrates that hold a cement paste
 together share a morphology: the solid is not a continuum but a stack of
 **parallel platelets**, a few nanometers apart, with water and ions in between.
@@ -401,3 +409,13 @@ Three things are worth stating plainly.
   ``\boldsymbol{\Sigma} + p\,\boldsymbol{1}`` still contains
   ``-g\,\pi^g_o\,\boldsymbol{1}``: a swelling clay left to itself, at constant pore
   pressure, is under stress.
+
+## Where to go next
+
+The poroelastic law that the library closes for a homogeneous solid phase is
+given in [Poromechanics](@ref manual-poromechanics); the swelling term
+``g\,\pi^g_o`` is a departure from it, and a prestressed phase such as the
+interfoliar layer requires the Levin route followed on this page. The next
+application, [Ageing creep of solidifying cementitious materials](@ref app-ageing-creep),
+opens the time-dependent family: a phase that solidifies progressively, and an
+effective relaxation kernel that depends on the loading age.

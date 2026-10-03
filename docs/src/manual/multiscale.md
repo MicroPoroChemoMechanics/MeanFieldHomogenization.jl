@@ -1,5 +1,11 @@
 # [Multiscale models](@id man-multiscale)
 
+!!! info "Before this page"
+    [Homogenization schemes](@ref man-schemes), where the `RVE` and the schemes
+    chained below are introduced, and
+    [Particle assemblies and N-body schemes](@ref man-assemblies) for the third
+    cell type of the table below.
+
 A multiscale model chains homogenizations: the effective property computed at
 one scale becomes a phase property at the next. `MeanFieldHomogenization` supports two
 ways of writing that chain, and **both are fully supported** — they differ in
@@ -211,3 +217,12 @@ and provides:
   take part in declarative nesting and in the parameter lenses.
 
 `RVE` and `Laminate` are the two worked examples.
+
+## Where to go next
+
+[Laminates](@ref man-laminates) describes the second cell of the table above, a
+periodic stack solved exactly rather than estimated. The tutorial
+[Multiscale chaining: explicit and declarative, side by side](@ref tut-laminate-multiscale)
+writes one chain in both styles, and
+[The interfacial transition zone in concrete](@ref app-itz-concrete) carries the
+four-scale cascade drawn above through to the concrete.

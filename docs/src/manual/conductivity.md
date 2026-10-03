@@ -1,5 +1,11 @@
 # [Conductivity](@id man-conductivity)
 
+!!! info "Before this page"
+    [Extension to conductivity](@ref th-conductivity), where the order-2
+    counterparts of the elastic tensors are derived, and
+    [Hill polarization tensors](@ref th-hill-tensors), whose section on
+    conductivity gives the closed form used below.
+
 Everything the elastic API does, the conduction API does with order-2 tensors
 instead of order-4. Heat conduction, mass diffusion, electric conduction and
 Darcy flow are the same mathematical problem, so the same functions serve all
@@ -26,9 +32,6 @@ hill_tensor(Ellipsoid(1.0), K₀)       # order-2 Hill tensor 𝐏
     tensors named `flux_*` below carry ``\boldsymbol{\sigma}``, not
     ``\underline{q}``. Full statement:
     [Elasticity and transport: one set of formulas](@ref th-notation-sigma-q).
-
-Theory: [Hill polarization tensors](../theory/hill_tensors.md), section
-*Hill tensor in conductivity*.
 
 ## Building a conductivity tensor
 
@@ -77,7 +80,7 @@ add_phase!(rve, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(20.0)); fraction = 0.3
 
 K_MT = homogenize(rve, MoriTanaka(), :K)
 K_SC = homogenize(rve, SelfConsistent(), :K)
-K_D  = homogenize(rve, Differential(), :K)
+K_D  = homogenize(rve, DifferentialScheme(), :K)
 ```
 
 The third argument selects the physics: `:C` for elasticity, `:K` for
@@ -101,14 +104,14 @@ R  = compliance_contribution(pc, K₀)       # 𝐑 = (3/4)·b·(ŵ⊗ŵ)
 ΔR = delta_resistivity(pc, R, 0.05)        # dilute correction at density ε
 ```
 
-Theory: [Thermal cracks](../theory/thermal_cracks.md).
+Theory: [Thermal cracks](@ref th-thermal-cracks).
 
 ## Imperfect interfaces
 
-Composite particles with imperfect interfaces are available in conduction only
-(the harmonic solution does not carry over to the vector elastic problem):
+In conduction, composite particles with imperfect interfaces are provided by:
 
-- [`LayeredSphere`](@ref) — concentric shells, any of the four interface models;
+- [`LayeredSphere`](@ref) — concentric shells, any of the four interface models
+  (the elastic ones are described in [Layered inclusions](@ref man-layered));
 - [`LayeredSpheroid`](@ref) — confocal spheroidal shells, with the
   low-conducting ([`KapitzaInterface`](@ref)) and highly-conducting
   ([`SurfaceConductiveInterface`](@ref)) models.
@@ -125,17 +128,26 @@ B = flux_gradient_loc(s, TensISO{3}(1e-6), TensISO{3}(1.0))      # ⟨𝐊∇T�
 k_eq = B[1, 1] / A[1, 1]                                          # equivalent particle
 ```
 
-Theory: [Layered sphere](../theory/layered_sphere.md) and
-[Layered spheroid](../theory/layered_spheroid.md). Worked examples:
-[geometry and effective conductivity](../tutorials/generated/layered_spheroid_effective.md)
+Theory: [Layered sphere](@ref th-layered-sphere) and
+[Layered spheroid](@ref th-layered-spheroid). Worked examples:
+[geometry and effective conductivity](@ref tut-layered-spheroid-effective)
 (Kapitza sweep and equivalent particle),
-[what an interface does to the local fields](../tutorials/generated/layered_spheroid_interfaces.md),
-and [highly conducting interfaces](../tutorials/generated/layered_spheroid_hc.md).
+[what an interface does to the local fields](@ref tut-layered-spheroid-interfaces),
+and [highly conducting interfaces](@ref tut-layered-spheroid-hc).
 
 ## Cross-property links
 
 Conduction and elasticity are not independent — a microstructure that stiffens a
 material also changes how it conducts. Explicit cross-property correlations for
 two-phase composites are given in [sevostianov2002](@citet); the
-[Transport properties](../tutorials/transport.md) application page works
+[Transport properties](@ref tut-transport) application page works
 through one.
+
+## Where to go next
+
+[Viscoelastic homogenization](@ref man-viscoelasticity) passes from a second
+physics to time dependence, on the same `RVE` machinery. The tutorial
+[Transport properties](@ref tut-transport) applies the calls of this page to
+effective conductivities, and
+[Cement paste: chloride diffusivity and elasticity](@ref app-cement-paste-diffusion)
+computes both properties on one microstructure.

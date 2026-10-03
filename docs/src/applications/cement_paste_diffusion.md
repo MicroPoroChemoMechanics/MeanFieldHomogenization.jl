@@ -1,5 +1,13 @@
 # [Cement paste: chloride diffusivity and elasticity](@id app-cement-paste-diffusion)
 
+!!! info "Before this page"
+    [Multiscale elasticity of a hydrating cement paste](@ref app-cement-paste),
+    whose Powers fractions and composite sphere are taken up again here,
+    [Extension to conductivity](@ref th-conductivity), where the second-order
+    problem solved for the diffusivity `:D` is set out, and
+    [Multiscale models](@ref man-multiscale) for the declarative form of the
+    two-scale chain.
+
 Following [achourCBM2020](@citet) — and mirroring the corresponding chapter of
 the Echoes book [echoes](@cite) — this page builds a multi-scale micromechanical
 model of Portland cement paste that **simultaneously predicts its elastic moduli
@@ -577,3 +585,13 @@ simultaneously load-bearing and diffusive — the prolate gel pores are what kee
     ``\varphi^{\mathrm{diff}}`` at these points coincide with the values above to the
     third decimal (identical Poisson ratio at the elastic root), confirming that
     `MeanFieldHomogenization` and Echoes share the same Hill/dual-Hill kernels.
+
+## Where to go next
+
+[The interfacial transition zone in concrete](@ref app-itz-concrete) moves one
+scale up: the paste becomes the matrix of a concrete, and each aggregate is a
+composite sphere whose coating is a more porous paste. The behavior of the
+self-consistent scheme near its percolation threshold, which both maps above
+rest on, is examined on a porous solid in the tutorial
+[Porous materials and the self-consistent trap](@ref tut-porous-materials), and
+the same scheme is applied to transport in [Transport properties](@ref tut-transport).

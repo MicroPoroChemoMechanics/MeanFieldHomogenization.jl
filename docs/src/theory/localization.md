@@ -1,8 +1,16 @@
 # [Localization and contribution tensors](@id th-localization)
 
-MeanFieldHomogenization exposes the four **dilute localization tensors** of the
-Eshelby problem, together with the size-independent **stiffness and
-compliance contribution tensors** of Kachanov–Sevostianov.
+!!! info "Before this page"
+    [The Eshelby inclusion problem](@ref th-eshelby-problem), whose
+    inhomogeneity problem is solved here, and
+    [Hill polarization tensors](@ref th-hill-tensors), which supplies the
+    ``\mathbb{P}`` the pivot formula is built on.
+
+The Hill tensor determines the uniform strain inside an ellipsoidal
+inhomogeneity under a remote load, and from it MeanFieldHomogenization builds
+the four **dilute localization tensors** of the Eshelby problem, together with
+the size-independent **stiffness and compliance contribution tensors** of
+Kachanov–Sevostianov.
 
 Everything on this page is one chain, and each link is a separate entry point —
 which is what makes it possible to plug a morphology in halfway through
@@ -31,7 +39,7 @@ flowchart TB
     class P,A,N,EFF comp
 ```
 
-## Pivot formula
+## 1. Pivot formula
 
 For an inclusion of shape tensor ``\boldsymbol A`` and stiffness
 ``\mathbb C_1`` embedded in an infinite matrix of stiffness ``\mathbb C_0``,
@@ -69,7 +77,7 @@ reference medium ``\mathbb C_0`` is the dilute concentration tensor written
 ``i`` is appended after a comma when the four are needed for one phase, as in
 ``\mathbb A_{\sigma\varepsilon,i}``.
 
-## Contribution tensors
+## 2. Contribution tensors
 
 The **stiffness contribution tensor** [kachanov2018](@cite) is
 
@@ -101,13 +109,13 @@ the reference medium. Resolving the pairwise interaction explicitly replaces
 ``\mathbb T^{ab}``, of which ``\mathbb P`` is the self term — see the
 [N-body schemes](@ref th-nbody).
 
-## Cracks (Kachanov convention)
+## 3. Cracks (Kachanov convention)
 
 For flat cracks the crack-density convention (Budiansky–O'Connell) is used instead of a
 volume fraction.  The same entry points apply, with the density
 ``\varepsilon`` replacing ``f``, and the compliance contribution built from the
 crack-opening-displacement tensor ``\boldsymbol B`` and the crack normal
-``\underline n`` ([Crack opening displacement](cod_tensors.md)):
+``\underline n`` ([Crack opening displacement](@ref th-cod-tensors)):
 
 ```math
 \mathbb H = \tfrac{3}{4}\,
@@ -128,7 +136,7 @@ crack-opening-displacement tensor ``\boldsymbol B`` and the crack normal
 - `delta_compliance(crack, H, ε)` and `delta_stiffness(crack, N, ε)`
   apply the appropriate ``4\pi/3`` or ``\pi`` geometric prefactor.
 
-## Conductivity (2nd-order transport)
+## 4. Conductivity (2nd-order transport)
 
 Every routine above has a 2-tensor analog, triggered by dispatch on
 `::AbstractTens{2,3}` matrices:
@@ -144,17 +152,27 @@ Every routine above has a 2-tensor analog, triggered by dispatch on
 | `delta_stiffness`                    | [`delta_conductivity`](@ref)           |
 | `delta_compliance` (ellipsoid)       | [`delta_resistivity`](@ref)            |
 
-## Type-genericity
+## 5. Type-genericity
 
 All four localization and both contribution tensors are generic in the element
 type; the only requirement is that [`hill_tensor`](@ref) supports it.
 
-## Extending to user-defined inclusions
+## 6. Extending to user-defined inclusions
 
 A concrete subtype of `AbstractInclusion` inherits the four localization and
 the contribution tensors as soon as it provides [`hill_tensor`](@ref). When
 ``\mathbb P`` has no convenient closed form (e.g. `LayeredSphere`), override
 [`strain_strain_loc`](@ref) instead — the rest is derived algebraically.
 
-See the developer guide [Adding a new inclusion](../developer/adding_inclusion.md)
+See the developer guide [Adding a new inclusion](@ref dev-adding-inclusion)
 for a step-by-step recipe.
+
+## Where to go next
+
+The contribution tensors are what the schemes add up. The next page,
+[Homogenization schemes](@ref th-homogenization), assembles them under one
+assumption per scheme on the reference medium and on the strain each inclusion
+sees. The crack form of §3 is derived in
+[Crack opening displacement and compliance](@ref th-cod-tensors), and the gates
+through which a user-defined morphology enters the chain of this page are
+described in [Custom inclusions](@ref man-custom-inclusions).

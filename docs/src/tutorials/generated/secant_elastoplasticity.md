@@ -2,7 +2,14 @@
 EditURL = "../../../../scripts/43_secant_elastoplasticity.jl"
 ```
 
-# Nonlinear homogenization: the secant method on a porous plastic solid
+# [Nonlinear homogenization: the secant method on a porous plastic solid](@id tut-secant-elastoplasticity)
+
+!!! info "Before this page"
+    The tutorials [Derivatives and sensitivities](@ref tut-sensitivities), whose
+    `ForwardDiff` derivative supplies the closure below, and
+    [Nonlinear solvers for the self-consistent fixed point](@ref tut-nonlinear-solvers),
+    for the scheme that is differentiated; the layered sphere is described in
+    [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere).
 
 Every scheme in `MeanFieldHomogenization` is linear: it maps phase stiffnesses to an
 effective stiffness. A *nonlinear* material can still be treated with those
@@ -323,9 +330,21 @@ from above.
     Nothing above ever evaluated a local field. The second moment of the
     strain in each shell came out of `ForwardDiff.jacobian` applied to a
     self-consistent homogenization — the same sensitivity machinery used in
-    the [sensitivities tutorial](../sensitivities.md) for parameter studies.
+    the [sensitivities tutorial](@ref tut-sensitivities) for parameter studies.
     A nonlinear constitutive law is, from the package's point of view, just
     one more consumer of that derivative.
+
+The figure above gathers the response computed with one and with several
+shells, against the limit that the plateau must reach.
+
+## Where to go next
+
+The secant method reuses the linear schemes of the package, one comparison
+material at a time. The next group of tutorials derives the same estimates
+symbolically, beginning with
+[Symbolic spheres: closed forms with SymPy and Symbolics.jl](@ref tut-symbolic-spheres).
+The sensitivity machinery that the closure relies on is documented in
+[Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities).
 
 ---
 

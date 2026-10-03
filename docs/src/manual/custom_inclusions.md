@@ -1,5 +1,11 @@
 # [Custom inclusions](@id man-custom-inclusions)
 
+!!! info "Before this page"
+    [Localization and contribution tensors](@ref th-localization), which defines
+    the localization and contribution tensors that the three entry gates below
+    supply or derive, and [Layered inclusions](@ref man-layered), the built-in
+    family that enters through gate B.
+
 `MeanFieldHomogenization` ships ellipsoids, cylinders, elliptical and ribbon cracks and
 multi-layer patterns. When your morphology is none of those — a non-ellipsoidal
 shape, a pattern whose response comes out of a finite-element solve, a
@@ -254,10 +260,19 @@ the flag asks whether a single ``\mathbb C_1`` describes the interior, and
 `inv(0)` is meaningless. See
 [`FESupershapePore`](@ref MeanFieldHomogenization.FESupershapePore).
 
-## See also
+## Where to go next
 
-- [Adding a new inclusion](@ref dev-adding-inclusion) — the complete contract, level by level.
+The two pages that follow apply the contract to morphologies with no closed
+form: [Finite-element inclusions](@ref man-fe-inclusions) obtains the response
+from a mesh, [Neural-surrogate inclusions](@ref man-neural-inclusions) from a
+trained network. The tutorial
+[The custom-inclusion contract: three entry gates, one answer](@ref tut-custom-inclusion-contract)
+enters one morphology through each gate and compares the three answers.
+
+- [Adding a new inclusion](@ref dev-adding-inclusion) — the complete contract,
+  level by level
 - [`CustomInclusion`](@ref MeanFieldHomogenization.CustomInclusion),
-  [`check_inclusion_interface`](@ref MeanFieldHomogenization.check_inclusion_interface).
+  [`check_inclusion_interface`](@ref MeanFieldHomogenization.check_inclusion_interface)
+  — the docstrings
 - `scripts/27_user_inclusion_sensitivity.jl` — sensitivities through a
-  user-defined type.
+  user-defined type

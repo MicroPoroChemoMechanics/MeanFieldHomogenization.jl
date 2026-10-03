@@ -1,5 +1,9 @@
 # [Elliptic integrals — examples](@id man-elliptic-examples)
 
+!!! info "Before this page"
+    [Elliptic integrals](@ref th-elliptic-integrals), where the five functions
+    called below are defined and their place in the Hill tensors explained.
+
 `MeanFieldHomogenization` re-exports the five entry points of the
 [`MeanFieldHomogenization.Elliptic`](@ref) submodule: `ell_K`, `ell_E`, `ell_F`,
 `ell_RF`, `ell_RD`.
@@ -131,3 +135,10 @@ MeanFieldHomogenization.Elliptic.ell_E(s::MyScalar) = ell_E(s.x)
 Downstream code that calls `ell_K`, `ell_E`, `ell_F`, `ell_RF`,
 `ell_RD` will pick up the new methods automatically — multiple
 dispatch does the rest.
+
+## Where to go next
+
+The manual ends with this appendix. The [Tutorials](@ref tut-index) follow,
+starting with [A first homogenization](@ref tut-first-estimate), and the
+signatures of the five functions are in
+[Elliptic integrals — API](@ref api-elliptic).

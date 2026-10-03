@@ -1,8 +1,11 @@
 # [Translating Echoes scripts: `echoes2mfh`](@id tools-echoes2mfh)
 
-[From Echoes to MeanFieldHomogenization](@ref tools-from-echoes) explains the correspondence
-between the two APIs. `tools/echoes2mfh/` automates it: point it at an Echoes
-Python script and it writes the Julia one.
+!!! info "Before this page"
+    [From Echoes to MeanFieldHomogenization](@ref tools-from-echoes), whose
+    correspondence between the two APIs is what the tool applies.
+
+`tools/echoes2mfh/` automates the correspondence between the two APIs: point it
+at an Echoes Python script and it writes the Julia one.
 
 It is deterministic — the same input always gives the same output — and it is
 plain Python 3.10+ with no dependencies beyond the standard library, so it runs
@@ -160,14 +163,15 @@ the Echoes symbol list from the pybind11 sources and the MFH export list from
 `src/MeanFieldHomogenization.jl`, then reports any symbol that is neither mapped nor
 explicitly refused, and any mapping target MFH no longer exports.
 
-## See also
+## Where to go next
 
-- [From Echoes to MeanFieldHomogenization](@ref tools-from-echoes) — the API correspondence
-  the tool automates.
+[MFH Studio](@ref tools-mfhstudio) is the graphical builder. It shares this
+tool's code generator, so both write the same style of Julia, and its **Open**
+runs this translator when handed a `.py`.
+
+- [From Echoes to MeanFieldHomogenization](@ref tools-from-echoes) — the API
+  correspondence the tool automates
 - [Cross-validation against Echoes](@ref dev-validation) — the deliberate
   divergences, including the crack-compliance normalization
   (``\mathbb H_{\mathrm{Echoes}} = \eta\, \mathbb H_{\mathrm{MFH}}``, ``\eta = b/a``),
-  which the translator never applies silently.
-- [MFH Studio](@ref tools-mfhstudio) — the graphical builder. It shares this
-  tool's code generator, so both write the same style of Julia, and its **Open**
-  runs this translator when handed a `.py`.
+  which the translator never applies silently

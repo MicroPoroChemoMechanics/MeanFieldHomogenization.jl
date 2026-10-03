@@ -1,5 +1,11 @@
 # [Layered spheroid — confocal harmonic series](@id th-layered-spheroid)
 
+!!! info "Before this page"
+    [Layered sphere](@ref th-layered-sphere), whose transfer-matrix recurrence
+    and interface models are extended here to confocal spheroids, and
+    [The Eshelby inclusion problem](@ref th-eshelby-problem) §3 for the
+    conduction form of the inclusion problem.
+
 [`LayeredSpheroid`](@ref) is an ``N``-layer confocal spheroidal composite
 inclusion — a core plus concentric confocal shells — embedded in an infinite
 isotropic matrix, in **conduction** (thermal, electric, Darcy). It follows
@@ -30,7 +36,7 @@ transfer per mode therefore becomes a truncated series with a
     transfer matrix to chain at all: the elastic solver assembles one global
     system instead.
 
-## Confocal spheroidal coordinates
+## 1. Confocal spheroidal coordinates
 
 Prolate spheroidal coordinates ``(\varphi, p, q)`` about the revolution axis
 ``\underline{n}``, with half focal distance ``c > 0``:
@@ -77,7 +83,7 @@ downstream routine — Legendre recurrences, coupling integrals, transfer
 matrices — is written generically over `Q <: Number`. **No branch is ever taken
 on prolate versus oblate.**
 
-## [The chart, checked rather than quoted](@id th-spheroid-chart)
+## [2. The chart, checked rather than quoted](@id th-spheroid-chart)
 
 Everything above is Appendix A of [barthelemyBignonnetIJES2020](@citet). Rather
 than transcribe it, the block below rebuilds it: `TensND` ships the prolate
@@ -155,7 +161,7 @@ directly, by applying the chart's Laplacian:
     three seed tables — the stability machinery below is order-generic and
     comes for free. See [the roadmap's checklist](@ref dev-elastic-spheroid).
 
-## Boundary value problem
+## 3. Boundary value problem
 
 ``N`` confocal layers of isotropic conductivity ``k_\ell``, separated by
 interfaces ``\mathcal{I}_\ell`` at ``q = q_\ell`` for ``\ell = 1,\dots,N``, are
@@ -181,7 +187,7 @@ solved by identical machinery:
 An arbitrary remote gradient follows by rotation, the geometry being
 axisymmetric.
 
-## Interface conditions and the coupling matrices
+## 4. Interface conditions and the coupling matrices
 
 Three interface types are available. Writing ``[\![\cdot]\!]`` for the jump
 across the interface and ``q_n`` for the normal flux:
@@ -217,7 +223,7 @@ interface through ``J_{ij}`` (axial) or
 ``K_{ij} + L_{ij}/(q^{2}-1)`` (transverse). They are assembled by
 [`coupling_matrices`](@ref MeanFieldHomogenization.LayeredSpheroids.coupling_matrices).
 
-## Transfer matrices
+## 5. Transfer matrices
 
 Truncating at ``\mathcal{N}`` terms — odd degrees ``1, 3, \dots, 2\mathcal{N}-1``
 — the interface condition becomes a linear map between the coefficient vectors
@@ -254,7 +260,7 @@ computes, and what
 [`local_flux`](@ref MeanFieldHomogenization.LayeredSpheres.local_flux) reconstruct
 pointwise from.
 
-## Volume-averaged concentration tensors
+## 6. Volume-averaged concentration tensors
 
 For homogenization only two order-2 tensors are needed. They are defined by the
 volume averages over the whole particle ``\Omega`` of the gradient and of the
@@ -352,7 +358,7 @@ depolarization factors already available through [`tens_IA`](@ref) and
 [`hill_tensor`](@ref) for a single spheroid. That closed form is used as an
 exact oracle in `test/LayeredSpheroids/test_conductivity.jl`.
 
-## Numerical precision: quadrature, not the monomial series
+## 7. Numerical precision: quadrature, not the monomial series
 
 The reference implementation of [barthelemyBignonnetIJES2020](@citet) computes
 ``I``, ``J``, ``K``, ``L`` by expanding the products ``P_i(x)P_j(x)`` into
@@ -388,13 +394,29 @@ complex-analytic with no real singularity for an oblate ``q = \mathrm{i}\tau``:
 (`test/LayeredSpheroids/test_coupling.jl`,
 `scripts/33_spheroid_series_convergence.jl`).
 
-## Integration with the schemes
+## 8. Integration with the schemes
 
 `LayeredSpheroid` is wired into the schemes exactly like `LayeredSphere` (see
-[Layered sphere](layered_sphere.md) and
+[Layered sphere](@ref th-layered-sphere) and
 `src/LayeredSpheres/scheme_integration.jl` for the elastic and conduction
 analogues): it declares `is_homogeneous_inclusion = false` and overrides
 [`gradient_gradient_loc`](@ref), [`flux_gradient_loc`](@ref) and
 `conductivity_contribution`. Every dilute, Mori–Tanaka, self-consistent, Maxwell
 and differential kernel then routes through the confocal transfer-matrix
 solution with no change to `src/Schemes/`.
+
+## Where to go next
+
+The elastic problem on the same chart is solved on the next page,
+[The elastic confocal spheroid](@ref th-spheroid-elasticity), where the coupling
+between degrees appears at every interface and the transfer matrices of §5 give
+way to one global system. The conduction solution of this page is put to work
+in three tutorials.
+
+- [The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective)
+  — building a spheroid and the effective conductivity of a composite.
+- [Imperfect interfaces: what they do to the local fields](@ref tut-layered-spheroid-interfaces)
+  — the temperature and the flux reconstructed pointwise across a Kapitza and a
+  highly conducting interface.
+- [Highly conducting interfaces: equivalent conductivity vs. aspect ratio](@ref tut-layered-spheroid-hc)
+  — the equivalent conductivity swept over the aspect ratio.

@@ -1,5 +1,12 @@
 # [Periodic multilayer — the laminate cell](@id th-laminate)
 
+!!! info "Before this page"
+    [Hill polarization tensors](@ref th-hill-tensors), whose flat limit is the
+    layer tensor ``\mathbb{P}_i`` used below, the Voigt and Reuss bounds of
+    [Homogenization schemes](@ref th-homogenization) §2, which the laminate
+    saturates, and the interface models of
+    [Layered sphere](@ref th-layered-sphere) §3, reused here on a plane.
+
 A **laminate** is a periodic stack of parallel layers: a unit cell of
 *periodic* homogenization, with no matrix, no auxiliary Eshelby problem and
 no reference medium. Its effective behavior is **exact and in closed form**,
@@ -19,7 +26,7 @@ The derivation below is written for a general anisotropic stack, in
 elasticity and in transport, with the localization tensors and the imperfect
 interfaces.
 
-## Setting
+## 1. Setting
 
 Layers are bounded by parallel planes of common unit normal ``\underline{n}``.
 The vector plane ``\mathcal{P}\perp\underline{n}`` is spanned by orthonormal
@@ -65,7 +72,7 @@ macroscopic stress is the average
 ``\boldsymbol{\Sigma} = \tfrac{1}{L}\int_0^L
 \boldsymbol{\sigma}(\underline{x}+z\underline{n})\,\mathrm{d}z``.
 
-## The two continuity conditions
+## 2. The two continuity conditions
 
 Invariance in the plane makes every field depend on
 ``\underline{x}\cdot\underline{n}`` alone, so ``\underline{\mathrm{div}}\,
@@ -98,7 +105,7 @@ The two conditions are complementary — three stress components are prescribed
 across the layers, three strain components are prescribed within them — and
 that split is the whole content of the problem.
 
-## In-plane and out-of-plane subspaces
+## 3. In-plane and out-of-plane subspaces
 
 The space of symmetric second-order tensors splits into the tensors *without*
 ``\underline{n}`` and those *with* it. With
@@ -151,7 +158,7 @@ every layer, and ``\sigma_{\mathcal{O}}`` is the same in every layer.
     layers, where ``\boldsymbol{K}`` is diagonal — which is exactly why the
     implementation guards it with a test on a *triclinic* stiffness.
 
-## Layer tensors
+## 4. Layer tensors
 
 Injecting ``\boldsymbol{\varepsilon}_i`` into the constitutive law and
 contracting with ``\underline{n}`` gives the traction in terms of
@@ -209,7 +216,7 @@ in-plane **Schur complement** of ``\mathbb{C}_i``. Two consequences used
 throughout: ``\mathbb{P}:\mathbb{C}:\mathbb{P} = \mathbb{P}`` and
 ``\mathbb{Q}:\mathbb{P} = 0``.
 
-## [The pseudo-inverse](@id th-laminate-pinv)
+## [5. The pseudo-inverse](@id th-laminate-pinv)
 
 Averaging the compatibility condition over the cell, ``\langle
 \boldsymbol{\varepsilon}\rangle = \boldsymbol{E}`` requires
@@ -247,7 +254,7 @@ every acoustic tensor ``\boldsymbol{K}_i`` is definite.
     neither `ForwardDiff` nor a symbolic backend, and would in any case be
     wasted on an exactly-rank-3 input.
 
-## Effective stiffness
+## 6. Effective stiffness
 
 Substituting back,
 
@@ -365,7 +372,7 @@ arithmetic (Voigt) one — the two saturations above, read off a closed form.
 `scripts/38_laminate_symbolic.jl` derives these from the code itself, with
 `SymPy`.
 
-## Localization
+## 7. Localization
 
 Since ``\boldsymbol{\Sigma} = \mathbb{C}^{\mathrm{hom}}:\boldsymbol{E}``, the layer
 strain follows directly:
@@ -386,7 +393,7 @@ a vanishing in-plane/out-of-plane coupling — the macroscopic in-plane strain
 reaches every layer unchanged, which is the compatibility condition read
 backwards. (These tensors are absent from the original note.)
 
-## Transport
+## 8. Transport
 
 The transposition is immediate: the in-plane gradient is continuous, the
 normal flux is continuous. With ``\boldsymbol{K}_i`` the conductivity (or
@@ -406,7 +413,7 @@ K^{\mathrm{hom}}_{\mathcal{II}} = \sum_i f_i\,
 
 — series across the layers, parallel within them.
 
-## [Imperfect interfaces](@id th-laminate-interfaces)
+## [9. Imperfect interfaces](@id th-laminate-interfaces)
 
 The four interface models of the [layered sphere](@ref th-layered-sphere) are
 reused unchanged; a planar interface is simply the curvature-free case, and
@@ -510,7 +517,7 @@ out-of-plane law and leaves the in-plane one alone, the dual one does the
 reverse. That is what makes the laminate the sharpest available check of the
 package's interface conventions.
 
-## Ageing viscoelasticity
+## 10. Ageing viscoelasticity
 
 The whole solution is products of Kelvin-Mandel matrices and one inversion
 restricted to the out-of-plane subspace. Replacing each scalar by a
@@ -522,7 +529,7 @@ becomes `volterra_inverse` on the out-of-plane restriction. The elastic limit
 — a Heaviside law per layer — returns the elastic laminate in every diagonal
 time block, and the two exact saturations survive the transposition.
 
-## Relation to the rest of the package
+## 11. Relation to the rest of the package
 
 - ``\mathbb{P}_i`` is the flat limit of the [Hill tensor](@ref th-hill-tensors): a
   laminate is what a stack of infinitely flat inclusions becomes when they
@@ -533,9 +540,25 @@ time block, and the two exact saturations survive the transposition.
 - As an [`AbstractHomogenizationCell`](@ref) it takes part in the multiscale
   chain like any `RVE` — see [Multiscale models](@ref man-multiscale).
 
-## References
+## 12. References
 
 The isotropic bilayer closed form is that of [backus1962](@citet); the flat-inclusion
 limit of the Hill tensor is discussed in [barthelemyIJES2021](@citet); the
 interface models are those of [herveLuanco2014](@citet), specialized to a
 plane.
+
+## Where to go next
+
+The N-body chapter that follows drops the one-site picture of the
+Eshelby-based schemes:
+[Two-inclusion interaction tensors](@ref th-interaction) introduces the tensor
+through which one inclusion acts on another, the ingredient of both N-body
+models. The exact solution of this page is evaluated in the tutorial
+[Periodic multilayer: the exact laminate solution](@ref tut-laminate), and the
+syntax of a laminate cell is in
+[Laminates — periodic multilayer cells](@ref man-laminates).
+
+- [Imperfect interfaces in a laminate, and the size effect](@ref tut-laminate-interfaces)
+  — the interface density of §9 and the size effect it produces.
+- [A creeping laminate: the multilayer in ageing viscoelasticity](@ref tut-laminate-alv)
+  — the transposition of §10 on a creeping stack.

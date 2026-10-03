@@ -1,4 +1,10 @@
-# # Chaining scales through an N-body scheme
+# # [Chaining scales through an N-body scheme](@id tut-multiscale-assemblies)
+#
+# !!! info "Before this page"
+#     The manual page [Particle assemblies and N-body schemes](@ref man-assemblies),
+#     where a [`ParticleAssembly`](@ref) is built and the cluster model called,
+#     and the theory page [The cluster model](@ref th-cluster), whose estimate is
+#     chained across scales below.
 #
 # The declarative multiscale seam of the package — a property whose value is
 # `Homogenized(cell, scheme)` — is generic over cells. This page shows that a
@@ -200,3 +206,17 @@ figpath = joinpath(figdir, "92_multiscale_assemblies.png")           #jl
 savefig(p_full, figpath)                                             #jl
 display(p_full)                                                      #jl
 @printf "\nSaved : %s\n" figpath                                     #jl
+
+# The last figure repeats the bar chart of §4, the component ``C_{1111}`` of the
+# matrix and of each of the three scales built on it.
+#
+# ## Where to go next
+#
+# Every tutorial so far is elastic or conductive, with no dependence on time.
+# [Viscoelastic composites](@ref tut-viscoelasticity) opens the tutorials that
+# go beyond elasticity, with complex moduli in the frequency domain and a first
+# ageing creep calculation. The two N-body schemes are taken to published results
+# in [The cluster model on cubic arrays](@ref app-cluster-model) and
+# [The equivalent inclusion method, against a published table](@ref app-eim-assembly),
+# and the `Homogenized` seam used throughout this page is described in
+# [Multiscale models](@ref man-multiscale).

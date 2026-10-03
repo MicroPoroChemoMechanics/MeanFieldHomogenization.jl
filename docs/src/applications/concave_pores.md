@@ -1,5 +1,13 @@
 # [Concave pores: superspheres and superspheroids](@id app-concave-pores)
 
+!!! info "Before this page"
+    [A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate),
+    whose Fourier reduction to the meridian half-plane is reused for the
+    superspheroid, [Finite-element inclusions](@ref man-fe-inclusions) for the
+    two pore types, and
+    [The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell)
+    for the corrected cell and the parity argument behind the octant.
+
 A **supersphere**
 
 ```math
@@ -409,7 +417,14 @@ julia scripts/fe/make_cell_figures.jl        # figures + docs/src/assets/fe/cell
 julia scripts/89_fe_concave_pores.jl      # the comparison, live
 ```
 
-## See also
+## Where to go next
+
+The two cells of this page are the teachers of the supersphere and superspheroid
+surrogates described in [Neural-surrogate inclusions](@ref man-neural-inclusions),
+which replace the solve inside a scheme. The next application,
+[A lamellar porous material: swelling clays and C-S-H](@ref app-lamellar),
+turns to a morphology solved exactly rather than meshed, a stack of platelets,
+and derives its effective behavior in closed form.
 
 - [The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell)
   — the pore declination, and the octant's parity argument.

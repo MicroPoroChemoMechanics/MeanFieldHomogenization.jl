@@ -1,14 +1,19 @@
 # [The cluster model](@id th-cluster)
 
-[molinari1996](@citet). An N-body scheme: the mean strain of
-every inclusion is solved for, accounting for the pairwise interaction with each
+!!! info "Before this page"
+    [Two-inclusion interaction tensors](@ref th-interaction), where the
+    interaction tensor ``\mathbb{T}^{IJ}``, its sign convention and the cluster
+    truncation used below are set out.
+
+The cluster model of [molinari1996](@citet) is an N-body scheme: the mean strain
+of every inclusion is solved for, accounting for the pairwise interaction with each
 neighbor inside a cluster, on top of the interaction with the matrix.
 
 Notation as in the [Nomenclature](@ref nomenclature); the interaction tensor
 ``\mathbb{T}^{IJ}`` and the Green operator are defined on
 [the interaction page](@ref th-interaction).
 
-## From the integral equation to a linear system
+## 1. From the integral equation to a linear system
 
 Take the matrix, of stiffness ``\mathbb{C}_0`` and volume fraction ``f_0``, as
 reference, write ``\Delta\mathbb{C}_J = \mathbb{C}_J - \mathbb{C}_0`` for the stiffness
@@ -50,11 +55,11 @@ operator being the Hill tensor of the inclusion shape. For an isotropic matrix a
 spherical inclusions,
 
 ```math
-\mathbb{P}_0 = \frac{1}{3k_m+4\mu_m}\,\mathbb{J}
-  + \frac{3\,(k_m+2\mu_m)}{5\,\mu_m\,(3k_m+4\mu_m)}\,\mathbb{K} .
+\mathbb{P}_0 = \frac{1}{3k_0+4\mu_0}\,\mathbb{J}
+  + \frac{3\,(k_0+2\mu_0)}{5\,\mu_0\,(3k_0+4\mu_0)}\,\mathbb{K} .
 ```
 
-## Families and the cluster
+## 2. Families and the cluster
 
 An infinite array is reduced to ``N`` unknowns by taking a periodic elementary
 representative volume containing ``N`` inclusions. Each inclusion of the cell carries a
@@ -68,9 +73,9 @@ truncated to the images lying within a cluster radius ``R_c`` of the receiver:
 
 ``\mathcal{C}_I`` being the cluster attached to ``I`` and ``\mathcal{F}_K`` the family
 ``K``. Convergence as ``R_c \to \infty`` is proved in their Appendix B — see the
-[cutoff discussion](@ref th-interaction).
+cutoff discussion of [Two-inclusion interaction tensors](@ref th-interaction) §7.
 
-## The block system
+## 3. The block system
 
 Splitting ``\mathbb{T}^{II}`` out of the sum and writing
 ``\boldsymbol{\varepsilon}_K = \mathbb{A}_K : \boldsymbol{E}`` turns the above into a
@@ -102,7 +107,7 @@ The implementation flattens the system onto the Kelvin-Mandel basis — where ``
 becomes an ordinary matrix product — and solves it with one dense factorization, rather
 than reproducing the tensorial Gauss elimination of the paper.
 
-## The Mori-Tanaka limit
+## 4. The Mori-Tanaka limit
 
 Reduce the cluster to its own receiver. Every ``\bar{\mathbb{T}}`` vanishes and
 
@@ -121,10 +126,11 @@ which is the Mori-Tanaka system term by term.
     elasticity and in conduction. It is the sharpest available statement that the
     assembly of ``\mathbb{M}`` is right.
 
-## What the cluster buys
+## 5. What the cluster buys
 
-Since ``\bar{\mathbb{T}}`` has [no isotropic part](@ref th-interaction), the correction
-is purely deviatoric:
+Since ``\bar{\mathbb{T}}`` has no isotropic part
+([Two-inclusion interaction tensors](@ref th-interaction) §4), the correction is
+purely deviatoric:
 
 * the effective **bulk** modulus of a cubic array equals the Mori-Tanaka one exactly;
 * the effective **shear** moduli do not, and the array is *cubic*, not isotropic — the
@@ -140,6 +146,13 @@ simple-cubic array of stiff spheres, so it is not a bound for that distribution;
 equal volume fraction the SC, BCC and FCC arrangements differ, the simple-cubic one
 being the softest.
 
-## API
+## Where to go next
 
-See [API — Particle assemblies](@ref api-assemblies).
+The next page, [The equivalent inclusion method](@ref th-eim), poses the same
+problem as a Galerkin discretization, which reduces to the system of §3 under
+periodic boundary conditions and adds a rigorous bound to the estimate. The
+results of [molinari1996](@citet) quoted in §5 are reproduced in
+[The cluster model on cubic arrays](@ref app-cluster-model), and the
+construction of a [`ParticleAssembly`](@ref) is described in
+[Particle assemblies and N-body schemes](@ref man-assemblies). The API entries
+are in [API — Particle assemblies](@ref api-assemblies).

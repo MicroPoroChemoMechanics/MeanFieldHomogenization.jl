@@ -24,12 +24,12 @@ assumption altogether.
 
 An **inclusion** embedded in an infinite reference medium responds to a remote
 load in a way entirely captured by one object, the **Hill polarization tensor**
-``\mathbb{P}`` — this is [Eshelby's result](eshelby_problem.md), and
+``\mathbb{P}`` — this is [Eshelby's result](@ref th-eshelby-problem), and
 ``\mathbb{P}`` depends only on the inclusion *shape* and the reference *moduli*
-([Hill polarization tensors](hill_tensors.md)). From ``\mathbb{P}`` follows the
+([Hill polarization tensors](@ref th-hill-tensors)). From ``\mathbb{P}`` follows the
 **localization tensor**, which says how much of the remote load each phase
 actually sees, and hence each phase's **contribution** to the effective
-stiffness ([Localization](localization.md)).
+stiffness ([Localization](@ref th-localization)).
 
 ## The chain, in one picture
 
@@ -97,12 +97,12 @@ Volterra products in place of tensor products. The contract is written up in
 
 Assembling those contributions under an assumption about how phases interact
 gives a **homogenization scheme** — dilute, Mori–Tanaka, self-consistent,
-differential, and the bounds ([Homogenization schemes](homogenization.md)).
+differential, and the bounds ([Homogenization schemes](@ref th-homogenization)).
 
 | Page | What it adds |
 | :--- | :----------- |
-| [Homogenization schemes](homogenization.md) | the scheme catalog, each as one assumption on the reference medium, and the bounds |
-| [Differential scheme](differential_scheme.md) | incorporation as an ODE in a fictitious time, and what a crack — which has no volume to replace — does to it |
+| [Homogenization schemes](@ref th-homogenization) | the scheme catalog, each as one assumption on the reference medium, and the bounds |
+| [Differential scheme](@ref th-differential-scheme) | incorporation as an ODE in a fictitious time, and what a crack — which has no volume to replace — does to it |
 
 The differential scheme is a scheme like the others, differing only in that its
 assembly is an integration rather than a closed form; it is grouped here rather
@@ -118,8 +118,8 @@ treatment belongs in this group; two are implemented.
 
 | Page | Pattern |
 | :--- | :------ |
-| [Layered sphere](layered_sphere.md) | a *composite* inclusion: no Hill tensor exists, the response is assembled by a radial recurrence |
-| [Layered spheroid](layered_spheroid.md) | the same for confocal spheroids, where imperfect interfaces couple harmonic degrees |
+| [Layered sphere](@ref th-layered-sphere) | a *composite* inclusion: no Hill tensor exists, the response is assembled by a radial recurrence |
+| [Layered spheroid](@ref th-layered-spheroid) | the same for confocal spheroids, where imperfect interfaces couple harmonic degrees |
 
 ## Cracks
 
@@ -129,14 +129,14 @@ descriptor.
 
 | Page | Specialization |
 | :--- | :------------- |
-| [Crack opening displacement](cod_tensors.md) | the flat-inclusion limit: a crack has no volume, so it is described by ``\boldsymbol{B}`` and ``\mathbb{H}`` instead of a volume fraction |
-| [Thermal cracks](thermal_cracks.md) | the same limit for scalar transport |
+| [Crack opening displacement](@ref th-cod-tensors) | the flat-inclusion limit: a crack has no volume, so it is described by ``\boldsymbol{B}`` and ``\mathbb{H}`` instead of a volume fraction |
+| [Thermal cracks](@ref th-thermal-cracks) | the same limit for scalar transport |
 
 ## Extension to conductivity
 
 | Page | What it adds |
 | :--- | :----------- |
-| [Extension to conductivity](conductivity.md) | the order-4 ↔ order-2 dictionary stated once — Hooke against Fourier, Fick, Darcy and Ohm — what transposes untouched, and the two things that genuinely differ |
+| [Extension to conductivity](@ref th-conductivity) | the order-4 ↔ order-2 dictionary stated once — Hooke against Fourier, Fick, Darcy and Ohm — what transposes untouched, and the two things that genuinely differ |
 
 ## Extension to viscoelasticity
 
@@ -147,8 +147,8 @@ problem itself that must be generalized.
 
 | Page | What it adds |
 | :--- | :----------- |
-| [The Laplace-Carson route](laplace_carson.md) | the correspondence principle: a non-ageing problem solved as an elastic one, transform by transform |
-| [Ageing linear viscoelasticity](viscoelasticity.md) | moduli become Volterra operators; the algebra of the chain is unchanged |
+| [The Laplace-Carson route](@ref th-laplace-carson) | the correspondence principle: a non-ageing problem solved as an elastic one, transform by transform |
+| [Ageing linear viscoelasticity](@ref th-viscoelasticity) | moduli become Volterra operators; the algebra of the chain is unchanged |
 
 ## Periodic homogenization
 
@@ -159,7 +159,7 @@ for that reason.
 
 | Page | What it adds |
 | :--- | :----------- |
-| [Laminate](laminate.md) | a periodic stack: no inclusion at all, the interface algebra replaces the Hill tensor |
+| [Laminate](@ref th-laminate) | a periodic stack: no inclusion at all, the interface algebra replaces the Hill tensor |
 
 ## N-body models
 
@@ -169,16 +169,16 @@ need to know *where* the inclusions are.
 
 | Page | What it adds |
 | :--- | :----------- |
-| [Interaction tensors](interaction_tensors.md) | the two-inclusion tensor ``\mathbb{T}^{ab}``, its Green operator, its closed forms — and the sign convention both models follow |
-| [The cluster model](cluster_model.md) | the mean strain of every inclusion, resolved inside a cluster [molinari1996](@cite) |
-| [The equivalent inclusion method](eim.md) | the same physics as a variational Galerkin problem, with rigorous bounds [brisard2014](@cite) |
+| [Interaction tensors](@ref th-interaction) | the two-inclusion tensor ``\mathbb{T}^{ab}``, its Green operator, its closed forms — and the sign convention both models follow |
+| [The cluster model](@ref th-cluster) | the mean strain of every inclusion, resolved inside a cluster [molinari1996](@cite) |
+| [The equivalent inclusion method](@ref th-eim) | the same physics as a variational Galerkin problem, with rigorous bounds [brisard2014](@cite) |
 
 ## Appendices
 
 | Page | Role |
 | :--- | :--- |
-| [The finite Eshelby cell](corrected_cell.md) | a numerical device supporting the finite-element inclusions: the inclusion is solved on a *finite* cell and the truncation bias removed by its own dipole far field. Written in the language of [localization](localization.md) and [crack opening displacement](cod_tensors.md), so it is read after both |
-| [Elliptic integrals](elliptic_integrals.md) | the special functions the closed forms need |
+| [The finite Eshelby cell](@ref th-corrected-cell) | a numerical device supporting the finite-element inclusions: the inclusion is solved on a *finite* cell and the truncation bias removed by its own dipole far field. Written in the language of [localization](@ref th-localization) and [crack opening displacement](@ref th-cod-tensors), so it is read after both |
+| [Elliptic integrals](@ref th-elliptic-integrals) | the special functions the closed forms need |
 
 ## Where the two physics meet
 
@@ -219,4 +219,4 @@ explicitly wherever they occur:
   `MeanFieldHomogenization` computes ``\boldsymbol{B}`` first and derives ``\mathbb{H}``
   from it, where Echoes computes ``\mathbb{H}`` directly and never forms
   ``\boldsymbol{B}``. The competing normalizations are named and compared in
-  [Crack opening displacement](cod_tensors.md).
+  [Crack opening displacement](@ref th-cod-tensors).

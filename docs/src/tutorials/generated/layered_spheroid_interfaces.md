@@ -2,7 +2,14 @@
 EditURL = "../../../../scripts/35_spheroid_interfaces.jl"
 ```
 
-# Imperfect interfaces: what they do to the local fields
+# [Imperfect interfaces: what they do to the local fields](@id tut-layered-spheroid-interfaces)
+
+!!! info "Before this page"
+    The tutorial [The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective),
+    which builds the confocal particle and its interfaces, and the theory page
+    [Layered spheroid — confocal harmonic series](@ref th-layered-spheroid),
+    where the interface conditions and the series of the local fields are
+    derived.
 
 An imperfect interface is a surface of zero thickness that nonetheless changes
 the physics across it. Two models are available on a [`LayeredSpheroid`](@ref):
@@ -28,7 +35,7 @@ by reconstructing the temperature and flux **pointwise**:
    over ``k^{\mathrm s}`` — the configuration of the ECHOES presentation of
    06/07/2020 — including an animation and an interactive 3-D view.
 
-Theory: [Layered spheroid](../../theory/layered_spheroid.md).
+Theory: [Layered spheroid](@ref th-layered-spheroid).
 
 ````@example layered_spheroid_interfaces
 using MeanFieldHomogenization
@@ -397,6 +404,19 @@ end
 
 _plotly_streamlines(3.0; uid = "spheroid-hc-3d")
 ````
+
+The view is drawn at the largest conductance of the sweep,
+``k^{\mathrm s} = 3``, where the skin is the preferential path described
+above.
+
+## Where to go next
+
+The sweep above is made at one aspect ratio.
+[Highly conducting interfaces: equivalent conductivity vs. aspect ratio](@ref tut-layered-spheroid-hc)
+follows the equivalent conductivity of a particle with a highly conducting
+skin from the needle to the disk. The functions that read the temperature,
+gradient and flux at a point are listed in
+[Layered inclusions](@ref man-layered) of the manual.
 
 ---
 

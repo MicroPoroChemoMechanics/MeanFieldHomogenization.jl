@@ -1,5 +1,19 @@
 # [Scale transition](@id fe-scale-transition)
 
+!!! info "Before this page"
+    [Finite-element coupling](@ref fe-coupling), for the role a homogenized
+    microstructure plays at a quadrature point, and
+    [Homogenization schemes](@ref man-schemes), whose effective stiffness is the
+    material response below. The poroelastic blocks use the Biot coefficients of
+    [Poromechanics](@ref manual-poromechanics).
+
+This page states what a finite-element code asks of a material at each
+quadrature point and how a homogenization scheme answers it: a stress, a
+consistent tangent and an updated state, then the blocks of that tangent when
+the material takes several gradients. It closes on the convention a coupling
+cannot afford to get wrong, the basis in which a TensND tensor stores its
+components.
+
 ## What the FE code needs
 
 At each quadrature point a finite-element code solving a nonlinear problem needs
@@ -97,3 +111,9 @@ global_ = to_tensors(C_hom)[1, 1, 1, 1]        # components an FE code expects
 
 The two differ: the first is expressed in the crack frame, the second in the
 global one.
+
+## Where to go next
+
+[The coupled poroelastic problem](@ref fe-poro-coupling) writes the balance
+equations that consume the four tangent blocks above, and
+[Materials](@ref fe-materials) turns the contract of this page into code.

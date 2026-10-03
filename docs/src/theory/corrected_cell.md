@@ -1,5 +1,11 @@
 # [The finite Eshelby cell with a corrected boundary condition](@id th-corrected-cell)
 
+!!! info "Before this page"
+    [Localization and contribution tensors](@ref th-localization), whose
+    concentration tensor is what the finite cell returns, and
+    [Crack opening displacement and compliance](@ref th-cod-tensors), whose
+    tensor ``\boldsymbol{B}`` the crack declination computes.
+
 When a morphology has no closed-form Eshelby solution, its response can be
 computed on a **finite** cell — the inclusion inside a ball of matrix of radius
 ``R`` — and fed to the schemes through the
@@ -9,7 +15,7 @@ first-order correction of [adessinaIJES2017](@citet), which removes the
 truncation bias, in the general form and in the two declinations the package
 implements.
 
-## The finite-size bias
+## 1. The finite-size bias
 
 We want the response of an **infinite** medium, but we can only mesh a
 **finite** ball ``\Omega`` of radius ``R``. The obvious boundary condition is
@@ -68,7 +74,7 @@ and `R/a = 5` suffices — the default `radius_ratio` of the finite-element
 backends ([FE inclusions](@ref man-fe-inclusions)) — the price being that
 ``\langle\boldsymbol\tau\rangle_{\mathcal D}`` appears on both sides.
 
-## The general fixed point
+## 2. The general fixed point
 
 The exact infinite-medium solution is
 
@@ -148,7 +154,7 @@ since the dipole of a modal polarization radiates in the same mode — so
 ``\mathbb X`` is ``2\times2`` for mode 0 and a scalar for modes 1 and 2.
 
 
-## The dipole fields, in closed form
+## 3. The dipole fields, in closed form
 
 For an isotropic reference medium both Green functions are closed forms, so the
 boundary data costs nothing. With ``r = \|\underline x\|``, ``\underline{n} = \underline x/r``,
@@ -190,7 +196,7 @@ anisotropy ``\nabla\boldsymbol G`` would come from the Willis integral, or
 from the Pan–Chou closed form in the transversely isotropic case, neither of
 which is implemented.
 
-## The pore declination
+## 4. The pore declination
 
 ### A cavity is its own polarization source
 
@@ -399,7 +405,7 @@ projecting keeps them at full amplitude. The Kelvin basis diagonalizes the group
 action, so ``\mathbb P_\chi`` is a diagonal mask — and the couplings it removes
 are exactly the ones a full cell finds only as mesh noise.
 
-## The crack declination (3 + 3)
+## 5. The crack declination (3 + 3)
 
 ### The crack radiates as an elastic dipole
 
@@ -474,3 +480,14 @@ the opening profile:
 \underline{U} = \frac{1}{S_f\,b}\left(\int_{\Gamma^+}\underline{u}\,\mathrm dS - \int_{\Gamma^-}\underline{u}\,\mathrm dS\right).
 ```
 
+## Where to go next
+
+The correction is put to the test in
+[Validating a finite-element crack](@ref tut-fe-crack), which measures what the
+dipole term buys against the closed form of the opening tensor. The pore
+declination of §4 is used by
+[A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate),
+and the calls that run these solves are described in
+[Finite-element inclusions](@ref man-fe-inclusions). The last page of the
+chapter, [Elliptic integrals](@ref th-elliptic-integrals), documents the special
+functions on which the closed forms of the foundations rely.

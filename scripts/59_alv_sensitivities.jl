@@ -1,8 +1,16 @@
-# # Derivatives through the ageing-viscoelastic pipeline
+# # [Derivatives through the ageing-viscoelastic pipeline](@id tut-alv-sensitivities)
 #
-# [Derivatives and sensitivities](@ref tut-sensitivities) differentiates an
-# *elastic* homogenization. Nothing in that story is specific to elasticity: the
-# ALV path is built from the same generic Julia code, so `ForwardDiff` propagates
+# !!! info "Before this page"
+#     The tutorial [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes),
+#     whose time-domain pipeline is differentiated below, and the manual page
+#     [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities), which
+#     introduces the `set_param` lens of the first pattern; the Volterra
+#     assembly itself is derived in
+#     [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity).
+#
+# An *elastic* homogenization is differentiated in
+# [Derivatives and sensitivities](@ref tut-sensitivities), and nothing in that
+# calculation is specific to elasticity: the ALV path is built from the same generic Julia code, so `ForwardDiff` propagates
 # a `Dual` straight through the Volterra assembly, the block inversions and the
 # scheme, and returns ``\partial \mu^{\mathrm{hom}}/\partial p`` for free — no adjoint,
 # no hand-written derivative, no finite difference.
@@ -179,3 +187,12 @@ dμ_dτK_FD = (eff_mu_vs_τK(τK₀ + h) - eff_mu_vs_τK(τK₀ - h)) / (2h)
 # central-difference truncation error is ``h^2 f'''/6``. The automatic
 # derivative is exact to machine precision; the finite difference is the
 # approximation being checked against it.
+
+# ## Where to go next
+#
+# The four patterns above give the derivative of an effective modulus with
+# respect to the parameters of a time-domain calculation.
+# [Nonlinear homogenization: the secant method on a porous plastic solid](@ref tut-secant-elastoplasticity)
+# puts a derivative of the same kind to use inside a nonlinear closure, and the
+# lenses and indexers themselves are documented in
+# [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities).

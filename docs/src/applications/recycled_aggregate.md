@@ -1,5 +1,13 @@
 # [A recycled-concrete aggregate, by axisymmetric Fourier elements](@id app-recycled-aggregate)
 
+!!! info "Before this page"
+    [Finite-element inclusions](@ref man-fe-inclusions), where the elliptical
+    crack introduces the finite cell and its corrected boundary condition,
+    derived in
+    [The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell),
+    and [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere)
+    for the concentric limit against which every result below is checked.
+
 Recycling concrete means crushing it, and what comes out is not a clean
 aggregate: each grain is an **old natural aggregate wrapped in a shell of
 adhered old mortar**, of uncertain and generally poor quality, and the old
@@ -403,6 +411,10 @@ and only the core is left to see.
 
 ## Using it
 
+In a script, the inclusion is built from its radius and its two constituents,
+and enters an `RVE` like any other phase; its localization tensors can also be
+requested directly.
+
 ```julia
 using MeanFieldHomogenization
 import Ferrite, FerriteGmsh, Gmsh        # or: import Gridap, GridapGmsh
@@ -584,7 +596,16 @@ julia --project=. -e 'using MeanFieldHomogenization, Ferrite, FerriteGmsh, Gmsh,
                       include("test/FiniteElements/test_axi_gridap.jl")'
 ```
 
-## See also
+## Where to go next
+
+The next application, [Concave pores: superspheres and superspheroids](@ref app-concave-pores),
+applies the same finite-element cells to a cavity that has no Eshelby solution
+at all, in three dimensions on an octant and on the meridian half-plane by the
+Fourier reduction of this page. The tutorial
+[Replacing a finite-element solve by a neural surrogate](@ref tut-neural-excentered-sphere)
+trains a surrogate on the morphology of this page, which removes the cost of
+the solve inside iterative schemes and yields the derivative with respect to
+the eccentricity that the solve itself cannot provide.
 
 - [Finite-element inclusions](@ref man-fe-inclusions) — the elliptical crack,
   the same correction in its 3 + 3 crack form

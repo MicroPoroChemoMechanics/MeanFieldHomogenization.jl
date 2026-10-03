@@ -72,7 +72,7 @@ The leading minus makes the Fourier symbol of ``\mathbb{G}^0`` positive
 semi-definite and its interior average **plus** the Hill tensor,
 ``\mathbb{T}^{aa} = +\mathbb{P}``, so the one-inclusion case is the
 ``\boldsymbol{\varepsilon} = -\mathbb{P}:\boldsymbol{\tau}`` used on every page
-of this section. [Interaction tensors](interaction_tensors.md) develops the
+of this section. [Interaction tensors](@ref th-interaction) develops the
 consequences and names the references that use the opposite sign.
 
 ## [Isotropic and transversely isotropic bases](@id th-notation-bases)
@@ -170,5 +170,14 @@ introduced only on another page, even at the cost of repeating a definition.
     citation to published work, or (ii) derived explicitly on the page from
     expressions that are. Where a convention differs between references — the
     crack opening displacement tensor ``\boldsymbol{B}`` is the notable case,
-    see [Crack opening displacement](cod_tensors.md) — the competing
+    see [Crack opening displacement](@ref th-cod-tensors) — the competing
     conventions are named and the one implemented by `MeanFieldHomogenization` is stated.
+
+## Where to go next
+
+The conventions fixed here are put to work on
+[The Eshelby inclusion problem](@ref th-eshelby-problem), the first page of the
+foundations, where the Hill tensor ``\mathbb{P}`` is defined from the uniformity
+of the strain inside an ellipsoid. Its closed forms follow in
+[Hill polarization tensors](@ref th-hill-tensors), written in the Walpole basis
+and with the shape tensor defined above.

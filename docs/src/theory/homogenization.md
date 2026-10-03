@@ -1,10 +1,16 @@
 # [Homogenization schemes](@id th-homogenization)
 
+!!! info "Before this page"
+    [Localization and contribution tensors](@ref th-localization), where the
+    dilute concentration tensor ``\mathbb A_i^{\mathrm{dil}}`` and the
+    contribution tensors ``\mathbb N_i`` and ``\mathbb H_i`` assembled below are
+    defined.
+
 `MeanFieldHomogenization.Schemes` computes the *effective* property tensor of a
 multi-phase medium from (i) the phase geometries, (ii) the phase properties and
 (iii) the phase volume fractions or crack densities.
 
-## Notation
+## 1. Notation
 
 The Representative Volume Element (RVE) consists of:
 
@@ -34,7 +40,7 @@ contribution** ``\mathbb N_i = (\mathbb C_i - \mathbb C_0):
 \mathbb A_{\sigma\sigma,i}`` is more natural for cracks (whose stiffness
 contribution is the rank-1 limit of a divergent eigenvalue).
 
-## Bounds
+## 2. Bounds
 
 | Scheme | Formula |
 | :-- | :-- |
@@ -44,7 +50,7 @@ contribution is the rank-1 limit of a divergent eigenvalue).
 Cracks are ignored in both bounds: their volume contribution vanishes in
 the penny limit (``c \to 0``) while their density stays finite.
 
-## One-shot schemes (require a matrix)
+## 3. One-shot schemes (require a matrix)
 
 Writing ``\mathbb N_\Sigma = \sum_i f_i \mathbb N_i`` for the total dilute
 stiffness contribution and ``\mathbb S_0 = \mathbb C_0^{-1}``:
@@ -73,7 +79,7 @@ sphere ⇒ Mori-Tanaka limit). Any `AbstractInclusion` can be used; the
 hierarchy [`AbstractDistributionShape`](@ref) leaves room for a future
 `PairwiseDistribution` extension following [willis1982](@citet).
 
-## Iterative schemes
+## 4. Iterative schemes
 
 The one-shot schemes all need a phase to play the role of the matrix. When no
 phase does — a polycrystal, a granular assembly, a saturated foam — the
@@ -93,7 +99,7 @@ The default solver is a damped Picard fixed point (Anderson with memory
 non-linear algorithm (`NewtonRaphson()`, `TrustRegion()`,
 `Anderson()`, …) via the `algorithm` keyword of [`SelfConsistent`](@ref).
 
-## Differential scheme
+## 5. Differential scheme
 
 The **DifferentialScheme** integrates the multi-phase incorporation ODE
 [norris1985](@cite) on a fictitious incorporation time
@@ -118,9 +124,9 @@ The trajectories agree in the dilute limit (``f \to 0``) and diverge like
 
 The full derivation, the crack case, the closed form of the homothetic
 trajectory and the SciML resolution are in
-[The differential scheme](differential_scheme.md).
+[The differential scheme](@ref th-differential-scheme).
 
-## [N-body schemes (require positions)](@id th-nbody)
+## [6. N-body schemes (require positions)](@id th-nbody)
 
 Every scheme above — bounds, one-shot, iterative, differential — sees *one*
 inclusion in a reference medium and accounts for the others only through that
@@ -141,9 +147,11 @@ the interaction is switched off — the sharpest available check that their
 assembly is right — and the equivalent inclusion method additionally returns a
 rigorous bound on the apparent stiffness.
 
-## Number-type compatibility
+## 7. Number-type compatibility
 
-Every scheme is mandated to support:
+The schemes above involve nothing but tensor algebra and, for the iterative and
+differential ones, a solver, so that the scalar type is left open. Every scheme
+is mandated to support:
 
 - `Float64` — default;
 - `ForwardDiff.Dual` — sensitivity analysis through fractions, moduli,
@@ -153,3 +161,14 @@ Every scheme is mandated to support:
 - `SymPy.Sym`, `Symbolics.Num`, `BigFloat` — best-effort, with explicit
   documentation of any limitation (the iterative SC solvers are not
   symbolic-friendly because the linear-system Jacobian must be numeric).
+
+## Where to go next
+
+The differential scheme of §5 is derived in full on the next page,
+[The differential scheme](@ref th-differential-scheme), together with the crack
+case and the choice of trajectory. The N-body schemes of §6 rest on the
+[two-inclusion interaction tensor](@ref th-interaction), developed in the N-body
+chapter. The tutorials [A first homogenization](@ref tut-first-estimate) and
+[Bounds and classical schemes](@ref tut-bounds-and-schemes) apply these schemes
+to a first RVE, and the manual page
+[Homogenization schemes](@ref man-schemes) gives their syntax.

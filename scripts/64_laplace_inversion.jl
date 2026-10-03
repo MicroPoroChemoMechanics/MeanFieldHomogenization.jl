@@ -1,5 +1,12 @@
 # # [Choosing a numerical Laplace inversion](@id tut-laplace-inversion)
 #
+# !!! info "Before this page"
+#     The tutorial [Generalized Kelvin ⇄ generalized Maxwell](@ref tut-kelvin-maxwell),
+#     which inverts the rational transforms exactly and so marks where a
+#     numerical inversion becomes necessary, and the theory page
+#     [The Laplace-Carson route](@ref th-laplace-carson), where the inversion is
+#     discussed as the ill-posed direction of the transform.
+#
 # Going from a relaxation function to its Laplace-Carson transform is a
 # quadrature — easy, stable, and what
 # [the frequency-or-time comparison](@ref tut-freq-vs-time) does. Coming back
@@ -230,3 +237,15 @@ figpath = joinpath(figdir, "64_laplace_inversion.png")               #jl
 savefig(p_full, figpath)                                             #jl
 display(p_full)                                                      #jl
 @printf "\nSaved : %s\n" figpath                                     #jl
+
+# The last figure gathers the four transform pairs of §1 on top, and below them
+# the panels of §2 to §4.
+#
+# ## Where to go next
+#
+# An inversion is one of three routes to the time response of a composite.
+# [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time)
+# runs the frequency route, the inverted Laplace-Carson route and the ageing
+# time-domain route on the same non-ageing composite and checks them against one
+# another. The keywords of each algorithm are documented in
+# [Numerical Laplace inversion](@ref man-laplace-inversion).

@@ -1,4 +1,10 @@
-# # An inclusion whose response is a neural network
+# # [An inclusion whose response is a neural network](@id tut-neural-inclusion)
+#
+# !!! info "Before this page"
+#     The tutorial [The custom-inclusion contract: three entry gates, one answer](@ref tut-custom-inclusion-contract),
+#     whose gates the surrogate enters through, and the theory page
+#     [Hill polarization tensors](@ref th-hill-tensors), whose closed form for
+#     the ellipsoid is the exact answer the surrogate is held to.
 #
 # `MeanFieldHomogenization` lets a morphology take part in every homogenization scheme
 # provided it can answer one of three questions — the Hill tensor, the
@@ -563,3 +569,16 @@ end
 )
 println("\n  → the ellipsoid pilot is about correctness and differentiability,")
 println("    not speed. The speed argument belongs to an expensive teacher.")
+
+# The printed ratio is the cost of the surrogate relative to the closed form, as
+# measured on the machine that built this page.
+#
+# ## Where to go next
+#
+# The ellipsoid was chosen because its answer is known.
+# [Replacing a finite-element solve by a neural surrogate](@ref tut-neural-excentered-sphere)
+# applies the same machinery to a sphere with an eccentric core, whose
+# localization tensors have no closed form and are learned from finite elements,
+# and differentiates the result with respect to the eccentricity. The models
+# shipped with the package, their inputs and their decoding are documented in
+# [Neural-surrogate inclusions](@ref man-neural-inclusions).

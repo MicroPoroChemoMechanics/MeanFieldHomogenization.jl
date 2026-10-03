@@ -1,5 +1,11 @@
 # [Porous benchmark: all schemes](@id tut-porous-benchmark)
 
+!!! info "Before this page"
+    The tutorial [Porous materials and the self-consistent trap](@ref tut-porous-materials),
+    which explains why soft pores need the compliance-form iteration used
+    below, and the theory page [Homogenization schemes](@ref th-homogenization),
+    which defines every scheme of the sweep.
+
 A solid matrix with spherical pores, porosity sweeping the *entire* range
 ``\varphi \in [0, 1]``, run through every scheme `MeanFieldHomogenization` implements —
 the porous benchmark of the Echoes book [echoes](@cite).
@@ -49,7 +55,7 @@ plotly_scene(rve_traces(; n = 70, semi_axes = (0.075, 0.075, 0.015), seed = 7,
 
 The homogenized stiffness is expected to be isotropic here (spherical
 solid and pore geometry), so it can be read back directly with
-`k_mu` — as in the [first tutorial](first_estimate.md). Some
+`k_mu` — as in the [first tutorial](@ref tut-first-estimate). Some
 schemes can return a result with tiny numerical anisotropy (e.g. from
 an iterative solve that has not fully converged); dispatching to
 `best_fit_iso` first — the best isotropic projection of the
@@ -124,7 +130,7 @@ All schemes start at the solid's moduli and part ways in between:
 | `Self-Consistent`, `Asym. SC` | ``0`` | ``\varphi \approx 0.5``, then collapse |
 | `Differential` | ``0`` | gradual |
 
-`select_best = true` (see the [previous tutorial](porous_materials.md)) is what
+`select_best = true` (see the [previous tutorial](@ref tut-porous-materials)) is what
 keeps the SC/ASC curves smooth through the crossover rather than jumping
 between branches under Picard noise.
 
@@ -177,3 +183,12 @@ to compare all ten schemes at a glance. The `try`/`catch` guard around
 each evaluation matters in practice: a scheme that fails to converge at
 one particular porosity (rare, but possible near percolation) reports
 `NaN` there instead of aborting the whole sweep.
+
+## Where to go next
+
+The same porous medium carries a diffusivity as well as a stiffness, and
+[Transport properties](@ref tut-transport) homogenizes it with the same schemes,
+at tensor order 2, before turning to the anisotropy that oriented pores
+produce. The options of each scheme used in the sweep (tolerances, iteration
+caps, the `select_best` guard) are listed in
+[Homogenization schemes](@ref man-schemes) of the manual.

@@ -1,8 +1,14 @@
 # [Nonlinear solvers for the self-consistent fixed point](@id tut-nonlinear-solvers)
 
-The [self-consistent scheme](bounds_and_schemes.md) is a fixed point
+!!! info "Before this page"
+    The tutorial [Porous materials and the self-consistent trap](@ref tut-porous-materials),
+    where the Picard iteration of the self-consistent scheme is met, and
+    [Derivatives and sensitivities](@ref tut-sensitivities), whose derivatives
+    are checked below through an external solver.
+
+The [self-consistent scheme](@ref tut-bounds-and-schemes) is a fixed point
 ``\mathbb C = \mathrm{step}(\mathbb C)``. Three solver families are available
-(see [Homogenization schemes](../manual/schemes.md)): the default damped Picard
+(see [Homogenization schemes](@ref man-schemes)): the default damped Picard
 [`AndersonDefault`](@ref), the dependency-free [`NewtonDefault`](@ref), and —
 the subject of this page — the weak extension
 `MeanFieldHomogenizationNonlinearSolveExt`, which hands the same fixed point to any
@@ -44,7 +50,7 @@ runtime to `TrustRegion` when the extension is active and to
 branches.
 
 SciML algorithms are opt-in rather than the default (see
-[Homogenization schemes](../manual/schemes.md)): reach for them on
+[Homogenization schemes](@ref man-schemes)): reach for them on
 well-conditioned, high-contrast problems away from a bifurcation, where they can
 be markedly faster.
 
@@ -231,7 +237,7 @@ d_m_tr     = derivative(rve, SelfConsistent(; algorithm = TrustRegion()), proper
 
 ## Strength criterion, revisited
 
-The [capstone tutorial](strength_criteria.md) builds a macroscopic strength
+The [capstone tutorial](@ref tut-strength-criteria) builds a macroscopic strength
 ellipse from `ForwardDiff` derivatives of
 ``(k^{\mathrm{hom}}, \mu^{\mathrm{hom}})`` with respect to the solid's shear
 modulus. Swapping the SC solve for a SciML algorithm changes nothing, since
@@ -271,3 +277,12 @@ end
 
 The two solver families produce the same ellipse — the strength criterion is a
 property of the *scheme*, not of how its fixed point happens to be solved.
+
+## Where to go next
+
+The solver is one of the settings of a scheme, and its keywords, together with
+the tolerances shared by the iterative schemes, are listed in
+[Homogenization schemes](@ref man-schemes) of the manual. The next tutorial,
+[Nonlinear homogenization by the secant method](@ref tut-secant-elastoplasticity),
+nests a nonlinear solve of another kind inside the scheme, to treat an
+elastic–perfectly plastic solid.

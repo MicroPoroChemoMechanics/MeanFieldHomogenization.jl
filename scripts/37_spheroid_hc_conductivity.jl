@@ -1,7 +1,14 @@
-# # Highly conducting interfaces: equivalent conductivity vs. aspect ratio
+# # [Highly conducting interfaces: equivalent conductivity vs. aspect ratio](@id tut-layered-spheroid-hc)
+#
+# !!! info "Before this page"
+#     The tutorial [Imperfect interfaces: what they do to the local fields](@ref tut-layered-spheroid-interfaces),
+#     where the highly conducting skin of an insulating particle is introduced at
+#     one aspect ratio, and the theory page
+#     [Layered spheroid — confocal harmonic series](@ref th-layered-spheroid),
+#     which gives the concentration tensors traced below.
 #
 # The companion of
-# [`32_spheroid_effective_conductivity.jl`](layered_spheroid_effective.md),
+# [The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective),
 # which treats the **low-conducting** (Kapitza) interface. Here the interface is
 # **highly conducting** — a surface layer of zero thickness and finite surface
 # conductance ``k^{\mathrm s}``:
@@ -36,7 +43,7 @@
 # group is ``k^{\mathrm s}/(k_m\,b)`` with ``b`` a particle radius. The curves below are
 # normalized so that this dependence is explicit.
 #
-# Theory: [Layered spheroid](../../theory/layered_spheroid.md).
+# Theory: [Layered spheroid](@ref th-layered-spheroid).
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
@@ -204,3 +211,14 @@ savefig(p_full, joinpath(figdir, "37_spheroid_hc_keq.png"))           #jl
 savefig(p_hom, joinpath(figdir, "37_spheroid_hc_khom.png"))           #jl
 display(p_full)                                                       #jl
 @printf "\nSaved : %s\n" joinpath(figdir, "37_spheroid_hc_*.png")      #jl
+
+# Where a curve crosses the dashed line, the insulating platelets and their skin
+# conduct better, in that direction, than the matrix they replace.
+#
+# ## Where to go next
+#
+# The three spheroid pages rest on a closed form that requires confocal layers.
+# [A layered spheroid, meshed](@ref tut-axi-layered-spheroid) solves the same
+# body by axisymmetric finite elements, calibrates the cell against the
+# confocal solution, and then takes it to nests of freely chosen semi-axes that
+# no closed form reaches.
