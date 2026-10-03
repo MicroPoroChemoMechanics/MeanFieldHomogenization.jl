@@ -445,20 +445,12 @@ end
     # treat it exactly, the ALV ones say so.
     rigid = LayeredSphere((0.6, 1.0), (iso_stiffness(Inf, 1.0), iso_stiffness(3.0, 1.5)))
     @test_throws "layer 1 of the LayeredSphere has an infinite modulus" strain_strain_loc_alv(rigid, law, times)
-    # No order-2 (conduction) ALV recurrence for a layered sphere.
-    K = ViscoLaw((t, tp) -> TensISO{3}(exp(-(t - tp))))
-    k2 = LayeredSphere((0.6, 1.0), (TensISO{3}(5.0), TensISO{3}(1.0)); interfaces = (KapitzaInterface(0.1), PerfectInterface()))
-    rve = RVE()
-    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K); fraction = :rest)
-    add_phase!(rve, :S, k2, Dict(:K => K); fraction = 0.3)
-    @test_throws "has no order-2" homogenize_alv(rve, MoriTanaka(), :K; times)
-    # The self-consistent schemes build an ellipsoid's Hill kernel.
+    # The row-by-row Newton solver of the self-consistent scheme, internal,
+    # builds an ellipsoid's Hill kernel; the Picard one takes layered spheres.
     r = RVE()
     add_phase!(r, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => law); fraction = :rest)
     grain = LayeredSphere((0.6, 1.0), (iso_stiffness(5.0, 1.0), iso_stiffness(3.0, 1.5)))
     add_phase!(r, :S, grain, Dict(:C => law); fraction = 0.3)
-    @test_throws "is a LayeredSphere" homogenize_alv(r, SelfConsistent(), :C; times)
-    @test_throws "is a LayeredSphere" homogenize_alv(r, AsymmetricSelfConsistent(), :C; times)
     @test_throws "is a LayeredSphere" MeanFieldHomogenization.Viscoelasticity.self_consistent_alv_newton(r, :C; times)
     # A reference medium with an infinite modulus has no Volterra matrix either.
     grain = LayeredSphere((0.6, 1.0), (iso_stiffness(5.0, 1.0), iso_stiffness(3.0, 1.5)))
@@ -495,4 +487,38 @@ end
     f = [0.7, 0.3 * 0.6^3, 0.3 * (1 - 0.6^3)]
     @test homogenize_alv(cell(s, matrix, matrix), Voigt(), :C; times) ≈ V.voigt_alv(kernels, f) rtol = 1.0e-12
     @test homogenize_alv(cell(s, matrix, matrix), Reuss(), :C; times) ≈ V.reuss_alv(kernels, f) rtol = 1.0e-12
+end
+
+@testset "Self-consistent schemes with a layered sphere — Echoes reference" begin
+    # The aging two-layer sphere bonded by springs of the test above, now in the
+    # self-consistent and the asymmetric self-consistent schemes, which take its
+    # concentration and average stress from the recurrences against the running
+    # estimate. Reference: Echoes `homogenize_visco(…, scheme = SC / ASC)`.
+    V = MeanFieldHomogenization.Viscoelasticity
+    times = [0.0, 0.4, 1.5]
+    core = ViscoLaw(
+        (t, tp) -> t >= tp ?
+            TensISO{3}(6.0 * (1 + 0.5tp) * exp(-(t - tp) / 0.8), 2.0 * (1 + tp) * exp(-(t - tp) / 1.5)) :
+            TensISO{3}(0.0, 0.0)
+    )
+    shell = ViscoLaw(
+        (t, tp) -> t >= tp ? TensISO{3}(9.0 * exp(-(t - tp) / 2.0), 3.0 * exp(-(t - tp) / 0.7)) :
+            TensISO{3}(0.0, 0.0)
+    )
+    matrix = ViscoLaw((t, tp) -> TensISO{3}(3.0 * exp(-(t - tp) / 0.6), exp(-(t - tp) / 2.0)))
+    s = LayeredSphere(
+        (0.6, 1.0), (core, shell);
+        interfaces = (SpringInterface(5.0, 2.0), SpringInterface(8.0, 3.0))
+    )
+    lower(rows) = [i >= j ? rows[i][j] : 0.0 for i in 1:3, j in 1:3]
+    ref = lower([[3.1720851067666516], [-0.6151482117335838, 2.562741111606682], [-0.15609507295966135, -1.264045056074525, 2.0803249728505318]]),
+        lower([[1.1245747421770969], [-0.11894525188256706, 1.0144383323322153], [-0.06418438435835679, -0.32178294540212, 0.8875071805220517]])
+    for scheme in (SelfConsistent(), AsymmetricSelfConsistent())
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => matrix); fraction = :rest)
+        add_phase!(rve, :I, s, Dict(:C => matrix); fraction = 0.3)
+        α, β = V.iso_params_from_blocks(homogenize_alv(rve, scheme, :C; times))
+        @test α ≈ ref[1] rtol = 1.0e-8
+        @test β ≈ ref[2] rtol = 1.0e-8
+    end
 end

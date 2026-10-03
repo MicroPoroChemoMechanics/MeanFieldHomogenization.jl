@@ -387,7 +387,7 @@ Once the matrix ages, the time route is the only one left.
 schemes along it on an ageing matrix, and shows where the shape assumed for the
 spatial distribution of the inclusions decides the answer. The time
 discretization behind [`homogenize_alv`](@ref) is derived in
-[Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity).
+[Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity).
 
 ---
 

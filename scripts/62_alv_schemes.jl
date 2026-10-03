@@ -3,7 +3,7 @@
 # !!! info "Before this page"
 #     The tutorial [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time),
 #     which validates the time route used alone below, and the theory page
-#     [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity), where the
+#     [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity), where the
 #     Volterra form of each scheme is derived.
 #
 # Every mean-field scheme `MeanFieldHomogenization` implements in elasticity also exists on

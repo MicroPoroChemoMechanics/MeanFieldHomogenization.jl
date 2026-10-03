@@ -77,9 +77,16 @@ function self_consistent_alv(
         Union{Nothing, AbstractMatrix},
         Union{Nothing, AbstractMatrix},
     }[]
+    # Layered spheres have no Hill kernel: their concentration and stress come
+    # from the recurrences, against the running estimate, at every iteration.
+    layered_data = NamedTuple[]
     for name in incl_names
         ph = rve.phases[name]
         a = rve.amounts[name]
+        if ph.geometry isa LayeredSphere
+            push!(layered_data, (geom = ph.geometry, f = _amount_value(rve, name), sym = phase_symmetrize(rve, name)))
+            continue
+        end
         if a isa CrackDensity
             ph.geometry isa MFH_Core.AbstractCrack ||
                 throw(ArgumentError("self_consistent_alv: phase $name has CrackDensity but geometry is not a crack"))
@@ -109,7 +116,6 @@ function self_consistent_alv(
         # exactly the same reason and with the same two ways out.
         _alv_diff_keeps_iso(ph.geometry, sym, C_r) ||
             _alv_diff_iso_error(name, "the shape or the anisotropy")
-        _alv_sc_refuse_layered(ph.geometry, name, "self_consistent_alv")
         push!(C_phases, C_r)
         push!(geometries, ph.geometry)
         push!(fractions, _amount_value(rve, name))
@@ -125,6 +131,7 @@ function self_consistent_alv(
     #    input (kernels, fractions, geometry tensors, crack data) so Dual
     #    parameters propagate through the fixed point.
     Tp = _alv_promoted_eltype(C_phases, fractions, U_M_phases, crack_data)
+    Tp = _alv_layered_eltype(Tp, layered_data, C_0, times)
     n = length(times)
     sz = 6 * n
     Id = _identity_alv(n, Tp)
@@ -145,17 +152,18 @@ function self_consistent_alv(
         # cracks are present (the crack term has no `J_m` factor),
         # giving the ECHOES SC fixed point that doesn't match the
         # textbook `(Σ f·C·A)·(Σ f·A)^{-1}` form.
+        extra_A, extra_CA = _sc_alv_layered_terms(layered_data, C_m, times)
         if isempty(crack_data)
             C_m_new = _sc_alv_step(
                 C_m, C_phases, U_M_phases, V_M_phases,
-                fractions, n, Id, symmetrizes
+                fractions, n, Id, symmetrizes; extra_A, extra_CA
             )
         else
             C_m_new = _sc_alv_step_echoes_form(
                 C_m, C_phases,
                 U_M_phases, V_M_phases,
                 fractions, n, Id, symmetrizes,
-                crack_data
+                crack_data; extra_A, extra_CA
             )
         end
         Δ = norm(C_m_new - C_m)
@@ -177,16 +185,44 @@ function self_consistent_alv(
     return select_best ? C_best : C_m
 end
 
-# The self-consistent bodies build the Hill kernel of each phase from the shape
-# of an ellipsoid. A layered sphere has none; its contribution comes from the
-# layered-sphere recurrences, which these bodies do not call. Refused by name
+# The concentration `A` and the average stress `B = Ñ + C ∘ A` of a layered
+# sphere against the running estimate `C`, from its recurrences: what a phase
+# with a Hill kernel gets from its dilute concentration.
+function _alv_layered_AB(s::LayeredSphere, C::AbstractMatrix, times)
+    A = strain_strain_loc_alv(s, C, times)
+    return A, stiffness_contribution_alv(s, C, times) .+ C * A
+end
+
+# Their volume-weighted, symmetrized sums over the layered phases.
+function _sc_alv_layered_terms(layered_data, C_m::AbstractMatrix, times)
+    isempty(layered_data) && return nothing, nothing
+    A_sum = zero(C_m)
+    B_sum = zero(C_m)
+    for d in layered_data
+        A, B = _alv_layered_AB(d.geom, C_m, times)
+        A_sum .+= d.f .* _maybe_symmetrize_alv(A, d.sym)
+        B_sum .+= d.f .* _maybe_symmetrize_alv(B, d.sym)
+    end
+    return A_sum, B_sum
+end
+
+# The element type a layered phase brings to the running estimate (a dual
+# number in one of its layers, for instance), probed once against `C_0`.
+function _alv_layered_eltype(Tp, layered_data, C_0, times)
+    for d in layered_data
+        Tp = promote_type(Tp, eltype(strain_strain_loc_alv(d.geom, C_0, times)), typeof(d.f))
+    end
+    return Tp
+end
+
+# The Newton self-consistent body builds the Hill kernel of each phase from
+# the shape of an ellipsoid and has no layered-sphere branch. Refused by name
 # rather than through a `MethodError` of `tens_UA`.
 _alv_sc_refuse_layered(::Any, ::Symbol, ::AbstractString) = nothing
 _alv_sc_refuse_layered(::LayeredSphere, name::Symbol, scheme::AbstractString) = throw(
     ArgumentError(
-        "$scheme: phase $name is a LayeredSphere, which this ALV scheme does not " *
-            "support; Dilute, DiluteDual, MoriTanaka, Maxwell, PonteCastanedaWillis, " *
-            "Voigt, Reuss and DifferentialScheme do."
+        "$scheme: phase $name is a LayeredSphere, which this solver does not " *
+            "support; `homogenize_alv(rve, SelfConsistent(), prop; times)` does."
     )
 )
 
@@ -261,12 +297,16 @@ function _sc_alv_step_echoes_form(
         fractions::AbstractVector{<:Real},
         n::Int, Id::AbstractMatrix,
         symmetrizes::AbstractVector{<:AbstractSymmetrize},
-        crack_data
+        crack_data;
+        extra_A::Union{Nothing, AbstractMatrix} = nothing,
+        extra_CA::Union{Nothing, AbstractMatrix} = nothing
     )
     sz = size(C_m, 1)
     T = eltype(C_m)
     A_avg = zeros(T, sz, sz)   # = Σ f·sym(A_α)            (no J_m yet)
     CA_avg = zeros(T, sz, sz)   # = Σ f·sym(C_α·A_α)        (no J_m yet)
+    extra_A === nothing || (A_avg .+= extra_A)
+    extra_CA === nothing || (CA_avg .+= extra_CA)
     α_m, β_m = iso_params_from_blocks(C_m)
     M_long = @. (α_m + 2 * β_m) / 3
     M_shear = β_m ./ 2
@@ -316,13 +356,7 @@ function _build_sc_crack_extra_J(C_m::AbstractMatrix, crack_data)
     _is_iso_block(C_m) ||
         error("self_consistent_alv with cracks: only iso running estimate is supported")
     α_c, β_c = _iso_pair(C_m)
-    α_p_2β = α_c .+ 2β_c
-    α_p_βh = α_c .+ β_c ./ 2
-    α_p_β = α_c .+ β_c
-    βα1 = β_c * α_p_βh
-    βα2 = β_c * α_p_β
-    B_n_base = (8 / (3π)) .* volterra_left_divide(βα1, α_p_2β)
-    B_t_base = (32 / (9π)) .* volterra_left_divide(βα2, α_p_2β)
+    B_n_base, B_t_base = _penny_cod_alv(α_c, β_c)
     Iₙ = Matrix{T}(LinearAlgebra.I, size(α_c, 1), size(α_c, 1))
     @inbounds for (geom, ε, sym, Rn_mat, Rt_mat) in crack_data
         B_n = B_n_base
@@ -364,7 +398,8 @@ function _sc_alv_step(
         fractions::AbstractVector{<:Real},
         n::Int, Id::AbstractMatrix,
         symmetrizes::AbstractVector{<:AbstractSymmetrize};
-        extra_A::Union{Nothing, AbstractMatrix} = nothing
+        extra_A::Union{Nothing, AbstractMatrix} = nothing,
+        extra_CA::Union{Nothing, AbstractMatrix} = nothing
     )
     sz = size(C_m, 1)
     T = eltype(C_m)
@@ -372,6 +407,9 @@ function _sc_alv_step(
     CA_avg = zeros(T, sz, sz)
     if extra_A !== nothing
         @. A_avg += extra_A
+    end
+    if extra_CA !== nothing
+        @. CA_avg += extra_CA
     end
     # Iso parameters of the running estimate → scalar Volterra inverses
     # for the Hill-kernel time-space decoupling.

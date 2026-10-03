@@ -1,12 +1,13 @@
 # [Viscoelastic homogenization](@id man-viscoelasticity)
 
 !!! info "Before this page"
-    [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity), where the
+    [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity), where the
     Volterra discretization and the ALV schemes used below are derived, and
     [Homogenization schemes](@ref man-schemes), whose `RVE` machinery the ALV
     pipeline reuses.
 
-The ALV (ageing linear viscoelastic) pipeline reuses the [`RVE`](@ref)
+The ALV (aging linear Volterra) pipeline, viscoelasticity at order 4 and its
+conduction and diffusion counterpart at order 2, reuses the [`RVE`](@ref)
 machinery of the elastic side: replace each phase property by a
 [`ViscoLaw`](@ref) and pass a `times` grid to [`homogenize_alv`](@ref).
 
@@ -303,7 +304,27 @@ Result is a `(3n × 3n)` block matrix. See
 `scripts/56_ageing_creep_order2.jl`.
 
 The order-2 pipeline implements the bounds, `Dilute`, `DiluteDual`,
-`MoriTanaka`, `Maxwell` and `DifferentialScheme`.
+`MoriTanaka`, `Maxwell`, `PonteCastanedaWillis`, `SelfConsistent` and
+`DifferentialScheme`. `Maxwell` and `PonteCastanedaWillis` take the Hill kernel
+of the distribution shape the RVE declares (`RVE(; distribution_shape = …)`).
+
+A [`LayeredSphere`](@ref) enters every one of them, with
+`KapitzaInterface` and `SurfaceConductiveInterface` between its layers. As at
+order 4, the phase law is a placeholder: the layers carry their own kernels,
+elastic tensors or `ViscoLaw`s.
+
+```julia
+grain = LayeredSphere((0.8, 1.0), (law_κ, heaviside_law(TensISO{2,3}(5.0)));
+                      interfaces = (KapitzaInterface(0.1), SurfaceConductiveInterface(0.3)))
+add_phase!(rve_κ, :G, grain, Dict(:K => law_κ); fraction = 0.2)
+gradient_gradient_loc_alv(grain, law_κ, times)       # whole-sphere concentration, 3n × 3n
+conductivity_contribution_alv(grain, law_κ, times)   # its contribution
+```
+
+The jumps follow the dictionary ``\boldsymbol\sigma\equiv-\underline q``: a Kapitza
+resistance gives ``[\![T]\!] = \rho\,\sigma_n = -\rho\,q_n``, outer value minus inner
+one, and `external = false` leaves the outer interface to the matrix, as in
+elasticity.
 
 `symmetrize` is honored in both orders. The projection is applied to the
 dilute quantities (`Ã_α`, `Ñ_α`) block by block, with the projector of the
@@ -342,9 +363,7 @@ That splits the schemes in two:
     that: **spherical inclusions** with an isotropic phase law, or an
     **isotropic orientation average**, `symmetrize = :iso`, which is also
     what randomly oriented inclusions or cracks mean physically. A
-    `LayeredSphere`, isotropic by construction, is accepted by
-    `DifferentialScheme`; the self-consistent schemes do not support it yet
-    and say so.
+    `LayeredSphere`, isotropic by construction, is always accepted.
 
     An RVE that satisfies neither raises an explicit `ArgumentError` naming
     the offending phase, rather than silently reading iso parameters off a
@@ -382,8 +401,11 @@ homogenize_alv(rve, DifferentialScheme(; formulation = :compliance), :C; times =
 ```
 
 Supported inclusions: ellipsoids and spheroids, `LayeredSphere`, and
-crack families through their density — subject to the isotropic-reference
-requirement of [section 7](@ref man-alv-iso-reference).
+crack families through their density (order 4) — subject to the
+isotropic-reference requirement of [section 7](@ref man-alv-iso-reference). The
+self-consistent and asymmetric self-consistent schemes accept the same
+inclusions at order 4; at order 2 the self-consistent scheme takes ellipsoids
+and layered spheres.
 
 ## 9. Symmetry-class fast paths
 

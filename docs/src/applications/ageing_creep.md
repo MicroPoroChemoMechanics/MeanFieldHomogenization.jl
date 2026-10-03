@@ -1,7 +1,7 @@
 # [Ageing creep of solidifying cementitious materials](@id app-ageing-creep)
 
 !!! info "Before this page"
-    [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity), where the
+    [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity), where the
     time-domain schemes and their Volterra algebra are derived,
     [Viscoelastic homogenization](@ref man-viscoelasticity) for
     [`homogenize_alv`](@ref) and the relaxation laws, and the tutorial

@@ -1,9 +1,8 @@
 # =============================================================================
 #  cracks_alv.jl — pure penny crack in an iso ALV matrix.
 #
-#  This first implementation covers **pure penny cracks (η = 1)** in an
-#  **isotropic ALV matrix** (no interface stiffness yet — the
-#  `(Rn(t,t'), Rt(t,t'))` interface laws will be added in a follow-up).
+#  Penny cracks (η = 1) in an **isotropic ALV matrix**, traction-free or with
+#  the `(Rn(t,t'), Rt(t,t'))` interface stiffness laws.
 #
 #  ── Time-space decoupling ─────────────────────────────────────────────────
 #
@@ -16,10 +15,13 @@
 #       B_nn = (8 / (3π))  · (α + 2β) / (β · (α + β/2))
 #       B_t  = (32 / (9π)) · (α + 2β) / (β · (α + β))
 #
-#  In iso ALV, every "/" becomes a Volterra inverse and every "·"
-#  becomes a Volterra product on `n × n` matrices:
-#       B̃_nn = (8 / (3π))  · (α + 2β) ∘ (β ∘ (α + β/2))^{-vol}
-#       B̃_t  = (32 / (9π)) · (α + 2β) ∘ (β ∘ (α + β))^{-vol}
+#  In iso ALV every "/" becomes a Volterra inverse and every "·" a Volterra
+#  product on `n × n` matrices, and the ORDER of the factors is not free: an
+#  aging matrix makes α and β non-commuting. It is fixed by the flat limit of
+#  a void spheroid, whose Hill kernel combines (k + 4μ/3)^{-vol} and μ^{-vol}
+#  alone (see `_penny_cod_alv`):
+#       B̃_nn = (8 / (3π))  · (α + β/2)^{-vol} ∘ (α + 2β) ∘ β^{-vol}
+#       B̃_t  = (32 / (9π)) · (α + β)^{-vol}   ∘ (α + 2β) ∘ β^{-vol}
 #
 #  The compliance contribution H̃ = (3/4) · n̂ ⊗ˢ B̃ ⊗ˢ n̂ is, in the
 #  canonical crack-aligned axis n̂ = e₃ + Mandel basis :

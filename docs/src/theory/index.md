@@ -148,7 +148,7 @@ problem itself that must be generalized.
 | Page | What it adds |
 | :--- | :----------- |
 | [The Laplace-Carson route](@ref th-laplace-carson) | the correspondence principle: a non-ageing problem solved as an elastic one, transform by transform |
-| [Ageing linear viscoelasticity](@ref th-viscoelasticity) | moduli become Volterra operators; the algebra of the chain is unchanged |
+| [Aging linear Volterra behavior](@ref th-viscoelasticity) | moduli and conductivities become Volterra operators; the algebra of the chain is unchanged, the order of its factors is not free |
 
 ## Periodic homogenization
 

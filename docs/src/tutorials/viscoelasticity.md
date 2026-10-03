@@ -4,7 +4,7 @@
     The tutorial [A first homogenization](@ref tut-first-estimate), whose RVE
     and schemes are reused below with complex moduli, and the theory pages
     [The Laplace-Carson route](@ref th-laplace-carson), for the correspondence
-    principle, and [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity),
+    principle, and [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity),
     for the time-domain calculation of the second section.
 
 Every scheme seen so far takes an elastic stiffness tensor and returns

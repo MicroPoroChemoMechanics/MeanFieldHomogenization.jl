@@ -343,6 +343,7 @@ end
         include("Viscoelasticity/test_sc_alv.jl")
         include("Viscoelasticity/test_sc_alv_newton.jl")
         include("Viscoelasticity/test_layered_alv.jl")
+        include("Viscoelasticity/test_layered_alv_order2.jl")
         include("Viscoelasticity/test_ti_alv.jl")
         include("Viscoelasticity/test_ortho_alv.jl")
         include("Viscoelasticity/test_ortho_dispatch_alv.jl")

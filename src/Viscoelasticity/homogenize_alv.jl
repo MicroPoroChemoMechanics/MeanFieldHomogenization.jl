@@ -318,17 +318,17 @@ once from the matrix `ViscoLaw` sample type):
     permittivity) → returns ``3n\\times 3n`` matrix via the order-2 ALV
     pipeline (`hill_kernel_order2`, time-space decoupling).
 
-Supports two inclusion-geometry families (order-4 only):
+Supports two inclusion-geometry families, in both orders:
   * Single-shape ellipsoidal (`Ellipsoid`, `Spheroid`): the standard
     Hill-kernel + dilute-concentration pipeline.
-  * `LayeredSphere`: bulk + shear ALV recurrences (see
-    [`bulk_localization_alv`](@ref) and
-    [`shear_localization_alv`](@ref)) feed
-    [`stiffness_contribution_alv`](@ref) and
-    [`strain_strain_loc_alv`](@ref) directly — no Hill kernel is
-    needed.  In this case `phase_property(rve, name, :C)` is ignored
-    (the per-layer moduli stored in the geometry are used instead);
-    pass any `ViscoLaw` (e.g. `heaviside_law(C_0)`) as a placeholder.
+  * `LayeredSphere`: the ALV recurrences feed its concentration and
+    contribution directly — no Hill kernel is needed. At order 4 these are
+    [`strain_strain_loc_alv`](@ref) and [`stiffness_contribution_alv`](@ref)
+    (bulk and shear recurrences, [`bulk_localization_alv`](@ref),
+    [`shear_localization_alv`](@ref)); at order 2,
+    [`gradient_gradient_loc_alv`](@ref) and [`conductivity_contribution_alv`](@ref).
+    The phase property is ignored (the layers carry their own kernels); pass
+    any `ViscoLaw` (e.g. `heaviside_law(C_0)`) as a placeholder.
 
 `symmetrize` is honored in both orders, with the projector of the matching
 tensor order (``6\\times 6`` Mandel blocks for order 4, 2-tensor blocks for order 2 —
@@ -347,9 +347,7 @@ and hence `symmetrize` — does not enter them.
     spherical inclusion with an isotropic phase law, or an isotropic
     orientation average `symmetrize = :iso`, which is also what randomly
     oriented inclusions and cracks mean physically. A `LayeredSphere`, whose
-    contribution is isotropic by construction, is accepted by
-    `DifferentialScheme` but not yet by the self-consistent schemes, which
-    refuse it by name.
+    contribution is isotropic by construction, is always accepted.
 
     An RVE satisfying neither raises an `ArgumentError` naming the phase,
     rather than reading iso parameters off a matrix that is not isotropic.

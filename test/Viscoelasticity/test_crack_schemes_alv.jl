@@ -155,3 +155,24 @@ end
         @test a ≈ b rtol = 1.0e-4
     end
 end
+
+@testset "ALV penny cracks in an aging matrix, self-consistent — Echoes reference" begin
+    # The running estimate takes the COD tensor of `_penny_cod_alv` too, in the
+    # Budiansky–O'Connell branch of the self-consistent scheme. Reference: Echoes
+    # `homogenize_visco(…, scheme = SC)` with a crack of aspect 1e-7, whence the
+    # tolerance.
+    V = MeanFieldHomogenization.Viscoelasticity
+    times = [0.0, 0.4, 1.5]
+    matrix = ViscoLaw(
+        (t, tp) -> t >= tp ?
+            TensISO{3}(6.0 * (1 + 0.5tp) * exp(-(t - tp) / 0.8), 2.0 * (1 + tp) * exp(-(t - tp) / 1.5)) :
+            TensISO{3}(0.0, 0.0)
+    )
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => matrix); fraction = :rest)
+    add_phase!(rve, :F, PennyCrack(1.0), Dict(:C => matrix); density = 0.1, symmetrize = :iso)
+    α, β = V.iso_params_from_blocks(homogenize_alv(rve, SelfConsistent(), :C; times))
+    lower(rows) = [i >= j ? rows[i][j] : 0.0 for i in 1:3, j in 1:3]
+    @test α ≈ lower([[4.272689333671794], [-1.2841395313625679, 4.003516637323179], [-0.36990479296289147, -3.601174676535309, 4.755441449535003]]) rtol = 1.0e-6
+    @test β ≈ lower([[1.7297859422284707], [-0.5474610920054662, 1.864948809282462], [-0.2589671145064161, -1.8299722030102268, 2.712448059696108]]) rtol = 1.0e-6
+end

@@ -223,13 +223,13 @@ function hill_kernel_order2_at(ell, K_0::AbstractMatrix)
     return P
 end
 
-# A layered sphere has no order-2 recurrence in the ALV setting. Refused by name
-# here rather than through a `MethodError` of `tens_IA` on its geometry.
+# A layered sphere has no Hill kernel: its contribution comes from the
+# recurrence of `layered_alv_order2.jl`. Refused by name rather than through a
+# `MethodError` of `tens_IA`, should a path ask for one.
 hill_kernel_order2_at(::LayeredSphere, ::AbstractMatrix) = throw(
     ArgumentError(
-        "a LayeredSphere has no order-2 (conduction, diffusion) ALV recurrence: its " *
-            "layers and interfaces are handled by the time-independent conduction path " *
-            "(`homogenize(rve, scheme, :K)`) and by the order-4 ALV path only."
+        "a LayeredSphere has no Hill kernel; its order-2 ALV contribution is " *
+            "`conductivity_contribution_alv`."
     )
 )
 
@@ -483,12 +483,23 @@ function _homogenize_alv_order2(
         K_r_law = phase_property(rve, name, prop)
         K_r_law isa ViscoLaw ||
             throw(ArgumentError("homogenize_alv_order2: phase $name property is not a ViscoLaw"))
-        K_r = _trapezoidal_relaxation(K_r_law, times, 3)
-        P_r = hill_kernel_order2(ph.geometry, K_M_law, times)
         # `symmetrize` is honored on the dilute quantities, exactly as the
         # order-4 pipeline does (`homogenize_alv.jl`), and with the order-2
         # projector: the blocks here are 2-tensors, not 6×6 Mandel blocks.
         sym = phase_symmetrize(rve, name)
+        if ph.geometry isa LayeredSphere
+            # No Hill kernel: the recurrence gives the concentration and the
+            # contribution of the whole sphere, and its layers the stiffness
+            # each bound averages (the phase law is a placeholder).
+            s = ph.geometry
+            return (
+                K_r = scheme isa Reuss ? _layer_reuss_alv2(s, times) : _layer_voigt_alv2(s, times),
+                A_dut = _maybe_symmetrize_alv2(gradient_gradient_loc_alv(s, K_M_law, times), sym),
+                N_dut = _maybe_symmetrize_alv2(conductivity_contribution_alv(s, K_M_law, times), sym),
+            )
+        end
+        K_r = _trapezoidal_relaxation(K_r_law, times, 3)
+        P_r = hill_kernel_order2(ph.geometry, K_M_law, times)
         return (
             K_r = K_r,
             A_dut = _maybe_symmetrize_alv2(
@@ -537,8 +548,8 @@ function _homogenize_alv2_dispatch(
     throw(
         ArgumentError(
             "$(nameof(typeof(scheme))) has no order-2 (conduction, diffusion) ALV " *
-                "implementation; Voigt, Reuss, Dilute, DiluteDual, MoriTanaka, Maxwell " *
-                "and DifferentialScheme have one."
+                "implementation; Voigt, Reuss, Dilute, DiluteDual, MoriTanaka, Maxwell, " *
+                "PonteCastanedaWillis, SelfConsistent and DifferentialScheme have one."
         )
     )
 end
@@ -594,14 +605,39 @@ function _homogenize_alv2_dispatch(
 end
 
 function _homogenize_alv2_dispatch(
-        rve::RVE, ::Maxwell, ::Symbol,
+        rve::RVE, scheme::Maxwell, ::Symbol,
         times::AbstractVector,
         K_0, K_phases, A_duts, contribs,
         fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
-    # Default distribution shape: spherical
-    H_0 = hill_kernel_order2(Spheroid(1.0), K_M_law, times)
+    # The Hill kernel of the distribution shape the RVE declares, as at order
+    # 4 and in the elastic scheme; it used to be a sphere whatever the RVE said.
+    H_0 = hill_kernel_order2(Schemes.distribution_shape(rve, scheme).shape, K_M_law, times)
     return maxwell_alv_order2(K_0, contribs, fractions; H_0 = H_0)
+end
+
+# Ponte Castañeda–Willis: the Maxwell formula on the shape of a uniform
+# distribution, as at order 4.
+function _homogenize_alv2_dispatch(
+        rve::RVE, scheme::PonteCastanedaWillis, ::Symbol,
+        times::AbstractVector,
+        K_0, K_phases, A_duts, contribs,
+        fractions, f_M, K_M_law, matrix::Symbol; kw...
+    )
+    dist = Schemes.distribution_shape(rve, scheme)
+    dist isa UniformDistribution ||
+        throw(ArgumentError("PCW-ALV: only UniformDistribution is currently supported"))
+    H_d = hill_kernel_order2(dist.shape, K_M_law, times)
+    return maxwell_alv_order2(K_0, contribs, fractions; H_0 = H_d)
+end
+
+function _homogenize_alv2_dispatch(
+        rve::RVE, sc::SelfConsistent, prop::Symbol,
+        times::AbstractVector,
+        K_0, K_phases, A_duts, contribs,
+        fractions, f_M, K_M_law, matrix::Symbol; kw...
+    )
+    return self_consistent_alv_order2(rve, prop; times, matrix, sc.options...)
 end
 
 function _homogenize_alv2_dispatch(
@@ -705,7 +741,8 @@ function differential_alv_order2(
         K_r_law = phase_property(rve, name, prop)
         K_r_law isa ViscoLaw ||
             throw(ArgumentError("differential_alv_order2: phase $name property is not a ViscoLaw"))
-        K_r = _trapezoidal_relaxation(K_r_law, times, 3)
+        # A layered sphere's law is a placeholder: its layers carry the kernels.
+        K_r = ph.geometry isa LayeredSphere ? K_0 : _trapezoidal_relaxation(K_r_law, times, 3)
         _alv_diff_keeps_iso(ph.geometry, sym, nothing) ||
             _alv_diff_iso_error(name, "the shape")
         push!(
@@ -732,13 +769,13 @@ function differential_alv_order2(
     for sd in solid_data
         Tp = promote_type(
             Tp, eltype(sd.K_r), typeof(sd.target),
-            eltype(hill_kernel_order2_at(sd.geom, K_0))
+            eltype(_diff_alv2_contribution(sd.geom, sd.K_r, K_0, times))
         )
     end
     sz = 3 * n
     dual = formulation === :compliance
     x0 = vec(Tp.(dual ? volterra_inverse(K_0; block_size = 3) : K_0))
-    ode_p = (n = n, sz = sz, solid_data = solid_data, paths = paths, dual = dual)
+    ode_p = (n = n, sz = sz, solid_data = solid_data, paths = paths, dual = dual, times = times)
     rhs! = (du, u, p, τ) -> _diff_alv2_ode_rhs!(du, u, p, τ)
     prob = ODEProblem(rhs!, x0, (0.0, 1.0), ode_p)
     sol = solve(
@@ -752,6 +789,13 @@ function differential_alv_order2(
     P_end = reshape(sol.u[end], sz, sz)
     return dual ? volterra_inverse(P_end; block_size = 3) : P_end
 end
+
+# The dilute contribution of one phase against the running medium `K_curr`:
+# the Hill kernel of an ellipsoid, the recurrence of a layered sphere.
+_diff_alv2_contribution(geom, K_r, K_curr, times) =
+    dilute_contribution_alv_order2(K_r, K_curr, hill_kernel_order2_at(geom, K_curr))
+_diff_alv2_contribution(s::LayeredSphere, K_r, K_curr, times) =
+    conductivity_contribution_alv(s, K_curr, times)
 
 function _diff_alv2_ode_rhs!(du, u, p, τ)
     sz = p.sz
@@ -776,8 +820,7 @@ function _diff_alv2_ode_rhs!(du, u, p, τ)
     @inbounds for (i, r) in enumerate(p.solid_data)
         dφᵢ = df[i] + (f[i] / f0) * sum_df
         iszero(dφᵢ) && continue
-        P_r = hill_kernel_order2_at(r.geom, K_curr)
-        contrib = dilute_contribution_alv_order2(r.K_r, K_curr, P_r)
+        contrib = _diff_alv2_contribution(r.geom, r.K_r, K_curr, p.times)
         # Order-2 projector: `K_curr` is a (3n × 3n) matrix of 2-tensor
         # blocks.  Using the order-4 (6×6 Mandel) one here silently mixed two
         # consecutive TIME blocks, so the "averaged" contribution was not
@@ -804,3 +847,93 @@ homogenize_alv_order2(
     prop::Symbol; kw...
 ) =
     homogenize_alv(rve, scheme, prop; kw...)
+
+# =============================================================================
+#  Self-consistent ALV, order 2 (conduction, diffusion) — Picard on the running
+#  estimate, the order-2 twin of `self_consistent_alv`:
+#
+#      K̃ ← (Σ_α f_α B̃_α(K̃)) ∘ (Σ_α f_α Ã_α(K̃))^{-∘},
+#
+#  over every phase, the matrix included, with Ã_α the dilute concentration of
+#  phase α in the running medium and B̃_α = K̃_α ∘ Ã_α its flux. A layered
+#  sphere gives Ã_α and B̃_α = Ñ_α + K̃ ∘ Ã_α through its recurrence.
+# =============================================================================
+
+# Whether a phase keeps the running estimate isotropic, as the order-2 Hill
+# kernel against it requires: a sphere of isotropic conductivity, a layered
+# sphere, or an isotropic orientation average.
+_alv2_keeps_iso(geom, sym::AbstractSymmetrize, K_r) =
+    sym isa IsoSymmetrize || geom isa LayeredSphere ||
+    (_alv_geom_is_spherical(geom) && _is_iso_order2_block(K_r))
+
+# The concentration and the flux of one phase in the running medium `K`.
+function _sc2_phase_AB(geom, K_r, K, sym, times)
+    A = dilute_concentration_alv_order2(K_r, K, hill_kernel_order2_at(geom, K))
+    return _maybe_symmetrize_alv2(A, sym), _maybe_symmetrize_alv2(K_r * A, sym)
+end
+function _sc2_phase_AB(s::LayeredSphere, K_r, K, sym, times)
+    A = gradient_gradient_loc_alv(s, K, times)
+    B = conductivity_contribution_alv(s, K, times) .+ K * A
+    return _maybe_symmetrize_alv2(A, sym), _maybe_symmetrize_alv2(B, sym)
+end
+
+"""
+    self_consistent_alv_order2(rve, prop; times, matrix = nothing, abstol = 1e-10,
+                               reltol = 1e-8, maxiters = 200, damping = 0.0,
+                               verbose = false) -> Matrix
+
+Order-2 (conduction, diffusion) self-consistent estimate in the aging linear
+Volterra setting: the fixed point of
+``\\widetilde{\\boldsymbol K} = \\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol K}_\\alpha\\circ\\widetilde{\\boldsymbol A}_\\alpha\\bigr)\\circ\\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol A}_\\alpha\\bigr)^{-\\circ}``,
+every concentration ``\\widetilde{\\boldsymbol A}_\\alpha`` being taken in the running estimate
+``\\widetilde{\\boldsymbol K}``, by Picard iteration from the matrix (the phase `matrix`, or
+the one with `fraction = :rest`). A [`LayeredSphere`](@ref) phase enters
+through its recurrence. Every phase must keep the estimate isotropic, as the
+order-2 Hill kernel against it requires: a sphere of isotropic conductivity, a
+layered sphere, or `symmetrize = :iso`. Reached through
+`homogenize_alv(rve, SelfConsistent(), :K; times)`.
+"""
+function self_consistent_alv_order2(
+        rve::RVE, prop::Symbol;
+        times::AbstractVector{<:Real},
+        matrix::Union{Nothing, Symbol} = nothing,
+        abstol::Real = 1.0e-10,
+        reltol::Real = 1.0e-8,
+        maxiters::Int = 200,
+        damping::Real = 0.0,
+        verbose::Bool = false
+    )
+    m = host_phase_name(rve, matrix, "self_consistent_alv_order2")
+    K_M_law = phase_property(rve, m, prop)
+    K_M_law isa ViscoLaw ||
+        throw(ArgumentError("self_consistent_alv_order2: matrix property is not a ViscoLaw"))
+    K_M = _trapezoidal_relaxation(K_M_law, times, 3)
+    data = map([m; inclusion_phase_names(rve, m)]) do name
+        rve.amounts[name] isa CrackDensity && throw(
+            ArgumentError("self_consistent_alv_order2: phase :$(name) is a crack family, which the order-2 ALV schemes do not support.")
+        )
+        ph = rve.phases[name]
+        sym = phase_symmetrize(rve, name)
+        law = phase_property(rve, name, prop)
+        law isa ViscoLaw ||
+            throw(ArgumentError("self_consistent_alv_order2: phase $name property is not a ViscoLaw"))
+        K_r = ph.geometry isa LayeredSphere ? K_M : _trapezoidal_relaxation(law, times, 3)
+        _alv2_keeps_iso(ph.geometry, sym, K_r) ||
+            _alv_diff_iso_error(name, "the shape or the anisotropy")
+        f = name === m ? volume_fraction(rve, m) : _amount_value(rve, name)
+        return (geom = ph.geometry, K_r = K_r, f = f, sym = sym)
+    end
+    K = K_M
+    for iter in 1:maxiters
+        AB = [_sc2_phase_AB(d.geom, d.K_r, K, d.sym, times) for d in data]
+        A = sum(d.f .* ab[1] for (d, ab) in zip(data, AB))
+        B = sum(d.f .* ab[2] for (d, ab) in zip(data, AB))
+        K_new = B * volterra_inverse(A; block_size = 3)
+        Δ = norm(K_new - K)
+        verbose && @info "SC-ALV order 2, iteration $iter: ‖Δ‖ = $Δ"
+        Δ ≤ abstol + reltol * norm(K) && return K_new
+        K = (1 - damping) .* K_new .+ damping .* K
+    end
+    @debug "self_consistent_alv_order2: maxiters = $(maxiters) reached without convergence" abstol reltol
+    return K
+end

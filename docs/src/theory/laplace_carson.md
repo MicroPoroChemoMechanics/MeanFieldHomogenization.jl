@@ -286,7 +286,7 @@ moduli below zero.
 
 ## Where to go next
 
-The next page, [Ageing linear viscoelasticity](@ref th-viscoelasticity), treats
+The next page, [Aging linear Volterra behavior](@ref th-viscoelasticity), treats
 the materials this route cannot, those whose kernel depends on the age at
 loading, by discretizing the Volterra operators directly. The rheological models
 whose transforms are used here are listed in

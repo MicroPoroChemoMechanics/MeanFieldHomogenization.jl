@@ -1,4 +1,4 @@
-# [Ageing linear viscoelasticity (ALV)](@id th-viscoelasticity)
+# [Aging linear Volterra behavior (ALV)](@id th-viscoelasticity)
 
 !!! info "Before this page"
     [The Laplace-Carson route](@ref th-laplace-carson), which treats the
@@ -22,6 +22,15 @@
     block-triangular matrix — and by the pointwise reciprocal
     ``\mathbb{L}^{*}(p) : \mathbb{C}^{*}(p) = \mathbb{I}`` there. That single
     difference is the whole cost and the whole benefit of each route.
+
+ALV stands for **aging linear Volterra**: a linear behavior whose response at
+time ``t`` depends on the whole history through a two-time kernel, the kernel
+being free to age. In mechanics it is aging linear viscoelasticity, the subject
+of most of this page. The same algebra holds at order 2 for a hereditary
+conductivity, diffusivity or permittivity, whose kernel ``\boldsymbol{K}(t, t')``
+maps the history of the gradient to the flux analog
+``\boldsymbol{\sigma}\equiv-\underline{q}`` of [Conventions](@ref th-notation-sigma-q); every
+statement below transposes to it by the dictionary of that page.
 
 Everything in the elastic part of this documentation — the Eshelby problem, the
 Hill polarization tensor, the concentration and contribution tensors, the
@@ -340,8 +349,13 @@ phase ``i``:
 
 The one new difficulty is bookkeeping: ``\circ`` does not commute, so the
 order of the factors is prescribed — even in the isotropic case, where every
-factor looks scalar. All ten schemes are implemented by
-[`homogenize_alv`](@ref).
+factor looks scalar. Two kernels commute only on a uniform time grid with
+non-aging laws, or when one of them is elastic; an aging law, or a logarithmic
+grid, makes the order matter at the percent level. In the Mori–Tanaka row the
+inverse stands on the right of ``\sum_i f_i\,\mathbb{N}_i``, because it maps the
+average strain to that of the matrix, on which the contributions act. All ten
+schemes are implemented by [`homogenize_alv`](@ref) at order 4; at order 2 all
+of them but the asymmetric self-consistent one.
 
 ## 6. The n-layer composite sphere
 
@@ -360,6 +374,37 @@ inverse; the transfer matrices become block matrices of size ``2n\times 2n`` and
 per-layer localization kernels and the imperfect-interface transfers. The
 composite sphere then enters the schemes exactly as in elasticity — through its
 volume-averaged concentration kernel, having no Hill tensor of its own.
+
+In conduction the temperature of layer ``k`` is
+``(A_k\,r + B_k/r^2)\cos\theta`` and, with the flux analog
+``\boldsymbol{\sigma}\equiv-\underline{q}``, the radial component is
+``\sigma_r = k_k\circ(A_k - 2B_k/r^3)\cos\theta``, the amplitudes ``A_k``, ``B_k`` being
+Volterra operators that act on the history of the remote gradient. A jump is the
+outer value minus the inner one. A Kapitza interface of resistance ``\rho`` and a
+surface-conductive one of conductance ``k^{\mathrm s}`` give, for this
+``Y_1`` harmonic,
+
+```math
+[\![T]\!] = \rho\,\sigma_r = -\rho\,q_r ,
+\qquad
+[\![\sigma_r]\!] = \frac{2k^{\mathrm s}}{r^2}\,T ,
+```
+
+the minus sign of the Kapitza law being that of the dictionary, and the
+amplitudes beyond the interface follow in closed form,
+
+```math
+A_b = (3k_b)^{-\circ}\circ\Bigl(\sigma_r^{+} + \frac{2}{r}\,k_b\circ T^{+}\Bigr),
+\qquad
+B_b = r^2\,\bigl(T^{+} - r\,A_b\bigr),
+```
+
+so that only ``3k_b`` is ever inverted and an impermeable core needs no
+inverse. As in elasticity, the concentration of the whole sphere adds to the
+material averages ``A_k\circ A_\infty^{-\circ}`` the temperature jumps
+``r_k^2\,[\![T]\!]_k/R^3``, and its flux the surface current
+``2k^{\mathrm s}\,T(r_k)\,r_k/R^3`` of the surface-conductive interfaces, the
+outer interface counting unless it is left to the matrix.
 
 ## [7. Symmetry classes and structured storage](@id th-visco-classes)
 

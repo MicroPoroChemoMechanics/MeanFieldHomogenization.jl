@@ -1,6 +1,22 @@
 # Changelog
 
-## v0.14.3 — the interfaces of the layered sphere, and three strength models
+## v0.15.0 — the interfaces of the layered sphere, checked to the aging Volterra setting
+
+### Breaking changes
+
+- Below 1.0, a minor release is breaking for the resolver: packages with
+  `MeanFieldHomogenization = "0.14"` must widen their bound to accept 0.15.
+- `kelvin_iso(k₀, μ₀, …)` now builds the compliance its docstring states,
+  `1/(3k₀)` and `1/(2μ₀)`; it built `1/k₀` and `1/μ₀`. Results computed with
+  it change (see Fixed).
+- The order-2 ALV `Maxwell` scheme takes the distribution shape the RVE
+  declares, and raises when it declares none, as at order 4 and in
+  elasticity; it used a sphere whatever the RVE said.
+- Several ALV results change because they were wrong (see Fixed): layered
+  spheres with springs between viscoelastic media, creep laws in layered
+  spheres, the Voigt and Reuss bounds of layered spheres, penny cracks in an
+  aging matrix, and the order-2 Mori–Tanaka estimate.
+
 
 The concentration tensors of a `LayeredSphere` with imperfect interfaces were
 wrong, and every scheme consumes them. The opening of a spring interface did not
@@ -12,6 +28,12 @@ moduli in the wrong order. Results computed with `SpringInterface` or
 `KapitzaInterface` on a `LayeredSphere` should be recomputed. All now agree with
 Echoes to at least ten digits and with closed forms of the literature, which
 the three new strength applications derive symbolically from the library.
+
+Checking the aging viscoelastic side against Echoes on an aging law and a
+non-uniform time grid, where Volterra matrices stop commuting, found four more
+products composed in the wrong order and three paths giving silently wrong
+results; all are fixed. The layered sphere now has its conduction counterpart
+in that setting, and the self-consistent schemes take it.
 
 ### Fixed
 
@@ -93,18 +115,17 @@ the three new strength applications derive symbolically from the library.
   inverse of `f₀ 1 + Σ f A` on the left of `Σ f N`**, against its own
   docstring and the order-4 scheme: 0.5 % off Echoes with an aging inclusion.
   It is now on the right; Mori–Tanaka equals Maxwell for one family of
-  spheres, as it must, and Voigt, Reuss, Dilute, DiluteDual, Mori–Tanaka and
-  Maxwell match Echoes to machine precision at order 2. The differential
-  scheme agrees with Echoes' explicit stepping, which converges to it as one
-  over the number of steps. A scheme with no order-2 implementation
-  (self-consistent, Ponte Castañeda–Willis) is refused by name.
-- An incompressible layer (`k = ∞`) in the ALV path now raises an
-  `ArgumentError` naming the layer, instead of failing inside a factorization:
-  it has no Volterra matrix, and the elastic functions treat it exactly. The
-  order-2 (conduction, diffusion) ALV path and the ALV self-consistent schemes
-  refuse a `LayeredSphere` by name instead of with a `MethodError`; the
-  docstring of `homogenize_alv` and the manual said the self-consistent scheme
-  accepted it.
+  spheres, as it must, and every order-2 scheme matches Echoes to machine
+  precision, or to the tolerance of its fixed point. The differential scheme
+  agrees with Echoes' explicit stepping, which converges to it as one over the
+  number of steps. The asymmetric self-consistent scheme, which has no order-2
+  implementation, is refused by name.
+- An incompressible layer (`k = ∞`), or an infinite conductivity, in the ALV
+  path now raises an `ArgumentError` naming the layer, instead of failing
+  inside a factorization: it has no Volterra matrix, and the elastic functions
+  treat it exactly. The docstring of `homogenize_alv` and the manual said the
+  self-consistent scheme accepted a `LayeredSphere`, which failed with a
+  `MethodError`; it now does accept one (see Added).
 - MFH Studio generated `maxwell_iso(k, μ, τ)` and `kelvin_iso(k, μ, τ)`, which
   no signature accepts, for a property saved with the older `visco` field.
 - **A layered sphere with an imperfect interface failed on SymPy moduli.**
@@ -140,8 +161,30 @@ the three new strength applications derive symbolically from the library.
   (`layer_eE`); the default stays the average over the material. With
   `external = true` on every layer the shells partition the sphere.
 
+- **Aging linear Volterra conduction of a `LayeredSphere`**, with Kapitza and
+  surface-conductive interfaces: `gradient_localization_alv`,
+  `gradient_gradient_loc_alv` and `conductivity_contribution_alv`, the order-2
+  twins of `bulk_localization_alv`, `strain_strain_loc_alv` and
+  `stiffness_contribution_alv`, and a layered sphere in every order-2 scheme of
+  `homogenize_alv`. A jump is the outer value minus the inner one, and the
+  Kapitza law `[T] = ρ σ_n = −ρ q_n` takes its sign from the dictionary
+  `σ ≡ −q`. Echoes' n-layer sphere reference being mechanical, the recurrence
+  is checked against exact identities on an aging core: the elastic limit, the
+  interface conditions solved as one system, and the equivalent sphere of a
+  Kapitza or surface-conductive interface.
+- **The order-2 self-consistent and Ponte Castañeda–Willis schemes**
+  (`self_consistent_alv_order2`, through `homogenize_alv(rve,
+  SelfConsistent(), :K; times)`), matching Echoes.
+- **The self-consistent and asymmetric self-consistent ALV schemes take a
+  `LayeredSphere`** at order 4, its concentration and stress coming from the
+  recurrences against the running estimate; they match Echoes.
+
 ### Changed
 
+- ALV now stands for **aging linear Volterra**, the setting of a linear,
+  hereditary, possibly aging behavior written with Volterra operators:
+  viscoelasticity at order 4 and conduction or diffusion at order 2. The API
+  keeps its names; the theory page is *Aging linear Volterra behavior*.
 - `stiffness_contribution(sphere::LayeredSphere, C₀)` returns the
   three-argument tensor `stiffness_contribution(sphere, C₀, C₀)`, which it
   duplicated; the two may differ in the last digit from before.

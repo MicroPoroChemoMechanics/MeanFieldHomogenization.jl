@@ -6,7 +6,7 @@
 #     [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities), which
 #     introduces the `set_param` lens of the first pattern; the Volterra
 #     assembly itself is derived in
-#     [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity).
+#     [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity).
 #
 # An *elastic* homogenization is differentiated in
 # [Derivatives and sensitivities](@ref tut-sensitivities), and nothing in that

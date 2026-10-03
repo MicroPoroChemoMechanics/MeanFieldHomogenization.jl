@@ -3,7 +3,7 @@
 # !!! info "Before this page"
 #     The tutorial [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes),
 #     which reads a uniaxial creep test off the Volterra matrix as done below,
-#     and the theory page [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity),
+#     and the theory page [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity),
 #     where the ageing creep function ``J(t, t')`` is defined.
 #
 # An **ageing** viscoelastic material is one whose creep compliance

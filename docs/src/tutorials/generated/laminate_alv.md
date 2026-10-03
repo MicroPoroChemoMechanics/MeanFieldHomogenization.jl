@@ -7,7 +7,7 @@ EditURL = "../../../../scripts/39_laminate_alv.jl"
 !!! info "Before this page"
     The tutorial [Periodic multilayer: the exact laminate solution](@ref tut-laminate),
     whose elastic algebra is transposed here, and the theory page
-    [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity), where the
+    [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity), where the
     Volterra products that replace the tensor products are defined.
 
 The laminate solution is pure algebra — products of Kelvin-Mandel matrices

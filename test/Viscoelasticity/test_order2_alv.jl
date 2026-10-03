@@ -112,5 +112,47 @@ end
     add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K1); fraction = 0.3)
     @test homogenize_alv(rve, MoriTanaka(), :K; times) ≈ homogenize_alv(rve, Maxwell(), :K; times) rtol = 1.0e-12
     # A scheme without an order-2 implementation says so.
-    @test_throws "has no order-2" homogenize_alv(rve, SelfConsistent(), :K; times)
+    @test_throws "has no order-2" homogenize_alv(rve, AsymmetricSelfConsistent(), :K; times)
+end
+
+@testset "order-2 ALV — self-consistent, Echoes reference" begin
+    # Spheres of an aging conductivity in a relaxing matrix; the running
+    # estimate is the reference of the order-2 Hill kernel. Reference: Echoes
+    # `homogenize_visco(…, scheme = SC, unitsize = 3)`.
+    times = [0.0, 0.4, 1.5]
+    K0 = ViscoLaw((t, tp) -> t >= tp ? TensISO{3}(2.0 * exp(-(t - tp) / 0.9)) : TensISO{3}(0.0))
+    K1 = ViscoLaw((t, tp) -> t >= tp ? TensISO{3}(5.0 * (1 + 0.5tp) * exp(-(t - tp) / 1.4)) : TensISO{3}(0.0))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K0); fraction = :rest)
+    add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K1); fraction = 0.3)
+    k = iso_order2_params_from_blocks(homogenize_alv(rve, SelfConsistent(), :K; times))
+    ref = [2.7010986358240276 0.0 0.0; -0.525261005076115 2.3571353808689532 0.0; -0.18236479432613548 -1.3361447591686293 2.1520634386635447]
+    @test k ≈ ref rtol = 1.0e-8
+    # Stopped before convergence, the iteration returns its last iterate.
+    early = homogenize_alv(rve, SelfConsistent(; maxiters = 1), :K; times)
+    @test size(early) == (9, 9) && !(iso_order2_params_from_blocks(early) ≈ ref)
+    # An aligned spheroid would take the running estimate out of the isotropic
+    # class the Hill kernel needs, unless averaged over orientations.
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K0); fraction = :rest)
+    add_phase!(r, :I, Spheroid(0.3), Dict(:K => K1); fraction = 0.3)
+    @test_throws ArgumentError homogenize_alv(r, SelfConsistent(), :K; times)
+end
+
+@testset "order-2 ALV — Maxwell and PCW on the declared distribution" begin
+    times = [0.0, 0.4, 1.5]
+    K0 = ViscoLaw((t, tp) -> t >= tp ? TensISO{3}(2.0 * exp(-(t - tp) / 0.9)) : TensISO{3}(0.0))
+    K1 = ViscoLaw((t, tp) -> t >= tp ? TensISO{3}(5.0 * (1 + 0.5tp) * exp(-(t - tp) / 1.4)) : TensISO{3}(0.0))
+    function cell(distribution)
+        r = RVE(; distribution_shape = distribution)
+        add_phase!(r, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K0); fraction = :rest)
+        add_phase!(r, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K1); fraction = 0.3)
+        return r
+    end
+    oblate = cell(Spheroid(0.5))
+    # The shape the RVE declares, not a sphere: it used to be a sphere whatever
+    # the RVE said.
+    @test !(homogenize_alv(oblate, Maxwell(), :K; times) ≈ homogenize_alv(cell(Ellipsoid(1.0, 1.0, 1.0)), Maxwell(), :K; times))
+    @test homogenize_alv(oblate, PonteCastanedaWillis(), :K; times) ≈ homogenize_alv(oblate, Maxwell(), :K; times) rtol = 1.0e-12
+    @test_throws ArgumentError homogenize_alv(cell(nothing), Maxwell(), :K; times)
 end
