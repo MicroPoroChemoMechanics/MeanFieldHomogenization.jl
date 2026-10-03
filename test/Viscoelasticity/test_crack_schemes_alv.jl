@@ -127,3 +127,31 @@ end
     # Ñ = -C̃·H̃·C̃ — round-trip identity at machine precision.
     @test isapprox(Ñ, -(C_M * H̃ * C_M); atol = 1.0e-12)
 end
+
+@testset "ALV penny crack — the flat limit of a void spheroid, aging matrix" begin
+    # A penny crack of density ε is the limit of void spheroids of aspect ω at
+    # volume fraction (4π/3) ω ε. The Hill kernel of the spheroid combines the
+    # inverses of k + 4μ/3 and μ alone, so the limit fixes the order of the
+    # Volterra factors of the COD tensor, which an aging matrix makes matter.
+    V = MeanFieldHomogenization.Viscoelasticity
+    times = [0.0, 0.3, 0.7, 1.2, 2.0]
+    matrix = ViscoLaw(
+        (t, tp) -> t >= tp ?
+            TensISO{3}(6.0 * (1 + 0.5tp) * exp(-(t - tp) / 0.8), 2.0 * (1 + tp) * exp(-(t - tp) / 1.5)) :
+            TensISO{3}(0.0, 0.0)
+    )
+    void = ViscoLaw((t, tp) -> TensISO{3}(0.0, 0.0))
+    ε, ω = 0.1, 1.0e-5
+    cracked = RVE()
+    add_phase!(cracked, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => matrix); fraction = :rest)
+    add_phase!(cracked, :F, PennyCrack(1.0), Dict(:C => matrix); density = ε, symmetrize = :iso)
+    porous = RVE()
+    add_phase!(porous, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => matrix); fraction = :rest)
+    add_phase!(porous, :V, Spheroid(ω), Dict(:C => void); fraction = 4π / 3 * ω * ε, symmetrize = :iso)
+    for (a, b) in zip(
+            V.iso_params_from_blocks(homogenize_alv(cracked, Dilute(:M), :C; times)),
+            V.iso_params_from_blocks(homogenize_alv(porous, Dilute(:M), :C; times)),
+        )
+        @test a ≈ b rtol = 1.0e-4
+    end
+end

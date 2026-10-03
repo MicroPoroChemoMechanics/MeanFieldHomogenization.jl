@@ -99,3 +99,18 @@ end
     α_back = iso_order2_params_from_blocks(M)
     @test isapprox(α, α_back; atol = 1.0e-14)
 end
+
+@testset "order-2 ALV — Mori-Tanaka is Maxwell for one family of spheres" begin
+    # (f₀ 1 + f A)^{-∘} = (1 − f P ΔK A)^{-∘} holds for Volterra operators, which
+    # do not commute: with an aging inclusion on a non-uniform grid, Mori-Tanaka
+    # must put that inverse on the right of Σ f N, as Maxwell does.
+    times = [0.0, 0.3, 0.7, 1.2, 2.0]
+    K0 = ViscoLaw((t, tp) -> t >= tp ? TensISO{3}(2.0 * exp(-(t - tp) / 0.9)) : TensISO{3}(0.0))
+    K1 = ViscoLaw((t, tp) -> t >= tp ? TensISO{3}(5.0 * (1 + 0.5tp) * exp(-(t - tp) / 1.4)) : TensISO{3}(0.0))
+    rve = RVE(; distribution_shape = Ellipsoid(1.0, 1.0, 1.0))
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K0); fraction = :rest)
+    add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K1); fraction = 0.3)
+    @test homogenize_alv(rve, MoriTanaka(), :K; times) ≈ homogenize_alv(rve, Maxwell(), :K; times) rtol = 1.0e-12
+    # A scheme without an order-2 implementation says so.
+    @test_throws "has no order-2" homogenize_alv(rve, SelfConsistent(), :K; times)
+end

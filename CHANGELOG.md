@@ -83,6 +83,21 @@ the three new strength applications derive symbolically from the library.
   `iso_stiffness(k₀, μ₀)` at `t = t′`. Results computed with `kelvin_iso`,
   MFH Studio's "Kelvin chain" included, change accordingly. The manual's
   example passed numbers where the branches are vectors.
+- **The COD tensor of a penny crack in an aging matrix composed its Volterra
+  factors in the wrong order**, so the ALV crack contributions were off by up
+  to 1.6 % on an aging matrix (exact in the elastic limit and for a non-aging
+  matrix on a uniform grid). The factors now come in the order of the flat
+  limit of a void spheroid, whose Hill kernel holds no product; the crack
+  estimates match that limit and Echoes to machine precision.
+- **The order-2 (conduction, diffusion) ALV Mori–Tanaka estimate put the
+  inverse of `f₀ 1 + Σ f A` on the left of `Σ f N`**, against its own
+  docstring and the order-4 scheme: 0.5 % off Echoes with an aging inclusion.
+  It is now on the right; Mori–Tanaka equals Maxwell for one family of
+  spheres, as it must, and Voigt, Reuss, Dilute, DiluteDual, Mori–Tanaka and
+  Maxwell match Echoes to machine precision at order 2. The differential
+  scheme agrees with Echoes' explicit stepping, which converges to it as one
+  over the number of steps. A scheme with no order-2 implementation
+  (self-consistent, Ponte Castañeda–Willis) is refused by name.
 - An incompressible layer (`k = ∞`) in the ALV path now raises an
   `ArgumentError` naming the layer, instead of failing inside a factorization:
   it has no Volterra matrix, and the elastic functions treat it exactly. The

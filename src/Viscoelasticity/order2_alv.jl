@@ -395,7 +395,10 @@ function mori_tanaka_alv_order2(
         @. num += fractions[r] * contribs[r]
         @. den += fractions[r] * A_duts[r]
     end
-    factor = volterra_left_divide(den, num; block_size = 3)
+    # `num ∘ den^{-∘}`, the inverse on the RIGHT, as at order 4: the matrix
+    # gradient is `den^{-∘}` applied to the average one, and `num` acts on it.
+    # The two orders agree only when the Volterra matrices commute.
+    factor = num * volterra_inverse(den; block_size = 3)
     return K_0 .+ factor
 end
 
@@ -523,6 +526,22 @@ function _homogenize_alv_order2(
 end
 
 # Dispatch table for order-2 schemes.
+
+# A scheme without an order-2 method is refused by name, not with a
+# `MethodError` on this internal function.
+function _homogenize_alv2_dispatch(
+        ::RVE, scheme::HomogenizationScheme, ::Symbol, ::AbstractVector,
+        K_0, K_phases, A_duts, contribs,
+        fractions, f_M, K_M_law, matrix::Symbol; kw...
+    )
+    throw(
+        ArgumentError(
+            "$(nameof(typeof(scheme))) has no order-2 (conduction, diffusion) ALV " *
+                "implementation; Voigt, Reuss, Dilute, DiluteDual, MoriTanaka, Maxwell " *
+                "and DifferentialScheme have one."
+        )
+    )
+end
 
 function _homogenize_alv2_dispatch(
         ::RVE, ::Voigt, ::Symbol, ::AbstractVector,
