@@ -77,3 +77,9 @@ every page and in every docstring:
 | ``\langle\,\cdot\,\rangle_\Omega`` | volume average over ``\Omega`` |
 | ``\mathrm{d}S_\xi`` | surface element in the ``\underline{\xi}`` parametrization |
 | ``\mathbb{A}\circ\mathbb{B}``, ``\mathbb{L}^{-\circ}`` | Volterra product and Volterra inverse of two kernels |
+
+```@eval
+using MeanFieldHomogenization
+include(joinpath(pkgdir(MeanFieldHomogenization), "docs", "nomenclature.jl"))
+nomenclature_markdown()
+```

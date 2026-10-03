@@ -36,6 +36,12 @@ include("literate.jl")
 
 # The page tree, read by both the draft pre-flight and the real build.
 include("pages.jl")
+
+# The nomenclature, as the JSON that the plugin typesetting the formulas and the
+# hints of the theme read: the entries of `nomenclature.toml`. Written before any
+# page is built, and not versioned (see `.gitignore`).
+include("nomenclature.jl")
+write_nomenclature_json(joinpath(@__DIR__, "src", ".vitepress", "nomenclature.json"))
 # Reads `pages`, and may replace it. See its header for why a partial build
 # needs a pruned SOURCE tree and not just a pruned page tree. After
 # `literate.jl`, so that the generated pages exist when the tree is pruned.

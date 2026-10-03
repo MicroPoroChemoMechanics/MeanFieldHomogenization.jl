@@ -16,6 +16,8 @@ import SidebarDrawerToggle from '@/SidebarDrawerToggle.vue'
 // __DV_PLUGIN_COMPONENT_IMPORTS__
 
 import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
+// Hovering an equation lists its symbols, with their meaning on the page.
+import { installSymbolHints } from './symbol-hints'
 
 import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css'
 import './style.css' // You could setup your own, or else a default will be copied.
@@ -151,7 +153,10 @@ export const Theme: ThemeConfig = {
     // Reachable from the inline scripts of the 3D figures, which are plain
     // (non-module) scripts and so cannot import the bundle themselves.
     if (typeof window !== "undefined") (window as any).mfhPlotly = drawPlotly
-    if (typeof window !== "undefined") installCitationHints(siteData.value.base)
+    if (typeof window !== "undefined") {
+      installCitationHints(siteData.value.base)
+      installSymbolHints()
+    }
     app.component('VersionPicker', VersionPicker);
     app.component('AuthorBadge', AuthorBadge)
     app.component('Authors', Authors)

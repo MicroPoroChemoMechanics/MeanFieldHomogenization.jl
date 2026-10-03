@@ -362,4 +362,8 @@ end
     @testset "Studio" begin
         include("Studio/test_studio.jl")
     end
+
+    @testset "Documentation" begin
+        include("Documentation/test_docs_nomenclature.jl")
+    end
 end

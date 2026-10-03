@@ -1,0 +1,1348 @@
+# The symbols of the documentation's formulas: the page `nomenclature.md` lists
+# them, and hovering an equation shows those it holds. Ported from ChemistryLab.
+#
+# One entry per meaning of a symbol.
+#
+#   tex       the symbol as the formulas write it, matched in their TeX source
+#             (see `src/.vitepress/nomenclature-match.mjs`: an upright label such
+#             as \mathrm{hom} is part of the symbol, a subscript is not a
+#             superscript, and a phase index i, j, k stands for any of them);
+#   label     how the page and the hint print it (HTML: <sub>, <sup>, <b>, <u>);
+#   name      what it is;
+#   unit      its SI unit ("1" for a number without one, "" when it depends on
+#             the physics, as for a conductivity that may be thermal, electric
+#             or hydraulic);
+#   pages     where this meaning holds: paths under docs/src, a folder ending
+#             in "/" for all of its pages. An entry without `pages` holds on
+#             every page where no entry of the same `tex` is scoped;
+#   script    true for a symbol matched only inside a subscript or superscript;
+#   group     the section of the page.
+#
+# A letter that means different things on different pages (p, φ, ω, ...) has
+# no entry that holds everywhere: each meaning is restricted to the pages where
+# it was checked, and elsewhere the hint is silent rather than wrong.
+#
+# A symbol has at most one unscoped entry, every page named exists, and two
+# entries never carry the same name: test/docs_nomenclature.jl checks it.
+
+[[symbol]]
+group = "Identities and bases"
+tex = '\mathbb{I}'
+label = "𝕀"
+name = "identity tensor of order 4, on symmetric tensors"
+unit = "1"
+
+[[symbol]]
+group = "Identities and bases"
+tex = '\mathbb{J}'
+label = "𝕁"
+name = "spherical projector, ⅓ <b>1</b> ⊗ <b>1</b>"
+unit = "1"
+
+[[symbol]]
+group = "Identities and bases"
+tex = '\mathbb{K}'
+label = "𝕂"
+name = "deviatoric projector, 𝕀 − 𝕁"
+unit = "1"
+
+[[symbol]]
+group = "Identities and bases"
+tex = '\boldsymbol{1}'
+label = "<b>1</b>"
+name = "identity tensor of order 2"
+unit = "1"
+
+[[symbol]]
+group = "Identities and bases"
+tex = '\mathbb{1}'
+label = "𝟙"
+name = "identity matrix"
+unit = "1"
+
+[[symbol]]
+group = "Identities and bases"
+tex = '\mathbb{W}'
+label = "𝕎"
+name = "element of the Walpole basis of transversely isotropic tensors"
+unit = "1"
+
+[[symbol]]
+group = "Identities and bases"
+tex = '\underline{e}'
+label = "<u>e</u>"
+name = "vector of an orthonormal basis"
+unit = "1"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{C}'
+label = "ℂ"
+name = "stiffness tensor"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{C}'
+label = "ℂ"
+name = "relaxation kernel ℂ(t, t′), the stiffness of elasticity"
+unit = "Pa"
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{C}_0'
+label = "ℂ<sub>0</sub>"
+name = "stiffness of the reference medium"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{C}_0'
+label = "ℂ<sub>0</sub>"
+name = "relaxation kernel of the reference medium"
+unit = "Pa"
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{C}_i'
+label = "ℂ<sub>i</sub>"
+name = "stiffness of phase i"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{C}_1'
+label = "ℂ<sub>1</sub>"
+name = "stiffness of the inclusion of a single-inclusion problem"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{C}^{\mathrm{hom}}'
+label = "ℂ<sup>hom</sup>"
+name = "effective (homogenized) stiffness"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{C}^{\mathrm{hom}}'
+label = "ℂ<sup>hom</sup>"
+name = "effective relaxation kernel"
+unit = "Pa"
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{C}^{\mathrm{iso}}'
+label = "ℂ<sup>iso</sup>"
+name = "isotropic stiffness, 3k 𝕁 + 2μ 𝕂"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{S}'
+label = "𝕊"
+name = "compliance tensor, ℂ<sup>−1</sup>"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{S}_0'
+label = "𝕊<sub>0</sub>"
+name = "compliance of the reference medium"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{S}_i'
+label = "𝕊<sub>i</sub>"
+name = "compliance of phase i"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{S}^{\mathrm{hom}}'
+label = "𝕊<sup>hom</sup>"
+name = "effective compliance"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'k'
+label = "k"
+name = "bulk modulus"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'k'
+label = "k"
+name = "isotropic conductivity"
+unit = ""
+pages = ["theory/conductivity.md", "manual/conductivity.md", "tutorials/transport.md", "theory/thermal_cracks.md", "theory/layered_spheroid.md", "fe_coupling/permeability.md", "tutorials/generated/layered_spheroid_effective.md", "tutorials/generated/layered_spheroid_interfaces.md", "tutorials/generated/layered_spheroid_hc.md", "applications/cement_paste_diffusion.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'k'
+label = "k"
+name = "order of a polarization or of a multipole"
+unit = "1"
+pages = ["theory/eim.md", "theory/interaction_tensors.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'k'
+label = "k"
+name = "modulus of an elliptic integral, m = k<sup>2</sup>"
+unit = "1"
+pages = ["theory/elliptic_integrals.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'k_0'
+label = "k<sub>0</sub>"
+name = "bulk modulus of the reference medium"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'k_0'
+label = "k<sub>0</sub>"
+name = "conductivity of the isotropic reference medium"
+unit = ""
+pages = ["theory/conductivity.md", "manual/conductivity.md", "tutorials/transport.md", "theory/thermal_cracks.md", "theory/layered_spheroid.md", "fe_coupling/permeability.md", "tutorials/generated/layered_spheroid_effective.md", "tutorials/generated/layered_spheroid_interfaces.md", "tutorials/generated/layered_spheroid_hc.md", "applications/cement_paste_diffusion.md", "theory/corrected_cell.md", "applications/concave_pores.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'k^{\mathrm{hom}}'
+label = "k<sup>hom</sup>"
+name = "effective bulk modulus"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'k^{\mathrm{hom}}'
+label = "k<sup>hom</sup>"
+name = "effective conductivity"
+unit = ""
+pages = ["theory/conductivity.md", "manual/conductivity.md", "tutorials/transport.md", "theory/thermal_cracks.md", "theory/layered_spheroid.md", "fe_coupling/permeability.md", "tutorials/generated/layered_spheroid_effective.md", "tutorials/generated/layered_spheroid_interfaces.md", "tutorials/generated/layered_spheroid_hc.md", "applications/cement_paste_diffusion.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mu'
+label = "μ"
+name = "shear modulus"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mu_0'
+label = "μ<sub>0</sub>"
+name = "shear modulus of the reference medium"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mu^{\mathrm{hom}}'
+label = "μ<sup>hom</sup>"
+name = "effective shear modulus"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\nu'
+label = "ν"
+name = "Poisson's ratio"
+unit = "1"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\nu_0'
+label = "ν<sub>0</sub>"
+name = "Poisson's ratio of the reference medium"
+unit = "1"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'E'
+label = "E"
+name = "Young's modulus"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'E'
+label = "E"
+name = "complete elliptic integral of the second kind"
+unit = "1"
+pages = ["theory/elliptic_integrals.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'E^{\mathrm{hom}}'
+label = "E<sup>hom</sup>"
+name = "effective Young's modulus"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\lambda'
+label = "λ"
+name = "first Lamé coefficient"
+unit = "Pa"
+pages = ["theory/layered_sphere.md", "theory/laminate.md", "tutorials/symbolic_laminate.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'k_{\mathrm{s}}'
+label = "k<sub>s</sub>"
+name = "bulk modulus of the solid grains"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mu_{\mathrm{s}}'
+label = "μ<sub>s</sub>"
+name = "shear modulus of the solid grains"
+unit = "Pa"
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{S}_{\mathrm{s}}'
+label = "𝕊<sub>s</sub>"
+name = "compliance of the solid grains"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\boldsymbol{\varepsilon}'
+label = "<b>ε</b>"
+name = "strain"
+unit = "1"
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\boldsymbol{\sigma}'
+label = "<b>σ</b>"
+name = "stress (minus the flux in conduction)"
+unit = "Pa"
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\boldsymbol{E}'
+label = "<b>E</b>"
+name = "macroscopic strain"
+unit = "1"
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\boldsymbol{\Sigma}'
+label = "<b>Σ</b>"
+name = "macroscopic stress"
+unit = "Pa"
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\boldsymbol{E}^0'
+label = "<b>E</b><sup>0</sup>"
+name = "remote strain of the auxiliary single-inclusion problems"
+unit = "1"
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\boldsymbol{\varepsilon}^\infty'
+label = "<b>ε</b><sup>∞</sup>"
+name = "remote uniform strain"
+unit = "1"
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\boldsymbol{\tau}'
+label = "<b>τ</b>"
+name = "polarization stress"
+unit = "Pa"
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\boldsymbol{\varepsilon}^{\star}'
+label = "<b>ε</b><sup>⋆</sup>"
+name = "eigenstrain (stress-free strain)"
+unit = "1"
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\underline{u}'
+label = "<u>u</u>"
+name = "displacement"
+unit = "m"
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\underline{x}'
+label = "<u>x</u>"
+name = "position vector"
+unit = "m"
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\underline{n}'
+label = "<u>n</u>"
+name = "unit normal"
+unit = "1"
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\underline{\xi}'
+label = "<u>ξ</u>"
+name = "wave vector, or a unit direction of integration"
+unit = ""
+
+[[symbol]]
+group = "Fields and loading"
+tex = 'T'
+label = "T"
+name = "temperature, or the potential of the conduction problem"
+unit = ""
+
+[[symbol]]
+group = "Fields and loading"
+tex = 'T'
+label = "T"
+name = "duration of the incorporation trajectory"
+unit = "s"
+pages = ["theory/differential_scheme.md"]
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\underline{q}'
+label = "<u>q</u>"
+name = "flux of the conduction problem"
+unit = ""
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\underline{\tau}_q'
+label = "<u>τ</u><sub>q</sub>"
+name = "polarization of the flux"
+unit = ""
+
+[[symbol]]
+group = "Fields and loading"
+tex = 't'
+label = "t"
+name = "time (t′ the loading time)"
+unit = "s"
+
+[[symbol]]
+group = "Fields and loading"
+tex = 't'
+label = "t"
+name = "thickness of the interfacial transition zone"
+unit = "m"
+pages = ["applications/itz_concrete.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\boldsymbol{A}'
+label = "<b>A</b>"
+name = "shape tensor of the ellipsoid"
+unit = "m"
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\mathcal{E}'
+label = "ℰ"
+name = "domain of the ellipsoidal inclusion"
+unit = ""
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\rho_i'
+label = "ρ<sub>i</sub>"
+name = "semi-axis of the ellipsoid along its i-th principal direction"
+unit = "m"
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'a'
+label = "a"
+name = "major semi-axis of the ellipsoid"
+unit = "m"
+pages = ["theory/notation.md", "theory/eshelby_problem.md", "theory/hill_tensors.md", "theory/cod_tensors.md", "manual/ellipsoidal_inclusions.md", "manual/inclusion_gallery.md", "manual/cracks.md", "tutorials/cracks.md", "manual/particle_assemblies.md", "theory/differential_scheme.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'b'
+label = "b"
+name = "second semi-axis of the ellipsoid (semi-minor axis of a crack)"
+unit = "m"
+pages = ["theory/notation.md", "theory/eshelby_problem.md", "theory/hill_tensors.md", "theory/cod_tensors.md", "manual/ellipsoidal_inclusions.md", "manual/inclusion_gallery.md", "manual/cracks.md", "tutorials/cracks.md", "manual/particle_assemblies.md", "theory/differential_scheme.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'c'
+label = "c"
+name = "minor semi-axis of the ellipsoid (half-aperture of a crack)"
+unit = "m"
+pages = ["theory/notation.md", "theory/eshelby_problem.md", "theory/hill_tensors.md", "theory/cod_tensors.md", "manual/ellipsoidal_inclusions.md", "manual/inclusion_gallery.md", "manual/cracks.md", "tutorials/cracks.md", "manual/particle_assemblies.md", "theory/differential_scheme.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\omega'
+label = "ω"
+name = "aspect ratio (defined on the page)"
+unit = "1"
+pages = ["theory/notation.md", "theory/eshelby_problem.md", "theory/hill_tensors.md", "theory/cod_tensors.md", "manual/ellipsoidal_inclusions.md", "manual/inclusion_gallery.md", "manual/cracks.md", "tutorials/cracks.md", "manual/particle_assemblies.md", "theory/differential_scheme.md", "theory/thermal_cracks.md", "theory/layered_spheroid.md", "theory/layered_spheroid_elasticity.md", "manual/layered_inclusions.md", "tutorials/porous_benchmark.md", "tutorials/strength_criteria.md", "tutorials/axi_layered_spheroid.md", "tutorials/transport.md", "fe_coupling/permeability.md", "fe_coupling/fractured_rock.md", "fe_coupling/materials.md", "fe_coupling/arma2011.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/nano_spheroids.md", "tutorials/generated/layered_spheroid_hc.md", "tutorials/generated/hill_tensors.md", "tutorials/generated/neural_inclusion.md", "manual/neural_inclusions.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\omega'
+label = "ω"
+name = "angular frequency"
+unit = "rad/s"
+pages = ["manual/rheological_models.md", "tutorials/viscoelasticity.md", "applications/bituminous.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/laplace_inversion.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\eta'
+label = "η"
+name = "in-plane aspect ratio b/a"
+unit = "1"
+pages = ["theory/notation.md", "theory/eshelby_problem.md", "theory/hill_tensors.md", "theory/cod_tensors.md", "manual/ellipsoidal_inclusions.md", "manual/inclusion_gallery.md", "manual/cracks.md", "tutorials/cracks.md", "manual/particle_assemblies.md", "theory/differential_scheme.md", "theory/thermal_cracks.md", "developer/validation.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\eta'
+label = "η"
+name = "viscosity of a dashpot"
+unit = "Pa s"
+pages = ["manual/rheological_models.md", "theory/laplace_carson.md", "tutorials/generated/kelvin_maxwell.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'f'
+label = "f"
+name = "volume fraction"
+unit = "1"
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'f'
+label = "f"
+name = "function of time and its Laplace-Carson transform f<sup>*</sup>"
+unit = ""
+pages = ["theory/laplace_carson.md", "manual/laplace_inversion.md", "tutorials/generated/laplace_inversion.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'f_0'
+label = "f<sub>0</sub>"
+name = "volume fraction of the reference phase (matrix)"
+unit = "1"
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'f_i'
+label = "f<sub>i</sub>"
+name = "volume fraction of phase i"
+unit = "1"
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'f_c'
+label = "f<sub>c</sub>"
+name = "uniaxial compressive strength"
+unit = "Pa"
+pages = ["applications/strength.md", "developer/validation.md", "manual/sensitivities.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\varphi'
+label = "φ"
+name = "porosity"
+unit = "1"
+pages = ["manual/poromechanics.md", "fe_coupling/materials.md", "fe_coupling/fractured_rock.md", "fe_coupling/poroelastic_coupling.md", "fe_coupling/scale_transition.md", "theory/eim.md", "applications/generated/eim_assembly.md", "tutorials/porous_benchmark.md", "tutorials/porous_materials.md", "tutorials/strength_criteria.md", "tutorials/transport.md", "tools/", "applications/cement_paste.md", "applications/cement_paste_diffusion.md", "applications/itz_concrete.md", "applications/lamellar_clay.md", "applications/strength.md", "developer/validation.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\varphi'
+label = "φ"
+name = "volume fraction incorporated along the trajectory"
+unit = "1"
+pages = ["theory/differential_scheme.md", "theory/homogenization.md", "tutorials/differential_paths.md", "tutorials/differential_loading_paths.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\varphi'
+label = "φ"
+name = "angle (azimuth or amplitude, defined on the page)"
+unit = "rad"
+pages = ["theory/cod_tensors.md", "theory/thermal_cracks.md", "theory/hill_tensors.md", "theory/interaction_tensors.md", "theory/elliptic_integrals.md", "theory/layered_spheroid.md", "tutorials/generated/crack_distributions.md", "tutorials/generated/multiscale_assemblies.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\varphi'
+label = "φ"
+name = "fluidity of a creep function"
+unit = "Pa<sup>−1</sup>"
+pages = ["manual/rheological_models.md", "theory/laplace_carson.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/rheological_models.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\varphi'
+label = "φ"
+name = "heat-loss coefficient of the calorimeter"
+unit = "W/K"
+pages = ["applications/ionic_hydrating_paste.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\varepsilon'
+label = "ε"
+name = "crack density, N a<sup>3</sup> for penny-shaped cracks"
+unit = "1"
+pages = ["manual/cracks.md", "theory/cod_tensors.md", "theory/thermal_cracks.md", "theory/differential_scheme.md", "theory/homogenization.md", "tutorials/cracks.md", "tutorials/fe_crack.md", "tutorials/generated/crack_distributions.md", "tutorials/generated/custom_inclusion_contract.md", "manual/custom_inclusions.md", "developer/adding_inclusion.md", "fe_coupling/permeability.md", "fe_coupling/fractured_rock.md", "fe_coupling/materials.md", "manual/viscoelasticity.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\varepsilon'
+label = "ε"
+name = "infinitesimal of a dual number"
+unit = "1"
+pages = ["tutorials/nonlinear_solvers.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\varepsilon^{3\mathrm{d}}'
+label = "ε<sup>3d</sup>"
+name = "crack density of an elliptic crack family, N a b<sup>2</sup>"
+unit = "1"
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\varepsilon^{2\mathrm{d}}'
+label = "ε<sup>2d</sup>"
+name = "crack density of a ribbon crack family, N b<sup>2</sup>"
+unit = "1"
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'N'
+label = "N"
+name = "number of cracks per unit volume"
+unit = "m<sup>−3</sup>"
+pages = ["theory/cod_tensors.md", "tutorials/cracks.md", "developer/adding_inclusion.md", "tutorials/generated/custom_inclusion_contract.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\mathcal{N}'
+label = "𝒩"
+name = "number of fractures per unit volume"
+unit = "m<sup>−3</sup>"
+pages = ["fe_coupling/permeability.md", "theory/differential_scheme.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{P}'
+label = "ℙ"
+name = "Hill polarization tensor"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{P}'
+label = "ℙ"
+name = "Hill polarization kernel"
+unit = "Pa<sup>−1</sup>"
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{P}_0'
+label = "ℙ<sub>0</sub>"
+name = "Hill tensor in the reference medium"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{P}_i'
+label = "ℙ<sub>i</sub>"
+name = "Hill tensor of the shape of phase i"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{P}_\Omega'
+label = "ℙ<sub>Ω</sub>"
+name = "Hill tensor of the distribution shape Ω"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{P}_d'
+label = "ℙ<sub>d</sub>"
+name = "Hill tensor of the outer distribution shape"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{Q}'
+label = "ℚ"
+name = "second Hill tensor, ℂ − ℂ:ℙ:ℂ"
+unit = "Pa"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{S}^{\mathrm{E}}'
+label = "𝕊<sup>E</sup>"
+name = "Eshelby tensor, ℙ:ℂ"
+unit = "1"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{A}'
+label = "𝔸"
+name = "strain concentration tensor"
+unit = "1"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{A}^{\mathrm{dil}}'
+label = "𝔸<sup>dil</sup>"
+name = "dilute strain concentration tensor"
+unit = "1"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{A}_i^{\mathrm{dil}}'
+label = "𝔸<sub>i</sub><sup>dil</sup>"
+name = "dilute strain concentration tensor of phase i"
+unit = "1"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{A}_{\varepsilon\varepsilon}'
+label = "𝔸<sub>εε</sub>"
+name = "strain-to-strain concentration tensor"
+unit = "1"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{A}_{\sigma\varepsilon}'
+label = "𝔸<sub>σε</sub>"
+name = "stress-to-strain concentration tensor"
+unit = "Pa"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{A}_{\varepsilon\sigma}'
+label = "𝔸<sub>εσ</sub>"
+name = "strain-to-stress concentration tensor"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{A}_{\sigma\sigma}'
+label = "𝔸<sub>σσ</sub>"
+name = "stress-to-stress concentration tensor"
+unit = "1"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{B}'
+label = "𝔹"
+name = "stress concentration tensor"
+unit = "1"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{B}'
+label = "𝔹"
+name = "average stress of the truncated cell per unit load"
+unit = "Pa"
+pages = ["theory/corrected_cell.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{N}'
+label = "ℕ"
+name = "stiffness contribution tensor"
+unit = "Pa"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{N}_i'
+label = "ℕ<sub>i</sub>"
+name = "stiffness contribution tensor of phase i"
+unit = "Pa"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{N}_\Sigma'
+label = "ℕ<sub>Σ</sub>"
+name = "total dilute stiffness contribution, Σ f<sub>i</sub> ℕ<sub>i</sub>"
+unit = "Pa"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{H}'
+label = "ℍ"
+name = "compliance contribution tensor"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{H}_i'
+label = "ℍ<sub>i</sub>"
+name = "compliance contribution tensor of phase i"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{G}^0'
+label = "𝔾<sup>0</sup>"
+name = "Green operator of the reference medium"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\hat{\mathbb{G}}^0'
+label = "𝔾̂<sup>0</sup>"
+name = "Fourier symbol of the Green operator"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\boldsymbol{G}'
+label = "<b>G</b>"
+name = "Green tensor of the reference medium"
+unit = ""
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\boldsymbol{I}^{\boldsymbol{A}}'
+label = "<b>I</b><sup><b>A</b></sup>"
+name = "Newton-potential tensor of the ellipsoid"
+unit = "1"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{X}'
+label = "𝕏"
+name = "closure operator of the corrected fixed point"
+unit = "1"
+pages = ["theory/corrected_cell.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{L}'
+label = "𝕃"
+name = "creep kernel 𝕃(t, t′)"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Conduction"
+tex = '\boldsymbol{K}'
+label = "<b>K</b>"
+name = "conductivity tensor"
+unit = ""
+
+[[symbol]]
+group = "Conduction"
+tex = '\boldsymbol{K}_0'
+label = "<b>K</b><sub>0</sub>"
+name = "conductivity of the reference medium"
+unit = ""
+
+[[symbol]]
+group = "Conduction"
+tex = '\boldsymbol{K}_i'
+label = "<b>K</b><sub>i</sub>"
+name = "conductivity of phase i"
+unit = ""
+
+[[symbol]]
+group = "Conduction"
+tex = '\boldsymbol{K}^{\mathrm{hom}}'
+label = "<b>K</b><sup>hom</sup>"
+name = "effective conductivity tensor"
+unit = ""
+
+[[symbol]]
+group = "Conduction"
+tex = '\boldsymbol{P}'
+label = "<b>P</b>"
+name = "Hill polarization tensor of conduction"
+unit = ""
+
+[[symbol]]
+group = "Conduction"
+tex = '\boldsymbol{S}^{\mathrm{E}}'
+label = "<b>S</b><sup>E</sup>"
+name = "Eshelby tensor of conduction, <b>P</b>·<b>K</b>"
+unit = "1"
+
+[[symbol]]
+group = "Conduction"
+tex = '\boldsymbol{Q}'
+label = "<b>Q</b>"
+name = "second Hill tensor of conduction"
+unit = ""
+
+[[symbol]]
+group = "Conduction"
+tex = '\boldsymbol{A}_\Omega'
+label = "<b>A</b><sub>Ω</sub>"
+name = "average-gradient concentration tensor of a layered particle"
+unit = "1"
+
+[[symbol]]
+group = "Conduction"
+tex = '\boldsymbol{B}_\Omega'
+label = "<b>B</b><sub>Ω</sub>"
+name = "average-flux concentration tensor of a layered particle"
+unit = ""
+
+[[symbol]]
+group = "Conduction"
+tex = '\boldsymbol{R}'
+label = "<b>R</b>"
+name = "crack resistivity contribution tensor"
+unit = ""
+pages = ["theory/thermal_cracks.md", "manual/cracks.md", "manual/conductivity.md", "theory/index.md", "theory/conductivity.md"]
+
+[[symbol]]
+group = "Conduction"
+tex = '\boldsymbol{R}'
+label = "<b>R</b>"
+name = "rotation from the principal frame of the inclusion"
+unit = "1"
+pages = ["developer/adding_inclusion.md"]
+
+[[symbol]]
+group = "Conduction"
+tex = '\boldsymbol{R}'
+label = "<b>R</b>"
+name = "reflection across a coordinate plane"
+unit = "1"
+pages = ["theory/corrected_cell.md"]
+
+[[symbol]]
+group = "Shape and Walpole coefficients"
+tex = '\mathbb{U}'
+label = "𝕌"
+name = "geometric tensor of the ellipsoid, integral of <u>ξ</u>⊗<u>ξ</u>⊗<u>ξ</u>⊗<u>ξ</u> over the unit sphere"
+unit = "1"
+pages = ["theory/hill_tensors.md", "manual/neural_inclusions.md", "theory/viscoelasticity.md"]
+
+[[symbol]]
+group = "Shape and Walpole coefficients"
+tex = '\mathbb{V}'
+label = "𝕍"
+name = "geometric tensor of the ellipsoid, integral of <u>ξ</u> ⊗ˢ <b>1</b> ⊗ˢ <u>ξ</u> over the unit sphere"
+unit = "1"
+pages = ["theory/hill_tensors.md", "manual/neural_inclusions.md"]
+
+[[symbol]]
+group = "Shape and Walpole coefficients"
+tex = '\chi'
+label = "χ"
+name = "shape coefficient of the mean opening of a crack"
+unit = "1"
+pages = ["theory/cod_tensors.md", "theory/thermal_cracks.md"]
+
+[[symbol]]
+group = "Shape and Walpole coefficients"
+tex = '\Delta'
+label = "Δ"
+name = "contrast, as in Δℂ<sub>J</sub> = ℂ<sub>J</sub> − ℂ<sub>0</sub>"
+unit = ""
+pages = ["theory/cluster_model.md", "theory/differential_scheme.md"]
+
+[[symbol]]
+group = "Shape and Walpole coefficients"
+tex = '\Phi'
+label = "Φ"
+name = "scalar potential of the Papkovich–Neuber representation"
+unit = ""
+pages = ["theory/layered_spheroid_elasticity.md"]
+
+[[symbol]]
+group = "Shape and Walpole coefficients"
+tex = '\underline{\varphi}'
+label = "<u>φ</u>"
+name = "vector potential of the Papkovich–Neuber representation"
+unit = ""
+pages = ["theory/layered_spheroid_elasticity.md"]
+
+[[symbol]]
+group = "Shape and Walpole coefficients"
+tex = '\Gamma'
+label = "Γ"
+name = "second engineering parameter of the transversely isotropic crack kernel, (E, ν<sub>1</sub>, ν<sub>2</sub>, H, Γ)"
+unit = "1"
+pages = ["theory/cod_tensors.md"]
+
+[[symbol]]
+group = "Shape and Walpole coefficients"
+tex = 'H'
+label = "H"
+name = "first engineering parameter of the transversely isotropic crack kernel, (E, ν<sub>1</sub>, ν<sub>2</sub>, H, Γ)"
+unit = "1"
+pages = ["theory/cod_tensors.md"]
+
+[[symbol]]
+group = "Cracks"
+tex = '\boldsymbol{B}'
+label = "<b>B</b>"
+name = "crack opening displacement (COD) tensor"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Cracks"
+tex = '\boldsymbol{B}'
+label = "<b>B</b>"
+name = "Biot tensor"
+unit = "1"
+pages = ["manual/poromechanics.md", "fe_coupling/materials.md", "fe_coupling/fractured_rock.md", "fe_coupling/poroelastic_coupling.md", "fe_coupling/scale_transition.md", "fe_coupling/arma2011.md", "fe_coupling/thick_cylinder.md", "fe_coupling/backends.md", "fe_coupling/index.md"]
+
+[[symbol]]
+group = "Cracks"
+tex = '\boldsymbol{B}'
+label = "<b>B</b>"
+name = "shape tensor of the inclusion in the transformed coordinates, <b>A</b>·<b>K</b><sub>0</sub><sup>−1/2</sup>"
+unit = ""
+pages = ["theory/thermal_cracks.md"]
+
+[[symbol]]
+group = "Cracks"
+tex = 'b_{\mathrm{ell}}'
+label = "b<sub>ell</sub>"
+name = "COD scalar of an elliptic crack in conduction"
+unit = ""
+
+[[symbol]]
+group = "Cracks"
+tex = 'b_{\mathrm{penny}}'
+label = "b<sub>penny</sub>"
+name = "COD scalar of a penny-shaped crack in conduction"
+unit = ""
+
+[[symbol]]
+group = "Cracks"
+tex = 'b_{\mathrm{ribbon}}'
+label = "b<sub>ribbon</sub>"
+name = "COD scalar of a ribbon crack in conduction"
+unit = ""
+
+[[symbol]]
+group = "Cracks"
+tex = '\underline{\ell}'
+label = "<u>ℓ</u>"
+name = "in-plane unit vector of the crack along its major axis"
+unit = "1"
+
+[[symbol]]
+group = "Cracks"
+tex = '\underline{m}'
+label = "<u>m</u>"
+name = "in-plane unit vector of the crack along its minor axis"
+unit = "1"
+
+[[symbol]]
+group = "Cracks"
+tex = '\hat{\mathbb{Q}}'
+label = "ℚ̂"
+name = "Fourier symbol of the second Hill operator"
+unit = "Pa"
+
+[[symbol]]
+group = "Viscoelasticity"
+tex = 'p'
+label = "p"
+name = "Laplace-Carson variable"
+unit = "s<sup>−1</sup>"
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+
+[[symbol]]
+group = "Viscoelasticity"
+tex = 'H'
+label = "H"
+name = "Heaviside step function"
+unit = "1"
+pages = ["theory/viscoelasticity.md", "tutorials/generated/alv_schemes.md"]
+
+[[symbol]]
+group = "Viscoelasticity"
+tex = 'R'
+label = "R"
+name = "relaxation function"
+unit = "Pa"
+pages = ["theory/laplace_carson.md", "manual/rheological_models.md", "manual/viscoelasticity.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/freq_vs_time.md", "applications/bituminous.md"]
+
+[[symbol]]
+group = "Viscoelasticity"
+tex = 'J'
+label = "J"
+name = "creep function"
+unit = "Pa<sup>−1</sup>"
+pages = ["theory/laplace_carson.md", "manual/rheological_models.md", "manual/viscoelasticity.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/freq_vs_time.md", "applications/bituminous.md", "tutorials/generated/ageing_ages_aspect.md"]
+
+[[symbol]]
+group = "Viscoelasticity"
+tex = 'J^{\mathrm{hom}}'
+label = "J<sup>hom</sup>"
+name = "uniaxial creep function of the composite"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Viscoelasticity"
+tex = '\tau'
+label = "τ"
+name = "relaxation or retardation time"
+unit = "s"
+pages = ["theory/laplace_carson.md", "manual/rheological_models.md", "manual/viscoelasticity.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/freq_vs_time.md", "applications/bituminous.md"]
+
+[[symbol]]
+group = "Viscoelasticity"
+tex = '\tau'
+label = "τ"
+name = "fictitious incorporation time"
+unit = "1"
+pages = ["theory/differential_scheme.md", "theory/homogenization.md", "tutorials/differential_paths.md", "tutorials/differential_loading_paths.md"]
+
+[[symbol]]
+group = "Viscoelasticity"
+tex = '\widetilde{\mathbb{C}}'
+label = "ℂ̃"
+name = "block matrix of the time-discretized relaxation kernel"
+unit = "Pa"
+
+[[symbol]]
+group = "Viscoelasticity"
+tex = '\widetilde{\mathbb{L}}'
+label = "𝕃̃"
+name = "block matrix of the time-discretized creep kernel"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Viscoelasticity"
+tex = 'E_{a,1}'
+label = "E<sub>a,1</sub>"
+name = "two-parameter Mittag-Leffler function"
+unit = "1"
+pages = ["theory/laplace_carson.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'r'
+label = "r"
+name = "distance from the center"
+unit = "m"
+pages = ["theory/layered_sphere.md", "manual/layered_inclusions.md", "tutorials/generated/layered_sphere.md", "tutorials/generated/layered_sphere_local_fields.md", "theory/corrected_cell.md", "theory/interaction_tensors.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'r_i'
+label = "r<sub>k</sub>"
+name = "outer radius of layer k"
+unit = "m"
+pages = ["theory/layered_sphere.md", "manual/layered_inclusions.md", "tutorials/generated/layered_sphere.md", "tutorials/generated/layered_sphere_local_fields.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\alpha_i'
+label = "α<sub>k</sub>"
+name = "bulk localization factor of layer k"
+unit = "1"
+pages = ["theory/layered_sphere.md", "manual/layered_inclusions.md", "tutorials/generated/layered_sphere.md", "tutorials/generated/layered_sphere_local_fields.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\beta_i'
+label = "β<sub>k</sub>"
+name = "shear localization factor of layer k"
+unit = "1"
+pages = ["theory/layered_sphere.md", "manual/layered_inclusions.md", "tutorials/generated/layered_sphere.md", "tutorials/generated/layered_sphere_local_fields.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\mathbf{s}'
+label = "<b>s</b>"
+name = "state vector carried across the layers"
+unit = ""
+pages = ["theory/layered_sphere.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\mathbf{T}'
+label = "<b>T</b>"
+name = "transfer matrix of a layer"
+unit = ""
+pages = ["theory/layered_sphere.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\mathbf{J}'
+label = "<b>J</b>"
+name = "jump matrix of an interface"
+unit = ""
+pages = ["theory/layered_sphere.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'k_n'
+label = "k<sub>n</sub>"
+name = "normal stiffness of a spring interface"
+unit = "Pa/m"
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'k_t'
+label = "k<sub>t</sub>"
+name = "tangential stiffness of a spring interface"
+unit = "Pa/m"
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 's_n'
+label = "s<sub>n</sub>"
+name = "normal compliance of a spring interface, 1/k<sub>n</sub>"
+unit = "m/Pa"
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 's_t'
+label = "s<sub>t</sub>"
+name = "tangential compliance of a spring interface, 1/k<sub>t</sub>"
+unit = "m/Pa"
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\kappa^{\mathrm{s}}'
+label = "κ<sup>s</sup>"
+name = "surface bulk modulus of a membrane interface"
+unit = "N/m"
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\mu^{\mathrm{s}}'
+label = "μ<sup>s</sup>"
+name = "surface shear modulus of a membrane interface"
+unit = "N/m"
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\lambda^{\mathrm{s}}'
+label = "λ<sup>s</sup>"
+name = "surface Lamé coefficient of a membrane interface"
+unit = "N/m"
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'k^{\mathrm{s}}'
+label = "k<sup>s</sup>"
+name = "surface conductance of a highly conducting interface"
+unit = ""
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\rho'
+label = "ρ"
+name = "thermal resistance of a Kapitza interface"
+unit = ""
+pages = ["theory/layered_sphere.md", "theory/layered_spheroid.md", "theory/laminate.md", "tutorials/generated/layered_spheroid_interfaces.md", "tutorials/generated/layered_spheroid_hc.md", "tutorials/generated/layered_spheroid_effective.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\rho'
+label = "ρ"
+name = "radial cylindrical coordinate"
+unit = "m"
+pages = ["applications/recycled_aggregate.md", "applications/concave_pores.md", "fe_coupling/thick_cylinder.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\boldsymbol{\mathcal{K}}'
+label = "<b>𝒦</b>"
+name = "compliance of a spring interface of a laminate"
+unit = "m/Pa"
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\mathbb{C}^{\mathrm{s}}'
+label = "ℂ<sup>s</sup>"
+name = "surface stiffness of a membrane interface"
+unit = "N/m"
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\mathbb{C}^{\mathrm{int}}'
+label = "ℂ<sup>int</sup>"
+name = "stiffness of the interface of a nanoparticle, condensed"
+unit = "Pa"
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'p'
+label = "p"
+name = "angular spheroidal coordinate, in [−1, 1]"
+unit = "1"
+pages = ["theory/layered_spheroid.md", "theory/layered_spheroid_elasticity.md", "manual/layered_inclusions.md", "tutorials/axi_layered_spheroid.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'q'
+label = "q"
+name = "radial spheroidal coordinate, the confocal surface of the layer"
+unit = "1"
+pages = ["theory/layered_spheroid.md", "theory/layered_spheroid_elasticity.md", "manual/layered_inclusions.md", "tutorials/axi_layered_spheroid.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'L'
+label = "L"
+name = "period of the laminate"
+unit = "m"
+pages = ["theory/laminate.md", "manual/laminates.md", "tutorials/symbolic_laminate.md", "tutorials/generated/laminate.md", "tutorials/generated/laminate_interfaces.md", "tutorials/generated/laminate_alv.md", "tutorials/generated/laminate_multiscale.md", "tools/mfhstudio.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = 'p'
+label = "p"
+name = "pore pressure"
+unit = "Pa"
+pages = ["manual/poromechanics.md", "fe_coupling/materials.md", "fe_coupling/fractured_rock.md", "fe_coupling/poroelastic_coupling.md", "fe_coupling/scale_transition.md", "fe_coupling/arma2011.md", "fe_coupling/thick_cylinder.md", "fe_coupling/backends.md", "fe_coupling/index.md", "applications/lamellar_clay.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = 'M'
+label = "M"
+name = "Biot modulus"
+unit = "Pa"
+pages = ["manual/poromechanics.md", "fe_coupling/materials.md", "fe_coupling/fractured_rock.md", "fe_coupling/poroelastic_coupling.md", "fe_coupling/scale_transition.md", "fe_coupling/arma2011.md", "fe_coupling/thick_cylinder.md", "fe_coupling/backends.md", "fe_coupling/index.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = 'b'
+label = "b"
+name = "Biot coefficient"
+unit = "1"
+pages = ["manual/poromechanics.md", "applications/cement_paste.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\mathbb{T}'
+label = "𝕋"
+name = "interaction tensor between two inclusions"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\mathbb{M}'
+label = "𝕄"
+name = "block of the linear system of the cluster model"
+unit = "1"
+pages = ["theory/cluster_model.md"]
