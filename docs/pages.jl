@@ -218,6 +218,7 @@ pages = [
         # closed form, computed by finite elements. The materials follow, each
         # in its own section; within a section a page comes after the pages it
         # builds on. A page may move within its section, not across chapters.
+        "applications/index.md",
         "General concepts" => [
             # Both reproduce one paper's published numbers, which is why they
             # are applications and not tutorials.

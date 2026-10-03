@@ -39,8 +39,8 @@ features:
     link: /tutorials/
   - icon: 🧪
     title: Applications
-    details: Full micromechanical models of real materials — cement paste, concrete, bituminous mixtures, clays.
-    link: /applications/cement_paste
+    details: Complete micromechanical models of real materials, each after a published one — cement paste and concrete, clays, sands and sandstones, bituminous mixtures.
+    link: /applications/
   - icon: 🔁
     title: Tools and migration
     details: Build a model in the browser with MFH Studio, or port one from the Echoes C++/Python codebase.

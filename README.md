@@ -58,9 +58,10 @@ respect to fractions, moduli and inclusion geometry.
 
 A gallery of full micromechanical models built on the package —
 hydrating cement paste, chloride diffusivity, the interfacial transition
-zone in concrete, recycled concrete aggregate, quasi-brittle strength,
-bituminous mixtures, aging creep — lives under [`docs/src/applications/`](docs/src/applications)
-and the [Applications](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/applications/cement_paste/)
+zone in concrete and its elastic limit, recycled concrete aggregate,
+quasi-brittle strength, aging creep, clays, the friction of a granular medium,
+the strength of a sandstone, bituminous mixtures — lives under [`docs/src/applications/`](docs/src/applications)
+and the [Applications](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/applications/)
 section of the docs.
 
 ## Features
@@ -238,7 +239,7 @@ roughly in reading order:
 | [Theory](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/theory/) | the Eshelby/Hill chain — polarization tensor → localization → schemes — its specializations (cracks, layered inclusions, laminates, viscoelasticity) and the N-body models (interaction tensors, cluster model, equivalent inclusion). |
 | [Manual](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/manual/) | a topic-by-topic reference for each inclusion family, cell and scheme. |
 | [Tutorials](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/tutorials/) | worked examples: bounds and schemes, layered spheres/spheroids, particle assemblies, viscoelasticity, sensitivities, symbolic computation. |
-| [Applications](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/applications/cement_paste/) | full micromechanical models — cement paste, ITZ concrete, recycled aggregate, bituminous mixtures, strength, aging creep. |
+| [Applications](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/applications/) | full micromechanical models, each after a published one — cement paste and concrete, aging creep, strength, clays, sands and sandstones, bituminous mixtures. |
 | [Finite-element coupling](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/fe_coupling/) | the opposite direction: MFH as a constitutive law inside a structural FE code — scale transition, poroelastic coupling, fractured permeability, worked models. |
 | [Tools and migration](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/tools/from_echoes/) | the Echoes translation guide, the script converter, and MFH Studio. |
 | [Developer guide](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/developer/architecture/) | architecture, dispatch, and how to add an inclusion / algorithm / scheme. |

@@ -101,7 +101,7 @@ C_paste = homogenize(paste, MoriTanaka(), :C)
 
 The order of the scales is explicit in the code, and the author controls
 exactly what is recomputed. This is the style of most of the
-[Applications](@ref app-cement-paste) chapters, and it stays the right choice
+[Applications](@ref app-index) chapters, and it stays the right choice
 when a scale needs post-processing before the next one consumes it (a
 projection, a strength criterion, a change of variables), or when the
 intermediate result is itself the quantity of interest.

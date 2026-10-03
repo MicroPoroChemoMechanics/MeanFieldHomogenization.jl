@@ -43,6 +43,7 @@ const DOC_SHARDS = [
     ],
     # The general concepts, the geomaterials and the bituminous mixture.
     "applications" => [
+        "applications/index.md",
         "applications/generated/cluster_model.md",
         "applications/generated/eim_assembly.md",
         "applications/recycled_aggregate.md",
