@@ -18,12 +18,9 @@ stiffness does that cost? Microstructural model of
     [konigsberger2013](@citet) go further and use the ITZ to explain the **elastic
     limit** of concrete: the ITZ is where local failure initiates, so the
     macroscopic proportionality limit is reached long before the bulk paste
-    fails. That criterion needs two ingredients `MeanFieldHomogenization` does not provide
-    — an orientation-resolved Drucker-Prager check with strain second moments,
-    and the Hadamard jump conditions across a plane aggregate/paste interface.
-    Only the elastic part of the model is reproduced here. The strength side of
-    the same family of models is treated, without an ITZ, in
-    [Quasi-brittle strength](@ref app-strength).
+    fails. This page reproduces the elastic part of the model; the elastic
+    limit is the subject of the next one,
+    [The elastic limit of concrete](@ref app-itz-elastic-limit).
 
 ## The three scales
 
@@ -217,8 +214,7 @@ Three readings of the figure:
 
 That last point is the reason [konigsberger2013](@citet) turn to the elastic
 *limit* rather than the elastic *modulus*: the ITZ is a far more conspicuous
-feature of where concrete starts to fail than of how stiff it is. Reproducing
-that argument would need the strength machinery listed in the scope note above.
+feature of where concrete starts to fail than of how stiff it is.
 
 ```@example itz
 @printf("t/R = 0.05, φ_ITZ = 0.30 → E/E₀ = %.3f\n", E_concrete(0.3, 0.05) / E_ref)
@@ -229,9 +225,9 @@ ITZ of thickness ``t/R = 0.05`` carrying an additional porosity of 0.3.
 
 ## Where to go next
 
-The paste model used at scales 1 and 2 is derived, and checked against Echoes,
-in [Quasi-brittle strength of cement paste and mortar](@ref app-strength), which
-carries the same chain up to the compressive strength of a mortar through a
-single derivative of its effective stiffness. The two ways of writing such a
-chain, explicit as on this page or as one nested object, are compared in
-[Multiscale models](@ref man-multiscale).
+The two ways of writing a multiscale chain, explicit as on this page or as one
+nested object, are compared in [Multiscale models](@ref man-multiscale). The
+next application,
+[The elastic limit of concrete: ITZ failure and ITZ–aggregate separation](@ref app-itz-elastic-limit),
+turns from the stiffness the ITZ costs to the stresses it concentrates, and
+derives the onset of cracking of concrete.

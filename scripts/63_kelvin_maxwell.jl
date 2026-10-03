@@ -266,7 +266,7 @@ p_burgers_err = plot(
 # as an arbitrary transform instead — a fractional model, or a homogenized
 # `C*(p)` — [`prony_fit_relaxation`](@ref) fits one by collocation, and
 # everything above becomes available: a closed-form time function, an exact
-# dual chain, and a [`ViscoLaw`](@ref) for the ageing pipeline.
+# dual chain, and a [`ViscoLaw`](@ref) for the aging pipeline.
 
 fz = FractionalZener(2.0, 10.0, 1.0, 0.6)
 τ_trial = exp10.(range(-2, 2; length = 14))

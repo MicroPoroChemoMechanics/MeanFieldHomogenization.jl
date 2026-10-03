@@ -1,7 +1,7 @@
 # =============================================================================
 #  bench_ellipsoid2.jl — debug script 38 against ECHOES Python.
 #
-#  Reproduces the exact ellipsoid-2 ageing-creep setup and compares
+#  Reproduces the exact ellipsoid-2 aging-creep setup and compares
 #  the homogenized effective relaxation matrix `R̃_eff` block-by-block,
 #  plus the trapezoidal inputs (matrix + inclusion creep / relaxation
 #  matrices), so we can pinpoint the divergence layer-by-layer.

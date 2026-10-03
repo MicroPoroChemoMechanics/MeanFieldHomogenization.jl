@@ -2,7 +2,7 @@
 #  layered_alv.jl — n-layer composite sphere in an ALV matrix.
 #
 #  Extends the elastic Hervé-Zaoui recurrence
-#  ([@LayeredSpheres/bulk_recurrence.jl]) to the ageing linear
+#  ([@LayeredSpheres/bulk_recurrence.jl]) to the aging linear
 #  viscoelastic setting by replacing every scalar modulus (κ, μ) with
 #  its `(n×n)` trapezoidal Volterra matrix.  Each scalar transfer-
 #  matrix entry of the elastic 2×2 transfer becomes a Volterra
@@ -56,46 +56,61 @@ function _bulk_layer_moduli_alv(
         times::AbstractVector{<:Real}
     ) where {T, N}
     n = length(times)
-    # Matrix kernel : iso scalar matrices.
-    R0 = C0_law isa ViscoLaw ? trapezoidal_matrix(C0_law, times) : C0_law
+    # Matrix kernel : iso scalar matrices. A law given in `:creep` mode is a
+    # compliance, inverted to the relaxation the recurrences work on.
+    R0 = C0_law isa ViscoLaw ? _trapezoidal_relaxation(C0_law, times, 6) : C0_law
     α0, β0 = iso_params_from_blocks(R0)
     M_κ_0 = α0 ./ 3
     M_μ_0 = β0 ./ 2
 
     # Per-layer kernels.
     layers = ntuple(k -> _layer_iso_volterra(layer_modulus(sphere, k), times), N)
+    # An incompressible or rigid layer has no Volterra matrix: its entries are
+    # infinite, and the recurrences would fail inside a factorization with a
+    # message that names neither the layer nor the cause.
+    for k in 1:N, M in layers[k]
+        any(_nonfinite, M) && throw(
+            ArgumentError(
+                "layer $k of the LayeredSphere has an infinite modulus (k = ∞ or μ = ∞): " *
+                    "the ALV recurrences need the Volterra matrices of the moduli, which it " *
+                    "does not have. The elastic LayeredSphere functions treat k = ∞ exactly."
+            )
+        )
+    end
+    (any(_nonfinite, M_κ_0) || any(_nonfinite, M_μ_0)) &&
+        throw(ArgumentError("the reference medium of the LayeredSphere has an infinite modulus"))
     return layers, M_κ_0, M_μ_0
 end
+
+# A kernel entry that is not a finite number. Only a float can be infinite here:
+# a dual number or a symbolic entry is let through.
+_nonfinite(x) = false
+_nonfinite(x::AbstractFloat) = !isfinite(x)
 
 # Convert a per-layer modulus value (either a `TensISO{4,3}` or a
 # `ViscoLaw` returning `TensISO{4,3}`) to scalar `(M_κ, M_μ)` n×n
 # Volterra matrices.  An elastic `TensISO{4,3}` is implicitly wrapped
-# in a Heaviside law.
+# in a Heaviside law, and a law in `:creep` mode is inverted to its relaxation.
 function _layer_iso_volterra(C, times::AbstractVector{<:Real})
     law = C isa ViscoLaw ? C : heaviside_law(C)
-    R = trapezoidal_matrix(law, times)
+    R = _trapezoidal_relaxation(law, times, 6)
     α, β = iso_params_from_blocks(R)
     return (α ./ 3, β ./ 2)   # (M_κ, M_μ)
 end
 
-# ── Interface parameter promotion (scalar OR ViscoLaw) ─────────────────────
+# ── Interface parameter promotion ──────────────────────────────────────────
 
 """
     _iface_param_volterra(p, times, n) -> Matrix{T}
 
-Promote an interface parameter to its ``n\\times n`` Volterra block.  Scalar
-parameters (constant in time, the elastic limit) become ``p\\,\\mathbb 1_n``;
-genuinely viscoelastic parameters (`p::ViscoLaw` returning a scalar)
-become their trapezoidal ``n\\times n`` matrix.  Lets every interface model
-stack on top of an ageing matrix without code duplication.
+The ``n\\times n`` Volterra block of an interface parameter, ``p\\,\\mathbb 1_n``.
+The parameters of the interfaces are numbers (`SpringInterface{T <: Number}`,
+`MembraneInterface{T <: Number}`), constant in time: an interface does not
+age, whatever the layers on either side of it do.
 """
 function _iface_param_volterra(p::Real, times::AbstractVector, n::Int)
     T = typeof(p)
     return p * Matrix{T}(I, n, n)
-end
-
-function _iface_param_volterra(p::ViscoLaw, times::AbstractVector, n::Int)
-    return trapezoidal_matrix(p, times)
 end
 
 
@@ -116,10 +131,8 @@ Supports the same interface types as the elastic counterpart:
 [`PerfectInterface`](@ref), [`SpringInterface`](@ref) (primal,
 displacement jump driven by the compliance ``s_n = 1/k_n``), and
 [`MembraneInterface`](@ref)
-(dual, traction jump driven by ``\\kappa^{\\mathrm s}``).  Each elastic scalar parameter
-may also be a [`ViscoLaw`](@ref) — in that case the jump is itself
-ageing and the corresponding block is the parameter's trapezoidal
-matrix.
+(dual, traction jump driven by ``\\kappa^{\\mathrm s}``).  The interface parameters are
+constant in time (see `_iface_param_volterra`).
 """
 function _bulk_interface_T_alv(
         ::PerfectInterface, M_κ, M_μ, r,
@@ -228,12 +241,14 @@ function _bulk_transition_alv(
     R⁴ = R^4
     Sb = 3 .* M_κ_b .+ 4 .* M_μ_b
     M_kn = _iface_param_volterra(intf.sn, times, n)   # stored COMPLIANCE
-    # Numerators (`u_b = u_a + σ_a/kn`, `σ_b = σ_a` → augmented bulk transition;
-    # `M_kn` already holds the COMPLIANCE block `1/kn`).
-    num11 = 3 .* M_κ_a .+ 4 .* M_μ_b .+ (12 / R) .* (M_μ_b * (M_κ_a * M_kn))
-    num12 = (4 / R³) .* (M_μ_b .- M_μ_a) .- (16 / R⁴) .* (M_μ_b * (M_μ_a * M_kn))
-    num21 = (-3 * R³) .* (M_κ_a .- M_κ_b) .+ (9 * R²) .* (M_κ_a * (M_κ_b * M_kn))
-    num22 = 3 .* M_κ_b .+ 4 .* M_μ_a .- (12 / R) .* (M_κ_b * (M_μ_a * M_kn))
+    # Numerators (`u_b = u_a + s_n σ_a`, `σ_b = σ_a` → augmented bulk transition;
+    # `M_kn` already holds the COMPLIANCE block `s_n = 1/kn`). Each product is
+    # written in the order of the composition it comes from, outer modulus, then
+    # compliance, then inner modulus: aging moduli do not commute.
+    num11 = 3 .* M_κ_a .+ 4 .* M_μ_b .+ (12 / R) .* (M_μ_b * (M_kn * M_κ_a))
+    num12 = (4 / R³) .* (M_μ_b .- M_μ_a) .- (16 / R⁴) .* (M_μ_b * (M_kn * M_μ_a))
+    num21 = (-3 * R³) .* (M_κ_a .- M_κ_b) .+ (9 * R²) .* (M_κ_b * (M_kn * M_κ_a))
+    num22 = 3 .* M_κ_b .+ 4 .* M_μ_a .- (12 / R) .* (M_κ_b * (M_kn * M_μ_a))
     return (
         volterra_left_divide(Sb, num11; block_size = 1),
         volterra_left_divide(Sb, num12; block_size = 1),
@@ -531,11 +546,9 @@ end
 # State (time-major) : at row (t-1)·4 + i, the i-th component
 # (U, V, σ_rr, σ_rθ) at time t.  Mirror of
 # `LayeredSpheres._shear_interface_T` with each entry of the elastic
-# 4×4 jump matrix promoted to a Volterra n × n block — for scalar
-# (constant-in-time) parameters the resulting (4n × 4n) is block-
-# diagonal in the 4×4 sense; for `ViscoLaw` parameters the off-diagonal
-# (in time) blocks of the parameter's trapezoidal matrix populate the
-# corresponding entries.
+# 4×4 jump matrix promoted to a Volterra n × n block. The parameters being
+# constant in time, the resulting (4n × 4n) is block-diagonal in the 4×4
+# sense.
 
 # Helper: assemble a `(4n × 4n)` time-major block-lower-triangular
 # matrix from a 4×4 array of (n × n) Volterra blocks.  Off-diagonal
@@ -567,11 +580,9 @@ end
 the interface of type `intf` located at radius ``r``.  Time-major
 layout, block-lower-triangular with ``4\\times 4`` diagonal blocks.
 
-For a scalar (elastic) interface the ``4n\\times 4n`` matrix is block-
-diagonal in the ``4\\times 4`` sense (the diagonal blocks repeat the elastic ``4\\times 4``
-jump for every time step).  For an ageing interface (parameters
-`::ViscoLaw`) the corresponding entries also populate sub-diagonal
-``4\\times 4`` blocks, encoding the convolution.
+The interface parameters being constant in time, the ``4n\\times 4n`` matrix is
+block-diagonal in the ``4\\times 4`` sense: the diagonal blocks repeat the elastic
+``4\\times 4`` jump for every time step.
 """
 function _shear_interface_T_alv(
         ::PerfectInterface,
@@ -1006,14 +1017,83 @@ end
 # =============================================================================
 
 """
-    strain_strain_loc_alv(sphere, C0_law, times) -> Matrix{T}
+    _strain_jump_terms_alv(sphere, C0_law, times; external = true) -> (Δα, Δβ)
+
+ALV counterpart of the elastic `LayeredSpheres._strain_jump_terms`: the
+``n\\times n`` Volterra blocks the displacement jumps across the
+[`SpringInterface`](@ref)s add to the average strain of the whole sphere, on
+``\\mathbb J`` and ``\\mathbb K``,
+
+```math
+\\Delta\\alpha = \\sum_k \\frac{r_k^2}{R^3}\\,[\\![u_r]\\!]_k\\circ A_\\infty^{-\\circ},
+\\qquad
+\\Delta\\beta = \\sum_k \\frac{r_k^2}{5R^3}\\,\\big([\\![U]\\!]_k + 3[\\![W]\\!]_k\\big),
+```
+
+over the inner interfaces, and the outer one when `external` is `true`. Each
+jump is ``(\\mathbf J - \\mathbb 1)\\,\\mathbf s`` read on the displacement rows.
+"""
+function _strain_jump_terms_alv(
+        sphere::LayeredSphere{T, N},
+        C0_law::_ALVReference,
+        times::AbstractVector{<:Real};
+        external::Bool = true,
+    ) where {T, N}
+    n = length(times)
+    radii = sphere.radii
+    R³ = radii[N]^3
+    springs = [k for k in 1:(external ? N : N - 1) if layer_interface(sphere, k) isa SpringInterface]
+    isempty(springs) && return (zeros(T, n, n), zeros(T, n, n))
+
+    layers, M_κ_0, M_μ_0 = _bulk_layer_moduli_alv(sphere, C0_law, times)
+    inside_amps, A_M, _ = bulk_amplitude_seq_alv(sphere, C0_law, times)
+    A_M_inv = volterra_inverse(A_M; block_size = 1)
+    inside_a, inside_b, s_a, s_b = _shear_state_seq_alv(sphere, layers, M_κ_0, M_μ_0, times)
+    a_ab, b_ab = _shear_amp_blocks_alv(radii[N], M_κ_0, M_μ_0, n, hcat(s_a, s_b))
+    λ_a, λ_b = _shear_solve_far_field_alv(
+        a_ab[:, 1:n], a_ab[:, (n + 1):(2n)],
+        b_ab[:, 1:n], b_ab[:, (n + 1):(2n)], n
+    )
+
+    Δα = nothing
+    Δβ = nothing
+    for k in springs
+        intf = layer_interface(sphere, k)
+        r = radii[k]
+        (M_κ_k, M_μ_k) = layers[k]
+        (M_κ_b, M_μ_b) = k < N ? layers[k + 1] : (M_κ_0, M_μ_0)
+        # Bulk: the (u_r; σ_rr) state on the inner side of r_k.
+        A_k, B_k = inside_amps[k]
+        S_b = vcat(r .* A_k .+ (1 / r^2) .* B_k, 3 .* (M_κ_k * A_k) .- (4 / r^3) .* (M_μ_k * B_k))
+        J_b = _bulk_interface_T_alv(intf, M_κ_k, M_μ_k, r, times, n)
+        ju = ((J_b - I) * S_b)[1:n, :]
+        tb = (r^2 / R³) .* (ju * A_M_inv)
+        # Deviatoric: the time-major (U, W, σ_rr, σ_rθ) state, already at unit
+        # remote deviatoric strain.
+        combo = inside_a[k] * λ_a + inside_b[k] * λ_b
+        J_s = _shear_interface_T_alv(intf, M_κ_k, M_μ_k, M_κ_b, M_μ_b, r, times, n)
+        ΔS = (J_s - I) * combo
+        jU = ΔS[1:4:(4n), :]
+        jW = ΔS[2:4:(4n), :]
+        td = (r^2 / (5 * R³)) .* (jU .+ 3 .* jW)
+        Δα = Δα === nothing ? tb : Δα .+ tb
+        Δβ = Δβ === nothing ? td : Δβ .+ td
+    end
+    return Δα, Δβ
+end
+
+"""
+    strain_strain_loc_alv(sphere, C0_law, times; external = true) -> Matrix{T}
 
 ``6n\\times 6n`` block matrix describing the volume-averaged strain-strain
 localization across the **entire** layered sphere under a unit
 Volterra far-field strain.  In iso form this is
 ``\\langle\\widetilde{\\mathbb{A}}\\rangle = \\langle\\alpha\\rangle\\,\\mathbb{J} + \\langle\\beta\\rangle\\,\\mathbb{K}`` with
-``\\langle\\alpha\\rangle = \\sum_k f_k\\,\\alpha_k(t,t')`` and ``\\langle\\beta\\rangle = \\sum_k f_k\\,\\beta_k(t,t')`` (Volterra
-products).
+``\\langle\\alpha\\rangle = \\sum_k f_k\\,\\alpha_k(t,t') + \\Delta\\alpha`` and ``\\langle\\beta\\rangle = \\sum_k f_k\\,\\beta_k(t,t') + \\Delta\\beta`` (Volterra
+products), ``\\Delta\\alpha``, ``\\Delta\\beta`` being the displacement jumps of the spring
+interfaces (`_strain_jump_terms_alv`). `external` decides whether the
+outer interface belongs to the sphere, as in the elastic
+[`strain_strain_loc`](@ref).
 
 This is the analog used by the ALV dilute / MT / Maxwell schemes
 when the inclusion phase is a `LayeredSphere`.
@@ -1021,14 +1101,16 @@ when the inclusion phase is a `LayeredSphere`.
 function strain_strain_loc_alv(
         sphere::LayeredSphere{T, N},
         C0_law::_ALVReference,
-        times::AbstractVector{<:Real}
+        times::AbstractVector{<:Real};
+        external::Bool = true,
     ) where {T, N}
     α_k = bulk_localization_alv(sphere, C0_law, times)
     β_k = shear_localization_alv(sphere, C0_law, times)
     f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
     α_avg = sum(f[k] * α_k[k] for k in 1:N)
     β_avg = sum(f[k] * β_k[k] for k in 1:N)
-    return iso_blocks_from_params(α_avg, β_avg)
+    Δα, Δβ = _strain_jump_terms_alv(sphere, C0_law, times; external)
+    return iso_blocks_from_params(α_avg .+ Δα, β_avg .+ Δβ)
 end
 
 """
@@ -1039,13 +1121,16 @@ sphere relative to its iso ALV matrix `C0_law`.  Iso parameters
 (``\\alpha``-, ``\\beta``-blocks of the assembled matrix) are
 
 ```math
-\\alpha = 3\\sum_k f_k\\,(\\widetilde{k}_k - \\widetilde{k}_0)\\circ\\alpha_k,
+\\alpha = 3\\sum_k f_k\\,(\\widetilde{k}_k - \\widetilde{k}_0)\\circ\\alpha_k - 3\\,\\widetilde{k}_0\\circ\\Delta\\alpha,
 \\qquad
-\\beta = 2\\sum_k f_k\\,(\\widetilde{\\mu}_k - \\widetilde{\\mu}_0)\\circ\\beta_k,
+\\beta = 2\\sum_k f_k\\,(\\widetilde{\\mu}_k - \\widetilde{\\mu}_0)\\circ\\beta_k - 2\\,\\widetilde{\\mu}_0\\circ\\Delta\\beta,
 ```
 
-where ``\\alpha_k``, ``\\beta_k`` are the per-layer localization matrices and ``\\widetilde{k}_k``,
-``\\widetilde{\\mu}_k`` (`M_κ_k`, `M_μ_k`) the per-layer Volterra moduli.
+where ``\\alpha_k``, ``\\beta_k`` are the per-layer localization matrices, ``\\widetilde{k}_k``,
+``\\widetilde{\\mu}_k`` (`M_κ_k`, `M_μ_k`) the per-layer Volterra moduli and ``\\Delta\\alpha``,
+``\\Delta\\beta`` the displacement jumps of the spring interfaces, plus the surface
+stress of the membranes. `external` has the meaning it has in
+[`strain_strain_loc_alv`](@ref).
 
 The dilute-scheme effective stiffness with this inclusion at volume
 fraction ``f`` is ``\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0 + f\\,\\widetilde{\\mathbb{N}}``,
@@ -1054,7 +1139,8 @@ with ``\\widetilde{\\mathbb{N}}`` = `stiffness_contribution_alv(sphere, …)`.
 function stiffness_contribution_alv(
         sphere::LayeredSphere{T, N},
         C0_law::_ALVReference,
-        times::AbstractVector{<:Real}
+        times::AbstractVector{<:Real};
+        external::Bool = true,
     ) where {T, N}
     layers, M_κ_0, M_μ_0 = _bulk_layer_moduli_alv(sphere, C0_law, times)
     α_k = bulk_localization_alv(sphere, C0_law, times)
@@ -1071,8 +1157,12 @@ function stiffness_contribution_alv(
         N_bulk .+= f[k] .* ((M_κ_k - M_κ_0) * α_k[k])
         N_shear .+= f[k] .* ((M_μ_k - M_μ_0) * β_k[k])
     end
-    a_surf, b_surf = _membrane_surface_stress_alv(sphere, C0_law, times)
-    return iso_blocks_from_params(3 .* N_bulk .+ a_surf, 2 .* N_shear .+ b_surf)
+    a_surf, b_surf = _membrane_surface_stress_alv(sphere, C0_law, times; external)
+    Δα, Δβ = _strain_jump_terms_alv(sphere, C0_law, times; external)
+    return iso_blocks_from_params(
+        3 .* N_bulk .+ a_surf .- 3 .* (M_κ_0 * Δα),
+        2 .* N_shear .+ b_surf .- 2 .* (M_μ_0 * Δβ)
+    )
 end
 
 """
@@ -1115,7 +1205,8 @@ b^{\\mathrm{surf}} = \\frac{2}{5}\\,\\bigl(-\\kappa^{\\mathrm s}U + 3\\kappa^{\\
 function _membrane_surface_stress_alv(
         sphere::LayeredSphere{T, N},
         C0_law::_ALVReference,
-        times::AbstractVector{<:Real}
+        times::AbstractVector{<:Real};
+        external::Bool = true,
     ) where {T, N}
     n = length(times)
     radii = sphere.radii
@@ -1143,7 +1234,7 @@ function _membrane_surface_stress_alv(
         b_ab[:, 1:n], b_ab[:, (n + 1):(2n)], n
     )
 
-    for k in 1:N
+    for k in 1:(external ? N : N - 1)
         intf = layer_interface(sphere, k)
         intf isa MembraneInterface || continue
         κs = intf.κs; μs = intf.μs

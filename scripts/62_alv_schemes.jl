@@ -1,13 +1,13 @@
-# # [Ageing viscoelastic schemes side by side](@id tut-alv-schemes)
+# # [Aging viscoelastic schemes side by side](@id tut-alv-schemes)
 #
 # !!! info "Before this page"
 #     The tutorial [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time),
 #     which validates the time route used alone below, and the theory page
-#     [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity), where the
+#     [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity), where the
 #     Volterra form of each scheme is derived.
 #
 # Every mean-field scheme `MeanFieldHomogenization` implements in elasticity also exists on
-# the **ageing linear viscoelastic** path, where each modulus becomes a Volterra
+# the **aging linear viscoelastic** path, where each modulus becomes a Volterra
 # operator and each product a Volterra product. This page runs four of them on
 # one composite and reads the differences off a single scalar: the effective
 # uniaxial creep compliance under a stress step.
@@ -28,7 +28,7 @@ using Printf
 using Plots
 gr()  # headless backend; GKSwstype is set to "100" before Literate runs
 
-# ## §1 An ageing matrix and elastic reinforcements
+# ## §1 An aging matrix and elastic reinforcements
 #
 # The matrix is a Maxwell fluid whose stiffness **grows with the age** `t'` at
 # which it is loaded — the elementary model of a setting binder:
@@ -48,11 +48,11 @@ gr()  # headless backend; GKSwstype is set to "100" before Literate runs
 
 const k₀, μ₀, τ = 5.0, 2.0, 1.0
 
-ageing(tp) = 1 + 0.3 * sqrt(max(tp, 0.0))
+aging(tp) = 1 + 0.3 * sqrt(max(tp, 0.0))
 
 function R_matrix(t, tp)
     t < tp && return TensISO{3}(0.0, 0.0)
-    a = ageing(tp)
+    a = aging(tp)
     decay = exp(-(t - tp) / (τ * a))
     return TensISO{3}(3k₀ * a * decay, 2μ₀ * a * decay)
 end
@@ -246,7 +246,7 @@ end                                                                  #jl
 #
 # The age of the matrix at loading enters every curve above through ``a(t')``,
 # and the aspect ratio through §4.
-# [Ageing creep: loading age against inclusion shape](@ref tut-ageing-ages-aspect)
+# [Aging creep: loading age against inclusion shape](@ref tut-aging-ages-aspect)
 # varies the two together on the same output and separates their effects. The
 # laws, the time grids and the reading of a Volterra result are described in
 # [Viscoelastic homogenization](@ref man-viscoelasticity) of the manual.

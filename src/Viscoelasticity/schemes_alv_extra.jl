@@ -1,7 +1,7 @@
 # =============================================================================
 #  schemes_alv_extra.jl — Ponte-Castañeda & Willis (PCW),
 #  Asymmetric Self-Consistent (ASC) and Differential (DIFF) schemes
-#  in ageing linear viscoelasticity.
+#  in aging linear viscoelasticity.
 #
 #  All operate on the discrete `(6n × 6n)` block matrices produced by
 #  `trapezoidal_matrix` (or its `_trapezoidal_relaxation` wrapper for
@@ -99,6 +99,7 @@ function asymmetric_self_consistent_alv(
         Union{Nothing, AbstractMatrix},
         Union{Nothing, AbstractMatrix},
     }[]
+    layered_data = NamedTuple[]   # see `self_consistent_alv`
     for name in incl_names
         ph = rve.phases[name]
         a = rve.amounts[name]
@@ -118,6 +119,10 @@ function asymmetric_self_consistent_alv(
         C_r_law = phase_property(rve, name, prop)
         C_r_law isa ViscoLaw ||
             throw(ArgumentError("asymmetric_self_consistent_alv: phase $name property is not a ViscoLaw"))
+        if ph.geometry isa LayeredSphere
+            push!(layered_data, (geom = ph.geometry, f = _amount_value(rve, name), sym = phase_symmetrize(rve, name)))
+            continue
+        end
         push!(C_phases, _trapezoidal_relaxation(C_r_law, times, 6))
         push!(geometries, ph.geometry)
         push!(fractions, _amount_value(rve, name))
@@ -130,6 +135,7 @@ function asymmetric_self_consistent_alv(
     Tp = _alv_promoted_eltype(
         vcat(Matrix[C_M], C_phases), fractions, U_M_phases, crack_data
     )
+    Tp = _alv_layered_eltype(Tp, layered_data, C_M, times)
     n = length(times)
     Id = _identity_alv(n, Tp)
     C_n = Tp.(C_M)
@@ -141,6 +147,12 @@ function asymmetric_self_consistent_alv(
             C_M, C_n, C_phases, U_M_phases, V_M_phases,
             fractions, symmetrizes, n, Id
         )
+        # A layered sphere adds (C_r − C_M) ∘ A_r through its average stress:
+        # B_r − C_M ∘ A_r, both against the running estimate.
+        for d in layered_data
+            A, B = _alv_layered_AB(d.geom, C_n, times)
+            C_n_new = C_n_new .+ d.f .* _maybe_symmetrize_alv(B .- C_M * A, d.sym)
+        end
         # Crack contribution (Budiansky-O'Connell SC):
         # `ΔJ̃_cracks(C_n)` against the running estimate, added to the
         # compliance side of the ASC solid update.
@@ -280,7 +292,7 @@ end
                       abstol = 1e-8, reltol = 1e-6, alg = nothing,
                       formulation = :stiffness) -> Matrix{T}
 
-Differential homogenization in ageing linear viscoelasticity, solved
+Differential homogenization in aging linear viscoelasticity, solved
 as a SciML ODE on the fictitious incorporation time ``\\tau \\in [0, 1]``
 [norris1985](@cite):
 

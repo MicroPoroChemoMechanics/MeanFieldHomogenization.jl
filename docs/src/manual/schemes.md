@@ -261,7 +261,7 @@ requirement.
 | Family | `abstol` | `reltol` | `maxiters` |
 | :--- | ---: | ---: | ---: |
 | [`SelfConsistent`](@ref), [`AsymmetricSelfConsistent`](@ref) | `1e-12` | `1e-8` | `100` |
-| ALV (ageing-viscoelastic) counterparts | `1e-10` | `1e-8` | `200` |
+| ALV (aging-viscoelastic) counterparts | `1e-10` | `1e-8` | `200` |
 | [`DifferentialScheme`](@ref) (forwarded to `OrdinaryDiffEq`) | `1e-8` | `1e-6` | → `solve` |
 | [`hill_tensor`](@ref) cubature backends | `1e-8` | `1e-6` | `10^6` |
 
@@ -371,10 +371,10 @@ C_eff = homogenize(rve, MoriTanaka())   # eltype(C_eff) == ComplexF64
 All schemes propagate `Complex{Float64}` through their tensor algebra.
 The `Im → 0` limit consistently recovers the real-modulus result.
 
-## Time-domain ageing viscoelasticity
+## Time-domain aging viscoelasticity
 
 For full time-domain ALV homogenization (relaxation / creep kernels
-`R(t,t')` / `J(t,t')`, possibly ageing), pass a [`ViscoLaw`](@ref)
+`R(t,t')` / `J(t,t')`, possibly aging), pass a [`ViscoLaw`](@ref)
 property and a `times` grid to [`homogenize_alv`](@ref):
 
 ```julia
@@ -396,7 +396,7 @@ C_eff = homogenize_alv(rve, MoriTanaka(), :C; times = times)   # 300 × 300
 ```
 
 See the dedicated [Viscoelasticity manual](@ref man-viscoelasticity) for the
-full pipeline (ageing kernels, cracks, sensitivities, fast paths,
+full pipeline (aging kernels, cracks, sensitivities, fast paths,
 ECHOES validation).
 
 ## Sensitivity (ForwardDiff)

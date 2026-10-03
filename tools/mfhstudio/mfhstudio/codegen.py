@@ -589,13 +589,23 @@ class CodeGen:
         return f"iso_stiffness({num('k', 1.0)}, {num('mu', 1.0)})"
 
     def _visco_expr(self, v: dict) -> str:
+        # The `visco` field of a property, kept for the projects saved with it;
+        # the panel now goes through the builders of `_prop_expr`. Its laws carry
+        # one time each, which the real signatures take as both the bulk and the
+        # shear time; its Kelvin-Voigt unit has no instantaneous compliance.
         kind = v.get("kind", "maxwell_iso")
         a = v.get("args", {})
         num = lambda k, d=1.0: _num(a.get(k, d))
         if kind == "maxwell_iso":
-            return f"maxwell_iso({num('k', 10.0)}, {num('mu', 5.0)}, {num('tau')})"
+            return (
+                f"maxwell_iso({num('k', 10.0)}, {num('mu', 5.0)}, "
+                f"{num('tau')}, {num('tau')})"
+            )
         if kind == "kelvin_iso":
-            return f"kelvin_iso({num('k', 10.0)}, {num('mu', 5.0)}, {num('tau')})"
+            return (
+                f"kelvin_iso(Inf, Inf, [{num('k', 10.0)}], [{num('mu', 5.0)}], "
+                f"[{num('tau')}], [{num('tau')}])"
+            )
         if kind == "heaviside":
             return (
                 f"heaviside_law(iso_stiffness({num('k', 10.0)}, {num('mu', 5.0)}))"
@@ -954,7 +964,7 @@ class CodeGen:
             return f"{lens.member}{lens.property} → {CodeGen._lens_label(inner)}"
         return k
 
-    # -- ageing viscoelasticity -------------------------------------------
+    # -- aging viscoelasticity -------------------------------------------
 
     def _alv_main(self, root: Cell) -> None:
         alv = self.m.alv

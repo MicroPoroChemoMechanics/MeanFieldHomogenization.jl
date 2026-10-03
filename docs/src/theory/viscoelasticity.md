@@ -1,8 +1,8 @@
-# [Ageing linear viscoelasticity (ALV)](@id th-viscoelasticity)
+# [Aging linear Volterra behavior (ALV)](@id th-viscoelasticity)
 
 !!! info "Before this page"
     [The Laplace-Carson route](@ref th-laplace-carson), which treats the
-    non-ageing case contrasted below, and the elastic chain transposed on this
+    non-aging case contrasted below, and the elastic chain transposed on this
     page: [The Eshelby inclusion problem](@ref th-eshelby-problem),
     [Localization and contribution tensors](@ref th-localization) and
     [Homogenization schemes](@ref th-homogenization).
@@ -23,12 +23,21 @@
     ``\mathbb{L}^{*}(p) : \mathbb{C}^{*}(p) = \mathbb{I}`` there. That single
     difference is the whole cost and the whole benefit of each route.
 
+ALV stands for **aging linear Volterra**: a linear behavior whose response at
+time ``t`` depends on the whole history through a two-time kernel, the kernel
+being free to age. In mechanics it is aging linear viscoelasticity, the subject
+of most of this page. The same algebra holds at order 2 for a hereditary
+conductivity, diffusivity or permittivity, whose kernel ``\boldsymbol{K}(t, t')``
+maps the history of the gradient to the flux analog
+``\boldsymbol{\sigma}\equiv-\underline{q}`` of [Conventions](@ref th-notation-sigma-q); every
+statement below transposes to it by the dictionary of that page.
+
 Everything in the elastic part of this documentation — the Eshelby problem, the
 Hill polarization tensor, the concentration and contribution tensors, the
-schemes built on them — carries over to **ageing linear viscoelasticity**
+schemes built on them — carries over to **aging linear viscoelasticity**
 essentially unchanged, provided two substitutions are made systematically:
 
-| Elastic | Ageing viscoelastic |
+| Elastic | Aging viscoelastic |
 | :------ | :------------------ |
 | tensor ``\mathbb{C}`` | two-time **kernel** ``\mathbb{C}(t,t')`` |
 | double contraction ``\mathbb{A}:\mathbb{B}`` | Volterra product ``\mathbb{A}\circ\mathbb{B}`` |
@@ -48,7 +57,7 @@ homogenization schemes. The derivations are those of [barthelemyIJSS2016](@citet
     tensor inverse. In `MeanFieldHomogenization` these two operations are
     [`volterra_product`](@ref) and [`volterra_inverse`](@ref).
 
-## 1. The ageing linear viscoelastic behavior
+## 1. The aging linear viscoelastic behavior
 
 The strain and stress histories are related by a **Stieltjes integral**
 [barthelemyIJSS2016](@cite):
@@ -64,7 +73,7 @@ The strain and stress histories are related by a **Stieltjes integral**
 with ``\mathbb{L}`` the creep compliance kernel and ``\mathbb{C}`` the
 relaxation kernel. Causality imposes ``\mathbb{C}(t,t') = 0`` for ``t < t'``.
 
-The **non-ageing** case is the special one where the kernels depend on ``t`` and
+The **non-aging** case is the special one where the kernels depend on ``t`` and
 ``t'`` only through their difference ``t-t'``. There, and only there, the
 Laplace–Carson correspondence principle applies and the problem reduces to an
 elastic one with complex moduli — the route taken in
@@ -89,7 +98,7 @@ symbol denotes
 ```
 
 This product is associative and distributive over addition, but **not
-commutative**: commutativity holds only for non-ageing kernels
+commutative**: commutativity holds only for non-aging kernels
 [barthelemyIJSS2016; after Maghous and Creus](@cite). Every formula below
 therefore keeps its factors in order, including the apparently scalar ones.
 
@@ -340,8 +349,13 @@ phase ``i``:
 
 The one new difficulty is bookkeeping: ``\circ`` does not commute, so the
 order of the factors is prescribed — even in the isotropic case, where every
-factor looks scalar. All ten schemes are implemented by
-[`homogenize_alv`](@ref).
+factor looks scalar. Two kernels commute only on a uniform time grid with
+non-aging laws, or when one of them is elastic; an aging law, or a logarithmic
+grid, makes the order matter at the percent level. In the Mori–Tanaka row the
+inverse stands on the right of ``\sum_i f_i\,\mathbb{N}_i``, because it maps the
+average strain to that of the matrix, on which the contributions act. All ten
+schemes are implemented by [`homogenize_alv`](@ref) at order 4; at order 2 all
+of them but the asymmetric self-consistent one.
 
 ## 6. The n-layer composite sphere
 
@@ -360,6 +374,37 @@ inverse; the transfer matrices become block matrices of size ``2n\times 2n`` and
 per-layer localization kernels and the imperfect-interface transfers. The
 composite sphere then enters the schemes exactly as in elasticity — through its
 volume-averaged concentration kernel, having no Hill tensor of its own.
+
+In conduction the temperature of layer ``k`` is
+``(A_k\,r + B_k/r^2)\cos\theta`` and, with the flux analog
+``\boldsymbol{\sigma}\equiv-\underline{q}``, the radial component is
+``\sigma_r = k_k\circ(A_k - 2B_k/r^3)\cos\theta``, the amplitudes ``A_k``, ``B_k`` being
+Volterra operators that act on the history of the remote gradient. A jump is the
+outer value minus the inner one. A Kapitza interface of resistance ``\rho`` and a
+surface-conductive one of conductance ``k^{\mathrm s}`` give, for this
+``Y_1`` harmonic,
+
+```math
+[\![T]\!] = \rho\,\sigma_r = -\rho\,q_r ,
+\qquad
+[\![\sigma_r]\!] = \frac{2k^{\mathrm s}}{r^2}\,T ,
+```
+
+the minus sign of the Kapitza law being that of the dictionary, and the
+amplitudes beyond the interface follow in closed form,
+
+```math
+A_b = (3k_b)^{-\circ}\circ\Bigl(\sigma_r^{+} + \frac{2}{r}\,k_b\circ T^{+}\Bigr),
+\qquad
+B_b = r^2\,\bigl(T^{+} - r\,A_b\bigr),
+```
+
+so that only ``3k_b`` is ever inverted and an impermeable core needs no
+inverse. As in elasticity, the concentration of the whole sphere adds to the
+material averages ``A_k\circ A_\infty^{-\circ}`` the temperature jumps
+``r_k^2\,[\![T]\!]_k/R^3``, and its flux the surface current
+``2k^{\mathrm s}\,T(r_k)\,r_k/R^3`` of the surface-conductive interfaces, the
+outer interface counting unless it is left to the matrix.
 
 ## [7. Symmetry classes and structured storage](@id th-visco-classes)
 
@@ -383,9 +428,9 @@ code while preserving both the storage saving and the algebraic closure.
 
 The next chapter leaves the inclusion problem altogether:
 [Periodic multilayer — the laminate cell](@ref th-laminate) solves a periodic
-stack exactly, and its §10 transposes that solution to ageing viscoelasticity by
+stack exactly, and its §10 transposes that solution to aging viscoelasticity by
 the substitution of this page. The schemes of §5 are compared on one composite
-in the tutorial [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes),
+in the tutorial [Aging viscoelastic schemes side by side](@ref tut-alv-schemes),
 and the manual page [Viscoelastic homogenization](@ref man-viscoelasticity)
 gives the syntax of [`homogenize_alv`](@ref).
 

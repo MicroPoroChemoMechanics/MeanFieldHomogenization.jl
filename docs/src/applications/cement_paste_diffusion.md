@@ -588,9 +588,10 @@ simultaneously load-bearing and diffusive — the prolate gel pores are what kee
 
 ## Where to go next
 
-[The interfacial transition zone in concrete](@ref app-itz-concrete) moves one
-scale up: the paste becomes the matrix of a concrete, and each aggregate is a
-composite sphere whose coating is a more porous paste. The behavior of the
+The next application,
+[Aging creep of solidifying cementitious materials](@ref app-aging-creep),
+follows the paste in time: a phase that solidifies progressively, and an
+effective relaxation kernel that depends on the age at loading. The behavior of the
 self-consistent scheme near its percolation threshold, which both maps above
 rest on, is examined on a porous solid in the tutorial
 [Porous materials and the self-consistent trap](@ref tut-porous-materials), and

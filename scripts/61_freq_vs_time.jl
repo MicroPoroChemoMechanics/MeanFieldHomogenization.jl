@@ -16,11 +16,11 @@
 #   [viscoelastic composites tutorial](@ref tut-viscoelasticity);
 # - the **time route** — [`homogenize_alv`](@ref), which discretizes the
 #   Volterra operators on a time grid and never leaves the time domain, as in
-#   the [ageing creep application](@ref app-ageing-creep);
+#   the [aging creep application](@ref app-aging-creep);
 # - the **Laplace-Carson route** — [`homogenize_lc`](@ref), which does the same
 #   and then inverts the answer back to the time domain numerically.
 #
-# They share no code. For a **non-ageing** material the correspondence principle
+# They share no code. For a **non-aging** material the correspondence principle
 # says all three must nevertheless agree, and this page checks that they do —
 # quantitatively, and with each source of discrepancy identified rather than
 # merely bounded.
@@ -79,7 +79,7 @@ gr()  # headless backend; GKSwstype is set to "100" before Literate runs
 # point of describing the material this way is that **one object serves all
 # three routes**: `carson_relaxation(z, p)` is the transformed stiffness the
 # frequency and Laplace-Carson routes need, and `ViscoLaw(z)` is the
-# time-domain kernel the ageing route needs. Nothing has to be written twice,
+# time-domain kernel the aging route needs. Nothing has to be written twice,
 # so the three routes are guaranteed to be comparing the same material.
 
 standard_solid(k∞, k_d, τk, μ∞, μ_d, τμ) =
@@ -356,7 +356,7 @@ plt3
 #     independently, the Laplace-Carson transform no longer factorizes the
 #     convolution, and *two of the three routes simply cease to exist* — which
 #     is why [`homogenize_alv`](@ref) is not a redundant implementation. See the
-#     [ageing creep application](@ref app-ageing-creep) for a case
+#     [aging creep application](@ref app-aging-creep) for a case
 #     where only the time route applies.
 
 const figdir = joinpath(@__DIR__, "figures")                        #jl
@@ -372,8 +372,8 @@ display(plt3)                                                        #jl
 # ## Where to go next
 #
 # Once the matrix ages, the time route is the only one left.
-# [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes) runs four
-# schemes along it on an ageing matrix, and shows where the shape assumed for the
+# [Aging viscoelastic schemes side by side](@ref tut-alv-schemes) runs four
+# schemes along it on an aging matrix, and shows where the shape assumed for the
 # spatial distribution of the inclusions decides the answer. The time
 # discretization behind [`homogenize_alv`](@ref) is derived in
-# [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity).
+# [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity).

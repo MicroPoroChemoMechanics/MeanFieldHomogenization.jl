@@ -87,7 +87,7 @@ tex = '\mathbb{C}'
 label = "ℂ"
 name = "relaxation kernel ℂ(t, t′), the stiffness of elasticity"
 unit = "Pa"
-pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/aging_creep.md", "applications/bituminous.md"]
 
 [[symbol]]
 group = "Stiffness and elastic moduli"
@@ -102,7 +102,7 @@ tex = '\mathbb{C}_0'
 label = "ℂ<sub>0</sub>"
 name = "relaxation kernel of the reference medium"
 unit = "Pa"
-pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/aging_creep.md", "applications/bituminous.md"]
 
 [[symbol]]
 group = "Stiffness and elastic moduli"
@@ -131,7 +131,7 @@ tex = '\mathbb{C}^{\mathrm{hom}}'
 label = "ℂ<sup>hom</sup>"
 name = "effective relaxation kernel"
 unit = "Pa"
-pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/aging_creep.md", "applications/bituminous.md"]
 
 [[symbol]]
 group = "Stiffness and elastic moduli"
@@ -494,7 +494,7 @@ tex = '\omega'
 label = "ω"
 name = "aspect ratio (defined on the page)"
 unit = "1"
-pages = ["theory/notation.md", "theory/eshelby_problem.md", "theory/hill_tensors.md", "theory/cod_tensors.md", "manual/ellipsoidal_inclusions.md", "manual/inclusion_gallery.md", "manual/cracks.md", "tutorials/cracks.md", "manual/particle_assemblies.md", "theory/differential_scheme.md", "theory/thermal_cracks.md", "theory/layered_spheroid.md", "theory/layered_spheroid_elasticity.md", "manual/layered_inclusions.md", "tutorials/porous_benchmark.md", "tutorials/strength_criteria.md", "tutorials/axi_layered_spheroid.md", "tutorials/transport.md", "fe_coupling/permeability.md", "fe_coupling/fractured_rock.md", "fe_coupling/materials.md", "fe_coupling/arma2011.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/nano_spheroids.md", "tutorials/generated/layered_spheroid_hc.md", "tutorials/generated/hill_tensors.md", "tutorials/generated/neural_inclusion.md", "manual/neural_inclusions.md"]
+pages = ["theory/notation.md", "theory/eshelby_problem.md", "theory/hill_tensors.md", "theory/cod_tensors.md", "manual/ellipsoidal_inclusions.md", "manual/inclusion_gallery.md", "manual/cracks.md", "tutorials/cracks.md", "manual/particle_assemblies.md", "theory/differential_scheme.md", "theory/thermal_cracks.md", "theory/layered_spheroid.md", "theory/layered_spheroid_elasticity.md", "manual/layered_inclusions.md", "tutorials/porous_benchmark.md", "tutorials/strength_criteria.md", "tutorials/axi_layered_spheroid.md", "tutorials/transport.md", "fe_coupling/permeability.md", "fe_coupling/fractured_rock.md", "fe_coupling/materials.md", "fe_coupling/arma2011.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/nano_spheroids.md", "tutorials/generated/layered_spheroid_hc.md", "tutorials/generated/hill_tensors.md", "tutorials/generated/neural_inclusion.md", "manual/neural_inclusions.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -563,7 +563,7 @@ tex = '\varphi'
 label = "φ"
 name = "porosity"
 unit = "1"
-pages = ["manual/poromechanics.md", "fe_coupling/materials.md", "fe_coupling/fractured_rock.md", "fe_coupling/poroelastic_coupling.md", "fe_coupling/scale_transition.md", "theory/eim.md", "applications/generated/eim_assembly.md", "tutorials/porous_benchmark.md", "tutorials/porous_materials.md", "tutorials/strength_criteria.md", "tutorials/transport.md", "tools/", "applications/cement_paste.md", "applications/cement_paste_diffusion.md", "applications/itz_concrete.md", "applications/lamellar_clay.md", "applications/strength.md", "developer/validation.md"]
+pages = ["manual/poromechanics.md", "fe_coupling/materials.md", "fe_coupling/fractured_rock.md", "fe_coupling/poroelastic_coupling.md", "fe_coupling/scale_transition.md", "theory/eim.md", "applications/generated/eim_assembly.md", "tutorials/porous_benchmark.md", "tutorials/porous_materials.md", "tutorials/strength_criteria.md", "tutorials/transport.md", "tools/", "applications/cement_paste.md", "applications/cement_paste_diffusion.md", "applications/itz_concrete.md", "applications/lamellar_clay.md", "applications/strength.md", "developer/validation.md", "applications/granular_friction.md", "applications/sandstone_strength.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -656,7 +656,7 @@ tex = '\mathbb{P}'
 label = "ℙ"
 name = "Hill polarization kernel"
 unit = "Pa<sup>−1</sup>"
-pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/aging_creep.md", "applications/bituminous.md"]
 
 [[symbol]]
 group = "Eshelby problem and localization"
@@ -1064,7 +1064,7 @@ tex = 'p'
 label = "p"
 name = "Laplace-Carson variable"
 unit = "s<sup>−1</sup>"
-pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/aging_creep.md", "applications/bituminous.md"]
 
 [[symbol]]
 group = "Viscoelasticity"
@@ -1088,7 +1088,7 @@ tex = 'J'
 label = "J"
 name = "creep function"
 unit = "Pa<sup>−1</sup>"
-pages = ["theory/laplace_carson.md", "manual/rheological_models.md", "manual/viscoelasticity.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/freq_vs_time.md", "applications/bituminous.md", "tutorials/generated/ageing_ages_aspect.md"]
+pages = ["theory/laplace_carson.md", "manual/rheological_models.md", "manual/viscoelasticity.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/freq_vs_time.md", "applications/bituminous.md", "tutorials/generated/aging_ages_aspect.md"]
 
 [[symbol]]
 group = "Viscoelasticity"
@@ -1346,3 +1346,409 @@ label = "𝕄"
 name = "block of the linear system of the cluster model"
 unit = "1"
 pages = ["theory/cluster_model.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\boldsymbol{K}'
+label = "<b>K</b>"
+name = "acoustic tensor, <u>n</u>·ℂ·<u>n</u>"
+unit = "Pa"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\underline{a}'
+label = "<u>a</u>"
+name = "vector of the rank-one strain jump across a plane interface"
+unit = "1"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{M}'
+label = "𝕄"
+name = "ITZ stress at the aggregate surface per unit macroscopic stress"
+unit = "1"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{B}_{\mathrm{agg}}'
+label = "𝔹<sub>agg</sub>"
+name = "stress concentration tensor of the aggregates"
+unit = "1"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{A}_{\mathrm{agg}}'
+label = "𝔸<sub>agg</sub>"
+name = "dilute strain concentration tensor of the aggregates"
+unit = "1"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{A}_{\mathrm{G}}'
+label = "𝔸<sub>G</sub>"
+name = "strain concentration tensor of the grain"
+unit = "1"
+pages = ["applications/granular_friction.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{B}_{\mathrm{G}}'
+label = "𝔹<sub>G</sub>"
+name = "stress concentration tensor of the grain"
+unit = "Pa"
+pages = ["applications/granular_friction.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{A}_{\mathrm{P}}'
+label = "𝔸<sub>P</sub>"
+name = "strain concentration tensor of the pore"
+unit = "1"
+pages = ["applications/granular_friction.md", "applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{A}_{\mathrm{S}}'
+label = "𝔸<sub>S</sub>"
+name = "strain concentration tensor of the bonded grain"
+unit = "1"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{B}_{\mathrm{S}}'
+label = "𝔹<sub>S</sub>"
+name = "stress concentration tensor of the bonded grain"
+unit = "Pa"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\boldsymbol{\sigma}_{\mathrm{agg}}'
+label = "<b>σ</b><sub>agg</sub>"
+name = "stress in the aggregate"
+unit = "Pa"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\boldsymbol{\varepsilon}_{\mathrm{agg}}'
+label = "<b>ε</b><sub>agg</sub>"
+name = "strain in the aggregate"
+unit = "1"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\boldsymbol{\sigma}_{\mathrm{ITZ}}'
+label = "<b>σ</b><sub>ITZ</sub>"
+name = "stress in the ITZ at the aggregate surface"
+unit = "Pa"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\boldsymbol{\varepsilon}_{\mathrm{ITZ}}'
+label = "<b>ε</b><sub>ITZ</sub>"
+name = "strain in the ITZ at the aggregate surface"
+unit = "1"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{C}_{\mathrm{ITZ}}'
+label = "ℂ<sub>ITZ</sub>"
+name = "stiffness of the ITZ"
+unit = "Pa"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\mathbb{C}_{\mathrm{agg}}'
+label = "ℂ<sub>agg</sub>"
+name = "stiffness of the aggregates"
+unit = "Pa"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Strength"
+tex = '\Sigma_m'
+label = "Σ<sub>m</sub>"
+name = "macroscopic mean stress, tr <b>Σ</b>/3"
+unit = "Pa"
+
+[[symbol]]
+group = "Strength"
+tex = '\Sigma_d'
+label = "Σ<sub>d</sub>"
+name = "macroscopic equivalent deviatoric stress, normalized as stated on the page"
+unit = "Pa"
+
+[[symbol]]
+group = "Strength"
+tex = '\sigma_d'
+label = "σ<sub>d</sub>"
+name = "equivalent deviatoric stress of the solid, (<b>σ</b><sup>d</sup>:<b>σ</b><sup>d</sup>/2)<sup>1/2</sup>"
+unit = "Pa"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = '\sigma_{\mathrm{I}}'
+label = "σ<sub>I</sub>"
+name = "largest principal stress"
+unit = "Pa"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'K'
+label = "K"
+name = "shear strength of the von Mises solid"
+unit = "Pa"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'T^{\mathrm{ult}}'
+label = "T<sup>ult</sup>"
+name = "tensile strength of the bond between ITZ and aggregate"
+unit = "Pa"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Strength"
+tex = '\sigma^{\mathrm{ult}}_{\mathrm{ITZ}}'
+label = "σ<sup>ult</sup><sub>ITZ</sub>"
+name = "tensile strength of the ITZ"
+unit = "Pa"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'B_{\mathrm{vol}}'
+label = "B<sub>vol</sub>"
+name = "spherical stress concentration factor of the aggregates"
+unit = "1"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'B_{\mathrm{dev}}'
+label = "B<sub>dev</sub>"
+name = "deviatoric stress concentration factor of the aggregates"
+unit = "1"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Strength"
+tex = '\xi'
+label = "ξ"
+name = "coordinate along the hydrostatic axis, √3 Σ<sub>m</sub>"
+unit = "Pa"
+pages = ["applications/itz_elastic_limit.md"]
+
+[[symbol]]
+group = "Strength"
+tex = '\alpha'
+label = "α"
+name = "friction coefficient of a contact"
+unit = "1"
+pages = ["applications/granular_friction.md", "applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'T'
+label = "T"
+name = "macroscopic friction coefficient, slope of the Drucker–Prager criterion"
+unit = "1"
+pages = ["applications/granular_friction.md"]
+
+[[symbol]]
+group = "Strength"
+tex = '\phi_f'
+label = "φ<sub>f</sub>"
+name = "friction angle of the Mohr–Coulomb criterion"
+unit = "rad"
+pages = ["applications/granular_friction.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'T_n'
+label = "T<sub>n</sub>"
+name = "normal traction on a contact"
+unit = "Pa"
+pages = ["applications/granular_friction.md", "applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = '\underline{T}_t'
+label = "<u>T</u><sub>t</sub>"
+name = "tangential traction on a contact"
+unit = "Pa"
+pages = ["applications/granular_friction.md", "applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = '\bar{T}_n'
+label = "T̄<sub>n</sub>"
+name = "mean normal traction on the contacts"
+unit = "Pa"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = '\bar{T}_t'
+label = "T̄<sub>t</sub>"
+name = "quadratic mean of the tangential traction on the contacts"
+unit = "Pa"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = '\bar{\varepsilon}_d'
+label = "ε̄<sub>d</sub>"
+name = "quadratic mean of the equivalent deviatoric strain in the grains"
+unit = "1"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'H'
+label = "H"
+name = "ratio Σ<sub>d</sub>/|Σ<sub>m</sub>| on the strength envelope"
+unit = "1"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'A'
+label = "A"
+name = "energy coefficient k<sup>−2</sup> ∂k/∂μ<sub>s</sub> of the grains"
+unit = "Pa<sup>−2</sup>"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'B'
+label = "B"
+name = "energy coefficient μ<sup>−2</sup> ∂μ/∂μ<sub>s</sub> of the grains"
+unit = "Pa<sup>−2</sup>"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'C'
+label = "C"
+name = "energy coefficient (k<sub>t</sub>/k)<sup>2</sup> ∂k/∂k<sub>t</sub> of the contacts"
+unit = "Pa<sup>−1</sup> m"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'D'
+label = "D"
+name = "energy coefficient (k<sub>t</sub>/μ)<sup>2</sup> ∂μ/∂k<sub>t</sub> of the contacts"
+unit = "Pa<sup>−1</sup> m"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'K_n'
+label = "K<sub>n</sub>"
+name = "normal stiffness of a grain contact"
+unit = "Pa m<sup>−1</sup>"
+pages = ["applications/granular_friction.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'K_t'
+label = "K<sub>t</sub>"
+name = "tangential stiffness of a grain contact"
+unit = "Pa m<sup>−1</sup>"
+pages = ["applications/granular_friction.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\rho'
+label = "ρ"
+name = "ratio K<sub>t</sub>/K<sub>n</sub> of the contact stiffnesses"
+unit = "1"
+pages = ["applications/granular_friction.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\kappa'
+label = "κ"
+name = "dimensionless contact stiffness k<sub>t</sub>R/μ<sub>s</sub>"
+unit = "1"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'a'
+label = "a"
+name = "radius of the grains"
+unit = "m"
+pages = ["applications/granular_friction.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'R'
+label = "R"
+name = "radius of the grains of a sandstone"
+unit = "m"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\chi'
+label = "χ"
+name = "fraction of the grain surface in contact with other grains"
+unit = "1"
+pages = ["applications/granular_friction.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'X'
+label = "X"
+name = "dimensionless shear modulus μ/(aK<sub>n</sub>) of a granular medium"
+unit = "1"
+pages = ["applications/granular_friction.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'G'
+label = "G"
+name = "dimensionless bulk modulus k/(aK<sub>n</sub>) of a granular medium"
+unit = "1"
+pages = ["applications/granular_friction.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'x'
+label = "x"
+name = "dimensionless shear modulus μ/μ<sub>s</sub> of a sandstone"
+unit = "1"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = 'M'
+label = "M"
+name = "root M(κ, φ) of the shear equation of a sandstone, μ/μ<sub>s</sub>"
+unit = "1"
+pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\epsilon'
+label = "ϵ"
+name = "vanishing parameter of a symbolic limit of infinite stiffness"
+unit = "1"
+pages = ["applications/granular_friction.md", "applications/sandstone_strength.md"]

@@ -75,7 +75,7 @@ pages = [
             "theory/conductivity.md",
         ],
         # Two distinct extensions: the correspondence principle, which maps a
-        # non-ageing problem onto an elastic one, and the ageing case, where
+        # non-aging problem onto an elastic one, and the aging case, where
         # no such map exists and the Eshelby problem itself is generalized.
         "Extension to viscoelasticity" => [
             "theory/laplace_carson.md",
@@ -191,7 +191,7 @@ pages = [
             "tutorials/generated/laplace_inversion.md",
             "tutorials/generated/freq_vs_time.md",
             "tutorials/generated/alv_schemes.md",
-            "tutorials/generated/ageing_ages_aspect.md",
+            "tutorials/generated/aging_ages_aspect.md",
             "tutorials/generated/alv_sensitivities.md",
             "tutorials/generated/laminate_alv.md",
         ],
@@ -213,32 +213,41 @@ pages = [
     # `applications/generated/` are built from `scripts/` by Literate,
     # which is an implementation detail; they sit with the others.
     "Applications" => [
-        # The largest coherent family, read roughly in order of increasing
-        # coupling: elasticity, then chemistry, then transport, then failure.
+        # General concepts first, in the order they introduce one another:
+        # interactions between particles, then two morphologies without a
+        # closed form, computed by finite elements. The materials follow, each
+        # in its own section; within a section a page comes after the pages it
+        # builds on. A page may move within its section, not across chapters.
+        "General concepts" => [
+            # Both reproduce one paper's published numbers, which is why they
+            # are applications and not tutorials.
+            "applications/generated/cluster_model.md",
+            "applications/generated/eim_assembly.md",
+            # The Fourier reduction of the first is reused by the second.
+            "applications/recycled_aggregate.md",
+            "applications/concave_pores.md",
+        ],
+        # Elasticity, then chemistry, then transport, then time, then failure;
+        # the ITZ pages use the paste model of the strength page.
         "Cementitious materials" => [
             "applications/cement_paste.md",
             "applications/hydrating_blended_paste.md",
             "applications/ionic_hydrating_paste.md",
             "applications/cement_paste_diffusion.md",
-            "applications/itz_concrete.md",
+            "applications/aging_creep.md",
             "applications/strength.md",
+            "applications/itz_concrete.md",
+            "applications/itz_elastic_limit.md",
         ],
-        # Morphology is what these three have in common: an aggregate with
-        # a coating, a concave cavity, a stack of platelets.
-        "Aggregates, pores and layered media" => [
-            "applications/recycled_aggregate.md",
-            "applications/concave_pores.md",
+        # Particles in contact through interfaces: sliding platelets, then
+        # frictional contacts between rigid grains, then deformable grains.
+        "Geomaterials" => [
             "applications/lamellar_clay.md",
+            "applications/granular_friction.md",
+            "applications/sandstone_strength.md",
         ],
-        "Time-dependent behavior" => [
-            "applications/ageing_creep.md",
+        "Bituminous materials" => [
             "applications/bituminous.md",
-        ],
-        # Both reproduce one paper's published numbers, which is why they
-        # are applications and not tutorials.
-        "Interacting particle assemblies" => [
-            "applications/generated/cluster_model.md",
-            "applications/generated/eim_assembly.md",
         ],
     ],
     # Getting work into and out of MeanFieldHomogenization. These are companions to

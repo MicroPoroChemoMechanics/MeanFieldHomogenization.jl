@@ -311,6 +311,6 @@ SymPy and Symbolics.jl.
 [Symbolic viscoelasticity: closed forms, derived](@ref tut-symbolic-viscoelasticity)
 carries the symbolic route to the rheological models, with symbolic parameters
 and a symbolic Laplace-Carson inversion. The numerical laminate, with its
-interfaces and its ageing counterpart, is treated in
+interfaces and its aging counterpart, is treated in
 [Periodic multilayer: the exact laminate solution](@ref tut-laminate) and
-[A creeping laminate: the multilayer in ageing viscoelasticity](@ref tut-laminate-alv).
+[A creeping laminate: the multilayer in aging viscoelasticity](@ref tut-laminate-alv).

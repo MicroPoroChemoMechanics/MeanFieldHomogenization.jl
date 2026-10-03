@@ -16,7 +16,7 @@
 
 `MeanFieldHomogenization.Schemes` ships Voigt/Reuss, dilute (direct and dual),
 Mori-Tanaka, Maxwell, Ponte-Castañeda–Willis, self-consistent (symmetric and
-asymmetric) and differential, each in an elastic and an ageing-viscoelastic
+asymmetric) and differential, each in an elastic and an aging-viscoelastic
 flavor. A new scheme slots in beside them:
 
 1. Create `src/Schemes/<scheme_name>.jl` and `include` it from

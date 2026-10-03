@@ -226,14 +226,17 @@ function kelvin_iso(
         if t < t_p
             return TensND.TensISO{3}(zero(T), zero(T))
         end
-        α = T(1) / k_0    # 3 (1/(3 k_0)) for the J-axis (TensISO data is (3K, 2μ))
-        β = T(1) / mu_0   # 2 (1/(2 mu_0)) for the K-axis
+        # The compliance `α 𝕁 + β 𝕂`: `TensISO{3}(α, β)` stores the
+        # coefficients on 𝕁 and 𝕂, so 1/(3k) and 1/(2μ), the inverse of the
+        # stiffness `iso_stiffness(k, μ)`, whose coefficients are 3k and 2μ.
+        α = one(T) / (3 * k_0)
+        β = one(T) / (2 * mu_0)
         Δt = t - t_p
         @inbounds for i in eachindex(k_branches)
-            α += (T(1) / k_branches[i]) * (one(T) - exp(-Δt / taus_k[i]))
+            α += (one(T) / (3 * k_branches[i])) * (one(T) - exp(-Δt / taus_k[i]))
         end
         @inbounds for i in eachindex(mu_branches)
-            β += (T(1) / mu_branches[i]) * (one(T) - exp(-Δt / taus_mu[i]))
+            β += (one(T) / (2 * mu_branches[i])) * (one(T) - exp(-Δt / taus_mu[i]))
         end
         return TensISO{3}(α, β)
     end

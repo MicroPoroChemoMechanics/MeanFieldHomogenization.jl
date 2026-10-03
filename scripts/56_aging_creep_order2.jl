@@ -1,11 +1,11 @@
 # =============================================================================
-#  56_ageing_creep_order2.jl
+#  56_aging_creep_order2.jl
 #
-#  Julia reproduction of the order-2 Maxwell ageing-creep benchmark.
+#  Julia reproduction of the order-2 Maxwell aging-creep benchmark.
 #
-#  Order-2 (vector-tensor) ageing linear viscoelasticity:
-#    * iso ALV matrix with Dirichlet 2-element chain + ageing prefactor
-#    * iso inclusion with similar Dirichlet chain + ageing prefactor
+#  Order-2 (vector-tensor) aging linear viscoelasticity:
+#    * iso ALV matrix with Dirichlet 2-element chain + aging prefactor
+#    * iso inclusion with similar Dirichlet chain + aging prefactor
 #    * spherical (ω = 1) and prolate spheroidal (ω = 0.1) inclusions
 #    * fraction φ = 0.2
 #    * schemes : Mori-Tanaka, Dilute, Maxwell
@@ -16,8 +16,8 @@
 #  trapezoidal compliance matrix to the relaxation form when the law
 #  mode is `:creep` — same convention as ECHOES `homogenize_visco`.
 #
-#  Usage  : julia --project scripts/56_ageing_creep_order2.jl
-#  Output : scripts/figures/56_ageing_creep_order2.png
+#  Usage  : julia --project scripts/56_aging_creep_order2.jl
+#  Output : scripts/figures/56_aging_creep_order2.png
 # =============================================================================
 
 import Pkg
@@ -102,7 +102,7 @@ end
 plt = plot(
     layout = (1, 1), size = (1100, 700),
     xlabel = "t", ylabel = "R(t)",
-    title = "Order-2 ALV — ageing creep (φ=0.2)",
+    title = "Order-2 ALV — aging creep (φ=0.2)",
     legend = :topleft
 )
 
@@ -144,7 +144,7 @@ xlims!(plt, (0.0, 130.0))
 mkpath(joinpath(@__DIR__, "figures"))
 out = joinpath(
     @__DIR__, "figures",
-    "56_ageing_creep_order2.png"
+    "56_aging_creep_order2.png"
 )
 savefig(plt, out)
 display(plt)

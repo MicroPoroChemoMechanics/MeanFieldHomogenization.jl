@@ -167,7 +167,7 @@ once, and read the time function off the fit. See
 [`prony_fit_relaxation`](@ref) and
 [the model manual](@ref man-rheological-models) §3. The result is a *model* —
 closed-form in time, exactly convertible to its dual chain, and usable by the
-ageing pipeline — rather than a value at one point.
+aging pipeline — rather than a value at one point.
 
 ## Where to go next
 

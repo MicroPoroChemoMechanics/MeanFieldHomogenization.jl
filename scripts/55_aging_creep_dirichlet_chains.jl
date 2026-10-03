@@ -1,17 +1,17 @@
 # =============================================================================
-#  55_ageing_creep_dirichlet_chains.jl
+#  55_aging_creep_dirichlet_chains.jl
 #
-#  Ageing linear-viscoelastic (ALV) creep with a 2-term Dirichlet
+#  Aging linear-viscoelastic (ALV) creep with a 2-term Dirichlet
 #  (Kelvin-chain) relaxation law, of the type used for concrete in EDF's
-#  Code_Aster (the Granger ageing-creep model, @granger1995), applied here
+#  Code_Aster (the Granger aging-creep model, @granger1995), applied here
 #  to the matrix-inclusion worked example of @barthelemyIJES2019.
 #
 #  Setup :
 #    * iso ALV matrix : `(E, ν) = (1, 0.25)`, 2 Dirichlet chains
-#      `(j₁,τ₁) = (2, 2)` and `(j₂,τ₂) = (3, 10)`, ageing prefactor
+#      `(j₁,τ₁) = (2, 2)` and `(j₂,τ₂) = (3, 10)`, aging prefactor
 #      `exp(-(tp/30)²)` on the transient part.
 #    * iso inhomogeneity : `(E, ν) = (10, 0.15)`, `(j₁,τ₁) = (0.5, 0.1)`,
-#      `(j₂,τ₂) = (0.7, 7)`, ageing `exp(-(tp/15)²)`.
+#      `(j₂,τ₂) = (0.7, 7)`, aging `exp(-(tp/15)²)`.
 #    * spheroidal inclusions, ω ∈ {1, 0.1}, fractions φ ∈ {0.05, 0.1, 0.2}.
 #    * schemes : Maxwell, Dilute, Mori-Tanaka.
 #
@@ -19,8 +19,8 @@
 #    (1) `ω = 0.1`, several fractions.
 #    (2) `φ = 0.2`, several aspect ratios.
 #
-#  Usage  : julia --project scripts/55_ageing_creep_dirichlet_chains.jl
-#  Output : scripts/figures/55_ageing_creep_dirichlet_chains_{frac,omega}.png
+#  Usage  : julia --project scripts/55_aging_creep_dirichlet_chains.jl
+#  Output : scripts/figures/55_aging_creep_dirichlet_chains_{frac,omega}.png
 # =============================================================================
 
 import Pkg
@@ -38,24 +38,24 @@ default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
 
 kmu_Enu(E, ν) = (E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
 
-# Scalar Granger compliance: 1/k₀ + ageing(tp) · Σ jₗ (1 - exp(-(t-tp)/τₗ)).
-function granger_scalar(k0, j_list, τ_list, ageing_f)
+# Scalar Granger compliance: 1/k₀ + aging(tp) · Σ jₗ (1 - exp(-(t-tp)/τₗ)).
+function granger_scalar(k0, j_list, τ_list, aging_f)
     return (t, tp) -> begin
         compl = 0.0
         for (j, τ) in zip(j_list, τ_list)
             compl += j * (1 - exp(-(t - tp) / τ))
         end
-        return (1 / k0 + ageing_f(tp) * compl)
+        return (1 / k0 + aging_f(tp) * compl)
     end
 end
 
-# (Jk, Jg) creep compliance pair from (E, ν, j_list, τ_list, ageing).
-function granger_Jk_Jg(E, ν, j_list, τ_list, ageing_f)
+# (Jk, Jg) creep compliance pair from (E, ν, j_list, τ_list, aging).
+function granger_Jk_Jg(E, ν, j_list, τ_list, aging_f)
     k, g = kmu_Enu(E, ν)
     j_k = [1 / kmu_Enu(1 / j, ν)[1] for j in j_list]
     j_g = [1 / kmu_Enu(1 / j, ν)[2] for j in j_list]
-    return granger_scalar(k, j_k, τ_list, ageing_f),
-        granger_scalar(g, j_g, τ_list, ageing_f)
+    return granger_scalar(k, j_k, τ_list, aging_f),
+        granger_scalar(g, j_g, τ_list, aging_f)
 end
 
 # ── Matrix law ──
@@ -166,7 +166,7 @@ mkpath(joinpath(@__DIR__, "figures"))
 savefig(
     plt1, joinpath(
         @__DIR__, "figures",
-        "55_ageing_creep_dirichlet_chains_frac.png"
+        "55_aging_creep_dirichlet_chains_frac.png"
     )
 )
 display(plt1)
@@ -213,9 +213,9 @@ end
 savefig(
     plt2, joinpath(
         @__DIR__, "figures",
-        "55_ageing_creep_dirichlet_chains_omega.png"
+        "55_aging_creep_dirichlet_chains_omega.png"
     )
 )
 display(plt2)
 
-println("Saved : 55_ageing_creep_dirichlet_chains_{frac,omega}.png")
+println("Saved : 55_aging_creep_dirichlet_chains_{frac,omega}.png")

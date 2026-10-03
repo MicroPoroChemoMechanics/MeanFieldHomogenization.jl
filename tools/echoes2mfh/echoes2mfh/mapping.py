@@ -146,6 +146,15 @@ INTERFACE_TYPE: dict[str, str] = {
     "DUALDISC": "MembraneInterface",
 }
 
+# Transport interfaces carry one parameter. Echoes' `PRIMALDISC` scalar is a
+# conductance h, MFH's `KapitzaInterface` a resistance: the extractor writes
+# `1 / h`. The `DUALDISC` scalar is a surface conductance in both.
+INTERFACE_TYPE_TRANSPORT: dict[str, str] = {
+    "NODISC": "PerfectInterface()",
+    "PRIMALDISC": "KapitzaInterface",
+    "DUALDISC": "SurfaceConductiveInterface",
+}
+
 VISCO_LAW_TYPE: dict[str, str] = {
     "CREEP": ":creep",
     "RELAXATION": ":relaxation",
@@ -286,7 +295,7 @@ FUNCTIONS: dict[str, str] = {
 # ---------------------------------------------------------------------------
 # Viscoelasticity.
 #
-# Echoes carries an ageing linear viscoelastic (ALV) law as a callable of
+# Echoes carries an aging linear viscoelastic (ALV) law as a callable of
 # (t, t') plus a mode flag, and evaluates it into a lower-triangular Volterra
 # block matrix over a time series. MFH keeps the same two ingredients but
 # names them differently and takes the time series at the call site rather

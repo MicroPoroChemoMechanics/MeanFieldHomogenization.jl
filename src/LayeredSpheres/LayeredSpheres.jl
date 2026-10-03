@@ -42,23 +42,36 @@ include("scheme_integration.jl") # concentration tensors → mean-field schemes
 # ── Localization / contribution overrides for LayeredSphere ─────────────────
 
 """
-    strain_strain_loc(sphere::LayeredSphere, C₀::TensISO{4,3}; layer::Int) -> Tens{4,3}
+    strain_strain_loc(sphere::LayeredSphere, C₀::TensISO{4,3}; layer::Int,
+                      external = false, internal = false) -> Tens{4,3}
 
 Per-layer strain-strain localization tensor in an ISO `LayeredSphere`.
 Returns the isotropic 4-tensor ``\\mathbb{A}_k = \\alpha_k\\,\\mathbb{J} + \\beta_k\\,\\mathbb{K}`` for the requested
 layer.  `layer` must be in `1..N`.
+
+By default the average is over the material of the layer. `external = true`
+adds the displacement jump across its outer boundary ``r_k``, `internal = true`
+the jump across its inner boundary ``r_{k-1}`` (both zero unless that interface is
+a [`SpringInterface`](@ref)), as Echoes' `layer_eE(k - 1, external, internal)`
+does — whose default is `external = True`. With `external = true` on every
+layer the shells partition the sphere,
+``\\sum_k f_k\\,\\mathbb{A}_k = \\mathbb{A}_\\Omega``, the whole-sphere tensor
+[`strain_strain_loc`](@ref)`(sphere, C₀, C₀)`.
 """
 function strain_strain_loc(
         sphere::LayeredSphere{T, N},
         C₀::TensND.TensISO{4, 3};
         layer::Int,
+        external::Bool = false,
+        internal::Bool = false,
         kw...,
     ) where {T, N}
     1 ≤ layer ≤ N || throw(BoundsError(sphere, layer))
     κ₀, μ₀ = _iso_bulk_shear(C₀)
     α_k = _bulk_localization(sphere, κ₀, μ₀)[layer]
     β_k = _shear_localization(sphere, C₀)[layer]
-    return TensISO{3}(α_k, β_k)
+    Δα, Δβ = _layer_strain_jump_terms(sphere, C₀, layer; external, internal)
+    return TensISO{3}(α_k + Δα, β_k + Δβ)
 end
 
 # =============================================================================
@@ -66,7 +79,7 @@ end
 # =============================================================================
 
 """
-    stiffness_contribution(sphere, C₀) -> Tens{4,3}
+    stiffness_contribution(sphere, C₀; external = true) -> Tens{4,3}
 
 Size-independent stiffness contribution tensor of the composite sphere
 relative to the matrix `C₀`.  The dilute-scheme effective stiffness
@@ -78,28 +91,25 @@ contributions (bulk + shear), ``f_k`` being the volume fraction of layer
 ```math
 \\mathbb{N} = 3N_{\\mathrm{bulk}}\\,\\mathbb{J} + 2N_{\\mathrm{shear}}\\,\\mathbb{K},
 \\qquad
-N_{\\mathrm{bulk}} = \\sum_k f_k\\,(k_k - k_0)\\,\\alpha_k,
+N_{\\mathrm{bulk}} = \\sum_k f_k\\,(k_k - k_0)\\,\\alpha_k - k_0\\,\\Delta\\alpha,
 \\qquad
-N_{\\mathrm{shear}} = \\sum_k f_k\\,(\\mu_k - \\mu_0)\\,\\beta_k,
+N_{\\mathrm{shear}} = \\sum_k f_k\\,(\\mu_k - \\mu_0)\\,\\beta_k - \\mu_0\\,\\Delta\\beta,
 ```
 
 plus the Gurtin–Murdoch surface stress of any membrane interface.
+``\\Delta\\alpha``, ``\\Delta\\beta`` are the displacement jumps of the spring interfaces, and
+`external` decides whether the outer interface belongs to the sphere, as in
+[`strain_strain_loc`](@ref). For an incompressible layer (``k_k = \\infty``,
+``\\alpha_k = 0``) the product ``k_k\\,\\alpha_k`` is its finite mean pressure, read from the
+traction. The same tensor as the three-argument form
+`stiffness_contribution(sphere, C₀, C₀)`.
 """
 function Core.stiffness_contribution(
         sphere::LayeredSphere{T, N},
         C₀::TensND.TensISO{4, 3};
         kw...,
     ) where {T, N}
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
-    κμ = _bulk_layer_moduli(sphere)
-    α = _bulk_localization(sphere, κ₀, μ₀)
-    β = _shear_localization(sphere, C₀)
-    f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
-    N_bulk = sum(f[k] * (κμ[k][1] - κ₀) * α[k] for k in 1:N)
-    N_shear = sum(f[k] * (κμ[k][2] - μ₀) * β[k] for k in 1:N)
-    # Gurtin–Murdoch surface stress of any dual (membrane) interface.
-    a_surf, b_surf = _membrane_surface_stress(sphere, C₀)
-    return TensISO{3}(3 * N_bulk + a_surf, 2 * N_shear + b_surf)
+    return stiffness_contribution(sphere, C₀, C₀; kw...)
 end
 
 # =============================================================================
@@ -107,36 +117,45 @@ end
 # =============================================================================
 
 """
-    gradient_gradient_loc(sphere::LayeredSphere, K₀; layer)
+    gradient_gradient_loc(sphere::LayeredSphere, K₀; layer, external = false, internal = false)
 
 Per-layer gradient-gradient localization tensor for an isotropic
 `LayeredSphere` embedded in an isotropic matrix of conductivity `K₀`.
 Returns the scalar ``\\alpha_k`` packed as `TensISO{3}(α_k)` (isotropic
 2-tensor), satisfying ``\\langle\\nabla T\\rangle_k = \\alpha_k\\,\\nabla T^{\\infty}``.
+
+`external` and `internal` add the temperature jumps across the outer and inner
+boundaries of the layer (nonzero across a [`KapitzaInterface`](@ref) only), as
+in the elastic [`strain_strain_loc`](@ref)`(sphere, C₀; layer)`.
 """
 function gradient_gradient_loc(
         sphere::LayeredSphere{T, N},
         K₀::TensND.TensISO{2, 3};
         layer::Int,
+        external::Bool = false,
+        internal::Bool = false,
         kw...,
     ) where {T, N}
     1 ≤ layer ≤ N || throw(BoundsError(sphere, layer))
     k₀ = _iso_scalar(K₀)
     α_k = _cond_localization(sphere, k₀)[layer]
-    return TensISO{3}(α_k)
+    return TensISO{3}(α_k + _layer_gradient_jump_term(sphere, k₀, layer; external, internal))
 end
 
 """
-    conductivity_contribution(sphere::LayeredSphere, K₀) -> Tens{2,3}
+    conductivity_contribution(sphere::LayeredSphere, K₀; external = true) -> Tens{2,3}
 
 Size-independent conductivity contribution tensor of the composite
-sphere:  ``\\boldsymbol{N} = \\sum_k f_k\\,(k_k - k_0)\\,\\alpha_k\\,\\boldsymbol{1}``, plus the surface-conduction
-flux [`_cond_surface_flux`](@ref) of any dual (surface-conductive)
-interface (Echoes' `DUALDISC`).
+sphere:  ``\\boldsymbol{N} = \\big(\\sum_k f_k\\,(k_k - k_0)\\,\\alpha_k - k_0\\,\\Delta\\alpha\\big)\\,\\boldsymbol{1}``, plus the
+surface-conduction flux [`_cond_surface_flux`](@ref) of any dual
+(surface-conductive) interface (Echoes' `DUALDISC`). ``\\Delta\\alpha`` is the
+temperature jump of the Kapitza interfaces, and `external` decides whether the
+outer interface belongs to the sphere (see [`gradient_gradient_loc`](@ref)).
 """
 function Core.conductivity_contribution(
         sphere::LayeredSphere{T, N},
         K₀::TensND.TensISO{2, 3};
+        external::Bool = true,
         kw...,
     ) where {T, N}
     k₀ = _iso_scalar(K₀)
@@ -144,7 +163,7 @@ function Core.conductivity_contribution(
     k_layers = _cond_layer_moduli(sphere)
     f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
     N_K = sum(f[k] * (k_layers[k] - k₀) * α[k] for k in 1:N) +
-        _cond_surface_flux(sphere, k₀)
+        _cond_surface_flux(sphere, k₀; external) - k₀ * _gradient_jump_term(sphere, k₀; external)
     return TensISO{3}(N_K)
 end
 

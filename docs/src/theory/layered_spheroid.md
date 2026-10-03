@@ -190,13 +190,15 @@ axisymmetric.
 ## 4. Interface conditions and the coupling matrices
 
 Three interface types are available. Writing ``[\![\cdot]\!]`` for the jump
-across the interface and ``q_n`` for the normal flux:
+across the interface, outer side minus inner side, and
+``q_n = \underline q\cdot\underline n`` for the normal flux, ``\underline q = -k\,\nabla T`` and
+``\underline n`` pointing outward:
 
 | type | condition | `MeanFieldHomogenization` | effect on degrees |
 | :--- | :-------- | :------------- | :---------------- |
 | **perfect** | ``[\![T]\!]=0``, ``[\![q_n]\!]=0`` | [`PerfectInterface`](@ref) | diagonal |
-| **LC** (low-conducting) | ``[\![T]\!] = \rho\,q_n``, flux continuous | [`KapitzaInterface`](@ref)`(ρ)` | couples all degrees |
-| **HC** (highly-conducting) | ``[\![q_n]\!] = -k^{\mathrm s}\,\mathrm{div}_S(\nabla_S T)``, temperature continuous | [`SurfaceConductiveInterface`](@ref)`(kₛ)` | couples all degrees |
+| **LC** (low-conducting) | ``[\![T]\!] = -\rho\,q_n``, flux continuous | [`KapitzaInterface`](@ref)`(ρ)` | couples all degrees |
+| **HC** (highly-conducting) | ``[\![q_n]\!] = k^{\mathrm s}\,\mathrm{div}_S(\nabla_S T)``, temperature continuous | [`SurfaceConductiveInterface`](@ref)`(kₛ)` | couples all degrees |
 
 The LC model is the Kapitza thermal contact resistance [kapitza1941, benveniste1986](@cite); the HC model is a highly conducting surface layer
 [miloh1999](@cite). Both are the imperfect-interface models used by

@@ -269,6 +269,7 @@ end
     @testset "LayeredSpheres" begin
         include("LayeredSpheres/test_bulk.jl")
         include("LayeredSpheres/test_interfaces.jl")
+        include("LayeredSpheres/test_interface_jumps.jl")
         include("LayeredSpheres/test_incompressible.jl")
         include("LayeredSpheres/test_conductivity.jl")
         include("LayeredSpheres/test_christensen.jl")
@@ -280,7 +281,7 @@ end
 
     # The periodic multilayer cell. Placed after the layered morphologies
     # whose interface models it reuses, and before `Viscoelasticity`, which
-    # carries its ageing-viscoelastic twin.
+    # carries its aging-viscoelastic twin.
     @testset "Laminates" begin
         include("Laminates/test_km_blocks.jl")
         include("Laminates/test_laminate_cell.jl")
@@ -321,7 +322,7 @@ end
     end
 
     @testset "Viscoelasticity" begin
-        # The Laplace-Carson half (non-ageing) first: it depends on nothing
+        # The Laplace-Carson half (non-aging) first: it depends on nothing
         # from the ALV pipeline, whereas `test_rheology_iso.jl` closes the loop
         # by checking that the two routes agree.
         include("Viscoelasticity/test_laplace_inversion.jl")
@@ -342,6 +343,7 @@ end
         include("Viscoelasticity/test_sc_alv.jl")
         include("Viscoelasticity/test_sc_alv_newton.jl")
         include("Viscoelasticity/test_layered_alv.jl")
+        include("Viscoelasticity/test_layered_alv_order2.jl")
         include("Viscoelasticity/test_ti_alv.jl")
         include("Viscoelasticity/test_ortho_alv.jl")
         include("Viscoelasticity/test_ortho_dispatch_alv.jl")

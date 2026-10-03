@@ -83,3 +83,30 @@ end
         @test Float64(subs(ℓ[i], Dict(r_sym => Sym(3) // 2))) ≈ ℓ_num[i] rtol = 1.0e-12
     end
 end
+
+@testset "LayeredSphere — symbolic grain with a spring and a Kapitza interface" begin
+    # The deviatoric recurrence inverts its mode matrix in closed form: on SymPy
+    # moduli the generic pivoted solve swelled for more than ten minutes, and
+    # `Matrix{Sym}(I, 4, 4)` held the logical `True`, which refuses to multiply.
+    @syms k::positive μ::positive ks::positive μs::positive kn::positive kt::positive R::positive
+    C = iso_stiffness(k, μ)
+    grain = LayeredSphere((R,), (iso_stiffness(ks, μs),); interfaces = (SpringInterface(kn, kt),))
+    α, β = TensND.get_data(strain_strain_loc(grain, C, C))
+    # The bonded grain answers a pressure as a grain of modulus kₛ/(1 + 3kₛ/(kₙR)).
+    k_eq = ks / (1 + 3ks / (kn * R))
+    @test simplify(α - (3k + 4μ) / (3k_eq + 4μ)) == 0
+    # The deviatoric part agrees with the numeric recurrence.
+    vals = Dict(k => 2.0, μ => 1.5, ks => 10.0, μs => 1.0, kn => 10.0, kt => 1.0, R => 1.0)
+    β_num = TensND.get_data(
+        strain_strain_loc(
+            LayeredSphere((1.0,), (iso_stiffness(10.0, 1.0),); interfaces = (SpringInterface(10.0, 1.0),)),
+            iso_stiffness(2.0, 1.5), iso_stiffness(2.0, 1.5)
+        )
+    )[2]
+    @test Float64(N(subs(β, vals...))) ≈ β_num rtol = 1.0e-12
+    # Kapitza: the Hasselman–Johnson grain k₁/(1 + ρk₁/R).
+    @syms k0::positive k1::positive ρ::positive
+    kgrain = LayeredSphere((R,), (TensISO{3}(k1),); interfaces = (KapitzaInterface(ρ),))
+    αT = TensND.get_data(gradient_gradient_loc(kgrain, TensISO{3}(k0), TensISO{3}(k0)))[1]
+    @test simplify(αT - 3k0 / (2k0 + k1 / (1 + ρ * k1 / R))) == 0
+end

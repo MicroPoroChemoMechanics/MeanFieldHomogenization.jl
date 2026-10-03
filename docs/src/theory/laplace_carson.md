@@ -18,12 +18,12 @@ inversion to come back to the time domain.
 When the properties *do* depend on age — concrete that is still hydrating, a
 gel whose volume fraction grows — no transform helps, and the Volterra
 operators have to be discretized directly. That is the
-[ageing route](@ref th-viscoelasticity), which is strictly more general and
+[aging route](@ref th-viscoelasticity), which is strictly more general and
 correspondingly more expensive.
 
 The two are related the way a Fourier method is related to a time-stepping
 scheme: the transform route is cheaper and more accurate where it applies, the
-direct route applies always. For a non-ageing material they must agree, and
+direct route applies always. For a non-aging material they must agree, and
 [the three-route comparison](@ref tut-freq-vs-time) checks that they do.
 
 ## 1. The transform, and why Carson rather than Laplace
@@ -67,7 +67,7 @@ and the transform route with no approximation on either side.
 
 ## 2. The correspondence principle
 
-The non-ageing constitutive law is the Stieltjes convolution
+The non-aging constitutive law is the Stieltjes convolution
 
 ```math
 \boldsymbol{\sigma}(t) = \int_{-\infty}^{t}
@@ -97,7 +97,7 @@ unchanged, and the only requirement is that they be generic in the scalar type
 
 [`homogenize_lc`](@ref) is the thin driver around that observation.
 
-!!! warning "It is the *non-ageing* case only"
+!!! warning "It is the *non-aging* case only"
     The step from convolution to product needs the kernel to depend on ``t - s``
     alone. A kernel ``\mathbb{C}(t, t')`` with genuine age dependence has no such
     factorization, and no amount of care with the transform recovers it. For
@@ -265,7 +265,7 @@ There is a fifth route that is not a quadrature at all. Given any transform,
 set of collocation points — the Schapery method. The result is not an
 approximation of `f(t)` at one point but a **model**: it has a closed-form time
 function, an exact dual chain through the conversion above, a
-[`ViscoLaw`](@ref) for the ageing pipeline, and derivatives.
+[`ViscoLaw`](@ref) for the aging pipeline, and derivatives.
 
 Fitting with a non-negativity constraint on the spectrum is what keeps the
 result completely monotone, hence passive. It is also, empirically, the better
@@ -282,11 +282,11 @@ moduli below zero.
 | the exact chain conversion | [`maxwell_to_kelvin`](@ref), [`kelvin_to_maxwell`](@ref) |
 | fitting a chain to a transform | [`prony_fit_relaxation`](@ref), [`prony_fit_creep`](@ref) |
 | homogenizing on this route | [`homogenize_lc`](@ref) |
-| the ageing alternative | [`homogenize_alv`](@ref) — [theory](@ref th-viscoelasticity) |
+| the aging alternative | [`homogenize_alv`](@ref) — [theory](@ref th-viscoelasticity) |
 
 ## Where to go next
 
-The next page, [Ageing linear viscoelasticity](@ref th-viscoelasticity), treats
+The next page, [Aging linear Volterra behavior](@ref th-viscoelasticity), treats
 the materials this route cannot, those whose kernel depends on the age at
 loading, by discretizing the Volterra operators directly. The rheological models
 whose transforms are used here are listed in
@@ -295,4 +295,4 @@ whose transforms are used here are listed in
 - [Generalized Kelvin ⇄ generalized Maxwell](@ref tut-kelvin-maxwell) — the
   exact conversion of §4 carried out on a chain.
 - [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time)
-  — this route checked against the ageing one on a non-ageing material.
+  — this route checked against the aging one on a non-aging material.

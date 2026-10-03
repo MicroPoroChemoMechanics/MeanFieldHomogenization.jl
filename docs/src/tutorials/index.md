@@ -73,15 +73,15 @@ API is on the [particle-assembly manual page](@ref man-assemblies).
 
 | Page | What it shows |
 | :--- | :--- |
-| [Viscoelastic composites](@ref tut-viscoelasticity) | complex moduli in the frequency domain; a first taste of ageing creep |
+| [Viscoelastic composites](@ref tut-viscoelasticity) | complex moduli in the frequency domain; a first taste of aging creep |
 | [The rheological model catalog](@ref tut-rheological-models) | the classical chains, the fractional family and the bituminous models side by side; master curves, Cole-Cole and Black diagrams; the exact 2S2P1D pair in both domains; and one object driving both homogenization routes |
 | [Generalized Kelvin ⇄ generalized Maxwell](@ref tut-kelvin-maxwell) | the exact conversion between the two representations: the interlacing that makes it unconditionally robust, the round trip at twenty branches, and two independent closed forms — the Zener relations and the Burgers relaxation function — as oracles |
 | [Choosing a numerical Laplace inversion](@ref tut-laplace-inversion) | four algorithms measured against four exact pairs; why branch cuts are not the problem and oscillation is; the Gaver-Stehfest optimum and why more terms is worse; `ForwardDiff` straight through |
-| [Frequency or time?](@ref tut-freq-vs-time) | the complex-modulus and time-domain ALV routes, cross-checked on the same non-ageing composite |
-| [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes) | Dilute / Mori-Tanaka / Maxwell / PCW on one creep test; the aspect ratio; where the distribution shape decides the answer |
-| [Ageing creep: loading age against inclusion shape](@ref tut-ageing-ages-aspect) | ageing and morphology on the same output: three loading ages × three aspect ratios, and why the shape effect is an offset independent of the age |
-| [A creeping laminate](@ref tut-laminate-alv) | the exact multilayer in ageing viscoelasticity: the same algebra with Volterra products in place of tensor products |
-| [Derivatives through the ageing-viscoelastic pipeline](@ref tut-alv-sensitivities) | `ForwardDiff` through the Volterra assembly: the `set_param` lens for RVE parameters, closure capture for moduli and relaxation times |
+| [Frequency or time?](@ref tut-freq-vs-time) | the complex-modulus and time-domain ALV routes, cross-checked on the same non-aging composite |
+| [Aging viscoelastic schemes side by side](@ref tut-alv-schemes) | Dilute / Mori-Tanaka / Maxwell / PCW on one creep test; the aspect ratio; where the distribution shape decides the answer |
+| [Aging creep: loading age against inclusion shape](@ref tut-aging-ages-aspect) | aging and morphology on the same output: three loading ages × three aspect ratios, and why the shape effect is an offset independent of the age |
+| [A creeping laminate](@ref tut-laminate-alv) | the exact multilayer in aging viscoelasticity: the same algebra with Volterra products in place of tensor products |
+| [Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities) | `ForwardDiff` through the Volterra assembly: the `set_param` lens for RVE parameters, closure capture for moduli and relaxation times |
 
 ## Differentiation and solvers
 

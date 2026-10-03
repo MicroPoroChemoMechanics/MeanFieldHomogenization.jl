@@ -139,6 +139,14 @@ shear_localization_alv
 strain_strain_loc_alv
 ```
 
+In conduction (order 2):
+
+```@docs
+gradient_localization_alv
+gradient_gradient_loc_alv
+conductivity_contribution_alv
+```
+
 ## Order-2 ALV (conductivity / diffusion)
 
 ```@docs
@@ -149,6 +157,7 @@ dilute_alv_order2
 dilute_dual_alv_order2
 mori_tanaka_alv_order2
 maxwell_alv_order2
+self_consistent_alv_order2
 homogenize_alv_order2
 dilute_concentration_alv_order2
 dilute_contribution_alv_order2

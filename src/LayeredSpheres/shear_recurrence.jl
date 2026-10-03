@@ -22,6 +22,15 @@
 #  with D₁ = 2 - 3x, D₂ = 3(x + 1), D₃ = (15x + 11)/3, D₄ = 2(3x + 1)/3
 #  and x = κ/μ.
 #
+#  Modes 2 and 4 grow like x, so the implementation scales them by
+#  s = μ/(κ + μ) = 1/(1 + x).  Every entry is then affine in s — for instance
+#  6(3x − 2)·s = 18 − 30s — and s = 0 is the incompressible layer κ = ∞,
+#  exactly, rather than a limit that only a large finite κ can approach.  A
+#  column scaling changes neither the transfer M(r_out)·M(r_in)⁻¹ nor the
+#  physical field: the amplitudes b and d are those of the scaled modes, and
+#  every consumer (`_layer_avg_dev_shear_factor`, the pointwise fields) reads
+#  them with the matching scaled coefficients.
+#
 #  State vector at radius r :    S(r) = (U, W, σ_rr, σ_rθ)
 #  where (U, W) are the radial and tangential-amplitude displacement
 #  components (u_r = U P₂, u_θ = W dP₂/dθ) and (σ_rr, σ_rθ) are the
@@ -59,6 +68,20 @@
 # =============================================================================
 
 """
+    _shear_mode_coefficients(κ, μ) -> (s, γ, δ, η)
+
+``s = \\mu/(k + \\mu)``, the scale of modes 2 and 4, and the coefficients of the
+scaled mode-2 and mode-4 profiles of the pointwise field,
+``\\gamma = (15x+11)\\,s = 15 - 4s``, ``\\delta = (6x+17)\\,s = 6 + 11s`` and
+``\\eta = \\tfrac{3x+1}{2}\\,s = \\tfrac{3}{2} - s``, with ``x = k/\\mu``. Written in ``s`` they stay
+finite at ``k = \\infty``, where ``(15x + 11)/(1 + x)`` would read ``\\infty/\\infty``.
+"""
+@inline function _shear_mode_coefficients(κ, μ)
+    s = μ / (κ + μ)
+    return s, 15 - 4 * s, 6 + 11 * s, 3 // 2 - s
+end
+
+"""
     _shear_M_matrix(r, κ, μ) -> Matrix(4×4)
 
 Fundamental 4×4 matrix of the ``Y_2``-harmonic deviatoric problem.  Columns
@@ -67,13 +90,14 @@ isotropic layer of moduli ``(k, \\mu)``; rows are the state vector
 ``\\mathbf S = (U, W, \\sigma_{rr}, \\sigma_{r\\theta})``, with the physical traction
 amplitudes (not divided by ``\\mu``).
 
-All entries are rational in ``(k, \\mu, r)``; no ``1/(1-2\\nu)`` remains, so the
-matrix is finite in the incompressibility limit ``k \\to \\infty``.
+Modes 2 and 4 are scaled by ``s = \\mu/(k + \\mu)``, which makes every entry affine
+in ``s``: the matrix is finite, and exact, for an incompressible layer
+``k = \\infty`` (``s = 0``) as for any other. See [`_shear_mode_coefficients`](@ref).
 """
 @inline function _shear_M_matrix(r, κ, μ)
     T = promote_type(typeof(r), typeof(κ), typeof(μ))
     Tκ = T(κ); Tμ = T(μ); Tr = T(r)
-    x = Tκ / Tμ
+    s = Tμ / (Tκ + Tμ)       # 1/(1 + x), zero for an incompressible layer
 
     r² = Tr * Tr
     r³ = r² * Tr
@@ -88,6 +112,7 @@ matrix is finite in the incompressibility limit ``k \\to \\infty``.
     #   n = 3 :   U/W =  6(3x − 2)/(15x + 11)    with x = κ/μ
     #   n = -4:   U/W = -3
     #   n = -2:   U/W =  3(x + 1)
+    # Modes 2 and 4 are written below multiplied by s = 1/(1 + x).
 
     M = Matrix{T}(undef, 4, 4)
 
@@ -97,13 +122,13 @@ matrix is finite in the incompressibility limit ``k \\to \\infty``.
     M[3, 1] = 4 * Tμ
     M[4, 1] = 2 * Tμ
 
-    # Mode 2 — (U, W) = (6(3x−2) r³, (15x+11) r³).
-    α₂ = 6 * (3 * x - 2)
-    γ₂ = 15 * x + 11
+    # Mode 2 — s·(U, W) = s·(6(3x−2) r³, (15x+11) r³) = ((18 − 30s) r³, (15 − 4s) r³).
+    α₂ = 18 - 30 * s
+    γ₂ = 15 - 4 * s
     M[1, 2] = α₂ * r³
     M[2, 2] = γ₂ * r³
-    M[3, 2] = 6 * (2 - 3 * x) * Tμ * r²
-    M[4, 2] = 2 * (24 * x + 5) * Tμ * r²
+    M[3, 2] = -α₂ * Tμ * r²                    # s·6(2 − 3x) μ r²
+    M[4, 2] = 2 * (24 - 19 * s) * Tμ * r²      # s·2(24x + 5) μ r²
 
     # Mode 3 — (U, W) = (3/r⁴, -1/r⁴).
     M[1, 3] = 3 * inv_r⁴
@@ -111,26 +136,64 @@ matrix is finite in the incompressibility limit ``k \\to \\infty``.
     M[3, 3] = -24 * Tμ * inv_r⁵
     M[4, 3] = 8 * Tμ * inv_r⁵
 
-    # Mode 4 — (U, W) = (3(x+1)/r², 1/r²).
-    α₄ = 3 * (x + 1)
-    M[1, 4] = α₄ * inv_r²
-    M[2, 4] = inv_r²
-    M[3, 4] = -2 * (9 * x + 4) * Tμ * inv_r³
-    M[4, 4] = 3 * x * Tμ * inv_r³
+    # Mode 4 — s·(U, W) = s·(3(x+1)/r², 1/r²) = (3/r², s/r²).
+    M[1, 4] = 3 * inv_r²
+    M[2, 4] = s * inv_r²
+    M[3, 4] = -2 * (9 - 5 * s) * Tμ * inv_r³   # s·(−2(9x + 4) μ/r³)
+    M[4, 4] = 3 * (1 - s) * Tμ * inv_r³        # s·3x μ/r³
 
     return M
+end
+
+"""
+    _shear_M_inverse(r, κ, μ) -> Matrix(4×4)
+
+Closed-form inverse of [`_shear_M_matrix`](@ref). With ``s = \\mu/(k + \\mu)``,
+``\\det\\mathbf M = 350\\,\\mu^2(s + 3)^2/r^4``, which vanishes for no ``s \\in [0, 1]``, and every
+entry of the inverse is a rational function of ``(r, s, \\mu)`` over ``s + 3``
+(derived with SymPy). Inverting in closed form rather than by a pivoted LU keeps
+a symbolic recurrence from swelling: the generic solve on SymPy moduli of a
+single grain with a spring took more than ten minutes.
+"""
+@inline function _shear_M_inverse(r, κ, μ)
+    T = promote_type(typeof(r), typeof(κ), typeof(μ))
+    Tμ = T(μ); Tr = T(r)
+    s = Tμ / (T(κ) + Tμ)
+    d = one(T) / (s + 3)
+    dμ = d / Tμ
+    r² = Tr * Tr
+    r³ = r² * Tr
+    r⁴ = r² * r²
+    r⁵ = r⁴ * Tr
+    Mi = Matrix{T}(undef, 4, 4)
+    Mi[1, 1] = (9 - 5 * s) * d / (5 * Tr)
+    Mi[1, 2] = 9 * (s - 1) * d / (5 * Tr)
+    Mi[1, 3] = 3 * dμ / 10
+    Mi[1, 4] = 3 * s * dμ / 5
+    Mi[2, 1] = -4 * d / (35 * r³)
+    Mi[2, 2] = 8 * d / (35 * r³)
+    Mi[2, 3] = -dμ / (70 * r²)
+    Mi[2, 4] = dμ / (35 * r²)
+    Mi[3, 1] = (3 - 5 * s) * r⁴ * d / 35
+    Mi[3, 2] = 2 * (19 * s - 24) * r⁴ * d / 35
+    Mi[3, 3] = (3 - 5 * s) * r⁵ * dμ / 35
+    Mi[3, 4] = (15 - 4 * s) * r⁵ * dμ / 35
+    Mi[4, 1] = 2 * r² * d / 5
+    Mi[4, 2] = 6 * r² * d / 5
+    Mi[4, 3] = -r³ * dμ / 5
+    Mi[4, 4] = -3 * r³ * dμ / 5
+    return Mi
 end
 
 """
     _shear_layer_transfer(r_out, r_in, κ, μ) -> Matrix(4×4)
 
 Intra-layer field-to-field transfer ``\\mathbf S(r_{\\mathrm{out}}) = \\mathbf T\\,\\mathbf S(r_{\\mathrm{in}})`` computed
-as ``\\mathbf T = \\mathbf M(r_{\\mathrm{out}})\\,\\mathbf M(r_{\\mathrm{in}})^{-1}``.
+as ``\\mathbf T = \\mathbf M(r_{\\mathrm{out}})\\,\\mathbf M(r_{\\mathrm{in}})^{-1}``, the inverse in closed form
+([`_shear_M_inverse`](@ref)).
 """
 @inline function _shear_layer_transfer(r_out, r_in, κ, μ)
-    M_in = _shear_M_matrix(r_in, κ, μ)
-    M_out = _shear_M_matrix(r_out, κ, μ)
-    return M_out / M_in
+    return _shear_M_matrix(r_out, κ, μ) * _shear_M_inverse(r_in, κ, μ)
 end
 
 """
@@ -154,12 +217,11 @@ end
 
 Given the state ``\\mathbf S = (U, W, \\sigma_{rr}, \\sigma_{r\\theta})`` at radius `r` in a layer of
 moduli ``(k, \\mu)``, return the local mode amplitudes ``(a, b, c, d)`` by
-solving ``\\mathbf M(r; k, \\mu)\\,\\mathbf x = \\mathbf S``.
+solving ``\\mathbf M(r; k, \\mu)\\,\\mathbf x = \\mathbf S`` with the closed-form inverse.
 """
 @inline function _shear_extract_amplitudes(r, κ, μ, state)
     T = promote_type(typeof(r), typeof(κ), typeof(μ), eltype(state))
-    M = _shear_M_matrix(T(r), T(κ), T(μ))
-    return M \ Vector{T}(state)
+    return _shear_M_inverse(T(r), T(κ), T(μ)) * Vector{T}(state)
 end
 
 """
@@ -298,14 +360,16 @@ end
 
 Per-unit mode-2 amplitude ``b`` contribution to the layer-volume-averaged
 deviatoric strain in a spherical shell ``(r_a, r_b)`` (with ``r_a = 0`` for
-the innermost layer) of moduli ``(k, \\mu)``.  Equals
+the innermost layer) of moduli ``(k, \\mu)``.  For the physical mode 2 it is
+``\\frac{21}{5}\\,\\frac{3k + \\mu}{\\mu}\\,\\frac{r_b^5 - r_a^5}{r_b^3 - r_a^3}``; for the mode scaled by
+``s = \\mu/(k + \\mu)``, as [`_shear_M_matrix`](@ref) writes it,
 
 ```math
-F = \\frac{21}{5}\\,\\frac{3k + \\mu}{\\mu}\\,\\frac{r_b^5 - r_a^5}{r_b^3 - r_a^3}
+F = \\frac{21}{5}\\,(3 - 2s)\\,\\frac{r_b^5 - r_a^5}{r_b^3 - r_a^3},
 ```
 
-(Christensen-Lo mode-2 angular integral; modes 3 and 4 contribute zero to
-the dev ``\\beta``).
+finite at ``k = \\infty`` (Christensen-Lo mode-2 angular integral; modes 3 and 4
+contribute zero to the dev ``\\beta``).
 
 The full per-layer dev localization is therefore
 ``\\beta_k = a_k + b_k\\,F_k``, with ``F_k`` = `_layer_avg_dev_shear_factor(r_a, r_b, κ_k, μ_k)`.
@@ -316,7 +380,8 @@ The full per-layer dev localization is therefore
     Trb3 = Trb^3; Tra3 = Tra^3
     Trb5 = Trb^5; Tra5 = Tra^5
     geom = (Trb5 - Tra5) / (Trb3 - Tra3)
-    return T(21 // 5) * (3 * Tκ + Tμ) / Tμ * geom
+    s = Tμ / (Tκ + Tμ)
+    return T(21 // 5) * (3 - 2 * s) * geom
 end
 
 """
@@ -329,10 +394,11 @@ volume-averaged deviatoric strain involves both the mode-1 amplitude
 displacement profile contributes a non-zero integrated dev strain
 through the layer thickness).  Modes 3 (``1/r^4``) and 4 (``1/r^2``)
 integrate to zero.  The returned per-layer ``\\beta_k`` is therefore
-``a_k + b_k\\,F_k`` with
+``a_k + b_k\\,F_k`` with, ``b_k`` being the amplitude of the mode scaled by
+``s_k = \\mu_k/(k_k + \\mu_k)``,
 
 ```math
-F_k = \\frac{21}{5}\\,\\frac{3k_k + \\mu_k}{\\mu_k}\\,
+F_k = \\frac{21}{5}\\,(3 - 2s_k)\\,
       \\frac{r_k^5 - r_{k-1}^5}{r_k^3 - r_{k-1}^3}.
 ```
 

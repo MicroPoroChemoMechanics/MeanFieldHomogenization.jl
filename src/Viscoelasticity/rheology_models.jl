@@ -388,7 +388,7 @@ end
     Rabotnov(mu_0, lambda_0, α, β)
 
 The Rabotnov fractional-exponential kernel, in the form ECHOES uses as its
-analytical benchmark for the ageing pipeline
+analytical benchmark for the aging pipeline
 (`tests/python/creep/fluage_echoes_maxwell_papier_rabotnov.py`):
 
 ```math
@@ -535,7 +535,7 @@ series dashpot ``\\beta`` makes the model a **fluid**.
     two routes.
 
     [`creep_kernel_law`](@ref) returns ``\\varphi`` packaged as a
-    [`ViscoLaw`](@ref) for the ageing pipeline.
+    [`ViscoLaw`](@ref) for the aging pipeline.
 
 !!! warning "The field names in older code are swapped"
     `docs/src/applications/bituminous.md` used to define its own struct whose
@@ -627,8 +627,8 @@ The transform is evaluated through `SpecialFunctions.expintx`, the scaled form
 ``e^{z}E_1(z)``, so it stays finite for large ``p\\tau`` where ``\\exp(p\\tau)`` alone would
 overflow.
 
-This is the non-ageing skeleton of the ageing law
-`logcompliance` in the ECHOES `ageing_visco_mat.py`; the ageing version, where
+This is the non-aging skeleton of the aging law
+`logcompliance` in the ECHOES `ageing_visco_mat.py`; the aging version, where
 ``E``, ``C`` and ``\\tau`` depend on the loading age, belongs to the
 [time-domain route](@ref man-viscoelasticity) instead.
 """
@@ -659,7 +659,7 @@ equilibrium_modulus(m::LogarithmicCreep) = zero(m.E)
     creep_kernel_law(m::Model2S2P1D) -> ViscoLaw
 
 The dimensionless 2S2P1D creep kernel ``\\varphi`` packaged as a scalar
-`:creep` [`ViscoLaw`](@ref) ``(t, t') \\mapsto \\varphi(t - t')``, ready for the ageing
+`:creep` [`ViscoLaw`](@ref) ``(t, t') \\mapsto \\varphi(t - t')``, ready for the aging
 pipeline.
 
 This is the entry point that lets one 2S2P1D object drive **both** routes.  The

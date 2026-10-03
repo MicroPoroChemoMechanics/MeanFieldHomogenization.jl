@@ -225,7 +225,7 @@ matrix and of each of the three scales built on it.
 Every tutorial so far is elastic or conductive, with no dependence on time.
 [Viscoelastic composites](@ref tut-viscoelasticity) opens the tutorials that
 go beyond elasticity, with complex moduli in the frequency domain and a first
-ageing creep calculation. The two N-body schemes are taken to published results
+aging creep calculation. The two N-body schemes are taken to published results
 in [The cluster model on cubic arrays](@ref app-cluster-model) and
 [The equivalent inclusion method, against a published table](@ref app-eim-assembly),
 and the `Homogenized` seam used throughout this page is described in

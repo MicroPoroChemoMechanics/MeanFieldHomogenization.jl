@@ -89,7 +89,7 @@ package derives the rest algebraically. Four routes already use them:
 
 Cracks and flat objects follow the same chain with ``\mathbb H`` in place of
 ``\mathbb N`` and a density in place of a volume fraction; transport is the same
-picture at tensor order 2, and ageing viscoelasticity the same picture with
+picture at tensor order 2, and aging viscoelasticity the same picture with
 Volterra products in place of tensor products. The contract is written up in
 [Adding a new inclusion](@ref dev-adding-inclusion).
 
@@ -140,15 +140,15 @@ descriptor.
 
 ## Extension to viscoelasticity
 
-Two distinct extensions, and the distinction matters: for a **non-ageing**
+Two distinct extensions, and the distinction matters: for a **non-aging**
 material a transform maps the problem onto an elastic one, so nothing new has to
-be solved; for an **ageing** one no such map exists, and it is the Eshelby
+be solved; for an **aging** one no such map exists, and it is the Eshelby
 problem itself that must be generalized.
 
 | Page | What it adds |
 | :--- | :----------- |
-| [The Laplace-Carson route](@ref th-laplace-carson) | the correspondence principle: a non-ageing problem solved as an elastic one, transform by transform |
-| [Ageing linear viscoelasticity](@ref th-viscoelasticity) | moduli become Volterra operators; the algebra of the chain is unchanged |
+| [The Laplace-Carson route](@ref th-laplace-carson) | the correspondence principle: a non-aging problem solved as an elastic one, transform by transform |
+| [Aging linear Volterra behavior](@ref th-viscoelasticity) | moduli and conductivities become Volterra operators; the algebra of the chain is unchanged, the order of its factors is not free |
 
 ## Periodic homogenization
 

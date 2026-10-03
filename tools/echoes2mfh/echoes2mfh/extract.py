@@ -501,7 +501,7 @@ class Extractor:
                     moduli = [self.tr.translate(e) for e in v.elts]
                     pd.props[f":{k.value}"] = JuliaExpr("")  # filled by emitter
         pd.layers = [JuliaExpr(r) for r in radii]
-        pd.props["__moduli__"] = JuliaExpr(", ".join(moduli))
+        pd.moduli = [JuliaExpr(m) for m in moduli]
         pd.geometry = JuliaExpr("")  # emitter builds LayeredSphere(...)
 
     def _layered_spheroid(self, pd: PhaseDef, kw: dict, node: ast.stmt) -> None:
@@ -518,10 +518,16 @@ class Extractor:
             for k, v in zip(kw["prop"].keys, kw["prop"].values):
                 if isinstance(v, (ast.List, ast.Tuple)):
                     moduli = [self.tr.translate(e) for e in v.elts]
-        pd.props["__moduli__"] = JuliaExpr(", ".join(moduli))
+        pd.moduli = [JuliaExpr(m) for m in moduli]
 
     def _interfaces(self, pd: PhaseDef, node_val: ast.expr, node: ast.stmt) -> None:
-        """`interf_prop={"C": [[kn, kt, PRIMALDISC]]}` -> SpringInterface(...)."""
+        """`interf_prop={"C": [[kn, kt, PRIMALDISC]]}` -> SpringInterface(...).
+
+        The physics is read from the number of parameters, the property name
+        being free in Echoes: two for elasticity (`[kn, kt]`, `[ks, mus]`), one
+        for transport. A transport `PRIMALDISC` scalar is a CONDUCTANCE in
+        Echoes, and `KapitzaInterface` takes a resistance, hence `1 / h`.
+        """
         if not isinstance(node_val, ast.Dict):
             return
         for _k, v in zip(node_val.keys, node_val.values):
@@ -534,8 +540,14 @@ class Extractor:
                 kind = "PerfectInterface()"
                 if parts and isinstance(entry.elts[-1], ast.Name):
                     tname = entry.elts[-1].id
-                    ctor = mapping.INTERFACE_TYPE.get(tname, "PerfectInterface()")
                     nums = parts[:-1]
+                    table = (
+                        mapping.INTERFACE_TYPE_TRANSPORT if len(nums) == 1
+                        else mapping.INTERFACE_TYPE
+                    )
+                    ctor = table.get(tname, "PerfectInterface()")
+                    if ctor == "KapitzaInterface":
+                        nums = [f"1 / ({nums[0]})"]
                     kind = ctor if ctor.endswith(")") else (
                         f"{ctor}({', '.join(nums)})" if nums else f"{ctor}()"
                     )

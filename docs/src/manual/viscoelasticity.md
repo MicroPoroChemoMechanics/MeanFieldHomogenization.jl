@@ -1,12 +1,13 @@
 # [Viscoelastic homogenization](@id man-viscoelasticity)
 
 !!! info "Before this page"
-    [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity), where the
+    [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity), where the
     Volterra discretization and the ALV schemes used below are derived, and
     [Homogenization schemes](@ref man-schemes), whose `RVE` machinery the ALV
     pipeline reuses.
 
-The ALV (ageing linear viscoelastic) pipeline reuses the [`RVE`](@ref)
+The ALV (aging linear Volterra) pipeline, viscoelasticity at order 4 and its
+conduction and diffusion counterpart at order 2, reuses the [`RVE`](@ref)
 machinery of the elastic side: replace each phase property by a
 [`ViscoLaw`](@ref) and pass a `times` grid to [`homogenize_alv`](@ref).
 
@@ -48,7 +49,7 @@ law_M = ViscoLaw(R_iso, :relaxation)
 
 ### 1.2 Pre-built constructors
 
-The shortest route to a non-ageing law is not to write a kernel at all, but to
+The shortest route to a non-aging law is not to write a kernel at all, but to
 take a model from the [rheological library](@ref man-rheological-models) and let
 `ViscoLaw` build the kernel:
 
@@ -58,11 +59,11 @@ law = ViscoLaw(m)          # (t, t') ↦ R(t - t'), ready for `homogenize_alv`
 ```
 
 The same object also drives the [Laplace-Carson route](@ref man-laplace-inversion)
-through `carson_relaxation(m, p)`, so a non-ageing material need only be
+through `carson_relaxation(m, p)`, so a non-aging material need only be
 described once and the two routes are guaranteed to be comparing the same
 thing — which is what the [three-route check](@ref tut-freq-vs-time) relies on.
 
-The hand-written constructors below remain the way to build an **ageing**
+The hand-written constructors below remain the way to build an **aging**
 kernel, which no model in the library can express.
 
 
@@ -70,22 +71,23 @@ kernel, which no model in the library can express.
 # `maxwell_iso(K, μ, τ_K, τ_μ)` —  R = 3K·e^{-t/τ_K} 𝕁 + 2μ·e^{-t/τ_μ} 𝕂
 law_max = maxwell_iso(5.0, 2.0, 1.0, 0.5)
 
-# `kelvin_iso(K_∞, μ_∞, K₀, μ₀, τ_K, τ_μ)` — Kelvin (creep) iso
-law_kel = kelvin_iso(3.0, 1.0, 5.0, 2.0, 1.0, 0.5)
+# `kelvin_iso(k₀, μ₀, k_branches, μ_branches, τ_k, τ_μ)` — Kelvin chain (creep):
+# instantaneous moduli k₀, μ₀, then one Kelvin branch per entry of the vectors
+law_kel = kelvin_iso(3.0, 1.0, [5.0], [2.0], [1.0], [0.5])
 
 # Elastic limit : R(t,t') = C · H(t-t')
 law_el  = heaviside_law(TensISO{3}(15.0, 4.0))
 ```
 
-### 1.3 Ageing kernels
+### 1.3 Aging kernels
 
 The first argument is the current time `t`, the second is the loading
-time `t'`. Ageing means the kernel depends on `t'`, not just on the
+time `t'`. Aging means the kernel depends on `t'`, not just on the
 duration `t − t'` (basic linear viscoelasticity is the special case
 where it depends only on `t − t'`):
 
 ```julia
-# solidification-type ageing : volume fraction of "active" gel grows
+# solidification-type aging : volume fraction of "active" gel grows
 # with t' as `f_∞ · t'^α / (1 + t'^α)`.
 const α_age = 4.0
 const f_∞   = 0.3
@@ -203,12 +205,12 @@ and routes them through the appropriate scheme branch.
 ### 5.2 Cracks with finite interface stiffness (Sevostianov)
 
 For a flat crack carrying a **spring-like interface stiffness** with
-time-dependent normal `Rn(t,t')` and tangential `Rt(t,t')` ageing
+time-dependent normal `Rn(t,t')` and tangential `Rt(t,t')` aging
 kernels, attach the interface laws as `:Rn` / `:Rt` properties on the
 crack phase :
 
 ```julia
-# Interface kernels — same Maxwell-iso ageing form as the matrix law
+# Interface kernels — same Maxwell-iso aging form as the matrix law
 R_n_kernel(t, tp) = (1 + 0.1 * tp^0.4) *
                      (1.0e10 + (2.0e10 - 1.0e10) * exp(-(t - tp) / 2.0))
 R_t_kernel(t, tp) = (1 + 0.1 * tp^0.2) *
@@ -263,7 +265,7 @@ elastic MT. `scripts/60_alv_cracks_interface.jl` runs the same configuration
 through both implementations: `rtol ≤ 1e-3` at low density, a few % to ~14 %
 at `d ≥ 0.20`.
 
-A static (non-ageing) elastic + conductivity crack benchmark with
+A static (non-aging) elastic + conductivity crack benchmark with
 matrix-only interface stiffness is in
 `scripts/15_cracks_iso_interface.jl`.
 
@@ -275,7 +277,7 @@ matrix-only interface stiffness is in
 | `SC`, `ASC`                    | re-evaluated against the running effective estimate |
 
 A complete demo with **all seven** crack-aware ALV schemes lives in
-`scripts/57_ageing_creep_cracks.jl`.
+`scripts/57_aging_creep_cracks.jl`.
 
 ## 6. Order-2 ALV — conductivity / diffusion
 
@@ -299,10 +301,30 @@ K_eff = homogenize_alv(rve_κ, MoriTanaka(), :K; times = times)   # 150 × 150 (
 The dispatcher sees the 2-tensor sample and routes via the
 order-2 pipeline ([`homogenize_alv_order2`](@ref) under the hood).
 Result is a `(3n × 3n)` block matrix. See
-`scripts/56_ageing_creep_order2.jl`.
+`scripts/56_aging_creep_order2.jl`.
 
 The order-2 pipeline implements the bounds, `Dilute`, `DiluteDual`,
-`MoriTanaka`, `Maxwell` and `DifferentialScheme`.
+`MoriTanaka`, `Maxwell`, `PonteCastanedaWillis`, `SelfConsistent` and
+`DifferentialScheme`. `Maxwell` and `PonteCastanedaWillis` take the Hill kernel
+of the distribution shape the RVE declares (`RVE(; distribution_shape = …)`).
+
+A [`LayeredSphere`](@ref) enters every one of them, with
+`KapitzaInterface` and `SurfaceConductiveInterface` between its layers. As at
+order 4, the phase law is a placeholder: the layers carry their own kernels,
+elastic tensors or `ViscoLaw`s.
+
+```julia
+grain = LayeredSphere((0.8, 1.0), (law_κ, heaviside_law(TensISO{2,3}(5.0)));
+                      interfaces = (KapitzaInterface(0.1), SurfaceConductiveInterface(0.3)))
+add_phase!(rve_κ, :G, grain, Dict(:K => law_κ); fraction = 0.2)
+gradient_gradient_loc_alv(grain, law_κ, times)       # whole-sphere concentration, 3n × 3n
+conductivity_contribution_alv(grain, law_κ, times)   # its contribution
+```
+
+The jumps follow the dictionary ``\boldsymbol\sigma\equiv-\underline q``: a Kapitza
+resistance gives ``[\![T]\!] = \rho\,\sigma_n = -\rho\,q_n``, outer value minus inner
+one, and `external = false` leaves the outer interface to the matrix, as in
+elasticity.
 
 `symmetrize` is honored in both orders. The projection is applied to the
 dilute quantities (`Ã_α`, `Ñ_α`) block by block, with the projector of the
@@ -338,11 +360,10 @@ That splits the schemes in two:
 !!! warning "Reference-updating ALV schemes need an isotropic running medium"
     With `SelfConsistent` or `DifferentialScheme` in ALV, every inclusion
     phase must keep the running estimate isotropic. Two ways to satisfy
-    that: **spherical inclusions** with an isotropic phase law
-    (`LayeredSphere` also qualifies — its contribution is isotropic by
-    construction), or an **isotropic orientation average**,
-    `symmetrize = :iso`, which is also what randomly oriented inclusions or
-    cracks mean physically.
+    that: **spherical inclusions** with an isotropic phase law, or an
+    **isotropic orientation average**, `symmetrize = :iso`, which is also
+    what randomly oriented inclusions or cracks mean physically. A
+    `LayeredSphere`, isotropic by construction, is always accepted.
 
     An RVE that satisfies neither raises an explicit `ArgumentError` naming
     the offending phase, rather than silently reading iso parameters off a
@@ -380,8 +401,11 @@ homogenize_alv(rve, DifferentialScheme(; formulation = :compliance), :C; times =
 ```
 
 Supported inclusions: ellipsoids and spheroids, `LayeredSphere`, and
-crack families through their density — subject to the isotropic-reference
-requirement of [section 7](@ref man-alv-iso-reference).
+crack families through their density (order 4) — subject to the
+isotropic-reference requirement of [section 7](@ref man-alv-iso-reference). The
+self-consistent and asymmetric self-consistent schemes accept the same
+inclusions at order 4; at order 2 the self-consistent scheme takes ellipsoids
+and layered spheres.
 
 ## 9. Symmetry-class fast paths
 
@@ -453,7 +477,7 @@ dμ_df = ForwardDiff.derivative(eff_mu, 0.20)        # ≈ 1.66 (validated FD �
 ### 10.2 Sensitivity wrt a material parameter — closure-captured
 
 When the parameter lives **inside** the kernel function (e.g. a
-modulus, relaxation time, ageing exponent), close it into the kernel
+modulus, relaxation time, aging exponent), close it into the kernel
 and differentiate normally. ForwardDiff lifts the parameter to `Dual`
 through the closure:
 
@@ -500,8 +524,8 @@ a central finite difference at `rtol ≤ 1e-7`.
 
 | script | benchmark | agreement |
 | :--- | :--- | :--- |
-| `53_ageing_creep_solid.jl` | multi-phase Maxwell + solidifying Maxwell + pore (ECHOES C++ manual) | — |
-| `57_ageing_creep_cracks.jl` | seven crack-aware ALV schemes, penny-crack RVE | — |
+| `53_aging_creep_solid.jl` | multi-phase Maxwell + solidifying Maxwell + pore (ECHOES C++ manual) | — |
+| `57_aging_creep_cracks.jl` | seven crack-aware ALV schemes, penny-crack RVE | — |
 | `52_rabotnov_mittag_leffler.jl` | Rabotnov / Mittag-Leffler closed form, [barthelemyIJES2019](@cite) §5 | `rtol ≤ 1.3e-3` at `n_times = 200` |
 
 The Rabotnov kernel needed by that benchmark used to come from an external
@@ -526,12 +550,12 @@ Mandel `(1, 1)` block, `≤ 1e-6` on the full matrix).
 ## Where to go next
 
 [The rheological model library](@ref man-rheological-models) supplies the
-non-ageing laws that `ViscoLaw(m)` turns into kernels, and drives the
+non-aging laws that `ViscoLaw(m)` turns into kernels, and drives the
 Laplace-Carson route with the same objects. The tutorials
 [Viscoelastic composites](@ref tut-viscoelasticity) and
-[Ageing viscoelastic schemes side by side](@ref tut-alv-schemes) run the
+[Aging viscoelastic schemes side by side](@ref tut-alv-schemes) run the
 pipeline of this page,
-[Derivatives through the ageing-viscoelastic pipeline](@ref tut-alv-sensitivities)
+[Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities)
 extends section 10, and
-[Ageing creep of solidifying cementitious materials](@ref app-ageing-creep)
+[Aging creep of solidifying cementitious materials](@ref app-aging-creep)
 applies it to a solidifying cementitious material.

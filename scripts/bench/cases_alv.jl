@@ -1,5 +1,5 @@
 # =============================================================================
-#  cases_alv.jl — ageing linear viscoelasticity.
+#  cases_alv.jl — aging linear viscoelasticity.
 #
 #  Everything here is O(n²) or worse in the number of time points, so the
 #  cases are the ones that expose the Volterra / trapezoidal buffer

@@ -40,7 +40,7 @@ Provides:
   reach a thickness or an interface compliance.
 
 The block algebra itself lives in `Core/laminate_algebra.jl`, so that the
-ageing-viscoelastic laminate reuses the very same kernel with the Volterra
+aging-viscoelastic laminate reuses the very same kernel with the Volterra
 inversion substituted.
 """
 module Laminates

@@ -1,9 +1,8 @@
 # =============================================================================
 #  cracks_alv.jl — pure penny crack in an iso ALV matrix.
 #
-#  This first implementation covers **pure penny cracks (η = 1)** in an
-#  **isotropic ALV matrix** (no interface stiffness yet — the
-#  `(Rn(t,t'), Rt(t,t'))` interface laws will be added in a follow-up).
+#  Penny cracks (η = 1) in an **isotropic ALV matrix**, traction-free or with
+#  the `(Rn(t,t'), Rt(t,t'))` interface stiffness laws.
 #
 #  ── Time-space decoupling ─────────────────────────────────────────────────
 #
@@ -16,10 +15,13 @@
 #       B_nn = (8 / (3π))  · (α + 2β) / (β · (α + β/2))
 #       B_t  = (32 / (9π)) · (α + 2β) / (β · (α + β))
 #
-#  In iso ALV, every "/" becomes a Volterra inverse and every "·"
-#  becomes a Volterra product on `n × n` matrices:
-#       B̃_nn = (8 / (3π))  · (α + 2β) ∘ (β ∘ (α + β/2))^{-vol}
-#       B̃_t  = (32 / (9π)) · (α + 2β) ∘ (β ∘ (α + β))^{-vol}
+#  In iso ALV every "/" becomes a Volterra inverse and every "·" a Volterra
+#  product on `n × n` matrices, and the ORDER of the factors is not free: an
+#  aging matrix makes α and β non-commuting. It is fixed by the flat limit of
+#  a void spheroid, whose Hill kernel combines (k + 4μ/3)^{-vol} and μ^{-vol}
+#  alone (see `_penny_cod_alv`):
+#       B̃_nn = (8 / (3π))  · (α + β/2)^{-vol} ∘ (α + 2β) ∘ β^{-vol}
+#       B̃_t  = (32 / (9π)) · (α + β)^{-vol}   ∘ (α + 2β) ∘ β^{-vol}
 #
 #  The compliance contribution H̃ = (3/4) · n̂ ⊗ˢ B̃ ⊗ˢ n̂ is, in the
 #  canonical crack-aligned axis n̂ = e₃ + Mandel basis :
@@ -106,13 +108,7 @@ function cod_kernel_alv(
         throw(ArgumentError("cod_kernel_alv: only penny cracks (η = 1) are currently supported"))
 
     # Volterra rationals for B̃_n and B̃_t — traction-free penny limit.
-    α_p_2β = α .+ 2β
-    α_p_βh = α .+ β ./ 2
-    α_p_β = α .+ β
-    βα1 = β * α_p_βh
-    βα2 = β * α_p_β
-    B_n = (8 / (3π)) .* volterra_left_divide(βα1, α_p_2β)
-    B_t = (32 / (9π)) .* volterra_left_divide(βα2, α_p_2β)
+    B_n, B_t = _penny_cod_alv(α, β)
 
     # Interface-stiffness post-correction.
     if Rn !== nothing || Rt !== nothing
@@ -122,6 +118,33 @@ function cod_kernel_alv(
         )
     end
     return (B_n = B_n, B_t = B_t)
+end
+
+"""
+    _penny_cod_alv(α, β) -> (B_n, B_t)
+
+The ``n\\times n`` Volterra COD coefficients of a traction-free penny crack in
+an isotropic matrix whose iso blocks are ``\\alpha = 3k``, ``\\beta = 2\\mu``:
+
+```math
+\\widetilde B_n = \\frac{8}{3\\pi}\\,(\\alpha + \\tfrac12\\beta)^{-\\circ}\\circ(\\alpha + 2\\beta)\\circ\\beta^{-\\circ},
+\\qquad
+\\widetilde B_t = \\frac{32}{9\\pi}\\,(\\alpha + \\beta)^{-\\circ}\\circ(\\alpha + 2\\beta)\\circ\\beta^{-\\circ}.
+```
+
+The order of the three factors is that of the flat limit of a void spheroid,
+whose Hill kernel is a linear combination of ``(k + \\tfrac43\\mu)^{-\\circ}`` and
+``\\mu^{-\\circ}`` alone; it is also Echoes' (`compute_visco_crack_compliance`).
+For an aging matrix the factors do not commute, and the elastic expression
+read with the inverse of ``\\beta\\circ(\\alpha + \\tfrac12\\beta)`` on the left is off by a
+percent.
+"""
+function _penny_cod_alv(α::AbstractMatrix, β::AbstractMatrix)
+    α_p_2β = α .+ 2β
+    β_inv = volterra_inverse(β; block_size = 1)
+    B_n = (8 / (3π)) .* (volterra_left_divide(α .+ β ./ 2, α_p_2β; block_size = 1) * β_inv)
+    B_t = (32 / (9π)) .* (volterra_left_divide(α .+ β, α_p_2β; block_size = 1) * β_inv)
+    return B_n, B_t
 end
 
 """
@@ -275,13 +298,7 @@ function stiffness_contribution_alv_at(
     _is_iso_block(C_ref) ||
         throw(ArgumentError("stiffness_contribution_alv_at: only iso reference is supported"))
     α, β = _iso_pair(C_ref)
-    α_p_2β = α .+ 2β
-    α_p_βh = α .+ β ./ 2
-    α_p_β = α .+ β
-    βα1 = β * α_p_βh
-    βα2 = β * α_p_β
-    B_n = (8 / (3π)) .* volterra_left_divide(βα1, α_p_2β)
-    B_t = (32 / (9π)) .* volterra_left_divide(βα2, α_p_2β)
+    B_n, B_t = _penny_cod_alv(α, β)
     # Optional Sevostianov interface-stiffness correction.  Caller
     # supplies the **already-discretized** scalar interface matrices
     # `Rn_mat`, `Rt_mat` (n × n Volterra) — the iteration of SC against

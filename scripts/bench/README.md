@@ -152,7 +152,7 @@ channel is wall-clock and will happily measure your other work.
 | `fixtures.jl` | shared stiffnesses and RVE builders, copied verbatim from `test/` and `scripts/` |
 | `cases_kernels.jl` | Hill / COD back-ends and per-node primitives |
 | `cases_schemes.jl` | `homogenize` for every scheme + ForwardDiff sensitivities |
-| `cases_alv.jl` | ageing linear viscoelasticity (O(n²) in time steps) |
+| `cases_alv.jl` | aging linear viscoelasticity (O(n²) in time steps) |
 | `cases_tensnd.jl` | TensND primitives — every MFH case is downstream of these |
 | `baseline.json` | **committed** reference report |
 | `results/` | per-tier reports (gitignored) |

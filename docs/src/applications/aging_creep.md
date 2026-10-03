@@ -1,14 +1,14 @@
-# [Ageing creep of solidifying cementitious materials](@id app-ageing-creep)
+# [Aging creep of solidifying cementitious materials](@id app-aging-creep)
 
 !!! info "Before this page"
-    [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity), where the
+    [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity), where the
     time-domain schemes and their Volterra algebra are derived,
     [Viscoelastic homogenization](@ref man-viscoelasticity) for
     [`homogenize_alv`](@ref) and the relaxation laws, and the tutorial
-    [Ageing creep: loading age against inclusion shape](@ref tut-ageing-ages-aspect)
+    [Aging creep: loading age against inclusion shape](@ref tut-aging-ages-aspect)
     on the effect of the loading age.
 
-The ageing-creep model of [sanahuja2013](@citet): one phase **solidifies
+The aging-creep model of [sanahuja2013](@citet): one phase **solidifies
 progressively** — as C-S-H does during hydration — so the effective relaxation kernel ``\mathbb C^{\mathrm{hom}}(t,
 t')`` depends on the observation time ``t`` and the loading time ``t'``
 *independently*. Laplace–Carson no longer applies; the homogenization runs
@@ -96,7 +96,7 @@ The key contribution of [sanahuja2013](@citet) is that the ``N`` solidifying she
 the pore can be packed into a **single composite sphere** instead of ``N+1``
 separate inclusions — reducing ``N+1`` Eshelby problems to one. `MeanFieldHomogenization`
 supports both: `:whole_pores` (``N`` separate spherical inclusions) and `:layers`
-(one [`LayeredSphere`](@ref) whose per-layer moduli are ageing relaxation laws).
+(one [`LayeredSphere`](@ref) whose per-layer moduli are aging relaxation laws).
 
 ```@example creep
 function build_rve_whole_pores(N, α, t0; fixed)
@@ -229,7 +229,7 @@ plot(creep_panel(:layers, "model = :layers"),
 
 Three observations, all reproducing [sanahuja2013](@cite):
 
-1. **Ageing** — early loading ages (``t_0`` small) give much larger creep because
+1. **Aging** — early loading ages (``t_0`` small) give much larger creep because
    many layers have not yet solidified; the compliance decreases toward the
    elastic limit as ``t_0`` grows.
 2. **History vs frozen** — the frozen approach overestimates creep at early ages
@@ -278,7 +278,10 @@ second scatters them independently in the matrix.
 ## Where to go next
 
 The schemes other than Mori–Tanaka on the same time-domain path are compared on
-one composite in [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes).
-The next application, [Viscoelastic complex modulus of a bituminous mixture](@ref app-bituminous),
-treats a non-ageing material, for which the correspondence principle holds and
-the homogenization runs in the frequency domain with complex moduli.
+one composite in [Aging viscoelastic schemes side by side](@ref tut-alv-schemes).
+A non-aging material, for which the correspondence principle holds and the
+homogenization runs in the frequency domain with complex moduli, is treated in
+[Viscoelastic complex modulus of a bituminous mixture](@ref app-bituminous).
+The next application,
+[Quasi-brittle strength of cement paste and mortar](@ref app-strength),
+returns to the elastic paste and derives its compressive strength.

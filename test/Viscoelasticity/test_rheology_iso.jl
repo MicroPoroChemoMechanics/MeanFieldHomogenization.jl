@@ -9,7 +9,7 @@ using ForwardDiff
 #  `homogenize_lc`.
 #
 #  The point of this file is the *unification*: one model object must drive the
-#  Laplace-Carson route and the ageing time-domain route to the same answer.
+#  Laplace-Carson route and the aging time-domain route to the same answer.
 #  The last testset is the three-route agreement, which is the strongest check
 #  in the suite because the two pipelines share no code at all.
 # =============================================================================
@@ -60,11 +60,11 @@ end
     @test relaxation(mν, 0.7) isa TensISO{4, 3}
 end
 
-@testset "ViscoLaw from a model — the bridge to the ageing pipeline" begin
+@testset "ViscoLaw from a model — the bridge to the aging pipeline" begin
     m = iso_rheology(zener_maxwell(30.0, 10.0, 1.0), zener_maxwell(10.0, 5.0, 0.5))
     law = ViscoLaw(m)
     @test visco_mode(law) == :relaxation
-    # Non-ageing by construction: only `t - t'` matters.
+    # Non-aging by construction: only `t - t'` matters.
     @test TensND.get_data(law(1.7, 0.7)) == TensND.get_data(law(3.0, 2.0))
     @test TensND.get_data(law(1.0, 0.0)) == TensND.get_data(relaxation(m, 1.0))
     # Causal, and the zero keeps the symmetry class.
@@ -121,11 +121,11 @@ end
     )
 end
 
-@testset "three routes agree on a non-ageing composite" begin
+@testset "three routes agree on a non-aging composite" begin
     # Route 1: the complex modulus at p = iω (the correspondence principle).
     # Route 2: `homogenize_lc` — the same, inverted back to the time domain.
-    # Route 3: `homogenize_alv` — the ageing Volterra machinery applied to a
-    #          non-ageing material, which shares no code with the other two.
+    # Route 3: `homogenize_alv` — the aging Volterra machinery applied to a
+    #          non-aging material, which shares no code with the other two.
     Zm = iso_rheology(zener_maxwell(1.0, 2.0, 1.0), zener_maxwell(0.6, 1.2, 0.7))
     Zi = iso_rheology(zener_maxwell(8.0, 4.0, 0.3), zener_maxwell(5.0, 2.5, 0.4))
     f = 0.25

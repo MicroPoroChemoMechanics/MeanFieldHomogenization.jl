@@ -89,7 +89,9 @@ u_r(r_1^-) = \frac{r_1}{3k_1}\,P_1 \xrightarrow{k_1 \to \infty} 0,\qquad
 
 Each interface type provides a 2×2 (bulk) jump matrix
 ``\mathbf J(r)`` such that
-``\mathbf s(r_k^+) = \mathbf J \cdot \mathbf s(r_k^-)``. A spring interface is
+``\mathbf s(r_k^+) = \mathbf J \cdot \mathbf s(r_k^-)``, on the state
+``(u_r, \sigma_{rr})`` in elasticity and ``(\hat T, \hat q_n)`` in conduction (§4). A jump is
+always the outer value minus the inner one, ``[\![x]\!] = x(r_k^+) - x(r_k^-)``. A spring interface is
 parametrized by its normal and tangential stiffnesses ``k_n``, ``k_t``, whose
 inverses ``s_n = 1/k_n``, ``s_t = 1/k_t`` are the compliances, a membrane by its
 surface bulk and shear moduli ``\kappa^{\mathrm s}``, ``\mu^{\mathrm s}``, a
@@ -103,7 +105,7 @@ by its surface conductance ``k^{\mathrm s}``.
 \quad\text{(the bulk problem uses } s_n\text{ only)},\\
 \text{Membrane:} &\quad \mathbf J = \begin{pmatrix}1 & 0 \\ 4\kappa^{\mathrm s}/r^{2} & 1\end{pmatrix}
 \quad\text{(the bulk problem uses } \kappa^{\mathrm s}\text{ only)},\\
-\text{Kapitza:} &\quad \mathbf J = \begin{pmatrix}1 & \rho \\ 0 & 1\end{pmatrix},\\
+\text{Kapitza:} &\quad \mathbf J = \begin{pmatrix}1 & -\rho \\ 0 & 1\end{pmatrix},\\
 \text{Surface-conductive:} &\quad \mathbf J = \begin{pmatrix}1 & 0 \\ -n(n{+}1)k^{\mathrm s}/r^{2} & 1\end{pmatrix}.
 \end{aligned}
 ```
@@ -114,11 +116,21 @@ discontinuity** (displacement / temperature jump), while
 discontinuity** (traction / flux jump).  All limit to
 `PerfectInterface` when their compliance goes to zero.
 
+The minus sign of the Kapitza matrix is that of the dictionary
+``\boldsymbol\sigma \equiv -\underline q`` of [Conventions](@ref th-notation-sigma-q). The Kapitza law is
+the exact analog of the spring law ``[\![u_r]\!] = s_n\,\sigma_{rr}``, namely
+``[\![T]\!] = \rho\,\sigma_n``, and the state carries the physical outward normal flux
+``\hat q_n``, with ``\underline q = -k\,\nabla T``: hence ``[\![T]\!] = -\rho\,q_n``. Heat crossing the
+resistance outward leaves the inner side hotter than the outer one. With ``+\rho``
+the interface would be a negative resistance, raising the conductance of the
+sphere it is meant to lower.
+
 ## 4. Conductivity recurrence (Y₁ harmonic)
 
 Under a remote uniform temperature gradient, the temperature field
-has a Y₁ dependence.  The state vector ``\mathbf s(r) = (\hat T, \hat q_n)``
-(amplitudes projected onto the remote gradient direction) propagates
+has a Y₁ dependence, ``T = \hat T(r)\,(\underline n\cdot\underline e)`` with ``\hat T = A r + B/r^2``.
+The state vector ``\mathbf s(r) = (\hat T, \hat q_n)``, ``\hat q_n = -k\,\partial_r\hat T`` being the
+amplitude of the outward flux, propagates
 through a 2×2 transfer matrix ``\mathbf T = \mathbf M(r_{\mathrm{out}})\,\mathbf M(r_{\mathrm{in}})^{-1}``
 with ``\mathbf M(r) = \begin{pmatrix} r & 1/r^2 \\ -k & 2k/r^3 \end{pmatrix}``, ``k``
 being here the conductivity of the layer.
@@ -154,7 +166,7 @@ state vector.
 
 Under a remote pure-deviatoric strain, the displacement field in an
 isotropic layer has the axisymmetric form
-``u_r = U(r)\,P_2(\cos\theta)``, ``u_\theta = W(r)\,P_2'(\cos\theta)``, and the
+``u_r = U(r)\,P_2(\cos\theta)``, ``u_\theta = W(r)\,\mathrm dP_2(\cos\theta)/\mathrm d\theta``, and the
 four linearly-independent Navier solutions at ``\ell = 2`` are parametrized
 by the power-law exponents ``n \in \{1, 3, -4, -2\}`` with material-
 dependent ``U/W`` ratios derived directly from the Navier characteristic
@@ -218,7 +230,9 @@ sphere result; for ``N \ge 2`` it reproduces the core-shell effective shear
 modulus of [christensenLo1979](@citet) and passes the Eshelby consistency tests
 (``N = 2`` with core ≡ shell ↔ single-layer of radius ``r_N``, etc.).
 
-## 7. Averages (Echoes-style)
+## [7. Averages and interface jumps](@id th-layered-sphere-jumps)
+
+### 7.1 Averages over the material
 
 Three volume-average flavors are provided:
 
@@ -230,7 +244,107 @@ Three volume-average flavors are provided:
   strain inside the ball of radius ``r``.
 
 All three cover the deviatoric part for any ``N \ge 1`` via the shear
-recurrence above.
+recurrence above. They average the field over the **material** of the layers,
+which is what a local criterion needs. A spring interface adds strain that
+belongs to no layer, and the concentration tensor of the whole sphere has to
+count it.
+
+### 7.2 The strain carried by a displacement jump
+
+Over a ball ``B`` of radius ``R``, the divergence theorem applied layer by layer
+gives
+
+```math
+\frac{1}{|B|}\int_B \boldsymbol\varepsilon\,\mathrm dV
+= \frac{1}{|B|}\oint_{\partial B^-}\underline u\otimes^{\mathrm s}\underline n\,\mathrm dS
+- \frac{1}{|B|}\sum_{r_k < R}\oint_{S_k}[\![\underline u]\!]\otimes^{\mathrm s}\underline n\,\mathrm dS,
+```
+
+with ``S_k`` the interface of radius ``r_k``, ``\underline n`` its outward normal and
+``[\![\underline u]\!] = \underline u^+ - \underline u^-``. The left-hand side is the average over the
+material, ``\sum_k f_k\,\langle\boldsymbol\varepsilon\rangle_k``. The strain of the ball seen from outside is the
+first term on the right, read on the outer side of ``\partial B``: it carries the
+opening of every interface. The two coincide only when no interface opens.
+
+The strain average rule ``\boldsymbol E = \sum_i f_i\,\langle\boldsymbol\varepsilon\rangle_i`` requires each opening to
+be assigned to some phase. The concentration tensor of a composite sphere
+assigns to the sphere the openings of its inner interfaces, and of its outer
+one by default. This is also the convention of Echoes, of
+[`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid)
+and of the laminates.
+
+On each harmonic the surface integral reduces to an amplitude. For the
+spherical part, ``\underline u = u_r(r)\,\underline n`` and
+``\oint u_r\,\underline n\otimes\underline n\,\mathrm dS = \tfrac{4\pi}{3}r^2u_r\,\boldsymbol 1``. For the deviatoric part, with
+``u_r = U P_2(\cos\theta)``, ``u_\theta = W\,\mathrm dP_2/\mathrm d\theta`` and the remote strain of
+mode 1, ``\boldsymbol\varepsilon^{\infty} = 2\underline e_3\otimes\underline e_3 - \underline e_1\otimes\underline e_1 - \underline e_2\otimes\underline e_2``,
+
+```math
+\oint u_3\,n_3\,\mathrm dS
+= r^2\!\int\!\big(U P_2\cos^2\theta + 3W\cos^2\theta\sin^2\theta\big)\,\mathrm d\Omega
+= \frac{8\pi r^2}{15}\,(U + 3W),
+```
+
+since both angular integrals equal ``8\pi/15``. Dividing by ``|B| = 4\pi R^3/3`` and
+by ``\varepsilon^{\infty}_{33} = 2`` gives the weight of the ``\mathbb K`` part. Mode 1,
+``(U, W) = (2r, r)``, then averages to 1 on its own ball, and modes 3 and 4 to
+zero on any shell, as §6 requires. The interface of radius ``r_k`` therefore
+adds to the concentration of a ball of radius ``R``
+
+```math
+\Delta\alpha_k = \frac{r_k^2}{R^3}\,[\![u_r]\!]_k,
+\qquad
+\Delta\beta_k = \frac{r_k^2}{5R^3}\,\big([\![U]\!]_k + 3[\![W]\!]_k\big),
+\qquad
+\Delta\alpha^{\mathrm{cond}}_k = \frac{r_k^2}{R^3}\,[\![\hat T]\!]_k,
+```
+
+per unit remote amplitude, on ``\mathbb J``, on ``\mathbb K`` and in conduction. The
+jumps are those of §3 and §6: ``[\![u_r]\!] = s_n\,\sigma_{rr}`` in the spherical harmonic,
+``[\![U]\!] = s_n\,\sigma_{rr}`` and ``[\![W]\!] = s_t\,\sigma_{r\theta}`` between amplitudes in the deviatoric
+one, and ``[\![\hat T]\!] = -\rho\,\hat q_n``. The traction and the flux are continuous across a primal
+interface, so the average stress and the average flux are unchanged. A
+jump is strain without stress, and it lowers the contribution tensor by
+``\mathbb C_0:\Delta\mathbb A``.
+
+A single grain of bulk modulus ``k_{\mathrm s}`` bonded by a normal spring ``k_n`` gives
+a check in closed form. Under a hydrostatic stress ``p\,\boldsymbol 1``, the grain strains by
+``\varepsilon = p/3k_{\mathrm s}`` in every direction and the interface opens by ``p/k_n``. The sphere seen from
+outside therefore strains by ``\varepsilon + p/(k_n R)``, which is the response of a
+homogeneous grain of modulus
+
+```math
+k^{\mathrm{eq}} = \frac{k_{\mathrm s}}{1 + 3k_{\mathrm s}/(k_n R)}.
+```
+
+Its dilute concentration ``(3k_0 + 4\mu_0)/(3k^{\mathrm{eq}} + 4\mu_0)`` is what the
+interface term restores. In conduction, the same reasoning gives
+``k^{\mathrm{eq}} = k_1/(1 + \rho k_1/R)`` for a Kapitza resistance.
+
+### 7.3 Which interfaces an average counts
+
+| Call | Inner interfaces | Outer interface ``r_N`` | Echoes |
+|:--|:--|:--|:--|
+| `strain_strain_loc(sphere, C₀, C₀)` | counted | counted | `eE` |
+| `strain_strain_loc(sphere, C₀, C₀; external = false)` | counted | not counted | `sphere_eE(n-1, external=False)` |
+| `strain_strain_loc(sphere, C₀; layer = k)` | — | — | `layer_eE(k-1, external=False)` |
+| `strain_strain_loc(sphere, C₀; layer = k, external = true)` | — | ``r_k`` counted | `layer_eE(k-1)` |
+| `strain_strain_loc(sphere, C₀; layer = k, internal = true)` | ``r_{k-1}`` counted | — | `layer_eE(k-1, internal=True)` |
+| `layer_strain_average`, `sphere_strain_average` | — | — | |
+
+`external` and `internal` keep the meaning they have in Echoes; only the
+default of the per-layer form differs, the material average. With
+`external = true` on every layer, the shells partition the sphere:
+``\sum_k f_k\,\mathbb A_k = \mathbb A_\Omega``. The same keyword moves the surface stress
+of an outer membrane out of [`stress_strain_loc`](@ref), so that
+``\mathbb N = \mathbb A_{\sigma\varepsilon} - \mathbb C_0:\mathbb A_\Omega`` holds for either value. Conduction
+follows the same rules through [`gradient_gradient_loc`](@ref) and
+[`flux_gradient_loc`](@ref). The schemes use the defaults.
+
+These tensors reproduce Echoes to ten digits, with spring interfaces inside
+and outside the sphere, under Mori–Tanaka and the self-consistent scheme, and
+with Kapitza interfaces in conduction. In conduction they also match the
+spherical limit of the confocal spheroid, computed independently.
 
 
 ## [8. Pointwise fields](@id th-layered-sphere-pointwise)

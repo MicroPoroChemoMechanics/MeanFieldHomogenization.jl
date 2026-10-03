@@ -1,12 +1,12 @@
-# # [Ageing creep: loading age against inclusion shape](@id tut-ageing-ages-aspect)
+# # [Aging creep: loading age against inclusion shape](@id tut-aging-ages-aspect)
 #
 # !!! info "Before this page"
-#     The tutorial [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes),
+#     The tutorial [Aging viscoelastic schemes side by side](@ref tut-alv-schemes),
 #     which reads a uniaxial creep test off the Volterra matrix as done below,
-#     and the theory page [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity),
-#     where the ageing creep function ``J(t, t')`` is defined.
+#     and the theory page [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity),
+#     where the aging creep function ``J(t, t')`` is defined.
 #
-# An **ageing** viscoelastic material is one whose creep compliance
+# An **aging** viscoelastic material is one whose creep compliance
 # ``J(t, t')`` depends on the loading time ``t'`` and not only on the elapsed
 # duration ``t - t'``. Concrete is the standard example: a specimen loaded at
 # 40 days creeps less than the same specimen loaded at 1 day, because it has
@@ -16,7 +16,7 @@
 # inclusions, 20 % by volume, homogenized by Mori-Tanaka — and sweeps the two
 # parameters that fight each other:
 #
-# * the **loading age** ``t' \in \{0, 20, 40\}``, which is the ageing itself;
+# * the **loading age** ``t' \in \{0, 20, 40\}``, which is the aging itself;
 # * the **inclusion aspect ratio** ``\omega \in \{1, 0.1, 0.01\}``, which is
 #   pure morphology and knows nothing about time.
 #
@@ -48,10 +48,10 @@ plotly_scene(
     title = "Aligned oblate inclusions, ω = 1/3 (drawn thicker than the run for legibility)"
 )
 
-# ## Two ageing creep laws
+# ## Two aging creep laws
 #
 # Each phase creeps in two additive parts: a **relaxing elastic** term whose
-# amplitude decays with the *loading age* ``t'`` — this is the ageing — and a
+# amplitude decays with the *loading age* ``t'`` — this is the aging — and a
 # **logarithmic creep** term in the elapsed duration ``t - t'``. Written on the
 # spherical and deviatoric projectors ``\mathbb J`` and ``\mathbb K``, a
 # compliance is `TensISO{3}(a, b)` with ``a`` the ``\mathbb J`` coefficient and
@@ -69,7 +69,7 @@ function J_matrix(t, tp)
     return TensISO{3}(a, b)
 end
 
-## Inclusions: stiffer and less compliant, E = 3, ν = 0.3, ageing faster.
+## Inclusions: stiffer and less compliant, E = 3, ν = 0.3, aging faster.
 const Ei, νi = 3.0, 0.3
 const ki, μi = k_mu(iso_stiffness_E_nu(Ei, νi))
 fk_i(tp) = 0.3 * exp(-tp / 10) + 0.4
@@ -163,7 +163,7 @@ for tp in AGES, key in (:matrix, OMEGAS..., :inclusion)
 end
 
 # The table already shows the two effects separately. Reading **down** the
-# blocks is ageing: the same microstructure loaded later creeps less. Reading
+# blocks is aging: the same microstructure loaded later creeps less. Reading
 # **across** the three ``\omega`` rows at fixed ``t'`` is morphology: flattening
 # the inclusions makes the composite creep *less*. At equal volume fraction a
 # flat stiff inclusion is the better reinforcement — the matrix cannot flow past
@@ -172,7 +172,7 @@ end
 #
 # ## The figure
 #
-# One panel per loading age, so the ageing is the shift between panels and the
+# One panel per loading age, so the aging is the shift between panels and the
 # shape effect is the spread inside each.
 
 const COLORS = Dict(1.0 => :magenta, 0.1 => :red, 0.01 => :green)
@@ -201,21 +201,21 @@ p_all = plot(panels...; layout = (1, 3), size = (1080, 440),
 # Three things are worth naming in that figure.
 #
 # **The composite is bracketed by its phases**, at every time and every age. That
-# is not automatic for an ageing problem — the bound holds here because both
+# is not automatic for an aging problem — the bound holds here because both
 # phases share the same kind of kernel.
 #
-# **Ageing shifts the whole family down.** Between ``t' = 0`` and ``t' = 40`` the
+# **Aging shifts the whole family down.** Between ``t' = 0`` and ``t' = 40`` the
 # elastic amplitudes ``f(t')`` have decayed by roughly a factor of two, and the
 # compliance at a fixed elapsed duration follows.
 #
 # **The aspect ratio orders the curves the same way at every age.** Morphology
-# and ageing do not interact here: the shape effect is a near-constant offset,
+# and aging do not interact here: the shape effect is a near-constant offset,
 # which is exactly the property that makes it legitimate to calibrate a
 # microstructure on one loading age and reuse it at another.
 #
 # ## The shape effect, isolated
 #
-# Dividing by the spherical case removes the ageing and leaves the morphology.
+# Dividing by the spherical case removes the aging and leaves the morphology.
 
 p_ratio = plot(;
     xscale = :log10, xlabel = "t − t′ + 1", ylabel = "J_E^hom(ω) / J_E^hom(ω = 1)",
@@ -253,21 +253,21 @@ end
 #
 # The two parameters above are swept on a coarse grid, whereas the response to a
 # small change of a parameter is better obtained as a derivative.
-# [Derivatives through the ageing-viscoelastic pipeline](@ref tut-alv-sensitivities)
+# [Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities)
 # differentiates such outputs with `ForwardDiff`, with respect to a volume
 # fraction, a modulus or a relaxation time, through the whole Volterra assembly.
 #
-# * [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes) — the same kind of
+# * [Aging viscoelastic schemes side by side](@ref tut-alv-schemes) — the same kind of
 #   test across Dilute / Mori-Tanaka / Maxwell / PCW
-# * [Frequency or time?](@ref tut-freq-vs-time) — when the non-ageing frequency route
+# * [Frequency or time?](@ref tut-freq-vs-time) — when the non-aging frequency route
 #   is enough
-# * [Ageing creep of solidifying cementitious materials](@ref app-ageing-creep) —
-#   an ageing model where the *phase fractions* also evolve
+# * [Aging creep of solidifying cementitious materials](@ref app-aging-creep) —
+#   an aging model where the *phase fractions* also evolve
 # * [The viscoelasticity manual](@ref man-viscoelasticity) — every ALV entry point
 
 const figdir = joinpath(@__DIR__, "figures")                          #jl
 isdir(figdir) || mkdir(figdir)                                        #jl
-savefig(p_all, joinpath(figdir, "87_ageing_ages_aspect.png"))          #jl
-savefig(p_ratio, joinpath(figdir, "87_ageing_shape_ratio.png"))        #jl
+savefig(p_all, joinpath(figdir, "87_aging_ages_aspect.png"))          #jl
+savefig(p_ratio, joinpath(figdir, "87_aging_shape_ratio.png"))        #jl
 display(p_all)                                                         #jl
-@printf "\nSaved : %s\n" joinpath(figdir, "87_ageing_*.png")           #jl
+@printf "\nSaved : %s\n" joinpath(figdir, "87_aging_*.png")           #jl

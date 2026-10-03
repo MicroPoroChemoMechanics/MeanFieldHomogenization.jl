@@ -3,7 +3,7 @@
 #  laminate, in the Kelvin-Mandel representation.
 #
 #  Everything here is pure linear algebra on `SMatrix`, with no dependency on
-#  `Schemes` or `Laminates`: the laminate kernel, its ageing-viscoelastic
+#  `Schemes` or `Laminates`: the laminate kernel, its aging-viscoelastic
 #  twin and user code all reach it from `Core`.
 #
 #  ── The partition ─────────────────────────────────────────────────────────
@@ -355,7 +355,7 @@ Arguments:
 
 `opinv` / `opinv_avg` are the out-of-plane inversion used for a layer
 stiffness and for the average ``\\langle\\mathbb{P}\\rangle`` respectively. They are function arguments
-so that the ageing-viscoelastic laminate reuses this very kernel with the
+so that the aging-viscoelastic laminate reuses this very kernel with the
 Volterra block inversion substituted; Julia specializes on the function type,
 so there is no abstraction cost and only one place where the physics lives.
 """

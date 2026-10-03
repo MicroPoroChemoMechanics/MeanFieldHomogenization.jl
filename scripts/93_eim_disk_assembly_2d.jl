@@ -198,4 +198,7 @@ display(p_full)                                                      #jl
 # zero is implemented. A particle assembly can also take part in a
 # multiscale chain, as the inner or the outer cell, which the tutorial
 # [Chaining scales through an N-body scheme](@ref tut-multiscale-assemblies)
-# shows.
+# shows. The next application,
+# [A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate),
+# returns to a single inclusion, whose core is no longer centered in its shell
+# and whose concentration tensors are computed by finite elements.

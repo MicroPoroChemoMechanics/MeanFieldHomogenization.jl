@@ -1,12 +1,12 @@
 # =============================================================================
-#  53_ageing_creep_solid.jl
+#  53_aging_creep_solid.jl
 #
-#  Reproduction of the solidifying ageing-creep benchmark
+#  Reproduction of the solidifying aging-creep benchmark
 #  (both the **whole-pores** and the **layers** topologies) and the
-#  manual chapter `ch09_applications.typ` § "Ageing creep of solidifying
+#  manual chapter `ch09_applications.typ` § "Aging creep of solidifying
 #  cementitious materials".
 #
-#  Setup : an ageing composite with three phase types
+#  Setup : an aging composite with three phase types
 #    * a viscoelastic Maxwell matrix (M),
 #    * N solidifying spherical inclusions (each Maxwell, each with its
 #      own setting time `t_i^set`),
@@ -26,8 +26,8 @@
 #  active when its setting time is reached during the experiment) and
 #  the **frozen** approach (microstructure is fixed at t_0).
 #
-#  Usage : julia --project scripts/53_ageing_creep_solid.jl
-#  Output : scripts/figures/53_ageing_creep_solid_<model>.png
+#  Usage : julia --project scripts/53_aging_creep_solid.jl
+#  Output : scripts/figures/53_aging_creep_solid_<model>.png
 # =============================================================================
 
 import Pkg
@@ -224,7 +224,7 @@ const t_max = 10 / 3
 const npts_per_curve = 41
 
 println(
-    "Ageing creep — solidifying composite (N = $N layers, α = $α_solid, " *
+    "Aging creep — solidifying composite (N = $N layers, α = $α_solid, " *
         "topology = :$MODEL)"
 )
 println("─"^70)
@@ -232,7 +232,7 @@ println("─"^70)
 # Plot.
 p = plot(;
     xlabel = "t", ylabel = "E₀ · J^E_{eff}(t, t₀)",
-    title = "Ageing creep — Maxwell matrix + Maxwell solidifying inclusions" *
+    title = "Aging creep — Maxwell matrix + Maxwell solidifying inclusions" *
         " ($(MODEL))",
     legend = :topleft, grid = true,
     xlims = (0, t_max), ylims = (0, 15)
@@ -351,7 +351,7 @@ end
 
 const figdir = joinpath(@__DIR__, "figures")
 isdir(figdir) || mkdir(figdir)
-figpath = joinpath(figdir, "53_ageing_creep_solid_$(MODEL).png")
+figpath = joinpath(figdir, "53_aging_creep_solid_$(MODEL).png")
 savefig(p, figpath)
 display(p)
 @printf "\nSaved : %s\n" figpath

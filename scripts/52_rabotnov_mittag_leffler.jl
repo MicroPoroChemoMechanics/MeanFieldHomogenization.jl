@@ -4,7 +4,7 @@
 #  Closed-form validation of the ALV homogenization pipeline against the
 #  Rabotnov / Mittag-Leffler benchmark of @barthelemyIJES2019 §5.
 #
-#  The matrix is a non-ageing fractional Maxwell with shear relaxation
+#  The matrix is a non-aging fractional Maxwell with shear relaxation
 #
 #      μ_M(t,t') = μ_0 · [ 1 + λ_0 · I_Rabotnov(t-t', α_0, β_0) ] · 𝕂
 #                + 3·k_0 · 𝕁

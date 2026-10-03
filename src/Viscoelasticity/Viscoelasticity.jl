@@ -1,7 +1,9 @@
 """
     MeanFieldHomogenization.Viscoelasticity
 
-Ageing linear viscoelastic (ALV) homogenization.  Provides:
+Aging linear Volterra (ALV) homogenization: aging linear viscoelasticity at
+order 4, and its hereditary conduction and diffusion counterpart at order 2.
+Provides:
 
   * [`ViscoLaw`](@ref) — relaxation ``R(t,t')`` or creep ``J(t,t')`` kernel,
     scalar- or 4-tensor-valued, with built-in Maxwell / Kelvin
@@ -20,8 +22,10 @@ Ageing linear viscoelastic (ALV) homogenization.  Provides:
     ellipsoidal inclusion, isotropic-matrix branch using the
     time-space decoupling formula
     [barthelemyIJSS2016; appendix on the ALV Hill kernel](@cite).
-  * Time-domain viscoelastic homogenization schemes (Voigt, Reuss,
-    Dilute, DiluteDual, Mori-Tanaka, Maxwell, Self-Consistent),
+  * Time-domain homogenization schemes (Voigt, Reuss, Dilute, DiluteDual,
+    Mori-Tanaka, Maxwell, Ponte Castañeda-Willis, self-consistent,
+    asymmetric self-consistent at order 4, differential), ellipsoids, cracks
+    and layered spheres alike,
     plugged into the existing [`homogenize`](@ref MeanFieldHomogenization.Core.homogenize)
     dispatcher whenever a phase carries a `ViscoLaw` property.
 
@@ -50,8 +54,8 @@ using ..Cracks: EllipticCrack, RibbonCrack, PennyCrack,
 import ..LayeredSpheres
 using ..LayeredSpheres: LayeredSphere, layer_radius, layer_modulus,
     layer_interface, AbstractInterface, PerfectInterface,
-    SpringInterface, MembraneInterface,
-    layer_count, layer_volume_fraction, outer_radius
+    SpringInterface, MembraneInterface, KapitzaInterface, SurfaceConductiveInterface,
+    interfaces_eltype, layer_count, layer_volume_fraction, outer_radius
 import ..Schemes
 import ..Laminates
 using ..Schemes: RVE, HomogenizationScheme, Laminated, Voigt, Reuss, Dilute, DiluteDual,
@@ -69,7 +73,7 @@ using ForwardDiff
 using OrdinaryDiffEq
 using SpecialFunctions: gamma, expintx
 
-# ── The Laplace-Carson half (non-ageing) ────────────────────────────────────
+# ── The Laplace-Carson half (non-aging) ────────────────────────────────────
 # `laplace_inversion.jl` depends on nothing from this package, so it goes
 # first; the rheology catalog then needs it for its fallbacks, and
 # `rheology_iso.jl` needs `ViscoLaw` from `visco_law.jl` for the bridge.
@@ -79,7 +83,7 @@ include("rheology_interface.jl")
 include("prony.jl")
 include("rheology_models.jl")
 
-# ── The ageing half (time domain) ───────────────────────────────────────────
+# ── The aging half (time domain) ───────────────────────────────────────────
 include("visco_law.jl")
 include("rheology_iso.jl")
 include("trapezoidal.jl")
@@ -98,6 +102,7 @@ include("layered_alv.jl")
 include("laminate_alv.jl")
 include("homogenize_alv.jl")
 include("order2_alv.jl")
+include("layered_alv_order2.jl")
 include("cracks_alv.jl")
 
 # ── Exports ─────────────────────────────────────────────────────────────────
@@ -127,6 +132,8 @@ export self_consistent_alv, asymmetric_self_consistent_alv,
     pcw_alv, differential_alv
 export bulk_localization_alv, bulk_state_seq_alv, shear_localization_alv
 export strain_strain_loc_alv, stiffness_contribution_alv
+export gradient_localization_alv, gradient_gradient_loc_alv, conductivity_contribution_alv
+export self_consistent_alv_order2
 export homogenize_alv, has_visco_property
 export iso_order2_params_from_blocks, iso_order2_blocks_from_params
 export hill_kernel_order2
@@ -138,7 +145,7 @@ export laminate_alv
 export cod_kernel_alv, compliance_contribution_alv, delta_compliance_alv
 export stiffness_contribution_alv, stiffness_contribution_alv_at, delta_stiffness_alv
 
-# ── Laplace-Carson (non-ageing) ─────────────────────────────────────────────
+# ── Laplace-Carson (non-aging) ─────────────────────────────────────────────
 export AbstractLaplaceInversion, GaverStehfest, FixedTalbot, TalbotTrefethen, DeHoog
 export DEFAULT_INVERSION
 export inverse_laplace, inverse_carson, inverse_carson_rate

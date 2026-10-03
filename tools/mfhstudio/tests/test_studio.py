@@ -183,6 +183,15 @@ def test_viscoelastic_laws_use_the_real_signatures():
         args={"k0": 10.0, "mu0": 5.0, "k1": 20.0, "mu1": 10.0,
               "tau_k": 1.0, "tau_mu": 2.0},
     )) == "kelvin_iso(10.0, 5.0, [20.0], [10.0], [1.0], [2.0])"
+    # The `visco` field of the projects saved before the builders: one time per
+    # law, so the call repeats it, and a Kelvin-Voigt unit without instantaneous
+    # compliance. Both used to emit a call no signature accepts.
+    assert g._prop_expr(Property(
+        visco={"kind": "maxwell_iso", "args": {"k": 10.0, "mu": 5.0, "tau": 2.0}},
+    )) == "maxwell_iso(10.0, 5.0, 2.0, 2.0)"
+    assert g._prop_expr(Property(
+        visco={"kind": "kelvin_iso", "args": {"k": 10.0, "mu": 5.0, "tau": 2.0}},
+    )) == "kelvin_iso(Inf, Inf, [10.0], [5.0], [2.0], [2.0])"
 
 
 def test_anisotropic_conductivity_forms():

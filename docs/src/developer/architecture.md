@@ -72,7 +72,7 @@ when touching it:
 | [`MeanFieldHomogenization.Assemblies`](@ref) | `ParticleAssembly`: the cell that carries positions, its generators and boundary treatments — what the two N-body schemes act on. |
 | [`MeanFieldHomogenization.Poromechanics`](@ref) | Biot coefficient tensor and skeleton modulus of a porous or cracked microstructure, for saturated and drained responses. |
 | [`MeanFieldHomogenization.Constitutive`](@ref) | The Gauss-point contract: a microstructure exposed to a finite-element code as a material law returning stress, tangent and updated state. |
-| [`MeanFieldHomogenization.Viscoelasticity`](@ref) | Ageing linear viscoelasticity via Volterra operators — every scheme, cracks and layered spheres included. |
+| [`MeanFieldHomogenization.Viscoelasticity`](@ref) | Aging linear Volterra (ALV) homogenization: viscoelasticity (order 4) and hereditary conduction (order 2) via Volterra operators — every scheme, cracks and layered spheres included. |
 | [`MeanFieldHomogenization.CustomInclusions`](@ref) | The user-defined inclusion contract: `CustomInclusion` (callback-driven) and `check_inclusion_interface`. |
 | [`MeanFieldHomogenization.FiniteElements`](@ref) | Inclusions whose response comes out of a finite-element solve of the Eshelby problem, behind a backend contract (`Ferrite` or `Gridap`). |
 | [`MeanFieldHomogenization.NeuralInclusions`](@ref) | Inclusions whose response comes out of a trained network, with the sampling and fitting machinery; differentiable in the morphology. |
@@ -96,7 +96,7 @@ sub-module is for, but what it puts in the namespace.
 | `Assemblies`       | `ParticleAssembly`, its generators and boundary treatments, the two N-body schemes                  |
 | `Schemes`          | `RVE`/`Phase`, `homogenize`, every scheme type, exact symmetrization, ForwardDiff sensitivities     |
 | `Poromechanics`    | Biot coefficient tensor and skeleton modulus of a porous or cracked cell                            |
-| `Viscoelasticity`  | ageing linear viscoelasticity (Volterra pipeline, ALV variant of every scheme)                      |
+| `Viscoelasticity`  | aging linear Volterra behavior (viscoelasticity and conduction, ALV variant of every scheme)         |
 | `CustomInclusions` | the user-defined inclusion contract: `CustomInclusion`, `check_inclusion_interface`                 |
 | `FiniteElements`   | inclusions solved by finite elements (`FEEllipticCrack`, `FEExcenteredSphere`, `FESupershapePore`, `FEAxiSupershapePore`, `FEAxiLayeredSpheroid`); the physics lives here, the discretization in a backend extension (`MeanFieldHomogenizationFerriteExt`, `MeanFieldHomogenizationGridapExt`) |
 | `NeuralInclusions` | inclusions answered by a trained network, with the sampling/fitting machinery; the training optimizer lives in `MeanFieldHomogenizationLuxExt` |

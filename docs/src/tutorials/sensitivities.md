@@ -117,6 +117,6 @@ macroscopic strength criterion built entirely from such derivatives.
 [From derivatives to a strength criterion](@ref tut-strength-criteria) uses these
 derivatives to build a macroscopic strength criterion of a porous solid. The
 same lenses differentiate a time-domain calculation in
-[Derivatives through the ageing-viscoelastic pipeline](@ref tut-alv-sensitivities),
+[Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities),
 and the full list of lenses and indexers is given in
 [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities).

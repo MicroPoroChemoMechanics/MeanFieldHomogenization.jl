@@ -10,12 +10,13 @@
 # An imperfect interface is a surface of zero thickness that nonetheless changes
 # the physics across it. Two models are available on a [`LayeredSpheroid`](@ref):
 # ```math
-# \text{LC (Kapitza):}\quad [\![T]\!] = \rho\,q_n,
+# \text{LC (Kapitza):}\quad [\![T]\!] = -\rho\,q_n,
 # \qquad
-# \text{HC (surface-conductive):}\quad [\![q_n]\!] = -k^{\mathrm s}\,\mathrm{div}_S(\nabla_S T),
+# \text{HC (surface-conductive):}\quad [\![q_n]\!] = k^{\mathrm s}\,\mathrm{div}_S(\nabla_S T),
 # ```
-# with ``\rho`` a genuine thermal resistance and ``k^{\mathrm s}`` a genuine surface
-# conductance. The LC interface impedes the normal flux; the HC one adds a
+# with ``q_n = \underline q\cdot\underline n`` the outward normal flux
+# (``\underline q = -k\,\nabla T``), ``\rho`` a genuine thermal resistance and
+# ``k^{\mathrm s}`` a genuine surface conductance. The LC interface impedes the normal flux; the HC one adds a
 # tangential short-circuit. Both come from [kushch2015](@citet); the confocal
 # ``N``-layer solution used to resolve them is that of
 # [barthelemyBignonnetIJES2020](@citet), and the surface-conductive model goes

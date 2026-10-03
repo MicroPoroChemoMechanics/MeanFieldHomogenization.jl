@@ -366,7 +366,7 @@ The derivation never used the tensor order: replacing
 conduction / diffusion scheme, and the compliance form becomes the
 resistivity form. Both orders are implemented.
 
-In ageing linear viscoelasticity the same ODE holds on the discrete
+In aging linear viscoelasticity the same ODE holds on the discrete
 Volterra block matrices, the products being Volterra products
 (`differential_alv` for the relaxation tensor, `differential_alv_order2`
 for conduction) — see [Viscoelasticity](@ref th-viscoelasticity). One

@@ -4,7 +4,7 @@
     The tutorial [A first homogenization](@ref tut-first-estimate), whose RVE
     and schemes are reused below with complex moduli, and the theory pages
     [The Laplace-Carson route](@ref th-laplace-carson), for the correspondence
-    principle, and [Ageing linear viscoelasticity (ALV)](@ref th-viscoelasticity),
+    principle, and [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity),
     for the time-domain calculation of the second section.
 
 Every scheme seen so far takes an elastic stiffness tensor and returns
@@ -91,10 +91,10 @@ interaction.
     [`GaverStehfest`](@ref), whose Carson variables are all **real**, so the
     Newton solver never meets a complex number in the first place.
 
-## A first taste of time-domain ageing viscoelasticity
+## A first taste of time-domain aging viscoelasticity
 
 The frequency-domain view above assumes properties that do not evolve
-with the material's age. For **ageing** viscoelasticity — a material
+with the material's age. For **aging** viscoelasticity — a material
 whose relaxation spectrum itself changes with time, as in curing cement
 paste — `MeanFieldHomogenization` provides a full time-domain (ALV) pipeline built
 on discretized Volterra operators. A [`ViscoLaw`](@ref) wraps a
@@ -127,7 +127,7 @@ are covered in full in the
 
 ## …and back to the time domain
 
-The frequency route above stops at ``E^*(\omega)``. For a **non-ageing**
+The frequency route above stops at ``E^*(\omega)``. For a **non-aging**
 material the answer can be brought back into the time domain without the
 Volterra machinery at all, by inverting the transform numerically:
 
@@ -153,6 +153,6 @@ and describes the phases by rheological models, the
 [exact Kelvin ⇄ Maxwell conversion](@ref tut-kelvin-maxwell), and
 [how to choose an inversion algorithm](@ref tut-laplace-inversion). The
 [three-route comparison](@ref tut-freq-vs-time) then checks this route, the
-frequency one and the ageing one against each other on the same composite. The
-calls of the ageing route, its output and its handling of cracks are described
+frequency one and the aging one against each other on the same composite. The
+calls of the aging route, its output and its handling of cracks are described
 in the [Viscoelasticity manual](@ref man-viscoelasticity).

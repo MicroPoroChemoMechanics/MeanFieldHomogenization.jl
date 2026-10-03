@@ -731,7 +731,7 @@ end
 #  This is the general bridge from "some Laplace-Carson transform" to "a model
 #  the whole library understands".  Fit once, and the result has a closed-form
 #  time function, an exact conversion to the dual chain, a `ViscoLaw` for the
-#  ageing pipeline, and derivatives — none of which an opaque `p -> F(p)` has.
+#  aging pipeline, and derivatives — none of which an opaque `p -> F(p)` has.
 #  It is the Schapery collocation method, and the ECHOES counterpart is
 #  `collocationR` / `collocationF` in `tests/python/creep/modele2S2P1D.py`.
 

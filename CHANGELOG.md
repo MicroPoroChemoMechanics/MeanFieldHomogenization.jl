@@ -1,9 +1,240 @@
 # Changelog
 
-## Unreleased
+## v0.15.0 — the interfaces of the layered sphere, checked to the aging Volterra setting
+
+### Breaking changes
+
+- Below 1.0, a minor release is breaking for the resolver: packages with
+  `MeanFieldHomogenization = "0.14"` must widen their bound to accept 0.15.
+- `kelvin_iso(k₀, μ₀, …)` now builds the compliance its docstring states,
+  `1/(3k₀)` and `1/(2μ₀)`; it built `1/k₀` and `1/μ₀`. Results computed with
+  it change (see Fixed).
+- The order-2 ALV `Maxwell` scheme takes the distribution shape the RVE
+  declares, and raises when it declares none, as at order 4 and in
+  elasticity; it used a sphere whatever the RVE said.
+- Several ALV results change because they were wrong (see Fixed): layered
+  spheres with springs between viscoelastic media, creep laws in layered
+  spheres, the Voigt and Reuss bounds of layered spheres, penny cracks in an
+  aging matrix, and the order-2 Mori–Tanaka estimate.
+
+
+The concentration tensors of a `LayeredSphere` with imperfect interfaces were
+wrong, and every scheme consumes them. The opening of a spring interface did not
+strain the composite sphere, so any estimate on spring-bonded grains was off (a
+Mori–Tanaka bulk modulus of 2.30 instead of 1.66 on a two-spring example), and a
+Kapitza interface lowered the resistance it was meant to add. In the aging
+viscoelastic recurrence, a spring between two viscoelastic media composed their
+moduli in the wrong order. Results computed with `SpringInterface` or
+`KapitzaInterface` on a `LayeredSphere` should be recomputed. All now agree with
+Echoes to at least ten digits and with closed forms of the literature, which
+the three new strength applications derive symbolically from the library.
+
+Checking the aging viscoelastic side against Echoes on an aging law and a
+non-uniform time grid, where Volterra matrices stop commuting, found four more
+products composed in the wrong order and three paths giving silently wrong
+results; all are fixed. The layered sphere now has its conduction counterpart
+in that setting, and the self-consistent schemes take it.
+
+### Fixed
+
+- **The opening of a spring interface did not strain the composite sphere.**
+  The concentration tensor of a `LayeredSphere`, which every scheme consumes,
+  averaged the strain over the material of the layers and so left out the
+  displacement jump across its `SpringInterface`s. The stress side was right,
+  the traction being continuous, so only the strain-average rule broke, and
+  with it every estimate: a two-layer sphere with two springs gave a
+  Mori–Tanaka bulk modulus of 2.30 where the right value is 1.66. The jumps now
+  count, those of the inner interfaces always and that of the outer one by
+  default, which is the convention of Echoes, of `LayeredSpheroid` and of the
+  laminates. The tensors reproduce Echoes to ten digits (inner and outer
+  springs, Mori–Tanaka, self-consistent) and the self-consistent closed forms
+  of Dormieux et al. (2010) for bonded grains. The ALV kernels
+  (`strain_strain_loc_alv`, `stiffness_contribution_alv`) had the same gap and
+  are fixed the same way. The averages of `averages.jl`
+  (`sphere_strain_average`, …) are unchanged: they average over the material,
+  and their docstrings now say that the opening is not part of it.
+- **A Kapitza interface on a `LayeredSphere` was a negative resistance.** Its
+  jump matrix carried `+ρ` on a state whose flux is the physical
+  `q = −k ∇T`, so the temperature rose in the direction of the flux: a grain
+  conducted better with the resistance than without, and diverged at
+  `ρ = r/k`. It now drops, `[T] = −ρ q_n`, and the concentration tensors match
+  Echoes, the Hasselman–Johnson equivalent grain and the spherical limit of the
+  confocal spheroid, which had the right sign all along. The jump is, as
+  everywhere, the outer value minus the inner one, and the minus sign is that
+  of the dictionary `σ ≡ −q`: the Kapitza law is the analog of the spring law,
+  `[T] = ρ σ_n = −ρ q_n`. The pages wrote `[T] = ρ q_n`, mixing the physical
+  flux with the law written for its analog; they now say where the sign comes
+  from. The surface-conductive law had its sign flipped the same way in two
+  tutorials and on the spheroid page, while the code was right.
+- **An incompressible layer (`k = ∞`) failed** with "matrix contains Infs or
+  NaNs" as soon as the sphere had an imperfect interface or a second layer,
+  although the theory page promised the limit. Modes 2 and 4 of the deviatoric
+  recurrence are now scaled by `μ/(k + μ)`, which makes every entry affine in
+  that ratio and exact at `k = ∞`; the mean pressure of such a layer is read
+  from the traction instead of `∞·0`. The pointwise stress of an incompressible
+  region, which the strain does not determine, now raises an `ArgumentError`
+  instead of returning `NaN`.
+- **A spring interface between two viscoelastic media composed their moduli
+  in the wrong order** in the aging linear viscoelastic (ALV) recurrence of
+  `LayeredSphere`. One of the four terms of the bulk transition across a
+  `SpringInterface` multiplied the Volterra matrices of the inner and outer bulk
+  moduli in reverse order, which is harmless only when they commute: on a
+  uniform time grid with non-aging laws, or when one side is elastic. On a
+  non-uniform grid, a logarithmic one included, or with an aging layer, the
+  bulk concentration tensors and the effective relaxation were wrong, by 0.2 to
+  0.4 % in the cases checked. The defect dates from v0.1.0. With springs or
+  membranes, an aging core and a non-uniform grid, the ALV concentration
+  tensors of the layers and of the whole sphere, with or without the outer
+  interface, and the dilute and Mori–Tanaka estimates now match Echoes to
+  machine precision.
+- **A creep law in a `LayeredSphere` was read as a relaxation.** The ALV
+  recurrences of the layered sphere discretized the laws of its layers and of
+  the matrix without looking at their mode, so a law given in `:creep` mode, a
+  compliance, entered as a stiffness: 5 to 63 % off on a one-layer sphere that
+  the ellipsoid path, which inverts it, got right. Both paths now agree
+  whichever mode each law is given in.
+- **The ALV Voigt and Reuss bounds gave a `LayeredSphere` the stiffness of a
+  dilute estimate** (`C₀ + N`), 34 % and 15 % off Echoes on an aged
+  two-layer sphere. They now take the Voigt and Reuss averages of its layers,
+  as the elastic bounds do, and match Echoes to machine precision.
+- **`kelvin_iso(k₀, μ₀, …)` built a compliance three times too large on the
+  spherical part and twice too large on the deviatoric one**: `1/k₀` and
+  `1/μ₀` where its docstring, its argument names and `maxwell_iso` all mean
+  `1/(3k₀)` and `1/(2μ₀)`, and the same for every Kelvin branch. Its test had
+  pinned the wrong values. It now returns the inverse of
+  `iso_stiffness(k₀, μ₀)` at `t = t′`. Results computed with `kelvin_iso`,
+  MFH Studio's "Kelvin chain" included, change accordingly. The manual's
+  example passed numbers where the branches are vectors.
+- **The COD tensor of a penny crack in an aging matrix composed its Volterra
+  factors in the wrong order**, so the ALV crack contributions were off by up
+  to 1.6 % on an aging matrix (exact in the elastic limit and for a non-aging
+  matrix on a uniform grid). The factors now come in the order of the flat
+  limit of a void spheroid, whose Hill kernel holds no product; the crack
+  estimates match that limit and Echoes to machine precision.
+- **The order-2 (conduction, diffusion) ALV Mori–Tanaka estimate put the
+  inverse of `f₀ 1 + Σ f A` on the left of `Σ f N`**, against its own
+  docstring and the order-4 scheme: 0.5 % off Echoes with an aging inclusion.
+  It is now on the right; Mori–Tanaka equals Maxwell for one family of
+  spheres, as it must, and every order-2 scheme matches Echoes to machine
+  precision, or to the tolerance of its fixed point. The differential scheme
+  agrees with Echoes' explicit stepping, which converges to it as one over the
+  number of steps. The asymmetric self-consistent scheme, which has no order-2
+  implementation, is refused by name.
+- An incompressible layer (`k = ∞`), or an infinite conductivity, in the ALV
+  path now raises an `ArgumentError` naming the layer, instead of failing
+  inside a factorization: it has no Volterra matrix, and the elastic functions
+  treat it exactly. The docstring of `homogenize_alv` and the manual said the
+  self-consistent scheme accepted a `LayeredSphere`, which failed with a
+  `MethodError`; it now does accept one (see Added).
+- MFH Studio generated `maxwell_iso(k, μ, τ)` and `kelvin_iso(k, μ, τ)`, which
+  no signature accepts, for a property saved with the older `visco` field.
+- **A layered sphere with an imperfect interface failed on SymPy moduli.**
+  `Matrix{T}(I, 4, 4)` holds the logical `True` and `False` when `T` is `Sym`,
+  and they refuse to multiply. Once past that, the pivoted solve of the
+  deviatoric recurrence swelled for more than ten minutes on a single grain.
+  The mode matrix is now inverted in closed form (its determinant,
+  `350 μ² (s + 3)² / r⁴`, never vanishes): the symbolic concentration tensors of
+  a spring-bonded grain take about a second, and the numeric recurrence no
+  longer pivots.
+- **A self-consistent iteration seeded with an infinite Voigt average** (a rigid
+  or incompressible phase) now says so and how to seed it, instead of failing
+  inside a linear solve.
+- **echoes2mfh** translated a transport `PRIMALDISC` interface into a
+  `SpringInterface`, and a transport `DUALDISC` into a `MembraneInterface`: they
+  become `KapitzaInterface(1 / h)` (Echoes gives a conductance) and
+  `SurfaceConductiveInterface`. A layer modulus containing a comma, such as
+  `5.0 * one(TensISO{2, 3})`, was split into two fragments and lost its tuple.
+- **MFH Studio** labeled the Kapitza field `h`, the symbol of a conductance,
+  for the resistance `KapitzaInterface` takes.
+
+### Added
+
+- `external` on the whole-sphere concentration and contribution tensors of
+  `LayeredSphere` (`strain_strain_loc`, `stress_strain_loc`,
+  `stiffness_contribution`, `gradient_gradient_loc`, `flux_gradient_loc`,
+  `conductivity_contribution`, and the ALV kernels): `false` leaves the outer
+  interface to the matrix, both its opening and the surface stress of a
+  membrane, as Echoes' `sphere_eE(n - 1, external = False)` does.
+- `external` and `internal` on the per-layer forms
+  `strain_strain_loc(sphere, C₀; layer)` and
+  `gradient_gradient_loc(sphere, K₀; layer)`, with Echoes' meaning
+  (`layer_eE`); the default stays the average over the material. With
+  `external = true` on every layer the shells partition the sphere.
+
+- **Aging linear Volterra conduction of a `LayeredSphere`**, with Kapitza and
+  surface-conductive interfaces: `gradient_localization_alv`,
+  `gradient_gradient_loc_alv` and `conductivity_contribution_alv`, the order-2
+  twins of `bulk_localization_alv`, `strain_strain_loc_alv` and
+  `stiffness_contribution_alv`, and a layered sphere in every order-2 scheme of
+  `homogenize_alv`. A jump is the outer value minus the inner one, and the
+  Kapitza law `[T] = ρ σ_n = −ρ q_n` takes its sign from the dictionary
+  `σ ≡ −q`. Echoes' n-layer sphere reference being mechanical, the recurrence
+  is checked against exact identities on an aging core: the elastic limit, the
+  interface conditions solved as one system, and the equivalent sphere of a
+  Kapitza or surface-conductive interface.
+- **The order-2 self-consistent and Ponte Castañeda–Willis schemes**
+  (`self_consistent_alv_order2`, through `homogenize_alv(rve,
+  SelfConsistent(), :K; times)`), matching Echoes.
+- **The self-consistent and asymmetric self-consistent ALV schemes take a
+  `LayeredSphere`** at order 4, its concentration and stress coming from the
+  recurrences against the running estimate; they match Echoes.
+
+### Changed
+
+- ALV now stands for **aging linear Volterra**, the setting of a linear,
+  hereditary, possibly aging behavior written with Volterra operators:
+  viscoelasticity at order 4 and conduction or diffusion at order 2. The API
+  keeps its names; the theory page is *Aging linear Volterra behavior*.
+- US spelling throughout: *aging*, in the prose, the docstrings, the scripts
+  and the file names. The application page is now `applications/aging_creep`,
+  the tutorial `tutorials/generated/aging_ages_aspect`, the scripts
+  `53_aging_creep_solid.jl` to `57_aging_creep_cracks.jl` and
+  `87_aging_ages_aspect.jl`, and the MFH Studio example `09_aging_creep.jl`;
+  links to the former documentation URLs no longer resolve. The titles of the
+  cited works keep their spelling, and so do the earlier sections of this file.
+- `stiffness_contribution(sphere::LayeredSphere, C₀)` returns the
+  three-argument tensor `stiffness_contribution(sphere, C₀, C₀)`, which it
+  duplicated; the two may differ in the last digit from before.
 
 ### Documentation
 
+- Three applications reproduce published strength models, each with its
+  paper cited at the top and its published values checked on the page:
+  - **The elastic limit of concrete**, after Königsberger, Pichler and
+    Hellmich (2014): ITZ failure and ITZ–aggregate separation around the
+    aggregates. The stress in the ITZ comes from the Hadamard jump conditions
+    written as one tensor equation, with the flat Hill tensors of the laminate
+    cell, rather than component by component; it is also the thin-shell limit
+    of the coated `LayeredSphere`. Every value of the article is recovered,
+    and the elastic limit surface is drawn in principal stress space.
+  - **Friction of a granular medium**, after Maalej, Dormieux and Sanahuja
+    (2009): rigid grains bonded by springs, the self-consistent moduli derived
+    symbolically (their eqs. 39 and 42 come out of the library), and the
+    Drucker–Prager slope by automatic differentiation through the
+    self-consistent solve.
+  - **The strength of a sandstone**, after Dormieux et al. (2010): von Mises
+    grains and Mohr–Coulomb contacts, with eqs. (49) to (54) derived
+    symbolically, and the strength envelopes of the modified secant method.
+- The Applications chapter is organized by subject: general concepts first
+  (interacting particles, morphologies computed by finite elements), then the
+  cementitious materials, the geomaterials and the bituminous mixtures, each
+  page coming after those it builds on, with the transitions rewritten to
+  match.
+- The data these pages take from articles live in `data/literature/*.json`,
+  with their source, location and transcription, instead of in the pages.
+- The title of `konigsberger2013` in the bibliography had the wrong subtitle.
+- The docstrings of the ALV interface transfers said that an interface
+  parameter could be a `ViscoLaw`. The interface types hold numbers, so an
+  interface is constant in time; the docstrings say so, and the method that
+  would have read an aging parameter, which nothing could reach, is removed.
+- The `SelfConsistent` docstring states the floor its positivity guard sets:
+  every component of the iterate is kept above `√eps` times the largest
+  component of the seed, so a solution far below the seed is out of reach and
+  wrong without notice; seed near the expected moduli in that case.
+- A pull request no longer builds the whole site in one job: a draft build of
+  the full tree checks the references, and the pages are built in parallel
+  shards (`docs/shards.jl`); the full build, with a longer time limit, runs on
+  `main` and deploys.
 - The README and the module docstring described `LayeredSpheroids` as
   conduction only, which it has not been since v0.11.0: they now name the
   elastic confocal spheroid, prolate or oblate, with perfect interfaces.

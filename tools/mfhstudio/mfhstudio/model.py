@@ -537,7 +537,7 @@ class Sens:
 
 @dataclass
 class Alv:
-    """Ageing linear viscoelasticity settings."""
+    """Aging linear viscoelasticity settings."""
 
     enabled: bool = False
     t_start: float = 0.0
@@ -723,11 +723,11 @@ class Model:
             problems.extend(self._sens_problems())
 
         # Documented MFH constraint: an inner Homogenized cannot sit inside an
-        # ageing-viscoelastic chain, because the inner result would have to be
+        # aging-viscoelastic chain, because the inner result would have to be
         # re-expressible as a ViscoLaw (src/Core/cells.jl).
         if self.alv.enabled and self.uses_multiscale():
             problems.append(
-                "ageing viscoelasticity cannot be combined with a nested scale: "
+                "aging viscoelasticity cannot be combined with a nested scale: "
                 "MeanFieldHomogenization cannot re-express a homogenized inner result as a "
                 "ViscoLaw"
             )
@@ -847,7 +847,7 @@ class Model:
                 and not c.is_canonical_frame()
             ):
                 problems.append(
-                    "ageing viscoelasticity of a laminate in transport (`:K`) "
+                    "aging viscoelasticity of a laminate in transport (`:K`) "
                     "requires the canonical frame: MeanFieldHomogenization "
                     "builds that kernel with the normal along e₃."
                 )

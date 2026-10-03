@@ -17,12 +17,12 @@ which treats the **low-conducting** (Kapitza) interface. Here the interface is
 **highly conducting** — a surface layer of zero thickness and finite surface
 conductance ``k^{\mathrm s}``:
 ```math
-\text{LC:}\quad [\![T]\!] = \rho\,q_n
+\text{LC:}\quad [\![T]\!] = -\rho\,q_n
 \qquad\text{vs.}\qquad
-\text{HC:}\quad [\![q_n]\!] = -k^{\mathrm s}\,\mathrm{div}_S(\nabla_S T).
+\text{HC:}\quad [\![q_n]\!] = k^{\mathrm s}\,\mathrm{div}_S(\nabla_S T).
 ```
-The two are duals: LC impedes the normal flux, HC adds a tangential
-short-circuit. Both are the imperfect-interface models of
+with ``q_n`` the outward normal flux. The two are duals: LC impedes the normal
+flux, HC adds a tangential short-circuit. Both are the imperfect-interface models of
 [kushch2015](@citet); the confocal ``N``-layer solution used here is that of
 [barthelemyBignonnetIJES2020](@citet), and the surface-conductive model goes
 back to [miloh1999](@citet).

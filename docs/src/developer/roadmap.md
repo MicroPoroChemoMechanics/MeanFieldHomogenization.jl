@@ -18,7 +18,7 @@ package already does is described in the [manual](@ref man-index) and the
   an *analytic* excentered sphere (only the finite-element route reaches that
   morphology).
 - Laminate extensions: viscoelastic *interface* laws (the interface types
-  carry `Number` fields today, so an ageing interface needs a different
+  carry `Number` fields today, so an aging interface needs a different
   carrier), and `Homogenized` inside an ALV chain (the inner result would have
   to be re-expressible as a `ViscoLaw`).
 - `PairwiseDistribution` (Willis 1982) envelope for the PCW scheme.
@@ -30,7 +30,7 @@ package already does is described in the [manual](@ref man-index) and the
   - **anisotropic tensor pairings.** Only [`IsoRheology`](@ref) exists; a
     transversely isotropic model would need six scalar channels and the
     corresponding `TensTI` assembly.
-  - **ageing models in the catalog.** `LogarithmicCreep` is the non-ageing
+  - **aging models in the catalog.** `LogarithmicCreep` is the non-aging
     skeleton of a law that is normally written with age-dependent `E`, `C` and
     `τ`; expressing that family would need a second, two-argument interface.
 - **Finite-element coupling** (see

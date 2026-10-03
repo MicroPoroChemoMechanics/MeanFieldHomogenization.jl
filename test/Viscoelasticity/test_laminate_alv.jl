@@ -1,5 +1,5 @@
 # =============================================================================
-#  test_laminate_alv.jl — the periodic multilayer in ageing viscoelasticity.
+#  test_laminate_alv.jl — the periodic multilayer in aging viscoelasticity.
 #
 #  The decisive oracle is the ELASTIC LIMIT: feeding each layer a Heaviside
 #  law built on its elastic stiffness must reproduce, in every diagonal time
@@ -10,7 +10,7 @@
 #  validated in closed form against Backus (1962).
 #
 #  Further coverage: N = 1 degeneracy, Voigt/Reuss ALV bracketing, genuine
-#  ageing behavior (a creeping layer), conduction at order 2, and the
+#  aging behavior (a creeping layer), conduction at order 2, and the
 #  interaction with `has_visco_property`.
 # =============================================================================
 
@@ -92,7 +92,7 @@ end
     @test M ≈ M1 atol = ATOL_LALV
 end
 
-@testset "ALV laminate — genuine ageing, bounded by Voigt / Reuss" begin
+@testset "ALV laminate — genuine aging, bounded by Voigt / Reuss" begin
     times = collect(range(0.0, 10.0; length = 6))
     lam = Laminate(; normal = (0, 0, 1))
     add_layer!(
