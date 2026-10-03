@@ -16,11 +16,11 @@
 """
     layer_strain_average(sphere, C₀, ε∞, layer) -> Tens{2,3}
 
-Volume-averaged strain tensor `<ε>_layer` inside the `layer`-th layer
+Volume-averaged strain tensor ``\\langle\\boldsymbol{\\varepsilon}\\rangle_k`` inside the `layer`-th layer
 of a `LayeredSphere` embedded in an isotropic matrix `C₀`, under a
 remote strain `ε∞`.  Returns a symmetric 2-tensor in the canonical
-frame.  Combines the bulk localization `α_k` (hydrostatic part) and
-the shear localization `β_k` (deviatoric part).
+frame.  Combines the bulk localization ``\\alpha_k`` (hydrostatic part) and
+the shear localization ``\\beta_k`` (deviatoric part).
 """
 function layer_strain_average(
         sphere::LayeredSphere{T, N},
@@ -45,8 +45,8 @@ end
     sphere_strain_average(sphere, C₀, ε∞) -> Tens{2,3}
 
 Volume-averaged strain over the whole composite sphere (all layers
-combined): `<ε>_Ω = Σ_k f_k <ε>_k` where `f_k` is the volume fraction
-of layer `k` inside the composite sphere.
+combined): ``\\langle\\boldsymbol{\\varepsilon}\\rangle_\\Omega = \\sum_k f_k\\,\\langle\\boldsymbol{\\varepsilon}\\rangle_k`` where ``f_k`` is the volume fraction
+of layer ``k`` inside the composite sphere.
 """
 function sphere_strain_average(
         sphere::LayeredSphere{T, N},
@@ -64,12 +64,12 @@ end
 Deviatoric localization averaged over the **truncated** shell
 `(r_{layer-1}, r_upper)` rather than over the whole layer.
 
-`α` is constant inside a layer, but `β` is not: the mode-2 amplitude carries
-an `r³` displacement profile whose contribution to the mean deviatoric strain
+``\\alpha`` is constant inside a layer, but ``\\beta`` is not: the mode-2 amplitude carries
+an ``r^3`` displacement profile whose contribution to the mean deviatoric strain
 grows with the shell's outer radius, as
 `_layer_avg_dev_shear_factor(r_a, r_b, κ, μ)` records.  Truncating therefore
 means re-evaluating that factor at `r_upper`, not rescaling the full-layer
-average.  With `r_upper = r_layer` this returns the full-layer `β` exactly.
+average.  With `r_upper = r_layer` this returns the full-layer ``\\beta`` exactly.
 """
 function _layer_dev_localization_upto(
         sphere::LayeredSphere{T, N}, amps, layer::Int, r_upper
@@ -83,7 +83,7 @@ end
 """
     cumulative_strain_average(sphere, C₀, ε∞, r) -> Tens{2,3}
 
-Volume-averaged strain over the ball of radius `r ∈ (0, r_N]` centered on the
+Volume-averaged strain over the ball of radius ``r \\in (0, r_N]`` centered on the
 composite sphere center.  The ball may cross several layers; the outermost one
 it reaches is generally **cut part way through**, and the average accounts for
 that exactly.
@@ -91,10 +91,10 @@ that exactly.
 !!! note "Why a truncated layer is not a scaled one"
     Weighting the full-layer average by the truncated volume — the obvious
     shortcut — is correct only where the field is uniform inside a layer, and
-    it is not: the mode-2 term of the deviatoric solution varies as `r²`.  The
+    it is not: the mode-2 term of the deviatoric solution varies as ``r^2``.  The
     truncated average is obtained instead by evaluating
     `_layer_avg_dev_shear_factor` at the cut radius.  The two agree at
-    `r = r_k`, which is why interface radii alone cannot expose the
+    ``r = r_k``, which is why interface radii alone cannot expose the
     difference.
 """
 function cumulative_strain_average(
@@ -152,7 +152,7 @@ end
 """
     layer_stress_average(sphere, C₀, ε∞, layer) -> Tens{2,3}
 
-Volume-averaged stress `<σ>_layer = ℂ_layer : <ε>_layer` inside the
+Volume-averaged stress ``\\langle\\boldsymbol{\\sigma}\\rangle_k = \\mathbb{C}_k:\\langle\\boldsymbol{\\varepsilon}\\rangle_k`` inside the
 `layer`-th layer, under a remote strain `ε∞`.
 
 Note this is the average of the stress **inside the layer's material**.  A
@@ -178,7 +178,7 @@ end
     sphere_stress_average(sphere, C₀, ε∞) -> Tens{2,3}
 
 Volume-averaged stress over the whole composite sphere,
-`<σ>_Ω = Σ_k f_k ℂ_k : <ε>_k`.
+``\\langle\\boldsymbol{\\sigma}\\rangle_\\Omega = \\sum_k f_k\\,\\mathbb{C}_k:\\langle\\boldsymbol{\\varepsilon}\\rangle_k``.
 """
 function sphere_stress_average(
         sphere::LayeredSphere{T, N},
@@ -191,21 +191,21 @@ function sphere_stress_average(
 end
 
 """
-    layer_gradient_average(sphere, K₀, ∇T∞, layer) -> Tens{2,3}
+    layer_gradient_average(sphere, K₀, ∇T∞, layer) -> Vec{3}
 
-Volume-averaged temperature gradient `<∇T>_layer = α_layer ∇T∞` inside the
+Volume-averaged temperature gradient ``\\langle\\nabla T\\rangle_k = \\alpha_k\\,\\nabla T^{\\infty}`` inside the
 `layer`-th layer of a `LayeredSphere` in an isotropic matrix `K₀`.
 
 Transport twin of [`layer_strain_average`](@ref).  The average is a scalar
 multiple of the remote gradient, and that scalar is **constant inside a
-layer**: with `∇T = f′ (n⊗n) + (f/r)(𝟏 − n⊗n)` and `f = Ã r + B̃/r²`, the
-directional averages `⟨n⊗n⟩ = 𝟏/3` give
+layer**: with ``\\nabla T = [f'\\,\\underline{n}\\otimes\\underline{n} + (f/r)(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n})]\\cdot\\nabla T^{\\infty}`` and ``f = \\tilde A r + \\tilde B/r^2``, the
+directional averages ``\\langle\\underline{n}\\otimes\\underline{n}\\rangle = \\boldsymbol{1}/3`` give
 
-```
-⟨∇T⟩_dir = [f′/3 + 2(f/r)/3] ∇T∞ = Ã ∇T∞,
+```math
+\\langle\\nabla T\\rangle_{\\mathrm{dir}} = \\Big[\\frac{f'}{3} + \\frac{2}{3}\\,\\frac{f}{r}\\Big]\\nabla T^{\\infty} = \\tilde A\\,\\nabla T^{\\infty},
 ```
 
-the `B̃/r³` terms of `f′` and `f/r` canceling exactly.  The decaying `1/r²`
+the ``\\tilde B/r^3`` terms of ``f'`` and ``f/r`` canceling exactly.  The decaying ``1/r^2``
 mode is *not* absent — it is generally large — it simply contributes nothing
 to the mean gradient.
 """
@@ -225,7 +225,7 @@ end
     sphere_gradient_average(sphere, K₀, ∇T∞) -> Vec{3}
 
 Volume-averaged temperature gradient over the whole composite sphere,
-`<∇T>_Ω = (Σ_k f_k α_k) ∇T∞`.
+``\\langle\\nabla T\\rangle_\\Omega = \\big(\\sum_k f_k\\,\\alpha_k\\big)\\,\\nabla T^{\\infty}``.
 """
 function sphere_gradient_average(
         sphere::LayeredSphere{T, N},
@@ -242,7 +242,7 @@ end
 """
     layer_flux_average(sphere, K₀, ∇T∞, layer) -> Vec{3}
 
-Volume-averaged flux `<q>_layer = −k_layer <∇T>_layer` inside the `layer`-th
+Volume-averaged flux ``\\langle\\underline{q}\\rangle_k = -k_k\\,\\langle\\nabla T\\rangle_k`` inside the `layer`-th
 layer, with the Fourier / Fick sign convention.
 """
 function layer_flux_average(

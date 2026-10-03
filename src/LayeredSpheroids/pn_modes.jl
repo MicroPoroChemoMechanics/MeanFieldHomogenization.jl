@@ -24,10 +24,10 @@
 """
     Jet2{T}
 
-Value, gradient and Hessian of a scalar function of `(φ, p, q)`, carried
+Value, gradient and Hessian of a scalar function of ``(\\varphi, p, q)``, carried
 together so that products differentiate themselves.
 
-`d = (∂φ, ∂p, ∂q)` and `h = (∂φφ, ∂pp, ∂qq, ∂φp, ∂φq, ∂pq)`.
+`d` = ``(\\partial_\\varphi, \\partial_p, \\partial_q)`` and `h` = ``(\\partial_{\\varphi\\varphi}, \\partial_{pp}, \\partial_{qq}, \\partial_{\\varphi p}, \\partial_{\\varphi q}, \\partial_{pq})``.
 """
 struct Jet2{T}
     v::T
@@ -74,9 +74,9 @@ end
 """
     _coord_jets(ϕ, p, q, c) -> (x, y, z)
 
-The Cartesian coordinates as jets in `(φ, p, q)`:
-`x = c p̄ q̄ cos φ`, `y = c p̄ q̄ sin φ`, `z = c p q`, with `p̄ = √(1-p²)`,
-`q̄ = √(q²-1)`. These are what multiply `φ₁, φ₂, φ₃` inside `Φ`.
+The Cartesian coordinates as jets in ``(\\varphi, p, q)``:
+``x = c\\,\\bar p\\,\\bar q\\cos\\varphi``, ``y = c\\,\\bar p\\,\\bar q\\sin\\varphi``, ``z = c\\,p\\,q``, with ``\\bar p = \\sqrt{1-p^2}``,
+``\\bar q = \\sqrt{q^2-1}``. These are what multiply ``\\varphi_1, \\varphi_2, \\varphi_3`` inside ``\\Phi``.
 """
 function _coord_jets(ϕ, p, q, c, ::Type{T}) where {T}
     z0 = zero(T)
@@ -110,31 +110,33 @@ end
 
 One harmonic mode of one Papkovich–Neuber potential.
 
-- `potential ∈ 0:3` — which of `φ₀, φ₁, φ₂, φ₃` it belongs to.
-- `regularity ∈ (:regular, :irregular)` — the `q`-dependence, in Barthélémy &
-  Bignonnet's own words (2020, §2): `Pₙᵐ(p)Pₙᵐ(q)` has a finite limit as
-  `q → 1` and is a **regular** harmonic, `Pₙᵐ(p)Qₙᵐ(q)` blows up there and is
+- `potential ∈ 0:3` — which of ``\\varphi_0, \\varphi_1, \\varphi_2, \\varphi_3`` it belongs to.
+- `regularity ∈ (:regular, :irregular)` — the ``q``-dependence, in Barthélémy &
+  Bignonnet's own words (2020, §2): ``P_n^m(p)\\,P_n^m(q)`` has a finite limit as
+  ``q \\to 1`` and is a **regular** harmonic, ``P_n^m(p)\\,Q_n^m(q)`` blows up there and is
   an **irregular** one. A core admits only regular harmonics, the matrix only
   irregular ones plus the remote field.
 - `n`, `m` — degree and order.
-- `trig ∈ (:cos, :sin)` — the azimuthal factor `cos mφ` or `sin mφ`.
+- `trig ∈ (:cos, :sin)` — the azimuthal factor ``\\cos m\\varphi`` or ``\\sin m\\varphi``.
 
 ## Amplitude naming
 
-Barthélémy & Bignonnet write the series of layer `ℓ` as
+Barthélémy & Bignonnet write the series of layer ``\\ell`` as
 
-    Σ Pₙᵐ(p) { [aᵐ_{ℓ,n} Pₙᵐ(q) + bᵐ_{ℓ,n} Qₙᵐ(q)] cos mφ
-             + [cᵐ_{ℓ,n} Pₙᵐ(q) + dᵐ_{ℓ,n} Qₙᵐ(q)] sin mφ }
+```math
+\\sum P_n^m(p)\\,\\Bigl\\{\\bigl[a^m_{\\ell,n} P_n^m(q) + b^m_{\\ell,n} Q_n^m(q)\\bigr]\\cos m\\varphi
+ + \\bigl[c^m_{\\ell,n} P_n^m(q) + d^m_{\\ell,n} Q_n^m(q)\\bigr]\\sin m\\varphi\\Bigr\\}
+```
 
-so `a, b, c, d` mean *regular-cos, irregular-cos, regular-sin, irregular-sin* —
+so ``a, b, c, d`` mean *regular-cos, irregular-cos, regular-sin, irregular-sin* —
 see [`bb_letter`](@ref). Conduction has one field; elasticity has four
 potentials, so the letters carry a potential index as well,
-`a^{i,m}_{ℓ,n} … d^{i,m}_{ℓ,n}`.
+``a^{i,m}_{\\ell,n}, \\dots, d^{i,m}_{\\ell,n}``.
 
 !!! warning "A letter encodes `(regularity, trig)`, never a potential"
     An earlier version of this module labeled case I's four families
-    `:A, :B, :C, :D` for `(φ₀, reg), (φ₀, irr), (φ₃, reg), (φ₃, irr)`. That
-    collides with the convention above, where `c` and `d` are the *sine*
+    `:A, :B, :C, :D` for ``(\\varphi_0, \\mathrm{reg})``, ``(\\varphi_0, \\mathrm{irr})``, ``(\\varphi_3, \\mathrm{reg})``, ``(\\varphi_3, \\mathrm{irr})``. That
+    collides with the convention above, where ``c`` and ``d`` are the *sine*
     families. The pair is carried explicitly here for that reason.
 """
 struct PNMode
@@ -164,9 +166,9 @@ end
 """
     _branch_kinds(m, regularity) -> (p_branch, q_branch)
 
-Legendre table symbols for the two branches at order `m`. The `p` branch is
-always of the first kind (`|p| ≤ 1`); the `q` branch is `Pₙᵐ` for a regular
-harmonic, `Qₙᵐ` for an irregular one.
+Legendre table symbols for the two branches at order `m`. The ``p`` branch is
+always of the first kind (``|p| \\le 1``); the ``q`` branch is ``P_n^m`` for a regular
+harmonic, ``Q_n^m`` for an irregular one.
 """
 @inline function _branch_kinds(m::Int, regularity::Symbol)
     reg = regularity === :regular
@@ -181,9 +183,11 @@ end
 
 Second derivative from the associated Legendre equation,
 
-    (1-x²) y'' - 2x y' + [n(n+1) - m²/(1-x²)] y = 0,
+```math
+(1-x^2)\\,y'' - 2x\\,y' + \\Bigl[n(n+1) - \\frac{m^2}{1-x^2}\\Bigr]\\,y = 0,
+```
 
-which `Pₙᵐ` and `Qₙᵐ` both satisfy on either branch. Nothing tabulates it.
+which ``P_n^m`` and ``Q_n^m`` both satisfy on either branch. Nothing tabulates it.
 """
 @inline function _assoc_second(y, dy, x, n::Int, m::Int)
     om = 1 - x^2
@@ -193,7 +197,7 @@ end
 """
     _mode_jet(mode, ϕ, p, q, ::Type{T}) -> Jet2{T}
 
-The mode's own potential as a jet: `Pₙᵐ(p) Rₙᵐ(q) T(mφ)` with all nine
+The mode's own potential as a jet: ``P_n^m(p)\\,R_n^m(q)\\,T(m\\varphi)`` with all nine
 derivatives, each a product of tabulated univariate pieces.
 """
 function _mode_jet(mode::PNMode, ϕ, p, q, ::Type{T}) where {T}
@@ -219,8 +223,8 @@ end
     _chart_grad(j, p, q, c) -> (gφ, gp, gq)
 
 Physical gradient components of a jet in the orthonormal chart frame:
-`(∇F)_φ = F_φ/(c p̄ q̄)`, `(∇F)_p = p̄ F_p/(c w)`, `(∇F)_q = q̄ F_q/(c w)`,
-with `w = √(q²-p²)`.
+``(\\nabla F)_\\varphi = F_\\varphi/(c\\,\\bar p\\,\\bar q)``, ``(\\nabla F)_p = \\bar p\\,F_p/(c\\,w)``, ``(\\nabla F)_q = \\bar q\\,F_q/(c\\,w)``,
+with ``w = \\sqrt{q^2-p^2}``.
 """
 @inline function _chart_grad(j::Jet2{T}, p, q, c) where {T}
     pb, qb, w = sqrt(one(T) - T(p)^2), sqrt(T(q)^2 - one(T)), sqrt(T(q)^2 - T(p)^2)
@@ -231,17 +235,21 @@ end
     _chart_hess(j, p, q, c) -> NTuple{6}
 
 Physical Hessian components in the chart frame, ordered
-`(φφ, pp, qq, φp, φq, pq)`. Extracted from the chart rather than quoted — the
+``(\\varphi\\varphi, pp, qq, \\varphi p, \\varphi q, pq)``. Extracted from the chart rather than quoted — the
 expression is linear in the derivatives, so each coefficient is unambiguous,
-and the six are checked in `test_pn_symbolic.jl`. With `p̄² = 1-p²`,
-`q̄² = q²-1`, `w² = q²-p²` and `S = q F_q - p F_p`:
+and the six are checked in `test_pn_symbolic.jl`. With ``\\bar p^2 = 1-p^2``,
+``\\bar q^2 = q^2-1``, ``w^2 = q^2-p^2`` and ``S = q F_q - p F_p``:
 
-    c² H_φφ = F_φφ/(p̄²q̄²) + S/w²
-    c² H_pp = p̄² F_pp/w²   + q̄² S/w⁴
-    c² H_qq = q̄² F_qq/w²   + p̄² S/w⁴
-    c² H_φp = [F_φp + p F_φ/p̄²] / (w q̄)
-    c² H_φq = [F_φq - q F_φ/q̄²] / (p̄ w)
-    c² H_pq = p̄ q̄ [F_pq/w² + (p F_q - q F_p)/w⁴]
+```math
+\\begin{aligned}
+c^2 H_{\\varphi\\varphi} &= F_{\\varphi\\varphi}/(\\bar p^2\\bar q^2) + S/w^2,\\\\
+c^2 H_{pp} &= \\bar p^2 F_{pp}/w^2 + \\bar q^2 S/w^4,\\\\
+c^2 H_{qq} &= \\bar q^2 F_{qq}/w^2 + \\bar p^2 S/w^4,\\\\
+c^2 H_{\\varphi p} &= \\bigl[F_{\\varphi p} + p F_\\varphi/\\bar p^2\\bigr]/(w\\,\\bar q),\\\\
+c^2 H_{\\varphi q} &= \\bigl[F_{\\varphi q} - q F_\\varphi/\\bar q^2\\bigr]/(\\bar p\\,w),\\\\
+c^2 H_{pq} &= \\bar p\\,\\bar q\\,\\bigl[F_{pq}/w^2 + (p F_q - q F_p)/w^4\\bigr].
+\\end{aligned}
+```
 
 Their trace is the spheroidal Laplacian, which is how they were first checked.
 """
@@ -265,8 +273,8 @@ end
 """
     _cartesian_in_chart(ϕ, p, q, ::Type{T}) -> NTuple{3,NTuple{3,T}}
 
-`ê_i · e_a` for `i = 1,2,3` (Cartesian) and `a = φ, p, q` (chart) — the chart's
-own normalized basis, read column-wise. Needed because `φ⃗` is a vector of
+``\\underline{e}_i\\cdot\\underline{e}_a`` for ``i = 1, 2, 3`` (Cartesian) and ``a = \\varphi, p, q`` (chart) — the chart's
+own normalized basis, read column-wise. Needed because ``\\underline{\\varphi}`` is a vector of
 CARTESIAN components while everything else lives in the chart frame.
 """
 @inline function _cartesian_in_chart(ϕ, p, q, ::Type{T}) where {T}
@@ -283,7 +291,7 @@ end
     mode_fields(mode, ϕ, p, q, c, μ, ν, ::Type{T}) -> (u, t)
 
 Displacement and traction of one unit-amplitude mode, in the chart frame:
-`u = (u_φ, u_p, u_q)` and `t = σ·e_q = (σ_φq, σ_pq, σ_qq)`.
+``\\underline{u} = (u_\\varphi, u_p, u_q)`` and ``\\underline{t} = \\boldsymbol{\\sigma}\\cdot\\underline{e}_q = (\\sigma_{\\varphi q}, \\sigma_{pq}, \\sigma_{qq})``.
 
 This is the single evaluator all three elementary problems go through. What
 distinguishes them is which modes are in the list, not how a mode is turned

@@ -58,29 +58,32 @@ end
     cod_kernel_alv(crack::EllipticCrack, C_M_law::ViscoLaw, times;
                    Rn = nothing, Rt = nothing) -> NamedTuple
 
-Discrete ALV COD-tensor data for a penny crack `η = 1` in an isotropic
+Discrete ALV COD-tensor data for a penny crack ``\\eta = 1`` in an isotropic
 ALV matrix.  Returns the named tuple `(B_n = …, B_t = …)` of two
-`n × n` scalar Volterra matrices (n = `length(times)`).  Each
-`B̃[i,j]` approximates the COD coefficient at the time pair
-`(t_i, t_j)`.
+``n\\times n`` scalar Volterra matrices (``n`` = `length(times)`).  Each
+``[\\widetilde{B}]_{ij}`` approximates the COD coefficient at the time pair
+``(t_i, t_j)``.
 
 # Interface stiffness (Sevostianov-style spring-like interface)
 
-When the crack carries finite **interface stiffness** kernels `Rn(t,t')`
-(normal) and `Rt(t,t')` (tangential), pass them as scalar `ViscoLaw`s
+When the crack carries finite **interface stiffness** kernels ``k_n(t,t')``
+(normal) and ``k_t(t,t')`` (tangential), pass them as scalar `ViscoLaw`s
 through the `Rn` / `Rt` keyword arguments.  The traction-free COD
-matrices `B̃_n`, `B̃_t` are then post-corrected via the algebraic identity
+matrices ``\\widetilde{B}_n``, ``\\widetilde{B}_t`` are then post-corrected via the algebraic identity
 
-```
-B̃_eff = (b · K + B̃^{-1})^{-vol} = B̃ ∘ (𝟙 + b · K ∘ B̃)^{-vol}
+```math
+\\widetilde{B}^{\\mathrm{int}}_{\\alpha}
+= \\bigl(b\\,\\widetilde{k}_{\\alpha} + \\widetilde{B}_{\\alpha}^{-\\circ}\\bigr)^{-\\circ}
+= \\widetilde{B}_{\\alpha}\\circ\\bigl(H + b\\,\\widetilde{k}_{\\alpha}\\circ\\widetilde{B}_{\\alpha}\\bigr)^{-\\circ},
+\\qquad \\alpha \\in \\{n, t\\},
 ```
 
-[sevostianovIJSS2007, barthelemyIJES2019](@cite), where `b = semi_minor`
-of the elliptic crack.  Limits :
+[sevostianovIJSS2007, barthelemyIJES2019](@cite), where ``b`` is the semi-minor
+axis (`semi_minor`) of the elliptic crack.  Limits :
 
 * `Rn / Rt = nothing` (default) → traction-free penny limit, recovers
   the existing `B_n`, `B_t`.
-* `Rn, Rt → ∞` (rigid bonding) → `B̃_eff_n, B̃_eff_t → 0` (no opening).
+* ``k_n, k_t \\to \\infty`` (rigid bonding) → ``\\widetilde{B}^{\\mathrm{int}}_n, \\widetilde{B}^{\\mathrm{int}}_t \\to 0`` (no opening).
 
 Throws if the matrix law is not iso or the crack is not a penny.
 """
@@ -125,7 +128,7 @@ end
     _apply_interface_stiffness_alv(B_n, B_t, Rn, Rt, times, b)
 
 Apply the interface-stiffness post-correction
-`B̃_eff = B̃ ∘ (𝟙 + b · K ∘ B̃)^{-vol}`
+``\\widetilde{B}^{\\mathrm{int}} = \\widetilde{B}\\circ(H + b\\,\\widetilde{k}\\circ\\widetilde{B})^{-\\circ}``
 to the traction-free COD matrices `B_n`, `B_t`.  When one of the two
 interface laws is `nothing`, the corresponding component is left
 untouched (modeling the traction-free direction).
@@ -171,16 +174,19 @@ end
 """
     compliance_contribution_alv(crack, C_M_law::ViscoLaw, times) -> Matrix{T}
 
-Discrete `(6n × 6n)` size-independent compliance contribution `H̃` of a
+Discrete ``6n\\times 6n`` size-independent compliance contribution ``\\widetilde{\\mathbb{H}}`` of a
 penny crack in an isotropic ALV matrix.  Computed via the time-space
 decoupling formula
 
-   `H̃ = (3/4) · B̃_n · W₁(n̂)  +  (3/8) · B̃_t · W₆(n̂)`
+```math
+\\widetilde{\\mathbb{H}} = \\tfrac{3}{4}\\,\\widetilde{B}_n\\,\\mathbb{W}_1(\\underline{n})
+  + \\tfrac{3}{8}\\,\\widetilde{B}_t\\,\\mathbb{W}_6(\\underline{n})
+```
 
-where `W₁`, `W₆` are the canonical Walpole basis tensors of the crack
-normal axis.  When `n̂ = e_3` the result is in TI form and routes
+where ``\\mathbb{W}_1``, ``\\mathbb{W}_6`` are the canonical Walpole basis tensors of the crack
+normal axis.  When ``\\underline{n} = \\underline{e}_3`` the result is in TI form and routes
 through the existing TI ALV fast path; arbitrary orientation requires
-a 6×6 Mandel rotation per `(i, j)` block (not yet implemented).
+a ``6\\times 6`` Mandel rotation per ``(i, j)`` block (not yet implemented).
 
 Convention: same as the elastic [`compliance_contribution`](@ref MeanFieldHomogenization.Core.compliance_contribution) — the
 Budiansky-O'Connell density factor is applied separately via
@@ -208,10 +214,10 @@ end
     delta_compliance_alv(crack, H̃, ε) -> Matrix
 
 Apply the Budiansky-O'Connell crack density factor to the
-size-independent compliance contribution `H̃` produced by
+size-independent compliance contribution ``\\widetilde{\\mathbb{H}}`` produced by
 [`compliance_contribution_alv`](@ref), giving the fractional
-compliance correction `ΔJ̃ = (4π/3) ε³ᵈ · H̃` (penny / elliptic
-geometry, `ε³ᵈ = N a b²`) — same pre-factor as the elastic case.
+compliance correction ``\\Delta\\widetilde{\\mathbb{L}} = \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm{d}}\\,\\widetilde{\\mathbb{H}}`` (penny / elliptic
+geometry, ``\\varepsilon^{3\\mathrm{d}} = N\\,a\\,b^{2}``) — same pre-factor as the elastic case.
 """
 function delta_compliance_alv(
         crack::MFH_Core.AbstractCrack,
@@ -229,12 +235,13 @@ end
 """
     stiffness_contribution_alv(crack, C_ref, times) -> Matrix{T}
 
-Discrete (6n × 6n) crack **stiffness** contribution
-   `Ñ = − C̃_ref ∘ H̃ ∘ C̃_ref`,
-mirror of the elastic [`stiffness_contribution(crack, C₀)`] formula.
+Discrete ``6n\\times 6n`` crack **stiffness** contribution
+``\\widetilde{\\mathbb{N}} = -\\widetilde{\\mathbb{C}}_0\\circ\\widetilde{\\mathbb{H}}\\circ\\widetilde{\\mathbb{C}}_0``,
+mirror of the elastic [`stiffness_contribution(crack, C₀)`] formula, with
+``\\widetilde{\\mathbb{C}}_0`` the discretized `C_ref`.
 `C_ref` may be a `ViscoLaw` (the matrix law — relaxation auto-built
 through [`_trapezoidal_relaxation`](@ref)) or a pre-discretized
-`(6n × 6n)` reference matrix (used by SC iterations against the
+``6n\\times 6n`` reference matrix (used by SC iterations against the
 running estimate `C_n`).
 """
 function stiffness_contribution_alv(
@@ -250,7 +257,7 @@ end
 """
     stiffness_contribution_alv_at(crack, C_ref::AbstractMatrix) -> Matrix
 
-Variant that takes a pre-discretized `(6n × 6n)` reference matrix.
+Variant that takes a pre-discretized ``6n\\times 6n`` reference matrix.
 The compliance contribution is recomputed from the iso parameters of
 `C_ref` (only iso ALV matrices are currently supported by
 [`compliance_contribution_alv`](@ref)).
@@ -306,10 +313,10 @@ end
     delta_stiffness_alv(crack, Ñ, ε) -> Matrix
 
 Apply the Budiansky-O'Connell crack density factor to the
-size-independent stiffness contribution `Ñ` produced by
+size-independent stiffness contribution ``\\widetilde{\\mathbb{N}}`` produced by
 [`stiffness_contribution_alv`](@ref), giving the dilute stiffness
-correction `ΔC̃ = (4π/3) ε³ᵈ · Ñ` (penny / elliptic) or
-`π ε²ᵈ · Ñ` (ribbon).  Same pre-factors as the elastic case.
+correction ``\\Delta\\widetilde{\\mathbb{C}} = \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm{d}}\\,\\widetilde{\\mathbb{N}}`` (penny / elliptic) or
+``\\pi\\,\\varepsilon^{2\\mathrm{d}}\\,\\widetilde{\\mathbb{N}}`` (ribbon).  Same pre-factors as the elastic case.
 """
 function delta_stiffness_alv(
         crack::MFH_Core.AbstractCrack,

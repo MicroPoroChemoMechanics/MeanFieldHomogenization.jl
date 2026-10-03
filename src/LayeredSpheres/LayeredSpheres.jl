@@ -45,7 +45,7 @@ include("scheme_integration.jl") # concentration tensors → mean-field schemes
     strain_strain_loc(sphere::LayeredSphere, C₀::TensISO{4,3}; layer::Int) -> Tens{4,3}
 
 Per-layer strain-strain localization tensor in an ISO `LayeredSphere`.
-Returns the isotropic 4-tensor `A_k = α_k J + β_k K` for the requested
+Returns the isotropic 4-tensor ``\\mathbb{A}_k = \\alpha_k\\,\\mathbb{J} + \\beta_k\\,\\mathbb{K}`` for the requested
 layer.  `layer` must be in `1..N`.
 """
 function strain_strain_loc(
@@ -70,14 +70,20 @@ end
 
 Size-independent stiffness contribution tensor of the composite sphere
 relative to the matrix `C₀`.  The dilute-scheme effective stiffness
-is `C_eff = C₀ + f · N_sphere` where `f` is the volume fraction of the
+is ``\\mathbb{C}^{\\mathrm{hom}} = \\mathbb{C}_0 + f\\,\\mathbb{N}`` where ``f`` is the volume fraction of the
 composite sphere.  For ISO materials this reduces to two scalar
-contributions (bulk + shear):
+contributions (bulk + shear), ``f_k`` being the volume fraction of layer
+``k`` within the sphere:
 
+```math
+\\mathbb{N} = 3N_{\\mathrm{bulk}}\\,\\mathbb{J} + 2N_{\\mathrm{shear}}\\,\\mathbb{K},
+\\qquad
+N_{\\mathrm{bulk}} = \\sum_k f_k\\,(k_k - k_0)\\,\\alpha_k,
+\\qquad
+N_{\\mathrm{shear}} = \\sum_k f_k\\,(\\mu_k - \\mu_0)\\,\\beta_k,
 ```
-N_bulk  = Σ_k f_k (κ_k - κ₀) α_k      → contributes to the `J` part
-N_shear = Σ_k f_k (μ_k - μ₀) β_k      → contributes to the `K` part
-```
+
+plus the Gurtin–Murdoch surface stress of any membrane interface.
 """
 function Core.stiffness_contribution(
         sphere::LayeredSphere{T, N},
@@ -105,8 +111,8 @@ end
 
 Per-layer gradient-gradient localization tensor for an isotropic
 `LayeredSphere` embedded in an isotropic matrix of conductivity `K₀`.
-Returns the scalar `α_k` packed as `TensISO{3}(α_k)` (isotropic
-2-tensor), satisfying `<∇T>_layer = α_k · ∇T∞`.
+Returns the scalar ``\\alpha_k`` packed as `TensISO{3}(α_k)` (isotropic
+2-tensor), satisfying ``\\langle\\nabla T\\rangle_k = \\alpha_k\\,\\nabla T^{\\infty}``.
 """
 function gradient_gradient_loc(
         sphere::LayeredSphere{T, N},
@@ -124,7 +130,7 @@ end
     conductivity_contribution(sphere::LayeredSphere, K₀) -> Tens{2,3}
 
 Size-independent conductivity contribution tensor of the composite
-sphere:  `N_K = Σ_k f_k (k_k - k_0) α_k`, plus the surface-conduction
+sphere:  ``\\boldsymbol{N} = \\sum_k f_k\\,(k_k - k_0)\\,\\alpha_k\\,\\boldsymbol{1}``, plus the surface-conduction
 flux [`_cond_surface_flux`](@ref) of any dual (surface-conductive)
 interface (Echoes' `DUALDISC`).
 """

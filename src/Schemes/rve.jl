@@ -33,7 +33,7 @@ subtypes:
 
 - [`VolumeFraction`](@ref) — for solid (ellipsoidal) inclusions and the
   matrix; obeys the unit-sum constraint
-  `f_matrix = 1 - Σ_other VolumeFraction.value`.
+  ``f_0 = 1 - \\sum_i f_i`` over the other `VolumeFraction` values.
 - [`CrackDensity`](@ref) — for flat cracks (Budiansky-O'Connell density);
   does **not** participate in the unit-sum constraint, since the volume
   contribution of a flat crack vanishes in the penny limit while the
@@ -101,7 +101,7 @@ Base.eltype(a::AbstractAmount) = eltype(typeof(a))
     _sums_to_unit(a::AbstractAmount) -> Bool
 
 Whether the amount counts towards the matrix-fraction complement
-`f_matrix = 1 - Σ_phase _sums_to_unit·value`. `true` for
+``f_0 = 1 - \\sum_i f_i``, summed over the phases for which this is `true`. `true` for
 [`VolumeFraction`](@ref), `false` for [`CrackDensity`](@ref).
 """
 _sums_to_unit(::VolumeFraction) = true
@@ -213,7 +213,7 @@ Every declared volume fraction is divided by their sum, so that only their
 
 No phase may then be declared `fraction = :rest` — there is no complement left
 to absorb. The rescaling is a plain division, so it differentiates: under this
-policy `∂C/∂f_i` is the derivative along the normalized simplex, and raising
+policy ``\\partial\\mathbb{C}^{\\mathrm{hom}}/\\partial f_i`` is the derivative along the normalized simplex, and raising
 one fraction lowers the others.
 """
 struct RescaledFractions <: AbstractFractionClosure end
@@ -785,7 +785,7 @@ homogenize(rve, SelfConsistent())  # sees the new value
 ```
 
 !!! note "Only volume fractions touch the cache"
-    `f_matrix = 1 - Σ f_inc` sums [`VolumeFraction`](@ref) entries only, so a
+    ``f_0 = 1 - \\sum_i f_i`` sums [`VolumeFraction`](@ref) entries only, so a
     [`CrackDensity`](@ref) write cannot stale it — cracks carry no volume. The
     cache is still recomputed for a volume-fraction write, with the same loop
     [`add_phase!`](@ref) uses, so the value stays bit-identical to what a fresh

@@ -48,7 +48,8 @@ regions,
 
 ```math
 \\mathbb{T}^{ab} = \\frac{1}{|\\Omega_a|}
-   \\int_{\\Omega_a}\\int_{\\Omega_b} \\mathbb{G}^0(x - y)\\, dV_y\\, dV_x ,
+   \\int_{\\Omega_a}\\int_{\\Omega_b} \\mathbb{G}^0(\\underline{x} - \\underline{y})\\,
+   \\mathrm{d}V_{\\underline{y}}\\,\\mathrm{d}V_{\\underline{x}} ,
 ```
 
 so that contracting it with a *uniform polarization* carried by `incl_b`
@@ -69,7 +70,7 @@ separation**; other geometries use the truncated multipole expansion of
 
 This is the shared numerical ingredient of both N-body models in the package,
 [`EquivalentInclusion`](@ref MeanFieldHomogenization.Schemes.EquivalentInclusion) and [`ClusterModel`](@ref MeanFieldHomogenization.Schemes.ClusterModel) — Brisard et al.
-(2014), §3.1, note that their influence pseudotensors of order `k = l = 0`
+(2014), §3.1, note that their influence pseudotensors of order ``k = l = 0``
 coincide with the interaction tensors of Molinari & El Mouden.
 
 !!! warning "Two sign conventions exist"
@@ -101,7 +102,7 @@ end
 
 Self term of the interaction family, ``\\mathbb{T}^{aa} = +\\mathbb{P}_a``:
 minus the average field induced in an inclusion by its *own* uniform
-polarization, which is the Eshelby result ``\\varepsilon = -\\mathbb{P}:\\tau``.
+polarization, which is the Eshelby result ``\\boldsymbol{\\varepsilon} = -\\mathbb{P}:\\boldsymbol{\\tau}``.
 
 It **is** the Hill polarization tensor, so it inherits every back-end of
 [`hill_tensor`](@ref MeanFieldHomogenization.Elasticity.hill_tensor) — closed

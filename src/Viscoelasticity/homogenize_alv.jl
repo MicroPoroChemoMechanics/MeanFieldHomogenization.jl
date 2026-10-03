@@ -66,11 +66,11 @@ end
 """
     _iso_project_blocks(M::AbstractMatrix) -> Matrix
 
-Project every 6×6 Mandel block of a `(6n × 6n)` ALV matrix to its iso
+Project every ``6\\times 6`` Mandel block of a ``6n\\times 6n`` ALV matrix to its iso
 component (Reynolds average over the orthogonal group), returning a
-new `(6n × 6n)` block matrix whose every block is iso.  Equivalent to
+new ``6n\\times 6n`` block matrix whose every block is iso.  Equivalent to
 the ECHOES `symmetrize=[ISO]` orientation-averaging projection
-applied to each `(t_i, t_j)` block independently.
+applied to each ``(t_i, t_j)`` block independently.
 """
 function _iso_project_blocks(M::AbstractMatrix)
     sz = size(M, 1)
@@ -95,11 +95,11 @@ end
 """
     _ti_project_blocks(M::AbstractMatrix, axis) -> Matrix
 
-Exact azimuthal average about `axis` of every 6×6 Mandel block of a
-`(6n × 6n)` ALV matrix (echoes `visco_transverse_isotropify` counterpart).
+Exact azimuthal average about `axis` of every ``6\\times 6`` Mandel block of a
+``6n\\times 6n`` ALV matrix (echoes `visco_transverse_isotropify` counterpart).
 Each block is averaged independently with
 [`Core.ti_average_mandel66`](@ref); the non-major-symmetric content of the
-blocks (ℓ₃ ≠ ℓ₄, antisymmetric couplings) is preserved, which the
+blocks (``\\ell_3 \\ne \\ell_4``, antisymmetric couplings) is preserved, which the
 6-parameter TI closure of `conversions.jl` cannot represent — hence the
 full-matrix return.
 """
@@ -123,8 +123,8 @@ end
     _maybe_symmetrize_alv(M, sym) -> Matrix
 
 Apply the orientation-averaging projection corresponding to `sym` to a
-`(6n × 6n)` ALV block matrix : `NoSymmetrize` (passthrough),
-`IsoSymmetrize` (block-by-block exact SO(3) average) and
+``6n\\times 6n`` ALV block matrix : `NoSymmetrize` (passthrough),
+`IsoSymmetrize` (block-by-block exact ``\\mathrm{SO}(3)`` average) and
 `TISymmetrize(axis)` (block-by-block exact azimuthal average about the
 axis).
 """
@@ -147,9 +147,9 @@ axis).
 """
     _iso_project_blocks3(M::AbstractMatrix) -> Matrix
 
-Exact SO(3) orientation average of every 3×3 block of a `(3n × 3n)`
-order-2 ALV matrix.  The isotropic part of a 2-tensor is
-`(tr B / 3) 𝟙`, so each block collapses onto its spherical part.
+Exact ``\\mathrm{SO}(3)`` orientation average of every ``3\\times 3`` block of a ``3n\\times 3n``
+order-2 ALV matrix.  The isotropic part of a 2-tensor ``\\boldsymbol{B}`` is
+``\\tfrac{1}{3}(\\mathrm{tr}\\,\\boldsymbol{B})\\,\\boldsymbol{1}``, so each block collapses onto its spherical part.
 """
 function _iso_project_blocks3(M::AbstractMatrix)
     sz = size(M, 1)
@@ -173,15 +173,20 @@ end
 """
     _ti_project_blocks3(M::AbstractMatrix, axis) -> Matrix
 
-Exact azimuthal average about `axis` of every 3×3 block of a
-`(3n × 3n)` order-2 ALV matrix.  Averaging a 2-tensor `B` over the
-rotations about the unit vector `n̂` keeps three invariants — the axial
-component `a_n = n̂·B·n̂`, the transverse mean
-`a_t = (tr B − a_n) / 2`, and the axial antisymmetric part (the
-component of `B` along `[n̂]×`, which commutes with those rotations) —
+Exact azimuthal average about `axis` of every ``3\\times 3`` block of a
+``3n\\times 3n`` order-2 ALV matrix.  Averaging a 2-tensor ``\\boldsymbol{B}`` over the
+rotations about the unit vector ``\\underline{n}`` keeps three invariants — the axial
+component ``a_n = \\underline{n}\\cdot\\boldsymbol{B}\\cdot\\underline{n}``, the transverse mean
+``a_t = (\\mathrm{tr}\\,\\boldsymbol{B} - a_n)/2``, and the axial antisymmetric part (the
+component of ``\\boldsymbol{B}`` along ``[\\underline{n}]_{\\times}``, which commutes with those rotations) —
 and averages everything else to zero:
 
-    ⟨B⟩ = a_t (𝟙 − n̂⊗n̂) + a_n n̂⊗n̂ + c [n̂]×  ,   c = (B_skew : [n̂]×) / 2 .
+```math
+\\langle\\boldsymbol{B}\\rangle = a_t\\,(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n})
+  + a_n\\,\\underline{n}\\otimes\\underline{n} + c\\,[\\underline{n}]_{\\times},
+\\qquad
+c = \\tfrac{1}{2}\\,\\boldsymbol{B}^{\\mathrm{skew}} : [\\underline{n}]_{\\times} .
+```
 
 The antisymmetric term is preserved rather than dropped, mirroring
 [`_ti_project_blocks`](@ref), which likewise keeps the block content a
@@ -240,7 +245,7 @@ end
 """
     _maybe_symmetrize_alv2(M, sym) -> Matrix
 
-Order-2 counterpart of [`_maybe_symmetrize_alv`](@ref), for `(3n × 3n)`
+Order-2 counterpart of [`_maybe_symmetrize_alv`](@ref), for ``3n\\times 3n``
 ALV matrices whose blocks are 2-tensors.
 """
 @inline _maybe_symmetrize_alv2(M::AbstractMatrix, ::NoSymmetrize) = M
@@ -276,7 +281,7 @@ end
     _alv_property_order(law::ViscoLaw, t) -> Int
 
 Inspect the sample returned by `visco_eval(law, t, t)` and report the
-tensor order (`2` for vector-tensor / 3×3, `4` for 4-tensor / 6×6
+tensor order (`2` for vector-tensor / ``3\\times 3``, `4` for 4-tensor / ``6\\times 6``
 Mandel).  Used by [`homogenize_alv`](@ref) to dispatch between the
 order-4 (stiffness / relaxation) and order-2 (conductivity / creep
 admittance) pipelines.
@@ -306,11 +311,11 @@ the ALV Hill kernel and dilute concentration tensors, and dispatch on
 
 The function dispatches on the **order of the matrix property** (read
 once from the matrix `ViscoLaw` sample type):
-  * order-4 (4-tensor / 6×6 Mandel kernel) → returns `(6n × 6n)`
+  * order-4 (4-tensor / ``6\\times 6`` Mandel kernel) → returns ``6n\\times 6n``
     relaxation matrix following the standard Hill-kernel +
     dilute-concentration pipeline.
-  * order-2 (2-tensor / 3×3 kernel; conductivity / diffusion /
-    permittivity) → returns `(3n × 3n)` matrix via the order-2 ALV
+  * order-2 (2-tensor / ``3\\times 3`` kernel; conductivity / diffusion /
+    permittivity) → returns ``3n\\times 3n`` matrix via the order-2 ALV
     pipeline (`hill_kernel_order2`, time-space decoupling).
 
 Supports two inclusion-geometry families (order-4 only):
@@ -326,7 +331,7 @@ Supports two inclusion-geometry families (order-4 only):
     pass any `ViscoLaw` (e.g. `heaviside_law(C_0)`) as a placeholder.
 
 `symmetrize` is honored in both orders, with the projector of the matching
-tensor order (6×6 Mandel blocks for order 4, 2-tensor blocks for order 2 —
+tensor order (``6\\times 6`` Mandel blocks for order 4, 2-tensor blocks for order 2 —
 see [`_maybe_symmetrize_alv`](@ref) and [`_maybe_symmetrize_alv2`](@ref)).
 `Voigt` and `Reuss` average the phase matrices directly, so the geometry —
 and hence `symmetrize` — does not enter them.
@@ -466,7 +471,7 @@ end
     _inclusion_alv_quantities(geom, C_r_law, C_M_law, C_0, times)
         -> (C_r, A_dut, N_dut, P_r)
 
-Compute the four `(6n × 6n)` matrices needed by the ALV scheme
+Compute the four ``6n\\times 6n`` matrices needed by the ALV scheme
 dispatch for a single inclusion of geometry `geom`.  Default method
 covers ellipsoidal geometries (Hill kernel + dilute formulas);
 specializations for `LayeredSphere` use the layered-sphere recurrences.
@@ -566,7 +571,7 @@ end
     _try_iso_pairs(matrices) -> Vector{Tuple} or nothing
 
 If every matrix in `matrices` passes the iso-form check
-(`_is_iso_block`), return a `Vector` of `(α, β)` `n×n` parameter
+(`_is_iso_block`), return a `Vector` of ``(\\alpha, \\beta)`` ``n\\times n`` parameter
 tuples extracted from each.  Otherwise return `nothing`.
 
 Used by the scheme fast paths to opt into the iso pipeline only when
@@ -587,7 +592,7 @@ end
     _try_ti_tuples(matrices) -> Vector{NTuple{6, Matrix}} or nothing
 
 If every matrix passes the TI-form check (`_is_ti_block`), return a
-`Vector` of 6-tuples of `n×n` Walpole parameter matrices extracted
+`Vector` of 6-tuples of ``n\\times n`` Walpole parameter matrices extracted
 from each.  Otherwise return `nothing`.
 
 Iso block matrices automatically satisfy the TI test (iso ⊂ TI), so a
@@ -608,10 +613,10 @@ end
     _try_ortho_tuples(matrices) -> Vector{NTuple{12, Matrix}} or nothing
 
 If every matrix passes the ortho-form check (`_is_ortho_block`), return
-a `Vector` of 12-tuples of `n×n` ortho parameter matrices extracted
+a `Vector` of 12-tuples of ``n\\times n`` ortho parameter matrices extracted
 from each.  Otherwise return `nothing`.
 
-Iso and TI (axis = e₃) block matrices automatically satisfy the ortho
+Iso and TI (axis ``\\underline{e}_3``) block matrices automatically satisfy the ortho
 test, so a mixed iso/TI/ortho phase setup with the canonical material
 frame works.
 """

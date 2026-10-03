@@ -58,11 +58,11 @@ R(t) = E_\\infty + \\sum_i E_i\\,e^{-t/\\tau_i},
 R^{*}(p) = E_\\infty + \\sum_i E_i\\,\\frac{p\\tau_i}{1 + p\\tau_i}.
 ```
 
-`E_inf == 0` means a **fluid**: the stress relaxes away completely.
+``E_\\infty = 0`` means a **fluid**: the stress relaxes away completely.
 
 !!! note "Why the degenerate branches are separate fields"
     The ECHOES Python reference stores the equilibrium term inside the spectrum
-    as a branch with `τ = Inf` (and, in the dual type, `τ = 0`).  That forces
+    as a branch with ``\\tau = \\infty`` (and, in the dual type, ``\\tau = 0``).  That forces
     `Inf` into a vector which is then sorted, exponentiated and differentiated
     — and `Inf` is poison for `ForwardDiff`, where `Inf * 0` gives `NaN` in the
     partials.  Keeping `E_inf` as its own scalar removes every special case.
@@ -109,13 +109,17 @@ J^{*}(p) = J_0 + \\sum_i \\frac{J_i}{1 + p\\tau_i} + \\frac{\\varphi}{p}.
 ```
 
 !!! note "Fluidity, not viscosity"
-    `phi = 1/η` rather than `η`, so a *solid* is `phi = 0` rather than
-    `η = Inf`.  Zero is differentiable and sorts and promotes like any other
+    ``\\varphi = 1/\\eta`` rather than ``\\eta``, so a *solid* is ``\\varphi = 0`` rather than
+    ``\\eta = \\infty``.  Zero is differentiable and sorts and promotes like any other
     number; `Inf` does none of those things.  It also makes the two Prony types
     exactly symmetric:
 
-        phi == 0    ⟺  solid  ⟺  E_inf > 0
-        E_inf == 0  ⟺  fluid  ⟺  phi > 0
+    ```math
+    \\begin{aligned}
+    \\varphi = 0 &\\iff \\mathrm{solid} \\iff E_\\infty > 0,\\\\
+    E_\\infty = 0 &\\iff \\mathrm{fluid} \\iff \\varphi > 0.
+    \\end{aligned}
+    ```
 
 See [`kelvin_to_maxwell`](@ref), [`prony_fit_creep`](@ref), [`burgers`](@ref)
 and [`zener_kelvin`](@ref).
@@ -175,7 +179,7 @@ to within `merge_tol` relative, summing their weights.
 Merging is the *correct* preprocessing rather than an error: two branches with
 the same characteristic time are indistinguishable, and their sum is the same
 material.  It also guarantees the strict interlacing the conversion relies on —
-[`maxwell_to_kelvin`](@ref) needs `τ_i < τ_{i+1}` with no ties, or the brackets
+[`maxwell_to_kelvin`](@ref) needs ``\\tau_i < \\tau_{i+1}`` with no ties, or the brackets
 it bisects in would be empty.
 """
 function _sort_and_merge(w::Vector{T}, tau::Vector{T}, merge_tol::Real, who::AbstractString) where {T}
@@ -298,8 +302,8 @@ end
 ``\\Phi(\\sigma) = R^{*}(-1/\\sigma) = E_\\infty - \\sum_j E_j\\tau_j/(\\sigma-\\tau_j)``.
 
 Its zeros are the retardation times of the equivalent Kelvin chain.  Strictly
-increasing between consecutive poles, with `Φ(0⁺) = E_glassy > 0` and
-`Φ(∞) = E_∞`.
+increasing between consecutive poles, with ``\\Phi(0^{+}) = E_{\\mathrm{glassy}} > 0`` and
+``\\Phi(\\infty) = E_\\infty``.
 """
 _phi_maxwell(m::PronyRelaxation, σ) =
     m.E_inf - sum((E * τ / (σ - τ) for (E, τ) in zip(m.E, m.tau)); init = zero(σ * one(eltype(m.E))))
@@ -309,7 +313,7 @@ _phi_maxwell(m::PronyRelaxation, σ) =
 
 ``\\Phi'(\\sigma) = \\sum_j E_j\\tau_j/(\\sigma-\\tau_j)^2``, strictly positive
 for a positive spectrum — which is why the converted compliances
-`J_j = 1/(σ_j Φ'(σ_j))` come out positive by construction.
+``J_j = 1/(\\sigma_j\\,\\Phi'(\\sigma_j))`` come out positive by construction.
 """
 _dphi_maxwell(m::PronyRelaxation, σ) =
     sum((E * τ / (σ - τ)^2 for (E, τ) in zip(m.E, m.tau)); init = zero(σ * one(eltype(m.E))))
@@ -321,7 +325,7 @@ _dphi_maxwell(m::PronyRelaxation, σ) =
    = J_0 + \\sum_j J_j\\sigma/(\\sigma-\\tau_j) - \\varphi\\sigma``.
 
 Its zeros are the relaxation times of the equivalent Maxwell chain.  Strictly
-*decreasing* between consecutive poles, with `Ψ(0⁺) = J_0 > 0`.
+*decreasing* between consecutive poles, with ``\\Psi(0^{+}) = J_0 > 0``.
 """
 _psi_kelvin(m::PronyCreep, σ) =
     m.J_0 - m.phi * σ +
@@ -331,7 +335,7 @@ _psi_kelvin(m::PronyCreep, σ) =
     _dpsi_kelvin(m::PronyCreep, σ)
 
 ``\\Psi'(\\sigma) = -\\sum_j J_j\\tau_j/(\\sigma-\\tau_j)^2 - \\varphi``,
-strictly negative — hence `E_j = -1/(σ_j Ψ'(σ_j)) > 0`.
+strictly negative — hence ``E_j = -1/(\\sigma_j\\,\\Psi'(\\sigma_j)) > 0``.
 """
 _dpsi_kelvin(m::PronyCreep, σ) =
     -m.phi - sum((J * τ / (σ - τ)^2 for (J, τ) in zip(m.J, m.tau)); init = zero(σ * one(eltype(m.J))))
@@ -341,10 +345,10 @@ _dpsi_kelvin(m::PronyCreep, σ) =
 """
     _bracketed_root(f, lo, hi; rtol = 1e-14, maxiter = 200) -> Float64
 
-Bisection in `log σ` on a bracket known to contain exactly one simple root.
+Bisection in ``\\log\\sigma`` on a bracket known to contain exactly one simple root.
 
 Logarithmic rather than linear because relaxation spectra span six to ten
-decades: the geometric midpoint `√(lo·hi)` halves the *relative* interval, so
+decades: the geometric midpoint ``\\sqrt{\\mathrm{lo}\\cdot\\mathrm{hi}}`` halves the *relative* interval, so
 the iteration count depends on the requested relative accuracy and not at all
 on where in the spectrum the root sits.
 
@@ -381,7 +385,7 @@ end
 """
     _expand_bracket(f, lo, growth, maxsteps) -> hi
 
-Find an upper end for a root known to lie somewhere in `(lo, ∞)` by repeatedly
+Find an upper end for a root known to lie somewhere in (`lo`, ``\\infty``) by repeatedly
 multiplying by `growth` until the sign flips.  Used for the outermost interval,
 which is unbounded whenever the model has a degenerate branch at the slow end.
 """
@@ -428,8 +432,8 @@ correct `ForwardDiff` partials.
 
 The bisection runs on values only — an iteration count is discrete, and
 differentiating through it is meaningless.  A **single Newton step taken in the
-full `Dual` type** then supplies the derivatives: since `f(σ_val) ≈ 0` at the
-value level, `σ - f(σ)/f'(σ)` leaves the value alone and sets the partials to
+full `Dual` type** then supplies the derivatives: since ``f(\\sigma_{\\mathrm{val}}) \\approx 0`` at the
+value level, ``\\sigma - f(\\sigma)/f'(\\sigma)`` leaves the value alone and sets the partials to
 
 ```math
 \\frac{\\partial\\sigma}{\\partial\\theta}
@@ -456,42 +460,42 @@ _just_below(τ) = τ * (1 - _POLE_OFFSET)
     maxwell_to_kelvin(m::PronyRelaxation; rtol = 1e-14) -> PronyCreep
 
 Convert a generalized Maxwell chain into the **exactly equivalent** generalized
-Kelvin chain, so that `J*(p) R*(p) = 1` identically.
+Kelvin chain, so that ``J^{*}(p)\\,R^{*}(p) = 1`` identically.
 
 # How
 
-In `σ = -1/p`, the transform becomes
+In ``\\sigma = -1/p``, the transform becomes
 ``\\Phi(\\sigma) = E_\\infty - \\sum_j E_j\\tau_j/(\\sigma-\\tau_j)``, which is
-strictly increasing between consecutive poles and runs from `-∞` to `+∞` across
+strictly increasing between consecutive poles and runs from ``-\\infty`` to ``+\\infty`` across
 every gap.  The retardation times are its zeros, and they **interlace** the
 relaxation times:
 
-```
-     0 <  τ₁  <  σ₁  <  τ₂  <  σ₂  < … <  τ_m  < [σ_m]
+```math
+0 < \\tau_1 < \\sigma_1 < \\tau_2 < \\sigma_2 < \\dots < \\tau_m < [\\sigma_m]
 ```
 
-with the last root present exactly when `E_∞ > 0`.  There is deliberately no
-root in `(0, τ₁)`: `Φ(0⁺) = E_glassy > 0` and `Φ` only increases from there —
+with the last root present exactly when ``E_\\infty > 0``.  There is deliberately no
+root in ``(0, \\tau_1)``: ``\\Phi(0^{+}) = E_{\\mathrm{glassy}} > 0`` and ``\\Phi`` only increases from there —
 the bracketing is *not* symmetric with [`kelvin_to_maxwell`](@ref), which does
 have a root below its first pole.
 
 Each root is thus isolated before any arithmetic happens, and bisection in
-`log σ` finds it whatever the number of branches or their spread.  The residues
-follow from `R*'(-1/σ) = σ²Φ'(σ)`:
+``\\log\\sigma`` finds it whatever the number of branches or their spread.  The residues
+follow from ``R^{*\\prime}(-1/\\sigma) = \\sigma^2\\,\\Phi'(\\sigma)``:
 
 ```math
 J_0 = \\frac{1}{E_\\infty + \\sum_i E_i},
 \\qquad
 J_j = \\frac{1}{\\sigma_j\\,\\Phi'(\\sigma_j)},
 \\qquad
-\\tau^{K}_j = \\sigma_j ,
+\\tau^{\\mathrm{K}}_j = \\sigma_j ,
 ```
 
-and `Φ' > 0` makes every `J_j` positive by construction rather than by luck.
+and ``\\Phi' > 0`` makes every ``J_j`` positive by construction rather than by luck.
 
 # Fluids
 
-When `E_∞ = 0` the outermost root recedes to infinity: that *is* the series
+When ``E_\\infty = 0`` the outermost root recedes to infinity: that *is* the series
 dashpot.  It is picked up exactly, as
 ``\\varphi = 1/\\sum_i E_i\\tau_i = 1/R^{*\\prime}(0)``, and the result has one
 branch fewer than the input.
@@ -499,8 +503,8 @@ branch fewer than the input.
 # Differentiability
 
 `ForwardDiff` traverses the conversion: the roots are lifted by the implicit
-function theorem (see [`_root_with_ad`](@ref)), so gradients of `J_j` and
-`τ^K_j` with respect to `(E_∞, E, τ)` are available.
+function theorem (see [`_root_with_ad`](@ref)), so gradients of ``J_j`` and
+``\\tau^{\\mathrm{K}}_j`` with respect to ``(E_\\infty, E, \\tau)`` are available.
 
 # Examples
 
@@ -556,40 +560,40 @@ end
     kelvin_to_maxwell(k::PronyCreep; rtol = 1e-14) -> PronyRelaxation
 
 Convert a generalized Kelvin chain into the **exactly equivalent** generalized
-Maxwell chain, so that `R*(p) J*(p) = 1` identically.  The inverse of
+Maxwell chain, so that ``R^{*}(p)\\,J^{*}(p) = 1`` identically.  The inverse of
 [`maxwell_to_kelvin`](@ref), and the operation `Kelvin2Maxwell.py` performs
 symbolically in ECHOES.
 
 # How
 
-In `σ = -1/p`, ``\\Psi(\\sigma) = J_0 + \\sum_j J_j\\sigma/(\\sigma-\\tau_j) -
+In ``\\sigma = -1/p``, ``\\Psi(\\sigma) = J_0 + \\sum_j J_j\\sigma/(\\sigma-\\tau_j) -
 \\varphi\\sigma`` is strictly *decreasing* between consecutive poles.  Its zeros
 are the relaxation times, and here — unlike the other direction — there **is**
-one below the first pole, because `Ψ(0⁺) = J_0 > 0` while `Ψ(τ₁⁻) = -∞`:
-
-```
-     0 <  σ₁  <  τ₁  <  σ₂  <  τ₂  < … <  τ_n  < [σ_{n+1}]
-```
-
-the last root existing exactly when `φ > 0`.  So a **solid** Kelvin chain of
-`n` branches gives `n` Maxwell branches with `E_∞ > 0`, and a **fluid** one
-gives `n+1` branches with `E_∞ = 0` — which is the degree count of the rational
-transform, as it should be.
-
-The residues, from `J*'(-1/σ) = σ²Ψ'(σ)`:
+one below the first pole, because ``\\Psi(0^{+}) = J_0 > 0`` while ``\\Psi(\\tau_1^{-}) = -\\infty``:
 
 ```math
-E_{\\rm glassy} = \\frac{1}{J_0},
+0 < \\sigma_1 < \\tau_1 < \\sigma_2 < \\tau_2 < \\dots < \\tau_n < [\\sigma_{n+1}]
+```
+
+the last root existing exactly when ``\\varphi > 0``.  So a **solid** Kelvin chain of
+``n`` branches gives ``n`` Maxwell branches with ``E_\\infty > 0``, and a **fluid** one
+gives ``n+1`` branches with ``E_\\infty = 0`` — which is the degree count of the rational
+transform, as it should be.
+
+The residues, from ``J^{*\\prime}(-1/\\sigma) = \\sigma^2\\,\\Psi'(\\sigma)``:
+
+```math
+E_{\\mathrm{glassy}} = \\frac{1}{J_0},
 \\qquad
 E_j = -\\frac{1}{\\sigma_j\\,\\Psi'(\\sigma_j)},
 \\qquad
-E_\\infty = E_{\\rm glassy} - \\sum_j E_j ,
+E_\\infty = E_{\\mathrm{glassy}} - \\sum_j E_j ,
 ```
 
-with `Ψ' < 0` making every `E_j` positive by construction.
+with ``\\Psi' < 0`` making every ``E_j`` positive by construction.
 
 For a solid the result satisfies a free consistency identity — both sides are
-`R*(0)`:
+``R^{*}(0)``:
 
 ```math
 \\frac{1}{J_0} - \\sum_j E_j \\;=\\; \\frac{1}{J_0 + \\sum_i J_i},
@@ -671,7 +675,7 @@ Refuse a symbolic spectrum, with the reason.
 
 The conversion locates the roots of a Stieltjes function by **bisection**
 between consecutive poles.  That needs a real ordering of the times and a real
-sign test, neither of which a symbolic `τ` provides — so this is a genuine
+sign test, neither of which a symbolic ``\\tau`` provides — so this is a genuine
 limitation rather than a missing method, and saying so beats failing later
 inside the bracketing with `TypeError: non-boolean (Num)`.
 
@@ -748,17 +752,17 @@ R^{*}(p_u) - E_\\infty \\;\\approx\\; \\sum_i X_i\\,\\frac{p_u\\tau_i}{1+p_u\\ta
 so the fit is one linear solve — no iteration, no starting guess.
 
   * `points` — the Carson variables to collocate at.  Defaults to
-    `2 * length(taus)` values log-spaced over `[1/(10 τ_max), 10/τ_min]`, which
+    `2 * length(taus)` values log-spaced over ``[1/(10\\,\\tau_{\\max}), 10/\\tau_{\\min}]``, which
     brackets the spectrum by a decade on each side.
   * `E_inf` — the equilibrium modulus.  Defaults to `Rstar` evaluated at
-    `1/(100 τ_max)`.
+    ``1/(100\\,\\tau_{\\max})``.
 
     !!! note
         The ECHOES reference uses `rstar(1e-100)` for this.  That overflows
-        `p^{-k}` for any fractional model — 2S2P1D included — so the default
+        ``p^{-k}`` for any fractional model — 2S2P1D included — so the default
         here is tied to the spectrum's own slowest time instead.
 
-  * `nonneg` — constrain `X_i ≥ 0` (the default).  A non-negative spectrum is
+  * `nonneg` — constrain ``X_i \\ge 0`` (the default).  A non-negative spectrum is
     what makes the fitted function completely monotone, hence passive; an
     unconstrained fit routinely produces small negative moduli that give a
     negative [`loss_factor`](@ref) somewhere.
@@ -804,13 +808,13 @@ J^{*}(p_u) - J_0 - \\frac{\\varphi}{p_u}
     \\;\\approx\\; \\sum_i \\frac{X_i}{1 + p_u\\tau_i}.
 ```
 
-`J_0` defaults to `Jstar` at `100/τ_min`, i.e. well above the fastest
+`J_0` defaults to `Jstar` at ``100/\\tau_{\\min}``, i.e. well above the fastest
 retardation time.
 
-`phi` is **not** fitted: a `φ/p` pole is a qualitatively different object from
+`phi` is **not** fitted: a ``\\varphi/p`` pole is a qualitatively different object from
 the rest of the sum, and reading it off noisy samples is unreliable.  Pass it
-explicitly when the material is a fluid — it is `1/η` of the series dashpot,
-and for a transform known in closed form it is `lim_{p→0} p J*(p)`.
+explicitly when the material is a fluid — it is ``1/\\eta`` of the series dashpot,
+and for a transform known in closed form it is ``\\lim_{p\\to 0} p\\,J^{*}(p)``.
 """
 function prony_fit_creep(
         Jstar, taus::AbstractVector{<:Real};
@@ -832,10 +836,10 @@ end
 """
     _default_collocation(taus) -> Vector{Float64}
 
-`2 length(taus)` Carson variables log-spaced over `[1/(10 τ_max), 10/τ_min]`.
+`2 length(taus)` Carson variables log-spaced over ``[1/(10\\,\\tau_{\\max}), 10/\\tau_{\\min}]``.
 
 Real and positive, so the transform is only ever sampled where every model in
-the catalog is defined — including the fractional ones, whose `p^{-k}` needs
+the catalog is defined — including the fractional ones, whose ``p^{-k}`` needs
 a branch choice off the positive real axis.
 """
 function _default_collocation(taus::AbstractVector{<:Real})
@@ -848,8 +852,8 @@ end
 """
     _lsq(A, b, nonneg, lambda) -> x
 
-Least-squares solve of `A x ≈ b`, optionally Tikhonov-regularized by `lambda`
-and optionally constrained to `x ≥ 0`.
+Least-squares solve of ``\\mathbf{A}\\mathbf{x} \\approx \\mathbf{b}``, optionally Tikhonov-regularized by `lambda`
+and optionally constrained to ``\\mathbf{x} \\ge 0``.
 """
 function _lsq(A::AbstractMatrix, b::AbstractVector, nonneg::Bool, lambda::Real)
     if iszero(lambda)
@@ -864,8 +868,8 @@ end
 """
     _nnls(A, b; maxiter, tol) -> x
 
-Lawson-Hanson non-negative least squares: minimize `‖Ax - b‖₂` subject to
-`x ≥ 0`.
+Lawson-Hanson non-negative least squares: minimize ``\\|\\mathbf{A}\\mathbf{x} - \\mathbf{b}\\|_2`` subject to
+``\\mathbf{x} \\ge 0``.
 
 Implemented here rather than pulled in as a dependency — it is forty lines, and
 the alternative in the ECHOES reference is an `nlopt` call.  Being an

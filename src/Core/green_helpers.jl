@@ -16,10 +16,12 @@
 """
     _A_and_Tn(C, n̂, ::Type{T}) -> (A, Tn)
 
-Pre-compute the n̂-only quantities used by every `Q̂_{nn}` evaluation:
+Pre-compute the `n̂`-only quantities used by every evaluation of
+``\\hat{\\boldsymbol{Q}}_{nn} = \\underline{n}\\cdot\\hat{\\mathbb{Q}}\\cdot\\underline{n}``:
 
-  * `Tn[i, p, q] = Σ_α C_{i α p q} n̂_α`          (3×3×3 array)
-  * `A[i, p]    = Σ_q Tn[i, p, q] n̂_q`            (3×3 = V(n̂) = K(n̂))
+  * `Tn`: ``(T_n)_{ipq} = \\sum_{\\alpha} C_{i\\alpha pq}\\,n_{\\alpha}`` (3×3×3 array)
+  * `A`: ``A_{ip} = \\sum_q (T_n)_{ipq}\\,n_q`` (3×3, ``\\boldsymbol{A} = \\boldsymbol{V}(\\underline{n}) = \\boldsymbol{N}(\\underline{n})``,
+    with ``\\boldsymbol{N}`` the acoustic tensor)
 
 Element type is the supplied `T = promote_type(...)`.
 """
@@ -61,12 +63,12 @@ end
 """
     _phi_cache(C, Tn, n̂, ξshat, ::Type{T}) -> (Vs, Ks, Kns)
 
-Pre-compute the three 3×3 matrices that depend only on `ξshat` (the
-in-plane unit direction):
+Pre-compute the three 3×3 matrices that depend only on `ξshat`, the
+in-plane unit direction written ``\\underline{u}`` below:
 
-  * `Vs[i, p]  = Σ_q Tn[i, p, q] ξshat_q                   = V(ξshat)`
-  * `Ks[i, j]  = Σ_{k,l} C_{i k j l} ξshat_k ξshat_l        = K(ξshat)`
-  * `Kns[i, j] = Σ_{k,l} C_{i k j l} (n̂_k ξshat_l + ξshat_k n̂_l)`
+  * `Vs`: ``(V_s)_{ip} = \\sum_q (T_n)_{ipq}\\,u_q``, i.e. ``\\boldsymbol{V}(\\underline{u})``
+  * `Ks`: ``(K_s)_{ij} = \\sum_{k,l} C_{ikjl}\\,u_k u_l``, i.e. the acoustic tensor ``\\boldsymbol{N}(\\underline{u})``
+  * `Kns`: ``(K_{ns})_{ij} = \\sum_{k,l} C_{ikjl}\\,(n_k u_l + u_k n_l)``
 
 `Ks` is built on its upper triangle only and `Kns` is obtained as
 `Vs + transpose(Vs)` — both follow from the major symmetry of `C` (see the
@@ -116,9 +118,11 @@ end
 """
     _qnn_pair_components(A, Vs, Ks, Kns, ca, sa, scale) -> SMatrix{3,3,T}
 
-`[Q̂_{nn}(ζp) + Q̂_{nn}(ζm)] · scale`, from the pre-computed φ-only quantities
-(`A, Vs, Ks, Kns`) and the α-only trigs (`ca = cos α`, `sa = sin α`), with a
-caller-supplied `scale` bundling the residual ρ / sin²α prefactor.
+``[\\hat{\\boldsymbol{Q}}_{nn}(\\underline{\\zeta}_p) + \\hat{\\boldsymbol{Q}}_{nn}(\\underline{\\zeta}_m)]``
+multiplied by `scale`, from the pre-computed ``\\varphi``-only quantities
+(`A, Vs, Ks, Kns`) and the ``\\alpha``-only trigs (`ca` ``= \\cos\\alpha``,
+`sa` ``= \\sin\\alpha``), with a caller-supplied `scale` bundling the residual
+``\\rho/\\sin^2\\alpha`` prefactor.
 
 This is the innermost loop of every crack COD back-end.  It used to write into
 a caller-owned `Matrix{T}` buffer and build ~10 heap `Matrix{T}` temporaries

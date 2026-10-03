@@ -22,9 +22,9 @@
 """
     _bulk_interface_T(intf, κ, μ, r) -> Matrix(2×2)
 
-Return the 2×2 jump matrix for the **bulk** (spherical, mode `Y₀`)
-state vector `(u_r, σ_rr)` at the interface of type `intf` located at
-radius `r` between layers of moduli `(κ, μ)` and `(κ⁺, μ⁺)`.  Only
+Return the 2×2 jump matrix for the **bulk** (spherical, mode ``Y_0``)
+state vector ``(u_r, \\sigma_{rr})`` at the interface of type `intf` located at
+radius ``r`` between layers of moduli ``(k, \\mu)`` and ``(k^+, \\mu^+)``.  Only
 the interface parameters and the radius enter the bulk jump; the
 adjacent layer moduli are provided for type promotion.
 """
@@ -78,9 +78,9 @@ end
 """
     _shear_interface_T(intf, κ, μ, r) -> Matrix(4×4)
 
-Return the 4×4 jump matrix for the **shear** (deviatoric, mode `Y₂`)
-state vector `(U, V, σ_rr/μ_ref, σ_rθ/μ_ref)` at the interface at
-radius `r`.
+Return the 4×4 jump matrix for the **shear** (deviatoric, mode ``Y_2``)
+state vector ``(U, W, \\sigma_{rr}, \\sigma_{r\\theta})`` at the interface at
+radius ``r``.
 """
 function _shear_interface_T end
 

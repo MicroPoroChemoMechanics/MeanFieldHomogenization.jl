@@ -37,7 +37,7 @@
 
 A composite spheroid has no single representative conductivity: its
 average flux must be obtained from the transfer-matrix recurrence, not
-from `(K₁ - K₀)·A`. See [`flux_gradient_loc`](@ref).
+from ``(\\boldsymbol{K}_1 - \\boldsymbol{K}_0)\\cdot\\boldsymbol{A}``. See [`flux_gradient_loc`](@ref).
 """
 Core.is_homogeneous_inclusion(::LayeredSpheroid) = false
 
@@ -45,9 +45,9 @@ Core.is_homogeneous_inclusion(::LayeredSpheroid) = false
     _spheroid_concentration(s, k₀) -> (αt, αa, βt, βa)
 
 The four real scalars parametrizing the transversely isotropic
-gradient (`α`) and flux (`β`) whole-inclusion concentration tensors,
-`t`/`a` for transverse/axial, computed once from the shared
-`(b/a)` ratios ([`spheroid_ba_ratios`](@ref)).
+gradient (``\\alpha``) and flux (``\\beta``) whole-inclusion concentration tensors,
+``t``/``a`` for transverse/axial, computed once from the shared
+``(b/a)`` ratios ([`spheroid_ba_ratios`](@ref)).
 """
 function _spheroid_concentration(s::LayeredSpheroid{T, N}, k₀) where {T, N}
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
@@ -64,8 +64,8 @@ end
     gradient_gradient_loc(s::LayeredSpheroid, K₁, K₀; kw...) -> TensTI{2,3}
 
 Whole-inclusion **gradient concentration tensor**
-`A_Ω = αₜ·(𝟙 - n⊗n) + αₐ·n⊗n` (`n` the spheroid's axis), such that
-`⟨∇T⟩_Ω = A_Ω · ∇T∞`. `K₁` is ignored (see the module docstring).
+``\\boldsymbol{A}_\\Omega = \\alpha_t\\,(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n}) + \\alpha_a\\,\\underline{n}\\otimes\\underline{n}`` (``\\underline{n}`` the spheroid's axis), such that
+``\\langle\\nabla T\\rangle_\\Omega = \\boldsymbol{A}_\\Omega\\cdot\\nabla T^{\\infty}``. `K₁` is ignored (see the module docstring).
 """
 function gradient_gradient_loc(
         s::LayeredSpheroid{T, N},
@@ -82,10 +82,12 @@ end
     flux_gradient_loc(s::LayeredSpheroid, K₁, K₀; kw...) -> TensTI{2,3}
 
 Whole-inclusion **average flux** per unit remote gradient,
-`⟨K∇T⟩_Ω = k₀·(βₜ·(𝟙 - n⊗n) + βₐ·n⊗n)`, `K₁` ignored.
+``\\boldsymbol{B}_\\Omega = k_0\\,\\bigl(\\beta_t\\,(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n}) + \\beta_a\\,\\underline{n}\\otimes\\underline{n}\\bigr)``,
+``\\langle\\boldsymbol{K}\\cdot\\nabla T\\rangle_\\Omega = \\boldsymbol{B}_\\Omega\\cdot\\nabla T^{\\infty}``, `K₁` ignored.
 
 Consistency: `conductivity_contribution = flux_gradient_loc - K₀ ⋅
-gradient_gradient_loc`, verified in the test suite (`N = ⟨B⟩ - K₀:A`,
+gradient_gradient_loc`, verified in the test suite
+(``\\boldsymbol{N}_K = \\boldsymbol{B}_\\Omega - \\boldsymbol{K}_0\\cdot\\boldsymbol{A}_\\Omega``,
 the same invariant as `LayeredSphere`'s).
 """
 function flux_gradient_loc(
@@ -103,8 +105,10 @@ end
     conductivity_contribution(s::LayeredSpheroid, K₁, K₀; kw...) -> TensTI{2,3}
 
 Size-independent **conductivity contribution tensor**
-`N_K = ⟨K∇T⟩_Ω - K₀ · ⟨∇T⟩_Ω`, assembled from the whole-inclusion
-average (the spheroid is heterogeneous, so `(K₁ - K₀)·A` does not
+``\\boldsymbol{N}_K = \\boldsymbol{B}_\\Omega - \\boldsymbol{K}_0\\cdot\\boldsymbol{A}_\\Omega``, i.e.
+``\\langle\\boldsymbol{K}\\cdot\\nabla T\\rangle_\\Omega - \\boldsymbol{K}_0\\cdot\\langle\\nabla T\\rangle_\\Omega`` per unit remote
+gradient, assembled from the whole-inclusion
+average (the spheroid is heterogeneous, so ``(\\boldsymbol{K}_1 - \\boldsymbol{K}_0)\\cdot\\boldsymbol{A}`` does not
 apply). `K₁` is ignored (see [`gradient_gradient_loc`](@ref)).
 """
 function Core.conductivity_contribution(
@@ -121,7 +125,7 @@ end
 """
     layer_conductivity_average(spheroid) -> TensISO{2,3}
 
-Voigt (volume) average of the layer conductivities, `Σ_k f_k k_k`
+Voigt (volume) average of the layer conductivities, ``\\sum_k f_k\\,k_k``
 (scalar, direction-independent — the Voigt/Reuss bounds only ever need
 the phase's volume-averaged property, not its shape).
 """
@@ -134,7 +138,7 @@ end
 """
     layer_resistivity_average(spheroid) -> TensISO{2,3}
 
-Reuss (volume) average of the layer resistivities, `Σ_k f_k / k_k`.
+Reuss (volume) average of the layer resistivities, ``\\sum_k f_k/k_k``.
 """
 function layer_resistivity_average(s::LayeredSpheroid{T, N}) where {T, N}
     k_layers = _spheroid_layer_moduli(s)
@@ -198,15 +202,15 @@ end
 """
     strain_strain_loc(s::LayeredSpheroid, C₁, C₀; D = 6, kw...) -> Tens{4,3}
 
-Volume-averaged strain concentration tensor `𝔸` of an elastic `n`-layer
-confocal spheroid, `⟨ε⟩ = 𝔸 : E`, ready for a mean-field scheme.
+Volume-averaged strain concentration tensor ``\\mathbb{A}`` of an elastic `n`-layer
+confocal spheroid, ``\\langle\\boldsymbol{\\varepsilon}\\rangle = \\mathbb{A}:\\boldsymbol{E}``, ready for a mean-field scheme.
 
 `C₁` is accepted for signature compatibility and **ignored**. `D` is the number
 of degrees kept per harmonic family; a single homogeneous spheroid is exact at
 any `D` and reproduces Eshelby, a layered one converges geometrically.
 
 Prolate and oblate alike, an oblate spheroid going through the complex
-substitution `q = iτ`. Only the default axis `ê₃` and perfect interfaces are
+substitution ``q = \\mathrm{i}\\tau``. Only the default axis ``\\underline{e}_3`` and perfect interfaces are
 supported — see [`spheroid_strain_concentration`](@ref).
 """
 function strain_strain_loc(
@@ -225,12 +229,12 @@ end
 Size-independent **stiffness contribution tensor** of a composite spheroid,
 
 ```math
-\\mathbb N_C = \\sum_k f_k\\,(\\mathbb C_k - \\mathbb C_0) : \\mathbb A_k .
+\\mathbb{N} = \\sum_k f_k\\,(\\mathbb{C}_k - \\mathbb{C}_0) : \\mathbb{A}_k .
 ```
 
 Assembled layer by layer, because a composite spheroid is heterogeneous and the
-`(ℂ₁ - ℂ₀) : 𝔸` of a homogeneous inhomogeneity does not apply. The per-layer
-`𝔸_k` come from [`spheroid_layer_strain_concentration`](@ref); the total `𝔸`
+``(\\mathbb{C}_1 - \\mathbb{C}_0):\\mathbb{A}`` of a homogeneous inhomogeneity does not apply. The per-layer
+``\\mathbb{A}_k`` come from [`spheroid_layer_strain_concentration`](@ref); the total ``\\mathbb{A}``
 alone cannot give this, the layers having different moduli. `C₁` is ignored.
 """
 function MFH_Core.stiffness_contribution(

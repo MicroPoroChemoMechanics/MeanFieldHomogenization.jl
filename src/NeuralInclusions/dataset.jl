@@ -132,7 +132,7 @@ const _HALTON_BURN = 32
 """
     sample_box(box, n; offset = 0) -> Matrix{Float64}
 
-`length(box) × n` matrix of raw feature vectors, from the Halton sequence.
+`length(box)` ``\\times\\, n`` matrix of raw feature vectors, from the Halton sequence.
 
 `offset` skips that many points, which is how a held-out set is drawn: pass
 `offset = n_train` and the two sets are disjoint yet drawn from the same
@@ -172,8 +172,8 @@ end
 """
     grid_box(box, npts) -> Matrix{Float64}
 
-Full tensor grid with `npts` points per feature — `length(box) × npts^d`
-columns. Used for error maps and for hitting the corners of the box, which a
+Full tensor grid with `npts` points per feature — `length(box)` rows by
+``n_{\\mathrm{pts}}^{d}`` columns, with ``n_{\\mathrm{pts}}`` = `npts` and ``d`` = `length(box)`. Used for error maps and for hitting the corners of the box, which a
 low-discrepancy sequence does not.
 """
 function grid_box(box::SampleBox, npts::Integer)
@@ -258,11 +258,11 @@ train, val = generate_dataset(geometry, response, spec, box, 4000; nvalidation =
 What the labels are depends on `spec`:
 
 - [`DimensionlessHill`](@ref) — one `response` call per sample, at the reference
-  medium built from the sampled `ν₀` (elasticity) or at unit conductivity
-  (transport); the target is `scale · ℙ`.
+  medium built from the sampled ``\\nu_0`` (elasticity) or at unit conductivity
+  (transport); the target is `scale` ``\\cdot\\,\\mathbb{P}``.
 - [`AffineHill`](@ref) — two `response` calls per sample at two different
-  Poisson ratios, and the shape tensors `𝕌ᴬ`, `𝕍ᴬ` are recovered by solving the
-  exact 2×2 affine system componentwise. `ν₀` must *not* be in the box: the
+  Poisson ratios, and the shape tensors ``\\mathbb{U}^{\\boldsymbol{A}}``, ``\\mathbb{V}^{\\boldsymbol{A}}`` are recovered by solving the
+  exact ``2\\times 2`` affine system componentwise. ``\\nu_0`` must *not* be in the box: the
   whole point is that it is not a degree of freedom.
 
 `atol` is the residual a label may leave when projected onto the class, and the
@@ -453,7 +453,7 @@ Standardization of both ends, and the per-component output transform, read off
 the **training** set only — the held-out set must not inform them.
 
 A component is fitted on a `:log` scale when it is strictly positive throughout
-and its dynamic range `max/min` exceeds `log_threshold`. That is the case of the
+and its dynamic range ``\\max/\\min`` exceeds `log_threshold`. That is the case of the
 oblate Walpole components as the aspect ratio goes to zero, which span decades
 and would otherwise monopolize a mean-squared loss.
 """
@@ -497,10 +497,12 @@ end
 
 Error of `s` over `data`, in the space the network predicts, at two granularities.
 
-**`max_block_error` — the headline number.** For each sample, the ∞-norm of the
-prediction error over *all* components, relative to the ∞-norm of the target:
+**`max_block_error` — the headline number.** For each sample, the ``\\infty``-norm of the
+prediction error over *all* components, relative to the ``\\infty``-norm of the target:
 
-    max_j ‖ẑⱼ − zⱼ‖_∞ / ‖zⱼ‖_∞ .
+```math
+\\max_j \\frac{\\|\\widetilde{\\mathbf{z}}_j - \\mathbf{z}_j\\|_\\infty}{\\|\\mathbf{z}_j\\|_\\infty} .
+```
 
 This is the quantity a test tolerance should be derived from, because it is the
 one that propagates: the decoded tensor is a linear combination of the whole
@@ -508,17 +510,19 @@ component vector, so what matters is the error relative to the tensor's own
 magnitude — not to that of its smallest entry. `worst` is an alias for it.
 
 **`max_rel_error` / `rms_rel_error` — the per-component diagnostic.** Component
-`i` on sample `j` is scored as
+``i`` on sample ``j`` is scored as
 
-    |ẑᵢⱼ − zᵢⱼ| / max(|zᵢⱼ|, floorᵢ) .
+```math
+\\frac{|\\hat z_{ij} - z_{ij}|}{\\max\\bigl(|z_{ij}|, \\mathrm{floor}_i\\bigr)} .
+```
 
 The floor is the component's own RMS over the set, so a component that merely
-passes through zero — the Walpole `ℓ₃` of a near-spherical inclusion — does not
+passes through zero — the Walpole ``\\ell_3`` of a near-spherical inclusion — does not
 report an unbounded error. When a component is **identically** zero over the
-whole set the floor falls back to the global RMS instead, which turns a `0/0`
+whole set the floor falls back to the global RMS instead, which turns a ``0/0``
 into the honest statement "this component is that fraction of the tensor's
-magnitude". A structurally-vanishing component is not a rarity: `𝕍ᴬ` has no `ℓ₃`
-at all, since the analytic kernel gives `p₃ = d·u₃` with no `1/μ₀` term.
+magnitude". A structurally-vanishing component is not a rarity: ``\\mathbb{V}^{\\boldsymbol{A}}`` has no ``\\ell_3``
+at all, since the analytic kernel gives ``p_3 = d\\,u_3`` with no ``1/\\mu_0`` term.
 """
 function validate_surrogate(s::NeuralSurrogate, data::Dataset)
     data.features == s.features || throw(

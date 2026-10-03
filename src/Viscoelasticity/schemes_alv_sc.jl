@@ -22,21 +22,21 @@
                         select_best = false) -> Matrix
 
 Self-consistent ALV homogenization.  Iterates the symmetric Picard
-fixed point on the `(6n × 6n)` block matrix until convergence.
+fixed point on the ``6n\\times 6n`` block matrix until convergence.
 
-The initial estimate is the discretized matrix kernel `C̃^0`. Each
+The initial estimate is the discretized matrix kernel ``\\widetilde{\\mathbb{C}}_0``. Each
 iteration rebuilds the per-phase Hill kernels using the current
 estimate's iso parameters, computes the dilute concentration tensors,
-and forms `C̃_{m+1}`.
+and forms ``\\widetilde{\\mathbb{C}}^{(m+1)}``.
 
 Returns the converged effective relaxation matrix.
 
 # Keyword arguments
 
-- `abstol`     — absolute Frobenius tolerance on `‖C̃_{m+1} − C̃_m‖`.
-- `reltol`     — additive relative tolerance (multiplied by `‖C̃_m‖`).
+- `abstol`     — absolute Frobenius tolerance on ``\\|\\widetilde{\\mathbb{C}}^{(m+1)} - \\widetilde{\\mathbb{C}}^{(m)}\\|``.
+- `reltol`     — additive relative tolerance (multiplied by ``\\|\\widetilde{\\mathbb{C}}^{(m)}\\|``).
 - `maxiters`   — hard iteration cap.
-- `damping`    — Picard relaxation `0 ≤ damping < 1` (0 = no damping).
+- `damping`    — Picard relaxation ``0 \\le`` `damping` ``< 1`` (0 = no damping).
 - `verbose`    — print residual norms each iteration.
 - `select_best`— return the best iterate seen (rather than the last)
   when convergence stalls.

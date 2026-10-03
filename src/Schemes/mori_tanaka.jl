@@ -96,7 +96,7 @@ end
 """
     _identity_like(P) -> AbstractTens
 
-Identity tensor of the same order/dimension as `P`. Used as the `A_dil`
+Identity tensor of the same order/dimension as `P`. Used as the ``\\mathbb{A}^{\\mathrm{dil}}``
 weight of the matrix in average-strain schemes (Mori-Tanaka,
 self-consistent, …).
 """

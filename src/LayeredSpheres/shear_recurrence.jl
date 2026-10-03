@@ -61,13 +61,14 @@
 """
     _shear_M_matrix(r, κ, μ) -> Matrix(4×4)
 
-Fundamental 4×4 matrix of the Y₂-harmonic deviatoric problem.  Columns
-1..4 are the four modes (r, r³, 1/r⁴, 1/r²) evaluated at `r` in an
-isotropic layer of moduli `(κ, μ)`; rows are the state vector
-`(U, V, τ_rr, τ_rθ)` with `τ = σ/μ`.
+Fundamental 4×4 matrix of the ``Y_2``-harmonic deviatoric problem.  Columns
+1..4 are the four modes ``(r, r^3, r^{-4}, r^{-2})`` evaluated at `r` in an
+isotropic layer of moduli ``(k, \\mu)``; rows are the state vector
+``\\mathbf S = (U, W, \\sigma_{rr}, \\sigma_{r\\theta})``, with the physical traction
+amplitudes (not divided by ``\\mu``).
 
-All entries are rational in `(κ, μ, r)`; no `1/(1−2ν)` remains, so the
-matrix is finite in the incompressibility limit `κ → ∞`.
+All entries are rational in ``(k, \\mu, r)``; no ``1/(1-2\\nu)`` remains, so the
+matrix is finite in the incompressibility limit ``k \\to \\infty``.
 """
 @inline function _shear_M_matrix(r, κ, μ)
     T = promote_type(typeof(r), typeof(κ), typeof(μ))
@@ -123,8 +124,8 @@ end
 """
     _shear_layer_transfer(r_out, r_in, κ, μ) -> Matrix(4×4)
 
-Intra-layer field-to-field transfer `S(r_out) = T · S(r_in)` computed
-as `M(r_out) · M(r_in)⁻¹`.
+Intra-layer field-to-field transfer ``\\mathbf S(r_{\\mathrm{out}}) = \\mathbf T\\,\\mathbf S(r_{\\mathrm{in}})`` computed
+as ``\\mathbf T = \\mathbf M(r_{\\mathrm{out}})\\,\\mathbf M(r_{\\mathrm{in}})^{-1}``.
 """
 @inline function _shear_layer_transfer(r_out, r_in, κ, μ)
     M_in = _shear_M_matrix(r_in, κ, μ)
@@ -135,10 +136,10 @@ end
 """
     _shear_seed_states(r_1, κ_1, μ_1) -> (probe_a, probe_b)
 
-Two independent probe state vectors at `r = r_1⁻` corresponding to the
-two regular amplitudes `(a₁, b₁) = (1, 0)` and `(0, 1)` (with
-`c₁ = d₁ = 0` forced by finiteness at the origin).  Returned as the
-matching columns of `M(r_1; κ_1, μ_1)`.
+Two independent probe state vectors at ``r = r_1^-`` corresponding to the
+two regular amplitudes ``(a_1, b_1) = (1, 0)`` and ``(0, 1)`` (with
+``c_1 = d_1 = 0`` forced by finiteness at the origin).  Returned as the
+matching columns of ``\\mathbf M(r_1; k_1, \\mu_1)``.
 """
 @inline function _shear_seed_states(r_1, κ_1, μ_1)
     T = promote_type(typeof(r_1), typeof(κ_1), typeof(μ_1))
@@ -151,9 +152,9 @@ end
 """
     _shear_extract_amplitudes(r, κ, μ, state) -> (a, b, c, d)
 
-Given the state `(U, V, τ_rr, τ_rθ)` at radius `r` in a layer of
-moduli `(κ, μ)`, return the local mode amplitudes `(a, b, c, d)` by
-solving `M(r; κ, μ) · x = state`.
+Given the state ``\\mathbf S = (U, W, \\sigma_{rr}, \\sigma_{r\\theta})`` at radius `r` in a layer of
+moduli ``(k, \\mu)``, return the local mode amplitudes ``(a, b, c, d)`` by
+solving ``\\mathbf M(r; k, \\mu)\\,\\mathbf x = \\mathbf S``.
 """
 @inline function _shear_extract_amplitudes(r, κ, μ, state)
     T = promote_type(typeof(r), typeof(κ), typeof(μ), eltype(state))
@@ -166,13 +167,13 @@ end
 
 Propagate the two linearly-independent probe state vectors from the core
 outward through every interface and every intermediate layer, and return
-them together with the combination coefficients `(λa, λb)` that match the
-remote far-field `(a_{N+1}, b_{N+1}) = (1, 0)`.
+them together with the combination coefficients ``(\\lambda_a, \\lambda_b)`` that match the
+remote far-field ``(a_{N+1}, b_{N+1}) = (1, 0)``.
 
 Shared by [`_shear_state_seq`](@ref) (which forms the composite states)
 and [`_shear_amplitude_seq`](@ref) (which forms the per-layer mode
 amplitudes).  Splitting the two lets the amplitude path keep the
-regularity zeros `c₁ = d₁ = 0` exactly instead of re-solving for them.
+regularity zeros ``c_1 = d_1 = 0`` exactly instead of re-solving for them.
 """
 function _shear_probe_seq(sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}) where {T, N}
     κμ = _bulk_layer_moduli(sphere)
@@ -219,8 +220,8 @@ end
     _shear_state_seq(sphere, C₀) -> NTuple{N, state⁻}, state⁺_N
 
 Composite state sequence inside every layer (at its outer-interface
-radius `r_k⁻`) and the state on the matrix side of the outer interface
-(`r_N⁺`), normalized to a unit remote deviatoric far-field.
+radius ``r_k^-``) and the state on the matrix side of the outer interface
+(``r_N^+``), normalized to a unit remote deviatoric far-field.
 """
 function _shear_state_seq(sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}) where {T, N}
     inside_a, inside_b, sa, sb, λa, λb, _ = _shear_probe_seq(sphere, C₀)
@@ -232,23 +233,23 @@ end
 """
     _shear_amplitude_seq(sphere, C₀) -> NTuple{N+1, NTuple{4, TP}}
 
-Per-region mode amplitudes `(a, b, c, d)` of the four Love /
-Christensen-Lo modes `(r, r³, 1/r⁴, 1/r²)`, for `k = 1..N` the layers and
-`k = N+1` the surrounding matrix, under a unit remote deviatoric strain.
+Per-region mode amplitudes ``(a, b, c, d)`` of the four Love /
+Christensen-Lo modes ``(r, r^3, r^{-4}, r^{-2})``, for ``k = 1, \\dots, N`` the layers and
+``k = N+1`` the surrounding matrix, under a unit remote deviatoric strain.
 
 Both end regions carry amplitudes that are known **exactly** and are
 therefore written down rather than recovered from a linear solve:
 
-- the core has `c₁ = d₁ = 0` (regularity at the origin) and
-  `(a₁, b₁) = (λa, λb)`, the very combination
+- the core has ``c_1 = d_1 = 0`` (regularity at the origin) and
+  ``(a_1, b_1) = (\\lambda_a, \\lambda_b)``, the very combination
   [`_shear_probe_seq`](@ref) solved for;
-- the matrix has `(a, b) = (1, 0)` by the far-field normalization.
+- the matrix has ``(a, b) = (1, 0)`` by the far-field normalization.
 
 Re-extracting those four zeros through `M(r) \\ state` would instead leave
-`O(eps)` residues, and a spurious `c ~ eps` is amplified by `1/r⁴` without
-bound as `r → 0` — the pointwise field in the core would lose all its
+`O(eps)` residues, and a spurious `c ~ eps` is amplified by ``1/r^4`` without
+bound as ``r \\to 0`` — the pointwise field in the core would lose all its
 digits near the center.  Only the genuinely unknown amplitudes are solved
-for: `(a, b, c, d)` in layers `2..N`, and `(c, d)` in the matrix.
+for: ``(a, b, c, d)`` in layers ``2, \\dots, N``, and ``(c, d)`` in the matrix.
 """
 function _shear_amplitude_seq(
         sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}
@@ -279,7 +280,7 @@ end
 """
     _shear_localization_single_layer(sphere, C₀) -> β::T
 
-For a single-layer (`N = 1`) composite sphere, delegate the deviatoric
+For a single-layer (``N = 1``) composite sphere, delegate the deviatoric
 localization to the existing `Ellipsoid(r)` Eshelby machinery.
 """
 function _shear_localization_single_layer(
@@ -295,14 +296,19 @@ end
 """
     _layer_avg_dev_shear_factor(r_a, r_b, κ, μ) -> Number
 
-Per-unit mode-2 amplitude `b` contribution to the layer-volume-averaged
-deviatoric strain in a spherical shell `(r_a, r_b)` (with `r_a = 0` for
-the innermost layer) of moduli `(κ, μ)`.  Equals
-`(21/5) · (3κ + μ)/μ · (r_b⁵ - r_a⁵) / (r_b³ - r_a³)` (Christensen-Lo
-mode-2 angular integral; modes 3 and 4 contribute zero to the dev β).
+Per-unit mode-2 amplitude ``b`` contribution to the layer-volume-averaged
+deviatoric strain in a spherical shell ``(r_a, r_b)`` (with ``r_a = 0`` for
+the innermost layer) of moduli ``(k, \\mu)``.  Equals
+
+```math
+F = \\frac{21}{5}\\,\\frac{3k + \\mu}{\\mu}\\,\\frac{r_b^5 - r_a^5}{r_b^3 - r_a^3}
+```
+
+(Christensen-Lo mode-2 angular integral; modes 3 and 4 contribute zero to
+the dev ``\\beta``).
 
 The full per-layer dev localization is therefore
-`β_k = a_k + b_k · _layer_avg_dev_shear_factor(r_a, r_b, κ_k, μ_k)`.
+``\\beta_k = a_k + b_k\\,F_k``, with ``F_k`` = `_layer_avg_dev_shear_factor(r_a, r_b, κ_k, μ_k)`.
 """
 @inline function _layer_avg_dev_shear_factor(r_a, r_b, κ, μ)
     T = promote_type(typeof(r_a), typeof(r_b), typeof(κ), typeof(μ))
@@ -316,15 +322,19 @@ end
 """
     _shear_localization_multi(sphere, C₀) -> NTuple{N}
 
-Multi-layer (`N ≥ 2`) per-layer deviatoric localization `β_k` from the
+Multi-layer (``N \\ge 2``) per-layer deviatoric localization ``\\beta_k`` from the
 4×4 state-vector recurrence.  For a spherical shell layer, the
 volume-averaged deviatoric strain involves both the mode-1 amplitude
-(uniform deviatoric part) **and** the mode-2 amplitude (whose r³
+(uniform deviatoric part) **and** the mode-2 amplitude (whose ``r^3``
 displacement profile contributes a non-zero integrated dev strain
-through the layer thickness).  Modes 3 (`1/r⁴`) and 4 (`1/r²`)
-integrate to zero.  The returned per-layer `β_k` is therefore
-`a_k + b_k · F_k` with `F_k = (21/5) (3κ_k + μ_k)/μ_k
-(r_k⁵ - r_{k-1}⁵)/(r_k³ - r_{k-1}³)`.
+through the layer thickness).  Modes 3 (``1/r^4``) and 4 (``1/r^2``)
+integrate to zero.  The returned per-layer ``\\beta_k`` is therefore
+``a_k + b_k\\,F_k`` with
+
+```math
+F_k = \\frac{21}{5}\\,\\frac{3k_k + \\mu_k}{\\mu_k}\\,
+      \\frac{r_k^5 - r_{k-1}^5}{r_k^3 - r_{k-1}^3}.
+```
 
 Reference: Hervé-Zaoui 1993, Christensen-Lo 1979.
 """
@@ -346,9 +356,9 @@ end
 """
     _shear_localization(sphere, C₀) -> NTuple{N}
 
-Per-layer deviatoric localization `β_k` under a remote unit deviatoric
+Per-layer deviatoric localization ``\\beta_k`` under a remote unit deviatoric
 far-field.  Dispatches to the single-layer Eshelby delegation for
-`N = 1` and to the state-vector recurrence for `N ≥ 2`.
+``N = 1`` and to the state-vector recurrence for ``N \\ge 2``.
 """
 function _shear_localization(
         sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}

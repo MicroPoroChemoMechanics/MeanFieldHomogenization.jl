@@ -31,7 +31,7 @@
 An `N`-layer coaxial, concentric spheroid in an isotropic matrix, solved by
 Fourier axisymmetric finite elements on the meridian half-plane.
 
-`axis_radii[ℓ]` and `disk_radii[ℓ]` are layer `ℓ`'s semi-axes along and across
+`axis_radii[ℓ]` and `disk_radii[ℓ]` are layer ``\\ell``'s semi-axes along and across
 the revolution axis, **ascending**, core first — the argument order of
 [`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid), so
 [`confocal_layer_radii`](@ref MeanFieldHomogenization.LayeredSpheroids.confocal_layer_radii)
@@ -47,8 +47,8 @@ physics.
 | `backend` | `AutoBackend()` | finite-element backend |
 
 Enters through **gate B**, with both localization tensors measured on the same
-solve: the inclusion is heterogeneous, so the stress side is not `ℂ₁ : 𝔸_εε`
-for any single `ℂ₁`.
+solve: the inclusion is heterogeneous, so the stress side is not ``\\mathbb{C}_1:\\mathbb{A}_{\\varepsilon\\varepsilon}``
+for any single ``\\mathbb{C}_1``.
 
 # Examples
 
@@ -152,7 +152,7 @@ _nlayers(s::FEAxiLayeredSpheroid) = length(s.axis_radii)
 """
     layer_volumes(incl) -> Vector
 
-Volume of each layer, `4π/3 · a² c` of its own boundary minus the one inside
+Volume of each layer, ``\\tfrac{4\\pi}{3}a^2 c`` of its own boundary minus the one inside
 it. Closed form for *any* semi-axes, confocal or not — which is what makes it
 the mesh check that is always available.
 """
@@ -248,7 +248,7 @@ end
 Mesh diagnostics: cell and node counts, and each layer's measured volume of
 revolution against its closed form.
 
-The closed form is `4πa²c/3` of the layer's own boundary minus the one inside
+The closed form is ``4\\pi a^2 c/3`` of the layer's own boundary minus the one inside
 it, which exists for **any** semi-axes — confocal or not. So this is the check
 that remains available on a geometry with no analytic solution at all, and it is
 worth running before a long solve on a nest that has not been tried: the

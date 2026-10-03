@@ -34,9 +34,11 @@
 """
     _build_acoustic_coeffs(C, α₀ζ, α₁ζ) -> (A₀, A₁, A₂)
 
-Build the three 3×3 coefficient matrices of `K(z) = A₀ + A₁·z + A₂·z²`
+Build the three 3×3 coefficient matrices of
+``\\boldsymbol{K}(z) = \\boldsymbol{A}_0 + \\boldsymbol{A}_1\\,z + \\boldsymbol{A}_2\\,z^2``
 given the stiffness `C` (Float64 `3×3×3×3` array) and the two linear
-coefficients of the wave-vector parametrization `ζ(z) = α₀ζ + α₁ζ · z`.
+coefficients `α₀ζ`, `α₁ζ` of the wave-vector parametrization
+``\\underline{\\zeta}(z) = \\underline{\\zeta}_0 + \\underline{\\zeta}_1\\,z``.
 
 Each `Aₖ` is a 3×3 matrix of real scalars ; they are assembled below
 into `ComplexF64` polynomial entries before root finding.
@@ -65,10 +67,11 @@ end
 """
     _build_poly_system(C, α₀ζ, α₁ζ) -> (K_poly, adj_poly, Q, dQ, roots_uhp)
 
-Build the polynomial acoustic tensor `K(z) = A₀ + A₁ z + A₂ z²`, its
-polynomial adjugate `adj(K)(z)`, the determinant `Q(z) = det K(z)` and
-its derivative `dQ(z)`, then compute the roots of `Q` lying in the
-strict upper half plane.
+Build the polynomial acoustic tensor
+``\\boldsymbol{K}(z) = \\boldsymbol{A}_0 + \\boldsymbol{A}_1\\,z + \\boldsymbol{A}_2\\,z^2``, its
+polynomial adjugate ``\\mathrm{adj}(\\boldsymbol{K})(z)``, the determinant
+``Q(z) = \\det\\boldsymbol{K}(z)`` and its derivative ``Q'(z)``, then compute
+the roots of ``Q`` lying in the strict upper half plane.
 
 All polynomial entries are `Polynomial{ComplexF64,:z}` (so that complex
 roots can be handled uniformly). The roots filter keeps only points
@@ -171,8 +174,8 @@ end
         -> (roots′, mults, refidx)
 
 Promote near-multiple Bairstow / Durand-Kerner roots to exact multiple ones
-by checking whether Q vanishes at the trial root for successively higher
-derivative levels (semantically: Q^(k-1)(z) ≈ 0 ⇒ multiplicity ≥ k) **and**
+by checking whether ``Q`` vanishes at the trial root for successively higher
+derivative levels (semantically: ``Q^{(k-1)}(z) \\approx 0 \\Rightarrow`` multiplicity ``\\ge k``) **and**
 whether a candidate "absorber" Bairstow root lies within a true-cluster
 distance. Each element of the returned vectors corresponds to one *cluster
 representative*; roots that have been absorbed into a higher-multiplicity
@@ -182,21 +185,21 @@ Three tolerances are used:
 
 * `ε_poly` — relative threshold on ``|Q^{(k-1)}(z)| / \\mathrm{scale}(Q^{(k-1)})``
   for the polynomial-vanishing test. 1e-3 catches multiplicities up to 6 in
-  a normalized degree-≤6 Q.
+  a normalized ``Q`` of degree ``\\le 6``.
 * `ε_match` — absolute distance in the complex plane below which an
   externally-supplied reference point is considered to coincide with a
   Bairstow root. Defaults to the Bairstow / Durand-Kerner precision floor,
   ~1e-4; **NOT** scale-dependent.
-* `ε_cluster` — max in-cluster distance. A true multiplicity-k root cluster
-  splits under finite precision into k Bairstow roots within ``ε^{1/k}``,
-  giving ~1e-8 for k=2, ~5e-6 for k=3, ~1e-4 for k=4. The default 1e-3
+* `ε_cluster` — max in-cluster distance. A true multiplicity-``k`` root cluster
+  splits under finite precision into ``k`` Bairstow roots within ``\\varepsilon^{1/k}``,
+  giving ~1e-8 for ``k=2``, ~5e-6 for ``k=3``, ~1e-4 for ``k=4``. The default 1e-3
   catches multiplicities up to 4 reliably while rejecting clustered-but-
-  distinct simple roots (which generically sit ≥ O(1e-2) apart even when
+  distinct simple roots (which generically sit ``\\ge O(10^{-2})`` apart even when
   they are close to each other in absolute terms). Multiplicities 5 and 6
   fall back to DECUHR. **This guard is essential**: the polynomial-derivative
   test alone gives false positives e.g. for the rotationally-symmetric
-  TI-aligned spheroid (Q has three close-but-simple root pairs and ``|Q'|/
-  \\mathrm{scale}(Q') < ε_{\\mathrm{poly}}`` at each one).
+  TI-aligned spheroid (``Q`` has three close-but-simple root pairs and ``|Q'|/
+  \\mathrm{scale}(Q') < \\varepsilon_{\\mathrm{poly}}`` at each one).
 
 If `ref` is provided (typically `complex(0,1)` for the Hill log_I term), it
 is treated as an extra reference point that must appear in the returned
@@ -293,8 +296,8 @@ end
 """
     _residue_logI(P, Q, mult) -> ComplexF64
 
-Residue at z=i (with Masson log factor folded in) for a numerator P and
-denominator Q of multiplicity `mult` at that point. Returns NaN+NaN·im if
+Residue at ``z = i`` (with Masson log factor folded in) for a numerator ``P`` and
+denominator ``Q`` of multiplicity `mult` at that point. Returns NaN+NaN·im if
 the multiplicity is beyond what is implemented.
 """
 function _residue_logI(P::Polynomial, Q::Polynomial, mult::Int)
@@ -331,8 +334,8 @@ end
 """
     _residue_logz(P, Q, z, mult) -> ComplexF64
 
-Residue at a general UHP root z (with Masson log factor folded in) for a
-numerator P and denominator Q with multiplicity `mult` at z. Returns
+Residue at a general UHP root ``z`` (with Masson log factor folded in) for a
+numerator ``P`` and denominator ``Q`` with multiplicity `mult` at ``z``. Returns
 NaN+NaN·im if `mult > 2` (the 3-formula was deemed too long to port; the
 caller falls back to DECUHR in that case).
 """

@@ -22,12 +22,12 @@
 """
     get_layer(s::LayeredSpheroid, q; side = :outer) -> Int
 
-Index of the region containing the confocal coordinate `q`: `1, …, N` for
-the layers, `N+1` for the surrounding matrix (`|q| > |q_N|`).
+Index of the region containing the confocal coordinate `q`: ``1, \\dots, N`` for
+the layers, ``N+1`` for the surrounding matrix (``|q| > |q_N|``).
 
-Exactly **on** an interface `|q| = |q_k|` the field has two limits and `side`
-picks one — `:outer` (default) the limit from outside, region `k+1`;
-`:inner` the limit from inside, region `k`. Same convention and same keyword
+Exactly **on** an interface ``|q| = |q_k|`` the field has two limits and `side`
+picks one — `:outer` (default) the limit from outside, region ``k+1``;
+`:inner` the limit from inside, region ``k``. Same convention and same keyword
 as [`get_layer`](@ref)`(::LayeredSphere, r)`; it matters for a
 [`KapitzaInterface`](@ref), across which the temperature itself jumps.
 """
@@ -79,12 +79,11 @@ end
 end
 
 """
-    _spheroid_field_coeffs(s, k₀, q, p; N_only = nothing)
-        -> (layer, k_layer, Aa, Ba, At, Bt)
+    _spheroid_field_coeffs(s, k₀) -> (Xa, Xt)
 
-The layer containing `q`, its conductivity (matrix `k₀` if `q` lies
-outside the spheroid), and the axial/transverse coefficient
-sub-vectors valid there.
+The axial and transverse coefficient sequences ``X_\\ell = [A_\\ell; B_\\ell]``,
+``\\ell = 1, \\dots, N+1``, of [`spheroid_state_sequence`](@ref), solved once for
+every region.
 """
 function _spheroid_field_coeffs(s::LayeredSpheroid{T, N}, k₀) where {T, N}
     Xa = spheroid_state_sequence(s, k₀, false)
@@ -96,7 +95,7 @@ end
     local_temperature(s, k₀, q, p, φ; H_axial = 1.0, H_trans = 0.0) -> T
 
 Temperature at the spheroidal point `(q, p, φ)` (own frame) under a
-remote gradient `H_axial·axis + H_trans·ê₁` (superposition of the
+remote gradient ``H_{\\mathrm{axial}}\\,\\underline{e}_3 + H_{\\mathrm{trans}}\\,\\underline{e}_1`` (``\\underline{e}_3`` the revolution axis; superposition of the
 axial and transverse canonical problems, eq:Taxi/eq:Ttrans).
 """
 function local_temperature(
@@ -129,12 +128,12 @@ end
 """
     local_gradient(s, k₀, q, p, φ; H_axial = 1.0, H_trans = 0.0) -> (g₁, g₂, g₃)
 
-Temperature gradient `∇T` at `(q, p, φ)` (own frame, real Cartesian
+Temperature gradient ``\\nabla T`` at `(q, p, φ)` (own frame, real Cartesian
 triple), under the same remote loading as [`local_temperature`](@ref).
 
-Valid on the revolution axis (`|p| = 1`) as well, where the `(q, p, φ)` chart
+Valid on the revolution axis (``|p| = 1``) as well, where the ``(q, p, \\varphi)`` chart
 itself degenerates: the two `0/0` the naive expression carries there are
-removed exactly, using `P¹ₙ = -√(1-p²) P′ₙ` and the Legendre equation, so the
+removed exactly, using ``P_n^1 = -\\sqrt{1-p^2}\\,P_n'`` and the Legendre equation, so the
 value on the axis is the limit of the values around it and — as it must be —
 independent of the azimuth, which is undefined there.
 """
@@ -220,7 +219,7 @@ end
 """
     local_flux(s, k₀, q, p, φ; H_axial = 1.0, H_trans = 0.0) -> (u₁, u₂, u₃)
 
-Heat/mass flux `u = -k(x)·∇T` at `(q, p, φ)` (own frame), `k(x)` the
+Heat/mass flux ``\\underline{q} = -k(\\underline{x})\\,\\nabla T`` at `(q, p, φ)` (own frame), ``k(\\underline{x})`` the
 conductivity of the layer containing the point (or `k₀` outside the
 spheroid).
 """
@@ -298,13 +297,13 @@ local_flux(
     _split_remote_gradient(G) -> (H_axial, H_trans, φ₀)
 
 Decompose a remote gradient given in the spheroid's own frame into the two
-canonical loadings the recurrence solves: the axial magnitude `G₃`, the
-transverse magnitude `√(G₁²+G₂²)`, and the azimuth `φ₀ = atan(G₂, G₁)` the
+canonical loadings the recurrence solves: the axial magnitude ``G_3``, the
+transverse magnitude ``\\sqrt{G_1^2+G_2^2}``, and the azimuth ``\\varphi_0 = \\operatorname{atan2}(G_2, G_1)`` the
 transverse one points along.
 
 By axisymmetry the transverse solution for a general in-plane direction is
-the canonical `ê₁` one evaluated at the shifted azimuth `φ − φ₀` and rotated
-back by `φ₀` — which is also true, vacuously, of the axial part, so a single
+the canonical ``\\underline{e}_1`` one evaluated at the shifted azimuth ``\\varphi - \\varphi_0`` and rotated
+back by ``\\varphi_0`` — which is also true, vacuously, of the axial part, so a single
 shifted evaluation carries both.
 """
 @inline function _split_remote_gradient(G)
@@ -322,7 +321,7 @@ end
     local_temperature(s_or_fields, [k₀,] q, p, φ, ∇T∞) -> Number
 
 Temperature at `(q, p, φ)` under a remote uniform gradient `∇T∞` given as a
-**vector in the spheroid's own frame** (revolution axis ≡ local `ê₃`).
+**vector in the spheroid's own frame** (revolution axis ≡ local ``\\underline{e}_3``).
 
 Vector form of the axial/transverse entry point above, harmonized with
 [`local_temperature`](@ref MeanFieldHomogenization.LayeredSpheres.local_temperature)`(::LayeredSphereTransportFields, x, ∇T∞)`.
@@ -353,7 +352,7 @@ end
 """
     local_flux(s_or_fields, [k₀,] q, p, φ, ∇T∞) -> NTuple{3}
 
-Flux `u = −k(x)·∇T` at `(q, p, φ)` under a remote uniform gradient `∇T∞`
+Flux ``\\underline{q} = -k(\\underline{x})\\,\\nabla T`` at `(q, p, φ)` under a remote uniform gradient `∇T∞`
 given as a vector in the spheroid's own frame.
 """
 local_flux(s::LayeredSpheroid, k₀, q, p, φ, ∇T∞) =
@@ -367,8 +366,8 @@ end
 """
     local_gradient_gradient_loc(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
 
-Pointwise gradient-gradient localization `𝐀(q,p,φ)`, so that
-`∇T = 𝐀 · ∇T∞` for any remote uniform gradient, in the spheroid's own frame.
+Pointwise gradient-gradient localization ``\\boldsymbol{A}(q, p, \\varphi)``, so that
+``\\nabla T = \\boldsymbol{A}\\cdot\\nabla T^{\\infty}`` for any remote uniform gradient, in the spheroid's own frame.
 
 Unlike the sphere's, this tensor is **not** transversely isotropic about the
 local radial direction — a confocal spheroid is not rotation-invariant about
@@ -389,7 +388,7 @@ end
 """
     local_flux_gradient_loc(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
 
-Pointwise flux-gradient localization `−k(x) 𝐀(q,p,φ)`: `q = ... · ∇T∞` with
+Pointwise flux-gradient localization ``-k(\\underline{x})\\,\\boldsymbol{A}(q, p, \\varphi)``: ``\\underline{q} = -k(\\underline{x})\\,\\boldsymbol{A}\\cdot\\nabla T^{\\infty}`` with
 the Fourier / Fick sign convention.
 """
 local_flux_gradient_loc(s::LayeredSpheroid, k₀, q, p, φ) =
@@ -406,8 +405,8 @@ end
 """
     local_gradient_flux_loc(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
 
-Pointwise gradient-flux localization `𝐀 · K₀⁻¹`: the local gradient under a
-remote uniform **flux** `q∞`.
+Pointwise gradient-flux localization ``-\\boldsymbol{A}\\cdot\\boldsymbol{K}_0^{-1}``: the local gradient under a
+remote uniform **flux** ``\\underline{q}^{\\infty}``.
 """
 local_gradient_flux_loc(s::LayeredSpheroid, k₀, q, p, φ) =
     local_gradient_flux_loc(LayeredSpheroidTransportFields(s, k₀), q, p, φ)
@@ -419,7 +418,7 @@ local_gradient_flux_loc(f::LayeredSpheroidTransportFields, q, p, φ) =
     local_flux_flux_loc(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
 
 Pointwise flux-flux localization: the local flux under a remote uniform
-**flux** `q∞`.
+**flux** ``\\underline{q}^{\\infty}``.
 """
 local_flux_flux_loc(s::LayeredSpheroid, k₀, q, p, φ) =
     local_flux_flux_loc(LayeredSpheroidTransportFields(s, k₀), q, p, φ)

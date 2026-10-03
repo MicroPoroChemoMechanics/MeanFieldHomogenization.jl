@@ -16,10 +16,10 @@
 
 Dilute scheme on the stiffness side for property `:p`. Solid inclusions
 contribute via the size-independent stiffness contribution tensor
-``\\mathbb N``; cracks via their associated
-``\\mathbb N_\\text{crack} = -\\mathbb C_0 : \\mathbb H : \\mathbb C_0``
-weighted by the geometry-specific Budiansky prefactor (`4π/3` for an
-elliptic crack, `π` for a ribbon crack).
+``\\mathbb{N}``; cracks via their associated
+``\\mathbb{N}^{\\mathrm{crack}} = -\\mathbb{C}_0:\\mathbb{H}:\\mathbb{C}_0``
+weighted by the geometry-specific Budiansky prefactor (``4\\pi/3`` for an
+elliptic crack, ``\\pi`` for a ribbon crack).
 
 References: [eshelby1957, kachanov2018](@citet).
 """

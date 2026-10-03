@@ -5,7 +5,7 @@ Superspherical and superspheroidal morphologies: shapes of the family
 
 ```math
 |x/a|^{2p} + |y/a|^{2p} + |z/a|^{2p} \\le 1
-\\qquad\\text{and}\\qquad
+\\qquad\\mathrm{and}\\qquad
 (\\rho/a)^{2p} + |z/c|^{2p} \\le 1 ,
 ```
 

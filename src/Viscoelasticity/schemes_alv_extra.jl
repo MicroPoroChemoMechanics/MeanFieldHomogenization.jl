@@ -59,11 +59,17 @@ end
 Asymmetric self-consistent viscoelastic homogenization.  The
 iteration update reads
 
-    `C^{n+1} = C_M + Σ_i f_i (C_i − C_M) ∘ A^{dil,i}(C^n)`,
+```math
+\\widetilde{\\mathbb{C}}^{(m+1)} = \\widetilde{\\mathbb{C}}_{\\mathrm{M}}
+  + \\sum_i f_i\\,(\\widetilde{\\mathbb{C}}_i - \\widetilde{\\mathbb{C}}_{\\mathrm{M}})
+    \\circ\\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}}\\bigl(\\widetilde{\\mathbb{C}}^{(m)}\\bigr),
+```
 
-mirroring the reference ASC form.  Returns the
-`(6n × 6n)` effective relaxation matrix once the residual
-`‖C^{n+1} − C^n‖_F` falls below `abstol + reltol · ‖C^n‖_F` (or after
+with ``\\widetilde{\\mathbb{C}}_{\\mathrm{M}}`` the matrix kernel and ``m`` the iteration
+index, mirroring the reference ASC form.  Returns the
+``6n\\times 6n`` effective relaxation matrix once the residual
+``\\|\\widetilde{\\mathbb{C}}^{(m+1)} - \\widetilde{\\mathbb{C}}^{(m)}\\|_F`` falls below
+`abstol` + `reltol` ``\\times\\,\\|\\widetilde{\\mathbb{C}}^{(m)}\\|_F`` (or after
 `maxiters` Picard steps).
 """
 function asymmetric_self_consistent_alv(
@@ -235,9 +241,9 @@ This matters only for the differential scheme.  The ALV Hill kernel
 [`hill_kernel`](@ref) exists for an isotropic reference **only**, and
 where Mori-Tanaka or the dilute scheme evaluate it against the (fixed,
 isotropic) matrix, the differential scheme evaluates it against the
-running estimate `C̃(τ)` — which an aligned, non-spherical inclusion
+running estimate ``\\widetilde{\\mathbb{C}}^{\\mathrm{hom}}(\\tau)`` — which an aligned, non-spherical inclusion
 progressively takes out of the iso class.  Rather than silently reading
-`(α, β)` off a matrix that is no longer isotropic, the ODE refuses to
+``(\\alpha, \\beta)`` off a matrix that is no longer isotropic, the ODE refuses to
 start (see [`differential_alv`](@ref)).
 
 An isotropic orientation average (`symmetrize = :iso`) restores the
@@ -275,25 +281,26 @@ end
                       formulation = :stiffness) -> Matrix{T}
 
 Differential homogenization in ageing linear viscoelasticity, solved
-as a SciML ODE on the fictitious incorporation time `τ ∈ [0, 1]`
+as a SciML ODE on the fictitious incorporation time ``\\tau \\in [0, 1]``
 [norris1985](@cite):
 
 ```math
-\\frac{\\mathrm d \\tilde{\\mathbb C}}{\\mathrm d \\tau}
-  = \\sum_\\alpha \\frac{\\mathrm d \\varphi_\\alpha}{\\mathrm d \\tau}
-                  (\\tilde{\\mathbb C}_\\alpha - \\tilde{\\mathbb C})
-                  \\circ \\tilde{\\mathbb A}_\\alpha^{dil}(\\tilde{\\mathbb C})
-   + \\sum_c \\frac{\\mathrm d \\varepsilon_c}{\\mathrm d \\tau}
-              \\Delta\\tilde{\\mathbb C}^{crack}_c(\\tilde{\\mathbb C})
+\\frac{\\mathrm{d}\\widetilde{\\mathbb{C}}^{\\mathrm{hom}}}{\\mathrm{d}\\tau}
+  = \\sum_i \\frac{\\mathrm{d}\\varphi_i}{\\mathrm{d}\\tau}
+                  (\\widetilde{\\mathbb{C}}_i - \\widetilde{\\mathbb{C}}^{\\mathrm{hom}})
+                  \\circ\\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}}(\\widetilde{\\mathbb{C}}^{\\mathrm{hom}})
+   + \\sum_c \\frac{\\mathrm{d}\\varepsilon_c}{\\mathrm{d}\\tau}
+              \\Delta\\widetilde{\\mathbb{C}}^{\\mathrm{crack}}_c(\\widetilde{\\mathbb{C}}^{\\mathrm{hom}})
 ```
 
-with the volume balance `df = (𝟙 − f ⊗ 𝐔)·dφ` inverted by Sherman-
+with the volume balance ``[\\mathrm{d}f] = (\\mathbb 1 - [f]\\,\\mathbf{U}^{\\!T})\\,[\\mathrm{d}\\varphi]`` inverted by Sherman-
 Morrison for solid phases (cracks contribute their density derivative
-directly).  `nsteps` is the density of save points along τ ; the
+directly).  `nsteps` is the density of save points along ``\\tau`` ; the
 integration step is controlled by `abstol` / `reltol`.
 
 `formulation = :compliance` integrates the dual ODE on the creep
-function `J̃ = C̃^{-vol}` instead, through `H̃_α = −J̃ ∘ Ñ_α ∘ J̃`, and
+function ``\\widetilde{\\mathbb{L}}^{\\mathrm{hom}} = (\\widetilde{\\mathbb{C}}^{\\mathrm{hom}})^{-\\circ}`` instead, through
+``\\widetilde{\\mathbb{H}}_i = -\\widetilde{\\mathbb{L}}^{\\mathrm{hom}}\\circ\\widetilde{\\mathbb{N}}_i\\circ\\widetilde{\\mathbb{L}}^{\\mathrm{hom}}``, and
 inverts the result — the same choice as the elastic
 [`DifferentialScheme`](@ref).
 

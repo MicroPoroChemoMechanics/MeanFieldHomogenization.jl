@@ -41,20 +41,22 @@
     _cod_iso_ellipse_thermal(c::EllipticCrack, k₀) -> Real
 
 Closed-form thermal COD scalar ``b`` of an elliptic crack of aspect
-ratio ``\\eta = b/a`` in an isotropic conductor ``\\mathbf K_0 =
-k_0\\,\\mathbf 1``:
+ratio ``\\eta = b/a`` in an isotropic conductor ``\\boldsymbol{K}_0 =
+k_0\\,\\boldsymbol{1}``:
 
-```
-b = 4 / (3 · k₀ · 𝓔_η) ,   𝓔_η = 𝓔(√(1-η²))
+```math
+b = \\frac{4}{3\\,k_0\\,\\mathcal{E}_\\eta} ,
+\\qquad
+\\mathcal{E}_\\eta = \\mathcal{E}\\bigl(\\sqrt{1-\\eta^{2}}\\bigr)
 ```
 
-with ``\\mathcal E_\\eta`` the complete elliptic integral of the second
+with ``\\mathcal{E}_\\eta`` the complete elliptic integral of the second
 kind [abramowitz1972](@cite). Penny-crack
 limit ``\\eta=1``: ``b = 8/(3\\pi k_0)``, which is the surface average of
 the textbook jump ``[\\![T]\\!](r) = \\frac{4\\sigma_n a}{\\pi k_0}
 \\sqrt{1-r^2/a^2}`` divided by ``a``.
 
-This is the ``\\mathbf K_0 = k_0\\mathbf 1`` case of
+This is the ``\\boldsymbol{K}_0 = k_0\\,\\boldsymbol{1}`` case of
 [`_cod_aniso_ellipse_thermal`](@ref) (there ``\\lambda_1 = k_0^2`` and
 ``\\eta' = \\eta``); it is kept as a specialization only to skip the
 adjugate and the 2×2 eigenvalue problem.
@@ -71,12 +73,12 @@ end
 Closed-form thermal COD scalar of a ribbon (tunnel) crack in an
 isotropic conductor:
 
-```
-b = π / (2 k₀) .
+```math
+b = \\frac{\\pi}{2\\,k_0} .
 ```
 
 The 2-D counterpart of the elliptic formula: the contour integral
-collapses to the single direction ``\\hat{\\mathbf m}`` and the shape
+collapses to the single direction ``\\underline{m}`` and the shape
 coefficient is ``\\chi^{\\mathcal R} = \\pi/4`` instead of
 ``\\chi^{\\mathcal E} = 2/3``
 [sevostianov2002, kachanov2018](@cite).
@@ -93,9 +95,9 @@ end
     _adj3_sym(K) -> (a11, a22, a33, a12, a13, a23)
 
 The six independent entries of the adjugate
-``\\mathrm{adj}\\,\\mathbf K = \\det\\mathbf K\\;\\mathbf K^{-1}`` of a
+``\\mathrm{adj}\\,\\boldsymbol{K} = \\det\\boldsymbol{K}\\;\\boldsymbol{K}^{-1}`` of a
 **symmetric** 3×3, by cofactors. Division-free, hence stable at small
-``\\det\\mathbf K`` and evaluable on `ForwardDiff.Dual` and symbolic scalars —
+``\\det\\boldsymbol{K}`` and evaluable on `ForwardDiff.Dual` and symbolic scalars —
 which `det` composed with `inv` would also be, but at the cost of a division
 the crack formulas immediately cancel.
 """
@@ -116,45 +118,45 @@ end
 Closed-form thermal COD scalar of an elliptic crack in an **arbitrarily
 anisotropic** conductor. Unlike elasticity, the order-2 problem needs no
 symmetry assumption: the acoustic form
-``\\underline\\xi\\cdot\\mathbf K_0\\cdot\\underline\\xi`` is a scalar, so the
+``\\underline{\\xi}\\cdot\\boldsymbol{K}_0\\cdot\\underline{\\xi}`` is a scalar, so the
 kernel integral closes in every case,
 
 ```math
-\\hat Q^{\\star}_{nn}(\\underline\\xi^{\\star})
-= \\tfrac12\\sqrt{(\\underline n\\wedge\\underline\\xi^{\\star})\\cdot
-                 \\mathrm{adj}\\,\\mathbf K_0\\cdot
-                 (\\underline n\\wedge\\underline\\xi^{\\star})} .
+\\hat{Q}^{\\star}_{nn}(\\underline{\\xi}^{\\star})
+= \\tfrac12\\sqrt{(\\underline{n}\\wedge\\underline{\\xi}^{\\star})\\cdot
+                 \\mathrm{adj}\\,\\boldsymbol{K}_0\\cdot
+                 (\\underline{n}\\wedge\\underline{\\xi}^{\\star})} .
 ```
 
 On the crack contour this leaves the 2×2 form
 
 ```math
-\\mathbf Q_2 = \\begin{pmatrix}
+\\mathbf{Q}_2 = \\begin{pmatrix}
   \\eta^{2} A & -\\eta B\\\\ -\\eta B & C\\end{pmatrix},
 \\quad
-A = \\hat{\\mathbf m}\\cdot\\mathrm{adj}\\mathbf K_0\\hat{\\mathbf m},\\;
-B = \\hat{\\mathbf m}\\cdot\\mathrm{adj}\\mathbf K_0\\hat{\\boldsymbol\\ell},\\;
-C = \\hat{\\boldsymbol\\ell}\\cdot\\mathrm{adj}\\mathbf K_0\\hat{\\boldsymbol\\ell},
+A = \\underline{m}\\cdot\\mathrm{adj}\\,\\boldsymbol{K}_0\\cdot\\underline{m},\\;
+B = \\underline{m}\\cdot\\mathrm{adj}\\,\\boldsymbol{K}_0\\cdot\\underline{\\ell},\\;
+C = \\underline{\\ell}\\cdot\\mathrm{adj}\\,\\boldsymbol{K}_0\\cdot\\underline{\\ell},
 ```
 
 whose eigenvalues ``\\lambda_1\\ge\\lambda_2>0`` give
 
 ```math
-b = \\frac{4}{3\\sqrt{\\lambda_1}\\,\\mathcal E_{\\eta'}},
+b = \\frac{4}{3\\sqrt{\\lambda_1}\\,\\mathcal{E}_{\\eta'}},
 \\qquad \\eta' = \\sqrt{\\lambda_2/\\lambda_1} .
 ```
 
 So an anisotropic conductor behaves as an **isotropic** one of conductivity
 ``\\sqrt{\\lambda_1}`` around a crack of **effective** aspect ratio ``\\eta'``;
 ``\\eta'\\ne\\eta`` in general, so even a circular crack acquires an effective
-ellipticity. Reduces to ``4/(3k_0\\mathcal E_\\eta)`` for
-``\\mathbf K_0 = k_0\\mathbf 1`` and to
-``b = 4/(3\\sqrt{k_tk_n}\\,\\mathcal E_\\eta)`` for a TI conductor aligned with
-``\\hat{\\mathbf n}`` (the geometric mean of the two conductivities).
+ellipticity. Reduces to ``4/(3k_0\\mathcal{E}_\\eta)`` for
+``\\boldsymbol{K}_0 = k_0\\,\\boldsymbol{1}`` and to
+``b = 4/(3\\sqrt{k_tk_n}\\,\\mathcal{E}_\\eta)`` for a TI conductor aligned with
+``\\underline{n}`` (the geometric mean of the two conductivities).
 
 Being a 2×2 eigenvalue problem, this is closed form and **type-generic** —
 `ForwardDiff.Dual` and symbolic scalars included. It replaces the
-``\\mathbf K_0^{-1/2}`` route of [giraudMOM2019](@citet),
+``\\boldsymbol{K}_0^{-1/2}`` route of [giraudMOM2019](@citet),
 which is equivalent but needs `eigen` on a 3×3 and `svdvals`, and so is
 restricted to `Float64`. Derived in
 `scripts/16_cod_symbolic_thermal.jl`.
@@ -193,16 +195,16 @@ end
 
 Closed-form thermal COD scalar of a ribbon crack in an arbitrarily
 anisotropic conductor.  The contour integral collapses to the single
-direction ``\\hat{\\mathbf m}``, so
-``\\hat Q^{\\star}_{nn}(\\hat{\\mathbf m})
-= \\tfrac12\\sqrt{\\det(\\mathbf K_0|_{(\\hat{\\mathbf m},\\hat{\\mathbf n})})}``
-and, with ``\\chi^{\\mathcal R} = \\pi/4``,
+direction ``\\underline{m}``, so
+``\\hat{Q}^{\\star}_{nn}(\\underline{m})
+= \\tfrac12\\sqrt{\\det(\\boldsymbol{K}_0|_{(\\underline{m},\\underline{n})})}``
+and, with ``\\chi^{\\mathcal{R}} = \\pi/4``,
 
-```
-b = π / (2 · √det(K₀|_{(m̂,n̂)})) .
+```math
+b = \\frac{\\pi}{2\\sqrt{\\det\\bigl(\\boldsymbol{K}_0|_{(\\underline{m},\\underline{n})}\\bigr)}} .
 ```
 
-Only the 2×2 block of ``\\mathbf K_0`` restricted to the plane spanned by the
+Only the 2×2 block of ``\\boldsymbol{K}_0`` restricted to the plane spanned by the
 in-plane crack direction and the crack normal enters — the transverse plane of
 the tunnel.  Reduces to ``b = \\pi/(2k_0)`` for an isotropic conductor.
 """

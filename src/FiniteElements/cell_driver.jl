@@ -51,9 +51,9 @@
 """
     _cell_close_dipole(L_s, L_u, F) -> (L, dipole_norm)
 
-Superpose the remote and unit-dipole families: `L = (𝕀 − L_u F)⁻¹ L_s`.
+Superpose the remote and unit-dipole families: ``\\mathbb{L} = (\\mathbb{I} - \\mathbb{L}_u\\mathbb{F})^{-1}\\mathbb{L}_s``.
 
-`dipole_norm = ‖L_u F‖` is the diagnostic to watch rather than the answer: the
+`dipole_norm` ``= \\|\\mathbb{L}_u\\mathbb{F}\\|`` is the diagnostic to watch rather than the answer: the
 dipole term is ``O((a/R)^3)``, so a log-log slope of ``-3`` against `R` says the
 correction is doing what it claims.
 """
@@ -89,7 +89,7 @@ end
         -> (; A, A_uncorrected, L_s, L_u, dipole_norm)
 
 The gradient localization tensor of the cavity, corrected and uncorrected, as a
-`3×3` in the cell's frame.
+``3\\times 3`` in the cell's frame.
 
 Six solves on one factorization: three with the remote gradient
 ``\\nabla T = \\underline e_i`` and three with a unit-moment dipole. `sign`
@@ -132,10 +132,10 @@ _iso3(k₀::Real) = Matrix(Float64(k₀) * LinearAlgebra.I, 3, 3)
         -> (; A, A_uncorrected, L_s, L_u, dipole_norm)
 
 The strain localization tensor of the cavity, corrected and uncorrected, as a
-`6×6` in Kelvin-Mandel.
+``6\\times 6`` in Kelvin-Mandel.
 
 Twelve solves on one factorization: six with the remote strain
-``\\varepsilon = \\underline{\\underline e}_i`` of the Kelvin basis — which is
+``\\boldsymbol\\varepsilon = \\boldsymbol{e}_i`` of the Kelvin basis — which is
 what makes a unit load a unit load, the map being an isometry — and six with a
 unit-moment dipole.
 """
@@ -212,11 +212,11 @@ end
 """
     _cell_parity(E) -> NTuple{3, Int8}
 
-Parity of a load case under the three coordinate reflections: `χ[k] = +1` when
-`R_k E R_k == E`, `-1` when `R_k E R_k == -E`.
+Parity of a load case under the three coordinate reflections: ``\\chi_k = +1`` when
+``\\boldsymbol{R}_k\\boldsymbol{E}\\boldsymbol{R}_k = \\boldsymbol{E}``, ``-1`` when ``\\boldsymbol{R}_k\\boldsymbol{E}\\boldsymbol{R}_k = -\\boldsymbol{E}``.
 
-`R_k` flips the sign of every entry with exactly one index equal to `k`, so the
-test is whether the off-diagonal row `k` vanishes. Accepts a `3×3` matrix (a
+``\\boldsymbol{R}_k`` flips the sign of every entry with exactly one index equal to ``k``, so the
+test is whether the off-diagonal row ``k`` vanishes. Accepts a ``3\\times 3`` matrix (a
 strain or a dipole moment) or a 3-tuple (a gradient or a flux moment).
 
 Every Kelvin basis tensor and every unit vector is an eigenvector of all three
@@ -235,19 +235,23 @@ _cell_parity(v::Union{Tuple, AbstractVector}) =
 """
     _cell_mask(χ) -> Vector{Float64}
 
-Kelvin-component mask of the parity class `χ`: `1.0` on the components a load
+Kelvin-component mask of the parity class ``\\chi``: `1.0` on the components a load
 case of that class can produce, `0.0` on the others.
 
 **An octant average is not one eighth of the whole.** Reflecting the surface
 integral over the eight octants gives
 
-    ∫_{∂I} (u ⊗ n)ˢ dS  =  Σ_{g ∈ G} χ(g) · g I_oct g  =  8 · P_χ(I_oct),
+```math
+\\int_{\\partial I}(\\underline{u}\\stackrel{s}{\\otimes}\\underline{n})\\,\\mathrm{d}S
+= \\sum_{g\\in G}\\chi(g)\\,g\\,\\boldsymbol{I}_{\\mathrm{oct}}\\,g
+= 8\\,\\boldsymbol{P}_\\chi(\\boldsymbol{I}_{\\mathrm{oct}}),
+```
 
 so the components whose parity differs from the load case cancel *between*
-octants rather than vanishing in each. They are not small in `I_oct`; they are
+octants rather than vanishing in each. They are not small in ``\\boldsymbol{I}_{\\mathrm{oct}}``; they are
 spurious. Multiplying by eight without projecting keeps them at full amplitude.
 
-The Kelvin basis diagonalizes the action of `G`, so `P_χ` is this diagonal mask.
+The Kelvin basis diagonalizes the action of ``G``, so ``\\boldsymbol{P}_\\chi`` is this diagonal mask.
 """
 _cell_mask(χ::NTuple{3, Int8}) =
     [Float64(_cell_parity(_cell_kelvin_basis(i)) == χ) for i in 1:6]

@@ -20,9 +20,9 @@
     _resolve_paths(traj::DifferentialTrajectory, rve::RVE, nsteps::Int, matrix::Symbol)
         -> Dict{Symbol, NamedTuple{(:f, :df), Tuple{Function, Function}}}
 
-Build per-phase callables `f_α(τ)` and `df_α(τ)` for each non-matrix
-phase of `rve`.  Each `f_α : [0, 1] → [0, 1]` is monotone non-decreasing
-with `f_α(0) = 0`, `f_α(1) = 1` ; `df_α` is the analytical derivative
+Build per-phase callables ``f_i(\\tau)`` and ``f_i'(\\tau)`` (fields `f` and `df`) for each non-matrix
+phase ``i`` of `rve`.  Each ``f_i : [0, 1] \\to [0, 1]`` is monotone non-decreasing
+with ``f_i(0) = 0``, ``f_i(1) = 1`` ; ``f_i'`` is the analytical derivative
 (or `ForwardDiff.derivative` for [`Path`](@ref)).
 """
 function _resolve_paths end

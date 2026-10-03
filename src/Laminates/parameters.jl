@@ -12,11 +12,11 @@
     ThicknessParameter(layer::Symbol)
     thickness(layer::Symbol)
 
-Lens on the thickness `h_i` of one layer of a [`Laminate`](@ref).
+Lens on the thickness ``h_i`` of one layer of a [`Laminate`](@ref).
 
 Differentiating with respect to a thickness is *not* the same as
-differentiating with respect to a volume fraction: changing `h_i` changes
-both `f_i` (through `L`) and the period, hence the `1/L` weight of every
+differentiating with respect to a volume fraction: changing ``h_i`` changes
+both ``f_i`` (through ``L``) and the period, hence the ``1/L`` weight of every
 imperfect interface. With perfect interfaces the two coincide up to the chain
 rule; with a spring interface the thickness derivative also carries the size
 effect, which is usually what one wants.

@@ -52,18 +52,18 @@ f(t) \\;\\approx\\; \\frac{\\ln 2}{t} \\sum_{k=1}^{N} V_k \\,
 with the Salzer weights ``V_k``.
 
 **All nodes are real and positive.** That is why this is the default: a
-transform defined only for real `p` works, an entire homogenization scheme run
+transform defined only for real ``p`` works, an entire homogenization scheme run
 through [`homogenize_lc`](@ref) stays in real arithmetic, and `ForwardDiff`
 sees plain `Dual` numbers rather than `Complex{Dual}`.
 
-`N` must be even with `4 ≤ N ≤ 40`.
+`N` must be even with ``4 \\le N \\le 40``.
 
 !!! warning "More terms is not more accurate"
     The weights alternate in sign with magnitudes up to ``10^{N/2}`` times the
-    answer, so the method needs roughly `2.3 M` digits of working precision to
-    return `M` correct ones.  In `Float64` that puts a hard ceiling on `N`:
+    answer, so the method needs roughly ``2.3\\,M`` digits of working precision to
+    return ``M`` correct ones.  In `Float64` that puts a hard ceiling on `N`:
 
-    | `N` | relative error on ``1/(p+2)`` at `t = 1`, in `Float64` |
+    | `N` | relative error on ``1/(p+2)`` at ``t = 1``, in `Float64` |
     |:---|:---|
     | 8  | 8e-3 |
     | 12 | 4e-4 |
@@ -73,22 +73,22 @@ sees plain `Dual` numbers rather than `Complex{Dual}`.
     | 26 | 4e-1 |
     | 30 | 1e+3 — and it keeps growing |
 
-    Past `N ≈ 18` the round-off *grows* — the single most surprising property
+    Past ``N \\approx 18`` the round-off *grows* — the single most surprising property
     of the method, and the reason `N` is validated rather than left free.
 
     Working in `BigFloat` removes the ceiling entirely: the weights are cached
     as exact `Rational{BigInt}` and converted to the working type on demand, so
     under `setprecision(256)` the error keeps falling with `N` all the way to
-    `1e-14` at `N = 34` — where `Float64` is at `1e5`.  See
+    `1e-14` at ``N = 34`` — where `Float64` is at `1e5`.  See
     [the inversion tutorial](@ref tut-laplace-inversion) §2 for the plot.
 
 At its best on completely monotone kernels — creep and relaxation functions —
-and poor on oscillatory ones: on ``\\sin(\\omega t)/\\omega`` at `N = 16` the
-relative error is O(1), where [`FixedTalbot`](@ref) reaches `1e-12`.
+and poor on oscillatory ones: on ``\\sin(\\omega t)/\\omega`` at ``N = 16`` the
+relative error is ``O(1)``, where [`FixedTalbot`](@ref) reaches `1e-12`.
 
-Measured on ``R(t) = E_\\infty + E_1 e^{-t/\\tau}`` with `τ = 1`, `N = 16`:
+Measured on ``R(t) = E_\\infty + E_1 e^{-t/\\tau}`` with ``\\tau = 1``, ``N = 16``:
 
-| `t/τ` | relative error, `E_∞ > 0` | relative error, `E_∞ = 0` |
+| ``t/\\tau`` | relative error, ``E_\\infty > 0`` | relative error, ``E_\\infty = 0`` |
 |:---|:---|:---|
 | 0.01 | 4e-8 | 6e-8 |
 | 1    | 3e-9 | 5e-7 |
@@ -122,7 +122,7 @@ p(\\theta) = \\frac{r\\theta}{t}\\,(\\cot\\theta + i), \\qquad
 ```
 
 on which ``e^{pt}`` decays fast enough for the midpoint trapezoidal rule to
-converge geometrically.  Near machine precision with `N = 24` evaluations on
+converge geometrically.  Near machine precision with ``N = 24`` evaluations on
 meromorphic transforms — Prony series, Zener, Burgers.
 
 **This is [`DEFAULT_INVERSION`](@ref)**, and on every kernel tested it is also
@@ -131,10 +131,10 @@ evaluations of the transform:
 
 | transform | `FixedTalbot(24)` | `GaverStehfest(16)` |
 |:---|:---|:---|
-| `1/(p+a)` (exponential) | 3e-12 | 1e-5 |
-| `1/p³` (polynomial) | 1e-14 | 3e-7 |
-| `1/√p` (branch cut) | 4e-12 | 4e-7 |
-| `1/(p²+ω²)` (oscillatory) | 1e-12 | O(1) |
+| ``1/(p+a)`` (exponential) | 3e-12 | 1e-5 |
+| ``1/p^3`` (polynomial) | 1e-14 | 3e-7 |
+| ``1/\\sqrt{p}`` (branch cut) | 4e-12 | 4e-7 |
+| ``1/(p^2+\\omega^2)`` (oscillatory) | 1e-12 | ``O(1)`` |
 | 2S2P1D creep kernel | 5e-13 | 3e-8 |
 
 !!! note "Branch cuts are fine — that is what the contour is for"
@@ -179,7 +179,7 @@ can be cross-checked against it directly.
 
 It differs from [`FixedTalbot`](@ref) in one respect that matters: its contour
 is tuned for decaying kernels and degrades badly on oscillatory ones
-(`6e-2` on ``\\sin(3t)/3`` at `t = 2`, against `9e-13` for `FixedTalbot`).
+(`6e-2` on ``\\sin(3t)/3`` at ``t = 2``, against `9e-13` for `FixedTalbot`).
 Prefer `FixedTalbot` unless cross-checking, or unless `shift` is needed.
 
 `shift` moves the contour to the right when the transform has poles on the
@@ -216,37 +216,37 @@ wanted.
 
 `T` is the scaling *period*.  The nodes depend on `T` but **not on `t`**, so one
 node set — one pass over `F` — can serve several times at once.  What limits
-the sharing is that the relative accuracy depends on the ratio `t/T` alone:
+the sharing is that the relative accuracy depends on the ratio ``t/T`` alone:
 
-| `t/T` | relative error (`N = 16`, `tol = 1e-9`) |
+| ``t/T`` | relative error (``N = 16``, `tol = 1e-9`) |
 |:---|:---|
-| 0.5 (i.e. `T = 2t`) | ≈ 1e-9 |
+| 0.5 (i.e. ``T = 2t``) | ≈ 1e-9 |
 | 0.15 | ≈ 2e-10 |
 | 0.05 | ≈ 1e-6 |
 | 0.005 | ≈ 1e-2 |
 | 0.0005 | ≈ 0.4 — meaningless |
 
-and raising `N` barely helps below `t/T ≈ 0.05`.  A single node set therefore
+and raising `N` barely helps below ``t/T \\approx 0.05``.  A single node set therefore
 covers a window of times spanning a factor of about three, not several decades.
 
 Two modes follow:
 
   * `T = nothing` (the default) — on a grid, the times are sorted and split
     into blocks spanning at most a factor of three, each block getting its own
-    `T = 2 t_max` and its own single pass over `F`.  Accuracy is uniform, and a
-    200-point grid over seven decades costs roughly 15 × (2N+1) ≈ 500
-    evaluations of `F` instead of 200 × (2N+1) ≈ 6600.  That is the reason to
+    ``T = 2\\,t_{\\max}`` and its own single pass over `F`.  Accuracy is uniform, and a
+    200-point grid over seven decades costs roughly ``15\\times(2N+1) \\approx 500``
+    evaluations of `F` instead of ``200\\times(2N+1) \\approx 6600``.  That is the reason to
     reach for `DeHoog` when each evaluation of `F` is a homogenization scheme.
-  * `T` given explicitly — one node set for everything, `2N + 1` evaluations
+  * `T` given explicitly — one node set for everything, ``2N + 1`` evaluations
     total.  Only do this when the grid really is narrow; a warning is emitted
-    for any time falling below `t/T = 0.15`.
+    for any time falling below ``t/T = 0.15``.
 
 !!! note "Not a weighted sum"
     Unlike the other three, de Hoog is *not* linear in the transform values:
     the quotient-difference tables divide consecutive samples by one another.
     Tensor- and matrix-valued transforms are therefore inverted component by
     component, and a component that vanishes identically is short-circuited to
-    zero rather than run through a `0/0`.
+    zero rather than run through a ``0/0``.
 """
 struct DeHoog <: AbstractLaplaceInversion
     N::Int
@@ -275,7 +275,7 @@ the table).
 Reasons to override it:
 
   * [`GaverStehfest`](@ref) when the transform must be evaluated at **real**
-    `p` only — that keeps a whole [`homogenize_lc`](@ref) sweep in real
+    ``p`` only — that keeps a whole [`homogenize_lc`](@ref) sweep in real
     arithmetic, costs a third fewer evaluations per point, and is the one way
     to use `SelfConsistent(algorithm = NewtonDefault())` in the Laplace-Carson
     route;
@@ -353,8 +353,8 @@ end
 """
     _accumulate(values, weights)
 
-Form `Σ_k weights[k] * values[k]`, seeding the accumulator with the **first
-term** rather than with `zero(...)`.
+Form ``\\sum_k w_k\\,v_k``, with ``w_k`` = `weights[k]` and ``v_k`` = `values[k]`,
+seeding the accumulator with the **first term** rather than with `zero(...)`.
 
 That single choice carries two unrelated correctness requirements at once:
 
@@ -402,7 +402,7 @@ Strip every `ForwardDiff.Dual` layer, returning the underlying float.
 Used only to choose [`DeHoog`](@ref)'s scaling period `T`.  `T` is a free
 algorithmic parameter — it selects the node set, not the mathematics — so
 freezing it at the value level is legitimate and keeps the `Dual` confined to
-the one place where `t` enters analytically, `exp(iπt/T)`.  Letting `T` carry
+the one place where `t` enters analytically, ``\\exp(i\\pi t/T)``.  Letting `T` carry
 partials would instead push them into `S(Tscale)` and fail.
 """
 _plain_value(x::Real) = x
@@ -536,14 +536,14 @@ end
     inverse_laplace(F, t, method = DEFAULT_INVERSION)
     inverse_laplace(F, times::AbstractVector, method = DEFAULT_INVERSION)
 
-Numerically invert the Laplace transform `F`, returning `f(t)` with
+Numerically invert the Laplace transform `F`, returning ``f(t)`` with
 
 ```math
 \\hat f(p) = \\int_0^\\infty f(t)\\,e^{-pt}\\,\\mathrm{d}t .
 ```
 
 `F` is any callable `p -> F(p)` whose value supports `+` and multiplication by
-a scalar.  Scalars, `TensND` tensors of any symmetry class and `6×6` Mandel
+a scalar.  Scalars, `TensND` tensors of any symmetry class and ``6\\times 6`` Mandel
 matrices all work, and the symmetry class of the result is the class `F`
 returns — a `TensTI` transform gives back a `TensTI` with its axis preserved.
 
@@ -555,7 +555,7 @@ The vector form returns a `Vector` of results.  With `DeHoog(; T = ...)` it
 shares one node set across the whole grid, which matters when each evaluation
 of `F` is a homogenization scheme.
 
-Throws `DomainError` for `t ≤ 0`: every method places its nodes at `O(1/t)`.
+Throws `DomainError` for ``t \\le 0``: every method places its nodes at ``O(1/t)``.
 
 !!! note "Name clash with Symbolics.jl"
     `Symbolics` exports a function also called `inverse_laplace` — a
@@ -573,10 +573,10 @@ Throws `DomainError` for `t ≤ 0`: every method places its nodes at `O(1/t)`.
     catalog — is not affected.
 
 !!! warning "Accuracy is absolute, not relative, in the tail"
-    Every algorithm here controls the error against the *scale of `f`*, not
-    against `f(t)` at the point asked for.  Once `f` has decayed many orders of
+    Every algorithm here controls the error against the *scale of ``f``*, not
+    against ``f(t)`` at the point asked for.  Once ``f`` has decayed many orders of
     magnitude below its initial value the relative error is unbounded: on
-    ``3e^{-t}`` at `t = 40`, where the function is `1e-17`, `FixedTalbot(24)`
+    ``3e^{-t}`` at ``t = 40``, where the function is `1e-17`, `FixedTalbot(24)`
     is off by a relative `1e4` — an absolute `1e-13`, which is exactly what it
     promises.
 
@@ -635,7 +635,7 @@ i.e. `inverse_laplace(p -> Fstar(p) / p, t, method)`.
 
 Laplace-Carson is the transform of choice in viscoelasticity because it maps a
 constant to itself: an elastic modulus is its own transform, so the
-correspondence principle reads `C*(p)` in place of `C` with no extra factor.
+correspondence principle reads ``\\mathbb{C}^{*}(p)`` in place of ``\\mathbb{C}`` with no extra factor.
 Every model in the [rheology catalog](@ref man-rheological-models) exposes its
 transform in this convention through [`carson_relaxation`](@ref) and
 [`carson_creep`](@ref).
@@ -664,17 +664,17 @@ inverse_carson(
 """
     inverse_carson_rate(Fstar, t, method = DEFAULT_INVERSION; f_glassy)
 
-Return the **time derivative** `ḟ(t)` of the function whose Laplace-Carson
+Return the **time derivative** ``\\dot f(t)`` of the function whose Laplace-Carson
 transform is `Fstar`, without differentiating the inversion.
 
-Because `L{ḟ}(p) = p f̂(p) - f(0⁺) = f*(p) - f(0⁺)`, the rate is itself an
+Because ``\\mathcal{L}[\\dot f](p) = p\\,\\hat f(p) - f(0^{+}) = f^{*}(p) - f(0^{+})``, the rate is itself an
 ordinary inverse Laplace transform:
 
 ```math
 \\dot f(t) = \\mathcal{L}^{-1}\\bigl[f^{*}(p) - f(0^{+})\\bigr](t).
 ```
 
-`f_glassy` is `f(0⁺) = lim_{p→∞} f*(p)`, available in closed form for every
+`f_glassy` is ``f(0^{+}) = \\lim_{p\\to\\infty} f^{*}(p)``, available in closed form for every
 model in the catalog via [`glassy_modulus`](@ref).
 
 !!! note "Relation to `ForwardDiff.derivative(t -> ..., t)`"
@@ -713,11 +713,11 @@ _invert_grid(F, times::AbstractVector{<:Real}, method::AbstractLaplaceInversion)
 """
     _DEHOOG_MIN_RATIO
 
-Smallest `t/T` at which [`DeHoog`](@ref) still returns close to full accuracy.
+Smallest ``t/T`` at which [`DeHoog`](@ref) still returns close to full accuracy.
 Measured on exponential and power-law kernels: the relative error is ≈ 2e-10 at
-`t/T = 0.15` and ≈ 1e-6 already at `t/T = 0.05`, essentially independent of `N`.
+``t/T = 0.15`` and ≈ 1e-6 already at ``t/T = 0.05``, essentially independent of `N`.
 
-A shared node set therefore spans a factor `0.5 / 0.15 ≈ 3.3` in time, which is
+A shared node set therefore spans a factor ``0.5/0.15 \\approx 3.3`` in time, which is
 what [`_dehoog_blocks`](@ref) uses.
 """
 const _DEHOOG_MIN_RATIO = 0.15
@@ -791,7 +791,7 @@ end
     _dehoog_from_values(values, t, method, Tscale)
 
 De Hoog-Knight-Stokes evaluation from transform samples already taken on the
-`2N+1` nodes.
+``2N+1`` nodes.
 
 The Fourier series ``\\sum_k a_k z^k`` — with ``a_0 = \\tfrac12 F(p_0)``,
 ``a_k = F(p_k)`` and ``z = e^{i\\pi t/T}`` — is turned into a continued

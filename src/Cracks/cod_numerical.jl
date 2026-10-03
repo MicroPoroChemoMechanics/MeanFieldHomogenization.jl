@@ -6,7 +6,7 @@
     _cod_elliptic_numerical(c, C₀, backend; abstol, reltol, maxiters) -> Tens{2,3}
 
 COD tensor of an elliptic crack in an arbitrarily anisotropic matrix.
-The limit ``\\omega\\to 0`` of ``\\omega\\,\\mathbb Q^{-1}`` is resolved
+The limit ``\\omega\\to 0`` of ``\\omega\\,\\mathbb{Q}^{-1}`` is resolved
 by the first-order Taylor term of the Hill tensor
 [barthelemyIJSS2009](@cite); the resulting integral
 on the unit circle of the crack plane is evaluated by `backend`

@@ -25,27 +25,28 @@
 
 Discrete ALV Hill polarization tensor kernel for the inclusion `ell`
 in an **isotropic** ALV matrix described by `C0_law` (a `ViscoLaw`
-returning a `TensND.TensISO{4,3}` 4-tensor at each `(t, t')`).
+returning a `TensND.TensISO{4,3}` 4-tensor at each ``(t, t')``).
 
-The output is a `(6n × 6n)` lower-block-triangular `Matrix{T}` with
-`n = length(times)`, in the same Mandel block convention as
+The output is a ``6n\\times 6n`` lower-block-triangular `Matrix{T}` with
+``n`` = `length(times)`, in the same Mandel block convention as
 `trapezoidal_matrix`.
 
 Implementation follows the time-space decoupling formula of the
 ECHOES manual appendix `viscoelastic_hill_kernel.qmd`:
 
-  1. Discretize the matrix kernel `C0_law` on `times` to a `6n × 6n`
-     block matrix `R̃_M`.
-  2. Extract the iso scalar parameter matrices `(α, β)` of `R̃_M`
-     (`α = 3K`, `β = 2μ` per Mandel convention).
-  3. Build the longitudinal `M_long = (α + 2β)/3` and the shear
-     `M_shear = β/2` `n×n` matrices.
+  1. Discretize the matrix kernel `C0_law` on `times` to a ``6n\\times 6n``
+     block matrix ``\\widetilde{\\mathbb{C}}_0``.
+  2. Extract the iso scalar parameter matrices ``(\\alpha, \\beta)`` of ``\\widetilde{\\mathbb{C}}_0``
+     (``\\alpha = 3k``, ``\\beta = 2\\mu`` per Mandel convention).
+  3. Build the longitudinal ``M_{\\mathrm{long}} = (\\alpha + 2\\beta)/3`` and the shear
+     ``M_{\\mathrm{shear}} = \\beta/2`` ``n\\times n`` matrices.
   4. Take the scalar Volterra inverses
-     `J_long = M_long^{-vol}` and `J_shear = M_shear^{-vol}`.
-  5. Compute the Mandel forms `U^A_M` and `V^A_M` of the elastic
+     ``J_{\\mathrm{long}} = M_{\\mathrm{long}}^{-\\circ}`` and ``J_{\\mathrm{shear}} = M_{\\mathrm{shear}}^{-\\circ}``.
+  5. Compute the Mandel forms ``\\mathrm{Mat}(\\mathbb{U}^{\\boldsymbol{A}})`` and
+     ``\\mathrm{Mat}(\\mathbb{V}^{\\boldsymbol{A}})`` of the elastic
      auxiliary tensors `tens_UA(ell)` and `tens_VA(ell)`.
   6. Assemble block-by-block:
-     `P̃_block(i,j) = J_long[i,j] · U^A_M + J_shear[i,j] · (V^A_M - U^A_M)`.
+     ``[\\widetilde{\\mathbb{P}}]_{ij} = (J_{\\mathrm{long}})_{ij}\\,\\mathrm{Mat}(\\mathbb{U}^{\\boldsymbol{A}}) + (J_{\\mathrm{shear}})_{ij}\\,\\mathrm{Mat}(\\mathbb{V}^{\\boldsymbol{A}} - \\mathbb{U}^{\\boldsymbol{A}})``.
 """
 function hill_kernel(ell, C0_law::ViscoLaw, times::AbstractVector{<:Real})
     n = length(times)

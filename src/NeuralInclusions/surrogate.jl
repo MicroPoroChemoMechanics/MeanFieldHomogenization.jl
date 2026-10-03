@@ -33,8 +33,8 @@ serialized with the weights.
 
 `max_block_error` is the number a test tolerance should be derived from — never a
 hard-coded literal, so that a retraining cannot silently loosen a threshold. The
-per-component vectors are diagnostics: a structurally vanishing component (`𝕍ᴬ`
-has no `ℓ₃`) has no meaningful relative error of its own, which is exactly why the
+per-component vectors are diagnostics: a structurally vanishing component (``\\mathbb{V}^{\\boldsymbol{A}}``
+has no ``\\ell_3``) has no meaningful relative error of its own, which is exactly why the
 headline number is measured against the block.
 """
 struct Provenance
@@ -208,7 +208,7 @@ Verify that every feature lies inside the box the surrogate was trained on.
 degradation — the error can be arbitrary and there is no diagnostic in the
 result — so the default is deliberately noisy.
 
-The bounds are inclusive up to a relative slack of `1e-9` of the box width, so
+The bounds are inclusive up to a relative slack of ``10^{-9}`` of the box width, so
 that reconstructing a bound by a slightly different arithmetic path — `log(0.1)`
 against a stored `log(0.10)` — does not trip the guard on the last bit.
 """

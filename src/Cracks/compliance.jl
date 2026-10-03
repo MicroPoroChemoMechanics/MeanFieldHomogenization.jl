@@ -11,29 +11,33 @@
     compliance_contribution(crack, C₀; method=:auto, kw...) -> Tens{4,3}
 
 Size-independent **crack compliance contribution tensor**
-``\\mathbb H`` (Echoes convention).  Assembled from the COD tensor
-``\\mathbf B = `` [`cod_tensor`](@ref) through the factorization
+``\\mathbb{H}`` (Echoes convention).  Assembled from the COD tensor
+``\\boldsymbol{B}`` ([`cod_tensor`](@ref)) through the factorization
 
-- Elliptic crack:  ``\\mathbb H = \\tfrac{3}{4}\\,\\hat{\\mathbf n}
-  \\stackrel{s}{\\otimes}\\mathbf B\\stackrel{s}{\\otimes}\\hat{\\mathbf n}``.
-- Ribbon crack:   ``\\mathbb H = \\tfrac{2}{\\pi}\\,\\hat{\\mathbf n}
-  \\stackrel{s}{\\otimes}\\mathbf B\\stackrel{s}{\\otimes}\\hat{\\mathbf n}``.
+- Elliptic crack:  ``\\mathbb{H} = \\tfrac{3}{4}\\,\\underline{n}
+  \\stackrel{s}{\\otimes}\\boldsymbol{B}\\stackrel{s}{\\otimes}\\underline{n}``.
+- Ribbon crack:   ``\\mathbb{H} = \\tfrac{2}{\\pi}\\,\\underline{n}
+  \\stackrel{s}{\\otimes}\\boldsymbol{B}\\stackrel{s}{\\otimes}\\underline{n}``.
 
 The two geometric prefactors follow from the single definition
-``\\mathbb H = \\lim_{c/b\\to 0}(c/b)\\,\\mathbb Q^{-1}
-= (cS/V)\\,\\hat{\\mathbf n}\\stackrel{s}{\\otimes}\\mathbf B
-\\stackrel{s}{\\otimes}\\hat{\\mathbf n}`` applied with
+``\\mathbb{H} = \\lim_{c/b\\to 0}(c/b)\\,\\mathbb{Q}^{-1}
+= (cS/V)\\,\\underline{n}\\stackrel{s}{\\otimes}\\boldsymbol{B}
+\\stackrel{s}{\\otimes}\\underline{n}`` applied with
 ``S/V = 3/(4c)`` (elliptic, ``S=\\pi ab``, ``V=\\tfrac{4}{3}\\pi abc``)
 or ``S/V = 2/(\\pi c)`` (ribbon, ``S=4ab``, ``V=2\\pi abc``,
 ``a\\to\\infty``).  The Kachanov–Echoes factorization of the elliptic
 case is recovered for ``\\eta=1`` (penny).
 
 Apply [`delta_compliance`](@ref)`(crack, H, ε)` to obtain the dilute
-compliance correction ``\\Delta\\mathbb S``:
+compliance correction ``\\Delta\\mathbb{S}``:
 
-```
-ΔS = (4π/3) ε³ᵈ H   (elliptic, ε³ᵈ = N a b²)
-ΔS =    π   ε²ᵈ H   (ribbon,   ε²ᵈ = N b²)
+```math
+\\begin{aligned}
+\\Delta\\mathbb{S} &= \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm{d}}\\,\\mathbb{H},
+  &\\varepsilon^{3\\mathrm{d}} &= N\\,a\\,b^{2} &&(\\mathrm{elliptic}),\\\\
+\\Delta\\mathbb{S} &= \\pi\\,\\varepsilon^{2\\mathrm{d}}\\,\\mathbb{H},
+  &\\varepsilon^{2\\mathrm{d}} &= N\\,b^{2} &&(\\mathrm{ribbon}).
+\\end{aligned}
 ```
 
 See [kachanov1992, sevostianov2002, barthelemyIJES2021](@citet).
@@ -51,7 +55,7 @@ end
 """
     _compliance_from_B_elliptic(crack, B) -> Tens{4,3}
 
-Elliptic: ``\\mathbb H = \\tfrac{3}{4}(\\hat n ⊗ˢ \\mathbf B ⊗ˢ \\hat n)``.
+Elliptic: ``\\mathbb{H} = \\tfrac{3}{4}\\,\\underline{n}\\stackrel{s}{\\otimes}\\boldsymbol{B}\\stackrel{s}{\\otimes}\\underline{n}``.
 """
 function _compliance_from_B_elliptic(crack::MFH_Core.AbstractCrack, B)
     n̂ = TensND.tens_basis(crack_basis(crack), 3)
@@ -62,7 +66,7 @@ end
 """
     _compliance_from_B_ribbon(crack, B) -> Tens{4,3}
 
-Ribbon: ``\\mathbb H = \\tfrac{2}{\\pi}(\\hat n ⊗ˢ \\mathbf B ⊗ˢ \\hat n)``.
+Ribbon: ``\\mathbb{H} = \\tfrac{2}{\\pi}\\,\\underline{n}\\stackrel{s}{\\otimes}\\boldsymbol{B}\\stackrel{s}{\\otimes}\\underline{n}``.
 """
 function _compliance_from_B_ribbon(crack::MFH_Core.AbstractCrack, B)
     n̂ = TensND.tens_basis(crack_basis(crack), 3)
@@ -103,13 +107,13 @@ _compliance_from_B(S::Type, _crack, _B) = _unsupported_crack_shape(S, "complianc
 """
     _resistivity_from_b_elliptic(crack, b, K₀) -> Tens{2,3}
 
-Elliptic: ``\\mathbf R = \\tfrac{3}{4}\\,b\\,\\hat{\\mathbf n}
-\\otimes\\hat{\\mathbf n}``.
+Elliptic: ``\\boldsymbol{R} = \\tfrac{3}{4}\\,b\\,\\underline{n}
+\\otimes\\underline{n}``.
 
-The rank-1 direction is always the crack normal ``\\hat{\\mathbf n}``
-(null space of ``\\mathbf K_0 - \\mathbf K_0\\mathbf P(0)\\mathbf K_0``
+The rank-1 direction is always the crack normal ``\\underline{n}``
+(null space of ``\\boldsymbol{K}_0 - \\boldsymbol{K}_0\\cdot\\boldsymbol{P}(0)\\cdot\\boldsymbol{K}_0``
 with the correct V-formula Hill tensor limit
-``\\mathbf P(0) = \\hat{\\mathbf n}\\otimes\\hat{\\mathbf n}/k_{nn}``).
+``\\boldsymbol{P}(0) = \\underline{n}\\otimes\\underline{n}/k_{nn}``).
 """
 function _resistivity_from_b_elliptic(crack::MFH_Core.AbstractCrack, b, _K₀)
     n̂ = TensND.tens_basis(crack_basis(crack), 3)
@@ -120,8 +124,8 @@ end
 """
     _resistivity_from_b_ribbon(crack, b, K₀) -> Tens{2,3}
 
-Ribbon: ``\\mathbf R = \\tfrac{2}{\\pi}\\,b\\,\\hat{\\mathbf n}
-\\otimes\\hat{\\mathbf n}``.
+Ribbon: ``\\boldsymbol{R} = \\tfrac{2}{\\pi}\\,b\\,\\underline{n}
+\\otimes\\underline{n}``.
 """
 function _resistivity_from_b_ribbon(crack::MFH_Core.AbstractCrack, b, _K₀)
     n̂ = TensND.tens_basis(crack_basis(crack), 3)
@@ -144,14 +148,14 @@ _resistivity_from_b(S::Type, _crack, _b, _K₀) = _unsupported_crack_shape(S, "r
 """
     delta_compliance(crack, H, ε) -> Tens{4,3}
 
-Dilute compliance correction ``\\Delta\\mathbb S`` of a family of
+Dilute compliance correction ``\\Delta\\mathbb{S}`` of a family of
 identical parallel cracks of Budiansky density ``\\varepsilon`` from the
-size-independent contribution tensor ``\\mathbb H``:
+size-independent contribution tensor ``\\mathbb{H}``:
 
-- Elliptic: ``\\Delta\\mathbb S = \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm d}\\,\\mathbb H``
-  with ``\\varepsilon^{3\\mathrm d} = N a b^{2}``.
-- Ribbon:   ``\\Delta\\mathbb S = \\pi\\,\\varepsilon^{2\\mathrm d}\\,\\mathbb H``
-  with ``\\varepsilon^{2\\mathrm d} = N b^{2}``.
+- Elliptic: ``\\Delta\\mathbb{S} = \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm{d}}\\,\\mathbb{H}``
+  with ``\\varepsilon^{3\\mathrm{d}} = N\\,a\\,b^{2}``.
+- Ribbon:   ``\\Delta\\mathbb{S} = \\pi\\,\\varepsilon^{2\\mathrm{d}}\\,\\mathbb{H}``
+  with ``\\varepsilon^{2\\mathrm{d}} = N\\,b^{2}``.
 
 See [budiansky1976, sevostianov2002](@citet).
 """
@@ -161,12 +165,12 @@ delta_compliance(crack::MFH_Core.AbstractCrack, H, ε) =
 """
     delta_resistivity(crack, R, ε) -> Tens{2,3}
 
-Dilute resistivity correction ``\\Delta\\mathbf R`` of a family of
+Dilute resistivity correction ``\\Delta\\boldsymbol{R}`` of a family of
 identical parallel cracks of Budiansky density ``\\varepsilon`` from the
-size-independent contribution tensor ``\\mathbf R``:
+size-independent contribution tensor ``\\boldsymbol{R}``:
 
-- Elliptic: ``\\Delta\\mathbf R = \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm d}\\,\\mathbf R``.
-- Ribbon:   ``\\Delta\\mathbf R = \\pi\\,\\varepsilon^{2\\mathrm d}\\,\\mathbf R``.
+- Elliptic: ``\\Delta\\boldsymbol{R} = \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm{d}}\\,\\boldsymbol{R}``.
+- Ribbon:   ``\\Delta\\boldsymbol{R} = \\pi\\,\\varepsilon^{2\\mathrm{d}}\\,\\boldsymbol{R}``.
 """
 delta_resistivity(crack::MFH_Core.AbstractCrack, R, ε) =
     crack_density_factor(crack) * ε * R
@@ -180,13 +184,13 @@ three-argument seams
 [`delta_compliance`](@ref), [`delta_stiffness`](@ref),
 [`delta_conductivity`](@ref) and [`delta_resistivity`](@ref):
 
-```
-Δ = crack_density_factor(crack) · ε · X
+```julia
+Δ = crack_density_factor(crack) * ε * X
 ```
 
-- `4π/3` for an elliptical (or penny-shaped) crack, whose Budiansky density
-  is ``\\varepsilon^{3\\mathrm d} = N a b^{2}``;
-- `π` for a ribbon crack, whose density is ``\\varepsilon^{2\\mathrm d} = N b^{2}``.
+- ``4\\pi/3`` for an elliptical (or penny-shaped) crack, whose Budiansky density
+  is ``\\varepsilon^{3\\mathrm{d}} = N\\,a\\,b^{2}``;
+- ``\\pi`` for a ribbon crack, whose density is ``\\varepsilon^{2\\mathrm{d}} = N\\,b^{2}``.
 
 Dispatched on [`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait), so a
 user-defined crack inherits the right prefactor for free.  A flat morphology
@@ -213,12 +217,12 @@ _crack_density_factor(S::Type) = _unsupported_crack_shape(S, "density-factor")
     stiffness_contribution(crack, C₀; kw...) -> Tens{4,3}
 
 Size-independent **crack stiffness contribution tensor**
-``\\mathbb N = -\\mathbb C_0 : \\mathbb H : \\mathbb C_0``, where
-``\\mathbb H`` is the crack compliance contribution tensor
+``\\mathbb{N} = -\\mathbb{C}_0:\\mathbb{H}:\\mathbb{C}_0``, where
+``\\mathbb{H}`` is the crack compliance contribution tensor
 ([`compliance_contribution`](@ref)).  Provided for API symmetry with
 solid inclusions; the associated dilute correction is
-``\\Delta\\mathbb C = (4\\pi/3)\\,\\varepsilon^{3\\mathrm d}\\,\\mathbb N``
-(elliptic) or ``\\pi\\,\\varepsilon^{2\\mathrm d}\\,\\mathbb N`` (ribbon),
+``\\Delta\\mathbb{C} = (4\\pi/3)\\,\\varepsilon^{3\\mathrm{d}}\\,\\mathbb{N}``
+(elliptic) or ``\\pi\\,\\varepsilon^{2\\mathrm{d}}\\,\\mathbb{N}`` (ribbon),
 assembled by [`delta_stiffness`](@ref)`(crack, N, ε)`.
 """
 function MFH_Core.stiffness_contribution(
@@ -234,7 +238,8 @@ end
     conductivity_contribution(crack, K₀; kw...) -> Tens{2,3}
 
 Size-independent **crack conductivity contribution tensor**
-``\\mathbf N_K = -\\mathbf K_0 \\cdot \\mathbf R \\cdot \\mathbf K_0``.
+``\\boldsymbol{N} = -\\boldsymbol{K}_0\\cdot\\boldsymbol{R}\\cdot\\boldsymbol{K}_0``,
+with ``\\boldsymbol{R}`` the crack resistivity contribution.
 """
 function MFH_Core.conductivity_contribution(
         crack::MFH_Core.AbstractCrack,
@@ -248,12 +253,12 @@ end
 """
     delta_stiffness(crack, N, ε) -> Tens{4,3}
 
-Dilute stiffness correction ``\\Delta\\mathbb C`` from the
-size-independent crack contribution tensor ``\\mathbb N`` and the
+Dilute stiffness correction ``\\Delta\\mathbb{C}`` from the
+size-independent crack contribution tensor ``\\mathbb{N}`` and the
 Budiansky density ``\\varepsilon``:
 
-- Elliptic: ``\\Delta\\mathbb C = \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm d}\\,\\mathbb N``.
-- Ribbon:   ``\\Delta\\mathbb C = \\pi\\,\\varepsilon^{2\\mathrm d}\\,\\mathbb N``.
+- Elliptic: ``\\Delta\\mathbb{C} = \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm{d}}\\,\\mathbb{N}``.
+- Ribbon:   ``\\Delta\\mathbb{C} = \\pi\\,\\varepsilon^{2\\mathrm{d}}\\,\\mathbb{N}``.
 """
 MFH_Core.delta_stiffness(crack::MFH_Core.AbstractCrack, N, ε) =
     crack_density_factor(crack) * ε * N
@@ -262,7 +267,7 @@ MFH_Core.delta_stiffness(crack::MFH_Core.AbstractCrack, N, ε) =
     delta_conductivity(crack, N_K, ε) -> Tens{2,3}
 
 Dilute conductivity correction from the crack contribution tensor
-``\\mathbf N_K`` and the Budiansky density, with the same prefactors as
+``\\boldsymbol{N}`` (`N_K`) and the Budiansky density, with the same prefactors as
 [`delta_stiffness`](@ref).
 """
 MFH_Core.delta_conductivity(crack::MFH_Core.AbstractCrack, N, ε) =

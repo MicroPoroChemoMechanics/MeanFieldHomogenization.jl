@@ -30,9 +30,9 @@
 """
     _ortho_identity(n, T) -> NTuple{12, Matrix{T}}
 
-Ortho form of the `(6n × 6n)` block-diagonal identity matrix.  The 9
-normal entries form the 3×3 identity (`o₁ = o₅ = o₉ = 𝟙`, others zero)
-and the three shears are each `𝟙`.
+Ortho form of the ``6n\\times 6n`` block-diagonal identity matrix.  The 9
+normal entries form the ``3\\times 3`` identity (``o_1 = o_5 = o_9 = \\mathbb 1``, others zero)
+and the three shears are each ``\\mathbb 1``.
 """
 @inline function _ortho_identity(n::Int, T::Type)
     Iₙ = Matrix{T}(LinearAlgebra.I, n, n)
@@ -48,7 +48,7 @@ end
 """
     _ortho_add!(acc, c, a) -> acc
 
-In-place ortho scalar AXPY: `acc[k] .+= c · a[k]` for k = 1..12.
+In-place ortho scalar AXPY: `acc[k] .+= c · a[k]` for ``k = 1, \\dots, 12``.
 """
 @inline function _ortho_add!(
         acc::NTuple{12, <:Matrix}, c::Real,
@@ -63,8 +63,8 @@ end
 """
     _ortho_prod(a, b) -> NTuple{12, Matrix}
 
-Ortho Volterra product `M_a ∘ M_b`.  The normal 3×3 block follows the
-standard 3×3 matrix product on Volterra entries; the shears multiply
+Ortho Volterra product ``M_a\\circ M_b``.  The normal ``3\\times 3`` block follows the
+standard ``3\\times 3`` matrix product on Volterra entries; the shears multiply
 component-wise.
 """
 @inline function _ortho_prod(a::NTuple{12, <:Matrix}, b::NTuple{12, <:Matrix})
@@ -173,7 +173,7 @@ end
 """
     _ortho_inv(a) -> NTuple{12, Matrix}
 
-Ortho Volterra inverse.  Inverts the 3×3 normal block via a `(3n)×(3n)`
+Ortho Volterra inverse.  Inverts the ``3\\times 3`` normal block via a ``3n\\times 3n``
 block-Volterra inverse and the three scalar shears independently.
 """
 function _ortho_inv(a::NTuple{12, <:Matrix})
@@ -195,8 +195,8 @@ end
 """
     _ortho_left_divide(S, M) -> NTuple{12, Matrix}
 
-Ortho form of the Volterra left-divide `T = S^{-vol} ∘ M`.  Solves the
-normal 3×3 part as a `(3n)×(3n)` block-Volterra system and the three
+Ortho form of the Volterra left-divide ``T = S^{-\\circ}\\circ M``.  Solves the
+normal ``3\\times 3`` part as a ``3n\\times 3n`` block-Volterra system and the three
 scalar shears independently.
 """
 function _ortho_left_divide(
@@ -224,10 +224,10 @@ end
 """
     _is_ortho_block(M; tol = 1e-12) -> Bool
 
-Heuristic: return `true` if the `(6n × 6n)` block matrix `M` is in
-ortho form (each 6×6 block is an ortho 4-tensor with canonical axes).
+Heuristic: return `true` if the ``6n\\times 6n`` block matrix `M` is in
+ortho form (each ``6\\times 6`` block is an ortho 4-tensor with canonical axes).
 The check verifies that every entry outside the orthotropic Mandel
-support pattern is below `tol · max|M|` in absolute value.
+support pattern is below ``\\mathrm{tol}\\cdot\\max|M|`` in absolute value.
 
 Allocation-free: scans each block once and tests for off-pattern
 entries directly, without building intermediate parameter matrices.
@@ -266,7 +266,7 @@ end
 """
     _ortho_pair(M; axes) -> NTuple{12, Matrix}
 
-Extract the 12 ortho parameter matrices from a `(6n × 6n)` block matrix.
+Extract the 12 ortho parameter matrices from a ``6n\\times 6n`` block matrix.
 Wrapper around [`ortho_params_from_blocks`](@ref).
 """
 @inline _ortho_pair(
@@ -282,7 +282,7 @@ Wrapper around [`ortho_params_from_blocks`](@ref).
 """
     _ortho_blocks(o; axes) -> Matrix
 
-Reassemble a `(6n × 6n)` ortho block matrix from the 12-tuple of Volterra
+Reassemble a ``6n\\times 6n`` ortho block matrix from the 12-tuple of Volterra
 parameter matrices.  Wrapper around [`ortho_blocks_from_params`](@ref).
 """
 @inline _ortho_blocks(
@@ -298,10 +298,10 @@ parameter matrices.  Wrapper around [`ortho_blocks_from_params`](@ref).
 """
     _iso_to_ortho(αβ::Tuple) -> NTuple{12, Matrix}
 
-Convert an iso `(α, β)` pair into the ortho 12-tuple in the canonical
-material frame.  Iso `α 𝕁 + β 𝕂` corresponds to:
-  * normal block (3×3): `diag = (α + 2β)/3`, `off-diag = (α − β)/3`
-  * shear diagonal:    `(β, β, β)`.
+Convert an iso ``(\\alpha, \\beta)`` pair into the ortho 12-tuple in the canonical
+material frame.  Iso ``\\alpha\\,\\mathbb{J} + \\beta\\,\\mathbb{K}`` corresponds to:
+  * normal block (``3\\times 3``): diag ``= (\\alpha + 2\\beta)/3``, off-diag ``= (\\alpha - \\beta)/3``
+  * shear diagonal:    ``(\\beta, \\beta, \\beta)``.
 """
 function _iso_to_ortho(αβ::Tuple)
     α, β = αβ
@@ -318,7 +318,7 @@ end
 """
     _ti_to_ortho(ℓ::NTuple{6}) -> NTuple{12, Matrix}
 
-Convert a TI 6-tuple `(ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆)` (axis = e₃) into the ortho
+Convert a TI 6-tuple ``(\\ell_1, \\ell_2, \\ell_3, \\ell_4, \\ell_5, \\ell_6)`` (axis ``\\underline{e}_3``) into the ortho
 12-tuple in the canonical material frame.  Cross-check helper used by
 the inclusion-ladder tests.
 """
@@ -344,7 +344,7 @@ end
 """
     voigt_alv_ortho(o_phases, fractions) -> NTuple{12, Matrix}
 
-Ortho-form Voigt bound: `oₖ_eff = Σ_r f_r oₖ_r` for each component.
+Ortho-form Voigt bound: ``o_k^{\\mathrm{hom}} = \\sum_i f_i\\,o_{k,i}`` for each component ``k``.
 """
 function voigt_alv_ortho(o_phases::AbstractVector, fractions::AbstractVector)
     length(o_phases) == length(fractions) ||
@@ -379,7 +379,9 @@ end
 """
     dilute_concentration_alv_ortho(o_E, o_0, o_P) -> NTuple{12, Matrix}
 
-Ortho-form dilute concentration `Ã^dil = (𝟙 + P̃ ∘ ΔC̃)^{-vol}`.
+Ortho-form dilute concentration
+``\\widetilde{\\mathbb{A}}^{\\mathrm{dil}} = (H\\,\\mathbb{I} + \\widetilde{\\mathbb{P}}\\circ\\Delta\\widetilde{\\mathbb{C}})^{-\\circ}``,
+``\\Delta\\widetilde{\\mathbb{C}} = \\widetilde{\\mathbb{C}}^{\\mathcal{E}} - \\widetilde{\\mathbb{C}}_0``.
 """
 function dilute_concentration_alv_ortho(
         o_E::NTuple{12, <:Matrix},
@@ -398,7 +400,7 @@ end
 """
     dilute_contribution_alv_ortho(o_E, o_0, o_P) -> NTuple{12, Matrix}
 
-Ortho-form dilute contribution `Ñ = ΔC̃ ∘ Ã^dil`.
+Ortho-form dilute contribution ``\\widetilde{\\mathbb{N}} = \\Delta\\widetilde{\\mathbb{C}}\\circ\\widetilde{\\mathbb{A}}^{\\mathrm{dil}}``.
 """
 function dilute_contribution_alv_ortho(
         o_E::NTuple{12, <:Matrix},
@@ -413,7 +415,7 @@ end
 """
     dilute_alv_ortho(o_0, contribs_ortho, fractions) -> NTuple{12, Matrix}
 
-Ortho-form Dilute scheme: `o_eff = o_0 + Σ_r f_r · Ñ_r`.
+Ortho-form Dilute scheme: ``\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0 + \\sum_i f_i\\,\\widetilde{\\mathbb{N}}_i``.
 """
 function dilute_alv_ortho(
         o_0::NTuple{12, <:Matrix},
@@ -451,7 +453,13 @@ end
         -> NTuple{12, Matrix}
 
 Ortho-form Mori-Tanaka:
-   `C̃_eff = C̃_0 + (Σ_r f_r Ñ_r) ∘ (f_0 𝟙 + Σ_s f_s Ã_s)^{-vol}`,
+
+```math
+\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0
+  + \\Bigl(\\sum_i f_i\\,\\widetilde{\\mathbb{N}}_i\\Bigr)\\circ
+    \\Bigl(f_0\\,H\\,\\mathbb{I} + \\sum_j f_j\\,\\widetilde{\\mathbb{A}}_j^{\\mathrm{dil}}\\Bigr)^{-\\circ},
+```
+
 all in ortho form.
 """
 function mori_tanaka_alv_ortho(

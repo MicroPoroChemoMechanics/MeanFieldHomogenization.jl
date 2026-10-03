@@ -11,7 +11,7 @@ parallel to the third axis (the crack normal) of the crack-local basis
 `ℬ_crack`.
 
 NB: this is the actual TI symmetry axis (`TensND.axis(C₀)`), not the
-third basis vector of `TensND.get_basis(C₀)` (which is always `e₃` for
+third basis vector of `TensND.get_basis(C₀)` (which is always ``\\underline{e}_3`` for
 a `TensTI{4}` since the underlying basis is canonical — the symmetry
 axis is stored separately in the structured container).
 """
@@ -83,27 +83,28 @@ end
         -> Tens{2,3}
 
 Size-independent crack-opening-displacement (COD) tensor
-``\\mathbf B`` defined from the average displacement jump on the crack
+``\\boldsymbol{B}`` defined from the average displacement jump on the crack
 surface through
 
-```
-(1/S) ∫_S [u] dS = b · B · (Σ · n̂),
+```math
+\\frac{1}{S}\\int_S [\\![\\underline{u}]\\!]\\,\\mathrm{d}S
+= b\\,\\boldsymbol{B}\\cdot(\\boldsymbol{\\Sigma}\\cdot\\underline{n}),
 ```
 
 where ``b`` is the semi-minor in-plane semi-axis (``b\\ge c\\to 0``).
-``\\mathbf B`` factors the crack compliance tensor as
+``\\boldsymbol{B}`` factors the crack compliance tensor as
 
-- Elliptic: ``\\mathbb H = \\tfrac{3}{4}\\,\\hat{\\mathbf n}
-  \\stackrel{s}{\\otimes}\\mathbf B\\stackrel{s}{\\otimes}\\hat{\\mathbf n}``;
-- Ribbon:   ``\\mathbb H = \\tfrac{2}{\\pi}\\,\\hat{\\mathbf n}
-  \\stackrel{s}{\\otimes}\\mathbf B\\stackrel{s}{\\otimes}\\hat{\\mathbf n}``;
+- Elliptic: ``\\mathbb{H} = \\tfrac{3}{4}\\,\\underline{n}
+  \\stackrel{s}{\\otimes}\\boldsymbol{B}\\stackrel{s}{\\otimes}\\underline{n}``;
+- Ribbon:   ``\\mathbb{H} = \\tfrac{2}{\\pi}\\,\\underline{n}
+  \\stackrel{s}{\\otimes}\\boldsymbol{B}\\stackrel{s}{\\otimes}\\underline{n}``;
 
-with ``\\mathbb H = \\lim_{c/b\\to 0}(c/b)\\,\\mathbb Q^{-1}`` and
-``\\mathbb Q = \\mathbb C - \\mathbb C:\\mathbb P:\\mathbb C`` the
+with ``\\mathbb{H} = \\lim_{c/b\\to 0}(c/b)\\,\\mathbb{Q}^{-1}`` and
+``\\mathbb{Q} = \\mathbb{C} - \\mathbb{C}:\\mathbb{P}:\\mathbb{C}`` the
 second Hill tensor
 [kachanov1992, sevostianov2002, barthelemyIJES2021](@cite).  The elliptic and ribbon
-factorizations are related by ``\\mathbf B^{\\mathcal R} =
-\\tfrac{3\\pi}{8}\\,\\lim_{\\eta\\to 0}\\mathbf B^{\\mathcal E}``.
+factorizations are related by ``\\boldsymbol{B}^{\\mathcal{R}} =
+\\tfrac{3\\pi}{8}\\,\\lim_{\\eta\\to 0}\\boldsymbol{B}^{\\mathcal{E}}``.
 
 For isotropic or aligned-TI matrices the kernel is analytical
 [hoenig1978, kanaun2009](@cite);
@@ -135,15 +136,17 @@ const B_tensor = cod_tensor
     _apply_interface_stiffness(B::Tens{2,3}, K::Tens{2,3}, b) -> Tens{2,3}
 
 Apply the Sevostianov spring-like-interface correction to the COD
-2-tensor ``\\mathbf B`` :
+2-tensor ``\\boldsymbol{B}``, with ``\\boldsymbol{K}`` the interface stiffness tensor:
 
-```
-B_eff = (b · K + B^{-1})^{-1} = B · (I + b · K · B)^{-1}
+```math
+\\boldsymbol{B}^{\\mathrm{hom}}
+= \\bigl(b\\,\\boldsymbol{K} + \\boldsymbol{B}^{-1}\\bigr)^{-1}
+= \\boldsymbol{B}\\cdot\\bigl(\\boldsymbol{1} + b\\,\\boldsymbol{K}\\cdot\\boldsymbol{B}\\bigr)^{-1}
 ```
 
 Limits :
-* ``\\mathbf K = 0`` (traction-free)        →  `B_eff = B`
-* ``\\mathbf K \\to \\infty`` (rigid bond)   →  `B_eff = 0`
+* ``\\boldsymbol{K} = \\boldsymbol{0}`` (traction-free)        →  ``\\boldsymbol{B}^{\\mathrm{hom}} = \\boldsymbol{B}``
+* ``\\boldsymbol{K} \\to \\infty`` (rigid bond)   →  ``\\boldsymbol{B}^{\\mathrm{hom}} = \\boldsymbol{0}``
 
 Reference : [sevostianov2002](@citet).
 """
@@ -168,30 +171,32 @@ end
 
 Size-independent **thermal crack-opening-displacement scalar** ``b``
 for a flat crack in a conductor of 2nd-order conductivity tensor
-``\\mathbf K_0``.  Analog of the elasticity COD tensor: in the 2nd-
+``\\boldsymbol{K}_0``.  Analog of the elasticity COD tensor: in the 2nd-
 order problem, the temperature jump across the crack is scalar and
 only the normal component of the heat flux drives it, so a single
 scalar captures the full crack flexibility.  The associated
-size-independent resistivity contribution ``\\mathbf R = `` [`compliance_contribution`](@ref)`(crack, K₀)` is
+size-independent resistivity contribution ``\\boldsymbol{R}``, returned by [`compliance_contribution`](@ref)`(crack, K₀)`, is
 
-```
-R = (3/4) b · n̂ ⊗ n̂   (elliptic)
-R = (2/π) b · n̂ ⊗ n̂   (ribbon)
+```math
+\\begin{aligned}
+\\boldsymbol{R} &= \\tfrac{3}{4}\\,b\\,\\underline{n}\\otimes\\underline{n} &&(\\mathrm{elliptic}),\\\\
+\\boldsymbol{R} &= \\tfrac{2}{\\pi}\\,b\\,\\underline{n}\\otimes\\underline{n} &&(\\mathrm{ribbon}).
+\\end{aligned}
 ```
 
-The rank-1 direction is the crack normal ``\\hat{\\mathbf n}`` for *any*
-``\\mathbf K_0``: the null space of
-``\\mathbf K_0-\\mathbf K_0\\mathbf P(0)\\mathbf K_0`` is spanned by it.
+The rank-1 direction is the crack normal ``\\underline{n}`` for *any*
+``\\boldsymbol{K}_0``: the null space of
+``\\boldsymbol{K}_0-\\boldsymbol{K}_0\\cdot\\boldsymbol{P}(0)\\cdot\\boldsymbol{K}_0`` is spanned by it.
 Apply [`delta_resistivity`](@ref) to recover the dilute resistivity
-correction ``\\Delta\\mathbf R = (4\\pi/3)\\varepsilon^{3\\mathrm d}\\mathbf R``
-(elliptic) or ``\\Delta\\mathbf R = \\pi\\,\\varepsilon^{2\\mathrm d}\\mathbf R``
+correction ``\\Delta\\boldsymbol{R} = (4\\pi/3)\\,\\varepsilon^{3\\mathrm{d}}\\,\\boldsymbol{R}``
+(elliptic) or ``\\Delta\\boldsymbol{R} = \\pi\\,\\varepsilon^{2\\mathrm{d}}\\,\\boldsymbol{R}``
 (ribbon).
 
-``b`` is normalized exactly like the elastic ``\\mathbf B`` — by the in-plane
-half-width — so ``b = \\chi/(b\\Lambda)`` with ``\\chi^{\\mathcal E} = 2/3`` and
-``\\chi^{\\mathcal R} = \\pi/4``. Because the order-2 acoustic form is a
+``b`` is normalized exactly like the elastic ``\\boldsymbol{B}`` — by the in-plane
+half-width — so ``b = \\chi/(b\\Lambda)`` with ``\\chi^{\\mathcal{E}} = 2/3`` and
+``\\chi^{\\mathcal{R}} = \\pi/4``. Because the order-2 acoustic form is a
 *scalar*, the closed form holds for **every** anisotropy, through a 2×2
-eigenvalue problem on ``\\mathrm{adj}\\,\\mathbf K_0``; see the theory page
+eigenvalue problem on ``\\mathrm{adj}\\,\\boldsymbol{K}_0``; see the theory page
 `docs/src/theory/thermal_cracks.md` and its derivation script
 `scripts/16_cod_symbolic_thermal.jl`.
 
@@ -232,19 +237,19 @@ _cod_thermal(crack::RibbonCrack, K₀::TensND.AbstractTens{2, 3}) =
 """
     compliance_contribution(crack, K₀::AbstractTens{2,3}; kw...) -> Tens{2,3}
 
-Size-independent **crack resistivity contribution tensor** ``\\mathbf R``
+Size-independent **crack resistivity contribution tensor** ``\\boldsymbol{R}``
 (thermal analog of the elasticity [`compliance_contribution`](@ref)):
 
-- Elliptic crack:  ``\\mathbf R = \\tfrac{3}{4}\\,b\\,
-  \\hat{\\mathbf w}\\otimes\\hat{\\mathbf w}``.
-- Ribbon crack:    ``\\mathbf R = \\tfrac{2}{\\pi}\\,b\\,
-  \\hat{\\mathbf w}\\otimes\\hat{\\mathbf w}``.
+- Elliptic crack:  ``\\boldsymbol{R} = \\tfrac{3}{4}\\,b\\,
+  \\underline{w}\\otimes\\underline{w}``.
+- Ribbon crack:    ``\\boldsymbol{R} = \\tfrac{2}{\\pi}\\,b\\,
+  \\underline{w}\\otimes\\underline{w}``.
 
-with ``b = `` [`cod_tensor`](@ref)`(crack, K₀)` the thermal COD scalar
-and ``\\hat{\\mathbf w}\\parallel\\mathbf K_0^{-1/2}\\hat{\\mathbf n}``
-(reduces to ``\\hat{\\mathbf n}`` for iso / aligned-TI matrices).
+with ``b`` the thermal COD scalar, returned by [`cod_tensor`](@ref)`(crack, K₀)`,
+and ``\\underline{w}\\parallel\\boldsymbol{K}_0^{-1/2}\\cdot\\underline{n}``
+(reduces to ``\\underline{n}`` for iso / aligned-TI matrices).
 Apply [`delta_resistivity`](@ref)`(crack, R, ε)` to obtain the dilute
-resistivity correction ``\\Delta\\mathbf R``.
+resistivity correction ``\\Delta\\boldsymbol{R}``.
 """
 function compliance_contribution(
         crack::MFH_Core.AbstractCrack,

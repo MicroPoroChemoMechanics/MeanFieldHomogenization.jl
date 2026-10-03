@@ -37,13 +37,13 @@
 """
     AxisymmetricCase()
 
-Case I of Duan et al. (2005): a remote strain `diag(ε_t, ε_t, ε_a)` about the
-spheroid's axis. The Papkovich–Neuber gauge is `φ₁ = φ₂ = 0`, both surviving
-potentials are of order `m = 0`, and the fields are axisymmetric — `u_φ` and
-`σ_φq` vanish structurally rather than by assumption.
+Case I of Duan et al. (2005): a remote strain ``\\mathrm{diag}(\\varepsilon_t, \\varepsilon_t, \\varepsilon_a)`` about the
+spheroid's axis. The Papkovich–Neuber gauge is ``\\varphi_1 = \\varphi_2 = 0``, both surviving
+potentials are of order ``m = 0``, and the fields are axisymmetric — ``u_\\varphi`` and
+``\\sigma_{\\varphi q}`` vanish structurally rather than by assumption.
 
 A singleton, so the two remaining elementary problems (transverse and
-longitudinal shear, which need orders `m = 2` and `m = 1`) can be added by
+longitudinal shear, which need orders ``m = 2`` and ``m = 1``) can be added by
 dispatch without disturbing this one.
 """
 struct AxisymmetricCase end
@@ -54,7 +54,7 @@ struct AxisymmetricCase end
 Legendre values, first and second derivatives at `x`, for the given `degrees`.
 
 The second derivative is not tabulated anywhere: it comes from Legendre's own
-equation, `(1-x²)y'' - 2x y' + n(n+1) y = 0`, which both `Pₙ` and `Qₙ` satisfy
+equation, ``(1-x^2)\\,y'' - 2x\\,y' + n(n+1)\\,y = 0``, which both ``P_n`` and ``Q_n`` satisfy
 on either branch.
 """
 function _leg_pqq(kind::Symbol, x, degrees)
@@ -64,22 +64,22 @@ function _leg_pqq(kind::Symbol, x, degrees)
     return v, d, dd
 end
 
-"Even degrees `0, 2, …` and odd degrees `1, 3, …`, `𝒩` of each."
+"Even degrees ``0, 2, \\dots`` and odd degrees ``1, 3, \\dots``, ``\\mathcal{N}`` of each."
 @inline _case1_degrees(𝒩::Int) = (collect(0:2:(2𝒩 - 2)), collect(1:2:(2𝒩 - 1)))
 
 """
     _case1_modes(𝒩, role) -> Vector{Tuple{Symbol,Int}}
 
-The unknown amplitudes of one region. `:A`/`:B` are the `Pₙ(q)`/`Qₙ(q)` parts of
-`φ₀` (even degrees), `:C`/`:D` the same for `φ₃` (odd degrees).
+The unknown amplitudes of one region. `:A`/`:B` are the ``P_n(q)``/``Q_n(q)`` parts of
+``\\varphi_0`` (even degrees), `:C`/`:D` the same for ``\\varphi_3`` (odd degrees).
 
-- `:core` — `Qₙ(q)` is singular on the focal segment, so only `:A`, `:C` survive.
+- `:core` — ``Q_n(q)`` is singular on the focal segment, so only `:A`, `:C` survive.
 - `:shell` — all four.
 - `:matrix` — only the decaying `:B`, `:D`; the growing part is the prescribed
   remote field.
 
-Degree `0` is absent from `:A` in every region: `φ₀ = P₀(p)P₀(q) = 1` is a
-constant, contributes nothing to `∇Φ`, and would put an exactly null column in
+Degree `0` is absent from `:A` in every region: ``\\varphi_0 = P_0(p)P_0(q) = 1`` is a
+constant, contributes nothing to ``\\nabla\\Phi``, and would put an exactly null column in
 the system.
 """
 function _case1_modes(𝒩::Int, role::Symbol)
@@ -108,12 +108,12 @@ themselves must be more accurate.
 """
     _case1_block(modes, q, c, μ, ν, 𝒩, xg, wg, even, odd) -> Matrix
 
-The `4𝒩 × length(modes)` contribution of one region to the conditions at
-`q`. Rows are, in order: `U_q/μ` on the even degrees, `(1-p²)U_p/μ` on the odd
-ones, `T_q` on the even, `(1-p²)T_p` on the odd.
+The ``4\\mathcal{N}`` × `length(modes)` contribution of one region to the conditions at
+``q``. Rows are, in order: ``U_q/\\mu`` on the even degrees, ``(1-p^2)\\,U_p/\\mu`` on the odd
+ones, ``T_q`` on the even, ``(1-p^2)\\,T_p`` on the odd.
 
-The projections are computed by Gauss–Legendre quadrature in `p`. That is exact,
-not approximate: each condition is a polynomial in `p` once the shared radicals
+The projections are computed by Gauss–Legendre quadrature in ``p``. That is exact,
+not approximate: each condition is a polynomial in ``p`` once the shared radicals
 are removed, so a rule with enough nodes integrates it to the last bit.
 """
 function _case1_block(modes, q, c, μ, ν, 𝒩::Int, xg, wg, even, odd)
@@ -150,7 +150,7 @@ function _case1_block(modes, q, c, μ, ν, 𝒩::Int, xg, wg, even, odd)
     return M
 end
 
-"The four condition values of a `φ₀` mode `Pₙ(p) F(q)`, where `Φ = φ₀`."
+"The four condition values of a ``\\varphi_0`` mode ``P_n(p)\\,F(q)``, where ``\\Phi = \\varphi_0``."
 @inline function _case1_phi0_terms(Pn, dPn, F, dF, ddF, p, q)
     pb2, qb2, w2 = 1 - p^2, q^2 - 1, q^2 - p^2
     return (
@@ -161,7 +161,7 @@ end
     )
 end
 
-"The four condition values of a `φ₃` mode `P_m(p) G(q)`, where `Φ = c p q φ₃`."
+"The four condition values of a ``\\varphi_3`` mode ``P_m(p)\\,G(q)``, where ``\\Phi = c\\,p\\,q\\,\\varphi_3``."
 @inline function _case1_phi3_terms(Pm, dPm, G, dG, ddG, p, q, c, ν)
     pb2, qb2, w2 = 1 - p^2, q^2 - 1, q^2 - p^2
     Φp = c * q * (Pm + p * dPm) * G
@@ -185,14 +185,21 @@ end
 """
     _case1_remote(c, κ₀, μ₀, εa, εt) -> (A₂, C₁)
 
-Amplitudes of the remote uniform strain `diag(ε_t, ε_t, ε_a)`, as coefficients
-on `P₂(p)P₂(q)` and `P₁(p)P₁(q)`.
+Amplitudes of the remote uniform strain ``\\mathrm{diag}(\\varepsilon_t, \\varepsilon_t, \\varepsilon_a)``, as coefficients
+on ``P_2(p)P_2(q)`` and ``P_1(p)P_1(q)``.
 
 A uniform strain excites **two** coefficients and no more, which is the
 "collapse" the single-inclusion case is checked against:
 
-    φ₀ = -(4/3) c² μ₀ ε_t P₂(p)P₂(q)   (plus a constant, which is inert)
-    φ₃ = γ c P₁(p)P₁(q),   γ = -μ₀(ε_a + 2ε_t)/(1 - 2ν₀)
+```math
+\\varphi_0 = -\\tfrac{4}{3}\\,c^2\\mu_0\\,\\varepsilon_t\\,P_2(p)P_2(q),
+\\qquad
+\\varphi_3 = \\gamma\\,c\\,P_1(p)P_1(q),
+\\qquad
+\\gamma = -\\frac{\\mu_0(\\varepsilon_a + 2\\varepsilon_t)}{1 - 2\\nu_0},
+```
+
+``\\varphi_0`` being defined up to a constant, which is inert.
 """
 @inline function _case1_remote(c, κ₀, μ₀, εa, εt)
     ν₀ = _poisson(κ₀, μ₀)
@@ -205,17 +212,17 @@ end
                                   ngauss = 0) -> NamedTuple
 
 Solve the elastic `n`-layer confocal spheroid under an axisymmetric remote
-strain `diag(εt, εt, εa)` about the spheroid's axis.
+strain ``\\mathrm{diag}(\\varepsilon_t, \\varepsilon_t, \\varepsilon_a)`` about the spheroid's axis.
 
 Returns `(; modes, amplitudes, residual)`: `modes[ℓ]` lists the
-`(kind, degree)` pairs of region `ℓ` (`1:N` the layers, `N+1` the matrix) and
+`(kind, degree)` pairs of region ``\\ell`` (`1:N` the layers, `N+1` the matrix) and
 `amplitudes[ℓ]` their values, with the matrix's prescribed remote part left
 out. `residual` is the relative least-squares residual, which is a *diagnostic*
 and not a fitting error — see the note below.
 
 !!! note "Why the system is solved in least squares"
-    Each interface contributes `4𝒩` conditions and each region `4𝒩-1`
-    amplitudes, degree `0` of `φ₀` being a constant potential that moves
+    Each interface contributes ``4\\mathcal{N}`` conditions and each region ``4\\mathcal{N}-1``
+    amplitudes, degree `0` of ``\\varphi_0`` being a constant potential that moves
     nothing. The assembled system is therefore over-determined by one row per
     interface, and those rows are **redundant, not conflicting**: the residual
     comes out at machine precision. Solving in least squares is the honest way
@@ -325,13 +332,19 @@ end
     spheroid_core_strain(s, C₀, εa, εt; kw...) -> (εa_in, εt_in)
 
 Uniform strain in the **core** of an elastic confocal spheroid under the
-axisymmetric remote strain `diag(εt, εt, εa)`.
+axisymmetric remote strain ``\\mathrm{diag}(\\varepsilon_t, \\varepsilon_t, \\varepsilon_a)``.
 
 The core carries only the regular modes, and the two that survive — degree `2`
-of `φ₀` and degree `1` of `φ₃` — are exactly a uniform strain, read back
+of ``\\varphi_0`` and degree `1` of ``\\varphi_3`` — are exactly a uniform strain, read back
 through the same relations that build the remote field:
 
-    ε_t = -3A₂ / (4 c² μ₁),   ε_a = -γ(1 - 2ν₁)/μ₁ - 2ε_t,   γ = C₁/c.
+```math
+\\varepsilon_t = -\\frac{3A_2}{4c^2\\mu_1},
+\\qquad
+\\varepsilon_a = -\\frac{\\gamma(1 - 2\\nu_1)}{\\mu_1} - 2\\varepsilon_t,
+\\qquad
+\\gamma = C_1/c.
+```
 
 For a single layer this is Eshelby's result, which is what the tests check it
 against.

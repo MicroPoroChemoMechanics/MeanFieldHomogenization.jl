@@ -58,8 +58,8 @@ Solve with [Gridap.jl](https://gridap.github.io/Gridap.jl); needs
 `import Gridap, GridapGmsh` (GridapGmsh carries its own `gmsh`, so `Gmsh.jl`
 is not required on this path).
 
-Gridap states the weak form directly — `∫( ε(v) ⊙ (σ∘ε(u)) )dΩ` for the crack,
-`∫( Bᵐ(v)' * D * Bᵐ(u) * ρ )dΩ` for the axisymmetric modes — which makes it the
+Gridap states the weak form directly — ``\\int \\boldsymbol{\\varepsilon}(v):\\boldsymbol{\\sigma}(\\varepsilon(u))\\,\\mathrm{d}\\Omega`` for the crack,
+``\\int \\mathbf{B}_m(v)^{\\!T}\\mathbf{D}\\,\\mathbf{B}_m(u)\\,\\rho\\,\\mathrm{d}\\Omega`` for the axisymmetric modes — which makes it the
 easier of the two to read and to modify.
 """
 struct GridapBackend <: FEBackend end
@@ -119,7 +119,7 @@ _no_backend_method(f, b) = error(
 Backend-native mesh of the meridian half-plane of `incl`, carrying the cell
 sets `"core"`, `"shell"`, `"matrix"` and the boundary sets `"outer"`, `"axis"`
 of [`_build_gmsh_axi_model`](@ref). The first node coordinate is the
-cylindrical radius `ρ`, the second the axial coordinate `z`.
+cylindrical radius ``\\rho``, the second the axial coordinate ``z``.
 """
 fe_axi_grid(b::FEBackend, incl) = _no_backend_method("fe_axi_grid", b)
 
@@ -134,7 +134,7 @@ fe_axi_grid_counts(b::FEBackend, grid) = _no_backend_method("fe_axi_grid_counts"
 """
     fe_axi_region_volume(backend, grid, set) -> Float64
 
-Volume of revolution `2π ∫_set ρ dρ dz` of one region, on the geometric
+Volume of revolution ``2\\pi\\int_{\\mathrm{set}}\\rho\\,\\mathrm{d}\\rho\\,\\mathrm{d}z`` of one region, on the geometric
 interpolation of the mesh. Diagnostics only — the driver measures its own
 volume with the mode's quadrature, and the two need not agree exactly.
 """
@@ -175,7 +175,7 @@ for every dof `d` of the outer boundary, `k` being its component, **then**
 
 Two things make this the delicate function of the contract.
 
-*The order matters.* The poles `(0, ±R)` belong to both the `"outer"` and the
+*The order matters.* The poles ``(0, \\pm R)`` belong to both the `"outer"` and the
 `"axis"` sets. The axis must win, so the zeroing comes second.
 
 *It must not touch the matrix.* The driver assembles and factorizes once, then
@@ -190,13 +190,16 @@ fe_axi_set_dirichlet!(b::FEBackend, mode, u, f) =
 
 Stiffness of one mode over the whole dof numbering,
 
+```math
+\\mathbf{K} = \\sum_{\\mathrm{regions}} \\int_{\\mathrm{region}}
+  \\mathbf{B}(v)^{\\!T}\\,\\mathbf{D}_{\\mathrm{region}}\\,\\mathbf{B}(u)\\,\\rho\\,\\mathrm{d}\\rho\\,\\mathrm{d}z ,
 ```
-K = Σ_regions ∫_region Bop(v)' * D_region * Bop(u) * ρ dρ dz .
-```
+
+with `Bop` ``= \\mathbf{B}``.
 
 `Dmap` is a `Vector{Pair{String,Matrix{Float64}}}` — a vector, not a `Dict`, so
 that the assembly order is reproducible — mapping a cell-set name to that
-region's material matrix in the cylindrical `(ρ, θ, z)` basis.
+region's material matrix in the cylindrical ``(\\rho, \\theta, z)`` basis.
 
 `Bop(N, dNρ, dNz, ρ) -> Matrix{Float64}` of size `nrow × ncomp` is the
 generalized-strain operator of one scalar shape function, already closed over
@@ -204,7 +207,7 @@ the Fourier mode. It is **R-linear in `(N, dNρ, dNz)`**, so a backend that
 manipulates whole trial functions rather than shape functions may apply it to
 `(u_c, ∂ρu_c, ∂zu_c)` directly instead of building an element `B` matrix.
 
-The `ρ` in the measure is the single factor that turns a plane problem into a
+The ``\\rho`` in the measure is the single factor that turns a plane problem into a
 solid of revolution.
 """
 fe_axi_stiffness(b::FEBackend, mode, Dmap, Bop) =
@@ -213,31 +216,31 @@ fe_axi_stiffness(b::FEBackend, mode, Dmap, Bop) =
 """
     fe_axi_pore_boundary(backend, mode, u, dofmap, proj, set) -> Vector
 
-Line integral of `(ū ⊗ n)ˢ` on the meridian trace of a **cavity** wall,
-projected onto the Fourier mode, with the measure `ρ dl` and **unnormalized**.
-`n` is the facet normal, outward from the matrix and therefore *into* the
+Line integral of ``(\\bar{\\underline{u}}\\stackrel{s}{\\otimes}\\underline{n})`` on the meridian trace of a **cavity** wall,
+projected onto the Fourier mode, with the measure ``\\rho\\,\\mathrm{d}l`` and **unnormalized**.
+``\\underline{n}`` is the facet normal, outward from the matrix and therefore *into* the
 cavity, so the caller supplies the sign.
 
 The tenth method of the axisymmetric contract, and the only one a cavity needs
 that a solid inclusion does not. A cavity has no interior to integrate over, so
-`⟨ε⟩_D` has to come from its boundary — exactly as `fe_cell_mean_strain` does in
+``\\langle\\boldsymbol{\\varepsilon}\\rangle_D`` has to come from its boundary — exactly as `fe_cell_mean_strain` does in
 three dimensions.
 
 **Not** by the divergence identity on the matrix. That route is algebraically
-exact and numerically hopeless: it computes `V_D` as the difference of `V_Ω` and
-`V_M`, whose ratio is `(R/a)³`, so it loses two digits at `R/a = 4` and more as
+exact and numerically hopeless: it computes ``V_D`` as the difference of ``V_\\Omega`` and
+``V_M``, whose ratio is ``(R/a)^3``, so it loses two digits at ``R/a = 4`` and more as
 the cell grows. Measured: the implied cavity volume is 2.9 % off at
-`V_Ω/V_D = 8` and 9.2 % off at 216, and the localization error tracks it.
+``V_\\Omega/V_D = 8`` and 9.2 % off at 216, and the localization error tracks it.
 
 `dofmap` is `_axi_dof_map(m)`, needed here and not in `fe_axi_stiffness` because
 `Bop` already folds it in: the boundary term uses the raw
-`(ū_ρ, ū_θ, ū_z)` while the solved unknowns are the mapped ones.
+``(\\bar u_\\rho, \\bar u_\\theta, \\bar u_z)`` while the solved unknowns are the mapped ones.
 
 The amplitude is returned in the same Kelvin ordering as `_axi_B_elast` produces
-— `(ρρ, θθ, zz, √2 θz, √2 ρz, √2 ρθ)` — so the same `proj` applies. Its `θθ`
+— ``(\\rho\\rho, \\theta\\theta, zz, \\sqrt{2}\\,\\theta z, \\sqrt{2}\\,\\rho z, \\sqrt{2}\\,\\rho\\theta)`` — so the same `proj` applies. Its ``\\theta\\theta``
 entry is identically zero, the facet normal having no azimuthal component; the
-metric term that `ε_θθ` carries has no counterpart in a tensor product, and the
-trace identity `u_ρn_ρ + u_θn_θ = u₁n₁ + u₂n₂` is what makes that consistent.
+metric term that ``\\varepsilon_{\\theta\\theta}`` carries has no counterpart in a tensor product, and the
+trace identity ``u_\\rho n_\\rho + u_\\theta n_\\theta = u_1 n_1 + u_2 n_2`` is what makes that consistent.
 """
 fe_axi_pore_boundary(b::FEBackend, mode, u, dofmap, proj, set) =
     _no_backend_method("fe_axi_pore_boundary", b)
@@ -245,12 +248,14 @@ fe_axi_pore_boundary(b::FEBackend, mode, u, dofmap, proj, set) =
 """
     fe_axi_average(backend, mode, Dmap, u, Bop, proj, sets) -> (prim, dual, V)
 
-Volume averages over `∪ sets` of the generalized strain and of the associated
+Volume averages over the union of `sets` of the generalized strain and of the associated
 generalized stress, both projected by `proj` onto the Kelvin basis of the mode,
-plus the volume of revolution `V = 2π ∫ ρ dρ dz` of that union:
+plus the volume of revolution ``V = 2\\pi\\int\\rho\\,\\mathrm{d}\\rho\\,\\mathrm{d}z`` of that union:
 
-```
-prim = ∫ proj(B u) ρ / ∫ ρ ,      dual = ∫ proj(D · B u) ρ / ∫ ρ .
+```math
+\\mathrm{prim} = \\frac{\\int \\mathrm{proj}(\\mathbf{B}u)\\,\\rho}{\\int\\rho},
+\\qquad
+\\mathrm{dual} = \\frac{\\int \\mathrm{proj}(\\mathbf{D}\\,\\mathbf{B}u)\\,\\rho}{\\int\\rho} .
 ```
 
 The azimuthal integration has already been performed analytically inside
@@ -280,7 +285,7 @@ fe_crack_grid(b::FEBackend, crack) = _no_backend_method("fe_crack_grid", b)
                                          area_up, area_dn)
 
 Mesh diagnostics: cell and node counts, and the facet count and area of each
-lip. The two areas must both equal `πab` — that is what says the plugin split
+lip. The two areas must both equal ``\\pi a b`` — that is what says the plugin split
 the surface cleanly and the front weld did not glue the lips back together.
 """
 fe_crack_counts(b::FEBackend, grid) = _no_backend_method("fe_crack_counts", b)
@@ -320,26 +325,26 @@ fe_crack_set_dirichlet!(b::FEBackend, space, u, f) =
 """
     fe_crack_stiffness(backend, space, C) -> AbstractMatrix
 
-Stiffness of linear elasticity, `∫ ε(v) : ℂ : ε(u) dΩ`, over the whole dof
+Stiffness of linear elasticity, ``\\int \\boldsymbol{\\varepsilon}(v):\\mathbb{C}:\\boldsymbol{\\varepsilon}(u)\\,\\mathrm{d}\\Omega``, over the whole dof
 numbering.
 
 `C` is a `Tensors.SymmetricTensor{4,3}` and is **isotropic**: the corrected
 boundary condition uses the closed-form Kelvin dipole field, so the driver
 refuses anything else long before reaching here. A backend may therefore work
-from `(λ, μ)` instead of from the full tensor.
+from ``(\\lambda, \\mu)`` instead of from the full tensor.
 """
 fe_crack_stiffness(b::FEBackend, space, C) = _no_backend_method("fe_crack_stiffness", b)
 
 """
     fe_crack_mean_jump(backend, space, u, S_f, b) -> Vector{3}
 
-`⟨[[u]]⟩ / b`, the opening averaged over the crack surface and normalized by
+``\\langle[\\![\\underline{u}]\\!]\\rangle / b``, the opening averaged over the crack surface and normalized by
 the semi-minor axis — the convention of `cod_tensor`.
 
 Measured as a surface integral of the trace of `u` on each lip, with no
 assumption on the opening profile. The two lips are told apart by the sign of
-`n ⋅ e₃`, `n` being the outward normal of the adjacent element: the lip whose
-element sits above the crack carries `n = -e₃` and contributes `+u`.
+``\\underline{n}\\cdot\\underline{e}_3``, ``\\underline{n}`` being the outward normal of the adjacent element: the lip whose
+element sits above the crack carries ``\\underline{n} = -\\underline{e}_3`` and contributes ``+\\underline{u}``.
 """
 fe_crack_mean_jump(bk::FEBackend, space, u, S_f, b) =
     _no_backend_method("fe_crack_mean_jump", bk)
@@ -432,15 +437,22 @@ fe_cell_set_dirichlet!(b::FEBackend, space, u, f) =
 
 Stiffness over the whole dof numbering, over the matrix region:
 
+Conduction, with `material` a ``3\\times 3`` matrix:
+
+```math
+K = \\int \\nabla v\\cdot\\boldsymbol{K}\\cdot\\nabla u\\,\\mathrm{d}\\Omega
 ```
-conduction   K = ∫ ∇v ⋅ 𝐊 ⋅ ∇u dΩ         `material` a 3×3 matrix
-elasticity   K = ∫ ε(v) : ℂ : ε(u) dΩ      `material` a SymmetricTensor{4,3}
+
+Elasticity, with `material` a `SymmetricTensor{4,3}`:
+
+```math
+K = \\int \\boldsymbol{\\varepsilon}(v):\\mathbb{C}:\\boldsymbol{\\varepsilon}(u)\\,\\mathrm{d}\\Omega
 ```
 
 Two methods on one name, told apart by the type of `material`. Both are
 **isotropic**: the corrected boundary condition uses a closed-form dipole field,
 and the driver refuses anything else long before reaching here, so a backend may
-work from the scalar or from `(λ, μ)` instead of from the full object.
+work from the scalar or from ``(\\lambda, \\mu)`` instead of from the full object.
 """
 fe_cell_stiffness(b::FEBackend, space, material) =
     _no_backend_method("fe_cell_stiffness", b)

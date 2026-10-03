@@ -24,7 +24,7 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
 - `MeanFieldHomogenization.Conductivity` — 2nd-order Hill tensor for conductivity /
   diffusion problems.
 - `MeanFieldHomogenization.Interactions` — two-inclusion interaction tensors
-  `Γ^{ab}`, the shared ingredient of the N-body schemes (equivalent inclusion
+  ``\\mathbb{T}^{ab}``, the shared ingredient of the N-body schemes (equivalent inclusion
   method, cluster model): closed forms for ball and disk pairs, multipole
   expansion for general ellipsoids, and periodic lattice sums.
 - `MeanFieldHomogenization.LayeredSpheres`   — `n`-layer composite spheres with five

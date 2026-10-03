@@ -36,16 +36,18 @@ Decompose the macroscopic compliance of `rve` into a solid part and one
 contribution per crack family, such that
 
 ```math
-\\mathbb{S}^{\\rm hom} = \\mathbb{S}^{\\rm solid}
-  + \\sum_i \\frac{4\\pi}{3}\\,d_i\\,\\mathbb{S}_i .
+\\mathbb{S}^{\\mathrm{hom}} = \\mathbb{S}^{\\mathrm{solid}}
+  + \\sum_i \\frac{4\\pi}{3}\\,\\varepsilon_i\\,\\mathbb{S}_i ,
 ```
+
+with ``\\varepsilon_i`` the Budiansky density of crack family ``i``.
 
 Returns a `NamedTuple`:
 
-- `solid` — the solid part ``\\mathbb{S}^{\\rm solid}`` (for a single-matrix RVE,
-  the matrix compliance ``\\mathbb{S}_{\\rm s}``);
+- `solid` — the solid part ``\\mathbb{S}^{\\mathrm{solid}}`` (for a single-matrix RVE,
+  the matrix compliance ``\\mathbb{S}_{\\mathrm s}``);
 - `families` — a `Dict{Symbol,…}` mapping each crack phase name to its
-  ``\\mathbb{S}_i``, **normalized per unit** ``(4\\pi/3)\\,d_i``, so that the
+  ``\\mathbb{S}_i``, **normalized per unit** ``(4\\pi/3)\\,\\varepsilon_i``, so that the
   scaled contribution is recovered with
   [`delta_compliance`](@ref MeanFieldHomogenization.Core.delta_compliance).
 
@@ -61,20 +63,20 @@ which consumes them.
 
 # Supported schemes
 
-| Scheme | ``\\mathbb{S}^{\\rm solid}`` | correction |
+| Scheme | ``\\mathbb{S}^{\\mathrm{solid}}`` | correction |
 |---|---|---|
-| [`SelfConsistent`](@ref) | ``\\langle\\mathbb{A}\\rangle : \\langle\\mathbb{C}\\mathbb{A}\\rangle^{-1}`` | ``\\mathbb{C}^{\\rm hom} : \\langle\\mathbb{C}\\mathbb{A}\\rangle^{-1}`` |
-| [`MoriTanaka`](@ref) | ``\\mathbb{S}_{\\rm s}`` | none (identity) |
+| [`SelfConsistent`](@ref) | ``\\langle\\mathbb{A}\\rangle : \\langle\\mathbb{C}:\\mathbb{A}\\rangle^{-1}`` | ``\\mathbb{C}^{\\mathrm{hom}} : \\langle\\mathbb{C}:\\mathbb{A}\\rangle^{-1}`` |
+| [`MoriTanaka`](@ref) | ``\\mathbb{S}_{\\mathrm s}`` | none (identity) |
 
-For Mori-Tanaka the identity ``\\mathbb{S}^{\\rm MT} = \\mathbb{S}_{\\rm s} + \\sum_i
-(4\\pi/3) d_i \\mathbb{H}_i(\\mathbb{C}_{\\rm s})`` is exact — a two-line consequence of
-the `𝔹 : 𝔸⁻¹` body — but **only when the matrix is the sole phase carrying
+For Mori-Tanaka the identity ``\\mathbb{S}^{\\mathrm{MT}} = \\mathbb{S}_{\\mathrm s} + \\sum_i
+(4\\pi/3)\\,\\varepsilon_i\\,\\mathbb{H}_i(\\mathbb{C}_{\\mathrm s})`` is exact — a two-line consequence of
+the ``\\mathbb{B}:\\mathbb{A}^{-1}`` body — but **only when the matrix is the sole phase carrying
 volume**. An RVE with solid inclusions *and* cracks is rejected rather than
 answered approximately.
 
 !!! warning "Unsymmetrized families only"
     ``(\\star)`` is a statement about one orientation. A crack phase declared
-    with `symmetrize = :iso` or `:ti` has already had its ℍ averaged over an
+    with `symmetrize = :iso` or `:ti` has already had its ``\\mathbb{H}`` averaged over an
     orbit of orientations, and no single ``\\underline{n}_i`` remains to project onto.
     Such a phase raises an `ArgumentError` here instead of returning a plausible
     but meaningless tensor. Discrete fracture families — the ARMA setting — are
@@ -155,8 +157,8 @@ Relative Frobenius residual of the identity guaranteed by
 [`crack_family_compliances`](@ref):
 
 ```math
-\\frac{\\bigl\\| \\mathbb{S}^{\\rm hom} - \\mathbb{S}^{\\rm solid}
-- \\sum_i (4\\pi/3) d_i \\mathbb{S}_i \\bigr\\|}{\\bigl\\|\\mathbb{S}^{\\rm hom}\\bigr\\|}
+\\frac{\\bigl\\| \\mathbb{S}^{\\mathrm{hom}} - \\mathbb{S}^{\\mathrm{solid}}
+- \\sum_i (4\\pi/3)\\,\\varepsilon_i\\,\\mathbb{S}_i \\bigr\\|}{\\bigl\\|\\mathbb{S}^{\\mathrm{hom}}\\bigr\\|}
 ```
 
 A model self-check, and the regression test of the decomposition. For an

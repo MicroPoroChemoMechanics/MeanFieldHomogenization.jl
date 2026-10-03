@@ -107,8 +107,8 @@ stress(r::MaterialResponse) = r.fluxes.σ
 """
     tangent(r::MaterialResponse)
 
-The `σε` tangent block — the consistent tangent stiffness ``\\partial\\sigma /
-\\partial\\varepsilon`` an FE code assembles into its Jacobian.
+The `σε` tangent block — the consistent tangent stiffness ``\\partial\\boldsymbol{\\sigma} /
+\\partial\\boldsymbol{\\varepsilon}`` an FE code assembles into its Jacobian.
 """
 tangent(r::MaterialResponse) = r.tangents.σε
 

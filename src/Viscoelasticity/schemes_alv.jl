@@ -47,9 +47,11 @@ end
 """
     dilute_concentration_alv(C_E, C_0, P) -> Matrix
 
-Dilute strain concentration kernel `Ã^dil = (𝟙 + P̃ ∘ ΔC̃)^{-vol}`
-[barthelemyIJES2019; eq. 16](@cite).  All inputs are `(6n × 6n)` block
-matrices ; the result is also `(6n × 6n)` and lower-block-triangular.
+Dilute strain concentration kernel
+``\\widetilde{\\mathbb{A}}^{\\mathrm{dil}} = (H\\,\\mathbb{I} + \\widetilde{\\mathbb{P}}\\circ\\Delta\\widetilde{\\mathbb{C}})^{-\\circ}``,
+``\\Delta\\widetilde{\\mathbb{C}} = \\widetilde{\\mathbb{C}}^{\\mathcal{E}} - \\widetilde{\\mathbb{C}}_0``
+[barthelemyIJES2019; eq. 16](@cite).  All inputs are ``6n\\times 6n`` block
+matrices ; the result is also ``6n\\times 6n`` and lower-block-triangular.
 """
 function dilute_concentration_alv(
         C_E::AbstractMatrix, C_0::AbstractMatrix,
@@ -68,7 +70,7 @@ end
 """
     dilute_contribution_alv(C_E, C_0, P) -> Matrix
 
-Dilute strain contribution kernel `Ñ = ΔC̃ ∘ Ã^dil`
+Dilute strain contribution kernel ``\\widetilde{\\mathbb{N}} = \\Delta\\widetilde{\\mathbb{C}}\\circ\\widetilde{\\mathbb{A}}^{\\mathrm{dil}}``
 [barthelemyIJES2019; eq. 17](@cite).  This is the size-independent stiffness
 contribution of a single inclusion.
 """
@@ -86,9 +88,9 @@ end
 """
     voigt_alv(C_phases::AbstractVector, fractions::AbstractVector) -> Matrix
 
-Voigt (uniform-strain) bound: `C_eff = Σ_r f_r · C̃^r`.  Each `C_phases[r]`
-is a `(6n × 6n)` block matrix and `fractions[r]` is the volume fraction
-of phase `r`.
+Voigt (uniform-strain) bound: ``\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\sum_i f_i\\,\\widetilde{\\mathbb{C}}_i``.  Each `C_phases[i]`
+is a ``6n\\times 6n`` block matrix and `fractions[i]` is the volume fraction ``f_i``
+of phase ``i``.
 """
 function voigt_alv(
         C_phases::AbstractVector{<:AbstractMatrix},
@@ -108,10 +110,14 @@ end
 """
     reuss_alv(C_phases::AbstractVector, fractions::AbstractVector) -> Matrix
 
-Reuss (uniform-stress) bound: invert each `C̃^r`, do the volume average
+Reuss (uniform-stress) bound: invert each ``\\widetilde{\\mathbb{C}}_i``, do the volume average
 of compliances, then invert the result.
 
-  J̃_eff = Σ_r f_r · J̃^r ,  C̃_eff = (J̃_eff)^{-vol}
+```math
+\\widetilde{\\mathbb{L}}^{\\mathrm{hom}} = \\sum_i f_i\\,\\widetilde{\\mathbb{L}}_i,
+\\qquad
+\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\bigl(\\widetilde{\\mathbb{L}}^{\\mathrm{hom}}\\bigr)^{-\\circ}
+```
 """
 function reuss_alv(
         C_phases::AbstractVector{<:AbstractMatrix},
@@ -130,12 +136,12 @@ end
 """
     dilute_alv(C_0, contribs, fractions) -> Matrix
 
-Dilute scheme: `C̃_eff = C̃^0 + Σ_r f_r · Ñ^{r,dil}` where the dilute
-contributions `Ñ^{r,dil}` of each inclusion phase are pre-computed via
-`dilute_contribution_alv` (each `(6n × 6n)`), `f_r` is the volume
-fraction of phase `r`, and the matrix `C̃^0` is the reference.
+Dilute scheme: ``\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0 + \\sum_i f_i\\,\\widetilde{\\mathbb{N}}_i`` where the dilute
+contributions ``\\widetilde{\\mathbb{N}}_i`` of each inclusion phase are pre-computed via
+`dilute_contribution_alv` (each ``6n\\times 6n``), ``f_i`` is the volume
+fraction of phase ``i``, and the matrix ``\\widetilde{\\mathbb{C}}_0`` is the reference.
 
-Note that for the dilute scheme the matrix volume fraction `f_0`
+Note that for the dilute scheme the matrix volume fraction ``f_0``
 does *not* appear: the inclusions are treated as if they were
 embedded in an infinite matrix.
 """
@@ -168,11 +174,16 @@ Mori-Tanaka scheme: the average matrix-strain is taken as the reference
 strain proportional to the inverse of the volume-weighted concentration
 average.
 
-  C̃_eff = C̃^0 + (Σ_r f_r Ñ^{r,dil}) ∘ (f_0 · 𝟙 + Σ_s f_s Ã^{s,dil})^{-vol}
+```math
+\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0
+  + \\Bigl(\\sum_i f_i\\,\\widetilde{\\mathbb{N}}_i\\Bigr)\\circ
+    \\Bigl(f_0\\,H\\,\\mathbb{I} + \\sum_j f_j\\,\\widetilde{\\mathbb{A}}_j^{\\mathrm{dil}}\\Bigr)^{-\\circ}
+```
 
-`A_duts[r]` is the dilute concentration kernel of phase `r`,
-`contribs[r] = ΔC^r ∘ A_duts[r]`, `fractions[r]` its volume fraction
-in the RVE, and `f_matrix` the matrix volume fraction `f_0`.
+`A_duts[i]` is the dilute concentration kernel ``\\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}}`` of phase ``i``,
+`contribs[i]` ``= \\widetilde{\\mathbb{N}}_i = (\\widetilde{\\mathbb{C}}_i - \\widetilde{\\mathbb{C}}_0)\\circ\\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}}``,
+`fractions[i]` its volume fraction ``f_i`` in the RVE, and `f_matrix` the matrix
+volume fraction ``f_0``.
 """
 function mori_tanaka_alv(
         C_0::AbstractMatrix,
@@ -210,12 +221,15 @@ end
     maxwell_alv(C_0, contribs, fractions; H_0) -> Matrix
 
 Maxwell scheme: the reference is replaced by a "host medium" with a
-prescribed distribution shape, whose Hill kernel is `H_0 = P̃_d`.
+prescribed distribution shape, whose Hill kernel is `H_0` ``= \\widetilde{\\mathbb{P}}_{\\Omega}``.
 The Volterra-discrete formula is
 
-  C̃_eff = C̃^0 + Σ̃ ∘ (𝟙 - P̃_d ∘ Σ̃)^{-vol}
+```math
+\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0
+  + \\widetilde{\\mathbb{N}}\\circ\\bigl(H\\,\\mathbb{I} - \\widetilde{\\mathbb{P}}_{\\Omega}\\circ\\widetilde{\\mathbb{N}}\\bigr)^{-\\circ}
+```
 
-where `Σ̃ = Σ_r f_r Ñ^{r,dil}` and the dilute contributions are the
+where ``\\widetilde{\\mathbb{N}} = \\sum_i f_i\\,\\widetilde{\\mathbb{N}}_i`` and the dilute contributions are the
 ones computed by [`dilute_contribution_alv`](@ref).
 
 When the distribution shape coincides with the inclusion shape and
@@ -260,15 +274,18 @@ acting on the compliance kernel.  Useful when the inclusions are weak
 (e.g. cracks) — the linearization around the matrix compliance
 converges better.
 
-  J̃_eff = J̃^0 + Σ_r f_r · H̃^{r,dil}
-  C̃_eff = (J̃_eff)^{-vol}
+```math
+\\widetilde{\\mathbb{L}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{L}}_0 + \\sum_i f_i\\,\\widetilde{\\mathbb{H}}_i,
+\\qquad
+\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\bigl(\\widetilde{\\mathbb{L}}^{\\mathrm{hom}}\\bigr)^{-\\circ}
+```
 
-with `H̃^{r,dil} = (J^r - J^0) ∘ B̃^{r,dil}` and
-`B̃^{r,dil} = (𝟙 + (𝟙 - Ã^{r,dil}))^{-vol}` … see Sevostianov 2008
+with ``\\widetilde{\\mathbb{H}}_i = (\\widetilde{\\mathbb{L}}_i - \\widetilde{\\mathbb{L}}_0)\\circ\\widetilde{\\mathbb{A}}_{\\sigma\\sigma,i}^{\\mathrm{dil}}`` and
+``\\widetilde{\\mathbb{A}}_{\\sigma\\sigma,i}^{\\mathrm{dil}} = \\bigl(H\\,\\mathbb{I} + (H\\,\\mathbb{I} - \\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}})\\bigr)^{-\\circ}`` … see Sevostianov 2008
 for the dual formulation in the elastic case.
 
 Implementation routes through `volterra_inverse` of `C_0` to obtain
-`J^0` and back.
+``\\widetilde{\\mathbb{L}}_0`` and back.
 """
 function dilute_dual_alv(
         C_0::AbstractMatrix,

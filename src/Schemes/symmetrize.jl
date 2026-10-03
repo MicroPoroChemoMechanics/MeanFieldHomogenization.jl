@@ -64,7 +64,7 @@ of a phase declaring the orientation distribution `sym`.
     * `:iso` (default) — isotropic average of `P₀`.  Approximation whenever
       `P₀` is not isotropic ; exact at the isotropic fixed point of the SC
       iteration (where the reference converges to its isotropic average).
-      Rationale : an inclusion family at polar angle θ ≠ 0 from the
+      Rationale : an inclusion family at polar angle ``\\theta \\ne 0`` from the
       symmetrize axis is *not* coaxial with a TI reference, so the
       TI-coaxial analytical Hill branch does not apply ; the isotropic
       projection guarantees an analytical, ForwardDiff-compatible branch

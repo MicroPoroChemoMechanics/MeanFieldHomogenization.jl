@@ -11,7 +11,7 @@
     hill_tensor(ell, C₀; method=:auto, abstol=1e-8, reltol=1e-6, maxiters=1_000_000)
         → AbstractTens
 
-Hill polarization tensor **P** for an ellipsoidal inclusion `ell`
+Hill polarization tensor ``\\mathbb{P}`` (``\\boldsymbol{P}`` in conduction) for an ellipsoidal inclusion `ell`
 embedded in a reference medium `C₀`.  `C₀` can be a 4th-order stiffness
 (elasticity) or a 2nd-order conductivity tensor — dispatch selects
 the appropriate formulation automatically.
@@ -19,8 +19,14 @@ the appropriate formulation automatically.
 The general expression of the elastic polarization tensor is
 [willis1977, mura1987](@cite):
 
-```
-P(A, C) = (det A)/(4π) ∫_{|ξ|=1} ξ ⊗ˢ (ξ·C·ξ)⁻¹ ⊗ˢ ξ / ‖A·ξ‖³ dS_ξ
+```math
+\\mathbb{P}(\\boldsymbol{A},\\mathbb{C})
+= \\frac{\\det\\boldsymbol{A}}{4\\pi}
+\\int_{\\|\\underline{\\xi}\\|=1}
+\\frac{\\underline{\\xi}\\stackrel{s}{\\otimes}
+      \\bigl(\\underline{\\xi}\\cdot\\mathbb{C}\\cdot\\underline{\\xi}\\bigr)^{-1}
+      \\stackrel{s}{\\otimes}\\underline{\\xi}}
+     {\\|\\boldsymbol{A}\\cdot\\underline{\\xi}\\|^{3}}\\,\\mathrm{d}S_{\\xi}
 ```
 
 The isotropic case (`C₀::TensISO`) is evaluated analytically; the
@@ -128,7 +134,7 @@ _kernel(ell::Ellipsoid{2}, C₀::TensND.AbstractTens{4, 2}, ::MFH_Core.Analytica
 """
     eshelby_tensor(incl::AbstractEllipsoidalInclusion, C₀::TensND.AbstractTens{4}; kw...)
 
-4th-order Eshelby tensor ``\\mathbb S = \\mathbb P : \\mathbb C_0``
+4th-order Eshelby tensor ``\\mathbb{S}^{\\mathrm{E}} = \\mathbb{P}:\\mathbb{C}_0``
 of an ellipsoidal inclusion `incl` embedded in a matrix of stiffness
 `C₀`. Thin wrapper around [`hill_tensor`](@ref) followed by the double
 contraction with `C₀`.

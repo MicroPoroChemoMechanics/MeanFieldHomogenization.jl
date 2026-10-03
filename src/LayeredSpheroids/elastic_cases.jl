@@ -37,7 +37,7 @@
 Modes that share a single amplitude, and the degrees they run over.
 
 `parts` is a list of `(potential, m, trig, weight)`. Most groups have one part.
-Case II needs more: its remote field ties `φ₁` and `φ₂` together — Duan's
+Case II needs more: its remote field ties ``\\varphi_1`` and ``\\varphi_2`` together — Duan's
 "``(\\varphi_1,\\varphi_2)`` from a single ``\\Psi`` at ``m=1``" — and without
 the tie the interface system is underdetermined, eight families answering six
 conditions.
@@ -53,12 +53,12 @@ ModeGroup(pot::Int, m::Int, trig::Symbol, degrees) =
 """
     TransverseShearCase(trig)
 
-Case II: a remote transverse shear. `trig = :sin` loads `2\\varepsilon_{12}`,
-`trig = :cos` loads `\\varepsilon_{11}-\\varepsilon_{22}`; the two are the same
-problem rotated by ``45°`` about the axis.
+Case II: a remote transverse shear. `trig = :sin` loads ``2\\varepsilon_{12}``,
+`trig = :cos` loads ``\\varepsilon_{11}-\\varepsilon_{22}``; the two are the same
+problem rotated by ``45^\\circ`` about the axis.
 
-Active potentials are `φ₀, φ₃` at order `m = 2` and the tied pair `(φ₁, φ₂)` at
-`m = 1`.
+Active potentials are ``\\varphi_0, \\varphi_3`` at order ``m = 2`` and the tied pair ``(\\varphi_1, \\varphi_2)`` at
+``m = 1``.
 """
 struct TransverseShearCase
     trig::Symbol
@@ -68,11 +68,11 @@ end
     LongitudinalShearCase(trig)
 
 Case III: a remote shear between the axis and a transverse direction.
-`trig = :cos` loads `2\\varepsilon_{13}`, `trig = :sin` loads
-`2\\varepsilon_{23}`.
+`trig = :cos` loads ``2\\varepsilon_{13}``, `trig = :sin` loads
+``2\\varepsilon_{23}``.
 
-Active potentials are `φ₀, φ₃` at order `m = 1` and `φ₁` (resp. `φ₂`) at
-`m = 0`. No rigid-body rotation is added — see this file's header.
+Active potentials are ``\\varphi_0, \\varphi_3`` at order ``m = 1`` and ``\\varphi_1`` (resp. ``\\varphi_2``) at
+``m = 0``. No rigid-body rotation is added — see this file's header.
 """
 struct LongitudinalShearCase
     trig::Symbol
@@ -85,10 +85,10 @@ const ElasticCase = Union{AxisymmetricCase, TransverseShearCase, LongitudinalShe
 
 The unknown families of one region, `D` degrees each.
 
-**Parity is part of the answer, not a detail.** Under `p → -p` (that is,
-`z → -z`) a mode picks up `(-1)^{n+m}`, and each case's remote field fixes which
-parity of `Φ` is admissible; the potentials then inherit one parity each. Case I
-puts `φ₀` on the even degrees and `φ₃` on the odd ones, and so on. Admitting
+**Parity is part of the answer, not a detail.** Under ``p \\to -p`` (that is,
+``z \\to -z``) a mode picks up ``(-1)^{n+m}``, and each case's remote field fixes which
+parity of ``\\Phi`` is admissible; the potentials then inherit one parity each. Case I
+puts ``\\varphi_0`` on the even degrees and ``\\varphi_3`` on the odd ones, and so on. Admitting
 both parities does **not** merely waste columns: it splices in the *other*
 problem of the same order — the one whose remote field is odd where this one's
 is even — and the truncated system then leaks between them. That mistake put
@@ -126,23 +126,24 @@ _case_groups(cs::LongitudinalShearCase, D::Int) = [
 ]
 
 """
-    _case_remote(case, groups, c, κ₀, μ₀, ε) -> Vector{Pair}
+    _case_remote(case, c, κ₀, μ₀, ε...) -> Vector{Pair}
 
 Amplitudes of the remote uniform strain, as `(group index, degree) => value`.
 
 Each case's remote field is two coefficients at most, which is why a single
 homogeneous inclusion is an *exact* oracle rather than a converged one. The
-derivations are on the theory page; in each, `Φ` comes out with no `φ₀` part
+derivations are on the theory page; in each, ``\\Phi`` comes out with no ``\\varphi_0`` part
 except in case I, and
 
-    case I    φ₀ = -(4/3) c² μ₀ ε_t P₂(p)P₂(q),  φ₃ = γ c P₁(p)P₁(q),
-              γ = -μ₀(ε_a + 2ε_t)/(1 - 2ν₀)
-    case II   the tied pair at degree 1, amplitude -A c
-    case III  φ₁ (or φ₂) = α z at degree 1, φ₃ = α x (or α y) at degree 1,
-              amplitudes α c and -α c
+- case I: ``\\varphi_0 = -\\tfrac{4}{3}\\,c^2\\mu_0\\,\\varepsilon_t\\,P_2(p)P_2(q)``,
+  ``\\varphi_3 = \\gamma\\,c\\,P_1(p)P_1(q)``,
+  ``\\gamma = -\\mu_0(\\varepsilon_a + 2\\varepsilon_t)/(1 - 2\\nu_0)``;
+- case II: the tied pair at degree 1, amplitude ``-A\\,c``;
+- case III: ``\\varphi_1`` (or ``\\varphi_2``) ``= \\alpha z`` at degree 1, ``\\varphi_3 = \\alpha x`` (or ``\\alpha y``) at degree 1,
+  amplitudes ``\\alpha c`` and ``-\\alpha c``,
 
-with `A = α = μ₀ ε/(2ν₀ - 1)`. The signs follow from
-`ρ = -c P₁¹(p)P₁¹(q)` and `z = c P₁(p)P₁(q)`.
+with ``A = \\alpha = \\mu_0\\,\\varepsilon/(2\\nu_0 - 1)``. The signs follow from
+``\\rho = -c\\,P_1^1(p)P_1^1(q)`` and ``z = c\\,P_1(p)P_1(q)``.
 """
 function _case_remote(::AxisymmetricCase, c, κ₀, μ₀, εa, εt)
     ν₀ = _poisson(κ₀, μ₀)
@@ -164,7 +165,7 @@ end
     _group_fields(group, regularity, n, ϕ, p, q, c, μ, ν, ::Type{T})
 
 Unit-amplitude displacement and traction of one group, summing its parts. A
-part whose order exceeds the degree contributes nothing, `Pₙᵐ` vanishing there.
+part whose order exceeds the degree contributes nothing, ``P_n^m`` vanishing there.
 """
 function _group_fields(g::ModeGroup, reg::Symbol, n::Int, ϕ, p, q, c, μ, ν, ::Type{T}) where {T}
     u = ntuple(_ -> zero(T), 3)
@@ -181,26 +182,26 @@ end
 """
     _elastic_block(groups, regularities, q, c, μ, ν, ϕ₀, xg, wg, tdegs, ::Type{T})
 
-One region's contribution to the six conditions at `q`, projected on `tdegs`.
+One region's contribution to the six conditions at ``q``, projected on `tdegs`.
 
-The conditions are the continuity of `u` and of the traction
-`σ·e_q`, three components each. Displacements carry `1/μ`; tractions do not,
-Papkovich–Neuber's stress carrying no `μ` at all.
+The conditions are the continuity of ``\\underline{u}`` and of the traction
+``\\boldsymbol{\\sigma}\\cdot\\underline{e}_q``, three components each. Displacements carry ``1/\\mu``; tractions do not,
+Papkovich–Neuber's stress carrying no ``\\mu`` at all.
 
 The azimuth is evaluated at a single generic `ϕ₀`, and that is exact rather
 than a sampling: every field component of a given case carries ONE azimuthal
 harmonic, and it is the same on both sides of the interface, so it divides out
-of a matching condition. `ϕ₀` only has to avoid the zeros of `sin mϕ` and
-`cos mϕ`.
+of a matching condition. `ϕ₀` only has to avoid the zeros of ``\\sin m\\varphi`` and
+``\\cos m\\varphi``.
 
-The **tangential** rows carry a factor `1 - p²`, for the reason
-[the banding argument](@ref th-spheroid-banding) gives: a bare `Pₙ′` reaches
+The **tangential** rows carry a factor ``1 - p^2``, for the reason
+[the banding argument](@ref th-spheroid-banding) gives: a bare ``P_n'`` reaches
 every lower degree, so a truncated projection of it loses information, while
-`(1-p²)Pₙ′` reaches one. The weight is legitimate — `1-p²` is shared geometry
-across a confocal interface, and it is the weight for which the `Pₙ′` are
+``(1-p^2)\\,P_n'`` reaches one. The weight is legitimate — ``1-p^2`` is shared geometry
+across a confocal interface, and it is the weight for which the ``P_n'`` are
 orthogonal. Leaving it out is not a small error: it puts case I out by 10%,
-while cases II and III survive because their `Pₙᵐ` with `m ≥ 1` already carry
-`(1-p²)^{m/2}`.
+while cases II and III survive because their ``P_n^m`` with ``m \\ge 1`` already carry
+``(1-p^2)^{m/2}``.
 """
 function _elastic_block(
         groups, regs, q, c, μ, ν, ϕ₀, xg, wg, tdegs, ::Type{T}
@@ -237,22 +238,22 @@ end
 Least-squares solve of `A x = b` with `A`'s columns scaled to unit norm first.
 
 **Why the scaling is there.** The columns are amplitudes of Papkovich–Neuber
-potentials evaluated at an interface, so a *growing* mode of degree `n` scales
-like `qⁿ` and a decaying one like `q^{-n-1}`. As the spheroid approaches a
-sphere the focal distance goes to zero and `q → ∞`, so the column magnitudes
-span `q^{2n+1}`: at `ω = 0.999`, `q ≈ 22` and degrees to 9, that is `10²⁵`, and
+potentials evaluated at an interface, so a *growing* mode of degree ``n`` scales
+like ``q^n`` and a decaying one like ``q^{-n-1}``. As the spheroid approaches a
+sphere the focal distance goes to zero and ``q \\to \\infty``, so the column magnitudes
+span ``q^{2n+1}``: at ``\\omega = 0.999``, ``q \\approx 22`` and degrees to 9, that is ``10^{25}``, and
 the factorization has nothing left to work with. Measured against the
 closed-form Eshelby result on a single layer — where the confocal machinery must
-reproduce it exactly — the answer was good to `3e-15` at `|1-ω| ≥ 0.3` and a
+reproduce it exactly — the answer was good to `3e-15` at ``|1-\\omega| \\ge 0.3`` and a
 *total* loss at `1e-3`, while conduction on the identical chart stayed at
 `1e-15`.
 
 **Why scaling is the right remedy.** The degeneracy is in the basis's
-normalization, not in the problem: as `q → ∞` the spheroidal harmonics tend to
+normalization, not in the problem: as ``q \\to \\infty`` the spheroidal harmonics tend to
 spherical ones, which are perfectly independent. So scaling each column to unit
 norm is a **change of unknowns** — exact in exact arithmetic, the solution
 unchanged — and it is the one that minimizes the 2-norm condition number over
-all diagonal column scalings to within `√n` (van der Sluis).
+all diagonal column scalings to within ``\\sqrt{n}`` (van der Sluis).
 
 **Columns only.** Equilibrating rows would reweight the residual of an
 overdetermined least squares and so change *which* solution is returned; scaling
@@ -280,7 +281,7 @@ end
 Assemble and solve one elementary problem on the whole stack.
 
 Returns `(; amplitudes, groups, residual)`, where `amplitudes[ℓ]` are the
-unknowns of region `ℓ` (`1:N` the layers, `N+1` the matrix) in the order
+unknowns of region ``\\ell`` (`1:N` the layers, `N+1` the matrix) in the order
 `_elastic_block` lists its columns.
 
 Like the case-I solver, the system is over-determined and solved in least
@@ -435,28 +436,28 @@ function _surface_moment(
     return E
 end
 
-"Confocal volume up to `q`: `(4π/3) c³ q(q²-1)`, and `0` at `q = 1`."
+"Confocal volume up to ``q``: ``\\tfrac{4\\pi}{3}\\,c^3\\,q(q^2-1)``, and 0 at ``q = 1``."
 @inline _confocal_volume(q, c) = abs(4 * π / 3 * c^3 * q * (q^2 - one(q)))
 
 """
     _avg_strain(groups, amps, q_out, q_in, c, μ, ν, ::Type{T}; kw...) -> 3×3
 
-Volume-averaged strain over one confocal shell `q_in < q ≤ q_out`, as the
+Volume-averaged strain over one confocal shell ``q_{\\mathrm{in}} < q \\le q_{\\mathrm{out}}``, as the
 difference of two surface moments,
 
 ```math
 \\langle\\boldsymbol\\varepsilon\\rangle_k \\, V_k
-   = \\oint_{q=q_{out}} \\operatorname{sym}(\\underline u\\otimes\\underline e_q)\\,\\mathrm dS
-   - \\oint_{q=q_{in}}  \\operatorname{sym}(\\underline u\\otimes\\underline e_q)\\,\\mathrm dS .
+   = \\oint_{q=q_{\\mathrm{out}}} \\operatorname{sym}(\\underline u\\otimes\\underline e_q)\\,\\mathrm dS
+   - \\oint_{q=q_{\\mathrm{in}}}  \\operatorname{sym}(\\underline u\\otimes\\underline e_q)\\,\\mathrm dS .
 ```
 
 Pass `q_in = 1` for the core: the confocal surface degenerates to the focal
-segment there and `dS = c²\\bar q w\\,\\mathrm dp\\,\\mathrm d\\varphi` vanishes with
-`\\bar q`, so the term drops out on its own.
+segment there and ``\\mathrm{d}S = c^2\\,\\bar q\\,w\\,\\mathrm{d}p\\,\\mathrm{d}\\varphi`` vanishes with
+``\\bar q``, so the term drops out on its own.
 
 For the **whole** inclusion take `q_in = 1` and the outermost layer's
-amplitudes: with perfect interfaces `u` is continuous, so the inner boundaries
-cancel in pairs and only the outer surface survives, whatever `N` is.
+amplitudes: with perfect interfaces ``\\underline{u}`` is continuous, so the inner boundaries
+cancel in pairs and only the outer surface survives, whatever ``N`` is.
 """
 function _avg_strain(
         groups, amps, q_out, q_in, c, μ, ν, ::Type{T}; kw...
@@ -476,8 +477,8 @@ end
 
 Drop a numerically zero imaginary part, or refuse.
 
-An oblate spheroid is solved through the complex substitution `q = iτ`,
-`c = -i c̄`, so every intermediate is `Complex` while the answer is real. The
+An oblate spheroid is solved through the complex substitution ``q = \\mathrm{i}\\tau``,
+``c = -\\mathrm{i}\\,\\bar c``, so every intermediate is `Complex` while the answer is real. The
 imaginary part comes out at `1e-16` relative; anything larger means the
 substitution has been misapplied somewhere, and returning half an answer would
 be worse than stopping.
@@ -504,12 +505,12 @@ with the elementary problem that solves it and the strain tensor it is:
 
 | loading | case | remote strain |
 |:--|:--|:--|
-| 1 | `AxisymmetricCase`, `(1,0)` | `ê₃⊗ê₃` |
-| 2 | `AxisymmetricCase`, `(0,1)` | `𝟙 - ê₃⊗ê₃` |
-| 3 | `TransverseShearCase(:sin)` | `ê₁⊗ê₂ + ê₂⊗ê₁` |
-| 4 | `TransverseShearCase(:cos)` | `ê₁⊗ê₁ - ê₂⊗ê₂` |
-| 5 | `LongitudinalShearCase(:cos)` | `ê₁⊗ê₃ + ê₃⊗ê₁` |
-| 6 | `LongitudinalShearCase(:sin)` | `ê₂⊗ê₃ + ê₃⊗ê₂` |
+| 1 | `AxisymmetricCase`, `(1,0)` | ``\\underline{e}_3\\otimes\\underline{e}_3`` |
+| 2 | `AxisymmetricCase`, `(0,1)` | ``\\boldsymbol{1} - \\underline{e}_3\\otimes\\underline{e}_3`` |
+| 3 | `TransverseShearCase(:sin)` | ``\\underline{e}_1\\otimes\\underline{e}_2 + \\underline{e}_2\\otimes\\underline{e}_1`` |
+| 4 | `TransverseShearCase(:cos)` | ``\\underline{e}_1\\otimes\\underline{e}_1 - \\underline{e}_2\\otimes\\underline{e}_2`` |
+| 5 | `LongitudinalShearCase(:cos)` | ``\\underline{e}_1\\otimes\\underline{e}_3 + \\underline{e}_3\\otimes\\underline{e}_1`` |
+| 6 | `LongitudinalShearCase(:sin)` | ``\\underline{e}_2\\otimes\\underline{e}_3 + \\underline{e}_3\\otimes\\underline{e}_2`` |
 
 Loadings 3–4 and 5–6 are the same problem rotated about the axis, so their
 responses must match up to that rotation — which is a check the assembly gets
@@ -528,25 +529,25 @@ function _basis_loadings(::Type{T}) where {T}
 end
 
 """
-    spheroid_strain_concentration(s::LayeredSpheroid, C₀; D = 6, kw...) -> Tens{4,3}
+    spheroid_strain_concentration(s::LayeredSpheroid, C₀; D = 6, kw...) -> (; A, residuals)
 
-Volume-averaged strain concentration tensor `𝔸` of an elastic `n`-layer
+Volume-averaged strain concentration tensor ``\\mathbb{A}`` of an elastic `n`-layer
 confocal spheroid in an infinite isotropic matrix `C₀`, defined by
-`⟨ε⟩ = 𝔸 : E` over the whole composite inclusion.
+``\\langle\\boldsymbol{\\varepsilon}\\rangle = \\mathbb{A}:\\boldsymbol{E}`` over the whole composite inclusion.
 
 This is what a mean-field scheme consumes. It is assembled from **six** solves,
 one per independent remote strain — `_basis_loadings` lists them — each
 averaged by the surface integral of `_avg_strain`. The result is
 returned as a general fourth-order tensor rather than a `TensTI{4}`: it *is*
 transversely isotropic about the spheroid's axis, but the tests check that
-rather than the type asserting it, and `𝔸` has no major symmetry to exploit.
+rather than the type asserting it, and ``\\mathbb{A}`` has no major symmetry to exploit.
 
 Returns `(; A, residuals)`, `residuals` being the six least-squares residuals —
 diagnostics, machine-precision for a single inclusion.
 
 !!! note "The axis"
-    `𝔸` comes out in the global frame, so a spheroid whose `axis` is not `ê₃`
-    is not yet handled here: the elementary problems are written about `ê₃`.
+    ``\\mathbb{A}`` comes out in the global frame, so a spheroid whose `axis` is not ``\\underline{e}_3``
+    is not yet handled here: the elementary problems are written about ``\\underline{e}_3``.
     Build the spheroid with the default axis and rotate the result.
 """
 function spheroid_strain_concentration(
@@ -596,14 +597,14 @@ end
 Per-layer strain concentration tensors of an elastic confocal spheroid, plus
 their volume-weighted sum.
 
-`layers[k]` is `𝔸_k` with `⟨ε⟩_k = 𝔸_k : E` averaged over layer `k` alone, and
-`A` is `Σ_k f_k 𝔸_k`. The two are computed independently — the layers from
+`layers[k]` is ``\\mathbb{A}_k`` with ``\\langle\\boldsymbol{\\varepsilon}\\rangle_k = \\mathbb{A}_k:\\boldsymbol{E}`` averaged over layer ``k`` alone, and
+`A` is ``\\sum_k f_k\\,\\mathbb{A}_k``. The two are computed independently — the layers from
 differences of surface moments on their own boundaries, `A` from a single
 moment on the outer one — so their agreement is a check rather than a
 restatement.
 
 Per-layer averages are what a **stiffness contribution tensor** needs:
-`N_C = Σ_k f_k (ℂ_k - ℂ_0) : 𝔸_k` cannot be recovered from the total alone,
+``\\mathbb{N} = \\sum_k f_k\\,(\\mathbb{C}_k - \\mathbb{C}_0):\\mathbb{A}_k`` cannot be recovered from the total alone,
 the layers having different moduli.
 """
 function spheroid_layer_strain_concentration(

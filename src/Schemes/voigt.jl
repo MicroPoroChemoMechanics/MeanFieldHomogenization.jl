@@ -12,7 +12,7 @@
     _evaluate(rve, ::Voigt, ::Val{p}; kw...) -> AbstractTens
 
 Voigt upper bound on the effective property `:p`:
-``\\langle\\mathbb C\\rangle = \\sum_i f_i \\mathbb C_i``.
+``\\langle\\mathbb{C}\\rangle = \\sum_i f_i\\,\\mathbb{C}_i``.
 
 Phases carrying a [`CrackDensity`](@ref) instead of a
 [`VolumeFraction`](@ref) are ignored (their volume contribution is

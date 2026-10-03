@@ -35,7 +35,7 @@ struct Voigt <: HomogenizationScheme end
 """
     Reuss() <: HomogenizationScheme
 
-Reuss (uniform-stress) lower bound: ``\\langle \\mathbb S \\rangle^{-1}``.
+Reuss (uniform-stress) lower bound: ``\\langle \\mathbb{S} \\rangle^{-1}``.
 """
 struct Reuss <: HomogenizationScheme end
 
@@ -45,20 +45,20 @@ struct Reuss <: HomogenizationScheme end
     Laminated() <: HomogenizationScheme
 
 Exact solution of the periodic **multilayer** unit cell — a stack of parallel
-layers of common normal `n`, with no matrix and no reference medium. Applies
+layers of common normal ``\\underline{n}``, with no matrix and no reference medium. Applies
 to a `Laminate` cell, not to an [`RVE`](@ref).
 
 Unlike every other scheme in this file it is not an estimate: for a laminate
 it *is* the answer,
 
 ```math
-\\mathbb{C}^{hom} = \\langle\\mathbb Q\\rangle
+\\mathbb{C}^{\\mathrm{hom}} = \\langle\\mathbb{Q}\\rangle
  + \\langle\\mathbb{C} : \\mathbb{P}\\rangle : \\langle\\mathbb{P}\\rangle^{\\dagger}
    : \\langle\\mathbb{P} : \\mathbb{C}\\rangle ,
 ```
 
-with `ℙ_i` the flat-inclusion Hill tensor of layer `i` and
-`ℚ_i = ℂ_i − ℂ_i:ℙ_i:ℂ_i`. Serves elasticity and transport, and accepts
+with ``\\mathbb{P}_i`` the flat-inclusion Hill tensor of layer ``i`` and
+``\\mathbb{Q}_i = \\mathbb{C}_i - \\mathbb{C}_i:\\mathbb{P}_i:\\mathbb{C}_i``. Serves elasticity and transport, and accepts
 imperfect interfaces of spring / membrane / Kapitza / surface-conductive
 type. See the theory page on the laminate and [backus1962](@citet).
 """
@@ -69,8 +69,8 @@ struct Laminated <: HomogenizationScheme end
 """
     Dilute() <: HomogenizationScheme
 
-Dilute scheme: ``\\mathbb{C}_{\\mathrm{eff}} = \\mathbb{C}_0 + \\sum_i f_i \\mathbb N_i``
-where ``\\mathbb N_i = (\\mathbb{C}_i - \\mathbb{C}_0):\\mathbb{A}_{\\varepsilon\\varepsilon}^{(i)}``
+Dilute scheme: ``\\mathbb{C}^{\\mathrm{hom}} = \\mathbb{C}_0 + \\sum_i f_i\\,\\mathbb{N}_i``
+where ``\\mathbb{N}_i = (\\mathbb{C}_i - \\mathbb{C}_0):\\mathbb{A}_{\\varepsilon\\varepsilon,i}``
 is the size-independent stiffness contribution
 [eshelby1957, kachanov2018](@cite).
 """
@@ -84,8 +84,8 @@ Dilute(; matrix::Union{Nothing, Symbol} = nothing) = Dilute(matrix)
     DiluteDual() <: HomogenizationScheme
 
 Dual dilute scheme on the compliance:
-``\\mathbb S_{\\mathrm{eff}} = \\mathbb S_0 + \\sum_i f_i \\mathbb H_i``,
-returning ``\\mathbb{C}_{\\mathrm{eff}} = \\mathbb S_{\\mathrm{eff}}^{-1}``.
+``\\mathbb{S}^{\\mathrm{hom}} = \\mathbb{S}_0 + \\sum_i f_i\\,\\mathbb{H}_i``,
+returning ``\\mathbb{C}^{\\mathrm{hom}} = (\\mathbb{S}^{\\mathrm{hom}})^{-1}``.
 """
 struct DiluteDual{M} <: HomogenizationScheme
     matrix::M
@@ -143,22 +143,19 @@ PonteCastanedaWillis(; matrix::Union{Nothing, Symbol} = nothing) = PonteCastaned
 Cluster model of [molinari1996](@citet): an N-body
 scheme in which the mean strain of every inclusion is solved for, accounting
 for the pairwise interaction with every neighbor inside a cluster of radius
-`R_c`, on top of the interaction with the matrix.
+``R_c``, on top of the interaction with the matrix.
 
 Acts on a [`ParticleAssembly`](@ref MeanFieldHomogenization.Assemblies.ParticleAssembly), not on an `RVE`. Writing
-``\\delta\\mathbb{C}_K = \\mathbb{C}_K - \\mathbb{C}_m``, the localization tensors
-of the families solve
+``\\Delta\\mathbb{C}_K = \\mathbb{C}_K - \\mathbb{C}_0``, with ``\\mathbb{C}_0`` the matrix,
+the localization tensors of the families solve
 
 ```math
 \\sum_K \\mathbb{M}_{IK} : \\mathbb{A}_K = \\mathbb{I} ,\\qquad
-\\mathbb{M}_{IK} = \\begin{cases}
- \\mathbb{I} + \\big[(1-f_K)\\mathbb{P}_0 - \\bar{\\mathbb{T}}_{II}\\big] : \\delta\\mathbb{C}_I
-   & K = I \\\\
- -\\big[\\bar{\\mathbb{T}}_{IK} + f_K \\mathbb{P}_0\\big] : \\delta\\mathbb{C}_K & K \\ne I
-\\end{cases}
+\\mathbb{M}_{IK} = \\delta_{IK}\\,\\mathbb{I}
+  + \\big[\\bar{\\mathbb{T}}^{IK} + (\\delta_{IK} - f_K)\\,\\mathbb{P}_0\\big] : \\Delta\\mathbb{C}_K ,
 ```
 
-with ``\\bar{\\mathbb{T}}_{IK}`` the sum of the pairwise interaction tensors
+with ``\\bar{\\mathbb{T}}^{IK}`` the sum of the pairwise interaction tensors
 ([`interaction_tensor`](@ref MeanFieldHomogenization.Interactions.interaction_tensor)) over the cluster. `cluster_radius` overrides the
 cutoff carried by the assembly's [`PeriodicBox`](@ref MeanFieldHomogenization.Assemblies.PeriodicBox).
 
@@ -183,12 +180,12 @@ piecewise constant over each inclusion at `order = 0`.
 Acts on a [`ParticleAssembly`](@ref MeanFieldHomogenization.Assemblies.ParticleAssembly). The polarizations solve
 
 ```math
-\\Big[(\\mathbb{C}_a - \\mathbb{C}_0)^{-1} + \\mathbb{P}_a - f_a \\mathbb{P}_\\Omega\\Big] : \\boldsymbol{\\tau}_a
- - \\sum_{b \\ne a}\\Big[\\mathbb{T}^{ab} + f_b \\mathbb{P}_\\Omega\\Big] : \\tau_b = E ,
+\\Big[(\\mathbb{C}_a - \\mathbb{C}_0)^{-1} + \\mathbb{P}_a - f_a\\,\\mathbb{P}_\\Omega\\Big] : \\boldsymbol{\\tau}_a
+ + \\sum_{b \\ne a}\\Big[\\mathbb{T}^{ab} - f_b\\,\\mathbb{P}_\\Omega\\Big] : \\boldsymbol{\\tau}_b = \\boldsymbol{E} ,
 ```
 
 and the apparent stiffness follows from
-``\\mathbb{C}^{app} : E = \\mathbb{C}_0 : E + \\sum_a f_a \\boldsymbol{\\tau}_a``. The term in
+``\\mathbb{C}^{\\mathrm{app}}:\\boldsymbol{E} = \\mathbb{C}_0:\\boldsymbol{E} + \\sum_a f_a\\,\\boldsymbol{\\tau}_a``. The term in
 ``\\mathbb{P}_\\Omega``, the Hill tensor of the SVE domain itself, is what
 implements the mixed boundary conditions of the paper — with
 [`MixedBC`](@ref MeanFieldHomogenization.Assemblies.MixedBC) no periodization and no conditionally convergent lattice sum
@@ -284,10 +281,10 @@ accepts `:voigt`, `:reuss`, a phase name, or an explicit tensor. A phase named
 
 !!! note "The seed picks the path, not the answer"
     Away from percolation the fixed point is unique and every seed reaches it:
-    measured over a porous RVE at `f ∈ {0.1, 0.3, 0.45, 0.6}` and a stiff one at
-    `f ∈ {0.1, 0.3, 0.5, 0.7}`, a Voigt seed and a phase seed agree to `1e-9` or
-    better. They part only next to the porous percolation threshold (`f = 0.49`,
-    `0.52`), where the stiffness has collapsed to `~1e-4` against a solid at
+    measured over a porous RVE at ``f \\in \\{0.1, 0.3, 0.45, 0.6\\}`` and a stiff one at
+    ``f \\in \\{0.1, 0.3, 0.5, 0.7\\}``, a Voigt seed and a phase seed agree to `1e-9` or
+    better. They part only next to the porous percolation threshold (``f = 0.49``,
+    ``0.52``), where the stiffness has collapsed to `~1e-4` against a solid at
     `72` and the damped Picard crawls along a degenerate fixed point;
     `NewtonDefault` agrees to `1e-7` even there. On a deeply percolated oblate
     RVE the Voigt start also makes `TrustRegion` stop where the
@@ -295,7 +292,7 @@ accepts `:voigt`, `:reuss`, a phase name, or an explicit tensor. A phase named
 
 Standard kwargs forwarded to the solver: `abstol`, `reltol`, `maxiters`,
 `damping`, `verbose`, `select_best`. Convergence is declared when
-`‖Δx‖ ≤ abstol + reltol · ‖x‖` (defaults `abstol = 1e-12`, `reltol = 1e-8`);
+``\\|\\Delta x\\| \\le \\mathrm{abstol} + \\mathrm{reltol}\\,\\|x\\|`` (defaults `abstol = 1e-12`, `reltol = 1e-8`);
 pass `abstol = 0` for a purely relative test. Because the stiffness carries a
 physical magnitude, it is `reltol` and not `abstol` that binds in the usual
 case — see [`_solve_sc`](@ref) and the
@@ -319,7 +316,7 @@ inclusion-soft regimes.
 
 `algorithm` and `init` mean exactly what they do for [`SelfConsistent`](@ref),
 and the same solver kwargs apply — `abstol`, `reltol`, `maxiters`, `damping`,
-`verbose`, `select_best`, with the same `‖Δx‖ ≤ abstol + reltol · ‖x‖` test and
+`verbose`, `select_best`, with the same ``\\|\\Delta x\\| \\le \\mathrm{abstol} + \\mathrm{reltol}\\,\\|x\\|`` test and
 the same defaults. Unlike `SelfConsistent` it does carry a reference medium,
 because deciding between the stiffness and the compliance form is a comparison
 against that phase.
@@ -344,13 +341,13 @@ Supertype describing the path through the multi-phase volume-fraction
 space used by the [`DifferentialScheme`](@ref) scheme. Concrete subtypes:
 
 - [`Proportional`](@ref) (default) — every phase grows linearly with
-  the fictitious incorporation time `τ ∈ [0, 1]`, all phases reaching
+  the fictitious incorporation time ``\\tau \\in [0, 1]``, all phases reaching
   their target simultaneously.
 - [`Sequential`](@ref) — phases are introduced one after the other in
   the user-supplied order, each occupying a contiguous slice of `τ`.
 - [`CustomPath`](@ref) — explicit per-phase trajectory as a vector of
   monotone non-decreasing values; piecewise-linear interpolated along
-  `τ ∈ [0, 1]`.
+  ``\\tau \\in [0, 1]``.
 - [`Path`](@ref) — explicit per-phase trajectory as a callable
   `τ -> f(τ)` (auto-differentiated by `ForwardDiff`); the natural API
   for the multi-phase incorporation-sequence ODE
@@ -399,26 +396,27 @@ CustomPath(first::Pair{Symbol}, rest::Pair{Symbol}...) =
     Path(:phase => τ -> f(τ), ...)
 
 Explicit per-phase trajectory as a callable.  `path[:phase]` is a
-function of the fictitious incorporation time `τ ∈ [0, 1]` returning
-the **effective volume fraction ratio** `f_α(τ) / f_α^∞ ∈ [0, 1]` for
-solid phases, or the **density ratio** `ε_α(τ) / ε_α^∞` for crack
-phases — `f(0) = 0`, `f(1) = 1`, monotone non-decreasing.
+function of the fictitious incorporation time ``\\tau \\in [0, 1]`` returning
+the **effective volume fraction ratio** ``f_i(\\tau)/f_i^{\\infty} \\in [0, 1]`` for
+solid phases, or the **density ratio** ``\\varepsilon_i(\\tau)/\\varepsilon_i^{\\infty}`` for crack
+phases — ``f(0) = 0``, ``f(1) = 1``, monotone non-decreasing.
 
-The derivative `df/dτ` is computed by `ForwardDiff.derivative` at
+The derivative ``\\mathrm{d}f/\\mathrm{d}\\tau`` is computed by `ForwardDiff.derivative` at
 each ODE step.  This is the natural API for the multi-phase DEM
 incorporation-sequence ODE :
 
 ```math
-\\frac{\\mathrm d \\mathbb{C}^{hom}}{\\mathrm d \\tau}
-  = \\sum_i \\frac{\\mathrm d \\varphi_i}{\\mathrm d \\tau}
-            (\\mathbb{C}_i - \\mathbb{C}^{hom}):\\mathbb{A}_i^{dil}(\\mathbb{C}^{hom})
+\\frac{\\mathrm{d}\\mathbb{C}^{\\mathrm{hom}}}{\\mathrm{d}\\tau}
+  = \\sum_i \\frac{\\mathrm{d}\\varphi_i}{\\mathrm{d}\\tau}\\,
+            (\\mathbb{C}_i - \\mathbb{C}^{\\mathrm{hom}}):\\mathbb{A}_i^{\\mathrm{dil}}(\\mathbb{C}^{\\mathrm{hom}})
 ```
 
-with the volumetric balance `dφ = (𝟙 - f ⊗ 𝐔)^{-1} · df` (Sherman-
-Morrison) inverted at each `τ` to translate user-supplied `f_α(τ)`
-into the increments `dφ_α / dτ`.
+with the volumetric balance
+``[\\mathrm{d}\\varphi] = (\\mathbb{1} - [f]\\,\\mathbf{U}^{\\!T})^{-1}[\\mathrm{d}f]`` (Sherman-
+Morrison) inverted at each ``\\tau`` to translate user-supplied ``f_i(\\tau)``
+into the increments ``\\mathrm{d}\\varphi_i/\\mathrm{d}\\tau``.
 
-The single-phase case is degenerate (`f₁` itself serves as `τ`) and
+The single-phase case is degenerate (``f_1`` itself serves as ``\\tau``) and
 does not require a `Path` — the default [`Proportional`](@ref) is
 sufficient.
 
@@ -439,16 +437,17 @@ Path(first::Pair{Symbol}, rest::Pair{Symbol}...) = Path(Dict(first, rest...))
                          alg = nothing, formulation = :stiffness, kwargs...)
 
 Differential scheme : integrates the Norris ODE on the fictitious
-incorporation time `τ ∈ [0, 1]` [norris1985](@cite) :
+incorporation time ``\\tau \\in [0, 1]`` [norris1985](@cite) :
 
 ```math
-\\frac{\\mathrm d \\mathbb{C}^{hom}}{\\mathrm d \\tau}
-  = \\sum_i \\frac{\\mathrm d \\varphi_i}{\\mathrm d \\tau}\\,
-            (\\mathbb{C}_i - \\mathbb{C}^{hom}):\\mathbb{A}_i^{dil}(\\mathbb{C}^{hom})
+\\frac{\\mathrm{d}\\mathbb{C}^{\\mathrm{hom}}}{\\mathrm{d}\\tau}
+  = \\sum_i \\frac{\\mathrm{d}\\varphi_i}{\\mathrm{d}\\tau}\\,
+            (\\mathbb{C}_i - \\mathbb{C}^{\\mathrm{hom}}):\\mathbb{A}_i^{\\mathrm{dil}}(\\mathbb{C}^{\\mathrm{hom}})
 ```
 
-with the volume balance `df = (𝟙 - f ⊗ 𝐔)·dφ` inverted by Sherman-
-Morrison so the user supplies effective volume fractions `f_α(τ)`
+with the volume balance
+``[\\mathrm{d}f] = (\\mathbb{1} - [f]\\,\\mathbf{U}^{\\!T})[\\mathrm{d}\\varphi]`` inverted by Sherman-
+Morrison so the user supplies effective volume fractions ``f_i(\\tau)``
 along the chosen `trajectory`.
 
 # Keyword arguments
@@ -457,10 +456,10 @@ along the chosen `trajectory`.
   [`CustomPath`](@ref), [`Path`](@ref).  Default `Proportional()`.
 - `formulation` — `:stiffness` (default) integrates the ODE above;
   `:compliance` integrates its exact dual
-  ``\\mathrm d \\mathbb S^{hom} / \\mathrm d \\tau =
-  \\sum_i \\dot\\varphi_i \\, \\mathbb H_i(\\mathbb S^{hom})``
+  ``\\mathrm{d}\\mathbb{S}^{\\mathrm{hom}}/\\mathrm{d}\\tau =
+  \\sum_i \\dot\\varphi_i\\,\\mathbb{H}_i(\\mathbb{S}^{\\mathrm{hom}})``
   and inverts the result, so both return the same declared property.
-  The two agree analytically (`ℍ = −𝕊 : 𝐍 : 𝕊`) and differ only in
+  The two agree analytically (``\\mathbb{H} = -\\mathbb{S}:\\mathbb{N}:\\mathbb{S}``) and differ only in
   which variable carries the solver's error control: prefer
   `:compliance` for a medium softening towards percolation (porous,
   cracked), `:stiffness` for a stiffening one.

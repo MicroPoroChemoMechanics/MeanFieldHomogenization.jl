@@ -24,19 +24,23 @@
 """
     _phase_stress_strain_average(rve, name, prop, P₀, A_dil; kw...)
 
-Average stress per unit remote strain of phase `name`, `⟨C:ε⟩_r` — the **B**
-concentration tensor of [echoes](@citet), as opposed to the
-strain concentration tensor **A** (`A_dil`).
+Average stress per unit remote strain of phase `name`,
+``\\langle\\mathbb{C}:\\boldsymbol{\\varepsilon}\\rangle_i`` — the stress-strain
+concentration tensor ``\\mathbb{B}`` of [echoes](@citet), as opposed to the
+strain concentration tensor ``\\mathbb{A}`` (`A_dil`).
 
-The two must be kept distinct. `⟨C:ε⟩_r = C_r : ⟨ε⟩_r` requires **both**:
+The two must be kept distinct.
+``\\langle\\mathbb{C}:\\boldsymbol{\\varepsilon}\\rangle_i = \\mathbb{C}_i:\\langle\\boldsymbol{\\varepsilon}\\rangle_i``
+requires **both**:
 
-  * `C_r` uniform inside the phase — false for a `LayeredSphere`, where the
+  * ``\\mathbb{C}_i`` uniform inside the phase — false for a `LayeredSphere`, where the
     average is assembled layer by layer through `stress_strain_loc`
-    (`Σ_k f_k C_k : A_k`);
-  * the orientation average to commute with `C_r` — false for an anisotropic
-    `C_r` carrying an ISO/TI orientation distribution, since
-    `⟨R(C_r : A_r)⟩ ≠ C_r : ⟨R(A_r)⟩`.  The product must then be formed on the
-    **un-symmetrized** `A_r` and averaged afterwards.
+    (``\\sum_k f_k\\,\\mathbb{C}_k:\\mathbb{A}_k``);
+  * the orientation average to commute with ``\\mathbb{C}_i`` — false for an anisotropic
+    ``\\mathbb{C}_i`` carrying an ISO/TI orientation distribution, since
+    ``\\langle\\mathbb{R}\\star(\\mathbb{C}_i:\\mathbb{A}_i)\\rangle \\ne \\mathbb{C}_i:\\langle\\mathbb{R}\\star\\mathbb{A}_i\\rangle``
+    for a rotation ``\\mathbb{R}``.  The product must then be formed on the
+    **un-symmetrized** ``\\mathbb{A}_i`` and averaged afterwards.
 
 The shortcut `P_i ⊡ A_dil` is therefore taken only when the orientation average
 is trivial or `C_r` is isotropic (an isotropic tensor commutes with every
@@ -229,9 +233,9 @@ end
     _phase_dilute_concentration(rve, name, prop::Symbol, P₀; kw...) -> AbstractTens
 
 Strain-strain (or gradient-gradient) dilute concentration tensor
-``\\mathbb A_{\\varepsilon\\varepsilon}^{(i)}`` for phase `name` in the
+``\\mathbb{A}_{\\varepsilon\\varepsilon,i}`` for phase `name` in the
 reference medium `P₀`. Used by Mori-Tanaka and self-consistent kernels
-when a per-phase tensor ``\\mathbb A_i`` is required (rather than just
+when a per-phase tensor ``\\mathbb{A}_i`` is required (rather than just
 the contribution sum).
 
 For cracks, the strain concentration tensor is singular (the crack is

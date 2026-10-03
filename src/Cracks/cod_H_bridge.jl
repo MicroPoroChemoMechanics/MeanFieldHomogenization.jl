@@ -17,12 +17,14 @@
 """
     cod_from_compliance(H, crack, ℬ=get_basis(H)) -> Tens{2,3}
 
-Extract the size-independent COD tensor ``\\mathbf B`` from the crack
-compliance contribution tensor ``\\mathbb H`` using
+Extract the size-independent COD tensor ``\\boldsymbol{B}`` from the crack
+compliance contribution tensor ``\\mathbb{H}`` using
 
+```math
+\\mathbb{H} = k\\,\\underline{n}\\stackrel{s}{\\otimes}\\boldsymbol{B}\\stackrel{s}{\\otimes}\\underline{n},
 ```
-H = k (n̂ ⊗ˢ B ⊗ˢ n̂),   k = 3/4  (elliptic)  or  k = 2/π  (ribbon).
-```
+
+with ``k = 3/4`` for an elliptic crack and ``k = 2/\\pi`` for a ribbon.
 
 Dispatches on the crack type
 [kachanov1992, barthelemyIJES2021](@cite).
@@ -86,8 +88,8 @@ const BfromH = cod_from_compliance
 """
     compliance_from_cod(B, crack, ℬ=get_basis(B)) -> Tens{4,3}
 
-Inverse of [`cod_from_compliance`](@ref).  Reconstruct ``\\mathbb H``
-from ``\\mathbf B`` with the crack-shape-dependent factor ``k``.
+Inverse of [`cod_from_compliance`](@ref).  Reconstruct ``\\mathbb{H}``
+from ``\\boldsymbol{B}`` with the crack-shape-dependent factor ``k``.
 """
 function compliance_from_cod(
         B, crack::MFH_Core.AbstractCrack,

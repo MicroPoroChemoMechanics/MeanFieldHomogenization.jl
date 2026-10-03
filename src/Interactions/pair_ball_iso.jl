@@ -86,16 +86,16 @@ Plane-strain elastic interaction between two non-overlapping disks. Built
 from the exact mean-value identity recalled in the file header,
 
 ```math
-\\mathbb{T}^{ab} = \\pi b^{2}\\Big[\\mathbb{G}^{0}(r)
-  + \\frac{a^{2}+b^{2}}{8}\\,\\Delta\\mathbb{G}^{0}(r)\\Big],
+\\mathbb{T}^{ab} = \\pi b^{2}\\Big[\\mathbb{G}^{0}(\\underline{r})
+  + \\frac{a^{2}+b^{2}}{8}\\,\\Delta\\mathbb{G}^{0}(\\underline{r})\\Big],
 ```
 
-with `2(d+2) = 8` in two dimensions. The Laplacian of the plane-strain Green
+with ``2(d+2) = 8`` in two dimensions. The Laplacian of the plane-strain Green
 operator is itself closed-form and, remarkably, independent of the reference
-Poisson ratio:
+Poisson ratio: with ``R = \\|\\underline{r}\\|`` and ``\\underline{n} = \\underline{r}/R``,
 
 ```math
-\\Delta\\mathbb{G}^{0}(r) = \\frac{-24}{8\\pi\\mu(1-\\nu)\\,r^{4}}
+\\Delta\\mathbb{G}^{0}(\\underline{r}) = \\frac{-24}{8\\pi\\mu(1-\\nu)\\,R^{4}}
    \\Big[\\mathbb{K}_2 - (2\\underline{n}\\otimes\\underline{n} - \\boldsymbol{1})
                      \\otimes(2\\underline{n}\\otimes\\underline{n} - \\boldsymbol{1})\\Big],
 ```
@@ -125,13 +125,15 @@ end
 
 Conduction counterpart in three dimensions. The exterior field of a uniformly
 polarized ball is exactly a dipole field whose components are *harmonic* away
-from the source, so `Δ𝔾⁰ ≡ 0` and the mean-value expansion collapses to its
+from the source, so ``\\Delta\\boldsymbol{G}^0 \\equiv \\boldsymbol{0}`` and the mean-value expansion collapses to its
 first term:
 
 ```math
-\\boldsymbol{T}^{ab} = \\frac{4\\pi b^{3}}{3}\\,\\boldsymbol{G}^{0}(r)
- = \\frac{b^{3}}{3\\sigma_0 R^{3}}\\big(\\boldsymbol{1} - 3\\,\\underline{n}\\otimes\\underline{n}\\big).
+\\boldsymbol{T}^{ab} = \\frac{4\\pi b^{3}}{3}\\,\\boldsymbol{G}^{0}(\\underline{r})
+ = \\frac{b^{3}}{3 k_0 R^{3}}\\big(\\boldsymbol{1} - 3\\,\\underline{n}\\otimes\\underline{n}\\big),
 ```
+
+with ``k_0`` the reference conductivity, ``R = \\|\\underline{r}\\|`` and ``\\underline{n} = \\underline{r}/R``.
 
 It is traceless, and the receiver radius `a` does not appear at all.
 """
@@ -146,12 +148,12 @@ end
     _pair_ball_iso(a, b, r, K₀::TensISO{2,2}) -> Tens{2,2}
 
 Two-dimensional conduction counterpart, for two disks of radii `a` and `b`.
-Same exactness argument as in 3D — `V_b = π b²` times the plane Green
+Same exactness argument as in 3D — ``V_b = \\pi b^2`` times the plane Green
 operator. This is *literally* the plane form given by
 [brisard2023](@cite),
 
 ```math
-\\boldsymbol{T}^{ab} = \\frac{b^{2}}{2\\sigma_0 R^{2}}
+\\boldsymbol{T}^{ab} = \\frac{b^{2}}{2 k_0 R^{2}}
    \\big(\\boldsymbol{1} - 2\\,\\underline{n}\\otimes\\underline{n}\\big),
 ```
 

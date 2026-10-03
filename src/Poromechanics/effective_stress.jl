@@ -22,7 +22,8 @@ defined by ``(\\boldsymbol{\\Sigma}, p)`` splits into
    fractures may open or close, and
 2. a superimposed loading ``(-p\\,\\boldsymbol{1}, p)`` whose solution is
    the *uniform* pair ``\\boldsymbol{\\sigma} = -p\\,\\boldsymbol{1}``,
-   ``\\boldsymbol{\\varepsilon} = -p\\,\\mathbb{S}_{\\rm s} : \\boldsymbol{1}``.
+   ``\\boldsymbol{\\varepsilon} = -p\\,\\mathbb{S}_{\\mathrm s} : \\boldsymbol{1}``, with ``\\mathbb{S}_{\\mathrm s}`` the
+   compliance of the solid phase.
 
 Step 2 carries no strain singularity, so it cannot change the aperture of a flat
 crack. All the information about the evolution of the pore space is therefore
@@ -31,7 +32,7 @@ This is the argument of [barthelemyARMA2011](@citet) § 1.1 and the reason why
 the constitutive laws of
 [`MeanFieldHomogenization.Constitutive`](@ref MeanFieldHomogenization.Constitutive)
 drive their internal state with `terzaghi_stress` rather than with
-`\\boldsymbol{\\Sigma}`.
+``\\boldsymbol{\\Sigma}``.
 
 Do not confuse it with [`biot_effective_stress`](@ref), which is the measure
 that makes the *macroscopic* constitutive law take its drained form.
@@ -48,9 +49,9 @@ end
 
 **Biot effective stress** ``\\boldsymbol{\\Sigma} + p\\,\\boldsymbol{B}``, the measure
 for which the poroelastic law
-``\\dot{\\boldsymbol{\\Sigma}} = \\mathbb{C}^{\\rm hom} : \\dot{\\boldsymbol{E}} -
+``\\dot{\\boldsymbol{\\Sigma}} = \\mathbb{C}^{\\mathrm{hom}} : \\dot{\\boldsymbol{E}} -
 \\dot p\\,\\boldsymbol{B}`` reduces to the drained relation
-``\\boldsymbol{\\Sigma} + p\\,\\boldsymbol{B} = \\mathbb{C}^{\\rm hom} : \\boldsymbol{E}``.
+``\\boldsymbol{\\Sigma} + p\\,\\boldsymbol{B} = \\mathbb{C}^{\\mathrm{hom}} : \\boldsymbol{E}``.
 
 It coincides with [`terzaghi_stress`](@ref) only when ``\\boldsymbol{B} =
 \\boldsymbol{1}``, i.e. for an incompressible solid phase.

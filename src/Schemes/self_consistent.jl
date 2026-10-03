@@ -41,17 +41,17 @@ Self-consistent scheme for property `:p`
 [mclaughlin1977](@cite). Iterates
 
 ```math
-\\mathbb C^{(n+1)} = \\Big(\\sum_i f_i\\,\\mathbb C_i \\!:\\! \\mathbb A_\\mathrm{dil}^{(i)}(\\mathbb C^{(n)})\\Big)
-                     :\\Big(\\sum_i f_i\\,\\mathbb A_\\mathrm{dil}^{(i)}(\\mathbb C^{(n)})\\Big)^{-1}
+\\mathbb{C}^{(n+1)} = \\Big(\\sum_i f_i\\,\\mathbb{C}_i : \\mathbb{A}_i^{\\mathrm{dil}}(\\mathbb{C}^{(n)})\\Big)
+                     :\\Big(\\sum_i f_i\\,\\mathbb{A}_i^{\\mathrm{dil}}(\\mathbb{C}^{(n)})\\Big)^{-1}
 ```
 
 with the dilute concentration tensor evaluated against the current
-estimate `C^{(n)}` itself (rather than the matrix property).
+estimate ``\\mathbb{C}^{(n)}`` itself (rather than the matrix property).
 
 The solver algorithm is selected by `sc.algorithm`; convergence kwargs
 in `sc.options` (`abstol`, `reltol`, `maxiters`, `damping`, `verbose`,
 `select_best`) override their defaults. The stopping test is the additive
-SciML convention `‖Δx‖ ≤ abstol + reltol · ‖x‖`, so `reltol` (default `1e-8`)
+SciML convention ``\\|\\Delta x\\| \\le \\mathrm{abstol} + \\mathrm{reltol}\\,\\|x\\|``, so `reltol` (default `1e-8`)
 is what binds on a stiffness of physical magnitude — see [`_solve_sc`](@ref)
 for the full contract. External algorithms from `NonlinearSolve.jl` are
 supported via the weak extension `MeanFieldHomogenizationNonlinearSolveExt`.
@@ -170,12 +170,14 @@ end
 Volume-weighted dilute-concentration and stress-average accumulators over every
 phase that carries volume, evaluated in the reference medium `P_n`:
 
-```
-A_avg  = Σ_α f_α ⟨A_α(P_n)⟩          CA_avg = Σ_α f_α ⟨C_α : A_α(P_n)⟩
+```math
+\\langle\\mathbb{A}\\rangle = \\sum_i f_i\\,\\langle\\mathbb{A}_i(\\mathbb{P}_n)\\rangle,
+\\qquad
+\\langle\\mathbb{C}:\\mathbb{A}\\rangle = \\sum_i f_i\\,\\langle\\mathbb{C}_i:\\mathbb{A}_i(\\mathbb{P}_n)\\rangle
 ```
 
-`f_α` is the *resolved* fraction: the RVE's fraction closure has already turned
-a [`Remainder`](@ref) into `1 - Σ f` and, under [`RescaledFractions`](@ref),
+``f_i`` is the *resolved* fraction: the RVE's fraction closure has already turned
+a [`Remainder`](@ref) into ``1 - \\sum f`` and, under [`RescaledFractions`](@ref),
 renormalized the declared ones. No phase is distinguished — which is the whole
 point of the self-consistent morphology, and what lets it run on an RVE that
 designates no matrix at all.
@@ -207,11 +209,11 @@ Project a property estimate onto the **major-symmetric** tensors:
 
 An effective stiffness (or conductivity) derives from an energy, so it *is*
 major-symmetric. The self-consistent body, however, assembles it as
-`𝔹_E : 𝔸_E⁻¹` — a product of two tensors that do not commute — and that product
+``\\mathbb{B}:\\mathbb{A}^{-1}`` — a product of two tensors that do not commute — and that product
 is only major-symmetric when the phases happen to share a common frame. With
 non-coaxial crack families it is not: the asymmetry starts at roundoff and is
-then **amplified by the fixed-point iteration** (measured: 3·10⁻¹⁵ at the second
-iterate, 2·10⁻⁴ at the third). A stiffness that is not major-symmetric is not a
+then **amplified by the fixed-point iteration** (measured: ``3\\times10^{-15}`` at the second
+iterate, ``2\\times10^{-4}`` at the third). A stiffness that is not major-symmetric is not a
 valid Eshelby reference medium, and the anisotropic crack cubature returns a
 `NaN` integrand on it, which used to abort the whole solve with a `DomainError`.
 
@@ -260,8 +262,8 @@ end
 Sum of the *density-scaled* compliance (resistivity) contributions of every
 [`CrackDensity`](@ref) phase, evaluated in the reference medium `P_n`:
 
-```
-H_total = Σ_i (4π/3) d_i ℍ_i(P_n)
+```math
+\\mathbb{H}^{\\mathrm{tot}} = \\sum_i \\frac{4\\pi}{3}\\,\\varepsilon_i\\,\\mathbb{H}_i(\\mathbb{P}_n)
 ```
 
 `has_cracks` reports whether the sum has any term at all, which is what selects
@@ -343,8 +345,8 @@ end
 Generic solver dispatcher for SC fixed points. Built-in:
 
 - [`AndersonDefault`](@ref) — Picard with relaxation
-  (`x_{n+1} = (1-damping)·step(x_n) + damping·x_n`). `damping = 0.0`
-  default; raise to ≈ 0.5 for high-contrast iterations that overshoot.
+  (``x_{n+1} = (1-\\mathrm{damping})\\,\\mathrm{step}(x_n) + \\mathrm{damping}\\,x_n``). `damping = 0.0`
+  default; raise to about ``0.5`` for high-contrast iterations that overshoot.
   Convergence near a bifurcation (e.g. SC at the porous-percolation
   threshold) is intrinsically slow because the Picard Jacobian
   eigenvalue approaches 1 there; in that regime, set
@@ -366,12 +368,12 @@ ForwardDiff-safe implicit-function-theorem lift so that
 `derivative`/`gradient`/`jacobian` (see `sensitivities.jl`) work
 transparently regardless of which solver is selected.
 
-Convergence is declared when `‖x_new − x_old‖ ≤ abstol + reltol · ‖x_old‖`
+Convergence is declared when ``\\|x_{\\mathrm{new}} - x_{\\mathrm{old}}\\| \\le \\mathrm{abstol} + \\mathrm{reltol}\\,\\|x_{\\mathrm{old}}\\|``
 (absolute *and* relative tolerance, additive convention; pass
 `abstol = 0` to require purely relative convergence). Default values:
 `abstol = 1e-12`, `reltol = 1e-8`.
 
-`‖·‖` is the **Frobenius norm of the tensor**, for every solver, so that a
+``\\|\\cdot\\|`` is the **Frobenius norm of the tensor**, for every solver, so that a
 given `abstol` expresses one requirement regardless of `algorithm` and of the
 symmetry class the fixed point lives in. The Picard loop measures it directly;
 the Newton path reaches it by working in the isometric parametrization of
@@ -380,7 +382,7 @@ weights to SciML as the `internalnorm` of its termination condition, leaving
 the unknowns alone — a trust region is not invariant under a rescaling of
 them, and moving its metric moves where it stops.
 
-Because a stiffness carries a physical magnitude, `reltol · ‖x‖` dominates the
+Because a stiffness carries a physical magnitude, ``\\mathrm{reltol}\\,\\|x\\|`` dominates the
 sum at the defaults above: tightening `abstol` alone does not tighten the
 iteration. Set both, or `abstol = 0`, when a converged value is read off
 rather than plotted.
@@ -394,7 +396,7 @@ than an earlier one. Default is `false` (return last iterate).
 Non-convergence is reported via `@debug` (silent by default; set
 `JULIA_DEBUG=MeanFieldHomogenization` to surface it) rather than `@warn`. Near
 bifurcation points the Picard step intrinsically slows down (the
-linearized step has a Jacobian eigenvalue ≈ 1) and the residual stalls
+linearized step has a Jacobian eigenvalue close to ``1``) and the residual stalls
 above `tol_eff` while still being negligibly small compared to the
 matrix-property scale; the returned iterate is informative even when
 the strict tolerance is not reached, so a default warning would be
@@ -451,15 +453,15 @@ estimate by its symmetry-class **canonical components**
 (`TensND.get_data` → `(α, β)` for iso, `(ℓ₁, …, ℓ₆)` for TI / Walpole,
 9 components for ortho).  At each Newton step:
 
-1. Build the residual `F(p) = canonical(step(rebuild(p))) − p`,
-2. Compute the Jacobian `J = ∂F/∂p` via `ForwardDiff.jacobian`,
-3. Take the Newton step `Δp = −J⁻¹·F(p)` with backtracking line
+1. Build the residual ``\\boldsymbol{F}(p) = \\mathrm{canonical}(\\mathrm{step}(\\mathrm{rebuild}(p))) - p``,
+2. Compute the Jacobian ``\\mathbf{J} = \\partial\\boldsymbol{F}/\\partial p`` via `ForwardDiff.jacobian`,
+3. Take the Newton step ``\\Delta p = -\\mathbf{J}^{-1}\\boldsymbol{F}(p)`` with backtracking line
    search (Armijo with shrinking factor 1/2, minimum step 1e-6).
 4. Fall back to a single Picard step when the line search fails.
 
 Compared to the SciML weak-extension path, this is dependency-free and
 specialized to the small parameter spaces of `MeanFieldHomogenization` symmetry
-classes (≤ 21 components for the most general aniso 4-tensor); the
+classes (at most ``21`` components for the most general aniso 4-tensor); the
 Jacobian is computed once per iteration through the same `step`
 function the AndersonDefault loop calls.
 """
@@ -743,18 +745,18 @@ and `reltol` express the same requirement whatever the `algorithm` and whatever
 the symmetry class.
 
 The canonical components are coordinates in a basis of the symmetry class
-(`(α, β)` on `(𝕁, 𝕂)` for `TensISO`, the Walpole coefficients for `TensTI`, …).
-Those bases are *orthogonal* but not orthonormal — `‖𝕁‖_F = 1` while
-`‖𝕂‖_F = √5` — so the plain Euclidean norm of the component vector understates
+(``(\\alpha, \\beta)`` on ``(\\mathbb{J}, \\mathbb{K})`` for `TensISO`, the Walpole coefficients for `TensTI`, …).
+Those bases are *orthogonal* but not orthonormal — ``\\|\\mathbb{J}\\|_F = 1`` while
+``\\|\\mathbb{K}\\|_F = \\sqrt{5}`` — so the plain Euclidean norm of the component vector understates
 the tensor norm, and understates it by a class-dependent factor. Scaling
-component `i` by `wᵢ = ‖rebuild(eᵢ)‖_F` restores the isometry exactly:
+component `i` by ``w_i = \\|\\mathrm{rebuild}(e_i)\\|_F`` restores the isometry exactly:
 
 ```math
 \\lVert w \\odot p \\rVert_2 = \\lVert \\mathrm{rebuild}(p) \\rVert_F .
 ```
 
-Newton is invariant under a diagonal rescaling of its unknowns — `J` becomes
-`W J W⁻¹`, the step `W δ`, and the iterate `W(p + δ)` — so the root and the
+Newton is invariant under a diagonal rescaling of its unknowns — ``\\mathbf{J}`` becomes
+``\\mathbf{W}\\mathbf{J}\\mathbf{W}^{-1}``, the step ``\\mathbf{W}\\delta``, and the iterate ``\\mathbf{W}(p + \\delta)`` — so the root and the
 sequence of iterates are untouched; only the norm the stopping test and the
 Armijo condition are measured in changes. A trust-region method is *not*
 invariant, and there the rescaling additionally puts its region in a
@@ -894,11 +896,11 @@ branch).
     The asymmetric fixed point coincides with the Hill-symmetric
     [`SelfConsistent`](@ref) one **only when every phase shares one Hill
     tensor** — the same shape, orientation and reference — which makes
-    `Σ_r f_r A_r = 𝟙` (see the derivation at the top of
+    ``\\sum_i f_i\\,\\mathbb{A}_i = \\mathbb{I}`` (see the derivation at the top of
     `self_consistent.jl`). All-spherical phases are the usual such case.
     With unequal shapes the two converge to genuinely different effective
-    media: about 2.5 % apart on `k` for an oblate `ω = 0.2` inclusion in a
-    spherical matrix, 6 % at `ω = 0.05`. An orientation average does not
+    media: about 2.5 % apart on ``k`` for an oblate ``\\omega = 0.2`` inclusion in a
+    spherical matrix, 6 % at ``\\omega = 0.05``. An orientation average does not
     restore the identity. Pick the scheme on physical grounds, not on the
     assumption that it is the cheaper route to the same answer.
 

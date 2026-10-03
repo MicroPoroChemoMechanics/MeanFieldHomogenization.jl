@@ -21,8 +21,8 @@ abstract type AbstractViscoLaw end
 
 Allowed values for `ViscoLaw.mode` :
 
-  * `:relaxation` — `R(t, t')` maps strain history to stress.
-  * `:creep`      — `J(t, t')` maps stress history to strain.
+  * `:relaxation` — ``R(t, t')`` maps strain history to stress.
+  * `:creep`      — ``J(t, t')`` maps stress history to strain.
 """
 const VALID_VISCO_MODES = (:relaxation, :creep)
 
@@ -35,7 +35,7 @@ Concrete viscoelastic law.  Wraps an `eval_fun::F` callable
 
   * a `Real` or `Complex` scalar (scalar Volterra kernel) ;
   * a `TensND.AbstractTens{4,3}` (4-tensor relaxation / creep tensor) ;
-  * an `AbstractMatrix` of size `6×6` already in Mandel form.
+  * an `AbstractMatrix` of size ``6\\times 6`` already in Mandel form.
 
 Construct via [`ViscoLaw`](@ref) directly or use the convenience
 constructors [`maxwell_relaxation`](@ref), [`kelvin_creep`](@ref),
@@ -79,7 +79,7 @@ visco_eval(law::ViscoLaw, t, t_p) = law.eval_fun(t, t_p)
     heaviside_law(C; mode = :relaxation)
 
 Return a `ViscoLaw` corresponding to a purely elastic kernel
-`R(t,t') = C · H(t-t')`.  Useful for testing the elastic limit of the
+``R(t,t') = C\\,H(t-t')``.  Useful for testing the elastic limit of the
 ALV pipeline.
 """
 function heaviside_law(C; mode::Symbol = :relaxation)
@@ -92,13 +92,13 @@ end
 
 Build a generalized Maxwell relaxation kernel
 
-```
-R(t, t') = C_inf + Σ_i C_branches[i] · exp(-(t - t')/taus[i])
+```math
+R(t, t') = C_{\\infty} + \\sum_i C_i\\,\\exp\\bigl(-(t - t')/\\tau_i\\bigr)
 ```
 
-for `t ≥ t'`, `0` otherwise.  `C_inf` and `C_branches[i]` may be
-scalars or 4-tensors (`TensND.AbstractTens{4,3}`); `taus[i]` is a
-positive relaxation time of the `i`-th branch.
+for ``t \\ge t'``, ``0`` otherwise.  `C_inf` (``C_{\\infty}``) and `C_branches[i]`
+(``C_i``) may be scalars or 4-tensors (`TensND.AbstractTens{4,3}`);
+`taus[i]` (``\\tau_i``) is a positive relaxation time of the ``i``-th branch.
 """
 function maxwell_relaxation(
         C_inf, C_branches::AbstractVector, taus::AbstractVector;
@@ -125,13 +125,13 @@ end
 
 Build a Kelvin (or Kelvin-Voigt-Generalized) creep kernel
 
-```
-J(t, t') = J_0 + Σ_i J_branches[i] · (1 - exp(-(t - t')/taus[i]))
+```math
+J(t, t') = J_0 + \\sum_i J_i\\,\\bigl(1 - \\exp(-(t - t')/\\tau_i)\\bigr)
 ```
 
-for `t ≥ t'`, `0` otherwise.  `J_0` is the instantaneous compliance,
-`J_branches[i]` the `i`-th branch compliance, `taus[i]` its retardation
-time.
+for ``t \\ge t'``, ``0`` otherwise.  `J_0` (``J_0``) is the instantaneous compliance,
+`J_branches[i]` (``J_i``) the ``i``-th branch compliance, `taus[i]` (``\\tau_i``)
+its retardation time.
 """
 function kelvin_creep(
         J_0, J_branches::AbstractVector, taus::AbstractVector;
@@ -164,14 +164,16 @@ end
 
 Convenience: build an isotropic Maxwell **relaxation** 4-tensor kernel
 
-```
-R(t, t') = 3 k · exp(-(t - t')/eta_k) · 𝕁
-         + 2 mu · exp(-(t - t')/eta_mu) · 𝕂
+```math
+\\mathbb{C}(t, t') = 3k\\,\\exp\\bigl(-(t - t')/\\eta_k\\bigr)\\,\\mathbb{J}
+         + 2\\mu\\,\\exp\\bigl(-(t - t')/\\eta_{\\mu}\\bigr)\\,\\mathbb{K}
 ```
 
-with `𝕁` the spherical projector `(1/3) 𝟙 ⊗ 𝟙` and `𝕂 = 𝕀 - 𝕁` the
+with `mu` (``\\mu``), `eta_k` (``\\eta_k``), `eta_mu` (``\\eta_{\\mu}``),
+``\\mathbb{J}`` the spherical projector ``\\tfrac{1}{3}\\boldsymbol{1}\\otimes\\boldsymbol{1}``
+and ``\\mathbb{K} = \\mathbb{I} - \\mathbb{J}`` the
 deviatoric projector.  The output is a `TensND.TensISO{4,3}` at every
-`(t, t')` with `t ≥ t'`.
+``(t, t')`` with ``t \\ge t'``.
 """
 function maxwell_iso(k, mu, eta_k, eta_mu)
     eval_fun = function (t, t_p)
@@ -195,12 +197,16 @@ end
 
 Convenience: build an isotropic Kelvin **creep** 4-tensor kernel
 
-```
-J(t, t') = (1/(3 k_0)) 𝕁 + (1/(2 mu_0)) 𝕂
-         + Σ_i (1/(3 k_branches[i])) (1 - exp(-(t-t')/taus_k[i])) 𝕁
-         + Σ_i (1/(2 mu_branches[i])) (1 - exp(-(t-t')/taus_mu[i])) 𝕂
+```math
+\\begin{aligned}
+\\mathbb{L}(t, t') ={}& \\frac{1}{3k_0}\\,\\mathbb{J} + \\frac{1}{2\\mu_0}\\,\\mathbb{K}
+         + \\sum_i \\frac{1}{3k_i}\\,\\bigl(1 - \\exp(-(t-t')/\\tau^{k}_i)\\bigr)\\,\\mathbb{J} \\\\
+       & + \\sum_i \\frac{1}{2\\mu_i}\\,\\bigl(1 - \\exp(-(t-t')/\\tau^{\\mu}_i)\\bigr)\\,\\mathbb{K}
+\\end{aligned}
 ```
 
+with `mu_0` (``\\mu_0``), `k_branches[i]` (``k_i``), `mu_branches[i]` (``\\mu_i``),
+`taus_k[i]` (``\\tau^{k}_i``) and `taus_mu[i]` (``\\tau^{\\mu}_i``).
 `k_branches`, `mu_branches`, `taus_k`, `taus_mu` may be empty if no
 Kelvin branches are required (instantaneous-only compliance).
 """

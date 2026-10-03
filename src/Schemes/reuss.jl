@@ -12,11 +12,11 @@
 
 Reuss lower bound on the effective property `:p`. For a stiffness-like
 property the algorithm averages the compliances and inverts:
-``\\mathbb C_\\mathrm{Reuss} = (\\sum_i f_i \\mathbb S_i)^{-1}``.
+``\\mathbb{C}^{\\mathrm{Reuss}} = \\bigl(\\sum_i f_i\\,\\mathbb{S}_i\\bigr)^{-1}``.
 
 The same logic applies to a 2nd-order conductivity tensor: the
-"compliance" is then the resistivity ``\\mathbf R = \\mathbf K^{-1}``,
-and Reuss returns ``\\mathbf K_\\mathrm{Reuss} = \\mathbf R_\\mathrm{Reuss}^{-1}``.
+"compliance" is then the resistivity ``\\boldsymbol{K}^{-1}``,
+and Reuss returns ``\\boldsymbol{K}^{\\mathrm{Reuss}} = \\bigl(\\sum_i f_i\\,\\boldsymbol{K}_i^{-1}\\bigr)^{-1}``.
 
 Phases carrying a [`CrackDensity`](@ref) are ignored, see [`Voigt`](@ref).
 

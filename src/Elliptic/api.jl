@@ -6,7 +6,7 @@
     ell_K(m) -> T
 
 Complete elliptic integral of the first kind
-``K(m) = \\int_0^{π/2} dθ/\\sqrt{1-m\\sin^2 θ}``.
+``K(m) = \\int_0^{\\pi/2} \\mathrm{d}\\theta/\\sqrt{1-m\\sin^2\\theta}``.
 
 `m` is the *parameter* (not the modulus): ``m = k^2``. Type-generic: works
 with any `Number` subtype.
@@ -18,7 +18,7 @@ with any `Number` subtype.
     ell_E(m) -> T
 
 Complete elliptic integral of the second kind
-``E(m) = \\int_0^{π/2} \\sqrt{1-m\\sin^2 θ}\\,dθ``.
+``E(m) = \\int_0^{\\pi/2} \\sqrt{1-m\\sin^2\\theta}\\,\\mathrm{d}\\theta``.
 """
 @inline ell_E(m::Float64) = _Elliptic.E(m)
 @inline ell_E(m::T) where {T <: Number} = _ell_E_agm(m)
@@ -27,7 +27,7 @@ Complete elliptic integral of the second kind
     ell_F(φ, m) -> T
 
 Incomplete elliptic integral of the first kind
-``F(φ, m) = \\int_0^φ dθ/\\sqrt{1-m\\sin^2 θ}``.
+``F(\\varphi, m) = \\int_0^\\varphi \\mathrm{d}\\theta/\\sqrt{1-m\\sin^2\\theta}``.
 """
 @inline ell_F(φ::Float64, m::Float64) = _Elliptic.F(φ, m)
 @inline ell_F(φ::Number, m::Number) = _ell_F_inc(φ, m)
@@ -36,7 +36,7 @@ Incomplete elliptic integral of the first kind
     ell_E(φ, m) -> T
 
 Incomplete elliptic integral of the second kind
-``E(φ, m) = \\int_0^φ \\sqrt{1-m\\sin^2 θ}\\,dθ``.
+``E(\\varphi, m) = \\int_0^\\varphi \\sqrt{1-m\\sin^2\\theta}\\,\\mathrm{d}\\theta``.
 
 The 1-argument `ell_E(m)` (complete integral) and the 2-argument
 `ell_E(φ, m)` (incomplete integral) coexist via arity dispatch —

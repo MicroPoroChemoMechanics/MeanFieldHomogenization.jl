@@ -35,7 +35,7 @@ stress `σ` the state was reached at.
 The law is **incremental**, so both `ε` and `σ` are carried: `ε` to form the
 strain increment that drives the apertures, and `σ` because the stress must be
 integrated along the path rather than recomputed as
-``\\mathbb{C}^{\\rm hom} : \\boldsymbol{\\varepsilon}``. Those two differ as soon
+``\\mathbb{C}^{\\mathrm{hom}} : \\boldsymbol{\\varepsilon}``. Those two differ as soon
 as a family closes — the medium stiffens from that point on, and only from that
 point on, so a total-strain formula would make the stress jump discontinuously
 at closure.
@@ -52,7 +52,7 @@ end
 
 Which crack families are currently open. This tuple — and nothing else about the
 state — is what the homogenized stiffness depends on, which is what makes
-[`MaterialCache`](@ref) effective: at most `2^N` distinct stiffnesses exist,
+[`MaterialCache`](@ref) effective: at most ``2^N`` distinct stiffnesses exist,
 however many quadrature points there are.
 """
 open_set(st::CrackedState) = st.open
@@ -82,7 +82,7 @@ with the loading.
   ratio reaches zero, so `ω₀` sets how much compression it tolerates.
 
 The law is piecewise linear: within a branch the tangent is exactly
-``\\mathbb{C}^{\\rm hom}`` of the current open set, and a step crossing a closure
+``\\mathbb{C}^{\\mathrm{hom}}`` of the current open set, and a step crossing a closure
 is split at the crossing.
 
 ```julia
@@ -289,7 +289,7 @@ end
 """
     _next_event(m, ω, dω, σ, Δσ, open) -> (α, event)
 
-Largest fraction `α ∈ [0,1]` of the remaining increment that can be applied
+Largest fraction ``\\alpha \\in [0, 1]`` of the remaining increment that can be applied
 before the open/closed configuration changes, and the event itself as
 `(family, closing)` — or `nothing` when the whole increment fits on the current
 branch.
@@ -299,7 +299,7 @@ Two kinds of event are searched together:
 - **closure** of an open family, when its aspect ratio reaches zero,
   ``\\omega_i + \\alpha\\,\\Delta\\omega_i = 0``;
 - **reopening** of a closed family, when the normal traction on its plane turns
-  tensile, ``\\underline{n}_i \\cdot (\\sigma + \\alpha\\,\\Delta\\sigma) \\cdot
+  tensile, ``\\underline{n}_i \\cdot (\\boldsymbol{\\sigma} + \\alpha\\,\\Delta\\boldsymbol{\\sigma}) \\cdot
   \\underline{n}_i = 0`` with a positive rate.
 
 The earliest of the two wins.

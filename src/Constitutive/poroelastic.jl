@@ -68,7 +68,7 @@ permeability follows their apertures.
 - `k_matrix` — matrix conductivity, small but **non-zero** (see
   [`fracture_permeability`](@ref MeanFieldHomogenization.Schemes.fracture_permeability)).
 
-The tangent blocks are `:σε` ``= \\mathbb{C}^{\\rm hom}``, `:σp` ``= -\\boldsymbol{B}``,
+The tangent blocks are `:σε` ``= \\mathbb{C}^{\\mathrm{hom}}``, `:σp` ``= -\\boldsymbol{B}``,
 `:φε` ``= \\boldsymbol{B}`` and `:φp` ``= 1/M``, all recomputed whenever the
 open/closed set changes and cached on it.
 
@@ -80,7 +80,7 @@ r.fluxes.σ, r.fluxes.φ, r.tangents.σp, transport_property(mat, r.state)
 
 !!! note "Incompressible fluid"
     ``1/M`` comes from [`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus), which assumes
-    ``k_f = \\infty`` — the setting of the paper. See that docstring for the
+    ``k_{\\mathrm f} = \\infty`` — the setting of the paper. See that docstring for the
     compressible generalization.
 """
 struct FracturedPoroelasticRock{N, M <: MicrocrackedMaterial{N}, T} <: AbstractMFHMaterial

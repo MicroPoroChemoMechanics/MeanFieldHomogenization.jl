@@ -53,7 +53,7 @@
 """
     _christoffel(C, ξ) -> SMatrix{3,3}
 
-Acoustic (Christoffel) tensor ``K_{ij}(\\xi) = \\xi_k\\,C_{kijl}\\,\\xi_l`` of a
+Acoustic (Christoffel) tensor ``K_{ij}(\\underline{\\xi}) = \\xi_k\\,C_{kijl}\\,\\xi_l`` of a
 stiffness given as a `3×3×3×3` array.
 """
 function _christoffel(C, ξ)
@@ -114,7 +114,7 @@ end
     green_function_aniso(C₀, x; nodes = 32) -> Tens{2,3}
 
 Displacement Green function of an infinite medium of arbitrary anisotropic
-stiffness `C₀`, evaluated at `x ≠ 0` by the Barnett line integral
+stiffness `C₀`, evaluated at ``\\underline{x} \\ne \\underline{0}`` by the Barnett line integral
 
 ```math
 G_{ij}(\\underline{x}) = \\frac{1}{8\\pi^2 r}
@@ -287,14 +287,14 @@ end
     green_operator(P₀, x; kw...) -> AbstractTens
 
 Real-space Green operator ``\\mathbb{G}^0`` of an infinite medium of reference
-property `P₀`, evaluated at `x ≠ 0` — the regular kernel of the
+property `P₀`, evaluated at ``\\underline{x} \\ne \\underline{0}`` — the regular kernel of the
 Lippmann-Schwinger equation, which the package writes in the sign convention
 of [brisard2023](@citet):
 
 ```math
 \\boldsymbol{\\varepsilon}(\\underline{x}) = \\boldsymbol{E}
   - \\int \\mathbb{G}^0(\\underline{x}-\\underline{y}):
-      \\boldsymbol{\\tau}(\\underline{y})\\,\\mathrm{d}V_{\\underline y} .
+      \\boldsymbol{\\tau}(\\underline{y})\\,\\mathrm{d}V_{\\underline{y}} .
 ```
 
 Dispatches on the symmetry class: an isotropic reference goes to the closed

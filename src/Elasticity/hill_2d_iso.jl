@@ -31,11 +31,11 @@ end
     _hill_2d_iso(ell::Ellipsoid{2}, C₀::TensISO{4,2}) -> AbstractTens{4,2}
 
 Analytical Hill polarization tensor of a 2-D ellipse in an isotropic
-plane-strain matrix ``\\mathbb C_0 = 3k\\,\\mathbb J + 2\\mu\\,\\mathbb K``,
+plane-strain matrix ``\\mathbb{C}_0 = 3k\\,\\mathbb{J} + 2\\mu\\,\\mathbb{K}``,
 obtained from the elliptic-cylinder Eshelby tensor of
-[mura1987](@citet) through ``\\mathbb P = \\mathbb S : \\mathbb C_0^{-1}``.
+[mura1987](@citet) through ``\\mathbb{P} = \\mathbb{S}^{\\mathrm{E}}:\\mathbb{C}_0^{-1}``.
 
-Setting `k = Inf` gives the incompressible limit.
+Setting ``k = \\infty`` (`Inf`) gives the incompressible limit.
 """
 function _hill_2d_iso(ell::Ellipsoid{2, Circular}, C₀)
     T = promote_type(eltype(ell.semi_axes), eltype(C₀))

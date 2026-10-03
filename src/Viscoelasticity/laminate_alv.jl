@@ -46,8 +46,8 @@ out-of-plane subspace of every time block, invert the restriction as a
 block-lower-triangular Volterra operator, and embed the result back with
 zeros elsewhere.
 
-The elastic version inverts a 3×3 (resp. 1×1) block in closed form; here the
-same restriction is a `(3n × 3n)` (resp. `(n × n)`) Volterra operator, and
+The elastic version inverts a ``3\\times 3`` (resp. ``1\\times 1``) block in closed form; here the
+same restriction is a ``3n\\times 3n`` (resp. ``n\\times n``) Volterra operator, and
 `volterra_inverse` plays the role of `_inv3`.
 """
 function _plane_pinv_alv(M::AbstractMatrix, n_times::Int, nc::Int, slots, bs::Int)
@@ -87,7 +87,7 @@ _alv_heaviside_weights(times) = trapezoidal_matrix(heaviside_law(1.0), times)
     _alv_kron_time(W, B) -> Matrix
 
 Assemble the ALV matrix of a **constant** (elastic) block `B` from the scalar
-Heaviside weights `W`: time block `(i, j)` is `W[i,j] · B`.
+Heaviside weights `W`: time block ``(i, j)`` is ``W_{ij}\\,B``.
 """
 function _alv_kron_time(W::AbstractMatrix, B::AbstractMatrix)
     n = size(W, 1)
@@ -119,8 +119,8 @@ end
     laminate_alv(lam, ::Val{order}; times, property) -> Matrix
 
 Effective ageing-viscoelastic operator of a periodic multilayer cell, as a
-`(6n × 6n)` relaxation matrix (`order = 4`) or a `(3n × 3n)` one
-(`order = 2`), with `n = length(times)`.
+``6n\\times 6n`` relaxation matrix (`order = 4`) or a ``3n\\times 3n`` one
+(`order = 2`), with ``n`` = `length(times)`.
 
 Each layer carries a [`ViscoLaw`](@ref) under `property`; the interfaces stay
 elastic (their compliances are numbers), which covers the usual case of an

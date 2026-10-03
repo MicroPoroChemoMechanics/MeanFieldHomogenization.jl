@@ -53,7 +53,7 @@ not known before a convergence study.
 | Keyword | Default | Meaning |
 |:--|:--|:--|
 | `radius_ratio` | `4.0` | outer radius as a multiple of the shape's **bounding** radius |
-| `level` | `4` | subdivision level of the inclusion surface: ``8 \\cdot 4^{\\text{level}}`` triangles |
+| `level` | `4` | subdivision level of the inclusion surface: ``8\\cdot 4^{\\mathrm{level}}`` triangles |
 | `outer_level` | `3` | subdivision level of the outer sphere |
 | `relax` | `60` | tangential relaxation sweeps on the inclusion surface |
 | `h_in`, `h_out` | `nothing` | interior element size at each boundary; derived from the surface meshes when `nothing` |
@@ -250,7 +250,7 @@ Predict `(; ntets, nnodes_p1, nnodes_p2, dofs_scalar, dofs_vector, …)`
 **without meshing**, by integrating the radial size law:
 
 ```math
-N_{\\text{tets}} \\approx \\int \\frac{4\\pi r^2\\,\\mathrm dr}{h(r)^3/(6\\sqrt2)} .
+N_{\\mathrm{tets}} \\approx \\int \\frac{4\\pi r^2\\,\\mathrm{d}r}{h(r)^3/(6\\sqrt{2})} .
 ```
 
 The point is to find out that a set of options will exhaust the machine *before*

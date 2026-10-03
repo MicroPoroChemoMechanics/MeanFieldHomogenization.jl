@@ -5,28 +5,31 @@
 """
     sif(crack, C₀, Σ; y₀=nothing, method=:auto, kw...) -> (𝐊, (Kᴵ, Kᴵᴵ, Kᴵᴵᴵ))
 
-Stress intensity factor vector ``\\hat{\\mathbf K}`` at a point of the
+Stress intensity factor vector ``\\underline{K}`` at a point of the
 crack front, together with its ``(K_{I},K_{II},K_{III})`` decomposition
-on ``(\\hat{\\mathbf n},\\hat{\\boldsymbol\\nu},\\hat{\\boldsymbol\\tau})``
+on ``(\\underline{n},\\underline{\\nu},\\underline{\\tau})``
 (after [irwin1957, kassir1968, willis1968](@citet);
- energy release rate identity ``G = \\hat{\\mathbf K}\\cdot\\hat{\\mathbf N}``
+ energy release rate identity ``G = \\underline{K}\\cdot\\underline{N}``
  in [barnett1972, rice1989](@citet)).
 
-For a ribbon crack (``\\hat{\\boldsymbol\\nu}=\\pm\\hat{\\mathbf m}``)
-``\\hat{\\mathbf K}^{\\mathcal R} = \\sqrt{\\pi b}\\,\\boldsymbol\\Sigma\\cdot\\hat{\\mathbf n}``
+For a ribbon crack (``\\underline{\\nu}=\\pm\\underline{m}``)
+``\\underline{K}^{\\mathcal{R}} = \\sqrt{\\pi b}\\,\\boldsymbol{\\Sigma}\\cdot\\underline{n}``
 (independent of the matrix stiffness).
-For an elliptic crack, ``\\hat{\\mathbf K}`` is obtained from the COD
-tensor ``\\mathbf B^{\\mathcal E}`` of the actual crack and the COD
-tensor ``\\mathbf B^{\\mathcal R}`` of the tangent ribbon crack at the
+For an elliptic crack, ``\\underline{K}`` is obtained from the COD
+tensor ``\\boldsymbol{B}^{\\mathcal{E}}`` of the actual crack and the COD
+tensor ``\\boldsymbol{B}^{\\mathcal{R}}`` of the tangent ribbon crack at the
 observation point:
 
-```
-K̂ = (3/8) π^{3/2} √b √(b ‖S† · ŷ₀★‖)
-    · (B^𝓡(ν̂, n̂))⁻¹ · B^𝓔(m̂, n̂, η) · Σ·n̂ .
+```math
+\\underline{K} = \\tfrac{3}{8}\\pi^{3/2}\\sqrt{b}\\;
+  \\sqrt{b\\,\\|\\boldsymbol{S}^{\\dagger}\\!\\cdot\\underline{y}^{\\star}_{0}\\|}\\;
+  \\bigl(\\boldsymbol{B}^{\\mathcal{R}}(\\underline{\\nu},\\underline{n})\\bigr)^{-1}
+  \\cdot\\boldsymbol{B}^{\\mathcal{E}}(\\underline{m},\\underline{n},\\eta)
+  \\cdot\\boldsymbol{\\Sigma}\\cdot\\underline{n} .
 ```
 
 The central identity
-``\\hat{\\mathbf K} = \\pi\\,(\\mathbf B^{\\mathcal R})^{-1}\\cdot\\hat{\\mathbf N}``
+``\\underline{K} = \\pi\\,(\\boldsymbol{B}^{\\mathcal{R}})^{-1}\\cdot\\underline{N}``
 is purely local
 [kanaun1981, kunin1983, kanaun2009](@cite).
 """
@@ -114,12 +117,12 @@ end
     sif(crack::RibbonCrack, K₀::AbstractTens{2,3}, σ∞; kw...) -> Real
 
 Thermal SIF (heat-flux intensity factor) of a ribbon crack:
-``K_T = \\sqrt{\\pi b}\\;\\hat{\\mathbf n}\\cdot\\boldsymbol\\sigma^{\\infty}``.
+``K_T = \\sqrt{\\pi b}\\;\\underline{n}\\cdot\\boldsymbol{\\sigma}^{\\infty}``.
 
 The driving vector is the transport twin of the remote stress of the elastic
-`sif`, i.e. ``\\boldsymbol\\sigma^\\infty \\equiv -\\mathbf q^\\infty
-= \\mathbf K_0\\cdot\\nabla T^\\infty``, per the package convention. Passing
-the physical flux ``\\mathbf q^\\infty`` instead returns ``-K_T``; the kernel
+`sif`, i.e. ``\\boldsymbol{\\sigma}^{\\infty} \\equiv -\\underline{q}^{\\infty}
+= \\boldsymbol{K}_0\\cdot\\nabla T^{\\infty}``, per the package convention. Passing
+the physical flux ``\\underline{q}^{\\infty}`` instead returns ``-K_T``; the kernel
 is linear in its third argument and takes no view of its own.
 """
 function sif(
@@ -174,11 +177,11 @@ end
 
 Temperature intensity factor (analog of displacement intensity
 factor) for a flat crack driven by the remote vector
-``\\boldsymbol\\sigma^{\\infty} \\equiv -\\mathbf q^{\\infty}
- = \\mathbf K_0\\cdot\\nabla T^{\\infty}``:
+``\\boldsymbol{\\sigma}^{\\infty} \\equiv -\\underline{q}^{\\infty}
+ = \\boldsymbol{K}_0\\cdot\\nabla T^{\\infty}``:
 
-```
-[[T]]_avg = b · (\\hat{\\mathbf n}·\\boldsymbol\\sigma^{\\infty}) .
+```math
+[\\![T]\\!]_{\\mathrm{avg}} = b\\,(\\underline{n}\\cdot\\boldsymbol{\\sigma}^{\\infty}) .
 ```
 
 Same convention as the thermal [`sif`](@ref): the driving vector is the

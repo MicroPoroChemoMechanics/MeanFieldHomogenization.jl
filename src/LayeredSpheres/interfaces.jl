@@ -30,7 +30,7 @@
 
 Root supertype for interface conditions in a `LayeredSphere`.  Concrete
 subtypes determine the jump matrix applied to the state vector
-`(u_r, σ_rr)` (bulk), `(U, V, σ_rr, σ_rθ)` (shear), or `(T, q_n)`
+``(u_r, \\sigma_{rr})`` (bulk), ``(U, W, \\sigma_{rr}, \\sigma_{r\\theta})`` (shear), or ``(T, q_n)``
 (conductivity).
 """
 abstract type AbstractInterface{T <: Number} end
@@ -54,13 +54,17 @@ PerfectInterface() = PerfectInterface{Float64}()
 Imperfect interface of linear-spring type: the traction stays continuous
 while the displacement jumps in proportion to it,
 
-```
-σ·n continuous,   [u_n] = σ_rr / kn = sn σ_rr,   [u_t] = σ_rθ / kt = st σ_rθ.
+```math
+[\\![\\boldsymbol{\\sigma}\\cdot\\underline{n}]\\!] = \\underline{0},
+\\qquad
+[\\![u_n]\\!] = \\sigma_{rr}/k_n = s_n\\,\\sigma_{rr},
+\\qquad
+[\\![u_t]\\!] = \\sigma_{r\\theta}/k_t = s_t\\,\\sigma_{r\\theta}.
 ```
 
-`kn`, `kt` are the normal and tangential **stiffnesses** — traction per unit
-opening, the usual meaning of those symbols — and `sn = 1/kn`, `st = 1/kt`
-the matching **compliances**. Both spellings read and write the same
+`kn`, `kt` are the normal and tangential **stiffnesses** ``k_n``, ``k_t`` — traction per unit
+opening, the usual meaning of those symbols — and `sn`, `st` the matching
+**compliances** ``s_n = 1/k_n``, ``s_t = 1/k_t``. Both spellings read and write the same
 interface:
 
 ```julia
@@ -70,13 +74,13 @@ itf.sn, itf.st                           # (0.02, 0.05)
 SpringInterface(; sn = 0.02, st = 0.05)  # == itf
 ```
 
-Limits: `kn, kt → ∞` (equivalently `sn = st = 0`) recovers
-[`PerfectInterface`](@ref); `kn = kt = 0` is a free surface, the layer
+Limits: ``k_n, k_t \\to \\infty`` (equivalently ``s_n = s_t = 0``) recovers
+[`PerfectInterface`](@ref); ``k_n = k_t = 0`` is a free surface, the layer
 boundary fully decoupled. The one-argument form `SpringInterface(kn)` is a
-normal spring with the tangential direction **bonded** (`st = 0`).
+normal spring with the tangential direction **bonded** (``s_t = 0``).
 
 !!! note "Compliances are what is stored"
-    The perfect interface is `sn = st = 0`, an exact zero, whereas in
+    The perfect interface is ``s_n = s_t = 0``, an exact zero, whereas in
     stiffnesses it is an infinity. Storing the compliances therefore keeps
     the near-perfect regime representable in `ForwardDiff.Dual` and in the
     symbolic types, where an `Inf` would poison the derivative. The
@@ -140,7 +144,7 @@ exact zeros.
 """
     spring_stiffnesses(intf::SpringInterface) -> (kn, kt)
 
-Normal and tangential stiffnesses, `(1/sn, 1/st)`. A bonded direction has a
+Normal and tangential stiffnesses, ``(1/s_n, 1/s_t)``. A bonded direction has a
 zero compliance and therefore an infinite stiffness.
 """
 @inline spring_stiffnesses(intf::SpringInterface) = (intf.kn, intf.kt)
@@ -161,24 +165,26 @@ end
 Imperfect interface of surface-elastic (Gurtin–Murdoch "membrane") type —
 the dual analog of [`SpringInterface`](@ref) and the elastic counterpart of
 Echoes' `DUALDISC`.  The interface behaves as a 2D elastic shell with
-surface moduli `κs = λs + μs` (surface dilatation, matching Echoes' `ks`)
-and surface shear `μs`.  Displacement is continuous across the interface
-and the surface strain generates a traction jump (`[σ·n] = −divₛσˢ`).  On a
-spherical interface of radius `r`, the bulk (`Y₀`) mode jump is
+surface moduli ``\\kappa^{\\mathrm s} = \\lambda^{\\mathrm s} + \\mu^{\\mathrm s}`` (surface dilatation, matching Echoes' `ks`)
+and surface shear ``\\mu^{\\mathrm s}``.  Displacement is continuous across the interface
+and the surface strain generates a traction jump (``[\\![\\boldsymbol{\\sigma}\\cdot\\underline{n}]\\!] = -\\mathrm{div}_{\\mathrm s}\\,\\boldsymbol{\\sigma}^{\\mathrm s}``).  On a
+spherical interface of radius ``r``, the bulk (``Y_0``) mode jump is
 
-```
-[σ_rr] = (4 κs / r²) · u_r,
-```
-
-and the shear (`Y₂`-harmonic) mode jump, with `u_r = U P₂`,
-`u_θ = W dP₂/dθ`, is
-
-```
-[σ_rr] = ( 4κs U − 12κs W) / r²,
-[σ_rθ] = (−2κs U + (6κs + 4μs) W) / r².
+```math
+[\\![\\sigma_{rr}]\\!] = \\frac{4\\kappa^{\\mathrm s}}{r^2}\\,u_r,
 ```
 
-The `κs = μs = 0` limit recovers [`PerfectInterface`](@ref).  These jumps
+and the shear (``Y_2``-harmonic) mode jump, with ``u_r = U\\,P_2``,
+``u_\\theta = W\\,\\mathrm{d}P_2/\\mathrm{d}\\theta``, is
+
+```math
+\\begin{aligned}
+[\\![\\sigma_{rr}]\\!] &= (4\\kappa^{\\mathrm s} U - 12\\kappa^{\\mathrm s} W)/r^2,\\\\
+[\\![\\sigma_{r\\theta}]\\!] &= (-2\\kappa^{\\mathrm s} U + (6\\kappa^{\\mathrm s} + 4\\mu^{\\mathrm s}) W)/r^2.
+\\end{aligned}
+```
+
+The ``\\kappa^{\\mathrm s} = \\mu^{\\mathrm s} = 0`` limit recovers [`PerfectInterface`](@ref).  These jumps
 reproduce Echoes' `DUALDISC` concentration tensors and effective moduli to
 machine precision.
 """
@@ -197,8 +203,8 @@ MembraneInterface(κs::Number, μs::Number) =
 """
     KapitzaInterface{T}(resistance::T)
 
-Thermal imperfect interface with scalar thermal resistance:
-`[T] = resistance · q_n`, with `q_n` continuous.  Primal analog of
+Thermal imperfect interface with scalar thermal resistance ``\\rho`` (`resistance`):
+``[\\![T]\\!] = \\rho\\,q_n``, with ``q_n`` continuous.  Primal analog of
 [`SpringInterface`](@ref).
 """
 struct KapitzaInterface{T <: Number} <: AbstractInterface{T}
@@ -210,14 +216,14 @@ end
 
 Highly-conductive 2D surface layer (dual analog of
 [`MembraneInterface`](@ref)).  Introduces a flux jump driven by the
-surface Laplacian of the temperature; for the spherical harmonic `Y_n`
-on a spherical interface of radius `r`,
+surface Laplacian of the temperature; for the spherical harmonic ``Y_n``
+on a spherical interface of radius ``r`` and surface conductance ``k^{\\mathrm s}`` (`conductance`),
 
-```
-[q_n] = -n(n+1) · conductance · T / r².
+```math
+[\\![q_n]\\!] = -n(n+1)\\,k^{\\mathrm s}\\,T/r^2.
 ```
 
-`conductance = 0` recovers [`PerfectInterface`](@ref).
+``k^{\\mathrm s} = 0`` recovers [`PerfectInterface`](@ref).
 """
 struct SurfaceConductiveInterface{T <: Number} <: AbstractInterface{T}
     conductance::T

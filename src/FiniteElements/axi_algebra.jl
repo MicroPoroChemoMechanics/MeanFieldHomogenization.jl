@@ -14,8 +14,19 @@
     _axi_correct(A_E, B_E, A_p, B_p, P0) -> (A, B, X)
 
 The linear fixed point of the corrected boundary condition, on one modal
-block: `X = (𝕀 − (𝔹ᵖ − P₀·𝔸ᵖ))⁻¹ (𝔹ᴱ − P₀·𝔸ᴱ)`, then `𝔸 = 𝔸ᴱ + 𝔸ᵖ X` and
-`𝔹 = 𝔹ᴱ + 𝔹ᵖ X`.
+block, with ``\\mathbb{A}`` and ``\\mathbb{B}`` the strain-side and stress-side localization blocks and
+superscripts E and p the remote and unit-dipole families:
+
+```math
+\\mathbf{X} = \\bigl(\\mathbb{1} - (\\mathbb{B}^{\\mathrm{p}} - \\mathbb{C}_0\\mathbb{A}^{\\mathrm{p}})\\bigr)^{-1}
+  (\\mathbb{B}^{\\mathrm{E}} - \\mathbb{C}_0\\mathbb{A}^{\\mathrm{E}}),
+\\qquad
+\\mathbb{A} = \\mathbb{A}^{\\mathrm{E}} + \\mathbb{A}^{\\mathrm{p}}\\mathbf{X},
+\\qquad
+\\mathbb{B} = \\mathbb{B}^{\\mathrm{E}} + \\mathbb{B}^{\\mathrm{p}}\\mathbf{X},
+```
+
+with ``\\mathbb{C}_0`` (`P0`) the reference medium.
 """
 function _axi_correct(A_E, B_E, A_p, B_p, P0)
     Π_E = B_E - P0 * A_E

@@ -236,10 +236,10 @@ end
 
 Diagnostic view of the corrected axisymmetric solve. Besides the corrected
 localization tensors `A`, `B` it returns their **uncorrected** counterparts —
-those of the plain truncated cell, `u|∂Ω = E·x` — and the per-mode blocks
+those of the plain truncated cell, ``\\underline{u}|_{\\partial\\Omega} = \\boldsymbol{E}\\cdot\\underline{x}`` — and the per-mode blocks
 `(A_E, B_E, A_p, B_p, A, B, X)`, plus the measured inclusion volume.
 
-`A_uncorrected` drifts with `radius_ratio` like `(a/R)³` while `A` does not:
+`A_uncorrected` drifts with `radius_ratio` like ``(a/R)^3`` while `A` does not:
 that contrast is the practical proof that the correction is wired correctly.
 Bypasses the cache.
 """

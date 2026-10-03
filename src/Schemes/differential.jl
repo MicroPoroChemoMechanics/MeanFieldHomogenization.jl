@@ -55,7 +55,7 @@ end
     _evaluate(rve, scheme::DifferentialScheme, ::Val{p}; kw...) -> AbstractTens
 
 Differential scheme for property `:p` [norris1985](@cite).
-Integrates the multi-phase incorporation-sequence ODE on `τ ∈ [0, 1]`
+Integrates the multi-phase incorporation-sequence ODE on ``\\tau \\in [0, 1]``
 with the SciML `OrdinaryDiffEq.solve` driver (default `Tsit5`), in the
 stiffness or the compliance variable according to the scheme's
 `formulation`.
@@ -69,10 +69,10 @@ end
         -> (τ::Vector, states::Vector{<:AbstractTens})
 
 Effective property of `rve` **all along** the differential scheme's
-fictitious incorporation time `τ ∈ [0, 1]`, instead of only at `τ = 1`
+fictitious incorporation time ``\\tau \\in [0, 1]``, instead of only at ``\\tau = 1``
 as [`homogenize`](@ref) returns.
 
-`τ` carries `nsteps + 1` uniformly spaced save points (the `saveat` of
+``\\tau`` carries `nsteps + 1` uniformly spaced save points (the `saveat` of
 the underlying ODE solve — the integration step itself remains adaptive
 and controlled by `abstol` / `reltol`), and `states[k]` is the effective
 property after the fraction of each phase has been grown to

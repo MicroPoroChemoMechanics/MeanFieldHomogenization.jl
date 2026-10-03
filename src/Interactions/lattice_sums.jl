@@ -24,8 +24,8 @@
 """
     periodic_images(r, L, R_c; skip_self=false) -> Vector
 
-Translations `r + n·L`, `n ∈ Zᵈ`, whose norm is at most `R_c`, for a cubic
-period `L`. With `skip_self = true` the null translation is dropped, which is
+Translations ``\\underline{r} + L\\,\\underline{n}``, ``\\underline{n} \\in \\mathbb{Z}^d``, whose norm is at most ``R_c``, for a cubic
+period ``L``. With `skip_self = true` the null translation is dropped, which is
 what a receiver needs when summing over its *own* family of images.
 
 Enumerating a ball rather than a box is what makes the truncated lattice sum
@@ -55,11 +55,12 @@ inclusion lying within the cluster radius `R_c` of the receiver, for a cubic
 cell of side `L`:
 
 ```math
-\\bar{\\mathbb{T}}^{ab} = \\sum_{\\|r_{ab} + nL\\| \\le R_c}
-   \\mathbb{T}^{ab}(r_{ab} + nL) .
+\\bar{\\mathbb{T}}^{ab} = \\sum_{\\|\\underline{r}_{ab} + L\\,\\underline{n}\\| \\le R_c}
+   \\mathbb{T}^{ab}(\\underline{r}_{ab} + L\\,\\underline{n}) ,
+\\qquad \\underline{n} \\in \\mathbb{Z}^d .
 ```
 
-When `incl_a` and `incl_b` are the *same* inclusion of the cell (`r = 0`), the
+When `incl_a` and `incl_b` are the *same* inclusion of the cell (``\\underline{r} = \\underline{0}``), the
 null translation is skipped: the self term is not part of this sum, it is
 [`self_interaction_tensor`](@ref).
 

@@ -14,7 +14,7 @@
 
 Maxwell homogenization for property `:p`. Uses the RVE's
 [`distribution_shape`](@ref) (`UniformDistribution` wrapper) as the
-reference for the outer Hill polarization tensor `P_d`. Conductivity
+reference for the outer Hill polarization tensor ``\\mathbb{P}_{\\mathrm{d}}``. Conductivity
 (`:K`) is supported through the same recipe with 2nd-order tensors.
 
 The dispatch on `rve.distribution_shape` is on its concrete subtype so

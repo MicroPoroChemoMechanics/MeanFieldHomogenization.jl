@@ -131,9 +131,9 @@ Whether the three coordinate planes are mirror planes of `s`.
 
 This is **the** condition that licenses meshing one octant of a cell built
 around `s`, and it is weaker than cubic symmetry: it asks for the group
-`{diag(±1,±1,±1)}` of order 8 and nothing more. A [`Superspheroid`](@ref) has
-it — its level set depends only on `√(x²+y²)` and `|z|` — without having
-octahedral symmetry at all. What `O_h` adds is the symmetry *class of the
+``\\{\\mathrm{diag}(\\pm1,\\pm1,\\pm1)\\}`` of order 8 and nothing more. A [`Superspheroid`](@ref) has
+it — its level set depends only on ``\\sqrt{x^2+y^2}`` and ``|z|`` — without having
+octahedral symmetry at all. What ``O_h`` adds is the symmetry *class of the
 measured tensor*, not the validity of the subdivision.
 
 The default is `false`, deliberately. A new shape has to opt in by adding a
@@ -498,10 +498,10 @@ _dirichlet(n::Integer, m) = exp(n * loggamma(1 + inv(m)) - loggamma(1 + n / m))
 Exact volume, in closed form:
 
 ```math
-V_{\\text{supersphere}} = 8a^3\\,
+V_{\\mathrm{supersphere}} = 8a^3\\,
   \\frac{\\Gamma(1 + \\tfrac{1}{2p})^3}{\\Gamma(1 + \\tfrac{3}{2p})},
 \\qquad
-V_{\\text{superspheroid}} = \\frac{2\\pi a^2 c}{2p}\\,
+V_{\\mathrm{superspheroid}} = \\frac{2\\pi a^2 c}{2p}\\,
   \\frac{\\Gamma(\\tfrac{1}{2p})\\,\\Gamma(1 + \\tfrac{1}{p})}
         {\\Gamma(1 + \\tfrac{1}{p} + \\tfrac{1}{2p})} .
 ```

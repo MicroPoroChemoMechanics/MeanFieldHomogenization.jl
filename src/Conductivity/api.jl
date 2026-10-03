@@ -66,14 +66,14 @@ end
     eshelby_tensor(incl::AbstractEllipsoidalInclusion, K₀::TensND.AbstractTens{2}; kw...)
 
 2nd-order Eshelby tensor of an ellipsoidal inclusion in a matrix of
-conductivity ``\\mathbf K_0``:
+conductivity ``\\boldsymbol{K}_0``:
 
-```
-s = P · K₀ .
+```math
+\\boldsymbol{S}^{\\mathrm{E}} = \\boldsymbol{P}\\cdot\\boldsymbol{K}_0 .
 ```
 
-For the sphere in an isotropic conductor ``\\mathbf s = \\tfrac{1}{3}
-\\mathbf 1`` (independent of ``K``). Thin wrapper around
+For the sphere in an isotropic conductor ``\\boldsymbol{S}^{\\mathrm{E}} = \\tfrac{1}{3}
+\\boldsymbol{1}`` (independent of ``k_0``). Thin wrapper around
 [`hill_tensor`](@ref).
 """
 MFH_Core.eshelby_tensor(

@@ -6,16 +6,18 @@
 """
     _hill_3d_iso(ell::Ellipsoid{3}, C₀::TensISO{4,3}) -> AbstractTens{4,3}
 
-Analytical Hill polarization tensor ``\\mathbb P`` for a 3-D ellipsoid
-in an isotropic matrix ``\\mathbb C_0 = 3k\\,\\mathbb J + 2\\mu\\,\\mathbb K
-= 3\\lambda\\,\\mathbb I + 2\\mu\\,\\mathbb K``:
+Analytical Hill polarization tensor ``\\mathbb{P}`` for a 3-D ellipsoid
+in an isotropic matrix ``\\mathbb{C}_0 = 3k\\,\\mathbb{J} + 2\\mu\\,\\mathbb{K}
+= 3\\lambda\\,\\mathbb{J} + 2\\mu\\,\\mathbb{I}``:
 
-```
-P(A, 3λI + 2μK) = U^A/(λ+2μ) + (V^A − U^A)/μ .
+```math
+\\mathbb{P}\\bigl(\\boldsymbol{A},\\,3\\lambda\\,\\mathbb{J} + 2\\mu\\,\\mathbb{I}\\bigr)
+= \\frac{1}{\\lambda+2\\mu}\\,\\mathbb{U}^{\\boldsymbol{A}}
++ \\frac{1}{\\mu}\\,\\bigl(\\mathbb{V}^{\\boldsymbol{A}} - \\mathbb{U}^{\\boldsymbol{A}}\\bigr) .
 ```
 
-Uses the Kelvin–Mandel forms of ``\\mathbb U^{\\mathbf A}`` and
-``\\mathbb V^{\\mathbf A}`` (see [`tens_UA`](@ref), [`tens_VA`](@ref))
+Uses the Kelvin–Mandel forms of ``\\mathbb{U}^{\\boldsymbol{A}}`` and
+``\\mathbb{V}^{\\boldsymbol{A}}`` (see [`tens_UA`](@ref), [`tens_VA`](@ref))
 and produces the most specific TensND type compatible with the
 ellipsoid symmetry [willis1977, mura1987](@cite).
 """

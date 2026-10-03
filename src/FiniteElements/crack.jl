@@ -52,8 +52,8 @@ finite elements** instead of the closed form of
 
 It subtypes [`AbstractCrack`](@ref Core.AbstractCrack) and declares the standard
 [`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait), so implementing
-[`cod_tensor`](@ref MeanFieldHomogenization.Cracks.cod_tensor) is *all* it takes: ℍ, ℕ,
-𝐑, 𝐍_K, the bundled pair and the four `delta_*` with the Budiansky `4π/3`
+[`cod_tensor`](@ref MeanFieldHomogenization.Cracks.cod_tensor) is *all* it takes: ``\\mathbb{H}``, ``\\mathbb{N}``,
+``\\boldsymbol{R}``, ``\\boldsymbol{N}_K``, the bundled pair and the four `delta_*` with the Budiansky ``4\\pi/3``
 prefactor are inherited. It is a drop-in replacement for `EllipticCrack` in
 every scheme — the point of the exercise being that the same machinery accepts
 a morphology for which no closed form exists.

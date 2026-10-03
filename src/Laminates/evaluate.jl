@@ -24,7 +24,7 @@
     _gather(lam, prop::Symbol, ::Val{order}) -> (C6s, fs, T)
 
 Collect the per-layer property matrices in the layer frame and the volume
-fractions `f_i = h_i / L`, promoted to one common element type so that a
+fractions ``f_i = h_i/L``, promoted to one common element type so that a
 `Dual` modulus, a `Dual` thickness or a symbolic entry propagates through the
 whole kernel.
 """
@@ -194,20 +194,20 @@ end
     _wrap4_general(lam, prop, M6) -> AbstractTens{4,3}
 
 Same as [`_wrap4`](@ref) for a tensor that is transversely isotropic about the
-layer normal but **not major-symmetric** — every localization tensor, `𝔸_i`
-first of all: `𝔸_i = 𝕀 + ℙ_i : (ℂ^{hom} − ℂ_i)` is a product of major-symmetric
+layer normal but **not major-symmetric** — every localization tensor, ``\\mathbb{A}_i``
+first of all: ``\\mathbb{A}_i = \\mathbb{I} + \\mathbb{P}_i:(\\mathbb{C}^{\\mathrm{hom}} - \\mathbb{C}_i)`` is a product of major-symmetric
 tensors and a product of two such is not one.
 
 `_wrap4` cannot be reused because `TensND.ti_params_from_KM` *projects* onto
 the 5-coefficient major-symmetric Walpole span: fed a concentration tensor it
-would replace `ℓ₃` and `ℓ₄` by their half-sum and report the result as exact.
+would replace ``\\ell_3`` and ``\\ell_4`` by their half-sum and report the result as exact.
 The read-off here is `TensND.ti8_params_from_KM`, which is the identity on the
 whole axially-invariant subspace.
 
-`ℓ₇` and `ℓ₈`, the antisymmetric azimuthal couplings, are **structurally** zero
+``\\ell_7`` and ``\\ell_8``, the antisymmetric azimuthal couplings, are **structurally** zero
 here and are dropped rather than carried: `_all_ti` has already established
-that every layer is `TensISO` or major-symmetric `TensTI{4,T,5}` about `n` —
-both with `ℓ₇ = ℓ₈ = 0` — that every interface is in-plane isotropic, and the
+that every layer is `TensISO` or major-symmetric `TensTI{4,T,5}` about ``\\underline{n}`` —
+both with ``\\ell_7 = \\ell_8 = 0`` — that every interface is in-plane isotropic, and the
 six-coefficient Walpole span is closed under product and inverse. So the result
 is exactly a `TensTI{4,T,6}`, the tightest type that loses nothing.
 
@@ -322,12 +322,12 @@ end
     laminate_hill(lam, name::Symbol; property = :C) -> (ℙ, ℚ)
 
 The two Hill tensors of one layer, as TensND tensors in the laminate basis:
-`ℙ = n ⊗ˢ 𝐊⁻¹ ⊗ˢ n` — the flat-inclusion limit of the Hill polarization
+``\\mathbb{P} = \\underline{n}\\stackrel{s}{\\otimes}\\boldsymbol{K}^{-1}\\stackrel{s}{\\otimes}\\underline{n}`` — the flat-inclusion limit of the Hill polarization
 tensor of an ellipsoid embedded in that layer's own material — and
-`ℚ = ℂ − ℂ:ℙ:ℂ`, the in-plane Schur complement.
+``\\mathbb{Q} = \\mathbb{C} - \\mathbb{C}:\\mathbb{P}:\\mathbb{C}``, the in-plane Schur complement.
 
-Exposed for the theory page and for checking the identities `ℙ:ℂ:ℙ = ℙ` and
-`ℚ:ℙ = 0`; the kernel itself never materializes them as tensors.
+Exposed for the theory page and for checking the identities ``\\mathbb{P}:\\mathbb{C}:\\mathbb{P} = \\mathbb{P}`` and
+``\\mathbb{Q}:\\mathbb{P} = 0``; the kernel itself never materializes them as tensors.
 """
 function laminate_hill(lam::Laminate, name::Symbol; property::Symbol = :C)
     C = layer_property(lam, name, property)
@@ -345,19 +345,19 @@ end
 """
     layer_strain_localization(lam, name::Symbol; property = :C) -> Tens{4,3}
 
-Strain localization tensor `𝔸_i` of one layer: `ε_i = 𝔸_i : E`, with
-`𝔸_i = 𝕀 + ℙ_i : (ℂ^{hom} − ℂ_i)` and `Σ_i f_i 𝔸_i = 𝕀`.
+Strain localization tensor ``\\mathbb{A}_i`` of one layer: ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_i:\\boldsymbol{E}``, with
+``\\mathbb{A}_i = \\mathbb{I} + \\mathbb{P}_i:(\\mathbb{C}^{\\mathrm{hom}} - \\mathbb{C}_i)`` and ``\\sum_i f_i\\,\\mathbb{A}_i = \\mathbb{I}``.
 
 Its in-plane block is the identity and its in-plane/out-of-plane coupling
 block vanishes — the macroscopic in-plane strain reaches every layer
-unchanged, which is the compatibility condition `ε_i = E + a_i ⊗ˢ n`.
+unchanged, which is the compatibility condition ``\\boldsymbol{\\varepsilon}_i = \\boldsymbol{E} + \\underline{a}_i\\stackrel{s}{\\otimes}\\underline{n}``.
 
 Synonym of [`strain_strain_loc`](@ref)`(lam, name)`, the package-wide generic
 name; the two return the same object.
 
 Defined for perfect interfaces; with a primal (spring / Kapitza) interface
 part of the macroscopic strain is carried by the jumps, so the layer strains
-no longer average to `E` — see [`interface_jump`](@ref).
+no longer average to ``\\boldsymbol{E}`` — see [`interface_jump`](@ref).
 """
 function layer_strain_localization(lam::Laminate, name::Symbol; property::Symbol = :C)
     C6, Chom = _loc_setup4(lam, name, property)
@@ -367,8 +367,8 @@ end
 """
     layer_stress_localization(lam, name::Symbol; property = :C) -> Tens{4,3}
 
-Stress localization tensor `𝔹_i` of one layer: `σ_i = 𝔹_i : Σ`, with
-`𝔹_i = ℂ_i : 𝔸_i : (ℂ^{hom})^{-1}` and `Σ_i f_i 𝔹_i = 𝕀`.
+Stress localization tensor ``\\mathbb{B}_i`` of one layer: ``\\boldsymbol{\\sigma}_i = \\mathbb{B}_i:\\boldsymbol{\\Sigma}``, with
+``\\mathbb{B}_i = \\mathbb{C}_i:\\mathbb{A}_i:(\\mathbb{C}^{\\mathrm{hom}})^{-1}`` and ``\\sum_i f_i\\,\\mathbb{B}_i = \\mathbb{I}``.
 
 Synonym of [`stress_stress_loc`](@ref)`(lam, name)`, the package-wide generic
 name; the two return the same object.
@@ -395,7 +395,7 @@ end
     layer_gradient_localization(lam, name::Symbol; property = :K) -> Tens{2,3}
 
 Transport counterpart of [`layer_strain_localization`](@ref):
-`∇T_i = 𝐀_i · ∇T`, with `Σ_i f_i 𝐀_i = 𝟏`.
+``\\nabla T_i = \\boldsymbol{A}_i\\cdot\\nabla T``, with ``\\sum_i f_i\\,\\boldsymbol{A}_i = \\boldsymbol{1}``.
 
 Synonym of [`gradient_gradient_loc`](@ref)`(lam, name)`.
 """
@@ -407,8 +407,8 @@ end
 """
     layer_flux_localization(lam, name::Symbol; property = :K) -> Tens{2,3}
 
-Transport counterpart of [`layer_stress_localization`](@ref): `q_i = 𝐁_i · q`,
-with `Σ_i f_i 𝐁_i = 𝟏`.
+Transport counterpart of [`layer_stress_localization`](@ref): ``\\underline{q}_i = \\boldsymbol{B}_i\\cdot\\underline{q}``,
+with ``\\sum_i f_i\\,\\boldsymbol{B}_i = \\boldsymbol{1}``.
 
 Synonym of [`flux_flux_loc`](@ref)`(lam, name)`.
 """
@@ -452,7 +452,7 @@ end
 """
     strain_strain_loc(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
 
-Strain-strain localization tensor `𝔸_i` of layer `name`: `ε_i = 𝔸_i : E`.
+Strain-strain localization tensor ``\\mathbb{A}_i`` of layer `name`: ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_i:\\boldsymbol{E}``.
 
 The `Laminate` method of the package-wide generic, keyed on a layer name
 because a laminate has no reference medium. Identical to
@@ -465,11 +465,11 @@ end
 """
     stress_strain_loc(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
 
-Mixed localization tensor `𝔸^{σε}_i = ℂ_i : 𝔸_i` of layer `name`, mapping the
-macroscopic strain to the layer stress: `σ_i = 𝔸^{σε}_i : E`, with
-`Σ_i f_i 𝔸^{σε}_i = ℂ^{hom}`.
+Mixed localization tensor ``\\mathbb{A}_{\\sigma\\varepsilon,i} = \\mathbb{C}_i:\\mathbb{A}_i`` of layer `name`, mapping the
+macroscopic strain to the layer stress: ``\\boldsymbol{\\sigma}_i = \\mathbb{A}_{\\sigma\\varepsilon,i}:\\boldsymbol{E}``, with
+``\\sum_i f_i\\,\\mathbb{A}_{\\sigma\\varepsilon,i} = \\mathbb{C}^{\\mathrm{hom}}``.
 
-Unlike [`stress_stress_loc`](@ref) it forms no inverse of `ℂ^{hom}`, so it is
+Unlike [`stress_stress_loc`](@ref) it forms no inverse of ``\\mathbb{C}^{\\mathrm{hom}}``, so it is
 the cheaper and better-conditioned of the two stress-side tensors.
 """
 function stress_strain_loc(lam::Laminate, name::Symbol; property::Symbol = :C)
@@ -482,9 +482,9 @@ end
 """
     strain_stress_loc(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
 
-Mixed localization tensor `𝔸^{εσ}_i = 𝔸_i : (ℂ^{hom})^{-1}` of layer `name`,
-mapping the macroscopic stress to the layer strain: `ε_i = 𝔸^{εσ}_i : Σ`, with
-`Σ_i f_i 𝔸^{εσ}_i = (ℂ^{hom})^{-1}`.
+Mixed localization tensor ``\\mathbb{A}_{\\varepsilon\\sigma,i} = \\mathbb{A}_i:(\\mathbb{C}^{\\mathrm{hom}})^{-1}`` of layer `name`,
+mapping the macroscopic stress to the layer strain: ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_{\\varepsilon\\sigma,i}:\\boldsymbol{\\Sigma}``, with
+``\\sum_i f_i\\,\\mathbb{A}_{\\varepsilon\\sigma,i} = (\\mathbb{C}^{\\mathrm{hom}})^{-1}``.
 """
 function strain_stress_loc(lam::Laminate, name::Symbol; property::Symbol = :C)
     C6, Chom = _loc_setup4(lam, name, property)
@@ -496,7 +496,7 @@ end
 """
     stress_stress_loc(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
 
-Stress-stress localization tensor `𝔹_i` of layer `name`: `σ_i = 𝔹_i : Σ`.
+Stress-stress localization tensor ``\\mathbb{B}_i`` of layer `name`: ``\\boldsymbol{\\sigma}_i = \\mathbb{B}_i:\\boldsymbol{\\Sigma}``.
 Identical to [`layer_stress_localization`](@ref).
 """
 function stress_stress_loc(lam::Laminate, name::Symbol; property::Symbol = :C)
@@ -506,7 +506,7 @@ end
 """
     gradient_gradient_loc(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
 
-Transport twin of [`strain_strain_loc`](@ref): `∇T_i = 𝐀_i · ∇T`. Identical to
+Transport twin of [`strain_strain_loc`](@ref): ``\\nabla T_i = \\boldsymbol{A}_i\\cdot\\nabla T``. Identical to
 [`layer_gradient_localization`](@ref).
 """
 function gradient_gradient_loc(lam::Laminate, name::Symbol; property::Symbol = :K)
@@ -516,8 +516,8 @@ end
 """
     flux_gradient_loc(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
 
-Transport twin of [`stress_strain_loc`](@ref): `𝐀^{qg}_i = 𝐊_i · 𝐀_i` maps the
-macroscopic gradient to the layer flux, with `Σ_i f_i 𝐀^{qg}_i = 𝐊^{hom}`.
+Transport twin of [`stress_strain_loc`](@ref): ``\\boldsymbol{A}_{q\\nabla,i} = \\boldsymbol{K}_i\\cdot\\boldsymbol{A}_i`` maps the
+macroscopic gradient to the layer flux, with ``\\sum_i f_i\\,\\boldsymbol{A}_{q\\nabla,i} = \\boldsymbol{K}^{\\mathrm{hom}}``.
 """
 function flux_gradient_loc(lam::Laminate, name::Symbol; property::Symbol = :K)
     K3, Khom = _loc_setup2(lam, name, property)
@@ -527,9 +527,9 @@ end
 """
     gradient_flux_loc(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
 
-Transport twin of [`strain_stress_loc`](@ref): `𝐀^{gq}_i = 𝐀_i · (𝐊^{hom})^{-1}`
+Transport twin of [`strain_stress_loc`](@ref): ``\\boldsymbol{A}_{\\nabla q,i} = \\boldsymbol{A}_i\\cdot(\\boldsymbol{K}^{\\mathrm{hom}})^{-1}``
 maps the macroscopic flux to the layer gradient, with
-`Σ_i f_i 𝐀^{gq}_i = (𝐊^{hom})^{-1}`.
+``\\sum_i f_i\\,\\boldsymbol{A}_{\\nabla q,i} = (\\boldsymbol{K}^{\\mathrm{hom}})^{-1}``.
 """
 function gradient_flux_loc(lam::Laminate, name::Symbol; property::Symbol = :K)
     K3, Khom = _loc_setup2(lam, name, property)
@@ -539,7 +539,7 @@ end
 """
     flux_flux_loc(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
 
-Transport twin of [`stress_stress_loc`](@ref): `q_i = 𝐁_i · q`. Identical to
+Transport twin of [`stress_stress_loc`](@ref): ``\\underline{q}_i = \\boldsymbol{B}_i\\cdot\\underline{q}``. Identical to
 [`layer_flux_localization`](@ref).
 """
 function flux_flux_loc(lam::Laminate, name::Symbol; property::Symbol = :K)
@@ -549,8 +549,8 @@ end
 """
     interface_jump(lam, k::Integer, E; property = :C) -> NTuple{3}
 
-Displacement jump `[u] = 𝕂_k · (Σ · n)` across the `k`-th interface, under the
-macroscopic strain `E`, with `Σ = ℂ^{hom} : E`. Returned in canonical
+Displacement jump ``[\\![\\underline{u}]\\!] = \\boldsymbol{\\mathcal{K}}_k\\cdot(\\boldsymbol{\\Sigma}\\cdot\\underline{n})`` across the `k`-th interface, under the
+macroscopic strain `E`, with ``\\boldsymbol{\\Sigma} = \\mathbb{C}^{\\mathrm{hom}}:\\boldsymbol{E}``. Returned in canonical
 components. Zero for a perfect or a dual (membrane) interface, which produce
 no jump.
 

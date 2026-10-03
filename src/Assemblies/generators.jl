@@ -28,10 +28,10 @@ const _CUBIC_SITES = Dict(
 
 Largest volume fraction of equal, non-overlapping spheres on the cubic lattice
 `kind` (`:sc`, `:bcc` or `:fcc`) — the point at which neighboring spheres
-touch: `π/6 ≈ 0.5236`, `√3π/8 ≈ 0.6802` and `√2π/6 ≈ 0.7405`.
+touch: ``\\pi/6 \\approx 0.5236``, ``\\sqrt{3}\\,\\pi/8 \\approx 0.6802`` and ``\\sqrt{2}\\,\\pi/6 \\approx 0.7405``.
 
 Worth knowing when reading Molinari & El Mouden's figures: their simple-cubic
-curves stop near `f = 0.52` for exactly this reason.
+curves stop near ``f = 0.52`` for exactly this reason.
 """
 function max_packing_fraction(kind::Symbol)
     kind === :sc && return π / 6

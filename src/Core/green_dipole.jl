@@ -24,13 +24,13 @@
     green_gradient_iso(C₀::TensISO{4,3}, x) -> SArray{Tuple{3,3,3}}
 
 Gradient ``\\partial G_{ij}/\\partial x_k`` of the Kelvin Green function of an
-isotropic elastic matrix `C₀`, evaluated at `x ≠ 0`.
+isotropic elastic matrix `C₀`, evaluated at ``\\underline{x} \\ne \\underline{0}``.
 
-With ``r = \\|x\\|``, ``\\hat n = x/r`` and
+With ``r = \\|\\underline{x}\\|``, ``\\underline{n} = \\underline{x}/r`` and
 ``A = 1/\\bigl(16\\pi\\mu(1-\\nu)\\bigr)`` the Kelvin solution reads
 
 ```math
-G_{ij}(x) = \\frac{A}{r}\\left[(3-4\\nu)\\,\\delta_{ij} + n_i n_j\\right],
+G_{ij}(\\underline{x}) = \\frac{A}{r}\\left[(3-4\\nu)\\,\\delta_{ij} + n_i n_j\\right],
 ```
 
 so that
@@ -83,21 +83,21 @@ Displacement field at `x` generated in an infinite isotropic matrix `C₀` by a
 point **polarization** (force dipole) `Π`, i.e. the contraction
 
 ```math
-u_i(x) = \\frac{\\partial G_{ij}}{\\partial x_k}(x)\\; \\Pi_{jk}.
+u_i(\\underline{x}) = \\frac{\\partial G_{ij}}{\\partial x_k}(\\underline{x})\\; \\Pi_{jk}.
 ```
 
 `Π` has the dimension of a stress times a volume: for an inclusion of volume
-``V_{\\mathcal I}`` carrying a uniform polarization ``\\pi`` (i.e.
-``\\sigma = \\mathbb C_0 : \\varepsilon + \\pi`` inside it),
-``\\Pi = V_{\\mathcal I}\\,\\pi``.
+``V_{\\mathcal{I}}`` carrying a uniform polarization ``\\boldsymbol{\\pi}`` (i.e.
+``\\boldsymbol{\\sigma} = \\mathbb{C}_0:\\boldsymbol{\\varepsilon} + \\boldsymbol{\\pi}`` inside it),
+``\\boldsymbol{\\Pi} = V_{\\mathcal{I}}\\,\\boldsymbol{\\pi}``.
 
 For a symmetric `Π` the closed form collapses to
 
 ```math
-u(x) = \\frac{1}{16\\pi\\mu(1-\\nu)r^{2}}
-   \\Bigl[-2(1-2\\nu)\\,\\Pi\\!\\cdot\\!\\hat n
-          + \\mathrm{tr}(\\Pi)\\,\\hat n
-          - 3(\\hat n\\!\\cdot\\!\\Pi\\!\\cdot\\!\\hat n)\\,\\hat n\\Bigr],
+\\underline{u}(\\underline{x}) = \\frac{1}{16\\pi\\mu(1-\\nu)r^{2}}
+   \\Bigl[-2(1-2\\nu)\\,\\boldsymbol{\\Pi}\\cdot\\underline{n}
+          + \\mathrm{tr}(\\boldsymbol{\\Pi})\\,\\underline{n}
+          - 3(\\underline{n}\\cdot\\boldsymbol{\\Pi}\\cdot\\underline{n})\\,\\underline{n}\\Bigr],
 ```
 
 which is the form evaluated here — it costs one matrix-vector product instead
@@ -151,12 +151,12 @@ _as_matrix3(P::TensND.AbstractTens{2, 3}) = TensND.components_canon(P)
     green_gradient_iso2(k₀::Number, x) -> SVector{3}
 
 Gradient ``\\partial G/\\partial x_k`` of the Green function of an isotropic
-conducting matrix of conductivity ``k_0``, evaluated at ``x \\ne 0``.
+conducting matrix of conductivity ``k_0``, evaluated at ``\\underline{x} \\ne \\underline{0}``.
 
-With ``r = \\|x\\|``,
+With ``r = \\|\\underline{x}\\|``,
 
 ```math
-G(x) = \\frac{1}{4\\pi k_0 r},
+G(\\underline{x}) = \\frac{1}{4\\pi k_0 r},
 \\qquad
 \\frac{\\partial G}{\\partial x_k} = -\\frac{x_k}{4\\pi k_0 r^3} .
 ```
@@ -185,14 +185,14 @@ Temperature at `x` radiated in an infinite isotropic conducting matrix by a
 point **polarization** of vector moment `M`,
 
 ```math
-T(x) = \\frac{\\partial G}{\\partial x_k}(x)\\, M_k
-     = -\\frac{\\underline M \\cdot \\underline x}{4\\pi k_0 r^3} .
+T(\\underline{x}) = \\frac{\\partial G}{\\partial x_k}(\\underline{x})\\, M_k
+     = -\\frac{\\underline{M}\\cdot\\underline{x}}{4\\pi k_0 r^3} .
 ```
 
 `M` has the dimension of a flux times a volume: an inclusion of volume
-``V_{\\mathcal I}`` carrying a uniform polarization ``\\underline\\pi`` (that is,
-``\\underline q = -\\boldsymbol K_0 \\cdot \\nabla T + \\underline\\pi`` inside
-it) radiates with ``\\underline M = V_{\\mathcal I}\\,\\underline\\pi``.
+``V_{\\mathcal{I}}`` carrying a uniform polarization ``\\underline{\\pi}`` (that is,
+``\\underline{q} = -\\boldsymbol{K}_0\\cdot\\nabla T + \\underline{\\pi}`` inside
+it) radiates with ``\\underline{M} = V_{\\mathcal{I}}\\,\\underline{\\pi}``.
 
 **On the sign.** It is the one that follows from the two definitions above, and
 it is worth measuring rather than trusting: a wrong sign leaves the *corrected*

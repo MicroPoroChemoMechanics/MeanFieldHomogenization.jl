@@ -129,7 +129,7 @@ end
 
 Relative defect of the divergence identity over the shell's five faces.
 
-``\\tfrac16 \\sum_{\\text{tri}} a\\cdot(b\\times c)`` is the enclosed volume when
+``\\tfrac{1}{6} \\sum_{\\mathrm{tri}} \\underline{a}\\cdot(\\underline{b}\\times\\underline{c})`` is the enclosed volume when
 the boundary is closed and consistently oriented outward, and the flat faces
 pass through the origin so they contribute nothing. It must therefore equal the
 volume between the two caps. A flipped face, a duplicated node or a chain
@@ -439,7 +439,7 @@ that everything downstream is indifferent to which one ran.
 
 `cavity_volume` is the volume of the **whole** body, not of the eighth that was
 meshed. It has two consumers pulling in opposite directions: the dipole moment
-`𝔽 = ±V ℂ₀` needs the total volume, since the dipole is that of the entire
+``\\mathbb{F} = \\pm V\\,\\mathbb{C}_0`` needs the total volume, since the dipole is that of the entire
 inclusion, while the surface average needs the meshed eighth. Returning the
 total and dividing in exactly one place — the average — keeps the trap visible.
 """

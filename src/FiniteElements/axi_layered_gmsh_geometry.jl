@@ -50,8 +50,8 @@ const AXI_TAG_LAYER0 = 100
 """
     axi_layer_set(ℓ) -> String
 
-Physical-group name of layer `ℓ`, counted from the core. The matrix keeps
-`AXI_SET_MATRIX`, so a driver reads `N + 1` regions from one list.
+Physical-group name of layer ``\\ell``, counted from the core. The matrix keeps
+`AXI_SET_MATRIX`, so a driver reads ``N + 1`` regions from one list.
 """
 axi_layer_set(ℓ::Integer) = "layer$(ℓ)"
 
@@ -200,9 +200,9 @@ _ellipse_meridian(a::Real, c::Real, n::Integer) =
                                   nprofile)
 
 Populate the current gmsh session with the meridian half-plane of an `N`-layer
-spheroid — layer `ℓ` bounded by the ellipse of semi-axes
+spheroid — layer ``\\ell`` bounded by the ellipse of semi-axes
 `(disk_radii[ℓ], axis_radii[ℓ])`, ascending — inside a ball of matrix of radius
-`R`.
+``R``.
 
 Physical groups: `axi_layer_set(ℓ)` for each layer, `AXI_SET_MATRIX`,
 `AXI_SET_OUTER`, `AXI_SET_AXIS`, and the point groups a label-driven backend

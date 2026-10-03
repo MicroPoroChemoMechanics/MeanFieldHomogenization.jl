@@ -18,22 +18,26 @@
 """
     iso_params_from_blocks(M) -> (α::Matrix, β::Matrix)
 
-Decompose a `6n×6n` block matrix whose every 6×6 block is an
+Decompose a ``6n\\times 6n`` block matrix whose every ``6\\times 6`` block is an
 **isotropic** 4-tensor in Mandel form into the two scalar parameter
-matrices `α` and `β`, both of size `n × n`.  The block layout is
+matrices `α` and `β`, both of size ``n\\times n``.  The block layout is
 
+```math
+\\mathbf{M}_{ij} = \\alpha_{ij}\\,\\mathrm{Mat}(\\mathbb{J}) + \\beta_{ij}\\,\\mathrm{Mat}(\\mathbb{K})
 ```
-  M_block(i,j) = α[i,j] · 𝕁_Mandel + β[i,j] · 𝕂_Mandel
-```
 
-where `𝕁_Mandel = (1/3) e₁ e₁ᵀ` (`e₁` the Mandel-1 unit) augmented
-with the symmetric off-diagonal part `(1/3)` for the upper 3×3 block,
-and `𝕂_Mandel = 𝕀_Mandel - 𝕁_Mandel`.
+where ``\\mathrm{Mat}(\\mathbb{J}) = \\tfrac{1}{3}\\,\\mathbf{e}_1\\mathbf{e}_1^{\\!T}`` (``\\mathbf{e}_1`` the Mandel-1 unit) augmented
+with the symmetric off-diagonal part ``\\tfrac{1}{3}`` for the upper ``3\\times 3`` block,
+and ``\\mathrm{Mat}(\\mathbb{K}) = \\mathrm{Mat}(\\mathbb{I}) - \\mathrm{Mat}(\\mathbb{J})``.
 
-`α[i,j]` and `β[i,j]` are extracted from the diagonal entry `M_block[1,1]`
+``\\alpha_{ij}`` and ``\\beta_{ij}`` are extracted from the diagonal entry ``(\\mathbf{M}_{ij})_{11}``
 and the (4,4) Mandel-shear entry of each block:
-   `α[i,j] = (M_block[1,1] + 2 M_block[1,2])`
-   `β[i,j] = M_block[4,4]`.
+
+```math
+\\alpha_{ij} = (\\mathbf{M}_{ij})_{11} + 2\\,(\\mathbf{M}_{ij})_{12},
+\\qquad
+\\beta_{ij} = (\\mathbf{M}_{ij})_{44} .
+```
 """
 function iso_params_from_blocks(M::AbstractMatrix)
     sz = size(M, 1)
@@ -57,14 +61,14 @@ end
 """
     iso_blocks_from_params(α::Matrix, β::Matrix) -> Matrix
 
-Inverse of [`iso_params_from_blocks`](@ref): build a `6n×6n` block
-matrix whose every block is the iso 4-tensor `α[i,j] · 𝕁 + β[i,j] · 𝕂`
+Inverse of [`iso_params_from_blocks`](@ref): build a ``6n\\times 6n`` block
+matrix whose every block is the iso 4-tensor ``\\alpha_{ij}\\,\\mathbb{J} + \\beta_{ij}\\,\\mathbb{K}``
 in Mandel form.
 
-Both `α` and `β` must be `n × n` and have a common element type.
+Both `α` and `β` must be ``n\\times n`` and have a common element type.
 
 Note: a `kron(α, 𝕁_M) + kron(β, 𝕂_M)` formulation was experimented
-(P3.3.1) and reverted — the two extra `(6n × 6n)` intermediate
+(P3.3.1) and reverted — the two extra ``6n\\times 6n`` intermediate
 allocations made it ~3× slower than this single-pass scalar loop,
 which writes each entry exactly once.
 """
@@ -133,10 +137,10 @@ const _SQRT2_ALV = sqrt(2)
     ti_params_from_blocks(M; axis = (0, 0, 1))
         -> NTuple{6, Matrix{T}}
 
-Decompose a `6n×6n` block matrix whose every 6×6 block is a TI
-4-tensor with axis `n` (only `n = e₃` is currently supported) into
-the six scalar Walpole parameter matrices `(ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆)`,
-each of size `n × n`.
+Decompose a ``6n\\times 6n`` block matrix whose every ``6\\times 6`` block is a TI
+4-tensor with axis ``\\underline{n}`` (only ``\\underline{n} = \\underline{e}_3`` is currently supported) into
+the six scalar Walpole parameter matrices ``(\\ell_1, \\ell_2, \\ell_3, \\ell_4, \\ell_5, \\ell_6)``,
+each of size ``n\\times n``.
 """
 function ti_params_from_blocks(
         M::AbstractMatrix;
@@ -172,9 +176,9 @@ end
     ti_blocks_from_params(ℓ::NTuple{6, AbstractMatrix}; axis = (0, 0, 1))
         -> Matrix{T}
 
-Inverse of [`ti_params_from_blocks`](@ref): rebuild a `6n×6n` block
-matrix whose every 6×6 block has the TI Mandel structure with axis
-`n = e₃` and Walpole coefficients `(ℓ₁[i,j], …, ℓ₆[i,j])`.
+Inverse of [`ti_params_from_blocks`](@ref): rebuild a ``6n\\times 6n`` block
+matrix whose every ``6\\times 6`` block has the TI Mandel structure with axis
+``\\underline{n} = \\underline{e}_3`` and Walpole coefficients ``((\\ell_1)_{ij}, \\dots, (\\ell_6)_{ij})``.
 """
 function ti_blocks_from_params(
         ℓ::NTuple{6, <:AbstractMatrix};
@@ -255,18 +259,20 @@ end
     ortho_params_from_blocks(M; axes = ((1,0,0),(0,1,0),(0,0,1)))
         -> NTuple{12, Matrix{T}}
 
-Decompose a `6n × 6n` block matrix whose every 6×6 block is an ortho
-4-tensor with material frame `(e₁, e₂, e₃)` (only the canonical frame is
+Decompose a ``6n\\times 6n`` block matrix whose every ``6\\times 6`` block is an ortho
+4-tensor with material frame ``(\\underline{e}_1, \\underline{e}_2, \\underline{e}_3)`` (only the canonical frame is
 currently supported) into the 12 scalar parameter matrices
 
-    (o₁₁, o₁₂, o₁₃, o₂₁, o₂₂, o₂₃, o₃₁, o₃₂, o₃₃, o₄, o₅, o₆),
+```math
+(o_{11}, o_{12}, o_{13}, o_{21}, o_{22}, o_{23}, o_{31}, o_{32}, o_{33}, o_4, o_5, o_6),
+```
 
-each of size `n × n`, where the 3×3 normal block of the Mandel form is
+each of size ``n\\times n``, where the ``3\\times 3`` normal block of the Mandel form is
 stored row-major in entries 1..9 and the 3 shear-diagonal Mandel
-entries `(M[4,4], M[5,5], M[6,6])` map to `(o₄, o₅, o₆)`.
+entries ``(M_{44}, M_{55}, M_{66})`` map to ``(o_4, o_5, o_6)``.
 
 Note that closure under Volterra product does **not** preserve major
-symmetry (`o₁₂ ≠ o₂₁` in general), so the full 9-entry normal block is
+symmetry (``o_{12} \\ne o_{21}`` in general), so the full 9-entry normal block is
 needed even for major-symmetric inputs.
 """
 function ortho_params_from_blocks(
@@ -311,9 +317,9 @@ end
                               axes = ((1,0,0),(0,1,0),(0,0,1)))
         -> Matrix{T}
 
-Inverse of [`ortho_params_from_blocks`](@ref): rebuild a `6n × 6n` block
-matrix whose every 6×6 block has the ortho Mandel structure with axes
-`(e₁, e₂, e₃)`.  All off-block-diagonal entries are zero (block 1..3 ↔
+Inverse of [`ortho_params_from_blocks`](@ref): rebuild a ``6n\\times 6n`` block
+matrix whose every ``6\\times 6`` block has the ortho Mandel structure with axes
+``(\\underline{e}_1, \\underline{e}_2, \\underline{e}_3)``.  All off-block-diagonal entries are zero (block 1..3 ↔
 block 4..6 coupling is forbidden by orthotropic symmetry).
 """
 function ortho_blocks_from_params(

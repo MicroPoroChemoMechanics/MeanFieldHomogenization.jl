@@ -51,7 +51,7 @@ would feed the network a reciprocal aspect ratio and read the answer in the
 wrong frame.
 
 A 2-tuple or any non-3 dimension is returned untouched: the shipped surrogates
-are three-dimensional, and there is no sorted convention to honour elsewhere.
+are three-dimensional, and there is no sorted convention to honor elsewhere.
 """
 _canonical_axes(axes::NTuple{3}, basis) =
     Core._sort_axes_and_basis(axes, basis, :ellipsoid_3d)
@@ -72,36 +72,36 @@ One raw (unstandardized) feature of `incl` under reference medium `P₀`.
 
 | Name | Meaning | Range |
 |---|---|---|
-| `:log_aspect` | `log(distinct axis / equal axes)` of a spheroid | `> 0` prolate, `< 0` oblate, `0` sphere |
-| `:log_r2` | `log(a₂/a₁)` of a sorted ellipsoid | `≤ 0` |
-| `:log_r32` | `log(a₃/a₂)` of a sorted ellipsoid | `≤ 0` |
-| `:log_p` | `log` of a supershape's concavity exponent | `< 0` concave, `0` the ellipsoidal control |
+| `:log_aspect` | ``\\log(\\rho_{\\mathrm{distinct}}/\\rho_{\\mathrm{equal}})`` of a spheroid | ``> 0`` prolate, ``< 0`` oblate, ``0`` sphere |
+| `:log_r2` | ``\\log(\\rho_2/\\rho_1)`` of a sorted ellipsoid | ``\\le 0`` |
+| `:log_r32` | ``\\log(\\rho_3/\\rho_2)`` of a sorted ellipsoid | ``\\le 0`` |
+| `:log_p` | ``\\log`` of a supershape's concavity exponent | ``< 0`` concave, ``0`` the ellipsoidal control |
 | `:nu0` | Poisson ratio of the isotropic reference medium | |
 
 Three conventions here are load-bearing, and each of them is a bug if broken.
 
 **The logarithm** is not cosmetic: an aspect ratio's interesting range spans
-decades, and `ω` and `1/ω` are the same amount of anisotropy, which only the
+decades, and ``\\omega`` and ``1/\\omega`` are the same amount of anisotropy, which only the
 logarithm makes symmetric.
 
 **A `SampleBox` is linear, so the feature *is* the sampling law.** That is the
 whole reason `:log_p` exists beside `:p`, which a pore also exposes. The
 resistivity contribution of an axisymmetric concave cavity runs from `1.66` at
-`p = 0.6` to `15.0` at `p = 0.20`, near-diverging as the body tends to a crack
-pierced by a needle. Uniform in `p`, most of the sample budget lands where the
-response is flat and almost none where it turns over; uniform in `log p` it is
+``p = 0.6`` to `15.0` at ``p = 0.20``, near-diverging as the body tends to a crack
+pierced by a needle. Uniform in ``p``, most of the sample budget lands where the
+response is flat and almost none where it turns over; uniform in ``\\log p`` it is
 spread evenly over the variation. The choice belongs to the study, not to the
 feature: `:p` remains available for a box whose response is well behaved.
 
 **`:log_aspect` is measured on the *distinct* axis**, not on a fixed slot.
 Semi-axes are stored sorted descending (as `Ellipsoid` does), so a prolate
-spheroid is `(ω, 1, 1)` and an oblate one `(1, 1, ω)`: `log(a₃/a₁)` would be
+spheroid is ``(\\omega, 1, 1)`` and an oblate one ``(1, 1, \\omega)``: ``\\log(\\rho_3/\\rho_1)`` would be
 negative for both and conflate the two families. Distinct-over-equal is instead
 a bijection onto the whole real line, with the sphere at the origin.
 
-**The triaxial pair is `(a₂/a₁, a₃/a₂)`, not `(a₂/a₁, a₃/a₁)`.** With the
-sorted convention `a₁ ≥ a₂ ≥ a₃`, the admissible set of the first pair is
-exactly the box `log_r2 ≤ 0, log_r32 ≤ 0`, whereas the second pair is confined
+**The triaxial pair is ``(\\rho_2/\\rho_1, \\rho_3/\\rho_2)``, not ``(\\rho_2/\\rho_1, \\rho_3/\\rho_1)``.** With the
+sorted convention ``\\rho_1 \\ge \\rho_2 \\ge \\rho_3``, the admissible set of the first pair is
+exactly the box `log_r2` ``\\le 0``, `log_r32` ``\\le 0``, whereas the second pair is confined
 to a triangular wedge that no `SampleBox` can express.
 """
 _feature(::Val{:log_aspect}, incl, _P₀) = log(_spheroid_ratio(_axes(incl)))
@@ -400,24 +400,25 @@ takes.
 
 Because [`is_homogeneous_inclusion`](@ref MeanFieldHomogenization.Core.is_homogeneous_inclusion) is `false`, gate B costs **two**
 tensors per physics: the strain side *and* the stress side, since
-`𝔸_σε = ℂ₁:𝔸_εε` presupposes a single uniform `ℂ₁` that a heterogeneous
+``\\mathbb{A}_{\\sigma\\varepsilon} = \\mathbb{C}_1:\\mathbb{A}_{\\varepsilon\\varepsilon}`` presupposes a single uniform ``\\mathbb{C}_1`` that a heterogeneous
 inclusion does not have. Given both, the generic contributions switch to the
-exact `ℕ = 𝔸_σε − ℂ₀:𝔸_εε` and `ℍ = (𝔸_εε − 𝕊₀:𝔸_σε):𝕊₀`, so gate B is a
+exact ``\\mathbb{N} = \\mathbb{A}_{\\sigma\\varepsilon} - \\mathbb{C}_0:\\mathbb{A}_{\\varepsilon\\varepsilon}`` and
+``\\mathbb{H} = (\\mathbb{A}_{\\varepsilon\\varepsilon} - \\mathbb{S}_0:\\mathbb{A}_{\\sigma\\varepsilon}):\\mathbb{S}_0``, so gate B is a
 complete entry point.
 
 | Option | Meaning |
 |---|---|
-| `strain` / `stress` | the order-4 pair, `𝔸_εε` and `𝔸_σε` |
-| `gradient` / `flux` | the order-2 pair, `𝔸_∇∇` and `𝔸_q∇` |
+| `strain` / `stress` | the order-4 pair, ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` and ``\\mathbb{A}_{\\sigma\\varepsilon}`` |
+| `gradient` / `flux` | the order-2 pair, ``\\boldsymbol{A}_{\\nabla\\nabla}`` and ``\\boldsymbol{A}_{q\\nabla}`` |
 | `shape_params` | named morphology parameters, e.g. `(; eccentricity = 0.4, core_fraction = 0.5)`. They are the surrogate's features *and* the fields the sensitivity API differentiates, so every value must be a `Number` |
 | `fractions` / `properties` | internal volume fractions and constituent properties; supplying them unlocks the `Voigt` and `Reuss` bounds, which a heterogeneous inclusion cannot otherwise serve. `properties` also backs the `:log_mu_ratio_k` contrast features |
 
 A gate-B surrogate's features are the morphology parameters and the **contrast
 ratios** — never absolute moduli. The reason is that the constituents live inside
-the inclusion, so scaling `ℂ₀` alone changes the contrast: the exact invariance is
+the inclusion, so scaling ``\\mathbb{C}_0`` alone changes the contrast: the exact invariance is
 under a *simultaneous* scaling of the reference medium and of every constituent,
-which leaves `𝔸_εε` unchanged and multiplies `𝔸_σε` by the factor. The
-`ℙ(λℂ₀) = ℙ(ℂ₀)/λ` homogeneity that gate A exploits does not transfer.
+which leaves ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` unchanged and multiplies ``\\mathbb{A}_{\\sigma\\varepsilon}`` by the factor. The
+``\\mathbb{P}(\\lambda\\mathbb{C}_0) = \\mathbb{P}(\\mathbb{C}_0)/\\lambda`` homogeneity that gate A exploits does not transfer.
 
 Supplying only one tensor of a pair is refused at construction: the omission is
 silent otherwise — `Dilute` and `MoriTanaka` stay right while `SelfConsistent`
@@ -667,7 +668,7 @@ as a `MethodError` or as a tensor of the wrong class:
 * **the class** — it has to be a *localization* class. In transport that means
   [`GradLocISO2`](@ref) specifically: `HillISO2` and `HillTI2` carry the same
   single component and a different dimension, so `decode` would divide the
-  prediction by `k₀` and be wrong at every `k₀ ≠ 1`. A cavity's stress side is
+  prediction by ``k_0`` and be wrong at every ``k_0 \\ne 1``. A cavity's stress side is
   identically zero, so `StressLocTI` has nothing to predict either;
 * **the features** — every one of them has to be a shape parameter the pore can
   supply, or `:nu0`.

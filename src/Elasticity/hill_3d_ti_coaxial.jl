@@ -115,7 +115,7 @@ end
         -> (P1, P2, P3, P5, P6)
 
 Closed-form Walpole-basis coefficients of the Hill tensor for a spheroid
-of aspect ratio `ω = (axial)/(transverse)` coaxial with a transversely
+of aspect ratio ``\\omega`` (axial / transverse semi-axis) coaxial with a transversely
 isotropic matrix specified by the five independent elastic constants.
 
 Element type policy: with
@@ -130,10 +130,10 @@ Element type policy: with
   ratio).
 - if `T` is itself complex (frequency-domain viscoelasticity, harmonic
   problems), the formula is evaluated directly in `T` and the genuinely
-  complex `P_i` are returned unchanged.
+  complex ``P_i`` are returned unchanged.
 
-When the matrix is in fact isotropic (`C1111 = C3333 = λ + 2μ`,
-`C1122 = C1133 = λ`, `C2323 = μ`) the returned coefficients reduce to
+When the matrix is in fact isotropic (``C_{1111} = C_{3333} = \\lambda + 2\\mu``,
+``C_{1122} = C_{1133} = \\lambda``, ``C_{2323} = \\mu``) the returned coefficients reduce to
 the classical Mura formula.
 
 !!! note "Symbolic numbers (SymPy Sym)"
@@ -226,10 +226,10 @@ the test succeeds.  Otherwise the user is silently routed to the
 generic residue/DECUHR backend.
 
 # Arguments
-- `ell::Ellipsoid{3, Oblate}`: oblate spheroid `a = b ≥ c`, axis `e₃`,
-  aspect ratio `ω = c/a`.
-- `ell::Ellipsoid{3, Prolate}`: prolate spheroid `a ≥ b = c`, axis `e₁`,
-  aspect ratio `ω = a/b`.
+- `ell::Ellipsoid{3, Oblate}`: oblate spheroid ``a = b \\ge c``, axis ``\\underline{e}_3``,
+  aspect ratio ``\\omega = c/a``.
+- `ell::Ellipsoid{3, Prolate}`: prolate spheroid ``a \\ge b = c``, axis ``\\underline{e}_1``,
+  aspect ratio ``\\omega = a/b``.
 
 # Returns
 `TensTI{4, Float64, 5}` (major-symmetric Walpole tensor) with axis equal

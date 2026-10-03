@@ -34,9 +34,9 @@ conduction and axisymmetric elasticity; the `moduli` tuple holds
 parameters:
 
 - `T` — element type of the geometric scalars (radii, focal distance).
-- `N` — number of layers (≥ 1).
-- `Q` — element type of the confocal parameter `q`: `T` for prolate,
-  `Complex{T}` for oblate (the complex substitution `c → -i c̄`, `q → i τ`).
+- `N` — number of layers (``N \\ge 1``).
+- `Q` — element type of the confocal parameter ``q``: `T` for prolate,
+  `Complex{T}` for oblate (the complex substitution ``c \\to -\\mathrm{i}\\,\\bar{c}``, ``q \\to \\mathrm{i}\\,\\tau``).
 - `Cs`, `Is` — concrete types of the `moduli` / `interfaces` tuples.
 
 Use the keyword constructor
@@ -65,14 +65,14 @@ end
 
 Build an `N`-layer confocal spheroid from the per-layer **axis**
 (revolution) and **disk** (transverse) semi-axes — ascending, confocal
-(`axisᵢ² - diskᵢ²` constant across layers, up to the type's tolerance).
-`axis_radii[ℓ] > disk_radii[ℓ]` ⟹ prolate; `<` ⟹ oblate.
+(``\\mathrm{axis}_i^2 - \\mathrm{disk}_i^2`` constant across layers, up to the type's tolerance).
+`axis_radii[ℓ] > disk_radii[ℓ]` ``\\Rightarrow`` prolate; `<` ``\\Rightarrow`` oblate.
 
 `moduli`, `interfaces`, `Nseries`, `axis` follow [`LayeredSphere`](@ref)'s
 conventions: `moduli::NTuple{N}` of per-layer `TensISO{2,3}` isotropic
 conductivities; `interfaces::NTuple{N}` of [`AbstractInterface`](@ref)
 (default: all [`PerfectInterface`](@ref)); `Nseries` the harmonic-series
-truncation 𝒩 (only odd degrees `1,…,2𝒩-1` are kept, by symmetry);
+truncation ``\\mathcal{N}`` (only odd degrees ``1, \\dots, 2\\mathcal{N}-1`` are kept, by symmetry);
 `axis` the unit vector giving the spheroid's revolution axis in the
 global frame.
 
@@ -81,14 +81,14 @@ The semi-axes may carry any element type: `Float64`, `BigFloat`,
 can be the differentiation variable — or a symbolic scalar.
 
 `prolate` declares the family explicitly. Leave it at `nothing` for a numeric
-element type and the sign of `axis² - disk²` decides. It is **required** for a
+element type and the sign of ``\\mathrm{axis}^2 - \\mathrm{disk}^2`` decides. It is **required** for a
 symbolic one: that sign is undecidable on a symbol, and SymPy answers `false`
 to a comparison it cannot settle, so guessing would silently pick a family.
 On a numeric type it is still checked: a hint that contradicts the semi-axes
 throws, since every layer is verified to belong to the declared family.
 
 !!! note "Symbolic support is prolate only"
-    An oblate spheroid carries `q = iτ`, so its confocal parameter is a
+    An oblate spheroid carries ``q = \\mathrm{i}\\tau``, so its confocal parameter is a
     `Complex{T}` — and Julia's `Complex{T}` requires `T <: Real`, which
     `SymPy.Sym` is not. `Symbolics.Num` is `<: Real` and builds, but Symbolics
     has no `sym_lu` for a `Matrix{Complex{Num}}`. Prolate works with both.
@@ -186,7 +186,7 @@ The per-layer semi-axes of an `N`-layer **confocal** spheroid of outer aspect
 ratio `ω` (`> 1` prolate, `< 1` oblate) and outer axis semi-axis
 `outer_axis_radius`, each layer occupying the prescribed fraction of the total
 volume (core first, normalized to sum 1). Inner confocal parameters come from
-bisection on the volume relation `V(q) ∝ |q(q²-1)|`.
+bisection on the volume relation ``V(q) \\propto |q(q^2-1)|``.
 
 Returned in the argument order [`LayeredSpheroid`](@ref) takes — axis
 (revolution) semi-axes first, transverse second — so the same pair builds the
@@ -285,7 +285,7 @@ end
 """
     _bisect_cubic_root(D, lo, hi; C = -1, tol = ...) -> x
 
-Real root of `x³ + C·x + D = 0` in `(lo, hi)`, by bisection. Used by
+Real root of ``x^3 + Cx + D = 0`` in `(lo, hi)`, by bisection. Used by
 [`layered_spheroid_from_fractions`](@ref) to locate the confocal
 parameter of an inner layer from the target cumulative volume
 (monotone increasing on the physical bracket).
@@ -332,7 +332,7 @@ layer_count(::LayeredSpheroid{T, N}) where {T, N} = N
 """
     layer_q(spheroid, k) -> Q
 
-Confocal parameter `q_k` of the outer boundary of layer `k`.
+Confocal parameter ``q_k`` of the outer boundary of layer `k`.
 """
 layer_q(s::LayeredSpheroid, k::Int) = s.q[k]
 
@@ -366,9 +366,9 @@ end
 """
     layer_volume_fraction(spheroid, k) -> T
 
-Volume fraction of layer `k` inside the outer spheroid `q_N`, based on
-the confocal volume shape function `φ(q) = |q(q²-1)|`
-(`V(q) = (4π/3)·focal³·φ(q)`, eq:xLeg).
+Volume fraction of layer `k` inside the outer spheroid ``q_N``, based on
+the confocal volume shape function ``\\varphi(q) = |q(q^2-1)|``
+(``V(q) = \\tfrac{4\\pi}{3}\\,\\lvert c\\rvert^3\\,\\varphi(q)``, eq:xLeg).
 """
 function layer_volume_fraction(s::LayeredSpheroid{T, N}, k::Int) where {T, N}
     φ(q) = abs(q * (q^2 - 1))
@@ -380,7 +380,7 @@ end
 """
     outer_semiaxes(spheroid) -> (axis, disk)
 
-Real (axis, disk) semi-axes of the outermost boundary `q_N`.
+Real (axis, disk) semi-axes of the outermost boundary ``q_N``.
 """
 outer_semiaxes(s::LayeredSpheroid) = layer_semiaxes(s, layer_count(s))
 
@@ -398,7 +398,7 @@ MFH_Core.shape_trait(::LayeredSpheroid) = SpheroidalLayered
     shape_tensor(spheroid::LayeredSpheroid) -> AbstractTens{2,3}
 
 Symmetric 2nd-order shape tensor of the outer confocal boundary,
-`diag(disk, disk, axis)` (transversely isotropic about `axis`).
+``\\mathrm{diag}(\\mathrm{disk}, \\mathrm{disk}, \\mathrm{axis})`` (transversely isotropic about `axis`).
 """
 function MFH_Core.shape_tensor(s::LayeredSpheroid{T}) where {T}
     a, b = outer_semiaxes(s)

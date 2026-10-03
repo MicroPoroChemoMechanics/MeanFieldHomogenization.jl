@@ -76,9 +76,9 @@ end
 """
     coupling_matrices(q, Nseries; method = :quadrature) -> (I, J, K, L)
 
-The four `Nseries × Nseries` interface coupling matrices at confocal
-parameter `q` (real for prolate, `q = iτ` for oblate), restricted to
-the odd degrees `1, 3, …, 2·Nseries-1` (index `r ↔` degree `2r-1`).
+The four ``\\mathcal{N}\\times\\mathcal{N}`` interface coupling matrices (``\\mathcal{N}`` = `Nseries`) at confocal
+parameter ``q`` (real for prolate, ``q = \\mathrm{i}\\tau`` for oblate), restricted to
+the odd degrees ``1, 3, \\dots, 2\\mathcal{N}-1`` (index ``r`` ``\\leftrightarrow`` degree ``2r-1``).
 
 `method = :quadrature` (default) integrates the paper's closed-form
 definitions directly (stable in `Float64`); `method = :series` uses the
@@ -224,10 +224,10 @@ end
 """
     _Wk_series(q, kmax, ::Type{Tb}) -> Vector{Tb}
 
-`Wₖ(q) = ∫₋₁¹ x²ᵏ/√(q²-x²) dx`, `k = 0, …, kmax`, via the hypergeometric
-series (eq:Wk2): `Wₖ(q) = 2/(q(1+2k)) ₂F₁(1/2, 1/2+k; 3/2+k; 1/q²)`,
+``W_k(q) = \\int_{-1}^{1} x^{2k}/\\sqrt{q^2-x^2}\\,\\mathrm{d}x``, ``k = 0, \\dots, k_{\\max}``, via the hypergeometric
+series (eq:Wk2): ``W_k(q) = \\frac{2}{q(1+2k)}\\,{}_2F_1\\bigl(\\tfrac{1}{2}, \\tfrac{1}{2}+k; \\tfrac{3}{2}+k; 1/q^2\\bigr)``,
 summed directly in the (Big)Float type `Tb` (converges since
-`|1/q²| < 1` for `|q| > 1`).
+``|1/q^2| < 1`` for ``|q| > 1``).
 """
 function _Wk_series(q::Tq, kmax::Int, ::Type{Tb}) where {Tq, Tb}
     z = one(Tq) / q^2
@@ -254,7 +254,7 @@ end
 
 BigFloat monomial-coefficient computation of the coupling matrices, on
 the odd-degree, i.e. "chess-filtered", submatrix. Precision is set from
-`Nseries` following the paper's rule `dps ≳ 0.8(2·Nseries-1)`.
+`Nseries` following the paper's rule ``\\mathrm{dps} \\gtrsim 0.8\\,(2\\mathcal{N}-1)``, ``\\mathcal{N}`` = `Nseries`.
 """
 function _coupling_matrices_series(q, Nseries::Int)
     Nmax = 2 * Nseries
