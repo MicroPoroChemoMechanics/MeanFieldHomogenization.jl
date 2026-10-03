@@ -87,7 +87,7 @@ tex = '\mathbb{C}'
 label = "ℂ"
 name = "relaxation kernel ℂ(t, t′), the stiffness of elasticity"
 unit = "Pa"
-pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/aging_creep.md", "applications/bituminous.md"]
 
 [[symbol]]
 group = "Stiffness and elastic moduli"
@@ -102,7 +102,7 @@ tex = '\mathbb{C}_0'
 label = "ℂ<sub>0</sub>"
 name = "relaxation kernel of the reference medium"
 unit = "Pa"
-pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/aging_creep.md", "applications/bituminous.md"]
 
 [[symbol]]
 group = "Stiffness and elastic moduli"
@@ -131,7 +131,7 @@ tex = '\mathbb{C}^{\mathrm{hom}}'
 label = "ℂ<sup>hom</sup>"
 name = "effective relaxation kernel"
 unit = "Pa"
-pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/aging_creep.md", "applications/bituminous.md"]
 
 [[symbol]]
 group = "Stiffness and elastic moduli"
@@ -494,7 +494,7 @@ tex = '\omega'
 label = "ω"
 name = "aspect ratio (defined on the page)"
 unit = "1"
-pages = ["theory/notation.md", "theory/eshelby_problem.md", "theory/hill_tensors.md", "theory/cod_tensors.md", "manual/ellipsoidal_inclusions.md", "manual/inclusion_gallery.md", "manual/cracks.md", "tutorials/cracks.md", "manual/particle_assemblies.md", "theory/differential_scheme.md", "theory/thermal_cracks.md", "theory/layered_spheroid.md", "theory/layered_spheroid_elasticity.md", "manual/layered_inclusions.md", "tutorials/porous_benchmark.md", "tutorials/strength_criteria.md", "tutorials/axi_layered_spheroid.md", "tutorials/transport.md", "fe_coupling/permeability.md", "fe_coupling/fractured_rock.md", "fe_coupling/materials.md", "fe_coupling/arma2011.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/nano_spheroids.md", "tutorials/generated/layered_spheroid_hc.md", "tutorials/generated/hill_tensors.md", "tutorials/generated/neural_inclusion.md", "manual/neural_inclusions.md"]
+pages = ["theory/notation.md", "theory/eshelby_problem.md", "theory/hill_tensors.md", "theory/cod_tensors.md", "manual/ellipsoidal_inclusions.md", "manual/inclusion_gallery.md", "manual/cracks.md", "tutorials/cracks.md", "manual/particle_assemblies.md", "theory/differential_scheme.md", "theory/thermal_cracks.md", "theory/layered_spheroid.md", "theory/layered_spheroid_elasticity.md", "manual/layered_inclusions.md", "tutorials/porous_benchmark.md", "tutorials/strength_criteria.md", "tutorials/axi_layered_spheroid.md", "tutorials/transport.md", "fe_coupling/permeability.md", "fe_coupling/fractured_rock.md", "fe_coupling/materials.md", "fe_coupling/arma2011.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/nano_spheroids.md", "tutorials/generated/layered_spheroid_hc.md", "tutorials/generated/hill_tensors.md", "tutorials/generated/neural_inclusion.md", "manual/neural_inclusions.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -656,7 +656,7 @@ tex = '\mathbb{P}'
 label = "ℙ"
 name = "Hill polarization kernel"
 unit = "Pa<sup>−1</sup>"
-pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/aging_creep.md", "applications/bituminous.md"]
 
 [[symbol]]
 group = "Eshelby problem and localization"
@@ -1064,7 +1064,7 @@ tex = 'p'
 label = "p"
 name = "Laplace-Carson variable"
 unit = "s<sup>−1</sup>"
-pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/ageing_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/ageing_creep.md", "applications/bituminous.md"]
+pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/aging_creep.md", "applications/bituminous.md"]
 
 [[symbol]]
 group = "Viscoelasticity"
@@ -1088,7 +1088,7 @@ tex = 'J'
 label = "J"
 name = "creep function"
 unit = "Pa<sup>−1</sup>"
-pages = ["theory/laplace_carson.md", "manual/rheological_models.md", "manual/viscoelasticity.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/freq_vs_time.md", "applications/bituminous.md", "tutorials/generated/ageing_ages_aspect.md"]
+pages = ["theory/laplace_carson.md", "manual/rheological_models.md", "manual/viscoelasticity.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/freq_vs_time.md", "applications/bituminous.md", "tutorials/generated/aging_ages_aspect.md"]
 
 [[symbol]]
 group = "Viscoelasticity"

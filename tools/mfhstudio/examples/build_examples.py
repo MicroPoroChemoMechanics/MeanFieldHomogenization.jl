@@ -377,12 +377,12 @@ def laminate_multiscale() -> Model:
 
 
 # ---------------------------------------------------------------------------
-# 09 — ageing viscoelasticity
+# 09 — aging viscoelasticity
 # ---------------------------------------------------------------------------
 
 
-def ageing_creep() -> Model:
-    """After `scripts/53_ageing_creep_solid.jl` and `scripts/62_alv_schemes.jl`.
+def aging_creep() -> Model:
+    """After `scripts/53_aging_creep_solid.jl` and `scripts/62_alv_schemes.jl`.
 
     A phase becomes viscoelastic through its *property*, not through a separate
     panel: pick a Kelvin chain or a Maxwell law in Properties, and the
@@ -405,7 +405,7 @@ def ageing_creep() -> Model:
         )],
     )
     c = Cell(name="mortar", matrix_name="PASTE", phases=[paste, sand])
-    m = Model(title="ageing_creep", cells=[c], root_cell=c.id)
+    m = Model(title="aging_creep", cells=[c], root_cell=c.id)
     m.description = (
         "Elastic sand grains in a creeping paste. The curve is the uniaxial "
         "creep response, read off the Volterra inverse of the effective "
@@ -464,7 +464,7 @@ EXAMPLES = [
     ("06_laminate_basics.jl", laminate_basics),
     ("07_laminate_interfaces.jl", laminate_interfaces),
     ("08_laminate_multiscale.jl", laminate_multiscale),
-    ("09_ageing_creep.jl", ageing_creep),
+    ("09_aging_creep.jl", aging_creep),
     ("10_sensitivities.jl", sensitivities),
 ]
 

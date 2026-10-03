@@ -14,7 +14,7 @@
 #
 # The groups follow what the pages execute, not a measured cost: the two
 # hydration pages couple a chemical solver to the micromechanics, the generated
-# tutorials train surrogates and integrate ageing kernels, and the rest is
+# tutorials train surrogates and integrate aging kernels, and the rest is
 # lighter. The shard jobs run with `JULIA_DEBUG=Documenter`, which names each
 # page as it is expanded, so their logs give the time per page to rebalance
 # from. The pages no group names fall into the last one, `rest`, so a new page
@@ -36,7 +36,7 @@ const DOC_SHARDS = [
     "cement" => [
         "applications/cement_paste.md",
         "applications/cement_paste_diffusion.md",
-        "applications/ageing_creep.md",
+        "applications/aging_creep.md",
         "applications/strength.md",
         "applications/itz_concrete.md",
         "applications/itz_elastic_limit.md",
@@ -52,11 +52,11 @@ const DOC_SHARDS = [
         "applications/sandstone_strength.md",
         "applications/bituminous.md",
     ],
-    # The generated tutorials on viscoelasticity, which integrate ageing kernels
+    # The generated tutorials on viscoelasticity, which integrate aging kernels
     # and invert transforms; they come before the broader group below.
     "viscoelastic" => [
         "tutorials/generated/alv_",
-        "tutorials/generated/ageing_",
+        "tutorials/generated/aging_",
         "tutorials/generated/laminate_alv",
         "tutorials/generated/freq_vs_time",
         "tutorials/generated/laplace_inversion",

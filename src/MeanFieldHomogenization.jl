@@ -6,7 +6,7 @@ Julia package for mean-field homogenization of heterogeneous materials.
 `MeanFieldHomogenization` unifies the computation of Hill polarization tensors for
 ellipsoidal inhomogeneities, crack opening displacement (COD) tensors, stress
 and displacement intensity factors, homogenization schemes over representative
-volume elements (RVEs), and ageing viscoelastic constitutive laws, sharing a
+volume elements (RVEs), and aging viscoelastic constitutive laws, sharing a
 common abstraction for inclusions, algorithms, and material symmetry classes.
 
 # Sub-modules
@@ -39,8 +39,8 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
   undrained conversion, Skempton tensor, effective stresses. A post-processor
   of a homogenized stiffness, not a scheme.
 - `MeanFieldHomogenization.Viscoelasticity`  — linear viscoelasticity by two routes:
-  the ageing time-domain one through Volterra operators (`homogenize_alv`), and
-  the non-ageing Laplace-Carson one (`homogenize_lc`), with a catalog of
+  the aging time-domain one through Volterra operators (`homogenize_alv`), and
+  the non-aging Laplace-Carson one (`homogenize_lc`), with a catalog of
   rheological models, numerical Laplace inversion, and the exact Kelvin ↔
   Maxwell conversion joining them.
 - `MeanFieldHomogenization.CustomInclusions` — the user-defined inclusion contract:
@@ -95,7 +95,7 @@ include("LayeredSpheroids/LayeredSpheroids.jl")
 include("Schemes/Schemes.jl")
 # `Laminates` sits between `Schemes` and `Viscoelasticity`: it extends
 # `_evaluate` and uses `HomogenizationScheme`/`Laminated`/`Voigt`/`Reuss` from
-# the former, and the latter needs `Laminate` for the ageing-viscoelastic
+# the former, and the latter needs `Laminate` for the aging-viscoelastic
 # multilayer.
 include("Laminates/Laminates.jl")
 # `Assemblies` follows the same pattern as `Laminates`: the scheme *types* are
@@ -404,7 +404,7 @@ export homogenize_alv_order2
 export cod_kernel_alv, compliance_contribution_alv, delta_compliance_alv
 export stiffness_contribution_alv, stiffness_contribution_alv_at, delta_stiffness_alv
 
-# ── Viscoelasticity (Laplace-Carson, non-ageing) ────────────────────────────
+# ── Viscoelasticity (Laplace-Carson, non-aging) ────────────────────────────
 export AbstractLaplaceInversion, GaverStehfest, FixedTalbot, TalbotTrefethen, DeHoog
 export DEFAULT_INVERSION
 export inverse_laplace, inverse_carson, inverse_carson_rate

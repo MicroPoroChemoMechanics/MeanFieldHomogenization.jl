@@ -224,7 +224,7 @@ PROPERTIES = [
     {
         "name": "visco_elastic", "label": "Viscoelastic — elastic (Heaviside)",
         "order": 4, "builder": "heaviside_law", "visco": True, "mode": "relaxation",
-        "doc": "A non-ageing elastic phase inside a viscoelastic RVE.",
+        "doc": "A non-aging elastic phase inside a viscoelastic RVE.",
         "fields": [
             {"name": "k", "label": "k", "type": "number", "default": 10.0},
             {"name": "mu", "label": "μ", "type": "number", "default": 5.0},

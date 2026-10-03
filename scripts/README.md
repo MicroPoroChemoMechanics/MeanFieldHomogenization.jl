@@ -113,7 +113,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | `34_laminate_interfaces.jl` | Hervé-Luanco 2014, planar case | **published tutorial** — primal (spring/Kapitza) vs dual (membrane/surface-conductive) interfaces act on complementary halves of the answer; the `1/L` size effect; displacement jumps |
 | `36_laminate_multiscale.jl` | — | **published tutorial** — a three-scale model written explicitly *and* declaratively (`Homogenized`), shown to agree exactly; `NestedParameter` sensitivities across every scale; one microstructure, two physics |
 | `38_laminate_symbolic.jl` | Backus 1962 | **not published** (SymPy-heavy): derives the closed forms *from the code*, symbolically, and prints the effective matrix in five averages — the check that the pseudo-inverse is a cofactor inverse and not an SVD. Hand-written companion: `docs/src/tutorials/symbolic_laminate.md` |
-| `39_laminate_alv.jl` | — | **published tutorial** — the multilayer in ageing viscoelasticity: elastic limit, a creeping binder between elastic reinforcements, the saturations surviving the Volterra transposition |
+| `39_laminate_alv.jl` | — | **published tutorial** — the multilayer in aging viscoelasticity: elastic limit, a creeping binder between elastic reinforcements, the saturations surviving the Volterra transposition |
 
 ### 40–49 Strength & multiscale
 | Script | reference / topic | Notes |
@@ -131,11 +131,11 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | `50_visco_law_basics.jl` | `visco_law` | Maxwell/Kelvin kernels |
 | `51_frequency_sweep_viscoelastic.jl` | complex moduli | frequency sweep, built on `iso_rheology` + `zener_maxwell` |
 | `52_rabotnov_mittag_leffler.jl` | Rabotnov / Mittag-Leffler | Rabotnov closed form; PyCall-free since the `Rabotnov` model landed |
-| `53_ageing_creep_solid.jl` | solidifying creep | ALV creep |
-| `54_ageing_creep_ellipsoid2.jl` | ellipsoid-2 creep | ALV creep |
-| `55_ageing_creep_dirichlet_chains.jl` | Granger creep | ageing creep (Granger–Bažant 1995 law) |
-| `56_ageing_creep_order2.jl` | order-2 creep | order-2 ALV |
-| `57_ageing_creep_cracks.jl` | crack creep | ALV crack creep |
+| `53_aging_creep_solid.jl` | solidifying creep | ALV creep |
+| `54_aging_creep_ellipsoid2.jl` | ellipsoid-2 creep | ALV creep |
+| `55_aging_creep_dirichlet_chains.jl` | Granger creep | aging creep (Granger–Bažant 1995 law) |
+| `56_aging_creep_order2.jl` | order-2 creep | order-2 ALV |
+| `57_aging_creep_cracks.jl` | crack creep | ALV crack creep |
 | `58_alv_kernel_types.jl` | — | structured ALV kernel types |
 | `59_alv_sensitivities.jl` | — | **published tutorial** — `ForwardDiff` through the ALV pipeline: `set_param` lens vs closure capture, joint gradient, relaxation-time sensitivity, all validated against central finite differences |
 
@@ -144,7 +144,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 |---|---|---|
 | `60_alv_cracks_interface.jl` | crack + interface creep | finite interface stiffness |
 | `61_freq_vs_time.jl` | trapezoidal Volterra (2013) | **published tutorial** — the **three** routes on one composite: complex moduli, `homogenize_alv`, and `homogenize_lc`. O(Δt²) agreement forward, and the reverse direction now closed by numerical inversion, with the trapezoidal error, the inversion error and the Gaver-Stehfest budget separated column by column. Ported from echoes `creep/comparison_freq_time.py` |
-| `62_alv_schemes.jl` | Barthélémy et al. (2019), IJES 144, 103104 | **published tutorial** — Dilute / Mori-Tanaka / Maxwell / PCW on one ageing creep test; the aspect-ratio sweep at fixed fraction; the collapse MT = Maxwell = PCW when the distribution shape equals the inclusion shape, and the PCW admissibility limit when it does not |
+| `62_alv_schemes.jl` | Barthélémy et al. (2019), IJES 144, 103104 | **published tutorial** — Dilute / Mori-Tanaka / Maxwell / PCW on one aging creep test; the aspect-ratio sweep at fixed fraction; the collapse MT = Maxwell = PCW when the distribution shape equals the inclusion shape, and the PCW admissibility limit when it does not |
 | `63_kelvin_maxwell.jl` | echoes `Abderrahim/Kelvin2Maxwell.py` | **published tutorial** — the exact generalized-Kelvin ⇄ generalized-Maxwell conversion: the interlacing that isolates every root before any arithmetic, the round trip staying at `1e-15` out to twenty branches (where the symbolic route fails), and two independent closed forms — the Zener relations and the Burgers `cosh`/`sinh` relaxation — as oracles |
 | `64_laplace_inversion.jl` | Abate & Valkó; de Hoog et al.; Trefethen et al. | **published tutorial** — the four inversion algorithms measured on four exact pairs; branch cuts are fine and oscillation is what separates them; the Gaver-Stehfest optimum and why more terms is worse; `ForwardDiff` straight through |
 | `65_rheological_models.jl` | Di Benedetto & Olard (2S2P1D); Huet-Sayegh | **published tutorial** — the model catalog in one place: classical chains, the fractional family, the bituminous models with master curves, Cole-Cole and Black diagrams, and the exact 2S2P1D pair in both domains |
@@ -163,7 +163,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 
 | `85_neural_excentered_sphere.jl` | Adessina et al. (2017), IJES 119, 1-15 | **published tutorial** (`neural_excentered_sphere`): a surrogate trained on the *finite-element* localization tensors of `FEExcenteredSphere`. Gate B with the 6-component TI pair, why the features are contrast ratios and not the gate-A homogeneity, accuracy and speed-up against the finite elements, and `ForwardDiff` on the eccentricity — which the finite-element type refuses. Trained by `scripts/nn/train_excentered.jl` (~1500 solves), compared by `scripts/nn/make_excentered_figures.jl`; the page loads the committed models |
 | `86_crack_distributions.jl` | echoes `crack` + `symmetrize=[ISO]` | **published tutorial** (`crack_distributions`): the same penny cracks at ε = 0.6 under two orientation rules. MT and the symmetric SC match Echoes 1.0 to ~1e-7 in both cases; `AsymmetricSelfConsistent` is the compliance-form fixed point instead; both percolate but at different densities (9/16 exactly for the compliance form, about 1.158 for the stiffness one, both independent of the matrix Poisson ratio). Also documents the local-versus-canonical component trap of a `TensRotated` result, and reads the five Walpole coefficients with `TensND.ti_params_from_KM` |
-| `87_ageing_ages_aspect.jl` | — | **published tutorial** (`ageing_ages_aspect`): ageing creep with `ViscoLaw(J, :creep)` on both phases — three loading ages t' x three inclusion aspect ratios under Mori-Tanaka. Shows that the morphological effect is a near-constant offset independent of t', and that flattening the inclusions *reduces* the effective creep. Eleven ALV runs on a 60-point grid |
+| `87_aging_ages_aspect.jl` | — | **published tutorial** (`aging_ages_aspect`): aging creep with `ViscoLaw(J, :creep)` on both phases — three loading ages t' x three inclusion aspect ratios under Mori-Tanaka. Shows that the morphological effect is a near-constant offset independent of t', and that flattening the inclusions *reduces* the effective creep. Eleven ALV runs on a 60-point grid |
 
 Scripts 84 and 85 need nothing beyond the package: it loads the surrogates committed
 under `src/NeuralInclusions/models/`. *Training* them is

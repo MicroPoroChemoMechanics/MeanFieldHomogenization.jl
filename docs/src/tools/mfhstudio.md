@@ -105,7 +105,7 @@ the interface can express:
 | `06_laminate_basics.jl` | the exact laminate; Backus, and both bounds saturating |
 | `07_laminate_interfaces.jl` | an imperfect interface and the size effect it brings |
 | `08_laminate_multiscale.jl` | a layer that is itself a homogenized cell |
-| `09_ageing_creep.jl` | a viscoelastic phase, and the creep curve |
+| `09_aging_creep.jl` | a viscoelastic phase, and the creep curve |
 | `10_sensitivities.jl` | derivatives of the effective property, by autodiff |
 
 Each is a running script *and* a filled-in model: open one, change a number in
@@ -328,7 +328,7 @@ lens rather than a hand-written closure:
 cell = set_param(base_cell, nested(:FOAM, :C, amount(:PORE)), φ)
 ```
 
-!!! note "Not combinable with ageing viscoelasticity"
+!!! note "Not combinable with aging viscoelasticity"
     An inner `Homogenized` cannot sit inside an ALV chain — the inner result
     would have to be re-expressible as a `ViscoLaw`. The interface refuses the
     combination instead of writing a script that fails at run time.
@@ -342,7 +342,7 @@ section, so turning one on turns the others off:
 | :--- | :--- |
 | **Sweep** | one point, or a curve over a lens |
 | **Sensitivity** | derivatives, by autodiff |
-| **Viscoelastic** | an ageing creep or relaxation curve |
+| **Viscoelastic** | an aging creep or relaxation curve |
 
 The **Sweep** tab decides the shape of the run.
 

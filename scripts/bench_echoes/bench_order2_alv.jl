@@ -1,6 +1,6 @@
 # Cross-check `homogenize_alv_order2` (Julia) vs ECHOES `homogenize_visco`
-# on the order-2 Maxwell ageing-creep setup:
-#   - iso ALV matrix with Dirichlet 2-element chain + ageing prefactor
+# on the order-2 Maxwell aging-creep setup:
+#   - iso ALV matrix with Dirichlet 2-element chain + aging prefactor
 #   - iso inhomogeneity with similar law, fraction φ = 0.2
 #   - spherical (ω=1) and prolate spheroidal (ω=0.1) shapes
 #   - schemes Maxwell, Dilute, Mori-Tanaka
@@ -19,7 +19,7 @@ const echoes = pyimport("echoes")
 const np = pyimport("numpy")
 
 # Build the same kernels as the Python script.
-# matrix R: instantaneous + 2 R//C, ageing prefactor exp(-(t/30)^2).
+# matrix R: instantaneous + 2 R//C, aging prefactor exp(-(t/30)^2).
 function build_R(r0, r1, r2, τ1, τ2, fag, finst)
     return (t, tp) -> begin
         je = finst(tp) * r0 +

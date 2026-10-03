@@ -964,7 +964,7 @@ class CodeGen:
             return f"{lens.member}{lens.property} → {CodeGen._lens_label(inner)}"
         return k
 
-    # -- ageing viscoelasticity -------------------------------------------
+    # -- aging viscoelasticity -------------------------------------------
 
     def _alv_main(self, root: Cell) -> None:
         alv = self.m.alv

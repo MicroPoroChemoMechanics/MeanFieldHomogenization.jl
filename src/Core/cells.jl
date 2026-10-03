@@ -212,7 +212,7 @@ self-consistent loop included. The memoization is task-local and torn down
 when the call returns, so no value ever leaks from one autodiff step to the
 next.
 
-Nesting a `Homogenized` inside an ageing-viscoelastic chain is not supported:
+Nesting a `Homogenized` inside an aging-viscoelastic chain is not supported:
 the inner result would have to be re-expressible as a `ViscoLaw`.
 
 See also [`NestedParameter`](@ref), [`resolve_property`](@ref).

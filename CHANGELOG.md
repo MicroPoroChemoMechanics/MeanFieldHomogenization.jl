@@ -185,6 +185,13 @@ in that setting, and the self-consistent schemes take it.
   hereditary, possibly aging behavior written with Volterra operators:
   viscoelasticity at order 4 and conduction or diffusion at order 2. The API
   keeps its names; the theory page is *Aging linear Volterra behavior*.
+- US spelling throughout: *aging*, in the prose, the docstrings, the scripts
+  and the file names. The application page is now `applications/aging_creep`,
+  the tutorial `tutorials/generated/aging_ages_aspect`, the scripts
+  `53_aging_creep_solid.jl` to `57_aging_creep_cracks.jl` and
+  `87_aging_ages_aspect.jl`, and the MFH Studio example `09_aging_creep.jl`;
+  links to the former documentation URLs no longer resolve. The titles of the
+  cited works keep their spelling, and so do the earlier sections of this file.
 - `stiffness_contribution(sphere::LayeredSphere, C₀)` returns the
   three-argument tensor `stiffness_contribution(sphere, C₀, C₀)`, which it
   duplicated; the two may differ in the last digit from before.

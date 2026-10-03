@@ -183,7 +183,7 @@ Di Benedetto and Olard and the ECHOES sources; `0 < k < h < 1`.
     model. [`creep_kernel`](@ref) gives ``\varphi(t)``,
     [`carson_creep_kernel`](@ref) gives ``\varphi^{*}(p)``, and
     [`creep_kernel_law`](@ref) packages the former as a [`ViscoLaw`](@ref) so
-    that the *ageing* pipeline can consume it:
+    that the *aging* pipeline can consume it:
 
     ```julia
     Φ = trapezoidal_matrix(creep_kernel_law(m), times)
@@ -208,7 +208,7 @@ transform involves the exponential integral,
 `SpecialFunctions.expintx`, the scaled form, so it stays finite where
 ``e^{p\tau}`` alone would overflow.
 
-The *ageing* version — where `E`, `C` and `τ` depend on the loading age — is a
+The *aging* version — where `E`, `C` and `τ` depend on the loading age — is a
 different object and belongs to the [time-domain route](@ref man-viscoelasticity).
 
 ## 3. Fitting a chain to something that is not one
@@ -269,8 +269,8 @@ law   = ViscoLaw(Zm)                    # → homogenize_alv
 (TensND.get_data(law(1.0, 0.0)), TensND.get_data(relaxation(Zm, 1.0)))
 ```
 
-`ViscoLaw(model)` builds a genuinely non-ageing kernel `(t, t') ↦ R(t - t')`,
-which the existing ageing pipeline consumes unchanged. The two routes then
+`ViscoLaw(model)` builds a genuinely non-aging kernel `(t, t') ↦ R(t - t')`,
+which the existing aging pipeline consumes unchanged. The two routes then
 compute the same thing by disjoint means, which is what
 [the three-route comparison](@ref tut-freq-vs-time) uses as a cross-check.
 

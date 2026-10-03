@@ -82,7 +82,7 @@ hand-rolled Mandel/IFT bypass is gone, and the fc tolerance tightened from
 15 % to 2 %.
 
 The `bench_layered_alv*` jl/py/json triads are cross-validation assets for the
-ageing-viscoelastic (ALV) layered-sphere recurrences; the committed
+aging-viscoelastic (ALV) layered-sphere recurrences; the committed
 `*_python.json` dumps let the Julia side be checked WITHOUT a live echoes /
 PyCall install.
 

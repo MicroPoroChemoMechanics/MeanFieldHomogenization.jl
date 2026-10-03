@@ -2,10 +2,10 @@
 EditURL = "../../../../scripts/59_alv_sensitivities.jl"
 ```
 
-# [Derivatives through the ageing-viscoelastic pipeline](@id tut-alv-sensitivities)
+# [Derivatives through the aging-viscoelastic pipeline](@id tut-alv-sensitivities)
 
 !!! info "Before this page"
-    The tutorial [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes),
+    The tutorial [Aging viscoelastic schemes side by side](@ref tut-alv-schemes),
     whose time-domain pipeline is differentiated below, and the manual page
     [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities), which
     introduces the `set_param` lens of the first pattern; the Volterra

@@ -126,7 +126,7 @@ orientation distribution:
   [Crack distributions: isotropic or parallel](@ref tut-crack-distributions).
 
 For the **time-dependent** (ALV) version with `Rn(t,t')` and
-`Rt(t,t')` ageing interface kernels, see the
+`Rt(t,t')` aging interface kernels, see the
 [Viscoelasticity manual](@ref man-visco-cracks).
 References: [sevostianov2002, barthelemyIJES2019](@citet).
 

@@ -66,7 +66,7 @@ using LinearAlgebra
 using Plots
 gr()  # headless backend; GKSwstype is set to "100" in make.jl
 
-# Hot-mix asphalt (HMA) — binders and experimental mix curves, ageing H0/H3/H9
+# Hot-mix asphalt (HMA) — binders and experimental mix curves, aging H0/H3/H9
 E_BH0 = Model2S2P1D(1e-7, 1000.0, 2.2, 1.94507827e-3, 0.22, 0.63, 50.0)
 E_BH3 = Model2S2P1D(1e-7, 1000.0, 2.12, 2.88910275e-3, 0.22, 0.611998586, 146.0)
 E_BH9 = Model2S2P1D(1e-7, 1000.0, 2.85, 7.07911122e-3, 0.22, 0.61430255, 178.0)
@@ -74,7 +74,7 @@ E_EH0 = Model2S2P1D(86.3470095, 26000.0, 2.52254414, 0.834764484, 0.22, 0.65, 43
 E_EH3 = Model2S2P1D(20.0, 24362.0, 2.6, 2.6604, 0.199, 0.65, 900.0)
 E_EH9 = Model2S2P1D(20.0, 24470.541, 2.73135009, 4.95748334, 0.175991713, 0.60, 900.0)
 
-# Warm-mix asphalt (WMA) — binders and experimental mix curves, ageing W0/W3/W6
+# Warm-mix asphalt (WMA) — binders and experimental mix curves, aging W0/W3/W6
 E_BW0 = Model2S2P1D(1e-7, 1000.0, 3.12, 9.49532017e-3, 0.22, 0.608684147, 101.0)
 E_BW3 = Model2S2P1D(6.81e-6, 1000.0, 4.2, 3.209694e-2, 0.22, 0.55078753664, 393.0)
 E_BW6 = Model2S2P1D(2.1e-4, 1000.0, 4.6, 3.78112337e-1, 0.22, 0.555320631, 808.0)
@@ -205,9 +205,9 @@ x_WMA = (4.165e-2, 0.9791, 3277.7)   # J = 2.39e-1
 nothing # hide
 ```
 
-## Master curves: binder amplification across ageing states
+## Master curves: binder amplification across aging states
 
-For each ageing state the binder stiffness (dashed) is amplified by roughly three
+For each aging state the binder stiffness (dashed) is amplified by roughly three
 decades to the mix modulus (solid); the mix phase angle stays below the binder's,
 reflecting the stiffening by the rigid granular skeleton. Markers are the
 experimental 2S2P1D master curves. The same `plot_mix` helper is reused for the
@@ -243,7 +243,7 @@ plot_mix(x_WMA, (("W0", E_BW0, E_EW0), ("W3", E_BW3, E_EW3), ("W6", E_BW6, E_EW6
     "Warm-mix asphalt (WMA) — model vs experiment")
 ```
 
-In both mixes the ageing states shift the master curve toward higher stiffness
+In both mixes the aging states shift the master curve toward higher stiffness
 and lower phase angle as the binder hardens — the model tracks the experimental
 curves across the whole frequency range with a single calibrated parameter set
 per mix.
@@ -281,7 +281,7 @@ Note what is *not* here: no time grid was needed to get the value at
 place. Each point costs 24 evaluations of the three-scale chain and nothing
 else — the transform carries the whole memory of the material.
 
-The ageing states separate the same way they do on the master curve, only read
+The aging states separate the same way they do on the master curve, only read
 from the other end: the aged binder gives a stiffer mix at every time, and the
 gap widens as the load becomes slower.
 
@@ -306,9 +306,9 @@ gap widens as the load becomes slower.
 ## Where to go next
 
 The frequency route of this page, the time route of
-[Ageing creep of solidifying cementitious materials](@ref app-ageing-creep) and
-the Laplace–Carson route are checked against one another on a non-ageing
+[Aging creep of solidifying cementitious materials](@ref app-aging-creep) and
+the Laplace–Carson route are checked against one another on a non-aging
 composite in [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time).
 This page closes the applications. The time-dependent behavior of a
 cementitious material, which ages and so does not admit complex moduli, is the
-subject of [Ageing creep of solidifying cementitious materials](@ref app-ageing-creep).
+subject of [Aging creep of solidifying cementitious materials](@ref app-aging-creep).

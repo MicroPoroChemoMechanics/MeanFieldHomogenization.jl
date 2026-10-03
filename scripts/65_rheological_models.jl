@@ -195,7 +195,7 @@ end
 # object: [`creep_kernel`](@ref) gives ``\varphi(t)``,
 # [`carson_creep_kernel`](@ref) gives ``\varphi^{*}(p)``, and
 # [`creep_kernel_law`](@ref) packages the former as a
-# [`ViscoLaw`](@ref) for the ageing pipeline. Inverting one must reproduce the
+# [`ViscoLaw`](@ref) for the aging pipeline. Inverting one must reproduce the
 # other:
 
 for t in (1.0e-5, 1.0e-3, 1.0e-1, 10.0)

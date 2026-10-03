@@ -49,7 +49,7 @@ law_M = ViscoLaw(R_iso, :relaxation)
 
 ### 1.2 Pre-built constructors
 
-The shortest route to a non-ageing law is not to write a kernel at all, but to
+The shortest route to a non-aging law is not to write a kernel at all, but to
 take a model from the [rheological library](@ref man-rheological-models) and let
 `ViscoLaw` build the kernel:
 
@@ -59,11 +59,11 @@ law = ViscoLaw(m)          # (t, t') ↦ R(t - t'), ready for `homogenize_alv`
 ```
 
 The same object also drives the [Laplace-Carson route](@ref man-laplace-inversion)
-through `carson_relaxation(m, p)`, so a non-ageing material need only be
+through `carson_relaxation(m, p)`, so a non-aging material need only be
 described once and the two routes are guaranteed to be comparing the same
 thing — which is what the [three-route check](@ref tut-freq-vs-time) relies on.
 
-The hand-written constructors below remain the way to build an **ageing**
+The hand-written constructors below remain the way to build an **aging**
 kernel, which no model in the library can express.
 
 
@@ -79,15 +79,15 @@ law_kel = kelvin_iso(3.0, 1.0, [5.0], [2.0], [1.0], [0.5])
 law_el  = heaviside_law(TensISO{3}(15.0, 4.0))
 ```
 
-### 1.3 Ageing kernels
+### 1.3 Aging kernels
 
 The first argument is the current time `t`, the second is the loading
-time `t'`. Ageing means the kernel depends on `t'`, not just on the
+time `t'`. Aging means the kernel depends on `t'`, not just on the
 duration `t − t'` (basic linear viscoelasticity is the special case
 where it depends only on `t − t'`):
 
 ```julia
-# solidification-type ageing : volume fraction of "active" gel grows
+# solidification-type aging : volume fraction of "active" gel grows
 # with t' as `f_∞ · t'^α / (1 + t'^α)`.
 const α_age = 4.0
 const f_∞   = 0.3
@@ -205,12 +205,12 @@ and routes them through the appropriate scheme branch.
 ### 5.2 Cracks with finite interface stiffness (Sevostianov)
 
 For a flat crack carrying a **spring-like interface stiffness** with
-time-dependent normal `Rn(t,t')` and tangential `Rt(t,t')` ageing
+time-dependent normal `Rn(t,t')` and tangential `Rt(t,t')` aging
 kernels, attach the interface laws as `:Rn` / `:Rt` properties on the
 crack phase :
 
 ```julia
-# Interface kernels — same Maxwell-iso ageing form as the matrix law
+# Interface kernels — same Maxwell-iso aging form as the matrix law
 R_n_kernel(t, tp) = (1 + 0.1 * tp^0.4) *
                      (1.0e10 + (2.0e10 - 1.0e10) * exp(-(t - tp) / 2.0))
 R_t_kernel(t, tp) = (1 + 0.1 * tp^0.2) *
@@ -265,7 +265,7 @@ elastic MT. `scripts/60_alv_cracks_interface.jl` runs the same configuration
 through both implementations: `rtol ≤ 1e-3` at low density, a few % to ~14 %
 at `d ≥ 0.20`.
 
-A static (non-ageing) elastic + conductivity crack benchmark with
+A static (non-aging) elastic + conductivity crack benchmark with
 matrix-only interface stiffness is in
 `scripts/15_cracks_iso_interface.jl`.
 
@@ -277,7 +277,7 @@ matrix-only interface stiffness is in
 | `SC`, `ASC`                    | re-evaluated against the running effective estimate |
 
 A complete demo with **all seven** crack-aware ALV schemes lives in
-`scripts/57_ageing_creep_cracks.jl`.
+`scripts/57_aging_creep_cracks.jl`.
 
 ## 6. Order-2 ALV — conductivity / diffusion
 
@@ -301,7 +301,7 @@ K_eff = homogenize_alv(rve_κ, MoriTanaka(), :K; times = times)   # 150 × 150 (
 The dispatcher sees the 2-tensor sample and routes via the
 order-2 pipeline ([`homogenize_alv_order2`](@ref) under the hood).
 Result is a `(3n × 3n)` block matrix. See
-`scripts/56_ageing_creep_order2.jl`.
+`scripts/56_aging_creep_order2.jl`.
 
 The order-2 pipeline implements the bounds, `Dilute`, `DiluteDual`,
 `MoriTanaka`, `Maxwell`, `PonteCastanedaWillis`, `SelfConsistent` and
@@ -477,7 +477,7 @@ dμ_df = ForwardDiff.derivative(eff_mu, 0.20)        # ≈ 1.66 (validated FD �
 ### 10.2 Sensitivity wrt a material parameter — closure-captured
 
 When the parameter lives **inside** the kernel function (e.g. a
-modulus, relaxation time, ageing exponent), close it into the kernel
+modulus, relaxation time, aging exponent), close it into the kernel
 and differentiate normally. ForwardDiff lifts the parameter to `Dual`
 through the closure:
 
@@ -524,8 +524,8 @@ a central finite difference at `rtol ≤ 1e-7`.
 
 | script | benchmark | agreement |
 | :--- | :--- | :--- |
-| `53_ageing_creep_solid.jl` | multi-phase Maxwell + solidifying Maxwell + pore (ECHOES C++ manual) | — |
-| `57_ageing_creep_cracks.jl` | seven crack-aware ALV schemes, penny-crack RVE | — |
+| `53_aging_creep_solid.jl` | multi-phase Maxwell + solidifying Maxwell + pore (ECHOES C++ manual) | — |
+| `57_aging_creep_cracks.jl` | seven crack-aware ALV schemes, penny-crack RVE | — |
 | `52_rabotnov_mittag_leffler.jl` | Rabotnov / Mittag-Leffler closed form, [barthelemyIJES2019](@cite) §5 | `rtol ≤ 1.3e-3` at `n_times = 200` |
 
 The Rabotnov kernel needed by that benchmark used to come from an external
@@ -550,12 +550,12 @@ Mandel `(1, 1)` block, `≤ 1e-6` on the full matrix).
 ## Where to go next
 
 [The rheological model library](@ref man-rheological-models) supplies the
-non-ageing laws that `ViscoLaw(m)` turns into kernels, and drives the
+non-aging laws that `ViscoLaw(m)` turns into kernels, and drives the
 Laplace-Carson route with the same objects. The tutorials
 [Viscoelastic composites](@ref tut-viscoelasticity) and
-[Ageing viscoelastic schemes side by side](@ref tut-alv-schemes) run the
+[Aging viscoelastic schemes side by side](@ref tut-alv-schemes) run the
 pipeline of this page,
-[Derivatives through the ageing-viscoelastic pipeline](@ref tut-alv-sensitivities)
+[Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities)
 extends section 10, and
-[Ageing creep of solidifying cementitious materials](@ref app-ageing-creep)
+[Aging creep of solidifying cementitious materials](@ref app-aging-creep)
 applies it to a solidifying cementitious material.

@@ -1,5 +1,5 @@
 # =============================================================================
-#  ageing_creep.jl
+#  aging_creep.jl
 #
 #  Built with MFH Studio. Editing this file by hand is fine: the
 #  studio reads it back and preserves anything it does not
@@ -8,7 +8,7 @@
 #  Elastic sand grains in a creeping paste. The curve is the uniaxial creep response, read off the Volterra inverse of the effective relaxation operator.
 # =============================================================================
 #
-# After `scripts/53_ageing_creep_solid.jl` and `scripts/62_alv_schemes.jl`.
+# After `scripts/53_aging_creep_solid.jl` and `scripts/62_alv_schemes.jl`.
 #
 # A phase becomes viscoelastic through its *property*, not through a separate
 # panel: pick a Kelvin chain or a Maxwell law in Properties, and the
@@ -259,6 +259,6 @@ Deleting it costs nothing but a best-effort re-reading of the code.
   "stop": 1.0,
   "variable": "\u03c6"
  },
- "title": "ageing_creep"
+ "title": "aging_creep"
 }
 =#

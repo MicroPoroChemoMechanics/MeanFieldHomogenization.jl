@@ -1,14 +1,14 @@
 # =============================================================================
 #  rheology_iso.jl — lifting scalar models to isotropic fourth-order tensors,
-#  the bridge to the ageing time-domain pipeline, and the Laplace-Carson
+#  the bridge to the aging time-domain pipeline, and the Laplace-Carson
 #  homogenization driver.
 #
 #  This is where the two routes meet.  One `IsoRheology` object yields both
 #
 #      p -> carson_relaxation(m, p)   the Laplace-Carson route (homogenize)
-#      ViscoLaw(m)                    the ageing time route     (homogenize_alv)
+#      ViscoLaw(m)                    the aging time route     (homogenize_alv)
 #
-#  so a non-ageing material need be described exactly once, and the two
+#  so a non-aging material need be described exactly once, and the two
 #  pipelines can be compared on identical input.
 # =============================================================================
 
@@ -72,7 +72,7 @@ than by calling the constructor.
 It answers the same generics as a scalar model — [`carson_relaxation`](@ref),
 [`carson_creep`](@ref), [`relaxation`](@ref), [`creep`](@ref),
 [`complex_modulus`](@ref) — with `TensISO{4,3}` values, and converts to a
-[`ViscoLaw`](@ref) for the ageing pipeline.
+[`ViscoLaw`](@ref) for the aging pipeline.
 """
 struct IsoRheology{P <: AbstractIsoPairing, A, B} <: AbstractTensorRheology
     a::A
@@ -203,18 +203,18 @@ function Base.show(io::IO, m::IsoRheology{P}) where {P}
     return print(io, "IsoRheology{", nameof(P), "}(", m.a, ", ", m.b, ")")
 end
 
-# ── Bridge to the ageing time-domain pipeline ───────────────────────────────
+# ── Bridge to the aging time-domain pipeline ───────────────────────────────
 
 """
     ViscoLaw(model::AbstractTensorRheology; mode = :relaxation, method = default_inversion(model))
     ViscoLaw(model::AbstractRheology;       mode = :relaxation, method = default_inversion(model))
 
 Package a rheological model as a [`ViscoLaw`](@ref) kernel ``(t, t') \\mapsto X``, so
-that the **ageing** machinery — [`trapezoidal_matrix`](@ref),
+that the **aging** machinery — [`trapezoidal_matrix`](@ref),
 [`volterra_inverse`](@ref), [`homogenize_alv`](@ref) — can consume a model that
 was written in the Laplace-Carson domain.
 
-The kernel produced is of course non-ageing: it depends on ``t - t'`` only.  That
+The kernel produced is of course non-aging: it depends on ``t - t'`` only.  That
 is the point.  It lets the same material be pushed through both routes and the
 answers compared, which is what
 [`tutorials/generated/freq_vs_time`](@ref tut-freq-vs-time) does.
@@ -263,7 +263,7 @@ _kernel_scale(model, mode) =
     homogenize_lc(build_cell, scheme, property = :C; p)
     homogenize_lc(build_cell, scheme, property = :C; times, method = DEFAULT_INVERSION, kw...)
 
-Homogenize a **non-ageing** viscoelastic composite through the correspondence
+Homogenize a **non-aging** viscoelastic composite through the correspondence
 principle, and — in the second form — bring the answer back to the time domain.
 
 `build_cell(p)` is a closure returning the homogenization cell with every phase
@@ -307,7 +307,7 @@ homogenizations, so the choice is a real one:
 
 # Relation to the time-domain route
 
-For a non-ageing material this and [`homogenize_alv`](@ref) compute the same
+For a non-aging material this and [`homogenize_alv`](@ref) compute the same
 thing by disjoint means — no shared code — so agreement between them is a real
 check on both.  `ViscoLaw(model)` turns the same model objects into the kernels
 `homogenize_alv` needs.

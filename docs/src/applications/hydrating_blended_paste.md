@@ -403,10 +403,10 @@ extra ODE solve.
   fluctuation at the concrete scale — which is how it explains a mortar being
   weaker than its own paste. The ingredient exists here only as script-level code;
   see [Quasi-brittle strength of cement paste and mortar](@ref app-strength).
-- **Ageing creep.** [`homogenize_alv`](@ref) takes *constant* volume fractions;
+- **Aging creep.** [`homogenize_alv`](@ref) takes *constant* volume fractions;
   time dependence is emulated by discretizing a growing phase into layers with
   individual setting times, driven by a postulated law — see
-  [Ageing creep of solidifying cementitious materials](@ref app-ageing-creep).
+  [Aging creep of solidifying cementitious materials](@ref app-aging-creep).
   Feeding it the `f_r(t)` computed above is the natural next step, and needs
   either an API accepting an amount law or a helper inverting an arbitrary
   kinetics into setting times.
@@ -434,7 +434,7 @@ The reaction set of this page states its products and orders them by hand.
 binder, the kinetics and the four-scale micromechanics, lets the clinker
 dissolve into ions, and leaves the choice of the hydrates to a Gibbs energy
 minimization, so that the two pages can be compared term by term. The
-compressive strength and the ageing creep, left out of this page, are treated
+compressive strength and the aging creep, left out of this page, are treated
 without the chemistry in
 [Quasi-brittle strength of cement paste and mortar](@ref app-strength) and
-[Ageing creep of solidifying cementitious materials](@ref app-ageing-creep).
+[Aging creep of solidifying cementitious materials](@ref app-aging-creep).

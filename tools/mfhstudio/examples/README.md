@@ -16,7 +16,7 @@ Start with `01`, then jump to whichever line interests you.
 | `06_laminate_basics.jl` | the exact laminate; Backus, and both bounds saturating | `scripts/33` |
 | `07_laminate_interfaces.jl` | an imperfect interface and the size effect it brings | `scripts/34` |
 | `08_laminate_multiscale.jl` | a layer that is itself a homogenized cell | `scripts/36` |
-| `09_ageing_creep.jl` | a viscoelastic phase, and the creep curve | `scripts/53`, `scripts/62` |
+| `09_aging_creep.jl` | a viscoelastic phase, and the creep curve | `scripts/53`, `scripts/62` |
 | `10_sensitivities.jl` | derivatives of the effective property, by autodiff | `scripts/26` |
 
 ## How these differ from `scripts/`

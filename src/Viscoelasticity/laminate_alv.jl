@@ -1,5 +1,5 @@
 # =============================================================================
-#  laminate_alv.jl — the periodic multilayer in ageing linear viscoelasticity.
+#  laminate_alv.jl — the periodic multilayer in aging linear viscoelasticity.
 #
 #  The laminate solution is pure algebra: products of Kelvin-Mandel matrices
 #  and ONE inversion restricted to the out-of-plane subspace. Replacing each
@@ -107,7 +107,7 @@ end
 function _alv_check_numeric_frame(basis)
     return is_hard_numeric(eltype(basis)) || throw(
         ArgumentError(
-            "laminate_alv: the ageing-viscoelastic kernel is a numerical " *
+            "laminate_alv: the aging-viscoelastic kernel is a numerical " *
                 "Volterra discretization and needs a numeric frame; got a " *
                 "$(eltype(basis)) basis. Evaluate the frame first, or use the " *
                 "elastic `Laminated` scheme, which is symbolic end to end."
@@ -118,13 +118,13 @@ end
 """
     laminate_alv(lam, ::Val{order}; times, property) -> Matrix
 
-Effective ageing-viscoelastic operator of a periodic multilayer cell, as a
+Effective aging-viscoelastic operator of a periodic multilayer cell, as a
 ``6n\\times 6n`` relaxation matrix (`order = 4`) or a ``3n\\times 3n`` one
 (`order = 2`), with ``n`` = `length(times)`.
 
 Each layer carries a [`ViscoLaw`](@ref) under `property`; the interfaces stay
 elastic (their compliances are numbers), which covers the usual case of an
-ageing bulk with a time-independent interface. Reached through
+aging bulk with a time-independent interface. Reached through
 `homogenize_alv(lam, Laminated(), :C; times = …)`.
 """
 function laminate_alv(lam::Laminates.Laminate, ::Val{4}; times, property::Symbol = :C)
@@ -200,7 +200,7 @@ end
 """
     homogenize_alv(lam::Laminate, ::Laminated, prop; times, kw...)
 
-Ageing-viscoelastic effective operator of a periodic multilayer, dispatching
+Aging-viscoelastic effective operator of a periodic multilayer, dispatching
 on the order of the layer laws exactly as the elastic `Laminated` scheme
 dispatches on the order of the layer tensors.
 """

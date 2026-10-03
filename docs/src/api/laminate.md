@@ -60,7 +60,7 @@ MeanFieldHomogenization.Laminates.InterfaceParameter
 MeanFieldHomogenization.Laminates.interface_param
 ```
 
-## Ageing viscoelasticity
+## Aging viscoelasticity
 
 ```@docs
 MeanFieldHomogenization.Viscoelasticity.laminate_alv
@@ -68,7 +68,7 @@ MeanFieldHomogenization.Viscoelasticity.laminate_alv
 
 ## The block algebra
 
-The kernel behind the cell, in `Core`, so that the ageing-viscoelastic
+The kernel behind the cell, in `Core`, so that the aging-viscoelastic
 laminate reuses it with the Volterra inversion substituted.
 
 ```@docs

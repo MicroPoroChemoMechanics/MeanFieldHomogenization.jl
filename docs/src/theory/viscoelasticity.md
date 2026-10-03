@@ -2,7 +2,7 @@
 
 !!! info "Before this page"
     [The Laplace-Carson route](@ref th-laplace-carson), which treats the
-    non-ageing case contrasted below, and the elastic chain transposed on this
+    non-aging case contrasted below, and the elastic chain transposed on this
     page: [The Eshelby inclusion problem](@ref th-eshelby-problem),
     [Localization and contribution tensors](@ref th-localization) and
     [Homogenization schemes](@ref th-homogenization).
@@ -34,10 +34,10 @@ statement below transposes to it by the dictionary of that page.
 
 Everything in the elastic part of this documentation — the Eshelby problem, the
 Hill polarization tensor, the concentration and contribution tensors, the
-schemes built on them — carries over to **ageing linear viscoelasticity**
+schemes built on them — carries over to **aging linear viscoelasticity**
 essentially unchanged, provided two substitutions are made systematically:
 
-| Elastic | Ageing viscoelastic |
+| Elastic | Aging viscoelastic |
 | :------ | :------------------ |
 | tensor ``\mathbb{C}`` | two-time **kernel** ``\mathbb{C}(t,t')`` |
 | double contraction ``\mathbb{A}:\mathbb{B}`` | Volterra product ``\mathbb{A}\circ\mathbb{B}`` |
@@ -57,7 +57,7 @@ homogenization schemes. The derivations are those of [barthelemyIJSS2016](@citet
     tensor inverse. In `MeanFieldHomogenization` these two operations are
     [`volterra_product`](@ref) and [`volterra_inverse`](@ref).
 
-## 1. The ageing linear viscoelastic behavior
+## 1. The aging linear viscoelastic behavior
 
 The strain and stress histories are related by a **Stieltjes integral**
 [barthelemyIJSS2016](@cite):
@@ -73,7 +73,7 @@ The strain and stress histories are related by a **Stieltjes integral**
 with ``\mathbb{L}`` the creep compliance kernel and ``\mathbb{C}`` the
 relaxation kernel. Causality imposes ``\mathbb{C}(t,t') = 0`` for ``t < t'``.
 
-The **non-ageing** case is the special one where the kernels depend on ``t`` and
+The **non-aging** case is the special one where the kernels depend on ``t`` and
 ``t'`` only through their difference ``t-t'``. There, and only there, the
 Laplace–Carson correspondence principle applies and the problem reduces to an
 elastic one with complex moduli — the route taken in
@@ -98,7 +98,7 @@ symbol denotes
 ```
 
 This product is associative and distributive over addition, but **not
-commutative**: commutativity holds only for non-ageing kernels
+commutative**: commutativity holds only for non-aging kernels
 [barthelemyIJSS2016; after Maghous and Creus](@cite). Every formula below
 therefore keeps its factors in order, including the apparently scalar ones.
 
@@ -428,9 +428,9 @@ code while preserving both the storage saving and the algebraic closure.
 
 The next chapter leaves the inclusion problem altogether:
 [Periodic multilayer — the laminate cell](@ref th-laminate) solves a periodic
-stack exactly, and its §10 transposes that solution to ageing viscoelasticity by
+stack exactly, and its §10 transposes that solution to aging viscoelasticity by
 the substitution of this page. The schemes of §5 are compared on one composite
-in the tutorial [Ageing viscoelastic schemes side by side](@ref tut-alv-schemes),
+in the tutorial [Aging viscoelastic schemes side by side](@ref tut-alv-schemes),
 and the manual page [Viscoelastic homogenization](@ref man-viscoelasticity)
 gives the syntax of [`homogenize_alv`](@ref).
 

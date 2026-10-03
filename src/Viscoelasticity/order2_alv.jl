@@ -1,5 +1,5 @@
 # =============================================================================
-#  order2_alv.jl — order-2 (vector-tensor) ageing linear viscoelasticity.
+#  order2_alv.jl — order-2 (vector-tensor) aging linear viscoelasticity.
 #
 #  Mirrors the order-4 ALV machinery for second-order properties such as
 #  thermal / electric conductivity, diffusivity, electrical permittivity,

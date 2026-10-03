@@ -1,7 +1,7 @@
 # =============================================================================
 #  schemes_alv_extra.jl — Ponte-Castañeda & Willis (PCW),
 #  Asymmetric Self-Consistent (ASC) and Differential (DIFF) schemes
-#  in ageing linear viscoelasticity.
+#  in aging linear viscoelasticity.
 #
 #  All operate on the discrete `(6n × 6n)` block matrices produced by
 #  `trapezoidal_matrix` (or its `_trapezoidal_relaxation` wrapper for
@@ -292,7 +292,7 @@ end
                       abstol = 1e-8, reltol = 1e-6, alg = nothing,
                       formulation = :stiffness) -> Matrix{T}
 
-Differential homogenization in ageing linear viscoelasticity, solved
+Differential homogenization in aging linear viscoelasticity, solved
 as a SciML ODE on the fictitious incorporation time ``\\tau \\in [0, 1]``
 [norris1985](@cite):
 

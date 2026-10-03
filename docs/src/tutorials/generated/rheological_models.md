@@ -208,7 +208,7 @@ So the same model is an exact Laplace-Carson object *and* an exact Volterra
 object: [`creep_kernel`](@ref) gives ``\varphi(t)``,
 [`carson_creep_kernel`](@ref) gives ``\varphi^{*}(p)``, and
 [`creep_kernel_law`](@ref) packages the former as a
-[`ViscoLaw`](@ref) for the ageing pipeline. Inverting one must reproduce the
+[`ViscoLaw`](@ref) for the aging pipeline. Inverting one must reproduce the
 other:
 
 ````@example rheological_models

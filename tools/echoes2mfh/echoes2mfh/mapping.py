@@ -295,7 +295,7 @@ FUNCTIONS: dict[str, str] = {
 # ---------------------------------------------------------------------------
 # Viscoelasticity.
 #
-# Echoes carries an ageing linear viscoelastic (ALV) law as a callable of
+# Echoes carries an aging linear viscoelastic (ALV) law as a callable of
 # (t, t') plus a mode flag, and evaluates it into a lower-triangular Volterra
 # block matrix over a time series. MFH keeps the same two ingredients but
 # names them differently and takes the time series at the call site rather

@@ -73,7 +73,7 @@ using ForwardDiff
 using OrdinaryDiffEq
 using SpecialFunctions: gamma, expintx
 
-# ── The Laplace-Carson half (non-ageing) ────────────────────────────────────
+# ── The Laplace-Carson half (non-aging) ────────────────────────────────────
 # `laplace_inversion.jl` depends on nothing from this package, so it goes
 # first; the rheology catalog then needs it for its fallbacks, and
 # `rheology_iso.jl` needs `ViscoLaw` from `visco_law.jl` for the bridge.
@@ -83,7 +83,7 @@ include("rheology_interface.jl")
 include("prony.jl")
 include("rheology_models.jl")
 
-# ── The ageing half (time domain) ───────────────────────────────────────────
+# ── The aging half (time domain) ───────────────────────────────────────────
 include("visco_law.jl")
 include("rheology_iso.jl")
 include("trapezoidal.jl")
@@ -145,7 +145,7 @@ export laminate_alv
 export cod_kernel_alv, compliance_contribution_alv, delta_compliance_alv
 export stiffness_contribution_alv, stiffness_contribution_alv_at, delta_stiffness_alv
 
-# ── Laplace-Carson (non-ageing) ─────────────────────────────────────────────
+# ── Laplace-Carson (non-aging) ─────────────────────────────────────────────
 export AbstractLaplaceInversion, GaverStehfest, FixedTalbot, TalbotTrefethen, DeHoog
 export DEFAULT_INVERSION
 export inverse_laplace, inverse_carson, inverse_carson_rate

@@ -31,7 +31,7 @@ numerical inversion.
 Lift a pair of scalar models to a fourth-order isotropic tensor with
 [`iso_rheology`](@ref) / [`iso_rheology_E_nu`](@ref); the result is an
 [`AbstractTensorRheology`](@ref), which answers the same generics with tensors
-and additionally feeds the ageing time-domain pipeline through
+and additionally feeds the aging time-domain pipeline through
 `ViscoLaw(model)`.
 
 See the [rheological model catalog](@ref man-rheological-models).

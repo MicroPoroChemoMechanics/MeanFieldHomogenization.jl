@@ -75,7 +75,7 @@ pages = [
             "theory/conductivity.md",
         ],
         # Two distinct extensions: the correspondence principle, which maps a
-        # non-ageing problem onto an elastic one, and the ageing case, where
+        # non-aging problem onto an elastic one, and the aging case, where
         # no such map exists and the Eshelby problem itself is generalized.
         "Extension to viscoelasticity" => [
             "theory/laplace_carson.md",
@@ -191,7 +191,7 @@ pages = [
             "tutorials/generated/laplace_inversion.md",
             "tutorials/generated/freq_vs_time.md",
             "tutorials/generated/alv_schemes.md",
-            "tutorials/generated/ageing_ages_aspect.md",
+            "tutorials/generated/aging_ages_aspect.md",
             "tutorials/generated/alv_sensitivities.md",
             "tutorials/generated/laminate_alv.md",
         ],
@@ -234,7 +234,7 @@ pages = [
             "applications/hydrating_blended_paste.md",
             "applications/ionic_hydrating_paste.md",
             "applications/cement_paste_diffusion.md",
-            "applications/ageing_creep.md",
+            "applications/aging_creep.md",
             "applications/strength.md",
             "applications/itz_concrete.md",
             "applications/itz_elastic_limit.md",

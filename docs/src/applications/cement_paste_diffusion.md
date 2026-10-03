@@ -589,7 +589,7 @@ simultaneously load-bearing and diffusive — the prolate gel pores are what kee
 ## Where to go next
 
 The next application,
-[Ageing creep of solidifying cementitious materials](@ref app-ageing-creep),
+[Aging creep of solidifying cementitious materials](@ref app-aging-creep),
 follows the paste in time: a phase that solidifies progressively, and an
 effective relaxation kernel that depends on the age at loading. The behavior of the
 self-consistent scheme near its percolation threshold, which both maps above

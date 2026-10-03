@@ -268,7 +268,7 @@ well — it then owns the four `delta_*` methods itself.
   requires the whole level-1 path to be type-generic — which rules out
   algorithms hard-wired to `Float64` (the `Residue` backend) and external
   solvers that factorize numerically.
-- **Ageing viscoelasticity.** The ALV pipeline has its own per-geometry seam:
+- **Aging viscoelasticity.** The ALV pipeline has its own per-geometry seam:
   either `tens_UA` / `tens_VA`, or a `Viscoelasticity._inclusion_alv_quantities`
   method.
 - **Crack API.** Implement `cod_tensor` if you want `sif` and `dif` too. For

@@ -305,11 +305,11 @@ simplify(C[2, 3, 2, 3])     # mu_A*mu_B/(f*mu_B + mu_A*(1 - f))
     obliquely oriented numeric frame still contributes floating-point axis
     components, which is correct: the geometry itself is floating point.
 
-Ageing viscoelasticity is the one part that stays numerical: `laminate_alv`
+Aging viscoelasticity is the one part that stays numerical: `laminate_alv`
 discretizes Volterra operators on a grid of times, so it rejects a symbolic
 frame rather than pretending otherwise.
 
-## Ageing viscoelasticity
+## Aging viscoelasticity
 
 Store a [`ViscoLaw`](@ref) per layer and call `homogenize_alv`:
 
@@ -351,7 +351,7 @@ call met so far. The tutorials
 [Periodic multilayer: the exact laminate solution](@ref tut-laminate),
 [Imperfect interfaces in a laminate, and the size effect](@ref tut-laminate-interfaces)
 and
-[A creeping laminate: the multilayer in ageing viscoelasticity](@ref tut-laminate-alv)
+[A creeping laminate: the multilayer in aging viscoelasticity](@ref tut-laminate-alv)
 work through the sections of this page, and
 [Symbolic laminates: arithmetic and harmonic averages](@ref tut-symbolic-laminate)
 derives the effective moduli in closed form.

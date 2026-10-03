@@ -1171,7 +1171,7 @@ function renderAlv() {
   $("#tab-alv").replaceChildren(
     blocked
       ? el("div", { class: "note problem" },
-          "Ageing viscoelasticity cannot be combined with a nested scale: "
+          "Aging viscoelasticity cannot be combined with a nested scale: "
           + "MeanFieldHomogenization cannot re-express a homogenized inner result as a "
           + "ViscoLaw. Remove the seam first.")
       : el("span"),
@@ -1181,7 +1181,7 @@ function renderAlv() {
       + (viscoPhases.length
           ? "Found on: " + viscoPhases.join(", ") + "."
           : "No phase carries one yet, so this run has nothing to age.")),
-    field("", checkboxLabel("Ageing linear viscoelastic run", a.enabled, (v) => {
+    field("", checkboxLabel("Aging linear viscoelastic run", a.enabled, (v) => {
       a.enabled = v;
       // One `Result` section is emitted; two run modes would fight over it.
       if (v) S.model.sens.enabled = false;

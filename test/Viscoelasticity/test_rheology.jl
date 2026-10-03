@@ -144,7 +144,7 @@ end
     @test equilibrium_modulus(m) == m.E00
     @test creep_kernel(m, 0.0) == 1.0
 
-    # The kernel packaged for the ageing pipeline agrees with the direct one.
+    # The kernel packaged for the aging pipeline agrees with the direct one.
     law = creep_kernel_law(m)
     @test visco_mode(law) == :creep
     @test law(0.5, 0.2) ≈ creep_kernel(m, 0.3)

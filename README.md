@@ -38,8 +38,8 @@ Everything else is that chain generalized in one direction at a time:
 - **a different physics** — heat conduction, diffusion, Darcy flow and electric
   conduction are the same problem at order two, and the Hill tensor is then
   analytical at any matrix anisotropy;
-- **a different time dependence** — a transform maps a non-ageing problem back
-  onto an elastic one, while the ageing case generalizes the Eshelby problem
+- **a different time dependence** — a transform maps a non-aging problem back
+  onto an elastic one, while the aging case generalizes the Eshelby problem
   itself, with moduli becoming Volterra operators;
 - **a periodic problem rather than an inclusion problem** — the periodic
   multilayer, reached by interface algebra;
@@ -59,7 +59,7 @@ respect to fractions, moduli and inclusion geometry.
 A gallery of full micromechanical models built on the package —
 hydrating cement paste, chloride diffusivity, the interfacial transition
 zone in concrete, recycled concrete aggregate, quasi-brittle strength,
-bituminous mixtures, ageing creep — lives under [`docs/src/applications/`](docs/src/applications)
+bituminous mixtures, aging creep — lives under [`docs/src/applications/`](docs/src/applications)
 and the [Applications](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/applications/cement_paste/)
 section of the docs.
 
@@ -74,7 +74,7 @@ section of the docs.
 | `MeanFieldHomogenization.Conductivity` | 2nd-order Hill tensor for transport problems; closed form for any matrix anisotropy. |
 | `MeanFieldHomogenization.LayeredSpheres` | `n`-layer composite spheres, 5 interface types (perfect, spring, membrane, Kapitza, surface-conductive), volume-average and pointwise localization. |
 | `MeanFieldHomogenization.LayeredSpheroids` | `n`-layer confocal spheroids: conduction with Kapitza / surface-conductive interfaces, series or quadrature evaluation; elasticity, prolate or oblate, with perfect interfaces. |
-| `MeanFieldHomogenization.Laminates` | Periodic **multilayer** cell: parallel layers, no matrix, no Eshelby problem — an *exact* solution in elasticity and transport, with the same 4 imperfect-interface models, per-layer localization and an ageing-viscoelastic twin. |
+| `MeanFieldHomogenization.Laminates` | Periodic **multilayer** cell: parallel layers, no matrix, no Eshelby problem — an *exact* solution in elasticity and transport, with the same 4 imperfect-interface models, per-layer localization and an aging-viscoelastic twin. |
 | `MeanFieldHomogenization.Interactions` | Two-inclusion interaction tensor and Green operator of the reference medium — exact closed forms for balls and disks, cubature for an anisotropic reference, periodic image sums. |
 | `MeanFieldHomogenization.Assemblies` | `ParticleAssembly`: the cell that carries **positions**, its lattice / random generators and boundary treatments — what the N-body schemes act on. |
 | `MeanFieldHomogenization.Poromechanics` | Biot coefficient tensor and skeleton modulus of a porous or cracked microstructure; drained and undrained responses. |
@@ -83,7 +83,7 @@ section of the docs.
 | `MeanFieldHomogenization.FiniteElements` | Inclusions whose response comes out of a finite-element resolution of the Eshelby problem — elliptical crack (3-D) and sphere with an off-center core (axisymmetric Fourier) — behind a two-backend contract. |
 | `MeanFieldHomogenization.NeuralInclusions` | Inclusions whose response comes out of a trained network, with the sampling and fitting machinery; differentiable in the morphology, where a finite-element solve is not. |
 | `MeanFieldHomogenization.Schemes` | The cell abstraction (`RVE`, `Laminate` and `ParticleAssembly` beside it) and `homogenize`; declarative multiscale chaining (`Homogenized`, `NestedParameter`); bounds, dilute, Mori–Tanaka, self-consistent (+ asymmetric), PCW, Maxwell, differential, cluster model, equivalent inclusion; exact vs. best-fit symmetrization; `ForwardDiff` sensitivities. |
-| `MeanFieldHomogenization.Viscoelasticity` | Linear viscoelasticity by two independent routes: **ageing** in the time domain via Volterra operators, with structured ISO/TI/orthotropic kernel storage — every scheme, cracks and layered spheres included — and **non-ageing** in the **Laplace-Carson** domain, with four autodiff-capable inverse-Laplace algorithms, a catalog of rheological models (Prony chains, Burgers, springpots, Huet-Sayegh, 2S2P1D…) and the exact generalized-Kelvin ⇄ generalized-Maxwell conversion. |
+| `MeanFieldHomogenization.Viscoelasticity` | Linear viscoelasticity by two independent routes: **aging** in the time domain via Volterra operators, with structured ISO/TI/orthotropic kernel storage — every scheme, cracks and layered spheres included — and **non-aging** in the **Laplace-Carson** domain, with four autodiff-capable inverse-Laplace algorithms, a catalog of rheological models (Prony chains, Burgers, springpots, Huet-Sayegh, 2S2P1D…) and the exact generalized-Kelvin ⇄ generalized-Maxwell conversion. |
 
 ## Installation
 
@@ -213,7 +213,7 @@ anything it does not recognize.
 - **Multiscale by dragging.** Each box is a scale; drag its output dot onto a
   property slot of another and the seam appears as
   `Homogenized(inner, scheme)`, with the builders emitted in topological order.
-- **Sweeps, sensitivities, ageing creep.** Several schemes on one figure;
+- **Sweeps, sensitivities, aging creep.** Several schemes on one figure;
   ForwardDiff derivatives through the whole chain; the effective creep curve.
 - **No installation beyond Julia.** Python 3.10+ standard library only, and the
   browser you already have.
@@ -238,7 +238,7 @@ roughly in reading order:
 | [Theory](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/theory/) | the Eshelby/Hill chain — polarization tensor → localization → schemes — its specializations (cracks, layered inclusions, laminates, viscoelasticity) and the N-body models (interaction tensors, cluster model, equivalent inclusion). |
 | [Manual](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/manual/) | a topic-by-topic reference for each inclusion family, cell and scheme. |
 | [Tutorials](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/tutorials/) | worked examples: bounds and schemes, layered spheres/spheroids, particle assemblies, viscoelasticity, sensitivities, symbolic computation. |
-| [Applications](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/applications/cement_paste/) | full micromechanical models — cement paste, ITZ concrete, recycled aggregate, bituminous mixtures, strength, ageing creep. |
+| [Applications](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/applications/cement_paste/) | full micromechanical models — cement paste, ITZ concrete, recycled aggregate, bituminous mixtures, strength, aging creep. |
 | [Finite-element coupling](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/fe_coupling/) | the opposite direction: MFH as a constitutive law inside a structural FE code — scale transition, poroelastic coupling, fractured permeability, worked models. |
 | [Tools and migration](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/tools/from_echoes/) | the Echoes translation guide, the script converter, and MFH Studio. |
 | [Developer guide](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/developer/architecture/) | architecture, dispatch, and how to add an inclusion / algorithm / scheme. |

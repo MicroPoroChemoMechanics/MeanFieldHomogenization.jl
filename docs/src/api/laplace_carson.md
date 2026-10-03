@@ -1,6 +1,6 @@
 # [API — Laplace-Carson viscoelasticity](@id api-laplace-carson)
 
-The non-ageing half of `MeanFieldHomogenization.Viscoelasticity`: numerical
+The non-aging half of `MeanFieldHomogenization.Viscoelasticity`: numerical
 Laplace inversion, the rheological model catalog, the exact Kelvin ⇄ Maxwell
 conversion, and the homogenization driver that ties them together.
 

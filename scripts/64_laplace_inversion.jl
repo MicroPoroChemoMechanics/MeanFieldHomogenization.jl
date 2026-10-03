@@ -245,7 +245,7 @@ display(p_full)                                                      #jl
 #
 # An inversion is one of three routes to the time response of a composite.
 # [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time)
-# runs the frequency route, the inverted Laplace-Carson route and the ageing
-# time-domain route on the same non-ageing composite and checks them against one
+# runs the frequency route, the inverted Laplace-Carson route and the aging
+# time-domain route on the same non-aging composite and checks them against one
 # another. The keywords of each algorithm are documented in
 # [Numerical Laplace inversion](@ref man-laplace-inversion).

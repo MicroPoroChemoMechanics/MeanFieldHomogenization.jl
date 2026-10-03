@@ -2,7 +2,7 @@
 #  layered_alv.jl — n-layer composite sphere in an ALV matrix.
 #
 #  Extends the elastic Hervé-Zaoui recurrence
-#  ([@LayeredSpheres/bulk_recurrence.jl]) to the ageing linear
+#  ([@LayeredSpheres/bulk_recurrence.jl]) to the aging linear
 #  viscoelastic setting by replacing every scalar modulus (κ, μ) with
 #  its `(n×n)` trapezoidal Volterra matrix.  Each scalar transfer-
 #  matrix entry of the elastic 2×2 transfer becomes a Volterra

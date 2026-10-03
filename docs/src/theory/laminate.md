@@ -517,12 +517,12 @@ out-of-plane law and leaves the in-plane one alone, the dual one does the
 reverse. That is what makes the laminate the sharpest available check of the
 package's interface conventions.
 
-## 10. Ageing viscoelasticity
+## 10. Aging viscoelasticity
 
 The whole solution is products of Kelvin-Mandel matrices and one inversion
 restricted to the out-of-plane subspace. Replacing each scalar by a
 discretized Volterra operator therefore transposes it verbatim to
-[ageing linear viscoelasticity](@ref th-viscoelasticity): the matrices become
+[aging linear viscoelasticity](@ref th-viscoelasticity): the matrices become
 ``(6n\times6n)`` (resp. ``(3n\times3n)``) in ``n`` time blocks, products
 become Volterra products, and the ``3\times3`` (resp. scalar) inversion
 becomes `volterra_inverse` on the out-of-plane restriction. The elastic limit
@@ -560,5 +560,5 @@ syntax of a laminate cell is in
 
 - [Imperfect interfaces in a laminate, and the size effect](@ref tut-laminate-interfaces)
   — the interface density of §9 and the size effect it produces.
-- [A creeping laminate: the multilayer in ageing viscoelasticity](@ref tut-laminate-alv)
+- [A creeping laminate: the multilayer in aging viscoelasticity](@ref tut-laminate-alv)
   — the transposition of §10 on a creeping stack.

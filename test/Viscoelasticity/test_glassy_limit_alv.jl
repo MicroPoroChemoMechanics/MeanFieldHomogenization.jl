@@ -170,14 +170,14 @@ end
     end
 end
 
-# ── 5. Ageing solidifying composite — the `scripts/53` invariant ───────────
+# ── 5. Aging solidifying composite — the `scripts/53` invariant ───────────
 #
-# Reduced version of `scripts/53_ageing_creep_solid.jl` : a Maxwell matrix,
+# Reduced version of `scripts/53_aging_creep_solid.jl` : a Maxwell matrix,
 # a pore and `N` solidifying shells, each becoming solid at its own setting
 # time.  Both topologies (composite sphere / separate inclusions) are
 # checked, at a loading age before and after some of the setting times.
 
-@testset "glassy limit — ageing solidifying composite" begin
+@testset "glassy limit — aging solidifying composite" begin
     k0, μ0 = 1.0 / (3 * (1 - 2 * 0.2)), 1.0 / (2 * 1.2)
     k1, μ1 = 5.0 / (3 * (1 - 2 * 0.3)), 5.0 / (2 * 1.3)
     finf, fp = 0.3, 0.1

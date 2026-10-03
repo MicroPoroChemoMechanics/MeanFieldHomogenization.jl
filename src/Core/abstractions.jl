@@ -67,7 +67,7 @@ abstract type AbstractCrack{T} <: AbstractInclusion{T} end
 Supertype for multi-layer inclusions.  The concrete `LayeredSphere`
 (concentric isotropic shells, Hervé-Zaoui recurrences for bulk, shear and
 conductivity, with five interface types) is shipped in the `LayeredSpheres`
-sub-module and extended to the ageing-viscoelastic setting in
+sub-module and extended to the aging-viscoelastic setting in
 `Viscoelasticity/layered_alv.jl`.  Open extensions (coated cylinders,
 anisotropic layers, excentered spheres) are tracked in
 `docs/src/developer/roadmap.md`.

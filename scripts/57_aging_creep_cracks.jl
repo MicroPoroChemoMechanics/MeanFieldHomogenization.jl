@@ -1,7 +1,7 @@
 # =============================================================================
-#  57_ageing_creep_cracks.jl
+#  57_aging_creep_cracks.jl
 #
-#  Julia reproduction of the ageing-creep penny-crack benchmark —
+#  Julia reproduction of the aging-creep penny-crack benchmark —
 #  pure penny crack (no interface stiffness) in an iso ALV matrix,
 #  using all the crack-aware homogenization schemes available in
 #  `MeanFieldHomogenization`:  Dilute, Mori-Tanaka, Maxwell, Self-Consistent,
@@ -23,8 +23,8 @@
 #  homogenized relaxation matrix R̃, as the strain field of a unit
 #  longitudinal stress step (cf. the Python `linalg.inv(V).dot(S)`).
 #
-#  Usage  : julia --project scripts/57_ageing_creep_cracks.jl
-#  Output : scripts/figures/57_ageing_creep_cracks.png
+#  Usage  : julia --project scripts/57_aging_creep_cracks.jl
+#  Output : scripts/figures/57_aging_creep_cracks.png
 # =============================================================================
 
 import Pkg
@@ -38,7 +38,7 @@ using Plots
 
 default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
 
-# ─── Matrix law (Maxwell-like ageing relaxation) ───────────────────────────
+# ─── Matrix law (Maxwell-like aging relaxation) ───────────────────────────
 
 const k₀ = 5.0;     const μ₀ = 2.0
 const k_inf = 3.0;  const μ_inf = 1.0
@@ -136,7 +136,7 @@ for t0 in t0_v
 end
 
 mkpath(joinpath(@__DIR__, "figures"))
-out = joinpath(@__DIR__, "figures", "57_ageing_creep_cracks.png")
+out = joinpath(@__DIR__, "figures", "57_aging_creep_cracks.png")
 savefig(plt, out)
 display(plt)
 

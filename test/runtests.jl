@@ -281,7 +281,7 @@ end
 
     # The periodic multilayer cell. Placed after the layered morphologies
     # whose interface models it reuses, and before `Viscoelasticity`, which
-    # carries its ageing-viscoelastic twin.
+    # carries its aging-viscoelastic twin.
     @testset "Laminates" begin
         include("Laminates/test_km_blocks.jl")
         include("Laminates/test_laminate_cell.jl")
@@ -322,7 +322,7 @@ end
     end
 
     @testset "Viscoelasticity" begin
-        # The Laplace-Carson half (non-ageing) first: it depends on nothing
+        # The Laplace-Carson half (non-aging) first: it depends on nothing
         # from the ALV pipeline, whereas `test_rheology_iso.jl` closes the loop
         # by checking that the two routes agree.
         include("Viscoelasticity/test_laplace_inversion.jl")
