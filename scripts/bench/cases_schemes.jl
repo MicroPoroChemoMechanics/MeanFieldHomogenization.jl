@@ -144,6 +144,9 @@ bcase(
 
 # ── Controls: schemes untouched by the de-duplication tier ──────────────────
 
+# Maxwell reads the envelope of the distribution, which an RVE has to declare;
+# a spherical one makes it coincide with Mori-Tanaka, which is all a control
+# needs.
 for (nm, sch) in (
         ("voigt", Voigt()), ("reuss", Reuss()),
         ("dilute", Dilute()), ("dilute_dual", DiluteDual()),
@@ -152,7 +155,7 @@ for (nm, sch) in (
     bcase(
         "control/$nm.iso2";
         group = :control, tags = [:scheme], control = true,
-        setup = () -> rve_iso2(),
+        setup = () -> rve_iso2(; distribution_shape = sch isa Maxwell ? Ellipsoid(1.0) : nothing),
         body = rve -> homogenize(rve, sch, :C),
     )
 end

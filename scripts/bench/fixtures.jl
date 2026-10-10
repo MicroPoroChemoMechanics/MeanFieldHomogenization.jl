@@ -51,9 +51,10 @@ C_ti() = TensTI{4}(20.0, 30.0, 4.0, 5.0, 8.0, (0.0, 0.0, 1.0))
 
 # ── RVE builders ────────────────────────────────────────────────────────────
 
-"""Two-phase isotropic RVE with spherical inclusions."""
-function rve_iso2(; f = 0.3)
-    rve = RVE()
+"""Two-phase isotropic RVE with spherical inclusions; `distribution_shape` is
+the envelope Maxwell and PCW read, and only they."""
+function rve_iso2(; f = 0.3, distribution_shape = nothing)
+    rve = RVE(; distribution_shape)
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_matrix_iso()); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_incl_iso()); fraction = f)
     return rve
