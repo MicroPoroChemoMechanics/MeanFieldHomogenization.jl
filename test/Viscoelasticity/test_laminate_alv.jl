@@ -19,6 +19,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using SymPy
+using ForwardDiff
 
 const ATOL_LALV = 1.0e-9
 
@@ -204,4 +205,21 @@ end
     add_layer!(lam4, :A, Dict(:C => heaviside_law(_isoa(2.0, 0.8))); thickness = 0.3)
     add_layer!(lam4, :B, Dict(:C => heaviside_law(_isoa(0.5, 0.2))); thickness = 0.7)
     @test homogenize_alv(lam4, Laminated(), :C; times = 0.0:1.0:2.0) isa AbstractMatrix
+end
+
+@testset "ALV laminate — derivative with respect to the orientation" begin
+    # The frame was read through the Float64-only `_basis_matrix`, so a dual
+    # normal threw. Reference: the elastic `Laminated` scheme, which takes any
+    # number type, against the diagonal blocks of the Heaviside laminate.
+    function lam_at(θ, law)
+        lam = Laminate(; normal = (0, sin(θ), cos(θ)))
+        add_layer!(lam, :A, Dict(:C => law(_isoa(2.0, 0.8))); thickness = 0.3)
+        add_layer!(lam, :B, Dict(:C => law(_isoa(0.5, 0.2))); thickness = 0.7)
+        return lam
+    end
+    C_el(θ) = Matrix(KM(homogenize(lam_at(θ, identity), Laminated(), :C)))
+    blk(θ) = _blk(homogenize_alv(lam_at(θ, heaviside_law), Laminated(), :C; times = [0.0, 1.0]), 2)
+    θ = 0.4
+    @test blk(θ) ≈ C_el(θ) atol = ATOL_LALV
+    @test ForwardDiff.derivative(blk, θ) ≈ ForwardDiff.derivative(C_el, θ) atol = ATOL_LALV
 end

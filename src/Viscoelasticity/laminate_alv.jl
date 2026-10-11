@@ -62,13 +62,14 @@ end
 """
     _alv_rotate_blocks(M, Q, n_times, nc) -> Matrix
 
-Apply a Kelvin-Mandel (Bond) rotation `Q` to every time block of an ALV
-matrix, i.e. express the whole Volterra operator in the layer frame. A no-op
-when the laminate normal is the third canonical axis, which is why the
-canonical laminate pays nothing.
+Apply a Kelvin-Mandel (Bond) rotation to every time block of an ALV matrix,
+``\\mathbf{Q}^{T}\\,\\mathbf{M}_{ij}\\,\\mathbf{Q}``: with `Q` the Bond matrix of the
+laminate frame, from the canonical frame to the layer frame, and with `Q'` back.
+Not called when the laminate normal is the third canonical axis, which is why
+the canonical laminate pays nothing.
 """
 function _alv_rotate_blocks(M::AbstractMatrix, Q::AbstractMatrix, n_times::Int, nc::Int)
-    out = similar(M)
+    out = similar(M, promote_type(eltype(M), eltype(Q)))
     @inbounds for i in 0:(n_times - 1), j in 0:(n_times - 1)
         rows = (nc * i + 1):(nc * i + nc)
         cols = (nc * j + 1):(nc * j + nc)
@@ -133,7 +134,7 @@ function laminate_alv(lam::Laminates.Laminate, ::Val{4}; times, property::Symbol
     basis = Laminates.laminate_basis(lam)
     _alv_check_numeric_frame(basis)
     rotate = !(basis isa TensND.CanonicalBasis)
-    Q = rotate ? MFH_Core._bond6(MFH_Core._basis_matrix(basis)) : nothing
+    Q = rotate ? MFH_Core._bond6(MFH_Core._frame_matrix(basis)) : nothing
 
     Cs = map(names) do nm
         law = Laminates.layer_property(lam, nm, property)
@@ -149,9 +150,12 @@ function laminate_alv(lam::Laminates.Laminate, ::Val{4}; times, property::Symbol
 
     opinv = M -> _plane_pinv_alv(M, n, 6, (3, 4, 5), 3)
     P_int, C_surf = _alv_interface_terms(lam, times, Val(4))
-    return MFH_Core.laminate_stiffness(
+    M_layer = MFH_Core.laminate_stiffness(
         Cs, fs, P_int, C_surf; opinv = opinv, opinv_avg = opinv
     )
+    # Back from the layer frame to the canonical one, where every other ALV
+    # operator lives and where the elastic `Laminated` scheme puts its tensor.
+    return rotate ? _alv_rotate_blocks(M_layer, Q', n, 6) : M_layer
 end
 
 function laminate_alv(lam::Laminates.Laminate, ::Val{2}; times, property::Symbol = :K)
