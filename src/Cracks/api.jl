@@ -52,29 +52,31 @@ end
 # TI-aligned dispatch rules — refine Core dispatch for `AbstractCrack` + TensTI{4}.
 # Explicit Val{:auto}, Val{:residues}, etc. methods are needed to disambiguate
 # against the generic Core rules (which use the same Val{:auto} signature).
-if isdefined(TensND, :TensTI)
-    @eval function _ti_crack_dispatch(method::Symbol, crack::MFH_Core.AbstractCrack, C₀::TensND.TensTI{4})
-        _ti_aligned(C₀, crack_basis(crack)) && return MFH_Core.Analytical()
-        method === :decuhr && return MFH_Core.DECUHR()
-        method === :nestedquadgk && return MFH_Core.NestedQuadGK()
-        method === :residues && return MFH_Core.Residue()
-        # Non-aligned : hand over to the shared anisotropic default, which
-        # picks a cubature.  Deciding it here again would silently reinstate
-        # the residue algorithm as a default — the very thing
-        # `Core.dispatch.jl` centralizes to avoid.
-        return MFH_Core._aniso_default_algo(C₀)
+function _ti_crack_dispatch(method::Symbol, crack::MFH_Core.AbstractCrack, C₀::TensND.TensTI{4})
+    # The closed form when it applies and was not ruled out; an explicit
+    # numerical method is honored, as for an ellipsoid (`Elasticity.jl`).
+    if (method === :auto || method === :analytical) && _ti_aligned(C₀, crack_basis(crack))
+        return MFH_Core.Analytical()
     end
-    @eval MFH_Core._resolve_algo(::Val{:auto}, crack::MFH_Core.AbstractCrack, C₀::TensND.TensTI{4}) =
-        _ti_crack_dispatch(:auto, crack, C₀)
-    @eval MFH_Core._resolve_algo(::Val{:analytical}, crack::MFH_Core.AbstractCrack, C₀::TensND.TensTI{4}) =
-        _ti_crack_dispatch(:analytical, crack, C₀)
-    @eval MFH_Core._resolve_algo(::Val{:residues}, crack::MFH_Core.AbstractCrack, C₀::TensND.TensTI{4}) =
-        _ti_crack_dispatch(:residues, crack, C₀)
-    @eval MFH_Core._resolve_algo(::Val{:decuhr}, crack::MFH_Core.AbstractCrack, C₀::TensND.TensTI{4}) =
-        _ti_crack_dispatch(:decuhr, crack, C₀)
-    @eval MFH_Core._resolve_algo(::Val{:nestedquadgk}, crack::MFH_Core.AbstractCrack, C₀::TensND.TensTI{4}) =
-        _ti_crack_dispatch(:nestedquadgk, crack, C₀)
+    method === :decuhr && return MFH_Core.DECUHR()
+    method === :nestedquadgk && return MFH_Core.NestedQuadGK()
+    method === :residues && return MFH_Core.Residue()
+    # Non-aligned : hand over to the shared anisotropic default, which
+    # picks a cubature.  Deciding it here again would silently reinstate
+    # the residue algorithm as a default — the very thing
+    # `Core.dispatch.jl` centralizes to avoid.
+    return MFH_Core._aniso_default_algo(C₀)
 end
+MFH_Core._resolve_algo(::Val{:auto}, crack::MFH_Core.AbstractCrack, C₀::TensND.TensTI{4}) =
+    _ti_crack_dispatch(:auto, crack, C₀)
+MFH_Core._resolve_algo(::Val{:analytical}, crack::MFH_Core.AbstractCrack, C₀::TensND.TensTI{4}) =
+    _ti_crack_dispatch(:analytical, crack, C₀)
+MFH_Core._resolve_algo(::Val{:residues}, crack::MFH_Core.AbstractCrack, C₀::TensND.TensTI{4}) =
+    _ti_crack_dispatch(:residues, crack, C₀)
+MFH_Core._resolve_algo(::Val{:decuhr}, crack::MFH_Core.AbstractCrack, C₀::TensND.TensTI{4}) =
+    _ti_crack_dispatch(:decuhr, crack, C₀)
+MFH_Core._resolve_algo(::Val{:nestedquadgk}, crack::MFH_Core.AbstractCrack, C₀::TensND.TensTI{4}) =
+    _ti_crack_dispatch(:nestedquadgk, crack, C₀)
 
 # ── Public API ──────────────────────────────────────────────────────────────
 
@@ -107,8 +109,9 @@ factorizations are related by ``\\boldsymbol{B}^{\\mathcal{R}} =
 \\tfrac{3\\pi}{8}\\,\\lim_{\\eta\\to 0}\\boldsymbol{B}^{\\mathcal{E}}``.
 
 For isotropic or aligned-TI matrices the kernel is analytical
-[hoenig1978, kanaun2009](@cite);
-for arbitrarily anisotropic matrices the limit ``c/b\\to 0`` is
+[hoenig1978, kanaun2009](@cite) with `method = :auto` or `:analytical`; an
+explicit numerical `method` is honored. For arbitrarily anisotropic
+matrices the limit ``c/b\\to 0`` is
 resolved numerically through the first-order Taylor term of the Hill
 tensor [barthelemyIJSS2009](@cite).
 
@@ -274,18 +277,16 @@ function _kernel(crack::RibbonCrack, C₀::TensND.TensISO{4, 3}, ::MFH_Core.Anal
 end
 
 # Analytical — TI matrix aligned with n̂
-if isdefined(TensND, :TensTI)
-    @eval function _kernel(crack::EllipticCrack, C₀::TensND.TensTI{4}, ::MFH_Core.Analytical; kw...)
-        n̂ = TensND.tens_basis(crack_basis(crack), 3)
-        nt = MFH_Core.extract_ti_moduli(C₀, n̂)
-        return _cod_ti_ellipse(crack, nt.E, nt.H, nt.ν₁, nt.ν₂, nt.Γ)
-    end
+function _kernel(crack::EllipticCrack, C₀::TensND.TensTI{4}, ::MFH_Core.Analytical; kw...)
+    n̂ = TensND.tens_basis(crack_basis(crack), 3)
+    nt = MFH_Core.extract_ti_moduli(C₀, n̂)
+    return _cod_ti_ellipse(crack, nt.E, nt.H, nt.ν₁, nt.ν₂, nt.Γ)
+end
 
-    @eval function _kernel(crack::RibbonCrack, C₀::TensND.TensTI{4}, ::MFH_Core.Analytical; kw...)
-        n̂ = TensND.tens_basis(crack_basis(crack), 3)
-        nt = MFH_Core.extract_ti_moduli(C₀, n̂)
-        return _cod_ti_ribbon(crack, nt.E, nt.H, nt.ν₁, nt.ν₂, nt.Γ)
-    end
+function _kernel(crack::RibbonCrack, C₀::TensND.TensTI{4}, ::MFH_Core.Analytical; kw...)
+    n̂ = TensND.tens_basis(crack_basis(crack), 3)
+    nt = MFH_Core.extract_ti_moduli(C₀, n̂)
+    return _cod_ti_ribbon(crack, nt.E, nt.H, nt.ν₁, nt.ν₂, nt.Γ)
 end
 
 # Residue — anisotropic matrix
