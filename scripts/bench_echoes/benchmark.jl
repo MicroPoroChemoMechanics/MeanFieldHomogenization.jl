@@ -39,8 +39,8 @@ using PyCall
 # `jl_method = :decuhr` is benchmarked below (§ 1), and that backend lives in a
 # package extension: without these two imports the extension never loads and the
 # run dies with "the `:decuhr` backend requires the DECUHR extension". Both are
-# already in this environment's Manifest — they only need to be brought into
-# scope. Same requirement as `test/runtests.jl`.
+# dependencies of this environment (`Project.toml`), DECUHR taken from the
+# sibling checkout like TensND. Same requirement as `test/runtests.jl`.
 import DECUHR, Integrals
 
 BenchmarkTools.DEFAULT_PARAMETERS.samples = 20

@@ -98,6 +98,10 @@ Same machine, before → after, results identical to the bit:
 ### Documentation
 
 - The ChemistryLab bound of the documentation environment raised to 0.38.
+- The benchmark against Echoes (`developer/benchmarks`) measured again on this
+  version: the nested-QuadGK cubature now runs 95 to 745 times faster than
+  Echoes' NUMINT3D, DECUHR at the speed of the residues. Its environment
+  declares DECUHR and Integrals, which the script imports and which it lacked.
 
 ## v0.15.0 — the interfaces of the layered sphere, checked to the aging Volterra setting
 
