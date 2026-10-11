@@ -2,6 +2,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+using ForwardDiff
 
 # =============================================================================
 #  Thermal COD scalar `b` and resistivity contribution `R`.
