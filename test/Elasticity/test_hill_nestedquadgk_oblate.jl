@@ -13,6 +13,7 @@
 using Test
 using MeanFieldHomogenization
 using TensND
+using ForwardDiff
 
 const ATOL4 = 5.0e-6   # looser than spheroidal due to near-singular kernel at z≈1
 const basis4 = TensND.CanonicalBasis{3, Float64}()
@@ -81,4 +82,20 @@ end
             for i in 1:3, j in 1:3, k in 1:3, l in 1:3
     )
     @test diff < 1.0e-7 * scale
+end
+
+
+@testset "nestedquadgk — derivative with respect to a semi-axis" begin
+    # The exponent α was read as `Float64(ω)`, which a dual semi-axis cannot be
+    # converted to: the derivative threw. Reference: the closed form of the
+    # spheroid in an isotropic medium, differentiated the same way; the same
+    # medium is handed to the quadrature as a general tensor.
+    C_iso = TensISO{3}(300.0, 80.0)
+    C_gen = TensND.Tens(Array(get_array(C_iso)), basis4)
+    P(ω, C; kw...) = Array(get_array(hill_tensor(Ellipsoid(1.0, 1.0, ω), C; kw...)))
+    for ω in (0.2, 0.02)    # α = 1, then α = 2 − log₁₀ 2
+        d_ref = ForwardDiff.derivative(x -> P(x, C_iso), ω)
+        d_nqg = ForwardDiff.derivative(x -> P(x, C_gen; method = :nestedquadgk, reltol = 1.0e-10), ω)
+        @test d_nqg ≈ d_ref rtol = 1.0e-7
+    end
 end

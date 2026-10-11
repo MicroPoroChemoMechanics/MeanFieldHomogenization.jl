@@ -113,7 +113,9 @@ function _hill_3d_aniso_nestedquadgk(
     # z(u) = 1 − (1 − u)^α concentrates Gauss-Kronrod nodes near z = 1
     # where the integrand varies most rapidly for flat ellipsoids (ω ≪ 1).
     # α = 1 (identity) when ω ≥ 0.1; beyond that α ≈ 2, 3, … for each decade.
-    α = max(1.0, -log10(Float64(ω)))
+    # Any α gives the same integral, so it is read on the value of ω alone: a
+    # dual semi-axis keeps its derivatives in ζ, where they belong.
+    α = max(1.0, -log10(MFH_Core._primal(ω)))
 
     voigt_ij = ((1, 1), (2, 2), (3, 3), (2, 3), (1, 3), (1, 2))
 
