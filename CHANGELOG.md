@@ -1,5 +1,104 @@
 # Changelog
 
+## v0.16.0 — derivatives everywhere, and the anisotropic Hill cubatures ×90
+
+An audit of the package against automatic differentiation, its own invariants
+and the Julia performance tips. Derivatives now go through the multipole
+interaction tensor, the anisotropic Hill tensors of conduction and of the nested
+cubature, the orientation of inclusions and laminates, the aging-viscoelastic
+schemes whatever phase carries them, and they converge in the self-consistent
+schemes. Four results were wrong without saying so and are corrected (see
+Breaking changes). The anisotropic Hill cubatures run up to ninety times faster,
+with results identical to the bit, and the package holds no boxed captured
+variable any more.
+
+### Breaking changes
+
+- Below 1.0 a minor release is breaking for the resolver: packages with
+  `MeanFieldHomogenization = "0.15"` must widen their bound to accept 0.16.
+- TensND 0.6 and DECUHR 0.3 are required.
+- Results that change because they were wrong:
+  - `AsymmetricSelfConsistent` in conduction ignored the crack phases: their
+    resistivity was never added, and a matrix with insulating cracks returned
+    the matrix conductivity. They are now added, as in elasticity.
+  - The aging-viscoelastic laminate (`homogenize_alv(lam, Laminated(), :C)`)
+    with a normal other than e₃ returned its operator in the layer frame; it is
+    now in the canonical frame, as every other ALV operator and as the elastic
+    `Laminated` result.
+  - A crack aligned with the axis of a TI medium took the closed form whatever
+    `method` was asked; an explicit numerical method is now honored, as for an
+    ellipsoid.
+  - The derivatives of the self-consistent schemes were judged converged on the
+    values alone. From a start at the solution (`init`), the derivative with
+    respect to a volume fraction was 2 % off with `AndersonDefault` and zero
+    with `NewtonDefault`; from the default start `NewtonDefault`'s was 6e-8 off.
+    Each partial must now meet the tolerance of the value.
+- The NonlinearSolve extension takes the exact ForwardDiff Jacobian instead of
+  a central finite difference: the derivatives of SC solves through SciML
+  algorithms move at the level of the former truncation error.
+- The 2D anisotropic Hill tensor is exactly symmetric; its values move by 3e-17
+  relative at most.
+
+### Fixed
+
+- Derivatives with respect to a semi-axis or an orientation through the
+  multipole interaction tensor (the second moment was stripped to Float64
+  before `eigen`, and a second derivative threw).
+- A dual semi-axis in the nested-QuadGK Hill tensor (`Float64(ω)` threw).
+- The anisotropic conduction Hill tensor under ForwardDiff: its value keeps the
+  closed form, its derivatives come from an integral representation that needs
+  neither `eigen` nor `svd`, at a repeated eigenvalue too.
+- A dual Euler angle (`_normalize_euler` converted it to Float64), a dual
+  rotation matrix given to a constructor, and a dual frame whose axes are
+  sorted.
+- A dual or symbolic laminate normal in the elastic `Laminated` scheme; the ALV
+  laminate rotation in the type of its frame.
+- The order-4 ALV schemes, and their iso/TI/orthotropic fast paths, with a dual
+  on any phase but the first (MethodError).
+- Work counters and the memoized Gauss–Legendre rules under threads (atomic
+  counters, a lock).
+- Docstrings detached from their definitions by a comment (`_sc_initial`,
+  `_bulk_state_seq`, `_ti_identity`); the detached docstring of `add_phase!`
+  described the matrix phase of an RVE that no longer has one.
+- `differential_alv` took an inclusion declared `fraction = :rest` for a crack
+  family and refused it as one; it now says that this phase has no amount to
+  integrate up to, as the elastic and the order-2 differential schemes do. The
+  asymmetric self-consistent ALV scheme checks up front, as the other ALV
+  schemes do, that a phase carrying a crack density is a crack.
+
+### Performance
+
+Same machine, before → after, results identical to the bit:
+
+- nested-QuadGK Hill tensor 75 → 0.85 ms (an ellipsoid 3:2:1), 102 → 1.06 ms
+  (a flat one), 79 → 2.9 ms under a dual semi-axis; allocations 103 MB →
+  0.26 MB. The stiffness array, assigned twice and captured by the integrand,
+  was boxed, so every access in the innermost loop was a dynamic one;
+- DECUHR Hill tensor 18.3 → 2.7 ms (22.6 → 8.3 ms under a dual); cylinder
+  0.39 → 0.021 ms; 2D 14.9 → 11.5 µs: the integrand is an `SVector` on the
+  stack, shared by the three cubatures;
+- no `Core.Box` left in the package and its extensions (fourteen sites before:
+  the residue Hill kernel, five ALV TI/orthotropic schemes, the ALV SC schemes,
+  the cracked material, layered spheroids, the Prony fit, the gmsh crack weld).
+
+### Internals
+
+- Run-time type tests turned into dispatch wherever the type holds the
+  answer: the kind of amount of a phase (`VolumeFraction`, `CrackDensity`,
+  `Remainder`) selects its contribution, its Mori–Tanaka term, the keyword that
+  declares it again and its display; the layout of the axis sort
+  (`Val(:crack)`, `Val(:cylinder)`, `Val(:ellipsoid_3d)`); the interface of a
+  layered spheroid in conduction; the average a bound assigns to a layered
+  sphere in the ALV schemes, which no longer computes the Voigt one only to
+  discard it under Reuss; the frame of an ALV laminate; the order of an ALV
+  property. The ALV crack corrections call `crack_density_factor` instead of
+  repeating it. What stays a test is a test on a value (a keyword, the mode of
+  a law), a guard that throws, or a filter over a heterogeneous collection.
+
+### Documentation
+
+- The ChemistryLab bound of the documentation environment raised to 0.38.
+
 ## v0.15.0 — the interfaces of the layered sphere, checked to the aging Volterra setting
 
 ### Breaking changes
