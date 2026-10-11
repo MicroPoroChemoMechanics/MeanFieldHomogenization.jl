@@ -151,6 +151,44 @@ end
     @test errs2[end] < 1.0e-4
 end
 
+@testset "𝕋^{ab} — multipole moment carries derivatives" begin
+    # The second-moment term was contracted through `eigen` of the moment
+    # stripped to Float64: a derivative with respect to a semi-axis lost the
+    # share of the moment, and a second derivative threw. The reference is the
+    # Hessian of the Green operator, by nested ForwardDiff on the kernel itself,
+    # contracted with the moments here: 𝕋 = V_b [𝔾⁰ + ½ (M²_a + M²_b) : ∇∇𝔾⁰].
+    C₀ = _C3()
+    r = [0.3, 0.2, 6.0]
+    ea = Ellipsoid(1.0, 0.6, 0.4)
+    G(x) = vec(Array(MeanFieldHomogenization.Core._green_operator(C₀, x)))
+    H = reshape(ForwardDiff.jacobian(x -> vec(ForwardDiff.jacobian(G, x)), r), :, 3, 3)
+    Hc(M) = sum(M[p, q] * H[:, p, q] for p in 1:3, q in 1:3)       # M : ∇∇𝔾⁰
+    Ma = Diagonal([1.0, 0.36, 0.16]) / 5
+    Mb(a) = Diagonal([a^2, 0.64, 0.09]) / 5
+    Vb(a) = 4π * a * 0.8 * 0.3 / 3
+    T(a) = vec(Array(get_array(interaction_tensor(ea, Ellipsoid(a, 0.8, 0.3), r, C₀; method = :multipole, order = 2))))
+    a = 0.9
+    @test T(a) ≈ Vb(a) * (G(r) + Hc(Ma + Mb(a)) / 2) rtol = 1.0e-12
+    # d/da: V_b is linear in a, and dM²_b/da = diag(2a, 0, 0)/5.
+    dVb = 4π * 0.8 * 0.3 / 3
+    dMb = Diagonal([2a, 0.0, 0.0]) / 5
+    @test ForwardDiff.derivative(T, a) ≈ dVb * (G(r) + Hc(Ma + Mb(a)) / 2) + Vb(a) * Hc(dMb) / 2 rtol = 1.0e-12
+    # d²/da²: V_b'' = 0 and d²M²_b/da² = diag(2, 0, 0)/5.
+    d2 = ForwardDiff.derivative(x -> ForwardDiff.derivative(T, x), a)
+    @test d2 ≈ dVb * Hc(dMb) + Vb(a) * Hc(Diagonal([2.0, 0.0, 0.0]) / 5) / 2 rtol = 1.0e-12
+    # The value of a differentiated evaluation is the evaluation itself.
+    @test ForwardDiff.value.(T(ForwardDiff.Dual(a, 1.0))) == T(a)
+    # d/dθ of a turned receiver: M²_b = Q D Qᵀ/5 gains off-diagonal
+    # derivatives, which enter by the polarization identity. V_b does not
+    # depend on θ; dM²_b/dθ comes from the rotation matrix of TensND.
+    Db = Diagonal([0.81, 0.64, 0.09])
+    Mθ(θ) = (Q = vecbasis(RotatedBasis(θ, 0.4, 0.2)); Q * Db * Q' / 5)
+    Tθ(θ) = vec(Array(get_array(interaction_tensor(ea, Ellipsoid(0.9, 0.8, 0.3, RotatedBasis(θ, 0.4, 0.2)), r, C₀; method = :multipole, order = 2))))
+    θ = 0.7
+    @test Tθ(θ) ≈ Vb(0.9) * (G(r) + Hc(Ma + Mθ(θ)) / 2) rtol = 1.0e-12
+    @test ForwardDiff.derivative(Tθ, θ) ≈ Vb(0.9) * Hc(ForwardDiff.derivative(Mθ, θ)) / 2 rtol = 1.0e-10
+end
+
 @testset "𝕋^{aa} — self term IS the Hill tensor" begin
     # The identity that fixes the sign convention of the whole N-body family:
     # 𝕋^{aa} = +ℙ, positive definite like ℙ itself. Molinari & El Mouden use

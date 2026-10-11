@@ -26,15 +26,25 @@
 #  Brisard et al. state, and `order = 2` is the truncation implemented here.
 #
 #  The contraction M²_pq ∂_p∂_q is not evaluated by building a rank-6 array.
-#  M² is symmetric positive definite, so its spectral decomposition
-#  M² = Σ_k λ_k v_k ⊗ v_k turns the contraction into d second *directional*
-#  derivatives,
+#  With D(u) = d²/dt² 𝔾⁰(r + t u)|_{t=0} = u_p u_q ∂_p∂_q 𝔾⁰ the second
+#  derivative along u, and M² = Σ_k λ_k v_k ⊗ v_k its spectral decomposition
+#  (M² is symmetric positive semi-definite),
 #
-#       M²_pq ∂_p∂_q 𝔾⁰(r) = Σ_k λ_k d²/dt² 𝔾⁰(r + t v_k) |_{t=0} ,
+#       M²_pq ∂_p∂_q 𝔾⁰(r) = Σ_k λ_k D(v_k) ,
 #
-#  each of which is one nested-dual evaluation of the whole kernel.  This is
-#  exact (no finite differences), type-generic, and costs d evaluations
-#  instead of d² Hessians.
+#  d second directional derivatives, each one nested-dual evaluation of the
+#  whole kernel: exact (no finite differences), type-generic, and d
+#  evaluations instead of d² Hessians.
+#
+#  When M² carries derivatives (with respect to the semi-axes or the
+#  orientation), `eigen` cannot follow them, and at a double eigenvalue the
+#  eigenvectors have none to give. The frame is then taken on the value of M²
+#  alone, and M² is written in it, N = Vᵀ M² V: N is diagonal in value, and its
+#  entries carry all the derivatives. The diagonal enters as λ_k above; an
+#  off-diagonal entry, zero in value, enters by the polarization identity
+#  D(v_k + v_l) − D(v_k) − D(v_l) = 2 v_k·∇∇𝔾⁰·v_l, and only when it does carry
+#  a derivative — a moment turned with an angle — so that a derivative with
+#  respect to a semi-axis still costs d evaluations.
 # =============================================================================
 
 """
@@ -66,13 +76,40 @@ function _pair_multipole(
     return TensND.Tens(V_b * (G + _moment_contraction(P₀, r, M²; kw...) / 2))
 end
 
-# Σ_k λ_k d²/dt² 𝔾⁰(r + t v_k) — spectral form of M²_pq ∂_p∂_q 𝔾⁰.
+# M²_pq ∂_p∂_q 𝔾⁰ = Σ_k λ_k D(v_k), spectral form (header of this file).
+function _moment_contraction(P₀, r::AbstractVector, M²::AbstractMatrix{<:AbstractFloat}; kw...)
+    λ, V = eigen(Symmetric(M²))
+    D = [_second_directional(P₀, r, @view(V[:, k]); kw...) for k in eachindex(λ)]
+    return _spectral_sum(D, λ)
+end
+
+# M² carrying derivatives: the frame on its value, every derivative in
+# N = Vᵀ M² V (header of this file).
 function _moment_contraction(P₀, r::AbstractVector, M²::AbstractMatrix; kw...)
-    λ, V = eigen(Symmetric(_as_float_matrix(M²)))
-    d = length(r)
-    acc = _second_directional(P₀, r, @view(V[:, 1]); kw...) * λ[1]
-    for k in 2:d
-        acc = acc + _second_directional(P₀, r, @view(V[:, k]); kw...) * λ[k]
+    λ₀, V = eigen(Symmetric(MFH_Core._primal.(M²)))
+    N = V' * M² * V
+    # What is left of an entry of N once its value is taken off: its
+    # derivatives, at every level of nesting. The diagonal keeps λ₀ for its
+    # value, so that the value of a differentiated evaluation is the
+    # evaluation itself; the off-diagonal is zero in value.
+    δ(x) = x - MFH_Core._primal(x)
+    λ = [λ₀[k] + δ(N[k, k]) for k in eachindex(λ₀)]
+    D = [_second_directional(P₀, r, @view(V[:, k]); kw...) for k in eachindex(λ₀)]
+    acc = _spectral_sum(D, λ)
+    for k in eachindex(λ₀), l in (k + 1):lastindex(λ₀)
+        δN = δ(N[k, l])
+        iszero(δN) && continue
+        Dkl = _second_directional(P₀, r, @view(V[:, k]) .+ @view(V[:, l]); kw...)
+        acc = acc + (Dkl - D[k] - D[l]) * δN
+    end
+    return acc
+end
+
+# Σ_k D_k λ_k, in the order of the eigenvalues.
+function _spectral_sum(D, λ)
+    acc = D[1] * λ[1]
+    for k in 2:length(λ)
+        acc = acc + D[k] * λ[k]
     end
     return acc
 end
@@ -84,13 +121,6 @@ function _second_directional(P₀, r::AbstractVector, v; kw...)
     return ForwardDiff.derivative(df, zero(eltype(r)))
 end
 
-# `eigen` needs a concrete floating-point matrix; the eigenvectors of the
-# second-moment tensor are a *geometric* datum (the inclusion axes) and carry
-# no sensitivity of their own, so taking their values is legitimate here —
-# the differentiable dependence stays in `λ` and in the kernel evaluation.
-_as_float_matrix(M::AbstractMatrix{T}) where {T} = Float64.(ForwardDiff.value.(M))
-_as_float_matrix(M::AbstractMatrix{Float64}) = M
-
 """
     _second_moment(incl) -> Matrix
 
@@ -100,7 +130,7 @@ its centroid, expressed in the global frame. For an ellipsoid of semi-axes
 with ``\\mathbf{Q}`` the matrix whose columns are the principal axes.
 """
 function _second_moment(ell::Ellipsoid{dim}) where {dim}
-    Q = MFH_Core._basis_matrix(ell.basis)
+    Q = MFH_Core._frame_matrix(ell.basis)
     a = ell.semi_axes
     D = [i == j ? a[i]^2 / (dim + 2) : zero(a[1]) for i in 1:dim, j in 1:dim]
     return Q * D * Q'
