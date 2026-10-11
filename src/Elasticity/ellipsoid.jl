@@ -203,7 +203,7 @@ degenerate-limit redirection rules as
 function Ellipsoid(a::Ta, b::Tb, c::Tc, R::AbstractMatrix) where {Ta, Tb, Tc}
     T = MFH_Core._floatlike(promote_type(Ta, Tb, Tc))
     axes_in = (T(a), T(b), T(c))
-    basis_in = TensND.RotatedBasis(Matrix{Float64}(R))
+    basis_in = TensND.RotatedBasis(Matrix{float(eltype(R))}(R))
     axes_sorted, basis = MFH_Core._sort_axes_and_basis(axes_in, basis_in, :ellipsoid_3d)
     if T <: Real
         redirected = _resolve_degenerate_ellipsoid(axes_sorted, basis)

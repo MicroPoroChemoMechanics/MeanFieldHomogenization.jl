@@ -2,6 +2,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+using ForwardDiff
 
 @testset "shape_tensor — Ellipsoid 3D (canonical basis)" begin
     ell = Ellipsoid(3.0, 2.0, 1.0)
@@ -223,4 +224,30 @@ end
     ell_b = Ellipsoid(BigFloat(3), BigFloat(2), BigFloat(1))
     A_b = shape_tensor(ell_b)
     @test eltype(A_b) === BigFloat
+end
+
+@testset "Derivatives with respect to the orientation" begin
+    # Semi-axes given out of order permute the columns of the basis, and the
+    # permutation read the frame as Float64: a dual Euler angle threw, and so
+    # did a dual rotation matrix handed to a constructor, which converted it
+    # to Float64 before anything else. Reference: the rotation matrix of
+    # TensND, differentiated as it stands.
+    Q(θ) = Matrix(TensND.vecbasis(TensND.RotatedBasis(θ, 0.4, 0.2), :cov))
+    frame(incl) = Matrix(TensND.vecbasis(inclusion_basis(incl), :cov))
+    θ = 0.7
+    D = Diagonal([0.5, 3.0, 1.0])
+    dA_ref = ForwardDiff.derivative(t -> Q(t) * D * Q(t)', θ)
+    for incl in (t -> Ellipsoid(0.5, 3.0, 1.0; euler_angles = (t, 0.4, 0.2)), t -> Ellipsoid(0.5, 3.0, 1.0, Q(t)))
+        A(t) = Matrix(TensND.components_canon(shape_tensor(incl(t))))
+        @test A(θ) ≈ Q(θ) * D * Q(θ)' rtol = 1.0e-12
+        @test ForwardDiff.derivative(A, θ) ≈ dA_ref rtol = 1.0e-12
+    end
+    # The transverse axes of a cylinder in ascending order swap columns 2 and
+    # 3, the in-plane axes of a crack columns 1 and 2, the second negated.
+    swap23(M) = hcat(M[:, 1], M[:, 3], -M[:, 2])
+    swap12(M) = hcat(M[:, 2], -M[:, 1], M[:, 3])
+    @test ForwardDiff.derivative(t -> frame(Cylinder(0.4, 1.0, Q(t))), θ) ≈
+        ForwardDiff.derivative(t -> swap23(Q(t)), θ) rtol = 1.0e-12
+    @test ForwardDiff.derivative(t -> frame(EllipticCrack(0.5, 2.0, Q(t))), θ) ≈
+        ForwardDiff.derivative(t -> swap12(Q(t)), θ) rtol = 1.0e-12
 end

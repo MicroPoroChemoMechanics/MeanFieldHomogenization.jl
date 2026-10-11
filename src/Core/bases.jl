@@ -83,16 +83,12 @@ function _normalize_euler(angles::Tuple{Vararg{Number}})
         return (0.0, 0.0, 0.0)
     end
     T_promoted = promote_type(map(typeof, angles)...)
-    # `float` is what turns an `Int` or an `Irrational` angle into a usable one;
+    # `float` is what turns an `Int` or an `Irrational` angle into a usable one,
+    # and leaves a `ForwardDiff.Dual` a dual (which is not an `AbstractFloat`);
     # it is meaningless on a symbolic type, and `Symbolics.Num` subtypes `Real`
     # without being convertible from `Float64`, so `is_hard_numeric` — not
     # `<: Real` — is what decides here.
-    T = if is_hard_numeric(T_promoted)
-        Tf = float(T_promoted)
-        Tf <: AbstractFloat ? Tf : Float64
-    else
-        T_promoted
-    end
+    T = is_hard_numeric(T_promoted) ? float(T_promoted) : T_promoted
     return ntuple(i -> i ≤ n ? convert(T, angles[i]) : zero(T), 3)
 end
 
@@ -225,8 +221,9 @@ end
 
 Extract the 3×3 (or 2×2) rotation matrix associated with a TensND basis
 as a `Matrix{Float64}` — columns are the local axes expressed in the
-canonical frame.  See [`_frame_matrix`](@ref) for the element-type-preserving
-variant.
+canonical frame — for the code that is Float64 by construction (the
+quadrature oracle of the pair tensors). Anything that may meet a dual or
+symbolic frame reads [`_frame_matrix`](@ref), which keeps the element type.
 """
 function _basis_matrix(basis::TensND.AbstractBasis)
     E = TensND.vecbasis(basis, :cov)
@@ -247,7 +244,7 @@ preserve a right-handed (``\\det = +1``) frame — physically equivalent since
 flipping an axis direction leaves an ellipsoid invariant.
 """
 function _permute_basis_3d(basis::TensND.AbstractBasis, σ::NTuple{3, Int})
-    M = _basis_matrix(basis)
+    M = _frame_matrix(basis)
     M′ = similar(M)
     @inbounds for k in 1:3
         M′[:, k] = M[:, σ[k]]
@@ -265,7 +262,7 @@ or the basis with columns `(1, 2)` swapped and column 2 negated when
 `swap=true` (preserves ``\\det = +1``).
 """
 function _permute_basis_2d(basis::TensND.AbstractBasis, swap::Bool)
-    M = _basis_matrix(basis)
+    M = _frame_matrix(basis)
     swap || return TensND.RotatedBasis(M)
     M′ = similar(M)
     @inbounds begin
@@ -346,7 +343,7 @@ Swap the 2nd and 3rd columns of a 3D basis (column 1 fixed) and negate
 column 3 to keep ``\\det = +1``.  Used by `Cylinder`.
 """
 function _permute_basis_cols23(basis::TensND.AbstractBasis)
-    M = _basis_matrix(basis)
+    M = _frame_matrix(basis)
     M′ = copy(M)
     @inbounds begin
         M′[:, 2] = M[:, 3]
@@ -362,7 +359,7 @@ Swap the 1st and 2nd columns of a 3D basis (column 3 fixed) and negate
 column 2 to keep ``\\det = +1``.  Used by `EllipticCrack`.
 """
 function _permute_basis_cols12(basis::TensND.AbstractBasis)
-    M = _basis_matrix(basis)
+    M = _frame_matrix(basis)
     M′ = copy(M)
     @inbounds begin
         M′[:, 1] = M[:, 2]

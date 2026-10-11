@@ -103,7 +103,7 @@ axes associated with `b` and `c` respectively.
 """
 function Cylinder(b::Tb, c::Tc, R::AbstractMatrix) where {Tb, Tc}
     T = MFH_Core._floatlike(promote_type(Tb, Tc))
-    basis_in = TensND.RotatedBasis(Matrix{Float64}(R))
+    basis_in = TensND.RotatedBasis(Matrix{float(eltype(R))}(R))
     axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(b), T(c)), basis_in, :cylinder)
     code = _classify_cylinder_shape(T, axes_sorted...)
     S = _SHAPE_CYLINDER[code]
