@@ -10,6 +10,7 @@ module Elasticity
 using LinearAlgebra
 using TensND
 using QuadGK
+using StaticArrays: SVector
 using ..Elliptic
 using Polynomials
 using PolynomialRoots

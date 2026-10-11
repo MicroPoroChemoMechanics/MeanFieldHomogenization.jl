@@ -37,31 +37,13 @@ function _hill_3d_cylinder_aniso(
         C₀_arr[i, j, k, l] = C₀_princ[i, j, k, l]
     end
 
-    voigt_ij = ((1, 1), (2, 2), (3, 3), (2, 3), (1, 3), (1, 2))
-
     function integrand_at(φ)
         ζ = (zero(T), cos(T(φ)) / b, sin(T(φ)) / c)
 
         # Symmetric acoustic tensor + closed-form inverse (see
         # `_sym3_inv_acoustic` in hill_3d_aniso_nestedquadgk.jl): 6 independent
         # entries instead of 9, no `Matrix` allocation and no LU per node.
-        iK = _sym3_inv_acoustic(C₀_arr, ζ)
-
-        vals = Vector{T}(undef, 21)
-        idx = 0
-        for I in 1:6
-            i, j = voigt_ij[I]
-            for J in I:6
-                k, l = voigt_ij[J]
-                γ = T(0.25) * (
-                    ζ[i] * (iK[j + (k - 1) * 3] * ζ[l] + iK[j + (l - 1) * 3] * ζ[k]) +
-                        ζ[j] * (iK[i + (k - 1) * 3] * ζ[l] + iK[i + (l - 1) * 3] * ζ[k])
-                )
-                idx += 1
-                vals[idx] = γ
-            end
-        end
-        return vals
+        return _hill_integrand21(_sym3_inv_acoustic(C₀_arr, ζ), ζ, T)
     end
 
     MFH_Core._bump!(MFH_Core.QUADGK_OUTER)
@@ -69,20 +51,9 @@ function _hill_3d_cylinder_aniso(
         integrand_at, 0.0, 2π;
         atol = abstol, rtol = reltol, maxevals = maxiters
     )
-    P_vals ./= T(2π)
+    P_vals = P_vals ./ T(2π)
 
-    P_arr = zeros(T, 3, 3, 3, 3)
-    idx = 0
-    for I in 1:6, J in I:6
-        i, j = voigt_ij[I]
-        k, l = voigt_ij[J]
-        idx += 1
-        v = P_vals[idx]
-        P_arr[i, j, k, l] = v; P_arr[j, i, k, l] = v
-        P_arr[i, j, l, k] = v; P_arr[j, i, l, k] = v
-        P_arr[k, l, i, j] = v; P_arr[l, k, i, j] = v
-        P_arr[k, l, j, i] = v; P_arr[l, k, j, i] = v
-    end
+    P_arr = _fill_hill21!(zeros(T, 3, 3, 3, 3), P_vals)
 
     return TensND.Tens(P_arr, cyl.basis)
 end
