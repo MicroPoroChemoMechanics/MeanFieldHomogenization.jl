@@ -89,6 +89,7 @@ end
 # evaluation — measured at ~1.2 s per interaction tensor before caching, ~1 ms
 # after.
 const _GL_CACHE = Dict{Int, Tuple{Vector{Float64}, Vector{Float64}}}()
+const _GL_LOCK = ReentrantLock()
 
 """
     gauss_legendre_nodes(n, lo = -1, hi = 1) -> (x, w)
@@ -101,11 +102,15 @@ The rule for a given `n` is computed once and memoized — see the note above th
 definition; this is a load-bearing optimization, not a micro-tuning.
 """
 function gauss_legendre_nodes(n::Int, lo::Real = -1.0, hi::Real = 1.0)
-    x, w = get!(_GL_CACHE, n) do
-        n == 1 && return ([0.0], [2.0])
-        β = [k / sqrt(4k^2 - 1) for k in 1:(n - 1)]
-        F = eigen(SymTridiagonal(zeros(n), β))
-        return (F.values, 2 .* (F.vectors[1, :] .^ 2))
+    # Under a lock: the anisotropic Green operator is reached from threaded
+    # assemblies, and a `Dict` filled from two threads at once is corrupted.
+    x, w = lock(_GL_LOCK) do
+        get!(_GL_CACHE, n) do
+            n == 1 && return ([0.0], [2.0])
+            β = [k / sqrt(4k^2 - 1) for k in 1:(n - 1)]
+            F = eigen(SymTridiagonal(zeros(n), β))
+            return (F.values, 2 .* (F.vectors[1, :] .^ 2))
+        end
     end
     return (hi + lo) / 2 .+ (hi - lo) / 2 .* x, (hi - lo) / 2 .* w
 end

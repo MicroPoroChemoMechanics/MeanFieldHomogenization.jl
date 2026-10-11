@@ -112,6 +112,7 @@ end
         include("Core/test_newton_cylinder.jl")
         include("Core/test_green_dipole.jl")
         include("Core/test_green_aniso.jl")
+        include("Core/test_counters.jl")
     end
 
     @testset "Elasticity" begin
