@@ -419,3 +419,19 @@ end
     @test S._sc_basis_norm(C_ti, [1.0, 2.0, 3.0]) === nothing
     @test S._sc_basis_norm(C_ti, collect(1.0:length(TensND.get_data(C_ti)))) isa Real
 end
+
+@testset "AsymmetricSelfConsistent — insulating cracks in conduction" begin
+    # The compliance form at order 2 skipped the crack phases: their
+    # resistivity was never added, and the conductivity came out as if the
+    # cracks were not there, while order 4 added them. With insulating penny
+    # cracks of density ε oriented at random, the scheme reads
+    # R = R_m + (8/9) ε R, hence k = k_m (1 − 8ε/9).
+    k_m = 2.0
+    for ε in (0.05, 0.1)
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(k_m)); fraction = :rest)
+        add_phase!(rve, :F, PennyCrack(1.0), Dict(:K => TensISO{3}(k_m)); density = ε, symmetrize = :iso)
+        K = homogenize(rve, AsymmetricSelfConsistent(); property = :K)
+        @test get_array(K)[1, 1] ≈ k_m * (1 - 8ε / 9) rtol = 1.0e-7
+    end
+end

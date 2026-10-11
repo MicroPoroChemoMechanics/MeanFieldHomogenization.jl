@@ -1137,5 +1137,10 @@ function _asc_step_compliance_dispatch(
         KA_avg += f * KA
     end
     R_new = R_m + (A_avg - R_m ⋅ KA_avg) ⋅ R_n
+    # Crack contributions add directly to the resistivity, as at order 4.
+    for name in inclusion_phase_names(rve, m)
+        rve.amounts[name] isa CrackDensity || continue
+        R_new += _phase_compliance_contribution(rve, name, prop, K_n; kw...)
+    end
     return inv(R_new)
 end
