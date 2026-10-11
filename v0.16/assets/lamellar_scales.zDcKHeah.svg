@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 350" width="780" height="350"
+     font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title>The two scales of a lamellar porous material</title>
+  <desc>Left: a representative volume element made of randomly oriented lamellar
+  particles and spherical macropores. Right: one particle, a periodic stack of
+  parallel solid platelets separated by interfoliar layers.</desc>
+
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+            orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/>
+    </marker>
+    <g id="particle">
+      <rect x="-38" y="-15" width="76" height="30" rx="2" fill="#fdf0e6" stroke="#c8792f" stroke-width="1"/>
+      <rect x="-38" y="-15"   width="76" height="4.4" fill="#a8c6e8"/>
+      <rect x="-38" y="-8.6"  width="76" height="4.4" fill="#a8c6e8"/>
+      <rect x="-38" y="-2.2"  width="76" height="4.4" fill="#a8c6e8"/>
+      <rect x="-38" y="4.2"   width="76" height="4.4" fill="#a8c6e8"/>
+      <rect x="-38" y="10.6"  width="76" height="4.4" fill="#a8c6e8"/>
+    </g>
+  </defs>
+
+  <rect x="0" y="0" width="780" height="350" rx="8" fill="#fcfcfd"/>
+
+  <!-- ─── Panel A: the REV ─────────────────────────────────────────────── -->
+  <text x="28" y="30" font-size="14.5" font-weight="600" fill="#222">① REV — a porous polycrystal</text>
+  <rect x="28" y="44" width="300" height="250" fill="#ffffff" stroke="#444" stroke-width="1.5"/>
+
+  <circle cx="170" cy="128" r="15" fill="#f2f2f4" stroke="#999" stroke-width="1"/>
+  <circle cx="305" cy="200" r="12" fill="#f2f2f4" stroke="#999" stroke-width="1"/>
+  <circle cx="45"  cy="250" r="11" fill="#f2f2f4" stroke="#999" stroke-width="1"/>
+  <circle cx="145" cy="190" r="9"  fill="#f2f2f4" stroke="#999" stroke-width="1"/>
+
+  <use href="#particle" transform="translate(95,100) rotate(-25)"/>
+  <use href="#particle" transform="translate(85,195) rotate(60)"/>
+  <use href="#particle" transform="translate(200,190) rotate(-55)"/>
+  <use href="#particle" transform="translate(110,265) rotate(8)"/>
+  <use href="#particle" transform="translate(265,255) rotate(-30)"/>
+  <use href="#particle" transform="translate(250,100) rotate(30)"/>
+
+  <!-- magnifier cue on the particle that is zoomed on the right -->
+  <circle cx="250" cy="100" r="46" fill="none" stroke="#888" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <path d="M 293 82 L 428 62" stroke="#888" stroke-width="1" stroke-dasharray="5 4" fill="none"/>
+  <path d="M 293 120 L 428 246" stroke="#888" stroke-width="1" stroke-dasharray="5 4" fill="none"/>
+
+  <rect x="28" y="302" width="16" height="11" fill="#f2f2f4" stroke="#999"/>
+  <text x="50" y="311.5" font-size="13" fill="#333">macropores, φ</text>
+  <rect x="170" y="302" width="16" height="11" fill="#a8c6e8" stroke="#4472a8"/>
+  <text x="192" y="311.5" font-size="13" fill="#333">lamellar particles, 1 − φ</text>
+
+  <!-- ─── Panel B: one particle ────────────────────────────────────────── -->
+  <text x="430" y="30" font-size="14.5" font-weight="600" fill="#222">② one particle — a periodic two-layer laminate</text>
+
+  <rect x="430" y="60"  width="170" height="188" fill="#fdf0e6" stroke="#c8792f" stroke-width="1"/>
+  <rect x="430" y="60"  width="170" height="28" fill="#dce9f8" stroke="#4472a8" stroke-width="1.2"/>
+  <rect x="430" y="100" width="170" height="28" fill="#dce9f8" stroke="#4472a8" stroke-width="1.2"/>
+  <rect x="430" y="140" width="170" height="28" fill="#dce9f8" stroke="#4472a8" stroke-width="1.2"/>
+  <rect x="430" y="180" width="170" height="28" fill="#dce9f8" stroke="#4472a8" stroke-width="1.2"/>
+  <rect x="430" y="220" width="170" height="28" fill="#dce9f8" stroke="#4472a8" stroke-width="1.2"/>
+
+  <!-- interfoliar thickness h -->
+  <path d="M 428 88 L 396 88"  stroke="#666" stroke-width="0.9"/>
+  <path d="M 428 100 L 396 100" stroke="#666" stroke-width="0.9"/>
+  <path d="M 402 88 L 402 100" stroke="#333" stroke-width="1.1" marker-start="url(#ah)" marker-end="url(#ah)"/>
+  <text x="374" y="98" font-size="14" font-style="italic" fill="#333">h</text>
+
+  <!-- the normal -->
+  <path d="M 615 118 L 615 68" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
+  <text x="622" y="96" font-size="14.5" font-style="italic" font-weight="600" fill="#333">n</text>
+
+  <path d="M 632 150 L 606 154" stroke="#666" stroke-width="0.9"/>
+  <text x="638" y="158" font-size="13" fill="#333">platelets, 1 − f</text>
+  <path d="M 632 210 L 606 214" stroke="#666" stroke-width="0.9"/>
+  <text x="638" y="218" font-size="13" fill="#333">interfoliar space, f</text>
+</svg>
