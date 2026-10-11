@@ -218,7 +218,9 @@ function check_domain(s::NeuralSurrogate, x_raw::AbstractVector, guard::Symbol)
         ArgumentError("`guard` must be :warn, :error or :none, got :$guard")
     )
     for (i, name) in enumerate(s.features)
-        xi = _value(x_raw[i])
+        # The box is compared on values: a `ForwardDiff.Dual` feature is
+        # checked on its primal part.
+        xi = Core._primal(x_raw[i])
         lo, hi = s.domain_lo[i], s.domain_hi[i]
         # The bounds themselves are legitimate queries, and a caller who writes
         # `log(0.1)` where the box stored `log(0.10)` is one ulp outside. Slacken
@@ -237,11 +239,6 @@ end
 
 # Relative slack on the domain bounds — see `check_domain`.
 const _DOMAIN_SLACK = 1.0e-9
-
-# The box is compared on values, so a `ForwardDiff.Dual` feature is checked on
-# its primal part rather than erroring on the comparison.
-_value(x::Number) = x
-_value(x::ForwardDiff.Dual) = ForwardDiff.value(x)
 
 # ─── Evaluation ──────────────────────────────────────────────────────────────
 
