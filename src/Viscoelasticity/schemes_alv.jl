@@ -154,11 +154,7 @@ function dilute_alv(
     )
     length(contribs) == length(fractions) ||
         throw(ArgumentError("dilute_alv: contribs and fractions length mismatch"))
-    T = promote_type(
-        eltype(C_0),
-        (isempty(contribs) ? Float64 : eltype(contribs[1])),
-        eltype(fractions)
-    )
+    T = promote_type(eltype(C_0), _alv_blocks_eltype(contribs), eltype(fractions))
     C = T.(C_0)
     @inbounds for r in eachindex(contribs)
         @. C += fractions[r] * contribs[r]
@@ -200,8 +196,7 @@ function mori_tanaka_alv(
     @assert sz % 6 == 0
     n = sz ÷ 6
     T = promote_type(
-        eltype(C_0),
-        (isempty(A_duts) ? Float64 : eltype(A_duts[1])),
+        eltype(C_0), _alv_blocks_eltype(A_duts), _alv_blocks_eltype(contribs),
         eltype(fractions), typeof(f_matrix)
     )
     Id = _identity_alv(n, T)
@@ -251,11 +246,7 @@ function maxwell_alv(
     sz = size(C_0, 1)
     @assert sz % 6 == 0
     n = sz ÷ 6
-    T = promote_type(
-        eltype(C_0),
-        (isempty(contribs) ? Float64 : eltype(contribs[1])),
-        eltype(fractions), eltype(H_0)
-    )
+    T = promote_type(eltype(C_0), _alv_blocks_eltype(contribs), eltype(fractions), eltype(H_0))
     Id = _identity_alv(n, T)
     Σ = zeros(T, sz, sz)
     @inbounds for r in eachindex(contribs)

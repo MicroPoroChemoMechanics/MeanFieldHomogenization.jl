@@ -283,7 +283,7 @@ end
 # an inclusion geometry makes `contribs` / `A_duts` (and any phase's `K̃_r`)
 # `Dual` while `K̃_0` and the fractions stay `Float64`.  `Bool` is the neutral
 # seed — it promotes away against any numeric type.
-_alv2_blocks_eltype(mats) = mapreduce(eltype, promote_type, mats; init = Bool)
+_alv_blocks_eltype(mats) = mapreduce(eltype, promote_type, mats; init = Bool)
 
 """
     voigt_alv_order2(matrices, fractions) -> Matrix
@@ -297,7 +297,7 @@ function voigt_alv_order2(
     length(matrices) == length(fractions) ||
         throw(ArgumentError("voigt_alv_order2: phase counts mismatch"))
     isempty(matrices) && throw(ArgumentError("voigt_alv_order2: at least one phase required"))
-    T = promote_type(_alv2_blocks_eltype(matrices), eltype(fractions))
+    T = promote_type(_alv_blocks_eltype(matrices), eltype(fractions))
     out = zeros(T, size(matrices[1])...)
     @inbounds for r in eachindex(matrices)
         @. out += fractions[r] * matrices[r]
@@ -334,7 +334,7 @@ function dilute_alv_order2(
     length(contribs) == length(fractions) ||
         throw(ArgumentError("dilute_alv_order2: phase counts mismatch"))
     T = promote_type(
-        eltype(K_0), _alv2_blocks_eltype(contribs), eltype(fractions)
+        eltype(K_0), _alv_blocks_eltype(contribs), eltype(fractions)
     )
     out = T.(K_0)
     @inbounds for r in eachindex(contribs)
@@ -382,7 +382,7 @@ function mori_tanaka_alv_order2(
     n = sz ÷ 3
     T = promote_type(
         eltype(K_0), eltype(fractions), typeof(f_M),
-        _alv2_blocks_eltype(A_duts), _alv2_blocks_eltype(contribs)
+        _alv_blocks_eltype(A_duts), _alv_blocks_eltype(contribs)
     )
     Id = zeros(T, sz, sz)
     @inbounds for i in 1:n
@@ -422,7 +422,7 @@ function maxwell_alv_order2(
     n = sz ÷ 3
     T = promote_type(
         eltype(K_0), eltype(fractions), eltype(H_0),
-        _alv2_blocks_eltype(contribs)
+        _alv_blocks_eltype(contribs)
     )
     Id = zeros(T, sz, sz)
     @inbounds for i in 1:n

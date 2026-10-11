@@ -598,7 +598,7 @@ Used by the scheme fast paths to opt into the iso pipeline only when
 all phases really are iso 4-tensors.
 """
 function _try_iso_pairs(matrices::AbstractVector{<:AbstractMatrix})
-    T = isempty(matrices) ? Float64 : eltype(matrices[1])
+    T = isempty(matrices) ? Float64 : _alv_blocks_eltype(matrices)
     isempty(matrices) && return Tuple{Matrix{T}, Matrix{T}}[]
     out = Vector{Tuple{Matrix{T}, Matrix{T}}}()
     for M in matrices
@@ -619,7 +619,7 @@ Iso block matrices automatically satisfy the TI test (iso ⊂ TI), so a
 mixed iso/TI phase setup with the canonical axis works.
 """
 function _try_ti_tuples(matrices::AbstractVector{<:AbstractMatrix})
-    T = isempty(matrices) ? Float64 : eltype(matrices[1])
+    T = isempty(matrices) ? Float64 : _alv_blocks_eltype(matrices)
     isempty(matrices) && return NTuple{6, Matrix{T}}[]
     out = Vector{NTuple{6, Matrix{T}}}()
     for M in matrices
@@ -641,7 +641,7 @@ test, so a mixed iso/TI/ortho phase setup with the canonical material
 frame works.
 """
 function _try_ortho_tuples(matrices::AbstractVector{<:AbstractMatrix})
-    T = isempty(matrices) ? Float64 : eltype(matrices[1])
+    T = isempty(matrices) ? Float64 : _alv_blocks_eltype(matrices)
     isempty(matrices) && return NTuple{12, Matrix{T}}[]
     out = Vector{NTuple{12, Matrix{T}}}()
     for M in matrices
