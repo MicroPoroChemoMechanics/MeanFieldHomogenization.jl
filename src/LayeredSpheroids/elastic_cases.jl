@@ -173,11 +173,15 @@ function _group_fields(g::ModeGroup, reg::Symbol, n::Int, ϕ, p, q, c, μ, ν, :
     for (pot, m, trig, w) in g.parts
         n < m && continue
         uu, tt = mode_fields(PNMode(pot, reg, n, m, trig), ϕ, p, q, c, μ, ν, T)
-        u = ntuple(k -> u[k] + w * uu[k], 3)
-        t = ntuple(k -> t[k] + w * tt[k], 3)
+        u = _axpy3(u, w, uu)
+        t = _axpy3(t, w, tt)
     end
     return u, t
 end
+
+# `a + w b` on 3-tuples, a function of its arguments: as a closure over `u` and
+# `t`, which the loop above reassigns, it boxed both.
+_axpy3(a::NTuple{3}, w, b::NTuple{3}) = ntuple(k -> a[k] + w * b[k], 3)
 
 """
     _elastic_block(groups, regularities, q, c, μ, ν, ϕ₀, xg, wg, tdegs, ::Type{T})

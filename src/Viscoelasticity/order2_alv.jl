@@ -925,7 +925,10 @@ function self_consistent_alv_order2(
     end
     K = K_M
     for iter in 1:maxiters
-        AB = [_sc2_phase_AB(d.geom, d.K_r, K, d.sym, times) for d in data]
+        # The comprehension captures this iteration's estimate, not `K`
+        # itself, which is reassigned below and would be boxed.
+        Kᵢ = K
+        AB = [_sc2_phase_AB(d.geom, d.K_r, Kᵢ, d.sym, times) for d in data]
         A = sum(d.f .* ab[1] for (d, ab) in zip(data, AB))
         B = sum(d.f .* ab[2] for (d, ab) in zip(data, AB))
         K_new = B * volterra_inverse(A; block_size = 3)

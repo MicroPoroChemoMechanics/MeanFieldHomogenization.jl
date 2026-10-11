@@ -46,8 +46,6 @@ function _hill_3d_aniso_residue(
         C[i, j, k, l] = Float64(C₀_princ[i, j, k, l])
     end
 
-    voigt_ij = ((1, 1), (2, 2), (3, 3), (2, 3), (1, 3), (1, 2))
-
     const_I = ComplexF64(0.0, 1.0)
 
     function hill_at_phi(φ::Float64)
@@ -75,18 +73,14 @@ function _hill_3d_aniso_residue(
 
         # 21 numerator polynomials (upper-Voigt) of degree ≤ 5
         P_num = Vector{Polynomial{ComplexF64, :z}}(undef, 21)
-        idx = 0
-        for I in 1:6
-            vi, vj = voigt_ij[I]
-            for J in I:6
-                vk, vl = voigt_ij[J]
-                idx += 1
-                p = (
-                    ζ_poly[vi] * (adj_poly[vj, vk] * ζ_poly[vl] + adj_poly[vj, vl] * ζ_poly[vk]) +
-                        ζ_poly[vj] * (adj_poly[vi, vk] * ζ_poly[vl] + adj_poly[vi, vl] * ζ_poly[vk])
-                )
-                P_num[idx] = p * 0.25
-            end
+        for (n, (I, J)) in enumerate(_VOIGT_UPPER21)
+            vi, vj = _VOIGT_IJ[I]
+            vk, vl = _VOIGT_IJ[J]
+            p = (
+                ζ_poly[vi] * (adj_poly[vj, vk] * ζ_poly[vl] + adj_poly[vj, vl] * ζ_poly[vk]) +
+                    ζ_poly[vj] * (adj_poly[vi, vk] * ζ_poly[vl] + adj_poly[vi, vl] * ζ_poly[vk])
+            )
+            P_num[n] = p * 0.25
         end
 
         res = zeros(Float64, 21)
@@ -138,18 +132,7 @@ function _hill_3d_aniso_residue(
 
     P_vals ./= π
 
-    P_arr = zeros(Float64, 3, 3, 3, 3)
-    idx = 0
-    for I in 1:6, J in I:6
-        i, j = voigt_ij[I]
-        k, l = voigt_ij[J]
-        idx += 1
-        v = P_vals[idx]
-        P_arr[i, j, k, l] = v;  P_arr[j, i, k, l] = v
-        P_arr[i, j, l, k] = v;  P_arr[j, i, l, k] = v
-        P_arr[k, l, i, j] = v;  P_arr[l, k, i, j] = v
-        P_arr[k, l, j, i] = v;  P_arr[l, k, j, i] = v
-    end
+    P_arr = _fill_hill21!(zeros(Float64, 3, 3, 3, 3), P_vals)
 
     return TensND.Tens(P_arr, ell.basis)
 end

@@ -886,8 +886,13 @@ function _nnls(
     w = A' * (b - A * x)
     scale = maximum(abs, w; init = one(T))
 
+    # Explicit loops rather than a predicate and a generator: both captured `w`
+    # and `x`, which the loops reassign, and boxed them.
     for _ in 1:maxiter
-        cand = findall(j -> !passive[j] && w[j] > tol * scale, 1:n)
+        cand = Int[]
+        for j in 1:n
+            !passive[j] && w[j] > tol * scale && push!(cand, j)
+        end
         isempty(cand) && break
         j = cand[argmax(w[cand])]
         passive[j] = true
@@ -897,10 +902,10 @@ function _nnls(
             s = zeros(T, n)
             s[idx] = A[:, idx] \ b
             all(>(0), s[idx]) && (x = s; break)
-            α = minimum(
-                x[k] / (x[k] - s[k]) for k in idx if s[k] ≤ 0 && x[k] != s[k];
-                init = one(T)
-            )
+            α = one(T)
+            for k in idx
+                s[k] ≤ 0 && x[k] != s[k] && (α = min(α, x[k] / (x[k] - s[k])))
+            end
             x = x + α * (s - x)
             for k in idx
                 abs(x[k]) ≤ tol * scale && (passive[k] = false; x[k] = zero(T))
