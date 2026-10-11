@@ -102,6 +102,18 @@ end
     end
 end
 
+@testset "hill 2D — the anisotropic quadrature is exactly symmetric" begin
+    # The minor and major symmetries were imposed by averaging in place, so an
+    # entry already overwritten entered the next average of its orbit: equal
+    # only to rounding. Each orbit is now averaged once, and its members are
+    # equal exactly — what decides the symmetric storage of the result.
+    C = TensND.Tens(TensND.inv_KM([10.0 3.0 1.0; 3.0 8.0 0.5; 1.0 0.5 4.0]))
+    P = get_array(_hill_2d_aniso(Ellipsoid(1.0, 0.6; angle = 0.3), C))
+    for i in 1:2, j in 1:2, p in 1:2, q in 1:2
+        @test P[i, j, p, q] == P[p, q, i, j] == P[j, i, p, q] == P[i, j, q, p]
+    end
+end
+
 @testset "hill 2D — limite incompressible (k = Inf)" begin
     mu = 2.0
     for rho in (1.0, 0.5, 0.25)
