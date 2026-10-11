@@ -75,27 +75,6 @@ function _evaluate(rve::RVE, sc::SelfConsistent, ::Val{p}; kw...) where {p}
     return _solve_sc(sc.algorithm, step, P_init; sc.options..., solver_kw...)
 end
 
-"""
-    _sc_initial(init, rve, prop; kw...) -> AbstractTens
-
-Starting iterate of the self-consistent fixed point.
-
-The self-consistent morphology distinguishes no phase, so the seed cannot come
-from "the matrix" the way it did while an RVE was required to have one. It is
-stated on the scheme instead:
-
-- `:voigt` — the Voigt average of the phases. Always defined, positive definite
-  by construction, and it needs no phase to be singled out, which is what makes
-  a matrix-free RVE solvable at all.
-- `:reuss` — the Reuss average.
-- a phase name — that phase's property. This is what versions up to 0.7 used
-  implicitly through the matrix; pass it to reproduce an older number exactly.
-- a tensor — an explicit guess, the natural form when restarting from the
-  previous step of a constitutive loop.
-
-A phase named `:voigt` or `:reuss` wins over the keyword: a phase name is the
-caller's data, a keyword is ours.
-"""
 # The Voigt average is infinite as soon as one phase is rigid or incompressible
 # (an `iso_stiffness(Inf, μ)` layer, say), and an infinite seed makes the first
 # step fail deep inside a linear solve with "matrix contains Infs or NaNs".
@@ -117,6 +96,27 @@ function _voigt_seed(rve::RVE, prop::Symbol; kw...)
     return C
 end
 
+"""
+    _sc_initial(init, rve, prop; kw...) -> AbstractTens
+
+Starting iterate of the self-consistent fixed point.
+
+The self-consistent morphology distinguishes no phase, so the seed cannot come
+from "the matrix" the way it did while an RVE was required to have one. It is
+stated on the scheme instead:
+
+- `:voigt` — the Voigt average of the phases. Always defined, positive definite
+  by construction, and it needs no phase to be singled out, which is what makes
+  a matrix-free RVE solvable at all.
+- `:reuss` — the Reuss average.
+- a phase name — that phase's property: the start from the matrix, as Echoes
+  makes it.
+- a tensor — an explicit guess, the natural form when restarting from the
+  previous step of a constitutive loop.
+
+A phase named `:voigt` or `:reuss` wins over the keyword: a phase name is the
+caller's data, a keyword is ours.
+"""
 function _sc_initial(init::Symbol, rve::RVE, prop::Symbol; kw...)
     haskey(rve.phases, init) && return phase_property(rve, init, prop)
     init === :voigt && return _voigt_seed(rve, prop; kw...)

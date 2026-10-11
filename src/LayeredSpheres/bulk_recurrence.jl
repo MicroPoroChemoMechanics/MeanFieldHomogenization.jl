@@ -118,17 +118,6 @@ return the coefficients ``(A, B)`` of the layer's local expansion
     return A, B
 end
 
-"""
-    _bulk_state_seq(sphere, κ₀, μ₀) -> NTuple{N, (u, σ)⁻}, (u, σ)⁺_N
-
-Propagate the bulk state vector from the core outward.  Returns the
-sequence of states at each interface ``r_k`` **on the inside** (layer
-side) for every ``k = 1, \\dots, N``, and the state on the **outside** of ``r_N``
-(matrix side).  Interface jumps are applied via
-`_bulk_interface_T(interface, κ, μ, r)` (defined in
-`interface_transfer.jl`).  The seed state corresponds to a unit
-pressure amplitude ``P_1 = 1``.
-"""
 # Cached tuple of per-layer `(κ, μ)` moduli pairs.
 @inline function _bulk_layer_moduli(sphere::LayeredSphere{T, N}) where {T, N}
     return ntuple(k -> _iso_bulk_shear(layer_modulus(sphere, k)), Val(N))
@@ -154,6 +143,17 @@ end
     )
 end
 
+"""
+    _bulk_state_seq(sphere, κ₀, μ₀) -> NTuple{N, (u, σ)⁻}, (u, σ)⁺_N
+
+Propagate the bulk state vector from the core outward.  Returns the
+sequence of states at each interface ``r_k`` **on the inside** (layer
+side) for every ``k = 1, \\dots, N``, and the state on the **outside** of ``r_N``
+(matrix side).  Interface jumps are applied via
+`_bulk_interface_T(interface, κ, μ, r)` (defined in
+`interface_transfer.jl`).  The seed state corresponds to a unit
+pressure amplitude ``P_1 = 1``.
+"""
 function _bulk_state_seq(sphere::LayeredSphere{T, N}, κ₀, μ₀) where {T, N}
     κμ = _bulk_layer_moduli(sphere)
     TP = _bulk_promote(sphere, κμ, κ₀, μ₀)

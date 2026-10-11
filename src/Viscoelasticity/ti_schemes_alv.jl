@@ -25,13 +25,6 @@
 
 # ── TI 6-tuple primitives ───────────────────────────────────────────────────
 
-"""
-    _ti_identity(n, T) -> NTuple{6, Matrix{T}}
-
-TI form of the ``6n\\times 6n`` block-diagonal identity matrix:
-``(\\ell_1, \\ell_2, \\ell_3, \\ell_4, \\ell_5, \\ell_6) = (\\mathbb 1, \\mathbb 1, 0, 0, \\mathbb 1, \\mathbb 1)`` (because
-``\\boldsymbol{1}\\stackrel{s}{\\boxtimes}\\boldsymbol{1} = \\mathbb{W}_1 + \\mathbb{W}_2 + \\mathbb{W}_5 + \\mathbb{W}_6`` for the full 4-tensor identity).
-"""
 # Promote `T` with the eltype of every TI 6-tuple in `list` (Dual-safe :
 # phases may carry a wider eltype than the matrix, e.g. geometry Duals).
 @inline function _ti_list_eltype(T::Type, list::AbstractVector)
@@ -41,6 +34,13 @@ TI form of the ``6n\\times 6n`` block-diagonal identity matrix:
     return T
 end
 
+"""
+    _ti_identity(n, T) -> NTuple{6, Matrix{T}}
+
+TI form of the ``6n\\times 6n`` block-diagonal identity matrix:
+``(\\ell_1, \\ell_2, \\ell_3, \\ell_4, \\ell_5, \\ell_6) = (\\mathbb 1, \\mathbb 1, 0, 0, \\mathbb 1, \\mathbb 1)`` (because
+``\\boldsymbol{1}\\stackrel{s}{\\boxtimes}\\boldsymbol{1} = \\mathbb{W}_1 + \\mathbb{W}_2 + \\mathbb{W}_5 + \\mathbb{W}_6`` for the full 4-tensor identity).
+"""
 @inline function _ti_identity(n::Int, T::Type)
     Iₙ = Matrix{T}(LinearAlgebra.I, n, n)
     Zₙ = zeros(T, n, n)

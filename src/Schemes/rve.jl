@@ -664,17 +664,6 @@ Base.convert(::Type{RVE{T}}, rve::RVE) where {T <: Number} =
 #  Mutators
 # =============================================================================
 
-"""
-    add_phase!(rve, :M, geometry, properties::AbstractDict; fraction = :rest, symmetrize = nothing)
-
-Register the matrix phase. Must be called before any [`add_phase!`](@ref).
-The matrix has no explicit amount (its volume fraction is implicit).
-
-Pass a `symmetrize = :iso | :ti | TISymmetrize(axis) | NoSymmetrize()` kwarg
-to declare an orientation-distribution projection of the matrix's
-localization tensor (see [`AbstractSymmetrize`](@ref)).
-"""
-
 # Register `name` as the phase absorbing the volume complement, enforcing the
 # two invariants that make the closure well posed: at most one such phase, and
 # not under a policy that leaves no complement to absorb.
@@ -702,11 +691,12 @@ end
     add_phase!(rve, name::Symbol, geometry, properties::AbstractDict;
                fraction = nothing, density = nothing, symmetrize = nothing)
 
-Register an inclusion phase with the given `geometry` and material
-`properties`. Exactly one of `fraction` (for ellipsoidal inclusions and
-solid inhomogeneities) or `density` (for cracks) must be supplied;
-`fraction` produces a [`VolumeFraction`](@ref), `density` a
-[`CrackDensity`](@ref).
+Register a phase with the given `geometry` and material `properties`.
+Exactly one of `fraction` (for ellipsoidal inclusions and solid
+inhomogeneities) or `density` (for cracks) must be supplied; `fraction`
+produces a [`VolumeFraction`](@ref), `density` a [`CrackDensity`](@ref).
+`fraction = :rest` makes the phase absorb the volume complement — at most
+one phase per RVE, and not under `closure = RescaledFractions()`.
 
 Both `fraction` and `density` are stored under the RVE's declared
 element-type floor `T`: widened to `promote_type(T, typeof(value))`,
