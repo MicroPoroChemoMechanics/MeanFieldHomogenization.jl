@@ -108,6 +108,16 @@ _sums_to_unit(::VolumeFraction) = true
 _sums_to_unit(::CrackDensity) = false
 
 """
+    _is_crack_family(a::AbstractAmount) -> Bool
+
+Whether the phase is a family of flat cracks, counted by a density rather than
+a volume: `true` for [`CrackDensity`](@ref) only. The schemes branch on this
+to give cracks their compliance contribution instead of a concentration tensor.
+"""
+_is_crack_family(::CrackDensity) = true
+_is_crack_family(::AbstractAmount) = false
+
+"""
     Remainder() <: AbstractAmount
 
 Marker amount of the phase whose volume fraction is *derived* rather than
@@ -752,6 +762,16 @@ end
 #  will propagate but was never promoted with the rest.
 # =============================================================================
 
+# The same kind of amount, carrying the value `v`.
+_with_value(::VolumeFraction, v) = VolumeFraction(v)
+_with_value(::CrackDensity, v) = CrackDensity(v)
+
+# The `add_phase!` keyword that declares the amount `a` again, for a scheme that
+# rebuilds an RVE phase by phase.
+_amount_keyword(a::VolumeFraction) = (; fraction = amount_value(a))
+_amount_keyword(a::CrackDensity) = (; density = amount_value(a))
+_amount_keyword(::Remainder) = (; fraction = :rest)
+
 """
     set_amount!(rve::RVE, name::Symbol, value) -> RVE
 
@@ -793,11 +813,7 @@ function set_amount!(rve::RVE{T}, name::Symbol, value) where {T}
                 "amount to set; change an explicit fraction instead."
         )
     )
-    new = if old isa VolumeFraction
-        VolumeFraction(_amount_promote(T, value))
-    else
-        CrackDensity(_amount_promote(T, value))
-    end
+    new = _with_value(old, _amount_promote(T, value))
     rve.amounts[name] = new
     # Only a volume fraction can move the sum the closure is applied to.
     if _sums_to_unit(new)
@@ -867,6 +883,15 @@ The phase to exclude has to be named: the reference medium is a property of the
 inclusion_phase_names(rve::RVE, matrix::Symbol) =
     Symbol[n for n in rve.phase_names if n != matrix]
 
+# The phases counted by a volume, and the crack families counted by a density,
+# in declaration order; with `matrix`, that phase left out.
+_volume_phase_names(rve::RVE) = Symbol[n for n in rve.phase_names if !_is_crack_family(rve.amounts[n])]
+_volume_phase_names(rve::RVE, matrix::Symbol) =
+    Symbol[n for n in inclusion_phase_names(rve, matrix) if !_is_crack_family(rve.amounts[n])]
+_crack_phase_names(rve::RVE) = Symbol[n for n in rve.phase_names if _is_crack_family(rve.amounts[n])]
+_crack_phase_names(rve::RVE, matrix::Symbol) =
+    Symbol[n for n in inclusion_phase_names(rve, matrix) if _is_crack_family(rve.amounts[n])]
+
 """
     phase_property(rve, name::Symbol, key::Symbol) -> AbstractTens
 
@@ -923,11 +948,12 @@ A [`CrackDensity`](@ref) phase reads as zero: a flat crack carries no volume.
 function volume_fraction(rve::RVE{T}, name::Symbol) where {T}
     haskey(rve.amounts, name) ||
         throw(ArgumentError("no phase named :$(name) in RVE"))
-    a = rve.amounts[name]
-    a isa CrackDensity && return zero(promote_type(T, eltype(a)))
-    a isa Remainder && return remainder_volume_fraction(rve)
-    return _closure_scale(_closure(rve), amount_value(a), rve.f_sum)
+    return _volume_fraction(rve.amounts[name], rve, T)
 end
+
+_volume_fraction(a::AbstractAmount, rve, ::Type) = _closure_scale(_closure(rve), amount_value(a), rve.f_sum)
+_volume_fraction(a::CrackDensity, rve, ::Type{T}) where {T} = zero(promote_type(T, eltype(a)))
+_volume_fraction(::Remainder, rve, ::Type) = remainder_volume_fraction(rve)
 
 # Under `RescaledFractions` a declared fraction is divided by their sum; every
 # other policy uses it as declared. A plain division, so it differentiates.
@@ -970,9 +996,11 @@ type (promoted with the RVE floor) if the phase carries a
 """
 function crack_density(rve::RVE{T}, name::Symbol) where {T}
     haskey(rve.amounts, name) || return zero(T)
-    a = rve.amounts[name]
-    return a isa CrackDensity ? amount_value(a) : zero(promote_type(T, eltype(a)))
+    return _crack_density(rve.amounts[name], T)
 end
+
+_crack_density(a::CrackDensity, ::Type) = amount_value(a)
+_crack_density(a::AbstractAmount, ::Type{T}) where {T} = zero(promote_type(T, eltype(a)))
 
 """
     phase_symmetrize(rve, name::Symbol) -> AbstractSymmetrize
@@ -1121,14 +1149,7 @@ function Base.show(io::IO, ::MIME"text/plain", rve::RVE{T, S}) where {T, S}
     # actually use. No phase is singled out as "the matrix": which one plays
     # the reference medium is the scheme's business, not the RVE's.
     for name in rve.phase_names
-        a = rve.amounts[name]
-        if a isa CrackDensity
-            println(io, "  phase :$(name)   ε = $(amount_value(a))")
-        elseif a isa Remainder
-            println(io, "  phase :$(name)   f = $(volume_fraction(rve, name))  (rest)")
-        else
-            println(io, "  phase :$(name)   f = $(volume_fraction(rve, name))")
-        end
+        _show_amount(io, rve.amounts[name], rve, name)
     end
     println(io, "  closure : ", _closure(rve))
     ds = rve.distribution_shape
@@ -1138,6 +1159,12 @@ function Base.show(io::IO, ::MIME"text/plain", rve::RVE{T, S}) where {T, S}
     )
     return
 end
+
+# One line per phase: a crack family by its density, the others by the fraction
+# the schemes use, the complement marked as such.
+_show_amount(io, a::CrackDensity, rve, name) = println(io, "  phase :$(name)   ε = $(amount_value(a))")
+_show_amount(io, ::Remainder, rve, name) = println(io, "  phase :$(name)   f = $(volume_fraction(rve, name))  (rest)")
+_show_amount(io, ::AbstractAmount, rve, name) = println(io, "  phase :$(name)   f = $(volume_fraction(rve, name))")
 
 Base.show(io::IO, rve::RVE{T}) where {T} =
     print(io, "RVE{$T}(", length(rve.phase_names), " phases)")

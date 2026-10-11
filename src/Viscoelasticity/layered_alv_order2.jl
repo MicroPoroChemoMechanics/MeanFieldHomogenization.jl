@@ -29,10 +29,8 @@
 # The n × n conductivity matrix of a layer, of a reference law, or of a running
 # 3n × 3n reference. A layer stored as an elastic tensor is a Heaviside law, and
 # a law in `:creep` mode (a resistivity) is inverted.
-function _cond_volterra_alv(K, times::AbstractVector{<:Real})
-    law = K isa ViscoLaw ? K : heaviside_law(K)
-    return iso_order2_params_from_blocks(_trapezoidal_relaxation(law, times, 3))
-end
+_cond_volterra_alv(K, times::AbstractVector{<:Real}) =
+    iso_order2_params_from_blocks(_trapezoidal_relaxation(_as_visco_law(K), times, 3))
 _cond_volterra_alv(K::AbstractMatrix, ::AbstractVector{<:Real}) = iso_order2_params_from_blocks(K)
 # An order-2 tensor of TensND is an `AbstractMatrix` too, but an elastic one.
 _cond_volterra_alv(K::TensND.AbstractTens, times::AbstractVector{<:Real}) =
@@ -208,9 +206,14 @@ end
 function _layer_cond_kernels_alv(sphere::LayeredSphere{T, N}, times) where {T, N}
     Ks = map(1:N) do k
         K = layer_modulus(sphere, k)
-        return _trapezoidal_relaxation(K isa ViscoLaw ? K : heaviside_law(K), times, 3)
+        return _trapezoidal_relaxation(_as_visco_law(K), times, 3)
     end
     return Ks, [layer_volume_fraction(sphere, k) for k in 1:N]
 end
 _layer_voigt_alv2(sphere::LayeredSphere, times) = voigt_alv_order2(_layer_cond_kernels_alv(sphere, times)...)
 _layer_reuss_alv2(sphere::LayeredSphere, times) = reuss_alv_order2(_layer_cond_kernels_alv(sphere, times)...)
+
+# The average a scheme reads as the conductivity of a layered sphere, as
+# `_layer_bound_alv` at order 4.
+_layer_bound_alv2(::Reuss, sphere::LayeredSphere, times) = _layer_reuss_alv2(sphere, times)
+_layer_bound_alv2(::HomogenizationScheme, sphere::LayeredSphere, times) = _layer_voigt_alv2(sphere, times)

@@ -97,19 +97,8 @@ function self_consistent_alv_newton(
     for name in incl_names
         ph = rve.phases[name]
         a = rve.amounts[name]
-        if a isa CrackDensity
-            ph.geometry isa MFH_Core.AbstractCrack ||
-                throw(ArgumentError("self_consistent_alv_newton: phase $name has CrackDensity but geometry is not a crack"))
-            Rn_mat = haskey(ph.properties, :Rn) ?
-                _trapezoidal_relaxation_scalar(ph.properties[:Rn], times) : nothing
-            Rt_mat = haskey(ph.properties, :Rt) ?
-                _trapezoidal_relaxation_scalar(ph.properties[:Rt], times) : nothing
-            push!(
-                crack_data_full, (
-                    ph.geometry, a.value,
-                    phase_symmetrize(rve, name), Rn_mat, Rt_mat,
-                )
-            )
+        if _is_crack_family(a)
+            push!(crack_data_full, _alv_crack_record(rve, name, a, times, "self_consistent_alv_newton"))
             continue
         end
         C_r_law = phase_property(rve, name, prop)

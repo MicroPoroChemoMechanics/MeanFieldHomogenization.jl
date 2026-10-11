@@ -90,15 +90,17 @@ struct FracturedPoroelasticRock{N, M <: MicrocrackedMaterial{N}, T} <: AbstractM
     porosity_ref::T
 end
 
+# The conductivity of a closed family: that of its fracture for a conductive
+# crack, none for any other.
+_family_conductivity(geom::Cracks.ConductiveCrack) = Cracks.fracture_conductivity(geom)
+_family_conductivity(geom) = 0.0
+
 function FracturedPoroelasticRock(
         rve, scheme; ω₀ = nothing, k_matrix::Real = 1.0e-18,
         porosity_ref::Real = 0.0, kw...
     )
     mech = MicrocrackedMaterial(rve, scheme; ω₀ = ω₀, kw...)
-    C₀ = map(mech.families) do name
-        geom = rve.phases[name].geometry
-        geom isa Cracks.ConductiveCrack ? Cracks.fracture_conductivity(geom) : 0.0
-    end
+    C₀ = map(name -> _family_conductivity(rve.phases[name].geometry), mech.families)
     T = float(promote_type(eltype(mech.ω₀), eltype(C₀), typeof(k_matrix)))
     return FracturedPoroelasticRock{length(C₀), typeof(mech), T}(
         mech, map(T, C₀), T(k_matrix), T(porosity_ref)

@@ -251,26 +251,11 @@ function _rve_with_open(m::MicrocrackedMaterial, open)
         idx = findfirst(==(name), m.families)
         idx !== nothing && !open[idx] && continue
         p = rve.phases[name]
-        a = rve.amounts[name]
-        if a isa Schemes.CrackDensity
-            Schemes.add_phase!(
-                kept, name, p.geometry, p.properties;
-                density = Schemes.amount_value(a),
-                symmetrize = Schemes.phase_symmetrize(rve, name)
-            )
-        elseif a isa Schemes.Remainder
-            Schemes.add_phase!(
-                kept, name, p.geometry, p.properties;
-                fraction = :rest,
-                symmetrize = Schemes.phase_symmetrize(rve, name)
-            )
-        else
-            Schemes.add_phase!(
-                kept, name, p.geometry, p.properties;
-                fraction = Schemes.amount_value(a),
-                symmetrize = Schemes.phase_symmetrize(rve, name)
-            )
-        end
+        Schemes.add_phase!(
+            kept, name, p.geometry, p.properties;
+            Schemes._amount_keyword(rve.amounts[name])...,
+            symmetrize = Schemes.phase_symmetrize(rve, name)
+        )
     end
     return kept
 end

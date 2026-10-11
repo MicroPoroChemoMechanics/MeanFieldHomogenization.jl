@@ -245,6 +245,13 @@ end
         fraction = 0.2
     )
     @test_throws ArgumentError homogenize_alv(ti_matrix, DifferentialScheme(), :C; times = times)
+
+    # An inclusion carrying the volume complement has no amount to integrate up
+    # to. It used to be taken for a crack family and refused as one.
+    complement = RVE()
+    add_phase!(complement, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_M_t)); fraction = 0.8)
+    add_phase!(complement, :R, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(C_I_t)); fraction = :rest)
+    @test_throws r"volume complement" homogenize_alv(complement, DifferentialScheme(:I), :C; times = times)
 end
 
 @testset "differential_alv_order2 — elastic limit and dual form" begin

@@ -191,13 +191,15 @@ both; under [`MixedBC`](@ref) there is no lattice, so the period is reported as
 infinite and the cutoff as zero, which makes every image sum collapse to the
 single primary pair.
 """
-function _lattice_parameters(asm::ParticleAssembly, override)
-    b = asm.boundary
-    if b isa PeriodicBox
-        return (b.period, override === nothing ? b.cutoff : override)
-    end
-    # No periodicity: keep only the primary images.  A period larger than any
-    # cutoff achieves that without a special case in the summation loop.
+_lattice_parameters(asm::ParticleAssembly, override) =
+    _lattice_parameters(asm.boundary, asm, override)
+
+_lattice_parameters(b::PeriodicBox, asm, override) =
+    (b.period, override === nothing ? b.cutoff : override)
+
+# No periodicity: keep only the primary images.  A period larger than any
+# cutoff achieves that without a special case in the summation loop.
+function _lattice_parameters(::MixedBC, asm, override)
     c = override === nothing ? _mixed_bc_reach(asm) : override
     return (10 * c + one(c), c)
 end

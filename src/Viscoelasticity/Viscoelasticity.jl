@@ -68,7 +68,7 @@ using ..Schemes: RVE, HomogenizationScheme, Laminated, Voigt, Reuss, Dilute, Dil
     volume_fraction, matrix_name, host_phase_name,
     AbstractSymmetrize, NoSymmetrize, IsoSymmetrize, TISymmetrize,
     phase_symmetrize,
-    VolumeFraction, CrackDensity, amount_value
+    VolumeFraction, CrackDensity, amount_value, _is_crack_family
 using ForwardDiff
 using OrdinaryDiffEq
 using SpecialFunctions: gamma, expintx

@@ -282,59 +282,47 @@ end
 end
 
 """
-    _sort_axes_and_basis(axes, basis, layout::Symbol) -> (sorted_axes, new_basis)
+    _sort_axes_and_basis(axes, basis, layout::Val) -> (sorted_axes, new_basis)
 
 Sort `axes` into descending order and permute the columns of `basis`
 accordingly to preserve the physical geometry of the inclusion.
 
 Supported layouts:
-- `:ellipsoid_3d` — full 3D permutation of ``(a, b, c)`` over columns 1,2,3.
-- `:ellipsoid_2d` — 2D permutation of ``(a, b)`` over columns 1,2.
-- `:cylinder`    — swap columns 2,3 if the two transverse axes are in
+- `Val(:ellipsoid_3d)` — full 3D permutation of ``(a, b, c)`` over columns 1,2,3.
+- `Val(:ellipsoid_2d)` — 2D permutation of ``(a, b)`` over columns 1,2.
+- `Val(:cylinder)`    — swap columns 2,3 if the two transverse axes are in
   ascending order (column 1 = cylinder axis, fixed).
-- `:crack`       — swap columns 1,2 if ``b > a`` (column 3 = crack
+- `Val(:crack)`       — swap columns 1,2 if ``b > a`` (column 3 = crack
   normal, fixed).
 
 Symbolic or non-Real element types are returned untouched (no
 comparison is performed).
 """
 function _sort_axes_and_basis(
-        axes::NTuple{3, T}, basis::TensND.AbstractBasis, layout::Symbol
+        axes::NTuple{3, T}, basis::TensND.AbstractBasis, ::Val{:ellipsoid_3d}
     ) where {T}
     is_hard_numeric(T) || return (axes, basis)
-    if layout === :ellipsoid_3d
-        σ = Tuple(sortperm(collect(axes); rev = true))::NTuple{3, Int}
-        σ == (1, 2, 3) && return (axes, basis)
-        sorted = (axes[σ[1]], axes[σ[2]], axes[σ[3]])
-        return (sorted, _permute_basis_3d(basis, σ))
-    elseif layout === :cylinder
-        # axes = (axis, b, c) with axes[1] ≡ Inf placeholder — ignore
-        # here; caller passes (b, c).  This 3-tuple branch is unused.
-        throw(ArgumentError("layout `:cylinder` expects a 2-tuple (b, c)"))
-    end
-    throw(ArgumentError("unknown layout $(layout) for 3-tuple axes"))
+    σ = Tuple(sortperm(collect(axes); rev = true))::NTuple{3, Int}
+    σ == (1, 2, 3) && return (axes, basis)
+    sorted = (axes[σ[1]], axes[σ[2]], axes[σ[3]])
+    return (sorted, _permute_basis_3d(basis, σ))
 end
 
 function _sort_axes_and_basis(
-        axes::NTuple{2, T}, basis::TensND.AbstractBasis, layout::Symbol
+        axes::NTuple{2, T}, basis::TensND.AbstractBasis, layout::Val
     ) where {T}
     is_hard_numeric(T) || return (axes, basis)
     a, b = axes
-    swap = b > a
-    if layout === :ellipsoid_2d
-        swap || return (axes, basis)
-        return ((b, a), _permute_basis_2d(basis, true))
-    elseif layout === :cylinder
-        # axes = (b, c); cylinder axis is column 1 and stays fixed.
-        swap || return (axes, basis)
-        return ((b, a), _permute_basis_cols23(basis))
-    elseif layout === :crack
-        # axes = (a, b); crack normal is column 3 and stays fixed.
-        swap || return (axes, basis)
-        return ((b, a), _permute_basis_cols12(basis))
-    end
-    throw(ArgumentError("unknown layout $(layout) for 2-tuple axes"))
+    b > a || return (axes, basis)
+    return ((b, a), _swap_axes_basis(basis, layout))
 end
+
+# The two columns a 2-axis layout swaps.
+_swap_axes_basis(basis, ::Val{:ellipsoid_2d}) = _permute_basis_2d(basis, true)
+# axes = (b, c); the cylinder axis is column 1 and stays fixed.
+_swap_axes_basis(basis, ::Val{:cylinder}) = _permute_basis_cols23(basis)
+# axes = (a, b); the crack normal is column 3 and stays fixed.
+_swap_axes_basis(basis, ::Val{:crack}) = _permute_basis_cols12(basis)
 
 """
     _permute_basis_cols23(basis) -> RotatedBasis

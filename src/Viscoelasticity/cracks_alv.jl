@@ -246,13 +246,7 @@ function delta_compliance_alv(
         crack::MFH_Core.AbstractCrack,
         H̃::AbstractMatrix, ε::Real
     )
-    if crack isa EllipticCrack
-        return (4π / 3) * ε .* H̃
-    elseif crack isa RibbonCrack
-        return Float64(π) * ε .* H̃
-    else
-        throw(ArgumentError("delta_compliance_alv: unsupported crack type $(typeof(crack))"))
-    end
+    return Cracks.crack_density_factor(crack) * ε .* H̃
 end
 
 """
@@ -339,11 +333,5 @@ function delta_stiffness_alv(
         crack::MFH_Core.AbstractCrack,
         Ñ::AbstractMatrix, ε::Real
     )
-    if crack isa EllipticCrack
-        return (4π / 3) * ε .* Ñ
-    elseif crack isa RibbonCrack
-        return Float64(π) * ε .* Ñ
-    else
-        throw(ArgumentError("delta_stiffness_alv: unsupported crack type $(typeof(crack))"))
-    end
+    return Cracks.crack_density_factor(crack) * ε .* Ñ
 end

@@ -126,10 +126,7 @@ function crack_family_compliances(
     )
     m = matrix_name(scheme, rve)
     names = _crack_family_names(rve)
-    solid_inclusions = [
-        n for n in inclusion_phase_names(rve, m)
-            if !(rve.amounts[n] isa CrackDensity)
-    ]
+    solid_inclusions = _volume_phase_names(rve, m)
     isempty(solid_inclusions) || throw(
         ArgumentError(
             "crack_family_compliances(::MoriTanaka) requires the matrix to be the " *
@@ -189,8 +186,7 @@ end
 # per-family law has no meaning (see the docstring above).
 function _crack_family_names(rve::RVE)
     names = Symbol[]
-    for name in rve.phase_names
-        rve.amounts[name] isa CrackDensity || continue
+    for name in _crack_phase_names(rve)
         sym = phase_symmetrize(rve, name)
         sym isa NoSymmetrize || throw(
             ArgumentError(

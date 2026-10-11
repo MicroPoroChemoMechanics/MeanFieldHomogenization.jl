@@ -133,8 +133,6 @@ function laminate_alv(lam::Laminates.Laminate, ::Val{4}; times, property::Symbol
     n = length(times)
     basis = Laminates.laminate_basis(lam)
     _alv_check_numeric_frame(basis)
-    rotate = !(basis isa TensND.CanonicalBasis)
-    Q = rotate ? MFH_Core._bond6(MFH_Core._frame_matrix(basis)) : nothing
 
     Cs = map(names) do nm
         law = Laminates.layer_property(lam, nm, property)
@@ -143,8 +141,7 @@ function laminate_alv(lam::Laminates.Laminate, ::Val{4}; times, property::Symbol
                 "laminate_alv: layer :$(nm) property :$(property) is not a ViscoLaw"
             )
         )
-        M = _trapezoidal_relaxation(law, times, 6)
-        return rotate ? _alv_rotate_blocks(M, Q, n, 6) : M
+        return _alv_to_layer_frame(_trapezoidal_relaxation(law, times, 6), basis, n)
     end
     fs = [Laminates.layer_volume_fraction(lam, nm) for nm in names]
 
@@ -155,8 +152,17 @@ function laminate_alv(lam::Laminates.Laminate, ::Val{4}; times, property::Symbol
     )
     # Back from the layer frame to the canonical one, where every other ALV
     # operator lives and where the elastic `Laminated` scheme puts its tensor.
-    return rotate ? _alv_rotate_blocks(M_layer, Q', n, 6) : M_layer
+    return _alv_from_layer_frame(M_layer, basis, n)
 end
+
+# The 6n × 6n relaxation blocks rotated from the canonical frame to the layer
+# frame `basis`, and back. Nothing to do when the layer frame is the canonical
+# one.
+_alv_to_layer_frame(M, ::TensND.CanonicalBasis, n) = M
+_alv_to_layer_frame(M, basis, n) = _alv_rotate_blocks(M, _alv_bond6(basis), n, 6)
+_alv_from_layer_frame(M, ::TensND.CanonicalBasis, n) = M
+_alv_from_layer_frame(M, basis, n) = _alv_rotate_blocks(M, _alv_bond6(basis)', n, 6)
+_alv_bond6(basis) = MFH_Core._bond6(MFH_Core._frame_matrix(basis))
 
 function laminate_alv(lam::Laminates.Laminate, ::Val{2}; times, property::Symbol = :K)
     names = Laminates.layer_names(lam)

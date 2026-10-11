@@ -39,7 +39,7 @@ end
 # from the first volume-carrying phase is therefore exact, where the old code
 # happened to seed the accumulator with the matrix term instead.
 function _bound_phase_names(rve::RVE, bound::AbstractString)
-    names = Symbol[n for n in rve.phase_names if !(rve.amounts[n] isa CrackDensity)]
+    names = _volume_phase_names(rve)
     isempty(names) && throw(
         ArgumentError(
             "the $bound bound needs at least one phase carrying volume; this RVE " *

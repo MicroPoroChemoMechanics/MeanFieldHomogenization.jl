@@ -103,17 +103,8 @@ function asymmetric_self_consistent_alv(
     for name in incl_names
         ph = rve.phases[name]
         a = rve.amounts[name]
-        if a isa CrackDensity
-            Rn_mat = haskey(ph.properties, :Rn) ?
-                _trapezoidal_relaxation_scalar(ph.properties[:Rn], times) : nothing
-            Rt_mat = haskey(ph.properties, :Rt) ?
-                _trapezoidal_relaxation_scalar(ph.properties[:Rt], times) : nothing
-            push!(
-                crack_data, (
-                    ph.geometry, a.value,
-                    phase_symmetrize(rve, name), Rn_mat, Rt_mat,
-                )
-            )
+        if _is_crack_family(a)
+            push!(crack_data, _alv_crack_record(rve, name, a, times, "asymmetric_self_consistent_alv"))
             continue
         end
         C_r_law = phase_property(rve, name, prop)
@@ -365,6 +356,14 @@ function differential_alv(
     for name in inclusion_phase_names(rve, m)
         ph = rve.phases[name]
         amt = rve.amounts[name]
+        amt isa Schemes.Remainder &&
+            throw(
+            ArgumentError(
+                "differential_alv: phase :$(name) carries the volume " *
+                    "complement and so has no target to integrate up to; name it " *
+                    "as the matrix, or give it an explicit fraction."
+            )
+        )
         if amt isa Schemes.VolumeFraction
             sym = phase_symmetrize(rve, name)
             geom = ph.geometry

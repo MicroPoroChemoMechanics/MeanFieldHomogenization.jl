@@ -38,6 +38,12 @@ suffix on the crack kernels (`stiffness_contribution_alv_at`).
 """
 const _ALVReference = Union{ViscoLaw, AbstractMatrix}
 
+# The 6n × 6n relaxation matrix of a reference: a law is discretized (one in
+# `:creep` mode, a compliance, inverted to its relaxation), a running reference
+# already is one.
+_reference_relaxation_alv(law::ViscoLaw, times) = _trapezoidal_relaxation(law, times, 6)
+_reference_relaxation_alv(R::AbstractMatrix, times) = R
+
 """
     _bulk_layer_moduli_alv(sphere, C0_ref, times) -> (NTuple{N,(M_κ, M_μ)}, M_κ_0, M_μ_0)
 
@@ -56,10 +62,8 @@ function _bulk_layer_moduli_alv(
         times::AbstractVector{<:Real}
     ) where {T, N}
     n = length(times)
-    # Matrix kernel : iso scalar matrices. A law given in `:creep` mode is a
-    # compliance, inverted to the relaxation the recurrences work on.
-    R0 = C0_law isa ViscoLaw ? _trapezoidal_relaxation(C0_law, times, 6) : C0_law
-    α0, β0 = iso_params_from_blocks(R0)
+    # Matrix kernel : iso scalar matrices.
+    α0, β0 = iso_params_from_blocks(_reference_relaxation_alv(C0_law, times))
     M_κ_0 = α0 ./ 3
     M_μ_0 = β0 ./ 2
 
@@ -92,8 +96,7 @@ _nonfinite(x::AbstractFloat) = !isfinite(x)
 # Volterra matrices.  An elastic `TensISO{4,3}` is implicitly wrapped
 # in a Heaviside law, and a law in `:creep` mode is inverted to its relaxation.
 function _layer_iso_volterra(C, times::AbstractVector{<:Real})
-    law = C isa ViscoLaw ? C : heaviside_law(C)
-    R = _trapezoidal_relaxation(law, times, 6)
+    R = _trapezoidal_relaxation(_as_visco_law(C), times, 6)
     α, β = iso_params_from_blocks(R)
     return (α ./ 3, β ./ 2)   # (M_κ, M_μ)
 end
@@ -573,6 +576,16 @@ function _assemble_4n_time_major(
     return M
 end
 
+# The shear states `sa`, `sb` carried across the interface `intf`, of transfer
+# matrix `_shear_interface_T_alv(intf, args...)`. `PerfectInterface` is the
+# identity jump on (U, V, σ_rr, σ_rθ): no `(4n×4n)` identity is built, and no
+# product that reduces to a no-op is paid for.
+_across_interface_alv(::PerfectInterface, sa, sb, args...) = (sa, sb)
+function _across_interface_alv(intf, sa, sb, args...)
+    T_intf = _shear_interface_T_alv(intf, args...)
+    return T_intf * sa, T_intf * sb
+end
+
 """
     _shear_interface_T_alv(intf, M_κ, M_μ, r, times, n) -> Matrix{T}
 
@@ -919,18 +932,9 @@ function _shear_state_seq_alv(
         else
             (M_κ_b, M_μ_b) = (M_κ_0, M_μ_0)
         end
-        # `PerfectInterface` is the identity jump on (U,V,σ_rr,σ_rθ) — skip
-        # building and applying the `(4n×4n)` identity matrix entirely
-        # rather than pay for a materialized `Matrix{T}(I,4n,4n)` and a
-        # matmul that both reduce to a no-op.
-        if !(intf isa PerfectInterface)
-            T_intf = _shear_interface_T_alv(
-                intf,
-                M_κ_a, M_μ_a, M_κ_b, M_μ_b, radii[k], times, n
-            )
-            sa = T_intf * sa
-            sb = T_intf * sb
-        end
+        sa, sb = _across_interface_alv(
+            intf, sa, sb, M_κ_a, M_μ_a, M_κ_b, M_μ_b, radii[k], times, n
+        )
         if k < N
             T_layer = _shear_layer_transfer_alv(
                 radii[k + 1], radii[k],

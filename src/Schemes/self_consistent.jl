@@ -211,8 +211,7 @@ function _sc_solid_averages(
     )
     A_avg = zero(P_n)
     CA_avg = zero(P_n)
-    for name in rve.phase_names
-        rve.amounts[name] isa CrackDensity && continue
+    for name in _volume_phase_names(rve)
         f = volume_fraction(rve, name)
         A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, P_n; kw...)
         A_avg += f * A_dil
@@ -295,8 +294,7 @@ function _sc_crack_total(
     )
     H_total = zero(P_n)
     has_cracks = false
-    for name in rve.phase_names
-        rve.amounts[name] isa CrackDensity || continue
+    for name in _crack_phase_names(rve)
         H_total += _phase_compliance_contribution(rve, name, prop, P_n; kw...)
         has_cracks = true
     end
@@ -976,9 +974,7 @@ end
 # already requires, so the scheme stays available: nothing in the asymmetric
 # self-consistent algorithm itself depends on a bound.
 function _asc_use_stiffness(rve::RVE, prop::Symbol, m::Symbol; kw...)
-    if any(a isa CrackDensity for a in values(rve.amounts))
-        return false
-    end
+    any(_is_crack_family, values(rve.amounts)) && return false
     P₀ = phase_property(rve, m, prop)
     probe = _bounds_available(rve) ? Voigt() : Dilute()
     return _frob_sq(_evaluate(rve, probe, Val(prop); kw...)) ≥ _frob_sq(P₀)
@@ -1014,9 +1010,7 @@ function _asc_step_stiffness_dispatch(
         C_n::TensND.AbstractTens{4, 3}; kw...
     )
     Δ = zero(C_n)
-    for name in inclusion_phase_names(rve, m)
-        a = rve.amounts[name]
-        a isa CrackDensity && continue   # cracks not supported in stiffness form
+    for name in _volume_phase_names(rve, m)   # cracks not supported in stiffness form
         f = volume_fraction(rve, name)
         # The asymmetry that defines the ASC: localization is computed in the
         # CURRENT reference `C_n`, but the contribution is measured against the
@@ -1036,9 +1030,7 @@ function _asc_step_stiffness_dispatch(
         K_n::TensND.AbstractTens{2, 3}; kw...
     )
     Δ = zero(K_n)
-    for name in inclusion_phase_names(rve, m)
-        a = rve.amounts[name]
-        a isa CrackDensity && continue
+    for name in _volume_phase_names(rve, m)
         f = volume_fraction(rve, name)
         A_dil, KA = _phase_dilute_and_stress_average(rve, name, prop, K_n; kw...)
         Δ += f * (KA - K_m ⋅ A_dil)
@@ -1082,38 +1074,28 @@ function _asc_step_compliance_dispatch(
     S_n = inv(C_n)
     A_avg = zero(C_n)
     CA_avg = zero(C_n)
-    for name in inclusion_phase_names(rve, m)
-        a = rve.amounts[name]
-        # Volume-fraction inclusions: standard A_εε.
-        # Crack densities: the strain concentration is singular; their
-        # "compliance contribution" is the natural object instead and is
-        # added directly to S^{n+1} via `compliance_contribution`.
-        if !(a isa CrackDensity)
-            f = volume_fraction(rve, name)
-            # `⟨C:A⟩`, NOT `C ⊡ ⟨A⟩`: the orientation average does not commute
-            # with the tensor product, so the product has to be formed on the
-            # RAW localization tensor and averaged afterwards — which is what
-            # the bundle does.  Building it here from the already-averaged
-            # `A_dil` and the raw `C_i` was wrong whenever the phase property
-            # is anisotropic and `symmetrize` is on (an ISO `C_i` commutes with
-            # the average, which is why the stiffness branch and every
-            # isotropic-phase RVE agreed anyway): an iso-symmetrized phase came
-            # back transversely isotropic, and not even major-symmetric.
-            # The bundle also routes heterogeneous inclusions through
-            # `loc_and_stress_average`, whose stress average the declared
-            # (placeholder) property of a `LayeredSphere` cannot give.
-            A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, C_n; kw...)
-            A_avg += f * A_dil
-            CA_avg += f * CA
-        end
+    # Volume-fraction inclusions: standard A_εε. Crack densities: the strain
+    # concentration is singular; their compliance contribution is the natural
+    # object instead and is added directly to S^{n+1} below.
+    for name in _volume_phase_names(rve, m)
+        f = volume_fraction(rve, name)
+        # `⟨C:A⟩`, NOT `C ⊡ ⟨A⟩`: the orientation average does not commute
+        # with the tensor product, so the product has to be formed on the RAW
+        # localization tensor and averaged afterwards, which is what the bundle
+        # does: formed from the averaged `A_dil` and the raw `C_i`, an
+        # iso-symmetrized anisotropic phase would come back transversely
+        # isotropic, and not even major-symmetric. The bundle also routes
+        # heterogeneous inclusions through `loc_and_stress_average`, whose
+        # stress average the declared (placeholder) property of a
+        # `LayeredSphere` cannot give.
+        A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, C_n; kw...)
+        A_avg += f * A_dil
+        CA_avg += f * CA
     end
     S_new = S_m + (A_avg - S_m ⊡ CA_avg) ⊡ S_n
     # Crack contributions add directly to the compliance.
-    for name in inclusion_phase_names(rve, m)
-        a = rve.amounts[name]
-        a isa CrackDensity || continue
-        H = _phase_compliance_contribution(rve, name, prop, C_n; kw...)
-        S_new += H
+    for name in _crack_phase_names(rve, m)
+        S_new += _phase_compliance_contribution(rve, name, prop, C_n; kw...)
     end
     return inv(S_new)
 end
@@ -1127,9 +1109,7 @@ function _asc_step_compliance_dispatch(
     R_n = inv(K_n)
     A_avg = zero(K_n)
     KA_avg = zero(K_n)
-    for name in inclusion_phase_names(rve, m)
-        a = rve.amounts[name]
-        a isa CrackDensity && continue
+    for name in _volume_phase_names(rve, m)
         f = volume_fraction(rve, name)
         # `⟨K·A⟩`, not `K ⋅ ⟨A⟩` — see the order-4 dispatch above.
         A_dil, KA = _phase_dilute_and_stress_average(rve, name, prop, K_n; kw...)
@@ -1138,8 +1118,7 @@ function _asc_step_compliance_dispatch(
     end
     R_new = R_m + (A_avg - R_m ⋅ KA_avg) ⋅ R_n
     # Crack contributions add directly to the resistivity, as at order 4.
-    for name in inclusion_phase_names(rve, m)
-        rve.amounts[name] isa CrackDensity || continue
+    for name in _crack_phase_names(rve, m)
         R_new += _phase_compliance_contribution(rve, name, prop, K_n; kw...)
     end
     return inv(R_new)

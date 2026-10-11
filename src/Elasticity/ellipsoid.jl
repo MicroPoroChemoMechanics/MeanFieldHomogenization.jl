@@ -180,7 +180,7 @@ function Ellipsoid(
     T = MFH_Core._floatlike(promote_type(Ta, Tb, Tc))
     axes_in = (T(a), T(b), T(c))
     basis_in = MFH_Core._default_basis(T, euler_angles)
-    axes_sorted, basis = MFH_Core._sort_axes_and_basis(axes_in, basis_in, :ellipsoid_3d)
+    axes_sorted, basis = MFH_Core._sort_axes_and_basis(axes_in, basis_in, Val(:ellipsoid_3d))
     if T <: Real
         redirected = _resolve_degenerate_ellipsoid(axes_sorted, basis)
         redirected === nothing || return redirected
@@ -204,7 +204,7 @@ function Ellipsoid(a::Ta, b::Tb, c::Tc, R::AbstractMatrix) where {Ta, Tb, Tc}
     T = MFH_Core._floatlike(promote_type(Ta, Tb, Tc))
     axes_in = (T(a), T(b), T(c))
     basis_in = TensND.RotatedBasis(Matrix{float(eltype(R))}(R))
-    axes_sorted, basis = MFH_Core._sort_axes_and_basis(axes_in, basis_in, :ellipsoid_3d)
+    axes_sorted, basis = MFH_Core._sort_axes_and_basis(axes_in, basis_in, Val(:ellipsoid_3d))
     if T <: Real
         redirected = _resolve_degenerate_ellipsoid(axes_sorted, basis)
         redirected === nothing || return redirected
@@ -229,7 +229,7 @@ function Ellipsoid(
     ) where {Ta, Tb, Tc}
     T = MFH_Core._floatlike(promote_type(Ta, Tb, Tc))
     axes_in = (T(a), T(b), T(c))
-    axes_sorted, basis_out = MFH_Core._sort_axes_and_basis(axes_in, basis, :ellipsoid_3d)
+    axes_sorted, basis_out = MFH_Core._sort_axes_and_basis(axes_in, basis, Val(:ellipsoid_3d))
     if T <: Real
         redirected = _resolve_degenerate_ellipsoid(axes_sorted, basis_out)
         redirected === nothing || return redirected
@@ -254,7 +254,7 @@ function Ellipsoid(a::Ta, b::Tb; angle::Real = 0.0) where {Ta, Tb}
     T = MFH_Core._floatlike(promote_type(Ta, Tb))
     Tbasis = MFH_Core._basis_eltype(T)
     basis_in = iszero(angle) ? TensND.CanonicalBasis{2, Tbasis}() : TensND.RotatedBasis(float(angle))
-    axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(a), T(b)), basis_in, :ellipsoid_2d)
+    axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(a), T(b)), basis_in, Val(:ellipsoid_2d))
     code = MFH_Core._classify_shape_2d(T, axes_sorted...)
     S = _SHAPE_2D[code]
     return Ellipsoid{2, S, T, typeof(basis)}(axes_sorted, basis)
