@@ -75,6 +75,30 @@ end
     @test isapprox(AD, FD; rtol = 1.0e-6)
 end
 
+@testset "ALV sensitivities — a property of the second inclusion" begin
+    # The accumulators of the order-4 schemes, and the vectors of the iso/TI/
+    # ortho fast paths, took their element type from the FIRST phase block: a
+    # dual on the second inclusion only met a Float64 accumulator and raised
+    # MethodError. The derivative cannot depend on the order the phases are
+    # declared in, and the Voigt one is the fraction itself.
+    function eff_mu(μ2, scheme; second_first = false)
+        rve = RVE(; distribution_shape = Ellipsoid(1.0))
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => _build_law_M(1.0, 1.0)); fraction = :rest)
+        I1 = (:I1, Dict(:C => heaviside_law(TensISO{3}(30.0, 8.0))))
+        I2 = (:I2, Dict(:C => heaviside_law(TensISO{3}(45.0, 2 * μ2))))
+        for (name, props) in (second_first ? (I2, I1) : (I1, I2))
+            add_phase!(rve, name, Ellipsoid(1.0), props; fraction = 0.1)
+        end
+        return _eff_mu_final(rve, scheme)
+    end
+    @test ForwardDiff.derivative(x -> eff_mu(x, Voigt()), 5.0) ≈ 0.1 rtol = 1.0e-12
+    for sch in (Dilute(), MoriTanaka(), Maxwell())
+        d = ForwardDiff.derivative(x -> eff_mu(x, sch), 5.0)
+        @test d ≈ ForwardDiff.derivative(x -> eff_mu(x, sch; second_first = true), 5.0) rtol = 1.0e-12
+        @test d > 0
+    end
+end
+
 @testset "ALV sensitivities — gradient over (f, k_M, μ_M)" begin
     function eff_mu_vs_fkμ(p::AbstractVector)
         f, k_M, μ_M = p

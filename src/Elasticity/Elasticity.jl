@@ -10,6 +10,7 @@ module Elasticity
 using LinearAlgebra
 using TensND
 using QuadGK
+using StaticArrays: SVector
 using ..Elliptic
 using Polynomials
 using PolynomialRoots
@@ -45,31 +46,29 @@ include("cubic.jl")
 # inclusion types and `_ti_coaxial` are visible) to avoid Core→Elasticity
 # circular dependency.
 
-if isdefined(TensND, :TensTI)
-    @eval function _ti_dispatch(method::Symbol, ell::Ellipsoid{3}, C₀::TensND.TensTI{4})
-        if (method === :auto || method === :analytical) && _ti_coaxial(C₀, ell)
-            return MFH_Core.Analytical()
-        end
-        method === :decuhr && return MFH_Core.DECUHR()
-        method === :nestedquadgk && return MFH_Core.NestedQuadGK()
-        method === :residues && return MFH_Core.Residue()
-        # `:auto`, non-coaxial : hand over to the shared anisotropic default,
-        # which picks a cubature (DECUHR when its extension is loaded, else the
-        # type-generic NestedQuadGK) and never the residue path — see
-        # `Core/dispatch.jl` `_aniso_default_algo` for why.
-        return MFH_Core._aniso_default_algo(C₀)
+function _ti_dispatch(method::Symbol, ell::Ellipsoid{3}, C₀::TensND.TensTI{4})
+    if (method === :auto || method === :analytical) && _ti_coaxial(C₀, ell)
+        return MFH_Core.Analytical()
     end
-    @eval MFH_Core._resolve_algo(::Val{:auto}, ell::Ellipsoid{3}, C₀::TensND.TensTI{4}) =
-        _ti_dispatch(:auto, ell, C₀)
-    @eval MFH_Core._resolve_algo(::Val{:analytical}, ell::Ellipsoid{3}, C₀::TensND.TensTI{4}) =
-        _ti_dispatch(:analytical, ell, C₀)
-    @eval MFH_Core._resolve_algo(::Val{:residues}, ell::Ellipsoid{3}, C₀::TensND.TensTI{4}) =
-        _ti_dispatch(:residues, ell, C₀)
-    @eval MFH_Core._resolve_algo(::Val{:decuhr}, ell::Ellipsoid{3}, C₀::TensND.TensTI{4}) =
-        _ti_dispatch(:decuhr, ell, C₀)
-    @eval MFH_Core._resolve_algo(::Val{:nestedquadgk}, ell::Ellipsoid{3}, C₀::TensND.TensTI{4}) =
-        _ti_dispatch(:nestedquadgk, ell, C₀)
+    method === :decuhr && return MFH_Core.DECUHR()
+    method === :nestedquadgk && return MFH_Core.NestedQuadGK()
+    method === :residues && return MFH_Core.Residue()
+    # `:auto`, non-coaxial : hand over to the shared anisotropic default,
+    # which picks a cubature (DECUHR when its extension is loaded, else the
+    # type-generic NestedQuadGK) and never the residue path — see
+    # `Core/dispatch.jl` `_aniso_default_algo` for why.
+    return MFH_Core._aniso_default_algo(C₀)
 end
+MFH_Core._resolve_algo(::Val{:auto}, ell::Ellipsoid{3}, C₀::TensND.TensTI{4}) =
+    _ti_dispatch(:auto, ell, C₀)
+MFH_Core._resolve_algo(::Val{:analytical}, ell::Ellipsoid{3}, C₀::TensND.TensTI{4}) =
+    _ti_dispatch(:analytical, ell, C₀)
+MFH_Core._resolve_algo(::Val{:residues}, ell::Ellipsoid{3}, C₀::TensND.TensTI{4}) =
+    _ti_dispatch(:residues, ell, C₀)
+MFH_Core._resolve_algo(::Val{:decuhr}, ell::Ellipsoid{3}, C₀::TensND.TensTI{4}) =
+    _ti_dispatch(:decuhr, ell, C₀)
+MFH_Core._resolve_algo(::Val{:nestedquadgk}, ell::Ellipsoid{3}, C₀::TensND.TensTI{4}) =
+    _ti_dispatch(:nestedquadgk, ell, C₀)
 
 export Ellipsoid, Spheroid
 export EllipsoidShape, Spherical, Prolate, Oblate, Triaxial, Circular, Elliptic

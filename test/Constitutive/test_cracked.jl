@@ -68,6 +68,24 @@ end
     @test _g(tangent(out.r))[3, 3, 3, 3] ≈ closed_C rtol = 1.0e-12
 end
 
+@testset "a closed family leaves the other phases as declared" begin
+    # A stiff inclusion of declared fraction next to the family: once the
+    # family closes, the medium is the scheme on the matrix and the inclusion
+    # alone, the inclusion rebuilt with the fraction it was declared with.
+    # Self-consistent: Mori–Tanaka refuses solid inclusions next to crack
+    # families (see `crack_family_compliances`).
+    C_I = TensISO{3}(3 * 60.0, 2 * 40.0)
+    rve = _cracked_rve((0.0,), (0.1,))
+    add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C_I); fraction = 0.2)
+    ref = RVE()
+    add_phase!(ref, :M, Ellipsoid(1.0), Dict(:C => C0_CR); fraction = :rest)
+    add_phase!(ref, :I, Ellipsoid(1.0), Dict(:C => C_I); fraction = 0.2)
+    mat = MicrocrackedMaterial(rve, SelfConsistent(); ω₀ = (1.0e-3,))
+    out = _drive(mat, -2.0e-3, 1)
+    @test open_set(out.st) == (false,)
+    @test _g(tangent(out.r)) ≈ _g(homogenize(ref, SelfConsistent())) rtol = 1.0e-12
+end
+
 @testset "the stress is continuous through closure" begin
     # The signature of a correctly INTEGRATED piecewise-linear law. Computing
     # `C_hom(final) : ε` instead would jump at closure, because the medium only

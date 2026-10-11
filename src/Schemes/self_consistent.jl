@@ -75,27 +75,6 @@ function _evaluate(rve::RVE, sc::SelfConsistent, ::Val{p}; kw...) where {p}
     return _solve_sc(sc.algorithm, step, P_init; sc.options..., solver_kw...)
 end
 
-"""
-    _sc_initial(init, rve, prop; kw...) -> AbstractTens
-
-Starting iterate of the self-consistent fixed point.
-
-The self-consistent morphology distinguishes no phase, so the seed cannot come
-from "the matrix" the way it did while an RVE was required to have one. It is
-stated on the scheme instead:
-
-- `:voigt` — the Voigt average of the phases. Always defined, positive definite
-  by construction, and it needs no phase to be singled out, which is what makes
-  a matrix-free RVE solvable at all.
-- `:reuss` — the Reuss average.
-- a phase name — that phase's property. This is what versions up to 0.7 used
-  implicitly through the matrix; pass it to reproduce an older number exactly.
-- a tensor — an explicit guess, the natural form when restarting from the
-  previous step of a constitutive loop.
-
-A phase named `:voigt` or `:reuss` wins over the keyword: a phase name is the
-caller's data, a keyword is ours.
-"""
 # The Voigt average is infinite as soon as one phase is rigid or incompressible
 # (an `iso_stiffness(Inf, μ)` layer, say), and an infinite seed makes the first
 # step fail deep inside a linear solve with "matrix contains Infs or NaNs".
@@ -117,6 +96,27 @@ function _voigt_seed(rve::RVE, prop::Symbol; kw...)
     return C
 end
 
+"""
+    _sc_initial(init, rve, prop; kw...) -> AbstractTens
+
+Starting iterate of the self-consistent fixed point.
+
+The self-consistent morphology distinguishes no phase, so the seed cannot come
+from "the matrix" the way it did while an RVE was required to have one. It is
+stated on the scheme instead:
+
+- `:voigt` — the Voigt average of the phases. Always defined, positive definite
+  by construction, and it needs no phase to be singled out, which is what makes
+  a matrix-free RVE solvable at all.
+- `:reuss` — the Reuss average.
+- a phase name — that phase's property: the start from the matrix, as Echoes
+  makes it.
+- a tensor — an explicit guess, the natural form when restarting from the
+  previous step of a constitutive loop.
+
+A phase named `:voigt` or `:reuss` wins over the keyword: a phase name is the
+caller's data, a keyword is ours.
+"""
 function _sc_initial(init::Symbol, rve::RVE, prop::Symbol; kw...)
     haskey(rve.phases, init) && return phase_property(rve, init, prop)
     init === :voigt && return _voigt_seed(rve, prop; kw...)
@@ -211,8 +211,7 @@ function _sc_solid_averages(
     )
     A_avg = zero(P_n)
     CA_avg = zero(P_n)
-    for name in rve.phase_names
-        rve.amounts[name] isa CrackDensity && continue
+    for name in _volume_phase_names(rve)
         f = volume_fraction(rve, name)
         A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, P_n; kw...)
         A_avg += f * A_dil
@@ -295,8 +294,7 @@ function _sc_crack_total(
     )
     H_total = zero(P_n)
     has_cracks = false
-    for name in rve.phase_names
-        rve.amounts[name] isa CrackDensity || continue
+    for name in _crack_phase_names(rve)
         H_total += _phase_compliance_contribution(rve, name, prop, P_n; kw...)
         has_cracks = true
     end
@@ -451,7 +449,7 @@ function _solve_sc(
                 x_best = x_new
             end
         end
-        _sc_converged(last_resid, tol_eff) && return x_new
+        _sc_converged(last_resid, tol_eff) && _sc_partials_converged(x_new, x; abstol, reltol) && return x_new
         x = (one(real(eltype(x))) - damping) * x_new + damping * x
     end
     # Non-convergence is reported as a `@debug` message rather than a
@@ -560,7 +558,13 @@ function _solve_sc(
             p_best .= p
         end
         if norm_r ≤ tol_eff
-            return rebuild(p)
+            _sc_partials_converged(r, p; abstol, reltol) && return rebuild(p)
+            # The value has converged and the derivatives have not: one full
+            # Newton step gives them, by the implicit function theorem. A line
+            # search on the value would only be judging its rounding.
+            p .+= ForwardDiff.jacobian(residual_vec, p) \ (-r)
+            r .= residual_vec(p)
+            continue
         end
         # Jacobian via ForwardDiff (strong dependency).
         J = ForwardDiff.jacobian(residual_vec, p)
@@ -811,12 +815,10 @@ end
 # Initial zero residual with eltype matching `x0` (Dual-preserving).
 _sc_residual_zero(x0::TensND.AbstractTens) = zero(real(eltype(x0)))
 
-# Scalar Float64 view of a residual: extract the `.value` field for
-# `ForwardDiff.Dual` (via duck-typing — no hard dependency on ForwardDiff)
-# so that comparisons and best-iterate tracking work uniformly.
-_scalar_value(r::Real) = float(r)
-_scalar_value(r) = hasfield(typeof(r), :value) ? float(_scalar_value(getfield(r, :value))) :
-    throw(ArgumentError("cannot reduce residual of type $(typeof(r)) to a Float64"))
+# Float64 view of a residual or a norm, for tolerances, comparisons and
+# best-iterate tracking: a `ForwardDiff.Dual` is a `Real`, so `float` alone
+# would keep its partials.
+_scalar_value(r::Real) = float(MFH_Core._primal(r))
 
 # Float64 type of `_scalar_value(zero_like_eltype(x0))`. Used to pick a
 # safe `typemax` for `resid_best_val` regardless of whether x0 is real
@@ -830,27 +832,42 @@ function _value_eltype(::Type{T}) where {T}
     return Float64
 end
 
-# Convergence criterion. For Real residuals it is the obvious `r < abstol`.
-# For Dual residuals (ForwardDiff), require both the value AND every
-# partial derivative to be below `abstol`: a fixed-point iteration where
-# ‖value‖ has converged but ‖partials‖ has not gives a derivative that
-# is numerically wrong (each Picard step propagates a contraction
-# coefficient of order ‖∂step/∂x‖ — partials converge as fast as the
-# value only if the contraction is well-behaved, which is not guaranteed
-# for ill-conditioned SC iterations).
+# Convergence of the value: `‖Δ‖ ≤ abstol + reltol ‖x‖`, compared on values.
 _sc_converged(r::Real, abstol::Real) = r ≤ abstol
-function _sc_converged(r, abstol::Real)
-    hasfield(typeof(r), :value) || return float(r) ≤ abstol
-    abs(_scalar_value(getfield(r, :value))) ≤ abstol || return false
-    if hasfield(typeof(r), :partials)
-        p = getfield(r, :partials)
-        # `partials` is a `ForwardDiff.Partials{N,T}` wrapper; iterate values.
-        for v in p
-            _sc_converged(v, abstol) || return false
-        end
-    end
-    return true
+
+# Convergence of the derivatives. With ForwardDiff duals they are iterated
+# along with the values, and converge only as fast, one step behind: started
+# from the solution itself (`init`), the value has converged at the first step
+# while the derivatives have not moved. Each partial — at every level of
+# nesting — is therefore tested on its own and against its own scale, as the
+# value is: ‖∂Δ‖ ≤ abstol + reltol ‖∂x‖.
+_sc_partials_converged(x_new::TensND.AbstractTens, x::TensND.AbstractTens; kw...) =
+    _sc_partials_converged(get_array(x_new) .- get_array(x), get_array(x); kw...)
+
+function _sc_partials_converged(Δ::AbstractArray, x::AbstractArray; abstol::Real, reltol::Real)
+    T = promote_type(eltype(Δ), eltype(x))
+    T <: ForwardDiff.Dual || return true
+    sΔ, sx = _channel_sqnorms(Δ, T), _channel_sqnorms(x, T)
+    # Channel 1 is the value, which the caller has tested.
+    return all(sqrt(sΔ[c]) ≤ abstol + reltol * sqrt(sx[c]) for c in 2:length(sΔ))
 end
+
+# Σ over `a` of the squares of every coefficient of an element: the value, then
+# each partial, recursively through the nesting.
+function _channel_sqnorms(a::AbstractArray, ::Type{T}) where {T}
+    acc = map(abs2, _channels(zero(T)))
+    for v in a
+        acc = acc .+ map(abs2, _channels(convert(T, v)))
+    end
+    return acc
+end
+
+_channels(x::Real) = (x,)
+_channels(d::ForwardDiff.Dual) = (
+    _channels(ForwardDiff.value(d))...,
+    _flatten_tuples(map(_channels, ForwardDiff.partials(d).values))...,
+)
+_flatten_tuples(t::Tuple) = foldl((a, b) -> (a..., b...), t; init = ())
 
 # =============================================================================
 #  AsymmetricSelfConsistent — Mori-Tanaka-style iteration with self-reference.
@@ -957,9 +974,7 @@ end
 # already requires, so the scheme stays available: nothing in the asymmetric
 # self-consistent algorithm itself depends on a bound.
 function _asc_use_stiffness(rve::RVE, prop::Symbol, m::Symbol; kw...)
-    if any(a isa CrackDensity for a in values(rve.amounts))
-        return false
-    end
+    any(_is_crack_family, values(rve.amounts)) && return false
     P₀ = phase_property(rve, m, prop)
     probe = _bounds_available(rve) ? Voigt() : Dilute()
     return _frob_sq(_evaluate(rve, probe, Val(prop); kw...)) ≥ _frob_sq(P₀)
@@ -995,9 +1010,7 @@ function _asc_step_stiffness_dispatch(
         C_n::TensND.AbstractTens{4, 3}; kw...
     )
     Δ = zero(C_n)
-    for name in inclusion_phase_names(rve, m)
-        a = rve.amounts[name]
-        a isa CrackDensity && continue   # cracks not supported in stiffness form
+    for name in _volume_phase_names(rve, m)   # cracks not supported in stiffness form
         f = volume_fraction(rve, name)
         # The asymmetry that defines the ASC: localization is computed in the
         # CURRENT reference `C_n`, but the contribution is measured against the
@@ -1017,9 +1030,7 @@ function _asc_step_stiffness_dispatch(
         K_n::TensND.AbstractTens{2, 3}; kw...
     )
     Δ = zero(K_n)
-    for name in inclusion_phase_names(rve, m)
-        a = rve.amounts[name]
-        a isa CrackDensity && continue
+    for name in _volume_phase_names(rve, m)
         f = volume_fraction(rve, name)
         A_dil, KA = _phase_dilute_and_stress_average(rve, name, prop, K_n; kw...)
         Δ += f * (KA - K_m ⋅ A_dil)
@@ -1063,38 +1074,28 @@ function _asc_step_compliance_dispatch(
     S_n = inv(C_n)
     A_avg = zero(C_n)
     CA_avg = zero(C_n)
-    for name in inclusion_phase_names(rve, m)
-        a = rve.amounts[name]
-        # Volume-fraction inclusions: standard A_εε.
-        # Crack densities: the strain concentration is singular; their
-        # "compliance contribution" is the natural object instead and is
-        # added directly to S^{n+1} via `compliance_contribution`.
-        if !(a isa CrackDensity)
-            f = volume_fraction(rve, name)
-            # `⟨C:A⟩`, NOT `C ⊡ ⟨A⟩`: the orientation average does not commute
-            # with the tensor product, so the product has to be formed on the
-            # RAW localization tensor and averaged afterwards — which is what
-            # the bundle does.  Building it here from the already-averaged
-            # `A_dil` and the raw `C_i` was wrong whenever the phase property
-            # is anisotropic and `symmetrize` is on (an ISO `C_i` commutes with
-            # the average, which is why the stiffness branch and every
-            # isotropic-phase RVE agreed anyway): an iso-symmetrized phase came
-            # back transversely isotropic, and not even major-symmetric.
-            # The bundle also routes heterogeneous inclusions through
-            # `loc_and_stress_average`, whose stress average the declared
-            # (placeholder) property of a `LayeredSphere` cannot give.
-            A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, C_n; kw...)
-            A_avg += f * A_dil
-            CA_avg += f * CA
-        end
+    # Volume-fraction inclusions: standard A_εε. Crack densities: the strain
+    # concentration is singular; their compliance contribution is the natural
+    # object instead and is added directly to S^{n+1} below.
+    for name in _volume_phase_names(rve, m)
+        f = volume_fraction(rve, name)
+        # `⟨C:A⟩`, NOT `C ⊡ ⟨A⟩`: the orientation average does not commute
+        # with the tensor product, so the product has to be formed on the RAW
+        # localization tensor and averaged afterwards, which is what the bundle
+        # does: formed from the averaged `A_dil` and the raw `C_i`, an
+        # iso-symmetrized anisotropic phase would come back transversely
+        # isotropic, and not even major-symmetric. The bundle also routes
+        # heterogeneous inclusions through `loc_and_stress_average`, whose
+        # stress average the declared (placeholder) property of a
+        # `LayeredSphere` cannot give.
+        A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, C_n; kw...)
+        A_avg += f * A_dil
+        CA_avg += f * CA
     end
     S_new = S_m + (A_avg - S_m ⊡ CA_avg) ⊡ S_n
     # Crack contributions add directly to the compliance.
-    for name in inclusion_phase_names(rve, m)
-        a = rve.amounts[name]
-        a isa CrackDensity || continue
-        H = _phase_compliance_contribution(rve, name, prop, C_n; kw...)
-        S_new += H
+    for name in _crack_phase_names(rve, m)
+        S_new += _phase_compliance_contribution(rve, name, prop, C_n; kw...)
     end
     return inv(S_new)
 end
@@ -1108,9 +1109,7 @@ function _asc_step_compliance_dispatch(
     R_n = inv(K_n)
     A_avg = zero(K_n)
     KA_avg = zero(K_n)
-    for name in inclusion_phase_names(rve, m)
-        a = rve.amounts[name]
-        a isa CrackDensity && continue
+    for name in _volume_phase_names(rve, m)
         f = volume_fraction(rve, name)
         # `⟨K·A⟩`, not `K ⋅ ⟨A⟩` — see the order-4 dispatch above.
         A_dil, KA = _phase_dilute_and_stress_average(rve, name, prop, K_n; kw...)
@@ -1118,5 +1117,9 @@ function _asc_step_compliance_dispatch(
         KA_avg += f * KA
     end
     R_new = R_m + (A_avg - R_m ⋅ KA_avg) ⋅ R_n
+    # Crack contributions add directly to the resistivity, as at order 4.
+    for name in _crack_phase_names(rve, m)
+        R_new += _phase_compliance_contribution(rve, name, prop, K_n; kw...)
+    end
     return inv(R_new)
 end

@@ -16,6 +16,23 @@
 #  SC numerically while keeping the same `B · A^{-vol}` body equation.
 # =============================================================================
 
+# The promoted element type of the inputs of the Newton state. Computed in a
+# function of its own: assigned in a loop and captured by the closures of the
+# solve, it was boxed.
+function _sc_newton_eltype(C_M, fractions, C_phases, U_phases, crack_data)
+    T = promote_type(
+        eltype(C_M), eltype(fractions),
+        (eltype(C) for C in C_phases)...,
+        (eltype(U) for U in U_phases)...,
+    )
+    for (_, ε, _, Rn, Rt) in crack_data
+        T = promote_type(T, typeof(ε))
+        Rn === nothing || (T = promote_type(T, eltype(Rn)))
+        Rt === nothing || (T = promote_type(T, eltype(Rt)))
+    end
+    return T
+end
+
 """
     self_consistent_alv_newton(rve, prop; times,
                                 abstol = 1e-10, reltol = 1e-8,
@@ -80,19 +97,8 @@ function self_consistent_alv_newton(
     for name in incl_names
         ph = rve.phases[name]
         a = rve.amounts[name]
-        if a isa CrackDensity
-            ph.geometry isa MFH_Core.AbstractCrack ||
-                throw(ArgumentError("self_consistent_alv_newton: phase $name has CrackDensity but geometry is not a crack"))
-            Rn_mat = haskey(ph.properties, :Rn) ?
-                _trapezoidal_relaxation_scalar(ph.properties[:Rn], times) : nothing
-            Rt_mat = haskey(ph.properties, :Rt) ?
-                _trapezoidal_relaxation_scalar(ph.properties[:Rt], times) : nothing
-            push!(
-                crack_data_full, (
-                    ph.geometry, a.value,
-                    phase_symmetrize(rve, name), Rn_mat, Rt_mat,
-                )
-            )
+        if _is_crack_family(a)
+            push!(crack_data_full, _alv_crack_record(rve, name, a, times, "self_consistent_alv_newton"))
             continue
         end
         C_r_law = phase_property(rve, name, prop)
@@ -111,16 +117,7 @@ function self_consistent_alv_newton(
     # Promoted scalar type of every input the Newton state must carry
     # (matrix/phase kernels, fractions, geometry tensors, crack data) so
     # outer `ForwardDiff.Dual` parameters propagate through the root-find.
-    Tp = promote_type(
-        eltype(C_M_full), eltype(fractions),
-        (eltype(C) for C in C_phases_full)...,
-        (eltype(U) for U in U_M_phases)...,
-    )
-    for (_, ε, _, Rn, Rt) in crack_data_full
-        Tp = promote_type(Tp, typeof(ε))
-        Rn === nothing || (Tp = promote_type(Tp, eltype(Rn)))
-        Rt === nothing || (Tp = promote_type(Tp, eltype(Rt)))
-    end
+    Tp = _sc_newton_eltype(C_M_full, fractions, C_phases_full, U_M_phases, crack_data_full)
 
     # State : lower-triangular (α[k,l], β[k,l]) for l ≤ k ≤ n.
     # Initial guess from the matrix kernel — the SC root is the SC

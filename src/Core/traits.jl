@@ -80,17 +80,9 @@ function material_symmetry(::TensND.TensISO)
     return IsotropicSym()
 end
 
-# `TensTI{4}` and `TensOrtho` may or may not exist in any given TensND
-# release — guard the method definitions with `isdefined` so the package
-# still loads if those symbols have been renamed upstream.
+material_symmetry(::TensND.TensTI{4}) = TransverselyIsotropicSym()
 
-if isdefined(TensND, :TensTI)
-    @eval material_symmetry(::TensND.TensTI{4}) = TransverselyIsotropicSym()
-end
-
-if isdefined(TensND, :TensOrtho)
-    @eval material_symmetry(::TensND.TensOrtho) = OrthotropicSym()
-end
+material_symmetry(::TensND.TensOrtho) = OrthotropicSym()
 
 # Fallback — generic `Tens` (or any non-classified subtype)
 material_symmetry(::TensND.AbstractTens) = GeneralAnisotropicSym()

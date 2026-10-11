@@ -69,23 +69,66 @@ function _hill_order2_3d_aniso(ell::Ellipsoid{3}, K₀)
         K_arr[i, j] = K₀[i, j]
     end
 
-    F = eigen(Symmetric(K_arr))
-    invsqrt_K = F.vectors * Diagonal(1 ./ sqrt.(F.values)) * F.vectors'
-
     R_ell = [ell.basis[i, j] for i in 1:3, j in 1:3]
     A = R_ell * Diagonal(collect(ell.semi_axes)) * R_ell'
+
+    P_arr = _hill_order2_aniso(A, K_arr)
+    return TensND.Tens(P_arr, TensND.CanonicalBasis{3, Float64}())
+end
+
+# P = K^{-1/2} · I^{A·K^{-1/2}} · K^{-1/2} in closed form: the semi-axes and
+# axes of the fictitious ellipsoid from LAPACK, so floating-point only.
+function _hill_order2_aniso(A::AbstractMatrix{<:AbstractFloat}, K_arr::AbstractMatrix{<:AbstractFloat})
+    F = eigen(Symmetric(K_arr))
+    invsqrt_K = F.vectors * Diagonal(1 ./ sqrt.(F.values)) * F.vectors'
 
     F2 = svd(A * invsqrt_K)
     perm = sortperm(F2.S, rev = true)
     s = F2.S[perm]
     V = F2.V[:, perm]
 
-    Iv, _ = MFH_Core.newton_potential_3d(s[1], s[2], s[3])
+    if size(A, 1) == 3
+        Iv, _ = MFH_Core.newton_potential_3d(s[1], s[2], s[3])
+        P₀_arr = V * Diagonal([Iv[1], Iv[2], Iv[3]] ./ (4π)) * V'
+    else
+        Iv2 = MFH_Core.newton_potential_2d(s[1], s[2])
+        P₀_arr = V * Diagonal([Iv2[1], Iv2[2]] ./ (2π)) * V'
+    end
+    return invsqrt_K * P₀_arr * invsqrt_K
+end
 
-    P₀_arr = V * Diagonal([Iv[1], Iv[2], Iv[3]] ./ (4π)) * V'
-    P_arr = invsqrt_K * P₀_arr * invsqrt_K
+# Any other element type, ForwardDiff duals among them: `eigen` and `svd` have
+# no derivatives to give, and at a repeated eigenvalue no axes. The same tensor
+# is, in any dimension d and with G = A·Aᵀ,
+#
+#     P = (det A / 2) ∫₀^∞ (G + u K)⁻¹ det(G + u K)^{-1/2} du ,
+#
+# (the Newton potential of the fictitious ellipsoid, pulled back by the change
+# of variable x ↦ K^{-1/2} x), which needs neither. Its value is taken from the
+# closed form at the values, so that the value of a differentiated evaluation
+# is the evaluation itself, and its derivatives from the integral.
+function _hill_order2_aniso(A::AbstractMatrix, K_arr::AbstractMatrix)
+    P₀ = _hill_order2_aniso(MFH_Core._primal.(A), MFH_Core._primal.(K_arr))
+    P = _hill_order2_integral(A, K_arr)
+    return P₀ .+ (P .- MFH_Core._primal.(P))
+end
 
-    return TensND.Tens(P_arr, TensND.CanonicalBasis{3, Float64}())
+_hill_order2_integral(A::AbstractMatrix, K_arr::AbstractMatrix) =
+    _hill_order2_integral(SMatrix{size(A, 1), size(A, 1)}(A), K_arr)
+
+function _hill_order2_integral(A::SMatrix{d, d}, K_arr::AbstractMatrix) where {d}
+    G = A * A'
+    K = SMatrix{d, d}(K_arr)
+    # u = c (t / (1 − t))², c a scale of G over K: the integrand, which
+    # decays as u^{-(d+2)/2}, is then smooth on [0, 1] at both ends.
+    c = tr(MFH_Core._primal.(G)) / tr(MFH_Core._primal.(K))
+    function integrand(t)
+        τ = t / (1 - t)
+        M = G + (c * τ^2) * K
+        return inv(M) * (2c * τ / (1 - t)^2 / sqrt(det(M)))
+    end
+    I, _ = quadgk(integrand, 0.0, 1.0; rtol = 1.0e-13)
+    return Matrix(det(A) / 2 * I)
 end
 
 # ── Infinite cylinder (axis = e₁) ────────────────────────────────────────────
@@ -153,20 +196,8 @@ function _hill_order2_3d_aniso(cyl::Cylinder, K₀)
         K2[i, j] = K_full[i + 1, j + 1]
     end
 
-    F = eigen(Symmetric(K2))
-    invsqrt_K = F.vectors * Diagonal(1 ./ sqrt.(F.values)) * F.vectors'
-
     b, c = cyl.semi_axes
-    A2 = Diagonal([b, c])
-    F2 = svd(A2 * invsqrt_K)
-    perm = sortperm(F2.S, rev = true)
-    s = F2.S[perm]
-    V = F2.V[:, perm]
-
-    Iv2 = MFH_Core.newton_potential_2d(s[1], s[2])
-
-    P_arr_2d_princ = V * Diagonal([Iv2[1], Iv2[2]] ./ (2π)) * V'
-    P_arr_2d = invsqrt_K * P_arr_2d_princ * invsqrt_K
+    P_arr_2d = _hill_order2_aniso(Diagonal([b, c]), K2)
 
     P_arr_3d_princ = zeros(T, 3, 3)
     for i in 1:2, j in 1:2

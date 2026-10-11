@@ -189,19 +189,25 @@ function _advance_cracks(
         α, event = _next_event(m, ω, dω, σ, Δσ_drive, open)
 
         σ = σ + C_hom ⊡ (α * Δε_left)
-        ω = ntuple(i -> open[i] ? ω[i] + α * dω[i] : ω[i], N)
+        ω = _advance_apertures(ω, open, α, dω)
         remaining -= α * remaining
         event === nothing && break
 
         i, closing = event
-        open = ntuple(k -> k == i ? !closing : open[k], N)
-        ω = ntuple(
-            k -> k == i ? (closing ? zero(eltype(ω)) : eps(eltype(ω))) : ω[k], N
-        )
+        open = _toggle_family(open, i, closing)
+        ω = _reset_aperture(ω, i, closing)
         remaining <= 0 && break
     end
     return CrackedState(ω, open, ε, σ)
 end
+
+# The three updates of the loop above, as functions of their arguments: written
+# as closures over `ω` and `open`, which the loop reassigns, they boxed both.
+_advance_apertures(ω::NTuple{N}, open::NTuple{N}, α, dω) where {N} =
+    ntuple(i -> open[i] ? ω[i] + α * dω[i] : ω[i], N)
+_toggle_family(open::NTuple{N}, i, closing) where {N} = ntuple(k -> k == i ? !closing : open[k], N)
+_reset_aperture(ω::NTuple{N}, i, closing) where {N} =
+    ntuple(k -> k == i ? (closing ? zero(eltype(ω)) : eps(eltype(ω))) : ω[k], N)
 
 # A genuine zero `Tens{2,3}`: `zero(::TensISO)` narrows the class, and a
 # structured zero would not promote the way an accumulator needs to.
@@ -245,26 +251,11 @@ function _rve_with_open(m::MicrocrackedMaterial, open)
         idx = findfirst(==(name), m.families)
         idx !== nothing && !open[idx] && continue
         p = rve.phases[name]
-        a = rve.amounts[name]
-        if a isa Schemes.CrackDensity
-            Schemes.add_phase!(
-                kept, name, p.geometry, p.properties;
-                density = Schemes.amount_value(a),
-                symmetrize = Schemes.phase_symmetrize(rve, name)
-            )
-        elseif a isa Schemes.Remainder
-            Schemes.add_phase!(
-                kept, name, p.geometry, p.properties;
-                fraction = :rest,
-                symmetrize = Schemes.phase_symmetrize(rve, name)
-            )
-        else
-            Schemes.add_phase!(
-                kept, name, p.geometry, p.properties;
-                fraction = Schemes.amount_value(a),
-                symmetrize = Schemes.phase_symmetrize(rve, name)
-            )
-        end
+        Schemes.add_phase!(
+            kept, name, p.geometry, p.properties;
+            Schemes._amount_keyword(rve.amounts[name])...,
+            symmetrize = Schemes.phase_symmetrize(rve, name)
+        )
     end
     return kept
 end

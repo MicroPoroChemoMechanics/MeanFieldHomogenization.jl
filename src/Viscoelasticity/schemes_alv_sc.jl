@@ -15,6 +15,18 @@
 #  ECHOES manual `viscoelasticity_time.qmd` § "SC ALV scheme".
 # =============================================================================
 
+# A crack family as the SC schemes consume it: its geometry, its density, its
+# orientation projection and the Volterra matrices of its optional normal and
+# tangential interface laws (`:Rn`, `:Rt`).
+function _alv_crack_record(rve, name, a::CrackDensity, times, who)
+    ph = rve.phases[name]
+    ph.geometry isa MFH_Core.AbstractCrack ||
+        throw(ArgumentError("$who: phase $name has CrackDensity but geometry is not a crack"))
+    Rn_mat = haskey(ph.properties, :Rn) ? _trapezoidal_relaxation_scalar(ph.properties[:Rn], times) : nothing
+    Rt_mat = haskey(ph.properties, :Rt) ? _trapezoidal_relaxation_scalar(ph.properties[:Rt], times) : nothing
+    return (ph.geometry, a.value, phase_symmetrize(rve, name), Rn_mat, Rt_mat)
+end
+
 """
     self_consistent_alv(rve, prop; times,
                         abstol = 1e-10, reltol = 1e-8, maxiters = 200,
@@ -87,19 +99,8 @@ function self_consistent_alv(
             push!(layered_data, (geom = ph.geometry, f = _amount_value(rve, name), sym = phase_symmetrize(rve, name)))
             continue
         end
-        if a isa CrackDensity
-            ph.geometry isa MFH_Core.AbstractCrack ||
-                throw(ArgumentError("self_consistent_alv: phase $name has CrackDensity but geometry is not a crack"))
-            Rn_mat = haskey(ph.properties, :Rn) ?
-                _trapezoidal_relaxation_scalar(ph.properties[:Rn], times) : nothing
-            Rt_mat = haskey(ph.properties, :Rt) ?
-                _trapezoidal_relaxation_scalar(ph.properties[:Rt], times) : nothing
-            push!(
-                crack_data, (
-                    ph.geometry, a.value,
-                    phase_symmetrize(rve, name), Rn_mat, Rt_mat,
-                )
-            )
+        if _is_crack_family(a)
+            push!(crack_data, _alv_crack_record(rve, name, a, times, "self_consistent_alv"))
             continue
         end
         C_r_law = phase_property(rve, name, prop)

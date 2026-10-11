@@ -83,16 +83,12 @@ function _normalize_euler(angles::Tuple{Vararg{Number}})
         return (0.0, 0.0, 0.0)
     end
     T_promoted = promote_type(map(typeof, angles)...)
-    # `float` is what turns an `Int` or an `Irrational` angle into a usable one;
+    # `float` is what turns an `Int` or an `Irrational` angle into a usable one,
+    # and leaves a `ForwardDiff.Dual` a dual (which is not an `AbstractFloat`);
     # it is meaningless on a symbolic type, and `Symbolics.Num` subtypes `Real`
     # without being convertible from `Float64`, so `is_hard_numeric` — not
     # `<: Real` — is what decides here.
-    T = if is_hard_numeric(T_promoted)
-        Tf = float(T_promoted)
-        Tf <: AbstractFloat ? Tf : Float64
-    else
-        T_promoted
-    end
+    T = is_hard_numeric(T_promoted) ? float(T_promoted) : T_promoted
     return ntuple(i -> i ≤ n ? convert(T, angles[i]) : zero(T), 3)
 end
 
@@ -225,8 +221,9 @@ end
 
 Extract the 3×3 (or 2×2) rotation matrix associated with a TensND basis
 as a `Matrix{Float64}` — columns are the local axes expressed in the
-canonical frame.  See [`_frame_matrix`](@ref) for the element-type-preserving
-variant.
+canonical frame — for the code that is Float64 by construction (the
+quadrature oracle of the pair tensors). Anything that may meet a dual or
+symbolic frame reads [`_frame_matrix`](@ref), which keeps the element type.
 """
 function _basis_matrix(basis::TensND.AbstractBasis)
     E = TensND.vecbasis(basis, :cov)
@@ -247,7 +244,7 @@ preserve a right-handed (``\\det = +1``) frame — physically equivalent since
 flipping an axis direction leaves an ellipsoid invariant.
 """
 function _permute_basis_3d(basis::TensND.AbstractBasis, σ::NTuple{3, Int})
-    M = _basis_matrix(basis)
+    M = _frame_matrix(basis)
     M′ = similar(M)
     @inbounds for k in 1:3
         M′[:, k] = M[:, σ[k]]
@@ -265,7 +262,7 @@ or the basis with columns `(1, 2)` swapped and column 2 negated when
 `swap=true` (preserves ``\\det = +1``).
 """
 function _permute_basis_2d(basis::TensND.AbstractBasis, swap::Bool)
-    M = _basis_matrix(basis)
+    M = _frame_matrix(basis)
     swap || return TensND.RotatedBasis(M)
     M′ = similar(M)
     @inbounds begin
@@ -285,59 +282,47 @@ end
 end
 
 """
-    _sort_axes_and_basis(axes, basis, layout::Symbol) -> (sorted_axes, new_basis)
+    _sort_axes_and_basis(axes, basis, layout::Val) -> (sorted_axes, new_basis)
 
 Sort `axes` into descending order and permute the columns of `basis`
 accordingly to preserve the physical geometry of the inclusion.
 
 Supported layouts:
-- `:ellipsoid_3d` — full 3D permutation of ``(a, b, c)`` over columns 1,2,3.
-- `:ellipsoid_2d` — 2D permutation of ``(a, b)`` over columns 1,2.
-- `:cylinder`    — swap columns 2,3 if the two transverse axes are in
+- `Val(:ellipsoid_3d)` — full 3D permutation of ``(a, b, c)`` over columns 1,2,3.
+- `Val(:ellipsoid_2d)` — 2D permutation of ``(a, b)`` over columns 1,2.
+- `Val(:cylinder)`    — swap columns 2,3 if the two transverse axes are in
   ascending order (column 1 = cylinder axis, fixed).
-- `:crack`       — swap columns 1,2 if ``b > a`` (column 3 = crack
+- `Val(:crack)`       — swap columns 1,2 if ``b > a`` (column 3 = crack
   normal, fixed).
 
 Symbolic or non-Real element types are returned untouched (no
 comparison is performed).
 """
 function _sort_axes_and_basis(
-        axes::NTuple{3, T}, basis::TensND.AbstractBasis, layout::Symbol
+        axes::NTuple{3, T}, basis::TensND.AbstractBasis, ::Val{:ellipsoid_3d}
     ) where {T}
     is_hard_numeric(T) || return (axes, basis)
-    if layout === :ellipsoid_3d
-        σ = Tuple(sortperm(collect(axes); rev = true))::NTuple{3, Int}
-        σ == (1, 2, 3) && return (axes, basis)
-        sorted = (axes[σ[1]], axes[σ[2]], axes[σ[3]])
-        return (sorted, _permute_basis_3d(basis, σ))
-    elseif layout === :cylinder
-        # axes = (axis, b, c) with axes[1] ≡ Inf placeholder — ignore
-        # here; caller passes (b, c).  This 3-tuple branch is unused.
-        throw(ArgumentError("layout `:cylinder` expects a 2-tuple (b, c)"))
-    end
-    throw(ArgumentError("unknown layout $(layout) for 3-tuple axes"))
+    σ = Tuple(sortperm(collect(axes); rev = true))::NTuple{3, Int}
+    σ == (1, 2, 3) && return (axes, basis)
+    sorted = (axes[σ[1]], axes[σ[2]], axes[σ[3]])
+    return (sorted, _permute_basis_3d(basis, σ))
 end
 
 function _sort_axes_and_basis(
-        axes::NTuple{2, T}, basis::TensND.AbstractBasis, layout::Symbol
+        axes::NTuple{2, T}, basis::TensND.AbstractBasis, layout::Val
     ) where {T}
     is_hard_numeric(T) || return (axes, basis)
     a, b = axes
-    swap = b > a
-    if layout === :ellipsoid_2d
-        swap || return (axes, basis)
-        return ((b, a), _permute_basis_2d(basis, true))
-    elseif layout === :cylinder
-        # axes = (b, c); cylinder axis is column 1 and stays fixed.
-        swap || return (axes, basis)
-        return ((b, a), _permute_basis_cols23(basis))
-    elseif layout === :crack
-        # axes = (a, b); crack normal is column 3 and stays fixed.
-        swap || return (axes, basis)
-        return ((b, a), _permute_basis_cols12(basis))
-    end
-    throw(ArgumentError("unknown layout $(layout) for 2-tuple axes"))
+    b > a || return (axes, basis)
+    return ((b, a), _swap_axes_basis(basis, layout))
 end
+
+# The two columns a 2-axis layout swaps.
+_swap_axes_basis(basis, ::Val{:ellipsoid_2d}) = _permute_basis_2d(basis, true)
+# axes = (b, c); the cylinder axis is column 1 and stays fixed.
+_swap_axes_basis(basis, ::Val{:cylinder}) = _permute_basis_cols23(basis)
+# axes = (a, b); the crack normal is column 3 and stays fixed.
+_swap_axes_basis(basis, ::Val{:crack}) = _permute_basis_cols12(basis)
 
 """
     _permute_basis_cols23(basis) -> RotatedBasis
@@ -346,7 +331,7 @@ Swap the 2nd and 3rd columns of a 3D basis (column 1 fixed) and negate
 column 3 to keep ``\\det = +1``.  Used by `Cylinder`.
 """
 function _permute_basis_cols23(basis::TensND.AbstractBasis)
-    M = _basis_matrix(basis)
+    M = _frame_matrix(basis)
     M′ = copy(M)
     @inbounds begin
         M′[:, 2] = M[:, 3]
@@ -362,7 +347,7 @@ Swap the 1st and 2nd columns of a 3D basis (column 3 fixed) and negate
 column 2 to keep ``\\det = +1``.  Used by `EllipticCrack`.
 """
 function _permute_basis_cols12(basis::TensND.AbstractBasis)
-    M = _basis_matrix(basis)
+    M = _frame_matrix(basis)
     M′ = copy(M)
     @inbounds begin
         M′[:, 1] = M[:, 2]

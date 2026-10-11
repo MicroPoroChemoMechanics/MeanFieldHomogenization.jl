@@ -50,10 +50,17 @@ function _gather_common(lam::Laminate, prop::Symbol)
         mapreduce(eltype, promote_type, props),
         mapreduce(typeof, promote_type, hs),
         typeof(L),
+        _frame_eltype(lam.basis),
     )
     fs = Tel[Tel(h / L) for h in hs]
     return props, fs, Tel
 end
+
+# The frame enters the layer components through the change of basis, so its
+# element type does too: a dual or symbolic normal. The canonical frame has
+# exact zeros and ones and imposes no type of its own.
+_frame_eltype(::TensND.CanonicalBasis) = Bool
+_frame_eltype(basis::TensND.AbstractBasis) = eltype(basis)
 
 # ── The returned TensND type ────────────────────────────────────────────────
 #

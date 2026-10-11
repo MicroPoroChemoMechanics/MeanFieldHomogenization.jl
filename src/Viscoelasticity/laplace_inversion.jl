@@ -394,20 +394,6 @@ _scalar_float(::Type{T}) where {T <: Real} = float(T)
 _scalar_float(::Type{D}) where {D <: ForwardDiff.Dual} =
     _scalar_float(ForwardDiff.valtype(D))
 
-"""
-    _plain_value(x)
-
-Strip every `ForwardDiff.Dual` layer, returning the underlying float.
-
-Used only to choose [`DeHoog`](@ref)'s scaling period `T`.  `T` is a free
-algorithmic parameter — it selects the node set, not the mathematics — so
-freezing it at the value level is legitimate and keeps the `Dual` confined to
-the one place where `t` enters analytically, ``\\exp(i\\pi t/T)``.  Letting `T` carry
-partials would instead push them into `S(Tscale)` and fail.
-"""
-_plain_value(x::Real) = x
-_plain_value(d::ForwardDiff.Dual) = _plain_value(ForwardDiff.value(d))
-
 # ── Gaver-Stehfest weights: exact rationals, cached per N ───────────────────
 #
 # The Salzer weights depend on N and on nothing else — not on `t`, not on the
@@ -700,7 +686,11 @@ function _invert(F, t::Real, method::AbstractLaplaceInversion)
 end
 
 function _invert(F, t::Real, method::DeHoog)
-    Tscale = method.T === nothing ? 2 * _plain_value(t) : method.T
+    # `T` is a free algorithmic parameter — it selects the node set, not the
+    # mathematics — so it is taken on the value of `t` alone, which keeps the
+    # `Dual` in the one place where `t` enters analytically, exp(iπt/T).
+    # Letting `T` carry partials would push them into `S(Tscale)` and fail.
+    Tscale = method.T === nothing ? 2 * MFH_Core._primal(t) : method.T
     S = _scalar_float(_worktype(t))
     nodes = _dehoog_nodes(method, S, Tscale)
     values = map(F, nodes)
@@ -763,7 +753,7 @@ function _invert_grid(F, times::AbstractVector{<:Real}, method::DeHoog)
     order = sortperm(times)
     ratio = 1 / (2 * _DEHOOG_MIN_RATIO)          # t_max / t_min within a block
     for blk in _dehoog_blocks(order, times, ratio)
-        Tscale = 2 * _plain_value(times[order[last(blk)]])
+        Tscale = 2 * MFH_Core._primal(times[order[last(blk)]])
         nodes = _dehoog_nodes(method, S, Tscale)
         values = map(F, nodes)
         for j in blk

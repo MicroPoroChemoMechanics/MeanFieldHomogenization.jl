@@ -8,6 +8,11 @@ const CANON_MAT = TensND.CanonicalBasis{3, Float64}()
 # Canonical-frame components — see the frame rule in `Constitutive`.
 _g(t::TensND.AbstractTens) = get_array(TensND.change_tens(t, CANON_MAT))
 
+# A material that implements the contract wrongly: `initial_state` returns no
+# material state and `material_response` has no method.
+struct _NonConforming <: AbstractMFHMaterial end
+MeanFieldHomogenization.initial_state(::_NonConforming) = nothing
+
 function _composite_rve(; f = 0.2)
     rve = RVE()
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => CS_MAT); fraction = :rest)
@@ -69,6 +74,9 @@ end
             HomogenizedElastic(rve, MoriTanaka()); verbose = false
         )
     end
+    # A material that does not conform is reported, not propagated: its state
+    # is not a material state and its response throws.
+    @test check_material_interface(_NonConforming(); verbose = false) === false
 end
 
 @testset "Tensors.jl bridge" begin

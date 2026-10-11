@@ -412,10 +412,9 @@ function _rebuild_laminate(
     )
     new_lam = Laminate{T, typeof(lam.basis)}(
         copy(lam.layer_names),
-        layers isa Dict{Symbol, Layer} ? layers : Dict{Symbol, Layer}(layers),
-        thicknesses isa Dict{Symbol, Any} ? thicknesses : Dict{Symbol, Any}(thicknesses),
-        interfaces isa Vector{AbstractInterface} ? interfaces :
-            Vector{AbstractInterface}(interfaces),
+        convert(Dict{Symbol, Layer}, layers),
+        convert(Dict{Symbol, Any}, thicknesses),
+        convert(Vector{AbstractInterface}, interfaces),
         lam.basis,
         zero(T),
     )

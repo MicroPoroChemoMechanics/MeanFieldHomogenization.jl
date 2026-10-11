@@ -10,6 +10,7 @@ module Conductivity
 using LinearAlgebra
 using TensND
 using QuadGK
+using StaticArrays: SMatrix
 
 import ..Core
 using ..Core

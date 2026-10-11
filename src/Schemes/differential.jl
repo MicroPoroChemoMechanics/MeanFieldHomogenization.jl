@@ -158,11 +158,7 @@ function _diff_integrate_ode(
     targets = Dict{Symbol, T_target}()
     for name in incl
         a = rve.amounts[name]
-        if a isa VolumeFraction
-            push!(solid_names, name)
-        else  # CrackDensity
-            push!(crack_names, name)
-        end
+        push!(_is_crack_family(a) ? crack_names : solid_names, name)
         targets[name] = T_target(amount_value(a))
     end
 
@@ -395,7 +391,7 @@ _diff_initial_state(tag::Val, P_init, proto) = _get_state(tag, proto)
 function _diff_probe_contribution(
         rve::RVE, name::Symbol, prop::Symbol, ref, dual::Bool; kw...
     )
-    is_crack = rve.amounts[name] isa CrackDensity
+    is_crack = _is_crack_family(rve.amounts[name])
     return if dual
         is_crack ?
             _diff_crack_density_compliance_kernel(rve, name, prop, ref; kw...) :

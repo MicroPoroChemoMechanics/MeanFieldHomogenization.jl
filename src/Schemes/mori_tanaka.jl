@@ -42,30 +42,9 @@ function _mt_4(rve, C₀::TensND.AbstractTens{4, 3}, m::Symbol, ::Val{p}; kw...)
     A_avg = f_m * Iref          # ⟨A_dil⟩, matrix carries A_dil = I
     Nsum = zero(C₀)
     for name in inclusion_phase_names(rve, m)
-        a = rve.amounts[name]
-        if !(a isa CrackDensity)
-            # Apply per-phase orientation symmetrize via the bundled helper,
-            # which shares the single localization solve between `A_dil` and
-            # the contribution `N` (they used to be computed independently,
-            # i.e. two `hill_tensor` calls with identical arguments).
-            # `N` goes through the trait so that internally heterogeneous
-            # inclusions (LayeredSphere) sum over their layers instead of
-            # using a phase property that does not represent them, and the
-            # helper symmetrizes the PRODUCT (C_i − C₀):A, not just A.
-            A_dil, N = _phase_dilute_and_contribution(rve, name, p, C₀; kw...)
-            A_avg += volume_fraction(rve, name) * A_dil
-            Nsum += N
-        else  # CrackDensity — ECHOES `B · A^{-1}` form.
-            # Strain-Stress contribution: A_crack = ε·sym(H_c)·C₀.
-            # Stress-Stress contribution: 0 (traction-free).
-            # Stiffness contribution into Nsum: ΔC_crack = -ε·C₀·sym(H_c)·C₀
-            # (same as the additive form).  The non-trivial change is the
-            # crack term in the denominator A_avg, which prevents the
-            # additive form's spurious percolation at moderate density.
-            H, N = _phase_compliance_and_contribution(rve, name, p, C₀; kw...)
-            A_avg += H ⊡ C₀
-            Nsum += N
-        end
+        ΔA, N = _mt_terms(rve.amounts[name], rve, name, p, C₀; kw...)
+        A_avg += ΔA
+        Nsum += N
     end
     return C₀ + Nsum ⊡ inv(A_avg)
 end
@@ -77,18 +56,39 @@ function _mt_2(rve, K₀::TensND.AbstractTens{2, 3}, m::Symbol, ::Val{p}; kw...)
     A_avg = f_m * Iref
     Nsum = zero(K₀)
     for name in inclusion_phase_names(rve, m)
-        a = rve.amounts[name]
-        if !(a isa CrackDensity)
-            A_dil, N = _phase_dilute_and_contribution(rve, name, p, K₀; kw...)
-            A_avg += volume_fraction(rve, name) * A_dil
-            Nsum += N
-        else  # CrackDensity — ECHOES `B · A^{-1}` form.
-            R, N = _phase_compliance_and_contribution(rve, name, p, K₀; kw...)
-            A_avg += R ⋅ K₀
-            Nsum += N
-        end
+        ΔA, N = _mt_terms(rve.amounts[name], rve, name, p, K₀; kw...)
+        A_avg += ΔA
+        Nsum += N
     end
     return K₀ + Nsum ⋅ inv(A_avg)
+end
+
+# The terms a phase adds to ⟨A⟩ and to the contribution sum, in one loop over
+# the phases so that the sums keep their order.
+#
+# A phase with a volume: its dilute concentration weighted by its fraction. The
+# bundled helper shares one localization solve between `A_dil` and `N`, sums
+# the layers of an internally heterogeneous inclusion (LayeredSphere) instead
+# of reading a phase property that does not represent it, and symmetrizes the
+# product (C_i − C₀):A, not A alone.
+function _mt_terms(::AbstractAmount, rve, name, p, P₀; kw...)
+    A_dil, N = _phase_dilute_and_contribution(rve, name, p, P₀; kw...)
+    return volume_fraction(rve, name) * A_dil, N
+end
+
+# A crack family, in the ECHOES `B · A⁻¹` form: strain-stress term
+# ε sym(H_c) : C₀, no stress-stress term (traction-free), and the stiffness
+# contribution −ε C₀ : sym(H_c) : C₀ as in the additive form. The crack term in
+# the denominator ⟨A⟩ is what prevents the spurious percolation of the
+# additive form at moderate density.
+function _mt_terms(::CrackDensity, rve, name, p, C₀::TensND.AbstractTens{4, 3}; kw...)
+    H, N = _phase_compliance_and_contribution(rve, name, p, C₀; kw...)
+    return H ⊡ C₀, N
+end
+
+function _mt_terms(::CrackDensity, rve, name, p, K₀::TensND.AbstractTens{2, 3}; kw...)
+    R, N = _phase_compliance_and_contribution(rve, name, p, K₀; kw...)
+    return R ⋅ K₀, N
 end
 
 # ── Identity tensor matching the algebra of the property tensor ─────────────

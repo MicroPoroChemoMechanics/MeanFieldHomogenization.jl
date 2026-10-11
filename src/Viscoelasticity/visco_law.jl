@@ -87,6 +87,10 @@ function heaviside_law(C; mode::Symbol = :relaxation)
     return ViscoLaw(eval_fun, mode)
 end
 
+# A law as it is, an elastic modulus as the Heaviside law it stands for.
+_as_visco_law(law::ViscoLaw) = law
+_as_visco_law(C) = heaviside_law(C)
+
 """
     maxwell_relaxation(C_inf, C_branches, taus; mode = :relaxation)
 

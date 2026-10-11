@@ -25,6 +25,16 @@
 
 # ── TI 6-tuple primitives ───────────────────────────────────────────────────
 
+# Promote `T` with the element type of every tuple of parameter matrices in
+# `list` (TI 6-tuples, orthotropic 12-tuples): a phase may carry a wider
+# element type than the matrix, a dual geometry for one.
+@inline function _params_list_eltype(T::Type, list::AbstractVector)
+    for a in list
+        T = promote_type(T, eltype(a[1]))
+    end
+    return T
+end
+
 """
     _ti_identity(n, T) -> NTuple{6, Matrix{T}}
 
@@ -32,15 +42,6 @@ TI form of the ``6n\\times 6n`` block-diagonal identity matrix:
 ``(\\ell_1, \\ell_2, \\ell_3, \\ell_4, \\ell_5, \\ell_6) = (\\mathbb 1, \\mathbb 1, 0, 0, \\mathbb 1, \\mathbb 1)`` (because
 ``\\boldsymbol{1}\\stackrel{s}{\\boxtimes}\\boldsymbol{1} = \\mathbb{W}_1 + \\mathbb{W}_2 + \\mathbb{W}_5 + \\mathbb{W}_6`` for the full 4-tensor identity).
 """
-# Promote `T` with the eltype of every TI 6-tuple in `list` (Dual-safe :
-# phases may carry a wider eltype than the matrix, e.g. geometry Duals).
-@inline function _ti_list_eltype(T::Type, list::AbstractVector)
-    for a in list
-        T = promote_type(T, eltype(a[1]))
-    end
-    return T
-end
-
 @inline function _ti_identity(n::Int, T::Type)
     Iₙ = Matrix{T}(LinearAlgebra.I, n, n)
     Zₙ = zeros(T, n, n)
@@ -321,7 +322,7 @@ function voigt_alv_ti(ℓ_phases::AbstractVector, fractions::AbstractVector)
         throw(ArgumentError("voigt_alv_ti: phase counts mismatch"))
     isempty(ℓ_phases) && throw(ArgumentError("voigt_alv_ti: at least one phase required"))
     n = size(ℓ_phases[1][1], 1)
-    T = _ti_list_eltype(eltype(fractions), ℓ_phases)
+    T = _params_list_eltype(eltype(fractions), ℓ_phases)
     eff = ntuple(_ -> zeros(T, n, n), 6)
     @inbounds for r in eachindex(ℓ_phases)
         _ti_add!(eff, fractions[r], ℓ_phases[r])
@@ -439,8 +440,10 @@ function mori_tanaka_alv_ti(
     length(A_duts_ti) == length(contribs_ti) == length(fractions) ||
         throw(ArgumentError("mori_tanaka_alv_ti: phase counts mismatch"))
     n = size(ℓ_0[1], 1)
-    T = promote_type(eltype(ℓ_0[1]), eltype(fractions), typeof(f_M))
-    T = _ti_list_eltype(_ti_list_eltype(T, A_duts_ti), contribs_ti)
+    T = _params_list_eltype(
+        _params_list_eltype(promote_type(eltype(ℓ_0[1]), eltype(fractions), typeof(f_M)), A_duts_ti),
+        contribs_ti,
+    )
     Id = _ti_identity(n, T)
     num = ntuple(_ -> zeros(T, n, n), 6)
     den = ntuple(k -> T(f_M) .* Id[k], 6)
@@ -466,8 +469,7 @@ function maxwell_alv_ti(
     length(contribs_ti) == length(fractions) ||
         throw(ArgumentError("maxwell_alv_ti: phase counts mismatch"))
     n = size(ℓ_0[1], 1)
-    T = promote_type(eltype(ℓ_0[1]), eltype(fractions), eltype(ℓ_H_0[1]))
-    T = _ti_list_eltype(T, contribs_ti)
+    T = _params_list_eltype(promote_type(eltype(ℓ_0[1]), eltype(fractions), eltype(ℓ_H_0[1])), contribs_ti)
     Id = _ti_identity(n, T)
     Σ = ntuple(_ -> zeros(T, n, n), 6)
     @inbounds for r in eachindex(contribs_ti)

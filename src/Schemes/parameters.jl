@@ -406,8 +406,7 @@ function _rebuild_rve(
     # (`rve.amounts` itself, `_amounts_with_replacement`, `promote_rve`), so it
     # is stored as-is — copying it here would allocate a second dict per
     # `set_param`, i.e. per autodiff step.
-    new_amounts = amounts isa Dict{Symbol, AbstractAmount} ? amounts :
-        Dict{Symbol, AbstractAmount}(amounts)
+    new_amounts = convert(Dict{Symbol, AbstractAmount}, amounts)
     # Property / geometry / distribution-shape lenses leave the amounts alone,
     # which is the common case under autodiff — carry the cached fraction over
     # instead of summing the dict again.
@@ -458,9 +457,11 @@ function get_param(rve::RVE, p::AmountParameter)
     # reading. Every other amount reports what was DECLARED, not what the
     # closure resolves it to — this is the inverse of `set_param`, and under
     # `RescaledFractions` the two differ (see `volume_fraction`).
-    a isa Remainder && return remainder_volume_fraction(rve)
-    return amount_value(a)
+    return _declared_amount(a, rve)
 end
+
+_declared_amount(a::AbstractAmount, rve) = amount_value(a)
+_declared_amount(::Remainder, rve) = remainder_volume_fraction(rve)
 
 function set_param(rve::RVE, p::AmountParameter, value)
     haskey(rve.amounts, p.phase) ||
@@ -474,7 +475,7 @@ function set_param(rve::RVE, p::AmountParameter, value)
         )
     )
     v = _amount_promote(_declared_eltype(rve), value)
-    new_amount = old isa VolumeFraction ? VolumeFraction(v) : CrackDensity(v)
+    new_amount = _with_value(old, v)
     new_amounts = _amounts_with_replacement(rve.amounts, p.phase, new_amount)
     return _rebuild_rve(rve; amounts = new_amounts)
 end

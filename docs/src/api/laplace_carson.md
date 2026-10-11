@@ -34,7 +34,6 @@ _realpart
 _decompose
 _gs_exact_weights
 _scalar_float
-_plain_value
 _dehoog_from_values
 _dehoog_blocks
 _DEHOOG_MIN_RATIO

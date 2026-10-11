@@ -205,3 +205,26 @@ end
     end
     @test ForwardDiff.derivative(tilted_h, 0.3) ≈ _fd(tilted_h, 0.3) rtol = RTOL_AD
 end
+
+@testset "ForwardDiff — the orientation of the laminate" begin
+    # The element type of the layer components was promoted over the layers and
+    # the thicknesses but not over the frame, so a dual normal threw. Reference:
+    # the laminate turns with its frame, C(θ) = Q(θ) C₀ Q(θ)ᵀ, with C₀ the
+    # laminate about e₃ and Q the Bond matrix of the frame.
+    function lam_at(θ)
+        lam = Laminate(; normal = (0, sin(θ), cos(θ)))
+        add_layer!(lam, :A, Dict(:C => _isod(2.0, 0.8)); thickness = 0.3)
+        add_layer!(lam, :B, Dict(:C => _isod(0.5, 0.2)); thickness = 0.7)
+        return lam
+    end
+    C(θ) = Matrix(KM(homogenize(lam_at(θ), Laminated(), :C)))
+    Q(θ) = Matrix(
+        MeanFieldHomogenization.Core._bond6(
+            MeanFieldHomogenization.Core._frame_matrix(MeanFieldHomogenization.Laminates.laminate_basis(lam_at(θ)))
+        )
+    )
+    C₀ = C(0.0)
+    θ = 0.4
+    @test C(θ) ≈ Q(θ) * C₀ * Q(θ)' rtol = 1.0e-12
+    @test ForwardDiff.derivative(C, θ) ≈ ForwardDiff.derivative(t -> Q(t) * C₀ * Q(t)', θ) rtol = 1.0e-10
+end

@@ -8,7 +8,8 @@
 #   4. ASC ≡ SC when the matrix is the soft phase (stiffness-form path).
 #   5. ASC handles inclusion-soft RVE through the compliance-form path.
 #   6. Conductivity (`property = :K`) — same recipes via gradient_gradient_loc.
-#   7. ForwardDiff sensitivity through the volume fraction.
+#   7. ForwardDiff sensitivity through the volume fraction; the derivatives
+#      converge with the values, from any start.
 #   8. NewtonDefault (built-in, dependency-free) agrees with AndersonDefault.
 #   9. Symbol shortcuts.
 #  10. ASC compliance branch: `⟨C:A⟩` of an ANISOTROPIC phase under an
@@ -125,6 +126,31 @@ end
     df = ForwardDiff.derivative(f_sc, 0.3)
     @test isfinite(df)
     @test df > 0
+end
+
+@testset "SelfConsistent — derivatives converge with the values" begin
+    # The derivatives are iterated along with the values and converge one step
+    # behind. Started from the solution itself (`init`), the value has
+    # converged at the first step while the derivatives have not moved: the
+    # derivative came out 2 % off with AndersonDefault and zero with
+    # NewtonDefault, and from a cold start NewtonDefault's was 6e-8 off.
+    # Reference: NewtonDefault from the default start.
+    function rve_f(f)
+        r = RVE(; T = typeof(f))
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
+        add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0)); fraction = f)
+        return r
+    end
+    C11(f, alg; init = nothing) = get_array(homogenize(rve_f(f), SelfConsistent(; algorithm = alg, init)))[1, 1, 1, 1]
+    f0 = 0.3
+    d_ref = ForwardDiff.derivative(f -> C11(f, NewtonDefault()), f0)
+    d2_ref = ForwardDiff.derivative(g -> ForwardDiff.derivative(f -> C11(f, NewtonDefault()), g), f0)
+    for alg in (AndersonDefault(), NewtonDefault())
+        C_star = homogenize(rve_f(f0), SelfConsistent(; algorithm = alg))
+        @test ForwardDiff.derivative(f -> C11(f, alg), f0) ≈ d_ref rtol = 1.0e-9
+        @test ForwardDiff.derivative(f -> C11(f, alg; init = C_star), f0) ≈ d_ref rtol = 1.0e-9
+        @test ForwardDiff.derivative(g -> ForwardDiff.derivative(f -> C11(f, alg; init = C_star), g), f0) ≈ d2_ref rtol = 1.0e-9
+    end
 end
 
 @testset "SelfConsistent — NewtonDefault works out of the box" begin
@@ -392,4 +418,20 @@ end
     # caller degrade to measuring the tensor directly instead of failing.
     @test S._sc_basis_norm(C_ti, [1.0, 2.0, 3.0]) === nothing
     @test S._sc_basis_norm(C_ti, collect(1.0:length(TensND.get_data(C_ti)))) isa Real
+end
+
+@testset "AsymmetricSelfConsistent — insulating cracks in conduction" begin
+    # The compliance form at order 2 skipped the crack phases: their
+    # resistivity was never added, and the conductivity came out as if the
+    # cracks were not there, while order 4 added them. With insulating penny
+    # cracks of density ε oriented at random, the scheme reads
+    # R = R_m + (8/9) ε R, hence k = k_m (1 − 8ε/9).
+    k_m = 2.0
+    for ε in (0.05, 0.1)
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(k_m)); fraction = :rest)
+        add_phase!(rve, :F, PennyCrack(1.0), Dict(:K => TensISO{3}(k_m)); density = ε, symmetrize = :iso)
+        K = homogenize(rve, AsymmetricSelfConsistent(); property = :K)
+        @test get_array(K)[1, 1] ≈ k_m * (1 - 8ε / 9) rtol = 1.0e-7
+    end
 end

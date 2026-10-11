@@ -36,7 +36,8 @@ function has_visco_property(cell::MFH_Core.AbstractHomogenizationCell, prop::Sym
     return false
 end
 
-_is_visco_value(v, ::Symbol) = v isa ViscoLaw
+_is_visco_value(::ViscoLaw, ::Symbol) = true
+_is_visco_value(v, ::Symbol) = false
 _is_visco_value(h::MFH_Core.Homogenized, key::Symbol) =
     has_visco_property(h.cell, h.property === nothing ? key : h.property)
 
@@ -233,9 +234,11 @@ end
 
 # The axis reaches us either as a plain 3-vector/tuple or as a TensND
 # 1-tensor, exactly as `TISymmetrize` stores it.
+_alv_axis_components(axis::TensND.AbstractTens) = collect(TensND.get_array(axis))
+_alv_axis_components(axis) = collect(axis)
+
 function _alv_unit_axis3(axis)
-    v = axis isa TensND.AbstractTens ? collect(TensND.get_array(axis)) :
-        collect(axis)
+    v = _alv_axis_components(axis)
     length(v) == 3 || throw(ArgumentError("ALV TI average: axis must have 3 components"))
     nrm = sqrt(sum(abs2, v))
     iszero(nrm) && throw(ArgumentError("ALV TI average: axis must be non-zero"))
@@ -286,21 +289,20 @@ Mandel).  Used by [`homogenize_alv`](@ref) to dispatch between the
 order-4 (stiffness / relaxation) and order-2 (conductivity / creep
 admittance) pipelines.
 """
-function _alv_property_order(law::ViscoLaw, t::Real)
-    sample = visco_eval(law, t, t)
-    if sample isa TensND.AbstractTens{2, 3}
-        return 2
-    elseif sample isa TensND.AbstractTens{4, 3}
-        return 4
-    elseif sample isa AbstractMatrix
-        if size(sample) == (3, 3)
-            return 2
-        elseif size(sample) == (6, 6)
-            return 4
-        end
-    end
-    throw(ArgumentError("homogenize_alv: cannot infer ALV order from sample of type $(typeof(sample))"))
+_alv_property_order(law::ViscoLaw, t::Real) = _alv_sample_order(visco_eval(law, t, t))
+
+_alv_sample_order(::TensND.AbstractTens{2, 3}) = 2
+_alv_sample_order(::TensND.AbstractTens{4, 3}) = 4
+# A plain array tells its order by its size only, a run-time value.
+function _alv_sample_order(sample::AbstractMatrix)
+    size(sample) == (3, 3) && return 2
+    size(sample) == (6, 6) && return 4
+    return _alv_order_error(sample)
 end
+_alv_sample_order(sample) = _alv_order_error(sample)
+_alv_order_error(sample) = throw(
+    ArgumentError("homogenize_alv: cannot infer ALV order from sample of type $(typeof(sample))")
+)
 
 """
     homogenize_alv(rve, scheme, prop::Symbol; times) -> Matrix
@@ -408,7 +410,7 @@ function homogenize_alv(
         ph = rve.phases[name]
         a = rve.amounts[name]
         sym = phase_symmetrize(rve, name)
-        if a isa CrackDensity
+        if _is_crack_family(a)
             geom = ph.geometry
             geom isa MFH_Core.AbstractCrack ||
                 throw(ArgumentError("homogenize_alv: phase $name has CrackDensity but geometry $(typeof(geom)) is not a crack"))
@@ -442,14 +444,10 @@ function homogenize_alv(
         else
             C_r_law = phase_property(rve, name, prop)
             C_r, A_dut, N_dut, P_r = _inclusion_alv_quantities(
-                ph.geometry, C_r_law, C_M_law, C_0, times
+                ph.geometry, scheme, C_r_law, C_M_law, C_0, times
             )
             A_dut = _maybe_symmetrize_alv(A_dut, sym)
             N_dut = _maybe_symmetrize_alv(N_dut, sym)
-            # A layered sphere has no single stiffness: the Reuss bound takes the
-            # inverse of the average of its layer compliances.
-            scheme isa Reuss && ph.geometry isa LayeredSphere &&
-                (C_r = _layer_reuss_alv(ph.geometry, times))
             push!(C_phases, C_r)
             push!(A_duts, A_dut)
             push!(contribs, N_dut)
@@ -472,16 +470,17 @@ end
 # ── Per-geometry inclusion quantities ───────────────────────────────────────
 
 """
-    _inclusion_alv_quantities(geom, C_r_law, C_M_law, C_0, times)
+    _inclusion_alv_quantities(geom, scheme, C_r_law, C_M_law, C_0, times)
         -> (C_r, A_dut, N_dut, P_r)
 
 Compute the four ``6n\\times 6n`` matrices needed by the ALV scheme
 dispatch for a single inclusion of geometry `geom`.  Default method
 covers ellipsoidal geometries (Hill kernel + dilute formulas);
-specializations for `LayeredSphere` use the layered-sphere recurrences.
+specializations for `LayeredSphere` use the layered-sphere recurrences, and
+the `scheme` only for the stiffness a bound assigns to the sphere.
 """
 function _inclusion_alv_quantities(
-        geom, C_r_law,
+        geom, scheme, C_r_law,
         C_M_law::ViscoLaw,
         C_0::AbstractMatrix,
         times::AbstractVector{<:Real}
@@ -533,7 +532,7 @@ function _inclusion_alv_quantities(
 end
 
 function _inclusion_alv_quantities(
-        sphere::LayeredSphere, _C_r_law,
+        sphere::LayeredSphere, scheme, _C_r_law,
         C_M_law::ViscoLaw,
         C_0::AbstractMatrix,
         times::AbstractVector{<:Real}
@@ -544,10 +543,8 @@ function _inclusion_alv_quantities(
     A_dut = strain_strain_loc_alv(sphere, C_M_law, times)
     N_dut = stiffness_contribution_alv(sphere, C_M_law, times)
     # A layered sphere has no single stiffness. The only consumer of `C_r` is
-    # a bound, and the Voigt bound takes the volume average of the layer
-    # kernels, as the elastic one does (`layer_stiffness_average`); the Reuss
-    # bound replaces it by `_layer_reuss_alv` in `homogenize_alv`.
-    C_r = _layer_voigt_alv(sphere, times)
+    # a bound, which takes its own average of the layer kernels.
+    C_r = _layer_bound_alv(scheme, sphere, times)
     # Placeholder Hill kernel (not used by Dilute / MT / Maxwell paths).
     P_r = zeros(eltype(C_0), size(C_0)...)
     return (C_r, A_dut, N_dut, P_r)
@@ -558,7 +555,7 @@ end
 function _layer_kernels_alv(sphere::LayeredSphere{T, N}, times) where {T, N}
     Cs = map(1:N) do k
         C = layer_modulus(sphere, k)
-        return _trapezoidal_relaxation(C isa ViscoLaw ? C : heaviside_law(C), times, 6)
+        return _trapezoidal_relaxation(_as_visco_law(C), times, 6)
     end
     return Cs, [layer_volume_fraction(sphere, k) for k in 1:N]
 end
@@ -568,6 +565,12 @@ end
 # `layer_compliance_average` do in elasticity.
 _layer_voigt_alv(sphere::LayeredSphere, times) = voigt_alv(_layer_kernels_alv(sphere, times)...)
 _layer_reuss_alv(sphere::LayeredSphere, times) = reuss_alv(_layer_kernels_alv(sphere, times)...)
+
+# The average a scheme reads as the stiffness of a layered sphere: the Reuss
+# bound inverts the average of the layer compliances, every other scheme takes
+# the Voigt average (only the Voigt bound reads it).
+_layer_bound_alv(::Reuss, sphere::LayeredSphere, times) = _layer_reuss_alv(sphere, times)
+_layer_bound_alv(::HomogenizationScheme, sphere::LayeredSphere, times) = _layer_voigt_alv(sphere, times)
 
 # Convenience: extract the scalar amount value (volume fraction or crack
 # density) from the RVE.  Preserves the element type of the wrapper —
@@ -598,7 +601,7 @@ Used by the scheme fast paths to opt into the iso pipeline only when
 all phases really are iso 4-tensors.
 """
 function _try_iso_pairs(matrices::AbstractVector{<:AbstractMatrix})
-    T = isempty(matrices) ? Float64 : eltype(matrices[1])
+    T = isempty(matrices) ? Float64 : _alv_blocks_eltype(matrices)
     isempty(matrices) && return Tuple{Matrix{T}, Matrix{T}}[]
     out = Vector{Tuple{Matrix{T}, Matrix{T}}}()
     for M in matrices
@@ -619,7 +622,7 @@ Iso block matrices automatically satisfy the TI test (iso ⊂ TI), so a
 mixed iso/TI phase setup with the canonical axis works.
 """
 function _try_ti_tuples(matrices::AbstractVector{<:AbstractMatrix})
-    T = isempty(matrices) ? Float64 : eltype(matrices[1])
+    T = isempty(matrices) ? Float64 : _alv_blocks_eltype(matrices)
     isempty(matrices) && return NTuple{6, Matrix{T}}[]
     out = Vector{NTuple{6, Matrix{T}}}()
     for M in matrices
@@ -641,7 +644,7 @@ test, so a mixed iso/TI/ortho phase setup with the canonical material
 frame works.
 """
 function _try_ortho_tuples(matrices::AbstractVector{<:AbstractMatrix})
-    T = isempty(matrices) ? Float64 : eltype(matrices[1])
+    T = isempty(matrices) ? Float64 : _alv_blocks_eltype(matrices)
     isempty(matrices) && return NTuple{12, Matrix{T}}[]
     out = Vector{NTuple{12, Matrix{T}}}()
     for M in matrices

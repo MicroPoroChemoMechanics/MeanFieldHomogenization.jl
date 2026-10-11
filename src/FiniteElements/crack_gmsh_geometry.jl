@@ -163,7 +163,8 @@ function _weld_msh_crack_front(
     p = i + 2
     for _ in 1:nblocks
         n = ints(lines[p])[4]
-        tags = [ints(lines[p + k])[1] for k in 1:n]
+        p₀ = p          # the comprehension reads this block's start, not `p`
+        tags = [ints(lines[p₀ + k])[1] for k in 1:n]
         for k in 1:n
             x, y, z = parse.(Float64, split(lines[p + n + k]))
             (abs(z) < z_tol && abs((x / a)^2 + (y / b)^2 - 1) < ell_tol) || continue
@@ -206,11 +207,12 @@ function _weld_msh_crack_front(
     for _ in 1:nblocks
         h = ints(lines[p])
         n = h[4]
-        tags = [ints(lines[p + k])[1] for k in 1:n]
+        p₀ = p          # the comprehensions read this block's start, not `p`
+        tags = [ints(lines[p₀ + k])[1] for k in 1:n]
         keep = [k for k in 1:n if !haskey(remap, tags[k])]
         push!(kept, join((h[1], h[2], h[3], length(keep)), " "))
         append!(kept, string(tags[k]) for k in keep)
-        append!(kept, lines[p + n + k] for k in keep)
+        append!(kept, lines[p₀ + n + k] for k in keep)
         total += length(keep)
         for k in keep
             lo = min(lo, tags[k])
@@ -218,12 +220,12 @@ function _weld_msh_crack_front(
         end
         p += 1 + 2n
     end
-    lines = vcat(
+    welded = vcat(
         lines[1:i], join((nblocks, total, lo, hi), " "), kept, lines[p:end]
     )
 
     open(path, "w") do io
-        for l in lines
+        for l in welded
             println(io, l)
         end
     end

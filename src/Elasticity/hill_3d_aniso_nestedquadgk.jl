@@ -68,6 +68,50 @@ computation out, so it is kept separate deliberately.
     return (iK11, iK12, iK13, iK12, iK22, iK23, iK13, iK23, iK33)
 end
 
+# The six Voigt pairs of a symmetric 3×3 tensor, and the 21 pairs (I ≤ J) of
+# those in row order: the independent components of a Hill tensor.
+const _VOIGT_IJ = ((1, 1), (2, 2), (3, 3), (2, 3), (1, 3), (1, 2))
+const _VOIGT_UPPER21 = Tuple((I, J) for I in 1:6 for J in I:6)
+
+"""
+    _hill_integrand21(iK, ζ, T) -> SVector{21, T}
+
+The integrand of the Hill tensor at the direction ``\\underline{\\zeta}``, from the
+inverse acoustic tensor `iK` (as returned by [`_sym3_inv_acoustic`](@ref)):
+
+```math
+\\Gamma_{ijkl} = \\tfrac14\\,\\big(\\zeta_i\\,(K^{-1}_{jk}\\,\\zeta_l + K^{-1}_{jl}\\,\\zeta_k)
++ \\zeta_j\\,(K^{-1}_{ik}\\,\\zeta_l + K^{-1}_{il}\\,\\zeta_k)\\big) ,
+```
+
+its 21 independent components in the order of `_VOIGT_UPPER21`, on the stack:
+one call per quadrature node, so a heap vector here was an allocation per node.
+Shared by the cubatures of the ellipsoid and the cylinder.
+"""
+@inline function _hill_integrand21(iK, ζ, ::Type{T}) where {T}
+    return SVector{21, T}(
+        ntuple(Val(21)) do n
+            I, J = _VOIGT_UPPER21[n]
+            i, j = _VOIGT_IJ[I]
+            k, l = _VOIGT_IJ[J]
+            T(0.25) * (
+                ζ[i] * (iK[j + (k - 1) * 3] * ζ[l] + iK[j + (l - 1) * 3] * ζ[k]) +
+                    ζ[j] * (iK[i + (k - 1) * 3] * ζ[l] + iK[i + (l - 1) * 3] * ζ[k])
+            )
+        end
+    )
+end
+
+# The 81 entries of a Hill tensor from its 21 independent components.
+function _fill_hill21!(A::AbstractArray{<:Any, 4}, vals)
+    for (n, (I, J)) in enumerate(_VOIGT_UPPER21)
+        i, j = _VOIGT_IJ[I]
+        k, l = _VOIGT_IJ[J]
+        MFH_Core._fill_sym4!(A, i, j, k, l, vals[n])
+    end
+    return A
+end
+
 """
     _hill_3d_aniso_nestedquadgk(ell, C₀; abstol, reltol, maxiters) -> AbstractTens{4,3}
 
@@ -85,24 +129,18 @@ function _hill_3d_aniso_nestedquadgk(
     )
     T = promote_type(eltype(ell.semi_axes), eltype(C₀))
 
-    C₀_princ = TensND.change_tens(C₀, ell.basis)
-    C₀_arr = Array{T, 4}(undef, 3, 3, 3, 3)
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        C₀_arr[i, j, k, l] = C₀_princ[i, j, k, l]
-    end
-
     # --- Axis sort (descending) -----------------------------------------------
     # Sort semi-axes so a₁ ≥ a₂ ≥ a₃, guaranteeing η ≤ 1 and ω ≤ 1.
     # The stiffness tensor is permuted consistently so that the parametrization
     # ζ = (√(1-z²)cosφ, √(1-z²)sinφ/η, z/ω) matches the sorted frame.
     # After integration, the result is un-permuted via the inverse permutation.
+    # `C₀_arr` is assigned once, already permuted: the integrand captures it,
+    # and a captured variable assigned twice is boxed, every access dynamic.
     p = sortperm(collect(ell.semi_axes), rev = true)
-    if p != [1, 2, 3]
-        C₀_arr_p = Array{T, 4}(undef, 3, 3, 3, 3)
-        for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-            C₀_arr_p[i, j, k, l] = C₀_arr[p[i], p[j], p[k], p[l]]
-        end
-        C₀_arr = C₀_arr_p
+    C₀_princ = TensND.change_tens(C₀, ell.basis)
+    C₀_arr = Array{T, 4}(undef, 3, 3, 3, 3)
+    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
+        C₀_arr[i, j, k, l] = C₀_princ[p[i], p[j], p[k], p[l]]
     end
 
     semi_sorted = ell.semi_axes[p]
@@ -113,30 +151,14 @@ function _hill_3d_aniso_nestedquadgk(
     # z(u) = 1 − (1 − u)^α concentrates Gauss-Kronrod nodes near z = 1
     # where the integrand varies most rapidly for flat ellipsoids (ω ≪ 1).
     # α = 1 (identity) when ω ≥ 0.1; beyond that α ≈ 2, 3, … for each decade.
-    α = max(1.0, -log10(Float64(ω)))
-
-    voigt_ij = ((1, 1), (2, 2), (3, 3), (2, 3), (1, 3), (1, 2))
+    # Any α gives the same integral, so it is read on the value of ω alone: a
+    # dual semi-axis keeps its derivatives in ζ, where they belong.
+    α = max(1.0, -log10(MFH_Core._primal(ω)))
 
     function integrand_at(z, φ)
         uz = sqrt(one(T) - T(z) * T(z))
         ζ = (uz * cos(T(φ)), uz * sin(T(φ)) / η, T(z) / ω)
-        iK = _sym3_inv_acoustic(C₀_arr, ζ)
-
-        vals = Vector{T}(undef, 21)
-        idx = 0
-        for I in 1:6
-            i, j = voigt_ij[I]
-            for J in I:6
-                k, l = voigt_ij[J]
-                γ = T(0.25) * (
-                    ζ[i] * (iK[j + (k - 1) * 3] * ζ[l] + iK[j + (l - 1) * 3] * ζ[k]) +
-                        ζ[j] * (iK[i + (k - 1) * 3] * ζ[l] + iK[i + (l - 1) * 3] * ζ[k])
-                )
-                idx += 1
-                vals[idx] = γ
-            end
-        end
-        return vals
+        return _hill_integrand21(_sym3_inv_acoustic(C₀_arr, ζ), ζ, T)
     end
 
     MFH_Core._bump!(MFH_Core.QUADGK_OUTER)
@@ -157,21 +179,10 @@ function _hill_3d_aniso_nestedquadgk(
         )
         inner .* jac
     end
-    P_vals ./= T(2π)
+    P_vals = P_vals ./ T(2π)
 
     # --- Build result in sorted frame -----------------------------------------
-    P_perm = zeros(T, 3, 3, 3, 3)
-    idx = 0
-    for I in 1:6, J in I:6
-        i, j = voigt_ij[I]
-        k, l = voigt_ij[J]
-        idx += 1
-        v = P_vals[idx]
-        P_perm[i, j, k, l] = v;  P_perm[j, i, k, l] = v
-        P_perm[i, j, l, k] = v;  P_perm[j, i, l, k] = v
-        P_perm[k, l, i, j] = v;  P_perm[l, k, i, j] = v
-        P_perm[k, l, j, i] = v;  P_perm[l, k, j, i] = v
-    end
+    P_perm = _fill_hill21!(zeros(T, 3, 3, 3, 3), P_vals)
 
     # --- Un-permute back to original axis ordering ----------------------------
     # P_orig[q[i],q[j],q[k],q[l]] = P_perm[i,j,k,l]  where  q = invperm(p).

@@ -54,7 +54,7 @@ A 2-tuple or any non-3 dimension is returned untouched: the shipped surrogates
 are three-dimensional, and there is no sorted convention to honor elsewhere.
 """
 _canonical_axes(axes::NTuple{3}, basis) =
-    Core._sort_axes_and_basis(axes, basis, :ellipsoid_3d)
+    Core._sort_axes_and_basis(axes, basis, Val(:ellipsoid_3d))
 
 _canonical_axes(axes::NTuple{N}, basis) where {N} = (axes, basis)
 
@@ -300,6 +300,12 @@ end
 
 _check_order(::Nothing, _order, _which) = nothing
 
+# Whether a surrogate of class `class` describes the shape: an isotropic class a
+# sphere, a transversely isotropic one a spheroid, any other a triaxial body.
+_fits_shape(::Union{HillISO, HillISO2}, sphere, spheroid) = sphere
+_fits_shape(::Union{HillTI, HillTI2}, sphere, spheroid) = spheroid
+_fits_shape(class, sphere, spheroid) = !sphere && !spheroid
+
 # A surrogate's class encodes how many components it emits, which is only
 # meaningful for the geometry it was trained on.  Refusing the mismatch here
 # turns a silently wrong tensor into a constructor error.
@@ -310,14 +316,7 @@ function _check_geometry(s::NeuralSurrogate, axes_::NTuple{3})
     # Axes are sorted descending, so a spheroid has either its first or its last
     # entry distinct.
     spheroid = !sphere && (_axes_equal(a2, a3) || _axes_equal(a1, a2))
-    ok = if class isa Union{HillISO, HillISO2}
-        sphere
-    elseif class isa Union{HillTI, HillTI2}
-        spheroid
-    else
-        !sphere && !spheroid
-    end
-    ok || throw(
+    _fits_shape(class, sphere, spheroid) || throw(
         ArgumentError(
             "a surrogate of class :$(class_name(class)) does not describe the " *
                 "geometry `semi_axes = $(axes_)`: :iso/:iso2 needs a sphere, " *

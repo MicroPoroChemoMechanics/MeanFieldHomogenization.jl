@@ -283,7 +283,7 @@ end
 # an inclusion geometry makes `contribs` / `A_duts` (and any phase's `K̃_r`)
 # `Dual` while `K̃_0` and the fractions stay `Float64`.  `Bool` is the neutral
 # seed — it promotes away against any numeric type.
-_alv2_blocks_eltype(mats) = mapreduce(eltype, promote_type, mats; init = Bool)
+_alv_blocks_eltype(mats) = mapreduce(eltype, promote_type, mats; init = Bool)
 
 """
     voigt_alv_order2(matrices, fractions) -> Matrix
@@ -297,7 +297,7 @@ function voigt_alv_order2(
     length(matrices) == length(fractions) ||
         throw(ArgumentError("voigt_alv_order2: phase counts mismatch"))
     isempty(matrices) && throw(ArgumentError("voigt_alv_order2: at least one phase required"))
-    T = promote_type(_alv2_blocks_eltype(matrices), eltype(fractions))
+    T = promote_type(_alv_blocks_eltype(matrices), eltype(fractions))
     out = zeros(T, size(matrices[1])...)
     @inbounds for r in eachindex(matrices)
         @. out += fractions[r] * matrices[r]
@@ -334,7 +334,7 @@ function dilute_alv_order2(
     length(contribs) == length(fractions) ||
         throw(ArgumentError("dilute_alv_order2: phase counts mismatch"))
     T = promote_type(
-        eltype(K_0), _alv2_blocks_eltype(contribs), eltype(fractions)
+        eltype(K_0), _alv_blocks_eltype(contribs), eltype(fractions)
     )
     out = T.(K_0)
     @inbounds for r in eachindex(contribs)
@@ -382,7 +382,7 @@ function mori_tanaka_alv_order2(
     n = sz ÷ 3
     T = promote_type(
         eltype(K_0), eltype(fractions), typeof(f_M),
-        _alv2_blocks_eltype(A_duts), _alv2_blocks_eltype(contribs)
+        _alv_blocks_eltype(A_duts), _alv_blocks_eltype(contribs)
     )
     Id = zeros(T, sz, sz)
     @inbounds for i in 1:n
@@ -422,7 +422,7 @@ function maxwell_alv_order2(
     n = sz ÷ 3
     T = promote_type(
         eltype(K_0), eltype(fractions), eltype(H_0),
-        _alv2_blocks_eltype(contribs)
+        _alv_blocks_eltype(contribs)
     )
     Id = zeros(T, sz, sz)
     @inbounds for i in 1:n
@@ -438,6 +438,33 @@ function maxwell_alv_order2(
 end
 
 # ── Order-2 ALV pipeline (internal — dispatched from homogenize_alv) ───────
+
+# The conductivity, dilute concentration and dilute contribution of one
+# inclusion, as `_inclusion_alv_quantities` at order 4.
+function _inclusion_alv2_quantities(geom, scheme, K_r_law, K_M_law, K_0, times)
+    K_r = _trapezoidal_relaxation(K_r_law, times, 3)
+    P_r = hill_kernel_order2(geom, K_M_law, times)
+    return (
+        K_r,
+        dilute_concentration_alv_order2(K_r, K_0, P_r),
+        dilute_contribution_alv_order2(K_r, K_0, P_r),
+    )
+end
+
+# No Hill kernel: the recurrence gives the concentration and the contribution
+# of the whole sphere, and its layers the conductivity each bound averages (the
+# phase law is a placeholder).
+_inclusion_alv2_quantities(s::LayeredSphere, scheme, K_r_law, K_M_law, K_0, times) = (
+    _layer_bound_alv2(scheme, s, times),
+    gradient_gradient_loc_alv(s, K_M_law, times),
+    conductivity_contribution_alv(s, K_M_law, times),
+)
+
+# The relaxation kernel a phase enters the order-2 schemes with. A layered
+# sphere's law is a placeholder, its layers carrying the kernels: the reference
+# kernel `K_ref` stands in for it.
+_alv2_phase_kernel(geom, law, K_ref, times) = _trapezoidal_relaxation(law, times, 3)
+_alv2_phase_kernel(::LayeredSphere, law, K_ref, times) = K_ref
 
 """
     _homogenize_alv_order2(rve, scheme, prop::Symbol; times) -> Matrix
@@ -487,27 +514,13 @@ function _homogenize_alv_order2(
         # order-4 pipeline does (`homogenize_alv.jl`), and with the order-2
         # projector: the blocks here are 2-tensors, not 6×6 Mandel blocks.
         sym = phase_symmetrize(rve, name)
-        if ph.geometry isa LayeredSphere
-            # No Hill kernel: the recurrence gives the concentration and the
-            # contribution of the whole sphere, and its layers the stiffness
-            # each bound averages (the phase law is a placeholder).
-            s = ph.geometry
-            return (
-                K_r = scheme isa Reuss ? _layer_reuss_alv2(s, times) : _layer_voigt_alv2(s, times),
-                A_dut = _maybe_symmetrize_alv2(gradient_gradient_loc_alv(s, K_M_law, times), sym),
-                N_dut = _maybe_symmetrize_alv2(conductivity_contribution_alv(s, K_M_law, times), sym),
-            )
-        end
-        K_r = _trapezoidal_relaxation(K_r_law, times, 3)
-        P_r = hill_kernel_order2(ph.geometry, K_M_law, times)
+        K_r, A_dut, N_dut = _inclusion_alv2_quantities(
+            ph.geometry, scheme, K_r_law, K_M_law, K_0, times
+        )
         return (
             K_r = K_r,
-            A_dut = _maybe_symmetrize_alv2(
-                dilute_concentration_alv_order2(K_r, K_0, P_r), sym
-            ),
-            N_dut = _maybe_symmetrize_alv2(
-                dilute_contribution_alv_order2(K_r, K_0, P_r), sym
-            ),
+            A_dut = _maybe_symmetrize_alv2(A_dut, sym),
+            N_dut = _maybe_symmetrize_alv2(N_dut, sym),
         )
     end
     T_block = isempty(per_phase) ? eltype(K_0) :
@@ -720,7 +733,7 @@ function differential_alv_order2(
     solid_data = NamedTuple[]
     for name in inclusion_phase_names(rve, m)
         amt = rve.amounts[name]
-        amt isa CrackDensity &&
+        _is_crack_family(amt) &&
             throw(
             ArgumentError(
                 "differential_alv_order2: phase :$(name) carries a crack " *
@@ -741,8 +754,7 @@ function differential_alv_order2(
         K_r_law = phase_property(rve, name, prop)
         K_r_law isa ViscoLaw ||
             throw(ArgumentError("differential_alv_order2: phase $name property is not a ViscoLaw"))
-        # A layered sphere's law is a placeholder: its layers carry the kernels.
-        K_r = ph.geometry isa LayeredSphere ? K_0 : _trapezoidal_relaxation(K_r_law, times, 3)
+        K_r = _alv2_phase_kernel(ph.geometry, K_r_law, K_0, times)
         _alv_diff_keeps_iso(ph.geometry, sym, nothing) ||
             _alv_diff_iso_error(name, "the shape")
         push!(
@@ -909,7 +921,7 @@ function self_consistent_alv_order2(
         throw(ArgumentError("self_consistent_alv_order2: matrix property is not a ViscoLaw"))
     K_M = _trapezoidal_relaxation(K_M_law, times, 3)
     data = map([m; inclusion_phase_names(rve, m)]) do name
-        rve.amounts[name] isa CrackDensity && throw(
+        _is_crack_family(rve.amounts[name]) && throw(
             ArgumentError("self_consistent_alv_order2: phase :$(name) is a crack family, which the order-2 ALV schemes do not support.")
         )
         ph = rve.phases[name]
@@ -917,7 +929,7 @@ function self_consistent_alv_order2(
         law = phase_property(rve, name, prop)
         law isa ViscoLaw ||
             throw(ArgumentError("self_consistent_alv_order2: phase $name property is not a ViscoLaw"))
-        K_r = ph.geometry isa LayeredSphere ? K_M : _trapezoidal_relaxation(law, times, 3)
+        K_r = _alv2_phase_kernel(ph.geometry, law, K_M, times)
         _alv2_keeps_iso(ph.geometry, sym, K_r) ||
             _alv_diff_iso_error(name, "the shape or the anisotropy")
         f = name === m ? volume_fraction(rve, m) : _amount_value(rve, name)
@@ -925,7 +937,10 @@ function self_consistent_alv_order2(
     end
     K = K_M
     for iter in 1:maxiters
-        AB = [_sc2_phase_AB(d.geom, d.K_r, K, d.sym, times) for d in data]
+        # The comprehension captures this iteration's estimate, not `K`
+        # itself, which is reassigned below and would be boxed.
+        Kᵢ = K
+        AB = [_sc2_phase_AB(d.geom, d.K_r, Kᵢ, d.sym, times) for d in data]
         A = sum(d.f .* ab[1] for (d, ab) in zip(data, AB))
         B = sum(d.f .* ab[2] for (d, ab) in zip(data, AB))
         K_new = B * volterra_inverse(A; block_size = 3)

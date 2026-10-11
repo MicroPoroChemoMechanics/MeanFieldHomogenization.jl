@@ -46,23 +46,22 @@ function _hill_2d_aniso(
         iK21 = -K21 / det_K
         iK22 = K11 / det_K
 
-        function iK(i, j)
-            (i == 1 && j == 1) && return iK11
-            (i == 1 && j == 2) && return iK12
-            (i == 2 && j == 1) && return iK21
-            return iK22
-        end
+        iK = ((iK11, iK12), (iK21, iK22))
 
-        result = Vector{T}(undef, 16)
-        n = 0
-        for α in 1:2, β in 1:2, γ in 1:2, δ in 1:2
-            n += 1
-            result[n] = T(0.25) * (
-                ζ[α] * (iK(β, γ) * ζ[δ] + iK(β, δ) * ζ[γ]) +
-                    ζ[β] * (iK(α, γ) * ζ[δ] + iK(α, δ) * ζ[γ])
-            )
-        end
-        return result
+        # The 16 components in the order α, β, γ, δ with δ fastest, on the
+        # stack: one call per quadrature node.
+        return SVector{16, T}(
+            ntuple(Val(16)) do n
+                δ = (n - 1) % 2 + 1
+                γ = (n - 1) ÷ 2 % 2 + 1
+                β = (n - 1) ÷ 4 % 2 + 1
+                α = (n - 1) ÷ 8 + 1
+                T(0.25) * (
+                    ζ[α] * (iK[β][γ] * ζ[δ] + iK[β][δ] * ζ[γ]) +
+                        ζ[β] * (iK[α][γ] * ζ[δ] + iK[α][δ] * ζ[γ])
+                )
+            end
+        )
     end
 
     # One VECTOR-valued quadrature instead of 16 scalar ones.  The integrand
@@ -82,15 +81,22 @@ function _hill_2d_aniso(
         end
     end
 
+    # Project on the minor and major symmetries. Averaged in place, an entry
+    # already overwritten entered the average of the next member of its orbit,
+    # and the result was not exactly symmetric; each orbit is now averaged
+    # once, in the order of its smallest index, and that value given to all
+    # its members.
+    P_sym = similar(P_arr)
     for α in 1:2, β in 1:2, γ in 1:2, δ in 1:2
-        v = (
-            P_arr[α, β, γ, δ] + P_arr[β, α, γ, δ] +
-                P_arr[α, β, δ, γ] + P_arr[β, α, δ, γ] +
-                P_arr[γ, δ, α, β] + P_arr[δ, γ, α, β] +
-                P_arr[γ, δ, β, α] + P_arr[δ, γ, β, α]
-        ) / 8
-        P_arr[α, β, γ, δ] = v
+        rep = minimum(_orbit8(α, β, γ, δ))
+        P_sym[α, β, γ, δ] = sum(P_arr[I...] for I in _orbit8(rep...)) / 8
     end
 
-    return TensND.Tens(P_arr, ell.basis)
+    return TensND.Tens(P_sym, ell.basis)
 end
+
+# The eight index tuples a tensor with minor and major symmetries maps to one value.
+@inline _orbit8(a, b, c, d) = (
+    (a, b, c, d), (b, a, c, d), (a, b, d, c), (b, a, d, c),
+    (c, d, a, b), (d, c, a, b), (c, d, b, a), (d, c, b, a),
+)

@@ -159,24 +159,29 @@ function _transition(
         (tables.P1[layer], tables.Q1[layer], tables.dP1[layer], tables.dQ1[layer]) :
         (tables.P0[layer], tables.Q0[layer], tables.dP0[layer], tables.dQ0[layer])
 
-    Jint = if intf isa PerfectInterface
-        _J_ext(kℓ, P, Qf, dP, dQ)
-    elseif intf isa KapitzaInterface
-        Im, Jm, Km, Lm = coupling_matrices(q, s.Nseries)
-        M = trans ? Jm : Im
-        coef = kℓ * intf.resistance / s.c * sqrt(q^2 - 1)
-        _J_int(kℓ, coef, P, Qf, dP, dQ, M, false, trans)
-    elseif intf isa SurfaceConductiveInterface
-        Im, Jm, Km, Lm = coupling_matrices(q, s.Nseries)
-        M = trans ? (Km .+ Lm ./ (q^2 - 1)) : Jm
-        coef = intf.conductance / (s.c * sqrt(q^2 - 1))
-        _J_int(kℓ, coef, P, Qf, dP, dQ, M, true, trans)
-    else
-        throw(ArgumentError("LayeredSpheroid: unsupported interface type $(typeof(intf))"))
-    end
+    Jint = _J_interface(intf, s, q, kℓ, P, Qf, dP, dQ, trans)
     Jext_next = _J_ext(k_next, P, Qf, dP, dQ)
     return Jext_next \ Jint
 end
+
+# The inner side of the transition across the interface `intf` of the layer of
+# confocal coordinate `q`: the plain exterior operator for a perfect interface,
+# the one carrying the jump of a Kapitza or a surface-conductive interface.
+_J_interface(::PerfectInterface, s, q, kℓ, P, Qf, dP, dQ, trans) = _J_ext(kℓ, P, Qf, dP, dQ)
+function _J_interface(intf::KapitzaInterface, s, q, kℓ, P, Qf, dP, dQ, trans)
+    Im, Jm, Km, Lm = coupling_matrices(q, s.Nseries)
+    M = trans ? Jm : Im
+    coef = kℓ * intf.resistance / s.c * sqrt(q^2 - 1)
+    return _J_int(kℓ, coef, P, Qf, dP, dQ, M, false, trans)
+end
+function _J_interface(intf::SurfaceConductiveInterface, s, q, kℓ, P, Qf, dP, dQ, trans)
+    Im, Jm, Km, Lm = coupling_matrices(q, s.Nseries)
+    M = trans ? (Km .+ Lm ./ (q^2 - 1)) : Jm
+    coef = intf.conductance / (s.c * sqrt(q^2 - 1))
+    return _J_int(kℓ, coef, P, Qf, dP, dQ, M, true, trans)
+end
+_J_interface(intf, args...) =
+    throw(ArgumentError("LayeredSpheroid: unsupported interface type $(typeof(intf))"))
 
 """
     spheroid_state_sequence(s, k₀, trans) -> Vector{Vector}

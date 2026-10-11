@@ -95,7 +95,7 @@ function EllipticCrack(
     ) where {Ta, Tb}
     T = MFH_Core._floatlike(promote_type(Ta, Tb))
     basis_in = MFH_Core._default_basis(T, euler_angles)
-    axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(a), T(b)), basis_in, :crack)
+    axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(a), T(b)), basis_in, Val(:crack))
     a_, b_ = axes_sorted
     S = _classify_crack(T, a_, b_)
     return EllipticCrack{T, S, typeof(basis)}(a_, b_, basis)
@@ -108,8 +108,8 @@ Elliptical flat crack whose local frame columns are the columns of `R`.
 """
 function EllipticCrack(a::Ta, b::Tb, R::AbstractMatrix) where {Ta, Tb}
     T = MFH_Core._floatlike(promote_type(Ta, Tb))
-    basis_in = TensND.RotatedBasis(Matrix{Float64}(R))
-    axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(a), T(b)), basis_in, :crack)
+    basis_in = TensND.RotatedBasis(Matrix{float(eltype(R))}(R))
+    axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(a), T(b)), basis_in, Val(:crack))
     a_, b_ = axes_sorted
     S = _classify_crack(T, a_, b_)
     return EllipticCrack{T, S, typeof(basis)}(a_, b_, basis)
@@ -122,7 +122,7 @@ Elliptical flat crack with an already-constructed TensND basis.
 """
 function EllipticCrack(a::Ta, b::Tb, basis::TensND.AbstractBasis) where {Ta, Tb}
     T = MFH_Core._floatlike(promote_type(Ta, Tb))
-    axes_sorted, basis_out = MFH_Core._sort_axes_and_basis((T(a), T(b)), basis, :crack)
+    axes_sorted, basis_out = MFH_Core._sort_axes_and_basis((T(a), T(b)), basis, Val(:crack))
     a_, b_ = axes_sorted
     S = _classify_crack(T, a_, b_)
     return EllipticCrack{T, S, typeof(basis_out)}(a_, b_, basis_out)
@@ -158,7 +158,7 @@ is given by the columns of `R`.
 """
 function RibbonCrack(b::Tb, R::AbstractMatrix) where {Tb}
     T = MFH_Core._floatlike(Tb)
-    basis = TensND.RotatedBasis(Matrix{Float64}(R))
+    basis = TensND.RotatedBasis(Matrix{float(eltype(R))}(R))
     return RibbonCrack{T, typeof(basis)}(T(b), basis)
 end
 

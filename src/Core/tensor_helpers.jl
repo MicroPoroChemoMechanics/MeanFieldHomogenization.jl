@@ -15,6 +15,17 @@ Kronecker delta ``\\delta_{ij}`` in element type `T` — returns `one(T)` when
 @inline _δ(i, j, ::Type{T}) where {T} = i == j ? one(T) : zero(T)
 
 """
+    _primal(x)
+
+`x` stripped of every level of `ForwardDiff.Dual`: the number a choice that
+does not depend on derivatives — a quadrature exponent, a scaling period, a
+bracket — is made on, so that the derivatives stay where the mathematics puts
+them.
+"""
+_primal(x::ForwardDiff.Dual) = _primal(ForwardDiff.value(x))
+_primal(x) = x
+
+"""
     _fill_sym4!(A, i, j, k, l, v)
 
 Fill the eight entries of a 4-rank array `A` linked to `(i,j,k,l)` by

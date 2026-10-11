@@ -239,8 +239,12 @@ function fe_axi_pore_localization(s::FEAxiSupershapePore, P₀::TensND.AbstractT
     # made every shipped axisymmetric model unusable.
     has_surrogate(s, O) && return _axi_pore_run(s, P₀)
     r = get!(() -> _axi_pore_run(s, P₀), s.cache.tensors, _fe_cache_key(P₀))
-    return r isa TensND.AbstractTens ? r : r.A
+    return _axi_pore_tensor(r)
 end
+
+# The cache holds the tensor of a surrogate, or the named tuple of a solve.
+_axi_pore_tensor(A::TensND.AbstractTens) = A
+_axi_pore_tensor(r) = r.A
 
 "Bypass the cache and return every intermediate, including `A_uncorrected`."
 fe_axi_pore_breakdown(s::FEAxiSupershapePore, P₀::TensND.AbstractTens) =

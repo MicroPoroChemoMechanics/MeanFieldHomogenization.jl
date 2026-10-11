@@ -88,6 +88,6 @@ separately), converting them is both unnecessary and destructive.
 Only a genuinely rotated tensor — what an RVE with tilted inclusions returns —
 is converted, and there the conversion is what makes the material correct.
 """
-_to_canonical(t::TensND.AbstractTens) =
-    TensND.get_basis(t) isa TensND.CanonicalBasis ? t :
-    TensND.change_tens(t, TensND.CanonicalBasis{3, eltype(t)}())
+_to_canonical(t::TensND.AbstractTens) = _to_canonical(t, TensND.get_basis(t))
+_to_canonical(t, ::TensND.CanonicalBasis) = t
+_to_canonical(t, ::TensND.AbstractBasis) = TensND.change_tens(t, TensND.CanonicalBasis{3, eltype(t)}())

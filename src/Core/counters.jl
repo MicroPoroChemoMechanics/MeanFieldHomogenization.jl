@@ -13,8 +13,9 @@
 #
 #    * **always-on** — placed only at O(1)…O(100) seams (`hill_tensor`,
 #      `cod_tensor`, `_quadgk`, one polynomial solve per φ node, one SC
-#      iteration, one layered recurrence).  A `Ref{Int}` increment against
-#      such a seam is far below measurement noise.
+#      iteration, one layered recurrence).  An atomic increment against
+#      such a seam is far below measurement noise, and keeps the counts exact
+#      when the seams run on several threads.
 #
 #    * **opt-in** (`COUNT_INTEGRAND`) — the true per-node counter.  It sits in
 #      the innermost loop, so it must never be a branch *inside* the
@@ -32,19 +33,17 @@
 
 Work counters incremented by the instrumented seams.  Read them through
 [`read_counters`](@ref) and zero them with [`reset_counters!`](@ref).
+
+The docstring is attached to `HILL_CALLS`, the six others carry none: a
+reference to one of them must stay a plain code span.
 """
-# The signature above lists all seven, but Julia attaches a docstring to the
-# *next expression only*, so this one documents `HILL_CALLS` and the other six
-# carry none.  They are internal and unexported, so nothing renders them and
-# nothing breaks; a reference to one of them from another docstring, however,
-# has nothing to resolve to and must stay a plain code span.
-const HILL_CALLS = Ref(0)
-const COD_CALLS = Ref(0)
-const QUADGK_OUTER = Ref(0)
-const INTEGRAND_EVALS = Ref(0)
-const RESIDUE_SOLVES = Ref(0)
-const SC_ITERATIONS = Ref(0)
-const LAYER_RECURRENCES = Ref(0)
+const HILL_CALLS = Threads.Atomic{Int}(0)
+const COD_CALLS = Threads.Atomic{Int}(0)
+const QUADGK_OUTER = Threads.Atomic{Int}(0)
+const INTEGRAND_EVALS = Threads.Atomic{Int}(0)
+const RESIDUE_SOLVES = Threads.Atomic{Int}(0)
+const SC_ITERATIONS = Threads.Atomic{Int}(0)
+const LAYER_RECURRENCES = Threads.Atomic{Int}(0)
 
 """
     COUNT_INTEGRAND
@@ -64,7 +63,7 @@ const _ALL_COUNTERS = (
     RESIDUE_SOLVES, SC_ITERATIONS, LAYER_RECURRENCES,
 )
 
-@inline _bump!(r::Base.RefValue{Int}) = (r[] += 1; nothing)
+@inline _bump!(r::Threads.Atomic{Int}) = (Threads.atomic_add!(r, 1); nothing)
 
 """
     reset_counters!()
@@ -108,7 +107,7 @@ struct _CountingFn{F}
     f::F
 end
 
-@inline (c::_CountingFn)(x) = (INTEGRAND_EVALS[] += 1; c.f(x))
+@inline (c::_CountingFn)(x) = (_bump!(INTEGRAND_EVALS); c.f(x))
 
 """
     _counted_quadgk(f, a, b; atol, rtol, maxevals) -> (value, error)

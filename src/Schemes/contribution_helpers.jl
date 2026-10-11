@@ -21,6 +21,12 @@
 #  Dispatch on the tensor order (`AbstractTens{4,3}` vs `AbstractTens{2,3}`)
 #  picks the right `stiffness_contribution` / `conductivity_contribution`.
 
+# Whether `P_i` may multiply the orientation-averaged concentration instead of
+# being averaged with it: the average is trivial, or `P_i` is isotropic and
+# commutes with every rotation. A disjunction over two arguments, which dispatch
+# would spell with a fourth, ambiguity-breaking method.
+_average_commutes(sym::AbstractSymmetrize, P_i) = sym isa NoSymmetrize || P_i isa TensND.TensISO
+
 """
     _phase_stress_strain_average(rve, name, prop, P₀, A_dil; kw...)
 
@@ -55,7 +61,7 @@ function _phase_stress_strain_average(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     if MFH_Core.is_homogeneous_inclusion(geom)
-        (sym isa NoSymmetrize || P_i isa TensND.TensISO) && return P_i ⊡ A_dil
+        _average_commutes(sym, P_i) && return P_i ⊡ A_dil
         P₀_proj = _project_matrix(P₀, sym)
         A_raw = MFH_Core.strain_strain_loc(geom, P_i, P₀_proj; kw...)
         return _apply_symmetrize(P_i ⊡ A_raw, sym)
@@ -75,7 +81,7 @@ function _phase_stress_strain_average(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     if MFH_Core.is_homogeneous_inclusion(geom)
-        (sym isa NoSymmetrize || P_i isa TensND.TensISO) && return P_i ⋅ A_dil
+        _average_commutes(sym, P_i) && return P_i ⋅ A_dil
         P₀_proj = _project_matrix(P₀, sym)
         A_raw = MFH_Core.gradient_gradient_loc(geom, P_i, P₀_proj; kw...)
         return _apply_symmetrize(P_i ⋅ A_raw, sym)
@@ -94,47 +100,46 @@ correction at reference `P₀` for property `prop` (`:C` for elasticity,
 `:K` for conductivity).
 """
 function _phase_stiffness_contribution(
-        rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{4, 3}; kw...
+        rve::RVE, name::Symbol, prop::Symbol, P₀::TensND.AbstractTens; kw...
     )
-    a = rve.amounts[name]
-    geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
-    P₀_proj = _project_matrix(P₀, sym)
-    if !(a isa CrackDensity)
-        P_i = phase_property(rve, name, prop)
-        N = MFH_Core.stiffness_contribution(geom, P_i, P₀_proj; kw...)
-        return volume_fraction(rve, name) * _apply_symmetrize(N, sym)
-    else  # CrackDensity
-        K_int = _crack_interface_K4(rve, name)
-        N = MFH_Core.stiffness_contribution(
-            geom, P₀_proj;
-            K_interface = K_int, kw...
-        )
-        return _apply_symmetrize(MFH_Core.delta_stiffness(geom, N, amount_value(a)), sym)
-    end
+    return _stiffness_contribution(
+        rve.amounts[name], rve, name, prop, _project_matrix(P₀, sym), sym; kw...
+    )
 end
 
-function _phase_stiffness_contribution(
-        rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{2, 3}; kw...
+# A phase with a volume: its contribution weighted by its fraction. A crack
+# family: its contribution per unit density, times the density.
+function _stiffness_contribution(
+        ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{4, 3}, sym; kw...
     )
-    a = rve.amounts[name]
     geom = rve.phases[name].geometry
-    sym = phase_symmetrize(rve, name)
-    P₀_proj = _project_matrix(P₀, sym)
-    if !(a isa CrackDensity)
-        P_i = phase_property(rve, name, prop)
-        N = MFH_Core.conductivity_contribution(geom, P_i, P₀_proj; kw...)
-        return volume_fraction(rve, name) * _apply_symmetrize(N, sym)
-    else
-        α_int = _crack_interface_α(rve, name)
-        N = MFH_Core.conductivity_contribution(
-            geom, P₀_proj;
-            α_interface = α_int, kw...
-        )
-        return _apply_symmetrize(MFH_Core.delta_conductivity(geom, N, amount_value(a)), sym)
-    end
+    N = MFH_Core.stiffness_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
+    return volume_fraction(rve, name) * _apply_symmetrize(N, sym)
+end
+
+function _stiffness_contribution(
+        a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{4, 3}, sym; kw...
+    )
+    geom = rve.phases[name].geometry
+    N = MFH_Core.stiffness_contribution(geom, P₀; K_interface = _crack_interface_K4(rve, name), kw...)
+    return _apply_symmetrize(MFH_Core.delta_stiffness(geom, N, amount_value(a)), sym)
+end
+
+function _stiffness_contribution(
+        ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{2, 3}, sym; kw...
+    )
+    geom = rve.phases[name].geometry
+    N = MFH_Core.conductivity_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
+    return volume_fraction(rve, name) * _apply_symmetrize(N, sym)
+end
+
+function _stiffness_contribution(
+        a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{2, 3}, sym; kw...
+    )
+    geom = rve.phases[name].geometry
+    N = MFH_Core.conductivity_contribution(geom, P₀; α_interface = _crack_interface_α(rve, name), kw...)
+    return _apply_symmetrize(MFH_Core.delta_conductivity(geom, N, amount_value(a)), sym)
 end
 
 # ── Helpers : pull optional interface-stiffness properties from the RVE ────
@@ -180,51 +185,59 @@ Aggregate contribution of phase `name` to the dilute *compliance*
 correction (resistivity for `:K`).
 """
 function _phase_compliance_contribution(
-        rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{4, 3}; kw...
+        rve::RVE, name::Symbol, prop::Symbol, P₀::TensND.AbstractTens; kw...
     )
-    a = rve.amounts[name]
-    geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
-    P₀_proj = _project_matrix(P₀, sym)
-    if !(a isa CrackDensity)
-        P_i = phase_property(rve, name, prop)
-        H = if MFH_Core.is_homogeneous_inclusion(geom)
-            compliance_contribution(geom, P_i, P₀_proj; kw...)
-        else
-            S₀ = inv(P₀_proj)
-            -(S₀ ⊡ MFH_Core.stiffness_contribution(geom, P_i, P₀_proj; kw...) ⊡ S₀)
-        end
-        return volume_fraction(rve, name) * _apply_symmetrize(H, sym)
-    else
-        K_int = _crack_interface_K4(rve, name)
-        H = compliance_contribution(geom, P₀_proj; K_interface = K_int, kw...)
-        return _apply_symmetrize(delta_compliance(geom, H, amount_value(a)), sym)
-    end
+    return _compliance_contribution(
+        rve.amounts[name], rve, name, prop, _project_matrix(P₀, sym), sym; kw...
+    )
 end
 
-function _phase_compliance_contribution(
-        rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{2, 3}; kw...
+# As `_stiffness_contribution`, for the compliance (resistivity for `:K`). A
+# heterogeneous inclusion has no compliance contribution of its own: it is
+# read from its stiffness contribution, -S₀ : N : S₀.
+function _compliance_contribution(
+        ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{4, 3}, sym; kw...
     )
-    a = rve.amounts[name]
     geom = rve.phases[name].geometry
-    sym = phase_symmetrize(rve, name)
-    P₀_proj = _project_matrix(P₀, sym)
-    if !(a isa CrackDensity)
-        P_i = phase_property(rve, name, prop)
-        R = if MFH_Core.is_homogeneous_inclusion(geom)
-            MFH_Core.resistivity_contribution(geom, P_i, P₀_proj; kw...)
-        else
-            R₀ = inv(P₀_proj)
-            -(R₀ ⋅ MFH_Core.conductivity_contribution(geom, P_i, P₀_proj; kw...) ⋅ R₀)
-        end
-        return volume_fraction(rve, name) * _apply_symmetrize(R, sym)
+    P_i = phase_property(rve, name, prop)
+    H = if MFH_Core.is_homogeneous_inclusion(geom)
+        compliance_contribution(geom, P_i, P₀; kw...)
     else
-        α_int = _crack_interface_α(rve, name)
-        R = compliance_contribution(geom, P₀_proj; α_interface = α_int, kw...)
-        return _apply_symmetrize(delta_resistivity(geom, R, amount_value(a)), sym)
+        S₀ = inv(P₀)
+        -(S₀ ⊡ MFH_Core.stiffness_contribution(geom, P_i, P₀; kw...) ⊡ S₀)
     end
+    return volume_fraction(rve, name) * _apply_symmetrize(H, sym)
+end
+
+function _compliance_contribution(
+        a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{4, 3}, sym; kw...
+    )
+    geom = rve.phases[name].geometry
+    H = compliance_contribution(geom, P₀; K_interface = _crack_interface_K4(rve, name), kw...)
+    return _apply_symmetrize(delta_compliance(geom, H, amount_value(a)), sym)
+end
+
+function _compliance_contribution(
+        ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{2, 3}, sym; kw...
+    )
+    geom = rve.phases[name].geometry
+    P_i = phase_property(rve, name, prop)
+    R = if MFH_Core.is_homogeneous_inclusion(geom)
+        MFH_Core.resistivity_contribution(geom, P_i, P₀; kw...)
+    else
+        R₀ = inv(P₀)
+        -(R₀ ⋅ MFH_Core.conductivity_contribution(geom, P_i, P₀; kw...) ⋅ R₀)
+    end
+    return volume_fraction(rve, name) * _apply_symmetrize(R, sym)
+end
+
+function _compliance_contribution(
+        a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{2, 3}, sym; kw...
+    )
+    geom = rve.phases[name].geometry
+    R = compliance_contribution(geom, P₀; α_interface = _crack_interface_α(rve, name), kw...)
+    return _apply_symmetrize(delta_resistivity(geom, R, amount_value(a)), sym)
 end
 
 # ── Strain-strain localization (Mori-Tanaka, SC, …) ──────────────────────────
@@ -467,7 +480,7 @@ end
 `(_phase_dilute_concentration, _phase_stress_strain_average)` sharing one
 localization solve.  Reproduces the three branches of
 `_phase_stress_strain_average` verbatim — including the
-`sym isa NoSymmetrize || P_i isa TensISO` shortcut, which returns
+`_average_commutes(sym, P_i)` shortcut, which returns
 `P_i ⊡ A_dil` (the **symmetrized** `A`) where the slow branch returns
 `_apply_symmetrize(P_i ⊡ A_raw, sym)` (the **raw** `A`).  Those two forms
 agree only to ~1e-16, so collapsing them would break bit-identity on the
@@ -485,7 +498,7 @@ function _phase_dilute_and_stress_average(
     if MFH_Core.is_homogeneous_inclusion(geom)
         A_raw = MFH_Core.strain_strain_loc(geom, P_i, P₀_proj; kw...)
         A_dil = _apply_symmetrize(A_raw, sym)
-        (sym isa NoSymmetrize || P_i isa TensND.TensISO) && return (A_dil, P_i ⊡ A_dil)
+        _average_commutes(sym, P_i) && return (A_dil, P_i ⊡ A_dil)
         return (A_dil, _apply_symmetrize(P_i ⊡ A_raw, sym))
     end
     A_raw, B_raw = MFH_Core.loc_and_stress_average(geom, P_i, P₀_proj; kw...)
@@ -504,7 +517,7 @@ function _phase_dilute_and_stress_average(
     if MFH_Core.is_homogeneous_inclusion(geom)
         A_raw = MFH_Core.gradient_gradient_loc(geom, P_i, P₀_proj; kw...)
         A_dil = _apply_symmetrize(A_raw, sym)
-        (sym isa NoSymmetrize || P_i isa TensND.TensISO) && return (A_dil, P_i ⋅ A_dil)
+        _average_commutes(sym, P_i) && return (A_dil, P_i ⋅ A_dil)
         return (A_dil, _apply_symmetrize(P_i ⋅ A_raw, sym))
     end
     A_raw, B_raw = MFH_Core.loc_and_stress_average(geom, P_i, P₀_proj; kw...)

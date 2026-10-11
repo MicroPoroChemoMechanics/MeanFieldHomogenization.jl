@@ -50,9 +50,9 @@ function check_material_interface(
         probe::Union{Nothing, TensND.AbstractTens{2, 3}} = nothing,
         Δ::Real = 1.0e-7, rtol::Real = 1.0e-5, verbose::Bool = true
     )
-    ok = true
+    ok = Ref(true)        # cleared by `fail`; a captured `Bool` would be boxed
     say(msg) = verbose && println(msg)
-    fail(msg) = (ok = false; verbose && println("  ✗ ", msg))
+    fail(msg) = (ok[] = false; verbose && println("  ✗ ", msg))
     pass(msg) = verbose && println("  ✓ ", msg)
 
     say("check_material_interface($(typeof(m)))")
@@ -74,7 +74,7 @@ function check_material_interface(
         r = material_response(m, ε, st0, 0.0)
     catch err
         fail("material_response threw: $(sprint(showerror, err))")
-        return ok
+        return ok[]
     end
     r isa MaterialResponse ? pass("material_response returns a MaterialResponse") :
         fail("material_response returned $(typeof(r))")
@@ -119,8 +119,8 @@ function check_material_interface(
         end
     end
 
-    say(ok ? "  → conforms" : "  → DOES NOT conform")
-    return ok
+    say(ok[] ? "  → conforms" : "  → DOES NOT conform")
+    return ok[]
 end
 
 # A triaxial probe with shear, so a law that only ever saw uniaxial tension is
