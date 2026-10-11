@@ -79,7 +79,9 @@ end
     add_phase!(r_ell, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_M); fraction = :rest)
     add_phase!(r_ell, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => C_I); fraction = 0.25)
 
-    for scheme in (MoriTanaka(), SelfConsistent(), Dilute(), DifferentialScheme())
+    # `DiluteDual` takes the compliance contribution, which a heterogeneous
+    # inclusion reads from its stiffness one, -S₀ : N : S₀.
+    for scheme in (MoriTanaka(), SelfConsistent(), Dilute(), DiluteDual(), DifferentialScheme())
         a = k_mu(homogenize(r_lay, scheme, :C))
         b = k_mu(homogenize(r_ell, scheme, :C))
         @test a[1] ≈ b[1] rtol = 1.0e-10
@@ -145,6 +147,9 @@ end
     )
     @test tr(Array(homogenize(r_lay, MoriTanaka(), :K))) ≈
         tr(Array(homogenize(r_ell, MoriTanaka(), :K))) rtol = 1.0e-10
+    # The resistivity contribution of a layered sphere, -R₀ ⋅ N ⋅ R₀.
+    @test tr(Array(homogenize(r_lay, DiluteDual(), :K))) ≈
+        tr(Array(homogenize(r_ell, DiluteDual(), :K))) rtol = 1.0e-10
 end
 
 @testset "Schemes — core/shell bounds" begin

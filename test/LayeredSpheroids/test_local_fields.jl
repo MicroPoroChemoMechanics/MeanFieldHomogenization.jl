@@ -1,4 +1,5 @@
 using Test
+using LinearAlgebra
 using MeanFieldHomogenization
 using MeanFieldHomogenization.LayeredSpheroids: _base_fond
 using TensND
