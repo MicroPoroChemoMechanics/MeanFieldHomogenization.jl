@@ -100,9 +100,9 @@ own* `Dual` on top — **nested** duals, fragile in tag ordering and wasteful.
 
 `MeanFieldHomogenizationNonlinearSolveExt` avoids this with an implicit-function-theorem
 (IFT) **lift**: it solves the *primal* problem (inputs stripped to `Float64`
-via `ForwardDiff.value`, explicit finite-difference Jacobian, so
-`NonlinearSolve` never seeds a `Dual`) and recovers the caller's partials with
-one linear-algebra correction.
+via `ForwardDiff.value`, and an explicit Jacobian, the value of the exact
+`ForwardDiff` one, so `NonlinearSolve` never seeds a `Dual`) and recovers the
+caller's partials with one linear-algebra correction.
 
 Write the self-consistent scheme as a root-finding problem. Let ``p`` collect the
 unknown effective moduli, ``\theta`` the parameter being differentiated, and

@@ -32,10 +32,13 @@
 #
 #    1. Solve the *primal* problem — `NonlinearSolve` itself only ever
 #       sees `Float64` (`u0`, and the residual/Jacobian callbacks are
-#       `Float64 → Float64`) — with an **explicit** finite-difference
-#       Jacobian passed to `NonlinearFunction`, which stops NonlinearSolve
-#       from seeding any Dual of its own, uniformly for any algorithm
-#       (`NewtonRaphson`, `TrustRegion`, …). Internally, every candidate
+#       `Float64 → Float64`) — with an **explicit** Jacobian passed to
+#       `NonlinearFunction`, which stops NonlinearSolve from seeding any
+#       Dual of its own, uniformly for any algorithm (`NewtonRaphson`,
+#       `TrustRegion`, …). That Jacobian is exact: the ForwardDiff
+#       Jacobian of the embedded residual, its tag nested inside the
+#       user's as in `NewtonDefault`, of which only the value is kept.
+#       Internally, every candidate
 #       `p` NonlinearSolve proposes is *embedded* back into the fully
 #       promoted Dual type (as a zero-partial Dual, via `embed`) before
 #       `step` ever sees it, and only the resulting residual's *value* is
@@ -88,30 +91,12 @@ function _nls_residual(step, x0, ε_pos)
     end
 end
 
-# Central finite-difference Jacobian, `Float64` only. Used exclusively on
-# the Dual/IFT branch below, where an *explicit* `jac` is what prevents
-# NonlinearSolve from AD-seeding `p` itself.
-#
-# Step size: `cbrt(eps)`, the standard optimum for a *central* difference
-# (balances O(h²) truncation against O(eps/h) round-off; the tighter
-# `sqrt(eps)` step optimal for *forward* differences leaves this
-# round-off-dominated and materially degrades the IFT-lifted derivative
-# on badly-scaled problems, e.g. the canonical (α,β) = (3K,2μ) pair for
-# a high-contrast porous solid where α ~ O(10⁶) and β ~ O(1)).
-function _fd_jacobian(f, p::AbstractVector{<:Real})
-    f0 = f(p)
-    n, m = length(p), length(f0)
-    J = zeros(Float64, m, n)
-    for j in 1:n
-        h = cbrt(eps(Float64)) * max(one(Float64), abs(p[j]))
-        pp = copy(p)
-        pp[j] += h
-        pm = copy(p)
-        pm[j] -= h
-        J[:, j] .= (f(pp) .- f(pm)) ./ (2h)
-    end
-    return J
-end
+# ∂F/∂p at the primal level, exact: the Jacobian of the residual at `p`
+# embedded in the promoted type `T`, its derivatives with respect to the
+# user's parameter dropped. The Jacobian's tag is created inside the user's
+# derivative, so it nests outside the user's tag, as in `NewtonDefault`.
+_primal_jacobian(residual_vec, p::AbstractVector, ::Type{T}) where {T} =
+    MeanFieldHomogenization.Core._primal.(ForwardDiff.jacobian(residual_vec, convert.(T, p)))
 
 """
     _solve_sc(algo::NonlinearSolve.AbstractNonlinearAlgorithm, step, x0; kw...)
@@ -209,7 +194,7 @@ function S._solve_sc(
     else
         # ── Dual branch: implicit-function-theorem lift (see module
         #    docstring). NonlinearSolve itself only ever sees `Float64`
-        #    (`u0`/`Fval`/`Jfd` are `Float64 → Float64`), so it never
+        #    (`u0`/`Fval`/`Jval` are `Float64 → Float64`), so it never
         #    seeds a `Dual` of its own. Crucially, every call into
         #    `step` — even during the "primal" solve — embeds its
         #    candidate `p` back into `T_full` (as a zero-partial `Dual`)
@@ -226,8 +211,8 @@ function S._solve_sc(
         embed(p) = convert.(T_full, p)
         u0 = Float64[ForwardDiff.value(x) for x in p0]
         Fval(p) = ForwardDiff.value.(residual_vec(embed(p)))
-        Jfd(p) = _fd_jacobian(Fval, p)
-        nf = NonlinearFunction((p, _) -> Fval(p); jac = (p, _) -> Jfd(p))
+        Jval(p) = _primal_jacobian(residual_vec, p, T_full)
+        nf = NonlinearFunction((p, _) -> Fval(p); jac = (p, _) -> Jval(p))
         prob = NonlinearProblem(nf, u0)
         sol = NonlinearSolve.solve(
             prob, algo; abstol = abstol, reltol = reltol, maxiters = maxiters,
@@ -237,7 +222,7 @@ function S._solve_sc(
             @debug "NonlinearSolve SC solver (primal/IFT) did not report success" retcode = sol.retcode
         pstar = sol.u
         r_dual = residual_vec(embed(pstar))  # single-layer Dual{UserTag}: value ≈ 0
-        Jf = Jfd(pstar)                      # Float64 ∂F/∂p at the primal root
+        Jf = Jval(pstar)                     # Float64 ∂F/∂p at the primal root
         pstar_dual = embed(pstar) .- (Jf \ r_dual)  # IFT correction: dp*/dθ = -Jf⁻¹ ∂F/∂θ
         return rebuild(pstar_dual)
     end
