@@ -19,12 +19,12 @@ include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.j
 
 ```@example mancracks
 plotly_scene(shape_traces(PennyCrack(1.0)); uid = "man-crack-penny", height = 400,
-    title = "Penny-shaped crack: a = b, c = 0, normal n̂")
+    title = "Penny-shaped crack: a = b, c = 0, normal <u><i>n</i></u>")
 ```
 
 ```@example mancracks
 plotly_scene(shape_traces(RibbonCrack(0.5)); uid = "man-crack-ribbon", height = 400,
-    title = "Ribbon crack: half-width b, unbounded along ℓ̂")
+    title = "Ribbon crack: half-width b, unbounded along <u><i>ℓ</i></u>")
 ```
 
 The full set of shapes, tilted cracks included, is in

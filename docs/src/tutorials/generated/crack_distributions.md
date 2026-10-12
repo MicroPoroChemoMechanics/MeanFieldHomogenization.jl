@@ -69,7 +69,7 @@ plotly_scene(
     rve_traces(; n = 70, semi_axes = (0.10, 0.10, 0.004), seed = 2024,
         orientation = n̂);
     uid = "cd-rve-aligned", height = 470,
-    title = "Parallel cracks, all normals along n̂ = (√2/4, √6/4, √2/2)"
+    title = "Parallel cracks, all normals along <u><i>n</i></u> = (√2/4, √6/4, √2/2)"
 )
 ````
 

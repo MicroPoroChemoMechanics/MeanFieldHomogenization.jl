@@ -259,7 +259,7 @@ for (i, αv) in enumerate(αs), (j, c) in enumerate(coef)
 end
 Ys = [αv for αv in αs, _ in κs]
 surface = replace(surface_trace(Xs, Ys, Zs; color = "#2c7fb8", opacity = 0.9), "NaN" => "null")
-plotly_scene([surface]; uid = "sandstone-envelopes-3d", height = 480, aspectmode = "cube",
+plotly_scene([surface]; uid = "sandstone-envelopes-3d", height = 480, aspectmode = "cube", axes_visible = true,
     xlabel = "−Σm / K", ylabel = "friction α", zlabel = "Σd / K",
     title = "Strength envelopes of a sandstone, φ = 0.25")
 ```

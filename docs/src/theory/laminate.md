@@ -44,7 +44,7 @@ include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.j
 
 ```@example laminate
 plotly_scene(laminate_traces([0.30, 0.15, 0.40, 0.15]); uid = "th-laminate-cell",
-    height = 420, title = "One period: four layers of thickness hᵢ, common normal n̂")
+    height = 420, title = "One period: four layers of thickness <i>h<sub>i</sub></i>, common normal <u><i>n</i></u>")
 ```
 
 Only ``\underline{n}`` and the thicknesses matter — the picture is drawn from the

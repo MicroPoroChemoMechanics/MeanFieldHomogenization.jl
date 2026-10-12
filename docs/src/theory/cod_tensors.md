@@ -37,33 +37,145 @@ order-4 tensor. Its normalization is not unique in the literature, hence the
 
 ## 1. Geometry
 
-A flat crack is the limit of a flat spheroidal inclusion. Keeping the shape
-tensor of [Conventions](@ref th-notation-ellipsoid),
+### Elliptic and ribbon cracks
+
+A crack ``\mathcal{I}`` is a plane region of unit normal ``\underline{n}``, and
+two shapes of it are considered here: the ellipse ``\mathcal{E}`` and the
+ribbon ``\mathcal{R}``, a strip of constant width extending without bound in one
+direction. Following [barthelemyIJSS2026](@citet), both are described by one
+singular order-2 tensor ``\boldsymbol{A}``, of rank 2 for the ellipse and 1 for
+the ribbon, whose kernel contains ``\underline{n}``:
+
+```math
+\underline{x}\in\mathcal{I}
+\iff
+\underline{x}\cdot\underline{n}=0
+\quad\text{and}\quad
+\underline{x}\cdot\bigl(\boldsymbol{A}^{\!T}\!\cdot\boldsymbol{A}\bigr)^{+}\!\cdot\underline{x}\le 1,
+```
+
+where ``(\cdot)^{+}`` denotes the Moore–Penrose pseudo-inverse, the inverse
+itself being undefined for a singular tensor. Only
+``\boldsymbol{A}^{\!T}\!\cdot\boldsymbol{A}`` enters this definition, so that
+``\boldsymbol{A}`` may be taken symmetric without loss of generality. With
+``(\underline{\ell},\underline{m},\underline{n})`` an orthonormal frame, the
+ellipse then corresponds to
 
 ```math
 \boldsymbol{A}
-= \underline{\ell}\otimes\underline{\ell}
-+ \eta\,\underline{m}\otimes\underline{m}
-+ \omega\,\underline{n}\otimes\underline{n},
+= a\,\underline{\ell}\otimes\underline{\ell}
++ b\,\underline{m}\otimes\underline{m},
 \qquad
-\eta = \frac{b}{a},
-\qquad
-\omega = \frac{c}{a}\to 0,
+\bigl(\boldsymbol{A}^{\!T}\!\cdot\boldsymbol{A}\bigr)^{+}
+= \frac{\underline{\ell}\otimes\underline{\ell}}{a^{2}}
++ \frac{\underline{m}\otimes\underline{m}}{b^{2}},
+\qquad a\ge b>0,
 ```
 
-with ``(\underline{\ell},\underline{m})`` the in-plane unit vectors along the
-major and minor semi-axes ``a\ge b``, and ``\underline{n}`` the unit normal. The
-frame is drawn below as in the Echoes book [echoes](@cite).
+and the second condition reads
+``(\underline{x}\cdot\underline{\ell})^{2}/a^{2}
++(\underline{x}\cdot\underline{m})^{2}/b^{2}\le 1``: ``\underline{\ell}`` and
+``\underline{m}`` are directed along the major and minor axes, ``a`` and ``b``
+are the corresponding semi-axes, and the in-plane aspect ratio is
+``\eta = b/a\le 1``.
 
-![The crack frame and its semi-axes, before the flat limit is taken](../assets/geometry/crack_frame.svg)
+```@setup codgeom
+using MeanFieldHomogenization
+include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
+```
 
-Two families matter, and they are **genuinely different objects**, not two
-regimes of one:
+```@example codgeom
+crack_figure(EllipticCrack(3.0, 1.5); uid = "th-cod-elliptic",
+    title = "Elliptic crack ℰ, a = 3, b = 1.5 (η = 0.5)")
+```
 
-| | geometry | in-plane aspect ratio | `MeanFieldHomogenization` type |
-| :-- | :-- | :-- | :-- |
-| **elliptic** (3-D) | bounded ellipse, semi-axes ``a\ge b`` | ``\eta\in(0,1]`` | [`EllipticCrack`](@ref), [`PennyCrack`](@ref) for ``\eta=1`` |
-| **ribbon** (2-D) | infinite tunnel along ``\underline{\ell}``, half-width ``b`` | ``a\to\infty``, so ``\eta\to 0`` | [`RibbonCrack`](@ref) |
+The ribbon is not the ellipse with ``a = 0``, which would be the segment of
+length ``2b`` carried by ``\underline{m}``, but its limit as ``a`` grows without
+bound while ``\underline{\ell}`` is held fixed. This limit is taken on the
+pseudo-inverse, the only part of the definition that remains finite, and it
+leaves
+
+```math
+\lim_{a\to+\infty}\bigl(\boldsymbol{A}^{\!T}\!\cdot\boldsymbol{A}\bigr)^{+}
+= \frac{\underline{m}\otimes\underline{m}}{b^{2}},
+\qquad\text{hence}\qquad
+\underline{x}\in\mathcal{R}
+\iff
+\underline{x}\cdot\underline{n}=0
+\quad\text{and}\quad
+\lvert\underline{x}\cdot\underline{m}\rvert\le b .
+```
+
+``\mathcal{R}`` is thus invariant by translation along ``\underline{\ell}``, of
+width ``2b``, and its in-plane aspect ratio ``\eta`` vanishes. Since the limit
+retains ``\underline{m}`` alone, the tensor no longer says how
+``\underline{\ell}`` and ``\underline{n}`` are placed in the plane orthogonal to
+``\underline{m}``: one of them must be given in addition, which is why
+[`RibbonCrack`](@ref) stores the whole frame along with ``b``, and why a ribbon
+is better handled as the end of a family of ellipses than as a shape of its own.
+
+```@example codgeom
+crack_figure(RibbonCrack(1.5); uid = "th-cod-ribbon",
+    title = "Ribbon crack ℛ, b = 1.5, unbounded along <u><i>ℓ</i></u>")
+```
+
+Both shapes are available as [`EllipticCrack`](@ref)`(a, b)`, with
+[`PennyCrack`](@ref)`(a)` for the circle ``\eta = 1``, and
+[`RibbonCrack`](@ref)`(b)`, oriented by Euler angles or by a given frame.
+
+### The crack as a degenerate ellipsoid
+
+The compliance of a crack and its opening under load are obtained from the
+Eshelby problem of an ellipsoid ([Conventions](@ref th-notation-ellipsoid)),
+the crack being regarded as an ellipsoid of vanishing thickness
+[laws1977, kachanov1992, barthelemyIJSS2009](@cite). In the notation of
+[barthelemyMMS2023](@citet) and [barthelemyIJES2021](@citet), the ellipse
+``\mathcal{E}`` is the limit of the ellipsoid
+
+```math
+\underline{x}\cdot\bigl(\boldsymbol{A}^{\!T}\!\cdot\boldsymbol{A}\bigr)^{-1}\!\cdot\underline{x}\le 1,
+\qquad
+\boldsymbol{A}
+= a\,\bigl(\underline{\ell}\otimes\underline{\ell}
++ \eta\,\underline{m}\otimes\underline{m}
++ \omega\,\underline{n}\otimes\underline{n}\bigr),
+\qquad
+\omega = \frac{c}{a},
+```
+
+whose third semi-axis ``c``, along ``\underline{n}``, is sent to zero, so that
+``\lim_{\omega\to 0}\boldsymbol{A}
+= a\,\underline{\ell}\otimes\underline{\ell}+b\,\underline{m}\otimes\underline{m}``
+is the rank-2 tensor of ``\mathcal{E}`` above. The slider of the figure lets
+``\omega`` decrease from 0.4 to 0.02:
+
+```@example codgeom
+flattening_figure(EllipticCrack(3.0, 1.5); uid = "th-cod-flat-ellipsoid",
+    title = "Ellipsoid of semi-axes a, ηa, ωa around ℰ, a = 3, η = 0.5")
+```
+
+The ribbon requires both limits. Letting ``a\to+\infty`` first turns the
+ellipsoid into an elliptic cylinder of axis ``\underline{\ell}`` whose cross
+section has the half-axes ``b`` along ``\underline{m}`` and ``c`` along
+``\underline{n}``; flattening that cross section then yields ``\mathcal{R}``
+[barthelemyIJES2021](@cite). As ``a`` is no longer finite, the flatness is
+measured on the cross section,
+
+```math
+\rho = \frac{c}{b}\to 0 .
+```
+
+```@example codgeom
+flattening_figure(RibbonCrack(1.5); uid = "th-cod-flat-cylinder",
+    title = "Elliptic cylinder of half-axes b, ρb around ℛ, b = 1.5")
+```
+
+For the ellipse the same ratio reads ``\rho = c/b = \omega/\eta``, and it is by
+``\rho`` that the limits defining the compliance of either crack are normalized
+in [§3](@ref th-cod-compliance). On the code side, `Ellipsoid(a, b, 0)` and
+`Ellipsoid(Inf, b, 0)` return an [`EllipticCrack`](@ref) and a
+[`RibbonCrack`](@ref) respectively
+([degenerate limits](@ref man-ellipsoidal-inclusions)).
 
 ## 2. The COD tensor ``\boldsymbol{B}``
 
@@ -142,8 +254,8 @@ the same formula and must not be confused.
 
 ## [3. From ``\boldsymbol{B}`` to the compliance ``\mathbb{H}``](@id th-cod-compliance)
 
-The extra strain a crack contributes, per unit volume of the embedding
-ellipsoid, is the average of the displacement jump over the crack surface
+The extra strain a crack contributes, per unit volume of the ellipsoid or
+cylinder of §1 that it is the flat limit of, is the average of the displacement jump over the crack surface
 ``S``, spread over the volume ``V``:
 
 ```math
@@ -243,7 +355,7 @@ would therefore verify nothing: it is the same formula read twice.
 Read from right to left the boxed definition is a **recipe**: take a flat
 ellipsoid, compute ``\mathbb{P}``, assemble
 ``\mathbb{Q} = \mathbb{C}-\mathbb{C}:\mathbb{P}:\mathbb{C}``, invert, scale by
-the flatness ``\omega = c/b``. That path never touches the crack machinery, so
+the flatness ``\rho = c/b``. That path never touches the crack machinery, so
 agreement with [`compliance_contribution`](@ref) is evidence rather than
 tautology:
 
@@ -254,37 +366,37 @@ gr()  # headless backend; GKSwstype is set to "100" in make.jl
 E, ν = 210.0, 0.3
 C₀ = TensISO{3}(E / (1 - 2ν), E / (1 + ν))   # (3k, 2μ)
 
-## ω-family of the definition, evaluated at finite flatness
-function H_from_hill(a, b, ω, C₀)
-    P = hill_tensor(Ellipsoid(a, b, ω * b), C₀)
+## ρ-family of the definition, evaluated at finite flatness
+function H_from_hill(a, b, ρ, C₀)
+    P = hill_tensor(Ellipsoid(a, b, ρ * b), C₀)
     Q = C₀ - C₀ ⊡ P ⊡ C₀
-    return ω * inv(Q)
+    return ρ * inv(Q)
 end
 
 relerr(A, B) =
     maximum(abs(A[i,j,k,l] - B[i,j,k,l]) for i in 1:3, j in 1:3, k in 1:3, l in 1:3) /
     maximum(abs(B[i,j,k,l]) for i in 1:3, j in 1:3, k in 1:3, l in 1:3)
 
-ωs = exp10.(range(-1, -3; length = 9))
+ρs = exp10.(range(-1, -3; length = 9))
 plt = plot(; xscale = :log10, yscale = :log10, legend = :topleft,
-           xlabel = "flatness ω = c/b", ylabel = "relative error on ℍ")
+           xlabel = "flatness ρ = c/b", ylabel = "relative error on ℍ")
 for η in (1.0, 0.5, 0.3)
     crack = η == 1.0 ? PennyCrack(1.0) : EllipticCrack(1.0, η)
     H_ref = compliance_contribution(crack, C₀)
-    plot!(plt, ωs, [relerr(H_from_hill(1.0, η, ω, C₀), H_ref) for ω in ωs];
+    plot!(plt, ρs, [relerr(H_from_hill(1.0, η, ρ, C₀), H_ref) for ρ in ρs];
           marker = :circle, label = "η = $η")
 end
-plot!(plt, ωs, ωs; linestyle = :dash, color = :black, label = "slope 1")
+plot!(plt, ρs, ρs; linestyle = :dash, color = :black, label = "slope 1")
 plt
 ```
 
 The three curves are straight lines of **slope 1**: the error decays like
-``\omega``, which is the order of the Taylor term that resolves the limit
+``\rho``, which is the order of the Taylor term that resolves the limit
 [barthelemyIJSS2009](@cite). That slope is the real content of the check — a
-single ``\omega`` would not distinguish a true limit from a coincidence.
+single ``\rho`` would not distinguish a true limit from a coincidence.
 
 !!! note "Two limits of the flattening route"
-    The Hill tensor is validated down to ``\omega = 10^{-3}``, where the sweep
+    The Hill tensor is validated down to ``\rho = 10^{-3}``, where the sweep
     stops, and the residue backend fails below about ``c \approx 10^{-3}`` —
     hence `method = :nestedquadgk` for the anisotropic cases. Neither affects [`cod_tensor`](@ref), which resolves the limit
     analytically instead of flattening an ellipsoid.

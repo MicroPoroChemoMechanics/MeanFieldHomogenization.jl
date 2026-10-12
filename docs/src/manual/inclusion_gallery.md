@@ -89,7 +89,7 @@ everything about a crack is written in.
 ```@example zoo
 pc = PennyCrack(1.0)
 plotly_scene(shape_traces(pc); uid = "zoo-penny", height = 420,
-    title = "Penny-shaped crack — a = b = 1, c = 0, with its normal n̂")
+    title = "Penny-shaped crack — a = b = 1, c = 0, with its normal <u><i>n</i></u>")
 ```
 
 Tilting a crack is a matter of Euler angles, and the frame carries the
@@ -107,7 +107,7 @@ crack, flat *and* unbounded:
 ```@example zoo
 rb = RibbonCrack(0.5)
 plotly_scene(shape_traces(rb); uid = "zoo-ribbon", height = 420,
-    title = "Ribbon crack — half-width b = 0.5, unbounded along ℓ̂")
+    title = "Ribbon crack — half-width b = 0.5, unbounded along <u><i>ℓ</i></u>")
 ```
 
 ## Composite inclusions
@@ -188,7 +188,7 @@ estimated, handled by its own algebra ([Laminates](@ref man-laminates)).
 ```@example zoo
 plotly_scene(laminate_traces([0.30, 0.15, 0.40, 0.15]);
     uid = "zoo-laminate", height = 420,
-    title = "Four-layer periodic cell, normal n̂")
+    title = "Four-layer periodic cell, normal <u><i>n</i></u>")
 ```
 
 ## What a scheme actually sees
@@ -220,7 +220,7 @@ density, different tensor:
 plotly_scene(rve_traces(; n = 70, semi_axes = (0.10, 0.10, 0.004), seed = 2024,
         orientation = (0.0, 0.0, 1.0));
     uid = "zoo-rve-cracks-aligned", height = 480,
-    title = "RVE realization: parallel cracks, all normals along e₃")
+    title = "RVE realization: parallel cracks, all normals along <u><i>e</i></u><sub>3</sub>")
 ```
 
 Both crack populations are worked out, numbers included, in

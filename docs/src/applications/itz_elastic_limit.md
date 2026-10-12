@@ -335,8 +335,8 @@ X = [R[i, j] * direction(us[i], vs[j])[1] for i in eachindex(us), j in eachindex
 Y = [R[i, j] * direction(us[i], vs[j])[2] for i in eachindex(us), j in eachindex(vs)]
 Z = [R[i, j] * direction(us[i], vs[j])[3] for i in eachindex(us), j in eachindex(vs)]
 surface = replace(surface_trace(X, Y, Z; color = "#4a90d9", opacity = 0.85), "NaN" => "null")
-axis = line_trace([[-3.5, -3.5, -3.5], [1.0, 1.0, 1.0]]; color = "#555555", width = 3)
-plotly_scene([surface, axis]; uid = "itz-envelope-3d", height = 520,
+axis = line_trace([[-3.5, -3.5, -3.5], [1.0, 1.0, 1.0]]; color = FIG_GUIDE, width = 3)
+plotly_scene([surface, axis]; uid = "itz-envelope-3d", height = 520, axes_visible = true,
     xlabel = "Σ₁ / σ_ITZ^ult", ylabel = "Σ₂ / σ_ITZ^ult", zlabel = "Σ₃ / σ_ITZ^ult",
     title = "Elastic limit of concrete by ITZ failure, principal stress space")
 ```
