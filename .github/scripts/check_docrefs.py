@@ -89,7 +89,7 @@ import sys
 DEF_PATTERNS = [
     re.compile(r"^\s*function\s+([A-Za-z_][\w!]*)\s*\("),
     re.compile(r"^\s*function\s+([A-Za-z_][\w!]*)\s+end\s*$"),
-    re.compile(r"^\s*@[\w.]+\s+function\s+([A-Za-z_][\w!]*)\s*\("),
+    re.compile(r"^\s*(?:(?:[A-Za-z_]\w*\.)*@[\w.]+(?:\s+:[A-Za-z_]\w*)?\s+)+function\s+([A-Za-z_][\w!]*)\s*\("),
     re.compile(r"^\s*(?:mutable\s+)?struct\s+([A-Za-z_]\w*)"),
     re.compile(r"^\s*Base\.@kwdef\s+struct\s+([A-Za-z_]\w*)"),
     re.compile(r"^\s*abstract\s+type\s+([A-Za-z_]\w*)"),
@@ -113,9 +113,11 @@ BARE_NAME = re.compile(r"^\s*([A-Za-z_][\w!]*)\s*$")
 # first `)` and so misses every signature with a nested call in it, such as
 # `tens_Id4(::Val{dim} = Val(3), ::Val{T} = Val(Sym)) where {dim, T} = ...`.
 # That was 14 false positives on TensND alone.
-# A macro in front of a definition may itself be qualified, and there may be
-# more than one: `Base.@kwdef struct FECellMeshOptions`, `@inline @inbounds f(x)`.
-MACROS = r"(?:(?:[A-Za-z_]\w*\.)*@[\w.]+\s+)*"
+# A macro in front of a definition may itself be qualified, take a symbol
+# argument, and there may be more than one: `Base.@kwdef struct
+# FECellMeshOptions`, `Base.@constprop :aggressive function hill_tensor(`,
+# `@inline @inbounds f(x)`.
+MACROS = r"(?:(?:[A-Za-z_]\w*\.)*@[\w.]+(?:\s+:[A-Za-z_]\w*)?\s+)*"
 
 DOC_TARGETS = [
     re.compile(
