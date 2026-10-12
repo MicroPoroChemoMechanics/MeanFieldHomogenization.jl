@@ -36,7 +36,7 @@ adaptive cubature of [espelid1994](@citet)
 (trait `DECUHR`). See the `Hill polarization tensors` theory page
 for the full dispatch table and return types.
 """
-function hill_tensor(
+Base.@constprop :aggressive function hill_tensor(
         ell::AbstractEllipsoidalInclusion,
         C₀::TensND.AbstractTens;
         method::Symbol = :auto,
@@ -53,7 +53,7 @@ end
 # entry points can never be ambiguous.  A custom inclusion either registers
 # `Elasticity._kernel(::MyIncl, C₀, ::Analytical; kw...)` methods, or bypasses
 # the table altogether by defining `hill_tensor` on its own concrete type.
-function hill_tensor(
+Base.@constprop :aggressive function hill_tensor(
         incl::MFH_Core.AbstractCustomInclusion,
         C₀::TensND.AbstractTens;
         method::Symbol = :auto,
@@ -64,11 +64,13 @@ function hill_tensor(
     return _hill_tensor_entry(incl, C₀, method, abstol, reltol, maxiters)
 end
 
-function _hill_tensor_entry(incl, C₀, method::Symbol, abstol, reltol, maxiters)
+Base.@constprop :aggressive function _hill_tensor_entry(incl, C₀, method::Symbol, abstol, reltol, maxiters)
     MFH_Core._bump!(MFH_Core.HILL_CALLS)
-    algo = MFH_Core._resolve_algo(Val(method), incl, C₀)
-    return _kernel(incl, C₀, algo; abstol = abstol, reltol = reltol, maxiters = maxiters)
+    return MFH_Core._with_method(_hill_tensor_at, method, incl, C₀, abstol, reltol, maxiters)
 end
+
+_hill_tensor_at(m::Val, incl, C₀, abstol, reltol, maxiters) =
+    _kernel(incl, C₀, MFH_Core._resolve_algo(m, incl, C₀); abstol, reltol, maxiters)
 
 # ── 4th-order, 3D ────────────────────────────────────────────────────────────
 

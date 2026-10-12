@@ -113,6 +113,7 @@ end
         include("Core/test_green_dipole.jl")
         include("Core/test_green_aniso.jl")
         include("Core/test_counters.jl")
+        include("Core/test_hot_paths.jl")
     end
 
     @testset "Elasticity" begin

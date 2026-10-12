@@ -36,7 +36,7 @@ is purely local
 function sif end
 
 # Ribbon crack (paper eq. 737)
-function sif(
+Base.@constprop :aggressive function sif(
         crack::RibbonCrack{T}, C₀, Σ;
         y₀ = nothing, method::Symbol = :auto, kw...
     ) where {T}
@@ -50,7 +50,7 @@ function sif(
 end
 
 # Elliptical crack (paper eq. 719)
-function sif(
+Base.@constprop :aggressive function sif(
         crack::EllipticCrack{T}, C₀, Σ;
         y₀ = nothing, method::Symbol = :auto, kw...
     ) where {T}
@@ -95,7 +95,7 @@ end
 """
     dif(crack, C₀, Σ; method=:auto, kw...) -> Tens{1,3}
 """
-function dif(crack::MFH_Core.AbstractCrack, C₀, Σ; method::Symbol = :auto, kw...)
+Base.@constprop :aggressive function dif(crack::MFH_Core.AbstractCrack, C₀, Σ; method::Symbol = :auto, kw...)
     B = cod_tensor(crack, C₀; method = method, kw...)
     n̂ = TensND.tens_basis(crack_basis(crack), 3)
     return B ⋅ Σ ⋅ n̂
@@ -125,7 +125,7 @@ The driving vector is the transport twin of the remote stress of the elastic
 the physical flux ``\\underline{q}^{\\infty}`` instead returns ``-K_T``; the kernel
 is linear in its third argument and takes no view of its own.
 """
-function sif(
+Base.@constprop :aggressive function sif(
         crack::RibbonCrack{T},
         K₀::TensND.AbstractTens{2, 3},
         σ∞;
@@ -137,7 +137,7 @@ function sif(
 end
 
 # Elliptic crack — thermal
-function sif(
+Base.@constprop :aggressive function sif(
         crack::EllipticCrack{T},
         K₀::TensND.AbstractTens{2, 3},
         σ∞;
@@ -189,7 +189,7 @@ transport twin of the remote stress, so the formula is the elastic one symbol
 for symbol. Returns a scalar (vs the `Tens{1,3}` returned by the elasticity
 `dif`) since the temperature field is scalar.
 """
-function dif(
+Base.@constprop :aggressive function dif(
         crack::MFH_Core.AbstractCrack,
         K₀::TensND.AbstractTens{2, 3},
         σ∞;

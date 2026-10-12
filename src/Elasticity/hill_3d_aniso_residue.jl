@@ -110,23 +110,27 @@ function _hill_3d_aniso_residue(
     end
 
     MFH_Core._bump!(MFH_Core.QUADGK_OUTER)
-    P_vals, _ = MFH_Core._counted_quadgk(
-        hill_at_phi, 0.0, π;
-        atol = abstol, rtol = reltol, maxevals = maxiters
-    )
-
-    # Detect residue-path failure (NaN propagated from an unsupported
-    # multiplicity, typically TI/ORTHO matrix aligned with the ellipsoid axes
-    # producing mult ≥ 4 in log_I or mult ≥ 3 in log_z) and silently fall
-    # back to the nested-QuadGK backend, which handles those cases via
-    # ordinary adaptive quadrature (ForwardDiff-compatible, no extra
-    # dependency). Previously this fell back to the DECUHR backend, which is
-    # now an optional extension; NestedQuadGK targets the same integral.
-    if any(isnan, P_vals)
-        return _hill_3d_aniso_nestedquadgk(
-            ell, C₀;
-            abstol = abstol, reltol = reltol,
-            maxiters = maxiters
+    # A root multiplicity the residue sums do not handle (mult ≥ 4 in log_I or
+    # ≥ 3 in log_z: a reference anisotropic in type but isotropic or
+    # transversely isotropic in value along the ellipsoid axes) makes the
+    # integrand NaN, which QuadGK refuses with a `DomainError`. Say what failed
+    # and what evaluates the same integral, rather than relay that refusal.
+    P_vals, _ = try
+        MFH_Core._counted_quadgk(
+            hill_at_phi, 0.0, π;
+            atol = abstol, rtol = reltol, maxevals = maxiters
+        )
+    catch err
+        err isa DomainError || rethrow()
+        throw(
+            ArgumentError(
+                "the residue algorithm cannot evaluate this Hill tensor: the " *
+                    "acoustic polynomial has roots of a multiplicity it does not " *
+                    "handle, as for a reference anisotropic in type but isotropic " *
+                    "or transversely isotropic in value along the ellipsoid axes. " *
+                    "`method = :auto` or `:nestedquadgk` evaluates the same integral " *
+                    "by cubature. ($(sprint(showerror, err)))"
+            )
         )
     end
 

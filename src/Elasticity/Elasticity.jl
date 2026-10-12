@@ -54,8 +54,7 @@ function _ti_dispatch(method::Symbol, ell::Ellipsoid{3}, C₀::TensND.TensTI{4})
     method === :nestedquadgk && return MFH_Core.NestedQuadGK()
     method === :residues && return MFH_Core.Residue()
     # `:auto`, non-coaxial : hand over to the shared anisotropic default,
-    # which picks a cubature (DECUHR when its extension is loaded, else the
-    # type-generic NestedQuadGK) and never the residue path — see
+    # the NestedQuadGK cubature, never the residue path — see
     # `Core/dispatch.jl` `_aniso_default_algo` for why.
     return MFH_Core._aniso_default_algo(C₀)
 end

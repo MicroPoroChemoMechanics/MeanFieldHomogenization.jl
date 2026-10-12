@@ -40,6 +40,16 @@ end
 #  ISO matrix
 # =============================================================================
 
+# The COD tensor diag(Bℓℓ, Bmm, Bnn) in the crack frame, built as the symmetric
+# Tensors.jl storage it ends up in, so that its dimension is in its type: built
+# from `Diagonal([…])`, a vector sized at run time, it was not, and every caller
+# of a closed-form `cod_tensor` received a tensor of unknown dimension.
+function _diagonal_cod(Bll, Bmm, Bnn, basis::TensND.AbstractBasis{3})
+    T = promote_type(typeof(Bll), typeof(Bmm), typeof(Bnn))
+    z = zero(T)
+    return TensND.Tens(TensND.Tensors.SymmetricTensor{2, 3, T}((Bll, z, z, Bmm, z, Bnn)), basis)
+end
+
 """
     _cod_iso_ellipse(c::EllipticCrack, E, ν) -> Tens{2,3}
 
@@ -73,7 +83,7 @@ function _cod_iso_ellipse(c::EllipticCrack, E::Number, ν::Number)
     Bll = χ / ((one(T) - ν) * 𝒞 + η^2 * 𝒮)
     Bmm = χ / ((one(T) - ν) * η^2 * 𝒮 + 𝒞)
     Bnn = χ / ℰ
-    return TensND.Tens(Diagonal([Bll, Bmm, Bnn]), crack_basis(c))
+    return _diagonal_cod(Bll, Bmm, Bnn, crack_basis(c))
 end
 
 """
@@ -87,7 +97,7 @@ function _cod_iso_ribbon(c::RibbonCrack, E::Number, ν::Number)
     T = promote_type(typeof(E), typeof(ν))
     χ = T(π) * (one(T) - ν^2) / E
     Bll = χ / (one(T) - ν)
-    return TensND.Tens(Diagonal([Bll, χ, χ]), crack_basis(c))
+    return _diagonal_cod(Bll, χ, χ, crack_basis(c))
 end
 
 # =============================================================================
@@ -123,7 +133,7 @@ function _cod_ti_ellipse(c::EllipticCrack, E::Number, H::Number, ν₁::Number, 
     Bll = χ / (β * 𝒞 + η^2 * 𝒮)
     Bmm = χ / (β * η^2 * 𝒮 + 𝒞)
     Bnn = χ * sqrt((one(T) - H * ν₂^2) / (H * (one(T) - ν₁^2))) / ℰ
-    return TensND.Tens(Diagonal([Bll, Bmm, Bnn]), crack_basis(c))
+    return _diagonal_cod(Bll, Bmm, Bnn, crack_basis(c))
 end
 
 # NB: the Penny case (η = 1) is handled by the generic elliptic formula
@@ -147,5 +157,5 @@ function _cod_ti_ribbon(c::RibbonCrack, E::Number, H::Number, ν₁::Number, ν�
     Bnn = χ * sqrt((one(T) - H * ν₂^2) / (H * (one(T) - ν₁^2))) * σᵞ / 2
     Bmm = χ * σᵞ / 2
     Bll = χ / (sqrt(Γ) * (one(T) - ν₁))
-    return TensND.Tens(Diagonal([Bll, Bmm, Bnn]), crack_basis(c))
+    return _diagonal_cod(Bll, Bmm, Bnn, crack_basis(c))
 end

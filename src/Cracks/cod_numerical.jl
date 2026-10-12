@@ -94,8 +94,5 @@ end
 # Backend dispatch
 _residue_backend(Carr, ξ_plane, nhat; kw...) = _Qnn_star_residue(Carr, ξ_plane, nhat)
 
-_decuhr_backend(Carr, ξ_plane, nhat; abstol, reltol, maxiters) =
-    _Qnn_star_decuhr(Carr, ξ_plane, nhat; abstol = abstol, reltol = reltol, maxiters = maxiters)
-
 _nestedquadgk_backend(Carr, ξ_plane, nhat; abstol, reltol, maxiters) =
     _Qnn_star_nestedquadgk(Carr, ξ_plane, nhat; abstol = abstol, reltol = reltol, maxiters = maxiters)

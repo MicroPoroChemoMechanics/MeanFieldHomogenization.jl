@@ -85,7 +85,7 @@ plane-strain elasticity with an anisotropic `P₀` is missing, and it raises an
 `ArgumentError` naming the limitation rather than falling back to an isotropic
 kernel.
 """
-function interaction_tensor(
+Base.@constprop :aggressive function interaction_tensor(
         incl_a::MFH_Core.AbstractInclusion,
         incl_b::MFH_Core.AbstractInclusion,
         r::AbstractVector,
@@ -93,9 +93,11 @@ function interaction_tensor(
         method::Symbol = :auto,
         kw...
     )
-    algo = MFH_Core._resolve_pair_algo(Val(method), incl_a, incl_b, P₀)
-    return _pair_kernel(incl_a, incl_b, r, P₀, algo; kw...)
+    return MFH_Core._with_method(_interaction_at, method, incl_a, incl_b, r, P₀, kw)
 end
+
+_interaction_at(m::Val, incl_a, incl_b, r, P₀, kw) =
+    _pair_kernel(incl_a, incl_b, r, P₀, MFH_Core._resolve_pair_algo(m, incl_a, incl_b, P₀); kw...)
 
 """
     self_interaction_tensor(incl, P₀; kw...) -> AbstractTens

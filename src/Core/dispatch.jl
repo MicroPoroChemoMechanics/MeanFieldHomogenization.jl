@@ -13,8 +13,7 @@
 #  - 2D stiffness / conductivity (any inclusion)               → Analytical
 #  - 3D conductivity (2nd-order tensor)                        → Analytical
 #  - 3D anisotropic elasticity (4th-order `AbstractTens{4,3}`) :
-#      * `AbstractEllipsoidalInclusion`, `:auto`  → DECUHR if its extension is
-#                                                   loaded, else NestedQuadGK
+#      * `AbstractEllipsoidalInclusion`, `:auto`  → NestedQuadGK
 #      * `AbstractEllipsoidalInclusion`, `:residues` → Residue (explicit only)
 #      * `AbstractEllipsoidalInclusion`, `:decuhr` / `:nestedquadgk` → as named
 #      * `AbstractCrack`, TI + aligned with n̂     → Analytical
@@ -69,35 +68,26 @@ _resolve_algo(::Val, ::AbstractEllipsoidalInclusion, ::TensND.AbstractTens{2, 2}
 # ─── 3D anisotropic elasticity ───────────────────────────────────────────────
 
 # `:auto` picks a CUBATURE, never the residue algorithm — the same choice
-# ECHOES makes with its `NUMINT` default.  The residue path is faster
-# (~4 ms vs ~11 ms on a triaxial ellipsoid) but it is not robust: its
-# acoustic polynomial degenerates whenever the reference is anisotropic in
-# *type* and isotropic in *value*, and it then returns `NaN` / throws a
-# `DomainError` rather than a number.  That reference is not exotic — it is
+# ECHOES makes with its `NUMINT` default.  The residue path is not robust:
+# its acoustic polynomial degenerates whenever the reference is anisotropic in
+# *type* and isotropic in *value*, and it then throws an `ArgumentError`
+# rather than return a number.  That reference is not exotic — it is
 # exactly what the differential and self-consistent schemes feed back at
 # their first step, and `Dilute` / `MoriTanaka` reach it too as soon as an
 # anisotropically-typed matrix happens to hold isotropic values.  A default
 # must not fail on a legitimate input, so `Residue` is now available on
 # explicit `method = :residues` only.
 #
-# Between the two cubatures, `DECUHR` is the cheaper one (~11 ms vs ~31 ms)
-# but lives behind a weak dependency, so it is used when its extension is
-# active and the type-generic `NestedQuadGK` otherwise.  Loading `DECUHR`
-# therefore changes the default backend — hence the accuracy the effective
-# properties are computed to (~1e-9 against ~1e-14); pass `method`
-# explicitly wherever that must not depend on the session.
-#
-# Non-`Float64` coefficient types (`ForwardDiff.Dual`, `Complex`, symbolic)
-# keep the type-generic `NestedQuadGK`: it is what makes AD through a
-# self-consistent iteration with a generically-anisotropic running estimate
-# possible, and `DECUHR`'s support beyond `Dual` is not established.
-function _aniso_default_algo(C₀::TensND.AbstractTens)
-    eltype(TensND.get_array(C₀)) === Float64 || return NestedQuadGK()
-    return _decuhr_available() ? DECUHR() : NestedQuadGK()
-end
-
-_decuhr_available() =
-    Base.get_extension(parentmodule(@__MODULE__), :MeanFieldHomogenizationDECUHRExt) !== nothing
+# Between the two cubatures, `NestedQuadGK` is the default. On every case
+# measured it is both the faster and the more accurate: against closed forms,
+# and against tight references checked by a second algorithm, it is within
+# ~1e-13 where `DECUHR` is within 1e-11 to 1e-8, at three to seven times less
+# cost (docs/src/developer/benchmarks.md). It is type-generic, which is what
+# makes AD through a self-consistent iteration with a generically-anisotropic
+# running estimate possible, and it needs no weak dependency, so the default
+# does not change with what the session has loaded. `DECUHR` remains available
+# as `method = :decuhr`.
+_aniso_default_algo(::TensND.AbstractTens) = NestedQuadGK()
 
 # Ellipsoidal inclusions — 3D anisotropic default (see `_aniso_default_algo`)
 _resolve_algo(::Val{:auto}, ::AbstractEllipsoidalInclusion, C₀::TensND.AbstractTens{4, 3}) = _aniso_default_algo(C₀)
@@ -137,3 +127,16 @@ truth table — new dispatch rules are added as new methods of this
 function.
 """
 _resolve_algo
+
+"""
+    _with_method(f, method::Symbol, args...) -> f(Val(method), args...)
+
+Call `f` with the method symbol lifted to the `Val` that selects its algorithm.
+`:auto`, the default and what most callers forward, is lifted at compile time;
+any other symbol costs one dynamic dispatch on its `Val`, negligible next to the
+numerical kernel it selects. `f` takes the `Val` first and does both the
+resolution and the kernel call, so nothing past that one dispatch runs on a type
+known only at run time.
+"""
+@inline _with_method(f::F, method::Symbol, args...) where {F} =
+    method === :auto ? f(Val(:auto), args...) : f(Val(method), args...)
