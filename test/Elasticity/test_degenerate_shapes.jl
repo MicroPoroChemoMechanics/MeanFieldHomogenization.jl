@@ -76,6 +76,14 @@ end
     @test Ellipsoid(1.0, 1.0, x) isa Ellipsoid{3, <:Union{Oblate, Prolate}}
     @test Spheroid(ForwardDiff.Dual(0.5, 1.0)) isa Ellipsoid{3, Oblate}
     @test Ellipsoid(x, x, x) isa Ellipsoid{3, Spherical}
+    # Nested duals (second derivatives): merged when no derivative of any
+    # order separates the semi-axes, kept apart when only the mixed second
+    # derivative does.
+    D = ForwardDiff.Dual
+    xx = D{:out}(D{:in}(1.0, 1.0), D{:in}(1.0, 0.0))
+    xy = D{:out}(D{:in}(1.0, 1.0), D{:in}(1.0, 1.0))
+    @test Ellipsoid(xx, xx, xx) isa Ellipsoid{3, Spherical}
+    @test Ellipsoid(xx, xy, 0.5) isa Ellipsoid{3, Triaxial}
 end
 
 @testset "Degenerate shapes — conduction tensor of a sphere, differentiated" begin
@@ -93,6 +101,12 @@ end
     @test rel(d_aniso, d) < 1.0e-12
     d_fd = (f(1 + 1.0e-6) .- f(1 - 1.0e-6)) ./ 2.0e-6
     @test rel(d_fd, d) < 1.0e-7
+    # Second order, through nested duals, against the exact value: with
+    # N₃(c) = (c/2) ∫₀^∞ ds / ((s + 1)(s + c²)^{3/2}) and
+    # ∫₀^∞ (s + 1)^{-1-n} ds = 1/n, ∂²N₃/∂c² = 12/35 at the sphere, and
+    # N₁ = N₂ = (1 − N₃)/2.
+    d2 = ForwardDiff.derivative(c -> ForwardDiff.derivative(f, c), 1.0)
+    @test d2 ≈ [-6 0 0; 0 -6 0; 0 0 12] ./ (35k) rtol = 1.0e-13
 end
 
 @testset "Degenerate shapes — transversely isotropic needle" begin
