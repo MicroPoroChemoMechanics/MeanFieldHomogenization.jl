@@ -22,8 +22,11 @@ Returns:
 - `IIv` ``= (I_{aa}, I_{bb}, I_{cc}, I_{bc}, I_{ca}, I_{ab})``
 
 Two methods are provided:
-- `T<:Real` (includes `Float64`, `ForwardDiff.Dual`): numerically stable case-split
-  using tolerance comparisons (sphere, oblate, prolate, triaxial with elliptic integrals).
+- `T<:Real` (includes `Float64`, `ForwardDiff.Dual`): case-split by tolerance
+  comparisons. A spheroid, sphere included, goes through the integrals of
+  `src/Core/spheroid_integrals.jl`, exact to rounding up to the sphere; a
+  triaxial ellipsoid through elliptic integrals, whose divided differences lose
+  accuracy when two semi-axes differ by less than about ``10^{-4}`` (relative).
 - `T<:Number` (e.g. `SymPy.Sym`, `Symbolics.Num`): structural equality via `isequal`
   selects the same four cases.
 """
@@ -32,32 +35,14 @@ function newton_potential_3d(a::T, b::T, c::T) where {T <: Real}
     AeqB = (a - b) ≤ a * tol
     BeqC = (b - c) ≤ b * tol
 
-    if AeqB && BeqC
-        A2 = a * a
-        Ia = Ib = Ic = 4 * T(π) / 3
-        Iaa = Ibb = Icc = Ibc = Ica = Iab = 4 * T(π) / (5 * A2)
-        return (Ia, Ib, Ic), (Iaa, Ibb, Icc, Ibc, Ica, Iab)
-
-    elseif AeqB && !BeqC
-        A2 = a * a;  C2 = c * c
-        Ia = Ib = 2 * T(π) * c * (A2 * acos(c / a) - c * sqrt(A2 - C2)) /
-            (A2 - C2)^(3 // 2)
-        Ic = 4 * T(π) - 2 * Ia
-        Ica = Ibc = (Ia - Ic) / (C2 - A2)
-        Icc = 4 * T(π) / (3 * C2) - 2 * Ica / 3
-        Iaa = Ibb = Iab = T(π) / A2 - Ica / 4
-        return (Ia, Ib, Ic), (Iaa, Ibb, Icc, Ibc, Ica, Iab)
-
-    elseif !AeqB && BeqC
-        A2 = a * a;  C2 = c * c
-        Ic = Ib = 2 * T(π) * a * (a * sqrt(A2 - C2) - C2 * acosh(a / c)) /
-            (A2 - C2)^(3 // 2)
-        Ia = 4 * T(π) - 2 * Ic
-        Ica = Iab = (Ia - Ic) / (C2 - A2)
-        Iaa = 4 * T(π) / (3 * A2) - 2 * Ica / 3
-        Ibb = Icc = Ibc = T(π) / C2 - Ica / 4
-        return (Ia, Ib, Ic), (Iaa, Ibb, Icc, Ibc, Ica, Iab)
-
+    # Within the tolerance on both sides, the closer pair is the one taken as
+    # equal: a spheroid has one gap exactly zero.
+    if AeqB && (!BeqC || a - b ≤ b - c)     # oblate, or a sphere: axis c
+        Ic, Ia, Ica, Icc, Iaa = _newton_spheroid(c, a)
+        return (Ia, Ia, Ic), (Iaa, Iaa, Icc, Ica, Ica, Iaa)
+    elseif BeqC                             # prolate: axis a
+        Ia, Ic, Ica, Iaa, Icc = _newton_spheroid(a, c)
+        return (Ia, Ic, Ic), (Iaa, Icc, Icc, Icc, Ica, Ica)
     else
         return _newton_potential_3d_triaxial(a, b, c)
     end

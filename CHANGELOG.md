@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.16.1 — the default method resolved at compile time, and NestedQuadGK by default
+## v0.16.1 — the default method resolved at compile time, NestedQuadGK by default, and spheroids exact near the sphere
 
 Every call of `hill_tensor` and `cod_tensor` with the default `method = :auto`
 paid a dynamic dispatch and a dynamic keyword call, and handed its caller a value
@@ -8,6 +8,11 @@ of type `Any`: the default was not propagated as a constant down to the `Val`
 that selects the algorithm. It now is, with results identical to the bit. And
 the default cubature for an anisotropic reference is now the nested Gauss–Kronrod
 one, measured both faster and more accurate than DECUHR on every case tried.
+Comparing the two on very flat ellipsoids, and checking the closed forms against
+a 256-bit quadrature, turned up defects in all three. The cubature stopped short
+on flat shapes. The closed forms of a spheroid, in an isotropic matrix and in a
+coaxial transversely isotropic one, were wrong near the sphere, and the latter
+gave wrong derivatives at an isotropic point.
 
 ### Changed
 
@@ -22,6 +27,59 @@ one, measured both faster and more accurate than DECUHR on every case tried.
 
 ### Fixed
 
+- The Newton potentials of a spheroid, behind every closed form in an
+  isotropic matrix (Hill, Eshelby and concentration tensors, 𝕌ᴬ and 𝕍ᴬ,
+  conduction), were wrong near the sphere. The potential I₃₁ was formed as the
+  divided difference (I₃ − I₁)/(a² − c²) of two closed forms that cancel there.
+  The Hill tensor of a spheroid was off by 1e-5 at ω = 0.9999 and 1.0001, by
+  2e-3 at |ω − 1| = 1e-5, and by 0.7 to 2.8 times its own size at
+  |ω − 1| = 2e-6; below 1e-6 the sphere values were returned. The potentials are
+  now evaluated as the integrals they stand for, through the regimes described
+  below. The Hill tensor of a spheroid now agrees with the tight cubature to
+  5e-16 at every distance from the sphere tried, from 1e-9 to 1e-2.
+  A triaxial ellipsoid whose two semi-axes nearly coincide is unchanged: its
+  elliptic integrals lose up to 5e-5 just above the tolerance under which the
+  two are taken as equal.
+- The closed-form Hill tensor of a spheroid coaxial with a transversely
+  isotropic matrix, the `:auto` path for that case, was wrong in three regimes.
+  The errors below were measured against a 256-bit quadrature of the same
+  integrals.
+  - **Near-spherical spheroid, isotropic or nearly isotropic matrix.** The error
+    was 1e-5 at ω = 0.9999 and 1.0001. At ω = 1 ± 1e-6 the relative error
+    reached 6 to 23. The closed forms cancel as η → 1, and a limit value was
+    used up to |η² − 1| = 1e-6.
+  - **Flat spheroid, ω ≤ 1e-4.** The error was about 0.1 ω (3e-5 at
+    ω = 1e-4). The test for coincident roots had an absolute floor that took any
+    two small roots for equal ones.
+  - **Matrix within one part in a million of isotropy.** It was evaluated as
+    isotropic. Values were off by up to 7e-7. ForwardDiff derivatives along the
+    directions that break isotropy were off by 24 % to a factor 14, at an
+    isotropic point included. This concerns any TI reference medium that is
+    isotropic in value. The same test, with its own absolute floor, also took
+    moduli below about 1e-4, in whatever unit they are given, for isotropic
+    ones.
+
+  The integrals are now evaluated from the mean and the squared half-difference
+  of the two roots, which are rational in the moduli. Three regimes apply: a
+  power series near the sphere, an expansion in the squared half-difference near
+  coincidence, and elsewhere the closed forms with a recurrence for flat shapes.
+  Against the same reference the error is now below 1e-14 for 1e-8 ≤ ω ≤ 10, on
+  every matrix tried and on isotropic values. Derivatives near an isotropic
+  point agree with a 256-bit reference to 4e-14 for ω ≤ 3 and to 1e-10 at
+  ω = 30. Needles, ω ≫ 1, lose accuracy as before, because the Walpole
+  combinations cancel as ω²: values are off by 4e-9 to 5e-7 at ω = 10⁴, and
+  derivatives by up to 7e-7 at ω = 30 when the roots are well apart. The theory
+  page documents the evaluation, in a folded block.
+- `NestedQuadGK` stopped with an error far above the tolerance asked for on
+  very flat ellipsoids. At the default `reltol = 1e-6` the error was 2e-5 at
+  ω = 1e-5 and 2e-6 at ω = 1e-6. The integrand also varies over a layer
+  z ~ ω at the end of the interval that the change of variable does not
+  stretch, and the first Gauss–Kronrod nodes missed it. Below ω = 1e-3,
+  breakpoints at z = ω, 10ω and 100ω now give that layer intervals of its own.
+  The error falls to 2e-8 to 5e-7, and results for ω ≥ 1e-3 are unchanged to
+  the bit. DECUHR misses the tolerance on these shapes as well: its error is
+  1e-6 to 2e-5 at ω = 1e-5. At tolerances 1e-13/1e-12 it is still 1.3e-6 to
+  1.6e-6, where `NestedQuadGK` reaches 3e-16 at a hundredth of the cost.
 - `hill_tensor(…; method = :residues)` on a reference whose acoustic polynomial
   has roots of a multiplicity the residue sums do not handle — a reference
   anisotropic in type but isotropic or transversely isotropic in value along the
@@ -39,13 +97,14 @@ one, measured both faster and more accurate than DECUHR on every case tried.
 
 ### Performance
 
-Same machine, 0.16.0 → 0.16.1, results identical to the bit:
+Same machine, 0.16.0 → 0.16.1, results identical to the bit except on the
+spheroid, whose Newton potentials are now evaluated otherwise (see *Fixed*):
 
 - `hill_tensor` of a sphere in an isotropic matrix 132 → 37 ns and
   `cod_tensor` of a penny crack 280 → 88 ns, both now inferred and allocation
   free;
 - Mori–Tanaka on a sphere 1.35 → 1.04 µs, self-consistent 20.6 → 17.7 µs,
-  differential 49.1 → 42.5 µs, Mori–Tanaka on a spheroid 1.67 → 1.41 µs;
+  differential 49.1 → 42.5 µs, Mori–Tanaka on a spheroid 1.67 → 1.4 µs;
 - the first `cod_tensor` call of a session 276 → 50 ms.
 
 The structural reasons: `_with_method` lifts `:auto` at compile time and
