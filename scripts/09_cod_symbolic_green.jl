@@ -389,7 +389,7 @@ end
     sifaniso_CS(ηv) -> (𝒞, 𝒮)
 
 `𝒞_η` and `𝒮_η` in the published form: over the complementary angle
-``\vartheta = \pi/2 - \varphi``, so a `cos²` integral for `𝒞` and a `sin²` one for `𝒮`.
+``\\vartheta = \\pi/2 - \\varphi``, so a `cos²` integral for `𝒞` and a `sin²` one for `𝒮`.
 Measuring both forms against the same Legendre reference is what shows the two
 conventions to be one and the same quantity.
 """
