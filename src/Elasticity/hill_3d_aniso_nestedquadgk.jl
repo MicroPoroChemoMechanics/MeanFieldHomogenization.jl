@@ -176,7 +176,8 @@ function _hill_3d_aniso_nestedquadgk(
         0.0, u_breaks..., 1.0;
         atol = abstol,
         rtol = reltol,
-        maxevals = maxiters
+        maxevals = maxiters,
+        norm = MFH_Core._quadgk_norm
     ) do u
         one_minus_u = 1.0 - u
         z = 1.0 - one_minus_u^α

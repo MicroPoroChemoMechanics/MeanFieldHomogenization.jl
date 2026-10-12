@@ -279,22 +279,15 @@ and ``I_{22}^{\boldsymbol{A}}=I_{33}^{\boldsymbol{A}}=I_{23}^{\boldsymbol{A}}
     the **raw** kernel — the values above multiplied by ``4\pi`` — and the
     division is applied at the [`tens_IA`](@ref) call site.
 
-!!! note "The spheroid columns near the sphere"
-    The divided difference ``I_{31}^{\boldsymbol{A}} = (I_3^{\boldsymbol{A}}-I_1^{\boldsymbol{A}})/(a^2-c^2)``
-    of the spheroid columns cancels as the spheroid approaches the sphere: a
-    Hill tensor built from it was off by ``10^{-5}`` at ``|\omega-1| = 10^{-4}``
-    and by more than its own size at ``|\omega-1| = 2\times10^{-6}``. With
-    ``m = \omega^2`` the squared ratio of the axial to the transverse semi-axis,
-    `newton_potential_3d` evaluates instead the axial potential as
-    ``\tfrac12 I_2(m)`` and ``I_{31}^{\boldsymbol{A}}`` as the integral
-    ``\int_{-1}^{1} z^4\,\mathrm{d}z/D(m,z)^2`` it stands for (up to the
-    normalization above), with the integrals ``I_n`` and ``D`` and the regimes of
-    [the transversely isotropic case](@ref th-hill-ti-coaxial). Both are exact to
-    rounding up to the sphere. A triaxial ellipsoid whose two semi-axes nearly
-    coincide still goes through its elliptic integrals and their divided
-    differences: about ``10^{-7}`` for a relative gap of ``10^{-5}``, up to
-    ``5\times10^{-5}`` just above the tolerance ``10^{-6}`` under which the two
-    semi-axes are taken as equal.
+!!! note "Close to a sphere, close to a spheroid"
+    The divided differences of the table, such as
+    ``I_{31}^{\boldsymbol{A}} = (I_3^{\boldsymbol{A}}-I_1^{\boldsymbol{A}})/(a^2-c^2)``,
+    cancel when two semi-axes come together. `newton_potential_3d` evaluates
+    them otherwise: a spheroid, sphere included, through the integrals these
+    potentials stand for, and a triaxial ellipsoid whose two semi-axes differ by
+    less than 2 % through an expansion around the spheroid it is close to,
+    exact and differentiable where the two meet.
+    [Degenerate shapes](@ref th-degenerate-shapes) gives both.
 
 !!! note "Why the cylinder column has zeros that still matter"
     The cylinder column is the limit ``a\to\infty`` of the triaxial one. Three
@@ -614,110 +607,16 @@ The five coefficients are closed-form combinations of `acosh` and complex square
 roots [barthelemyIJES2020_hilltrans; eqs. 53–58](@cite), depending on
 the aspect ratio ``\omega`` (axial / transverse) and the five independent
 constants ``(C_{1111}, C_{1122}, C_{1133}, C_{3333}, C_{2323})``.
-They involve, for ``n = 0, 2, 4``, the integrals
-
-```math
-I_n(a) = \int_{-1}^{1}\frac{z^n\,\mathrm{d}z}{D(a,z)},
-\qquad
-J_n(a_1,a_2) = \int_{-1}^{1}\frac{z^n\,\mathrm{d}z}{D(a_1,z)\,D(a_2,z)},
-\qquad
-D(a,z) = a + (1-a)\,z^2 ,
-```
-
-with ``a_i = \omega^2\gamma_i^2``, where ``\gamma_1^2`` and ``\gamma_2^2`` are the
-roots of the acoustic polynomial
-``C_{2323}C_{3333}\,\gamma^4 + (C_{1133}^2 + 2C_{1133}C_{2323} - C_{1111}C_{3333})\,\gamma^2 + C_{1111}C_{2323}``,
-and ``a_3 = \omega^2(C_{1111}-C_{1122})/(2C_{2323})`` in ``I_0`` and ``I_2``.
-Away from the sphere and from coincident roots these are elementary, in
-``\operatorname{acosh}\sqrt{a}`` [barthelemyIJES2020_hilltrans](@cite). Where
-they are not, they cancel, as shown in the block below.
-
-```@raw html
-<details><summary>How the integrals are evaluated</summary>
-```
-
-The closed forms fail in three places. Near the sphere, ``a \to 1``, they are
-differences of nearly equal terms divided by powers of ``a - 1``. For an
-isotropic matrix stored as transversely isotropic, ``\gamma_1 = \gamma_2``, the
-partial fractions of ``J_n`` divide by ``a_2 - a_1``. And each root
-``\gamma_i^2`` has an infinite derivative there, through
-``\sqrt{\Delta}``. For a flat spheroid the partial fractions of ``J_4`` cancel
-as ``1/a``.
-
-``J_n`` is symmetric in ``(a_1, a_2)``, so it depends on them only through the mean
-and the squared half-difference
-
-```math
-m = \frac{a_1 + a_2}{2} = -\frac{\omega^2 b}{2\,C_{2323}C_{3333}},
-\qquad
-d^2 = \Big(\frac{a_1 - a_2}{2}\Big)^2 = \frac{\omega^4\,(b^2 - 4\,C_{2323}C_{3333}\,C_{1111}C_{2323})}{4\,(C_{2323}C_{3333})^2},
-```
-
-with ``b = C_{1133}^2 + 2C_{1133}C_{2323} - C_{1111}C_{3333}``. Both are rational
-in the moduli and do not depend on their scale. Three regimes follow.
-
-1. **Near the sphere**, ``|a_i - 1| \le 1/4``. Write ``D = 1 + k\,(1 - z^2)`` with
-   ``k = a - 1`` and expand:
-
-   ```math
-   J_n = \sum_{j \ge 0} (-1)^j\,h_j(k_1,k_2)\,\beta_{n,j},
-   \qquad
-   \beta_{n,j} = \int_{-1}^{1} z^n (1-z^2)^j\,\mathrm{d}z
-   = \beta_{n,j-1}\,\frac{2j}{2j+n+1},
-   ```
-
-   Here ``h_j = \sum_{p+q=j} k_1^p k_2^q = (k_1+k_2)\,h_{j-1} - k_1k_2\,h_{j-2}``,
-   which needs only ``k_1 + k_2 = 2(m-1)`` and ``k_1k_2 = (m-1)^2 - d^2``.
-   ``I_n`` is the case ``k_2 = 0``. With 32 terms the truncation is below
-   ``10^{-18}``.
-2. **Nearly coincident roots**, ``|d| \le |m|/20``. With ``\bar D = D(m,z)`` and
-   ``D(a_{1,2},z) = \bar D \pm d\,(1-z^2)``,
-
-   ```math
-   \frac{1}{D_1 D_2} = \sum_{j \ge 0} d^{2j}\,\frac{(1-z^2)^{2j}}{\bar D^{\,2j+2}},
-   \qquad
-   1-z^2 = \frac{\bar D - 1}{m - 1},
-   ```
-
-   truncated at ``j = 4``. The binomial expansion of ``(\bar D - 1)^{2j}`` reduces
-   ``J_n`` to the integrals ``U_{n,p} = \int z^n/\bar D^{\,p}``,
-   ``p = 2, \dots, 10``. They follow from ``U_{0,1} = I_0(m)`` by two recurrences:
-   integrating ``\mathrm{d}(z/\bar D^{\,p})/\mathrm{d}z``, and
-   ``z^2 = (\bar D - m)/(1-m)``:
-
-   ```math
-   U_{0,p+1} = \frac{1 + (p - \tfrac12)\,U_{0,p}}{p\,m},
-   \qquad
-   U_{n+2,p} = \frac{U_{n,p-1} - m\,U_{n,p}}{1-m}.
-   ```
-
-3. **Elsewhere**, the closed forms of the two roots, combined by partial
-   fractions. For a flat spheroid, ``|a_i| < 1``, ``J_2`` and ``J_4`` come instead
-   from ``z^2 = (D_1 - a_1)/(1 - a_1)``:
-
-   ```math
-   J_2 = \frac{I_0(a_2) - a_1 J_0}{1 - a_1},
-   \qquad
-   J_4 = \frac{I_2(a_2) - a_1 J_2}{1 - a_1}.
-   ```
-
-No square root of ``d^2`` is taken in the first two regimes. Derivatives are
-therefore exact at an isotropic point, along the directions that break isotropy
-too. In derivatives, the split ``|d| = |m|/20`` balances the ``O(d^8)``
-truncation of the second regime against the cancellation of the third, which
-grows as ``1/d^3``. Both stay near ``10^{-10}``.
-
-Against a 256-bit quadrature of the same integrals, the relative error on the
-Walpole coefficients is below ``10^{-14}`` for ``10^{-8} \le \omega \le 10``. The
-test set includes generic, strongly anisotropic and nearly isotropic matrices,
-isotropic values, and ``\omega = 1 \pm 10^{-6}``. For a needle,
-``\omega \gg 1``, the Walpole combinations themselves cancel as ``\omega^2``: the
-error grows to ``10^{-13}``–``10^{-10}`` at ``\omega = 100`` and to
-``10^{-9}``–``10^{-6}`` at ``\omega = 10^4``.
-
-```@raw html
-</details>
-```
+They involve integrals over ``z\in[-1,1]`` of rational functions of
+``D(a,z) = a + (1-a)\,z^2``, for ``a = \omega^2\gamma_i^2`` with ``\gamma_i^2``
+the roots of the acoustic polynomial, and for
+``a = \omega^2(C_{1111}-C_{1122})/(2C_{2323})``
+[barthelemyIJES2020_hilltrans](@cite). As written, these closed forms cancel
+near the sphere, at coincident roots (an isotropic matrix stored as
+transversely isotropic), for a disc and for a needle, and a square root of
+zero spoils the derivatives at an isotropic point. How the package evaluates
+them so that they stay exact to rounding everywhere, derivatives included, is
+in [Degenerate shapes](@ref th-degenerate-shapes).
 
 The dispatcher routes a `TensTI{4}` matrix combined with a coaxial
 `Ellipsoid{3, Spherical|Prolate|Oblate}` to this path by default; coaxiality is

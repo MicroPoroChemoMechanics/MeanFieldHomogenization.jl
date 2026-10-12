@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.16.1 — the default method resolved at compile time, NestedQuadGK by default, and spheroids exact near the sphere
+## v0.16.1 — the default method resolved at compile time, NestedQuadGK by default, and degenerate shapes exact
 
 Every call of `hill_tensor` and `cod_tensor` with the default `method = :auto`
 paid a dynamic dispatch and a dynamic keyword call, and handed its caller a value
@@ -12,7 +12,12 @@ Comparing the two on very flat ellipsoids, and checking the closed forms against
 a 256-bit quadrature, turned up defects in all three. The cubature stopped short
 on flat shapes. The closed forms of a spheroid, in an isotropic matrix and in a
 coaxial transversely isotropic one, were wrong near the sphere, and the latter
-gave wrong derivatives at an isotropic point.
+gave wrong derivatives at an isotropic point. Following them up to every shape
+where two semi-axes meet, or a spheroid becomes a disc or a needle, turned up
+more: wrong derivatives with respect to a semi-axis, a triaxial ellipsoid next
+to a spheroid, a crack next to a circle, two traps of the cubatures under
+`ForwardDiff`, and a self-consistent estimate that lost its symmetry class. All
+are treated, and a new theory page, *Degenerate shapes*, says how.
 
 ### Changed
 
@@ -37,9 +42,20 @@ gave wrong derivatives at an isotropic point.
   now evaluated as the integrals they stand for, through the regimes described
   below. The Hill tensor of a spheroid now agrees with the tight cubature to
   5e-16 at every distance from the sphere tried, from 1e-9 to 1e-2.
-  A triaxial ellipsoid whose two semi-axes nearly coincide is unchanged: its
-  elliptic integrals lose up to 5e-5 just above the tolerance under which the
-  two are taken as equal.
+- A triaxial ellipsoid whose two closer semi-axes nearly coincide went through
+  elliptic integrals and their divided differences, which lose accuracy as
+  1/δ² with the relative gap δ: up to 5e-5 at δ = 1e-6, where the two
+  semi-axes were taken as equal instead. Below a gap of 2 % (in squares) the
+  potentials are now expanded around the spheroid they are close to, with
+  spheroidal coefficients: within 1e-15 of the cubature for gaps of 1e-9 to
+  1e-2, next to a flat, an elongated or a near-spherical spheroid.
+- The derivative with respect to a semi-axis where it meets another one was
+  silently wrong, by 100 % to 550 %: the shape was classified as a sphere or a
+  spheroid, whose closed form no longer depends on the gap. Two semi-axes
+  carried by dual numbers are now merged only when their derivatives coincide
+  too, for ellipsoids, ellipses, cylinders and cracks, and the expansion above
+  carries the derivative. The derivatives agree with those taken through the
+  cubature to 2e-14.
 - The closed-form Hill tensor of a spheroid coaxial with a transversely
   isotropic matrix, the `:auto` path for that case, was wrong in three regimes.
   The errors below were measured against a 256-bit quadrature of the same
@@ -66,10 +82,38 @@ gave wrong derivatives at an isotropic point.
   Against the same reference the error is now below 1e-14 for 1e-8 ≤ ω ≤ 10, on
   every matrix tried and on isotropic values. Derivatives near an isotropic
   point agree with a 256-bit reference to 4e-14 for ω ≤ 3 and to 1e-10 at
-  ω = 30. Needles, ω ≫ 1, lose accuracy as before, because the Walpole
-  combinations cancel as ω²: values are off by 4e-9 to 5e-7 at ω = 10⁴, and
-  derivatives by up to 7e-7 at ω = 30 when the roots are well apart. The theory
-  page documents the evaluation, in a folded block.
+  ω = 30. Needles, ω ≫ 1, lost accuracy as ω², the Walpole coefficients being
+  differences of terms ω² or ω⁴ larger than the result: 5e-7 at ω = 10⁴, and
+  derivatives 7e-7 off at ω = 30. They are now written with ∫z²(1−z²)/(D₁D₂)
+  and ∫(1−z²)²/(D₁D₂), computed directly, and for a needle the part of these
+  integrals rational in the roots is summed exactly: within 1e-14 up to
+  ω = 10⁶, and derivatives within 2e-10 at ω = 10³.
+- Every cubature differentiated by `ForwardDiff` could stop with a
+  `DomainError`: QuadGK's error estimate goes through `LinearAlgebra.norm`,
+  which rescales by the largest entry unless it `iszero`, and a dual number of
+  value zero with non-zero partials is not. On a segment where the Kronrod and
+  Gauss rules agree to the last bit the estimate came out `NaN` — the
+  derivative of the anisotropic conduction tensor of a sphere, for one. The
+  cubatures now hand QuadGK the norm of the values: the refinement makes the
+  decisions of an evaluation without derivatives, whose value it reproduces.
+- The derivative with respect to a crack semi-axis through the crack cubature
+  was a `MethodError`: its integration bounds were taken in the number type of
+  the crack, and QuadGK has no rule for a dual interval. They are plain numbers
+  now.
+- The COD tensor of an elliptical crack close to a circle formed
+  𝒮 = (𝒦 − ℰ)/k² and 𝒞 = 𝒦 − 𝒮, which cancel as k² → 0 (an error near ε/k²,
+  1e-6 at the threshold where the crack became a `PennyCrack`). Below k² = 0.1
+  they are now the series of the complete integrals: within 1.1e-15 of the same
+  closed forms in 256-bit arithmetic. 𝐁, normalized by the smaller semi-axis,
+  has a kink at the circle; the derivative AD returns there is the one-sided
+  one in the direction of the increase, which the documentation now states.
+- The self-consistent scheme rebuilt a transversely isotropic estimate as a
+  generic tensor at every iterate: products of TI tensors land in the six- or
+  eight-parameter form, which its major symmetrization did not recognize. The
+  Hill tensor of a coaxial spheroid then went through a cubature, as accurate
+  as its tolerance. The projection is now made within the class, onto the
+  five-parameter form; on a 3:1 spheroid the scheme takes 46 µs instead of
+  4.2 ms, and its fixed point is the closed-form one.
 - `NestedQuadGK` stopped with an error far above the tolerance asked for on
   very flat ellipsoids. At the default `reltol = 1e-6` the error was 2e-5 at
   ω = 1e-5 and 2e-6 at ω = 1e-6. The integrand also varies over a layer
@@ -121,6 +165,21 @@ compile time on 1.12 and 1.13 alike.
 
 ### Documentation
 
+- *Degenerate shapes*, a new theory page: every situation above where the
+  closed forms or the cubatures fail — a spheroid next to the sphere, a
+  triaxial ellipsoid next to a spheroid, the derivative where two semi-axes
+  meet, the transversely isotropic closed form at the sphere, at coincident
+  roots, for a disc and a needle, a crack next to the circle, the cubatures
+  under `ForwardDiff`, the self-consistent estimate of TI class — what goes
+  wrong, how it is evaluated instead, and the accuracy measured.
+- COD tensors: the calculation of 𝐁 in an isotropic matrix, which the
+  literature quotes, carried out from the Fourier kernel to the closed form —
+  the reduced kernel and its three coefficients, the contour integral, the
+  inversion, the circle and the ribbon. The angles are those of
+  barthelemyIJSS2026 throughout: its contour for the integral, its definitions
+  of 𝒦, ℰ, 𝒞 and 𝒮, related by one change of variable.
+- Thermal cracks: the contractions that were missing in a dozen tensor
+  products are written out.
 - Hill tensors: the proof of the surface-element identity, the Kelvin–Mandel
   matrices of 𝕌ᴬ and 𝕍ᴬ,
   the definitions of the elliptic integrals, why ℙ is positive

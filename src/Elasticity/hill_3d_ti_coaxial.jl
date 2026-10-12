@@ -103,23 +103,21 @@ function _hill_ti_walpole(ω, C1111, C1122, C1133, C3333, C2323)
     a3 = om2 * (C11 - C12) / (2 * C44)
 
     coef = C44 * C33
-    J0, J2, J4 = MFH_Core._spheroid_J024(m, d2)
-    j0 = J0 / coef
-    j2 = J2 / coef
+    J4, L21, L02 = MFH_Core._spheroid_JL(m, d2)
     j4 = J4 / coef
-    i0 = MFH_Core._spheroid_I0(a3) / C44
+    l21 = L21 / coef
+    l02 = L02 / coef
     i2 = MFH_Core._spheroid_I2(a3) / C44
+    iw = MFH_Core._spheroid_Iw(a3) / C44
 
-    # Walpole components (eqs. 53–58 of Barthélémy 2020)
-    P1_c = ((C44 - om2 * C11) * j4 + om2 * C11 * j2) / 2
-    P2_c = om2 * ((om2 * C44 - C33) * j4 + (C33 - 2 * om2 * C44) * j2 + om2 * C44 * j0) / 4
-    P3_c = om2 / (2 * sqrt(TC(2))) * (C44 + C13) * (j4 - j2)
-    P5_c = P2_c / 2 + om2 * (i0 - i2) / 8
-    P6_c = (
-        (om4 * C11 + C33 + 2 * om2 * C13) * j4
-            - 2 * om2 * (om2 * C11 + C13) * j2
-            + om4 * C11 * j0 + i2
-    ) / 8
+    # Walpole components (eqs. 53–58 of Barthélémy 2020), written with
+    # j₂ − j₄ = l₂₁ and j₀ − 2j₂ + j₄ = l₀₂: in j₀, j₂, j₄ they are differences of
+    # terms ω² or ω⁴ larger than the result for a needle.
+    P1_c = (C44 * j4 + om2 * C11 * l21) / 2
+    P2_c = om2 * (C33 * l21 + om2 * C44 * l02) / 4
+    P3_c = -om2 / (2 * sqrt(TC(2))) * (C44 + C13) * l21
+    P5_c = P2_c / 2 + om2 * iw / 8
+    P6_c = (C33 * j4 - 2 * om2 * C13 * l21 + om4 * C11 * l02 + i2) / 8
 
     return (
         _strip_im(P1_c, T),

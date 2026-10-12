@@ -110,9 +110,31 @@ end
 @inline (c::_CountingFn)(x) = (_bump!(INTEGRAND_EVALS); c.f(x))
 
 """
+    _quadgk_norm(x) -> Real
+
+The error norm every cubature of the package hands to QuadGK: `LinearAlgebra.norm`
+of the values, a plain number.
+
+`norm` itself, applied to `ForwardDiff.Dual` numbers, rescales by the largest
+entry and divides by it unless that entry `iszero` — and a dual of value zero
+with non-zero partials is not `iszero`. On a segment where the Kronrod and Gauss
+rules agree to the last bit, which a smooth integrand produces, the error
+estimate came out `NaN` and QuadGK stopped with a `DomainError`: the derivative
+of the anisotropic conduction Hill tensor of a sphere, for one. Taken on the
+values, the norm is the one a plain evaluation computes, so the adaptive
+refinement of a differentiated evaluation makes the same decisions as the plain
+one, and its value is that evaluation itself; the derivatives ride on the same
+nodes.
+"""
+@inline _quadgk_norm(x) = LinearAlgebra.norm(x)
+@inline _quadgk_norm(x::ForwardDiff.Dual) = LinearAlgebra.norm(_primal(x))
+@inline _quadgk_norm(x::AbstractArray{<:ForwardDiff.Dual}) = LinearAlgebra.norm(_primal.(x))
+
+"""
     _counted_quadgk(f, a, b; atol, rtol, maxevals) -> (value, error)
 
-`QuadGK.quadgk` with opt-in per-node counting.
+`QuadGK.quadgk` with opt-in per-node counting, and the error norm
+[`_quadgk_norm`](@ref).
 
 The [`COUNT_INTEGRAND`](@ref) branch is taken **once per `quadgk` call**, and
 each side passes a *concretely typed* callable, so the integrand loop is
@@ -121,8 +143,8 @@ off (always, during a timed run) this is a plain `quadgk` call on the
 original function.
 """
 @inline function _counted_quadgk(f::F, a, b; kw...) where {F}
-    COUNT_INTEGRAND[] || return QuadGK.quadgk(f, a, b; kw...)
-    return QuadGK.quadgk(_CountingFn(f), a, b; kw...)
+    COUNT_INTEGRAND[] || return QuadGK.quadgk(f, a, b; norm = _quadgk_norm, kw...)
+    return QuadGK.quadgk(_CountingFn(f), a, b; norm = _quadgk_norm, kw...)
 end
 
 """

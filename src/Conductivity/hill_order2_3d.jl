@@ -127,7 +127,7 @@ function _hill_order2_integral(A::SMatrix{d, d}, K_arr::AbstractMatrix) where {d
         M = G + (c * τ^2) * K
         return inv(M) * (2c * τ / (1 - t)^2 / sqrt(det(M)))
     end
-    I, _ = quadgk(integrand, 0.0, 1.0; rtol = 1.0e-13)
+    I, _ = quadgk(integrand, 0.0, 1.0; rtol = 1.0e-13, norm = MFH_Core._quadgk_norm)
     return Matrix(det(A) / 2 * I)
 end
 

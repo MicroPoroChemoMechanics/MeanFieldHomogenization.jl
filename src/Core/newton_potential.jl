@@ -22,30 +22,40 @@ Returns:
 - `IIv` ``= (I_{aa}, I_{bb}, I_{cc}, I_{bc}, I_{ca}, I_{ab})``
 
 Two methods are provided:
-- `T<:Real` (includes `Float64`, `ForwardDiff.Dual`): case-split by tolerance
-  comparisons. A spheroid, sphere included, goes through the integrals of
-  `src/Core/spheroid_integrals.jl`, exact to rounding up to the sphere; a
-  triaxial ellipsoid through elliptic integrals, whose divided differences lose
-  accuracy when two semi-axes differ by less than about ``10^{-4}`` (relative).
+- `T<:Real` (includes `Float64`, `ForwardDiff.Dual`): a spheroid, sphere
+  included, goes through the integrals of `src/Core/spheroid_integrals.jl`; a
+  triaxial ellipsoid whose two closer semi-axes differ by less than 2 %
+  (relative, in squares) through their expansion around that spheroid; any
+  other through elliptic integrals. All three are exact to rounding, and the
+  first two stay differentiable where two semi-axes meet: a dual semi-axis is
+  merged with another one only when their derivatives coincide too.
 - `T<:Number` (e.g. `SymPy.Sym`, `Symbolics.Num`): structural equality via `isequal`
   selects the same four cases.
 """
 function newton_potential_3d(a::T, b::T, c::T) where {T <: Real}
-    tol = 1.0e-6 * one(T)
-    AeqB = (a - b) ≤ a * tol
-    BeqC = (b - c) ≤ b * tol
-
-    # Within the tolerance on both sides, the closer pair is the one taken as
-    # equal: a spheroid has one gap exactly zero.
-    if AeqB && (!BeqC || a - b ≤ b - c)     # oblate, or a sphere: axis c
-        Ic, Ia, Ica, Icc, Iaa = _newton_spheroid(c, a)
-        return (Ia, Ia, Ic), (Iaa, Iaa, Icc, Ica, Ica, Iaa)
-    elseif BeqC                             # prolate: axis a
-        Ia, Ic, Ica, Iaa, Icc = _newton_spheroid(a, c)
-        return (Ia, Ic, Ic), (Iaa, Icc, Icc, Icc, Ica, Ica)
+    # The closer pair of semi-axes: its relative gap in squares, and the
+    # spheroid it sits next to (axis c for a ≈ b, axis a for b ≈ c).
+    a², b², c² = a * a, b * b, c * c
+    r_ab = abs(a² - b²) / (a² + b²)
+    r_bc = abs(b² - c²) / (b² + c²)
+    if r_ab ≤ r_bc
+        if _same_semi_axis(a, b)            # oblate, or a sphere: axis c
+            Ic, Ia, Ica, Icc, Iaa = _newton_spheroid(c, a)
+            return (Ia, Ia, Ic), (Iaa, Iaa, Icc, Ica, Ica, Iaa)
+        elseif r_ab ≤ _NEAR_SPHEROID_SPLIT  # close to that spheroid
+            Ic, Ia, Ib, Icc, Iaa, Ibb, Ica, Icb, Iab = _newton_near_spheroid(c, a, b)
+            return (Ia, Ib, Ic), (Iaa, Ibb, Icc, Icb, Ica, Iab)
+        end
     else
-        return _newton_potential_3d_triaxial(a, b, c)
+        if _same_semi_axis(b, c)            # prolate: axis a
+            Ia, Ic, Ica, Iaa, Icc = _newton_spheroid(a, c)
+            return (Ia, Ic, Ic), (Iaa, Icc, Icc, Icc, Ica, Ica)
+        elseif r_bc ≤ _NEAR_SPHEROID_SPLIT
+            Ia, Ib, Ic, Iaa, Ibb, Icc, Iab, Iac, Ibc = _newton_near_spheroid(a, b, c)
+            return (Ia, Ib, Ic), (Iaa, Ibb, Icc, Ibc, Iac, Iab)
+        end
     end
+    return _newton_potential_3d_triaxial(a, b, c)
 end
 
 # Symbolic types (T<:Number but not T<:Real)
