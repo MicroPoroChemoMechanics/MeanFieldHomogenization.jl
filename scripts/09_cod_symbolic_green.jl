@@ -18,17 +18,19 @@
 # ```
 #
 # ```math
+# \begin{aligned}
 # \hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{\xi}^{\star})
-#   = \frac{1}{2\pi}\int_{-\infty}^{+\infty}
+#   &= \frac{1}{2\pi}\int_{-\infty}^{+\infty}
 #     \underline{n}\cdot\hat{\mathbb{Q}}(\underline{\xi}^{\star}+\xi_3\,\underline{n})
 #     \cdot\underline{n}\;\mathrm{d}\xi_3,
-# \qquad
-# b\boldsymbol{\Lambda} = \frac14\int_0^{2\pi}
+# \\
+# b\boldsymbol{\Lambda} &= \frac14\int_0^{2\pi}
 #     \hat{\boldsymbol{Q}}^{\star}_{nn}
 #     \bigl(\eta\cos\varphi\,\underline{\ell}+\sin\varphi\,\underline{m}\bigr)\,
 #     \mathrm{d}\varphi,
 # \qquad
 # \boldsymbol{B} = \chi\,(b\boldsymbol{\Lambda})^{-1}.
+# \end{aligned}
 # ```
 #
 # The article defines ``\hat{\boldsymbol{Q}}^{\star}_{nn}``, proves that its
@@ -387,7 +389,7 @@ end
     sifaniso_CS(ηv) -> (𝒞, 𝒮)
 
 `𝒞_η` and `𝒮_η` in the published form: over the complementary angle
-``\vartheta = \pi/2 - \varphi``, so a `cos²` integral for `𝒞` and a `sin²` one for `𝒮`.
+``\\vartheta = \\pi/2 - \\varphi``, so a `cos²` integral for `𝒞` and a `sin²` one for `𝒮`.
 Measuring both forms against the same Legendre reference is what shows the two
 conventions to be one and the same quantity.
 """

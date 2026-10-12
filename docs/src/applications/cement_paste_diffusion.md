@@ -455,12 +455,14 @@ C:\mathbb P_p:\mathbb C`` of the pore (with ``\mathbb C(\nu)`` the SC medium
 normalized to unit Young's modulus):
 
 ```math
-f_s = \frac{\operatorname{tr}(\mathbb J : \mathbb Q_p^{-1})}
+\begin{aligned}
+f_s &= \frac{\operatorname{tr}(\mathbb J : \mathbb Q_p^{-1})}
            {(1-2\nu)^2\operatorname{tr}(\mathbb J:\mathbb P_s^{-1})
             + \operatorname{tr}(\mathbb J:\mathbb Q_p^{-1})},
-\qquad
+\\
 f_s (1+\nu)^2 \operatorname{tr}(\mathbb K:\mathbb P_s^{-1})
-   = (1-f_s)\operatorname{tr}(\mathbb K:\mathbb Q_p^{-1}),
+   &= (1-f_s)\operatorname{tr}(\mathbb K:\mathbb Q_p^{-1}),
+\end{aligned}
 ```
 
 with ``\varphi^{\mathrm{elas}} = 1 - f_s``. These are exactly the relations of the

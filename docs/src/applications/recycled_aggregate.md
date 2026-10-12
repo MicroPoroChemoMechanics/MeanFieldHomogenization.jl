@@ -133,9 +133,13 @@ what a localization tensor is.
 of the body. Single-valuedness of the three-dimensional field there forces
 
 ```math
-m = 0:\;\; \bar u_\rho = 0; \qquad
-m = 1:\;\; \bar u_\rho + \bar u_\theta = 0 \;\text{ and }\; \bar u_z = 0; \qquad
-m \ge 2:\;\; \bar u_\rho = \bar u_\theta = \bar u_z = 0,
+\begin{aligned}
+m &= 0: && \bar u_\rho = 0;
+\\
+m &= 1: && \bar u_\rho + \bar u_\theta = 0 \;\text{ and }\; \bar u_z = 0;
+\\
+m &\ge 2: && \bar u_\rho = \bar u_\theta = \bar u_z = 0,
+\end{aligned}
 ```
 
 and in transport ``\bar t = 0`` for ``m \ge 1``, nothing for ``m = 0``.

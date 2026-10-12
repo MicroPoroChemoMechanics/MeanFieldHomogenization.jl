@@ -56,14 +56,16 @@ ellipsoid ``\\mathcal{E}_{\\boldsymbol{A}}`` is described by an invertible
 second-order shape tensor ``\\boldsymbol{A}`` through
 
 ```math
+\\begin{gathered}
 \\underline{x}\\in\\mathcal{E}_{\\boldsymbol{A}}
 \\iff
 \\underline{x}\\cdot(\\boldsymbol{A}^{\\!T}\\!\\cdot\\boldsymbol{A})^{-1}\\cdot\\underline{x}\\le 1,
-\\qquad
+\\\\
 \\boldsymbol{A}^{\\!T}\\!\\cdot\\boldsymbol{A}
 = \\sum_{i}\\rho_i^{2}\\,\\underline{e}^{\\boldsymbol{A}}_i\\otimes\\underline{e}^{\\boldsymbol{A}}_i,
 \\qquad
 \\rho_1 = a \\ge \\rho_2 = b \\ge \\rho_3 = c .
+\\end{gathered}
 ```
 
 `semi_axes` stores the eigenvalues ``\\rho_i`` (sorted in decreasing

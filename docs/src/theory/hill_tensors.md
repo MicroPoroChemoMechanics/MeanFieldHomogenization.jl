@@ -325,11 +325,13 @@ Both are orthotropic along the ellipsoid axes. In the principal frame
 [barthelemyIJSS2016, barthelemyIJES2020_hilltrans](@cite):
 
 ```math
-U^{\boldsymbol{A}}_{iiii} = \tfrac{3}{2}\bigl(I_i^{\boldsymbol{A}}-\rho_i^{2}I_{ii}^{\boldsymbol{A}}\bigr),
-\qquad
+\begin{aligned}
+U^{\boldsymbol{A}}_{iiii} &= \tfrac{3}{2}\bigl(I_i^{\boldsymbol{A}}-\rho_i^{2}I_{ii}^{\boldsymbol{A}}\bigr),
+\\
 U^{\boldsymbol{A}}_{iijj} = U^{\boldsymbol{A}}_{ijij} = U^{\boldsymbol{A}}_{ijji}
-= \tfrac{1}{2}\bigl(I_j^{\boldsymbol{A}}-\rho_i^{2}I_{ij}^{\boldsymbol{A}}\bigr)
+&= \tfrac{1}{2}\bigl(I_j^{\boldsymbol{A}}-\rho_i^{2}I_{ij}^{\boldsymbol{A}}\bigr)
 = \tfrac{1}{2}\bigl(I_i^{\boldsymbol{A}}-\rho_j^{2}I_{ij}^{\boldsymbol{A}}\bigr)
+\end{aligned}
 ```
 
 ```math
@@ -349,7 +351,10 @@ In the frame ``(\underline{e}^{\boldsymbol{A}}_i)``, with ``(\rho_1,\rho_2,\rho_
 above fill
 
 ```math
-\mathrm{Mat}\bigl(\mathbb{U}^{\boldsymbol{A}}\bigr) =
+\begin{aligned}
+&\mathrm{Mat}\bigl(\mathbb{U}^{\boldsymbol{A}}\bigr) =
+\\
+&\qquad
 \begin{pmatrix}
 \frac{3(I_1-a^2I_{11})}{2} & \frac{I_2-a^2I_{12}}{2} & \frac{I_1-c^2I_{31}}{2} & 0 & 0 & 0\\
 \frac{I_2-a^2I_{12}}{2} & \frac{3(I_2-b^2I_{22})}{2} & \frac{I_3-b^2I_{23}}{2} & 0 & 0 & 0\\
@@ -358,6 +363,7 @@ above fill
 0 & 0 & 0 & 0 & I_1-c^2I_{31} & 0\\
 0 & 0 & 0 & 0 & 0 & I_2-a^2I_{12}
 \end{pmatrix}
+\end{aligned}
 ```
 
 ```math
@@ -389,7 +395,8 @@ gives the two matrices of the cylinder below.
 [mura1987; §11.22](@cite) — substituting the cylinder column above:
 
 ```math
-\mathrm{Mat}\bigl(\mathbb{U}^{\mathrm{cyl}}\bigr) =
+\begin{aligned}
+\mathrm{Mat}\bigl(\mathbb{U}^{\mathrm{cyl}}\bigr) &=
 \begin{pmatrix}
 0 & 0 & 0 & 0 & 0 & 0\\
 0 & \frac{c(b+2c)}{2(b+c)^{2}} & \frac{bc}{2(b+c)^{2}} & 0 & 0 & 0\\
@@ -398,8 +405,8 @@ gives the two matrices of the cylinder below.
 0 & 0 & 0 & 0 & 0 & 0\\
 0 & 0 & 0 & 0 & 0 & 0
 \end{pmatrix},
-\quad
-\mathrm{Mat}\bigl(\mathbb{V}^{\mathrm{cyl}}\bigr) =
+\\
+\mathrm{Mat}\bigl(\mathbb{V}^{\mathrm{cyl}}\bigr) &=
 \begin{pmatrix}
 0 & 0 & 0 & 0 & 0 & 0\\
 0 & \frac{c}{b+c} & 0 & 0 & 0 & 0\\
@@ -408,6 +415,7 @@ gives the two matrices of the cylinder below.
 0 & 0 & 0 & 0 & \frac{b}{2(b+c)} & 0\\
 0 & 0 & 0 & 0 & 0 & \frac{c}{2(b+c)}
 \end{pmatrix}
+\end{aligned}
 ```
 
 in Kelvin–Mandel storage and in the frame

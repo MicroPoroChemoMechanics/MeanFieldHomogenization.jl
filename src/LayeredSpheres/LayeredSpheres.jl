@@ -89,11 +89,13 @@ contributions (bulk + shear), ``f_k`` being the volume fraction of layer
 ``k`` within the sphere:
 
 ```math
-\\mathbb{N} = 3N_{\\mathrm{bulk}}\\,\\mathbb{J} + 2N_{\\mathrm{shear}}\\,\\mathbb{K},
-\\qquad
-N_{\\mathrm{bulk}} = \\sum_k f_k\\,(k_k - k_0)\\,\\alpha_k - k_0\\,\\Delta\\alpha,
-\\qquad
-N_{\\mathrm{shear}} = \\sum_k f_k\\,(\\mu_k - \\mu_0)\\,\\beta_k - \\mu_0\\,\\Delta\\beta,
+\\begin{aligned}
+\\mathbb{N} &= 3N_{\\mathrm{bulk}}\\,\\mathbb{J} + 2N_{\\mathrm{shear}}\\,\\mathbb{K},
+\\\\
+N_{\\mathrm{bulk}} &= \\sum_k f_k\\,(k_k - k_0)\\,\\alpha_k - k_0\\,\\Delta\\alpha,
+\\\\
+N_{\\mathrm{shear}} &= \\sum_k f_k\\,(\\mu_k - \\mu_0)\\,\\beta_k - \\mu_0\\,\\Delta\\beta,
+\\end{aligned}
 ```
 
 plus the Gurtin–Murdoch surface stress of any membrane interface.

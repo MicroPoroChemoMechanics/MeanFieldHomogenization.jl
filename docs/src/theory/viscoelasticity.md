@@ -261,14 +261,16 @@ and ``\mathbb{V}^{\boldsymbol{A}} = \tfrac{1}{3}\mathbb{I}``, giving the closed
 form [barthelemyIJSS2016](@cite)
 
 ```math
+\begin{aligned}
 \mathbb{P}^{\mathrm{sphere}}
-= (3k+4\mu)^{-\circ}\circ
+&= (3k+4\mu)^{-\circ}\circ
   \Bigl(H\,\mathbb{J}
       + \tfrac{3}{5}\,(k+2\mu)\circ\mu^{-\circ}\,\mathbb{K}\Bigr),
-\qquad
+\\
 \mathbb{S}^{\mathrm{sphere}}
-= 3\,(3k+4\mu)^{-\circ}\circ
+&= 3\,(3k+4\mu)^{-\circ}\circ
   \Bigl(k\,\mathbb{J} + \tfrac{2}{5}(k+2\mu)\,\mathbb{K}\Bigr).
+\end{aligned}
 ```
 
 An anisotropic reference kernel does not enjoy this decoupling; as in

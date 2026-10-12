@@ -134,12 +134,14 @@ of [barthelemyIJSS2026](@citet) this leaves the 2×2 form in
 ``(\\cos\\varphi, \\sin\\varphi)``
 
 ```math
+\\begin{gathered}
 \\boldsymbol{Q}_2 = \\begin{pmatrix}
   \\eta^{2} A & -\\eta B\\\\ -\\eta B & C\\end{pmatrix},
-\\quad
-A = \\underline{m}\\cdot\\mathrm{adj}\\,\\boldsymbol{K}_0\\cdot\\underline{m},\\;
-B = \\underline{m}\\cdot\\mathrm{adj}\\,\\boldsymbol{K}_0\\cdot\\underline{\\ell},\\;
+\\\\
+A = \\underline{m}\\cdot\\mathrm{adj}\\,\\boldsymbol{K}_0\\cdot\\underline{m},\\quad
+B = \\underline{m}\\cdot\\mathrm{adj}\\,\\boldsymbol{K}_0\\cdot\\underline{\\ell},\\quad
 C = \\underline{\\ell}\\cdot\\mathrm{adj}\\,\\boldsymbol{K}_0\\cdot\\underline{\\ell},
+\\end{gathered}
 ```
 
 whose eigenvalues ``\\lambda_1\\ge\\lambda_2>0`` give

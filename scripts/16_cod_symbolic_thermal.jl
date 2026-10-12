@@ -8,17 +8,19 @@
 # in place of the stiffness:
 #
 # ```math
+# \begin{aligned}
 # \hat{\boldsymbol{\Gamma}}(\underline{\xi})
-#   = \frac{\underline{\xi}\otimes\underline{\xi}}
+#   &= \frac{\underline{\xi}\otimes\underline{\xi}}
 #          {\underline{\xi}\cdot\boldsymbol{K}_0\cdot\underline{\xi}},
 # \qquad
 # \hat{\boldsymbol{Q}}(\underline{\xi})
 #   = \boldsymbol{K}_0 - \boldsymbol{K}_0\cdot\hat{\boldsymbol{\Gamma}}\cdot\boldsymbol{K}_0,
-# \qquad
+# \\
 # \hat{Q}^{\star}_{nn}(\underline{\xi}^{\star})
-#   = \frac{1}{2\pi}\int_{-\infty}^{+\infty}
+#   &= \frac{1}{2\pi}\int_{-\infty}^{+\infty}
 #     \underline{n}\cdot\hat{\boldsymbol{Q}}
 #     (\underline{\xi}^{\star}+\xi_n\underline{n})\cdot\underline{n}\;\mathrm{d}\xi_n .
+# \end{aligned}
 # ```
 #
 # One difference decides everything. The elastic acoustic tensor
@@ -34,13 +36,16 @@
 # free symbols throughout:
 #
 # ```math
+# \begin{aligned}
 # \hat{Q}^{\star}_{nn}(\underline{\xi}^{\star})
-# = \tfrac12\sqrt{(\underline{n}\cdot\boldsymbol{K}_0\underline{n})
+# &= \tfrac12\sqrt{(\underline{n}\cdot\boldsymbol{K}_0\underline{n})
 #                 (\underline{\xi}^{\star}\cdot\boldsymbol{K}_0\underline{\xi}^{\star})
 #               - (\underline{n}\cdot\boldsymbol{K}_0\underline{\xi}^{\star})^{2}}
-# = \tfrac12\sqrt{(\underline{n}\wedge\underline{\xi}^{\star})\cdot
+# \\
+# &= \tfrac12\sqrt{(\underline{n}\wedge\underline{\xi}^{\star})\cdot
 #                 \mathrm{adj}\,\boldsymbol{K}_0\cdot
 #                 (\underline{n}\wedge\underline{\xi}^{\star})},
+# \end{aligned}
 # ```
 #
 # and then, on the crack contour, that an arbitrarily anisotropic conductor

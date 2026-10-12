@@ -63,11 +63,13 @@ Symbolics.simplify(carson_creep(m, p) * carson_relaxation(m, p) - 1)
 
 The fractional and bituminous models, whose constructors carry the tightest
 validations, build symbolically as well, and the lift to a fourth-order tensor
-keeps everything symbolic:
+keeps everything symbolic: the bulk and shear moduli of the transformed tensor,
+read back with [`k_mu`](@ref), are the two channels' transforms:
 
 ```@example tutsymvisco
 Symbolics.@variables kk
-carson_relaxation(iso_rheology(Spring(kk), m), p)
+C = carson_relaxation(iso_rheology(Spring(kk), m), p)
+k_mu(C)
 ```
 
 ### The one thing a symbolic spectrum cannot do

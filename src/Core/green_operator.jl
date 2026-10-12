@@ -63,13 +63,16 @@ With ``r = \\|\\underline{x}\\|``, ``\\underline{n} = \\underline{x}/r`` and ``A
 the second gradient of the Kelvin solution reads
 
 ```math
+\\begin{aligned}
 \\frac{\\partial^2 G_{ij}}{\\partial x_k \\partial x_l}
-  = \\frac{A}{r^{3}}\\Big[(3-4\\nu)\\,\\delta_{ij}\\,(3 n_k n_l - \\delta_{kl})
+  &= \\frac{A}{r^{3}}\\Big[(3-4\\nu)\\,\\delta_{ij}\\,(3 n_k n_l - \\delta_{kl})
     + \\delta_{ik}\\delta_{jl} + \\delta_{il}\\delta_{jk}
-    - 3\\big(\\delta_{il} n_j n_k + \\delta_{jl} n_i n_k
+\\\\
+  &\\quad {}- 3\\big(\\delta_{il} n_j n_k + \\delta_{jl} n_i n_k
            + \\delta_{ik} n_j n_l + \\delta_{jk} n_i n_l
            + \\delta_{kl} n_i n_j\\big)
     + 15\\, n_i n_j n_k n_l\\Big].
+\\end{aligned}
 ```
 
 A uniform polarization ``\\boldsymbol{\\tau}`` carried by a volume ``V`` around the origin
@@ -229,13 +232,16 @@ G_{ij}(\\underline{x}) = \\frac{1}{8\\pi\\mu(1-\\nu)}
 whose second gradient gives
 
 ```math
+\\begin{aligned}
 \\frac{\\partial^2 G_{ij}}{\\partial x_k \\partial x_l}
-  = \\frac{A_2}{r^{2}}\\Big[(3-4\\nu)\\,\\delta_{ij}\\,(2 n_k n_l - \\delta_{kl})
+  &= \\frac{A_2}{r^{2}}\\Big[(3-4\\nu)\\,\\delta_{ij}\\,(2 n_k n_l - \\delta_{kl})
     + \\delta_{ik}\\delta_{jl} + \\delta_{il}\\delta_{jk}
-    - 2\\big(\\delta_{il} n_j n_k + \\delta_{jl} n_i n_k
+\\\\
+  &\\quad {}- 2\\big(\\delta_{il} n_j n_k + \\delta_{jl} n_i n_k
            + \\delta_{ik} n_j n_l + \\delta_{jk} n_i n_l
            + \\delta_{kl} n_i n_j\\big)
     + 8\\, n_i n_j n_k n_l\\Big],
+\\end{aligned}
 ```
 
 with ``A_2 = 1/(8\\pi\\mu(1-\\nu))``. ``\\nu`` is the plane-strain Poisson ratio of

@@ -61,12 +61,14 @@ macroscopic strain ``\boldsymbol E = \langle\mathbb A\rangle:\boldsymbol\varepsi
 aggregate fields are therefore linear in the macroscopic stress ``\boldsymbol\Sigma``:
 
 ```math
-\boldsymbol\varepsilon_{\mathrm{agg}} = \mathbb A_{\mathrm{agg}}:\langle\mathbb A\rangle^{-1}:(\mathbb C^{\mathrm{hom}})^{-1}:\boldsymbol\Sigma,
-\qquad
-\boldsymbol\sigma_{\mathrm{agg}} = \mathbb C_{\mathrm{agg}}:\boldsymbol\varepsilon_{\mathrm{agg}}
+\begin{aligned}
+\boldsymbol\varepsilon_{\mathrm{agg}} &= \mathbb A_{\mathrm{agg}}:\langle\mathbb A\rangle^{-1}:(\mathbb C^{\mathrm{hom}})^{-1}:\boldsymbol\Sigma,
+\\
+\boldsymbol\sigma_{\mathrm{agg}} &= \mathbb C_{\mathrm{agg}}:\boldsymbol\varepsilon_{\mathrm{agg}}
   = \mathbb B_{\mathrm{agg}}:\boldsymbol\Sigma,
 \qquad
 \mathbb B_{\mathrm{agg}} = B_{\mathrm{vol}}\,\mathbb J + B_{\mathrm{dev}}\,\mathbb K.
+\end{aligned}
 ```
 
 ```@example itzlim

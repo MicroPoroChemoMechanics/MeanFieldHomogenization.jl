@@ -18,12 +18,14 @@ block, with ``\\mathbb{A}`` and ``\\mathbb{B}`` the strain-side and stress-side 
 superscripts E and p the remote and unit-dipole families:
 
 ```math
-\\mathbb{X} = \\bigl(\\mathbb{I} - (\\mathbb{B}^{\\mathrm{p}} - \\mathbb{C}_0:\\mathbb{A}^{\\mathrm{p}})\\bigr)^{-1}
+\\begin{aligned}
+\\mathbb{X} &= \\bigl(\\mathbb{I} - (\\mathbb{B}^{\\mathrm{p}} - \\mathbb{C}_0:\\mathbb{A}^{\\mathrm{p}})\\bigr)^{-1}
   :(\\mathbb{B}^{\\mathrm{E}} - \\mathbb{C}_0:\\mathbb{A}^{\\mathrm{E}}),
-\\qquad
-\\mathbb{A} = \\mathbb{A}^{\\mathrm{E}} + \\mathbb{A}^{\\mathrm{p}}:\\mathbb{X},
+\\\\
+\\mathbb{A} &= \\mathbb{A}^{\\mathrm{E}} + \\mathbb{A}^{\\mathrm{p}}:\\mathbb{X},
 \\qquad
 \\mathbb{B} = \\mathbb{B}^{\\mathrm{E}} + \\mathbb{B}^{\\mathrm{p}}:\\mathbb{X},
+\\end{aligned}
 ```
 
 with ``\\mathbb{C}_0`` (`P0`) the reference medium.

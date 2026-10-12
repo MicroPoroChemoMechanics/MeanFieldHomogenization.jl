@@ -183,12 +183,15 @@ end
 # Laplace-Carson transform of an ordinary function of time, term by term:
 #
 # ```math
-# \varphi(t) = 1 + \delta\,\frac{(t/\tau_E)^{k}}{\Gamma(k+1)}
+# \begin{aligned}
+# \varphi(t) &= 1 + \delta\,\frac{(t/\tau_E)^{k}}{\Gamma(k+1)}
 #                + \frac{(t/\tau_E)^{h}}{\Gamma(h+1)}
 #                + \frac{t}{\beta\,\tau_E}
-# \;\longleftrightarrow\;
-# \varphi^{*}(p) = 1 + \delta\,(p\tau_E)^{-k} + (p\tau_E)^{-h}
+# \\
+# \longleftrightarrow\quad
+# \varphi^{*}(p) &= 1 + \delta\,(p\tau_E)^{-k} + (p\tau_E)^{-h}
 #                    + \frac{1}{\beta\,p\,\tau_E}.
+# \end{aligned}
 # ```
 #
 # So the same model is an exact Laplace-Carson object *and* an exact Volterra

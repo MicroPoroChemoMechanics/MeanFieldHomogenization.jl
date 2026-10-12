@@ -60,12 +60,14 @@ J + \beta\,\mathbb K`` on the spherical (``\mathbb J``) and deviatoric
 `(α, β)` — no further rescaling. For the sphere:
 
 ```math
-\mathbb P = \frac{1}{3k_0+4\mu_0}\,\mathbb J
+\begin{aligned}
+\mathbb P &= \frac{1}{3k_0+4\mu_0}\,\mathbb J
           + \frac{3(k_0+2\mu_0)}{5\mu_0(3k_0+4\mu_0)}\,\mathbb K,
-\qquad
-\mathbb S^{\mathrm E} = \mathbb P:\mathbb C_0
+\\
+\mathbb S^{\mathrm E} &= \mathbb P:\mathbb C_0
           = \frac{3k_0}{3k_0+4\mu_0}\,\mathbb J
           + \frac{6(k_0+2\mu_0)}{5(3k_0+4\mu_0)}\,\mathbb K.
+\end{aligned}
 ```
 
 Substituting the isotropic identity ``k_0 = \dfrac{2\mu_0(1+\nu_0)}{3(1-2\nu_0)}``

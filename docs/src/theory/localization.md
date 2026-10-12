@@ -118,15 +118,17 @@ crack-opening-displacement tensor ``\boldsymbol B`` and the crack normal
 ``\underline n`` ([Crack opening displacement](@ref th-cod-tensors)):
 
 ```math
-\mathbb H = \tfrac{3}{4}\,
+\begin{aligned}
+\mathbb H &= \tfrac{3}{4}\,
   \underline n \stackrel{s}{\otimes} \boldsymbol B \stackrel{s}{\otimes} \underline n
 \quad\text{(elliptic)},
 \qquad
 \mathbb H = \tfrac{2}{\pi}\,
   \underline n \stackrel{s}{\otimes} \boldsymbol B \stackrel{s}{\otimes} \underline n
 \quad\text{(ribbon)},
-\qquad
-\mathbb N = -\,\mathbb C_0 : \mathbb H : \mathbb C_0 .
+\\
+\mathbb N &= -\,\mathbb C_0 : \mathbb H : \mathbb C_0 .
+\end{aligned}
 ```
 
 - `compliance_contribution(crack, C₀)` returns the size-independent

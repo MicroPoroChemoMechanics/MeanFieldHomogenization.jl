@@ -45,11 +45,13 @@ second order in the contrast, an **elliptical macroscopic strength
 domain**:
 
 ```math
+\begin{gathered}
 \frac{(\Sigma_m/\sigma_o)^2}{2A} + \frac{(\Sigma_d/\sigma_o)^2}{B} = \frac{1}{1-\varphi},
-\qquad
+\\
 A = \Big(\frac{\mu_s}{k^{\mathrm{hom}}}\Big)^{\!2}\frac{\partial k^{\mathrm{hom}}}{\partial\mu_s},
 \qquad
 B = \Big(\frac{\mu_s}{\mu^{\mathrm{hom}}}\Big)^{\!2}\frac{\partial \mu^{\mathrm{hom}}}{\partial\mu_s}.
+\end{gathered}
 ```
 
 ``A`` and ``B`` are **not** independent material data — they are the

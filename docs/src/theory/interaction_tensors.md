@@ -188,11 +188,14 @@ Walpole coefficients rather than by an 81-component array — the storage descri
 [Conventions](@ref th-notation-bases):
 
 ```math
+\begin{gathered}
 T_1 = T_{3333},\quad
 T_2 = T_{1111}+T_{1122},\quad
-T_3 = \sqrt{2}\,T_{1133},\quad
+T_3 = \sqrt{2}\,T_{1133},
+\\
 T_5 = T_{1111}-T_{1122},\quad
 T_6 = 2\,T_{1313},
+\end{gathered}
 ```
 
 ```math

@@ -1125,9 +1125,11 @@ sphere relative to its iso ALV matrix `C0_law`.  Iso parameters
 (``\\alpha``-, ``\\beta``-blocks of the assembled matrix) are
 
 ```math
-\\alpha = 3\\sum_k f_k\\,(\\widetilde{k}_k - \\widetilde{k}_0)\\circ\\alpha_k - 3\\,\\widetilde{k}_0\\circ\\Delta\\alpha,
-\\qquad
-\\beta = 2\\sum_k f_k\\,(\\widetilde{\\mu}_k - \\widetilde{\\mu}_0)\\circ\\beta_k - 2\\,\\widetilde{\\mu}_0\\circ\\Delta\\beta,
+\\begin{aligned}
+\\alpha &= 3\\sum_k f_k\\,(\\widetilde{k}_k - \\widetilde{k}_0)\\circ\\alpha_k - 3\\,\\widetilde{k}_0\\circ\\Delta\\alpha,
+\\\\
+\\beta &= 2\\sum_k f_k\\,(\\widetilde{\\mu}_k - \\widetilde{\\mu}_0)\\circ\\beta_k - 2\\,\\widetilde{\\mu}_0\\circ\\Delta\\beta,
+\\end{aligned}
 ```
 
 where ``\\alpha_k``, ``\\beta_k`` are the per-layer localization matrices, ``\\widetilde{k}_k``,
