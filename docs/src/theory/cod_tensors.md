@@ -85,7 +85,7 @@ The normalization is by the **in-plane half-width ``b``** — the minor semi-axi
 of the ellipse, the half-width of the ribbon. This makes ``\boldsymbol{B}``
 **size-independent**: it depends on the crack *shape* (through ``\eta``) and on
 its orientation, never on how big it is. This is the convention of
-[barthelemySifAniso](@cite), following [kachanov1992, kachanov1993](@citet), and it is the one `MeanFieldHomogenization` implements
+[barthelemyIJSS2026](@cite), following [kachanov1992, kachanov1993](@citet), and it is the one `MeanFieldHomogenization` implements
 ([`cod_tensor`](@ref), alias [`B_tensor`](@ref)).
 
 ### The shape coefficient ``\chi``
@@ -114,7 +114,7 @@ elliptic geometry from the ribbon one.
 
 A ribbon is the limiting shape of an ellipse as ``\eta\to 0``, so one expects
 ``\boldsymbol{B}^{\mathcal{R}}`` to be ``\lim_{\eta\to 0}\boldsymbol{B}^{\mathcal{E}}``.
-**It is not** [barthelemySifAniso](@cite):
+**It is not** [barthelemyIJSS2026](@cite):
 
 ```math
 \boxed{\;
@@ -191,8 +191,8 @@ crack type to apply the correct factor.
 ### Conventions: what ``\boldsymbol{B}`` and ``\mathbb{H}`` are normalized by
 
 The ``3/4`` above looks like it disagrees with the literature. It does not — the
-three sources normalize the **limit** differently, while agreeing on
-``\boldsymbol{B}``. Naming them once avoids a great deal of confusion:
+sources normalize the **limit** differently. Naming them once avoids a great
+deal of confusion:
 
 | convention | elliptic ``\mathbb{H}^{\mathcal{E}}`` | ribbon ``\mathbb{H}^{\mathcal{R}}`` |
 | :--------- | :------------------------------------ | :---------------------------------- |
@@ -224,11 +224,13 @@ Measured, not inferred from the papers — Echoes' `crack_compliance` against
 On the `MeanFieldHomogenization` side the ``3/4`` is ``\eta``-independent to machine
 precision (``\mathbb{H}_{3333}/B_{33} = 0.750000`` for every ``\eta``).
 
-!!! warning "The COD tensor is the same, the compliance is not"
-    All three sources normalize ``\boldsymbol{B}`` by the half-width ``b``, so
-    the **COD tensors agree**. Only the compliance differs, and only for the
-    elliptic crack. If you compare a ``\boldsymbol{B}`` across papers, expect
-    agreement; if you compare an ``\mathbb{H}``, check the normalization first.
+!!! warning "Check the normalization before comparing across sources"
+    `MeanFieldHomogenization` and [barthelemyIJSS2026](@citet) normalize
+    ``\boldsymbol{B}`` by the half-width ``b``. [barthelemyIJES2021](@citet) and
+    [barthelemyMMS2023](@citet) normalize their COD tensors differently, as
+    [barthelemyIJSS2026](@citet) points out, and Echoes never forms
+    ``\boldsymbol{B}``: it returns ``\mathbb{H}`` directly. Whether you compare a
+    ``\boldsymbol{B}`` or an ``\mathbb{H}``, check the normalization first.
 
 ### Checking ``\mathbb{H}`` without going through ``\boldsymbol{B}``
 
@@ -281,9 +283,8 @@ single ``\omega`` would not distinguish a true limit from a coincidence.
 
 !!! note "Two limits of the flattening route"
     The Hill tensor is validated down to ``\omega = 10^{-3}``, where the sweep
-    stops, and the residue backend returns `NaN` below about
-    ``c \approx 10^{-3}`` — hence `method = :nestedquadgk` for the anisotropic
-    cases. Neither affects [`cod_tensor`](@ref), which resolves the limit
+    stops, and the residue backend fails below about ``c \approx 10^{-3}`` —
+    hence `method = :nestedquadgk` for the anisotropic cases. Neither affects [`cod_tensor`](@ref), which resolves the limit
     analytically instead of flattening an ellipsoid.
 
 ## [4. From the Green operator to ``\boldsymbol{B}``](@id th-cod-green)
@@ -311,7 +312,7 @@ integral equation on the crack plane are [kunin1983, kanaun2009](@cite):
 
 and the object the crack problem actually needs is the **reduced** transform —
 the Fourier transform of the restriction of ``\hat{\mathbb{Q}}`` to the crack
-plane [barthelemySifAniso](@cite):
+plane [barthelemyIJSS2026](@cite):
 
 ```math
 \boxed{\;
@@ -408,6 +409,98 @@ The radical ``\sigma_\gamma`` of the published TI closed form
 sum of the two in-plane Stroh roots — it *comes out of* the factorization rather
 than being postulated.
 
+### From the reduced kernel to ``\boldsymbol{B}``, for any anisotropy
+
+The opening of an open crack under a uniform remote stress is an ellipsoidal
+cap, of maximum ``\underline{\beta}``. Carried through the traction integral
+equation, that profile gives a **uniform** traction on the crack,
+``\boldsymbol{\Sigma}\cdot\underline{n} = \boldsymbol{\Lambda}\cdot\underline{\beta}``,
+with [barthelemyIJSS2026](@cite)
+
+```math
+\boldsymbol{\Lambda}
+= \frac{1}{4}\int_{0}^{2\pi}
+  \hat{\boldsymbol{Q}}^{\star}_{nn}\bigl(\boldsymbol{S}^{\dagger}\!\cdot\underline{\kappa}^{\star}(\varphi)\bigr)\,
+  \mathrm{d}\varphi,
+\qquad
+\underline{\kappa}^{\star}(\varphi) = \cos\varphi\,\underline{\ell}+\sin\varphi\,\underline{m},
+\qquad
+\boldsymbol{S}^{\dagger} = \frac{\underline{\ell}\otimes\underline{\ell}}{a}
+                         + \frac{\underline{m}\otimes\underline{m}}{b}.
+```
+
+Since ``\langle[\![\underline{u}]\!]\rangle_{\mathcal{I}} = \chi\,\underline{\beta}``,
+the definition of ``\boldsymbol{B}`` reads
+``\boldsymbol{B} = \chi\,(b\boldsymbol{\Lambda})^{-1}``. The kernel being
+homogeneous of degree ``1``, ``b\boldsymbol{\Lambda}`` depends on the shape
+only, and
+
+```math
+\boxed{\;
+\boldsymbol{B}^{\mathcal{E}}(\underline{m},\underline{n},\eta)
+= \frac{8}{3}\left(\int_{0}^{2\pi}
+  \hat{\boldsymbol{Q}}^{\star}_{nn}\bigl(\eta\cos\varphi\,\underline{\ell}
+  +\sin\varphi\,\underline{m}\bigr)\,\mathrm{d}\varphi\right)^{-1},
+\qquad
+\boldsymbol{B}^{\mathcal{R}}(\underline{m},\underline{n})
+= \frac{\pi}{4}\,\bigl(\hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{m})\bigr)^{-1}.
+\;}
+```
+
+These hold whatever the anisotropy of the matrix. The closed forms of the next
+section are their evaluations when ``\hat{\boldsymbol{Q}}^{\star}_{nn}`` is
+known explicitly; otherwise the contour integral is computed numerically. For
+the ribbon, ``a\to\infty`` leaves
+``\boldsymbol{S}^{\dagger}\to\underline{m}\otimes\underline{m}/b`` and the
+contour integral reduces to ``\int_0^{2\pi}|\sin\varphi|\,\mathrm{d}\varphi/4 = 1``.
+
+```@raw html
+<details><summary>Fourier conventions, the reduced transform and the ellipsoidal profile</summary>
+```
+
+The Fourier transform of a function ``\phi`` on ``\mathbb{R}^{d}`` and its
+inverse are taken as
+
+```math
+\hat{\phi}(\underline{\xi}) = \int_{\mathbb{R}^{d}}
+  e^{-i\,\underline{\xi}\cdot\underline{x}}\,\phi(\underline{x})\,\mathrm{d}\Omega_{x},
+\qquad
+\phi(\underline{x}) = \frac{1}{(2\pi)^{d}}\int_{\mathbb{R}^{d}}
+  e^{i\,\underline{\xi}\cdot\underline{x}}\,\hat{\phi}(\underline{\xi})\,\mathrm{d}\Omega_{\xi}.
+```
+
+Splitting ``\underline{\xi} = \underline{\xi}^{\star}+\xi_n\underline{n}`` in
+the inverse transform and integrating over ``\xi_n`` first shows that the
+reduced transform
+``\hat{\phi}^{\star}(\underline{\xi}^{\star}) = \frac{1}{2\pi}\int
+\hat{\phi}(\underline{\xi}^{\star}+\xi_n\underline{n})\,\mathrm{d}\xi_n`` is the
+``(d-1)``-dimensional Fourier transform of the restriction of ``\phi`` to the
+plane ``\underline{n}^{\perp}``. A shift of ``\xi_n`` leaves it unchanged, so it
+ignores any component of its argument along ``\underline{n}``; a change of
+variable ``\xi_n\to\lambda\xi_n`` shows that it raises the degree of
+homogeneity by one, which is how ``\hat{\mathbb{Q}}``, of degree ``0``, gives a
+kernel of degree ``1``.
+
+The ellipsoidal opening enters through the transform of the hemispherical cap
+on the unit disc,
+
+```math
+\int_{\|\underline{x}\|\le 1}
+  e^{-i\,\underline{\xi}\cdot\underline{x}}\,\sqrt{1-\|\underline{x}\|^{2}}\;\mathrm{d}S_{x}
+= 2\pi\,\frac{j_1(\|\underline{\xi}\|)}{\|\underline{\xi}\|},
+\qquad
+j_1(s) = \frac{\sin s - s\cos s}{s^{2}},
+```
+
+an elliptical crack being mapped onto the unit disc by its semi-axis tensor.
+Inserted in the integral equation, this transform is what turns it into the
+uniform traction ``\boldsymbol{\Lambda}\cdot\underline{\beta}`` above
+[barthelemyIJSS2026](@cite).
+
+```@raw html
+</details>
+```
+
 ### The crack-plane integral: where the elliptic integrals enter
 
 On the crack contour ``\underline{\xi}^{\star}(\varphi) =
@@ -444,7 +537,7 @@ term vanishes by parity, which is why ``\boldsymbol{B}`` is diagonal in the crac
 frame.
 
 !!! note "Why cos² and sin² look exchanged against the literature"
-    [barthelemySifAniso](@citet) defines the very same two quantities as
+    [barthelemyIJSS2026](@citet) defines the very same two quantities as
     ```math
     \mathcal{C}_\eta = \int_0^{\pi/2}
       \frac{\cos^{2}\vartheta\;\mathrm{d}\vartheta}
@@ -535,6 +628,17 @@ with ``\mathcal{K}_\eta = \mathcal{K}(\sqrt{1-\eta^{2}})`` and
 integrals of the first and second kind [abramowitz1972](@cite), provided by
 [`ell_K`](@ref) and [`ell_E`](@ref).
 
+In terms of the combinations ``\mathcal{C}_\eta`` and ``\mathcal{S}_\eta`` of
+§4, which make both limits immediate [barthelemyIJSS2026](@cite),
+
+```math
+\boldsymbol{B}^{\mathcal{E}}
+= \frac{8\,(1-\nu^{2})}{3E}\left(
+  \frac{\underline{\ell}\otimes\underline{\ell}}{(1-\nu)\,\mathcal{C}_\eta+\eta^{2}\mathcal{S}_\eta}
++ \frac{\underline{m}\otimes\underline{m}}{(1-\nu)\,\eta^{2}\mathcal{S}_\eta+\mathcal{C}_\eta}
++ \frac{\underline{n}\otimes\underline{n}}{\mathcal{E}_\eta}\right).
+```
+
 The three components are the three fracture modes: ``B_{nn}`` opens the crack
 (mode I), ``B_{mm}`` and ``B_{\ell\ell}`` shear it (modes II and III).
 
@@ -546,6 +650,17 @@ B_{nn} = \frac{16\,(1-\nu^{2})}{3\pi E},
 B_{mm} = B_{\ell\ell} = \frac{B_{nn}}{1-\nu/2}.
 ```
 
+**Ribbon crack**, ``\frac{3\pi}{8}\lim_{\eta\to 0}\boldsymbol{B}^{\mathcal{E}}``
+with ``\mathcal{C}_0 = \mathcal{E}_0 = 1`` and ``\eta^{2}\mathcal{S}_\eta\to 0``:
+
+```math
+\boldsymbol{B}^{\mathcal{R}}
+= \frac{\pi\,(1-\nu^{2})}{E}\left(
+  \frac{\underline{\ell}\otimes\underline{\ell}}{1-\nu}
++ \underline{m}\otimes\underline{m}
++ \underline{n}\otimes\underline{n}\right).
+```
+
 Implementation: `src/Cracks/cod_analytical.jl`, selected by `method = :auto`
 when ``\mathbb{C}_0`` is a `TensISO{4,3}`.
 
@@ -553,36 +668,109 @@ when ``\mathbb{C}_0`` is a `TensISO{4,3}`.
 
 When the matrix is transversely isotropic with its axis **aligned with the crack
 normal** ``\underline{n}``, ``\boldsymbol{B}`` is still analytical. The closed
-forms use the engineering parameters ``(E,\nu_1,\nu_2,H,\Gamma)`` defined on the
-compliance ``\mathbb{S} = \mathbb{C}^{-1}`` [hoenig1978, kanaun2009, barthelemyIJES2021](@cite), and reduce to the isotropic
-case for ``\nu_1=\nu_2=\nu``, ``H=\Gamma=1``. The auxiliary coefficients are
-documented inline in `src/Cracks/cod_analytical.jl`.
+forms are written in the engineering parameters of [hoenig1978](@citet), defined
+on the compliance ``\mathbb{S} = \mathbb{C}^{-1}`` in a frame whose third axis is
+``\underline{n}``:
 
-The more general cases — a TI axis **not** aligned with the crack normal, or an
-elliptic-orthotropic matrix — are treated in [barthelemyMMS2023](@citet) and
-[barthelemySifAniso](@citet) but are not yet exposed here.
+```math
+E = \frac{1}{S_{1111}},
+\qquad
+\nu_1 = -E\,S_{1122},
+\qquad
+\nu_2 = -E\,S_{1133},
+\qquad
+H = \frac{1}{E\,S_{3333}},
+\qquad
+\Gamma = \frac{1+\nu_1}{2\,E\,S_{2323}}.
+```
+
+With
+
+```math
+h = \sqrt{\frac{1-H\nu_2^{2}}{H\,(1-\nu_1^{2})}},
+\qquad
+\sigma_\gamma = \sqrt{2}\,\sqrt{\frac{1-\Gamma\nu_2}{\Gamma\,(1-\nu_1)} + h},
+\qquad
+\beta = \frac{\sigma_\gamma}{2}\,\sqrt{\Gamma}\,(1-\nu_1),
+```
+
+the elliptic and ribbon COD tensors are
+[hoenig1978, kanaun2009, barthelemyIJES2021, barthelemyIJSS2026](@cite)
+
+```math
+\begin{aligned}
+\boldsymbol{B}^{\mathcal{E}}
+&= \frac{4\,\sigma_\gamma\,(1-\nu_1^{2})}{3E}\left(
+  \frac{\underline{\ell}\otimes\underline{\ell}}{\beta\,\mathcal{C}_\eta+\eta^{2}\mathcal{S}_\eta}
++ \frac{\underline{m}\otimes\underline{m}}{\beta\,\eta^{2}\mathcal{S}_\eta+\mathcal{C}_\eta}
++ h\,\frac{\underline{n}\otimes\underline{n}}{\mathcal{E}_\eta}\right),\\[4pt]
+\boldsymbol{B}^{\mathcal{R}}
+&= \frac{\pi\,(1-\nu_1^{2})}{E}\left(
+  \frac{\underline{\ell}\otimes\underline{\ell}}{\sqrt{\Gamma}\,(1-\nu_1)}
++ \frac{\sigma_\gamma}{2}\,\underline{m}\otimes\underline{m}
++ \frac{\sigma_\gamma}{2}\,h\,\underline{n}\otimes\underline{n}\right).
+\end{aligned}
+```
+
+They reduce to the isotropic forms above for ``\nu_1=\nu_2=\nu`` and
+``H=\Gamma=1``, where ``\sigma_\gamma = 2`` and ``\beta = 1-\nu``.
+``\sigma_\gamma`` is the sum ``\gamma_1+\gamma_2`` of the two in-plane Stroh roots
+of §4. Implementation: `src/Cracks/cod_analytical.jl`, with the parameters
+extracted by `extract_ti_moduli`.
+
+```@raw html
+<details><summary>The stiffness components in the engineering parameters</summary>
+```
+
+With ``A = 1-\nu_1-2H\nu_2^{2}``, the five independent components that enter
+the reduced kernel of §4 are [barthelemyIJSS2026](@cite)
+
+```math
+C_{1111} = \frac{E\,(1-H\nu_2^{2})}{A\,(1+\nu_1)},
+\quad
+C_{1122} = \frac{E\,(\nu_1+H\nu_2^{2})}{A\,(1+\nu_1)},
+\quad
+C_{1133} = \frac{E\,H\,\nu_2}{A},
+\quad
+C_{3333} = \frac{E\,H\,(1-\nu_1)}{A},
+\quad
+C_{2323} = \frac{E\,\Gamma}{2\,(1+\nu_1)},
+```
+
+the isotropic case giving ``A = (1+\nu)(1-2\nu)``.
+
+```@raw html
+</details>
+```
+
+A transversely isotropic axis **not** aligned with the crack normal, and more
+generally a transformed transversely isotropic matrix, are treated in
+[barthelemyMMS2023](@citet) for the compliance and the average opening, and in
+[barthelemyIJSS2026](@citet) for the COD tensor and the intensity factors, by a
+linear transformation of the crack problem. Neither is implemented here.
 
 ### Arbitrary anisotropy — numerical
 
 No closed form exists in general. Following [barthelemyIJSS2009](@citet), the
 limit ``\omega\to 0`` is resolved by extracting the **first-order term** of the
 Taylor expansion of ``\mathbb{P}`` in ``\omega``; that term has an integral
-representation on the unit circle of the crack plane, evaluated by either
-algorithm trait:
+representation on the unit circle of the crack plane, evaluated by one of three
+algorithm traits:
 
-- **`DECUHR`** — adaptive cubature [espelid1994](@cite), ForwardDiff-safe
-  (`src/Cracks/green_decuhr.jl`);
+- **`NestedQuadGK`** — nested adaptive Gauss–Kronrod quadratures, type-generic
+  (`src/Cracks/green_nestedquadgk.jl`);
+- **`DECUHR`** — adaptive cubature [espelid1994](@cite), ForwardDiff-safe, once
+  its weak dependency is loaded (`src/Cracks/green_decuhr.jl`);
 - **`Residue`** — Cauchy-residue reduction to a 1-D quadrature, as in
   [masson2008](@citet) adapted to the crack kernel, `Float64` only
   (`src/Cracks/green_residue.jl`).
 
-`method = :auto` always picks a **cubature**, never `Residue`: `DECUHR` when its
-weak dependency is loaded, and the type-generic `NestedQuadGK` otherwise — which
-is also what a `ForwardDiff.Dual` or symbolic scalar gets. `Residue` is faster
-but its acoustic polynomial degenerates when the reference is anisotropic in
-*type* and isotropic in *value*, a case the self-consistent and differential
-schemes reach at their first step, so it is available on explicit
-`method = :residues` only (`src/Core/dispatch.jl`).
+`method = :auto` picks `NestedQuadGK`, whatever the coefficient type and
+whatever else is loaded: it is the fastest and the most accurate of the three
+(see [Hill polarization tensors](@ref th-hill-tensors)). `Residue` degenerates
+when the reference is anisotropic in *type* and isotropic in *value*, a case the
+self-consistent and differential schemes reach at their first step, so it is
+available on explicit `method = :residues` only (`src/Core/dispatch.jl`).
 
 ## 6. Dilute correction to the effective compliance
 
@@ -635,7 +823,21 @@ crack at the observation point:
 
 This holds whatever the matrix anisotropy and whatever the remote loading — and
 it is why ``\boldsymbol{B}^{\mathcal{R}}``, with its ``3\pi/8`` factor, cannot be
-dispensed with even when studying elliptic cracks.
+dispensed with even when studying elliptic cracks. With
+``\boldsymbol{B}^{\mathcal{R}}(\underline{\nu},\underline{n})
+= \frac{\pi}{4}\bigl(\hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{\nu})\bigr)^{-1}``
+(§4) it also reads
+``\underline{K} = 4\,\hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{\nu})\cdot\underline{N}``,
+and the energy release rate is a quadratic form in either factor
+[barthelemyIJSS2026](@cite):
+
+```math
+G = \pi\,\underline{N}\cdot
+    \bigl(\boldsymbol{B}^{\mathcal{R}}(\underline{\nu},\underline{n})\bigr)^{-1}
+    \cdot\underline{N}
+  = \frac{1}{\pi}\,\underline{K}\cdot
+    \boldsymbol{B}^{\mathcal{R}}(\underline{\nu},\underline{n})\cdot\underline{K}.
+```
 
 ### Elliptic crack
 
@@ -672,6 +874,47 @@ where the dimensionless front factor is
 = \sqrt{\eta^{2}\cos^{2}\theta_y + \sin^{2}\theta_y}.
 ```
 
+The energy release rate follows as
+
+```math
+G^{\mathcal{E}} = \frac{9\pi^{2}b}{64}\,\varrho\;
+  (\boldsymbol{\Sigma}\cdot\underline{n})\cdot
+  \boldsymbol{B}^{\mathcal{E}}(\underline{m},\underline{n},\eta)\cdot
+  \bigl(\boldsymbol{B}^{\mathcal{R}}(\underline{\nu},\underline{n})\bigr)^{-1}\cdot
+  \boldsymbol{B}^{\mathcal{E}}(\underline{m},\underline{n},\eta)\cdot
+  (\boldsymbol{\Sigma}\cdot\underline{n}).
+```
+
+```@raw html
+<details><summary>Other parametrizations of the front</summary>
+```
+
+[`sif`](@ref) and [`dif`](@ref) take the front point through
+``\underline{y}^{\star}_{0}`` (keyword `y₀`, ``\underline{m}`` by default), the
+point itself being
+``\underline{x}^{\star}_{0} = a\cos\theta_y\,\underline{\ell} + b\sin\theta_y\,\underline{m}``.
+With the polar angle ``\theta_x`` of ``\underline{x}^{\star}_{0}``, or the angle
+``\theta_\nu`` of the outer normal
+``\underline{\nu} = \cos\theta_\nu\,\underline{\ell}+\sin\theta_\nu\,\underline{m}``,
+the front factor reads [barthelemyIJSS2026](@cite)
+
+```math
+\varrho
+= \sqrt{\eta^{2}\cos^{2}\theta_y+\sin^{2}\theta_y}
+= \sqrt{\frac{\eta^{4}\cos^{2}\theta_x+\sin^{2}\theta_x}
+             {\eta^{2}\cos^{2}\theta_x+\sin^{2}\theta_x}}
+= \frac{\eta}{\sqrt{\cos^{2}\theta_\nu+\eta^{2}\sin^{2}\theta_\nu}},
+```
+
+from ``\tan\theta_x = \eta\tan\theta_y`` and ``\eta\tan\theta_\nu = \tan\theta_y``.
+In terms of the maximum opening ``\underline{\beta}`` at the crack center,
+``\underline{N} = \frac{1}{4}\sqrt{\pi\varrho/b}\;\underline{\beta}`` and
+``\underline{K} = \sqrt{\pi\varrho/b}\;\hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{\nu})\cdot\underline{\beta}``.
+
+```@raw html
+</details>
+```
+
 ### Ribbon crack
 
 Here ``\underline{\nu} = \pm\underline{m}`` and ``\varrho = 1``:
@@ -688,7 +931,10 @@ Here ``\underline{\nu} = \pm\underline{m}`` and ``\varrho = 1``:
 
 The SIF of an infinite ribbon crack is **independent of the matrix stiffness** —
 the ``\boldsymbol{B}^{\mathcal{R}}`` of the DIF cancels against its inverse in
-the exchange relation.
+the exchange relation — and the energy release rate is
+``G^{\mathcal{R}} = b\,(\boldsymbol{\Sigma}\cdot\underline{n})\cdot
+\boldsymbol{B}^{\mathcal{R}}(\underline{m},\underline{n})\cdot
+(\boldsymbol{\Sigma}\cdot\underline{n})``.
 
 ### Modes
 
@@ -708,7 +954,7 @@ Evaluation: [`sif`](@ref) and [`dif`](@ref) (`src/Cracks/sif.jl`).
 | :------------ | :-------------- | :----------- | :---------: |
 | `EllipticCrack` / `RibbonCrack`, `TensISO` | `Analytical` | — | ✓ |
 | `EllipticCrack` / `RibbonCrack`, `TensTI` (aligned) | `Analytical` (MFH) | — | ✓ |
-| `EllipticCrack` / `RibbonCrack`, `AbstractTens{4,3}` | `DECUHR` if loaded, else `NestedQuadGK` | `:residues`, `:decuhr`, `:nestedquadgk` | ✓ |
+| `EllipticCrack` / `RibbonCrack`, `AbstractTens{4,3}` | `NestedQuadGK` | `:residues`, `:decuhr`, `:nestedquadgk` | ✓ |
 
 Entry points: [`cod_tensor`](@ref) / [`B_tensor`](@ref) for ``\boldsymbol{B}``,
 [`compliance_contribution`](@ref) for ``\mathbb{H}``,
