@@ -117,7 +117,7 @@ tensor [barthelemyIJSS2009](@cite).
 
 Alias: [`B_tensor`](@ref).
 """
-Base.@constprop :aggressive function cod_tensor(
+Base.@constprop :aggressive @inline function cod_tensor(
         crack::MFH_Core.AbstractCrack,
         C₀::TensND.AbstractTens{4, 3};
         K_interface::Union{Nothing, TensND.AbstractTens{2, 3}} = nothing,
@@ -125,6 +125,16 @@ Base.@constprop :aggressive function cod_tensor(
         abstol::Float64 = 1.0e-8,
         reltol::Float64 = 1.0e-6,
         maxiters::Int = 100_000
+    )
+    return _cod_tensor_entry(crack, C₀, K_interface, method, abstol, reltol, maxiters)
+end
+
+# Positional and inlined, as `_hill_tensor_entry`: Julia 1.12 propagates the
+# constant default `method = :auto` for inference but compiled this body for a
+# run-time `Symbol`, whose other branch returns an abstract type, and boxed the
+# result — 64 bytes per call. Inlined, the literal reaches `_with_method`.
+Base.@constprop :aggressive @inline function _cod_tensor_entry(
+        crack, C₀, K_interface, method::Symbol, abstol, reltol, maxiters
     )
     MFH_Core._bump!(MFH_Core.COD_CALLS)
     B = MFH_Core._with_method(_cod_tensor_at, method, crack, C₀, abstol, reltol, maxiters)

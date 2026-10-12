@@ -85,7 +85,7 @@ plane-strain elasticity with an anisotropic `P₀` is missing, and it raises an
 `ArgumentError` naming the limitation rather than falling back to an isotropic
 kernel.
 """
-Base.@constprop :aggressive function interaction_tensor(
+Base.@constprop :aggressive @inline function interaction_tensor(
         incl_a::MFH_Core.AbstractInclusion,
         incl_b::MFH_Core.AbstractInclusion,
         r::AbstractVector,

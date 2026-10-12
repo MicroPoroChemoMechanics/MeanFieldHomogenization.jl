@@ -36,7 +36,7 @@ adaptive cubature of [espelid1994](@citet)
 (trait `DECUHR`). See the `Hill polarization tensors` theory page
 for the full dispatch table and return types.
 """
-Base.@constprop :aggressive function hill_tensor(
+Base.@constprop :aggressive @inline function hill_tensor(
         ell::AbstractEllipsoidalInclusion,
         C₀::TensND.AbstractTens;
         method::Symbol = :auto,
@@ -53,7 +53,7 @@ end
 # entry points can never be ambiguous.  A custom inclusion either registers
 # `Elasticity._kernel(::MyIncl, C₀, ::Analytical; kw...)` methods, or bypasses
 # the table altogether by defining `hill_tensor` on its own concrete type.
-Base.@constprop :aggressive function hill_tensor(
+Base.@constprop :aggressive @inline function hill_tensor(
         incl::MFH_Core.AbstractCustomInclusion,
         C₀::TensND.AbstractTens;
         method::Symbol = :auto,
@@ -64,7 +64,12 @@ Base.@constprop :aggressive function hill_tensor(
     return _hill_tensor_entry(incl, C₀, method, abstol, reltol, maxiters)
 end
 
-Base.@constprop :aggressive function _hill_tensor_entry(incl, C₀, method::Symbol, abstol, reltol, maxiters)
+# Inlined, with the keyword methods above, down to `_with_method`: Julia 1.12
+# propagates the constant default `method = :auto` for inference but compiles
+# the entry for a run-time `Symbol`, whose other branch returns an abstract type
+# and boxes the result. Inlined, the literal reaches `_with_method` and selects
+# the branch at compile time on every version.
+Base.@constprop :aggressive @inline function _hill_tensor_entry(incl, C₀, method::Symbol, abstol, reltol, maxiters)
     MFH_Core._bump!(MFH_Core.HILL_CALLS)
     return MFH_Core._with_method(_hill_tensor_at, method, incl, C₀, abstol, reltol, maxiters)
 end

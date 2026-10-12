@@ -112,6 +112,12 @@ dispatches any other method once, on its `Val`, into a kernel call with
 positional arguments; `Base.@constprop :aggressive` on `hill_tensor`,
 `cod_tensor`, `sif`, `dif` and `interaction_tensor` carries the default down to
 it; the closed-form COD tensors are built with their dimension in their type.
+Julia 1.12 propagates such a constant for inference only. It compiled the entry
+of `cod_tensor` for a run-time `Symbol`, whose other branch returns an abstract
+type, and boxed the result: 64 bytes per call, caught by the allocation test on
+1.12. The entry points of `hill_tensor`, `cod_tensor` and `interaction_tensor`
+are now inlined down to `_with_method`, so the literal selects the branch at
+compile time on 1.12 and 1.13 alike.
 
 ### Documentation
 

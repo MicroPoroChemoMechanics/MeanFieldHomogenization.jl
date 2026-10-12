@@ -132,8 +132,11 @@ _resolve_algo
     _with_method(f, method::Symbol, args...) -> f(Val(method), args...)
 
 Call `f` with the method symbol lifted to the `Val` that selects its algorithm.
-`:auto`, the default and what most callers forward, is lifted at compile time;
-any other symbol costs one dynamic dispatch on its `Val`, negligible next to the
+`:auto`, the default and what most callers forward, is lifted at compile time
+provided the literal reaches this call: the entry points are inlined down to it,
+since Julia 1.12 propagates a keyword default for inference only, and compiles a
+non-inlined body for a run-time `Symbol` whose other branch boxes the result.
+Any other symbol costs one dynamic dispatch on its `Val`, negligible next to the
 numerical kernel it selects. `f` takes the `Val` first and does both the
 resolution and the kernel call, so nothing past that one dispatch runs on a type
 known only at run time.
