@@ -19,6 +19,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+using ForwardDiff
 
 const ATOL_ANA_ISO = 1.0e-8
 const ATOL_ANA_RES = 1.0e-12
@@ -101,7 +102,6 @@ end
 end
 
 @testset "Hill TI coaxial — ForwardDiff compatibility" begin
-    using ForwardDiff
     n_axis = [0.0, 0.0, 1.0]
     ell = Ellipsoid(1.0, 1.0, 0.3)
     C0 = [2.179, 0.579, 0.689, 10.345, 1.0]
@@ -124,10 +124,15 @@ end
     dval_dc = ForwardDiff.derivative(g, 0.3)
     @test isfinite(dval_dc)
 
-    # Numerical sanity: forward difference should agree with the AD derivative
-    h = 1.0e-6
-    fd = (g(0.3 + h) - g(0.3 - h)) / (2h)
-    @test isapprox(dval_dc, fd; rtol = 1.0e-5)
+    # The same derivative through the nested cubature, which shares no code
+    # with the closed form.
+    g_cub = c_axial -> begin
+        C_full = TensND.change_tens_canon(tens_TI(C0..., n_axis))
+        ell2 = Ellipsoid(1.0, 1.0, c_axial)
+        P = hill_tensor(ell2, C_full; method = :nestedquadgk, abstol = 1.0e-13, reltol = 1.0e-12)
+        get_array(P)[3, 3, 3, 3]
+    end
+    @test isapprox(dval_dc, ForwardDiff.derivative(g_cub, 0.3); rtol = 1.0e-9)
 end
 
 @testset "Hill TI coaxial — complex moduli (frequency-domain viscoelasticity)" begin
@@ -172,4 +177,73 @@ end
 
     @test maximum(abs.(get_array(P_ana) .- get_array(P_res))) < ATOL_ANA_RES
     @test maximum(abs.(get_array(P_ana) .- get_array(P_dec))) < ATOL_ANA_DEC
+end
+
+@testset "Hill TI coaxial — isotropic values near the sphere and at extreme ratios" begin
+    # An isotropic matrix stored as TI has coincident acoustic roots, and a
+    # near-spherical spheroid puts them at η ≈ 1, where the closed forms cancel:
+    # the relative error reached 6 to 23 at ω = 1 ± 1e-6, and 1e-5 at ω = 0.9999.
+    # Reference: the nested cubature at tight tolerances, independent of both
+    # closed forms; the isotropic builder must agree as well.
+    n_axis = [0.0, 0.0, 1.0]
+    C_iso = TensISO{3}(3 * 30.0, 2 * 18.0)
+    C_ti = fromISO(C_iso, n_axis)
+    C_full = TensND.change_tens_canon(C_iso)
+    canon(P) = get_array(TensND.change_tens_canon(P))
+    for ω in (1.0e-6, 1.0e-3, 0.9999, 1 - 1.0e-6, 1 + 1.0e-6, 1.0001, 10.0)
+        R = canon(hill_tensor(Spheroid(ω), C_full; method = :nestedquadgk, abstol = 1.0e-14, reltol = 1.0e-13))
+        for C in (C_ti, C_iso)
+            P = canon(hill_tensor(Spheroid(ω), C))
+            @test maximum(abs, P .- R) / maximum(abs, R) < 1.0e-12
+        end
+    end
+end
+
+@testset "Hill TI coaxial — flat spheroid, and the scale of the moduli" begin
+    # Two tests had an absolute floor: the coincidence of the roots, which
+    # took any two small roots for equal ones on a flat spheroid (an error of
+    # about 0.1 ω), and the isotropy of the matrix, which took moduli below
+    # about 1e-4 for isotropic ones. Reference: the nested cubature of the same
+    # tensor at tight tolerances.
+    n_axis = [0.0, 0.0, 1.0]
+    C_TI = tens_TI(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
+    C_full = TensND.change_tens_canon(C_TI)
+    tight = (abstol = 1.0e-14, reltol = 1.0e-12)
+    for ω in (1.0e-5, 1.0e-3)
+        P = get_array(hill_tensor(Spheroid(ω), C_TI))
+        R = get_array(hill_tensor(Spheroid(ω), C_full; method = :nestedquadgk, tight...))
+        @test maximum(abs, P .- R) / maximum(abs, R) < 1.0e-10
+    end
+    for s in (1.0e-6, 1.0e6), ω in (0.3, 1.0, 3.0)
+        P = get_array(hill_tensor(Spheroid(ω), C_TI))
+        Ps = s .* get_array(hill_tensor(Spheroid(ω), tens_TI(s .* (2.179, 0.579, 0.689, 10.345, 1.0)..., n_axis)))
+        @test maximum(abs, Ps .- P) / maximum(abs, P) < 1.0e-13
+    end
+end
+
+@testset "Hill TI coaxial — derivatives at an isotropic point" begin
+    # At coincident roots each root has an infinite derivative. Merging them
+    # there lost the term in the squared root difference, and with it every
+    # derivative along a direction that breaks isotropy (24 % to a factor 14).
+    # Reference: ForwardDiff through the nested cubature, which has no
+    # coincidence to handle.
+    n_axis = [0.0, 0.0, 1.0]
+    λ, μ = 18.0, 18.0
+    C0 = [λ + 2μ, λ, λ, λ + 2μ, μ]
+    tight = (abstol = 1.0e-13, reltol = 1.0e-12)
+    for ω in (0.3, 0.999, 3.0), dir in ([0.0, 0, 1, 0, 0], [0.0, 0, 0, 1, 0], [0.0, 0, 0, 0, 1])
+        # Canonical components: a prolate spheroid's cubature is returned in
+        # the spheroid's own basis.
+        canon(P) = get_array(TensND.change_tens_canon(P))
+        f = t -> canon(hill_tensor(Spheroid(ω), tens_TI((C0 .+ t .* dir)..., n_axis)))
+        g = t -> canon(
+            hill_tensor(
+                Spheroid(ω), TensND.change_tens_canon(tens_TI((C0 .+ t .* dir)..., n_axis));
+                method = :nestedquadgk, tight...
+            )
+        )
+        d_f = ForwardDiff.derivative(f, 0.0)
+        d_g = ForwardDiff.derivative(g, 0.0)
+        @test maximum(abs, d_f .- d_g) / maximum(abs, d_g) < 1.0e-8
+    end
 end

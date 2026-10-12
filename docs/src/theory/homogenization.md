@@ -93,6 +93,11 @@ a fixed point:
 | **SelfConsistent** [mclaughlin1977](@cite) | ``\mathbb C^{(n+1)} = \big(\sum_i f_i \mathbb C_i : \mathbb A_i^{\mathrm{dil}}(\mathbb C^{(n)})\big) : \big(\sum_i f_i \mathbb A_i^{\mathrm{dil}}(\mathbb C^{(n)})\big)^{-1}`` |
 | **AsymmetricSelfConsistent** | switches between stiffness- and compliance-form iteration based on the matrix-vs-Voigt-bound contrast |
 
+Each iterate is projected on the major-symmetric tensors, within its symmetry
+class: a transversely isotropic estimate stays one, so the Hill tensor of a
+coaxial spheroid keeps its closed form from one iterate to the next
+([Degenerate shapes](@ref th-degenerate-shapes)).
+
 The default solver is a damped Picard fixed point (Anderson with memory
 1, Dual-safe). Loading `NonlinearSolve.jl` activates the
 `MeanFieldHomogenizationNonlinearSolveExt` extension, which accepts every SciML

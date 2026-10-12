@@ -36,14 +36,17 @@ function _Qnn_star_nestedquadgk(
     Vs, Ks, Kns = MFH_Core._phi_cache(C, Tn, nhat, ξshat, T)
 
     function vec_at(α)
-        ca = cos(α); sa = sin(α)
+        ca = T(cos(α)); sa = T(sin(α))
         M = MFH_Core._qnn_pair_components(A, Vs, Ks, Kns, ca, sa, inv(sa * sa))
         return SVector{6, T}(M[1, 1], M[2, 2], M[3, 3], M[1, 2], M[1, 3], M[2, 3])
     end
 
+    # Bounds are plain numbers: the derivatives live in the integrand, and QuadGK
+    # has no Gauss–Kronrod rule for a dual interval.
+    F = typeof(float(MFH_Core._primal(zero(T))))
     Tvec, _ = QuadGK.quadgk(
-        vec_at, zero(T), T(π) / 2;
-        atol = abstol, rtol = reltol, maxevals = maxiters
+        vec_at, zero(F), F(π) / 2;
+        atol = abstol, rtol = reltol, maxevals = maxiters, norm = MFH_Core._quadgk_norm
     )
 
     fac = ρ / (2 * T(π))
@@ -87,6 +90,9 @@ function _cod_elliptic_nestedquadgk_direct(
     A, Tn = MFH_Core._A_and_Tn(Carr, nhat_p, Tp)
 
     inner_atol = abstol / 10
+    # Bounds are plain numbers: the derivatives live in the integrand, and QuadGK
+    # has no Gauss–Kronrod rule for a dual interval.
+    F = typeof(float(MFH_Core._primal(zero(Tp))))
 
     function outer(φ)
         cφ = cos(φ); sφ = sin(φ)
@@ -100,21 +106,21 @@ function _cod_elliptic_nestedquadgk_direct(
         Vs, Ks, Kns = MFH_Core._phi_cache(Carr, Tn, nhat_p, ξshat, Tp)
 
         function inner(α)
-            ca = cos(α); sa = sin(α)
+            ca = Tp(cos(α)); sa = Tp(sin(α))
             M = MFH_Core._qnn_pair_components(A, Vs, Ks, Kns, ca, sa, ρ / (sa * sa))
             return SVector{6, Tp}(M[1, 1], M[2, 2], M[3, 3], M[1, 2], M[1, 3], M[2, 3])
         end
 
         inner_val, _ = QuadGK.quadgk(
-            inner, zero(Tp), Tp(π) / 2;
-            atol = inner_atol, rtol = reltol, maxevals = maxiters
+            inner, zero(F), F(π) / 2;
+            atol = inner_atol, rtol = reltol, maxevals = maxiters, norm = MFH_Core._quadgk_norm
         )
         return inner_val
     end
 
     Tvec, _ = QuadGK.quadgk(
-        outer, zero(Tp), 2 * Tp(π);
-        atol = abstol, rtol = reltol, maxevals = maxiters
+        outer, zero(F), 2 * F(π);
+        atol = abstol, rtol = reltol, maxevals = maxiters, norm = MFH_Core._quadgk_norm
     )
 
     fac = inv(2 * Tp(π))

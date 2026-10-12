@@ -51,6 +51,7 @@ pages = [
             "theory/eshelby_problem.md",
             "theory/hill_tensors.md",
             "theory/localization.md",
+            "theory/degenerate_shapes.md",
         ],
         "Homogenization schemes" => [
             "theory/homogenization.md",

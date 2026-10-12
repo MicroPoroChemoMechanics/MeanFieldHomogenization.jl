@@ -34,7 +34,7 @@ A scalar ``b`` suffices because ``[T]`` is a scalar and only
 ``\underline{q}\cdot\underline{n}`` produces a jump — there are no sliding or
 shear modes to resolve, unlike the 6-component ``\boldsymbol{B}``. The direction is
 always ``\underline{n}``: the null space of
-``\boldsymbol{K}_0 - \boldsymbol{K}_0\boldsymbol{P}(0)\boldsymbol{K}_0`` is spanned by
+``\boldsymbol{K}_0 - \boldsymbol{K}_0\cdot\boldsymbol{P}(0)\cdot\boldsymbol{K}_0`` is spanned by
 ``\underline{n}`` for any ``\boldsymbol{K}_0`` (derivation below), so ``b``
 carries all the matrix anisotropy.
 
@@ -46,7 +46,7 @@ Same geometric families as in the elasticity chapter:
   ([`EllipticCrack`](@ref)), including the circular penny ``\eta = 1``
   ([`PennyCrack`](@ref)).
 - **Ribbon cracks** (tunnel cracks) of half-width ``b``
-  ([`RibbonCrack`](@ref)), infinite along ``\hat{\boldsymbol\ell}``.
+  ([`RibbonCrack`](@ref)), infinite along ``\underline{\ell}``.
 
 ## 3. Hill tensor Taylor expansion and block-matrix limit
 
@@ -59,29 +59,31 @@ computed via the formula
   \cdot\boldsymbol{K}_0^{-1/2}``
 [giraudMOM2019](@cite), where
 ``\boldsymbol{I}^{\boldsymbol{B}}`` is assembled in the eigenbasis of
-``\boldsymbol{B}^{\!T}\boldsymbol{B}`` (right singular vectors of
+``\boldsymbol{B}^{\!T}\cdot\boldsymbol{B}`` (right singular vectors of
 ``\boldsymbol{B} = \boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}``).  As ``\omega\to 0``:
 
-- The null vector of ``\boldsymbol{B}^{\!T}\boldsymbol{B}`` is
-  ``\underline{v}_3 = \boldsymbol{K}_0^{1/2}\underline{n}/\sqrt{k_{nn}}``,
-  ``k_{nn}=\underline{n}\cdot\boldsymbol{K}_0\underline{n}``.
+- The null vector of ``\boldsymbol{B}^{\!T}\cdot\boldsymbol{B}`` is
+  ``\underline{v}_3 = \boldsymbol{K}_0^{1/2}\cdot\underline{n}/\sqrt{k_{nn}}``,
+  ``k_{nn}=\underline{n}\cdot\boldsymbol{K}_0\cdot\underline{n}``.
 - The corresponding Newton potential ``I_3\to 4\pi`` while
   ``I_1, I_2\to 0``, so
 
 ```math
-\boldsymbol{P}(0) = \boldsymbol{K}_0^{-1/2}\underline{v}_3\otimes\underline{v}_3\boldsymbol{K}_0^{-1/2}
+\boldsymbol{P}(0) = \big(\boldsymbol{K}_0^{-1/2}\cdot\underline{v}_3\big)\otimes\big(\boldsymbol{K}_0^{-1/2}\cdot\underline{v}_3\big)
              = \frac{\underline{n}\otimes\underline{n}}{k_{nn}}
 ```
 
 which is rank-1 along ``\underline{n}``.  The acoustic block is then
 
 ```math
-\boldsymbol\Lambda(\omega) = \boldsymbol{K}_0 - \boldsymbol{K}_0\boldsymbol{P}(\omega)\boldsymbol{K}_0
+\boldsymbol\Lambda(\omega) = \boldsymbol{K}_0 - \boldsymbol{K}_0\cdot\boldsymbol{P}(\omega)\cdot\boldsymbol{K}_0
                            = \boldsymbol\Lambda(0) + \omega\,\boldsymbol\Lambda_1 + o(\omega),
 ```
 
-with ``\boldsymbol\Lambda(0) = \boldsymbol{K}_0 - (\boldsymbol{K}_0\underline{n})\otimes(\boldsymbol{K}_0\underline{n})/k_{nn}``.
-Its null space is spanned by ``\underline{n}`` (one-dimensional in the
+with ``\boldsymbol\Lambda(0) = \boldsymbol{K}_0 - (\boldsymbol{K}_0\cdot\underline{n})\otimes(\boldsymbol{K}_0\cdot\underline{n})/k_{nn}``.
+Its null space is spanned by ``\underline{n}``, since
+``\boldsymbol\Lambda(0)\cdot\underline{n} = \boldsymbol{K}_0\cdot\underline{n}
+- (\boldsymbol{K}_0\cdot\underline{n})\,(\underline{n}\cdot\boldsymbol{K}_0\cdot\underline{n})/k_{nn} = \underline{0}`` (one-dimensional in the
 2-tensor case — to be contrasted with the 3-dimensional null space in
 the elasticity problem).  The limit
 
@@ -131,15 +133,16 @@ sibling.
 Write the three contractions
 
 ```math
-a = \underline{n}\cdot\boldsymbol{K}_0\underline{n},
+a = \underline{n}\cdot\boldsymbol{K}_0\cdot\underline{n},
 \qquad
-b_\xi = \underline{n}\cdot\boldsymbol{K}_0\underline{\xi}^{\star},
+b_\xi = \underline{n}\cdot\boldsymbol{K}_0\cdot\underline{\xi}^{\star},
 \qquad
-c = \underline{\xi}^{\star}\cdot\boldsymbol{K}_0\underline{\xi}^{\star},
+c = \underline{\xi}^{\star}\cdot\boldsymbol{K}_0\cdot\underline{\xi}^{\star},
 ```
 
 so that ``N = a\xi_n^{2}+2b_\xi\xi_n+c`` and
-``\underline{n}\cdot\boldsymbol{K}_0\underline{\xi} = b_\xi + a\xi_n``. Then
+``\underline{n}\cdot\boldsymbol{K}_0\cdot\underline{\xi} = b_\xi + a\xi_n``, with
+``\underline{\xi} = \underline{\xi}^{\star}+\xi_n\underline{n}``. Then
 **every power of ``\xi_n`` cancels in the numerator**:
 
 ```math
@@ -166,20 +169,22 @@ restricted to ``\mathrm{span}\{\underline{n},\underline{\xi}^{\star}\}`` and
 ```
 
 the second form following from
-``(\underline{u}\cdot\boldsymbol{K}\underline{u})(\underline{v}\cdot\boldsymbol{K}\underline{v})
--(\underline{u}\cdot\boldsymbol{K}\underline{v})^{2}
-=(\underline{u}\wedge\underline{v})\cdot\mathrm{adj}\boldsymbol{K}\cdot(\underline{u}\wedge\underline{v})``,
-with ``\mathrm{adj}\boldsymbol{K}_0 = \det\boldsymbol{K}_0\,\boldsymbol{K}_0^{-1}``.
+``(\underline{u}\cdot\boldsymbol{K}\cdot\underline{u})(\underline{v}\cdot\boldsymbol{K}\cdot\underline{v})
+-(\underline{u}\cdot\boldsymbol{K}\cdot\underline{v})^{2}
+=(\underline{u}\wedge\underline{v})\cdot\mathrm{adj}\,\boldsymbol{K}\cdot(\underline{u}\wedge\underline{v})``,
+valid for a symmetric ``\boldsymbol{K}``, with
+``\mathrm{adj}\,\boldsymbol{K}_0 = (\det\boldsymbol{K}_0)\,\boldsymbol{K}_0^{-1}``.
 So ``\hat{Q}^{\star}_{nn}`` is a norm of
 ``\underline{n}\wedge\underline{\xi}^{\star}`` in the metric
-``\mathrm{adj}\boldsymbol{K}_0``, manifestly homogeneous of degree 1. No Stroh
+``\mathrm{adj}\,\boldsymbol{K}_0``, manifestly homogeneous of degree 1. No Stroh
 roots, no residues, no cubature — at any anisotropy. The elastic page's closing
 section, *"what breaks in the general case"*, has no counterpart here.
 
 ### The crack-plane integral: an effective ellipse
 
 On the contour ``\underline{\xi}^{\star}(\varphi)
-= \eta\cos\varphi\,\underline{\ell}+\sin\varphi\,\underline{m}`` one has
+= \eta\cos\varphi\,\underline{\ell}+\sin\varphi\,\underline{m}`` of
+[barthelemyIJSS2026](@citet) one has
 ``\underline{n}\wedge\underline{\xi}^{\star}
 = \eta\cos\varphi\,\underline{m}-\sin\varphi\,\underline{\ell}``, so with
 ``\underline{v} = (\cos\varphi,\sin\varphi)``
@@ -188,10 +193,10 @@ On the contour ``\underline{\xi}^{\star}(\varphi)
 \hat{Q}^{\star}_{nn} = \tfrac12\sqrt{\underline{v}\cdot\boldsymbol{Q}_2\cdot\underline{v}},
 \qquad
 \boldsymbol{Q}_2 = \begin{pmatrix}
-  \eta^{2}\,\underline{m}\cdot\mathrm{adj}\boldsymbol{K}_0\underline{m} &
- -\eta\,\underline{m}\cdot\mathrm{adj}\boldsymbol{K}_0\underline{\ell}\\
- -\eta\,\underline{\ell}\cdot\mathrm{adj}\boldsymbol{K}_0\underline{m} &
-       \underline{\ell}\cdot\mathrm{adj}\boldsymbol{K}_0\underline{\ell}
+  \eta^{2}\,\underline{m}\cdot\mathrm{adj}\,\boldsymbol{K}_0\cdot\underline{m} &
+ -\eta\,\underline{m}\cdot\mathrm{adj}\,\boldsymbol{K}_0\cdot\underline{\ell}\\
+ -\eta\,\underline{\ell}\cdot\mathrm{adj}\,\boldsymbol{K}_0\cdot\underline{m} &
+       \underline{\ell}\cdot\mathrm{adj}\,\boldsymbol{K}_0\cdot\underline{\ell}
 \end{pmatrix}.
 ```
 
@@ -243,7 +248,11 @@ All of these are the two boxed formulas above, evaluated on a more symmetric
 ### Anisotropic matrix — the general case
 
 ``\boldsymbol{K}_0`` arbitrary, ``\eta = b/a``, and
-``A,B,C`` the in-plane entries of ``\mathrm{adj}\boldsymbol{K}_0`` defined above:
+``A = \underline{m}\cdot\mathrm{adj}\,\boldsymbol{K}_0\cdot\underline{m}``,
+``B = \underline{\ell}\cdot\mathrm{adj}\,\boldsymbol{K}_0\cdot\underline{m}`` and
+``C = \underline{\ell}\cdot\mathrm{adj}\,\boldsymbol{K}_0\cdot\underline{\ell}`` the
+in-plane entries of ``\mathrm{adj}\,\boldsymbol{K}_0``, so that
+``\boldsymbol{Q}_2 = \begin{pmatrix} \eta^{2}A & -\eta B\\ -\eta B & C\end{pmatrix}``:
 
 ```math
 \boxed{\;
@@ -262,7 +271,7 @@ no symmetry assumption, and no need for the numerical
 
 ### Isotropic matrix
 
-``\mathrm{adj}(k_0\boldsymbol{1}) = k_0^{2}\boldsymbol{1}`` gives
+``\mathrm{adj}\,(k_0\boldsymbol{1}) = k_0^{2}\boldsymbol{1}`` gives
 ``\lambda_1 = k_0^{2}`` and ``\eta' = \eta``:
 
 ```math
@@ -308,7 +317,7 @@ which reduces to ``b = \pi/(2 k_0)`` for an isotropic matrix.
 ### The ``\boldsymbol{K}_0^{-1/2}`` route
 
 Historically these formulas were obtained by the square-root change of variable
-``\tilde{\underline{x}} = \boldsymbol{K}_0^{-1/2}\underline{x}``
+``\tilde{\underline{x}} = \boldsymbol{K}_0^{-1/2}\cdot\underline{x}``
 [giraudMOM2019](@cite), which maps the problem to an
 isotropic one with a *transformed crack shape*: with
 ``\tilde{\boldsymbol{A}} = \boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}`` and its
@@ -330,8 +339,7 @@ COD flows through automatic differentiation and symbolic scalars.
 ## 6. Resistivity contribution ``\boldsymbol{R}`` and dilute correction ``\Delta\boldsymbol{R}``
 
 The size-independent **crack resistivity contribution tensor** is
-assembled from the scalar ``b`` and the effective direction
-``\underline{w}``:
+assembled from the scalar ``b`` and the crack normal ``\underline{n}``:
 
 ```math
 \boldsymbol{R}^{\mathcal E} = \tfrac{3}{4}\,b\,\underline{n}\otimes\underline{n}
@@ -378,8 +386,8 @@ so each formula is the elastic one with the symbols substituted.
   ribbon crack of half-width ``b``,
   ``K_T = \sqrt{\pi b}\,(\underline{n}\cdot\boldsymbol\sigma^{\infty})``.
   For an elliptic crack the formula involves the tangent-ribbon COD
-  ratio exactly as in the elasticity case (``b^\mathcal E/b^\mathcal R``
-  replaces ``\boldsymbol{B}^\mathcal E(\boldsymbol{B}^\mathcal R)^{-1}``).
+  ratio exactly as in the elasticity case (``b^{\mathcal E}/b^{\mathcal R}``
+  replaces ``\boldsymbol{B}^{\mathcal E}\cdot(\boldsymbol{B}^{\mathcal R})^{-1}``).
 - **Temperature intensity factor** (scalar):
   ``[T]_{\mathrm{avg}} = b\,(\underline{n}\cdot\boldsymbol\sigma^{\infty})``.
 

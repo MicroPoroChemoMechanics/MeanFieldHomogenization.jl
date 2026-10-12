@@ -113,6 +113,7 @@ end
         include("Core/test_green_dipole.jl")
         include("Core/test_green_aniso.jl")
         include("Core/test_counters.jl")
+        include("Core/test_hot_paths.jl")
     end
 
     @testset "Elasticity" begin
@@ -124,6 +125,7 @@ end
         include("Elasticity/test_localization.jl")
         include("Elasticity/test_contribution.jl")
         include("Elasticity/test_hill_nestedquadgk_oblate.jl")
+        include("Elasticity/test_degenerate_shapes.jl")
         include("Elasticity/test_hill_ti_coaxial.jl")
         include("Elasticity/test_param_conversions.jl")
         include("Elasticity/test_cubic.jl")
@@ -132,6 +134,7 @@ end
 
     @testset "Cracks" begin
         include("Cracks/test_cod.jl")
+        include("Cracks/test_crack_near_circle.jl")
         include("Cracks/test_cod_ti_aligned.jl")
         include("Cracks/test_cod_symbolic.jl")
         include("Cracks/test_crack_orientation.jl")

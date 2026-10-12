@@ -34,8 +34,9 @@ end
     @test Array(aniso_typed) ≈ Array(C_iso) atol = 1.0e-10
 
     for C₀ in (aniso_typed, C_iso + 0.35 * N)
+        # NestedQuadGK, whether or not the DECUHR extension is loaded (it is here).
         @test MeanFieldHomogenization.Core._resolve_algo(Val(:auto), tri, C₀) isa
-            Union{MeanFieldHomogenization.Core.DECUHR, MeanFieldHomogenization.Core.NestedQuadGK}
+            MeanFieldHomogenization.Core.NestedQuadGK
         @test MeanFieldHomogenization.Core._resolve_algo(Val(:residues), tri, C₀) isa
             MeanFieldHomogenization.Core.Residue
     end
@@ -45,11 +46,22 @@ end
     P = hill_tensor(tri, aniso_typed)
     P_ref = hill_tensor(tri, C_iso)                     # closed form
     @test maximum(abs, Array(P) .- Array(P_ref)) / maximum(abs, Array(P_ref)) < 1.0e-8
-    @test_throws Exception hill_tensor(tri, aniso_typed; method = :residues)
+    # Explicitly asked for, the residue path refuses it and says why.
+    @test_throws ArgumentError hill_tensor(tri, aniso_typed; method = :residues)
 
     # Non-Float64 coefficients keep the type-generic cubature.
     @test MeanFieldHomogenization.Core._aniso_default_algo(ComplexF64(1) * (C_iso + 0.35 * N)) isa
         MeanFieldHomogenization.Core.NestedQuadGK
+
+    # A ribbon crack, whose reduced kernel is a 1-D integral: DECUHR integrates
+    # over rectangles of dimension two or more and failed on every ribbon, which
+    # made a ribbon in an anisotropic reference fail as soon as DECUHR was loaded.
+    rib = RibbonCrack(1.0)
+    B_ref = cod_tensor(rib, C_iso)                      # closed form
+    for m in (:auto, :decuhr)
+        B = cod_tensor(rib, aniso_typed; method = m)
+        @test maximum(abs, Array(B) .- Array(B_ref)) / maximum(abs, Array(B_ref)) < 1.0e-8
+    end
 end
 
 # Regression: `:nestedquadgk` used to be missing from the `TensISO`

@@ -95,7 +95,7 @@ end
     _adj3_sym(K) -> (a11, a22, a33, a12, a13, a23)
 
 The six independent entries of the adjugate
-``\\mathrm{adj}\\,\\boldsymbol{K} = \\det\\boldsymbol{K}\\;\\boldsymbol{K}^{-1}`` of a
+``\\mathrm{adj}\\,\\boldsymbol{K} = (\\det\\boldsymbol{K})\\,\\boldsymbol{K}^{-1}`` of a
 **symmetric** 3×3, by cofactors. Division-free, hence stable at small
 ``\\det\\boldsymbol{K}`` and evaluable on `ForwardDiff.Dual` and symbolic scalars —
 which `det` composed with `inv` would also be, but at the cost of a division
@@ -128,10 +128,13 @@ kernel integral closes in every case,
                  (\\underline{n}\\wedge\\underline{\\xi}^{\\star})} .
 ```
 
-On the crack contour this leaves the 2×2 form
+On the crack contour
+``\\underline{\\xi}^{\\star}(\\varphi) = \\eta\\cos\\varphi\\,\\underline{\\ell}+\\sin\\varphi\\,\\underline{m}``
+of [barthelemyIJSS2026](@citet) this leaves the 2×2 form in
+``(\\cos\\varphi, \\sin\\varphi)``
 
 ```math
-\\mathbf{Q}_2 = \\begin{pmatrix}
+\\boldsymbol{Q}_2 = \\begin{pmatrix}
   \\eta^{2} A & -\\eta B\\\\ -\\eta B & C\\end{pmatrix},
 \\quad
 A = \\underline{m}\\cdot\\mathrm{adj}\\,\\boldsymbol{K}_0\\cdot\\underline{m},\\;

@@ -74,7 +74,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | `06_cylinder.jl` | cylinder Hill | transverse-plane quadrature |
 | `07_hill_ti_coaxial.jl` | `hill(...,TI)` | Barthélémy 2020 TI-coaxial closed form |
 | `08_hill_derivatives.jl` | `hill_derivative` | ∂P/∂C by ForwardDiff (ISO, TI), validated vs finite differences |
-| `09_cod_symbolic_green.jl` | `barthelemySifAniso` | SymPy, end-to-end derivation of the COD tensor 𝐁 from the Fourier Green operator: the ξ₃ integral of `Q̂*ₙₙ`, the crack-plane integral, ISO and aligned-TI closed forms recovered (σᵞ included), oracles = `cod_tensor` |
+| `09_cod_symbolic_green.jl` | `barthelemyIJSS2026` | SymPy, end-to-end derivation of the COD tensor 𝐁 from the Fourier Green operator: the ξ₃ integral of `Q̂*ₙₙ`, the crack-plane integral, ISO and aligned-TI closed forms recovered (σᵞ included), oracles = `cod_tensor` |
 
 ### 10–19 Cracks & COD
 | Script | reference / topic | Notes |
@@ -85,7 +85,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | `13_cod_ribbon.jl` | ribbon crack | 2D ribbon COD |
 | `14_sif_computation.jl` | — | stress/displacement intensity factors |
 | `15_cracks_iso_interface.jl` | iso cracks + spring interface | Sevostianov spring interface |
-| `16_cod_symbolic_thermal.jl` | `barthelemySifAniso` (transport twin) | SymPy, end-to-end derivation of the **thermal** COD scalar from the order-2 Green operator. The acoustic form is a scalar, so the ξₙ integral closes at **full anisotropy**: `Q̂*ₙₙ = ½√[(n̲∧ξ̲*)·adj(K₀)·(n̲∧ξ̲*)]`, and the contour integral reduces to an effective ellipse (`√λ₁`, `η′`). Cross-checked against the Hill flattening limit and the textbook penny jump |
+| `16_cod_symbolic_thermal.jl` | `barthelemyIJSS2026` (transport twin) | SymPy, end-to-end derivation of the **thermal** COD scalar from the order-2 Green operator. The acoustic form is a scalar, so the ξₙ integral closes at **full anisotropy**: `Q̂*ₙₙ = ½√[(n̲∧ξ̲*)·adj(K₀)·(n̲∧ξ̲*)]`, and the contour integral reduces to an effective ellipse (`√λ₁`, `η′`). Cross-checked against the Hill flattening limit and the textbook penny jump |
 
 ### 20–29 Elastic schemes
 | Script | reference / topic | Notes |

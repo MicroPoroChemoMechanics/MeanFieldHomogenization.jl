@@ -1,10 +1,11 @@
 # =============================================================================
-#  green_decuhr.jl — DECUHR-based evaluation of Q̂*_{nn} (1-D α-integral)
-#  and direct 2-D cubature for the elliptic-crack COD.  Uses
-#  `Integrals.jl` with `DecuhrAlgorithm` (Espelid & Genz 1994).
+#  green_decuhr.jl — direct 2-D DECUHR cubature for the elliptic-crack COD.
+#  Uses `Integrals.jl` with `DecuhrAlgorithm` (Espelid & Genz 1994), which
+#  integrates over hyperrectangles of dimension two or more: the ribbon, whose
+#  reduced kernel is a single 1-D integral, has no DECUHR path (see the ribbon
+#  `_kernel` in `api.jl`).
 #
-#  The integrands are smooth on the integration domains (α ∈ [0, π/2]
-#  for Q̂*; (φ, α) ∈ [0, 2π] × [0, π/2] for the elliptic COD).  We pass
+#  The integrand is smooth on (φ, α) ∈ [0, 2π] × [0, π/2].  We pass
 #  `singul = 1, alpha = 0.0` to `DecuhrAlgorithm`, which degrades to
 #  ordinary adaptive Gauss and bypasses the Float64-only `alpha`
 #  auto-estimation path — keeping ForwardDiff compatibility.
@@ -13,56 +14,6 @@
 #  `_inv3`) live in `src/Core/green_helpers.jl`.  The nested-QuadGK
 #  counterpart lives in `green_nestedquadgk.jl`.
 # =============================================================================
-
-"""
-    _Qnn_star_decuhr(C, ξs, n̂; abstol, reltol, maxiters) -> Matrix
-
-Adaptive 1-D DECUHR (via `Integrals.DecuhrAlgorithm`) evaluation of
-the crack-plane kernel used in the ``\\omega \\to 0`` limit algorithm
-of [barthelemyIJSS2009](@citet).  Integrand is smooth,
-`alpha = 0.0` is forced to keep ForwardDiff compatibility.
-"""
-function _Qnn_star_decuhr(
-        C::AbstractArray{TC, 4},
-        ξs::AbstractVector{Tξ},
-        n̂::AbstractVector{Tnh};
-        abstol::Real = 1.0e-8,
-        reltol::Real = 1.0e-6,
-        maxiters::Int = 100_000
-    ) where {TC <: Number, Tξ <: Number, Tnh <: Number}
-    T = promote_type(TC, Tξ, Tnh)
-
-    ρ² = T(ξs[1])^2 + T(ξs[2])^2 + T(ξs[3])^2
-    ρ = sqrt(ρ²)
-    iszero(ρ) && return zeros(T, 3, 3)
-
-    nhat = SVector{3, T}(T(n̂[1]), T(n̂[2]), T(n̂[3]))
-    ξshat = SVector{3, T}(T(ξs[1]) / ρ, T(ξs[2]) / ρ, T(ξs[3]) / ρ)
-
-    A, Tn = MFH_Core._A_and_Tn(C, nhat, T)
-    Vs, Ks, Kns = MFH_Core._phi_cache(C, Tn, nhat, ξshat, T)
-
-    function integrand(u, _)
-        α = u[1]
-        ca = cos(α); sa = sin(α)
-        M = MFH_Core._qnn_pair_components(A, Vs, Ks, Kns, ca, sa, inv(sa * sa))
-        return SVector{6, T}(M[1, 1], M[2, 2], M[3, 3], M[1, 2], M[1, 3], M[2, 3])
-    end
-
-    Tvec = MFH_Core._decuhr_cubature(
-        integrand, [0.0], [π / 2];
-        wrksub = max(5000, maxiters ÷ 32),
-        abstol = abstol, reltol = reltol, maxiters = maxiters
-    )
-
-    fac = ρ / (2 * T(π))
-    result = Matrix{T}(undef, 3, 3)
-    result[1, 1] = Tvec[1] * fac; result[2, 2] = Tvec[2] * fac; result[3, 3] = Tvec[3] * fac
-    result[1, 2] = result[2, 1] = Tvec[4] * fac
-    result[1, 3] = result[3, 1] = Tvec[5] * fac
-    result[2, 3] = result[3, 2] = Tvec[6] * fac
-    return result
-end
 
 # -----------------------------------------------------------------------------
 #  Direct 2-D cubature for elliptic COD — DECUHR version

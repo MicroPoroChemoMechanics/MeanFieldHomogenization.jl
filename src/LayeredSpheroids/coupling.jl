@@ -42,7 +42,7 @@ function _coupling_I(q, Nseries::Int)
         P, _ = legendre_odd(:P0, x, Nseries)
         (P * P') ./ sqrt(q^2 - x^2)
     end
-    M, _ = quadgk(f, -1.0, 1.0)
+    M, _ = quadgk(f, -1.0, 1.0; norm = MFH_Core._quadgk_norm)
     return M
 end
 
@@ -51,7 +51,7 @@ function _coupling_J(q, Nseries::Int)
         P1, _ = legendre_odd(:P1p, x, Nseries)
         (P1 * P1') ./ sqrt(q^2 - x^2)
     end
-    M, _ = quadgk(f, -1.0, 1.0)
+    M, _ = quadgk(f, -1.0, 1.0; norm = MFH_Core._quadgk_norm)
     return M
 end
 
@@ -60,7 +60,7 @@ function _coupling_K(q, Nseries::Int)
         _, dP1 = legendre_odd(:P1p, x, Nseries)
         ((1 - x^2) / sqrt(q^2 - x^2)) .* (dP1 * dP1')
     end
-    M, _ = quadgk(f, -1.0, 1.0)
+    M, _ = quadgk(f, -1.0, 1.0; norm = MFH_Core._quadgk_norm)
     return M
 end
 
@@ -69,7 +69,7 @@ function _coupling_L(q, Nseries::Int)
         _, dP0 = legendre_odd(:P0, x, Nseries)
         sqrt(q^2 - x^2) .* (dP0 * dP0')
     end
-    M, _ = quadgk(f, -1.0, 1.0)
+    M, _ = quadgk(f, -1.0, 1.0; norm = MFH_Core._quadgk_norm)
     return M
 end
 

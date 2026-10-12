@@ -186,8 +186,9 @@ end
 #     degenerates when the reference is anisotropic in *type* and isotropic in
 #     *value*, which is exactly what the self-consistent and differential
 #     schemes feed back at their first step. `method = :residues` remains
-#     available explicitly, as above, and `:decuhr` is preferred over
-#     `:nestedquadgk` whenever `import DECUHR, Integrals` has been run.
+#     available explicitly, as above. The automatic choice is
+#     `:nestedquadgk`, the faster and the more accurate of the two cubatures;
+#     `:decuhr` is an explicit choice once `import DECUHR, Integrals` has run.
 
 # ## §3 Two dimensions — plane strain
 #

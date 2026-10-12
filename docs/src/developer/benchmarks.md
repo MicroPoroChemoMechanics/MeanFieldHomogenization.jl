@@ -61,8 +61,11 @@ Julia 1.13. Accuracy for the same runs is in [Cross-validation](@ref dev-validat
   `hill_tensor` beats Echoes' closed-form ``\partial\mathbb P/\partial\mathbb C``
   by 10.6× on the isotropic sphere.
 - The script passes `method` as a keyword holding a run-time `Symbol`, which
-  costs a dynamic dispatch: about 110 ns on the closed forms, the same in 0.15.
-  Called without it, the sphere takes 124 ns.
+  cost a dynamic dispatch in 0.16.0: about 110 ns on the closed forms, the same
+  in 0.15. Since 0.16.1 the default is resolved at compile time and any other
+  `method` costs one dispatch on its `Val`: on the same machine the sphere takes
+  37 ns without the keyword (132 ns in 0.16.0) and 150 ns with a run-time
+  `Symbol` (242 ns). The table above is that of 0.16.0.
 
 ## Reproducing
 

@@ -34,7 +34,7 @@
 #  ## The fixed point is the existing one
 #
 #  For a cavity `𝔹ᴱ = 𝔹ᵖ = 0`, so `_axi_correct` degenerates *identically* into
-#  the pore form `𝕃 = (𝕀 − 𝕃_u 𝔽)⁻¹ 𝕃_s` of `_cell_close_dipole` with
+#  the pore form `𝕃 = (𝕀 − 𝕃_u : 𝔽)⁻¹ : 𝕃_s` of `_cell_close_dipole` with
 #  `𝔽 = −P₀`, block by modal block. It is reused rather than rewritten.
 #
 #  `𝔽 = −P₀` and not `−V_D P₀`: the cavity volume is already carried by the

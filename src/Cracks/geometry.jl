@@ -65,8 +65,7 @@ end
 
 function _classify_crack(::Type{T}, a, b) where {T}
     if is_hard_numeric(T)
-        tol = max(a, b) * (1.0e-10 * one(T))
-        return (a - b) ≤ tol ? Penny : EllipticShape
+        return MFH_Core._coincident(a, b, 1.0e-10) ? Penny : EllipticShape
     else
         return isequal(a, b) ? Penny : EllipticShape
     end

@@ -245,20 +245,33 @@ exactly major-symmetric.
 The components are taken and rebuilt in the tensor's **own** basis, so the
 projection commutes with the orientation of the running estimate.
 
-!!! note "Structured types are returned untouched"
+!!! note "Structured types keep their class"
     `TensISO`, `TensOrtho` and the five-parameter Walpole `TensTI{4,T,5}` are
     major-symmetric *by construction*, so there is nothing to project — and
     rebuilding them as a generic `Tens` would be actively harmful: the Newton
     parameterization (`_sc_newton_seed`) reads the structured components through
-    `get_data`, and the symmetry-class dispatch keys on the concrete type. Only
-    the genuinely unstructured estimates — which is exactly what a mix of
-    non-coaxial families produces — are rebuilt.
+    `get_data`, and the symmetry-class dispatch keys on the concrete type. A
+    six- or eight-parameter `TensTI` is projected within its class, onto the
+    five-parameter form. Only the genuinely unstructured estimates — which is
+    exactly what a mix of non-coaxial families produces — are rebuilt.
 """
 _major_symmetrize(P::TensND.TensISO{4, 3}) = P
 _major_symmetrize(P::TensND.TensISO{2, 3}) = P
 _major_symmetrize(P::TensND.TensOrtho) = P
 _major_symmetrize(P::TensND.TensTI{4, T, 5}) where {T} = P
 _major_symmetrize(P::TensND.TensTI{2}) = P
+
+# A transversely isotropic estimate stays one. In the Walpole basis the major
+# transpose swaps ℓ₃ and ℓ₄ and changes the sign of ℓ₇ and ℓ₈, the
+# major-antisymmetric generators of the eight-parameter form, so the
+# major-symmetric part is the five-parameter tensor below. Products of TI tensors
+# land in the six- or eight-parameter form; rebuilt as a generic `Tens`, the
+# estimate lost its class, and the Hill tensor of a coaxial spheroid in it went
+# through a cubature instead of its closed form.
+function _major_symmetrize(P::TensND.TensTI{4, T}) where {T}
+    ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆, _, _ = TensND.get_ℓ8(P)
+    return TensND.TensTI{4, T, 5}((ℓ₁, ℓ₂, (ℓ₃ + ℓ₄) / 2, ℓ₅, ℓ₆), TensND.axis(P))
+end
 
 function _major_symmetrize(P::TensND.AbstractTens{4, 3})
     A = get_array(P)

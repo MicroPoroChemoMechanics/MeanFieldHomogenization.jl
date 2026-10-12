@@ -59,7 +59,7 @@ end
 
 function _classify_cylinder_shape(::Type{T}, b, c) where {T}
     if T <: Real
-        is_equal = (b - c) ≤ max(b, c) * (1.0e-10 * one(T))
+        is_equal = MFH_Core._coincident(b, c, 1.0e-10)
     else
         is_equal = isequal(b, c)
     end

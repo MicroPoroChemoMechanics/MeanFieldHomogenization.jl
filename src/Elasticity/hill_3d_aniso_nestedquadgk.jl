@@ -153,7 +153,17 @@ function _hill_3d_aniso_nestedquadgk(
     # α = 1 (identity) when ω ≥ 0.1; beyond that α ≈ 2, 3, … for each decade.
     # Any α gives the same integral, so it is read on the value of ω alone: a
     # dual semi-axis keeps its derivatives in ζ, where they belong.
-    α = max(1.0, -log10(MFH_Core._primal(ω)))
+    ω_val = MFH_Core._primal(ω)
+    α = max(1.0, -log10(ω_val))
+
+    # --- Boundary layer at z = 0 ----------------------------------------------
+    # A flat ellipsoid's integrand also varies over a layer z ~ ω near z = 0,
+    # which the first Gauss-Kronrod nodes miss once ω < 1e-3: QuadGK then stops
+    # with an error far above the one asked for (2e-5 relative at ω = 1e-5 for
+    # `reltol = 1e-6`). Breakpoints at z = ω, 10ω and 100ω give the layer
+    # intervals of its own; read on the value of ω, as α is.
+    u_breaks = ω_val < 1.0e-3 ?
+        map(z -> 1.0 - (1.0 - z)^(1 / α), (ω_val, 10ω_val, 100ω_val)) : ()
 
     function integrand_at(z, φ)
         uz = sqrt(one(T) - T(z) * T(z))
@@ -163,10 +173,11 @@ function _hill_3d_aniso_nestedquadgk(
 
     MFH_Core._bump!(MFH_Core.QUADGK_OUTER)
     P_vals, _ = QuadGK.quadgk(
-        0.0, 1.0;
+        0.0, u_breaks..., 1.0;
         atol = abstol,
         rtol = reltol,
-        maxevals = maxiters
+        maxevals = maxiters,
+        norm = MFH_Core._quadgk_norm
     ) do u
         one_minus_u = 1.0 - u
         z = 1.0 - one_minus_u^α

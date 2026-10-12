@@ -13,18 +13,33 @@ Angular integrals (paper eq. 1532):
 likewise ``\\mathcal{S}_\\eta`` with ``\\sin^2\\!\\vartheta``, and
 ``\\mathcal{E}_\\eta`` the complete integral of the second kind.
 
-The circular limit ``\\eta = 1`` is a removable ``0/0`` and must be taken
-by the shortcut below. The guard is deliberately **not** restricted to
-`T <: Real`: on a symbolic element type `iszero(k²)` is `false` for a free
-symbol (which is what we want — the elliptic branch is the general answer)
-and `true` for an exact `Sym(1)`, where the general branch would otherwise
-return `NaN`. Restricting it to `Real` made `cod_tensor(PennyCrack(one(Sym)), …)`
-silently produce `NaN`.
+The circular limit ``\\eta = 1`` is a removable ``0/0``. For a number type
+the closed forms ``\\mathcal{S} = (\\mathcal{K}-\\mathcal{E})/k^2`` and
+``\\mathcal{C} = \\mathcal{K}-\\mathcal{S}`` cancel as ``k^2 \\to 0`` (a relative
+error near ``\\epsilon/k^2``), so below ``k^2 = 0.1`` they are replaced by the
+series of the complete integrals,
+
+```math
+\\mathcal{K} = \\frac{\\pi}{2}\\sum_{n\\ge0} a_n k^{2n},\\quad
+\\mathcal{S} = \\frac{\\pi}{2}\\sum_{n\\ge1}\\frac{2n}{2n-1}\\,a_n k^{2n-2},\\quad
+a_n = \\Big(\\frac{(1/2)_n}{n!}\\Big)^2,
+```
+
+with ``\\mathcal{E} = \\mathcal{K} - k^2\\mathcal{S}``: exact at the circle, and
+differentiable through it, where a dual ``k^2`` of value zero carries the
+derivative of an elliptical crack's gap. The guard is deliberately **not**
+restricted to `T <: Real`: on a symbolic element type `iszero(k²)` is `false`
+for a free symbol (which is what we want — the elliptic branch is the general
+answer) and `true` for an exact `Sym(1)`, where the general branch would
+otherwise return `NaN`. Restricting it to `Real` made
+`cod_tensor(PennyCrack(one(Sym)), …)` silently produce `NaN`.
 """
 @inline function _elliptic_CS(η::T) where {T <: Number}
     η² = η^2
     k² = one(T) - η²
-    if is_hard_numeric(T) ? iszero(k²) : isequal(k², zero(k²))
+    if is_hard_numeric(T) && abs(k²) ≤ 0.1
+        return _elliptic_CS_series(k²)
+    elseif !is_hard_numeric(T) && isequal(k², zero(k²))
         q = T(π) / T(4)
         return q, q, T(π) / T(2)
     else
@@ -36,9 +51,37 @@ silently produce `NaN`.
     end
 end
 
+# 𝒞, 𝒮, ℰ near the circle, |k²| ≤ 0.1: 40 terms leave a truncation below
+# 0.1⁴⁰. The coefficients aₙ = ((½)ₙ/n!)² follow from aₙ = aₙ₋₁ ((2n − 1)/(2n))².
+@inline function _elliptic_CS_series(k²)
+    F = typeof(float(MFH_Core._primal(k²)))
+    a = one(F)
+    𝒦 = one(k²)
+    𝒮 = zero(k²)
+    kp = one(k²)                                  # k^(2n−2)
+    for n in 1:40
+        a = a * ((2n - 1) / (2n))^2
+        𝒮 += (2n / (2n - 1)) * a * kp
+        kp *= k²
+        𝒦 += a * kp
+    end
+    h = F(π) / 2
+    return h * (𝒦 - 𝒮), h * 𝒮, h * (𝒦 - k² * 𝒮)
+end
+
 # =============================================================================
 #  ISO matrix
 # =============================================================================
+
+# The COD tensor diag(Bℓℓ, Bmm, Bnn) in the crack frame, built as the symmetric
+# Tensors.jl storage it ends up in, so that its dimension is in its type: built
+# from `Diagonal([…])`, a vector sized at run time, it was not, and every caller
+# of a closed-form `cod_tensor` received a tensor of unknown dimension.
+function _diagonal_cod(Bll, Bmm, Bnn, basis::TensND.AbstractBasis{3})
+    T = promote_type(typeof(Bll), typeof(Bmm), typeof(Bnn))
+    z = zero(T)
+    return TensND.Tens(TensND.Tensors.SymmetricTensor{2, 3, T}((Bll, z, z, Bmm, z, Bnn)), basis)
+end
 
 """
     _cod_iso_ellipse(c::EllipticCrack, E, ν) -> Tens{2,3}
@@ -73,7 +116,7 @@ function _cod_iso_ellipse(c::EllipticCrack, E::Number, ν::Number)
     Bll = χ / ((one(T) - ν) * 𝒞 + η^2 * 𝒮)
     Bmm = χ / ((one(T) - ν) * η^2 * 𝒮 + 𝒞)
     Bnn = χ / ℰ
-    return TensND.Tens(Diagonal([Bll, Bmm, Bnn]), crack_basis(c))
+    return _diagonal_cod(Bll, Bmm, Bnn, crack_basis(c))
 end
 
 """
@@ -87,7 +130,7 @@ function _cod_iso_ribbon(c::RibbonCrack, E::Number, ν::Number)
     T = promote_type(typeof(E), typeof(ν))
     χ = T(π) * (one(T) - ν^2) / E
     Bll = χ / (one(T) - ν)
-    return TensND.Tens(Diagonal([Bll, χ, χ]), crack_basis(c))
+    return _diagonal_cod(Bll, χ, χ, crack_basis(c))
 end
 
 # =============================================================================
@@ -123,7 +166,7 @@ function _cod_ti_ellipse(c::EllipticCrack, E::Number, H::Number, ν₁::Number, 
     Bll = χ / (β * 𝒞 + η^2 * 𝒮)
     Bmm = χ / (β * η^2 * 𝒮 + 𝒞)
     Bnn = χ * sqrt((one(T) - H * ν₂^2) / (H * (one(T) - ν₁^2))) / ℰ
-    return TensND.Tens(Diagonal([Bll, Bmm, Bnn]), crack_basis(c))
+    return _diagonal_cod(Bll, Bmm, Bnn, crack_basis(c))
 end
 
 # NB: the Penny case (η = 1) is handled by the generic elliptic formula
@@ -147,5 +190,5 @@ function _cod_ti_ribbon(c::RibbonCrack, E::Number, H::Number, ν₁::Number, ν�
     Bnn = χ * sqrt((one(T) - H * ν₂^2) / (H * (one(T) - ν₁^2))) * σᵞ / 2
     Bmm = χ * σᵞ / 2
     Bll = χ / (sqrt(Γ) * (one(T) - ν₁))
-    return TensND.Tens(Diagonal([Bll, Bmm, Bnn]), crack_basis(c))
+    return _diagonal_cod(Bll, Bmm, Bnn, crack_basis(c))
 end

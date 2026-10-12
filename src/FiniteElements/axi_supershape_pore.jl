@@ -148,7 +148,7 @@ function _axi_pore_run_elastic(
         P0 = Qm' * C0_66 * Qm
         Z = zeros(nload, nload)
         # `𝔹ᴱ = 𝔹ᵖ = 0` for a cavity, so this degenerates *identically* into
-        # `(𝕀 - 𝕃_u 𝔽)⁻¹ 𝕃_s` with `𝔽 = -P₀`. Reused rather than rewritten.
+        # `(𝕀 - 𝕃_u : 𝔽)⁻¹ : 𝕃_s` with `𝔽 = -P₀`. Reused rather than rewritten.
         A, _B, X = _axi_correct(L_s, Z, L_u, Z, P0)
         (; m, L_s, L_u, A, X)
     end
@@ -169,7 +169,7 @@ end
 """
     _axi_pore_dipole_norm(block, C0_66) -> Float64
 
-``\\|\\mathbb{L}_u\\mathbb{F}\\|`` on one modal block — the diagnostic to watch rather than the answer.
+``\\|\\mathbb{L}_u:\\mathbb{F}\\|`` on one modal block — the diagnostic to watch rather than the answer.
 It is ``O((a/R)^3)``, so a log-log slope of ``-3`` against ``R`` says the correction is
 wired right, and the *corrected* answer falling faster than that says the sign
 is right too.

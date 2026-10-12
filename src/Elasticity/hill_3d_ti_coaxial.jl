@@ -21,81 +21,10 @@
 #  [mura1987](@cite).
 # =============================================================================
 
-# ── Elliptic-integral helpers — single argument η ----------------------------
-#
-#   I₀(η) = ∫₋₁¹ dz / [z² + η² (1−z²)]
-#   I₂(η) = ∫₋₁¹ z² dz / [z² + η² (1−z²)]
-#   I₄(η) = ∫₋₁¹ z⁴ dz / [z² + η² (1−z²)]
-#
-# Closed forms when η ≠ 1, with limit values 2, 2/3, 2/5 at η → 1.
-
-# Tolerances chosen to absorb floating-point noise from acoustic-polynomial
-# discriminants that should vanish exactly (e.g. when the TI matrix collapses
-# to an isotropic one).  `_HILL_TI_EPS` is used both for `η ≈ 1` (single
-# argument) and `η₁ ≈ η₂` (two arguments).
-const _HILL_TI_EPS = 1.0e-6
-
-@inline function _I0(η)
-    k2 = η^2 - 1
-    abs(k2) < _HILL_TI_EPS && return 2 * one(η)
-    return 2 * acosh(η) / (η * sqrt(k2))
-end
-
-@inline function _I2(η)
-    k2 = η^2 - 1
-    abs(k2) < _HILL_TI_EPS && return 2 * one(η) / 3
-    return 2 * (η * acosh(η) - sqrt(k2)) / k2^(3 // 2)
-end
-
-@inline function _I4(η)
-    k2 = η^2 - 1
-    abs(k2) < _HILL_TI_EPS && return 2 * one(η) / 5
-    return 2 * (η^3 * acosh(η) - (1 + 4 * k2 / 3) * sqrt(k2)) / k2^(5 // 2)
-end
-
-# ── Elliptic-integral helpers — two arguments η₁, η₂ -------------------------
-#
-#   J_n(η₁,η₂) = ∫₋₁¹ z^n dz / { [z² + η₁²(1−z²)] [z² + η₂²(1−z²)] }
-#
-# Coincidence rule J_n(η,η) handled separately to avoid the 0/0 form.
-# `η₁ ≈ η₂` is detected with a relative tolerance to absorb round-off
-# noise from a near-degenerate acoustic polynomial (e.g. iso matrix
-# expressed as a TI tensor).
-
-@inline _close_eta(η1, η2) = abs(η1^2 - η2^2) < _HILL_TI_EPS * max(abs(η1^2), abs(η2^2), 1.0)
-
-@inline function _J0(η1, η2)
-    if _close_eta(η1, η2)
-        η = (η1 + η2) / 2
-        k2 = η^2 - 1; sk2 = sqrt(k2)
-        abs(k2) < _HILL_TI_EPS && return 2 * one(η)
-        return (acosh(η) + η * sk2) / (sk2 * η^3)
-    end
-    e12 = η1^2; e22 = η2^2
-    return ((1 - e12) * _I0(η1) - (1 - e22) * _I0(η2)) / (e22 - e12)
-end
-
-@inline function _J2(η1, η2)
-    if _close_eta(η1, η2)
-        η = (η1 + η2) / 2
-        k2 = η^2 - 1; sk2 = sqrt(k2)
-        abs(k2) < _HILL_TI_EPS && return 2 * one(η) / 3
-        return (-acosh(η) + η * sk2) / (sk2^3 * η)
-    end
-    e12 = η1^2; e22 = η2^2
-    return ((1 - e12) * _I2(η1) - (1 - e22) * _I2(η2)) / (e22 - e12)
-end
-
-@inline function _J4(η1, η2)
-    if _close_eta(η1, η2)
-        η = (η1 + η2) / 2
-        k2 = η^2 - 1; sk2 = sqrt(k2)
-        abs(k2) < _HILL_TI_EPS && return 2 * one(η) / 5
-        return (-3 * η * acosh(η) + (2 + η^2) * sk2) / sk2^5
-    end
-    e12 = η1^2; e22 = η2^2
-    return ((1 - e12) * _I4(η1) - (1 - e22) * _I4(η2)) / (e22 - e12)
-end
+# The auxiliary integrals I_n, J_n of the closed form, with the regimes that
+# keep them exact near the sphere, near coincident roots and for flat shapes,
+# live in `src/Core/spheroid_integrals.jl`: the Newton potentials of the
+# isotropic case share them.
 
 # ── Core routine --------------------------------------------------------------
 
@@ -125,9 +54,10 @@ Element type policy: with
   out in `Complex{T}` to keep the complex roots of the acoustic
   polynomial well-defined; the imaginary parts cancel by construction
   and only the real parts are returned. Compatible with
-  `ForwardDiff.Dual` numbers (the analytical Hill tensor is
+  `ForwardDiff.Dual` numbers: the analytical Hill tensor is
   differentiable through the elastic constants and the spheroid aspect
-  ratio).
+  ratio, at an isotropic point too, where the two acoustic roots
+  coincide (see `src/Core/spheroid_integrals.jl`).
 - if `T` is itself complex (frequency-domain viscoelasticity, harmonic
   problems), the formula is evaluated directly in `T` and the genuinely
   complex ``P_i`` are returned unchanged.
@@ -162,47 +92,32 @@ function _hill_ti_walpole(ω, C1111, C1122, C1133, C3333, C2323)
     om2 = ωc^2
     om4 = om2^2
 
-    # Roots γ₁, γ₂ of  a γ⁴ + b γ² + c = 0  (acoustic polynomial)
+    # The acoustic polynomial a γ⁴ + b γ² + c has roots γ₁², γ₂² of sum −b/a
+    # and product c/a; aᵢ = ω² γᵢ² enter through their mean and squared
+    # half-difference, rational in the moduli and free of their scale.
     a = C44 * C33
     b = C13^2 + 2 * C13 * C44 - C11 * C33
     c = C11 * C44
-    # Detect iso (or near-iso) values: b² − 4ac vanishes exactly when the
-    # matrix is isotropic. Using `sqrt` on the discriminant in Dual
-    # arithmetic at that point produces NaN partials (the analytic
-    # derivative of √x at x = 0 is +∞). Branch on the *real* value of
-    # the discriminant so the comparison is a plain Bool and the Dual
-    # partials are propagated through the appropriate iso-coaxial limit.
-    disc = b^2 - 4 * a * c
-    γ1, γ2 = if abs(disc) < _HILL_TI_EPS *
-            max(abs(b^2), abs(4 * a * c), one(real(TC)))
-        γ_iso = sqrt(-b / (2 * a))
-        (γ_iso, γ_iso)
-    else
-        sqd = sqrt(disc)
-        (sqrt((-b + sqd) / (2 * a)), sqrt((-b - sqd) / (2 * a)))
-    end
-
-    η1 = ωc * γ1
-    η2 = ωc * γ2
-    η3 = ωc * sqrt((C11 - C12) / (2 * C44))
+    m = -om2 * b / (2 * a)
+    d2 = om4 * (b^2 - 4 * a * c) / (4 * a^2)
+    a3 = om2 * (C11 - C12) / (2 * C44)
 
     coef = C44 * C33
-    j0 = _J0(η1, η2) / coef
-    j2 = _J2(η1, η2) / coef
-    j4 = _J4(η1, η2) / coef
-    i0 = _I0(η3) / C44
-    i2 = _I2(η3) / C44
+    J4, L21, L02 = MFH_Core._spheroid_JL(m, d2)
+    j4 = J4 / coef
+    l21 = L21 / coef
+    l02 = L02 / coef
+    i2 = MFH_Core._spheroid_I2(a3) / C44
+    iw = MFH_Core._spheroid_Iw(a3) / C44
 
-    # Walpole components (eqs. 53–58 of Barthélémy 2020)
-    P1_c = ((C44 - om2 * C11) * j4 + om2 * C11 * j2) / 2
-    P2_c = om2 * ((om2 * C44 - C33) * j4 + (C33 - 2 * om2 * C44) * j2 + om2 * C44 * j0) / 4
-    P3_c = om2 / (2 * sqrt(TC(2))) * (C44 + C13) * (j4 - j2)
-    P5_c = P2_c / 2 + om2 * (i0 - i2) / 8
-    P6_c = (
-        (om4 * C11 + C33 + 2 * om2 * C13) * j4
-            - 2 * om2 * (om2 * C11 + C13) * j2
-            + om4 * C11 * j0 + i2
-    ) / 8
+    # Walpole components (eqs. 53–58 of Barthélémy 2020), written with
+    # j₂ − j₄ = l₂₁ and j₀ − 2j₂ + j₄ = l₀₂: in j₀, j₂, j₄ they are differences of
+    # terms ω² or ω⁴ larger than the result for a needle.
+    P1_c = (C44 * j4 + om2 * C11 * l21) / 2
+    P2_c = om2 * (C33 * l21 + om2 * C44 * l02) / 4
+    P3_c = -om2 / (2 * sqrt(TC(2))) * (C44 + C13) * l21
+    P5_c = P2_c / 2 + om2 * iw / 8
+    P6_c = (C33 * j4 - 2 * om2 * C13 * l21 + om4 * C11 * l02 + i2) / 8
 
     return (
         _strip_im(P1_c, T),

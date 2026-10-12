@@ -99,3 +99,18 @@ end
         @test d_nqg ≈ d_ref rtol = 1.0e-7
     end
 end
+
+@testset "nestedquadgk — the boundary layer of a very flat ellipsoid" begin
+    # Isotropic values in a fully anisotropic type, so that the closed form is
+    # the exact reference. Below ω ≈ 1e-4, QuadGK used to miss the layer z ~ ω
+    # near z = 0 and stop with an error of 2e-5 at ω = 1e-5 for the default
+    # `reltol = 1e-6`.
+    C_iso = TensISO{3}(3 * 30.0, 2 * 18.0)
+    C_full = TensND.change_tens_canon(C_iso)
+    canon(P) = TensND.get_array(TensND.change_tens_canon(P))
+    for ω in (1.0e-5, 1.0e-6), ell in (Ellipsoid(1.0, 1.0, ω), Ellipsoid(1.0, 0.5, ω))
+        P = canon(hill_tensor(ell, C_full; method = :nestedquadgk))
+        R = canon(hill_tensor(ell, C_iso))
+        @test maximum(abs, P .- R) / maximum(abs, R) < 1.0e-6
+    end
+end

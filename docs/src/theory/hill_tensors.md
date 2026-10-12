@@ -146,7 +146,51 @@ identity is
 ```
 
 An intrinsic proof is given in [barthelemyIJSS2016](@citet), as an alternative to
-the component reasoning of [mura1987](@citet). Both forms are useful: the
+the component reasoning of [mura1987](@citet).
+
+```@raw html
+<details><summary>Proof of the surface-element identity</summary>
+```
+
+Let ``r = \|\boldsymbol{A}^{-1}\!\cdot\underline{\zeta}\|``. Differentiating
+``\underline{\xi} = \boldsymbol{A}^{-1}\!\cdot\underline{\zeta}/r`` along the
+sphere, the variation of ``1/r`` only adds a component along ``\underline{\xi}``:
+
+```math
+\mathrm{d}\underline{\xi}
+= \bigl(\boldsymbol{1}-\underline{\xi}\otimes\underline{\xi}\bigr)\cdot
+  \boldsymbol{F}\cdot\mathrm{d}\underline{\zeta},
+\qquad
+\boldsymbol{F} = \frac{\boldsymbol{A}^{-1}}{r}.
+```
+
+The map is therefore the linear map ``\boldsymbol{F}`` followed by the
+orthogonal projection onto the plane tangent to the sphere at
+``\underline{\xi}``. A linear map carries an oriented surface element
+``\mathrm{d}\underline{S}`` to ``(\det\boldsymbol{F})\,\boldsymbol{F}^{-T}\!\cdot
+\mathrm{d}\underline{S}`` (Nanson's formula), and the projection onto a plane
+keeps the component of a surface vector along the normal to that plane. On the
+two unit spheres ``\mathrm{d}\underline{S}_{\zeta} = \mathrm{d}S_{\zeta}\,\underline{\zeta}``
+and ``\mathrm{d}\underline{S}_{\xi} = \mathrm{d}S_{\xi}\,\underline{\xi}``, so that,
+``\boldsymbol{A}`` being symmetric,
+
+```math
+\mathrm{d}S_{\xi}
+= \underline{\xi}\cdot(\det\boldsymbol{F})\,\boldsymbol{F}^{-T}\!\cdot\underline{\zeta}\;\mathrm{d}S_{\zeta}
+= \frac{\det\boldsymbol{A}^{-1}}{r^{3}}\;
+  r\,\underline{\xi}\cdot\boldsymbol{A}\cdot\underline{\zeta}\;\mathrm{d}S_{\zeta}
+= \frac{\det\boldsymbol{A}^{-1}}{r^{3}}\,\mathrm{d}S_{\zeta},
+```
+
+because ``\underline{\xi}\cdot\boldsymbol{A}\cdot\underline{\zeta}
+= \underline{\zeta}\cdot\underline{\zeta}/r = 1/r``. The inverse map
+``\underline{\zeta} = \boldsymbol{A}\cdot\underline{\xi}/\|\boldsymbol{A}\cdot\underline{\xi}\|``
+gives ``r = 1/\|\boldsymbol{A}\cdot\underline{\xi}\|``, which turns the last
+expression into the identity above.
+
+```@raw html
+</details>
+``` Both forms are useful: the
 ``\underline{\xi}`` form makes the geometry explicit, the ``\underline{\zeta}``
 form is the one that degenerates cleanly in the cylinder limit below.
 
@@ -178,8 +222,17 @@ every symmetry class:
 
 Here ``\mathcal{F} = \mathcal{F}(\theta,\kappa)`` and
 ``\mathcal{E} = \mathcal{E}(\theta,\kappa)`` are the incomplete elliptic
-integrals of the first and second kind [abramowitz1972](@cite), of amplitude and
-parameter
+integrals of the first and second kind [abramowitz1972](@cite),
+
+```math
+\mathcal{F}(\theta,\kappa) = \int_{0}^{\theta}
+\frac{\mathrm{d}\varphi}{\sqrt{1-\kappa^{2}\sin^{2}\varphi}},
+\qquad
+\mathcal{E}(\theta,\kappa) = \int_{0}^{\theta}
+\sqrt{1-\kappa^{2}\sin^{2}\varphi}\,\mathrm{d}\varphi,
+```
+
+of amplitude and modulus
 
 ```math
 \theta = \arcsin\sqrt{1-\frac{c^{2}}{a^{2}}},
@@ -225,6 +278,16 @@ and ``I_{22}^{\boldsymbol{A}}=I_{33}^{\boldsymbol{A}}=I_{23}^{\boldsymbol{A}}
     Internally, `newton_potential_3d` and `newton_potential_3d_cylinder` return
     the **raw** kernel — the values above multiplied by ``4\pi`` — and the
     division is applied at the [`tens_IA`](@ref) call site.
+
+!!! note "Close to a sphere, close to a spheroid"
+    The divided differences of the table, such as
+    ``I_{31}^{\boldsymbol{A}} = (I_3^{\boldsymbol{A}}-I_1^{\boldsymbol{A}})/(a^2-c^2)``,
+    cancel when two semi-axes come together. `newton_potential_3d` evaluates
+    them otherwise: a spheroid, sphere included, through the integrals these
+    potentials stand for, and a triaxial ellipsoid whose two semi-axes differ by
+    less than 2 % through an expansion around the spheroid it is close to,
+    exact and differentiable where the two meet.
+    [Degenerate shapes](@ref th-degenerate-shapes) gives both.
 
 !!! note "Why the cylinder column has zeros that still matter"
     The cylinder column is the limit ``a\to\infty`` of the triaxial one. Three
@@ -275,6 +338,42 @@ V^{\boldsymbol{A}}_{iiii} = I_i^{\boldsymbol{A}},
 V^{\boldsymbol{A}}_{ijij} = V^{\boldsymbol{A}}_{ijji}
 = \tfrac{1}{4}\bigl(I_i^{\boldsymbol{A}}+I_j^{\boldsymbol{A}}\bigr)
 \qquad (i\ne j).
+```
+
+```@raw html
+<details><summary>The two tensors as 6×6 Kelvin–Mandel matrices</summary>
+```
+
+In the frame ``(\underline{e}^{\boldsymbol{A}}_i)``, with ``(\rho_1,\rho_2,\rho_3)
+= (a,b,c)`` and the components ordered ``11, 22, 33, 23, 31, 12``, the formulas
+above fill
+
+```math
+\mathrm{Mat}\bigl(\mathbb{U}^{\boldsymbol{A}}\bigr) =
+\begin{pmatrix}
+\frac{3(I_1-a^2I_{11})}{2} & \frac{I_2-a^2I_{12}}{2} & \frac{I_1-c^2I_{31}}{2} & 0 & 0 & 0\\
+\frac{I_2-a^2I_{12}}{2} & \frac{3(I_2-b^2I_{22})}{2} & \frac{I_3-b^2I_{23}}{2} & 0 & 0 & 0\\
+\frac{I_1-c^2I_{31}}{2} & \frac{I_3-b^2I_{23}}{2} & \frac{3(I_3-c^2I_{33})}{2} & 0 & 0 & 0\\
+0 & 0 & 0 & I_3-b^2I_{23} & 0 & 0\\
+0 & 0 & 0 & 0 & I_1-c^2I_{31} & 0\\
+0 & 0 & 0 & 0 & 0 & I_2-a^2I_{12}
+\end{pmatrix}
+```
+
+```math
+\mathrm{Mat}\bigl(\mathbb{V}^{\boldsymbol{A}}\bigr) =
+\operatorname{diag}\Bigl(I_1,\ I_2,\ I_3,\
+\tfrac{I_2+I_3}{2},\ \tfrac{I_3+I_1}{2},\ \tfrac{I_1+I_2}{2}\Bigr),
+```
+
+the superscript ``\boldsymbol{A}`` being dropped. The shear entries are twice
+the tensor components, ``2\,U^{\boldsymbol{A}}_{2323}``, ``2\,V^{\boldsymbol{A}}_{2323}``,
+as Kelvin–Mandel storage requires. Substituting the cylinder column of the
+tables, with the finite limits of the products ``a^2 I_{1j}`` noted above,
+gives the two matrices of the cylinder below.
+
+```@raw html
+</details>
 ```
 
 **Sphere** ``\boldsymbol{A}=\boldsymbol{1}``:
@@ -345,28 +444,108 @@ its axis**. For the circular cylinder ``b=c`` the non-zero entries reduce to
      {\|\boldsymbol{A}\cdot\underline{\xi}\|^{3}}\,\mathrm{d}S_{\xi}
 ```
 
-This is the form of [willis1977](@citet); see also [mura1987](@citet). Inverting the acoustic tensor
-``\underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi}`` pointwise is the source of
-all the computational work: in general no closed form exists and one resorts to
-numerical cubature [ghahremani1977, gavazzi1990, masson2008](@cite). `MeanFieldHomogenization` offers three algorithm traits, mirroring the
-Echoes `NUMINT` / `RESIDUES` options:
+This is the form of [willis1977](@citet); see also [mura1987](@citet).
 
+### Properties
+
+Scaling ``\boldsymbol{A}`` by ``\lambda>0`` multiplies ``\det\boldsymbol{A}`` and
+``\|\boldsymbol{A}\cdot\underline{\xi}\|^{3}`` by the same ``\lambda^{3}``:
+``\mathbb{P}`` depends on the shape of the inclusion through two aspect ratios
+and the orientation of its axes, not on its size.
+
+``\mathbb{P}`` is major-symmetric and positive definite on symmetric
+second-order tensors, for any positive definite ``\mathbb{C}``. The Eshelby
+tensor ``\mathbb{S}^{\mathrm{E}} = \mathbb{P}:\mathbb{C}`` is not major-symmetric
+in general. It is similar to ``\mathbb{C}^{1/2}:\mathbb{P}:\mathbb{C}^{1/2}``, so
+its eigenvalues are real and positive; being non-symmetric, its quadratic form is
+not controlled by them. The stress counterpart
+``\mathbb{Q} = \mathbb{C}-\mathbb{C}:\mathbb{P}:\mathbb{C}`` is defined in
+[The Eshelby inclusion problem](@ref th-eshelby-problem).
+
+```@raw html
+<details><summary>Why ℙ is positive definite</summary>
+```
+
+For a symmetric ``\boldsymbol{\varepsilon}`` and a symmetric ``\boldsymbol{M}``,
+``\boldsymbol{\varepsilon}:\bigl(\underline{\xi}\stackrel{s}{\otimes}\boldsymbol{M}
+\stackrel{s}{\otimes}\underline{\xi}\bigr):\boldsymbol{\varepsilon}
+= (\boldsymbol{\varepsilon}\cdot\underline{\xi})\cdot\boldsymbol{M}\cdot
+(\boldsymbol{\varepsilon}\cdot\underline{\xi})``. Hence, from the
+``\underline{\xi}`` form,
+
+```math
+\boldsymbol{\varepsilon}:\mathbb{P}:\boldsymbol{\varepsilon}
+= \frac{\det\boldsymbol{A}}{4\pi}
+\int_{\|\underline{\xi}\|=1}
+\frac{(\boldsymbol{\varepsilon}\cdot\underline{\xi})\cdot
+      \bigl(\underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi}\bigr)^{-1}\cdot
+      (\boldsymbol{\varepsilon}\cdot\underline{\xi})}
+     {\|\boldsymbol{A}\cdot\underline{\xi}\|^{3}}\,\mathrm{d}S_{\xi}.
+```
+
+The acoustic tensor is symmetric positive definite, since
+``\underline{v}\cdot(\underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi})\cdot\underline{v}
+= (\underline{v}\stackrel{s}{\otimes}\underline{\xi}):\mathbb{C}:
+(\underline{v}\stackrel{s}{\otimes}\underline{\xi}) > 0`` for ``\underline{v}\ne\underline{0}``,
+and so is its inverse. The integrand is therefore non-negative, and the
+integral, of a continuous integrand, vanishes only if
+``\boldsymbol{\varepsilon}\cdot\underline{\xi} = \underline{0}`` for every unit
+``\underline{\xi}``, that is ``\boldsymbol{\varepsilon} = \boldsymbol{0}``.
+
+```@raw html
+</details>
+```
+
+### Algorithms for an arbitrary anisotropy
+
+Inverting the acoustic tensor ``\underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi}``
+pointwise is the source of all the computational work: in general no closed
+form exists and one resorts to numerical integration
+[ghahremani1977, gavazzi1990, masson2008](@cite). `MeanFieldHomogenization`
+offers three algorithm traits, mirroring the Echoes `NUMINT` / `RESIDUES`
+options:
+
+- **`NestedQuadGK`** — nested adaptive 1-D Gauss–Kronrod quadratures,
+  type-generic and always available, the `:auto` choice whatever the
+  coefficient type and whatever else is loaded.
 - **`DECUHR`** — the surface integral is evaluated by the adaptive cubature for
-  singular integrands of [espelid1994](@citet). ForwardDiff-safe. Selected by
-  `:auto` when its (weak-dependency) extension is loaded.
-- **`NestedQuadGK`** — nested adaptive 1-D quadrature, type-generic and always
-  available; the `:auto` choice otherwise, and the one used for `Dual`,
-  `Complex` and symbolic coefficients whatever else is loaded.
+  singular integrands of [espelid1994](@citet). ForwardDiff-safe, on an explicit
+  `method = :decuhr` once its (weak-dependency) extension is loaded.
 - **`Residue`** — the inner ``\varphi`` integral is reduced to a sum of residues
-  by the Cauchy theorem, leaving a single 1-D quadrature [masson2008](@cite).
-  The fastest of the three (~4 ms against ~11 ms and ~31 ms on a triaxial
-  ellipsoid), but reachable on an explicit `method = :residues` only: it is
-  `Float64`-only (the polynomial root finder it needs is not differentiable by
-  ForwardDiff), and its acoustic polynomial degenerates when the reference is
-  anisotropic in *type* while isotropic in *value* — returning `NaN` there
-  instead of a number. That reference is what the differential and
-  self-consistent schemes feed back at their first step, hence the choice of a
-  cubature as the default.
+  at the roots of the acoustic polynomial by the Cauchy theorem, leaving a
+  single 1-D quadrature [masson2008](@cite). Roots that nearly coincide are
+  grouped and summed as one root of the corresponding multiplicity, at a cost
+  in accuracy: on a prolate ``3{:}1{:}1`` in a cubic matrix the residues are off
+  by ``7\times10^{-4}``. The method
+  is `Float64`-only (its polynomial root finder is not differentiable by
+  ForwardDiff) and reachable on an explicit `method = :residues` only: a
+  multiplicity its residue sums do not handle — a reference anisotropic in
+  *type* but isotropic or transversely isotropic in *value* along the ellipsoid
+  axes, which is what the differential and self-consistent schemes feed back at
+  their first step — makes it throw an `ArgumentError`.
+
+All three honor the `abstol` (default ``10^{-8}``), `reltol` (``10^{-6}``) and
+`maxiters` (``10^{6}`` evaluations) keywords of [`hill_tensor`](@ref). At these
+defaults `NestedQuadGK` is within about ``10^{-13}`` of the exact value — of a
+closed form where one exists, of a tight reference checked by a second algorithm
+otherwise — and `DECUHR` within ``10^{-11}`` to ``10^{-8}``; on a triaxial
+ellipsoid ``2{:}1{:}0.5`` in a triclinic matrix `NestedQuadGK` takes about 1 ms,
+the residues and `DECUHR` about 4 ms
+([Performance vs Echoes](@ref dev-benchmarks)).
+
+Flat ellipsoids, ``\omega = a_3/a_1 \ll 1``, are a case apart. The integrand is
+regular there, so `DECUHR` runs as an adaptive Gauss rule; it gives the values of
+the Echoes `NUMINT3D` option at equal tolerances. At the default tolerances its
+error is ``10^{-5}`` to ``2\times10^{-5}`` at ``\omega = 10^{-4}`` and
+``10^{-5}``. At tolerances ``10^{-13}/10^{-12}`` it is still ``1.3\times10^{-6}``
+at ``\omega = 10^{-5}``, for about 0.5 s per tensor. `NestedQuadGK` stretches the
+end ``z \to 1`` of its outer interval by ``z = 1-(1-u)^{\alpha}``, with
+``\alpha = \max(1, -\log_{10}\omega)``. The integrand also varies over a layer
+``z \sim \omega`` at the other end, so below ``\omega = 10^{-3}`` breakpoints at
+``z = \omega, 10\,\omega, 100\,\omega`` give that layer intervals of its own.
+The result then stays within the tolerance asked for down to
+``\omega = 10^{-7}``: at most ``5\times10^{-7}`` at the defaults, and
+``3\times10^{-16}`` at ``10^{-13}/10^{-12}`` in 2 to 4 ms.
 
 Analytical paths exist in the literature for further anisotropy classes
 [withers1989, pouya2000, pouya2006, suvorov2002](@cite) and are not all implemented yet.
@@ -409,7 +588,7 @@ Implementation: `src/Elasticity/hill_3d_iso.jl` and
 `src/Elasticity/hill_3d_cylinder_iso.jl`, selected by `method = :auto` when
 ``\mathbb{C}_0`` is a `TensISO`.
 
-### Transversely isotropic matrix coaxial with a spheroid
+### [Transversely isotropic matrix coaxial with a spheroid](@id th-hill-ti-coaxial)
 
 When the matrix is transversely isotropic and its symmetry axis is **parallel to
 the spheroid axis**, a fully analytical path exists
@@ -428,6 +607,16 @@ The five coefficients are closed-form combinations of `acosh` and complex square
 roots [barthelemyIJES2020_hilltrans; eqs. 53–58](@cite), depending on
 the aspect ratio ``\omega`` (axial / transverse) and the five independent
 constants ``(C_{1111}, C_{1122}, C_{1133}, C_{3333}, C_{2323})``.
+They involve integrals over ``z\in[-1,1]`` of rational functions of
+``D(a,z) = a + (1-a)\,z^2``, for ``a = \omega^2\gamma_i^2`` with ``\gamma_i^2``
+the roots of the acoustic polynomial, and for
+``a = \omega^2(C_{1111}-C_{1122})/(2C_{2323})``
+[barthelemyIJES2020_hilltrans](@cite). As written, these closed forms cancel
+near the sphere, at coincident roots (an isotropic matrix stored as
+transversely isotropic), for a disc and for a needle, and a square root of
+zero spoils the derivatives at an isotropic point. How the package evaluates
+them so that they stay exact to rounding everywhere, derivatives included, is
+in [Degenerate shapes](@ref th-degenerate-shapes).
 
 The dispatcher routes a `TensTI{4}` matrix combined with a coaxial
 `Ellipsoid{3, Spherical|Prolate|Oblate}` to this path by default; coaxiality is
@@ -549,7 +738,7 @@ geometric auxiliaries via [`tens_IA`](@ref), [`tens_UA`](@ref),
 | :---------------- | :-------------- | :----------- | :---------: |
 | `Ellipsoid{3}, TensISO` | `Analytical` | — | ✓ |
 | `Ellipsoid{3}, TensTI` (coaxial) | `Analytical` (MFH) | `:residues`, `:decuhr` | ✓ |
-| `Ellipsoid{3}, AbstractTens{4,3}` | `DECUHR` if loaded, else `NestedQuadGK` | `:residues`, `:decuhr`, `:nestedquadgk` | ✓ |
+| `Ellipsoid{3}, AbstractTens{4,3}` | `NestedQuadGK` | `:residues`, `:decuhr`, `:nestedquadgk` | ✓ |
 | `Cylinder, TensISO` | `Analytical` | — | ✓ |
 | `Cylinder, AbstractTens{4,3}` | `CylinderQuadrature` | (residue degenerates) | ✓ |
 | `Ellipsoid{2}, TensISO` | `Analytical` | — | ✓ |

@@ -1,5 +1,202 @@
 # Changelog
 
+## v0.16.1 — the default method resolved at compile time, NestedQuadGK by default, and degenerate shapes exact
+
+Every call of `hill_tensor` and `cod_tensor` with the default `method = :auto`
+paid a dynamic dispatch and a dynamic keyword call, and handed its caller a value
+of type `Any`: the default was not propagated as a constant down to the `Val`
+that selects the algorithm. It now is, with results identical to the bit. And
+the default cubature for an anisotropic reference is now the nested Gauss–Kronrod
+one, measured both faster and more accurate than DECUHR on every case tried.
+Comparing the two on very flat ellipsoids, and checking the closed forms against
+a 256-bit quadrature, turned up defects in all three. The cubature stopped short
+on flat shapes. The closed forms of a spheroid, in an isotropic matrix and in a
+coaxial transversely isotropic one, were wrong near the sphere, and the latter
+gave wrong derivatives at an isotropic point. Following them up to every shape
+where two semi-axes meet, or a spheroid becomes a disc or a needle, turned up
+more: wrong derivatives with respect to a semi-axis, a triaxial ellipsoid next
+to a spheroid, a crack next to a circle, two traps of the cubatures under
+`ForwardDiff`, and a self-consistent estimate that lost its symmetry class. All
+are treated, and a new theory page, *Degenerate shapes*, says how.
+
+### Changed
+
+- `method = :auto` for an anisotropic three-dimensional elastic reference — Hill
+  tensors and crack COD tensors — is `NestedQuadGK`, whatever is loaded. It was
+  `DECUHR` as soon as its extension was loaded. Against closed forms, and
+  against tight references checked by a second algorithm, `NestedQuadGK` is
+  within 1e-15 to 2e-12 where `DECUHR` is within 1e-11 to 6e-8, at two to twelve
+  times less cost. Results computed with DECUHR loaded move by at most that
+  former error, and the default no longer depends on what the session has
+  loaded. `method = :decuhr` remains available.
+
+### Fixed
+
+- The Newton potentials of a spheroid, behind every closed form in an
+  isotropic matrix (Hill, Eshelby and concentration tensors, 𝕌ᴬ and 𝕍ᴬ,
+  conduction), were wrong near the sphere. The potential I₃₁ was formed as the
+  divided difference (I₃ − I₁)/(a² − c²) of two closed forms that cancel there.
+  The Hill tensor of a spheroid was off by 1e-5 at ω = 0.9999 and 1.0001, by
+  2e-3 at |ω − 1| = 1e-5, and by 0.7 to 2.8 times its own size at
+  |ω − 1| = 2e-6; below 1e-6 the sphere values were returned. The potentials are
+  now evaluated as the integrals they stand for, through the regimes described
+  below. The Hill tensor of a spheroid now agrees with the tight cubature to
+  5e-16 at every distance from the sphere tried, from 1e-9 to 1e-2.
+- A triaxial ellipsoid whose two closer semi-axes nearly coincide went through
+  elliptic integrals and their divided differences, which lose accuracy as
+  1/δ² with the relative gap δ: up to 5e-5 at δ = 1e-6, where the two
+  semi-axes were taken as equal instead. Below a gap of 2 % (in squares) the
+  potentials are now expanded around the spheroid they are close to, with
+  spheroidal coefficients: within 1e-15 of the cubature for gaps of 1e-9 to
+  1e-2, next to a flat, an elongated or a near-spherical spheroid.
+- The derivative with respect to a semi-axis where it meets another one was
+  silently wrong, by 100 % to 550 %: the shape was classified as a sphere or a
+  spheroid, whose closed form no longer depends on the gap. Two semi-axes
+  carried by dual numbers are now merged only when their derivatives coincide
+  too, for ellipsoids, ellipses, cylinders and cracks, and the expansion above
+  carries the derivative. The derivatives agree with those taken through the
+  cubature to 2e-14.
+- The closed-form Hill tensor of a spheroid coaxial with a transversely
+  isotropic matrix, the `:auto` path for that case, was wrong in three regimes.
+  The errors below were measured against a 256-bit quadrature of the same
+  integrals.
+  - **Near-spherical spheroid, isotropic or nearly isotropic matrix.** The error
+    was 1e-5 at ω = 0.9999 and 1.0001. At ω = 1 ± 1e-6 the relative error
+    reached 6 to 23. The closed forms cancel as η → 1, and a limit value was
+    used up to |η² − 1| = 1e-6.
+  - **Flat spheroid, ω ≤ 1e-4.** The error was about 0.1 ω (3e-5 at
+    ω = 1e-4). The test for coincident roots had an absolute floor that took any
+    two small roots for equal ones.
+  - **Matrix within one part in a million of isotropy.** It was evaluated as
+    isotropic. Values were off by up to 7e-7. ForwardDiff derivatives along the
+    directions that break isotropy were off by 24 % to a factor 14, at an
+    isotropic point included. This concerns any TI reference medium that is
+    isotropic in value. The same test, with its own absolute floor, also took
+    moduli below about 1e-4, in whatever unit they are given, for isotropic
+    ones.
+
+  The integrals are now evaluated from the mean and the squared half-difference
+  of the two roots, which are rational in the moduli. Three regimes apply: a
+  power series near the sphere, an expansion in the squared half-difference near
+  coincidence, and elsewhere the closed forms with a recurrence for flat shapes.
+  Against the same reference the error is now below 1e-14 for 1e-8 ≤ ω ≤ 10, on
+  every matrix tried and on isotropic values. Derivatives near an isotropic
+  point agree with a 256-bit reference to 4e-14 for ω ≤ 3 and to 1e-10 at
+  ω = 30. Needles, ω ≫ 1, lost accuracy as ω², the Walpole coefficients being
+  differences of terms ω² or ω⁴ larger than the result: 5e-7 at ω = 10⁴, and
+  derivatives 7e-7 off at ω = 30. They are now written with ∫z²(1−z²)/(D₁D₂)
+  and ∫(1−z²)²/(D₁D₂), computed directly, and for a needle the part of these
+  integrals rational in the roots is summed exactly: within 1e-14 up to
+  ω = 10⁶, and derivatives within 2e-10 at ω = 10³.
+- Every cubature differentiated by `ForwardDiff` could stop with a
+  `DomainError`: QuadGK's error estimate goes through `LinearAlgebra.norm`,
+  which rescales by the largest entry unless it `iszero`, and a dual number of
+  value zero with non-zero partials is not. On a segment where the Kronrod and
+  Gauss rules agree to the last bit the estimate came out `NaN` — the
+  derivative of the anisotropic conduction tensor of a sphere, for one. The
+  cubatures now hand QuadGK the norm of the values: the refinement makes the
+  decisions of an evaluation without derivatives, whose value it reproduces.
+- The derivative with respect to a crack semi-axis through the crack cubature
+  was a `MethodError`: its integration bounds were taken in the number type of
+  the crack, and QuadGK has no rule for a dual interval. They are plain numbers
+  now.
+- The COD tensor of an elliptical crack close to a circle formed
+  𝒮 = (𝒦 − ℰ)/k² and 𝒞 = 𝒦 − 𝒮, which cancel as k² → 0 (an error near ε/k²,
+  1e-6 at the threshold where the crack became a `PennyCrack`). Below k² = 0.1
+  they are now the series of the complete integrals: within 1.1e-15 of the same
+  closed forms in 256-bit arithmetic. 𝐁, normalized by the smaller semi-axis,
+  has a kink at the circle; the derivative AD returns there is the one-sided
+  one in the direction of the increase, which the documentation now states.
+- The self-consistent scheme rebuilt a transversely isotropic estimate as a
+  generic tensor at every iterate: products of TI tensors land in the six- or
+  eight-parameter form, which its major symmetrization did not recognize. The
+  Hill tensor of a coaxial spheroid then went through a cubature, as accurate
+  as its tolerance. The projection is now made within the class, onto the
+  five-parameter form; on a 3:1 spheroid the scheme takes 46 µs instead of
+  4.2 ms, and its fixed point is the closed-form one.
+- `NestedQuadGK` stopped with an error far above the tolerance asked for on
+  very flat ellipsoids. At the default `reltol = 1e-6` the error was 2e-5 at
+  ω = 1e-5 and 2e-6 at ω = 1e-6. The integrand also varies over a layer
+  z ~ ω at the end of the interval that the change of variable does not
+  stretch, and the first Gauss–Kronrod nodes missed it. Below ω = 1e-3,
+  breakpoints at z = ω, 10ω and 100ω now give that layer intervals of its own.
+  The error falls to 2e-8 to 5e-7, and results for ω ≥ 1e-3 are unchanged to
+  the bit. DECUHR misses the tolerance on these shapes as well: its error is
+  1e-6 to 2e-5 at ω = 1e-5. At tolerances 1e-13/1e-12 it is still 1.3e-6 to
+  1.6e-6, where `NestedQuadGK` reaches 3e-16 at a hundredth of the cost.
+- `hill_tensor(…; method = :residues)` on a reference whose acoustic polynomial
+  has roots of a multiplicity the residue sums do not handle — a reference
+  anisotropic in type but isotropic or transversely isotropic in value along the
+  ellipsoid axes — threw QuadGK's `DomainError` ("integrand produced NaN"), and
+  the fallback to `NestedQuadGK` written for that case could never be reached.
+  It now throws an `ArgumentError` that says what failed and which method
+  evaluates the same integral; the dead fallback is gone.
+- A ribbon crack under `DECUHR` failed ("DECUHR failed: retcode = Failure"):
+  DECUHR integrates over rectangles of dimension two or more, and the ribbon's
+  reduced kernel is a single one-dimensional integral. With DECUHR loaded this
+  was the default for a ribbon crack in an anisotropic reference, which the
+  self-consistent and differential schemes produce. `:decuhr` on a ribbon now
+  evaluates that integral by Gauss–Kronrod, as `:residues` on a cylinder falls
+  back to the quadrature that applies.
+
+### Performance
+
+Same machine, 0.16.0 → 0.16.1, results identical to the bit except on the
+spheroid, whose Newton potentials are now evaluated otherwise (see *Fixed*):
+
+- `hill_tensor` of a sphere in an isotropic matrix 132 → 37 ns and
+  `cod_tensor` of a penny crack 280 → 88 ns, both now inferred and allocation
+  free;
+- Mori–Tanaka on a sphere 1.35 → 1.04 µs, self-consistent 20.6 → 17.7 µs,
+  differential 49.1 → 42.5 µs, Mori–Tanaka on a spheroid 1.67 → 1.4 µs;
+- the first `cod_tensor` call of a session 276 → 50 ms.
+
+The structural reasons: `_with_method` lifts `:auto` at compile time and
+dispatches any other method once, on its `Val`, into a kernel call with
+positional arguments; `Base.@constprop :aggressive` on `hill_tensor`,
+`cod_tensor`, `sif`, `dif` and `interaction_tensor` carries the default down to
+it; the closed-form COD tensors are built with their dimension in their type.
+Julia 1.12 propagates such a constant for inference only. It compiled the entry
+of `cod_tensor` for a run-time `Symbol`, whose other branch returns an abstract
+type, and boxed the result: 64 bytes per call, caught by the allocation test on
+1.12. The entry points of `hill_tensor`, `cod_tensor` and `interaction_tensor`
+are now inlined down to `_with_method`, so the literal selects the branch at
+compile time on 1.12 and 1.13 alike.
+
+### Documentation
+
+- *Degenerate shapes*, a new theory page: every situation above where the
+  closed forms or the cubatures fail — a spheroid next to the sphere, a
+  triaxial ellipsoid next to a spheroid, the derivative where two semi-axes
+  meet, the transversely isotropic closed form at the sphere, at coincident
+  roots, for a disc and a needle, a crack next to the circle, the cubatures
+  under `ForwardDiff`, the self-consistent estimate of TI class — what goes
+  wrong, how it is evaluated instead, and the accuracy measured.
+- COD tensors: the calculation of 𝐁 in an isotropic matrix, which the
+  literature quotes, carried out from the Fourier kernel to the closed form —
+  the reduced kernel and its three coefficients, the contour integral, the
+  inversion, the circle and the ribbon. The angles are those of
+  barthelemyIJSS2026 throughout: its contour for the integral, its definitions
+  of 𝒦, ℰ, 𝒞 and 𝒮, related by one change of variable.
+- Thermal cracks: the contractions that were missing in a dozen tensor
+  products are written out.
+- Hill tensors: the proof of the surface-element identity, the Kelvin–Mandel
+  matrices of 𝕌ᴬ and 𝕍ᴬ,
+  the definitions of the elliptic integrals, why ℙ is positive
+  definite, and an account of the three algorithms with their current costs,
+  the long parts folded.
+- COD tensors, after the appendices of the now published barthelemyIJSS2026
+  (International Journal of Solids and Structures 341 (2026) 114293), cited
+  under that key: the general formula of 𝐁 through the reduced
+  kernel and the Fourier conventions behind it, the isotropic ribbon and the
+  transversely isotropic closed forms in engineering parameters as implemented,
+  K = 4 Q̂*ₙₙ(ν)·N and
+  the energy release rate as a quadratic form, other parametrizations of the
+  front. The page stated that every source normalizes 𝐁 by the
+  half-width; the earlier papers do not, and the warning now says so.
+- The performance notes and the dispatch rationale give the current costs of
+  the anisotropic back-ends.
+
 ## v0.16.0 — derivatives everywhere, and the anisotropic Hill cubatures ×90
 
 An audit of the package against automatic differentiation, its own invariants

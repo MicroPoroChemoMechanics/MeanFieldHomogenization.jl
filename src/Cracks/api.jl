@@ -117,7 +117,7 @@ tensor [barthelemyIJSS2009](@cite).
 
 Alias: [`B_tensor`](@ref).
 """
-function cod_tensor(
+Base.@constprop :aggressive @inline function cod_tensor(
         crack::MFH_Core.AbstractCrack,
         C₀::TensND.AbstractTens{4, 3};
         K_interface::Union{Nothing, TensND.AbstractTens{2, 3}} = nothing,
@@ -126,12 +126,24 @@ function cod_tensor(
         reltol::Float64 = 1.0e-6,
         maxiters::Int = 100_000
     )
+    return _cod_tensor_entry(crack, C₀, K_interface, method, abstol, reltol, maxiters)
+end
+
+# Positional and inlined, as `_hill_tensor_entry`: Julia 1.12 propagates the
+# constant default `method = :auto` for inference but compiled this body for a
+# run-time `Symbol`, whose other branch returns an abstract type, and boxed the
+# result — 64 bytes per call. Inlined, the literal reaches `_with_method`.
+Base.@constprop :aggressive @inline function _cod_tensor_entry(
+        crack, C₀, K_interface, method::Symbol, abstol, reltol, maxiters
+    )
     MFH_Core._bump!(MFH_Core.COD_CALLS)
-    algo = MFH_Core._resolve_algo(Val(method), crack, C₀)
-    B = _kernel(crack, C₀, algo; abstol = abstol, reltol = reltol, maxiters = maxiters)
+    B = MFH_Core._with_method(_cod_tensor_at, method, crack, C₀, abstol, reltol, maxiters)
     K_interface === nothing && return B
     return _apply_interface_stiffness(B, K_interface, semi_minor(crack))
 end
+
+_cod_tensor_at(m::Val, crack, C₀, abstol, reltol, maxiters) =
+    _kernel(crack, C₀, MFH_Core._resolve_algo(m, crack, C₀); abstol, reltol, maxiters)
 
 const B_tensor = cod_tensor
 
@@ -319,9 +331,13 @@ function _kernel(crack::EllipticCrack, C₀::TensND.AbstractTens{4, 3}, ::MFH_Co
     )
 end
 
+# The ribbon's reduced kernel is a single 1-D integral, and DECUHR integrates
+# over hyperrectangles of dimension two or more: it returned `Failure` on every
+# ribbon. The integral is evaluated by Gauss–Kronrod, as `:residues` on a
+# cylinder falls back to the quadrature that applies.
 function _kernel(crack::RibbonCrack, C₀::TensND.AbstractTens{4, 3}, ::MFH_Core.DECUHR; kw...)
     return _cod_ribbon_numerical(
-        crack, C₀, _decuhr_backend;
+        crack, C₀, _nestedquadgk_backend;
         abstol = get(kw, :abstol, 1.0e-8),
         reltol = get(kw, :reltol, 1.0e-6),
         maxiters = get(kw, :maxiters, 100_000)

@@ -376,9 +376,8 @@ Returns an integer code instead of a type to avoid circular references:
 """
 function _classify_shape_3d(::Type{T}, a, b, c) where {T}
     if is_hard_numeric(T)
-        tol = max(a, b, c) * (1.0e-10 * one(T))
-        AeqB = (a - b) ≤ tol
-        BeqC = (b - c) ≤ tol
+        AeqB = _coincident(a, b, 1.0e-10)
+        BeqC = _coincident(b, c, 1.0e-10)
     else
         AeqB = isequal(a, b)
         BeqC = isequal(b, c)
@@ -403,6 +402,33 @@ Classify a 2D ellipse from its (already sorted) semi-axes:
 - 2 → equivalent of `Elliptic` (``a > b``)
 """
 function _classify_shape_2d(::Type{T}, a, b) where {T}
-    is_equal = is_hard_numeric(T) ? (a - b) ≤ max(a, b) * (1.0e-10 * one(T)) : isequal(a, b)
+    is_equal = is_hard_numeric(T) ? _coincident(a, b, 1.0e-10) : isequal(a, b)
     return is_equal ? 1 : 2
 end
+
+"""
+    _coincident(a, b, rtol) -> Bool
+
+Whether two semi-axes are one: equal to within `rtol` (relative) and, when they
+carry derivatives, with equal derivatives. Two dual semi-axes merged while their
+derivatives differ would build a sphere, a spheroid or a circle that no longer
+depends on their gap, and the derivative along it would be lost without a word.
+"""
+@inline _coincident(a, b, rtol) =
+    abs(a - b) ≤ max(abs(a), abs(b)) * rtol && _no_derivative(a - b)
+
+"""
+    _same_semi_axis(a, b) -> Bool
+
+Whether two semi-axes are exactly equal, derivatives included: the condition for
+the closed forms of a spheroid to be exact in value and in derivative.
+"""
+@inline _same_semi_axis(a, b) = a == b && _no_derivative(a - b)
+
+# Whether `x` carries no derivative, at any nesting level of dual numbers.
+@inline _no_derivative(x) = true
+@inline _no_derivative(x::ForwardDiff.Dual) =
+    all(_iszero_dual, ForwardDiff.partials(x)) && _no_derivative(ForwardDiff.value(x))
+@inline _iszero_dual(x) = iszero(x)
+@inline _iszero_dual(x::ForwardDiff.Dual) =
+    _iszero_dual(ForwardDiff.value(x)) && all(_iszero_dual, ForwardDiff.partials(x))

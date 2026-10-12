@@ -435,3 +435,24 @@ end
         @test get_array(K)[1, 1] ≈ k_m * (1 - 8ε / 9) rtol = 1.0e-7
     end
 end
+
+@testset "SC — a transversely isotropic estimate keeps its class" begin
+    # Products of TI tensors land in the six- or eight-parameter form; rebuilt
+    # as a generic tensor, the estimate lost its class and the Hill tensor of a
+    # coaxial spheroid went through a cubature at every iterate (4 ms against
+    # 46 µs). Projected within the class, it keeps the closed form.
+    canon = P -> TensND.get_array(TensND.change_tens_canon(P))
+    C₀ = TensISO{3}(3 * 30.0, 2 * 18.0)
+    C₁ = TensISO{3}(3 * 70.0, 2 * 40.0)
+    for shape in (Ellipsoid(3.0, 1.0, 1.0), Ellipsoid(1.0, 1.0, 0.3), Ellipsoid(3.0, 1.0, 1.0; euler_angles = (0.3, 0.7, 0.0)))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
+        add_phase!(rve, :I, shape, Dict(:C => C₁); fraction = 0.3)
+        MeanFieldHomogenization.Core.reset_counters!()
+        x = homogenize(rve, SelfConsistent())
+        @test x isa TensND.TensTI{4, Float64, 5}
+        @test MeanFieldHomogenization.Core.read_counters().quadgk_outer == 0
+        x_cub = homogenize(rve, SelfConsistent(); method = :nestedquadgk, abstol = 1.0e-13, reltol = 1.0e-12)
+        @test maximum(abs, canon(x) .- canon(x_cub)) / maximum(abs, canon(x_cub)) < 1.0e-8
+    end
+end
