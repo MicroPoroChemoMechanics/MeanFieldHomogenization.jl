@@ -95,7 +95,7 @@ end
     _adj3_sym(K) -> (a11, a22, a33, a12, a13, a23)
 
 The six independent entries of the adjugate
-``\\mathrm{adj}\\,\\boldsymbol{K} = \\det\\boldsymbol{K}\\;\\boldsymbol{K}^{-1}`` of a
+``\\mathrm{adj}\\,\\boldsymbol{K} = (\\det\\boldsymbol{K})\\,\\boldsymbol{K}^{-1}`` of a
 **symmetric** 3×3, by cofactors. Division-free, hence stable at small
 ``\\det\\boldsymbol{K}`` and evaluable on `ForwardDiff.Dual` and symbolic scalars —
 which `det` composed with `inv` would also be, but at the cost of a division

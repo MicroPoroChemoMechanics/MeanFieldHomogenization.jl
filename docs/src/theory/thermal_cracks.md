@@ -173,7 +173,7 @@ the second form following from
 -(\underline{u}\cdot\boldsymbol{K}\cdot\underline{v})^{2}
 =(\underline{u}\wedge\underline{v})\cdot\mathrm{adj}\,\boldsymbol{K}\cdot(\underline{u}\wedge\underline{v})``,
 valid for a symmetric ``\boldsymbol{K}``, with
-``\mathrm{adj}\,\boldsymbol{K}_0 = \det\boldsymbol{K}_0\,\boldsymbol{K}_0^{-1}``.
+``\mathrm{adj}\,\boldsymbol{K}_0 = (\det\boldsymbol{K}_0)\,\boldsymbol{K}_0^{-1}``.
 So ``\hat{Q}^{\star}_{nn}`` is a norm of
 ``\underline{n}\wedge\underline{\xi}^{\star}`` in the metric
 ``\mathrm{adj}\,\boldsymbol{K}_0``, manifestly homogeneous of degree 1. No Stroh

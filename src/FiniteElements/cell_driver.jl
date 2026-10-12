@@ -51,9 +51,9 @@
 """
     _cell_close_dipole(L_s, L_u, F) -> (L, dipole_norm)
 
-Superpose the remote and unit-dipole families: ``\\mathbb{L} = (\\mathbb{I} - \\mathbb{L}_u\\mathbb{F})^{-1}\\mathbb{L}_s``.
+Superpose the remote and unit-dipole families: ``\\mathbb{L} = (\\mathbb{I} - \\mathbb{L}_u:\\mathbb{F})^{-1}:\\mathbb{L}_s``.
 
-`dipole_norm` ``= \\|\\mathbb{L}_u\\mathbb{F}\\|`` is the diagnostic to watch rather than the answer: the
+`dipole_norm` ``= \\|\\mathbb{L}_u:\\mathbb{F}\\|`` is the diagnostic to watch rather than the answer: the
 dipole term is ``O((a/R)^3)``, so a log-log slope of ``-3`` against `R` says the
 correction is doing what it claims.
 """
@@ -213,7 +213,7 @@ end
     _cell_parity(E) -> NTuple{3, Int8}
 
 Parity of a load case under the three coordinate reflections: ``\\chi_k = +1`` when
-``\\boldsymbol{R}_k\\boldsymbol{E}\\boldsymbol{R}_k = \\boldsymbol{E}``, ``-1`` when ``\\boldsymbol{R}_k\\boldsymbol{E}\\boldsymbol{R}_k = -\\boldsymbol{E}``.
+``\\boldsymbol{R}_k\\cdot\\boldsymbol{E}\\cdot\\boldsymbol{R}_k = \\boldsymbol{E}``, ``-1`` when ``\\boldsymbol{R}_k\\cdot\\boldsymbol{E}\\cdot\\boldsymbol{R}_k = -\\boldsymbol{E}``.
 
 ``\\boldsymbol{R}_k`` flips the sign of every entry with exactly one index equal to ``k``, so the
 test is whether the off-diagonal row ``k`` vanishes. Accepts a ``3\\times 3`` matrix (a

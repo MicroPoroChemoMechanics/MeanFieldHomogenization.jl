@@ -205,7 +205,7 @@ end
 
 Diagnostic view of the corrected solve: the COD tensor of the **finite** cell
 `B_s`, the response `B_u` to the crack's own dipole far field, and the
-infinite-medium result ``\\boldsymbol{B}_\\infty = (\\boldsymbol{1} - \\boldsymbol{B}_u)^{-1}\\boldsymbol{B}_s``, all in the crack's local
+infinite-medium result ``\\boldsymbol{B}_\\infty = (\\boldsymbol{1} - \\boldsymbol{B}_u)^{-1}\\cdot\\boldsymbol{B}_s``, all in the crack's local
 frame, plus `B_s` and `B_inf` rotated back to the global frame.
 
 `norm(B_u)` measures how much work the boundary correction is doing; it should
