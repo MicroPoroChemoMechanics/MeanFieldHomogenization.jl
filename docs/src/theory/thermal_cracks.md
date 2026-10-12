@@ -110,17 +110,19 @@ components of ``\boldsymbol{K}_0`` as free symbols.
 ### The reduced kernel
 
 ```math
+\begin{aligned}
 \hat{\boldsymbol{\Gamma}}(\underline{\xi})
-  = \frac{\underline{\xi}\otimes\underline{\xi}}
+  &= \frac{\underline{\xi}\otimes\underline{\xi}}
          {\underline{\xi}\cdot\boldsymbol{K}_0\cdot\underline{\xi}},
 \qquad
 \hat{\boldsymbol{Q}}(\underline{\xi})
   = \boldsymbol{K}_0 - \boldsymbol{K}_0\cdot\hat{\boldsymbol{\Gamma}}\cdot\boldsymbol{K}_0,
-\qquad
+\\
 \hat{Q}^{\star}_{nn}(\underline{\xi}^{\star})
-  = \frac{1}{2\pi}\int_{-\infty}^{+\infty}
+  &= \frac{1}{2\pi}\int_{-\infty}^{+\infty}
     \underline{n}\cdot\hat{\boldsymbol{Q}}
     (\underline{\xi}^{\star}+\xi_n\underline{n})\cdot\underline{n}\,\mathrm{d}\xi_n .
+\end{aligned}
 ```
 
 The acoustic object
@@ -255,14 +257,16 @@ in-plane entries of ``\mathrm{adj}\,\boldsymbol{K}_0``, so that
 ``\boldsymbol{Q}_2 = \begin{pmatrix} \eta^{2}A & -\eta B\\ -\eta B & C\end{pmatrix}``:
 
 ```math
+\begin{gathered}
 \boxed{\;
 b_{\mathrm{ell}} = \frac{4}{3\sqrt{\lambda_1}\,\mathcal{E}_{\eta'}}
 \;},
-\qquad
+\\
 \lambda_{1,2} = \frac{\eta^{2}A+C}{2}
   \pm\sqrt{\Bigl(\frac{\eta^{2}A+C}{2}\Bigr)^{2}-\eta^{2}(AC-B^{2})},
 \qquad
 \eta' = \sqrt{\lambda_2/\lambda_1}.
+\end{gathered}
 ```
 
 Being a **2×2** eigenvalue problem, this is closed form for every anisotropy —
@@ -362,11 +366,13 @@ resistivity of the cracked conductor is obtained via
 [`delta_resistivity`](@ref)`(crack, R, ε)`:
 
 ```math
-\Delta\boldsymbol{R} = \tfrac{4\pi}{3}\,\varepsilon^{3\mathrm d}\,\boldsymbol{R}
-\qquad\text{(elliptic, }\varepsilon^{3\mathrm d} = Nab^{2}\text{)},
-\qquad
-\Delta\boldsymbol{R} = \pi\,\varepsilon^{2\mathrm d}\,\boldsymbol{R}
-\qquad\text{(ribbon, }\varepsilon^{2\mathrm d} = Nb^{2}\text{)}.
+\begin{aligned}
+\Delta\boldsymbol{R} &= \tfrac{4\pi}{3}\,\varepsilon^{3\mathrm d}\,\boldsymbol{R}
+&&\qquad\text{(elliptic, }\varepsilon^{3\mathrm d} = Nab^{2}\text{)},
+\\
+\Delta\boldsymbol{R} &= \pi\,\varepsilon^{2\mathrm d}\,\boldsymbol{R}
+&&\qquad\text{(ribbon, }\varepsilon^{2\mathrm d} = Nb^{2}\text{)}.
+\end{aligned}
 ```
 
 These reduce to the expressions of

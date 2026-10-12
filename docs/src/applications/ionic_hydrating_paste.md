@@ -239,11 +239,13 @@ released heat balances the change of enthalpy, and the enthalpy of the system is
 the sum over species of the molar enthalpies of formation,
 
 ```math
--\delta Q \;=\; \mathrm{d}H
-\;=\; \Bigl(\sum_i n_i\,C^\circ_{p,i}(T)\Bigr)\mathrm{d}T
-\;+\; \sum_i \Delta_f H_i(P,T)\,\mathrm{d}n_i ,
-\qquad
-\Delta_f H_i(P,T) = \Delta_f H_i(P,T_0) + \int_{T_0}^{T}\!C^\circ_{p,i}\,\mathrm{d}\theta .
+\begin{aligned}
+-\delta Q = \mathrm{d}H
+&= \Bigl(\sum_i n_i\,C^\circ_{p,i}(T)\Bigr)\mathrm{d}T
++ \sum_i \Delta_f H_i(P,T)\,\mathrm{d}n_i ,
+\\
+\Delta_f H_i(P,T) &= \Delta_f H_i(P,T_0) + \int_{T_0}^{T}\!C^\circ_{p,i}\,\mathrm{d}\theta .
+\end{aligned}
 ```
 
 At fixed temperature this collapses to `Q(t) = H(t_0) - H(t)`. Enthalpy is a

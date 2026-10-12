@@ -12,11 +12,14 @@
 # imposed boundary displacement, the **dipole far field of the open crack**:
 #
 # ```math
+# \begin{gathered}
 # \underline u(\underline x) \;\underset{\|\underline x\|\to\infty}{\approx}\;
 #   (\mathbb S_0 : \boldsymbol\Sigma)\cdot\underline x
 #   \;-\; b\,S_f\,\bigl(\nabla\boldsymbol G(\underline x):\mathbb C_0\cdot\underline n\bigr)
 #         \cdot\underline U ,
-# \qquad \underline U = \frac{\langle[\![\underline u]\!]\rangle}{b},\quad S_f = \pi a b .
+# \\
+# \underline U = \frac{\langle[\![\underline u]\!]\rangle}{b},\quad S_f = \pi a b .
+# \end{gathered}
 # ```
 #
 # Three "traction" solves give the COD tensor ``\boldsymbol B_s`` of the truncated

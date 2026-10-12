@@ -90,13 +90,15 @@ where ``\boldsymbol G`` is the Green tensor of the reference medium and
 ``\|\underline x\| \gg a``, the far field collapses to a single **force dipole**:
 
 ```math
+\begin{gathered}
 \underline u(\underline x) \;\approx\; \boldsymbol E\cdot\underline x
   + \nabla\boldsymbol G(\underline x) : \bigl(V_{\mathcal D}\,\bar{\boldsymbol\tau}\bigr),
 \qquad
 \bar{\boldsymbol\tau} = \langle\boldsymbol\tau\rangle_{\mathcal D},
-\qquad
+\\
 \frac{\bigl\|V_{\mathcal D}\,\nabla\boldsymbol G(\underline x):\bar{\boldsymbol\tau}\bigr\|}
      {\|\boldsymbol E\cdot\underline x\|} = O\!\left(\frac{V_{\mathcal D}}{\|\underline x\|^{3}}\right).
+\end{gathered}
 ```
 
 Imposing ``\underline u = \boldsymbol E\cdot\underline x`` on a sphere of radius ``R`` therefore leaves an
@@ -164,22 +166,26 @@ the elastic field is
 [`dipole_displacement_iso`](@ref MeanFieldHomogenization.Core.dipole_displacement_iso):
 
 ```math
-u_i(\underline x) = \frac{\partial G_{ij}}{\partial x_k}(\underline x)\,M_{jk},
-\qquad
+\begin{aligned}
+u_i(\underline x) &= \frac{\partial G_{ij}}{\partial x_k}(\underline x)\,M_{jk},
+\\
 \underline u(\underline x)
-     = \frac{1}{16\pi\mu_0(1-\nu_0)r^{2}}
+     &= \frac{1}{16\pi\mu_0(1-\nu_0)r^{2}}
        \Bigl[-2(1-2\nu_0)\,\boldsymbol M\!\cdot\!\underline{n} + \mathrm{tr}(\boldsymbol M)\,\underline{n}
              - 3(\underline{n}\!\cdot\! \boldsymbol M\!\cdot\!\underline{n})\,\underline{n}\Bigr],
+\end{aligned}
 ```
 
 Written out for a symmetric moment, the gradient of the Kelvin solution is
 
 ```math
-G_{ij}(\underline{x}) = \frac{A}{r}\bigl[(3-4\nu_0)\,\delta_{ij} + n_i n_j\bigr],
-\qquad
-\frac{\partial G_{ij}}{\partial x_k}
-  = \frac{A}{r^{2}}\bigl[-(3-4\nu_0)\,\delta_{ij}n_k + \delta_{ik}n_j + \delta_{jk}n_i - 3\,n_i n_j n_k\bigr],
+\begin{aligned}
+G_{ij}(\underline{x}) &= \frac{A}{r}\bigl[(3-4\nu_0)\,\delta_{ij} + n_i n_j\bigr],
 \qquad A = \frac{1}{16\pi\mu_0(1-\nu_0)} ,
+\\
+\frac{\partial G_{ij}}{\partial x_k}
+  &= \frac{A}{r^{2}}\bigl[-(3-4\nu_0)\,\delta_{ij}n_k + \delta_{ik}n_j + \delta_{jk}n_i - 3\,n_i n_j n_k\bigr],
+\end{aligned}
 ```
 
 and the transport one, with ``G = 1/(4\pi k_0 r)``,
@@ -219,12 +225,14 @@ and ``\mathbb A_u`` for the response to a unit dipole, the loop closes in one
 inversion:
 
 ```math
+\begin{gathered}
 \boxed{\;\mathbb A = (\mathbb I - \mathbb A_u:\mathbb F)^{-1}:\mathbb A_s\;},
-\qquad
+\\
 \mathbb F = -\,V_{\mathcal D}\,\mathbb C_0
 \quad\text{(elasticity)},\qquad
 \boldsymbol F = -\,k_0 V_{\mathcal D}\,\boldsymbol 1
 \quad\text{(transport)} .
+\end{gathered}
 ```
 
 There is no ``\mathbb C_1`` anywhere in it, which is the point: `inv(C₁)` is

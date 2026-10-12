@@ -41,9 +41,12 @@ families of integrals carry the shape of a spheroid of axial over transverse
 semi-axis ``\omega``:
 
 ```math
-I_n(a) = \int_{-1}^{1}\frac{z^n\,\mathrm{d}z}{D(a,z)},\qquad
-J_{n,q}(a_1,a_2) = \int_{-1}^{1}\frac{z^n w^q\,\mathrm{d}z}{D(a_1,z)\,D(a_2,z)},\qquad
-M_{n,k,p}(m) = \int_{-1}^{1}\frac{z^n w^k\,\mathrm{d}z}{D(m,z)^p}.
+\begin{aligned}
+I_n(a) &= \int_{-1}^{1}\frac{z^n\,\mathrm{d}z}{D(a,z)},\qquad
+J_{n,q}(a_1,a_2) = \int_{-1}^{1}\frac{z^n w^q\,\mathrm{d}z}{D(a_1,z)\,D(a_2,z)},
+\\
+M_{n,k,p}(m) &= \int_{-1}^{1}\frac{z^n w^k\,\mathrm{d}z}{D(m,z)^p}.
+\end{aligned}
 ```
 
 With ``a = \omega^2`` they give the Newton potentials of the spheroid; with
@@ -216,11 +219,14 @@ roots ``a_{1,2} = \omega^2\gamma_{1,2}^2`` and ``I_n`` of
 are written here with
 
 ```math
+\begin{gathered}
 j_4 = \frac{J_{4,0}}{C_{2323}C_{3333}},\quad
 l_{21} = \frac{J_{2,1}}{C_{2323}C_{3333}},\quad
-l_{02} = \frac{J_{0,2}}{C_{2323}C_{3333}},\quad
+l_{02} = \frac{J_{0,2}}{C_{2323}C_{3333}},
+\\
 i_2 = \frac{I_2(a_3)}{C_{2323}},\quad
 i_w = \frac{I_0(a_3)-I_2(a_3)}{C_{2323}},
+\end{gathered}
 ```
 
 as
@@ -245,9 +251,12 @@ The ``J`` are symmetric in the two roots: they depend on them only through the
 mean ``m`` and the squared half-difference ``d^2``,
 
 ```math
-m = -\frac{\omega^2 b}{2\,C_{2323}C_{3333}},\qquad
-d^2 = \frac{\omega^4\,\big(b^2 - 4\,C_{2323}C_{3333}\,C_{1111}C_{2323}\big)}{4\,(C_{2323}C_{3333})^2},
+\begin{aligned}
+m &= -\frac{\omega^2 b}{2\,C_{2323}C_{3333}},
 \qquad b = C_{1133}^2 + 2C_{1133}C_{2323} - C_{1111}C_{3333},
+\\
+d^2 &= \frac{\omega^4\,\big(b^2 - 4\,C_{2323}C_{3333}\,C_{1111}C_{2323}\big)}{4\,(C_{2323}C_{3333})^2},
+\end{aligned}
 ```
 
 rational in the moduli and free of their scale. Four situations would

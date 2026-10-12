@@ -99,7 +99,11 @@ All are positive but the last, the cubic (42) of the article, whose positive
 root is the dimensionless shear modulus ``X = F(\rho, \varphi)``:
 
 ```math
-128X^3 + 16\,[3\varphi + 2 + 2\rho(3\varphi-1)]\,X^2 + 2\,[3(3\varphi-1) + 2\rho(12\varphi-5)]\,X + 3\rho\,(2\varphi-1) = 0 .
+\begin{aligned}
+&128X^3 + 16\,[3\varphi + 2 + 2\rho(3\varphi-1)]\,X^2
+\\
+&\qquad {}+ 2\,[3(3\varphi-1) + 2\rho(12\varphi-5)]\,X + 3\rho\,(2\varphi-1) = 0 .
+\end{aligned}
 ```
 
 ## 3. The numerical estimate

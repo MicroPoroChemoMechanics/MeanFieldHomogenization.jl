@@ -94,16 +94,18 @@ The opening profile is an ellipsoidal cap, so the average jump is a fixed
 fraction of the **maximum** jump ``\underline{\beta}`` at the crack center:
 
 ```math
-\bigl\langle [\![\underline{u}]\!] \bigr\rangle_{\mathcal{I}} = \chi\,\underline{\beta},
-\qquad
+\begin{aligned}
+\bigl\langle [\![\underline{u}]\!] \bigr\rangle_{\mathcal{I}} &= \chi\,\underline{\beta},
+\\
 \chi^{\mathcal{E}}
-= \frac{1}{\pi a b}\!\!\int_{\frac{x^2}{a^2}+\frac{y^2}{b^2}\le 1}\!\!
+&= \frac{1}{\pi a b}\!\!\int_{\frac{x^2}{a^2}+\frac{y^2}{b^2}\le 1}\!\!
   \sqrt{1-\frac{x^2}{a^2}-\frac{y^2}{b^2}}\;\mathrm{d}x\,\mathrm{d}y
 = \frac{2}{3},
-\qquad
+\\
 \chi^{\mathcal{R}}
-= \frac{1}{2b}\!\int_{-b}^{b}\!\sqrt{1-\frac{y^2}{b^2}}\;\mathrm{d}y
+&= \frac{1}{2b}\!\int_{-b}^{b}\!\sqrt{1-\frac{y^2}{b^2}}\;\mathrm{d}y
 = \frac{\pi}{4}.
+\end{aligned}
 ```
 
 ``\chi`` is worth introducing explicitly, because **every numerical factor on
@@ -419,15 +421,17 @@ equation, that profile gives a **uniform** traction on the crack,
 with [barthelemyIJSS2026](@cite)
 
 ```math
+\begin{aligned}
 \boldsymbol{\Lambda}
-= \frac{1}{4}\int_{0}^{2\pi}
+&= \frac{1}{4}\int_{0}^{2\pi}
   \hat{\boldsymbol{Q}}^{\star}_{nn}\bigl(\boldsymbol{S}^{\dagger}\!\cdot\underline{\kappa}^{\star}(\varphi)\bigr)\,
   \mathrm{d}\varphi,
-\qquad
-\underline{\kappa}^{\star}(\varphi) = \cos\varphi\,\underline{\ell}+\sin\varphi\,\underline{m},
+\\
+\underline{\kappa}^{\star}(\varphi) &= \cos\varphi\,\underline{\ell}+\sin\varphi\,\underline{m},
 \qquad
 \boldsymbol{S}^{\dagger} = \frac{\underline{\ell}\otimes\underline{\ell}}{a}
                          + \frac{\underline{m}\otimes\underline{m}}{b}.
+\end{aligned}
 ```
 
 Since ``\langle[\![\underline{u}]\!]\rangle_{\mathcal{I}} = \chi\,\underline{\beta}``,
@@ -516,15 +520,17 @@ and
 = (\eta\cos\varphi\,\underline{m}-\sin\varphi\,\underline{\ell})/\rho``, so that
 
 ```math
+\begin{aligned}
 \rho\,\underline{u}\otimes\underline{u}
-= \frac{\eta^{2}\cos^{2}\varphi\,\underline{\ell}\otimes\underline{\ell}
+&= \frac{\eta^{2}\cos^{2}\varphi\,\underline{\ell}\otimes\underline{\ell}
        + \sin^{2}\varphi\,\underline{m}\otimes\underline{m}
        + \eta\cos\varphi\sin\varphi\,(\underline{\ell}\otimes\underline{m}+\underline{m}\otimes\underline{\ell})}{\rho},
-\qquad
+\\
 \rho\,\underline{w}\otimes\underline{w}
-= \frac{\sin^{2}\varphi\,\underline{\ell}\otimes\underline{\ell}
+&= \frac{\sin^{2}\varphi\,\underline{\ell}\otimes\underline{\ell}
        + \eta^{2}\cos^{2}\varphi\,\underline{m}\otimes\underline{m}
        - \eta\cos\varphi\sin\varphi\,(\underline{\ell}\otimes\underline{m}+\underline{m}\otimes\underline{\ell})}{\rho}.
+\end{aligned}
 ```
 
 The ``\rho`` of the degree-1 homogeneity has canceled the ``1/\rho^{2}`` of the
@@ -556,11 +562,13 @@ with the complete elliptic integrals and the two combinations of
 ```
 
 ```math
-\mathcal{C}_\eta = \int_0^{\pi/2}\frac{\cos^{2}\phi\;\mathrm{d}\phi}{\sqrt{\cos^{2}\phi+\eta^{2}\sin^{2}\phi}}
+\begin{aligned}
+\mathcal{C}_\eta &= \int_0^{\pi/2}\frac{\cos^{2}\phi\;\mathrm{d}\phi}{\sqrt{\cos^{2}\phi+\eta^{2}\sin^{2}\phi}}
 = \frac{\mathcal{E}_\eta-\eta^{2}\mathcal{K}_\eta}{1-\eta^{2}},
-\qquad
-\mathcal{S}_\eta = \int_0^{\pi/2}\frac{\sin^{2}\phi\;\mathrm{d}\phi}{\sqrt{\cos^{2}\phi+\eta^{2}\sin^{2}\phi}}
+\\
+\mathcal{S}_\eta &= \int_0^{\pi/2}\frac{\sin^{2}\phi\;\mathrm{d}\phi}{\sqrt{\cos^{2}\phi+\eta^{2}\sin^{2}\phi}}
 = \frac{\mathcal{K}_\eta-\mathcal{E}_\eta}{1-\eta^{2}}.
+\end{aligned}
 ```
 
 The second forms follow from ``D = \cos^{2}\phi+\eta^{2}\sin^{2}\phi``, which
@@ -612,14 +620,16 @@ algebra.
 ``\underline{\xi}^{\star} = \rho\,\underline{u}``,
 
 ```math
-\boldsymbol{N}(\underline{\xi}) = \mu\,\|\underline{\xi}\|^{2}\,\boldsymbol{1}
+\begin{aligned}
+\boldsymbol{N}(\underline{\xi}) &= \mu\,\|\underline{\xi}\|^{2}\,\boldsymbol{1}
 + (\lambda+\mu)\,\underline{\xi}\otimes\underline{\xi},
 \qquad
 \boldsymbol{A} = \mu\,\boldsymbol{1} + (\lambda+\mu)\,\underline{n}\otimes\underline{n},
-\qquad
-\boldsymbol{V} = \lambda\,\underline{n}\otimes\underline{\xi}
+\\
+\boldsymbol{V} &= \lambda\,\underline{n}\otimes\underline{\xi}
 + \mu\,\underline{\xi}\otimes\underline{n}
 + \mu\,(\underline{\xi}\cdot\underline{n})\,\boldsymbol{1},
+\end{aligned}
 ```
 
 and ``\boldsymbol{N}^{-1} = \big(\boldsymbol{1} - \kappa\,\underline{\xi}\otimes\underline{\xi}/\|\underline{\xi}\|^{2}\big)/(\mu\|\underline{\xi}\|^{2})``
@@ -630,13 +640,15 @@ with ``\kappa = (\lambda+\mu)/(\lambda+2\mu) = 1/(2(1-\nu))``.
 ``\underline{n}\cdot\hat{\mathbb{Q}}\cdot\underline{n} = \boldsymbol{A} - \boldsymbol{V}\cdot\boldsymbol{N}^{-1}\cdot\boldsymbol{V}^{\!T}`` has the components
 
 ```math
-Q_{uu} = \frac{2\mu}{1-\nu}\,\frac{\rho^{2}\xi_n^{2}}{(\rho^{2}+\xi_n^{2})^{2}},
-\qquad
-Q_{ww} = \mu\,\frac{\rho^{2}}{\rho^{2}+\xi_n^{2}},
-\qquad
-Q_{nn} = \frac{2\mu}{1-\nu}\,\frac{\rho^{4}}{(\rho^{2}+\xi_n^{2})^{2}},
-\qquad
-Q_{un} = Q_{nu} = -\frac{2\mu}{1-\nu}\,\frac{\rho^{3}\xi_n}{(\rho^{2}+\xi_n^{2})^{2}},
+\begin{aligned}
+Q_{uu} &= \frac{2\mu}{1-\nu}\,\frac{\rho^{2}\xi_n^{2}}{(\rho^{2}+\xi_n^{2})^{2}},
+&\qquad
+Q_{ww} &= \mu\,\frac{\rho^{2}}{\rho^{2}+\xi_n^{2}},
+\\
+Q_{nn} &= \frac{2\mu}{1-\nu}\,\frac{\rho^{4}}{(\rho^{2}+\xi_n^{2})^{2}},
+&\qquad
+Q_{un} = Q_{nu} &= -\frac{2\mu}{1-\nu}\,\frac{\rho^{3}\xi_n}{(\rho^{2}+\xi_n^{2})^{2}},
+\end{aligned}
 ```
 
 and ``Q_{uw} = Q_{wn} = 0``. All decay as ``\xi_n^{-2}``, as announced.
@@ -655,24 +667,29 @@ to zero. The three others need only
 so that, with the factor ``1/(2\pi)`` of the reduced transform,
 
 ```math
+\begin{gathered}
 \hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{\xi}^{\star})
 = \rho\,\big[a_1\,\underline{u}\otimes\underline{u}
 + a_2\,\underline{w}\otimes\underline{w}
 + a_3\,\underline{n}\otimes\underline{n}\big],
-\qquad
+\\
 a_1 = a_3 = \frac{\mu}{2(1-\nu)} = \frac{E}{4(1-\nu^{2})},
 \qquad
 a_2 = \frac{\mu}{2} = \frac{E}{4(1+\nu)}.
+\end{gathered}
 ```
 
 **4. The contour integral.** With the angular integrals of the previous section,
 
 ```math
+\begin{aligned}
 b\boldsymbol{\Lambda}
-= \frac{E}{4(1-\nu^{2})}\Big[
+&= \frac{E}{4(1-\nu^{2})}\Big[
   \big(\eta^{2}\mathcal{S}_\eta + (1-\nu)\,\mathcal{C}_\eta\big)\,\underline{\ell}\otimes\underline{\ell}
-+ \big(\mathcal{C}_\eta + (1-\nu)\,\eta^{2}\mathcal{S}_\eta\big)\,\underline{m}\otimes\underline{m}
+\\
+&\qquad {}+ \big(\mathcal{C}_\eta + (1-\nu)\,\eta^{2}\mathcal{S}_\eta\big)\,\underline{m}\otimes\underline{m}
 + \mathcal{E}_\eta\,\underline{n}\otimes\underline{n}\Big],
+\end{aligned}
 ```
 
 using ``a_2/a_1 = 1-\nu``.
@@ -681,12 +698,15 @@ using ``a_2/a_1 = 1-\nu``.
 and ``\chi^{\mathcal{E}} = 2/3``:
 
 ```math
+\begin{aligned}
 \boldsymbol{B}^{\mathcal{E}}
-= \frac{2}{3}\,(b\boldsymbol{\Lambda})^{-1}
-= \frac{8\,(1-\nu^{2})}{3E}\left(
+&= \frac{2}{3}\,(b\boldsymbol{\Lambda})^{-1}
+\\
+&= \frac{8\,(1-\nu^{2})}{3E}\left(
   \frac{\underline{\ell}\otimes\underline{\ell}}{(1-\nu)\,\mathcal{C}_\eta+\eta^{2}\mathcal{S}_\eta}
 + \frac{\underline{m}\otimes\underline{m}}{(1-\nu)\,\eta^{2}\mathcal{S}_\eta+\mathcal{C}_\eta}
 + \frac{\underline{n}\otimes\underline{n}}{\mathcal{E}_\eta}\right),
+\end{aligned}
 ```
 
 the form of [barthelemyIJSS2026](@citet). Replacing ``\mathcal{C}_\eta`` and
@@ -694,11 +714,13 @@ the form of [barthelemyIJSS2026](@citet). Replacing ``\mathcal{C}_\eta`` and
 ``\mathcal{E}_\eta``,
 
 ```math
+\begin{aligned}
 (1-\nu)\,\mathcal{C}_\eta+\eta^{2}\mathcal{S}_\eta
-= \frac{(1-\nu-\eta^{2})\,\mathcal{E}_\eta + \nu\,\eta^{2}\mathcal{K}_\eta}{1-\eta^{2}},
-\qquad
+&= \frac{(1-\nu-\eta^{2})\,\mathcal{E}_\eta + \nu\,\eta^{2}\mathcal{K}_\eta}{1-\eta^{2}},
+\\
 (1-\nu)\,\eta^{2}\mathcal{S}_\eta+\mathcal{C}_\eta
-= \frac{\big(1-(1-\nu)\eta^{2}\big)\,\mathcal{E}_\eta - \nu\,\eta^{2}\mathcal{K}_\eta}{1-\eta^{2}},
+&= \frac{\big(1-(1-\nu)\eta^{2}\big)\,\mathcal{E}_\eta - \nu\,\eta^{2}\mathcal{K}_\eta}{1-\eta^{2}},
+\end{aligned}
 ```
 
 gives the form of the next section.
@@ -817,15 +839,17 @@ on the compliance ``\mathbb{S} = \mathbb{C}^{-1}`` in a frame whose third axis i
 ``\underline{n}``:
 
 ```math
+\begin{gathered}
 E = \frac{1}{S_{1111}},
 \qquad
 \nu_1 = -E\,S_{1122},
 \qquad
 \nu_2 = -E\,S_{1133},
-\qquad
+\\
 H = \frac{1}{E\,S_{3333}},
 \qquad
 \Gamma = \frac{1+\nu_1}{2\,E\,S_{2323}}.
+\end{gathered}
 ```
 
 With
@@ -870,15 +894,17 @@ With ``A = 1-\nu_1-2H\nu_2^{2}``, the five independent components that enter
 the reduced kernel of §4 are [barthelemyIJSS2026](@cite)
 
 ```math
+\begin{gathered}
 C_{1111} = \frac{E\,(1-H\nu_2^{2})}{A\,(1+\nu_1)},
-\quad
+\qquad
 C_{1122} = \frac{E\,(\nu_1+H\nu_2^{2})}{A\,(1+\nu_1)},
-\quad
+\qquad
 C_{1133} = \frac{E\,H\,\nu_2}{A},
-\quad
+\\
 C_{3333} = \frac{E\,H\,(1-\nu_1)}{A},
-\quad
+\qquad
 C_{2323} = \frac{E\,\Gamma}{2\,(1+\nu_1)},
+\end{gathered}
 ```
 
 the isotropic case giving ``A = (1+\nu)(1-2\nu)``.
@@ -999,16 +1025,18 @@ with ``\boldsymbol{S}`` the in-plane semi-axis tensor and
 ``\boldsymbol{S}^{\dagger}`` its pseudo-inverse. Then
 
 ```math
+\begin{aligned}
 \underline{N}^{\mathcal{E}}
-= \tfrac{3}{8}\sqrt{\pi b}\;\sqrt{\varrho}\;
+&= \tfrac{3}{8}\sqrt{\pi b}\;\sqrt{\varrho}\;
   \boldsymbol{B}^{\mathcal{E}}(\underline{m},\underline{n},\eta)
   \cdot\boldsymbol{\Sigma}\cdot\underline{n},
-\qquad
+\\
 \underline{K}^{\mathcal{E}}
-= \tfrac{3}{8}\pi^{3/2}\sqrt{b}\;\sqrt{\varrho}\;
+&= \tfrac{3}{8}\pi^{3/2}\sqrt{b}\;\sqrt{\varrho}\;
   \bigl(\boldsymbol{B}^{\mathcal{R}}(\underline{\nu},\underline{n})\bigr)^{-1}
   \cdot\boldsymbol{B}^{\mathcal{E}}(\underline{m},\underline{n},\eta)
   \cdot\boldsymbol{\Sigma}\cdot\underline{n},
+\end{aligned}
 ```
 
 where the dimensionless front factor is

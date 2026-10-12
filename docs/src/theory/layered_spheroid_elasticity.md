@@ -113,9 +113,12 @@ The conduction page expands the temperature as
 in layer ``\ell``,
 
 ```math
+\begin{aligned}
 \varphi_i^{(\ell)} = \sum_{n,m} P_n^m(p)\Big\{
-   \big[a^{i,m}_{\ell,n}P_n^m(q) + b^{i,m}_{\ell,n}Q_n^m(q)\big]\cos m\varphi
- + \big[c^{i,m}_{\ell,n}P_n^m(q) + d^{i,m}_{\ell,n}Q_n^m(q)\big]\sin m\varphi\Big\}.
+   &\big[a^{i,m}_{\ell,n}P_n^m(q) + b^{i,m}_{\ell,n}Q_n^m(q)\big]\cos m\varphi
+\\
+ &+ \big[c^{i,m}_{\ell,n}P_n^m(q) + d^{i,m}_{\ell,n}Q_n^m(q)\big]\sin m\varphi\Big\}.
+\end{aligned}
 ```
 
 ``P_n^m(p)P_n^m(q)`` has a finite limit as ``q\to1`` and is a **regular**
@@ -180,11 +183,13 @@ simplify.([uc[1], sc[1, 3]])          # u_ϕ , σ_ϕq
 ### The displacement
 
 ```math
-u_p = \frac{\bar p}{2\mu\,c\,w}\Big[\partial_p\varphi_0
+\begin{aligned}
+u_p &= \frac{\bar p}{2\mu\,c\,w}\Big[\partial_p\varphi_0
       + c\,p\,q\,\partial_p\varphi_3 + c\,q\,(4\nu-3)\,\varphi_3\Big],
-\qquad
-u_q = \frac{\bar q}{2\mu\,c\,w}\Big[\partial_q\varphi_0
+\\
+u_q &= \frac{\bar q}{2\mu\,c\,w}\Big[\partial_q\varphi_0
       + c\,p\,q\,\partial_q\varphi_3 + c\,p\,(4\nu-3)\,\varphi_3\Big].
+\end{aligned}
 ```
 
 The ``c`` in the denominator is the Lamé coefficient's — ``\chi_p = c\,w/\bar p``,
@@ -244,10 +249,12 @@ behind it is one. Because ``\varphi_3`` is harmonic,
 ``\nabla^2\Phi = 2\,\partial_z\varphi_3``, so the trace collapses:
 
 ```math
+\begin{gathered}
 \operatorname{tr}\boldsymbol\varepsilon = -\frac{1-2\nu}{\mu}\,\partial_z\varphi_3,
-\qquad
+\\
 \boxed{\;\boldsymbol\sigma = -2\nu\,(\partial_z\varphi_3)\,\boldsymbol 1
  + \nabla\nabla\Phi - 4(1-\nu)\,\operatorname{sym}\!\left(\underline e_3\otimes\nabla\varphi_3\right).\;}
+\end{gathered}
 ```
 
 Every spheroidal component is a projection of that single equation:
@@ -311,10 +318,12 @@ shared by both sides — so every purely geometric prefactor cancels from a
 matching condition, and what must be continuous is
 
 ```math
-\frac{U_q}{\mu} = \frac{1}{\mu}\Big[\partial_q\varphi_0 + c\,p\,q\,\partial_q\varphi_3
+\begin{aligned}
+\frac{U_q}{\mu} &= \frac{1}{\mu}\Big[\partial_q\varphi_0 + c\,p\,q\,\partial_q\varphi_3
                   + c\,p\,(4\nu-3)\,\varphi_3\Big],
-\qquad
-\frac{U_p}{\mu} = \frac{1}{\mu}\Big[\partial_p\Phi - 4c\,q\,(1-\nu)\,\varphi_3\Big].
+\\
+\frac{U_p}{\mu} &= \frac{1}{\mu}\Big[\partial_p\Phi - 4c\,q\,(1-\nu)\,\varphi_3\Big].
+\end{aligned}
 ```
 
 ``U_q`` carries **no** ``p``-derivative at all: only ``p\,P_n`` appears, so it is
@@ -384,11 +393,13 @@ coefficient is unambiguous:
 (\nabla\nabla F)_{\varphi\varphi} = \frac{q F_{,q} - p F_{,p}}{c^2 w^2},
 ```
 ```math
-(\nabla\nabla F)_{qq} = \frac{\bar q^2 F_{,qq}}{c^2 w^2}
+\begin{aligned}
+(\nabla\nabla F)_{qq} &= \frac{\bar q^2 F_{,qq}}{c^2 w^2}
    + \frac{\bar p^2\,(q F_{,q} - p F_{,p})}{c^2 w^4},
-\qquad
-(\nabla\nabla F)_{pq} = \frac{\bar p\,\bar q}{c^2}
+\\
+(\nabla\nabla F)_{pq} &= \frac{\bar p\,\bar q}{c^2}
    \left[\frac{F_{,pq}}{w^2} + \frac{p F_{,q} - q F_{,p}}{w^4}\right].
+\end{aligned}
 ```
 
 Projecting the boxed stress on ``\underline e_q`` and clearing the shared
@@ -399,9 +410,12 @@ c^2 w^4\,\sigma_{qq} = T_q,\qquad
 c^2 w^4\,\sigma_{pq} = \bar p\,\bar q\;T_p,
 ```
 ```math
-T_q = \bar q^2 w^2 \Phi_{,qq} + \bar p^2\big(q\Phi_{,q} - p\Phi_{,p}\big)
+\begin{aligned}
+T_q &= \bar q^2 w^2 \Phi_{,qq} + \bar p^2\big(q\Phi_{,q} - p\Phi_{,p}\big)
   - 2\nu c\,w^2\big(q\bar p^2\varphi_{3,p} + p\bar q^2\varphi_{3,q}\big)
-  - 4(1-\nu)\,c\,p\,\bar q^2 w^2\,\varphi_{3,q},
+\\
+  &\quad {}- 4(1-\nu)\,c\,p\,\bar q^2 w^2\,\varphi_{3,q},
+\end{aligned}
 ```
 ```math
 T_p = w^2 \Phi_{,pq} + p\Phi_{,q} - q\Phi_{,p}
@@ -731,9 +745,11 @@ weighted one that
 [the tangential condition](@ref th-spheroid-banding) is built around:
 
 ```math
-\int_{-1}^{1} P_n(p)\,P_m(p)\,\mathrm dp = \frac{2}{2n+1}\,\delta_{nm},
-\qquad
-\int_{-1}^{1} (1-p^2)\,P_n'(p)\,P_m'(p)\,\mathrm dp = \frac{2n(n+1)}{2n+1}\,\delta_{nm}.
+\begin{aligned}
+\int_{-1}^{1} P_n(p)\,P_m(p)\,\mathrm dp &= \frac{2}{2n+1}\,\delta_{nm},
+\\
+\int_{-1}^{1} (1-p^2)\,P_n'(p)\,P_m'(p)\,\mathrm dp &= \frac{2n(n+1)}{2n+1}\,\delta_{nm}.
+\end{aligned}
 ```
 
 The second is why ``1-p^2`` is the *natural* weight there rather than a
