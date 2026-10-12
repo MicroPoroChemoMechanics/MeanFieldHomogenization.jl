@@ -128,10 +128,13 @@ kernel integral closes in every case,
                  (\\underline{n}\\wedge\\underline{\\xi}^{\\star})} .
 ```
 
-On the crack contour this leaves the 2×2 form
+On the crack contour
+``\\underline{\\xi}^{\\star}(\\varphi) = \\eta\\cos\\varphi\\,\\underline{\\ell}+\\sin\\varphi\\,\\underline{m}``
+of [barthelemyIJSS2026](@citet) this leaves the 2×2 form in
+``(\\cos\\varphi, \\sin\\varphi)``
 
 ```math
-\\mathbf{Q}_2 = \\begin{pmatrix}
+\\boldsymbol{Q}_2 = \\begin{pmatrix}
   \\eta^{2} A & -\\eta B\\\\ -\\eta B & C\\end{pmatrix},
 \\quad
 A = \\underline{m}\\cdot\\mathrm{adj}\\,\\boldsymbol{K}_0\\cdot\\underline{m},\\;

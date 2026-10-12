@@ -369,7 +369,8 @@ Together, with ``\underline{u} = \underline{\xi}^{\star}/\rho`` and
 For an **isotropic** matrix the sextic degenerates to
 ``\mu^{2}(\lambda+2\mu)\|\underline{\xi}\|^{6}``, leaving the single pair of
 double poles ``\xi_n = \pm i\rho``, and the three coefficients are just the
-plane-strain and antiplane moduli:
+plane-strain and antiplane moduli, derived step by step in
+[The isotropic matrix, from the kernel to ``\boldsymbol{B}``](@ref th-cod-iso-derivation):
 
 ```math
 a_1 = a_3 = \frac{\mu}{2(1-\nu)} = \frac{E}{4(1-\nu^{2})},
@@ -433,7 +434,9 @@ Since ``\langle[\![\underline{u}]\!]\rangle_{\mathcal{I}} = \chi\,\underline{\be
 the definition of ``\boldsymbol{B}`` reads
 ``\boldsymbol{B} = \chi\,(b\boldsymbol{\Lambda})^{-1}``. The kernel being
 homogeneous of degree ``1``, ``b\boldsymbol{\Lambda}`` depends on the shape
-only, and
+only, through
+``b\,\boldsymbol{S}^{\dagger}\!\cdot\underline{\kappa}^{\star}(\varphi)
+= \eta\cos\varphi\,\underline{\ell}+\sin\varphi\,\underline{m}``, and
 
 ```math
 \boxed{\;
@@ -504,59 +507,69 @@ uniform traction ``\boldsymbol{\Lambda}\cdot\underline{\beta}`` above
 ### The crack-plane integral: where the elliptic integrals enter
 
 On the crack contour ``\underline{\xi}^{\star}(\varphi) =
-\eta\cos\varphi\,\underline{\ell} + \sin\varphi\,\underline{m}``, so that
-``\rho = \sqrt{\eta^{2}\cos^{2}\varphi+\sin^{2}\varphi}``, and the ``\rho`` of
-the degree-1 homogeneity cancels the ``1/\rho^{2}`` of the two in-plane dyads.
-**Exactly three** angular integrals survive:
+\eta\cos\varphi\,\underline{\ell} + \sin\varphi\,\underline{m}`` of
+[barthelemyIJSS2026](@citet),
+``\rho = \sqrt{\eta^{2}\cos^{2}\varphi+\sin^{2}\varphi}``,
+``\underline{u} = (\eta\cos\varphi\,\underline{\ell}+\sin\varphi\,\underline{m})/\rho``
+and
+``\underline{w} = \underline{n}\wedge\underline{u}
+= (\eta\cos\varphi\,\underline{m}-\sin\varphi\,\underline{\ell})/\rho``, so that
+
+```math
+\rho\,\underline{u}\otimes\underline{u}
+= \frac{\eta^{2}\cos^{2}\varphi\,\underline{\ell}\otimes\underline{\ell}
+       + \sin^{2}\varphi\,\underline{m}\otimes\underline{m}
+       + \eta\cos\varphi\sin\varphi\,(\underline{\ell}\otimes\underline{m}+\underline{m}\otimes\underline{\ell})}{\rho},
+\qquad
+\rho\,\underline{w}\otimes\underline{w}
+= \frac{\sin^{2}\varphi\,\underline{\ell}\otimes\underline{\ell}
+       + \eta^{2}\cos^{2}\varphi\,\underline{m}\otimes\underline{m}
+       - \eta\cos\varphi\sin\varphi\,(\underline{\ell}\otimes\underline{m}+\underline{m}\otimes\underline{\ell})}{\rho}.
+```
+
+The ``\rho`` of the degree-1 homogeneity has canceled the ``1/\rho^{2}`` of the
+two in-plane dyads. ``\rho`` being even in ``\varphi``, the
+``\cos\varphi\sin\varphi`` cross terms are odd and integrate to zero over
+``[0,2\pi]``, which is why ``\boldsymbol{B}`` is diagonal in the crack frame.
+**Exactly three** angular integrals survive. The integrands being even and
+``\pi``-periodic, ``\frac14\int_0^{2\pi} = \int_0^{\pi/2}``, and the change of
+variable ``\phi = \pi/2-\varphi`` turns ``\rho`` into
+``\sqrt{\cos^{2}\phi+\eta^{2}\sin^{2}\phi}``:
 
 ```math
 \frac14\!\int_0^{2\pi}\!\rho\,\mathrm{d}\varphi = \mathcal{E}_\eta,
 \qquad
-\frac14\!\int_0^{2\pi}\!\frac{\eta^{2}\cos^{2}\varphi}{\rho}\,\mathrm{d}\varphi
-  = \eta^{2}\mathcal{S}_\eta,
-\qquad
 \frac14\!\int_0^{2\pi}\!\frac{\sin^{2}\varphi}{\rho}\,\mathrm{d}\varphi
   = \mathcal{C}_\eta,
+\qquad
+\frac14\!\int_0^{2\pi}\!\frac{\eta^{2}\cos^{2}\varphi}{\rho}\,\mathrm{d}\varphi
+  = \eta^{2}\mathcal{S}_\eta,
 ```
 
-where, with ``m = 1-\eta^{2}`` the Legendre *parameter* of
-[Elliptic integrals](@ref th-elliptic-integrals),
+with the complete elliptic integrals and the two combinations of
+[barthelemyIJSS2026](@citet),
 
 ```math
-\mathcal{K}_\eta = K(1-\eta^{2}),
+\mathcal{K}_\eta = \int_0^{\pi/2}\frac{\mathrm{d}\phi}{\sqrt{\cos^{2}\phi+\eta^{2}\sin^{2}\phi}},
 \qquad
-\mathcal{E}_\eta = E(1-\eta^{2}),
-\qquad
-\mathcal{C}_\eta = \frac{\mathcal{E}_\eta-\eta^{2}\mathcal{K}_\eta}{1-\eta^{2}},
-\qquad
-\mathcal{S}_\eta = \frac{\mathcal{K}_\eta-\mathcal{E}_\eta}{1-\eta^{2}} ,
+\mathcal{E}_\eta = \int_0^{\pi/2}\sqrt{\cos^{2}\phi+\eta^{2}\sin^{2}\phi}\;\mathrm{d}\phi,
 ```
 
-the combinations stored by `_elliptic_CS`. The ``\cos\varphi\sin\varphi`` cross
-term vanishes by parity, which is why ``\boldsymbol{B}`` is diagonal in the crack
-frame.
+```math
+\mathcal{C}_\eta = \int_0^{\pi/2}\frac{\cos^{2}\phi\;\mathrm{d}\phi}{\sqrt{\cos^{2}\phi+\eta^{2}\sin^{2}\phi}}
+= \frac{\mathcal{E}_\eta-\eta^{2}\mathcal{K}_\eta}{1-\eta^{2}},
+\qquad
+\mathcal{S}_\eta = \int_0^{\pi/2}\frac{\sin^{2}\phi\;\mathrm{d}\phi}{\sqrt{\cos^{2}\phi+\eta^{2}\sin^{2}\phi}}
+= \frac{\mathcal{K}_\eta-\mathcal{E}_\eta}{1-\eta^{2}}.
+```
 
-!!! note "Why cos² and sin² look exchanged against the literature"
-    [barthelemyIJSS2026](@citet) defines the very same two quantities as
-    ```math
-    \mathcal{C}_\eta = \int_0^{\pi/2}
-      \frac{\cos^{2}\vartheta\;\mathrm{d}\vartheta}
-           {\sqrt{\cos^{2}\vartheta+\eta^{2}\sin^{2}\vartheta}},
-    \qquad
-    \mathcal{S}_\eta = \int_0^{\pi/2}
-      \frac{\sin^{2}\vartheta\;\mathrm{d}\vartheta}
-           {\sqrt{\cos^{2}\vartheta+\eta^{2}\sin^{2}\vartheta}},
-    ```
-    that is, over the **complementary** angle
-    ``\vartheta = \pi/2 - \varphi``, for which the radical above reads
-    ``\rho``. Substituting swaps ``\cos`` and ``\sin`` in *both* the integrand
-    and the radical, so the numbers are identical — verified to ten digits
-    against the Legendre forms — while ``\mathcal{C}_\eta`` looks like a
-    ``\cos^{2}`` integral there and a ``\sin^{2}`` integral here. Neither is
-    wrong; only the origin of the angle differs. The ``\varphi`` above is the
-    one to keep, because it is the angle the code integrates over
-    (`Cracks._cod_elliptic_numerical`), matching the contour
-    ``\underline{\xi}^{\star}(\varphi)``.
+The second forms follow from ``D = \cos^{2}\phi+\eta^{2}\sin^{2}\phi``, which
+gives ``\sin^{2}\phi = (1-D)/(1-\eta^{2})`` and
+``\cos^{2}\phi = (D-\eta^{2})/(1-\eta^{2})``, with ``\int_0^{\pi/2}D^{-1/2} = \mathcal{K}_\eta``
+and ``\int_0^{\pi/2}D^{1/2} = \mathcal{E}_\eta``. In terms of the Legendre
+*parameter* ``m = 1-\eta^{2}`` of [Elliptic integrals](@ref th-elliptic-integrals),
+``\mathcal{K}_\eta = K(1-\eta^{2})`` and ``\mathcal{E}_\eta = E(1-\eta^{2})``;
+`_elliptic_CS` returns ``(\mathcal{C}_\eta, \mathcal{S}_\eta, \mathcal{E}_\eta)``.
 
 Hence
 
@@ -587,6 +600,128 @@ This is the exact identity behind the SIF ↔ DIF exchange relation at the end o
 this page: the operator that trades ``\underline{K}`` for ``\underline{N}`` *is*
 ``\hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{\nu})``.
 
+### [The isotropic matrix, from the kernel to ``\boldsymbol{B}``](@id th-cod-iso-derivation)
+
+The steps above, carried out for
+``\mathbb{C} = \lambda\,\boldsymbol{1}\otimes\boldsymbol{1} + 2\mu\,\mathbb{I}``,
+end on the closed form of ``\boldsymbol{B}``. Each line was checked by computer
+algebra.
+
+**1. The three tensors of the kernel.** With
+``\underline{\xi} = \underline{\xi}^{\star}+\xi_n\underline{n}`` and
+``\underline{\xi}^{\star} = \rho\,\underline{u}``,
+
+```math
+\boldsymbol{N}(\underline{\xi}) = \mu\,\|\underline{\xi}\|^{2}\,\boldsymbol{1}
++ (\lambda+\mu)\,\underline{\xi}\otimes\underline{\xi},
+\qquad
+\boldsymbol{A} = \mu\,\boldsymbol{1} + (\lambda+\mu)\,\underline{n}\otimes\underline{n},
+\qquad
+\boldsymbol{V} = \lambda\,\underline{n}\otimes\underline{\xi}
++ \mu\,\underline{\xi}\otimes\underline{n}
++ \mu\,(\underline{\xi}\cdot\underline{n})\,\boldsymbol{1},
+```
+
+and ``\boldsymbol{N}^{-1} = \big(\boldsymbol{1} - \kappa\,\underline{\xi}\otimes\underline{\xi}/\|\underline{\xi}\|^{2}\big)/(\mu\|\underline{\xi}\|^{2})``
+with ``\kappa = (\lambda+\mu)/(\lambda+2\mu) = 1/(2(1-\nu))``.
+
+**2. The doubly contracted kernel.** In the orthonormal frame
+``(\underline{u},\underline{w},\underline{n})``,
+``\underline{n}\cdot\hat{\mathbb{Q}}\cdot\underline{n} = \boldsymbol{A} - \boldsymbol{V}\cdot\boldsymbol{N}^{-1}\cdot\boldsymbol{V}^{\!T}`` has the components
+
+```math
+Q_{uu} = \frac{2\mu}{1-\nu}\,\frac{\rho^{2}\xi_n^{2}}{(\rho^{2}+\xi_n^{2})^{2}},
+\qquad
+Q_{ww} = \mu\,\frac{\rho^{2}}{\rho^{2}+\xi_n^{2}},
+\qquad
+Q_{nn} = \frac{2\mu}{1-\nu}\,\frac{\rho^{4}}{(\rho^{2}+\xi_n^{2})^{2}},
+\qquad
+Q_{un} = Q_{nu} = -\frac{2\mu}{1-\nu}\,\frac{\rho^{3}\xi_n}{(\rho^{2}+\xi_n^{2})^{2}},
+```
+
+and ``Q_{uw} = Q_{wn} = 0``. All decay as ``\xi_n^{-2}``, as announced.
+
+**3. The integral over ``\xi_n``.** ``Q_{un}`` is odd in ``\xi_n`` and integrates
+to zero. The three others need only
+
+```math
+\int_{-\infty}^{+\infty}\frac{\mathrm{d}\xi_n}{\rho^{2}+\xi_n^{2}} = \frac{\pi}{\rho},
+\qquad
+\int_{-\infty}^{+\infty}\frac{\xi_n^{2}\,\mathrm{d}\xi_n}{(\rho^{2}+\xi_n^{2})^{2}} = \frac{\pi}{2\rho},
+\qquad
+\int_{-\infty}^{+\infty}\frac{\mathrm{d}\xi_n}{(\rho^{2}+\xi_n^{2})^{2}} = \frac{\pi}{2\rho^{3}},
+```
+
+so that, with the factor ``1/(2\pi)`` of the reduced transform,
+
+```math
+\hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{\xi}^{\star})
+= \rho\,\big[a_1\,\underline{u}\otimes\underline{u}
++ a_2\,\underline{w}\otimes\underline{w}
++ a_3\,\underline{n}\otimes\underline{n}\big],
+\qquad
+a_1 = a_3 = \frac{\mu}{2(1-\nu)} = \frac{E}{4(1-\nu^{2})},
+\qquad
+a_2 = \frac{\mu}{2} = \frac{E}{4(1+\nu)}.
+```
+
+**4. The contour integral.** With the angular integrals of the previous section,
+
+```math
+b\boldsymbol{\Lambda}
+= \frac{E}{4(1-\nu^{2})}\Big[
+  \big(\eta^{2}\mathcal{S}_\eta + (1-\nu)\,\mathcal{C}_\eta\big)\,\underline{\ell}\otimes\underline{\ell}
++ \big(\mathcal{C}_\eta + (1-\nu)\,\eta^{2}\mathcal{S}_\eta\big)\,\underline{m}\otimes\underline{m}
++ \mathcal{E}_\eta\,\underline{n}\otimes\underline{n}\Big],
+```
+
+using ``a_2/a_1 = 1-\nu``.
+
+**5. The inversion.** ``b\boldsymbol{\Lambda}`` is diagonal in the crack frame,
+and ``\chi^{\mathcal{E}} = 2/3``:
+
+```math
+\boldsymbol{B}^{\mathcal{E}}
+= \frac{2}{3}\,(b\boldsymbol{\Lambda})^{-1}
+= \frac{8\,(1-\nu^{2})}{3E}\left(
+  \frac{\underline{\ell}\otimes\underline{\ell}}{(1-\nu)\,\mathcal{C}_\eta+\eta^{2}\mathcal{S}_\eta}
++ \frac{\underline{m}\otimes\underline{m}}{(1-\nu)\,\eta^{2}\mathcal{S}_\eta+\mathcal{C}_\eta}
++ \frac{\underline{n}\otimes\underline{n}}{\mathcal{E}_\eta}\right),
+```
+
+the form of [barthelemyIJSS2026](@citet). Replacing ``\mathcal{C}_\eta`` and
+``\mathcal{S}_\eta`` by their expressions in ``\mathcal{K}_\eta`` and
+``\mathcal{E}_\eta``,
+
+```math
+(1-\nu)\,\mathcal{C}_\eta+\eta^{2}\mathcal{S}_\eta
+= \frac{(1-\nu-\eta^{2})\,\mathcal{E}_\eta + \nu\,\eta^{2}\mathcal{K}_\eta}{1-\eta^{2}},
+\qquad
+(1-\nu)\,\eta^{2}\mathcal{S}_\eta+\mathcal{C}_\eta
+= \frac{\big(1-(1-\nu)\eta^{2}\big)\,\mathcal{E}_\eta - \nu\,\eta^{2}\mathcal{K}_\eta}{1-\eta^{2}},
+```
+
+gives the form of the next section.
+
+**6. The two limits.** At the circle, ``\mathcal{C}_1 = \mathcal{S}_1 = \pi/4`` and
+``\mathcal{E}_1 = \pi/2``, so
+``B_{nn} = 16(1-\nu^{2})/(3\pi E)`` and
+``B_{\ell\ell} = B_{mm} = B_{nn}/(1-\nu/2)``. For the ribbon,
+``b\boldsymbol{\Lambda}^{\mathcal{R}} = \hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{m})``,
+where ``\underline{u} = \underline{m}`` and ``\underline{w} = -\underline{\ell}``:
+``b\boldsymbol{\Lambda}^{\mathcal{R}} = a_2\,\underline{\ell}\otimes\underline{\ell}
++ a_1\,\underline{m}\otimes\underline{m} + a_3\,\underline{n}\otimes\underline{n}``,
+and with ``\chi^{\mathcal{R}} = \pi/4``
+
+```math
+\boldsymbol{B}^{\mathcal{R}}
+= \frac{\pi}{4}\,(b\boldsymbol{\Lambda}^{\mathcal{R}})^{-1}
+= \frac{\pi\,(1-\nu^{2})}{E}\left(
+  \frac{\underline{\ell}\otimes\underline{\ell}}{1-\nu}
++ \underline{m}\otimes\underline{m}
++ \underline{n}\otimes\underline{n}\right).
+```
+
 ### What breaks in the general case
 
 Nothing above survives a general anisotropy: the acoustic tensor no longer
@@ -602,7 +737,8 @@ Stroh roots located numerically.
 
 For ``\mathbb{C} = 3k\,\mathbb{J}+2\mu\,\mathbb{K}`` with Young's modulus ``E``
 and Poisson ratio ``\nu``, in the crack frame
-``(\underline{\ell},\underline{m},\underline{n})``:
+``(\underline{\ell},\underline{m},\underline{n})`` — derived step by step in
+[The isotropic matrix, from the kernel to ``\boldsymbol{B}``](@ref th-cod-iso-derivation):
 
 ```math
 \boldsymbol{B}
@@ -627,6 +763,14 @@ with ``\mathcal{K}_\eta = \mathcal{K}(\sqrt{1-\eta^{2}})`` and
 ``\mathcal{E}_\eta = \mathcal{E}(\sqrt{1-\eta^{2}})`` the complete elliptic
 integrals of the first and second kind [abramowitz1972](@cite), provided by
 [`ell_K`](@ref) and [`ell_E`](@ref).
+
+!!! note "Near the circle"
+    ``\mathcal{C}_\eta`` and ``\mathcal{S}_\eta``, written with ``\mathcal{K}_\eta``
+    and ``\mathcal{E}_\eta``, cancel as ``\eta\to1``; they are evaluated by series
+    there. And ``\boldsymbol{B}``, a function of the ratio of the smaller
+    semi-axis to the larger, has a kink at the circle, where the two swap
+    roles: its derivative there is one-sided.
+    [Degenerate shapes](@ref th-degenerate-shapes) gives both.
 
 In terms of the combinations ``\mathcal{C}_\eta`` and ``\mathcal{S}_\eta`` of
 §4, which make both limits immediate [barthelemyIJSS2026](@cite),
