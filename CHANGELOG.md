@@ -1,5 +1,78 @@
 # Changelog
 
+## v0.16.1 — the default method resolved at compile time, and NestedQuadGK by default
+
+Every call of `hill_tensor` and `cod_tensor` with the default `method = :auto`
+paid a dynamic dispatch and a dynamic keyword call, and handed its caller a value
+of type `Any`: the default was not propagated as a constant down to the `Val`
+that selects the algorithm. It now is, with results identical to the bit. And
+the default cubature for an anisotropic reference is now the nested Gauss–Kronrod
+one, measured both faster and more accurate than DECUHR on every case tried.
+
+### Changed
+
+- `method = :auto` for an anisotropic three-dimensional elastic reference — Hill
+  tensors and crack COD tensors — is `NestedQuadGK`, whatever is loaded. It was
+  `DECUHR` as soon as its extension was loaded. Against closed forms, and
+  against tight references checked by a second algorithm, `NestedQuadGK` is
+  within 1e-15 to 2e-12 where `DECUHR` is within 1e-11 to 6e-8, at two to twelve
+  times less cost. Results computed with DECUHR loaded move by at most that
+  former error, and the default no longer depends on what the session has
+  loaded. `method = :decuhr` remains available.
+
+### Fixed
+
+- `hill_tensor(…; method = :residues)` on a reference whose acoustic polynomial
+  has roots of a multiplicity the residue sums do not handle — a reference
+  anisotropic in type but isotropic or transversely isotropic in value along the
+  ellipsoid axes — threw QuadGK's `DomainError` ("integrand produced NaN"), and
+  the fallback to `NestedQuadGK` written for that case could never be reached.
+  It now throws an `ArgumentError` that says what failed and which method
+  evaluates the same integral; the dead fallback is gone.
+- A ribbon crack under `DECUHR` failed ("DECUHR failed: retcode = Failure"):
+  DECUHR integrates over rectangles of dimension two or more, and the ribbon's
+  reduced kernel is a single one-dimensional integral. With DECUHR loaded this
+  was the default for a ribbon crack in an anisotropic reference, which the
+  self-consistent and differential schemes produce. `:decuhr` on a ribbon now
+  evaluates that integral by Gauss–Kronrod, as `:residues` on a cylinder falls
+  back to the quadrature that applies.
+
+### Performance
+
+Same machine, 0.16.0 → 0.16.1, results identical to the bit:
+
+- `hill_tensor` of a sphere in an isotropic matrix 132 → 37 ns and
+  `cod_tensor` of a penny crack 280 → 88 ns, both now inferred and allocation
+  free;
+- Mori–Tanaka on a sphere 1.35 → 1.04 µs, self-consistent 20.6 → 17.7 µs,
+  differential 49.1 → 42.5 µs, Mori–Tanaka on a spheroid 1.67 → 1.41 µs;
+- the first `cod_tensor` call of a session 276 → 50 ms.
+
+The structural reasons: `_with_method` lifts `:auto` at compile time and
+dispatches any other method once, on its `Val`, into a kernel call with
+positional arguments; `Base.@constprop :aggressive` on `hill_tensor`,
+`cod_tensor`, `sif`, `dif` and `interaction_tensor` carries the default down to
+it; the closed-form COD tensors are built with their dimension in their type.
+
+### Documentation
+
+- Hill tensors: the proof of the surface-element identity, the Kelvin–Mandel
+  matrices of 𝕌ᴬ and 𝕍ᴬ,
+  the definitions of the elliptic integrals, why ℙ is positive
+  definite, and an account of the three algorithms with their current costs,
+  the long parts folded.
+- COD tensors, after the appendices of the now published barthelemyIJSS2026
+  (International Journal of Solids and Structures 341 (2026) 114293), cited
+  under that key: the general formula of 𝐁 through the reduced
+  kernel and the Fourier conventions behind it, the isotropic ribbon and the
+  transversely isotropic closed forms in engineering parameters as implemented,
+  K = 4 Q̂*ₙₙ(ν)·N and
+  the energy release rate as a quadratic form, other parametrizations of the
+  front. The page stated that every source normalizes 𝐁 by the
+  half-width; the earlier papers do not, and the warning now says so.
+- The performance notes and the dispatch rationale give the current costs of
+  the anisotropic back-ends.
+
 ## v0.16.0 — derivatives everywhere, and the anisotropic Hill cubatures ×90
 
 An audit of the package against automatic differentiation, its own invariants
