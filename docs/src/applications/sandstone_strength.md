@@ -245,24 +245,84 @@ mean-stress axis first, so that a hydrostatic compression alone breaks the
 rock before the grains reach their own limit.
 
 The friction coefficient enters only through ``H``, so the whole family of
-envelopes at ``\varphi = 0.25`` is one surface:
+envelopes at ``\varphi = 0.25`` is one surface. Each envelope is built as in the
+plane figure, its end included, then resampled at points evenly spaced along
+its length, so that the edges of the surface are the envelopes and their ends
+rather than the cells of the ``\kappa`` grid:
 
 ```@example sandstone
 include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
 φv = 0.25
-αs = range(0.12, 0.34; length = 23)
 coef = [coefficients(κv, φv) for κv in κs]
-Xs = fill(NaN, length(αs), length(κs)); Zs = fill(NaN, length(αs), length(κs))
-for (i, αv) in enumerate(αs), (j, c) in enumerate(coef)
-    H²(c, φv, αv) < 0 && continue
-    Xs[i, j], Zs[i, j] = point(c, φv, αv)
+## n points evenly spaced along the polyline pts.
+function resample(pts, n)
+    s = vcat(0.0, cumsum([hypot((pts[k] .- pts[k - 1])...) for k in 2:length(pts)]))
+    return map(range(0, s[end]; length = n)) do t
+        k = clamp(searchsortedlast(s, t), 1, length(pts) - 1)
+        w = s[k + 1] > s[k] ? (t - s[k]) / (s[k + 1] - s[k]) : 0.0
+        (1 - w) .* pts[k] .+ w .* pts[k + 1]
+    end
 end
-Ys = [αv for αv in αs, _ in κs]
-surface = replace(surface_trace(Xs, Ys, Zs; color = "#2c7fb8", opacity = 0.9), "NaN" => "null")
-plotly_scene([surface]; uid = "sandstone-envelopes-3d", height = 480, aspectmode = "cube", axes_visible = true,
+αs = range(0.12, 0.34; length = 23)
+envs = [envelope(φv, αv, coef) for αv in αs]
+pts = resample.(envs, 61)
+grid = [pts[i][j] for i in eachindex(pts), j in 1:61]
+Xs, Zs = first.(grid), last.(grid)
+Ys = [αv for αv in αs, _ in 1:61]
+surface = surface_trace(Xs, Ys, Zs; color = "#2c7fb8", opacity = 0.9)
+rim = line_trace(
+    hcat(permutedims(hcat(Xs[1, :], Ys[1, :], Zs[1, :])), permutedims(hcat(Xs[:, end], Ys[:, end], Zs[:, end])),
+        permutedims(hcat(reverse(Xs[end, :]), reverse(Ys[end, :]), reverse(Zs[end, :]))),
+        permutedims(hcat(reverse(Xs[:, 1]), reverse(Ys[:, 1]), reverse(Zs[:, 1]))));
+    color = FIG_VECTOR, width = 4)
+nothing # hide
+```
+
+Two families of planes cut it. A plane ``\alpha = \text{const}`` gives back the
+envelope of that friction coefficient, as in the plane figure above. A plane
+``\Sigma_m = \text{const}`` gives the strength in shear as a function of the
+friction at a fixed confinement, read on each envelope where it crosses that
+mean stress; it is empty where the rock breaks under that hydrostatic
+compression alone, whatever the shear.
+
+```@example sandstone
+xm, zm = maximum(Xs), maximum(Zs)
+## Plane α = const: the envelope itself.
+αc = 0.12:0.02:0.34
+envc = [envelope(φv, αv, coef) for αv in αc]
+friction = CutFamily(
+    "Plane α = const", "α", string.(αc),
+    [plane_patch([xm / 2, αv, zm / 2], [1, 0, 0], [0, 0, 1], 0.55xm, 0.55zm) for αv in αc],
+    [vcat(first.(e)', fill(αv, 1, length(e)), last.(e)') for (αv, e) in zip(αc, envc)],
+    [vcat(first.(e)', last.(e)') for e in envc],
+    ("−Σm / K", "Σd / K"); active = 5,
+)
+## Plane −Σm = c: Σd where each envelope crosses that mean stress.
+function crossing(e, c)
+    for k in 1:(length(e) - 1)
+        (x0, z0), (x1, z1) = e[k], e[k + 1]
+        (x0 - c) * (x1 - c) ≤ 0 && x1 != x0 && return z0 + (c - x0) / (x1 - x0) * (z1 - z0)
+    end
+    return NaN
+end
+cs = 0.1:0.1:floor(xm; digits = 1)
+shear = [[crossing(e, c) for e in envs] for c in cs]
+confinement = CutFamily(
+    "Plane Σm = const", "−Σm / K", string.(cs),
+    [plane_patch([c, (first(αs) + last(αs)) / 2, zm / 2], [0, 1, 0], [0, 0, 1], 0.55 * (last(αs) - first(αs)), 0.55zm) for c in cs],
+    [vcat(fill(c, 1, length(αs)), collect(αs)', d') for (c, d) in zip(cs, shear)],
+    [vcat(collect(αs)', d') for d in shear],
+    ("friction α", "Σd / K"); active = 5, equal = false,
+)
+section_figure([surface, rim], [friction, confinement];
+    uid = "sandstone-envelopes-3d", height = 620, aspectmode = "cube",
     xlabel = "−Σm / K", ylabel = "friction α", zlabel = "Σd / K",
     title = "Strength envelopes of a sandstone, φ = 0.25")
 ```
+
+The buttons above the surface choose a family of planes, or none, and the slider
+below moves the plane; on the right, the section is drawn in coordinates of its
+plane.
 
 ## Where to go next
 

@@ -281,14 +281,16 @@ end
 # ── Sections of a surface, cut with the mouse ────────────────────────────────
 
 """
-    CutFamily(name, symbol, labels, planes, curves, sections, labels2d; active = 1)
+    CutFamily(name, symbol, labels, planes, curves, sections, labels2d;
+              active = 1, equal = true)
 
 One family of cutting planes for [`section_figure`](@ref). For the `k`-th
 plane, `labels[k]` names it on the slider (after `symbol = `), `planes[k]` is
 the patch drawn in space (`(X, Y, Z)`, see [`plane_patch`](@ref)), `curves[k]`
 the section in space (`3 × n`) and `sections[k]` the same curve in coordinates
 of the plane (`2 × n`), whose axes `labels2d` names. `NaN` columns break a
-curve.
+curve. `equal` keeps the same scale on both axes of the panel, which only
+makes sense when they carry the same quantity.
 """
 struct CutFamily
     name::String
@@ -299,12 +301,13 @@ struct CutFamily
     sections::Vector{Matrix{Float64}}
     labels2d::NTuple{2, String}
     active::Int
+    equal::Bool
 end
 
-CutFamily(name, symbol, labels, planes, curves, sections, labels2d; active::Integer = 1) =
+CutFamily(name, symbol, labels, planes, curves, sections, labels2d; active::Integer = 1, equal::Bool = true) =
     CutFamily(
     String(name), String(symbol), String.(labels), planes, curves, sections,
-    (String(labels2d[1]), String(labels2d[2])), Int(active)
+    (String(labels2d[1]), String(labels2d[2])), Int(active), equal
 )
 
 """
@@ -327,8 +330,9 @@ A surface in space (`items`, as for [`plotly_scene`](@ref)), with a panel on its
 right showing it cut by a plane. Buttons choose the family of planes, or none,
 and a slider moves the plane; the section is drawn on the surface and, in the
 panel, in coordinates of the plane, which is where a two-dimensional criterion
-is read. The panel keeps equal scales on its two axes by shrinking the side
-that has room to spare, rather than its range, so that no section is clipped.
+is read. Where a family asks for it, the panel keeps equal scales on its two
+axes by shrinking the side that has room to spare, rather than its range, so
+that no section is clipped.
 """
 function section_figure(
         items::AbstractVector, families::AbstractVector{CutFamily};
@@ -386,7 +390,8 @@ function section_figure(
         """{label:"$(f.name)",method:"update",args:[$(a[1:(end - 1)]),visible:[true,true,true]},
         {$(shown(i)),"sliders[$(i - 1)].active":$(f.active - 1),
          "xaxis.visible":true,"yaxis.visible":true,
-         "xaxis.title.text":"$(f.labels2d[1])","yaxis.title.text":"$(f.labels2d[2])"},$idx]}"""
+         "xaxis.title.text":"$(f.labels2d[1])","yaxis.title.text":"$(f.labels2d[2])",
+         "yaxis.scaleanchor":$(f.equal ? "\"x\"" : "null")},$idx]}"""
     end
     ## Plotly paints the pressed button near white whatever the theme, so the
     ## buttons keep a light face and dark text in both schemes.
