@@ -1,5 +1,43 @@
 # Changelog
 
+## v0.16.2 — tensors compared as tensors
+
+A patch release. The documentation, the tutorials and the tests compared
+tensors through the arrays of their components, which `get_array` and
+`t[i, j, k, l]` give in each tensor's own basis: the difference of two such
+arrays means something only when the two bases coincide. They now compare the
+tensors themselves, which holds in any basis. Two internal kernels are written
+in static algebra, equal to the bit and faster. No result changes.
+
+### Changed
+
+- The isotropic conduction Green operator, (𝟏 − 3 n⊗n)/(4πσ₀r³) in 3D and
+  (𝟏 − 2 n⊗n)/(2πσ₀r²) in 2D, was built entry by entry into a heap array then
+  converted to a static one. It is now formed in static algebra, with the same
+  products in the same order: equal to the bit, 51 → 38 ns in 3D and
+  45 → 26 ns in 2D, one allocation instead of three.
+- The second moment of an ellipsoid is Q diag(aᵢ²/(d + 2)) Qᵀ through
+  `Diagonal`, 103 → 78 ns, equal to the bit. It takes `transpose(Q)`, not
+  `Q'`, which would conjugate a symbolic frame.
+- `TensND` is bounded to `"0.6.1"` (package, tests and documentation). The
+  documentation uses `𝐞(3, 3, Float64)`, which works from that release.
+
+### Tests and documentation
+
+- Pages and published scripts use the tensor API instead of rewriting it:
+  `norm`, `≈` and `==` on tensors, `⊡` for invariants (𝟏 ⊡ ℂ ⊡ 𝟏 / 9), `KM`,
+  `tens_cubic`, `best_fit_iso`, `components_canon`, `𝐞₃ ⊗ 𝐞₃`. A 300 × 300
+  mask that was the identity is `I`, and a standard error of the mean is
+  `std`. The 15 tutorial pages are regenerated from their scripts; every
+  modified script runs. `Statistics` is declared in the documentation
+  environment.
+- Tests compare tensors with `≈`, or through `components_canon` where a
+  tolerance was set on the largest component. A loop of one `@test` per
+  component is one test. Invariants are written as tensors. The independent
+  references a test checks against (an explicit contraction by components,
+  the 3⁸-term rotations, the closed forms of Mura and Eshelby by components)
+  are kept as written, since they are what makes the check independent.
+
 ## v0.16.1 — the default method resolved at compile time, NestedQuadGK by default, and degenerate shapes exact
 
 Every call of `hill_tensor` and `cod_tensor` with the default `method = :auto`
