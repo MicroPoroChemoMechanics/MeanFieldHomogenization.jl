@@ -216,12 +216,12 @@ for (label, x, key) in rows
 end
 ```
 
-Every value of the article is recovered. The ITZ limits are in units of
+Every published value [konigsberger2014strength](@cite) is recovered. The ITZ limits are in units of
 ``\sigma^{\mathrm{ult}}_{\mathrm{ITZ}}``, the separation limits in units of ``T^{\mathrm{ult}}``; the
-"compression" peaks are signed as in the article, a positive principal stress
+"compression" peaks are signed as in [konigsberger2014strength](@citet), a positive principal stress
 per unit negative load. Uniaxial compression thus puts the ITZ in tension, at
 about a third of the way from the poles, and its limit ratio
-``\Sigma_{\mathrm{ut}}/|\Sigma_{\mathrm{uc}}| = 0.225`` is the one the article finds within the
+``\Sigma_{\mathrm{ut}}/|\Sigma_{\mathrm{uc}}| = 0.225`` is the one [konigsberger2014strength](@citet) find within the
 experimental range.
 
 ## 6. Elastic limit envelopes
@@ -266,7 +266,7 @@ nothing # hide
 ```
 
 Under biaxial loading ``\boldsymbol\Sigma = \Sigma_{xx}\,\underline e_x\otimes\underline e_x + \Sigma_{yy}\,\underline e_y\otimes\underline e_y``,
-the two envelopes are those of Figure 7 of the article:
+the two envelopes are those of [konigsberger2014strength; Fig. 7](@citet):
 
 ```@example itzlim
 ψs = range(0, 2π; length = 241)
@@ -326,28 +326,119 @@ surface they describe, in interactive form:
 
 ```@example itzlim
 include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
-us = range(0, π; length = 31)              # angle from the hydrostatic axis
-vs = range(0, 2π; length = 61)
 direction(u, v) = cos(u) * N3 + sin(u) * (cos(v) * N1 + sin(v) * N2)
-R = [itz_limit(diagm(direction(u, v))) for u in us, v in vs]
-R[R .> 6] .= NaN                           # open towards hydrostatic compression
-X = [R[i, j] * direction(us[i], vs[j])[1] for i in eachindex(us), j in eachindex(vs)]
-Y = [R[i, j] * direction(us[i], vs[j])[2] for i in eachindex(us), j in eachindex(vs)]
-Z = [R[i, j] * direction(us[i], vs[j])[3] for i in eachindex(us), j in eachindex(vs)]
-surface = replace(surface_trace(X, Y, Z; color = "#4a90d9", opacity = 0.85), "NaN" => "null")
-axis = line_trace([[-3.5, -3.5, -3.5], [1.0, 1.0, 1.0]]; color = FIG_GUIDE, width = 3)
-plotly_scene([surface, axis]; uid = "itz-envelope-3d", height = 520, axes_visible = true,
-    xlabel = "Σ₁ / σ_ITZ^ult", ylabel = "Σ₂ / σ_ITZ^ult", zlabel = "Σ₃ / σ_ITZ^ult",
-    title = "Elastic limit of concrete by ITZ failure, principal stress space")
+radius(u, v) = itz_limit(diagm(direction(u, v)))   # u: angle from the hydrostatic axis
+ξcut = -5.0
+ξapex = radius(0.0, 0.0)                            # hydrostatic tension
+## Angle at which the meridian v crosses the deviatoric plane ξ = ξcut. The
+## limit is infinite near hydrostatic compression, where the product is -Inf.
+function u_cut(v)
+    lo, hi = π / 2, π
+    for _ in 1:40
+        mid = (lo + hi) / 2
+        radius(mid, v) * cos(mid) > ξcut ? (lo = mid) : (hi = mid)
+    end
+    return lo
+end
+## The meridian v, from the apex to the cut.
+meridian(v; n = 41) = (uc = u_cut(v);
+    [radius(t * uc, v) * direction(t * uc, v) for t in range(0, 1; length = n)])
+vs = range(0, 2π; length = 73)
+P = reduce(hcat, meridian.(vs))
+surface = surface_trace(getindex.(P, 1), getindex.(P, 2), getindex.(P, 3);
+    color = "#4a90d9", opacity = 0.85)
+rim = line_trace(P[end, :]; color = FIG_VECTOR, width = 5)
+axis = line_trace([(ξcut - 1) * N3, (ξapex + 1) * N3]; color = FIG_GUIDE, width = 3)
+nothing # hide
 ```
 
-The six curved faces of the article's Figure 4(b) appear around the hydrostatic
-axis (gray line); the surface is cut where the elastic limit exceeds six times
-the ITZ strength, since it does not close under compression.
+The six curved faces of the envelope
+[konigsberger2014strength; Fig. 4(b)](@cite) appear around the hydrostatic axis
+(gray line). The surface does not close under hydrostatic compression, so
+it is cut by the deviatoric plane ``\xi = -5``: each meridian is followed from
+the apex up to the angle at which it crosses that plane, found by bisection, and
+the rim of the surface is the section of the envelope by the plane. Along each
+direction the limit itself is exact, ``\sigma_{\mathrm I}`` being positively
+homogeneous of degree one in ``\boldsymbol\Sigma``.
+
+Three families of planes cut it. The deviatoric planes ``\xi = \text{const}``
+give back the sections of the previous figure. The planes ``\Sigma_3 = s``
+contain the hydrostatic point ``(s, s, s)``, inside the envelope as long as it
+lies below the apex, so that the section is found by bisection along the rays
+issued from it; ``s = 0`` gives back the biaxial envelope drawn above
+[konigsberger2014strength; Fig. 7](@cite). Under lateral compression these
+sections reach beyond the cut of the surface, and that part of them is drawn in
+the panel only. The meridian planes contain the hydrostatic axis and the
+deviatoric direction ``\cos\psi\,\underline N_1 + \sin\psi\,\underline N_2``,
+where ``\underline N_1 = (-1, 1, 0)/\sqrt 2`` and
+``\underline N_2 = (-1, -1, 2)/\sqrt 6`` are the in-plane axes of the previous
+figure; their sections are two meridians of the surface itself, and
+``\psi = 90^{\circ}`` is the plane ``\Sigma_1 = \Sigma_2`` of axisymmetric
+triaxial tests.
+
+```@example itzlim
+ψc = range(0, 2π; length = 73)
+points(cols) = reduce(hcat, cols)
+dirN(ψ) = cos(ψ) * N1 + sin(ψ) * N2
+
+## Deviatoric planes ξ = const.
+ξs = filter(<(ξapex), -5.0:0.5:2.0)
+rdev = [[section_radius(ξ, ψ; xmax = 20.0) for ψ in ψc] for ξ in ξs]
+hdev = 1.15 * maximum(maximum(r) for r in rdev)
+deviatoric = CutFamily(
+    "Deviatoric plane", "ξ", string.(ξs),
+    [plane_patch(ξ * N3, N1, N2, hdev, hdev) for ξ in ξs],
+    [points(ξ * N3 + ri * dirN(ψ) for (ri, ψ) in zip(r, ψc)) for (ξ, r) in zip(ξs, rdev)],
+    [points([ri * cos(ψ), ri * sin(ψ)] for (ri, ψ) in zip(r, ψc)) for r in rdev],
+    ("along N₁", "along N₂"); active = findfirst(==(0.0), ξs),
+)
+
+## Planes Σ₃ = s, by bisection along the rays issued from (s, s, s).
+function biaxial_point(s, ψ; xmax = 20.0)
+    S(x) = [s + x * cos(ψ), s + x * sin(ψ), s]
+    lo, hi = 0.0, xmax
+    for _ in 1:40
+        mid = (lo + hi) / 2
+        itz_peak(diagm(S(mid))) < 1 ? (lo = mid) : (hi = mid)
+    end
+    return S(lo)
+end
+sbi = [s for s in -2.0:0.25:1.0 if sqrt(3) * s < ξapex]
+cbi = [points(biaxial_point(s, ψ) for ψ in ψc) for s in sbi]
+## On the surface, the part of a section beyond the cut is left out.
+onsurface(C) = [sum(C[:, j]) / sqrt(3) ≥ ξcut ? C[i, j] : NaN for i in 1:3, j in axes(C, 2)]
+lo, hi = extrema(vcat(getindex.(P, 1), getindex.(P, 2)))
+biaxial = CutFamily(
+    "Plane Σ₃ = s", "s", string.(sbi),
+    [plane_patch([(lo + hi) / 2, (lo + hi) / 2, s], [1, 0, 0], [0, 1, 0], 0.55 * (hi - lo), 0.55 * (hi - lo)) for s in sbi],
+    onsurface.(cbi), [C[1:2, :] for C in cbi],
+    ("Σ₁ / σ_ITZ^ult", "Σ₂ / σ_ITZ^ult"); active = findfirst(==(0.0), sbi),
+)
+
+## Meridian planes: two meridians of the surface, joined at the apex.
+ψm = 0:15:165
+cme = [points(vcat(reverse(meridian(deg2rad(ψ) + π)), meridian(deg2rad(ψ)))) for ψ in ψm]
+hme = 1.15 * maximum(maximum(abs, dirN(deg2rad(ψ))' * C) for (ψ, C) in zip(ψm, cme))
+meridional = CutFamily(
+    "Meridian plane", "ψ", ["$(ψ)°" for ψ in ψm],
+    [plane_patch((ξcut + ξapex) / 2 * N3, N3, dirN(deg2rad(ψ)), 0.55 * (ξapex - ξcut), hme) for ψ in ψm],
+    cme, [vcat(dirN(deg2rad(ψ))' * C, N3' * C) for (ψ, C) in zip(ψm, cme)],
+    ("along cos ψ N₁ + sin ψ N₂", "ξ = √3 Σm"); active = findfirst(==(90), ψm),
+)
+
+section_figure([surface, rim, axis], [deviatoric, biaxial, meridional];
+    uid = "itz-envelope-3d", height = 640, camera = (1.6, -1.6, 1.0),
+    xlabel = "Σ₁ / σ_ITZ^ult", ylabel = "Σ₂ / σ_ITZ^ult", zlabel = "Σ₃ / σ_ITZ^ult",
+    title = "Elastic limit of concrete by ITZ failure, principal stress space, cut at ξ = −5")
+```
+
+The buttons above the surface choose a family of planes, or none, and the slider
+below moves the plane; on the right, the section is drawn in coordinates of its
+plane, which is where the two-dimensional envelopes above are read.
 
 ## Where to go next
 
-The combined criterion of the article takes the lower of the two limits; which
+The combined criterion of [konigsberger2014strength](@citet) takes the lower of the two limits; which
 mode governs then depends only on the ratio ``T^{\mathrm{ult}}/\sigma^{\mathrm{ult}}_{\mathrm{ITZ}}``,
 and the two functions of this page give it for any load. The jump conditions
 used here are those of [Periodic multilayer — the laminate cell](@ref th-laminate),

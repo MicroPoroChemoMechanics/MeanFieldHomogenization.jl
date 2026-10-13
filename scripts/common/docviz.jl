@@ -278,6 +278,142 @@ function scene_bounds(parts::AbstractMatrix...; pad::Real = 0.04)
     return ntuple(i -> (lo[i] - δ, hi[i] + δ), 3)
 end
 
+# ── Sections of a surface, cut with the mouse ────────────────────────────────
+
+"""
+    CutFamily(name, symbol, labels, planes, curves, sections, labels2d; active = 1)
+
+One family of cutting planes for [`section_figure`](@ref). For the `k`-th
+plane, `labels[k]` names it on the slider (after `symbol = `), `planes[k]` is
+the patch drawn in space (`(X, Y, Z)`, see [`plane_patch`](@ref)), `curves[k]`
+the section in space (`3 × n`) and `sections[k]` the same curve in coordinates
+of the plane (`2 × n`), whose axes `labels2d` names. `NaN` columns break a
+curve.
+"""
+struct CutFamily
+    name::String
+    symbol::String
+    labels::Vector{String}
+    planes::Vector{NTuple{3, Matrix{Float64}}}
+    curves::Vector{Matrix{Float64}}
+    sections::Vector{Matrix{Float64}}
+    labels2d::NTuple{2, String}
+    active::Int
+end
+
+CutFamily(name, symbol, labels, planes, curves, sections, labels2d; active::Integer = 1) =
+    CutFamily(
+    String(name), String(symbol), String.(labels), planes, curves, sections,
+    (String(labels2d[1]), String(labels2d[2])), Int(active)
+)
+
+"""
+    plane_patch(o, u, w, hu, hw) -> (X, Y, Z)
+
+The rectangle of center `o` and half-sides `hu`, `hw` along the unit vectors
+`u`, `w`, as the `2 × 2` matrices of a surface trace.
+"""
+function plane_patch(o, u, w, hu, hw)
+    P = [o .+ s * hu .* u .+ t * hw .* w for s in (-1, 1), t in (-1, 1)]
+    return getindex.(P, 1), getindex.(P, 2), getindex.(P, 3)
+end
+
+"""
+    section_figure(items, families; uid, title = "", height = 620,
+                   xlabel = "x", ylabel = "y", zlabel = "z", camera = nothing,
+                   aspectmode = "data") -> Base.HTML
+
+A surface in space (`items`, as for [`plotly_scene`](@ref)), with a panel on its
+right showing it cut by a plane. Buttons choose the family of planes, or none,
+and a slider moves the plane; the section is drawn on the surface and, in the
+panel, in coordinates of the plane, which is where a two-dimensional criterion
+is read. The panel keeps equal scales on its two axes by shrinking the side
+that has room to spare, rather than its range, so that no section is clipped.
+"""
+function section_figure(
+        items::AbstractVector, families::AbstractVector{CutFamily};
+        uid::AbstractString, title::AbstractString = "", height::Integer = 620,
+        xlabel::AbstractString = "x", ylabel::AbstractString = "y", zlabel::AbstractString = "z",
+        camera = nothing, aspectmode::AbstractString = "data",
+    )
+    traces = String[x for x in items if x isa AbstractString]
+    labels = SceneLabel[x for x in items if x isa SceneLabel]
+    n0 = length(traces)
+    idx = _jsints(n0:(n0 + 2))
+    ## The three traces of the cut, hidden until a family is chosen: the plane,
+    ## the section on the surface, the section in the panel.
+    push!(
+        traces, """{type:"surface",x:[[0,0],[0,0]],y:[[0,0],[0,0]],z:[[0,0],[0,0]],visible:false,
+        opacity:0.3,showscale:false,colorscale:[[0,"$FIG_GUIDE"],[1,"$FIG_GUIDE"]],
+        lighting:{ambient:1,diffuse:0,specular:0,roughness:1,fresnel:0},hoverinfo:"skip"}"""
+    )
+    push!(
+        traces, """{type:"scatter3d",mode:"lines",x:[0],y:[0],z:[0],visible:false,
+        line:{width:7,color:"$FIG_EDGE"},hoverinfo:"skip"}"""
+    )
+    push!(
+        traces, """{type:"scatter",mode:"lines",x:[0],y:[0],visible:false,xaxis:"x",yaxis:"y",
+        line:{width:3,color:"$FIG_EDGE"},hovertemplate:"(%{x:.3f}, %{y:.3f})<extra></extra>"}"""
+    )
+    function cut_args(f, k)
+        X, Y, Z = f.planes[k]
+        C, S = f.curves[k], f.sections[k]
+        return replace(
+            "{x:[$(_jsmat(X)),$(_jsvec(@view C[1, :])),$(_jsvec(@view S[1, :]))]," *
+                "y:[$(_jsmat(Y)),$(_jsvec(@view C[2, :])),$(_jsvec(@view S[2, :]))]," *
+                "z:[$(_jsmat(Z)),$(_jsvec(@view C[3, :])),null]}",
+            "NaN" => "null"
+        )
+    end
+    nf = length(families)
+    shown(i) = join(("\"sliders[$(j - 1)].visible\":$(_jsbool(j == i))" for j in 1:nf), ",")
+    sliders = map(enumerate(families)) do (i, f)
+        steps = join(
+            (
+                "{label:\"$(f.labels[k])\",method:\"restyle\",args:[$(cut_args(f, k)),$idx]}"
+                    for k in eachindex(f.labels)
+            ), ","
+        )
+        """{visible:false,active:$(f.active - 1),x:0,len:0.62,pad:{t:6,b:6},
+        currentvalue:{prefix:"$(f.symbol) = ",font:{color:"$FIG_INK",size:14}},
+        font:{color:"$FIG_INK"},bgcolor:"$FIG_GRID",activebgcolor:"$FIG_GUIDE",
+        bordercolor:"$FIG_GUIDE",tickcolor:"$FIG_GUIDE",steps:[$steps]}"""
+    end
+    off = """{label:"No cut",method:"update",args:[{visible:[false,false,false]},
+        {$(shown(0)),"xaxis.visible":false,"yaxis.visible":false},$idx]}"""
+    ons = map(enumerate(families)) do (i, f)
+        a = cut_args(f, f.active)
+        """{label:"$(f.name)",method:"update",args:[$(a[1:(end - 1)]),visible:[true,true,true]},
+        {$(shown(i)),"sliders[$(i - 1)].active":$(f.active - 1),
+         "xaxis.visible":true,"yaxis.visible":true,
+         "xaxis.title.text":"$(f.labels2d[1])","yaxis.title.text":"$(f.labels2d[2])"},$idx]}"""
+    end
+    ## Plotly paints the pressed button near white whatever the theme, so the
+    ## buttons keep a light face and dark text in both schemes.
+    menus = """{type:"buttons",direction:"right",showactive:true,active:0,
+        x:0,xanchor:"left",y:1,yanchor:"top",pad:{t:0,r:0,l:0,b:0},
+        font:{color:"#24292f",size:12},bgcolor:"#e6e9ed",bordercolor:"#9da7b3",
+        buttons:[$off,$(join(ons, ","))]}"""
+    ttl = isempty(title) ? "" :
+        "title:{text:\"$title\",x:0.02,xanchor:\"left\",font:{size:13}},"
+    eye = camera === nothing ? "" :
+        "camera:{eye:{x:$(_js(camera[1])),y:$(_js(camera[2])),z:$(_js(camera[3]))},up:{x:0,y:0,z:1}},"
+    axis3(t) = "{title:{text:\"$t\"},color:\"$FIG_INK\",gridcolor:\"$FIG_GRID\",zerolinecolor:\"$FIG_GUIDE\",showspikes:false}"
+    axis2(extra) = "{$(extra)visible:false,title:{text:\"\"},color:\"$FIG_INK\",gridcolor:\"$FIG_GRID\",zerolinecolor:\"$FIG_GUIDE\"}"
+    return _plotly_html(
+        uid, height, join(traces, ","),
+        """{height:$height, margin:{l:0,r:10,t:$(isempty(title) ? 10 : 46),b:64},
+        $(_THEMED_LAYOUT) uirevision:"$uid", $ttl showlegend:false, hovermode:"closest",
+        scene:{domain:{x:[0,0.62],y:[0,0.9]}, aspectmode:"$aspectmode", bgcolor:"rgba(0,0,0,0)",
+               hovermode:"closest", $eye
+               xaxis:$(axis3(xlabel)), yaxis:$(axis3(ylabel)), zaxis:$(axis3(zlabel)),
+               annotations:[$(join(map(_annotation, labels), ","))]},
+        xaxis:$(axis2("domain:[0.74,1],anchor:\"y\",constrain:\"domain\",")),
+        yaxis:$(axis2("domain:[0.1,0.85],anchor:\"x\",scaleanchor:\"x\",scaleratio:1,constrain:\"domain\",")),
+        updatemenus:[$menus], sliders:[$(join(sliders, ","))]}"""
+    )
+end
+
 # ── Trace constructors ───────────────────────────────────────────────────────
 
 """
