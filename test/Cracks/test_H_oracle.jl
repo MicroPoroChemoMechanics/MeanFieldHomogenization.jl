@@ -41,9 +41,7 @@ function _H_from_hill(a, b, ω, C₀; kw...)
     return ω * inv(Q)
 end
 
-_relerr(A, B) =
-    maximum(abs(A[i, j, k, l] - B[i, j, k, l]) for i in 1:3, j in 1:3, k in 1:3, l in 1:3) /
-    maximum(abs(B[i, j, k, l]) for i in 1:3, j in 1:3, k in 1:3, l in 1:3)
+_relerr(A, B) = maximum(abs, components_canon(A - B)) / maximum(abs, components_canon(B))
 
 # Crack of in-plane aspect ratio η, semi-major 1 — normal along e₃ by default.
 _crack(η) = η == 1.0 ? PennyCrack(1.0) : EllipticCrack(1.0, η)

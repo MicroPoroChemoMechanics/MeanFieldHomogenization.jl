@@ -137,16 +137,9 @@ end
         fraction = f
     )
 
-    # Bulk modulus extracted from the trace of the spherical projection :
-    # 3K = (1/3) Σ_i Σ_j C[i,i,j,j]  for any 4th-order isotropic stiffness
-    bulk_from_tens = C -> begin
-        a = get_array(C)
-        s = zero(eltype(a))
-        for i in 1:3, j in 1:3
-            s += a[i, i, j, j]
-        end
-        return s / 9
-    end
+    # Bulk modulus of an isotropic stiffness: k = 𝟏 : ℂ : 𝟏 / 9.
+    𝟏 = TensISO{3}(1.0)
+    bulk_from_tens = C -> (𝟏 ⊡ C ⊡ 𝟏) / 9
     ∂k_∂f_ad = derivative(rve, MoriTanaka(), amount(:I); indexer = bulk_from_tens)
     @test isapprox(∂k_∂f_ad, ∂k_∂f_ref; rtol = 1.0e-10)
 end

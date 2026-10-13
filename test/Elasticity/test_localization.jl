@@ -48,20 +48,14 @@ end
     # A_σε = C₁ : A_εε
     lhs = A_σε
     rhs = C₁ ⊡ A_εε
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        @test lhs[i, j, k, l] ≈ rhs[i, j, k, l] rtol = 1.0e-10
-    end
+    @test lhs ≈ rhs rtol = 1.0e-10
     # A_εσ = A_εε : S₀
     S₀ = inv(C₀)
     rhs2 = A_εε ⊡ S₀
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        @test A_εσ[i, j, k, l] ≈ rhs2[i, j, k, l] rtol = 1.0e-10
-    end
+    @test A_εσ ≈ rhs2 rtol = 1.0e-10
     # A_σσ = C₁ : A_εε : S₀
     rhs3 = C₁ ⊡ A_εε ⊡ S₀
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        @test A_σσ[i, j, k, l] ≈ rhs3[i, j, k, l] rtol = 1.0e-10
-    end
+    @test A_σσ ≈ rhs3 rtol = 1.0e-10
 end
 
 @testset "strain_strain_loc — triaxial ellipsoid, aniso stiffness" begin
@@ -81,10 +75,7 @@ end
 
     A = strain_strain_loc(ell, C₁, C₀; method = :residues)
     A_nqg = strain_strain_loc(ell, C₁, C₀; method = :nestedquadgk, reltol = 1.0e-12)
-    scale = maximum(abs(A[i, j, k, l]) for i in 1:3, j in 1:3, k in 1:3, l in 1:3)
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        @test abs(A[i, j, k, l] - A_nqg[i, j, k, l]) < 1.0e-7 * scale
-    end
+    @test maximum(abs, components_canon(A - A_nqg)) < 1.0e-7 * maximum(abs, components_canon(A))
 end
 
 @testset "Localization — symbolic propagation (SymPy)" begin

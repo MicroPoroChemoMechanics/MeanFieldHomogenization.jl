@@ -19,13 +19,7 @@ import MeanFieldHomogenization.Elasticity: _hill_2d_iso, _hill_2d_aniso
 # =============================================================================
 
 # The same tensor as a generic `Tens`: forces the anisotropic routing.
-function _as_generic(C)
-    A = zeros(2, 2, 2, 2)
-    for i in 1:2, j in 1:2, p in 1:2, q in 1:2
-        A[i, j, p, q] = C[i, j, p, q]
-    end
-    return TensND.Tens(A)
-end
+_as_generic(C) = TensND.Tens(Array(C))
 
 # Mura (1987) eq. 11.22 — elliptic cylinder, semi-axes (a, b), plane strain,
 # Poisson's ratio ν.
@@ -55,7 +49,7 @@ function _mura_P(a, b, k, mu)
     ]
 end
 
-_maxdiff(P, Q) = maximum(abs(P[i, j, p, q] - Q[i, j, p, q]) for i in 1:2, j in 1:2, p in 1:2, q in 1:2)
+_maxdiff(P, Q) = maximum(abs, Array(P) - Array(Q))
 
 @testset "hill 2D — isotropic closed form vs Mura (1987)" begin
     for (k, mu) in ((5.0, 2.0), (1.0, 1.0), (10.0, 0.5), (0.5, 4.0))
@@ -91,10 +85,9 @@ end
     for rho in (1.0, 0.6)
         P = hill_tensor(Ellipsoid(1.0, rho), TensISO{2}(15.0, 4.0))
         # Major and minor symmetries.
-        for i in 1:2, j in 1:2, p in 1:2, q in 1:2
-            @test P[i, j, p, q] ≈ P[p, q, i, j] atol = 1.0e-12
-            @test P[i, j, p, q] ≈ P[j, i, p, q] atol = 1.0e-12
-            @test P[i, j, p, q] ≈ P[i, j, q, p] atol = 1.0e-12
+        p = Array(P)
+        for perm in ((3, 4, 1, 2), (2, 1, 3, 4), (1, 2, 4, 3))
+            @test all(isapprox.(p, permutedims(p, perm); atol = 1.0e-12))
         end
         @test P[1, 1, 1, 1] > 0
         @test P[2, 2, 2, 2] > 0
@@ -109,9 +102,7 @@ end
     # equal exactly — what decides the symmetric storage of the result.
     C = TensND.Tens(TensND.inv_KM([10.0 3.0 1.0; 3.0 8.0 0.5; 1.0 0.5 4.0]))
     P = get_array(_hill_2d_aniso(Ellipsoid(1.0, 0.6; angle = 0.3), C))
-    for i in 1:2, j in 1:2, p in 1:2, q in 1:2
-        @test P[i, j, p, q] == P[p, q, i, j] == P[j, i, p, q] == P[i, j, q, p]
-    end
+    @test P == permutedims(P, (3, 4, 1, 2)) == permutedims(P, (2, 1, 3, 4)) == permutedims(P, (1, 2, 4, 3))
 end
 
 @testset "hill 2D — limite incompressible (k = Inf)" begin
@@ -120,10 +111,7 @@ end
         ell = Ellipsoid(1.0, rho)
         P_inf = hill_tensor(ell, TensISO{2}(Inf, 2mu))
         P_big = hill_tensor(ell, TensISO{2}(3.0e12, 2mu))
-        @test all(
-            isfinite(P_inf[i, j, p, q])
-                for i in 1:2, j in 1:2, p in 1:2, q in 1:2
-        )
+        @test all(isfinite, P_inf)
         # The `isinf` branch must be the continuous limit of the general
         # branch.
         @test _maxdiff(P_inf, P_big) < 1.0e-9

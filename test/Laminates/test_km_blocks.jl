@@ -63,7 +63,7 @@ end
     M = _rand_km6(rng)
     arr = Array(inv_KM(Matrix(M)))
     # K_ab = n_i C_iajb n_j with n = e₃, i.e. C[3,a,3,b]
-    K_naive = SMatrix{3, 3}([arr[3, i, 3, j] for i in 1:3, j in 1:3])
+    K_naive = SMatrix{3, 3}(arr[3, :, 3, :])
     @test MFHC.acoustic_tensor(M) ≈ K_naive atol = ATOL_KM
     # ... and it is genuinely non-diagonal here, so the reversal is exercised
     @test !isapprox(K_naive, Diagonal(K_naive); atol = 1.0e-6)

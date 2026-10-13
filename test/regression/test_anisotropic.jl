@@ -55,24 +55,18 @@ const _K_aniso = TensND.Tens([3.0 0.5 0.3; 0.5 2.0 0.2; 0.3 0.2 1.5])
         P_nqg = hill_tensor(ell, C_tri; method = :nestedquadgk, reltol = 1.0e-12)
         P_dec = hill_tensor(ell, C_tri; method = :decuhr, reltol = 1.0e-10)
 
-        scale = maximum(
-            abs(P_nqg[i, j, k, l])
-                for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        )
-        for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-            @test abs(P_res[i, j, k, l] - P_nqg[i, j, k, l]) < 1.0e-7 * scale
-            @test abs(P_dec[i, j, k, l] - P_nqg[i, j, k, l]) < 1.0e-7 * scale
-        end
+        scale = maximum(abs, components_canon(P_nqg))
+        @test maximum(abs, components_canon(P_res - P_nqg)) < 1.0e-7 * scale
+        @test maximum(abs, components_canon(P_dec - P_nqg)) < 1.0e-7 * scale
     end
 
     @testset "Triaxial ellipsoid + cubic C — symmetries" begin
         ell = Ellipsoid(3.0, 2.0, 1.0)
         P = hill_tensor(ell, C_cubic; method = :residues)
         # Minor and major symmetries must hold on the Hill tensor.
-        for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-            @test P[i, j, k, l] ≈ P[j, i, k, l] rtol = 1.0e-10
-            @test P[i, j, k, l] ≈ P[i, j, l, k] rtol = 1.0e-10
-            @test P[i, j, k, l] ≈ P[k, l, i, j] rtol = 1.0e-10
+        p = get_array(P)
+        for perm in ((2, 1, 3, 4), (1, 2, 4, 3), (3, 4, 1, 2))
+            @test all(isapprox.(p, permutedims(p, perm); rtol = 1.0e-10))
         end
     end
 
@@ -90,8 +84,8 @@ const _K_aniso = TensND.Tens([3.0 0.5 0.3; 0.5 2.0 0.2; 0.3 0.2 1.5])
         # Just assert finiteness here; detailed numerical equality is case-
         # specific.  The purpose is smoke testing the new constructor
         # through the aniso Hill path.
-        @test all(isfinite, (P1[i, j, k, l] for i in 1:3,j in 1:3,k in 1:3,l in 1:3))
-        @test all(isfinite, (P2[i, j, k, l] for i in 1:3,j in 1:3,k in 1:3,l in 1:3))
+        @test all(isfinite, P1)
+        @test all(isfinite, P2)
     end
 end
 
@@ -100,7 +94,7 @@ end
     ell = Ellipsoid(3.0, 2.0, 1.0)
     P = hill_tensor(ell, _K_aniso)
     # Symmetry + positivity (as a quadratic form).
-    P_arr = [P[i, j] for i in 1:3, j in 1:3]
+    P_arr = Array(P)
     @test P_arr ≈ P_arr'  rtol = 1.0e-10
     @test all(eigvals(Symmetric(P_arr)) .> -1.0e-10)
 end
@@ -116,22 +110,15 @@ end
         H = compliance_contribution(pc, C_tri; method = :residues)
         n̂ = tens_basis(crack_basis(pc), 3)
         Hexp = (3 / 4) * (n̂ ⊗ˢ B ⊗ˢ n̂)
-        for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-            @test H[i, j, k, l] ≈ Hexp[i, j, k, l] rtol = 1.0e-10
-        end
+        @test H ≈ Hexp rtol = 1.0e-10
     end
 
     @testset "Elliptic η=0.3 / triclinic — residue vs DECUHR" begin
         ec = EllipticCrack(1.0, 0.3)
         H_res = compliance_contribution(ec, C_tri; method = :residues)
         H_dec = compliance_contribution(ec, C_tri; method = :decuhr, reltol = 1.0e-10)
-        scale = maximum(
-            abs(H_res[i, j, k, l])
-                for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        )
-        for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-            @test abs(H_res[i, j, k, l] - H_dec[i, j, k, l]) < 1.0e-6 * scale
-        end
+        scale = maximum(abs, components_canon(H_res))
+        @test maximum(abs, components_canon(H_res - H_dec)) < 1.0e-6 * scale
     end
 
     @testset "Ribbon / triclinic — H = (2/π) n̂ ⊗ˢ B ⊗ˢ n̂" begin
@@ -140,9 +127,7 @@ end
         H = compliance_contribution(r, C_tri; method = :residues)
         n̂ = tens_basis(crack_basis(r), 3)
         Hexp = (2 / π) * (n̂ ⊗ˢ B ⊗ˢ n̂)
-        for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-            @test H[i, j, k, l] ≈ Hexp[i, j, k, l] rtol = 1.0e-10
-        end
+        @test H ≈ Hexp rtol = 1.0e-10
     end
 end
 
@@ -159,12 +144,7 @@ end
     H_dec = compliance_contribution(pc, C_tri; method = :decuhr, reltol = 1.0e-10)
     H_nqg = compliance_contribution(pc, C_tri; method = :nestedquadgk, reltol = 1.0e-10)
 
-    scale = maximum(
-        abs(H_res[i, j, k, l])
-            for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-    )
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        @test abs(H_res[i, j, k, l] - H_dec[i, j, k, l]) < 1.0e-6 * scale
-        @test abs(H_res[i, j, k, l] - H_nqg[i, j, k, l]) < 1.0e-6 * scale
-    end
+    scale = maximum(abs, components_canon(H_res))
+    @test maximum(abs, components_canon(H_res - H_dec)) < 1.0e-6 * scale
+    @test maximum(abs, components_canon(H_res - H_nqg)) < 1.0e-6 * scale
 end

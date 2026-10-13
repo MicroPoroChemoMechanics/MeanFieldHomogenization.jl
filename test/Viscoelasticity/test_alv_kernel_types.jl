@@ -43,9 +43,7 @@ end
     @test isapprox(K_back.β, β; atol = 1.0e-14)
 
     # `getindex` lazy view matches dense materialization
-    for i in 1:6n, j in 1:6n
-        @test K[i, j] == M[i, j]
-    end
+    @test K == M
 end
 
 @testset "ALVKernelISO — algebra closure" begin
@@ -101,9 +99,7 @@ end
         @test isapprox(K_back.ℓ[k], ℓ[k]; atol = 1.0e-14)
     end
 
-    for i in 1:6n, j in 1:6n
-        @test K[i, j] ≈ M[i, j] atol = 1.0e-14
-    end
+    @test all(isapprox.(K, M; atol = 1.0e-14))
 
     # Algebra
     ℓ₂ = ntuple(_ -> _alvk_rand_lt(n), 6)
@@ -135,9 +131,7 @@ end
         @test isapprox(K_back.o[k], o[k]; atol = 1.0e-14)
     end
 
-    for i in 1:6n, j in 1:6n
-        @test K[i, j] ≈ M[i, j] atol = 1.0e-14
-    end
+    @test all(isapprox.(K, M; atol = 1.0e-14))
 
     K₂ = K
     K_prod = K * K₂

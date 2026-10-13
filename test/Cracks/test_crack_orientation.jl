@@ -35,8 +35,7 @@ _ti_medium(axis = (0.0, 0.0, 1.0)) = TensTI{4}(TI_PARAMS..., axis)
 # components in the tensor's OWN basis, so a component-wise comparison across
 # orientations is meaningless; the Frobenius norm and the full contraction are
 # not.
-_fro(t) = sqrt(sum(abs2, get_array(t)))
-_contract(H) = (A = get_array(H); sum(A[i, j, i, j] for i in 1:3, j in 1:3))
+_contract(H) = H ⊙ TensISO{3}(1.0, 1.0)          # Hᵢⱼᵢⱼ: ℍ has the minor symmetries
 
 # ── ECHOES reference ─────────────────────────────────────────────────────────
 #
@@ -85,7 +84,7 @@ end
     for (θ, fro_ref, contract_ref) in ECHOES_H
         crack = PennyCrack(1.0; euler_angles = (θ, 0.0))
         H = compliance_contribution(crack, C)      # `:auto`
-        @test _fro(H) ≈ fro_ref rtol = 1.0e-5
+        @test norm(H) ≈ fro_ref rtol = 1.0e-5
         @test _contract(H) ≈ contract_ref rtol = 1.0e-5
     end
 end
@@ -101,7 +100,7 @@ end
         H_medium = compliance_contribution(
             PennyCrack(1.0), _ti_medium((sin(-θ), 0.0, cos(-θ)))
         )
-        @test _fro(H_crack) ≈ _fro(H_medium) rtol = 1.0e-8
+        @test norm(H_crack) ≈ norm(H_medium) rtol = 1.0e-8
         @test _contract(H_crack) ≈ _contract(H_medium) rtol = 1.0e-8
     end
 end
@@ -115,7 +114,7 @@ end
     for θ in (π / 8, π / 4, 3π / 8, π / 2)
         n = (sin(θ), 0.0, cos(θ))
         H = compliance_contribution(PennyCrack(1.0; euler_angles = (θ, 0.0)), _ti_medium(n))
-        @test _fro(H) ≈ _fro(H0) rtol = 1.0e-8
+        @test norm(H) ≈ norm(H0) rtol = 1.0e-8
         @test _contract(H) ≈ _contract(H0) rtol = 1.0e-8
     end
 end
@@ -132,7 +131,7 @@ end
         for method in (:auto, :nestedquadgk)
             H_ti = compliance_contribution(crack, C_ti; method = method)
             H_gen = compliance_contribution(crack, C_generic; method = method)
-            @test _fro(H_ti) ≈ _fro(H_gen) rtol = 1.0e-9
+            @test norm(H_ti) ≈ norm(H_gen) rtol = 1.0e-9
             @test _contract(H_ti) ≈ _contract(H_gen) rtol = 1.0e-9
         end
     end
@@ -146,7 +145,7 @@ end
     ref = compliance_contribution(PennyCrack(1.0; euler_angles = (θ, 0.0)), C)
     for φ in (π / 5, π / 2, π, 3π / 2)
         H = compliance_contribution(PennyCrack(1.0; euler_angles = (θ, φ)), C)
-        @test _fro(H) ≈ _fro(ref) rtol = 1.0e-8
+        @test norm(H) ≈ norm(ref) rtol = 1.0e-8
         @test _contract(H) ≈ _contract(ref) rtol = 1.0e-8
     end
 end
@@ -171,15 +170,15 @@ end
             RibbonCrack(1.0), _ti_medium((sin(-θ), 0.0, cos(-θ)));
             method = :nestedquadgk
         )
-        @test _fro(H_crack) ≈ _fro(H_medium) rtol = 1.0e-7
+        @test norm(H_crack) ≈ norm(H_medium) rtol = 1.0e-7
     end
 
     # The frame fix also reconciled the two backends on a tilted ribbon: before
     # it they disagreed by ~57% at θ = π/4.
     for θ in (π / 6, π / 4)
         crack = RibbonCrack(1.0; euler_angles = (θ, 0.0))
-        r = _fro(compliance_contribution(crack, _ti_medium(); method = :residues))
-        q = _fro(compliance_contribution(crack, _ti_medium(); method = :nestedquadgk))
+        r = norm(compliance_contribution(crack, _ti_medium(); method = :residues))
+        q = norm(compliance_contribution(crack, _ti_medium(); method = :nestedquadgk))
         @test r ≈ q rtol = 1.0e-8
     end
 end
@@ -200,15 +199,15 @@ end
         crack = PennyCrack(1.0; euler_angles = (θ, 0.0))
         algo = MeanFieldHomogenization.Core._resolve_algo(Val(:auto), crack, C)
         θ == 0.0 || @test !(algo isa MeanFieldHomogenization.Core.Residue)
-        @test _fro(compliance_contribution(crack, C; method = :auto)) ≈ fro_ref rtol = 1.0e-5
+        @test norm(compliance_contribution(crack, C; method = :auto)) ≈ fro_ref rtol = 1.0e-5
     end
 
     # Away from the degeneracy the residue reduction agrees with the cubature to
     # near machine precision — that is the regime it is meant for.
     for θ in (0.0, π / 8, π / 4, 0.4π)
         crack = PennyCrack(1.0; euler_angles = (θ, 0.0))
-        r = _fro(compliance_contribution(crack, C; method = :residues))
-        q = _fro(compliance_contribution(crack, C; method = :nestedquadgk))
+        r = norm(compliance_contribution(crack, C; method = :residues))
+        q = norm(compliance_contribution(crack, C; method = :nestedquadgk))
         @test r ≈ q rtol = 1.0e-8
     end
 
@@ -216,7 +215,7 @@ end
     # π/2. Guard the *documented* behavior so a future improvement shows up as
     # a failing test rather than going unnoticed.
     crack90 = PennyCrack(1.0; euler_angles = (π / 2, 0.0))
-    r90 = _fro(compliance_contribution(crack90, C; method = :residues))
-    q90 = _fro(compliance_contribution(crack90, C; method = :nestedquadgk))
+    r90 = norm(compliance_contribution(crack90, C; method = :residues))
+    q90 = norm(compliance_contribution(crack90, C; method = :nestedquadgk))
     @test !isapprox(r90, q90; rtol = 1.0e-3)
 end

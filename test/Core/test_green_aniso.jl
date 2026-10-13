@@ -115,7 +115,7 @@ end
     Kan = Tens([3.0 0.4 0.1; 0.4 2.0 -0.2; 0.1 -0.2 1.5])
     G = green_operator_aniso(Kan, x3)
     Karr = get_array(Kan)
-    @test sum(Karr[i, j] * G[i, j] for i in 1:3, j in 1:3) ≈ 0.0 atol = 1.0e-14
+    @test dot(Karr, G) ≈ 0.0 atol = 1.0e-14            # Kᵢⱼ Gᵢⱼ
     @test G ≈ G' rtol = 1.0e-14
 end
 
@@ -151,7 +151,7 @@ end
         -(H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
             for i in 1:3, j in 1:3, k in 1:3, l in 1:3
     ]
-    @test maximum(abs.(Γ .- Gfd)) < 1.0e-5 * maximum(abs.(Γ))
+    @test maximum(abs, Γ .- Gfd) < 1.0e-5 * maximum(abs, Γ)
 end
 
 @testset "green_operator — dispatch" begin

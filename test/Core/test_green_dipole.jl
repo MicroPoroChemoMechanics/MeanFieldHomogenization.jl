@@ -33,9 +33,7 @@ const _MFHC = MeanFieldHomogenization.Core
     @testset "∇G symmetry in (i,j) and singularity" begin
         for x in xs
             G = green_gradient_iso(C₀, x)
-            for k in 1:3, i in 1:3, j in 1:3
-                @test G[i, j, k] ≈ G[j, i, k] rtol = 1.0e-12
-            end
+            @test G ≈ permutedims(G, (2, 1, 3)) rtol = 1.0e-12
         end
         @test_throws DomainError green_gradient_iso(C₀, [0.0, 0.0, 0.0])
         @test_throws DomainError dipole_displacement_iso(C₀, [0.0, 0.0, 0.0], Π)

@@ -38,9 +38,7 @@ end
     S_ref = P ⊡ C₀
     S = eshelby_tensor(ell, C₀)
 
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        @test S[i, j, k, l] ≈ S_ref[i, j, k, l]  rtol = 1.0e-12
-    end
+    @test S ≈ S_ref rtol = 1.0e-12
 end
 
 @testset "eshelby_tensor — method keyword forwarded to hill_tensor" begin
@@ -52,7 +50,5 @@ end
     ell = Ellipsoid(3.0, 2.0, 1.0)
     S_auto = eshelby_tensor(ell, C₀)                         # analytical (iso)
     S_decuhr = eshelby_tensor(ell, C₀; method = :decuhr)      # forced cubature
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        @test S_auto[i, j, k, l] ≈ S_decuhr[i, j, k, l]  rtol = 1.0e-4
-    end
+    @test S_auto ≈ S_decuhr rtol = 1.0e-4
 end

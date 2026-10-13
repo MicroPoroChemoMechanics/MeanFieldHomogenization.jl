@@ -90,9 +90,7 @@ end
         crack, law_M, times;
         Rn = law_K, Rt = law_K
     )
-    for i in 1:length(times)
-        @test 0 < abs(cod_K.B_n[i, i]) < abs(cod0.B_n[i, i])
-    end
+    @test all(0 .< abs.(diag(cod_K.B_n)) .< abs.(diag(cod0.B_n)))
 
     # Algebraic identity check: (b·K + B^{-1})^{-vol} ≈ B ∘ (𝟙 + b·K·B)^{-vol}
     K_M = MeanFieldHomogenization.Viscoelasticity._trapezoidal_relaxation_scalar(law_K, times)
@@ -144,9 +142,7 @@ end
     # Interface stiffens the composite : 2μ_eff(t_n, t_n) ≥ 2μ_TF
     @test β_IS[end, end] > β_TF[end, end]
     # Same for all (t, t') diagonal entries
-    for i in 1:length(times)
-        @test β_IS[i, i] ≥ β_TF[i, i] - 1.0e-12
-    end
+    @test all(diag(β_IS) .≥ diag(β_TF) .- 1.0e-12)
 
     # K → ∞ recovers the matrix without crack effect
     law_huge = ViscoLaw((t, tp) -> 1.0e10, :relaxation)

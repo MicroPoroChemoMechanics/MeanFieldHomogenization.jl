@@ -57,7 +57,7 @@ end
     # Each diagonal block of J must equal inv(M_block) where M_block is the
     # Mandel form of C.  Off-diagonal blocks must be zero (no history coupling).
     inv_block = inv(R[1:6, 1:6])
-    for i in 1:length(times), j in 1:length(times)
+    for i in eachindex(times), j in eachindex(times)
         rows = (6 * (i - 1) + 1):(6 * i)
         cols = (6 * (j - 1) + 1):(6 * j)
         if i == j

@@ -86,7 +86,7 @@ end
 # stands. A rotated configuration is checked by equivariance, P(R·ε, R K Rᵀ) =
 # R P(ε, K) Rᵀ, which brings the off-diagonal entries of K into play.
 
-_diagK(k) = TensND.Tens([i == j ? k[i] : zero(k[i]) for i in 1:3, j in 1:3])
+_diagK(k) = TensND.Tens(diagm(k))
 
 @testset "Conductivity — the anisotropic order-2 Hill tensor differentiates" begin
     _P(ell, K) = _canon2(hill_tensor(ell, K))

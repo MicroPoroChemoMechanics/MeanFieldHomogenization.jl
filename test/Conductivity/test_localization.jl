@@ -42,14 +42,10 @@ end
     # A_q∇ = K₁ · A_∇∇
     lhs = A_q∇
     rhs = K₁ ⋅ A_∇∇
-    for i in 1:3, j in 1:3
-        @test lhs[i, j] ≈ rhs[i, j] rtol = 1.0e-12
-    end
+    @test lhs ≈ rhs rtol = 1.0e-12
     # A_∇q = A_∇∇ · R₀
     rhs2 = A_∇∇ ⋅ inv(K₀)
-    for i in 1:3, j in 1:3
-        @test A_∇q[i, j] ≈ rhs2[i, j] rtol = 1.0e-12
-    end
+    @test A_∇q ≈ rhs2 rtol = 1.0e-12
 end
 
 @testset "Fully-anisotropic conductivity — sanity" begin
@@ -63,13 +59,11 @@ end
 
     ell = Ellipsoid(2.0, 1.5, 1.0)
     A = gradient_gradient_loc(ell, K₁, K₀)
-    @test all(isfinite(A[i, j]) for i in 1:3, j in 1:3)
+    @test all(isfinite, A)
 
     # K₁ = K₀ → A = 𝟙
     A0 = gradient_gradient_loc(ell, K₀, K₀)
-    for i in 1:3, j in 1:3
-        @test A0[i, j] ≈ Float64(i == j) atol = 1.0e-10
-    end
+    @test A0 ≈ TensISO{3}(1.0) atol = 1.0e-10
 end
 
 @testset "conductivity_contribution and resistivity_contribution" begin
@@ -90,9 +84,7 @@ end
     K_eff = K₀ + ΔK
     R_eff = inv(K₀) + ΔR
     R_from_K = inv(K_eff)
-    max_err = maximum(abs(R_eff[i, j] - R_from_K[i, j]) for i in 1:3, j in 1:3)
-    scale = maximum(abs(R_from_K[i, j]) for i in 1:3, j in 1:3)
-    @test max_err / scale < 5 * f^2
+    @test norm(R_eff - R_from_K) / norm(R_from_K) < 5 * f^2
 end
 
 @testset "Conductivity — SymPy genericity" begin

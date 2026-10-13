@@ -35,8 +35,8 @@ using TensND
         B_res = cod_tensor(crack, C_cubic; method = :residues)
         B_nqg = cod_tensor(crack, C_cubic; method = :nestedquadgk, reltol = 1.0e-12)
 
-        err = maximum(abs(B_res[i, j] - B_nqg[i, j]) for i in 1:3 for j in i:3)
-        scale = maximum(abs(B_nqg[i, j]) for i in 1:3 for j in i:3)
+        err = maximum(abs, components_canon(B_res - B_nqg))
+        scale = maximum(abs, components_canon(B_nqg))
         @test err / scale < 1.0e-8
     end
 
@@ -45,8 +45,8 @@ using TensND
         B_res = cod_tensor(crack, C_tric; method = :residues)
         B_nqg = cod_tensor(crack, C_tric; method = :nestedquadgk, reltol = 1.0e-12)
 
-        err = maximum(abs(B_res[i, j] - B_nqg[i, j]) for i in 1:3 for j in i:3)
-        scale = maximum(abs(B_nqg[i, j]) for i in 1:3 for j in i:3)
+        err = maximum(abs, components_canon(B_res - B_nqg))
+        scale = maximum(abs, components_canon(B_nqg))
         @test err / scale < 1.0e-6
     end
 
@@ -55,8 +55,8 @@ using TensND
         B_res = cod_tensor(crack, C_cubic; method = :residues)
         B_nqg = cod_tensor(crack, C_cubic; method = :nestedquadgk, reltol = 1.0e-12)
 
-        err = maximum(abs(B_res[i, j] - B_nqg[i, j]) for i in 1:3 for j in i:3)
-        scale = maximum(abs(B_nqg[i, j]) for i in 1:3 for j in i:3)
+        err = maximum(abs, components_canon(B_res - B_nqg))
+        scale = maximum(abs, components_canon(B_nqg))
         @test err / scale < 1.0e-6
     end
 

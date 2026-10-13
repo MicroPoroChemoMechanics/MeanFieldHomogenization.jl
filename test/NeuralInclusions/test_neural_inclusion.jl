@@ -316,7 +316,7 @@ end
     C_ref = homogenize(oriented(ell_at, 8, 0.2), MoriTanaka(), :C)
     C_nn = homogenize(oriented(nn_at, 8, 0.2), MoriTanaka(), :C)
     @test typeof(C_nn).name.name === typeof(C_ref).name.name
-    @test maximum(abs, get_array(C_nn) .- get_array(C_ref)) ≤
+    @test maximum(abs, components_canon(C_nn - C_ref)) ≤
         tol * maximum(abs, get_array(C_ref))
 end
 

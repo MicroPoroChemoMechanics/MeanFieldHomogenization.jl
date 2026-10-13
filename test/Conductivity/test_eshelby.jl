@@ -23,9 +23,7 @@ end
     P = hill_tensor(ell, K₀)
     s_ref = P ⋅ K₀
     s = eshelby_tensor(ell, K₀)
-    for i in 1:3, j in 1:3
-        @test s[i, j] ≈ s_ref[i, j]  rtol = 1.0e-12
-    end
+    @test s ≈ s_ref rtol = 1.0e-12
 end
 
 @testset "eshelby_tensor — 2D sphere (circle) in isotropic 2-D conductivity" begin
