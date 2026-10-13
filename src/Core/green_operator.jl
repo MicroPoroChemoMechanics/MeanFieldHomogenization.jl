@@ -171,12 +171,7 @@ function _green_operator_iso_order2(σ₀, x::AbstractVector)
     )
     n = SVector{3}(x[1] / r, x[2] / r, x[3] / r)
     A = one(r) / (4 * π * σ₀ * r^3)
-    T = typeof(A)
-    return SArray{Tuple{3, 3}}(
-        @inbounds [
-            A * (_δ(i, j, T) - 3 * n[i] * n[j]) for i in 1:3, j in 1:3
-        ]
-    )
+    return A * (I - 3 * n * transpose(n))       # (𝟏 − 3 n⊗n) / (4πσ₀r³)
 end
 
 """
@@ -210,12 +205,7 @@ function _green_operator_iso_order2_2d(σ₀, x::AbstractVector)
     )
     n = SVector{2}(x[1] / r, x[2] / r)
     A = one(r) / (2 * π * σ₀ * r^2)
-    T = typeof(A)
-    return SArray{Tuple{2, 2}}(
-        @inbounds [
-            A * (_δ(i, j, T) - 2 * n[i] * n[j]) for i in 1:2, j in 1:2
-        ]
-    )
+    return A * (I - 2 * n * transpose(n))       # (𝟏 − 2 n⊗n) / (2πσ₀r²)
 end
 
 """
