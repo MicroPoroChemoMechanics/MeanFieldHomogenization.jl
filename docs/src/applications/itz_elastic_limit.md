@@ -106,8 +106,9 @@ stress is positive, and no limit otherwise.
 σI(σ) = eigmax(Symmetric(components_canon(σ)))
 separation_limit(N) = (λ = σI(B_σ ⊡ N); λ > 0 ? 1 / λ : Inf)   # in units of T^ult
 
-uz = Tens(Float64[0 0 0; 0 0 0; 0 0 1])      # uniaxial
-bxy = Tens(Float64[1 0 0; 0 1 0; 0 0 0])     # equibiaxial
+e₃ = 𝐞(3, 3, Float64)
+uz = e₃ ⊗ e₃                  # uniaxial
+bxy = TensISO{3}(1.0) - uz     # equibiaxial
 nothing # hide
 ```
 
@@ -175,7 +176,7 @@ fields = LayeredSphereFields(coated, C_cp)
 θ, φ = 0.3π, 0.2π
 σ_sphere = local_stress(fields, 1.0, θ, φ, ε∞; side = :outer)
 σ_jump = itz_stress_operator([sin(θ) * cos(φ), sin(θ) * sin(φ), cos(θ)]) ⊡ uz
-maximum(abs, components_canon(σ_sphere) - components_canon(σ_jump))
+norm(σ_sphere - σ_jump)
 ```
 
 The difference is of the order of the shell thickness, as it should be: the
@@ -406,7 +407,7 @@ end
 sbi = [s for s in -2.0:0.25:1.0 if sqrt(3) * s < ξapex]
 cbi = [points(biaxial_point(s, ψ) for ψ in ψc) for s in sbi]
 ## On the surface, the part of a section beyond the cut is left out.
-onsurface(C) = [sum(C[:, j]) / sqrt(3) ≥ ξcut ? C[i, j] : NaN for i in 1:3, j in axes(C, 2)]
+onsurface(C) = ifelse.(sum(C; dims = 1) ./ sqrt(3) .≥ ξcut, C, NaN)
 lo, hi = extrema(vcat(getindex.(P, 1), getindex.(P, 2)))
 biaxial = CutFamily(
     "Plane Σ₃ = s", "s", string.(sbi),

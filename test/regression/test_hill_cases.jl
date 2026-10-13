@@ -80,14 +80,12 @@ const K_iso3 = TensISO{3}(5.0)
         # (pre-existing degeneracy in the root-finder) — cross-check against
         # DECUHR which is ForwardDiff- and iso-safe.
         ell = Ellipsoid(3.0, 1.0, 1.0)
-        C_full = Tens(Array{Float64, 4}([C_iso3[i, j, k, l] for i in 1:3, j in 1:3, k in 1:3, l in 1:3]))
+        C_full = Tens(Array(C_iso3))
 
         P_iso = hill_tensor(ell, C_iso3)
         P_dcr = hill_tensor(ell, C_full; method = :decuhr, abstol = 1.0e-8, reltol = 1.0e-6)
 
-        for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-            @test P_dcr[i, j, k, l] ≈ P_iso[i, j, k, l]  atol = 5.0e-5
-        end
+        @test all(isapprox.(components_canon(P_dcr), components_canon(P_iso); atol = 5.0e-5))
     end
 
     @testset "Hill 2D iso — circle" begin

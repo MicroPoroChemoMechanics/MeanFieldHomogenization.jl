@@ -30,6 +30,8 @@ using ForwardDiff
 
 const RTOL_QUAD = 1.0e-10
 const ATOL_ZERO = 1.0e-12
+const 𝟏 = TensISO{3}(1.0)           # order-2 identity
+const 𝕀 = TensISO{3}(1.0, 1.0)      # order-4 symmetric identity
 
 # Reference media used throughout: k = 1, μ = 1 (elasticity), σ₀ = 2
 # (conduction).  `TensISO{3}(α, β)` is 3k J + 2μ K with α = 3k, β = 2μ.
@@ -59,7 +61,7 @@ _disk(a) = Ellipsoid(a, a)
             for i in 1:3, j in 1:3, k in 1:3, l in 1:3
     ]
     G = green_operator_iso(C₀, x)
-    @test maximum(abs.(G .- Gfd)) < 1.0e-6 * maximum(abs.(G))
+    @test maximum(abs, G .- Gfd) < 1.0e-6 * maximum(abs, G)
     # …and it is a `Tens`, like every other tensor-valued public entry point.
     @test G isa TensND.AbstractTens{4, 3}
 end
@@ -77,9 +79,9 @@ end
     # a cubic array coincides exactly with the Mori-Tanaka estimate.
     C₀ = _C3()
     for r in ([0.0, 0.0, 5.0], [3.0, -4.0, 2.0], [1.0, 1.0, 1.0] .* 4)
-        A = get_array(interaction_tensor(_ball(1.0), _ball(0.7), r, C₀))
-        @test sum(A[i, i, j, j] for i in 1:3, j in 1:3) ≈ 0.0 atol = ATOL_ZERO
-        @test sum(A[i, j, i, j] for i in 1:3, j in 1:3) ≈ 0.0 atol = ATOL_ZERO
+        𝕋 = interaction_tensor(_ball(1.0), _ball(0.7), r, C₀)
+        @test 𝟏 ⊡ 𝕋 ⊡ 𝟏 ≈ 0.0 atol = ATOL_ZERO     # Tᵢᵢⱼⱼ
+        @test 𝕋 ⊙ 𝕀 ≈ 0.0 atol = ATOL_ZERO         # Tᵢⱼᵢⱼ, 𝕋 having the minor symmetries
     end
 end
 
@@ -218,12 +220,9 @@ end
     for r in ([5.0, 0.0], [3.0, -4.0], [-2.0, 2.0])
         R = sqrt(r[1]^2 + r[2]^2)
         n̂ = r ./ R
-        expected = [
-            b^2 / (2 * σ₀ * R^2) * ((i == j ? 1.0 : 0.0) - 2 * n̂[i] * n̂[j])
-                for i in 1:2, j in 1:2
-        ]
+        expected = b^2 / (2 * σ₀ * R^2) * (I - 2 * n̂ * transpose(n̂))
         T = get_array(interaction_tensor(_disk(a), _disk(b), r, K₀))
-        @test maximum(abs.(T .- expected)) < 1.0e-14 * maximum(abs.(expected))
+        @test maximum(abs, T .- expected) < 1.0e-14 * maximum(abs, expected)
         # Traceless, as their Appendix D requires of the infinite-medium form.
         @test tr(T) ≈ 0.0 atol = ATOL_ZERO
     end
@@ -253,7 +252,7 @@ end
     σ₀ = 2.0
     K₀ = TensISO{3}(σ₀)
     for x in ([1.0, 0.0, 0.0], [1.0, -2.0, 0.5], [0.0, 0.3, 0.4])
-        r = sqrt(sum(abs2, x))
+        r = norm(x)
         n̂ = x ./ r
         G = get_array(green_operator_iso(K₀, x))
         @test (G * n̂) ≈ (-2 / (4π * σ₀ * r^3)) .* n̂ rtol = 1.0e-12
@@ -319,7 +318,7 @@ end
                 for p in 1:3, q in 1:3, s in 1:3, t in 1:3
         ) for i in 1:3, j in 1:3, k in 1:3, l in 1:3
     ]
-    @test maximum(abs.(B .- RA)) < 1.0e-12 * maximum(abs.(A))
+    @test maximum(abs, B .- RA) < 1.0e-12 * maximum(abs, A)
 end
 
 @testset "𝕋^{ab} — asymmetric case: unequal radii, off-axis" begin
@@ -395,8 +394,8 @@ end
     @test A[1, 1, 1, 1] ≈ A[2, 2, 2, 2] rtol = 1.0e-12
     @test A[1, 1, 1, 1] ≈ A[3, 3, 3, 3] rtol = 1.0e-12
     @test A[1, 1, 2, 2] ≈ A[2, 2, 3, 3] rtol = 1.0e-12
-    @test sum(A[i, i, j, j] for i in 1:3, j in 1:3) ≈ 0.0 atol = ATOL_ZERO
-    @test sum(A[i, j, i, j] for i in 1:3, j in 1:3) ≈ 0.0 atol = ATOL_ZERO
+    @test 𝟏 ⊡ Γ̄ ⊡ 𝟏 ≈ 0.0 atol = ATOL_ZERO        # Γ̄ᵢᵢⱼⱼ
+    @test Γ̄ ⊙ 𝕀 ≈ 0.0 atol = ATOL_ZERO            # Γ̄ᵢⱼᵢⱼ
     # No image inside the cutoff ⇒ exactly zero.
     Γ0 = lattice_interaction_tensor(_ball(0.3), _ball(0.3), [0.0, 0.0, 0.0], C₀, 1.0, 0.5)
     @test maximum(abs.(get_array(Γ0))) ≈ 0.0 atol = ATOL_ZERO
@@ -435,23 +434,21 @@ end
         arr[idx...] = 1.4
     end
     Ccub = Tens(arr)
-    errs = Float64[]
-    Qs = Any[]
-    for R in (6.0, 12.0)
+    runs = map((6.0, 12.0)) do R
         r = [0.0, 0.0, R]
-        M = get_array(interaction_tensor(ia, ib, r, Ccub))
-        Q = get_array(interaction_tensor(ia, ib, r, Ccub; method = :quadrature, nodes = (4, 4, 8)))
-        push!(errs, maximum(abs.(M .- Q)) / maximum(abs.(Q)))
-        push!(Qs, Q)
+        𝕄 = interaction_tensor(ia, ib, r, Ccub)
+        ℚ = interaction_tensor(ia, ib, r, Ccub; method = :quadrature, nodes = (4, 4, 8))
+        (err = maximum(abs, components_canon(𝕄 - ℚ)) / maximum(abs, components_canon(ℚ)), ℚ = ℚ)
     end
+    errs = getproperty.(runs, :err)
     @test errs[2] < errs[1]
     @test errs[end] < 1.0e-3
 
     # (c) With an anisotropic reference the isotropic part does NOT vanish —
     #     that invariant is specific to an isotropic Green operator. The
     #     quadrature value from (b) confirms it independently of the multipole.
-    Q = Qs[end]
-    @test abs(sum(Q[i, i, j, j] for i in 1:3, j in 1:3)) > 1.0e-3 * maximum(abs.(Q))
+    ℚ = runs[end].ℚ
+    @test abs(𝟏 ⊡ ℚ ⊡ 𝟏) > 1.0e-3 * maximum(abs, components_canon(ℚ))
 
     # (d) Conduction with an anisotropic conductivity. Cheap: the anisotropic
     #     conduction Green operator is a closed form, not a quadrature.

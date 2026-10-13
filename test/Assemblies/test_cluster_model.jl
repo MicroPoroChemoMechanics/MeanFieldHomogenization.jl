@@ -33,8 +33,9 @@ _Ci() = TensISO{3}(3 * 10.0, 2 * 6.0)
 _Cvoid() = TensISO{3}(3 * 1.0e-9, 2 * 1.0e-9)
 _Crigid() = TensISO{3}(3 * 1.0e4, 2 * 1.0e4)
 
-_mu(C) = get_array(C)[1, 2, 1, 2]
-_kappa(C) = (A = get_array(C); sum(A[i, i, j, j] for i in 1:3, j in 1:3) / 9)
+const 𝟏 = TensISO{3}(1.0)
+_mu(C) = components_canon(C)[1, 2, 1, 2]
+_kappa(C) = (𝟏 ⊡ C ⊡ 𝟏) / 9          # 𝟏 : ℂ : 𝟏 / 9
 
 function _mt_rve(f, Ci; Cm = _Cm())
     rve = RVE()

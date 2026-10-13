@@ -102,9 +102,7 @@ using LinearAlgebra
         H_p = compliance_contribution(pc, C₀)
         n̂ = tens_basis(crack_basis(pc), 3)
         expected_H_p = (3 / 4) * (n̂ ⊗ˢ B_p ⊗ˢ n̂)
-        for i in 1:3, j in 1:3, kk in 1:3, l in 1:3
-            @test H_p[i, j, kk, l] ≈ expected_H_p[i, j, kk, l] rtol = 1.0e-12
-        end
+        @test H_p ≈ expected_H_p rtol = 1.0e-12
         # Analytical penny value: H[3,3,3,3] = (3/4) × 16(1-ν²)/(3πE) = 4(1-ν²)/(πE)
         @test H_p[3, 3, 3, 3] ≈ 4 * (1 - ν^2) / (π * E) rtol = 1.0e-10
 
@@ -114,9 +112,7 @@ using LinearAlgebra
         H_r = compliance_contribution(r, C₀)
         n̂r = tens_basis(crack_basis(r), 3)
         expected_H_r = (2 / π) * (n̂r ⊗ˢ B_r ⊗ˢ n̂r)
-        for i in 1:3, j in 1:3, kk in 1:3, l in 1:3
-            @test H_r[i, j, kk, l] ≈ expected_H_r[i, j, kk, l] rtol = 1.0e-12
-        end
+        @test H_r ≈ expected_H_r rtol = 1.0e-12
         # Analytical ribbon: H[3,3,3,3] = (2/π) × π(1-ν²)/E = 2(1-ν²)/E
         @test H_r[3, 3, 3, 3] ≈ 2 * (1 - ν^2) / E rtol = 1.0e-10
     end
@@ -132,17 +128,13 @@ using LinearAlgebra
         H_p = compliance_contribution(pc, C₀)
         ΔS_p = delta_compliance(pc, H_p, ε)
         # Elliptic: ΔS = (4π/3) ε H
-        for i in 1:3, j in 1:3, kk in 1:3, l in 1:3
-            @test ΔS_p[i, j, kk, l] ≈ (4π / 3) * ε * H_p[i, j, kk, l] rtol = 1.0e-12
-        end
+        @test ΔS_p ≈ (4π / 3) * ε * H_p rtol = 1.0e-12
 
         r = RibbonCrack(1.0)
         H_r = compliance_contribution(r, C₀)
         ΔS_r = delta_compliance(r, H_r, ε)
         # Ribbon: ΔS = π ε H
-        for i in 1:3, j in 1:3, kk in 1:3, l in 1:3
-            @test ΔS_r[i, j, kk, l] ≈ π * ε * H_r[i, j, kk, l] rtol = 1.0e-12
-        end
+        @test ΔS_r ≈ π * ε * H_r rtol = 1.0e-12
     end
 
     @testset "stiffness_contribution / conductivity_contribution — crack API symmetry" begin
@@ -157,17 +149,13 @@ using LinearAlgebra
             H = compliance_contribution(crack, C₀)
             N = stiffness_contribution(crack, C₀)
             expected_N = -(C₀ ⊡ H ⊡ C₀)
-            for i in 1:3, j in 1:3, k_idx in 1:3, l in 1:3
-                @test N[i, j, k_idx, l] ≈ expected_N[i, j, k_idx, l] rtol = 1.0e-12
-            end
+            @test N ≈ expected_N rtol = 1.0e-12
 
             # Conductivity: N_K = -K₀ · R · K₀
             R = compliance_contribution(crack, K₀)
             N_K = conductivity_contribution(crack, K₀)
             expected_N_K = -(K₀ ⋅ R ⋅ K₀)
-            for i in 1:3, j in 1:3
-                @test N_K[i, j] ≈ expected_N_K[i, j] rtol = 1.0e-12
-            end
+            @test N_K ≈ expected_N_K rtol = 1.0e-12
 
             # Dilute coherence on cracks: delta_stiffness gives
             # (4π/3) ε N (elliptic) or π ε N (ribbon); at first order in ε,
@@ -176,9 +164,7 @@ using LinearAlgebra
             ΔC = delta_stiffness(crack, N, ε_small)
             ΔS = delta_compliance(crack, H, ε_small)
             ΔC_from_ΔS = -(C₀ ⊡ ΔS ⊡ C₀)
-            for i in 1:3, j in 1:3, k_idx in 1:3, l in 1:3
-                @test ΔC[i, j, k_idx, l] ≈ ΔC_from_ΔS[i, j, k_idx, l] rtol = 1.0e-10
-            end
+            @test ΔC ≈ ΔC_from_ΔS rtol = 1.0e-10
         end
     end
 

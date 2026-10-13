@@ -38,7 +38,7 @@ const ATOL_ANA_DEC = 1.0e-8
     P_iso = hill_tensor(ell, C_iso)                    # isotropic builder
     P_ana = hill_tensor(ell, C_ti)                     # auto → :analytical
     @test P_ana isa TensND.TensTI{4, Float64, 5}
-    @test maximum(abs.(get_array(P_ana) .- get_array(P_iso))) < ATOL_ANA_ISO
+    @test maximum(abs, components_canon(P_ana - P_iso)) < ATOL_ANA_ISO
 end
 
 @testset "Hill TI coaxial — oblate, cross-validation vs residue" begin
@@ -54,7 +54,7 @@ end
         @test ell isa Ellipsoid{3, MeanFieldHomogenization.Oblate}
         P_ana = hill_tensor(ell, C_TI)                   # analytical
         P_res = hill_tensor(ell, C_TI; method = :residues)
-        diff = maximum(abs.(get_array(P_ana) .- get_array(P_res)))
+        diff = maximum(abs, components_canon(P_ana - P_res))
         @test diff < ATOL_ANA_RES
     end
 end
@@ -67,7 +67,7 @@ end
         ell = Ellipsoid(ratio, 1.0, 1.0)                # prolate, axis e₁
         P_ana = hill_tensor(ell, C_TI)                   # analytical
         P_dec = hill_tensor(ell, C_TI; method = :decuhr)
-        diff = maximum(abs.(get_array(P_ana) .- get_array(P_dec)))
+        diff = maximum(abs, components_canon(P_ana - P_dec))
         @test diff < ATOL_ANA_DEC
     end
 end
@@ -98,7 +98,7 @@ end
 
     # And the residue / DECUHR path should still produce a finite answer.
     P_dec = hill_tensor(ell, C_TI; method = :decuhr)
-    @test all(isfinite(P_dec[i, j, k, l]) for i in 1:3, j in 1:3, k in 1:3, l in 1:3)
+    @test all(isfinite, P_dec)
 end
 
 @testset "Hill TI coaxial — ForwardDiff compatibility" begin
@@ -175,8 +175,8 @@ end
     P_res = hill_tensor(ell, C_TI; method = :residues)
     P_dec = hill_tensor(ell, C_TI; method = :decuhr)
 
-    @test maximum(abs.(get_array(P_ana) .- get_array(P_res))) < ATOL_ANA_RES
-    @test maximum(abs.(get_array(P_ana) .- get_array(P_dec))) < ATOL_ANA_DEC
+    @test maximum(abs, components_canon(P_ana - P_res)) < ATOL_ANA_RES
+    @test maximum(abs, components_canon(P_ana - P_dec)) < ATOL_ANA_DEC
 end
 
 @testset "Hill TI coaxial — isotropic values near the sphere and at extreme ratios" begin

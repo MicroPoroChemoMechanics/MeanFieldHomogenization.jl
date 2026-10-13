@@ -132,8 +132,7 @@ with ``\\mathbf{Q}`` the matrix whose columns are the principal axes.
 function _second_moment(ell::Ellipsoid{dim}) where {dim}
     Q = MFH_Core._frame_matrix(ell.basis)
     a = ell.semi_axes
-    D = [i == j ? a[i]^2 / (dim + 2) : zero(a[1]) for i in 1:dim, j in 1:dim]
-    return Q * D * Q'
+    return Q * Diagonal([aᵢ^2 / (dim + 2) for aᵢ in a]) * transpose(Q)
 end
 
 """

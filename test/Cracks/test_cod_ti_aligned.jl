@@ -40,7 +40,7 @@ const ATOL_COD_DEC = 1.0e-7
     for c in (PennyCrack(1.0), EllipticCrack(1.0, 0.5), RibbonCrack(1.0))
         B_iso = cod_tensor(c, C_iso)
         B_ti = cod_tensor(c, C_ti)
-        @test maximum(abs.(get_array(B_ti) .- get_array(B_iso))) < ATOL_COD_ISO
+        @test maximum(abs, components_canon(B_ti - B_iso)) < ATOL_COD_ISO
     end
 end
 
@@ -52,7 +52,7 @@ end
     for c in (PennyCrack(1.0), EllipticCrack(1.0, 0.5), EllipticCrack(1.0, 0.2))
         B_ana = cod_tensor(c, C_TI)                                   # analytical
         B_res = cod_tensor(c, C_TI; method = :residues)
-        diff = maximum(abs.(get_array(B_ana) .- get_array(B_res)))
+        diff = maximum(abs, components_canon(B_ana - B_res))
         @test diff < ATOL_COD_RES
     end
 end
@@ -64,7 +64,7 @@ end
     for c in (PennyCrack(1.0), EllipticCrack(1.0, 0.5))
         B_ana = cod_tensor(c, C_TI)
         B_dec = cod_tensor(c, C_TI; method = :decuhr)
-        diff = maximum(abs.(get_array(B_ana) .- get_array(B_dec)))
+        diff = maximum(abs, components_canon(B_ana - B_dec))
         @test diff < ATOL_COD_DEC
     end
 end

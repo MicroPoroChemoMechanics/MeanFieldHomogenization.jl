@@ -73,13 +73,6 @@ function print_voigt(C; label = "P", scale = 1.0e6, unit = "×10⁻⁶ MPa⁻¹"
     end
     return
 end
-
-const mandel_f = (1.0, 1.0, 1.0, √2, √2, √2)
-
-mandel(C) = [
-    C[i, j, k, l] * mandel_f[I] * mandel_f[J]
-        for (I, (i, j)) in enumerate(voigt_idx), (J, (k, l)) in enumerate(voigt_idx)
-]
 ````
 
 ## §1 Isotropic matrix, four geometries
@@ -145,8 +138,9 @@ of ``\mathbb{P}`` are worth checking explicitly.
 let ell = Ellipsoid(4.0, 2.0, 1.0)
     P = hill_tensor(ell, C_iso)
     print_voigt(P; label = "P triaxial")
-    err_min = maximum(abs(P[i, j, k, l] - P[j, i, k, l]) for i in 1:3, j in 1:3, k in 1:3, l in 1:3)
-    err_maj = maximum(abs(P[i, j, k, l] - P[k, l, i, j]) for i in 1:3, j in 1:3, k in 1:3, l in 1:3)
+    p = get_array(P)
+    err_min = maximum(abs, p - permutedims(p, (2, 1, 3, 4)))
+    err_maj = maximum(abs, p - permutedims(p, (3, 4, 1, 2)))
     @printf "\n  symmetry: minor %.2e,  major %.2e\n" err_min err_maj
 end
 ````
@@ -166,19 +160,7 @@ Zener ratio ``A = 2C_{44}/(C_{11}-C_{12})`` just off 1.
 ````@example hill_tensors
 let
     C11, C12, C44 = 250.0e3, 100.0e3, 80.0e3
-    C_arr = zeros(3, 3, 3, 3)
-    for (I, (i, j)) in enumerate(voigt_idx), (J, (k, l)) in enumerate(voigt_idx)
-        v = [
-            C11 C12 C12 0 0 0;
-            C12 C11 C12 0 0 0;
-            C12 C12 C11 0 0 0;
-            0 0 0 C44 0 0;
-            0 0 0 0 C44 0;
-            0 0 0 0 0 C44
-        ][I, J]
-        C_arr[i, j, k, l] = C_arr[j, i, k, l] = C_arr[i, j, l, k] = C_arr[j, i, l, k] = v
-    end
-    C_cubic = Tens(C_arr)
+    C_cubic = tens_cubic(C11, C12, C44, CanonicalBasis{3, Float64}())
 
     @printf "Zener ratio A = 2C44/(C11−C12) = %.4f   (isotropic ⇔ 1)\n" 2C44 / (C11 - C12)
 
@@ -191,9 +173,8 @@ let
     t_res = @elapsed P_res = hill_tensor(ell, C_cubic; method = :residues, abstol = 1.0e-8, reltol = 1.0e-6)
     t_qgk = @elapsed P_qgk = hill_tensor(ell, C_cubic; method = :nestedquadgk, abstol = 1.0e-8, reltol = 1.0e-6)
 
-    max_err = maximum(abs(P_res[i, j, k, l] - P_qgk[i, j, k, l]) for i in 1:3, j in 1:3, k in 1:3, l in 1:3)
     @printf "  :residues      %.4f s\n  :nestedquadgk  %.4f s\n" t_res t_qgk
-    @printf "  max |P_residues − P_nestedquadgk| = %.3e MPa⁻¹\n" max_err
+    @printf "  ‖P_residues − P_nestedquadgk‖ = %.3e MPa⁻¹\n" norm(P_res - P_qgk)
 end
 ````
 
@@ -289,12 +270,11 @@ let
     f = 0.05
     P = hill_tensor(Ellipsoid(1.0), C_iso)
 
-    M₀ = mandel(C_iso)
+    M₀ = KM(C_iso)
     Mδ = -M₀
-    MP = mandel(P)
+    MP = KM(P)
 
-    I6 = Matrix{Float64}(I, 6, 6)
-    M_A = inv(I6 + MP * Mδ)
+    M_A = inv(I + MP * Mδ)
     M_eff = M₀ + f * Mδ * M_A
     S_eff = inv(M_eff)
 

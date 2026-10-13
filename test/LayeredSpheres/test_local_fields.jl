@@ -309,7 +309,7 @@ end
         Af = local_strain_strain_loc(
             LayeredSphere((1.0, 2.0), (LF_C₁, LF_C₂)), LF_C₀, [0.5, 0.0, 0.0]
         )
-        @test Float64(maximum(abs, get_array(Ab) .- get_array(Af))) < 1.0e-14
+        @test Float64(maximum(abs, components_canon(Ab - Af))) < 1.0e-14
     end
 
     # Near-incompressible core: finite, and the volumetric localization → 0.
@@ -528,7 +528,7 @@ end
         ) / (vol1 + vol2)
     end
     exact = cumulative_strain_average(sph, LF_C₀, LF_ε∞, 1.37)
-    @test maximum(abs, get_array(naive) .- get_array(exact)) /
+    @test maximum(abs, components_canon(naive - exact)) /
         maximum(abs, get_array(exact)) > 1.0e-2
 end
 

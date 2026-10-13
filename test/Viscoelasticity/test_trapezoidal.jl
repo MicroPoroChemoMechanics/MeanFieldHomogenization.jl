@@ -13,13 +13,8 @@ using LinearAlgebra
     times = collect(0.0:0.5:2.0)
     M = trapezoidal_matrix(law, times)
     @test size(M) == (5, 5)
-    for i in 1:5, j in 1:5
-        if i == j
-            @test M[i, j] ≈ 2.5
-        else
-            @test M[i, j] ≈ 0.0 atol = 1.0e-14
-        end
-    end
+    @test all(diag(M) .≈ 2.5)
+    @test all(abs.(M - Diagonal(M)) .≤ 1.0e-14)
 end
 
 @testset "trapezoidal_matrix — scalar Maxwell relaxation" begin
@@ -29,12 +24,7 @@ end
     M = trapezoidal_matrix(law, times)
     @test size(M) == (5, 5)
 
-    # Lower-triangular structure.
-    for i in 1:5, j in 1:5
-        if j > i
-            @test M[i, j] == 0.0
-        end
-    end
+    @test istril(M)                     # lower-triangular structure
 
     # Verify a couple of entries against the trapezoidal formula.
     # M[1, 1] = f(t_0, t_0) = 1.0

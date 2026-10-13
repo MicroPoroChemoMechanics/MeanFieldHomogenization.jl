@@ -7,21 +7,21 @@ using ForwardDiff
 @testset "shape_tensor — Ellipsoid 3D (canonical basis)" begin
     ell = Ellipsoid(3.0, 2.0, 1.0)
     A = shape_tensor(ell)
-    A_arr = [A[i, j] for i in 1:3, j in 1:3]
+    A_arr = Array(A)
     @test A_arr ≈ Diagonal([3.0, 2.0, 1.0])  rtol = 1.0e-12
 end
 
 @testset "shape_tensor — Ellipsoid 3D (rotated basis)" begin
     b = TensND.RotatedBasis(π / 3, π / 4, π / 5)
-    R = [b[i, j] for i in 1:3, j in 1:3]
+    R = Array(b)
 
     # Constructor with euler_angles and pass-through basis must give same tensor
     ell1 = Ellipsoid(3.0, 2.0, 1.0; euler_angles = (π / 3, π / 4, π / 5))
     ell2 = Ellipsoid(3.0, 2.0, 1.0, b)
     A1 = change_tens_canon(shape_tensor(ell1))
     A2 = change_tens_canon(shape_tensor(ell2))
-    A1_arr = [A1[i, j] for i in 1:3, j in 1:3]
-    A2_arr = [A2[i, j] for i in 1:3, j in 1:3]
+    A1_arr = Array(A1)
+    A2_arr = Array(A2)
     A_ref = R * Diagonal([3.0, 2.0, 1.0]) * R'
 
     @test A1_arr ≈ A_ref  rtol = 1.0e-12
@@ -39,7 +39,7 @@ end
 @testset "shape_tensor — Ellipsoid 2D" begin
     ell = Ellipsoid(3.0, 2.0; angle = π / 4)
     A = change_tens_canon(shape_tensor(ell))
-    A_arr = [A[i, j] for i in 1:2, j in 1:2]
+    A_arr = Array(A)
 
     c, s = cos(π / 4), sin(π / 4)
     R = [c -s; s c]
@@ -54,7 +54,7 @@ end
     b = TensND.RotatedBasis(π / 3, π / 4, π / 5)
     cyl = Cylinder(2.0, 1.0, b)
     A = change_tens_canon(shape_tensor(cyl))
-    A_arr = [A[i, j] for i in 1:3, j in 1:3]
+    A_arr = Array(A)
 
     # At least one entry is Inf (the Inf diagonal in the local frame, when
     # rotated, propagates Inf to all entries touched by the first row/column
@@ -63,13 +63,13 @@ end
 
     # Along the cylinder axis (column 1 of the basis), the quadratic form
     # u^T A u should be Inf.
-    axis = [b[i, 1] for i in 1:3]
+    axis = b[:, 1]
     @test isinf(axis' * A_arr * axis)
 
     # In the canonical-basis case the tensor is exactly diag(Inf, b, c).
     cyl0 = Cylinder(2.0, 1.0)
     A0 = shape_tensor(cyl0)
-    A0_arr = [A0[i, j] for i in 1:3, j in 1:3]
+    A0_arr = Array(A0)
     @test isinf(A0_arr[1, 1])
     @test A0_arr[2, 2] == 2.0
     @test A0_arr[3, 3] == 1.0
@@ -80,15 +80,15 @@ end
     b = TensND.RotatedBasis(π / 3, π / 4, π / 5)
     crack = EllipticCrack(3.0, 2.0, b)
     A = change_tens_canon(shape_tensor(crack))
-    A_arr = [A[i, j] for i in 1:3, j in 1:3]
+    A_arr = Array(A)
 
     # Along the crack normal n̂ (column 3), quadratic form vanishes.
-    nhat = [b[i, 3] for i in 1:3]
+    nhat = b[:, 3]
     @test isapprox(nhat' * A_arr * nhat, 0.0; atol = 1.0e-12)
 
     # Along l̂ and m̂, it returns a and b respectively.
-    lhat = [b[i, 1] for i in 1:3]
-    mhat = [b[i, 2] for i in 1:3]
+    lhat = b[:, 1]
+    mhat = b[:, 2]
     @test lhat' * A_arr * lhat ≈ 3.0  rtol = 1.0e-12
     @test mhat' * A_arr * mhat ≈ 2.0  rtol = 1.0e-12
 end
@@ -104,7 +104,7 @@ end
     # Canonical basis — diagonal is exactly (Inf, b, 0)
     ribbon0 = RibbonCrack(2.0)
     A0 = shape_tensor(ribbon0)
-    A0_arr = [A0[i, j] for i in 1:3, j in 1:3]
+    A0_arr = Array(A0)
     @test isinf(A0_arr[1, 1])
     @test A0_arr[2, 2] == 2.0
     @test A0_arr[3, 3] == 0.0
@@ -113,8 +113,8 @@ end
     b = TensND.RotatedBasis(π / 3, π / 4, π / 5)
     ribbon = RibbonCrack(2.0, b)
     A = change_tens_canon(shape_tensor(ribbon))
-    A_arr = [A[i, j] for i in 1:3, j in 1:3]
-    lhat = [b[i, 1] for i in 1:3]
+    A_arr = Array(A)
+    lhat = b[:, 1]
     @test isinf(lhat' * A_arr * lhat)
     @test any(isinf, A_arr)
 end
@@ -174,9 +174,9 @@ end
     # relative to the basis columns.  But the EIGENVALUES must be the
     # same sorted semi-axes, and the TRACE/DETERMINANT are identical.
     A = change_tens_canon(shape_tensor(ell))
-    A_arr = [A[i, j] for i in 1:3, j in 1:3]
+    A_arr = Array(A)
     Aref = change_tens_canon(shape_tensor(ell_ref))
-    Aref_arr = [Aref[i, j] for i in 1:3, j in 1:3]
+    Aref_arr = Array(Aref)
     @test sort(eigvals(Symmetric(A_arr)); rev = true) ≈ [3.0, 1.0, 0.5]
     @test sort(eigvals(Symmetric(Aref_arr)); rev = true) ≈ [3.0, 1.0, 0.5]
     @test tr(A_arr) ≈ tr(Aref_arr) rtol = 1.0e-12
@@ -193,9 +193,7 @@ end
     ell_pad4 = Ellipsoid(4.0, 2.0, 1.0)
     A3 = change_tens_canon(shape_tensor(ell_pad3))
     A4 = change_tens_canon(shape_tensor(ell_pad4))
-    for i in 1:3, j in 1:3
-        @test A3[i, j] ≈ A4[i, j] atol = 1.0e-14
-    end
+    @test A3 ≈ A4 atol = 1.0e-14
 
     # Mixed types — Int + Float
     ell_mix = Ellipsoid(4.0, 2.0, 1.0; euler_angles = (π / 2, 0, 0))

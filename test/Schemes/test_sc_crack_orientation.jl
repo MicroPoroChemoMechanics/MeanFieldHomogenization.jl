@@ -42,13 +42,7 @@ end
 # orientations (or against another code) is meaningless without this.
 _global(C) = get_array(TensND.change_tens(C, CANON_SCO))
 
-_major_asym(C) = (
-    A = _global(C);
-    maximum(
-        abs(A[i, j, k, l] - A[k, l, i, j])
-            for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-    )
-)
+_major_asym(C) = (A = _global(C); maximum(abs, A - permutedims(A, (3, 4, 1, 2))))
 
 # ── ECHOES reference ─────────────────────────────────────────────────────────
 #
@@ -154,9 +148,9 @@ end
     @test _major_asym(T4) > 1.0e-3        # the probe really is asymmetric
     S1 = sym(T4)
     @test _major_asym(S1) < 1.0e-13       # …and gets projected
-    @test get_array(sym(S1)) ≈ get_array(S1) atol = 1.0e-14   # idempotent
+    @test sym(S1) ≈ S1 atol = 1.0e-14   # idempotent
     # The projection preserves the major-symmetric part it started from.
-    Aexp = [(A[i, j, k, l] + A[k, l, i, j]) / 2 for i in 1:3, j in 1:3, k in 1:3, l in 1:3]
+    Aexp = (A + permutedims(A, (3, 4, 1, 2))) / 2
     @test get_array(S1) ≈ Aexp atol = 1.0e-12
 
     # 2nd-order (conductivity) counterpart.

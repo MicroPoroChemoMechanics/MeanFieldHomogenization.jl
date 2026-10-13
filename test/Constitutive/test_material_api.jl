@@ -87,7 +87,7 @@ end
     CT = to_tensors(C)
     @test CT isa TensND.Tensors.SymmetricTensor{4, 3}
     # `to_tensors` must give the GLOBAL components, not the own-basis ones.
-    @test [CT[i, j, k, l] for i in 1:3, j in 1:3, k in 1:3, l in 1:3] ≈ _g(C) atol = 1.0e-12
+    @test Array(CT) ≈ _g(C) atol = 1.0e-12
 
     # Voigt round trips, with the engineering-shear factor kept straight.
     ε = Tens(TensND.Tensors.SymmetricTensor{2, 3}((i, j) -> 1.0e-3 * (i + j)))

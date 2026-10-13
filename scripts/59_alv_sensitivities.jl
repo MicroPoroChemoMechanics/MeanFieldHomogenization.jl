@@ -148,12 +148,10 @@ end
 p₀ = [0.2, 1.0, 1.0]
 ∇AD = ForwardDiff.gradient(eff_mu_vs_fkμ, p₀)
 ∇FD = let h = 1.0e-5
-    [
-        (
-                eff_mu_vs_fkμ(p₀ .+ h .* (i == k for k in 1:3)) -
-                eff_mu_vs_fkμ(p₀ .- h .* (i == k for k in 1:3))
-            ) / (2h) for i in 1:3
-    ]
+    map(eachindex(p₀)) do i
+        eᵢ = eachindex(p₀) .== i
+        (eff_mu_vs_fkμ(p₀ .+ h .* eᵢ) - eff_mu_vs_fkμ(p₀ .- h .* eᵢ)) / (2h)
+    end
 end
 for (i, name) in enumerate(("f", "k_M", "μ_M"))
     @printf "  ∂μ/∂%-3s   AD = %+.6e   FD = %+.6e   rel_err = %.2e\n" name ∇AD[i] ∇FD[i] abs(∇AD[i] - ∇FD[i]) / abs(∇FD[i])

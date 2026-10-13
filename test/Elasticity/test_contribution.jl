@@ -15,9 +15,7 @@ using LinearAlgebra
 
     # C₁ = C₀ → N = 0
     N0 = stiffness_contribution(ell, C₀, C₀)
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        @test abs(N0[i, j, k, l]) < 1.0e-12
-    end
+    @test maximum(abs, N0) < 1.0e-12
 
     # Stiffer inclusion → N is positive-definite contribution
     C₁ = TensISO{3}(3k₀ * 1.5, 2μ₀ * 1.5)
@@ -43,14 +41,8 @@ end
 
     # S_eff ≈ inv(C_eff) to first order in f
     S_from_C = inv(C_eff)
-    max_err = 0.0
-    scale = 0.0
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        max_err = max(max_err, abs(S_eff[i, j, k, l] - S_from_C[i, j, k, l]))
-        scale = max(scale, abs(S_from_C[i, j, k, l]))
-    end
     # First-order agreement: residual ~ f² × scale
-    @test max_err / scale < 5 * f^2
+    @test maximum(abs, components_canon(S_eff - S_from_C)) / maximum(abs, components_canon(S_from_C)) < 5 * f^2
 end
 
 @testset "compliance_contribution — crack case (2-arg) still works" begin

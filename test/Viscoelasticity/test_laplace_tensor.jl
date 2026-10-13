@@ -66,7 +66,7 @@ end
 end
 
 @testset "6×6 Mandel matrix transform" begin
-    Mstar(p) = [i == j ? (1.0 + 2.0 * p / (p + 1)) : 0.0 for i in 1:6, j in 1:6]
+    Mstar(p) = Matrix((1.0 + 2.0 * p / (p + 1)) * I, 6, 6)
     for m in TENSOR_METHODS
         M = inverse_carson(Mstar, 1.0, m)
         @test M isa Matrix{Float64}

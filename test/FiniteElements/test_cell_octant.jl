@@ -115,7 +115,7 @@ end
             for k in 1:3
                 nk, co, _ = gmsh.model.mesh.getNodes(2, FEO.CELL_TAG_PLANE[k], true, false)
                 @test !isempty(nk)
-                @test all(abs(co[3 * (a - 1) + k]) < 1.0e-15 for a in 1:length(nk))
+                @test all(abs.(co[k:3:end]) .< 1.0e-15)
             end
             # The eighth of a cavity, times eight, is the cavity.
             @test b.cavity_volume ≈ shape_volume(shape) rtol = 0.05

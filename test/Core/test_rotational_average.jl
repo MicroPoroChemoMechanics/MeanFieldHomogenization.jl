@@ -23,11 +23,7 @@ const MC = MeanFieldHomogenization.Core
 
 function _rand_minor4(rng)
     a = randn(rng, 3, 3, 3, 3)
-    b = zeros(3, 3, 3, 3)
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        b[i, j, k, l] = (a[i, j, k, l] + a[j, i, k, l] + a[i, j, l, k] + a[j, i, l, k]) / 4
-    end
-    return b
+    return (a + permutedims(a, (2, 1, 3, 4)) + permutedims(a, (1, 2, 4, 3)) + permutedims(a, (2, 1, 4, 3))) / 4
 end
 
 function _rot_axis(n, φ)
@@ -171,7 +167,7 @@ end
         # method is the oracle; it is reached here through `Tens`, whose array
         # carries no structure to dispatch on.
         nax = (0.3, -0.5, 0.81)
-        nax = nax ./ sqrt(sum(abs2, nax))
+        nax = nax ./ norm(nax)
         cases = (
             TensND.TensTI{4}(1.3, 2.1, 0.7, 1.7, 0.4, nax),               # N = 5
             TensND.TensTI{4}(1.3, 2.1, 0.7, -0.4, 1.7, 0.9, nax),         # N = 6

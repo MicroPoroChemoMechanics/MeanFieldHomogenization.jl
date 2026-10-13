@@ -25,17 +25,10 @@ import ForwardDiff as FD
     @testset "iso projection — extracts (α, β) of an aniso 4-tensor" begin
         # Build a simple aniso tensor as a perturbation of an iso one.
         α0, β0 = 60.0, 24.0
-        arr = zeros(3, 3, 3, 3)
-        for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-            J_iso = (i == j) * (k == l) / 3.0
-            K_iso = ((i == k) * (j == l) + (i == l) * (j == k)) / 2.0 - J_iso
-            arr[i, j, k, l] = α0 * J_iso + β0 * K_iso
-        end
+        arr = Array(TensND.TensISO{3}(α0, β0))
         # add an off-iso perturbation (orthorhombic-style scaling on the (3,3) axis)
-        for i in 1:3, j in 1:3
-            arr[i, j, 3, 3] += 1.5 * (i == j)
-            arr[3, 3, i, j] += 1.5 * (i == j)
-        end
+        arr[:, :, 3, 3] .+= Matrix(1.5I, 3, 3)
+        arr[3, 3, :, :] .+= Matrix(1.5I, 3, 3)
         T = TensND.Tens(arr)
         Tp = _apply_symmetrize(T, IsoSymmetrize())
         @test Tp isa TensND.TensISO{4, 3}

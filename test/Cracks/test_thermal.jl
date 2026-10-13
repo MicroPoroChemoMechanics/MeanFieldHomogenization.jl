@@ -28,13 +28,11 @@ using ForwardDiff
 
 const ELL_T = MeanFieldHomogenization.Elliptic
 
-"`R₃₃` from the flattening route at finite flatness `ω = c/b`, in the crack frame."
+"The thermal crack tensor from the flattening route, at finite flatness `ω = c/b`."
 function R_from_hill_thermal(crack, K₀, ω)
     a, bmin = crack isa RibbonCrack ? (1.0e8 * crack.b, crack.b) : (crack.a, crack.b)
     P = hill_tensor(Ellipsoid(a, bmin, ω * bmin, crack_basis(crack)), K₀)
-    Pa = [P[i, j] for i in 1:3, j in 1:3]
-    Ka = [K₀[i, j] for i in 1:3, j in 1:3]
-    return ω * inv(Ka - Ka * Pa * Ka)
+    return ω * inv(K₀ - K₀ ⋅ P ⋅ K₀)
 end
 
 @testset "Cracks / conductivity — thermal COD scalar b and R" begin
@@ -120,14 +118,14 @@ end
             R = compliance_contribution(crack, K₀)
             errs = map((1.0e-2, 1.0e-3)) do ω
                 O = R_from_hill_thermal(crack, K₀, ω)
-                maximum(abs, [R[i, j] - O[i, j] for i in 1:3, j in 1:3])
+                maximum(abs, components_canon(R - O))
             end
             # Converging at all …
             @test errs[2] < errs[1]
             # … and at order ω: a tenfold smaller ω must cut the error ~tenfold.
             # A wrong prefactor would leave a constant offset and flunk this.
             @test errs[1] / errs[2] > 5
-            @test errs[2] / maximum(abs, [R[i, j] for i in 1:3, j in 1:3]) < 5.0e-3
+            @test errs[2] / maximum(abs, components_canon(R)) < 5.0e-3
         end
     end
 
@@ -146,7 +144,7 @@ end
         b_ref = cod_tensor(EllipticCrack(1.0, 0.6), TensND.Tens(K_arr))
         for angles in ((0.3, 0.4, 0.2), (1.1, -0.5, 0.7))
             rot = TensND.RotatedBasis(angles...)
-            Q = [rot[i, j] for i in 1:3, j in 1:3]
+            Q = Array(rot)
             K_rot = TensND.Tens(Q * K_arr * transpose(Q))
             b_rot = cod_tensor(EllipticCrack(1.0, 0.6, rot), K_rot)
             @test b_rot ≈ b_ref rtol = 1.0e-11

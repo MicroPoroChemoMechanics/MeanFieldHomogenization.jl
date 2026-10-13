@@ -37,12 +37,9 @@ const basis = TensND.CanonicalBasis{3, Float64}()
     P_res = hill_tensor(ell, C_TI; method = :residues)
     P_dec = hill_tensor(ell, C_TI; method = :decuhr)
 
-    diff = maximum(
-        abs(P_res[i, j, k, l] - P_dec[i, j, k, l])
-            for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-    )
+    diff = maximum(abs, components_canon(P_res - P_dec))
     @test diff < ATOL
-    @test all(isfinite(P_res[i, j, k, l]) for i in 1:3, j in 1:3, k in 1:3, l in 1:3)
+    @test all(isfinite, P_res)
 end
 
 
@@ -62,10 +59,7 @@ end
     P_res = hill_tensor(ell, C_O; method = :residues)
     P_dec = hill_tensor(ell, C_O; method = :decuhr)
 
-    diff = maximum(
-        abs(P_res[i, j, k, l] - P_dec[i, j, k, l])
-            for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-    )
+    diff = maximum(abs, components_canon(P_res - P_dec))
     @test diff < ATOL
 end
 
@@ -90,10 +84,7 @@ end
     P_res = hill_tensor(ell, C_TI; method = :residues)
     P_dec = hill_tensor(ell, C_TI; method = :decuhr)
 
-    diff = maximum(
-        abs(P_res[i, j, k, l] - P_dec[i, j, k, l])
-            for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-    )
+    diff = maximum(abs, components_canon(P_res - P_dec))
     @test diff < ATOL
 end
 
@@ -115,9 +106,6 @@ end
     P_res = hill_tensor(ell, C; method = :residues)
     P_dec = hill_tensor(ell, C; method = :decuhr)
 
-    diff = maximum(
-        abs(P_res[i, j, k, l] - P_dec[i, j, k, l])
-            for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-    )
+    diff = maximum(abs, components_canon(P_res - P_dec))
     @test diff < 1.0e-6
 end

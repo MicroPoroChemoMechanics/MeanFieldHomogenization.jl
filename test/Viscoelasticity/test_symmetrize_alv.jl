@@ -16,10 +16,7 @@ const MCr = MeanFieldHomogenization.Core
 
 function _rand_minor_mandel(rng)
     a = randn(rng, 3, 3, 3, 3)
-    b = zeros(3, 3, 3, 3)
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        b[i, j, k, l] = (a[i, j, k, l] + a[j, i, k, l] + a[i, j, l, k] + a[j, i, l, k]) / 4
-    end
+    b = (a + permutedims(a, (2, 1, 3, 4)) + permutedims(a, (1, 2, 4, 3)) + permutedims(a, (2, 1, 4, 3))) / 4
     return MCr.mandel66_minor(b)
 end
 
@@ -95,7 +92,7 @@ end
         # about the axis (trapezoid over θ, which is exact for the finite
         # Fourier content of R·B·Rᵀ).
         function _num_azim_avg(B, axis; nθ = 2048)
-            v = collect(axis) ./ sqrt(sum(abs2, collect(axis)))
+            v = normalize(collect(axis))
             acc = zeros(3, 3)
             for m in 0:(nθ - 1)
                 θ = 2π * m / nθ

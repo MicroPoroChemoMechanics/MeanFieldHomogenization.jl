@@ -55,7 +55,7 @@ a = 1.0                      ## in-plane semi-axis
 ## Aspect ratio X = ω = c/a: oblate below 1, prolate above.
 function Cint_components(X)
     ell = X < 1 ? Ellipsoid(a, a, X * a) : (X > 1 ? Ellipsoid(X * a, a, a) : Ellipsoid(a))
-    A = get_array(surface_stiffness(ell, κs, μs))
+    A = components_canon(surface_stiffness(ell, κs, μs))
     ## Read in the frame of the symmetry axis: e₃ for oblate/sphere, e₁ for prolate.
     return X > 1 ? (A[2, 2, 2, 2], A[1, 1, 1, 1], A[2, 2, 3, 3], A[1, 2, 1, 2]) :
         (A[1, 1, 1, 1], A[3, 3, 3, 3], A[1, 1, 2, 2], A[1, 3, 1, 3])
@@ -88,21 +88,21 @@ p1
 
 println("Spherical limit X = 1, closed form:")
 R = 1.0
-A = get_array(surface_stiffness(Ellipsoid(R), κs, μs))
+A = components_canon(surface_stiffness(Ellipsoid(R), κs, μs))
 @printf "  C_1111 = %.6f   vs  8(κs+μs)/(5R) = %.6f\n" A[1, 1, 1, 1] 8 * (κs + μs) / (5R)
 @printf "  C_1122 = %.6f   vs  2(3κs-2μs)/(5R) = %.6f\n" A[1, 1, 2, 2] 2 * (3κs - 2μs) / (5R)
 @printf "  C_1313 = %.6f   vs  (κs+6μs)/(5R) = %.6f\n" A[1, 3, 1, 3] (κs + 6μs) / (5R)
 
 println("\nAsymptotic oblate limit X → 0 (platelet):")
 c = 1.0e-6
-B = get_array(surface_stiffness(Ellipsoid(1.0, 1.0, c), κs, μs))
+B = components_canon(surface_stiffness(Ellipsoid(1.0, 1.0, c), κs, μs))
 @printf "  c·C_1111 = %.6f   vs  3(κs+μs)/2 = %.6f\n" c * B[1, 1, 1, 1] 3 * (κs + μs) / 2
 @printf "  c·C_1122 = %.6f   vs  3(κs-μs)/2 = %.6f\n" c * B[1, 1, 2, 2] 3 * (κs - μs) / 2
 @printf "  c·C_1212 = %.6f   vs  3μs/2      = %.6f\n" c * B[1, 2, 1, 2] 3μs / 2
 @printf "  c·C_3333 = %.3e  (vanishes: a platelet stiffens only in its plane)\n" c * B[3, 3, 3, 3]
 
 println("\nAsymptotic prolate limit X → ∞ (nanofiber):")
-D = get_array(surface_stiffness(Ellipsoid(1.0e6, 1.0, 1.0), κs, μs))
+D = components_canon(surface_stiffness(Ellipsoid(1.0e6, 1.0, 1.0), κs, μs))
 @printf "  axial   C = %.6f   vs  3π(κs+μs)/(4a) = %.6f\n" D[1, 1, 1, 1] 3π * (κs + μs) / (4a)
 @printf "  C_1111/C_1122 = %.6f   vs  3 (compared with atomistics in the paper)\n" D[2, 2, 2, 2] / D[2, 2, 3, 3]
 
@@ -124,7 +124,7 @@ function mt_with_interface(radius; with_interface = true)
     rve = RVE()
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :nano, sph, Dict(:C => C_eq); fraction = f)
-    return get_array(homogenize(rve, MoriTanaka(), :C))[1, 2, 1, 2]
+    return components_canon(homogenize(rve, MoriTanaka(), :C))[1, 2, 1, 2]
 end
 
 radii = 10.0 .^ range(-9, -6; length = 60)       ## 1 nm to 1 μm
@@ -161,7 +161,7 @@ for X in Xs2
     rve = RVE()
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(rve, :nano, ell, Dict(:C => C_eq); fraction = f, symmetrize = :iso)
-    push!(μ_shape, get_array(homogenize(rve, MoriTanaka(), :C))[1, 2, 1, 2])
+    push!(μ_shape, components_canon(homogenize(rve, MoriTanaka(), :C))[1, 2, 1, 2])
 end
 
 p3 = plot(

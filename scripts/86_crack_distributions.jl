@@ -100,7 +100,7 @@ end
 ## The two angles of `euler_angles` are read here as the polar and azimuthal
 ## angles of the crack normal, which is the third column of the crack frame.
 crack = PennyCrack(1.0; euler_angles = (π / 4, π / 3))
-normal = [TensND.vecbasis(crack.basis, :cov)[i, 3] for i in 1:3]
+normal = TensND.vecbasis(crack.basis, :cov)[:, 3]
 @printf "crack normal : (%.6f, %.6f, %.6f)\n" normal...
 
 # ## Isotropic distribution

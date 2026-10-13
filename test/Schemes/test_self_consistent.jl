@@ -66,7 +66,7 @@ end
     C_eff = homogenize(rve, SelfConsistent(; abstol = 1.0e-12, maxiters = 200))
     # Verify : one more SC step on C_eff itself should return ≈ C_eff
     step_once = MeanFieldHomogenization.Schemes._sc_step(rve, C_eff, :C)
-    @test maximum(abs.(get_array(step_once) .- get_array(C_eff))) < 1.0e-9
+    @test maximum(abs, components_canon(step_once - C_eff)) < 1.0e-9
 end
 
 @testset "AsymmetricSelfConsistent — matches SC when matrix is soft" begin
@@ -387,7 +387,6 @@ end
     # holds only if the class basis is orthogonal, which the code checks rather
     # than assumes — so both halves of that contract are pinned here.
     S = MeanFieldHomogenization.Schemes
-    frob(t) = sqrt(sum(abs2, get_array(t)))
 
     C_iso = iso_stiffness(30.0, 20.0)
     rve = RVE()
@@ -403,7 +402,7 @@ end
         @test all(>(0), w)
         # ‖w ⊙ p‖₂ == ‖rebuild(p)‖_F, on a vector aligned with no single axis.
         q = Float64[1 / (i + 1) for i in 1:L]
-        @test sqrt(sum(abs2, q .* w)) ≈ frob(S._rebuild_from_data(T, q)) rtol = 1.0e-12
+        @test norm(q .* w) ≈ norm(S._rebuild_from_data(T, q)) rtol = 1.0e-12
     end
 
     # The deviatoric basis tensor is not a unit tensor: an isotropic stiffness

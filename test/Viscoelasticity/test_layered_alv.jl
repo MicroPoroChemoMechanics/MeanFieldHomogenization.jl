@@ -28,8 +28,8 @@ using LinearAlgebra
 
     for k in 1:2
         # Diagonal entries match the elastic constant.
-        diag_α = [α_alv[k][i, i] for i in 1:n]
-        @test maximum(abs.(diag_α .- α_elas[k])) ≤ 1.0e-12
+        diag_α = diag(α_alv[k])
+        @test maximum(abs, diag_α .- α_elas[k]) ≤ 1.0e-12
         # Off-diagonal entries are zero (no history coupling for elastic limit).
         for i in 1:n, j in 1:n
             if i != j
@@ -49,8 +49,8 @@ end
 
     α_alv = bulk_localization_alv(sphere, heaviside_law(C_M), times)
     α_elas = MeanFieldHomogenization.LayeredSpheres._bulk_localization(sphere, 10.0, 4.0)
-    diag_α = [α_alv[1][i, i] for i in 1:length(times)]
-    @test maximum(abs.(diag_α .- α_elas[1])) ≤ 1.0e-12
+    diag_α = diag(α_alv[1])
+    @test maximum(abs, diag_α .- α_elas[1]) ≤ 1.0e-12
 end
 
 @testset "bulk_localization_alv — Maxwell relaxation kernel structure" begin
@@ -94,8 +94,8 @@ end
     α_alv = bulk_localization_alv(sphere, heaviside_law(C_M), times)
     α_elas = MeanFieldHomogenization.LayeredSpheres._bulk_localization(sphere, 10.0, 4.0)
     for k in 1:2
-        diag_α = [α_alv[k][i, i] for i in 1:length(times)]
-        @test maximum(abs.(diag_α .- α_elas[k])) ≤ 1.0e-12
+        diag_α = diag(α_alv[k])
+        @test maximum(abs, diag_α .- α_elas[k]) ≤ 1.0e-12
     end
 end
 
@@ -113,8 +113,8 @@ end
     α_alv = bulk_localization_alv(sphere, heaviside_law(C_M), times)
     α_elas = MeanFieldHomogenization.LayeredSpheres._bulk_localization(sphere, 10.0, 4.0)
     for k in 1:2
-        diag_α = [α_alv[k][i, i] for i in 1:length(times)]
-        @test maximum(abs.(diag_α .- α_elas[k])) ≤ 1.0e-12
+        diag_α = diag(α_alv[k])
+        @test maximum(abs, diag_α .- α_elas[k]) ≤ 1.0e-12
     end
 end
 
@@ -136,8 +136,8 @@ end
 
     β_elas = MeanFieldHomogenization.LayeredSpheres._shear_localization(sphere, C_M)
     for k in 1:2
-        diag_β = [β_alv[k][i, i] for i in 1:n]
-        @test maximum(abs.(diag_β .- β_elas[k])) ≤ 1.0e-10
+        diag_β = diag(β_alv[k])
+        @test maximum(abs, diag_β .- β_elas[k]) ≤ 1.0e-10
         # Off-diagonal entries vanish for the Heaviside (memory-less) limit.
         for i in 1:n, j in 1:n
             if i != j
@@ -157,8 +157,8 @@ end
         sphere, heaviside_law(C_M), times
     )
     β_elas = MeanFieldHomogenization.LayeredSpheres._shear_localization(sphere, C_M)
-    diag_β = [β_alv[1][i, i] for i in 1:length(times)]
-    @test maximum(abs.(diag_β .- β_elas[1])) ≤ 1.0e-10
+    diag_β = diag(β_alv[1])
+    @test maximum(abs, diag_β .- β_elas[1]) ≤ 1.0e-10
 end
 
 @testset "shear_localization_alv — Maxwell kernel triangular structure" begin
@@ -197,8 +197,8 @@ end
     )
     β_elas = MeanFieldHomogenization.LayeredSpheres._shear_localization(sphere, C_M)
     for k in 1:2
-        diag_β = [β_alv[k][i, i] for i in 1:length(times)]
-        @test maximum(abs.(diag_β .- β_elas[k])) ≤ 1.0e-10
+        diag_β = diag(β_alv[k])
+        @test maximum(abs, diag_β .- β_elas[k]) ≤ 1.0e-10
     end
 end
 
@@ -218,8 +218,8 @@ end
     )
     β_elas = MeanFieldHomogenization.LayeredSpheres._shear_localization(sphere, C_M)
     for k in 1:2
-        diag_β = [β_alv[k][i, i] for i in 1:length(times)]
-        @test maximum(abs.(diag_β .- β_elas[k])) ≤ 1.0e-10
+        diag_β = diag(β_alv[k])
+        @test maximum(abs, diag_β .- β_elas[k]) ≤ 1.0e-10
     end
 end
 

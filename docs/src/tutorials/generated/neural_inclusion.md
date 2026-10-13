@@ -236,14 +236,14 @@ incl = nn_spheroid(0.4)
 
 A_zero = strain_strain_loc(incl, C₀, C₀)
 @printf(
-    "\n  |𝔸 − 𝕀| at zero contrast          %.2e\n",
-    maximum(abs, get_array(A_zero) .- get_array(TensISO{3}(1.0, 1.0)))
+    "\n  ‖𝔸 − 𝕀‖ at zero contrast          %.2e\n",
+    norm(A_zero - TensISO{3}(1.0, 1.0))
 )
 
 P = hill_tensor(incl, C₀)
 @printf(
-    "  |λℙ(λℂ₀) − ℙ(ℂ₀)| at λ = 17       %.2e\n",
-    maximum(abs, 17 .* get_array(hill_tensor(incl, 17 * C₀)) .- get_array(P))
+    "  ‖λℙ(λℂ₀) − ℙ(ℂ₀)‖ at λ = 17       %.2e\n",
+    norm(17 * hill_tensor(incl, 17 * C₀) - P)
 )
 
 Parr = get_array(P)
@@ -258,7 +258,7 @@ orientation is never an input, so frame indifference is exact too.
 rot = nn_spheroid(0.4; euler_angles = (0.3, 0.7, 0.2))
 @printf(
     "  |Δcomponents| under a rotation     %.2e\n",
-    maximum(abs, collect(get_data(hill_tensor(rot, C₀))) .- collect(get_data(P)))
+    maximum(abs, get_data(hill_tensor(rot, C₀)) .- get_data(P))
 )
 ````
 
@@ -271,9 +271,9 @@ on a per-component logarithmic scale where the dynamic range calls for it.
 
 ````@example neural_inclusion
 function hill_error(incl_of, exact_of, ω, C)
-    Pn = get_array(hill_tensor(incl_of(ω), C))
-    Pe = get_array(hill_tensor(exact_of(ω), C))
-    return maximum(abs, Pn .- Pe) / maximum(abs, Pe)
+    Pn = hill_tensor(incl_of(ω), C)
+    Pe = hill_tensor(exact_of(ω), C)
+    return norm(Pn - Pe) / norm(Pe)
 end
 
 const OMEGAS = (0.06, 0.1, 0.25, 0.5, 0.9, 1.2, 2.5, 6.0, 18.0)
@@ -298,9 +298,9 @@ K₀ = TensISO{3}(2.0)
 println("\n  ℙ_K of a spheroid — no material feature, the 1/k₀ scaling is exact\n")
 println("      ω      relative error")
 for ω in OMEGAS
-    Pn = get_array(hill_tensor(nn_spheroid(ω), K₀))
-    Pe = get_array(hill_tensor(spheroid(ω), K₀))
-    @printf("  %7.2f      %9.2e\n", ω, maximum(abs, Pn .- Pe) / maximum(abs, Pe))
+    Pn = hill_tensor(nn_spheroid(ω), K₀)
+    Pe = hill_tensor(spheroid(ω), K₀)
+    @printf("  %7.2f      %9.2e\n", ω, norm(Pn - Pe) / norm(Pe))
 end
 ````
 
@@ -318,9 +318,9 @@ println("\n  ℙ of a triaxial ellipsoid, ν₀ = 0.25\n")
 println("    a₂/a₁    a₃/a₁    relative error")
 for (r2, r3) in ((0.9, 0.8), (0.8, 0.5), (0.6, 0.2), (0.5, 0.1), (0.2, 0.08))
     C = iso_stiffness_E_nu(1.0, 0.25)
-    Pn = get_array(hill_tensor(nn_triaxial(r2, r3), C))
-    Pe = get_array(hill_tensor(Ellipsoid(1.0, r2, r3), C))
-    @printf("  %7.2f  %7.2f      %9.2e\n", r2, r3, maximum(abs, Pn .- Pe) / maximum(abs, Pe))
+    Pn = hill_tensor(nn_triaxial(r2, r3), C)
+    Pe = hill_tensor(Ellipsoid(1.0, r2, r3), C)
+    @printf("  %7.2f  %7.2f      %9.2e\n", r2, r3, norm(Pn - Pe) / norm(Pe))
 end
 ````
 
@@ -435,8 +435,8 @@ function rve_with(geom, prop_m, prop_i, key; kw...)
     return r
 end
 
-c1111(C) = get_array(C)[1, 1, 1, 1]
-k11(K) = get_array(K)[1, 1]
+c1111(C) = components_canon(C)[1, 1, 1, 1]
+k11(K) = components_canon(K)[1, 1]
 
 println("\n  Elasticity, one-shot schemes — C_eff[1,1,1,1]\n", "-"^62)
 @printf "  %-16s %14s %14s %12s\n" "scheme" "Ellipsoid" "surrogate" "rel. Δ"
@@ -521,9 +521,9 @@ end
 C_ref = homogenize(oriented(ell_at, 12, 0.2), MoriTanaka(), :C)
 C_nn = homogenize(oriented(nn_at, 12, 0.2), MoriTanaka(), :C)
 @printf(
-    "\n  12 polar bins + TISymmetrize: %s versus %s, max rel. Δ = %.2e\n",
+    "\n  12 polar bins + TISymmetrize: %s versus %s, ‖Δ‖/‖ℂ‖ = %.2e\n",
     typeof(C_ref).name.name, typeof(C_nn).name.name,
-    maximum(abs, get_array(C_nn) .- get_array(C_ref)) / maximum(abs, get_array(C_ref))
+    norm(C_nn - C_ref) / norm(C_ref)
 )
 ````
 
@@ -540,7 +540,7 @@ come back as a silent zero. Refusing is the only honest option there; here
 there is nothing to refuse.
 
 ````@example neural_inclusion
-idx = C -> get_array(C)[1, 1, 1, 1]
+idx = C -> components_canon(C)[1, 1, 1, 1]
 
 function rve_of(a3, geom_of)
     r = RVE(; distribution_shape = Ellipsoid(1.0))

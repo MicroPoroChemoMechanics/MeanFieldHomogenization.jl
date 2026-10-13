@@ -114,8 +114,8 @@ function rve_with(geom, prop_m, prop_i, key)
     return r
 end
 
-c1111(C) = get_array(C)[1, 1, 1, 1]
-k11(K) = get_array(K)[1, 1]
+c1111(C) = components_canon(C)[1, 1, 1, 1]
+k11(K) = components_canon(K)[1, 1]
 
 ALL = (
     "Dilute" => Dilute(), "DiluteDual" => DiluteDual(),
@@ -225,13 +225,13 @@ C_cus = homogenize(oriented(custom_at, 12, 0.2), MoriTanaka(), :C)
 println("\nOrientation distribution (12 polar bins) + TISymmetrize\n", "-"^78)
 println(
     "  native  : ", typeof(C_ref).name.name, "   C₃₃₃₃ = ",
-    round(get_array(C_ref)[3, 3, 3, 3], digits = 10)
+    round(components_canon(C_ref)[3, 3, 3, 3], digits = 10)
 )
 println(
     "  custom  : ", typeof(C_cus).name.name, "   C₃₃₃₃ = ",
-    round(get_array(C_cus)[3, 3, 3, 3], digits = 10)
+    round(components_canon(C_cus)[3, 3, 3, 3], digits = 10)
 )
-@printf "  max |Δ| = %.3e\n" maximum(abs, get_array(C_cus) .- get_array(C_ref))
+@printf "  ‖Δ‖ = %.3e\n" norm(C_cus - C_ref)
 
 # The exact transverse-isotropic average is applied identically in both cases:
 # the custom inclusion never had to know that orientation averaging existed.

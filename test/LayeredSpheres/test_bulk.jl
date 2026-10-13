@@ -93,21 +93,15 @@ end
     f2 = layer_volume_fraction(s, 2)
     avg1 = layer_strain_average(s, C₀, ε∞, 1)
     avg2 = layer_strain_average(s, C₀, ε∞, 2)
-    for i in 1:3, j in 1:3
-        @test sph_avg[i, j] ≈ f1 * avg1[i, j] + f2 * avg2[i, j] rtol = 1.0e-12
-    end
+    @test sph_avg ≈ f1 * avg1 + f2 * avg2 rtol = 1.0e-12
 
     # Cumulative at r = outer equals sphere_avg
     cum = cumulative_strain_average(s, C₀, ε∞, outer_radius(s))
-    for i in 1:3, j in 1:3
-        @test cum[i, j] ≈ sph_avg[i, j] rtol = 1.0e-12
-    end
+    @test cum ≈ sph_avg rtol = 1.0e-12
 
     # Cumulative at r = r_1 equals layer_1 average
     cum1 = cumulative_strain_average(s, C₀, ε∞, layer_radius(s, 1))
-    for i in 1:3, j in 1:3
-        @test cum1[i, j] ≈ avg1[i, j] rtol = 1.0e-12
-    end
+    @test cum1 ≈ avg1 rtol = 1.0e-12
 end
 
 @testset "LayeredSphere — stiffness_contribution for single-layer" begin

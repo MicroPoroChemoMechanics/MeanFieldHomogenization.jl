@@ -123,7 +123,7 @@ add_phase!(
     rve_cp, :CLIN, Ellipsoid(1.0),
     Dict(:C => TensISO{3}(3K_clin, 2μ_clin)); fraction = f_clin(WC, ALPHA),
 )
-k_cp, μ_cp = k_mu(TensND.proj_tens(Val(:ISO), get_array(homogenize(rve_cp, MoriTanaka(), :C)))[1])
+k_cp, μ_cp = k_mu(best_fit_iso(homogenize(rve_cp, MoriTanaka(), :C)))
 C_cp = TensISO{3}(3k_cp, 2μ_cp)
 
 @printf("bulk cement paste : E = %.2f GPa, ν = %.3f\n", E_nu(C_cp)...)
