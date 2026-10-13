@@ -134,8 +134,9 @@ fs = Dict(nm => layer_volume_fraction(lam, nm) for nm in layer_names(lam))
 
 sumA = sum(fs[nm] * 𝔸[nm] for nm in layer_names(lam))
 sumB = sum(fs[nm] * 𝔹[nm] for nm in layer_names(lam))
-@printf "\n‖Σ fᵢ 𝔸ᵢ − 𝕀‖∞ = %.2e\n" maximum(abs, Matrix(KM(sumA)) - I)
-@printf "‖Σ fᵢ 𝔹ᵢ − 𝕀‖∞ = %.2e\n" maximum(abs, Matrix(KM(sumB)) - I)
+𝕀 = TensISO{3}(1.0, 1.0)
+@printf "\n‖Σ fᵢ 𝔸ᵢ − 𝕀‖ = %.2e\n" norm(sumA - 𝕀)
+@printf "‖Σ fᵢ 𝔹ᵢ − 𝕀‖ = %.2e\n" norm(sumB - 𝕀)
 
 MA = Matrix(KM(𝔸[:A]))
 @printf "in-plane block of 𝔸_A is the identity : %.2e\n" maximum(
@@ -149,9 +150,7 @@ of the Hill polarization tensor and operates only within out-of-plane tensors;
 
 ````@example laminate
 ℙ, ℚ = laminate_hill(lam, :A)
-@printf "\n‖ℙ:ℂ:ℙ − ℙ‖∞ = %.2e     ‖ℚ:ℙ‖∞ = %.2e\n" maximum(
-    abs, Matrix(KM(ℙ ⊡ C₁ ⊡ ℙ)) - Matrix(KM(ℙ))
-) maximum(abs, Matrix(KM(ℚ ⊡ ℙ)))
+@printf "\n‖ℙ:ℂ:ℙ − ℙ‖ = %.2e     ‖ℚ:ℙ‖ = %.2e\n" norm(ℙ ⊡ C₁ ⊡ ℙ - ℙ) norm(ℚ ⊡ ℙ)
 ````
 
 ## Anisotropic layers, and an arbitrary normal

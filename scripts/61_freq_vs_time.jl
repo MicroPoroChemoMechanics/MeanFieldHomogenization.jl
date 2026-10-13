@@ -171,7 +171,7 @@ end
 rel_err = abs.(μ_freq .- μ_time) ./ abs.(μ_freq)
 
 @printf("\n   ω      Re μ* (freq)  Re μ* (time)  Im μ* (freq)  Im μ* (time)   rel. err\n")
-for i in 1:4:length(ωs)
+for i in eachindex(ωs)[1:4:end]
     @printf(
         "%7.3f   %11.5f  %12.5f  %12.5f  %12.5f   %.2e\n",
         ωs[i], real(μ_freq[i]), real(μ_time[i]),

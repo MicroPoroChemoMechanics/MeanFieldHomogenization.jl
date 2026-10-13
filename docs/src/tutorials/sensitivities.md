@@ -30,7 +30,7 @@ rve = RVE()
 add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness(60.0, 20.0)); fraction = 0.2)
 
-idxC = C -> get_array(C)[1, 1, 1, 1]
+idxC = C -> components_canon(C)[1, 1, 1, 1]
 
 ∂f = derivative(rve, MoriTanaka(), amount(:I); indexer = idxC)          # ∂C[1111]/∂f_I
 ∂K = derivative(rve, MoriTanaka(), property(:I, :C, :bulk); indexer = idxC)  # ∂C[1111]/∂K_I
@@ -93,7 +93,8 @@ k_m, μ_m = 10.0, 5.0
 k_i, μ_i = 40.0, 20.0
 ζm = k_m + 4μ_m / 3
 Δk = k_i - k_m
-bulk = C -> sum(get_array(C)[i, i, j, j] for i in 1:3, j in 1:3) / 9
+𝟏 = TensISO{3}(1.0)
+bulk = C -> (𝟏 ⊡ C ⊡ 𝟏) / 9          # 𝟏 : ℂ : 𝟏 / 9
 
 for f in (0.05, 0.1, 0.2, 0.3, 0.4)
     r = RVE()

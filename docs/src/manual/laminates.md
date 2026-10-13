@@ -292,7 +292,7 @@ lam = Laminate(; normal = (0, 0, 1))
 add_layer!(lam, :A, Dict(:C => iso_stiffness(k_A, mu_A)); fraction = f)
 add_layer!(lam, :B, Dict(:C => iso_stiffness(k_B, mu_B)); fraction = 1 - f)
 
-C = get_array(homogenize(lam, Laminated(), :C))
+C = homogenize(lam, Laminated(), :C)
 simplify(C[2, 3, 2, 3])     # mu_A*mu_B/(f*mu_B + mu_A*(1 - f))
 ```
 

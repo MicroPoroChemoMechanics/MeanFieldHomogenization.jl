@@ -68,7 +68,7 @@ ell = Spheroid(3.0)                        # equivalent homogeneous Ellipsoid
 P = hill_tensor(ell, K0)
 A_classic = inv(TensISO{3}(1.0) + P ⋅ (K1 - K0))
 
-get_array(A_layered) ≈ get_array(A_classic)
+A_layered ≈ A_classic
 ````
 
 `Spheroid(ϖ)`'s revolution axis is `ê₁` for a prolate spheroid (aspect ratio
@@ -89,8 +89,7 @@ interface must behave like a fully insulated core.
 s_lc = LayeredSpheroid((3.0,), (1.0,), (K1,); interfaces = (KapitzaInterface(1.0e10),))
 s_insulated = LayeredSpheroid((3.0,), (1.0,), (TensISO{3}(1.0e-12),))
 
-get_array(gradient_gradient_loc(s_lc, K1, K0)) ≈
-    get_array(gradient_gradient_loc(s_insulated, TensISO{3}(1.0e-12), K0))
+gradient_gradient_loc(s_lc, K1, K0) ≈ gradient_gradient_loc(s_insulated, TensISO{3}(1.0e-12), K0)
 ````
 
 ### Multiple layers

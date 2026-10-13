@@ -120,10 +120,7 @@ substitution. A `LowerTriangular` BLAS path is selected internally for
 
 ```julia
 J = volterra_inverse(M; block_size = 6)            # creep (compliance) matrix
-@assert isapprox(M * J,
-                 [iszero(rem(i - j, 6)) && (i ÷ 6 == j ÷ 6) for i in 1:300, j in 1:300] |>
-                  Matrix{Float64};
-                 atol = 1e-10)                       # block-diagonal identity
+@assert isapprox(M * J, I; atol = 1e-10)          # J is the Volterra inverse of M
 ```
 
 ## 3. Building an RVE and homogenizing

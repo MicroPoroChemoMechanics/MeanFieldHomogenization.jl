@@ -49,7 +49,7 @@ add_phase!(rve, :I, Ellipsoid(1.0),
 
 # Sensitivity of C_eff[1,1,1,1] w.r.t. the inclusion volume fraction
 ∂_f = derivative(rve, MoriTanaka(), amount(:I);
-                 indexer = C -> get_array(C)[1, 1, 1, 1])
+                 indexer = C -> components_canon(C)[1, 1, 1, 1])
 ```
 
 That's it — no closure to write, no manual `set_param`/`homogenize`
@@ -84,12 +84,12 @@ positional `Int` index into `get_data(tensor)`):
 ```julia
 # scalar in / scalar out
 ∂_K = derivative(rve, MoriTanaka(), property(:I, :C, :bulk);
-                 indexer = C -> get_array(C)[1, 1, 1, 1])
+                 indexer = C -> components_canon(C)[1, 1, 1, 1])
 
 # vector in / scalar out
 ps = [amount(:I), property(:I, :C, :bulk), property(:M, :C, :shear)]
 ∇  = gradient(rve, MoriTanaka(), ps;
-              indexer = C -> get_array(C)[1, 1, 1, 1])
+              indexer = C -> components_canon(C)[1, 1, 1, 1])
 
 # vector in / tensor out → full Jacobian (flattened to 81 × N for a 4-tensor)
 J = jacobian(rve, MoriTanaka(), ps)         # size(J) == (81, 3)
@@ -110,7 +110,7 @@ can be differentiated through a user-supplied closure:
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0, α, α^2),
                 Dict(:C => TensISO{3}(60.0, 20.0)); fraction = 0.2)
-    return get_array(homogenize(rve, MoriTanaka(), :C))[1, 1, 1, 1]
+    return components_canon(homogenize(rve, MoriTanaka(), :C))[1, 1, 1, 1]
 end
 ```
 
@@ -134,7 +134,7 @@ MeanFieldHomogenization.hill_tensor(b::MyBlob, C₀::TensND.AbstractTens; kw...)
 
 # Differentiate w.r.t. any scalar field — no library change required.
 ∂_e = derivative(rve, Dilute(), geometry(:B, :eccentricity);
-                 indexer = C -> get_array(C)[1,1,1,1])
+                 indexer = C -> components_canon(C)[1, 1, 1, 1])
 ```
 
 The generic `_replace_geom_field` reflects on the struct's fieldnames and

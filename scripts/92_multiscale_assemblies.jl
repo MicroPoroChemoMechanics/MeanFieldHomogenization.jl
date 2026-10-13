@@ -34,6 +34,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
 
 using MeanFieldHomogenization
 using TensND
+using LinearAlgebra
 using Printf
 using Plots
 gr()
@@ -44,9 +45,10 @@ C_i = TensISO{3}(3 * 10.0, 2 * 6.0)
 C_f = TensISO{3}(3 * 40.0, 2 * 25.0)
 C_void = TensISO{3}(3 * 1.0e-9, 2 * 1.0e-9)
 
-μ_of(C) = get_array(C)[1, 2, 1, 2]
-μ2_of(C) = (A = get_array(C); (A[1, 1, 1, 1] - A[1, 1, 2, 2]) / 2)
-κ_of(C) = (A = get_array(C); sum(A[i, i, j, j] for i in 1:3, j in 1:3) / 9)
+𝟏 = TensISO{3}(1.0)
+μ_of(C) = components_canon(C)[1, 2, 1, 2]
+μ2_of(C) = (A = components_canon(C); (A[1, 1, 1, 1] - A[1, 1, 2, 2]) / 2)
+κ_of(C) = (𝟏 ⊡ C ⊡ 𝟏) / 9          # 𝟏 : ℂ : 𝟏 / 9
 
 # ## §1 An assembly as the inner cell
 #
@@ -69,9 +71,9 @@ ref = RVE()
 add_phase!(ref, :M, Ellipsoid(1.0), Dict(:C => homogenize(inner, ClusterModel(), :C)); fraction = :rest)
 add_phase!(ref, :F, Ellipsoid(1.0), Dict(:C => C_f); fraction = 0.2)
 
-@printf "declarative : C1111 = %.10f\n" get_array(C_two_scale)[1, 1, 1, 1]
-@printf "by hand     : C1111 = %.10f\n" get_array(homogenize(ref, MoriTanaka(), :C))[1, 1, 1, 1]
-@printf "difference  : %.2e\n" maximum(abs.(get_array(C_two_scale) .- get_array(homogenize(ref, MoriTanaka(), :C))))
+@printf "declarative : C1111 = %.10f\n" components_canon(C_two_scale)[1, 1, 1, 1]
+@printf "by hand     : C1111 = %.10f\n" components_canon(homogenize(ref, MoriTanaka(), :C))[1, 1, 1, 1]
+@printf "difference  : %.2e\n" norm(C_two_scale - homogenize(ref, MoriTanaka(), :C))
 
 # ## §2 An assembly as the outer cell
 #
@@ -86,7 +88,7 @@ asm = ParticleAssembly(; boundary = PeriodicBox(1.0; cutoff = 2.0))
 add_matrix!(asm, Dict(:C => C_m))
 add_particle!(asm, :p1, (0.0, 0.0, 0.0), Ellipsoid(0.3), Dict(:C => Homogenized(sub, MoriTanaka())))
 
-@printf "\nassembly with a homogenized particle: C1111 = %.6f\n" get_array(homogenize(asm, ClusterModel(), :C))[1, 1, 1, 1]
+@printf "\nassembly with a homogenized particle: C1111 = %.6f\n" components_canon(homogenize(asm, ClusterModel(), :C))[1, 1, 1, 1]
 
 # ## §3 Why chaining N-body schemes needs the anisotropic Green operator
 #
@@ -131,14 +133,14 @@ C1 = homogenize(lvl1, ClusterModel(), :C)
 C2 = homogenize(lvl2, ClusterModel(), :C)
 C3 = homogenize(lvl3, MoriTanaka(), :C)
 
-@printf "\nlevel 1 (cubic array, cluster)          : C1111 = %.5f   type %s\n" get_array(C1)[1, 1, 1, 1] string(nameof(typeof(C1)))
-@printf "level 2 (assembly in that medium)       : C1111 = %.5f\n" get_array(C2)[1, 1, 1, 1]
-@printf "level 3 (porosity added, Mori-Tanaka)   : C1111 = %.5f\n" get_array(C3)[1, 1, 1, 1]
+@printf "\nlevel 1 (cubic array, cluster)          : C1111 = %.5f   type %s\n" components_canon(C1)[1, 1, 1, 1] string(nameof(typeof(C1)))
+@printf "level 2 (assembly in that medium)       : C1111 = %.5f\n" components_canon(C2)[1, 1, 1, 1]
+@printf "level 3 (porosity added, Mori-Tanaka)   : C1111 = %.5f\n" components_canon(C3)[1, 1, 1, 1]
 
 p1 = bar(
     ["matrix", "level 1", "level 2", "level 3"],
-    [get_array(C_m)[1, 1, 1, 1], get_array(C1)[1, 1, 1, 1],
-        get_array(C2)[1, 1, 1, 1], get_array(C3)[1, 1, 1, 1]];
+    [components_canon(C_m)[1, 1, 1, 1], components_canon(C1)[1, 1, 1, 1],
+        components_canon(C2)[1, 1, 1, 1], components_canon(C3)[1, 1, 1, 1]];
     ylabel = "C₁₁₁₁", title = "Three scales", legend = false, color = :steelblue
 )
 p1
@@ -150,7 +152,7 @@ p1
 # forward-mode pass through the whole chain.
 
 lens = nested(:M, :C, property(:matrix, :C, :μ))
-idx = C -> get_array(C)[1, 2, 1, 2]
+idx = C -> components_canon(C)[1, 2, 1, 2]
 d_ad = derivative(outer, MoriTanaka(), lens; indexer = idx)
 x₀ = get_param(outer, lens)
 d_fd = (
@@ -190,12 +192,8 @@ t_ani = @elapsed for _ in 1:20
 end
 @printf "\nisotropic closed form : %8.1f µs\n" t_iso / 200 * 1.0e6
 @printf "anisotropic multipole : %8.1f µs   (same values, generic type)\n" t_ani / 20 * 1.0e6
-@printf "agreement             : %.2e\n" maximum(
-    abs.(
-        get_array(interaction_tensor(ia, ib, r, Cgen)) .-
-            get_array(interaction_tensor(ia, ib, r, C_m))
-    )
-) / maximum(abs.(get_array(interaction_tensor(ia, ib, r, C_m))))
+T_iso, T_gen = interaction_tensor(ia, ib, r, C_m), interaction_tensor(ia, ib, r, Cgen)
+@printf "agreement             : %.2e\n" norm(T_gen - T_iso) / norm(T_iso)
 
 p_full = plot(p1; size = (700, 430))
 p_full

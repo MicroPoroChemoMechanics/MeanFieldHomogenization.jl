@@ -77,8 +77,7 @@ A_fit = best_fit_ti(A, n)                     # TensTI{4,T,5}
 ## The gap: what best-fit discards
 
 ````@example symmetrization
-gap = maximum(abs, get_array(A_exact) .- get_array(A_fit))
-@printf "‖exact − best-fit‖∞ = %.4e  (content dropped by the projection)\n" gap
+@printf "‖exact − best-fit‖ = %.4e  (content dropped by the projection)\n" norm(A_exact - A_fit)
 @printf "  → components lost : ℓ₃≠ℓ₄ split + the ℓ₇/ℓ₈ azimuthal couplings.\n\n"
 ````
 
@@ -100,7 +99,7 @@ end
 
 C_iso = homogenise_with(:iso)                       # full SO(3) average
 C_ti = homogenise_with(TISymmetrize(n))             # exact azimuthal average
-@printf "MT homogenised C₃₃₃₃ :  iso-average = %.4f   TI(ez)-average = %.4f\n" get_array(C_iso)[3, 3, 3, 3] get_array(C_ti)[3, 3, 3, 3]
+@printf "MT homogenised C₃₃₃₃ :  iso-average = %.4f   TI(ez)-average = %.4f\n" components_canon(C_iso)[3, 3, 3, 3] components_canon(C_ti)[3, 3, 3, 3]
 println("\nDone.")
 ````
 

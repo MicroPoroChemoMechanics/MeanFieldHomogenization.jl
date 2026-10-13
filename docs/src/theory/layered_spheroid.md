@@ -118,7 +118,7 @@ though they are equal on the domain:
     c * sqrt((q^2 - p^2) / (1 - p^2)),
     c * sqrt((q^2 - p^2) / (q^2 - 1)),
 )
-[simplify(χ[i]^2 - χ_ref[i]^2) for i in 1:3]
+simplify.(χ .^ 2 .- χ_ref .^ 2)
 ```
 
 The volume element (A.7), `dΩ = χ_ϕ χ_p χ_q dϕ dp dq = c³ (q² − p²) dϕ dp dq`,

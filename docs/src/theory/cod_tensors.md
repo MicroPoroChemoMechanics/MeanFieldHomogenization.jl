@@ -360,7 +360,7 @@ agreement with [`compliance_contribution`](@ref) is evidence rather than
 tautology:
 
 ```@example Horacle
-using MeanFieldHomogenization, TensND, Plots
+using MeanFieldHomogenization, TensND, LinearAlgebra, Plots
 gr()  # headless backend; GKSwstype is set to "100" in make.jl
 
 E, ν = 210.0, 0.3
@@ -373,9 +373,7 @@ function H_from_hill(a, b, ρ, C₀)
     return ρ * inv(Q)
 end
 
-relerr(A, B) =
-    maximum(abs(A[i,j,k,l] - B[i,j,k,l]) for i in 1:3, j in 1:3, k in 1:3, l in 1:3) /
-    maximum(abs(B[i,j,k,l]) for i in 1:3, j in 1:3, k in 1:3, l in 1:3)
+relerr(A, B) = norm(A - B) / norm(B)   # Frobenius norm, basis-independent
 
 ρs = exp10.(range(-1, -3; length = 9))
 plt = plot(; xscale = :log10, yscale = :log10, legend = :topleft,

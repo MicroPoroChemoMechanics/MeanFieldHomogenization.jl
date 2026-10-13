@@ -184,7 +184,7 @@ fig1 = plot(
 
 function von_mises(σ)
     s = σ - (tr(σ) / 3) * TensISO{3}(1.0)
-    return sqrt(3 / 2 * sum(s[i, j]^2 for i in 1:3, j in 1:3))
+    return sqrt(3 / 2) * norm(s)
 end
 
 xs = range(-2.6Rₛ, 2.6Rₛ; length = 220)

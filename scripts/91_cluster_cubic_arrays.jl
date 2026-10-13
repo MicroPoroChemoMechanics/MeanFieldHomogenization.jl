@@ -35,6 +35,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
 
 using MeanFieldHomogenization
 using TensND
+using LinearAlgebra
 using Printf
 using Plots
 gr()
@@ -50,8 +51,9 @@ C_m = TensISO{3}(3k_m, 2μ_m)
 C_rigid = TensISO{3}(3 * 1.0e4, 2 * 1.0e4)
 C_void = TensISO{3}(3 * 1.0e-9, 2 * 1.0e-9)
 
-μ_of(C) = get_array(C)[1, 2, 1, 2]
-κ_of(C) = (A = get_array(C); sum(A[i, i, j, j] for i in 1:3, j in 1:3) / 9)
+𝟏 = TensISO{3}(1.0)
+μ_of(C) = components_canon(C)[1, 2, 1, 2]
+κ_of(C) = (𝟏 ⊡ C ⊡ 𝟏) / 9          # 𝟏 : ℂ : 𝟏 / 9
 
 # The one-site schemes read the *same* assembly: `RVE(asm)` forgets the
 # positions and keeps the derived fractions, so no parallel cell has to be
@@ -155,7 +157,7 @@ end
 println("\n  f      C_1212/μ_m    (C_1111-C_1122)/2μ_m    anisotropy ratio")
 for f in (0.1, 0.2, 0.3, 0.4)
     asm = cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_rigid); fraction = f, cutoff = 3.0)
-    A = get_array(homogenize(asm, ClusterModel(), :C))
+    A = components_canon(homogenize(asm, ClusterModel(), :C))
     μ1 = A[1, 2, 1, 2] / μ_m
     μ2 = (A[1, 1, 1, 1] - A[1, 1, 2, 2]) / (2μ_m)
     @printf " %.1f     %.5f       %.5f              %.4f\n" f μ1 μ2 (μ1 / μ2)
@@ -207,12 +209,12 @@ p3
 # El Mouden. They agree to machine precision, which is the acceptance gate of
 # both implementations.
 
-println("\n  cutoff    cluster        EIM            max|difference|")
+println("\n  cutoff    cluster        EIM            ‖difference‖")
 for c in (0.0, 1.5, 3.0)
     asm = cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_rigid); fraction = 0.3, cutoff = c)
-    A = get_array(homogenize(asm, ClusterModel(), :C))
-    B = get_array(homogenize(asm, EquivalentInclusion(), :C))
-    @printf "   %.1f     %.10f   %.10f   %.2e\n" c A[1, 2, 1, 2] B[1, 2, 1, 2] maximum(abs.(A .- B))
+    A = homogenize(asm, ClusterModel(), :C)
+    B = homogenize(asm, EquivalentInclusion(), :C)
+    @printf "   %.1f     %.10f   %.10f   %.2e\n" c μ_of(A) μ_of(B) norm(A - B)
 end
 
 p_full = plot(p1, p2, p3; layout = (1, 3), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm,

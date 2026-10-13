@@ -46,6 +46,7 @@ of ``0.349\,\mu_0``.
 using MeanFieldHomogenization
 using TensND
 using Random
+using Statistics
 using Printf
 using Plots
 gr()
@@ -91,7 +92,7 @@ println(asm)
 println("bound type: ", eim_bound_type(asm))
 
 C = homogenize(asm, EquivalentInclusion(), :C)
-@printf "μ_app / μ₀ = %.4f   (single realization)\n" get_array(C)[1, 2, 1, 2] / μ₀
+@printf "μ_app / μ₀ = %.4f   (single realization)\n" components_canon(C)[1, 2, 1, 2] / μ₀
 ````
 
 ## Monte-Carlo over realizations
@@ -101,18 +102,17 @@ statistical error well below the gap to the reference.
 
 ````@example eim_assembly
 nreal = 8            ## reduced ensemble, so the documentation build stays cheap
-vals = Float64[]
-for m in 1:nreal
+vals = map(1:nreal) do _
     asm_m = random_assembly(
         N, Dict(:C => C_m), Dict(:C => C_void);
         radius = a, dim = 2, rng = rng, cycles = 4000,
         boundary = MixedBC(Ellipsoid(R, R))
     )
-    push!(vals, get_array(homogenize(asm_m, EquivalentInclusion(), :C))[1, 2, 1, 2] / μ₀)
+    components_canon(homogenize(asm_m, EquivalentInclusion(), :C))[1, 2, 1, 2] / μ₀
 end
 
-mean_val = sum(vals) / length(vals)
-sem = sqrt(sum((v - mean_val)^2 for v in vals) / max(1, length(vals) - 1)) / sqrt(length(vals))
+mean_val = mean(vals)
+sem = std(vals) / sqrt(length(vals))          # standard error of the mean
 @printf "\nEIM (p = 0), %d realizations : μ_app/μ₀ = %.4f ± %.4f\n" length(vals) mean_val sem
 @printf "paper (1000 realizations)     : 0.310\n"
 @printf "finite-element reference      : 0.244\n"
@@ -129,7 +129,7 @@ the next can only lower an upper bound.
 
 ````@example eim_assembly
 p1 = scatter(
-    1:length(vals), vals;
+    eachindex(vals), vals;
     xlabel = "realization", ylabel = "μ_app / μ₀",
     title = "EIM (p = 0), $(N) circular pores, φ = 0.4",
     label = "EIM", ms = 4, legend = :right
@@ -177,7 +177,7 @@ for φ in φs
         radius = a, dim = 2, rng = rng, cycles = 4000,
         boundary = MixedBC(Ellipsoid(R, R))
     )
-    push!(μs, get_array(homogenize(asm_φ, EquivalentInclusion(), :C))[1, 2, 1, 2] / μ₀)
+    push!(μs, components_canon(homogenize(asm_φ, EquivalentInclusion(), :C))[1, 2, 1, 2] / μ₀)
     @printf "φ = %.2f  (N = %3d)  μ_app/μ₀ = %.4f\n" φ Nφ μs[end]
 end
 

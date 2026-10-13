@@ -380,7 +380,7 @@ let wc = 0.5, sc = 0.0, α_p = αmax(0.5) * (1 - 1e-12)
     C_hf = best_fit_ti(build_hf(wc, α_p, float(μ_hyd_ref)), (0.0, 0.0, 1.0))
     C_explicit = build_mo(wc, sc, build_cp(wc, α_p, C_hf))
     C_declarative = homogenize(cp_mo_declarative(wc, sc, α_p, C_hf), MoriTanaka(), :C)
-    maximum(abs, get_array(C_explicit) - get_array(C_declarative))
+    C_explicit == C_declarative
 end
 ```
 
