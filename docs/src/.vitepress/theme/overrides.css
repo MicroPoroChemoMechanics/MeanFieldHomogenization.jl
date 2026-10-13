@@ -152,6 +152,27 @@
   margin: 1.2rem 0;
 }
 
+/* Their colors, by role. The figures are drawn on a transparent background and
+ * name these tokens (`FIG_*` in scripts/common/docviz.jl); plotly-figures.ts
+ * reads their current values and draws again when the scheme is toggled. */
+:root {
+  --mfh-fig-ink: #24292f;
+  --mfh-fig-guide: #6e7781;
+  --mfh-fig-grid: rgba(36, 41, 47, 0.16);
+  --mfh-fig-vector: #1a5fb4;
+  --mfh-fig-edge: #c0392b;
+  --mfh-fig-body: #2e8b57;
+}
+
+.dark {
+  --mfh-fig-ink: #e6edf3;
+  --mfh-fig-guide: #9da7b3;
+  --mfh-fig-grid: rgba(230, 237, 243, 0.18);
+  --mfh-fig-vector: #79b8ff;
+  --mfh-fig-edge: #ff7b72;
+  --mfh-fig-body: #56d364;
+}
+
 /* Citation hints: the card that pops when a `[n]` is hovered. Positioned from
  * the theme's script, so only its appearance is set here. */
 .mfh-cite-hint {

@@ -4,8 +4,10 @@
 #  The docs are rendered by VitePress, which bundles plotly.js itself
 #  (`plotly.js-gl3d-dist-min`, declared in `docs/package.json`) and exposes a
 #  single drawing entry point, `window.mfhPlotly`, from
-#  `docs/src/.vitepress/theme/index.ts`. A figure therefore emits nothing but a
-#  container and a one-line call — see `_plotly_html`.
+#  `docs/src/.vitepress/theme/plotly-figures.ts`. A figure therefore emits
+#  nothing but a container and a one-line call — see `_plotly_html` — and names
+#  its colors by theme token (`FIG_*` below) so that it reads on the light and
+#  the dark scheme alike.
 #
 #  Standalone `julia scripts/NN_*.jl` runs write the same HTML; opening one
 #  outside the docs needs a `window.mfhPlotly` of its own, which is the price of
@@ -44,46 +46,168 @@ _jsmat(M) = "[" * join(("[" * join((_js(M[i, j]) for j in axes(M, 2)), ",") * "]
     for i in axes(M, 1)), ",") * "]"
 _jsints(v) = "[" * join(v, ",") * "]"
 _jsstrs(v) = "[" * join(("\"" * string(s) * "\"" for s in v), ",") * "]"
+_jsbool(x::Bool) = x ? "true" : "false"
+
+# ── Colors ───────────────────────────────────────────────────────────────────
+#
+# Figures are drawn on a transparent background, so whatever has to contrast
+# with the page (text, guides, unit vectors, the haze of a cell) names a theme
+# token instead of a color. The tokens are defined once per color scheme in
+# `docs/src/.vitepress/theme/overrides.css`; `plotly-figures.ts`, next to it,
+# substitutes their current values before drawing and again when the reader
+# toggles the scheme. Filled surfaces keep plain colors that read on both
+# backgrounds.
+
+const FIG_INK = "var(--mfh-fig-ink)"
+const FIG_GUIDE = "var(--mfh-fig-guide)"
+const FIG_GRID = "var(--mfh-fig-grid)"
+const FIG_VECTOR = "var(--mfh-fig-vector)"
+const FIG_EDGE = "var(--mfh-fig-edge)"
+const FIG_BODY = "var(--mfh-fig-body)"
+
+# The part of a layout that puts a figure on the page rather than on a white
+# card: transparent paper, text and modebar in the theme's ink.
+const _THEMED_LAYOUT = """paper_bgcolor:"rgba(0,0,0,0)", plot_bgcolor:"rgba(0,0,0,0)",
+    font:{color:"$FIG_INK"},
+    modebar:{bgcolor:"rgba(0,0,0,0)",color:"$FIG_GUIDE",activecolor:"$FIG_INK"},"""
+# ── Labels ───────────────────────────────────────────────────────────────────
+#
+# A label is anchored at a point of the scene but drawn in the SVG layer above
+# it, as a Plotly scene annotation. A WebGL text trace would be cheaper, but it
+# knows no underline, and the vectors are underlined in this documentation
+# (Notation page): `<u><i>n</i></u>` only renders as an annotation. It also
+# stays upright and the same size however the scene is turned.
+
+"""
+    SceneLabel
+
+A text anchored at a point of a 3-D scene, built by [`scene_label`](@ref).
+[`plotly_scene`](@ref) routes it to the layout, so labels and trace strings can
+be mixed in the vector it receives.
+"""
+struct SceneLabel
+    pos::NTuple{3, Float64}
+    text::String
+    color::String
+    size::Int
+    xanchor::String
+    yanchor::String
+    xshift::Int
+    yshift::Int
+end
+
+"What a scene is built from: Plotly trace strings and labels."
+const SceneItem = Union{String, SceneLabel}
+
+"""
+    scene_label(p, text; color = FIG_INK, size = 17, xanchor = "center",
+                yanchor = "middle", xshift = 0, yshift = 0) -> SceneLabel
+
+`text` takes Plotly's markup: `<i>a</i>` for a scalar, `<u><i>n</i></u>` for a
+vector, `<sub>`/`<sup>`. `xshift`/`yshift` move it by that many pixels on
+screen, which keeps it clear of the point it names whichever way the scene is
+rotated.
+"""
+function scene_label(
+        p, text::AbstractString;
+        color::AbstractString = FIG_INK, size::Integer = 17,
+        xanchor::AbstractString = "center", yanchor::AbstractString = "middle",
+        xshift::Integer = 0, yshift::Integer = 0,
+    )
+    x, y, z = Float64.(Tuple(p))
+    return SceneLabel((x, y, z), text, color, size, xanchor, yanchor, xshift, yshift)
+end
+
+# A serif family for the labels, which are symbols of the equations and should
+# look like them rather than like the sans-serif title.
+const LABEL_FONT = "STIX Two Text, Cambria, Times New Roman, serif"
+
+_annotation(l::SceneLabel) =
+    """{x:$(_js(l.pos[1])),y:$(_js(l.pos[2])),z:$(_js(l.pos[3])),text:"$(l.text)",
+    showarrow:false,font:{family:"$LABEL_FONT",color:"$(l.color)",size:$(l.size)},
+    xanchor:"$(l.xanchor)",yanchor:"$(l.yanchor)",xshift:$(l.xshift),yshift:$(l.yshift)}"""
 
 # ── The scene emitter ────────────────────────────────────────────────────────
 
 """
-    plotly_scene(traces; uid, title = "", height = 480, aspectmode = "data",
-                 xlabel = "x", ylabel = "y", zlabel = "z", showlegend = false,
-                 axes_visible = true)
+    plotly_scene(items; uid, title = "", height = 480, aspectmode = "data",
+                 axes_visible = false, xlabel = "x", ylabel = "y", zlabel = "z",
+                 showlegend = false, camera = nothing, orthographic = false,
+                 bounds = nothing, zoom = 1, sliders = "")
 
-Wrap a vector of ready-made Plotly trace strings into an interactive 3-D
-figure.  `uid` must be unique **within a page** — it is the id of the `<div>`
-the plot is drawn into.
+Wrap a vector of ready-made Plotly trace strings, possibly mixed with
+[`SceneLabel`](@ref)s, into an interactive 3-D figure. `uid` must be unique
+**within a page**: it is the id of the `<div>` the plot is drawn into.
+
+The axes are hidden unless `axes_visible = true`: a picture of a shape, a cell
+or a field has no use for coordinates, and they are kept only where they carry a
+quantity (a stress, a friction angle). `camera` is the eye position
+`(x, y, z)`, `orthographic` drops the perspective, and `sliders` is a ready-made
+Plotly slider object (see [`flattening_figure`](@ref)).
+
+`bounds`, three `(min, max)` pairs from [`scene_bounds`](@ref), fixes the axis
+ranges, and `zoom` then enlarges the picture by that factor. Without
+perspective, moving the eye does not change the size of the picture: Plotly
+zooms by scaling the aspect ratios, and does so here from the same geometric
+mean of the ranges as its own `aspectmode = "data"`, so that `zoom = 1` is the
+default size and the proportions stay exact.
 """
 function plotly_scene(
-        traces::AbstractVector{<:AbstractString};
+        items::AbstractVector;
         uid::AbstractString,
         title::AbstractString = "",
         height::Integer = 480,
         aspectmode::AbstractString = "data",
+        axes_visible::Bool = false,
         xlabel::AbstractString = "x",
         ylabel::AbstractString = "y",
         zlabel::AbstractString = "z",
         showlegend::Bool = false,
-        axes_visible::Bool = true,
+        camera = nothing,
+        orthographic::Bool = false,
+        bounds = nothing,
+        zoom::Real = 1,
+        sliders::AbstractString = "",
     )
-    vis = axes_visible ? "true" : "false"
+    all(x -> x isa AbstractString || x isa SceneLabel, items) ||
+        throw(ArgumentError("a scene is built from trace strings and SceneLabels"))
+    traces = String[x for x in items if x isa AbstractString]
+    labels = SceneLabel[x for x in items if x isa SceneLabel]
     ## Left-aligned: Plotly puts its modebar at the top right, and a centered
     ## title long enough to be useful runs straight into it.
     ttl = isempty(title) ? "" :
         "title:{text:\"$title\",x:0.02,xanchor:\"left\",font:{size:13}},"
+    eye = camera === nothing ? "" :
+        "eye:{x:$(_js(camera[1])),y:$(_js(camera[2])),z:$(_js(camera[3]))},"
+    proj = orthographic ? "projection:{type:\"orthographic\"}," : ""
+    cam = isempty(eye) && isempty(proj) ? "" : "camera:{$eye$proj up:{x:0,y:0,z:1}},"
+    ## Without axes there is nothing to read in a hover box but meaningless
+    ## coordinates, so hovering is switched off with them.
+    hover = axes_visible ? "\"closest\"" : "false"
+    rng(k) = bounds === nothing ? "" : "range:[$(_js(bounds[k][1])),$(_js(bounds[k][2]))],"
+    axis(t, k) = "{title:{text:\"$t\"},$(rng(k))visible:$(_jsbool(axes_visible)),color:\"$FIG_INK\"," *
+        "gridcolor:\"$FIG_GRID\",zerolinecolor:\"$FIG_GUIDE\",showspikes:false}"
+    aspect = if bounds === nothing
+        "aspectmode:\"$aspectmode\""
+    else
+        Δ = [Float64(b[2] - b[1]) for b in bounds]
+        r = zoom .* Δ ./ cbrt(prod(Δ))
+        "aspectmode:\"manual\",aspectratio:{x:$(_js(r[1])),y:$(_js(r[2])),z:$(_js(r[3]))}"
+    end
+    sl = isempty(sliders) ? "" : ", sliders:[$sliders]"
     return _plotly_html(
         uid, height,
         join(traces, ","),
-        """{height:$height, margin:{l:0,r:0,t:$(isempty(title) ? 10 : 46),b:0},
+        """{height:$height, margin:{l:0,r:0,t:$(isempty(title) ? 10 : 46),b:$(isempty(sliders) ? 0 : 64)},
+            $(_THEMED_LAYOUT) uirevision:"$uid",
             $ttl showlegend:$(showlegend),
-            scene:{aspectmode:"$aspectmode",
-                   xaxis:{title:"$xlabel",visible:$vis},
-                   yaxis:{title:"$ylabel",visible:$vis},
-                   zaxis:{title:"$zlabel",visible:$vis}}}"""
+            scene:{$aspect, bgcolor:"rgba(0,0,0,0)", hovermode:$hover,
+                   $cam
+                   xaxis:$(axis(xlabel, 1)), yaxis:$(axis(ylabel, 2)), zaxis:$(axis(zlabel, 3)),
+                   annotations:[$(join(map(_annotation, labels), ","))]}$sl}"""
     )
 end
+
 
 """
     plotly_surface(x, y, Z; title, zlabel, uid, colorscale = "RdBu",
@@ -103,11 +227,15 @@ function plotly_surface(
     cb = isempty(colorbar_title) ? "" : ",colorbar:{title:\"$colorbar_title\"}"
     trace = """{type:"surface", x:$(_jsvec(x)), y:$(_jsvec(y)), z:$(_jsmat(Z)),
         colorscale:"$colorscale", reversescale:$(reversescale)$cb}"""
+    ## The axes of a response surface carry its variables, so they stay; only
+    ## their colors follow the theme.
+    axis(t) = "{title:{text:\"$t\"},color:\"$FIG_INK\",gridcolor:\"$FIG_GRID\",zerolinecolor:\"$FIG_GUIDE\"}"
     return _plotly_html(
         uid, height, trace,
         """{title:{text:"$title"}, height:$height, margin:{l:0,r:0,t:40,b:0},
-            scene:{xaxis:{title:"$xlabel"}, yaxis:{title:"$ylabel"},
-                   zaxis:{title:"$zlabel"}}}"""
+            $(_THEMED_LAYOUT) uirevision:"$uid",
+            scene:{bgcolor:"rgba(0,0,0,0)",
+                   xaxis:$(axis(xlabel)), yaxis:$(axis(ylabel)), zaxis:$(axis(zlabel))}}"""
     )
 end
 
@@ -130,23 +258,202 @@ function _plotly_html(uid, height, data, layout)
     )
 end
 
+"""
+    scene_bounds(parts...; pad = 0.04) -> NTuple{3, Tuple{Float64, Float64}}
+
+Axis ranges enclosing every point of `parts`, each a `3 × n` matrix (`NaN`
+columns ignored), widened by `pad` times the largest extent. A degenerate
+extent (a flat picture) is opened to the same margin.
+"""
+function scene_bounds(parts::AbstractMatrix...; pad::Real = 0.04)
+    lo = fill(Inf, 3)
+    hi = fill(-Inf, 3)
+    for P in parts, j in axes(P, 2), i in 1:3
+        x = Float64(P[i, j])
+        isnan(x) && continue
+        lo[i] = min(lo[i], x)
+        hi[i] = max(hi[i], x)
+    end
+    δ = pad * maximum(hi .- lo)
+    return ntuple(i -> (lo[i] - δ, hi[i] + δ), 3)
+end
+
+# ── Sections of a surface, cut with the mouse ────────────────────────────────
+
+"""
+    CutFamily(name, symbol, labels, planes, curves, sections, labels2d;
+              active = 1, equal = true)
+
+One family of cutting planes for [`section_figure`](@ref). For the `k`-th
+plane, `labels[k]` names it on the slider (after `symbol = `), `planes[k]` is
+the patch drawn in space (`(X, Y, Z)`, see [`plane_patch`](@ref)), `curves[k]`
+the section in space (`3 × n`) and `sections[k]` the same curve in coordinates
+of the plane (`2 × n`), whose axes `labels2d` names. `NaN` columns break a
+curve. `equal` keeps the same scale on both axes of the panel, which only
+makes sense when they carry the same quantity.
+"""
+struct CutFamily
+    name::String
+    symbol::String
+    labels::Vector{String}
+    planes::Vector{NTuple{3, Matrix{Float64}}}
+    curves::Vector{Matrix{Float64}}
+    sections::Vector{Matrix{Float64}}
+    labels2d::NTuple{2, String}
+    active::Int
+    equal::Bool
+end
+
+CutFamily(name, symbol, labels, planes, curves, sections, labels2d; active::Integer = 1, equal::Bool = true) =
+    CutFamily(
+    String(name), String(symbol), String.(labels), planes, curves, sections,
+    (String(labels2d[1]), String(labels2d[2])), Int(active), equal
+)
+
+"""
+    plane_patch(o, u, w, hu, hw) -> (X, Y, Z)
+
+The rectangle of center `o` and half-sides `hu`, `hw` along the unit vectors
+`u`, `w`, as the `2 × 2` matrices of a surface trace.
+"""
+function plane_patch(o, u, w, hu, hw)
+    P = [o .+ s * hu .* u .+ t * hw .* w for s in (-1, 1), t in (-1, 1)]
+    return getindex.(P, 1), getindex.(P, 2), getindex.(P, 3)
+end
+
+"""
+    section_figure(items, families; uid, title = "", height = 620,
+                   xlabel = "x", ylabel = "y", zlabel = "z", camera = nothing,
+                   aspectmode = "data") -> Base.HTML
+
+A surface in space (`items`, as for [`plotly_scene`](@ref)), with a panel on its
+right showing it cut by a plane. Buttons choose the family of planes, or none,
+and a slider moves the plane; the section is drawn on the surface and, in the
+panel, in coordinates of the plane, which is where a two-dimensional criterion
+is read. Where a family asks for it, the panel keeps equal scales on its two
+axes by shrinking the side that has room to spare, rather than its range, so
+that no section is clipped.
+"""
+function section_figure(
+        items::AbstractVector, families::AbstractVector{CutFamily};
+        uid::AbstractString, title::AbstractString = "", height::Integer = 620,
+        xlabel::AbstractString = "x", ylabel::AbstractString = "y", zlabel::AbstractString = "z",
+        camera = nothing, aspectmode::AbstractString = "data",
+    )
+    traces = String[x for x in items if x isa AbstractString]
+    labels = SceneLabel[x for x in items if x isa SceneLabel]
+    n0 = length(traces)
+    idx = _jsints(n0:(n0 + 2))
+    ## The three traces of the cut, hidden until a family is chosen: the plane,
+    ## the section on the surface, the section in the panel.
+    push!(
+        traces, """{type:"surface",x:[[0,0],[0,0]],y:[[0,0],[0,0]],z:[[0,0],[0,0]],visible:false,
+        opacity:0.3,showscale:false,colorscale:[[0,"$FIG_GUIDE"],[1,"$FIG_GUIDE"]],
+        lighting:{ambient:1,diffuse:0,specular:0,roughness:1,fresnel:0},hoverinfo:"skip"}"""
+    )
+    push!(
+        traces, """{type:"scatter3d",mode:"lines",x:[0],y:[0],z:[0],visible:false,
+        line:{width:7,color:"$FIG_EDGE"},hoverinfo:"skip"}"""
+    )
+    push!(
+        traces, """{type:"scatter",mode:"lines",x:[0],y:[0],visible:false,xaxis:"x",yaxis:"y",
+        line:{width:3,color:"$FIG_EDGE"},hovertemplate:"(%{x:.3f}, %{y:.3f})<extra></extra>"}"""
+    )
+    function cut_args(f, k)
+        X, Y, Z = f.planes[k]
+        C, S = f.curves[k], f.sections[k]
+        return replace(
+            "{x:[$(_jsmat(X)),$(_jsvec(@view C[1, :])),$(_jsvec(@view S[1, :]))]," *
+                "y:[$(_jsmat(Y)),$(_jsvec(@view C[2, :])),$(_jsvec(@view S[2, :]))]," *
+                "z:[$(_jsmat(Z)),$(_jsvec(@view C[3, :])),null]}",
+            "NaN" => "null"
+        )
+    end
+    nf = length(families)
+    shown(i) = join(("\"sliders[$(j - 1)].visible\":$(_jsbool(j == i))" for j in 1:nf), ",")
+    sliders = map(enumerate(families)) do (i, f)
+        steps = join(
+            (
+                "{label:\"$(f.labels[k])\",method:\"restyle\",args:[$(cut_args(f, k)),$idx]}"
+                    for k in eachindex(f.labels)
+            ), ","
+        )
+        """{visible:false,active:$(f.active - 1),x:0,len:0.62,pad:{t:6,b:6},
+        currentvalue:{prefix:"$(f.symbol) = ",font:{color:"$FIG_INK",size:14}},
+        font:{color:"$FIG_INK"},bgcolor:"$FIG_GRID",activebgcolor:"$FIG_GUIDE",
+        bordercolor:"$FIG_GUIDE",tickcolor:"$FIG_GUIDE",steps:[$steps]}"""
+    end
+    off = """{label:"No cut",method:"update",args:[{visible:[false,false,false]},
+        {$(shown(0)),"xaxis.visible":false,"yaxis.visible":false},$idx]}"""
+    ons = map(enumerate(families)) do (i, f)
+        a = cut_args(f, f.active)
+        """{label:"$(f.name)",method:"update",args:[$(a[1:(end - 1)]),visible:[true,true,true]},
+        {$(shown(i)),"sliders[$(i - 1)].active":$(f.active - 1),
+         "xaxis.visible":true,"yaxis.visible":true,
+         "xaxis.title.text":"$(f.labels2d[1])","yaxis.title.text":"$(f.labels2d[2])",
+         "yaxis.scaleanchor":$(f.equal ? "\"x\"" : "null")},$idx]}"""
+    end
+    ## Plotly paints the pressed button near white whatever the theme, so the
+    ## buttons keep a light face and dark text in both schemes.
+    menus = """{type:"buttons",direction:"right",showactive:true,active:0,
+        x:0,xanchor:"left",y:1,yanchor:"top",pad:{t:0,r:0,l:0,b:0},
+        font:{color:"#24292f",size:12},bgcolor:"#e6e9ed",bordercolor:"#9da7b3",
+        buttons:[$off,$(join(ons, ","))]}"""
+    ttl = isempty(title) ? "" :
+        "title:{text:\"$title\",x:0.02,xanchor:\"left\",font:{size:13}},"
+    eye = camera === nothing ? "" :
+        "camera:{eye:{x:$(_js(camera[1])),y:$(_js(camera[2])),z:$(_js(camera[3]))},up:{x:0,y:0,z:1}},"
+    axis3(t) = "{title:{text:\"$t\"},color:\"$FIG_INK\",gridcolor:\"$FIG_GRID\",zerolinecolor:\"$FIG_GUIDE\",showspikes:false}"
+    axis2(extra) = "{$(extra)visible:false,title:{text:\"\"},color:\"$FIG_INK\",gridcolor:\"$FIG_GRID\",zerolinecolor:\"$FIG_GUIDE\"}"
+    return _plotly_html(
+        uid, height, join(traces, ","),
+        """{height:$height, margin:{l:0,r:10,t:$(isempty(title) ? 10 : 46),b:64},
+        $(_THEMED_LAYOUT) uirevision:"$uid", $ttl showlegend:false, hovermode:"closest",
+        scene:{domain:{x:[0,0.62],y:[0,0.9]}, aspectmode:"$aspectmode", bgcolor:"rgba(0,0,0,0)",
+               hovermode:"closest", $eye
+               xaxis:$(axis3(xlabel)), yaxis:$(axis3(ylabel)), zaxis:$(axis3(zlabel)),
+               annotations:[$(join(map(_annotation, labels), ","))]},
+        xaxis:$(axis2("domain:[0.74,1],anchor:\"y\",constrain:\"domain\",")),
+        yaxis:$(axis2("domain:[0.1,0.85],anchor:\"x\",scaleanchor:\"x\",scaleratio:1,constrain:\"domain\",")),
+        updatemenus:[$menus], sliders:[$(join(sliders, ","))]}"""
+    )
+end
+
 # ── Trace constructors ───────────────────────────────────────────────────────
 
 """
-    surface_trace(X, Y, Z; color = "#4a90d9", opacity = 1.0, name = "")
+    surface_trace(X, Y, Z; color = "#4a90d9", opacity = 1.0, name = "",
+                  flat = false, fade = nothing)
 
 A one-color parametric surface.  Plotly has no flat-color surface, so the
 color is passed as a degenerate two-stop colorscale.
+
+`flat = true` turns the shading off, for a planar region that should read as
+one tint from every angle (a crack face). `fade = (W, w)` makes the surface
+transparent where the matrix `W` (sampled like `X`) exceeds `w`, opaque at
+`opacity` below: the way an unbounded body is drawn as a finite piece that
+dies out rather than one that ends.
 """
 function surface_trace(
         X, Y, Z;
         color::AbstractString = "#4a90d9", opacity::Real = 1.0,
-        name::AbstractString = "",
+        name::AbstractString = "", flat::Bool = false, fade = nothing,
     )
     nm = isempty(name) ? "" : ",name:\"$name\",showlegend:true"
+    lit = flat ? ",lighting:{ambient:1,diffuse:0,specular:0,roughness:1,fresnel:0}" : ""
+    op = if fade === nothing
+        "opacity:$(_js(opacity))"
+    else
+        W, w = fade
+        ## The surface color is |W| rescaled to [0, 1]; the opacity scale is
+        ## flat up to w, then falls to zero at the largest |W|.
+        Wmax = maximum(abs, W)
+        "surfacecolor:$(_jsmat(abs.(W) ./ Wmax)),cmin:0,cmax:1," *
+            "opacityscale:[[0,$(_js(opacity))],[$(_js(w / Wmax)),$(_js(opacity))],[1,0]]"
+    end
     return """{type:"surface",x:$(_jsmat(X)),y:$(_jsmat(Y)),z:$(_jsmat(Z)),
-        opacity:$(_js(opacity)),showscale:false,
-        colorscale:[[0,"$color"],[1,"$color"]],
+        $op,showscale:false,
+        colorscale:[[0,"$color"],[1,"$color"]]$lit,
         contours:{x:{highlight:false},y:{highlight:false},z:{highlight:false}}$nm}"""
 end
 
@@ -174,7 +481,8 @@ end
     line_trace(pts; color = "#c0392b", width = 4, dash = "solid", name = "")
 
 A 3-D polyline through the columns of a `3 × n` matrix (or a vector of
-triples) — used for principal-axis guides and section outlines.
+triples) — used for principal-axis guides and section outlines.  A column of
+`NaN` breaks the line, so one trace can carry several separate pieces.
 """
 function line_trace(
         pts;
@@ -183,56 +491,86 @@ function line_trace(
     )
     P = _as_matrix(pts)
     nm = isempty(name) ? "" : ",name:\"$name\",showlegend:true"
-    return """{type:"scatter3d",mode:"lines",x:$(_jsvec(@view P[1, :])),
+    return replace(
+        """{type:"scatter3d",mode:"lines",x:$(_jsvec(@view P[1, :])),
         y:$(_jsvec(@view P[2, :])),z:$(_jsvec(@view P[3, :])),
-        line:{width:$width,color:"$color",dash:"$dash"},showlegend:false$nm}"""
-end
-
-"""
-    text_trace(pts, labels; color = "#111", size = 15)
-
-Floating labels at given points.  The Asymptote originals of these figures
-carried their labels commented out; annotating is most of what a reader
-actually needs from a shape picture.
-"""
-function text_trace(
-        pts, labels;
-        color::AbstractString = "#111111", size::Integer = 15,
+        line:{width:$width,color:"$color",dash:"$dash"},showlegend:false$nm}""",
+        "NaN" => "null"
     )
-    P = _as_matrix(pts)
-    return """{type:"scatter3d",mode:"text",x:$(_jsvec(@view P[1, :])),
-        y:$(_jsvec(@view P[2, :])),z:$(_jsvec(@view P[3, :])),
-        text:$(_jsstrs(labels)),textfont:{size:$size,color:"$color"},
-        showlegend:false}"""
 end
 
 """
-    arrow_trace(origin, direction; color = "#1565c0", size = 0.35, label = "")
+    marker_trace(pts; color = FIG_EDGE, size = 5)
 
-A cone marking a direction (a crack normal, a revolution axis), optionally
-labeled at its tip.
+Dots at the columns of a `3 × n` matrix — the vertices a dimension is read
+between.
+"""
+function marker_trace(pts; color::AbstractString = FIG_EDGE, size::Real = 5)
+    P = _as_matrix(pts)
+    return """{type:"scatter3d",mode:"markers",x:$(_jsvec(@view P[1, :])),
+        y:$(_jsvec(@view P[2, :])),z:$(_jsvec(@view P[3, :])),
+        marker:{size:$size,color:"$color"},showlegend:false}"""
+end
+
+"""
+    arrow_trace(origin, direction; color = FIG_VECTOR, size = 0.2, label = "",
+                shaft = true) -> Vector{SceneItem}
+
+An arrow from `origin` to `origin + direction`, marking a direction (a unit
+vector of a frame, a crack normal). `size` is the length of the head, which is
+a cone meshed explicitly so that it keeps that length whatever the scene; a
+Plotly `cone` trace rescales itself from the data instead. `label`, if given, is
+set beyond the tip.
 """
 function arrow_trace(
         origin, direction;
-        color::AbstractString = "#1565c0", size::Real = 0.35,
-        label::AbstractString = "", shaft::Bool = true,
+        color::AbstractString = FIG_VECTOR, size::Real = 0.2,
+        label::AbstractString = "", shaft::Bool = true, width::Real = 6,
     )
     o = collect(Float64, origin)
     d = collect(Float64, direction)
+    L = norm(d)
+    u = d ./ L
     tip = o .+ d
-    traces = String[]
-    shaft && push!(traces, line_trace(hcat(o, tip); color = color, width = 5))
-    push!(
-        traces, """{type:"cone",x:$(_jsvec([tip[1]])),y:$(_jsvec([tip[2]])),
-        z:$(_jsvec([tip[3]])),u:$(_jsvec([d[1] * size])),v:$(_jsvec([d[2] * size])),
-        w:$(_jsvec([d[3] * size])),anchor:"tail",showscale:false,
-        colorscale:[[0,"$color"],[1,"$color"]]}"""
-    )
-    isempty(label) || push!(traces, text_trace(reshape(tip .* 1.15, 3, 1), [label]))
-    return traces
+    h = min(Float64(size), 0.6 * L)
+    items = SceneItem[]
+    shaft && push!(items, line_trace(hcat(o, tip .- 0.9h .* u); color = color, width = width))
+    V, F = _cone_mesh(tip, u, h, 0.38h)
+    push!(items, mesh_trace(V, F; color = color, flatshading = true))
+    ## The camera keeps z up, so the label of a vertical arrow (a normal, most
+    ## often) goes just above or below its tip; any other one, a little beyond.
+    if !isempty(label)
+        up = abs(u[3]) > 0.7
+        yanchor = up ? (u[3] > 0 ? "bottom" : "top") : "middle"
+        push!(items, scene_label(tip .+ (up ? 0.04L : 0.22L) .* u, label; color = color, yanchor = yanchor))
+    end
+    return items
+end
+
+# Apex at `tip`, axis `-u`, height `h`, base radius `r`, closed by its base.
+function _cone_mesh(tip, u, h, r; n::Integer = 18)
+    a = abs(u[1]) < 0.9 ? [1.0, 0.0, 0.0] : [0.0, 1.0, 0.0]
+    e1 = normalize(a .- (a ⋅ u) .* u)
+    e2 = u × e1
+    c = tip .- h .* u
+    V = Matrix{Float64}(undef, 3, n + 2)
+    V[:, 1] = tip
+    V[:, 2] = c
+    for k in 1:n
+        θ = 2π * (k - 1) / n
+        V[:, k + 2] = c .+ r .* (cos(θ) .* e1 .+ sin(θ) .* e2)
+    end
+    F = Matrix{Int}(undef, 3, 2n)
+    for k in 1:n
+        i, j = k + 1, mod1(k + 1, n) + 1          # 0-based ring indices
+        F[:, k] = [0, i, j]
+        F[:, n + k] = [1, j, i]
+    end
+    return V, F
 end
 
 _as_matrix(P::AbstractMatrix) = P
+_as_matrix(P::AbstractVector{<:Real}) = reshape(collect(Float64, P), :, 1)   # one point
 _as_matrix(P) = reduce(hcat, (collect(Float64, p) for p in P))
 
 # ── Parametric surfaces ──────────────────────────────────────────────────────
@@ -418,7 +756,7 @@ end
 """
     rve_traces(; n = 60, R = 1.0, semi_axes = (0.05, 0.05, 0.05),
                orientation = :random, seed = 1949, color = "#1f4e9c",
-               opacity = 1.0, cell_color = "#000000", cell_opacity = 0.12,
+               opacity = 1.0, cell_color = FIG_INK, cell_opacity = 0.12,
                nu = 13, nv = 7, max_tries = 4000)
 
 A realization of a matrix/inclusion RVE: `n` non-overlapping inclusions of
@@ -437,7 +775,7 @@ function rve_traces(;
         orientation = :random,
         seed::Integer = 1949,
         color::AbstractString = "#1f4e9c", opacity::Real = 1.0,
-        cell_color::AbstractString = "#000000", cell_opacity::Real = 0.12,
+        cell_color::AbstractString = FIG_INK, cell_opacity::Real = 0.12,
         nu::Integer = 13, nv::Integer = 7,
         max_tries::Integer = 4000,
     )
@@ -484,7 +822,7 @@ function frame_matrix(basis::TensND.AbstractBasis)
 end
 
 """
-    shape_traces(x; kwargs...) -> Vector{String}
+    shape_traces(x; kwargs...) -> Vector{SceneItem}
 
 Draw a `MeanFieldHomogenization` inclusion object.  Implemented for [`Ellipsoid`](@ref),
 [`Cylinder`](@ref), [`EllipticCrack`](@ref), [`RibbonCrack`](@ref),
@@ -496,13 +834,13 @@ function shape_traces end
 function shape_traces(
         ell::MeanFieldHomogenization.Ellipsoid{3};
         color::AbstractString = "#4a90d9", opacity::Real = 0.55,
-        axes_guides::Bool = true, labels = ("a", "b", "c"),
+        axes_guides::Bool = true, labels = ("<i>a</i>", "<i>b</i>", "<i>c</i>"),
         nu::Integer = 41, nv::Integer = 21,
     )
     a, b, c = Float64.(ell.semi_axes)
     R = frame_matrix(ell.basis)
     X, Y, Z = ellipsoid_surface(a, b, c; R = R, nu = nu, nv = nv)
-    traces = [surface_trace(X, Y, Z; color = color, opacity = opacity)]
+    traces = SceneItem[surface_trace(X, Y, Z; color = color, opacity = opacity)]
     axes_guides && append!(traces, _axis_guides(R, (a, b, c), labels))
     return traces
 end
@@ -510,13 +848,13 @@ end
 function shape_traces(
         cyl::MeanFieldHomogenization.Cylinder;
         color::AbstractString = "#4a90d9", opacity::Real = 0.55,
-        length_shown::Real = 6.0, labels = ("L → ∞", "b", "c"),
+        length_shown::Real = 6.0, labels = ("<i>L</i> → ∞", "<i>b</i>", "<i>c</i>"),
         axes_guides::Bool = true,
     )
     b, c = Float64.(cyl.semi_axes)
     R = frame_matrix(cyl.basis)
     X, Y, Z = cylinder_surface(b, c, length_shown; R = R)
-    traces = [surface_trace(X, Y, Z; color = color, opacity = opacity)]
+    traces = SceneItem[surface_trace(X, Y, Z; color = color, opacity = opacity)]
     if axes_guides
         append!(traces, _axis_guides(R, (length_shown / 2, b, c), labels))
     end
@@ -527,12 +865,12 @@ function shape_traces(
         cr::MeanFieldHomogenization.EllipticCrack;
         color::AbstractString = "#8a6d3b", opacity::Real = 0.9,
         normal::Bool = true, axes_guides::Bool = true,
-        labels = ("a", "b", "n̂"),
+        labels = ("<i>a</i>", "<i>b</i>", "<u><i>n</i></u>"),
     )
     a, b = Float64(cr.a), Float64(cr.b)
     R = frame_matrix(cr.basis)
     X, Y, Z = disc_surface(a, b; R = R)
-    traces = [surface_trace(X, Y, Z; color = color, opacity = opacity)]
+    traces = SceneItem[surface_trace(X, Y, Z; color = color, opacity = opacity)]
     if axes_guides
         append!(traces, _axis_guides(R, (a, b, 0.0), (labels[1], labels[2], "")))
     end
@@ -541,7 +879,7 @@ function shape_traces(
             traces,
             arrow_trace(
                 (0.0, 0.0, 0.0), R[:, 3] .* (0.8 * a);
-                color = "#1565c0", size = 0.3 * a, label = labels[3]
+                size = 0.18 * a, label = labels[3]
             )
         )
     end
@@ -558,13 +896,13 @@ function shape_traces(
     # A ribbon is the a → ∞ limit of an elliptic crack: draw a long strip.
     f = (u, t) -> Tuple(R * [length_shown * (u / 2π - 0.5), b * (2t - 1), 0.0])
     X, Y, Z = param_surface(f, range(0, 2π; length = 33), range(0, 1; length = 5))
-    traces = [surface_trace(X, Y, Z; color = color, opacity = opacity)]
+    traces = SceneItem[surface_trace(X, Y, Z; color = color, opacity = opacity)]
     if normal
         append!(
             traces,
             arrow_trace(
                 (0.0, 0.0, 0.0), R[:, 3] .* (2b);
-                color = "#1565c0", size = 0.6 * b, label = "n̂"
+                size = 0.36 * b, label = "<u><i>n</i></u>"
             )
         )
     end
@@ -586,12 +924,12 @@ function shape_traces(
     )
     radii = Float64.(ls.radii)
     cols = colors === nothing ? _layer_colors(length(radii)) : colors
-    traces = String[]
     # Every shell cut open over the same quarter of its azimuth, so the inner
     # ones stay visible — the flat picture of the recurrence. Opaque on purpose:
     # six translucent nested surfaces blend into one muddy color.
     u0 = cutaway ? CUT_START : 0.0
     umax = cutaway ? 1.5π : 2π
+    traces = SceneItem[]
     for (k, r) in enumerate(radii)
         f = (u, v) -> (r * cos(v) * cos(u), r * cos(v) * sin(u), r * sin(v))
         X, Y, Z = param_surface(f, range(u0, u0 + umax; length = nu), range(-π / 2, π / 2; length = nv))
@@ -610,7 +948,7 @@ function shape_traces(
     R = rotation_from_axis(sp.axis)
     u0 = cutaway ? CUT_START : 0.0   # see CUT_START above
     umax = cutaway ? 1.5π : 2π
-    traces = String[]
+    traces = SceneItem[]
     for k in 1:N
         ax, disk = Float64.(MeanFieldHomogenization.layer_semiaxes(sp, k))
         f = function (u, v)
@@ -660,51 +998,51 @@ An exploded stack of layers with its normal — the periodic multilayer cell of
 
 Each layer is drawn as a **solid box**.  It used to be two horizontal faces,
 which reads as a stack of planes rather than of matter, and hides the very
-thing the figure is about: the layer thicknesses.
+thing the figure is about: the layer thicknesses, which `thickness_labels`
+names ``h_1, h_2, …`` along the edge that faces right in the default view.
 """
 function laminate_traces(
         thicknesses;
         width::Real = 2.0, colors = nothing, opacity::Real = 0.95,
-        normal::Bool = true, gap::Real = 0.0,
+        normal::Bool = true, gap::Real = 0.0, thickness_labels::Bool = true,
     )
     t = Float64.(collect(thicknesses))
     cols = colors === nothing ? _layer_colors(length(t)) : colors
-    traces = String[]
+    traces = SceneItem[]
+    w = width / 2
     z = -sum(t) / 2
     for (k, tk) in enumerate(t)
         z0, z1 = z, z + tk
-        V, F = box_mesh((-width / 2, width / 2), (-width / 2, width / 2), (z0, z1))
+        V, F = box_mesh((-w, w), (-w, w), (z0, z1))
         push!(
             traces,
-            mesh_trace(V, F; color = cols[mod1(k, length(cols))], opacity = opacity)
+            mesh_trace(V, F; color = cols[mod1(k, length(cols))], opacity = opacity, flatshading = true)
+        )
+        ## The camera looks from (+x, +y, +z), so the vertical edge at
+        ## (-w, w) is the one on the right of the picture.
+        thickness_labels && push!(
+            traces, scene_label(
+                (-w, w, (z0 + z1) / 2), "<i>h</i><sub>$k</sub>";
+                xanchor = "left", xshift = 8
+            )
         )
         z = z1 + gap
     end
     if normal
-        append!(
-            traces,
-            arrow_trace(
-                (0.0, 0.0, z), (0.0, 0.0, 0.6);
-                color = "#1565c0", size = 0.25, label = "n̂"
-            )
-        )
+        append!(traces, arrow_trace((0.0, 0.0, z), (0.0, 0.0, 0.6); size = 0.15, label = "<u><i>n</i></u>"))
     end
     return traces
 end
 
 # Dashed guides along the three local axes, with their labels at the tips.
 function _axis_guides(R, lengths, labels)
-    traces = String[]
-    pts, txt = Vector{Float64}[], String[]
+    traces = SceneItem[]
     for m in 1:3
         L = Float64(lengths[m])
         L > 0 || continue
-        push!(traces, line_trace(hcat(zeros(3), R[:, m] .* L); color = "#c0392b", width = 3, dash = "dash"))
-        isempty(labels[m]) && continue
-        push!(pts, R[:, m] .* (1.12 * L))
-        push!(txt, labels[m])
+        push!(traces, line_trace(hcat(zeros(3), R[:, m] .* L); color = FIG_EDGE, width = 3, dash = "dash"))
+        isempty(labels[m]) || push!(traces, scene_label(R[:, m] .* (1.12 * L), labels[m]))
     end
-    isempty(pts) || push!(traces, text_trace(reduce(hcat, pts), txt))
     return traces
 end
 
@@ -712,4 +1050,272 @@ end
 function _layer_colors(n::Integer)
     base = ["#1f4e9c", "#4a90d9", "#7ec8e3", "#f0ad4e", "#c0392b", "#8a6d3b"]
     return n ≤ length(base) ? base[1:n] : [base[mod1(k, length(base))] for k in 1:n]
+end
+
+# ── Crack sketches ───────────────────────────────────────────────────────────
+#
+# The figures of the geometry section of `theory/cod_tensors.md`: the elliptic
+# and the ribbon crack with their frame, then the flat ellipsoid and the flat
+# elliptic cylinder of which they are the limits. Each is drawn from the crack
+# object itself (its semi-axes and its frame), the crack in FIG_EDGE, the body
+# that degenerates onto it in FIG_BODY, the unit vectors in FIG_VECTOR.
+
+# Seen from (+ℓ, +m) and somewhat above, without perspective: the view of the
+# usual hand-drawn sketch, in which ℓ runs to the lower left and m to the lower
+# right.
+const SKETCH_EYE = (1.0, 1.0, 0.8)
+
+# How much larger than Plotly's default size a sketch is drawn: the default
+# leaves room for any rotation, which a crack lying flat does not need. A tilted
+# one keeps the default, being seen face on from the default eye.
+const SKETCH_ZOOM = 1.6
+_sketch_zoom(R, zoom) = zoom === nothing ? (abs(R[3, 3]) > 0.99 ? SKETCH_ZOOM : 1.0) : Float64(zoom)
+
+const _VEC_LABELS = ("<u><i>ℓ</i></u>", "<u><i>m</i></u>", "<u><i>n</i></u>")
+
+# Length of the unit vectors drawn in a crack of in-plane half-sizes a ≥ b: long
+# enough to read, short enough to stay inside the crack.
+_unit_length(a, b) = min(a / 3, 0.7 * b)
+
+# A dashed axis from -L to L along u, interrupted over [0, v] where the unit
+# vector is drawn: a guide drawn on top of an arrow hides it.
+function _axis_line(u, L, v)
+    gap = v < L ? hcat(fill(NaN, 3), v .* u, L .* u) : zeros(3, 0)
+    return hcat(-L .* u, zeros(3), gap)
+end
+
+# Points of the ellipse of half-axes p along u and q along w, centered at o.
+_ellipse(o, u, p, w, q; n::Integer = 97) =
+    reduce(hcat, (o .+ p * cos(t) .* u .+ q * sin(t) .* w for t in range(0, 2π; length = n)))
+
+# The unit vectors of the frame, labeled. `shifts` says, for each of the three,
+# where its label sits relative to its tip on screen.
+function _frame_arrows(R, v)
+    items = SceneItem[]
+    shifts = ((xanchor = "center", yanchor = "bottom", xshift = 0, yshift = 6),
+        (xanchor = "center", yanchor = "bottom", xshift = 0, yshift = 6),
+        (xanchor = "right", yanchor = "bottom", xshift = -6, yshift = 0))
+    for k in 1:3
+        append!(items, arrow_trace(zeros(3), v .* R[:, k]; size = 0.22 * v))
+        push!(items, scene_label(v .* R[:, k], _VEC_LABELS[k]; color = FIG_VECTOR, shifts[k]...))
+    end
+    return items
+end
+
+# The crack face of an ellipse: a flat tint and its outline.
+function _elliptic_face(a, b, R)
+    X, Y, Z = disc_surface(a, b; R = R, nu = 73, nv = 3)
+    return SceneItem[
+        surface_trace(X, Y, Z; color = FIG_EDGE, opacity = 0.2, flat = true),
+        line_trace(_ellipse(zeros(3), R[:, 1], a, R[:, 2], b); color = FIG_EDGE, width = 5),
+    ]
+end
+
+# The face of a ribbon over |s| ≤ L along ℓ, dying out beyond `solid`: outline
+# solid up to there, dotted after.
+function _ribbon_face(b, R, L, solid)
+    ℓ, m = R[:, 1], R[:, 2]
+    ss = range(-L, L; length = 61)
+    ts = range(-b, b; length = 3)
+    S = [s for s in ss, t in ts]
+    f = (s, t) -> Tuple(s .* ℓ .+ t .* m)
+    X, Y, Z = param_surface(f, ss, ts)
+    edge(s0, s1) = hcat(s0 .* ℓ .+ b .* m, s1 .* ℓ .+ b .* m, fill(NaN, 3),
+        s0 .* ℓ .- b .* m, s1 .* ℓ .- b .* m, fill(NaN, 3))
+    return SceneItem[
+        surface_trace(X, Y, Z; color = FIG_EDGE, opacity = 0.2, flat = true, fade = (S, solid)),
+        line_trace(edge(-solid, solid); color = FIG_EDGE, width = 5),
+        line_trace(hcat(edge(solid, L), edge(-L, -solid)); color = FIG_EDGE, width = 4, dash = "dot"),
+    ]
+end
+
+"""
+    crack_figure(crack; uid, title = "", height = 380, zoom = nothing) -> Base.HTML
+
+The crack alone, in its plane: its face, its axes (dashed), the vertices that
+carry its semi-axes, and the unit vectors ``(\\underline{\\ell},
+\\underline{m}, \\underline{n})`` of its frame. Implemented for an
+[`EllipticCrack`](@ref) and a [`RibbonCrack`](@ref); a ribbon is drawn over six
+half-widths and fades out along ``\\underline{\\ell}``. `zoom` defaults to a
+close view of a crack lying flat and to Plotly's default size otherwise.
+"""
+function crack_figure end
+
+function crack_figure(
+        cr::MeanFieldHomogenization.EllipticCrack;
+        uid::AbstractString, title::AbstractString = "", height::Integer = 380,
+        zoom = nothing,
+    )
+    a, b = Float64(cr.a), Float64(cr.b)
+    R = frame_matrix(cr.basis)
+    ℓ, m = R[:, 1], R[:, 2]
+    v = _unit_length(a, b)
+    items = _elliptic_face(a, b, R)
+    push!(items, line_trace(hcat(_axis_line(ℓ, a, v), fill(NaN, 3), _axis_line(m, b, v)); color = FIG_EDGE, width = 3, dash = "dash"))
+    push!(items, marker_trace(hcat(a .* ℓ, b .* m)))
+    append!(items, _frame_arrows(R, v))
+    push!(items, scene_label(a .* ℓ, "<i>a</i>"; xanchor = "right", xshift = -8))
+    push!(items, scene_label(b .* m, "<i>b</i> = <i>ηa</i>"; xanchor = "left", xshift = 8))
+    push!(items, scene_label(0.5a .* ℓ .- 0.55b .* m, "ℰ"; color = FIG_EDGE, size = 22))
+    bounds = scene_bounds(_ellipse(zeros(3), ℓ, a, m, b), 1.1v .* R)
+    return plotly_scene(items; uid, title, height, camera = SKETCH_EYE, orthographic = true, bounds, zoom = _sketch_zoom(R, zoom))
+end
+
+function crack_figure(
+        cr::MeanFieldHomogenization.RibbonCrack;
+        uid::AbstractString, title::AbstractString = "", height::Integer = 380,
+        zoom = nothing,
+    )
+    b = Float64(cr.b)
+    R = frame_matrix(cr.basis)
+    ℓ, m = R[:, 1], R[:, 2]
+    L, solid = 3b, 1.6b
+    v = _unit_length(L, b)
+    items = _ribbon_face(b, R, L, solid)
+    push!(items, line_trace(hcat(_axis_line(ℓ, solid, v), fill(NaN, 3), _axis_line(m, b, v)); color = FIG_EDGE, width = 3, dash = "dash"))
+    push!(items, marker_trace(b .* m))
+    append!(items, _frame_arrows(R, v))
+    push!(items, scene_label(b .* m, "<i>b</i>"; xanchor = "left", xshift = 8))
+    push!(items, scene_label(solid .* ℓ, "<i>a</i> → ∞"; xanchor = "right", yanchor = "top", xshift = -6, yshift = -4))
+    push!(items, scene_label(-1.1b .* ℓ .- 0.55b .* m, "ℛ"; color = FIG_EDGE, size = 22))
+    bounds = scene_bounds(hcat(L .* ℓ .+ b .* m, L .* ℓ .- b .* m, -L .* ℓ .+ b .* m, -L .* ℓ .- b .* m), 1.1v .* R)
+    return plotly_scene(items; uid, title, height, camera = SKETCH_EYE, orthographic = true, bounds, zoom = _sketch_zoom(R, zoom))
+end
+
+"""
+    flattening_figure(crack; uid, ratios = (0.4, 0.25, 0.12, 0.05, 0.02),
+                      active = 2, title = "", height = 460, zoom = nothing) -> Base.HTML
+
+The body a crack is the flat limit of, around the crack: the ellipsoid of
+semi-axes ``(a, b, c = \\omega a)`` for an [`EllipticCrack`](@ref), the elliptic
+cylinder of axis ``\\underline{\\ell}`` and half-axes ``(b, c = \\rho b)`` for a
+[`RibbonCrack`](@ref). A slider runs the flatness through `ratios`, starting
+from `ratios[active]`, so that the body is seen collapsing onto the crack.
+"""
+function flattening_figure end
+
+function flattening_figure(
+        cr::MeanFieldHomogenization.EllipticCrack;
+        uid::AbstractString, ratios = (0.4, 0.25, 0.12, 0.05, 0.02), active::Integer = 2,
+        title::AbstractString = "", height::Integer = 460, zoom = nothing,
+    )
+    a, b = Float64(cr.a), Float64(cr.b)
+    R = frame_matrix(cr.basis)
+    ℓ, m, n = R[:, 1], R[:, 2], R[:, 3]
+    v = _unit_length(a, b)
+    ## The traces that depend on c come first, in this order, so that the slider
+    ## can address them by index.
+    body(c) = ellipsoid_surface(a, b, c; R = R, nu = 41, nv = 19)
+    moving(c) = (
+        body(c),
+        _ellipse(zeros(3), ℓ, a, n, c),
+        _ellipse(zeros(3), m, b, n, c),
+        hcat(-c .* n, c .* n),
+        reshape(c .* n, 3, 1),
+    )
+    return _flattening(
+        moving, a .* Float64.(ratios), active, ratios, "ω", "<i>c</i> = <i>ωa</i>", n;
+        uid, title, height, extent = 1.1v .* R, zoom = _sketch_zoom(R, zoom),
+        static = vcat(
+            _elliptic_face(a, b, R),
+            [
+                line_trace(hcat(_axis_line(ℓ, a, v), fill(NaN, 3), _axis_line(m, b, v)); color = FIG_EDGE, width = 3, dash = "dash"),
+                marker_trace(hcat(a .* ℓ, b .* m)),
+            ],
+            _frame_arrows(R, v),
+            [
+                scene_label(a .* ℓ, "<i>a</i>"; xanchor = "right", xshift = -8),
+                scene_label(b .* m, "<i>b</i> = <i>ηa</i>"; xanchor = "left", xshift = 8),
+            ],
+        ),
+    )
+end
+
+function flattening_figure(
+        cr::MeanFieldHomogenization.RibbonCrack;
+        uid::AbstractString, ratios = (0.4, 0.25, 0.12, 0.05, 0.02), active::Integer = 2,
+        title::AbstractString = "", height::Integer = 460, zoom = nothing,
+    )
+    b = Float64(cr.b)
+    R = frame_matrix(cr.basis)
+    ℓ, m, n = R[:, 1], R[:, 2], R[:, 3]
+    L, solid = 3b, 1.6b
+    v = _unit_length(L, b)
+    ss = range(-L, L; length = 31)
+    us = range(0, 2π; length = 33)
+    S = [s for s in ss, u in us]
+    body(c) = param_surface((s, u) -> Tuple(s .* ℓ .+ b * cos(u) .* m .+ c * sin(u) .* n), ss, us)
+    moving(c) = (
+        body(c),
+        _ellipse(zeros(3), m, b, n, c),
+        hcat(_ellipse(solid .* ℓ, m, b, n, c), fill(NaN, 3), _ellipse(-solid .* ℓ, m, b, n, c)),
+        hcat(-c .* n, c .* n),
+        reshape(c .* n, 3, 1),
+    )
+    return _flattening(
+        moving, b .* Float64.(ratios), active, ratios, "ρ", "<i>c</i> = <i>ρb</i>", n;
+        uid, title, height, fade = (S, solid), extent = 1.1v .* R, zoom = _sketch_zoom(R, zoom),
+        static = vcat(
+            _ribbon_face(b, R, L, solid),
+            [
+                line_trace(hcat(_axis_line(ℓ, solid, v), fill(NaN, 3), _axis_line(m, b, v)); color = FIG_EDGE, width = 3, dash = "dash"),
+                marker_trace(b .* m),
+            ],
+            _frame_arrows(R, v),
+            [
+                scene_label(b .* m, "<i>b</i>"; xanchor = "left", xshift = 8),
+                scene_label(solid .* ℓ, "<i>a</i> → ∞"; xanchor = "right", yanchor = "top", xshift = -6, yshift = -4),
+            ],
+        ),
+    )
+end
+
+# The figure shared by the two bodies. `moving(c)` returns, for the third
+# half-axis c, the body surface (X, Y, Z), its two section outlines and the
+# guide and vertex of c, as 3 × n matrices; `cs` are the values of c the slider
+# visits, named `symbol = ratios[k]` on it.
+function _flattening(
+        moving, cs, active, ratios, symbol, clabel, n;
+        uid, title, height, static, fade = nothing, extent = zeros(3, 0), zoom = SKETCH_ZOOM,
+    )
+    nmov = 5
+    function geometry(c)
+        (X, Y, Z), sec1, sec2, guide, vertex = moving(c)
+        return (X, Y, Z), (sec1, sec2, guide, vertex)
+    end
+    (X, Y, Z), lines = geometry(cs[active])
+    items = SceneItem[
+        surface_trace(X, Y, Z; color = FIG_BODY, opacity = 0.22, fade = fade),
+        line_trace(lines[1]; color = FIG_BODY, width = 3),
+        line_trace(lines[2]; color = FIG_BODY, width = 3),
+        line_trace(lines[3]; color = FIG_BODY, width = 3, dash = "dash"),
+        marker_trace(lines[4]; color = FIG_BODY),
+    ]
+    append!(items, static)
+    ## The label of c is the first annotation, so the slider moves
+    ## `scene.annotations[0]`.
+    label(c) = scene_label(c .* n, clabel; color = FIG_BODY, xanchor = "left", yanchor = "bottom", xshift = 6, yshift = 2)
+    pushfirst!(items, label(cs[active]))
+    steps = map(eachindex(cs)) do k
+        (Xk, Yk, Zk), lk = geometry(cs[k])
+        xs = "[" * join(vcat(_jsmat(Xk), [_jsvec(@view l[1, :]) for l in lk]), ",") * "]"
+        ys = "[" * join(vcat(_jsmat(Yk), [_jsvec(@view l[2, :]) for l in lk]), ",") * "]"
+        zs = "[" * join(vcat(_jsmat(Zk), [_jsvec(@view l[3, :]) for l in lk]), ",") * "]"
+        p = cs[k] .* n
+        replace(
+            """{label:"$(ratios[k])",method:"update",args:[{x:$xs,y:$ys,z:$zs},
+            {"scene.annotations[0].x":$(_js(p[1])),"scene.annotations[0].y":$(_js(p[2])),
+             "scene.annotations[0].z":$(_js(p[3]))},$(_jsints(0:(nmov - 1)))]}""",
+            "NaN" => "null"
+        )
+    end
+    sliders = """{active:$(active - 1),x:0.1,len:0.8,pad:{t:6,b:6},
+        currentvalue:{prefix:"$symbol = ",font:{color:"$FIG_INK",size:14}},
+        font:{color:"$FIG_INK"},bgcolor:"$FIG_GRID",activebgcolor:"$FIG_GUIDE",
+        bordercolor:"$FIG_GUIDE",tickcolor:"$FIG_GUIDE",
+        steps:[$(join(steps, ","))]}"""
+    ## The ranges hold the thickest body of the slider, and stay put as it moves.
+    (Xm, Ym, Zm), _ = geometry(maximum(cs))
+    bounds = scene_bounds(permutedims(hcat(vec(Xm), vec(Ym), vec(Zm))), extent)
+    return plotly_scene(items; uid, title, height, camera = SKETCH_EYE, orthographic = true, bounds, zoom, sliders)
 end

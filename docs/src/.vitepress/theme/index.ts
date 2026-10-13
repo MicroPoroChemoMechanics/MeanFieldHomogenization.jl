@@ -18,6 +18,8 @@ import SidebarDrawerToggle from '@/SidebarDrawerToggle.vue'
 import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
 // Hovering an equation lists its symbols, with their meaning on the page.
 import { installSymbolHints } from './symbol-hints'
+// Draws the interactive 3D figures, in the colors of the current scheme.
+import { drawPlotly } from './plotly-figures'
 
 import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css'
 import './style.css' // You could setup your own, or else a default will be copied.
@@ -43,29 +45,6 @@ async function activateScripts(container: Element): Promise<void> {
     old.replaceWith(fresh) // inserting is what runs it; inline scripts run synchronously
     await ran
   }
-}
-
-// Draws one interactive 3D figure. `scripts/common/docviz.jl` emits, for each
-// figure, a `<div>` plus an inline `<script>` calling this helper; the writer
-// wraps that output in `<ClientOnly v-exec-scripts>`, so the call happens on
-// mount and again after every client-side navigation.
-//
-// Plotly is a bundled dependency (`plotly.js-gl3d-dist-min`), imported lazily so
-// that only pages carrying a figure pay for it, and awaited through a single
-// shared promise so that a page with fifteen scenes still loads it once.
-let plotlyModule: Promise<any> | null = null
-
-async function drawPlotly(uid: string, data: unknown[], layout: unknown): Promise<void> {
-  const el = document.getElementById(uid)
-  if (!el) return // navigated away before the import resolved
-  if (!plotlyModule) plotlyModule = import('plotly.js-gl3d-dist-min')
-  // The gl3d bundle is CommonJS; depending on how Vite interops it, the object
-  // is either the module's default export or the module namespace itself.
-  const mod = (await plotlyModule) as any
-  const Plotly = mod.default ?? mod
-  // The element may have been torn down while the bundle was in flight.
-  if (!document.getElementById(uid)) return
-  await Plotly.newPlot(uid, data, layout, { responsive: true })
 }
 
 // ── Citation hints ──────────────────────────────────────────────────────────

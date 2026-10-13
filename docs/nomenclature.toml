@@ -954,6 +954,38 @@ unit = "1"
 pages = ["theory/cod_tensors.md", "theory/thermal_cracks.md"]
 
 [[symbol]]
+group = "Cracks"
+tex = '\mathcal{I}'
+label = "ℐ"
+name = "crack, elliptic or ribbon-like"
+unit = ""
+pages = ["theory/cod_tensors.md"]
+
+[[symbol]]
+group = "Cracks"
+tex = '\mathcal{E}'
+label = "ℰ"
+name = "elliptic crack"
+unit = ""
+pages = ["theory/cod_tensors.md"]
+
+[[symbol]]
+group = "Cracks"
+tex = '\mathcal{R}'
+label = "ℛ"
+name = "ribbon-like crack"
+unit = ""
+pages = ["theory/cod_tensors.md"]
+
+[[symbol]]
+group = "Cracks"
+tex = '\rho'
+label = "ρ"
+name = "flatness c/b of the ellipsoid or elliptic cylinder a crack is the limit of"
+unit = "1"
+pages = ["theory/cod_tensors.md"]
+
+[[symbol]]
 group = "Shape and Walpole coefficients"
 tex = '\Delta'
 label = "Δ"
