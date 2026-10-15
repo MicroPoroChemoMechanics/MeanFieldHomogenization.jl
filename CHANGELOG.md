@@ -1,5 +1,65 @@
 # Changelog
 
+## v0.16.3 — a void has a compliance contribution
+
+A patch release. The compliance contribution of an inclusion with no stiffness,
+and the resistivity contribution of one with no conductivity, came out as NaN,
+and so did `DiluteDual` and the compliance form of the differential scheme on
+pores and insulators. They are now finite and exact. The theory chapter is
+reorganized: the problems of a single heterogeneity come first, then one page per
+family of schemes, each with its figure, its assumption and its equations, and
+the Maxwell and Ponte Castañeda–Willis schemes are derived from the Green
+operator. Writing them out turned up statements in the documentation and the
+docstrings that were wrong, all corrected.
+
+### Fixed
+
+- **`compliance_contribution(incl, C₁, C₀)` returned NaN for a void
+  (`C₁ = 0`).** It evaluated its definition (𝕊₁ − 𝕊₀) : 𝔸_σσ literally, an
+  infinite compliance times a zero stress concentration. It now reads
+  ℍ = −𝕊₀ : ℕ : 𝕊₀ from the stiffness contribution, an exact identity that
+  never inverts `C₁` and was already the route of heterogeneous inclusions.
+  `resistivity_contribution` does the same for an insulator (`K₁ = 0`). For a
+  spherical void the result is the closed form, checked in value, under
+  `ForwardDiff` and with `Symbolics`; for every other inclusion it agrees with
+  the former value to rounding. `DiluteDual` and
+  `DifferentialScheme(; formulation = :compliance)`, which call these functions,
+  now accept pores: the first returns the closed form, and the second agrees
+  with the stiffness form.
+
+### Documentation
+
+- **The theory chapter reads in a new order.** The Eshelby problem, with the
+  interaction of two inclusions; the cracks, with the degenerate shapes; the
+  layered patterns; and only then the homogenization schemes. The overview of
+  the schemes states what every scheme estimates, the identities between
+  contribution tensors and the way a crack family enters, and gathers the
+  schemes in one table. Each family then has its own page, with its figure,
+  its assumption and its equations: bounds, dilute estimates, Mori–Tanaka,
+  Maxwell and Ponte Castañeda–Willis, self-consistent schemes, then the
+  differential scheme, the laminate, the cluster model and the equivalent
+  inclusion method, whose pages keep their content. The transitions between
+  pages are rewritten to follow that order.
+- **Maxwell and Ponte Castañeda–Willis are derived.** From the far field of an
+  inhomogeneity for Maxwell, and from the field inside the distribution
+  ellipsoid for Ponte Castañeda–Willis, in the notation of Barthélémy et al.
+  (2019). Two proofs show that the two coincide for a single distribution shape,
+  and Mori–Tanaka is shown to be the choice of a distribution shaped like each
+  source phase, which is not symmetric. The aging viscoelastic page restates
+  every scheme in Volterra form.
+- **A spherical distribution reproduces Mori–Tanaka only for spherical
+  inclusions.** The manual, two docstrings and the error message of an
+  undeclared distribution said it did for any inclusion; with spheroids the two
+  estimates differ.
+- **Docstrings corrected.** Mori–Tanaka does add the crack term to its
+  denominator; the self-consistent scheme does handle cracks, with the prefactor
+  π for a ribbon family; it cites Hill (1965) and Budiansky (1965), not a paper
+  on the differential scheme; Voigt and Reuss cite Hill (1952); the aging
+  viscoelastic Maxwell and dual dilute kernels are stated as implemented, and the
+  Maxwell table of the aging viscoelastic page no longer inverts the estimate.
+- Nine references added, each resolved on Crossref; `hill1965` and `willis1982`
+  carry their DOI.
+
 ## v0.16.2 — tensors compared as tensors
 
 A patch release. The documentation, the tutorials and the tests compared
