@@ -529,8 +529,8 @@ end
 # Mirror images of the four kernels above, evaluated against the same
 # running STIFFNESS `P_curr` (the caller inverts the state once per RHS
 # step) but returning the compliance / resistivity contribution, so the
-# ODE integrates S rather than C.  Heterogeneous inclusions route through
-# the `ℍ = −𝕊 : 𝐍 : 𝕊` fallback of `_phase_compliance_contribution`.
+# ODE integrates S rather than C.  `compliance_contribution` evaluates
+# `ℍ = −𝕊 : 𝐍 : 𝕊`, which holds for heterogeneous inclusions and voids alike.
 
 # Unit-amount compliance contribution `ℍ_i(C)` of a solid inclusion phase.
 function _diff_compliance_correction(
@@ -541,12 +541,7 @@ function _diff_compliance_correction(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
-    H = if MFH_Core.is_homogeneous_inclusion(geom)
-        compliance_contribution(geom, P_i, P₀_proj; kw...)
-    else
-        S₀ = inv(P₀_proj)
-        -(S₀ ⊡ MFH_Core.stiffness_contribution(geom, P_i, P₀_proj; kw...) ⊡ S₀)
-    end
+    H = compliance_contribution(geom, P_i, P₀_proj; kw...)
     return _apply_symmetrize(H, sym)
 end
 
@@ -558,12 +553,7 @@ function _diff_compliance_correction(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
-    R = if MFH_Core.is_homogeneous_inclusion(geom)
-        MFH_Core.resistivity_contribution(geom, P_i, P₀_proj; kw...)
-    else
-        R₀ = inv(P₀_proj)
-        -(R₀ ⋅ MFH_Core.conductivity_contribution(geom, P_i, P₀_proj; kw...) ⋅ R₀)
-    end
+    R = MFH_Core.resistivity_contribution(geom, P_i, P₀_proj; kw...)
     return _apply_symmetrize(R, sym)
 end
 

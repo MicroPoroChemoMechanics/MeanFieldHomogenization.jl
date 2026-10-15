@@ -57,10 +57,13 @@ Size-independent **compliance contribution tensor**
 in a matrix `C₀` (``\\mathbb{S} = \\mathbb{C}^{-1}``).  For a dilute family, the effective
 compliance correction is ``\\Delta\\mathbb{S}^{\\mathrm{hom}} = f\\,\\mathbb{H}`` — see [`delta_compliance`](@ref).
 
-!!! note "Heterogeneous inclusions"
-    As for [`stiffness_contribution`](@ref), `inv(C₁)` is meaningless when
-    [`is_homogeneous_inclusion`](@ref MeanFieldHomogenization.Core.is_homogeneous_inclusion) is `false`; the exact identity
-    ``\\mathbb{H} = \\mathbb{A}_{\\varepsilon\\sigma} - \\mathbb{S}_0:\\mathbb{A}_{\\sigma\\sigma} = (\\mathbb{A}_{\\varepsilon\\varepsilon} - \\mathbb{S}_0:\\mathbb{A}_{\\sigma\\varepsilon}):\\mathbb{S}_0`` is used instead.
+It is evaluated through the exact identity
+``\\mathbb{H} = -\\,\\mathbb{S}_0:\\mathbb{N}:\\mathbb{S}_0``, with ``\\mathbb{N}`` the
+[`stiffness_contribution`](@ref), which never inverts `C₁`. A void (`C₁ = 0`)
+therefore has the finite contribution it should, where the literal product
+``(\\mathbb{S}_1 - \\mathbb{S}_0):\\mathbb{A}_{\\sigma\\sigma}`` is an infinite compliance
+times a zero concentration. The identity holds for any inclusion, heterogeneous
+ones included, for which `C₁` is not even meaningful.
 
 See [kachanov2018](@citet).
 """
@@ -70,15 +73,8 @@ function compliance_contribution(
         C₀::TensND.AbstractTens{4, 3};
         kw...
     )
-    # `stress_strain_loc` (unlike `stress_stress_loc`) needs no `inv(C₀)`, so
-    # `S₀` is computed here exactly once and reused for both `A_σσ = A_σε ⊡ S₀`
-    # and the `(S₁ - S₀)` factor, instead of once inside `stress_stress_loc`
-    # and once again here.
     S₀ = inv(C₀)
-    A_σε = stress_strain_loc(incl, C₁, C₀; kw...)
-    is_homogeneous_inclusion(incl) ||
-        return (strain_strain_loc(incl, C₁, C₀; kw...) - S₀ ⊡ A_σε) ⊡ S₀
-    return (inv(C₁) - S₀) ⊡ (A_σε ⊡ S₀)
+    return -(S₀ ⊡ stiffness_contribution(incl, C₁, C₀; kw...) ⊡ S₀)
 end
 
 """
@@ -142,9 +138,11 @@ Size-independent **resistivity contribution tensor**
 for an `AbstractInclusion` (the resistivity is ``\\boldsymbol{K}^{-1}``).
 Dilute effective correction: ``\\Delta(\\boldsymbol{K}^{-1})^{\\mathrm{hom}} = f\\,\\boldsymbol{H}``.
 
-For a heterogeneous inclusion the exact
-``\\boldsymbol{H} = (\\boldsymbol{A}_{\\nabla\\nabla} - \\boldsymbol{K}_0^{-1}\\cdot\\boldsymbol{A}_{q\\nabla})\\cdot\\boldsymbol{K}_0^{-1}`` is
-used instead — see [`compliance_contribution`](@ref).
+It is evaluated through the exact identity
+``\\boldsymbol{H} = -\\,\\boldsymbol{K}_0^{-1}\\cdot\\boldsymbol{N}\\cdot\\boldsymbol{K}_0^{-1}``, with
+``\\boldsymbol{N}`` the [`conductivity_contribution`](@ref), which never inverts `K₁`:
+an insulating inclusion (`K₁ = 0`) has a finite contribution, and so has a
+heterogeneous one — see [`compliance_contribution`](@ref).
 """
 function resistivity_contribution(
         incl::AbstractInclusion,
@@ -152,14 +150,8 @@ function resistivity_contribution(
         K₀::TensND.AbstractTens{2, 3};
         kw...
     )
-    # `flux_gradient_loc` (unlike `flux_flux_loc`) needs no `inv(K₀)`, so `R₀`
-    # is computed here exactly once and reused for both `A_qq = A_q∇ ⋅ R₀`
-    # and the `(R₁ - R₀)` factor.
     R₀ = inv(K₀)
-    A_q∇ = flux_gradient_loc(incl, K₁, K₀; kw...)
-    is_homogeneous_inclusion(incl) ||
-        return (gradient_gradient_loc(incl, K₁, K₀; kw...) - R₀ ⋅ A_q∇) ⋅ R₀
-    return (inv(K₁) - R₀) ⋅ (A_q∇ ⋅ R₀)
+    return -(R₀ ⋅ conductivity_contribution(incl, K₁, K₀; kw...) ⋅ R₀)
 end
 
 """

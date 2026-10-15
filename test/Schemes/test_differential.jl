@@ -616,3 +616,19 @@ end
     C_prop = homogenize(mixed, DifferentialScheme(; tol...), :C)
     @test k_mu(C_prop)[2] < k_mu(C_seq)[2]
 end
+
+# The compliance form integrates ℍ(ℂ) of every phase. For exact voids it read
+# NaN before 0.16.3; it now agrees with the stiffness form, in elasticity and
+# in conduction.
+@testset "compliance form — exact voids" begin
+    C₀, K₀ = TensISO{3}(30.0, 10.0), TensISO{3}(2.0)
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀, :K => K₀); fraction = :rest)
+    add_phase!(rve, :P, Ellipsoid(1.0), Dict(:C => zero(C₀), :K => zero(K₀)); fraction = 0.2)
+    for p in (:C, :K)
+        stiff = homogenize(rve, DifferentialScheme(:M), p)
+        compl = homogenize(rve, DifferentialScheme(:M; formulation = :compliance), p)
+        @test all(isfinite, components_canon(compl))
+        @test norm(compl - stiff) <= 1.0e-6 * norm(stiff)
+    end
+end
