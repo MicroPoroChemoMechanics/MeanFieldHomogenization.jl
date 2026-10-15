@@ -95,14 +95,22 @@ function contact_packing(rng, radii, c::Point; e, dilation = 1.16)
     return ps
 end
 
+const MIX_WORDS = (
+    titles = ("grain contact", "full mix", "mortar", "mastic"),
+    schemes = ("", "self-consistent", "Mori–Tanaka", "Mori–Tanaka"),
+    contents = ("", "coated coarse aggregates, voids", "sand in mastic", "fillers in bitumen"),
+    film = "mastic film",
+    contact = "grain-to-grain contact",
+)
+
 """
 Grain contact ← full mix (SC) → mortar (MT) → mastic (MT), after someCBM2022.
 The coarse aggregates are coated by a mastic film and press on one another:
 where two of them touch, the films merge and thin down to the contact, which is
 what the left panel magnifies.
 """
-function ver_multi_mix()
-    return sheet("ver_multi_mix", 1000, 350) do
+function ver_multi_mix(; path = "ver_multi_mix", words = MIX_WORDS)
+    return sheet(path, 1000, 350) do
         rng = StableRNG(41)
         y, R, e = 172.0, 105.0, 3.5          # e: thickness of the mastic film, drawn
         cs = (Point(335, y), Point(600, y), Point(865, y))
@@ -170,8 +178,8 @@ function ver_multi_mix()
             circle(film, 2.4, :fill)
             circle(rc, 2.4, :fill)
         end
-        label(txt("mastic film"), Point(film.x, y - h / 2 - 14); size = 13, valign = :bottom)
-        label(txt("grain-to-grain contact"), Point(rc.x, y + h / 2 + 15); size = 13, valign = :top)
+        label(txt(words.film), Point(film.x, y - h / 2 - 14); size = 13, valign = :bottom)
+        label(txt(words.contact), Point(rc.x, y + h / 2 + 15); size = 13, valign = :top)
         # the zooms, over the panels, from each orange spot
         zoom_cone(sp1[1], sp1[2], rc + Point(w / 2, -h / 2), rc + Point(w / 2, h / 2))
         zoom_cone(spm[1], spm[2], cs[2], R)
@@ -179,9 +187,9 @@ function ver_multi_mix()
         spot(sp1...)
         spot(spm...)
         spot(sp2...)
-        titles = (txt("grain contact"), txt("full mix"), txt("mortar"), txt("mastic"))
-        schemes = ("", txt("self-consistent"), txt("Mori–Tanaka"), txt("Mori–Tanaka"))
-        contents = ("", txt("coated coarse aggregates, voids"), txt("sand in mastic"), txt("fillers in bitumen"))
+        titles = map(txt, words.titles)
+        schemes = map(w -> isempty(w) ? "" : txt(w), words.schemes)
+        contents = map(w -> isempty(w) ? "" : txt(w), words.contents)
         xs = (rc.x, cs[1].x, cs[2].x, cs[3].x)
         for k in 1:4
             label(titles[k], Point(xs[k], 36); size = 19, color = VECTOR)
@@ -486,7 +494,57 @@ function cement_paste_scales(; path = "applications/cement_paste_scales", words 
     end
 end
 
+# ── A solidifying composite sphere (aging viscoelasticity) ────────────────────
+
+const SET_LAYER = tint(BLUE, 0.3)
+
+const SOLID_WORDS = (
+    time = "time",
+    set = "set: creeps from its setting time on",
+    unset = "not yet set: still a pore",
+)
+
+"""
+    solidifying_sphere(; path, words = SOLID_WORDS)
+
+The composite sphere of the aging-creep page, after Sanahuja (2013): a pore
+wrapped in shells that set one after the other, from the outside in, each
+creeping only from its own setting time; drawn at three ages. The setting times
+are those of the page: fraction set f(t) = f∞ tᵅ/(1 + tᵅ), α = 4, the shell of
+midpoint fraction fₖ setting at tₖ = (fₖ/(f∞ − fₖ))^(1/α), the earliest
+outermost. Eight shells are drawn where the page computes with a hundred.
+"""
+function solidifying_sphere(; path = "applications/solidifying_sphere", words = SOLID_WORDS)
+    N, α, finf, fp = 8, 4.0, 0.3, 0.1
+    q = [(k + 0.5) / N for k in 0:(N - 1)]
+    t_set = [(x / (1 - x))^(1 / α) for x in q]
+    ρ = (cumsum(vcat(fp, fill(finf / N, N))) ./ (fp + finf)) .^ (1 / 3)   # pore, then shells outwards
+    ages = (0.75, 1.0, 1.6)              # two, four and seven shells of eight set
+    return sheet(path, 760, 340) do
+        R, y = 92.0, 152.0
+        xs = (140.0, 380.0, 620.0)
+        arrow_ab(Point(40, 24), Point(690, 24); color = MUTED, lw = 1.6, head = 10)
+        label(txt(words.time), Point(698, 24); size = 15, color = MUTED, halign = :left)
+        for (j, (x, t)) in enumerate(zip(xs, ages))
+            c = Point(x, y)
+            rve_box(c, 220, 220)
+            for k in N:-1:1              # shell k spans ρ[k]…ρ[k+1]; the outermost, k = N, sets first
+                set = t >= t_set[N - k + 1]
+                disk(c, R * ρ[k + 1]; fill = set ? SET_LAYER : PORE, stroke = set ? tint(BLUE, 0.05) : GUIDE, lw = set ? 0.5 : 0.8)
+            end
+            disk(c, R * ρ[1]; fill = PORE, stroke = GUIDE, lw = 0.8)
+            label(m("t_$j"), Point(x, y + 130); size = 19)
+        end
+        # the legend
+        y2 = 318
+        disk(Point(150, y2), 8; fill = SET_LAYER, stroke = nothing)
+        label(txt(words.set), Point(166, y2); size = 14, halign = :left)
+        disk(Point(450, y2), 8; fill = PORE, stroke = GUIDE, lw = 0.8)
+        label(txt(words.unset), Point(466, y2); size = 14, halign = :left)
+    end
+end
+
 application_figures() = (
     veritz(), ver_multi_mix(), lamellar_scales(), interfoliar_layer(), axi_schematic(),
-    cement_paste_scales(),
+    cement_paste_scales(), solidifying_sphere(),
 )
