@@ -261,6 +261,8 @@ into a single stiffness: here the hydrate species are merged first, by a
 self-consistent scheme with all phases spherical, and only the *result* is given
 the fibrillar morphology at the foam scale.
 
+![The three inner scales, from the paste inwards: anhydrous grains and fillers in the hydrate foam (Mori–Tanaka), hydrate needles of aspect ratio 7 with pore solution and void (self-consistent), spherical hydrates (self-consistent)](../assets/applications/cement_paste_scales.svg)
+
 ```mermaid
 %%{init: {"flowchart": {"useMaxWidth": false, "nodeSpacing": 26, "rankSpacing": 34}} }%%
 flowchart TB

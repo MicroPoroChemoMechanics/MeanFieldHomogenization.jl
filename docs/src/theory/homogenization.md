@@ -20,9 +20,9 @@ The Representative Volume Element (RVE) consists of:
   ``\mathbb C_i``, geometries ``\mathcal G_i``, and amounts
   ``f_i`` (volume fraction) or ``\varepsilon_i`` (crack density).
 
-The two drawings of this page are taken from the Echoes book [echoes](@cite).
+The drawings of this page are redrawn after the Echoes book [echoes](@cite).
 
-![An RVE loaded by ``\underline u = \boldsymbol E\cdot\underline x`` is replaced by a sum of single-inclusion problems in the infinite matrix ``\mathbb C_0``, each loaded by ``\underline u = \boldsymbol E^0\cdot\underline x``](../assets/schemes/rve_decomposition.png)
+![An RVE loaded by ``\underline u = \boldsymbol E\cdot\underline x`` is replaced by a sum of single-inclusion problems in the infinite matrix ``\mathbb C_0``, each loaded by ``\underline u = \boldsymbol E^0\cdot\underline x``](../assets/schemes/rve_decomposition.svg)
 
 That picture *is* the mean-field approximation, and every scheme below is one
 answer to the single question it leaves open: **what is ``\boldsymbol E^0``, and
@@ -39,6 +39,166 @@ contribution** ``\mathbb N_i = (\mathbb C_i - \mathbb C_0):
 **compliance contribution** ``\mathbb H_i = (\mathbb S_i - \mathbb S_0):
 \mathbb A_{\sigma\sigma,i}`` is more natural for cracks (whose stiffness
 contribution is the rank-1 limit of a divergent eigenvalue).
+
+### [Every scheme at a glance](@id th-schemes-glance)
+
+Each card answers the question above — what is ``\boldsymbol E^0``, and in which
+medium is each inclusion embedded — for one scheme. Where an RVE is drawn on the
+left, it is the same on every card, and the right shows what the scheme reads it
+as: the auxiliary problem, its reference medium (blue: the matrix
+``\mathbb C_0``; purple: the effective medium ``\mathbb C^{\mathrm{hom}}``) and
+its loading at infinity. The other cards draw what the scheme adds to the
+picture: the morphology it is exact for (laminate), a second shape (Maxwell,
+PCW), a trajectory (differential), or the positions (cluster model, equivalent
+inclusion method).
+
+```@raw html
+<div class="mfh-figure-grid">
+<div>
+```
+
+[`Voigt`](@ref)
+
+![A uniform strain, exact for bars in parallel.](../assets/schemes/scheme_voigt.svg)
+
+A uniform strain, exact for bars in parallel.
+
+```@raw html
+</div>
+<div>
+```
+
+[`Reuss`](@ref)
+
+![A uniform stress, exact for layers in series.](../assets/schemes/scheme_reuss.svg)
+
+A uniform stress, exact for layers in series.
+
+```@raw html
+</div>
+<div>
+```
+
+[`Dilute`](@ref)
+
+![Each inclusion alone in the matrix, under the remote strain.](../assets/schemes/scheme_dilute.svg)
+
+Each inclusion alone in the matrix, under the remote strain.
+
+```@raw html
+</div>
+<div>
+```
+
+[`DiluteDual`](@ref)
+
+![Each inclusion alone in the matrix, under the remote stress.](../assets/schemes/scheme_dilute_dual.svg)
+
+Each inclusion alone in the matrix, under the remote stress.
+
+```@raw html
+</div>
+<div>
+```
+
+[`MoriTanaka`](@ref)
+
+![Each inclusion in the matrix, under the mean strain of the matrix.](../assets/schemes/scheme_mori_tanaka.svg)
+
+Each inclusion in the matrix, under the mean strain of the matrix.
+
+```@raw html
+</div>
+<div class="narrow">
+```
+
+[`Laminated`](@ref)
+
+![A stack of layers of normal n, solved exactly.](../assets/schemes/scheme_laminated.svg)
+
+A stack of layers of normal n, solved exactly.
+
+```@raw html
+</div>
+<div>
+```
+
+[`SelfConsistent`](@ref)
+
+![Every phase, the matrix included, in the effective medium.](../assets/schemes/scheme_self_consistent.svg)
+
+Every phase, the matrix included, in the effective medium.
+
+```@raw html
+</div>
+<div>
+```
+
+[`AsymmetricSelfConsistent`](@ref)
+
+![The inclusions in the effective medium; the matrix keeps its role.](../assets/schemes/scheme_asymmetric_self_consistent.svg)
+
+The inclusions in the effective medium; the matrix keeps its role.
+
+```@raw html
+</div>
+<div>
+```
+
+[`Maxwell`](@ref)
+
+![A cluster of inclusions is equivalent to one inclusion Ω, both loaded remotely.](../assets/schemes/rve_maxwell.svg)
+
+A cluster of inclusions is equivalent to one inclusion Ω, both loaded remotely.
+
+```@raw html
+</div>
+<div class="narrow">
+```
+
+[`PonteCastanedaWillis`](@ref)
+
+![Each inclusion inside its own spherical safety domain, the domains paving the space.](../assets/schemes/rve_pcw.svg)
+
+Each inclusion inside its own spherical safety domain, the domains paving the space.
+
+```@raw html
+</div>
+<div class="wide">
+```
+
+[`DifferentialScheme`](@ref)
+
+![Inclusions added by small amounts to the current effective medium, from the matrix at τ = 0 to the effective medium at τ = 1.](../assets/schemes/scheme_differential.svg)
+
+Inclusions added by small amounts to the current effective medium, from the matrix at τ = 0 to the effective medium at τ = 1.
+
+```@raw html
+</div>
+<div class="narrow">
+```
+
+[`ClusterModel`](@ref)
+
+![The positions enter, through the interaction tensor of every pair.](../assets/schemes/scheme_cluster.svg)
+
+The positions enter, through the interaction tensor of every pair.
+
+```@raw html
+</div>
+<div class="narrow">
+```
+
+[`EquivalentInclusion`](@ref)
+
+![A polarization per inclusion, in a periodic cell and its images.](../assets/schemes/scheme_eim.svg)
+
+A polarization per inclusion, in a periodic cell and its images.
+
+```@raw html
+</div>
+</div>
+```
 
 ## 2. Bounds
 
@@ -68,11 +228,8 @@ stiffness contribution and ``\mathbb S_0 = \mathbb C_0^{-1}``:
 Maxwell and PCW differ from the first three rows in that a **second** shape
 enters, describing how the inclusions are *placed* rather than what they look
 like. Maxwell reads it as one equivalent inclusion swallowing a cluster; PCW
-reads it as a safety ellipsoid around each inclusion:
-
-| Maxwell | Ponte Castañeda–Willis |
-| :---: | :---: |
-| ![A cluster of inclusions is equivalent to a single inclusion Ω, both loaded remotely](../assets/schemes/rve_maxwell.png) | ![Each flat inclusion sits inside its own spatial-distribution ellipsoid](../assets/schemes/rve_pcw.png) |
+reads it as a safety ellipsoid around each inclusion. Both are drawn in
+[Every scheme at a glance](@ref th-schemes-glance).
 
 The **distribution shape** is stored at the RVE level (default: unit
 sphere ⇒ Mori-Tanaka limit). Any `AbstractInclusion` can be used; the
@@ -86,7 +243,7 @@ phase does — a polycrystal, a granular assembly, a saturated foam — the
 reference medium has to be the effective medium itself, and the estimate becomes
 a fixed point:
 
-![No phase plays the role of a matrix: the reference medium is the effective medium being sought](../assets/schemes/rve_self_consistent.png)
+![No phase plays the role of a matrix: the reference medium is the effective medium being sought](../assets/schemes/rve_self_consistent.svg)
 
 | Scheme | Iteration |
 | :-- | :-- |

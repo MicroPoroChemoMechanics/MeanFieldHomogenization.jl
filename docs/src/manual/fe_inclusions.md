@@ -28,6 +28,8 @@ response happens to come out of a mesh. Once built, it goes into an
 [`RVE`](@ref) like any other, every scheme accepts it, and nothing downstream
 knows a solver was involved.
 
+![A mesh of an elliptical crack and its matrix, refined toward the crack front](../assets/fe/crack_mesh_sketch.svg)
+
 Three are shipped, and the same machinery serves all of them:
 
 | Type | Morphology | Discretization | What it supplies |

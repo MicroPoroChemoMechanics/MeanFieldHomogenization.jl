@@ -1,8 +1,10 @@
 [deps]
-LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 Luxor = "ae8d54c2-7ccd-5906-9d76-62fc9837b5bc"
-MathTeXEngine = "0a4f8689-d25c-4efe-a92b-7142dfc1aa53"
+StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
+Typstry = "f0ed7684-a786-439e-b1e3-3b82803b501e"
 
 [compat]
 Luxor = "4"
+StableRNGs = "1"
+Typstry = "0.7"
 julia = "1.12"

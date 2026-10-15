@@ -4,18 +4,19 @@
 #
 #  Maintenance script, run **by hand**, never at documentation-build time. The
 #  page embeds the committed PNGs and quotes the numbers printed here, so a doc
-#  build stays free of `gmsh_jll` and of any finite-element work.
+#  build stays free of `gmsh_jll` and of any finite-element work. The drawing of
+#  the morphology, `axi_schematic.svg`, is not a plot: it is drawn with the other
+#  schematics by `docs/assets_src` (`axi_schematic` in `src/applications.jl`).
 #
 #      julia scripts/fe/make_axi_figures.jl              # everything
 #      julia scripts/fe/make_axi_figures.jl mesh         # one section only
 #
-#  Section names: schematic, mesh, convergence, contrast, conductivity, cost.
+#  Section names: morphology, mesh, convergence, contrast, conductivity, cost.
 #  Passing any
 #  of them regenerates only those figures and leaves `axi_results.md.in` alone,
 #  which is what you want while iterating on a plot.
 #
 #  Outputs (committed):
-#      docs/src/assets/fe/axi_schematic.png
 #      docs/src/assets/fe/axi_mesh.png
 #      docs/src/assets/fe/axi_convergence.png
 #      docs/src/assets/fe/axi_contrast.png
@@ -99,84 +100,14 @@ function figure_mesh(incl; zoom = nothing, kw...)
     return plt
 end
 
-# ─── Figure 0 — the morphology, with its symbols on it ───────────────────────
+# ─── The morphology: its numbers ─────────────────────────────────────────────
 #
-#  A definition, not a result: the eccentricity α is a *normalized* offset, and
-#  a symbol table alone leaves the reader to reconstruct what it is normalized
-#  by.  The sketch says it in one look — α = 1 is where the core touches the
-#  outer surface, which is why d = α(a − a_c) and not α·a.
+#  α is a *normalized* offset: α = 1 is where the core touches the outer
+#  surface, which is why d = α(a − a_c) and not α·a. The drawing that says so is
+#  docs/src/assets/fe/axi_schematic.svg (docs/assets_src); the report keeps the
+#  numbers.
 
-"Circle of radius `r` centered at `(x0, z0)`, as a closed polyline."
-function _circle(x0, z0, r; n = 400)
-    θ = range(0, 2π; length = n)
-    return x0 .+ r .* cos.(θ), z0 .+ r .* sin.(θ)
-end
-
-"""
-Annotated meridian sketch of the morphology: the whole inclusion of radius `a`,
-the core of radius `a_c = a·w^(1/3)` offset by `d = α(a − a_c)` along the
-symmetry axis, and the surrounding ball of matrix of radius `R`.
-"""
-function figure_schematic(α; w = W_CORE, a = 1.0, kw...)
-    ac = a * cbrt(w)
-    d = α * (a - ac)
-    plt = plot(;
-        aspect_ratio = 1, legend = false, framestyle = :none,
-        xlims = (-1.9a, 1.75a), ylims = (-1.5a, 1.6a), kw...,
-    )
-    ## The ball of matrix, cropped by the frame — only its curvature is needed.
-    plot!(plt, _circle(0, 0, 1.45a)...; lc = :grey75, lw = 1.0, ls = :dot)
-    annotate!(plt, 1.06a, -1.16a, text("matrix  ℂ₀", 8, :grey45, :left))
-    ## Shell, then core on top of it.
-    plot!(plt, _circle(0, 0, a)...; lc = :steelblue, lw = 1.6, fillalpha = 0.16,
-        fillcolor = :steelblue, seriestype = :shape)
-    plot!(plt, _circle(0, d, ac)...; lc = :firebrick, lw = 1.6, fillalpha = 0.20,
-        fillcolor = :firebrick, seriestype = :shape)
-    ## The symmetry axis.
-    plot!(plt, [0, 0], [-1.36a, 1.40a]; lc = :black, lw = 0.7, ls = :dashdot)
-    annotate!(plt, 0.06a, 1.44a, text("z", 9, :black, :left))
-    ## a: the outer radius, measured to the right at mid-height of the shell so
-    ## that it never runs across the core radius.
-    z_a = -0.55a
-    x_a = sqrt(max(a^2 - z_a^2, 0.0))
-    plot!(plt, [0, x_a], [z_a, z_a]; lc = :black, lw = 1.0)
-    plot!(plt, [x_a, x_a], [z_a - 0.05a, z_a + 0.05a]; lc = :black, lw = 1.0)
-    annotate!(plt, 0.5x_a, z_a - 0.13a, text("a", 9, :black))
-    ## a_c: the core radius, on the up-right diagonal from the core center.
-    xe = ac / sqrt(2)
-    ze = d + ac / sqrt(2)
-    plot!(plt, [0, xe], [d, ze]; lc = :firebrick, lw = 1.0)
-    annotate!(plt, xe + 0.06a, ze + 0.02a, text("a_c", 8, :firebrick, :left))
-    ## The core center, and d: the offset, bracketed to the left of everything.
-    scatter!(plt, [0], [d]; mc = :firebrick, ms = 3, msw = 0)
-    if α > 0
-        xb = -1.20a
-        plot!(plt, [xb, xb], [0, d]; lc = :darkgreen, lw = 1.4)
-        for zz in (0, d)
-            plot!(plt, [xb - 0.06a, xb + 0.06a], [zz, zz]; lc = :darkgreen, lw = 1.2)
-            plot!(plt, [xb, 0], [zz, zz]; lc = :darkgreen, lw = 0.5, ls = :dot)
-        end
-        annotate!(plt, xb - 0.10a, d / 2, text("d", 9, :darkgreen, :right))
-    end
-    annotate!(plt, -0.16a, d - 0.42ac, text("core ℂ₁", 8, :firebrick, :right))
-    annotate!(plt, 0.30a, -0.90a, text("shell ℂ₂", 8, :steelblue, :left))
-    return plt
-end
-
-want("schematic") && let
-    ## Three eccentricities: concentric, intermediate, and the tangency limit
-    ## α = 1 — which is what fixes the normalization of α.
-    fig = plot(
-        figure_schematic(0.0; title = "α = 0 — concentric"),
-        figure_schematic(0.6; title = "α = 0.6"),
-        figure_schematic(1.0; title = "α = 1 — tangency, by definition"),
-        layout = (1, 3), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1150, 420), titlefontsize = 10,
-        plot_title = "a_c = a·w^(1/3),   d = α (a − a_c)" *
-            "      (here w = $W_CORE, so a_c/a = $(round(cbrt(W_CORE), digits = 3)))",
-        plot_titlefontsize = 11,
-    )
-    savefig(fig, joinpath(OUT, "axi_schematic.png"))
-
+want("morphology") && let
     println(report, "## Morphology\n")
     ## `@printf` needs a literal format string — no concatenation.
     @printf(report, "`w = %.2f` gives `a_c/a = %.4f`; ", W_CORE, cbrt(W_CORE))

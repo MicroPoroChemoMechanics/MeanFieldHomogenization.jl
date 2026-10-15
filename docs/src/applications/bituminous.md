@@ -20,9 +20,10 @@ complex-valued stiffnesses.
 | 3 | Full mix | mortar matrix + coated coarse aggregates + pores | Self-Consistent |
 
 The three scales are drawn below after [someCBM2022](@citet), as reproduced in
-the Echoes book [echoes](@cite).
+the Echoes book [echoes](@cite), together with the contact between two coated
+aggregates: their mastic films merge and thin down where the grains touch.
 
-![Three-scale RVE of a bituminous mixture](../assets/ver_multi_mix.png)
+![Three-scale RVE of a bituminous mixture: the full mix of coated coarse aggregates in partial contact, the mortar, the mastic, and one grain-to-grain contact magnified](../assets/ver_multi_mix.svg)
 
 The coarse aggregates are **coated grains** — a stiff core wrapped in a thin
 mastic film — represented by a two-layer [`LayeredSphere`](@ref) that enters the

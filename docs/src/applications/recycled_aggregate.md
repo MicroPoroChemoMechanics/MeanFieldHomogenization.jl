@@ -30,14 +30,15 @@ Nothing downstream knows any of this: the inclusion satisfies the
 it.
 
 !!! note "This page is static"
-    Every figure and number below was produced once by
-    `scripts/fe/make_axi_figures.jl` and committed. Nothing here runs at
+    Every plot and number below was produced once by
+    `scripts/fe/make_axi_figures.jl`, and the drawing of the morphology by
+    `docs/assets_src`, and committed. Nothing here runs at
     documentation-build time, so building the docs needs neither `gmsh_jll`
     nor a single finite-element solve.
 
 ## The morphology
 
-![Definition of the morphology and its symbols](../assets/fe/axi_schematic.png)
+![Definition of the morphology and its symbols](../assets/fe/axi_schematic.svg)
 
 Meridian section, drawn at ``w = 0.5`` (hence ``a_c/a = 0.794``), the value used
 throughout this page. Left to right: the concentric limit, an intermediate

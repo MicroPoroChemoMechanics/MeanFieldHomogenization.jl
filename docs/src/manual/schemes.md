@@ -15,10 +15,11 @@ An `RVE` is the morphological picture, written down: phases, each with a
 geometry, properties and an amount. **No phase is singled out.** Whether one of
 them acts as a matrix is not a property of the microstructure but of the model
 applied to it, and it is stated on the scheme — see
-[Who is the matrix?](@ref man-who-is-the-matrix) below. The two drawings of this
-page are taken from the Echoes book [echoes](@cite).
+[Who is the matrix?](@ref man-who-is-the-matrix) below. The drawings of this
+page are redrawn after the Echoes book [echoes](@cite), and every scheme is drawn
+side by side in [Every scheme at a glance](@ref th-schemes-glance).
 
-![Matrix carrying ellipsoids and coated spheres — the morphology Mori–Tanaka reads into an RVE](../assets/schemes/rve_mori_tanaka.png)
+![Matrix carrying ellipsoids and coated spheres — the morphology Mori–Tanaka reads into an RVE](../assets/schemes/rve_mori_tanaka.svg)
 
 ```julia
 using MeanFieldHomogenization, TensND
@@ -127,9 +128,32 @@ rather than what they look like. Maxwell reads it as the envelope of a cluster
 that is replaced by one equivalent inclusion; PCW reads it as a distribution
 ellipsoid around each inclusion, forbidding closer approach:
 
-| Maxwell | Ponte Castañeda–Willis |
-| :---: | :---: |
-| ![Cluster of inclusions replaced by an equivalent inclusion Ω](../assets/schemes/rve_maxwell.png) | ![Each inclusion inside its own distribution ellipsoid](../assets/schemes/rve_pcw.png) |
+```@raw html
+<div class="mfh-figure-grid">
+<div>
+```
+
+**Maxwell**
+
+![A cluster of inclusions replaced by one equivalent inclusion Ω.](../assets/schemes/rve_maxwell.svg)
+
+A cluster of inclusions replaced by one equivalent inclusion Ω.
+
+```@raw html
+</div>
+<div class="narrow">
+```
+
+**Ponte Castañeda–Willis**
+
+![Each flat inclusion inside its own spherical safety domain, the domains paving the space.](../assets/schemes/rve_pcw.svg)
+
+Each flat inclusion inside its own spherical safety domain, the domains paving the space.
+
+```@raw html
+</div>
+</div>
+```
 
 ```julia
 rve = RVE(; distribution_shape = Ellipsoid(1.0, 1.0, 0.3))   # oblate outer
@@ -210,7 +234,7 @@ an explicit tensor. Unset, it is the `:rest` phase when there is one and the
 Voigt average otherwise — the latter is what lets the RVE above be solved at
 all.
 
-![A tessellation in which no phase surrounds the others](../assets/schemes/rve_self_consistent.png)
+![A tessellation in which no phase surrounds the others](../assets/schemes/rve_self_consistent.svg)
 
 ```julia
 homogenize(rve, SelfConsistent())                            # built-in damped Picard (default)
