@@ -17,7 +17,7 @@
 #    non-major-symmetric content of the concentration tensors
 #    (`TensTI{4,T,8}`), plus water and air.  The reference medium of each
 #    family is iso-projected (`reference_projection = :iso` default), exact at
-#    the isotropic SC fixed point — echoes computes the per-bin localization
+#    the isotropic SC fixed point — echoes computes the per-bin concentration
 #    in the converged iso `C_hf` in the same way.
 #  * Cement Paste (CP)  — Mori-Tanaka (HF matrix + clinker).
 #  * Mortar (MO)        — Mori-Tanaka (CP matrix + sand).
@@ -78,7 +78,7 @@ function build_hf(wc, α_p, μ_b0; N::Int = NTHETA, ω::Real = ω_aspect)
     ez = (0.0, 0.0, 1.0)
     rve = RVE(; T = T)
     # Zero-volume matrix phase = SC seed only (Σ inclusion fractions = 1).
-    # `symmetrize = :iso` keeps its (weightless) localization on the
+    # `symmetrize = :iso` keeps its (weightless) concentration on the
     # analytical iso branch whatever the running estimate's type.
     add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => TensISO{3}(convert(T, 3 * K_hyd_ref), convert(T, 2 * μ_hyd_ref))); fraction = :rest, symmetrize = :iso)
     for (i, bin) in enumerate(polar_orientation_bins(N))

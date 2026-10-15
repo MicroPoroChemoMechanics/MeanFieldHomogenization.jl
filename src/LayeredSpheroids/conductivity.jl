@@ -38,7 +38,7 @@ end
 
 Normalize a matrix conductivity argument to its isotropic scalar,
 accepting either a bare `Number` or a `TensISO{2,3}` (the natural way
-to call the public API, matching `gradient_gradient_loc`'s own `K₀`
+to call the public API, matching `gradient_gradient_concentration`'s own `K₀`
 convention).
 """
 @inline _as_scalar_k(k₀::Number) = k₀

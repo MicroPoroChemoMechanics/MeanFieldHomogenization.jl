@@ -1,7 +1,7 @@
 # # [n-layer sphere: pointwise fields](@id tut-layered-sphere-local-fields)
 #
 # !!! info "Before this page"
-#     The tutorial [n-layer sphere: volume-averaged localization tensors](@ref tut-layered-sphere),
+#     The tutorial [n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere),
 #     whose layer averages the pointwise fields must reproduce, and the section
 #     [Pointwise fields](@ref th-layered-sphere-pointwise) of the theory page on
 #     the layered sphere, where the fields evaluated below are written out.
@@ -14,10 +14,10 @@
 # pointwise API gives the field itself:
 #
 # - [`LayeredSphereFields`](@ref)`(sphere, C₀)` — solve the recurrence once;
-# - [`local_strain_strain_loc`](@ref)`(sol, x)` — ``\mathbb{A}(\underline x)`` with
+# - [`local_strain_strain_concentration`](@ref)`(sol, x)` — ``\mathbb{A}(\underline x)`` with
 #   ``\boldsymbol\varepsilon(\underline x) = \mathbb{A}(\underline x):\boldsymbol\varepsilon^\infty``, and its three
-#   siblings `local_stress_strain_loc`, `local_strain_stress_loc`,
-#   `local_stress_stress_loc` for a remote stress;
+#   siblings `local_stress_strain_concentration`, `local_strain_stress_concentration`,
+#   `local_stress_stress_concentration` for a remote stress;
 # - [`local_strain`](@ref), [`local_stress`](@ref),
 #   [`local_displacement`](@ref) — the fields for one loading;
 # - [`get_layer`](@ref)`(sphere, r; side)` — which region a radius belongs
@@ -212,13 +212,13 @@ end
 #
 # Averaging ``\mathbb{A}(\underline x)`` over a layer must return the
 # ``(\alpha_k, \beta_k)`` the averaged API reports —
-# [`shell_localization`](@ref) exposes that identity from the same cached
+# [`shell_concentration`](@ref) exposes that identity from the same cached
 # amplitudes, so the two routes cannot drift apart.
 
 println("\nlayer   α_k (pointwise)   α_k (averaged)   β_k (pointwise)   β_k (averaged)")
 for k in 1:layer_count(sphere)
-    αp, βp = shell_localization(sol, k)
-    A = strain_strain_loc(sphere, C₀; layer = k)
+    αp, βp = shell_concentration(sol, k)
+    A = strain_strain_concentration(sphere, C₀; layer = k)
     αa, βa = TensND.get_data(A)
     @printf "  %d      %14.10f   %14.10f   %14.10f   %14.10f\n" k αp αa βp βa
 end

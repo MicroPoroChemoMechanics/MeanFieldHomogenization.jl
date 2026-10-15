@@ -100,7 +100,7 @@ A **single** expression covers both the diagonal and the off-diagonal block, whi
 the practical dividend of the convention adopted here: in the opposite one the
 two cases carry opposite signs and have to be written separately.
 
-The matrix localization follows from the strain average rule and the effective
+The matrix concentration follows from the strain average rule and the effective
 stiffness from the stress one:
 
 ```math

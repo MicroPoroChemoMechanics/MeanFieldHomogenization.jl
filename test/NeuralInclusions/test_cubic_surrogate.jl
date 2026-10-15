@@ -5,7 +5,7 @@
 # `84_neural_inclusion_ellipsoid.jl` uses for gate A — it exercises the whole
 # path (dataset, fit, decode, inclusion, schemes, sensitivity) against an
 # exactly known answer, with no mesh and no solve anywhere. Training on the real
-# teacher, `fe_cell_localization`, is a dataset of finite-element solves and
+# teacher, `fe_cell_concentration`, is a dataset of finite-element solves and
 # belongs in a script, not in the suite.
 #
 # What the path has to deliver is two things a finite-element solve cannot:
@@ -21,11 +21,11 @@ import ForwardDiff
 
 const NI = MeanFieldHomogenization.NeuralInclusions
 
-@testset "cubic localization surrogate" begin
+@testset "cubic concentration surrogate" begin
 
     can = TensND.CanonicalBasis{3, Float64}()
 
-    # A stand-in for the cavity's strain localization: cubic, dimensionless,
+    # A stand-in for the cavity's strain concentration: cubic, dimensionless,
     # smooth in (p, ν₀), and genuinely anisotropic (β ≠ γ) so that the class is
     # doing work.
     _teacher(p, ν) = TensND.TensCubic(1 + 2p, 1 + p + ν, 1 + p^2 / 2, can)
@@ -39,34 +39,34 @@ const NI = MeanFieldHomogenization.NeuralInclusions
         return _teacher(g.shape.p, ν)
     end
 
-    spec = NI.DimensionlessHill(StrainLocCubic())
+    spec = NI.DimensionlessHill(StrainConcentrationCubic())
     box = NI.SampleBox([:p, :nu0], [0.3, 0.0], [1.5, 0.45])
 
     @testset "the class round-trips through build and components" begin
-        @test NI.ncomponents(StrainLocCubic()) == 3
-        @test NI.tensor_order(StrainLocCubic()) == 4
-        @test NI.class_name(StrainLocCubic()) == :loc_cubic
-        @test NI.hill_class(spec) isa StrainLocCubic
+        @test NI.ncomponents(StrainConcentrationCubic()) == 3
+        @test NI.tensor_order(StrainConcentrationCubic()) == 4
+        @test NI.class_name(StrainConcentrationCubic()) == :strain_concentration_cubic
+        @test NI.hill_class(spec) isa StrainConcentrationCubic
         @test NI.noutputs(spec) == 3
-        # Three components and not six: a localization tensor has no major
-        # symmetry in general -- which is why `StrainLocTI` needs six -- but a
+        # Three components and not six: a concentration tensor has no major
+        # symmetry in general -- which is why `StrainConcentrationTI` needs six -- but a
         # cubic one has it automatically, so there is nothing to drop.
-        @test NI.ncomponents(StrainLocTI()) == 6
+        @test NI.ncomponents(StrainConcentrationTI()) == 6
 
         C = _teacher(0.6, 0.3)
-        c = NI.components(StrainLocCubic(), C, can)
+        c = NI.components(StrainConcentrationCubic(), C, can)
         @test length(c) == 3
         @test all(isapprox.(c, TensND.get_data(C); atol = 1.0e-12))
-        @test norm(KM(NI.build(StrainLocCubic(), c, can)) - KM(C)) < 1.0e-12
+        @test norm(KM(NI.build(StrainConcentrationCubic(), c, can)) - KM(C)) < 1.0e-12
 
         # A tensor outside the class is refused loudly rather than trained on.
         ti = TensND.tens_TI(10.0, 3.0, 2.5, 12.0, 2.0, [0.0, 0.0, 1.0])
-        @test_throws ArgumentError NI.components(StrainLocCubic(), ti, can)
+        @test_throws ArgumentError NI.components(StrainConcentrationCubic(), ti, can)
 
         # The frame comes from the inclusion's own basis, all three columns of
         # it -- a cube has no distinguished direction to single out.
         pore = FESupershapePore(Supersphere(1.0, 0.6))
-        @test NI._class_frame(StrainLocCubic(), pore) === inclusion_basis(pore)
+        @test NI._class_frame(StrainConcentrationCubic(), pore) === inclusion_basis(pore)
     end
 
     @testset "the pore exposes its parameters as features" begin
@@ -82,7 +82,7 @@ const NI = MeanFieldHomogenization.NeuralInclusions
         train, val = NI.generate_dataset(_geom, response, spec, box, 600; nvalidation = 150)
         s = NI.train_surrogate(
             spec, box, train, val;
-            teacher_name = "synthetic cubic localization",
+            teacher_name = "synthetic cubic concentration",
             options = NI.TrainingOptions(; hidden = [24, 24], epochs = 1500, seed = 1),
         )
 
@@ -100,7 +100,7 @@ const NI = MeanFieldHomogenization.NeuralInclusions
             _, ν = MeanFieldHomogenization.Core.extract_iso_moduli(C₀)
             for p in (0.4, 0.8, 1.2)
                 pore = FESupershapePore(Supersphere(1.0, p); elastic = s)
-                A = fe_cell_localization(pore, C₀)
+                A = fe_cell_concentration(pore, C₀)
                 @test A isa TensND.TensCubic
                 @test norm(KM(A) - KM(_teacher(p, ν))) < tol * norm(KM(_teacher(p, ν)))
                 # No mesh was built and no system factorized.
@@ -167,9 +167,9 @@ end
 # The transport class of a cavity, and the construction-time guards. None of
 # this needs a fit, so it runs whether or not Lux is installed -- which matters,
 # because these are the checks that turn a silent wrong answer into an error.
-@testset "the transport localization class of a cavity" begin
+@testset "the transport concentration class of a cavity" begin
     NI = MeanFieldHomogenization.NeuralInclusions
-    c = GradLocISO2()
+    c = GradientConcentrationISO2()
 
     @testset "one component, and no scale divides out" begin
         # A second-order tensor invariant under the octahedral group is
@@ -177,7 +177,7 @@ end
         # exactly one here.
         @test NI.ncomponents(c) == 1
         @test NI.tensor_order(c) == 2
-        @test NI.class_name(c) == :grad_loc_iso2
+        @test NI.class_name(c) == :gradient_concentration_iso2
         @test NI._class_frame(c, nothing) === nothing
 
         # The distinction from `HillISO2`, and the reason the class exists:
@@ -191,15 +191,15 @@ end
         A = NI.build(c, [1.5], nothing)
         @test A isa TensND.TensISO{2, 3}
         @test collect(NI.components(c, A, nothing)) ≈ [1.5]
-        @test NI.hill_class(:grad_loc_iso2) isa GradLocISO2
-        # A localization class has no affine decomposition on shape tensors.
+        @test NI.hill_class(:gradient_concentration_iso2) isa GradientConcentrationISO2
+        # A concentration class has no affine decomposition on shape tensors.
         @test_throws ArgumentError NI.material_coeffs(c, TensISO{3}(1.0))
     end
 
     @testset "and it decodes without dividing by k₀" begin
         # The failure this class exists to prevent, made explicit: decoding the
         # same prediction under `HillISO2` scales with `k₀`, under
-        # `GradLocISO2` it does not.
+        # `GradientConcentrationISO2` it does not.
         z = [1.5]
         for k₀ in (1.0, 4.0)
             K₀ = TensISO{3}(k₀)
@@ -215,9 +215,9 @@ end
     @testset "a reference medium exists for it, and needs no ν₀" begin
         box = NI.SampleBox([:p], [0.3], [1.5])
         @test NI._reference_medium(c, box, [0.7]) isa TensND.TensISO{2, 3}
-        # The cavity restriction on `StrainLocTI` is about the morphology, not
+        # The cavity restriction on `StrainConcentrationTI` is about the morphology, not
         # the class, and it still has no method.
-        @test_throws MethodError NI._reference_medium(StrainLocTI(), box, [0.7])
+        @test_throws MethodError NI._reference_medium(StrainConcentrationTI(), box, [0.7])
     end
 end
 
@@ -227,7 +227,7 @@ end
     net = NI.glorot_mlp(Random.MersenneTwister(1), [1, 4, 1])
 
     ok2 = NI.NeuralSurrogate(;
-        net, features = [:p], output = NI.DimensionlessHill(GradLocISO2()),
+        net, features = [:p], output = NI.DimensionlessHill(GradientConcentrationISO2()),
         domain_lo = [0.3], domain_hi = [1.5],
     )
     # Right order, right class, feature the pore can supply.
@@ -245,7 +245,7 @@ end
 
     # A feature the shape cannot supply: `:c` belongs to a superspheroid.
     bad_feat = NI.NeuralSurrogate(;
-        net, features = [:c], output = NI.DimensionlessHill(GradLocISO2()),
+        net, features = [:c], output = NI.DimensionlessHill(GradientConcentrationISO2()),
         domain_lo = [0.3], domain_hi = [1.5],
     )
     @test_throws ArgumentError FESupershapePore(shape; transport = bad_feat)
@@ -274,8 +274,8 @@ end
         end
         sc = NI.load_surrogate(NI.model_path("supershape_pore_conduction"))
         se = NI.load_surrogate(NI.model_path("supershape_pore_elastic"))
-        @test NI.hill_class(sc) isa GradLocISO2
-        @test NI.hill_class(se) isa StrainLocCubic
+        @test NI.hill_class(sc) isa GradientConcentrationISO2
+        @test NI.hill_class(se) isa StrainConcentrationCubic
         @test NI.tensor_order(sc) == 2
         @test NI.tensor_order(se) == 4
         @test sc.features == [:p]
@@ -297,15 +297,15 @@ end
             @test has_surrogate(pore, 4)
             @test has_surrogate(pore, 2)
 
-            A = fe_cell_localization(pore, iso_stiffness(1.0, 0.6))
+            A = fe_cell_concentration(pore, iso_stiffness(1.0, 0.6))
             @test A isa TensND.TensCubic
-            B = fe_cell_localization(pore, TensISO{3}(2.5))
+            B = fe_cell_concentration(pore, TensISO{3}(2.5))
             @test B isa TensND.TensISO{2, 3}
             @test fe_assembly_count(pore) == 0
 
-            # Scale-free in k₀, which is what `GradLocISO2` encodes and what
+            # Scale-free in k₀, which is what `GradientConcentrationISO2` encodes and what
             # `HillISO2` would have destroyed.
-            C = fe_cell_localization(pore, TensISO{3}(1.0))
+            C = fe_cell_concentration(pore, TensISO{3}(1.0))
             @test collect(TensND.get_data(B)) ≈ collect(TensND.get_data(C))
         end
     end
@@ -316,7 +316,7 @@ end
         se = NI.load_surrogate(NI.model_path("supershape_pore_elastic"))
         pore = FESupershapePore(Supersphere(1.0, 1.0); elastic = se, transport = sc)
 
-        a = only(TensND.get_data(fe_cell_localization(pore, TensISO{3}(1.0))))
+        a = only(TensND.get_data(fe_cell_concentration(pore, TensISO{3}(1.0))))
         @test a ≈ 1.5 rtol = 3 * NI.worst_error(sc.provenance)
 
         ν = 0.3
@@ -327,7 +327,7 @@ end
         J = v * v' / 3
         K = Matrix(1.0I, 6, 6) - J
         Aex = inv(Matrix(1.0I, 6, 6) - (SJ * J + SK * K))
-        A = Matrix(KM(fe_cell_localization(pore, C₀)))
+        A = Matrix(KM(fe_cell_concentration(pore, C₀)))
         @test norm(A - Aex) / norm(Aex) < 3 * NI.worst_error(se.provenance)
     end
 
@@ -337,6 +337,6 @@ end
         # stops. Below it the answer is refused, not extrapolated.
         sc = NI.load_surrogate(NI.model_path("supershape_pore_conduction"))
         pore = FESupershapePore(Supersphere(1.0, 0.2); transport = sc, guard = :error)
-        @test_throws Exception fe_cell_localization(pore, TensISO{3}(1.0))
+        @test_throws Exception fe_cell_concentration(pore, TensISO{3}(1.0))
     end
 end

@@ -61,8 +61,8 @@ end
         )
         moduli = ntuple(k -> TensISO{3}(5.0 + 10k), length(radii_a))
         s = LayeredSpheroid(radii_a, radii_b, moduli; Nseries = 6)
-        A = gradient_gradient_loc(s, K_I, K_M)
-        B = flux_gradient_loc(s, K_I, K_M)
+        A = gradient_gradient_concentration(s, K_I, K_M)
+        B = flux_gradient_concentration(s, K_I, K_M)
         N = conductivity_contribution(s, K_I, K_M)
         @test get_array(N) ≈ get_array(B - K_M ⋅ A) rtol = 1.0e-12
     end

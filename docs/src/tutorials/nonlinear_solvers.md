@@ -113,7 +113,7 @@ F(p;\theta) = p - \mathcal{H}(p;\theta)
 
 the **residual** of the self-consistent fixed point, where
 ``\mathcal{H}(p;\theta)`` is one application of the scheme — the map that takes a
-trial effective medium ``p``, computes each phase's localization in it, and
+trial effective medium ``p``, computes each phase's concentration in it, and
 returns the resulting effective moduli. A self-consistent solution is exactly a
 root ``F(p^\star;\theta) = 0``. The IFT correction is then
 

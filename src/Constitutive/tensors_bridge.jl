@@ -38,7 +38,7 @@ ready to be contracted with shape-function gradients.
     change of basis; reading the array directly silently rotates the material.
 
 The 4th-order conversion assumes minor symmetry, which every stiffness,
-compliance and localization tensor in the package satisfies. Major symmetry is
+compliance and concentration tensor in the package satisfies. Major symmetry is
 *not* assumed: `Tensors.SymmetricTensor{4,3}` carries 36 independent components
 and can hold a concentration tensor unchanged.
 """

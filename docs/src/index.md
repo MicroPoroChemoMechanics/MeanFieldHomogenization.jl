@@ -6,7 +6,7 @@ layout: home
 hero:
   name: "MeanFieldHomogenization.jl"
   text: "Effective properties of heterogeneous materials"
-  tagline: One Eshelby chain — Hill tensor, localization, scheme — generalized one direction at a time, in pure Julia and differentiable throughout.
+  tagline: One Eshelby chain — Hill tensor, concentration, scheme — generalized one direction at a time, in pure Julia and differentiable throughout.
   image:
     src: /logo.png
     alt: A representative volume element of ellipsoidal inclusions in a matrix
@@ -64,7 +64,7 @@ features:
 
 Given a reference medium and an inclusion shape, `MeanFieldHomogenization` builds
 the Hill polarization tensor ``\mathbb{P}`` (Eshelby's result), derives the
-localization tensor for each phase, and assembles a **homogenization scheme** —
+concentration tensor for each phase, and assembles a **homogenization scheme** —
 dilute, Mori–Tanaka, self-consistent, differential, PCW, or the classical bounds
 — into an effective stiffness or conductivity.
 

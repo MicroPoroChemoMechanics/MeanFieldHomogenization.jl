@@ -128,7 +128,7 @@ end
 # moment the per-layer moduli differ in type — which is precisely what
 # `ForwardDiff` produces when a single layer's modulus is the differentiation
 # variable and the others stay `Float64`. Before this signature was widened,
-# `ForwardDiff.derivative(p -> strain_strain_loc(sphere_with_one_Dual_layer, …), p)`
+# `ForwardDiff.derivative(p -> strain_strain_concentration(sphere_with_one_Dual_layer, …), p)`
 # died in a `MethodError`, while making *every* layer dual worked — an AD gap
 # invisible to any test that differentiates the whole stack at once.
 @inline function _bulk_promote(
@@ -182,13 +182,13 @@ function _bulk_state_seq(sphere::LayeredSphere{T, N}, κ₀, μ₀) where {T, N}
 end
 
 """
-    _bulk_localization(sphere, κ₀, μ₀) -> NTuple{N, TP}
+    _bulk_concentration(sphere, κ₀, μ₀) -> NTuple{N, TP}
 
-Per-layer bulk localization ``\\alpha_k = A_k/A_\\infty`` for the composite
+Per-layer bulk concentration ``\\alpha_k = A_k/A_\\infty`` for the composite
 sphere.  Regular in the limit ``k_k \\to \\infty`` (gives ``\\alpha_k \\to 0``, no
 volumetric strain in incompressible layer).
 """
-function _bulk_localization(sphere::LayeredSphere{T, N}, κ₀, μ₀) where {T, N}
+function _bulk_concentration(sphere::LayeredSphere{T, N}, κ₀, μ₀) where {T, N}
     κμ = _bulk_layer_moduli(sphere)
     TP = _bulk_promote(sphere, κμ, κ₀, μ₀)
     inside_states, s_matrix = _bulk_state_seq(sphere, κ₀, μ₀)
@@ -217,10 +217,10 @@ end
 the layers per unit remote volumetric strain. It is not an effective bulk
 modulus, which is the ratio of the mean pressure to the mean volumetric strain
 of the sphere, and the latter also carries the jumps of the spring interfaces
-([`strain_strain_loc`](@ref)).
+([`strain_strain_concentration`](@ref)).
 """
 function _effective_bulk(sphere::LayeredSphere{T, N}, κ₀, μ₀) where {T, N}
-    α = _bulk_localization(sphere, κ₀, μ₀)
+    α = _bulk_concentration(sphere, κ₀, μ₀)
     κμ = _bulk_layer_moduli(sphere)
     f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
     return sum(f[k] * κμ[k][1] * α[k] for k in 1:N)

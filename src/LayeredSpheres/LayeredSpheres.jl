@@ -5,7 +5,7 @@ Isotropic `n`-layer spherical composite inclusion (core + concentric
 shells) embedded in an infinite matrix, with perfect or imperfect
 interfaces (spring / surface-elastic / Kapitza / surface-conductive).
 Public entry points: [`LayeredSphere`](@ref), the bulk / shear
-localization and layer-average utilities.
+concentration and layer-average utilities.
 """
 module LayeredSpheres
 
@@ -21,31 +21,31 @@ import ..Elasticity   # for single-layer shear delegation to `Ellipsoid`
 # `is_hard_numeric` — the numeric/symbolic split used throughout the package.
 using ..Elliptic: is_hard_numeric
 
-# Core-level generics we extend (strain_strain_loc etc. are declared in
+# Core-level generics we extend (strain_strain_concentration etc. are declared in
 # Core/abstractions.jl so every sub-module can attach methods uniformly).
-import ..Core: strain_strain_loc, stress_strain_loc, strain_stress_loc,
-    stress_stress_loc, gradient_gradient_loc, flux_gradient_loc,
-    gradient_flux_loc, flux_flux_loc,
+import ..Core: strain_strain_concentration, stress_strain_concentration, strain_stress_concentration,
+    stress_stress_concentration, gradient_gradient_concentration, flux_gradient_concentration,
+    gradient_flux_concentration, flux_flux_concentration,
     stiffness_contribution, conductivity_contribution,
     resistivity_contribution, is_homogeneous_inclusion
 
 include("interfaces.jl")
 include("geometry.jl")
 include("interface_transfer.jl") # interface jump matrices (bulk + shear)
-include("bulk_recurrence.jl")    # bulk state-vector transfer + localization
+include("bulk_recurrence.jl")    # bulk state-vector transfer + concentration
 include("shear_recurrence.jl")   # multi-layer shear stub
 include("conductivity.jl")       # Y₁-harmonic conductivity state-vector
 include("averages.jl")
 include("localfields.jl")     # pointwise u, ε, σ, T, ∇T, flux reconstruction
 include("scheme_integration.jl") # concentration tensors → mean-field schemes
 
-# ── Localization / contribution overrides for LayeredSphere ─────────────────
+# ── Concentration / contribution overrides for LayeredSphere ─────────────────
 
 """
-    strain_strain_loc(sphere::LayeredSphere, C₀::TensISO{4,3}; layer::Int,
+    strain_strain_concentration(sphere::LayeredSphere, C₀::TensISO{4,3}; layer::Int,
                       external = false, internal = false) -> Tens{4,3}
 
-Per-layer strain-strain localization tensor in an ISO `LayeredSphere`.
+Per-layer strain-strain concentration tensor in an ISO `LayeredSphere`.
 Returns the isotropic 4-tensor ``\\mathbb{A}_k = \\alpha_k\\,\\mathbb{J} + \\beta_k\\,\\mathbb{K}`` for the requested
 layer.  `layer` must be in `1..N`.
 
@@ -56,9 +56,9 @@ a [`SpringInterface`](@ref)), as Echoes' `layer_eE(k - 1, external, internal)`
 does — whose default is `external = True`. With `external = true` on every
 layer the shells partition the sphere,
 ``\\sum_k f_k\\,\\mathbb{A}_k = \\mathbb{A}_\\Omega``, the whole-sphere tensor
-[`strain_strain_loc`](@ref)`(sphere, C₀, C₀)`.
+[`strain_strain_concentration`](@ref)`(sphere, C₀, C₀)`.
 """
-function strain_strain_loc(
+function strain_strain_concentration(
         sphere::LayeredSphere{T, N},
         C₀::TensND.TensISO{4, 3};
         layer::Int,
@@ -68,8 +68,8 @@ function strain_strain_loc(
     ) where {T, N}
     1 ≤ layer ≤ N || throw(BoundsError(sphere, layer))
     κ₀, μ₀ = _iso_bulk_shear(C₀)
-    α_k = _bulk_localization(sphere, κ₀, μ₀)[layer]
-    β_k = _shear_localization(sphere, C₀)[layer]
+    α_k = _bulk_concentration(sphere, κ₀, μ₀)[layer]
+    β_k = _shear_concentration(sphere, C₀)[layer]
     Δα, Δβ = _layer_strain_jump_terms(sphere, C₀, layer; external, internal)
     return TensISO{3}(α_k + Δα, β_k + Δβ)
 end
@@ -101,7 +101,7 @@ N_{\\mathrm{shear}} &= \\sum_k f_k\\,(\\mu_k - \\mu_0)\\,\\beta_k - \\mu_0\\,\\D
 plus the Gurtin–Murdoch surface stress of any membrane interface.
 ``\\Delta\\alpha``, ``\\Delta\\beta`` are the displacement jumps of the spring interfaces, and
 `external` decides whether the outer interface belongs to the sphere, as in
-[`strain_strain_loc`](@ref). For an incompressible layer (``k_k = \\infty``,
+[`strain_strain_concentration`](@ref). For an incompressible layer (``k_k = \\infty``,
 ``\\alpha_k = 0``) the product ``k_k\\,\\alpha_k`` is its finite mean pressure, read from the
 traction. The same tensor as the three-argument form
 `stiffness_contribution(sphere, C₀, C₀)`.
@@ -119,18 +119,18 @@ end
 # =============================================================================
 
 """
-    gradient_gradient_loc(sphere::LayeredSphere, K₀; layer, external = false, internal = false)
+    gradient_gradient_concentration(sphere::LayeredSphere, K₀; layer, external = false, internal = false)
 
-Per-layer gradient-gradient localization tensor for an isotropic
+Per-layer gradient-gradient concentration tensor for an isotropic
 `LayeredSphere` embedded in an isotropic matrix of conductivity `K₀`.
 Returns the scalar ``\\alpha_k`` packed as `TensISO{3}(α_k)` (isotropic
 2-tensor), satisfying ``\\langle\\nabla T\\rangle_k = \\alpha_k\\,\\nabla T^{\\infty}``.
 
 `external` and `internal` add the temperature jumps across the outer and inner
 boundaries of the layer (nonzero across a [`KapitzaInterface`](@ref) only), as
-in the elastic [`strain_strain_loc`](@ref)`(sphere, C₀; layer)`.
+in the elastic [`strain_strain_concentration`](@ref)`(sphere, C₀; layer)`.
 """
-function gradient_gradient_loc(
+function gradient_gradient_concentration(
         sphere::LayeredSphere{T, N},
         K₀::TensND.TensISO{2, 3};
         layer::Int,
@@ -140,7 +140,7 @@ function gradient_gradient_loc(
     ) where {T, N}
     1 ≤ layer ≤ N || throw(BoundsError(sphere, layer))
     k₀ = _iso_scalar(K₀)
-    α_k = _cond_localization(sphere, k₀)[layer]
+    α_k = _cond_concentration(sphere, k₀)[layer]
     return TensISO{3}(α_k + _layer_gradient_jump_term(sphere, k₀, layer; external, internal))
 end
 
@@ -152,7 +152,7 @@ sphere:  ``\\boldsymbol{N} = \\big(\\sum_k f_k\\,(k_k - k_0)\\,\\alpha_k - k_0\\
 surface-conduction flux [`_cond_surface_flux`](@ref) of any dual
 (surface-conductive) interface (Echoes' `DUALDISC`). ``\\Delta\\alpha`` is the
 temperature jump of the Kapitza interfaces, and `external` decides whether the
-outer interface belongs to the sphere (see [`gradient_gradient_loc`](@ref)).
+outer interface belongs to the sphere (see [`gradient_gradient_concentration`](@ref)).
 """
 function Core.conductivity_contribution(
         sphere::LayeredSphere{T, N},
@@ -161,7 +161,7 @@ function Core.conductivity_contribution(
         kw...,
     ) where {T, N}
     k₀ = _iso_scalar(K₀)
-    α = _cond_localization(sphere, k₀)
+    α = _cond_concentration(sphere, k₀)
     k_layers = _cond_layer_moduli(sphere)
     f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
     N_K = sum(f[k] * (k_layers[k] - k₀) * α[k] for k in 1:N) +
@@ -184,12 +184,12 @@ export layer_gradient_average, sphere_gradient_average, layer_flux_average
 # declaring rival bindings — same arrangement as `layer_count` & friends.
 export get_layer
 export LayeredSphereFields, LayeredSphereTransportFields
-export region_stiffness, shell_localization
-export local_strain_strain_loc, local_stress_strain_loc,
-    local_strain_stress_loc, local_stress_stress_loc
+export region_stiffness, shell_concentration
+export local_strain_strain_concentration, local_stress_strain_concentration,
+    local_strain_stress_concentration, local_stress_stress_concentration
 export local_strain, local_stress, local_displacement
-export local_gradient_gradient_loc, local_flux_gradient_loc,
-    local_gradient_flux_loc, local_flux_flux_loc
+export local_gradient_gradient_concentration, local_flux_gradient_concentration,
+    local_gradient_flux_concentration, local_flux_flux_concentration
 export local_temperature, local_gradient, local_flux
 export layer_stiffness_average, layer_compliance_average,
     layer_conductivity_average, layer_resistivity_average

@@ -7,7 +7,7 @@ EditURL = "../../../../scripts/80_custom_inclusion_contract.jl"
 !!! info "Before this page"
     The tutorial [Hill polarization tensors in practice](@ref tut-hill-tensors),
     whose Hill tensor is the first of the three entry gates, and the theory
-    page [Localization and contribution tensors](@ref th-localization), which
+    page [Concentration and contribution tensors](@ref th-concentration), which
     derives every tensor of the contract from that one.
 
 `MeanFieldHomogenization` lets an arbitrary morphology take part in every homogenization
@@ -18,8 +18,8 @@ the package derives everything above it.
 
 | Gate | You supply | You get |
 |---|---|---|
-| **A** | the Hill tensor ``\mathbb P`` | the 8 localization tensors, the 4 contribution tensors, every scheme |
-| **B** | the localization tensor ``\mathbb A`` (both sides of it if the inclusion is heterogeneous) | the derived localizations, the contributions, every scheme |
+| **A** | the Hill tensor ``\mathbb P`` | the 8 concentration tensors, the 4 contribution tensors, every scheme |
+| **B** | the concentration tensor ``\mathbb A`` (both sides of it if the inclusion is heterogeneous) | the derived concentrations, the contributions, every scheme |
 | **C** | the contribution tensors ``\mathbb N``, ``\mathbb H`` | the contribution-based schemes |
 
 This script drives the same physical inclusion through all three gates and
@@ -55,7 +55,7 @@ basis = MeanFieldHomogenization.inclusion_basis(ell)
 
 ## Gate A — the Hill tensor
 
-One callback. Everything else is derived: the eight localization tensors, the
+One callback. Everything else is derived: the eight concentration tensors, the
 four contribution tensors, and every scheme.
 
 ````@example custom_inclusion_contract
@@ -68,7 +68,7 @@ gate_A = CustomInclusion(
 `P₀` is a 4th-order stiffness in elasticity and a 2nd-order conductivity in
 transport, so a single callback serves both physics.
 
-## Gate B — the localization tensor
+## Gate B — the concentration tensor
 
 For a morphology whose ``\mathbb P`` has no convenient closed form, or when
 an external solver returns ``\mathbb A`` directly.
@@ -77,15 +77,15 @@ The inclusion here is **homogeneous**, so the strain-side tensor alone is
 enough: the stress side follows from
 ``\mathbb A_{\sigma\varepsilon} = \mathbb C_1:\mathbb A_{\varepsilon\varepsilon}``.
 A heterogeneous inclusion has no such ``\mathbb C_1`` and must supply
-`stress_strain_loc` (and `flux_gradient_loc`) as well — `LayeredSphere`
+`stress_strain_concentration` (and `flux_gradient_concentration`) as well — `LayeredSphere`
 implements all four. Omitting them is silent: `Dilute` and `MoriTanaka` stay
 right, only the self-consistent schemes drift.
 
 ````@example custom_inclusion_contract
 gate_B = CustomInclusion(
     semi; basis,
-    strain_strain_loc = (P₁, P₀; kw...) -> strain_strain_loc(ell, P₁, P₀; kw...),
-    gradient_gradient_loc = (P₁, P₀; kw...) -> gradient_gradient_loc(ell, P₁, P₀; kw...),
+    strain_strain_concentration = (P₁, P₀; kw...) -> strain_strain_concentration(ell, P₁, P₀; kw...),
+    gradient_gradient_concentration = (P₁, P₀; kw...) -> gradient_gradient_concentration(ell, P₁, P₀; kw...),
 )
 ````
 

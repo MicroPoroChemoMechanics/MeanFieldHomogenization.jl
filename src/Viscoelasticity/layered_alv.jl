@@ -14,7 +14,7 @@
 #
 #  This file delivers BOTH the **bulk (Y₀ harmonic)** and the
 #  **shear (Y₂ harmonic)** ALV recurrences, plus the corresponding
-#  per-layer localization matrices and the ALV interface transfers.
+#  per-layer concentration matrices and the ALV interface transfers.
 #  Both are exercised (incl. an N=2 cross-check against ECHOES Python)
 #  in `test/Viscoelasticity/test_layered_alv.jl`.
 # =============================================================================
@@ -355,9 +355,9 @@ function bulk_amplitude_seq_alv(
 end
 
 """
-    bulk_localization_alv(sphere, C0_law, times) -> NTuple{N, Matrix}
+    bulk_concentration_alv(sphere, C0_law, times) -> NTuple{N, Matrix}
 
-Per-layer bulk localization matrices ``\\alpha_k(t,t')`` (``n\\times n`` each), such
+Per-layer bulk concentration matrices ``\\alpha_k(t,t')`` (``n\\times n`` each), such
 that ``\\langle\\varepsilon_{\\mathrm{v}}\\rangle_k = \\alpha_k\\circ\\varepsilon_{\\mathrm{v}}^{\\infty}`` in the Volterra sense.
 
 For the bulk ``Y_0`` harmonic, the volume-averaged volumetric strain in
@@ -372,7 +372,7 @@ for arbitrary modulus contrasts (pores, step-activated layers …).
 Reference : Hervé-Zaoui 1993 (elastic) ; ECHOES manual ch07
 §"n-layer ALV bulk recurrence" ; sanahuja2013.
 """
-function bulk_localization_alv(
+function bulk_concentration_alv(
         sphere::LayeredSphere{T, N},
         C0_law::_ALVReference,
         times::AbstractVector{<:Real}
@@ -394,7 +394,7 @@ bulk recurrence: at each layer ``k``, reconstruct the ``2n\\times n`` block
 ``(u_r; \\sigma_{rr})`` from the per-layer amplitudes via
 ``u_r = A_k r_k + B_k/r_k^2`` and ``\\sigma_{rr} = 3k_k A_k - 4\\mu_k B_k/r_k^3``.
 
-Most users should rely on [`bulk_localization_alv`](@ref) directly.
+Most users should rely on [`bulk_concentration_alv`](@ref) directly.
 This helper is retained for the existing test that asserts the
 matrix-side state matches the analytical Hervé-Zaoui boundary
 condition.
@@ -796,7 +796,7 @@ Given a ``4n\\times m`` state matrix in time-major layout and the Volterra
 moduli of the layer at radius ``r``, solve ``\\mathbf{M}(r)\\,\\mathbf{x}`` = `state` (Volterra
 inverse with `block_size = 4`) and extract the "mode 1" and "mode 2"
 amplitude blocks (``n\\times m`` each).  Modes 3 and 4 are not returned (they
-are not needed for layered-sphere localization since ``c = d = 0`` for the
+are not needed for layered-sphere concentration since ``c = d = 0`` for the
 core probe construction and the matrix-side normalization only fixes
 ``a`` and ``b``).
 """
@@ -948,9 +948,9 @@ function _shear_state_seq_alv(
 end
 
 """
-    shear_localization_alv(sphere, C0_law, times) -> NTuple{N, Matrix}
+    shear_concentration_alv(sphere, C0_law, times) -> NTuple{N, Matrix}
 
-Per-layer deviatoric ALV localization matrices ``\\beta_k(t,t')`` (``n\\times n``
+Per-layer deviatoric ALV concentration matrices ``\\beta_k(t,t')`` (``n\\times n``
 each), defined by ``\\langle\\varepsilon_{\\mathrm{d}}\\rangle_k = \\beta_k\\circ\\varepsilon_{\\mathrm{d}}^{\\infty}`` in the Volterra
 sense — the ``n\\times n`` Volterra matrix that maps a unit deviatoric remote
 strain to the volume-averaged deviatoric strain in layer ``k``.
@@ -965,7 +965,7 @@ amplitude block extracted from the combined inside state.
 Reference : ECHOES manual ch07 §"n-layer ALV shear recurrence" ;
 Hervé-Zaoui 1993 generalized to ALV via [sanahuja2013](@cite).
 """
-function shear_localization_alv(
+function shear_concentration_alv(
         sphere::LayeredSphere{T, N},
         C0_law::_ALVReference,
         times::AbstractVector{<:Real}
@@ -1011,12 +1011,12 @@ function shear_localization_alv(
 end
 
 # =============================================================================
-#  Public ALV-contribution / localization assembly for the layered sphere.
+#  Public ALV-contribution / concentration assembly for the layered sphere.
 #
-#  The combination of bulk α_k and shear β_k localization matrices into
-#  isotropic 6n×6n strain-strain localization and stiffness contribution
+#  The combination of bulk α_k and shear β_k concentration matrices into
+#  isotropic 6n×6n strain-strain concentration and stiffness contribution
 #  tensors mirrors the elastic helpers in `LayeredSpheres.jl`:
-#     A_loc = α 𝕁 + β 𝕂                (mean strain-strain in the sphere)
+#     A_conc = α 𝕁 + β 𝕂                (mean strain-strain in the sphere)
 #     N     = Σ_k f_k (C_k − C_0) ∘ A_k  (size-independent contribution).
 # =============================================================================
 
@@ -1087,29 +1087,29 @@ function _strain_jump_terms_alv(
 end
 
 """
-    strain_strain_loc_alv(sphere, C0_law, times; external = true) -> Matrix{T}
+    strain_strain_concentration_alv(sphere, C0_law, times; external = true) -> Matrix{T}
 
 ``6n\\times 6n`` block matrix describing the volume-averaged strain-strain
-localization across the **entire** layered sphere under a unit
+concentration across the **entire** layered sphere under a unit
 Volterra far-field strain.  In iso form this is
 ``\\langle\\widetilde{\\mathbb{A}}\\rangle = \\langle\\alpha\\rangle\\,\\mathbb{J} + \\langle\\beta\\rangle\\,\\mathbb{K}`` with
 ``\\langle\\alpha\\rangle = \\sum_k f_k\\,\\alpha_k(t,t') + \\Delta\\alpha`` and ``\\langle\\beta\\rangle = \\sum_k f_k\\,\\beta_k(t,t') + \\Delta\\beta`` (Volterra
 products), ``\\Delta\\alpha``, ``\\Delta\\beta`` being the displacement jumps of the spring
 interfaces (`_strain_jump_terms_alv`). `external` decides whether the
 outer interface belongs to the sphere, as in the elastic
-[`strain_strain_loc`](@ref).
+[`strain_strain_concentration`](@ref).
 
 This is the analog used by the ALV dilute / MT / Maxwell schemes
 when the inclusion phase is a `LayeredSphere`.
 """
-function strain_strain_loc_alv(
+function strain_strain_concentration_alv(
         sphere::LayeredSphere{T, N},
         C0_law::_ALVReference,
         times::AbstractVector{<:Real};
         external::Bool = true,
     ) where {T, N}
-    α_k = bulk_localization_alv(sphere, C0_law, times)
-    β_k = shear_localization_alv(sphere, C0_law, times)
+    α_k = bulk_concentration_alv(sphere, C0_law, times)
+    β_k = shear_concentration_alv(sphere, C0_law, times)
     f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
     α_avg = sum(f[k] * α_k[k] for k in 1:N)
     β_avg = sum(f[k] * β_k[k] for k in 1:N)
@@ -1132,11 +1132,11 @@ sphere relative to its iso ALV matrix `C0_law`.  Iso parameters
 \\end{aligned}
 ```
 
-where ``\\alpha_k``, ``\\beta_k`` are the per-layer localization matrices, ``\\widetilde{k}_k``,
+where ``\\alpha_k``, ``\\beta_k`` are the per-layer concentration matrices, ``\\widetilde{k}_k``,
 ``\\widetilde{\\mu}_k`` (`M_κ_k`, `M_μ_k`) the per-layer Volterra moduli and ``\\Delta\\alpha``,
 ``\\Delta\\beta`` the displacement jumps of the spring interfaces, plus the surface
 stress of the membranes. `external` has the meaning it has in
-[`strain_strain_loc_alv`](@ref).
+[`strain_strain_concentration_alv`](@ref).
 
 The dilute-scheme effective stiffness with this inclusion at volume
 fraction ``f`` is ``\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0 + f\\,\\widetilde{\\mathbb{N}}``,
@@ -1149,8 +1149,8 @@ function stiffness_contribution_alv(
         external::Bool = true,
     ) where {T, N}
     layers, M_κ_0, M_μ_0 = _bulk_layer_moduli_alv(sphere, C0_law, times)
-    α_k = bulk_localization_alv(sphere, C0_law, times)
-    β_k = shear_localization_alv(sphere, C0_law, times)
+    α_k = bulk_concentration_alv(sphere, C0_law, times)
+    β_k = shear_concentration_alv(sphere, C0_law, times)
     f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
     n = length(times)
 
@@ -1232,7 +1232,7 @@ function _membrane_surface_stress_alv(
     b_surf = zeros(Tb, n, n)
 
     # Deviatoric interface displacement amplitudes (U, W)(r_k), normalized to a
-    # unit remote deviatoric far field (same λ combination as the localization).
+    # unit remote deviatoric far field (same λ combination as the concentration).
     inside_a, inside_b, s_a, s_b = _shear_state_seq_alv(sphere, layers, M_κ_0, M_μ_0, times)
     a_ab, b_ab = _shear_amp_blocks_alv(radii[N], M_κ_0, M_μ_0, n, hcat(s_a, s_b))
     λ_a, λ_b = _shear_solve_far_field_alv(

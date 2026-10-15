@@ -64,9 +64,9 @@ when touching it:
 | [`MeanFieldHomogenization.Elasticity`](@ref) | Hill polarization tensor for ellipsoidal inclusions and infinite cylinders (2D/3D, iso/aniso/TI-coaxial). |
 | [`MeanFieldHomogenization.Cracks`](@ref) | Crack-opening-displacement (COD) tensor, compliance contribution, stress/displacement intensity factors. |
 | [`MeanFieldHomogenization.Conductivity`](@ref) | Second-order Hill tensor for transport problems (diffusion, conduction, Darcy flow), closed form for any matrix anisotropy. |
-| [`MeanFieldHomogenization.LayeredSpheres`](@ref) | `n`-layer composite spheres (Hervé–Zaoui, Christensen–Lo), five interface types, volume-average and pointwise localization. |
+| [`MeanFieldHomogenization.LayeredSpheres`](@ref) | `n`-layer composite spheres (Hervé–Zaoui, Christensen–Lo), five interface types, volume-average and pointwise concentration. |
 | [`MeanFieldHomogenization.LayeredSpheroids`](@ref) | `n`-layer confocal spheroids, conduction, Kapitza / surface-conductive interfaces, series or quadrature evaluation. |
-| [`MeanFieldHomogenization.Laminates`](@ref) | Periodic multilayer cell: no matrix, no Eshelby problem — an *exact* solution in elasticity and transport, same imperfect interfaces, per-layer localization. |
+| [`MeanFieldHomogenization.Laminates`](@ref) | Periodic multilayer cell: no matrix, no Eshelby problem — an *exact* solution in elasticity and transport, same imperfect interfaces, per-layer concentration. |
 | [`MeanFieldHomogenization.Schemes`](@ref) | RVE container and `homogenize`; Voigt, Reuss, Dilute, Mori–Tanaka, Maxwell, PCW, self-consistent, asymmetric SC, differential, cluster model, equivalent inclusion; exact vs. best-fit symmetrization; `ForwardDiff` sensitivities. |
 | [`MeanFieldHomogenization.Interactions`](@ref) | Two-inclusion interaction tensor ``\mathbb{T}^{ab}`` and the Green operator of the reference — closed forms for balls and disks, cubature for the anisotropic case. |
 | [`MeanFieldHomogenization.Assemblies`](@ref) | `ParticleAssembly`: the cell that carries positions, its generators and boundary treatments — what the two N-body schemes act on. |
@@ -89,9 +89,9 @@ sub-module is for, but what it puts in the namespace.
 | `Elasticity`       | `Ellipsoid`, `Cylinder`, auxiliary tensors, `hill_tensor` + 3D/2D kernels                           |
 | `Cracks`           | `EllipticCrack`, `RibbonCrack`, `cod_tensor`, `sif`, `dif`, and the crack methods of the contribution generics |
 | `Conductivity`     | additional `_kernel` methods for 2nd-order transport tensors                                        |
-| `LayeredSpheres`   | `LayeredSphere`, Hervé–Zaoui recurrences, five interface types, localization fields                 |
+| `LayeredSpheres`   | `LayeredSphere`, Hervé–Zaoui recurrences, five interface types, concentration fields                 |
 | `LayeredSpheroids` | `LayeredSpheroid` (confocal, conduction)                                                            |
-| `Laminates`        | `Laminate`, the interface algebra, per-layer localization, the ALV twin                              |
+| `Laminates`        | `Laminate`, the interface algebra, per-layer concentration, the ALV twin                              |
 | `Interactions`     | Green operator of the reference and the two-inclusion interaction tensor (closed forms, cubature, periodic sums) |
 | `Assemblies`       | `ParticleAssembly`, its generators and boundary treatments, the two N-body schemes                  |
 | `Schemes`          | `RVE`/`Phase`, `homogenize`, every scheme type, exact symmetrization, ForwardDiff sensitivities     |
@@ -103,7 +103,7 @@ sub-module is for, but what it puts in the namespace.
 | `Constitutive`     | the Gauss-point contract of the [finite-element coupling](@ref fe-coupling): `material_response`, the shipped materials, the state types; the Ferrite glue in `MeanFieldHomogenizationFerriteMaterialExt` |
 
 Two files sit at the **top level** rather than in a sub-module, and are loaded
-after every geometry sub-module on purpose: `localization.jl` and
+after every geometry sub-module on purpose: `concentration.jl` and
 `contribution.jl` implement generics declared in `Core` whose methods need
 every sub-module's `_kernel` table to be visible. `CustomInclusions`,
 `FiniteElements` and `NeuralInclusions` are included after *those*, because

@@ -16,7 +16,7 @@
 #      family s:  boundary data = the remote field       → L_s
 #      family u:  boundary data = a unit-moment dipole   → L_u
 #
-#  with `L` the measured localization.  The true solution satisfies
+#  with `L` the measured concentration.  The true solution satisfies
 #  `L = L_s + L_u·M` and `M = F·L`, hence
 #
 #      L = (𝕀 − L_u·F)⁻¹ L_s .
@@ -29,7 +29,7 @@
 #
 #  ## Two sign conventions, one rule
 #
-#  The factor `F` mapping the measured localization to the polarization moment
+#  The factor `F` mapping the measured concentration to the polarization moment
 #  is `-V�ℂ₀` in elasticity and `-k₀V` in conduction, and the apparent
 #  inconsistency is structural.  Writing `L` for the operator each Green
 #  function inverts,
@@ -85,10 +85,10 @@ function _cell_solver(backend, space, K, χ = nothing)
 end
 
 """
-    _cell_conduction_localization(backend, space, k₀, V; sign = -1)
+    _cell_conduction_concentration(backend, space, k₀, V; sign = -1)
         -> (; A, A_uncorrected, L_s, L_u, dipole_norm)
 
-The gradient localization tensor of the cavity, corrected and uncorrected, as a
+The gradient concentration tensor of the cavity, corrected and uncorrected, as a
 ``3\\times 3`` in the cell's frame.
 
 Six solves on one factorization: three with the remote gradient
@@ -96,7 +96,7 @@ Six solves on one factorization: three with the remote gradient
 selects the sign of the polarization factor and exists so that a test can flip
 it and watch the factor of two appear.
 """
-function _cell_conduction_localization(
+function _cell_conduction_concentration(
         backend, space, k₀::Real, V::Real; sign::Int = -1, octant::Bool = false
     )
     K = fe_cell_stiffness(backend, space, _iso3(k₀))
@@ -128,10 +128,10 @@ end
 _iso3(k₀::Real) = Matrix(Float64(k₀) * LinearAlgebra.I, 3, 3)
 
 """
-    _cell_elastic_localization(backend, space, C₀, μ, ν, V; sign = -1)
+    _cell_elastic_concentration(backend, space, C₀, μ, ν, V; sign = -1)
         -> (; A, A_uncorrected, L_s, L_u, dipole_norm)
 
-The strain localization tensor of the cavity, corrected and uncorrected, as a
+The strain concentration tensor of the cavity, corrected and uncorrected, as a
 ``6\\times 6`` in Kelvin-Mandel.
 
 Twelve solves on one factorization: six with the remote strain
@@ -139,7 +139,7 @@ Twelve solves on one factorization: six with the remote strain
 what makes a unit load a unit load, the map being an isometry — and six with a
 unit-moment dipole.
 """
-function _cell_elastic_localization(
+function _cell_elastic_concentration(
         backend, space, C::Tensors.SymmetricTensor{4, 3, Float64},
         μ::Real, ν::Real, V::Real; sign::Int = -1, octant::Bool = false
     )

@@ -1,7 +1,7 @@
 # [Homogenization schemes](@id th-homogenization)
 
 !!! info "Before this page"
-    [Localization and contribution tensors](@ref th-localization), where the
+    [Concentration and contribution tensors](@ref th-concentration), where the
     dilute concentration tensor ``\mathbb A_i^{\mathrm{dil}}`` and the
     contribution tensors ``\mathbb N_i`` and ``\mathbb H_i`` are defined,
     [Crack opening displacement and compliance](@ref th-cod-tensors) for the
@@ -61,7 +61,7 @@ scheme is precisely an estimate of them, built from the solution of an Eshelby
 problem posed in some reference medium.
 
 The schemes below are written with three objects of
-[Localization](@ref th-localization), computed in the matrix ``\mathbb C_0``
+[Concentration](@ref th-concentration), computed in the matrix ``\mathbb C_0``
 unless stated otherwise. For an ellipsoidal phase ``i`` of Hill tensor
 ``\mathbb P_i``,
 

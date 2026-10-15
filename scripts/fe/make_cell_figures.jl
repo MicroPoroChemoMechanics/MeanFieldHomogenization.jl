@@ -190,7 +190,7 @@ want("cost") && let
             octant = oct, max_dofs = 400_000, min_free_gb = 4.0,
         )
         pore = FESupershapePore(Supersphere(1.0, 1.0); opts = o)
-        t = @elapsed A = gradient_gradient_loc(pore, TensISO{3}(1.0), TensISO{3}(1.0))
+        t = @elapsed A = gradient_gradient_concentration(pore, TensISO{3}(1.0), TensISO{3}(1.0))
         err = abs(Matrix(get_array(A))[1, 1] - 1.5) / 1.5
         rep = fe_cell_mesh_report(pore)
         @printf report "| %d | %s | %d | %.2e | %.1f s |\n" lvl (

@@ -95,8 +95,8 @@ component-wise: index 1 is transverse, index 3 axial.
 ````@example layered_spheroid_hc
 function _keq(ϖ, β)
     s = _particle(ϖ, β)
-    A = gradient_gradient_loc(s, KC, K0)
-    B = flux_gradient_loc(s, KC, K0)
+    A = gradient_gradient_concentration(s, KC, K0)
+    B = flux_gradient_concentration(s, KC, K0)
     return real(B[1, 1] / A[1, 1]), real(B[3, 3] / A[3, 3])
 end
 ````

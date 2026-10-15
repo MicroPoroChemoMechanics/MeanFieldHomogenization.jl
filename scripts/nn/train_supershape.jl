@@ -24,7 +24,7 @@
 #
 #  A second-order tensor invariant under the octahedral group is **isotropic**.
 #  So a supersphere, which needs three constants in elasticity, needs one here:
-#  hence `GradLocISO2` rather than the three-component cubic class.
+#  hence `GradientConcentrationISO2` rather than the three-component cubic class.
 # =============================================================================
 
 import Pkg
@@ -97,11 +97,11 @@ pore_geometry(x) = FESupershapePore(Supersphere(1.0, x[1]); opts = CELL)
 # model was not: 1.37e-2 worst case, all of it inherited.
 const AXI = FEAxiMeshOptions(; nradial = 14, radius_ratio = 6.0, tip_refine = 16.0)
 
-# `a` is not a feature: the localization of a cavity is scale-free, so only the
+# `a` is not a feature: the concentration of a cavity is scale-free, so only the
 # aspect ratio `c/a` and the exponent matter. The shape is built at `a = 1` and
 # the features are `(c, p)`.
 # The shape features arrive as logarithms, which is what makes the sampling
-# geometric; `a = 1` because a cavity's localization is scale-free.
+# geometric; `a = 1` because a cavity's concentration is scale-free.
 axi_geometry(x) = FEAxiSupershapePore(
     Superspheroid(1.0, exp(x[1]), exp(x[2])); opts = AXI
 )
@@ -116,8 +116,8 @@ const AXI_P_LO, AXI_P_HI = 0.25, 1.5
 const AXI_LP_LO, AXI_LP_HI = log(AXI_P_LO), log(AXI_P_HI)
 const AXI_LC_LO, AXI_LC_HI = log(C_LO), log(C_HI)
 
-elastic_response(g, C₀) = strain_strain_loc(g, C₀, C₀)
-transport_response(g, K₀) = gradient_gradient_loc(g, K₀, K₀)
+elastic_response(g, C₀) = strain_strain_concentration(g, C₀, C₀)
+transport_response(g, K₀) = gradient_gradient_concentration(g, K₀, K₀)
 
 function train_and_save(
         name, spec, box, geometry, response, teacher, n, nval, opts;
@@ -184,10 +184,10 @@ end
 
 want("conduction") && train_and_save(
     "supershape_pore_conduction",
-    NI.DimensionlessHill(GradLocISO2()),
+    NI.DimensionlessHill(GradientConcentrationISO2()),
     NI.SampleBox([:p], [P_LO], [P_HI]),
     pore_geometry, transport_response,
-    "gradient_gradient_loc(FESupershapePore, TensISO{2}) — octant cell, level $LEVEL",
+    "gradient_gradient_concentration(FESupershapePore, TensISO{2}) — octant cell, level $LEVEL",
     120, 40,
     NI.TrainingOptions(; hidden = [24, 24], epochs = 12_000, batchsize = 32),
     # Measured isotropy residual of `𝑨_∇∇`: ~2e-6 for a convex shape at level 4,
@@ -204,10 +204,10 @@ want("conduction") && train_and_save(
 
 want("elastic") && train_and_save(
     "supershape_pore_elastic",
-    NI.DimensionlessHill(StrainLocCubic()),
+    NI.DimensionlessHill(StrainConcentrationCubic()),
     NI.SampleBox([:p, :nu0], [P_LO, NU_LO], [P_HI, NU_HI]),
     pore_geometry, elastic_response,
-    "strain_strain_loc(FESupershapePore, TensISO{4}) — octant cell, level $LEVEL",
+    "strain_strain_concentration(FESupershapePore, TensISO{4}) — octant cell, level $LEVEL",
     480, 140,
     NI.TrainingOptions(; hidden = [48, 48], epochs = 20_000, batchsize = 64),
     # A fourth-order tensor departs from its class by more than a second-order
@@ -223,15 +223,15 @@ want("elastic") && train_and_save(
 # ─── 3. The axisymmetric cavity, transport ───────────────────────────────────
 #
 #  Two components, `R₁₁` and `R₃₃`, because a body of revolution distinguishes
-#  its axis — where the supersphere's transport localization is isotropic and
+#  its axis — where the supersphere's transport concentration is isotropic and
 #  needs one.
 
 want("axi_conduction") && train_and_save(
     "axi_supershape_pore_conduction",
-    NI.DimensionlessHill(GradLocTI2()),
+    NI.DimensionlessHill(GradientConcentrationTI2()),
     NI.SampleBox([:log_aspect, :log_p], [AXI_LC_LO, AXI_LP_LO], [AXI_LC_HI, AXI_LP_HI]),
     axi_geometry, transport_response,
-    "gradient_gradient_loc(FEAxiSupershapePore, TensISO{2}) — Fourier axi, " *
+    "gradient_gradient_concentration(FEAxiSupershapePore, TensISO{2}) — Fourier axi, " *
         "nradial = $(AXI.nradial), R/a = $(AXI.radius_ratio)",
     # `R₃₃` is the demanding component: it runs over a factor of nine across
     # this box and steepens in the flat-and-concave corner, where a thin oblate
@@ -262,8 +262,8 @@ want("axi_conduction") && train_and_save(
 
 # ─── 4. The axisymmetric cavity, elasticity ──────────────────────────────────
 #
-#  Six components, not five: a localization tensor has no major symmetry, and
-#  `StrainLocTI` carries the six Walpole coefficients for exactly that reason.
+#  Six components, not five: a concentration tensor has no major symmetry, and
+#  `StrainConcentrationTI` carries the six Walpole coefficients for exactly that reason.
 #
 #  This is the class whose reference medium the package deliberately refuses to
 #  guess, because the same class also serves *heterogeneous* morphologies that
@@ -273,13 +273,13 @@ want("axi_conduction") && train_and_save(
 
 want("axi_elastic") && train_and_save(
     "axi_supershape_pore_elastic",
-    NI.DimensionlessHill(StrainLocTI()),
+    NI.DimensionlessHill(StrainConcentrationTI()),
     NI.SampleBox(
         [:log_aspect, :log_p, :nu0],
         [AXI_LC_LO, AXI_LP_LO, NU_LO], [AXI_LC_HI, AXI_LP_HI, NU_HI],
     ),
     axi_geometry, elastic_response,
-    "strain_strain_loc(FEAxiSupershapePore, TensISO{4}) — Fourier axi, " *
+    "strain_strain_concentration(FEAxiSupershapePore, TensISO{4}) — Fourier axi, " *
         "nradial = $(AXI.nradial), R/a = $(AXI.radius_ratio)",
     # A three-dimensional box, and `ℓ₁` runs from 1.4 to 63 across it — a factor
     # of 46, near-diverging in the flat-and-concave corner where the cavity is

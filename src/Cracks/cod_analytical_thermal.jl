@@ -217,10 +217,10 @@ function _cod_aniso_ribbon_thermal(c::RibbonCrack, K₀)
     T_mat = eltype(K₀)
 
     # Express K₀ in the crack basis: indices 2, 3 give the (m̂, n̂) block.
-    K₀_loc = TensND.change_tens(K₀, crack_basis(c))
-    K_mm = T_mat(K₀_loc[2, 2])
-    K_nn = T_mat(K₀_loc[3, 3])
-    K_mn = T_mat(K₀_loc[2, 3])
+    K₀_local = TensND.change_tens(K₀, crack_basis(c))
+    K_mm = T_mat(K₀_local[2, 2])
+    K_nn = T_mat(K₀_local[3, 3])
+    K_mn = T_mat(K₀_local[2, 3])
 
     det_K⊥ = K_mm * K_nn - K_mn * K_mn
     return T_mat(π) / (T_mat(2) * sqrt(det_K⊥))

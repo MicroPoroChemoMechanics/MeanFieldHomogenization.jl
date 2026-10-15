@@ -35,10 +35,10 @@ Three are shipped, and the same machinery serves all of them:
 | Type | Morphology | Discretization | What it supplies |
 |:--|:--|:--|:--|
 | [`FEEllipticCrack`](@ref MeanFieldHomogenization.FEEllipticCrack) | flat elliptical crack | 3-D tetrahedra | the crack-opening tensor 𝐁 |
-| [`FEExcenteredSphere`](@ref MeanFieldHomogenization.FEExcenteredSphere) | sphere with an off-center spherical core | axisymmetric Fourier modes | both localization tensors |
+| [`FEExcenteredSphere`](@ref MeanFieldHomogenization.FEExcenteredSphere) | sphere with an off-center spherical core | axisymmetric Fourier modes | both concentration tensors |
 | [`FESupershapePore`](@ref MeanFieldHomogenization.FESupershapePore) | superspherical or superspheroidal **cavity** | 3-D tetrahedra, curved boundary | the strain-side tensor, in both physics |
 | [`FEAxiSupershapePore`](@ref MeanFieldHomogenization.FEAxiSupershapePore) | superspheroidal **cavity**, axisymmetric | axisymmetric Fourier modes | the strain-side tensor, in both physics |
-| [`FEAxiLayeredSpheroid`](@ref MeanFieldHomogenization.FEAxiLayeredSpheroid) | `N` nested coaxial spheroids, free semi-axes | axisymmetric Fourier modes | both localization tensors, in both physics |
+| [`FEAxiLayeredSpheroid`](@ref MeanFieldHomogenization.FEAxiLayeredSpheroid) | `N` nested coaxial spheroids, free semi-axes | axisymmetric Fourier modes | both concentration tensors, in both physics |
 
 The general principle and the shared syntax come first below; the three
 morphologies, and the ones not yet written, come after.
@@ -119,7 +119,7 @@ homogenize(rve, MoriTanaka(), :C)
 
 That is the whole point of the [custom-inclusion
 contract](@ref man-custom-inclusions): the inclusion implements *one* response
-function, and everything else — the other localization tensors, the
+function, and everything else — the other concentration tensors, the
 contribution tensors, orientation averaging, the bounds — is derived by the
 package from that one. The tensor can also be asked for on its own, which is
 what a validation script does:
@@ -183,7 +183,7 @@ and the anisotropy an order of magnitude above it.
 
 Two consequences of the same group theory are worth knowing. A tensor with the
 minor symmetries and cubic symmetry is automatically **major-symmetric**, so a
-localization tensor — which in general has none — recovers it here. And at
+concentration tensor — which in general has none — recovers it here. And at
 **order two the cubic class is the isotropic class**, which is why a
 cube-symmetric pore has a single scalar resistivity contribution while its
 compliance contribution needs three constants, and why a conduction computation
@@ -239,7 +239,7 @@ route works for anything star-shaped about its center.
 
 *My inclusion is a cavity.* Then declare
 `is_homogeneous_inclusion` **false** and supply an exactly zero stress-side
-localization. That reads as a paradox — a cavity is uniformly empty, so surely
+concentration. That reads as a paradox — a cavity is uniformly empty, so surely
 it is homogeneous — but the flag asks whether a single ``\mathbb C_1``
 describes the interior, and for a cavity ``\mathrm{inv}(\mathbb C_1)`` is
 meaningless. Answering `false` routes every contribution tensor through the
@@ -312,7 +312,7 @@ capped at P2 for the reason listed above.
 
 [`FEExcenteredSphere`](@ref MeanFieldHomogenization.FEExcenteredSphere) is the
 *heterogeneous* case, and it enters through gate B: being internally
-heterogeneous it has no Hill tensor, so it supplies both localization tensors
+heterogeneous it has no Hill tensor, so it supplies both concentration tensors
 directly. Its constituents live in the geometry object, core first then shell,
 and the `Dict` handed to `add_phase!` is a placeholder the kernel ignores.
 
@@ -320,7 +320,7 @@ and the `Dict` handed to `add_phase!` is a placeholder the kernel ignores.
 C_core, C_shell = iso_stiffness(20.0, 12.0), iso_stiffness(6.0, 4.0)
 incl = FEExcenteredSphere(1.0, (C_core, C_shell);
                           core_fraction = 0.5, eccentricity = 0.4)
-A, B = fe_axi_localization(incl, C₀)          # both tensors, one solve
+A, B = fe_axi_concentration(incl, C₀)          # both tensors, one solve
 ```
 
 `eccentricity` is normalized by the largest offset that keeps the core inside,
@@ -530,7 +530,7 @@ or surface-conductive layer is refused **by name** at construction rather than
 accepted and ignored.
 
 Being heterogeneous, the inclusion enters through gate B with **both**
-localization tensors, measured on the same solve: the stress side is not
+concentration tensors, measured on the same solve: the stress side is not
 ``\mathbb C_1 : \mathbb A_{\varepsilon\varepsilon}`` for any single
 ``\mathbb C_1``. `Voigt` and `Reuss` work because the internal volume fractions
 are a closed form of the semi-axes, and
@@ -550,7 +550,7 @@ Named here so that the boundary of what exists is explicit:
   only, and the conduction problem would need its own resolution;
 - **solid** supershape inclusions. The cell is set up for a cavity: it meshes
   the matrix shell alone and leaves the inclusion boundary free, which is what
-  makes the stress-side localization exactly zero. A solid inclusion would have
+  makes the stress-side concentration exactly zero. A solid inclusion would have
   to be meshed too, and would enter through gate B with two measured tensors,
   as the off-center core does;
 

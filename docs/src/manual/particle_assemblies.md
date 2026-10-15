@@ -83,7 +83,7 @@ Two keywords are forwarded through `homogenize` to the conversion:
 
 | keyword | default | who reads it |
 | :-- | :-- | :-- |
-| `matrix_geometry` | a ball (a disk in 2D) | only the schemes that localize the matrix like any other phase — the self-consistent family. `MoriTanaka`, `Dilute` and the bounds never look at it |
+| `matrix_geometry` | a ball (a disk in 2D) | only the schemes that solve an auxiliary problem for the matrix like any other phase — the self-consistent family. `MoriTanaka`, `Dilute` and the bounds never look at it |
 | `distribution_shape` | none | [`PonteCastanedaWillis`](@ref), which needs one; an assembly carries no such statistical descriptor |
 
 !!! warning "The bridge is one-way"
@@ -219,7 +219,7 @@ formalism and raises an `ArgumentError` naming the limitation.
 
 ```julia
 τ, names = eim_polarizations(asm)        # per-particle polarization operators
-A, reps  = cluster_localizations(asm)    # per-family localization tensors
+A, reps  = cluster_concentrations(asm)    # per-family concentration tensors
 eim_bound_type(asm)                      # :upper, :lower or :none
 ```
 

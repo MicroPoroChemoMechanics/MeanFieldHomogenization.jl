@@ -76,7 +76,7 @@ effective stiffness is a sum of independent contributions:
 
 where ``\mathbb{P}_i`` is the Hill polarization tensor of inclusion
 ``i`` in the matrix ``\mathbb{C}_0`` ([`hill_tensor`](@ref)) and
-``\mathbb{A}_i^{\mathrm{dil}}`` is its **dilute strain-localization
+``\mathbb{A}_i^{\mathrm{dil}}`` is its **dilute strain-concentration
 tensor**: the linear map from the macroscopic strain to the strain
 inside inclusion ``i``. This is exact only in the dilute limit
 ``f_i \to 0`` — at finite volume fraction, inclusions interact and the
@@ -84,8 +84,8 @@ estimate drifts.
 
 ## Mori–Tanaka: accounting for interaction
 
-[`MoriTanaka`](@ref) corrects for this by localizing not on the
-macroscopic strain, but on the *average strain in the matrix*:
+[`MoriTanaka`](@ref) corrects for this by loading each inclusion not with the
+macroscopic strain, but with the *average strain in the matrix*:
 
 ```math
 \mathbb{A}_i^{\mathrm{MT}} = \mathbb{A}_i^{\mathrm{dil}}:\Big(\sum_j f_j\,\mathbb{A}_j^{\mathrm{dil}}\Big)^{-1}.

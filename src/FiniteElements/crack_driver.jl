@@ -188,16 +188,16 @@ function _fe_cod_tensor(
         crack::FEEllipticCrack, C₀::TensND.AbstractTens{4, 3}; kw...
     )
     μ, ν = _isotropic_moduli(crack, C₀)
-    C_loc = _local_stiffness(crack, C₀)
-    key = _cache_key(C_loc)
+    C_local = _local_stiffness(crack, C₀)
+    key = _cache_key(C_local)
 
-    B_loc = get!(crack.cache.tensors, key) do
-        _, _, B = _solve_cod_local(crack, C_loc, μ, ν)
+    B_local = get!(crack.cache.tensors, key) do
+        _, _, B = _solve_cod_local(crack, C_local, μ, ν)
         B
     end
 
     R = _frame_matrix(crack)
-    return TensND.TensCanonical(R * B_loc * R')
+    return TensND.TensCanonical(R * B_local * R')
 end
 
 """
@@ -220,8 +220,8 @@ function fe_cod_breakdown(
     )
 
     μ, ν = _isotropic_moduli(crack, C₀)
-    C_loc = _local_stiffness(crack, C₀)
-    B_s, B_u, B_inf = _solve_cod_local(crack, C_loc, μ, ν)
+    C_local = _local_stiffness(crack, C₀)
+    B_s, B_u, B_inf = _solve_cod_local(crack, C_local, μ, ν)
     R = _frame_matrix(crack)
     return (;
         B_s, B_u, B_inf,

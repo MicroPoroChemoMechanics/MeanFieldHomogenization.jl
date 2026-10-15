@@ -1,8 +1,8 @@
 # [Custom inclusions](@id man-custom-inclusions)
 
 !!! info "Before this page"
-    [Localization and contribution tensors](@ref th-localization), which defines
-    the localization and contribution tensors that the three entry gates below
+    [Concentration and contribution tensors](@ref th-concentration), which defines
+    the concentration and contribution tensors that the three entry gates below
     supply or derive, and [Layered inclusions](@ref man-layered), the built-in
     family that enters through gate B.
 
@@ -44,13 +44,13 @@ Implement the lowest level you can reach; everything above is derived.
 
 | Gate | What you supply | What you get |
 |:--|:--|:--|
-| **A** | `hill_tensor(incl, P₀)` | the 8 localization tensors, the 4 contribution tensors, every scheme |
-| **B** | `strain_strain_loc(incl, P₁, P₀)` — plus `stress_strain_loc` if the inclusion is heterogeneous | the derived localizations, the contributions, every scheme |
+| **A** | `hill_tensor(incl, P₀)` | the 8 concentration tensors, the 4 contribution tensors, every scheme |
+| **B** | `strain_strain_concentration(incl, P₁, P₀)` — plus `stress_strain_concentration` if the inclusion is heterogeneous | the derived concentrations, the contributions, every scheme |
 | **C** | the contribution tensors themselves | the contribution-based schemes (see the caveat below) |
 
 `P₀` is the reference medium: a 4th-order stiffness in elasticity, a 2nd-order
 conductivity in transport. Dispatch on it and one implementation serves both.
-In transport the gate-B pair is `gradient_gradient_loc` / `flux_gradient_loc`.
+In transport the gate-B pair is `gradient_gradient_concentration` / `flux_gradient_concentration`.
 
 ## Quick route — `CustomInclusion`
 
@@ -109,7 +109,7 @@ pass `homogeneous = false`. The scheme kernels then use the exact identities
 instead of ``\langle\mathbb C:\boldsymbol\varepsilon\rangle_i = \mathbb C_i:\mathbb A_i``,
 which would otherwise give a wrong answer — occasionally with the wrong sign.
 
-The same caveat applies *inside* gate B. The strain localization fixes the
+The same caveat applies *inside* gate B. The strain concentration fixes the
 stress one only through ``\mathbb A_{\sigma\varepsilon} = \mathbb C_1 :
 \mathbb A_{\varepsilon\varepsilon}``, so a heterogeneous inclusion must supply
 both:
@@ -117,10 +117,10 @@ both:
 ```julia
 layered = CustomInclusion(;
     homogeneous           = false,
-    strain_strain_loc     = (P₁, P₀; kw...) -> ...,   # ⟨ε⟩_I  from ε∞
-    stress_strain_loc     = (P₁, P₀; kw...) -> ...,   # ⟨σ⟩_I  from ε∞
-    gradient_gradient_loc = (P₁, P₀; kw...) -> ...,   # transport counterparts
-    flux_gradient_loc     = (P₁, P₀; kw...) -> ...)
+    strain_strain_concentration     = (P₁, P₀; kw...) -> ...,   # ⟨ε⟩_I  from ε∞
+    stress_strain_concentration     = (P₁, P₀; kw...) -> ...,   # ⟨σ⟩_I  from ε∞
+    gradient_gradient_concentration = (P₁, P₀; kw...) -> ...,   # transport counterparts
+    flux_gradient_concentration     = (P₁, P₀; kw...) -> ...)
 ```
 
 This is exactly what the built-in `LayeredSphere` does. Omitting the
@@ -232,7 +232,7 @@ end
 ```
 
 **Gate B is complete for a heterogeneous inclusion too.** Supply *both*
-localization tensors (`strain_strain_loc` and `stress_strain_loc`, or their
+concentration tensors (`strain_strain_concentration` and `stress_strain_concentration`, or their
 transport analogues) and the contribution tensors are derived from
 ``\mathbb N = \mathbb A_{\sigma\varepsilon} - \mathbb C_0 :
 \mathbb A_{\varepsilon\varepsilon}``, which needs no single
@@ -249,10 +249,10 @@ the contract, with nothing downstream aware of it.
 | Page | Covers | Gate |
 | :--- | :--- | :--- |
 | [Finite-element inclusions](@ref man-fe-inclusions) | the principle, the shared syntax, and the three shipped morphologies | the crack algebra from `cod_tensor` alone, or B |
-| [A recycled-concrete aggregate](@ref app-recycled-aggregate) | the off-center core, worked end to end | B, both localization tensors |
+| [A recycled-concrete aggregate](@ref app-recycled-aggregate) | the off-center core, worked end to end | B, both concentration tensors |
 
 A cavity is the case where gate B is at its simplest and most exact: its
-stress-side localization is **identically zero**, so the package's own
+stress-side concentration is **identically zero**, so the package's own
 contribution identities collapse to ``\mathbb N = -\mathbb C_0:\mathbb A``
 and ``\mathbb H = \mathbb A:\mathbb S_0`` with no ``\mathbb C_1`` in them at
 all. Declaring `is_homogeneous_inclusion` **false** is what reaches that route —

@@ -1,7 +1,7 @@
 # =============================================================================
-#  test_loc_bundles.jl — contract of the bundled localization helpers.
+#  test_concentration_bundles.jl — contract of the bundled concentration helpers.
 #
-#  `Core.loc_and_stiffness` / `Core.loc_and_stress_average` (and the crack
+#  `Core.concentration_and_stiffness` / `Core.concentration_and_stress_average` (and the crack
 #  analog `Cracks.compliance_and_stiffness_contribution`) exist purely to share
 #  the single expensive Hill / COD / recurrence solve between two quantities
 #  that Mori-Tanaka and the self-consistent kernels always request together.
@@ -39,7 +39,7 @@ const _KM_TRI_B = [
     3.0 -1.0 2.0 1.5 -1.0 55.0
 ]
 
-@testset "loc_and_stiffness / loc_and_stress_average — bitwise contract" begin
+@testset "concentration_and_stiffness / concentration_and_stress_average — bitwise contract" begin
     C_tri = TensND.inv_KM(_KM_TRI_B, CanonicalBasis{3, Float64}())
     C_iso = TensISO{3}(3 * 20.0, 2 * 12.0)
     C_i = TensISO{3}(3 * 80.0, 2 * 50.0)
@@ -55,13 +55,13 @@ const _KM_TRI_B = [
     ]
 
     @testset "4th order — $nm" for (nm, geom, C₁, C₀) in fixtures4
-        A, N = MFHC_B.loc_and_stiffness(geom, C₁, C₀)
-        @test _vals(A) == _vals(strain_strain_loc(geom, C₁, C₀))
+        A, N = MFHC_B.concentration_and_stiffness(geom, C₁, C₀)
+        @test _vals(A) == _vals(strain_strain_concentration(geom, C₁, C₀))
         @test _vals(N) == _vals(stiffness_contribution(geom, C₁, C₀))
 
-        A2, B2 = MFHC_B.loc_and_stress_average(geom, C₁, C₀)
-        @test _vals(A2) == _vals(strain_strain_loc(geom, C₁, C₀))
-        @test _vals(B2) == _vals(stress_strain_loc(geom, C₁, C₀))
+        A2, B2 = MFHC_B.concentration_and_stress_average(geom, C₁, C₀)
+        @test _vals(A2) == _vals(strain_strain_concentration(geom, C₁, C₀))
+        @test _vals(B2) == _vals(stress_strain_concentration(geom, C₁, C₀))
     end
 
     K_iso = TensISO{3}(2.0)
@@ -72,13 +72,13 @@ const _KM_TRI_B = [
     ]
 
     @testset "2nd order — $nm" for (nm, geom, K₁, K₀) in fixtures2
-        A, N = MFHC_B.loc_and_stiffness(geom, K₁, K₀)
-        @test _vals(A) == _vals(gradient_gradient_loc(geom, K₁, K₀))
+        A, N = MFHC_B.concentration_and_stiffness(geom, K₁, K₀)
+        @test _vals(A) == _vals(gradient_gradient_concentration(geom, K₁, K₀))
         @test _vals(N) == _vals(conductivity_contribution(geom, K₁, K₀))
 
-        A2, B2 = MFHC_B.loc_and_stress_average(geom, K₁, K₀)
-        @test _vals(A2) == _vals(gradient_gradient_loc(geom, K₁, K₀))
-        @test _vals(B2) == _vals(flux_gradient_loc(geom, K₁, K₀))
+        A2, B2 = MFHC_B.concentration_and_stress_average(geom, K₁, K₀)
+        @test _vals(A2) == _vals(gradient_gradient_concentration(geom, K₁, K₀))
+        @test _vals(B2) == _vals(flux_gradient_concentration(geom, K₁, K₀))
     end
 
     @testset "heterogeneous inclusions keep the layer-by-layer assembly" begin
@@ -86,28 +86,28 @@ const _KM_TRI_B = [
             (0.5, 1.0),
             (TensISO{3}(3 * 10.0, 2 * 6.0), TensISO{3}(3 * 40.0, 2 * 25.0))
         )
-        A, N = MFHC_B.loc_and_stiffness(sph, C_i, C_iso)
-        @test _vals(A) == _vals(strain_strain_loc(sph, C_i, C_iso))
+        A, N = MFHC_B.concentration_and_stiffness(sph, C_i, C_iso)
+        @test _vals(A) == _vals(strain_strain_concentration(sph, C_i, C_iso))
         @test _vals(N) == _vals(stiffness_contribution(sph, C_i, C_iso))
 
-        A2, B2 = MFHC_B.loc_and_stress_average(sph, C_i, C_iso)
-        @test _vals(A2) == _vals(strain_strain_loc(sph, C_i, C_iso))
-        @test _vals(B2) == _vals(stress_strain_loc(sph, C_i, C_iso))
+        A2, B2 = MFHC_B.concentration_and_stress_average(sph, C_i, C_iso)
+        @test _vals(A2) == _vals(strain_strain_concentration(sph, C_i, C_iso))
+        @test _vals(B2) == _vals(stress_strain_concentration(sph, C_i, C_iso))
     end
 
     @testset "the bundle costs strictly less than the two separate calls" begin
         # `@inferred` is deliberately NOT used here: `hill_tensor` resolves its
         # algorithm at run time (`_resolve_algo(Val(method), incl, C₀)`), so the
-        # whole localization chain is inferrably `Any` BY DESIGN — that predates
+        # whole concentration chain is inferrably `Any` BY DESIGN — that predates
         # these bundles and is what makes `:auto` work.  What must hold is that
         # bundling does not make things worse: the tuple return must not add
         # allocation on top of the work it saves.
         geom = Ellipsoid(3.0, 2.0, 1.0)
         pair() = (
-            strain_strain_loc(geom, C_i, C_tri),
+            strain_strain_concentration(geom, C_i, C_tri),
             stiffness_contribution(geom, C_i, C_tri),
         )
-        bundle() = MFHC_B.loc_and_stiffness(geom, C_i, C_tri)
+        bundle() = MFHC_B.concentration_and_stiffness(geom, C_i, C_tri)
         pair(); bundle()                      # warm up in this process
         for _ in 1:2
             pair(); bundle()
@@ -121,7 +121,7 @@ const _KM_TRI_B = [
 
     @testset "ForwardDiff flows through the bundle" begin
         g = FD.derivative(1.0) do x
-            A, N = MFHC_B.loc_and_stiffness(
+            A, N = MFHC_B.concentration_and_stiffness(
                 Ellipsoid(3.0, 2.0, 1.0), x * C_i, C_iso
             )
             TensND.get_array(N)[1, 1, 1, 1]
@@ -230,11 +230,11 @@ end
     end
 
     # Independent reference for the stress average of that phase, built from
-    # the raw localization exactly as the slow branch prescribes.
+    # the raw concentration exactly as the slow branch prescribes.
     sym = MeanFieldHomogenization.Schemes.phase_symmetrize(rve, :I)
     P₀_proj = MeanFieldHomogenization.Schemes._project_matrix(C_m, sym)
     geom = rve.phases[:I].geometry
-    A_raw = strain_strain_loc(geom, C_ti, P₀_proj)
+    A_raw = strain_strain_concentration(geom, C_ti, P₀_proj)
     CA_ref = MeanFieldHomogenization.Schemes._apply_symmetrize(C_ti ⊡ A_raw, sym)
 
     A_dil, CA = MeanFieldHomogenization.Schemes._phase_dilute_and_stress_average(rve, :I, :C, C_m)
@@ -341,7 +341,7 @@ end
         geom = rve.phases[:I].geometry
         @test _vals(A) == _vals(
             MeanFieldHomogenization.Schemes._apply_symmetrize(
-                gradient_gradient_loc(geom, TensISO{3}(20.0), K_proj), symK
+                gradient_gradient_concentration(geom, TensISO{3}(20.0), K_proj), symK
             )
         )
         @test _vals(N) == _vals(

@@ -33,7 +33,7 @@ end
 function _eshelby(ω, C₁, C₀, εa, εt)
     # MFH sorts an Ellipsoid's semi-axes, longest onto ê₁, so the loading is
     # permuted into that frame and read back.
-    A = strain_strain_loc(Ellipsoid(ω, 1.0, 1.0), C₁, C₀)
+    A = strain_strain_concentration(Ellipsoid(ω, 1.0, 1.0), C₁, C₀)
     Ep = TensND.Tens(
         TensND.SymmetricTensor{2, 3}((i, j) -> i != j ? 0.0 : (i == 1 ? εa : εt))
     )

@@ -17,7 +17,7 @@ The contract itself (four levels, three entry gates, the *amount × contribution
 seam) is specified in `docs/src/developer/adding_inclusion.md`; the user-facing
 tutorial is `docs/src/manual/custom_inclusions.md`.
 
-Loaded after `localization.jl` and `contribution.jl`, because the fallbacks
+Loaded after `concentration.jl` and `contribution.jl`, because the fallbacks
 here `invoke` the generic methods defined there.
 """
 module CustomInclusions

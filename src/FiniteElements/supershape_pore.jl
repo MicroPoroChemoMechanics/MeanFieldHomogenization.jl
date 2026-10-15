@@ -12,7 +12,7 @@
 #
 #      ℕ = 𝔸_σε - ℂ₀:𝔸_εε ,        ℍ = (𝔸_εε - 𝕊₀:𝔸_σε):𝕊₀ ,
 #
-#  in which the stress-side localization of a cavity is **exactly zero** — no
+#  in which the stress-side concentration of a cavity is **exactly zero** — no
 #  stress inside, by definition.  They collapse to `ℕ = -ℂ₀:𝔸` and `ℍ = 𝔸:𝕊₀`,
 #  which is the right answer for a pore, reached with no `ℂ₁` anywhere in it.
 #
@@ -31,7 +31,7 @@
 
 [`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait) of
 [`FESupershapePore`](@ref). No kernel dispatches on it — the inclusion supplies
-its own localization tensors.
+its own concentration tensors.
 """
 struct SupershapePoreShape end
 
@@ -87,7 +87,7 @@ add_phase!(rve, :pores, pore, Dict(:C => C₀); fraction = 0.05)
 homogenize(rve, MoriTanaka(), :C)
 ```
 
-See also [`FECellMeshOptions`](@ref), [`fe_cell_localization`](@ref),
+See also [`FECellMeshOptions`](@ref), [`fe_cell_concentration`](@ref),
 [`fe_cell_mesh_report`](@ref).
 """
 struct FESupershapePore{
@@ -284,9 +284,9 @@ _pore_polar_semiaxis(shape::Superspheroid) = shape.c
 # ─── The memoized solve ──────────────────────────────────────────────────────
 
 """
-    fe_cell_localization(pore, P₀) -> A
+    fe_cell_concentration(pore, P₀) -> A
 
-The localization tensor of the cavity — ``\\mathbb A_{\\varepsilon\\varepsilon}``
+The concentration tensor of the cavity — ``\\mathbb A_{\\varepsilon\\varepsilon}``
 for a fourth-order reference, ``\\boldsymbol A_{\\nabla\\nabla}`` for a
 second-order one — in the **global** frame.
 
@@ -295,7 +295,7 @@ useful consequence: a whole family of *orientations* of the same shape in the
 same matrix shares one finite-element resolution. So a one-shot scheme costs a
 single solve even under an orientation average.
 """
-fe_cell_localization(s::FESupershapePore, P₀::TensND.AbstractTens) =
+fe_cell_concentration(s::FESupershapePore, P₀::TensND.AbstractTens) =
     _fe_cell_cached(s, P₀)
 
 # A surrogate answers in microseconds and depends on nothing a cache would
@@ -337,7 +337,7 @@ function _fe_cell_run(s::FESupershapePore, C₀::TensND.AbstractTens{4, 3})
     backend, space, built = _fe_cell_setup(s, 3)
     L = _to_local4(C₀, R)
     Cloc = Tensors.SymmetricTensor{4, 3}((i, j, k, l) -> L[i, j, k, l])
-    r = _cell_elastic_localization(
+    r = _cell_elastic_concentration(
         backend, space, Cloc, μ, ν, built.cavity_volume; octant = s.mesh.octant
     )
     s.cache.assemblies += 1
@@ -349,7 +349,7 @@ function _fe_cell_run(s::FESupershapePore, K₀::TensND.AbstractTens{2, 3})
     s.transport === nothing || return _pore_surrogate_response(s.transport, s, K₀)
     R = _fe_frame(s)
     backend, space, built = _fe_cell_setup(s, 1)
-    r = _cell_conduction_localization(
+    r = _cell_conduction_concentration(
         backend, space, k₀, built.cavity_volume; octant = s.mesh.octant
     )
     s.cache.assemblies += 1
@@ -362,20 +362,20 @@ end
 #  has no use for, so the middle argument is accepted and ignored — as for
 #  `LayeredSphere` and `FEExcenteredSphere`.
 
-Core.strain_strain_loc(
+Core.strain_strain_concentration(
     s::FESupershapePore, ::TensND.AbstractTens{4, 3}, C₀::TensND.AbstractTens{4, 3}; kw...
 ) = _fe_cell_cached(s, C₀)
 
-Core.gradient_gradient_loc(
+Core.gradient_gradient_concentration(
     s::FESupershapePore, ::TensND.AbstractTens{2, 3}, K₀::TensND.AbstractTens{2, 3}; kw...
 ) = _fe_cell_cached(s, K₀)
 
 """
-    Core.stress_strain_loc(pore, C₁, C₀)
-    Core.flux_gradient_loc(pore, K₁, K₀)
+    Core.stress_strain_concentration(pore, C₁, C₀)
+    Core.flux_gradient_concentration(pore, K₁, K₀)
 
 **Exactly zero.** A cavity carries no stress and no flux, so its stress-side
-localization vanishes identically — not to the discretization error, but as a
+concentration vanishes identically — not to the discretization error, but as a
 matter of definition.
 
 This is what makes the package's exact contribution identities collapse to
@@ -383,11 +383,11 @@ This is what makes the package's exact contribution identities collapse to
 ``\\mathbb H = \\mathbb A:\\mathbb S_0``, and it is why no contribution tensor
 is overridden here: the generic route is already the right one.
 """
-Core.stress_strain_loc(
+Core.stress_strain_concentration(
     ::FESupershapePore, ::TensND.AbstractTens{4, 3}, C₀::TensND.AbstractTens{4, 3}; kw...
 ) = TensND.TensCanonical(Tensors.Tensor{4, 3}((i, j, k, l) -> 0.0))
 
-Core.flux_gradient_loc(
+Core.flux_gradient_concentration(
     ::FESupershapePore, ::TensND.AbstractTens{2, 3}, K₀::TensND.AbstractTens{2, 3}; kw...
 ) = TensND.TensCanonical(Tensors.Tensor{2, 3}((i, j) -> 0.0))
 

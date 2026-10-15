@@ -86,7 +86,7 @@ julia --project=docs docs/make.jl
   ```
 
 - **US English, systematically.** All prose — comments, docstrings, error
-  messages, testset names, commit messages, docs — is US English (`localization`,
+  messages, testset names, commit messages, docs — is US English (`concentration`,
   `parameterized`, `center`, `color`, `behavior`). A pre-commit hook catches
   UK spellings before they reach CI:
 

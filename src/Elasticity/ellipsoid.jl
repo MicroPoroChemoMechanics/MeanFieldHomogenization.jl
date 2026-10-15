@@ -292,7 +292,7 @@ of revolution) to the equatorial semi-axis:
 
 The two equatorial semi-axes are fixed to ``1``. Eshelby/Hill computations
 are scale-invariant, so the absolute size of the inclusion has no effect
-on the localization tensor and only ``\\omega`` matters.
+on the concentration tensor and only ``\\omega`` matters.
 
 Optional `euler_angles` (tuple of length 0–3, ZYZ convention, radians)
 rotate the symmetry axis from ``\\underline{e}_3``. Without angles, the axis of

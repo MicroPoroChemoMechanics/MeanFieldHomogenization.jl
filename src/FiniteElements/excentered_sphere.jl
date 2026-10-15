@@ -110,7 +110,7 @@ exact Hervé-Zaoui answer — the reference this type is validated against.
 # What it provides
 
 The inclusion is **heterogeneous**, so it enters through gate B of the
-inclusion contract with *both* localization tensors — the strain-side
+inclusion contract with *both* concentration tensors — the strain-side
 ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` and the stress-side ``\\mathbb{A}_{\\sigma\\varepsilon}`` (resp. ``\\boldsymbol{A}_{\\nabla\\nabla}`` and ``\\boldsymbol{A}_{q\\nabla}`` in transport). All
 schemes that consume those two follow: `Dilute`, `MoriTanaka`, `Maxwell`,
 `PonteCastanedaWillis`, `SelfConsistent`, `DifferentialScheme`.
@@ -148,7 +148,7 @@ C₀ = iso_stiffness(10.0, 6.0)
 incl = FEExcenteredSphere(1.0, (C_core, C_shell);
                           core_fraction = 0.5, eccentricity = 0.4)
 
-A, B = fe_axi_localization(incl, C₀)          # both tensors, one solve
+A, B = fe_axi_concentration(incl, C₀)          # both tensors, one solve
 
 rve = RVE()
 add_phase!(rve, :m, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
@@ -217,7 +217,7 @@ _tens_order(::TensND.AbstractTens{O, 3}) where {O} = O
 
 [`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait) of
 [`FEExcenteredSphere`](@ref). No kernel dispatches on it — the inclusion
-supplies its own localization tensors.
+supplies its own concentration tensors.
 """
 struct ExcenteredSphereShape end
 
@@ -258,7 +258,7 @@ core_offset(s::FEExcenteredSphere) = s.eccentricity * (s.a - core_radius(s))
 #  `1 - w` for the shell, whatever the eccentricity.
 #
 #  (`AsymmetricSelfConsistent` does *not* depend on this: its iteration needs
-#  only the two localization tensors, and its branch-selection heuristic falls
+#  only the two concentration tensors, and its branch-selection heuristic falls
 #  back to the dilute estimate when no bound is available.  Supplying the
 #  averages here simply lets it use the Voigt bound, as it does everywhere
 #  else.)
@@ -283,19 +283,19 @@ Schemes._layer_reuss(s::FEExcenteredSphere, ref::TensND.AbstractTens) =
     _layer_average(s, ref, inv)
 
 """
-    fe_axi_localization(incl, P₀) -> (A, B)
+    fe_axi_concentration(incl, P₀) -> (A, B)
 
-The pair of localization tensors of an axisymmetric finite-element inclusion,
+The pair of concentration tensors of an axisymmetric finite-element inclusion,
 computed in one solve — the strain-side ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` and stress-side ``\\mathbb{A}_{\\sigma\\varepsilon}`` in
 elasticity, ``\\boldsymbol{A}_{\\nabla\\nabla}`` and ``\\boldsymbol{A}_{q\\nabla}`` in transport.
 
 Calling the two generics separately returns exactly the same tensors at no
 extra cost: they share the memoized solve.
 """
-fe_axi_localization(s::FEExcenteredSphere, P₀::TensND.AbstractTens; kw...) =
-    _fe_axi_localization(s, P₀; kw...)
+fe_axi_concentration(s::FEExcenteredSphere, P₀::TensND.AbstractTens; kw...) =
+    _fe_axi_concentration(s, P₀; kw...)
 
-# ─── Gate B — both localization tensors ──────────────────────────────────────
+# ─── Gate B — both concentration tensors ──────────────────────────────────────
 #
 #  The inclusion is heterogeneous, so the stress-side tensor is *not*
 #  `C₁ : A_εε` for any single `C₁`; it is measured on the finite-element
@@ -306,15 +306,15 @@ fe_axi_localization(s::FEExcenteredSphere, P₀::TensND.AbstractTens; kw...) =
 #  geometry object — so the middle argument is accepted and ignored.
 
 for (gen, order, idx) in (
-        (:(Core.strain_strain_loc), 4, 1),
-        (:(Core.stress_strain_loc), 4, 2),
-        (:(Core.gradient_gradient_loc), 2, 1),
-        (:(Core.flux_gradient_loc), 2, 2),
+        (:(Core.strain_strain_concentration), 4, 1),
+        (:(Core.stress_strain_concentration), 4, 2),
+        (:(Core.gradient_gradient_concentration), 2, 1),
+        (:(Core.flux_gradient_concentration), 2, 2),
     )
     @eval $gen(
         s::FEExcenteredSphere,
         ::TensND.AbstractTens{$order, 3},
         P₀::TensND.AbstractTens{$order, 3};
         kw...
-    ) = _fe_axi_localization(s, P₀; kw...)[$idx]
+    ) = _fe_axi_concentration(s, P₀; kw...)[$idx]
 end

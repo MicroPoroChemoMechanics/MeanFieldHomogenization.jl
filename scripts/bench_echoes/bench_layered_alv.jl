@@ -3,7 +3,7 @@
 #
 #  Loads the per-layer ALV concentration tensors computed by ECHOES Python
 #  (the trusted reference) and compares them to those produced by
-#  `MeanFieldHomogenization.jl`'s `bulk_localization_alv` / `shear_localization_alv`.
+#  `MeanFieldHomogenization.jl`'s `bulk_concentration_alv` / `shear_concentration_alv`.
 #
 #  Run order :
 #    1. python scripts/bench_echoes/bench_layered_alv.py
@@ -60,8 +60,8 @@ println("LayeredSphere : ", layer_count(sphere), " layers, radii = ", sphere.rad
 # ── Compute Julia per-layer alpha, beta Volterra blocks ─────────────────────
 
 C0_law = make_R0()
-α_jl = bulk_localization_alv(sphere, C0_law, T_grid)
-β_jl = shear_localization_alv(sphere, C0_law, T_grid)
+α_jl = bulk_concentration_alv(sphere, C0_law, T_grid)
+β_jl = shear_concentration_alv(sphere, C0_law, T_grid)
 
 println("Julia α[1] (n×n) :")
 display(α_jl[1])

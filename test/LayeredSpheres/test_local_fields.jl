@@ -7,7 +7,7 @@
 #   1. a homogeneous stack must give 𝔸 ≡ 𝕀 everywhere, origin and matrix
 #      included;
 #   2. for N = 1 the interior field is uniform and equals the Eshelby
-#      localization of an `Ellipsoid`;
+#      concentration of an `Ellipsoid`;
 #   3. for N = 1 the exterior field is `𝕀 − 𝕋 ⊡ τ` with `𝕋` the closed-form
 #      ball interaction tensor of `Interactions._pair_ball_iso` evaluated at
 #      a POINT receiver (`a = 0`) — exact at every distance, because the
@@ -20,14 +20,14 @@
 #   6. interface conditions — continuity for a perfect interface, and the
 #      PRESCRIBED jump for spring and membrane ones, re-derived from the
 #      field rather than from the transfer matrix that produced it;
-#   7. hard-coded Echoes `loc_eE` / `loc_sE` values, including the two
+#   7. hard-coded Echoes `conc_eE` / `conc_sE` values, including the two
 #      imperfect interface families.
 # =============================================================================
 
 using Test
 using MeanFieldHomogenization
-using MeanFieldHomogenization.LayeredSpheres: _bulk_localization, _shear_localization,
-    _iso_bulk_shear, _cond_localization
+using MeanFieldHomogenization.LayeredSpheres: _bulk_concentration, _shear_concentration,
+    _iso_bulk_shear, _cond_concentration
 using MeanFieldHomogenization.Interactions: _pair_ball_iso
 using TensND
 using LinearAlgebra
@@ -58,8 +58,8 @@ _unit(v) = v ./ norm(v)
             [0.0, 0.0, 0.0], [0.3, 0.2, 0.1], [0.9, 0.0, 0.0],
             [1.4, 0.5, -0.3], [2.5, 1.0, 1.0], [50.0, 0.0, 0.0],
         )
-        @test _maxabs(local_strain_strain_loc(sol, x) - LF_𝕀) < 1.0e-14
-        @test _maxabs(local_stress_stress_loc(sol, x) - LF_𝕀) < 1.0e-14
+        @test _maxabs(local_strain_strain_concentration(sol, x) - LF_𝕀) < 1.0e-14
+        @test _maxabs(local_stress_stress_concentration(sol, x) - LF_𝕀) < 1.0e-14
     end
     # The displacement must be the affine remote one, with no perturbation.
     for x in ([0.4, -0.2, 0.7], [3.0, 1.0, -1.0])
@@ -72,9 +72,9 @@ end
     R = 1.0
     sph = LayeredSphere((R,), (LF_C₁,))
     sol = LayeredSphereFields(sph, LF_C₀)
-    A_esh = strain_strain_loc(MeanFieldHomogenization.Elasticity.Ellipsoid(R), LF_C₁, LF_C₀)
+    A_esh = strain_strain_concentration(MeanFieldHomogenization.Elasticity.Ellipsoid(R), LF_C₁, LF_C₀)
     for x in ([0.0, 0.0, 0.0], [0.1, 0.2, 0.3], [0.5, -0.5, 0.5], [0.99, 0.0, 0.0])
-        @test _maxabs(local_strain_strain_loc(sol, x) - A_esh) < 1.0e-13
+        @test _maxabs(local_strain_strain_concentration(sol, x) - A_esh) < 1.0e-13
     end
     # With a perfect interface the core carries no mode-2 amplitude at all.
     @test abs(sol.abcd[1][2]) < 1.0e-15
@@ -84,22 +84,22 @@ end
     R = 1.0
     sph = LayeredSphere((R,), (LF_C₁,))
     sol = LayeredSphereFields(sph, LF_C₀)
-    A₁ = strain_strain_loc(MeanFieldHomogenization.Elasticity.Ellipsoid(R), LF_C₁, LF_C₀)
+    A₁ = strain_strain_concentration(MeanFieldHomogenization.Elasticity.Ellipsoid(R), LF_C₁, LF_C₀)
     τ = (LF_C₁ - LF_C₀) ⊡ A₁                     # uniform polarization of the ball
     for ρ in (1.6, 2.6, 5.4, 20.0)
         x = ρ * R * _unit([1.0, 0.3, -0.2])
         𝕋 = _pair_ball_iso(0.0, R, x, LF_C₀)     # point receiver: a = 0
-        @test _maxabs(local_strain_strain_loc(sol, x) - (LF_𝕀 - 𝕋 ⊡ τ)) < 1.0e-13
+        @test _maxabs(local_strain_strain_concentration(sol, x) - (LF_𝕀 - 𝕋 ⊡ τ)) < 1.0e-13
     end
 end
 
 @testset "local fields — shell averages reproduce α_k and β_k" begin
     sph = LayeredSphere((1.0, 2.0, 3.5), (LF_C₁, LF_C₂, LF_C₃))
     sol = LayeredSphereFields(sph, LF_C₀)
-    α = _bulk_localization(sph, _iso_bulk_shear(LF_C₀)...)
-    β = _shear_localization(sph, LF_C₀)
+    α = _bulk_concentration(sph, _iso_bulk_shear(LF_C₀)...)
+    β = _shear_concentration(sph, LF_C₀)
     for k in 1:3
-        a, b = shell_localization(sol, k)
+        a, b = shell_concentration(sol, k)
         @test a ≈ α[k] rtol = 1.0e-14
         @test b ≈ β[k] rtol = 1.0e-13
     end
@@ -117,7 +117,7 @@ end
         num = zero(LF_𝕀)
         for (ξ, w) in zip(gl_x, gl_w)
             r = mid + half * ξ
-            A = local_strain_strain_loc(sol, [r, 0.0, 0.0]; side = :inner)
+            A = local_strain_strain_concentration(sol, [r, 0.0, 0.0]; side = :inner)
             num += (w * half * r^2) * isotropify(A)
         end
         avg = (3 / (rb^3 - ra^3)) * num
@@ -130,8 +130,8 @@ end
     sol = LayeredSphereFields(sph, LF_C₀)
     # Two decades apart, and far enough out that the subleading 1/r⁵ mode is
     # negligible — at r = 10 it still biases the ratio by ~3 %.
-    e1 = _maxabs(local_strain_strain_loc(sol, [100.0, 0.0, 0.0]) - LF_𝕀)
-    e2 = _maxabs(local_strain_strain_loc(sol, [1000.0, 0.0, 0.0]) - LF_𝕀)
+    e1 = _maxabs(local_strain_strain_concentration(sol, [100.0, 0.0, 0.0]) - LF_𝕀)
+    e2 = _maxabs(local_strain_strain_concentration(sol, [1000.0, 0.0, 0.0]) - LF_𝕀)
     @test e1 < 1.0e-4
     @test e1 / e2 ≈ 1000.0 rtol = 1.0e-2         # the decaying mode is 1/r³
 end
@@ -203,8 +203,8 @@ end
     sol_1 = LayeredSphereFields(sph_1, LF_C₀)
     @test abs(sol_1.abcd[1][2]) > 1.0e-6
     @test _maxabs(
-        local_strain_strain_loc(sol_1, [0.9, 0.0, 0.0]) -
-            local_strain_strain_loc(sol_1, [0.1, 0.0, 0.0])
+        local_strain_strain_concentration(sol_1, [0.9, 0.0, 0.0]) -
+            local_strain_strain_concentration(sol_1, [0.1, 0.0, 0.0])
     ) > 1.0e-6
 
     # Membrane: displacement continuous, traction jumping.
@@ -231,14 +231,14 @@ end
     𝕊₀ = inv(LF_C₀)
     for (r, θ, φ) in ((0.5, 0.7, 0.9), (1.4, 2.1, -0.3), (5.0, 1.0, 2.5))
         x = [r * sin(θ) * cos(φ), r * sin(θ) * sin(φ), r * cos(θ)]
-        A = local_strain_strain_loc(sol, x)
-        @test _maxabs(A - local_strain_strain_loc(sol, r, θ, φ)) < 1.0e-14
+        A = local_strain_strain_concentration(sol, x)
+        @test _maxabs(A - local_strain_strain_concentration(sol, r, θ, φ)) < 1.0e-14
 
         k = get_layer(sph, r)
         ℂ = region_stiffness(sol, k)
-        @test _maxabs(local_stress_strain_loc(sol, x) - ℂ ⊡ A) < 1.0e-12
-        @test _maxabs(local_strain_stress_loc(sol, x) - A ⊡ 𝕊₀) < 1.0e-14
-        @test _maxabs(local_stress_stress_loc(sol, x) - ℂ ⊡ A ⊡ 𝕊₀) < 1.0e-12
+        @test _maxabs(local_stress_strain_concentration(sol, x) - ℂ ⊡ A) < 1.0e-12
+        @test _maxabs(local_strain_stress_concentration(sol, x) - A ⊡ 𝕊₀) < 1.0e-14
+        @test _maxabs(local_stress_stress_concentration(sol, x) - ℂ ⊡ A ⊡ 𝕊₀) < 1.0e-12
 
         # The field evaluators are the tensors applied to the loading.
         @test local_strain(sol, x, LF_ε∞) ≈ A ⊡ LF_ε∞
@@ -252,8 +252,8 @@ end
     Q = Matrix(rot3(0.4, 0.9, -0.7))
     x = [0.7, -0.4, 1.1]
     Qx = Q * x
-    A = get_array(local_strain_strain_loc(sol, x))
-    AQ = get_array(local_strain_strain_loc(sol, Qx))
+    A = get_array(local_strain_strain_concentration(sol, x))
+    AQ = get_array(local_strain_strain_concentration(sol, Qx))
     rotated = [
         sum(
             Q[i, a] * Q[j, b] * Q[k, c] * Q[l, d] * A[a, b, c, d]
@@ -276,24 +276,24 @@ end
 
     sol = LayeredSphereFields(sph, LF_C₀)
     x = [1.0, 0.0, 0.0]
-    @test local_strain_strain_loc(sol, x; layer = 1) ==
-        local_strain_strain_loc(sol, x; side = :inner)
-    @test local_strain_strain_loc(sol, x; layer = 2) ==
-        local_strain_strain_loc(sol, x; side = :outer)
-    @test_throws ArgumentError local_strain_strain_loc(sol, x; layer = 4)
+    @test local_strain_strain_concentration(sol, x; layer = 1) ==
+        local_strain_strain_concentration(sol, x; side = :inner)
+    @test local_strain_strain_concentration(sol, x; layer = 2) ==
+        local_strain_strain_concentration(sol, x; side = :outer)
+    @test_throws ArgumentError local_strain_strain_concentration(sol, x; layer = 4)
 end
 
 @testset "local fields — genericity: Dual, BigFloat, near-incompressible" begin
     # A single layer's modulus as the differentiation variable, the others
     # staying `Float64` — the heterogeneous case.
-    f(p) = local_strain_strain_loc(
+    f(p) = local_strain_strain_concentration(
         LayeredSphere((1.0, 2.0), (_iso(100.0 * p, 0.2), LF_C₂)), LF_C₀, [0.5, 0.0, 0.0]
     )[1, 1, 1, 1]
     h = 1.0e-6
     @test ForwardDiff.derivative(f, 1.0) ≈ (f(1.0 + h) - f(1.0 - h)) / (2h) rtol = 1.0e-7
 
     # One interface radius as the variable — a mixed-eltype radii tuple.
-    g(r₁) = local_strain_strain_loc(
+    g(r₁) = local_strain_strain_concentration(
         LayeredSphere((r₁, 2.0), (LF_C₁, LF_C₂)), LF_C₀, [0.5, 0.0, 0.0]
     )[1, 1, 1, 1]
     @test ForwardDiff.derivative(g, 0.9) ≈ (g(0.9 + h) - g(0.9 - h)) / (2h) rtol = 1.0e-6
@@ -302,20 +302,20 @@ end
         Cb₀ = _iso(big(30.0), big(3) / 10)
         Cb₁ = _iso(big(100.0), big(2) / 10)
         Cb₂ = _iso(big(10.0), big(35) / 100)
-        Ab = local_strain_strain_loc(
+        Ab = local_strain_strain_concentration(
             LayeredSphere((big(1.0), big(2.0)), (Cb₁, Cb₂)), Cb₀,
             [big(1) / 2, big(0), big(0)]
         )
-        Af = local_strain_strain_loc(
+        Af = local_strain_strain_concentration(
             LayeredSphere((1.0, 2.0), (LF_C₁, LF_C₂)), LF_C₀, [0.5, 0.0, 0.0]
         )
         @test Float64(maximum(abs, components_canon(Ab - Af))) < 1.0e-14
     end
 
-    # Near-incompressible core: finite, and the volumetric localization → 0.
+    # Near-incompressible core: finite, and the volumetric concentration → 0.
     C_inc = TensISO{3}(3 * 1.0e14, 2 * 1.0)
     sol = LayeredSphereFields(LayeredSphere((1.0, 2.0), (C_inc, LF_C₂)), LF_C₀)
-    A = local_strain_strain_loc(sol, [0.5, 0.0, 0.0])
+    A = local_strain_strain_concentration(sol, [0.5, 0.0, 0.0])
     @test all(isfinite, get_array(A))
     @test abs(sol.AB[1][1]) < 1.0e-10
 end
@@ -327,12 +327,12 @@ end
     # cannot be found by comparison; the error must say so instead of dying
     # inside the lookup loop.  (Checked here with a stand-in that is likewise
     # not `is_hard_numeric`-comparable only through the documented path.)
-    @test_throws ArgumentError local_strain_strain_loc(sol, [0.5, 0.0, 0.0]; layer = 0)
+    @test_throws ArgumentError local_strain_strain_concentration(sol, [0.5, 0.0, 0.0]; layer = 0)
 end
 
 # ── Echoes cross-check ──────────────────────────────────────────────────────
 #
-# Hard-coded from the C++ reference (`sphere_nlayers.loc_eE` / `loc_sE`,
+# Hard-coded from the C++ reference (`sphere_nlayers.conc_eE` / `conc_sE`,
 # rows rotated to the canonical basis with `rot6(θ, φ)`), 2-layer sphere
 # r = (1, 2), core E=100/ν=0.2, shell E=10/ν=0.35, matrix E=30/ν=0.3.
 # The stiffness convention matches: Echoes' `PRIMALDISC [kn, kt]` takes the
@@ -388,8 +388,8 @@ end
         sph = LayeredSphere((1.0, 2.0), (LF_C₁, LF_C₂); interfaces)
         sol = LayeredSphereFields(sph, LF_C₀)
         for (r, θ, φ, eE_diag, sE_diag) in pts
-            A = Matrix(KM(local_strain_strain_loc(sol, r, θ, φ)))
-            S = Matrix(KM(local_stress_strain_loc(sol, r, θ, φ)))
+            A = Matrix(KM(local_strain_strain_concentration(sol, r, θ, φ)))
+            S = Matrix(KM(local_stress_strain_concentration(sol, r, θ, φ)))
             @test [A[i, i] for i in 1:6] ≈ eE_diag rtol = 1.0e-10
             @test [S[i, i] for i in 1:6] ≈ sE_diag rtol = 1.0e-10
         end
@@ -417,10 +417,10 @@ end
         @test collect(local_gradient(sol1, x, ∇T∞)) ≈ (3 * 2.0 / 24.0) .* ∇T∞ rtol = 1.0e-12
     end
 
-    # Multi-layer: the per-layer amplitudes are the production localizations.
+    # Multi-layer: the per-layer amplitudes are the production concentrations.
     sph = LayeredSphere((1.0, 2.0), (K₁, K₂))
     sol = LayeredSphereTransportFields(sph, K₀)
-    α = _cond_localization(sph, 2.0)
+    α = _cond_concentration(sph, 2.0)
     for k in 1:2
         @test sol.AB[k][1] ≈ α[k] rtol = 1.0e-14
     end
@@ -444,11 +444,11 @@ end
             collect(local_gradient(sol, x₀, ∇T∞)) atol = 1.0e-12
     end
 
-    # Far field, and the flux localization is −k(x) times the gradient one.
+    # Far field, and the flux concentration is −k(x) times the gradient one.
     @test collect(local_gradient(sol, [1.0e5, 0.0, 0.0], ∇T∞)) ≈ ∇T∞ atol = 1.0e-8
     for (x, k) in (([0.5, 0.0, 0.0], 20.0), ([1.5, 0.0, 0.0], 0.5), ([9.0, 0.0, 0.0], 2.0))
-        @test get_array(local_flux_gradient_loc(sol, x)) ≈
-            -k * get_array(local_gradient_gradient_loc(sol, x)) rtol = 1.0e-13
+        @test get_array(local_flux_gradient_concentration(sol, x)) ≈
+            -k * get_array(local_gradient_gradient_concentration(sol, x)) rtol = 1.0e-13
     end
 
     # An impermeable core (k = 0) carries no FLUX — the gradient is finite and
@@ -459,7 +459,7 @@ end
     x0 = [0.6, 0.1, -0.2]
     @test norm(collect(local_flux(sol0, x0, ∇T∞))) < 1.0e-13
     @test norm(collect(local_gradient(sol0, x0, ∇T∞))) > 1.0e-2
-    @test sol0.AB[1][1] ≈ _cond_localization(sph0, 2.0)[1] rtol = 1.0e-14
+    @test sol0.AB[1][1] ≈ _cond_concentration(sph0, 2.0)[1] rtol = 1.0e-14
     # A single impermeable sphere: the classical 3k₀/(2k₀) = 3/2.
     sol0₁ = LayeredSphereTransportFields(LayeredSphere((1.0,), (TensISO{3}(0.0),)), K₀)
     @test collect(local_gradient(sol0₁, [0.5, 0.0, 0.0], ∇T∞)) ≈ 1.5 .* ∇T∞ rtol = 1.0e-13
@@ -490,7 +490,7 @@ function _ball_strain_average(sol, radii, r_max, ε∞)
         mid, half = (ra + rb) / 2, (rb - ra) / 2
         for (ξ, w) in zip(LF_GLX, LF_GLW)
             r = mid + half * ξ
-            A = isotropify(local_strain_strain_loc(sol, [r, 0.0, 0.0]; side = :inner))
+            A = isotropify(local_strain_strain_concentration(sol, [r, 0.0, 0.0]; side = :inner))
             c = w * half * r^2
             num = num === nothing ? c * (A ⊡ ε∞) : num + c * (A ⊡ ε∞)
         end
@@ -543,7 +543,7 @@ end
             layer_modulus(sph, k) ⊡ layer_strain_average(sph, LF_C₀, LF_ε∞, k)
     end
     @test get_array(sphere_stress_average(sph, LF_C₀, LF_ε∞)) ≈
-        get_array(stress_strain_loc(sph, LF_C₁, LF_C₀) ⊡ LF_ε∞) rtol = 1.0e-13
+        get_array(stress_strain_concentration(sph, LF_C₁, LF_C₀) ⊡ LF_ε∞) rtol = 1.0e-13
 
     # Against the pointwise field, layer 2.
     ra, rb = 1.0, 2.0
@@ -551,7 +551,7 @@ end
     num = nothing
     for (ξ, w) in zip(LF_GLX, LF_GLW)
         r = mid + half * ξ
-        A = isotropify(local_strain_strain_loc(sol, [r, 0.0, 0.0]; side = :inner))
+        A = isotropify(local_strain_strain_concentration(sol, [r, 0.0, 0.0]; side = :inner))
         c = w * half * r^2
         σ = LF_C₂ ⊡ (A ⊡ LF_ε∞)
         num = num === nothing ? c * σ : num + c * σ
@@ -568,7 +568,7 @@ end
     gap = maximum(
         abs,
         get_array(sphere_stress_average(sm, LF_C₀, LF_ε∞)) .-
-            get_array(stress_strain_loc(sm, LF_C₁, LF_C₀) ⊡ LF_ε∞)
+            get_array(stress_strain_concentration(sm, LF_C₁, LF_C₀) ⊡ LF_ε∞)
     )
     @test gap > 1.0e-2
 
@@ -577,11 +577,11 @@ end
     sphK = LayeredSphere((1.0, 2.0), (TensISO{3}(20.0), TensISO{3}(0.5)))
     G = [0.3, -0.7, 1.0]
     for k in 1:2
-        A = gradient_gradient_loc(sphK, K₀; layer = k)
+        A = gradient_gradient_concentration(sphK, K₀; layer = k)
         @test collect(layer_gradient_average(sphK, K₀, G, k)) ≈
             [sum(A[i, j] * G[j] for j in 1:3) for i in 1:3] rtol = 1.0e-14
     end
-    A3 = gradient_gradient_loc(sphK, TensISO{3}(20.0), K₀)
+    A3 = gradient_gradient_concentration(sphK, TensISO{3}(20.0), K₀)
     @test collect(sphere_gradient_average(sphK, K₀, G)) ≈
         [sum(A3[i, j] * G[j] for j in 1:3) for i in 1:3] rtol = 1.0e-14
     @test collect(layer_flux_average(sphK, K₀, G, 1)) ≈
@@ -591,7 +591,7 @@ end
     # (B̃ ≠ 0) but contributes nothing to the directional average.
     solK = LayeredSphereTransportFields(sphK, K₀)
     @test abs(solK.AB[2][2]) > 1.0e-2
-    tr3(r) = let a = get_array(local_gradient_gradient_loc(solK, [r, 0.0, 0.0]; side = :inner))
+    tr3(r) = let a = get_array(local_gradient_gradient_concentration(solK, [r, 0.0, 0.0]; side = :inner))
         (a[1, 1] + a[2, 2] + a[3, 3]) / 3
     end
     for rs in ((0.1, 0.5, 0.99), (1.01, 1.5, 1.99), (2.5, 6.0, 40.0))

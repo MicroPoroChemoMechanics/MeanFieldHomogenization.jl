@@ -1,7 +1,7 @@
 # The superspheroidal cavity by axisymmetric Fourier elements.
 #
 # Two oracles, and the second is the strong one. At `p = 1` the body is an
-# exact spheroid, whose cavity localization the package already knows in closed
+# exact spheroid, whose cavity concentration the package already knows in closed
 # form through `hill_tensor` — so `[𝕀 − ℙ:ℂ₀]⁻¹` is the answer, prolate and
 # oblate, in both physics. And the response must be transversely isotropic,
 # which `A₁₂₁₂ = (A₁₁₁₁ − A₁₁₂₂)/2` checks for free and to machine precision:
@@ -32,7 +32,7 @@ const _AXP_C0 = iso_stiffness(
 )
 const _AXP_K0 = TensISO{3}(1.0)
 
-"Exact cavity localization of a spheroid of aspect ratio `c`, canonical Kelvin."
+"Exact cavity concentration of a spheroid of aspect ratio `c`, canonical Kelvin."
 _axp_exact4(c) = inv(Matrix(1.0I, 6, 6) - _kmc(hill_tensor(Spheroid(c), _AXP_C0)) * _kmc(_AXP_C0))
 _axp_exact2(c) = inv(Matrix(1.0I, 3, 3) - _mc(hill_tensor(Spheroid(c), _AXP_K0)) * _mc(_AXP_K0))
 
@@ -80,8 +80,8 @@ _axp_pore(sh; nradial = 24, radius_ratio = 8.0, kw...) = FEAxiSupershapePore(
         # truncation, not discretization — see the sweep below.
         for (c, tol4, tol2) in ((0.5, 2.0e-3, 1.0e-3), (1.0, 5.0e-4, 1.0e-4), (2.0, 5.0e-4, 1.0e-4))
             pore = _axp_pore(Superspheroid(1.0, c, 1.0))
-            A = _kmc(strain_strain_loc(pore, _AXP_C0, _AXP_C0))
-            a = _mc(gradient_gradient_loc(pore, _AXP_K0, _AXP_K0))
+            A = _kmc(strain_strain_concentration(pore, _AXP_C0, _AXP_C0))
+            a = _mc(gradient_gradient_concentration(pore, _AXP_K0, _AXP_K0))
             Aex, aex = _axp_exact4(c), _axp_exact2(c)
             @test norm(A - Aex) / norm(Aex) < tol4
             @test norm(a - aex) / norm(aex) < tol2
@@ -95,12 +95,12 @@ _axp_pore(sh; nradial = 24, radius_ratio = 8.0, kw...) = FEAxiSupershapePore(
         # `(A₁₁₁₁ − A₁₁₂₂)/2` to round-off.
         for c in (0.5, 1.0, 2.0), p in (0.6, 1.0)
             pore = _axp_pore(Superspheroid(1.0, c, p); nradial = 14, radius_ratio = 4.0)
-            A = _kmc(strain_strain_loc(pore, _AXP_C0, _AXP_C0))
+            A = _kmc(strain_strain_concentration(pore, _AXP_C0, _AXP_C0))
             @test A[6, 6] / 2 ≈ (A[1, 1] - A[1, 2]) / 2 atol = 1.0e-12
             @test A[1, 1] ≈ A[2, 2] atol = 1.0e-12
             @test A[4, 4] ≈ A[5, 5] atol = 1.0e-12
             @test maximum(abs, A[1:3, 4:6]) < 1.0e-12
-            a = _mc(gradient_gradient_loc(pore, _AXP_K0, _AXP_K0))
+            a = _mc(gradient_gradient_concentration(pore, _AXP_K0, _AXP_K0))
             @test a[1, 1] ≈ a[2, 2] atol = 1.0e-12
             @test maximum(abs, a - Diagonal(diag(a))) < 1.0e-12
         end
@@ -136,7 +136,7 @@ _axp_pore(sh; nradial = 24, radius_ratio = 8.0, kw...) = FEAxiSupershapePore(
         # the sharpest single number in the file.
         for nr in (16, 32)
             pore = _axp_pore(Superspheroid(1.0, 1.0, 1.0); nradial = nr, radius_ratio = 8.0)
-            a = _mc(gradient_gradient_loc(pore, _AXP_K0, _AXP_K0))
+            a = _mc(gradient_gradient_concentration(pore, _AXP_K0, _AXP_K0))
             @test a[1, 1] ≈ 1.5 rtol = 2.0e-5
             @test a[3, 3] ≈ 1.5 rtol = 2.0e-5
         end
@@ -144,8 +144,8 @@ _axp_pore(sh; nradial = 24, radius_ratio = 8.0, kw...) = FEAxiSupershapePore(
 
     @testset "a cavity carries no stress and no flux" begin
         pore = _axp_pore(Superspheroid(1.0, 1.5, 0.7); nradial = 14, radius_ratio = 4.0)
-        @test maximum(abs, _kmc(stress_strain_loc(pore, _AXP_C0, _AXP_C0))) == 0.0
-        @test maximum(abs, _mc(flux_gradient_loc(pore, _AXP_K0, _AXP_K0))) == 0.0
+        @test maximum(abs, _kmc(stress_strain_concentration(pore, _AXP_C0, _AXP_C0))) == 0.0
+        @test maximum(abs, _mc(flux_gradient_concentration(pore, _AXP_K0, _AXP_K0))) == 0.0
         @test !MeanFieldHomogenization.Core.is_homogeneous_inclusion(pore)
     end
 
@@ -166,11 +166,11 @@ _axp_pore(sh; nradial = 24, radius_ratio = 8.0, kw...) = FEAxiSupershapePore(
     @testset "memoization, and the cache is per reference" begin
         pore = _axp_pore(Superspheroid(1.0, 1.0, 1.0); nradial = 12, radius_ratio = 4.0)
         @test fe_assembly_count(pore) == 0
-        gradient_gradient_loc(pore, _AXP_K0, _AXP_K0)
+        gradient_gradient_concentration(pore, _AXP_K0, _AXP_K0)
         @test fe_assembly_count(pore) == 1
-        gradient_gradient_loc(pore, _AXP_K0, _AXP_K0)
+        gradient_gradient_concentration(pore, _AXP_K0, _AXP_K0)
         @test fe_assembly_count(pore) == 1
-        gradient_gradient_loc(pore, TensISO{3}(4.0), TensISO{3}(4.0))
+        gradient_gradient_concentration(pore, TensISO{3}(4.0), TensISO{3}(4.0))
         @test fe_assembly_count(pore) == 2
         fe_reset!(pore)
         @test fe_assembly_count(pore) == 0
@@ -184,7 +184,7 @@ _axp_pore(sh; nradial = 24, radius_ratio = 8.0, kw...) = FEAxiSupershapePore(
         # uses the closed-form isotropic dipole field.
         pore = _axp_pore(sh; nradial = 12, radius_ratio = 4.0)
         Cti = TensTI{4}(20.0, 30.0, 4.0, 5.0, 8.0, (0, 0, 1))
-        @test_throws ArgumentError strain_strain_loc(pore, Cti, Cti)
+        @test_throws ArgumentError strain_strain_concentration(pore, Cti, Cti)
         # And sensitivity is refused while no surrogate answers.
         @test_throws ErrorException MeanFieldHomogenization.Schemes._replace_geom_field(
             pore, Val(:p), nothing, 0.9

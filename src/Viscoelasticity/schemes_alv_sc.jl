@@ -190,7 +190,7 @@ end
 # sphere against the running estimate `C`, from its recurrences: what a phase
 # with a Hill kernel gets from its dilute concentration.
 function _alv_layered_AB(s::LayeredSphere, C::AbstractMatrix, times)
-    A = strain_strain_loc_alv(s, C, times)
+    A = strain_strain_concentration_alv(s, C, times)
     return A, stiffness_contribution_alv(s, C, times) .+ C * A
 end
 
@@ -211,7 +211,7 @@ end
 # number in one of its layers, for instance), probed once against `C_0`.
 function _alv_layered_eltype(Tp, layered_data, C_0, times)
     for d in layered_data
-        Tp = promote_type(Tp, eltype(strain_strain_loc_alv(d.geom, C_0, times)), typeof(d.f))
+        Tp = promote_type(Tp, eltype(strain_strain_concentration_alv(d.geom, C_0, times)), typeof(d.f))
     end
     return Tp
 end

@@ -1,7 +1,7 @@
 {
     "provenance": {
         "epochs": 5878,
-        "teacher": "fe_axi_localization(FEExcenteredSphere, TensISO{4}) — axisymmetric Fourier finite elements",
+        "teacher": "fe_axi_concentration(FEExcenteredSphere, TensISO{4}) — axisymmetric Fourier finite elements",
         "max_rel_error": [
             0.0005279802169999752,
             0.0005071920700006439,
@@ -4875,7 +4875,7 @@
             "identity",
             "identity"
         ],
-        "class": "loc_ti",
+        "class": "strain_concentration_ti",
         "shift": [
             1.039122826477922,
             1.0435466194132321,

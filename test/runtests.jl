@@ -122,7 +122,7 @@ end
         include("Elasticity/test_hill_cylinder.jl")
         include("Elasticity/test_shape_tensor.jl")
         include("Elasticity/test_eshelby.jl")
-        include("Elasticity/test_localization.jl")
+        include("Elasticity/test_concentration.jl")
         include("Elasticity/test_contribution.jl")
         include("Elasticity/test_hill_nestedquadgk_oblate.jl")
         include("Elasticity/test_degenerate_shapes.jl")
@@ -149,7 +149,7 @@ end
         include("Conductivity/test_hill_order2.jl")
         include("Conductivity/test_hill_cylinder.jl")
         include("Conductivity/test_eshelby.jl")
-        include("Conductivity/test_localization.jl")
+        include("Conductivity/test_concentration.jl")
     end
 
     # `Interactions` sits between the one-inclusion kernels it builds on and
@@ -187,7 +187,7 @@ end
         include("Schemes/test_sensitivities.jl")
         include("Schemes/test_symmetrize.jl")
         include("Schemes/test_orientation.jl")
-        include("Schemes/test_loc_bundles.jl")
+        include("Schemes/test_concentration_bundles.jl")
         include("Schemes/test_crack_families.jl")
     end
 
@@ -204,7 +204,7 @@ end
     # keeps this testset deterministic and independent of the Lux stack.
     @testset "NeuralInclusions" begin
         include("NeuralInclusions/test_neural_inclusion.jl")
-        # The cubic localization class and the surrogate that stands in for a
+        # The cubic concentration class and the surrogate that stands in for a
         # supershape cell. The teacher is synthetic -- a closed-form cubic
         # tensor -- so no mesh and no solve appear anywhere; the fit itself is
         # guarded by `NN_HAS_LUX` like the others.

@@ -5,7 +5,7 @@
     at each increment,
     [Self-consistent schemes](@ref th-scheme-self-consistent), the other way of
     embedding the inclusions in the effective medium, and
-    [Localization and contribution tensors](@ref th-localization) for the
+    [Concentration and contribution tensors](@ref th-concentration) for the
     contribution tensors ``\mathbb N_i`` and ``\mathbb H_i`` integrated below.
 
 The self-consistent schemes embed every inclusion in the final effective medium
@@ -128,14 +128,14 @@ of phase `i` in the current medium,
 
 ``\mathbb A_{\varepsilon\varepsilon,i}`` and ``\mathbb A_{\sigma\varepsilon,i}`` being the
 strain and stress concentration tensors of phase `i` in the current medium, as
-defined in [Localization](@ref th-localization).
+defined in [Concentration](@ref th-concentration).
 
 Written this way, ``\mathbb N_i`` needs only the phase's concentration
 tensors — **not** a Hill tensor, and not even a uniform phase property.
 It is therefore available for every inclusion family the package
 supports (ellipsoids, cylinders, flat cracks, multi-layer spheres and
 spheroids), which is why the differential scheme accepts all of them
-without special-casing. See [Localization](@ref th-localization).
+without special-casing. See [Concentration](@ref th-concentration).
 
 Hence the ODE integrated by [`DifferentialScheme`](@ref):
 

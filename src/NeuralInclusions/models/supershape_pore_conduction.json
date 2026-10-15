@@ -1,7 +1,7 @@
 {
     "provenance": {
         "epochs": 1280,
-        "teacher": "gradient_gradient_loc(FESupershapePore, TensISO{2}) — octant cell, level 3",
+        "teacher": "gradient_gradient_concentration(FESupershapePore, TensISO{2}) — octant cell, level 3",
         "max_rel_error": [
             0.0014736203870271598
         ],
@@ -725,7 +725,7 @@
         "kind": [
             "identity"
         ],
-        "class": "grad_loc_iso2",
+        "class": "gradient_concentration_iso2",
         "shift": [
             1.526973906279807
         ],

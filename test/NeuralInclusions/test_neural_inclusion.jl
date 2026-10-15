@@ -19,7 +19,7 @@
 #      ratios no label was ever generated at.
 #   8. `save_surrogate` / `load_surrogate` round trip.
 #   9. The domain guard.
-#  10. Gate B plumbing (`NeuralLocalizationInclusion`) and its guard rails.
+#  10. Gate B plumbing (`NeuralConcentrationInclusion`) and its guard rails.
 #  11. Constructor guard rails.
 #
 #  Tests 2, 8, 9, 10 and 11 use *untrained* networks where the values are
@@ -119,7 +119,7 @@ end
     incl = NeuralHillInclusion((1.0, 1.0, 0.4); elastic = s, guard = :error)
 
     @testset "zero contrast gives the identity to machine precision" begin
-        A = strain_strain_loc(incl, NN_C_M, NN_C_M)
+        A = strain_strain_concentration(incl, NN_C_M, NN_C_M)
         @test get_array(A) ≈ get_array(TensISO{3}(1.0, 1.0)) atol = 1.0e-14
     end
 
@@ -427,7 +427,7 @@ end
     s2 = _nn_untrained(NI.DimensionlessHill(NI.HillTI2()), _NN_SPHEROID_BOX2)
     s2b = _nn_untrained(NI.DimensionlessHill(NI.HillTI2()), _NN_SPHEROID_BOX2; seed = 99)
 
-    incl = NeuralLocalizationInclusion(
+    incl = NeuralConcentrationInclusion(
         (1.0, 1.0, 0.4); strain = s4, stress = s4b,
         gradient = s2, flux = s2b, guard = :none
     )
@@ -436,16 +436,16 @@ end
     @test MeanFieldHomogenization.shape_trait(incl) === NI.NeuralShape
     @test MeanFieldHomogenization.dimension(incl) == 3
 
-    @testset "the four localization methods answer" begin
-        @test strain_strain_loc(incl, NN_C_I, NN_C_M) isa TensND.AbstractTens{4, 3}
-        @test stress_strain_loc(incl, NN_C_I, NN_C_M) isa TensND.AbstractTens{4, 3}
-        @test gradient_gradient_loc(incl, NN_K_I, NN_K_M) isa TensND.AbstractTens{2, 3}
-        @test flux_gradient_loc(incl, NN_K_I, NN_K_M) isa TensND.AbstractTens{2, 3}
+    @testset "the four concentration methods answer" begin
+        @test strain_strain_concentration(incl, NN_C_I, NN_C_M) isa TensND.AbstractTens{4, 3}
+        @test stress_strain_concentration(incl, NN_C_I, NN_C_M) isa TensND.AbstractTens{4, 3}
+        @test gradient_gradient_concentration(incl, NN_K_I, NN_K_M) isa TensND.AbstractTens{2, 3}
+        @test flux_gradient_concentration(incl, NN_K_I, NN_K_M) isa TensND.AbstractTens{2, 3}
     end
 
     @testset "the contributions take the exact heterogeneous branch" begin
-        A = strain_strain_loc(incl, NN_C_I, NN_C_M)
-        B = stress_strain_loc(incl, NN_C_I, NN_C_M)
+        A = strain_strain_concentration(incl, NN_C_I, NN_C_M)
+        B = stress_strain_concentration(incl, NN_C_I, NN_C_M)
         N = stiffness_contribution(incl, NN_C_I, NN_C_M)
         @test get_array(N) ≈ get_array(B) - get_array(NN_C_M ⊡ A) atol = 1.0e-12
         # And *not* the homogeneous formula, which the stress-side surrogate
@@ -460,7 +460,7 @@ end
 
     @testset "bounds follow the internal fractions" begin
         @test !MeanFieldHomogenization.Schemes.has_layer_average(incl)
-        bounded = NeuralLocalizationInclusion(
+        bounded = NeuralConcentrationInclusion(
             (1.0, 1.0, 0.4); strain = s4, stress = s4b, guard = :none,
             fractions = (0.3, 0.7), properties = (NN_C_I, NN_C_M)
         )
@@ -475,32 +475,32 @@ end
         # The silent-failure case the contract warns about: with only the strain
         # side, `Dilute` and `MoriTanaka` would stay right while the
         # self-consistent schemes drifted.
-        @test_throws ArgumentError NeuralLocalizationInclusion(
+        @test_throws ArgumentError NeuralConcentrationInclusion(
             (1.0, 1.0, 0.4); strain = s4
         )
-        @test_throws ArgumentError NeuralLocalizationInclusion(
+        @test_throws ArgumentError NeuralConcentrationInclusion(
             (1.0, 1.0, 0.4); stress = s4b
         )
-        @test_throws ArgumentError NeuralLocalizationInclusion((1.0, 1.0, 0.4))
-        @test_throws ArgumentError NeuralLocalizationInclusion(
+        @test_throws ArgumentError NeuralConcentrationInclusion((1.0, 1.0, 0.4))
+        @test_throws ArgumentError NeuralConcentrationInclusion(
             (1.0, 1.0, 0.4); strain = s4, stress = s4b, fractions = (0.5, 0.5)
         )
-        @test_throws ArgumentError NeuralLocalizationInclusion(
+        @test_throws ArgumentError NeuralConcentrationInclusion(
             (1.0, 1.0, 0.4); strain = s4, stress = s4b,
             fractions = (0.5, 0.4), properties = (NN_C_I, NN_C_M)
         )
     end
 end
 
-@testset "NeuralInclusions — the localization classes carry six components" begin
-    # A localization tensor is not major-symmetric, so it needs the 6-component
+@testset "NeuralInclusions — the concentration classes carry six components" begin
+    # A concentration tensor is not major-symmetric, so it needs the 6-component
     # transversely isotropic form where a Hill tensor needs 5 — and not the
     # 8-component one, whose `ℓ₇`, `ℓ₈` are antisymmetric in an index pair and
     # vanish for anything mapping symmetric strains to symmetric stresses.
     axis = (0.0, 0.0, 1.0)
     ell = Ellipsoid(1.0, 1.0, 0.4)
     P = hill_tensor(ell, NN_C_M)
-    A = strain_strain_loc(ell, NN_C_I, NN_C_M)
+    A = strain_strain_concentration(ell, NN_C_I, NN_C_M)
 
     _major_defect(t) = let M = Array(TensND.components_canon(t))
         maximum(abs, M .- permutedims(M, (3, 4, 1, 2))) / maximum(abs, M)
@@ -512,24 +512,24 @@ end
     end
 
     @testset "component counts" begin
-        @test NI.ncomponents(NI.StrainLocTI()) == 6
-        @test NI.ncomponents(NI.StressLocTI()) == 6
-        @test NI.tensor_order(NI.StrainLocTI()) == 4
-        @test length(NI.components(NI.StrainLocTI(), A, axis)) == 6
+        @test NI.ncomponents(NI.StrainConcentrationTI()) == 6
+        @test NI.ncomponents(NI.StressConcentrationTI()) == 6
+        @test NI.tensor_order(NI.StrainConcentrationTI()) == 4
+        @test length(NI.components(NI.StrainConcentrationTI(), A, axis)) == 6
         # The 5-component form genuinely loses something.
         @test_throws ArgumentError NI.components(NI.HillTI(), A, axis)
     end
 
-    @testset "build ∘ components is the identity on a TI localization tensor" begin
-        c = NI.components(NI.StrainLocTI(), A, axis)
-        rebuilt = NI.build(NI.StrainLocTI(), collect(c), axis)
+    @testset "build ∘ components is the identity on a TI concentration tensor" begin
+        c = NI.components(NI.StrainConcentrationTI(), A, axis)
+        rebuilt = NI.build(NI.StrainConcentrationTI(), collect(c), axis)
         @test Array(TensND.components_canon(rebuilt)) ≈
             Array(TensND.components_canon(A)) atol = 1.0e-12
         @test length(TensND.get_data(rebuilt)) == 6
     end
 
     @testset "the antisymmetric couplings vanish" begin
-        for t in (P, A, stress_strain_loc(ell, NN_C_I, NN_C_M))
+        for t in (P, A, stress_strain_concentration(ell, NN_C_I, NN_C_M))
             l8 = TensND.get_ℓ8(MeanFieldHomogenization.transverse_isotropify(t, axis))
             @test abs(l8[7]) < 1.0e-14
             @test abs(l8[8]) < 1.0e-14
@@ -538,14 +538,14 @@ end
 
     @testset "the two differ only by their dimension" begin
         # 𝔸_εε is of degree 0 in the moduli, 𝔸_σε of degree +1.
-        @test NI.dimensionless_scale(NI.StrainLocTI(), NN_C_M) == 1
-        @test NI.dimensionless_scale(NI.StressLocTI(), NN_C_M) ≈
+        @test NI.dimensionless_scale(NI.StrainConcentrationTI(), NN_C_M) == 1
+        @test NI.dimensionless_scale(NI.StressConcentrationTI(), NN_C_M) ≈
             inv(TensND.get_data(NN_C_M)[2])
     end
 
-    @testset "no affine factorization for a localization tensor" begin
+    @testset "no affine factorization for a concentration tensor" begin
         # `ℙ = d·𝕌ᴬ + 𝕎ᴬ/μ₀` belongs to the Hill tensor, not to 𝔸.
-        @test_throws ArgumentError NI.material_coeffs(NI.StrainLocTI(), NN_C_M)
+        @test_throws ArgumentError NI.material_coeffs(NI.StrainConcentrationTI(), NN_C_M)
     end
 end
 
@@ -554,11 +554,11 @@ end
         [:eccentricity, :core_fraction, :log_mu_ratio_2],
         [0.0, 0.2, log(0.1)], [0.8, 0.7, log(2.0)]
     )
-    sA = _nn_untrained(NI.DimensionlessHill(NI.StrainLocTI()), box)
-    sB = _nn_untrained(NI.DimensionlessHill(NI.StressLocTI()), box; seed = 5)
+    sA = _nn_untrained(NI.DimensionlessHill(NI.StrainConcentrationTI()), box)
+    sB = _nn_untrained(NI.DimensionlessHill(NI.StressConcentrationTI()), box; seed = 5)
     C2 = iso_stiffness(4.0, 1.5)
 
-    incl = NeuralLocalizationInclusion(
+    incl = NeuralConcentrationInclusion(
         (1.0, 1.0, 1.0); strain = sA, stress = sB,
         shape_params = (; eccentricity = 0.4, core_fraction = 0.5),
         fractions = (0.5, 0.5), properties = (NN_C_I, C2), guard = :none
@@ -573,24 +573,24 @@ end
 
     @testset "an unnamed parameter is refused" begin
         bad = NI.SampleBox([:not_a_parameter], [0.0], [1.0])
-        s = _nn_untrained(NI.DimensionlessHill(NI.StrainLocTI()), bad)
-        i2 = NeuralLocalizationInclusion(
+        s = _nn_untrained(NI.DimensionlessHill(NI.StrainConcentrationTI()), bad)
+        i2 = NeuralConcentrationInclusion(
             (1.0, 1.0, 1.0); strain = s, stress = s, guard = :none
         )
-        @test_throws ArgumentError strain_strain_loc(i2, NN_C_I, NN_C_M)
+        @test_throws ArgumentError strain_strain_concentration(i2, NN_C_I, NN_C_M)
     end
 
     @testset "a contrast feature needs the constituents" begin
-        i3 = NeuralLocalizationInclusion(
+        i3 = NeuralConcentrationInclusion(
             (1.0, 1.0, 1.0); strain = sA, stress = sB,
             shape_params = (; eccentricity = 0.4, core_fraction = 0.5), guard = :none
         )
-        @test_throws ArgumentError strain_strain_loc(i3, NN_C_I, NN_C_M)
+        @test_throws ArgumentError strain_strain_concentration(i3, NN_C_I, NN_C_M)
     end
 
     @testset "the pair answers, and the contributions take the exact branch" begin
-        A = strain_strain_loc(incl, NN_C_I, NN_C_M)
-        B = stress_strain_loc(incl, NN_C_I, NN_C_M)
+        A = strain_strain_concentration(incl, NN_C_I, NN_C_M)
+        B = stress_strain_concentration(incl, NN_C_I, NN_C_M)
         @test length(TensND.get_data(A)) == 6
         @test length(TensND.get_data(B)) == 6
         N = stiffness_contribution(incl, NN_C_I, NN_C_M)
@@ -604,7 +604,7 @@ end
         # have to perturb the semi-axes too.
         idx = C -> get_array(C)[1, 1, 1, 1]
         function rve_of(α)
-            i = NeuralLocalizationInclusion(
+            i = NeuralConcentrationInclusion(
                 (1.0, 1.0, 1.0); strain = sA, stress = sB,
                 shape_params = (; eccentricity = α, core_fraction = 0.5),
                 fractions = (0.5, 0.5), properties = (NN_C_I, C2), guard = :none
@@ -627,7 +627,7 @@ end
     end
 
     @testset "shape parameters must be numbers" begin
-        @test_throws ArgumentError NeuralLocalizationInclusion(
+        @test_throws ArgumentError NeuralConcentrationInclusion(
             (1.0, 1.0, 1.0); strain = sA, stress = sB,
             shape_params = (; eccentricity = "a lot"), guard = :none
         )
@@ -858,14 +858,14 @@ if NN_HAS_LUX
     end
 end
 
-@testset "NeuralInclusions — the localization frame is column 3, prolate included" begin
+@testset "NeuralInclusions — the concentration frame is column 3, prolate included" begin
     # A regression test on a bug that bit **prolate shapes only**, which is why
     # nothing above caught it: every other gate-B test on this page uses
     # `(1, 1, 0.4)` — oblate, hence already sorted descending, hence an identity
-    # permutation — and every localization surrogate shipped before the layered
+    # permutation — and every concentration surrogate shipped before the layered
     # spheroid was trained on a *sphere*, where the sort is the identity too.
     #
-    # A localization class reads **column 3** of the inclusion basis, because the
+    # A concentration class reads **column 3** of the inclusion basis, because the
     # morphology it describes may be a sphere whose response is transversely
     # isotropic about a direction the outer shape does not name. Sorting the
     # semi-axes descending — which a Hill surrogate needs, to match the frame its
@@ -874,11 +874,11 @@ end
     # tensor was then transversely isotropic about an equatorial direction, and
     # nothing threw, the projection residual being measured when *encoding*.
     box = NI.SampleBox([:log_aspect], [-log(20)], [log(20)])
-    sA = _nn_untrained(NI.DimensionlessHill(NI.StrainLocTI()), box)
-    sB = _nn_untrained(NI.DimensionlessHill(NI.StressLocTI()), box; seed = 99)
+    sA = _nn_untrained(NI.DimensionlessHill(NI.StrainConcentrationTI()), box)
+    sB = _nn_untrained(NI.DimensionlessHill(NI.StressConcentrationTI()), box; seed = 99)
 
     for ω in (2.5, 0.4, 1.0)                     # prolate, oblate, sphere
-        incl = NeuralLocalizationInclusion(
+        incl = NeuralConcentrationInclusion(
             (1.0, 1.0, ω); strain = sA, stress = sB, guard = :none
         )
         # The semi-axes are kept in the order given, deliberately.
@@ -887,17 +887,17 @@ end
         # for the distinct axis instead of trusting a position.
         @test NI._feature(Val(:log_aspect), incl, NN_C_M) ≈ log(ω)
         # The axis is e₃ whatever the aspect ratio.
-        @test NI._class_frame(NI.StrainLocTI(), incl) == (0.0, 0.0, 1.0)
-        @test NI._class_frame(NI.StressLocTI(), incl) == (0.0, 0.0, 1.0)
+        @test NI._class_frame(NI.StrainConcentrationTI(), incl) == (0.0, 0.0, 1.0)
+        @test NI._class_frame(NI.StressConcentrationTI(), incl) == (0.0, 0.0, 1.0)
 
         # And the decoded tensors really are transversely isotropic about it:
         # `components` measures the projection residual and throws above `atol`,
         # so reaching six components at 1e-10 is the assertion.
-        axis = NI._class_frame(NI.StrainLocTI(), incl)
-        A = strain_strain_loc(incl, NN_C_I, NN_C_M)
-        B = stress_strain_loc(incl, NN_C_I, NN_C_M)
-        @test length(collect(NI.components(NI.StrainLocTI(), A, axis; atol = 1.0e-10))) == 6
-        @test length(collect(NI.components(NI.StressLocTI(), B, axis; atol = 1.0e-10))) == 6
+        axis = NI._class_frame(NI.StrainConcentrationTI(), incl)
+        A = strain_strain_concentration(incl, NN_C_I, NN_C_M)
+        B = stress_strain_concentration(incl, NN_C_I, NN_C_M)
+        @test length(collect(NI.components(NI.StrainConcentrationTI(), A, axis; atol = 1.0e-10))) == 6
+        @test length(collect(NI.components(NI.StressConcentrationTI(), B, axis; atol = 1.0e-10))) == 6
     end
 
     # The asymmetry with the Hill type is intended, not an oversight: its teacher

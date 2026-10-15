@@ -32,7 +32,7 @@ Provides:
   [`SpringInterface`](@ref) / [`MembraneInterface`](@ref) in elasticity,
   [`KapitzaInterface`](@ref) / [`SurfaceConductiveInterface`](@ref) in
   transport, each entering with an interface *density* ``1/L``;
-- per-layer localization ([`layer_strain_localization`](@ref), …), the two
+- per-layer concentration ([`layer_strain_concentration`](@ref), …), the two
   Hill tensors ([`laminate_hill`](@ref)) and the interface jumps
   ([`interface_jump`](@ref));
 - parameter lenses [`ThicknessParameter`](@ref) and
@@ -62,13 +62,13 @@ import ..Core: AbstractHomogenizationCell, AbstractParameter,
     cell_member_names, cell_container_property, cell_set_property,
     Homogenized, NestedParameter, nested, resolve_property
 
-# The package-wide localization generics, declared bodyless in
+# The package-wide concentration generics, declared bodyless in
 # `Core/abstractions.jl`. A laminate is a cell, not an inclusion, so the
 # methods added here are keyed on a layer NAME rather than on a `(C₁, C₀)`
-# pair — the same shape as `strain_strain_loc(::LayeredSphere, C₀; layer)`.
-import ..Core: strain_strain_loc, stress_strain_loc, strain_stress_loc,
-    stress_stress_loc, gradient_gradient_loc, flux_gradient_loc,
-    gradient_flux_loc, flux_flux_loc
+# pair — the same shape as `strain_strain_concentration(::LayeredSphere, C₀; layer)`.
+import ..Core: strain_strain_concentration, stress_strain_concentration, strain_stress_concentration,
+    stress_stress_concentration, gradient_gradient_concentration, flux_gradient_concentration,
+    gradient_flux_concentration, flux_flux_concentration
 
 # The five interface models are shared with the layered sphere and spheroid:
 # a planar interface is the curvature-free case of a spherical one, so the
@@ -110,8 +110,8 @@ export AnisotropicSurfaceConductiveInterface
 
 # Fields
 export laminate_hill
-export layer_strain_localization, layer_stress_localization
-export layer_gradient_localization, layer_flux_localization
+export layer_strain_concentration, layer_stress_concentration
+export layer_gradient_concentration, layer_flux_concentration
 export interface_jump
 
 # Lenses

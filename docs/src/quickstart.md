@@ -71,7 +71,7 @@ which phase plays the role of a matrix: that is decided by the scheme
 ([Who is the matrix?](@ref man-who-is-the-matrix)).
 
 The Mori–Tanaka scheme takes the matrix as the reference medium, of stiffness
-``\mathbb C_0``, and localizes each inclusion on the average strain of the
+``\mathbb C_0``, and loads each inclusion with the average strain of the
 matrix. With the dilute concentration tensor of the inclusion phase ``i``,
 
 ```math

@@ -38,8 +38,8 @@ leave, `1 - Σ f`. It is pure bookkeeping — it says nothing about morphology �
 and an RVE may equally well have none, with every fraction given explicitly.
 
 Volume fractions are stored at the RVE level (not on the inclusions), so a
-single inclusion remains usable for localization-tensor calculations without
-any RVE machinery ([`hill_tensor`](@ref), [`strain_strain_loc`](@ref), …).
+single inclusion remains usable for concentration-tensor calculations without
+any RVE machinery ([`hill_tensor`](@ref), [`strain_strain_concentration`](@ref), …).
 Crack densities are excluded from the unit sum: a flat crack's volume vanishes
 in the penny limit while its density stays finite.
 

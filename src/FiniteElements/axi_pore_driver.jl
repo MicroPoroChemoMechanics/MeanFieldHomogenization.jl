@@ -26,7 +26,7 @@
 #  accuracy.
 #
 #  Measured, before it was abandoned: the implied cavity volume is 2.9 % off at
-#  `V_Ω/V_D = 8`, 5.8 % at 64 and 9.2 % at 216, and the localization error
+#  `V_Ω/V_D = 8`, 5.8 % at 64 and 9.2 % at 216, and the concentration error
 #  tracks it (2.0e-2 → 6.1e-2). Convergence in `nradial` was `O(h)` where the
 #  core-shell cell gets `O(h²)`. Recorded here because the trap is attractive:
 #  it reuses only tested code and adds nothing.
@@ -47,7 +47,7 @@
     _axi_pore_solve_mode(backend, mode, Dmap, Bop, proj, nload, bc_E, bc_p,
                          dofmap, V_D) -> (L_s, L_u)
 
-One modal block of a cavity's localization, both families, on a single
+One modal block of a cavity's concentration, both families, on a single
 factorization.
 
 The normalization is the **meridian** measure of the volume the *meshed* wall

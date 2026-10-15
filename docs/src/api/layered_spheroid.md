@@ -6,7 +6,7 @@
 for their docstrings; they apply unchanged to `LayeredSpheroid`.
 
 So are the pointwise-field generics `get_layer`, `local_temperature`,
-`local_gradient`, `local_flux` and the four `local_*_*_loc` couplings: one
+`local_gradient`, `local_flux` and the four `local_*_*_concentration` couplings: one
 binding carries both inclusion families, and **all** their docstrings — the
 sphere's methods and the spheroid's — are rendered together on that same
 page.

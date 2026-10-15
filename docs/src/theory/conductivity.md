@@ -3,14 +3,14 @@
 !!! info "Before this page"
     [The Eshelby inclusion problem](@ref th-eshelby-problem) §3, where the
     transport form of the inclusion problem is stated, and
-    [Localization and contribution tensors](@ref th-localization) §4 for the
+    [Concentration and contribution tensors](@ref th-concentration) §4 for the
     order-2 routines named below.
 
 The foundations and the schemes were written above for elasticity, where the
 unknown is a displacement and the constitutive tensor has order four. The same
 machinery solves a second family of problems, in which the unknown is a scalar
 potential and the constitutive tensor has order two. Nothing has to be
-rederived: the Eshelby problem, the Hill tensor, the localization tensors and
+rederived: the Eshelby problem, the Hill tensor, the concentration tensors and
 every scheme carry over term by term.
 
 This chapter states the correspondence once, so that the other chapters can
@@ -63,10 +63,10 @@ with the symbols renamed, and no sign is ever flipped.
 | stiffness ``\mathbb{C}`` — 21 components                 | conductivity ``\boldsymbol{K}`` — 6 components         |
 | Hill tensor ``\mathbb{P}`` — 4-tensor                    | Hill tensor ``\boldsymbol{P}`` — 2-tensor              |
 | Eshelby tensor ``\mathbb{S}^{\mathrm{E}} = \mathbb{P}:\mathbb{C}``    | ``\boldsymbol{S}^{\mathrm{E}} = \boldsymbol{P}\cdot\boldsymbol{K}`` |
-| localization ``\mathbb{A}``, contribution ``\mathbb{N}`` | ``\boldsymbol{A}``, ``\boldsymbol{N}``                 |
+| concentration ``\mathbb{A}``, contribution ``\mathbb{N}`` | ``\boldsymbol{A}``, ``\boldsymbol{N}``                 |
 
 The routine names follow the same rule, and the correspondence is listed in
-full in [Localization and contribution tensors](@ref th-localization) §4: each
+full in [Concentration and contribution tensors](@ref th-concentration) §4: each
 `strain`/`stress` becomes a `gradient`/`flux`, each `stiffness` a
 `conductivity`, each `compliance` a `resistivity`.
 
@@ -74,7 +74,7 @@ full in [Localization and contribution tensors](@ref th-localization) §4: each
 
 **The schemes transpose entirely.** Dilute, Mori-Tanaka, self-consistent,
 differential, the bounds, the N-body models: all of them are written on
-localization and contribution tensors, never on the order of the constitutive
+concentration and contribution tensors, never on the order of the constitutive
 tensor. Dispatching on a 2-tensor is enough — see
 [Homogenization schemes](@ref th-homogenization).
 
@@ -104,7 +104,7 @@ pages.
 
 - [Hill polarization tensors](@ref th-hill-tensors) — the closed form of
   ``\boldsymbol{P}`` and its dispatch.
-- [Localization and contribution tensors](@ref th-localization) — the full
+- [Concentration and contribution tensors](@ref th-concentration) — the full
   table of order-2 routine names.
 - [Thermal cracks](@ref th-thermal-cracks) — the flat-inclusion limit in
   conduction, and its intensity factor.

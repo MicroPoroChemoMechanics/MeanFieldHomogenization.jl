@@ -34,9 +34,9 @@ kmat(law) = iso_order2_params_from_blocks(V2._trapezoidal_relaxation(law, times2
                 (PerfectInterface(), PerfectInterface()),
             ), external in (true, false)
         s = LayeredSphere((0.6, 1.0), (TensISO{3}(5.0), TensISO{3}(1.0)); interfaces)
-        A = gradient_gradient_loc_alv(s, heaviside_law(K₀), times; external)
+        A = gradient_gradient_concentration_alv(s, heaviside_law(K₀), times; external)
         N = conductivity_contribution_alv(s, heaviside_law(K₀), times; external)
-        @test A ≈ TensND.get_data(gradient_gradient_loc(s, K₀, K₀; external))[1] .* Id atol = 1.0e-14
+        @test A ≈ TensND.get_data(gradient_gradient_concentration(s, K₀, K₀; external))[1] .* Id atol = 1.0e-14
         @test N ≈ TensND.get_data(MeanFieldHomogenization.conductivity_contribution(s, K₀; external))[1] .* Id atol = 1.0e-14
     end
     # An impermeable core needs no Volterra inverse of its conductivity.
@@ -44,8 +44,8 @@ kmat(law) = iso_order2_params_from_blocks(V2._trapezoidal_relaxation(law, times2
         (0.6, 1.0), (TensISO{3}(0.0), TensISO{3}(1.0));
         interfaces = (SurfaceConductiveInterface(0.3), PerfectInterface())
     )
-    @test gradient_gradient_loc_alv(s, heaviside_law(K₀), times) ≈
-        TensND.get_data(gradient_gradient_loc(s, K₀, K₀))[1] .* Id atol = 1.0e-14
+    @test gradient_gradient_concentration_alv(s, heaviside_law(K₀), times) ≈
+        TensND.get_data(gradient_gradient_concentration(s, K₀, K₀))[1] .* Id atol = 1.0e-14
     @test conductivity_contribution_alv(s, heaviside_law(K₀), times) ≈
         TensND.get_data(MeanFieldHomogenization.conductivity_contribution(s, K₀))[1] .* Id atol = 1.0e-14
 end
@@ -79,7 +79,7 @@ end
         add!(4, 2, -(k₂ + 2kˢ(2) / r₂ * Id)); add!(4, 3, -(-2 / r₂^3 * k₂ + 2kˢ(2) / r₂^4 * Id))
         rhs[(3n + 1):(4n), :] .= -k₀
         X = M \ rhs
-        α = gradient_localization_alv(LayeredSphere((r₁, r₂), (K1_law, K2_law); interfaces), K0_law, times2)
+        α = gradient_concentration_alv(LayeredSphere((r₁, r₂), (K1_law, K2_law); interfaces), K0_law, times2)
         @test α[1] ≈ X[1:n, :] rtol = 1.0e-12
         @test α[2] ≈ X[(n + 1):(2n), :] rtol = 1.0e-12
     end
@@ -100,14 +100,14 @@ end
         )
         s = LayeredSphere((R,), (K1_law,); interfaces = (interface,))
         K_eq = iso_order2_blocks_from_params(Matrix(k_eq))
-        @test gradient_gradient_loc_alv(s, K0_law, times2) ≈ dilute_concentration_alv_order2(K_eq, K_ref, P) rtol = 1.0e-12
+        @test gradient_gradient_concentration_alv(s, K0_law, times2) ≈ dilute_concentration_alv_order2(K_eq, K_ref, P) rtol = 1.0e-12
         @test conductivity_contribution_alv(s, K0_law, times2) ≈ dilute_contribution_alv_order2(K_eq, K_ref, P) rtol = 1.0e-12
     end
     # Leaving the outer interface to the matrix drops its jump from the average,
     # not its effect on the field: what remains is the material average.
     s = LayeredSphere((R,), (K1_law,); interfaces = (KapitzaInterface(0.2),))
-    @test gradient_gradient_loc_alv(s, K0_law, times2; external = false) ≈
-        iso_order2_blocks_from_params(gradient_localization_alv(s, K0_law, times2)[1]) rtol = 1.0e-14
+    @test gradient_gradient_concentration_alv(s, K0_law, times2; external = false) ≈
+        iso_order2_blocks_from_params(gradient_concentration_alv(s, K0_law, times2)[1]) rtol = 1.0e-14
 end
 
 @testset "Layered sphere, order 2 — every scheme, one layer against the ellipsoid" begin
@@ -133,10 +133,10 @@ end
 
 @testset "Layered sphere, order 2 — what is refused" begin
     s = LayeredSphere((0.6, 1.0), (K1_law, K2_law); interfaces = (SpringInterface(5.0, 2.0), PerfectInterface()))
-    @test_throws "elastic interface" gradient_gradient_loc_alv(s, K0_law, times2)
+    @test_throws "elastic interface" gradient_gradient_concentration_alv(s, K0_law, times2)
     hot = LayeredSphere((0.6, 1.0), (TensISO{3}(Inf), TensISO{3}(1.0)))
-    @test_throws "infinite conductivity" gradient_gradient_loc_alv(hot, K0_law, times2)
-    @test_throws "reference medium" gradient_gradient_loc_alv(
+    @test_throws "infinite conductivity" gradient_gradient_concentration_alv(hot, K0_law, times2)
+    @test_throws "reference medium" gradient_gradient_concentration_alv(
         LayeredSphere((1.0,), (K1_law,)), heaviside_law(TensISO{3}(Inf)), times2
     )
     @test_throws "no Hill kernel" V2.hill_kernel_order2_at(

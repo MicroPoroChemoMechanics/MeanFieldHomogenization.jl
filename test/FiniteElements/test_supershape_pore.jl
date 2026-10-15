@@ -39,8 +39,8 @@ const _K0 = TensND.TensISO{3}(1.0)
 
     @testset "a cavity's stress side is exactly zero" begin
         pore = FESupershapePore(Supersphere(1.0, 1.0); opts = _POPTS)
-        Z4 = MeanFieldHomogenization.Core.stress_strain_loc(pore, _C0, _C0)
-        Z2 = MeanFieldHomogenization.Core.flux_gradient_loc(pore, _K0, _K0)
+        Z4 = MeanFieldHomogenization.Core.stress_strain_concentration(pore, _C0, _C0)
+        Z2 = MeanFieldHomogenization.Core.flux_gradient_concentration(pore, _K0, _K0)
         # Identically zero, not zero to the discretization error: no solve is
         # even run for it.
         @test iszero(KM(Z4))
@@ -51,11 +51,11 @@ const _K0 = TensND.TensISO{3}(1.0)
     pore = FESupershapePore(Supersphere(1.0, 1.0); opts = _POPTS)
 
     @testset "the spherical pore through the contract" begin
-        A = fe_cell_localization(pore, _C0)
+        A = fe_cell_concentration(pore, _C0)
         @test cubic_residual(A) < 2.0e-3
         @test fe_assembly_count(pore) == 1
         # Memoized on the reference: asking again is free.
-        fe_cell_localization(pore, _C0)
+        fe_cell_concentration(pore, _C0)
         @test fe_assembly_count(pore) == 1
 
         # The two contribution tensors satisfy an exact identity that nothing
@@ -74,7 +74,7 @@ const _K0 = TensND.TensISO{3}(1.0)
     end
 
     @testset "conduction on the same object and the same mesh" begin
-        A = fe_cell_localization(pore, _K0)
+        A = fe_cell_concentration(pore, _K0)
         d = diag(get_array(change_tens_canon(A)))
         @test all(x -> abs(x - 1.5) < 5.0e-3, d)        # exact value is 3/2
         # One assembly per physics, and the mesh was built once.
@@ -132,7 +132,7 @@ const _K0 = TensND.TensISO{3}(1.0)
             TensND.inv_KM(Matrix(KM(_C0)) + Diagonal([0.0, 0.0, 0.4, 0, 0, 0]))
         )
         err = try
-            fe_cell_localization(pore, Caniso)
+            fe_cell_concentration(pore, Caniso)
             nothing
         catch e
             e
@@ -156,11 +156,11 @@ const _K0 = TensND.TensISO{3}(1.0)
 
     @testset "fe_reset! drops everything" begin
         p2 = FESupershapePore(Supersphere(1.0, 1.0); opts = _POPTS)
-        fe_cell_localization(p2, _C0)
+        fe_cell_concentration(p2, _C0)
         @test fe_assembly_count(p2) == 1
         fe_reset!(p2)
         @test fe_assembly_count(p2) == 0
-        fe_cell_localization(p2, _C0)
+        fe_cell_concentration(p2, _C0)
         @test fe_assembly_count(p2) == 1
     end
 end

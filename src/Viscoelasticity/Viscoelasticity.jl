@@ -130,9 +130,9 @@ export mori_tanaka_alv_ortho, maxwell_alv_ortho
 export dilute_concentration_alv_ortho, dilute_contribution_alv_ortho
 export self_consistent_alv, asymmetric_self_consistent_alv,
     pcw_alv, differential_alv
-export bulk_localization_alv, bulk_state_seq_alv, shear_localization_alv
-export strain_strain_loc_alv, stiffness_contribution_alv
-export gradient_localization_alv, gradient_gradient_loc_alv, conductivity_contribution_alv
+export bulk_concentration_alv, bulk_state_seq_alv, shear_concentration_alv
+export strain_strain_concentration_alv, stiffness_contribution_alv
+export gradient_concentration_alv, gradient_gradient_concentration_alv, conductivity_contribution_alv
 export self_consistent_alv_order2
 export homogenize_alv, has_visco_property
 export iso_order2_params_from_blocks, iso_order2_blocks_from_params

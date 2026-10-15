@@ -7,12 +7,12 @@
 #
 #      ΔC_eff = f × N,      N = (C₁ - C₀) : A_εε,
 #
-#  where `A_εε` is the strain-strain localization tensor.  Dually, the
+#  where `A_εε` is the strain-strain concentration tensor.  Dually, the
 #  dilute effective compliance correction is
 #
 #      ΔS_eff = f × H,      H = (S₁ - S₀) : A_σσ,
 #
-#  with `S = C⁻¹` and `A_σσ` the stress-stress localization tensor.
+#  with `S = C⁻¹` and `A_σσ` the stress-stress concentration tensor.
 #  The helpers `delta_stiffness` and `delta_compliance` apply the
 #  volume fraction `f` (analogous to Budiansky density for cracks).
 #
@@ -32,7 +32,7 @@ in a matrix `C₀`.  For a dilute family of inclusions of volume fraction
     ``(\\mathbb{C}_1 - \\mathbb{C}_0):\\mathbb{A}_{\\varepsilon\\varepsilon}`` presupposes a *single* stiffness inside the inclusion.
     When [`is_homogeneous_inclusion`](@ref MeanFieldHomogenization.Core.is_homogeneous_inclusion) is `false` the exact identity
     ``\\mathbb{N} = \\mathbb{A}_{\\sigma\\varepsilon} - \\mathbb{C}_0:\\mathbb{A}_{\\varepsilon\\varepsilon}`` is used instead — it needs no `C₁`, only the two
-    localization tensors, and reduces to the expression above whenever a
+    concentration tensors, and reduces to the expression above whenever a
     uniform `C₁` does exist. This is what lets a layered or finite-element
     inclusion reach the schemes through gate B alone.
 
@@ -44,8 +44,8 @@ function stiffness_contribution(
         C₀::TensND.AbstractTens{4, 3};
         kw...
     )
-    A = strain_strain_loc(incl, C₁, C₀; kw...)
-    is_homogeneous_inclusion(incl) || return stress_strain_loc(incl, C₁, C₀; kw...) - C₀ ⊡ A
+    A = strain_strain_concentration(incl, C₁, C₀; kw...)
+    is_homogeneous_inclusion(incl) || return stress_strain_concentration(incl, C₁, C₀; kw...) - C₀ ⊡ A
     return (C₁ - C₀) ⊡ A
 end
 
@@ -100,11 +100,11 @@ delta_compliance(H::TensND.AbstractTens{4, 3}, f) = f * H
 # =============================================================================
 #  Conductivity contribution (2-tensor fields)
 #
-#  Same sign convention as `localization.jl`: the "flux" side of these
+#  Same sign convention as `concentration.jl`: the "flux" side of these
 #  expressions carries σ ≡ -q = K·∇T, so `A_q∇` and `A_qq` are the transport
 #  twins of `A_σε` and `A_σσ` symbol for symbol.  Both kernels below are
 #  written in terms of those tensors, so nothing here needs a compensating
-#  sign — see the block comment in `localization.jl`.
+#  sign — see the block comment in `concentration.jl`.
 # =============================================================================
 
 """
@@ -125,8 +125,8 @@ function conductivity_contribution(
         K₀::TensND.AbstractTens{2, 3};
         kw...
     )
-    A = gradient_gradient_loc(incl, K₁, K₀; kw...)
-    is_homogeneous_inclusion(incl) || return flux_gradient_loc(incl, K₁, K₀; kw...) - K₀ ⋅ A
+    A = gradient_gradient_concentration(incl, K₁, K₀; kw...)
+    is_homogeneous_inclusion(incl) || return flux_gradient_concentration(incl, K₁, K₀; kw...) - K₀ ⋅ A
     return (K₁ - K₀) ⋅ A
 end
 

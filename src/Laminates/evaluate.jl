@@ -1,5 +1,5 @@
 # =============================================================================
-#  evaluate.jl — `homogenize` on a `Laminate`, and the per-layer localization.
+#  evaluate.jl — `homogenize` on a `Laminate`, and the per-layer concentration.
 #
 #  The physics lives in `Core/laminate_algebra.jl`; this file is the bridge
 #  between the cell (named layers, thicknesses, interfaces, a frame) and that
@@ -201,7 +201,7 @@ end
     _wrap4_general(lam, prop, M6) -> AbstractTens{4,3}
 
 Same as [`_wrap4`](@ref) for a tensor that is transversely isotropic about the
-layer normal but **not major-symmetric** — every localization tensor, ``\\mathbb{A}_i``
+layer normal but **not major-symmetric** — every concentration tensor, ``\\mathbb{A}_i``
 first of all: ``\\mathbb{A}_i = \\mathbb{I} + \\mathbb{P}_i:(\\mathbb{C}^{\\mathrm{hom}} - \\mathbb{C}_i)`` is a product of major-symmetric
 tensors and a product of two such is not one.
 
@@ -350,46 +350,46 @@ function laminate_hill(lam::Laminate, name::Symbol; property::Symbol = :C)
 end
 
 """
-    layer_strain_localization(lam, name::Symbol; property = :C) -> Tens{4,3}
+    layer_strain_concentration(lam, name::Symbol; property = :C) -> Tens{4,3}
 
-Strain localization tensor ``\\mathbb{A}_i`` of one layer: ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_i:\\boldsymbol{E}``, with
+Strain concentration tensor ``\\mathbb{A}_i`` of one layer: ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_i:\\boldsymbol{E}``, with
 ``\\mathbb{A}_i = \\mathbb{I} + \\mathbb{P}_i:(\\mathbb{C}^{\\mathrm{hom}} - \\mathbb{C}_i)`` and ``\\sum_i f_i\\,\\mathbb{A}_i = \\mathbb{I}``.
 
 Its in-plane block is the identity and its in-plane/out-of-plane coupling
 block vanishes — the macroscopic in-plane strain reaches every layer
 unchanged, which is the compatibility condition ``\\boldsymbol{\\varepsilon}_i = \\boldsymbol{E} + \\underline{a}_i\\stackrel{s}{\\otimes}\\underline{n}``.
 
-Synonym of [`strain_strain_loc`](@ref)`(lam, name)`, the package-wide generic
+Synonym of [`strain_strain_concentration`](@ref)`(lam, name)`, the package-wide generic
 name; the two return the same object.
 
 Defined for perfect interfaces; with a primal (spring / Kapitza) interface
 part of the macroscopic strain is carried by the jumps, so the layer strains
 no longer average to ``\\boldsymbol{E}`` — see [`interface_jump`](@ref).
 """
-function layer_strain_localization(lam::Laminate, name::Symbol; property::Symbol = :C)
-    C6, Chom = _loc_setup4(lam, name, property)
-    return _wrap4_general(lam, property, MFH_Core.laminate_strain_localization(C6, Chom))
+function layer_strain_concentration(lam::Laminate, name::Symbol; property::Symbol = :C)
+    C6, Chom = _concentration_setup4(lam, name, property)
+    return _wrap4_general(lam, property, MFH_Core.laminate_strain_concentration(C6, Chom))
 end
 
 """
-    layer_stress_localization(lam, name::Symbol; property = :C) -> Tens{4,3}
+    layer_stress_concentration(lam, name::Symbol; property = :C) -> Tens{4,3}
 
-Stress localization tensor ``\\mathbb{B}_i`` of one layer: ``\\boldsymbol{\\sigma}_i = \\mathbb{B}_i:\\boldsymbol{\\Sigma}``, with
+Stress concentration tensor ``\\mathbb{B}_i`` of one layer: ``\\boldsymbol{\\sigma}_i = \\mathbb{B}_i:\\boldsymbol{\\Sigma}``, with
 ``\\mathbb{B}_i = \\mathbb{C}_i:\\mathbb{A}_i:(\\mathbb{C}^{\\mathrm{hom}})^{-1}`` and ``\\sum_i f_i\\,\\mathbb{B}_i = \\mathbb{I}``.
 
-Synonym of [`stress_stress_loc`](@ref)`(lam, name)`, the package-wide generic
+Synonym of [`stress_stress_concentration`](@ref)`(lam, name)`, the package-wide generic
 name; the two return the same object.
 """
-function layer_stress_localization(lam::Laminate, name::Symbol; property::Symbol = :C)
-    C6, Chom = _loc_setup4(lam, name, property)
-    return _wrap4_general(lam, property, MFH_Core.laminate_stress_localization(C6, Chom))
+function layer_stress_concentration(lam::Laminate, name::Symbol; property::Symbol = :C)
+    C6, Chom = _concentration_setup4(lam, name, property)
+    return _wrap4_general(lam, property, MFH_Core.laminate_stress_concentration(C6, Chom))
 end
 
-function _loc_setup4(lam::Laminate, name::Symbol, property::Symbol)
+function _concentration_setup4(lam::Laminate, name::Symbol, property::Symbol)
     C = layer_property(lam, name, property)
     C isa TensND.AbstractTens{4, 3} || throw(
         ArgumentError(
-            "layer localization at order 4 needs a 4th-order property; got $(typeof(C))"
+            "layer concentration at order 4 needs a 4th-order property; got $(typeof(C))"
         )
     )
     C6s, fs, T = _gather(lam, property, Val(4))
@@ -399,36 +399,36 @@ function _loc_setup4(lam::Laminate, name::Symbol, property::Symbol)
 end
 
 """
-    layer_gradient_localization(lam, name::Symbol; property = :K) -> Tens{2,3}
+    layer_gradient_concentration(lam, name::Symbol; property = :K) -> Tens{2,3}
 
-Transport counterpart of [`layer_strain_localization`](@ref):
+Transport counterpart of [`layer_strain_concentration`](@ref):
 ``\\nabla T_i = \\boldsymbol{A}_i\\cdot\\nabla T``, with ``\\sum_i f_i\\,\\boldsymbol{A}_i = \\boldsymbol{1}``.
 
-Synonym of [`gradient_gradient_loc`](@ref)`(lam, name)`.
+Synonym of [`gradient_gradient_concentration`](@ref)`(lam, name)`.
 """
-function layer_gradient_localization(lam::Laminate, name::Symbol; property::Symbol = :K)
-    K3, Khom = _loc_setup2(lam, name, property)
-    return _wrap2(lam, property, MFH_Core.laminate_gradient_localization(K3, Khom))
+function layer_gradient_concentration(lam::Laminate, name::Symbol; property::Symbol = :K)
+    K3, Khom = _concentration_setup2(lam, name, property)
+    return _wrap2(lam, property, MFH_Core.laminate_gradient_concentration(K3, Khom))
 end
 
 """
-    layer_flux_localization(lam, name::Symbol; property = :K) -> Tens{2,3}
+    layer_flux_concentration(lam, name::Symbol; property = :K) -> Tens{2,3}
 
-Transport counterpart of [`layer_stress_localization`](@ref): ``\\underline{q}_i = \\boldsymbol{B}_i\\cdot\\underline{q}``,
+Transport counterpart of [`layer_stress_concentration`](@ref): ``\\underline{q}_i = \\boldsymbol{B}_i\\cdot\\underline{q}``,
 with ``\\sum_i f_i\\,\\boldsymbol{B}_i = \\boldsymbol{1}``.
 
-Synonym of [`flux_flux_loc`](@ref)`(lam, name)`.
+Synonym of [`flux_flux_concentration`](@ref)`(lam, name)`.
 """
-function layer_flux_localization(lam::Laminate, name::Symbol; property::Symbol = :K)
-    K3, Khom = _loc_setup2(lam, name, property)
-    return _wrap2(lam, property, MFH_Core.laminate_flux_localization(K3, Khom))
+function layer_flux_concentration(lam::Laminate, name::Symbol; property::Symbol = :K)
+    K3, Khom = _concentration_setup2(lam, name, property)
+    return _wrap2(lam, property, MFH_Core.laminate_flux_concentration(K3, Khom))
 end
 
-function _loc_setup2(lam::Laminate, name::Symbol, property::Symbol)
+function _concentration_setup2(lam::Laminate, name::Symbol, property::Symbol)
     K = layer_property(lam, name, property)
     K isa TensND.AbstractTens{2, 3} || throw(
         ArgumentError(
-            "layer localization at order 2 needs a 2nd-order property; got $(typeof(K))"
+            "layer concentration at order 2 needs a 2nd-order property; got $(typeof(K))"
         )
     )
     K3s, fs, T = _gather(lam, property, Val(2))
@@ -437,16 +437,16 @@ function _loc_setup2(lam::Laminate, name::Symbol, property::Symbol)
     return (_layer_km2(K, lam.basis), Khom)
 end
 
-# ── The package-wide localization generics, on a layer ──────────────────────
+# ── The package-wide concentration generics, on a layer ──────────────────────
 #
 #  `Laminate` is a cell, not an `AbstractInclusion`: there is no matrix, no
 #  reference medium and no Eshelby auxiliary problem, so the `(incl, C₁, C₀)`
-#  signature of `src/localization.jl` does not apply. What plays the role of
+#  signature of `src/concentration.jl` does not apply. What plays the role of
 #  "which inclusion" is the LAYER NAME — the same choice as
-#  `strain_strain_loc(::LayeredSphere, C₀; layer::Int)`.
+#  `strain_strain_concentration(::LayeredSphere, C₀; layer::Int)`.
 #
 #  The four elastic methods and their four transport twins are all one call to
-#  `_loc_setup4` / `_loc_setup2` plus one kernel from `Core/laminate_algebra.jl`,
+#  `_concentration_setup4` / `_concentration_setup2` plus one kernel from `Core/laminate_algebra.jl`,
 #  which inverts by cofactors and never by LU — so every one of them is exact
 #  under `ForwardDiff.Dual` and evaluable on `SymPy.Sym` / `Symbolics.Num`.
 #
@@ -457,100 +457,100 @@ end
 #  and the strain-side rules no longer close.
 
 """
-    strain_strain_loc(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
+    strain_strain_concentration(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
 
-Strain-strain localization tensor ``\\mathbb{A}_i`` of layer `name`: ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_i:\\boldsymbol{E}``.
+Strain-strain concentration tensor ``\\mathbb{A}_i`` of layer `name`: ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_i:\\boldsymbol{E}``.
 
 The `Laminate` method of the package-wide generic, keyed on a layer name
 because a laminate has no reference medium. Identical to
-[`layer_strain_localization`](@ref).
+[`layer_strain_concentration`](@ref).
 """
-function strain_strain_loc(lam::Laminate, name::Symbol; property::Symbol = :C)
-    return layer_strain_localization(lam, name; property = property)
+function strain_strain_concentration(lam::Laminate, name::Symbol; property::Symbol = :C)
+    return layer_strain_concentration(lam, name; property = property)
 end
 
 """
-    stress_strain_loc(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
+    stress_strain_concentration(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
 
-Mixed localization tensor ``\\mathbb{A}_{\\sigma\\varepsilon,i} = \\mathbb{C}_i:\\mathbb{A}_i`` of layer `name`, mapping the
+Mixed concentration tensor ``\\mathbb{A}_{\\sigma\\varepsilon,i} = \\mathbb{C}_i:\\mathbb{A}_i`` of layer `name`, mapping the
 macroscopic strain to the layer stress: ``\\boldsymbol{\\sigma}_i = \\mathbb{A}_{\\sigma\\varepsilon,i}:\\boldsymbol{E}``, with
 ``\\sum_i f_i\\,\\mathbb{A}_{\\sigma\\varepsilon,i} = \\mathbb{C}^{\\mathrm{hom}}``.
 
-Unlike [`stress_stress_loc`](@ref) it forms no inverse of ``\\mathbb{C}^{\\mathrm{hom}}``, so it is
+Unlike [`stress_stress_concentration`](@ref) it forms no inverse of ``\\mathbb{C}^{\\mathrm{hom}}``, so it is
 the cheaper and better-conditioned of the two stress-side tensors.
 """
-function stress_strain_loc(lam::Laminate, name::Symbol; property::Symbol = :C)
-    C6, Chom = _loc_setup4(lam, name, property)
+function stress_strain_concentration(lam::Laminate, name::Symbol; property::Symbol = :C)
+    C6, Chom = _concentration_setup4(lam, name, property)
     return _wrap4_general(
-        lam, property, MFH_Core.laminate_stress_strain_localization(C6, Chom)
+        lam, property, MFH_Core.laminate_stress_strain_concentration(C6, Chom)
     )
 end
 
 """
-    strain_stress_loc(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
+    strain_stress_concentration(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
 
-Mixed localization tensor ``\\mathbb{A}_{\\varepsilon\\sigma,i} = \\mathbb{A}_i:(\\mathbb{C}^{\\mathrm{hom}})^{-1}`` of layer `name`,
+Mixed concentration tensor ``\\mathbb{A}_{\\varepsilon\\sigma,i} = \\mathbb{A}_i:(\\mathbb{C}^{\\mathrm{hom}})^{-1}`` of layer `name`,
 mapping the macroscopic stress to the layer strain: ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_{\\varepsilon\\sigma,i}:\\boldsymbol{\\Sigma}``, with
 ``\\sum_i f_i\\,\\mathbb{A}_{\\varepsilon\\sigma,i} = (\\mathbb{C}^{\\mathrm{hom}})^{-1}``.
 """
-function strain_stress_loc(lam::Laminate, name::Symbol; property::Symbol = :C)
-    C6, Chom = _loc_setup4(lam, name, property)
+function strain_stress_concentration(lam::Laminate, name::Symbol; property::Symbol = :C)
+    C6, Chom = _concentration_setup4(lam, name, property)
     return _wrap4_general(
-        lam, property, MFH_Core.laminate_strain_stress_localization(C6, Chom)
+        lam, property, MFH_Core.laminate_strain_stress_concentration(C6, Chom)
     )
 end
 
 """
-    stress_stress_loc(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
+    stress_stress_concentration(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
 
-Stress-stress localization tensor ``\\mathbb{B}_i`` of layer `name`: ``\\boldsymbol{\\sigma}_i = \\mathbb{B}_i:\\boldsymbol{\\Sigma}``.
-Identical to [`layer_stress_localization`](@ref).
+Stress-stress concentration tensor ``\\mathbb{B}_i`` of layer `name`: ``\\boldsymbol{\\sigma}_i = \\mathbb{B}_i:\\boldsymbol{\\Sigma}``.
+Identical to [`layer_stress_concentration`](@ref).
 """
-function stress_stress_loc(lam::Laminate, name::Symbol; property::Symbol = :C)
-    return layer_stress_localization(lam, name; property = property)
+function stress_stress_concentration(lam::Laminate, name::Symbol; property::Symbol = :C)
+    return layer_stress_concentration(lam, name; property = property)
 end
 
 """
-    gradient_gradient_loc(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
+    gradient_gradient_concentration(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
 
-Transport twin of [`strain_strain_loc`](@ref): ``\\nabla T_i = \\boldsymbol{A}_i\\cdot\\nabla T``. Identical to
-[`layer_gradient_localization`](@ref).
+Transport twin of [`strain_strain_concentration`](@ref): ``\\nabla T_i = \\boldsymbol{A}_i\\cdot\\nabla T``. Identical to
+[`layer_gradient_concentration`](@ref).
 """
-function gradient_gradient_loc(lam::Laminate, name::Symbol; property::Symbol = :K)
-    return layer_gradient_localization(lam, name; property = property)
+function gradient_gradient_concentration(lam::Laminate, name::Symbol; property::Symbol = :K)
+    return layer_gradient_concentration(lam, name; property = property)
 end
 
 """
-    flux_gradient_loc(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
+    flux_gradient_concentration(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
 
-Transport twin of [`stress_strain_loc`](@ref): ``\\boldsymbol{A}_{q\\nabla,i} = \\boldsymbol{K}_i\\cdot\\boldsymbol{A}_i`` maps the
+Transport twin of [`stress_strain_concentration`](@ref): ``\\boldsymbol{A}_{q\\nabla,i} = \\boldsymbol{K}_i\\cdot\\boldsymbol{A}_i`` maps the
 macroscopic gradient to the layer flux, with ``\\sum_i f_i\\,\\boldsymbol{A}_{q\\nabla,i} = \\boldsymbol{K}^{\\mathrm{hom}}``.
 """
-function flux_gradient_loc(lam::Laminate, name::Symbol; property::Symbol = :K)
-    K3, Khom = _loc_setup2(lam, name, property)
-    return _wrap2(lam, property, MFH_Core.laminate_flux_gradient_localization(K3, Khom))
+function flux_gradient_concentration(lam::Laminate, name::Symbol; property::Symbol = :K)
+    K3, Khom = _concentration_setup2(lam, name, property)
+    return _wrap2(lam, property, MFH_Core.laminate_flux_gradient_concentration(K3, Khom))
 end
 
 """
-    gradient_flux_loc(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
+    gradient_flux_concentration(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
 
-Transport twin of [`strain_stress_loc`](@ref): ``\\boldsymbol{A}_{\\nabla q,i} = \\boldsymbol{A}_i\\cdot(\\boldsymbol{K}^{\\mathrm{hom}})^{-1}``
+Transport twin of [`strain_stress_concentration`](@ref): ``\\boldsymbol{A}_{\\nabla q,i} = \\boldsymbol{A}_i\\cdot(\\boldsymbol{K}^{\\mathrm{hom}})^{-1}``
 maps the macroscopic flux to the layer gradient, with
 ``\\sum_i f_i\\,\\boldsymbol{A}_{\\nabla q,i} = (\\boldsymbol{K}^{\\mathrm{hom}})^{-1}``.
 """
-function gradient_flux_loc(lam::Laminate, name::Symbol; property::Symbol = :K)
-    K3, Khom = _loc_setup2(lam, name, property)
-    return _wrap2(lam, property, MFH_Core.laminate_gradient_flux_localization(K3, Khom))
+function gradient_flux_concentration(lam::Laminate, name::Symbol; property::Symbol = :K)
+    K3, Khom = _concentration_setup2(lam, name, property)
+    return _wrap2(lam, property, MFH_Core.laminate_gradient_flux_concentration(K3, Khom))
 end
 
 """
-    flux_flux_loc(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
+    flux_flux_concentration(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
 
-Transport twin of [`stress_stress_loc`](@ref): ``\\underline{q}_i = \\boldsymbol{B}_i\\cdot\\underline{q}``. Identical to
-[`layer_flux_localization`](@ref).
+Transport twin of [`stress_stress_concentration`](@ref): ``\\underline{q}_i = \\boldsymbol{B}_i\\cdot\\underline{q}``. Identical to
+[`layer_flux_concentration`](@ref).
 """
-function flux_flux_loc(lam::Laminate, name::Symbol; property::Symbol = :K)
-    return layer_flux_localization(lam, name; property = property)
+function flux_flux_concentration(lam::Laminate, name::Symbol; property::Symbol = :K)
+    return layer_flux_concentration(lam, name; property = property)
 end
 
 """

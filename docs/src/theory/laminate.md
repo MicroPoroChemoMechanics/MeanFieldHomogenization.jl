@@ -26,7 +26,7 @@ saturates the Voigt bound in the plane of the layers and the Reuss bound
 across them, simultaneously.
 
 The derivation below is written for a general anisotropic stack, in
-elasticity and in transport, with the localization tensors and the imperfect
+elasticity and in transport, with the concentration tensors and the imperfect
 interfaces.
 
 ## 1. Setting
@@ -375,7 +375,7 @@ arithmetic (Voigt) one — the two saturations above, read off a closed form.
 `scripts/38_laminate_symbolic.jl` derives these from the code itself, with
 `SymPy`.
 
-## 7. Localization
+## 7. Concentration
 
 Since ``\boldsymbol{\Sigma} = \mathbb{C}^{\mathrm{hom}}:\boldsymbol{E}``, the layer
 strain follows directly:

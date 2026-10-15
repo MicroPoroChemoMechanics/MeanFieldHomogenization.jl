@@ -1,7 +1,7 @@
 # [The finite Eshelby cell with a corrected boundary condition](@id th-corrected-cell)
 
 !!! info "Before this page"
-    [Localization and contribution tensors](@ref th-localization), whose
+    [Concentration and contribution tensors](@ref th-concentration), whose
     concentration tensor is what the finite cell returns, and
     [Crack opening displacement and compliance](@ref th-cod-tensors), whose
     tensor ``\boldsymbol{B}`` the crack declination computes.
@@ -264,7 +264,7 @@ place, and only a radius sweep exposes it.
 Zero traction on the cavity wall in elasticity, zero normal flux in transport.
 Nothing is meshed inside: the cell is a shell of matrix between the shape and
 the outer sphere. Two consequences the implementation leans on — the
-**stress-side localization is identically zero**, so gate B is served by one
+**stress-side concentration is identically zero**, so gate B is served by one
 tensor rather than two; and the normalizing volume is the **curved** volume of
 the cavity, `fe_cell_curved_volume`, not the volume of the flat triangulation
 that bounds the mesh, which differs from it by a percent at usable refinements.
@@ -317,7 +317,7 @@ that already exists. It is also **numerically hopeless**: it obtains
 whose ratio is ``(R/a)^3``. Two digits go at ``R/a = 4`` and more as the cell
 grows — the opposite of what a larger cell is for. Measured before it was
 abandoned: the implied cavity volume is 2.9 % wrong at ``V_\Omega/V_{\mathcal D}
-= 8`` and 9.2 % at 216, with the localization error tracking it, and convergence
+= 8`` and 9.2 % at 216, with the concentration error tracking it, and convergence
 of ``O(h)`` where the direct route gives more.
 
 One consequence of that route is worth keeping even after abandoning it:

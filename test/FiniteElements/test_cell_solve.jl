@@ -1,6 +1,6 @@
 # The corrected solve on the three-dimensional cell.
 #
-# The gate is the **spherical pore**, whose localization is exact in both
+# The gate is the **spherical pore**, whose concentration is exact in both
 # physics: `A = 3/2` in conduction and `[I - S]^-1` with Eshelby's `S` in
 # elasticity. A supersphere at `p = 1` *is* a sphere, so this exercises the
 # whole chain -- discrete surface, curved boundary, corrected condition, surface
@@ -20,7 +20,7 @@ using Gmsh: gmsh
 const FE = MeanFieldHomogenization.FiniteElements
 const _B = FE.FerriteBackend()
 
-# Exact strain localization of a spherical pore, Kelvin-Mandel.
+# Exact strain concentration of a spherical pore, Kelvin-Mandel.
 function _sphere_pore_A(ν)
     SJ = (1 + ν) / (3 * (1 - ν))
     SK = 2 * (4 - 5ν) / (15 * (1 - ν))
@@ -48,11 +48,11 @@ function _sphere_gate(level, radius_ratio; μ = 1.0, ν = 0.3)
     V = shape_volume(shape)
 
     sc = FE.fe_cell_space(_B, g.grid, 2, 1)
-    c = FE._cell_conduction_localization(_B, sc, 1.0, V)
-    cbad = FE._cell_conduction_localization(_B, sc, 1.0, V; sign = +1)
+    c = FE._cell_conduction_concentration(_B, sc, 1.0, V)
+    cbad = FE._cell_conduction_concentration(_B, sc, 1.0, V; sign = +1)
 
     se = FE.fe_cell_space(_B, g.grid, 2, 3)
-    e = FE._cell_elastic_localization(_B, se, _iso_C(μ, ν), μ, ν, V)
+    e = FE._cell_elastic_concentration(_B, se, _iso_C(μ, ν), μ, ν, V)
 
     Aex = _sphere_pore_A(ν)
     return (;
@@ -139,7 +139,7 @@ end
         V = shape_volume(shape)
         μ, ν = 1.0, 0.3
         se = FE.fe_cell_space(_B, g.grid, 2, 3)
-        e = FE._cell_elastic_localization(_B, se, _iso_C(μ, ν), μ, ν, V)
+        e = FE._cell_elastic_concentration(_B, se, _iso_C(μ, ν), μ, ν, V)
         A = TensND.Tens(TensND.inv_KM(e.A))
         @test cubic_residual(A) < 5.0e-3
         # And it is *not* isotropic: that is the third constant the literature's
@@ -150,7 +150,7 @@ end
             10 * cubic_residual(A)
 
         sc = FE.fe_cell_space(_B, g.grid, 2, 1)
-        c = FE._cell_conduction_localization(_B, sc, 1.0, V)
+        c = FE._cell_conduction_concentration(_B, sc, 1.0, V)
         # At order two the cubic class *is* the isotropic class, so conduction
         # carries no anisotropy signal whatever the shape does in elasticity.
         @test norm(c.A - (tr(c.A) / 3) * I) / abs(tr(c.A) / 3) < 5.0e-3

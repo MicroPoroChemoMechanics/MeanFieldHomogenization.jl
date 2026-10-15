@@ -114,16 +114,16 @@ function _cond_amplitude_seq_alv(
 end
 
 """
-    gradient_localization_alv(sphere, K0_law, times) -> NTuple{N, Matrix}
+    gradient_concentration_alv(sphere, K0_law, times) -> NTuple{N, Matrix}
 
 Per-layer gradient concentrations of a [`LayeredSphere`](@ref) in an isotropic
 aging reference: the ``n\\times n`` Volterra matrices ``\\alpha_k`` with
 ``\\langle\\nabla T\\rangle_k = \\alpha_k\\circ\\nabla T^{\\infty}``, averaged over the material of
-layer ``k`` (the conduction twin of [`bulk_localization_alv`](@ref)). For a
+layer ``k`` (the conduction twin of [`bulk_concentration_alv`](@ref)). For a
 non-aging problem they are the elastic ones of
-[`gradient_gradient_loc`](@ref) at every time step.
+[`gradient_gradient_concentration`](@ref) at every time step.
 """
-function gradient_localization_alv(
+function gradient_concentration_alv(
         sphere::LayeredSphere{T, N}, K0_law::_ALVReference,
         times::AbstractVector{<:Real}
     ) where {T, N}
@@ -157,15 +157,15 @@ function _cond_interface_terms_alv(
 end
 
 """
-    gradient_gradient_loc_alv(sphere, K0_law, times; external = true) -> Matrix
+    gradient_gradient_concentration_alv(sphere, K0_law, times; external = true) -> Matrix
 
 ``3n\\times 3n`` gradient concentration of the whole [`LayeredSphere`](@ref) in an
 isotropic aging reference, ``\\sum_k f_k\\,\\alpha_k + \\Delta\\alpha``, the conduction twin
-of [`strain_strain_loc_alv`](@ref): ``\\Delta\\alpha`` adds the temperature jumps
+of [`strain_strain_concentration_alv`](@ref): ``\\Delta\\alpha`` adds the temperature jumps
 ``[\\![T]\\!] = \\rho\\,\\sigma_n = -\\rho\\,q_n`` of the Kapitza interfaces, the outer one
-when `external` is `true`, as in the elastic [`gradient_gradient_loc`](@ref).
+when `external` is `true`, as in the elastic [`gradient_gradient_concentration`](@ref).
 """
-function gradient_gradient_loc_alv(
+function gradient_gradient_concentration_alv(
         sphere::LayeredSphere{T, N}, K0_law::_ALVReference,
         times::AbstractVector{<:Real}; external::Bool = true
     ) where {T, N}

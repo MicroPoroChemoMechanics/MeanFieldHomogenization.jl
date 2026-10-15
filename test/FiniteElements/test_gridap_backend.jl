@@ -67,10 +67,10 @@ end
 
 @testset "Concentric limit reproduces LayeredSphere (Gridap)" begin
     incl = gx_incl(GridapBackend(), (GX_C_CORE, GX_C_SHELL); eccentricity = 0.0)
-    A, B = fe_axi_localization(incl, GX_C_MAT)
+    A, B = fe_axi_concentration(incl, GX_C_MAT)
     sph = LayeredSphere((cbrt(GX_W), 1.0), (GX_C_CORE, GX_C_SHELL))
-    Aex = gx_mandel(strain_strain_loc(sph, GX_C_MAT, GX_C_MAT))
-    Bex = gx_mandel(stress_strain_loc(sph, GX_C_MAT, GX_C_MAT))
+    Aex = gx_mandel(strain_strain_concentration(sph, GX_C_MAT, GX_C_MAT))
+    Bex = gx_mandel(stress_strain_concentration(sph, GX_C_MAT, GX_C_MAT))
     Anum, Bnum = gx_mandel(A), gx_mandel(B)
     @test gx_bulk(Anum) ≈ gx_bulk(Aex) rtol = 2.0e-3
     @test gx_shear(Anum) ≈ gx_shear(Aex) rtol = 3.0e-3
@@ -78,10 +78,10 @@ end
     @test gx_shear(Bnum) ≈ gx_shear(Bex) rtol = 3.0e-3
 
     ic = gx_incl(GridapBackend(), (GX_K_CORE, GX_K_SHELL); eccentricity = 0.0)
-    a, b = fe_axi_localization(ic, GX_K_MAT)
+    a, b = fe_axi_concentration(ic, GX_K_MAT)
     sphk = LayeredSphere((cbrt(GX_W), 1.0), (GX_K_CORE, GX_K_SHELL))
-    aex = TensND.components_canon(gradient_gradient_loc(sphk, GX_K_MAT, GX_K_MAT))
-    bex = TensND.components_canon(flux_gradient_loc(sphk, GX_K_MAT, GX_K_MAT))
+    aex = TensND.components_canon(gradient_gradient_concentration(sphk, GX_K_MAT, GX_K_MAT))
+    bex = TensND.components_canon(flux_gradient_concentration(sphk, GX_K_MAT, GX_K_MAT))
     @test TensND.components_canon(a)[1, 1] ≈ aex[1, 1] rtol = 2.0e-3
     @test TensND.components_canon(b)[1, 1] ≈ bex[1, 1] rtol = 2.0e-3
 end
@@ -92,19 +92,19 @@ end
     # statement. The eccentric case exercises all three elastic modes and both
     # transport ones with a genuinely transversely isotropic answer.
     for e in (0.0, 0.6)
-        Af, Bf = fe_axi_localization(
+        Af, Bf = fe_axi_concentration(
             gx_incl(FerriteBackend(), (GX_C_CORE, GX_C_SHELL); eccentricity = e), GX_C_MAT
         )
-        Ag, Bg = fe_axi_localization(
+        Ag, Bg = fe_axi_concentration(
             gx_incl(GridapBackend(), (GX_C_CORE, GX_C_SHELL); eccentricity = e), GX_C_MAT
         )
         @test gx_rel(gx_mandel(Af), gx_mandel(Ag)) < 1.0e-8
         @test gx_rel(gx_mandel(Bf), gx_mandel(Bg)) < 1.0e-8
 
-        af, bf = fe_axi_localization(
+        af, bf = fe_axi_concentration(
             gx_incl(FerriteBackend(), (GX_K_CORE, GX_K_SHELL); eccentricity = e), GX_K_MAT
         )
-        ag, bg = fe_axi_localization(
+        ag, bg = fe_axi_concentration(
             gx_incl(GridapBackend(), (GX_K_CORE, GX_K_SHELL); eccentricity = e), GX_K_MAT
         )
         @test gx_rel(TensND.components_canon(af), TensND.components_canon(ag)) < 1.0e-8

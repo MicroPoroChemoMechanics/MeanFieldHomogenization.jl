@@ -2,7 +2,7 @@
 
 # Surrogate of the finite-element eccentric sphere
 
-- teacher: `fe_axi_localization`, `nradial = 18`, `R/a = 4.0`
+- teacher: `fe_axi_concentration`, `nradial = 18`, `R/a = 4.0`
 - one cold finite-element evaluation: **1.57 s**
 - box: `α ∈ [0, 0.8]`, `w ∈ [0.2, 0.7]`, `E₂/E₀ ∈ [0.1, 2]`; fixed `ν = 0.2`, `E₁/E₀ = 3.5`
 - 1200 training + 300 held-out solves

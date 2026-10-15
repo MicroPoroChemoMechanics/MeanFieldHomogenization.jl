@@ -66,7 +66,7 @@ Verified at ``\eta = 0.7, 0.5, 0.3, 0.1``: the ratio is ``\eta`` to four
 decimals, and the ``3/4`` is ``\eta``-independent to machine precision.
 
 !!! warning "Degenerate cases hide conventions"
-    At ``\eta = 1`` both conventions coincide, and a localization term that
+    At ``\eta = 1`` both conventions coincide, and a concentration term that
     vanishes in every symmetric configuration is invisible to a test suite
     built from those configurations. See
     [Testing conventions](@ref dev-testing-conventions).

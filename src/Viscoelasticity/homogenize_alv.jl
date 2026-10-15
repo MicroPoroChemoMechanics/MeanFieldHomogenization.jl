@@ -325,10 +325,10 @@ Supports two inclusion-geometry families, in both orders:
     Hill-kernel + dilute-concentration pipeline.
   * `LayeredSphere`: the ALV recurrences feed its concentration and
     contribution directly — no Hill kernel is needed. At order 4 these are
-    [`strain_strain_loc_alv`](@ref) and [`stiffness_contribution_alv`](@ref)
-    (bulk and shear recurrences, [`bulk_localization_alv`](@ref),
-    [`shear_localization_alv`](@ref)); at order 2,
-    [`gradient_gradient_loc_alv`](@ref) and [`conductivity_contribution_alv`](@ref).
+    [`strain_strain_concentration_alv`](@ref) and [`stiffness_contribution_alv`](@ref)
+    (bulk and shear recurrences, [`bulk_concentration_alv`](@ref),
+    [`shear_concentration_alv`](@ref)); at order 2,
+    [`gradient_gradient_concentration_alv`](@ref) and [`conductivity_contribution_alv`](@ref).
     The phase property is ignored (the layers carry their own kernels); pass
     any `ViscoLaw` (e.g. `heaviside_law(C_0)`) as a placeholder.
 
@@ -540,7 +540,7 @@ function _inclusion_alv_quantities(
     # Per-layer moduli are stored inside the LayeredSphere geometry; the
     # phase-level C_r_law is ignored (we accept any placeholder so that
     # the existing `add_phase!` API still works).
-    A_dut = strain_strain_loc_alv(sphere, C_M_law, times)
+    A_dut = strain_strain_concentration_alv(sphere, C_M_law, times)
     N_dut = stiffness_contribution_alv(sphere, C_M_law, times)
     # A layered sphere has no single stiffness. The only consumer of `C_r` is
     # a bound, which takes its own average of the layer kernels.

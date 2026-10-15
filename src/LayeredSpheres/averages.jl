@@ -7,7 +7,7 @@
 #
 #      <ε>_k = α_k · ε∞   for purely hydrostatic ε∞,
 #
-#  where `α_k` is the per-layer bulk localization.  For a general remote
+#  where `α_k` is the per-layer bulk concentration.  For a general remote
 #  strain, the decomposition splits bulk + deviatoric and the shear
 #  contribution is delegated to the multi-layer shear solver (single
 #  layer only for now).
@@ -19,12 +19,12 @@
 Volume-averaged strain tensor ``\\langle\\boldsymbol{\\varepsilon}\\rangle_k`` inside the `layer`-th layer
 of a `LayeredSphere` embedded in an isotropic matrix `C₀`, under a
 remote strain `ε∞`.  Returns a symmetric 2-tensor in the canonical
-frame.  Combines the bulk localization ``\\alpha_k`` (hydrostatic part) and
-the shear localization ``\\beta_k`` (deviatoric part).
+frame.  Combines the bulk concentration ``\\alpha_k`` (hydrostatic part) and
+the shear concentration ``\\beta_k`` (deviatoric part).
 
 This is the strain of the layer's **material**: the opening of a
 [`SpringInterface`](@ref) on either side of it is not included.
-[`strain_strain_loc`](@ref)`(sphere, C₀; layer, external, internal)` adds it.
+[`strain_strain_concentration`](@ref)`(sphere, C₀; layer, external, internal)` adds it.
 """
 function layer_strain_average(
         sphere::LayeredSphere{T, N},
@@ -34,8 +34,8 @@ function layer_strain_average(
     ) where {T, N}
     1 ≤ layer ≤ N || throw(BoundsError(sphere, layer))
     κ₀, μ₀ = _iso_bulk_shear(C₀)
-    α = _bulk_localization(sphere, κ₀, μ₀)[layer]
-    β = _shear_localization(sphere, C₀)[layer]
+    α = _bulk_concentration(sphere, κ₀, μ₀)[layer]
+    β = _shear_concentration(sphere, C₀)[layer]
 
     Tres = promote_type(T, eltype(C₀), eltype(ε∞))
     I2 = TensISO{3}(one(Tres))
@@ -54,7 +54,7 @@ of layer ``k`` inside the composite sphere.
 
 This is the strain of the **material**, which leaves out the opening of the
 spring interfaces. The strain of the sphere seen from the matrix, which the
-schemes use, includes it: `strain_strain_loc(sphere, C₀, C₀) ⊡ ε∞`. The two
+schemes use, includes it: `strain_strain_concentration(sphere, C₀, C₀) ⊡ ε∞`. The two
 agree when every interface is perfect or a membrane.
 """
 function sphere_strain_average(
@@ -68,9 +68,9 @@ function sphere_strain_average(
 end
 
 """
-    _layer_dev_localization_upto(sphere, amps, layer, r_upper) -> β
+    _layer_dev_concentration_upto(sphere, amps, layer, r_upper) -> β
 
-Deviatoric localization averaged over the **truncated** shell
+Deviatoric concentration averaged over the **truncated** shell
 `(r_{layer-1}, r_upper)` rather than over the whole layer.
 
 ``\\alpha`` is constant inside a layer, but ``\\beta`` is not: the mode-2 amplitude carries
@@ -80,7 +80,7 @@ grows with the shell's outer radius, as
 means re-evaluating that factor at `r_upper`, not rescaling the full-layer
 average.  With `r_upper = r_layer` this returns the full-layer ``\\beta`` exactly.
 """
-function _layer_dev_localization_upto(
+function _layer_dev_concentration_upto(
         sphere::LayeredSphere{T, N}, amps, layer::Int, r_upper
     ) where {T, N}
     κ_k, μ_k = _iso_bulk_shear(layer_modulus(sphere, layer))
@@ -116,7 +116,7 @@ function cumulative_strain_average(
     radii = sphere.radii
 
     κ₀, μ₀ = _iso_bulk_shear(C₀)
-    α = _bulk_localization(sphere, κ₀, μ₀)
+    α = _bulk_concentration(sphere, κ₀, μ₀)
     amps = _shear_amplitude_seq(sphere, C₀)
 
     Tres = promote_type(T, typeof(r), eltype(C₀), eltype(ε∞))
@@ -137,7 +137,7 @@ function cumulative_strain_average(
         end
         r_upper = min(Tres(r), Tres(r_k))
         vol_k = (4 * π / 3) * (r_upper^3 - r_prev^3)
-        β_k = _layer_dev_localization_upto(sphere, amps, k, r_upper)
+        β_k = _layer_dev_concentration_upto(sphere, amps, k, r_upper)
         avg_k = α[k] * ε_sph + β_k * ε_dev
         acc_vol_times_avg = acc_vol_times_avg === nothing ?
             vol_k * avg_k :
@@ -168,9 +168,9 @@ Note this is the average of the stress **inside the layer's material**.  A
 [`MembraneInterface`](@ref) additionally carries a surface stress on the layer
 boundary, which belongs to the interface rather than to either adjacent bulk,
 and is therefore *not* included here — `stiffness_contribution` and
-`stress_strain_loc` account for it separately.  The gap is not small: on a
+`stress_strain_concentration` account for it separately.  The gap is not small: on a
 two-layer sphere with `MembraneInterface(1.3, 0.7)`,
-`sphere_stress_average` and `stress_strain_loc ⊡ ε∞` differ by order one,
+`sphere_stress_average` and `stress_strain_concentration ⊡ ε∞` differ by order one,
 while with perfect interfaces they agree to machine precision.
 """
 function layer_stress_average(
@@ -187,9 +187,9 @@ function layer_stress_average(
     # k = ∞: the volumetric strain vanishes and the mean pressure is read from
     # the traction (`_layer_pressures`), not from ∞·0.
     κ₀, μ₀ = _iso_bulk_shear(C₀)
-    α = _bulk_localization(sphere, κ₀, μ₀)
+    α = _bulk_concentration(sphere, κ₀, μ₀)
     P = _layer_pressures(sphere, C₀, α)[layer]
-    β = _shear_localization(sphere, C₀)[layer]
+    β = _shear_concentration(sphere, C₀)[layer]
     return TensISO{3}(P, 2 * μk * β) ⊡ ε∞
 end
 
@@ -235,7 +235,7 @@ function layer_gradient_average(
         layer::Int,
     ) where {T, N}
     1 ≤ layer ≤ N || throw(BoundsError(sphere, layer))
-    α = _cond_localization(sphere, _iso_scalar(K₀))[layer]
+    α = _cond_concentration(sphere, _iso_scalar(K₀))[layer]
     g = TensND._extract_vec(∇T∞)
     return TensND.Vec{3}(ntuple(i -> α * g[i], 3))
 end
@@ -248,14 +248,14 @@ Volume-averaged temperature gradient over the whole composite sphere,
 
 As [`sphere_strain_average`](@ref), an average over the material: the
 temperature jump across a [`KapitzaInterface`](@ref) is left out, and
-[`gradient_gradient_loc`](@ref)`(sphere, K₀, K₀)` includes it.
+[`gradient_gradient_concentration`](@ref)`(sphere, K₀, K₀)` includes it.
 """
 function sphere_gradient_average(
         sphere::LayeredSphere{T, N},
         K₀::TensND.TensISO{2, 3},
         ∇T∞,
     ) where {T, N}
-    α = _cond_localization(sphere, _iso_scalar(K₀))
+    α = _cond_concentration(sphere, _iso_scalar(K₀))
     f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
     s = sum(f[k] * α[k] for k in 1:N)
     g = TensND._extract_vec(∇T∞)

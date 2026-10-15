@@ -384,59 +384,59 @@ function laminate_stiffness(
 end
 
 """
-    laminate_strain_localization(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
+    laminate_strain_concentration(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
 
-Strain localization tensor of one layer,
+Strain concentration tensor of one layer,
 ``\\mathbb{A}_i = \\mathbb{I} + \\mathbb{P}_i:(\\mathbb{C}^{\\mathrm{hom}} - \\mathbb{C}_i)``,
 in Kelvin-Mandel form. Its in-plane block is the identity and its
 in-plane/out-of-plane coupling block vanishes — the macroscopic in-plane
 strain is transmitted unchanged to every layer. The fractions weight to the
 identity, ``\\sum_i f_i\\,\\mathbb{A}_i = \\mathbb{I}``.
 """
-@inline function laminate_strain_localization(C6, Chom6; opinv = plane_pinv)
+@inline function laminate_strain_concentration(C6, Chom6; opinv = plane_pinv)
     return one(SMatrix{6, 6, eltype(Chom6)}) + opinv(C6) * (Chom6 - C6)
 end
 
 """
-    laminate_stress_localization(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
+    laminate_stress_concentration(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
 
-Stress localization tensor of one layer,
+Stress concentration tensor of one layer,
 ``\\mathbb{B}_i = \\mathbb{C}_i:\\mathbb{A}_i:(\\mathbb{C}^{\\mathrm{hom}})^{-1}``, in Kelvin-Mandel form, with
 ``\\sum_i f_i\\,\\mathbb{B}_i = \\mathbb{I}``. The inverse goes through [`_inv_km6`](@ref), so the result
 stays differentiable and symbolically evaluable.
 """
-@inline function laminate_stress_localization(C6, Chom6; opinv = plane_pinv)
-    return C6 * laminate_strain_localization(C6, Chom6; opinv = opinv) * _inv_km6(Chom6)
+@inline function laminate_stress_concentration(C6, Chom6; opinv = plane_pinv)
+    return C6 * laminate_strain_concentration(C6, Chom6; opinv = opinv) * _inv_km6(Chom6)
 end
 
 """
-    laminate_stress_strain_localization(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
+    laminate_stress_strain_concentration(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
 
-Mixed localization tensor of one layer,
+Mixed concentration tensor of one layer,
 ``\\mathbb{A}_{\\sigma\\varepsilon,i} = \\mathbb{C}_i:\\mathbb{A}_i``, mapping the
 **macroscopic strain** to the layer stress:
 ``\\boldsymbol{\\sigma}_i = \\mathbb{A}_{\\sigma\\varepsilon,i}:\\boldsymbol{E}``. It weights to
 the effective stiffness, ``\\sum_i f_i\\,\\mathbb{A}_{\\sigma\\varepsilon,i} = \\mathbb{C}^{\\mathrm{hom}}``, which is the mean-field
 identity ``\\mathbb{C}^{\\mathrm{hom}} = \\langle\\mathbb{C}:\\mathbb{A}\\rangle`` written layer by layer.
 
-No inverse of ``\\mathbb{C}^{\\mathrm{hom}}`` is formed, unlike [`laminate_stress_localization`](@ref).
+No inverse of ``\\mathbb{C}^{\\mathrm{hom}}`` is formed, unlike [`laminate_stress_concentration`](@ref).
 """
-@inline function laminate_stress_strain_localization(C6, Chom6; opinv = plane_pinv)
-    return C6 * laminate_strain_localization(C6, Chom6; opinv = opinv)
+@inline function laminate_stress_strain_concentration(C6, Chom6; opinv = plane_pinv)
+    return C6 * laminate_strain_concentration(C6, Chom6; opinv = opinv)
 end
 
 """
-    laminate_strain_stress_localization(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
+    laminate_strain_stress_concentration(C6, Chom6; opinv = plane_pinv) -> SMatrix{6,6}
 
-Mixed localization tensor of one layer,
+Mixed concentration tensor of one layer,
 ``\\mathbb{A}_{\\varepsilon\\sigma,i} = \\mathbb{A}_i:(\\mathbb{C}^{\\mathrm{hom}})^{-1}``,
 mapping the **macroscopic stress** to the layer strain:
 ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_{\\varepsilon\\sigma,i}:\\boldsymbol{\\Sigma}``,
 with ``\\sum_i f_i\\,\\mathbb{A}_{\\varepsilon\\sigma,i} = (\\mathbb{C}^{\\mathrm{hom}})^{-1}``. The inverse goes through
 [`_inv_km6`](@ref), never `inv(::SMatrix{6,6})`.
 """
-@inline function laminate_strain_stress_localization(C6, Chom6; opinv = plane_pinv)
-    return laminate_strain_localization(C6, Chom6; opinv = opinv) * _inv_km6(Chom6)
+@inline function laminate_strain_stress_concentration(C6, Chom6; opinv = plane_pinv)
+    return laminate_strain_concentration(C6, Chom6; opinv = opinv) * _inv_km6(Chom6)
 end
 
 # ── Conduction (order 2) ────────────────────────────────────────────────────
@@ -500,49 +500,49 @@ function laminate_conductivity(
 end
 
 """
-    laminate_gradient_localization(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
+    laminate_gradient_concentration(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
 
-Gradient localization tensor of one layer in a transport problem,
+Gradient concentration tensor of one layer in a transport problem,
 ``\\boldsymbol{A}_i = \\boldsymbol{1} + \\boldsymbol{P}_i\\cdot(\\boldsymbol{K}^{\\mathrm{hom}} - \\boldsymbol{K}_i)``,
 with ``\\sum_i f_i\\,\\boldsymbol{A}_i = \\boldsymbol{1}``.
 """
-@inline function laminate_gradient_localization(K3, Khom3; opinv = plane_pinv2)
+@inline function laminate_gradient_concentration(K3, Khom3; opinv = plane_pinv2)
     return one(SMatrix{3, 3, eltype(Khom3)}) + opinv(K3) * (Khom3 - K3)
 end
 
 """
-    laminate_flux_localization(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
+    laminate_flux_concentration(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
 
-Flux localization tensor of one layer,
+Flux concentration tensor of one layer,
 ``\\boldsymbol{B}_i = \\boldsymbol{K}_i\\cdot\\boldsymbol{A}_i\\cdot(\\boldsymbol{K}^{\\mathrm{hom}})^{-1}``,
 with ``\\sum_i f_i\\,\\boldsymbol{B}_i = \\boldsymbol{1}``.
 """
-@inline function laminate_flux_localization(K3, Khom3; opinv = plane_pinv2)
-    return K3 * laminate_gradient_localization(K3, Khom3; opinv = opinv) * _inv3(Khom3)
+@inline function laminate_flux_concentration(K3, Khom3; opinv = plane_pinv2)
+    return K3 * laminate_gradient_concentration(K3, Khom3; opinv = opinv) * _inv3(Khom3)
 end
 
 """
-    laminate_flux_gradient_localization(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
+    laminate_flux_gradient_concentration(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
 
-Mixed transport localization of one layer,
+Mixed transport concentration of one layer,
 ``\\boldsymbol{A}_{q\\nabla,i} = \\boldsymbol{K}_i\\cdot\\boldsymbol{A}_i``, mapping the
 **macroscopic gradient** to the layer flux, with
 ``\\sum_i f_i\\,\\boldsymbol{A}_{q\\nabla,i} = \\boldsymbol{K}^{\\mathrm{hom}}``.
-Order-2 twin of [`laminate_stress_strain_localization`](@ref).
+Order-2 twin of [`laminate_stress_strain_concentration`](@ref).
 """
-@inline function laminate_flux_gradient_localization(K3, Khom3; opinv = plane_pinv2)
-    return K3 * laminate_gradient_localization(K3, Khom3; opinv = opinv)
+@inline function laminate_flux_gradient_concentration(K3, Khom3; opinv = plane_pinv2)
+    return K3 * laminate_gradient_concentration(K3, Khom3; opinv = opinv)
 end
 
 """
-    laminate_gradient_flux_localization(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
+    laminate_gradient_flux_concentration(K3, Khom3; opinv = plane_pinv2) -> SMatrix{3,3}
 
-Mixed transport localization of one layer,
+Mixed transport concentration of one layer,
 ``\\boldsymbol{A}_{\\nabla q,i} = \\boldsymbol{A}_i\\cdot(\\boldsymbol{K}^{\\mathrm{hom}})^{-1}``,
 mapping the **macroscopic flux** to the layer gradient, with
 ``\\sum_i f_i\\,\\boldsymbol{A}_{\\nabla q,i} = (\\boldsymbol{K}^{\\mathrm{hom}})^{-1}``. Order-2 twin of
-[`laminate_strain_stress_localization`](@ref).
+[`laminate_strain_stress_concentration`](@ref).
 """
-@inline function laminate_gradient_flux_localization(K3, Khom3; opinv = plane_pinv2)
-    return laminate_gradient_localization(K3, Khom3; opinv = opinv) * _inv3(Khom3)
+@inline function laminate_gradient_flux_concentration(K3, Khom3; opinv = plane_pinv2)
+    return laminate_gradient_concentration(K3, Khom3; opinv = opinv) * _inv3(Khom3)
 end

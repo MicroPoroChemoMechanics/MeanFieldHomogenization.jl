@@ -5,7 +5,7 @@ EditURL = "../../../../scripts/32_spheroid_effective_conductivity.jl"
 # [The n-layer confocal spheroid: geometry and effective conductivity](@id tut-layered-spheroid-effective)
 
 !!! info "Before this page"
-    The tutorials [n-layer sphere: volume-averaged localization tensors](@ref tut-layered-sphere),
+    The tutorials [n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere),
     the spherical case of the composite inclusion treated here, and
     [Transport properties](@ref tut-transport), for the conduction problem it
     is solved in; the theory page
@@ -62,7 +62,7 @@ inclusion. This is the first regression test in
 machinery is anchored:
 
 ````@example layered_spheroid_effective
-A_layered = gradient_gradient_loc(s, K1, K0)
+A_layered = gradient_gradient_concentration(s, K1, K0)
 
 ell = Spheroid(3.0)                        # equivalent homogeneous Ellipsoid
 P = hill_tensor(ell, K0)
@@ -89,7 +89,7 @@ interface must behave like a fully insulated core.
 s_lc = LayeredSpheroid((3.0,), (1.0,), (K1,); interfaces = (KapitzaInterface(1.0e10),))
 s_insulated = LayeredSpheroid((3.0,), (1.0,), (TensISO{3}(1.0e-12),))
 
-gradient_gradient_loc(s_lc, K1, K0) ≈ gradient_gradient_loc(s_insulated, TensISO{3}(1.0e-12), K0)
+gradient_gradient_concentration(s_lc, K1, K0) ≈ gradient_gradient_concentration(s_insulated, TensISO{3}(1.0e-12), K0)
 ````
 
 ### Multiple layers
@@ -177,8 +177,8 @@ end
 
 function _ec_equiv(ϖ, ρ, scheme)
     p = _ec_particle(ϖ, ρ)
-    A = gradient_gradient_loc(p, EC_KINC, EC_KMAT)
-    B = flux_gradient_loc(p, EC_KINC, EC_KMAT)
+    A = gradient_gradient_concentration(p, EC_KINC, EC_KMAT)
+    B = flux_gradient_concentration(p, EC_KINC, EC_KMAT)
     Keq = TensND.TensTI{2}(B[2, 2] / A[2, 2], B[1, 1] / A[1, 1], EC_AXIS)
     rve = RVE()
     add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => EC_KMAT); fraction = :rest)
@@ -256,8 +256,8 @@ function _eq_keq(ϖ, ρ)
         (EQ_A,), (EQ_A / ϖ,), (EQ_KINC,);
         interfaces = (MeanFieldHomogenization.KapitzaInterface(ρ),), Nseries = 6,
     )
-    A = gradient_gradient_loc(p, EQ_KINC, EQ_KM)
-    B = flux_gradient_loc(p, EQ_KINC, EQ_KM)
+    A = gradient_gradient_concentration(p, EQ_KINC, EQ_KM)
+    B = flux_gradient_concentration(p, EQ_KINC, EQ_KM)
     return real(B[1, 1] / A[1, 1]), real(B[3, 3] / A[3, 3])
 end
 

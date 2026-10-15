@@ -44,7 +44,7 @@ pages = [
         "The Eshelby problem" => [
             "theory/eshelby_problem.md",
             "theory/hill_tensors.md",
-            "theory/localization.md",
+            "theory/concentration.md",
             "theory/interaction_tensors.md",
         ],
         # A crack is a degenerate ellipsoid, so it stays close to the
@@ -301,7 +301,7 @@ pages = [
         "api/elasticity.md",
         "api/cracks.md",
         "api/conductivity.md",
-        "api/localization.md",
+        "api/concentration.md",
         "api/layered_sphere.md",
         "api/layered_spheroid.md",
         "api/superspheres.md",

@@ -45,8 +45,8 @@ for symbol:
 
 Two consequences worth keeping in mind while reading the code:
 
-- the localization tensors named `flux_gradient_loc`, `flux_flux_loc`,
-  `gradient_flux_loc` carry ``\boldsymbol{\sigma} = -\underline{q}``, not
+- the concentration tensors named `flux_gradient_concentration`, `flux_flux_concentration`,
+  `gradient_flux_concentration` carry ``\boldsymbol{\sigma} = -\underline{q}``, not
   ``\underline{q}``. The names are kept for continuity with their elastic
   twins; the sign is the one stated here.
 - a conductivity ``\boldsymbol{K}`` and a stiffness ``\mathbb{C}`` are then

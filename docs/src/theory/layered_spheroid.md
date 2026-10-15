@@ -325,7 +325,7 @@ ratios,
   1 + \tfrac{b}{a}\big|_a\,\mathcal{U}_a(q_N)\Bigr).
 ```
 
-These are [`gradient_gradient_loc`](@ref) and [`flux_gradient_loc`](@ref).
+These are [`gradient_gradient_concentration`](@ref) and [`flux_gradient_concentration`](@ref).
 
 Like [`LayeredSphere`](@ref), a layered spheroid has **no Hill tensor** — it is
 not a homogeneous ellipsoid, so ``\mathbb{P}`` does not exist for it. It plugs
@@ -402,7 +402,7 @@ complex-analytic with no real singularity for an oblate ``q = \mathrm{i}\tau``:
 [Layered sphere](@ref th-layered-sphere) and
 `src/LayeredSpheres/scheme_integration.jl` for the elastic and conduction
 analogues): it declares `is_homogeneous_inclusion = false` and overrides
-[`gradient_gradient_loc`](@ref), [`flux_gradient_loc`](@ref) and
+[`gradient_gradient_concentration`](@ref), [`flux_gradient_concentration`](@ref) and
 `conductivity_contribution`. Every dilute, Mori–Tanaka, self-consistent, Maxwell
 and differential kernel then routes through the confocal transfer-matrix
 solution with no change to `src/Schemes/`.

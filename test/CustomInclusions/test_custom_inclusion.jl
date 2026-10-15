@@ -2,7 +2,7 @@
 #  test_custom_inclusion.jl — the user-defined-inclusion contract.
 #
 #  Coverage:
-#   1. The three entry gates (Hill / localization / contribution) plug a
+#   1. The three entry gates (Hill / concentration / contribution) plug a
 #      `CustomInclusion` into every scheme and are indistinguishable from the
 #      native `Ellipsoid`, in elasticity and in conduction.
 #   2. A flat custom inclusion registered with `density = ε` reproduces
@@ -55,9 +55,9 @@ end
     gate_B = CustomInclusion(
         (3.0, 1.0, 1.0);
         basis = MeanFieldHomogenization.inclusion_basis(ell),
-        strain_strain_loc = (P₁, P₀; kw...) -> strain_strain_loc(ell, P₁, P₀; kw...),
-        gradient_gradient_loc = (P₁, P₀; kw...) ->
-        gradient_gradient_loc(ell, P₁, P₀; kw...),
+        strain_strain_concentration = (P₁, P₀; kw...) -> strain_strain_concentration(ell, P₁, P₀; kw...),
+        gradient_gradient_concentration = (P₁, P₀; kw...) ->
+        gradient_gradient_concentration(ell, P₁, P₀; kw...),
     )
     gate_C = CustomInclusion(
         (3.0, 1.0, 1.0);
@@ -119,16 +119,16 @@ end
         @test_throws ArgumentError homogenize(rve, MoriTanaka(), :C)
     end
 
-    @testset "gate A also yields the derived localization tensors" begin
+    @testset "gate A also yields the derived concentration tensors" begin
         for f in (
-                strain_strain_loc, stress_strain_loc,
-                strain_stress_loc, stress_stress_loc,
+                strain_strain_concentration, stress_strain_concentration,
+                strain_stress_concentration, stress_stress_concentration,
             )
             @test get_array(f(gate_A, CI_C_I, CI_C_M)) ≈ get_array(f(ell, CI_C_I, CI_C_M))
         end
         for f in (
-                gradient_gradient_loc, flux_gradient_loc,
-                gradient_flux_loc, flux_flux_loc,
+                gradient_gradient_concentration, flux_gradient_concentration,
+                gradient_flux_concentration, flux_flux_concentration,
             )
             @test get_array(f(gate_A, CI_K_I, CI_K_M)) ≈ get_array(f(ell, CI_K_I, CI_K_M))
         end
@@ -302,9 +302,9 @@ MeanFieldHomogenization.Elasticity._kernel(
     @test check_inclusion_interface(blob; verbose = false)
 end
 
-@testset "heterogeneous inclusion needs BOTH localizations" begin
+@testset "heterogeneous inclusion needs BOTH concentrations" begin
     # A heterogeneous inclusion has no single `C₁`, so the generic identity
-    # `A_σε = C₁ : A_εε` does not hold: the stress-side localization must be
+    # `A_σε = C₁ : A_εε` does not hold: the stress-side concentration must be
     # supplied too.  `LayeredSphere` is the reference heterogeneous inclusion.
     sphere = LayeredSphere((0.5, 1.0), (TensISO{3}(60.0, 20.0), TensISO{3}(90.0, 30.0)))
     C_i = TensISO{3}(60.0, 20.0)
@@ -312,8 +312,8 @@ end
     # Complete: both sides of the pair.
     het = CustomInclusion(;
         homogeneous = false,
-        strain_strain_loc = (P₁, P₀; kw...) -> strain_strain_loc(sphere, P₁, P₀; kw...),
-        stress_strain_loc = (P₁, P₀; kw...) -> stress_strain_loc(sphere, P₁, P₀; kw...),
+        strain_strain_concentration = (P₁, P₀; kw...) -> strain_strain_concentration(sphere, P₁, P₀; kw...),
+        stress_strain_concentration = (P₁, P₀; kw...) -> stress_strain_concentration(sphere, P₁, P₀; kw...),
         stiffness_contribution = (P₁, P₀; kw...) ->
         stiffness_contribution(sphere, P₁, P₀; kw...),
         compliance_contribution = (P₁, P₀; kw...) ->
@@ -322,7 +322,7 @@ end
     # Incomplete: strain side only, as one is tempted to write.
     partial = CustomInclusion(;
         homogeneous = false,
-        strain_strain_loc = (P₁, P₀; kw...) -> strain_strain_loc(sphere, P₁, P₀; kw...),
+        strain_strain_concentration = (P₁, P₀; kw...) -> strain_strain_concentration(sphere, P₁, P₀; kw...),
         stiffness_contribution = (P₁, P₀; kw...) ->
         stiffness_contribution(sphere, P₁, P₀; kw...),
         compliance_contribution = (P₁, P₀; kw...) ->
@@ -351,7 +351,7 @@ end
         get_array(homogenize(ref, SelfConsistent(), :C)) rtol = 1.0e-10
     # And the partial one is now **refused** rather than answered wrongly. It
     # used to come back off by several percent, which this test recorded; the
-    # generic `stress_strain_loc` no longer applies `ℂ₁ : 𝔸_εε` to an inclusion
+    # generic `stress_strain_concentration` no longer applies `ℂ₁ : 𝔸_εε` to an inclusion
     # that declares itself heterogeneous, because that formula needs a single
     # uniform stiffness. Refusing is what the contract's docstring always said
     # should happen, and a few percent is exactly the size of error that passes
@@ -368,7 +368,7 @@ end
     end
 
     # `AsymmetricSelfConsistent`, on the other hand, must *not* inherit that
-    # restriction: its iteration consumes the same two localization tensors as
+    # restriction: its iteration consumes the same two concentration tensors as
     # `SelfConsistent`, and only its branch-selection heuristic ever looked at a
     # bound.  With none available it falls back to the dilute estimate and runs,
     # reaching the same fixed point as `SelfConsistent`.
@@ -377,20 +377,20 @@ end
         get_array(homogenize(ref, AsymmetricSelfConsistent(), :C)) rtol = 1.0e-8
     @test get_array(asc) ≈ get_array(homogenize(ok, SelfConsistent(), :C)) rtol = 1.0e-6
 
-    # The root cause, isolated: the two stress-side localizations disagree.
+    # The root cause, isolated: the two stress-side concentrations disagree.
     @test !isapprox(
-        get_array(stress_strain_loc(sphere, C_i, CI_C_M)),
-        get_array(C_i ⊡ strain_strain_loc(sphere, C_i, CI_C_M)); rtol = 1.0e-3
+        get_array(stress_strain_concentration(sphere, C_i, CI_C_M)),
+        get_array(C_i ⊡ strain_strain_concentration(sphere, C_i, CI_C_M)); rtol = 1.0e-3
     )
 
     # The checker is what protects the user from that silent gap.
     @test check_inclusion_interface(het; verbose = false)
     @test !check_inclusion_interface(partial; verbose = false)
 
-    # A heterogeneous inclusion also needs the stress side for `stress_stress_loc`
-    # to be right — it is derived from `stress_strain_loc`, not from `A_εε`.
-    @test get_array(stress_stress_loc(het, C_i, CI_C_M)) ≈
-        get_array(stress_strain_loc(sphere, C_i, CI_C_M) ⊡ inv(CI_C_M))
+    # A heterogeneous inclusion also needs the stress side for `stress_stress_concentration`
+    # to be right — it is derived from `stress_strain_concentration`, not from `A_εε`.
+    @test get_array(stress_stress_concentration(het, C_i, CI_C_M)) ≈
+        get_array(stress_strain_concentration(sphere, C_i, CI_C_M) ⊡ inv(CI_C_M))
 end
 
 @testset "shape_tensor is optional" begin
@@ -497,7 +497,7 @@ end
     # An elasticity-only custom inclusion is not usable in conduction.
     elas_only = CustomInclusion(
         (1.0, 1.0, 1.0);
-        strain_strain_loc = (P₁, P₀; kw...) -> strain_strain_loc(ell, P₁, P₀; kw...),
+        strain_strain_concentration = (P₁, P₀; kw...) -> strain_strain_concentration(ell, P₁, P₀; kw...),
     )
     @test check_inclusion_interface(elas_only; verbose = false)
     @test !check_inclusion_interface(elas_only; physics = :conduction, verbose = false)

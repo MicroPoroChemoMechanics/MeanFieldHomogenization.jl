@@ -10,7 +10,7 @@ analytic families, the layered patterns and
 | Type | Entry gate | For |
 |---|---|---|
 | [`NeuralHillInclusion`](@ref) | A — the Hill tensor | a morphology with a Hill tensor: contrast dependence and the ``\\mathbb{C}_1 = \\mathbb{C}_0 \\Rightarrow \\mathbb{A} = \\mathbb{I}`` limit stay exact |
-| [`NeuralLocalizationInclusion`](@ref) | B — both localization tensors | an internally heterogeneous morphology, which has no Hill tensor |
+| [`NeuralConcentrationInclusion`](@ref) | B — both concentration tensors | an internally heterogeneous morphology, which has no Hill tensor |
 
 # Why bother, when the analytic Hill tensor is exact
 
@@ -66,7 +66,7 @@ using Printf: @printf, @sprintf
 
 import ..Core
 # `hill_tensor` and the two identity helpers live at the package's top level,
-# in `localization.jl`, which is included before this module. `AnchoredHill`
+# in `concentration.jl`, which is included before this module. `AnchoredHill`
 # needs them to evaluate a closed-form baseline, and importing them keeps the
 # convention single-sourced rather than re-deriving the identity here.
 import ..hill_tensor
@@ -82,9 +82,9 @@ export NeuralSurrogate, Provenance, worst_error
 export save_surrogate, load_surrogate, model_path, shipped_models
 
 # The physics of the output
-export HillISO, HillTI, HillOrtho, HillISO2, HillTI2, StrainLocCubic
-export GradLocISO2, GradLocTI2
-export StrainLocTI, StressLocTI
+export HillISO, HillTI, HillOrtho, HillISO2, HillTI2, StrainConcentrationCubic
+export GradientConcentrationISO2, GradientConcentrationTI2
+export StrainConcentrationTI, StressConcentrationTI
 export DimensionlessHill, AnchoredHill, AffineHill
 
 # The learning system
@@ -93,7 +93,7 @@ export TrainingOptions, train_surrogate, assemble_surrogate
 export validate_surrogate, report_surrogate, component_labels
 
 # The inclusions
-export NeuralShape, NeuralHillInclusion, NeuralLocalizationInclusion
+export NeuralShape, NeuralHillInclusion, NeuralConcentrationInclusion
 
 include("mlp.jl")
 include("specs.jl")

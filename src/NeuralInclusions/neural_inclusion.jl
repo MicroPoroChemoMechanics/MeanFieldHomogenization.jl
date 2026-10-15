@@ -3,19 +3,19 @@
 #  contract of `docs/src/developer/adding_inclusion.md`.
 #
 #  `NeuralHillInclusion` enters through **gate A**: it supplies `hill_tensor`,
-#  and the package derives the eight localization tensors, the four contribution
+#  and the package derives the eight concentration tensors, the four contribution
 #  tensors and every scheme.  Two consequences worth stating, because they are
 #  what makes gate A the right choice for a surrogate:
 #
 #  * the pivot `𝔸_εε = [𝕀 + ℙ:(ℂ₁−ℂ₀)]⁻¹` is evaluated exactly, so the limit
 #    `ℂ₁ = ℂ₀ ⟹ 𝔸 = 𝕀` holds to machine precision no matter how badly the
 #    network is trained, and the surrogate's error is confined to one tensor;
-#  * the eight localization tensors stay exactly consistent with one another,
+#  * the eight concentration tensors stay exactly consistent with one another,
 #    which a surrogate predicting `𝔸` directly could not guarantee.
 #
-#  `NeuralLocalizationInclusion` enters through **gate B** with both tensors, for
+#  `NeuralConcentrationInclusion` enters through **gate B** with both tensors, for
 #  a heterogeneous morphology that has no Hill tensor at all — the shape a
-#  surrogate trained on `fe_axi_localization` takes.
+#  surrogate trained on `fe_axi_concentration` takes.
 #
 #  Both are ordinary `AbstractCustomInclusion`s: the neutral branch of the
 #  hierarchy, so their methods can never become ambiguous with the ellipsoidal,
@@ -215,7 +215,7 @@ end
 
 Inclusion whose **Hill tensor** is produced by a trained
 [`NeuralSurrogate`](@ref) — entry gate A of the inclusion contract, so all eight
-localization tensors, all four contribution tensors and every homogenization
+concentration tensors, all four contribution tensors and every homogenization
 scheme follow.
 
 | Option | Meaning |
@@ -243,7 +243,7 @@ add_phase!(rve, :i, incl, Dict(:C => iso_stiffness(60.0, 30.0)); fraction = 0.2)
 homogenize(rve, MoriTanaka(), :C)
 ```
 
-See also [`NeuralLocalizationInclusion`](@ref), and
+See also [`NeuralConcentrationInclusion`](@ref), and
 `docs/src/manual/neural_inclusions.md`.
 """
 struct NeuralHillInclusion{dim, T <: Number, B <: TensND.AbstractBasis, S4, S2} <:
@@ -383,18 +383,18 @@ _neural_hill(_incl, ::Nothing, _P₀, which) = throw(
     )
 )
 
-# ─── Gate B — NeuralLocalizationInclusion ────────────────────────────────────
+# ─── Gate B — NeuralConcentrationInclusion ────────────────────────────────────
 
 """
-    NeuralLocalizationInclusion(semi_axes; strain = nothing, stress = nothing,
+    NeuralConcentrationInclusion(semi_axes; strain = nothing, stress = nothing,
                                 gradient = nothing, flux = nothing,
                                 fractions = nothing, properties = nothing,
                                 basis = nothing, euler_angles = (), guard = :warn)
 
-Inclusion whose **localization tensors** are produced by trained surrogates —
+Inclusion whose **concentration tensors** are produced by trained surrogates —
 entry gate B, the only way in for an internally heterogeneous morphology, which
 has no Hill tensor at all. This is the shape a surrogate trained on
-[`fe_axi_localization`](@ref MeanFieldHomogenization.FiniteElements.fe_axi_localization)
+[`fe_axi_concentration`](@ref MeanFieldHomogenization.FiniteElements.fe_axi_concentration)
 takes.
 
 Because [`is_homogeneous_inclusion`](@ref MeanFieldHomogenization.Core.is_homogeneous_inclusion) is `false`, gate B costs **two**
@@ -429,7 +429,7 @@ drift by several percent.
     This type is the seam for the heterogeneous morphologies, and it is tested
     against an equivalent gate-A inclusion; no trained model ships for it yet.
 """
-struct NeuralLocalizationInclusion{
+struct NeuralConcentrationInclusion{
         dim, T <: Number, TS <: Number, B <: TensND.AbstractBasis, S4, S2, NS, F, P,
     } <: Core.AbstractCustomInclusion{T}
     semi_axes::NTuple{dim, T}
@@ -448,7 +448,7 @@ struct NeuralLocalizationInclusion{
     guard::Symbol
 end
 
-function NeuralLocalizationInclusion(
+function NeuralConcentrationInclusion(
         semi_axes::Tuple{Vararg{Number}};
         strain::Union{Nothing, NeuralSurrogate} = nothing,
         stress::Union{Nothing, NeuralSurrogate} = nothing,
@@ -465,7 +465,7 @@ function NeuralLocalizationInclusion(
     _check_pair(gradient, flux, :gradient, :flux, 2)
     strain === nothing && gradient === nothing && throw(
         ArgumentError(
-            "a `NeuralLocalizationInclusion` needs at least one pair of " *
+            "a `NeuralConcentrationInclusion` needs at least one pair of " *
                 "surrogates: (`strain`, `stress`) for elasticity, (`gradient`, " *
                 "`flux`) for conduction"
         )
@@ -504,16 +504,16 @@ function NeuralLocalizationInclusion(
     # asymmetry is the whole correctness argument. Sorting the semi-axes
     # descending exists to match `Ellipsoid`, the analytic teacher of a *Hill*
     # surrogate, which returns its components in the sorted frame. A
-    # *localization* surrogate's teacher is a finite-element cell, whose frame is
+    # *concentration* surrogate's teacher is a finite-element cell, whose frame is
     # unsorted and whose response axis is **column 3** by the package's
-    # convention — the column `_class_frame` reads for every localization class,
+    # convention — the column `_class_frame` reads for every concentration class,
     # and the one `FiniteElements._fe_frame` solves about.
     #
     # Sorting would move that axis: `(1, 1, ω)` with `ω > 1` sorts to `(ω, 1, 1)`
     # and permutes the basis so the revolution axis lands in column 1, while
     # `_class_frame` still reads column 3. The decoded tensor is then transversely
     # isotropic about an equatorial direction. It stayed hidden because every
-    # localization surrogate shipped before the layered spheroid was trained on a
+    # concentration surrogate shipped before the layered spheroid was trained on a
     # *sphere* (`FEExcenteredSphere`), where the sort is the identity, and because
     # the projection residual that catches a wrong axis is measured on the
     # encoding path, not on decoding.
@@ -524,21 +524,21 @@ function NeuralLocalizationInclusion(
     TS = isempty(vals) ? T : Core._floatlike(promote_type(typeof.(vals)...))
     sp = map(TS, vals)
     sn = keys(shape_params)
-    return NeuralLocalizationInclusion{
+    return NeuralConcentrationInclusion{
         length(axes_), T, TS, typeof(b), typeof(el), typeof(tr), length(sp),
         typeof(fractions), typeof(properties),
     }(axes_, b, el, tr, sp, sn, fractions, properties, guard)
 end
 
-_constituents(i::NeuralLocalizationInclusion) = i.properties
+_constituents(i::NeuralConcentrationInclusion) = i.properties
 
-function _shape_param(i::NeuralLocalizationInclusion, name::Symbol)
+function _shape_param(i::NeuralConcentrationInclusion, name::Symbol)
     k = findfirst(==(name), i.shape_names)
     return k === nothing ? nothing : i.shape_params[k]
 end
 
-NeuralLocalizationInclusion(semi_axes::Number...; kw...) =
-    NeuralLocalizationInclusion(promote(semi_axes...); kw...)
+NeuralConcentrationInclusion(semi_axes::Number...; kw...) =
+    NeuralConcentrationInclusion(promote(semi_axes...); kw...)
 
 function _check_pair(a, b, na::Symbol, nb::Symbol, order::Int)
     if (a === nothing) != (b === nothing)
@@ -562,12 +562,12 @@ end
 
 # ── Level 0 ──────────────────────────────────────────────────────────────────
 
-Core.dimension(::NeuralLocalizationInclusion{dim}) where {dim} = dim
-Core.inclusion_basis(i::NeuralLocalizationInclusion) = i.basis
-Core.shape_trait(::NeuralLocalizationInclusion) = NeuralShape
-Core.is_homogeneous_inclusion(::NeuralLocalizationInclusion) = false
+Core.dimension(::NeuralConcentrationInclusion{dim}) where {dim} = dim
+Core.inclusion_basis(i::NeuralConcentrationInclusion) = i.basis
+Core.shape_trait(::NeuralConcentrationInclusion) = NeuralShape
+Core.is_homogeneous_inclusion(::NeuralConcentrationInclusion) = false
 
-function Core.shape_tensor(i::NeuralLocalizationInclusion{dim, T}) where {dim, T}
+function Core.shape_tensor(i::NeuralConcentrationInclusion{dim, T}) where {dim, T}
     D = zeros(T, dim, dim)
     @inbounds for k in 1:dim
         D[k, k] = i.semi_axes[k]
@@ -583,13 +583,13 @@ end
 #  argument is accepted and ignored.
 
 for (gen, order, slot, idx, name) in (
-        (:(Core.strain_strain_loc), 4, :elastic, 1, :strain),
-        (:(Core.stress_strain_loc), 4, :elastic, 2, :stress),
-        (:(Core.gradient_gradient_loc), 2, :transport, 1, :gradient),
-        (:(Core.flux_gradient_loc), 2, :transport, 2, :flux),
+        (:(Core.strain_strain_concentration), 4, :elastic, 1, :strain),
+        (:(Core.stress_strain_concentration), 4, :elastic, 2, :stress),
+        (:(Core.gradient_gradient_concentration), 2, :transport, 1, :gradient),
+        (:(Core.flux_gradient_concentration), 2, :transport, 2, :flux),
     )
     @eval function $gen(
-            i::NeuralLocalizationInclusion,
+            i::NeuralConcentrationInclusion,
             ::TensND.AbstractTens{$order, 3},
             P₀::TensND.AbstractTens{$order, 3};
             kw...
@@ -597,7 +597,7 @@ for (gen, order, slot, idx, name) in (
         pair = i.$slot
         pair === nothing && throw(
             ArgumentError(
-                "this `NeuralLocalizationInclusion` carries no $($(QuoteNode(slot))) " *
+                "this `NeuralConcentrationInclusion` carries no $($(QuoteNode(slot))) " *
                     "surrogates, so it cannot serve `$($(QuoteNode(name)))`"
             )
         )
@@ -615,14 +615,14 @@ end
 #  off the RVE, and the internal fractions are not something the RVE carries.
 #  When the morphology knows them, the averages are exact and free.
 
-Schemes.has_layer_average(i::NeuralLocalizationInclusion) = i.fractions !== nothing
+Schemes.has_layer_average(i::NeuralConcentrationInclusion) = i.fractions !== nothing
 
-function _layer_average(i::NeuralLocalizationInclusion, ref::TensND.AbstractTens{O, 3}, f) where {O}
+function _layer_average(i::NeuralConcentrationInclusion, ref::TensND.AbstractTens{O, 3}, f) where {O}
     i.fractions === nothing && throw(
         ArgumentError(
-            "this `NeuralLocalizationInclusion` was built without `fractions` and " *
+            "this `NeuralConcentrationInclusion` was built without `fractions` and " *
                 "`properties`, so the Voigt and Reuss bounds are unavailable for it. " *
-                "Every scheme that consumes localization or contribution tensors is " *
+                "Every scheme that consumes concentration or contribution tensors is " *
                 "unaffected, `AsymmetricSelfConsistent` included."
         )
     )
@@ -636,9 +636,9 @@ function _layer_average(i::NeuralLocalizationInclusion, ref::TensND.AbstractTens
     return sum(i.fractions[k] * f(i.properties[k]) for k in eachindex(i.fractions))
 end
 
-Schemes._layer_voigt(i::NeuralLocalizationInclusion, ref::TensND.AbstractTens) =
+Schemes._layer_voigt(i::NeuralConcentrationInclusion, ref::TensND.AbstractTens) =
     _layer_average(i, ref, identity)
-Schemes._layer_reuss(i::NeuralLocalizationInclusion, ref::TensND.AbstractTens) =
+Schemes._layer_reuss(i::NeuralConcentrationInclusion, ref::TensND.AbstractTens) =
     _layer_average(i, ref, inv)
 
 # ─── A surrogate standing in for a finite-element cell ───────────────────────
@@ -664,11 +664,11 @@ Three things a wrong attachment would otherwise reveal only at the first solve,
 as a `MethodError` or as a tensor of the wrong class:
 
 * **the order** — elasticity is 4, transport 2;
-* **the class** — it has to be a *localization* class. In transport that means
-  [`GradLocISO2`](@ref) specifically: `HillISO2` and `HillTI2` carry the same
+* **the class** — it has to be a *concentration* class. In transport that means
+  [`GradientConcentrationISO2`](@ref) specifically: `HillISO2` and `HillTI2` carry the same
   single component and a different dimension, so `decode` would divide the
   prediction by ``k_0`` and be wrong at every ``k_0 \\ne 1``. A cavity's stress side is
-  identically zero, so `StressLocTI` has nothing to predict either;
+  identically zero, so `StressConcentrationTI` has nothing to predict either;
 * **the features** — every one of them has to be a shape parameter the pore can
   supply, or `:nu0`.
 """
@@ -683,17 +683,17 @@ function FiniteElements._check_pore_surrogate(
         )
     )
     cls = hill_class(s)
-    ok = order == 4 ? cls isa Union{StrainLocCubic, StrainLocTI} :
-        cls isa Union{GradLocISO2, GradLocTI2}
+    ok = order == 4 ? cls isa Union{StrainConcentrationCubic, StrainConcentrationTI} :
+        cls isa Union{GradientConcentrationISO2, GradientConcentrationTI2}
     ok || throw(
         ArgumentError(
             "class :$(class_name(cls)) cannot serve the `$which` slot of an " *
-                "`FESupershapePore`: that slot carries a *localization* tensor of a " *
+                "`FESupershapePore`: that slot carries a *concentration* tensor of a " *
                 "cavity, which is of degree 0 in the reference moduli. Use " *
                 (
-                order == 4 ? "`StrainLocCubic` for a supersphere, `StrainLocTI` " *
+                order == 4 ? "`StrainConcentrationCubic` for a supersphere, `StrainConcentrationTI` " *
                     "for a superspheroid." :
-                    "`GradLocISO2` (cubic) or `GradLocTI2` (axisymmetric) — the " *
+                    "`GradientConcentrationISO2` (cubic) or `GradientConcentrationTI2` (axisymmetric) — the " *
                     "`Hill*` classes of the same shape carry a different dimension " *
                     "and would divide by `k₀`, silently wrong away from `k₀ = 1`."
             )

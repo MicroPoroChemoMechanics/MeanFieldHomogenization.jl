@@ -1,16 +1,16 @@
-# [API — Localization & contribution](@id api-localization)
+# [API — Concentration & contribution](@id api-concentration)
 
-## Localization tensors
+## Concentration tensors
 
 ```@docs
-MeanFieldHomogenization.strain_strain_loc
-MeanFieldHomogenization.stress_strain_loc
-MeanFieldHomogenization.strain_stress_loc
-MeanFieldHomogenization.stress_stress_loc
-MeanFieldHomogenization.gradient_gradient_loc
-MeanFieldHomogenization.flux_gradient_loc
-MeanFieldHomogenization.gradient_flux_loc
-MeanFieldHomogenization.flux_flux_loc
+MeanFieldHomogenization.strain_strain_concentration
+MeanFieldHomogenization.stress_strain_concentration
+MeanFieldHomogenization.strain_stress_concentration
+MeanFieldHomogenization.stress_stress_concentration
+MeanFieldHomogenization.gradient_gradient_concentration
+MeanFieldHomogenization.flux_gradient_concentration
+MeanFieldHomogenization.gradient_flux_concentration
+MeanFieldHomogenization.flux_flux_concentration
 ```
 
 ## Contribution tensors
@@ -38,8 +38,8 @@ prefactor, [`crack_density_factor`](@ref MeanFieldHomogenization.Cracks.crack_de
 
 ```@docs
 MeanFieldHomogenization.Core.is_homogeneous_inclusion
-MeanFieldHomogenization.loc_and_stiffness
-MeanFieldHomogenization.loc_and_stress_average
+MeanFieldHomogenization.concentration_and_stiffness
+MeanFieldHomogenization.concentration_and_stress_average
 MeanFieldHomogenization.compliance_and_stiffness_contribution
 ```
 
@@ -147,8 +147,8 @@ MeanFieldHomogenization.FiniteElements.fe_cell_stiffness
 MeanFieldHomogenization.FiniteElements.fe_cell_mean_gradient
 MeanFieldHomogenization.FiniteElements.fe_cell_mean_strain
 MeanFieldHomogenization.FiniteElements._cell_close_dipole
-MeanFieldHomogenization.FiniteElements._cell_conduction_localization
-MeanFieldHomogenization.FiniteElements._cell_elastic_localization
+MeanFieldHomogenization.FiniteElements._cell_conduction_concentration
+MeanFieldHomogenization.FiniteElements._cell_elastic_concentration
 MeanFieldHomogenization.FiniteElements._cell_kelvin_basis
 MeanFieldHomogenization.FiniteElements._cell_outer_radius
 MeanFieldHomogenization.FiniteElements._cell_solver
@@ -160,7 +160,7 @@ The inclusion type. It enters as a **heterogeneous** inclusion, which for a
 cavity is the truthful answer rather than a convenience: `is_homogeneous_inclusion`
 asks whether a single ``\mathbb C_1`` describes the interior, and `inv(0)` is
 meaningless. The package's exact identities then take over, and with a cavity's
-stress-side localization being *identically* zero they collapse to
+stress-side concentration being *identically* zero they collapse to
 ``\mathbb N = -\mathbb C_0:\mathbb A`` and
 ``\mathbb H = \mathbb A:\mathbb S_0`` — the right answer for a pore, with no
 ``\mathbb C_1`` anywhere in it. So the phase property handed to `add_phase!` is
@@ -169,7 +169,7 @@ genuinely ignored, and no contribution tensor is overridden.
 ```@docs
 MeanFieldHomogenization.FESupershapePore
 MeanFieldHomogenization.SupershapePoreShape
-MeanFieldHomogenization.fe_cell_localization
+MeanFieldHomogenization.fe_cell_concentration
 MeanFieldHomogenization.fe_cell_mesh_report
 MeanFieldHomogenization.has_surrogate
 MeanFieldHomogenization.pore_shape_params
@@ -184,7 +184,7 @@ MeanFieldHomogenization.axi_layer_set
 MeanFieldHomogenization.layer_volumes
 MeanFieldHomogenization.layer_fractions
 MeanFieldHomogenization.AxiSupershapePoreShape
-MeanFieldHomogenization.fe_axi_pore_localization
+MeanFieldHomogenization.fe_axi_pore_concentration
 MeanFieldHomogenization.fe_axi_pore_breakdown
 MeanFieldHomogenization.fe_axi_pore_mesh_report
 MeanFieldHomogenization.fe_axi_pore_boundary
@@ -206,7 +206,7 @@ MeanFieldHomogenization.fe_cod_breakdown
 ```@docs
 MeanFieldHomogenization.FEExcenteredSphere
 MeanFieldHomogenization.FEAxiMeshOptions
-MeanFieldHomogenization.fe_axi_localization
+MeanFieldHomogenization.fe_axi_concentration
 MeanFieldHomogenization.fe_axi_breakdown
 MeanFieldHomogenization.fe_axi_mesh_report
 MeanFieldHomogenization.FiniteElements.core_radius
@@ -256,13 +256,13 @@ Evaluating needs nothing beyond the package; *training* needs
 ```@docs
 MeanFieldHomogenization.NeuralInclusions
 MeanFieldHomogenization.NeuralHillInclusion
-MeanFieldHomogenization.NeuralLocalizationInclusion
+MeanFieldHomogenization.NeuralConcentrationInclusion
 MeanFieldHomogenization.NeuralInclusions.NeuralShape
-MeanFieldHomogenization.NeuralInclusions.StrainLocTI
-MeanFieldHomogenization.NeuralInclusions.StressLocTI
-MeanFieldHomogenization.NeuralInclusions.StrainLocCubic
-MeanFieldHomogenization.NeuralInclusions.GradLocISO2
-MeanFieldHomogenization.NeuralInclusions.GradLocTI2
+MeanFieldHomogenization.NeuralInclusions.StrainConcentrationTI
+MeanFieldHomogenization.NeuralInclusions.StressConcentrationTI
+MeanFieldHomogenization.NeuralInclusions.StrainConcentrationCubic
+MeanFieldHomogenization.NeuralInclusions.GradientConcentrationISO2
+MeanFieldHomogenization.NeuralInclusions.GradientConcentrationTI2
 ```
 
 ### The surrogate

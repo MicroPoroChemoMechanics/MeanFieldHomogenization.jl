@@ -15,7 +15,7 @@ is a vector rather than a symmetric 2-tensor.
 ## 1. What is specific to a crack
 
 The general elasticity ↔ conductivity dictionary — fields, fluxes, moduli, Hill
-and localization tensors — is stated once in
+and concentration tensors — is stated once in
 [Extension to conductivity](@ref th-conductivity), together with the
 ``\boldsymbol\sigma \equiv -\underline{q}`` convention that makes every row of
 it sign-free. Only the rows below are proper to the flat-inclusion limit, and

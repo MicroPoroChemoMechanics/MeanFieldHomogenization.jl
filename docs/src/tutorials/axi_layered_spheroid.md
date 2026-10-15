@@ -306,7 +306,7 @@ nowhere else.
 ## It has to arrive in a scheme
 
 Which is the point of all of it. The inclusion is heterogeneous, so it enters
-through gate B with **both** localization tensors, and both come out of one
+through gate B with **both** concentration tensors, and both come out of one
 solve:
 
 ```julia
@@ -381,7 +381,7 @@ sequence of short runs.
 Three decisions rather than defaults.
 
 **The features are contrast ratios, never absolute moduli.** A heterogeneous
-morphology carries its constituents inside itself, so its localization depends
+morphology carries its constituents inside itself, so its concentration depends
 on the reference medium only through the contrasts — which is why one pair of
 files serves any `ℂ₀` at the trained Poisson ratio, and why a network fed
 absolute moduli would be spending capacity on a redundancy.
@@ -407,7 +407,7 @@ stress_s = load_surrogate(model_path("layered_spheroid_stress"))
 C₁ = iso_stiffness(1.6667, 1.25)             # E₁/E₀ = 3, ν = 0.2
 C₂ = iso_stiffness(0.3333, 0.25)             # E₂/E₀ = 0.6
 
-nn = NeuralLocalizationInclusion(
+nn = NeuralConcentrationInclusion(
     (1.0, 1.0, 2.0);                         # the aspect ratio, as the semi-axes
     strain = strain_s, stress = stress_s,
     shape_params = (; core_fraction = 0.4),
@@ -421,15 +421,15 @@ Both tensors are supplied, so the inclusion enters gate B on the heterogeneous
 branch — exactly as the meshed cell does, and the schemes cannot tell them apart.
 
 !!! warning "The semi-axes are not sorted, and that is deliberate"
-    A localization class reads **column 3** of the inclusion basis as its
+    A concentration class reads **column 3** of the inclusion basis as its
     symmetry axis, because the morphology it describes may be a sphere whose
     response is transversely isotropic about a direction the outer shape does
     not name. `NeuralHillInclusion` sorts its semi-axes descending, to match the
-    frame its `Ellipsoid` teacher returns; `NeuralLocalizationInclusion` must
+    frame its `Ellipsoid` teacher returns; `NeuralConcentrationInclusion` must
     **not**, or `(1, 1, ω)` with `ω > 1` would sort to `(ω, 1, 1)`, put the
     revolution axis in column 1, and decode a tensor transversely isotropic
     about an equatorial direction. That was a real bug, fixed in 0.14.1 and now
-    asserted by a test — it had stayed hidden because every localization
+    asserted by a test — it had stayed hidden because every concentration
     surrogate before this one was trained on a sphere, where the sort is the
     identity.
 

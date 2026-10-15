@@ -40,7 +40,7 @@ The two must be kept distinct.
 requires **both**:
 
   * ``\\mathbb{C}_i`` uniform inside the phase — false for a `LayeredSphere`, where the
-    average is assembled layer by layer through `stress_strain_loc`
+    average is assembled layer by layer through `stress_strain_concentration`
     (``\\sum_k f_k\\,\\mathbb{C}_k:\\mathbb{A}_k``);
   * the orientation average to commute with ``\\mathbb{C}_i`` — false for an anisotropic
     ``\\mathbb{C}_i`` carrying an ISO/TI orientation distribution, since
@@ -63,12 +63,12 @@ function _phase_stress_strain_average(
     if MFH_Core.is_homogeneous_inclusion(geom)
         _average_commutes(sym, P_i) && return P_i ⊡ A_dil
         P₀_proj = _project_matrix(P₀, sym)
-        A_raw = MFH_Core.strain_strain_loc(geom, P_i, P₀_proj; kw...)
+        A_raw = MFH_Core.strain_strain_concentration(geom, P_i, P₀_proj; kw...)
         return _apply_symmetrize(P_i ⊡ A_raw, sym)
     end
     P₀_proj = _project_matrix(P₀, sym)
     return _apply_symmetrize(
-        MFH_Core.stress_strain_loc(geom, P_i, P₀_proj; kw...), sym
+        MFH_Core.stress_strain_concentration(geom, P_i, P₀_proj; kw...), sym
     )
 end
 
@@ -83,12 +83,12 @@ function _phase_stress_strain_average(
     if MFH_Core.is_homogeneous_inclusion(geom)
         _average_commutes(sym, P_i) && return P_i ⋅ A_dil
         P₀_proj = _project_matrix(P₀, sym)
-        A_raw = MFH_Core.gradient_gradient_loc(geom, P_i, P₀_proj; kw...)
+        A_raw = MFH_Core.gradient_gradient_concentration(geom, P_i, P₀_proj; kw...)
         return _apply_symmetrize(P_i ⋅ A_raw, sym)
     end
     P₀_proj = _project_matrix(P₀, sym)
     return _apply_symmetrize(
-        MFH_Core.flux_gradient_loc(geom, P_i, P₀_proj; kw...), sym
+        MFH_Core.flux_gradient_concentration(geom, P_i, P₀_proj; kw...), sym
     )
 end
 
@@ -222,7 +222,7 @@ function _compliance_contribution(
     return _apply_symmetrize(delta_resistivity(geom, R, amount_value(a)), sym)
 end
 
-# ── Strain-strain localization (Mori-Tanaka, SC, …) ──────────────────────────
+# ── Strain-strain concentration (Mori-Tanaka, SC, …) ──────────────────────────
 
 """
     _phase_dilute_concentration(rve, name, prop::Symbol, P₀; kw...) -> AbstractTens
@@ -247,7 +247,7 @@ function _phase_dilute_concentration(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
-    A = MFH_Core.strain_strain_loc(geom, P_i, P₀_proj; kw...)
+    A = MFH_Core.strain_strain_concentration(geom, P_i, P₀_proj; kw...)
     return _apply_symmetrize(A, sym)
 end
 
@@ -260,7 +260,7 @@ function _phase_dilute_concentration(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
-    A = MFH_Core.gradient_gradient_loc(geom, P_i, P₀_proj; kw...)
+    A = MFH_Core.gradient_gradient_concentration(geom, P_i, P₀_proj; kw...)
     return _apply_symmetrize(A, sym)
 end
 
@@ -348,7 +348,7 @@ function _phase_reuss_property(rve::RVE, name::Symbol, prop::Symbol, ref)
 end
 
 # =============================================================================
-#  Bundled phase helpers — one localization solve instead of two
+#  Bundled phase helpers — one concentration solve instead of two
 #
 #  Mori-Tanaka and the self-consistent kernels ask, for the same phase and the
 #  same reference medium, for BOTH a concentration tensor and a contribution
@@ -364,7 +364,7 @@ end
 #  Two invariants make the bundles bitwise identical rather than merely close:
 #
 #    1. `_apply_symmetrize` does NOT commute with the tensor product, so the
-#       bundles thread the RAW (pre-symmetrization) localization tensor and
+#       bundles thread the RAW (pre-symmetrization) concentration tensor and
 #       reproduce each original expression verbatim.
 #
 #    2. Every helper now evaluates its phase in the SAME reference medium,
@@ -380,7 +380,7 @@ end
     _phase_dilute_and_contribution(rve, name, prop, P₀; kw...) -> (A_dil, N)
 
 `(_phase_dilute_concentration, _phase_stiffness_contribution)` for a
-`VolumeFraction` phase, sharing one localization solve.  Bitwise identical to
+`VolumeFraction` phase, sharing one concentration solve.  Bitwise identical to
 calling the two helpers separately.  `CrackDensity` phases must go through
 [`_phase_compliance_and_contribution`](@ref).
 """
@@ -392,7 +392,7 @@ function _phase_dilute_and_contribution(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
-    A_raw, N_raw = MFH_Core.loc_and_stiffness(geom, P_i, P₀_proj; kw...)
+    A_raw, N_raw = MFH_Core.concentration_and_stiffness(geom, P_i, P₀_proj; kw...)
     return (
         _apply_symmetrize(A_raw, sym),
         volume_fraction(rve, name) * _apply_symmetrize(N_raw, sym),
@@ -407,7 +407,7 @@ function _phase_dilute_and_contribution(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
-    A_raw, N_raw = MFH_Core.loc_and_stiffness(geom, P_i, P₀_proj; kw...)
+    A_raw, N_raw = MFH_Core.concentration_and_stiffness(geom, P_i, P₀_proj; kw...)
     return (
         _apply_symmetrize(A_raw, sym),
         volume_fraction(rve, name) * _apply_symmetrize(N_raw, sym),
@@ -460,7 +460,7 @@ end
     _phase_dilute_and_stress_average(rve, name, prop, P₀; kw...) -> (A_dil, CA)
 
 `(_phase_dilute_concentration, _phase_stress_strain_average)` sharing one
-localization solve.  Reproduces the three branches of
+concentration solve.  Reproduces the three branches of
 `_phase_stress_strain_average` verbatim — including the
 `_average_commutes(sym, P_i)` shortcut, which returns
 `P_i ⊡ A_dil` (the **symmetrized** `A`) where the slow branch returns
@@ -478,12 +478,12 @@ function _phase_dilute_and_stress_average(
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
     if MFH_Core.is_homogeneous_inclusion(geom)
-        A_raw = MFH_Core.strain_strain_loc(geom, P_i, P₀_proj; kw...)
+        A_raw = MFH_Core.strain_strain_concentration(geom, P_i, P₀_proj; kw...)
         A_dil = _apply_symmetrize(A_raw, sym)
         _average_commutes(sym, P_i) && return (A_dil, P_i ⊡ A_dil)
         return (A_dil, _apply_symmetrize(P_i ⊡ A_raw, sym))
     end
-    A_raw, B_raw = MFH_Core.loc_and_stress_average(geom, P_i, P₀_proj; kw...)
+    A_raw, B_raw = MFH_Core.concentration_and_stress_average(geom, P_i, P₀_proj; kw...)
     return (_apply_symmetrize(A_raw, sym), _apply_symmetrize(B_raw, sym))
 end
 
@@ -497,11 +497,11 @@ function _phase_dilute_and_stress_average(
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
     if MFH_Core.is_homogeneous_inclusion(geom)
-        A_raw = MFH_Core.gradient_gradient_loc(geom, P_i, P₀_proj; kw...)
+        A_raw = MFH_Core.gradient_gradient_concentration(geom, P_i, P₀_proj; kw...)
         A_dil = _apply_symmetrize(A_raw, sym)
         _average_commutes(sym, P_i) && return (A_dil, P_i ⋅ A_dil)
         return (A_dil, _apply_symmetrize(P_i ⋅ A_raw, sym))
     end
-    A_raw, B_raw = MFH_Core.loc_and_stress_average(geom, P_i, P₀_proj; kw...)
+    A_raw, B_raw = MFH_Core.concentration_and_stress_average(geom, P_i, P₀_proj; kw...)
     return (_apply_symmetrize(A_raw, sym), _apply_symmetrize(B_raw, sym))
 end

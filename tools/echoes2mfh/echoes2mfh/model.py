@@ -165,9 +165,9 @@ class HomogenizeCall(Node):
 
 @dataclass
 class PhaseAccess(Node):
-    """`ver["PORE"].eE` -> `strain_strain_loc(...)` and friends.
+    """`ver["PORE"].eE` -> `strain_strain_concentration(...)` and friends.
 
-    Echoes stores localization tensors on the phase after `homogenize`;
+    Echoes stores concentration tensors on the phase after `homogenize`;
     MFH computes them on demand. The emitter therefore needs the RVE, the
     phase name and the reference medium, which this node carries.
     """

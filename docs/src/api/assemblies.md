@@ -61,7 +61,7 @@ ClusterModel
 EquivalentInclusion
 eim_bound_type
 eim_polarizations
-cluster_localizations
+cluster_concentrations
 ```
 
 ## Parameter lenses

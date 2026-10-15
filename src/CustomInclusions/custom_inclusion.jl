@@ -12,7 +12,7 @@
 #  to return the concentration tensors by any means.
 #
 #  Loaded by the `CustomInclusions` sub-module, itself included after
-#  `localization.jl` and `contribution.jl`, because the fallbacks below
+#  `concentration.jl` and `contribution.jl`, because the fallbacks below
 #  `invoke` the generic methods defined there.
 # =============================================================================
 
@@ -27,10 +27,10 @@ struct CustomShape end
 
 const _CUSTOM_CALLBACKS = (
     :hill_tensor,
-    :strain_strain_loc,
-    :stress_strain_loc,
-    :gradient_gradient_loc,
-    :flux_gradient_loc,
+    :strain_strain_concentration,
+    :stress_strain_concentration,
+    :gradient_gradient_concentration,
+    :flux_gradient_concentration,
     :stiffness_contribution,
     :compliance_contribution,
     :conductivity_contribution,
@@ -71,19 +71,19 @@ the schemes forward `method`, tolerances, and — for density-based phases —
 | Gate | Callbacks | Signature |
 |---|---|---|
 | **A — Hill tensor** | `hill_tensor` | `(P₀; kw...) -> Tens` |
-| **B — localization** | `strain_strain_loc` (+ `stress_strain_loc` if heterogeneous), `gradient_gradient_loc` (+ `flux_gradient_loc`) | `(P₁, P₀; kw...) -> Tens` |
+| **B — concentration** | `strain_strain_concentration` (+ `stress_strain_concentration` if heterogeneous), `gradient_gradient_concentration` (+ `flux_gradient_concentration`) | `(P₁, P₀; kw...) -> Tens` |
 | **C — contribution, solid** | `stiffness_contribution`, `compliance_contribution`, `conductivity_contribution`, `resistivity_contribution` | `(P₁, P₀; kw...) -> Tens` |
 | **C — contribution, flat** | same names, with `density_factor` set | `(P₀; kw...) -> Tens` |
 
-Gate A yields all eight localization and all four contribution tensors for
-free; gate B yields the derived localizations and the contributions.
+Gate A yields all eight concentration and all four contribution tensors for
+free; gate B yields the derived concentrations and the contributions.
 `P₀` is a 4th-order stiffness in elasticity (``\\mathbb{C}_0``) and a 2nd-order conductivity (``\\boldsymbol{K}_0``) in
 transport — a single callback may serve both by dispatching on its argument.
 
 !!! warning "Gate B and heterogeneous inclusions"
-    The strain-side localization determines the stress-side one *only* through
+    The strain-side concentration determines the stress-side one *only* through
     ``\\mathbb{A}_{\\sigma\\varepsilon} = \\mathbb{C}_1 : \\mathbb{A}_{\\varepsilon\\varepsilon}``, which needs a single uniform ``\\mathbb{C}_1``. If you set
-    `homogeneous = false`, supply `stress_strain_loc` (and `flux_gradient_loc`
+    `homogeneous = false`, supply `stress_strain_concentration` (and `flux_gradient_concentration`
     in transport) as well — otherwise the average stress in the inclusion is
     silently wrong, and with it `SelfConsistent` and
     `AsymmetricSelfConsistent`, the two schemes that consume it. `Dilute` and
@@ -94,7 +94,7 @@ transport — a single callback may serve both by dispatching on its argument.
     and `Reuss` bounds — they need its internal volume fractions — so those are
     unavailable unless the type supplies a layer-wise average
     (`Schemes._layer_voigt` / `Schemes._layer_reuss`, plus
-    `Schemes.has_layer_average`). Every scheme that consumes localization or
+    `Schemes.has_layer_average`). Every scheme that consumes concentration or
     contribution tensors is unaffected, `AsymmetricSelfConsistent` included.
 
 !!! warning "Gate C and the dilute concentration tensor"
@@ -223,17 +223,17 @@ function Elasticity.hill_tensor(c::CustomInclusion, P₀::TensND.AbstractTens; k
     return c.fns.hill_tensor(P₀; kw...)
 end
 
-# ─── Gate B — localization ───────────────────────────────────────────────────
+# ─── Gate B — concentration ───────────────────────────────────────────────────
 
 #  Both sides of the pair are forwarded.  For a homogeneous inclusion the
 #  stress-side one may be omitted — the generic `A_σε = C₁ : A_εε` fallback is
 #  then exact.  For a heterogeneous one it must be supplied, since no single
 #  `C₁` represents the inclusion (`is_homogeneous_inclusion`).
 for (fname, gen, order) in (
-        (:strain_strain_loc, :(Core.strain_strain_loc), 4),
-        (:stress_strain_loc, :(Core.stress_strain_loc), 4),
-        (:gradient_gradient_loc, :(Core.gradient_gradient_loc), 2),
-        (:flux_gradient_loc, :(Core.flux_gradient_loc), 2),
+        (:strain_strain_concentration, :(Core.strain_strain_concentration), 4),
+        (:stress_strain_concentration, :(Core.stress_strain_concentration), 4),
+        (:gradient_gradient_concentration, :(Core.gradient_gradient_concentration), 2),
+        (:flux_gradient_concentration, :(Core.flux_gradient_concentration), 2),
     )
     @eval function $gen(
             c::CustomInclusion,
@@ -332,7 +332,7 @@ Checks, in order:
    [`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait),
    [`shape_tensor`](@ref MeanFieldHomogenization.Core.shape_tensor).
 2. **Level 1** — which entry gate is available: the Hill tensor, the
-   localization tensor, or the contribution tensors.
+   concentration tensor, or the contribution tensors.
 3. **Level 2** — for `amount = :density`, the three-argument `delta_*` seams.
 
 Works on any `AbstractInclusion`, not only [`CustomInclusion`](@ref) — use it
@@ -371,8 +371,8 @@ function check_inclusion_interface(
     P₀, P₁ = _probe_tensors(physics)
     gate_a = _provides(incl, :hill_tensor, Elasticity.hill_tensor, incl, P₀) ||
         _provides_kernel(incl, P₀)
-    locname = physics === :elasticity ? :strain_strain_loc : :gradient_gradient_loc
-    loc = physics === :elasticity ? Core.strain_strain_loc : Core.gradient_gradient_loc
+    locname = physics === :elasticity ? :strain_strain_concentration : :gradient_gradient_concentration
+    loc = physics === :elasticity ? Core.strain_strain_concentration : Core.gradient_gradient_concentration
     gate_b = _provides(incl, locname, loc, incl, P₁, P₀)
     contrib = physics === :elasticity ?
         (
@@ -391,17 +391,17 @@ function check_inclusion_interface(
 
     if gate_a
         push!(
-            msgs, "  ✓ level 1, gate A: `hill_tensor` — all localization and " *
+            msgs, "  ✓ level 1, gate A: `hill_tensor` — all concentration and " *
                 "contribution tensors are derived"
         )
     elseif gate_b
         push!(msgs, "  ✓ level 1, gate B: `$locname` — contributions are derived")
-        # The strain-side localization fixes the stress-side one only through
+        # The strain-side concentration fixes the stress-side one only through
         # `A_σε = C₁ : A_εε`, which needs a single uniform property.
         if !Core.is_homogeneous_inclusion(incl)
-            sname = physics === :elasticity ? :stress_strain_loc : :flux_gradient_loc
-            sfun = physics === :elasticity ? Core.stress_strain_loc :
-                Core.flux_gradient_loc
+            sname = physics === :elasticity ? :stress_strain_concentration : :flux_gradient_concentration
+            sfun = physics === :elasticity ? Core.stress_strain_concentration :
+                Core.flux_gradient_concentration
             if !_provides(incl, sname, sfun, incl, P₁, P₀)
                 ok = false
                 push!(
@@ -472,7 +472,7 @@ end
 
 # Does `incl` genuinely *provide* the generic `f`, as opposed to merely being
 # caught by one of the abstract fallbacks?  `applicable` alone is not enough:
-# `strain_strain_loc(::AbstractInclusion, …)` matches every inclusion but only
+# `strain_strain_concentration(::AbstractInclusion, …)` matches every inclusion but only
 # re-expresses the answer in terms of `hill_tensor`, and the `hill_tensor`
 # entry point declared on `AbstractCustomInclusion` only routes to the
 # `_kernel` table.  Methods owned by those two abstract types therefore do not

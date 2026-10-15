@@ -392,7 +392,7 @@ class ExprTranslator:
             raise Untranslatable(
                 f"phase accessor `.{attr}` outside a recognized RVE context",
                 n,
-                "MFH computes localization tensors on demand; the emitter "
+                "MFH computes concentration tensors on demand; the emitter "
                 "needs to know the RVE and reference medium",
             )
         raise Untranslatable(f"unsupported attribute `.{attr}`", n)

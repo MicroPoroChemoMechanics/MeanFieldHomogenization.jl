@@ -5,7 +5,7 @@
 #  (`bulk_recurrence.jl`, `shear_recurrence.jl`, `conductivity.jl`).
 #
 #  Where the rest of the module stops at the volume-averaged concentration
-#  tensors (`layer_strain_average`, `strain_strain_loc(…; layer)`), this
+#  tensors (`layer_strain_average`, `strain_strain_concentration(…; layer)`), this
 #  file gives the field AT A POINT — in any layer and in the surrounding
 #  matrix — for an arbitrary remote loading.
 #
@@ -13,7 +13,7 @@
 #  -----------------------
 #  Write `n = x/‖x‖`, `p = n⊗n`, `q = 𝟏 − p`.  The configuration is
 #  invariant under every rotation about the center, so the pointwise
-#  localization tensor is TRANSVERSELY ISOTROPIC about `n`, with
+#  concentration tensor is TRANSVERSELY ISOTROPIC about `n`, with
 #  coefficients depending on `r = ‖x‖` alone, and it carries NO major
 #  symmetry.  That is exactly `TensND.TensTI{4,T,6}` (Walpole basis
 #  `W₁…W₆`), so `𝔸(x)` is six scalars plus an axis, never an 81-component
@@ -48,7 +48,7 @@
 #  contribute zero POINTWISE, mode 1 contributes `a`, and mode 2
 #  contributes `7 b r² (3κ+μ)/μ`, whose shell average is exactly
 #  `_layer_avg_dev_shear_factor`.  So the pointwise and averaged routes
-#  reproduce `α_k` and `β_k` identically — `shell_localization` below
+#  reproduce `α_k` and `β_k` identically — `shell_concentration` below
 #  exposes that identity, and the test suite pins it.
 #
 #  Transport (Y₁).  `T = f(r)(n·∇T∞)`, `f = Ã r + B̃/r²`, hence
@@ -176,7 +176,7 @@ in the ``(\\underline{e}_1, \\underline{e}_2)`` plane.
 
 At ``r = 0`` the direction is undefined; `(0, 0, 1)` is returned, which is
 harmless because every Walpole coefficient of the field is axis-independent
-there (see [`local_strain_strain_loc`](@ref)).
+there (see [`local_strain_strain_concentration`](@ref)).
 """
 function _radial_frame(x)
     v = TensND._extract_vec(x)
@@ -209,7 +209,7 @@ wasteful for the thousands a field map needs.
 
 ```julia
 sol = LayeredSphereFields(sphere, C₀)
-A   = local_strain_strain_loc(sol, x)
+A   = local_strain_strain_concentration(sol, x)
 ```
 
 See also [`LayeredSphereTransportFields`](@ref).
@@ -286,7 +286,7 @@ end
 # The pointwise stress is the stiffness applied to the strain, which an
 # incompressible region (k = ∞, zero volumetric strain) turns into ∞·0: its
 # pressure is a field of its own. Refuse rather than return NaN; the averaged
-# stress (`stress_strain_loc`, `layer_stress_average`) is available.
+# stress (`stress_strain_concentration`, `layer_stress_average`) is available.
 function _stress_stiffness(f::LayeredSphereFields, k::Int)
     κ, _ = _region_moduli(f, k)
     _is_incompressible(κ) && throw(
@@ -294,7 +294,7 @@ function _stress_stiffness(f::LayeredSphereFields, k::Int)
             "the pointwise stress of region $k is not available: the region is " *
                 "incompressible (k = ∞), so its pressure is not a function of its " *
                 "strain. Its average stress is: use `layer_stress_average` or " *
-                "`stress_strain_loc`."
+                "`stress_strain_concentration`."
         )
     )
     return region_stiffness(f, k)
@@ -351,12 +351,12 @@ forming ``g(r)/r`` would divide two vanishing quantities.
     return f_over_r, fp, g_over_r, gp, h_over_r, hp
 end
 
-# ── The pointwise strain localization tensor ─────────────────────────────────
+# ── The pointwise strain concentration tensor ─────────────────────────────────
 
 """
-    local_strain_strain_loc(f_or_sphere, [C₀,] x; side = :outer) -> TensTI{4,3}
+    local_strain_strain_concentration(f_or_sphere, [C₀,] x; side = :outer) -> TensTI{4,3}
 
-Pointwise strain-strain localization tensor ``\\mathbb{A}(\\underline{x})``, so that the local
+Pointwise strain-strain concentration tensor ``\\mathbb{A}(\\underline{x})``, so that the local
 strain under a remote uniform strain ``\\boldsymbol{\\varepsilon}^{\\infty}`` is ``\\boldsymbol{\\varepsilon}(\\underline{x}) = \\mathbb{A}(\\underline{x}):\\boldsymbol{\\varepsilon}^{\\infty}``. Valid at
 every point: inside any layer **and** in the surrounding matrix, with
 perfect or imperfect interfaces.
@@ -378,20 +378,20 @@ from the layer average ``\\beta_1``, which folds in the mode-2 term.
 `side` disambiguates a point lying exactly on an interface — see
 [`get_layer`](@ref).
 
-See also [`local_stress_strain_loc`](@ref), [`local_strain_stress_loc`](@ref),
-[`local_stress_stress_loc`](@ref), [`local_strain`](@ref),
+See also [`local_stress_strain_concentration`](@ref), [`local_strain_stress_concentration`](@ref),
+[`local_stress_stress_concentration`](@ref), [`local_strain`](@ref),
 [`LayeredSphereFields`](@ref).
 """
-function local_strain_strain_loc end
+function local_strain_strain_concentration end
 
-function local_strain_strain_loc(
+function local_strain_strain_concentration(
         f::LayeredSphereFields, x; side::Symbol = :outer, layer = nothing
     )
     r, n = _radial_frame(x)
     return _local_A(f, r, n, _resolve_layer(f.sphere, r; side, layer))
 end
 
-function local_strain_strain_loc(
+function local_strain_strain_concentration(
         f::LayeredSphereFields, r, θ, φ; side::Symbol = :outer, layer = nothing
     )
     rr, n = _radial_frame(r, θ, φ)
@@ -428,43 +428,43 @@ function _local_A(f::LayeredSphereFields{T}, r, n, k::Int) where {T}
 end
 
 """
-    local_stress_strain_loc(f_or_sphere, [C₀,] x; side = :outer) -> TensTI{4,3}
+    local_stress_strain_concentration(f_or_sphere, [C₀,] x; side = :outer) -> TensTI{4,3}
 
-Pointwise stress-strain localization ``\\mathbb{C}(\\underline{x}):\\mathbb{A}(\\underline{x})``: the local stress under
-a remote uniform **strain** ``\\boldsymbol{\\varepsilon}^{\\infty}`` is `σ(x) = local_stress_strain_loc(…) ⊡ ε∞`.
+Pointwise stress-strain concentration ``\\mathbb{C}(\\underline{x}):\\mathbb{A}(\\underline{x})``: the local stress under
+a remote uniform **strain** ``\\boldsymbol{\\varepsilon}^{\\infty}`` is `σ(x) = local_stress_strain_concentration(…) ⊡ ε∞`.
 ``\\mathbb{C}(\\underline{x})`` is the stiffness of the region containing `x` (the matrix outside).
 
-Twin of [`local_strain_strain_loc`](@ref); same arguments and conventions.
+Twin of [`local_strain_strain_concentration`](@ref); same arguments and conventions.
 """
-function local_stress_strain_loc end
+function local_stress_strain_concentration end
 
 """
-    local_strain_stress_loc(f_or_sphere, [C₀,] x; side = :outer) -> TensTI{4,3}
+    local_strain_stress_concentration(f_or_sphere, [C₀,] x; side = :outer) -> TensTI{4,3}
 
-Pointwise strain-stress localization ``\\mathbb{A}(\\underline{x}):\\mathbb{S}_0``, ``\\mathbb{S}_0 = \\mathbb{C}_0^{-1}``: the local
+Pointwise strain-stress concentration ``\\mathbb{A}(\\underline{x}):\\mathbb{S}_0``, ``\\mathbb{S}_0 = \\mathbb{C}_0^{-1}``: the local
 strain under a remote uniform **stress** ``\\boldsymbol{\\sigma}^{\\infty}`` is
-`ε(x) = local_strain_stress_loc(…) ⊡ σ∞`.
+`ε(x) = local_strain_stress_concentration(…) ⊡ σ∞`.
 
 Exact because the remote medium is uniform: ``\\boldsymbol{\\varepsilon}^{\\infty} = \\mathbb{S}_0:\\boldsymbol{\\sigma}^{\\infty}``.
-Twin of [`local_strain_strain_loc`](@ref); same arguments and conventions.
+Twin of [`local_strain_strain_concentration`](@ref); same arguments and conventions.
 """
-function local_strain_stress_loc end
+function local_strain_stress_concentration end
 
 """
-    local_stress_stress_loc(f_or_sphere, [C₀,] x; side = :outer) -> TensTI{4,3}
+    local_stress_stress_concentration(f_or_sphere, [C₀,] x; side = :outer) -> TensTI{4,3}
 
-Pointwise stress-stress localization ``\\mathbb{C}(\\underline{x}):\\mathbb{A}(\\underline{x}):\\mathbb{S}_0``: the local stress
+Pointwise stress-stress concentration ``\\mathbb{C}(\\underline{x}):\\mathbb{A}(\\underline{x}):\\mathbb{S}_0``: the local stress
 under a remote uniform **stress** ``\\boldsymbol{\\sigma}^{\\infty}`` is
-`σ(x) = local_stress_stress_loc(…) ⊡ σ∞`.
+`σ(x) = local_stress_stress_concentration(…) ⊡ σ∞`.
 
-Twin of [`local_strain_strain_loc`](@ref); same arguments and conventions.
+Twin of [`local_strain_strain_concentration`](@ref); same arguments and conventions.
 """
-function local_stress_stress_loc end
+function local_stress_stress_concentration end
 
 for (name, pre, post) in (
-        (:local_stress_strain_loc, true, false),
-        (:local_strain_stress_loc, false, true),
-        (:local_stress_stress_loc, true, true),
+        (:local_stress_strain_concentration, true, false),
+        (:local_strain_stress_concentration, false, true),
+        (:local_stress_stress_concentration, true, true),
     )
     @eval function $name(
             f::LayeredSphereFields, x; side::Symbol = :outer, layer = nothing
@@ -501,7 +501,7 @@ end
     local_strain(f_or_sphere, [C₀,] x, ε∞; side = :outer) -> Tens{2,3}
 
 Local strain tensor at `x` under the remote uniform strain `ε∞`, i.e.
-`local_strain_strain_loc(…) ⊡ ε∞`. `x` is Cartesian, or replace it by three
+`local_strain_strain_concentration(…) ⊡ ε∞`. `x` is Cartesian, or replace it by three
 arguments `(r, θ, φ)`.
 """
 function local_strain end
@@ -599,18 +599,18 @@ end
 # ── Bridge back to the layer averages ────────────────────────────────────────
 
 """
-    shell_localization(f::LayeredSphereFields, k) -> (α_k, β_k)
+    shell_concentration(f::LayeredSphereFields, k) -> (α_k, β_k)
 
-Volume-averaged bulk and shear localization of layer `k`, recovered from
-the cached pointwise amplitudes: ``\\alpha_k = \\tilde A_k`` (the spherical localization is
+Volume-averaged bulk and shear concentration of layer `k`, recovered from
+the cached pointwise amplitudes: ``\\alpha_k = \\tilde A_k`` (the spherical concentration is
 uniform inside a layer) and
 ``\\beta_k = a_k + b_k\\,F_k``, with ``F_k`` = `_layer_avg_dev_shear_factor(r_{k-1}, r_k, κ_k, μ_k)`.
 
-Identical by construction to `_bulk_localization` and `_shear_localization`,
+Identical by construction to `_bulk_concentration` and `_shear_concentration`,
 which is the point: the pointwise reconstruction and the averaged path
 share their amplitudes and cannot drift apart.
 """
-function shell_localization(f::LayeredSphereFields{T, N}, k::Int) where {T, N}
+function shell_concentration(f::LayeredSphereFields{T, N}, k::Int) where {T, N}
     1 ≤ k ≤ N || throw(BoundsError(f.sphere, k))
     radii = f.sphere.radii
     κk, μk = f.κμ[k]
@@ -687,44 +687,44 @@ get_layer(f::LayeredSphereTransportFields, r; side::Symbol = :outer) =
 end
 
 """
-    local_gradient_gradient_loc(f_or_sphere, [K₀,] x; side = :outer) -> TensTI{2,3}
+    local_gradient_gradient_concentration(f_or_sphere, [K₀,] x; side = :outer) -> TensTI{2,3}
 
-Pointwise gradient-gradient localization ``\\boldsymbol{A}(\\underline{x})``, so that the local
+Pointwise gradient-gradient concentration ``\\boldsymbol{A}(\\underline{x})``, so that the local
 temperature gradient under a remote uniform gradient ``\\nabla T^{\\infty}`` is
 ``\\nabla T(\\underline{x}) = \\boldsymbol{A}(\\underline{x})\\cdot\\nabla T^{\\infty}``. Valid in any layer and in the matrix, with perfect,
 Kapitza or surface-conductive interfaces.
 
 ``\\boldsymbol{A}(\\underline{x}) = f'(r)\\,\\underline{n}\\otimes\\underline{n} + (f(r)/r)(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n})`` is transversely isotropic about
 ``\\underline{n} = \\underline{x}/\\lVert\\underline{x}\\rVert`` and comes back as a `TensTI{2,T,2}`. Transport twin of
-[`local_strain_strain_loc`](@ref); same argument forms and same `side`
+[`local_strain_strain_concentration`](@ref); same argument forms and same `side`
 convention.
 """
-function local_gradient_gradient_loc end
+function local_gradient_gradient_concentration end
 
 """
-    local_flux_gradient_loc(f_or_sphere, [K₀,] x; side = :outer) -> TensTI{2,3}
+    local_flux_gradient_concentration(f_or_sphere, [K₀,] x; side = :outer) -> TensTI{2,3}
 
-Pointwise flux-gradient localization ``-k(\\underline{x})\\,\\boldsymbol{A}(\\underline{x})``: the local flux under a
-remote uniform gradient ``\\nabla T^{\\infty}`` is `q(x) = local_flux_gradient_loc(…) · ∇T∞`,
+Pointwise flux-gradient concentration ``-k(\\underline{x})\\,\\boldsymbol{A}(\\underline{x})``: the local flux under a
+remote uniform gradient ``\\nabla T^{\\infty}`` is `q(x) = local_flux_gradient_concentration(…) · ∇T∞`,
 with the Fourier / Fick sign convention ``\\underline{q} = -k\\,\\nabla T``.
 """
-function local_flux_gradient_loc end
+function local_flux_gradient_concentration end
 
 """
-    local_gradient_flux_loc(f_or_sphere, [K₀,] x; side = :outer) -> TensTI{2,3}
+    local_gradient_flux_concentration(f_or_sphere, [K₀,] x; side = :outer) -> TensTI{2,3}
 
-Pointwise gradient-flux localization ``\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}``: the local gradient
-under a remote uniform **flux** ``\\underline{q}^{\\infty}`` is `∇T(x) = local_gradient_flux_loc(…) · q∞`.
+Pointwise gradient-flux concentration ``\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}``: the local gradient
+under a remote uniform **flux** ``\\underline{q}^{\\infty}`` is `∇T(x) = local_gradient_flux_concentration(…) · q∞`.
 """
-function local_gradient_flux_loc end
+function local_gradient_flux_concentration end
 
 """
-    local_flux_flux_loc(f_or_sphere, [K₀,] x; side = :outer) -> TensTI{2,3}
+    local_flux_flux_concentration(f_or_sphere, [K₀,] x; side = :outer) -> TensTI{2,3}
 
-Pointwise flux-flux localization ``-k(\\underline{x})\\,\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}``: the local flux under
-a remote uniform **flux** ``\\underline{q}^{\\infty}`` is `q(x) = local_flux_flux_loc(…) · q∞`.
+Pointwise flux-flux concentration ``-k(\\underline{x})\\,\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}``: the local flux under
+a remote uniform **flux** ``\\underline{q}^{\\infty}`` is `q(x) = local_flux_flux_concentration(…) · q∞`.
 """
-function local_flux_flux_loc end
+function local_flux_flux_concentration end
 
 function _local_K(f::LayeredSphereTransportFields, r, n, k::Int)
     f_over_r, fp = _cond_radial_scalars(f, k, r)
@@ -732,10 +732,10 @@ function _local_K(f::LayeredSphereTransportFields, r, n, k::Int)
 end
 
 for (name, pre, post) in (
-        (:local_gradient_gradient_loc, false, false),
-        (:local_flux_gradient_loc, true, false),
-        (:local_gradient_flux_loc, false, true),
-        (:local_flux_flux_loc, true, true),
+        (:local_gradient_gradient_concentration, false, false),
+        (:local_flux_gradient_concentration, true, false),
+        (:local_gradient_flux_concentration, false, true),
+        (:local_flux_flux_concentration, true, true),
     )
     @eval function $name(
             f::LayeredSphereTransportFields, x; side::Symbol = :outer, layer = nothing
@@ -782,7 +782,7 @@ function local_temperature end
     local_gradient(f_or_sphere, [K₀,] x, ∇T∞; side = :outer) -> Vec{3}
 
 Local temperature gradient at `x` under the remote uniform gradient `∇T∞`,
-i.e. `local_gradient_gradient_loc(…) · ∇T∞`.
+i.e. `local_gradient_gradient_concentration(…) · ∇T∞`.
 """
 function local_gradient end
 
@@ -871,8 +871,8 @@ end
 # Anything sweeping many points should build the cached solution once.
 
 for name in (
-        :local_strain_strain_loc, :local_stress_strain_loc,
-        :local_strain_stress_loc, :local_stress_stress_loc,
+        :local_strain_strain_concentration, :local_stress_strain_concentration,
+        :local_strain_stress_concentration, :local_stress_stress_concentration,
     )
     @eval $name(sphere::LayeredSphere, C₀::TensND.TensISO{4, 3}, args...; kw...) =
         $name(LayeredSphereFields(sphere, C₀), args...; kw...)
@@ -884,8 +884,8 @@ for name in (:local_strain, :local_stress, :local_displacement)
 end
 
 for name in (
-        :local_gradient_gradient_loc, :local_flux_gradient_loc,
-        :local_gradient_flux_loc, :local_flux_flux_loc,
+        :local_gradient_gradient_concentration, :local_flux_gradient_concentration,
+        :local_gradient_flux_concentration, :local_flux_flux_concentration,
         :local_temperature, :local_gradient, :local_flux,
     )
     @eval $name(sphere::LayeredSphere, K₀::TensND.TensISO{2, 3}, args...; kw...) =

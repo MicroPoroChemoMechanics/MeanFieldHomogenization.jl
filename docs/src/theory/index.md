@@ -27,9 +27,9 @@ load in a way entirely captured by one object, the **Hill polarization tensor**
 ``\mathbb{P}`` — this is [Eshelby's result](@ref th-eshelby-problem), and
 ``\mathbb{P}`` depends only on the inclusion *shape* and the reference *moduli*
 ([Hill polarization tensors](@ref th-hill-tensors)). From ``\mathbb{P}`` follows the
-**localization tensor**, which says how much of the remote load each phase
+**concentration tensor**, which says how much of the remote load each phase
 actually sees, and hence each phase's **contribution** to the effective
-stiffness ([Localization](@ref th-localization)).
+stiffness ([Concentration](@ref th-concentration)).
 
 ## The chain, in one picture
 
@@ -48,7 +48,7 @@ flowchart TB
     AMOUNT["amount<br/>fraction f or density ε"]
 
     P["Hill tensor ℙ<br/><i>Elasticity, Conductivity</i>"]
-    A["localization 𝔸 = [𝕀 + ℙ:(ℂᵣ−ℂ₀)]⁻¹<br/><i>localization.jl</i>"]
+    A["concentration 𝔸 = [𝕀 + ℙ:(ℂᵣ−ℂ₀)]⁻¹<br/><i>concentration.jl</i>"]
     N["contribution ℕ, ℍ<br/><i>contribution.jl</i>"]
     S["scheme<br/><i>Schemes</i>"]
     EFF["effective ℂ or 𝐊<br/>+ ∂/∂parameters"]
@@ -63,7 +63,7 @@ flowchart TB
     S --> EFF
 
     GA["gate A<br/>hill_tensor"] -.-> P
-    GB["gate B<br/>strain_strain_loc<br/>stress_strain_loc"] -.-> A
+    GB["gate B<br/>strain_strain_concentration<br/>stress_strain_concentration"] -.-> A
     GC["gate C<br/>stiffness_contribution<br/>compliance_contribution"] -.-> N
 
     classDef ext fill:#d7f2d7,stroke:#2e7d32,color:#1b5e20
@@ -99,7 +99,7 @@ Volterra products in place of tensor products. The contract is written up in
 | :--- | :----------- |
 | [The Eshelby inclusion problem](@ref th-eshelby-problem) | the uniform strain inside an ellipsoid, and the three tensors ``\mathbb{P}``, ``\mathbb{S}^{\mathrm{E}}``, ``\mathbb{Q}`` |
 | [Hill polarization tensors](@ref th-hill-tensors) | the closed forms of ``\mathbb{P}``, shape by shape and symmetry class by symmetry class |
-| [Localization and contribution tensors](@ref th-localization) | the response of an inhomogeneity to a remote load, and its contribution to the effective stiffness |
+| [Concentration and contribution tensors](@ref th-concentration) | the response of an inhomogeneity to a remote load, and its contribution to the effective stiffness |
 | [Two-inclusion interaction tensors](@ref th-interaction) | the field one inclusion induces in another, through the Green operator — the ingredient of the N-body schemes |
 
 ## Cracks and degenerate shapes
@@ -175,7 +175,7 @@ problem itself that must be generalized.
 
 | Page | Role |
 | :--- | :--- |
-| [The finite Eshelby cell](@ref th-corrected-cell) | a numerical device supporting the finite-element inclusions: the inclusion is solved on a *finite* cell and the truncation bias removed by its own dipole far field. Written in the language of [localization](@ref th-localization) and [crack opening displacement](@ref th-cod-tensors), so it is read after both |
+| [The finite Eshelby cell](@ref th-corrected-cell) | a numerical device supporting the finite-element inclusions: the inclusion is solved on a *finite* cell and the truncation bias removed by its own dipole far field. Written in the language of [concentration](@ref th-concentration) and [crack opening displacement](@ref th-cod-tensors), so it is read after both |
 | [Elliptic integrals](@ref th-elliptic-integrals) | the special functions the closed forms need |
 
 ## Where the two physics meet

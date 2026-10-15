@@ -107,7 +107,7 @@ end
 
 # Heat-flux intensity factor `K_T` — thermal analog of the elasticity SIF.
 # The driving vector is the transport twin of the remote stress, σ^∞ ≡ -q^∞ =
-# K₀·∇T^∞ (see the sign block in `localization.jl`), and the crack-tip singular
+# K₀·∇T^∞ (see the sign block in `concentration.jl`), and the crack-tip singular
 # field scales as ~ K_T/√r:
 #   - Ribbon:    K_T = √(π b) (n̂ · σ^∞)
 #   - Elliptic:  K_T = (3π^{3/2} b/8) √(b n_S) (b^𝓔/b^𝓡) (n̂ · σ^∞)

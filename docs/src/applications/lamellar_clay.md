@@ -179,14 +179,14 @@ add_layer!(particle, :INTERFOLIAR, Dict(:C => C_interfoliar); fraction = f)
 is exactly the first Walpole tensor, which is why one coefficient describes
 ``\mathbb{C}_f`` completely.
 
-Solving the cell and localizing into the interfoliar layer, then taking the two
-limits:
+Solving the cell for the concentration tensor of the interfoliar layer, then
+taking the two limits:
 
 ```@example lamellar
 phys(t) = tsimplify(tlimit(tlimit(tlimit(t, μw, 0), κw, 0), ks, oo))
 
 Cpar = phys(homogenize(particle, Laminated(), :C))
-A_f = phys(strain_strain_loc(particle, :INTERFOLIAR))
+A_f = phys(strain_strain_concentration(particle, :INTERFOLIAR))
 
 println(typeof(Cpar), "   ← exactly TI about n, and major-symmetric (N = 5)")
 println(typeof(A_f), "   ← TI too, but a concentration tensor has no major symmetry (N = 6)")
@@ -215,7 +215,7 @@ Those are exactly the same components read off the tensor one at a time:
 @printf "ℂᵖᵃʳ_ntnt = %s\n" string(tsimplify(Cpar[2, 3, 2, 3]))
 ```
 
-The interfoliar localization tensor is just as compact — its six Walpole
+The interfoliar concentration tensor is just as compact — its six Walpole
 coefficients, in the order ``(\ell_1, \ldots, \ell_6)``:
 
 ```@example lamellar
@@ -226,7 +226,7 @@ get_data(A_f)
 
 The prestress does not average trivially, and what it averages to is the
 tensor that carries the deviation from Terzaghi's effective stress all the way
-up. It is built from the interfoliar localization tensor:
+up. It is built from the interfoliar concentration tensor:
 
 ```@example lamellar
 Bπ = tsimplify(f * (nn ⊡ A_f))
@@ -273,7 +273,7 @@ discretized here.
 
 C_ac = TensISO{3}(3κ, 2μ)
 sphere = Ellipsoid(1.0)
-A_par = strain_strain_loc(sphere, Cpar, C_ac)    # (𝕀 + ℙ:(ℂᵖᵃʳ − ℂᵃᶜ))⁻¹
+A_par = strain_strain_concentration(sphere, Cpar, C_ac)    # (𝕀 + ℙ:(ℂᵖᵃʳ − ℂᵃᶜ))⁻¹
 
 # The macropores have zero stiffness: they contribute nothing to ⟨ℂ:𝔸⟩, so the
 # self-consistent condition ℂᵃᶜ = ⟨ℂ:𝔸⟩ reads

@@ -203,13 +203,13 @@ See also [`hill_tensor`](@ref MeanFieldHomogenization.Elasticity.hill_tensor).
 function eshelby_tensor end
 
 # =============================================================================
-#  Localization & contribution public API stubs
+#  Concentration & contribution public API stubs
 #
 #  Declared here so that every sub-module (Elasticity, Cracks,
 #  Conductivity, LayeredSphere, user extensions) can add methods via
 #  `import ..Core: stiffness_contribution` + method definition, all
 #  attaching to a single generic function.  Definitions live in
-#  `src/localization.jl` and `src/contribution.jl` (loaded at
+#  `src/concentration.jl` and `src/contribution.jl` (loaded at
 #  MeanFieldHomogenization top level after all sub-modules).
 # =============================================================================
 
@@ -237,46 +237,46 @@ formula.
 is_homogeneous_inclusion(::AbstractInclusion) = true
 
 """
-    strain_strain_loc(incl, C₁, C₀; kw...)  -> Tens{4,3}
+    strain_strain_concentration(incl, C₁, C₀; kw...)  -> Tens{4,3}
 
-Dilute strain-strain localization tensor ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` (Eshelby).
+Dilute strain-strain concentration tensor ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` (Eshelby).
 """
-function strain_strain_loc end
-
-"""
-    stress_strain_loc(incl, C₁, C₀; kw...)  -> Tens{4,3}
-"""
-function stress_strain_loc end
+function strain_strain_concentration end
 
 """
-    strain_stress_loc(incl, C₁, C₀; kw...)  -> Tens{4,3}
+    stress_strain_concentration(incl, C₁, C₀; kw...)  -> Tens{4,3}
 """
-function strain_stress_loc end
+function stress_strain_concentration end
 
 """
-    stress_stress_loc(incl, C₁, C₀; kw...)  -> Tens{4,3}
+    strain_stress_concentration(incl, C₁, C₀; kw...)  -> Tens{4,3}
 """
-function stress_stress_loc end
+function strain_stress_concentration end
 
 """
-    gradient_gradient_loc(incl, K₁, K₀; kw...) -> Tens{2,3}
+    stress_stress_concentration(incl, C₁, C₀; kw...)  -> Tens{4,3}
 """
-function gradient_gradient_loc end
+function stress_stress_concentration end
 
 """
-    flux_gradient_loc(incl, K₁, K₀; kw...)    -> Tens{2,3}
+    gradient_gradient_concentration(incl, K₁, K₀; kw...) -> Tens{2,3}
 """
-function flux_gradient_loc end
+function gradient_gradient_concentration end
 
 """
-    gradient_flux_loc(incl, K₁, K₀; kw...)    -> Tens{2,3}
+    flux_gradient_concentration(incl, K₁, K₀; kw...)    -> Tens{2,3}
 """
-function gradient_flux_loc end
+function flux_gradient_concentration end
 
 """
-    flux_flux_loc(incl, K₁, K₀; kw...)        -> Tens{2,3}
+    gradient_flux_concentration(incl, K₁, K₀; kw...)    -> Tens{2,3}
 """
-function flux_flux_loc end
+function gradient_flux_concentration end
+
+"""
+    flux_flux_concentration(incl, K₁, K₀; kw...)        -> Tens{2,3}
+"""
+function flux_flux_concentration end
 
 """
     stiffness_contribution(incl, C₁, C₀; kw...) -> Tens{4,3}
@@ -372,10 +372,10 @@ Dilute effective-resistivity correction — 2nd-order analog of
 function delta_resistivity end
 
 """
-    loc_and_stiffness(incl, P₁, P₀; kw...) -> (A, N)
+    concentration_and_stiffness(incl, P₁, P₀; kw...) -> (A, N)
 
 Bundled evaluation of the dilute concentration tensor `A`
-([`strain_strain_loc`](@ref) / [`gradient_gradient_loc`](@ref)) **and** the
+([`strain_strain_concentration`](@ref) / [`gradient_gradient_concentration`](@ref)) **and** the
 size-independent contribution tensor `N` ([`stiffness_contribution`](@ref) /
 [`conductivity_contribution`](@ref)) of the *same* inclusion in the *same*
 reference medium, sharing the single expensive Hill / recurrence solve.
@@ -387,37 +387,37 @@ arguments.
 
 !!! note "Contract"
     The returned pair must be **bitwise identical** to
-    `(strain_strain_loc(incl, P₁, P₀; kw...),
+    `(strain_strain_concentration(incl, P₁, P₀; kw...),
       stiffness_contribution(incl, P₁, P₀; kw...))`.
     The generic fallback *is* that pair; specializations are a pure
     performance concern and must not reassociate the arithmetic.
 
 Internal seam — not exported.
 """
-function loc_and_stiffness end
+function concentration_and_stiffness end
 
 """
-    loc_and_stress_average(incl, P₁, P₀; kw...) -> (A, B)
+    concentration_and_stress_average(incl, P₁, P₀; kw...) -> (A, B)
 
-Bundled `(strain_strain_loc, stress_strain_loc)` — resp.
-`(gradient_gradient_loc, flux_gradient_loc)` — sharing one localization
-solve.  Same bitwise contract as [`loc_and_stiffness`](@ref).
+Bundled `(strain_strain_concentration, stress_strain_concentration)` — resp.
+`(gradient_gradient_concentration, flux_gradient_concentration)` — sharing one concentration
+solve.  Same bitwise contract as [`concentration_and_stiffness`](@ref).
 
 Internal seam — not exported.
 """
-function loc_and_stress_average end
+function concentration_and_stress_average end
 
 """
     compliance_and_stiffness_contribution(incl, P₀; kw...) -> (H, N)
 
 Bundled two-argument contribution pair of a **flat** inclusion — the
-density-amount counterpart of [`loc_and_stiffness`](@ref), sharing whatever
+density-amount counterpart of [`concentration_and_stiffness`](@ref), sharing whatever
 single expensive solve produces both (for a crack, one
 [`cod_tensor`](@ref MeanFieldHomogenization.Cracks.cod_tensor)).
 
 Returns `(compliance_contribution, stiffness_contribution)` for a 4th-order
 `P₀` and `(compliance_contribution, conductivity_contribution)` for a
-2nd-order one.  Same bitwise contract as [`loc_and_stiffness`](@ref): the
+2nd-order one.  Same bitwise contract as [`concentration_and_stiffness`](@ref): the
 generic fallback in `src/contribution.jl` *is* that pair, and any
 specialization is a pure performance concern.
 

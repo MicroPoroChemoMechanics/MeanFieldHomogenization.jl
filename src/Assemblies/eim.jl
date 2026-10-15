@@ -206,20 +206,20 @@ function eim_polarizations(
 end
 
 """
-    cluster_localizations(asm, prop = :C; cluster_radius = nothing, kw...)
+    cluster_concentrations(asm, prop = :C; cluster_radius = nothing, kw...)
         -> (Vector, Vector{Symbol})
 
-Per-family localization tensors of the [`ClusterModel`](@ref) solution,
+Per-family concentration tensors of the [`ClusterModel`](@ref) solution,
 together with the representative particle of each family.
 
 `A[k]` maps the macroscopic strain onto the mean strain of family `k`, so the
 mean stress follows as ``\\mathbb{C}_k:\\mathbb{A}_k:\\boldsymbol{E}``.
 """
-function cluster_localizations(
+function cluster_concentrations(
         asm::ParticleAssembly, prop::Symbol = :C;
         cluster_radius = nothing, kw...
     )
     validate_assembly(asm)
     P₀ = matrix_property(asm, prop)
-    return _cluster_localizations(asm, P₀, prop, cluster_radius, NamedTuple(); kw...)
+    return _cluster_concentrations(asm, P₀, prop, cluster_radius, NamedTuple(); kw...)
 end

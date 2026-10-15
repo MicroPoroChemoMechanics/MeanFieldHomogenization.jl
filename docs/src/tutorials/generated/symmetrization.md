@@ -46,7 +46,7 @@ isotropic matrix:
 C₀ = TensISO{3}(3 * 20.0, 2 * 12.0)          # matrix
 C₁ = TensISO{3}(3 * 90.0, 2 * 60.0)          # stiff inclusion
 incl = Spheroid(6.0; euler_angles = (deg2rad(35.0), 0.0, 0.0))   # tilted needle
-A = strain_strain_loc(incl, C₁, C₀)
+A = strain_strain_concentration(incl, C₁, C₀)
 arrA = get_array(A)
 
 ismaj = maximum(abs, arrA .- permutedims(arrA, (3, 4, 1, 2)))

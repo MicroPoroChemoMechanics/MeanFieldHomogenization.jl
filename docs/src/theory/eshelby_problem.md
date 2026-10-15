@@ -127,7 +127,7 @@ A real heterogeneous material is not one ellipsoid in an infinite medium. What
 comes closest is the **inhomogeneity** problem — an ellipsoid of a *different*
 stiffness ``\mathbb{C}_1``, loaded remotely by ``\underline{u} = \boldsymbol{E}\cdot\underline{x}``
 — and it reduces to the inclusion problem above by the equivalent-polarization
-argument of [Localization](@ref th-localization):
+argument of [Concentration](@ref th-concentration):
 
 ![The inhomogeneity problem: a different stiffness inside, remote loading outside](../assets/geometry/eshelby_inhomogeneity.svg)
 
@@ -140,14 +140,14 @@ next two pages, and it has two parts:
    ([Homogenization schemes](@ref th-homogenization));
 2. the choice of that reference medium is the scheme: the matrix itself
    (Mori–Tanaka), the effective medium being sought (self-consistent), or
-   something in between ([Localization](@ref th-localization)).
+   something in between ([Concentration](@ref th-concentration)).
 
 ## Where to go next
 
 The closed forms of ``\mathbb{P}``, shape by shape and for each symmetry class
 of the reference medium, are given on the next page,
 [Hill polarization tensors](@ref th-hill-tensors). The inhomogeneity problem of
-§4 is solved in [Localization and contribution tensors](@ref th-localization),
+§4 is solved in [Concentration and contribution tensors](@ref th-concentration),
 which turns ``\mathbb{P}`` into the concentration and contribution tensors that
 every scheme consumes.
 

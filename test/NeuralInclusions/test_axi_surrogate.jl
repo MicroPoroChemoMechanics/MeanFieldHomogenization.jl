@@ -15,17 +15,17 @@ using LinearAlgebra
 
 const NIA = MeanFieldHomogenization.NeuralInclusions
 
-@testset "the transport localization class of an axisymmetric cavity" begin
-    c = GradLocTI2()
+@testset "the transport concentration class of an axisymmetric cavity" begin
+    c = GradientConcentrationTI2()
 
     @testset "two components, and no scale divides out" begin
         # A second-order tensor invariant under the rotations about one axis has
         # two constants, where the octahedral group leaves exactly one.
         @test NIA.ncomponents(c) == 2
-        @test NIA.ncomponents(GradLocISO2()) == 1
+        @test NIA.ncomponents(GradientConcentrationISO2()) == 1
         @test NIA.tensor_order(c) == 2
-        @test NIA.class_name(c) == :grad_loc_ti2
-        @test NIA.hill_class(:grad_loc_ti2) isa GradLocTI2
+        @test NIA.class_name(c) == :gradient_concentration_ti2
+        @test NIA.hill_class(:gradient_concentration_ti2) isa GradientConcentrationTI2
 
         # The distinction from `HillTI2`, which has the same two components and
         # a different dimension. Reusing it would divide every prediction by k₀.
@@ -70,12 +70,12 @@ const NIA = MeanFieldHomogenization.NeuralInclusions
 end
 
 @testset "the reference medium of a cavity is stated, not guessed" begin
-    # `StrainLocTI` has no `_reference_medium` method, deliberately: the same
+    # `StrainConcentrationTI` has no `_reference_medium` method, deliberately: the same
     # class serves *heterogeneous* morphologies that carry their constituents
     # inside themselves, and guessing there would train on corrupted labels. A
     # cavity has no constituent, so the caller declares the medium.
     box = NIA.SampleBox([:log_p, :nu0], [log(0.25), 0.0], [log(1.5), 0.45])
-    @test_throws MethodError NIA._reference_medium(StrainLocTI(), box, [0.0, 0.3])
+    @test_throws MethodError NIA._reference_medium(StrainConcentrationTI(), box, [0.0, 0.3])
 
     ref = (b, x) -> NIA._iso_ref(x[NIA.feature_index(b, :nu0)])
     C₀ = ref(box, [0.0, 0.3])
@@ -152,7 +152,7 @@ end
     # will read the column.
     net = NIA.glorot_mlp(Random.MersenneTwister(7), [1, 4, 2])
     s = NIA.NeuralSurrogate(;
-        net, features = [:log_p], output = NIA.DimensionlessHill(GradLocTI2()),
+        net, features = [:log_p], output = NIA.DimensionlessHill(GradientConcentrationTI2()),
         domain_lo = [-1.0], domain_hi = [1.0],
     )
     X = reshape(collect(range(-1.0, 1.0; length = 8)), 1, 8)
@@ -180,7 +180,7 @@ end
     # `validate_surrogate` returns quantiles.
     net = NIA.glorot_mlp(Random.MersenneTwister(11), [1, 8, 2])
     s = NIA.NeuralSurrogate(;
-        net, features = [:log_p], output = NIA.DimensionlessHill(GradLocTI2()),
+        net, features = [:log_p], output = NIA.DimensionlessHill(GradientConcentrationTI2()),
         domain_lo = [-1.0], domain_hi = [1.0],
     )
     n = 50
@@ -212,8 +212,8 @@ end
     se = NIA.load_surrogate(NIA.model_path("axi_supershape_pore_elastic"))
 
     @testset "they declare what they are" begin
-        @test NIA.hill_class(sc) isa GradLocTI2
-        @test NIA.hill_class(se) isa StrainLocTI
+        @test NIA.hill_class(sc) isa GradientConcentrationTI2
+        @test NIA.hill_class(se) isa StrainConcentrationTI
         @test NIA.tensor_order(sc) == 2
         @test NIA.tensor_order(se) == 4
         @test sc.features == [:log_aspect, :log_p]
@@ -238,14 +238,14 @@ end
             @test has_surrogate(pore, 4)
             @test has_surrogate(pore, 2)
 
-            A = fe_axi_pore_localization(pore, iso_stiffness(1.0, 0.6))
+            A = fe_axi_pore_concentration(pore, iso_stiffness(1.0, 0.6))
             @test A isa TensND.TensTI{4}
-            B = fe_axi_pore_localization(pore, TensISO{3}(2.5))
+            B = fe_axi_pore_concentration(pore, TensISO{3}(2.5))
             @test B isa TensND.TensTI{2}
             @test fe_assembly_count(pore) == 0
 
-            # Degree 0 in k₀, which is what `GradLocTI2` encodes.
-            C = fe_axi_pore_localization(pore, TensISO{3}(1.0))
+            # Degree 0 in k₀, which is what `GradientConcentrationTI2` encodes.
+            C = fe_axi_pore_concentration(pore, TensISO{3}(1.0))
             @test collect(TensND.get_data(B)) ≈ collect(TensND.get_data(C))
         end
     end
@@ -260,7 +260,7 @@ end
         a = Matrix(
             TensND.get_array(
                 TensND.change_tens(
-                    fe_axi_pore_localization(pore, TensISO{3}(1.0)), can
+                    fe_axi_pore_concentration(pore, TensISO{3}(1.0)), can
                 )
             )
         )
@@ -274,7 +274,7 @@ end
         J = v * v' / 3
         K = Matrix(1.0I, 6, 6) - J
         Aex = inv(Matrix(1.0I, 6, 6) - (SJ * J + SK * K))
-        A = Matrix(KM(fe_axi_pore_localization(pore, C₀)))
+        A = Matrix(KM(fe_axi_pore_concentration(pore, C₀)))
         @test norm(A - Aex) / norm(Aex) < 4 * NIA.worst_error(se.provenance)
     end
 
@@ -283,7 +283,7 @@ end
         # refused rather than extrapolated — in either variable.
         for sh in (Superspheroid(1.0, 1.0, 0.15), Superspheroid(1.0, 4.0, 0.8))
             pore = FEAxiSupershapePore(sh; transport = sc, guard = :error)
-            @test_throws Exception fe_axi_pore_localization(pore, TensISO{3}(1.0))
+            @test_throws Exception fe_axi_pore_concentration(pore, TensISO{3}(1.0))
         end
     end
 end

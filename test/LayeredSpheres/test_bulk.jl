@@ -38,25 +38,25 @@ end
     C₁ = TensISO{3}(3κ₁, 2μ₁)
 
     s = LayeredSphere((1.0,), (C₁,))
-    A_layered = strain_strain_loc(s, C₀; layer = 1)
-    A_ell = strain_strain_loc(Ellipsoid(1.0), C₁, C₀)
+    A_layered = strain_strain_concentration(s, C₀; layer = 1)
+    A_ell = strain_strain_concentration(Ellipsoid(1.0), C₁, C₀)
     # Both should match to floating-point precision (the two paths
     # differ only in round-off — bulk via (u,σ) propagation vs direct
     # Eshelby iso inversion).
     @test A_layered.data[1] ≈ A_ell.data[1] rtol = 1.0e-14
     @test A_layered.data[2] ≈ A_ell.data[2] rtol = 1.0e-14
 
-    # Bulk localization matches Eshelby sphere formula
+    # Bulk concentration matches Eshelby sphere formula
     α_bulk = (3κ₀ + 4μ₀) / (3κ₁ + 4μ₀)
     @test A_layered[1, 1, 1, 1] ≈ α_bulk / 3 + 2 * A_layered.data[2] / 3 rtol = 1.0e-12
 end
 
-@testset "LayeredSphere — bulk localization and effective bulk" begin
+@testset "LayeredSphere — bulk concentration and effective bulk" begin
     # Homogeneous composite (all layers = matrix): α_k ≡ 1 and κ_eff = κ₀.
     κ₀, μ₀ = 120.0, 80.0
     C₀ = TensISO{3}(3κ₀, 2μ₀)
     s = LayeredSphere((0.4, 0.7, 1.0), (C₀, C₀, C₀))
-    α = MeanFieldHomogenization.LayeredSpheres._bulk_localization(s, κ₀, μ₀)
+    α = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(s, κ₀, μ₀)
     @test all(≈(1), α)
     κ_eff = MeanFieldHomogenization.LayeredSpheres._effective_bulk(s, κ₀, μ₀)
     @test κ_eff ≈ κ₀ rtol = 1.0e-12
@@ -65,7 +65,7 @@ end
     κ₁, μ₁ = 3κ₀, 2μ₀
     C₁ = TensISO{3}(3κ₁, 2μ₁)
     s_mono = LayeredSphere((0.4, 0.7, 1.0), (C₁, C₁, C₁))
-    α_mono = MeanFieldHomogenization.LayeredSpheres._bulk_localization(s_mono, κ₀, μ₀)
+    α_mono = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(s_mono, κ₀, μ₀)
     α_expected = (3κ₀ + 4μ₀) / (3κ₁ + 4μ₀)
     for k in 1:3
         @test α_mono[k] ≈ α_expected rtol = 1.0e-10
@@ -80,7 +80,7 @@ end
     s = LayeredSphere((0.5, 1.0), (C_in, C₀))
     ε∞ = TensND.Tens(Matrix(Diagonal([0.1, 0.1, 0.1])))
 
-    α = MeanFieldHomogenization.LayeredSpheres._bulk_localization(s, κ₀, μ₀)
+    α = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(s, κ₀, μ₀)
     # Layer 2 (shell = matrix): α[2] should be close to 1 for this case
     # (consistent with the generalized self-consistent ... the shell's
     # average strain is not exactly 1 because the core perturbs it,

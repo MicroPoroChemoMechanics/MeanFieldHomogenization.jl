@@ -29,7 +29,7 @@
 #  `layer_resistivity_average`, volume averages of the LOCAL isotropic
 #  layer conductivities, direction-independent) and the dilute/MT/SC/
 #  Maxwell/differential kernels that route through
-#  `gradient_gradient_loc` / `flux_gradient_loc` / `conductivity_contribution`.
+#  `gradient_gradient_concentration` / `flux_gradient_concentration` / `conductivity_contribution`.
 # =============================================================================
 
 """
@@ -37,7 +37,7 @@
 
 A composite spheroid has no single representative conductivity: its
 average flux must be obtained from the transfer-matrix recurrence, not
-from ``(\\boldsymbol{K}_1 - \\boldsymbol{K}_0)\\cdot\\boldsymbol{A}``. See [`flux_gradient_loc`](@ref).
+from ``(\\boldsymbol{K}_1 - \\boldsymbol{K}_0)\\cdot\\boldsymbol{A}``. See [`flux_gradient_concentration`](@ref).
 """
 Core.is_homogeneous_inclusion(::LayeredSpheroid) = false
 
@@ -61,13 +61,13 @@ function _spheroid_concentration(s::LayeredSpheroid{T, N}, k₀) where {T, N}
 end
 
 """
-    gradient_gradient_loc(s::LayeredSpheroid, K₁, K₀; kw...) -> TensTI{2,3}
+    gradient_gradient_concentration(s::LayeredSpheroid, K₁, K₀; kw...) -> TensTI{2,3}
 
 Whole-inclusion **gradient concentration tensor**
 ``\\boldsymbol{A}_\\Omega = \\alpha_t\\,(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n}) + \\alpha_a\\,\\underline{n}\\otimes\\underline{n}`` (``\\underline{n}`` the spheroid's axis), such that
 ``\\langle\\nabla T\\rangle_\\Omega = \\boldsymbol{A}_\\Omega\\cdot\\nabla T^{\\infty}``. `K₁` is ignored (see the module docstring).
 """
-function gradient_gradient_loc(
+function gradient_gradient_concentration(
         s::LayeredSpheroid{T, N},
         ::TensND.AbstractTens{2, 3},
         K₀::TensND.TensISO{2, 3};
@@ -79,18 +79,18 @@ function gradient_gradient_loc(
 end
 
 """
-    flux_gradient_loc(s::LayeredSpheroid, K₁, K₀; kw...) -> TensTI{2,3}
+    flux_gradient_concentration(s::LayeredSpheroid, K₁, K₀; kw...) -> TensTI{2,3}
 
 Whole-inclusion **average flux** per unit remote gradient,
 ``\\boldsymbol{B}_\\Omega = k_0\\,\\bigl(\\beta_t\\,(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n}) + \\beta_a\\,\\underline{n}\\otimes\\underline{n}\\bigr)``,
 ``\\langle\\boldsymbol{K}\\cdot\\nabla T\\rangle_\\Omega = \\boldsymbol{B}_\\Omega\\cdot\\nabla T^{\\infty}``, `K₁` ignored.
 
-Consistency: `conductivity_contribution = flux_gradient_loc - K₀ ⋅
-gradient_gradient_loc`, verified in the test suite
+Consistency: `conductivity_contribution = flux_gradient_concentration - K₀ ⋅
+gradient_gradient_concentration`, verified in the test suite
 (``\\boldsymbol{N}_K = \\boldsymbol{B}_\\Omega - \\boldsymbol{K}_0\\cdot\\boldsymbol{A}_\\Omega``,
 the same invariant as `LayeredSphere`'s).
 """
-function flux_gradient_loc(
+function flux_gradient_concentration(
         s::LayeredSpheroid{T, N},
         ::TensND.AbstractTens{2, 3},
         K₀::TensND.TensISO{2, 3};
@@ -109,7 +109,7 @@ Size-independent **conductivity contribution tensor**
 ``\\langle\\boldsymbol{K}\\cdot\\nabla T\\rangle_\\Omega - \\boldsymbol{K}_0\\cdot\\langle\\nabla T\\rangle_\\Omega`` per unit remote
 gradient, assembled from the whole-inclusion
 average (the spheroid is heterogeneous, so ``(\\boldsymbol{K}_1 - \\boldsymbol{K}_0)\\cdot\\boldsymbol{A}`` does not
-apply). `K₁` is ignored (see [`gradient_gradient_loc`](@ref)).
+apply). `K₁` is ignored (see [`gradient_gradient_concentration`](@ref)).
 """
 function Core.conductivity_contribution(
         s::LayeredSpheroid{T, N},
@@ -117,8 +117,8 @@ function Core.conductivity_contribution(
         K₀::TensND.TensISO{2, 3};
         kw...,
     ) where {T, N}
-    B = flux_gradient_loc(s, K₁, K₀; kw...)
-    A = gradient_gradient_loc(s, K₁, K₀; kw...)
+    B = flux_gradient_concentration(s, K₁, K₀; kw...)
+    A = gradient_gradient_concentration(s, K₁, K₀; kw...)
     return B - K₀ ⋅ A
 end
 
@@ -147,21 +147,21 @@ function layer_resistivity_average(s::LayeredSpheroid{T, N}) where {T, N}
 end
 
 # =============================================================================
-#  Bundled localization + contribution for a confocal layered spheroid
+#  Bundled concentration + contribution for a confocal layered spheroid
 #
-#  `conductivity_contribution` already calls BOTH `flux_gradient_loc` and
-#  `gradient_gradient_loc`, each of which reruns `_spheroid_concentration`
+#  `conductivity_contribution` already calls BOTH `flux_gradient_concentration` and
+#  `gradient_gradient_concentration`, each of which reruns `_spheroid_concentration`
 #  (i.e. the confocal transfer-matrix recurrence `spheroid_ba_ratios`).  Add
-#  the scheme layer's own `gradient_gradient_loc` and a Mori-Tanaka phase costs
+#  the scheme layer's own `gradient_gradient_concentration` and a Mori-Tanaka phase costs
 #  THREE recurrences where `_spheroid_concentration` already returns all four
 #  scalars at once.
 #
 #  Bitwise identical: `A` and `B` are the verbatim expressions of the two
-#  localization functions, and `N = B - K₀ ⋅ A` is the verbatim body of
+#  concentration functions, and `N = B - K₀ ⋅ A` is the verbatim body of
 #  `conductivity_contribution`.
 # =============================================================================
 
-function Core.loc_and_stiffness(
+function Core.concentration_and_stiffness(
         s::LayeredSpheroid{T, N},
         ::TensND.AbstractTens{2, 3},
         K₀::TensND.TensISO{2, 3};
@@ -174,7 +174,7 @@ function Core.loc_and_stiffness(
     return (A, B - K₀ ⋅ A)
 end
 
-function Core.loc_and_stress_average(
+function Core.concentration_and_stress_average(
         s::LayeredSpheroid{T, N},
         ::TensND.AbstractTens{2, 3},
         K₀::TensND.TensISO{2, 3};
@@ -200,7 +200,7 @@ end
 #  `elastic_cases.jl` and not before.
 
 """
-    strain_strain_loc(s::LayeredSpheroid, C₁, C₀; D = 6, kw...) -> Tens{4,3}
+    strain_strain_concentration(s::LayeredSpheroid, C₁, C₀; D = 6, kw...) -> Tens{4,3}
 
 Volume-averaged strain concentration tensor ``\\mathbb{A}`` of an elastic `n`-layer
 confocal spheroid, ``\\langle\\boldsymbol{\\varepsilon}\\rangle = \\mathbb{A}:\\boldsymbol{E}``, ready for a mean-field scheme.
@@ -213,7 +213,7 @@ Prolate and oblate alike, an oblate spheroid going through the complex
 substitution ``q = \\mathrm{i}\\tau``. Only the default axis ``\\underline{e}_3`` and perfect interfaces are
 supported — see [`spheroid_strain_concentration`](@ref).
 """
-function strain_strain_loc(
+function strain_strain_concentration(
         s::LayeredSpheroid{T, N},
         ::TensND.AbstractTens{4, 3},
         C₀::TensND.TensISO{4, 3};

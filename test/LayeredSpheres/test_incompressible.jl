@@ -20,7 +20,7 @@ using LinearAlgebra
         κ₁ = 2 * μ₁ * (1 + ν₁) / (3 * (1 - 2 * ν₁))
         C₁ = TensISO{3}(3κ₁, 2μ₁)
         s = LayeredSphere((1.0,), (C₁,))
-        α = MeanFieldHomogenization.LayeredSpheres._bulk_localization(s, κ₀, μ₀)[1]
+        α = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(s, κ₀, μ₀)[1]
         push!(αs, α)
     end
     # Convergence toward the incompressible limit α = 4μ₀ / (3κ∞ + 4μ₀)  → 0.
@@ -36,14 +36,14 @@ end
 
     # Single layer — α should be very small but finite.
     s1 = LayeredSphere((1.0,), (C_inc,))
-    α = MeanFieldHomogenization.LayeredSpheres._bulk_localization(s1, κ₀, μ₀)[1]
+    α = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(s1, κ₀, μ₀)[1]
     @test isfinite(α)
     @test α < 1.0e-25   # ≈ 4μ₀/(3 · 1e30) at leading order
 
     # Core-shell with incompressible core: layer 1 α → 0, layer 2 finite.
     C_shell = TensISO{3}(3κ₀ * 1.5, 2μ₀ * 1.5)
     s2 = LayeredSphere((0.5, 1.0), (C_inc, C_shell))
-    α2 = MeanFieldHomogenization.LayeredSpheres._bulk_localization(s2, κ₀, μ₀)
+    α2 = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(s2, κ₀, μ₀)
     @test all(isfinite, α2)
     @test α2[1] < 1.0e-25
 end
@@ -56,7 +56,7 @@ end
     for κ₁ in [100.0, 1.0e4, 1.0e8, 1.0e16]
         C₁ = TensISO{3}(3κ₁, 2μ₀)
         s = LayeredSphere((1.0,), (C₁,))
-        α_comp = MeanFieldHomogenization.LayeredSpheres._bulk_localization(s, κ₀, μ₀)[1]
+        α_comp = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(s, κ₀, μ₀)[1]
         α_expected = (3κ₀ + 4μ₀) / (3κ₁ + 4μ₀)
         @test α_comp ≈ α_expected rtol = 1.0e-10
     end

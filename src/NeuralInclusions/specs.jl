@@ -77,9 +77,9 @@ struct HillTI2 <: AbstractHillClass end
 """
 Transversely isotropic 4th-order tensor **without major symmetry**: the six
 Walpole components ``(\\ell_1, \\dots, \\ell_6)`` of `TensTI{4,·,6}`, for the *strain-side*
-localization tensor ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` of a morphology axisymmetric about ``\\underline{n}``.
+concentration tensor ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` of a morphology axisymmetric about ``\\underline{n}``.
 
-Six and not five, because a localization tensor is genuinely not
+Six and not five, because a concentration tensor is genuinely not
 major-symmetric: ``\\mathbb{A}_{\\varepsilon\\varepsilon} = [\\mathbb{I} + \\mathbb{P}:(\\mathbb{C}_1-\\mathbb{C}_0)]^{-1}`` is the inverse of a product of two
 major-symmetric tensors, which does not commute. For an oblate spheroid at a
 contrast of 2 the defect reaches 10 % and ``\\ell_3 \\ne \\ell_4`` outright, so projecting onto
@@ -92,24 +92,24 @@ symmetric stresses has ``\\ell_7 = \\ell_8 = 0`` identically — measured, not a
 ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` is dimensionless, so no scale divides out: see
 [`dimensionless_scale`](@ref).
 """
-struct StrainLocTI <: AbstractHillClass end
+struct StrainConcentrationTI <: AbstractHillClass end
 
 """
-Same six-component transversely isotropic form as [`StrainLocTI`](@ref), for the
-*stress-side* localization tensor ``\\mathbb{A}_{\\sigma\\varepsilon}``.
+Same six-component transversely isotropic form as [`StrainConcentrationTI`](@ref), for the
+*stress-side* concentration tensor ``\\mathbb{A}_{\\sigma\\varepsilon}``.
 
 The two differ only in their physical dimension, and therefore in what makes
 them dimensionless: ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` is of degree 0 in the moduli, ``\\mathbb{A}_{\\sigma\\varepsilon}`` of degree ``+1``.
 """
-struct StressLocTI <: AbstractHillClass end
+struct StressConcentrationTI <: AbstractHillClass end
 
 """
-Cubic strain localization tensor: the **three** components ``(\\alpha, \\beta, \\gamma)`` of a
+Cubic strain concentration tensor: the **three** components ``(\\alpha, \\beta, \\gamma)`` of a
 `TensCubic` on the projectors ``(\\mathbb{J}, \\mathbb{E}, \\mathbb{T})``, for a morphology left invariant by
 the octahedral group — a supersphere, a cubic array.
 
-Three and not six, where [`StrainLocTI`](@ref) needs six for the same object one
-class up. A localization tensor has **no major symmetry** in general, which is
+Three and not six, where [`StrainConcentrationTI`](@ref) needs six for the same object one
+class up. A concentration tensor has **no major symmetry** in general, which is
 exactly why the TI case cannot use the five-component major-symmetric Walpole
 form; but a tensor with the minor symmetries and cubic symmetry *is*
 major-symmetric automatically, the three projectors being symmetric. So nothing
@@ -118,11 +118,11 @@ is dropped here: the class simply has no antisymmetric content to lose.
 Dimensionless, like its TI sibling: ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` is of degree 0 in the reference
 moduli.
 """
-struct StrainLocCubic <: AbstractHillClass end
+struct StrainConcentrationCubic <: AbstractHillClass end
 
 """
-Gradient localization tensor of a cavity in transport: the **single** component
-of an isotropic 2nd-order tensor, for `gradient_gradient_loc`.
+Gradient concentration tensor of a cavity in transport: the **single** component
+of an isotropic 2nd-order tensor, for `gradient_gradient_concentration`.
 
 One component, whatever the shape's symmetry class, because a second-order
 tensor invariant under the octahedral group is *isotropic* — the same fact that
@@ -133,21 +133,21 @@ frame is irrelevant.
 Distinct from [`HillISO2`](@ref), which has the same one component and a
 different dimension. ``\\boldsymbol{A}_{\\nabla\\nabla}`` is of degree **0** in the reference conductivity, so
 nothing divides out; the Hill tensor is of degree ``-1``, so ``k_0`` does. Reusing
-`HillISO2` for a localization tensor would therefore divide the prediction by
+`HillISO2` for a concentration tensor would therefore divide the prediction by
 ``k_0`` and be silently wrong at every ``k_0 \\ne 1`` — see [`dimensionless_scale`](@ref).
 """
-struct GradLocISO2 <: AbstractHillClass end
+struct GradientConcentrationISO2 <: AbstractHillClass end
 
 """
-Gradient localization tensor of a cavity in transport, **transversely
+Gradient concentration tensor of a cavity in transport, **transversely
 isotropic**: the two components ``(a, b)`` of `TensTI{2}` about the axis, for
-`gradient_gradient_loc` on an axisymmetric morphology.
+`gradient_gradient_concentration` on an axisymmetric morphology.
 
-Two where [`GradLocISO2`](@ref) has one, because a body of revolution
+Two where [`GradientConcentrationISO2`](@ref) has one, because a body of revolution
 distinguishes its axis: a superspheroidal pore has ``R_{11} \\ne R_{33}`` for every
 aspect ratio but the sphere.
 
-Distinct from [`HillTI2`](@ref) for the same reason `GradLocISO2` is distinct
+Distinct from [`HillTI2`](@ref) for the same reason `GradientConcentrationISO2` is distinct
 from `HillISO2`, and it is worth repeating because the two are otherwise
 interchangeable in shape: ``\\boldsymbol{A}_{\\nabla\\nabla}`` is of degree **0** in the reference
 conductivity while the Hill tensor is of degree ``-1``, so reusing `HillTI2` would
@@ -156,15 +156,15 @@ divide every prediction by ``k_0`` and be silently wrong away from ``k_0 = 1``.
 The axis is column 3 of the inclusion basis, the package's usual convention and
 the one the axisymmetric solver revolves about.
 """
-struct GradLocTI2 <: AbstractHillClass end
+struct GradientConcentrationTI2 <: AbstractHillClass end
 
 const _CLASS_NAMES = Dict{Symbol, AbstractHillClass}(
     :iso => HillISO(), :ti => HillTI(), :ortho => HillOrtho(),
     :iso2 => HillISO2(), :ti2 => HillTI2(),
-    :loc_ti => StrainLocTI(), :stress_loc_ti => StressLocTI(),
-    :loc_cubic => StrainLocCubic(),
-    :grad_loc_iso2 => GradLocISO2(),
-    :grad_loc_ti2 => GradLocTI2(),
+    :strain_concentration_ti => StrainConcentrationTI(), :stress_concentration_ti => StressConcentrationTI(),
+    :strain_concentration_cubic => StrainConcentrationCubic(),
+    :gradient_concentration_iso2 => GradientConcentrationISO2(),
+    :gradient_concentration_ti2 => GradientConcentrationTI2(),
 )
 const _NAMES_CLASS = Dict{Any, Symbol}(typeof(v) => k for (k, v) in _CLASS_NAMES)
 
@@ -196,22 +196,22 @@ ncomponents(::HillTI) = 5
 ncomponents(::HillOrtho) = 9
 ncomponents(::HillISO2) = 1
 ncomponents(::HillTI2) = 2
-ncomponents(::Union{StrainLocTI, StressLocTI}) = 6
-ncomponents(::StrainLocCubic) = 3
-ncomponents(::GradLocISO2) = 1
-ncomponents(::GradLocTI2) = 2
+ncomponents(::Union{StrainConcentrationTI, StressConcentrationTI}) = 6
+ncomponents(::StrainConcentrationCubic) = 3
+ncomponents(::GradientConcentrationISO2) = 1
+ncomponents(::GradientConcentrationTI2) = 2
 
 """
     tensor_order(class) -> Int
 
-`4` for elasticity, `2` for transport. The localization and contribution
+`4` for elasticity, `2` for transport. The concentration and contribution
 generics are declared per order, so this is what decides which physics a
 surrogate serves.
 """
 tensor_order(
-    ::Union{HillISO, HillTI, HillOrtho, StrainLocTI, StressLocTI, StrainLocCubic}
+    ::Union{HillISO, HillTI, HillOrtho, StrainConcentrationTI, StressConcentrationTI, StrainConcentrationCubic}
 ) = 4
-tensor_order(::Union{HillISO2, HillTI2, GradLocISO2, GradLocTI2}) = 2
+tensor_order(::Union{HillISO2, HillTI2, GradientConcentrationISO2, GradientConcentrationTI2}) = 2
 
 """
     tensor_order(t::AbstractTens) -> Int
@@ -237,14 +237,14 @@ frame (a TensND basis) for `HillOrtho`, and ignored for the isotropic ones.
 """
 build(::HillISO, c, _frame) = TensND.TensISO{3}(c[1], c[2])
 build(::HillTI, c, axis) = TensND.TensTI{4}(c[1], c[2], c[3], c[4], c[5], axis)
-build(::Union{HillISO2, GradLocISO2}, c, _frame) = TensND.TensISO{3}(c[1])
-build(::Union{HillTI2, GradLocTI2}, c, axis) = TensND.TensTI{2}(c[1], c[2], axis)
+build(::Union{HillISO2, GradientConcentrationISO2}, c, _frame) = TensND.TensISO{3}(c[1])
+build(::Union{HillTI2, GradientConcentrationTI2}, c, axis) = TensND.TensTI{2}(c[1], c[2], axis)
 
-build(::Union{StrainLocTI, StressLocTI}, c, axis) =
+build(::Union{StrainConcentrationTI, StressConcentrationTI}, c, axis) =
     TensND.TensTI{4}(c[1], c[2], c[3], c[4], c[5], c[6], axis)
 
 # The cube frame is a TensND basis, like `HillOrtho`'s material frame.
-build(::StrainLocCubic, c, frame) = TensND.TensCubic(c[1], c[2], c[3], frame)
+build(::StrainConcentrationCubic, c, frame) = TensND.TensCubic(c[1], c[2], c[3], frame)
 
 build(::HillOrtho, c, frame) = Core._make_ortho(
     eltype(c), c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], nothing, frame
@@ -289,25 +289,25 @@ function components(
     return data
 end
 
-_project(::Union{HillISO, HillISO2, GradLocISO2}, P, _frame) =
+_project(::Union{HillISO, HillISO2, GradientConcentrationISO2}, P, _frame) =
     TensND.proj_tens(Val(:ISO), P)
-_project(::Union{HillTI, HillTI2, GradLocTI2}, P, axis) =
+_project(::Union{HillTI, HillTI2, GradientConcentrationTI2}, P, axis) =
     TensND.proj_tens(Val(:TI), P, axis)
 _project(::HillOrtho, P, frame) = TensND.proj_tens(Val(:ORTHO), P, frame)
 
-# Unlike the TI localization classes below, this one needs no special treatment:
+# Unlike the TI concentration classes below, this one needs no special treatment:
 # `proj_tens(Val(:CUBIC), …)` already returns the full class, there being no
 # major-symmetric sub-form to fall short of.
-_project(::StrainLocCubic, P, frame) = TensND.proj_tens(Val(:CUBIC), P, frame)
+_project(::StrainConcentrationCubic, P, frame) = TensND.proj_tens(Val(:CUBIC), P, frame)
 
 # `proj_tens(Val(:TI), …)` returns the *five*-component major-symmetric form, so
-# it cannot serve a localization tensor. `Core.transverse_isotropify` is the exact
+# it cannot serve a concentration tensor. `Core.transverse_isotropify` is the exact
 # rotation-group average about the axis and keeps the non-major-symmetric content
 # (`TensTI{4,·,8}`); dropping `ℓ₇`, `ℓ₈` — which vanish identically for a tensor
 # with the minor symmetries — leaves the six components wanted. The residual is
 # measured explicitly, in canonical components so that two different bases cannot
 # be compared by accident.
-function _project(::Union{StrainLocTI, StressLocTI}, P, axis)
+function _project(::Union{StrainConcentrationTI, StressConcentrationTI}, P, axis)
     l = TensND.get_ℓ8(Core.transverse_isotropify(P, axis))
     B = TensND.TensTI{4}(l[1], l[2], l[3], l[4], l[5], l[6], axis)
     ref = Array(TensND.components_canon(P))
@@ -374,13 +374,13 @@ For the TI classes the *column* carrying the symmetry axis is derived from the
 semi-axes — column 1 for a prolate spheroid, column 3 for an oblate one, which
 is what the analytic kernels of `Elasticity._hill_3d_iso` use.
 """
-_class_frame(::Union{HillISO, HillISO2, GradLocISO2}, _geom) = nothing
+_class_frame(::Union{HillISO, HillISO2, GradientConcentrationISO2}, _geom) = nothing
 _class_frame(::HillOrtho, geom) = Core.inclusion_basis(geom)
 
 _class_frame(::Union{HillTI, HillTI2}, geom) =
     Core._basis_col(Core.inclusion_basis(geom), _spheroid_axis_index(_axes(geom)))
 
-# A localization pair does *not* get its axis from the semi-axes: the morphology
+# A concentration pair does *not* get its axis from the semi-axes: the morphology
 # it describes may well be a sphere (`FEExcenteredSphere` is one) whose response
 # is transversely isotropic about a direction the outer shape says nothing about.
 # The convention is therefore the package's usual one — **column 3 of the
@@ -388,13 +388,13 @@ _class_frame(::Union{HillTI, HillTI2}, geom) =
 # about (`FiniteElements._fe_frame`) and the same one that carries a crack's
 # normal. A wrong choice here does not pass silently: `components` measures the
 # projection residual.
-_class_frame(::Union{StrainLocTI, StressLocTI, GradLocTI2}, geom) =
+_class_frame(::Union{StrainConcentrationTI, StressConcentrationTI, GradientConcentrationTI2}, geom) =
     Core._basis_col(Core.inclusion_basis(geom), 3)
 
 # The cube axes are the inclusion's own basis, all three columns of it — a cube
 # has no distinguished direction to single out, which is the whole difference
 # from the TI case above.
-_class_frame(::StrainLocCubic, geom) = Core.inclusion_basis(geom)
+_class_frame(::StrainConcentrationCubic, geom) = Core.inclusion_basis(geom)
 
 # ─── Material coefficients ───────────────────────────────────────────────────
 
@@ -435,7 +435,7 @@ dimensionless_scale(::Union{HillISO, HillTI, HillOrtho}, C₀::TensND.TensISO{4,
 dimensionless_scale(::Union{HillISO2, HillTI2}, K₀::TensND.TensISO{2, 3}) =
     only(TensND.get_data(K₀))
 
-# The localization pair. `𝔸_εε` is already dimensionless — degree 0 in the moduli
+# The concentration pair. `𝔸_εε` is already dimensionless — degree 0 in the moduli
 # — so nothing divides out; `𝔸_σε` is of degree +1, so `𝔸_σε/(2μ₀)` is the
 # dimensionless quantity.
 #
@@ -446,10 +446,10 @@ dimensionless_scale(::Union{HillISO2, HillTI2}, K₀::TensND.TensISO{2, 3}) =
 # reference medium and of every constituent (measured to 3·10⁻¹⁵ and 9·10⁻¹⁴ on
 # `FEExcenteredSphere`). Which is exactly why the features of such a surrogate
 # have to be contrast *ratios* rather than absolute moduli.
-dimensionless_scale(::StrainLocTI, ::TensND.TensISO{4, 3}) = 1
-dimensionless_scale(::StrainLocCubic, ::TensND.TensISO{4, 3}) = 1
-dimensionless_scale(::Union{GradLocISO2, GradLocTI2}, ::TensND.TensISO{2, 3}) = 1
-dimensionless_scale(::StressLocTI, C₀::TensND.TensISO{4, 3}) =
+dimensionless_scale(::StrainConcentrationTI, ::TensND.TensISO{4, 3}) = 1
+dimensionless_scale(::StrainConcentrationCubic, ::TensND.TensISO{4, 3}) = 1
+dimensionless_scale(::Union{GradientConcentrationISO2, GradientConcentrationTI2}, ::TensND.TensISO{2, 3}) = 1
+dimensionless_scale(::StressConcentrationTI, C₀::TensND.TensISO{4, 3}) =
     inv(TensND.get_data(C₀)[2])
 
 _iso_only(P₀) = throw(
@@ -464,14 +464,14 @@ _iso_only(P₀) = throw(
 )
 
 material_coeffs(
-    ::Union{StrainLocTI, StressLocTI, StrainLocCubic, GradLocISO2, GradLocTI2},
+    ::Union{StrainConcentrationTI, StressConcentrationTI, StrainConcentrationCubic, GradientConcentrationISO2, GradientConcentrationTI2},
     ::TensND.AbstractTens
 ) = throw(
     ArgumentError(
-        "a localization tensor has no affine decomposition on shape-only tensors: " *
+        "a concentration tensor has no affine decomposition on shape-only tensors: " *
             "the structure `ℙ = d·𝕌ᴬ + 𝕍ᴬ/μ₀` belongs to the Hill tensor of an " *
             "ellipsoid in an isotropic matrix. Use `DimensionlessHill` for a " *
-            ":loc_ti / :stress_loc_ti surrogate."
+            ":strain_concentration_ti / :stress_concentration_ti surrogate."
     )
 )
 
@@ -541,7 +541,7 @@ is learned.
 
 The general-purpose choice: it needs nothing of the reference medium beyond a
 scale, so the same shape of surrogate transfers to an anisotropic matrix, and
-to a localization pair (gate B) where no affine structure exists.
+to a concentration pair (gate B) where no affine structure exists.
 """
 struct DimensionlessHill{C <: AbstractHillClass} <: AbstractOutputSpec
     class::C
@@ -759,13 +759,13 @@ function _anchor(::Val{:spheroid_cavity}, class, x, features, P₀, frame)
     c = _anchor_aspect(x, features)
     sph = Elasticity.Spheroid(c)
     P = hill_tensor(sph, P₀)
-    Ab = _cavity_localization(P, P₀)
+    Ab = _cavity_concentration(P, P₀)
     # `Spheroid(ω)` puts its axis of revolution on `ez` when oblate and on `ex`
     # when prolate — the semi-axes are sorted and the basis permuted. So the
     # baseline is read in **its own** frame and rebuilt in the caller's, rather
     # than contracted against a frame it does not share.
     #
-    # And that frame is *not* `_class_frame(class, sph)`. A localization class
+    # And that frame is *not* `_class_frame(class, sph)`. A concentration class
     # takes column 3 by convention, which is right for the morphology being
     # learned — a pore whose axis is `e₃` by construction — and wrong for the
     # baseline, an `Ellipsoid` whose distinct axis is wherever sorting put it.
@@ -778,11 +778,11 @@ function _anchor(::Val{:spheroid_cavity}, class, x, features, P₀, frame)
     return build(class, components(class, Ab, axis), frame)
 end
 
-# `𝔸 = (𝕀 − ℙ:ℂ₀)⁻¹` — the cavity limit of `strain_strain_loc`, with the
+# `𝔸 = (𝕀 − ℙ:ℂ₀)⁻¹` — the cavity limit of `strain_strain_concentration`, with the
 # operator the order demands: `⊡` in elasticity, `⋅` in transport.
-_cavity_localization(P::TensND.AbstractTens{4, 3}, C₀::TensND.AbstractTens{4, 3}) =
+_cavity_concentration(P::TensND.AbstractTens{4, 3}, C₀::TensND.AbstractTens{4, 3}) =
     inv(_identity_4sym(promote_type(eltype(P), eltype(C₀))) - (P ⊡ C₀))
-_cavity_localization(P::TensND.AbstractTens{2, 3}, K₀::TensND.AbstractTens{2, 3}) =
+_cavity_concentration(P::TensND.AbstractTens{2, 3}, K₀::TensND.AbstractTens{2, 3}) =
     inv(_identity_2(promote_type(eltype(P), eltype(K₀))) - (P ⋅ K₀))
 
 # The layers' mean modulus, as a multiple of the reference. Every constituent of
@@ -823,7 +823,7 @@ stress side.
 
 For a **stress** class the baseline is ``\\overline{\\mathbb{C}}:\\mathbb{A}_{\\mathrm{b}}``, not ``\\mathbb{A}_{\\mathrm{b}}``: the quantity being
 anchored is ``\\mathbb{A}_{\\sigma\\varepsilon}``, which is of degree one in the moduli where ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` is of
-degree zero, so anchoring it against a strain localization would leave the
+degree zero, so anchoring it against a strain concentration would leave the
 target carrying a modulus and the whole point — a dimensionless correction near
 ``\\mathbb{I}`` — would be lost.
 """
@@ -833,7 +833,7 @@ function _anchor(::Val{:layered_spheroid}, class, x, features, P₀, frame)
     sph = Elasticity.Spheroid(c)
     P = hill_tensor(sph, P₀)
     P̄ = r̄ * P₀
-    Ab = _homogeneous_localization(P, P̄, P₀)
+    Ab = _homogeneous_concentration(P, P̄, P₀)
     # Same frame discipline as the cavity anchor: `Spheroid` sorts its semi-axes
     # and permutes its basis, so the baseline is read in its own axis and rebuilt
     # in the caller's.
@@ -844,21 +844,21 @@ function _anchor(::Val{:layered_spheroid}, class, x, features, P₀, frame)
     return build(class, components(class, Bb, axis), frame)
 end
 
-# `𝔸 = (𝕀 + ℙ:(ℂ̄ − ℂ₀))⁻¹`, the homogeneous-inclusion localization, with the
+# `𝔸 = (𝕀 + ℙ:(ℂ̄ − ℂ₀))⁻¹`, the homogeneous-inclusion concentration, with the
 # operator the order demands.
-_homogeneous_localization(
+_homogeneous_concentration(
     P::TensND.AbstractTens{4, 3}, C̄::TensND.AbstractTens{4, 3},
     C₀::TensND.AbstractTens{4, 3},
 ) = inv(_identity_4sym(promote_type(eltype(P), eltype(C₀))) + (P ⊡ (C̄ - C₀)))
-_homogeneous_localization(
+_homogeneous_concentration(
     P::TensND.AbstractTens{2, 3}, K̄::TensND.AbstractTens{2, 3},
     K₀::TensND.AbstractTens{2, 3},
 ) = inv(_identity_2(promote_type(eltype(P), eltype(K₀))) + (P ⋅ (K̄ - K₀)))
 
-# A strain or gradient class anchors against the localization itself; a stress
-# class against the localization carrying the mean modulus.
-_anchor_moduli_side(::Union{StrainLocTI, GradLocTI2}, _P̄, Ab) = Ab
-_anchor_moduli_side(::StressLocTI, C̄, Ab) = C̄ ⊡ Ab
+# A strain or gradient class anchors against the concentration itself; a stress
+# class against the concentration carrying the mean modulus.
+_anchor_moduli_side(::Union{StrainConcentrationTI, GradientConcentrationTI2}, _P̄, Ab) = Ab
+_anchor_moduli_side(::StressConcentrationTI, C̄, Ab) = C̄ ⊡ Ab
 
 # The same asymmetry on the way back: contracting the baseline with what the
 # network predicted.

@@ -4,7 +4,7 @@
     [Mori–Tanaka](@ref th-scheme-mori-tanaka), whose second form is compared
     with the estimate below, the
     [sign of the Green operator](@ref th-notation-green-sign) fixed in the
-    Conventions, and [Localization](@ref th-localization) for the contribution
+    Conventions, and [Concentration](@ref th-concentration) for the contribution
     tensors.
 
 Mori–Tanaka describes what surrounds an inclusion by the mean strain of the

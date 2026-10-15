@@ -29,7 +29,7 @@
 #     Kapitza(ρ)                    J = [1  -ρ ; 0  1]       [T] = -ρ q_n
 #     SurfaceConductive(ks)         J = [1  0 ; -n(n+1) ks/r²  1]  with n=1 ⇒ 2ks/r².
 #
-#  Per-layer gradient localization `α_k = A_k / A_∞`.
+#  Per-layer gradient concentration `α_k = A_k / A_∞`.
 # =============================================================================
 
 """
@@ -135,7 +135,7 @@ function _cond_interface_T(intf::SurfaceConductiveInterface, k_iso, r)
     return T[one(T) zero(T); -2 * T(intf.conductance) / Tr² one(T)]
 end
 
-# ── Propagation and localization ────────────────────────────────────────────
+# ── Propagation and concentration ────────────────────────────────────────────
 
 # Cached tuple of per-layer scalar conductivities, built once from the
 # `sphere.moduli` field.
@@ -177,13 +177,13 @@ function _cond_state_seq(sphere::LayeredSphere{T, N}, k₀) where {T, N}
 end
 
 """
-    _cond_localization(sphere, k₀) -> NTuple{N, TP}
+    _cond_concentration(sphere, k₀) -> NTuple{N, TP}
 
-Per-layer gradient localization ``\\alpha_k = A_k/A_\\infty`` under a remote
+Per-layer gradient concentration ``\\alpha_k = A_k/A_\\infty`` under a remote
 uniform gradient.  Reduces, for ``N = 1``, to the classical formula
 ``\\alpha_1 = 3k_0/(2k_0 + k_1)`` for a sphere inclusion.
 """
-function _cond_localization(sphere::LayeredSphere{T, N}, k₀) where {T, N}
+function _cond_concentration(sphere::LayeredSphere{T, N}, k₀) where {T, N}
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
     k_layers = _cond_layer_moduli(sphere)
     TP = promote_type(
@@ -225,7 +225,7 @@ single impermeable core coated by a surface-conductive shell this reduces to
 the enclosed conductivity — reproducing Echoes' `DUALDISC` transmissivity.
 The average **gradient** (concentration ``\\alpha_k``) is unaffected: only the flux
 picks up the surface term. With `external = false` the outer interface is left
-to the matrix (see [`gradient_gradient_loc`](@ref)).
+to the matrix (see [`gradient_gradient_concentration`](@ref)).
 """
 function _cond_surface_flux(sphere::LayeredSphere{T, N}, k₀; external::Bool = true) where {T, N}
     k_layers = _cond_layer_moduli(sphere)
@@ -254,12 +254,12 @@ end
 
 Average flux of the composite sphere per unit remote gradient,
 ``\\sum_k f_k\\,k_k\\,\\alpha_k`` plus the surface-conduction flux [`_cond_surface_flux`](@ref) of any
-dual (surface-conductive) interface — the scalar of [`flux_gradient_loc`](@ref),
+dual (surface-conductive) interface — the scalar of [`flux_gradient_concentration`](@ref),
 not an effective conductivity: that one is its ratio to the average gradient,
-[`gradient_gradient_loc`](@ref).
+[`gradient_gradient_concentration`](@ref).
 """
 function _effective_conductivity(sphere::LayeredSphere{T, N}, k₀) where {T, N}
-    α = _cond_localization(sphere, k₀)
+    α = _cond_concentration(sphere, k₀)
     k_layers = _cond_layer_moduli(sphere)
     f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
     return sum(f[k] * k_layers[k] * α[k] for k in 1:N) + _cond_surface_flux(sphere, k₀)

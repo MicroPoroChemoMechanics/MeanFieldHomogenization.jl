@@ -4,7 +4,7 @@
     [The Eshelby inclusion problem](@ref th-eshelby-problem) §2, where the
     tensor ``\mathbb{Q}``, which degenerates in a controlled way as the
     inclusion flattens, is introduced, and
-    [Localization and contribution tensors](@ref th-localization) §3 for the
+    [Concentration and contribution tensors](@ref th-concentration) §3 for the
     compliance contribution ``\mathbb{H}`` of a crack and its density.
 
 A crack has no volume, so it cannot be described by a volume fraction and a

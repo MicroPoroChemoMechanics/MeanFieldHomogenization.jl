@@ -34,7 +34,7 @@ loaded, **at the first solve** rather than at construction.
 Deferring the choice is what lets an inclusion be built, printed, stored in an
 `RVE` and passed around in a session where no finite-element package has been
 imported; the informative error arrives only when a scheme actually asks for a
-localization tensor.
+concentration tensor.
 
 Priority is `FerriteBackend` then `GridapBackend`. Loading both is not an
 error — it just means the first is chosen. To pick deliberately, pass
@@ -230,7 +230,7 @@ three dimensions.
 exact and numerically hopeless: it computes ``V_D`` as the difference of ``V_\\Omega`` and
 ``V_M``, whose ratio is ``(R/a)^3``, so it loses two digits at ``R/a = 4`` and more as
 the cell grows. Measured: the implied cavity volume is 2.9 % off at
-``V_\\Omega/V_D = 8`` and 9.2 % off at 216, and the localization error tracks it.
+``V_\\Omega/V_D = 8`` and 9.2 % off at 216, and the concentration error tracks it.
 
 `dofmap` is `_axi_dof_map(m)`, needed here and not in `fe_axi_stiffness` because
 `Bop` already folds it in: the boundary term uses the raw

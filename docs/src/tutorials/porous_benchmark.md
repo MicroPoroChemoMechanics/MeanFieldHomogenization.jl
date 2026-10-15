@@ -139,7 +139,7 @@ between branches under Picard noise.
 Real pore populations are rarely spherical. Replacing both phases with
 **oblate spheroids** (aspect ratio ``\omega = 0.2``, flatter than a
 sphere) and declaring [`IsoSymmetrize`](@ref)`()` on each phase tells
-the homogenization kernel to average the localization tensor over a
+the homogenization kernel to average the concentration tensor over a
 **uniform spatial distribution of orientations** — so, even though each
 individual pore is anisotropic, the macroscopic effective tensor comes
 out isotropic:

@@ -79,8 +79,8 @@ SOLVER_KW_RENAME: dict[str, str] = {
 # `homogenize` keywords that carry no MFH counterpart and are simply dropped.
 HOMOGENIZE_KW_DROPPED: dict[str, str] = {
     "verbose": "MFH homogenize is quiet; use @show or the logging macros",
-    "concentration": "localization tensors are obtained on demand via "
-    "strain_strain_loc(...) rather than a homogenize flag",
+    "concentration": "concentration tensors are obtained on demand via "
+    "strain_strain_concentration(...) rather than a homogenize flag",
     "weight": "no MFH counterpart",
     "prop": "becomes the positional property Symbol",
     "rve": "becomes the first positional argument",
@@ -227,15 +227,16 @@ CONSTANTS: dict[str, str] = {
 
 # Result / phase attribute accessors.
 #
-# The four Echoes localization tensors follow the "<local field><macroscopic
+# The four Echoes concentration tensors follow the "<local field><macroscopic
 # field>" convention: eE = strain given macroscopic Strain, sE = stress given
 # Strain, eS = strain given Stress, sS = stress given Stress. MFH names them
-# <local>_<macroscopic>_loc, so the correspondence is positional and exact.
+# <local>_<macroscopic>_concentration, so the correspondence is positional
+# and exact.
 PHASE_ACCESSORS: dict[str, str] = {
-    "eE": "strain_strain_loc",
-    "sE": "stress_strain_loc",
-    "eS": "strain_stress_loc",
-    "sS": "stress_stress_loc",
+    "eE": "strain_strain_concentration",
+    "sE": "stress_strain_concentration",
+    "eS": "strain_stress_concentration",
+    "sS": "stress_stress_concentration",
     "factor": "volume_fraction",
     "fraction": "volume_fraction",
     "density": "crack_density",
@@ -243,10 +244,10 @@ PHASE_ACCESSORS: dict[str, str] = {
 
 # Transport analogues, selected when the phase property is 2nd order.
 PHASE_ACCESSORS_TRANSPORT: dict[str, str] = {
-    "eE": "gradient_gradient_loc",
-    "sE": "flux_gradient_loc",
-    "eS": "gradient_flux_loc",
-    "sS": "flux_flux_loc",
+    "eE": "gradient_gradient_concentration",
+    "sE": "flux_gradient_concentration",
+    "eS": "gradient_flux_concentration",
+    "sS": "flux_flux_concentration",
 }
 
 # Attribute reads on a tensor result.

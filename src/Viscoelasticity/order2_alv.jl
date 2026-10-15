@@ -456,7 +456,7 @@ end
 # phase law is a placeholder).
 _inclusion_alv2_quantities(s::LayeredSphere, scheme, K_r_law, K_M_law, K_0, times) = (
     _layer_bound_alv2(scheme, s, times),
-    gradient_gradient_loc_alv(s, K_M_law, times),
+    gradient_gradient_concentration_alv(s, K_M_law, times),
     conductivity_contribution_alv(s, K_M_law, times),
 )
 
@@ -884,7 +884,7 @@ function _sc2_phase_AB(geom, K_r, K, sym, times)
     return _maybe_symmetrize_alv2(A, sym), _maybe_symmetrize_alv2(K_r * A, sym)
 end
 function _sc2_phase_AB(s::LayeredSphere, K_r, K, sym, times)
-    A = gradient_gradient_loc_alv(s, K, times)
+    A = gradient_gradient_concentration_alv(s, K, times)
     B = conductivity_contribution_alv(s, K, times) .+ K * A
     return _maybe_symmetrize_alv2(A, sym), _maybe_symmetrize_alv2(B, sym)
 end

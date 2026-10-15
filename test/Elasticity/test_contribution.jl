@@ -96,7 +96,7 @@ end
     # For a solid inclusion the identity reproduces the definition.
     spheroid = Ellipsoid(1.0, 1.0, 0.3)
     C₁ = TensISO{3}(90.0, 40.0)
-    literal = (inv(C₁) - inv(C₀)) ⊡ (stress_strain_loc(spheroid, C₁, C₀) ⊡ inv(C₀))
+    literal = (inv(C₁) - inv(C₀)) ⊡ (stress_strain_concentration(spheroid, C₁, C₀) ⊡ inv(C₀))
     @test @inferred(compliance_contribution(spheroid, C₁, C₀)) ≈ literal rtol = 1.0e-12
 
     # ForwardDiff through the matrix moduli, against the closed form.

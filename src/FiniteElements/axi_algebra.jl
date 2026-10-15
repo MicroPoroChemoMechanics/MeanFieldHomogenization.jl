@@ -14,7 +14,7 @@
     _axi_correct(A_E, B_E, A_p, B_p, P0) -> (A, B, X)
 
 The linear fixed point of the corrected boundary condition, on one modal
-block, with ``\\mathbb{A}`` and ``\\mathbb{B}`` the strain-side and stress-side localization blocks and
+block, with ``\\mathbb{A}`` and ``\\mathbb{B}`` the strain-side and stress-side concentration blocks and
 superscripts E and p the remote and unit-dipole families:
 
 ```math

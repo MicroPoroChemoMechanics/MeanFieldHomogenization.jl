@@ -1,4 +1,4 @@
-# [Localization and contribution tensors](@id th-localization)
+# [Concentration and contribution tensors](@id th-concentration)
 
 !!! info "Before this page"
     [The Eshelby inclusion problem](@ref th-eshelby-problem), whose
@@ -8,7 +8,7 @@
 
 The Hill tensor determines the uniform strain inside an ellipsoidal
 inhomogeneity under a remote load, and from it MeanFieldHomogenization builds
-the four **dilute localization tensors** of the Eshelby problem, together with
+the four **dilute concentration tensors** of the Eshelby problem, together with
 the size-independent **stiffness and compliance contribution tensors** of
 Kachanov–Sevostianov.
 
@@ -43,7 +43,7 @@ flowchart TB
 
 For an inclusion of shape tensor ``\boldsymbol A`` and stiffness
 ``\mathbb C_1`` embedded in an infinite matrix of stiffness ``\mathbb C_0``,
-the strain–strain localization tensor is
+the strain–strain concentration tensor is
 
 ```math
 \mathbb A_{\varepsilon\varepsilon} = \bigl[\,\mathbb I +
@@ -53,7 +53,7 @@ the strain–strain localization tensor is
 
 where ``\mathbb P`` is the Hill polarization tensor
 ([`hill_tensor`](@ref)) and ``\mathbb I`` is the symmetric identity
-4-tensor.  The three other localization tensors follow algebraically:
+4-tensor.  The three other concentration tensors follow algebraically:
 
 ```math
 \mathbb A_{\sigma\varepsilon} = \mathbb C_1 : \mathbb A_{\varepsilon\varepsilon},\qquad
@@ -66,10 +66,10 @@ MeanFieldHomogenization are:
 
 | Function                                     | Return value                               |
 | :------------------------------------------- | :----------------------------------------- |
-| [`strain_strain_loc`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\varepsilon\varepsilon}``     |
-| [`stress_strain_loc`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\sigma\varepsilon}``          |
-| [`strain_stress_loc`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\varepsilon\sigma}``          |
-| [`stress_stress_loc`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\sigma\sigma}``               |
+| [`strain_strain_concentration`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\varepsilon\varepsilon}``     |
+| [`stress_strain_concentration`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\sigma\varepsilon}``          |
+| [`strain_stress_concentration`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\varepsilon\sigma}``          |
+| [`stress_stress_concentration`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\sigma\sigma}``               |
 
 For phase ``i`` of an RVE, ``\mathbb A_{\varepsilon\varepsilon}`` computed in the
 reference medium ``\mathbb C_0`` is the dilute concentration tensor written
@@ -145,10 +145,10 @@ Every routine above has a 2-tensor analog, triggered by dispatch on
 
 | Elasticity                           | Conductivity                           |
 | :----------------------------------- | :------------------------------------- |
-| `strain_strain_loc`                  | [`gradient_gradient_loc`](@ref)        |
-| `stress_strain_loc`                  | [`flux_gradient_loc`](@ref)            |
-| `strain_stress_loc`                  | [`gradient_flux_loc`](@ref)            |
-| `stress_stress_loc`                  | [`flux_flux_loc`](@ref)                |
+| `strain_strain_concentration`                  | [`gradient_gradient_concentration`](@ref)        |
+| `stress_strain_concentration`                  | [`flux_gradient_concentration`](@ref)            |
+| `strain_stress_concentration`                  | [`gradient_flux_concentration`](@ref)            |
+| `stress_stress_concentration`                  | [`flux_flux_concentration`](@ref)                |
 | `stiffness_contribution`             | [`conductivity_contribution`](@ref)    |
 | `compliance_contribution` (ellipsoid)| [`resistivity_contribution`](@ref)     |
 | `delta_stiffness`                    | [`delta_conductivity`](@ref)           |
@@ -156,15 +156,15 @@ Every routine above has a 2-tensor analog, triggered by dispatch on
 
 ## 5. Type-genericity
 
-All four localization and both contribution tensors are generic in the element
+All four concentration and both contribution tensors are generic in the element
 type; the only requirement is that [`hill_tensor`](@ref) supports it.
 
 ## 6. Extending to user-defined inclusions
 
-A concrete subtype of `AbstractInclusion` inherits the four localization and
+A concrete subtype of `AbstractInclusion` inherits the four concentration and
 the contribution tensors as soon as it provides [`hill_tensor`](@ref). When
 ``\mathbb P`` has no convenient closed form (e.g. `LayeredSphere`), override
-[`strain_strain_loc`](@ref) instead — the rest is derived algebraically.
+[`strain_strain_concentration`](@ref) instead — the rest is derived algebraically.
 
 See the developer guide [Adding a new inclusion](@ref dev-adding-inclusion)
 for a step-by-step recipe.

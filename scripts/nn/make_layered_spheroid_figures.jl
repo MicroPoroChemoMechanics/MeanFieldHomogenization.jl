@@ -65,7 +65,7 @@ radii(ω, w) = confocal_layer_radii(ω, 1.0, (w, 1 - w))
 fe_incl(ω, w) = (r = radii(ω, w);
     FEAxiLayeredSpheroid(r[1], r[2], CS; opts = FEAxiMeshOptions(; MESH...)))
 an_incl(ω, w) = (r = radii(ω, w); LayeredSpheroid(r[1], r[2], CS))
-nn_incl(ω, w) = NeuralLocalizationInclusion(
+nn_incl(ω, w) = NeuralConcentrationInclusion(
     (1.0, 1.0, ω);
     strain = STRAIN, stress = STRESS,
     shape_params = (; core_fraction = w),
@@ -73,9 +73,9 @@ nn_incl(ω, w) = NeuralLocalizationInclusion(
 )
 
 # `(𝔸_εε)₁₁₁₁` by each of the three routes.
-A_an(ω, w) = a1111(strain_strain_loc(an_incl(ω, w), C0, C0))
-A_fe(ω, w) = a1111(fe_axi_localization(fe_incl(ω, w), C0)[1])
-A_nn(ω, w) = a1111(strain_strain_loc(nn_incl(ω, w), C0, C0))
+A_an(ω, w) = a1111(strain_strain_concentration(an_incl(ω, w), C0, C0))
+A_fe(ω, w) = a1111(fe_axi_concentration(fe_incl(ω, w), C0)[1])
+A_nn(ω, w) = a1111(strain_strain_concentration(nn_incl(ω, w), C0, C0))
 
 # The effective stiffness, which has **no** closed form: it needs both sides of
 # gate B, and the analytic type supplies no stress side.
@@ -134,12 +134,12 @@ const V_nn_edge = [A_nn(EDGE_OMEGA, w) for w in WS]
 
 gf = fe_incl(2.0, 0.4)
 fe_axi_mesh_report(gf)                                  # mesh out of the timing
-t_fe = @elapsed fe_axi_localization(gf, ce(1.01 * E0, NU))
+t_fe = @elapsed fe_axi_concentration(gf, ce(1.01 * E0, NU))
 gn = nn_incl(2.0, 0.4)
-strain_strain_loc(gn, C0, C0)
+strain_strain_concentration(gn, C0, C0)
 const N_EVAL = 2000
 t_nn = @elapsed for _ in 1:N_EVAL
-    strain_strain_loc(gn, C0, C0)
+    strain_strain_concentration(gn, C0, C0)
 end
 t_nn /= N_EVAL
 

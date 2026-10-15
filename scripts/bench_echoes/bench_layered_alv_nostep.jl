@@ -18,8 +18,8 @@ radii = ntuple(k -> cumulative[k]^(1 / 3), N + 1)
 sphere = LayeredSphere(radii, moduli)
 
 C0_law = maxwell_iso(k0, mu0, eta0, gamma0)
-α_jl = bulk_localization_alv(sphere, C0_law, T_grid)
-β_jl = shear_localization_alv(sphere, C0_law, T_grid)
+α_jl = bulk_concentration_alv(sphere, C0_law, T_grid)
+β_jl = shear_concentration_alv(sphere, C0_law, T_grid)
 
 to_matrix(v) = reduce(hcat, [collect(Float64.(row)) for row in v])'
 

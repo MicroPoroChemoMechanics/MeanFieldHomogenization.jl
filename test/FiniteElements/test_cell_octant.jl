@@ -46,9 +46,9 @@ function _oct_run(shape, level, octant; μ = 1.0, ν = 0.3, outer_level = 2, rr 
     g = FEO.fe_cell_grid(_BO, shape, opts)
     V = shape_volume(shape)
     sc = FEO.fe_cell_space(_BO, g.grid, 2, 1)
-    c = FEO._cell_conduction_localization(_BO, sc, 1.0, V; octant)
+    c = FEO._cell_conduction_concentration(_BO, sc, 1.0, V; octant)
     se = FEO.fe_cell_space(_BO, g.grid, 2, 3)
-    e = FEO._cell_elastic_localization(_BO, se, _octC(μ, ν), μ, ν, V; octant)
+    e = FEO._cell_elastic_concentration(_BO, se, _octC(μ, ν), μ, ν, V; octant)
     return (;
         cond = c.A, elas = e.A, built = g.built,
         ndofs = FEO.fe_cell_dof_split(_BO, se)[1],

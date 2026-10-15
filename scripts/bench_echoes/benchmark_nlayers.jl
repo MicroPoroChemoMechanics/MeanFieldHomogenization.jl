@@ -5,16 +5,16 @@
 #  independent references:
 #
 #   § 1  **Bulk α_k and shear β_k** vs `echoes.layer_eE` (volume-averaged
-#        strain localization in each layer).
+#        strain concentration in each layer).
 #   § 2  **Internal consistency**: Julia state-vector recurrence vs
 #        a direct 8×8 linear-system solver assembled from the same mode
 #        formulas (sanity check that the recurrence implements the
 #        correct boundary-value problem).
-#   § 3  **Analytical limits**: shear localization `β_k` in degenerate
+#   § 3  **Analytical limits**: shear concentration `β_k` in degenerate
 #        configurations (vanishing core, vanishing shell, core ≡ shell)
 #        compared to the closed-form single-layer Eshelby result.
 #   § 4  **Local bulk stress profile** `σ_rr(r), σ_θθ(r)` vs
-#        `echoes.loc_sS` under remote hydrostatic loading.
+#        `echoes.conc_sS` under remote hydrostatic loading.
 #
 #  History of the shear (β_k) ECHOES comparison
 #  --------------------------------------------
@@ -25,7 +25,7 @@
 #  the same reasoning:
 #
 #    * β_k was then computed as the bare mode-1 amplitude a_k, dropping the
-#      mode-2 term b_k·F_k (see `_shear_localization_multi`).  The omission
+#      mode-2 term b_k·F_k (see `_shear_concentration_multi`).  The omission
 #      cancels in every degenerate configuration — which is exactly what §3
 #      tests — hence "agrees with the analytical limits but not with ECHOES".
 #      The same bug was found and fixed in §2's direct 8×8 solver.
@@ -92,20 +92,20 @@ def py_sE(spn):
 def py_layer_fraction(spn, k):
     return float(spn.layer_fraction(k))
 
-def py_loc_sS(spn, r, theta, phi):
-    return np.asarray(spn.loc_sS(r, theta, phi))
+def py_conc_sS(spn, r, theta, phi):
+    return np.asarray(spn.conc_sS(r, theta, phi))
 
-# The four pointwise localizations, rows rotated to the CANONICAL basis.
+# The four pointwise concentrations, rows rotated to the CANONICAL basis.
 # ECHOES returns rows in the local spherical basis (e_theta, e_phi, e_r);
 # rot6(theta, phi) brings them back to global Cartesian, which is what
 # MeanFieldHomogenization returns.  `layer` is 0-based, -1 = auto.
-def py_loc_all(spn, r, theta, phi, layer):
+def py_conc_all(spn, r, theta, phi, layer):
     P = rot6(theta, phi)
     kw = {} if layer < 0 else {"layer": layer}
-    return (np.asarray(P @ spn.loc_eE(r, theta, phi, **kw)),
-            np.asarray(P @ spn.loc_sE(r, theta, phi, **kw)),
-            np.asarray(P @ spn.loc_eS(r, theta, phi, **kw)),
-            np.asarray(P @ spn.loc_sS(r, theta, phi, **kw)))
+    return (np.asarray(P @ spn.conc_eE(r, theta, phi, **kw)),
+            np.asarray(P @ spn.conc_sE(r, theta, phi, **kw)),
+            np.asarray(P @ spn.conc_eS(r, theta, phi, **kw)),
+            np.asarray(P @ spn.conc_sS(r, theta, phi, **kw)))
 
 # Interface descriptors are built ENTIRELY on the Python side.  Handing a
 # Julia vector of `[NODISC]` lists across PyCall converts the enum members to
@@ -134,8 +134,8 @@ const py_layer_eE = py"py_layer_eE"
 const py_eE_total = py"py_eE"
 const py_sE_total = py"py_sE"
 const py_layer_frac = py"py_layer_fraction"
-const py_loc_sS = py"py_loc_sS"
-const py_loc_all = py"py_loc_all"
+const py_conc_sS = py"py_conc_sS"
+const py_conc_all = py"py_conc_all"
 const py_make_nlayers_itf = py"py_make_nlayers_itf"
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -212,7 +212,7 @@ for cfg in 1:N_CONFIGS
     cfg_α_err = 0.0
     cfg_β_err = 0.0
     for k in 1:n
-        A_jl = strain_strain_loc(sphere_jl, C_ref_jl; layer = k)
+        A_jl = strain_strain_concentration(sphere_jl, C_ref_jl; layer = k)
         α_jl, β_jl = TensND.get_data(A_jl)
         eE_py = py_layer_eE(spn_py, k - 1)
         α_py, β_py = _iso_data_from_echoes6x6(eE_py)
@@ -243,7 +243,7 @@ println("="^78)
 # Unknowns x = (a₁, b₁, a₂, b₂, c₂, d₂, c_∞, d_∞);  c₁ = d₁ = 0 enforced.
 # BC at r = ∞ : matrix mode-1 amplitude = 1, mode-2 amplitude = 0.
 #
-# β_layer1 is the layer-VOLUME-AVERAGED deviatoric strain localization, not
+# β_layer1 is the layer-VOLUME-AVERAGED deviatoric strain concentration, not
 # the bare mode-1 amplitude a₁: the core carries both the uniform mode 1 (a₁)
 # and the r³-varying mode 2 (b₁), whose Y₂-projected volume average adds
 # `b₁ · F₁` with the Christensen-Lo factor F₁ = _layer_avg_dev_shear_factor.
@@ -278,7 +278,7 @@ for cfg in 1:20
         (TensISO{3}(3Kc, 2μc), TensISO{3}(3Ks, 2μs))
     )
     C0 = TensISO{3}(3Km, 2μm)
-    _, β_recurrence = TensND.get_data(strain_strain_loc(sphere, C0; layer = 1))
+    _, β_recurrence = TensND.get_data(strain_strain_concentration(sphere, C0; layer = 1))
     β_direct = direct_2layer_β_layer1(r1, 1.0, Kc, μc, Ks, μs, Km, μm)
     err = relerr(β_recurrence, β_direct)
     err < rtol_match && (global n_pass_self += 1)
@@ -293,7 +293,7 @@ println("="^78)
 println("§3  β_layer1 vs analytical Eshelby in degenerate limits")
 println("="^78)
 
-# Single-layer Eshelby strain localization for a sphere of moduli (μ₁) in
+# Single-layer Eshelby strain concentration for a sphere of moduli (μ₁) in
 # matrix (κ₀, μ₀):  β_∞ = 1 / (1 + α_dev (μ₁/μ₀ − 1))  with
 # α_dev = 6(κ₀+2μ₀) / (5(3κ₀+4μ₀)).
 function β_eshelby_sphere(μ1, κ0, μ0)
@@ -311,7 +311,7 @@ const C_shell = TensISO{3}(3Ks, 2μs)
 # Limit 1 : shell ≡ matrix → β_layer1 = single-layer Eshelby (core in matrix).
 let
     sphere = LayeredSphere((0.5, 1.0), (C_core, C_ref_lim))
-    _, β_jl = TensND.get_data(strain_strain_loc(sphere, C_ref_lim; layer = 1))
+    _, β_jl = TensND.get_data(strain_strain_concentration(sphere, C_ref_lim; layer = 1))
     β_an = β_eshelby_sphere(μc, Km, μm)
     @printf "  shell ≡ matrix      :  Julia β = %.10f   analytical = %.10f   relerr = %.2e\n" β_jl β_an relerr(β_jl, β_an)
 end
@@ -320,7 +320,7 @@ end
 # core moduli at full radius (radius 1) in matrix.
 let
     sphere = LayeredSphere((0.5, 1.0), (C_core, C_core))
-    _, β_jl = TensND.get_data(strain_strain_loc(sphere, C_ref_lim; layer = 1))
+    _, β_jl = TensND.get_data(strain_strain_concentration(sphere, C_ref_lim; layer = 1))
     β_an = β_eshelby_sphere(μc, Km, μm)
     @printf "  core ≡ shell        :  Julia β = %.10f   analytical = %.10f   relerr = %.2e\n" β_jl β_an relerr(β_jl, β_an)
 end
@@ -329,7 +329,7 @@ end
 let
     r1 = 1.0e-4
     sphere = LayeredSphere((r1, 1.0), (C_core, C_shell))
-    _, β_jl = TensND.get_data(strain_strain_loc(sphere, C_ref_lim; layer = 1))
+    _, β_jl = TensND.get_data(strain_strain_concentration(sphere, C_ref_lim; layer = 1))
     β_shell = β_eshelby_sphere(μs, Km, μm)
     β_core_in_shell = β_eshelby_sphere(μc, Ks, μs)
     β_an = β_core_in_shell * β_shell
@@ -339,15 +339,15 @@ end
 # Limit 4 : N=3 homogeneous (all layers equal to matrix) → β_k = 1 ∀ k.
 let
     sphere = LayeredSphere((0.3, 0.7, 1.0), (C_ref_lim, C_ref_lim, C_ref_lim))
-    βs = [TensND.get_data(strain_strain_loc(sphere, C_ref_lim; layer = k))[2] for k in 1:3]
+    βs = [TensND.get_data(strain_strain_concentration(sphere, C_ref_lim; layer = k))[2] for k in 1:3]
     @printf "  homogeneous N=3     :  β = (%.10f, %.10f, %.10f)   (expected 1.0)\n" βs[1] βs[2] βs[3]
 end
 println()
 
-# ─── §4  Local bulk profile vs `loc_sS` under hydrostatic load ──────────────
+# ─── §4  Local bulk profile vs `conc_sS` under hydrostatic load ──────────────
 
 println("="^78)
-println("§4  Local stress profile (hydrostatic) vs ECHOES loc_sS")
+println("§4  Local stress profile (hydrostatic) vs ECHOES conc_sS")
 println("="^78)
 
 # Use the Christensen-style 2-layer setup of script 32_local_nlayers.jl.
@@ -359,27 +359,27 @@ K_o, μ_o = _Kmu_Enu(Eo, νo)
 K_i, μ_i = _Kmu_Enu(Ei, νi)
 K_itz, μ_itz = _Kmu_Enu(Eitz, νitz)
 
-const C_ref_loc_jl = TensISO{3}(3 * K_o, 2 * μ_o)
-const C_ref_loc_py = py_stiff_kmu(K_o, μ_o)
-const C_layers_loc_py = [py_stiff_kmu(K_i, μ_i), py_stiff_kmu(K_itz, μ_itz)]
+const C_ref_local_jl = TensISO{3}(3 * K_o, 2 * μ_o)
+const C_ref_local_py = py_stiff_kmu(K_o, μ_o)
+const C_layers_local_py = [py_stiff_kmu(K_i, μ_i), py_stiff_kmu(K_itz, μ_itz)]
 
 const R_inner = 1.0
 const ep_layer = 2.0
-const radii_loc = [R_inner, R_inner + ep_layer]
-const sphere_loc_jl = LayeredSphere(
+const radii_local = [R_inner, R_inner + ep_layer]
+const sphere_local_jl = LayeredSphere(
     (R_inner, R_inner + ep_layer),
     (
         TensISO{3}(3 * K_i, 2 * μ_i),
         TensISO{3}(3 * K_itz, 2 * μ_itz),
     )
 )
-const spn_loc_py = py_make_nlayers(radii_loc, C_layers_loc_py, C_ref_loc_py)
+const spn_local_py = py_make_nlayers(radii_local, C_layers_local_py, C_ref_local_py)
 
 # Radial stress profile straight from the public pointwise API.  This used to
 # reach into `_bulk_state_seq` / `_bulk_extract_AB` and re-derive the (A, B)
 # coefficients by hand, and it covered the hydrostatic part only because the
 # deviatoric amplitudes were not exposed.  Both limitations are gone.
-const sol_loc_jl = LayeredSphereFields(sphere_loc_jl, C_ref_loc_jl)
+const sol_local_jl = LayeredSphereFields(sphere_local_jl, C_ref_local_jl)
 
 "Radial and hoop stress at radius `r` under a remote hydrostatic strain `ε_v 𝟙`."
 function bulk_stresses(sol, r; ε_v::Real = 1.0)
@@ -389,7 +389,7 @@ function bulk_stresses(sol, r; ε_v::Real = 1.0)
 end
 
 # Far-field hydrostatic strain ε_v ⇒ remote uniaxial in *each* direction.
-# In ECHOES Voigt-Mandel convention, `loc_sS(r, θ, φ)` returns a 6×6
+# In ECHOES Voigt-Mandel convention, `conc_sS(r, θ, φ)` returns a 6×6
 # matrix σ_local = M · σ_∞.  For hydrostatic σ∞ = 3K₀ ε_v · 𝟙, a
 # Voigt 6-vector representation is `(3 K₀ ε_v, 3 K₀ ε_v, 3 K₀ ε_v, 0, 0, 0)`.
 # In the spherical-symmetric basis at point (r, 0, 0) (i.e. on the x axis),
@@ -403,10 +403,10 @@ const lr_check = collect(range(0.05 * R_inner, 5 * (R_inner + ep_layer); length 
 σ_rr_py = similar(lr_check); σ_θθ_py = similar(lr_check)
 
 for (i, r) in enumerate(lr_check)
-    σrr, σθθ = bulk_stresses(sol_loc_jl, r; ε_v = ε_v)
+    σrr, σθθ = bulk_stresses(sol_local_jl, r; ε_v = ε_v)
     σ_rr_jl[i] = σrr; σ_θθ_jl[i] = σθθ
     # ECHOES at (r, θ=0, φ=0) — local frame has e_z radial, so σ_rr ↔ Voigt index 3.
-    M = py_loc_sS(spn_loc_py, r, 0.0, 0.0)
+    M = py_conc_sS(spn_local_py, r, 0.0, 0.0)
     σ_local = M * Σ_inf_voigt
     σ_rr_py[i] = σ_local[3]   # zz in local frame = rr at (θ=0, φ=0)
     σ_θθ_py[i] = σ_local[1]   # xx local = θθ
@@ -418,27 +418,27 @@ errs_θθ = [relerr(σ_θθ_jl[i], σ_θθ_py[i]) for i in eachindex(lr_check)]
 @printf "Local stress max relerr — σ_rr : %.3e, σ_θθ : %.3e (over %d points)\n\n" maximum(errs_rr) maximum(errs_θθ) length(lr_check)
 
 # Plot Julia vs ECHOES.
-p_loc = plot(;
+p_local = plot(;
     xlabel = "r", ylabel = "σ_ij / σ∞",
     title = "Local stress profile — hydrostatic far-field",
     legend = :topright, grid = true
 )
-plot!(p_loc, lr_check, σ_rr_jl ./ σ_far; lw = 2, color = :red, label = "σ_rr (Julia)")
+plot!(p_local, lr_check, σ_rr_jl ./ σ_far; lw = 2, color = :red, label = "σ_rr (Julia)")
 plot!(
-    p_loc, lr_check, σ_rr_py ./ σ_far; lw = 0, marker = :circle, ms = 4,
+    p_local, lr_check, σ_rr_py ./ σ_far; lw = 0, marker = :circle, ms = 4,
     color = :red, label = "σ_rr (ECHOES)"
 )
-plot!(p_loc, lr_check, σ_θθ_jl ./ σ_far; lw = 2, color = :blue, label = "σ_θθ (Julia)")
+plot!(p_local, lr_check, σ_θθ_jl ./ σ_far; lw = 2, color = :blue, label = "σ_θθ (Julia)")
 plot!(
-    p_loc, lr_check, σ_θθ_py ./ σ_far; lw = 0, marker = :diamond, ms = 4,
+    p_local, lr_check, σ_θθ_py ./ σ_far; lw = 0, marker = :diamond, ms = 4,
     color = :blue, label = "σ_θθ (ECHOES)"
 )
-hline!(p_loc, [1.0]; lw = 1, color = :black, linestyle = :dot, label = "σ∞")
-vline!(p_loc, [R_inner]; lw = 1, color = :black, linestyle = :dash, label = "")
-vline!(p_loc, [R_inner + ep_layer]; lw = 1, color = :black, linestyle = :dash, label = "")
+hline!(p_local, [1.0]; lw = 1, color = :black, linestyle = :dot, label = "σ∞")
+vline!(p_local, [R_inner]; lw = 1, color = :black, linestyle = :dash, label = "")
+vline!(p_local, [R_inner + ep_layer]; lw = 1, color = :black, linestyle = :dash, label = "")
 
 # =============================================================================
-#  §5  POINTWISE localization tensors — the four couplings, three interface
+#  §5  POINTWISE concentration tensors — the four couplings, three interface
 #      families.  This is the check that pins `LayeredSpheres/localfields.jl`
 #      against an independent implementation: whole 6×6 Kelvin-Mandel matrices,
 #      inside every layer, in the matrix, and exactly ON an interface with the
@@ -451,7 +451,7 @@ vline!(p_loc, [R_inner + ep_layer]; lw = 1, color = :black, linestyle = :dash, l
 # =============================================================================
 
 println("\n" * "="^78)
-println("§5  Pointwise localization — loc_eE / loc_sE / loc_eS / loc_sS")
+println("§5  Pointwise concentration — conc_eE / conc_sE / conc_eS / conc_sS")
 println("="^78)
 
 const KN_SPRING, KT_SPRING = 47.6, 27.1
@@ -474,56 +474,56 @@ const ITF_CASES = (
 )
 
 # (r, θ, φ, layer)  — `layer` is 0-based ECHOES / `nothing` = let both decide.
-const LOC_POINTS = (
+const LOCAL_POINTS = (
     (0.4 * R_inner, 0.7, 0.9, nothing),
     (0.999 * R_inner, 1.2, -0.4, nothing),
-    (0.5 * (R_inner + radii_loc[2]), 0.3, 2.1, nothing),
-    (0.9999 * radii_loc[2], 2.4, 0.15, nothing),
-    (1.3 * radii_loc[2], 1.0, 0.6, nothing),
-    (4.0 * radii_loc[2], 0.45, -1.3, nothing),
+    (0.5 * (R_inner + radii_local[2]), 0.3, 2.1, nothing),
+    (0.9999 * radii_local[2], 2.4, 0.15, nothing),
+    (1.3 * radii_local[2], 1.0, 0.6, nothing),
+    (4.0 * radii_local[2], 0.45, -1.3, nothing),
     (R_inner, 0.7, 0.9, 0),          # on the inner interface, inside
     (R_inner, 0.7, 0.9, 1),          # on the inner interface, outside
-    (radii_loc[2], 0.7, 0.9, 1),     # on the outer interface, inside
-    (radii_loc[2], 0.7, 0.9, 2),     # on the outer interface, matrix side
+    (radii_local[2], 0.7, 0.9, 1),     # on the outer interface, inside
+    (radii_local[2], 0.7, 0.9, 2),     # on the outer interface, matrix side
 )
 
-@printf "  %-9s  %10s  %10s  %10s  %10s\n" "interface" "loc_eE" "loc_sE" "loc_eS" "loc_sS"
+@printf "  %-9s  %10s  %10s  %10s  %10s\n" "interface" "conc_eE" "conc_sE" "conc_eS" "conc_sS"
 println("  " * "-"^58)
 
-worst_loc = 0.0
+worst_local = 0.0
 for (label, itf_jl, tags, p1s, p2s) in ITF_CASES
     sph = LayeredSphere(
-        (R_inner, radii_loc[2]),
+        (R_inner, radii_local[2]),
         (TensISO{3}(3 * K_i, 2 * μ_i), TensISO{3}(3 * K_itz, 2 * μ_itz));
         interfaces = itf_jl,
     )
-    sol = LayeredSphereFields(sph, C_ref_loc_jl)
-    spn = py_make_nlayers_itf(radii_loc, C_layers_loc_py, C_ref_loc_py, tags, p1s, p2s)
+    sol = LayeredSphereFields(sph, C_ref_local_jl)
+    spn = py_make_nlayers_itf(radii_local, C_layers_local_py, C_ref_local_py, tags, p1s, p2s)
 
     w = zeros(4)
-    for (r, θ, φ, lay) in LOC_POINTS
+    for (r, θ, φ, lay) in LOCAL_POINTS
         py_lay = lay === nothing ? -1 : lay
         jl_lay = lay === nothing ? nothing : lay + 1        # Julia is 1-based
-        ref = py_loc_all(spn, r, θ, φ, py_lay)
+        ref = py_conc_all(spn, r, θ, φ, py_lay)
         got = (
-            Matrix(KM(local_strain_strain_loc(sol, r, θ, φ; layer = jl_lay))),
-            Matrix(KM(local_stress_strain_loc(sol, r, θ, φ; layer = jl_lay))),
-            Matrix(KM(local_strain_stress_loc(sol, r, θ, φ; layer = jl_lay))),
-            Matrix(KM(local_stress_stress_loc(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(KM(local_strain_strain_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(KM(local_stress_strain_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(KM(local_strain_stress_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(KM(local_stress_stress_concentration(sol, r, θ, φ; layer = jl_lay))),
         )
         for q in 1:4
             scale = max(1.0, maximum(abs, ref[q]))
             w[q] = max(w[q], maximum(abs, got[q] .- ref[q]) / scale)
         end
     end
-    global worst_loc = max(worst_loc, maximum(w))
+    global worst_local = max(worst_local, maximum(w))
     @printf "  %-9s  %10.2e  %10.2e  %10.2e  %10.2e\n" label w[1] w[2] w[3] w[4]
 end
-@printf "\n  worst pointwise discrepancy over all cases : %.3e\n" worst_loc
-println(worst_loc < 1.0e-11 ? "  PASS" : "  FAIL — investigate before releasing")
+@printf "\n  worst pointwise discrepancy over all cases : %.3e\n" worst_local
+println(worst_local < 1.0e-11 ? "  PASS" : "  FAIL — investigate before releasing")
 
 const figdir = joinpath(@__DIR__, "figures")
 isdir(figdir) || mkdir(figdir)
 figpath = joinpath(figdir, "benchmark_nlayers.png")
-savefig(p_loc, figpath)
+savefig(p_local, figpath)
 @printf "\nSaved : %s\n" figpath

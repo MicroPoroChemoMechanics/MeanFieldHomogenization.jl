@@ -18,7 +18,7 @@ for item in ref.Ns
     cumulative = cumsum(fill(1.0 / N, N))
     radii = ntuple(k -> cumulative[k]^(1 / 3), N)
     sphere = LayeredSphere(radii, moduli)
-    α_jl = bulk_localization_alv(sphere, C0_law, T_grid)
+    α_jl = bulk_concentration_alv(sphere, C0_law, T_grid)
     @printf "\n=== N = %d ===\n" N
     for k in 1:N
         α_py = Matrix(to_matrix(item.alpha[k]))

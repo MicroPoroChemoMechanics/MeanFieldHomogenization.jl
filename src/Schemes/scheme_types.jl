@@ -147,7 +147,7 @@ for the pairwise interaction with every neighbor inside a cluster of radius
 
 Acts on a [`ParticleAssembly`](@ref MeanFieldHomogenization.Assemblies.ParticleAssembly), not on an `RVE`. Writing
 ``\\Delta\\mathbb{C}_K = \\mathbb{C}_K - \\mathbb{C}_0``, with ``\\mathbb{C}_0`` the matrix,
-the localization tensors of the families solve
+the concentration tensors of the families solve
 
 ```math
 \\sum_K \\mathbb{M}_{IK} : \\mathbb{A}_K = \\mathbb{I} ,\\qquad

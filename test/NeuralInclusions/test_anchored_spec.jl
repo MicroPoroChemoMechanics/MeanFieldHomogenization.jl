@@ -37,38 +37,38 @@ end
 @testset "anchored output specification" begin
 
     @testset "it declares itself, and refuses an unknown baseline" begin
-        sp = AnchoredHill(StrainLocTI(), :spheroid_cavity)
+        sp = AnchoredHill(StrainConcentrationTI(), :spheroid_cavity)
         @test NIB.spec_name(sp) === :anchored
         @test NIB.spec_baseline(sp) === :spheroid_cavity
-        @test NIB.hill_class(sp) isa StrainLocTI
+        @test NIB.hill_class(sp) isa StrainConcentrationTI
         @test NIB.nterms(sp) == 1
         @test NIB.noutputs(sp) == 6
         @test NIB.needs_nu(sp)
-        @test !NIB.needs_nu(AnchoredHill(GradLocTI2(), :spheroid_cavity))
+        @test !NIB.needs_nu(AnchoredHill(GradientConcentrationTI2(), :spheroid_cavity))
         @test :spheroid_cavity in NIB.anchor_baselines()
-        @test_throws ArgumentError AnchoredHill(StrainLocTI(), :nonesuch)
+        @test_throws ArgumentError AnchoredHill(StrainConcentrationTI(), :nonesuch)
         # The unanchored specifications have no baseline, and say so.
-        @test NIB.spec_baseline(DimensionlessHill(StrainLocTI())) === nothing
+        @test NIB.spec_baseline(DimensionlessHill(StrainConcentrationTI())) === nothing
     end
 
     @testset "it round-trips through the serialized names" begin
-        sp = NIB.output_spec(:anchored, :loc_ti, "spheroid_cavity")
+        sp = NIB.output_spec(:anchored, :strain_concentration_ti, "spheroid_cavity")
         @test sp isa AnchoredHill
         @test NIB.spec_baseline(sp) === :spheroid_cavity
-        @test NIB.hill_class(sp) isa StrainLocTI
+        @test NIB.hill_class(sp) isa StrainConcentrationTI
         # A file written before the field existed carries no baseline, and that
         # is an error rather than a guess.
-        @test_throws ArgumentError NIB.output_spec(:anchored, :loc_ti, nothing)
-        @test_throws ArgumentError NIB.output_spec(:nonesuch, :loc_ti)
+        @test_throws ArgumentError NIB.output_spec(:anchored, :strain_concentration_ti, nothing)
+        @test_throws ArgumentError NIB.output_spec(:nonesuch, :strain_concentration_ti)
     end
 
     @testset "exact on the face where the baseline is the answer" begin
         # A superspheroid at p = 1 *is* a spheroid, so the whole face p = 1 —
         # every aspect ratio, every ν₀, oblate through prolate — has the closed
         # form for its answer and the label must be the identity there.
-        sp = AnchoredHill(StrainLocTI(), :spheroid_cavity)
+        sp = AnchoredHill(StrainConcentrationTI(), :spheroid_cavity)
         feats = [:log_aspect, :log_p, :nu0]
-        zid = collect(NIB.components(StrainLocTI(), TensISO{3}(1.0, 1.0), _AN_E3))
+        zid = collect(NIB.components(StrainConcentrationTI(), TensISO{3}(1.0, 1.0), _AN_E3))
         for c in (0.4, 0.7, 1.0, 1.6, 3.0), ν in (0.0, 0.3, 0.45)
             Aex = _an_exact4(c, ν)
             x = [log(c), 0.0, ν]
@@ -81,11 +81,11 @@ end
 
     @testset "the prolate branch is the one that catches a frame error" begin
         # `Spheroid(ω)` sorts its semi-axes: the axis of revolution is `ez` when
-        # oblate and `ex` when prolate. Reading the baseline in the localization
+        # oblate and `ex` when prolate. Reading the baseline in the concentration
         # class's own convention — column 3 — is right for the morphology being
         # learned and wrong for the baseline, and it fails for prolate shapes
         # only. So an oblate-only check would pass over the bug.
-        sp = AnchoredHill(StrainLocTI(), :spheroid_cavity)
+        sp = AnchoredHill(StrainConcentrationTI(), :spheroid_cavity)
         feats = [:log_aspect, :log_p, :nu0]
         for c in (1.5, 2.5, 4.0)
             Ab = NIB.anchor_tensor(sp, [log(c), 0.0, 0.3], feats, NIB._iso_ref(0.3), _AN_E3)
@@ -99,9 +99,9 @@ end
     end
 
     @testset "and in transport" begin
-        sp = AnchoredHill(GradLocTI2(), :spheroid_cavity)
+        sp = AnchoredHill(GradientConcentrationTI2(), :spheroid_cavity)
         f2 = [:log_aspect, :log_p]
-        zid = collect(NIB.components(GradLocTI2(), TensISO{3}(1.0), _AN_E3))
+        zid = collect(NIB.components(GradientConcentrationTI2(), TensISO{3}(1.0), _AN_E3))
         for c in (0.4, 1.0, 2.5)
             aex = _an_exact2(c)
             x = [log(c), 0.0]
@@ -113,9 +113,9 @@ end
     end
 
     @testset "the round trip is algebra, so it holds off the face too" begin
-        sp = AnchoredHill(StrainLocTI(), :spheroid_cavity)
+        sp = AnchoredHill(StrainConcentrationTI(), :spheroid_cavity)
         feats = [:log_aspect, :log_p, :nu0]
-        A = NIB.build(StrainLocTI(), [3.1, 5.7, -0.8, -0.6, 2.2, 1.9], _AN_E3)
+        A = NIB.build(StrainConcentrationTI(), [3.1, 5.7, -0.8, -0.6, 2.2, 1.9], _AN_E3)
         for c in (0.6, 1.0, 1.4), ν in (0.1, 0.35)
             x = [log(c), log(0.4), ν]
             P₀ = NIB._iso_ref(ν)
@@ -129,7 +129,7 @@ end
         # At prediction time there is no solve to read the geometry from, so a
         # feature set without an aspect ratio cannot be served — and it is
         # refused rather than defaulted to a sphere.
-        sp = AnchoredHill(StrainLocTI(), :spheroid_cavity)
+        sp = AnchoredHill(StrainConcentrationTI(), :spheroid_cavity)
         @test_throws ArgumentError NIB.encode(
             sp, TensISO{3}(1.0, 1.0), NIB._iso_ref(0.3), _AN_E3, [0.4, 0.3], [:p, :nu0]
         )
@@ -138,12 +138,12 @@ end
             sp, _an_exact4(0.8, 0.3), NIB._iso_ref(0.3), _AN_E3, [0.8, 0.3],
             [:aspect, :nu0]; atol = 1.0e-6
         )
-        @test z ≈ collect(NIB.components(StrainLocTI(), TensISO{3}(1.0, 1.0), _AN_E3)) atol = 1.0e-10
+        @test z ≈ collect(NIB.components(StrainConcentrationTI(), TensISO{3}(1.0, 1.0), _AN_E3)) atol = 1.0e-10
     end
 
     @testset "a surrogate carries the specification through save and load" begin
         mktempdir() do dir
-            sp = AnchoredHill(StrainLocTI(), :spheroid_cavity)
+            sp = AnchoredHill(StrainConcentrationTI(), :spheroid_cavity)
             net = NIB.glorot_mlp(Random.MersenneTwister(3), [3, 8, 6])
             s = NIB.NeuralSurrogate(;
                 net, features = [:log_aspect, :log_p, :nu0], output = sp,
@@ -177,7 +177,7 @@ end
             NIB._spheroid_axis_index(NIB._axes(sph)),
         )
     end
-    # The exact homogeneous-inclusion localization, built independently of the
+    # The exact homogeneous-inclusion concentration, built independently of the
     # code under test, and transversely isotropic about the spheroid's **own**
     # axis — which is `e₃` when oblate and `e₁` when prolate, since `Spheroid`
     # sorts its semi-axes. Hence the tests below pass that axis rather than
@@ -187,34 +187,34 @@ end
 
     @testset "it is declared" begin
         @test :layered_spheroid in NIB.anchor_baselines()
-        @test NIB.spec_baseline(AnchoredHill(StrainLocTI(), :layered_spheroid)) ===
+        @test NIB.spec_baseline(AnchoredHill(StrainConcentrationTI(), :layered_spheroid)) ===
             :layered_spheroid
-        @test NIB.output_spec(:anchored, :loc_ti, "layered_spheroid") isa AnchoredHill
+        @test NIB.output_spec(:anchored, :strain_concentration_ti, "layered_spheroid") isa AnchoredHill
     end
 
     @testset "exact wherever the layers agree, prolate and oblate" begin
-        sp = AnchoredHill(StrainLocTI(), :layered_spheroid)
+        sp = AnchoredHill(StrainConcentrationTI(), :layered_spheroid)
         for c in (2.5, 1.4, 0.8, 0.4), r in (0.6, 1.0, 3.0), w in (0.25, 0.7)
             axis = own_axis(c)
             x = [log(c), w, log(r), log(r)]                  # r₁ = r₂ = r
             z = NIB.encode(sp, exact_hom(c, r), C₀, axis, x, feats)
-            @test z ≈ collect(NIB.components(StrainLocTI(), id4, axis)) atol = 1.0e-8
+            @test z ≈ collect(NIB.components(StrainConcentrationTI(), id4, axis)) atol = 1.0e-8
         end
     end
 
     @testset "the stress side carries the mean modulus, not the identity" begin
-        sp = AnchoredHill(StressLocTI(), :layered_spheroid)
+        sp = AnchoredHill(StressConcentrationTI(), :layered_spheroid)
         for c in (1.8, 0.5), r in (0.8, 2.5), w in (0.3, 0.65)
             axis = own_axis(c)
             x = [log(c), w, log(r), log(r)]
             # A homogeneous inclusion's stress side *is* derivable: ℂ̄ : 𝔸.
             B = (r * C₀) ⊡ exact_hom(c, r)
             z = NIB.encode(sp, B, C₀, axis, x, feats)
-            @test z ≈ collect(NIB.components(StressLocTI(), id4, axis)) atol = 1.0e-8
+            @test z ≈ collect(NIB.components(StressConcentrationTI(), id4, axis)) atol = 1.0e-8
         end
         # And it is genuinely a different baseline from the strain side, or the
         # anchored target would still carry a modulus.
-        strain = AnchoredHill(StrainLocTI(), :layered_spheroid)
+        strain = AnchoredHill(StrainConcentrationTI(), :layered_spheroid)
         x = [log(2.0), 0.4, log(3.0), log(3.0)]
         ax = own_axis(2.0)
         @test !isapprox(
@@ -224,7 +224,7 @@ end
     end
 
     @testset "the mean is the layer average, so w moves the baseline" begin
-        sp = AnchoredHill(StrainLocTI(), :layered_spheroid)
+        sp = AnchoredHill(StrainConcentrationTI(), :layered_spheroid)
         ax = own_axis(2.0)
         b(w) = _an_km(NIB.anchor_tensor(sp, [log(2.0), w, log(4.0), log(0.5)], feats, C₀, ax))
         @test !isapprox(b(0.25), b(0.7); atol = 1.0e-6)
@@ -238,17 +238,17 @@ end
         # transversely isotropic about the frame requested — `components`
         # measures the projection residual, so a frame mistake throws here
         # instead of passing silently.
-        sp = AnchoredHill(StrainLocTI(), :layered_spheroid)
+        sp = AnchoredHill(StrainConcentrationTI(), :layered_spheroid)
         for c in (2.5, 0.6)
             x = [log(c), 0.4, log(2.0), log(0.7)]
-            z = collect(NIB.components(StrainLocTI(), id4, _AN_E3))
+            z = collect(NIB.components(StrainConcentrationTI(), id4, _AN_E3))
             Ab = NIB.decode(sp, z, C₀, _AN_E3, x, feats)
-            @test length(collect(NIB.components(StrainLocTI(), Ab, _AN_E3; atol = 1.0e-10))) == 6
+            @test length(collect(NIB.components(StrainConcentrationTI(), Ab, _AN_E3; atol = 1.0e-10))) == 6
         end
     end
 
     @testset "round trip on a genuinely layered point" begin
-        sp = AnchoredHill(StrainLocTI(), :layered_spheroid)
+        sp = AnchoredHill(StrainConcentrationTI(), :layered_spheroid)
         x = [log(2.0), 0.4, log(3.0), log(0.6)]
         ax = own_axis(2.0)
         A = exact_hom(1.5, 2.0)                       # any tensor of the class
@@ -257,7 +257,7 @@ end
     end
 
     @testset "it refuses features it cannot build the baseline from" begin
-        sp = AnchoredHill(StrainLocTI(), :layered_spheroid)
+        sp = AnchoredHill(StrainConcentrationTI(), :layered_spheroid)
         @test_throws ArgumentError NIB.encode(
             sp, id4, C₀, _AN_E3, [log(2.0)], [:log_aspect]
         )
@@ -269,9 +269,9 @@ end
 
     @testset "component_labels answers for an anchored spec" begin
         # It did not: a shipped output specification could not be reported on.
-        @test NIB.component_labels(AnchoredHill(StrainLocTI(), :layered_spheroid)) ==
-            NIB.component_labels(StrainLocTI())
-        @test NIB.component_labels(AnchoredHill(GradLocTI2(), :spheroid_cavity)) ==
-            NIB.component_labels(GradLocTI2())
+        @test NIB.component_labels(AnchoredHill(StrainConcentrationTI(), :layered_spheroid)) ==
+            NIB.component_labels(StrainConcentrationTI())
+        @test NIB.component_labels(AnchoredHill(GradientConcentrationTI2(), :spheroid_cavity)) ==
+            NIB.component_labels(GradientConcentrationTI2())
     end
 end

@@ -123,8 +123,8 @@ s = LayeredSpheroid(
     Nseries = 5,
 )
 
-A = gradient_gradient_loc(s, TensISO{3}(1e-6), TensISO{3}(1.0))  # ⟨∇T⟩ = 𝐀_Ω·𝐇
-B = flux_gradient_loc(s, TensISO{3}(1e-6), TensISO{3}(1.0))      # ⟨𝐊∇T⟩ = 𝐁_Ω·𝐇
+A = gradient_gradient_concentration(s, TensISO{3}(1e-6), TensISO{3}(1.0))  # ⟨∇T⟩ = 𝐀_Ω·𝐇
+B = flux_gradient_concentration(s, TensISO{3}(1e-6), TensISO{3}(1.0))      # ⟨𝐊∇T⟩ = 𝐁_Ω·𝐇
 k_eq = B[1, 1] / A[1, 1]                                          # equivalent particle
 ```
 

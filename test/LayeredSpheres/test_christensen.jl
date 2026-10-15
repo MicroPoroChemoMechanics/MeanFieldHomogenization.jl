@@ -13,7 +13,7 @@ using LinearAlgebra
     C₀ = TensISO{3}(3κ₀, 2μ₀)
     # All layers identical to matrix.
     s = LayeredSphere((0.5, 1.0), (C₀, C₀))
-    β = MeanFieldHomogenization.LayeredSpheres._shear_localization(s, C₀)
+    β = MeanFieldHomogenization.LayeredSpheres._shear_concentration(s, C₀)
     @test length(β) == 2
     for k in 1:2
         @test β[k] ≈ 1.0 rtol = 1.0e-10
@@ -24,7 +24,7 @@ end
     κ₀, μ₀ = 150.0, 90.0
     C₀ = TensISO{3}(3κ₀, 2μ₀)
     s = LayeredSphere((0.3, 0.7, 1.0), (C₀, C₀, C₀))
-    β = MeanFieldHomogenization.LayeredSpheres._shear_localization(s, C₀)
+    β = MeanFieldHomogenization.LayeredSpheres._shear_concentration(s, C₀)
     for k in 1:3
         @test β[k] ≈ 1.0 rtol = 1.0e-10
     end
@@ -41,10 +41,10 @@ end
 
     a, b = 0.4, 1.0
     s2 = LayeredSphere((a, b), (C₁, C₀))
-    β2 = MeanFieldHomogenization.LayeredSpheres._shear_localization(s2, C₀)
+    β2 = MeanFieldHomogenization.LayeredSpheres._shear_concentration(s2, C₀)
 
     s1 = LayeredSphere((a,), (C₁,))
-    β1 = MeanFieldHomogenization.LayeredSpheres._shear_localization(s1, C₀)[1]
+    β1 = MeanFieldHomogenization.LayeredSpheres._shear_concentration(s1, C₀)[1]
 
     @test β2[1] ≈ β1        rtol = 1.0e-9
     @test β2[2] ≈ 1.0       rtol = 1.0e-10  # shell identical to matrix: β = 1
@@ -60,10 +60,10 @@ end
 
     a, b = 0.6, 1.0
     s2 = LayeredSphere((a, b), (C₁, C₁))
-    β2 = MeanFieldHomogenization.LayeredSpheres._shear_localization(s2, C₀)
+    β2 = MeanFieldHomogenization.LayeredSpheres._shear_concentration(s2, C₀)
 
     s1 = LayeredSphere((b,), (C₁,))
-    β1 = MeanFieldHomogenization.LayeredSpheres._shear_localization(s1, C₀)[1]
+    β1 = MeanFieldHomogenization.LayeredSpheres._shear_concentration(s1, C₀)[1]
 
     @test β2[1] ≈ β1 rtol = 1.0e-9
     @test β2[2] ≈ β1 rtol = 1.0e-9
@@ -98,7 +98,7 @@ end
         κ₁ = 2 * μ₁ * (1 + ν₁) / (3 * (1 - 2 * ν₁))
         C₁ = TensISO{3}(3κ₁, 2μ₁)
         s = LayeredSphere((0.5, 1.0), (C₁, C₀))
-        β = MeanFieldHomogenization.LayeredSpheres._shear_localization(s, C₀)
+        β = MeanFieldHomogenization.LayeredSpheres._shear_concentration(s, C₀)
         @test all(isfinite, β)
     end
 end

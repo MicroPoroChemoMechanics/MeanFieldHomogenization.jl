@@ -7,16 +7,16 @@ using SymPy   # top level on purpose: `@syms` below is expanded before any
 # `using` nested in a @testset body would have run.
 
 # =============================================================================
-#  Localization and contribution tensors for conductivity (2nd order).
+#  Concentration and contribution tensors for conductivity (2nd order).
 # =============================================================================
 
-@testset "gradient_gradient_loc — iso sphere, iso matrix" begin
+@testset "gradient_gradient_concentration — iso sphere, iso matrix" begin
     # Analytical for iso sphere: A_∇∇ = 3k₀/(2k₀+k₁) 𝟙
     ell = Ellipsoid(1.0)
     for (k₀, k₁) in ((1.0, 5.0), (2.5, 0.3), (10.0, 10.0))
         K₀ = TensISO{3}(k₀)
         K₁ = TensISO{3}(k₁)
-        A = gradient_gradient_loc(ell, K₁, K₀)
+        A = gradient_gradient_concentration(ell, K₁, K₀)
         expected = 3 * k₀ / (2 * k₀ + k₁)
         @test A[1, 1] ≈ expected rtol = 1.0e-12
         @test A[2, 2] ≈ expected rtol = 1.0e-12
@@ -26,19 +26,19 @@ using SymPy   # top level on purpose: `@syms` below is expanded before any
 
     # K₁ = K₀ → A = 𝟙
     K₀ = TensISO{3}(2.0)
-    A0 = gradient_gradient_loc(ell, K₀, K₀)
+    A0 = gradient_gradient_concentration(ell, K₀, K₀)
     @test A0[1, 1] ≈ 1.0 rtol = 1.0e-12
 end
 
-@testset "4 conductivity localization tensors consistent" begin
+@testset "4 conductivity concentration tensors consistent" begin
     ell = Ellipsoid(2.0, 1.5, 1.0)
     K₀ = TensISO{3}(2.0)
     K₁ = TensISO{3}(5.0)
 
-    A_∇∇ = gradient_gradient_loc(ell, K₁, K₀)
-    A_q∇ = flux_gradient_loc(ell, K₁, K₀)
-    A_∇q = gradient_flux_loc(ell, K₁, K₀)
-    A_qq = flux_flux_loc(ell, K₁, K₀)
+    A_∇∇ = gradient_gradient_concentration(ell, K₁, K₀)
+    A_q∇ = flux_gradient_concentration(ell, K₁, K₀)
+    A_∇q = gradient_flux_concentration(ell, K₁, K₀)
+    A_qq = flux_flux_concentration(ell, K₁, K₀)
 
     # A_q∇ = K₁ · A_∇∇
     lhs = A_q∇
@@ -51,7 +51,7 @@ end
 
 @testset "Fully-anisotropic conductivity — sanity" begin
     # For a general aniso ellipsoid in an aniso matrix, A_∇∇ is NOT
-    # symmetric (localization is a linear map between tensors, not a
+    # symmetric (concentration is a linear map between tensors, not a
     # symmetric 2-tensor itself). We just verify it is finite and
     # reduces to the identity when K₁ = K₀.
     K_arr = [3.0 0.5 0.3; 0.5 2.0 0.2; 0.3 0.2 1.5]
@@ -59,11 +59,11 @@ end
     K₁ = 2.0 * K₀
 
     ell = Ellipsoid(2.0, 1.5, 1.0)
-    A = gradient_gradient_loc(ell, K₁, K₀)
+    A = gradient_gradient_concentration(ell, K₁, K₀)
     @test all(isfinite, A)
 
     # K₁ = K₀ → A = 𝟙
-    A0 = gradient_gradient_loc(ell, K₀, K₀)
+    A0 = gradient_gradient_concentration(ell, K₀, K₀)
     @test A0 ≈ TensISO{3}(1.0) atol = 1.0e-10
 end
 
@@ -106,7 +106,7 @@ end
     @syms ka kb
     K₀ = TensISO{3}(ka)
     K₁ = TensISO{3}(kb)
-    A = gradient_gradient_loc(Ellipsoid(1.0), K₁, K₀)
+    A = gradient_gradient_concentration(Ellipsoid(1.0), K₁, K₀)
     # Expected symbolic: A[1,1] = 3ka/(2ka+kb)
     simplified = simplify(A[1, 1] - 3ka / (2ka + kb))
     @test simplified == 0

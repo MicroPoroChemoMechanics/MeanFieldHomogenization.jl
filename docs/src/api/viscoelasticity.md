@@ -132,18 +132,18 @@ delta_stiffness_alv
 ## Layered spheres
 
 ```@docs
-bulk_localization_alv
+bulk_concentration_alv
 bulk_state_seq_alv
 bulk_amplitude_seq_alv
-shear_localization_alv
-strain_strain_loc_alv
+shear_concentration_alv
+strain_strain_concentration_alv
 ```
 
 In conduction (order 2):
 
 ```@docs
-gradient_localization_alv
-gradient_gradient_loc_alv
+gradient_concentration_alv
+gradient_gradient_concentration_alv
 conductivity_contribution_alv
 ```
 
