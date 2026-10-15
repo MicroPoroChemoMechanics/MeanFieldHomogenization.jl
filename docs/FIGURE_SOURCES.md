@@ -34,6 +34,7 @@ earlier figures, whose origin is kept below.
 | `lamellar/lamellar_scales.svg`, `lamellar/interfoliar_layer.svg` | `applications.jl` | hand-written SVGs of this repository |
 | `fe/axi_schematic.svg` | `applications.jl` | a `Plots` drawing of `scripts/fe/make_axi_figures.jl` |
 | `applications/cement_paste_scales.svg` | `applications.jl` | new, after Fig. 2 of Lavergne et al. (2018) |
+| `applications/solidifying_sphere.svg` | `applications.jl` | new, after Sanahuja (2013) |
 | `rheology/*.svg` | `rheology.jl` | the former `make_rheology_diagrams.jl` of this directory |
 | `nn/network_sketch.svg`, `fe/crack_mesh_sketch.svg` | `vignettes.jl` | new |
 

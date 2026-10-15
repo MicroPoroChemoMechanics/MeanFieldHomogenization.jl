@@ -98,6 +98,8 @@ separate inclusions — reducing ``N+1`` Eshelby problems to one. `MeanFieldHomo
 supports both: `:whole_pores` (``N`` separate spherical inclusions) and `:layers`
 (one [`LayeredSphere`](@ref) whose per-layer moduli are aging relaxation laws).
 
+![The `:layers` composite sphere at three ages: a pore wrapped in shells that set from the outside in; a shell creeps from its setting time on, and is still a pore before](../assets/applications/solidifying_sphere.svg)
+
 ```@example creep
 function build_rve_whole_pores(N, α, t0; fixed)
     rve = RVE()
