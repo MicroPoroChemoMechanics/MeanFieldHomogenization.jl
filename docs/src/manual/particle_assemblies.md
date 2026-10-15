@@ -12,6 +12,8 @@ instead of averaging it: [`ClusterModel`](@ref) and [`EquivalentInclusion`](@ref
 need to know *where* the inclusions are, so both act on a
 [`ParticleAssembly`](@ref) rather than on an `RVE`.
 
+![Positioned particles: the interaction of each pair, such as the one marked, enters the scheme](../assets/schemes/particle_assembly.svg)
+
 ## Building an assembly
 
 ```julia

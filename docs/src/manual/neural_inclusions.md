@@ -12,6 +12,8 @@ A trained network is a fourth way into the
 families, the layered patterns and the
 [finite-element inclusions](@ref man-fe-inclusions).
 
+![A network that maps the parameters of a shape to the tensors of its response](../assets/nn/network_sketch.svg)
+
 | Type | Entry gate | For |
 |:--|:--|:--|
 | [`NeuralHillInclusion`](@ref MeanFieldHomogenization.NeuralHillInclusion) | A — the Hill tensor | a morphology that has a Hill tensor |

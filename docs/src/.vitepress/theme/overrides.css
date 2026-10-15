@@ -281,3 +281,77 @@ mjx-container[data-nomen] {
   font-size: clamp(1.7rem, 3vw, 2.8rem);
   line-height: 1.15;
 }
+
+/* ── Grids of drawings ───────────────────────────────────────────────────────
+   Images in a Markdown table come out broken (the writer puts each image on
+   lines of its own, which splits the row), so drawings shown side by side are
+   wrapped in raw HTML instead:
+
+       ```@raw html
+       <div class="mfh-figure-grid">
+       <div>
+       ```
+       [`Name`](@ref)            ← title
+       ![…](../assets/….svg)     ← drawing
+       One-line caption.         ← caption
+       ```@raw html
+       </div>
+       <div class="wide">        ← an item across both columns ("narrow":
+                                   a drawing of about half the usual width)
+       ```
+       …
+       ```@raw html
+       </div>
+       </div>
+       ```                                                                     */
+.mfh-figure-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.4rem 1.6rem;
+  align-items: start;
+  margin: 1.4rem 0;
+}
+
+.mfh-figure-grid > div {
+  text-align: center;
+}
+
+.mfh-figure-grid > .wide {
+  grid-column: 1 / -1;
+}
+
+.mfh-figure-grid > div > p {
+  margin: 0.3rem 0;
+}
+
+.mfh-figure-grid > div > p:first-child {
+  font-weight: 600;
+}
+
+.mfh-figure-grid > div > p:last-child {
+  font-size: 0.86em;
+  line-height: 1.4;
+  color: var(--vp-c-text-2);
+}
+
+.mfh-figure-grid img {
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+/* Drawings come in two widths (about 340 and 600 units); the narrow ones are
+   shrunk so that both read at a similar scale. */
+.mfh-figure-grid > .narrow img {
+  width: 76%;
+}
+
+.mfh-figure-grid > .wide img {
+  max-width: 520px;
+}
+
+@media (max-width: 640px) {
+  .mfh-figure-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

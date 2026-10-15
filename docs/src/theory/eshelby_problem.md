@@ -18,9 +18,9 @@ centered at the origin (shape tensor ``\boldsymbol{A}``, semi-axes
 ``a\ge b\ge c``; see [Conventions](@ref th-notation-ellipsoid)). Prescribe a
 uniform **polarization stress** ``\boldsymbol{\tau}`` inside the ellipsoid and
 zero outside, with no remote loading. This problem and the inhomogeneity problem
-below are drawn as in the Echoes book [echoes](@cite).
+below are drawn after the Echoes book [echoes](@cite).
 
-![The inclusion problem: a uniform polarization inside the ellipsoid, no remote loading](../assets/geometry/eshelby_inclusion.png)
+![The inclusion problem: a uniform polarization inside the ellipsoid, no remote loading](../assets/geometry/eshelby_inclusion.svg)
 
 [eshelby1957](@citet) showed that the resulting strain field is **uniform inside
 the ellipsoid**. This is the whole reason mean-field homogenization works, and
@@ -129,7 +129,7 @@ stiffness ``\mathbb{C}_1``, loaded remotely by ``\underline{u} = \boldsymbol{E}\
 — and it reduces to the inclusion problem above by the equivalent-polarization
 argument of [Localization](@ref th-localization):
 
-![The inhomogeneity problem: a different stiffness inside, remote loading outside](../assets/geometry/eshelby_inhomogeneity.png)
+![The inhomogeneity problem: a different stiffness inside, remote loading outside](../assets/geometry/eshelby_inhomogeneity.svg)
 
 The step from there to an estimate of effective properties is the subject of the
 next two pages, and it has two parts:
