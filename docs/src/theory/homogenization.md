@@ -128,8 +128,8 @@ and the page where the scheme is derived.
 | [`Dilute`](@ref) | matrix | the macroscopic strain, at infinity | [Dilute estimates](@ref th-scheme-dilute) |
 | [`DiluteDual`](@ref) | matrix | the macroscopic stress, at infinity | [Dilute estimates](@ref th-scheme-dilute) |
 | [`MoriTanaka`](@ref) | matrix | the mean strain of the matrix | [Mori–Tanaka](@ref th-scheme-mori-tanaka) |
-| [`Maxwell`](@ref) | matrix | a remote strain applied to a domain holding every inclusion | [Maxwell and PCW](@ref th-scheme-maxwell-pcw) |
-| [`PonteCastanedaWillis`](@ref) | matrix | the field inside the distribution ellipsoid | [Maxwell and PCW](@ref th-scheme-maxwell-pcw) |
+| [`Maxwell`](@ref) | matrix | a remote strain applied to a domain holding every inclusion | [Maxwell](@ref th-scheme-maxwell) |
+| [`PonteCastanedaWillis`](@ref) | matrix | the field inside the distribution ellipsoid of each pair of phases | [Ponte Castañeda–Willis](@ref th-scheme-pcw) |
 | [`SelfConsistent`](@ref) | effective medium, every phase | a remote strain fixed by the average | [Self-consistent schemes](@ref th-scheme-self-consistent) |
 | [`AsymmetricSelfConsistent`](@ref) | effective medium, inclusions only | a remote strain fixed by the average | [Self-consistent schemes](@ref th-scheme-self-consistent) |
 | [`DifferentialScheme`](@ref) | current effective medium | dilute increments | [Differential scheme](@ref th-differential-scheme) |
@@ -138,7 +138,7 @@ and the page where the scheme is derived.
 | [`EquivalentInclusion`](@ref) | matrix | a Galerkin polarization | [Equivalent inclusion method](@ref th-eim) |
 
 The pages of the chapter follow the order of the table. The bounds use no shape
-at all. The next three pages embed the inclusions in the matrix, each with a
+at all. The next four pages embed the inclusions in the matrix, each with a
 richer description of what surrounds them. The self-consistent and differential
 schemes then replace the matrix by the effective medium, the laminate is solved
 exactly, and the last two schemes resolve the interaction inclusion by inclusion.

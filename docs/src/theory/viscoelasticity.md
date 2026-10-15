@@ -348,7 +348,7 @@ the Volterra algebra:
 | [Dilute](@ref th-scheme-dilute) | ``\mathbb{C}_0 + \mathbb{N}_\Sigma`` |
 | [DiluteDual](@ref th-scheme-dilute) | ``\bigl(\mathbb{L}_0 + \sum_i f_i\,\mathbb{H}_i\bigr)^{-\circ}``, with ``\mathbb{H}_i = -\,\mathbb{L}_0\circ\mathbb{N}_i\circ\mathbb{L}_0`` |
 | [Mori–Tanaka](@ref th-scheme-mori-tanaka) | ``\mathbb{C}_0 + \mathbb{N}_\Sigma\circ\bigl(f_0\,H\,\mathbb{I} + \sum_j f_j\,\mathbb{A}_j^{\mathrm{dil}}\bigr)^{-\circ}`` |
-| [Maxwell, PCW](@ref th-scheme-maxwell-pcw) | ``\mathbb{C}_0 + \mathbb{N}_\Sigma\circ\bigl(H\,\mathbb{I} - \mathbb{P}_\Omega\circ\mathbb{N}_\Sigma\bigr)^{-\circ}`` |
+| [Maxwell](@ref th-scheme-maxwell), [PCW](@ref th-scheme-pcw) | ``\mathbb{C}_0 + \mathbb{N}_\Sigma\circ\bigl(H\,\mathbb{I} - \mathbb{P}_\Omega\circ\mathbb{N}_\Sigma\bigr)^{-\circ}`` |
 | [Self-consistent](@ref th-scheme-sc) | ``\bigl(\sum_r f_r\,\mathbb{C}_r\circ\mathbb{A}_r^{\mathrm{dil}}\bigr)\circ\bigl(\sum_r f_r\,\mathbb{A}_r^{\mathrm{dil}}\bigr)^{-\circ}``, the kernels computed in the estimate itself |
 | [Asymmetric self-consistent](@ref th-scheme-asc) | ``\mathbb{C}_m + \sum_{i \ne m} f_i\,(\mathbb{C}_i - \mathbb{C}_m)\circ\mathbb{A}_i^{\mathrm{dil}}``, the kernels computed in the estimate itself |
 | [Differential](@ref th-differential-scheme) | the incorporation ODE, integrated on the kernels |
@@ -358,7 +358,7 @@ the Volterra algebra:
 ``\mathbb{N}_\Sigma`` is invertible the same estimate reads
 ``\mathbb{C}_0 + \bigl(\mathbb{N}_\Sigma^{-\circ} - \mathbb{P}_\Omega\bigr)^{-\circ}``
 [barthelemyIJES2019](@cite), by the identity of §4: the far-field argument of the
-[elastic derivation](@ref th-scheme-maxwell-pcw) carries over unchanged, since
+[elastic derivation](@ref th-scheme-maxwell) carries over unchanged, since
 it uses nothing but the linearity of the integral equation. The two
 self-consistent schemes and the differential one take the running estimate as
 reference, so that their Hill kernels, built for an isotropic reference, require

@@ -25,7 +25,8 @@ single effective inclusion.
 The pairwise form, with one distribution shape per pair of phases, would be
 supported by adding a method `_pcw(rve, ::PairwiseDistribution, …)` without
 touching this file or the public API. The identity with Maxwell is proved in
-the theory page [Maxwell and Ponte Castañeda–Willis](@ref th-scheme-maxwell-pcw).
+the theory page [Ponte Castañeda–Willis](@ref th-scheme-pcw), which derives the
+estimate for any number of phases and pairwise distribution ellipsoids.
 """
 function _evaluate(rve::RVE, scheme::PonteCastanedaWillis, ::Val{p}; kw...) where {p}
     return _pcw(rve, distribution_shape(rve, scheme), matrix_name(scheme, rve), Val(p); kw...)

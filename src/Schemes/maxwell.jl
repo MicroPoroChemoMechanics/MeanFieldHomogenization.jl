@@ -22,7 +22,7 @@ The dispatch on `rve.distribution_shape` is on its concrete subtype so
 that a future `PairwiseDistribution` [willis1982](@cite) can plug in by
 adding a new method without touching the public API. The derivation, from
 the far field of the inhomogeneities [sevostianovIJES2013](@cite), is in the
-theory page [Maxwell and Ponte Castañeda–Willis](@ref th-scheme-maxwell-pcw).
+theory page [Maxwell](@ref th-scheme-maxwell).
 """
 function _evaluate(rve::RVE, scheme::Maxwell, ::Val{p}; kw...) where {p}
     return _maxwell(rve, distribution_shape(rve, scheme), matrix_name(scheme, rve), Val(p); kw...)

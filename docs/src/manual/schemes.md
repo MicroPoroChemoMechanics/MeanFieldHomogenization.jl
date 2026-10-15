@@ -166,9 +166,10 @@ homogenize(rve, Maxwell())
 The `distribution_shape` field is wrapped in `UniformDistribution`. A
 future `PairwiseDistribution`, with one shape per pair of phases
 [ponte1995, willis1982](@cite), can be added without breaking the public API —
-see [`AbstractDistributionShape`](@ref). Both schemes are derived, and shown to
-coincide for a single shape, in
-[Maxwell and Ponte Castañeda–Willis](@ref th-scheme-maxwell-pcw).
+see [`AbstractDistributionShape`](@ref). The two schemes are derived in
+[Maxwell](@ref th-scheme-maxwell) and
+[Ponte Castañeda–Willis](@ref th-scheme-pcw), and the second page shows why
+they coincide for a single shape.
 
 ### It belongs to the RVE, and it has no default
 

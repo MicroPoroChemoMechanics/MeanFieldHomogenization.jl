@@ -141,7 +141,8 @@ then has its page, with its figure, its assumption and its equations.
 | [Voigt and Reuss bounds](@ref th-scheme-bounds) | a uniform strain or a uniform stress, and the energy principles that make them bounds |
 | [Dilute estimates](@ref th-scheme-dilute) | each inclusion alone in the matrix, under the remote strain or the remote stress |
 | [Mori–Tanaka](@ref th-scheme-mori-tanaka) | each inclusion under the mean strain of the matrix |
-| [Maxwell and Ponte Castañeda–Willis](@ref th-scheme-maxwell-pcw) | a second shape for the distribution, both schemes derived from the Green operator and shown to coincide |
+| [Maxwell](@ref th-scheme-maxwell) | a domain holding the inclusions, filled with the effective medium, disturbs the matrix far away as they do |
+| [Ponte Castañeda–Willis](@ref th-scheme-pcw) | the Hashin–Shtrikman energy principle with the two-point statistics of the inclusions, one distribution ellipsoid per pair of phases |
 | [Self-consistent schemes](@ref th-scheme-self-consistent) | each phase in the effective medium, with or without a distinguished matrix |
 | [Differential scheme](@ref th-differential-scheme) | incorporation as an ODE in a fictitious time, and what a crack — which has no volume to replace — does to it |
 | [Laminate](@ref th-laminate) | a periodic stack solved exactly: no inclusion at all, the interface algebra replaces the Hill tensor |

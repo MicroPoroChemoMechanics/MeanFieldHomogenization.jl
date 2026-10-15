@@ -79,7 +79,7 @@ bound when the matrix is the stiffer phase, the lower one when it is the softer.
 
 With several inclusion shapes the estimate is not, in general, major-symmetric.
 [ponte1995](@citet) trace this to the morphology the scheme implicitly assumes,
-which the next page makes explicit. The package returns the estimate as
+which the page on [their estimate](@ref th-scheme-pcw) makes explicit. The package returns the estimate as
 computed: an asymmetric Mori–Tanaka tensor is the scheme's answer, not a
 numerical artifact.
 
@@ -91,9 +91,9 @@ of ``(\mathbb C, \mathbb P, \mathbb N)``.
 ## Where to go next
 
 Mori–Tanaka describes what surrounds an inclusion only through the mean strain
-of the matrix. The next page,
-[Maxwell and Ponte Castañeda–Willis](@ref th-scheme-maxwell-pcw), adds a second
-shape that describes how the inclusions are distributed, derives both schemes
-from the Green operator, and recovers Mori–Tanaka as a particular choice of that
-shape. The estimate is computed and compared with the bounds in the tutorial
+of the matrix. The next two pages add a second shape, which describes how the
+inclusions are distributed: [Maxwell](@ref th-scheme-maxwell) through the far
+field of a cluster, then [Ponte Castañeda–Willis](@ref th-scheme-pcw) through
+an energy principle and the two-point statistics, which recovers Mori–Tanaka as
+a particular choice of distribution. The estimate is computed and compared with the bounds in the tutorial
 [Bounds and classical schemes](@ref tut-bounds-and-schemes).

@@ -603,7 +603,7 @@ tex = '\varepsilon'
 label = "ε"
 name = "crack density, N a<sup>3</sup> for penny-shaped cracks"
 unit = "1"
-pages = ["manual/cracks.md", "theory/cod_tensors.md", "theory/thermal_cracks.md", "theory/differential_scheme.md", "theory/homogenization.md", "theory/scheme_dilute.md", "theory/scheme_mori_tanaka.md", "theory/scheme_maxwell_pcw.md", "theory/scheme_self_consistent.md", "tutorials/cracks.md", "tutorials/fe_crack.md", "tutorials/generated/crack_distributions.md", "tutorials/generated/custom_inclusion_contract.md", "manual/custom_inclusions.md", "developer/adding_inclusion.md", "fe_coupling/permeability.md", "fe_coupling/fractured_rock.md", "fe_coupling/materials.md", "manual/viscoelasticity.md"]
+pages = ["manual/cracks.md", "theory/cod_tensors.md", "theory/thermal_cracks.md", "theory/differential_scheme.md", "theory/homogenization.md", "theory/scheme_dilute.md", "theory/scheme_mori_tanaka.md", "theory/scheme_maxwell.md", "theory/scheme_pcw.md", "theory/scheme_self_consistent.md", "tutorials/cracks.md", "tutorials/fe_crack.md", "tutorials/generated/crack_distributions.md", "tutorials/generated/custom_inclusion_contract.md", "manual/custom_inclusions.md", "developer/adding_inclusion.md", "fe_coupling/permeability.md", "fe_coupling/fractured_rock.md", "fe_coupling/materials.md", "manual/viscoelasticity.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -706,7 +706,7 @@ tex = '\mathbb{P}_d^{ij}'
 label = "ℙ<sub>d</sub><sup>ij</sup>"
 name = "Hill tensor of the distribution ellipsoid of phase j around phase i"
 unit = "Pa<sup>−1</sup>"
-pages = ["theory/scheme_maxwell_pcw.md"]
+pages = ["theory/scheme_pcw.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -714,7 +714,7 @@ tex = '\mathcal{D}'
 label = "𝒟"
 name = "distribution ellipsoid, from which the other inclusion centers are excluded"
 unit = ""
-pages = ["theory/scheme_maxwell_pcw.md"]
+pages = ["theory/scheme_pcw.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -722,7 +722,7 @@ tex = '\mathcal{E}'
 label = "ℰ"
 name = "domain of an inhomogeneity, of any shape"
 unit = ""
-pages = ["theory/scheme_maxwell_pcw.md"]
+pages = ["theory/scheme_maxwell.md"]
 
 [[symbol]]
 group = "Eshelby problem and localization"
@@ -730,7 +730,103 @@ tex = '\bar{\boldsymbol\tau}'
 label = "<b>τ̄</b>"
 name = "mean polarization of the inclusions, Σ f<sub>j</sub> <b>τ</b><sub>j</sub>"
 unit = "Pa"
-pages = ["theory/scheme_maxwell_pcw.md"]
+pages = ["theory/scheme_pcw.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{Y}^{ij}'
+label = "𝕐<sup>ij</sup>"
+name = "microstructural tensor of the Hashin–Shtrikman functional for phases i and j"
+unit = "Pa<sup>−1</sup>"
+pages = ["theory/scheme_pcw.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathcal{H}'
+label = "ℋ"
+name = "Hashin–Shtrikman functional of the polarization"
+unit = "J/m<sup>3</sup>"
+pages = ["theory/scheme_pcw.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = 'w'
+label = "w"
+name = "strain energy density"
+unit = "J/m<sup>3</sup>"
+pages = ["theory/scheme_pcw.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = 'w_0'
+label = "w<sub>0</sub>"
+name = "strain energy density of the comparison medium"
+unit = "J/m<sup>3</sup>"
+pages = ["theory/scheme_pcw.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = 'W^{\mathrm{hom}}'
+label = "W<sup>hom</sup>"
+name = "effective strain energy density"
+unit = "J/m<sup>3</sup>"
+pages = ["theory/scheme_pcw.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\chi_i'
+label = "χ<sub>i</sub>"
+name = "characteristic function of phase i"
+unit = "1"
+pages = ["theory/scheme_pcw.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'n_i'
+label = "n<sub>i</sub>"
+name = "number density of the inclusions of phase i"
+unit = "m<sup>−3</sup>"
+pages = ["theory/scheme_pcw.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'p_{j|i}'
+label = "p<sub>j|i</sub>"
+name = "number density of centers of phase j at a given separation from a center of phase i"
+unit = "m<sup>−3</sup>"
+pages = ["theory/scheme_pcw.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\omega_d'
+label = "ω<sub>d</sub>"
+name = "aspect ratio of a spheroidal distribution ellipsoid"
+unit = "1"
+pages = ["theory/scheme_pcw.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbf{K}'
+label = "<b>K</b>"
+name = "block matrix of the Ponte Castañeda–Willis system"
+unit = "Pa<sup>−1</sup>"
+pages = ["theory/scheme_pcw.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{E}_i'
+label = "𝔼<sub>i</sub>"
+name = "tensor mapping the macroscopic strain onto the field applied to phase i"
+unit = "1"
+pages = ["theory/scheme_pcw.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\boldsymbol{t}_i'
+label = "<b>t</b><sub>i</sub>"
+name = "polarization of phase i weighted by its fraction, f<sub>i</sub> <b>τ</b><sub>i</sub>"
+unit = "Pa"
+pages = ["theory/scheme_pcw.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -738,7 +834,7 @@ tex = '\kappa_c'
 label = "κ<sub>c</sub>"
 name = "geometric prefactor of a crack family, 4π/3 (elliptic) or π (ribbon)"
 unit = "1"
-pages = ["theory/homogenization.md", "theory/scheme_dilute.md", "theory/scheme_mori_tanaka.md", "theory/scheme_maxwell_pcw.md", "theory/scheme_self_consistent.md"]
+pages = ["theory/homogenization.md", "theory/scheme_dilute.md", "theory/scheme_mori_tanaka.md", "theory/scheme_maxwell.md", "theory/scheme_pcw.md", "theory/scheme_self_consistent.md"]
 
 [[symbol]]
 group = "Eshelby problem and localization"
