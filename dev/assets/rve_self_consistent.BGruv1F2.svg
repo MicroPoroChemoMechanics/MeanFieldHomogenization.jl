@@ -1,0 +1,1195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="360" height="340" viewBox="0 0 360 340">
+<defs>
+<clipPath id="clip-0">
+<path clip-rule="nonzero" d="M 96 15 L 173 15 L 173 87 L 96 87 Z M 96 15 "/>
+</clipPath>
+<clipPath id="clip-1">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-2">
+<path clip-rule="nonzero" d="M 73 15 L 196 15 L 196 109 L 73 109 Z M 73 15 "/>
+</clipPath>
+<clipPath id="clip-3">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-4">
+<path clip-rule="nonzero" d="M 104 118 L 169 118 L 169 170 L 104 170 Z M 104 118 "/>
+</clipPath>
+<clipPath id="clip-5">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-6">
+<path clip-rule="nonzero" d="M 81 95 L 191 95 L 191 192 L 81 192 Z M 81 95 "/>
+</clipPath>
+<clipPath id="clip-7">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-8">
+<path clip-rule="nonzero" d="M 48 171 L 107 171 L 107 214 L 48 214 Z M 48 171 "/>
+</clipPath>
+<clipPath id="clip-9">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-10">
+<path clip-rule="nonzero" d="M 25 149 L 129 149 L 129 237 L 25 237 Z M 25 149 "/>
+</clipPath>
+<clipPath id="clip-11">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-12">
+<path clip-rule="nonzero" d="M 316 76 L 345 76 L 345 132 L 316 132 Z M 316 76 "/>
+</clipPath>
+<clipPath id="clip-13">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-14">
+<path clip-rule="nonzero" d="M 294 53 L 345 53 L 345 154 L 294 154 Z M 294 53 "/>
+</clipPath>
+<clipPath id="clip-15">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-16">
+<path clip-rule="nonzero" d="M 133 147 L 200 147 L 200 221 L 133 221 Z M 133 147 "/>
+</clipPath>
+<clipPath id="clip-17">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-18">
+<path clip-rule="nonzero" d="M 110 124 L 223 124 L 223 244 L 110 244 Z M 110 124 "/>
+</clipPath>
+<clipPath id="clip-19">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-20">
+<path clip-rule="nonzero" d="M 61 15 L 137 15 L 137 57 L 61 57 Z M 61 15 "/>
+</clipPath>
+<clipPath id="clip-21">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-22">
+<path clip-rule="nonzero" d="M 38 15 L 159 15 L 159 80 L 38 80 Z M 38 15 "/>
+</clipPath>
+<clipPath id="clip-23">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-24">
+<path clip-rule="nonzero" d="M 242 89 L 301 89 L 301 137 L 242 137 Z M 242 89 "/>
+</clipPath>
+<clipPath id="clip-25">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-26">
+<path clip-rule="nonzero" d="M 220 66 L 324 66 L 324 160 L 220 160 Z M 220 66 "/>
+</clipPath>
+<clipPath id="clip-27">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-28">
+<path clip-rule="nonzero" d="M 15 88 L 63 88 L 63 161 L 15 161 Z M 15 88 "/>
+</clipPath>
+<clipPath id="clip-29">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-30">
+<path clip-rule="nonzero" d="M 15 65 L 85 65 L 85 184 L 15 184 Z M 15 65 "/>
+</clipPath>
+<clipPath id="clip-31">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-32">
+<path clip-rule="nonzero" d="M 36 41 L 65 41 L 65 96 L 36 96 Z M 36 41 "/>
+</clipPath>
+<clipPath id="clip-33">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-34">
+<path clip-rule="nonzero" d="M 15 18 L 87 18 L 87 118 L 15 118 Z M 15 18 "/>
+</clipPath>
+<clipPath id="clip-35">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-36">
+<path clip-rule="nonzero" d="M 21 23 L 64 23 L 64 48 L 21 48 Z M 21 23 "/>
+</clipPath>
+<clipPath id="clip-37">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-38">
+<path clip-rule="nonzero" d="M 15 15 L 86 15 L 86 71 L 15 71 Z M 15 15 "/>
+</clipPath>
+<clipPath id="clip-39">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-40">
+<path clip-rule="nonzero" d="M 197 200 L 275 200 L 275 240 L 197 240 Z M 197 200 "/>
+</clipPath>
+<clipPath id="clip-41">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-42">
+<path clip-rule="nonzero" d="M 174 177 L 298 177 L 298 263 L 174 263 Z M 174 177 "/>
+</clipPath>
+<clipPath id="clip-43">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-44">
+<path clip-rule="nonzero" d="M 15 185 L 73 185 L 73 236 L 15 236 Z M 15 185 "/>
+</clipPath>
+<clipPath id="clip-45">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-46">
+<path clip-rule="nonzero" d="M 15 163 L 96 163 L 96 259 L 15 259 Z M 15 163 "/>
+</clipPath>
+<clipPath id="clip-47">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-48">
+<path clip-rule="nonzero" d="M 163 15 L 280 15 L 280 68 L 163 68 Z M 163 15 "/>
+</clipPath>
+<clipPath id="clip-49">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-50">
+<path clip-rule="nonzero" d="M 140 15 L 303 15 L 303 91 L 140 91 Z M 140 15 "/>
+</clipPath>
+<clipPath id="clip-51">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-52">
+<path clip-rule="nonzero" d="M 284 270 L 345 270 L 345 325 L 284 325 Z M 284 270 "/>
+</clipPath>
+<clipPath id="clip-53">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-54">
+<path clip-rule="nonzero" d="M 261 247 L 345 247 L 345 325 L 261 325 Z M 261 247 "/>
+</clipPath>
+<clipPath id="clip-55">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-56">
+<path clip-rule="nonzero" d="M 59 92 L 108 92 L 108 153 L 59 153 Z M 59 92 "/>
+</clipPath>
+<clipPath id="clip-57">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-58">
+<path clip-rule="nonzero" d="M 36 69 L 130 69 L 130 175 L 36 175 Z M 36 69 "/>
+</clipPath>
+<clipPath id="clip-59">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-60">
+<path clip-rule="nonzero" d="M 301 122 L 341 122 L 341 186 L 301 186 Z M 301 122 "/>
+</clipPath>
+<clipPath id="clip-61">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-62">
+<path clip-rule="nonzero" d="M 278 100 L 345 100 L 345 209 L 278 209 Z M 278 100 "/>
+</clipPath>
+<clipPath id="clip-63">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-64">
+<path clip-rule="nonzero" d="M 15 26 L 40 26 L 40 90 L 15 90 Z M 15 26 "/>
+</clipPath>
+<clipPath id="clip-65">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-66">
+<path clip-rule="nonzero" d="M 15 15 L 63 15 L 63 112 L 15 112 Z M 15 15 "/>
+</clipPath>
+<clipPath id="clip-67">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-68">
+<path clip-rule="nonzero" d="M 53 210 L 113 210 L 113 271 L 53 271 Z M 53 210 "/>
+</clipPath>
+<clipPath id="clip-69">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-70">
+<path clip-rule="nonzero" d="M 30 187 L 136 187 L 136 293 L 30 293 Z M 30 187 "/>
+</clipPath>
+<clipPath id="clip-71">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-72">
+<path clip-rule="nonzero" d="M 107 80 L 170 80 L 170 128 L 107 128 Z M 107 80 "/>
+</clipPath>
+<clipPath id="clip-73">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-74">
+<path clip-rule="nonzero" d="M 84 57 L 192 57 L 192 151 L 84 151 Z M 84 57 "/>
+</clipPath>
+<clipPath id="clip-75">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-76">
+<path clip-rule="nonzero" d="M 216 222 L 265 222 L 265 296 L 216 296 Z M 216 222 "/>
+</clipPath>
+<clipPath id="clip-77">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-78">
+<path clip-rule="nonzero" d="M 193 199 L 287 199 L 287 319 L 193 319 Z M 193 199 "/>
+</clipPath>
+<clipPath id="clip-79">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-80">
+<path clip-rule="nonzero" d="M 15 156 L 49 156 L 49 227 L 15 227 Z M 15 156 "/>
+</clipPath>
+<clipPath id="clip-81">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-82">
+<path clip-rule="nonzero" d="M 15 134 L 72 134 L 72 250 L 15 250 Z M 15 134 "/>
+</clipPath>
+<clipPath id="clip-83">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-84">
+<path clip-rule="nonzero" d="M 70 78 L 128 78 L 128 138 L 70 138 Z M 70 78 "/>
+</clipPath>
+<clipPath id="clip-85">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-86">
+<path clip-rule="nonzero" d="M 47 55 L 151 55 L 151 161 L 47 161 Z M 47 55 "/>
+</clipPath>
+<clipPath id="clip-87">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-88">
+<path clip-rule="nonzero" d="M 301 207 L 330 207 L 330 271 L 301 271 Z M 301 207 "/>
+</clipPath>
+<clipPath id="clip-89">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-90">
+<path clip-rule="nonzero" d="M 278 184 L 345 184 L 345 293 L 278 293 Z M 278 184 "/>
+</clipPath>
+<clipPath id="clip-91">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-92">
+<path clip-rule="nonzero" d="M 59 270 L 150 270 L 150 325 L 59 325 Z M 59 270 "/>
+</clipPath>
+<clipPath id="clip-93">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-94">
+<path clip-rule="nonzero" d="M 37 248 L 173 248 L 173 325 L 37 325 Z M 37 248 "/>
+</clipPath>
+<clipPath id="clip-95">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-96">
+<path clip-rule="nonzero" d="M 191 205 L 221 205 L 221 276 L 191 276 Z M 191 205 "/>
+</clipPath>
+<clipPath id="clip-97">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-98">
+<path clip-rule="nonzero" d="M 169 183 L 244 183 L 244 298 L 169 298 Z M 169 183 "/>
+</clipPath>
+<clipPath id="clip-99">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-100">
+<path clip-rule="nonzero" d="M 15 15 L 64 15 L 64 29 L 15 29 Z M 15 15 "/>
+</clipPath>
+<clipPath id="clip-101">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-102">
+<path clip-rule="nonzero" d="M 15 15 L 87 15 L 87 52 L 15 52 Z M 15 15 "/>
+</clipPath>
+<clipPath id="clip-103">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-104">
+<path clip-rule="nonzero" d="M 186 110 L 248 110 L 248 166 L 186 166 Z M 186 110 "/>
+</clipPath>
+<clipPath id="clip-105">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-106">
+<path clip-rule="nonzero" d="M 163 87 L 270 87 L 270 189 L 163 189 Z M 163 87 "/>
+</clipPath>
+<clipPath id="clip-107">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-108">
+<path clip-rule="nonzero" d="M 208 54 L 273 54 L 273 126 L 208 126 Z M 208 54 "/>
+</clipPath>
+<clipPath id="clip-109">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-110">
+<path clip-rule="nonzero" d="M 185 31 L 296 31 L 296 148 L 185 148 Z M 185 31 "/>
+</clipPath>
+<clipPath id="clip-111">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-112">
+<path clip-rule="nonzero" d="M 261 158 L 336 158 L 336 221 L 261 221 Z M 261 158 "/>
+</clipPath>
+<clipPath id="clip-113">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-114">
+<path clip-rule="nonzero" d="M 238 135 L 345 135 L 345 243 L 238 243 Z M 238 135 "/>
+</clipPath>
+<clipPath id="clip-115">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-116">
+<path clip-rule="nonzero" d="M 317 204 L 345 204 L 345 289 L 317 289 Z M 317 204 "/>
+</clipPath>
+<clipPath id="clip-117">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-118">
+<path clip-rule="nonzero" d="M 294 181 L 345 181 L 345 312 L 294 312 Z M 294 181 "/>
+</clipPath>
+<clipPath id="clip-119">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-120">
+<path clip-rule="nonzero" d="M 15 231 L 74 231 L 74 260 L 15 260 Z M 15 231 "/>
+</clipPath>
+<clipPath id="clip-121">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-122">
+<path clip-rule="nonzero" d="M 15 208 L 96 208 L 96 282 L 15 282 Z M 15 208 "/>
+</clipPath>
+<clipPath id="clip-123">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-124">
+<path clip-rule="nonzero" d="M 244 132 L 302 132 L 302 176 L 244 176 Z M 244 132 "/>
+</clipPath>
+<clipPath id="clip-125">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-126">
+<path clip-rule="nonzero" d="M 221 110 L 324 110 L 324 198 L 221 198 Z M 221 110 "/>
+</clipPath>
+<clipPath id="clip-127">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-128">
+<path clip-rule="nonzero" d="M 199 158 L 265 158 L 265 201 L 199 201 Z M 199 158 "/>
+</clipPath>
+<clipPath id="clip-129">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-130">
+<path clip-rule="nonzero" d="M 176 135 L 287 135 L 287 223 L 176 223 Z M 176 135 "/>
+</clipPath>
+<clipPath id="clip-131">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-132">
+<path clip-rule="nonzero" d="M 165 122 L 227 122 L 227 190 L 165 190 Z M 165 122 "/>
+</clipPath>
+<clipPath id="clip-133">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-134">
+<path clip-rule="nonzero" d="M 142 99 L 250 99 L 250 213 L 142 213 Z M 142 99 "/>
+</clipPath>
+<clipPath id="clip-135">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-136">
+<path clip-rule="nonzero" d="M 34 256 L 113 256 L 113 311 L 34 311 Z M 34 256 "/>
+</clipPath>
+<clipPath id="clip-137">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-138">
+<path clip-rule="nonzero" d="M 15 233 L 136 233 L 136 325 L 15 325 Z M 15 233 "/>
+</clipPath>
+<clipPath id="clip-139">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-140">
+<path clip-rule="nonzero" d="M 91 144 L 141 144 L 141 196 L 91 196 Z M 91 144 "/>
+</clipPath>
+<clipPath id="clip-141">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-142">
+<path clip-rule="nonzero" d="M 69 122 L 163 122 L 163 219 L 69 219 Z M 69 122 "/>
+</clipPath>
+<clipPath id="clip-143">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-144">
+<path clip-rule="nonzero" d="M 268 49 L 318 49 L 318 133 L 268 133 Z M 268 49 "/>
+</clipPath>
+<clipPath id="clip-145">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-146">
+<path clip-rule="nonzero" d="M 245 27 L 341 27 L 341 156 L 245 156 Z M 245 27 "/>
+</clipPath>
+<clipPath id="clip-147">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-148">
+<path clip-rule="nonzero" d="M 142 211 L 204 211 L 204 265 L 142 265 Z M 142 211 "/>
+</clipPath>
+<clipPath id="clip-149">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-150">
+<path clip-rule="nonzero" d="M 120 188 L 227 188 L 227 287 L 120 287 Z M 120 188 "/>
+</clipPath>
+<clipPath id="clip-151">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-152">
+<path clip-rule="nonzero" d="M 243 244 L 313 244 L 313 297 L 243 297 Z M 243 244 "/>
+</clipPath>
+<clipPath id="clip-153">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-154">
+<path clip-rule="nonzero" d="M 220 221 L 335 221 L 335 319 L 220 319 Z M 220 221 "/>
+</clipPath>
+<clipPath id="clip-155">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-156">
+<path clip-rule="nonzero" d="M 15 313 L 60 313 L 60 325 L 15 325 Z M 15 313 "/>
+</clipPath>
+<clipPath id="clip-157">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-158">
+<path clip-rule="nonzero" d="M 15 291 L 83 291 L 83 325 L 15 325 Z M 15 291 "/>
+</clipPath>
+<clipPath id="clip-159">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-160">
+<path clip-rule="nonzero" d="M 279 51 L 345 51 L 345 117 L 279 117 Z M 279 51 "/>
+</clipPath>
+<clipPath id="clip-161">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-162">
+<path clip-rule="nonzero" d="M 256 28 L 345 28 L 345 139 L 256 139 Z M 256 28 "/>
+</clipPath>
+<clipPath id="clip-163">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-164">
+<path clip-rule="nonzero" d="M 222 288 L 321 288 L 321 325 L 222 325 Z M 222 288 "/>
+</clipPath>
+<clipPath id="clip-165">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-166">
+<path clip-rule="nonzero" d="M 199 266 L 343 266 L 343 325 L 199 325 Z M 199 266 "/>
+</clipPath>
+<clipPath id="clip-167">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-168">
+<path clip-rule="nonzero" d="M 15 271 L 61 271 L 61 315 L 15 315 Z M 15 271 "/>
+</clipPath>
+<clipPath id="clip-169">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-170">
+<path clip-rule="nonzero" d="M 15 248 L 84 248 L 84 325 L 15 325 Z M 15 248 "/>
+</clipPath>
+<clipPath id="clip-171">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-172">
+<path clip-rule="nonzero" d="M 15 243 L 62 243 L 62 283 L 15 283 Z M 15 243 "/>
+</clipPath>
+<clipPath id="clip-173">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-174">
+<path clip-rule="nonzero" d="M 15 220 L 85 220 L 85 306 L 15 306 Z M 15 220 "/>
+</clipPath>
+<clipPath id="clip-175">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-176">
+<path clip-rule="nonzero" d="M 57 32 L 103 32 L 103 95 L 57 95 Z M 57 32 "/>
+</clipPath>
+<clipPath id="clip-177">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-178">
+<path clip-rule="nonzero" d="M 34 15 L 126 15 L 126 117 L 34 117 Z M 34 15 "/>
+</clipPath>
+<clipPath id="clip-179">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-180">
+<path clip-rule="nonzero" d="M 95 187 L 162 187 L 162 274 L 95 274 Z M 95 187 "/>
+</clipPath>
+<clipPath id="clip-181">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-182">
+<path clip-rule="nonzero" d="M 72 164 L 185 164 L 185 297 L 72 297 Z M 72 164 "/>
+</clipPath>
+<clipPath id="clip-183">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-184">
+<path clip-rule="nonzero" d="M 325 131 L 345 131 L 345 206 L 325 206 Z M 325 131 "/>
+</clipPath>
+<clipPath id="clip-185">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-186">
+<path clip-rule="nonzero" d="M 303 108 L 345 108 L 345 228 L 303 228 Z M 303 108 "/>
+</clipPath>
+<clipPath id="clip-187">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-188">
+<path clip-rule="nonzero" d="M 37 137 L 93 137 L 93 181 L 37 181 Z M 37 137 "/>
+</clipPath>
+<clipPath id="clip-189">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-190">
+<path clip-rule="nonzero" d="M 15 114 L 116 114 L 116 204 L 15 204 Z M 15 114 "/>
+</clipPath>
+<clipPath id="clip-191">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-192">
+<path clip-rule="nonzero" d="M 121 256 L 193 256 L 193 325 L 121 325 Z M 121 256 "/>
+</clipPath>
+<clipPath id="clip-193">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-194">
+<path clip-rule="nonzero" d="M 98 233 L 215 233 L 215 325 L 98 325 Z M 98 233 "/>
+</clipPath>
+<clipPath id="clip-195">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-196">
+<path clip-rule="nonzero" d="M 276 15 L 345 15 L 345 74 L 276 74 Z M 276 15 "/>
+</clipPath>
+<clipPath id="clip-197">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-198">
+<path clip-rule="nonzero" d="M 254 15 L 345 15 L 345 97 L 254 97 Z M 254 15 "/>
+</clipPath>
+<clipPath id="clip-199">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-200">
+<path clip-rule="nonzero" d="M 316 15 L 345 15 L 345 43 L 316 43 Z M 316 15 "/>
+</clipPath>
+<clipPath id="clip-201">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-202">
+<path clip-rule="nonzero" d="M 294 15 L 345 15 L 345 66 L 294 66 Z M 294 15 "/>
+</clipPath>
+<clipPath id="clip-203">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-204">
+<path clip-rule="nonzero" d="M 160 37 L 216 37 L 216 127 L 160 127 Z M 160 37 "/>
+</clipPath>
+<clipPath id="clip-205">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-206">
+<path clip-rule="nonzero" d="M 137 15 L 239 15 L 239 150 L 137 150 Z M 137 15 "/>
+</clipPath>
+<clipPath id="clip-207">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-208">
+<path clip-rule="nonzero" d="M 263 209 L 324 209 L 324 262 L 263 262 Z M 263 209 "/>
+</clipPath>
+<clipPath id="clip-209">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-210">
+<path clip-rule="nonzero" d="M 241 186 L 345 186 L 345 285 L 241 285 Z M 241 186 "/>
+</clipPath>
+<clipPath id="clip-211">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-212">
+<path clip-rule="nonzero" d="M 175 262 L 235 262 L 235 325 L 175 325 Z M 175 262 "/>
+</clipPath>
+<clipPath id="clip-213">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+<clipPath id="clip-214">
+<path clip-rule="nonzero" d="M 152 239 L 258 239 L 258 325 L 152 325 Z M 152 239 "/>
+</clipPath>
+<clipPath id="clip-215">
+<path clip-rule="nonzero" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</clipPath>
+</defs>
+<path fill="rgb(100%, 100%, 100%)" stroke-width="1.2" stroke="rgb(81.57%, 84.31%, 87.06%)" stroke-miterlimit="10" d="M 180 339 L 13 339 C 6.37 339 1 333.63 1 327 L 1 13 C 1 6.37 6.37 1 13 1 L 347 1 C 353.63 1 359 6.37 359 13 L 359 327 C 359 333.63 353.63 339 347 339 Z M 180 339 "/>
+<g clip-path="url(#clip-0)">
+<g clip-path="url(#clip-1)">
+<path fill="rgb(49.27%, 73.75%, 44.69%)" d="M 136.24 15 L 163.22 15 L 172.86 37.62 L 160.29 80.29 L 107.26 86.27 L 96.24 78.57 L 102.58 56.65 Z M 136.24 15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-2)">
+<g clip-path="url(#clip-3)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 136.24 15 L 163.22 15 L 172.86 37.62 L 160.29 80.29 L 107.26 86.27 L 96.24 78.57 L 102.58 56.65 Z M 136.24 15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-4)">
+<g clip-path="url(#clip-5)">
+<path fill="rgb(42.9%, 75.27%, 69.92%)" d="M 104.62 144.96 L 107.19 137.98 L 127.95 118.06 L 168.18 127.6 L 165.47 147.42 L 140.24 169.37 Z M 104.62 144.96 "/>
+</g>
+</g>
+<g clip-path="url(#clip-6)">
+<g clip-path="url(#clip-7)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 104.62 144.96 L 107.19 137.98 L 127.95 118.06 L 168.18 127.6 L 165.47 147.42 L 140.24 169.37 Z M 104.62 144.96 "/>
+</g>
+</g>
+<g clip-path="url(#clip-8)">
+<g clip-path="url(#clip-9)">
+<path fill="rgb(42.9%, 75.27%, 69.92%)" d="M 91.83 171.7 L 106.3 195.84 L 95.16 213.54 L 72.51 210.11 L 48.67 185.74 L 48.21 180.88 Z M 91.83 171.7 "/>
+</g>
+</g>
+<g clip-path="url(#clip-10)">
+<g clip-path="url(#clip-11)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 91.83 171.7 L 106.3 195.84 L 95.16 213.54 L 72.51 210.11 L 48.67 185.74 L 48.21 180.88 Z M 91.83 171.7 "/>
+</g>
+</g>
+<g clip-path="url(#clip-12)">
+<g clip-path="url(#clip-13)">
+<path fill="rgb(88.2%, 73.92%, 36.31%)" d="M 345 76.14 L 345 131.15 L 340.8 131.34 L 316.66 122.76 L 317.47 116.27 Z M 345 76.14 "/>
+</g>
+</g>
+<g clip-path="url(#clip-14)">
+<g clip-path="url(#clip-15)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 345 76.14 L 345 131.15 L 340.8 131.34 L 316.66 122.76 L 317.47 116.27 Z M 345 76.14 "/>
+</g>
+</g>
+<g clip-path="url(#clip-16)">
+<g clip-path="url(#clip-17)">
+<path fill="rgb(51.31%, 60.24%, 90.06%)" d="M 140.24 169.37 L 165.47 147.42 L 199.99 189.75 L 199.5 200.07 L 197.59 205.79 L 191.88 211.05 L 161.75 220.82 L 133.47 187.24 Z M 140.24 169.37 "/>
+</g>
+</g>
+<g clip-path="url(#clip-18)">
+<g clip-path="url(#clip-19)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 140.24 169.37 L 165.47 147.42 L 199.99 189.75 L 199.5 200.07 L 197.59 205.79 L 191.88 211.05 L 161.75 220.82 L 133.47 187.24 Z M 140.24 169.37 "/>
+</g>
+</g>
+<g clip-path="url(#clip-20)">
+<g clip-path="url(#clip-21)">
+<path fill="rgb(42.9%, 75.27%, 69.92%)" d="M 63.47 15 L 136.24 15 L 102.58 56.65 L 63.07 32.27 L 61.02 23.38 Z M 63.47 15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-22)">
+<g clip-path="url(#clip-23)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 63.47 15 L 136.24 15 L 102.58 56.65 L 63.07 32.27 L 61.02 23.38 Z M 63.47 15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-24)">
+<g clip-path="url(#clip-25)">
+<path fill="rgb(42.9%, 75.27%, 69.92%)" d="M 300.42 132.7 L 247.21 136.71 L 242.83 125.37 L 268.09 89.1 Z M 300.42 132.7 "/>
+</g>
+</g>
+<g clip-path="url(#clip-26)">
+<g clip-path="url(#clip-27)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 300.42 132.7 L 247.21 136.71 L 242.83 125.37 L 268.09 89.1 Z M 300.42 132.7 "/>
+</g>
+</g>
+<g clip-path="url(#clip-28)">
+<g clip-path="url(#clip-29)">
+<path fill="rgb(91.49%, 63.76%, 45.65%)" d="M 37.66 160.52 L 15 156.69 L 15 89.16 L 36.56 88.18 L 62.29 95.04 L 59.31 137.06 Z M 37.66 160.52 "/>
+</g>
+</g>
+<g clip-path="url(#clip-30)">
+<g clip-path="url(#clip-31)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 37.66 160.52 L 15 156.69 L 15 89.16 L 36.56 88.18 L 62.29 95.04 L 59.31 137.06 Z M 37.66 160.52 "/>
+</g>
+</g>
+<g clip-path="url(#clip-32)">
+<g clip-path="url(#clip-33)">
+<path fill="rgb(42.9%, 75.27%, 69.92%)" d="M 64.34 94 L 62.29 95.04 L 36.56 88.18 L 39.56 47.5 L 57.27 41.08 Z M 64.34 94 "/>
+</g>
+</g>
+<g clip-path="url(#clip-34)">
+<g clip-path="url(#clip-35)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 64.34 94 L 62.29 95.04 L 36.56 88.18 L 39.56 47.5 L 57.27 41.08 Z M 64.34 94 "/>
+</g>
+</g>
+<g clip-path="url(#clip-36)">
+<g clip-path="url(#clip-37)">
+<path fill="rgb(91.49%, 63.76%, 45.65%)" d="M 61.02 23.38 L 63.07 32.27 L 57.27 41.08 L 39.56 47.5 L 21.55 28.68 Z M 61.02 23.38 "/>
+</g>
+</g>
+<g clip-path="url(#clip-38)">
+<g clip-path="url(#clip-39)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 61.02 23.38 L 63.07 32.27 L 57.27 41.08 L 39.56 47.5 L 21.55 28.68 Z M 61.02 23.38 "/>
+</g>
+</g>
+<g clip-path="url(#clip-40)">
+<g clip-path="url(#clip-41)">
+<path fill="rgb(49.27%, 73.75%, 44.69%)" d="M 197.59 205.79 L 199.5 200.07 L 264.37 200.01 L 274.69 220.2 L 264.18 239.41 L 220.53 222.21 Z M 197.59 205.79 "/>
+</g>
+</g>
+<g clip-path="url(#clip-42)">
+<g clip-path="url(#clip-43)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 197.59 205.79 L 199.5 200.07 L 264.37 200.01 L 274.69 220.2 L 264.18 239.41 L 220.53 222.21 Z M 197.59 205.79 "/>
+</g>
+</g>
+<g clip-path="url(#clip-44)">
+<g clip-path="url(#clip-45)">
+<path fill="rgb(88.2%, 73.92%, 36.31%)" d="M 15 235.97 L 15 226.77 L 48.67 185.74 L 72.51 210.11 L 53.4 231.62 Z M 15 235.97 "/>
+</g>
+</g>
+<g clip-path="url(#clip-46)">
+<g clip-path="url(#clip-47)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 15 235.97 L 15 226.77 L 48.67 185.74 L 72.51 210.11 L 53.4 231.62 Z M 15 235.97 "/>
+</g>
+</g>
+<g clip-path="url(#clip-48)">
+<g clip-path="url(#clip-49)">
+<path fill="rgb(88.2%, 73.92%, 36.31%)" d="M 163.22 15 L 279.71 15 L 276.94 49.65 L 272.62 54.26 L 215.88 67.9 L 172.86 37.62 Z M 163.22 15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-50)">
+<g clip-path="url(#clip-51)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 163.22 15 L 279.71 15 L 276.94 49.65 L 272.62 54.26 L 215.88 67.9 L 172.86 37.62 Z M 163.22 15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-52)">
+<g clip-path="url(#clip-53)">
+<path fill="rgb(91.49%, 63.76%, 45.65%)" d="M 345 288.9 L 345 325 L 320.29 325 L 284.11 296.26 L 312.27 270.14 L 317.5 270.36 Z M 345 288.9 "/>
+</g>
+</g>
+<g clip-path="url(#clip-54)">
+<g clip-path="url(#clip-55)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 345 288.9 L 345 325 L 320.29 325 L 284.11 296.26 L 312.27 270.14 L 317.5 270.36 Z M 345 288.9 "/>
+</g>
+</g>
+<g clip-path="url(#clip-56)">
+<g clip-path="url(#clip-57)">
+<path fill="rgb(51.31%, 60.24%, 90.06%)" d="M 107.19 137.98 L 104.62 144.96 L 92.93 152.09 L 59.31 137.06 L 62.29 95.04 L 64.34 94 L 70.17 92.39 Z M 107.19 137.98 "/>
+</g>
+</g>
+<g clip-path="url(#clip-58)">
+<g clip-path="url(#clip-59)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 107.19 137.98 L 104.62 144.96 L 92.93 152.09 L 59.31 137.06 L 62.29 95.04 L 64.34 94 L 70.17 92.39 Z M 107.19 137.98 "/>
+</g>
+</g>
+<g clip-path="url(#clip-60)">
+<g clip-path="url(#clip-61)">
+<path fill="rgb(42.9%, 75.27%, 69.92%)" d="M 325.78 186 L 301.05 158.44 L 301.09 133 L 316.66 122.76 L 340.8 131.34 Z M 325.78 186 "/>
+</g>
+</g>
+<g clip-path="url(#clip-62)">
+<g clip-path="url(#clip-63)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 325.78 186 L 301.05 158.44 L 301.09 133 L 316.66 122.76 L 340.8 131.34 Z M 325.78 186 "/>
+</g>
+</g>
+<g clip-path="url(#clip-64)">
+<g clip-path="url(#clip-65)">
+<path fill="rgb(51.31%, 60.24%, 90.06%)" d="M 39.56 47.5 L 36.56 88.18 L 15 89.16 L 15 26.22 L 21.55 28.68 Z M 39.56 47.5 "/>
+</g>
+</g>
+<g clip-path="url(#clip-66)">
+<g clip-path="url(#clip-67)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 39.56 47.5 L 36.56 88.18 L 15 89.16 L 15 26.22 L 21.55 28.68 Z M 39.56 47.5 "/>
+</g>
+</g>
+<g clip-path="url(#clip-68)">
+<g clip-path="url(#clip-69)">
+<path fill="rgb(51.31%, 60.24%, 90.06%)" d="M 53.4 231.62 L 72.51 210.11 L 95.16 213.54 L 112.45 270.34 L 73.15 256.58 Z M 53.4 231.62 "/>
+</g>
+</g>
+<g clip-path="url(#clip-70)">
+<g clip-path="url(#clip-71)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 53.4 231.62 L 72.51 210.11 L 95.16 213.54 L 112.45 270.34 L 73.15 256.58 Z M 53.4 231.62 "/>
+</g>
+</g>
+<g clip-path="url(#clip-72)">
+<g clip-path="url(#clip-73)">
+<path fill="rgb(88.2%, 73.92%, 36.31%)" d="M 168.18 127.6 L 127.95 118.06 L 107.26 86.27 L 160.29 80.29 L 169.09 126.59 Z M 168.18 127.6 "/>
+</g>
+</g>
+<g clip-path="url(#clip-74)">
+<g clip-path="url(#clip-75)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 168.18 127.6 L 127.95 118.06 L 107.26 86.27 L 160.29 80.29 L 169.09 126.59 Z M 168.18 127.6 "/>
+</g>
+</g>
+<g clip-path="url(#clip-76)">
+<g clip-path="url(#clip-77)">
+<path fill="rgb(42.9%, 75.27%, 69.92%)" d="M 216.5 275.02 L 220.53 222.21 L 264.18 239.41 L 263.8 244.37 L 243.54 288.88 L 234.75 295.45 Z M 216.5 275.02 "/>
+</g>
+</g>
+<g clip-path="url(#clip-78)">
+<g clip-path="url(#clip-79)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 216.5 275.02 L 220.53 222.21 L 264.18 239.41 L 263.8 244.37 L 243.54 288.88 L 234.75 295.45 Z M 216.5 275.02 "/>
+</g>
+</g>
+<g clip-path="url(#clip-80)">
+<g clip-path="url(#clip-81)">
+<path fill="rgb(51.31%, 60.24%, 90.06%)" d="M 15 226.77 L 15 156.69 L 37.66 160.52 L 48.21 180.88 L 48.67 185.74 Z M 15 226.77 "/>
+</g>
+</g>
+<g clip-path="url(#clip-82)">
+<g clip-path="url(#clip-83)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 15 226.77 L 15 156.69 L 37.66 160.52 L 48.21 180.88 L 48.67 185.74 Z M 15 226.77 "/>
+</g>
+</g>
+<g clip-path="url(#clip-84)">
+<g clip-path="url(#clip-85)">
+<path fill="rgb(91.49%, 63.76%, 45.65%)" d="M 96.24 78.57 L 107.26 86.27 L 127.95 118.06 L 107.19 137.98 L 70.17 92.39 Z M 96.24 78.57 "/>
+</g>
+</g>
+<g clip-path="url(#clip-86)">
+<g clip-path="url(#clip-87)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 96.24 78.57 L 107.26 86.27 L 127.95 118.06 L 107.19 137.98 L 70.17 92.39 Z M 96.24 78.57 "/>
+</g>
+</g>
+<g clip-path="url(#clip-88)">
+<g clip-path="url(#clip-89)">
+<path fill="rgb(42.9%, 75.27%, 69.92%)" d="M 317.5 270.36 L 312.27 270.14 L 301.38 261.57 L 323.86 209.19 L 329.97 207.31 Z M 317.5 270.36 "/>
+</g>
+</g>
+<g clip-path="url(#clip-90)">
+<g clip-path="url(#clip-91)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 317.5 270.36 L 312.27 270.14 L 301.38 261.57 L 323.86 209.19 L 329.97 207.31 Z M 317.5 270.36 "/>
+</g>
+</g>
+<g clip-path="url(#clip-92)">
+<g clip-path="url(#clip-93)">
+<path fill="rgb(49.27%, 73.75%, 44.69%)" d="M 149.56 325 L 59.73 325 L 59.72 313.9 L 60.66 310.3 L 112.9 270.92 L 121.48 273.4 Z M 149.56 325 "/>
+</g>
+</g>
+<g clip-path="url(#clip-94)">
+<g clip-path="url(#clip-95)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 149.56 325 L 59.73 325 L 59.72 313.9 L 60.66 310.3 L 112.9 270.92 L 121.48 273.4 Z M 149.56 325 "/>
+</g>
+</g>
+<g clip-path="url(#clip-96)">
+<g clip-path="url(#clip-97)">
+<path fill="rgb(88.2%, 73.92%, 36.31%)" d="M 191.88 211.05 L 197.59 205.79 L 220.53 222.21 L 216.5 275.02 L 203.52 264.03 Z M 191.88 211.05 "/>
+</g>
+</g>
+<g clip-path="url(#clip-98)">
+<g clip-path="url(#clip-99)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 191.88 211.05 L 197.59 205.79 L 220.53 222.21 L 216.5 275.02 L 203.52 264.03 Z M 191.88 211.05 "/>
+</g>
+</g>
+<g clip-path="url(#clip-100)">
+<g clip-path="url(#clip-101)">
+<path fill="rgb(49.27%, 73.75%, 44.69%)" d="M 15 15 L 63.47 15 L 61.02 23.38 L 21.55 28.68 L 15 26.22 Z M 15 15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-102)">
+<g clip-path="url(#clip-103)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 15 15 L 63.47 15 L 61.02 23.38 L 21.55 28.68 L 15 26.22 Z M 15 15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-104)">
+<g clip-path="url(#clip-105)">
+<path fill="rgb(49.27%, 73.75%, 44.69%)" d="M 208.23 110.02 L 242.83 125.37 L 247.21 136.71 L 244.32 158.51 L 226.94 165.46 L 186.2 122.14 Z M 208.23 110.02 "/>
+</g>
+</g>
+<g clip-path="url(#clip-106)">
+<g clip-path="url(#clip-107)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 208.23 110.02 L 242.83 125.37 L 247.21 136.71 L 244.32 158.51 L 226.94 165.46 L 186.2 122.14 Z M 208.23 110.02 "/>
+</g>
+</g>
+<g clip-path="url(#clip-108)">
+<g clip-path="url(#clip-109)">
+<path fill="rgb(91.49%, 63.76%, 45.65%)" d="M 268.09 89.1 L 242.83 125.37 L 208.23 110.02 L 215.88 67.9 L 272.62 54.26 Z M 268.09 89.1 "/>
+</g>
+</g>
+<g clip-path="url(#clip-110)">
+<g clip-path="url(#clip-111)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 268.09 89.1 L 242.83 125.37 L 208.23 110.02 L 215.88 67.9 L 272.62 54.26 Z M 268.09 89.1 "/>
+</g>
+</g>
+<g clip-path="url(#clip-112)">
+<g clip-path="url(#clip-113)">
+<path fill="rgb(51.31%, 60.24%, 90.06%)" d="M 274.69 220.2 L 264.37 200.01 L 261.32 175.06 L 301.05 158.44 L 325.78 186 L 335.46 204.02 L 329.97 207.31 L 323.86 209.19 Z M 274.69 220.2 "/>
+</g>
+</g>
+<g clip-path="url(#clip-114)">
+<g clip-path="url(#clip-115)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 274.69 220.2 L 264.37 200.01 L 261.32 175.06 L 301.05 158.44 L 325.78 186 L 335.46 204.02 L 329.97 207.31 L 323.86 209.19 Z M 274.69 220.2 "/>
+</g>
+</g>
+<g clip-path="url(#clip-116)">
+<g clip-path="url(#clip-117)">
+<path fill="rgb(88.2%, 73.92%, 36.31%)" d="M 345 205.09 L 345 288.9 L 317.5 270.36 L 329.97 207.31 L 335.46 204.02 Z M 345 205.09 "/>
+</g>
+</g>
+<g clip-path="url(#clip-118)">
+<g clip-path="url(#clip-119)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 345 205.09 L 345 288.9 L 317.5 270.36 L 329.97 207.31 L 335.46 204.02 Z M 345 205.09 "/>
+</g>
+</g>
+<g clip-path="url(#clip-120)">
+<g clip-path="url(#clip-121)">
+<path fill="rgb(49.27%, 73.75%, 44.69%)" d="M 15 243.14 L 15 235.97 L 53.4 231.62 L 73.15 256.58 L 61.43 259.13 Z M 15 243.14 "/>
+</g>
+</g>
+<g clip-path="url(#clip-122)">
+<g clip-path="url(#clip-123)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 15 243.14 L 15 235.97 L 53.4 231.62 L 73.15 256.58 L 61.43 259.13 Z M 15 243.14 "/>
+</g>
+</g>
+<g clip-path="url(#clip-124)">
+<g clip-path="url(#clip-125)">
+<path fill="rgb(91.49%, 63.76%, 45.65%)" d="M 244.32 158.51 L 247.21 136.71 L 300.42 132.7 L 301.09 133 L 301.05 158.44 L 261.32 175.06 Z M 244.32 158.51 "/>
+</g>
+</g>
+<g clip-path="url(#clip-126)">
+<g clip-path="url(#clip-127)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 244.32 158.51 L 247.21 136.71 L 300.42 132.7 L 301.09 133 L 301.05 158.44 L 261.32 175.06 Z M 244.32 158.51 "/>
+</g>
+</g>
+<g clip-path="url(#clip-128)">
+<g clip-path="url(#clip-129)">
+<path fill="rgb(88.2%, 73.92%, 36.31%)" d="M 199.5 200.07 L 199.99 189.75 L 226.94 165.46 L 244.32 158.51 L 261.32 175.06 L 264.37 200.01 Z M 199.5 200.07 "/>
+</g>
+</g>
+<g clip-path="url(#clip-130)">
+<g clip-path="url(#clip-131)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 199.5 200.07 L 199.99 189.75 L 226.94 165.46 L 244.32 158.51 L 261.32 175.06 L 264.37 200.01 Z M 199.5 200.07 "/>
+</g>
+</g>
+<g clip-path="url(#clip-132)">
+<g clip-path="url(#clip-133)">
+<path fill="rgb(91.49%, 63.76%, 45.65%)" d="M 199.99 189.75 L 165.47 147.42 L 168.18 127.6 L 169.09 126.59 L 186.2 122.14 L 226.94 165.46 Z M 199.99 189.75 "/>
+</g>
+</g>
+<g clip-path="url(#clip-134)">
+<g clip-path="url(#clip-135)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 199.99 189.75 L 165.47 147.42 L 168.18 127.6 L 169.09 126.59 L 186.2 122.14 L 226.94 165.46 Z M 199.99 189.75 "/>
+</g>
+</g>
+<g clip-path="url(#clip-136)">
+<g clip-path="url(#clip-137)">
+<path fill="rgb(88.2%, 73.92%, 36.31%)" d="M 61.43 259.13 L 73.15 256.58 L 112.45 270.34 L 112.9 270.92 L 60.66 310.3 L 34.63 282.74 Z M 61.43 259.13 "/>
+</g>
+</g>
+<g clip-path="url(#clip-138)">
+<g clip-path="url(#clip-139)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 61.43 259.13 L 73.15 256.58 L 112.45 270.34 L 112.9 270.92 L 60.66 310.3 L 34.63 282.74 Z M 61.43 259.13 "/>
+</g>
+</g>
+<g clip-path="url(#clip-140)">
+<g clip-path="url(#clip-141)">
+<path fill="rgb(49.27%, 73.75%, 44.69%)" d="M 106.3 195.84 L 91.83 171.7 L 92.93 152.09 L 104.62 144.96 L 140.24 169.37 L 133.47 187.24 Z M 106.3 195.84 "/>
+</g>
+</g>
+<g clip-path="url(#clip-142)">
+<g clip-path="url(#clip-143)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 106.3 195.84 L 91.83 171.7 L 92.93 152.09 L 104.62 144.96 L 140.24 169.37 L 133.47 187.24 Z M 106.3 195.84 "/>
+</g>
+</g>
+<g clip-path="url(#clip-144)">
+<g clip-path="url(#clip-145)">
+<path fill="rgb(51.31%, 60.24%, 90.06%)" d="M 317.47 116.27 L 316.66 122.76 L 301.09 133 L 300.42 132.7 L 268.09 89.1 L 272.62 54.26 L 276.94 49.65 L 279.26 51.07 Z M 317.47 116.27 "/>
+</g>
+</g>
+<g clip-path="url(#clip-146)">
+<g clip-path="url(#clip-147)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 317.47 116.27 L 316.66 122.76 L 301.09 133 L 300.42 132.7 L 268.09 89.1 L 272.62 54.26 L 276.94 49.65 L 279.26 51.07 Z M 317.47 116.27 "/>
+</g>
+</g>
+<g clip-path="url(#clip-148)">
+<g clip-path="url(#clip-149)">
+<path fill="rgb(42.9%, 75.27%, 69.92%)" d="M 142.93 256.16 L 161.75 220.82 L 191.88 211.05 L 203.52 264.03 L 175.53 262.58 Z M 142.93 256.16 "/>
+</g>
+</g>
+<g clip-path="url(#clip-150)">
+<g clip-path="url(#clip-151)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 142.93 256.16 L 161.75 220.82 L 191.88 211.05 L 203.52 264.03 L 175.53 262.58 Z M 142.93 256.16 "/>
+</g>
+</g>
+<g clip-path="url(#clip-152)">
+<g clip-path="url(#clip-153)">
+<path fill="rgb(51.31%, 60.24%, 90.06%)" d="M 312.27 270.14 L 284.11 296.26 L 243.54 288.88 L 263.8 244.37 L 301.38 261.57 Z M 312.27 270.14 "/>
+</g>
+</g>
+<g clip-path="url(#clip-154)">
+<g clip-path="url(#clip-155)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 312.27 270.14 L 284.11 296.26 L 243.54 288.88 L 263.8 244.37 L 301.38 261.57 Z M 312.27 270.14 "/>
+</g>
+</g>
+<g clip-path="url(#clip-156)">
+<g clip-path="url(#clip-157)">
+<path fill="rgb(51.31%, 60.24%, 90.06%)" d="M 59.73 325 L 15 325 L 15 314.55 L 59.72 313.9 Z M 59.73 325 "/>
+</g>
+</g>
+<g clip-path="url(#clip-158)">
+<g clip-path="url(#clip-159)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 59.73 325 L 15 325 L 15 314.55 L 59.72 313.9 Z M 59.73 325 "/>
+</g>
+</g>
+<g clip-path="url(#clip-160)">
+<g clip-path="url(#clip-161)">
+<path fill="rgb(91.49%, 63.76%, 45.65%)" d="M 345 73.98 L 345 76.14 L 317.47 116.27 L 279.26 51.07 Z M 345 73.98 "/>
+</g>
+</g>
+<g clip-path="url(#clip-162)">
+<g clip-path="url(#clip-163)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 345 73.98 L 345 76.14 L 317.47 116.27 L 279.26 51.07 Z M 345 73.98 "/>
+</g>
+</g>
+<g clip-path="url(#clip-164)">
+<g clip-path="url(#clip-165)">
+<path fill="rgb(49.27%, 73.75%, 44.69%)" d="M 320.29 325 L 222.25 325 L 234.75 295.45 L 243.54 288.88 L 284.11 296.26 Z M 320.29 325 "/>
+</g>
+</g>
+<g clip-path="url(#clip-166)">
+<g clip-path="url(#clip-167)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 320.29 325 L 222.25 325 L 234.75 295.45 L 243.54 288.88 L 284.11 296.26 Z M 320.29 325 "/>
+</g>
+</g>
+<g clip-path="url(#clip-168)">
+<g clip-path="url(#clip-169)">
+<path fill="rgb(91.49%, 63.76%, 45.65%)" d="M 15 314.55 L 15 271.3 L 34.63 282.74 L 60.66 310.3 L 59.72 313.9 Z M 15 314.55 "/>
+</g>
+</g>
+<g clip-path="url(#clip-170)">
+<g clip-path="url(#clip-171)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 15 314.55 L 15 271.3 L 34.63 282.74 L 60.66 310.3 L 59.72 313.9 Z M 15 314.55 "/>
+</g>
+</g>
+<g clip-path="url(#clip-172)">
+<g clip-path="url(#clip-173)">
+<path fill="rgb(42.9%, 75.27%, 69.92%)" d="M 15 271.3 L 15 243.14 L 61.43 259.13 L 34.63 282.74 Z M 15 271.3 "/>
+</g>
+</g>
+<g clip-path="url(#clip-174)">
+<g clip-path="url(#clip-175)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 15 271.3 L 15 243.14 L 61.43 259.13 L 34.63 282.74 Z M 15 271.3 "/>
+</g>
+</g>
+<g clip-path="url(#clip-176)">
+<g clip-path="url(#clip-177)">
+<path fill="rgb(88.2%, 73.92%, 36.31%)" d="M 63.07 32.27 L 102.58 56.65 L 96.24 78.57 L 70.17 92.39 L 64.34 94 L 57.27 41.08 Z M 63.07 32.27 "/>
+</g>
+</g>
+<g clip-path="url(#clip-178)">
+<g clip-path="url(#clip-179)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 63.07 32.27 L 102.58 56.65 L 96.24 78.57 L 70.17 92.39 L 64.34 94 L 57.27 41.08 Z M 63.07 32.27 "/>
+</g>
+</g>
+<g clip-path="url(#clip-180)">
+<g clip-path="url(#clip-181)">
+<path fill="rgb(91.49%, 63.76%, 45.65%)" d="M 112.45 270.34 L 95.16 213.54 L 106.3 195.84 L 133.47 187.24 L 161.75 220.82 L 142.93 256.16 L 121.48 273.4 L 112.9 270.92 Z M 112.45 270.34 "/>
+</g>
+</g>
+<g clip-path="url(#clip-182)">
+<g clip-path="url(#clip-183)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 112.45 270.34 L 95.16 213.54 L 106.3 195.84 L 133.47 187.24 L 161.75 220.82 L 142.93 256.16 L 121.48 273.4 L 112.9 270.92 Z M 112.45 270.34 "/>
+</g>
+</g>
+<g clip-path="url(#clip-184)">
+<g clip-path="url(#clip-185)">
+<path fill="rgb(49.27%, 73.75%, 44.69%)" d="M 345 131.15 L 345 205.09 L 335.46 204.02 L 325.78 186 L 340.8 131.34 Z M 345 131.15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-186)">
+<g clip-path="url(#clip-187)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 345 131.15 L 345 205.09 L 335.46 204.02 L 325.78 186 L 340.8 131.34 Z M 345 131.15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-188)">
+<g clip-path="url(#clip-189)">
+<path fill="rgb(88.2%, 73.92%, 36.31%)" d="M 37.66 160.52 L 59.31 137.06 L 92.93 152.09 L 91.83 171.7 L 48.21 180.88 Z M 37.66 160.52 "/>
+</g>
+</g>
+<g clip-path="url(#clip-190)">
+<g clip-path="url(#clip-191)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 37.66 160.52 L 59.31 137.06 L 92.93 152.09 L 91.83 171.7 L 48.21 180.88 Z M 37.66 160.52 "/>
+</g>
+</g>
+<g clip-path="url(#clip-192)">
+<g clip-path="url(#clip-193)">
+<path fill="rgb(88.2%, 73.92%, 36.31%)" d="M 192.09 325 L 149.56 325 L 121.48 273.4 L 142.93 256.16 L 175.53 262.58 Z M 192.09 325 "/>
+</g>
+</g>
+<g clip-path="url(#clip-194)">
+<g clip-path="url(#clip-195)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 192.09 325 L 149.56 325 L 121.48 273.4 L 142.93 256.16 L 175.53 262.58 Z M 192.09 325 "/>
+</g>
+</g>
+<g clip-path="url(#clip-196)">
+<g clip-path="url(#clip-197)">
+<path fill="rgb(49.27%, 73.75%, 44.69%)" d="M 279.71 15 L 316.8 15 L 345 42.64 L 345 73.98 L 279.26 51.07 L 276.94 49.65 Z M 279.71 15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-198)">
+<g clip-path="url(#clip-199)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 279.71 15 L 316.8 15 L 345 42.64 L 345 73.98 L 279.26 51.07 L 276.94 49.65 Z M 279.71 15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-200)">
+<g clip-path="url(#clip-201)">
+<path fill="rgb(42.9%, 75.27%, 69.92%)" d="M 316.8 15 L 345 15 L 345 42.64 Z M 316.8 15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-202)">
+<g clip-path="url(#clip-203)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 316.8 15 L 345 15 L 345 42.64 Z M 316.8 15 "/>
+</g>
+</g>
+<g clip-path="url(#clip-204)">
+<g clip-path="url(#clip-205)">
+<path fill="rgb(51.31%, 60.24%, 90.06%)" d="M 208.23 110.02 L 186.2 122.14 L 169.09 126.59 L 160.29 80.29 L 172.86 37.62 L 215.88 67.9 Z M 208.23 110.02 "/>
+</g>
+</g>
+<g clip-path="url(#clip-206)">
+<g clip-path="url(#clip-207)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 208.23 110.02 L 186.2 122.14 L 169.09 126.59 L 160.29 80.29 L 172.86 37.62 L 215.88 67.9 Z M 208.23 110.02 "/>
+</g>
+</g>
+<g clip-path="url(#clip-208)">
+<g clip-path="url(#clip-209)">
+<path fill="rgb(88.2%, 73.92%, 36.31%)" d="M 263.8 244.37 L 264.18 239.41 L 274.69 220.2 L 323.86 209.19 L 301.38 261.57 Z M 263.8 244.37 "/>
+</g>
+</g>
+<g clip-path="url(#clip-210)">
+<g clip-path="url(#clip-211)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 263.8 244.37 L 264.18 239.41 L 274.69 220.2 L 323.86 209.19 L 301.38 261.57 Z M 263.8 244.37 "/>
+</g>
+</g>
+<g clip-path="url(#clip-212)">
+<g clip-path="url(#clip-213)">
+<path fill="rgb(91.49%, 63.76%, 45.65%)" d="M 222.25 325 L 192.09 325 L 175.53 262.58 L 203.52 264.03 L 216.5 275.02 L 234.75 295.45 Z M 222.25 325 "/>
+</g>
+</g>
+<g clip-path="url(#clip-214)">
+<g clip-path="url(#clip-215)">
+<path fill="none" stroke-width="1.6" stroke="rgb(100%, 100%, 100%)" stroke-miterlimit="10" d="M 222.25 325 L 192.09 325 L 175.53 262.58 L 203.52 264.03 L 216.5 275.02 L 234.75 295.45 Z M 222.25 325 "/>
+</g>
+</g>
+<path fill="none" stroke-width="1.6" stroke="rgb(14.12%, 16.08%, 18.43%)" stroke-miterlimit="10" d="M 180 325 L 25 325 C 19.48 325 15 320.52 15 315 L 15 25 C 15 19.48 19.48 15 25 15 L 335 15 C 340.52 15 345 19.48 345 25 L 345 315 C 345 320.52 340.52 325 335 325 Z M 180 325 "/>
+</svg>
