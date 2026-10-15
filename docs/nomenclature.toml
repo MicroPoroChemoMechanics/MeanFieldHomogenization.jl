@@ -571,7 +571,7 @@ tex = '\varphi'
 label = "φ"
 name = "volume fraction incorporated along the trajectory"
 unit = "1"
-pages = ["theory/differential_scheme.md", "theory/homogenization.md", "tutorials/differential_paths.md", "tutorials/differential_loading_paths.md"]
+pages = ["theory/differential_scheme.md", "tutorials/differential_paths.md", "tutorials/differential_loading_paths.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -603,7 +603,7 @@ tex = '\varepsilon'
 label = "ε"
 name = "crack density, N a<sup>3</sup> for penny-shaped cracks"
 unit = "1"
-pages = ["manual/cracks.md", "theory/cod_tensors.md", "theory/thermal_cracks.md", "theory/differential_scheme.md", "theory/homogenization.md", "tutorials/cracks.md", "tutorials/fe_crack.md", "tutorials/generated/crack_distributions.md", "tutorials/generated/custom_inclusion_contract.md", "manual/custom_inclusions.md", "developer/adding_inclusion.md", "fe_coupling/permeability.md", "fe_coupling/fractured_rock.md", "fe_coupling/materials.md", "manual/viscoelasticity.md"]
+pages = ["manual/cracks.md", "theory/cod_tensors.md", "theory/thermal_cracks.md", "theory/differential_scheme.md", "theory/homogenization.md", "theory/scheme_dilute.md", "theory/scheme_mori_tanaka.md", "theory/scheme_maxwell_pcw.md", "theory/scheme_self_consistent.md", "tutorials/cracks.md", "tutorials/fe_crack.md", "tutorials/generated/crack_distributions.md", "tutorials/generated/custom_inclusion_contract.md", "manual/custom_inclusions.md", "developer/adding_inclusion.md", "fe_coupling/permeability.md", "fe_coupling/fractured_rock.md", "fe_coupling/materials.md", "manual/viscoelasticity.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -676,15 +676,69 @@ unit = "Pa<sup>−1</sup>"
 group = "Eshelby problem and localization"
 tex = '\mathbb{P}_\Omega'
 label = "ℙ<sub>Ω</sub>"
-name = "Hill tensor of the distribution shape Ω"
+name = "Hill tensor of the Maxwell domain Ω, the distribution shape"
 unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{Q}_\Omega'
+label = "ℚ<sub>Ω</sub>"
+name = "second Hill tensor of the Maxwell domain Ω"
+unit = "Pa"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{N}_\Omega'
+label = "ℕ<sub>Ω</sub>"
+name = "stiffness contribution of the domain Ω filled with the effective medium"
+unit = "Pa"
 
 [[symbol]]
 group = "Eshelby problem and localization"
 tex = '\mathbb{P}_d'
 label = "ℙ<sub>d</sub>"
-name = "Hill tensor of the outer distribution shape"
+name = "Hill tensor of the distribution ellipsoid of Ponte Castañeda and Willis"
 unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{P}_d^{ij}'
+label = "ℙ<sub>d</sub><sup>ij</sup>"
+name = "Hill tensor of the distribution ellipsoid of phase j around phase i"
+unit = "Pa<sup>−1</sup>"
+pages = ["theory/scheme_maxwell_pcw.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\mathcal{D}'
+label = "𝒟"
+name = "distribution ellipsoid, from which the other inclusion centers are excluded"
+unit = ""
+pages = ["theory/scheme_maxwell_pcw.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\mathcal{E}'
+label = "ℰ"
+name = "domain of an inhomogeneity, of any shape"
+unit = ""
+pages = ["theory/scheme_maxwell_pcw.md"]
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\bar{\boldsymbol\tau}'
+label = "<b>τ̄</b>"
+name = "mean polarization of the inclusions, Σ f<sub>j</sub> <b>τ</b><sub>j</sub>"
+unit = "Pa"
+pages = ["theory/scheme_maxwell_pcw.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\kappa_c'
+label = "κ<sub>c</sub>"
+name = "geometric prefactor of a crack family, 4π/3 (elliptic) or π (ribbon)"
+unit = "1"
+pages = ["theory/homogenization.md", "theory/scheme_dilute.md", "theory/scheme_mori_tanaka.md", "theory/scheme_maxwell_pcw.md", "theory/scheme_self_consistent.md"]
 
 [[symbol]]
 group = "Eshelby problem and localization"
@@ -784,6 +838,13 @@ tex = '\mathbb{N}_\Sigma'
 label = "ℕ<sub>Σ</sub>"
 name = "total dilute stiffness contribution, Σ f<sub>i</sub> ℕ<sub>i</sub>"
 unit = "Pa"
+
+[[symbol]]
+group = "Eshelby problem and localization"
+tex = '\mathbb{H}_\Sigma'
+label = "ℍ<sub>Σ</sub>"
+name = "total dilute compliance contribution, Σ f<sub>i</sub> ℍ<sub>i</sub>"
+unit = "Pa<sup>−1</sup>"
 
 [[symbol]]
 group = "Eshelby problem and localization"
@@ -1143,7 +1204,7 @@ tex = '\tau'
 label = "τ"
 name = "fictitious incorporation time"
 unit = "1"
-pages = ["theory/differential_scheme.md", "theory/homogenization.md", "tutorials/differential_paths.md", "tutorials/differential_loading_paths.md"]
+pages = ["theory/differential_scheme.md", "tutorials/differential_paths.md", "tutorials/differential_loading_paths.md"]
 
 [[symbol]]
 group = "Viscoelasticity"

@@ -1,8 +1,8 @@
 # [Two-inclusion interaction tensors](@id th-interaction)
 
 !!! info "Before this page"
-    [Homogenization schemes](@ref th-homogenization) §6, where the two N-body
-    schemes are introduced, and the
+    [Localization and contribution tensors](@ref th-localization), whose
+    one-site picture this page extends to a pair of inclusions, and the
     [sign of the Green operator](@ref th-notation-green-sign) fixed in the
     Conventions, which this page follows.
 
@@ -399,9 +399,12 @@ truncation is legitimate.
 
 ## Where to go next
 
-The two schemes built on ``\mathbb{T}^{ab}`` follow.
-[The cluster model](@ref th-cluster), the next page, solves for the mean strain
-of every inclusion inside a cluster of neighbors, and
+The next chapter returns to a single inclusion, in its flat limit:
+[Crack opening displacement and compliance](@ref th-cod-tensors) describes a
+crack by how much it opens rather than by a volume fraction and a stiffness.
+The two schemes built on ``\mathbb{T}^{ab}`` come at
+the end of the chapter on schemes: [The cluster model](@ref th-cluster) solves
+for the mean strain of every inclusion inside a cluster of neighbors, and
 [The equivalent inclusion method](@ref th-eim) poses the same problem as a
 Galerkin discretization that also yields a rigorous bound. The functions
 evaluating ``\mathbb{T}^{ab}`` are documented in

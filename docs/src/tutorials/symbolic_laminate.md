@@ -13,7 +13,7 @@ whole laminate cell runs on **SymPy** `Sym` unchanged — nothing has to be
 declared for it, the moduli, the fractions and the frame all carry their own
 type — and what comes out is
 the classical result of [backus1962](@citet), in the form
-[Voigt and Reuss](@ref th-homogenization) would lead one to expect: some
+[Voigt and Reuss](@ref th-scheme-bounds) would lead one to expect: some
 coefficients are **arithmetic** averages across the layers, others are
 **harmonic** ones, and the rest are combinations of both.
 

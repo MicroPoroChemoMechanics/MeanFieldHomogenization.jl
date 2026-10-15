@@ -368,11 +368,10 @@ decision and therefore lives on the scheme. It has no default, though — see
 Currently a single concrete subtype is shipped:
 
 - [`UniformDistribution`](@ref) — a single shape applied to every
-  inclusion phase (Maxwell 1873 ; Ponte-Castañeda & Willis 1995).
+  inclusion phase [sevostianovIJES2013, ponte1995](@cite).
 
-Future extension (placeholder, *not* implemented in this PR): a
-`PairwiseDistribution` carrying a per-pair `(i, j) ↦ shape` mapping
-[willis1982](@cite).  Adding it will only require a new
+Future extension, not implemented: a `PairwiseDistribution` carrying a
+per-pair `(i, j) ↦ shape` mapping [ponte1995, willis1982](@cite).  Adding it will only require a new
 concrete subtype + matching `_evaluate(rve, ::Maxwell|::PonteCastanedaWillis, …)`
 methods — no public-API change.
 """
@@ -384,9 +383,10 @@ abstract type AbstractDistributionShape end
 Single distribution shape applied to every inclusion phase. The argument-free
 constructor `UniformDistribution()` returns a unit sphere — an isotropic
 distribution, which makes [`Maxwell`](@ref) and [`PonteCastanedaWillis`](@ref)
-coincide exactly with Mori-Tanaka. That is a legitimate choice and has to be
-made explicitly: an `RVE` given no distribution shape keeps `nothing` and those
-two schemes raise rather than assume a sphere.
+coincide exactly with Mori-Tanaka when the inclusions are spheres too. That is
+a legitimate choice and has to be made explicitly: an `RVE` given no
+distribution shape keeps `nothing` and those two schemes raise rather than
+assume a sphere.
 """
 struct UniformDistribution{S <: AbstractInclusion} <: AbstractDistributionShape
     shape::S

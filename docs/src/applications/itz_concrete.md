@@ -4,8 +4,9 @@
     [Layered inclusions](@ref man-layered), which explains how a composite
     sphere enters a scheme as a phase, the recurrences behind it in
     [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere),
-    and [Homogenization schemes](@ref th-homogenization) for the
-    self-consistent and Mori–Tanaka estimates of the four scales.
+    and [Self-consistent schemes](@ref th-scheme-self-consistent) and
+    [Mori–Tanaka](@ref th-scheme-mori-tanaka) for the estimates of the four
+    scales.
 
 Around every aggregate in a concrete there is a thin shell of cement paste that
 is **more porous than the bulk paste**: packing of cement grains against a rigid

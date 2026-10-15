@@ -229,11 +229,11 @@ The Volterra-discrete formula is
 where ``\\widetilde{\\mathbb{N}} = \\sum_i f_i\\,\\widetilde{\\mathbb{N}}_i`` and the dilute contributions are the
 ones computed by [`dilute_contribution_alv`](@ref).
 
-When the distribution shape coincides with the inclusion shape and
-the matrix is the reference, Maxwell reduces to Mori-Tanaka.
+When every inclusion phase has the shape of the distribution and the matrix is
+the reference, Maxwell reduces to Mori-Tanaka.
 
-Pass `H_0 = hill_kernel(distribution_shape, C_0_law, times)` for the
-default uniform-sphere distribution.
+Pass `H_0 = hill_kernel(distribution_shape, C_0_law, times)`, the distribution
+shape being the one declared on the RVE; there is no default.
 """
 function maxwell_alv(
         C_0::AbstractMatrix,
@@ -273,9 +273,11 @@ converges better.
 \\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\bigl(\\widetilde{\\mathbb{L}}^{\\mathrm{hom}}\\bigr)^{-\\circ}
 ```
 
-with ``\\widetilde{\\mathbb{H}}_i = (\\widetilde{\\mathbb{L}}_i - \\widetilde{\\mathbb{L}}_0)\\circ\\widetilde{\\mathbb{A}}_{\\sigma\\sigma,i}^{\\mathrm{dil}}`` and
-``\\widetilde{\\mathbb{A}}_{\\sigma\\sigma,i}^{\\mathrm{dil}} = \\bigl(H\\,\\mathbb{I} + (H\\,\\mathbb{I} - \\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}})\\bigr)^{-\\circ}`` … see Sevostianov 2008
-for the dual formulation in the elastic case.
+with the compliance contribution kernels
+``\\widetilde{\\mathbb{H}}_i = -\\,\\widetilde{\\mathbb{L}}_0\\circ\\widetilde{\\mathbb{N}}_i\\circ\\widetilde{\\mathbb{L}}_0``,
+the Volterra counterpart of the elastic identity
+``\\mathbb{H}_i = -\\,\\mathbb{S}_0:\\mathbb{N}_i:\\mathbb{S}_0`` [barthelemyIJES2019](@cite);
+`contribs_compliance` holds them.
 
 Implementation routes through `volterra_inverse` of `C_0` to obtain
 ``\\widetilde{\\mathbb{L}}_0`` and back.

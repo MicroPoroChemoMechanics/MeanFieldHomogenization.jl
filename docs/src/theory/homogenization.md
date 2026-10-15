@@ -3,315 +3,162 @@
 !!! info "Before this page"
     [Localization and contribution tensors](@ref th-localization), where the
     dilute concentration tensor ``\mathbb A_i^{\mathrm{dil}}`` and the
-    contribution tensors ``\mathbb N_i`` and ``\mathbb H_i`` assembled below are
-    defined.
+    contribution tensors ``\mathbb N_i`` and ``\mathbb H_i`` are defined,
+    [Crack opening displacement and compliance](@ref th-cod-tensors) for the
+    compliance contribution of a crack and its density, and
+    [Layered sphere](@ref th-layered-sphere) for a pattern that supplies a
+    concentration tensor without having a Hill tensor.
 
-`MeanFieldHomogenization.Schemes` computes the *effective* property tensor of a
-multi-phase medium from (i) the phase geometries, (ii) the phase properties and
-(iii) the phase volume fractions or crack densities.
+The previous chapters solved the problem of a single heterogeneity in an
+infinite medium: an ellipsoid, a crack, a layered pattern. A homogenization
+scheme turns those solutions into an estimate of the effective property of a
+representative volume element, by stating which auxiliary problem each phase is
+assumed to solve. This page sets the framework that all the schemes share. The
+pages that follow treat them one at a time, each with its figure, its assumption
+and its equations.
 
-## 1. Notation
+## 1. The representative volume element
 
-The Representative Volume Element (RVE) consists of:
+The representative volume element (RVE) holds
 
 - a *matrix* phase of property tensor ``\mathbb C_0`` (or ``\boldsymbol{K}_0``
-  for the 2nd-order conductivity problem),
-- one or more *inclusion* phases of property tensors
-  ``\mathbb C_i``, geometries ``\mathcal G_i``, and amounts
-  ``f_i`` (volume fraction) or ``\varepsilon_i`` (crack density).
+  for the order-2 conductivity problem), when one phase plays that role;
+- one or more *inclusion* phases of property tensors ``\mathbb C_i``,
+  geometries ``\mathcal G_i``, and amounts ``f_i`` (volume fraction) or
+  ``\varepsilon_i`` (crack density).
 
-The drawings of this page are redrawn after the Echoes book [echoes](@cite).
+The drawings of this chapter are redrawn after the Echoes book [echoes](@cite).
 
 ![An RVE loaded by ``\underline u = \boldsymbol E\cdot\underline x`` is replaced by a sum of single-inclusion problems in the infinite matrix ``\mathbb C_0``, each loaded by ``\underline u = \boldsymbol E^0\cdot\underline x``](../assets/schemes/rve_decomposition.svg)
 
-That picture *is* the mean-field approximation, and every scheme below is one
-answer to the single question it leaves open: **what is ``\boldsymbol E^0``, and
-in which medium is each inclusion embedded?** Take ``\boldsymbol E^0 = \boldsymbol E``
-and the matrix as the reference and you have the dilute estimate; require the
-matrix average to come out right and you have Mori–Tanaka; embed each inclusion
-in the *unknown* effective medium and you have the self-consistent scheme.
-
-For each inclusion the **dilute strain concentration tensor**
-``\mathbb A_i^{\mathrm{dil}}`` and the **size-independent stiffness
-contribution** ``\mathbb N_i = (\mathbb C_i - \mathbb C_0):
-\mathbb A_i^{\mathrm{dil}}`` are the natural building blocks
-[kachanov2018](@cite). The dual
-**compliance contribution** ``\mathbb H_i = (\mathbb S_i - \mathbb S_0):
-\mathbb A_{\sigma\sigma,i}`` is more natural for cracks (whose stiffness
-contribution is the rank-1 limit of a divergent eigenvalue).
-
-### [Every scheme at a glance](@id th-schemes-glance)
-
-Each card answers the question above — what is ``\boldsymbol E^0``, and in which
-medium is each inclusion embedded — for one scheme. Where an RVE is drawn on the
-left, it is the same on every card, and the right shows what the scheme reads it
-as: the auxiliary problem, its reference medium (blue: the matrix
-``\mathbb C_0``; purple: the effective medium ``\mathbb C^{\mathrm{hom}}``) and
-its loading at infinity. The other cards draw what the scheme adds to the
-picture: the morphology it is exact for (laminate), a second shape (Maxwell,
-PCW), a trajectory (differential), or the positions (cluster model, equivalent
-inclusion method).
-
-```@raw html
-<div class="mfh-figure-grid">
-<div>
-```
-
-[`Voigt`](@ref)
-
-![A uniform strain, exact for bars in parallel.](../assets/schemes/scheme_voigt.svg)
-
-A uniform strain, exact for bars in parallel.
-
-```@raw html
-</div>
-<div>
-```
-
-[`Reuss`](@ref)
-
-![A uniform stress, exact for layers in series.](../assets/schemes/scheme_reuss.svg)
-
-A uniform stress, exact for layers in series.
-
-```@raw html
-</div>
-<div>
-```
-
-[`Dilute`](@ref)
-
-![Each inclusion alone in the matrix, under the remote strain.](../assets/schemes/scheme_dilute.svg)
-
-Each inclusion alone in the matrix, under the remote strain.
-
-```@raw html
-</div>
-<div>
-```
-
-[`DiluteDual`](@ref)
-
-![Each inclusion alone in the matrix, under the remote stress.](../assets/schemes/scheme_dilute_dual.svg)
-
-Each inclusion alone in the matrix, under the remote stress.
-
-```@raw html
-</div>
-<div>
-```
-
-[`MoriTanaka`](@ref)
-
-![Each inclusion in the matrix, under the mean strain of the matrix.](../assets/schemes/scheme_mori_tanaka.svg)
-
-Each inclusion in the matrix, under the mean strain of the matrix.
-
-```@raw html
-</div>
-<div class="narrow">
-```
-
-[`Laminated`](@ref)
-
-![A stack of layers of normal n, solved exactly.](../assets/schemes/scheme_laminated.svg)
-
-A stack of layers of normal n, solved exactly.
-
-```@raw html
-</div>
-<div>
-```
-
-[`SelfConsistent`](@ref)
-
-![Every phase, the matrix included, in the effective medium.](../assets/schemes/scheme_self_consistent.svg)
-
-Every phase, the matrix included, in the effective medium.
-
-```@raw html
-</div>
-<div>
-```
-
-[`AsymmetricSelfConsistent`](@ref)
-
-![The inclusions in the effective medium; the matrix keeps its role.](../assets/schemes/scheme_asymmetric_self_consistent.svg)
-
-The inclusions in the effective medium; the matrix keeps its role.
-
-```@raw html
-</div>
-<div>
-```
-
-[`Maxwell`](@ref)
-
-![A cluster of inclusions is equivalent to one inclusion Ω, both loaded remotely.](../assets/schemes/rve_maxwell.svg)
-
-A cluster of inclusions is equivalent to one inclusion Ω, both loaded remotely.
-
-```@raw html
-</div>
-<div class="narrow">
-```
-
-[`PonteCastanedaWillis`](@ref)
-
-![Each inclusion inside its own spherical safety domain, the domains paving the space.](../assets/schemes/rve_pcw.svg)
-
-Each inclusion inside its own spherical safety domain, the domains paving the space.
-
-```@raw html
-</div>
-<div class="wide">
-```
-
-[`DifferentialScheme`](@ref)
-
-![Inclusions added by small amounts to the current effective medium, from the matrix at τ = 0 to the effective medium at τ = 1.](../assets/schemes/scheme_differential.svg)
-
-Inclusions added by small amounts to the current effective medium, from the matrix at τ = 0 to the effective medium at τ = 1.
-
-```@raw html
-</div>
-<div class="narrow">
-```
-
-[`ClusterModel`](@ref)
-
-![The positions enter, through the interaction tensor of every pair.](../assets/schemes/scheme_cluster.svg)
-
-The positions enter, through the interaction tensor of every pair.
-
-```@raw html
-</div>
-<div class="narrow">
-```
-
-[`EquivalentInclusion`](@ref)
-
-![A polarization per inclusion, in a periodic cell and its images.](../assets/schemes/scheme_eim.svg)
-
-A polarization per inclusion, in a periodic cell and its images.
-
-```@raw html
-</div>
-</div>
-```
-
-## 2. Bounds
-
-| Scheme | Formula |
-| :-- | :-- |
-| **Voigt** | ``\langle \mathbb C \rangle = \sum_i f_i \mathbb C_i`` (upper bound) [hill1965](@cite) |
-| **Reuss** | ``\langle \mathbb S \rangle^{-1}`` (lower bound) |
-
-Cracks are ignored in both bounds: their volume contribution vanishes in
-the penny limit (``c \to 0``) while their density stays finite.
-
-## 3. One-shot schemes (require a matrix)
-
-Writing ``\mathbb N_\Sigma = \sum_i f_i \mathbb N_i`` for the total dilute
-stiffness contribution and ``\mathbb S_0 = \mathbb C_0^{-1}``:
-
-| Scheme | Effective stiffness |
-| :-- | :-- |
-| **Dilute** | ``\mathbb C_0 + \mathbb N_\Sigma`` (first order in ``f``) |
-| **DiluteDual** | ``\big(\mathbb S_0 + \sum_i f_i \mathbb H_i\big)^{-1}`` |
-| **Mori-Tanaka** | ``\mathbb C_0 + \mathbb N_\Sigma : \big(f_m\,\mathbb I + \sum_i f_i \mathbb A_i^{\mathrm{dil}}\big)^{-1}`` [mori1973, christensen1990](@cite) |
-| **Maxwell** | ``\mathbb C_0 + \mathbb N_\Sigma : (\mathbb I - \mathbb P_d : \mathbb N_\Sigma)^{-1}`` with ``\mathbb P_d`` the Hill tensor of the *outer distribution shape* |
-| **PCW** | identical algebraic form, distribution-shape-aware ensemble interpretation [ponte1995](@cite) |
-
-### The second shape: Maxwell and PCW
-
-Maxwell and PCW differ from the first three rows in that a **second** shape
-enters, describing how the inclusions are *placed* rather than what they look
-like. Maxwell reads it as one equivalent inclusion swallowing a cluster; PCW
-reads it as a safety ellipsoid around each inclusion. Both are drawn in
-[Every scheme at a glance](@ref th-schemes-glance).
-
-The **distribution shape** is stored at the RVE level (default: unit
-sphere ⇒ Mori-Tanaka limit). Any `AbstractInclusion` can be used; the
-hierarchy [`AbstractDistributionShape`](@ref) leaves room for a future
-`PairwiseDistribution` extension following [willis1982](@citet).
-
-## 4. Iterative schemes
-
-The one-shot schemes all need a phase to play the role of the matrix. When no
-phase does — a polycrystal, a granular assembly, a saturated foam — the
-reference medium has to be the effective medium itself, and the estimate becomes
-a fixed point:
-
-![No phase plays the role of a matrix: the reference medium is the effective medium being sought](../assets/schemes/rve_self_consistent.svg)
-
-| Scheme | Iteration |
-| :-- | :-- |
-| **SelfConsistent** [mclaughlin1977](@cite) | ``\mathbb C^{(n+1)} = \big(\sum_i f_i \mathbb C_i : \mathbb A_i^{\mathrm{dil}}(\mathbb C^{(n)})\big) : \big(\sum_i f_i \mathbb A_i^{\mathrm{dil}}(\mathbb C^{(n)})\big)^{-1}`` |
-| **AsymmetricSelfConsistent** | switches between stiffness- and compliance-form iteration based on the matrix-vs-Voigt-bound contrast |
-
-Each iterate is projected on the major-symmetric tensors, within its symmetry
-class: a transversely isotropic estimate stays one, so the Hill tensor of a
-coaxial spheroid keeps its closed form from one iterate to the next
-([Degenerate shapes](@ref th-degenerate-shapes)).
-
-The default solver is a damped Picard fixed point (Anderson with memory
-1, Dual-safe). Loading `NonlinearSolve.jl` activates the
-`MeanFieldHomogenizationNonlinearSolveExt` extension, which accepts every SciML
-non-linear algorithm (`NewtonRaphson()`, `TrustRegion()`,
-`Anderson()`, …) via the `algorithm` keyword of [`SelfConsistent`](@ref).
-
-## 5. Differential scheme
-
-The **DifferentialScheme** integrates the multi-phase incorporation ODE
-[norris1985](@cite) on a fictitious incorporation time
-``\tau \in [0, 1]``,
+That picture is the mean-field approximation, and every scheme of this chapter
+is one answer to the question it leaves open: what is ``\boldsymbol E^0``, and in
+which medium is each inclusion embedded? Taking ``\boldsymbol E^0 = \boldsymbol E``
+in the matrix gives the dilute estimate; requiring the matrix average to come out
+right gives Mori–Tanaka; embedding each phase in the unknown effective medium
+gives the self-consistent scheme.
+
+## 2. What every scheme estimates
+
+Under uniform boundary conditions the macroscopic strain and stress are the
+volume averages of their local counterparts, ``\boldsymbol E = \langle
+\boldsymbol\varepsilon\rangle`` and ``\boldsymbol\Sigma = \langle
+\boldsymbol\sigma\rangle`` [hill1963](@cite). Linearity defines a strain
+concentration tensor per phase, ``\langle\boldsymbol\varepsilon\rangle_r =
+\mathbb A_r:\boldsymbol E``, and the two averages give
 
 ```math
-\frac{\mathrm d \mathbb C^{\mathrm{hom}}}{\mathrm d \tau}
-  = \sum_i \dot\varphi_i \, \mathbb N_i(\mathbb C^{\mathrm{hom}}) ,
+\sum_r f_r\,\mathbb A_r = \mathbb I ,
 \qquad
-\dot\varphi_i = \dot f_i + \frac{f_i}{f_0} \sum_j \dot f_j ,
+\mathbb C^{\mathrm{hom}} = \sum_r f_r\,\mathbb C_r:\mathbb A_r
+  = \mathbb C_0 + \sum_{i} f_i\,(\mathbb C_i - \mathbb C_0):\mathbb A_i ,
 ```
 
-the increments ``\dot\varphi_i`` following from the volume balance by
-Sherman-Morrison, along a user-selectable trajectory
-([`Proportional`](@ref), [`Sequential`](@ref), [`CustomPath`](@ref),
-[`Path`](@ref)). The dual form on the compliance is available through
-`formulation = :compliance`, and cracks — which have no volume but a
-finite density — enter with a balance of their own.
+the sum over ``r`` running over every phase and the one over ``i`` over the
+phases other than the matrix, whose term vanishes in the second form. The
+effective tensor is thus known as soon as the concentration tensors are, and a
+scheme is precisely an estimate of them, built from the solution of an Eshelby
+problem posed in some reference medium.
 
-The trajectories agree in the dilute limit (``f \to 0``) and diverge like
-``f`` at finite fractions — a *physical* feature of the scheme.
+The schemes below are written with three objects of
+[Localization](@ref th-localization), computed in the matrix ``\mathbb C_0``
+unless stated otherwise. For an ellipsoidal phase ``i`` of Hill tensor
+``\mathbb P_i``,
 
-The full derivation, the crack case, the closed form of the homothetic
-trajectory and the SciML resolution are in
-[The differential scheme](@ref th-differential-scheme).
+```math
+\mathbb N_i = (\mathbb C_i - \mathbb C_0):\mathbb A_i^{\mathrm{dil}}
+  = \big[(\mathbb C_i - \mathbb C_0)^{-1} + \mathbb P_i\big]^{-1} ,
+\qquad
+\mathbb A_i^{\mathrm{dil}} = \mathbb I - \mathbb P_i:\mathbb N_i ,
+\qquad
+\mathbb H_i = -\,\mathbb S_0:\mathbb N_i:\mathbb S_0 .
+```
 
-## [6. N-body schemes (require positions)](@id th-nbody)
+The middle identity follows from
+``\mathbb I - \mathbb A_i^{\mathrm{dil}}
+= \big((\mathbb A_i^{\mathrm{dil}})^{-1} - \mathbb I\big):\mathbb A_i^{\mathrm{dil}}
+= \mathbb P_i:(\mathbb C_i - \mathbb C_0):\mathbb A_i^{\mathrm{dil}}``,
+and the last one from the definition
+``\mathbb H_i = (\mathbb S_i - \mathbb S_0):\mathbb C_i:\mathbb A_i^{\mathrm{dil}}:\mathbb S_0``
+once ``(\mathbb S_i - \mathbb S_0):\mathbb C_i = -\,\mathbb S_0:(\mathbb C_i - \mathbb C_0)``
+is noted. The second form of ``\mathbb N_i`` needs ``\mathbb C_i - \mathbb C_0``
+to be invertible, the first one does not, and that is the one the package
+evaluates. The total dilute contributions are written
 
-Every scheme above — bounds, one-shot, iterative, differential — sees *one*
-inclusion in a reference medium and accounts for the others only through that
-reference: the interaction is treated in an average sense. Two schemes drop that
-one-site assumption and resolve the interaction inclusion by inclusion, which
-needs strictly more information than an `RVE` carries — the positions. They act
-on a [`ParticleAssembly`](@ref) instead, and share one ingredient, the
+```math
+\mathbb N_\Sigma = \sum_i f_i\,\mathbb N_i ,
+\qquad
+\mathbb H_\Sigma = \sum_i f_i\,\mathbb H_i = -\,\mathbb S_0:\mathbb N_\Sigma:\mathbb S_0 .
+```
+
+### Cracks
+
+A crack family ``c`` is given by its density ``\varepsilon_c`` rather than by a
+volume fraction, which vanishes in the flat limit while the opening, and hence
+the strain the family carries, stays finite. The two products a scheme needs keep
+a finite limit:
+
+```math
+f_c\,\mathbb A_c \;\longrightarrow\; \kappa_c\,\varepsilon_c\,\mathbb H_c:\mathbb C_0 ,
+\qquad
+f_c\,(\mathbb C_c - \mathbb C_0):\mathbb A_c \;\longrightarrow\;
+  -\,\kappa_c\,\varepsilon_c\,\mathbb C_0:\mathbb H_c:\mathbb C_0 ,
+```
+
+with ``\kappa_c = 4\pi/3`` for an elliptic family and ``\pi`` for a ribbon
+family [budiansky1976](@cite), and ``\mathbb H_c`` the compliance contribution
+derived in [Crack opening displacement](@ref th-cod-tensors). The first limit is
+the strain carried by the openings per unit remote strain. The second follows
+because a traction-free crack carries no stress, so that
+``f_c\,\mathbb C_c:\mathbb A_c \to 0``. A crack family therefore enters every
+scheme through these two terms, added to ``\mathbb N_\Sigma`` as
+``\kappa_c\,\varepsilon_c\,\mathbb N_c`` with
+``\mathbb N_c = -\,\mathbb C_0:\mathbb H_c:\mathbb C_0``, and each page says where.
+
+## [3. The schemes at a glance](@id th-schemes-glance)
+
+Each scheme answers the question of §1 differently. The table names the
+reference medium in which each inclusion is embedded, the field it is loaded by,
+and the page where the scheme is derived.
+
+| Scheme | Reference medium | Field applied to each inclusion | Page |
+| :-- | :-- | :-- | :-- |
+| [`Voigt`](@ref) | none | the macroscopic strain, in every phase | [Bounds](@ref th-scheme-bounds) |
+| [`Reuss`](@ref) | none | the macroscopic stress, in every phase | [Bounds](@ref th-scheme-bounds) |
+| [`Dilute`](@ref) | matrix | the macroscopic strain, at infinity | [Dilute estimates](@ref th-scheme-dilute) |
+| [`DiluteDual`](@ref) | matrix | the macroscopic stress, at infinity | [Dilute estimates](@ref th-scheme-dilute) |
+| [`MoriTanaka`](@ref) | matrix | the mean strain of the matrix | [Mori–Tanaka](@ref th-scheme-mori-tanaka) |
+| [`Maxwell`](@ref) | matrix | a remote strain applied to a domain holding every inclusion | [Maxwell and PCW](@ref th-scheme-maxwell-pcw) |
+| [`PonteCastanedaWillis`](@ref) | matrix | the field inside the distribution ellipsoid | [Maxwell and PCW](@ref th-scheme-maxwell-pcw) |
+| [`SelfConsistent`](@ref) | effective medium, every phase | a remote strain fixed by the average | [Self-consistent schemes](@ref th-scheme-self-consistent) |
+| [`AsymmetricSelfConsistent`](@ref) | effective medium, inclusions only | a remote strain fixed by the average | [Self-consistent schemes](@ref th-scheme-self-consistent) |
+| [`DifferentialScheme`](@ref) | current effective medium | dilute increments | [Differential scheme](@ref th-differential-scheme) |
+| [`Laminated`](@ref) | none, exact | piecewise-uniform fields | [Laminate](@ref th-laminate) |
+| [`ClusterModel`](@ref) | matrix | the remote strain and the field of every neighbor | [Cluster model](@ref th-cluster) |
+| [`EquivalentInclusion`](@ref) | matrix | a Galerkin polarization | [Equivalent inclusion method](@ref th-eim) |
+
+The pages of the chapter follow the order of the table. The bounds use no shape
+at all. The next three pages embed the inclusions in the matrix, each with a
+richer description of what surrounds them. The self-consistent and differential
+schemes then replace the matrix by the effective medium, the laminate is solved
+exactly, and the last two schemes resolve the interaction inclusion by inclusion.
+
+## [4. Schemes that need positions](@id th-nbody)
+
+Every scheme of the table but the last two sees one inclusion in a reference
+medium and accounts for the others only through that reference: the interaction
+is treated in an average sense. The [`ClusterModel`](@ref) and the
+[`EquivalentInclusion`](@ref) method drop that one-site assumption and resolve
+the interaction inclusion by inclusion, which needs strictly more information
+than an `RVE` carries — the positions. They act on a [`ParticleAssembly`](@ref)
+instead, and share one ingredient, the
 [two-inclusion interaction tensor](@ref th-interaction) ``\mathbb{T}^{ab}``.
+Both degenerate exactly onto Mori–Tanaka when the interaction is switched off,
+which is the sharpest available check that their assembly is right.
 
-| Scheme | Unknowns | Reference |
-| :-- | :-- | :-- |
-| **ClusterModel** | mean strain of every family, from ``\sum_K \mathbb{M}_{IK} : \mathbb{A}^K = \mathbb{I}`` — see [the cluster model](@ref th-cluster) | [molinari1996](@citet) |
-| **EquivalentInclusion** | polarization of every inclusion, from a Galerkin discretization of the weak Lippmann-Schwinger equation — see [the equivalent inclusion method](@ref th-eim) | [brisard2014](@citet) |
+## 5. Number-type compatibility
 
-The two are the *same* linear system on a periodic assembly and differ only in
-how the far field is closed. Both degenerate **exactly** onto Mori-Tanaka when
-the interaction is switched off — the sharpest available check that their
-assembly is right — and the equivalent inclusion method additionally returns a
-rigorous bound on the apparent stiffness.
-
-## 7. Number-type compatibility
-
-The schemes above involve nothing but tensor algebra and, for the iterative and
+The schemes involve nothing but tensor algebra and, for the iterative and
 differential ones, a solver, so that the scalar type is left open. Every scheme
 is mandated to support:
 
@@ -326,11 +173,10 @@ is mandated to support:
 
 ## Where to go next
 
-The differential scheme of §5 is derived in full on the next page,
-[The differential scheme](@ref th-differential-scheme), together with the crack
-case and the choice of trajectory. The N-body schemes of §6 rest on the
-[two-inclusion interaction tensor](@ref th-interaction), developed in the N-body
-chapter. The tutorials [A first homogenization](@ref tut-first-estimate) and
-[Bounds and classical schemes](@ref tut-bounds-and-schemes) apply these schemes
-to a first RVE, and the manual page
+The schemes are now taken one at a time, starting with the two that need
+neither a shape nor a reference medium:
+[Voigt and Reuss bounds](@ref th-scheme-bounds). The tutorials
+[A first homogenization](@ref tut-first-estimate) and
+[Bounds and classical schemes](@ref tut-bounds-and-schemes) apply the schemes of
+this chapter to a first RVE, and the manual page
 [Homogenization schemes](@ref man-schemes) gives their syntax.

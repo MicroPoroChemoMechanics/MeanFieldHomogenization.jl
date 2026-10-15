@@ -2,6 +2,9 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+using ForwardDiff
+# `import`, not `using`: SymPy and Symbolics both export `@variables`.
+import Symbolics
 
 # =============================================================================
 #  Contribution tensors N (stiffness) and H (compliance) for ellipsoids.
@@ -71,4 +74,42 @@ end
     ΔS = delta_compliance(H, f)
     @test ΔC[1, 1, 1, 1] ≈ f * N[1, 1, 1, 1] rtol = 1.0e-12
     @test ΔS[1, 1, 1, 1] ≈ f * H[1, 1, 1, 1] rtol = 1.0e-12
+end
+
+# A void and an insulator have finite compliance / resistivity contributions,
+# although their stiffness has no inverse: the contribution is read as
+# ℍ = −𝕊₀ : ℕ : 𝕊₀. Before 0.16.3 the literal (𝕊₁ − 𝕊₀) : 𝔸_σσ multiplied an
+# infinite compliance by a zero concentration and returned NaN, and with it
+# DiluteDual and the compliance form of the differential scheme on pores.
+# Reference: a spherical void in an isotropic matrix,
+# ℍ = (1/(3k₀) + 1/(4μ₀)) 𝕁 + 5(3k₀ + 4μ₀) / (2μ₀(9k₀ + 8μ₀)) 𝕂.
+@testset "compliance_contribution — void, closed form, AD and symbolic" begin
+    hJ(k, μ) = 1 / (3k) + 1 / (4μ)
+    hK(k, μ) = 5 * (3k + 4μ) / (2μ * (9k + 8μ))
+    k₀, μ₀ = 10.0, 5.0
+    C₀ = TensISO{3}(3k₀, 2μ₀)
+    sphere = Ellipsoid(1.0)
+
+    H = @inferred compliance_contribution(sphere, zero(C₀), C₀)
+    @test H ≈ TensISO{3}(hJ(k₀, μ₀), hK(k₀, μ₀)) rtol = 1.0e-13
+
+    # For a solid inclusion the identity reproduces the definition.
+    spheroid = Ellipsoid(1.0, 1.0, 0.3)
+    C₁ = TensISO{3}(90.0, 40.0)
+    literal = (inv(C₁) - inv(C₀)) ⊡ (stress_strain_loc(spheroid, C₁, C₀) ⊡ inv(C₀))
+    @test @inferred(compliance_contribution(spheroid, C₁, C₀)) ≈ literal rtol = 1.0e-12
+
+    # ForwardDiff through the matrix moduli, against the closed form.
+    jcoef(T) = sum(T[i, i, j, j] for i in 1:3, j in 1:3) / 3
+    void_H(k, μ) = compliance_contribution(sphere, zero(TensISO{3}(3k, 2μ)), TensISO{3}(3k, 2μ))
+    @test ForwardDiff.derivative(k -> jcoef(void_H(k, μ₀)), k₀) ≈
+        ForwardDiff.derivative(k -> hJ(k, μ₀), k₀) rtol = 1.0e-12
+    @test ForwardDiff.derivative(μ -> void_H(k₀, μ)[1, 2, 1, 2], μ₀) ≈
+        ForwardDiff.derivative(μ -> hK(k₀, μ) / 2, μ₀) rtol = 1.0e-12
+
+    # Symbolic moduli: the closed form itself.
+    Symbolics.@variables k μ
+    Hs = void_H(k, μ)
+    @test isequal(Symbolics.simplify(jcoef(Hs) - hJ(k, μ)), 0)
+    @test isequal(Symbolics.simplify(2 * Hs[1, 2, 1, 2] - hK(k, μ)), 0)
 end

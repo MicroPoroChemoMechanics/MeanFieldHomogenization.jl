@@ -187,3 +187,21 @@ end
     @test homogenize(rve, :MoriTanaka) ≈ homogenize(rve, MoriTanaka())
     @test homogenize(rve, :MT) ≈ homogenize(rve, MoriTanaka())
 end
+
+# Exact voids (zero stiffness): DiluteDual adds their finite compliance
+# contribution. It returned NaN before 0.16.3, through an infinite compliance
+# times a zero concentration. Reference: a spherical void in an isotropic
+# matrix, ℍ = (1/(3k₀) + 1/(4μ₀)) 𝕁 + 5(3k₀ + 4μ₀)/(2μ₀(9k₀ + 8μ₀)) 𝕂, and in
+# conduction 3/(2k₀) 𝟏.
+@testset "DiluteDual — exact voids" begin
+    k₀, μ₀, κ₀ = 10.0, 5.0, 2.0
+    C₀, K₀ = TensISO{3}(3k₀, 2μ₀), TensISO{3}(κ₀)
+    H = TensISO{3}(1 / (3k₀) + 1 / (4μ₀), 5 * (3k₀ + 4μ₀) / (2μ₀ * (9k₀ + 8μ₀)))
+    for f in (0.1, 0.2)
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀, :K => K₀); fraction = :rest)
+        add_phase!(rve, :P, Ellipsoid(1.0), Dict(:C => zero(C₀), :K => zero(K₀)); fraction = f)
+        @test homogenize(rve, DiluteDual(:M), :C) ≈ inv(inv(C₀) + f * H)
+        @test homogenize(rve, DiluteDual(:M), :K) ≈ inv(inv(K₀) + f * TensISO{3}(3 / (2κ₀)))
+    end
+end

@@ -384,7 +384,9 @@ agrees with the one reached through the cubature at tight tolerances to
 
 ## Where to go next
 
-[Hill polarization tensors](@ref th-hill-tensors) for the closed forms and the
-cubatures, [COD tensors](@ref th-cod-tensors) for the cracks, and
-[Homogenization schemes](@ref th-homogenization) for the self-consistent
-iteration.
+The next chapter leaves the ellipsoid for patterns whose inner strain is not
+uniform: [Layered sphere](@ref th-layered-sphere) solves the generalized Eshelby
+problem of a concentric multilayer. The closed forms treated here are those of
+[Hill polarization tensors](@ref th-hill-tensors) and
+[COD tensors](@ref th-cod-tensors), and the self-consistent iteration that
+relies on them is in [Self-consistent schemes](@ref th-scheme-self-consistent).

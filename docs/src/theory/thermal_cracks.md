@@ -402,7 +402,10 @@ on ``\boldsymbol{K}_0::\texttt{AbstractTens\{2,3\}}``).
 
 ## Where to go next
 
-The dictionary invoked in §1 is stated in full on the next page,
+The next page, [Degenerate shapes and extreme aspect ratios](@ref th-degenerate-shapes),
+closes the chapter: it evaluates the closed forms of this chapter and of the
+previous one at the shapes where they degenerate, the disc of a crack among
+them. The dictionary invoked in §1 is stated in full in
 [Extension to conductivity](@ref th-conductivity), which lists what carries over
 from elasticity to the order-2 problem and the two points where the latter is
 simpler. The scalar ``b`` and the resistivity contribution are called as

@@ -1,17 +1,22 @@
 # [The differential scheme](@id th-differential-scheme)
 
 !!! info "Before this page"
-    [Homogenization schemes](@ref th-homogenization), where the dilute estimate
-    repeated here at each increment is stated, and
+    [Dilute estimates](@ref th-scheme-dilute), whose estimate is repeated here
+    at each increment,
+    [Self-consistent schemes](@ref th-scheme-self-consistent), the other way of
+    embedding the inclusions in the effective medium, and
     [Localization and contribution tensors](@ref th-localization) for the
     contribution tensors ``\mathbb N_i`` and ``\mathbb H_i`` integrated below.
 
-The differential (or incremental) scheme builds the composite by
-*repeated dilute incorporation*: an infinitesimal amount of each
+The self-consistent schemes embed every inclusion in the final effective medium
+at once. The differential (or incremental) scheme builds the composite by
+*repeated dilute incorporation* instead: an infinitesimal amount of each
 inclusion phase is added to the current effective medium, which is
 re-homogenized before the next increment. This page derives the
 resulting ODE for an arbitrary number of phases and an arbitrary
 incorporation trajectory [norris1985](@cite).
+
+![Inclusions added by small amounts to the current effective medium, from the matrix at τ = 0 to the effective medium at τ = 1.](../assets/schemes/scheme_differential.svg)
 
 ## [1. Incorporation process](@id th-differential-incorporation)
 
@@ -402,10 +407,9 @@ saying so.
 
 ## Where to go next
 
-The next chapter leaves the ellipsoid for patterns whose inner strain is not
-uniform. [Layered sphere](@ref th-layered-sphere) solves the generalized Eshelby
-problem of a concentric multilayer and supplies its volume-averaged
-concentration tensor, which the schemes of this chapter, the differential one
-included, consume like any other. The path dependence of §3 is measured in the
-tutorials [The differential scheme and path dependence](@ref tut-differential-paths)
+Every scheme so far is an estimate for a random morphology. The next page,
+[Periodic multilayer — the laminate cell](@ref th-laminate), treats the one
+morphology whose effective behavior is known exactly, a periodic stack of
+layers. The path dependence of §3 is measured in the tutorials
+[The differential scheme and path dependence](@ref tut-differential-paths)
 and [Comparing loading-path trajectories](@ref tut-differential-loading-paths).

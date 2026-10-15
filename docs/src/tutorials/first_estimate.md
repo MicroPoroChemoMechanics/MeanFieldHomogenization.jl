@@ -3,8 +3,9 @@
 !!! info "Before this page"
     [Getting started](@ref getting-started), where the package is installed
     and a first effective stiffness is read back, and the theory page
-    [Homogenization schemes](@ref th-homogenization), where the dilute and
-    Mori–Tanaka estimates compared below are derived.
+    [Dilute estimates](@ref th-scheme-dilute) and
+    [Mori–Tanaka](@ref th-scheme-mori-tanaka), where the estimates compared
+    below are derived.
 
 Every `MeanFieldHomogenization` computation starts from the same three ingredients:
 a **representative volume element** (RVE) describing the phases, their

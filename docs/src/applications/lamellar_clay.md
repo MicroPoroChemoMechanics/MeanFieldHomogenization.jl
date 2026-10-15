@@ -5,8 +5,8 @@
     the particle scale exactly, the tutorial
     [Symbolic laminates: arithmetic and harmonic averages](@ref tut-symbolic-laminate),
     where the same cell runs on `SymPy` symbols, and
-    [Homogenization schemes](@ref th-homogenization) for the self-consistent
-    closure of the porous polycrystal.
+    [Self-consistent schemes](@ref th-scheme-self-consistent) for the
+    self-consistent closure of the porous polycrystal.
 
 Smectite clays and the calcium silicate hydrates that hold a cement paste
 together share a morphology: the solid is not a continuum but a stack of

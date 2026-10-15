@@ -1,10 +1,12 @@
 # [Layered sphere — bulk + shear recurrences and imperfect interfaces](@id th-layered-sphere)
 
 !!! info "Before this page"
+    [The Eshelby inclusion problem](@ref th-eshelby-problem), whose uniformity
+    result a composite pattern loses, and
     [Localization and contribution tensors](@ref th-localization), whose strain
     concentration tensor is what a pattern without a Hill tensor supplies
-    instead, and [Homogenization schemes](@ref th-homogenization), which
-    consume it.
+    instead, for the [Homogenization schemes](@ref th-homogenization) of the
+    next chapter to consume.
 
 [`LayeredSphere`](@ref) is an `n`-layer isotropic spherical composite
 inclusion in an infinite isotropic matrix, with per-layer localization, global

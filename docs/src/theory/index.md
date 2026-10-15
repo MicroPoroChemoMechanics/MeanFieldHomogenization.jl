@@ -7,13 +7,13 @@ order in which it is built. Every page follows the
 every formula is either cited or derived on the page.
 
 The order below is the dependency chain, and it is worth reading in that order.
-It starts from the Eshelby problem and the tensors it produces, then the schemes
-assembled from them. Then come the three independent ways that one-inclusion
-picture is *generalized* — a richer morphological pattern in place of the
-ellipsoid, a different physics, a different time dependence — followed by
-periodic homogenization, which is a different construction rather than a
-generalization, and finally the N-body models, which drop the one-site
-assumption altogether.
+It starts with the problems of a single heterogeneity in an infinite medium: the
+Eshelby problem and the tensors it produces, the interaction of two inclusions,
+the crack as the flat limit of an ellipsoid, and the layered patterns that
+generalize the Eshelby problem. The homogenization schemes come next, one family
+per page, and turn those solutions into effective properties. The chain is then
+extended to another physics, conduction, and to another time dependence,
+viscoelasticity.
 
 !!! tip "The symbols"
     Every symbol of these pages is in the [Nomenclature](@ref nomenclature),
@@ -93,20 +93,26 @@ picture at tensor order 2, and aging viscoelasticity the same picture with
 Volterra products in place of tensor products. The contract is written up in
 [Adding a new inclusion](@ref dev-adding-inclusion).
 
-## Homogenization schemes
-
-Assembling those contributions under an assumption about how phases interact
-gives a **homogenization scheme** — dilute, Mori–Tanaka, self-consistent,
-differential, and the bounds ([Homogenization schemes](@ref th-homogenization)).
+## The Eshelby problem
 
 | Page | What it adds |
 | :--- | :----------- |
-| [Homogenization schemes](@ref th-homogenization) | the scheme catalog, each as one assumption on the reference medium, and the bounds |
-| [Differential scheme](@ref th-differential-scheme) | incorporation as an ODE in a fictitious time, and what a crack — which has no volume to replace — does to it |
+| [The Eshelby inclusion problem](@ref th-eshelby-problem) | the uniform strain inside an ellipsoid, and the three tensors ``\mathbb{P}``, ``\mathbb{S}^{\mathrm{E}}``, ``\mathbb{Q}`` |
+| [Hill polarization tensors](@ref th-hill-tensors) | the closed forms of ``\mathbb{P}``, shape by shape and symmetry class by symmetry class |
+| [Localization and contribution tensors](@ref th-localization) | the response of an inhomogeneity to a remote load, and its contribution to the effective stiffness |
+| [Two-inclusion interaction tensors](@ref th-interaction) | the field one inclusion induces in another, through the Green operator — the ingredient of the N-body schemes |
 
-The differential scheme is a scheme like the others, differing only in that its
-assembly is an integration rather than a closed form; it is grouped here rather
-than treated as a specialization of its own.
+## Cracks and degenerate shapes
+
+A crack is a degenerate ellipsoid rather than a composite pattern: it keeps the
+Eshelby framework and loses its volume, which is what forces a different
+descriptor.
+
+| Page | What it adds |
+| :--- | :----------- |
+| [Crack opening displacement](@ref th-cod-tensors) | the flat-inclusion limit: a crack has no volume, so it is described by ``\boldsymbol{B}`` and ``\mathbb{H}`` instead of a volume fraction |
+| [Thermal cracks](@ref th-thermal-cracks) | the same limit for scalar transport |
+| [Degenerate shapes](@ref th-degenerate-shapes) | the closed forms of the Hill, Eshelby and crack opening tensors at the shapes where they reach ``0/0`` limits: sphere, disc, needle |
 
 ## The generalized Eshelby problem: morphological patterns
 
@@ -120,17 +126,31 @@ treatment belongs in this group; two are implemented.
 | :--- | :------ |
 | [Layered sphere](@ref th-layered-sphere) | a *composite* inclusion: no Hill tensor exists, the response is assembled by a radial recurrence |
 | [Layered spheroid](@ref th-layered-spheroid) | the same for confocal spheroids, where imperfect interfaces couple harmonic degrees |
+| [The elastic confocal spheroid](@ref th-spheroid-elasticity) | the axisymmetric elastic problem on the same chart |
 
-## Cracks
+## Homogenization schemes
 
-A crack is a degenerate ellipsoid rather than a composite pattern: it keeps the
-Eshelby framework and loses its volume, which is what forces a different
-descriptor.
+Assembling the solutions of the previous chapters under an assumption about
+what surrounds each inclusion gives a **homogenization scheme**. The overview
+states what every scheme estimates and gathers them in one table; each family
+then has its page, with its figure, its assumption and its equations.
 
-| Page | Specialization |
-| :--- | :------------- |
-| [Crack opening displacement](@ref th-cod-tensors) | the flat-inclusion limit: a crack has no volume, so it is described by ``\boldsymbol{B}`` and ``\mathbb{H}`` instead of a volume fraction |
-| [Thermal cracks](@ref th-thermal-cracks) | the same limit for scalar transport |
+| Page | What it adds |
+| :--- | :----------- |
+| [Homogenization schemes](@ref th-homogenization) | the framework common to all schemes, the identities between contribution tensors, how a crack family enters, and the table of schemes |
+| [Voigt and Reuss bounds](@ref th-scheme-bounds) | a uniform strain or a uniform stress, and the energy principles that make them bounds |
+| [Dilute estimates](@ref th-scheme-dilute) | each inclusion alone in the matrix, under the remote strain or the remote stress |
+| [Mori–Tanaka](@ref th-scheme-mori-tanaka) | each inclusion under the mean strain of the matrix |
+| [Maxwell and Ponte Castañeda–Willis](@ref th-scheme-maxwell-pcw) | a second shape for the distribution, both schemes derived from the Green operator and shown to coincide |
+| [Self-consistent schemes](@ref th-scheme-self-consistent) | each phase in the effective medium, with or without a distinguished matrix |
+| [Differential scheme](@ref th-differential-scheme) | incorporation as an ODE in a fictitious time, and what a crack — which has no volume to replace — does to it |
+| [Laminate](@ref th-laminate) | a periodic stack solved exactly: no inclusion at all, the interface algebra replaces the Hill tensor |
+| [The cluster model](@ref th-cluster) | the mean strain of every inclusion, resolved inside a cluster [molinari1996](@cite) |
+| [The equivalent inclusion method](@ref th-eim) | the same physics as a variational Galerkin problem, with rigorous bounds [brisard2014](@cite) |
+
+The last two drop the one-site assumption: instead of averaging the interaction
+between inclusions, they resolve it pair by pair, and therefore need to know
+*where* the inclusions are.
 
 ## Extension to conductivity
 
@@ -148,30 +168,7 @@ problem itself that must be generalized.
 | Page | What it adds |
 | :--- | :----------- |
 | [The Laplace-Carson route](@ref th-laplace-carson) | the correspondence principle: a non-aging problem solved as an elastic one, transform by transform |
-| [Aging linear Volterra behavior](@ref th-viscoelasticity) | moduli and conductivities become Volterra operators; the algebra of the chain is unchanged, the order of its factors is not free |
-
-## Periodic homogenization
-
-Not a morphological pattern, and not an inclusion problem at all: the laminate
-result is the closed form of a *periodic* homogenization problem, reached by
-interface algebra rather than by an Eshelby argument. It is grouped on its own
-for that reason.
-
-| Page | What it adds |
-| :--- | :----------- |
-| [Laminate](@ref th-laminate) | a periodic stack: no inclusion at all, the interface algebra replaces the Hill tensor |
-
-## N-body models
-
-These are the only pages that drop the one-site assumption: instead of averaging
-the interaction between inclusions, they resolve it pair by pair, and therefore
-need to know *where* the inclusions are.
-
-| Page | What it adds |
-| :--- | :----------- |
-| [Interaction tensors](@ref th-interaction) | the two-inclusion tensor ``\mathbb{T}^{ab}``, its Green operator, its closed forms — and the sign convention both models follow |
-| [The cluster model](@ref th-cluster) | the mean strain of every inclusion, resolved inside a cluster [molinari1996](@cite) |
-| [The equivalent inclusion method](@ref th-eim) | the same physics as a variational Galerkin problem, with rigorous bounds [brisard2014](@cite) |
+| [Aging linear Volterra behavior](@ref th-viscoelasticity) | moduli and conductivities become Volterra operators; the algebra of the chain is unchanged, the order of its factors is not free, and every scheme is restated in that algebra |
 
 ## Appendices
 

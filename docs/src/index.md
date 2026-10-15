@@ -27,7 +27,7 @@ hero:
 features:
   - icon: 📐
     title: Theory
-    details: The Eshelby/Hill chain in the order it is built, then the ways it is generalized — richer patterns, conductivity, viscoelasticity, periodicity, N-body.
+    details: One heterogeneity first — the Eshelby problem, cracks, layered patterns — then every homogenization scheme, one family per page, and the extensions to conductivity and viscoelasticity.
     link: /theory/
   - icon: 🧰
     title: Manual
@@ -68,12 +68,13 @@ localization tensor for each phase, and assembles a **homogenization scheme** �
 dilute, Mori–Tanaka, self-consistent, differential, PCW, or the classical bounds
 — into an effective stiffness or conductivity.
 
-That chain is the whole library. Everything else is the chain **generalized in
-one direction at a time**: a richer morphological pattern in place of the
-ellipsoid, a degenerate one for cracks, a different physics for transport, a
-different time dependence for viscoelasticity, a periodic problem for the
-multilayer, and no one-site assumption at all for the N-body schemes. The
-[reading path](@ref th-index) takes them in that order.
+That chain is the whole library. The [reading path](@ref th-index) follows it:
+first the problem of a single heterogeneity, an ellipsoid, a crack or a layered
+pattern; then the schemes that assemble those solutions, one family per page,
+from the bounds to the N-body schemes that resolve the interaction inclusion by
+inclusion; and finally the chain **generalized in one direction at a time**, a
+different physics for transport and a different time dependence for
+viscoelasticity.
 
 `MeanFieldHomogenization` is a pure-Julia reimplementation of the Eshelby/Hill
 machinery of the [Echoes](https://jfbarthelemy.github.io/echoes/) C++/Python

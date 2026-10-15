@@ -2,6 +2,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+using ForwardDiff
 using SymPy   # top level on purpose: `@syms` below is expanded before any
 # `using` nested in a @testset body would have run.
 
@@ -85,6 +86,20 @@ end
     R_eff = inv(K₀) + ΔR
     R_from_K = inv(K_eff)
     @test norm(R_eff - R_from_K) / norm(R_from_K) < 5 * f^2
+end
+
+# An insulating sphere has the finite resistivity contribution 3/(2k₀) 𝟏,
+# read as −𝐊₀⁻¹ ⋅ 𝐍 ⋅ 𝐊₀⁻¹ without inverting K₁ = 0 (NaN before 0.16.3).
+@testset "resistivity_contribution — insulating sphere" begin
+    for k₀ in (2.0, 7.5)
+        K₀ = TensISO{3}(k₀)
+        R = @inferred resistivity_contribution(Ellipsoid(1.0), zero(K₀), K₀)
+        @test R ≈ TensISO{3}(3 / (2k₀)) rtol = 1.0e-13
+    end
+    d = ForwardDiff.derivative(
+        k -> resistivity_contribution(Ellipsoid(1.0), zero(TensISO{3}(k)), TensISO{3}(k))[1, 1], 2.0
+    )
+    @test d ≈ -3 / (2 * 2.0^2) rtol = 1.0e-12
 end
 
 @testset "Conductivity — SymPy genericity" begin
