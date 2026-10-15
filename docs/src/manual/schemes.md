@@ -17,7 +17,7 @@ them acts as a matrix is not a property of the microstructure but of the model
 applied to it, and it is stated on the scheme — see
 [Who is the matrix?](@ref man-who-is-the-matrix) below. The drawings of this
 page are redrawn after the Echoes book [echoes](@cite), and every scheme is drawn
-side by side in [Every scheme at a glance](@ref th-schemes-glance).
+on its own theory page, listed in [The schemes at a glance](@ref th-schemes-glance).
 
 ![Matrix carrying ellipsoids and coated spheres — the morphology Mori–Tanaka reads into an RVE](../assets/schemes/rve_mori_tanaka.svg)
 
@@ -121,7 +121,7 @@ decides when the iteration stops.
     `RVE` does not carry. They act on a [`ParticleAssembly`](@ref) instead — see
     [the particle-assembly page](@ref man-assemblies).
 
-## Distribution shape (Maxwell, PCW)
+## [Distribution shape (Maxwell, PCW)](@id man-distribution-shape)
 
 Two schemes take a **second** shape, describing how the inclusions are placed
 rather than what they look like. Maxwell reads it as the envelope of a cluster
@@ -164,9 +164,11 @@ homogenize(rve, Maxwell())
 ```
 
 The `distribution_shape` field is wrapped in `UniformDistribution`. A
-future `PairwiseDistribution` (Willis 1982) can be added without
-breaking the public API — see
-[`AbstractDistributionShape`](@ref).
+future `PairwiseDistribution`, with one shape per pair of phases
+[ponte1995, willis1982](@cite), can be added without breaking the public API —
+see [`AbstractDistributionShape`](@ref). Both schemes are derived, and shown to
+coincide for a single shape, in
+[Maxwell and Ponte Castañeda–Willis](@ref th-scheme-maxwell-pcw).
 
 ### It belongs to the RVE, and it has no default
 
@@ -189,11 +191,12 @@ data, not a sign that the field is in the wrong place.
 
 !!! warning "An undeclared distribution shape is an error"
     Where the field does differ from a phase geometry is that it has no
-    harmless default. A **spherical** distribution makes Maxwell and PCW
-    coincide *exactly* with Mori–Tanaka. Supplying one silently — which is what
-    this field used to do — therefore answered the scheme whose whole purpose is
-    a non-spherical distribution with the estimate it generalizes, and said
-    nothing about it.
+    harmless default. With spherical inclusions, a **spherical** distribution
+    makes Maxwell and PCW coincide *exactly* with Mori–Tanaka (more generally,
+    the three agree whenever every inclusion has the shape of the
+    distribution). Supplying one silently — which is what this field used to
+    do — therefore answered the scheme whose whole purpose is the distribution
+    with the estimate it generalizes, and said nothing about it.
 
     So an RVE that declares none raises, the way a matrix-based scheme raises
     when no phase can play the reference medium:
@@ -208,10 +211,12 @@ data, not a sign that the field is in the wrong place.
 
     ```julia
     rve = RVE(; distribution_shape = Ellipsoid(1.0))
+    # ... phases added, every inclusion a sphere ...
     homogenize(rve, PonteCastanedaWillis()) ≈ homogenize(rve, MoriTanaka())   # true, and now on purpose
     ```
 
-    This is also the quickest way to check that the option is wired correctly.
+    With spherical inclusions, this is also the quickest way to check that the
+    option is wired correctly.
 
 ## Iterative solvers
 

@@ -20,7 +20,7 @@ and Reuss returns ``\\boldsymbol{K}^{\\mathrm{Reuss}} = \\bigl(\\sum_i f_i\\,\\b
 
 Phases carrying a [`CrackDensity`](@ref) are ignored, see [`Voigt`](@ref).
 
-Reference: [hill1965](@citet).
+Reference: [hill1952](@citet).
 """
 function _evaluate(rve::RVE, ::Reuss, ::Val{p}; kw...) where {p}
     names = _bound_phase_names(rve, "Reuss")

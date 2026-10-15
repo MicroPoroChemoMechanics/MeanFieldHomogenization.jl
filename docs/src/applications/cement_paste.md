@@ -1,8 +1,9 @@
 # [Multiscale elasticity of a hydrating cement paste](@id app-cement-paste)
 
 !!! info "Before this page"
-    [Homogenization schemes](@ref th-homogenization), where the self-consistent
-    and Mori–Tanaka estimates chained below are derived, the tutorial
+    [Self-consistent schemes](@ref th-scheme-self-consistent) and
+    [Mori–Tanaka](@ref th-scheme-mori-tanaka), where the estimates chained
+    below are derived, the tutorial
     [Porous materials and the self-consistent trap](@ref tut-porous-materials)
     on the percolation threshold of the self-consistent scheme, which is what
     makes the paste set, and [Layered inclusions](@ref man-layered) for the

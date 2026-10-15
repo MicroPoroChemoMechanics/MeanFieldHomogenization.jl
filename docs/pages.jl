@@ -30,32 +30,30 @@
 pages = [
     "Home" => "index.md",
     "Getting Started" => "quickstart.md",
-    # Ordered as a reading path, and grouped so that the standard theory
-    # comes before what is built on top of it: conventions, then the
-    # Eshelby framework and the tools it produces (Hill tensor,
-    # localization, the schemes), then the specializations (cracks,
-    # layered inclusions, laminates, viscoelasticity), then the N-body
-    # models, and finally the appendices — pages that support the rest but
-    # are written in its language rather than the other way round.
-    # Grouped by what a chapter *is about*, not by how it is derived. The
-    # order follows the dependency chain: the Eshelby problem and the
-    # tensors it produces, then the schemes built on them, then the three
-    # ways the problem is generalized — a richer pattern in place of the
-    # ellipsoid, a different physics, a different time dependence — then
-    # periodic homogenization, which is a different construction entirely,
-    # and finally the N-body models that drop the one-site picture.
+    # Ordered as a reading path. The problems of a single heterogeneity come
+    # first — the Eshelby problem and the tensors it produces, with the
+    # interaction of two inclusions; the crack, its flat limit, with the
+    # degenerate shapes; the layered patterns, which generalize the Eshelby
+    # problem — and the homogenization schemes that turn their solutions into
+    # effective properties come after, one family per page, from the bounds to
+    # the N-body schemes. Conductivity and viscoelasticity then extend the whole
+    # chain, and the appendices support it in its own language.
     "Theory" => [
         "theory/index.md",
         "theory/notation.md",
-        "Foundations — the Eshelby problem" => [
+        "The Eshelby problem" => [
             "theory/eshelby_problem.md",
             "theory/hill_tensors.md",
             "theory/localization.md",
-            "theory/degenerate_shapes.md",
+            "theory/interaction_tensors.md",
         ],
-        "Homogenization schemes" => [
-            "theory/homogenization.md",
-            "theory/differential_scheme.md",
+        # A crack is a degenerate ellipsoid, so it stays close to the
+        # foundations; the page on degenerate shapes treats its closed forms
+        # together with those of the sphere and the needle.
+        "Cracks and degenerate shapes" => [
+            "theory/cod_tensors.md",
+            "theory/thermal_cracks.md",
+            "theory/degenerate_shapes.md",
         ],
         # A layered sphere or a confocal spheroid is not an inclusion with a
         # Hill tensor: it is a *pattern* whose generalized Eshelby problem is
@@ -66,11 +64,22 @@ pages = [
             "theory/layered_spheroid.md",
             "theory/layered_spheroid_elasticity.md",
         ],
-        # A crack is a degenerate ellipsoid, so it stays close to the
-        # foundations rather than joining the composite patterns.
-        "Cracks" => [
-            "theory/cod_tensors.md",
-            "theory/thermal_cracks.md",
+        # One page per family of schemes, each with its figure, its assumption
+        # and its equations, in the order of the overview's table. The laminate
+        # is solved exactly by periodic homogenization rather than estimated,
+        # and the cluster model and the equivalent inclusion method need the
+        # positions; they are schemes all the same, and sit with the others.
+        "Homogenization schemes" => [
+            "theory/homogenization.md",
+            "theory/scheme_bounds.md",
+            "theory/scheme_dilute.md",
+            "theory/scheme_mori_tanaka.md",
+            "theory/scheme_maxwell_pcw.md",
+            "theory/scheme_self_consistent.md",
+            "theory/differential_scheme.md",
+            "theory/laminate.md",
+            "theory/cluster_model.md",
+            "theory/eim.md",
         ],
         "Extension to conductivity" => [
             "theory/conductivity.md",
@@ -81,16 +90,6 @@ pages = [
         "Extension to viscoelasticity" => [
             "theory/laplace_carson.md",
             "theory/viscoelasticity.md",
-        ],
-        # NOT a morphological pattern: the laminate result comes out of
-        # periodic homogenization, a construction of its own.
-        "Periodic homogenization" => [
-            "theory/laminate.md",
-        ],
-        "N-body models" => [
-            "theory/interaction_tensors.md",
-            "theory/cluster_model.md",
-            "theory/eim.md",
         ],
         "Appendices" => [
             "theory/corrected_cell.md",

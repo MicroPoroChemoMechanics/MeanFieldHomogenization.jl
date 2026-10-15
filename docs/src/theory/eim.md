@@ -10,6 +10,8 @@ discretization of the weak form of the Lippmann-Schwinger equation, with the pol
 polynomial over the inclusions. Unlike every other scheme of the package it also
 delivers a **rigorous bound** on the apparent stiffness.
 
+![A polarization per inclusion, in a periodic cell and its images.](../assets/schemes/scheme_eim.svg)
+
 Where [moschovidis1975](@citet) discretized the *strong* form by
 Taylor expansion and collocation, the variational form discretizes the *weak* one — and
 inherits the extremum property of the Hashin-Shtrikman principle.
@@ -177,9 +179,10 @@ polynomial enrichment is not implemented.
 
 ## Where to go next
 
-The N-body chapter ends here, and the two appendices support the pages above.
-[The finite Eshelby cell](@ref th-corrected-cell) describes the numerical device
-behind the finite-element inclusions, and the table of §5 is reproduced in
+The chapter on schemes ends here. The next one keeps every scheme and changes
+the physics: [Extension to conductivity](@ref th-conductivity) states the
+dictionary through which the order-2 transport problem reuses the whole chain.
+The table of §5 is reproduced in
 [The equivalent inclusion method, against a published table](@ref app-eim-assembly).
 The construction of a [`ParticleAssembly`](@ref) is in
 [Particle assemblies and N-body schemes](@ref man-assemblies), and the API

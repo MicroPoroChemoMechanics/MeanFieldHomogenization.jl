@@ -5,8 +5,9 @@
 #       Σ     = Σ_i fᵢ Nᵢ  (+ density-weighted crack contributions)
 #       P_d   = hill_tensor(rve.distribution_shape, C₀)
 #
-#  Reduces to Dilute when P_d → 0 (no interaction) and to Mori-Tanaka
-#  when the distribution shape coincides with the inclusion shape.
+#  Agrees with Dilute to first order in the fractions, and reduces to
+#  Mori-Tanaka when every inclusion phase has the Hill tensor of the
+#  distribution shape (MT is C₀ + Σ ⊡ (I − Σᵢ fᵢ Pᵢ ⊡ Nᵢ)⁻¹).
 # =============================================================================
 
 """
@@ -18,8 +19,10 @@ reference for the outer Hill polarization tensor ``\\mathbb{P}_{\\mathrm{d}}``. 
 (`:K`) is supported through the same recipe with 2nd-order tensors.
 
 The dispatch on `rve.distribution_shape` is on its concrete subtype so
-that a future `PairwiseDistribution` (Willis 1982) can plug in by
-adding a new method without touching the public API.
+that a future `PairwiseDistribution` [willis1982](@cite) can plug in by
+adding a new method without touching the public API. The derivation, from
+the far field of the inhomogeneities [sevostianovIJES2013](@cite), is in the
+theory page [Maxwell and Ponte Castañeda–Willis](@ref th-scheme-maxwell-pcw).
 """
 function _evaluate(rve::RVE, scheme::Maxwell, ::Val{p}; kw...) where {p}
     return _maxwell(rve, distribution_shape(rve, scheme), matrix_name(scheme, rve), Val(p); kw...)

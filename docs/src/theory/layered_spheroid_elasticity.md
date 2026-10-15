@@ -792,10 +792,10 @@ throughout.
 
 ## Where to go next
 
-The next chapter returns to a single ellipsoid, in its flat limit:
-[Crack opening displacement and compliance](@ref th-cod-tensors) describes a
-crack by how much it opens rather than by a volume fraction and a stiffness.
-The finite-element counterpart of the layered spheroid, calibrated against the
+The single-heterogeneity problems are now all solved: the ellipsoid, the
+crack and the layered patterns. The next chapter,
+[Homogenization schemes](@ref th-homogenization), turns their solutions into
+estimates of effective properties. The finite-element counterpart of the layered spheroid, calibrated against the
 confocal solutions and carried to nested spheroids with freely chosen
 semi-axes, is the tutorial
 [A layered spheroid, meshed](@ref tut-axi-layered-spheroid).

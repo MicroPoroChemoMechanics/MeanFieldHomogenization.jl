@@ -2,19 +2,22 @@
 
 !!! info "Before this page"
     [Hill polarization tensors](@ref th-hill-tensors), whose flat limit is the
-    layer tensor ``\mathbb{P}_i`` used below, the Voigt and Reuss bounds of
-    [Homogenization schemes](@ref th-homogenization) §2, which the laminate
+    layer tensor ``\mathbb{P}_i`` used below, the
+    [Voigt and Reuss bounds](@ref th-scheme-bounds), which the laminate
     saturates, and the interface models of
     [Layered sphere](@ref th-layered-sphere) §3, reused here on a plane.
 
 A **laminate** is a periodic stack of parallel layers: a unit cell of
 *periodic* homogenization, with no matrix, no auxiliary Eshelby problem and
 no reference medium. Its effective behavior is **exact and in closed form**,
-which sets it apart from every other page of this section: the schemes built
-on the Eshelby problem ([Mori-Tanaka](@ref th-homogenization), the
-[self-consistent](@ref th-homogenization) family, the
+which sets it apart from every other page of this chapter: the schemes built
+on the Eshelby problem ([Mori-Tanaka](@ref th-scheme-mori-tanaka), the
+[self-consistent](@ref th-scheme-self-consistent) family, the
 [differential](@ref th-differential-scheme) scheme, …) describe *random*
 morphologies and produce *estimates*; the laminate solution **is** the answer.
+The [`Laminated`](@ref) scheme evaluates it.
+
+![A stack of layers of normal n, solved exactly.](../assets/schemes/scheme_laminated.svg)
 
 That makes it useful twice over: as a model of genuinely stratified materials
 (coatings, interfacial transition zones, bedded media), and as an exact
@@ -549,11 +552,11 @@ plane.
 
 ## Where to go next
 
-The N-body chapter that follows drops the one-site picture of the
-Eshelby-based schemes:
-[Two-inclusion interaction tensors](@ref th-interaction) introduces the tensor
-through which one inclusion acts on another, the ingredient of both N-body
-models. The exact solution of this page is evaluated in the tutorial
+The last two schemes of the chapter drop the one-site picture of the
+Eshelby-based ones and resolve the interaction inclusion by inclusion, through
+the [two-inclusion interaction tensor](@ref th-interaction) of the first
+chapter. [The cluster model](@ref th-cluster) comes first. The exact solution of
+this page is evaluated in the tutorial
 [Periodic multilayer: the exact laminate solution](@ref tut-laminate), and the
 syntax of a laminate cell is in
 [Laminates — periodic multilayer cells](@ref man-laminates).

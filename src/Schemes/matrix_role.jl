@@ -155,10 +155,12 @@ The outer envelope of the spatial distribution that `scheme` reads off `rve`.
 An RVE that declares none is an error, and deliberately so. A spherical
 distribution — the value this used to default to — makes both
 [`Maxwell`](@ref) and [`PonteCastanedaWillis`](@ref) reduce **exactly** to
-Mori-Tanaka. Supplying one silently therefore answered a scheme whose whole
-purpose is a non-spherical distribution with the estimate it generalizes, and
-did so without a word. A sphere remains a perfectly legitimate choice; it just
-has to be the caller's, not the container's.
+Mori-Tanaka as soon as the inclusions are spheres too (more generally, whenever
+every inclusion phase has the Hill tensor of the distribution shape).
+Supplying one silently therefore answered a scheme whose whole purpose is the
+distribution with the estimate it generalizes, and did so without a word. A
+sphere remains a perfectly legitimate choice; it just has to be the caller's,
+not the container's.
 """
 function distribution_shape(rve::RVE, scheme::HomogenizationScheme)
     ds = rve.distribution_shape
@@ -168,9 +170,10 @@ function distribution_shape(rve::RVE, scheme::HomogenizationScheme)
                 "distribution of the inclusions — the two-point statistics its " *
                 "estimate is built on — and this RVE declares none. Declare it on " *
                 "the RVE, e.g. `RVE(; distribution_shape = Spheroid(0.3))`. " *
-                "A spherical distribution is a legitimate choice, but it makes " *
-                "this scheme coincide exactly with Mori-Tanaka, so it has to be " *
-                "stated: `RVE(; distribution_shape = Ellipsoid(1.0))`."
+                "A spherical distribution is a legitimate choice, but with " *
+                "spherical inclusions it makes this scheme coincide exactly with " *
+                "Mori-Tanaka, so it has to be stated: " *
+                "`RVE(; distribution_shape = Ellipsoid(1.0))`."
         )
     )
     return ds

@@ -9,11 +9,12 @@
 #  with A_dil^{(i)} = (I + P_0 : (C_i − C_0))⁻¹ the dilute strain
 #  concentration tensor and Nᵢ = (Cᵢ − C₀) : A_dil^{(i)}.
 #
-#  For cracks (`CrackDensity`) the strain concentration tensor is singular;
-#  we add their density-weighted stiffness reduction
-#  -C₀ : H : C₀ to the numerator (consistent with Kachanov 1992 in the
-#  dilute crack limit) and skip the denominator term — physically the
-#  crack volume → 0 limit anyway sends f_crack to zero.
+#  For cracks (`CrackDensity`) the volume fraction vanishes while the strain
+#  the openings carry does not: a family adds κ ε H : C₀ to the denominator
+#  (the limit of f A) and −κ ε C₀ : H : C₀ to the numerator (the limit of
+#  f (C − C₀) : A, a traction-free crack carrying no stress), κ being 4π/3
+#  or π. With cracks alone this gives S_MT = S₀ + Σ κ ε H, the
+#  non-interaction approximation.
 # =============================================================================
 
 """

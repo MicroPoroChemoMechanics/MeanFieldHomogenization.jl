@@ -236,7 +236,7 @@ roughly in reading order:
 
 | Section | Content |
 | --- | --- |
-| [Theory](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/theory/) | the Eshelby/Hill chain — polarization tensor → localization → schemes — its specializations (cracks, layered inclusions, laminates, viscoelasticity) and the N-body models (interaction tensors, cluster model, equivalent inclusion). |
+| [Theory](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/theory/) | the problem of one heterogeneity — Eshelby problem, polarization tensor, localization, interaction of two inclusions, cracks, layered patterns — then every homogenization scheme with its derivation, one family per page from the bounds to the N-body models, and the extensions to conductivity and viscoelasticity. |
 | [Manual](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/manual/) | a topic-by-topic reference for each inclusion family, cell and scheme. |
 | [Tutorials](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/tutorials/) | worked examples: bounds and schemes, layered spheres/spheroids, particle assemblies, viscoelasticity, sensitivities, symbolic computation. |
 | [Applications](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/applications/) | full micromechanical models, each after a published one — cement paste and concrete, aging creep, strength, clays, sands and sandstones, bituminous mixtures. |

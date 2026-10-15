@@ -3,8 +3,8 @@
 !!! info "Before this page"
     The tutorial [Bounds and classical schemes](@ref tut-bounds-and-schemes),
     which introduces the self-consistent scheme and the two bounds used below,
-    and the theory page [Homogenization schemes](@ref th-homogenization), where
-    the stiffness and compliance forms of the self-consistent iteration are
+    and the theory page [Self-consistent schemes](@ref th-scheme-self-consistent),
+    where the stiffness and compliance forms of the self-consistent iteration are
     stated.
 
 Porosity is the simplest microstructure that breaks naive intuition: a

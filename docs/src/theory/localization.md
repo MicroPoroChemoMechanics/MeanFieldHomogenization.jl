@@ -171,10 +171,11 @@ for a step-by-step recipe.
 
 ## Where to go next
 
-The contribution tensors are what the schemes add up. The next page,
-[Homogenization schemes](@ref th-homogenization), assembles them under one
-assumption per scheme on the reference medium and on the strain each inclusion
-sees. The crack form of §3 is derived in
-[Crack opening displacement and compliance](@ref th-cod-tensors), and the gates
-through which a user-defined morphology enters the chain of this page are
-described in [Custom inclusions](@ref man-custom-inclusions).
+Everything on this page concerns one inclusion, alone in its reference medium.
+The next page, [Two-inclusion interaction tensors](@ref th-interaction), asks
+what one inclusion induces in another, the ingredient of the two schemes that
+resolve interactions pair by pair. The contribution tensors of §2 are what the
+[Homogenization schemes](@ref th-homogenization) add up, the crack form of §3
+is derived in [Crack opening displacement and compliance](@ref th-cod-tensors),
+and the gates through which a user-defined morphology enters the chain of this
+page are described in [Custom inclusions](@ref man-custom-inclusions).

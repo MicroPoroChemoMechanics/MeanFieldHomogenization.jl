@@ -38,7 +38,7 @@
     _evaluate(rve, sc::SelfConsistent, ::Val{p}; kw...) -> AbstractTens
 
 Self-consistent scheme for property `:p`
-[mclaughlin1977](@cite). Iterates
+[hill1965composites, budiansky1965](@cite). Iterates
 
 ```math
 \\mathbb{C}^{(n+1)} = \\Big(\\sum_i f_i\\,\\mathbb{C}_i : \\mathbb{A}_i^{\\mathrm{dil}}(\\mathbb{C}^{(n)})\\Big)
@@ -56,9 +56,11 @@ is what binds on a stiffness of physical magnitude — see [`_solve_sc`](@ref)
 for the full contract. External algorithms from `NonlinearSolve.jl` are
 supported via the weak extension `MeanFieldHomogenizationNonlinearSolveExt`.
 
-Cracks are not natively handled by this stiffness-form SC (the strain
-concentration tensor is singular). For mixed RVEs (solid + crack) use
-[`AsymmetricSelfConsistent`](@ref) instead.
+Crack families enter through their compliance contribution in the current
+estimate: each adds ``\\kappa_c\\,\\varepsilon_c\\,\\mathbb{H}_c(\\mathbb{C}^{(n)}):\\mathbb{C}^{(n)}``
+to the strain average (the limit of ``f_c\\,\\mathbb{A}_c``) and nothing to the stress
+average, a traction-free crack carrying no stress, with ``\\kappa_c = 4\\pi/3`` for an
+elliptic family and ``\\pi`` for a ribbon — see `_sc_crack_total`.
 """
 function _evaluate(rve::RVE, sc::SelfConsistent, ::Val{p}; kw...) where {p}
     # Symmetric Hill / Budiansky SC iteration on the ECHOES `B · A^{-1}`
@@ -296,8 +298,11 @@ Sum of the *density-scaled* compliance (resistivity) contributions of every
 [`CrackDensity`](@ref) phase, evaluated in the reference medium `P_n`:
 
 ```math
-\\mathbb{H}^{\\mathrm{tot}} = \\sum_i \\frac{4\\pi}{3}\\,\\varepsilon_i\\,\\mathbb{H}_i(\\mathbb{P}_n)
+\\mathbb{H}^{\\mathrm{tot}} = \\sum_i \\kappa_i\\,\\varepsilon_i\\,\\mathbb{H}_i(\\mathbb{P}_n) ,
 ```
+
+with ``\\kappa_i = 4\\pi/3`` for an elliptic family and ``\\pi`` for a ribbon family
+(`crack_density_factor`).
 
 `has_cracks` reports whether the sum has any term at all, which is what selects
 the crack branch of the SC body.

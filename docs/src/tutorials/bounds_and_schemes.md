@@ -3,8 +3,8 @@
 !!! info "Before this page"
     The tutorial [A first homogenization](@ref tut-first-estimate), whose RVE
     and dilute and Mori–Tanaka estimates are reused below, and the theory page
-    [Homogenization schemes](@ref th-homogenization), where the bounds and the
-    iterative schemes are written out.
+    [Homogenization schemes](@ref th-homogenization), whose pages derive the
+    bounds and the iterative schemes.
 
 The dilute and Mori–Tanaka estimates of the previous tutorial are two
 points in a much larger family. This page places every classical
@@ -26,7 +26,7 @@ RVE, and the **Reuss** bound a uniform stress:
 
 Both are exact bounds — no assumption on the microstructure's geometry
 is needed — and order every physically realizable effective bulk
-modulus [hill1963, hill1965](@cite):
+modulus [hill1952, hill1963](@cite):
 
 ```math
 k_R \le k^{\mathrm{hom}} \le k_V.

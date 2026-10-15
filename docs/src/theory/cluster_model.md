@@ -3,11 +3,18 @@
 !!! info "Before this page"
     [Two-inclusion interaction tensors](@ref th-interaction), where the
     interaction tensor ``\mathbb{T}^{IJ}``, its sign convention and the cluster
-    truncation used below are set out.
+    truncation used below are set out, and
+    [Mori–Tanaka](@ref th-scheme-mori-tanaka), onto which the model falls back
+    when the interaction is switched off.
 
-The cluster model of [molinari1996](@citet) is an N-body scheme: the mean strain
-of every inclusion is solved for, accounting for the pairwise interaction with each
-neighbor inside a cluster, on top of the interaction with the matrix.
+Every scheme of the previous pages sees one inclusion in a reference medium. The
+cluster model of [molinari1996](@citet) is an N-body scheme instead: the mean
+strain of every inclusion is solved for, accounting for the pairwise interaction
+with each neighbor inside a cluster, on top of the interaction with the matrix.
+It acts on a [`ParticleAssembly`](@ref), which carries the positions an `RVE`
+does not.
+
+![The positions enter, through the interaction tensor of every pair.](../assets/schemes/scheme_cluster.svg)
 
 Notation as in the [Nomenclature](@ref nomenclature); the interaction tensor
 ``\mathbb{T}^{IJ}`` and the Green operator are defined on

@@ -333,21 +333,36 @@ fraction of phase ``i``, ``\mathbb{C}_i`` for its relaxation kernel and
   \langle\mathbb{A}\rangle_i ,
 ```
 
-and the schemes differ only in how ``\langle\mathbb{A}\rangle_i`` is estimated —
-which yields, after substitution, with ``\mathbb{N}_i`` and
+and the schemes differ only in how ``\langle\mathbb{A}\rangle_i`` is estimated.
+Each one is the elastic scheme of the
+[chapter on schemes](@ref th-homogenization), with every product a Volterra
+product and every inverse a Volterra inverse. With ``\mathbb{N}_i`` and
 ``\mathbb{A}_i^{\mathrm{dil}}`` the contribution and dilute concentration kernels of
-phase ``i``:
+phase ``i``, ``\mathbb{N}_\Sigma = \sum_i f_i\,\mathbb{N}_i``, ``\mathbb{L}_0``
+the creep kernel of the matrix and ``H`` the Heaviside kernel, the identity of
+the Volterra algebra:
 
 | Scheme | Effective kernel |
 | :----- | :--------------- |
-| **Dilute** / NIA | ``\mathbb{C}^{\mathrm{hom}} = \mathbb{C}_0 + \sum_i f_i\,\mathbb{N}_i`` |
-| **Mori-Tanaka** | ``\mathbb{C}^{\mathrm{hom}} = \mathbb{C}_0 + \bigl(\sum_i f_i\,\mathbb{N}_i\bigr)\circ\bigl((1-\sum_j f_j)H\,\mathbb{I} + \sum_j f_j\,\mathbb{A}_j^{\mathrm{dil}}\bigr)^{-\circ}`` |
-| **Maxwell** / PCW | ``(\mathbb{C}^{\mathrm{hom}})^{-\circ} = \mathbb{C}_0^{-\circ} + \bigl((\sum_i f_i\,\mathbb{N}_i)^{-\circ} - \mathbb{P}_{\Omega}\bigr)^{-\circ}`` |
-| **Self-consistent** | the same equations with ``\mathbb{C}_0 = \mathbb{C}^{\mathrm{hom}}``, solved iteratively |
-| **Differential** | inclusions added in infinitesimal increments, re-homogenizing at each step |
+| [Voigt, Reuss](@ref th-scheme-bounds) | ``\sum_r f_r\,\mathbb{C}_r`` and ``\bigl(\sum_r f_r\,\mathbb{C}_r^{-\circ}\bigr)^{-\circ}`` |
+| [Dilute](@ref th-scheme-dilute) | ``\mathbb{C}_0 + \mathbb{N}_\Sigma`` |
+| [DiluteDual](@ref th-scheme-dilute) | ``\bigl(\mathbb{L}_0 + \sum_i f_i\,\mathbb{H}_i\bigr)^{-\circ}``, with ``\mathbb{H}_i = -\,\mathbb{L}_0\circ\mathbb{N}_i\circ\mathbb{L}_0`` |
+| [Mori–Tanaka](@ref th-scheme-mori-tanaka) | ``\mathbb{C}_0 + \mathbb{N}_\Sigma\circ\bigl(f_0\,H\,\mathbb{I} + \sum_j f_j\,\mathbb{A}_j^{\mathrm{dil}}\bigr)^{-\circ}`` |
+| [Maxwell, PCW](@ref th-scheme-maxwell-pcw) | ``\mathbb{C}_0 + \mathbb{N}_\Sigma\circ\bigl(H\,\mathbb{I} - \mathbb{P}_\Omega\circ\mathbb{N}_\Sigma\bigr)^{-\circ}`` |
+| [Self-consistent](@ref th-scheme-sc) | ``\bigl(\sum_r f_r\,\mathbb{C}_r\circ\mathbb{A}_r^{\mathrm{dil}}\bigr)\circ\bigl(\sum_r f_r\,\mathbb{A}_r^{\mathrm{dil}}\bigr)^{-\circ}``, the kernels computed in the estimate itself |
+| [Asymmetric self-consistent](@ref th-scheme-asc) | ``\mathbb{C}_m + \sum_{i \ne m} f_i\,(\mathbb{C}_i - \mathbb{C}_m)\circ\mathbb{A}_i^{\mathrm{dil}}``, the kernels computed in the estimate itself |
+| [Differential](@ref th-differential-scheme) | the incorporation ODE, integrated on the kernels |
 
 ``\mathbb{P}_{\Omega}`` in the Maxwell row is the Hill kernel of the
-**distribution shape** ``\Omega``, not of an inclusion.
+**distribution shape** ``\Omega``, not of an inclusion. When
+``\mathbb{N}_\Sigma`` is invertible the same estimate reads
+``\mathbb{C}_0 + \bigl(\mathbb{N}_\Sigma^{-\circ} - \mathbb{P}_\Omega\bigr)^{-\circ}``
+[barthelemyIJES2019](@cite), by the identity of §4: the far-field argument of the
+[elastic derivation](@ref th-scheme-maxwell-pcw) carries over unchanged, since
+it uses nothing but the linearity of the integral equation. The two
+self-consistent schemes and the differential one take the running estimate as
+reference, so that their Hill kernels, built for an isotropic reference, require
+every phase to keep that estimate isotropic.
 
 The one new difficulty is bookkeeping: ``\circ`` does not commute, so the
 order of the factors is prescribed — even in the isotropic case, where every
@@ -428,10 +443,12 @@ code while preserving both the storage saving and the algebraic closure.
 
 ## Where to go next
 
-The next chapter leaves the inclusion problem altogether:
-[Periodic multilayer — the laminate cell](@ref th-laminate) solves a periodic
-stack exactly, and its §10 transposes that solution to aging viscoelasticity by
-the substitution of this page. The schemes of §5 are compared on one composite
+The theory closes with two appendices, starting with
+[The finite Eshelby cell](@ref th-corrected-cell), the numerical device behind
+the finite-element inclusions. The laminate of
+[Periodic multilayer — the laminate cell](@ref th-laminate) is transposed to
+aging viscoelasticity in its §10, by the substitution of this page. The schemes
+of §5 are compared on one composite
 in the tutorial [Aging viscoelastic schemes side by side](@ref tut-alv-schemes),
 and the manual page [Viscoelastic homogenization](@ref man-viscoelasticity)
 gives the syntax of [`homogenize_alv`](@ref).

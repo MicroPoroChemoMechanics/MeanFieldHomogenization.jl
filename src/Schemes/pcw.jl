@@ -5,10 +5,11 @@
 #  identical to Maxwell; the difference is in the physical interpretation
 #  (PCW: ensemble average over a stochastic distribution function with the
 #  given outer shape; Maxwell: matching far-field of an effective inclusion).
+#  The identity is proved in the theory page on the two schemes.
 #
-#  The schemes diverge when one uses the *pairwise* PCW (Willis 1982),
-#  which is the future extension hook left open by the
-#  `AbstractDistributionShape` hierarchy.
+#  The schemes diverge when the distribution shape depends on the pair of
+#  phases (Ponte Castañeda & Willis 1995, §3), which is the future extension
+#  hook left open by the `AbstractDistributionShape` hierarchy.
 # =============================================================================
 
 """
@@ -21,9 +22,10 @@ PCW homogenization for property `:p`. In the single-shape case
 terms of an ensemble average over a distribution function rather than a
 single effective inclusion.
 
-The future pairwise PCW (Willis 1982) will be supported by adding a
-method `_pcw(rve, ::PairwiseDistribution, …)` without touching this
-file or the public API.
+The pairwise form, with one distribution shape per pair of phases, would be
+supported by adding a method `_pcw(rve, ::PairwiseDistribution, …)` without
+touching this file or the public API. The identity with Maxwell is proved in
+the theory page [Maxwell and Ponte Castañeda–Willis](@ref th-scheme-maxwell-pcw).
 """
 function _evaluate(rve::RVE, scheme::PonteCastanedaWillis, ::Val{p}; kw...) where {p}
     return _pcw(rve, distribution_shape(rve, scheme), matrix_name(scheme, rve), Val(p); kw...)
