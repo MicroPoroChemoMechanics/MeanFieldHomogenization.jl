@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.17.1 — JSON.jl 1 in place of the deprecated JSON3.jl
+
+A patch release. JSON3.jl is deprecated: its README now sends its users to
+JSON.jl 1, which absorbed its features, and it receives no further releases.
+The package used it in a single place, the files of the neural-inclusion
+surrogates, but as a strong dependency, loaded by every
+`using MeanFieldHomogenization`. It now uses JSON.jl instead, with no change to
+the API, to the results or to the files.
+
+### Changed
+
+- **The JSON dependency is JSON.jl 1, no longer JSON3.jl.** `save_surrogate`
+  writes with `JSON.json(io, payload; pretty = 4)` and `load_surrogate` reads
+  with `JSON.parsefile`. The surrogate format is unchanged (1.2.0): the shipped
+  models, and any model saved by an earlier version, load as before and give
+  the same predictions bit for bit; a model saved now also loads in an earlier
+  version. Keys are looked up by string, which every JSON.jl 1.x release
+  supports, hence the bound `JSON = "1"`.
+
+### Tooling
+
+- The benchmark harness (`scripts/bench`), the comparisons against Echoes
+  (`scripts/bench_echoes`) and the MFH Studio sidecar read and write JSON with
+  JSON.jl as well. The environment of `scripts/bench_echoes` now declares it:
+  its scripts loaded JSON3 without declaring it, so they only ran from an
+  environment that happened to provide it.
+- **The MFH Studio sidecar warned, on its first catalog, trace and parse
+  requests, that its code would error in a future Julia.** It reached the handlers defined at run time through
+  `Base.invokelatest(catalog)`, which calls the latest method but reads the
+  name `catalog` in the caller's world, before the binding exists there.
+  `Base.@invokelatest catalog()` also looks the name up in the latest world;
+  the replies are unchanged.
+
 ## v0.17.0 — concentration tensors of every scheme, Levin's theorem, one function whatever the order
 
 A minor release, and a breaking one. Every scheme now returns, besides the
