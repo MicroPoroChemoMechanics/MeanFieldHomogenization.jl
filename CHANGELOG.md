@@ -1,5 +1,122 @@
 # Changelog
 
+## v0.17.0 — concentration tensors of every scheme, and Levin's theorem
+
+A minor release, and a breaking one. The package now says *concentration
+tensor*, the English term of the literature, where it used to say
+*localization*, a gallicism; every name that carried the former word changes,
+with no alias left behind. Every scheme now returns, besides the effective
+tensor, the concentration tensors of each of its phases, and with them the
+contribution of each phase to the estimate and, by Levin's theorem, the response
+of the composite to free strains and prestresses of its phases: a thermal
+expansion, or the Biot tensor of a solid made of several phases or holding
+pressurized cracks, which no single-solid formula covers. The differential
+scheme in conduction no longer fails when its estimate becomes fully
+anisotropic.
+
+### Breaking changes
+
+- **The compat bound must be widened.** Below 1.0, Julia's resolver treats a
+  minor bump as breaking: a package declaring `MeanFieldHomogenization = "0.16"`
+  does not accept 0.17.0 and must widen its bound to `"0.16, 0.17"`, or move to
+  `"0.17"` once it uses the new names.
+- **Every *localization* name is renamed, without alias.** Code calling the
+  former names must be updated:
+
+  | Former name | New name |
+  | :-- | :-- |
+  | `strain_strain_loc`, `stress_strain_loc`, `strain_stress_loc`, `stress_stress_loc` | `strain_strain_concentration`, `stress_strain_concentration`, `strain_stress_concentration`, `stress_stress_concentration` |
+  | `gradient_gradient_loc`, `flux_gradient_loc`, `gradient_flux_loc`, `flux_flux_loc` | `gradient_gradient_concentration`, `flux_gradient_concentration`, `gradient_flux_concentration`, `flux_flux_concentration` |
+  | `local_<field>_<field>_loc` (eight pointwise fields of layered spheres) | `local_<field>_<field>_concentration` |
+  | `laminate_<…>_localization` (eight), `layer_<…>_localization` (four) | `laminate_<…>_concentration`, `layer_<…>_concentration` |
+  | `shell_localization`, `cluster_localizations` | `shell_concentration`, `cluster_concentrations` |
+  | `fe_cell_localization`, `fe_axi_localization`, `fe_axi_pore_localization` | `fe_cell_concentration`, `fe_axi_concentration`, `fe_axi_pore_concentration` |
+  | `strain_strain_loc_alv`, `gradient_gradient_loc_alv` | `strain_strain_concentration_alv`, `gradient_gradient_concentration_alv` |
+  | `bulk_localization_alv`, `shear_localization_alv`, `gradient_localization_alv` | `bulk_concentration_alv`, `shear_concentration_alv`, `gradient_concentration_alv` |
+  | `NeuralLocalizationInclusion` | `NeuralConcentrationInclusion` |
+  | `StrainLocTI`, `StressLocTI`, `StrainLocCubic`, `GradLocISO2`, `GradLocTI2` | `StrainConcentrationTI`, `StressConcentrationTI`, `StrainConcentrationCubic`, `GradientConcentrationISO2`, `GradientConcentrationTI2` |
+
+- **The keywords of a `CustomInclusion` follow.** Its callbacks are passed as
+  `strain_strain_concentration`, `stress_strain_concentration`,
+  `gradient_gradient_concentration` and `flux_gradient_concentration`.
+- **The class keys of a neural surrogate follow.** `:loc_ti`, `:stress_loc_ti`,
+  `:loc_cubic`, `:grad_loc_iso2` and `:grad_loc_ti2` become
+  `:strain_concentration_ti`, `:stress_concentration_ti`,
+  `:strain_concentration_cubic`, `:gradient_concentration_iso2` and
+  `:gradient_concentration_ti2`. The model files shipped with the package are
+  updated; a model file saved by an earlier version must have its `"class"`
+  field renamed the same way before it loads.
+- **Documentation addresses.** The theory page `th-concentration`
+  (`theory/concentration`) replaces `th-localization`, and the API page
+  `api/concentration` replaces `api/localization`; links to the former addresses
+  no longer resolve.
+
+### Added
+
+- **`concentration_tensors(cell, scheme, property)`**, returning a
+  `ConcentrationTensors`: the strain and stress concentration tensors of every
+  phase, ⟨ε⟩_r = 𝔸_r : E and ⟨σ⟩_r = 𝔸_σε,r : E, with the effective
+  tensor they are consistent with. Every scheme on an `RVE` is covered — the
+  bounds, the dilute estimates, Mori–Tanaka, Maxwell, Ponte Castañeda–Willis,
+  both self-consistent schemes and the differential scheme, whose tensors are
+  integrated along the path together with the medium — as well as the exact
+  laminate and the cluster model and equivalent inclusion method on a
+  `ParticleAssembly`, in elasticity and in conduction, crack families included
+  per unit density. Every result satisfies Σ w 𝔸 = 𝕀 and Σ w 𝔸_σε = ℂ^hom.
+  Until now only the dilute tensors, and those of a few cells, were available,
+  and the mean fields of the phases under the actual scheme had to be rebuilt
+  by hand.
+- **Readers and contributions.** The concentration generics
+  (`strain_strain_concentration`, …, `stress_stress_concentration` and their
+  conduction twins) read a `ConcentrationTensors` by phase name, in the
+  strain-driven and stress-driven forms. `stiffness_contribution`,
+  `compliance_contribution`, `conductivity_contribution` and
+  `resistivity_contribution` give the contribution of a phase to the estimate,
+  ⟨σ − ℂ_ref : ε⟩_r = ℕ_r : E, relative to the matrix of the scheme or to
+  any phase or tensor passed as `reference`.
+- **Levin's theorem.** `levin_free_strain` turns eigenstrains of the phases
+  into the macroscopic free strain — a thermal expansion tensor, a swelling —
+  and `levin_prestress` turns prestresses into the macroscopic prestress, a pore
+  pressure giving the Biot tensor. The latter accepts crack families, so that
+  the pressure in the cracks contributes, and holds for any number of solid
+  phases, where `biot_tensor` assumes a single one.
+- The closed-form schemes run on `ForwardDiff.Dual`, nested, and on SymPy and
+  Symbolics numbers; the iterative ones are numeric, as their effective tensors
+  are.
+
+### Fixed
+
+- **`DifferentialScheme` in conduction threw a `DimensionMismatch` as soon as
+  its estimate became fully anisotropic**, for instance with two families of
+  spheroids tilted differently. The state of a fully anisotropic conductivity
+  was laid out on nine components and rebuilt from six; it now holds the six
+  components of a symmetric tensor. Elasticity was not affected, and the
+  transversely isotropic case, which never reached that state, is unchanged.
+
+### Documentation
+
+- **Concentration tensors in the theory.** The overview of the schemes defines
+  the concentration tensors of an estimate, the averages they satisfy, the
+  contributions relative to any reference and the one-site construction
+  𝔸_i = 𝔸_i^dil : 𝔼; every scheme page ends with its own tensors, and the
+  page on the differential scheme derives the equations along the path that
+  carry them.
+- **A page on Levin's theorem**, at the end of the chapter on schemes: the
+  statement, its proof by Hill's lemma, the exact two-phase formula, which holds
+  for every scheme of the package, and the Biot tensor with pores and cracks.
+- **A tutorial, Thermal expansion and Biot tensor**: the thermal expansion of a
+  two-phase composite under five schemes, its anisotropy with aligned platelets,
+  the Biot tensor of a solid with pressurized cracks, and both results in closed
+  form with SymPy. The manual gains the sections *Concentration tensors of the
+  phases* and *Several solid phases* (poromechanics).
+- Three references added, each resolved on Crossref: Dvorak & Benveniste
+  (1992), Rosen & Hashin (1970) and Dormieux, Kondo & Ulm (2006). Levin's own
+  article of 1967 is not entered: it has no DOI, and the reference lists
+  deposited with the first two disagree on its year.
+- Two formulas of the theory, in the Ponte Castañeda–Willis and thermal crack
+  pages, were broken by a line starting with a minus sign, which Markdown reads
+  as a list item; they render as formulas again.
+
 ## v0.16.3 — a void has a compliance contribution
 
 A patch release. The compliance contribution of an inclusion with no stiffness,
