@@ -224,18 +224,13 @@ function _with_matrix(rve::RVE, m::Symbol, names, pairs, 𝔼, P_hom)
         n => _compose(CA, 𝔼) for (n, (_, CA)) in zip(names, pairs)
     )
     f_m = volume_fraction(rve, m)
-    strain[m] = _per_weight(_identity_like(P_hom) - _weighted_sum(rve, names, strain, P_hom), f_m)
-    stress[m] = _per_weight(P_hom - _weighted_sum(rve, names, stress, P_hom), f_m)
+    strain[m] = (_identity_like(P_hom) - _weighted_sum(rve, names, strain, P_hom)) / f_m
+    stress[m] = (P_hom - _weighted_sum(rve, names, stress, P_hom)) / f_m
     return vcat(m, names), strain, stress
 end
 
 _weighted_sum(rve::RVE, names, tensors, proto) =
     sum((_phase_weight(rve, n) * tensors[n] for n in names); init = zero(proto))
-
-# A tensor divided by a weight, written as a product: `TensISO / Num` is
-# ambiguous between Symbolics and TensND before 0.6.2, which the compat bound
-# still admits; `Num * TensISO` never was.
-_per_weight(t, w) = inv(w) * t
 
 # ── Scheme by scheme ────────────────────────────────────────────────────────
 
@@ -371,8 +366,8 @@ function _concentration_tensors(rve::RVE, scheme::DifferentialScheme, ::Val{p}; 
         n => _from_flat(_flat_block(y, q, k, 1), P_matrix) for (k, n) in enumerate(names)
     )
     f_m = volume_fraction(rve, m)
-    strain[m] = _per_weight(_identity_like(P_hom) - _weighted_sum(rve, names, strain, P_hom), f_m)
-    stress[m] = _per_weight(P_hom - _weighted_sum(rve, names, stress, P_hom), f_m)
+    strain[m] = (_identity_like(P_hom) - _weighted_sum(rve, names, strain, P_hom)) / f_m
+    stress[m] = (P_hom - _weighted_sum(rve, names, stress, P_hom)) / f_m
     return _concentration_result(rve, scheme, p, P_hom, vcat(m, names), strain, stress)
 end
 

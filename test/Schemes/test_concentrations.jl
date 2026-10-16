@@ -609,7 +609,6 @@ end
     @test @inferred(Sch._diff_unit_rates(params, 0.5, D)) isa Vector{D}
     @test Sch._diff_unit_rates(params, 0.5, Float64) .* [params.targets[n] for n in vcat(params.solid_names, params.crack_names)] ≈
         vcat(Sch._diff_rates(params, 0.5, Float64)...)
-    @test @inferred(Sch._per_weight(TensISO{3}(2.0), 0.5)) == TensISO{3}(4.0)
 end
 
 @testset "Differential scheme — the compliance form gives the same tensors" begin
