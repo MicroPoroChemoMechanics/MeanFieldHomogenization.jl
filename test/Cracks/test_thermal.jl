@@ -189,6 +189,34 @@ end
     @test maximum(abs, g) > 1.0e-3          # not trivially zero
 end
 
+@testset "Cracks / conductivity — a dense isotropic conductor, and the circular point" begin
+    # A circular crack in an isotropic conductor stored as a dense tensor took
+    # the discriminant of Q₂ as tr² − 4 det, which rounds below zero for most
+    # conductivities, and `sqrt` threw; the differential scheme met it whenever
+    # its running conductivity was dense. The discriminant is now a sum of
+    # squares, and the circular point is crossed by a series in q = disc / tr².
+    for k₀ in (0.3, 1.0, 2.0, 2.5, 7.0, 13.0)
+        K_dense = TensND.Tens(Matrix(k₀ * I(3)))
+        @test cod_tensor(PennyCrack(1.0), K_dense) ≈ 8 / (3π * k₀) rtol = 1.0e-14
+    end
+    # Along K = diag(k + t, k, k), for a penny crack of normal e₃, the eigenvalues
+    # of Q₂ are k(k + t) and k², and b = 4 / (3 √λ₁ ℰ(1 − λ₂/λ₁)) is the closed
+    # form. The values of t cross the switch to the series, q = 1e-2.
+    k = 2.0
+    b_closed(t) = 4 / (3 * sqrt(k * (k + t)) * ELL_T.ell_E(1 - k / (k + t)))
+    b(t) = cod_tensor(PennyCrack(1.0), TensND.Tens([k + t 0 0; 0 k 0; 0 0 k]))
+    for t in (1.0e-6, 1.0e-3, 0.05, 0.4, 0.45, 1.0)
+        @test b(t) ≈ b_closed(t) rtol = 1.0e-14
+    end
+    # At the circular point the root of the discriminant has no derivative, the
+    # series does: I = √(tr/2) (π/2) (1 + O(q)) with q = O(t²) gives
+    # db/dt = −2 / (3π k²), and the second derivative continues the closed form's.
+    @test ForwardDiff.derivative(b, 0.0) ≈ -2 / (3π * k^2) rtol = 1.0e-13
+    d2(f, t) = ForwardDiff.derivative(s -> ForwardDiff.derivative(f, s), t)
+    @test isfinite(d2(b, 0.0))
+    @test d2(b, 0.0) ≈ d2(b_closed, 1.0e-4) rtol = 1.0e-3
+end
+
 @testset "Cracks / conductivity — SIF and DIF" begin
 
     @testset "Ribbon thermal SIF" begin
