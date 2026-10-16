@@ -57,12 +57,15 @@ end
 # The handlers below live in files `include`d at run time by `_boot`, so they
 # are newer than this function's world age and must be reached through
 # `invokelatest`. Calling them directly raises "method too new to be called
-# from this world context".
+# from this world context". The macro form also looks the *name* up in the
+# latest world: `Base.invokelatest(catalog)` reads the binding `catalog` in the
+# caller's world first, which Julia 1.12 flags as an access before its
+# definition and announces will become an error.
 function handle(op::String, payload)
     op == "ping" && return Dict("pong" => true, "ready" => STATE["ready"])
-    op == "catalog" && return Base.invokelatest(catalog)
+    op == "catalog" && return Base.@invokelatest catalog()
     op == "traces" && return _traces(payload)
-    op == "parse" && return Base.invokelatest(parse_script, String(payload["source"]))
+    op == "parse" && return Base.@invokelatest parse_script(String(payload["source"]))
     op == "run" && return _run(payload)
     error("unknown op `$op`")
 end
@@ -83,7 +86,7 @@ function _traces(payload)
     haskey(payload, "cutaway") && (kw[:cutaway] = Bool(payload["cutaway"]))
     haskey(payload, "guides") && (kw[:guides] = Bool(payload["guides"]))
     # `scene` comes from a run-time `include` — see the note on `handle`.
-    return Base.invokelatest(scene, geom; kw...)
+    return Base.@invokelatest scene(geom; kw...)
 end
 
 # Geometry expressions come from the interface's own form state, not from a
