@@ -150,6 +150,12 @@ end
     # The resistivity contribution of a layered sphere, -R₀ ⋅ N ⋅ R₀.
     @test tr(Array(homogenize(r_lay, DiluteDual(), :K))) ≈
         tr(Array(homogenize(r_ell, DiluteDual(), :K))) rtol = 1.0e-10
+    # The self-consistent schemes read the flux average of each inclusion, which
+    # a layered sphere supplies itself rather than as K_I ⋅ A.
+    for scheme in (SelfConsistent(), AsymmetricSelfConsistent(:M))
+        @test tr(Array(homogenize(r_lay, scheme, :K))) ≈
+            tr(Array(homogenize(r_ell, scheme, :K))) rtol = 1.0e-10
+    end
 end
 
 @testset "Schemes — core/shell bounds" begin

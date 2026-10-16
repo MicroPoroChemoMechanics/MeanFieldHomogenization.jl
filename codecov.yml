@@ -1,8 +1,0 @@
-# The test suite runs in four parts (`TEST_PARTS` in test/runtests.jl), and the
-# coverage job of each part uploads the lines it exercised. Codecov merges the
-# four reports of a commit, and reports only once all of them have arrived.
-codecov:
-  notify:
-    after_n_builds: 4
-comment:
-  after_n_builds: 4
