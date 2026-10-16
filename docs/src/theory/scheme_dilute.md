@@ -77,6 +77,31 @@ whether the inclusions are stiffer or softer than the matrix. For spherical
 voids or rigid spheres in an isotropic matrix, the closed forms show that the
 Mori–Tanaka bulk modulus of the next page lies between the two.
 
+## 4. Concentration tensors
+
+Both estimates follow the construction of
+[the overview](@ref th-estimate-concentration), with the matrix as reference
+medium. Under [`Dilute`](@ref) the remote field is the macroscopic strain,
+``\mathbb E = \mathbb I``, and each inclusion keeps its dilute tensor,
+``\mathbb A_i = \mathbb A_i^{\mathrm{dil}}``. The matrix takes the rest of the
+average,
+
+```math
+f_0\,\mathbb A_0 = \mathbb I - \sum_i f_i\,\mathbb A_i^{\mathrm{dil}}
+  - \sum_c \kappa_c\,\varepsilon_c\,\mathbb H_c:\mathbb C_0 ,
+```
+
+so that ``\mathbb A_0`` departs from ``\mathbb I`` at first order in the
+amounts, which is the inconsistency of §1 seen from the matrix. Under
+[`DiluteDual`](@ref) the remote field is the strain of the matrix under the
+macroscopic stress, ``\mathbb S_0:\boldsymbol\Sigma = \mathbb S_0:\mathbb C^{\mathrm{dild}}:\boldsymbol E``,
+hence ``\mathbb E = \mathbb S_0:\mathbb C^{\mathrm{dild}}`` and
+``\mathbb A_i = \mathbb A_i^{\mathrm{dil}}:\mathbb S_0:\mathbb C^{\mathrm{dild}}``,
+the matrix again taking the rest. Its compliance contributions are then
+``\mathbb H_i^{\mathrm{est}} = \mathbb H_i``: each inclusion of the dual estimate
+contributes to the compliance exactly as it does alone, which is the
+non-interaction approximation once more.
+
 ## Where to go next
 
 Both estimates ignore what surrounds an inclusion. The next page,

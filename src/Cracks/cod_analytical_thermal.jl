@@ -181,13 +181,40 @@ function _cod_aniso_ellipse_thermal(c::EllipticCrack, K₀)
     B = adj[4]           # m̂·adj(K₀)·ℓ̂   (the (1,2) entry, adj being symmetric)
     C = adj[1]           # ℓ̂·adj(K₀)·ℓ̂
 
-    # Eigenvalues of Q₂ = [η²A  -ηB; -ηB  C], ordered λ₁ ≥ λ₂ > 0.
+    # Q₂ = [η²A  -ηB; -ηB  C] enters through its trace and the discriminant of
+    # its eigenvalues, written as a sum of squares: tr² − 4 det, its equal,
+    # rounds below zero for a circular crack in an isotropic conductor stored
+    # as a dense tensor, and its root then throws.
     tr = η^2 * A + C
-    dt = η^2 * (A * C - B^2)
-    gap = sqrt(tr^2 - 4 * dt)
+    disc = (η^2 * A - C)^2 + 4 * η^2 * B^2
+    return _thermal_cod_from_invariants(tr, disc)
+end
+
+# b = 4 / (3 I) with I = ∫₀^{π/2} √(λ₁ cos²φ + λ₂ sin²φ) dφ = √λ₁ ℰ(1 − λ₂/λ₁),
+# λ₁ ≥ λ₂ the eigenvalues of Q₂. I is symmetric in them, a function of
+# tr = λ₁ + λ₂ and disc = (λ₁ − λ₂)² alone: writing λ = tr/2 ± √disc/2 and
+# averaging √(1 + x cos 2φ) term by term,
+#
+#     I = √(tr/2) (π/2) Σₖ cₖ qᵏ ,   q = disc / tr² ,
+#     cₖ = binom(1/2, 2k) binom(2k, k) / 4ᵏ ,
+#
+# a series in q that carries derivatives of every order through the circular
+# point, where the root of the discriminant has none. Seven terms leave a
+# relative error below 2e-17 for q < 1e-2; above, the closed form is exact and
+# well conditioned. A symbolic input keeps the closed form, exact.
+const _THERMAL_COD_SERIES = (
+    1, -1 // 16, -15 // 1024, -105 // 16384, -15015 // 4194304,
+    -153153 // 67108864, -6789783 // 4294967296,
+)
+
+function _thermal_cod_from_invariants(tr, disc)
+    if is_hard_numeric(typeof(disc)) && disc < tr^2 / 100
+        q = disc / tr^2
+        return 8 / (3 * π * sqrt(tr / 2) * evalpoly(q, _THERMAL_COD_SERIES))
+    end
+    gap = sqrt(disc)
     λ₁ = (tr + gap) / 2
     λ₂ = (tr - gap) / 2
-
     return 4 / (3 * sqrt(λ₁) * ell_E(one(λ₁) - λ₂ / λ₁))
 end
 
@@ -217,10 +244,10 @@ function _cod_aniso_ribbon_thermal(c::RibbonCrack, K₀)
     T_mat = eltype(K₀)
 
     # Express K₀ in the crack basis: indices 2, 3 give the (m̂, n̂) block.
-    K₀_loc = TensND.change_tens(K₀, crack_basis(c))
-    K_mm = T_mat(K₀_loc[2, 2])
-    K_nn = T_mat(K₀_loc[3, 3])
-    K_mn = T_mat(K₀_loc[2, 3])
+    K₀_local = TensND.change_tens(K₀, crack_basis(c))
+    K_mm = T_mat(K₀_local[2, 2])
+    K_nn = T_mat(K₀_local[3, 3])
+    K_mn = T_mat(K₀_local[2, 3])
 
     det_K⊥ = K_mm * K_nn - K_mn * K_mn
     return T_mat(π) / (T_mat(2) * sqrt(det_K⊥))

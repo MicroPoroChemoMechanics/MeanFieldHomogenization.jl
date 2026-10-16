@@ -80,7 +80,7 @@ whose Laplace-Carson transform is a plain product,
 \boldsymbol{\sigma}^{*}(p) = \mathbb{C}^{*}(p) : \boldsymbol{\varepsilon}^{*}(p).
 ```
 
-Transformed, the field equations of the localization problem — equilibrium,
+Transformed, the field equations of the concentration problem — equilibrium,
 compatibility, the interface conditions — are *identical* to those of an
 elastic problem whose stiffness is ``\mathbb{C}^{*}(p)``, with ``p`` a parameter.
 Therefore

@@ -190,7 +190,7 @@ for a flat crack in a conductor of 2nd-order conductivity tensor
 order problem, the temperature jump across the crack is scalar and
 only the normal component of the heat flux drives it, so a single
 scalar captures the full crack flexibility.  The associated
-size-independent resistivity contribution ``\\boldsymbol{R}``, returned by [`compliance_contribution`](@ref)`(crack, K₀)`, is
+size-independent resistivity contribution ``\\boldsymbol{R}``, returned by [`inverse_property_contribution`](@ref)`(crack, K₀)`, is
 
 ```math
 \\begin{aligned}
@@ -202,7 +202,7 @@ size-independent resistivity contribution ``\\boldsymbol{R}``, returned by [`com
 The rank-1 direction is the crack normal ``\\underline{n}`` for *any*
 ``\\boldsymbol{K}_0``: the null space of
 ``\\boldsymbol{K}_0-\\boldsymbol{K}_0\\cdot\\boldsymbol{P}(0)\\cdot\\boldsymbol{K}_0`` is spanned by it.
-Apply [`delta_resistivity`](@ref) to recover the dilute resistivity
+Apply [`delta_inverse_property`](@ref) to recover the dilute resistivity
 correction ``\\Delta\\boldsymbol{R} = (4\\pi/3)\\,\\varepsilon^{3\\mathrm{d}}\\,\\boldsymbol{R}``
 (elliptic) or ``\\Delta\\boldsymbol{R} = \\pi\\,\\varepsilon^{2\\mathrm{d}}\\,\\boldsymbol{R}``
 (ribbon).
@@ -250,10 +250,10 @@ _cod_thermal(crack::RibbonCrack, K₀::TensND.AbstractTens{2, 3}) =
     _cod_aniso_ribbon_thermal(crack, K₀)
 
 """
-    compliance_contribution(crack, K₀::AbstractTens{2,3}; kw...) -> Tens{2,3}
+    inverse_property_contribution(crack, K₀::AbstractTens{2,3}; kw...) -> Tens{2,3}
 
 Size-independent **crack resistivity contribution tensor** ``\\boldsymbol{R}``
-(thermal analog of the elasticity [`compliance_contribution`](@ref)):
+(thermal analog of the elasticity [`inverse_property_contribution`](@ref)):
 
 - Elliptic crack:  ``\\boldsymbol{R} = \\tfrac{3}{4}\\,b\\,
   \\underline{w}\\otimes\\underline{w}``.
@@ -263,10 +263,10 @@ Size-independent **crack resistivity contribution tensor** ``\\boldsymbol{R}``
 with ``b`` the thermal COD scalar, returned by [`cod_tensor`](@ref)`(crack, K₀)`,
 and ``\\underline{w}\\parallel\\boldsymbol{K}_0^{-1/2}\\cdot\\underline{n}``
 (reduces to ``\\underline{n}`` for iso / aligned-TI matrices).
-Apply [`delta_resistivity`](@ref)`(crack, R, ε)` to obtain the dilute
+Apply [`delta_inverse_property`](@ref)`(crack, R, ε)` to obtain the dilute
 resistivity correction ``\\Delta\\boldsymbol{R}``.
 """
-function compliance_contribution(
+function inverse_property_contribution(
         crack::MFH_Core.AbstractCrack,
         K₀::TensND.AbstractTens{2, 3};
         kw...

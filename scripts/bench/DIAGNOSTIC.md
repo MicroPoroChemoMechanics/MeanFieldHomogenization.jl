@@ -40,11 +40,11 @@ Call chain, verified line by line:
 
 - `Schemes/mori_tanaka.jl` `_mt_4` calls, **per phase**,
   `_phase_dilute_concentration` *and* `_phase_stiffness_contribution`;
-- the first does `strain_strain_loc(geom, P_i, P₀_proj)`;
-- the second goes through `Core.stiffness_contribution` →
-  `contribution.jl:33-41` → **`strain_strain_loc(incl, C₁, C₀)`, identical
+- the first does `gradient_gradient_concentration(geom, P_i, P₀_proj)`;
+- the second goes through `Core.property_contribution` →
+  `contribution.jl:33-41` → **`gradient_gradient_concentration(incl, C₁, C₀)`, identical
   arguments**;
-- `strain_strain_loc` (`localization.jl:72-82`) does
+- `gradient_gradient_concentration` (`concentration.jl:72-82`) does
   `P = hill_tensor(incl, C₀; kw...)` — the expensive object.
 
 An exact factor of 2 on the dominant cost, at every MT evaluation and every SC
@@ -54,12 +54,12 @@ iteration. Three further instances of the same pattern:
 |---|---|---|
 | cracks (MT) | `_phase_compliance_contribution` then `Cracks/compliance.jl:168-175` | `cod_tensor` ×2 |
 | SC / ASC | `self_consistent.jl:136-140` → `_phase_stress_strain_average` recomputes `A_raw` as soon as `sym ≠ NoSymmetrize` and `P_i` is not isotropic | `hill_tensor` × number of bins |
-| `LayeredSphere` | `strain_strain_loc` + `stiffness_contribution` + internal `_membrane_surface_stress` | Hervé-Zaoui recurrences ×3 |
-| `LayeredSpheroid` | `conductivity_contribution` already calls both localizations | confocal recurrences ×3 |
+| `LayeredSphere` | `gradient_gradient_concentration` + `property_contribution` + internal `_membrane_surface_stress` | Hervé-Zaoui recurrences ×3 |
+| `LayeredSpheroid` | `property_contribution` already calls both concentrations | confocal recurrences ×3 |
 
 ### Fix and measured gains (tier 1, bit-for-bit gate)
 
-New generics `Core.loc_and_stiffness` / `Core.loc_and_stress_average`,
+New generics `Core.concentration_and_contribution` / `Core.concentration_and_flux_average`,
 dispatched on the **inclusion class** (safe fallback on `AbstractInclusion`,
 fast path on `AbstractEllipsoidalInclusion`), plus dedicated bundles for cracks,
 `LayeredSphere` and `LayeredSpheroid`.
@@ -83,7 +83,7 @@ full suite green (7142 pass, 0 failure).
 ### Measured downside, owned
 
 On the cheapest cases the deduplication **costs** more than it saves: the
-returned tuple `(A, N)` is allocated and boxed (the localization chain is
+returned tuple `(A, N)` is allocated and boxed (the concentration chain is
 inferred `Any` by construction, see §5), while the Hill solve saved is
 analytical and nearly free.
 
@@ -439,7 +439,7 @@ Each **verified on a worktree of the reference commit** before being asserted.
 4. **Inherent type instability**: `hill_tensor` is not inferable, by design —
    `_resolve_algo(Val(method), incl, C₀)` resolves the algorithm at runtime,
    which is precisely what makes `:auto` and the `NestedQuadGK` fallback under
-   `Dual` work. The whole localization chain is therefore `Any`. This is the
+   `Dual` work. The whole concentration chain is therefore `Any`. This is the
    cause of the §1 downside.
 
 ---

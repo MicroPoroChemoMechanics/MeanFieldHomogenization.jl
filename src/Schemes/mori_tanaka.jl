@@ -68,7 +68,7 @@ end
 # the phases so that the sums keep their order.
 #
 # A phase with a volume: its dilute concentration weighted by its fraction. The
-# bundled helper shares one localization solve between `A_dil` and `N`, sums
+# bundled helper shares one concentration solve between `A_dil` and `N`, sums
 # the layers of an internally heterogeneous inclusion (LayeredSphere) instead
 # of reading a phase property that does not represent it, and symmetrizes the
 # product (C_i − C₀):A, not A alone.

@@ -171,12 +171,12 @@ want("validation") && let
     for ω in ωs
         ar, dr = confocal_layer_radii(ω, 1.0, (0.3, 0.7))
         K = (TensISO{3}(5.0), TensISO{3}(2.0))
-        A = _ar(gradient_gradient_loc(
+        A = _ar(gradient_gradient_concentration(
             FEAxiLayeredSpheroid(
                 ar, dr, K; opts = FEAxiMeshOptions(; nradial = 14, radius_ratio = 6.0)
             ), K₀, K₀,
         ))
-        E = _ar(gradient_gradient_loc(LayeredSpheroid(ar, dr, K), K₀, K₀))
+        E = _ar(gradient_gradient_concentration(LayeredSpheroid(ar, dr, K), K₀, K₀))
         push!(fe11, A[1, 1]); push!(fe33, A[3, 3])
         push!(an11, E[1, 1]); push!(an33, E[3, 3])
         @printf "  confocal ω = %.2f   A11 %.6f / %.6f   A33 %.6f / %.6f\n" ω A[1, 1] E[1, 1] A[3, 3] E[3, 3]
@@ -198,13 +198,13 @@ want("validation") && let
     sf, sa = Float64[], Float64[]
     for r in fr
         K = (TensISO{3}(5.0), TensISO{3}(2.0))
-        A = _ar(gradient_gradient_loc(
+        A = _ar(gradient_gradient_concentration(
             FEAxiLayeredSpheroid(
                 (r, 1.0), (r, 1.0), K;
                 opts = FEAxiMeshOptions(; nradial = 16, radius_ratio = 6.0),
             ), K₀, K₀,
         ))
-        E = _ar(gradient_gradient_loc(LayeredSphere((r, 1.0), K), K₀, K₀))
+        E = _ar(gradient_gradient_concentration(LayeredSphere((r, 1.0), K), K₀, K₀))
         push!(sf, A[1, 1]); push!(sa, E[1, 1])
         @printf "  spheres r = %.2f   A %.6f / %.6f\n" r A[1, 1] E[1, 1]
         flush(stdout)
@@ -255,13 +255,13 @@ want("validation") && let
             ar, dr, Cs; opts = FEAxiMeshOptions(; nradial = 12, radius_ratio = 6.0)
         )
         ana = LayeredSpheroid(ar, dr, Cs)
-        A = _km(strain_strain_loc(fe, C₀, C₀))
-        E = _km(strain_strain_loc(ana, C₀, C₀))
+        A = _km(gradient_gradient_concentration(fe, C₀, C₀))
+        E = _km(gradient_gradient_concentration(ana, C₀, C₀))
         for (k, (i, j)) in enumerate(idx4)
             push!(feE[k], A[i, j]); push!(anE[k], E[i, j])
         end
         # No stress-side curve here, and that is a finding rather than an
-        # omission: `LayeredSpheroid` implements no elastic `stress_strain_loc`,
+        # omission: `LayeredSpheroid` implements no elastic `flux_gradient_concentration`,
         # so the call used to fall through to the generic `ℂ₁ : 𝔸_εε` — which
         # presupposes a uniform stiffness a multilayer does not have, and was
         # wrong by 110 % at every aspect ratio. The generic now refuses instead,
@@ -291,10 +291,10 @@ want("validation") && let
             opts = FEAxiMeshOptions(; nradial = 16, radius_ratio = 6.0),
         )
         ana = LayeredSphere((r, 1.0), Cs)
-        push!(feA, _km(strain_strain_loc(fe, C₀, C₀))[1, 1])
-        push!(anA, _km(strain_strain_loc(ana, C₀, C₀))[1, 1])
-        push!(feB, _km(stress_strain_loc(fe, C₀, C₀))[1, 1])
-        push!(anB, _km(stress_strain_loc(ana, C₀, C₀))[1, 1])
+        push!(feA, _km(gradient_gradient_concentration(fe, C₀, C₀))[1, 1])
+        push!(anA, _km(gradient_gradient_concentration(ana, C₀, C₀))[1, 1])
+        push!(feB, _km(flux_gradient_concentration(fe, C₀, C₀))[1, 1])
+        push!(anB, _km(flux_gradient_concentration(ana, C₀, C₀))[1, 1])
         @printf "  elastic spheres r = %.2f   A %.6f / %.6f   B %.6f / %.6f\n" r feA[end] anA[end] feB[end] anB[end]
         flush(stdout)
     end
@@ -350,11 +350,11 @@ want("validation") && let
     K1 = TensISO{3}(5.0); C1 = Ciso(4.0, 0.2)
     for ω in ωn
         ar, dr = confocal_layer_radii(ω, 1.0, (1.0,))
-        an = _km(strain_strain_loc(LayeredSpheroid(ar, dr, (C1,)), C₀, C₀))
-        ex = _km(strain_strain_loc(Spheroid(ω), C1, C₀))
+        an = _km(gradient_gradient_concentration(LayeredSpheroid(ar, dr, (C1,)), C₀, C₀))
+        ex = _km(gradient_gradient_concentration(Spheroid(ω), C1, C₀))
         push!(de, norm(an - ex) / norm(ex))
-        ant = _ar(gradient_gradient_loc(LayeredSpheroid(ar, dr, (K1,)), K₀, K₀))
-        ext = _ar(gradient_gradient_loc(Spheroid(ω), K1, K₀))
+        ant = _ar(gradient_gradient_concentration(LayeredSpheroid(ar, dr, (K1,)), K₀, K₀))
+        ext = _ar(gradient_gradient_concentration(Spheroid(ω), K1, K₀))
         push!(dc, norm(ant - ext) / norm(ext))
         @printf "  ω = %.3f   elastic %.2e   transport %.2e\n" ω de[end] dc[end]
         flush(stdout)

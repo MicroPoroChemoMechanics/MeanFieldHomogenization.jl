@@ -38,7 +38,7 @@ scheme_matrix(
 """
     requires_matrix(scheme) -> Bool
 
-Whether `scheme` computes localization tensors in a reference medium taken
+Whether `scheme` computes concentration tensors in a reference medium taken
 from one distinguished phase, and therefore cannot be evaluated until that
 phase is decided.
 
@@ -80,7 +80,7 @@ function matrix_name(scheme::HomogenizationScheme, rve::RVE)
     r === nothing && throw(
         ArgumentError(
             "$(nameof(typeof(scheme))) needs a matrix phase — the reference medium " *
-                "its localization tensors are computed in — and this RVE designates " *
+                "its concentration tensors are computed in — and this RVE designates " *
                 "none. Name it on the scheme, e.g. " *
                 "$(nameof(typeof(scheme)))(:" *
                 "$(isempty(rve.phase_names) ? :phase : first(rve.phase_names)))" *

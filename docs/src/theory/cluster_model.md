@@ -100,7 +100,7 @@ A **single** expression covers both the diagonal and the off-diagonal block, whi
 the practical dividend of the convention adopted here: in the opposite one the
 two cases carry opposite signs and have to be written separately.
 
-The matrix localization follows from the strain average rule and the effective
+The matrix concentration follows from the strain average rule and the effective
 stiffness from the stress one:
 
 ```math
@@ -113,6 +113,13 @@ f_0\, \mathbb{A}_0 = \mathbb{I} - \sum_I f_I\, \mathbb{A}_I ,
 The implementation flattens the system onto the Kelvin-Mandel basis — where ``:``
 becomes an ordinary matrix product — and solves it with one dense factorization, rather
 than reproducing the tensorial Gauss elimination of the paper.
+
+The unknowns of the system are therefore the concentration tensors themselves,
+and [`concentration_tensors`](@ref) returns them in the form of
+[the overview](@ref th-estimate-concentration): one strain tensor
+``\mathbb A_I`` per family, keyed `:family_<label>`, with
+``\mathbb A_{\sigma\varepsilon,I} = \mathbb C_I:\mathbb A_I``, and the matrix
+closing both averages as above.
 
 ## 4. The Mori-Tanaka limit
 

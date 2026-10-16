@@ -19,8 +19,11 @@ tensor ([`tens_IA`](@ref), [willis1977](@cite)).
 function _hill_order2_3d_iso(ell::Ellipsoid{3, Spherical}, K₀)
     T = promote_type(eltype(ell.semi_axes), eltype(K₀))
     k = K₀.data[1]
-    IA = tens_IA(ell)
-    return TensND.TensISO{3}(T(IA[1, 1]) / k)
+    # The geometric factor of a sphere is 1/3 whatever its radius. Formed in the
+    # promoted type it stays exact on symbolic conductivities, where reading it
+    # off `tens_IA` carried in the `Float64` of the radius; on `Float64` the
+    # value is the same to the bit.
+    return TensND.TensISO{3}((T(1) / 3) / k)
 end
 
 function _hill_order2_3d_iso(ell::Ellipsoid{3}, K₀)

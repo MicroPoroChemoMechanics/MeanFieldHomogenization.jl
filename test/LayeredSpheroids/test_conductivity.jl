@@ -39,11 +39,11 @@ end
         ell = Spheroid(a / b)
         P = hill_tensor(ell, K0)
         A_classic = inv(TensISO{3}(1.0) + P ⋅ (K1 - K0))
-        A_mine = gradient_gradient_loc(s, K1, K0)
+        A_mine = gradient_gradient_concentration(s, K1, K0)
         @test get_array(A_mine) ≈ get_array(A_classic) rtol = 1.0e-10
 
-        B_mine = flux_gradient_loc(s, K1, K0)
-        N_mine = conductivity_contribution(s, K1, K0)
+        B_mine = flux_gradient_concentration(s, K1, K0)
+        N_mine = property_contribution(s, K1, K0)
         @test get_array(N_mine) ≈ get_array(B_mine - K0 ⋅ A_mine) rtol = 1.0e-10
         N_classic = (K1 - K0) ⋅ A_classic
         @test get_array(N_mine) ≈ get_array(N_classic) rtol = 1.0e-10
@@ -57,27 +57,27 @@ end
     a_in = 2.9
     b_in = sqrt(a_in^2 - focal2)
     s2 = LayeredSpheroid((a_in, 3.0), (b_in, 1.0), (K1, K1); Nseries = 6)
-    A1 = gradient_gradient_loc(s1, K1, K0)
-    A2 = gradient_gradient_loc(s2, K1, K0)
+    A1 = gradient_gradient_concentration(s1, K1, K0)
+    A2 = gradient_gradient_concentration(s2, K1, K0)
     @test get_array(A1) ≈ get_array(A2) atol = 1.0e-12
 end
 
 @testset "LayeredSpheroid — Kapitza / surface-conductive interface limits" begin
     K1 = TensISO{3}(5.0); K0 = TensISO{3}(2.0)
     s_perfect = LayeredSpheroid((3.0,), (1.0,), (K1,); Nseries = 6)
-    A_perfect = gradient_gradient_loc(s_perfect, K1, K0)
+    A_perfect = gradient_gradient_concentration(s_perfect, K1, K0)
 
     s_lc_tiny = LayeredSpheroid(
         (3.0,), (1.0,), (K1,);
         interfaces = (MeanFieldHomogenization.KapitzaInterface(1.0e-9),), Nseries = 6
     )
-    @test get_array(gradient_gradient_loc(s_lc_tiny, K1, K0)) ≈ get_array(A_perfect) atol = 1.0e-6
+    @test get_array(gradient_gradient_concentration(s_lc_tiny, K1, K0)) ≈ get_array(A_perfect) atol = 1.0e-6
 
     s_hc_tiny = LayeredSpheroid(
         (3.0,), (1.0,), (K1,);
         interfaces = (MeanFieldHomogenization.SurfaceConductiveInterface(1.0e-9),), Nseries = 6
     )
-    @test get_array(gradient_gradient_loc(s_hc_tiny, K1, K0)) ≈ get_array(A_perfect) atol = 1.0e-6
+    @test get_array(gradient_gradient_concentration(s_hc_tiny, K1, K0)) ≈ get_array(A_perfect) atol = 1.0e-6
 
     # Kapitza resistance → ∞ ⟺ fully insulated (impermeable) core.
     s_lc_big = LayeredSpheroid(
@@ -85,8 +85,8 @@ end
         interfaces = (MeanFieldHomogenization.KapitzaInterface(1.0e10),), Nseries = 6
     )
     s_insulated = LayeredSpheroid((3.0,), (1.0,), (TensISO{3}(1.0e-14),); Nseries = 6)
-    A_lc_big = gradient_gradient_loc(s_lc_big, K1, K0)
-    A_insulated = gradient_gradient_loc(s_insulated, TensISO{3}(1.0e-14), K0)
+    A_lc_big = gradient_gradient_concentration(s_lc_big, K1, K0)
+    A_insulated = gradient_gradient_concentration(s_insulated, TensISO{3}(1.0e-14), K0)
     @test get_array(A_lc_big) ≈ get_array(A_insulated) rtol = 1.0e-5
 end
 
@@ -112,7 +112,7 @@ end
     s1 = layered_spheroid_from_fractions(
         3.0, 3.0, (1.0,), (K1,); Nseries = 6, axis = (0.0, 0.0, 1.0)
     )
-    A = gradient_gradient_loc(s1, K1, K0)
+    A = gradient_gradient_concentration(s1, K1, K0)
     ell = Spheroid(3.0)
     P = hill_tensor(ell, K0)
     A_classic = inv(TensISO{3}(1.0) + P ⋅ (K1 - K0))

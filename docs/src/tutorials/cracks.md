@@ -56,13 +56,13 @@ the dilute compliance correction is
 
 [kachanov1992, kachanov1993](@citet) — ``\mathbb{H}`` is the
 **size-independent compliance contribution tensor**
-([`compliance_contribution`](@ref)), computed once from `B` and the
+([`inverse_property_contribution`](@ref)), computed once from `B` and the
 crack normal ``\underline{n}``, and reused unchanged across an entire
 crack population that shares the same orientation and shape.
 
 ```@example tutcracks
-H = compliance_contribution(pc, C0)
-ΔS = delta_compliance(pc, H, 0.05)   # ε = 0.05
+H = inverse_property_contribution(pc, C0)
+ΔS = delta_inverse_property(pc, H, 0.05)   # ε = 0.05
 nothing # hide
 ```
 
@@ -90,7 +90,7 @@ keyword on ordinary inclusions), so the macroscopic effect of an
 isotropically-oriented crack population is itself isotropic.
 
 Note: [`SelfConsistent`](@ref) does not support cracks (its
-strain-localization tensor becomes singular for zero-volume
+strain-concentration tensor becomes singular for zero-volume
 inclusions); use [`AsymmetricSelfConsistent`](@ref) instead. See the
 [cracks manual page](@ref man-cracks) for the full API, including
 finite interface stiffness (Sevostianov springs).
@@ -124,7 +124,7 @@ effective medium, exactly as the self-consistent porous estimate did
 in [an earlier tutorial](@ref tut-porous-materials). Crack density plays
 the same qualitative role here that porosity played there; what differs
 is the *shape* (a surface rather than a volume) entering the
-localization tensor.
+concentration tensor.
 
 ## Where to go next
 

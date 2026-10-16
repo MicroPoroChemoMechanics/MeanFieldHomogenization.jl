@@ -8,7 +8,7 @@ EditURL = "../../../../scripts/33_laminate_basics.jl"
     The tutorial [Bounds and classical schemes](@ref tut-bounds-and-schemes),
     whose Voigt and Reuss bounds the laminate saturates, and the theory page
     [Periodic multilayer — the laminate cell](@ref th-laminate), where the
-    exact effective tensor and the layer localization are derived.
+    exact effective tensor and the layer concentration are derived.
 
 A laminate is a periodic unit cell of parallel layers: no matrix, no
 auxiliary Eshelby problem, no reference medium — and an **exact** effective
@@ -120,7 +120,7 @@ Karr = Matrix(components(Kᵉᶠᶠ))
 @printf "            k_⊥ = %.6f  (want %.6f, series)\n" Karr[3, 3] 1 / (f₁ / 2.0 + f₂ / 0.3)
 ````
 
-## Localization
+## Concentration
 
 The layer strains follow from the same tensors. Their fraction-weighted average is the
 identity, and the in-plane block of every ``\mathbb A_i`` is the identity: the
@@ -128,8 +128,8 @@ macroscopic in-plane strain reaches each layer unchanged, which is the compatibi
 condition read backwards.
 
 ````@example laminate
-𝔸 = Dict(nm => layer_strain_localization(lam, nm) for nm in layer_names(lam))
-𝔹 = Dict(nm => layer_stress_localization(lam, nm) for nm in layer_names(lam))
+𝔸 = Dict(nm => layer_strain_concentration(lam, nm) for nm in layer_names(lam))
+𝔹 = Dict(nm => layer_stress_concentration(lam, nm) for nm in layer_names(lam))
 fs = Dict(nm => layer_volume_fraction(lam, nm) for nm in layer_names(lam))
 
 sumA = sum(fs[nm] * 𝔸[nm] for nm in layer_names(lam))
@@ -187,7 +187,7 @@ Every interface of the cell above is perfect.
 places spring, membrane, Kapitza and surface-conductive interfaces between the
 layers, and shows why the period, and not only the fractions, then enters the
 result. The constructor, the keywords of `add_layer!` and the
-localization functions of the laminate are documented in
+concentration functions of the laminate are documented in
 [Laminates — periodic multilayer cells](@ref man-laminates).
 
 ---

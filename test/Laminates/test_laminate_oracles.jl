@@ -18,7 +18,7 @@
 #  Further coverage: Backus (1962) bilayer closed form, N = 1 degeneracy,
 #  identical layers, layer-order invariance, exact `TensTI` output, bounds
 #  bracketing with the in-plane Voigt / out-of-plane Reuss exactness, the
-#  localization sum rules, and a deliberately asymmetric anisotropic case.
+#  concentration sum rules, and a deliberately asymmetric anisotropic case.
 # =============================================================================
 
 using Test
@@ -198,7 +198,7 @@ end
         _acoustic(homogenize(lam, Reuss(), :C), b) atol = ATOL_LAM
 end
 
-@testset "Laminate — localization sum rules and block structure" begin
+@testset "Laminate — concentration sum rules and block structure" begin
     rng = MersenneTwister(1003)
     Cs = [_rand_stiffness(rng) for _ in 1:3]
     hs = [0.2, 0.45, 0.35]
@@ -208,8 +208,8 @@ end
     end
     names = layer_names(lam)
     fs = [layer_volume_fraction(lam, nm) for nm in names]
-    As = [layer_strain_localization(lam, nm) for nm in names]
-    Bs = [layer_stress_localization(lam, nm) for nm in names]
+    As = [layer_strain_concentration(lam, nm) for nm in names]
+    Bs = [layer_stress_concentration(lam, nm) for nm in names]
 
     @test Matrix(KM(sum(fs[i] * As[i] for i in 1:3))) ≈ Matrix(1.0I, 6, 6) atol = ATOL_LAM
     @test Matrix(KM(sum(fs[i] * Bs[i] for i in 1:3))) ≈ Matrix(1.0I, 6, 6) atol = ATOL_LAM
@@ -234,7 +234,7 @@ end
     @test maximum(abs, Matrix(KM(Q ⊡ P))) < ATOL_LAM
 end
 
-@testset "Laminate — the four localization generics" begin
+@testset "Laminate — the four concentration generics" begin
     rng = MersenneTwister(1004)
     Cs = [_rand_stiffness(rng) for _ in 1:3]
     Ks = [Tens(Symmetric(randn(rng, 3, 3) * 0.1 + 3.0I)) for _ in 1:3]
@@ -254,42 +254,43 @@ end
 
     # The two aliases are the very same object as the `layer_*` names.
     for (i, nm) in enumerate(names)
-        @test Matrix(KM(strain_strain_loc(lam, nm))) ==
-            Matrix(KM(layer_strain_localization(lam, nm)))
-        @test Matrix(KM(stress_stress_loc(lam, nm))) ==
-            Matrix(KM(layer_stress_localization(lam, nm)))
-        @test Matrix(gradient_gradient_loc(lam, nm)) ==
-            Matrix(layer_gradient_localization(lam, nm))
-        @test Matrix(flux_flux_loc(lam, nm)) == Matrix(layer_flux_localization(lam, nm))
+        @test Matrix(KM(gradient_gradient_concentration(lam, nm))) ==
+            Matrix(KM(layer_strain_concentration(lam, nm)))
+        @test Matrix(KM(flux_flux_concentration(lam, nm))) ==
+            Matrix(KM(layer_stress_concentration(lam, nm)))
+        @test Matrix(gradient_gradient_concentration(lam, nm; property = :K)) ==
+            Matrix(layer_gradient_concentration(lam, nm; property = :K))
+        @test Matrix(flux_flux_concentration(lam, nm; property = :K)) ==
+            Matrix(layer_flux_concentration(lam, nm; property = :K))
 
         # The two mixed tensors, against their definitions.
-        A = strain_strain_loc(lam, nm)
-        @test Matrix(KM(stress_strain_loc(lam, nm))) ≈ Matrix(KM(Cs[i] ⊡ A)) atol = ATOL_LAM
-        @test Matrix(KM(strain_stress_loc(lam, nm))) ≈ Matrix(KM(A ⊡ Sh)) atol = ATOL_LAM
-        @test Matrix(KM(stress_stress_loc(lam, nm))) ≈
-            Matrix(KM(stress_strain_loc(lam, nm) ⊡ Sh)) atol = ATOL_LAM
+        A = gradient_gradient_concentration(lam, nm)
+        @test Matrix(KM(flux_gradient_concentration(lam, nm))) ≈ Matrix(KM(Cs[i] ⊡ A)) atol = ATOL_LAM
+        @test Matrix(KM(gradient_flux_concentration(lam, nm))) ≈ Matrix(KM(A ⊡ Sh)) atol = ATOL_LAM
+        @test Matrix(KM(flux_flux_concentration(lam, nm))) ≈
+            Matrix(KM(flux_gradient_concentration(lam, nm) ⊡ Sh)) atol = ATOL_LAM
 
-        a = gradient_gradient_loc(lam, nm)
-        @test Matrix(flux_gradient_loc(lam, nm)) ≈ Matrix(Ks[i] ⋅ a) atol = ATOL_LAM
-        @test Matrix(gradient_flux_loc(lam, nm)) ≈ Matrix(a ⋅ Rh) atol = ATOL_LAM
+        a = gradient_gradient_concentration(lam, nm; property = :K)
+        @test Matrix(flux_gradient_concentration(lam, nm; property = :K)) ≈ Matrix(Ks[i] ⋅ a) atol = ATOL_LAM
+        @test Matrix(gradient_flux_concentration(lam, nm; property = :K)) ≈ Matrix(a ⋅ Rh) atol = ATOL_LAM
     end
 
     # The four sum rules, at both orders.
     _sum(g) = sum(fs[i] * g(names[i]) for i in eachindex(names))
-    @test Matrix(KM(_sum(nm -> strain_strain_loc(lam, nm)))) ≈ Id4 atol = ATOL_LAM
-    @test Matrix(KM(_sum(nm -> stress_stress_loc(lam, nm)))) ≈ Id4 atol = ATOL_LAM
-    @test Matrix(KM(_sum(nm -> stress_strain_loc(lam, nm)))) ≈
+    @test Matrix(KM(_sum(nm -> gradient_gradient_concentration(lam, nm)))) ≈ Id4 atol = ATOL_LAM
+    @test Matrix(KM(_sum(nm -> flux_flux_concentration(lam, nm)))) ≈ Id4 atol = ATOL_LAM
+    @test Matrix(KM(_sum(nm -> flux_gradient_concentration(lam, nm)))) ≈
         Matrix(KM(Ch)) atol = ATOL_LAM
-    @test Matrix(KM(_sum(nm -> strain_stress_loc(lam, nm)))) ≈
+    @test Matrix(KM(_sum(nm -> gradient_flux_concentration(lam, nm)))) ≈
         Matrix(KM(Sh)) atol = ATOL_LAM
-    @test Matrix(_sum(nm -> gradient_gradient_loc(lam, nm))) ≈ Id2 atol = ATOL_LAM
-    @test Matrix(_sum(nm -> flux_flux_loc(lam, nm))) ≈ Id2 atol = ATOL_LAM
-    @test Matrix(_sum(nm -> flux_gradient_loc(lam, nm))) ≈ Matrix(Kh) atol = ATOL_LAM
-    @test Matrix(_sum(nm -> gradient_flux_loc(lam, nm))) ≈ Matrix(Rh) atol = ATOL_LAM
+    @test Matrix(_sum(nm -> gradient_gradient_concentration(lam, nm; property = :K))) ≈ Id2 atol = ATOL_LAM
+    @test Matrix(_sum(nm -> flux_flux_concentration(lam, nm; property = :K))) ≈ Id2 atol = ATOL_LAM
+    @test Matrix(_sum(nm -> flux_gradient_concentration(lam, nm; property = :K))) ≈ Matrix(Kh) atol = ATOL_LAM
+    @test Matrix(_sum(nm -> gradient_flux_concentration(lam, nm; property = :K))) ≈ Matrix(Rh) atol = ATOL_LAM
 
     # The symmetry class of the answer, which is the point of `_wrap4_general`.
     #
-    # A laminate of layers all TI about its own normal has localization tensors
+    # A laminate of layers all TI about its own normal has concentration tensors
     # TI about that same normal — but NOT major-symmetric, `𝔸ᵢ` being a product
     # of major-symmetric tensors. So the exact type is `TensTI{4,T,6}`, and the
     # 5-coefficient read-off `_wrap4` uses for the effective stiffness would
@@ -299,7 +300,7 @@ end
     add_layer!(lam_ti, :B, Dict(:C => _iso(0.7, 0.3), :K => TensISO{3}(0.4)); fraction = 0.65)
 
     @test homogenize(lam_ti, Laminated(), :C) isa TensND.TensTI{4, Float64, 5}
-    for g in (strain_strain_loc, stress_strain_loc, strain_stress_loc, stress_stress_loc)
+    for g in (gradient_gradient_concentration, flux_gradient_concentration, gradient_flux_concentration, flux_flux_concentration)
         A = g(lam_ti, :A)
         @test A isa TensND.TensTI{4, Float64, 6}
         @test collect(TensND.axis(A)) ≈ [0.0, 0.6, 0.8]
@@ -313,8 +314,8 @@ end
         ℓ = TensND.get_ℓ(A)
         @test abs(ℓ[3] - ℓ[4]) > 1.0e-3
     end
-    for g in (gradient_gradient_loc, flux_gradient_loc, gradient_flux_loc, flux_flux_loc)
-        @test g(lam_ti, :A) isa TensND.TensTI{2, Float64, 2}
+    for g in (gradient_gradient_concentration, flux_gradient_concentration, gradient_flux_concentration, flux_flux_concentration)
+        @test g(lam_ti, :A; property = :K) isa TensND.TensTI{2, Float64, 2}
     end
 
     # An anisotropic layer breaks it, structurally, and an unstructured tensor
@@ -322,7 +323,7 @@ end
     lam_gen = Laminate(; normal = (0, 0, 1))
     add_layer!(lam_gen, :A, Dict(:C => _rand_stiffness(MersenneTwister(7))); fraction = 0.4)
     add_layer!(lam_gen, :B, Dict(:C => _iso(0.7, 0.3)); fraction = 0.6)
-    @test !(strain_strain_loc(lam_gen, :A) isa TensND.TensTI)
+    @test !(gradient_gradient_concentration(lam_gen, :A) isa TensND.TensTI)
 
     # A primal (spring) interface carries part of the macroscopic strain in the
     # displacement jumps, so the STRAIN-side rule is expected to fail while the
@@ -334,8 +335,8 @@ end
     )
     add_layer!(lam_s, :B, Dict(:C => _iso(0.7, 0.3)); thickness = 0.6)
     fs_s = [layer_volume_fraction(lam_s, nm) for nm in layer_names(lam_s)]
-    As_s = [strain_strain_loc(lam_s, nm) for nm in layer_names(lam_s)]
-    Bs_s = [stress_stress_loc(lam_s, nm) for nm in layer_names(lam_s)]
+    As_s = [gradient_gradient_concentration(lam_s, nm) for nm in layer_names(lam_s)]
+    Bs_s = [flux_flux_concentration(lam_s, nm) for nm in layer_names(lam_s)]
     @test !isapprox(
         Matrix(KM(sum(fs_s[i] * As_s[i] for i in 1:2))), Id4; atol = 1.0e-6
     )
@@ -455,6 +456,6 @@ end
     M = Matrix(KM(Ch, b))
     @test M ≈ M' atol = ATOL_LAM
 
-    As = [layer_strain_localization(lam, nm) for nm in names]
+    As = [layer_strain_concentration(lam, nm) for nm in names]
     @test Matrix(KM(sum(fs[i] * As[i] for i in 1:3))) ≈ Matrix(1.0I, 6, 6) atol = ATOL_LAM
 end

@@ -151,12 +151,12 @@ function asymmetric_self_consistent_alv(
             ΔJ = zeros(eltype(C_n), size(C_n)...)
             J_n = volterra_inverse(C_n; block_size = 6)
             @inbounds for (geom, ε, sym, Rn_mat, Rt_mat) in crack_data
-                Ñ = stiffness_contribution_alv_at(
+                Ñ = property_contribution_alv_at(
                     geom, C_n;
                     Rn_mat = Rn_mat,
                     Rt_mat = Rt_mat
                 )
-                ΔC = delta_stiffness_alv(geom, Ñ, ε)
+                ΔC = delta_property_alv(geom, Ñ, ε)
                 ΔJ_block = -(J_n * ΔC * J_n)
                 ΔJ_block = _maybe_symmetrize_alv(ΔJ_block, sym)
                 ΔJ .+= ΔJ_block
@@ -475,7 +475,7 @@ function _diff_alv_ode_rhs!(du, u, p, τ)
     # evaluated against the running relaxation C̃ = J̃^{-vol}; each stiffness
     # contribution Ñ is mapped to its compliance counterpart by the exact
     # identity H̃ = − J̃ ∘ Ñ ∘ J̃ (same relation as
-    # `stiffness_contribution_alv(crack, …)`, read backwards).
+    # `property_contribution_alv(crack, …)`, read backwards).
     P_curr = reshape(u, sz, sz)
     C_curr = p.dual ? volterra_inverse(P_curr; block_size = 6) : P_curr
     J_curr = p.dual ? P_curr : nothing
@@ -515,7 +515,7 @@ function _diff_alv_ode_rhs!(du, u, p, τ)
             contrib = if r.kind === :layered_sphere
                 # No Hill kernel: the bulk + shear ALV recurrences give the
                 # contribution of the whole composite sphere directly.
-                stiffness_contribution_alv_at(r.geom, C_curr, p.times)
+                property_contribution_alv_at(r.geom, C_curr, p.times)
             else
                 # Per-phase Hill kernel against C_curr.
                 D_M = r.V_M .- r.U_M
@@ -546,11 +546,11 @@ function _diff_alv_ode_rhs!(du, u, p, τ)
         εᶜ = nt.f(τ) * r.target
         dφᶜ = nt.df(τ) * r.target + (εᶜ / f0) * sum_df
         iszero(dφᶜ) && continue
-        Ñ = stiffness_contribution_alv_at(
+        Ñ = property_contribution_alv_at(
             r.geom, C_curr;
             Rn_mat = r.Rn_mat, Rt_mat = r.Rt_mat
         )
-        ΔC = delta_stiffness_alv(r.geom, Ñ, 1.0)
+        ΔC = delta_property_alv(r.geom, Ñ, 1.0)
         push_contrib!(_maybe_symmetrize_alv(ΔC, r.sym), dφᶜ)
     end
 

@@ -15,7 +15,7 @@
 #   6. `_bond6` against `TensND.KM(C, basis)`.
 #   7. `laminate_stiffness` : N = 1 degeneracy, identical layers, the exact
 #      Backus (1962) bilayer closed form, in-plane rotation invariance.
-#   8. Localization : `Σ f 𝔸 = Σ f 𝔹 = 𝕀`, the block structure of `𝔸`, and
+#   8. Concentration : `Σ f 𝔸 = Σ f 𝔹 = 𝕀`, the block structure of `𝔸`, and
 #      `⟨ℂ:𝔸⟩ = ℂ_hom`.
 #   9. `laminate_conductivity` : the exact series / parallel laws.
 #  10. ForwardDiff through the kernel.
@@ -187,15 +187,15 @@ end
     @test MFHC.laminate_stiffness(C6r, f, Z, Z) ≈ Qz' * Ch * Qz atol = 1.0e-10
 end
 
-@testset "laminate localization — sum rules and block structure" begin
+@testset "laminate concentration — sum rules and block structure" begin
     rng = MersenneTwister(59)
     C6s = ntuple(_ -> _rand_km6(rng), 3)
     f = (0.2, 0.45, 0.35)
     Z = zero(SMatrix{6, 6, Float64})
     Ch = MFHC.laminate_stiffness(C6s, f, Z, Z)
 
-    As = [MFHC.laminate_strain_localization(C6s[i], Ch) for i in 1:3]
-    Bs = [MFHC.laminate_stress_localization(C6s[i], Ch) for i in 1:3]
+    As = [MFHC.laminate_strain_concentration(C6s[i], Ch) for i in 1:3]
+    Bs = [MFHC.laminate_stress_concentration(C6s[i], Ch) for i in 1:3]
 
     @test sum(f[i] * As[i] for i in 1:3) ≈ I atol = 1.0e-10
     @test sum(f[i] * Bs[i] for i in 1:3) ≈ I atol = 1.0e-10
@@ -223,8 +223,8 @@ end
     K3a = ntuple(_ -> (A = randn(rng, 3, 3); SMatrix{3, 3}(A * A' + 3I)), 3)
     Kha = MFHC.laminate_conductivity(K3a, f, Z3, Z3)
     @test 1 / Kha[3, 3] ≈ sum(f[i] / K3a[i][3, 3] for i in 1:3) atol = ATOL_KM
-    As = [MFHC.laminate_gradient_localization(K3a[i], Kha) for i in 1:3]
-    Bs = [MFHC.laminate_flux_localization(K3a[i], Kha) for i in 1:3]
+    As = [MFHC.laminate_gradient_concentration(K3a[i], Kha) for i in 1:3]
+    Bs = [MFHC.laminate_flux_concentration(K3a[i], Kha) for i in 1:3]
     @test sum(f[i] * As[i] for i in 1:3) ≈ I atol = 1.0e-10
     @test sum(f[i] * Bs[i] for i in 1:3) ≈ I atol = 1.0e-10
     @test MFHC.laminate_conductivity((K3a[1],), (1.0,), Z3, Z3) ≈ K3a[1] atol = 1.0e-10

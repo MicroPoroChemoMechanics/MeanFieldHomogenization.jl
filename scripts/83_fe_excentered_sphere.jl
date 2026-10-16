@@ -19,7 +19,7 @@
 # A transversely isotropic material does not couple the ``\cos`` and ``\sin``
 # groups of the strain, so ``\int_0^{2\pi}`` leaves one constant per mode and
 # the modes are independent. Four macroscopic loadings — two in mode 0, one in
-# mode 1, one in mode 2 — span the whole transversely isotropic localization
+# mode 1, one in mode 2 — span the whole transversely isotropic concentration
 # tensor.
 #
 # On top of that sits the same **first-order corrected boundary condition** as
@@ -83,16 +83,16 @@ rep = fe_axi_mesh_report(incl0)
 
 # ## §2 The concentric limit against Hervé-Zaoui
 #
-# At zero eccentricity the pattern *is* the two-layer sphere, whose localization
+# At zero eccentricity the pattern *is* the two-layer sphere, whose concentration
 # tensors `LayeredSphere` gives exactly. Everything has to be simultaneously
 # right for this to match — the three modes, the axis conditions, the azimuthal
 # projections, the dipole correction — and the answer must come out isotropic
 # although it is assembled from three separate discrete problems.
 
-A_fe, B_fe = fe_axi_localization(incl0, C_PASTE)
+A_fe, B_fe = fe_axi_concentration(incl0, C_PASTE)
 sph = LayeredSphere((cbrt(W), 1.0), (C_AGG, C_MORTAR))
-A_ex = strain_strain_loc(sph, C_PASTE, C_PASTE)
-B_ex = stress_strain_loc(sph, C_PASTE, C_PASTE)
+A_ex = gradient_gradient_concentration(sph, C_PASTE, C_PASTE)
+B_ex = flux_gradient_concentration(sph, C_PASTE, C_PASTE)
 
 println("\n  tensor   part    finite elements       exact        Δ")
 for (nm, num, ex) in (("A", A_fe, A_ex), ("B", B_fe, B_ex))
@@ -133,10 +133,10 @@ end
 # ## §4 Moving the core off center
 #
 # The response loses its isotropy and becomes transversely isotropic about the
-# eccentricity axis. `A₁₁` is the transverse localization, `A₃₃` the axial one.
+# eccentricity axis. `A₁₁` is the transverse concentration, `A₃₃` the axial one.
 # With this mortar (`E = 8 GPa`, only 2.5 times softer than the paste) the
 # induced anisotropy stays under a hundredth of a percent; the effect on the
-# *level* of localization, and hence on the effective moduli in §5, is an order
+# *level* of concentration, and hence on the effective moduli in §5, is an order
 # of magnitude larger.
 
 println("\n     α       A₁₁        A₃₃      A₃₃/A₁₁ − 1")
@@ -145,7 +145,7 @@ for α in (0.0, 0.2, 0.4, 0.6, 0.8)
         1.0, (C_AGG, C_MORTAR); core_fraction = W, eccentricity = α,
         nradial = 20, radius_ratio = 4.0
     )
-    M = mand(fe_axi_localization(incl, C_PASTE)[1])
+    M = mand(fe_axi_concentration(incl, C_PASTE)[1])
     @printf(
         "  %5.2f  %9.5f  %9.5f   %+8.4f %%\n",
         α, M[1, 1], M[3, 3], 100 * (M[3, 3] / M[1, 1] - 1)
@@ -155,7 +155,7 @@ end
 # ## §5 In a scheme
 #
 # The inclusion is heterogeneous, so it enters the schemes through *both*
-# localization tensors, and every scheme that consumes them works. The
+# concentration tensors, and every scheme that consumes them works. The
 # concentric case must reproduce the composite sphere; the eccentric one is
 # what the exercise is for.
 
@@ -198,14 +198,14 @@ for α in (0.0, 0.4, 0.8)
         1.0, (K_AGG, K_MORTAR); core_fraction = W, eccentricity = α,
         nradial = 24, radius_ratio = 4.0
     )
-    A, B = fe_axi_localization(incl, K_PASTE)
+    A, B = fe_axi_concentration(incl, K_PASTE)
     Am, Bm = TensND.components_canon(A), TensND.components_canon(B)
     @printf("  %5.2f   %14.5f   %10.5f\n", α, Bm[1, 1] / Am[1, 1], Bm[3, 3] / Am[3, 3])
 end
 
 sphk = LayeredSphere((cbrt(W), 1.0), (K_AGG, K_MORTAR))
-ak = TensND.components_canon(gradient_gradient_loc(sphk, K_PASTE, K_PASTE))[1, 1]
-bk = TensND.components_canon(flux_gradient_loc(sphk, K_PASTE, K_PASTE))[1, 1]
+ak = TensND.components_canon(gradient_gradient_concentration(sphk, K_PASTE, K_PASTE))[1, 1]
+bk = TensND.components_canon(flux_gradient_concentration(sphk, K_PASTE, K_PASTE))[1, 1]
 @printf("  exact (α = 0)  %14.5f\n", bk / ak)
 
 # ## §7 Memoization
@@ -218,9 +218,9 @@ incl = FEExcenteredSphere(
     1.0, (C_AGG, C_MORTAR); core_fraction = W, eccentricity = 0.4, nradial = 20
 )
 fe_axi_mesh_report(incl)                       # build the mesh out of the timing
-t1 = @elapsed strain_strain_loc(incl, C_PASTE, C_PASTE)
-t2 = @elapsed stress_strain_loc(incl, C_PASTE, C_PASTE)
-t3 = @elapsed strain_strain_loc(incl, C_PASTE, ce(21.0, 0.2))
+t1 = @elapsed gradient_gradient_concentration(incl, C_PASTE, C_PASTE)
+t2 = @elapsed flux_gradient_concentration(incl, C_PASTE, C_PASTE)
+t3 = @elapsed gradient_gradient_concentration(incl, C_PASTE, ce(21.0, 0.2))
 @printf(
     "\n  first solve %.2f s | same solve, stress side %.1e s | new medium %.2f s | assemblies %d\n",
     t1, t2, t3, fe_assembly_count(incl)

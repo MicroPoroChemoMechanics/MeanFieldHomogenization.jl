@@ -9,10 +9,10 @@ contract is enough to reach every scheme.
 | Type | Morphology | Discretization | Entry gate |
 |---|---|---|---|
 | [`FEEllipticCrack`](@ref) | flat elliptical crack | 3-D tetrahedra | COD tensor → crack algebra |
-| [`FEExcenteredSphere`](@ref) | sphere with an off-center spherical core | axisymmetric Fourier | B — the two localization tensors |
+| [`FEExcenteredSphere`](@ref) | sphere with an off-center spherical core | axisymmetric Fourier | B — the two concentration tensors |
 | [`FESupershapePore`](@ref) | superspherical cavity, cube-symmetric | 3-D tetrahedra, whole cell or one octant | B — the strain side alone, the stress side being zero |
 | [`FEAxiSupershapePore`](@ref) | superspheroidal cavity, a solid of revolution | axisymmetric Fourier | B — the strain side alone |
-| [`FEAxiLayeredSpheroid`](@ref) | `N` nested coaxial spheroids, free semi-axes | axisymmetric Fourier | B — both localization tensors |
+| [`FEAxiLayeredSpheroid`](@ref) | `N` nested coaxial spheroids, free semi-axes | axisymmetric Fourier | B — both concentration tensors |
 
 Both use the *finite Eshelby cell with a first-order corrected boundary
 condition* of Adessina, Barthélémy, Lavergne & Ben Fraj, *Int. J. Eng. Sci.*
@@ -63,12 +63,12 @@ export FECellMeshOptions, fe_cell_size_estimate
 export FESupershapePore, SupershapePoreShape, has_surrogate, pore_shape_params
 export check_nested_spheroids, axi_layer_set
 export FEAxiLayeredSpheroid, LayeredSpheroidShape, layer_volumes, layer_fractions
-export fe_cell_localization, fe_cell_mesh_report
+export fe_cell_concentration, fe_cell_mesh_report
 export fe_cell_curved_volume, fe_cell_meshed_volume
-export fe_axi_breakdown, fe_axi_mesh_report, fe_axi_localization
+export fe_axi_breakdown, fe_axi_mesh_report, fe_axi_concentration
 export fe_axi_pore_boundary
 export FEAxiSupershapePore, AxiSupershapePoreShape
-export fe_axi_pore_localization, fe_axi_pore_breakdown, fe_axi_pore_mesh_report
+export fe_axi_pore_concentration, fe_axi_pore_breakdown, fe_axi_pore_mesh_report
 
 include("common.jl")
 include("backends.jl")

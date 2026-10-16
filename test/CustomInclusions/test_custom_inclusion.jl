@@ -2,7 +2,7 @@
 #  test_custom_inclusion.jl — the user-defined-inclusion contract.
 #
 #  Coverage:
-#   1. The three entry gates (Hill / localization / contribution) plug a
+#   1. The three entry gates (Hill / concentration / contribution) plug a
 #      `CustomInclusion` into every scheme and are indistinguishable from the
 #      native `Ellipsoid`, in elasticity and in conduction.
 #   2. A flat custom inclusion registered with `density = ε` reproduces
@@ -55,21 +55,15 @@ end
     gate_B = CustomInclusion(
         (3.0, 1.0, 1.0);
         basis = MeanFieldHomogenization.inclusion_basis(ell),
-        strain_strain_loc = (P₁, P₀; kw...) -> strain_strain_loc(ell, P₁, P₀; kw...),
-        gradient_gradient_loc = (P₁, P₀; kw...) ->
-        gradient_gradient_loc(ell, P₁, P₀; kw...),
+        gradient_gradient_concentration = (P₁, P₀; kw...) -> gradient_gradient_concentration(ell, P₁, P₀; kw...),
     )
     gate_C = CustomInclusion(
         (3.0, 1.0, 1.0);
         basis = MeanFieldHomogenization.inclusion_basis(ell),
-        stiffness_contribution = (P₁, P₀; kw...) ->
-        stiffness_contribution(ell, P₁, P₀; kw...),
-        compliance_contribution = (P₁, P₀; kw...) ->
-        compliance_contribution(ell, P₁, P₀; kw...),
-        conductivity_contribution = (P₁, P₀; kw...) ->
-        conductivity_contribution(ell, P₁, P₀; kw...),
-        resistivity_contribution = (P₁, P₀; kw...) ->
-        resistivity_contribution(ell, P₁, P₀; kw...),
+        property_contribution = (P₁, P₀; kw...) ->
+        property_contribution(ell, P₁, P₀; kw...),
+        inverse_property_contribution = (P₁, P₀; kw...) ->
+        inverse_property_contribution(ell, P₁, P₀; kw...),
     )
 
     # Gate C supplies only the contribution tensors.  That is enough for every
@@ -119,18 +113,12 @@ end
         @test_throws ArgumentError homogenize(rve, MoriTanaka(), :C)
     end
 
-    @testset "gate A also yields the derived localization tensors" begin
+    @testset "gate A also yields the derived concentration tensors" begin
         for f in (
-                strain_strain_loc, stress_strain_loc,
-                strain_stress_loc, stress_stress_loc,
-            )
-            @test get_array(f(gate_A, CI_C_I, CI_C_M)) ≈ get_array(f(ell, CI_C_I, CI_C_M))
-        end
-        for f in (
-                gradient_gradient_loc, flux_gradient_loc,
-                gradient_flux_loc, flux_flux_loc,
-            )
-            @test get_array(f(gate_A, CI_K_I, CI_K_M)) ≈ get_array(f(ell, CI_K_I, CI_K_M))
+                    gradient_gradient_concentration, flux_gradient_concentration,
+                    gradient_flux_concentration, flux_flux_concentration,
+                ), (P₁, P₀) in ((CI_C_I, CI_C_M), (CI_K_I, CI_K_M))
+            @test get_array(f(gate_A, P₁, P₀)) ≈ get_array(f(ell, P₁, P₀))
         end
     end
 end
@@ -143,10 +131,8 @@ end
         (a, b, 0.0);
         basis = MeanFieldHomogenization.inclusion_basis(crack),
         density_factor = 4π / 3,
-        compliance_contribution = (P₀; kw...) -> compliance_contribution(crack, P₀; kw...),
-        stiffness_contribution = (P₀; kw...) -> stiffness_contribution(crack, P₀; kw...),
-        conductivity_contribution = (P₀; kw...) ->
-        conductivity_contribution(crack, P₀; kw...),
+        inverse_property_contribution = (P₀; kw...) -> inverse_property_contribution(crack, P₀; kw...),
+        property_contribution = (P₀; kw...) -> property_contribution(crack, P₀; kw...),
     )
 
     @testset "elasticity" begin
@@ -168,22 +154,22 @@ end
     end
 
     @testset "the prefactor really is the seam" begin
-        H = compliance_contribution(flat, CI_C_M)
-        @test get_array(delta_compliance(flat, H, ε)) ≈
-            get_array(delta_compliance(crack, H, ε))
+        H = inverse_property_contribution(flat, CI_C_M)
+        @test get_array(delta_inverse_property(flat, H, ε)) ≈
+            get_array(delta_inverse_property(crack, H, ε))
         # A wrong prefactor must show up as a different effective compliance.
         wrong = CustomInclusion(
             (a, b, 0.0);
             basis = MeanFieldHomogenization.inclusion_basis(crack),
             density_factor = 1.0,
-            compliance_contribution = (P₀; kw...) ->
-            compliance_contribution(crack, P₀; kw...),
-            stiffness_contribution = (P₀; kw...) ->
-            stiffness_contribution(crack, P₀; kw...),
+            inverse_property_contribution = (P₀; kw...) ->
+            inverse_property_contribution(crack, P₀; kw...),
+            property_contribution = (P₀; kw...) ->
+            property_contribution(crack, P₀; kw...),
         )
         @test !isapprox(
-            get_array(delta_compliance(wrong, H, ε)),
-            get_array(delta_compliance(crack, H, ε))
+            get_array(delta_inverse_property(wrong, H, ε)),
+            get_array(delta_inverse_property(crack, H, ε))
         )
     end
 
@@ -191,10 +177,10 @@ end
         nofactor = CustomInclusion(
             (a, b, 0.0);
             basis = MeanFieldHomogenization.inclusion_basis(crack),
-            compliance_contribution = (P₀; kw...) ->
-            compliance_contribution(crack, P₀; kw...),
-            stiffness_contribution = (P₀; kw...) ->
-            stiffness_contribution(crack, P₀; kw...),
+            inverse_property_contribution = (P₀; kw...) ->
+            inverse_property_contribution(crack, P₀; kw...),
+            property_contribution = (P₀; kw...) ->
+            property_contribution(crack, P₀; kw...),
         )
         rve = _ci_rve_with(nofactor, CI_C_M, CI_C_M, :C; density = ε)
         @test_throws ArgumentError homogenize(rve, Dilute(), :C)
@@ -233,20 +219,20 @@ MeanFieldHomogenization.Cracks.cod_tensor(
     mine = DelegatingCrack(a, b, basis)
     ref = EllipticCrack(a, b, basis)
 
-    @test get_array(compliance_contribution(mine, CI_C_M)) ≈
-        get_array(compliance_contribution(ref, CI_C_M))
-    @test get_array(stiffness_contribution(mine, CI_C_M)) ≈
-        get_array(stiffness_contribution(ref, CI_C_M))
-    @test get_array(compliance_contribution(mine, CI_K_M)) ≈
-        get_array(compliance_contribution(ref, CI_K_M))
-    @test get_array(conductivity_contribution(mine, CI_K_M)) ≈
-        get_array(conductivity_contribution(ref, CI_K_M))
+    @test get_array(inverse_property_contribution(mine, CI_C_M)) ≈
+        get_array(inverse_property_contribution(ref, CI_C_M))
+    @test get_array(property_contribution(mine, CI_C_M)) ≈
+        get_array(property_contribution(ref, CI_C_M))
+    @test get_array(inverse_property_contribution(mine, CI_K_M)) ≈
+        get_array(inverse_property_contribution(ref, CI_K_M))
+    @test get_array(property_contribution(mine, CI_K_M)) ≈
+        get_array(property_contribution(ref, CI_K_M))
     @test MeanFieldHomogenization.Cracks.crack_density_factor(mine) ≈ 4π / 3
 
-    H = compliance_contribution(mine, CI_C_M)
-    N = stiffness_contribution(mine, CI_C_M)
-    @test get_array(delta_compliance(mine, H, ε)) ≈ get_array(delta_compliance(ref, H, ε))
-    @test get_array(delta_stiffness(mine, N, ε)) ≈ get_array(delta_stiffness(ref, N, ε))
+    H = inverse_property_contribution(mine, CI_C_M)
+    N = property_contribution(mine, CI_C_M)
+    @test get_array(delta_inverse_property(mine, H, ε)) ≈ get_array(delta_inverse_property(ref, H, ε))
+    @test get_array(delta_property(mine, N, ε)) ≈ get_array(delta_property(ref, N, ε))
 
     for scheme in (Dilute(), DiluteDual(), MoriTanaka(), SelfConsistent())
         got = homogenize(_ci_rve_with(mine, CI_C_M, CI_C_M, :C; density = ε), scheme, :C)
@@ -302,9 +288,9 @@ MeanFieldHomogenization.Elasticity._kernel(
     @test check_inclusion_interface(blob; verbose = false)
 end
 
-@testset "heterogeneous inclusion needs BOTH localizations" begin
+@testset "heterogeneous inclusion needs BOTH concentrations" begin
     # A heterogeneous inclusion has no single `C₁`, so the generic identity
-    # `A_σε = C₁ : A_εε` does not hold: the stress-side localization must be
+    # `A_σε = C₁ : A_εε` does not hold: the stress-side concentration must be
     # supplied too.  `LayeredSphere` is the reference heterogeneous inclusion.
     sphere = LayeredSphere((0.5, 1.0), (TensISO{3}(60.0, 20.0), TensISO{3}(90.0, 30.0)))
     C_i = TensISO{3}(60.0, 20.0)
@@ -312,21 +298,21 @@ end
     # Complete: both sides of the pair.
     het = CustomInclusion(;
         homogeneous = false,
-        strain_strain_loc = (P₁, P₀; kw...) -> strain_strain_loc(sphere, P₁, P₀; kw...),
-        stress_strain_loc = (P₁, P₀; kw...) -> stress_strain_loc(sphere, P₁, P₀; kw...),
-        stiffness_contribution = (P₁, P₀; kw...) ->
-        stiffness_contribution(sphere, P₁, P₀; kw...),
-        compliance_contribution = (P₁, P₀; kw...) ->
-        compliance_contribution(sphere, P₁, P₀; kw...),
+        gradient_gradient_concentration = (P₁, P₀; kw...) -> gradient_gradient_concentration(sphere, P₁, P₀; kw...),
+        flux_gradient_concentration = (P₁, P₀; kw...) -> flux_gradient_concentration(sphere, P₁, P₀; kw...),
+        property_contribution = (P₁, P₀; kw...) ->
+        property_contribution(sphere, P₁, P₀; kw...),
+        inverse_property_contribution = (P₁, P₀; kw...) ->
+        inverse_property_contribution(sphere, P₁, P₀; kw...),
     )
     # Incomplete: strain side only, as one is tempted to write.
     partial = CustomInclusion(;
         homogeneous = false,
-        strain_strain_loc = (P₁, P₀; kw...) -> strain_strain_loc(sphere, P₁, P₀; kw...),
-        stiffness_contribution = (P₁, P₀; kw...) ->
-        stiffness_contribution(sphere, P₁, P₀; kw...),
-        compliance_contribution = (P₁, P₀; kw...) ->
-        compliance_contribution(sphere, P₁, P₀; kw...),
+        gradient_gradient_concentration = (P₁, P₀; kw...) -> gradient_gradient_concentration(sphere, P₁, P₀; kw...),
+        property_contribution = (P₁, P₀; kw...) ->
+        property_contribution(sphere, P₁, P₀; kw...),
+        inverse_property_contribution = (P₁, P₀; kw...) ->
+        inverse_property_contribution(sphere, P₁, P₀; kw...),
     )
 
     @test !MeanFieldHomogenization.is_homogeneous_inclusion(het)
@@ -351,7 +337,7 @@ end
         get_array(homogenize(ref, SelfConsistent(), :C)) rtol = 1.0e-10
     # And the partial one is now **refused** rather than answered wrongly. It
     # used to come back off by several percent, which this test recorded; the
-    # generic `stress_strain_loc` no longer applies `ℂ₁ : 𝔸_εε` to an inclusion
+    # generic `flux_gradient_concentration` no longer applies `ℂ₁ : 𝔸_εε` to an inclusion
     # that declares itself heterogeneous, because that formula needs a single
     # uniform stiffness. Refusing is what the contract's docstring always said
     # should happen, and a few percent is exactly the size of error that passes
@@ -368,7 +354,7 @@ end
     end
 
     # `AsymmetricSelfConsistent`, on the other hand, must *not* inherit that
-    # restriction: its iteration consumes the same two localization tensors as
+    # restriction: its iteration consumes the same two concentration tensors as
     # `SelfConsistent`, and only its branch-selection heuristic ever looked at a
     # bound.  With none available it falls back to the dilute estimate and runs,
     # reaching the same fixed point as `SelfConsistent`.
@@ -377,20 +363,20 @@ end
         get_array(homogenize(ref, AsymmetricSelfConsistent(), :C)) rtol = 1.0e-8
     @test get_array(asc) ≈ get_array(homogenize(ok, SelfConsistent(), :C)) rtol = 1.0e-6
 
-    # The root cause, isolated: the two stress-side localizations disagree.
+    # The root cause, isolated: the two stress-side concentrations disagree.
     @test !isapprox(
-        get_array(stress_strain_loc(sphere, C_i, CI_C_M)),
-        get_array(C_i ⊡ strain_strain_loc(sphere, C_i, CI_C_M)); rtol = 1.0e-3
+        get_array(flux_gradient_concentration(sphere, C_i, CI_C_M)),
+        get_array(C_i ⊡ gradient_gradient_concentration(sphere, C_i, CI_C_M)); rtol = 1.0e-3
     )
 
     # The checker is what protects the user from that silent gap.
     @test check_inclusion_interface(het; verbose = false)
     @test !check_inclusion_interface(partial; verbose = false)
 
-    # A heterogeneous inclusion also needs the stress side for `stress_stress_loc`
-    # to be right — it is derived from `stress_strain_loc`, not from `A_εε`.
-    @test get_array(stress_stress_loc(het, C_i, CI_C_M)) ≈
-        get_array(stress_strain_loc(sphere, C_i, CI_C_M) ⊡ inv(CI_C_M))
+    # A heterogeneous inclusion also needs the stress side for `flux_flux_concentration`
+    # to be right — it is derived from `flux_gradient_concentration`, not from `A_εε`.
+    @test get_array(flux_flux_concentration(het, C_i, CI_C_M)) ≈
+        get_array(flux_gradient_concentration(sphere, C_i, CI_C_M) ⊡ inv(CI_C_M))
 end
 
 @testset "shape_tensor is optional" begin
@@ -486,18 +472,24 @@ end
     # Gate C without a density factor is incomplete for a density amount.
     gate_C = CustomInclusion(
         (1.0, 1.0, 1.0);
-        stiffness_contribution = (P₁, P₀; kw...) ->
-        stiffness_contribution(ell, P₁, P₀; kw...),
-        compliance_contribution = (P₁, P₀; kw...) ->
-        compliance_contribution(ell, P₁, P₀; kw...),
+        property_contribution = (P₁, P₀; kw...) ->
+        property_contribution(ell, P₁, P₀; kw...),
+        inverse_property_contribution = (P₁, P₀; kw...) ->
+        inverse_property_contribution(ell, P₁, P₀; kw...),
     )
     @test check_inclusion_interface(gate_C; verbose = false)
     @test !check_inclusion_interface(gate_C; amount = :density, verbose = false)
 
-    # An elasticity-only custom inclusion is not usable in conduction.
+    # A callback serves both physics unless its arguments are typed on one order.
+    both = CustomInclusion(
+        (1.0, 1.0, 1.0);
+        gradient_gradient_concentration = (P₁, P₀; kw...) -> gradient_gradient_concentration(ell, P₁, P₀; kw...),
+    )
+    @test check_inclusion_interface(both; physics = :conduction, verbose = false)
     elas_only = CustomInclusion(
         (1.0, 1.0, 1.0);
-        strain_strain_loc = (P₁, P₀; kw...) -> strain_strain_loc(ell, P₁, P₀; kw...),
+        gradient_gradient_concentration = (P₁::TensND.AbstractTens{4}, P₀::TensND.AbstractTens{4}; kw...) ->
+        gradient_gradient_concentration(ell, P₁, P₀; kw...),
     )
     @test check_inclusion_interface(elas_only; verbose = false)
     @test !check_inclusion_interface(elas_only; physics = :conduction, verbose = false)
@@ -517,7 +509,7 @@ end
     only_A = CustomInclusion(
         (1.0, 1.0, 1.0); hill_tensor = (P₀; kw...) -> hill_tensor(ell, P₀; kw...)
     )
-    @test_throws ArgumentError compliance_contribution(only_A, CI_C_M)
+    @test_throws ArgumentError inverse_property_contribution(only_A, CI_C_M)
 
     # Level-0 interface.
     @test MeanFieldHomogenization.dimension(only_A) == 3

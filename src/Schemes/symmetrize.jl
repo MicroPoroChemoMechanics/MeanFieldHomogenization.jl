@@ -48,13 +48,13 @@ _apply_symmetrize(t::TensND.AbstractTens{2, 3}, sym::TISymmetrize) =
     MFH_Core.transverse_isotropify(t, sym.axis)
 
 # =============================================================================
-#  Reference-medium projection for the localization-tensor computation.
+#  Reference-medium projection for the concentration-tensor computation.
 # =============================================================================
 
 """
     _project_matrix(P₀::AbstractTens, sym::AbstractSymmetrize) -> AbstractTens
 
-Project the reference medium `P₀` before computing the localization tensor
+Project the reference medium `P₀` before computing the concentration tensor
 of a phase declaring the orientation distribution `sym`.
 
 - `NoSymmetrize` : passthrough.

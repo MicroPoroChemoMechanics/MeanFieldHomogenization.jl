@@ -133,7 +133,7 @@ is built from two surface loops with the outer one first — the inclusion is a
 hole.
 
 `cavity_volume` is the volume of the body the solve **actually sees**, measured
-on the curved boundary once it has been snapped. Normalizing a localization
+on the curved boundary once it has been snapped. Normalizing a concentration
 tensor by the *exact* volume while solving on the meshed one would fold a
 geometry error into the answer with nothing to reveal it; reporting both is what
 makes that error visible instead.

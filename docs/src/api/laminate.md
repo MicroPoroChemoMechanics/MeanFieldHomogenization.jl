@@ -32,24 +32,31 @@ MeanFieldHomogenization.Laminates.AnisotropicSurfaceConductiveInterface
 
 ```@docs
 MeanFieldHomogenization.Laminates.laminate_hill
-MeanFieldHomogenization.Laminates.layer_strain_localization
-MeanFieldHomogenization.Laminates.layer_stress_localization
-MeanFieldHomogenization.Laminates.layer_gradient_localization
-MeanFieldHomogenization.Laminates.layer_flux_localization
+MeanFieldHomogenization.Laminates.layer_gradient_concentration
+MeanFieldHomogenization.Laminates.layer_flux_concentration
 MeanFieldHomogenization.Laminates.interface_jump
 ```
 
-A layer also answers the package-wide localization generics —
-[`strain_strain_loc`](@ref MeanFieldHomogenization.strain_strain_loc),
-[`stress_strain_loc`](@ref MeanFieldHomogenization.stress_strain_loc),
-[`strain_stress_loc`](@ref MeanFieldHomogenization.strain_stress_loc),
-[`stress_stress_loc`](@ref MeanFieldHomogenization.stress_stress_loc) and their
-four transport twins — called as `strain_strain_loc(lam, :LAYER)`. Since a
-laminate has neither a matrix nor a reference medium, the layer *name* takes
-the place of the `(ℂ₁, ℂ₀)` pair of the inclusion signature. Two of the eight
-(`𝔸^{σε}` and `𝔸^{εσ}`) exist only under those names; the other six are
-synonyms of the `layer_*` functions above. See
-[API — Localization & contribution](@ref api-localization).
+`layer_gradient_concentration` and `layer_flux_concentration` serve elasticity
+(`property = :C`, the default) and conduction (`property = :K`). Their names in
+elasticity accept a fourth-order layer property only:
+
+```@docs
+MeanFieldHomogenization.Laminates.layer_strain_concentration
+MeanFieldHomogenization.Laminates.layer_stress_concentration
+```
+
+A layer also answers the package-wide concentration generics —
+[`gradient_gradient_concentration`](@ref MeanFieldHomogenization.gradient_gradient_concentration),
+[`flux_gradient_concentration`](@ref MeanFieldHomogenization.flux_gradient_concentration),
+[`gradient_flux_concentration`](@ref MeanFieldHomogenization.gradient_flux_concentration) and
+[`flux_flux_concentration`](@ref MeanFieldHomogenization.flux_flux_concentration) — called as
+`gradient_gradient_concentration(lam, :LAYER; property = :C)`. Since a laminate
+has neither a matrix nor a reference medium, the layer *name* takes the place
+of the property pair of the inclusion signature. Two of the four (the
+flux-gradient and the gradient-flux tensors) exist only under those names; the
+other two are synonyms of the `layer_*` functions above. See
+[API — Concentration & contribution](@ref api-concentration).
 
 ## Parameter lenses
 
@@ -82,14 +89,21 @@ MeanFieldHomogenization.Core.acoustic_tensor
 MeanFieldHomogenization.Core.compliance_op_block
 MeanFieldHomogenization.Core.laminate_stiffness
 MeanFieldHomogenization.Core.laminate_conductivity
-MeanFieldHomogenization.Core.laminate_strain_localization
-MeanFieldHomogenization.Core.laminate_stress_localization
-MeanFieldHomogenization.Core.laminate_stress_strain_localization
-MeanFieldHomogenization.Core.laminate_strain_stress_localization
-MeanFieldHomogenization.Core.laminate_gradient_localization
-MeanFieldHomogenization.Core.laminate_flux_localization
-MeanFieldHomogenization.Core.laminate_flux_gradient_localization
-MeanFieldHomogenization.Core.laminate_gradient_flux_localization
+MeanFieldHomogenization.Core.laminate_gradient_concentration
+MeanFieldHomogenization.Core.laminate_flux_concentration
+MeanFieldHomogenization.Core.laminate_flux_gradient_concentration
+MeanFieldHomogenization.Core.laminate_gradient_flux_concentration
+```
+
+The four kernels serve the ``6\times 6`` Kelvin–Mandel blocks of elasticity and
+the ``3\times 3`` blocks of conduction. Their names in elasticity accept the
+former only:
+
+```@docs
+MeanFieldHomogenization.Core.laminate_strain_concentration
+MeanFieldHomogenization.Core.laminate_stress_concentration
+MeanFieldHomogenization.Core.laminate_stress_strain_concentration
+MeanFieldHomogenization.Core.laminate_strain_stress_concentration
 ```
 
 ## The cell contract and declarative nesting

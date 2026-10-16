@@ -644,14 +644,14 @@ unit = "m<sup>−3</sup>"
 pages = ["fe_coupling/permeability.md", "theory/differential_scheme.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{P}'
 label = "ℙ"
 name = "Hill polarization tensor"
 unit = "Pa<sup>−1</sup>"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{P}'
 label = "ℙ"
 name = "Hill polarization kernel"
@@ -659,49 +659,49 @@ unit = "Pa<sup>−1</sup>"
 pages = ["theory/viscoelasticity.md", "theory/laplace_carson.md", "manual/viscoelasticity.md", "manual/rheological_models.md", "manual/laplace_inversion.md", "tutorials/viscoelasticity.md", "tutorials/symbolic_viscoelasticity.md", "tutorials/generated/freq_vs_time.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/alv_schemes.md", "tutorials/generated/alv_sensitivities.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/laminate_alv.md", "applications/aging_creep.md", "applications/bituminous.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{P}_0'
 label = "ℙ<sub>0</sub>"
 name = "Hill tensor in the reference medium"
 unit = "Pa<sup>−1</sup>"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{P}_i'
 label = "ℙ<sub>i</sub>"
 name = "Hill tensor of the shape of phase i"
 unit = "Pa<sup>−1</sup>"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{P}_\Omega'
 label = "ℙ<sub>Ω</sub>"
 name = "Hill tensor of the Maxwell domain Ω, the distribution shape"
 unit = "Pa<sup>−1</sup>"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{Q}_\Omega'
 label = "ℚ<sub>Ω</sub>"
 name = "second Hill tensor of the Maxwell domain Ω"
 unit = "Pa"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{N}_\Omega'
 label = "ℕ<sub>Ω</sub>"
 name = "stiffness contribution of the domain Ω filled with the effective medium"
 unit = "Pa"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{P}_d'
 label = "ℙ<sub>d</sub>"
 name = "Hill tensor of the distribution ellipsoid of Ponte Castañeda and Willis"
 unit = "Pa<sup>−1</sup>"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{P}_d^{ij}'
 label = "ℙ<sub>d</sub><sup>ij</sup>"
 name = "Hill tensor of the distribution ellipsoid of phase j around phase i"
@@ -725,7 +725,7 @@ unit = ""
 pages = ["theory/scheme_maxwell.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\bar{\boldsymbol\tau}'
 label = "<b>τ̄</b>"
 name = "mean polarization of the inclusions, Σ f<sub>j</sub> <b>τ</b><sub>j</sub>"
@@ -733,7 +733,7 @@ unit = "Pa"
 pages = ["theory/scheme_pcw.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{Y}^{ij}'
 label = "𝕐<sup>ij</sup>"
 name = "microstructural tensor of the Hashin–Shtrikman functional for phases i and j"
@@ -741,7 +741,7 @@ unit = "Pa<sup>−1</sup>"
 pages = ["theory/scheme_pcw.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathcal{H}'
 label = "ℋ"
 name = "Hashin–Shtrikman functional of the polarization"
@@ -749,7 +749,7 @@ unit = "J/m<sup>3</sup>"
 pages = ["theory/scheme_pcw.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = 'w'
 label = "w"
 name = "strain energy density"
@@ -757,7 +757,7 @@ unit = "J/m<sup>3</sup>"
 pages = ["theory/scheme_pcw.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = 'w_0'
 label = "w<sub>0</sub>"
 name = "strain energy density of the comparison medium"
@@ -765,7 +765,7 @@ unit = "J/m<sup>3</sup>"
 pages = ["theory/scheme_pcw.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = 'W^{\mathrm{hom}}'
 label = "W<sup>hom</sup>"
 name = "effective strain energy density"
@@ -805,7 +805,7 @@ unit = "1"
 pages = ["theory/scheme_pcw.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbf{K}'
 label = "<b>K</b>"
 name = "block matrix of the Ponte Castañeda–Willis system"
@@ -813,7 +813,7 @@ unit = "Pa<sup>−1</sup>"
 pages = ["theory/scheme_pcw.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{E}_i'
 label = "𝔼<sub>i</sub>"
 name = "tensor mapping the macroscopic strain onto the field applied to phase i"
@@ -821,7 +821,7 @@ unit = "1"
 pages = ["theory/scheme_pcw.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\boldsymbol{t}_i'
 label = "<b>t</b><sub>i</sub>"
 name = "polarization of phase i weighted by its fraction, f<sub>i</sub> <b>τ</b><sub>i</sub>"
@@ -834,80 +834,80 @@ tex = '\kappa_c'
 label = "κ<sub>c</sub>"
 name = "geometric prefactor of a crack family, 4π/3 (elliptic) or π (ribbon)"
 unit = "1"
-pages = ["theory/homogenization.md", "theory/scheme_dilute.md", "theory/scheme_mori_tanaka.md", "theory/scheme_maxwell.md", "theory/scheme_pcw.md", "theory/scheme_self_consistent.md"]
+pages = ["theory/homogenization.md", "theory/scheme_dilute.md", "theory/scheme_mori_tanaka.md", "theory/scheme_maxwell.md", "theory/scheme_pcw.md", "theory/scheme_self_consistent.md", "theory/differential_scheme.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{Q}'
 label = "ℚ"
 name = "second Hill tensor, ℂ − ℂ:ℙ:ℂ"
 unit = "Pa"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{S}^{\mathrm{E}}'
 label = "𝕊<sup>E</sup>"
 name = "Eshelby tensor, ℙ:ℂ"
 unit = "1"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{A}'
 label = "𝔸"
 name = "strain concentration tensor"
 unit = "1"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{A}^{\mathrm{dil}}'
 label = "𝔸<sup>dil</sup>"
 name = "dilute strain concentration tensor"
 unit = "1"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{A}_i^{\mathrm{dil}}'
 label = "𝔸<sub>i</sub><sup>dil</sup>"
 name = "dilute strain concentration tensor of phase i"
 unit = "1"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{A}_{\varepsilon\varepsilon}'
 label = "𝔸<sub>εε</sub>"
 name = "strain-to-strain concentration tensor"
 unit = "1"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{A}_{\sigma\varepsilon}'
 label = "𝔸<sub>σε</sub>"
 name = "stress-to-strain concentration tensor"
 unit = "Pa"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{A}_{\varepsilon\sigma}'
 label = "𝔸<sub>εσ</sub>"
 name = "strain-to-stress concentration tensor"
 unit = "Pa<sup>−1</sup>"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{A}_{\sigma\sigma}'
 label = "𝔸<sub>σσ</sub>"
 name = "stress-to-stress concentration tensor"
 unit = "1"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{B}'
 label = "𝔹"
 name = "stress concentration tensor"
 unit = "1"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{B}'
 label = "𝔹"
 name = "average stress of the truncated cell per unit load"
@@ -915,77 +915,77 @@ unit = "Pa"
 pages = ["theory/corrected_cell.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{N}'
 label = "ℕ"
 name = "stiffness contribution tensor"
 unit = "Pa"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{N}_i'
 label = "ℕ<sub>i</sub>"
 name = "stiffness contribution tensor of phase i"
 unit = "Pa"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{N}_\Sigma'
 label = "ℕ<sub>Σ</sub>"
 name = "total dilute stiffness contribution, Σ f<sub>i</sub> ℕ<sub>i</sub>"
 unit = "Pa"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{H}_\Sigma'
 label = "ℍ<sub>Σ</sub>"
 name = "total dilute compliance contribution, Σ f<sub>i</sub> ℍ<sub>i</sub>"
 unit = "Pa<sup>−1</sup>"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{H}'
 label = "ℍ"
 name = "compliance contribution tensor"
 unit = "Pa<sup>−1</sup>"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{H}_i'
 label = "ℍ<sub>i</sub>"
 name = "compliance contribution tensor of phase i"
 unit = "Pa<sup>−1</sup>"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{G}^0'
 label = "𝔾<sup>0</sup>"
 name = "Green operator of the reference medium"
 unit = "Pa<sup>−1</sup>"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\hat{\mathbb{G}}^0'
 label = "𝔾̂<sup>0</sup>"
 name = "Fourier symbol of the Green operator"
 unit = "Pa<sup>−1</sup>"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\boldsymbol{G}'
 label = "<b>G</b>"
 name = "Green tensor of the reference medium"
 unit = ""
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\boldsymbol{I}^{\boldsymbol{A}}'
 label = "<b>I</b><sup><b>A</b></sup>"
 name = "Newton-potential tensor of the ellipsoid"
 unit = "1"
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{X}'
 label = "𝕏"
 name = "closure operator of the corrected fixed point"
@@ -993,7 +993,7 @@ unit = "1"
 pages = ["theory/corrected_cell.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{L}'
 label = "𝕃"
 name = "creep kernel 𝕃(t, t′)"
@@ -1195,7 +1195,7 @@ tex = '\boldsymbol{B}'
 label = "<b>B</b>"
 name = "Biot tensor"
 unit = "1"
-pages = ["manual/poromechanics.md", "fe_coupling/materials.md", "fe_coupling/fractured_rock.md", "fe_coupling/poroelastic_coupling.md", "fe_coupling/scale_transition.md", "fe_coupling/arma2011.md", "fe_coupling/thick_cylinder.md", "fe_coupling/backends.md", "fe_coupling/index.md"]
+pages = ["manual/poromechanics.md", "theory/levin.md", "tutorials/levin.md", "fe_coupling/materials.md", "fe_coupling/fractured_rock.md", "fe_coupling/poroelastic_coupling.md", "fe_coupling/scale_transition.md", "fe_coupling/arma2011.md", "fe_coupling/thick_cylinder.md", "fe_coupling/backends.md", "fe_coupling/index.md"]
 
 [[symbol]]
 group = "Cracks"
@@ -1344,7 +1344,7 @@ pages = ["theory/layered_sphere.md", "manual/layered_inclusions.md", "tutorials/
 group = "Interfaces and layered inclusions"
 tex = '\alpha_i'
 label = "α<sub>k</sub>"
-name = "bulk localization factor of layer k"
+name = "bulk concentration factor of layer k"
 unit = "1"
 pages = ["theory/layered_sphere.md", "manual/layered_inclusions.md", "tutorials/generated/layered_sphere.md", "tutorials/generated/layered_sphere_local_fields.md"]
 
@@ -1352,7 +1352,7 @@ pages = ["theory/layered_sphere.md", "manual/layered_inclusions.md", "tutorials/
 group = "Interfaces and layered inclusions"
 tex = '\beta_i'
 label = "β<sub>k</sub>"
-name = "shear localization factor of layer k"
+name = "shear concentration factor of layer k"
 unit = "1"
 pages = ["theory/layered_sphere.md", "manual/layered_inclusions.md", "tutorials/generated/layered_sphere.md", "tutorials/generated/layered_sphere_local_fields.md"]
 
@@ -1537,7 +1537,7 @@ unit = "1"
 pages = ["theory/cluster_model.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\boldsymbol{K}'
 label = "<b>K</b>"
 name = "acoustic tensor, <u>n</u>·ℂ·<u>n</u>"
@@ -1545,7 +1545,7 @@ unit = "Pa"
 pages = ["applications/itz_elastic_limit.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\underline{a}'
 label = "<u>a</u>"
 name = "vector of the rank-one strain jump across a plane interface"
@@ -1553,7 +1553,7 @@ unit = "1"
 pages = ["applications/itz_elastic_limit.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{M}'
 label = "𝕄"
 name = "ITZ stress at the aggregate surface per unit macroscopic stress"
@@ -1561,7 +1561,7 @@ unit = "1"
 pages = ["applications/itz_elastic_limit.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{B}_{\mathrm{agg}}'
 label = "𝔹<sub>agg</sub>"
 name = "stress concentration tensor of the aggregates"
@@ -1569,7 +1569,7 @@ unit = "1"
 pages = ["applications/itz_elastic_limit.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{A}_{\mathrm{agg}}'
 label = "𝔸<sub>agg</sub>"
 name = "dilute strain concentration tensor of the aggregates"
@@ -1577,7 +1577,7 @@ unit = "1"
 pages = ["applications/itz_elastic_limit.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{A}_{\mathrm{G}}'
 label = "𝔸<sub>G</sub>"
 name = "strain concentration tensor of the grain"
@@ -1585,7 +1585,7 @@ unit = "1"
 pages = ["applications/granular_friction.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{B}_{\mathrm{G}}'
 label = "𝔹<sub>G</sub>"
 name = "stress concentration tensor of the grain"
@@ -1593,7 +1593,7 @@ unit = "Pa"
 pages = ["applications/granular_friction.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{A}_{\mathrm{P}}'
 label = "𝔸<sub>P</sub>"
 name = "strain concentration tensor of the pore"
@@ -1601,7 +1601,7 @@ unit = "1"
 pages = ["applications/granular_friction.md", "applications/sandstone_strength.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{A}_{\mathrm{S}}'
 label = "𝔸<sub>S</sub>"
 name = "strain concentration tensor of the bonded grain"
@@ -1609,7 +1609,7 @@ unit = "1"
 pages = ["applications/sandstone_strength.md"]
 
 [[symbol]]
-group = "Eshelby problem and localization"
+group = "Eshelby problem and concentration"
 tex = '\mathbb{B}_{\mathrm{S}}'
 label = "𝔹<sub>S</sub>"
 name = "stress concentration tensor of the bonded grain"
@@ -1941,3 +1941,161 @@ label = "ϵ"
 name = "vanishing parameter of a symbolic limit of infinite stiffness"
 unit = "1"
 pages = ["applications/granular_friction.md", "applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{E}'
+label = "𝔼"
+name = "tensor mapping the macroscopic strain onto the remote strain applied to the inclusions of a one-site scheme"
+unit = "1"
+pages = ["theory/homogenization.md", "theory/scheme_bounds.md", "theory/scheme_dilute.md", "theory/scheme_mori_tanaka.md", "theory/scheme_maxwell.md", "theory/scheme_self_consistent.md"]
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{N}^{\mathrm{est}}'
+label = "ℕ<sup>est</sup>"
+name = "contribution of a phase to the estimated stiffness, relative to a reference stiffness"
+unit = "Pa"
+pages = ["theory/homogenization.md", "theory/scheme_dilute.md"]
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{H}^{\mathrm{est}}'
+label = "ℍ<sup>est</sup>"
+name = "contribution of a phase to the estimated compliance, relative to a reference compliance"
+unit = "Pa<sup>−1</sup>"
+pages = ["theory/homogenization.md", "theory/scheme_dilute.md"]
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{C}_{\mathrm{ref}}'
+label = "ℂ<sub>ref</sub>"
+name = "reference stiffness of a contribution"
+unit = "Pa"
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{S}_{\mathrm{ref}}'
+label = "𝕊<sub>ref</sub>"
+name = "reference compliance of a contribution"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'w_r'
+label = "w<sub>r</sub>"
+name = "weight of a phase in the averages: its volume fraction, or the density of a crack family"
+unit = "1"
+pages = ["theory/homogenization.md", "theory/differential_scheme.md"]
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{G}^\varepsilon'
+label = "𝔾<sup>ε</sup>"
+name = "strain concentration tensor of a phase weighted by its amount, along the differential path"
+unit = "1"
+pages = ["theory/differential_scheme.md"]
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{G}^\sigma'
+label = "𝔾<sup>σ</sup>"
+name = "stress concentration tensor of a phase weighted by its amount, along the differential path"
+unit = "Pa"
+pages = ["theory/differential_scheme.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\boldsymbol{\varepsilon}^\ast'
+label = "<b>ε</b><sup>∗</sup>"
+name = "eigenstrain (free strain) of a phase"
+unit = "1"
+pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\boldsymbol{\sigma}^\ast'
+label = "<b>σ</b><sup>∗</sup>"
+name = "prestress of a phase"
+unit = "Pa"
+pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\boldsymbol{E}^\ast'
+label = "<b>E</b><sup>∗</sup>"
+name = "macroscopic free strain, the strain under a vanishing macroscopic stress"
+unit = "1"
+pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\boldsymbol{\Sigma}^\ast'
+label = "<b>Σ</b><sup>∗</sup>"
+name = "macroscopic prestress, the stress under a vanishing macroscopic strain"
+unit = "Pa"
+pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\boldsymbol{\alpha}^{\mathrm{hom}}'
+label = "<b>α</b><sup>hom</sup>"
+name = "effective thermal expansion tensor"
+unit = "K<sup>−1</sup>"
+pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\alpha^{\mathrm{hom}}'
+label = "α<sup>hom</sup>"
+name = "effective thermal expansion coefficient of an isotropic composite"
+unit = "K<sup>−1</sup>"
+pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\Delta T'
+label = "ΔT"
+name = "temperature change"
+unit = "K"
+pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\underline{g}^\ast'
+label = "<u>g</u><sup>∗</sup>"
+name = "eigengradient of a phase in conduction, the gradient at which it conducts no flux"
+unit = ""
+pages = ["theory/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\underline{q}^\ast'
+label = "<u>q</u><sup>∗</sup>"
+name = "pre-flux of a phase, the flux it conducts under a vanishing gradient"
+unit = ""
+pages = ["theory/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\underline{G}^\ast'
+label = "<u>G</u><sup>∗</sup>"
+name = "macroscopic free gradient"
+unit = ""
+pages = ["theory/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\underline{Q}^\ast'
+label = "<u>Q</u><sup>∗</sup>"
+name = "macroscopic pre-flux"
+unit = ""
+pages = ["theory/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\boldsymbol{A}^q'
+label = "<b>A</b><sup>q</sup>"
+name = "flux concentration tensor of a phase in conduction"
+unit = "1"
+pages = ["theory/levin.md"]

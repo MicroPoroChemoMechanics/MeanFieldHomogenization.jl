@@ -4,7 +4,7 @@
     [The Eshelby inclusion problem](@ref th-eshelby-problem) §2, where the
     tensor ``\mathbb{Q}``, which degenerates in a controlled way as the
     inclusion flattens, is introduced, and
-    [Localization and contribution tensors](@ref th-localization) §3 for the
+    [Concentration and contribution tensors](@ref th-concentration) §3 for the
     compliance contribution ``\mathbb{H}`` of a crack and its density.
 
 A crack has no volume, so it cannot be described by a volume fraction and a
@@ -328,7 +328,7 @@ invisible on the most common test case — and why a penny-only cross-check cann
 detect a wrong ``\eta``-dependence.
 
 Measured, not inferred from the papers — Echoes' `crack_compliance` against
-[`compliance_contribution`](@ref) on a flat triaxial ellipsoid
+[`inverse_property_contribution`](@ref) on a flat triaxial ellipsoid
 (``a = 1``, ``b = \eta``, ``c = 10^{-5}``):
 
 | ``\eta`` | 1.0 | 0.7 | 0.5 | 0.3 | 0.1 |
@@ -356,7 +356,7 @@ Read from right to left the boxed definition is a **recipe**: take a flat
 ellipsoid, compute ``\mathbb{P}``, assemble
 ``\mathbb{Q} = \mathbb{C}-\mathbb{C}:\mathbb{P}:\mathbb{C}``, invert, scale by
 the flatness ``\rho = c/b``. That path never touches the crack machinery, so
-agreement with [`compliance_contribution`](@ref) is evidence rather than
+agreement with [`inverse_property_contribution`](@ref) is evidence rather than
 tautology:
 
 ```@example Horacle
@@ -380,7 +380,7 @@ plt = plot(; xscale = :log10, yscale = :log10, legend = :topleft,
            xlabel = "flatness ρ = c/b", ylabel = "relative error on ℍ")
 for η in (1.0, 0.5, 0.3)
     crack = η == 1.0 ? PennyCrack(1.0) : EllipticCrack(1.0, η)
-    H_ref = compliance_contribution(crack, C₀)
+    H_ref = inverse_property_contribution(crack, C₀)
     plot!(plt, ρs, [relerr(H_from_hill(1.0, η, ρ, C₀), H_ref) for ρ in ρs];
           marker = :circle, label = "η = $η")
 end
@@ -1054,11 +1054,11 @@ available on explicit `method = :residues` only (`src/Core/dispatch.jl`).
 
 ## 6. Dilute correction to the effective compliance
 
-[`compliance_contribution`](@ref)`(crack, C₀)` returns ``\mathbb{H}`` itself —
+[`inverse_property_contribution`](@ref)`(crack, C₀)` returns ``\mathbb{H}`` itself —
 the *size-independent* contribution, not the dilute correction. Cracks have no
 volume fraction, so the amount of cracking is measured by a **Budiansky crack
 density** [budiansky1976, kachanov1993](@cite), and reintroduced by
-[`delta_compliance`](@ref):
+[`delta_inverse_property`](@ref):
 
 | | density | dilute correction |
 | :-- | :-- | :-- |
@@ -1239,8 +1239,8 @@ Evaluation: [`sif`](@ref) and [`dif`](@ref) (`src/Cracks/sif.jl`).
 | `EllipticCrack` / `RibbonCrack`, `AbstractTens{4,3}` | `NestedQuadGK` | `:residues`, `:decuhr`, `:nestedquadgk` | ✓ |
 
 Entry points: [`cod_tensor`](@ref) / [`B_tensor`](@ref) for ``\boldsymbol{B}``,
-[`compliance_contribution`](@ref) for ``\mathbb{H}``,
-[`delta_compliance`](@ref) for ``\Delta\mathbb{S}``, [`sif`](@ref) /
+[`inverse_property_contribution`](@ref) for ``\mathbb{H}``,
+[`delta_inverse_property`](@ref) for ``\Delta\mathbb{S}``, [`sif`](@ref) /
 [`dif`](@ref) for the front quantities. The transport counterpart — a scalar COD
 and a rank-1 resistivity contribution — is treated in
 [Thermal cracks](@ref th-thermal-cracks), with the same geometric factors ``3/4`` and

@@ -128,7 +128,7 @@ end
     _axi_run_elastic(incl, C₀) -> NamedTuple
 
 Full corrected solve in elasticity: the three modes, the fixed point, and the
-two localization tensors reassembled in the global frame.
+two concentration tensors reassembled in the global frame.
 """
 function _axi_run_elastic(incl::FEExcenteredSphere, C₀::TensND.AbstractTens{4, 3})
     μ, ν = _fe_iso_moduli(C₀; what = "`FEExcenteredSphere`")
@@ -179,7 +179,7 @@ end
     _axi_run_cond(incl, K₀) -> NamedTuple
 
 Full corrected solve in transport: modes 0 and 1, the fixed point, and the two
-localization tensors reassembled in the global frame.
+concentration tensors reassembled in the global frame.
 """
 function _axi_run_cond(incl::FEExcenteredSphere, K₀::TensND.AbstractTens{2, 3})
     k₀ = _fe_iso_scalar(K₀; what = "`FEExcenteredSphere`")
@@ -224,7 +224,7 @@ _axi_run(incl, P₀::TensND.AbstractTens{2, 3}) = _axi_run_cond(incl, P₀)
 
 # ─── Public entry points ─────────────────────────────────────────────────────
 
-function _fe_axi_localization(
+function _fe_axi_concentration(
         incl::FEExcenteredSphere, P₀::TensND.AbstractTens; kw...
     )
     res = get!(() -> _axi_run(incl, P₀), incl.cache.tensors, _fe_cache_key(P₀))
@@ -235,7 +235,7 @@ end
     fe_axi_breakdown(incl, P₀) -> NamedTuple
 
 Diagnostic view of the corrected axisymmetric solve. Besides the corrected
-localization tensors `A`, `B` it returns their **uncorrected** counterparts —
+concentration tensors `A`, `B` it returns their **uncorrected** counterparts —
 those of the plain truncated cell, ``\\underline{u}|_{\\partial\\Omega} = \\boldsymbol{E}\\cdot\\underline{x}`` — and the per-mode blocks
 `(A_E, B_E, A_p, B_p, A, B, X)`, plus the measured inclusion volume.
 

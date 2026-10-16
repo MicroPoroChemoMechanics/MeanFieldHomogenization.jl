@@ -47,6 +47,7 @@ using PolynomialRoots
 
 include("counters.jl")
 include("abstractions.jl")
+include("order_aliases.jl")
 include("cells.jl")
 include("traits.jl")
 include("bases.jl")
@@ -95,7 +96,7 @@ export extract_iso_moduli, extract_ti_moduli, extract_iso_conductivity
 # being pure tensor algebra with nothing homogenization-specific about them
 # they now belong to TensND (`src/tens_rotational_average.jl`), together with
 # the non-major-symmetric Walpole read-off `ti8_params_from_KM` that the
-# laminate localization needs. Re-exported here so that every call site of the
+# laminate concentration needs. Re-exported here so that every call site of the
 # form `Core.isotropify(...)` keeps working unchanged.
 export isotropify, transverse_isotropify
 export ti_average_mandel66, iso_average_mandel66
@@ -115,16 +116,22 @@ export green_function_aniso, gauss_legendre_nodes
 export KM_IP, KM_OP
 export plane_pinv, plane_pinv2, flat_hill, acoustic_tensor, compliance_op_block
 export laminate_stiffness, laminate_conductivity
-export laminate_strain_localization, laminate_stress_localization
-export laminate_stress_strain_localization, laminate_strain_stress_localization
-export laminate_gradient_localization, laminate_flux_localization
-export laminate_flux_gradient_localization, laminate_gradient_flux_localization
+export laminate_strain_concentration, laminate_stress_concentration
+export laminate_stress_strain_concentration, laminate_strain_stress_concentration
+export laminate_gradient_concentration, laminate_flux_concentration
+export laminate_flux_gradient_concentration, laminate_gradient_flux_concentration
 
-# Localization & contribution (generics; methods added at top level and in Cracks)
-export strain_strain_loc, stress_strain_loc, strain_stress_loc, stress_stress_loc
-export gradient_gradient_loc, flux_gradient_loc, gradient_flux_loc, flux_flux_loc
-export stiffness_contribution, conductivity_contribution, resistivity_contribution
-export compliance_contribution
-export delta_stiffness, delta_conductivity, delta_compliance, delta_resistivity
+# Concentration & contribution: one generic function per notion for fourth- and
+# second-order tensors (methods added at top level and in the sub-modules), and
+# the explicit names of elasticity and conduction, each restricted to its order.
+export gradient_gradient_concentration, flux_gradient_concentration
+export gradient_flux_concentration, flux_flux_concentration
+export property_contribution, inverse_property_contribution
+export delta_property, delta_inverse_property
+export strain_strain_concentration, stress_strain_concentration
+export strain_stress_concentration, stress_stress_concentration
+export stiffness_contribution, compliance_contribution
+export conductivity_contribution, resistivity_contribution
+export delta_stiffness, delta_compliance, delta_conductivity, delta_resistivity
 
 end # module

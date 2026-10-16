@@ -325,8 +325,8 @@ defined by ``\langle\nabla T\rangle_\Omega =
 keq_a = Float64[]; keq_t = Float64[]
 for β in βs
     s = _oblate_particle(β)
-    A = gradient_gradient_loc(s, TensISO{3}(OBL_KCORE), OBL_K0)
-    B = flux_gradient_loc(s, TensISO{3}(OBL_KCORE), OBL_K0)
+    A = gradient_gradient_concentration(s, TensISO{3}(OBL_KCORE), OBL_K0)
+    B = flux_gradient_concentration(s, TensISO{3}(OBL_KCORE), OBL_K0)
     push!(keq_t, real(B[1, 1] / A[1, 1]))
     push!(keq_a, real(B[3, 3] / A[3, 3]))
 end

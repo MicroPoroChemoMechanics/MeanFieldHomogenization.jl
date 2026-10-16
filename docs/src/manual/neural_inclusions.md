@@ -17,7 +17,7 @@ families, the layered patterns and the
 | Type | Entry gate | For |
 |:--|:--|:--|
 | [`NeuralHillInclusion`](@ref MeanFieldHomogenization.NeuralHillInclusion) | A — the Hill tensor | a morphology that has a Hill tensor |
-| [`NeuralLocalizationInclusion`](@ref MeanFieldHomogenization.NeuralLocalizationInclusion) | B — both localization tensors | an internally heterogeneous morphology, which has none |
+| [`NeuralConcentrationInclusion`](@ref MeanFieldHomogenization.NeuralConcentrationInclusion) | B — both concentration tensors | an internally heterogeneous morphology, which has none |
 
 **Evaluating** a surrogate needs nothing beyond the package. **Training** one
 needs three weak dependencies:
@@ -95,7 +95,7 @@ trained:
   ``\mathbb A_{\varepsilon\varepsilon} =
   [\mathbb I + \mathbb P:(\mathbb C_1-\mathbb C_0)]^{-1}`` exactly, so
   ``\mathbb C_1 = \mathbb C_0 \Rightarrow \mathbb A = \mathbb I``. The eight
-  localization tensors also stay exactly consistent with one another — which a
+  concentration tensors also stay exactly consistent with one another — which a
   surrogate predicting ``\mathbb A`` could not guarantee.
   ``\mathbb A_{\varepsilon\varepsilon}`` has **no major symmetry**, so it needs
   the 6-component transversely isotropic form where ``\mathbb P`` needs 5; for
@@ -144,7 +144,7 @@ exact with no material input at all.
 Prefer `AffineHill` whenever the reference medium is isotropic: same cost, one
 input fewer, an order of magnitude more accurate. Prefer
 [`DimensionlessHill`](@ref MeanFieldHomogenization.DimensionlessHill) when you will need to
-transfer the recipe to an anisotropic matrix or to a localization pair, where no
+transfer the recipe to an anisotropic matrix or to a concentration pair, where no
 affine structure exists.
 
 ## The general syntax: training your own
@@ -156,7 +156,7 @@ and of the fitting loop, and shows the recorded learning curve.
 **1. Which tensor, and therefore which gate.** ``\mathbb P`` (gate A) whenever
 the morphology has one: the contrast dependence and the ``\mathbb C_1 = \mathbb
 C_0 \Rightarrow \mathbb A = \mathbb I`` limit then stay exact and the fit error
-is confined to a single tensor. The localization pair (gate B) only for a
+is confined to a single tensor. The concentration pair (gate B) only for a
 heterogeneous morphology, which has no ``\mathbb P``.
 
 **2. Which symmetry class**, from the shape: `HillISO` for a sphere (2
@@ -167,9 +167,9 @@ returns a *different* tensor class for each and the components would otherwise
 mean something else.
 
 A cube-symmetric morphology — a supersphere, a cubic array — belongs to the
-**cubic** class, and `StrainLocCubic` is its specification: three components,
-against six for `StrainLocTI`. Three and not six is not a simplification. A
-localization tensor has **no major symmetry** in general, which is exactly why
+**cubic** class, and `GradientConcentrationCubic` is its specification: three components,
+against six for `GradientConcentrationTI`. Three and not six is not a simplification. A
+concentration tensor has **no major symmetry** in general, which is exactly why
 the transversely isotropic case cannot use the five-component major-symmetric
 Walpole form; but a tensor with the minor symmetries and cubic symmetry *is*
 major-symmetric automatically, so the class has no antisymmetric content to
@@ -363,7 +363,7 @@ capacity fitting a dependence that is exactly known, as
 
 ## Heterogeneous morphologies
 
-[`NeuralLocalizationInclusion`](@ref MeanFieldHomogenization.NeuralLocalizationInclusion)
+[`NeuralConcentrationInclusion`](@ref MeanFieldHomogenization.NeuralConcentrationInclusion)
 takes gate B, the only way in for a morphology with no Hill tensor. Since
 [`is_homogeneous_inclusion`](@ref) is `false`, it costs **two** surrogates per
 physics — the strain side and the stress side — because
@@ -377,19 +377,19 @@ Supplying `fractions` and `properties` unlocks the `Voigt` and `Reuss` bounds,
 which a heterogeneous inclusion cannot otherwise serve.
 
 No trained model ships for this type yet; it is the seam for surrogates trained
-on [`fe_axi_localization`](@ref MeanFieldHomogenization.fe_axi_localization).
+on [`fe_axi_concentration`](@ref MeanFieldHomogenization.fe_axi_concentration).
 
 ## A surrogate in place of a finite-element cell
 
-A **cavity** is the easy case for gate B — its stress-side localization is
+A **cavity** is the easy case for gate B — its stress-side concentration is
 identically zero, so *one* surrogate per physics suffices rather than a pair —
 and it is the case where a surrogate is worth most. So it does not go through
-`NeuralLocalizationInclusion` at all: it is handed to the very type that would
+`NeuralConcentrationInclusion` at all: it is handed to the very type that would
 otherwise mesh and solve.
 
 ```julia
 pore = FESupershapePore(Supersphere(1.0, 0.6); elastic = s)
-fe_cell_localization(pore, C₀)      # microseconds, no mesh, no backend loaded
+fe_cell_concentration(pore, C₀)      # microseconds, no mesh, no backend loaded
 ```
 
 Everything else is unchanged: the same type, the same contract, the same

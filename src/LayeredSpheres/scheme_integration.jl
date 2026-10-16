@@ -3,12 +3,12 @@
 #
 #  A composite sphere has NO Hill tensor: it is not an ellipsoidal
 #  inhomogeneity with a uniform eigenstrain.  What it does have — and what the
-#  schemes actually need — is a **concentration (localization) tensor**, which
+#  schemes actually need — is a **concentration (concentration) tensor**, which
 #  the layered recurrences already provide per layer:
 #
 #      <ε>_k = α_k · ε∞_sph + β_k · ε∞_dev
 #
-#  The generic `strain_strain_loc(::AbstractInclusion, …)` in `localization.jl`
+#  The generic `gradient_gradient_concentration(::AbstractInclusion, …)` in `concentration.jl`
 #  builds `A` from `hill_tensor`, so without the specializations below a
 #  `LayeredSphere` phase would fall into it and fail.  The methods here
 #  short-circuit that path, exactly as the conductivity side already does.
@@ -27,7 +27,7 @@
     is_homogeneous_inclusion(::LayeredSphere) -> false
 
 A composite sphere has no single representative property: its average stress
-must be summed over layers. See [`stress_strain_loc`](@ref).
+must be summed over layers. See [`flux_gradient_concentration`](@ref).
 """
 Core.is_homogeneous_inclusion(::LayeredSphere) = false
 
@@ -45,19 +45,19 @@ end
 end
 
 """
-    _layer_localizations(sphere, C₀) -> (α, β, f)
+    _layer_concentrations(sphere, C₀) -> (α, β, f)
 
-Per-layer bulk (``\\alpha_k``) and deviatoric (``\\beta_k``) localization scalars together
+Per-layer bulk (``\\alpha_k``) and deviatoric (``\\beta_k``) concentration scalars together
 with the layer volume fractions.
 """
-function _layer_localizations(
+function _layer_concentrations(
         sphere::LayeredSphere{T, N},
         C₀::TensND.TensISO{4, 3},
     ) where {T, N}
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
     κ₀, μ₀ = _iso_bulk_shear(C₀)
-    α = _bulk_localization(sphere, κ₀, μ₀)
-    β = _shear_localization(sphere, C₀)
+    α = _bulk_concentration(sphere, κ₀, μ₀)
+    β = _shear_concentration(sphere, C₀)
     return α, β, _layer_fractions(sphere)
 end
 
@@ -145,7 +145,7 @@ the factor ``1/3`` being the ``\\mathbb{K}``-projection of the
 
 With `external = false` the outer interface is left out: its surface stress is
 then counted with the matrix rather than with the sphere (see
-[`strain_strain_loc`](@ref)).
+[`gradient_gradient_concentration`](@ref)).
 """
 function _membrane_surface_stress(
         sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3};
@@ -338,7 +338,7 @@ function _layer_gradient_jump_term(
 end
 
 """
-    strain_strain_loc(sphere::LayeredSphere, C₁, C₀; external = true, kw...) -> TensISO{4,3}
+    gradient_gradient_concentration(sphere::LayeredSphere, C₁, C₀; external = true, kw...) -> TensISO{4,3}
 
 Whole-inclusion **strain concentration tensor** of a composite sphere embedded
 in the isotropic reference `C₀`:
@@ -365,25 +365,25 @@ one.
 - `external = false`: it belongs to the matrix, and the strain is read on the
   inner side of ``r_N`` — Echoes' `sphere_eE(n - 1, external = False)`. The
   surface stress of an outer [`MembraneInterface`](@ref) then leaves
-  [`stress_strain_loc`](@ref) and [`stiffness_contribution`](@ref) with the same
+  [`flux_gradient_concentration`](@ref) and [`property_contribution`](@ref) with the same
   keyword, so that ``\\mathbb N = \\mathbb A_{\\sigma\\varepsilon} - \\mathbb C_0:\\mathbb A_\\Omega`` holds for either value.
 
 `C₁` is accepted for signature compatibility with the generic
-`strain_strain_loc(::AbstractInclusion, C₁, C₀)` used by the scheme dispatch,
+`gradient_gradient_concentration(::AbstractInclusion, C₁, C₀)` used by the scheme dispatch,
 but is **ignored**: the moduli of a composite sphere live in its layers
 (`layer_modulus`), not in a single phase tensor.
 
 For a single layer and a perfect interface this reduces exactly to the Eshelby
 result for a sphere.
 """
-function strain_strain_loc(
+function gradient_gradient_concentration(
         sphere::LayeredSphere{T, N},
         ::TensND.AbstractTens{4, 3},
         C₀::TensND.TensISO{4, 3};
         external::Bool = true,
         kw...,
     ) where {T, N}
-    α, β, f = _layer_localizations(sphere, C₀)
+    α, β, f = _layer_concentrations(sphere, C₀)
     Δα, Δβ = _strain_jump_terms(sphere, C₀; external)
     return TensISO{3}(
         sum(f[k] * α[k] for k in 1:N) + Δα, sum(f[k] * β[k] for k in 1:N) + Δβ
@@ -391,7 +391,7 @@ function strain_strain_loc(
 end
 
 """
-    stiffness_contribution(sphere::LayeredSphere, C₁, C₀; external = true, kw...) -> TensISO{4,3}
+    property_contribution(sphere::LayeredSphere, C₁, C₀; external = true, kw...) -> TensISO{4,3}
 
 Size-independent **stiffness contribution tensor** of a composite sphere,
 
@@ -401,22 +401,22 @@ Size-independent **stiffness contribution tensor** of a composite sphere,
 
 plus the Gurtin–Murdoch surface stress of any membrane interface
 (`_membrane_surface_stress`). ``\\Delta\\mathbb{A} = \\Delta\\alpha\\,\\mathbb{J} + \\Delta\\beta\\,\\mathbb{K}`` is the part of
-[`strain_strain_loc`](@ref) due to the displacement jumps of spring interfaces:
+[`gradient_gradient_concentration`](@ref) due to the displacement jumps of spring interfaces:
 a jump is strain without stress, so it lowers the contribution. `external`
 has the meaning it has there.
 
 Assembled layer by layer: a composite sphere is heterogeneous, so the usual
 ``(\\mathbb{C}_1 - \\mathbb{C}_0):\\mathbb{A}`` of a homogeneous inhomogeneity does not apply. `C₁` is ignored,
-as in [`strain_strain_loc`](@ref).
+as in [`gradient_gradient_concentration`](@ref).
 """
-function stiffness_contribution(
+function property_contribution(
         sphere::LayeredSphere{T, N},
         ::TensND.AbstractTens{4, 3},
         C₀::TensND.TensISO{4, 3};
         external::Bool = true,
         kw...,
     ) where {T, N}
-    α, β, f = _layer_localizations(sphere, C₀)
+    α, β, f = _layer_concentrations(sphere, C₀)
     C_k = _layer_iso_pairs(sphere)
     α₀, β₀ = TensND.get_data(C₀)
     a = _bulk_contrast_sum(sphere, C₀, α, f, α₀)
@@ -427,7 +427,7 @@ function stiffness_contribution(
 end
 
 """
-    stress_strain_loc(sphere::LayeredSphere, C₁, C₀; external = true, kw...) -> TensISO{4,3}
+    flux_gradient_concentration(sphere::LayeredSphere, C₁, C₀; external = true, kw...) -> TensISO{4,3}
 
 Whole-inclusion **average stress** per unit remote strain,
 
@@ -437,22 +437,22 @@ Whole-inclusion **average stress** per unit remote strain,
 
 assembled layer by layer, plus the Gurtin–Murdoch surface stress of any
 membrane interface (`_membrane_surface_stress`), that of the outer one only
-when `external` is `true` (see [`strain_strain_loc`](@ref)). The traction is
+when `external` is `true` (see [`gradient_gradient_concentration`](@ref)). The traction is
 continuous across a spring interface, so its displacement jump leaves this
 average unchanged. This is what the self-consistent and Mori-Tanaka kernels
 need; it is *not* ``\\mathbb{C}_1:\\mathbb{A}_\\Omega``. `C₁` is ignored (see
-[`strain_strain_loc`](@ref)).
+[`gradient_gradient_concentration`](@ref)).
 
-Consistency: `stiffness_contribution = stress_strain_loc - C₀ : strain_strain_loc`.
+Consistency: `property_contribution = flux_gradient_concentration - C₀ : gradient_gradient_concentration`.
 """
-function stress_strain_loc(
+function flux_gradient_concentration(
         sphere::LayeredSphere{T, N},
         ::TensND.AbstractTens{4, 3},
         C₀::TensND.TensISO{4, 3};
         external::Bool = true,
         kw...,
     ) where {T, N}
-    α, β, f = _layer_localizations(sphere, C₀)
+    α, β, f = _layer_concentrations(sphere, C₀)
     C_k = _layer_iso_pairs(sphere)
     a = _bulk_stress_sum(sphere, C₀, α, f)
     b = sum(f[k] * C_k[k][2] * β[k] for k in 1:N)
@@ -461,15 +461,15 @@ function stress_strain_loc(
 end
 
 """
-    flux_gradient_loc(sphere::LayeredSphere, K₁, K₀; external = true, kw...) -> TensISO{2,3}
+    flux_gradient_concentration(sphere::LayeredSphere, K₁, K₀; external = true, kw...) -> TensISO{2,3}
 
-Conductivity counterpart of [`stress_strain_loc`](@ref):
+Conductivity counterpart of [`flux_gradient_concentration`](@ref):
 ``\\langle k\\,\\nabla T\\rangle_\\Omega = \\big(\\sum_k f_k\\,k_k\\,\\alpha_k\\big)\\,\\nabla T^{\\infty}``, plus the surface-conduction flux
 [`_cond_surface_flux`](@ref) of any dual (surface-conductive) interface, that
 of the outer one only when `external` is `true` (see
-[`gradient_gradient_loc`](@ref)). `K₁` is ignored.
+[`gradient_gradient_concentration`](@ref)). `K₁` is ignored.
 """
-function flux_gradient_loc(
+function flux_gradient_concentration(
         sphere::LayeredSphere{T, N},
         ::TensND.AbstractTens{2, 3},
         K₀::TensND.TensISO{2, 3};
@@ -477,7 +477,7 @@ function flux_gradient_loc(
         kw...,
     ) where {T, N}
     k₀ = _iso_scalar(K₀)
-    α = _cond_localization(sphere, k₀)
+    α = _cond_concentration(sphere, k₀)
     k_layers = _cond_layer_moduli(sphere)
     f = _layer_fractions(sphere)
     return TensISO{3}(
@@ -487,19 +487,19 @@ function flux_gradient_loc(
 end
 
 """
-    gradient_gradient_loc(sphere::LayeredSphere, K₁, K₀; external = true, kw...) -> TensISO{2,3}
+    gradient_gradient_concentration(sphere::LayeredSphere, K₁, K₀; external = true, kw...) -> TensISO{2,3}
 
 Whole-inclusion **gradient concentration tensor**
 ``\\alpha_\\Omega = \\sum_k f_k\\,\\alpha_k + \\Delta\\alpha``, the conductivity counterpart of
-[`strain_strain_loc`](@ref): ``\\Delta\\alpha`` adds the temperature jumps across the
+[`gradient_gradient_concentration`](@ref): ``\\Delta\\alpha`` adds the temperature jumps across the
 [`KapitzaInterface`](@ref)s, those of the inner interfaces always and that of the
 outer one when `external` is `true` (the default, and what the schemes use).
 `K₁` is ignored (see there).
 
 The per-layer form is available as
-`gradient_gradient_loc(sphere, K₀; layer = k)`.
+`gradient_gradient_concentration(sphere, K₀; layer = k)`.
 """
-function gradient_gradient_loc(
+function gradient_gradient_concentration(
         sphere::LayeredSphere{T, N},
         ::TensND.AbstractTens{2, 3},
         K₀::TensND.TensISO{2, 3};
@@ -507,34 +507,41 @@ function gradient_gradient_loc(
         kw...,
     ) where {T, N}
     k₀ = _iso_scalar(K₀)
-    α = _cond_localization(sphere, k₀)
+    α = _cond_concentration(sphere, k₀)
     f = _layer_fractions(sphere)
     return TensISO{3}(sum(f[k] * α[k] for k in 1:N) + _gradient_jump_term(sphere, k₀; external))
 end
 
 """
-    conductivity_contribution(sphere::LayeredSphere, K₁, K₀; kw...) -> TensISO{2,3}
+    property_contribution(sphere::LayeredSphere, K₁, K₀; kw...) -> TensISO{2,3}
 
 Three-argument form matching the scheme dispatch; `K₁` is ignored and the
 computation is delegated to the two-argument method.
 """
-function Core.conductivity_contribution(
+function Core.property_contribution(
         sphere::LayeredSphere{T, N},
         ::TensND.AbstractTens{2, 3},
         K₀::TensND.TensISO{2, 3};
         kw...,
     ) where {T, N}
-    return Core.conductivity_contribution(sphere, K₀; kw...)
+    return Core.property_contribution(sphere, K₀; kw...)
 end
 
 """
-    layer_stiffness_average(sphere) -> TensISO{4,3}
+    layer_property_average(sphere, P₀) -> TensISO
+    layer_property_average(sphere, Val(order)) -> TensISO
 
-Voigt (volume) average of the layer stiffnesses, ``\\sum_k f_k\\,\\mathbb{C}_k``. This is what
-the Voigt bound needs for a composite sphere: the declared phase property does
-not represent it.
+Voigt (volume) average of the layer properties: the stiffnesses,
+``\\sum_k f_k\\,\\mathbb{C}_k``, when `P₀` is a fourth-order tensor (`order = 4`), the
+conductivities, ``\\sum_k f_k\\,k_k``, when it is a second-order one (`order = 2`);
+`P₀` only sets the order. This is what the Voigt bound needs for a composite
+sphere: the declared phase property does not represent it. Explicit names:
+[`layer_stiffness_average`](@ref) and [`layer_conductivity_average`](@ref).
 """
-function layer_stiffness_average(sphere::LayeredSphere{T, N}) where {T, N}
+layer_property_average(sphere::LayeredSphere, ::TensND.AbstractTens{N, 3}) where {N} =
+    layer_property_average(sphere, Val(N))
+
+function layer_property_average(sphere::LayeredSphere{T, N}, ::Val{4}) where {T, N}
     C_k = _layer_iso_pairs(sphere)
     f = _layer_fractions(sphere)
     return TensISO{3}(
@@ -543,12 +550,25 @@ function layer_stiffness_average(sphere::LayeredSphere{T, N}) where {T, N}
     )
 end
 
-"""
-    layer_compliance_average(sphere) -> TensISO{4,3}
+function layer_property_average(sphere::LayeredSphere{T, N}, ::Val{2}) where {T, N}
+    k_layers = _cond_layer_moduli(sphere)
+    f = _layer_fractions(sphere)
+    return TensISO{3}(sum(f[k] * k_layers[k] for k in 1:N))
+end
 
-Reuss (volume) average of the layer compliances, ``\\sum_k f_k\\,\\mathbb{C}_k^{-1}``.
 """
-function layer_compliance_average(sphere::LayeredSphere{T, N}) where {T, N}
+    layer_inverse_property_average(sphere, P₀) -> TensISO
+    layer_inverse_property_average(sphere, Val(order)) -> TensISO
+
+Reuss (volume) average of the inverse layer properties: the compliances,
+``\\sum_k f_k\\,\\mathbb{C}_k^{-1}``, at order 4, the resistivities, ``\\sum_k f_k/k_k``,
+at order 2. Explicit names: [`layer_compliance_average`](@ref) and
+[`layer_resistivity_average`](@ref).
+"""
+layer_inverse_property_average(sphere::LayeredSphere, ::TensND.AbstractTens{N, 3}) where {N} =
+    layer_inverse_property_average(sphere, Val(N))
+
+function layer_inverse_property_average(sphere::LayeredSphere{T, N}, ::Val{4}) where {T, N}
     C_k = _layer_iso_pairs(sphere)
     f = _layer_fractions(sphere)
     return TensISO{3}(
@@ -557,30 +577,46 @@ function layer_compliance_average(sphere::LayeredSphere{T, N}) where {T, N}
     )
 end
 
-"""
-    layer_conductivity_average(sphere) -> TensISO{2,3}
-
-Voigt average of the layer conductivities, ``\\sum_k f_k\\,k_k``.
-"""
-function layer_conductivity_average(sphere::LayeredSphere{T, N}) where {T, N}
-    k_layers = _cond_layer_moduli(sphere)
-    f = _layer_fractions(sphere)
-    return TensISO{3}(sum(f[k] * k_layers[k] for k in 1:N))
-end
-
-"""
-    layer_resistivity_average(sphere) -> TensISO{2,3}
-
-Reuss average of the layer resistivities, ``\\sum_k f_k/k_k``.
-"""
-function layer_resistivity_average(sphere::LayeredSphere{T, N}) where {T, N}
+function layer_inverse_property_average(sphere::LayeredSphere{T, N}, ::Val{2}) where {T, N}
     k_layers = _cond_layer_moduli(sphere)
     f = _layer_fractions(sphere)
     return TensISO{3}(sum(f[k] / k_layers[k] for k in 1:N))
 end
 
+"""
+    layer_stiffness_average(sphere) -> TensISO{4,3}
+
+Name in elasticity of [`layer_property_average`](@ref): the Voigt average of the
+layer stiffnesses.
+"""
+layer_stiffness_average(sphere) = layer_property_average(sphere, Val(4))
+
+"""
+    layer_compliance_average(sphere) -> TensISO{4,3}
+
+Name in elasticity of [`layer_inverse_property_average`](@ref): the Reuss average
+of the layer compliances.
+"""
+layer_compliance_average(sphere) = layer_inverse_property_average(sphere, Val(4))
+
+"""
+    layer_conductivity_average(sphere) -> TensISO{2,3}
+
+Name in conduction of [`layer_property_average`](@ref): the Voigt average of the
+layer conductivities.
+"""
+layer_conductivity_average(sphere) = layer_property_average(sphere, Val(2))
+
+"""
+    layer_resistivity_average(sphere) -> TensISO{2,3}
+
+Name in conduction of [`layer_inverse_property_average`](@ref): the Reuss average
+of the layer resistivities.
+"""
+layer_resistivity_average(sphere) = layer_inverse_property_average(sphere, Val(2))
+
 # =============================================================================
-#  Bundled localization + contribution for a composite sphere
+#  Bundled concentration + contribution for a composite sphere
 #
 #  A `LayeredSphere` is `is_homogeneous_inclusion == false`, so a scheme asking
 #  for both a concentration tensor and a contribution tensor runs the
@@ -588,23 +624,23 @@ end
 #  the `_membrane_surface_stress` call that re-runs `_bulk_state_seq` /
 #  `_shear_state_seq` internally.
 #
-#  The bundles below share `_layer_localizations` (and `_membrane_surface_stress`
+#  The bundles below share `_layer_concentrations` (and `_membrane_surface_stress`
 #  where both members need it) while keeping every `sum(...)` expression
 #  verbatim.  In particular `N` is NOT derived from the documented identity
-#  `N = B − C₀:A` (see `stress_strain_loc` above): that identity is exact in
+#  `N = B − C₀:A` (see `flux_gradient_concentration` above): that identity is exact in
 #  real arithmetic, but the surface terms enter both members additively and the
 #  subtraction would reassociate the floating-point operations.  Keeping the
 #  original expressions is what makes these bundles bitwise identical.
 # =============================================================================
 
-function Core.loc_and_stiffness(
+function Core.concentration_and_contribution(
         sphere::LayeredSphere{T, N},
         ::TensND.AbstractTens{4, 3},
         C₀::TensND.TensISO{4, 3};
         external::Bool = true,
         kw...,
     ) where {T, N}
-    α, β, f = _layer_localizations(sphere, C₀)
+    α, β, f = _layer_concentrations(sphere, C₀)
     Δα, Δβ = _strain_jump_terms(sphere, C₀; external)
     A = TensISO{3}(
         sum(f[k] * α[k] for k in 1:N) + Δα, sum(f[k] * β[k] for k in 1:N) + Δβ
@@ -617,14 +653,14 @@ function Core.loc_and_stiffness(
     return (A, TensISO{3}(a + a_surf - α₀ * Δα, b + b_surf - β₀ * Δβ))
 end
 
-function Core.loc_and_stress_average(
+function Core.concentration_and_flux_average(
         sphere::LayeredSphere{T, N},
         ::TensND.AbstractTens{4, 3},
         C₀::TensND.TensISO{4, 3};
         external::Bool = true,
         kw...,
     ) where {T, N}
-    α, β, f = _layer_localizations(sphere, C₀)
+    α, β, f = _layer_concentrations(sphere, C₀)
     Δα, Δβ = _strain_jump_terms(sphere, C₀; external)
     A = TensISO{3}(
         sum(f[k] * α[k] for k in 1:N) + Δα, sum(f[k] * β[k] for k in 1:N) + Δβ
@@ -636,7 +672,7 @@ function Core.loc_and_stress_average(
     return (A, TensISO{3}(a + a_surf, b + b_surf))
 end
 
-function Core.loc_and_stiffness(
+function Core.concentration_and_contribution(
         sphere::LayeredSphere{T, N},
         ::TensND.AbstractTens{2, 3},
         K₀::TensND.TensISO{2, 3};
@@ -644,7 +680,7 @@ function Core.loc_and_stiffness(
         kw...,
     ) where {T, N}
     k₀ = _iso_scalar(K₀)
-    α = _cond_localization(sphere, k₀)
+    α = _cond_concentration(sphere, k₀)
     f = _layer_fractions(sphere)
     Δα = _gradient_jump_term(sphere, k₀; external)
     A = TensISO{3}(sum(f[k] * α[k] for k in 1:N) + Δα)
@@ -654,7 +690,7 @@ function Core.loc_and_stiffness(
     return (A, TensISO{3}(N_K))
 end
 
-function Core.loc_and_stress_average(
+function Core.concentration_and_flux_average(
         sphere::LayeredSphere{T, N},
         ::TensND.AbstractTens{2, 3},
         K₀::TensND.TensISO{2, 3};
@@ -662,7 +698,7 @@ function Core.loc_and_stress_average(
         kw...,
     ) where {T, N}
     k₀ = _iso_scalar(K₀)
-    α = _cond_localization(sphere, k₀)
+    α = _cond_concentration(sphere, k₀)
     f = _layer_fractions(sphere)
     A = TensISO{3}(sum(f[k] * α[k] for k in 1:N) + _gradient_jump_term(sphere, k₀; external))
     k_layers = _cond_layer_moduli(sphere)

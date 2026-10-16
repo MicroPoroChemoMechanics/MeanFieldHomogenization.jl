@@ -28,7 +28,7 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
   method, cluster model): closed forms for ball and disk pairs, multipole
   expansion for general ellipsoids, and periodic lattice sums.
 - `MeanFieldHomogenization.LayeredSpheres`   — `n`-layer composite spheres with five
-  interface types, volume-average and pointwise localization.
+  interface types, volume-average and pointwise concentration.
 - `MeanFieldHomogenization.LayeredSpheroids` — `n`-layer confocal spheroids in
   conduction, with imperfect interfaces, and in elasticity, with perfect ones.
 - `MeanFieldHomogenization.Schemes`      — RVEs, amounts, symmetrization and the
@@ -50,7 +50,7 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
   `FEExcenteredSphere`); the discretization comes from a backend extension,
   `MeanFieldHomogenizationFerriteExt` or `MeanFieldHomogenizationGridapExt`.
 - `MeanFieldHomogenization.NeuralInclusions` — inclusions whose response comes out of a
-  trained neural network (`NeuralHillInclusion`, `NeuralLocalizationInclusion`),
+  trained neural network (`NeuralHillInclusion`, `NeuralConcentrationInclusion`),
   together with the sampling and fitting machinery; the optimizer comes from
   `MeanFieldHomogenizationLuxExt`, evaluation needs no extra dependency.
 - `MeanFieldHomogenization.Constitutive` — the package **as a constitutive law at
@@ -65,9 +65,9 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
 ```julia
 hill_tensor(ell::AbstractEllipsoidalInclusion, C₀; method=:auto, ...)
 cod_tensor(crack::AbstractCrack, C₀; method=:auto, ...)
-compliance_contribution(crack, C₀; method=:auto, ...)    # returns H (or R)
-delta_compliance(crack, H, ε)                             # ΔS = factor · ε · H
-delta_resistivity(crack, R, ε)                            # ΔR = factor · ε · R
+inverse_property_contribution(crack, C₀; method=:auto, ...)    # returns H (or R)
+delta_inverse_property(crack, H, ε)                             # ΔS = factor · ε · H
+delta_inverse_property(crack, R, ε)                            # ΔR = factor · ε · R
 sif(crack, C₀, Σ; method=:auto, ...)
 dif(crack, C₀, Σ; method=:auto, ...)
 ```
@@ -122,21 +122,22 @@ using .Assemblies
 using .Poromechanics
 using .Viscoelasticity
 
-# ─── Localization + contribution (top-level: need all sub-module APIs) ──────
+# ─── Concentration + contribution (top-level: need all sub-module APIs) ──────
 # Every generic is declared in `Core`; sub-modules (and user code) extend them
 # via qualified imports so that all methods attach to the same canonical
 # function.
-import .Core: strain_strain_loc, stress_strain_loc, strain_stress_loc,
-    stress_stress_loc, gradient_gradient_loc, flux_gradient_loc,
-    gradient_flux_loc, flux_flux_loc,
-    stiffness_contribution, conductivity_contribution,
-    resistivity_contribution, compliance_contribution,
-    delta_stiffness, delta_conductivity, delta_compliance, delta_resistivity,
-    loc_and_stiffness, loc_and_stress_average,
-    compliance_and_stiffness_contribution, is_homogeneous_inclusion
+import .Core: gradient_gradient_concentration, flux_gradient_concentration,
+    gradient_flux_concentration, flux_flux_concentration, property_contribution,
+    inverse_property_contribution, delta_property, delta_inverse_property,
+    concentration_and_contribution, concentration_and_flux_average,
+    inverse_and_property_contribution, is_homogeneous_inclusion
+import .Core: strain_strain_concentration, stress_strain_concentration,
+    strain_stress_concentration, stress_stress_concentration, stiffness_contribution,
+    compliance_contribution, conductivity_contribution, resistivity_contribution,
+    delta_stiffness, delta_compliance, delta_conductivity, delta_resistivity
 import .Elasticity: hill_tensor
 
-include("localization.jl")
+include("concentration.jl")
 include("contribution.jl")
 
 # ─── Sub-modules that build on the generic algebra above ────────────────────
@@ -214,18 +215,18 @@ export FECellMeshOptions, fe_cell_size_estimate
 export FESupershapePore, SupershapePoreShape, has_surrogate, pore_shape_params
 export check_nested_spheroids, axi_layer_set
 export FEAxiLayeredSpheroid, LayeredSpheroidShape, layer_volumes, layer_fractions
-export fe_cell_localization, fe_cell_mesh_report
+export fe_cell_concentration, fe_cell_mesh_report
 export fe_cell_curved_volume, fe_cell_meshed_volume
-export fe_axi_localization, fe_axi_breakdown, fe_axi_mesh_report
+export fe_axi_concentration, fe_axi_breakdown, fe_axi_mesh_report
 export FEAxiSupershapePore, AxiSupershapePoreShape
-export fe_axi_pore_localization, fe_axi_pore_breakdown, fe_axi_pore_mesh_report
+export fe_axi_pore_concentration, fe_axi_pore_breakdown, fe_axi_pore_mesh_report
 
 # ── Neural-network (surrogate) inclusions ────────────────────────────────────
-export NeuralHillInclusion, NeuralLocalizationInclusion, NeuralShape
+export NeuralHillInclusion, NeuralConcentrationInclusion, NeuralShape
 export NeuralSurrogate, Provenance, worst_error
 export save_surrogate, load_surrogate, model_path, shipped_models
 export HillISO, HillTI, HillOrtho, HillISO2, HillTI2
-export StrainLocTI, StressLocTI, StrainLocCubic, GradLocISO2, GradLocTI2
+export GradientConcentrationTI, FluxConcentrationTI, GradientConcentrationCubic, GradientConcentrationISO2, GradientConcentrationTI2
 
 # ── Superspherical and superspheroidal morphologies ──────────────────────────
 export AbstractSuperShape, Supersphere, Superspheroid
@@ -243,13 +244,18 @@ export SampleBox, Dataset, generate_dataset, fit_scaling
 export TrainingOptions, train_surrogate, assemble_surrogate
 export validate_surrogate, report_surrogate, component_labels
 
-# ── Localization & contribution (Eshelby dilute, Kachanov-Sevostianov) ───────
-export strain_strain_loc, stress_strain_loc, strain_stress_loc, stress_stress_loc
-export gradient_gradient_loc, flux_gradient_loc, gradient_flux_loc, flux_flux_loc
-export stiffness_contribution, conductivity_contribution, resistivity_contribution
-export compliance_contribution
+# ── Concentration & contribution (Eshelby dilute, Kachanov-Sevostianov) ───────
+export gradient_gradient_concentration, flux_gradient_concentration, gradient_flux_concentration, flux_flux_concentration
+export gradient_gradient_concentration, flux_gradient_concentration
+export gradient_flux_concentration, flux_flux_concentration
+export property_contribution, inverse_property_contribution
+export delta_property, delta_inverse_property
+export strain_strain_concentration, stress_strain_concentration
+export strain_stress_concentration, stress_stress_concentration
+export stiffness_contribution, compliance_contribution
+export conductivity_contribution, resistivity_contribution
+export delta_stiffness, delta_compliance, delta_conductivity, delta_resistivity
 export is_homogeneous_inclusion
-export delta_stiffness, delta_conductivity, delta_compliance, delta_resistivity
 
 # ── LayeredSphere (Hervé-Zaoui / Hervé-Luanco / Gurtin-Murdoch / Kapitza) ────
 export LayeredSphere, AbstractInterface, PerfectInterface
@@ -258,21 +264,22 @@ export spring_compliances, spring_stiffnesses
 export KapitzaInterface, SurfaceConductiveInterface
 export layer_count, layer_radius, layer_modulus, layer_interface,
     layer_volume_fraction, outer_radius
-export layer_strain_average, sphere_strain_average, cumulative_strain_average
+export layer_gradient_average, sphere_gradient_average, cumulative_strain_average
+export layer_flux_average, sphere_flux_average
+export layer_strain_average, sphere_strain_average
 export layer_stress_average, sphere_stress_average
-export layer_gradient_average, sphere_gradient_average, layer_flux_average
 # Pointwise fields.  Declared in `LayeredSpheres` and extended by
 # `LayeredSpheroids`, hence listed once, here — see the `Laminates` note below
 # for the same arrangement applied to `layer_count` & friends.
 export get_layer
 export LayeredSphereFields, LayeredSphereTransportFields
-export region_stiffness, shell_localization
-export local_strain_strain_loc, local_stress_strain_loc,
-    local_strain_stress_loc, local_stress_stress_loc
-export local_strain, local_stress, local_displacement
-export local_gradient_gradient_loc, local_flux_gradient_loc,
-    local_gradient_flux_loc, local_flux_flux_loc
-export local_temperature, local_gradient, local_flux
+export region_stiffness, shell_concentration
+export local_gradient_gradient_concentration, local_flux_gradient_concentration,
+    local_gradient_flux_concentration, local_flux_flux_concentration
+export local_gradient, local_flux, local_displacement, local_temperature
+export local_strain_strain_concentration, local_stress_strain_concentration,
+    local_strain_stress_concentration, local_stress_stress_concentration
+export local_strain, local_stress
 
 # ── LayeredSpheroid (Barthélémy-Bignonnet confocal spheroid, conduction and elasticity)
 export LayeredSpheroid, layered_spheroid_from_fractions, confocal_layer_radii
@@ -323,8 +330,8 @@ export validate_laminate
 export AnisotropicSpringInterface, AnisotropicMembraneInterface
 export AnisotropicSurfaceConductiveInterface
 export laminate_hill
-export layer_strain_localization, layer_stress_localization
-export layer_gradient_localization, layer_flux_localization
+export layer_strain_concentration, layer_stress_concentration
+export layer_gradient_concentration, layer_flux_concentration
 export interface_jump
 export ThicknessParameter, InterfaceParameter, thickness, interface_param
 
@@ -338,7 +345,7 @@ export particle_property, particle_family, family_labels
 export particle_volume, particle_volume_fraction, inclusion_volume_fraction
 export assembly_volume, validate_assembly
 export cubic_lattice, random_assembly, max_packing_fraction
-export eim_bound_type, eim_polarizations, cluster_localizations
+export eim_bound_type, eim_polarizations, cluster_concentrations
 export CenterParameter, RadiusParameter, center_param, radius_param
 
 # ── Schemes : scheme types + entry point ─────────────────────────────────────
@@ -349,6 +356,8 @@ export ClusterModel, EquivalentInclusion
 export AndersonDefault, NewtonDefault, AutoNonlinear
 export DifferentialTrajectory, Proportional, Sequential, CustomPath, Path, DifferentialScheme
 export homogenize, differential_path
+export ConcentrationTensors, concentration_tensors
+export levin_free_gradient, levin_preflux, levin_free_strain, levin_prestress
 export crack_family_compliances, crack_family_residual
 export fracture_permeability
 
@@ -390,9 +399,9 @@ export mori_tanaka_alv_ortho, maxwell_alv_ortho
 export dilute_concentration_alv_ortho, dilute_contribution_alv_ortho
 export self_consistent_alv, asymmetric_self_consistent_alv,
     pcw_alv, differential_alv
-export bulk_localization_alv, bulk_state_seq_alv, shear_localization_alv
-export strain_strain_loc_alv, stiffness_contribution_alv
-export gradient_localization_alv, gradient_gradient_loc_alv, conductivity_contribution_alv
+export bulk_concentration_alv, bulk_state_seq_alv, shear_concentration_alv
+export gradient_gradient_concentration_alv, property_contribution_alv, gradient_concentration_alv
+export strain_strain_concentration_alv, stiffness_contribution_alv, conductivity_contribution_alv
 export self_consistent_alv_order2
 export homogenize_alv, has_visco_property
 export iso_order2_params_from_blocks, iso_order2_blocks_from_params
@@ -401,8 +410,10 @@ export voigt_alv_order2, reuss_alv_order2, dilute_alv_order2,
     dilute_dual_alv_order2, mori_tanaka_alv_order2, maxwell_alv_order2
 export dilute_concentration_alv_order2, dilute_contribution_alv_order2
 export homogenize_alv_order2
-export cod_kernel_alv, compliance_contribution_alv, delta_compliance_alv
-export stiffness_contribution_alv, stiffness_contribution_alv_at, delta_stiffness_alv
+export cod_kernel_alv, inverse_property_contribution_alv, delta_inverse_property_alv
+export property_contribution_alv_at, delta_property_alv
+export compliance_contribution_alv, delta_compliance_alv
+export stiffness_contribution_alv_at, delta_stiffness_alv
 
 # ── Viscoelasticity (Laplace-Carson, non-aging) ────────────────────────────
 export AbstractLaplaceInversion, GaverStehfest, FixedTalbot, TalbotTrefethen, DeHoog

@@ -126,7 +126,7 @@ Fields:
 - `particles::Dict{Symbol,Particle}` — position, geometry and moduli of each;
 - `boundary::B` — [`MixedBC`](@ref) or [`PeriodicBox`](@ref);
 - `families::Dict{Symbol,Int}` — family label per particle. Particles sharing a
-  label are constrained to carry the *same* polarization or localization
+  label are constrained to carry the *same* polarization or concentration
   tensor, which is how a lattice with a small motif is described without
   repeating its equations. Defaults to one family per particle.
 

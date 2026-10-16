@@ -4,7 +4,7 @@
     [Mori–Tanaka](@ref th-scheme-mori-tanaka), whose second form is compared
     with the estimate below, the
     [sign of the Green operator](@ref th-notation-green-sign) fixed in the
-    Conventions, and [Localization](@ref th-localization) for the contribution
+    Conventions, and [Concentration](@ref th-concentration) for the contribution
     tensors.
 
 Mori–Tanaka describes what surrounds an inclusion by the mean strain of the
@@ -176,7 +176,11 @@ are consistent with the estimate:
 Every inclusion is loaded by the same field, that of the cluster at infinity.
 These are also the concentration tensors that the stationarity condition of the
 [Ponte Castañeda–Willis](@ref th-scheme-pcw) estimate yields for a single
-distribution ellipsoid shaped like ``\Omega``.
+distribution ellipsoid shaped like ``\Omega``. In the terms of
+[the overview](@ref th-estimate-concentration), the remote field is
+``\mathbb E = (\mathbb I - \mathbb P_\Omega:\mathbb N_\Sigma)^{-1}``, crack
+families entering ``\mathbb N_\Sigma`` through their limits and carrying the
+strain ``\kappa_c\,\mathbb H_c:\mathbb C_0:\mathbb E`` per unit density.
 
 ## 4. Relation to the other estimates
 

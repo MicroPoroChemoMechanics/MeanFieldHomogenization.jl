@@ -200,7 +200,12 @@ jobs:
       - uses: julia-actions/setup-julia@v3
         with:
           version: '1'
+      # One depot cache for the seven shards, which build from the same
+      # environment: a cache per shard made seven of the twenty that overflowed
+      # the 10 GB a repository may hold.
       - uses: julia-actions/cache@v3
+        with:
+          include-matrix: false
       # Node itself comes from NodeJS_20_jll, which the Julia depot cache above
       # already covers; this caches only what `npm install` fetches for the
       # VitePress build (MathJax, mermaid, plotly), keyed on the manifest that

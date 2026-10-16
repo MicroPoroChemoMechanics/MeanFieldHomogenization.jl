@@ -7,7 +7,7 @@ using ForwardDiff
 #  test_matrix_role.jl — the contract this refactor exists for.
 #
 #  Three notions used to travel together under the name "matrix": the phase
-#  whose fraction is derived, the reference medium a scheme localizes in, and
+#  whose fraction is derived, the reference medium a scheme solves its auxiliary problems in, and
 #  the homogeneous solid of poromechanics. They are stated separately now, and
 #  each block below pins one consequence of that separation.
 # =============================================================================

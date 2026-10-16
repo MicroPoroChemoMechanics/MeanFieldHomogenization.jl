@@ -1,7 +1,7 @@
 # # [n-layer sphere: pointwise fields](@id tut-layered-sphere-local-fields)
 #
 # !!! info "Before this page"
-#     The tutorial [n-layer sphere: volume-averaged localization tensors](@ref tut-layered-sphere),
+#     The tutorial [n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere),
 #     whose layer averages the pointwise fields must reproduce, and the section
 #     [Pointwise fields](@ref th-layered-sphere-pointwise) of the theory page on
 #     the layered sphere, where the fields evaluated below are written out.
@@ -10,15 +10,15 @@
 # an n-layer composite sphere, under an arbitrary remote loading, with
 # perfect or imperfect interfaces.
 #
-# Where [`layer_strain_average`](@ref) gives one tensor per layer, the
+# Where [`layer_gradient_average`](@ref) gives one tensor per layer, the
 # pointwise API gives the field itself:
 #
 # - [`LayeredSphereFields`](@ref)`(sphere, C₀)` — solve the recurrence once;
-# - [`local_strain_strain_loc`](@ref)`(sol, x)` — ``\mathbb{A}(\underline x)`` with
+# - [`local_gradient_gradient_concentration`](@ref)`(sol, x)` — ``\mathbb{A}(\underline x)`` with
 #   ``\boldsymbol\varepsilon(\underline x) = \mathbb{A}(\underline x):\boldsymbol\varepsilon^\infty``, and its three
-#   siblings `local_stress_strain_loc`, `local_strain_stress_loc`,
-#   `local_stress_stress_loc` for a remote stress;
-# - [`local_strain`](@ref), [`local_stress`](@ref),
+#   siblings `local_flux_gradient_concentration`, `local_gradient_flux_concentration`,
+#   `local_flux_flux_concentration` for a remote stress;
+# - [`local_gradient`](@ref), [`local_flux`](@ref),
 #   [`local_displacement`](@ref) — the fields for one loading;
 # - [`get_layer`](@ref)`(sphere, r; side)` — which region a radius belongs
 #   to, and which limit is meant exactly on an interface.
@@ -68,7 +68,7 @@ const ε∞_hyd = εᵥ * TensISO{3}(1.0)
 
 "Radial and hoop stress at radius `r` under the remote loading `ε∞`."
 function radial_hoop(sol, r, ε∞; side = :outer)
-    σ = local_stress(sol, [r, 0.0, 0.0], ε∞; side)
+    σ = local_flux(sol, [r, 0.0, 0.0], ε∞; side)
     return σ[1, 1], σ[2, 2]              # e₁ is radial here, e₂ is a hoop axis
 end
 
@@ -106,12 +106,12 @@ end
 const ε∞_dev = Tens(diagm([0.0, 0.0, 1.0]))
 
 # Note the two spellings of a point: a Cartesian vector, as here, or the three
-# separate arguments `(r, θ, φ)`.  `local_stress(sol, a, b, c, ε∞)` is the
+# separate arguments `(r, θ, φ)`.  `local_flux(sol, a, b, c, ε∞)` is the
 # SPHERICAL form — passing Cartesian components that way silently evaluates
 # somewhere else entirely.
 "σ in the meridian plane φ = 0, at colatitude θ, in the canonical basis."
 σ_at(sol, r, θ, ε∞; side = :outer) =
-    local_stress(sol, [r * sin(θ), 0.0, r * cos(θ)], ε∞; side)
+    local_flux(sol, [r * sin(θ), 0.0, r * cos(θ)], ε∞; side)
 
 σzz_pole = [σ_at(sol, r, 0.0, ε∞_dev)[3, 3] for r in rs]      # along the load axis
 σzz_eq = [σ_at(sol, r, π / 2, ε∞_dev)[3, 3] for r in rs]      # perpendicular to it
@@ -131,7 +131,7 @@ const sol_spring = LayeredSphereFields(sphere_spring, C₀)
 let n = [1.0, 0.0, 0.0], x = R * n
     u⁻ = local_displacement(sol_spring, x, ε∞_hyd; side = :inner)
     u⁺ = local_displacement(sol_spring, x, ε∞_hyd; side = :outer)
-    t = local_stress(sol_spring, x, ε∞_hyd; side = :inner)[1, 1]
+    t = local_flux(sol_spring, x, ε∞_hyd; side = :inner)[1, 1]
     @printf "\nSpring interface at r = R:  [u_r] = %.6f,  σ_rr/kn = %.6f\n" (u⁺[1] - u⁻[1]) (t / 20.0)
 end
 
@@ -191,8 +191,8 @@ xs = range(-2.6Rₛ, 2.6Rₛ; length = 220)
 zs = range(-2.6Rₛ, 2.6Rₛ; length = 220)
 vm = [
     let r = hypot(x, z)
-        r < 1.0e-9 ? von_mises(local_stress(sol, [0.0, 0.0, 0.0], ε∞_dev)) :
-            von_mises(local_stress(sol, [x, 0.0, z], ε∞_dev))
+        r < 1.0e-9 ? von_mises(local_flux(sol, [0.0, 0.0, 0.0], ε∞_dev)) :
+            von_mises(local_flux(sol, [x, 0.0, z], ε∞_dev))
     end
         for z in zs, x in xs
 ]
@@ -212,13 +212,13 @@ end
 #
 # Averaging ``\mathbb{A}(\underline x)`` over a layer must return the
 # ``(\alpha_k, \beta_k)`` the averaged API reports —
-# [`shell_localization`](@ref) exposes that identity from the same cached
+# [`shell_concentration`](@ref) exposes that identity from the same cached
 # amplitudes, so the two routes cannot drift apart.
 
 println("\nlayer   α_k (pointwise)   α_k (averaged)   β_k (pointwise)   β_k (averaged)")
 for k in 1:layer_count(sphere)
-    αp, βp = shell_localization(sol, k)
-    A = strain_strain_loc(sphere, C₀; layer = k)
+    αp, βp = shell_concentration(sol, k)
+    A = gradient_gradient_concentration(sphere, C₀; layer = k)
     αa, βa = TensND.get_data(A)
     @printf "  %d      %14.10f   %14.10f   %14.10f   %14.10f\n" k αp αa βp βa
 end

@@ -105,8 +105,8 @@ end
 function _fracture_permeability_step(K_s, cracks, densities, K_n; kw...)
     acc = K_s
     for (c, d) in zip(cracks, densities)
-        𝕂 = MFH_Core.conductivity_contribution(c, K_n; kw...)
-        acc = acc + MFH_Core.delta_conductivity(c, 𝕂, d)
+        𝕂 = MFH_Core.property_contribution(c, K_n; kw...)
+        acc = acc + MFH_Core.delta_property(c, 𝕂, d)
     end
     return _major_symmetrize(acc)
 end

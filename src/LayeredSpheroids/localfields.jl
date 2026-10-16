@@ -243,7 +243,7 @@ end
 
 # =============================================================================
 #  Harmonization with `LayeredSphere` — a cached solution object, a remote
-#  gradient given as a VECTOR, and the four `local_*_*_loc` couplings.
+#  gradient given as a VECTOR, and the four `local_*_*_concentration` couplings.
 #
 #  The sphere and the spheroid solve different harmonic problems and will
 #  never share an implementation, but they answer the same questions and
@@ -364,9 +364,9 @@ function local_flux(f::LayeredSpheroidTransportFields, q, p, φ, ∇T∞)
 end
 
 """
-    local_gradient_gradient_loc(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
+    local_gradient_gradient_concentration(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
 
-Pointwise gradient-gradient localization ``\\boldsymbol{A}(q, p, \\varphi)``, so that
+Pointwise gradient-gradient concentration ``\\boldsymbol{A}(q, p, \\varphi)``, so that
 ``\\nabla T = \\boldsymbol{A}\\cdot\\nabla T^{\\infty}`` for any remote uniform gradient, in the spheroid's own frame.
 
 Unlike the sphere's, this tensor is **not** transversely isotropic about the
@@ -375,53 +375,53 @@ the field point — so it comes back as a general `Tens{2,3}`, built column by
 column from the three canonical remote gradients.
 
 Spheroid twin of
-[`local_gradient_gradient_loc`](@ref MeanFieldHomogenization.LayeredSpheres.local_gradient_gradient_loc).
+[`local_gradient_gradient_concentration`](@ref MeanFieldHomogenization.LayeredSpheres.local_gradient_gradient_concentration).
 """
-local_gradient_gradient_loc(s::LayeredSpheroid, k₀, q, p, φ) =
-    local_gradient_gradient_loc(LayeredSpheroidTransportFields(s, k₀), q, p, φ)
+local_gradient_gradient_concentration(s::LayeredSpheroid, k₀, q, p, φ) =
+    local_gradient_gradient_concentration(LayeredSpheroidTransportFields(s, k₀), q, p, φ)
 
-function local_gradient_gradient_loc(f::LayeredSpheroidTransportFields, q, p, φ)
+function local_gradient_gradient_concentration(f::LayeredSpheroidTransportFields, q, p, φ)
     cols = ntuple(j -> local_gradient(f, q, p, φ, ntuple(i -> i == j ? 1.0 : 0.0, 3)), 3)
     return TensND.Tens([cols[j][i] for i in 1:3, j in 1:3])
 end
 
 """
-    local_flux_gradient_loc(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
+    local_flux_gradient_concentration(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
 
-Pointwise flux-gradient localization ``-k(\\underline{x})\\,\\boldsymbol{A}(q, p, \\varphi)``: ``\\underline{q} = -k(\\underline{x})\\,\\boldsymbol{A}\\cdot\\nabla T^{\\infty}`` with
+Pointwise flux-gradient concentration ``-k(\\underline{x})\\,\\boldsymbol{A}(q, p, \\varphi)``: ``\\underline{q} = -k(\\underline{x})\\,\\boldsymbol{A}\\cdot\\nabla T^{\\infty}`` with
 the Fourier / Fick sign convention.
 """
-local_flux_gradient_loc(s::LayeredSpheroid, k₀, q, p, φ) =
-    local_flux_gradient_loc(LayeredSpheroidTransportFields(s, k₀), q, p, φ)
+local_flux_gradient_concentration(s::LayeredSpheroid, k₀, q, p, φ) =
+    local_flux_gradient_concentration(LayeredSpheroidTransportFields(s, k₀), q, p, φ)
 
-function local_flux_gradient_loc(f::LayeredSpheroidTransportFields, q, p, φ)
+function local_flux_gradient_concentration(f::LayeredSpheroidTransportFields, q, p, φ)
     s = f.spheroid
     N = layer_count(s)
     lay = get_layer(s, q)
     k_here = lay ≤ N ? _spheroid_layer_moduli(s)[lay] : _as_scalar_k(f.k₀)
-    return -k_here * local_gradient_gradient_loc(f, q, p, φ)
+    return -k_here * local_gradient_gradient_concentration(f, q, p, φ)
 end
 
 """
-    local_gradient_flux_loc(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
+    local_gradient_flux_concentration(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
 
-Pointwise gradient-flux localization ``-\\boldsymbol{A}\\cdot\\boldsymbol{K}_0^{-1}``: the local gradient under a
+Pointwise gradient-flux concentration ``-\\boldsymbol{A}\\cdot\\boldsymbol{K}_0^{-1}``: the local gradient under a
 remote uniform **flux** ``\\underline{q}^{\\infty}``.
 """
-local_gradient_flux_loc(s::LayeredSpheroid, k₀, q, p, φ) =
-    local_gradient_flux_loc(LayeredSpheroidTransportFields(s, k₀), q, p, φ)
+local_gradient_flux_concentration(s::LayeredSpheroid, k₀, q, p, φ) =
+    local_gradient_flux_concentration(LayeredSpheroidTransportFields(s, k₀), q, p, φ)
 
-local_gradient_flux_loc(f::LayeredSpheroidTransportFields, q, p, φ) =
-    -local_gradient_gradient_loc(f, q, p, φ) / _as_scalar_k(f.k₀)
+local_gradient_flux_concentration(f::LayeredSpheroidTransportFields, q, p, φ) =
+    -local_gradient_gradient_concentration(f, q, p, φ) / _as_scalar_k(f.k₀)
 
 """
-    local_flux_flux_loc(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
+    local_flux_flux_concentration(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
 
-Pointwise flux-flux localization: the local flux under a remote uniform
+Pointwise flux-flux concentration: the local flux under a remote uniform
 **flux** ``\\underline{q}^{\\infty}``.
 """
-local_flux_flux_loc(s::LayeredSpheroid, k₀, q, p, φ) =
-    local_flux_flux_loc(LayeredSpheroidTransportFields(s, k₀), q, p, φ)
+local_flux_flux_concentration(s::LayeredSpheroid, k₀, q, p, φ) =
+    local_flux_flux_concentration(LayeredSpheroidTransportFields(s, k₀), q, p, φ)
 
-local_flux_flux_loc(f::LayeredSpheroidTransportFields, q, p, φ) =
-    -local_flux_gradient_loc(f, q, p, φ) / _as_scalar_k(f.k₀)
+local_flux_flux_concentration(f::LayeredSpheroidTransportFields, q, p, φ) =
+    -local_flux_gradient_concentration(f, q, p, φ) / _as_scalar_k(f.k₀)

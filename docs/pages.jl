@@ -44,7 +44,7 @@ pages = [
         "The Eshelby problem" => [
             "theory/eshelby_problem.md",
             "theory/hill_tensors.md",
-            "theory/localization.md",
+            "theory/concentration.md",
             "theory/interaction_tensors.md",
         ],
         # A crack is a degenerate ellipsoid, so it stays close to the
@@ -81,6 +81,9 @@ pages = [
             "theory/laminate.md",
             "theory/cluster_model.md",
             "theory/eim.md",
+            # Not a scheme: what every scheme's concentration tensors give
+            # beyond the effective stiffness.
+            "theory/levin.md",
         ],
         "Extension to conductivity" => [
             "theory/conductivity.md",
@@ -151,6 +154,7 @@ pages = [
             "tutorials/transport.md",
             "tutorials/differential_paths.md",
             "tutorials/differential_loading_paths.md",
+            "tutorials/levin.md",
         ],
         "Inclusions, geometries and orientation" => [
             "tutorials/generated/hill_tensors.md",
@@ -301,7 +305,7 @@ pages = [
         "api/elasticity.md",
         "api/cracks.md",
         "api/conductivity.md",
-        "api/localization.md",
+        "api/concentration.md",
         "api/layered_sphere.md",
         "api/layered_spheroid.md",
         "api/superspheres.md",

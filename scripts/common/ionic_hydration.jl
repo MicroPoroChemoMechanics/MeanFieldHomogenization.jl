@@ -29,7 +29,7 @@ const IONIC_CEMDATA = joinpath(pkgdir(ChemistryLab), "data", "cemdata18-thermofu
 
 # Four systems. `:opc` is the model; the three smaller ones are the ladder that
 # was used to isolate what made it hard, and they are kept because reproducing an
-# intermediate is the fastest way to localize a regression.
+# intermediate is the fastest way to pinpoint a regression.
 #
 # All four run with ChemistryLab >= 0.9. `:opc` over 28 days: 202 accepted steps,
 # retcode Success, pore solution at pH 12.52-12.58, every replayed instant

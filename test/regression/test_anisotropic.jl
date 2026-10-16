@@ -12,7 +12,7 @@ using LinearAlgebra
 #
 #    1. hill_tensor(ellipsoid triaxial, C_aniso)   ← triclinic stiffness
 #    2. hill_tensor(ellipsoid triaxial, K_aniso)   ← fully-aniso K₀
-#    3. compliance_contribution(crack, C_triclinic) ← H tensor in aniso
+#    3. inverse_property_contribution(crack, C_triclinic) ← H tensor in aniso
 #    4. Cross-algorithm consistency (:residues vs :nestedquadgk) in aniso
 #    5. Hill-limit → COD consistency for elliptic cracks in aniso matrix
 # =============================================================================
@@ -100,14 +100,14 @@ end
 end
 
 # =============================================================================
-@testset "Anisotropic compliance_contribution — elastic cracks" begin
+@testset "Anisotropic inverse_property_contribution — elastic cracks" begin
     ℬ = CanonicalBasis{3, Float64}()
     C_tri = TensND.inv_KM(_KM_tri, ℬ)
 
     @testset "Penny / triclinic — H = (3/4) n̂ ⊗ˢ B ⊗ˢ n̂" begin
         pc = PennyCrack(1.0)
         B = cod_tensor(pc, C_tri; method = :residues)
-        H = compliance_contribution(pc, C_tri; method = :residues)
+        H = inverse_property_contribution(pc, C_tri; method = :residues)
         n̂ = tens_basis(crack_basis(pc), 3)
         Hexp = (3 / 4) * (n̂ ⊗ˢ B ⊗ˢ n̂)
         @test H ≈ Hexp rtol = 1.0e-10
@@ -115,8 +115,8 @@ end
 
     @testset "Elliptic η=0.3 / triclinic — residue vs DECUHR" begin
         ec = EllipticCrack(1.0, 0.3)
-        H_res = compliance_contribution(ec, C_tri; method = :residues)
-        H_dec = compliance_contribution(ec, C_tri; method = :decuhr, reltol = 1.0e-10)
+        H_res = inverse_property_contribution(ec, C_tri; method = :residues)
+        H_dec = inverse_property_contribution(ec, C_tri; method = :decuhr, reltol = 1.0e-10)
         scale = maximum(abs, components_canon(H_res))
         @test maximum(abs, components_canon(H_res - H_dec)) < 1.0e-6 * scale
     end
@@ -124,7 +124,7 @@ end
     @testset "Ribbon / triclinic — H = (2/π) n̂ ⊗ˢ B ⊗ˢ n̂" begin
         r = RibbonCrack(1.0)
         B = cod_tensor(r, C_tri; method = :residues)
-        H = compliance_contribution(r, C_tri; method = :residues)
+        H = inverse_property_contribution(r, C_tri; method = :residues)
         n̂ = tens_basis(crack_basis(r), 3)
         Hexp = (2 / π) * (n̂ ⊗ˢ B ⊗ˢ n̂)
         @test H ≈ Hexp rtol = 1.0e-10
@@ -140,9 +140,9 @@ end
     C_tri = TensND.inv_KM(_KM_tri, ℬ)
 
     pc = PennyCrack(1.0)
-    H_res = compliance_contribution(pc, C_tri; method = :residues)
-    H_dec = compliance_contribution(pc, C_tri; method = :decuhr, reltol = 1.0e-10)
-    H_nqg = compliance_contribution(pc, C_tri; method = :nestedquadgk, reltol = 1.0e-10)
+    H_res = inverse_property_contribution(pc, C_tri; method = :residues)
+    H_dec = inverse_property_contribution(pc, C_tri; method = :decuhr, reltol = 1.0e-10)
+    H_nqg = inverse_property_contribution(pc, C_tri; method = :nestedquadgk, reltol = 1.0e-10)
 
     scale = maximum(abs, components_canon(H_res))
     @test maximum(abs, components_canon(H_res - H_dec)) < 1.0e-6 * scale

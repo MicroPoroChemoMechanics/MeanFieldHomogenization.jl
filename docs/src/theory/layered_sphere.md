@@ -3,13 +3,13 @@
 !!! info "Before this page"
     [The Eshelby inclusion problem](@ref th-eshelby-problem), whose uniformity
     result a composite pattern loses, and
-    [Localization and contribution tensors](@ref th-localization), whose strain
+    [Concentration and contribution tensors](@ref th-concentration), whose strain
     concentration tensor is what a pattern without a Hill tensor supplies
     instead, for the [Homogenization schemes](@ref th-homogenization) of the
     next chapter to consume.
 
 [`LayeredSphere`](@ref) is an `n`-layer isotropic spherical composite
-inclusion in an infinite isotropic matrix, with per-layer localization, global
+inclusion in an infinite isotropic matrix, with per-layer concentration, global
 contribution tensors and layer / sphere / cumulative averages. The bulk and
 shear recurrences follow [herve1993](@citet) (generalizing the three-phase model
 of [christensenLo1979](@citet)); imperfect interfaces follow
@@ -76,7 +76,7 @@ directly, with the intra-layer transfer
 
 where ``\alpha = 4\mu/(3k+4\mu) \in [0,1]`` and ``\beta = 3k/(3k+4\mu) \in [0,1]`` with
 ``\alpha + \beta = 1``.  Every entry stays finite as ``k \to \infty`` (hence also for
-``\nu \to 1/2``), and the per-layer bulk localization ``\alpha_k = A_k/A_\infty``
+``\nu \to 1/2``), and the per-layer bulk concentration ``\alpha_k = A_k/A_\infty``
 degenerates smoothly (``\alpha_k \to 0`` for an incompressible core).
 
 The entry-point at ``r = 0^+`` is written in the "pressure amplitude"
@@ -139,7 +139,7 @@ being here the conductivity of the layer.
 
 Interface jumps for conductivity are given above (Kapitza primal,
 SurfaceConductive dual, matching the structural pattern of their
-elastic analogs).  The per-layer gradient localization
+elastic analogs).  The per-layer gradient concentration
 ``\alpha_k = A_k/A_\infty`` reduces, in the single-layer case, to the classical
 ``3k_0/(2k_0 + k_1)`` of Maxwell-type composites.
 
@@ -152,7 +152,7 @@ element type; it is exercised with `Float64`, `BigFloat`,
 ```julia
 using SymPy; @syms κ₀ μ₀ κ₁ μ₁
 s = LayeredSphere((Sym(1),), (TensISO{3}(3κ₁, 2μ₁),))
-simplify(MeanFieldHomogenization.LayeredSpheres._bulk_localization(s, κ₀, μ₀)[1])
+simplify(MeanFieldHomogenization.LayeredSpheres._bulk_concentration(s, κ₀, μ₀)[1])
 # → (3κ₀ + 4μ₀) / (3κ₁ + 4μ₀)
 ```
 
@@ -213,7 +213,7 @@ are forced by regularity at the origin).  Propagating both probes and
 solving a 2×2 linear system for the matrix-side far-field
 ``(a_\infty, b_\infty) = (1, 0)`` yields the per-layer amplitudes.
 
-The layer localization is **not** the mode-1 amplitude alone.  Mode 2 has
+The layer concentration is **not** the mode-1 amplitude alone.  Mode 2 has
 an ``r^3`` displacement profile, so it integrates to a non-zero deviatoric
 strain over a shell of finite thickness, whereas modes 3 and 4 average to
 zero pointwise:
@@ -238,9 +238,9 @@ modulus of [christensenLo1979](@citet) and passes the Eshelby consistency tests
 
 Three volume-average flavors are provided:
 
-- [`layer_strain_average`](@ref)`(sphere, C₀, ε∞, k)` — mean strain in
+- [`layer_gradient_average`](@ref)`(sphere, C₀, ε∞, k)` — mean strain in
   layer ``k`` (bulk + deviatoric parts).
-- [`sphere_strain_average`](@ref)`(sphere, C₀, ε∞)` — mean strain in
+- [`sphere_gradient_average`](@ref)`(sphere, C₀, ε∞)` — mean strain in
   the whole composite.
 - [`cumulative_strain_average`](@ref)`(sphere, C₀, ε∞, r)` — mean
   strain inside the ball of radius ``r``.
@@ -327,21 +327,21 @@ interface term restores. In conduction, the same reasoning gives
 
 | Call | Inner interfaces | Outer interface ``r_N`` | Echoes |
 |:--|:--|:--|:--|
-| `strain_strain_loc(sphere, C₀, C₀)` | counted | counted | `eE` |
-| `strain_strain_loc(sphere, C₀, C₀; external = false)` | counted | not counted | `sphere_eE(n-1, external=False)` |
-| `strain_strain_loc(sphere, C₀; layer = k)` | — | — | `layer_eE(k-1, external=False)` |
-| `strain_strain_loc(sphere, C₀; layer = k, external = true)` | — | ``r_k`` counted | `layer_eE(k-1)` |
-| `strain_strain_loc(sphere, C₀; layer = k, internal = true)` | ``r_{k-1}`` counted | — | `layer_eE(k-1, internal=True)` |
-| `layer_strain_average`, `sphere_strain_average` | — | — | |
+| `gradient_gradient_concentration(sphere, C₀, C₀)` | counted | counted | `eE` |
+| `gradient_gradient_concentration(sphere, C₀, C₀; external = false)` | counted | not counted | `sphere_eE(n-1, external=False)` |
+| `gradient_gradient_concentration(sphere, C₀; layer = k)` | — | — | `layer_eE(k-1, external=False)` |
+| `gradient_gradient_concentration(sphere, C₀; layer = k, external = true)` | — | ``r_k`` counted | `layer_eE(k-1)` |
+| `gradient_gradient_concentration(sphere, C₀; layer = k, internal = true)` | ``r_{k-1}`` counted | — | `layer_eE(k-1, internal=True)` |
+| `layer_gradient_average`, `sphere_gradient_average` | — | — | |
 
 `external` and `internal` keep the meaning they have in Echoes; only the
 default of the per-layer form differs, the material average. With
 `external = true` on every layer, the shells partition the sphere:
 ``\sum_k f_k\,\mathbb A_k = \mathbb A_\Omega``. The same keyword moves the surface stress
-of an outer membrane out of [`stress_strain_loc`](@ref), so that
+of an outer membrane out of [`flux_gradient_concentration`](@ref), so that
 ``\mathbb N = \mathbb A_{\sigma\varepsilon} - \mathbb C_0:\mathbb A_\Omega`` holds for either value. Conduction
-follows the same rules through [`gradient_gradient_loc`](@ref) and
-[`flux_gradient_loc`](@ref). The schemes use the defaults.
+follows the same rules through [`gradient_gradient_concentration`](@ref) and
+[`flux_gradient_concentration`](@ref). The schemes use the defaults.
 
 These tensors reproduce Echoes to ten digits, with spring interfaces inside
 and outside the sphere, under Mori–Tanaka and the self-consistent scheme, and
@@ -387,7 +387,7 @@ G_4 &= h/r.
 
 Every generator is transversely isotropic about ``\underline n`` — the
 configuration is rotation-invariant about the center — so the pointwise
-localization tensor ``\mathbb A(\underline x)``, defined by
+concentration tensor ``\mathbb A(\underline x)``, defined by
 ``\boldsymbol\varepsilon(\underline x) = \mathbb A(\underline x):\boldsymbol\varepsilon^\infty``,
 is a `TensTI{4,T,6}`: six Walpole coefficients and an axis, with **no major
 symmetry**.
@@ -396,7 +396,7 @@ Averaging ``\mathbb A(\underline x)`` over directions and over a shell returns e
 the ``(\alpha_k, \beta_k)`` above — mode 1 contributes ``a_k``, modes 3 and 4
 contribute nothing pointwise, and mode 2 contributes
 ``7 b_k r^2 (3k_k+\mu_k)/\mu_k``, whose shell average is the ``21/5`` factor.
-[`shell_localization`](@ref) exposes that identity from the same cached
+[`shell_concentration`](@ref) exposes that identity from the same cached
 amplitudes, so the pointwise and averaged routes cannot drift apart.
 
 The transport problem is the ``Y_1`` analog: ``T = f(r)\,(\underline
@@ -405,7 +405,7 @@ n\cdot\nabla T^\infty)`` and
 a second-order transversely isotropic tensor.
 
 Everything is validated pointwise against the C++ reference (Echoes'
-`loc_eE`, `loc_eS`, `loc_sE`, `loc_sS`) to ``10^{-14}``, perfect, spring and
+`conc_eE`, `conc_eS`, `conc_sE`, `conc_sS`) to ``10^{-14}``, perfect, spring and
 Gurtin–Murdoch membrane interfaces alike.
 
 See the worked example with figures:
@@ -416,8 +416,8 @@ See the worked example with figures:
 The next page, [Layered spheroid](@ref th-layered-spheroid), solves the same
 problem in conduction for confocal spheroidal layers, on which an imperfect
 interface couples the harmonic degrees that a sphere keeps apart. The
-per-layer localization tensors of §7 are computed on a random multilayer in the
+per-layer concentration tensors of §7 are computed on a random multilayer in the
 tutorial
-[n-layer sphere: volume-averaged localization tensors](@ref tut-layered-sphere),
+[n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere),
 and the syntax of a layered inclusion is in
 [Layered inclusions](@ref man-layered).

@@ -20,7 +20,7 @@
 #  in Mori-Tanaka, in the self-consistent fixed point, and along a
 #  differential path alike.  Keeping one phase per particle is therefore
 #  exact, needs no heuristic, and preserves the particle names, so a
-#  per-particle localization stays addressable by the name it had.
+#  per-particle concentration stays addressable by the name it had.
 # =============================================================================
 
 """
@@ -47,7 +47,7 @@ rve = RVE(asm)                          # …and here it is, to look at
 `matrix_geometry` is the shape the matrix phase is given. An assembly has no
 matrix shape of its own, so it defaults to a **ball** (a disk in 2D) — the
 neutral, orientation-free choice, and the one the one-site scripts of the
-package use. It is read by the schemes that localize
+package use. It is read by the schemes that solve an auxiliary problem for
 every phase alike — the self-consistent family and the bounds — and ignored by
 `MoriTanaka`, `Dilute`, `Maxwell` and `PCW`, which need the matrix *property*
 only.

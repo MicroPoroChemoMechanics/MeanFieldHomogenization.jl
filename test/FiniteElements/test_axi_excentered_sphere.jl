@@ -53,7 +53,7 @@ end
     # dipole field on the cylindrical basis mode by mode. Both are checked here
     # against their Cartesian expressions, rebuilt from the modal amplitudes at
     # several azimuths — a failure here would otherwise surface only as a
-    # plausible-looking few-percent drift in the localization tensors.
+    # plausible-looking few-percent drift in the concentration tensors.
     FE = MeanFieldHomogenization.FiniteElements
     s2 = sqrt(2.0)
     basis = (
@@ -86,11 +86,11 @@ end
         1.0, (AX_C_CORE, AX_C_SHELL); core_fraction = AX_W,
         eccentricity = 0.0, nradial = 24, radius_ratio = 4.0
     )
-    A, B = fe_axi_localization(incl, AX_C_MAT)
+    A, B = fe_axi_concentration(incl, AX_C_MAT)
 
     sph = LayeredSphere((cbrt(AX_W), 1.0), (AX_C_CORE, AX_C_SHELL))
-    Aex = ax_mandel(strain_strain_loc(sph, AX_C_MAT, AX_C_MAT))
-    Bex = ax_mandel(stress_strain_loc(sph, AX_C_MAT, AX_C_MAT))
+    Aex = ax_mandel(gradient_gradient_concentration(sph, AX_C_MAT, AX_C_MAT))
+    Bex = ax_mandel(flux_gradient_concentration(sph, AX_C_MAT, AX_C_MAT))
     Anum, Bnum = ax_mandel(A), ax_mandel(B)
 
     @test ax_bulk(Anum) ≈ ax_bulk(Aex) rtol = 2.0e-3
@@ -107,7 +107,7 @@ end
     @test maximum(abs, Anum[1:3, 4:6]) < 1.0e-10
 
     # The contribution identity `N = B − C₀:A` must hold on the FE tensors.
-    N = stiffness_contribution(incl, AX_C_MAT, AX_C_MAT)
+    N = property_contribution(incl, AX_C_MAT, AX_C_MAT)
     Nid = ax_mandel(B) - ax_mandel(AX_C_MAT) * ax_mandel(A)
     @test ax_mandel(N) ≈ Nid rtol = 1.0e-10
 end
@@ -118,10 +118,10 @@ end
         eccentricity = 0.0, nradial = 24, radius_ratio = 4.0
     )
     @test MeanFieldHomogenization.FiniteElements.tensor_order(incl) == 2
-    A, B = fe_axi_localization(incl, AX_K_MAT)
+    A, B = fe_axi_concentration(incl, AX_K_MAT)
     sph = LayeredSphere((cbrt(AX_W), 1.0), (AX_K_CORE, AX_K_SHELL))
-    Aex = TensND.components_canon(gradient_gradient_loc(sph, AX_K_MAT, AX_K_MAT))
-    Bex = TensND.components_canon(flux_gradient_loc(sph, AX_K_MAT, AX_K_MAT))
+    Aex = TensND.components_canon(gradient_gradient_concentration(sph, AX_K_MAT, AX_K_MAT))
+    Bex = TensND.components_canon(flux_gradient_concentration(sph, AX_K_MAT, AX_K_MAT))
     Anum, Bnum = TensND.components_canon(A), TensND.components_canon(B)
     @test Anum[1, 1] ≈ Aex[1, 1] rtol = 1.0e-3
     @test Anum[3, 3] ≈ Aex[3, 3] rtol = 1.0e-3
@@ -132,7 +132,7 @@ end
 @testset "The boundary correction is what makes R small" begin
     exact = ax_bulk(
         ax_mandel(
-            strain_strain_loc(
+            gradient_gradient_concentration(
                 LayeredSphere((cbrt(AX_W), 1.0), (AX_C_CORE, AX_C_SHELL)),
                 AX_C_MAT, AX_C_MAT
             )
@@ -165,7 +165,7 @@ end
             1.0, (AX_C_CORE, AX_C_SHELL); core_fraction = AX_W,
             eccentricity = α, nradial = 20, radius_ratio = 4.0
         )
-        M = ax_mandel(fe_axi_localization(incl, AX_C_MAT)[1])
+        M = ax_mandel(fe_axi_concentration(incl, AX_C_MAT)[1])
         if α == 0.0
             ref = M
             @test M[1, 1] ≈ M[3, 3] rtol = 1.0e-4
@@ -188,14 +188,14 @@ end
         eccentricity = 0.2, nradial = 12, radius_ratio = 4.0
     )
     @test fe_assembly_count(incl) == 0
-    strain_strain_loc(incl, AX_C_MAT, AX_C_MAT)
+    gradient_gradient_concentration(incl, AX_C_MAT, AX_C_MAT)
     @test fe_assembly_count(incl) == 1
     # The stress-side tensor comes out of the *same* solve.
-    stress_strain_loc(incl, AX_C_MAT, AX_C_MAT)
+    flux_gradient_concentration(incl, AX_C_MAT, AX_C_MAT)
     @test fe_assembly_count(incl) == 1
-    strain_strain_loc(incl, AX_C_MAT, iso_stiffness(10.0, 6.0))
+    gradient_gradient_concentration(incl, AX_C_MAT, iso_stiffness(10.0, 6.0))
     @test fe_assembly_count(incl) == 1              # same content, same key
-    strain_strain_loc(incl, AX_C_MAT, iso_stiffness(11.0, 6.0))
+    gradient_gradient_concentration(incl, AX_C_MAT, iso_stiffness(11.0, 6.0))
     @test fe_assembly_count(incl) == 2
     fe_reset!(incl)
     @test fe_assembly_count(incl) == 0
@@ -290,7 +290,7 @@ end
         1.0, (AX_C_CORE, AX_C_SHELL); core_fraction = AX_W, nradial = 10
     )
     C_ti = TensTI{4}(20.0, 30.0, 4.0, 5.0, 8.0, (0, 0, 1))
-    @test_throws ArgumentError fe_axi_localization(incl, C_ti)
+    @test_throws ArgumentError fe_axi_concentration(incl, C_ti)
     # ... and neither has a non-transversely-isotropic constituent.
     bad = FEExcenteredSphere(
         1.0, (C_ti, AX_C_SHELL); core_fraction = AX_W, nradial = 10
@@ -303,8 +303,8 @@ end
     worse = FEExcenteredSphere(
         1.0, (C_ortho, AX_C_SHELL); core_fraction = AX_W, nradial = 10
     )
-    @test_throws ArgumentError fe_axi_localization(worse, AX_C_MAT)
-    @test fe_axi_localization(bad, AX_C_MAT) isa Tuple   # TI core is allowed
+    @test_throws ArgumentError fe_axi_concentration(worse, AX_C_MAT)
+    @test fe_axi_concentration(bad, AX_C_MAT) isa Tuple   # TI core is allowed
 end
 
 @testset "Analytic sensitivity is refused, not silently zero" begin

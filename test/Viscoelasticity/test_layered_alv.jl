@@ -11,7 +11,7 @@ using LinearAlgebra
 #  harmonics.
 # =============================================================================
 
-@testset "bulk_localization_alv — elastic limit (Heaviside law)" begin
+@testset "bulk_concentration_alv — elastic limit (Heaviside law)" begin
     C_M = TensISO{3}(30.0, 8.0)   # k = 10, μ = 4 — matrix
     C_1 = TensISO{3}(60.0, 16.0)  # k = 20, μ = 8 — core
     C_2 = TensISO{3}(90.0, 24.0)  # k = 30, μ = 12 — shell
@@ -19,12 +19,12 @@ using LinearAlgebra
     times = collect(0.0:0.25:1.0)
     n = length(times)
 
-    α_alv = bulk_localization_alv(sphere, heaviside_law(C_M), times)
+    α_alv = bulk_concentration_alv(sphere, heaviside_law(C_M), times)
     @test length(α_alv) == 2
     @test all(size(α) == (n, n) for α in α_alv)
 
     # Reference elastic α_k from the existing recurrence.
-    α_elas = MeanFieldHomogenization.LayeredSpheres._bulk_localization(sphere, 10.0, 4.0)
+    α_elas = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(sphere, 10.0, 4.0)
 
     for k in 1:2
         # Diagonal entries match the elastic constant.
@@ -39,24 +39,24 @@ using LinearAlgebra
     end
 end
 
-@testset "bulk_localization_alv — single-layer sphere ≡ Eshelby bulk α" begin
+@testset "bulk_concentration_alv — single-layer sphere ≡ Eshelby bulk α" begin
     # Single layer = single sphere ; bulk α should equal the Eshelby
-    # bulk localization factor for a sphere (k_inc) in matrix (k_0, μ_0).
+    # bulk concentration factor for a sphere (k_inc) in matrix (k_0, μ_0).
     C_M = TensISO{3}(30.0, 8.0)
     C_1 = TensISO{3}(60.0, 16.0)
     sphere = LayeredSphere((1.0,), (C_1,))
     times = collect(0.0:0.5:1.0)
 
-    α_alv = bulk_localization_alv(sphere, heaviside_law(C_M), times)
-    α_elas = MeanFieldHomogenization.LayeredSpheres._bulk_localization(sphere, 10.0, 4.0)
+    α_alv = bulk_concentration_alv(sphere, heaviside_law(C_M), times)
+    α_elas = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(sphere, 10.0, 4.0)
     diag_α = diag(α_alv[1])
     @test maximum(abs, diag_α .- α_elas[1]) ≤ 1.0e-12
 end
 
-@testset "bulk_localization_alv — Maxwell relaxation kernel structure" begin
+@testset "bulk_concentration_alv — Maxwell relaxation kernel structure" begin
     # Matrix is a Maxwell relaxation ; layers are elastic.  At t = 0 the
     # response is elastic-instantaneous ; at later t' < t the kernel has
-    # decayed and the localization factor changes accordingly.
+    # decayed and the concentration factor changes accordingly.
     C_1 = TensISO{3}(60.0, 16.0)
     C_2 = TensISO{3}(90.0, 24.0)
     sphere = LayeredSphere((0.5, 1.0), (C_1, C_2))
@@ -64,7 +64,7 @@ end
     n = length(times)
 
     law = maxwell_iso(10.0, 4.0, 1.0, 0.5)
-    α_alv = bulk_localization_alv(sphere, law, times)
+    α_alv = bulk_concentration_alv(sphere, law, times)
     @test length(α_alv) == 2
     @test all(size(α) == (n, n) for α in α_alv)
     # Lower-triangular structure (causality).
@@ -80,7 +80,7 @@ end
 @testset "bulk_state_seq_alv — Spring + Perfect interface stack (elastic limit)" begin
     # Elastic limit : Heaviside matrix kernel, scalar-spring interface, perfect outer.
     # The ALV bulk α_k under a Spring interface must coincide diagonal-wise with
-    # the elastic α_k computed by `_bulk_localization` of the same sphere.
+    # the elastic α_k computed by `_bulk_concentration` of the same sphere.
     C_M = TensISO{3}(30.0, 8.0)
     C_1 = TensISO{3}(60.0, 16.0)
     C_2 = TensISO{3}(90.0, 24.0)
@@ -91,8 +91,8 @@ end
     )
     times = collect(0.0:0.5:1.0)
 
-    α_alv = bulk_localization_alv(sphere, heaviside_law(C_M), times)
-    α_elas = MeanFieldHomogenization.LayeredSpheres._bulk_localization(sphere, 10.0, 4.0)
+    α_alv = bulk_concentration_alv(sphere, heaviside_law(C_M), times)
+    α_elas = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(sphere, 10.0, 4.0)
     for k in 1:2
         diag_α = diag(α_alv[k])
         @test maximum(abs, diag_α .- α_elas[k]) ≤ 1.0e-12
@@ -110,8 +110,8 @@ end
     )
     times = collect(0.0:0.5:1.0)
 
-    α_alv = bulk_localization_alv(sphere, heaviside_law(C_M), times)
-    α_elas = MeanFieldHomogenization.LayeredSpheres._bulk_localization(sphere, 10.0, 4.0)
+    α_alv = bulk_concentration_alv(sphere, heaviside_law(C_M), times)
+    α_elas = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(sphere, 10.0, 4.0)
     for k in 1:2
         diag_α = diag(α_alv[k])
         @test maximum(abs, diag_α .- α_elas[k]) ≤ 1.0e-12
@@ -120,7 +120,7 @@ end
 
 # ── Shear (Y₂) recurrence ──────────────────────────────────────────────────
 
-@testset "shear_localization_alv — elastic limit (Heaviside law)" begin
+@testset "shear_concentration_alv — elastic limit (Heaviside law)" begin
     C_M = TensISO{3}(30.0, 8.0)
     C_1 = TensISO{3}(60.0, 16.0)
     C_2 = TensISO{3}(90.0, 24.0)
@@ -128,13 +128,13 @@ end
     times = collect(0.0:0.25:1.0)
     n = length(times)
 
-    β_alv = MeanFieldHomogenization.Viscoelasticity.shear_localization_alv(
+    β_alv = MeanFieldHomogenization.Viscoelasticity.shear_concentration_alv(
         sphere, heaviside_law(C_M), times
     )
     @test length(β_alv) == 2
     @test all(size(β) == (n, n) for β in β_alv)
 
-    β_elas = MeanFieldHomogenization.LayeredSpheres._shear_localization(sphere, C_M)
+    β_elas = MeanFieldHomogenization.LayeredSpheres._shear_concentration(sphere, C_M)
     for k in 1:2
         diag_β = diag(β_alv[k])
         @test maximum(abs, diag_β .- β_elas[k]) ≤ 1.0e-10
@@ -147,21 +147,21 @@ end
     end
 end
 
-@testset "shear_localization_alv — single-layer sphere ≡ Eshelby shear β" begin
+@testset "shear_concentration_alv — single-layer sphere ≡ Eshelby shear β" begin
     C_M = TensISO{3}(30.0, 8.0)
     C_1 = TensISO{3}(60.0, 16.0)
     sphere = LayeredSphere((1.0,), (C_1,))
     times = collect(0.0:0.5:1.0)
 
-    β_alv = MeanFieldHomogenization.Viscoelasticity.shear_localization_alv(
+    β_alv = MeanFieldHomogenization.Viscoelasticity.shear_concentration_alv(
         sphere, heaviside_law(C_M), times
     )
-    β_elas = MeanFieldHomogenization.LayeredSpheres._shear_localization(sphere, C_M)
+    β_elas = MeanFieldHomogenization.LayeredSpheres._shear_concentration(sphere, C_M)
     diag_β = diag(β_alv[1])
     @test maximum(abs, diag_β .- β_elas[1]) ≤ 1.0e-10
 end
 
-@testset "shear_localization_alv — Maxwell kernel triangular structure" begin
+@testset "shear_concentration_alv — Maxwell kernel triangular structure" begin
     C_1 = TensISO{3}(60.0, 16.0)
     C_2 = TensISO{3}(90.0, 24.0)
     sphere = LayeredSphere((0.5, 1.0), (C_1, C_2))
@@ -169,7 +169,7 @@ end
     n = length(times)
     law = maxwell_iso(10.0, 4.0, 1.0, 0.5)
 
-    β_alv = MeanFieldHomogenization.Viscoelasticity.shear_localization_alv(sphere, law, times)
+    β_alv = MeanFieldHomogenization.Viscoelasticity.shear_concentration_alv(sphere, law, times)
     @test length(β_alv) == 2
     @test all(size(β) == (n, n) for β in β_alv)
     for k in 1:2
@@ -181,7 +181,7 @@ end
     end
 end
 
-@testset "shear_localization_alv — Spring interface (elastic limit)" begin
+@testset "shear_concentration_alv — Spring interface (elastic limit)" begin
     C_M = TensISO{3}(30.0, 8.0)
     C_1 = TensISO{3}(60.0, 16.0)
     C_2 = TensISO{3}(90.0, 24.0)
@@ -192,17 +192,17 @@ end
     )
     times = collect(0.0:0.5:1.0)
 
-    β_alv = MeanFieldHomogenization.Viscoelasticity.shear_localization_alv(
+    β_alv = MeanFieldHomogenization.Viscoelasticity.shear_concentration_alv(
         sphere, heaviside_law(C_M), times
     )
-    β_elas = MeanFieldHomogenization.LayeredSpheres._shear_localization(sphere, C_M)
+    β_elas = MeanFieldHomogenization.LayeredSpheres._shear_concentration(sphere, C_M)
     for k in 1:2
         diag_β = diag(β_alv[k])
         @test maximum(abs, diag_β .- β_elas[k]) ≤ 1.0e-10
     end
 end
 
-@testset "shear_localization_alv — Membrane interface (elastic limit)" begin
+@testset "shear_concentration_alv — Membrane interface (elastic limit)" begin
     C_M = TensISO{3}(30.0, 8.0)
     C_1 = TensISO{3}(60.0, 16.0)
     C_2 = TensISO{3}(90.0, 24.0)
@@ -213,19 +213,19 @@ end
     )
     times = collect(0.0:0.5:1.0)
 
-    β_alv = MeanFieldHomogenization.Viscoelasticity.shear_localization_alv(
+    β_alv = MeanFieldHomogenization.Viscoelasticity.shear_concentration_alv(
         sphere, heaviside_law(C_M), times
     )
-    β_elas = MeanFieldHomogenization.LayeredSpheres._shear_localization(sphere, C_M)
+    β_elas = MeanFieldHomogenization.LayeredSpheres._shear_concentration(sphere, C_M)
     for k in 1:2
         diag_β = diag(β_alv[k])
         @test maximum(abs, diag_β .- β_elas[k]) ≤ 1.0e-10
     end
 end
 
-# ── stiffness_contribution_alv & strain_strain_loc_alv (composite assembly) ─
+# ── property_contribution_alv & gradient_gradient_concentration_alv (composite assembly) ─
 
-@testset "stiffness_contribution_alv — elastic limit ≡ stiffness_contribution" begin
+@testset "property_contribution_alv — elastic limit ≡ property_contribution" begin
     C_M = TensISO{3}(30.0, 8.0)    # κ = 10, μ = 4
     C_1 = TensISO{3}(60.0, 16.0)   # κ = 20, μ = 8
     C_2 = TensISO{3}(90.0, 24.0)   # κ = 30, μ = 12
@@ -233,11 +233,11 @@ end
     times = collect(0.0:0.25:1.0)
     n = length(times)
 
-    N_alv = stiffness_contribution_alv(sphere, heaviside_law(C_M), times)
+    N_alv = property_contribution_alv(sphere, heaviside_law(C_M), times)
     @test size(N_alv) == (6 * n, 6 * n)
 
     # Reference elastic stiffness contribution.
-    N_elas = stiffness_contribution(sphere, C_M)
+    N_elas = property_contribution(sphere, C_M)
     N_elas_M = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66(N_elas)
 
     # Diagonal 6×6 blocks must match the elastic 6×6, off-diag must vanish.
@@ -251,10 +251,10 @@ end
     end
 end
 
-@testset "stiffness_contribution_alv — Membrane (DUALDISC) surface stress" begin
+@testset "property_contribution_alv — Membrane (DUALDISC) surface stress" begin
     # The ALV stiffness contribution must include the Gurtin–Murdoch surface
     # stress of a dual interface; in the elastic (Heaviside) limit it must
-    # equal the elastic `stiffness_contribution`, which is validated against
+    # equal the elastic `property_contribution`, which is validated against
     # Echoes' `DUALDISC`.  Single-layer aggregate (the N=1 composite-sphere
     # path) + membrane, and a 2-layer sphere with an interior membrane.
     C_M = iso_stiffness_E_nu(30.0, 0.3)
@@ -270,9 +270,9 @@ end
         ),
     )
     for sphere in spheres
-        N_alv = stiffness_contribution_alv(sphere, heaviside_law(C_M), times)
+        N_alv = property_contribution_alv(sphere, heaviside_law(C_M), times)
         N_elas_M = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66(
-            stiffness_contribution(sphere, C_M)
+            property_contribution(sphere, C_M)
         )
         for i in 1:n
             rows = (6 * (i - 1) + 1):(6 * i)
@@ -301,7 +301,7 @@ end
 
     C_alv = homogenize_alv(rve, Dilute(), :C; times = times)
     # Reference elastic dilute.
-    N_elas = stiffness_contribution(sphere, C_M)
+    N_elas = property_contribution(sphere, C_M)
     C_eff_elas = C_M + f_I * N_elas
     C_eff_elas_M = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66(C_eff_elas)
 
@@ -318,7 +318,7 @@ end
     end
 end
 
-@testset "shear_localization_alv — N=2 cross-check vs ECHOES Python" begin
+@testset "shear_concentration_alv — N=2 cross-check vs ECHOES Python" begin
     # Reference values produced by `scripts/bench_echoes/bench_layered_alv.py`
     # (ECHOES Python `sphere_nlayers.layer_visco_eE` with `visco_paramsym(_, ISO)`).
     # Setup: Maxwell matrix, two elastic Heaviside layers.
@@ -336,8 +336,8 @@ end
     times = [0.0, 0.5, 1.0, 1.5, 2.0]
     C0_law = maxwell_iso(k0, mu0, eta_k0, eta_mu0)
 
-    α_jl = bulk_localization_alv(sphere, C0_law, times)
-    β_jl = MeanFieldHomogenization.Viscoelasticity.shear_localization_alv(sphere, C0_law, times)
+    α_jl = bulk_concentration_alv(sphere, C0_law, times)
+    β_jl = MeanFieldHomogenization.Viscoelasticity.shear_concentration_alv(sphere, C0_law, times)
 
     # ECHOES Python diagonal (== single-time elastic limit) reference values.
     α_py_diag_core = [0.5952381, 0.4792996, 0.4792996, 0.4792996, 0.4792996]
@@ -377,7 +377,7 @@ end
     end
     # t = t = 0 block ≡ elastic dilute with κ = 10, μ = 4.
     C_M_t0 = TensISO{3}(30.0, 8.0)
-    N_elas_t0 = stiffness_contribution(sphere, C_M_t0)
+    N_elas_t0 = property_contribution(sphere, C_M_t0)
     C_eff_t0 = C_M_t0 + 0.2 * N_elas_t0
     block11 = C_alv[1:6, 1:6]
     @test isapprox(
@@ -426,7 +426,7 @@ end
         ),
     )
     for (key, external) in ((:ext, true), (:noext, false))
-        α, β = V.iso_params_from_blocks(strain_strain_loc_alv(s, matrix, times; external))
+        α, β = V.iso_params_from_blocks(gradient_gradient_concentration_alv(s, matrix, times; external))
         @test α ≈ ref[key][1] rtol = 1.0e-12
         @test β ≈ ref[key][2] rtol = 1.0e-12
     end
@@ -444,7 +444,7 @@ end
     # An incompressible layer has no Volterra matrix; the elastic functions
     # treat it exactly, the ALV ones say so.
     rigid = LayeredSphere((0.6, 1.0), (iso_stiffness(Inf, 1.0), iso_stiffness(3.0, 1.5)))
-    @test_throws "layer 1 of the LayeredSphere has an infinite modulus" strain_strain_loc_alv(rigid, law, times)
+    @test_throws "layer 1 of the LayeredSphere has an infinite modulus" gradient_gradient_concentration_alv(rigid, law, times)
     # The row-by-row Newton solver of the self-consistent scheme, internal,
     # builds an ellipsoid's Hill kernel; the Picard one takes layered spheres.
     r = RVE()
@@ -454,7 +454,7 @@ end
     @test_throws "is a LayeredSphere" MeanFieldHomogenization.Viscoelasticity.self_consistent_alv_newton(r, :C; times)
     # A reference medium with an infinite modulus has no Volterra matrix either.
     grain = LayeredSphere((0.6, 1.0), (iso_stiffness(5.0, 1.0), iso_stiffness(3.0, 1.5)))
-    @test_throws "reference medium" strain_strain_loc_alv(grain, heaviside_law(iso_stiffness(Inf, 1.0)), times)
+    @test_throws "reference medium" gradient_gradient_concentration_alv(grain, heaviside_law(iso_stiffness(Inf, 1.0)), times)
 end
 
 @testset "LayeredSphere ALV — creep laws, and the stiffness the bounds average" begin

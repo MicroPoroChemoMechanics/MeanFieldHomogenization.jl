@@ -88,7 +88,7 @@ study reports ±5 % on ``\boldsymbol{B}_\infty`` at `htipdiv = 12` with P3 eleme
 
 A crack is the flat limit of a single homogeneous inclusion. The next tutorials
 turn to inclusions built of several layers, starting with
-[n-layer sphere: volume-averaged localization tensors](@ref tut-layered-sphere),
+[n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere),
 whose concentration tensors follow from an exact recurrence. The
 finite-element cell validated here returns in
 [A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate),

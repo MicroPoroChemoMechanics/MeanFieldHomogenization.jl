@@ -79,8 +79,8 @@ println("Radii: ", radii)
 sphere = LayeredSphere(radii, moduli)
 C0_law = make_R0()
 
-α_jl = bulk_localization_alv(sphere, C0_law, T_grid)
-β_jl = shear_localization_alv(sphere, C0_law, T_grid)
+α_jl = bulk_concentration_alv(sphere, C0_law, T_grid)
+β_jl = shear_concentration_alv(sphere, C0_law, T_grid)
 
 # Compare against Python reference per layer.
 to_matrix(v) = reduce(hcat, [collect(Float64.(row)) for row in v])'

@@ -454,9 +454,9 @@ function bench_crack(
     )
     crack = PennyCrack(1.0)
 
-    H_jl = compliance_contribution(crack, C_jl; method = jl_method)
+    H_jl = inverse_property_contribution(crack, C_jl; method = jl_method)
     H_jl_KM = KM(change_tens_canon(H_jl))
-    tJ = @belapsed compliance_contribution(
+    tJ = @belapsed inverse_property_contribution(
         $crack, $C_jl;
         method = $jl_method
     )
@@ -560,7 +560,7 @@ function bench_crack_elliptic(C_jl, C_py; ωflat = 1.0e-5, ηs = (1.0, 0.7, 0.5,
             continue
         end
 
-        H_jl = compliance_contribution(EllipticCrack(1.0, η), C_jl)
+        H_jl = inverse_property_contribution(EllipticCrack(1.0, η), C_jl)
         r = H_py[3, 3] / H_jl[3, 3, 3, 3]
         err = abs(r - η) / η
         worst = max(worst, err)

@@ -28,7 +28,7 @@ end
     tri = Ellipsoid(1.0, 0.6, 0.3)
 
     # An anisotropically-TYPED tensor holding isotropic VALUES.
-    N = stiffness_contribution(tri, C_i, C_iso)
+    N = property_contribution(tri, C_i, C_iso)
     aniso_typed = MeanFieldHomogenization.Schemes._diff_embed(C_iso, C_iso + N)
     @test !(aniso_typed isa TensND.TensISO)
     @test Array(aniso_typed) ≈ Array(C_iso) atol = 1.0e-10

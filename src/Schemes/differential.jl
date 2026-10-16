@@ -131,6 +131,28 @@ function _diff_integrate_ode(
         solver_kwargs::NamedTuple = NamedTuple(),
         kw...
     )
+    ode_kw, x0 = _diff_setup(rve, paths, prop, matrix, P_init, formulation; kw...)
+    rhs! = (du, u, p, τ) -> _diff_ode_rhs!(du, u, p, τ)
+    prob = ODEProblem(rhs!, x0, (0.0, 1.0), ode_kw)
+    τ_save = range(0.0, 1.0; length = max(nsteps, 1) + 1)
+    sol = solve(
+        prob,
+        alg === nothing ? Tsit5() : alg;
+        abstol, reltol,
+        saveat = τ_save,
+        dense = false,
+        solver_kwargs...
+    )
+    states = [_reconstruct_tens(ode_kw.sym_tag, ode_kw.proto, u) for u in sol.u]
+    return collect(sol.t), states
+end
+
+# Everything the right-hand side needs, and the initial state: the phases split
+# between solids and cracks with their targets, and the state layout.
+function _diff_setup(
+        rve::RVE, paths::AbstractDict{Symbol}, prop::Symbol, matrix::Symbol,
+        P_init::TensND.AbstractTens, formulation::Symbol; kw...
+    )
     # Split inclusion phases between solids and cracks.  Targets are the
     # final values reached at `τ = 1` (volume fractions for solids,
     # densities for cracks).  The target eltype is preserved (it can be
@@ -164,7 +186,7 @@ function _diff_integrate_ode(
 
     # State : canonical components of the running estimate (length
     # 2 / 5 / 9 for iso/TI/ortho 4-tensors, 1 / 3 / 6 for the
-    # corresponding 2-tensors, 36 / 9 for the fully-anisotropic Mandel
+    # corresponding 2-tensors, 36 / 6 for the fully-anisotropic Mandel
     # fallback).  `proto` carries the matrix values in the smallest
     # symmetry class the running estimate can stay in — the matrix's own
     # class when every phase preserves it, a wider one otherwise (see
@@ -198,19 +220,7 @@ function _diff_integrate_ode(
         dual = dual,
         kw = kw,
     )
-    rhs! = (du, u, p, τ) -> _diff_ode_rhs!(du, u, p, τ)
-    prob = ODEProblem(rhs!, x0, (0.0, 1.0), ode_kw)
-    τ_save = range(0.0, 1.0; length = max(nsteps, 1) + 1)
-    sol = solve(
-        prob,
-        alg === nothing ? Tsit5() : alg;
-        abstol, reltol,
-        saveat = τ_save,
-        dense = false,
-        solver_kwargs...
-    )
-    states = [_reconstruct_tens(sym_tag, proto, u) for u in sol.u]
-    return collect(sol.t), states
+    return ode_kw, x0
 end
 
 # ── RHS ─────────────────────────────────────────────────────────────────────
@@ -220,21 +230,10 @@ function _diff_ode_rhs!(du, u, p, τ)
     # evaluated against C = S⁻¹ (closed-form inverse for ISO / TI / ortho).
     Pτ = _reconstruct_tens(p.sym_tag, p.proto, u)
     Cτ = p.dual ? inv(Pτ) : Pτ
-    # Sherman-Morrison inversion of dφ = (𝟙 − f ⊗ 𝐔)^{-1} · df.
-    n_solid = length(p.solid_names)
-    f = Vector{eltype(u)}(undef, n_solid)
-    df = Vector{eltype(u)}(undef, n_solid)
-    @inbounds for (i, name) in enumerate(p.solid_names)
-        nt = p.paths[name]
-        f[i] = nt.f(τ) * p.targets[name]
-        df[i] = nt.df(τ) * p.targets[name]
-    end
-    f0 = one(eltype(u)) - sum(f; init = zero(eltype(u)))
-    sum_df = sum(df; init = zero(eltype(u)))
+    dφ, dφᶜ = _diff_rates(p, τ, eltype(u))
     Δ = zero(Pτ)
     @inbounds for (i, name) in enumerate(p.solid_names)
-        # dφ_i / dτ = df_i + (f_i / f_0) · sum(df)   (Sherman-Morrison)
-        dφᵢ = df[i] + (f[i] / f0) * sum_df
+        dφᵢ = dφ[i]
         iszero(dφᵢ) && continue
         Δ += dφᵢ * (
             p.dual ?
@@ -242,22 +241,10 @@ function _diff_ode_rhs!(du, u, p, τ)
                 _diff_dilute_correction(p.rve, name, p.prop, Cτ; p.kw...)
         )
     end
-    # Crack families carry no volume, so they contribute nothing to the sum
-    # inverted above.  They are still diluted by it: replacing dφ of the
-    # current medium by solid material destroys the cracks that piece of
-    # medium contained, hence
-    #     dε_c = dφ_c^ε − ε_c Σ_{j solid} dφ_j ,
-    # which inverts with the very same Sherman-Morrison factor as the
-    # solid fractions, the density playing the role of the fraction:
-    #     dφ_c^ε = dε_c + (ε_c / f_0) Σ_{j solid} df_j .
-    # The correction vanishes for a crack-only RVE and whenever no solid
-    # phase grows at the same τ (e.g. `Sequential`).
-    @inbounds for name in p.crack_names
-        nt = p.paths[name]
-        εᶜ = nt.f(τ) * p.targets[name]
-        dφᶜ = nt.df(τ) * p.targets[name] + (εᶜ / f0) * sum_df
-        iszero(dφᶜ) && continue
-        Δ += dφᶜ * (
+    @inbounds for (c, name) in enumerate(p.crack_names)
+        dφᶜ_c = dφᶜ[c]
+        iszero(dφᶜ_c) && continue
+        Δ += dφᶜ_c * (
             p.dual ?
                 _diff_crack_density_compliance_kernel(p.rve, name, p.prop, Cτ; p.kw...) :
                 _diff_crack_density_kernel(p.rve, name, p.prop, Cτ; p.kw...)
@@ -265,6 +252,47 @@ function _diff_ode_rhs!(du, u, p, τ)
     end
     _set_state_layout!(du, p.sym_tag, p.proto, Δ)
     return nothing
+end
+
+# Rates at which the solid phases and the crack families are incorporated into
+# the current medium, dφ_i/dτ and dφ_c^ε/dτ, from the prescribed df_i/dτ.
+# Sherman-Morrison inversion of dφ = (𝟙 − f ⊗ 𝐔)⁻¹ · df for the solids.
+# Crack families carry no volume, so they contribute nothing to the sum
+# inverted.  They are still diluted by it: replacing dφ of the current medium
+# by solid material destroys the cracks that piece of medium contained, hence
+#     dε_c = dφ_c^ε − ε_c Σ_{j solid} dφ_j ,
+# which inverts with the very same Sherman-Morrison factor as the solid
+# fractions, the density playing the role of the fraction:
+#     dφ_c^ε = dε_c + (ε_c / f_0) Σ_{j solid} df_j .
+# The correction vanishes for a crack-only RVE and whenever no solid phase
+# grows at the same τ (e.g. `Sequential`).
+function _diff_rates(p, τ, ::Type{T}) where {T}
+    f, df, f0, sum_df = _diff_amounts(p, τ, T)
+    dφ = T[df[i] + (f[i] / f0) * sum_df for i in eachindex(f)]
+    dφᶜ = T[
+        p.paths[name].df(τ) * p.targets[name] + (p.paths[name].f(τ) * p.targets[name] / f0) * sum_df
+            for name in p.crack_names
+    ]
+    return dφ, dφᶜ
+end
+
+# Fractions of the solid phases at `τ`, their rates, the matrix fraction and the
+# total rate.
+function _diff_amounts(p, τ, ::Type{T}) where {T}
+    f = T[p.paths[name].f(τ) * p.targets[name] for name in p.solid_names]
+    df = T[p.paths[name].df(τ) * p.targets[name] for name in p.solid_names]
+    return f, df, one(T) - sum(f; init = zero(T)), sum(df; init = zero(T))
+end
+
+# The same rates per unit target amount, solids then cracks: finite when a
+# target vanishes, they feed the concentration tensor of a phase rather than
+# its weighted tensor (see `concentrations.jl`).
+function _diff_unit_rates(p, τ, ::Type{T}) where {T}
+    _, _, f0, sum_df = _diff_amounts(p, τ, T)
+    return T[
+        p.paths[name].df(τ) + (p.paths[name].f(τ) / f0) * sum_df
+            for name in vcat(p.solid_names, p.crack_names)
+    ]
 end
 
 # Write `Δ` into the state layout fixed at setup.  `Δ` normally lives in
@@ -416,7 +444,8 @@ end
 
 _state_length(::Val, t) = length(TensND.get_data(t))
 _state_length(::Val{:full_4}, t) = 36
-_state_length(::Val{:full_2}, t) = 9
+# A conductivity is symmetric: its Mandel vector has 6 components.
+_state_length(::Val{:full_2}, t) = 6
 
 _symmetry_tag(::TensND.TensISO{4}) = Val(:iso_4)
 _symmetry_tag(::TensND.TensISO{2}) = Val(:iso_2)
@@ -461,7 +490,7 @@ _reconstruct_tens(::Val{:ortho}, proto::TensND.AbstractTens, u) =
 _reconstruct_tens(::Val{:full_4}, ::TensND.AbstractTens, u) =
     TensND.inv_KM(reshape(u, 6, 6))
 _reconstruct_tens(::Val{:full_2}, ::TensND.AbstractTens, u) =
-    TensND.inv_KM(reshape(u, 3, 3))
+    TensND.inv_KM(collect(u))
 
 # ── Per-phase contribution helpers ──────────────────────────────────────────
 
@@ -475,7 +504,7 @@ function _diff_dilute_correction(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
-    N = MFH_Core.stiffness_contribution(geom, P_i, P₀_proj; kw...)
+    N = MFH_Core.property_contribution(geom, P_i, P₀_proj; kw...)
     return _apply_symmetrize(N, sym)
 end
 
@@ -487,12 +516,12 @@ function _diff_dilute_correction(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
-    N = MFH_Core.conductivity_contribution(geom, P_i, P₀_proj; kw...)
+    N = MFH_Core.property_contribution(geom, P_i, P₀_proj; kw...)
     return _apply_symmetrize(N, sym)
 end
 
 # Crack contribution kernel **per unit density** : returns
-# `delta_stiffness(geom, N, 1.0)` (or `delta_conductivity` for 2-tensor)
+# `delta_property(geom, N, 1.0)`, of either order,
 # so the RHS multiplies by `dε/dτ` directly.
 function _diff_crack_density_kernel(
         rve::RVE, name::Symbol, prop::Symbol,
@@ -502,11 +531,11 @@ function _diff_crack_density_kernel(
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
     K_int = _crack_interface_K4(rve, name)
-    N = MFH_Core.stiffness_contribution(
+    N = MFH_Core.property_contribution(
         geom, P₀_proj;
         K_interface = K_int, kw...
     )
-    return _apply_symmetrize(MFH_Core.delta_stiffness(geom, N, 1.0), sym)
+    return _apply_symmetrize(MFH_Core.delta_property(geom, N, 1.0), sym)
 end
 
 function _diff_crack_density_kernel(
@@ -517,11 +546,11 @@ function _diff_crack_density_kernel(
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
     α_int = _crack_interface_α(rve, name)
-    N = MFH_Core.conductivity_contribution(
+    N = MFH_Core.property_contribution(
         geom, P₀_proj;
         α_interface = α_int, kw...
     )
-    return _apply_symmetrize(MFH_Core.delta_conductivity(geom, N, 1.0), sym)
+    return _apply_symmetrize(MFH_Core.delta_property(geom, N, 1.0), sym)
 end
 
 # ── Dual (compliance-side) per-phase kernels ────────────────────────────────
@@ -529,7 +558,7 @@ end
 # Mirror images of the four kernels above, evaluated against the same
 # running STIFFNESS `P_curr` (the caller inverts the state once per RHS
 # step) but returning the compliance / resistivity contribution, so the
-# ODE integrates S rather than C.  `compliance_contribution` evaluates
+# ODE integrates S rather than C.  `inverse_property_contribution` evaluates
 # `ℍ = −𝕊 : 𝐍 : 𝕊`, which holds for heterogeneous inclusions and voids alike.
 
 # Unit-amount compliance contribution `ℍ_i(C)` of a solid inclusion phase.
@@ -541,7 +570,7 @@ function _diff_compliance_correction(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
-    H = compliance_contribution(geom, P_i, P₀_proj; kw...)
+    H = inverse_property_contribution(geom, P_i, P₀_proj; kw...)
     return _apply_symmetrize(H, sym)
 end
 
@@ -553,7 +582,7 @@ function _diff_compliance_correction(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
-    R = MFH_Core.resistivity_contribution(geom, P_i, P₀_proj; kw...)
+    R = MFH_Core.inverse_property_contribution(geom, P_i, P₀_proj; kw...)
     return _apply_symmetrize(R, sym)
 end
 
@@ -567,8 +596,8 @@ function _diff_crack_density_compliance_kernel(
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
     K_int = _crack_interface_K4(rve, name)
-    H = compliance_contribution(geom, P₀_proj; K_interface = K_int, kw...)
-    return _apply_symmetrize(delta_compliance(geom, H, 1.0), sym)
+    H = inverse_property_contribution(geom, P₀_proj; K_interface = K_int, kw...)
+    return _apply_symmetrize(delta_inverse_property(geom, H, 1.0), sym)
 end
 
 function _diff_crack_density_compliance_kernel(
@@ -579,6 +608,6 @@ function _diff_crack_density_compliance_kernel(
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
     α_int = _crack_interface_α(rve, name)
-    R = compliance_contribution(geom, P₀_proj; α_interface = α_int, kw...)
-    return _apply_symmetrize(delta_resistivity(geom, R, 1.0), sym)
+    R = inverse_property_contribution(geom, P₀_proj; α_interface = α_int, kw...)
+    return _apply_symmetrize(delta_inverse_property(geom, R, 1.0), sym)
 end

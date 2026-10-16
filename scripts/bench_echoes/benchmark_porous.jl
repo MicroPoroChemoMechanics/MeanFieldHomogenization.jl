@@ -162,7 +162,7 @@ function _tol(ω, φ)
         return (atol = 1.0e-3, rtol = 1.0e-3)
     else
         # Non-spherical: looser, both ECHOES and MFH go through
-        # numerical localization-tensor branches.
+        # numerical concentration-tensor branches.
         return (atol = 5.0e-3, rtol = 5.0e-3)
     end
 end

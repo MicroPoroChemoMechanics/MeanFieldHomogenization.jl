@@ -77,8 +77,8 @@ polarization only, so that the strain averages to ``\boldsymbol E``
 ``\mathbb C_0:\boldsymbol\varepsilon + \boldsymbol\tau`` is in equilibrium and the
 strain fluctuation is compatible with zero mean, so their product averages to
 the product of their averages (Hill's lemma), and the minimum is
-``\frac12\,\boldsymbol E:\mathbb C_0:\boldsymbol E + \bar{\boldsymbol\tau}:\boldsymbol E
-- \frac12\,\langle(\boldsymbol\tau - \bar{\boldsymbol\tau}):\mathbb G^0\ast(\boldsymbol\tau - \bar{\boldsymbol\tau})\rangle``,
+``\frac12\,\boldsymbol E:\mathbb C_0:\boldsymbol E + \bar{\boldsymbol\tau}:\boldsymbol E -
+\frac12\,\langle(\boldsymbol\tau - \bar{\boldsymbol\tau}):\mathbb G^0\ast(\boldsymbol\tau - \bar{\boldsymbol\tau})\rangle``,
 and the effective energy is bounded below by the Hashin–Shtrikman functional
 
 ```math
@@ -351,6 +351,9 @@ closed form in general. With one ellipsoid they are all equal:
 The field that loads the inclusions is the mean strain of the matrix when the
 bracket reduces to ``\mathbb I``, as it does when every inclusion has the shape of
 the distribution: the Mori–Tanaka case again.
+The package implements the estimate with a single distribution ellipsoid, and
+[`concentration_tensors`](@ref) returns these tensors, the crack families of §8
+entering as they do in the [Maxwell](@ref th-scheme-maxwell) estimate.
 
 ## 8. Cracks
 

@@ -24,6 +24,7 @@ and the one where the choice of scheme matters most.
 | [Transport properties](@ref tut-transport) | the same algebra at tensor order 2: diffusivity of a porous medium, anisotropy from oriented pores |
 | [The differential scheme and path dependence](@ref tut-differential-paths) | incremental homogenization; why mixing order matters |
 | [Comparing loading-path trajectories](@ref tut-differential-loading-paths) | the same target fractions, four trajectories, watched τ by τ |
+| [Thermal expansion and Biot tensor](@ref tut-levin) | Levin's theorem on the concentration tensors of a scheme: the thermal expansion of a two-phase composite under five schemes, anisotropic with aligned platelets, the Biot tensor of a solid with pores and pressurized cracks, and both in closed form |
 
 ## Inclusions, geometries and orientation
 
@@ -33,18 +34,18 @@ and the one where the choice of scheme matters most.
 | [Cracks and crack density](@ref tut-cracks) | volume fraction → crack density; the COD tensor |
 | [Crack distributions: isotropic or parallel](@ref tut-crack-distributions) | the same density, two orientation rules; the two self-consistent forms and their two percolation thresholds (9/16 exactly for the compliance form, ≈ 1.158 for the stiffness one); the local-versus-global frame of a `TensRotated` result |
 | [Validating a finite-element crack](@ref tut-fe-crack) | the same crack solved by finite elements: what the corrected boundary condition buys, and convergence to the closed-form COD |
-| [Layered spheres](@ref tut-layered-sphere) | Hervé–Zaoui `n`-layer localization and layer averages |
+| [Layered spheres](@ref tut-layered-sphere) | Hervé–Zaoui `n`-layer concentration and layer averages |
 | [Layered spheroids: geometry and effective conductivity](@ref tut-layered-spheroid-effective) | the confocal `n`-layer spheroid, the equivalent particle, harmonic-series accuracy |
 | [Imperfect interfaces: what they do to the local fields](@ref tut-layered-spheroid-interfaces) | pointwise temperature and flux, streamlines, conductance sweep, 3-D view |
 | [Highly conducting interfaces](@ref tut-layered-spheroid-hc) | equivalent conductivity of an HC-coated particle vs aspect ratio |
 | [A layered spheroid, meshed](@ref tut-axi-layered-spheroid) | the same body by Fourier axisymmetric finite elements: calibrated against the two closed forms, taken to nests neither covers, then replaced by a surrogate trained on the cell so the morphology becomes differentiable |
 | [Nanocomposites: the equivalent particle](@ref tut-nano-spheroids) | a Gurtin-Murdoch interface condensed into a particle stiffness, its three limiting shapes reproduced exactly, and the size effect it produces through an ordinary Mori-Tanaka estimate — no new scheme needed |
-| [Periodic multilayer: the exact laminate solution](@ref tut-laminate) | a cell with no matrix and no Eshelby problem: the exact effective tensor, per-layer localization, the bounds it saturates |
+| [Periodic multilayer: the exact laminate solution](@ref tut-laminate) | a cell with no matrix and no Eshelby problem: the exact effective tensor, per-layer concentration, the bounds it saturates |
 | [Imperfect interfaces in a laminate, and the size effect](@ref tut-laminate-interfaces) | the four interface models on a planar interface, and the interface *density* that makes the period matter |
 | [Symmetrization](@ref tut-symmetrization) | exact rotation-group average vs best-fit projection |
 | [The custom-inclusion contract](@ref tut-custom-inclusion-contract) | plugging an arbitrary morphology into every scheme — the three entry gates, the density seam, free orientation averaging |
 | [An inclusion whose response is a neural network](@ref tut-neural-inclusion) | both phases — how a surrogate is **trained** (schematics of the network and of the fitting loop, the recorded learning curve) and how a trained one is **used**: what stays exact whatever the fit, accuracy against the closed form, every scheme, and the derivative with respect to the *morphology* |
-| [Replacing a finite-element solve by a surrogate](@ref tut-neural-excentered-sphere) | the case the machinery exists for: the eccentric-core sphere, whose localization tensors have no closed form. Gate B with the 6-component transversely isotropic pair, the contrast ratios that replace gate A's homogeneity, the accuracy against the finite elements, the speed-up, and a derivative with respect to the **eccentricity** |
+| [Replacing a finite-element solve by a surrogate](@ref tut-neural-excentered-sphere) | the case the machinery exists for: the eccentric-core sphere, whose concentration tensors have no closed form. Gate B with the 6-component transversely isotropic pair, the contrast ratios that replace gate A's homogeneity, the accuracy against the finite elements, the speed-up, and a derivative with respect to the **eccentricity** |
 
 Composite inclusions carry no Hill tensor at all: they enter the schemes through
 their volume-averaged concentration tensors instead.

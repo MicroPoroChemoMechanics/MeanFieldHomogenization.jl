@@ -72,7 +72,7 @@ aggregate fields are therefore linear in the macroscopic stress ``\boldsymbol\Si
 ```
 
 ```@example itzlim
-A_agg = strain_strain_loc(Ellipsoid(1.0), C_agg, C_cp)
+A_agg = gradient_gradient_concentration(Ellipsoid(1.0), C_agg, C_cp)
 A_mean = (1 - f_agg) * TensISO{3}(1.0, 1.0) + f_agg * A_agg
 C_hom = ((1 - f_agg) * C_cp + f_agg * C_agg ⊡ A_agg) ⊡ inv(A_mean)
 A_ε = A_agg ⊡ inv(A_mean) ⊡ inv(C_hom)    # ε_agg = A_ε : Σ
@@ -170,11 +170,11 @@ aggregate:
 
 ```@example itzlim
 coated = LayeredSphere((1.0, 1.0 + 1.0e-6), (C_agg, C_itz))
-B_coated = stress_strain_loc(coated, C_cp, C_cp)
+B_coated = flux_gradient_concentration(coated, C_cp, C_cp)
 ε∞ = inv((1 - f_agg) * C_cp + f_agg * B_coated) ⊡ uz   # Mori–Tanaka remote strain
 fields = LayeredSphereFields(coated, C_cp)
 θ, φ = 0.3π, 0.2π
-σ_sphere = local_stress(fields, 1.0, θ, φ, ε∞; side = :outer)
+σ_sphere = local_flux(fields, 1.0, θ, φ, ε∞; side = :outer)
 σ_jump = itz_stress_operator([sin(θ) * cos(φ), sin(θ) * sin(φ), cos(θ)]) ⊡ uz
 norm(σ_sphere - σ_jump)
 ```

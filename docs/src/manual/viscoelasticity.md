@@ -314,8 +314,8 @@ elastic tensors or `ViscoLaw`s.
 grain = LayeredSphere((0.8, 1.0), (law_κ, heaviside_law(TensISO{2,3}(5.0)));
                       interfaces = (KapitzaInterface(0.1), SurfaceConductiveInterface(0.3)))
 add_phase!(rve_κ, :G, grain, Dict(:K => law_κ); fraction = 0.2)
-gradient_gradient_loc_alv(grain, law_κ, times)       # whole-sphere concentration, 3n × 3n
-conductivity_contribution_alv(grain, law_κ, times)   # its contribution
+gradient_gradient_concentration_alv(grain, law_κ, times)       # whole-sphere concentration, 3n × 3n
+property_contribution_alv(grain, law_κ, times)   # its contribution
 ```
 
 The jumps follow the dictionary ``\boldsymbol\sigma\equiv-\underline q``: a Kapitza

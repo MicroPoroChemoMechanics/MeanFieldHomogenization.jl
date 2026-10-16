@@ -1,7 +1,7 @@
 {
     "provenance": {
         "epochs": 7892,
-        "teacher": "fe_axi_localization(FEAxiLayeredSpheroid, TensISO{4}) — axisymmetric Fourier finite elements",
+        "teacher": "fe_axi_concentration(FEAxiLayeredSpheroid, TensISO{4}) — axisymmetric Fourier finite elements",
         "max_rel_error": [
             0.0009524253309145803,
             0.00123674980584863,
@@ -4940,7 +4940,7 @@
             "identity",
             "identity"
         ],
-        "class": "loc_ti",
+        "class": "gradient_concentration_ti",
         "shift": [
             0.8673079858169985,
             0.831731005469773,

@@ -190,7 +190,7 @@ want("cost") && let
             octant = oct, max_dofs = 400_000, min_free_gb = 4.0,
         )
         pore = FESupershapePore(Supersphere(1.0, 1.0); opts = o)
-        t = @elapsed A = gradient_gradient_loc(pore, TensISO{3}(1.0), TensISO{3}(1.0))
+        t = @elapsed A = gradient_gradient_concentration(pore, TensISO{3}(1.0), TensISO{3}(1.0))
         err = abs(Matrix(get_array(A))[1, 1] - 1.5) / 1.5
         rep = fe_cell_mesh_report(pore)
         @printf report "| %d | %s | %d | %.2e | %.1f s |\n" lvl (
@@ -357,8 +357,8 @@ want("sevostianov") && let
     mine = Dict{Float64, Any}()
     for p in ps
         pore = FEAxiSupershapePore(Superspheroid(1.0, 1.0, p); opts)
-        H = Matrix(KM(compliance_contribution(pore, Cs, Cs)))
-        R = Matrix(get_array(resistivity_contribution(pore, Ks, Ks)))
+        H = Matrix(KM(inverse_property_contribution(pore, Cs, Cs)))
+        R = Matrix(get_array(inverse_property_contribution(pore, Ks, Ks)))
         mine[p] = (
             H = (H[1, 1], H[1, 2], H[1, 3], H[3, 3], H[5, 5] / 2),
             R = (R[1, 1], R[3, 3]),

@@ -36,9 +36,9 @@ const Sy = Symbolics
 # `import`, deliberately, **not** `using`: `SymPy` and `Symbolics` both export
 # `@syms`, and `runtests.jl` includes every test file into the same `Main`, so a
 # `using Symbolics` here makes the bare macro ambiguous in the *other* files that
-# rely on SymPy's export (`Conductivity/test_localization.jl`,
+# rely on SymPy's export (`Conductivity/test_concentration.jl`,
 # `LayeredSpheres/test_generic.jl`, `Laminates/test_laminate_symbolic.jl`,
-# `Elasticity/test_localization.jl`) — they fail with
+# `Elasticity/test_concentration.jl`) — they fail with
 # `UndefVarError: @syms not defined in Main`. SymPy's macro is also qualified
 # throughout this file, and Symbolics' variables use `Sy.@variables`.
 

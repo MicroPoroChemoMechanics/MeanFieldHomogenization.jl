@@ -27,9 +27,9 @@ load in a way entirely captured by one object, the **Hill polarization tensor**
 ``\mathbb{P}`` — this is [Eshelby's result](@ref th-eshelby-problem), and
 ``\mathbb{P}`` depends only on the inclusion *shape* and the reference *moduli*
 ([Hill polarization tensors](@ref th-hill-tensors)). From ``\mathbb{P}`` follows the
-**localization tensor**, which says how much of the remote load each phase
+**concentration tensor**, which says how much of the remote load each phase
 actually sees, and hence each phase's **contribution** to the effective
-stiffness ([Localization](@ref th-localization)).
+stiffness ([Concentration](@ref th-concentration)).
 
 ## The chain, in one picture
 
@@ -48,7 +48,7 @@ flowchart TB
     AMOUNT["amount<br/>fraction f or density ε"]
 
     P["Hill tensor ℙ<br/><i>Elasticity, Conductivity</i>"]
-    A["localization 𝔸 = [𝕀 + ℙ:(ℂᵣ−ℂ₀)]⁻¹<br/><i>localization.jl</i>"]
+    A["concentration 𝔸 = [𝕀 + ℙ:(ℂᵣ−ℂ₀)]⁻¹<br/><i>concentration.jl</i>"]
     N["contribution ℕ, ℍ<br/><i>contribution.jl</i>"]
     S["scheme<br/><i>Schemes</i>"]
     EFF["effective ℂ or 𝐊<br/>+ ∂/∂parameters"]
@@ -63,8 +63,8 @@ flowchart TB
     S --> EFF
 
     GA["gate A<br/>hill_tensor"] -.-> P
-    GB["gate B<br/>strain_strain_loc<br/>stress_strain_loc"] -.-> A
-    GC["gate C<br/>stiffness_contribution<br/>compliance_contribution"] -.-> N
+    GB["gate B<br/>gradient_gradient_concentration<br/>flux_gradient_concentration"] -.-> A
+    GC["gate C<br/>property_contribution<br/>inverse_property_contribution"] -.-> N
 
     classDef ext fill:#d7f2d7,stroke:#2e7d32,color:#1b5e20
     classDef inbox fill:#eceff1,stroke:#78909c,color:#263238
@@ -99,7 +99,7 @@ Volterra products in place of tensor products. The contract is written up in
 | :--- | :----------- |
 | [The Eshelby inclusion problem](@ref th-eshelby-problem) | the uniform strain inside an ellipsoid, and the three tensors ``\mathbb{P}``, ``\mathbb{S}^{\mathrm{E}}``, ``\mathbb{Q}`` |
 | [Hill polarization tensors](@ref th-hill-tensors) | the closed forms of ``\mathbb{P}``, shape by shape and symmetry class by symmetry class |
-| [Localization and contribution tensors](@ref th-localization) | the response of an inhomogeneity to a remote load, and its contribution to the effective stiffness |
+| [Concentration and contribution tensors](@ref th-concentration) | the response of an inhomogeneity to a remote load, and its contribution to the effective stiffness |
 | [Two-inclusion interaction tensors](@ref th-interaction) | the field one inclusion induces in another, through the Green operator — the ingredient of the N-body schemes |
 
 ## Cracks and degenerate shapes
@@ -137,7 +137,7 @@ then has its page, with its figure, its assumption and its equations.
 
 | Page | What it adds |
 | :--- | :----------- |
-| [Homogenization schemes](@ref th-homogenization) | the framework common to all schemes, the identities between contribution tensors, how a crack family enters, and the table of schemes |
+| [Homogenization schemes](@ref th-homogenization) | the framework common to all schemes, the identities between contribution tensors, how a crack family enters, the concentration tensors of an estimate, and the table of schemes |
 | [Voigt and Reuss bounds](@ref th-scheme-bounds) | a uniform strain or a uniform stress, and the energy principles that make them bounds |
 | [Dilute estimates](@ref th-scheme-dilute) | each inclusion alone in the matrix, under the remote strain or the remote stress |
 | [Mori–Tanaka](@ref th-scheme-mori-tanaka) | each inclusion under the mean strain of the matrix |
@@ -148,10 +148,13 @@ then has its page, with its figure, its assumption and its equations.
 | [Laminate](@ref th-laminate) | a periodic stack solved exactly: no inclusion at all, the interface algebra replaces the Hill tensor |
 | [The cluster model](@ref th-cluster) | the mean strain of every inclusion, resolved inside a cluster [molinari1996](@cite) |
 | [The equivalent inclusion method](@ref th-eim) | the same physics as a variational Galerkin problem, with rigorous bounds [brisard2014](@cite) |
+| [Levin's theorem](@ref th-levin) | the response to free strains and prestresses of the phases — thermal expansion, Biot tensor — from the concentration tensors of any scheme |
 
-The last two drop the one-site assumption: instead of averaging the interaction
-between inclusions, they resolve it pair by pair, and therefore need to know
-*where* the inclusions are.
+The cluster model and the equivalent inclusion method drop the one-site
+assumption: instead of averaging the interaction between inclusions, they
+resolve it pair by pair, and therefore need to know *where* the inclusions are.
+Every scheme also estimates the concentration tensors of the phases, and the
+last page draws from them what the effective stiffness alone does not give.
 
 ## Extension to conductivity
 
@@ -175,7 +178,7 @@ problem itself that must be generalized.
 
 | Page | Role |
 | :--- | :--- |
-| [The finite Eshelby cell](@ref th-corrected-cell) | a numerical device supporting the finite-element inclusions: the inclusion is solved on a *finite* cell and the truncation bias removed by its own dipole far field. Written in the language of [localization](@ref th-localization) and [crack opening displacement](@ref th-cod-tensors), so it is read after both |
+| [The finite Eshelby cell](@ref th-corrected-cell) | a numerical device supporting the finite-element inclusions: the inclusion is solved on a *finite* cell and the truncation bias removed by its own dipole far field. Written in the language of [concentration](@ref th-concentration) and [crack opening displacement](@ref th-cod-tensors), so it is read after both |
 | [Elliptic integrals](@ref th-elliptic-integrals) | the special functions the closed forms need |
 
 ## Where the two physics meet

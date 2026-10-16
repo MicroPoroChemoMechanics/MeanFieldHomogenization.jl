@@ -73,7 +73,7 @@ end
 
 # =============================================================================
 #  Harmonization with `LayeredSphere`: the cached solution object, the remote
-#  gradient given as a vector, the `side` keyword, and the four `local_*_*_loc`
+#  gradient given as a vector, the `side` keyword, and the four `local_*_*_concentration`
 #  couplings.  Same names and same conventions as the sphere, on a problem
 #  whose solution is structurally different.
 # =============================================================================
@@ -107,7 +107,7 @@ end
     @test local_temperature(f, 1.5, 0.4, π / 2, [0.0, 1.0, 0.0]) ≈
         local_temperature(f, 1.5, 0.4, 0.0; H_axial = 0.0, H_trans = 1.0)
 
-    # Linearity in the loading, which is the whole content of a localization
+    # Linearity in the loading, which is the whole content of a concentration
     # tensor and is NOT automatic given the azimuth-shift construction.
     G₁ = [0.3, -0.7, 1.0]
     G₂ = [1.1, 0.2, -0.4]
@@ -119,7 +119,7 @@ end
     end
 end
 
-@testset "local fields — the localization tensors" begin
+@testset "local fields — the concentration tensors" begin
     s = _two_layer_spheroid()
     f = LayeredSpheroidTransportFields(s, K0)
     G = [0.3, -0.7, 1.0]
@@ -129,31 +129,31 @@ end
     # require |q| ≥ 1), inside the shell, and out in the matrix.
     q_core = (1 + real(s.q[1])) / 2
     for (q, p, φ) in ((q_core, -0.2, 2.0), (1.5, 0.4, 0.7), (3.0, 0.6, 0.1))
-        A = local_gradient_gradient_loc(f, q, p, φ)
+        A = local_gradient_gradient_concentration(f, q, p, φ)
         g = collect(local_gradient(f, q, p, φ, G))
         @test [sum(A[i, j] * G[j] for j in 1:3) for i in 1:3] ≈ g rtol = 1.0e-12
 
-        # `−k(x)` relates the flux and gradient localizations, `k(x)` being the
+        # `−k(x)` relates the flux and gradient concentrations, `k(x)` being the
         # conductivity of the region containing the point.
         lay = get_layer(s, q)
         k_here = lay ≤ layer_count(s) ?
             MeanFieldHomogenization.LayeredSpheroids._spheroid_layer_moduli(s)[lay] : k₀
-        @test get_array(local_flux_gradient_loc(f, q, p, φ)) ≈
+        @test get_array(local_flux_gradient_concentration(f, q, p, φ)) ≈
             -k_here .* get_array(A) rtol = 1.0e-12
-        @test get_array(local_gradient_flux_loc(f, q, p, φ)) ≈
+        @test get_array(local_gradient_flux_concentration(f, q, p, φ)) ≈
             -get_array(A) ./ k₀ rtol = 1.0e-12
-        @test get_array(local_flux_flux_loc(f, q, p, φ)) ≈
+        @test get_array(local_flux_flux_concentration(f, q, p, φ)) ≈
             k_here .* get_array(A) ./ k₀ rtol = 1.0e-12
     end
 
-    # Far away the localization returns to the identity.
-    @test get_array(local_gradient_gradient_loc(f, 1.0e5, 0.4, 0.7)) ≈
+    # Far away the concentration returns to the identity.
+    @test get_array(local_gradient_gradient_concentration(f, 1.0e5, 0.4, 0.7)) ≈
         Matrix(1.0I, 3, 3) atol = 1.0e-6
 
     # Unlike the sphere's, this tensor is genuinely non-symmetric: a confocal
     # spheroid is not rotation-invariant about the field point, so it cannot be
     # carried by a `TensTI` and a general `Tens` is required.
-    A = get_array(local_gradient_gradient_loc(f, 1.5, 0.4, 0.7))
+    A = get_array(local_gradient_gradient_concentration(f, 1.5, 0.4, 0.7))
     @test maximum(abs, A - A') > 1.0e-3
 end
 
@@ -181,8 +181,8 @@ end
     @test collect(local_flux(s, K0, q, p, φ, G)) ≈ collect(local_flux(f, q, p, φ, G))
 
     for g in (
-            local_gradient_gradient_loc, local_flux_gradient_loc,
-            local_gradient_flux_loc, local_flux_flux_loc,
+            local_gradient_gradient_concentration, local_flux_gradient_concentration,
+            local_gradient_flux_concentration, local_flux_flux_concentration,
         )
         @test get_array(g(s, K0, q, p, φ)) ≈ get_array(g(f, q, p, φ))
     end

@@ -164,7 +164,7 @@ need the intermediate Jacobians.
 A thin oblate spheroid with a *uniform spatial distribution of orientations*
 is, on average, isotropic. The `symmetrize` keyword on [`add_phase!`](@ref)
 declares such a distribution, so the kernel projects the phase
-localization tensor onto the corresponding symmetry class:
+concentration tensor onto the corresponding symmetry class:
 
 | Symmetrize value           | Meaning                                                     | Result class |
 | :------------------------- | :---------------------------------------------------------- | :----------- |
@@ -201,7 +201,7 @@ projection automatically.
   get a non-trivial geometric sensitivity, perturb around an already
   non-degenerate (`Triaxial` / `Prolate` / `Oblate`) configuration.
 - **TI symmetrize on non-coaxial inclusions** routes the matrix used for
-  the localization-tensor computation through an isotropic projection —
+  the concentration-tensor computation through an isotropic projection —
   the result still satisfies the outer `TI(axis)` projection, and is
   exact at the iso fixed-point of the SC iteration. This is documented
   in [`src/Schemes/symmetrize.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/src/Schemes/symmetrize.jl).

@@ -241,7 +241,7 @@ end
 # ```
 #
 # For voids ``\mathbb{C}_1 = 0``, so ``\delta\mathbb{C} = -\mathbb{C}_0`` and the
-# localization tensor collapses to ``(\mathbb{I} - \mathbb{S}^{\mathrm{E}})^{-1}``.
+# concentration tensor collapses to ``(\mathbb{I} - \mathbb{S}^{\mathrm{E}})^{-1}``.
 # Written out by hand in Mandel storage, at 5 % porosity:
 
 let

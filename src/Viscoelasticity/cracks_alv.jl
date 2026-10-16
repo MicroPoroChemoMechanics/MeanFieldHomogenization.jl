@@ -38,9 +38,9 @@
 #
 #  The two functions below mirror the elastic API:
 #       cod_kernel_alv(crack, C_M_law, times)         -> Matrix{T}
-#       compliance_contribution_alv(crack, C_M_law, times) -> Matrix{T}
+#       inverse_property_contribution_alv(crack, C_M_law, times) -> Matrix{T}
 #
-#  Apply [`delta_compliance_alv`](@ref) (= `(4π/3) · ε · H̃`) to convert
+#  Apply [`delta_inverse_property_alv`](@ref) (= `(4π/3) · ε · H̃`) to convert
 #  from the size-independent contribution to a fractional compliance
 #  correction `ΔJ̃ = (4π/3) ε³ᵈ · H̃`.
 #
@@ -195,7 +195,7 @@ function _trapezoidal_relaxation_scalar(
 end
 
 """
-    compliance_contribution_alv(crack, C_M_law::ViscoLaw, times) -> Matrix{T}
+    inverse_property_contribution_alv(crack, C_M_law::ViscoLaw, times) -> Matrix{T}
 
 Discrete ``6n\\times 6n`` size-independent compliance contribution ``\\widetilde{\\mathbb{H}}`` of a
 penny crack in an isotropic ALV matrix.  Computed via the time-space
@@ -211,11 +211,11 @@ normal axis.  When ``\\underline{n} = \\underline{e}_3`` the result is in TI for
 through the existing TI ALV fast path; arbitrary orientation requires
 a ``6\\times 6`` Mandel rotation per ``(i, j)`` block (not yet implemented).
 
-Convention: same as the elastic [`compliance_contribution`](@ref MeanFieldHomogenization.Core.compliance_contribution) — the
+Convention: same as the elastic [`inverse_property_contribution`](@ref MeanFieldHomogenization.Core.inverse_property_contribution) — the
 Budiansky-O'Connell density factor is applied separately via
-[`delta_compliance_alv`](@ref).
+[`delta_inverse_property_alv`](@ref).
 """
-function compliance_contribution_alv(
+function inverse_property_contribution_alv(
         crack::MFH_Core.AbstractCrack,
         C_M_law::ViscoLaw,
         times::AbstractVector{<:Real};
@@ -223,7 +223,7 @@ function compliance_contribution_alv(
         Rt::Union{Nothing, ViscoLaw} = nothing
     )
     _crack_axis_is_e3(crack) ||
-        throw(ArgumentError("compliance_contribution_alv: only crack normal n̂ = e_3 is currently supported"))
+        throw(ArgumentError("inverse_property_contribution_alv: only crack normal n̂ = e_3 is currently supported"))
     cod = cod_kernel_alv(crack, C_M_law, times; Rn = Rn, Rt = Rt)
     n = size(cod.B_n, 1)
     T = promote_type(eltype(cod.B_n), eltype(cod.B_t))
@@ -234,15 +234,15 @@ function compliance_contribution_alv(
 end
 
 """
-    delta_compliance_alv(crack, H̃, ε) -> Matrix
+    delta_inverse_property_alv(crack, H̃, ε) -> Matrix
 
 Apply the Budiansky-O'Connell crack density factor to the
 size-independent compliance contribution ``\\widetilde{\\mathbb{H}}`` produced by
-[`compliance_contribution_alv`](@ref), giving the fractional
+[`inverse_property_contribution_alv`](@ref), giving the fractional
 compliance correction ``\\Delta\\widetilde{\\mathbb{L}} = \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm{d}}\\,\\widetilde{\\mathbb{H}}`` (penny / elliptic
 geometry, ``\\varepsilon^{3\\mathrm{d}} = N\\,a\\,b^{2}``) — same pre-factor as the elastic case.
 """
-function delta_compliance_alv(
+function delta_inverse_property_alv(
         crack::MFH_Core.AbstractCrack,
         H̃::AbstractMatrix, ε::Real
     )
@@ -250,47 +250,47 @@ function delta_compliance_alv(
 end
 
 """
-    stiffness_contribution_alv(crack, C_ref, times) -> Matrix{T}
+    property_contribution_alv(crack, C_ref, times) -> Matrix{T}
 
 Discrete ``6n\\times 6n`` crack **stiffness** contribution
 ``\\widetilde{\\mathbb{N}} = -\\widetilde{\\mathbb{C}}_0\\circ\\widetilde{\\mathbb{H}}\\circ\\widetilde{\\mathbb{C}}_0``,
-mirror of the elastic [`stiffness_contribution(crack, C₀)`] formula, with
+mirror of the elastic [`property_contribution(crack, C₀)`] formula, with
 ``\\widetilde{\\mathbb{C}}_0`` the discretized `C_ref`.
 `C_ref` may be a `ViscoLaw` (the matrix law — relaxation auto-built
 through [`_trapezoidal_relaxation`](@ref)) or a pre-discretized
 ``6n\\times 6n`` reference matrix (used by SC iterations against the
 running estimate `C_n`).
 """
-function stiffness_contribution_alv(
+function property_contribution_alv(
         crack::MFH_Core.AbstractCrack,
         C_M_law::ViscoLaw,
         times::AbstractVector{<:Real}
     )
-    H̃ = compliance_contribution_alv(crack, C_M_law, times)
+    H̃ = inverse_property_contribution_alv(crack, C_M_law, times)
     C̃_ref = _trapezoidal_relaxation(C_M_law, times, 6)
     return -(C̃_ref * H̃ * C̃_ref)
 end
 
 """
-    stiffness_contribution_alv_at(crack, C_ref::AbstractMatrix) -> Matrix
+    property_contribution_alv_at(crack, C_ref::AbstractMatrix) -> Matrix
 
 Variant that takes a pre-discretized ``6n\\times 6n`` reference matrix.
 The compliance contribution is recomputed from the iso parameters of
 `C_ref` (only iso ALV matrices are currently supported by
-[`compliance_contribution_alv`](@ref)).
+[`inverse_property_contribution_alv`](@ref)).
 """
-function stiffness_contribution_alv_at(
+function property_contribution_alv_at(
         crack::MFH_Core.AbstractCrack,
         C_ref::AbstractMatrix;
         Rn_mat::Union{Nothing, AbstractMatrix} = nothing,
         Rt_mat::Union{Nothing, AbstractMatrix} = nothing
     )
-    # Wrap C_ref in a synthetic ViscoLaw for compliance_contribution_alv —
+    # Wrap C_ref in a synthetic ViscoLaw for inverse_property_contribution_alv —
     # it only inspects the iso (α, β) parameters of the trapezoidal of the
     # law, so we just need a "dummy" law whose trapezoidal equals C_ref.
     # The fastest route is to extract (α, β) directly here.
     _is_iso_block(C_ref) ||
-        throw(ArgumentError("stiffness_contribution_alv_at: only iso reference is supported"))
+        throw(ArgumentError("property_contribution_alv_at: only iso reference is supported"))
     α, β = _iso_pair(C_ref)
     B_n, B_t = _penny_cod_alv(α, β)
     # Optional Sevostianov interface-stiffness correction.  Caller
@@ -321,15 +321,15 @@ function stiffness_contribution_alv_at(
 end
 
 """
-    delta_stiffness_alv(crack, Ñ, ε) -> Matrix
+    delta_property_alv(crack, Ñ, ε) -> Matrix
 
 Apply the Budiansky-O'Connell crack density factor to the
 size-independent stiffness contribution ``\\widetilde{\\mathbb{N}}`` produced by
-[`stiffness_contribution_alv`](@ref), giving the dilute stiffness
+[`property_contribution_alv`](@ref), giving the dilute stiffness
 correction ``\\Delta\\widetilde{\\mathbb{C}} = \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm{d}}\\,\\widetilde{\\mathbb{N}}`` (penny / elliptic) or
 ``\\pi\\,\\varepsilon^{2\\mathrm{d}}\\,\\widetilde{\\mathbb{N}}`` (ribbon).  Same pre-factors as the elastic case.
 """
-function delta_stiffness_alv(
+function delta_property_alv(
         crack::MFH_Core.AbstractCrack,
         Ñ::AbstractMatrix, ε::Real
     )

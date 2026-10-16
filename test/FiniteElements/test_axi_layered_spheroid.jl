@@ -110,7 +110,7 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
     end
 
     @testset "the generic stress side refuses a heterogeneous inclusion" begin
-        # `stress_strain_loc`'s generic evaluates `ℂ₁ : 𝔸_εε`, which needs a
+        # `flux_gradient_concentration`'s generic evaluates `ℂ₁ : 𝔸_εε`, which needs a
         # single uniform stiffness. Its docstring has said so since the contract
         # was written; nothing enforced it, and `LayeredSpheroid` — which
         # declares itself heterogeneous and supplies no elastic stress side —
@@ -121,15 +121,15 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
         ar, dr = confocal_layer_radii(2.0, 1.0, (0.3, 0.7))
         Cs = (_als_C(4.0, 0.2), _als_C(1.5, 0.3))
         C₀ = _als_C(1.0, 0.25)
-        @test_throws ArgumentError stress_strain_loc(
+        @test_throws ArgumentError flux_gradient_concentration(
             LayeredSpheroid(ar, dr, Cs), C₀, C₀
         )
         # The types that do supply one are unaffected — and a homogeneous
         # inclusion still gets the generic, which is correct for it.
-        @test stress_strain_loc(Ellipsoid(1.0, 1.0, 2.0), Cs[1], C₀) isa
+        @test flux_gradient_concentration(Ellipsoid(1.0, 1.0, 2.0), Cs[1], C₀) isa
             TensND.AbstractTens{4, 3}
         fe = FEAxiLayeredSpheroid(ar, dr, Cs; opts = _als_opts(10, 4.0))
-        @test stress_strain_loc(fe, C₀, C₀) isa TensND.AbstractTens{4, 3}
+        @test flux_gradient_concentration(fe, C₀, C₀) isa TensND.AbstractTens{4, 3}
     end
 
     @testset "a sensitivity is refused, not answered with a zero" begin
@@ -203,14 +203,14 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
             fe = FEAxiLayeredSpheroid((c,), (a,), (k1,); opts = _als_opts(16, 6.0))
             @test layer_count(fe) == 1
             @test only(layer_volumes(fe)) ≈ 4π / 3 * a^2 * c
-            A = _als_m(gradient_gradient_loc(fe, K₀, K₀))
-            ex = _als_m(gradient_gradient_loc(Spheroid(c / a), k1, K₀))
+            A = _als_m(gradient_gradient_concentration(fe, K₀, K₀))
+            ex = _als_m(gradient_gradient_concentration(Spheroid(c / a), k1, K₀))
             @test norm(A - ex) / norm(ex) < 1.0e-3
 
             C₀, C1 = _als_C(1.0, 0.25), _als_C(4.0, 0.2)
             fe4 = FEAxiLayeredSpheroid((c,), (a,), (C1,); opts = _als_opts(14, 6.0))
-            A4 = _als_k(strain_strain_loc(fe4, C₀, C₀))
-            ex4 = _als_k(strain_strain_loc(Spheroid(c / a), C1, C₀))
+            A4 = _als_k(gradient_gradient_concentration(fe4, C₀, C₀))
+            ex4 = _als_k(gradient_gradient_concentration(Spheroid(c / a), C1, C₀))
             @test norm(A4 - ex4) / norm(ex4) < 2.0e-3
         end
     end
@@ -236,8 +236,8 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
         # bound comes from the measurement rather than the reverse.
         @test r.volume_error < 3.5e-2
         # And the answer still matches the closed form.
-        Aex = _als_m(gradient_gradient_loc(LayeredSphere(radii, K), K₀, K₀))
-        A = _als_m(gradient_gradient_loc(fe, K₀, K₀))
+        Aex = _als_m(gradient_gradient_concentration(LayeredSphere(radii, K), K₀, K₀))
+        A = _als_m(gradient_gradient_concentration(fe, K₀, K₀))
         @test norm(A - Aex) / norm(Aex) < 2.0e-3
     end
 
@@ -254,9 +254,9 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
             n = length(fr)
             K = ntuple(i -> TensISO{3}(1.0 + 3.0 * i), n)
             K₀ = TensISO{3}(1.0)
-            Aex = _als_m(gradient_gradient_loc(LayeredSpheroid(ar, dr, K), K₀, K₀))
+            Aex = _als_m(gradient_gradient_concentration(LayeredSpheroid(ar, dr, K), K₀, K₀))
             fe = FEAxiLayeredSpheroid(ar, dr, K; opts = _als_opts(12, 6.0))
-            A = _als_m(gradient_gradient_loc(fe, K₀, K₀))
+            A = _als_m(gradient_gradient_concentration(fe, K₀, K₀))
             @test norm(A - Aex) / norm(Aex) < tol
             # Transversely isotropic about the axis, structurally.
             @test A[1, 1] ≈ A[2, 2] atol = 1.0e-12
@@ -270,9 +270,9 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
             n = length(radii)
             K = ntuple(i -> TensISO{3}(1.0 + 3.0 * i), n)
             K₀ = TensISO{3}(1.0)
-            Aex = _als_m(gradient_gradient_loc(LayeredSphere(radii, K), K₀, K₀))
+            Aex = _als_m(gradient_gradient_concentration(LayeredSphere(radii, K), K₀, K₀))
             fe = FEAxiLayeredSpheroid(radii, radii, K; opts = _als_opts(16, 6.0))
-            A = _als_m(gradient_gradient_loc(fe, K₀, K₀))
+            A = _als_m(gradient_gradient_concentration(fe, K₀, K₀))
             @test norm(A - Aex) / norm(Aex) < 5.0e-4
             # A sphere's answer is isotropic, and nothing enforces that.
             @test A[1, 1] ≈ A[3, 3] rtol = 2.0e-3
@@ -284,9 +284,9 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
             ar, dr = confocal_layer_radii(ω, 1.0, fr)
             Cs = (_als_C(4.0, 0.2), _als_C(1.5, 0.3))
             C₀ = _als_C(1.0, 0.25)
-            Aex = _als_k(strain_strain_loc(LayeredSpheroid(ar, dr, Cs), C₀, C₀))
+            Aex = _als_k(gradient_gradient_concentration(LayeredSpheroid(ar, dr, Cs), C₀, C₀))
             fe = FEAxiLayeredSpheroid(ar, dr, Cs; opts = _als_opts(12, 6.0))
-            A = _als_k(strain_strain_loc(fe, C₀, C₀))
+            A = _als_k(gradient_gradient_concentration(fe, C₀, C₀))
             @test norm(A - Aex) / norm(Aex) < tol
             # The class identity, free and structural.
             @test A[6, 6] / 2 ≈ (A[1, 1] - A[1, 2]) / 2 atol = 1.0e-10
@@ -294,12 +294,12 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
         let radii = (0.6, 1.0), C₀ = _als_C(1.0, 0.25)
             Cs = (_als_C(3.0, 0.2), _als_C(1.5, 0.3))
             ana = LayeredSphere(radii, Cs)
-            Aex = _als_k(strain_strain_loc(ana, C₀, C₀))
-            Bex = _als_k(stress_strain_loc(ana, C₀, C₀))
+            Aex = _als_k(gradient_gradient_concentration(ana, C₀, C₀))
+            Bex = _als_k(flux_gradient_concentration(ana, C₀, C₀))
             fe = FEAxiLayeredSpheroid(radii, radii, Cs; opts = _als_opts(16, 6.0))
-            @test norm(_als_k(strain_strain_loc(fe, C₀, C₀)) - Aex) / norm(Aex) < 5.0e-4
+            @test norm(_als_k(gradient_gradient_concentration(fe, C₀, C₀)) - Aex) / norm(Aex) < 5.0e-4
             # The stress side is measured, not derived — and it is right.
-            @test norm(_als_k(stress_strain_loc(fe, C₀, C₀)) - Bex) / norm(Bex) < 5.0e-4
+            @test norm(_als_k(flux_gradient_concentration(fe, C₀, C₀)) - Bex) / norm(Bex) < 5.0e-4
         end
     end
 
@@ -309,8 +309,8 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
         ar, dr = (0.6, 1.0), (0.36, 0.6)
         K₀, k1 = TensISO{3}(1.0), TensISO{3}(4.0)
         fe = FEAxiLayeredSpheroid(ar, dr, (k1, k1); opts = _als_opts(16, 6.0))
-        A = _als_m(gradient_gradient_loc(fe, K₀, K₀))
-        ex = _als_m(gradient_gradient_loc(Spheroid(ar[2] / dr[2]), k1, K₀))
+        A = _als_m(gradient_gradient_concentration(fe, K₀, K₀))
+        ex = _als_m(gradient_gradient_concentration(Spheroid(ar[2] / dr[2]), k1, K₀))
         @test norm(A - ex) / norm(ex) < 5.0e-4
     end
 
@@ -342,7 +342,7 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
         K₀ = TensISO{3}(1.0)
         # The exact answer of the same body, so "does not move" can be
         # measured against something rather than asserted.
-        Aex = _als_m(gradient_gradient_loc(LayeredSphere(radii, K), K₀, K₀))
+        Aex = _als_m(gradient_gradient_concentration(LayeredSphere(radii, K), K₀, K₀))
         corr, unco = Float64[], Float64[]
         for rr in (2.5, 4.0, 6.0)
             fe = FEAxiLayeredSpheroid(
@@ -362,21 +362,21 @@ _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
         @test unco[1] / corr[1] > 10
     end
 
-    @testset "both localization tensors come from one solve" begin
+    @testset "both concentration tensors come from one solve" begin
         radii = (0.6, 1.0)
         Cs = (_als_C(3.0, 0.2), _als_C(1.5, 0.3))
         C₀ = _als_C(1.0, 0.25)
         fe = FEAxiLayeredSpheroid(radii, radii, Cs; opts = _als_opts(10, 4.0))
         @test fe_assembly_count(fe) == 0
-        A, B = fe_axi_localization(fe, C₀)
+        A, B = fe_axi_concentration(fe, C₀)
         @test fe_assembly_count(fe) == 1
         # Calling the generics separately costs nothing more: they share the
         # memoized solve, which is what makes a family of orientations free.
-        @test strain_strain_loc(fe, C₀, C₀) ≈ A
-        @test stress_strain_loc(fe, C₀, C₀) ≈ B
+        @test gradient_gradient_concentration(fe, C₀, C₀) ≈ A
+        @test flux_gradient_concentration(fe, C₀, C₀) ≈ B
         @test fe_assembly_count(fe) == 1
         # A different reference medium is a different solve, and only one.
-        strain_strain_loc(fe, _als_C(2.0, 0.3), _als_C(2.0, 0.3))
+        gradient_gradient_concentration(fe, _als_C(2.0, 0.3), _als_C(2.0, 0.3))
         @test fe_assembly_count(fe) == 2
         fe_reset!(fe)
         @test fe_assembly_count(fe) == 0

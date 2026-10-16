@@ -16,9 +16,9 @@ using TensND
 
     # Compliance contribution — size-independent H (4th-order tensor)
     pc = PennyCrack(1.0)
-    H = compliance_contribution(pc, C₀)
+    H = inverse_property_contribution(pc, C₀)
     @test H[1, 1, 1, 1] == H[1, 1, 1, 1]   # no NaN
     # Budiansky helper reintroduces the density ε
-    ΔS = delta_compliance(pc, H, 0.1)
+    ΔS = delta_inverse_property(pc, H, 0.1)
     @test ΔS[1, 1, 1, 1] == ΔS[1, 1, 1, 1]   # no NaN
 end

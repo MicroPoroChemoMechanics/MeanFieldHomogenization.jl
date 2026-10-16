@@ -14,14 +14,14 @@ _g(t) = get_array(TensND.change_tens(t, CANON_CD))
     # 𝕂 = γ/(1 + πγ/(4k₀)) (δ − n̂⊗n̂),  γ = C/2a
     γ = C / (2a)
     κ = γ / (1 + π * γ / (4k₀))
-    K = _g(conductivity_contribution(cr, TensISO{3}(k₀)))
+    K = _g(property_contribution(cr, TensISO{3}(k₀)))
     @test K[1, 1] ≈ κ rtol = 1.0e-12
     @test K[2, 2] ≈ κ rtol = 1.0e-12
     @test K[3, 3] ≈ 0.0 atol = 1.0e-18      # purely in-plane
     @test K[1, 2] ≈ 0.0 atol = 1.0e-18
 
     # Ideal fracture C → ∞ : 𝕂 → (4k₀/π)(δ − n̂⊗n̂)
-    ideal = _g(conductivity_contribution(ConductiveCrack(a; conductivity = 1.0e8), TensISO{3}(k₀)))
+    ideal = _g(property_contribution(ConductiveCrack(a; conductivity = 1.0e8), TensISO{3}(k₀)))
     @test ideal[1, 1] ≈ 4k₀ / π rtol = 1.0e-6
 end
 
@@ -31,10 +31,10 @@ end
     # k_f = C/(2aω) so that C stays finite.
     a, k₀, C = 1.0, 1.0e-3, 2.0e-2
     cr = ConductiveCrack(a; conductivity = C)
-    closed = _g(conductivity_contribution(cr, TensISO{3}(k₀)))[1, 1]
+    closed = _g(property_contribution(cr, TensISO{3}(k₀)))[1, 1]
     prev = Inf
     for ω in (1.0e-3, 1.0e-4, 1.0e-5)
-        N = conductivity_contribution(Ellipsoid(a, a, a * ω), TensISO{3}(C / (2a * ω)), TensISO{3}(k₀))
+        N = property_contribution(Ellipsoid(a, a, a * ω), TensISO{3}(C / (2a * ω)), TensISO{3}(k₀))
         err = abs(ω * _g(N)[1, 1] - closed)
         @test err < prev                      # converging to the closed form
         prev = err
@@ -48,7 +48,7 @@ end
     a, C = 1.0, 2.0e-2
     cr = ConductiveCrack(a; conductivity = C)
     Kani = Tens([1.0e-3 0.0 0.0; 0.0 2.0e-3 0.0; 0.0 0.0 4.0e-4])
-    K = _g(conductivity_contribution(cr, Kani))
+    K = _g(property_contribution(cr, Kani))
     ref = _g(MeanFieldHomogenization.Cracks._flat_spheroid_limit(cr, Kani, 1.0e-6))
     @test K[1, 1] ≈ ref[1, 1] rtol = 1.0e-4
     @test K[2, 2] ≈ ref[2, 2] rtol = 1.0e-4
@@ -58,7 +58,7 @@ end
     # the two independent routes meeting.
     k₀ = 1.0e-3
     K_gen = _g(MeanFieldHomogenization.Cracks._conductive_crack_K(cr, Tens(get_array(TensISO{3}(k₀)))))
-    K_iso = _g(conductivity_contribution(cr, TensISO{3}(k₀)))
+    K_iso = _g(property_contribution(cr, TensISO{3}(k₀)))
     @test K_gen[1, 1] ≈ K_iso[1, 1] rtol = 1.0e-7
 end
 
@@ -68,7 +68,7 @@ end
     plain = PennyCrack(1.0; euler_angles = (π / 4, 0.0))
     flow = ConductiveCrack(plain, 1.0e-3)
     @test _g(cod_tensor(flow, C₀)) ≈ _g(cod_tensor(plain, C₀)) rtol = 1.0e-14
-    @test _g(compliance_contribution(flow, C₀)) ≈ _g(compliance_contribution(plain, C₀)) rtol = 1.0e-14
+    @test _g(inverse_property_contribution(flow, C₀)) ≈ _g(inverse_property_contribution(plain, C₀)) rtol = 1.0e-14
     @test MeanFieldHomogenization.Cracks.crack_density_factor(flow) ≈ 4π / 3
 end
 

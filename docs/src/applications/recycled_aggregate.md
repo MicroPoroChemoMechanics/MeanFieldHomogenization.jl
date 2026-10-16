@@ -126,7 +126,7 @@ e_3\otimes e_2)/\sqrt2`` and ``(e_1\otimes e_2 + e_2\otimes e_1)/\sqrt2`` are
 obtained by rotating about the axis and share the eigenvalue of their mode.
 Six Kelvin coordinates, six independent components — exactly the dimension of a
 transversely isotropic fourth-order tensor without major symmetry, which is
-what a localization tensor is.
+what a concentration tensor is.
 
 ## The axis
 
@@ -260,7 +260,7 @@ percent, which is the discretization of the circular arcs by straight edges.
 ### The concentric limit
 
 At ``\alpha = 0`` the morphology is the two-layer sphere and `LayeredSphere`
-gives the exact Hervé-Zaoui localization tensors. That single comparison
+gives the exact Hervé-Zaoui concentration tensors. That single comparison
 exercises everything at once: the three Fourier modes, the axis conditions, the
 azimuthal projections, the ``\rho\,\mathrm d\rho\,\mathrm dz`` measure, the
 dipole correction and the Kelvin reassembly all have to be right simultaneously
@@ -417,7 +417,7 @@ and only the core is left to see.
 ## Using it
 
 In a script, the inclusion is built from its radius and its two constituents,
-and enters an `RVE` like any other phase; its localization tensors can also be
+and enters an `RVE` like any other phase; its concentration tensors can also be
 requested directly.
 
 ```julia
@@ -431,7 +431,7 @@ C₀      = iso_stiffness(20.0 / (3 * (1 - 2 * 0.2)), 20.0 / (2 * (1 + 0.2)))
 incl = FEExcenteredSphere(1.0, (C_agg, C_mortar);
                           core_fraction = 0.5, eccentricity = 0.4)
 
-A, B = fe_axi_localization(incl, C₀)     # both tensors, one solve
+A, B = fe_axi_concentration(incl, C₀)     # both tensors, one solve
 
 rve = RVE()
 add_phase!(rve, :paste, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
@@ -507,7 +507,7 @@ the solver to another morphology is a one-line change there and a new mesh.
 
 The inclusion is **heterogeneous** ([`is_homogeneous_inclusion`](@ref) is
 `false`), so it enters through gate B of the
-[inclusion contract](@ref dev-adding-inclusion) with *both* localization
+[inclusion contract](@ref dev-adding-inclusion) with *both* concentration
 tensors — the strain-side ``\mathbb A_{\varepsilon\varepsilon}`` and the
 stress-side ``\mathbb A_{\sigma\varepsilon}``. They come out of the same solve,
 so asking for one and then the other costs one solve, not two.
@@ -524,7 +524,7 @@ placeholder. Here the geometry fixes it exactly, `w` for the core and
 `Schemes._layer_voigt` / `Schemes._layer_reuss` and the bounds come for free.
 
 `AsymmetricSelfConsistent` works whether or not the bounds do. Its iteration
-needs exactly what `SelfConsistent` needs — the same two localization tensors —
+needs exactly what `SelfConsistent` needs — the same two concentration tensors —
 and only its branch-selection heuristic, which decides once between the
 stiffness and the compliance form, ever consulted a bound. When no bound is
 available it uses the dilute estimate instead, which answers the same question

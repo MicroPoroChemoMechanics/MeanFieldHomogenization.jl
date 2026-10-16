@@ -107,7 +107,7 @@ original Python verbatim, plus a runtime `error(...)`:
 #= UNTRANSLATED  line 26  severity=blocking
    iteration over an RVE (`for x in ver` / `x.data()`)
    -> MFH exposes the phases by name: iterate inclusion_phase_names(rve)
-   -> and use volume_fraction(rve, name) plus the localization functions
+   -> and use volume_fraction(rve, name) plus the concentration functions
    Original Python:
      moyA=sum([x.data().factor*isotropify(x.data().eE) for x in ver],0)
 =#
@@ -171,7 +171,7 @@ constructs need code in `extract.py`/`emit.py`.
   → `IsoSymmetrize()`) and `.paramsym(ISO)` (a least-squares reporting
   projection, → `best_fit_iso`) are kept strictly apart; conflating them
   changes the numbers.
-- Localization tensors: Echoes stores `eE`/`sE`/`eS`/`sS` on the phase after
+- Concentration tensors: Echoes stores `eE`/`sE`/`eS`/`sS` on the phase after
   `homogenize`; MFH computes them on demand from the inclusion, its stiffness
   and the *reference medium* — the matrix for matrix-based schemes, the
   homogenized result for self-consistent ones. The tool resolves which from

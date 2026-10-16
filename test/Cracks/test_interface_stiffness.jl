@@ -28,10 +28,10 @@ using LinearAlgebra
     B_K = cod_tensor(crack, C₀; K_interface = TensISO{3}(5.0))
     @test all(0 .< diag(TensND.get_array(B_K)) .< diag(TensND.get_array(B_TF)))
 
-    # `compliance_contribution` propagates the kwarg
-    H_TF = compliance_contribution(crack, C₀)
-    H_K = compliance_contribution(crack, C₀; K_interface = TensISO{3}(5.0))
-    H0 = compliance_contribution(crack, C₀; K_interface = TensISO{3}(0.0))
+    # `inverse_property_contribution` propagates the kwarg
+    H_TF = inverse_property_contribution(crack, C₀)
+    H_K = inverse_property_contribution(crack, C₀; K_interface = TensISO{3}(5.0))
+    H0 = inverse_property_contribution(crack, C₀; K_interface = TensISO{3}(0.0))
     @test isapprox(TensND.get_array(H0), TensND.get_array(H_TF); atol = 1.0e-12)
     # Interface stiffens → smaller H → smaller compliance
     @test all(abs.(TensND.get_array(H_K)) .≤ abs.(TensND.get_array(H_TF)) .+ 1.0e-12)
@@ -48,8 +48,8 @@ end
     b_α = cod_tensor(crack, K₀; α_interface = 1.0)
     @test 0 < b_α < b_TF
 
-    R_TF = compliance_contribution(crack, K₀)
-    R_α = compliance_contribution(crack, K₀; α_interface = 1.0)
+    R_TF = inverse_property_contribution(crack, K₀)
+    R_α = inverse_property_contribution(crack, K₀; α_interface = 1.0)
     @test maximum(abs, TensND.get_array(R_α)) ≤
         maximum(abs, TensND.get_array(R_TF)) + 1.0e-12
 end

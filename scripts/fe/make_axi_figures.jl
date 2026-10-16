@@ -165,7 +165,7 @@ end
 
 # ─── Figure 2 — the boundary correction against the cell size ────────────────
 #
-#  The paper's headline figure: the localization tensor as a function of the
+#  The paper's headline figure: the concentration tensor as a function of the
 #  ratio (mesh outer radius)/(inclusion radius), with and without the
 #  first-order corrected boundary condition.  Here the reference is not a
 #  converged computation but the *exact* Hervé-Zaoui solution of the concentric
@@ -176,7 +176,7 @@ want("convergence") && let
     C₀ = C_PASTE
     C_SHELL = ce(2.0, 0.2)                     # a badly degraded adhered mortar
     sph = LayeredSphere((cbrt(W_CORE), 1.0), (C_AGG, C_SHELL))
-    Aex = mand(strain_strain_loc(sph, C₀, C₀))
+    Aex = mand(gradient_gradient_concentration(sph, C₀, C₀))
     Jex, Kex = kelvin_J(Aex), kelvin_K(Aex)
 
     # The concentric limit, tabulated once at the shipped defaults.
@@ -184,8 +184,8 @@ want("convergence") && let
         1.0, (C_AGG, C_SHELL); core_fraction = W_CORE, eccentricity = 0.0,
         nradial = 24, radius_ratio = 4.0
     )
-    A0, B0 = fe_axi_localization(incl0, C₀)
-    Bex = mand(stress_strain_loc(sph, C₀, C₀))
+    A0, B0 = fe_axi_concentration(incl0, C₀)
+    Bex = mand(flux_gradient_concentration(sph, C₀, C₀))
     println(report, "## Concentric limit against Hervé-Zaoui\n")
     println(report, "| Tensor | Part | Finite elements | Hervé-Zaoui | Δ |")
     println(report, "| :--- | :---: | ---: | ---: | ---: |")
@@ -243,7 +243,7 @@ want("convergence") && let
     savefig(plt, joinpath(OUT, "axi_convergence.png"))
 
     println(report, "## Boundary correction against the cell size\n")
-    println(report, "Relative error on the localization tensor 𝔸 (%), concentric case,")
+    println(report, "Relative error on the concentration tensor 𝔸 (%), concentric case,")
     println(report, "`nradial = 24`, against the exact Hervé-Zaoui solution.\n")
     println(report, "| R/a | 𝕁, `u = E·x` | 𝕁, corrected | 𝕂, `u = E·x` | 𝕂, corrected |")
     println(report, "| ---: | ---: | ---: | ---: | ---: |")
@@ -375,7 +375,7 @@ want("conductivity") && let
             nradial = 24, radius_ratio = 4.0
         )
         for k in ks
-            A, B = fe_axi_localization(incl, TensISO{3}(k * 0.1))
+            A, B = fe_axi_concentration(incl, TensISO{3}(k * 0.1))
             Am, Bm = TensND.components_canon(A), TensND.components_canon(B)
             push!(tr, Bm[1, 1] / Am[1, 1] / 0.1)
             push!(ax, Bm[3, 3] / Am[3, 3] / 0.1)
@@ -412,8 +412,8 @@ want("cost") && let
         nradial = 24, radius_ratio = 4.0
     )
     fe_axi_mesh_report(incl)                     # build the mesh out of the timing
-    t = @elapsed fe_axi_localization(incl, C_PASTE)
-    t2 = @elapsed fe_axi_localization(incl, C_PASTE)
+    t = @elapsed fe_axi_concentration(incl, C_PASTE)
+    t2 = @elapsed fe_axi_concentration(incl, C_PASTE)
     rep = fe_axi_mesh_report(incl)
     println(report, "## Cost\n")
     println(

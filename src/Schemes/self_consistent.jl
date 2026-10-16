@@ -966,7 +966,7 @@ contractivity argument otherwise breaks down for high-contrast
 matrix-stiff systems. When an internally heterogeneous phase exposes no
 layer-wise average, so that no bound can be evaluated, the dilute estimate
 plays the same role: the branch heuristic is the only place a bound ever
-entered, and the iteration itself needs nothing beyond the localization
+entered, and the iteration itself needs nothing beyond the concentration
 tensors that `SelfConsistent` also requires.
 """
 function _evaluate(rve::RVE, asc::AsymmetricSelfConsistent, ::Val{p}; kw...) where {p}
@@ -1030,7 +1030,7 @@ function _asc_step_stiffness_dispatch(
     Δ = zero(C_n)
     for name in _volume_phase_names(rve, m)   # cracks not supported in stiffness form
         f = volume_fraction(rve, name)
-        # The asymmetry that defines the ASC: localization is computed in the
+        # The asymmetry that defines the ASC: concentration is computed in the
         # CURRENT reference `C_n`, but the contribution is measured against the
         # MATRIX `C_m`.  `_phase_stiffness_contribution` cannot be used here —
         # it uses one and the same reference for both.  The B tensor (⟨C:A⟩)
@@ -1099,11 +1099,11 @@ function _asc_step_compliance_dispatch(
         f = volume_fraction(rve, name)
         # `⟨C:A⟩`, NOT `C ⊡ ⟨A⟩`: the orientation average does not commute
         # with the tensor product, so the product has to be formed on the RAW
-        # localization tensor and averaged afterwards, which is what the bundle
+        # concentration tensor and averaged afterwards, which is what the bundle
         # does: formed from the averaged `A_dil` and the raw `C_i`, an
         # iso-symmetrized anisotropic phase would come back transversely
         # isotropic, and not even major-symmetric. The bundle also routes
-        # heterogeneous inclusions through `loc_and_stress_average`, whose
+        # heterogeneous inclusions through `concentration_and_flux_average`, whose
         # stress average the declared (placeholder) property of a
         # `LayeredSphere` cannot give.
         A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, C_n; kw...)

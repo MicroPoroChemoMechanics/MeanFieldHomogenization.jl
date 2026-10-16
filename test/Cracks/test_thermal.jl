@@ -11,7 +11,7 @@ using ForwardDiff
 #  Most assertions here used to restate the very closed form the code
 #  evaluates, which cannot detect a wrong prefactor. The one non-tautological
 #  test — the Hill-tensor limit — compared its oracle against
-#  `delta_resistivity(crack, R, 1) = (4π/3) R` instead of against `R` itself.
+#  `delta_inverse_property(crack, R, 1) = (4π/3) R` instead of against `R` itself.
 #  A `b` too small by exactly `4π/(3η)` is invisible to that comparison,
 #  because the spurious `4π/3` on one side cancels it. That is how the error
 #  survived 37 green tests.
@@ -44,11 +44,11 @@ end
             b = cod_tensor(crack, K₀)
             # Surface average of the textbook jump 4σₙa/(πk₀)·√(1-r²/a²), over a.
             @test b ≈ 8 / (3 * π * k₀) rtol = 1.0e-13
-            R = compliance_contribution(crack, K₀)
+            R = inverse_property_contribution(crack, K₀)
             @test R[3, 3] ≈ 2 / (π * k₀) rtol = 1.0e-13      # (3/4)·b
             @test R[1, 1] ≈ 0 atol = 1.0e-14
             @test R[2, 2] ≈ 0 atol = 1.0e-14
-            ΔR = delta_resistivity(crack, R, 1.0)
+            ΔR = delta_inverse_property(crack, R, 1.0)
             @test ΔR[3, 3] ≈ (4π / 3) * R[3, 3] rtol = 1.0e-13
         end
     end
@@ -69,9 +69,9 @@ end
             crack = RibbonCrack(0.5)
             b = cod_tensor(crack, K₀)
             @test b ≈ π / (2 * k₀) rtol = 1.0e-13
-            R = compliance_contribution(crack, K₀)
+            R = inverse_property_contribution(crack, K₀)
             @test R[3, 3] ≈ 1 / k₀ rtol = 1.0e-13            # (2/π)·b
-            ΔR = delta_resistivity(crack, R, 1.0)
+            ΔR = delta_inverse_property(crack, R, 1.0)
             @test ΔR[3, 3] ≈ π * R[3, 3] rtol = 1.0e-13
         end
     end
@@ -115,7 +115,7 @@ end
             (TensND.Tens([3.0 0.5 0.3; 0.5 2.0 0.2; 0.3 0.2 1.5]), EllipticCrack(1.0, 0.6)),
         )
         for (K₀, crack) in cases
-            R = compliance_contribution(crack, K₀)
+            R = inverse_property_contribution(crack, K₀)
             errs = map((1.0e-2, 1.0e-3)) do ω
                 O = R_from_hill_thermal(crack, K₀, ω)
                 maximum(abs, components_canon(R - O))
@@ -173,7 +173,7 @@ end
     fr(k) = cod_tensor(RibbonCrack(0.7), TensISO{3}(k))
     @test ForwardDiff.derivative(fr, 2.0) ≈ (fr(2.0 + h) - fr(2.0 - h)) / (2h) rtol = 1.0e-6
 
-    fR(k) = compliance_contribution(PennyCrack(1.0), TensISO{3}(k))[3, 3]
+    fR(k) = inverse_property_contribution(PennyCrack(1.0), TensISO{3}(k))[3, 3]
     @test ForwardDiff.derivative(fR, 2.0) ≈ (fR(2.0 + h) - fR(2.0 - h)) / (2h) rtol = 1.0e-6
 
     # Gradient through the anisotropic adjugate branch.
@@ -187,6 +187,34 @@ end
     end
     @test maximum(abs, g .- fd) < 1.0e-8
     @test maximum(abs, g) > 1.0e-3          # not trivially zero
+end
+
+@testset "Cracks / conductivity — a dense isotropic conductor, and the circular point" begin
+    # A circular crack in an isotropic conductor stored as a dense tensor took
+    # the discriminant of Q₂ as tr² − 4 det, which rounds below zero for most
+    # conductivities, and `sqrt` threw; the differential scheme met it whenever
+    # its running conductivity was dense. The discriminant is now a sum of
+    # squares, and the circular point is crossed by a series in q = disc / tr².
+    for k₀ in (0.3, 1.0, 2.0, 2.5, 7.0, 13.0)
+        K_dense = TensND.Tens(Matrix(k₀ * I(3)))
+        @test cod_tensor(PennyCrack(1.0), K_dense) ≈ 8 / (3π * k₀) rtol = 1.0e-14
+    end
+    # Along K = diag(k + t, k, k), for a penny crack of normal e₃, the eigenvalues
+    # of Q₂ are k(k + t) and k², and b = 4 / (3 √λ₁ ℰ(1 − λ₂/λ₁)) is the closed
+    # form. The values of t cross the switch to the series, q = 1e-2.
+    k = 2.0
+    b_closed(t) = 4 / (3 * sqrt(k * (k + t)) * ELL_T.ell_E(1 - k / (k + t)))
+    b(t) = cod_tensor(PennyCrack(1.0), TensND.Tens([k + t 0 0; 0 k 0; 0 0 k]))
+    for t in (1.0e-6, 1.0e-3, 0.05, 0.4, 0.45, 1.0)
+        @test b(t) ≈ b_closed(t) rtol = 1.0e-14
+    end
+    # At the circular point the root of the discriminant has no derivative, the
+    # series does: I = √(tr/2) (π/2) (1 + O(q)) with q = O(t²) gives
+    # db/dt = −2 / (3π k²), and the second derivative continues the closed form's.
+    @test ForwardDiff.derivative(b, 0.0) ≈ -2 / (3π * k^2) rtol = 1.0e-13
+    d2(f, t) = ForwardDiff.derivative(s -> ForwardDiff.derivative(f, s), t)
+    @test isfinite(d2(b, 0.0))
+    @test d2(b, 0.0) ≈ d2(b_closed, 1.0e-4) rtol = 1.0e-3
 end
 
 @testset "Cracks / conductivity — SIF and DIF" begin

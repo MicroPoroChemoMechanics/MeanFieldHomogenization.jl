@@ -63,6 +63,7 @@ include("generators.jl")
 include("block_solve.jl")
 include("cluster_model.jl")
 include("eim.jl")
+include("concentrations.jl")
 include("as_rve.jl")
 include("parameters.jl")
 
@@ -80,7 +81,7 @@ export assembly_volume, validate_assembly
 export cubic_lattice, random_assembly, max_packing_fraction
 
 # ── Scheme-specific queries ─────────────────────────────────────────────────
-export eim_bound_type, eim_polarizations, cluster_localizations
+export eim_bound_type, eim_polarizations, cluster_concentrations
 
 # ── Parameter lenses ────────────────────────────────────────────────────────
 export CenterParameter, RadiusParameter, center_param, radius_param

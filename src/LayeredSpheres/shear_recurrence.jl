@@ -56,14 +56,14 @@
 #  at r_N⁺, and form the linear combination that yields a unit remote
 #  deviatoric far-field (a_{N+1}, b_{N+1}) = (1, 0).
 #
-#  The per-layer shear localization is **not** the mode-1 amplitude alone:
+#  The per-layer shear concentration is **not** the mode-1 amplitude alone:
 #  the r³ profile of mode 2 integrates to a non-zero deviatoric strain over
 #  a shell of finite thickness, so
 #      β_k = a_k + b_k · _layer_avg_dev_shear_factor(r_{k-1}, r_k, κ_k, μ_k),
 #  modes 3 (1/r⁴) and 4 (1/r²) integrating to zero.  Dropping the mode-2
 #  term is invisible on degenerate configurations (vanishing core, core ≡
 #  shell, single layer) and wrong by 1–50 % on genuine multi-layer stacks —
-#  see `_shear_localization_multi` and the ECHOES cross-check in
+#  see `_shear_concentration_multi` and the ECHOES cross-check in
 #  `scripts/bench_echoes/benchmark_nlayers.jl` §3.
 # =============================================================================
 
@@ -340,17 +340,17 @@ function _shear_amplitude_seq(
 end
 
 """
-    _shear_localization_single_layer(sphere, C₀) -> β::T
+    _shear_concentration_single_layer(sphere, C₀) -> β::T
 
 For a single-layer (``N = 1``) composite sphere, delegate the deviatoric
-localization to the existing `Ellipsoid(r)` Eshelby machinery.
+concentration to the existing `Ellipsoid(r)` Eshelby machinery.
 """
-function _shear_localization_single_layer(
+function _shear_concentration_single_layer(
         sphere::LayeredSphere{T, 1}, C₀::TensND.TensISO{4, 3}
     ) where {T}
     C₁ = layer_modulus(sphere, 1)
     ell = Elasticity.Ellipsoid(outer_radius(sphere))
-    A = strain_strain_loc(ell, C₁, C₀)
+    A = gradient_gradient_concentration(ell, C₁, C₀)
     _, β_K = A.data
     return β_K
 end
@@ -371,7 +371,7 @@ F = \\frac{21}{5}\\,(3 - 2s)\\,\\frac{r_b^5 - r_a^5}{r_b^3 - r_a^3},
 finite at ``k = \\infty`` (Christensen-Lo mode-2 angular integral; modes 3 and 4
 contribute zero to the dev ``\\beta``).
 
-The full per-layer dev localization is therefore
+The full per-layer dev concentration is therefore
 ``\\beta_k = a_k + b_k\\,F_k``, with ``F_k`` = `_layer_avg_dev_shear_factor(r_a, r_b, κ_k, μ_k)`.
 """
 @inline function _layer_avg_dev_shear_factor(r_a, r_b, κ, μ)
@@ -385,9 +385,9 @@ The full per-layer dev localization is therefore
 end
 
 """
-    _shear_localization_multi(sphere, C₀) -> NTuple{N}
+    _shear_concentration_multi(sphere, C₀) -> NTuple{N}
 
-Multi-layer (``N \\ge 2``) per-layer deviatoric localization ``\\beta_k`` from the
+Multi-layer (``N \\ge 2``) per-layer deviatoric concentration ``\\beta_k`` from the
 4×4 state-vector recurrence.  For a spherical shell layer, the
 volume-averaged deviatoric strain involves both the mode-1 amplitude
 (uniform deviatoric part) **and** the mode-2 amplitude (whose ``r^3``
@@ -404,7 +404,7 @@ F_k = \\frac{21}{5}\\,(3 - 2s_k)\\,
 
 Reference: Hervé-Zaoui 1993, Christensen-Lo 1979.
 """
-function _shear_localization_multi(
+function _shear_concentration_multi(
         sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}
     ) where {T, N}
     states, _ = _shear_state_seq(sphere, C₀)
@@ -420,13 +420,13 @@ function _shear_localization_multi(
 end
 
 """
-    _shear_localization(sphere, C₀) -> NTuple{N}
+    _shear_concentration(sphere, C₀) -> NTuple{N}
 
-Per-layer deviatoric localization ``\\beta_k`` under a remote unit deviatoric
+Per-layer deviatoric concentration ``\\beta_k`` under a remote unit deviatoric
 far-field.  Dispatches to the single-layer Eshelby delegation for
 ``N = 1`` and to the state-vector recurrence for ``N \\ge 2``.
 """
-function _shear_localization(
+function _shear_concentration(
         sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}
     ) where {T, N}
     # The single-layer Eshelby delegation is only valid for a *perfect*
@@ -434,7 +434,7 @@ function _shear_localization(
     # (spring / membrane) interface the state-vector recurrence — which
     # applies the interface jump — must be used even for N = 1.
     if N == 1 && layer_interface(sphere, 1) isa PerfectInterface
-        return (_shear_localization_single_layer(sphere, C₀),)
+        return (_shear_concentration_single_layer(sphere, C₀),)
     end
-    return _shear_localization_multi(sphere, C₀)
+    return _shear_concentration_multi(sphere, C₀)
 end

@@ -158,7 +158,7 @@ Numerical audit of [`has_coordinate_mirrors`](@ref): `radial_distance` must be
 invariant under each of the three reflections, over a deterministic sweep of
 directions.
 
-An **audit, not a guard**. A finite sample can miss a localized defect, and
+An **audit, not a guard**. A finite sample can miss a defect confined to a small region, and
 letting this function decide would do exactly what the trait exists to prevent:
 correct silently. Use it when writing a `has_coordinate_mirrors` method for a
 new shape, and as a test on the shapes already shipped.

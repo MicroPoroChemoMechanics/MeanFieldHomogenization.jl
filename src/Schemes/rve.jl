@@ -7,8 +7,8 @@
 #  conductivity, …) and an *amount* — a `VolumeFraction` for ellipsoidal
 #  inclusions, a `CrackDensity` for cracks.  Volume fractions are stored
 #  **at the RVE level**, not on the inclusions: a single inclusion is still
-#  usable for localization-tensor calculations (`hill_tensor`,
-#  `strain_strain_loc`, …) without any fraction-related machinery.
+#  usable for concentration-tensor calculations (`hill_tensor`,
+#  `gradient_gradient_concentration`, …) without any fraction-related machinery.
 #
 #  The matrix amount is implicit (`f_matrix = 1 - Σ f_inc`) and crack
 #  densities are excluded from that sum (their volume contribution → 0
@@ -252,7 +252,7 @@ end
 """
     AbstractSymmetrize
 
-Specifies how a phase's *localization tensor* (and the derived stiffness /
+Specifies how a phase's *concentration tensor* (and the derived stiffness /
 compliance / conductivity / resistivity contributions) is averaged over an
 orientation distribution before being used in the homogenization formula.
 
@@ -270,14 +270,14 @@ This mirrors C++ ECHOES's `symmetrize=[ISO]` / `symmetrize=[TI]` keyword on
 `ellipsoid()`, but moved to the *RVE* side (just like volume fractions) :
 the same inclusion type can be re-used in different RVEs with different
 distribution assumptions, and a single inclusion remains usable for
-localization-tensor calculations without any RVE.
+concentration-tensor calculations without any RVE.
 """
 abstract type AbstractSymmetrize end
 
 """
     NoSymmetrize() <: AbstractSymmetrize
 
-Default. The localization tensor is used as computed for the single
+Default. The concentration tensor is used as computed for the single
 orientation defined by the inclusion's basis.
 """
 struct NoSymmetrize <: AbstractSymmetrize end
@@ -285,7 +285,7 @@ struct NoSymmetrize <: AbstractSymmetrize end
 """
     IsoSymmetrize() <: AbstractSymmetrize
 
-The localization tensor is averaged over a *uniform spatial distribution*
+The concentration tensor is averaged over a *uniform spatial distribution*
 of orientations, equivalent to projecting onto the isotropic basis
 `(J, K_proj)` for 4th-order tensors and onto the spherical part for
 2nd-order tensors. Produces an isotropic phase contribution regardless of
@@ -296,14 +296,14 @@ struct IsoSymmetrize <: AbstractSymmetrize end
 """
     TISymmetrize(axis = (0, 0, 1); reference_projection = :iso) <: AbstractSymmetrize
 
-The localization tensor is averaged **exactly** over rotations about `axis`
+The concentration tensor is averaged **exactly** over rotations about `axis`
 (uniaxial uniform distribution).  The average preserves the full
 axially-invariant structure — including the non-major-symmetric components
 of concentration tensors — and returns a `TensND.TensTI{4,T,8}`
 (resp. `TensTI{2,T,3}` at 2nd order).
 
 `reference_projection` controls how the *reference medium* is pre-projected
-before the localization tensor of this phase is computed :
+before the concentration tensor of this phase is computed :
 
 - `:iso` (default) — project the reference to its isotropic average.  Every
   inclusion orientation then has an analytical, ForwardDiff-compatible Hill
@@ -715,7 +715,7 @@ therefore accepted by a plain `RVE()`, and phases may carry amounts of
 different element types.
 
 The optional `symmetrize` kwarg declares an orientation-distribution
-projection of this phase's localization tensor : `:iso` (uniform spatial
+projection of this phase's concentration tensor : `:iso` (uniform spatial
 distribution → isotropic projection), `:ti` (uniaxial uniform around
 z-axis), `TISymmetrize(axis)` (around an arbitrary axis), or pass an
 explicit [`AbstractSymmetrize`](@ref) instance. The default
@@ -874,7 +874,7 @@ phase_names(rve::RVE) = rve.phase_names
     inclusion_phase_names(rve::RVE, matrix::Symbol) -> Vector{Symbol}
 
 Names of the phases other than `matrix`, in declaration order — the phases a
-matrix-based scheme localizes in its reference medium.
+matrix-based scheme embeds in its reference medium.
 
 The phase to exclude has to be named: the reference medium is a property of the
 *scheme*, and an RVE holds no such designation of its own. Use

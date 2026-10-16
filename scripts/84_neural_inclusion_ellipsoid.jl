@@ -8,7 +8,7 @@
 #
 # `MeanFieldHomogenization` lets a morphology take part in every homogenization scheme
 # provided it can answer one of three questions — the Hill tensor, the
-# localization tensors, or the contribution tensors. Nothing says the answer has
+# concentration tensors, or the contribution tensors. Nothing says the answer has
 # to come from a formula. It can come from a finite-element solve
 # (`FEEllipticCrack`, `FEExcenteredSphere`), and it can come from a **trained
 # network**, which is what this script drives.
@@ -188,7 +188,7 @@ nn_spheroid(ω; kw...) = NeuralHillInclusion(
 )
 
 # `check_inclusion_interface` reports which gate the inclusion satisfies. Gate A
-# — the Hill tensor — is the most complete: the eight localization tensors, the
+# — the Hill tensor — is the most complete: the eight concentration tensors, the
 # four contribution tensors and every scheme are derived from it.
 
 println()
@@ -209,7 +209,7 @@ check_inclusion_interface(nn_spheroid(0.4))
 # ```
 #
 # exactly, so ``\mathbb C_1 = \mathbb C_0 \Rightarrow \mathbb A = \mathbb I``.
-# The fit error is confined to a single tensor, and the eight localization
+# The fit error is confined to a single tensor, and the eight concentration
 # tensors stay exactly consistent with one another — which a surrogate predicting
 # ``\mathbb A`` directly could not guarantee, ``\mathbb A`` having no major
 # symmetry.
@@ -223,7 +223,7 @@ check_inclusion_interface(nn_spheroid(0.4))
 C₀ = iso_stiffness(30.0, 10.0)
 incl = nn_spheroid(0.4)
 
-A_zero = strain_strain_loc(incl, C₀, C₀)
+A_zero = gradient_gradient_concentration(incl, C₀, C₀)
 @printf(
     "\n  ‖𝔸 − 𝕀‖ at zero contrast          %.2e\n",
     norm(A_zero - TensISO{3}(1.0, 1.0))
@@ -504,7 +504,7 @@ C_nn = homogenize(oriented(nn_at, 12, 0.2), MoriTanaka(), :C)
 #
 # This is what the surrogate is really for. A network is a smooth function of its
 # inputs, so `ForwardDiff` flows from a semi-axis through the features, the
-# weights, the decode, the localization algebra and the scheme — and the
+# weights, the decode, the concentration algebra and the scheme — and the
 # sensitivity API finds the geometric field by reflection, with no library change.
 #
 # The finite-element inclusions refuse exactly this request: their solve runs in
@@ -578,7 +578,7 @@ println("    not speed. The speed argument belongs to an expensive teacher.")
 # The ellipsoid was chosen because its answer is known.
 # [Replacing a finite-element solve by a neural surrogate](@ref tut-neural-excentered-sphere)
 # applies the same machinery to a sphere with an eccentric core, whose
-# localization tensors have no closed form and are learned from finite elements,
+# concentration tensors have no closed form and are learned from finite elements,
 # and differentiates the result with respect to the eccentricity. The models
 # shipped with the package, their inputs and their decoding are documented in
 # [Neural-surrogate inclusions](@ref man-neural-inclusions).

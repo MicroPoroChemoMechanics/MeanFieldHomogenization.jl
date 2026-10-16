@@ -90,7 +90,7 @@ original Python, plus a runtime `error(...)`:
 #= UNTRANSLATED  line 26  severity=blocking
    iteration over an RVE (`for x in ver` / `x.data()`)
    -> MFH exposes the phases by name: iterate inclusion_phase_names(rve)
-   -> and use volume_fraction(rve, name) plus the localization functions
+   -> and use volume_fraction(rve, name) plus the concentration functions
    Original Python:
      moyA = sum([x.data().factor * isotropify(x.data().eE) for x in ver], 0)
 =#

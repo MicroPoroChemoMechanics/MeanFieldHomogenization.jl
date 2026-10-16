@@ -1,7 +1,7 @@
 {
     "provenance": {
         "epochs": 1573,
-        "teacher": "strain_strain_loc(FEAxiSupershapePore, TensISO{4}) — Fourier axi, nradial = 14.0, R/a = 6.0",
+        "teacher": "strain_strain_concentration(FEAxiSupershapePore, TensISO{4}) — Fourier axi, nradial = 14.0, R/a = 6.0",
         "max_rel_error": [
             0.06532771273995092,
             0.01565971361384026,
@@ -4875,7 +4875,7 @@
             "identity",
             "log"
         ],
-        "class": "loc_ti",
+        "class": "gradient_concentration_ti",
         "shift": [
             1.2623705967558847,
             0.7528194865646638,

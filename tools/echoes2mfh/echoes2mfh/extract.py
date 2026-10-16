@@ -273,7 +273,7 @@ class Extractor:
         names = self._targets(tgt)
         value = self.tr.translate(node.value)
         # a homogenize result bound to a name becomes the self-consistent
-        # reference medium for any localization read later in this scope
+        # reference medium for any concentration read later in this scope
         if len(names) == 1 and "homogenize(" in value:
             self._current_result = names[0]
         for n_ in names:
@@ -720,8 +720,8 @@ class Extractor:
                 node,
                 "see scripts/80_custom_inclusion_contract.jl and "
                 "check_inclusion_interface; the four tensors eE/sE/eS/sS "
-                "become strain_strain_loc / stress_strain_loc / "
-                "strain_stress_loc / stress_stress_loc callbacks",
+                "become gradient_gradient_concentration / flux_gradient_concentration / "
+                "gradient_flux_concentration / flux_flux_concentration callbacks",
             )
         raise Untranslatable(f"class `{node.name}` has no MFH counterpart", node)
 
@@ -1135,7 +1135,7 @@ class Extractor:
                 "iteration over an RVE (`for x in ver` / `x.data()`)", call,
                 "MFH exposes the phases by name: iterate "
                 "inclusion_phase_names(rve) and use volume_fraction(rve, name) "
-                "plus the localization functions",
+                "plus the concentration functions",
             )
         return None
 
@@ -1219,9 +1219,9 @@ class Extractor:
         return f"echoes_tensor({inner})"
 
     def _phase_access(self, attr: ast.Attribute) -> Optional[str]:
-        """`ver["PORE"].eE` -> the corresponding MFH localization call.
+        """`ver["PORE"].eE` -> the corresponding MFH concentration call.
 
-        Echoes stores the four localization tensors on the phase as a side
+        Echoes stores the four concentration tensors on the phase as a side
         effect of `homogenize`; MFH computes them on demand from the inclusion,
         its stiffness and the *reference medium*. Which medium that is depends
         on the scheme -- the matrix for the matrix-based schemes, the
@@ -1264,8 +1264,8 @@ class Extractor:
         c_incl = pd.props.get(prop_key)
         if c_incl is None or not c_incl.code:
             raise Untranslatable(
-                f"phase `{phase}` carries no `{prop_key}` property to localize "
-                f"with", attr,
+                f"phase `{phase}` carries no `{prop_key}` property to compute "
+                f"its concentration tensors with", attr,
             )
         c_ref = self._reference_medium(rve, prop_key, attr)
         return f"{fn}({self._geometry_expr(pd)}, {c_incl.code}, {c_ref})"
@@ -1278,26 +1278,26 @@ class Extractor:
     def _reference_medium(
         self, rve: RVEDef, prop_key: str, node: ast.AST
     ) -> str:
-        """The medium the scheme localizes against."""
+        """The reference medium of the scheme's auxiliary problems."""
         scheme = self._current_scheme
         if scheme is None:
             raise Untranslatable(
-                "a localization tensor is read with no homogenize call in "
+                "a concentration tensor is read with no homogenize call in "
                 "scope to fix the reference medium",
                 node,
                 "MFH needs the reference explicitly: "
-                "strain_strain_loc(inclusion, C_inclusion, C_reference)",
+                "gradient_gradient_concentration(inclusion, C_inclusion, C_reference)",
             )
         if scheme.startswith(("SelfConsistent", "AsymmetricSelfConsistent")):
             if self._current_result is None:
                 raise Untranslatable(
-                    "a self-consistent localization needs the homogenized "
+                    "a self-consistent concentration needs the homogenized "
                     "stiffness as its reference, but the result is not bound "
                     "to a name",
                     node,
                 )
             return self._current_result
-        # matrix-based schemes localize against the matrix
+        # matrix-based schemes solve their auxiliary problems in the matrix
         for pd in rve.phases:
             if pd.is_matrix:
                 c = pd.props.get(prop_key)
@@ -1341,7 +1341,7 @@ class Extractor:
 
         scheme_node = kw.get("scheme")
         scheme = self._scheme(scheme_node, kw)
-        # Remember what the localization tensors read afterwards refer to.
+        # Remember what the concentration tensors read afterwards refer to.
         self._current_scheme = scheme
         if rve is not None and scheme.startswith(("Maxwell", "PonteCastanedaWillis")):
             rve.needs_distribution_shape = True

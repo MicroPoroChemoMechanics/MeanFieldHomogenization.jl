@@ -242,7 +242,7 @@ convention safe:
   `inclusion_basis` — an `Ellipsoid` does, and so does any user type.
 - `response(geom, P₀) -> AbstractTens` evaluates the tensor to be learned. For
   the pilot this is `hill_tensor`; for a heterogeneous morphology it is one of
-  the localization tensors, and for an expensive one it is a solve.
+  the concentration tensors, and for an expensive one it is a solve.
 
 Because the frame in which the components are read is then obtained from `geom`
 through the very same `_class_frame` the inclusion uses at evaluation time, a
@@ -277,7 +277,7 @@ misses by orders of magnitude more, still fails loudly.
 `reference` overrides how the reference medium is built, as
 `reference(box, x_full) -> AbstractTens`. The default dispatches on the class,
 and for most classes that is the only sensible thing. It is **not** for
-`StrainLocTI` and `StressLocTI`: those describe the *localization* of a
+`GradientConcentrationTI` and `FluxConcentrationTI`: those describe the *concentration* of a
 morphology, and whether the reference can be recovered from the features at all
 depends on the morphology and not on the class. A heterogeneous one carries its
 constituents inside itself, so scaling the reference changes the contrast and
@@ -415,12 +415,12 @@ end
 
 _reference_medium(::Union{HillISO2, HillTI2}, ::SampleBox, _x_full) = TensND.TensISO{3}(1.0)
 
-# A **cavity**'s strain localization is dimensionless -- degree 0 in the moduli
+# A **cavity**'s strain concentration is dimensionless -- degree 0 in the moduli
 # -- and depends on the reference through ν₀ alone, so the same isotropic
 # reference at unit shear modulus serves. That is exactly the case
-# `StrainLocCubic` exists for: a cube-symmetric pore.
+# `GradientConcentrationCubic` exists for: a cube-symmetric pore.
 #
-# There is deliberately no method for `StrainLocTI` / `StressLocTI`. Those are
+# There is deliberately no method for `GradientConcentrationTI` / `FluxConcentrationTI`. Those are
 # used here for *heterogeneous* morphologies, which carry their constituents
 # inside themselves, so scaling the reference alone changes the contrast and
 # changes the answer; their features have to be contrast ratios and the
@@ -430,17 +430,17 @@ _reference_medium(::Union{HillISO2, HillTI2}, ::SampleBox, _x_full) = TensND.Ten
 # The restriction is on the *morphology*, not on the class. A transversely
 # isotropic **cavity** — a superspheroidal pore — is of degree 0 in the
 # reference just as the cubic one is, and would take the same method as
-# `StrainLocCubic`. It has none yet only because nothing generates such a
+# `GradientConcentrationCubic`. It has none yet only because nothing generates such a
 # dataset: see the roadmap.
-_reference_medium(::StrainLocCubic, box::SampleBox, x_full) =
+_reference_medium(::GradientConcentrationCubic, box::SampleBox, x_full) =
     _iso_ref(x_full[feature_index(box, :nu0)])
 
-# Transport, and it needs no `nu0`: a cavity's gradient localization is
+# Transport, and it needs no `nu0`: a cavity's gradient concentration is
 # scale-free in `k₀`, so the shape alone determines it and the reference is the
 # identity. Two components instead of one when the morphology has an axis, and
 # neither class is ambiguous about its reference — unlike `HillTI2`, whose
 # dimension is different.
-_reference_medium(::Union{GradLocISO2, GradLocTI2}, ::SampleBox, _) =
+_reference_medium(::Union{GradientConcentrationISO2, GradientConcentrationTI2}, ::SampleBox, _) =
     TensND.TensISO{3}(1.0)
 
 # ─── Scaling fitted on the training set ──────────────────────────────────────

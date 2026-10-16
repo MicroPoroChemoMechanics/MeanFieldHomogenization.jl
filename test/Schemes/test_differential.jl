@@ -421,7 +421,7 @@ end
         @test agree(rve, :C) < 1.0e-9
     end
 
-    # Heterogeneous inclusion: no `compliance_contribution` of its own, the
+    # Heterogeneous inclusion: no `inverse_property_contribution` of its own, the
     # dual kernel goes through `ℍ = −𝕊 : 𝐍 : 𝕊`.
     @testset "layered sphere (elasticity + conductivity)" begin
         s = LayeredSphere((0.8, 1.0), (TensISO{3}(3 * 80.0, 2 * 35.0), TensISO{3}(3 * 5.0, 2 * 2.0)))

@@ -21,7 +21,7 @@ Isotropy of the assembled tensor: |A11-A33|/A11 = 1.6e-06, |A44-A66|/A44 = 1.5e-
 
 ## Boundary correction against the cell size
 
-Relative error on the localization tensor 𝔸 (%), concentric case,
+Relative error on the concentration tensor 𝔸 (%), concentric case,
 `nradial = 24`, against the exact Hervé-Zaoui solution.
 
 | R/a | 𝕁, `u = E·x` | 𝕁, corrected | 𝕂, `u = E·x` | 𝕂, corrected |

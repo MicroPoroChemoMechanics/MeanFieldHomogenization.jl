@@ -38,25 +38,25 @@ end
     C₁ = TensISO{3}(3κ₁, 2μ₁)
 
     s = LayeredSphere((1.0,), (C₁,))
-    A_layered = strain_strain_loc(s, C₀; layer = 1)
-    A_ell = strain_strain_loc(Ellipsoid(1.0), C₁, C₀)
+    A_layered = gradient_gradient_concentration(s, C₀; layer = 1)
+    A_ell = gradient_gradient_concentration(Ellipsoid(1.0), C₁, C₀)
     # Both should match to floating-point precision (the two paths
     # differ only in round-off — bulk via (u,σ) propagation vs direct
     # Eshelby iso inversion).
     @test A_layered.data[1] ≈ A_ell.data[1] rtol = 1.0e-14
     @test A_layered.data[2] ≈ A_ell.data[2] rtol = 1.0e-14
 
-    # Bulk localization matches Eshelby sphere formula
+    # Bulk concentration matches Eshelby sphere formula
     α_bulk = (3κ₀ + 4μ₀) / (3κ₁ + 4μ₀)
     @test A_layered[1, 1, 1, 1] ≈ α_bulk / 3 + 2 * A_layered.data[2] / 3 rtol = 1.0e-12
 end
 
-@testset "LayeredSphere — bulk localization and effective bulk" begin
+@testset "LayeredSphere — bulk concentration and effective bulk" begin
     # Homogeneous composite (all layers = matrix): α_k ≡ 1 and κ_eff = κ₀.
     κ₀, μ₀ = 120.0, 80.0
     C₀ = TensISO{3}(3κ₀, 2μ₀)
     s = LayeredSphere((0.4, 0.7, 1.0), (C₀, C₀, C₀))
-    α = MeanFieldHomogenization.LayeredSpheres._bulk_localization(s, κ₀, μ₀)
+    α = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(s, κ₀, μ₀)
     @test all(≈(1), α)
     κ_eff = MeanFieldHomogenization.LayeredSpheres._effective_bulk(s, κ₀, μ₀)
     @test κ_eff ≈ κ₀ rtol = 1.0e-12
@@ -65,7 +65,7 @@ end
     κ₁, μ₁ = 3κ₀, 2μ₀
     C₁ = TensISO{3}(3κ₁, 2μ₁)
     s_mono = LayeredSphere((0.4, 0.7, 1.0), (C₁, C₁, C₁))
-    α_mono = MeanFieldHomogenization.LayeredSpheres._bulk_localization(s_mono, κ₀, μ₀)
+    α_mono = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(s_mono, κ₀, μ₀)
     α_expected = (3κ₀ + 4μ₀) / (3κ₁ + 4μ₀)
     for k in 1:3
         @test α_mono[k] ≈ α_expected rtol = 1.0e-10
@@ -80,19 +80,19 @@ end
     s = LayeredSphere((0.5, 1.0), (C_in, C₀))
     ε∞ = TensND.Tens(Matrix(Diagonal([0.1, 0.1, 0.1])))
 
-    α = MeanFieldHomogenization.LayeredSpheres._bulk_localization(s, κ₀, μ₀)
+    α = MeanFieldHomogenization.LayeredSpheres._bulk_concentration(s, κ₀, μ₀)
     # Layer 2 (shell = matrix): α[2] should be close to 1 for this case
     # (consistent with the generalized self-consistent ... the shell's
     # average strain is not exactly 1 because the core perturbs it,
     # but the trace average across the whole composite must equal ε∞ when
     # the matrix surrounds a composite of the same material).
-    # We just check sphere_strain_average trace vs exact dilute expectation.
-    sph_avg = sphere_strain_average(s, C₀, ε∞)
+    # We just check sphere_gradient_average trace vs exact dilute expectation.
+    sph_avg = sphere_gradient_average(s, C₀, ε∞)
     # Sum of per-layer averages weighted by volume fraction equals sphere_avg
     f1 = layer_volume_fraction(s, 1)
     f2 = layer_volume_fraction(s, 2)
-    avg1 = layer_strain_average(s, C₀, ε∞, 1)
-    avg2 = layer_strain_average(s, C₀, ε∞, 2)
+    avg1 = layer_gradient_average(s, C₀, ε∞, 1)
+    avg2 = layer_gradient_average(s, C₀, ε∞, 2)
     @test sph_avg ≈ f1 * avg1 + f2 * avg2 rtol = 1.0e-12
 
     # Cumulative at r = outer equals sphere_avg
@@ -104,15 +104,15 @@ end
     @test cum1 ≈ avg1 rtol = 1.0e-12
 end
 
-@testset "LayeredSphere — stiffness_contribution for single-layer" begin
+@testset "LayeredSphere — property_contribution for single-layer" begin
     κ₀, μ₀ = 100.0, 70.0
     κ₁, μ₁ = 250.0, 180.0
     C₀ = TensISO{3}(3κ₀, 2μ₀)
     C₁ = TensISO{3}(3κ₁, 2μ₁)
 
     s = LayeredSphere((1.0,), (C₁,))
-    N_layered = stiffness_contribution(s, C₀)
-    N_ell = stiffness_contribution(Ellipsoid(1.0), C₁, C₀)
+    N_layered = property_contribution(s, C₀)
+    N_ell = property_contribution(Ellipsoid(1.0), C₁, C₀)
     # For single layer (f = 1), both should agree on the iso coefficients.
     @test N_layered.data[1] ≈ N_ell.data[1] rtol = 1.0e-10
     @test N_layered.data[2] ≈ N_ell.data[2] rtol = 1.0e-10
@@ -124,10 +124,10 @@ end
     C₁ = TensISO{3}(200.0, 140.0)
     s2 = LayeredSphere((0.5, 1.0), (C₁, C₀))
     ε∞_sph = TensND.Tens(Matrix(Diagonal([0.1, 0.1, 0.1])))
-    @test_nowarn layer_strain_average(s2, C₀, ε∞_sph, 1)
+    @test_nowarn layer_gradient_average(s2, C₀, ε∞_sph, 1)
 
     # Deviatoric component ≠ 0: combines bulk α_k and shear β_k.
     ε∞_dev = TensND.Tens([0.1 0.0 0.0; 0.0 -0.05 0.0; 0.0 0.0 -0.05])
-    avg = layer_strain_average(s2, C₀, ε∞_dev, 1)
+    avg = layer_gradient_average(s2, C₀, ε∞_dev, 1)
     @test all(isfinite, Matrix(avg))
 end

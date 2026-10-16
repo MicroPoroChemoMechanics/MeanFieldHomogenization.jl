@@ -3,7 +3,7 @@
 
 COD tensors, compliance contributions, SIF and DIF for flat cracks
 embedded in an elastic matrix of arbitrary anisotropy.  Public entry
-points: [`cod_tensor`](@ref), [`compliance_contribution`](@ref),
+points: [`cod_tensor`](@ref), [`inverse_property_contribution`](@ref),
 [`sif`](@ref), [`dif`](@ref).
 """
 module Cracks
@@ -24,13 +24,13 @@ using ..Core
 import ..Elasticity
 const MFH_Core = Core
 
-# `compliance_contribution` / `delta_compliance` / `delta_resistivity` are
-# Core-level generics (like `stiffness_contribution` & co.) so that *every*
+# `inverse_property_contribution` and `delta_inverse_property` are
+# Core-level generics (like `property_contribution` & co.) so that *every*
 # inclusion family — including user-defined ones living outside this
 # sub-module — extends one single canonical function.  The crack methods
 # below therefore *extend*, they do not declare.
-import ..Core: compliance_contribution, delta_compliance, delta_resistivity,
-    compliance_and_stiffness_contribution
+import ..Core: inverse_property_contribution, delta_inverse_property,
+    inverse_and_property_contribution
 
 include("geometry.jl")
 include("cod_H_bridge.jl")
@@ -57,10 +57,9 @@ export cod_tensor, B_tensor
 export cod_from_compliance, compliance_from_cod
 export crack_density_factor
 # Internal perf seam consumed by `Schemes` (not re-exported by MeanFieldHomogenization).
-export compliance_and_stiffness_contribution
-# (`compliance_contribution`, `delta_compliance`, `delta_resistivity`,
-# `stiffness_contribution`, `conductivity_contribution`, `delta_stiffness`
-# and `delta_conductivity` are Core-level generics; the methods defined in
+export inverse_and_property_contribution
+# (`inverse_property_contribution`, `delta_inverse_property`,
+# `property_contribution` and `delta_property` are Core-level generics; the methods defined in
 # `compliance.jl` / `api.jl` attach to them and are visible through Core's
 # exports — nothing to re-export here.)
 

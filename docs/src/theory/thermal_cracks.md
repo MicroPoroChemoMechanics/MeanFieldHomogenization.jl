@@ -15,7 +15,7 @@ is a vector rather than a symmetric 2-tensor.
 ## 1. What is specific to a crack
 
 The general elasticity ↔ conductivity dictionary — fields, fluxes, moduli, Hill
-and localization tensors — is stated once in
+and concentration tensors — is stated once in
 [Extension to conductivity](@ref th-conductivity), together with the
 ``\boldsymbol\sigma \equiv -\underline{q}`` convention that makes every row of
 it sign-free. Only the rows below are proper to the flat-inclusion limit, and
@@ -82,8 +82,8 @@ which is rank-1 along ``\underline{n}``.  The acoustic block is then
 
 with ``\boldsymbol\Lambda(0) = \boldsymbol{K}_0 - (\boldsymbol{K}_0\cdot\underline{n})\otimes(\boldsymbol{K}_0\cdot\underline{n})/k_{nn}``.
 Its null space is spanned by ``\underline{n}``, since
-``\boldsymbol\Lambda(0)\cdot\underline{n} = \boldsymbol{K}_0\cdot\underline{n}
-- (\boldsymbol{K}_0\cdot\underline{n})\,(\underline{n}\cdot\boldsymbol{K}_0\cdot\underline{n})/k_{nn} = \underline{0}`` (one-dimensional in the
+``\boldsymbol\Lambda(0)\cdot\underline{n} = \boldsymbol{K}_0\cdot\underline{n} -
+(\boldsymbol{K}_0\cdot\underline{n})\,(\underline{n}\cdot\boldsymbol{K}_0\cdot\underline{n})/k_{nn} = \underline{0}`` (one-dimensional in the
 2-tensor case — to be contrasted with the 3-dimensional null space in
 the elasticity problem).  The limit
 
@@ -360,10 +360,10 @@ and ribbon geometries — see
 The rank-1 direction is always the crack normal ``\underline{n}``,
 for any conductivity tensor ``\boldsymbol{K}_0``.
 
-[`compliance_contribution`](@ref)`(crack, K₀)` returns ``\boldsymbol{R}``
+[`inverse_property_contribution`](@ref)`(crack, K₀)` returns ``\boldsymbol{R}``
 directly.  The dilute resistivity correction to the effective
 resistivity of the cracked conductor is obtained via
-[`delta_resistivity`](@ref)`(crack, R, ε)`:
+[`delta_inverse_property`](@ref)`(crack, R, ε)`:
 
 ```math
 \begin{aligned}

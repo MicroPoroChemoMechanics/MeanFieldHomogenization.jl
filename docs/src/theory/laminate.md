@@ -26,7 +26,7 @@ saturates the Voigt bound in the plane of the layers and the Reuss bound
 across them, simultaneously.
 
 The derivation below is written for a general anisotropic stack, in
-elasticity and in transport, with the localization tensors and the imperfect
+elasticity and in transport, with the concentration tensors and the imperfect
 interfaces.
 
 ## 1. Setting
@@ -375,7 +375,7 @@ arithmetic (Voigt) one — the two saturations above, read off a closed form.
 `scripts/38_laminate_symbolic.jl` derives these from the code itself, with
 `SymPy`.
 
-## 7. Localization
+## 7. Concentration
 
 Since ``\boldsymbol{\Sigma} = \mathbb{C}^{\mathrm{hom}}:\boldsymbol{E}``, the layer
 strain follows directly:
@@ -395,6 +395,16 @@ out-of-plane, ``\mathbb{A}_i`` has an in-plane block equal to the identity and
 a vanishing in-plane/out-of-plane coupling — the macroscopic in-plane strain
 reaches every layer unchanged, which is the compatibility condition read
 backwards. (These tensors are absent from the original note.)
+
+These are exact, and [`concentration_tensors`](@ref) returns them for every
+layer under [`Laminated`](@ref), in the form of
+[the overview](@ref th-estimate-concentration) with
+``\mathbb A_{\sigma\varepsilon,i} = \mathbb C_i:\mathbb A_i``. No layer plays the
+role of a matrix, so that a contribution needs an explicit reference. The
+imperfect interfaces of §9 have no volume and break one of the two averages: a
+spring interface carries part of the macroscopic strain in its opening, so that
+``\sum_i f_i\,\mathbb A_i \ne \mathbb I``, and a membrane carries part of the
+macroscopic stress, so that ``\sum_i f_i\,\mathbb C_i:\mathbb A_i \ne \mathbb C^{\mathrm{hom}}``.
 
 ## 8. Transport
 

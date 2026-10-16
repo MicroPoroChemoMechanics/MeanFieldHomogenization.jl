@@ -190,8 +190,8 @@ end
     # `matrix_geometry` reaches the conversion …
     rve = RVE(asm; matrix_geometry = Ellipsoid(3.0, 1.0, 1.0))
     @test collect(rve.phases[remainder_phase_name(rve)].geometry.semi_axes) == [3.0, 1.0, 1.0]
-    # … and through `homogenize`. It is read by the schemes that localize the
-    # matrix like any other phase, so the self-consistent answer must move
+    # … and through `homogenize`. It is read by the schemes that solve an
+    # auxiliary problem for the matrix like any other phase, so the self-consistent answer must move
     # while Mori-Tanaka (which never looks at it) must not.
     sc_ball = _BR_μ(homogenize(asm, SelfConsistent(), :C))
     sc_fiber = _BR_μ(homogenize(asm, SelfConsistent(), :C; matrix_geometry = Ellipsoid(20.0, 1.0, 1.0)))

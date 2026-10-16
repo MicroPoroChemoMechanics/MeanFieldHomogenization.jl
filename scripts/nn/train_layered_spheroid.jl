@@ -12,8 +12,8 @@
 #  `LayeredSpheroid` solves this body in closed form, and on this slice it is
 #  exact — so it is tempting to label from it and get a free dataset. It cannot
 #  supply the labels this needs: a heterogeneous inclusion enters through gate B
-#  with **both** localization tensors, and the analytic type implements the
-#  strain side only. Its `stress_strain_loc` is refused rather than answered
+#  with **both** concentration tensors, and the analytic type implements the
+#  strain side only. Its `flux_gradient_concentration` is refused rather than answered
 #  (the generic `ℂ₁ : 𝔸_εε` presupposes a uniform stiffness a multilayer does
 #  not have), so half the pair simply does not exist there.
 #
@@ -106,11 +106,11 @@ SPEC_KIND in ("dimensionless", "anchored") ||
     error("MFH_NN_SPEC is \"dimensionless\" or \"anchored\", got \"$SPEC_KIND\"")
 _spec(class) = SPEC_KIND == "anchored" ?
     NI.AnchoredHill(class, :layered_spheroid) : NI.DimensionlessHill(class)
-const SPEC_A = _spec(NI.StrainLocTI())
-const SPEC_B = _spec(NI.StressLocTI())
+const SPEC_A = _spec(NI.GradientConcentrationTI())
+const SPEC_B = _spec(NI.FluxConcentrationTI())
 
 # The revolution axis of the cell, which is the frame every label is expressed
-# in — `_class_frame` of a localization class reads column 3.
+# in — `_class_frame` of a concentration class reads column 3.
 const FRAME = (0.0, 0.0, 1.0)
 
 # Deliberately not through `generate_dataset`: one solve returns **both**
@@ -190,15 +190,15 @@ function label(X, tag)
     for (i, j) in enumerate(todo)
         i > budget && break
         geom, _ = geometry(collect(view(X, :, j)))
-        frame = NI._class_frame(NI.StrainLocTI(), geom)
-        A, B = fe_axi_localization(geom, C0)
+        frame = NI._class_frame(NI.GradientConcentrationTI(), geom)
+        A, B = fe_axi_concentration(geom, C0)
         # `components` measures the projection residual, so a wrong axis or a
         # response that is not transversely isotropic about it fails here
         # instead of training quietly on corrupted labels.
-        za = collect(NI.components(NI.StrainLocTI(), A, frame; atol = 1.0e-6)) .*
-            NI.dimensionless_scale(NI.StrainLocTI(), C0)
-        zb = collect(NI.components(NI.StressLocTI(), B, frame; atol = 1.0e-6)) .*
-            NI.dimensionless_scale(NI.StressLocTI(), C0)
+        za = collect(NI.components(NI.GradientConcentrationTI(), A, frame; atol = 1.0e-6)) .*
+            NI.dimensionless_scale(NI.GradientConcentrationTI(), C0)
+        zb = collect(NI.components(NI.FluxConcentrationTI(), B, frame; atol = 1.0e-6)) .*
+            NI.dimensionless_scale(NI.FluxConcentrationTI(), C0)
         append_ckpt(tag, j, za, zb)          # durable before anything else
         done[j] = (za, zb)
         if i % 10 == 0 || i == budget
@@ -255,7 +255,7 @@ const ZAv, ZBv = LV
 const FE_SECONDS = let
     geom, _ = geometry([log(2.0), 0.4, log(2.0), log(1.0)])
     fe_axi_mesh_report(geom)                 # mesh out of the timing
-    @elapsed fe_axi_localization(geom, ce(1.01 * E0, NU))
+    @elapsed fe_axi_concentration(geom, ce(1.01 * E0, NU))
 end
 @printf("\none cold finite-element evaluation: %.2f s\n", FE_SECONDS)
 
@@ -287,7 +287,7 @@ function fit(name, spec, ZT, ZV; notes)
         options = NI.TrainingOptions(;
             hidden = [64, 64], epochs = 8000, batchsize = 128, verbose = true
         ),
-        teacher_name = "fe_axi_localization(FEAxiLayeredSpheroid, TensISO{4}) — " *
+        teacher_name = "fe_axi_concentration(FEAxiLayeredSpheroid, TensISO{4}) — " *
             "axisymmetric Fourier finite elements",
         notes, history,
     )
@@ -302,16 +302,16 @@ const SUFFIX = (FAMILY == "prolate" ? "" : "_oblate") *
 
 sA, hA, valA = fit(
     "layered_spheroid_strain" * SUFFIX, SPEC_A,
-    reencode(ZAt, Xt, NI.StrainLocTI(), SPEC_A),
-    reencode(ZAv, Xv, NI.StrainLocTI(), SPEC_A);
+    reencode(ZAt, Xt, NI.GradientConcentrationTI(), SPEC_A),
+    reencode(ZAv, Xv, NI.GradientConcentrationTI(), SPEC_A);
     notes = "𝔸_εε of a two-layer confocal spheroid, from axisymmetric Fourier " *
         "finite elements; features (log ω, w, log E₁/E₀, log E₂/E₀) at ν = 0.2, " *
         "$FAMILY branch",
 )
 sB, hB, valB = fit(
     "layered_spheroid_stress" * SUFFIX, SPEC_B,
-    reencode(ZBt, Xt, NI.StressLocTI(), SPEC_B),
-    reencode(ZBv, Xv, NI.StressLocTI(), SPEC_B);
+    reencode(ZBt, Xt, NI.FluxConcentrationTI(), SPEC_B),
+    reencode(ZBv, Xv, NI.FluxConcentrationTI(), SPEC_B);
     notes = "𝔸_σε of the same morphology, divided by 2μ₀ — it is of degree +1 " *
         "in the moduli where 𝔸_εε is of degree 0. The analytic type supplies " *
         "no counterpart: this half of gate B exists only through the cell",

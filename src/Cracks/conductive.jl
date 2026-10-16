@@ -46,7 +46,7 @@ wrapped [`EllipticCrack`](@ref); only the transport response differs.
 
 ```julia
 cr = ConductiveCrack(1.0; conductivity = 2.0e-13, euler_angles = (π/4, 0.0))
-conductivity_contribution(cr, TensISO{3}(1.0e-18))     # 𝕂, POSITIVE, in-plane
+property_contribution(cr, TensISO{3}(1.0e-18))     # 𝕂, POSITIVE, in-plane
 ```
 
 !!! note "Penny shape only"
@@ -105,16 +105,16 @@ cod_tensor(c::ConductiveCrack, C₀::TensND.AbstractTens{4, 3}; kw...) =
 # ── Transport: the conductive limit ──────────────────────────────────────────
 
 """
-    conductivity_contribution(c::ConductiveCrack, K₀; kw...) -> Tens{2,3}
+    property_contribution(c::ConductiveCrack, K₀; kw...) -> Tens{2,3}
 
 Size-independent **conductivity contribution** ``\\boldsymbol{k}`` of a flowing
-crack, such that `delta_conductivity(c, 𝕂, d)` ``= (4\\pi/3)\\,d\\,\\boldsymbol{k}``
+crack, such that `delta_property(c, 𝕂, d)` ``= (4\\pi/3)\\,d\\,\\boldsymbol{k}``
 is the dilute correction to the effective conductivity.
 
 Positive and purely in-plane, in contrast with the insulating crack whose
 contribution is negative and normal to the crack plane.
 """
-MFH_Core.conductivity_contribution(
+MFH_Core.property_contribution(
     c::ConductiveCrack, K₀::TensND.AbstractTens{2, 3}; kw...
 ) = _conductive_crack_K(c, K₀)
 
@@ -142,6 +142,6 @@ function _flat_spheroid_limit(c::ConductiveCrack, K₀, ω)
     a = semi_major(c)
     k_f = c.conductivity / (2 * a * ω)          # C = 2·c·k_f with c = aω
     ell = Elasticity.Ellipsoid(a, a, a * ω, crack_basis(c))
-    N = MFH_Core.conductivity_contribution(ell, TensND.TensISO{3}(k_f), K₀)
+    N = MFH_Core.property_contribution(ell, TensND.TensISO{3}(k_f), K₀)
     return ω * N
 end

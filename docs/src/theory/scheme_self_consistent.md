@@ -118,7 +118,32 @@ Like Mori–Tanaka, the asymmetric scheme depends on which phase is the matrix. 
 returns the matrix when the inclusions vanish, and the inclusion phase when a
 single one remains without matrix.
 
-## 3. Conduction and viscoelasticity
+## 3. Concentration tensors
+
+The construction of [the overview](@ref th-estimate-concentration) applies with
+the effective medium as reference. In the symmetric scheme every phase, the
+matrix included, is loaded by the remote strain that the average fixes,
+
+```math
+\mathbb E = \Big(\sum_r f_r\,\mathbb A_r^{\mathrm{dil}}(\mathbb C^{\mathrm{sc}})
+  + \sum_c \kappa_c\,\varepsilon_c\,\mathbb H_c(\mathbb C^{\mathrm{sc}}):\mathbb C^{\mathrm{sc}}\Big)^{-1} ,
+\qquad
+\mathbb A_r^{\mathrm{sc}} = \mathbb A_r^{\mathrm{dil}}(\mathbb C^{\mathrm{sc}}):\mathbb E ,
+```
+
+so that no phase takes the rest of the averages: the strain average holds by
+construction and the stress average is the fixed point itself, satisfied to the
+tolerance of the solver. In the asymmetric scheme the inclusions are loaded by
+the macroscopic strain, ``\mathbb E = \mathbb I``, and
+``\mathbb A_i^{\mathrm{asc}} = \mathbb A_i^{\mathrm{dil}}(\mathbb C^{\mathrm{asc}})``,
+while the matrix, which has no shape, takes the rest of both averages. Its mean
+stress and mean strain so defined satisfy
+``\langle\boldsymbol\sigma\rangle_m = \mathbb C_m:\langle\boldsymbol\varepsilon\rangle_m``
+exactly when ``\mathbb C^{\mathrm{asc}}`` is the fixed point of either form above,
+crack families included: the scheme can be read as the requirement that the
+matrix obey its own law on average.
+
+## 4. Conduction and viscoelasticity
 
 Both schemes carry over to conduction with order-2 tensors. In aging
 viscoelasticity the Hill kernel is built for an isotropic reference, and the

@@ -90,22 +90,53 @@ function aqua_persistent_tasks(m::Module)
     return success(run(ignorestatus(cmd)))
 end
 
-@testset "MeanFieldHomogenization" begin
+# The suite runs in parts. `Pkg.test(; test_args = ["schemes"])` runs the groups
+# of one part, several parts may be named, and with no argument every group runs,
+# as it always has. CI runs the parts as parallel jobs: the whole suite under
+# coverage instrumentation came within minutes of the job timeout and crossed it
+# on slower runners. Each group belongs to exactly one part, which the last
+# testset checks.
+const TEST_PARTS = Dict(
+    "core" => (
+        "Aqua", "Elliptic", "Core", "Elasticity", "Cracks", "Conductivity",
+        "Interactions", "Poromechanics", "Constitutive", "Regression", "Studio",
+        "Documentation",
+    ),
+    "schemes" => ("Schemes", "Assemblies", "CustomInclusions"),
+    "patterns" => (
+        "LayeredSpheres", "Laminates", "LayeredSpheroids", "Superspheres",
+        "FiniteElementInclusions",
+    ),
+    "visco-neural" => ("Viscoelasticity", "NeuralInclusions"),
+)
+const TEST_GROUPS_SEEN = Set{String}()
+function rungroup(name::String)
+    push!(TEST_GROUPS_SEEN, name)
+    isempty(ARGS) && return true
+    for part in ARGS
+        haskey(TEST_PARTS, part) || error("unknown test part \"$(part)\"; the parts are $(join(keys(TEST_PARTS), ", "))")
+    end
+    return any(part -> name in TEST_PARTS[part], ARGS)
+end
+
+# `verbose` prints the time of every group, passing or not, which is what the
+# split of the suite into parts is balanced on.
+@testset "MeanFieldHomogenization" verbose = true begin
     # Ambiguities, unbound type parameters, undefined exports, dependency
     # hygiene, type piracy and tasks left running at load. Nothing is exempted:
     # every default check passes on the package as it stands, across all
     # eighteen sub-modules and nine extensions.
-    @testset "Aqua" begin
+    rungroup("Aqua") && @testset "Aqua" begin
         # `persistent_tasks` is run apart, see `aqua_persistent_tasks` above.
         Aqua.test_all(MeanFieldHomogenization; persistent_tasks = false)
         @test aqua_persistent_tasks(MeanFieldHomogenization)
     end
 
-    @testset "Elliptic" begin
+    rungroup("Elliptic") && @testset "Elliptic" begin
         include("Elliptic/test_elliptic.jl")
     end
 
-    @testset "Core" begin
+    rungroup("Core") && @testset "Core" begin
         include("Core/test_traits.jl")
         include("Core/test_rotational_average.jl")
         include("Core/test_newton.jl")
@@ -114,15 +145,16 @@ end
         include("Core/test_green_aniso.jl")
         include("Core/test_counters.jl")
         include("Core/test_hot_paths.jl")
+        include("Core/test_order_aliases.jl")
     end
 
-    @testset "Elasticity" begin
+    rungroup("Elasticity") && @testset "Elasticity" begin
         include("Elasticity/test_hill.jl")
         include("Elasticity/test_hill_2d.jl")
         include("Elasticity/test_hill_cylinder.jl")
         include("Elasticity/test_shape_tensor.jl")
         include("Elasticity/test_eshelby.jl")
-        include("Elasticity/test_localization.jl")
+        include("Elasticity/test_concentration.jl")
         include("Elasticity/test_contribution.jl")
         include("Elasticity/test_hill_nestedquadgk_oblate.jl")
         include("Elasticity/test_degenerate_shapes.jl")
@@ -132,7 +164,7 @@ end
         include("Elasticity/test_surface_stiffness.jl")
     end
 
-    @testset "Cracks" begin
+    rungroup("Cracks") && @testset "Cracks" begin
         include("Cracks/test_cod.jl")
         include("Cracks/test_crack_near_circle.jl")
         include("Cracks/test_cod_ti_aligned.jl")
@@ -145,24 +177,24 @@ end
         include("Cracks/test_interface_stiffness.jl")
     end
 
-    @testset "Conductivity" begin
+    rungroup("Conductivity") && @testset "Conductivity" begin
         include("Conductivity/test_hill_order2.jl")
         include("Conductivity/test_hill_cylinder.jl")
         include("Conductivity/test_eshelby.jl")
-        include("Conductivity/test_localization.jl")
+        include("Conductivity/test_concentration.jl")
     end
 
     # `Interactions` sits between the one-inclusion kernels it builds on and
     # the N-body schemes that consume it: the pair tensors must be trusted
     # before either scheme is exercised.
-    @testset "Interactions" begin
+    rungroup("Interactions") && @testset "Interactions" begin
         include("Interactions/test_pair_tensors.jl")
     end
 
     # `Assemblies` carries the positional cell and the two N-body schemes.  It
     # runs after `Interactions` (whose pair tensors it consumes) and needs the
     # `Schemes` types, so it sits between them and the rest.
-    @testset "Assemblies" begin
+    rungroup("Assemblies") && @testset "Assemblies" begin
         include("Assemblies/test_assembly.jl")
         include("Assemblies/test_cluster_model.jl")
         include("Assemblies/test_eim.jl")
@@ -170,7 +202,7 @@ end
         include("Assemblies/test_multiscale.jl")
     end
 
-    @testset "Schemes" begin
+    rungroup("Schemes") && @testset "Schemes" begin
         include("Schemes/test_rve.jl")
         include("Schemes/test_matrix_role.jl")
         include("Schemes/test_dispatch.jl")
@@ -187,14 +219,15 @@ end
         include("Schemes/test_sensitivities.jl")
         include("Schemes/test_symmetrize.jl")
         include("Schemes/test_orientation.jl")
-        include("Schemes/test_loc_bundles.jl")
+        include("Schemes/test_concentration_bundles.jl")
+        include("Schemes/test_concentrations.jl")
         include("Schemes/test_crack_families.jl")
     end
 
     # The user-defined-inclusion contract spans Core (the abstractions) and
     # Schemes (every consumer), so it runs after both — the scheme kernels are
     # already compiled by then, which keeps this testset cheap.
-    @testset "CustomInclusions" begin
+    rungroup("CustomInclusions") && @testset "CustomInclusions" begin
         include("CustomInclusions/test_custom_inclusion.jl")
     end
 
@@ -202,9 +235,9 @@ end
     # straight after it. The committed models under
     # `src/NeuralInclusions/models/` are loaded, not retrained, which is what
     # keeps this testset deterministic and independent of the Lux stack.
-    @testset "NeuralInclusions" begin
+    rungroup("NeuralInclusions") && @testset "NeuralInclusions" begin
         include("NeuralInclusions/test_neural_inclusion.jl")
-        # The cubic localization class and the surrogate that stands in for a
+        # The cubic concentration class and the surrogate that stands in for a
         # supershape cell. The teacher is synthetic -- a closed-form cubic
         # tensor -- so no mesh and no solve appear anywhere; the fit itself is
         # guarded by `NN_HAS_LUX` like the others.
@@ -223,7 +256,7 @@ end
     # Superspherical and superspheroidal geometry. Pure closed forms, no mesh
     # and no solver, so this runs unconditionally and in seconds — and it is
     # what everything built on those shapes assumes.
-    @testset "Superspheres" begin
+    rungroup("Superspheres") && @testset "Superspheres" begin
         include("Superspheres/test_shapes.jl")
         include("Superspheres/test_surface_mesh.jl")
     end
@@ -232,7 +265,7 @@ end
     # (it is a weak dependency), and slow when it is — the crack cases mesh a
     # ball and factorize a ~10⁵-dof system, while the axisymmetric ones are
     # two-dimensional and cost a fraction of that.
-    if HAS_FERRITE
+    if HAS_FERRITE && rungroup("FiniteElementInclusions")
         @testset "FiniteElementInclusions" begin
             # The octant's parity algebra and shape guard: closed form, no
             # mesh and no solve, so it runs first and costs nothing.
@@ -265,12 +298,12 @@ end
                     "cross-backend finite-element tests."
             end
         end
-    else
+    elseif rungroup("FiniteElementInclusions")
         @info "Ferrite / FerriteGmsh / Gmsh unavailable — skipping the " *
             "finite-element inclusion tests."
     end
 
-    @testset "LayeredSpheres" begin
+    rungroup("LayeredSpheres") && @testset "LayeredSpheres" begin
         include("LayeredSpheres/test_bulk.jl")
         include("LayeredSpheres/test_interfaces.jl")
         include("LayeredSpheres/test_interface_jumps.jl")
@@ -286,7 +319,7 @@ end
     # The periodic multilayer cell. Placed after the layered morphologies
     # whose interface models it reuses, and before `Viscoelasticity`, which
     # carries its aging-viscoelastic twin.
-    @testset "Laminates" begin
+    rungroup("Laminates") && @testset "Laminates" begin
         include("Laminates/test_km_blocks.jl")
         include("Laminates/test_laminate_cell.jl")
         include("Laminates/test_laminate_oracles.jl")
@@ -296,7 +329,7 @@ end
         include("Laminates/test_laminate_symbolic.jl")
     end
 
-    @testset "LayeredSpheroids" begin
+    rungroup("LayeredSpheroids") && @testset "LayeredSpheroids" begin
         include("LayeredSpheroids/test_legendre.jl")
         include("LayeredSpheroids/test_coupling.jl")
         include("LayeredSpheroids/test_conductivity.jl")
@@ -312,20 +345,20 @@ end
 
     # `Poromechanics` post-processes a homogenized stiffness, so it only needs
     # `Schemes` to be exercised — same position as in the load order.
-    @testset "Poromechanics" begin
+    rungroup("Poromechanics") && @testset "Poromechanics" begin
         include("Poromechanics/test_biot.jl")
     end
 
     # `Constitutive` is the Gauss-point law built on a cell + scheme, so it runs
     # after both, and after `Poromechanics` whose parameters the poroelastic
     # materials consume.
-    @testset "Constitutive" begin
+    rungroup("Constitutive") && @testset "Constitutive" begin
         include("Constitutive/test_material_api.jl")
         include("Constitutive/test_cracked.jl")
         include("Constitutive/test_poroelastic.jl")
     end
 
-    @testset "Viscoelasticity" begin
+    rungroup("Viscoelasticity") && @testset "Viscoelasticity" begin
         # The Laplace-Carson half (non-aging) first: it depends on nothing
         # from the ALV pipeline, whereas `test_rheology_iso.jl` closes the loop
         # by checking that the two routes agree.
@@ -359,17 +392,25 @@ end
         include("Viscoelasticity/test_glassy_limit_alv.jl")
     end
 
-    @testset "Regression" begin
+    rungroup("Regression") && @testset "Regression" begin
         include("regression/test_hill_cases.jl")
         include("regression/test_crack_cases.jl")
         include("regression/test_anisotropic.jl")
     end
 
-    @testset "Studio" begin
+    rungroup("Studio") && @testset "Studio" begin
         include("Studio/test_studio.jl")
     end
 
-    @testset "Documentation" begin
+    rungroup("Documentation") && @testset "Documentation" begin
         include("Documentation/test_docs_nomenclature.jl")
+    end
+
+    # Every group above belongs to exactly one part, and every name a part lists
+    # is a group above: a group added without a part would run in no CI job.
+    @testset "Test parts" begin
+        listed = collect(Iterators.flatten(values(TEST_PARTS)))
+        @test allunique(listed)
+        @test Set(listed) == TEST_GROUPS_SEEN
     end
 end

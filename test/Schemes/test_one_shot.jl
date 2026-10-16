@@ -8,7 +8,7 @@
 #   3. MT and Dilute agree to first order in f → 0 (dilute limit consistency).
 #   4. Crack RVE handled by Dilute/DiluteDual through the
 #      compliance-contribution path.
-#   5. Conductivity (`property = :K`) — same recipes via gradient_gradient_loc.
+#   5. Conductivity (`property = :K`) — same recipes via gradient_gradient_concentration.
 #   6. ForwardDiff sensitivity through the volume fraction.
 #   7. Complex moduli — eltype propagation + Im → 0 consistency.
 #   8. Symbol shortcuts for all three schemes.

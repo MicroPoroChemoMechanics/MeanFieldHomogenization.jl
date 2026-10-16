@@ -31,7 +31,7 @@ the sphere, requiring the truncated series machinery of
 That path into the schemes now works in **elasticity** too, prolate and oblate
 alike: [`spheroid_strain_concentration`](@ref) assembles the full transversely
 isotropic concentration tensor from the three elementary problems, and
-`strain_strain_loc` / `stiffness_contribution` hand it to the schemes. Only
+`gradient_gradient_concentration` / `property_contribution` hand it to the schemes. Only
 perfect interfaces, and only the default axis ``\\underline{e}_3``.
 """
 module LayeredSpheroids
@@ -47,17 +47,17 @@ const MFH_Core = Core
 import ..LayeredSpheres: _iso_bulk_shear
 import ..LayeredSpheres: PerfectInterface, KapitzaInterface, SurfaceConductiveInterface,
     AbstractInterface, interfaces_eltype,
+    layer_property_average, layer_inverse_property_average,
     layer_conductivity_average, layer_resistivity_average,
     layer_count, layer_modulus, layer_interface, layer_volume_fraction
 # Pointwise-field generics are declared by `LayeredSpheres` (included first) and
 # extended here, so a single binding carries both inclusion families.
 import ..LayeredSpheres: get_layer, local_temperature, local_gradient, local_flux,
-    local_gradient_gradient_loc, local_flux_gradient_loc,
-    local_gradient_flux_loc, local_flux_flux_loc
+    local_gradient_gradient_concentration, local_flux_gradient_concentration,
+    local_gradient_flux_concentration, local_flux_flux_concentration
 
-import ..Core: strain_strain_loc, stiffness_contribution
-import ..Core: gradient_gradient_loc, flux_gradient_loc, gradient_flux_loc, flux_flux_loc,
-    conductivity_contribution, resistivity_contribution, is_homogeneous_inclusion
+import ..Core: gradient_gradient_concentration, flux_gradient_concentration, gradient_flux_concentration, flux_flux_concentration,
+    property_contribution, inverse_property_contribution, is_homogeneous_inclusion
 
 # `is_hard_numeric` — the numeric/symbolic split used throughout the package.
 using ..Elliptic: is_hard_numeric

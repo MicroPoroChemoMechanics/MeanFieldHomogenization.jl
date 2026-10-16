@@ -1,15 +1,15 @@
 # =============================================================================
-#  localization.jl — generic localization tensors of the dilute Eshelby
+#  concentration.jl — generic concentration tensors of the dilute Eshelby
 #  problem (Kachanov-Sevostianov / Barthélémy et al. 2021).
 #
 #  Four tensors relate the fields within an inclusion of stiffness `C₁`
 #  (or conductivity `K₁`) embedded in an infinite matrix `C₀` (`K₀`) to
 #  the remote far-field `ε∞` / `σ∞`:
 #
-#      strain_strain_loc : ε_inc = A_εε : ε∞
-#      stress_strain_loc : σ_inc = A_σε : ε∞
-#      strain_stress_loc : ε_inc = A_εσ : σ∞
-#      stress_stress_loc : σ_inc = A_σσ : σ∞
+#      gradient_gradient_concentration : ε_inc = A_εε : ε∞
+#      flux_gradient_concentration : σ_inc = A_σε : ε∞
+#      gradient_flux_concentration : ε_inc = A_εσ : σ∞
+#      flux_flux_concentration : σ_inc = A_σσ : σ∞
 #
 #  The pivot formula (dilute) is
 #
@@ -50,13 +50,13 @@ Identity 2-tensor ``\\boldsymbol{1}`` (components ``\\delta_{ij}``) in 3D
 _identity_2(::Type{T}) where {T <: Number} = TensISO{3}(one(T))
 
 # =============================================================================
-#  Elastic localization (4-tensor fields)
+#  Elastic concentration (4-tensor fields)
 # =============================================================================
 
 """
-    strain_strain_loc(incl, C₁, C₀; kw...) -> Tens{4,3}
+    gradient_gradient_concentration(incl, C₁, C₀; kw...) -> Tens{4,3}
 
-Dilute **strain-strain localization tensor** ``\\mathbb{A}_{\\varepsilon\\varepsilon}``: connects the
+Dilute **strain-strain concentration tensor** ``\\mathbb{A}_{\\varepsilon\\varepsilon}``: connects the
 average strain in an `AbstractInclusion` of stiffness `C₁` to the remote
 strain ``\\boldsymbol{\\varepsilon}^{\\infty}``:
 
@@ -68,10 +68,10 @@ strain ``\\boldsymbol{\\varepsilon}^{\\infty}``:
 
 Keyword arguments are forwarded to [`hill_tensor`](@ref MeanFieldHomogenization.Elasticity.hill_tensor).
 
-See also [`stress_strain_loc`](@ref), [`strain_stress_loc`](@ref),
-[`stress_stress_loc`](@ref).
+See also [`flux_gradient_concentration`](@ref), [`gradient_flux_concentration`](@ref),
+[`flux_flux_concentration`](@ref).
 """
-function strain_strain_loc(
+function gradient_gradient_concentration(
         incl::AbstractInclusion,
         C₁::TensND.AbstractTens{4, 3},
         C₀::TensND.AbstractTens{4, 3};
@@ -84,9 +84,9 @@ function strain_strain_loc(
 end
 
 """
-    stress_strain_loc(incl, C₁, C₀; kw...) -> Tens{4,3}
+    flux_gradient_concentration(incl, C₁, C₀; kw...) -> Tens{4,3}
 
-Dilute **stress-strain localization tensor** ``\\mathbb{A}_{\\sigma\\varepsilon}``:
+Dilute **stress-strain concentration tensor** ``\\mathbb{A}_{\\sigma\\varepsilon}``:
 ``\\boldsymbol{\\sigma}_{\\mathrm{inc}} = \\mathbb{A}_{\\sigma\\varepsilon}:\\boldsymbol{\\varepsilon}^{\\infty}``.
 
 !!! warning "The generic method assumes a homogeneous inclusion"
@@ -95,17 +95,17 @@ Dilute **stress-strain localization tensor** ``\\mathbb{A}_{\\sigma\\varepsilon}
     inclusion — one whose [`is_homogeneous_inclusion`](@ref MeanFieldHomogenization.Core.is_homogeneous_inclusion) is `false` — has
     no such `C₁`: its average stress has to be assembled from the local
     fields, and the type **must** provide its own method (as `LayeredSphere`
-    does). [`stress_stress_loc`](@ref) is expressed in terms of this function,
+    does). [`flux_flux_concentration`](@ref) is expressed in terms of this function,
     so overriding it here fixes both.
 """
-function stress_strain_loc(
+function flux_gradient_concentration(
         incl::AbstractInclusion,
         C₁::TensND.AbstractTens{4, 3},
         C₀::TensND.AbstractTens{4, 3};
         kw...
     )
-    _no_generic_stress_side(incl, "stress_strain_loc", "C₁ : A_εε")
-    return C₁ ⊡ strain_strain_loc(incl, C₁, C₀; kw...)
+    _no_generic_stress_side(incl, "flux_gradient_concentration", "C₁ : A_εε")
+    return C₁ ⊡ gradient_gradient_concentration(incl, C₁, C₀; kw...)
 end
 
 """
@@ -143,46 +143,46 @@ function _no_generic_stress_side(incl, generic::AbstractString, formula::Abstrac
 end
 
 """
-    strain_stress_loc(incl, C₁, C₀; kw...) -> Tens{4,3}
+    gradient_flux_concentration(incl, C₁, C₀; kw...) -> Tens{4,3}
 
-Dilute **strain-stress localization tensor**
+Dilute **strain-stress concentration tensor**
 ``\\mathbb{A}_{\\varepsilon\\sigma} = \\mathbb{A}_{\\varepsilon\\varepsilon}:\\mathbb{S}_0``:
 ``\\boldsymbol{\\varepsilon}_{\\mathrm{inc}} = \\mathbb{A}_{\\varepsilon\\sigma}:\\boldsymbol{\\sigma}^{\\infty}``.
 ``\\mathbb{S}_0 = \\mathbb{C}_0^{-1}`` is built internally.
 """
-function strain_stress_loc(
+function gradient_flux_concentration(
         incl::AbstractInclusion,
         C₁::TensND.AbstractTens{4, 3},
         C₀::TensND.AbstractTens{4, 3};
         kw...
     )
-    return strain_strain_loc(incl, C₁, C₀; kw...) ⊡ inv(C₀)
+    return gradient_gradient_concentration(incl, C₁, C₀; kw...) ⊡ inv(C₀)
 end
 
 """
-    stress_stress_loc(incl, C₁, C₀; kw...) -> Tens{4,3}
+    flux_flux_concentration(incl, C₁, C₀; kw...) -> Tens{4,3}
 
-Dilute **stress-stress localization tensor**
+Dilute **stress-stress concentration tensor**
 ``\\mathbb{A}_{\\sigma\\sigma} = \\mathbb{A}_{\\sigma\\varepsilon}:\\mathbb{S}_0``:
 ``\\boldsymbol{\\sigma}_{\\mathrm{inc}} = \\mathbb{A}_{\\sigma\\sigma}:\\boldsymbol{\\sigma}^{\\infty}``.
 
-Derived from [`stress_strain_loc`](@ref) rather than from ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` directly, so
+Derived from [`flux_gradient_concentration`](@ref) rather than from ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` directly, so
 that a heterogeneous inclusion which supplies its own stress-side
-localization gets a correct ``\\mathbb{A}_{\\sigma\\sigma}`` for free. For a homogeneous inclusion the
+concentration gets a correct ``\\mathbb{A}_{\\sigma\\sigma}`` for free. For a homogeneous inclusion the
 two routes are the same expression (`⊡` is left-associative), hence bitwise
 identical.
 """
-function stress_stress_loc(
+function flux_flux_concentration(
         incl::AbstractInclusion,
         C₁::TensND.AbstractTens{4, 3},
         C₀::TensND.AbstractTens{4, 3};
         kw...
     )
-    return stress_strain_loc(incl, C₁, C₀; kw...) ⊡ inv(C₀)
+    return flux_gradient_concentration(incl, C₁, C₀; kw...) ⊡ inv(C₀)
 end
 
 # =============================================================================
-#  Conductivity localization (2-tensor fields)
+#  Conductivity concentration (2-tensor fields)
 #
 #  SIGN CONVENTION.  Hooke carries no minus sign, Fourier and Fick do.  The
 #  package removes that asymmetry by taking as the stress analog MINUS the
@@ -195,17 +195,16 @@ end
 #  mechanics, the entering flux in conduction.  Every transport formula is then
 #  the elastic one symbol for symbol (∇T ↔ ε, K ↔ ℂ, ℙ ↔ 𝐏, …).
 #
-#  Consequence for the four functions below: the "flux" they carry is σ = -q.
-#  The names are kept aligned with their elastic twins — renaming them would be
-#  breaking and would not make the meaning any clearer than saying it here —
-#  and each docstring states the quantity explicitly.  See the notation page,
-#  section "Elasticity and transport: one set of formulas".
+#  Consequence for the conduction methods below: the "flux" they carry is
+#  σ = -q, which is what lets one generic function serve both orders; each
+#  docstring states the quantity explicitly.  See the notation page, section
+#  "Elasticity and transport: one set of formulas".
 # =============================================================================
 
 """
-    gradient_gradient_loc(incl, K₁, K₀; kw...) -> Tens{2,3}
+    gradient_gradient_concentration(incl, K₁, K₀; kw...) -> Tens{2,3}
 
-Dilute **gradient-gradient localization tensor** ``\\boldsymbol{A}_{\\nabla\\nabla}`` for the 2nd
+Dilute **gradient-gradient concentration tensor** ``\\boldsymbol{A}_{\\nabla\\nabla}`` for the 2nd
 order transport problem:
 
 ```math
@@ -214,10 +213,10 @@ order transport problem:
 \\boldsymbol{A}_{\\nabla\\nabla} = [\\boldsymbol{1} + \\boldsymbol{P}(\\mathrm{incl}, \\boldsymbol{K}_0)\\cdot(\\boldsymbol{K}_1 - \\boldsymbol{K}_0)]^{-1}.
 ```
 
-Conductivity analog of [`strain_strain_loc`](@ref).  Keyword arguments
-are forwarded to [`hill_tensor`](@ref MeanFieldHomogenization.Elasticity.hill_tensor).
+The conduction method: the elastic formula with ``\\mathbb{C}`` replaced by
+``\\boldsymbol{K}``.  Keyword arguments are forwarded to [`hill_tensor`](@ref MeanFieldHomogenization.Elasticity.hill_tensor).
 """
-function gradient_gradient_loc(
+function gradient_gradient_concentration(
         incl::AbstractInclusion,
         K₁::TensND.AbstractTens{2, 3},
         K₀::TensND.AbstractTens{2, 3};
@@ -230,78 +229,76 @@ function gradient_gradient_loc(
 end
 
 """
-    flux_gradient_loc(incl, K₁, K₀; kw...) -> Tens{2,3}
+    flux_gradient_concentration(incl, K₁, K₀; kw...) -> Tens{2,3}
 
-Dilute **flux-gradient localization tensor** ``\\boldsymbol{A}_{q\\nabla}``:
+Dilute **flux-gradient concentration tensor** ``\\boldsymbol{A}_{q\\nabla}``:
 ``\\boldsymbol{\\sigma}_{\\mathrm{inc}} = \\boldsymbol{A}_{q\\nabla}\\cdot\\nabla T^{\\infty}``,
 with ``\\boldsymbol{\\sigma} \\equiv -\\underline{q} = \\boldsymbol{K}\\cdot\\nabla T`` the stress analog of the package (see the sign note
 above this block, and the notation page). It is ``\\boldsymbol{A}_{q\\nabla} = \\boldsymbol{K}_1\\cdot\\boldsymbol{A}_{\\nabla\\nabla}``, so the
-quantity it produces is ``\\boldsymbol{K}_1\\cdot\\nabla T_{\\mathrm{inc}}``, i.e. **minus** the flux — exactly what
-makes this the transport twin of [`stress_strain_loc`](@ref), symbol for
-symbol.
+quantity it produces is ``\\boldsymbol{K}_1\\cdot\\nabla T_{\\mathrm{inc}}``, i.e. minus the flux — exactly what
+makes this conduction method the elastic one symbol for symbol.
 
 !!! warning "The generic method assumes a homogeneous inclusion"
     The expression ``\\boldsymbol{A}_{q\\nabla} = \\boldsymbol{K}_1\\cdot\\boldsymbol{A}_{\\nabla\\nabla}`` is valid only for a single uniform
     conductivity. A heterogeneous inclusion must supply its own method;
-    [`flux_flux_loc`](@ref) then follows.
+    [`flux_flux_concentration`](@ref) then follows.
 """
-function flux_gradient_loc(
+function flux_gradient_concentration(
         incl::AbstractInclusion,
         K₁::TensND.AbstractTens{2, 3},
         K₀::TensND.AbstractTens{2, 3};
         kw...
     )
-    _no_generic_stress_side(incl, "flux_gradient_loc", "K₁ ⋅ A_∇∇")
-    return K₁ ⋅ gradient_gradient_loc(incl, K₁, K₀; kw...)
+    _no_generic_stress_side(incl, "flux_gradient_concentration", "K₁ ⋅ A_∇∇")
+    return K₁ ⋅ gradient_gradient_concentration(incl, K₁, K₀; kw...)
 end
 
 """
-    gradient_flux_loc(incl, K₁, K₀; kw...) -> Tens{2,3}
+    gradient_flux_concentration(incl, K₁, K₀; kw...) -> Tens{2,3}
 
-Dilute **gradient-flux localization tensor**
+Dilute **gradient-flux concentration tensor**
 ``\\boldsymbol{A}_{\\nabla q} = \\boldsymbol{A}_{\\nabla\\nabla}\\cdot\\boldsymbol{K}_0^{-1}``:
 ``\\nabla T_{\\mathrm{inc}} = \\boldsymbol{A}_{\\nabla q}\\cdot\\boldsymbol{\\sigma}^{\\infty}``, with
 ``\\boldsymbol{\\sigma} \\equiv -\\underline{q} = \\boldsymbol{K}_0\\cdot\\nabla T^{\\infty}`` the stress
-analog of the package. Transport twin of [`strain_stress_loc`](@ref).
+analog of the package: the elastic formula symbol for symbol.
 """
-function gradient_flux_loc(
+function gradient_flux_concentration(
         incl::AbstractInclusion,
         K₁::TensND.AbstractTens{2, 3},
         K₀::TensND.AbstractTens{2, 3};
         kw...
     )
-    return gradient_gradient_loc(incl, K₁, K₀; kw...) ⋅ inv(K₀)
+    return gradient_gradient_concentration(incl, K₁, K₀; kw...) ⋅ inv(K₀)
 end
 
 """
-    flux_flux_loc(incl, K₁, K₀; kw...) -> Tens{2,3}
+    flux_flux_concentration(incl, K₁, K₀; kw...) -> Tens{2,3}
 
-Dilute **flux-flux localization tensor**
+Dilute **flux-flux concentration tensor**
 ``\\boldsymbol{A}_{qq} = \\boldsymbol{A}_{q\\nabla}\\cdot\\boldsymbol{K}_0^{-1}``:
 ``\\boldsymbol{\\sigma}_{\\mathrm{inc}} = \\boldsymbol{A}_{qq}\\cdot\\boldsymbol{\\sigma}^{\\infty}``, with
 ``\\boldsymbol{\\sigma} \\equiv -\\underline{q}`` throughout — both sides carry the same
-convention, so the tensor itself is the one a reader of
-[`stress_stress_loc`](@ref) expects.
+convention, so the tensor is the elastic ``\\mathbb{A}_{\\sigma\\sigma}`` symbol for symbol.
 
-Derived from [`flux_gradient_loc`](@ref), for the reason given in
-[`stress_stress_loc`](@ref).
+Derived from [`flux_gradient_concentration`](@ref), so that a heterogeneous
+inclusion which supplies that method gets this one too.
 """
-function flux_flux_loc(
+function flux_flux_concentration(
         incl::AbstractInclusion,
         K₁::TensND.AbstractTens{2, 3},
         K₀::TensND.AbstractTens{2, 3};
         kw...
     )
-    return flux_gradient_loc(incl, K₁, K₀; kw...) ⋅ inv(K₀)
+    return flux_gradient_concentration(incl, K₁, K₀; kw...) ⋅ inv(K₀)
 end
 
 # =============================================================================
-#  Bundled localization + contribution
+#  Bundled concentration + contribution
 #
 #  Mori-Tanaka and the self-consistent kernels need, per phase, BOTH the
 #  dilute concentration tensor `A` and the contribution tensor `N` (resp. the
 #  stress average `B`).  Computed separately, each goes through
-#  `strain_strain_loc` — hence through `hill_tensor`, the dominant cost of the
+#  `gradient_gradient_concentration` — hence through `hill_tensor`, the dominant cost of the
 #  whole package — with byte-identical arguments.
 #
 #  The dispatch axis is the INCLUSION CLASS rather than a runtime
@@ -312,91 +309,91 @@ end
 #  construction.
 #
 #  Every fast path repeats the SAME expressions in the SAME order as the two
-#  functions it replaces (`contribution.jl` `stiffness_contribution`,
-#  `stress_strain_loc` above), so the results are bitwise identical — the
+#  functions it replaces (`contribution.jl` `property_contribution`,
+#  `flux_gradient_concentration` above), so the results are bitwise identical — the
 #  benchmark harness asserts exactly that.
 # =============================================================================
 
 # ── Safe fallback: any inclusion, including internally heterogeneous ones ────
 
-loc_and_stiffness(
+concentration_and_contribution(
     incl::AbstractInclusion,
     C₁::TensND.AbstractTens{4, 3},
     C₀::TensND.AbstractTens{4, 3};
     kw...
 ) = (
-    strain_strain_loc(incl, C₁, C₀; kw...),
-    stiffness_contribution(incl, C₁, C₀; kw...),
+    gradient_gradient_concentration(incl, C₁, C₀; kw...),
+    property_contribution(incl, C₁, C₀; kw...),
 )
 
-loc_and_stiffness(
+concentration_and_contribution(
     incl::AbstractInclusion,
     K₁::TensND.AbstractTens{2, 3},
     K₀::TensND.AbstractTens{2, 3};
     kw...
 ) = (
-    gradient_gradient_loc(incl, K₁, K₀; kw...),
-    conductivity_contribution(incl, K₁, K₀; kw...),
+    gradient_gradient_concentration(incl, K₁, K₀; kw...),
+    property_contribution(incl, K₁, K₀; kw...),
 )
 
-loc_and_stress_average(
+concentration_and_flux_average(
     incl::AbstractInclusion,
     C₁::TensND.AbstractTens{4, 3},
     C₀::TensND.AbstractTens{4, 3};
     kw...
 ) = (
-    strain_strain_loc(incl, C₁, C₀; kw...),
-    stress_strain_loc(incl, C₁, C₀; kw...),
+    gradient_gradient_concentration(incl, C₁, C₀; kw...),
+    flux_gradient_concentration(incl, C₁, C₀; kw...),
 )
 
-loc_and_stress_average(
+concentration_and_flux_average(
     incl::AbstractInclusion,
     K₁::TensND.AbstractTens{2, 3},
     K₀::TensND.AbstractTens{2, 3};
     kw...
 ) = (
-    gradient_gradient_loc(incl, K₁, K₀; kw...),
-    flux_gradient_loc(incl, K₁, K₀; kw...),
+    gradient_gradient_concentration(incl, K₁, K₀; kw...),
+    flux_gradient_concentration(incl, K₁, K₀; kw...),
 )
 
 # ── Homogeneous ellipsoidal fast path: ONE hill_tensor instead of two ────────
 
-function loc_and_stiffness(
+function concentration_and_contribution(
         incl::AbstractEllipsoidalInclusion,
         C₁::TensND.AbstractTens{4, 3},
         C₀::TensND.AbstractTens{4, 3};
         kw...
     )
-    A = strain_strain_loc(incl, C₁, C₀; kw...)
+    A = gradient_gradient_concentration(incl, C₁, C₀; kw...)
     return (A, (C₁ - C₀) ⊡ A)          # verbatim `contribution.jl` :39-40
 end
 
-function loc_and_stiffness(
+function concentration_and_contribution(
         incl::AbstractEllipsoidalInclusion,
         K₁::TensND.AbstractTens{2, 3},
         K₀::TensND.AbstractTens{2, 3};
         kw...
     )
-    A = gradient_gradient_loc(incl, K₁, K₀; kw...)
+    A = gradient_gradient_concentration(incl, K₁, K₀; kw...)
     return (A, (K₁ - K₀) ⋅ A)
 end
 
-function loc_and_stress_average(
+function concentration_and_flux_average(
         incl::AbstractEllipsoidalInclusion,
         C₁::TensND.AbstractTens{4, 3},
         C₀::TensND.AbstractTens{4, 3};
         kw...
     )
-    A = strain_strain_loc(incl, C₁, C₀; kw...)
-    return (A, C₁ ⊡ A)                 # verbatim `stress_strain_loc`
+    A = gradient_gradient_concentration(incl, C₁, C₀; kw...)
+    return (A, C₁ ⊡ A)                 # verbatim `flux_gradient_concentration`
 end
 
-function loc_and_stress_average(
+function concentration_and_flux_average(
         incl::AbstractEllipsoidalInclusion,
         K₁::TensND.AbstractTens{2, 3},
         K₀::TensND.AbstractTens{2, 3};
         kw...
     )
-    A = gradient_gradient_loc(incl, K₁, K₀; kw...)
+    A = gradient_gradient_concentration(incl, K₁, K₀; kw...)
     return (A, K₁ ⋅ A)
 end

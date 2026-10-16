@@ -7,7 +7,7 @@
 #   3. SC fixed-point self-consistency : `step(C_eff) ≈ C_eff` to abstol.
 #   4. ASC ≡ SC when the matrix is the soft phase (stiffness-form path).
 #   5. ASC handles inclusion-soft RVE through the compliance-form path.
-#   6. Conductivity (`property = :K`) — same recipes via gradient_gradient_loc.
+#   6. Conductivity (`property = :K`) — same recipes via gradient_gradient_concentration.
 #   7. ForwardDiff sensitivity through the volume fraction; the derivatives
 #      converge with the values, from any start.
 #   8. NewtonDefault (built-in, dependency-free) agrees with AndersonDefault.
@@ -228,7 +228,7 @@ end
 
 # =============================================================================
 #  The orientation average does NOT commute with the tensor product, so
-#  `⟨C:A⟩` has to be built from the RAW localization tensor and averaged
+#  `⟨C:A⟩` has to be built from the RAW concentration tensor and averaged
 #  afterwards. The ASC compliance branch used to assemble it as
 #  `C_i ⊡ ⟨A⟩` — the raw (anisotropic) phase stiffness times the
 #  already-averaged concentration — which is a different tensor unless `C_i`

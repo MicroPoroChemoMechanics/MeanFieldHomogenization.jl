@@ -77,7 +77,7 @@ hill_tensor(incl, C₀::AbstractTens{4,3}; kw...) -> Tens{4,3}
 hill_tensor(incl, K₀::AbstractTens{2,3}; kw...) -> Tens{2,3}
 ```
 
-The cheapest way in, and the most complete: all eight localization tensors and
+The cheapest way in, and the most complete: all eight concentration tensors and
 all four contribution tensors follow, and every scheme becomes available.
 
 Two ways to supply it:
@@ -94,18 +94,18 @@ Two ways to supply it:
    you delegate to an equivalent built-in geometry or to an external solver.
 
 !!! warning "Match the argument types of the generic"
-    `cod_tensor`, `eshelby_tensor` and the localization generics are declared
+    `cod_tensor`, `eshelby_tensor` and the concentration generics are declared
     **separately for `AbstractTens{4,3}` and `AbstractTens{2,3}`**. A method
     typed on the union supertype `AbstractTens` is ambiguous with both. Write
     one method per order.
 
-### Gate B — the localization tensors
+### Gate B — the concentration tensors
 
 ```julia
-strain_strain_loc(incl, C₁, C₀; kw...)      -> Tens{4,3}   # 𝔸_εε
-stress_strain_loc(incl, C₁, C₀; kw...)      -> Tens{4,3}   # 𝔸_σε
-gradient_gradient_loc(incl, K₁, K₀; kw...)  -> Tens{2,3}   # 𝔸_∇∇
-flux_gradient_loc(incl, K₁, K₀; kw...)      -> Tens{2,3}   # 𝔸_q∇
+gradient_gradient_concentration(incl, C₁, C₀; kw...)      -> Tens{4,3}   # 𝔸_εε
+flux_gradient_concentration(incl, C₁, C₀; kw...)      -> Tens{4,3}   # 𝔸_σε
+gradient_gradient_concentration(incl, K₁, K₀; kw...)  -> Tens{2,3}   # 𝔸_∇∇
+flux_gradient_concentration(incl, K₁, K₀; kw...)      -> Tens{2,3}   # 𝔸_q∇
 ```
 
 Use this when ``\mathbb P`` has no convenient closed form, or when an external
@@ -122,17 +122,17 @@ side only through
 which presupposes a *single uniform* ``\mathbb C_1``. So:
 
 - **homogeneous inclusion** (the default): the strain-side tensor alone is
-  enough. `stress_strain_loc` and the rest follow from the generic methods.
+  enough. `flux_gradient_concentration` and the rest follow from the generic methods.
 - **heterogeneous inclusion** (`is_homogeneous_inclusion == false`): there is
   no such ``\mathbb C_1``. The average stress has to be assembled from the
-  local fields, so you **must** supply `stress_strain_loc` as well (and
-  `flux_gradient_loc` in transport). `LayeredSphere` and
+  local fields, so you **must** supply `flux_gradient_concentration` as well (and
+  `flux_gradient_concentration` in transport). `LayeredSphere` and
   [`FEExcenteredSphere`](@ref) both take that route; the finite-element one
   gets the two tensors out of a single solve, which is the usual situation and
-  the reason [`fe_axi_localization`](@ref) returns them as a pair.
+  the reason [`fe_axi_concentration`](@ref) returns them as a pair.
 
 Supplying that second tensor buys the **contribution tensors** as well: the
-generic `stiffness_contribution` and friends switch, when
+generic `property_contribution` and friends switch, when
 `is_homogeneous_inclusion` is `false`, to the identities
 
 ```math
@@ -165,25 +165,25 @@ implement `Schemes._layer_voigt` / `Schemes._layer_reuss` and set
 stiffness and compliance iteration, and falls back to the dilute estimate when
 none is available.
 
-The remaining localizations are derived: `strain_stress_loc` and
-`gradient_flux_loc` are a change of driving variable (valid regardless of
-homogeneity), while `stress_stress_loc` and `flux_flux_loc` are expressed in
-terms of the stress-side tensor, so overriding that one fixes them too.
+The remaining concentrations are derived: `gradient_flux_concentration` is a
+change of driving variable (valid regardless of homogeneity), while
+`flux_flux_concentration` is expressed in terms of the flux-side tensor, so
+overriding that one fixes it too.
 
 ### Gate C — the contribution tensors
 
 ```julia
 # solid inclusion (volume-fraction amount)
-stiffness_contribution(incl, P₁, P₀; kw...)
-compliance_contribution(incl, P₁, P₀; kw...)
-conductivity_contribution(incl, P₁, P₀; kw...)
-resistivity_contribution(incl, P₁, P₀; kw...)
+property_contribution(incl, P₁, P₀; kw...)
+inverse_property_contribution(incl, P₁, P₀; kw...)
+property_contribution(incl, P₁, P₀; kw...)
+inverse_property_contribution(incl, P₁, P₀; kw...)
 
 # flat object (density amount) — two arguments, no property of its own
-stiffness_contribution(incl, C₀; kw...)      # ℕ
-compliance_contribution(incl, C₀; kw...)     # ℍ
-conductivity_contribution(incl, K₀; kw...)   # 𝐍_K
-compliance_contribution(incl, K₀; kw...)     # 𝐑 (transport flavour of ℍ)
+property_contribution(incl, C₀; kw...)      # ℕ
+inverse_property_contribution(incl, C₀; kw...)     # ℍ
+property_contribution(incl, K₀; kw...)   # 𝐍_K
+inverse_property_contribution(incl, K₀; kw...)     # 𝐑 (transport flavour of ℍ)
 ```
 
 !!! warning "Gate C does not provide the concentration tensor"
@@ -199,18 +199,15 @@ compliance_contribution(incl, K₀; kw...)     # 𝐑 (transport flavour of ℍ)
     `K_interface` and `α_interface` (possibly `nothing`). Your methods must
     accept and ignore them — a trailing `kw...` is enough.
 
-### Elasticity ↔ transport correspondence
+### Elasticity and transport
 
-| Elasticity (order 4) | Transport (order 2) |
-|:--|:--|
-| `strain_strain_loc` | `gradient_gradient_loc` |
-| `stress_strain_loc` | `flux_gradient_loc` |
-| `strain_stress_loc` | `gradient_flux_loc` |
-| `stress_stress_loc` | `flux_flux_loc` |
-| `stiffness_contribution` | `conductivity_contribution` |
-| `compliance_contribution` | `resistivity_contribution` |
-| `delta_stiffness` | `delta_conductivity` |
-| `delta_compliance` | `delta_resistivity` |
+Each generic above serves both physics: a method on fourth-order properties
+answers elasticity, a method on second-order ones answers transport, under the
+same name. Extend the generic, never one of its names in elasticity or in
+conduction (`strain_strain_concentration`, `stiffness_contribution`,
+`conductivity_contribution`, …): those forward to the generic and only check the
+order of what it returns, so a method attached to one of them is never called
+by a scheme.
 
 There is no separate code path: `homogenize(rve, scheme, property)` treats
 `property` as a dictionary key and dispatches on the **tensor order** of the
@@ -231,8 +228,8 @@ uses the three-argument contributions and the generic two-argument
 uses the two-argument contributions and the **three-argument** seams
 
 ```julia
-delta_stiffness(incl, N, ε)      delta_compliance(incl, H, ε)
-delta_conductivity(incl, N, ε)   delta_resistivity(incl, R, ε)
+delta_property(incl, N, ε)      delta_inverse_property(incl, H, ε)
+delta_property(incl, N, ε)   delta_inverse_property(incl, R, ε)
 ```
 
 This is where the geometric prefactor relating a density to the effective
@@ -254,9 +251,9 @@ well — it then owns the four `delta_*` methods itself.
 
 ## Level 3 — optional refinements
 
-- **Bundled seams.** [`loc_and_stiffness`](@ref MeanFieldHomogenization.loc_and_stiffness),
-  [`loc_and_stress_average`](@ref MeanFieldHomogenization.loc_and_stress_average) and
-  [`compliance_and_stiffness_contribution`](@ref MeanFieldHomogenization.compliance_and_stiffness_contribution)
+- **Bundled seams.** [`concentration_and_contribution`](@ref MeanFieldHomogenization.concentration_and_contribution),
+  [`concentration_and_flux_average`](@ref MeanFieldHomogenization.concentration_and_flux_average) and
+  [`inverse_and_property_contribution`](@ref MeanFieldHomogenization.inverse_and_property_contribution)
   let a scheme obtain two objects from one expensive solve. Generic fallbacks
   exist, so specializing is purely a performance decision — and the result
   must be **bitwise identical** to calling the two functions separately.

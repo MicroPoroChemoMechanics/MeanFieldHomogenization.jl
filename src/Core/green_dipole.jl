@@ -7,7 +7,7 @@
 #
 #  Unlike the Fourier-space Green operator used by the Hill-tensor kernels,
 #  this is the point-source solution in physical space.  Its role is to
-#  provide the far field of a localized heterogeneity, which is what makes a
+#  provide the far field of a bounded heterogeneity, which is what makes a
 #  *finite* numerical Eshelby cell behave like an infinite medium: imposing
 #
 #       u(x) = E·x + ∇G(x) : Π            on the outer boundary

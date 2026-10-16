@@ -104,6 +104,7 @@ include("homogenize_alv.jl")
 include("order2_alv.jl")
 include("layered_alv_order2.jl")
 include("cracks_alv.jl")
+include("alv_order.jl")
 
 # ── Exports ─────────────────────────────────────────────────────────────────
 export AbstractViscoLaw, ViscoLaw, VALID_VISCO_MODES
@@ -130,9 +131,9 @@ export mori_tanaka_alv_ortho, maxwell_alv_ortho
 export dilute_concentration_alv_ortho, dilute_contribution_alv_ortho
 export self_consistent_alv, asymmetric_self_consistent_alv,
     pcw_alv, differential_alv
-export bulk_localization_alv, bulk_state_seq_alv, shear_localization_alv
-export strain_strain_loc_alv, stiffness_contribution_alv
-export gradient_localization_alv, gradient_gradient_loc_alv, conductivity_contribution_alv
+export bulk_concentration_alv, bulk_state_seq_alv, shear_concentration_alv
+export gradient_gradient_concentration_alv, property_contribution_alv, gradient_concentration_alv
+export strain_strain_concentration_alv, stiffness_contribution_alv, conductivity_contribution_alv
 export self_consistent_alv_order2
 export homogenize_alv, has_visco_property
 export iso_order2_params_from_blocks, iso_order2_blocks_from_params
@@ -142,8 +143,10 @@ export voigt_alv_order2, reuss_alv_order2, dilute_alv_order2,
 export dilute_concentration_alv_order2, dilute_contribution_alv_order2
 export homogenize_alv_order2
 export laminate_alv
-export cod_kernel_alv, compliance_contribution_alv, delta_compliance_alv
-export stiffness_contribution_alv, stiffness_contribution_alv_at, delta_stiffness_alv
+export cod_kernel_alv, inverse_property_contribution_alv, delta_inverse_property_alv
+export property_contribution_alv_at, delta_property_alv
+export compliance_contribution_alv, delta_compliance_alv
+export stiffness_contribution_alv_at, delta_stiffness_alv
 
 # ── Laplace-Carson (non-aging) ─────────────────────────────────────────────
 export AbstractLaplaceInversion, GaverStehfest, FixedTalbot, TalbotTrefethen, DeHoog

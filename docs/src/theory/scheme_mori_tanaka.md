@@ -71,7 +71,28 @@ which is the non-interaction approximation of the
 [`DiluteDual`](@ref) coincide. The crack term in the bracket is not optional: an
 additive crack term alone would make the stiffness vanish at a moderate density.
 
-## 3. Properties
+## 3. Concentration tensors
+
+Unlike most schemes, Mori–Tanaka starts from its concentration tensors, and in
+the terms of [the overview](@ref th-estimate-concentration) the remote field is
+the mean strain of the matrix,
+
+```math
+\mathbb E = \Big(f_0\,\mathbb I + \sum_j f_j\,\mathbb A_j^{\mathrm{dil}}
+  + \sum_c \kappa_c\,\varepsilon_c\,\mathbb H_c:\mathbb C_0\Big)^{-1} ,
+\qquad
+\mathbb A_i^{\mathrm{MT}} = \mathbb A_i^{\mathrm{dil}}:\mathbb E ,
+\qquad
+\mathbb A_c^{\mathrm{MT}} = \kappa_c\,\mathbb H_c:\mathbb C_0:\mathbb E ,
+```
+
+the crack families included. The matrix taking the rest of the strain average,
+``f_0\,\mathbb A_0^{\mathrm{MT}} = \mathbb I - \sum_i f_i\,\mathbb A_i^{\mathrm{MT}} -
+\sum_c \varepsilon_c\,\mathbb A_c^{\mathrm{MT}}``, the definition of ``\mathbb E``
+returns ``\mathbb A_0^{\mathrm{MT}} = \mathbb E``: the scheme is consistent with its
+own premise.
+
+## 4. Properties
 
 For a two-phase isotropic composite with spherical inclusions and well-ordered
 phases, the estimate coincides with a bound of [hashin1963](@citet): the upper

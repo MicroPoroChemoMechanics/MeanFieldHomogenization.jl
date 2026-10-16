@@ -4,7 +4,7 @@
     [The Laplace-Carson route](@ref th-laplace-carson), which treats the
     non-aging case contrasted below, and the elastic chain transposed on this
     page: [The Eshelby inclusion problem](@ref th-eshelby-problem),
-    [Localization and contribution tensors](@ref th-localization) and
+    [Concentration and contribution tensors](@ref th-concentration) and
     [Homogenization schemes](@ref th-homogenization).
 
 !!! tip "If the material does not age, there is a cheaper route"
@@ -388,7 +388,7 @@ In the ALV setting every scalar modulus becomes its ``n\times n`` trapezoidal
 Volterra matrix, every product a matrix product and every reciprocal a Volterra
 inverse; the transfer matrices become block matrices of size ``2n\times 2n`` and
 ``4n\times 4n`` respectively. Both harmonics carry over, together with the
-per-layer localization kernels and the imperfect-interface transfers. The
+per-layer concentration kernels and the imperfect-interface transfers. The
 composite sphere then enters the schemes exactly as in elasticity — through its
 volume-averaged concentration kernel, having no Hill tensor of its own.
 

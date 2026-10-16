@@ -19,7 +19,7 @@ The strain is **not uniform inside it**, so Eshelby's result does not apply and
 it has no Hill tensor. What it does have is a volume-averaged concentration
 tensor, computed exactly by a recurrence over the layers, and that is all a
 scheme needs — the family enters through
-[gate B](@ref man-custom-inclusions), supplying both localization tensors
+[gate B](@ref man-custom-inclusions), supplying both concentration tensors
 directly.
 
 Two families are shipped, and they share their whole surface:
@@ -112,8 +112,8 @@ opening of the outer interface, as Echoes does. `external = false` leaves that
 last one to the matrix:
 
 ```@example layered
-strain_strain_loc(coated, C₀, C₀)                     # what the schemes use
-strain_strain_loc(coated, C₀, C₀; external = false)   # outer opening excluded
+gradient_gradient_concentration(coated, C₀, C₀)                     # what the schemes use
+gradient_gradient_concentration(coated, C₀, C₀; external = false)   # outer opening excluded
 ```
 
 The averages of the next section are over the material and count no opening.
@@ -131,8 +131,8 @@ The **averages** read off the geometry directly:
 ```@example layered
 ε∞ = TensISO{3}(1.0)                       # a hydrostatic remote strain
 
-layer_strain_average(sphere, C₀, ε∞, 2)    # mean strain in shell 2
-sphere_strain_average(sphere, C₀, ε∞)      # over the whole inclusion
+layer_gradient_average(sphere, C₀, ε∞, 2)    # mean strain in shell 2
+sphere_gradient_average(sphere, C₀, ε∞)      # over the whole inclusion
 ```
 
 The **pointwise** fields go through a solved object, built once and reused —
@@ -142,13 +142,13 @@ not one per point:
 ```@example layered
 fields = LayeredSphereFields(sphere, C₀)
 
-local_strain(fields, [0.0, 0.0, 0.6], ε∞)  # at a point, Cartesian
-local_stress(fields, 0.6, 0.0, 0.0, ε∞)    # or spherical, r θ φ
+local_gradient(fields, [0.0, 0.0, 0.6], ε∞)  # at a point, Cartesian
+local_flux(fields, 0.6, 0.0, 0.0, ε∞)    # or spherical, r θ φ
 get_layer(sphere, 0.6)                     # which layer that radius is in
 ```
 
 with `local_displacement`, `local_temperature`, `local_gradient`, `local_flux`
-and the four `local_*_*_loc` couplings alongside. One binding serves both
+and the four `local_*_*_concentration` couplings alongside. One binding serves both
 families, and the transport fields come from `LayeredSphereTransportFields`.
 
 !!! tip "`side` at an interface"
@@ -218,7 +218,7 @@ rather than a chain of transfer matrices. `Nseries` sets the truncation.
 A morphology outside the shipped families enters the schemes through
 [Custom inclusions](@ref man-custom-inclusions), the contract the two layered
 families themselves use through gate B. The tutorials
-[n-layer sphere: volume-averaged localization tensors](@ref tut-layered-sphere)
+[n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere)
 and
 [The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective)
 work through both geometries, and

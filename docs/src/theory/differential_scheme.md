@@ -5,7 +5,7 @@
     at each increment,
     [Self-consistent schemes](@ref th-scheme-self-consistent), the other way of
     embedding the inclusions in the effective medium, and
-    [Localization and contribution tensors](@ref th-localization) for the
+    [Concentration and contribution tensors](@ref th-concentration) for the
     contribution tensors ``\mathbb N_i`` and ``\mathbb H_i`` integrated below.
 
 The self-consistent schemes embed every inclusion in the final effective medium
@@ -128,14 +128,14 @@ of phase `i` in the current medium,
 
 ``\mathbb A_{\varepsilon\varepsilon,i}`` and ``\mathbb A_{\sigma\varepsilon,i}`` being the
 strain and stress concentration tensors of phase `i` in the current medium, as
-defined in [Localization](@ref th-localization).
+defined in [Concentration](@ref th-concentration).
 
 Written this way, ``\mathbb N_i`` needs only the phase's concentration
 tensors — **not** a Hill tensor, and not even a uniform phase property.
 It is therefore available for every inclusion family the package
 supports (ellipsoids, cylinders, flat cracks, multi-layer spheres and
 spheroids), which is why the differential scheme accepts all of them
-without special-casing. See [Localization](@ref th-localization).
+without special-casing. See [Concentration](@ref th-concentration).
 
 Hence the ODE integrated by [`DifferentialScheme`](@ref):
 
@@ -392,7 +392,8 @@ Two things about it are theory rather than plumbing.
 *The state is sized by the running estimate, not by the matrix.* It carries the
 canonical components in the smallest symmetry class that estimate can stay in —
 two numbers for an isotropic medium, five to eight for a transversely isotropic
-one, the full Mandel matrix otherwise. A phase whose contribution is less
+one, the full Mandel matrix otherwise; in conduction, one, three or the six
+components of a symmetric conductivity. A phase whose contribution is less
 symmetric drags the estimate out of the matrix's class at the first step (a
 crack, or simply an aligned spheroid, whose ``\mathbb A^{\mathrm{dil}}`` is
 transversely isotropic even between two isotropic materials), so the scheme
@@ -404,6 +405,66 @@ the acoustic polynomial of the residue method degenerates precisely at the
 isotropic starting point of the integration. That is what `method = :auto`
 selects, and an explicit `method = :residues` on such an RVE raises an error
 saying so.
+
+## 6. Concentration tensors
+
+The concentration tensors of the composite evolve with it along the path, and
+the increment of §2 also gives their evolution. At time ``\tau`` the current
+medium holds each phase ``r`` with the weight ``w_r`` — its volume fraction, or
+its density for a crack family — and the strain concentration tensor
+``\mathbb A_r(\tau)``, relative to the macroscopic strain of that medium. The
+increment replaces the part ``\mathrm d\varphi = \sum_j \mathrm d\varphi_j`` of
+it by dilute inclusions, solid ones and crack families, all loaded by the new
+macroscopic strain ``\boldsymbol E``. The incoming inclusions carry the mean
+strains ``\mathbb A_j^{\mathrm{dil}}(\mathbb C^{\mathrm{hom}}):\boldsymbol E``, the
+cracks the strains
+``\mathrm d\varphi_c^\varepsilon\,\kappa_c\,\mathbb H_c(\mathbb C^{\mathrm{hom}}):\mathbb C^{\mathrm{hom}}:\boldsymbol E``,
+and the strain average fixes the mean strain ``\bar{\boldsymbol\varepsilon}`` of the
+part of the current medium that remains,
+
+```math
+(1 - \mathrm d\varphi)\,\bar{\boldsymbol\varepsilon}
+  = \big(\mathbb I - \mathrm d\tau\,\mathbb X\big):\boldsymbol E ,
+\qquad
+\mathbb X = \sum_j \dot\varphi_j\,\mathbb A_j^{\mathrm{dil}}(\mathbb C^{\mathrm{hom}})
+  + \sum_c \dot\varphi_c^\varepsilon\,\kappa_c\,\mathbb H_c(\mathbb C^{\mathrm{hom}}):\mathbb C^{\mathrm{hom}} .
+```
+
+The remaining medium being homogeneous at the scale of the new inclusions, each
+of its phases keeps its concentration tensor relative to
+``\bar{\boldsymbol\varepsilon}``, while its weight is reduced to
+``(1 - \mathrm d\varphi)\,w_r``. The weighted tensor ``\mathbb G^\varepsilon_r = w_r\,\mathbb A_r``
+therefore becomes
+``\mathbb G^\varepsilon_r:(\mathbb I - \mathrm d\tau\,\mathbb X) + \mathrm d\varphi_r\,\mathbb A_r^{\mathrm{dil}}``,
+the factor ``1 - \mathrm d\varphi`` canceling, and its stress counterpart
+``\mathbb G^\sigma_r = w_r\,\mathbb A_{\sigma\varepsilon,r}`` follows in the same way:
+
+```math
+\frac{\mathrm d\mathbb G^\varepsilon_r}{\mathrm d\tau}
+  = \dot\varphi_r\,\mathbb A_r^{\mathrm{dil}}(\mathbb C^{\mathrm{hom}}) - \mathbb G^\varepsilon_r:\mathbb X ,
+\qquad
+\frac{\mathrm d\mathbb G^\sigma_r}{\mathrm d\tau}
+  = \dot\varphi_r\,\mathbb C_r:\mathbb A_r^{\mathrm{dil}}(\mathbb C^{\mathrm{hom}}) - \mathbb G^\sigma_r:\mathbb X ,
+```
+
+from ``\mathbb G^\varepsilon_r(0) = \mathbb G^\sigma_r(0) = 0``, with ``\dot\varphi_c^\varepsilon`` in place
+of ``\dot\varphi_r``, ``\kappa_c\,\mathbb H_c:\mathbb C^{\mathrm{hom}}`` in place of
+``\mathbb A_r^{\mathrm{dil}}`` and no stress term for a crack family. The matrix
+starts from ``\mathbb G^\varepsilon_0(0) = \mathbb I`` and ``\mathbb G^\sigma_0(0) = \mathbb C_0`` and is
+never incorporated. Summing over all phases, the strain equation gives
+``\mathrm d(\sum_r \mathbb G^\varepsilon_r)/\mathrm d\tau = \mathbb X - (\sum_r \mathbb G^\varepsilon_r):\mathbb X``,
+so that ``\sum_r \mathbb G^\varepsilon_r = \mathbb I`` holds along the whole path, and the
+stress equation then reproduces the ODE of §2 for ``\sum_r \mathbb G^\sigma_r``, since
+``\sum_j \dot\varphi_j\,\mathbb C_j:\mathbb A_j^{\mathrm{dil}} - \mathbb C^{\mathrm{hom}}:\mathbb X
+= \sum_j \dot\varphi_j\,\mathbb N_j - \sum_c \dot\varphi_c^\varepsilon\,\kappa_c\,\mathbb C^{\mathrm{hom}}:\mathbb H_c:\mathbb C^{\mathrm{hom}}``.
+The package integrates the tensors of the inclusion phases together with the
+effective tensor, in a single ODE in Kelvin–Mandel components, divided by the
+final amount ``w_r(1)`` of each phase: the state is then the concentration
+tensor itself at ``\tau = 1``, and remains finite for a phase whose amount
+vanishes. The matrix takes the rest of both averages at ``\tau = 1``; its mean stress and strain then
+satisfy ``\langle\boldsymbol\sigma\rangle_0 = \mathbb C_0:\langle\boldsymbol\varepsilon\rangle_0``
+to the tolerance of the integration. Like the scheme itself, these tensors are
+numeric only.
 
 ## Where to go next
 

@@ -1,21 +1,21 @@
-# # [n-layer sphere: volume-averaged localization tensors](@id tut-layered-sphere)
+# # [n-layer sphere: volume-averaged concentration tensors](@id tut-layered-sphere)
 #
 # !!! info "Before this page"
 #     The tutorial [Hill polarization tensors in practice](@ref tut-hill-tensors),
-#     whose dilute estimate built from one localization tensor is extended here
+#     whose dilute estimate built from one concentration tensor is extended here
 #     to an inclusion of several layers, and the theory page
 #     [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere),
 #     where the recurrence evaluated below is derived.
 #
-# Volume-averaged strain and stress localization tensors of an isotropic
+# Volume-averaged strain and stress concentration tensors of an isotropic
 # n-layer composite sphere. Uses random per-layer moduli and a random
 # reference matrix, and adds a per-layer bar chart of the bulk and
-# shear localization factors ``(\alpha_k, \beta_k)``.
+# shear concentration factors ``(\alpha_k, \beta_k)``.
 #
 # The `MeanFieldHomogenization.jl` API used here:
 # - [`LayeredSphere`](@ref)`(radii, moduli)` — geometry + per-layer stiffness;
-# - [`strain_strain_loc`](@ref)`(sphere, C₀; layer=k)` — per-layer iso ``A_k``;
-# - [`stiffness_contribution`](@ref)`(sphere, C₀)` — size-independent ``N``;
+# - [`gradient_gradient_concentration`](@ref)`(sphere, C₀; layer=k)` — per-layer iso ``A_k``;
+# - [`property_contribution`](@ref)`(sphere, C₀)` — size-independent ``N``;
 # - [`layer_volume_fraction`](@ref)`(sphere, k)` — ``f_k``.
 #
 # The whole-inclusion average
@@ -118,14 +118,14 @@ println(
 )
 println()
 
-# ## Per-layer localization tensors ``A_k`` (iso 4-tensor)
+# ## Per-layer concentration tensors ``A_k`` (iso 4-tensor)
 
-A_per_layer = ntuple(k -> strain_strain_loc(sphere, C_ref; layer = k), n)
+A_per_layer = ntuple(k -> gradient_gradient_concentration(sphere, C_ref; layer = k), n)
 αβ = ntuple(k -> TensND.get_data(A_per_layer[k]), n)
-α_k = [αβ[k][1] for k in 1:n]   # bulk localization
-β_k = [αβ[k][2] for k in 1:n]   # shear localization
+α_k = [αβ[k][1] for k in 1:n]   # bulk concentration
+β_k = [αβ[k][2] for k in 1:n]   # shear concentration
 
-println("Per-layer localization factors :")
+println("Per-layer concentration factors :")
 @printf "  %-4s  %-12s  %-12s\n" "k" "α_k (bulk)" "β_k (shear)"
 for k in 1:n
     @printf "  %2d    %+10.6f    %+10.6f\n" k α_k[k] β_k[k]
@@ -138,9 +138,9 @@ A_whole_α = sum(layer_volume_fraction(sphere, k) * α_k[k] for k in 1:n)
 A_whole_β = sum(layer_volume_fraction(sphere, k) * β_k[k] for k in 1:n)
 @printf "Whole-inclusion average :  α = %+12.8f   β = %+12.8f\n" A_whole_α A_whole_β
 
-# Cross-check: `stiffness_contribution` ``N`` satisfies
+# Cross-check: `property_contribution` ``N`` satisfies
 # ``N = \langle(C_k - C_0) : A_k\rangle``.
-N_tensor = stiffness_contribution(sphere, C_ref)
+N_tensor = property_contribution(sphere, C_ref)
 N_α, N_β = TensND.get_data(N_tensor)
 N_α_check = sum(
     layer_volume_fraction(sphere, k) *
@@ -152,14 +152,14 @@ N_β_check = sum(
         (TensND.get_data(C_layers[k])[2] - TensND.get_data(C_ref)[2]) *
         β_k[k] for k in 1:n
 )
-@printf "stiffness_contribution :  N_α = %+12.6f  (rec. %+12.6f, diff=%.2e)\n" N_α N_α_check abs(N_α - N_α_check)
+@printf "property_contribution :  N_α = %+12.6f  (rec. %+12.6f, diff=%.2e)\n" N_α N_α_check abs(N_α - N_α_check)
 @printf "                         N_β = %+12.6f  (rec. %+12.6f, diff=%.2e)\n" N_β N_β_check abs(N_β - N_β_check)
 println()
 
 # ## Reset reference to last-layer modulus (mirror Python l. 59-60)
 println("Resetting reference to C_layers[end] :")
 C_ref2 = C_layers[end]
-A_layer_last = strain_strain_loc(sphere, C_ref2; layer = n)
+A_layer_last = gradient_gradient_concentration(sphere, C_ref2; layer = n)
 α_last, β_last = TensND.get_data(A_layer_last)
 @printf "  layer_eE(n) with C_ref = C_layers[n] :  α = %+10.6f  β = %+10.6f\n" α_last β_last
 println("  (when reference = layer modulus, the layer is invisible to itself.)")
@@ -167,13 +167,13 @@ println()
 
 # ## Graphical output
 #
-# Per-layer bulk/shear localization factors and volume fractions, bar-charted
+# Per-layer bulk/shear concentration factors and volume fractions, bar-charted
 # side by side.
 
 p1 = bar(
     1:n, α_k;
     xlabel = "layer k", ylabel = "α_k (bulk)",
-    title = "Bulk localization per layer",
+    title = "Bulk concentration per layer",
     legend = false, color = :steelblue
 )
 hline!(
@@ -185,7 +185,7 @@ p1 = plot!(p1; legend = :topright)
 p2 = bar(
     1:n, β_k;
     xlabel = "layer k", ylabel = "β_k (shear)",
-    title = "Shear localization per layer",
+    title = "Shear concentration per layer",
     legend = false, color = :darkorange
 )
 hline!(
@@ -204,11 +204,11 @@ p3 = bar(
 p_full = plot(
     p1, p2, p3; layout = (1, 3), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm,
     size = (1500, 520), titlefontsize = 9,
-    plot_title = "n-layer sphere ($n layers, R=$R) — average localizations"
+    plot_title = "n-layer sphere ($n layers, R=$R) — average concentrations"
 )
 p_full
 
-# Each bar is the localization factor of one layer, and the dashed line is their
+# Each bar is the concentration factor of one layer, and the dashed line is their
 # volume-weighted average, which is the factor the inclusion as a whole presents
 # to a scheme.
 #

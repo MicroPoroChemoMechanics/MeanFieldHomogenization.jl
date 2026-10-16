@@ -1,5 +1,5 @@
 # =============================================================================
-#  evaluate.jl — `homogenize` on a `Laminate`, and the per-layer localization.
+#  evaluate.jl — `homogenize` on a `Laminate`, and the per-layer concentration.
 #
 #  The physics lives in `Core/laminate_algebra.jl`; this file is the bridge
 #  between the cell (named layers, thicknesses, interfaces, a frame) and that
@@ -201,7 +201,7 @@ end
     _wrap4_general(lam, prop, M6) -> AbstractTens{4,3}
 
 Same as [`_wrap4`](@ref) for a tensor that is transversely isotropic about the
-layer normal but **not major-symmetric** — every localization tensor, ``\\mathbb{A}_i``
+layer normal but **not major-symmetric** — every concentration tensor, ``\\mathbb{A}_i``
 first of all: ``\\mathbb{A}_i = \\mathbb{I} + \\mathbb{P}_i:(\\mathbb{C}^{\\mathrm{hom}} - \\mathbb{C}_i)`` is a product of major-symmetric
 tensors and a product of two such is not one.
 
@@ -350,208 +350,167 @@ function laminate_hill(lam::Laminate, name::Symbol; property::Symbol = :C)
 end
 
 """
-    layer_strain_localization(lam, name::Symbol; property = :C) -> Tens{4,3}
+    layer_gradient_concentration(lam, name::Symbol; property = :C) -> AbstractTens
 
-Strain localization tensor ``\\mathbb{A}_i`` of one layer: ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_i:\\boldsymbol{E}``, with
-``\\mathbb{A}_i = \\mathbb{I} + \\mathbb{P}_i:(\\mathbb{C}^{\\mathrm{hom}} - \\mathbb{C}_i)`` and ``\\sum_i f_i\\,\\mathbb{A}_i = \\mathbb{I}``.
+Gradient concentration tensor of one layer: with a fourth-order stiffness, the
+strain concentration tensor ``\\mathbb{A}_i``, ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_i:\\boldsymbol{E}``, with
+``\\mathbb{A}_i = \\mathbb{I} + \\mathbb{P}_i:(\\mathbb{C}^{\\mathrm{hom}} - \\mathbb{C}_i)`` and ``\\sum_i f_i\\,\\mathbb{A}_i = \\mathbb{I}``; with a
+second-order conductivity (`property = :K`), ``\\nabla T_i = \\boldsymbol{A}_i\\cdot\\nabla T``.
 
 Its in-plane block is the identity and its in-plane/out-of-plane coupling
-block vanishes — the macroscopic in-plane strain reaches every layer
-unchanged, which is the compatibility condition ``\\boldsymbol{\\varepsilon}_i = \\boldsymbol{E} + \\underline{a}_i\\stackrel{s}{\\otimes}\\underline{n}``.
+block vanishes — the macroscopic in-plane gradient reaches every layer
+unchanged, which is the compatibility condition
+``\\boldsymbol{\\varepsilon}_i = \\boldsymbol{E} + \\underline{a}_i\\stackrel{s}{\\otimes}\\underline{n}`` read backwards.
 
-Synonym of [`strain_strain_loc`](@ref)`(lam, name)`, the package-wide generic
-name; the two return the same object.
-
-Defined for perfect interfaces; with a primal (spring / Kapitza) interface
-part of the macroscopic strain is carried by the jumps, so the layer strains
-no longer average to ``\\boldsymbol{E}`` — see [`interface_jump`](@ref).
+The same object as [`gradient_gradient_concentration`](@ref)`(lam, name)`, the
+package-wide generic. Defined for perfect interfaces; with a primal (spring /
+Kapitza) interface part of the macroscopic gradient is carried by the jumps,
+so the layer gradients no longer average to it — see [`interface_jump`](@ref).
+Explicit name in elasticity: [`layer_strain_concentration`](@ref).
 """
-function layer_strain_localization(lam::Laminate, name::Symbol; property::Symbol = :C)
-    C6, Chom = _loc_setup4(lam, name, property)
-    return _wrap4_general(lam, property, MFH_Core.laminate_strain_localization(C6, Chom))
+function layer_gradient_concentration(lam::Laminate, name::Symbol; property::Symbol = :C)
+    P, Phom = _concentration_setup(lam, name, property)
+    return _wrap_km(lam, property, MFH_Core.laminate_gradient_concentration(P, Phom))
 end
 
 """
-    layer_stress_localization(lam, name::Symbol; property = :C) -> Tens{4,3}
+    layer_flux_concentration(lam, name::Symbol; property = :C) -> AbstractTens
 
-Stress localization tensor ``\\mathbb{B}_i`` of one layer: ``\\boldsymbol{\\sigma}_i = \\mathbb{B}_i:\\boldsymbol{\\Sigma}``, with
-``\\mathbb{B}_i = \\mathbb{C}_i:\\mathbb{A}_i:(\\mathbb{C}^{\\mathrm{hom}})^{-1}`` and ``\\sum_i f_i\\,\\mathbb{B}_i = \\mathbb{I}``.
-
-Synonym of [`stress_stress_loc`](@ref)`(lam, name)`, the package-wide generic
-name; the two return the same object.
+Flux concentration tensor of one layer: the stress concentration tensor
+``\\mathbb{B}_i``, ``\\boldsymbol{\\sigma}_i = \\mathbb{B}_i:\\boldsymbol{\\Sigma}``, with
+``\\mathbb{B}_i = \\mathbb{C}_i:\\mathbb{A}_i:(\\mathbb{C}^{\\mathrm{hom}})^{-1}`` and ``\\sum_i f_i\\,\\mathbb{B}_i = \\mathbb{I}``; in
+conduction, ``\\underline{q}_i = \\boldsymbol{B}_i\\cdot\\underline{q}``. The same object as
+[`flux_flux_concentration`](@ref)`(lam, name)`. Explicit name in elasticity:
+[`layer_stress_concentration`](@ref).
 """
-function layer_stress_localization(lam::Laminate, name::Symbol; property::Symbol = :C)
-    C6, Chom = _loc_setup4(lam, name, property)
-    return _wrap4_general(lam, property, MFH_Core.laminate_stress_localization(C6, Chom))
+function layer_flux_concentration(lam::Laminate, name::Symbol; property::Symbol = :C)
+    P, Phom = _concentration_setup(lam, name, property)
+    return _wrap_km(lam, property, MFH_Core.laminate_flux_concentration(P, Phom))
 end
 
-function _loc_setup4(lam::Laminate, name::Symbol, property::Symbol)
-    C = layer_property(lam, name, property)
-    C isa TensND.AbstractTens{4, 3} || throw(
-        ArgumentError(
-            "layer localization at order 4 needs a 4th-order property; got $(typeof(C))"
-        )
-    )
+# The Kelvin-Mandel matrices of the layer and of the laminate, at the order of
+# the property: the property tensor of the layer is the function barrier.
+_concentration_setup(lam::Laminate, name::Symbol, property::Symbol) =
+    _concentration_setup(lam, property, layer_property(lam, name, property))
+
+function _concentration_setup(lam::Laminate, property::Symbol, C::TensND.AbstractTens{4, 3})
     C6s, fs, T = _gather(lam, property, Val(4))
     P_int, C_surf = _interface_terms(lam, T, Val(4))
-    Chom = MFH_Core.laminate_stiffness(C6s, fs, P_int, C_surf)
-    return (_layer_km4(C, lam.basis), Chom)
+    return (_layer_km4(C, lam.basis), MFH_Core.laminate_stiffness(C6s, fs, P_int, C_surf))
 end
 
-"""
-    layer_gradient_localization(lam, name::Symbol; property = :K) -> Tens{2,3}
-
-Transport counterpart of [`layer_strain_localization`](@ref):
-``\\nabla T_i = \\boldsymbol{A}_i\\cdot\\nabla T``, with ``\\sum_i f_i\\,\\boldsymbol{A}_i = \\boldsymbol{1}``.
-
-Synonym of [`gradient_gradient_loc`](@ref)`(lam, name)`.
-"""
-function layer_gradient_localization(lam::Laminate, name::Symbol; property::Symbol = :K)
-    K3, Khom = _loc_setup2(lam, name, property)
-    return _wrap2(lam, property, MFH_Core.laminate_gradient_localization(K3, Khom))
-end
-
-"""
-    layer_flux_localization(lam, name::Symbol; property = :K) -> Tens{2,3}
-
-Transport counterpart of [`layer_stress_localization`](@ref): ``\\underline{q}_i = \\boldsymbol{B}_i\\cdot\\underline{q}``,
-with ``\\sum_i f_i\\,\\boldsymbol{B}_i = \\boldsymbol{1}``.
-
-Synonym of [`flux_flux_loc`](@ref)`(lam, name)`.
-"""
-function layer_flux_localization(lam::Laminate, name::Symbol; property::Symbol = :K)
-    K3, Khom = _loc_setup2(lam, name, property)
-    return _wrap2(lam, property, MFH_Core.laminate_flux_localization(K3, Khom))
-end
-
-function _loc_setup2(lam::Laminate, name::Symbol, property::Symbol)
-    K = layer_property(lam, name, property)
-    K isa TensND.AbstractTens{2, 3} || throw(
-        ArgumentError(
-            "layer localization at order 2 needs a 2nd-order property; got $(typeof(K))"
-        )
-    )
+function _concentration_setup(lam::Laminate, property::Symbol, K::TensND.AbstractTens{2, 3})
     K3s, fs, T = _gather(lam, property, Val(2))
     P_int, K_surf = _interface_terms(lam, T, Val(2))
-    Khom = MFH_Core.laminate_conductivity(K3s, fs, P_int, K_surf)
-    return (_layer_km2(K, lam.basis), Khom)
+    return (_layer_km2(K, lam.basis), MFH_Core.laminate_conductivity(K3s, fs, P_int, K_surf))
 end
 
-# ── The package-wide localization generics, on a layer ──────────────────────
+_concentration_setup(::Laminate, property::Symbol, P) = throw(
+    ArgumentError(
+        "layer concentration needs a 4th- or 2nd-order property; :$(property) is a $(typeof(P))"
+    )
+)
+
+# Back to a tensor, at the order of the Kelvin-Mandel matrix.
+_wrap_km(lam::Laminate, property::Symbol, M::StaticMatrix{6, 6}) = _wrap4_general(lam, property, M)
+_wrap_km(lam::Laminate, property::Symbol, M::StaticMatrix{3, 3}) = _wrap2(lam, property, M)
+
+# ── The package-wide concentration generics, on a layer ──────────────────────
 #
 #  `Laminate` is a cell, not an `AbstractInclusion`: there is no matrix, no
-#  reference medium and no Eshelby auxiliary problem, so the `(incl, C₁, C₀)`
-#  signature of `src/localization.jl` does not apply. What plays the role of
+#  reference medium and no Eshelby auxiliary problem, so the `(incl, P₁, P₀)`
+#  signature of `src/concentration.jl` does not apply. What plays the role of
 #  "which inclusion" is the LAYER NAME — the same choice as
-#  `strain_strain_loc(::LayeredSphere, C₀; layer::Int)`.
+#  `gradient_gradient_concentration(::LayeredSphere, C₀; layer::Int)`. The
+#  property, `:C` by default as for `homogenize`, sets the order.
 #
-#  The four elastic methods and their four transport twins are all one call to
-#  `_loc_setup4` / `_loc_setup2` plus one kernel from `Core/laminate_algebra.jl`,
-#  which inverts by cofactors and never by LU — so every one of them is exact
-#  under `ForwardDiff.Dual` and evaluable on `SymPy.Sym` / `Symbolics.Num`.
+#  Each method is one call to `_concentration_setup` plus one kernel from
+#  `Core/laminate_algebra.jl`, which inverts by cofactors and never by LU — so
+#  every one of them is exact under `ForwardDiff.Dual` and evaluable on
+#  `SymPy.Sym` / `Symbolics.Num`.
 #
 #  Sum rules: `Σ_i f_i 𝔸_i = 𝕀`, `Σ_i f_i 𝔹_i = 𝕀`, `Σ_i f_i ℂ_i:𝔸_i = ℂ^{hom}`
 #  and `Σ_i f_i 𝔸_i:𝕊^{hom} = 𝕊^{hom}`. They hold for perfect and for dual
 #  (membrane) interfaces; with a primal (spring / Kapitza) interface part of the
-#  macroscopic strain is carried by the displacement jumps (`interface_jump`)
-#  and the strain-side rules no longer close.
+#  macroscopic gradient is carried by the jumps (`interface_jump`) and the
+#  gradient-side rules no longer close.
 
 """
-    strain_strain_loc(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
+    gradient_gradient_concentration(lam::Laminate, name::Symbol; property = :C) -> AbstractTens
 
-Strain-strain localization tensor ``\\mathbb{A}_i`` of layer `name`: ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_i:\\boldsymbol{E}``.
-
-The `Laminate` method of the package-wide generic, keyed on a layer name
-because a laminate has no reference medium. Identical to
-[`layer_strain_localization`](@ref).
+Gradient concentration tensor ``\\mathbb{A}_i`` of layer `name`:
+``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_i:\\boldsymbol{E}`` in elasticity,
+``\\nabla T_i = \\boldsymbol{A}_i\\cdot\\nabla T`` in conduction. Identical to
+[`layer_gradient_concentration`](@ref).
 """
-function strain_strain_loc(lam::Laminate, name::Symbol; property::Symbol = :C)
-    return layer_strain_localization(lam, name; property = property)
+function gradient_gradient_concentration(lam::Laminate, name::Symbol; property::Symbol = :C)
+    return layer_gradient_concentration(lam, name; property = property)
 end
 
 """
-    stress_strain_loc(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
+    flux_gradient_concentration(lam::Laminate, name::Symbol; property = :C) -> AbstractTens
 
-Mixed localization tensor ``\\mathbb{A}_{\\sigma\\varepsilon,i} = \\mathbb{C}_i:\\mathbb{A}_i`` of layer `name`, mapping the
-macroscopic strain to the layer stress: ``\\boldsymbol{\\sigma}_i = \\mathbb{A}_{\\sigma\\varepsilon,i}:\\boldsymbol{E}``, with
+Flux of layer `name` per unit macroscopic gradient,
+``\\mathbb{A}_{\\sigma\\varepsilon,i} = \\mathbb{C}_i:\\mathbb{A}_i``:
+``\\boldsymbol{\\sigma}_i = \\mathbb{A}_{\\sigma\\varepsilon,i}:\\boldsymbol{E}``, with
 ``\\sum_i f_i\\,\\mathbb{A}_{\\sigma\\varepsilon,i} = \\mathbb{C}^{\\mathrm{hom}}``.
 
-Unlike [`stress_stress_loc`](@ref) it forms no inverse of ``\\mathbb{C}^{\\mathrm{hom}}``, so it is
-the cheaper and better-conditioned of the two stress-side tensors.
+Unlike [`flux_flux_concentration`](@ref) it forms no inverse of the effective
+property, so it is the cheaper and better-conditioned of the two flux-side
+tensors.
 """
-function stress_strain_loc(lam::Laminate, name::Symbol; property::Symbol = :C)
-    C6, Chom = _loc_setup4(lam, name, property)
-    return _wrap4_general(
-        lam, property, MFH_Core.laminate_stress_strain_localization(C6, Chom)
-    )
+function flux_gradient_concentration(lam::Laminate, name::Symbol; property::Symbol = :C)
+    P, Phom = _concentration_setup(lam, name, property)
+    return _wrap_km(lam, property, MFH_Core.laminate_flux_gradient_concentration(P, Phom))
 end
 
 """
-    strain_stress_loc(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
+    gradient_flux_concentration(lam::Laminate, name::Symbol; property = :C) -> AbstractTens
 
-Mixed localization tensor ``\\mathbb{A}_{\\varepsilon\\sigma,i} = \\mathbb{A}_i:(\\mathbb{C}^{\\mathrm{hom}})^{-1}`` of layer `name`,
-mapping the macroscopic stress to the layer strain: ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_{\\varepsilon\\sigma,i}:\\boldsymbol{\\Sigma}``, with
+Gradient of layer `name` per unit macroscopic flux,
+``\\mathbb{A}_{\\varepsilon\\sigma,i} = \\mathbb{A}_i:(\\mathbb{C}^{\\mathrm{hom}})^{-1}``:
+``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_{\\varepsilon\\sigma,i}:\\boldsymbol{\\Sigma}``, with
 ``\\sum_i f_i\\,\\mathbb{A}_{\\varepsilon\\sigma,i} = (\\mathbb{C}^{\\mathrm{hom}})^{-1}``.
 """
-function strain_stress_loc(lam::Laminate, name::Symbol; property::Symbol = :C)
-    C6, Chom = _loc_setup4(lam, name, property)
-    return _wrap4_general(
-        lam, property, MFH_Core.laminate_strain_stress_localization(C6, Chom)
-    )
+function gradient_flux_concentration(lam::Laminate, name::Symbol; property::Symbol = :C)
+    P, Phom = _concentration_setup(lam, name, property)
+    return _wrap_km(lam, property, MFH_Core.laminate_gradient_flux_concentration(P, Phom))
 end
 
 """
-    stress_stress_loc(lam::Laminate, name::Symbol; property = :C) -> Tens{4,3}
+    flux_flux_concentration(lam::Laminate, name::Symbol; property = :C) -> AbstractTens
 
-Stress-stress localization tensor ``\\mathbb{B}_i`` of layer `name`: ``\\boldsymbol{\\sigma}_i = \\mathbb{B}_i:\\boldsymbol{\\Sigma}``.
-Identical to [`layer_stress_localization`](@ref).
+Flux concentration tensor ``\\mathbb{B}_i`` of layer `name`:
+``\\boldsymbol{\\sigma}_i = \\mathbb{B}_i:\\boldsymbol{\\Sigma}``. Identical to
+[`layer_flux_concentration`](@ref).
 """
-function stress_stress_loc(lam::Laminate, name::Symbol; property::Symbol = :C)
-    return layer_stress_localization(lam, name; property = property)
+function flux_flux_concentration(lam::Laminate, name::Symbol; property::Symbol = :C)
+    return layer_flux_concentration(lam, name; property = property)
 end
 
-"""
-    gradient_gradient_loc(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
-
-Transport twin of [`strain_strain_loc`](@ref): ``\\nabla T_i = \\boldsymbol{A}_i\\cdot\\nabla T``. Identical to
-[`layer_gradient_localization`](@ref).
-"""
-function gradient_gradient_loc(lam::Laminate, name::Symbol; property::Symbol = :K)
-    return layer_gradient_localization(lam, name; property = property)
-end
+# The names of elasticity, for fourth-order stiffnesses only.
 
 """
-    flux_gradient_loc(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
+    layer_strain_concentration(lam, name::Symbol; property = :C) -> AbstractTens{4,3}
 
-Transport twin of [`stress_strain_loc`](@ref): ``\\boldsymbol{A}_{q\\nabla,i} = \\boldsymbol{K}_i\\cdot\\boldsymbol{A}_i`` maps the
-macroscopic gradient to the layer flux, with ``\\sum_i f_i\\,\\boldsymbol{A}_{q\\nabla,i} = \\boldsymbol{K}^{\\mathrm{hom}}``.
+Name in elasticity of [`layer_gradient_concentration`](@ref), for a fourth-order
+property.
 """
-function flux_gradient_loc(lam::Laminate, name::Symbol; property::Symbol = :K)
-    K3, Khom = _loc_setup2(lam, name, property)
-    return _wrap2(lam, property, MFH_Core.laminate_flux_gradient_localization(K3, Khom))
-end
-
-"""
-    gradient_flux_loc(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
-
-Transport twin of [`strain_stress_loc`](@ref): ``\\boldsymbol{A}_{\\nabla q,i} = \\boldsymbol{A}_i\\cdot(\\boldsymbol{K}^{\\mathrm{hom}})^{-1}``
-maps the macroscopic flux to the layer gradient, with
-``\\sum_i f_i\\,\\boldsymbol{A}_{\\nabla q,i} = (\\boldsymbol{K}^{\\mathrm{hom}})^{-1}``.
-"""
-function gradient_flux_loc(lam::Laminate, name::Symbol; property::Symbol = :K)
-    K3, Khom = _loc_setup2(lam, name, property)
-    return _wrap2(lam, property, MFH_Core.laminate_gradient_flux_localization(K3, Khom))
-end
+layer_strain_concentration(lam::Laminate, name::Symbol; kw...) = MFH_Core._order_checked(
+    Val(4), :layer_strain_concentration, :layer_gradient_concentration,
+    layer_gradient_concentration(lam, name; kw...)
+)
 
 """
-    flux_flux_loc(lam::Laminate, name::Symbol; property = :K) -> Tens{2,3}
+    layer_stress_concentration(lam, name::Symbol; property = :C) -> AbstractTens{4,3}
 
-Transport twin of [`stress_stress_loc`](@ref): ``\\underline{q}_i = \\boldsymbol{B}_i\\cdot\\underline{q}``. Identical to
-[`layer_flux_localization`](@ref).
+Name in elasticity of [`layer_flux_concentration`](@ref), for a fourth-order
+property.
 """
-function flux_flux_loc(lam::Laminate, name::Symbol; property::Symbol = :K)
-    return layer_flux_localization(lam, name; property = property)
-end
+layer_stress_concentration(lam::Laminate, name::Symbol; kw...) = MFH_Core._order_checked(
+    Val(4), :layer_stress_concentration, :layer_flux_concentration,
+    layer_flux_concentration(lam, name; kw...)
+)
 
 """
     interface_jump(lam, k::Integer, E; property = :C) -> NTuple{3}
@@ -586,3 +545,26 @@ end
 _interface_jump_local(::MembraneInterface, t) = zero(t)
 _interface_jump_local(::KapitzaInterface, t) = zero(t)
 _interface_jump_local(::SurfaceConductiveInterface, t) = zero(t)
+
+# ── Concentration tensors of every layer ────────────────────────────────────
+#
+# The exact solution gives each layer its strain and stress concentration
+# tensors directly. With a primal (spring / Kapitza) interface part of the
+# macroscopic strain is carried by the jumps, and the strain average over the
+# layers no longer closes on 𝕀.
+
+function Schemes._concentration_tensors(lam::Laminate, scheme::Laminated, ::Val{p}; kw...) where {p}
+    P_hom = Schemes._evaluate(lam, scheme, Val(p); kw...)
+    names = layer_names(lam)
+    pairs = [_layer_concentration_pair(lam, n, p) for n in names]
+    strain = Dict{Symbol, TensND.AbstractTens}(n => A for (n, (A, _)) in zip(names, pairs))
+    stress = Dict{Symbol, TensND.AbstractTens}(n => B for (n, (_, B)) in zip(names, pairs))
+    weights = Dict(n => layer_volume_fraction(lam, n) for n in names)
+    properties = Dict{Symbol, TensND.AbstractTens}(n => layer_property(lam, n, p) for n in names)
+    return Schemes._concentration_result(P_hom, names, strain, stress, weights, properties, nothing)
+end
+
+_layer_concentration_pair(lam::Laminate, name::Symbol, p::Symbol) = (
+    gradient_gradient_concentration(lam, name; property = p),
+    flux_gradient_concentration(lam, name; property = p),
+)

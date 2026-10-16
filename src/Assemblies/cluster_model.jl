@@ -51,18 +51,18 @@ function Schemes._evaluate(
     P₀ = matrix_property(asm, p)
     R_c = get(scheme.options, :cluster_radius, nothing)
     pass = _kernel_options(scheme.options)
-    A, names = _cluster_localizations(asm, P₀, p, R_c, pass; kw...)
-    return _effective_from_localizations(asm, P₀, p, A, names)
+    A, names = _cluster_concentrations(asm, P₀, p, R_c, pass; kw...)
+    return _effective_from_concentrations(asm, P₀, p, A, names)
 end
 
 """
-    _cluster_localizations(asm, P₀, prop, R_c, pass; kw...) -> (Vector, Vector{Symbol})
+    _cluster_concentrations(asm, P₀, prop, R_c, pass; kw...) -> (Vector, Vector{Symbol})
 
-Solve the cluster system for the strain (or gradient) localization tensor of
+Solve the cluster system for the strain (or gradient) concentration tensor of
 every family, returning them alongside the representative particle of each
 family.
 """
-function _cluster_localizations(asm, P₀, prop::Symbol, R_c, pass; kw...)
+function _cluster_concentrations(asm, P₀, prop::Symbol, R_c, pass; kw...)
     labels = family_labels(asm)
     reps = [_family_representative(asm, lab) for lab in labels]
     n = length(labels)
@@ -126,22 +126,22 @@ function _family_interaction(asm, rep::Symbol, label::Int, P₀, L, cutoff, pass
     return acc
 end
 
-# ─── Effective property from the localization tensors ────────────────────────
+# ─── Effective property from the concentration tensors ────────────────────────
 
 """
-    _effective_from_localizations(asm, P₀, prop, A, reps) -> AbstractTens
+    _effective_from_concentrations(asm, P₀, prop, A, reps) -> AbstractTens
 
-Assemble the effective property from the per-family localization tensors,
+Assemble the effective property from the per-family concentration tensors,
 
 ```math
 \\mathbb{C}^{\\mathrm{hom}} = f_0\\, \\mathbb{C}_0 : \\mathbb{A}_0
   + \\sum_I f_I\\, \\mathbb{C}_I : \\mathbb{A}_I ,
 ```
 
-with the matrix localization following from the strain average rule,
+with the matrix concentration following from the strain average rule,
 ``f_0\\,\\mathbb{A}_0 = \\mathbb{I} - \\sum_I f_I\\,\\mathbb{A}_I``.
 """
-function _effective_from_localizations(asm, P₀, prop::Symbol, A, reps)
+function _effective_from_concentrations(asm, P₀, prop::Symbol, A, reps)
     Id = _identity_like(P₀)
     f = [_family_fraction(asm, particle_family(asm, reps[k])) for k in eachindex(reps)]
     acc = Id

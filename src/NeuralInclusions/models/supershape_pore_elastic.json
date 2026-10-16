@@ -1,7 +1,7 @@
 {
     "provenance": {
         "epochs": 1841,
-        "teacher": "strain_strain_loc(FESupershapePore, TensISO{4}) — octant cell, level 3",
+        "teacher": "strain_strain_concentration(FESupershapePore, TensISO{4}) — octant cell, level 3",
         "max_rel_error": [
             0.019827632601106676,
             0.019927893289497296,
@@ -2702,7 +2702,7 @@
             "identity",
             "identity"
         ],
-        "class": "loc_cubic",
+        "class": "gradient_concentration_cubic",
         "shift": [
             2.784113758577303,
             1.9934760614432292,

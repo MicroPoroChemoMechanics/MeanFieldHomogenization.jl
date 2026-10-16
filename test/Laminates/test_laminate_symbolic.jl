@@ -296,14 +296,14 @@ end
 end
 
 
-@testset "Symbolic — the four localization generics on a laminate" begin
+@testset "Symbolic — the four concentration generics on a laminate" begin
     # The two mixed tensors are new; the identities that define them must hold
     # as exact symbolic zeros, not as tolerances.
     #
     # Two choices keep this cheap enough to belong in a test suite. The
     # comparison is made on the Walpole coefficients rather than on the 6×6
     # Kelvin-Mandel matrices — a laminate of isotropic layers returns
-    # localization tensors that are exactly `TensTI{4,T,6}`, so six scalars
+    # concentration tensors that are exactly `TensTI{4,T,6}`, so six scalars
     # describe each of them. And only ONE layer is symbolic: the compliance
     # `𝕊ʰᵒᵐ`, which the two stress-side tensors carry, is a rational function of
     # every modulus, and asking SymPy to simplify it in four free moduli at once
@@ -325,21 +325,21 @@ end
     # tensors — see the TensND v0.4.0 changelog.)
     zero_tens(X) = all(iszero, TensND.get_data(tsimplify(X)))
 
-    A = strain_strain_loc(lam, :A)
+    A = gradient_gradient_concentration(lam, :A)
     C_A = TensISO{3}(3κ₁, 2μ₁)
     @test A isa TensND.TensTI{4, <:Sym, 6}         # NOT major-symmetric
-    @test zero_tens(A - layer_strain_localization(lam, :A))
-    @test zero_tens(stress_stress_loc(lam, :A) - layer_stress_localization(lam, :A))
-    @test zero_tens(stress_strain_loc(lam, :A) - C_A ⊡ A)
-    @test zero_tens(strain_stress_loc(lam, :A) - A ⊡ Sh)
-    @test zero_tens(stress_stress_loc(lam, :A) - stress_strain_loc(lam, :A) ⊡ Sh)
+    @test zero_tens(A - layer_strain_concentration(lam, :A))
+    @test zero_tens(flux_flux_concentration(lam, :A) - layer_stress_concentration(lam, :A))
+    @test zero_tens(flux_gradient_concentration(lam, :A) - C_A ⊡ A)
+    @test zero_tens(gradient_flux_concentration(lam, :A) - A ⊡ Sh)
+    @test zero_tens(flux_flux_concentration(lam, :A) - flux_gradient_concentration(lam, :A) ⊡ Sh)
 
     # The two strain-side sum rules. The stress-side ones follow from them by
     # right-multiplication with `𝕊ʰᵒᵐ` and are covered numerically.
     Id4 = TensND.tens_Id4(Val(3), Val(Sym))
     wsum(g) = f₁ * g(:A) + (1 - f₁) * g(:B)
-    @test zero_tens(wsum(nm -> strain_strain_loc(lam, nm)) - Id4)
-    @test zero_tens(wsum(nm -> stress_strain_loc(lam, nm)) - Ch)
+    @test zero_tens(wsum(nm -> gradient_gradient_concentration(lam, nm)) - Id4)
+    @test zero_tens(wsum(nm -> flux_gradient_concentration(lam, nm)) - Ch)
 
     # The one closed form worth reading off: the macroscopic in-plane strain
     # reaches every layer unchanged, so ℓ₅ of 𝔸ᵢ — the in-plane deviatoric

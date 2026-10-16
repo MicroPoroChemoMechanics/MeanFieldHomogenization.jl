@@ -1,7 +1,7 @@
 # [Two-inclusion interaction tensors](@id th-interaction)
 
 !!! info "Before this page"
-    [Localization and contribution tensors](@ref th-localization), whose
+    [Concentration and contribution tensors](@ref th-concentration), whose
     one-site picture this page extends to a pair of inclusions, and the
     [sign of the Green operator](@ref th-notation-green-sign) fixed in the
     Conventions, which this page follows.

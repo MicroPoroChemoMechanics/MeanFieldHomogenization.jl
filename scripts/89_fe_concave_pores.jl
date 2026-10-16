@@ -105,8 +105,8 @@ function contributions(p)
     pore = FESupershapePore(Supersphere(1.0, p); opts = CELL)
     # The phase property is a placeholder for a cavity and is ignored — see the
     # manual. Passing the matrix's own moduli is the documented way to say so.
-    H = compliance_contribution(pore, C₀, C₀)
-    R = resistivity_contribution(pore, KK₀, KK₀)
+    H = inverse_property_contribution(pore, C₀, C₀)
+    R = inverse_property_contribution(pore, KK₀, KK₀)
     return (; H, R, pore)
 end
 
@@ -319,8 +319,8 @@ const THEIR_R = Dict(          # p => (R₁₁, R₃₃)
 function axi_contributions(p)
     pore = FEAxiSupershapePore(Superspheroid(1.0, 1.0, p); opts = AXI)
     return (
-        H = compliance_contribution(pore, C₀_axi, C₀_axi),
-        R = resistivity_contribution(pore, K₀_axi, K₀_axi),
+        H = inverse_property_contribution(pore, C₀_axi, C₀_axi),
+        R = inverse_property_contribution(pore, K₀_axi, K₀_axi),
         pore,
     )
 end

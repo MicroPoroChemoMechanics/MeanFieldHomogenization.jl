@@ -29,7 +29,7 @@
     AxiSupershapePoreShape
 
 Shape trait of [`FEAxiSupershapePore`](@ref). No kernel dispatches on it — the
-inclusion supplies its own localization tensors.
+inclusion supplies its own concentration tensors.
 """
 struct AxiSupershapePoreShape end
 
@@ -226,16 +226,16 @@ _axi_pore_run(s::FEAxiSupershapePore, P₀::TensND.AbstractTens{2, 3}) =
     _axi_pore_run_cond(s, P₀)
 
 """
-    fe_axi_pore_localization(pore, P₀) -> Tens
+    fe_axi_pore_concentration(pore, P₀) -> Tens
 
-The cavity's localization tensor, memoized on the reference medium expressed in
+The cavity's concentration tensor, memoized on the reference medium expressed in
 the pore's own frame — so a whole family of *orientations* of the same shape in
 the same matrix shares one solve.
 """
-function fe_axi_pore_localization(s::FEAxiSupershapePore, P₀::TensND.AbstractTens{O, 3}) where {O}
+function fe_axi_pore_concentration(s::FEAxiSupershapePore, P₀::TensND.AbstractTens{O, 3}) where {O}
     # No `.A` here: with a surrogate attached, `_axi_pore_run_*` returns the
     # tensor itself rather than the solve's named tuple — the same contract as
-    # `fe_cell_localization` in the three-dimensional pore. Asking for `.A`
+    # `fe_cell_concentration` in the three-dimensional pore. Asking for `.A`
     # made every shipped axisymmetric model unusable.
     has_surrogate(s, O) && return _axi_pore_run(s, P₀)
     r = get!(() -> _axi_pore_run(s, P₀), s.cache.tensors, _fe_cache_key(P₀))
@@ -252,29 +252,29 @@ fe_axi_pore_breakdown(s::FEAxiSupershapePore, P₀::TensND.AbstractTens) =
 
 # ─── Gate B, with an exactly zero stress side ────────────────────────────────
 
-Core.strain_strain_loc(
+Core.gradient_gradient_concentration(
     s::FEAxiSupershapePore, ::TensND.AbstractTens{4, 3},
     C₀::TensND.AbstractTens{4, 3}; kw...
-) = fe_axi_pore_localization(s, C₀)
+) = fe_axi_pore_concentration(s, C₀)
 
-Core.gradient_gradient_loc(
+Core.gradient_gradient_concentration(
     s::FEAxiSupershapePore, ::TensND.AbstractTens{2, 3},
     K₀::TensND.AbstractTens{2, 3}; kw...
-) = fe_axi_pore_localization(s, K₀)
+) = fe_axi_pore_concentration(s, K₀)
 
 """
-    Core.stress_strain_loc(pore, C₁, C₀)
-    Core.flux_gradient_loc(pore, K₁, K₀)
+    Core.flux_gradient_concentration(pore, C₁, C₀)
+    Core.flux_gradient_concentration(pore, K₁, K₀)
 
 **Exactly zero**, as for [`FESupershapePore`](@ref): a cavity carries no stress
 and no flux, not to the discretization error but by definition.
 """
-Core.stress_strain_loc(
+Core.flux_gradient_concentration(
     ::FEAxiSupershapePore, ::TensND.AbstractTens{4, 3},
     ::TensND.AbstractTens{4, 3}; kw...
 ) = TensND.TensCanonical(Tensors.Tensor{4, 3}((i, j, k, l) -> 0.0))
 
-Core.flux_gradient_loc(
+Core.flux_gradient_concentration(
     ::FEAxiSupershapePore, ::TensND.AbstractTens{2, 3},
     ::TensND.AbstractTens{2, 3}; kw...
 ) = TensND.TensCanonical(Tensors.Tensor{2, 3}((i, j) -> 0.0))

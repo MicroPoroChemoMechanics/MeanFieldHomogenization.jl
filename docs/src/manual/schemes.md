@@ -38,8 +38,8 @@ leave, `1 - Σ f`. It is pure bookkeeping — it says nothing about morphology �
 and an RVE may equally well have none, with every fraction given explicitly.
 
 Volume fractions are stored at the RVE level (not on the inclusions), so a
-single inclusion remains usable for localization-tensor calculations without
-any RVE machinery ([`hill_tensor`](@ref), [`strain_strain_loc`](@ref), …).
+single inclusion remains usable for concentration-tensor calculations without
+any RVE machinery ([`hill_tensor`](@ref), [`gradient_gradient_concentration`](@ref), …).
 Crack densities are excluded from the unit sum: a flat crack's volume vanishes
 in the penny limit while its density stays finite.
 
@@ -120,6 +120,57 @@ decides when the iteration stops.
     between individual inclusions and therefore need their positions, which an
     `RVE` does not carry. They act on a [`ParticleAssembly`](@ref) instead — see
     [the particle-assembly page](@ref man-assemblies).
+
+## [Concentration tensors of the phases](@id man-concentration-tensors)
+
+Besides the effective tensor, every scheme estimates the mean strain and the
+mean stress of each phase under the macroscopic strain
+([theory](@ref th-estimate-concentration)). [`concentration_tensors`](@ref) takes
+the same arguments as [`homogenize`](@ref) and returns them all at once, with the
+effective tensor they are consistent with:
+
+```@example manconc
+using MeanFieldHomogenization, TensND
+
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 10.0, 2 * 4.0)); fraction = :rest)
+add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 0.3), Dict(:C => TensISO{3}(3 * 40.0, 2 * 25.0)); fraction = 0.3)
+
+ct = concentration_tensors(rve, MoriTanaka(:M), :C)
+```
+
+The tensors of a phase are read by name. Under a macroscopic strain
+``\boldsymbol E`` or a macroscopic stress ``\boldsymbol\Sigma``,
+
+```@example manconc
+A = gradient_gradient_concentration(ct, :I)   # ⟨ε⟩_I = A : E
+B = flux_flux_concentration(ct, :I)   # ⟨σ⟩_I = B : Σ
+N = property_contribution(ct, :I)        # ⟨σ - C_M : ε⟩_I = N : E
+H = inverse_property_contribution(ct, :I)       # ⟨ε - S_M : σ⟩_I = H : Σ
+nothing # hide
+```
+
+and the two averages hold, ``\sum_r f_r\,\mathbb A_r = \mathbb I`` and
+``\mathbb C_M + \sum_r f_r\,\mathbb N_r = \mathbb C^{\mathrm{hom}}``:
+
+```@example manconc
+I4 = tens_Id4(Val(3), Val(Float64))
+ΣfA = sum(ct.weights[n] * gradient_gradient_concentration(ct, n) for n in keys(ct))
+ΣfN = sum(ct.weights[n] * property_contribution(ct, n) for n in keys(ct))
+(maximum(abs, get_array(ΣfA - I4)), maximum(abs, get_array(ct.properties[:M] + ΣfN - ct.effective)))
+```
+
+The contributions are taken relative to the matrix of the scheme, or to any
+reference passed as `reference = :PHASE` or as a tensor; the self-consistent
+schemes, the bounds and the laminate have no matrix and require it. A crack
+family is weighted by its density, its tensors being per unit density, and the
+conduction readers ([`gradient_gradient_concentration`](@ref),
+[`flux_flux_concentration`](@ref), [`property_contribution`](@ref), …) apply
+to `concentration_tensors(rve, scheme, :K)`. The concentration tensors are also
+what [`levin_free_gradient`](@ref) and [`levin_preflux`](@ref) need to turn
+eigenstrains or prestresses of the phases into their macroscopic counterpart
+([Levin's theorem](@ref th-levin)), and [`levin_free_gradient`](@ref) and
+[`levin_preflux`](@ref) eigengradients or pre-fluxes in conduction.
 
 ## [Distribution shape (Maxwell, PCW)](@id man-distribution-shape)
 

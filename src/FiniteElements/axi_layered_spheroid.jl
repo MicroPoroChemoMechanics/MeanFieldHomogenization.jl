@@ -46,7 +46,7 @@ physics.
 | `basis` | canonical | the revolution axis is the basis's third column |
 | `backend` | `AutoBackend()` | finite-element backend |
 
-Enters through **gate B**, with both localization tensors measured on the same
+Enters through **gate B**, with both concentration tensors measured on the same
 solve: the inclusion is heterogeneous, so the stress side is not ``\\mathbb{C}_1:\\mathbb{A}_{\\varepsilon\\varepsilon}``
 for any single ``\\mathbb{C}_1``.
 
@@ -123,7 +123,7 @@ end
 
 [`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait) of
 [`FEAxiLayeredSpheroid`](@ref). No kernel dispatches on it — the inclusion
-supplies its own localization tensors.
+supplies its own concentration tensors.
 """
 struct LayeredSpheroidShape end
 
@@ -208,10 +208,10 @@ Schemes._layer_voigt(s::FEAxiLayeredSpheroid, ref::TensND.AbstractTens) =
 Schemes._layer_reuss(s::FEAxiLayeredSpheroid, ref::TensND.AbstractTens) =
     _layer_average(s, ref, inv)
 
-fe_axi_localization(s::FEAxiLayeredSpheroid, P₀::TensND.AbstractTens; kw...) =
-    _fe_axi_localization(s, P₀; kw...)
+fe_axi_concentration(s::FEAxiLayeredSpheroid, P₀::TensND.AbstractTens; kw...) =
+    _fe_axi_concentration(s, P₀; kw...)
 
-_fe_axi_localization(
+_fe_axi_concentration(
     s::FEAxiLayeredSpheroid, P₀::TensND.AbstractTens; kw...
 ) = let res = get!(() -> _axi_run(s, P₀), s.cache.tensors, _fe_cache_key(P₀))
     (res.A, res.B)
@@ -220,7 +220,7 @@ end
 "Bypass the cache and return every intermediate, including the uncorrected pair."
 fe_axi_breakdown(s::FEAxiLayeredSpheroid, P₀::TensND.AbstractTens) = _axi_run(s, P₀)
 
-# ─── Gate B — both localization tensors, from one solve ──────────────────────
+# ─── Gate B — both concentration tensors, from one solve ──────────────────────
 #
 #  The stress side is *not* `ℂ₁ : 𝔸_εε` for any single `ℂ₁`, so it is measured
 #  on the finite-element solution beside the strain side. The three-argument
@@ -229,17 +229,17 @@ fe_axi_breakdown(s::FEAxiLayeredSpheroid, P₀::TensND.AbstractTens) = _axi_run(
 #  as for `LayeredSphere`.
 
 for (gen, order, idx) in (
-        (:(Core.strain_strain_loc), 4, 1),
-        (:(Core.stress_strain_loc), 4, 2),
-        (:(Core.gradient_gradient_loc), 2, 1),
-        (:(Core.flux_gradient_loc), 2, 2),
+        (:(Core.gradient_gradient_concentration), 4, 1),
+        (:(Core.flux_gradient_concentration), 4, 2),
+        (:(Core.gradient_gradient_concentration), 2, 1),
+        (:(Core.flux_gradient_concentration), 2, 2),
     )
     @eval $gen(
         s::FEAxiLayeredSpheroid,
         ::TensND.AbstractTens{$order, 3},
         P₀::TensND.AbstractTens{$order, 3};
         kw...
-    ) = _fe_axi_localization(s, P₀; kw...)[$idx]
+    ) = _fe_axi_concentration(s, P₀; kw...)[$idx]
 end
 
 """

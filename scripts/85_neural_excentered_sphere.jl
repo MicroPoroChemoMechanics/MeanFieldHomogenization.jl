@@ -9,7 +9,7 @@
 #
 # The [ellipsoid pilot](@ref tut-neural-inclusion) proved the machinery against a
 # closed form. This is the case it exists for: the **sphere with an off-center
-# core** of [adessinaIJES2017](@citet), whose localization tensors have no
+# core** of [adessinaIJES2017](@citet), whose concentration tensors have no
 # analytic expression and come out of an axisymmetric Fourier finite-element
 # solve ([`FEExcenteredSphere`](@ref)).
 #
@@ -23,7 +23,7 @@
 # ## §1 What is learned, and why the features are ratios
 #
 # The morphology is **heterogeneous**: it has no Hill tensor, so it enters
-# through gate B with *both* localization tensors,
+# through gate B with *both* concentration tensors,
 # ``\mathbb A_{\varepsilon\varepsilon}`` and ``\mathbb A_{\sigma\varepsilon}``. Two surrogates,
 # one per tensor, sharing one finite-element solve per sample.
 #
@@ -34,7 +34,7 @@
 #     FE --> AB["𝔸_εε and 𝔸_σε<br/>TI about the eccentricity axis"]
 #     AB --> LAB["6 Walpole components each<br/>+ residual check"]
 #     LAB --> FIT["two surrogates<br/>Adam, 64+64 hidden"]
-#     FIT --> USE["NeuralLocalizationInclusion<br/><b>≈ µs</b>, and differentiable"]
+#     FIT --> USE["NeuralConcentrationInclusion<br/><b>≈ µs</b>, and differentiable"]
 #
 #     P -.- NT1["offline, once:<br/>one solve per sample"]
 #     LAB -.- NT2["online, every call:<br/>no solve, and ∂/∂α exists"]
@@ -51,10 +51,10 @@
 #     class NT1,NT2 note
 # ```
 #
-# **Six components, not five.** A localization tensor is *not* major-symmetric,
+# **Six components, not five.** A concentration tensor is *not* major-symmetric,
 # so the transversely isotropic form it needs has six Walpole components
-# (`ℓ₃ ≠ ℓ₄`), against five for a Hill tensor. The classes `StrainLocTI` and
-# `StressLocTI` carry exactly that. Eight would be wrong too: `ℓ₇` and `ℓ₈` are
+# (`ℓ₃ ≠ ℓ₄`), against five for a Hill tensor. The classes `GradientConcentrationTI` and
+# `FluxConcentrationTI` carry exactly that. Eight would be wrong too: `ℓ₇` and `ℓ₈` are
 # antisymmetric in an index pair and vanish identically for a tensor mapping
 # symmetric strains to symmetric stresses.
 #
@@ -106,7 +106,7 @@
 #
 # ## One solve returns *both* tensors, so the two label matrices are filled in a
 # ## single pass rather than by calling `generate_dataset` twice.
-# A, B = fe_axi_localization(geometry(x), C0)
+# A, B = fe_axi_concentration(geometry(x), C0)
 # ```
 #
 # ![Learning curves](../../assets/nn/excentered_training_curve.png)
@@ -153,7 +153,7 @@ stress_s = load_surrogate(model_path("excentered_sphere_stress"))
 
 function nn_rca(α, w, e2)
     C2 = ce(e2 * E0, NU)
-    return NeuralLocalizationInclusion(
+    return NeuralConcentrationInclusion(
         (1.0, 1.0, 1.0);
         strain = strain_s, stress = stress_s,
         shape_params = (; eccentricity = α, core_fraction = w),
@@ -218,9 +218,9 @@ end
 
 const N_EVAL = 2000
 incl = nn_rca(0.4, 0.5, 0.4)
-strain_strain_loc(incl, C0, C0)                  # warm up the compilation
+gradient_gradient_concentration(incl, C0, C0)                  # warm up the compilation
 t_nn = @elapsed for _ in 1:N_EVAL
-    strain_strain_loc(incl, C0, C0)
+    gradient_gradient_concentration(incl, C0, C0)
 end
 
 @printf(

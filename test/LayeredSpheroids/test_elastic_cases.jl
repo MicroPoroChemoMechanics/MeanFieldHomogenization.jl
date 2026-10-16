@@ -51,7 +51,7 @@ end
         ω in (1.5, 2.0, 4.0, 10.0)
         s = _sph((1.0,), (C₁,), ω; 𝒩 = 5)
         r = spheroid_strain_concentration(s, C₀; D = 6)
-        Ar = get_array(strain_strain_loc(Ellipsoid(ω, 1.0, 1.0), C₁, C₀))
+        Ar = get_array(gradient_gradient_concentration(Ellipsoid(ω, 1.0, 1.0), C₁, C₀))
         @test maximum(abs, _rotate4(get_array(r.A), _R) .- Ar) <
             1.0e-11 * maximum(abs, Ar)
         # a single inclusion is exact at any truncation, so the residual is not
@@ -195,7 +195,7 @@ end
             r = spheroid_strain_concentration(s, C₀; D = 5)
             A = get_array(r.A)
             @test eltype(A) <: Real                     # `_realify` did its job
-            Ar = get_array(strain_strain_loc(Ellipsoid(1.0, 1.0, ω), C₁, C₀))
+            Ar = get_array(gradient_gradient_concentration(Ellipsoid(1.0, 1.0, ω), C₁, C₀))
             @test maximum(abs, A .- Ar) < 1.0e-11 * maximum(abs, Ar)
             @test maximum(r.residuals) < 1.0e-10
         end
@@ -267,7 +267,7 @@ end
         @test !isapprox(A[1, 1, 1, 1], A[3, 3, 3, 3]; rtol = 1.0e-4)
         # the stiffness contribution is assembled layer by layer, so it must not
         # coincide with the naive homogeneous-inhomogeneity form
-        NC = stiffness_contribution(s, C₁, C₀)
+        NC = property_contribution(s, C₁, C₀)
         @test all(isfinite, get_array(NC))
     end
 
@@ -411,14 +411,14 @@ end
                 (1.05, 1.0e-11), (1.1, 1.0e-12), (1.3, 1.0e-12), (2.0, 1.0e-12),
             )
             ar, dr = confocal_layer_radii(ω, 1.0, (1.0,))
-            an = _nsk(strain_strain_loc(LayeredSpheroid(ar, dr, (C1,)), C₀, C₀))
-            ex = _nsk(strain_strain_loc(Spheroid(ω), C1, C₀))
+            an = _nsk(gradient_gradient_concentration(LayeredSpheroid(ar, dr, (C1,)), C₀, C₀))
+            ex = _nsk(gradient_gradient_concentration(Spheroid(ω), C1, C₀))
             @test norm(an - ex) / norm(ex) < tol
         end
     end
 
     @testset "and so does transport, on the same chart" begin
-        # The control that localized the defect: same geometry, same confocal
+        # The control that pinpointed the defect: same geometry, same confocal
         # parameter, and it was always exact. If a future change breaks one
         # branch and not the other, this pair says which.
         for ω in (0.5, 0.9, 0.99, 0.999, 1.1, 2.0)
@@ -426,7 +426,7 @@ end
             an = Matrix(
                 TensND.get_array(
                     TensND.change_tens(
-                        gradient_gradient_loc(LayeredSpheroid(ar, dr, (K1,)), K₀, K₀),
+                        gradient_gradient_concentration(LayeredSpheroid(ar, dr, (K1,)), K₀, K₀),
                         TensND.CanonicalBasis{3, Float64}(),
                     )
                 )
@@ -434,7 +434,7 @@ end
             ex = Matrix(
                 TensND.get_array(
                     TensND.change_tens(
-                        gradient_gradient_loc(Spheroid(ω), K1, K₀),
+                        gradient_gradient_concentration(Spheroid(ω), K1, K₀),
                         TensND.CanonicalBasis{3, Float64}(),
                     )
                 )
@@ -449,11 +449,11 @@ end
         # `LayeredSphere` solves exactly. So the sphere is an independent judge
         # of the limit, and the convergence has to be first order in `1 - ω`.
         Cs = (C1, iso_stiffness(1.5 / (3 * (1 - 2 * 0.3)), 1.5 / (2 * (1 + 0.3))))
-        Es = _nsk(strain_strain_loc(LayeredSphere((cbrt(0.3), 1.0), Cs), C₀, C₀))
+        Es = _nsk(gradient_gradient_concentration(LayeredSphere((cbrt(0.3), 1.0), Cs), C₀, C₀))
         prev = Inf
         for ω in (0.9, 0.95, 0.99, 0.999)
             ar, dr = confocal_layer_radii(ω, 1.0, (0.3, 0.7))
-            A = _nsk(strain_strain_loc(LayeredSpheroid(ar, dr, Cs), C₀, C₀))
+            A = _nsk(gradient_gradient_concentration(LayeredSpheroid(ar, dr, Cs), C₀, C₀))
             d = norm(A - Es) / norm(Es)
             @test d < 1.0e-2
             @test d < prev          # monotone, which a conditioning failure is not

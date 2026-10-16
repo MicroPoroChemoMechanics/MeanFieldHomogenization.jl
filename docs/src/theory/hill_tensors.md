@@ -763,7 +763,7 @@ page [Cylindrical inclusions](@ref man-cylindrical-inclusions).
 ## Where to go next
 
 The Hill tensor is the response of an inclusion to a prescribed polarization.
-The next page, [Localization and contribution tensors](@ref th-localization),
+The next page, [Concentration and contribution tensors](@ref th-concentration),
 turns it into the response of an inhomogeneity to a remote load and into the
 contribution of each phase to the effective stiffness. The flat limits
 announced at the top of this page are taken in

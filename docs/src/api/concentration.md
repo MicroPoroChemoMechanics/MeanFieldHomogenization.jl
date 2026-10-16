@@ -1,46 +1,78 @@
-# [API — Localization & contribution](@id api-localization)
+# [API — Concentration & contribution](@id api-concentration)
 
-## Localization tensors
+## Concentration tensors
+
+One function per tensor serves elasticity and conduction: a fourth-order
+property pair selects the elastic method, a second-order one the conduction
+method. In conduction the flux side carries ``\boldsymbol\sigma \equiv -\underline q``,
+so that the formulas are the elastic ones symbol for symbol.
 
 ```@docs
-MeanFieldHomogenization.strain_strain_loc
-MeanFieldHomogenization.stress_strain_loc
-MeanFieldHomogenization.strain_stress_loc
-MeanFieldHomogenization.stress_stress_loc
-MeanFieldHomogenization.gradient_gradient_loc
-MeanFieldHomogenization.flux_gradient_loc
-MeanFieldHomogenization.gradient_flux_loc
-MeanFieldHomogenization.flux_flux_loc
+MeanFieldHomogenization.gradient_gradient_concentration
+MeanFieldHomogenization.flux_gradient_concentration
+MeanFieldHomogenization.gradient_flux_concentration
+MeanFieldHomogenization.flux_flux_concentration
 ```
 
 ## Contribution tensors
 
 ```@docs
-MeanFieldHomogenization.stiffness_contribution
-MeanFieldHomogenization.compliance_contribution
-MeanFieldHomogenization.conductivity_contribution
-MeanFieldHomogenization.resistivity_contribution
+MeanFieldHomogenization.property_contribution
+MeanFieldHomogenization.inverse_property_contribution
 ```
 
 ## The amount × contribution seam
 
 ```@docs
+MeanFieldHomogenization.delta_property
+MeanFieldHomogenization.delta_inverse_property
+```
+
+For a flat inclusion the three-argument methods of these two seams share one
+geometric prefactor, [`crack_density_factor`](@ref MeanFieldHomogenization.Cracks.crack_density_factor).
+
+## The names of elasticity and of conduction
+
+Each generic function also answers to the name it has in elasticity, and the
+contributions and their seams to the name they have in conduction. Such a name
+forwards to the generic function, accepts one order only, and refuses the other
+with an error that names the generic function. The same names read the
+[`ConcentrationTensors`](@ref MeanFieldHomogenization.Schemes.ConcentrationTensors)
+of a scheme.
+
+| Generic function | Elasticity (order 4) | Conduction (order 2) |
+|:-----------------|:---------------------|:---------------------|
+| `gradient_gradient_concentration` | `strain_strain_concentration` | |
+| `flux_gradient_concentration` | `stress_strain_concentration` | |
+| `gradient_flux_concentration` | `strain_stress_concentration` | |
+| `flux_flux_concentration` | `stress_stress_concentration` | |
+| `property_contribution` | `stiffness_contribution` | `conductivity_contribution` |
+| `inverse_property_contribution` | `compliance_contribution` | `resistivity_contribution` |
+| `delta_property` | `delta_stiffness` | `delta_conductivity` |
+| `delta_inverse_property` | `delta_compliance` | `delta_resistivity` |
+
+```@docs
+MeanFieldHomogenization.strain_strain_concentration
+MeanFieldHomogenization.stress_strain_concentration
+MeanFieldHomogenization.strain_stress_concentration
+MeanFieldHomogenization.stress_stress_concentration
+MeanFieldHomogenization.stiffness_contribution
+MeanFieldHomogenization.compliance_contribution
+MeanFieldHomogenization.conductivity_contribution
+MeanFieldHomogenization.resistivity_contribution
 MeanFieldHomogenization.delta_stiffness
 MeanFieldHomogenization.delta_compliance
 MeanFieldHomogenization.delta_conductivity
 MeanFieldHomogenization.delta_resistivity
 ```
 
-For a flat inclusion the four three-argument seams share one geometric
-prefactor, [`crack_density_factor`](@ref MeanFieldHomogenization.Cracks.crack_density_factor).
-
 ## Inclusion traits and bundled seams
 
 ```@docs
 MeanFieldHomogenization.Core.is_homogeneous_inclusion
-MeanFieldHomogenization.loc_and_stiffness
-MeanFieldHomogenization.loc_and_stress_average
-MeanFieldHomogenization.compliance_and_stiffness_contribution
+MeanFieldHomogenization.concentration_and_contribution
+MeanFieldHomogenization.concentration_and_flux_average
+MeanFieldHomogenization.inverse_and_property_contribution
 ```
 
 ## Custom (user-defined) inclusions
@@ -147,8 +179,8 @@ MeanFieldHomogenization.FiniteElements.fe_cell_stiffness
 MeanFieldHomogenization.FiniteElements.fe_cell_mean_gradient
 MeanFieldHomogenization.FiniteElements.fe_cell_mean_strain
 MeanFieldHomogenization.FiniteElements._cell_close_dipole
-MeanFieldHomogenization.FiniteElements._cell_conduction_localization
-MeanFieldHomogenization.FiniteElements._cell_elastic_localization
+MeanFieldHomogenization.FiniteElements._cell_conduction_concentration
+MeanFieldHomogenization.FiniteElements._cell_elastic_concentration
 MeanFieldHomogenization.FiniteElements._cell_kelvin_basis
 MeanFieldHomogenization.FiniteElements._cell_outer_radius
 MeanFieldHomogenization.FiniteElements._cell_solver
@@ -160,7 +192,7 @@ The inclusion type. It enters as a **heterogeneous** inclusion, which for a
 cavity is the truthful answer rather than a convenience: `is_homogeneous_inclusion`
 asks whether a single ``\mathbb C_1`` describes the interior, and `inv(0)` is
 meaningless. The package's exact identities then take over, and with a cavity's
-stress-side localization being *identically* zero they collapse to
+stress-side concentration being *identically* zero they collapse to
 ``\mathbb N = -\mathbb C_0:\mathbb A`` and
 ``\mathbb H = \mathbb A:\mathbb S_0`` — the right answer for a pore, with no
 ``\mathbb C_1`` anywhere in it. So the phase property handed to `add_phase!` is
@@ -169,7 +201,7 @@ genuinely ignored, and no contribution tensor is overridden.
 ```@docs
 MeanFieldHomogenization.FESupershapePore
 MeanFieldHomogenization.SupershapePoreShape
-MeanFieldHomogenization.fe_cell_localization
+MeanFieldHomogenization.fe_cell_concentration
 MeanFieldHomogenization.fe_cell_mesh_report
 MeanFieldHomogenization.has_surrogate
 MeanFieldHomogenization.pore_shape_params
@@ -184,7 +216,7 @@ MeanFieldHomogenization.axi_layer_set
 MeanFieldHomogenization.layer_volumes
 MeanFieldHomogenization.layer_fractions
 MeanFieldHomogenization.AxiSupershapePoreShape
-MeanFieldHomogenization.fe_axi_pore_localization
+MeanFieldHomogenization.fe_axi_pore_concentration
 MeanFieldHomogenization.fe_axi_pore_breakdown
 MeanFieldHomogenization.fe_axi_pore_mesh_report
 MeanFieldHomogenization.fe_axi_pore_boundary
@@ -206,7 +238,7 @@ MeanFieldHomogenization.fe_cod_breakdown
 ```@docs
 MeanFieldHomogenization.FEExcenteredSphere
 MeanFieldHomogenization.FEAxiMeshOptions
-MeanFieldHomogenization.fe_axi_localization
+MeanFieldHomogenization.fe_axi_concentration
 MeanFieldHomogenization.fe_axi_breakdown
 MeanFieldHomogenization.fe_axi_mesh_report
 MeanFieldHomogenization.FiniteElements.core_radius
@@ -256,13 +288,13 @@ Evaluating needs nothing beyond the package; *training* needs
 ```@docs
 MeanFieldHomogenization.NeuralInclusions
 MeanFieldHomogenization.NeuralHillInclusion
-MeanFieldHomogenization.NeuralLocalizationInclusion
+MeanFieldHomogenization.NeuralConcentrationInclusion
 MeanFieldHomogenization.NeuralInclusions.NeuralShape
-MeanFieldHomogenization.NeuralInclusions.StrainLocTI
-MeanFieldHomogenization.NeuralInclusions.StressLocTI
-MeanFieldHomogenization.NeuralInclusions.StrainLocCubic
-MeanFieldHomogenization.NeuralInclusions.GradLocISO2
-MeanFieldHomogenization.NeuralInclusions.GradLocTI2
+MeanFieldHomogenization.NeuralInclusions.GradientConcentrationTI
+MeanFieldHomogenization.NeuralInclusions.FluxConcentrationTI
+MeanFieldHomogenization.NeuralInclusions.GradientConcentrationCubic
+MeanFieldHomogenization.NeuralInclusions.GradientConcentrationISO2
+MeanFieldHomogenization.NeuralInclusions.GradientConcentrationTI2
 ```
 
 ### The surrogate

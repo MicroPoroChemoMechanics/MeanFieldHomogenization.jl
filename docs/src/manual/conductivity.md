@@ -100,8 +100,8 @@ pc = PennyCrack(1.0)
 K₀ = TensISO{3}(2.5)
 
 b  = cod_tensor(pc, K₀)                    # scalar COD, = 2/(π²K) for a penny
-R  = compliance_contribution(pc, K₀)       # 𝐑 = (3/4)·b·(ŵ⊗ŵ)
-ΔR = delta_resistivity(pc, R, 0.05)        # dilute correction at density ε
+R  = inverse_property_contribution(pc, K₀)       # 𝐑 = (3/4)·b·(ŵ⊗ŵ)
+ΔR = delta_inverse_property(pc, R, 0.05)        # dilute correction at density ε
 ```
 
 Theory: [Thermal cracks](@ref th-thermal-cracks).
@@ -123,8 +123,8 @@ s = LayeredSpheroid(
     Nseries = 5,
 )
 
-A = gradient_gradient_loc(s, TensISO{3}(1e-6), TensISO{3}(1.0))  # ⟨∇T⟩ = 𝐀_Ω·𝐇
-B = flux_gradient_loc(s, TensISO{3}(1e-6), TensISO{3}(1.0))      # ⟨𝐊∇T⟩ = 𝐁_Ω·𝐇
+A = gradient_gradient_concentration(s, TensISO{3}(1e-6), TensISO{3}(1.0))  # ⟨∇T⟩ = 𝐀_Ω·𝐇
+B = flux_gradient_concentration(s, TensISO{3}(1e-6), TensISO{3}(1.0))      # ⟨𝐊∇T⟩ = 𝐁_Ω·𝐇
 k_eq = B[1, 1] / A[1, 1]                                          # equivalent particle
 ```
 
