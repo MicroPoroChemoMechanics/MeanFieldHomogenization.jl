@@ -119,7 +119,9 @@ function rungroup(name::String)
     return any(part -> name in TEST_PARTS[part], ARGS)
 end
 
-@testset "MeanFieldHomogenization" begin
+# `verbose` prints the time of every group, passing or not, which is what the
+# split of the suite into parts is balanced on.
+@testset "MeanFieldHomogenization" verbose = true begin
     # Ambiguities, unbound type parameters, undefined exports, dependency
     # hygiene, type piracy and tasks left running at load. Nothing is exempted:
     # every default check passes on the package as it stands, across all

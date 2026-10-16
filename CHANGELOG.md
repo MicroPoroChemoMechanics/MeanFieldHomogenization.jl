@@ -189,9 +189,12 @@ those of conduction for the contributions, as aliases restricted to their order.
 ### Changed
 
 - The test suite runs in four parts, `core`, `schemes`, `patterns` and
-  `visco-neural`, selected by `Pkg.test(test_args = [...])` and run as four CI
-  jobs whose coverage Codecov merges; with no argument every part runs. A single
-  job had grown past the time limit of the CI on Julia 1.12.
+  `visco-neural`, selected by `Pkg.test(test_args = [...])` and run as four
+  parallel CI jobs; with no argument every part runs. A single job had grown
+  past the time limit of the CI on Julia 1.12. The raw coverage of the four
+  parts is merged before it is processed, so that the report is the one a
+  single job would give, and the parts of a Julia version share one depot
+  cache. The test summary gives the time of every group.
 
 ## v0.16.3 — a void has a compliance contribution
 
