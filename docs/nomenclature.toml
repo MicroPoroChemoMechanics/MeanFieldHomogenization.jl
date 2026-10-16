@@ -2059,3 +2059,43 @@ label = "ΔT"
 name = "temperature change"
 unit = "K"
 pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\underline{g}^\ast'
+label = "<u>g</u><sup>∗</sup>"
+name = "eigengradient of a phase in conduction, the gradient at which it conducts no flux"
+unit = ""
+pages = ["theory/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\underline{q}^\ast'
+label = "<u>q</u><sup>∗</sup>"
+name = "pre-flux of a phase, the flux it conducts under a vanishing gradient"
+unit = ""
+pages = ["theory/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\underline{G}^\ast'
+label = "<u>G</u><sup>∗</sup>"
+name = "macroscopic free gradient"
+unit = ""
+pages = ["theory/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\underline{Q}^\ast'
+label = "<u>Q</u><sup>∗</sup>"
+name = "macroscopic pre-flux"
+unit = ""
+pages = ["theory/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\boldsymbol{A}^q'
+label = "<b>A</b><sup>q</sup>"
+name = "flux concentration tensor of a phase in conduction"
+unit = "1"
+pages = ["theory/levin.md"]

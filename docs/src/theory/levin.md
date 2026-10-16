@@ -197,7 +197,40 @@ shortcut: neither pores nor cracks carry stress, so that
 evaluated by [`biot_tensor`](@ref). With several solid phases the shortcut is
 lost, and the theorem in the form above is the general route.
 
-## 6. In the package
+## 6. Conduction
+
+The proof uses neither the order of the tensors nor the physics, only the
+symmetry of the local law and Hill's lemma, both of which hold in conduction
+with the dictionary of [Extension to conductivity](@ref th-conductivity): the
+gradient for the strain, the opposite of the flux for the stress, vectors for the
+second-order tensors. A phase conducting no flux under the gradient
+``\underline g^\ast_r``, its eigengradient,
+
+```math
+\underline q = -\,\boldsymbol K_r\cdot(\nabla T - \underline g^\ast_r)
+  = -\,\boldsymbol K_r\cdot\nabla T + \underline q^\ast_r ,
+\qquad
+\underline q^\ast_r = \boldsymbol K_r\cdot\underline g^\ast_r ,
+```
+
+gives the composite the law
+``\underline Q = -\,\boldsymbol K^{\mathrm{hom}}\cdot(\underline G - \underline G^\ast)
+= -\,\boldsymbol K^{\mathrm{hom}}\cdot\underline G + \underline Q^\ast``, with
+
+```math
+\underline G^\ast = \sum_r f_r\,\underline g^\ast_r\cdot\boldsymbol A^q_r ,
+\qquad
+\underline Q^\ast = \sum_r f_r\,\underline q^\ast_r\cdot\boldsymbol A_r ,
+```
+
+where ``\boldsymbol A_r`` maps the macroscopic gradient onto the mean gradient of the
+phase and ``\boldsymbol A^q_r`` the macroscopic flux onto its mean flux. For two
+phases the free gradient again depends on the effective tensor alone,
+``\underline G^\ast = \underline g^\ast_1 + (\underline g^\ast_2 - \underline g^\ast_1)\cdot(\boldsymbol K_2^{-1} - \boldsymbol K_1^{-1})^{-1}\cdot\big((\boldsymbol K^{\mathrm{hom}})^{-1} - \boldsymbol K_1^{-1}\big)``.
+Such terms arise when a transport law carries, besides the gradient, a driving
+force that is uniform in each phase.
+
+## 7. In the package
 
 [`concentration_tensors`](@ref) returns the concentration tensors of every phase
 under a scheme, and the theorem is applied by [`levin_prestress`](@ref) and
@@ -212,7 +245,14 @@ B = -levin_prestress(ct, Dict(:P => -𝟏, :cracks => -𝟏))
 ```
 
 A crack family is accepted as a prestressed phase, with its density as weight,
-and refused as an eigenstrained one, since it holds no material.
+and refused as an eigenstrained one, since it holds no material. The conduction
+twins, [`levin_free_gradient`](@ref) and [`levin_preflux`](@ref), take vectors and
+the concentration tensors of a conduction estimate:
+
+```julia
+ct_K = concentration_tensors(rve, MoriTanaka(:M), :K)
+G = levin_free_gradient(ct_K, Dict(:M => g_M, :I => g_I))   # g_M = Tens([0.0, 0.0, 1.0]), …
+```
 
 ## Where to go next
 

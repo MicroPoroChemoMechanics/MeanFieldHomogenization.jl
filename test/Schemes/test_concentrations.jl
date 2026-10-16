@@ -257,6 +257,40 @@ end
     end
 end
 
+# The conduction twin: with q = -K_r · (∇T - g*_r), the free gradient of two
+# phases follows from the effective resistivity alone,
+#     G* = g*₁ + (g*₂ - g*₁) · (R₂ - R₁)⁻¹ · (R^hom - R₁),   R = K⁻¹.
+_ct_levin_exact_K(g₁, g₂, R₁, R₂, R) = g₁ + (g₂ - g₁) ⋅ inv(R₂ - R₁) ⋅ (R - R₁)
+
+@testset "Levin — exact for two phases in conduction, under every scheme" begin
+    K₁, K₂ = TensISO{3}(2.0), TensISO{3}(9.0)
+    g₁, g₂ = Tens([1.0, 0.0, 0.5]), Tens([0.0, 2.0, -1.0])
+    for shape in (Ellipsoid(1.0), Ellipsoid(1.0, 1.0, 0.3))
+        rve = RVE(; distribution_shape = Ellipsoid(1.0))
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => K₁); fraction = :rest)
+        add_phase!(rve, :I, shape, Dict(:K => K₂); fraction = 0.3)
+        for sch in _CT_SCHEMES
+            ct = concentration_tensors(rve, sch, :K)
+            G = levin_free_gradient(ct, Dict(:M => g₁, :I => g₂))
+            @test G isa TensND.AbstractTens{1, 3}
+            exact = _ct_levin_exact_K(g₁, g₂, inv(K₁), inv(K₂), ct.compliance)
+            @test _ct_rel(G, exact) < max(_ct_tol(sch), 1.0e-11)
+            # A free gradient is the pre-flux K_r · g*_r: the two forms agree.
+            Q = levin_preflux(ct, Dict(:M => K₁ ⋅ g₁, :I => K₂ ⋅ g₂))
+            @test _ct_rel(Q, ct.effective ⋅ G) < max(_ct_tol(sch), 1.0e-11)
+        end
+    end
+    # A uniform eigengradient is the macroscopic one, cracks or not.
+    rve = _ct_cell()
+    ct = concentration_tensors(rve, MoriTanaka(:M), :K)
+    @test _ct_rel(levin_free_gradient(ct, Dict(:M => g₁, :I => g₁, :P => g₁)), g₁) < 1.0e-12
+    @test iszero(get_array(levin_free_gradient(ct, Dict{Symbol, typeof(g₁)}())))
+    # A pre-flux on the faces of a crack family contributes, weighted by its
+    # density, exactly as the strain it carries does in elasticity.
+    q = Tens([0.0, 0.0, 1.0])
+    @test _ct_rel(levin_preflux(ct, Dict(:c => q)), ct.weights[:c] * (q ⋅ gradient_gradient_concentration(ct, :c))) < 1.0e-14
+end
+
 @testset "Concentration tensors — ForwardDiff against closed forms" begin
     k₀, μ₀, k₁, μ₁, f₀ = 10.0, 4.0, 40.0, 25.0, 0.3
     A_I(f) = _ct_bulk(strain_strain_concentration(concentration_tensors(_ct_spheres(k₀, μ₀, k₁, μ₁, f), MoriTanaka(:M), :C), :I))
@@ -283,6 +317,26 @@ end
     end
     @test α_levin(f₀) ≈ α_ref(f₀) rtol = 1.0e-12
     @test FD.derivative(α_levin, f₀) ≈ FD.derivative(α_ref, f₀) rtol = 1.0e-11
+
+    # Conduction: the gradient concentration of the spheres, a / (1 - f + f a)
+    # with a = 3K₀ / (2K₀ + K₁), and the free gradient through the Mori–Tanaka
+    # conductivity, nested derivatives included.
+    K₀, K₁, g₀, g₁ = 2.0, 7.0, 1.0, 3.0
+    e₁ = Tens([1.0, 0.0, 0.0])
+    A_K(f) = get_array(gradient_gradient_concentration(concentration_tensors(_ct_spheres(k₀, μ₀, k₁, μ₁, f), MoriTanaka(:M), :K), :I))[1, 1]
+    ref_K(f) = _ct_mt(_ct_aK(K₀, K₁), f)
+    @test FD.derivative(A_K, f₀) ≈ FD.derivative(ref_K, f₀) rtol = 1.0e-12
+    @test FD.derivative(f -> FD.derivative(A_K, f), f₀) ≈ FD.derivative(f -> FD.derivative(ref_K, f), f₀) rtol = 1.0e-11
+    function G_levin(f)
+        ct = concentration_tensors(_ct_spheres(k₀, μ₀, k₁, μ₁, f), MoriTanaka(:M), :K)
+        return get_array(levin_free_gradient(ct, Dict(:M => g₀ * e₁, :I => g₁ * e₁)))[1]
+    end
+    function G_ref(f)
+        K = K₀ + f * (K₁ - K₀) * _ct_mt(_ct_aK(K₀, K₁), f)
+        return g₀ + (g₁ - g₀) * (1 / K - 1 / K₀) / (1 / K₁ - 1 / K₀)
+    end
+    @test G_levin(f₀) ≈ G_ref(f₀) rtol = 1.0e-12
+    @test FD.derivative(G_levin, f₀) ≈ FD.derivative(G_ref, f₀) rtol = 1.0e-11
 end
 
 const _CT_HAS_SYMPY = try
@@ -329,6 +383,21 @@ if _CT_HAS_SYMPY
         b = -levin_prestress(ct, Dict(:P => -one2))
         k_p = k0 + f * (0 - k0) * _ct_mt(_ct_ak(k0, μ0, 0), f)
         @test SymPy.simplify(get_array(b)[1, 1] - (1 - k_p / k0)) == 0
+
+        # Conduction: the gradient concentration and the free gradient of the
+        # Mori–Tanaka estimate on spheres, in closed form.
+        SymPy.@syms K0::positive K1::positive g0::real g1::real
+        rve_K = RVE(; distribution_shape = Ellipsoid(1.0))
+        add_phase!(rve_K, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(K0)); fraction = :rest)
+        add_phase!(rve_K, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(K1)); fraction = f)
+        ct = concentration_tensors(rve_K, MoriTanaka(:M), :K)
+        aK = _ct_aK(K0, K1)
+        @test SymPy.simplify(get_array(gradient_gradient_concentration(ct, :I))[1, 1] - _ct_mt(aK, f)) == 0
+        e = Tens(SymPy.Sym[1, 0, 0])
+        G = levin_free_gradient(ct, Dict(:M => g0 * e, :I => g1 * e))
+        K_hom = K0 + f * (K1 - K0) * _ct_mt(aK, f)
+        @test SymPy.simplify(get_array(G)[1] - (g0 + (g1 - g0) * (1 / K_hom - 1 / K0) / (1 / K1 - 1 / K0))) == 0
+        @test SymPy.simplify(get_array(G)[2]) == 0
     end
 end
 
@@ -360,6 +429,22 @@ if _CT_HAS_SYMBOLICS
             N = stiffness_contribution(ct, :I)
             @test _num(get_data(N)[1]) ≈ _num(3 * (k1 - k0) * ref_a) rtol = 1.0e-13
         end
+        # Conduction, through the same schemes.
+        Symbolics.@variables K0 K1
+        rve_K = RVE(; T = Symbolics.Num, distribution_shape = Ellipsoid(1.0))
+        add_phase!(rve_K, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(K0)); fraction = :rest)
+        add_phase!(rve_K, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(K1)); fraction = f)
+        point_K = Dict(K0 => 2.0, K1 => 7.0, f => 0.3)
+        _numK(x) = Symbolics.value(Symbolics.substitute(x, point_K))
+        aK = _ct_aK(K0, K1)
+        for sch in (Dilute(:M), MoriTanaka(:M), Maxwell(:M))
+            ct = concentration_tensors(rve_K, sch, :K)
+            a = get_array(gradient_gradient_concentration(ct, :I))[1, 1]
+            ref = sch isa Dilute ? aK : _ct_mt(aK, f)
+            @test _numK(a) ≈ _numK(ref) rtol = 1.0e-13
+            N = get_array(conductivity_contribution(ct, :I))[1, 1]
+            @test _numK(N) ≈ _numK((K1 - K0) * ref) rtol = 1.0e-13
+        end
     end
 end
 
@@ -389,6 +474,23 @@ end
             @test _ct_rel(sum(ctK.weights[n] * ctK.strain[n] for n in keys(ctK)), _ct_id(:K)) < 1.0e-12
         end
     end
+    # The same in conduction: a Kapitza resistance carries part of the
+    # macroscopic gradient in its temperature jump, a conducting surface part of
+    # the macroscopic flux.
+    for itf in (PerfectInterface(), KapitzaInterface(0.1), SurfaceConductiveInterface(0.2))
+        lam = Laminate(; normal = (0, 0, 1))
+        add_layer!(lam, :A, Dict(:K => TensISO{3}(1.0)); thickness = 0.3, interface = itf)
+        add_layer!(lam, :B, Dict(:K => TensISO{3}(5.0)); thickness = 0.7)
+        ct = concentration_tensors(lam, Laminated(), :K)
+        @test _ct_rel(ct.effective, homogenize(lam, Laminated(), :K)) < 1.0e-14
+        for n in keys(ct)
+            @test _ct_rel(ct.stress[n], ct.properties[n] ⋅ ct.strain[n]) < 1.0e-12
+        end
+        sA = sum(ct.weights[n] * ct.strain[n] for n in keys(ct))
+        sS = sum(ct.weights[n] * ct.stress[n] for n in keys(ct))
+        @test (_ct_rel(sA, _ct_id(:K)) < 1.0e-12) == !(itf isa KapitzaInterface)
+        @test (_ct_rel(sS, ct.effective) < 1.0e-12) == !(itf isa SurfaceConductiveInterface)
+    end
     # Levin on a laminate: exact for two phases, interfaces aside.
     lam = Laminate(; normal = (0, 0, 1))
     add_layer!(lam, :A, Dict(:C => C₁); thickness = 0.3)
@@ -407,6 +509,14 @@ end
         @test _ct_rel(sum(ct.weights[n] * ct.strain[n] for n in keys(ct)), _ct_id(:C)) < 1.0e-12
         @test _ct_rel(sum(ct.weights[n] * ct.stress[n] for n in keys(ct)), ct.effective) < 1.0e-12
         @test _ct_rel(Cm + sum(ct.weights[n] * stiffness_contribution(ct, n) for n in keys(ct)), ct.effective) < 1.0e-12
+    end
+    for kind in (:sc, :bcc), sch in (ClusterModel(), EquivalentInclusion())
+        asm = cubic_lattice(kind, Dict(:K => TensISO{3}(1.0)), Dict(:K => TensISO{3}(20.0)); fraction = 0.25, cutoff = 2.0)
+        ct = concentration_tensors(asm, sch, :K)
+        @test _ct_rel(ct.effective, homogenize(asm, sch, :K)) < 1.0e-14
+        @test _ct_rel(sum(ct.weights[n] * ct.strain[n] for n in keys(ct)), _ct_id(:K)) < 1.0e-12
+        @test _ct_rel(sum(ct.weights[n] * ct.stress[n] for n in keys(ct)), ct.effective) < 1.0e-12
+        @test _ct_rel(TensISO{3}(1.0) + sum(ct.weights[n] * conductivity_contribution(ct, n) for n in keys(ct)), ct.effective) < 1.0e-12
     end
     @test keys(concentration_tensors(cubic_lattice(:sc, Dict(:C => Cm), Dict(:C => Ci); fraction = 0.25), ClusterModel(), :C)) ==
         [:matrix, :family_1]
@@ -438,6 +548,10 @@ end
     ctK = concentration_tensors(rve, SelfConsistent(), :K)
     @test_throws MethodError strain_strain_concentration(ctK, :I)
     @test_throws MethodError levin_free_strain(ctK, Dict(:I => _CT_1))
+    @test_throws MethodError levin_free_gradient(ct, Dict(:I => Tens([1.0, 0.0, 0.0])))
+    @test_throws ArgumentError levin_free_gradient(ctK, Dict(:c => Tens([1.0, 0.0, 0.0])))
+    @test_throws "levin_preflux" levin_free_gradient(ctK, Dict(:c => Tens([1.0, 0.0, 0.0])))
+    @test_throws "levin_prestress" levin_free_strain(ct, Dict(:c => _CT_1))
     # A scheme the cell does not support.
     lam = Laminate(; normal = (0, 0, 1))
     add_layer!(lam, :A, Dict(:C => TensISO{3}(30.0, 10.0)); thickness = 0.3)
@@ -472,6 +586,16 @@ end
     @test _ct_rel(homogenize(cell(1.0e-7), DifferentialScheme(:M), :K), homogenize(cell(0.0), DifferentialScheme(:M), :K)) < 1.0e-6
     ct = concentration_tensors(cell(0.7), DifferentialScheme(:M), :K)
     @test _ct_rel(ct.effective, K_tilted) < 1.0e-6
+    # With a crack family as well: the scheme probes the crack against the
+    # starting medium, isotropic in value but stored dense, where the thermal
+    # COD of a circular crack took the root of a discriminant rounded below zero.
+    rve_c = cell(0.7)
+    add_phase!(rve_c, :c, PennyCrack(1.0), Dict(:K => TensISO{3}(2.0)); density = 0.05)
+    K_c = homogenize(rve_c, DifferentialScheme(:M), :K)
+    @test isposdef(Symmetric(Matrix(get_array(K_c))))
+    ct_c = concentration_tensors(rve_c, DifferentialScheme(:M), :K)
+    @test _ct_rel(ct_c.effective, K_c) < 1.0e-6
+    @test _ct_rel(sum(ct_c.weights[n] * ct_c.strain[n] for n in keys(ct_c)), _ct_id(:K)) < 1.0e-12
 
     # The rates shared by the effective ODE and the concentration one are
     # inferred, on plain and on dual numbers.
@@ -486,6 +610,23 @@ end
     @test Sch._diff_unit_rates(params, 0.5, Float64) .* [params.targets[n] for n in vcat(params.solid_names, params.crack_names)] ≈
         vcat(Sch._diff_rates(params, 0.5, Float64)...)
     @test @inferred(Sch._per_weight(TensISO{3}(2.0), 0.5)) == TensISO{3}(4.0)
+end
+
+@testset "Differential scheme — the compliance form gives the same tensors" begin
+    # The two forms integrate the same process on 𝕊 or on ℂ; their concentration
+    # tensors agree to the tolerance of the integration, cracks included.
+    rve = _ct_cell()
+    for prop in (:C, :K)
+        dual = DifferentialScheme(:M; formulation = :compliance)
+        ct_s = concentration_tensors(rve, DifferentialScheme(:M), prop)
+        ct_c = concentration_tensors(rve, dual, prop)
+        @test _ct_rel(ct_c.effective, homogenize(rve, dual, prop)) < 1.0e-6
+        @test _ct_rel(ct_c.effective, ct_s.effective) < 1.0e-5
+        for n in keys(ct_s)
+            @test _ct_rel(ct_c.strain[n], ct_s.strain[n]) < 1.0e-5
+        end
+        @test _ct_rel(sum(ct_c.weights[n] * ct_c.stress[n] for n in keys(ct_c)), ct_c.effective) < 1.0e-12
+    end
 end
 
 @testset "No trace of the former terminology" begin

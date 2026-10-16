@@ -110,6 +110,8 @@ ConcentrationTensors
 concentration_tensors
 levin_free_strain
 levin_prestress
+levin_free_gradient
+levin_preflux
 ```
 
 The readers of a [`ConcentrationTensors`](@ref) are methods of

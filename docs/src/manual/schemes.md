@@ -169,7 +169,8 @@ conduction readers ([`gradient_gradient_concentration`](@ref),
 to `concentration_tensors(rve, scheme, :K)`. The concentration tensors are also
 what [`levin_free_strain`](@ref) and [`levin_prestress`](@ref) need to turn
 eigenstrains or prestresses of the phases into their macroscopic counterpart
-([Levin's theorem](@ref th-levin)).
+([Levin's theorem](@ref th-levin)), and [`levin_free_gradient`](@ref) and
+[`levin_preflux`](@ref) eigengradients or pre-fluxes in conduction.
 
 ## [Distribution shape (Maxwell, PCW)](@id man-distribution-shape)
 

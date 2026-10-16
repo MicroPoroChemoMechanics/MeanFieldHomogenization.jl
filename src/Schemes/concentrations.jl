@@ -233,7 +233,8 @@ _weighted_sum(rve::RVE, names, tensors, proto) =
     sum((_phase_weight(rve, n) * tensors[n] for n in names); init = zero(proto))
 
 # A tensor divided by a weight, written as a product: `TensISO / Num` is
-# ambiguous between TensND and Symbolics, `Num * TensISO` is not.
+# ambiguous between Symbolics and TensND before 0.6.2, which the compat bound
+# still admits; `Num * TensISO` never was.
 _per_weight(t, w) = inv(w) * t
 
 # ── Scheme by scheme ────────────────────────────────────────────────────────
@@ -259,48 +260,43 @@ function _scheme_concentrations(rve::RVE, ::Reuss, ::Val{p}, P_hom; kw...) where
     return names, strain, stress
 end
 
-# The schemes whose inclusions solve a dilute problem in the matrix.
-function _matrix_scheme(rve::RVE, scheme, ::Val{p}, P_hom, field; kw...) where {p}
+# The schemes whose inclusions solve a dilute problem in the matrix, each under
+# the remote field 𝔼 : E that `_remote_field` gives for the scheme; the matrix
+# takes the rest of the two averages.
+const _MatrixReferenceScheme = Union{Dilute, DiluteDual, MoriTanaka, Maxwell, PonteCastanedaWillis}
+
+function _scheme_concentrations(rve::RVE, scheme::_MatrixReferenceScheme, prop::Val{p}, P_hom; kw...) where {p}
     m = matrix_name(scheme, rve)
     P₀ = phase_property(rve, m, p)
     names = inclusion_phase_names(rve, m)
     pairs = [_dilute_pair(rve, n, p, P₀; kw...) for n in names]
-    return _with_matrix(rve, m, names, pairs, field(rve, m, names, pairs, P₀), P_hom)
+    𝔼 = _remote_field(scheme, rve, prop, m, names, pairs, P₀, P_hom; kw...)
+    return _with_matrix(rve, m, names, pairs, 𝔼, P_hom)
 end
 
-# Dilute: each inclusion under the macroscopic strain.
-_scheme_concentrations(rve::RVE, scheme::Dilute, prop::Val, P_hom; kw...) =
-    _matrix_scheme(rve, scheme, prop, P_hom, (_, _, _, _, P₀) -> _identity_like(P₀); kw...)
+# Dilute: the macroscopic strain itself.
+_remote_field(::Dilute, rve, prop, m, names, pairs, P₀, P_hom; kw...) = _identity_like(P₀)
 
-# Dual dilute: each inclusion under the macroscopic stress, that is under the
-# remote strain 𝕊₀ : ℂ^hom : E.
-_scheme_concentrations(rve::RVE, scheme::DiluteDual, prop::Val, P_hom; kw...) =
-    _matrix_scheme(rve, scheme, prop, P_hom, (_, _, _, _, P₀) -> _compose(inv(P₀), P_hom); kw...)
+# Dual dilute: the strain of the matrix under the macroscopic stress, 𝕊₀ : ℂ^hom.
+_remote_field(::DiluteDual, rve, prop, m, names, pairs, P₀, P_hom; kw...) =
+    _compose(inv(P₀), P_hom)
 
-# Mori–Tanaka: each inclusion under the mean strain of the matrix,
-# (f₀ 𝕀 + Σ w 𝔸^dil)⁻¹ : E, cracks included through their openings.
-function _scheme_concentrations(rve::RVE, scheme::MoriTanaka, prop::Val, P_hom; kw...)
-    field = function (rve, m, names, pairs, P₀)
-        I = _identity_like(P₀)
-        A_avg = volume_fraction(rve, m) * I +
-            sum((_phase_weight(rve, n) * A for (n, (A, _)) in zip(names, pairs)); init = zero(P₀))
-        return inv(A_avg)
-    end
-    return _matrix_scheme(rve, scheme, prop, P_hom, field; kw...)
+# Mori–Tanaka: the mean strain of the matrix, (f₀ 𝕀 + Σ w 𝔸^dil)⁻¹, cracks
+# included through their openings.
+function _remote_field(::MoriTanaka, rve, prop, m, names, pairs, P₀, P_hom; kw...)
+    A_avg = volume_fraction(rve, m) * _identity_like(P₀) +
+        sum((_phase_weight(rve, n) * A for (n, (A, _)) in zip(names, pairs)); init = zero(P₀))
+    return inv(A_avg)
 end
 
-# Maxwell and PCW (one distribution ellipsoid): each inclusion under the remote
-# strain of the cluster, (𝕀 − ℙ_d : ℕ_Σ)⁻¹ : E.
-function _scheme_concentrations(
-        rve::RVE, scheme::Union{Maxwell, PonteCastanedaWillis}, prop::Val{p}, P_hom; kw...
+# Maxwell and PCW (one distribution ellipsoid): the remote strain of the
+# cluster, (𝕀 − ℙ_d : ℕ_Σ)⁻¹, with the contributions the estimate itself sums.
+function _remote_field(
+        scheme::Union{Maxwell, PonteCastanedaWillis}, rve, ::Val{p}, m, names, pairs, P₀, P_hom; kw...
     ) where {p}
-    shape = distribution_shape_of(distribution_shape(rve, scheme))
-    field = function (rve, m, _, _, P₀)
-        N_Σ = _accumulate_contributions(rve, P₀, p, m; kw...)
-        P_d = hill_tensor(shape, P₀; kw...)
-        return inv(_identity_like(P₀) - _compose(P_d, N_Σ))
-    end
-    return _matrix_scheme(rve, scheme, prop, P_hom, field; kw...)
+    N_Σ = _accumulate_contributions(rve, P₀, p, m; kw...)
+    P_d = hill_tensor(distribution_shape_of(distribution_shape(rve, scheme)), P₀; kw...)
+    return inv(_identity_like(P₀) - _compose(P_d, N_Σ))
 end
 
 # Asymmetric self-consistent: the inclusions solve their dilute problem in the
@@ -382,17 +378,19 @@ end
 
 function _diff_concentration_rhs!(dy, y, q, τ)
     p = q.params
-    _diff_ode_rhs!(view(dy, 1:q.nu), view(y, 1:q.nu), p, τ)
     Pτ = _reconstruct_tens(p.sym_tag, p.proto, view(y, 1:q.nu))
     Cτ = p.dual ? inv(Pτ) : Pτ
     dφ, dφᶜ = _diff_rates(p, τ, eltype(y))
     rates = vcat(dφ, dφᶜ)
     unit = _diff_unit_rates(p, τ, eltype(y))
     active = findall(!iszero, unit)
-    flat = Dict(
-        k => map(_flat_matrix, _dilute_pair(p.rve, q.names[k], q.prop, Cτ; p.kw...))
-            for k in active
+    bundles = Dict(
+        k => _diff_phase_bundle(p.rve, q.names[k], q.prop, Cτ, p.dual; p.kw...) for k in active
     )
+    # The effective medium advances as in `_diff_ode_rhs!`, from the same kernels.
+    Δ = sum((rates[k] * first(bundles[k]) for k in active); init = zero(Pτ))
+    _set_state_layout!(view(dy, 1:q.nu), p.sym_tag, p.proto, Δ)
+    flat = Dict(k => (_flat_matrix(bundles[k][2]), _flat_matrix(bundles[k][3])) for k in active)
     r = isqrt(q.L)
     X = sum((rates[k] * first(flat[k]) for k in active); init = zeros(eltype(y), r, r))
     for k in eachindex(q.names), part in (0, 1)
@@ -402,6 +400,59 @@ function _diff_concentration_rhs!(dy, y, q, τ)
     end
     return nothing
 end
+
+# One dilute solve per phase and per evaluation of the right-hand side: the
+# kernel of the effective ODE — the contribution that `_diff_ode_rhs!` sums, or
+# its compliance form — together with the dilute strain and stress
+# concentration tensors. The shared solves `concentration_and_stiffness` and
+# `compliance_and_stiffness_contribution` give the contribution bitwise as the
+# kernels of `differential.jl` do, and the rest follows by the exact identities
+# ℍ = −𝕊₀ : ℕ : 𝕊₀ and 𝔸_σε = ℕ + ℂ₀ : 𝔸.
+_diff_phase_bundle(rve::RVE, name::Symbol, prop::Symbol, Cτ, dual::Bool; kw...) =
+    _diff_phase_bundle(rve.amounts[name], rve, name, prop, Cτ, dual; kw...)
+
+function _diff_phase_bundle(
+        ::AbstractAmount, rve::RVE, name::Symbol, prop::Symbol, Cτ, dual::Bool; kw...
+    )
+    geom = rve.phases[name].geometry
+    sym = phase_symmetrize(rve, name)
+    P₀ = _project_matrix(Cτ, sym)
+    A_raw, N_raw = MFH_Core.concentration_and_stiffness(geom, phase_property(rve, name, prop), P₀; kw...)
+    kernel = _apply_symmetrize(dual ? _dual_contribution(N_raw, P₀) : N_raw, sym)
+    return kernel, _apply_symmetrize(A_raw, sym), _apply_symmetrize(N_raw + _compose(P₀, A_raw), sym)
+end
+
+# A crack family, per unit density: the strain of its openings and no stress.
+function _diff_phase_bundle(
+        ::CrackDensity, rve::RVE, name::Symbol, prop::Symbol, Cτ, dual::Bool; kw...
+    )
+    geom = rve.phases[name].geometry
+    sym = phase_symmetrize(rve, name)
+    P₀ = _project_matrix(Cτ, sym)
+    H_raw, N_raw = MFH_Core.compliance_and_stiffness_contribution(
+        geom, P₀; _crack_interface_kw(rve, name, P₀)..., kw...
+    )
+    H = _apply_symmetrize(_delta_dual(geom, H_raw), sym)
+    kernel = dual ? H : _apply_symmetrize(_delta_primal(geom, N_raw), sym)
+    return kernel, _compose(H, Cτ), zero(Cτ)
+end
+
+# The compliance form of a contribution: ℍ = −𝕊₀ : ℕ : 𝕊₀, 𝑹 = −𝑲₀⁻¹ · 𝑵 · 𝑲₀⁻¹.
+function _dual_contribution(N, P₀)
+    S₀ = inv(P₀)
+    return -_compose(_compose(S₀, N), S₀)
+end
+
+_crack_interface_kw(rve::RVE, name::Symbol, ::TensND.AbstractTens{4, 3}) =
+    (; K_interface = _crack_interface_K4(rve, name))
+_crack_interface_kw(rve::RVE, name::Symbol, ::TensND.AbstractTens{2, 3}) =
+    (; α_interface = _crack_interface_α(rve, name))
+
+# A crack contribution per unit density, geometric prefactor included.
+_delta_primal(geom, N::TensND.AbstractTens{4, 3}) = MFH_Core.delta_stiffness(geom, N, one(eltype(N)))
+_delta_primal(geom, N::TensND.AbstractTens{2, 3}) = MFH_Core.delta_conductivity(geom, N, one(eltype(N)))
+_delta_dual(geom, H::TensND.AbstractTens{4, 3}) = delta_compliance(geom, H, one(eltype(H)))
+_delta_dual(geom, H::TensND.AbstractTens{2, 3}) = delta_resistivity(geom, H, one(eltype(H)))
 
 # The block of phase `k` in the state: its strain (part 0) or stress (part 1)
 # concentration tensor, weighted by its amount per unit target amount, as a
@@ -597,9 +648,13 @@ _reference(::ConcentrationTensors, ::Nothing) = throw(
 )
 
 # ── Levin's theorem ─────────────────────────────────────────────────────────
+#
+# One kernel for both tensor orders: a load of each phase — a second-order
+# tensor in elasticity, a vector in conduction — contracted with the
+# concentration tensor of the phase from the left, weighted and summed.
 
 """
-    levin_free_strain(ct::ConcentrationTensors, eigenstrains) -> AbstractTens
+    levin_free_strain(ct::ConcentrationTensors, eigenstrains) -> AbstractTens{2}
 
 Macroscopic free strain of a composite whose phases carry uniform eigenstrains
 (free strains) ``\\boldsymbol{\\varepsilon}^\\ast_r``, by Levin's theorem: with
@@ -613,17 +668,15 @@ Macroscopic free strain of a composite whose phases carry uniform eigenstrains
 ``\\mathbb{B}_r`` being the stress concentration tensor of the phase
 ([`stress_stress_concentration`](@ref)). `eigenstrains` maps phase names to
 second-order tensors; phases left out carry none. A crack family holds no
-material, so an eigenstrain in it has no effect and is refused.
+material, so an eigenstrain in it has no effect and is refused. In conduction,
+see [`levin_free_gradient`](@ref).
 """
 function levin_free_strain(ct::_ConcentrationTensors4, eigenstrains::AbstractDict{Symbol})
-    foreach(n -> _check_material_phase(ct, n), keys(eigenstrains))
-    return _levin_sum(ct, eigenstrains) do name
-        MFH_Core.stress_stress_concentration(ct, name)
-    end
+    return _levin_free(ct, eigenstrains)
 end
 
 """
-    levin_prestress(ct::ConcentrationTensors, prestresses) -> AbstractTens
+    levin_prestress(ct::ConcentrationTensors, prestresses) -> AbstractTens{2}
 
 Macroscopic prestress of a composite whose phases carry uniform prestresses
 ``\\boldsymbol{\\sigma}^\\ast_r``, by Levin's theorem: with
@@ -639,30 +692,90 @@ family enters with its density as weight and its tensor per unit density, and
 only the traction ``\\boldsymbol{\\sigma}^\\ast_c\\cdot\\underline{n}`` on its faces matters. A
 pore pressure ``p`` is the prestress ``-p\\,\\boldsymbol{1}`` of the pores and of the
 cracks it fills, and the Biot tensor follows as
-``\\boldsymbol{b} = \\sum_{\\mathrm{pores}} f_p\\,\\boldsymbol{1}:\\mathbb{A}_p
-+ \\sum_{\\mathrm{cracks}} \\varepsilon_c\\,\\boldsymbol{1}:\\mathbb{A}_c``.
+``\\boldsymbol{B} = \\sum_{\\mathrm{pores}} f_p\\,\\boldsymbol{1}:\\mathbb{A}_p +
+\\sum_{\\mathrm{cracks}} \\varepsilon_c\\,\\boldsymbol{1}:\\mathbb{A}_c``. In conduction, see
+[`levin_preflux`](@ref).
 """
 function levin_prestress(ct::_ConcentrationTensors4, prestresses::AbstractDict{Symbol})
-    return _levin_sum(ct, prestresses) do name
-        _strain(ct, name)
+    return _levin_polarization(ct, prestresses)
+end
+
+"""
+    levin_free_gradient(ct::ConcentrationTensors, eigengradients) -> AbstractTens{1}
+
+Transport twin of [`levin_free_strain`](@ref). Each phase carries a uniform
+eigengradient ``\\underline{g}^\\ast_r``, the gradient at which it conducts no flux,
+``\\underline{q} = -\\boldsymbol{K}_r\\cdot(\\nabla T - \\underline{g}^\\ast_r)``, and the composite
+obeys ``\\underline{Q} = -\\boldsymbol{K}^{\\mathrm{hom}}\\cdot(\\underline{G} - \\underline{G}^\\ast)`` with
+
+```math
+\\underline{G}^\\ast = \\sum_r f_r\\,\\underline{g}^\\ast_r\\cdot\\boldsymbol{B}_r ,
+```
+
+``\\boldsymbol{B}_r`` being the flux concentration tensor of the phase
+([`flux_flux_concentration`](@ref)). `eigengradients` maps phase names to
+vectors (first-order tensors); a crack family is refused, as in elasticity.
+"""
+function levin_free_gradient(ct::_ConcentrationTensors2, eigengradients::AbstractDict{Symbol})
+    return _levin_free(ct, eigengradients)
+end
+
+"""
+    levin_preflux(ct::ConcentrationTensors, prefluxes) -> AbstractTens{1}
+
+Transport twin of [`levin_prestress`](@ref). Each phase carries a uniform
+pre-flux ``\\underline{q}^\\ast_r``, the flux it conducts under a vanishing gradient,
+``\\underline{q} = -\\boldsymbol{K}_r\\cdot\\nabla T + \\underline{q}^\\ast_r``, and the composite obeys
+``\\underline{Q} = -\\boldsymbol{K}^{\\mathrm{hom}}\\cdot\\underline{G} + \\underline{Q}^\\ast`` with
+
+```math
+\\underline{Q}^\\ast = \\sum_r f_r\\,\\underline{q}^\\ast_r\\cdot\\boldsymbol{A}_r ,
+```
+
+``\\boldsymbol{A}_r`` being the gradient concentration tensor of the phase
+([`gradient_gradient_concentration`](@ref)). A crack family enters with its
+density as weight and its tensor per unit density.
+"""
+function levin_preflux(ct::_ConcentrationTensors2, prefluxes::AbstractDict{Symbol})
+    return _levin_polarization(ct, prefluxes)
+end
+
+# The free field E* = Σ f ε*:𝔹, contracted with the stress-driven tensors.
+function _levin_free(ct::ConcentrationTensors, loads::AbstractDict{Symbol})
+    foreach(n -> _check_material_phase(ct, n), keys(loads))
+    return _levin_sum(ct, loads) do name
+        _compose(_stress(ct, name), ct.compliance)
     end
 end
 
+# The polarization Σ* = Σ f σ*:𝔸, contracted with the strain-driven tensors.
+_levin_polarization(ct::ConcentrationTensors, loads::AbstractDict{Symbol}) =
+    _levin_sum(name -> _strain(ct, name), ct, loads)
+
 function _levin_sum(concentration, ct::ConcentrationTensors, loads::AbstractDict{Symbol})
-    T = eltype(ct.effective)
-    zero2 = zero(TensND.tens_Id2(Val(3), Val(T)))
     return sum(
-        (ct.weights[_check_phase(ct, n)] * (x ⊡ concentration(n)) for (n, x) in loads);
-        init = zero2
+        (ct.weights[_check_phase(ct, n)] * _load_contract(x, concentration(n)) for (n, x) in loads);
+        init = _zero_load(ct)
     )
 end
+
+# A load of each phase contracts the concentration tensor from the left.
+_load_contract(x::TensND.AbstractTens{2, 3}, A::TensND.AbstractTens{4, 3}) = x ⊡ A
+_load_contract(x::TensND.AbstractTens{1, 3}, A::TensND.AbstractTens{2, 3}) = x ⋅ A
+
+# The zero of the macroscopic load, in the element type of the estimate.
+_zero_load(ct::_ConcentrationTensors4) = zero(TensND.tens_Id2(Val(3), Val(eltype(ct.effective))))
+_zero_load(ct::_ConcentrationTensors2) = TensND.Tens(zeros(eltype(ct.effective), 3))
 
 function _check_material_phase(ct::ConcentrationTensors, name::Symbol)
     _check_phase(ct, name) in ct.cracks && throw(
         ArgumentError(
-            "crack family :$(name) holds no material, so an eigenstrain in it has no " *
-                "effect; a pressure in the cracks is a prestress (`levin_prestress`)"
+            "crack family :$(name) holds no material, so an eigenfield in it has no " *
+                "effect; a load on its faces is a polarization (`$(_polarization_reader(ct))`)"
         )
     )
     return name
 end
+
+_polarization_reader(::_ConcentrationTensors4) = "levin_prestress"
+_polarization_reader(::_ConcentrationTensors2) = "levin_preflux"

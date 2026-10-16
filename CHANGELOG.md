@@ -79,7 +79,9 @@ anisotropic.
   and `levin_prestress` turns prestresses into the macroscopic prestress, a pore
   pressure giving the Biot tensor. The latter accepts crack families, so that
   the pressure in the cracks contributes, and holds for any number of solid
-  phases, where `biot_tensor` assumes a single one.
+  phases, where `biot_tensor` assumes a single one. In conduction,
+  `levin_free_gradient` and `levin_preflux` do the same with eigengradients and
+  pre-fluxes, through the same kernel dispatched on the order of the tensors.
 - The closed-form schemes run on `ForwardDiff.Dual`, nested, and on SymPy and
   Symbolics numbers; the iterative ones are numeric, as their effective tensors
   are.
@@ -92,6 +94,20 @@ anisotropic.
   was laid out on nine components and rebuilt from six; it now holds the six
   components of a symmetric tensor. Elasticity was not affected, and the
   transversely isotropic case, which never reached that state, is unchanged.
+- **The thermal COD of a circular crack threw in an isotropic conductor stored
+  as a dense tensor.** The discriminant of the eigenvalues it needs was written
+  tr² − 4 det, which rounds below zero there, so that `sqrt` threw; the
+  differential scheme in conduction met it as soon as its running conductivity
+  was dense, with a crack family and an inclusion breaking the transverse
+  isotropy. The discriminant is now a sum of squares, and near the circular
+  point a series in the discriminant replaces its root, so that derivatives of
+  every order exist there.
+- **The conduction Hill tensor of a sphere was not exact on symbolic
+  conductivities.** It read the geometric factor 1/3 off the Newton-potential
+  tensor of the sphere, formed in the `Float64` of its radius, so that a SymPy
+  estimate carried `0.333…` and left a residue of order 1e-16 in identities that
+  should vanish. The factor is now formed in the element type of the
+  conductivity; on `Float64` the value is unchanged to the bit.
 
 ### Documentation
 
