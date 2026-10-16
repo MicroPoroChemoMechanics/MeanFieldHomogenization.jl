@@ -188,6 +188,7 @@ end
         include("Schemes/test_symmetrize.jl")
         include("Schemes/test_orientation.jl")
         include("Schemes/test_concentration_bundles.jl")
+        include("Schemes/test_concentrations.jl")
         include("Schemes/test_crack_families.jl")
     end
 

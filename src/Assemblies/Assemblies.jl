@@ -63,6 +63,7 @@ include("generators.jl")
 include("block_solve.jl")
 include("cluster_model.jl")
 include("eim.jl")
+include("concentrations.jl")
 include("as_rve.jl")
 include("parameters.jl")
 

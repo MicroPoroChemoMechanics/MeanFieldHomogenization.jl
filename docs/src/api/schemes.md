@@ -103,6 +103,24 @@ differential_path
 MeanFieldHomogenization.Schemes.SCHEME_ALIAS
 ```
 
+## Concentration tensors of an estimate and Levin's theorem
+
+```@docs
+ConcentrationTensors
+concentration_tensors
+levin_free_strain
+levin_prestress
+```
+
+The readers of a [`ConcentrationTensors`](@ref) are methods of
+[`strain_strain_concentration`](@ref MeanFieldHomogenization.strain_strain_concentration),
+[`stress_strain_concentration`](@ref MeanFieldHomogenization.stress_strain_concentration),
+[`strain_stress_concentration`](@ref MeanFieldHomogenization.strain_stress_concentration),
+[`stress_stress_concentration`](@ref MeanFieldHomogenization.stress_stress_concentration),
+[`stiffness_contribution`](@ref MeanFieldHomogenization.stiffness_contribution) and
+[`compliance_contribution`](@ref MeanFieldHomogenization.compliance_contribution), and of
+their conduction twins, documented in [API — Concentration](@ref api-concentration).
+
 ## [Symmetry projections](@id api-schemes-symmetry)
 
 Best-fit projection of a tensor onto a symmetry class. These force major

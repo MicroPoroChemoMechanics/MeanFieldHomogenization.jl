@@ -586,3 +586,31 @@ end
 _interface_jump_local(::MembraneInterface, t) = zero(t)
 _interface_jump_local(::KapitzaInterface, t) = zero(t)
 _interface_jump_local(::SurfaceConductiveInterface, t) = zero(t)
+
+# ── Concentration tensors of every layer ────────────────────────────────────
+#
+# The exact solution gives each layer its strain and stress concentration
+# tensors directly. With a primal (spring / Kapitza) interface part of the
+# macroscopic strain is carried by the jumps, and the strain average over the
+# layers no longer closes on 𝕀.
+
+function Schemes._concentration_tensors(lam::Laminate, scheme::Laminated, ::Val{p}; kw...) where {p}
+    P_hom = Schemes._evaluate(lam, scheme, Val(p); kw...)
+    names = layer_names(lam)
+    pairs = [_layer_concentration_pair(lam, n, p, P_hom) for n in names]
+    strain = Dict{Symbol, TensND.AbstractTens}(n => A for (n, (A, _)) in zip(names, pairs))
+    stress = Dict{Symbol, TensND.AbstractTens}(n => B for (n, (_, B)) in zip(names, pairs))
+    weights = Dict(n => layer_volume_fraction(lam, n) for n in names)
+    properties = Dict{Symbol, TensND.AbstractTens}(n => layer_property(lam, n, p) for n in names)
+    return Schemes._concentration_result(P_hom, names, strain, stress, weights, properties, nothing)
+end
+
+_layer_concentration_pair(lam::Laminate, name::Symbol, p::Symbol, ::TensND.AbstractTens{4, 3}) = (
+    strain_strain_concentration(lam, name; property = p),
+    stress_strain_concentration(lam, name; property = p),
+)
+
+_layer_concentration_pair(lam::Laminate, name::Symbol, p::Symbol, ::TensND.AbstractTens{2, 3}) = (
+    gradient_gradient_concentration(lam, name; property = p),
+    flux_gradient_concentration(lam, name; property = p),
+)

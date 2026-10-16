@@ -70,6 +70,7 @@ include("crack_families.jl")
 include("fracture_permeability.jl")
 include("trajectory.jl")
 include("differential.jl")
+include("concentrations.jl")
 include("parameters.jl")
 include("sensitivities.jl")
 
@@ -102,6 +103,7 @@ export DifferentialTrajectory, Proportional, Sequential, CustomPath, Path, Diffe
 
 # Entry point
 export homogenize, differential_path
+export ConcentrationTensors, concentration_tensors, levin_free_strain, levin_prestress
 export crack_family_compliances, crack_family_residual
 export fracture_permeability
 

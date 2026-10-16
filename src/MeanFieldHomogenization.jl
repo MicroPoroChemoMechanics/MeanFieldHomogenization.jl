@@ -349,6 +349,7 @@ export ClusterModel, EquivalentInclusion
 export AndersonDefault, NewtonDefault, AutoNonlinear
 export DifferentialTrajectory, Proportional, Sequential, CustomPath, Path, DifferentialScheme
 export homogenize, differential_path
+export ConcentrationTensors, concentration_tensors, levin_free_strain, levin_prestress
 export crack_family_compliances, crack_family_residual
 export fracture_permeability
 
