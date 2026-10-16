@@ -1675,16 +1675,39 @@ unit = "Pa"
 group = "Strength"
 tex = '\Sigma_d'
 label = "Σ<sub>d</sub>"
-name = "macroscopic equivalent deviatoric stress, normalized as stated on the page"
+name = "norm of the macroscopic stress deviator, (<b>Σ</b><sup>d</sup>:<b>Σ</b><sup>d</sup>)<sup>1/2</sup>"
+unit = "Pa"
+
+[[symbol]]
+group = "Strength"
+tex = '\Sigma_d'
+label = "Σ<sub>d</sub>"
+name = "macroscopic deviatoric stress in the normalization of the article, (<b>Σ</b><sup>d</sup>:<b>Σ</b><sup>d</sup>/2)<sup>1/2</sup>"
+unit = "Pa"
+pages = ["applications/sandstone_strength.md", "applications/granular_friction.md"]
+
+[[symbol]]
+group = "Strength"
+tex = '\sigma_d'
+label = "σ<sub>d</sub>"
+name = "norm of the stress deviator, (<b>σ</b><sup>d</sup>:<b>σ</b><sup>d</sup>)<sup>1/2</sup>"
 unit = "Pa"
 
 [[symbol]]
 group = "Strength"
 tex = '\sigma_d'
 label = "σ<sub>d</sub>"
-name = "equivalent deviatoric stress of the solid, (<b>σ</b><sup>d</sup>:<b>σ</b><sup>d</sup>/2)<sup>1/2</sup>"
+name = "deviatoric stress of the solid in the normalization of the article, (<b>σ</b><sup>d</sup>:<b>σ</b><sup>d</sup>/2)<sup>1/2</sup>"
 unit = "Pa"
 pages = ["applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = '\sigma_o'
+label = "σ<sub>o</sub>"
+name = "strength of the solid: the bound on the norm of its stress deviator"
+unit = "Pa"
+pages = ["tutorials/strength_criteria.md"]
 
 [[symbol]]
 group = "Strength"
@@ -1802,7 +1825,7 @@ pages = ["applications/sandstone_strength.md"]
 group = "Strength"
 tex = '\bar{\varepsilon}_d'
 label = "ε̄<sub>d</sub>"
-name = "quadratic mean of the equivalent deviatoric strain in the grains"
+name = "quadratic mean of the deviatoric strain in the grains, in the normalization of the article (½ under the root)"
 unit = "1"
 pages = ["applications/sandstone_strength.md"]
 

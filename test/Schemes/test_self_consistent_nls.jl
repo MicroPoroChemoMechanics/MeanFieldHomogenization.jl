@@ -18,7 +18,7 @@
 #      implicit-function-theorem lift in the extension.
 #   6. Regression: differentiating w.r.t. the MATRIX'S OWN modulus on a
 #      non-spherical, `IsoSymmetrize`d RVE (the strength-criterion
-#      recipe of `09_strength_criteria.md`) through a SciML algorithm.
+#      recipe of `docs/src/tutorials/strength_criteria.md`) through a SciML algorithm.
 #      This used to crash: the primal/IFT solve rebuilt the iterating
 #      tensor at a plain `Float64` type while the RVE's other captured
 #      state stayed `Dual`, which is unsupported for a mixed-type
@@ -168,7 +168,7 @@ end
 end
 
 @testset "SelfConsistent — NonlinearSolve, non-spherical IsoSymmetrize regression" begin
-    # Strength-criterion recipe (09_strength_criteria.md / 12_nonlinear_solvers.md):
+    # Strength-criterion recipe (docs/src/tutorials/strength_criteria.md and nonlinear_solvers.md):
     # oblate spheroid solid + pore, IsoSymmetrize'd, differentiated w.r.t.
     # the SOLID's own shear modulus — so a seed taken from that phase
     # is ITSELF Dual-typed from the very first SC iterate (unlike the

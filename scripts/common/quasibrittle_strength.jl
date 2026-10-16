@@ -6,7 +6,7 @@
 #    Cement and Concrete Research 41, 467-476.
 #    https://doi.org/10.1016/j.cemconres.2011.01.010
 #
-#  Included by `scripts/40_multiscale_strength.jl` (plots / tables) and
+#  Included by `scripts/41_multiscale_strength.jl` (plots / tables) and
 #  `scripts/bench_echoes/benchmark_strength.jl` (cross-validation against the
 #  echoes Python reference).  Built ENTIRELY on the public MeanFieldHomogenization API :
 #
@@ -21,10 +21,13 @@
 #    in the converged iso `C_hf` in the same way.
 #  * Cement Paste (CP)  — Mori-Tanaka (HF matrix + clinker).
 #  * Mortar (MO)        — Mori-Tanaka (CP matrix + sand).
-#  * Strength           — compliance pull-back `M = S_mo : dC_mo : S_mo`,
-#    `fc = 1/√(M₃₃₃₃ · 2μ² / f_θ)`, with `dC_mo = ∂C_mo/∂μ_hyd(bin θ=0)`
-#    obtained by ONE ForwardDiff pass through the whole three-scale chain
-#    (multi-bin SC included) — no hand-rolled IFT, no Mandel bypass.
+#  * Strength           — Pichler & Hellmich (2011): the quadratic average
+#    √⟨½ s:s⟩ of the deviatoric stress in the hydrates (the article's
+#    normalization, ½ under the root) is bounded by σ_ult. With the pull-back
+#    `M = S_mo : ∂C_mo/∂μ_hyd : S_mo`, `fc/σ_ult = 1/√(M₃₃₃₃ · μ² / f_θ)`;
+#    `∂C_mo/∂μ_hyd(bin θ=0)` comes from ONE ForwardDiff pass through the
+#    whole three-scale chain (multi-bin SC included) — no hand-rolled IFT, no
+#    Mandel bypass. The code passes ∂/∂(2μ) with 2μ², the same number.
 # =============================================================================
 
 using MeanFieldHomogenization
@@ -160,7 +163,8 @@ extract_kμ(arr::AbstractArray) = k_mu(TensND.proj_tens(Val(:ISO), arr)[1])
 #
 # `M = S_mo : dC : S_mo` (compliance pull-back of the sensitivity), and
 # `fc = 1/√(M₃₃₃₃ · 2μ²/f_θ)` where `f_θ` is the volume fraction of the
-# perturbed hydrate family (bin θ = 0) in the mortar.
+# perturbed hydrate family (bin θ = 0) in the mortar. `dC` is the derivative
+# with respect to 2μ, so that this is `1/√(M₃₃₃₃ · μ²/f_θ)` with ∂/∂μ.
 function quasibrittle_strength(
         arr_C_mo::AbstractArray, arr_dC::AbstractArray,
         μh::Real, f_θ::Real

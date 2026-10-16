@@ -28,14 +28,14 @@
 # ## The nonlinear closure, and why a derivative gives it
 #
 # Write the macroscopic strain as ``\boldsymbol{E} = \tfrac{E_v}{3}\boldsymbol{1} +
-# \boldsymbol{E}_d`` with ``E_v = \mathrm{tr}\,\boldsymbol{E}`` its volumetric
-# part and ``\boldsymbol{E}_d`` its deviator. For an isotropic effective
+# \boldsymbol{E}^d`` with ``E_v = \mathrm{tr}\,\boldsymbol{E}`` its volumetric
+# part and ``\boldsymbol{E}^d`` its deviator. For an isotropic effective
 # behavior of moduli ``(k^{\mathrm{hom}}, \mu^{\mathrm{hom}})`` the macroscopic elastic energy is
 #
 # ```math
 # W(\boldsymbol{E}) = \tfrac{1}{2}\,\boldsymbol{E}:\mathbb{C}^{\mathrm{hom}}:\boldsymbol{E}
 #                   = \tfrac{1}{2}\,k^{\mathrm{hom}} E_v^{2}
-#                   + \mu^{\mathrm{hom}}\,\boldsymbol{E}_d\!:\!\boldsymbol{E}_d .
+#                   + \mu^{\mathrm{hom}}\,\boldsymbol{E}^d\!:\!\boldsymbol{E}^d .
 # ```
 #
 # Now let ``\mu_i`` be the shear modulus of shell ``i``, of volume fraction
@@ -45,13 +45,13 @@
 # [kreher1990, suquet1997](@cite):
 #
 # ```math
-# \bigl\langle \boldsymbol{\varepsilon}_d\!:\!\boldsymbol{\varepsilon}_d
+# \bigl\langle \boldsymbol{\varepsilon}^d\!:\!\boldsymbol{\varepsilon}^d
 # \bigr\rangle_i
 # \;=\; \frac{1}{f_i}\,\frac{\partial W}{\partial \mu_i}
 # \;=\; \frac{1}{f_i}\left(
 #   \tfrac{1}{2}\frac{\partial k^{\mathrm{hom}}}{\partial \mu_i}\,E_v^{2}
 #   + \frac{\partial \mu^{\mathrm{hom}}}{\partial \mu_i}\,
-#     \boldsymbol{E}_d\!:\!\boldsymbol{E}_d
+#     \boldsymbol{E}^d\!:\!\boldsymbol{E}^d
 # \right).
 # ```
 #
@@ -60,7 +60,7 @@
 # *derivative of the effective moduli*, which `ForwardDiff` supplies exactly.
 #
 # Writing ``x_i`` for the resulting equivalent deviatoric strain,
-# ``x_i = \sqrt{\langle\boldsymbol{\varepsilon}_d\!:\!\boldsymbol{\varepsilon}_d
+# ``x_i = \sqrt{\langle\boldsymbol{\varepsilon}^d\!:\!\boldsymbol{\varepsilon}^d
 # \rangle_i}``, a von Mises solid of elastic shear modulus ``\mu_s`` responds
 # with the secant modulus
 #
@@ -78,10 +78,11 @@
 # !!! warning "Where the square root of 2/3 comes from"
 #     ``\sigma_0`` is the yield stress in **simple tension**, which is how a von
 #     Mises criterion is normally quoted. The quantity the secant closure
-#     actually caps is the *norm of the deviatoric stress*
-#     ``\|\boldsymbol{\sigma}_d\| = 2\mu_i x_i``, and under simple tension
+#     actually caps is the *norm of the deviatoric stress*, with no factor (see
+#     [Conventions](@ref th-notation-deviatoric)),
+#     ``\sigma_d = \sqrt{\boldsymbol{\sigma}^d:\boldsymbol{\sigma}^d} = 2\mu_i x_i``, and under simple tension
 #     ``\boldsymbol{\sigma} = \sigma_0\,\underline{e}\otimes\underline{e}`` the
-#     deviator has norm ``\|\boldsymbol{\sigma}_d\| = \sqrt{2/3}\,\sigma_0``, not
+#     deviator has norm ``\sigma_d = \sqrt{2/3}\,\sigma_0``, not
 #     ``\sigma_0``. Yielding therefore reads ``2\mu_i x_i = \sqrt{2/3}\,\sigma_0``.
 #     Dropping that factor rescales the whole plastic branch by
 #     ``\sqrt{3/2} \approx 1.22`` — enough to make a converged estimate look like
@@ -104,8 +105,8 @@ gr()  # headless backend; GKSwstype is set to "100" before Literate runs
 # ## §1 The porous material
 #
 # The solid is elastic–perfectly plastic: bulk modulus ``k_s``, shear modulus
-# ``\mu_s``, yield stress ``\sigma_0`` (a threshold on the deviatoric stress
-# norm ``\|\boldsymbol{\sigma}_d\| = 2\mu\|\boldsymbol{\varepsilon}_d\|``). The
+# ``\mu_s``, yield stress in simple tension ``\sigma_0``, which caps the norm of
+# the stress deviator ``\sigma_d = 2\mu\,\varepsilon_d`` at ``\sqrt{2/3}\,\sigma_0``. The
 # porosity is ``f``. Plasticity only enters through ``\sigma_0``; the bulk
 # modulus never changes, since a von Mises solid is plastically incompressible.
 
@@ -214,7 +215,7 @@ end
 # ## §3 The stress–strain response
 #
 # Loading is purely hydrostatic: ``\boldsymbol{E} = \tfrac{E_v}{3}\boldsymbol{1}``,
-# so ``\boldsymbol{E}_d = 0`` and the response is read on the mean stress
+# so ``\boldsymbol{E}^d = 0`` and the response is read on the mean stress
 # ``\Sigma_m = k^{\mathrm{hom}} E_v``. Note that plasticity develops all the same: the
 # void makes the *local* strain deviatoric even under a purely volumetric
 # macroscopic strain, and it is that local deviator which yields.
@@ -294,7 +295,7 @@ end
 # That estimate sits about 24 % above the exact collapse load at this porosity:
 # a *uniform* secant modulus cannot represent a solid that yields near the void
 # long before it yields far from it, and the quadratic average of
-# ``\boldsymbol{\varepsilon}_d`` over the whole shell overstates the
+# ``\boldsymbol{\varepsilon}^d`` over the whole shell overstates the
 # dissipation.
 #
 # **Resolving the radial profile removes that gap.** Each shell then carries its

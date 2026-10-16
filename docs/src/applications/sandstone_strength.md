@@ -16,6 +16,17 @@ question is the macroscopic strength, in the plane of the mean stress
 ``\Sigma_m = \mathrm{tr}\,\boldsymbol\Sigma/3`` and of the deviatoric stress
 ``\Sigma_d = \sqrt{\boldsymbol\Sigma^{\mathrm d}:\boldsymbol\Sigma^{\mathrm d}/2}``.
 
+!!! note "The normalization of this page"
+    This page keeps the normalization of [dormieux2010](@citet), with
+    ``\tfrac{1}{2}`` under the root, also for the deviatoric strain
+    ``\bar\varepsilon_d`` below, so that its formulas and figures are those of the
+    article. The norm used in the rest of this documentation carries no factor
+    (see [Conventions](@ref th-notation-deviatoric)): it is ``\sqrt 2`` times the
+    ``\sigma_d``, ``\Sigma_d`` and ``\bar\varepsilon_d`` of this page. In that norm the
+    grains obey ``\sqrt{\boldsymbol\sigma^{\mathrm d}:\boldsymbol\sigma^{\mathrm d}} \le \sqrt 2\,K``,
+    and every ratio ``\Sigma_d/|\Sigma_m|`` of this page, ``H`` and the slope of
+    the Drucker–Prager limit, is multiplied by ``\sqrt 2``.
+
 The model follows the modified secant method: each nonlinear behavior is
 replaced by a linear one whose stiffness depends on the average strain it
 undergoes, and the strength is reached when these stiffnesses vanish. The

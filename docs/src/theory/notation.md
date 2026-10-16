@@ -3,8 +3,8 @@
 This page fixes the conventions that the formulas of the documentation take for
 granted: the sign under which elasticity and conduction share one set of
 formulas, the sign of the Green operator, the bases in which isotropic and
-transversely isotropic tensors are written, the geometry of an ellipsoid and the
-storage of tensors. The typeface of each kind of object, the operators and the
+transversely isotropic tensors are written, the norm of a deviator, the geometry
+of an ellipsoid and the storage of tensors. The typeface of each kind of object, the operators and the
 list of the symbols are in the [Nomenclature](@ref nomenclature).
 
 ## [Elasticity and transport: one set of formulas](@id th-notation-sigma-q)
@@ -103,6 +103,36 @@ sharing a single coefficient — hence five independent numbers written
 This is the storage used by `TensND.TensTI{4}` and by
 [`hill_tensor`](@ref) on a transversely isotropic matrix
 [walpole1981, barthelemyIJES2020_hilltrans](@cite).
+
+## [Mean and deviatoric parts, and the deviatoric norm](@id th-notation-deviatoric)
+
+A stress splits into a mean part and a deviator, and the deviator is measured by
+its norm:
+
+```math
+\sigma_m = \tfrac{1}{3}\,\mathrm{tr}\,\boldsymbol{\sigma},
+\qquad
+\boldsymbol{\sigma}^d = \boldsymbol{\sigma} - \sigma_m\,\boldsymbol{1} = \mathbb{K}:\boldsymbol{\sigma},
+\qquad
+\sigma_d = \sqrt{\boldsymbol{\sigma}^d:\boldsymbol{\sigma}^d}.
+```
+
+The same holds for a macroscopic stress, with ``\Sigma_m``, ``\boldsymbol{\Sigma}^d``
+and ``\Sigma_d``, and for a strain, with
+``\varepsilon_d = \sqrt{\boldsymbol{\varepsilon}^d:\boldsymbol{\varepsilon}^d}``. The norm
+carries no factor, as in [barthelemyThesis2005](@cite). Other references put
+``\tfrac{1}{2}`` under the root, which makes ``\sigma_d`` the square root of the
+second invariant ``J_2``, or ``\tfrac{3}{2}``, which makes it the von Mises
+equivalent stress. With the norm above, an isotropic solid gives
+``\sigma_d = 2\mu\,\varepsilon_d``, and a uniaxial stress
+``\sigma\,\underline{e}_1\otimes\underline{e}_1`` gives ``\sigma_d = \sqrt{2/3}\,|\sigma|``:
+a von Mises solid of tensile strength ``\sigma_t`` obeys
+``\sigma_d \le \sqrt{2/3}\,\sigma_t``.
+
+A page that reproduces the analytical results of an article keeps the
+normalization of that article, so that its formulas and figures can be compared
+with it. Such a page says so where it defines ``\sigma_d``, and gives the
+conversion to the norm above.
 
 ## [Ellipsoid geometry](@id th-notation-ellipsoid)
 

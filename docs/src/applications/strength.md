@@ -156,16 +156,34 @@ nothing # hide
 
 ## Strength criterion and the autodiff sensitivity
 
-The compliance pull-back ``\boldsymbol{M} = \boldsymbol{S}_{\mathrm{MO}}:\partial\mathbb
-C_{\mathrm{MO}}/\partial\mu_{\mathrm{hyd}}:\boldsymbol{S}_{\mathrm{MO}}`` gives the axial term ``M_{3333}``,
-and the criterion of [pichler2011](@citet) reads
+The criterion of [pichler2011](@citet) bounds, in every family of hydrate needles,
+the quadratic average of the deviatoric stress,
+``\bar\sigma^{\mathrm{dev}}_{\mathrm{hyd}} = \sqrt{\langle\tfrac{1}{2}\,\boldsymbol{s}:\boldsymbol{s}\rangle} \le \sigma^{\mathrm{ult}}_{\mathrm{hyd}}``,
+``\boldsymbol{s}`` being the stress deviator (their eqs. 15 and 19). The derivative of
+the energy of the mortar gives that average,
+``(\bar\sigma^{\mathrm{dev}}_{\mathrm{hyd}})^2 = (\mu_{\mathrm{hyd}}^2/f_\theta)\,\boldsymbol{E}:\partial\mathbb C_{\mathrm{MO}}/\partial\mu_{\mathrm{hyd}}:\boldsymbol{E}``
+(their eq. 22), where ``f_\theta`` is the mortar volume fraction of the perturbed
+(``\theta=0``) hydrate family. Under a uniaxial compression
+``\boldsymbol{\Sigma} = f_c\,\underline{e}_3\otimes\underline{e}_3``, the strain is
+``\boldsymbol{E} = \boldsymbol{S}_{\mathrm{MO}}:\boldsymbol{\Sigma}``, and with the compliance pull-back
+``\boldsymbol{M} = \boldsymbol{S}_{\mathrm{MO}}:\partial\mathbb C_{\mathrm{MO}}/\partial\mu_{\mathrm{hyd}}:\boldsymbol{S}_{\mathrm{MO}}``
+the strength is
 
 ```math
-\frac{f_c}{\sigma^{\mathrm{ult}}_{\mathrm{hyd}}} = \frac{1}{\sqrt{\,M_{3333}\,2\mu_{\mathrm{hyd}}^2 / f_\theta\,}},
+\frac{f_c}{\sigma^{\mathrm{ult}}_{\mathrm{hyd}}} = \frac{1}{\sqrt{\,M_{3333}\,\mu_{\mathrm{hyd}}^2 / f_\theta\,}}.
 ```
 
-where ``f_\theta`` is the mortar volume fraction of the perturbed (``\theta=0``)
-hydrate family. The sensitivity ``\partial\mathbb C_{\mathrm{MO}}/\partial\mu_{\mathrm{hyd}}``
+The code below differentiates with respect to the stiffness parameter
+``2\mu_{\mathrm{hyd}}`` instead, which halves ``\boldsymbol{M}`` and doubles the factor
+``\mu_{\mathrm{hyd}}^2``: the same number.
+
+!!! note "The normalization of this page"
+    This page keeps the normalization of [pichler2011](@citet), with
+    ``\tfrac{1}{2}`` under the root, so that ``\sigma^{\mathrm{ult}}_{\mathrm{hyd}}`` is the
+    strength of the article. The norm used in the rest of this documentation
+    carries no factor (see [Conventions](@ref th-notation-deviatoric)): in it the
+    bound is ``\sqrt 2\,\sigma^{\mathrm{ult}}_{\mathrm{hyd}}``, and every ratio
+    ``f_c/\sigma^{\mathrm{ult}}_{\mathrm{hyd}}`` of this page is divided by ``\sqrt 2``. The sensitivity ``\partial\mathbb C_{\mathrm{MO}}/\partial\mu_{\mathrm{hyd}}``
 is obtained by seeding ``\mu_{b0}`` with a `Dual` and reading the partial of the
 final array — one pass through the whole three-scale chain.
 
@@ -344,8 +362,9 @@ psc
 ```
 
 The absolute strength in MPa is recovered by multiplying by
-``\sigma^{\mathrm{ult}}_{\mathrm{hyd}}``, which [pichler2011](@citet) calibrate to ≈ 70–90 MPa
-for typical C-S-H.
+``\sigma^{\mathrm{ult}}_{\mathrm{hyd}}``, which [pichler2011](@citet) identify as about 50 MPa
+from the compressive strength of 54.1 MPa of a fully hydrated paste of
+water-to-cement ratio 0.50 (their eq. 31).
 
 ## The same chain, written declaratively
 

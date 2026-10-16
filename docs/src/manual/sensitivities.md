@@ -145,7 +145,7 @@ the parametric inner constructor of `MyBlob{T,B}` resolves cleanly.
 
 Composing several `homogenize` calls in one closure applies the chain rule
 automatically.
-[`scripts/28_multiscale_strength.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/28_multiscale_strength.jl)
+[`scripts/41_multiscale_strength.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/41_multiscale_strength.jl)
 follows the quasi-brittle strength model of [pichler2011](@citet) — a three-scale cement-paste / mortar
 upscaling (SC hydrate foam + two Mori-Tanaka stages) requiring
 `∂C_mortar / ∂μ_hyd` through the full chain — in two styles:

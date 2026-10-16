@@ -10,8 +10,10 @@
 #         phases iso-symmetrized, so the homogenized stiffness is isotropic
 #         (in the limit of infinitely many random orientations).
 #
-#  For each scheme we plot the strength ellipse
-#       (Σ_m / σ_o)² / (2A)  +  (Σ_d / σ_o)² / B = 1 / (1 - φ)
+#  The solid obeys σ_d = √(σᵈ:σᵈ) ≤ σ_o, the norm of the deviator with no
+#  factor, and Σ_m = tr Σ / 3, Σ_d = √(Σᵈ:Σᵈ). For each scheme we plot the
+#  strength ellipse
+#       2A (Σ_m / σ_o)²  +  B (Σ_d / σ_o)² = 1 - φ
 #  where
 #       A = (μ_s / k_hom)² · (∂k_hom / ∂μ_s)
 #       B = (μ_s / μ_hom)² · (∂μ_hom / ∂μ_s)

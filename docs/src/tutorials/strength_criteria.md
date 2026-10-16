@@ -38,21 +38,35 @@ nothing # hide
 
 ## The criterion
 
-Under a macroscopic stress split into a mean part ``\Sigma_m`` and a
-deviatoric magnitude ``\Sigma_d``, a porous solid governed by a von
-Mises-type local strength ``\sigma_o`` in the solid phase admits, to
-second order in the contrast, an **elliptical macroscopic strength
+The solid obeys a von Mises criterion written on the norm of its stress
+deviator, ``\sigma_d = \sqrt{\boldsymbol{\sigma}^d:\boldsymbol{\sigma}^d} \le \sigma_o``,
+with no factor under the root (see [Conventions](@ref th-notation-deviatoric)):
+``\sigma_o`` is ``\sqrt{2/3}`` times the tensile strength of the solid. A
+macroscopic stress is split in the same way into its mean part
+``\Sigma_m = \tfrac{1}{3}\,\mathrm{tr}\,\boldsymbol{\Sigma}`` and the norm of its deviator
+``\Sigma_d = \sqrt{\boldsymbol{\Sigma}^d:\boldsymbol{\Sigma}^d}``. The quadratic average of
+``\sigma_d`` over the solid follows from the sensitivity of the homogenized
+moduli to the shear modulus of the solid [kreher1990, suquet1997](@cite),
+``(1-\varphi)\,\langle\boldsymbol{\sigma}^d:\boldsymbol{\sigma}^d\rangle_s = 2A\,\Sigma_m^2 + B\,\Sigma_d^2``,
+and bounding it by ``\sigma_o^2`` gives an **elliptical macroscopic strength
 domain**:
 
 ```math
 \begin{gathered}
-\frac{(\Sigma_m/\sigma_o)^2}{2A} + \frac{(\Sigma_d/\sigma_o)^2}{B} = \frac{1}{1-\varphi},
+2A\,\Big(\frac{\Sigma_m}{\sigma_o}\Big)^{\!2} + B\,\Big(\frac{\Sigma_d}{\sigma_o}\Big)^{\!2} = 1-\varphi,
 \\
 A = \Big(\frac{\mu_s}{k^{\mathrm{hom}}}\Big)^{\!2}\frac{\partial k^{\mathrm{hom}}}{\partial\mu_s},
 \qquad
 B = \Big(\frac{\mu_s}{\mu^{\mathrm{hom}}}\Big)^{\!2}\frac{\partial \mu^{\mathrm{hom}}}{\partial\mu_s}.
 \end{gathered}
 ```
+
+For spherical pores in an incompressible solid, Mori–Tanaka gives
+``A = 3\varphi/(4(1-\varphi))`` and ``B = (1+2\varphi/3)/(1-\varphi)``, and the ellipse
+becomes
+``\tfrac{3}{2}\varphi\,\Sigma_m^2 + (1+\tfrac{2}{3}\varphi)\,\Sigma_d^2 = (1-\varphi)^2\sigma_o^2``,
+eq. (5.33) of [barthelemyThesis2005](@cite), where the bound ``\sigma_o`` on ``\sigma_d``
+is written ``b``.
 
 ``A`` and ``B`` are **not** independent material data — they are the
 sensitivities of the two homogenized moduli to the *solid's own* shear

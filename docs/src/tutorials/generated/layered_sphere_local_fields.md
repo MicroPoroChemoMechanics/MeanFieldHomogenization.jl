@@ -114,7 +114,7 @@ no longer radial: it depends on ``\theta`` as well, and both the radial
 and hoop stresses vary along the interface.
 
 ````@example layered_sphere_local_fields
-const ε∞_dev = Tens(diagm([0.0, 0.0, 1.0]))
+const ε∞_uni = Tens(diagm([0.0, 0.0, 1.0]))
 ````
 
 Note the two spellings of a point: a Cartesian vector, as here, or the three
@@ -127,8 +127,8 @@ somewhere else entirely.
 σ_at(sol, r, θ, ε∞; side = :outer) =
     local_flux(sol, [r * sin(θ), 0.0, r * cos(θ)], ε∞; side)
 
-σzz_pole = [σ_at(sol, r, 0.0, ε∞_dev)[3, 3] for r in rs]      # along the load axis
-σzz_eq = [σ_at(sol, r, π / 2, ε∞_dev)[3, 3] for r in rs]      # perpendicular to it
+σzz_pole = [σ_at(sol, r, 0.0, ε∞_uni)[3, 3] for r in rs]      # along the load axis
+σzz_eq = [σ_at(sol, r, π / 2, ε∞_uni)[3, 3] for r in rs]      # perpendicular to it
 ````
 
 ## A spring interface debonds the core
@@ -195,32 +195,32 @@ fig1 = plot(
 )
 ````
 
-## Figure 2 — a meridian map of the von Mises stress
+## Figure 2 — a meridian map of the norm of the stress deviator
 
-The deviatoric loading breaks the spherical symmetry, so the field is
-genuinely two-dimensional. A meridian slice ``(x, z)`` shows the ITZ
-concentrating the shear and the core shielding.
+The deviatoric part of the uniaxial loading breaks the spherical symmetry,
+so the field is genuinely two-dimensional. A meridian slice ``(x, z)`` of
+``\sigma_d = \sqrt{\boldsymbol\sigma^d:\boldsymbol\sigma^d}``, with no factor (see
+[Conventions](@ref th-notation-deviatoric)), shows the ITZ concentrating the
+shear and the core shielding.
 
 ````@example layered_sphere_local_fields
-function von_mises(σ)
-    s = σ - (tr(σ) / 3) * TensISO{3}(1.0)
-    return sqrt(3 / 2) * norm(s)
-end
+"Norm of the stress deviator, `σ_d = √(σᵈ:σᵈ)`."
+deviatoric_norm(σ) = norm(σ - (tr(σ) / 3) * TensISO{3}(1.0))
 
 xs = range(-2.6Rₛ, 2.6Rₛ; length = 220)
 zs = range(-2.6Rₛ, 2.6Rₛ; length = 220)
-vm = [
+σd_map = [
     let r = hypot(x, z)
-        r < 1.0e-9 ? von_mises(local_flux(sol, [0.0, 0.0, 0.0], ε∞_dev)) :
-            von_mises(local_flux(sol, [x, 0.0, z], ε∞_dev))
+        r < 1.0e-9 ? deviatoric_norm(local_flux(sol, [0.0, 0.0, 0.0], ε∞_uni)) :
+            deviatoric_norm(local_flux(sol, [x, 0.0, z], ε∞_uni))
     end
         for z in zs, x in xs
 ]
 
 fig2 = heatmap(
-    xs, zs, vm;
+    xs, zs, σd_map;
     aspect_ratio = 1, c = :viridis, xlabel = "x", ylabel = "z",
-    title = "von Mises stress, ε∞ = diag(0,0,1)",
+    title = "σ_d = √(σᵈ:σᵈ), ε∞ = e₃⊗e₃",
     size = (620, 560), right_margin = 6Plots.mm
 )
 let θ = range(0, 2π; length = 400)

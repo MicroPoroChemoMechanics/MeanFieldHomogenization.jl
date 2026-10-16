@@ -59,7 +59,7 @@
 #       differentiating through the iterations (no repeated user-partial
 #       propagation every iteration).
 #
-#  See `docs/src/tutorials/12_nonlinear_solvers.md` for a worked
+#  See `docs/src/tutorials/nonlinear_solvers.md` for a worked
 #  derivation and cross-check against the built-in solvers.
 # =============================================================================
 

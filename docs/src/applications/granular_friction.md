@@ -24,6 +24,17 @@ assembly is expected to follow a Drucker–Prager criterion
 ``\Sigma_d = \sqrt{\boldsymbol\Sigma^{\mathrm d}:\boldsymbol\Sigma^{\mathrm d}/2}``. The macroscopic friction
 coefficient ``T`` is what this page computes.
 
+!!! note "The normalization of this page"
+    This page keeps the normalization of [maalej2009](@citet), with
+    ``\tfrac{1}{2}`` under the root, so that the friction coefficient ``T`` and its
+    expressions are those of the article. The norm used in the rest of this
+    documentation carries no factor (see [Conventions](@ref th-notation-deviatoric)):
+    it makes ``\Sigma_d`` larger by ``\sqrt 2``, and the friction coefficient
+    ``t = \sqrt 2\,T``. The conversion of a friction angle used below,
+    ``T = 2\sqrt 3\sin\phi_f/(3 - \sin\phi_f)``, then reads
+    ``t = 2\sqrt 6\sin\phi_f/(3 - \sin\phi_f)``. The contact friction ``\alpha``, a
+    ratio of tractions, does not depend on it.
+
 ## 1. A rigid grain bonded by springs
 
 ```@example granular
