@@ -15,7 +15,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
+    name: Julia ${{ matrix.version }} - ${{ matrix.part }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     permissions: # needed to allow julia-actions/cache to proactively delete old caches that it has created
@@ -28,6 +28,14 @@ jobs:
           - '1.12'
           - '1.13'
           - 'pre'
+        # The suite runs in four parts (`TEST_PARTS` in test/runtests.jl). Whole,
+        # it took 52 to 85 minutes depending on the runner, and the coverage job
+        # crossed the 90-minute timeout; each part is a fraction of that.
+        part:
+          - 'core'
+          - 'schemes'
+          - 'patterns'
+          - 'visco-neural'
         os:
           - ubuntu-latest
         arch:
@@ -79,6 +87,7 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         with:
+          test_args: ${{ matrix.part }}
           # Instrument only the primary job: coverage disables precompilation
           # caching and would slow down every other matrix entry for nothing.
           coverage: ${{ matrix.version == '1.12' }}
