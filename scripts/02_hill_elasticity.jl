@@ -78,12 +78,12 @@ end
 # The only case with a one-line closed form:
 #
 # ```math
-# P_{1111} = \frac{1}{5(\lambda + 2\mu)} + \frac{1}{\mu}\left(\frac13 - \frac15\right).
+# P_{1111} = \frac{1}{5(\lambda + 2\mu)} + \frac{2}{15\,\mu}.
 # ```
 
 let ell = Ellipsoid(1.0)
     P = hill_tensor(ell, C_iso)
-    P1111_theory = 1 / (5 * (λ_ref + 2μ_ref)) + (1 / 3 - 1 / 5) / μ_ref
+    P1111_theory = 1 / (5 * (λ_ref + 2μ_ref)) + 2 / (15μ_ref)
 
     @printf "  P[1,1,1,1] = %12.9e MPa⁻¹\n" P[1, 1, 1, 1]
     @printf "  theory     = %12.9e MPa⁻¹   (err = %.2e)\n" P1111_theory abs(P[1, 1, 1, 1] - P1111_theory)
