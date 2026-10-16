@@ -82,8 +82,8 @@ which is rank-1 along ``\underline{n}``.  The acoustic block is then
 
 with ``\boldsymbol\Lambda(0) = \boldsymbol{K}_0 - (\boldsymbol{K}_0\cdot\underline{n})\otimes(\boldsymbol{K}_0\cdot\underline{n})/k_{nn}``.
 Its null space is spanned by ``\underline{n}``, since
-``\boldsymbol\Lambda(0)\cdot\underline{n} = \boldsymbol{K}_0\cdot\underline{n}
-- (\boldsymbol{K}_0\cdot\underline{n})\,(\underline{n}\cdot\boldsymbol{K}_0\cdot\underline{n})/k_{nn} = \underline{0}`` (one-dimensional in the
+``\boldsymbol\Lambda(0)\cdot\underline{n} = \boldsymbol{K}_0\cdot\underline{n} -
+(\boldsymbol{K}_0\cdot\underline{n})\,(\underline{n}\cdot\boldsymbol{K}_0\cdot\underline{n})/k_{nn} = \underline{0}`` (one-dimensional in the
 2-tensor case — to be contrasted with the 3-dimensional null space in
 the elasticity problem).  The limit
 

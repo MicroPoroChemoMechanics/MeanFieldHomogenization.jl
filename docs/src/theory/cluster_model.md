@@ -114,6 +114,13 @@ The implementation flattens the system onto the Kelvin-Mandel basis — where ``
 becomes an ordinary matrix product — and solves it with one dense factorization, rather
 than reproducing the tensorial Gauss elimination of the paper.
 
+The unknowns of the system are therefore the concentration tensors themselves,
+and [`concentration_tensors`](@ref) returns them in the form of
+[the overview](@ref th-estimate-concentration): one strain tensor
+``\mathbb A_I`` per family, keyed `:family_<label>`, with
+``\mathbb A_{\sigma\varepsilon,I} = \mathbb C_I:\mathbb A_I``, and the matrix
+closing both averages as above.
+
 ## 4. The Mori-Tanaka limit
 
 Reduce the cluster to its own receiver. Every ``\bar{\mathbb{T}}`` vanishes and

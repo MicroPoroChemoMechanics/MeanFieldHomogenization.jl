@@ -1,0 +1,223 @@
+# [Levin's theorem: free strains and prestresses](@id th-levin)
+
+!!! info "Before this page"
+    [Homogenization schemes](@ref th-homogenization), where the strain and
+    stress concentration tensors of an estimate are defined, and any of the
+    scheme pages of this chapter, each of which ends with the concentration
+    tensors of its estimate.
+
+The schemes of this chapter estimate the response of a composite to a
+macroscopic strain alone. The phases of a real material often carry, in
+addition, a strain that owes nothing to the stress — a thermal dilation, a
+hydric or chemical swelling — or a stress that owes nothing to the strain, such
+as the pressure of a fluid filling the pores. The macroscopic law then acquires
+an additional term, and the result known as Levin's theorem states that this
+term follows from the concentration tensors already computed, without any new
+problem to solve. Its consequences for thermal expansion were drawn by
+[rosen1970](@citet) for two anisotropic phases, the relations between the
+eigenstrains of the phases and their concentration tensors are developed for
+multiphase media by [dvorak1992](@citet), and the theorem is the basis of the
+micromechanics of saturated porous media [dormieux2006microporo](@cite).
+
+## 1. Setting
+
+Each phase ``r`` of the representative volume element obeys a linear elastic
+law with a uniform eigenstrain ``\boldsymbol\varepsilon^\ast_r``, or equivalently
+a uniform prestress ``\boldsymbol\sigma^\ast_r``,
+
+```math
+\boldsymbol\sigma = \mathbb C_r:(\boldsymbol\varepsilon - \boldsymbol\varepsilon^\ast_r)
+  = \mathbb C_r:\boldsymbol\varepsilon + \boldsymbol\sigma^\ast_r ,
+\qquad
+\boldsymbol\sigma^\ast_r = -\,\mathbb C_r:\boldsymbol\varepsilon^\ast_r ,
+```
+
+the stiffness ``\mathbb C_r`` having the major symmetry. The second form remains
+meaningful for a phase without stiffness, such as a pore filled with a fluid at
+pressure ``p``, where ``\mathbb C_r = 0`` and ``\boldsymbol\sigma^\ast_r = -p\,\boldsymbol 1``.
+The local problem being linear in the pair
+``(\boldsymbol E, \boldsymbol\sigma^\ast)``, the macroscopic law is affine,
+
+```math
+\boldsymbol\Sigma = \mathbb C^{\mathrm{hom}}:\boldsymbol E + \boldsymbol\Sigma^\ast
+  = \mathbb C^{\mathrm{hom}}:(\boldsymbol E - \boldsymbol E^\ast) ,
+\qquad
+\boldsymbol\Sigma^\ast = -\,\mathbb C^{\mathrm{hom}}:\boldsymbol E^\ast ,
+```
+
+which defines the macroscopic prestress ``\boldsymbol\Sigma^\ast``, the stress
+under a vanishing macroscopic strain, and the macroscopic free strain
+``\boldsymbol E^\ast``, the strain under a vanishing macroscopic stress. The
+concentration tensors are those of the problem without eigenstrain:
+``\langle\boldsymbol\varepsilon\rangle_r = \mathbb A_r:\boldsymbol E`` under a
+macroscopic strain and ``\langle\boldsymbol\sigma\rangle_r = \mathbb B_r:\boldsymbol\Sigma``
+under a macroscopic stress.
+
+## 2. Statement
+
+The macroscopic prestress and free strain are
+
+```math
+\boldsymbol\Sigma^\ast = \sum_r f_r\,\boldsymbol\sigma^\ast_r:\mathbb A_r ,
+\qquad
+\boldsymbol E^\ast = \sum_r f_r\,\boldsymbol\varepsilon^\ast_r:\mathbb B_r ,
+```
+
+where the second-order tensor contracts the first pair of indices of the
+fourth-order one, ``(\boldsymbol\sigma^\ast:\mathbb A)_{kl} = \sigma^\ast_{ij}\,A_{ijkl}``.
+The concentration tensors have the minor symmetries but not the major one, so
+the order of the factors matters.
+
+## 3. Proof
+
+Two problems are posed on the same volume element under uniform strain
+boundary conditions. In problem (a) the phases carry their prestresses and the
+macroscopic strain vanishes, so that
+``\langle\boldsymbol\varepsilon^a\rangle = \boldsymbol 0`` and
+``\langle\boldsymbol\sigma^a\rangle = \boldsymbol\Sigma^\ast``. In problem (b)
+there is no prestress and the macroscopic strain is an arbitrary
+``\boldsymbol E^b``, so that
+``\langle\boldsymbol\varepsilon^b\rangle_r = \mathbb A_r:\boldsymbol E^b`` and
+``\boldsymbol\sigma^b = \mathbb C:\boldsymbol\varepsilon^b``. Each stress field is in
+equilibrium and each strain field is compatible, so that Hill's lemma
+[hill1963](@cite) applies to the two crossed pairs:
+
+```math
+\langle\boldsymbol\sigma^a:\boldsymbol\varepsilon^b\rangle = \boldsymbol\Sigma^\ast:\boldsymbol E^b ,
+\qquad
+\langle\boldsymbol\sigma^b:\boldsymbol\varepsilon^a\rangle
+  = \langle\boldsymbol\sigma^b\rangle:\langle\boldsymbol\varepsilon^a\rangle = 0 .
+```
+
+Pointwise, the major symmetry of the local stiffness yields
+``\boldsymbol\sigma^a:\boldsymbol\varepsilon^b
+= \boldsymbol\varepsilon^a:\mathbb C:\boldsymbol\varepsilon^b + \boldsymbol\sigma^\ast:\boldsymbol\varepsilon^b
+= \boldsymbol\sigma^b:\boldsymbol\varepsilon^a + \boldsymbol\sigma^\ast:\boldsymbol\varepsilon^b``.
+Averaging this identity, the prestress being uniform in each phase,
+
+```math
+\boldsymbol\Sigma^\ast:\boldsymbol E^b
+  = \sum_r f_r\,\boldsymbol\sigma^\ast_r:\langle\boldsymbol\varepsilon^b\rangle_r
+  = \Big(\sum_r f_r\,\boldsymbol\sigma^\ast_r:\mathbb A_r\Big):\boldsymbol E^b ,
+```
+
+for every ``\boldsymbol E^b``, which is the first statement. Only the symmetry of
+the local stiffness was used, so that it holds for a phase without stiffness as
+well. The second statement follows by substituting
+``\boldsymbol\sigma^\ast_r = -\,\mathbb C_r:\boldsymbol\varepsilon^\ast_r``. For a homogeneous
+phase ``\langle\boldsymbol\sigma\rangle_r = \mathbb C_r:\langle\boldsymbol\varepsilon\rangle_r``,
+hence ``\mathbb C_r:\mathbb A_r = \mathbb B_r:\mathbb C^{\mathrm{hom}}``, and
+
+```math
+\boldsymbol\Sigma^\ast
+  = -\sum_r f_r\,\boldsymbol\varepsilon^\ast_r:\mathbb C_r:\mathbb A_r
+  = -\Big(\sum_r f_r\,\boldsymbol\varepsilon^\ast_r:\mathbb B_r\Big):\mathbb C^{\mathrm{hom}}
+  = -\,\mathbb C^{\mathrm{hom}}:\Big(\sum_r f_r\,\boldsymbol\varepsilon^\ast_r:\mathbb B_r\Big) ,
+```
+
+the last equality using the major symmetry of ``\mathbb C^{\mathrm{hom}}``.
+Comparison with ``\boldsymbol\Sigma^\ast = -\,\mathbb C^{\mathrm{hom}}:\boldsymbol E^\ast``
+gives the free strain.
+
+## 4. With an estimate
+
+A scheme provides estimates of ``\mathbb A_r`` and ``\mathbb B_r`` rather than
+the exact phase averages, and the theorem applied to them yields the estimate of
+``\boldsymbol\Sigma^\ast`` and ``\boldsymbol E^\ast`` consistent with the scheme.
+The two forms of §2 remain equivalent as long as the estimate of
+``\mathbb C^{\mathrm{hom}}`` keeps the major symmetry, on which the proof of the
+second one rests. A Mori–Tanaka estimate with inclusions of different shapes or
+orientations can lose it, and the two forms then give two different estimates;
+the package evaluates each one as stated, from ``\mathbb A_r`` for the prestress
+and from ``\mathbb B_r`` for the free strain.
+
+### Two phases
+
+With two phases the averages
+``f_1\,\mathbb B_1 + f_2\,\mathbb B_2 = \mathbb I`` and
+``f_1\,\mathbb S_1:\mathbb B_1 + f_2\,\mathbb S_2:\mathbb B_2 = \mathbb S^{\mathrm{hom}}``
+determine both stress concentration tensors, provided ``\mathbb S_2 - \mathbb S_1``
+is invertible:
+``f_2\,\mathbb B_2 = (\mathbb S_2 - \mathbb S_1)^{-1}:(\mathbb S^{\mathrm{hom}} - \mathbb S_1)``
+and ``f_1\,\mathbb B_1 = \mathbb I - f_2\,\mathbb B_2``. The free strain therefore
+depends on the effective compliance alone,
+
+```math
+\boldsymbol E^\ast = \boldsymbol\varepsilon^\ast_1
+  + (\boldsymbol\varepsilon^\ast_2 - \boldsymbol\varepsilon^\ast_1):(\mathbb S_2 - \mathbb S_1)^{-1}:(\mathbb S^{\mathrm{hom}} - \mathbb S_1) .
+```
+
+The derivation uses nothing but the two averages, which every estimate of the
+package satisfies: whatever the scheme, its estimate of the free strain of a
+two-phase material is this function of its estimate of
+``\mathbb S^{\mathrm{hom}}``. For two isotropic phases of bulk moduli ``k_1``,
+``k_2`` and thermal expansion coefficients ``\alpha_1``, ``\alpha_2``, under a
+temperature rise ``\Delta T``, the eigenstrains are
+``\boldsymbol\varepsilon^\ast_r = \alpha_r\,\Delta T\,\boldsymbol 1``. Since
+``\boldsymbol 1:\mathbb K = \boldsymbol 0`` for the deviatoric projector and
+``\boldsymbol 1:(\mathbb S_2 - \mathbb S_1)^{-1} = 3\,\boldsymbol 1/(1/k_2 - 1/k_1)``,
+the thermal expansion tensor ``\boldsymbol\alpha^{\mathrm{hom}} = \boldsymbol E^\ast/\Delta T`` is
+
+```math
+\boldsymbol\alpha^{\mathrm{hom}} = \alpha_1\,\boldsymbol 1
+  + \frac{\alpha_2 - \alpha_1}{1/k_2 - 1/k_1}
+    \Big(3\,\boldsymbol 1:\mathbb S^{\mathrm{hom}} - \frac{1}{k_1}\,\boldsymbol 1\Big) ,
+```
+
+which reduces to
+``\alpha^{\mathrm{hom}} = \alpha_1 + (\alpha_2 - \alpha_1)\,(1/k^{\mathrm{hom}} - 1/k_1)/(1/k_2 - 1/k_1)``
+when the effective compliance is isotropic, ``\boldsymbol 1:\mathbb S^{\mathrm{hom}} = \boldsymbol 1/(3k^{\mathrm{hom}})``.
+
+## 5. Saturated pores and cracks: the Biot tensor
+
+A fluid at pressure ``p`` filling the pores loads them with the prestress
+``-p\,\boldsymbol 1``, and the macroscopic law takes the drained form
+``\boldsymbol\Sigma = \mathbb C^{\mathrm{hom}}:\boldsymbol E - p\,\boldsymbol B`` of
+[Poromechanics](@ref manual-poromechanics), with the Biot tensor
+``\boldsymbol B`` defined by ``\boldsymbol\Sigma^\ast = -p\,\boldsymbol B``. A crack
+family filled by the same fluid contributes as well. Its volume fraction vanishes
+while the strain carried by its openings remains finite, so that the product
+``f_c\,\mathbb A_c`` tends to ``\varepsilon_c\,\mathbb A_c``, the crack density
+times the concentration tensor per unit density defined in
+[Homogenization schemes](@ref th-homogenization). Only the traction
+``-p\,\underline n`` on its faces enters the contraction, since the opening is a
+displacement jump across them. The first statement of §2 thus gives
+
+```math
+\boldsymbol B = \sum_{\mathrm{pores}} f_p\,\boldsymbol 1:\mathbb A_p
+  + \sum_{\mathrm{cracks}} \varepsilon_c\,\boldsymbol 1:\mathbb A_c .
+```
+
+When the solid is a single homogeneous phase ``s``, the two averages provide a
+shortcut: neither pores nor cracks carry stress, so that
+``f_s\,\mathbb C_s:\mathbb A_s = \mathbb C^{\mathrm{hom}}``, and the strain average then gives
+``\sum_{\mathrm{pores}} f_p\,\mathbb A_p + \sum_{\mathrm{cracks}} \varepsilon_c\,\mathbb A_c
+= \mathbb I - \mathbb S_s:\mathbb C^{\mathrm{hom}}``, whence the classical
+``\boldsymbol B = \boldsymbol 1:(\mathbb I - \mathbb S_s:\mathbb C^{\mathrm{hom}})``
+evaluated by [`biot_tensor`](@ref). With several solid phases the shortcut is
+lost, and the theorem in the form above is the general route.
+
+## 6. In the package
+
+[`concentration_tensors`](@ref) returns the concentration tensors of every phase
+under a scheme, and the theorem is applied by [`levin_prestress`](@ref) and
+[`levin_free_strain`](@ref), which take the prestress or the eigenstrain of each
+loaded phase:
+
+```julia
+ct = concentration_tensors(rve, MoriTanaka(:M), :C)
+𝟏 = TensISO{3}(1.0)
+α_hom = levin_free_strain(ct, Dict(:M => α_M * 𝟏, :I => α_I * 𝟏))
+B = -levin_prestress(ct, Dict(:P => -𝟏, :cracks => -𝟏))
+```
+
+A crack family is accepted as a prestressed phase, with its density as weight,
+and refused as an eigenstrained one, since it holds no material.
+
+## Where to go next
+
+The tutorial [Thermal expansion and Biot tensor](@ref tut-levin) applies the
+theorem to a two-phase composite and to a porous solid, numerically and in
+closed form. The next chapter keeps every scheme and changes the physics:
+[Extension to conductivity](@ref th-conductivity) states the dictionary through
+which the order-2 transport problem reuses the whole chain.

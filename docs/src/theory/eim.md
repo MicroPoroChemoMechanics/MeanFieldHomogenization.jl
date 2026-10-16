@@ -78,7 +78,12 @@ Local fields come out for free:
 ``\boldsymbol{\varepsilon}_a = (\mathbb{C}_a-\mathbb{C}_0)^{-1}:\boldsymbol{\tau}_a``
 and
 ``\boldsymbol{\sigma}_a = \mathbb{C}_0 : \boldsymbol{\varepsilon}_a +
-\boldsymbol{\tau}_a``.
+\boldsymbol{\tau}_a``. Solving the system for a unit macroscopic strain, the
+polarization of each particle is a fourth-order tensor applied to
+``\boldsymbol E``, and so is its mean strain: these are the concentration tensors
+``\mathbb A_a`` that [`concentration_tensors`](@ref) returns, one per particle, in
+the form of [the overview](@ref th-estimate-concentration), the matrix closing
+both averages.
 
 !!! note "Transcribed verbatim"
     The package shares the sign convention of [brisard2023](@citet) (see the
@@ -179,10 +184,9 @@ polynomial enrichment is not implemented.
 
 ## Where to go next
 
-The chapter on schemes ends here. The next one keeps every scheme and changes
-the physics: [Extension to conductivity](@ref th-conductivity) states the
-dictionary through which the order-2 transport problem reuses the whole chain.
-The table of §5 is reproduced in
+The last page of the chapter, [Levin's theorem](@ref th-levin), draws from the
+concentration tensors of any of these schemes the response of the composite to
+free strains and prestresses of its phases. The table of §5 is reproduced in
 [The equivalent inclusion method, against a published table](@ref app-eim-assembly).
 The construction of a [`ParticleAssembly`](@ref) is in
 [Particle assemblies and N-body schemes](@ref man-assemblies), and the API

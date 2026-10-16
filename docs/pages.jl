@@ -81,6 +81,9 @@ pages = [
             "theory/laminate.md",
             "theory/cluster_model.md",
             "theory/eim.md",
+            # Not a scheme: what every scheme's concentration tensors give
+            # beyond the effective stiffness.
+            "theory/levin.md",
         ],
         "Extension to conductivity" => [
             "theory/conductivity.md",
@@ -151,6 +154,7 @@ pages = [
             "tutorials/transport.md",
             "tutorials/differential_paths.md",
             "tutorials/differential_loading_paths.md",
+            "tutorials/levin.md",
         ],
         "Inclusions, geometries and orientation" => [
             "tutorials/generated/hill_tensors.md",

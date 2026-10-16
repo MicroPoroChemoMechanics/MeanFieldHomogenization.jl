@@ -115,6 +115,75 @@ scheme through these two terms, added to ``\mathbb N_\Sigma`` as
 ``\kappa_c\,\varepsilon_c\,\mathbb N_c`` with
 ``\mathbb N_c = -\,\mathbb C_0:\mathbb H_c:\mathbb C_0``, and each page says where.
 
+### [The concentration tensors of an estimate](@id th-estimate-concentration)
+
+Besides ``\mathbb C^{\mathrm{hom}}``, a scheme estimates the concentration
+tensors of every phase, which [`concentration_tensors`](@ref) returns: the strain
+concentration tensor ``\mathbb A_r`` and the stress concentration tensor per unit
+macroscopic strain ``\mathbb A_{\sigma\varepsilon,r}``, such that
+
+```math
+\langle\boldsymbol\varepsilon\rangle_r = \mathbb A_r:\boldsymbol E ,
+\qquad
+\langle\boldsymbol\sigma\rangle_r = \mathbb A_{\sigma\varepsilon,r}:\boldsymbol E ,
+```
+
+with ``\mathbb A_{\sigma\varepsilon,r} = \mathbb C_r:\mathbb A_r`` for a homogeneous
+phase. A crack family carries no stress, ``\mathbb A_{\sigma\varepsilon,c} = 0``,
+and its strain tensor is the limit of the previous section per unit density,
+``\mathbb A_c = \kappa_c\,\mathbb H_c:\mathbb C_0`` in the dilute case. Weighting
+each phase by ``w_r``, its volume fraction or the density of a crack family,
+every estimate of the package satisfies the two averages
+
+```math
+\sum_r w_r\,\mathbb A_r = \mathbb I ,
+\qquad
+\sum_r w_r\,\mathbb A_{\sigma\varepsilon,r} = \mathbb C^{\mathrm{hom}} ,
+```
+
+and the stress-driven forms follow by composition with the effective
+compliance: ``\langle\boldsymbol\sigma\rangle_r = \mathbb B_r:\boldsymbol\Sigma`` with
+``\mathbb B_r = \mathbb A_{\sigma\varepsilon,r}:\mathbb S^{\mathrm{hom}}``, and
+``\langle\boldsymbol\varepsilon\rangle_r = \mathbb A_r:\mathbb S^{\mathrm{hom}}:\boldsymbol\Sigma``.
+Relative to any reference stiffness ``\mathbb C_{\mathrm{ref}}``, the contribution of
+phase ``r`` to the estimate maps the macroscopic strain onto the mean
+polarization of the phase,
+
+```math
+\langle\boldsymbol\sigma - \mathbb C_{\mathrm{ref}}:\boldsymbol\varepsilon\rangle_r
+  = \mathbb N_r^{\mathrm{est}}:\boldsymbol E ,
+\qquad
+\mathbb N_r^{\mathrm{est}} = \mathbb A_{\sigma\varepsilon,r} - \mathbb C_{\mathrm{ref}}:\mathbb A_r ,
+\qquad
+\mathbb C^{\mathrm{hom}} = \mathbb C_{\mathrm{ref}} + \sum_r w_r\,\mathbb N_r^{\mathrm{est}} ,
+```
+
+the last identity following from the two averages, and its compliance
+counterpart
+``\mathbb H_r^{\mathrm{est}} = (\mathbb A_r - \mathbb S_{\mathrm{ref}}:\mathbb A_{\sigma\varepsilon,r}):\mathbb S^{\mathrm{hom}}``
+maps the macroscopic stress onto
+``\langle\boldsymbol\varepsilon - \mathbb S_{\mathrm{ref}}:\boldsymbol\sigma\rangle_r``, with
+``\mathbb S^{\mathrm{hom}} = \mathbb S_{\mathrm{ref}} + \sum_r w_r\,\mathbb H_r^{\mathrm{est}}``.
+With the matrix as reference, ``\mathbb N_i^{\mathrm{est}}`` reduces to the dilute
+``\mathbb N_i`` for the dilute estimate, and ``\mathbb H_i^{\mathrm{est}}`` to the
+dilute ``\mathbb H_i`` for the dual one; under any other scheme they carry the
+interactions that the scheme accounts for.
+
+The one-site schemes all build these tensors in the same way. Phase ``i`` solves
+its dilute problem in the reference medium of the scheme, loaded by a remote
+strain ``\mathbb E:\boldsymbol E`` that the scheme fixes,
+
+```math
+\mathbb A_i = \mathbb A_i^{\mathrm{dil}}:\mathbb E ,
+\qquad
+\mathbb A_{\sigma\varepsilon,i} = \mathbb C_i:\mathbb A_i^{\mathrm{dil}}:\mathbb E ,
+```
+
+and when the scheme singles out a matrix, the matrix takes the rest of the two
+averages. Each scheme page ends with its tensor ``\mathbb E``, and
+[Levin's theorem](@ref th-levin), at the end of the chapter, draws from the
+concentration tensors the response to free strains and prestresses.
+
 ## [3. The schemes at a glance](@id th-schemes-glance)
 
 Each scheme answers the question of §1 differently. The table names the
@@ -142,6 +211,7 @@ at all. The next four pages embed the inclusions in the matrix, each with a
 richer description of what surrounds them. The self-consistent and differential
 schemes then replace the matrix by the effective medium, the laminate is solved
 exactly, and the last two schemes resolve the interaction inclusion by inclusion.
+A last page, on [Levin's theorem](@ref th-levin), applies to all of them.
 
 ## [4. Schemes that need positions](@id th-nbody)
 

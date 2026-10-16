@@ -75,6 +75,19 @@ is the Reuss mean of the layers' inverses, and in their plane, the Schur
 complement of ``\mathbb C^{\mathrm{hom}}`` is the Voigt mean of the layers'
 complements ([Laminate](@ref th-laminate), §6).
 
+## 4. Concentration tensors
+
+The two assumptions are statements on the concentration tensors themselves, in
+the sense of [the overview](@ref th-estimate-concentration). Under Voigt every
+phase undergoes the macroscopic strain, so that ``\mathbb A_r = \mathbb I`` and
+``\mathbb A_{\sigma\varepsilon,r} = \mathbb C_r``; under Reuss every phase carries
+the macroscopic stress, ``\mathbb B_r = \mathbb I``, so that
+``\mathbb A_{\sigma\varepsilon,r} = \mathbb C^{\mathrm R}`` and
+``\mathbb A_r = \mathbb S_r:\mathbb C^{\mathrm R}``. The two averages then return
+``\mathbb C^{\mathrm V}`` and ``\mathbb C^{\mathrm R}``. Neither bound singles out a
+matrix, so that a contribution must be given an explicit reference, and crack
+families are absent, as they are from the bounds.
+
 ## Where to go next
 
 The bounds know nothing of shapes. The next page,

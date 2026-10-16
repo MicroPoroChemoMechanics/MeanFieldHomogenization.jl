@@ -57,6 +57,33 @@ B = biot_tensor(homogenize(rve_c, MoriTanaka()), C_s)
 (B₁₁ = B[1, 1], B₃₃ = B[3, 3])       # normal to the cracks is e₃
 ```
 
+## Several solid phases
+
+The formula for ``\boldsymbol{B}`` rests on a single solid phase. With several,
+the Biot tensor follows from [Levin's theorem](@ref th-levin): the pore pressure
+is the prestress ``-p\,\boldsymbol{1}`` of the pores, and of the cracks it fills,
+so that ``\boldsymbol{B} = \sum_{\mathrm{pores}} f_p\,\boldsymbol{1}:\mathbb{A}_p +
+\sum_{\mathrm{cracks}} \varepsilon_c\,\boldsymbol{1}:\mathbb{A}_c``, with the
+concentration tensors of the scheme ([Concentration tensors of the phases](@ref man-concentration-tensors)).
+Stiff grains are added to the porous solid above:
+
+```@example poro
+rve_g = RVE()
+add_phase!(rve_g, :M, Ellipsoid(1.0), Dict(:C => C_s); fraction = :rest)
+add_phase!(rve_g, :G, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 60.0, 2 * 40.0));
+           fraction = 0.3)
+add_phase!(rve_g, :P, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0e-9, 1.0e-9));
+           fraction = φ)
+
+ct = concentration_tensors(rve_g, MoriTanaka(:M), :C)
+𝟏 = TensISO{3}(1.0)
+B_g = -levin_prestress(ct, Dict(:P => -𝟏))
+(B₁₁ = B_g[1, 1], one_solid_formula = biot_tensor(ct.effective, C_s)[1, 1])
+```
+
+The second number applies the single-solid formula as if the matrix were the only
+solid; it is not the Biot coefficient of this material.
+
 !!! warning "The fluid is assumed incompressible"
     ``1/M`` above holds for ``k_f = \infty``. A compressible fluid adds a
     storage term ``\varphi/k_f``. The distinction is not cosmetic: with an

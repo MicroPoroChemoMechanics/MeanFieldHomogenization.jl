@@ -834,7 +834,7 @@ tex = '\kappa_c'
 label = "κ<sub>c</sub>"
 name = "geometric prefactor of a crack family, 4π/3 (elliptic) or π (ribbon)"
 unit = "1"
-pages = ["theory/homogenization.md", "theory/scheme_dilute.md", "theory/scheme_mori_tanaka.md", "theory/scheme_maxwell.md", "theory/scheme_pcw.md", "theory/scheme_self_consistent.md"]
+pages = ["theory/homogenization.md", "theory/scheme_dilute.md", "theory/scheme_mori_tanaka.md", "theory/scheme_maxwell.md", "theory/scheme_pcw.md", "theory/scheme_self_consistent.md", "theory/differential_scheme.md"]
 
 [[symbol]]
 group = "Eshelby problem and concentration"
@@ -1195,7 +1195,7 @@ tex = '\boldsymbol{B}'
 label = "<b>B</b>"
 name = "Biot tensor"
 unit = "1"
-pages = ["manual/poromechanics.md", "fe_coupling/materials.md", "fe_coupling/fractured_rock.md", "fe_coupling/poroelastic_coupling.md", "fe_coupling/scale_transition.md", "fe_coupling/arma2011.md", "fe_coupling/thick_cylinder.md", "fe_coupling/backends.md", "fe_coupling/index.md"]
+pages = ["manual/poromechanics.md", "theory/levin.md", "tutorials/levin.md", "fe_coupling/materials.md", "fe_coupling/fractured_rock.md", "fe_coupling/poroelastic_coupling.md", "fe_coupling/scale_transition.md", "fe_coupling/arma2011.md", "fe_coupling/thick_cylinder.md", "fe_coupling/backends.md", "fe_coupling/index.md"]
 
 [[symbol]]
 group = "Cracks"
@@ -1941,3 +1941,121 @@ label = "ϵ"
 name = "vanishing parameter of a symbolic limit of infinite stiffness"
 unit = "1"
 pages = ["applications/granular_friction.md", "applications/sandstone_strength.md"]
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{E}'
+label = "𝔼"
+name = "tensor mapping the macroscopic strain onto the remote strain applied to the inclusions of a one-site scheme"
+unit = "1"
+pages = ["theory/homogenization.md", "theory/scheme_bounds.md", "theory/scheme_dilute.md", "theory/scheme_mori_tanaka.md", "theory/scheme_maxwell.md", "theory/scheme_self_consistent.md"]
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{N}^{\mathrm{est}}'
+label = "ℕ<sup>est</sup>"
+name = "contribution of a phase to the estimated stiffness, relative to a reference stiffness"
+unit = "Pa"
+pages = ["theory/homogenization.md", "theory/scheme_dilute.md"]
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{H}^{\mathrm{est}}'
+label = "ℍ<sup>est</sup>"
+name = "contribution of a phase to the estimated compliance, relative to a reference compliance"
+unit = "Pa<sup>−1</sup>"
+pages = ["theory/homogenization.md", "theory/scheme_dilute.md"]
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{C}_{\mathrm{ref}}'
+label = "ℂ<sub>ref</sub>"
+name = "reference stiffness of a contribution"
+unit = "Pa"
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{S}_{\mathrm{ref}}'
+label = "𝕊<sub>ref</sub>"
+name = "reference compliance of a contribution"
+unit = "Pa<sup>−1</sup>"
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'w_r'
+label = "w<sub>r</sub>"
+name = "weight of a phase in the averages: its volume fraction, or the density of a crack family"
+unit = "1"
+pages = ["theory/homogenization.md", "theory/differential_scheme.md"]
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{G}^\varepsilon'
+label = "𝔾<sup>ε</sup>"
+name = "strain concentration tensor of a phase weighted by its amount, along the differential path"
+unit = "1"
+pages = ["theory/differential_scheme.md"]
+
+[[symbol]]
+group = "Eshelby problem and concentration"
+tex = '\mathbb{G}^\sigma'
+label = "𝔾<sup>σ</sup>"
+name = "stress concentration tensor of a phase weighted by its amount, along the differential path"
+unit = "Pa"
+pages = ["theory/differential_scheme.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\boldsymbol{\varepsilon}^\ast'
+label = "<b>ε</b><sup>∗</sup>"
+name = "eigenstrain (free strain) of a phase"
+unit = "1"
+pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\boldsymbol{\sigma}^\ast'
+label = "<b>σ</b><sup>∗</sup>"
+name = "prestress of a phase"
+unit = "Pa"
+pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\boldsymbol{E}^\ast'
+label = "<b>E</b><sup>∗</sup>"
+name = "macroscopic free strain, the strain under a vanishing macroscopic stress"
+unit = "1"
+pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\boldsymbol{\Sigma}^\ast'
+label = "<b>Σ</b><sup>∗</sup>"
+name = "macroscopic prestress, the stress under a vanishing macroscopic strain"
+unit = "Pa"
+pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\boldsymbol{\alpha}^{\mathrm{hom}}'
+label = "<b>α</b><sup>hom</sup>"
+name = "effective thermal expansion tensor"
+unit = "K<sup>−1</sup>"
+pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\alpha^{\mathrm{hom}}'
+label = "α<sup>hom</sup>"
+name = "effective thermal expansion coefficient of an isotropic composite"
+unit = "K<sup>−1</sup>"
+pages = ["theory/levin.md", "tutorials/levin.md"]
+
+[[symbol]]
+group = "Eigenstrains and prestresses"
+tex = '\Delta T'
+label = "ΔT"
+name = "temperature change"
+unit = "K"
+pages = ["theory/levin.md", "tutorials/levin.md"]

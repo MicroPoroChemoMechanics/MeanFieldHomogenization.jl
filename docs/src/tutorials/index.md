@@ -24,6 +24,7 @@ and the one where the choice of scheme matters most.
 | [Transport properties](@ref tut-transport) | the same algebra at tensor order 2: diffusivity of a porous medium, anisotropy from oriented pores |
 | [The differential scheme and path dependence](@ref tut-differential-paths) | incremental homogenization; why mixing order matters |
 | [Comparing loading-path trajectories](@ref tut-differential-loading-paths) | the same target fractions, four trajectories, watched τ by τ |
+| [Thermal expansion and Biot tensor](@ref tut-levin) | Levin's theorem on the concentration tensors of a scheme: the thermal expansion of a two-phase composite under five schemes, anisotropic with aligned platelets, the Biot tensor of a solid with pores and pressurized cracks, and both in closed form |
 
 ## Inclusions, geometries and orientation
 
