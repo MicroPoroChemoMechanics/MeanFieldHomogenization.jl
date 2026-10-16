@@ -1,8 +1,8 @@
 import Pkg
 Pkg.activate(joinpath(@__DIR__, "..", ".."); io = devnull)
-using MeanFieldHomogenization, TensND, LinearAlgebra, JSON3, Printf
+using MeanFieldHomogenization, TensND, LinearAlgebra, JSON, Printf
 
-ref = JSON3.read(read(joinpath(@__DIR__, "bench_layered_alv_nopore_python.json"), String))
+ref = JSON.parsefile(joinpath(@__DIR__, "bench_layered_alv_nopore_python.json"))
 T_grid = collect(Float64.(ref.T))
 N = Int(ref.N)
 k0 = Float64(ref.k0); mu0 = Float64(ref.mu0)

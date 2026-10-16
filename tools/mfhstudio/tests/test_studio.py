@@ -720,7 +720,7 @@ def test_startup_failure_is_diagnosed_not_dumped():
     """A stack trace says what happened; the user needs to know what to do."""
     from mfhstudio.juliabridge import _diagnose
 
-    log = ("ERROR: LoadError: ArgumentError: Package JSON3 [0f8b85d8] is "
+    log = ("ERROR: LoadError: ArgumentError: Package JSON [682c06a0] is "
            "required but does not seem to be installed:\n"
            " - Run `Pkg.instantiate()` to install all recorded dependencies.")
     msg = _diagnose(log)

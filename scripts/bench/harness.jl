@@ -29,7 +29,7 @@
 # =============================================================================
 
 using BenchmarkTools
-using JSON3
+using JSON
 using SHA
 using Printf
 using Statistics
@@ -277,12 +277,12 @@ function write_report(path, results; label, settings)
         "cases" => results,
     )
     open(path, "w") do io
-        JSON3.pretty(io, payload)
+        JSON.json(io, payload; pretty = 4)
     end
     return path
 end
 
-read_report(path) = JSON3.read(read(path, String))
+read_report(path) = JSON.parsefile(path)
 
 # ── Diff ────────────────────────────────────────────────────────────────────
 
@@ -355,8 +355,8 @@ function diff_reports(new_results, ref_report; gate::Symbol = :bitwise, noise::F
 
     for id in sort(collect(keys(new_results)))
         n = new_results[id]
-        haskey(refcases, Symbol(id)) || (println(rpad(id, 44), "  (new case)"); continue)
-        r = refcases[Symbol(id)]
+        haskey(refcases, id) || (println(rpad(id, 44), "  (new case)"); continue)
+        r = refcases[id]
 
         dt = _pct(n.time_ns_min, r.time_ns_min)
         da = _pct(n.alloc_bytes_min, r.alloc_bytes_min)
@@ -394,12 +394,17 @@ end
 function _work_delta(newc, refc)
     parts = String[]
     for k in (:hill_calls, :cod_calls, :residue_solves, :integrand_evals, :sc_iterations, :layer_recurrences)
-        a = get(refc, k, 0); b = get(newc, k, 0)
+        a = _count(refc, k); b = _count(newc, k)
         (a == 0 && b == 0) && continue
         push!(parts, a == b ? "$(_short(k)) $a" : "$(_short(k)) $a→$b")
     end
     return isempty(parts) ? "—" : join(parts, " ")
 end
+
+# A counter of the current run (a `NamedTuple`) or of a report read back from
+# disk (a JSON object, keyed by strings).
+_count(c::NamedTuple, k::Symbol) = get(c, k, 0)
+_count(c::AbstractDict, k::Symbol) = get(c, String(k), 0)
 
 _short(k::Symbol) = k === :hill_calls ? "hill" : k === :cod_calls ? "cod" :
     k === :residue_solves ? "res" : k === :integrand_evals ? "nodes" :

@@ -3,7 +3,7 @@
 #
 #  The format is JSON, for three reasons and not because it is fast:
 #
-#  * `JSON3` is already a strong dependency of the package, so loading a model
+#  * `JSON` is already a strong dependency of the package, so loading a model
 #    pulls in nothing new — the same argument that keeps the evaluator itself
 #    dependency-free;
 #  * a committed model is reviewable.  A diff on a retrained network shows the
@@ -86,7 +86,7 @@ function save_surrogate(path::AbstractString, s::NeuralSurrogate)
     mkpath(dirname(abspath(path)))
     payload = _to_dict(s)
     open(path, "w") do io
-        JSON3.pretty(io, payload)
+        JSON.json(io, payload; pretty = 4)
         println(io)
     end
     return String(path)
@@ -99,7 +99,7 @@ end
 _json_number(x::Real) = isfinite(x) ? Float64(x) : nothing
 
 function _read_block_error(p)
-    if haskey(p, :max_block_error)
+    if haskey(p, "max_block_error")
         v = p.max_block_error
         v === nothing && return Inf
         return Float64(v)
@@ -161,13 +161,13 @@ evaluated everywhere.
 """
 function load_surrogate(path::AbstractString)
     isfile(path) || throw(ArgumentError("no such surrogate file: $path"))
-    d = JSON3.read(read(path, String))
-    _check_format(get(d, :format, nothing), path)
+    d = JSON.parsefile(path)
+    _check_format(get(d, "format", nothing), path)
 
     net = _net_from(d.network)
     spec = output_spec(
         Symbol(d.output.spec), Symbol(d.output.class),
-        get(d.output, :baseline, nothing),
+        get(d.output, "baseline", nothing),
     )
     p = d.provenance
     prov = Provenance(;

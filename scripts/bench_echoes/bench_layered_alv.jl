@@ -16,20 +16,20 @@ Pkg.activate(joinpath(@__DIR__, "..", ".."); io = devnull)
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
-using JSON3
+using JSON
 using Printf
 
 const HERE = @__DIR__
 const json_path = joinpath(HERE, "bench_layered_alv_python.json")
 isfile(json_path) || error("Run `bench_layered_alv.py` first; missing: $json_path")
-ref = JSON3.read(read(json_path, String))
+ref = JSON.parsefile(json_path)
 
 # ── Reproduce the Python setup in Julia ─────────────────────────────────────
 
 T_grid = collect(Float64.(ref.T))
 n = length(T_grid)
 
-# Coerce the JSON-loaded scalars to Float64 (JSON3 keeps integers as Int).
+# Coerce the JSON-loaded scalars to Float64 (JSON keeps integers as Int).
 const k0 = Float64(ref.k0)
 const mu0 = Float64(ref.mu0)
 const eta_k0 = Float64(ref.eta_k0)
