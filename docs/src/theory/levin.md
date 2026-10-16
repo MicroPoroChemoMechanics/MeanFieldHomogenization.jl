@@ -48,76 +48,135 @@ The local problem being linear in the pair
 which defines the macroscopic prestress ``\boldsymbol\Sigma^\ast``, the stress
 under a vanishing macroscopic strain, and the macroscopic free strain
 ``\boldsymbol E^\ast``, the strain under a vanishing macroscopic stress. The
-concentration tensors are those of the problem without eigenstrain:
-``\langle\boldsymbol\varepsilon\rangle_r = \mathbb A_r:\boldsymbol E`` under a
-macroscopic strain and ``\langle\boldsymbol\sigma\rangle_r = \mathbb B_r:\boldsymbol\Sigma``
-under a macroscopic stress.
+concentration tensors are those of the problem without eigenstrain: the fields
+``\mathbb A(\underline x)`` and ``\mathbb B(\underline x)`` give the local strain
+``\boldsymbol\varepsilon(\underline x) = \mathbb A(\underline x):\boldsymbol E`` under a
+macroscopic strain and the local stress
+``\boldsymbol\sigma(\underline x) = \mathbb B(\underline x):\boldsymbol\Sigma`` under a
+macroscopic stress, and their averages over phase ``r`` are
+``\mathbb A_r = \langle\mathbb A\rangle_r`` and ``\mathbb B_r = \langle\mathbb B\rangle_r``. The
+fields ``\boldsymbol\sigma^\ast(\underline x)`` and ``\boldsymbol\varepsilon^\ast(\underline x)``
+equal ``\boldsymbol\sigma^\ast_r`` and ``\boldsymbol\varepsilon^\ast_r`` in phase ``r``.
 
 ## 2. Statement
 
 The macroscopic prestress and free strain are
 
 ```math
-\boldsymbol\Sigma^\ast = \sum_r f_r\,\boldsymbol\sigma^\ast_r:\mathbb A_r ,
+\boldsymbol\Sigma^\ast = \langle\boldsymbol\sigma^\ast:\mathbb A\rangle
+  = \sum_r f_r\,\boldsymbol\sigma^\ast_r:\mathbb A_r ,
 \qquad
-\boldsymbol E^\ast = \sum_r f_r\,\boldsymbol\varepsilon^\ast_r:\mathbb B_r ,
+\boldsymbol E^\ast = \langle\boldsymbol\varepsilon^\ast:\mathbb B\rangle
+  = \sum_r f_r\,\boldsymbol\varepsilon^\ast_r:\mathbb B_r ,
 ```
 
-where the second-order tensor contracts the first pair of indices of the
+the averages holding whatever the fields ``\boldsymbol\sigma^\ast`` and
+``\boldsymbol\varepsilon^\ast``, and the sums being their value for fields uniform in
+each phase. The second-order tensor contracts the first pair of indices of the
 fourth-order one, ``(\boldsymbol\sigma^\ast:\mathbb A)_{kl} = \sigma^\ast_{ij}\,A_{ijkl}``.
 The concentration tensors have the minor symmetries but not the major one, so
 the order of the factors matters.
 
 ## 3. Proof
 
-Two problems are posed on the same volume element under uniform strain
-boundary conditions. In problem (a) the phases carry their prestresses and the
-macroscopic strain vanishes, so that
-``\langle\boldsymbol\varepsilon^a\rangle = \boldsymbol 0`` and
-``\langle\boldsymbol\sigma^a\rangle = \boldsymbol\Sigma^\ast``. In problem (b)
-there is no prestress and the macroscopic strain is an arbitrary
-``\boldsymbol E^b``, so that
-``\langle\boldsymbol\varepsilon^b\rangle_r = \mathbb A_r:\boldsymbol E^b`` and
-``\boldsymbol\sigma^b = \mathbb C:\boldsymbol\varepsilon^b``. Each stress field is in
+![Under a macroscopic strain, the problem with prestresses is the sum of (a) no prestress under the same strain and (b) the prestresses alone under a vanishing macroscopic strain; Hill's lemma on the crossed pairs gives the macroscopic prestress](../assets/geometry/levin_prestress.svg)
+
+The local laws being linear, the problem with prestresses under a macroscopic
+strain ``\boldsymbol E`` is the sum of two problems posed on the same volume
+element under uniform strain boundary conditions (figure above). In problem (a)
+there is no prestress and the macroscopic strain is ``\boldsymbol E``, so that
+``\boldsymbol\varepsilon^a = \mathbb A:\boldsymbol E`` and
+``\boldsymbol\sigma^a = \mathbb C:\boldsymbol\varepsilon^a``. In problem (b) the phases
+carry their prestresses and the macroscopic strain vanishes, so that
+``\langle\boldsymbol\varepsilon^b\rangle = \boldsymbol 0`` and
+``\langle\boldsymbol\sigma^b\rangle = \boldsymbol\Sigma^\ast``. Each stress field is in
 equilibrium and each strain field is compatible, so that Hill's lemma
 [hill1963](@cite) applies to the two crossed pairs:
 
 ```math
-\langle\boldsymbol\sigma^a:\boldsymbol\varepsilon^b\rangle = \boldsymbol\Sigma^\ast:\boldsymbol E^b ,
-\qquad
 \langle\boldsymbol\sigma^b:\boldsymbol\varepsilon^a\rangle
-  = \langle\boldsymbol\sigma^b\rangle:\langle\boldsymbol\varepsilon^a\rangle = 0 .
+  = \langle\boldsymbol\sigma^b\rangle:\langle\boldsymbol\varepsilon^a\rangle
+  = \boldsymbol\Sigma^\ast:\boldsymbol E ,
+\qquad
+\langle\boldsymbol\sigma^a:\boldsymbol\varepsilon^b\rangle
+  = \langle\boldsymbol\sigma^a\rangle:\langle\boldsymbol\varepsilon^b\rangle = 0 .
 ```
 
 Pointwise, the major symmetry of the local stiffness yields
-``\boldsymbol\sigma^a:\boldsymbol\varepsilon^b
-= \boldsymbol\varepsilon^a:\mathbb C:\boldsymbol\varepsilon^b + \boldsymbol\sigma^\ast:\boldsymbol\varepsilon^b
-= \boldsymbol\sigma^b:\boldsymbol\varepsilon^a + \boldsymbol\sigma^\ast:\boldsymbol\varepsilon^b``.
-Averaging this identity, the prestress being uniform in each phase,
+``\boldsymbol\sigma^b:\boldsymbol\varepsilon^a
+= \boldsymbol\varepsilon^b:\mathbb C:\boldsymbol\varepsilon^a + \boldsymbol\sigma^\ast:\boldsymbol\varepsilon^a
+= \boldsymbol\sigma^a:\boldsymbol\varepsilon^b + \boldsymbol\sigma^\ast:\boldsymbol\varepsilon^a``,
+whose average is
 
 ```math
-\boldsymbol\Sigma^\ast:\boldsymbol E^b
-  = \sum_r f_r\,\boldsymbol\sigma^\ast_r:\langle\boldsymbol\varepsilon^b\rangle_r
-  = \Big(\sum_r f_r\,\boldsymbol\sigma^\ast_r:\mathbb A_r\Big):\boldsymbol E^b ,
+\boldsymbol\Sigma^\ast:\boldsymbol E
+  = \langle\boldsymbol\sigma^\ast:\boldsymbol\varepsilon^a\rangle
+  = \langle\boldsymbol\sigma^\ast:\mathbb A\rangle:\boldsymbol E
 ```
 
-for every ``\boldsymbol E^b``, which is the first statement. Only the symmetry of
-the local stiffness was used, so that it holds for a phase without stiffness as
-well. The second statement follows by substituting
-``\boldsymbol\sigma^\ast_r = -\,\mathbb C_r:\boldsymbol\varepsilon^\ast_r``. For a homogeneous
-phase ``\langle\boldsymbol\sigma\rangle_r = \mathbb C_r:\langle\boldsymbol\varepsilon\rangle_r``,
-hence ``\mathbb C_r:\mathbb A_r = \mathbb B_r:\mathbb C^{\mathrm{hom}}``, and
+for every ``\boldsymbol E``, so that
+``\boldsymbol\Sigma^\ast = \langle\boldsymbol\sigma^\ast:\mathbb A\rangle``. Only the
+symmetry of the local stiffness was used, so that this holds for a phase
+without stiffness as well. For a prestress uniform in each phase, the average
+splits over the phases,
+``\langle\boldsymbol\sigma^\ast:\mathbb A\rangle = \sum_r f_r\,\boldsymbol\sigma^\ast_r:\langle\mathbb A\rangle_r = \sum_r f_r\,\boldsymbol\sigma^\ast_r:\mathbb A_r``,
+which is the first statement.
+
+![Under a macroscopic stress, the problem with eigenstrains is the sum of (a) no eigenstrain under the same stress and (b) the eigenstrains alone under a vanishing macroscopic stress; Hill's lemma on the crossed pairs gives the macroscopic free strain](../assets/geometry/levin_free_strain.svg)
+
+The second statement follows from the dual decomposition, under uniform stress
+boundary conditions (figure above), when every phase has a stiffness and hence
+a compliance ``\mathbb C^{-1}``. In problem (a) there is no eigenstrain and the
+macroscopic stress is ``\boldsymbol\Sigma``, so that
+``\boldsymbol\sigma^a = \mathbb B:\boldsymbol\Sigma`` and
+``\boldsymbol\varepsilon^a = \mathbb C^{-1}:\boldsymbol\sigma^a``. In problem (b) the phases
+carry their eigenstrains and the macroscopic stress vanishes, so that
+``\langle\boldsymbol\sigma^b\rangle = \boldsymbol 0`` and
+``\langle\boldsymbol\varepsilon^b\rangle = \boldsymbol E^\ast``. Hill's lemma now gives
+
+```math
+\langle\boldsymbol\sigma^a:\boldsymbol\varepsilon^b\rangle
+  = \langle\boldsymbol\sigma^a\rangle:\langle\boldsymbol\varepsilon^b\rangle
+  = \boldsymbol\Sigma:\boldsymbol E^\ast ,
+\qquad
+\langle\boldsymbol\sigma^b:\boldsymbol\varepsilon^a\rangle
+  = \langle\boldsymbol\sigma^b\rangle:\langle\boldsymbol\varepsilon^a\rangle = 0 ,
+```
+
+and, the compliance having the major symmetry too, pointwise
+``\boldsymbol\varepsilon^b = \mathbb C^{-1}:\boldsymbol\sigma^b + \boldsymbol\varepsilon^\ast`` yields
+``\boldsymbol\sigma^a:\boldsymbol\varepsilon^b
+= \boldsymbol\sigma^b:\boldsymbol\varepsilon^a + \boldsymbol\sigma^a:\boldsymbol\varepsilon^\ast``,
+whose average is
+
+```math
+\boldsymbol\Sigma:\boldsymbol E^\ast
+  = \langle\boldsymbol\sigma^a:\boldsymbol\varepsilon^\ast\rangle
+  = \boldsymbol\Sigma:\langle\boldsymbol\varepsilon^\ast:\mathbb B\rangle
+```
+
+for every ``\boldsymbol\Sigma``, so that
+``\boldsymbol E^\ast = \langle\boldsymbol\varepsilon^\ast:\mathbb B\rangle``. For an
+eigenstrain uniform in each phase,
+``\langle\boldsymbol\varepsilon^\ast:\mathbb B\rangle = \sum_r f_r\,\boldsymbol\varepsilon^\ast_r:\mathbb B_r``,
+which is the second statement.
+
+The two statements agree. The volume element being representative, a
+macroscopic strain ``\boldsymbol E`` and the macroscopic stress
+``\mathbb C^{\mathrm{hom}}:\boldsymbol E`` produce the same fields, so that
+``\mathbb C:\mathbb A:\boldsymbol E = \mathbb B:\mathbb C^{\mathrm{hom}}:\boldsymbol E`` at every
+point, and ``\mathbb C:\mathbb A = \mathbb B:\mathbb C^{\mathrm{hom}}``. Substituting
+``\boldsymbol\sigma^\ast = -\,\mathbb C:\boldsymbol\varepsilon^\ast`` in the first,
 
 ```math
 \boldsymbol\Sigma^\ast
-  = -\sum_r f_r\,\boldsymbol\varepsilon^\ast_r:\mathbb C_r:\mathbb A_r
-  = -\Big(\sum_r f_r\,\boldsymbol\varepsilon^\ast_r:\mathbb B_r\Big):\mathbb C^{\mathrm{hom}}
-  = -\,\mathbb C^{\mathrm{hom}}:\Big(\sum_r f_r\,\boldsymbol\varepsilon^\ast_r:\mathbb B_r\Big) ,
+  = -\,\langle\boldsymbol\varepsilon^\ast:\mathbb C:\mathbb A\rangle
+  = -\,\langle\boldsymbol\varepsilon^\ast:\mathbb B\rangle:\mathbb C^{\mathrm{hom}}
+  = -\,\mathbb C^{\mathrm{hom}}:\boldsymbol E^\ast ,
 ```
 
-the last equality using the major symmetry of ``\mathbb C^{\mathrm{hom}}``.
-Comparison with ``\boldsymbol\Sigma^\ast = -\,\mathbb C^{\mathrm{hom}}:\boldsymbol E^\ast``
-gives the free strain.
+the last equality using the major symmetry of ``\mathbb C^{\mathrm{hom}}``: it is the
+relation between the macroscopic prestress and the free strain of the setting.
 
 ## 4. With an estimate
 

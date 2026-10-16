@@ -1,9 +1,9 @@
 # =============================================================================
 #  geometry.jl — the auxiliary problems of the theory pages:
 #  Eshelby's inclusion and inhomogeneity, the n-layer sphere, the n-layer
-#  confocal spheroid.
+#  confocal spheroid, the decompositions of the proof of Levin's theorem.
 #  Docs: theory/eshelby_problem.md, theory/layered_sphere.md,
-#        theory/layered_spheroid.md.
+#        theory/layered_spheroid.md, theory/levin.md.
 # =============================================================================
 
 "Eshelby's inclusion problem: a uniform polarization inside the ellipsoid, no remote loading."
@@ -112,4 +112,119 @@ function layered_ellipsoid()
     end
 end
 
-geometry_figures() = (eshelby_inclusion(), eshelby_inhomogeneity(), layered_sphere(), layered_ellipsoid())
+# ── Levin's theorem: a problem with eigen loads as the sum of two ────────────
+
+const LEVIN_W = 210.0      # the volume element of each panel
+const LEVIN_H = 150.0
+const LEVIN_X = (135.0, 465.0, 795.0)
+const LEVIN_Y = 200.0
+
+"""
+    levin_sum(path, titles, conditions, formulas, conclusion)
+
+The complete problem, `=`, the problem without eigen load under the boundary
+condition, `+`, the eigen loads alone under a vanishing boundary condition: one
+volume element drawn three times with the same microstructure, its boundary
+condition above, its local law, concentration and averages below, and Hill's
+lemma on the crossed pairs at the bottom.
+"""
+function levin_sum(path, titles, conditions, formulas, conclusion)
+    return sheet(path, 930, 560) do
+        W, H = LEVIN_W, LEVIN_H
+        # One microstructure, the same in the three panels.
+        disks = pack(StableRNG(20261016), 7, in_box(Point(0, 0), W - 26, H - 26), rng -> 11 + 7rand(rng); gap = 10)
+        for k in 1:3
+            x = LEVIN_X[k]
+            c = Point(x, LEVIN_Y)
+            label(titles[k], Point(x, 52); size = 17)
+            label(conditions[k], Point(x, 92); size = 16)
+            rve_box(c, W, H)
+            for (p, r) in disks
+                disk(c + p, r; fill = INCLUSIONS[2], stroke = nothing)
+            end
+            for (i, f) in enumerate(formulas[k])
+                label(f, Point(x, LEVIN_Y + H / 2 + 34 + 36 * (i - 1)); size = 16)
+            end
+        end
+        label(m("="), Point((LEVIN_X[1] + LEVIN_X[2]) / 2, LEVIN_Y); size = 34)
+        label(m("+"), Point((LEVIN_X[2] + LEVIN_X[3]) / 2, LEVIN_Y); size = 34)
+        @layer (setcolor(PANEL_EDGE); setline(1.2); line(Point(60, 440), Point(870, 440), :stroke))
+        label(txt("Hill's lemma on the crossed pairs of (a) and (b)"), Point(465, 470); size = 15, color = MUTED)
+        label(conclusion, Point(465, 512); size = 17)
+    end
+end
+
+"""
+Levin's theorem, prestresses: under a macroscopic strain, the problem with
+prestresses is the sum of (a) no prestress under the same strain and (b) the
+prestresses alone under a vanishing macroscopic strain.
+"""
+levin_prestress() = levin_sum(
+    "geometry/levin_prestress",
+    (txt("prestressed phases"), txt("(a) no prestress"), txt("(b) prestresses alone")),
+    (
+        m("underline(u) = bold(E) dot underline(x) \"on\" partial Omega"),
+        m("underline(u)^a = bold(E) dot underline(x) \"on\" partial Omega"),
+        m("underline(u)^b = underline(0) \"on\" partial Omega"),
+    ),
+    (
+        (
+            m("bold(sigma) = bb(C)_r : bold(epsilon) + bold(sigma)^ast_r"),
+            m("angle.l bold(epsilon) angle.r = bold(E)"),
+            m("angle.l bold(sigma) angle.r = bb(C)^\"hom\" : bold(E) + bold(Sigma)^ast"),
+        ),
+        (
+            m("bold(sigma)^a = bb(C)_r : bold(epsilon)^a"),
+            m("bold(epsilon)^a = bb(A) : bold(E)"),
+            m("angle.l bold(sigma)^a angle.r = bb(C)^\"hom\" : bold(E)"),
+        ),
+        (
+            m("bold(sigma)^b = bb(C)_r : bold(epsilon)^b + bold(sigma)^ast_r"),
+            m("angle.l bold(epsilon)^b angle.r = bold(0)"),
+            m("angle.l bold(sigma)^b angle.r = bold(Sigma)^ast"),
+        ),
+    ),
+    m("angle.l bold(sigma)^b : bold(epsilon)^a angle.r = bold(Sigma)^ast : bold(E), quad " *
+        "angle.l bold(sigma)^a : bold(epsilon)^b angle.r = 0 quad => quad " *
+        "bold(Sigma)^ast = angle.l bold(sigma)^ast : bb(A) angle.r = sum_r f_r bold(sigma)^ast_r : bb(A)_r"),
+)
+
+"""
+Levin's theorem, free strains: under a macroscopic stress, the problem with
+eigenstrains is the sum of (a) no eigenstrain under the same stress and (b) the
+eigenstrains alone under a vanishing macroscopic stress.
+"""
+levin_free_strain() = levin_sum(
+    "geometry/levin_free_strain",
+    (txt("phases with eigenstrains"), txt("(a) no eigenstrain"), txt("(b) eigenstrains alone")),
+    (
+        m("bold(sigma) dot underline(n) = bold(Sigma) dot underline(n) \"on\" partial Omega"),
+        m("bold(sigma)^a dot underline(n) = bold(Sigma) dot underline(n) \"on\" partial Omega"),
+        m("bold(sigma)^b dot underline(n) = underline(0) \"on\" partial Omega"),
+    ),
+    (
+        (
+            m("bold(sigma) = bb(C)_r : (bold(epsilon) - bold(epsilon)^ast_r)"),
+            m("angle.l bold(sigma) angle.r = bold(Sigma)"),
+            m("angle.l bold(epsilon) angle.r = (bb(C)^\"hom\")^(-1) : bold(Sigma) + bold(E)^ast"),
+        ),
+        (
+            m("bold(sigma)^a = bb(C)_r : bold(epsilon)^a"),
+            m("bold(sigma)^a = bb(B) : bold(Sigma)"),
+            m("angle.l bold(epsilon)^a angle.r = (bb(C)^\"hom\")^(-1) : bold(Sigma)"),
+        ),
+        (
+            m("bold(sigma)^b = bb(C)_r : (bold(epsilon)^b - bold(epsilon)^ast_r)"),
+            m("angle.l bold(sigma)^b angle.r = bold(0)"),
+            m("angle.l bold(epsilon)^b angle.r = bold(E)^ast"),
+        ),
+    ),
+    m("angle.l bold(sigma)^a : bold(epsilon)^b angle.r = bold(Sigma) : bold(E)^ast, quad " *
+        "angle.l bold(sigma)^b : bold(epsilon)^a angle.r = 0 quad => quad " *
+        "bold(E)^ast = angle.l bold(epsilon)^ast : bb(B) angle.r = sum_r f_r bold(epsilon)^ast_r : bb(B)_r"),
+)
+
+geometry_figures() = (
+    eshelby_inclusion(), eshelby_inhomogeneity(), layered_sphere(), layered_ellipsoid(),
+    levin_prestress(), levin_free_strain(),
+)

@@ -18,7 +18,7 @@ out of `docs/Project.toml`.
 | file | output under `docs/src/assets/` |
 | :--- | :--- |
 | `src/style.jl` | — the palette by role, the sheet and its white panel, `label`, the primitives, the inclusion families, packings, Voronoi cells |
-| `src/geometry.jl` | `geometry/`: Eshelby's inclusion and inhomogeneity, the layered sphere, the confocal layered spheroid |
+| `src/geometry.jl` | `geometry/`: Eshelby's inclusion and inhomogeneity, the layered sphere, the confocal layered spheroid, the decompositions of the proof of Levin's theorem, with prestresses and with free strains |
 | `src/schemes.jl` | `schemes/rve_*.svg`, the morphologies the schemes read, and `schemes/scheme_*.svg`, one card per scheme |
 | `src/applications.jl` | `veritz.svg`, `ver_multi_mix.svg`, `lamellar/`, `fe/axi_schematic.svg`, `applications/cement_paste_scales.svg`, `applications/solidifying_sphere.svg` |
 | `src/rheology.jl` | `rheology/`: the spring-and-dashpot networks of the model catalog |
