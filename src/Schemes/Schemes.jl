@@ -42,12 +42,11 @@ using ..Elliptic: is_hard_numeric
 
 import ..Elasticity: Ellipsoid, hill_tensor
 import ..Cracks
-import ..Core: compliance_contribution, delta_compliance, delta_resistivity,
-    compliance_and_stiffness_contribution
+import ..Core: inverse_property_contribution, delta_inverse_property,
+    inverse_and_property_contribution
 import ..LayeredSpheres
 import ..LayeredSpheroids
-import ..LayeredSpheres: layer_stiffness_average, layer_compliance_average,
-    layer_conductivity_average, layer_resistivity_average
+import ..LayeredSpheres: layer_property_average, layer_inverse_property_average
 
 include("rve.jl")
 include("symmetrize.jl")
@@ -104,7 +103,7 @@ export DifferentialTrajectory, Proportional, Sequential, CustomPath, Path, Diffe
 # Entry point
 export homogenize, differential_path
 export ConcentrationTensors, concentration_tensors
-export levin_free_strain, levin_prestress, levin_free_gradient, levin_preflux
+export levin_free_gradient, levin_preflux, levin_free_strain, levin_prestress
 export crack_family_compliances, crack_family_residual
 export fracture_permeability
 

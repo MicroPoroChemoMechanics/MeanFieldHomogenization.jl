@@ -91,8 +91,8 @@ rep = fe_axi_mesh_report(incl0)
 
 A_fe, B_fe = fe_axi_concentration(incl0, C_PASTE)
 sph = LayeredSphere((cbrt(W), 1.0), (C_AGG, C_MORTAR))
-A_ex = strain_strain_concentration(sph, C_PASTE, C_PASTE)
-B_ex = stress_strain_concentration(sph, C_PASTE, C_PASTE)
+A_ex = gradient_gradient_concentration(sph, C_PASTE, C_PASTE)
+B_ex = flux_gradient_concentration(sph, C_PASTE, C_PASTE)
 
 println("\n  tensor   part    finite elements       exact        Δ")
 for (nm, num, ex) in (("A", A_fe, A_ex), ("B", B_fe, B_ex))
@@ -218,9 +218,9 @@ incl = FEExcenteredSphere(
     1.0, (C_AGG, C_MORTAR); core_fraction = W, eccentricity = 0.4, nradial = 20
 )
 fe_axi_mesh_report(incl)                       # build the mesh out of the timing
-t1 = @elapsed strain_strain_concentration(incl, C_PASTE, C_PASTE)
-t2 = @elapsed stress_strain_concentration(incl, C_PASTE, C_PASTE)
-t3 = @elapsed strain_strain_concentration(incl, C_PASTE, ce(21.0, 0.2))
+t1 = @elapsed gradient_gradient_concentration(incl, C_PASTE, C_PASTE)
+t2 = @elapsed flux_gradient_concentration(incl, C_PASTE, C_PASTE)
+t3 = @elapsed gradient_gradient_concentration(incl, C_PASTE, ce(21.0, 0.2))
 @printf(
     "\n  first solve %.2f s | same solve, stress side %.1e s | new medium %.2f s | assemblies %d\n",
     t1, t2, t3, fe_assembly_count(incl)

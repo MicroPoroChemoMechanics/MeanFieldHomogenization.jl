@@ -277,7 +277,7 @@ misses by orders of magnitude more, still fails loudly.
 `reference` overrides how the reference medium is built, as
 `reference(box, x_full) -> AbstractTens`. The default dispatches on the class,
 and for most classes that is the only sensible thing. It is **not** for
-`StrainConcentrationTI` and `StressConcentrationTI`: those describe the *concentration* of a
+`GradientConcentrationTI` and `FluxConcentrationTI`: those describe the *concentration* of a
 morphology, and whether the reference can be recovered from the features at all
 depends on the morphology and not on the class. A heterogeneous one carries its
 constituents inside itself, so scaling the reference changes the contrast and
@@ -418,9 +418,9 @@ _reference_medium(::Union{HillISO2, HillTI2}, ::SampleBox, _x_full) = TensND.Ten
 # A **cavity**'s strain concentration is dimensionless -- degree 0 in the moduli
 # -- and depends on the reference through ν₀ alone, so the same isotropic
 # reference at unit shear modulus serves. That is exactly the case
-# `StrainConcentrationCubic` exists for: a cube-symmetric pore.
+# `GradientConcentrationCubic` exists for: a cube-symmetric pore.
 #
-# There is deliberately no method for `StrainConcentrationTI` / `StressConcentrationTI`. Those are
+# There is deliberately no method for `GradientConcentrationTI` / `FluxConcentrationTI`. Those are
 # used here for *heterogeneous* morphologies, which carry their constituents
 # inside themselves, so scaling the reference alone changes the contrast and
 # changes the answer; their features have to be contrast ratios and the
@@ -430,9 +430,9 @@ _reference_medium(::Union{HillISO2, HillTI2}, ::SampleBox, _x_full) = TensND.Ten
 # The restriction is on the *morphology*, not on the class. A transversely
 # isotropic **cavity** — a superspheroidal pore — is of degree 0 in the
 # reference just as the cubic one is, and would take the same method as
-# `StrainConcentrationCubic`. It has none yet only because nothing generates such a
+# `GradientConcentrationCubic`. It has none yet only because nothing generates such a
 # dataset: see the roadmap.
-_reference_medium(::StrainConcentrationCubic, box::SampleBox, x_full) =
+_reference_medium(::GradientConcentrationCubic, box::SampleBox, x_full) =
     _iso_ref(x_full[feature_index(box, :nu0)])
 
 # Transport, and it needs no `nu0`: a cavity's gradient concentration is

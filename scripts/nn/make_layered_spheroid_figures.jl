@@ -73,9 +73,9 @@ nn_incl(ω, w) = NeuralConcentrationInclusion(
 )
 
 # `(𝔸_εε)₁₁₁₁` by each of the three routes.
-A_an(ω, w) = a1111(strain_strain_concentration(an_incl(ω, w), C0, C0))
+A_an(ω, w) = a1111(gradient_gradient_concentration(an_incl(ω, w), C0, C0))
 A_fe(ω, w) = a1111(fe_axi_concentration(fe_incl(ω, w), C0)[1])
-A_nn(ω, w) = a1111(strain_strain_concentration(nn_incl(ω, w), C0, C0))
+A_nn(ω, w) = a1111(gradient_gradient_concentration(nn_incl(ω, w), C0, C0))
 
 # The effective stiffness, which has **no** closed form: it needs both sides of
 # gate B, and the analytic type supplies no stress side.
@@ -136,10 +136,10 @@ gf = fe_incl(2.0, 0.4)
 fe_axi_mesh_report(gf)                                  # mesh out of the timing
 t_fe = @elapsed fe_axi_concentration(gf, ce(1.01 * E0, NU))
 gn = nn_incl(2.0, 0.4)
-strain_strain_concentration(gn, C0, C0)
+gradient_gradient_concentration(gn, C0, C0)
 const N_EVAL = 2000
 t_nn = @elapsed for _ in 1:N_EVAL
-    strain_strain_concentration(gn, C0, C0)
+    gradient_gradient_concentration(gn, C0, C0)
 end
 t_nn /= N_EVAL
 

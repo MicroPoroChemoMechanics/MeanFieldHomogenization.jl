@@ -186,7 +186,7 @@ taking the two limits:
 phys(t) = tsimplify(tlimit(tlimit(tlimit(t, μw, 0), κw, 0), ks, oo))
 
 Cpar = phys(homogenize(particle, Laminated(), :C))
-A_f = phys(strain_strain_concentration(particle, :INTERFOLIAR))
+A_f = phys(gradient_gradient_concentration(particle, :INTERFOLIAR))
 
 println(typeof(Cpar), "   ← exactly TI about n, and major-symmetric (N = 5)")
 println(typeof(A_f), "   ← TI too, but a concentration tensor has no major symmetry (N = 6)")
@@ -273,7 +273,7 @@ discretized here.
 
 C_ac = TensISO{3}(3κ, 2μ)
 sphere = Ellipsoid(1.0)
-A_par = strain_strain_concentration(sphere, Cpar, C_ac)    # (𝕀 + ℙ:(ℂᵖᵃʳ − ℂᵃᶜ))⁻¹
+A_par = gradient_gradient_concentration(sphere, Cpar, C_ac)    # (𝕀 + ℙ:(ℂᵖᵃʳ − ℂᵃᶜ))⁻¹
 
 # The macropores have zero stiffness: they contribute nothing to ⟨ℂ:𝔸⟩, so the
 # self-consistent condition ℂᵃᶜ = ⟨ℂ:𝔸⟩ reads

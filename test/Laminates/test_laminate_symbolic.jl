@@ -325,21 +325,21 @@ end
     # tensors — see the TensND v0.4.0 changelog.)
     zero_tens(X) = all(iszero, TensND.get_data(tsimplify(X)))
 
-    A = strain_strain_concentration(lam, :A)
+    A = gradient_gradient_concentration(lam, :A)
     C_A = TensISO{3}(3κ₁, 2μ₁)
     @test A isa TensND.TensTI{4, <:Sym, 6}         # NOT major-symmetric
     @test zero_tens(A - layer_strain_concentration(lam, :A))
-    @test zero_tens(stress_stress_concentration(lam, :A) - layer_stress_concentration(lam, :A))
-    @test zero_tens(stress_strain_concentration(lam, :A) - C_A ⊡ A)
-    @test zero_tens(strain_stress_concentration(lam, :A) - A ⊡ Sh)
-    @test zero_tens(stress_stress_concentration(lam, :A) - stress_strain_concentration(lam, :A) ⊡ Sh)
+    @test zero_tens(flux_flux_concentration(lam, :A) - layer_stress_concentration(lam, :A))
+    @test zero_tens(flux_gradient_concentration(lam, :A) - C_A ⊡ A)
+    @test zero_tens(gradient_flux_concentration(lam, :A) - A ⊡ Sh)
+    @test zero_tens(flux_flux_concentration(lam, :A) - flux_gradient_concentration(lam, :A) ⊡ Sh)
 
     # The two strain-side sum rules. The stress-side ones follow from them by
     # right-multiplication with `𝕊ʰᵒᵐ` and are covered numerically.
     Id4 = TensND.tens_Id4(Val(3), Val(Sym))
     wsum(g) = f₁ * g(:A) + (1 - f₁) * g(:B)
-    @test zero_tens(wsum(nm -> strain_strain_concentration(lam, nm)) - Id4)
-    @test zero_tens(wsum(nm -> stress_strain_concentration(lam, nm)) - Ch)
+    @test zero_tens(wsum(nm -> gradient_gradient_concentration(lam, nm)) - Id4)
+    @test zero_tens(wsum(nm -> flux_gradient_concentration(lam, nm)) - Ch)
 
     # The one closed form worth reading off: the macroscopic in-plane strain
     # reaches every layer unchanged, so ℓ₅ of 𝔸ᵢ — the in-plane deviatoric

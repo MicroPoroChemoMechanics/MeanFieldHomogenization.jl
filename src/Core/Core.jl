@@ -47,6 +47,7 @@ using PolynomialRoots
 
 include("counters.jl")
 include("abstractions.jl")
+include("order_aliases.jl")
 include("cells.jl")
 include("traits.jl")
 include("bases.jl")
@@ -120,11 +121,17 @@ export laminate_stress_strain_concentration, laminate_strain_stress_concentratio
 export laminate_gradient_concentration, laminate_flux_concentration
 export laminate_flux_gradient_concentration, laminate_gradient_flux_concentration
 
-# Concentration & contribution (generics; methods added at top level and in Cracks)
-export strain_strain_concentration, stress_strain_concentration, strain_stress_concentration, stress_stress_concentration
-export gradient_gradient_concentration, flux_gradient_concentration, gradient_flux_concentration, flux_flux_concentration
-export stiffness_contribution, conductivity_contribution, resistivity_contribution
-export compliance_contribution
-export delta_stiffness, delta_conductivity, delta_compliance, delta_resistivity
+# Concentration & contribution: one generic function per notion for fourth- and
+# second-order tensors (methods added at top level and in the sub-modules), and
+# the explicit names of elasticity and conduction, each restricted to its order.
+export gradient_gradient_concentration, flux_gradient_concentration
+export gradient_flux_concentration, flux_flux_concentration
+export property_contribution, inverse_property_contribution
+export delta_property, delta_inverse_property
+export strain_strain_concentration, stress_strain_concentration
+export strain_stress_concentration, stress_stress_concentration
+export stiffness_contribution, compliance_contribution
+export conductivity_contribution, resistivity_contribution
+export delta_stiffness, delta_compliance, delta_conductivity, delta_resistivity
 
 end # module

@@ -35,9 +35,9 @@ kmat(law) = iso_order2_params_from_blocks(V2._trapezoidal_relaxation(law, times2
             ), external in (true, false)
         s = LayeredSphere((0.6, 1.0), (TensISO{3}(5.0), TensISO{3}(1.0)); interfaces)
         A = gradient_gradient_concentration_alv(s, heaviside_law(K₀), times; external)
-        N = conductivity_contribution_alv(s, heaviside_law(K₀), times; external)
+        N = property_contribution_alv(s, heaviside_law(K₀), times; external)
         @test A ≈ TensND.get_data(gradient_gradient_concentration(s, K₀, K₀; external))[1] .* Id atol = 1.0e-14
-        @test N ≈ TensND.get_data(MeanFieldHomogenization.conductivity_contribution(s, K₀; external))[1] .* Id atol = 1.0e-14
+        @test N ≈ TensND.get_data(MeanFieldHomogenization.property_contribution(s, K₀; external))[1] .* Id atol = 1.0e-14
     end
     # An impermeable core needs no Volterra inverse of its conductivity.
     s = LayeredSphere(
@@ -46,8 +46,8 @@ kmat(law) = iso_order2_params_from_blocks(V2._trapezoidal_relaxation(law, times2
     )
     @test gradient_gradient_concentration_alv(s, heaviside_law(K₀), times) ≈
         TensND.get_data(gradient_gradient_concentration(s, K₀, K₀))[1] .* Id atol = 1.0e-14
-    @test conductivity_contribution_alv(s, heaviside_law(K₀), times) ≈
-        TensND.get_data(MeanFieldHomogenization.conductivity_contribution(s, K₀))[1] .* Id atol = 1.0e-14
+    @test property_contribution_alv(s, heaviside_law(K₀), times) ≈
+        TensND.get_data(MeanFieldHomogenization.property_contribution(s, K₀))[1] .* Id atol = 1.0e-14
 end
 
 @testset "Layered sphere, order 2 — the interface conditions solved as one system" begin
@@ -101,7 +101,7 @@ end
         s = LayeredSphere((R,), (K1_law,); interfaces = (interface,))
         K_eq = iso_order2_blocks_from_params(Matrix(k_eq))
         @test gradient_gradient_concentration_alv(s, K0_law, times2) ≈ dilute_concentration_alv_order2(K_eq, K_ref, P) rtol = 1.0e-12
-        @test conductivity_contribution_alv(s, K0_law, times2) ≈ dilute_contribution_alv_order2(K_eq, K_ref, P) rtol = 1.0e-12
+        @test property_contribution_alv(s, K0_law, times2) ≈ dilute_contribution_alv_order2(K_eq, K_ref, P) rtol = 1.0e-12
     end
     # Leaving the outer interface to the matrix drops its jump from the average,
     # not its effect on the field: what remains is the material average.

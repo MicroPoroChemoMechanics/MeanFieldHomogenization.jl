@@ -360,10 +360,10 @@ and ribbon geometries — see
 The rank-1 direction is always the crack normal ``\underline{n}``,
 for any conductivity tensor ``\boldsymbol{K}_0``.
 
-[`compliance_contribution`](@ref)`(crack, K₀)` returns ``\boldsymbol{R}``
+[`inverse_property_contribution`](@ref)`(crack, K₀)` returns ``\boldsymbol{R}``
 directly.  The dilute resistivity correction to the effective
 resistivity of the cracked conductor is obtained via
-[`delta_resistivity`](@ref)`(crack, R, ε)`:
+[`delta_inverse_property`](@ref)`(crack, R, ε)`:
 
 ```math
 \begin{aligned}

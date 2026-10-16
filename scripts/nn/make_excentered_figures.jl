@@ -85,7 +85,7 @@ for α in ALPHAS
     for e2 in E2S
         gf, gn = fe_incl(α, 0.5, e2), nn_incl(α, 0.5, e2)
         A_fe = fe_axi_concentration(gf, C0)[1]
-        A_nn = strain_strain_concentration(gn, C0, C0)
+        A_nn = gradient_gradient_concentration(gn, C0, C0)
         push!(
             tens_err,
             maximum(abs, get_array(A_nn) .- get_array(A_fe)) / maximum(abs, get_array(A_fe))
@@ -104,10 +104,10 @@ fe_axi_mesh_report(gf)                                  # mesh out of the timing
 t_fe = @elapsed fe_axi_concentration(gf, ce(1.01 * E0, NU))
 
 gn = nn_incl(0.4, 0.5, 0.4)
-strain_strain_concentration(gn, C0, C0)
+gradient_gradient_concentration(gn, C0, C0)
 const N_EVAL = 2000
 t_nn = @elapsed for _ in 1:N_EVAL
-    strain_strain_concentration(gn, C0, C0)
+    gradient_gradient_concentration(gn, C0, C0)
 end
 t_nn /= N_EVAL
 

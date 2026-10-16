@@ -10,7 +10,7 @@ using SymPy   # top level on purpose: `@syms` below is expanded before any
 #  Concentration tensors for ellipsoids (dilute Eshelby).
 # =============================================================================
 
-@testset "strain_strain_concentration — iso sphere, iso matrix" begin
+@testset "gradient_gradient_concentration — iso sphere, iso matrix" begin
     # Analytical Eshelby for a sphere in iso matrix: A_εε is isotropic,
     # its two moduli are α = 1/(1 + 3k₀ₚ·Δk) and β similar for shear.
     # We cross-check the diagonal (1,1,1,1) entry and identity limit.
@@ -22,13 +22,13 @@ using SymPy   # top level on purpose: `@syms` below is expanded before any
     ell = Ellipsoid(1.0)
 
     # C₁ = C₀ → A = 𝕀
-    A₀ = strain_strain_concentration(ell, C₀, C₀)
+    A₀ = gradient_gradient_concentration(ell, C₀, C₀)
     @test A₀[1, 1, 1, 1] ≈ 1.0 rtol = 1.0e-12
     @test A₀[1, 2, 1, 2] ≈ 0.5 rtol = 1.0e-12
 
     # Stiffer inclusion: A_εε[1,1,1,1] < 1
     C₁ = TensISO{3}(3k₀ * 2, 2μ₀ * 2)
-    A = strain_strain_concentration(ell, C₁, C₀)
+    A = gradient_gradient_concentration(ell, C₁, C₀)
     @test 0 < A[1, 1, 1, 1] < 1
 end
 
@@ -40,10 +40,10 @@ end
     C₁ = TensISO{3}(3k₀ * 1.8, 2μ₀ * 1.4)
     ell = Ellipsoid(1.0)
 
-    A_εε = strain_strain_concentration(ell, C₁, C₀)
-    A_σε = stress_strain_concentration(ell, C₁, C₀)
-    A_εσ = strain_stress_concentration(ell, C₁, C₀)
-    A_σσ = stress_stress_concentration(ell, C₁, C₀)
+    A_εε = gradient_gradient_concentration(ell, C₁, C₀)
+    A_σε = flux_gradient_concentration(ell, C₁, C₀)
+    A_εσ = gradient_flux_concentration(ell, C₁, C₀)
+    A_σσ = flux_flux_concentration(ell, C₁, C₀)
 
     # A_σε = C₁ : A_εε
     lhs = A_σε
@@ -58,7 +58,7 @@ end
     @test A_σσ ≈ rhs3 rtol = 1.0e-10
 end
 
-@testset "strain_strain_concentration — triaxial ellipsoid, aniso stiffness" begin
+@testset "gradient_gradient_concentration — triaxial ellipsoid, aniso stiffness" begin
     # Hand-picked triclinic stiffness (same reference as test_anisotropic.jl)
     ℬ = CanonicalBasis{3, Float64}()
     _KM_tri = [
@@ -73,8 +73,8 @@ end
     C₁ = 2.0 * C₀   # same symmetry, doubled
     ell = Ellipsoid(3.0, 2.0, 1.0)
 
-    A = strain_strain_concentration(ell, C₁, C₀; method = :residues)
-    A_nqg = strain_strain_concentration(ell, C₁, C₀; method = :nestedquadgk, reltol = 1.0e-12)
+    A = gradient_gradient_concentration(ell, C₁, C₀; method = :residues)
+    A_nqg = gradient_gradient_concentration(ell, C₁, C₀; method = :nestedquadgk, reltol = 1.0e-12)
     @test maximum(abs, components_canon(A - A_nqg)) < 1.0e-7 * maximum(abs, components_canon(A))
 end
 
@@ -83,11 +83,11 @@ end
     C₀ = TensISO{3}(3k0, 2m0)
     C₁ = TensISO{3}(3kk1, 2mm1)
     ell = Ellipsoid(1.0)
-    A = strain_strain_concentration(ell, C₁, C₀)
+    A = gradient_gradient_concentration(ell, C₁, C₀)
     # Expression should be symbolic in k0, m0, kk1, mm1
     @test string(A[1, 1, 1, 1]) isa String    # smoke
     # A collapses to identity at C₁ = C₀
-    A_id = strain_strain_concentration(ell, C₀, C₀)
+    A_id = gradient_gradient_concentration(ell, C₀, C₀)
     @test simplify(A_id[1, 1, 1, 1] - 1) == 0
 end
 
@@ -100,7 +100,7 @@ end
         μ = E / (2 * (1 + ν))
         C₀ = TensISO{3}(3k, 2μ)
         C₁ = 2.0 * C₀
-        strain_strain_concentration(ell, C₁, C₀)[3, 3, 3, 3]
+        gradient_gradient_concentration(ell, C₁, C₀)[3, 3, 3, 3]
     end
     d = ForwardDiff.derivative(f, 0.3)
     # Finite-difference check

@@ -38,8 +38,8 @@ end
     C₁ = TensISO{3}(3κ₁, 2μ₁)
 
     s = LayeredSphere((1.0,), (C₁,))
-    A_layered = strain_strain_concentration(s, C₀; layer = 1)
-    A_ell = strain_strain_concentration(Ellipsoid(1.0), C₁, C₀)
+    A_layered = gradient_gradient_concentration(s, C₀; layer = 1)
+    A_ell = gradient_gradient_concentration(Ellipsoid(1.0), C₁, C₀)
     # Both should match to floating-point precision (the two paths
     # differ only in round-off — bulk via (u,σ) propagation vs direct
     # Eshelby iso inversion).
@@ -86,13 +86,13 @@ end
     # average strain is not exactly 1 because the core perturbs it,
     # but the trace average across the whole composite must equal ε∞ when
     # the matrix surrounds a composite of the same material).
-    # We just check sphere_strain_average trace vs exact dilute expectation.
-    sph_avg = sphere_strain_average(s, C₀, ε∞)
+    # We just check sphere_gradient_average trace vs exact dilute expectation.
+    sph_avg = sphere_gradient_average(s, C₀, ε∞)
     # Sum of per-layer averages weighted by volume fraction equals sphere_avg
     f1 = layer_volume_fraction(s, 1)
     f2 = layer_volume_fraction(s, 2)
-    avg1 = layer_strain_average(s, C₀, ε∞, 1)
-    avg2 = layer_strain_average(s, C₀, ε∞, 2)
+    avg1 = layer_gradient_average(s, C₀, ε∞, 1)
+    avg2 = layer_gradient_average(s, C₀, ε∞, 2)
     @test sph_avg ≈ f1 * avg1 + f2 * avg2 rtol = 1.0e-12
 
     # Cumulative at r = outer equals sphere_avg
@@ -104,15 +104,15 @@ end
     @test cum1 ≈ avg1 rtol = 1.0e-12
 end
 
-@testset "LayeredSphere — stiffness_contribution for single-layer" begin
+@testset "LayeredSphere — property_contribution for single-layer" begin
     κ₀, μ₀ = 100.0, 70.0
     κ₁, μ₁ = 250.0, 180.0
     C₀ = TensISO{3}(3κ₀, 2μ₀)
     C₁ = TensISO{3}(3κ₁, 2μ₁)
 
     s = LayeredSphere((1.0,), (C₁,))
-    N_layered = stiffness_contribution(s, C₀)
-    N_ell = stiffness_contribution(Ellipsoid(1.0), C₁, C₀)
+    N_layered = property_contribution(s, C₀)
+    N_ell = property_contribution(Ellipsoid(1.0), C₁, C₀)
     # For single layer (f = 1), both should agree on the iso coefficients.
     @test N_layered.data[1] ≈ N_ell.data[1] rtol = 1.0e-10
     @test N_layered.data[2] ≈ N_ell.data[2] rtol = 1.0e-10
@@ -124,10 +124,10 @@ end
     C₁ = TensISO{3}(200.0, 140.0)
     s2 = LayeredSphere((0.5, 1.0), (C₁, C₀))
     ε∞_sph = TensND.Tens(Matrix(Diagonal([0.1, 0.1, 0.1])))
-    @test_nowarn layer_strain_average(s2, C₀, ε∞_sph, 1)
+    @test_nowarn layer_gradient_average(s2, C₀, ε∞_sph, 1)
 
     # Deviatoric component ≠ 0: combines bulk α_k and shear β_k.
     ε∞_dev = TensND.Tens([0.1 0.0 0.0; 0.0 -0.05 0.0; 0.0 0.0 -0.05])
-    avg = layer_strain_average(s2, C₀, ε∞_dev, 1)
+    avg = layer_gradient_average(s2, C₀, ε∞_dev, 1)
     @test all(isfinite, Matrix(avg))
 end

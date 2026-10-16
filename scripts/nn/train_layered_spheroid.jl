@@ -13,7 +13,7 @@
 #  exact — so it is tempting to label from it and get a free dataset. It cannot
 #  supply the labels this needs: a heterogeneous inclusion enters through gate B
 #  with **both** concentration tensors, and the analytic type implements the
-#  strain side only. Its `stress_strain_concentration` is refused rather than answered
+#  strain side only. Its `flux_gradient_concentration` is refused rather than answered
 #  (the generic `ℂ₁ : 𝔸_εε` presupposes a uniform stiffness a multilayer does
 #  not have), so half the pair simply does not exist there.
 #
@@ -106,8 +106,8 @@ SPEC_KIND in ("dimensionless", "anchored") ||
     error("MFH_NN_SPEC is \"dimensionless\" or \"anchored\", got \"$SPEC_KIND\"")
 _spec(class) = SPEC_KIND == "anchored" ?
     NI.AnchoredHill(class, :layered_spheroid) : NI.DimensionlessHill(class)
-const SPEC_A = _spec(NI.StrainConcentrationTI())
-const SPEC_B = _spec(NI.StressConcentrationTI())
+const SPEC_A = _spec(NI.GradientConcentrationTI())
+const SPEC_B = _spec(NI.FluxConcentrationTI())
 
 # The revolution axis of the cell, which is the frame every label is expressed
 # in — `_class_frame` of a concentration class reads column 3.
@@ -190,15 +190,15 @@ function label(X, tag)
     for (i, j) in enumerate(todo)
         i > budget && break
         geom, _ = geometry(collect(view(X, :, j)))
-        frame = NI._class_frame(NI.StrainConcentrationTI(), geom)
+        frame = NI._class_frame(NI.GradientConcentrationTI(), geom)
         A, B = fe_axi_concentration(geom, C0)
         # `components` measures the projection residual, so a wrong axis or a
         # response that is not transversely isotropic about it fails here
         # instead of training quietly on corrupted labels.
-        za = collect(NI.components(NI.StrainConcentrationTI(), A, frame; atol = 1.0e-6)) .*
-            NI.dimensionless_scale(NI.StrainConcentrationTI(), C0)
-        zb = collect(NI.components(NI.StressConcentrationTI(), B, frame; atol = 1.0e-6)) .*
-            NI.dimensionless_scale(NI.StressConcentrationTI(), C0)
+        za = collect(NI.components(NI.GradientConcentrationTI(), A, frame; atol = 1.0e-6)) .*
+            NI.dimensionless_scale(NI.GradientConcentrationTI(), C0)
+        zb = collect(NI.components(NI.FluxConcentrationTI(), B, frame; atol = 1.0e-6)) .*
+            NI.dimensionless_scale(NI.FluxConcentrationTI(), C0)
         append_ckpt(tag, j, za, zb)          # durable before anything else
         done[j] = (za, zb)
         if i % 10 == 0 || i == budget
@@ -302,16 +302,16 @@ const SUFFIX = (FAMILY == "prolate" ? "" : "_oblate") *
 
 sA, hA, valA = fit(
     "layered_spheroid_strain" * SUFFIX, SPEC_A,
-    reencode(ZAt, Xt, NI.StrainConcentrationTI(), SPEC_A),
-    reencode(ZAv, Xv, NI.StrainConcentrationTI(), SPEC_A);
+    reencode(ZAt, Xt, NI.GradientConcentrationTI(), SPEC_A),
+    reencode(ZAv, Xv, NI.GradientConcentrationTI(), SPEC_A);
     notes = "𝔸_εε of a two-layer confocal spheroid, from axisymmetric Fourier " *
         "finite elements; features (log ω, w, log E₁/E₀, log E₂/E₀) at ν = 0.2, " *
         "$FAMILY branch",
 )
 sB, hB, valB = fit(
     "layered_spheroid_stress" * SUFFIX, SPEC_B,
-    reencode(ZBt, Xt, NI.StressConcentrationTI(), SPEC_B),
-    reencode(ZBv, Xv, NI.StressConcentrationTI(), SPEC_B);
+    reencode(ZBt, Xt, NI.FluxConcentrationTI(), SPEC_B),
+    reencode(ZBv, Xv, NI.FluxConcentrationTI(), SPEC_B);
     notes = "𝔸_σε of the same morphology, divided by 2μ₀ — it is of degree +1 " *
         "in the moduli where 𝔸_εε is of degree 0. The analytic type supplies " *
         "no counterpart: this half of gate B exists only through the cell",

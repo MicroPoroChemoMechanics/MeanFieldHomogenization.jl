@@ -11,15 +11,15 @@
 # ── Stiffness / conductivity contribution ────────────────────────────────────
 #
 #  Solid inclusion (VolumeFraction)
-#    elasticity   : Δ_solid = f · stiffness_contribution(geom, C_i, C₀)
-#    conductivity : Δ_solid = f · conductivity_contribution(geom, K_i, K₀)
+#    elasticity   : Δ_solid = f · property_contribution(geom, C_i, C₀)
+#    conductivity : Δ_solid = f · property_contribution(geom, K_i, K₀)
 #
 #  Flat crack (CrackDensity)
-#    elasticity   : Δ_crack = (4π/3 or π) · ε · stiffness_contribution(crack, C₀)
-#    conductivity : Δ_crack = (4π/3 or π) · ε · conductivity_contribution(crack, K₀)
+#    elasticity   : Δ_crack = (4π/3 or π) · ε · property_contribution(crack, C₀)
+#    conductivity : Δ_crack = (4π/3 or π) · ε · property_contribution(crack, K₀)
 #
 #  Dispatch on the tensor order (`AbstractTens{4,3}` vs `AbstractTens{2,3}`)
-#  picks the right `stiffness_contribution` / `conductivity_contribution`.
+#  picks the method of `property_contribution`.
 
 # Whether `P_i` may multiply the orientation-averaged concentration instead of
 # being averaged with it: the average is trivial, or `P_i` is isotropic and
@@ -40,7 +40,7 @@ The two must be kept distinct.
 requires **both**:
 
   * ``\\mathbb{C}_i`` uniform inside the phase — false for a `LayeredSphere`, where the
-    average is assembled layer by layer through `stress_strain_concentration`
+    average is assembled layer by layer through `flux_gradient_concentration`
     (``\\sum_k f_k\\,\\mathbb{C}_k:\\mathbb{A}_k``);
   * the orientation average to commute with ``\\mathbb{C}_i`` — false for an anisotropic
     ``\\mathbb{C}_i`` carrying an ISO/TI orientation distribution, since
@@ -63,12 +63,12 @@ function _phase_stress_strain_average(
     if MFH_Core.is_homogeneous_inclusion(geom)
         _average_commutes(sym, P_i) && return P_i ⊡ A_dil
         P₀_proj = _project_matrix(P₀, sym)
-        A_raw = MFH_Core.strain_strain_concentration(geom, P_i, P₀_proj; kw...)
+        A_raw = MFH_Core.gradient_gradient_concentration(geom, P_i, P₀_proj; kw...)
         return _apply_symmetrize(P_i ⊡ A_raw, sym)
     end
     P₀_proj = _project_matrix(P₀, sym)
     return _apply_symmetrize(
-        MFH_Core.stress_strain_concentration(geom, P_i, P₀_proj; kw...), sym
+        MFH_Core.flux_gradient_concentration(geom, P_i, P₀_proj; kw...), sym
     )
 end
 
@@ -114,7 +114,7 @@ function _stiffness_contribution(
         ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{4, 3}, sym; kw...
     )
     geom = rve.phases[name].geometry
-    N = MFH_Core.stiffness_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
+    N = MFH_Core.property_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
     return volume_fraction(rve, name) * _apply_symmetrize(N, sym)
 end
 
@@ -122,15 +122,15 @@ function _stiffness_contribution(
         a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{4, 3}, sym; kw...
     )
     geom = rve.phases[name].geometry
-    N = MFH_Core.stiffness_contribution(geom, P₀; K_interface = _crack_interface_K4(rve, name), kw...)
-    return _apply_symmetrize(MFH_Core.delta_stiffness(geom, N, amount_value(a)), sym)
+    N = MFH_Core.property_contribution(geom, P₀; K_interface = _crack_interface_K4(rve, name), kw...)
+    return _apply_symmetrize(MFH_Core.delta_property(geom, N, amount_value(a)), sym)
 end
 
 function _stiffness_contribution(
         ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{2, 3}, sym; kw...
     )
     geom = rve.phases[name].geometry
-    N = MFH_Core.conductivity_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
+    N = MFH_Core.property_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
     return volume_fraction(rve, name) * _apply_symmetrize(N, sym)
 end
 
@@ -138,8 +138,8 @@ function _stiffness_contribution(
         a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{2, 3}, sym; kw...
     )
     geom = rve.phases[name].geometry
-    N = MFH_Core.conductivity_contribution(geom, P₀; α_interface = _crack_interface_α(rve, name), kw...)
-    return _apply_symmetrize(MFH_Core.delta_conductivity(geom, N, amount_value(a)), sym)
+    N = MFH_Core.property_contribution(geom, P₀; α_interface = _crack_interface_α(rve, name), kw...)
+    return _apply_symmetrize(MFH_Core.delta_property(geom, N, amount_value(a)), sym)
 end
 
 # ── Helpers : pull optional interface-stiffness properties from the RVE ────
@@ -163,7 +163,7 @@ end
 
 # ── Compliance / resistivity contribution ────────────────────────────────────
 #
-#  The generic `compliance_contribution` / `resistivity_contribution` read the
+#  The generic methods of `inverse_property_contribution` read the
 #  compliance contribution from the stiffness one through the exact identity
 #
 #      ℍ = − 𝕊₀ : 𝐍 : 𝕊₀ ,      (resp.  ℍ_R = − 𝐑₀ ⋅ 𝐍_K ⋅ 𝐑₀)
@@ -172,7 +172,7 @@ end
 #  (`C₁ = 0`) keeps a finite contribution, and a heterogeneous inclusion
 #  (`LayeredSphere`, `LayeredSpheroid`), whose `phase_property` is a
 #  placeholder, never reads it.  The same identity is used on the ALV side by
-#  `stiffness_contribution_alv(crack, …)`.
+#  `property_contribution_alv(crack, …)`.
 
 """
     _phase_compliance_contribution(rve, name, prop::Symbol, P₀; kw...)
@@ -194,7 +194,7 @@ function _compliance_contribution(
         ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{4, 3}, sym; kw...
     )
     geom = rve.phases[name].geometry
-    H = compliance_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
+    H = inverse_property_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
     return volume_fraction(rve, name) * _apply_symmetrize(H, sym)
 end
 
@@ -202,15 +202,15 @@ function _compliance_contribution(
         a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{4, 3}, sym; kw...
     )
     geom = rve.phases[name].geometry
-    H = compliance_contribution(geom, P₀; K_interface = _crack_interface_K4(rve, name), kw...)
-    return _apply_symmetrize(delta_compliance(geom, H, amount_value(a)), sym)
+    H = inverse_property_contribution(geom, P₀; K_interface = _crack_interface_K4(rve, name), kw...)
+    return _apply_symmetrize(delta_inverse_property(geom, H, amount_value(a)), sym)
 end
 
 function _compliance_contribution(
         ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{2, 3}, sym; kw...
     )
     geom = rve.phases[name].geometry
-    R = MFH_Core.resistivity_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
+    R = MFH_Core.inverse_property_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
     return volume_fraction(rve, name) * _apply_symmetrize(R, sym)
 end
 
@@ -218,8 +218,8 @@ function _compliance_contribution(
         a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{2, 3}, sym; kw...
     )
     geom = rve.phases[name].geometry
-    R = compliance_contribution(geom, P₀; α_interface = _crack_interface_α(rve, name), kw...)
-    return _apply_symmetrize(delta_resistivity(geom, R, amount_value(a)), sym)
+    R = inverse_property_contribution(geom, P₀; α_interface = _crack_interface_α(rve, name), kw...)
+    return _apply_symmetrize(delta_inverse_property(geom, R, amount_value(a)), sym)
 end
 
 # ── Strain-strain concentration (Mori-Tanaka, SC, …) ──────────────────────────
@@ -247,7 +247,7 @@ function _phase_dilute_concentration(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
-    A = MFH_Core.strain_strain_concentration(geom, P_i, P₀_proj; kw...)
+    A = MFH_Core.gradient_gradient_concentration(geom, P_i, P₀_proj; kw...)
     return _apply_symmetrize(A, sym)
 end
 
@@ -279,14 +279,8 @@ end
 #  the tensor order instead would make the catch-all unreachable.)
 const _Layered = Union{LayeredSpheres.LayeredSphere, LayeredSpheroids.LayeredSpheroid}
 
-_layer_voigt(sphere::_Layered, ::TensND.AbstractTens{4, 3}) =
-    layer_stiffness_average(sphere)
-_layer_voigt(sphere::_Layered, ::TensND.AbstractTens{2, 3}) =
-    layer_conductivity_average(sphere)
-_layer_reuss(sphere::_Layered, ::TensND.AbstractTens{4, 3}) =
-    layer_compliance_average(sphere)
-_layer_reuss(sphere::_Layered, ::TensND.AbstractTens{2, 3}) =
-    layer_resistivity_average(sphere)
+_layer_voigt(sphere::_Layered, ref::TensND.AbstractTens) = layer_property_average(sphere, ref)
+_layer_reuss(sphere::_Layered, ref::TensND.AbstractTens) = layer_inverse_property_average(sphere, ref)
 
 _layer_voigt(geom, _ref) = _no_layer_average(geom, "Voigt")
 _layer_reuss(geom, _ref) = _no_layer_average(geom, "Reuss")
@@ -392,7 +386,7 @@ function _phase_dilute_and_contribution(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
-    A_raw, N_raw = MFH_Core.concentration_and_stiffness(geom, P_i, P₀_proj; kw...)
+    A_raw, N_raw = MFH_Core.concentration_and_contribution(geom, P_i, P₀_proj; kw...)
     return (
         _apply_symmetrize(A_raw, sym),
         volume_fraction(rve, name) * _apply_symmetrize(N_raw, sym),
@@ -407,7 +401,7 @@ function _phase_dilute_and_contribution(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
-    A_raw, N_raw = MFH_Core.concentration_and_stiffness(geom, P_i, P₀_proj; kw...)
+    A_raw, N_raw = MFH_Core.concentration_and_contribution(geom, P_i, P₀_proj; kw...)
     return (
         _apply_symmetrize(A_raw, sym),
         volume_fraction(rve, name) * _apply_symmetrize(N_raw, sym),
@@ -429,12 +423,12 @@ function _phase_compliance_and_contribution(
     P₀_proj = _project_matrix(P₀, sym)
     a = rve.amounts[name]
     K_int = _crack_interface_K4(rve, name)
-    H_raw, N_raw = compliance_and_stiffness_contribution(
+    H_raw, N_raw = inverse_and_property_contribution(
         geom, P₀_proj; K_interface = K_int, kw...
     )
     return (
-        _apply_symmetrize(delta_compliance(geom, H_raw, amount_value(a)), sym),
-        _apply_symmetrize(MFH_Core.delta_stiffness(geom, N_raw, amount_value(a)), sym),
+        _apply_symmetrize(delta_inverse_property(geom, H_raw, amount_value(a)), sym),
+        _apply_symmetrize(MFH_Core.delta_property(geom, N_raw, amount_value(a)), sym),
     )
 end
 
@@ -447,12 +441,12 @@ function _phase_compliance_and_contribution(
     P₀_proj = _project_matrix(P₀, sym)
     a = rve.amounts[name]
     α_int = _crack_interface_α(rve, name)
-    R_raw, N_raw = compliance_and_stiffness_contribution(
+    R_raw, N_raw = inverse_and_property_contribution(
         geom, P₀_proj; α_interface = α_int, kw...
     )
     return (
-        _apply_symmetrize(delta_resistivity(geom, R_raw, amount_value(a)), sym),
-        _apply_symmetrize(MFH_Core.delta_conductivity(geom, N_raw, amount_value(a)), sym),
+        _apply_symmetrize(delta_inverse_property(geom, R_raw, amount_value(a)), sym),
+        _apply_symmetrize(MFH_Core.delta_property(geom, N_raw, amount_value(a)), sym),
     )
 end
 
@@ -478,12 +472,12 @@ function _phase_dilute_and_stress_average(
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P₀, sym)
     if MFH_Core.is_homogeneous_inclusion(geom)
-        A_raw = MFH_Core.strain_strain_concentration(geom, P_i, P₀_proj; kw...)
+        A_raw = MFH_Core.gradient_gradient_concentration(geom, P_i, P₀_proj; kw...)
         A_dil = _apply_symmetrize(A_raw, sym)
         _average_commutes(sym, P_i) && return (A_dil, P_i ⊡ A_dil)
         return (A_dil, _apply_symmetrize(P_i ⊡ A_raw, sym))
     end
-    A_raw, B_raw = MFH_Core.concentration_and_stress_average(geom, P_i, P₀_proj; kw...)
+    A_raw, B_raw = MFH_Core.concentration_and_flux_average(geom, P_i, P₀_proj; kw...)
     return (_apply_symmetrize(A_raw, sym), _apply_symmetrize(B_raw, sym))
 end
 
@@ -502,6 +496,6 @@ function _phase_dilute_and_stress_average(
         _average_commutes(sym, P_i) && return (A_dil, P_i ⋅ A_dil)
         return (A_dil, _apply_symmetrize(P_i ⋅ A_raw, sym))
     end
-    A_raw, B_raw = MFH_Core.concentration_and_stress_average(geom, P_i, P₀_proj; kw...)
+    A_raw, B_raw = MFH_Core.concentration_and_flux_average(geom, P_i, P₀_proj; kw...)
     return (_apply_symmetrize(A_raw, sym), _apply_symmetrize(B_raw, sym))
 end

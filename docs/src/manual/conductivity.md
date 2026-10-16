@@ -100,8 +100,8 @@ pc = PennyCrack(1.0)
 K₀ = TensISO{3}(2.5)
 
 b  = cod_tensor(pc, K₀)                    # scalar COD, = 2/(π²K) for a penny
-R  = compliance_contribution(pc, K₀)       # 𝐑 = (3/4)·b·(ŵ⊗ŵ)
-ΔR = delta_resistivity(pc, R, 0.05)        # dilute correction at density ε
+R  = inverse_property_contribution(pc, K₀)       # 𝐑 = (3/4)·b·(ŵ⊗ŵ)
+ΔR = delta_inverse_property(pc, R, 0.05)        # dilute correction at density ε
 ```
 
 Theory: [Thermal cracks](@ref th-thermal-cracks).

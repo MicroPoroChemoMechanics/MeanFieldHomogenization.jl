@@ -112,8 +112,8 @@ opening of the outer interface, as Echoes does. `external = false` leaves that
 last one to the matrix:
 
 ```@example layered
-strain_strain_concentration(coated, C₀, C₀)                     # what the schemes use
-strain_strain_concentration(coated, C₀, C₀; external = false)   # outer opening excluded
+gradient_gradient_concentration(coated, C₀, C₀)                     # what the schemes use
+gradient_gradient_concentration(coated, C₀, C₀; external = false)   # outer opening excluded
 ```
 
 The averages of the next section are over the material and count no opening.
@@ -131,8 +131,8 @@ The **averages** read off the geometry directly:
 ```@example layered
 ε∞ = TensISO{3}(1.0)                       # a hydrostatic remote strain
 
-layer_strain_average(sphere, C₀, ε∞, 2)    # mean strain in shell 2
-sphere_strain_average(sphere, C₀, ε∞)      # over the whole inclusion
+layer_gradient_average(sphere, C₀, ε∞, 2)    # mean strain in shell 2
+sphere_gradient_average(sphere, C₀, ε∞)      # over the whole inclusion
 ```
 
 The **pointwise** fields go through a solved object, built once and reused —
@@ -142,8 +142,8 @@ not one per point:
 ```@example layered
 fields = LayeredSphereFields(sphere, C₀)
 
-local_strain(fields, [0.0, 0.0, 0.6], ε∞)  # at a point, Cartesian
-local_stress(fields, 0.6, 0.0, 0.0, ε∞)    # or spherical, r θ φ
+local_gradient(fields, [0.0, 0.0, 0.6], ε∞)  # at a point, Cartesian
+local_flux(fields, 0.6, 0.0, 0.0, ε∞)    # or spherical, r θ φ
 get_layer(sphere, 0.6)                     # which layer that radius is in
 ```
 

@@ -140,8 +140,8 @@ for (tag, ω, fr) in (
         gradient_gradient_concentration(LayeredSpheroid(ar, dr, ks), K0, K0),
     )
     d4 = reldiff(
-        strain_strain_concentration(FEAxiLayeredSpheroid(ar, dr, cs; opts), C0, C0),
-        strain_strain_concentration(LayeredSpheroid(ar, dr, cs), C0, C0),
+        gradient_gradient_concentration(FEAxiLayeredSpheroid(ar, dr, cs; opts), C0, C0),
+        gradient_gradient_concentration(LayeredSpheroid(ar, dr, cs), C0, C0),
     )
     @printf("%-32s %14.2e %14.2e\n", tag, d2, d4)
     flush(stdout)
@@ -159,8 +159,8 @@ for (tag, radii) in (
         gradient_gradient_concentration(LayeredSphere(radii, ks), K0, K0),
     )
     d4 = reldiff(
-        strain_strain_concentration(FEAxiLayeredSpheroid(radii, radii, cs; opts), C0, C0),
-        strain_strain_concentration(LayeredSphere(radii, cs), C0, C0),
+        gradient_gradient_concentration(FEAxiLayeredSpheroid(radii, radii, cs; opts), C0, C0),
+        gradient_gradient_concentration(LayeredSphere(radii, cs), C0, C0),
     )
     @printf("%-32s %14.2e %14.2e\n", tag, d2, d4)
     flush(stdout)
@@ -176,12 +176,12 @@ let radii = (0.6, 1.0), cs = (ce(3.0, NU), ce(1.5, NU))
     @printf(
         "  𝔸_σε against LayeredSphere: %.2e\n",
         reldiff(
-            stress_strain_concentration(FEAxiLayeredSpheroid(radii, radii, cs; opts), C0, C0),
-            stress_strain_concentration(LayeredSphere(radii, cs), C0, C0),
+            flux_gradient_concentration(FEAxiLayeredSpheroid(radii, radii, cs; opts), C0, C0),
+            flux_gradient_concentration(LayeredSphere(radii, cs), C0, C0),
         )
     )
     try
-        stress_strain_concentration(LayeredSpheroid(AR, DR, cs), C0, C0)
+        flux_gradient_concentration(LayeredSpheroid(AR, DR, cs), C0, C0)
         println("  the analytic spheroid answered — that is a bug")
     catch e
         println("  the analytic spheroid: ", first(split(sprint(showerror, e), '\n')))
@@ -206,8 +206,8 @@ for ω in (0.9999, 0.999, 0.99, 0.97, 0.95, 0.9, 0.7, 1.05, 1.3)
     ar, dr = confocal_layer_radii(ω, 1.0, (1.0,))
     c1, k1 = ce(4.0, NU), TensISO{3}(5.0)
     de = reldiff(
-        strain_strain_concentration(LayeredSpheroid(ar, dr, (c1,)), C0, C0),
-        strain_strain_concentration(Spheroid(ω), c1, C0),
+        gradient_gradient_concentration(LayeredSpheroid(ar, dr, (c1,)), C0, C0),
+        gradient_gradient_concentration(Spheroid(ω), c1, C0),
     )
     dc = reldiff(
         gradient_gradient_concentration(LayeredSpheroid(ar, dr, (k1,)), K0, K0),
@@ -288,12 +288,12 @@ supplies no stress side, so half of gate B exists only through the cell.""")
         )
         tfe = @elapsed A, B = fe_axi_concentration(cell, C0)
         nn = nn_incl(ω, w, r1, r2)
-        strain_strain_concentration(nn, C0, C0)                      # warm the compilation
-        tnn = @elapsed strain_strain_concentration(nn, C0, C0)
+        gradient_gradient_concentration(nn, C0, C0)                      # warm the compilation
+        tnn = @elapsed gradient_gradient_concentration(nn, C0, C0)
         @printf(
             "%-6.2f %-6.2f %-8.1f %-8.1f %12.2e %12.2e %10.0f×\n", ω, w, r1, r2,
-            reldiff(strain_strain_concentration(nn, C0, C0), A),
-            reldiff(stress_strain_concentration(nn, C0, C0), B), tfe / tnn
+            reldiff(gradient_gradient_concentration(nn, C0, C0), A),
+            reldiff(flux_gradient_concentration(nn, C0, C0), B), tfe / tnn
         )
         flush(stdout)
     end

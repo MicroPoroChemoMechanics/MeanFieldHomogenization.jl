@@ -32,7 +32,7 @@ Provides:
   [`SpringInterface`](@ref) / [`MembraneInterface`](@ref) in elasticity,
   [`KapitzaInterface`](@ref) / [`SurfaceConductiveInterface`](@ref) in
   transport, each entering with an interface *density* ``1/L``;
-- per-layer concentration ([`layer_strain_concentration`](@ref), …), the two
+- per-layer concentration ([`layer_gradient_concentration`](@ref), …), the two
   Hill tensors ([`laminate_hill`](@ref)) and the interface jumps
   ([`interface_jump`](@ref));
 - parameter lenses [`ThicknessParameter`](@ref) and
@@ -65,9 +65,8 @@ import ..Core: AbstractHomogenizationCell, AbstractParameter,
 # The package-wide concentration generics, declared bodyless in
 # `Core/abstractions.jl`. A laminate is a cell, not an inclusion, so the
 # methods added here are keyed on a layer NAME rather than on a `(C₁, C₀)`
-# pair — the same shape as `strain_strain_concentration(::LayeredSphere, C₀; layer)`.
-import ..Core: strain_strain_concentration, stress_strain_concentration, strain_stress_concentration,
-    stress_stress_concentration, gradient_gradient_concentration, flux_gradient_concentration,
+# pair — the same shape as `gradient_gradient_concentration(::LayeredSphere, C₀; layer)`.
+import ..Core: gradient_gradient_concentration, flux_gradient_concentration,
     gradient_flux_concentration, flux_flux_concentration
 
 # The five interface models are shared with the layered sphere and spheroid:
@@ -110,8 +109,8 @@ export AnisotropicSurfaceConductiveInterface
 
 # Fields
 export laminate_hill
-export layer_strain_concentration, layer_stress_concentration
 export layer_gradient_concentration, layer_flux_concentration
+export layer_strain_concentration, layer_stress_concentration
 export interface_jump
 
 # Lenses

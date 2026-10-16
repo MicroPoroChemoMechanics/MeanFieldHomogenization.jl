@@ -190,8 +190,8 @@ end
 # sphere against the running estimate `C`, from its recurrences: what a phase
 # with a Hill kernel gets from its dilute concentration.
 function _alv_layered_AB(s::LayeredSphere, C::AbstractMatrix, times)
-    A = strain_strain_concentration_alv(s, C, times)
-    return A, stiffness_contribution_alv(s, C, times) .+ C * A
+    A = gradient_gradient_concentration_alv(s, C, times)
+    return A, property_contribution_alv(s, C, times) .+ C * A
 end
 
 # Their volume-weighted, symmetrized sums over the layered phases.
@@ -211,7 +211,7 @@ end
 # number in one of its layers, for instance), probed once against `C_0`.
 function _alv_layered_eltype(Tp, layered_data, C_0, times)
     for d in layered_data
-        Tp = promote_type(Tp, eltype(strain_strain_concentration_alv(d.geom, C_0, times)), typeof(d.f))
+        Tp = promote_type(Tp, eltype(gradient_gradient_concentration_alv(d.geom, C_0, times)), typeof(d.f))
     end
     return Tp
 end
@@ -377,7 +377,7 @@ function _build_sc_crack_extra_J(C_m::AbstractMatrix, crack_data)
         ℓ₁ = (3 / 4) .* B_n
         ℓ₆ = (3 / 8) .* B_t
         H_TI = ti_blocks_from_params((ℓ₁, copy(Z), copy(Z), copy(Z), copy(Z), ℓ₆))
-        H_full = _maybe_symmetrize_alv(delta_compliance_alv(geom, H_TI, ε), sym)
+        H_full = _maybe_symmetrize_alv(delta_inverse_property_alv(geom, H_TI, ε), sym)
         @. extra += H_full
     end
     return extra

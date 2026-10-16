@@ -71,9 +71,9 @@ using SymPy
 
 C = iso_stiffness(k, μ)
 G_sym = LayeredSphere((a,), (iso_stiffness(1 / ϵ, 1 / ϵ),); interfaces = (SpringInterface(Kn, Kt),))
-αG, βG = get_data(strain_strain_concentration(G_sym, C, C))
-aG, bG = get_data(stress_strain_concentration(G_sym, C, C))
-αP, βP = get_data(strain_strain_concentration(Ellipsoid(1.0), iso_stiffness(0, 0), C))
+αG, βG = get_data(gradient_gradient_concentration(G_sym, C, C))
+aG, bG = get_data(flux_gradient_concentration(G_sym, C, C))
+αP, βP = get_data(gradient_gradient_concentration(Ellipsoid(1.0), iso_stiffness(0, 0), C))
 
 # The lowest order in ϵ of the numerator: the equation of the rigid grain.
 function rigid(e)

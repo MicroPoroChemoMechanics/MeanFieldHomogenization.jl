@@ -92,23 +92,23 @@ symmetric stresses has ``\\ell_7 = \\ell_8 = 0`` identically — measured, not a
 ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` is dimensionless, so no scale divides out: see
 [`dimensionless_scale`](@ref).
 """
-struct StrainConcentrationTI <: AbstractHillClass end
+struct GradientConcentrationTI <: AbstractHillClass end
 
 """
-Same six-component transversely isotropic form as [`StrainConcentrationTI`](@ref), for the
+Same six-component transversely isotropic form as [`GradientConcentrationTI`](@ref), for the
 *stress-side* concentration tensor ``\\mathbb{A}_{\\sigma\\varepsilon}``.
 
 The two differ only in their physical dimension, and therefore in what makes
 them dimensionless: ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` is of degree 0 in the moduli, ``\\mathbb{A}_{\\sigma\\varepsilon}`` of degree ``+1``.
 """
-struct StressConcentrationTI <: AbstractHillClass end
+struct FluxConcentrationTI <: AbstractHillClass end
 
 """
 Cubic strain concentration tensor: the **three** components ``(\\alpha, \\beta, \\gamma)`` of a
 `TensCubic` on the projectors ``(\\mathbb{J}, \\mathbb{E}, \\mathbb{T})``, for a morphology left invariant by
 the octahedral group — a supersphere, a cubic array.
 
-Three and not six, where [`StrainConcentrationTI`](@ref) needs six for the same object one
+Three and not six, where [`GradientConcentrationTI`](@ref) needs six for the same object one
 class up. A concentration tensor has **no major symmetry** in general, which is
 exactly why the TI case cannot use the five-component major-symmetric Walpole
 form; but a tensor with the minor symmetries and cubic symmetry *is*
@@ -118,7 +118,7 @@ is dropped here: the class simply has no antisymmetric content to lose.
 Dimensionless, like its TI sibling: ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` is of degree 0 in the reference
 moduli.
 """
-struct StrainConcentrationCubic <: AbstractHillClass end
+struct GradientConcentrationCubic <: AbstractHillClass end
 
 """
 Gradient concentration tensor of a cavity in transport: the **single** component
@@ -161,8 +161,8 @@ struct GradientConcentrationTI2 <: AbstractHillClass end
 const _CLASS_NAMES = Dict{Symbol, AbstractHillClass}(
     :iso => HillISO(), :ti => HillTI(), :ortho => HillOrtho(),
     :iso2 => HillISO2(), :ti2 => HillTI2(),
-    :strain_concentration_ti => StrainConcentrationTI(), :stress_concentration_ti => StressConcentrationTI(),
-    :strain_concentration_cubic => StrainConcentrationCubic(),
+    :gradient_concentration_ti => GradientConcentrationTI(), :flux_concentration_ti => FluxConcentrationTI(),
+    :gradient_concentration_cubic => GradientConcentrationCubic(),
     :gradient_concentration_iso2 => GradientConcentrationISO2(),
     :gradient_concentration_ti2 => GradientConcentrationTI2(),
 )
@@ -196,8 +196,8 @@ ncomponents(::HillTI) = 5
 ncomponents(::HillOrtho) = 9
 ncomponents(::HillISO2) = 1
 ncomponents(::HillTI2) = 2
-ncomponents(::Union{StrainConcentrationTI, StressConcentrationTI}) = 6
-ncomponents(::StrainConcentrationCubic) = 3
+ncomponents(::Union{GradientConcentrationTI, FluxConcentrationTI}) = 6
+ncomponents(::GradientConcentrationCubic) = 3
 ncomponents(::GradientConcentrationISO2) = 1
 ncomponents(::GradientConcentrationTI2) = 2
 
@@ -209,7 +209,7 @@ generics are declared per order, so this is what decides which physics a
 surrogate serves.
 """
 tensor_order(
-    ::Union{HillISO, HillTI, HillOrtho, StrainConcentrationTI, StressConcentrationTI, StrainConcentrationCubic}
+    ::Union{HillISO, HillTI, HillOrtho, GradientConcentrationTI, FluxConcentrationTI, GradientConcentrationCubic}
 ) = 4
 tensor_order(::Union{HillISO2, HillTI2, GradientConcentrationISO2, GradientConcentrationTI2}) = 2
 
@@ -240,11 +240,11 @@ build(::HillTI, c, axis) = TensND.TensTI{4}(c[1], c[2], c[3], c[4], c[5], axis)
 build(::Union{HillISO2, GradientConcentrationISO2}, c, _frame) = TensND.TensISO{3}(c[1])
 build(::Union{HillTI2, GradientConcentrationTI2}, c, axis) = TensND.TensTI{2}(c[1], c[2], axis)
 
-build(::Union{StrainConcentrationTI, StressConcentrationTI}, c, axis) =
+build(::Union{GradientConcentrationTI, FluxConcentrationTI}, c, axis) =
     TensND.TensTI{4}(c[1], c[2], c[3], c[4], c[5], c[6], axis)
 
 # The cube frame is a TensND basis, like `HillOrtho`'s material frame.
-build(::StrainConcentrationCubic, c, frame) = TensND.TensCubic(c[1], c[2], c[3], frame)
+build(::GradientConcentrationCubic, c, frame) = TensND.TensCubic(c[1], c[2], c[3], frame)
 
 build(::HillOrtho, c, frame) = Core._make_ortho(
     eltype(c), c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], nothing, frame
@@ -298,7 +298,7 @@ _project(::HillOrtho, P, frame) = TensND.proj_tens(Val(:ORTHO), P, frame)
 # Unlike the TI concentration classes below, this one needs no special treatment:
 # `proj_tens(Val(:CUBIC), …)` already returns the full class, there being no
 # major-symmetric sub-form to fall short of.
-_project(::StrainConcentrationCubic, P, frame) = TensND.proj_tens(Val(:CUBIC), P, frame)
+_project(::GradientConcentrationCubic, P, frame) = TensND.proj_tens(Val(:CUBIC), P, frame)
 
 # `proj_tens(Val(:TI), …)` returns the *five*-component major-symmetric form, so
 # it cannot serve a concentration tensor. `Core.transverse_isotropify` is the exact
@@ -307,7 +307,7 @@ _project(::StrainConcentrationCubic, P, frame) = TensND.proj_tens(Val(:CUBIC), P
 # with the minor symmetries — leaves the six components wanted. The residual is
 # measured explicitly, in canonical components so that two different bases cannot
 # be compared by accident.
-function _project(::Union{StrainConcentrationTI, StressConcentrationTI}, P, axis)
+function _project(::Union{GradientConcentrationTI, FluxConcentrationTI}, P, axis)
     l = TensND.get_ℓ8(Core.transverse_isotropify(P, axis))
     B = TensND.TensTI{4}(l[1], l[2], l[3], l[4], l[5], l[6], axis)
     ref = Array(TensND.components_canon(P))
@@ -388,13 +388,13 @@ _class_frame(::Union{HillTI, HillTI2}, geom) =
 # about (`FiniteElements._fe_frame`) and the same one that carries a crack's
 # normal. A wrong choice here does not pass silently: `components` measures the
 # projection residual.
-_class_frame(::Union{StrainConcentrationTI, StressConcentrationTI, GradientConcentrationTI2}, geom) =
+_class_frame(::Union{GradientConcentrationTI, FluxConcentrationTI, GradientConcentrationTI2}, geom) =
     Core._basis_col(Core.inclusion_basis(geom), 3)
 
 # The cube axes are the inclusion's own basis, all three columns of it — a cube
 # has no distinguished direction to single out, which is the whole difference
 # from the TI case above.
-_class_frame(::StrainConcentrationCubic, geom) = Core.inclusion_basis(geom)
+_class_frame(::GradientConcentrationCubic, geom) = Core.inclusion_basis(geom)
 
 # ─── Material coefficients ───────────────────────────────────────────────────
 
@@ -446,10 +446,10 @@ dimensionless_scale(::Union{HillISO2, HillTI2}, K₀::TensND.TensISO{2, 3}) =
 # reference medium and of every constituent (measured to 3·10⁻¹⁵ and 9·10⁻¹⁴ on
 # `FEExcenteredSphere`). Which is exactly why the features of such a surrogate
 # have to be contrast *ratios* rather than absolute moduli.
-dimensionless_scale(::StrainConcentrationTI, ::TensND.TensISO{4, 3}) = 1
-dimensionless_scale(::StrainConcentrationCubic, ::TensND.TensISO{4, 3}) = 1
+dimensionless_scale(::GradientConcentrationTI, ::TensND.TensISO{4, 3}) = 1
+dimensionless_scale(::GradientConcentrationCubic, ::TensND.TensISO{4, 3}) = 1
 dimensionless_scale(::Union{GradientConcentrationISO2, GradientConcentrationTI2}, ::TensND.TensISO{2, 3}) = 1
-dimensionless_scale(::StressConcentrationTI, C₀::TensND.TensISO{4, 3}) =
+dimensionless_scale(::FluxConcentrationTI, C₀::TensND.TensISO{4, 3}) =
     inv(TensND.get_data(C₀)[2])
 
 _iso_only(P₀) = throw(
@@ -464,14 +464,14 @@ _iso_only(P₀) = throw(
 )
 
 material_coeffs(
-    ::Union{StrainConcentrationTI, StressConcentrationTI, StrainConcentrationCubic, GradientConcentrationISO2, GradientConcentrationTI2},
+    ::Union{GradientConcentrationTI, FluxConcentrationTI, GradientConcentrationCubic, GradientConcentrationISO2, GradientConcentrationTI2},
     ::TensND.AbstractTens
 ) = throw(
     ArgumentError(
         "a concentration tensor has no affine decomposition on shape-only tensors: " *
             "the structure `ℙ = d·𝕌ᴬ + 𝕍ᴬ/μ₀` belongs to the Hill tensor of an " *
             "ellipsoid in an isotropic matrix. Use `DimensionlessHill` for a " *
-            ":strain_concentration_ti / :stress_concentration_ti surrogate."
+            ":gradient_concentration_ti / :flux_concentration_ti surrogate."
     )
 )
 
@@ -778,7 +778,7 @@ function _anchor(::Val{:spheroid_cavity}, class, x, features, P₀, frame)
     return build(class, components(class, Ab, axis), frame)
 end
 
-# `𝔸 = (𝕀 − ℙ:ℂ₀)⁻¹` — the cavity limit of `strain_strain_concentration`, with the
+# `𝔸 = (𝕀 − ℙ:ℂ₀)⁻¹` — the cavity limit of `gradient_gradient_concentration`, with the
 # operator the order demands: `⊡` in elasticity, `⋅` in transport.
 _cavity_concentration(P::TensND.AbstractTens{4, 3}, C₀::TensND.AbstractTens{4, 3}) =
     inv(_identity_4sym(promote_type(eltype(P), eltype(C₀))) - (P ⊡ C₀))
@@ -857,8 +857,8 @@ _homogeneous_concentration(
 
 # A strain or gradient class anchors against the concentration itself; a stress
 # class against the concentration carrying the mean modulus.
-_anchor_moduli_side(::Union{StrainConcentrationTI, GradientConcentrationTI2}, _P̄, Ab) = Ab
-_anchor_moduli_side(::StressConcentrationTI, C̄, Ab) = C̄ ⊡ Ab
+_anchor_moduli_side(::Union{GradientConcentrationTI, GradientConcentrationTI2}, _P̄, Ab) = Ab
+_anchor_moduli_side(::FluxConcentrationTI, C̄, Ab) = C̄ ⊡ Ab
 
 # The same asymmetry on the way back: contracting the baseline with what the
 # network predicted.

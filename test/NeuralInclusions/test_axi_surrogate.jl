@@ -70,12 +70,12 @@ const NIA = MeanFieldHomogenization.NeuralInclusions
 end
 
 @testset "the reference medium of a cavity is stated, not guessed" begin
-    # `StrainConcentrationTI` has no `_reference_medium` method, deliberately: the same
+    # `GradientConcentrationTI` has no `_reference_medium` method, deliberately: the same
     # class serves *heterogeneous* morphologies that carry their constituents
     # inside themselves, and guessing there would train on corrupted labels. A
     # cavity has no constituent, so the caller declares the medium.
     box = NIA.SampleBox([:log_p, :nu0], [log(0.25), 0.0], [log(1.5), 0.45])
-    @test_throws MethodError NIA._reference_medium(StrainConcentrationTI(), box, [0.0, 0.3])
+    @test_throws MethodError NIA._reference_medium(GradientConcentrationTI(), box, [0.0, 0.3])
 
     ref = (b, x) -> NIA._iso_ref(x[NIA.feature_index(b, :nu0)])
     C₀ = ref(box, [0.0, 0.3])
@@ -213,7 +213,7 @@ end
 
     @testset "they declare what they are" begin
         @test NIA.hill_class(sc) isa GradientConcentrationTI2
-        @test NIA.hill_class(se) isa StrainConcentrationTI
+        @test NIA.hill_class(se) isa GradientConcentrationTI
         @test NIA.tensor_order(sc) == 2
         @test NIA.tensor_order(se) == 4
         @test sc.features == [:log_aspect, :log_p]

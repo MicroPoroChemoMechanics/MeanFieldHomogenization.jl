@@ -1103,7 +1103,7 @@ function _asc_step_compliance_dispatch(
         # does: formed from the averaged `A_dil` and the raw `C_i`, an
         # iso-symmetrized anisotropic phase would come back transversely
         # isotropic, and not even major-symmetric. The bundle also routes
-        # heterogeneous inclusions through `concentration_and_stress_average`, whose
+        # heterogeneous inclusions through `concentration_and_flux_average`, whose
         # stress average the declared (placeholder) property of a
         # `LayeredSphere` cannot give.
         A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, C_n; kw...)

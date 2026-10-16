@@ -14,7 +14,7 @@
 # =============================================================================
 
 """
-    layer_strain_average(sphere, C₀, ε∞, layer) -> Tens{2,3}
+    layer_gradient_average(sphere, C₀, ε∞, layer) -> Tens{2,3}
 
 Volume-averaged strain tensor ``\\langle\\boldsymbol{\\varepsilon}\\rangle_k`` inside the `layer`-th layer
 of a `LayeredSphere` embedded in an isotropic matrix `C₀`, under a
@@ -24,9 +24,9 @@ the shear concentration ``\\beta_k`` (deviatoric part).
 
 This is the strain of the layer's **material**: the opening of a
 [`SpringInterface`](@ref) on either side of it is not included.
-[`strain_strain_concentration`](@ref)`(sphere, C₀; layer, external, internal)` adds it.
+[`gradient_gradient_concentration`](@ref)`(sphere, C₀; layer, external, internal)` adds it.
 """
-function layer_strain_average(
+function layer_gradient_average(
         sphere::LayeredSphere{T, N},
         C₀::TensND.TensISO{4, 3},
         ε∞::TensND.AbstractTens{2, 3},
@@ -46,7 +46,7 @@ function layer_strain_average(
 end
 
 """
-    sphere_strain_average(sphere, C₀, ε∞) -> Tens{2,3}
+    sphere_gradient_average(sphere, C₀, ε∞) -> Tens{2,3}
 
 Volume-averaged strain over the whole composite sphere (all layers
 combined): ``\\langle\\boldsymbol{\\varepsilon}\\rangle_\\Omega = \\sum_k f_k\\,\\langle\\boldsymbol{\\varepsilon}\\rangle_k`` where ``f_k`` is the volume fraction
@@ -54,16 +54,16 @@ of layer ``k`` inside the composite sphere.
 
 This is the strain of the **material**, which leaves out the opening of the
 spring interfaces. The strain of the sphere seen from the matrix, which the
-schemes use, includes it: `strain_strain_concentration(sphere, C₀, C₀) ⊡ ε∞`. The two
+schemes use, includes it: `gradient_gradient_concentration(sphere, C₀, C₀) ⊡ ε∞`. The two
 agree when every interface is perfect or a membrane.
 """
-function sphere_strain_average(
+function sphere_gradient_average(
         sphere::LayeredSphere{T, N},
         C₀::TensND.TensISO{4, 3},
         ε∞::TensND.AbstractTens{2, 3},
     ) where {T, N}
     f = ntuple(k -> layer_volume_fraction(sphere, k), N)
-    avgs = ntuple(k -> layer_strain_average(sphere, C₀, ε∞, k), N)
+    avgs = ntuple(k -> layer_gradient_average(sphere, C₀, ε∞, k), N)
     return sum(f[k] * avgs[k] for k in 1:N)
 end
 
@@ -159,7 +159,7 @@ end
 # transport, although both follow from them in one contraction.
 
 """
-    layer_stress_average(sphere, C₀, ε∞, layer) -> Tens{2,3}
+    layer_flux_average(sphere, C₀, ε∞, layer) -> Tens{2,3}
 
 Volume-averaged stress ``\\langle\\boldsymbol{\\sigma}\\rangle_k = \\mathbb{C}_k:\\langle\\boldsymbol{\\varepsilon}\\rangle_k`` inside the
 `layer`-th layer, under a remote strain `ε∞`.
@@ -167,13 +167,13 @@ Volume-averaged stress ``\\langle\\boldsymbol{\\sigma}\\rangle_k = \\mathbb{C}_k
 Note this is the average of the stress **inside the layer's material**.  A
 [`MembraneInterface`](@ref) additionally carries a surface stress on the layer
 boundary, which belongs to the interface rather than to either adjacent bulk,
-and is therefore *not* included here — `stiffness_contribution` and
-`stress_strain_concentration` account for it separately.  The gap is not small: on a
+and is therefore *not* included here — `property_contribution` and
+`flux_gradient_concentration` account for it separately.  The gap is not small: on a
 two-layer sphere with `MembraneInterface(1.3, 0.7)`,
-`sphere_stress_average` and `stress_strain_concentration ⊡ ε∞` differ by order one,
+`sphere_flux_average` and `flux_gradient_concentration ⊡ ε∞` differ by order one,
 while with perfect interfaces they agree to machine precision.
 """
-function layer_stress_average(
+function layer_flux_average(
         sphere::LayeredSphere{T, N},
         C₀::TensND.TensISO{4, 3},
         ε∞::TensND.AbstractTens{2, 3},
@@ -183,7 +183,7 @@ function layer_stress_average(
     C_k = layer_modulus(sphere, layer)
     κk, μk = _iso_bulk_shear(C_k)
     _is_incompressible(κk) ||
-        return C_k ⊡ layer_strain_average(sphere, C₀, ε∞, layer)
+        return C_k ⊡ layer_gradient_average(sphere, C₀, ε∞, layer)
     # k = ∞: the volumetric strain vanishes and the mean pressure is read from
     # the traction (`_layer_pressures`), not from ∞·0.
     κ₀, μ₀ = _iso_bulk_shear(C₀)
@@ -194,18 +194,18 @@ function layer_stress_average(
 end
 
 """
-    sphere_stress_average(sphere, C₀, ε∞) -> Tens{2,3}
+    sphere_flux_average(sphere, C₀, ε∞) -> Tens{2,3}
 
 Volume-averaged stress over the whole composite sphere,
 ``\\langle\\boldsymbol{\\sigma}\\rangle_\\Omega = \\sum_k f_k\\,\\mathbb{C}_k:\\langle\\boldsymbol{\\varepsilon}\\rangle_k``.
 """
-function sphere_stress_average(
+function sphere_flux_average(
         sphere::LayeredSphere{T, N},
         C₀::TensND.TensISO{4, 3},
         ε∞::TensND.AbstractTens{2, 3},
     ) where {T, N}
     f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
-    avgs = ntuple(k -> layer_stress_average(sphere, C₀, ε∞, k), Val(N))
+    avgs = ntuple(k -> layer_flux_average(sphere, C₀, ε∞, k), Val(N))
     return sum(f[k] * avgs[k] for k in 1:N)
 end
 
@@ -215,7 +215,7 @@ end
 Volume-averaged temperature gradient ``\\langle\\nabla T\\rangle_k = \\alpha_k\\,\\nabla T^{\\infty}`` inside the
 `layer`-th layer of a `LayeredSphere` in an isotropic matrix `K₀`.
 
-Transport twin of [`layer_strain_average`](@ref).  The average is a scalar
+The conduction method.  The average is a scalar
 multiple of the remote gradient, and that scalar is **constant inside a
 layer**: with ``\\nabla T = [f'\\,\\underline{n}\\otimes\\underline{n} + (f/r)(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n})]\\cdot\\nabla T^{\\infty}`` and ``f = \\tilde A r + \\tilde B/r^2``, the
 directional averages ``\\langle\\underline{n}\\otimes\\underline{n}\\rangle = \\boldsymbol{1}/3`` give
@@ -246,7 +246,7 @@ end
 Volume-averaged temperature gradient over the whole composite sphere,
 ``\\langle\\nabla T\\rangle_\\Omega = \\big(\\sum_k f_k\\,\\alpha_k\\big)\\,\\nabla T^{\\infty}``.
 
-As [`sphere_strain_average`](@ref), an average over the material: the
+As in elasticity, an average over the material: the
 temperature jump across a [`KapitzaInterface`](@ref) is left out, and
 [`gradient_gradient_concentration`](@ref)`(sphere, K₀, K₀)` includes it.
 """
@@ -277,4 +277,21 @@ function layer_flux_average(
     k_here = _cond_layer_moduli(sphere)[layer]
     g = layer_gradient_average(sphere, K₀, ∇T∞, layer)
     return TensND.Vec{3}(ntuple(i -> -k_here * g[i], 3))
+end
+
+"""
+    sphere_flux_average(sphere, K₀, ∇T∞) -> Vec{3}
+
+Volume-averaged flux over the composite sphere,
+``\\langle\\underline{q}\\rangle_\\Omega = \\sum_k f_k\\,\\langle\\underline{q}\\rangle_k``, with the
+Fourier / Fick sign convention: the conduction method of the function whose
+elasticity method averages the stress.
+"""
+function sphere_flux_average(
+        sphere::LayeredSphere{T, N},
+        K₀::TensND.TensISO{2, 3},
+        ∇T∞,
+    ) where {T, N}
+    f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
+    return sum(f[k] * layer_flux_average(sphere, K₀, ∇T∞, k) for k in 1:N)
 end

@@ -325,10 +325,10 @@ Supports two inclusion-geometry families, in both orders:
     Hill-kernel + dilute-concentration pipeline.
   * `LayeredSphere`: the ALV recurrences feed its concentration and
     contribution directly — no Hill kernel is needed. At order 4 these are
-    [`strain_strain_concentration_alv`](@ref) and [`stiffness_contribution_alv`](@ref)
+    [`gradient_gradient_concentration_alv`](@ref) and [`property_contribution_alv`](@ref)
     (bulk and shear recurrences, [`bulk_concentration_alv`](@ref),
     [`shear_concentration_alv`](@ref)); at order 2,
-    [`gradient_gradient_concentration_alv`](@ref) and [`conductivity_contribution_alv`](@ref).
+    [`gradient_gradient_concentration_alv`](@ref) and [`property_contribution_alv`](@ref).
     The phase property is ignored (the layers carry their own kernels); pass
     any `ViscoLaw` (e.g. `heaviside_law(C_0)`) as a placeholder.
 
@@ -421,24 +421,24 @@ function homogenize_alv(
             # Compliance + stiffness contributions, with optional
             # interface-stiffness Sevostianov correction
             # `B̃_eff = B̃ ∘ (𝟙 + b·K ∘ B̃)^{-vol}`.
-            H̃ = compliance_contribution_alv(
+            H̃ = inverse_property_contribution_alv(
                 geom, C_M_law, times;
                 Rn = Rn_law, Rt = Rt_law
             )
             # Iso-projected, Budiansky-scaled H̃ for the ECHOES-form MT
             # denominator (cf. ECHOES `compute_visco_strain_Stress`).  The
-            # `delta_compliance_alv` factor (4π/3 elliptic, π ribbon)
+            # `delta_inverse_property_alv` factor (4π/3 elliptic, π ribbon)
             # absorbs the Budiansky-O'Connell density convention.
             H̃_full = _maybe_symmetrize_alv(
-                delta_compliance_alv(geom, H̃, ε),
+                delta_inverse_property_alv(geom, H̃, ε),
                 sym
             )
             push!(crack_data, (geom, ε, sym, H̃_full))
             Ñ = -(C_0 * H̃ * C_0)
-            ΔC = delta_stiffness_alv(geom, Ñ, ε)
+            ΔC = delta_property_alv(geom, Ñ, ε)
             ΔC = _maybe_symmetrize_alv(ΔC, sym)
             ΔC_cracks_M .+= ΔC
-            ΔJ = delta_compliance_alv(geom, H̃, ε)
+            ΔJ = delta_inverse_property_alv(geom, H̃, ε)
             ΔJ = _maybe_symmetrize_alv(ΔJ, sym)
             ΔJ_cracks_M .+= ΔJ
         else
@@ -540,8 +540,8 @@ function _inclusion_alv_quantities(
     # Per-layer moduli are stored inside the LayeredSphere geometry; the
     # phase-level C_r_law is ignored (we accept any placeholder so that
     # the existing `add_phase!` API still works).
-    A_dut = strain_strain_concentration_alv(sphere, C_M_law, times)
-    N_dut = stiffness_contribution_alv(sphere, C_M_law, times)
+    A_dut = gradient_gradient_concentration_alv(sphere, C_M_law, times)
+    N_dut = property_contribution_alv(sphere, C_M_law, times)
     # A layered sphere has no single stiffness. The only consumer of `C_r` is
     # a bound, which takes its own average of the layer kernels.
     C_r = _layer_bound_alv(scheme, sphere, times)

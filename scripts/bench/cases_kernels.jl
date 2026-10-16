@@ -88,7 +88,7 @@ bcase(
     "kernels/H.compliance.penny.tri";
     group = :kernels, tags = [:cod, :residues],
     setup = () -> (PennyCrack(1.0), C_tri()),
-    body = ctx -> compliance_contribution(ctx[1], ctx[2]; method = :residues),
+    body = ctx -> inverse_property_contribution(ctx[1], ctx[2]; method = :residues),
 )
 
 # ── Controls: analytical branches, must not move ────────────────────────────

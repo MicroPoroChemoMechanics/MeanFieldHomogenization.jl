@@ -14,8 +14,8 @@
 #
 # The `MeanFieldHomogenization.jl` API used here:
 # - [`LayeredSphere`](@ref)`(radii, moduli)` — geometry + per-layer stiffness;
-# - [`strain_strain_concentration`](@ref)`(sphere, C₀; layer=k)` — per-layer iso ``A_k``;
-# - [`stiffness_contribution`](@ref)`(sphere, C₀)` — size-independent ``N``;
+# - [`gradient_gradient_concentration`](@ref)`(sphere, C₀; layer=k)` — per-layer iso ``A_k``;
+# - [`property_contribution`](@ref)`(sphere, C₀)` — size-independent ``N``;
 # - [`layer_volume_fraction`](@ref)`(sphere, k)` — ``f_k``.
 #
 # The whole-inclusion average
@@ -120,7 +120,7 @@ println()
 
 # ## Per-layer concentration tensors ``A_k`` (iso 4-tensor)
 
-A_per_layer = ntuple(k -> strain_strain_concentration(sphere, C_ref; layer = k), n)
+A_per_layer = ntuple(k -> gradient_gradient_concentration(sphere, C_ref; layer = k), n)
 αβ = ntuple(k -> TensND.get_data(A_per_layer[k]), n)
 α_k = [αβ[k][1] for k in 1:n]   # bulk concentration
 β_k = [αβ[k][2] for k in 1:n]   # shear concentration
@@ -138,9 +138,9 @@ A_whole_α = sum(layer_volume_fraction(sphere, k) * α_k[k] for k in 1:n)
 A_whole_β = sum(layer_volume_fraction(sphere, k) * β_k[k] for k in 1:n)
 @printf "Whole-inclusion average :  α = %+12.8f   β = %+12.8f\n" A_whole_α A_whole_β
 
-# Cross-check: `stiffness_contribution` ``N`` satisfies
+# Cross-check: `property_contribution` ``N`` satisfies
 # ``N = \langle(C_k - C_0) : A_k\rangle``.
-N_tensor = stiffness_contribution(sphere, C_ref)
+N_tensor = property_contribution(sphere, C_ref)
 N_α, N_β = TensND.get_data(N_tensor)
 N_α_check = sum(
     layer_volume_fraction(sphere, k) *
@@ -152,14 +152,14 @@ N_β_check = sum(
         (TensND.get_data(C_layers[k])[2] - TensND.get_data(C_ref)[2]) *
         β_k[k] for k in 1:n
 )
-@printf "stiffness_contribution :  N_α = %+12.6f  (rec. %+12.6f, diff=%.2e)\n" N_α N_α_check abs(N_α - N_α_check)
+@printf "property_contribution :  N_α = %+12.6f  (rec. %+12.6f, diff=%.2e)\n" N_α N_α_check abs(N_α - N_α_check)
 @printf "                         N_β = %+12.6f  (rec. %+12.6f, diff=%.2e)\n" N_β N_β_check abs(N_β - N_β_check)
 println()
 
 # ## Reset reference to last-layer modulus (mirror Python l. 59-60)
 println("Resetting reference to C_layers[end] :")
 C_ref2 = C_layers[end]
-A_layer_last = strain_strain_concentration(sphere, C_ref2; layer = n)
+A_layer_last = gradient_gradient_concentration(sphere, C_ref2; layer = n)
 α_last, β_last = TensND.get_data(A_layer_last)
 @printf "  layer_eE(n) with C_ref = C_layers[n] :  α = %+10.6f  β = %+10.6f\n" α_last β_last
 println("  (when reference = layer modulus, the layer is invisible to itself.)")

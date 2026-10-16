@@ -167,8 +167,8 @@ returns a *different* tensor class for each and the components would otherwise
 mean something else.
 
 A cube-symmetric morphology — a supersphere, a cubic array — belongs to the
-**cubic** class, and `StrainConcentrationCubic` is its specification: three components,
-against six for `StrainConcentrationTI`. Three and not six is not a simplification. A
+**cubic** class, and `GradientConcentrationCubic` is its specification: three components,
+against six for `GradientConcentrationTI`. Three and not six is not a simplification. A
 concentration tensor has **no major symmetry** in general, which is exactly why
 the transversely isotropic case cannot use the five-component major-symmetric
 Walpole form; but a tensor with the minor symmetries and cubic symmetry *is*

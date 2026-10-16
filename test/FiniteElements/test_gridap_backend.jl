@@ -69,8 +69,8 @@ end
     incl = gx_incl(GridapBackend(), (GX_C_CORE, GX_C_SHELL); eccentricity = 0.0)
     A, B = fe_axi_concentration(incl, GX_C_MAT)
     sph = LayeredSphere((cbrt(GX_W), 1.0), (GX_C_CORE, GX_C_SHELL))
-    Aex = gx_mandel(strain_strain_concentration(sph, GX_C_MAT, GX_C_MAT))
-    Bex = gx_mandel(stress_strain_concentration(sph, GX_C_MAT, GX_C_MAT))
+    Aex = gx_mandel(gradient_gradient_concentration(sph, GX_C_MAT, GX_C_MAT))
+    Bex = gx_mandel(flux_gradient_concentration(sph, GX_C_MAT, GX_C_MAT))
     Anum, Bnum = gx_mandel(A), gx_mandel(B)
     @test gx_bulk(Anum) ≈ gx_bulk(Aex) rtol = 2.0e-3
     @test gx_shear(Anum) ≈ gx_shear(Aex) rtol = 3.0e-3

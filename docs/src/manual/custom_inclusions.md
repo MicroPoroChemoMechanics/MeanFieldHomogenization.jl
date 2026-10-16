@@ -44,13 +44,13 @@ Implement the lowest level you can reach; everything above is derived.
 
 | Gate | What you supply | What you get |
 |:--|:--|:--|
-| **A** | `hill_tensor(incl, P₀)` | the 8 concentration tensors, the 4 contribution tensors, every scheme |
-| **B** | `strain_strain_concentration(incl, P₁, P₀)` — plus `stress_strain_concentration` if the inclusion is heterogeneous | the derived concentrations, the contributions, every scheme |
+| **A** | `hill_tensor(incl, P₀)` | the 4 concentration tensors and the 2 contribution tensors of each physics, every scheme |
+| **B** | `gradient_gradient_concentration(incl, P₁, P₀)` — plus `flux_gradient_concentration` if the inclusion is heterogeneous | the derived concentrations, the contributions, every scheme |
 | **C** | the contribution tensors themselves | the contribution-based schemes (see the caveat below) |
 
 `P₀` is the reference medium: a 4th-order stiffness in elasticity, a 2nd-order
-conductivity in transport. Dispatch on it and one implementation serves both.
-In transport the gate-B pair is `gradient_gradient_concentration` / `flux_gradient_concentration`.
+conductivity in transport. Dispatch on it and one implementation serves both,
+under the same function names.
 
 ## Quick route — `CustomInclusion`
 
@@ -96,8 +96,8 @@ crack = EllipticCrack(1.0, 0.25)
 flat = CustomInclusion((1.0, 0.25, 0.0);
     basis          = MeanFieldHomogenization.inclusion_basis(crack),
     density_factor = 4π / 3,                      # Budiansky, elliptical crack
-    compliance_contribution = (P₀; kw...) -> compliance_contribution(crack, P₀; kw...),
-    stiffness_contribution  = (P₀; kw...) -> stiffness_contribution(crack, P₀; kw...))
+    inverse_property_contribution = (P₀; kw...) -> inverse_property_contribution(crack, P₀; kw...),
+    property_contribution  = (P₀; kw...) -> property_contribution(crack, P₀; kw...))
 
 add_phase!(rve, :cracks, flat, Dict(:C => C_matrix); density = 0.08)
 ```
@@ -116,12 +116,14 @@ both:
 
 ```julia
 layered = CustomInclusion(;
-    homogeneous           = false,
-    strain_strain_concentration     = (P₁, P₀; kw...) -> ...,   # ⟨ε⟩_I  from ε∞
-    stress_strain_concentration     = (P₁, P₀; kw...) -> ...,   # ⟨σ⟩_I  from ε∞
-    gradient_gradient_concentration = (P₁, P₀; kw...) -> ...,   # transport counterparts
-    flux_gradient_concentration     = (P₁, P₀; kw...) -> ...)
+    homogeneous                     = false,
+    gradient_gradient_concentration = (P₁, P₀; kw...) -> ...,   # ⟨ε⟩_I from ε∞, ⟨∇T⟩_I from ∇T∞
+    flux_gradient_concentration     = (P₁, P₀; kw...) -> ...)   # ⟨σ⟩_I from ε∞ or from ∇T∞
 ```
+
+Each callback serves both physics: `P₁` and `P₀` are fourth-order stiffnesses
+in elasticity and second-order conductivities in conduction, as for
+`hill_tensor`.
 
 This is exactly what the built-in `LayeredSphere` does. Omitting the
 stress-side callback fails *silently*, and in the most misleading way:
@@ -232,8 +234,8 @@ end
 ```
 
 **Gate B is complete for a heterogeneous inclusion too.** Supply *both*
-concentration tensors (`strain_strain_concentration` and `stress_strain_concentration`, or their
-transport analogues) and the contribution tensors are derived from
+concentration tensors (`gradient_gradient_concentration` and `flux_gradient_concentration`,
+in either physics) and the contribution tensors are derived from
 ``\mathbb N = \mathbb A_{\sigma\varepsilon} - \mathbb C_0 :
 \mathbb A_{\varepsilon\varepsilon}``, which needs no single
 ``\mathbb C_1``. Supply only the strain side, with

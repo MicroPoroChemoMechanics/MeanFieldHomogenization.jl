@@ -4875,7 +4875,7 @@
             "identity",
             "identity"
         ],
-        "class": "stress_concentration_ti",
+        "class": "flux_concentration_ti",
         "shift": [
             1.2786217128948487,
             1.5914918882825129,

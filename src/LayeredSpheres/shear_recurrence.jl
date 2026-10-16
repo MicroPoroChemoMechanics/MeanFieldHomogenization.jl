@@ -350,7 +350,7 @@ function _shear_concentration_single_layer(
     ) where {T}
     C₁ = layer_modulus(sphere, 1)
     ell = Elasticity.Ellipsoid(outer_radius(sphere))
-    A = strain_strain_concentration(ell, C₁, C₀)
+    A = gradient_gradient_concentration(ell, C₁, C₀)
     _, β_K = A.data
     return β_K
 end

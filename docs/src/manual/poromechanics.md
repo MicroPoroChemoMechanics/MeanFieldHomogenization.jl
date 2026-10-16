@@ -77,7 +77,7 @@ add_phase!(rve_g, :P, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0e-9, 1.0e-9));
 
 ct = concentration_tensors(rve_g, MoriTanaka(:M), :C)
 𝟏 = TensISO{3}(1.0)
-B_g = -levin_prestress(ct, Dict(:P => -𝟏))
+B_g = -levin_preflux(ct, Dict(:P => -𝟏))
 (B₁₁ = B_g[1, 1], one_solid_formula = biot_tensor(ct.effective, C_s)[1, 1])
 ```
 

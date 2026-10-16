@@ -34,15 +34,15 @@ end
     s = LayeredSphere((1.0,), (C_I,))
     ell = Ellipsoid(1.0, 1.0, 1.0)
 
-    A_s = strain_strain_concentration(s, C_I, C_M)
-    A_e = strain_strain_concentration(ell, C_I, C_M)
+    A_s = gradient_gradient_concentration(s, C_I, C_M)
+    A_e = gradient_gradient_concentration(ell, C_I, C_M)
     @test collect(TensND.get_data(A_s)) ≈ collect(TensND.get_data(A_e)) rtol = 1.0e-12
 
-    N_s = stiffness_contribution(s, C_I, C_M)
-    N_e = stiffness_contribution(ell, C_I, C_M)
+    N_s = property_contribution(s, C_I, C_M)
+    N_e = property_contribution(ell, C_I, C_M)
     @test collect(TensND.get_data(N_s)) ≈ collect(TensND.get_data(N_e)) rtol = 1.0e-12
 
-    CA_s = stress_strain_concentration(s, C_I, C_M)
+    CA_s = flux_gradient_concentration(s, C_I, C_M)
     CA_e = C_I ⊡ A_e
     @test Array(CA_s) ≈ Array(CA_e) rtol = 1.0e-12
 end
@@ -51,9 +51,9 @@ end
     for radii in ((1.0,), (0.8, 1.0), (0.4, 0.7, 1.0))
         moduli = ntuple(k -> TensISO{3}(3 * (10.0 + 20k), 2 * (4.0 + 8k)), length(radii))
         s = LayeredSphere(radii, moduli)
-        A = strain_strain_concentration(s, C_I, C_M)
-        CA = stress_strain_concentration(s, C_I, C_M)
-        N = stiffness_contribution(s, C_I, C_M)
+        A = gradient_gradient_concentration(s, C_I, C_M)
+        CA = flux_gradient_concentration(s, C_I, C_M)
+        N = property_contribution(s, C_I, C_M)
         @test Array(N) ≈ Array(CA - C_M ⊡ A) rtol = 1.0e-12
     end
 end
@@ -61,10 +61,10 @@ end
 @testset "LayeredSphere — identical layers reduce to the homogeneous sphere" begin
     s2 = LayeredSphere((0.6, 1.0), (C_I, C_I))
     ell = Ellipsoid(1.0, 1.0, 1.0)
-    @test collect(TensND.get_data(strain_strain_concentration(s2, C_I, C_M))) ≈
-        collect(TensND.get_data(strain_strain_concentration(ell, C_I, C_M))) rtol = 1.0e-10
-    @test collect(TensND.get_data(stiffness_contribution(s2, C_I, C_M))) ≈
-        collect(TensND.get_data(stiffness_contribution(ell, C_I, C_M))) rtol = 1.0e-10
+    @test collect(TensND.get_data(gradient_gradient_concentration(s2, C_I, C_M))) ≈
+        collect(TensND.get_data(gradient_gradient_concentration(ell, C_I, C_M))) rtol = 1.0e-10
+    @test collect(TensND.get_data(property_contribution(s2, C_I, C_M))) ≈
+        collect(TensND.get_data(property_contribution(ell, C_I, C_M))) rtol = 1.0e-10
 end
 
 @testset "Schemes — single-layer phase ≡ spherical Ellipsoid phase" begin

@@ -403,7 +403,7 @@ complex-analytic with no real singularity for an oblate ``q = \mathrm{i}\tau``:
 `src/LayeredSpheres/scheme_integration.jl` for the elastic and conduction
 analogues): it declares `is_homogeneous_inclusion = false` and overrides
 [`gradient_gradient_concentration`](@ref), [`flux_gradient_concentration`](@ref) and
-`conductivity_contribution`. Every dilute, Mori–Tanaka, self-consistent, Maxwell
+`property_contribution`. Every dilute, Mori–Tanaka, self-consistent, Maxwell
 and differential kernel then routes through the confocal transfer-matrix
 solution with no change to `src/Schemes/`.
 

@@ -39,7 +39,7 @@ const _K0 = TensND.TensISO{3}(1.0)
 
     @testset "a cavity's stress side is exactly zero" begin
         pore = FESupershapePore(Supersphere(1.0, 1.0); opts = _POPTS)
-        Z4 = MeanFieldHomogenization.Core.stress_strain_concentration(pore, _C0, _C0)
+        Z4 = MeanFieldHomogenization.Core.flux_gradient_concentration(pore, _C0, _C0)
         Z2 = MeanFieldHomogenization.Core.flux_gradient_concentration(pore, _K0, _K0)
         # Identically zero, not zero to the discretization error: no solve is
         # even run for it.
@@ -62,13 +62,13 @@ const _K0 = TensND.TensISO{3}(1.0)
         # here was asked to enforce: for a cavity `H = A:S₀` and `N = -C₀:A`,
         # hence `H:C₀ = -S₀:N`. It holds to machine precision because both come
         # from the same `A` through the package's own generic formulas.
-        N = stiffness_contribution(pore, _C0, _C0)
-        H = compliance_contribution(pore, _C0, _C0)
+        N = property_contribution(pore, _C0, _C0)
+        H = inverse_property_contribution(pore, _C0, _C0)
         @test norm(KM(H ⊡ _C0 + inv(_C0) ⊡ N)) < 1.0e-12 * norm(KM(H ⊡ _C0))
 
         # And the phase property really is ignored: a wildly different `C₁`
         # changes nothing.
-        Nother = stiffness_contribution(pore, iso_stiffness(99.0, 42.0), _C0)
+        Nother = property_contribution(pore, iso_stiffness(99.0, 42.0), _C0)
         @test norm(KM(Nother) - KM(N)) < 1.0e-12 * norm(KM(N))
         @test fe_assembly_count(pore) == 1
     end
@@ -79,7 +79,7 @@ const _K0 = TensND.TensISO{3}(1.0)
         @test all(x -> abs(x - 1.5) < 5.0e-3, d)        # exact value is 3/2
         # One assembly per physics, and the mesh was built once.
         @test fe_assembly_count(pore) == 2
-        R = resistivity_contribution(pore, _K0, _K0)
+        R = inverse_property_contribution(pore, _K0, _K0)
         @test tr(get_array(change_tens_canon(R))) / 3 ≈ sum(d) / 3 rtol = 1.0e-10
     end
 
@@ -89,7 +89,7 @@ const _K0 = TensND.TensISO{3}(1.0)
         add_phase!(rve, :p, pore, Dict(:C => _C0, :K => _K0); fraction = 0.05)
 
         Cd = homogenize(rve, Dilute(), :C)
-        N = stiffness_contribution(pore, _C0, _C0)
+        N = property_contribution(pore, _C0, _C0)
         # `Dilute` *is* `C₀ + f N` by definition, so this is a wiring check with
         # no tolerance to argue about.
         @test norm(KM(Cd) - KM(_C0 + 0.05 * N)) < 1.0e-12 * norm(KM(Cd))

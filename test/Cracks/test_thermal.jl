@@ -11,7 +11,7 @@ using ForwardDiff
 #  Most assertions here used to restate the very closed form the code
 #  evaluates, which cannot detect a wrong prefactor. The one non-tautological
 #  test — the Hill-tensor limit — compared its oracle against
-#  `delta_resistivity(crack, R, 1) = (4π/3) R` instead of against `R` itself.
+#  `delta_inverse_property(crack, R, 1) = (4π/3) R` instead of against `R` itself.
 #  A `b` too small by exactly `4π/(3η)` is invisible to that comparison,
 #  because the spurious `4π/3` on one side cancels it. That is how the error
 #  survived 37 green tests.
@@ -44,11 +44,11 @@ end
             b = cod_tensor(crack, K₀)
             # Surface average of the textbook jump 4σₙa/(πk₀)·√(1-r²/a²), over a.
             @test b ≈ 8 / (3 * π * k₀) rtol = 1.0e-13
-            R = compliance_contribution(crack, K₀)
+            R = inverse_property_contribution(crack, K₀)
             @test R[3, 3] ≈ 2 / (π * k₀) rtol = 1.0e-13      # (3/4)·b
             @test R[1, 1] ≈ 0 atol = 1.0e-14
             @test R[2, 2] ≈ 0 atol = 1.0e-14
-            ΔR = delta_resistivity(crack, R, 1.0)
+            ΔR = delta_inverse_property(crack, R, 1.0)
             @test ΔR[3, 3] ≈ (4π / 3) * R[3, 3] rtol = 1.0e-13
         end
     end
@@ -69,9 +69,9 @@ end
             crack = RibbonCrack(0.5)
             b = cod_tensor(crack, K₀)
             @test b ≈ π / (2 * k₀) rtol = 1.0e-13
-            R = compliance_contribution(crack, K₀)
+            R = inverse_property_contribution(crack, K₀)
             @test R[3, 3] ≈ 1 / k₀ rtol = 1.0e-13            # (2/π)·b
-            ΔR = delta_resistivity(crack, R, 1.0)
+            ΔR = delta_inverse_property(crack, R, 1.0)
             @test ΔR[3, 3] ≈ π * R[3, 3] rtol = 1.0e-13
         end
     end
@@ -115,7 +115,7 @@ end
             (TensND.Tens([3.0 0.5 0.3; 0.5 2.0 0.2; 0.3 0.2 1.5]), EllipticCrack(1.0, 0.6)),
         )
         for (K₀, crack) in cases
-            R = compliance_contribution(crack, K₀)
+            R = inverse_property_contribution(crack, K₀)
             errs = map((1.0e-2, 1.0e-3)) do ω
                 O = R_from_hill_thermal(crack, K₀, ω)
                 maximum(abs, components_canon(R - O))
@@ -173,7 +173,7 @@ end
     fr(k) = cod_tensor(RibbonCrack(0.7), TensISO{3}(k))
     @test ForwardDiff.derivative(fr, 2.0) ≈ (fr(2.0 + h) - fr(2.0 - h)) / (2h) rtol = 1.0e-6
 
-    fR(k) = compliance_contribution(PennyCrack(1.0), TensISO{3}(k))[3, 3]
+    fR(k) = inverse_property_contribution(PennyCrack(1.0), TensISO{3}(k))[3, 3]
     @test ForwardDiff.derivative(fR, 2.0) ≈ (fR(2.0 + h) - fR(2.0 - h)) / (2h) rtol = 1.0e-6
 
     # Gradient through the anisotropic adjugate branch.

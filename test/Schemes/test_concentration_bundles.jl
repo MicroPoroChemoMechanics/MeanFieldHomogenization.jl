@@ -1,8 +1,8 @@
 # =============================================================================
 #  test_concentration_bundles.jl — contract of the bundled concentration helpers.
 #
-#  `Core.concentration_and_stiffness` / `Core.concentration_and_stress_average` (and the crack
-#  analog `Cracks.compliance_and_stiffness_contribution`) exist purely to share
+#  `Core.concentration_and_contribution` / `Core.concentration_and_flux_average` (and the crack
+#  analog `Cracks.inverse_and_property_contribution`) exist purely to share
 #  the single expensive Hill / COD / recurrence solve between two quantities
 #  that Mori-Tanaka and the self-consistent kernels always request together.
 #
@@ -39,7 +39,7 @@ const _KM_TRI_B = [
     3.0 -1.0 2.0 1.5 -1.0 55.0
 ]
 
-@testset "concentration_and_stiffness / concentration_and_stress_average — bitwise contract" begin
+@testset "concentration_and_contribution / concentration_and_flux_average — bitwise contract" begin
     C_tri = TensND.inv_KM(_KM_TRI_B, CanonicalBasis{3, Float64}())
     C_iso = TensISO{3}(3 * 20.0, 2 * 12.0)
     C_i = TensISO{3}(3 * 80.0, 2 * 50.0)
@@ -55,13 +55,13 @@ const _KM_TRI_B = [
     ]
 
     @testset "4th order — $nm" for (nm, geom, C₁, C₀) in fixtures4
-        A, N = MFHC_B.concentration_and_stiffness(geom, C₁, C₀)
-        @test _vals(A) == _vals(strain_strain_concentration(geom, C₁, C₀))
-        @test _vals(N) == _vals(stiffness_contribution(geom, C₁, C₀))
+        A, N = MFHC_B.concentration_and_contribution(geom, C₁, C₀)
+        @test _vals(A) == _vals(gradient_gradient_concentration(geom, C₁, C₀))
+        @test _vals(N) == _vals(property_contribution(geom, C₁, C₀))
 
-        A2, B2 = MFHC_B.concentration_and_stress_average(geom, C₁, C₀)
-        @test _vals(A2) == _vals(strain_strain_concentration(geom, C₁, C₀))
-        @test _vals(B2) == _vals(stress_strain_concentration(geom, C₁, C₀))
+        A2, B2 = MFHC_B.concentration_and_flux_average(geom, C₁, C₀)
+        @test _vals(A2) == _vals(gradient_gradient_concentration(geom, C₁, C₀))
+        @test _vals(B2) == _vals(flux_gradient_concentration(geom, C₁, C₀))
     end
 
     K_iso = TensISO{3}(2.0)
@@ -72,11 +72,11 @@ const _KM_TRI_B = [
     ]
 
     @testset "2nd order — $nm" for (nm, geom, K₁, K₀) in fixtures2
-        A, N = MFHC_B.concentration_and_stiffness(geom, K₁, K₀)
+        A, N = MFHC_B.concentration_and_contribution(geom, K₁, K₀)
         @test _vals(A) == _vals(gradient_gradient_concentration(geom, K₁, K₀))
-        @test _vals(N) == _vals(conductivity_contribution(geom, K₁, K₀))
+        @test _vals(N) == _vals(property_contribution(geom, K₁, K₀))
 
-        A2, B2 = MFHC_B.concentration_and_stress_average(geom, K₁, K₀)
+        A2, B2 = MFHC_B.concentration_and_flux_average(geom, K₁, K₀)
         @test _vals(A2) == _vals(gradient_gradient_concentration(geom, K₁, K₀))
         @test _vals(B2) == _vals(flux_gradient_concentration(geom, K₁, K₀))
     end
@@ -86,13 +86,13 @@ const _KM_TRI_B = [
             (0.5, 1.0),
             (TensISO{3}(3 * 10.0, 2 * 6.0), TensISO{3}(3 * 40.0, 2 * 25.0))
         )
-        A, N = MFHC_B.concentration_and_stiffness(sph, C_i, C_iso)
-        @test _vals(A) == _vals(strain_strain_concentration(sph, C_i, C_iso))
-        @test _vals(N) == _vals(stiffness_contribution(sph, C_i, C_iso))
+        A, N = MFHC_B.concentration_and_contribution(sph, C_i, C_iso)
+        @test _vals(A) == _vals(gradient_gradient_concentration(sph, C_i, C_iso))
+        @test _vals(N) == _vals(property_contribution(sph, C_i, C_iso))
 
-        A2, B2 = MFHC_B.concentration_and_stress_average(sph, C_i, C_iso)
-        @test _vals(A2) == _vals(strain_strain_concentration(sph, C_i, C_iso))
-        @test _vals(B2) == _vals(stress_strain_concentration(sph, C_i, C_iso))
+        A2, B2 = MFHC_B.concentration_and_flux_average(sph, C_i, C_iso)
+        @test _vals(A2) == _vals(gradient_gradient_concentration(sph, C_i, C_iso))
+        @test _vals(B2) == _vals(flux_gradient_concentration(sph, C_i, C_iso))
     end
 
     @testset "the bundle costs strictly less than the two separate calls" begin
@@ -104,10 +104,10 @@ const _KM_TRI_B = [
         # allocation on top of the work it saves.
         geom = Ellipsoid(3.0, 2.0, 1.0)
         pair() = (
-            strain_strain_concentration(geom, C_i, C_tri),
-            stiffness_contribution(geom, C_i, C_tri),
+            gradient_gradient_concentration(geom, C_i, C_tri),
+            property_contribution(geom, C_i, C_tri),
         )
-        bundle() = MFHC_B.concentration_and_stiffness(geom, C_i, C_tri)
+        bundle() = MFHC_B.concentration_and_contribution(geom, C_i, C_tri)
         pair(); bundle()                      # warm up in this process
         for _ in 1:2
             pair(); bundle()
@@ -121,7 +121,7 @@ const _KM_TRI_B = [
 
     @testset "ForwardDiff flows through the bundle" begin
         g = FD.derivative(1.0) do x
-            A, N = MFHC_B.concentration_and_stiffness(
+            A, N = MFHC_B.concentration_and_contribution(
                 Ellipsoid(3.0, 2.0, 1.0), x * C_i, C_iso
             )
             TensND.get_array(N)[1, 1, 1, 1]
@@ -129,17 +129,17 @@ const _KM_TRI_B = [
         h = 1.0e-6
         ref = (
             TensND.get_array(
-                stiffness_contribution(Ellipsoid(3.0, 2.0, 1.0), (1 + h) * C_i, C_iso)
+                property_contribution(Ellipsoid(3.0, 2.0, 1.0), (1 + h) * C_i, C_iso)
             )[1, 1, 1, 1] -
                 TensND.get_array(
-                stiffness_contribution(Ellipsoid(3.0, 2.0, 1.0), (1 - h) * C_i, C_iso)
+                property_contribution(Ellipsoid(3.0, 2.0, 1.0), (1 - h) * C_i, C_iso)
             )[1, 1, 1, 1]
         ) / 2h
         @test g ≈ ref rtol = 1.0e-5
     end
 end
 
-@testset "compliance_and_stiffness_contribution — bitwise contract" begin
+@testset "inverse_and_property_contribution — bitwise contract" begin
     C_tri = TensND.inv_KM(_KM_TRI_B, CanonicalBasis{3, Float64}())
     C_iso = TensISO{3}(3 * 24.0, 2 * 12.0)
 
@@ -148,17 +148,17 @@ end
             ("penny/tri", PennyCrack(1.0), C_tri),
             ("ellipse/iso", EllipticCrack(1.0, 0.4), C_iso),
         ]
-        H, N = MeanFieldHomogenization.Cracks.compliance_and_stiffness_contribution(crack, C₀)
-        @test _vals(H) == _vals(compliance_contribution(crack, C₀))
-        @test _vals(N) == _vals(stiffness_contribution(crack, C₀))
+        H, N = MeanFieldHomogenization.Cracks.inverse_and_property_contribution(crack, C₀)
+        @test _vals(H) == _vals(inverse_property_contribution(crack, C₀))
+        @test _vals(N) == _vals(property_contribution(crack, C₀))
     end
 
     @testset "conductivity" begin
         K₀ = TensISO{3}(2.0)
         crack = PennyCrack(1.0)
-        R, N = MeanFieldHomogenization.Cracks.compliance_and_stiffness_contribution(crack, K₀)
-        @test _vals(R) == _vals(compliance_contribution(crack, K₀))
-        @test _vals(N) == _vals(conductivity_contribution(crack, K₀))
+        R, N = MeanFieldHomogenization.Cracks.inverse_and_property_contribution(crack, K₀)
+        @test _vals(R) == _vals(inverse_property_contribution(crack, K₀))
+        @test _vals(N) == _vals(property_contribution(crack, K₀))
     end
 end
 
@@ -234,7 +234,7 @@ end
     sym = MeanFieldHomogenization.Schemes.phase_symmetrize(rve, :I)
     P₀_proj = MeanFieldHomogenization.Schemes._project_matrix(C_m, sym)
     geom = rve.phases[:I].geometry
-    A_raw = strain_strain_concentration(geom, C_ti, P₀_proj)
+    A_raw = gradient_gradient_concentration(geom, C_ti, P₀_proj)
     CA_ref = MeanFieldHomogenization.Schemes._apply_symmetrize(C_ti ⊡ A_raw, sym)
 
     A_dil, CA = MeanFieldHomogenization.Schemes._phase_dilute_and_stress_average(rve, :I, :C, C_m)
@@ -304,17 +304,17 @@ end
 
         # Both must now be built on the PROJECTED reference.
         ε = 0.08
-        Href, Nref = MeanFieldHomogenization.Cracks.compliance_and_stiffness_contribution(
+        Href, Nref = MeanFieldHomogenization.Cracks.inverse_and_property_contribution(
             PennyCrack(1.0), C_proj
         )
         @test _vals(H) == _vals(
             MeanFieldHomogenization.Schemes._apply_symmetrize(
-                delta_compliance(PennyCrack(1.0), Href, ε), sym
+                delta_inverse_property(PennyCrack(1.0), Href, ε), sym
             )
         )
         @test _vals(N) == _vals(
             MeanFieldHomogenization.Schemes._apply_symmetrize(
-                MeanFieldHomogenization.Core.delta_stiffness(PennyCrack(1.0), Nref, ε), sym
+                MeanFieldHomogenization.Core.delta_property(PennyCrack(1.0), Nref, ε), sym
             )
         )
 
@@ -346,7 +346,7 @@ end
         )
         @test _vals(N) == _vals(
             0.2 * MeanFieldHomogenization.Schemes._apply_symmetrize(
-                conductivity_contribution(geom, TensISO{3}(20.0), K_proj), symK
+                property_contribution(geom, TensISO{3}(20.0), K_proj), symK
             )
         )
         Ab, Nb = MeanFieldHomogenization.Schemes._phase_dilute_and_contribution(rve, :I, :K, K_aniso)

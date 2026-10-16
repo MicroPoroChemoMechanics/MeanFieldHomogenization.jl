@@ -43,7 +43,7 @@ end
         @test get_array(A_mine) ≈ get_array(A_classic) rtol = 1.0e-10
 
         B_mine = flux_gradient_concentration(s, K1, K0)
-        N_mine = conductivity_contribution(s, K1, K0)
+        N_mine = property_contribution(s, K1, K0)
         @test get_array(N_mine) ≈ get_array(B_mine - K0 ⋅ A_mine) rtol = 1.0e-10
         N_classic = (K1 - K0) ⋅ A_classic
         @test get_array(N_mine) ≈ get_array(N_classic) rtol = 1.0e-10

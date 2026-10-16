@@ -39,7 +39,7 @@ end
 _assemble(rve, dec) = begin
     acc = dec.solid
     for (name, S_i) in dec.families
-        acc = acc + delta_compliance(rve.phases[name].geometry, S_i, crack_density(rve, name))
+        acc = acc + delta_inverse_property(rve.phases[name].geometry, S_i, crack_density(rve, name))
     end
     acc
 end
@@ -74,12 +74,12 @@ end
     dec = crack_family_compliances(rve, sc, C_hom)
 
     naive = Dict(
-        name => compliance_contribution(rve.phases[name].geometry, C_hom)
+        name => inverse_property_contribution(rve.phases[name].geometry, C_hom)
             for name in (:F1, :F2, :F3)
     )
     acc_naive = inv(CS_FAM)
     for (name, H) in naive
-        acc_naive = acc_naive + delta_compliance(rve.phases[name].geometry, H, crack_density(rve, name))
+        acc_naive = acc_naive + delta_inverse_property(rve.phases[name].geometry, H, crack_density(rve, name))
     end
     res_naive = sqrt(
         sum(abs2, _g(inv(C_hom)) .- _g(acc_naive)) / sum(abs2, _g(inv(C_hom)))
@@ -97,7 +97,7 @@ end
     # Mori-Tanaka on a matrix + cracks RVE needs no correction at all, and the
     # contributions are evaluated in the matrix.
     for name in (:F1, :F2, :F3)
-        H = compliance_contribution(rve.phases[name].geometry, CS_FAM)
+        H = inverse_property_contribution(rve.phases[name].geometry, CS_FAM)
         @test _g(dec.families[name]) ≈ _g(H) rtol = 1.0e-12
     end
     @test _g(_assemble(rve, dec)) ≈ _g(inv(C_hom)) rtol = 1.0e-12
@@ -123,7 +123,7 @@ end
     dec = crack_family_compliances(rve, sc, C_hom)
     # In the dilute limit the correction factor tends to the identity, so the
     # per-family compliance tends to the bare ℍ evaluated in the matrix.
-    H_ref = compliance_contribution(rve.phases[:F1].geometry, CS_FAM)
+    H_ref = inverse_property_contribution(rve.phases[:F1].geometry, CS_FAM)
     @test _g(dec.families[:F1]) ≈ _g(H_ref) rtol = 1.0e-6
 end
 

@@ -108,15 +108,15 @@ using LinearAlgebra
         @test MeanFieldHomogenization.shape_trait(crack6) === MeanFieldHomogenization.Penny
         @test MeanFieldHomogenization.Cracks.crack_density_factor(crack6) ≈ 4π / 3
 
-        H = compliance_contribution(crack6, C₀_fe)
-        N = stiffness_contribution(crack6, C₀_fe)
+        H = inverse_property_contribution(crack6, C₀_fe)
+        N = property_contribution(crack6, C₀_fe)
         @test N ≈ -(C₀_fe ⊡ H ⊡ C₀_fe)
-        Hb, Nb = MeanFieldHomogenization.compliance_and_stiffness_contribution(crack6, C₀_fe)
+        Hb, Nb = MeanFieldHomogenization.inverse_and_property_contribution(crack6, C₀_fe)
         @test get_array(Hb) == get_array(H)
         @test get_array(Nb) == get_array(N)
 
         ε = 0.05
-        @test get_array(delta_compliance(crack6, H, ε)) ≈ get_array((4π / 3) * ε * H)
+        @test get_array(delta_inverse_property(crack6, H, ε)) ≈ get_array((4π / 3) * ε * H)
         @test check_inclusion_interface(crack6; amount = :density, verbose = false)
     end
 

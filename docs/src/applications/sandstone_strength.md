@@ -58,9 +58,9 @@ using SymPy
 
 C = iso_stiffness(k, μ)
 S_sym = LayeredSphere((R,), (iso_stiffness(ks, μs),); interfaces = (SpringInterface(kn, kt),))
-αS, βS = get_data(strain_strain_concentration(S_sym, C, C))
-aS, bS = get_data(stress_strain_concentration(S_sym, C, C))
-αP, βP = get_data(strain_strain_concentration(Ellipsoid(1.0), iso_stiffness(0, 0), C))
+αS, βS = get_data(gradient_gradient_concentration(S_sym, C, C))
+aS, bS = get_data(flux_gradient_concentration(S_sym, C, C))
+αP, βP = get_data(gradient_gradient_concentration(Ellipsoid(1.0), iso_stiffness(0, 0), C))
 
 k_sc = simplify(solve(3k * ((1 - φ) * αS + φ * αP) - (1 - φ) * aS, k)[1])
 ```

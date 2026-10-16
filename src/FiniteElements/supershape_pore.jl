@@ -362,7 +362,7 @@ end
 #  has no use for, so the middle argument is accepted and ignored — as for
 #  `LayeredSphere` and `FEExcenteredSphere`.
 
-Core.strain_strain_concentration(
+Core.gradient_gradient_concentration(
     s::FESupershapePore, ::TensND.AbstractTens{4, 3}, C₀::TensND.AbstractTens{4, 3}; kw...
 ) = _fe_cell_cached(s, C₀)
 
@@ -371,7 +371,7 @@ Core.gradient_gradient_concentration(
 ) = _fe_cell_cached(s, K₀)
 
 """
-    Core.stress_strain_concentration(pore, C₁, C₀)
+    Core.flux_gradient_concentration(pore, C₁, C₀)
     Core.flux_gradient_concentration(pore, K₁, K₀)
 
 **Exactly zero.** A cavity carries no stress and no flux, so its stress-side
@@ -383,7 +383,7 @@ This is what makes the package's exact contribution identities collapse to
 ``\\mathbb H = \\mathbb A:\\mathbb S_0``, and it is why no contribution tensor
 is overridden here: the generic route is already the right one.
 """
-Core.stress_strain_concentration(
+Core.flux_gradient_concentration(
     ::FESupershapePore, ::TensND.AbstractTens{4, 3}, C₀::TensND.AbstractTens{4, 3}; kw...
 ) = TensND.TensCanonical(Tensors.Tensor{4, 3}((i, j, k, l) -> 0.0))
 

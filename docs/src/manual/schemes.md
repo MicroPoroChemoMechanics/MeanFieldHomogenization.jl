@@ -39,7 +39,7 @@ and an RVE may equally well have none, with every fraction given explicitly.
 
 Volume fractions are stored at the RVE level (not on the inclusions), so a
 single inclusion remains usable for concentration-tensor calculations without
-any RVE machinery ([`hill_tensor`](@ref), [`strain_strain_concentration`](@ref), …).
+any RVE machinery ([`hill_tensor`](@ref), [`gradient_gradient_concentration`](@ref), …).
 Crack densities are excluded from the unit sum: a flat crack's volume vanishes
 in the penny limit while its density stays finite.
 
@@ -143,10 +143,10 @@ The tensors of a phase are read by name. Under a macroscopic strain
 ``\boldsymbol E`` or a macroscopic stress ``\boldsymbol\Sigma``,
 
 ```@example manconc
-A = strain_strain_concentration(ct, :I)   # ⟨ε⟩_I = A : E
-B = stress_stress_concentration(ct, :I)   # ⟨σ⟩_I = B : Σ
-N = stiffness_contribution(ct, :I)        # ⟨σ - C_M : ε⟩_I = N : E
-H = compliance_contribution(ct, :I)       # ⟨ε - S_M : σ⟩_I = H : Σ
+A = gradient_gradient_concentration(ct, :I)   # ⟨ε⟩_I = A : E
+B = flux_flux_concentration(ct, :I)   # ⟨σ⟩_I = B : Σ
+N = property_contribution(ct, :I)        # ⟨σ - C_M : ε⟩_I = N : E
+H = inverse_property_contribution(ct, :I)       # ⟨ε - S_M : σ⟩_I = H : Σ
 nothing # hide
 ```
 
@@ -155,8 +155,8 @@ and the two averages hold, ``\sum_r f_r\,\mathbb A_r = \mathbb I`` and
 
 ```@example manconc
 I4 = tens_Id4(Val(3), Val(Float64))
-ΣfA = sum(ct.weights[n] * strain_strain_concentration(ct, n) for n in keys(ct))
-ΣfN = sum(ct.weights[n] * stiffness_contribution(ct, n) for n in keys(ct))
+ΣfA = sum(ct.weights[n] * gradient_gradient_concentration(ct, n) for n in keys(ct))
+ΣfN = sum(ct.weights[n] * property_contribution(ct, n) for n in keys(ct))
 (maximum(abs, get_array(ΣfA - I4)), maximum(abs, get_array(ct.properties[:M] + ΣfN - ct.effective)))
 ```
 
@@ -165,9 +165,9 @@ reference passed as `reference = :PHASE` or as a tensor; the self-consistent
 schemes, the bounds and the laminate have no matrix and require it. A crack
 family is weighted by its density, its tensors being per unit density, and the
 conduction readers ([`gradient_gradient_concentration`](@ref),
-[`flux_flux_concentration`](@ref), [`conductivity_contribution`](@ref), …) apply
+[`flux_flux_concentration`](@ref), [`property_contribution`](@ref), …) apply
 to `concentration_tensors(rve, scheme, :K)`. The concentration tensors are also
-what [`levin_free_strain`](@ref) and [`levin_prestress`](@ref) need to turn
+what [`levin_free_gradient`](@ref) and [`levin_preflux`](@ref) need to turn
 eigenstrains or prestresses of the phases into their macroscopic counterpart
 ([Levin's theorem](@ref th-levin)), and [`levin_free_gradient`](@ref) and
 [`levin_preflux`](@ref) eigengradients or pre-fluxes in conduction.

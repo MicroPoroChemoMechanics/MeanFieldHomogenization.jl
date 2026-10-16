@@ -54,7 +54,7 @@ const ORACLE_ω = (1.0e-2, 1.0e-3)   # ratio 10 expected between the two
 
     for η in (1.0, 0.7, 0.5, 0.3)
         crack = _crack(η)
-        H_ref = compliance_contribution(crack, C₀)
+        H_ref = inverse_property_contribution(crack, C₀)
         errs = [_relerr(_H_from_hill(1.0, η, ω, C₀), H_ref) for ω in ORACLE_ω]
 
         @test errs[2] < 2.0e-3              # the limit is actually approached
@@ -68,7 +68,7 @@ end
     C₀ = tens_TI(2.179, 0.579, 0.689, 10.345, 1.0, [0.0, 0.0, 1.0])
 
     for η in (1.0, 0.5)
-        H_ref = compliance_contribution(_crack(η), C₀)
+        H_ref = inverse_property_contribution(_crack(η), C₀)
         errs = [
             _relerr(_H_from_hill(1.0, η, ω, C₀; method = :nestedquadgk, reltol = 1.0e-8), H_ref)
                 for ω in ORACLE_ω
@@ -93,7 +93,7 @@ end
     C₀ = TensND.inv_KM(KM_tri, basis)
 
     for η in (1.0, 0.5)
-        H_ref = compliance_contribution(_crack(η), C₀)
+        H_ref = inverse_property_contribution(_crack(η), C₀)
         errs = [
             _relerr(_H_from_hill(1.0, η, ω, C₀; method = :nestedquadgk, reltol = 1.0e-8), H_ref)
                 for ω in ORACLE_ω

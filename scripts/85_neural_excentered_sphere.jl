@@ -53,8 +53,8 @@
 #
 # **Six components, not five.** A concentration tensor is *not* major-symmetric,
 # so the transversely isotropic form it needs has six Walpole components
-# (`ℓ₃ ≠ ℓ₄`), against five for a Hill tensor. The classes `StrainConcentrationTI` and
-# `StressConcentrationTI` carry exactly that. Eight would be wrong too: `ℓ₇` and `ℓ₈` are
+# (`ℓ₃ ≠ ℓ₄`), against five for a Hill tensor. The classes `GradientConcentrationTI` and
+# `FluxConcentrationTI` carry exactly that. Eight would be wrong too: `ℓ₇` and `ℓ₈` are
 # antisymmetric in an index pair and vanish identically for a tensor mapping
 # symmetric strains to symmetric stresses.
 #
@@ -218,9 +218,9 @@ end
 
 const N_EVAL = 2000
 incl = nn_rca(0.4, 0.5, 0.4)
-strain_strain_concentration(incl, C0, C0)                  # warm up the compilation
+gradient_gradient_concentration(incl, C0, C0)                  # warm up the compilation
 t_nn = @elapsed for _ in 1:N_EVAL
-    strain_strain_concentration(incl, C0, C0)
+    gradient_gradient_concentration(incl, C0, C0)
 end
 
 @printf(

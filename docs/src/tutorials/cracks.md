@@ -56,13 +56,13 @@ the dilute compliance correction is
 
 [kachanov1992, kachanov1993](@citet) — ``\mathbb{H}`` is the
 **size-independent compliance contribution tensor**
-([`compliance_contribution`](@ref)), computed once from `B` and the
+([`inverse_property_contribution`](@ref)), computed once from `B` and the
 crack normal ``\underline{n}``, and reused unchanged across an entire
 crack population that shares the same orientation and shape.
 
 ```@example tutcracks
-H = compliance_contribution(pc, C0)
-ΔS = delta_compliance(pc, H, 0.05)   # ε = 0.05
+H = inverse_property_contribution(pc, C0)
+ΔS = delta_inverse_property(pc, H, 0.05)   # ε = 0.05
 nothing # hide
 ```
 

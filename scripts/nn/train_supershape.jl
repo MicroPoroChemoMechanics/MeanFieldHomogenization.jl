@@ -116,7 +116,7 @@ const AXI_P_LO, AXI_P_HI = 0.25, 1.5
 const AXI_LP_LO, AXI_LP_HI = log(AXI_P_LO), log(AXI_P_HI)
 const AXI_LC_LO, AXI_LC_HI = log(C_LO), log(C_HI)
 
-elastic_response(g, C₀) = strain_strain_concentration(g, C₀, C₀)
+elastic_response(g, C₀) = gradient_gradient_concentration(g, C₀, C₀)
 transport_response(g, K₀) = gradient_gradient_concentration(g, K₀, K₀)
 
 function train_and_save(
@@ -204,10 +204,10 @@ want("conduction") && train_and_save(
 
 want("elastic") && train_and_save(
     "supershape_pore_elastic",
-    NI.DimensionlessHill(StrainConcentrationCubic()),
+    NI.DimensionlessHill(GradientConcentrationCubic()),
     NI.SampleBox([:p, :nu0], [P_LO, NU_LO], [P_HI, NU_HI]),
     pore_geometry, elastic_response,
-    "strain_strain_concentration(FESupershapePore, TensISO{4}) — octant cell, level $LEVEL",
+    "gradient_gradient_concentration(FESupershapePore, TensISO{4}) — octant cell, level $LEVEL",
     480, 140,
     NI.TrainingOptions(; hidden = [48, 48], epochs = 20_000, batchsize = 64),
     # A fourth-order tensor departs from its class by more than a second-order
@@ -263,7 +263,7 @@ want("axi_conduction") && train_and_save(
 # ─── 4. The axisymmetric cavity, elasticity ──────────────────────────────────
 #
 #  Six components, not five: a concentration tensor has no major symmetry, and
-#  `StrainConcentrationTI` carries the six Walpole coefficients for exactly that reason.
+#  `GradientConcentrationTI` carries the six Walpole coefficients for exactly that reason.
 #
 #  This is the class whose reference medium the package deliberately refuses to
 #  guess, because the same class also serves *heterogeneous* morphologies that
@@ -273,13 +273,13 @@ want("axi_conduction") && train_and_save(
 
 want("axi_elastic") && train_and_save(
     "axi_supershape_pore_elastic",
-    NI.DimensionlessHill(StrainConcentrationTI()),
+    NI.DimensionlessHill(GradientConcentrationTI()),
     NI.SampleBox(
         [:log_aspect, :log_p, :nu0],
         [AXI_LC_LO, AXI_LP_LO, NU_LO], [AXI_LC_HI, AXI_LP_HI, NU_HI],
     ),
     axi_geometry, elastic_response,
-    "strain_strain_concentration(FEAxiSupershapePore, TensISO{4}) — Fourier axi, " *
+    "gradient_gradient_concentration(FEAxiSupershapePore, TensISO{4}) — Fourier axi, " *
         "nradial = $(AXI.nradial), R/a = $(AXI.radius_ratio)",
     # A three-dimensional box, and `ℓ₁` runs from 1.4 to 63 across it — a factor
     # of 46, near-diverging in the flat-and-concave corner where the cavity is

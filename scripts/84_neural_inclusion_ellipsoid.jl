@@ -223,7 +223,7 @@ check_inclusion_interface(nn_spheroid(0.4))
 C₀ = iso_stiffness(30.0, 10.0)
 incl = nn_spheroid(0.4)
 
-A_zero = strain_strain_concentration(incl, C₀, C₀)
+A_zero = gradient_gradient_concentration(incl, C₀, C₀)
 @printf(
     "\n  ‖𝔸 − 𝕀‖ at zero contrast          %.2e\n",
     norm(A_zero - TensISO{3}(1.0, 1.0))

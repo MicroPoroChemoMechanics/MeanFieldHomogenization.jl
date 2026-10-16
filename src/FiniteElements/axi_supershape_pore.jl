@@ -252,7 +252,7 @@ fe_axi_pore_breakdown(s::FEAxiSupershapePore, P₀::TensND.AbstractTens) =
 
 # ─── Gate B, with an exactly zero stress side ────────────────────────────────
 
-Core.strain_strain_concentration(
+Core.gradient_gradient_concentration(
     s::FEAxiSupershapePore, ::TensND.AbstractTens{4, 3},
     C₀::TensND.AbstractTens{4, 3}; kw...
 ) = fe_axi_pore_concentration(s, C₀)
@@ -263,13 +263,13 @@ Core.gradient_gradient_concentration(
 ) = fe_axi_pore_concentration(s, K₀)
 
 """
-    Core.stress_strain_concentration(pore, C₁, C₀)
+    Core.flux_gradient_concentration(pore, C₁, C₀)
     Core.flux_gradient_concentration(pore, K₁, K₀)
 
 **Exactly zero**, as for [`FESupershapePore`](@ref): a cavity carries no stress
 and no flux, not to the discretization error but by definition.
 """
-Core.stress_strain_concentration(
+Core.flux_gradient_concentration(
     ::FEAxiSupershapePore, ::TensND.AbstractTens{4, 3},
     ::TensND.AbstractTens{4, 3}; kw...
 ) = TensND.TensCanonical(Tensors.Tensor{4, 3}((i, j, k, l) -> 0.0))

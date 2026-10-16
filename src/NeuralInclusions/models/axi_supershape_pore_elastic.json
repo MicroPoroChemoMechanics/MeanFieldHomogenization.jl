@@ -4875,7 +4875,7 @@
             "identity",
             "log"
         ],
-        "class": "strain_concentration_ti",
+        "class": "gradient_concentration_ti",
         "shift": [
             1.2623705967558847,
             0.7528194865646638,

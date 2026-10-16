@@ -80,7 +80,7 @@ SOLVER_KW_RENAME: dict[str, str] = {
 HOMOGENIZE_KW_DROPPED: dict[str, str] = {
     "verbose": "MFH homogenize is quiet; use @show or the logging macros",
     "concentration": "concentration tensors are obtained on demand via "
-    "strain_strain_concentration(...) rather than a homogenize flag",
+    "gradient_gradient_concentration(...) rather than a homogenize flag",
     "weight": "no MFH counterpart",
     "prop": "becomes the positional property Symbol",
     "rve": "becomes the first positional argument",
@@ -233,10 +233,10 @@ CONSTANTS: dict[str, str] = {
 # <local>_<macroscopic>_concentration, so the correspondence is positional
 # and exact.
 PHASE_ACCESSORS: dict[str, str] = {
-    "eE": "strain_strain_concentration",
-    "sE": "stress_strain_concentration",
-    "eS": "strain_stress_concentration",
-    "sS": "stress_stress_concentration",
+    "eE": "gradient_gradient_concentration",
+    "sE": "flux_gradient_concentration",
+    "eS": "gradient_flux_concentration",
+    "sS": "flux_flux_concentration",
     "factor": "volume_fraction",
     "fraction": "volume_fraction",
     "density": "crack_density",

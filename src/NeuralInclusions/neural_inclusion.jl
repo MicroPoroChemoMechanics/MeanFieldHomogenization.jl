@@ -583,8 +583,8 @@ end
 #  argument is accepted and ignored.
 
 for (gen, order, slot, idx, name) in (
-        (:(Core.strain_strain_concentration), 4, :elastic, 1, :strain),
-        (:(Core.stress_strain_concentration), 4, :elastic, 2, :stress),
+        (:(Core.gradient_gradient_concentration), 4, :elastic, 1, :strain),
+        (:(Core.flux_gradient_concentration), 4, :elastic, 2, :stress),
         (:(Core.gradient_gradient_concentration), 2, :transport, 1, :gradient),
         (:(Core.flux_gradient_concentration), 2, :transport, 2, :flux),
     )
@@ -668,7 +668,7 @@ as a `MethodError` or as a tensor of the wrong class:
   [`GradientConcentrationISO2`](@ref) specifically: `HillISO2` and `HillTI2` carry the same
   single component and a different dimension, so `decode` would divide the
   prediction by ``k_0`` and be wrong at every ``k_0 \\ne 1``. A cavity's stress side is
-  identically zero, so `StressConcentrationTI` has nothing to predict either;
+  identically zero, so `FluxConcentrationTI` has nothing to predict either;
 * **the features** — every one of them has to be a shape parameter the pore can
   supply, or `:nu0`.
 """
@@ -683,7 +683,7 @@ function FiniteElements._check_pore_surrogate(
         )
     )
     cls = hill_class(s)
-    ok = order == 4 ? cls isa Union{StrainConcentrationCubic, StrainConcentrationTI} :
+    ok = order == 4 ? cls isa Union{GradientConcentrationCubic, GradientConcentrationTI} :
         cls isa Union{GradientConcentrationISO2, GradientConcentrationTI2}
     ok || throw(
         ArgumentError(
@@ -691,7 +691,7 @@ function FiniteElements._check_pore_surrogate(
                 "`FESupershapePore`: that slot carries a *concentration* tensor of a " *
                 "cavity, which is of degree 0 in the reference moduli. Use " *
                 (
-                order == 4 ? "`StrainConcentrationCubic` for a supersphere, `StrainConcentrationTI` " *
+                order == 4 ? "`GradientConcentrationCubic` for a supersphere, `GradientConcentrationTI` " *
                     "for a superspheroid." :
                     "`GradientConcentrationISO2` (cubic) or `GradientConcentrationTI2` (axisymmetric) — the " *
                     "`Hill*` classes of the same shape carry a different dimension " *

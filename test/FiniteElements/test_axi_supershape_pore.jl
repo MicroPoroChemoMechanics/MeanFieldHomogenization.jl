@@ -80,7 +80,7 @@ _axp_pore(sh; nradial = 24, radius_ratio = 8.0, kw...) = FEAxiSupershapePore(
         # truncation, not discretization — see the sweep below.
         for (c, tol4, tol2) in ((0.5, 2.0e-3, 1.0e-3), (1.0, 5.0e-4, 1.0e-4), (2.0, 5.0e-4, 1.0e-4))
             pore = _axp_pore(Superspheroid(1.0, c, 1.0))
-            A = _kmc(strain_strain_concentration(pore, _AXP_C0, _AXP_C0))
+            A = _kmc(gradient_gradient_concentration(pore, _AXP_C0, _AXP_C0))
             a = _mc(gradient_gradient_concentration(pore, _AXP_K0, _AXP_K0))
             Aex, aex = _axp_exact4(c), _axp_exact2(c)
             @test norm(A - Aex) / norm(Aex) < tol4
@@ -95,7 +95,7 @@ _axp_pore(sh; nradial = 24, radius_ratio = 8.0, kw...) = FEAxiSupershapePore(
         # `(A₁₁₁₁ − A₁₁₂₂)/2` to round-off.
         for c in (0.5, 1.0, 2.0), p in (0.6, 1.0)
             pore = _axp_pore(Superspheroid(1.0, c, p); nradial = 14, radius_ratio = 4.0)
-            A = _kmc(strain_strain_concentration(pore, _AXP_C0, _AXP_C0))
+            A = _kmc(gradient_gradient_concentration(pore, _AXP_C0, _AXP_C0))
             @test A[6, 6] / 2 ≈ (A[1, 1] - A[1, 2]) / 2 atol = 1.0e-12
             @test A[1, 1] ≈ A[2, 2] atol = 1.0e-12
             @test A[4, 4] ≈ A[5, 5] atol = 1.0e-12
@@ -144,7 +144,7 @@ _axp_pore(sh; nradial = 24, radius_ratio = 8.0, kw...) = FEAxiSupershapePore(
 
     @testset "a cavity carries no stress and no flux" begin
         pore = _axp_pore(Superspheroid(1.0, 1.5, 0.7); nradial = 14, radius_ratio = 4.0)
-        @test maximum(abs, _kmc(stress_strain_concentration(pore, _AXP_C0, _AXP_C0))) == 0.0
+        @test maximum(abs, _kmc(flux_gradient_concentration(pore, _AXP_C0, _AXP_C0))) == 0.0
         @test maximum(abs, _mc(flux_gradient_concentration(pore, _AXP_K0, _AXP_K0))) == 0.0
         @test !MeanFieldHomogenization.Core.is_homogeneous_inclusion(pore)
     end
@@ -184,7 +184,7 @@ _axp_pore(sh; nradial = 24, radius_ratio = 8.0, kw...) = FEAxiSupershapePore(
         # uses the closed-form isotropic dipole field.
         pore = _axp_pore(sh; nradial = 12, radius_ratio = 4.0)
         Cti = TensTI{4}(20.0, 30.0, 4.0, 5.0, 8.0, (0, 0, 1))
-        @test_throws ArgumentError strain_strain_concentration(pore, Cti, Cti)
+        @test_throws ArgumentError gradient_gradient_concentration(pore, Cti, Cti)
         # And sensitivity is refused while no surrogate answers.
         @test_throws ErrorException MeanFieldHomogenization.Schemes._replace_geom_field(
             pore, Val(:p), nothing, 0.9

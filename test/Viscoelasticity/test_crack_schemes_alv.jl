@@ -6,7 +6,7 @@ using LinearAlgebra
 # =============================================================================
 #  test_crack_schemes_alv.jl — crack-aware ALV homogenization schemes:
 #  Voigt / Reuss (cracks ignored), Dilute / DiluteDual / MT / Maxwell / PCW
-#  (cracks add ΔC̃ = (4π/3) ε · stiffness_contribution_alv to the
+#  (cracks add ΔC̃ = (4π/3) ε · property_contribution_alv to the
 #  numerator), SC / ASC (cracks iterated against the running estimate).
 # =============================================================================
 
@@ -122,8 +122,8 @@ end
     crack = ctx.crack
     times = ctx.times
     C_M = MeanFieldHomogenization.Viscoelasticity._trapezoidal_relaxation(ctx.law_M, times, 6)
-    Ñ = MeanFieldHomogenization.Viscoelasticity.stiffness_contribution_alv_at(crack, C_M)
-    H̃ = compliance_contribution_alv(crack, ctx.law_M, times)
+    Ñ = MeanFieldHomogenization.Viscoelasticity.property_contribution_alv_at(crack, C_M)
+    H̃ = inverse_property_contribution_alv(crack, ctx.law_M, times)
     # Ñ = -C̃·H̃·C̃ — round-trip identity at machine precision.
     @test isapprox(Ñ, -(C_M * H̃ * C_M); atol = 1.0e-12)
 end

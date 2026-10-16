@@ -229,7 +229,7 @@ end
 hill_kernel_order2_at(::LayeredSphere, ::AbstractMatrix) = throw(
     ArgumentError(
         "a LayeredSphere has no Hill kernel; its order-2 ALV contribution is " *
-            "`conductivity_contribution_alv`."
+            "`property_contribution_alv`."
     )
 )
 
@@ -457,7 +457,7 @@ end
 _inclusion_alv2_quantities(s::LayeredSphere, scheme, K_r_law, K_M_law, K_0, times) = (
     _layer_bound_alv2(scheme, s, times),
     gradient_gradient_concentration_alv(s, K_M_law, times),
-    conductivity_contribution_alv(s, K_M_law, times),
+    property_contribution_alv(s, K_M_law, times),
 )
 
 # The relaxation kernel a phase enters the order-2 schemes with. A layered
@@ -807,7 +807,7 @@ end
 _diff_alv2_contribution(geom, K_r, K_curr, times) =
     dilute_contribution_alv_order2(K_r, K_curr, hill_kernel_order2_at(geom, K_curr))
 _diff_alv2_contribution(s::LayeredSphere, K_r, K_curr, times) =
-    conductivity_contribution_alv(s, K_curr, times)
+    property_contribution_alv(s, K_curr, times)
 
 function _diff_alv2_ode_rhs!(du, u, p, τ)
     sz = p.sz
@@ -885,7 +885,7 @@ function _sc2_phase_AB(geom, K_r, K, sym, times)
 end
 function _sc2_phase_AB(s::LayeredSphere, K_r, K, sym, times)
     A = gradient_gradient_concentration_alv(s, K, times)
-    B = conductivity_contribution_alv(s, K, times) .+ K * A
+    B = property_contribution_alv(s, K, times) .+ K * A
     return _maybe_symmetrize_alv2(A, sym), _maybe_symmetrize_alv2(B, sym)
 end
 

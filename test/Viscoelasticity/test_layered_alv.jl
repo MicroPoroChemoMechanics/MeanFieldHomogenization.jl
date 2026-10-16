@@ -223,9 +223,9 @@ end
     end
 end
 
-# ── stiffness_contribution_alv & strain_strain_concentration_alv (composite assembly) ─
+# ── property_contribution_alv & gradient_gradient_concentration_alv (composite assembly) ─
 
-@testset "stiffness_contribution_alv — elastic limit ≡ stiffness_contribution" begin
+@testset "property_contribution_alv — elastic limit ≡ property_contribution" begin
     C_M = TensISO{3}(30.0, 8.0)    # κ = 10, μ = 4
     C_1 = TensISO{3}(60.0, 16.0)   # κ = 20, μ = 8
     C_2 = TensISO{3}(90.0, 24.0)   # κ = 30, μ = 12
@@ -233,11 +233,11 @@ end
     times = collect(0.0:0.25:1.0)
     n = length(times)
 
-    N_alv = stiffness_contribution_alv(sphere, heaviside_law(C_M), times)
+    N_alv = property_contribution_alv(sphere, heaviside_law(C_M), times)
     @test size(N_alv) == (6 * n, 6 * n)
 
     # Reference elastic stiffness contribution.
-    N_elas = stiffness_contribution(sphere, C_M)
+    N_elas = property_contribution(sphere, C_M)
     N_elas_M = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66(N_elas)
 
     # Diagonal 6×6 blocks must match the elastic 6×6, off-diag must vanish.
@@ -251,10 +251,10 @@ end
     end
 end
 
-@testset "stiffness_contribution_alv — Membrane (DUALDISC) surface stress" begin
+@testset "property_contribution_alv — Membrane (DUALDISC) surface stress" begin
     # The ALV stiffness contribution must include the Gurtin–Murdoch surface
     # stress of a dual interface; in the elastic (Heaviside) limit it must
-    # equal the elastic `stiffness_contribution`, which is validated against
+    # equal the elastic `property_contribution`, which is validated against
     # Echoes' `DUALDISC`.  Single-layer aggregate (the N=1 composite-sphere
     # path) + membrane, and a 2-layer sphere with an interior membrane.
     C_M = iso_stiffness_E_nu(30.0, 0.3)
@@ -270,9 +270,9 @@ end
         ),
     )
     for sphere in spheres
-        N_alv = stiffness_contribution_alv(sphere, heaviside_law(C_M), times)
+        N_alv = property_contribution_alv(sphere, heaviside_law(C_M), times)
         N_elas_M = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66(
-            stiffness_contribution(sphere, C_M)
+            property_contribution(sphere, C_M)
         )
         for i in 1:n
             rows = (6 * (i - 1) + 1):(6 * i)
@@ -301,7 +301,7 @@ end
 
     C_alv = homogenize_alv(rve, Dilute(), :C; times = times)
     # Reference elastic dilute.
-    N_elas = stiffness_contribution(sphere, C_M)
+    N_elas = property_contribution(sphere, C_M)
     C_eff_elas = C_M + f_I * N_elas
     C_eff_elas_M = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66(C_eff_elas)
 
@@ -377,7 +377,7 @@ end
     end
     # t = t = 0 block ≡ elastic dilute with κ = 10, μ = 4.
     C_M_t0 = TensISO{3}(30.0, 8.0)
-    N_elas_t0 = stiffness_contribution(sphere, C_M_t0)
+    N_elas_t0 = property_contribution(sphere, C_M_t0)
     C_eff_t0 = C_M_t0 + 0.2 * N_elas_t0
     block11 = C_alv[1:6, 1:6]
     @test isapprox(
@@ -426,7 +426,7 @@ end
         ),
     )
     for (key, external) in ((:ext, true), (:noext, false))
-        α, β = V.iso_params_from_blocks(strain_strain_concentration_alv(s, matrix, times; external))
+        α, β = V.iso_params_from_blocks(gradient_gradient_concentration_alv(s, matrix, times; external))
         @test α ≈ ref[key][1] rtol = 1.0e-12
         @test β ≈ ref[key][2] rtol = 1.0e-12
     end
@@ -444,7 +444,7 @@ end
     # An incompressible layer has no Volterra matrix; the elastic functions
     # treat it exactly, the ALV ones say so.
     rigid = LayeredSphere((0.6, 1.0), (iso_stiffness(Inf, 1.0), iso_stiffness(3.0, 1.5)))
-    @test_throws "layer 1 of the LayeredSphere has an infinite modulus" strain_strain_concentration_alv(rigid, law, times)
+    @test_throws "layer 1 of the LayeredSphere has an infinite modulus" gradient_gradient_concentration_alv(rigid, law, times)
     # The row-by-row Newton solver of the self-consistent scheme, internal,
     # builds an ellipsoid's Hill kernel; the Picard one takes layered spheres.
     r = RVE()
@@ -454,7 +454,7 @@ end
     @test_throws "is a LayeredSphere" MeanFieldHomogenization.Viscoelasticity.self_consistent_alv_newton(r, :C; times)
     # A reference medium with an infinite modulus has no Volterra matrix either.
     grain = LayeredSphere((0.6, 1.0), (iso_stiffness(5.0, 1.0), iso_stiffness(3.0, 1.5)))
-    @test_throws "reference medium" strain_strain_concentration_alv(grain, heaviside_law(iso_stiffness(Inf, 1.0)), times)
+    @test_throws "reference medium" gradient_gradient_concentration_alv(grain, heaviside_law(iso_stiffness(Inf, 1.0)), times)
 end
 
 @testset "LayeredSphere ALV — creep laws, and the stiffness the bounds average" begin

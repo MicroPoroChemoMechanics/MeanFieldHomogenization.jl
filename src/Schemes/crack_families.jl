@@ -21,7 +21,7 @@
 #  guarantees — validates both at once.  Transcribing eq. (10) literally would
 #  instead be an independent, unchecked chain of operators.
 #
-#  THE SUBTLETY.  `𝕊_i` is NOT simply `compliance_contribution(crack, C_hom)`.
+#  THE SUBTLETY.  `𝕊_i` is NOT simply `inverse_property_contribution(crack, C_hom)`.
 #  Each scheme post-multiplies ℍ_i by its own concentration correction, because
 #  the stress seen by an inclusion in the Eshelby auxiliary problem is not the
 #  macroscopic one.  The correction is derived here from the scheme body itself
@@ -49,7 +49,7 @@ Returns a `NamedTuple`:
 - `families` — a `Dict{Symbol,…}` mapping each crack phase name to its
   ``\\mathbb{S}_i``, **normalized per unit** ``(4\\pi/3)\\,\\varepsilon_i``, so that the
   scaled contribution is recovered with
-  [`delta_compliance`](@ref MeanFieldHomogenization.Core.delta_compliance).
+  [`delta_inverse_property`](@ref MeanFieldHomogenization.Core.delta_inverse_property).
 
 `C_hom` **must** be the estimate that `scheme` itself returned for this `rve`
 (`homogenize(rve, scheme, property)`): the decomposition is an identity of the
@@ -175,7 +175,7 @@ function crack_family_residual(
     acc = dec.solid
     for (name, S_i) in dec.families
         geom = rve.phases[name].geometry
-        acc = acc + delta_compliance(geom, S_i, crack_density(rve, name))
+        acc = acc + delta_inverse_property(geom, S_i, crack_density(rve, name))
     end
     return sqrt(_frob_sq(S_hom - acc) / _frob_sq(S_hom))
 end
@@ -212,5 +212,5 @@ function _crack_family_H(
     )
     geom = rve.phases[name].geometry
     K_int = _crack_interface_K4(rve, name)
-    return compliance_contribution(geom, P₀; K_interface = K_int, kw...)
+    return inverse_property_contribution(geom, P₀; K_interface = K_int, kw...)
 end

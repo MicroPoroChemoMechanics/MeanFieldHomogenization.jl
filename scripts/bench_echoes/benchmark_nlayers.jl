@@ -212,7 +212,7 @@ for cfg in 1:N_CONFIGS
     cfg_α_err = 0.0
     cfg_β_err = 0.0
     for k in 1:n
-        A_jl = strain_strain_concentration(sphere_jl, C_ref_jl; layer = k)
+        A_jl = gradient_gradient_concentration(sphere_jl, C_ref_jl; layer = k)
         α_jl, β_jl = TensND.get_data(A_jl)
         eE_py = py_layer_eE(spn_py, k - 1)
         α_py, β_py = _iso_data_from_echoes6x6(eE_py)
@@ -278,7 +278,7 @@ for cfg in 1:20
         (TensISO{3}(3Kc, 2μc), TensISO{3}(3Ks, 2μs))
     )
     C0 = TensISO{3}(3Km, 2μm)
-    _, β_recurrence = TensND.get_data(strain_strain_concentration(sphere, C0; layer = 1))
+    _, β_recurrence = TensND.get_data(gradient_gradient_concentration(sphere, C0; layer = 1))
     β_direct = direct_2layer_β_layer1(r1, 1.0, Kc, μc, Ks, μs, Km, μm)
     err = relerr(β_recurrence, β_direct)
     err < rtol_match && (global n_pass_self += 1)
@@ -311,7 +311,7 @@ const C_shell = TensISO{3}(3Ks, 2μs)
 # Limit 1 : shell ≡ matrix → β_layer1 = single-layer Eshelby (core in matrix).
 let
     sphere = LayeredSphere((0.5, 1.0), (C_core, C_ref_lim))
-    _, β_jl = TensND.get_data(strain_strain_concentration(sphere, C_ref_lim; layer = 1))
+    _, β_jl = TensND.get_data(gradient_gradient_concentration(sphere, C_ref_lim; layer = 1))
     β_an = β_eshelby_sphere(μc, Km, μm)
     @printf "  shell ≡ matrix      :  Julia β = %.10f   analytical = %.10f   relerr = %.2e\n" β_jl β_an relerr(β_jl, β_an)
 end
@@ -320,7 +320,7 @@ end
 # core moduli at full radius (radius 1) in matrix.
 let
     sphere = LayeredSphere((0.5, 1.0), (C_core, C_core))
-    _, β_jl = TensND.get_data(strain_strain_concentration(sphere, C_ref_lim; layer = 1))
+    _, β_jl = TensND.get_data(gradient_gradient_concentration(sphere, C_ref_lim; layer = 1))
     β_an = β_eshelby_sphere(μc, Km, μm)
     @printf "  core ≡ shell        :  Julia β = %.10f   analytical = %.10f   relerr = %.2e\n" β_jl β_an relerr(β_jl, β_an)
 end
@@ -329,7 +329,7 @@ end
 let
     r1 = 1.0e-4
     sphere = LayeredSphere((r1, 1.0), (C_core, C_shell))
-    _, β_jl = TensND.get_data(strain_strain_concentration(sphere, C_ref_lim; layer = 1))
+    _, β_jl = TensND.get_data(gradient_gradient_concentration(sphere, C_ref_lim; layer = 1))
     β_shell = β_eshelby_sphere(μs, Km, μm)
     β_core_in_shell = β_eshelby_sphere(μc, Ks, μs)
     β_an = β_core_in_shell * β_shell
@@ -339,7 +339,7 @@ end
 # Limit 4 : N=3 homogeneous (all layers equal to matrix) → β_k = 1 ∀ k.
 let
     sphere = LayeredSphere((0.3, 0.7, 1.0), (C_ref_lim, C_ref_lim, C_ref_lim))
-    βs = [TensND.get_data(strain_strain_concentration(sphere, C_ref_lim; layer = k))[2] for k in 1:3]
+    βs = [TensND.get_data(gradient_gradient_concentration(sphere, C_ref_lim; layer = k))[2] for k in 1:3]
     @printf "  homogeneous N=3     :  β = (%.10f, %.10f, %.10f)   (expected 1.0)\n" βs[1] βs[2] βs[3]
 end
 println()
@@ -384,7 +384,7 @@ const sol_local_jl = LayeredSphereFields(sphere_local_jl, C_ref_local_jl)
 "Radial and hoop stress at radius `r` under a remote hydrostatic strain `ε_v 𝟙`."
 function bulk_stresses(sol, r; ε_v::Real = 1.0)
     # At (r, 0, 0) the first canonical axis is radial and the other two are hoop.
-    σ = local_stress(sol, [r, 0.0, 0.0], ε_v * TensISO{3}(1.0))
+    σ = local_flux(sol, [r, 0.0, 0.0], ε_v * TensISO{3}(1.0))
     return σ[1, 1], σ[2, 2]
 end
 
@@ -506,10 +506,10 @@ for (label, itf_jl, tags, p1s, p2s) in ITF_CASES
         jl_lay = lay === nothing ? nothing : lay + 1        # Julia is 1-based
         ref = py_conc_all(spn, r, θ, φ, py_lay)
         got = (
-            Matrix(KM(local_strain_strain_concentration(sol, r, θ, φ; layer = jl_lay))),
-            Matrix(KM(local_stress_strain_concentration(sol, r, θ, φ; layer = jl_lay))),
-            Matrix(KM(local_strain_stress_concentration(sol, r, θ, φ; layer = jl_lay))),
-            Matrix(KM(local_stress_stress_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(KM(local_gradient_gradient_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(KM(local_flux_gradient_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(KM(local_gradient_flux_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(KM(local_flux_flux_concentration(sol, r, θ, φ; layer = jl_lay))),
         )
         for q in 1:4
             scale = max(1.0, maximum(abs, ref[q]))

@@ -137,8 +137,8 @@ add_layer!(particle, :PLATELET, Dict(:C => C_platelet); fraction = 1 - f)
 add_layer!(particle, :INTERFOLIAR, Dict(:C => C_interfoliar); fraction = f)
 
 Cpar_reg = homogenize(particle, Laminated(), :C)
-A_s_reg = strain_strain_concentration(particle, :PLATELET)      # eps_s = A_s : E
-A_f_reg = strain_strain_concentration(particle, :INTERFOLIAR)   # eps_f = A_f : E
+A_s_reg = gradient_gradient_concentration(particle, :PLATELET)      # eps_s = A_s : E
+A_f_reg = gradient_gradient_concentration(particle, :INTERFOLIAR)   # eps_f = A_f : E
 
 # The mean-field identity (6) is formed BEFORE any limit is taken: both factors
 # of `C_interfoliar : A_f` are singular in the limit, their product is not.
@@ -221,8 +221,8 @@ C_ac = TensISO{3}(3κ, 2μ)
 sphere = Ellipsoid(1.0)
 𝕀 = TensND.tens_Id4(Val(3), Val(Sym))
 
-A_par = strain_strain_concentration(sphere, Cpar, C_ac)                 # (I + P:(C^par - C^ac))^-1
-A_por = strain_strain_concentration(sphere, TensISO{3}(zero(κ), zero(κ)), C_ac)
+A_par = gradient_gradient_concentration(sphere, Cpar, C_ac)                 # (I + P:(C^par - C^ac))^-1
+A_por = gradient_gradient_concentration(sphere, TensISO{3}(zero(κ), zero(κ)), C_ac)
 
 # (13)+(14). The macropores contribute nothing to <C:A>, their stiffness being
 # zero; they weigh on the scheme through the average of A alone.
@@ -393,7 +393,7 @@ end
 # the package exposes no Levin post-processing.
 function g_numeric(Cpar_n, C_n, φv)
     Bπ_n = TensTI{2}(1 - F_NUM, 1.0, (0.0, 0.0, 1.0))
-    A = strain_strain_concentration(Ellipsoid(1.0), Cpar_n, C_n)
+    A = gradient_gradient_concentration(Ellipsoid(1.0), Cpar_n, C_n)
     return (1 - φv) * TensND.get_data(isotropify(Bπ_n ⊡ A))[1]
 end
 

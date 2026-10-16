@@ -63,8 +63,8 @@ flowchart TB
     S --> EFF
 
     GA["gate A<br/>hill_tensor"] -.-> P
-    GB["gate B<br/>strain_strain_concentration<br/>stress_strain_concentration"] -.-> A
-    GC["gate C<br/>stiffness_contribution<br/>compliance_contribution"] -.-> N
+    GB["gate B<br/>gradient_gradient_concentration<br/>flux_gradient_concentration"] -.-> A
+    GC["gate C<br/>property_contribution<br/>inverse_property_contribution"] -.-> N
 
     classDef ext fill:#d7f2d7,stroke:#2e7d32,color:#1b5e20
     classDef inbox fill:#eceff1,stroke:#78909c,color:#263238

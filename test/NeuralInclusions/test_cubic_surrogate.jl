@@ -39,34 +39,34 @@ const NI = MeanFieldHomogenization.NeuralInclusions
         return _teacher(g.shape.p, ν)
     end
 
-    spec = NI.DimensionlessHill(StrainConcentrationCubic())
+    spec = NI.DimensionlessHill(GradientConcentrationCubic())
     box = NI.SampleBox([:p, :nu0], [0.3, 0.0], [1.5, 0.45])
 
     @testset "the class round-trips through build and components" begin
-        @test NI.ncomponents(StrainConcentrationCubic()) == 3
-        @test NI.tensor_order(StrainConcentrationCubic()) == 4
-        @test NI.class_name(StrainConcentrationCubic()) == :strain_concentration_cubic
-        @test NI.hill_class(spec) isa StrainConcentrationCubic
+        @test NI.ncomponents(GradientConcentrationCubic()) == 3
+        @test NI.tensor_order(GradientConcentrationCubic()) == 4
+        @test NI.class_name(GradientConcentrationCubic()) == :gradient_concentration_cubic
+        @test NI.hill_class(spec) isa GradientConcentrationCubic
         @test NI.noutputs(spec) == 3
         # Three components and not six: a concentration tensor has no major
-        # symmetry in general -- which is why `StrainConcentrationTI` needs six -- but a
+        # symmetry in general -- which is why `GradientConcentrationTI` needs six -- but a
         # cubic one has it automatically, so there is nothing to drop.
-        @test NI.ncomponents(StrainConcentrationTI()) == 6
+        @test NI.ncomponents(GradientConcentrationTI()) == 6
 
         C = _teacher(0.6, 0.3)
-        c = NI.components(StrainConcentrationCubic(), C, can)
+        c = NI.components(GradientConcentrationCubic(), C, can)
         @test length(c) == 3
         @test all(isapprox.(c, TensND.get_data(C); atol = 1.0e-12))
-        @test norm(KM(NI.build(StrainConcentrationCubic(), c, can)) - KM(C)) < 1.0e-12
+        @test norm(KM(NI.build(GradientConcentrationCubic(), c, can)) - KM(C)) < 1.0e-12
 
         # A tensor outside the class is refused loudly rather than trained on.
         ti = TensND.tens_TI(10.0, 3.0, 2.5, 12.0, 2.0, [0.0, 0.0, 1.0])
-        @test_throws ArgumentError NI.components(StrainConcentrationCubic(), ti, can)
+        @test_throws ArgumentError NI.components(GradientConcentrationCubic(), ti, can)
 
         # The frame comes from the inclusion's own basis, all three columns of
         # it -- a cube has no distinguished direction to single out.
         pore = FESupershapePore(Supersphere(1.0, 0.6))
-        @test NI._class_frame(StrainConcentrationCubic(), pore) === inclusion_basis(pore)
+        @test NI._class_frame(GradientConcentrationCubic(), pore) === inclusion_basis(pore)
     end
 
     @testset "the pore exposes its parameters as features" begin
@@ -116,12 +116,12 @@ const NI = MeanFieldHomogenization.NeuralInclusions
             add_phase!(rve, :m, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
             add_phase!(rve, :p, pore, Dict(:C => C₀); fraction = 0.05)
             Cd = homogenize(rve, Dilute(), :C)
-            N = stiffness_contribution(pore, C₀, C₀)
+            N = property_contribution(pore, C₀, C₀)
             @test norm(KM(Cd) - KM(C₀ + 0.05 * N)) < 1.0e-12 * norm(KM(Cd))
             @test fe_assembly_count(pore) == 0
             # Still a cavity: the stress side is identically zero, so the
             # contribution identity holds exactly as it does for the meshed one.
-            H = compliance_contribution(pore, C₀, C₀)
+            H = inverse_property_contribution(pore, C₀, C₀)
             @test norm(KM(H ⊡ C₀ + inv(C₀) ⊡ N)) < 1.0e-10 * norm(KM(H ⊡ C₀))
         end
 
@@ -215,9 +215,9 @@ end
     @testset "a reference medium exists for it, and needs no ν₀" begin
         box = NI.SampleBox([:p], [0.3], [1.5])
         @test NI._reference_medium(c, box, [0.7]) isa TensND.TensISO{2, 3}
-        # The cavity restriction on `StrainConcentrationTI` is about the morphology, not
+        # The cavity restriction on `GradientConcentrationTI` is about the morphology, not
         # the class, and it still has no method.
-        @test_throws MethodError NI._reference_medium(StrainConcentrationTI(), box, [0.7])
+        @test_throws MethodError NI._reference_medium(GradientConcentrationTI(), box, [0.7])
     end
 end
 
@@ -275,7 +275,7 @@ end
         sc = NI.load_surrogate(NI.model_path("supershape_pore_conduction"))
         se = NI.load_surrogate(NI.model_path("supershape_pore_elastic"))
         @test NI.hill_class(sc) isa GradientConcentrationISO2
-        @test NI.hill_class(se) isa StrainConcentrationCubic
+        @test NI.hill_class(se) isa GradientConcentrationCubic
         @test NI.tensor_order(sc) == 2
         @test NI.tensor_order(se) == 4
         @test sc.features == [:p]

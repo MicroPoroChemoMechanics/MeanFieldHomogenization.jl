@@ -77,14 +77,13 @@ The inclusion here is **homogeneous**, so the strain-side tensor alone is
 enough: the stress side follows from
 ``\mathbb A_{\sigma\varepsilon} = \mathbb C_1:\mathbb A_{\varepsilon\varepsilon}``.
 A heterogeneous inclusion has no such ``\mathbb C_1`` and must supply
-`stress_strain_concentration` (and `flux_gradient_concentration`) as well — `LayeredSphere`
-implements all four. Omitting them is silent: `Dilute` and `MoriTanaka` stay
-right, only the self-consistent schemes drift.
+`flux_gradient_concentration` as well, as `LayeredSphere` does. Omitting it is
+silent: `Dilute` and `MoriTanaka` stay right, only the self-consistent schemes
+drift. As for gate A, each callback serves both physics.
 
 ````@example custom_inclusion_contract
 gate_B = CustomInclusion(
     semi; basis,
-    strain_strain_concentration = (P₁, P₀; kw...) -> strain_strain_concentration(ell, P₁, P₀; kw...),
     gradient_gradient_concentration = (P₁, P₀; kw...) -> gradient_gradient_concentration(ell, P₁, P₀; kw...),
 )
 ````
@@ -98,10 +97,8 @@ Mori-Tanaka and the self-consistent schemes stay out of reach.
 ````@example custom_inclusion_contract
 gate_C = CustomInclusion(
     semi; basis,
-    stiffness_contribution = (P₁, P₀; kw...) -> stiffness_contribution(ell, P₁, P₀; kw...),
-    compliance_contribution = (P₁, P₀; kw...) -> compliance_contribution(ell, P₁, P₀; kw...),
-    conductivity_contribution = (P₁, P₀; kw...) -> conductivity_contribution(ell, P₁, P₀; kw...),
-    resistivity_contribution = (P₁, P₀; kw...) -> resistivity_contribution(ell, P₁, P₀; kw...),
+    property_contribution = (P₁, P₀; kw...) -> property_contribution(ell, P₁, P₀; kw...),
+    inverse_property_contribution = (P₁, P₀; kw...) -> inverse_property_contribution(ell, P₁, P₀; kw...),
 )
 ````
 
@@ -190,8 +187,8 @@ flat = CustomInclusion(
     (1.0, 0.25, 0.0);
     basis = MeanFieldHomogenization.inclusion_basis(crack),
     density_factor = 4π / 3,
-    compliance_contribution = (P₀; kw...) -> compliance_contribution(crack, P₀; kw...),
-    stiffness_contribution = (P₀; kw...) -> stiffness_contribution(crack, P₀; kw...),
+    inverse_property_contribution = (P₀; kw...) -> inverse_property_contribution(crack, P₀; kw...),
+    property_contribution = (P₀; kw...) -> property_contribution(crack, P₀; kw...),
 )
 
 function cracked(geom, ε)

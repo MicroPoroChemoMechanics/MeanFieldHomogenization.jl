@@ -34,7 +34,7 @@ single set of routines serves all four: what the caller supplies is a symmetric
 positive-definite ``\boldsymbol{K}``, and what the caller reads back is an
 effective ``\boldsymbol{K}^{\mathrm{hom}}`` in the same units. The chemical
 route of a hydrating paste and the permeability of a fractured rock use the same
-`conductivity_contribution` as a heat-conduction estimate.
+`property_contribution` as a heat-conduction estimate.
 
 ## 2. The one asymmetry, and how it is removed
 

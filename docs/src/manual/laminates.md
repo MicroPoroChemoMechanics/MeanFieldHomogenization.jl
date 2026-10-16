@@ -215,11 +215,10 @@ interface_jump(lam, 1, E)      # [u] across interface 1 under macroscopic strain
 ## Per-layer fields
 
 ```julia
-layer_strain_concentration(lam, :A)       # 𝔸_A,  ε_A = 𝔸_A : E,   Σ f 𝔸 = 𝕀
-layer_stress_concentration(lam, :A)       # 𝔹_A,  σ_A = 𝔹_A : Σ
-layer_gradient_concentration(lam, :A)     # transport counterparts
-layer_flux_concentration(lam, :A)
-laminate_hill(lam, :A)                   # (ℙ_A, ℚ_A), the two Hill tensors
+layer_gradient_concentration(lam, :A)     # 𝔸_A,  ε_A = 𝔸_A : E,   Σ f 𝔸 = 𝕀
+layer_flux_concentration(lam, :A)         # 𝔹_A,  σ_A = 𝔹_A : Σ
+layer_gradient_concentration(lam, :A; property = :K)   # the same in conduction
+laminate_hill(lam, :A)                    # (ℙ_A, ℚ_A), the two Hill tensors
 ```
 
 A layer also answers the package-wide concentration generics, under the same
@@ -227,18 +226,16 @@ names used for every inclusion — with the layer *name* in place of the
 `(ℂ₁, ℂ₀)` pair, a laminate having neither a matrix nor a reference medium:
 
 ```julia
-strain_strain_concentration(lam, :A)               # 𝔸_A      — same object as above
-stress_strain_concentration(lam, :A)               # ℂ_A : 𝔸_A,          Σ f · = ℂ^hom
-strain_stress_concentration(lam, :A)               # 𝔸_A : 𝕊^hom,        Σ f · = 𝕊^hom
-stress_stress_concentration(lam, :A)               # 𝔹_A
-gradient_gradient_concentration(lam, :A)           # and the four transport twins
-flux_gradient_concentration(lam, :A)
-gradient_flux_concentration(lam, :A)
-flux_flux_concentration(lam, :A)
+gradient_gradient_concentration(lam, :A)   # 𝔸_A      — same object as above
+flux_gradient_concentration(lam, :A)       # ℂ_A : 𝔸_A,          Σ f · = ℂ^hom
+gradient_flux_concentration(lam, :A)       # 𝔸_A : 𝕊^hom,        Σ f · = 𝕊^hom
+flux_flux_concentration(lam, :A)           # 𝔹_A
+gradient_gradient_concentration(lam, :A; property = :K)   # the same four in conduction
 ```
 
 The two mixed tensors `ℂ_i : 𝔸_i` and `𝔸_i : 𝕊^hom` have no `layer_*` name;
-they are what a Levin-type post-processing of a laminate needs. All eight go
+they are what a Levin-type post-processing of a laminate needs. All four, in
+either physics, go
 through the same cofactor block algebra as the effective property, so they are
 exact under `ForwardDiff.Dual` and evaluable symbolically.
 

@@ -233,21 +233,23 @@ force that is uniform in each phase.
 ## 7. In the package
 
 [`concentration_tensors`](@ref) returns the concentration tensors of every phase
-under a scheme, and the theorem is applied by [`levin_prestress`](@ref) and
-[`levin_free_strain`](@ref), which take the prestress or the eigenstrain of each
+under a scheme, and the theorem is applied by [`levin_preflux`](@ref) and
+[`levin_free_gradient`](@ref), which take the prestress or the eigenstrain of each
 loaded phase:
 
 ```julia
 ct = concentration_tensors(rve, MoriTanaka(:M), :C)
 𝟏 = TensISO{3}(1.0)
-α_hom = levin_free_strain(ct, Dict(:M => α_M * 𝟏, :I => α_I * 𝟏))
-B = -levin_prestress(ct, Dict(:P => -𝟏, :cracks => -𝟏))
+α_hom = levin_free_gradient(ct, Dict(:M => α_M * 𝟏, :I => α_I * 𝟏))
+B = -levin_preflux(ct, Dict(:P => -𝟏, :cracks => -𝟏))
 ```
 
 A crack family is accepted as a prestressed phase, with its density as weight,
-and refused as an eigenstrained one, since it holds no material. The conduction
-twins, [`levin_free_gradient`](@ref) and [`levin_preflux`](@ref), take vectors and
-the concentration tensors of a conduction estimate:
+and refused as an eigenstrained one, since it holds no material. The same two
+functions serve conduction: they take vectors and the concentration tensors of
+a conduction estimate. In elasticity they also answer to
+[`levin_free_strain`](@ref) and [`levin_prestress`](@ref), which refuse a
+conduction estimate:
 
 ```julia
 ct_K = concentration_tensors(rve, MoriTanaka(:M), :K)

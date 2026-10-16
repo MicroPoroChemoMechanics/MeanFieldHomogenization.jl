@@ -176,7 +176,7 @@ want("convergence") && let
     C₀ = C_PASTE
     C_SHELL = ce(2.0, 0.2)                     # a badly degraded adhered mortar
     sph = LayeredSphere((cbrt(W_CORE), 1.0), (C_AGG, C_SHELL))
-    Aex = mand(strain_strain_concentration(sph, C₀, C₀))
+    Aex = mand(gradient_gradient_concentration(sph, C₀, C₀))
     Jex, Kex = kelvin_J(Aex), kelvin_K(Aex)
 
     # The concentric limit, tabulated once at the shipped defaults.
@@ -185,7 +185,7 @@ want("convergence") && let
         nradial = 24, radius_ratio = 4.0
     )
     A0, B0 = fe_axi_concentration(incl0, C₀)
-    Bex = mand(stress_strain_concentration(sph, C₀, C₀))
+    Bex = mand(flux_gradient_concentration(sph, C₀, C₀))
     println(report, "## Concentric limit against Hervé-Zaoui\n")
     println(report, "| Tensor | Part | Finite elements | Hervé-Zaoui | Δ |")
     println(report, "| :--- | :---: | ---: | ---: | ---: |")

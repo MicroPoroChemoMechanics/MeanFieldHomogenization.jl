@@ -66,10 +66,10 @@ MeanFieldHomogenization are:
 
 | Function                                     | Return value                               |
 | :------------------------------------------- | :----------------------------------------- |
-| [`strain_strain_concentration`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\varepsilon\varepsilon}``     |
-| [`stress_strain_concentration`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\sigma\varepsilon}``          |
-| [`strain_stress_concentration`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\varepsilon\sigma}``          |
-| [`stress_stress_concentration`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\sigma\sigma}``               |
+| [`gradient_gradient_concentration`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\varepsilon\varepsilon}``     |
+| [`flux_gradient_concentration`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\sigma\varepsilon}``          |
+| [`gradient_flux_concentration`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\varepsilon\sigma}``          |
+| [`flux_flux_concentration`](@ref)`(incl, C₁, C₀)`  | ``\mathbb A_{\sigma\sigma}``               |
 
 For phase ``i`` of an RVE, ``\mathbb A_{\varepsilon\varepsilon}`` computed in the
 reference medium ``\mathbb C_0`` is the dilute concentration tensor written
@@ -99,9 +99,9 @@ contribution tensor** is
 \Delta\mathbb S^{\mathrm{hom}} = f\,\mathbb H.
 ```
 
-Functions: [`stiffness_contribution`](@ref),
-[`compliance_contribution`](@ref), with density helpers
-[`delta_stiffness`](@ref) and [`delta_compliance`](@ref).
+Functions: [`property_contribution`](@ref),
+[`inverse_property_contribution`](@ref), with density helpers
+[`delta_property`](@ref) and [`delta_inverse_property`](@ref).
 
 All of the above is *one-site*: the inclusion feels its neighbors only through
 the reference medium. Resolving the pairwise interaction explicitly replaces
@@ -131,28 +131,32 @@ crack-opening-displacement tensor ``\boldsymbol B`` and the crack normal
 \end{aligned}
 ```
 
-- `compliance_contribution(crack, C₀)` returns the size-independent
+- `inverse_property_contribution(crack, C₀)` returns the size-independent
   ``\mathbb H``;
-- `stiffness_contribution(crack, C₀)` returns ``\mathbb N`` (first order in the
+- `property_contribution(crack, C₀)` returns ``\mathbb N`` (first order in the
   density, provided for API symmetry);
-- `delta_compliance(crack, H, ε)` and `delta_stiffness(crack, N, ε)`
+- `delta_inverse_property(crack, H, ε)` and `delta_property(crack, N, ε)`
   apply the appropriate ``4\pi/3`` or ``\pi`` geometric prefactor.
 
 ## 4. Conductivity (2nd-order transport)
 
-Every routine above has a 2-tensor analog, triggered by dispatch on
-`::AbstractTens{2,3}` matrices:
+Every routine above serves conduction as well, under the same name: the
+methods on `::AbstractTens{2,3}` properties are the elastic formulas with
+``\mathbb C`` replaced by ``\boldsymbol K``, ``\boldsymbol\varepsilon`` by ``\nabla T`` and
+``\boldsymbol\sigma`` by ``-\underline q``. Each routine also answers to its name in
+elasticity, and the contributions to their names in conduction; these accept
+one order only:
 
-| Elasticity                           | Conductivity                           |
-| :----------------------------------- | :------------------------------------- |
-| `strain_strain_concentration`                  | [`gradient_gradient_concentration`](@ref)        |
-| `stress_strain_concentration`                  | [`flux_gradient_concentration`](@ref)            |
-| `strain_stress_concentration`                  | [`gradient_flux_concentration`](@ref)            |
-| `stress_stress_concentration`                  | [`flux_flux_concentration`](@ref)                |
-| `stiffness_contribution`             | [`conductivity_contribution`](@ref)    |
-| `compliance_contribution` (ellipsoid)| [`resistivity_contribution`](@ref)     |
-| `delta_stiffness`                    | [`delta_conductivity`](@ref)           |
-| `delta_compliance` (ellipsoid)       | [`delta_resistivity`](@ref)            |
+| Generic                              | Elasticity                     | Conduction                  |
+| :----------------------------------- | :----------------------------- | :-------------------------- |
+| [`gradient_gradient_concentration`](@ref) | `strain_strain_concentration`  |                             |
+| [`flux_gradient_concentration`](@ref)     | `stress_strain_concentration`  |                             |
+| [`gradient_flux_concentration`](@ref)     | `strain_stress_concentration`  |                             |
+| [`flux_flux_concentration`](@ref)         | `stress_stress_concentration`  |                             |
+| [`property_contribution`](@ref)           | `stiffness_contribution`       | `conductivity_contribution` |
+| [`inverse_property_contribution`](@ref)   | `compliance_contribution`      | `resistivity_contribution`  |
+| [`delta_property`](@ref)                  | `delta_stiffness`              | `delta_conductivity`        |
+| [`delta_inverse_property`](@ref)          | `delta_compliance`             | `delta_resistivity`         |
 
 ## 5. Type-genericity
 
@@ -164,7 +168,7 @@ type; the only requirement is that [`hill_tensor`](@ref) supports it.
 A concrete subtype of `AbstractInclusion` inherits the four concentration and
 the contribution tensors as soon as it provides [`hill_tensor`](@ref). When
 ``\mathbb P`` has no convenient closed form (e.g. `LayeredSphere`), override
-[`strain_strain_concentration`](@ref) instead — the rest is derived algebraically.
+[`gradient_gradient_concentration`](@ref) instead — the rest is derived algebraically.
 
 See the developer guide [Adding a new inclusion](@ref dev-adding-inclusion)
 for a step-by-step recipe.

@@ -118,7 +118,7 @@ end
             (1.0, 1.5), (C₁, C₂);
             interfaces = (PerfectInterface(), MembraneInterface(κs, μs)),
         )
-        A = strain_strain_concentration(s, C₁, C₀)
+        A = gradient_gradient_concentration(s, C₁, C₀)
         a, b = TensND.get_data(A)                  # (Σf α, Σf β)
         @test a ≈ bulk rtol = 1.0e-8
         @test b ≈ shear rtol = 1.0e-8

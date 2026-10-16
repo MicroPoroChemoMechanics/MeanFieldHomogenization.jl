@@ -40,14 +40,18 @@ mean strain and the mean stress of the phase,
 ``w_r`` being the volume fraction of the phase. A crack family has no volume: its
 weight is its density, its strain tensor is the strain carried by its openings
 per unit density, and its stress tensor is zero. In conduction the same holds
-with gradients and fluxes.
+with the gradient for the strain and the opposite of the flux for the stress;
+the fields keep the names `strain` and `stress` for both orders.
 
-Read the tensors with [`strain_strain_concentration`](@ref),
-[`stress_strain_concentration`](@ref), [`strain_stress_concentration`](@ref) and
-[`stress_stress_concentration`](@ref) (or their conduction twins), the
-contributions with [`stiffness_contribution`](@ref) and
-[`compliance_contribution`](@ref), and apply Levin's theorem with
-[`levin_free_strain`](@ref) and [`levin_prestress`](@ref).
+Read the tensors with [`gradient_gradient_concentration`](@ref),
+[`flux_gradient_concentration`](@ref), [`gradient_flux_concentration`](@ref) and
+[`flux_flux_concentration`](@ref), the contributions with
+[`property_contribution`](@ref) and [`inverse_property_contribution`](@ref), and
+apply Levin's theorem with [`levin_free_gradient`](@ref) and
+[`levin_preflux`](@ref): the same functions in elasticity and in conduction,
+whose names of elasticity (`strain_strain_concentration`,
+`stiffness_contribution`, `levin_free_strain`, …) are aliases for fourth-order
+estimates.
 
 # Fields
 
@@ -107,8 +111,8 @@ do in [`homogenize`](@ref).
 
 ```julia
 ct = concentration_tensors(rve, MoriTanaka(:M), :C)
-A = strain_strain_concentration(ct, :I)        # ⟨ε⟩_I = A : E
-N = stiffness_contribution(ct, :I)             # ⟨σ − C_M : ε⟩_I = N : E
+A = gradient_gradient_concentration(ct, :I)        # ⟨ε⟩_I = A : E
+N = property_contribution(ct, :I)             # ⟨σ − C_M : ε⟩_I = N : E
 ```
 """
 function concentration_tensors(
@@ -183,10 +187,10 @@ function _crack_compliance_per_density(
     )
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
-    H = compliance_contribution(
+    H = inverse_property_contribution(
         geom, _project_matrix(P_ref, sym); K_interface = _crack_interface_K4(rve, name), kw...
     )
-    return _apply_symmetrize(delta_compliance(geom, H, one(eltype(H))), sym)
+    return _apply_symmetrize(delta_inverse_property(geom, H, one(eltype(H))), sym)
 end
 
 function _crack_compliance_per_density(
@@ -194,10 +198,10 @@ function _crack_compliance_per_density(
     )
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
-    R = compliance_contribution(
+    R = inverse_property_contribution(
         geom, _project_matrix(P_ref, sym); α_interface = _crack_interface_α(rve, name), kw...
     )
-    return _apply_symmetrize(delta_resistivity(geom, R, one(eltype(R))), sym)
+    return _apply_symmetrize(delta_inverse_property(geom, R, one(eltype(R))), sym)
 end
 
 # Dilute strain and stress concentration tensors of a phase in the reference
@@ -399,8 +403,8 @@ end
 # One dilute solve per phase and per evaluation of the right-hand side: the
 # kernel of the effective ODE — the contribution that `_diff_ode_rhs!` sums, or
 # its compliance form — together with the dilute strain and stress
-# concentration tensors. The shared solves `concentration_and_stiffness` and
-# `compliance_and_stiffness_contribution` give the contribution bitwise as the
+# concentration tensors. The shared solves `concentration_and_contribution` and
+# `inverse_and_property_contribution` give the contribution bitwise as the
 # kernels of `differential.jl` do, and the rest follows by the exact identities
 # ℍ = −𝕊₀ : ℕ : 𝕊₀ and 𝔸_σε = ℕ + ℂ₀ : 𝔸.
 _diff_phase_bundle(rve::RVE, name::Symbol, prop::Symbol, Cτ, dual::Bool; kw...) =
@@ -412,7 +416,7 @@ function _diff_phase_bundle(
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
     P₀ = _project_matrix(Cτ, sym)
-    A_raw, N_raw = MFH_Core.concentration_and_stiffness(geom, phase_property(rve, name, prop), P₀; kw...)
+    A_raw, N_raw = MFH_Core.concentration_and_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
     kernel = _apply_symmetrize(dual ? _dual_contribution(N_raw, P₀) : N_raw, sym)
     return kernel, _apply_symmetrize(A_raw, sym), _apply_symmetrize(N_raw + _compose(P₀, A_raw), sym)
 end
@@ -424,7 +428,7 @@ function _diff_phase_bundle(
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
     P₀ = _project_matrix(Cτ, sym)
-    H_raw, N_raw = MFH_Core.compliance_and_stiffness_contribution(
+    H_raw, N_raw = MFH_Core.inverse_and_property_contribution(
         geom, P₀; _crack_interface_kw(rve, name, P₀)..., kw...
     )
     H = _apply_symmetrize(_delta_dual(geom, H_raw), sym)
@@ -444,10 +448,10 @@ _crack_interface_kw(rve::RVE, name::Symbol, ::TensND.AbstractTens{2, 3}) =
     (; α_interface = _crack_interface_α(rve, name))
 
 # A crack contribution per unit density, geometric prefactor included.
-_delta_primal(geom, N::TensND.AbstractTens{4, 3}) = MFH_Core.delta_stiffness(geom, N, one(eltype(N)))
-_delta_primal(geom, N::TensND.AbstractTens{2, 3}) = MFH_Core.delta_conductivity(geom, N, one(eltype(N)))
-_delta_dual(geom, H::TensND.AbstractTens{4, 3}) = delta_compliance(geom, H, one(eltype(H)))
-_delta_dual(geom, H::TensND.AbstractTens{2, 3}) = delta_resistivity(geom, H, one(eltype(H)))
+_delta_primal(geom, N::TensND.AbstractTens{4, 3}) = MFH_Core.delta_property(geom, N, one(eltype(N)))
+_delta_primal(geom, N::TensND.AbstractTens{2, 3}) = MFH_Core.delta_property(geom, N, one(eltype(N)))
+_delta_dual(geom, H::TensND.AbstractTens{4, 3}) = delta_inverse_property(geom, H, one(eltype(H)))
+_delta_dual(geom, H::TensND.AbstractTens{2, 3}) = delta_inverse_property(geom, H, one(eltype(H)))
 
 # The block of phase `k` in the state: its strain (part 0) or stress (part 1)
 # concentration tensor, weighted by its amount per unit target amount, as a
@@ -467,72 +471,47 @@ _from_flat(M::AbstractMatrix, ::TensND.AbstractTens{4, 3}) = TensND.inv_KM(Matri
 _from_flat(M::AbstractMatrix, ::TensND.AbstractTens{2, 3}) = TensND.TensCanonical(Matrix(M))
 
 # ── Readers ─────────────────────────────────────────────────────────────────
-
-"""
-    strain_strain_concentration(ct::ConcentrationTensors, name) -> AbstractTens
-
-Strain concentration tensor ``\\mathbb{A}_r`` of phase `name`:
-``\\langle\\boldsymbol{\\varepsilon}\\rangle_r = \\mathbb{A}_r:\\boldsymbol{E}``. Per unit density for a crack family.
-"""
-MFH_Core.strain_strain_concentration(ct::_ConcentrationTensors4, name::Symbol) = _strain(ct, name)
-
-"""
-    stress_strain_concentration(ct::ConcentrationTensors, name) -> AbstractTens
-
-Stress concentration tensor of phase `name` per unit macroscopic strain:
-``\\langle\\boldsymbol{\\sigma}\\rangle_r = \\mathbb{A}_{\\sigma\\varepsilon,r}:\\boldsymbol{E}``. Zero for a crack family.
-"""
-MFH_Core.stress_strain_concentration(ct::_ConcentrationTensors4, name::Symbol) = _stress(ct, name)
-
-"""
-    strain_stress_concentration(ct::ConcentrationTensors, name) -> AbstractTens
-
-Strain concentration tensor of phase `name` per unit macroscopic stress:
-``\\langle\\boldsymbol{\\varepsilon}\\rangle_r = \\mathbb{A}_r:\\mathbb{S}^{\\mathrm{hom}}:\\boldsymbol{\\Sigma}``.
-"""
-MFH_Core.strain_stress_concentration(ct::_ConcentrationTensors4, name::Symbol) =
-    _compose(_strain(ct, name), ct.compliance)
-
-"""
-    stress_stress_concentration(ct::ConcentrationTensors, name) -> AbstractTens
-
-Stress concentration tensor ``\\mathbb{B}_r`` of phase `name`:
-``\\langle\\boldsymbol{\\sigma}\\rangle_r = \\mathbb{B}_r:\\boldsymbol{\\Sigma}``, with
-``\\mathbb{B}_r = \\mathbb{A}_{\\sigma\\varepsilon,r}:\\mathbb{S}^{\\mathrm{hom}}``.
-"""
-MFH_Core.stress_stress_concentration(ct::_ConcentrationTensors4, name::Symbol) =
-    _compose(_stress(ct, name), ct.compliance)
+#
+# One method each, whatever the order: the order only enters the contraction
+# with the effective compliance, through `_compose`.
 
 """
     gradient_gradient_concentration(ct::ConcentrationTensors, name) -> AbstractTens
 
-Transport twin of [`strain_strain_concentration`](@ref):
-``\\langle\\nabla T\\rangle_r = \\boldsymbol{A}_r\\cdot\\nabla T``.
+Gradient concentration tensor ``\\mathbb{A}_r`` of phase `name` under the scheme
+of `ct`: ``\\langle\\boldsymbol{\\varepsilon}\\rangle_r = \\mathbb{A}_r:\\boldsymbol{E}`` in elasticity,
+``\\langle\\nabla T\\rangle_r = \\boldsymbol{A}_r\\cdot\\nabla T`` in conduction. Per unit density for a crack
+family.
 """
-MFH_Core.gradient_gradient_concentration(ct::_ConcentrationTensors2, name::Symbol) = _strain(ct, name)
+MFH_Core.gradient_gradient_concentration(ct::ConcentrationTensors, name::Symbol) = _strain(ct, name)
 
 """
     flux_gradient_concentration(ct::ConcentrationTensors, name) -> AbstractTens
 
-Transport twin of [`stress_strain_concentration`](@ref), with
-``\\boldsymbol{\\sigma}\\equiv-\\underline{q}``.
+Flux of phase `name` per unit macroscopic gradient: the mean stress,
+``\\langle\\boldsymbol{\\sigma}\\rangle_r = \\mathbb{A}_{\\sigma\\varepsilon,r}:\\boldsymbol{E}``, in elasticity, the mean opposite
+of the flux, ``\\langle-\\underline{q}\\rangle_r``, in conduction. Zero for a crack family.
 """
-MFH_Core.flux_gradient_concentration(ct::_ConcentrationTensors2, name::Symbol) = _stress(ct, name)
+MFH_Core.flux_gradient_concentration(ct::ConcentrationTensors, name::Symbol) = _stress(ct, name)
 
 """
     gradient_flux_concentration(ct::ConcentrationTensors, name) -> AbstractTens
 
-Transport twin of [`strain_stress_concentration`](@ref).
+Gradient of phase `name` per unit macroscopic flux:
+``\\langle\\boldsymbol{\\varepsilon}\\rangle_r = \\mathbb{A}_r:\\mathbb{S}^{\\mathrm{hom}}:\\boldsymbol{\\Sigma}`` in elasticity.
 """
-MFH_Core.gradient_flux_concentration(ct::_ConcentrationTensors2, name::Symbol) =
+MFH_Core.gradient_flux_concentration(ct::ConcentrationTensors, name::Symbol) =
     _compose(_strain(ct, name), ct.compliance)
 
 """
     flux_flux_concentration(ct::ConcentrationTensors, name) -> AbstractTens
 
-Transport twin of [`stress_stress_concentration`](@ref).
+Flux concentration tensor ``\\mathbb{B}_r`` of phase `name`:
+``\\langle\\boldsymbol{\\sigma}\\rangle_r = \\mathbb{B}_r:\\boldsymbol{\\Sigma}`` in elasticity, with
+``\\mathbb{B}_r = \\mathbb{A}_{\\sigma\\varepsilon,r}:\\mathbb{S}^{\\mathrm{hom}}``;
+``\\langle\\underline{q}\\rangle_r = \\boldsymbol{B}_r\\cdot\\underline{Q}`` in conduction.
 """
-MFH_Core.flux_flux_concentration(ct::_ConcentrationTensors2, name::Symbol) =
+MFH_Core.flux_flux_concentration(ct::ConcentrationTensors, name::Symbol) =
     _compose(_stress(ct, name), ct.compliance)
 
 _strain(ct::ConcentrationTensors, name::Symbol) = ct.strain[_check_phase(ct, name)]
@@ -551,11 +530,11 @@ end
 # ── Contributions of a scheme ───────────────────────────────────────────────
 
 """
-    stiffness_contribution(ct::ConcentrationTensors, name; reference = ct.reference)
+    property_contribution(ct::ConcentrationTensors, name; reference = ct.reference)
 
-Contribution of phase `name` to the effective stiffness under the scheme of
-`ct`, relative to the reference stiffness ``\\mathbb{C}_{\\mathrm{ref}}``: the tensor
-``\\mathbb{N}_r = \\mathbb{A}_{\\sigma\\varepsilon,r} - \\mathbb{C}_{\\mathrm{ref}}:\\mathbb{A}_r`` that maps the macroscopic strain
+Contribution of phase `name` to the effective property under the scheme of
+`ct`, relative to the reference property ``\\mathbb{C}_{\\mathrm{ref}}``: the tensor
+``\\mathbb{N}_r = \\mathbb{A}_{\\sigma\\varepsilon,r} - \\mathbb{C}_{\\mathrm{ref}}:\\mathbb{A}_r`` that maps the macroscopic gradient
 onto the mean polarization of the phase,
 ``\\langle\\boldsymbol{\\sigma} - \\mathbb{C}_{\\mathrm{ref}}:\\boldsymbol{\\varepsilon}\\rangle_r = \\mathbb{N}_r:\\boldsymbol{E}``, so that
 
@@ -563,62 +542,32 @@ onto the mean polarization of the phase,
 \\mathbb{C}^{\\mathrm{hom}} = \\mathbb{C}_{\\mathrm{ref}} + \\sum_r w_r\\,\\mathbb{N}_r .
 ```
 
-`reference` is a phase name (a homogeneous phase) or a stiffness tensor; it
-defaults to the matrix of the schemes that have one. Per unit density for a crack
-family. In conduction, see [`conductivity_contribution`](@ref).
+The stiffness contribution in elasticity, the conductivity contribution in
+conduction. `reference` is a phase name (a homogeneous phase) or a property
+tensor; it defaults to the matrix of the schemes that have one. Per unit
+density for a crack family.
 """
-function MFH_Core.stiffness_contribution(
-        ct::_ConcentrationTensors4, name::Symbol; reference = ct.reference
-    )
+function MFH_Core.property_contribution(ct::ConcentrationTensors, name::Symbol; reference = ct.reference)
     return _stress(ct, name) - _compose(_reference(ct, reference), _strain(ct, name))
 end
 
 """
-    compliance_contribution(ct::ConcentrationTensors, name; reference = ct.reference)
+    inverse_property_contribution(ct::ConcentrationTensors, name; reference = ct.reference)
 
-Contribution of phase `name` to the effective compliance under the scheme of
-`ct`, relative to the reference compliance ``\\mathbb{S}_{\\mathrm{ref}}``: the tensor
-``\\mathbb{H}_r`` that maps the macroscopic stress onto
+Contribution of phase `name` to the effective inverse property under the scheme
+of `ct`, relative to the inverse ``\\mathbb{S}_{\\mathrm{ref}}`` of the reference: the tensor
+``\\mathbb{H}_r`` that maps the macroscopic flux onto
 ``\\langle\\boldsymbol{\\varepsilon} - \\mathbb{S}_{\\mathrm{ref}}:\\boldsymbol{\\sigma}\\rangle_r``, so that
 
 ```math
 \\mathbb{S}^{\\mathrm{hom}} = \\mathbb{S}_{\\mathrm{ref}} + \\sum_r w_r\\,\\mathbb{H}_r .
 ```
 
-`reference` is a phase name or a stiffness tensor (whose inverse is taken), as
-for [`stiffness_contribution`](@ref). In conduction, see
-[`resistivity_contribution`](@ref).
+The compliance contribution in elasticity, the resistivity contribution in
+conduction. `reference` is a phase name or a property tensor (whose inverse is
+taken), as for [`property_contribution`](@ref).
 """
-function MFH_Core.compliance_contribution(
-        ct::_ConcentrationTensors4, name::Symbol; reference = ct.reference
-    )
-    return _compliance_contribution(ct, name, reference)
-end
-
-"""
-    conductivity_contribution(ct::ConcentrationTensors, name; reference = ct.reference)
-
-Transport twin of [`stiffness_contribution`](@ref): the tensor mapping the
-macroscopic gradient onto ``\\langle-\\underline{q} - \\boldsymbol{K}_{\\mathrm{ref}}\\cdot\\nabla T\\rangle_r``.
-"""
-function MFH_Core.conductivity_contribution(
-        ct::_ConcentrationTensors2, name::Symbol; reference = ct.reference
-    )
-    return _stress(ct, name) - _compose(_reference(ct, reference), _strain(ct, name))
-end
-
-"""
-    resistivity_contribution(ct::ConcentrationTensors, name; reference = ct.reference)
-
-Transport twin of [`compliance_contribution`](@ref).
-"""
-function MFH_Core.resistivity_contribution(
-        ct::_ConcentrationTensors2, name::Symbol; reference = ct.reference
-    )
-    return _compliance_contribution(ct, name, reference)
-end
-
-function _compliance_contribution(ct::ConcentrationTensors, name::Symbol, reference)
+function MFH_Core.inverse_property_contribution(ct::ConcentrationTensors, name::Symbol; reference = ct.reference)
     S_ref = inv(_reference(ct, reference))
     return _compose(_strain(ct, name) - _compose(S_ref, _stress(ct, name)), ct.compliance)
 end
@@ -649,10 +598,13 @@ _reference(::ConcentrationTensors, ::Nothing) = throw(
 # concentration tensor of the phase from the left, weighted and summed.
 
 """
-    levin_free_strain(ct::ConcentrationTensors, eigenstrains) -> AbstractTens{2}
+    levin_free_gradient(ct::ConcentrationTensors, eigengradients) -> AbstractTens
 
-Macroscopic free strain of a composite whose phases carry uniform eigenstrains
-(free strains) ``\\boldsymbol{\\varepsilon}^\\ast_r``, by Levin's theorem: with
+Macroscopic free gradient of a composite whose phases carry uniform
+eigengradients, by Levin's theorem.
+
+In elasticity the eigengradients are eigenstrains (free strains)
+``\\boldsymbol{\\varepsilon}^\\ast_r``: with
 ``\\boldsymbol{\\sigma} = \\mathbb{C}:(\\boldsymbol{\\varepsilon} - \\boldsymbol{\\varepsilon}^\\ast)`` in each phase,
 ``\\boldsymbol{\\Sigma} = \\mathbb{C}^{\\mathrm{hom}}:(\\boldsymbol{E} - \\boldsymbol{E}^\\ast)`` with
 
@@ -660,21 +612,32 @@ Macroscopic free strain of a composite whose phases carry uniform eigenstrains
 \\boldsymbol{E}^\\ast = \\sum_r f_r\\,\\boldsymbol{\\varepsilon}^\\ast_r:\\mathbb{B}_r ,
 ```
 
-``\\mathbb{B}_r`` being the stress concentration tensor of the phase
-([`stress_stress_concentration`](@ref)). `eigenstrains` maps phase names to
-second-order tensors; phases left out carry none. A crack family holds no
-material, so an eigenstrain in it has no effect and is refused. In conduction,
-see [`levin_free_gradient`](@ref).
+``\\mathbb{B}_r`` being the flux (stress) concentration tensor of the phase
+([`flux_flux_concentration`](@ref)). In conduction they are vectors
+``\\underline{g}^\\ast_r``, the gradients at which the phases conduct no flux,
+``\\underline{q} = -\\boldsymbol{K}_r\\cdot(\\nabla T - \\underline{g}^\\ast_r)``, and the composite obeys
+``\\underline{Q} = -\\boldsymbol{K}^{\\mathrm{hom}}\\cdot(\\underline{G} - \\underline{G}^\\ast)`` with
+``\\underline{G}^\\ast = \\sum_r f_r\\,\\underline{g}^\\ast_r\\cdot\\boldsymbol{B}_r``.
+
+`eigengradients` maps phase names to second-order tensors in elasticity, to
+vectors (first-order tensors) in conduction; phases left out carry none. A crack
+family holds no material, so an eigengradient in it has no effect and is
+refused. Explicit name in elasticity: [`levin_free_strain`](@ref).
 """
-function levin_free_strain(ct::_ConcentrationTensors4, eigenstrains::AbstractDict{Symbol})
-    return _levin_free(ct, eigenstrains)
+function levin_free_gradient(ct::ConcentrationTensors, eigengradients::AbstractDict{Symbol})
+    foreach(n -> _check_material_phase(ct, n), keys(eigengradients))
+    return _levin_sum(ct, eigengradients) do name
+        _compose(_stress(ct, name), ct.compliance)
+    end
 end
 
 """
-    levin_prestress(ct::ConcentrationTensors, prestresses) -> AbstractTens{2}
+    levin_preflux(ct::ConcentrationTensors, prefluxes) -> AbstractTens
 
-Macroscopic prestress of a composite whose phases carry uniform prestresses
-``\\boldsymbol{\\sigma}^\\ast_r``, by Levin's theorem: with
+Macroscopic pre-flux of a composite whose phases carry uniform pre-fluxes, the
+fluxes they carry under a vanishing gradient, by Levin's theorem.
+
+In elasticity the pre-fluxes are prestresses ``\\boldsymbol{\\sigma}^\\ast_r``: with
 ``\\boldsymbol{\\sigma} = \\mathbb{C}:\\boldsymbol{\\varepsilon} + \\boldsymbol{\\sigma}^\\ast`` in each phase,
 ``\\boldsymbol{\\Sigma} = \\mathbb{C}^{\\mathrm{hom}}:\\boldsymbol{E} + \\boldsymbol{\\Sigma}^\\ast`` with
 
@@ -682,70 +645,42 @@ Macroscopic prestress of a composite whose phases carry uniform prestresses
 \\boldsymbol{\\Sigma}^\\ast = \\sum_r f_r\\,\\boldsymbol{\\sigma}^\\ast_r:\\mathbb{A}_r ,
 ```
 
-``\\mathbb{A}_r`` being the strain concentration tensor of the phase. A crack
-family enters with its density as weight and its tensor per unit density, and
-only the traction ``\\boldsymbol{\\sigma}^\\ast_c\\cdot\\underline{n}`` on its faces matters. A
-pore pressure ``p`` is the prestress ``-p\\,\\boldsymbol{1}`` of the pores and of the
-cracks it fills, and the Biot tensor follows as
-``\\boldsymbol{B} = \\sum_{\\mathrm{pores}} f_p\\,\\boldsymbol{1}:\\mathbb{A}_p +
-\\sum_{\\mathrm{cracks}} \\varepsilon_c\\,\\boldsymbol{1}:\\mathbb{A}_c``. In conduction, see
-[`levin_preflux`](@ref).
-"""
-function levin_prestress(ct::_ConcentrationTensors4, prestresses::AbstractDict{Symbol})
-    return _levin_polarization(ct, prestresses)
-end
-
-"""
-    levin_free_gradient(ct::ConcentrationTensors, eigengradients) -> AbstractTens{1}
-
-Transport twin of [`levin_free_strain`](@ref). Each phase carries a uniform
-eigengradient ``\\underline{g}^\\ast_r``, the gradient at which it conducts no flux,
-``\\underline{q} = -\\boldsymbol{K}_r\\cdot(\\nabla T - \\underline{g}^\\ast_r)``, and the composite
-obeys ``\\underline{Q} = -\\boldsymbol{K}^{\\mathrm{hom}}\\cdot(\\underline{G} - \\underline{G}^\\ast)`` with
-
-```math
-\\underline{G}^\\ast = \\sum_r f_r\\,\\underline{g}^\\ast_r\\cdot\\boldsymbol{B}_r ,
-```
-
-``\\boldsymbol{B}_r`` being the flux concentration tensor of the phase
-([`flux_flux_concentration`](@ref)). `eigengradients` maps phase names to
-vectors (first-order tensors); a crack family is refused, as in elasticity.
-"""
-function levin_free_gradient(ct::_ConcentrationTensors2, eigengradients::AbstractDict{Symbol})
-    return _levin_free(ct, eigengradients)
-end
-
-"""
-    levin_preflux(ct::ConcentrationTensors, prefluxes) -> AbstractTens{1}
-
-Transport twin of [`levin_prestress`](@ref). Each phase carries a uniform
-pre-flux ``\\underline{q}^\\ast_r``, the flux it conducts under a vanishing gradient,
-``\\underline{q} = -\\boldsymbol{K}_r\\cdot\\nabla T + \\underline{q}^\\ast_r``, and the composite obeys
+``\\mathbb{A}_r`` being the gradient (strain) concentration tensor of the phase. In
+conduction, ``\\underline{q} = -\\boldsymbol{K}_r\\cdot\\nabla T + \\underline{q}^\\ast_r`` gives
 ``\\underline{Q} = -\\boldsymbol{K}^{\\mathrm{hom}}\\cdot\\underline{G} + \\underline{Q}^\\ast`` with
+``\\underline{Q}^\\ast = \\sum_r f_r\\,\\underline{q}^\\ast_r\\cdot\\boldsymbol{A}_r``.
 
-```math
-\\underline{Q}^\\ast = \\sum_r f_r\\,\\underline{q}^\\ast_r\\cdot\\boldsymbol{A}_r ,
-```
-
-``\\boldsymbol{A}_r`` being the gradient concentration tensor of the phase
-([`gradient_gradient_concentration`](@ref)). A crack family enters with its
-density as weight and its tensor per unit density.
+A crack family enters with its density as weight and its tensor per unit
+density, and only the load on its faces matters. A pore pressure ``p`` is the
+prestress ``-p\\,\\boldsymbol{1}`` of the pores and of the cracks it fills, and the
+Biot tensor follows as
+``\\boldsymbol{B} = \\sum_{\\mathrm{pores}} f_p\\,\\boldsymbol{1}:\\mathbb{A}_p +
+\\sum_{\\mathrm{cracks}} \\varepsilon_c\\,\\boldsymbol{1}:\\mathbb{A}_c``. Explicit name in elasticity:
+[`levin_prestress`](@ref).
 """
-function levin_preflux(ct::_ConcentrationTensors2, prefluxes::AbstractDict{Symbol})
-    return _levin_polarization(ct, prefluxes)
-end
-
-# The free field E* = Σ f ε*:𝔹, contracted with the stress-driven tensors.
-function _levin_free(ct::ConcentrationTensors, loads::AbstractDict{Symbol})
-    foreach(n -> _check_material_phase(ct, n), keys(loads))
-    return _levin_sum(ct, loads) do name
-        _compose(_stress(ct, name), ct.compliance)
+function levin_preflux(ct::ConcentrationTensors, prefluxes::AbstractDict{Symbol})
+    return _levin_sum(ct, prefluxes) do name
+        _strain(ct, name)
     end
 end
 
-# The polarization Σ* = Σ f σ*:𝔸, contracted with the strain-driven tensors.
-_levin_polarization(ct::ConcentrationTensors, loads::AbstractDict{Symbol}) =
-    _levin_sum(name -> _strain(ct, name), ct, loads)
+"""
+    levin_free_strain(ct::ConcentrationTensors, eigenstrains) -> AbstractTens{2,3}
+
+Name in elasticity of [`levin_free_gradient`](@ref): the macroscopic free strain
+from the eigenstrains of the phases, for a fourth-order estimate only.
+"""
+levin_free_strain(ct::ConcentrationTensors, eigenstrains::AbstractDict{Symbol}) =
+    MFH_Core._order_checked(Val(2), :levin_free_strain, :levin_free_gradient, levin_free_gradient(ct, eigenstrains))
+
+"""
+    levin_prestress(ct::ConcentrationTensors, prestresses) -> AbstractTens{2,3}
+
+Name in elasticity of [`levin_preflux`](@ref): the macroscopic prestress from the
+prestresses of the phases, for a fourth-order estimate only.
+"""
+levin_prestress(ct::ConcentrationTensors, prestresses::AbstractDict{Symbol}) =
+    MFH_Core._order_checked(Val(2), :levin_prestress, :levin_preflux, levin_preflux(ct, prestresses))
 
 function _levin_sum(concentration, ct::ConcentrationTensors, loads::AbstractDict{Symbol})
     return sum(
@@ -765,12 +700,9 @@ _zero_load(ct::_ConcentrationTensors2) = TensND.Tens(zeros(eltype(ct.effective),
 function _check_material_phase(ct::ConcentrationTensors, name::Symbol)
     _check_phase(ct, name) in ct.cracks && throw(
         ArgumentError(
-            "crack family :$(name) holds no material, so an eigenfield in it has no " *
-                "effect; a load on its faces is a polarization (`$(_polarization_reader(ct))`)"
+            "crack family :$(name) holds no material, so an eigengradient in it has no " *
+                "effect; a load on its faces is a pre-flux (`levin_preflux`)"
         )
     )
     return name
 end
-
-_polarization_reader(::_ConcentrationTensors4) = "levin_prestress"
-_polarization_reader(::_ConcentrationTensors2) = "levin_preflux"

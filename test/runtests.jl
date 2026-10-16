@@ -143,6 +143,7 @@ end
         include("Core/test_green_aniso.jl")
         include("Core/test_counters.jl")
         include("Core/test_hot_paths.jl")
+        include("Core/test_order_aliases.jl")
     end
 
     rungroup("Elasticity") && @testset "Elasticity" begin

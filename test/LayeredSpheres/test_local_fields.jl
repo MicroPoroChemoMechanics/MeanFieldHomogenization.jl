@@ -58,8 +58,8 @@ _unit(v) = v ./ norm(v)
             [0.0, 0.0, 0.0], [0.3, 0.2, 0.1], [0.9, 0.0, 0.0],
             [1.4, 0.5, -0.3], [2.5, 1.0, 1.0], [50.0, 0.0, 0.0],
         )
-        @test _maxabs(local_strain_strain_concentration(sol, x) - LF_𝕀) < 1.0e-14
-        @test _maxabs(local_stress_stress_concentration(sol, x) - LF_𝕀) < 1.0e-14
+        @test _maxabs(local_gradient_gradient_concentration(sol, x) - LF_𝕀) < 1.0e-14
+        @test _maxabs(local_flux_flux_concentration(sol, x) - LF_𝕀) < 1.0e-14
     end
     # The displacement must be the affine remote one, with no perturbation.
     for x in ([0.4, -0.2, 0.7], [3.0, 1.0, -1.0])
@@ -72,9 +72,9 @@ end
     R = 1.0
     sph = LayeredSphere((R,), (LF_C₁,))
     sol = LayeredSphereFields(sph, LF_C₀)
-    A_esh = strain_strain_concentration(MeanFieldHomogenization.Elasticity.Ellipsoid(R), LF_C₁, LF_C₀)
+    A_esh = gradient_gradient_concentration(MeanFieldHomogenization.Elasticity.Ellipsoid(R), LF_C₁, LF_C₀)
     for x in ([0.0, 0.0, 0.0], [0.1, 0.2, 0.3], [0.5, -0.5, 0.5], [0.99, 0.0, 0.0])
-        @test _maxabs(local_strain_strain_concentration(sol, x) - A_esh) < 1.0e-13
+        @test _maxabs(local_gradient_gradient_concentration(sol, x) - A_esh) < 1.0e-13
     end
     # With a perfect interface the core carries no mode-2 amplitude at all.
     @test abs(sol.abcd[1][2]) < 1.0e-15
@@ -84,12 +84,12 @@ end
     R = 1.0
     sph = LayeredSphere((R,), (LF_C₁,))
     sol = LayeredSphereFields(sph, LF_C₀)
-    A₁ = strain_strain_concentration(MeanFieldHomogenization.Elasticity.Ellipsoid(R), LF_C₁, LF_C₀)
+    A₁ = gradient_gradient_concentration(MeanFieldHomogenization.Elasticity.Ellipsoid(R), LF_C₁, LF_C₀)
     τ = (LF_C₁ - LF_C₀) ⊡ A₁                     # uniform polarization of the ball
     for ρ in (1.6, 2.6, 5.4, 20.0)
         x = ρ * R * _unit([1.0, 0.3, -0.2])
         𝕋 = _pair_ball_iso(0.0, R, x, LF_C₀)     # point receiver: a = 0
-        @test _maxabs(local_strain_strain_concentration(sol, x) - (LF_𝕀 - 𝕋 ⊡ τ)) < 1.0e-13
+        @test _maxabs(local_gradient_gradient_concentration(sol, x) - (LF_𝕀 - 𝕋 ⊡ τ)) < 1.0e-13
     end
 end
 
@@ -117,7 +117,7 @@ end
         num = zero(LF_𝕀)
         for (ξ, w) in zip(gl_x, gl_w)
             r = mid + half * ξ
-            A = local_strain_strain_concentration(sol, [r, 0.0, 0.0]; side = :inner)
+            A = local_gradient_gradient_concentration(sol, [r, 0.0, 0.0]; side = :inner)
             num += (w * half * r^2) * isotropify(A)
         end
         avg = (3 / (rb^3 - ra^3)) * num
@@ -130,8 +130,8 @@ end
     sol = LayeredSphereFields(sph, LF_C₀)
     # Two decades apart, and far enough out that the subleading 1/r⁵ mode is
     # negligible — at r = 10 it still biases the ratio by ~3 %.
-    e1 = _maxabs(local_strain_strain_concentration(sol, [100.0, 0.0, 0.0]) - LF_𝕀)
-    e2 = _maxabs(local_strain_strain_concentration(sol, [1000.0, 0.0, 0.0]) - LF_𝕀)
+    e1 = _maxabs(local_gradient_gradient_concentration(sol, [100.0, 0.0, 0.0]) - LF_𝕀)
+    e2 = _maxabs(local_gradient_gradient_concentration(sol, [1000.0, 0.0, 0.0]) - LF_𝕀)
     @test e1 < 1.0e-4
     @test e1 / e2 ≈ 1000.0 rtol = 1.0e-2         # the decaying mode is 1/r³
 end
@@ -141,15 +141,15 @@ end
     sol = LayeredSphereFields(sph, LF_C₀)
     for x₀ in ([0.4, 0.3, 0.2], [1.5, 0.4, -0.6], [2.7, 1.0, 0.5], [6.0, 1.0, -2.0])
         J = ForwardDiff.jacobian(x -> collect(local_displacement(sol, x, LF_ε∞)), x₀)
-        @test (J + J') / 2 ≈ get_array(local_strain(sol, x₀, LF_ε∞)) atol = 1.0e-13
+        @test (J + J') / 2 ≈ get_array(local_gradient(sol, x₀, LF_ε∞)) atol = 1.0e-13
 
         divσ = [
             sum(
-                ForwardDiff.gradient(x -> local_stress(sol, x, LF_ε∞)[i, j], x₀)[j]
+                ForwardDiff.gradient(x -> local_flux(sol, x, LF_ε∞)[i, j], x₀)[j]
                     for j in 1:3
             ) for i in 1:3
         ]
-        scale = _maxabs(local_stress(sol, x₀, LF_ε∞)) / norm(x₀)
+        scale = _maxabs(local_flux(sol, x₀, LF_ε∞)) / norm(x₀)
         @test norm(divσ) / scale < 1.0e-12
     end
 end
@@ -170,8 +170,8 @@ end
             )
         ) < 1.0e-12
         @test norm(
-            traction(local_stress(sol, x, LF_ε∞; side = :outer)) -
-                traction(local_stress(sol, x, LF_ε∞; side = :inner))
+            traction(local_flux(sol, x, LF_ε∞; side = :outer)) -
+                traction(local_flux(sol, x, LF_ε∞; side = :inner))
         ) < 1.0e-10
     end
 
@@ -184,8 +184,8 @@ end
     )
     sol_s = LayeredSphereFields(sph_s, LF_C₀)
     x = 1.0 * n
-    t⁻ = traction(local_stress(sol_s, x, LF_ε∞; side = :inner))
-    t⁺ = traction(local_stress(sol_s, x, LF_ε∞; side = :outer))
+    t⁻ = traction(local_flux(sol_s, x, LF_ε∞; side = :inner))
+    t⁺ = traction(local_flux(sol_s, x, LF_ε∞; side = :outer))
     @test norm(t⁺ - t⁻) < 1.0e-10
     Δu = collect(
         local_displacement(sol_s, x, LF_ε∞; side = :outer) -
@@ -203,8 +203,8 @@ end
     sol_1 = LayeredSphereFields(sph_1, LF_C₀)
     @test abs(sol_1.abcd[1][2]) > 1.0e-6
     @test _maxabs(
-        local_strain_strain_concentration(sol_1, [0.9, 0.0, 0.0]) -
-            local_strain_strain_concentration(sol_1, [0.1, 0.0, 0.0])
+        local_gradient_gradient_concentration(sol_1, [0.9, 0.0, 0.0]) -
+            local_gradient_gradient_concentration(sol_1, [0.1, 0.0, 0.0])
     ) > 1.0e-6
 
     # Membrane: displacement continuous, traction jumping.
@@ -220,8 +220,8 @@ end
                 local_displacement(sol_m, y, LF_ε∞; side = :inner)
         )
     ) < 1.0e-12
-    Δt = traction(local_stress(sol_m, y, LF_ε∞; side = :outer)) -
-        traction(local_stress(sol_m, y, LF_ε∞; side = :inner))
+    Δt = traction(local_flux(sol_m, y, LF_ε∞; side = :outer)) -
+        traction(local_flux(sol_m, y, LF_ε∞; side = :inner))
     @test norm(Δt) > 1.0e-3                     # the surface stress really acts
 end
 
@@ -231,18 +231,18 @@ end
     𝕊₀ = inv(LF_C₀)
     for (r, θ, φ) in ((0.5, 0.7, 0.9), (1.4, 2.1, -0.3), (5.0, 1.0, 2.5))
         x = [r * sin(θ) * cos(φ), r * sin(θ) * sin(φ), r * cos(θ)]
-        A = local_strain_strain_concentration(sol, x)
-        @test _maxabs(A - local_strain_strain_concentration(sol, r, θ, φ)) < 1.0e-14
+        A = local_gradient_gradient_concentration(sol, x)
+        @test _maxabs(A - local_gradient_gradient_concentration(sol, r, θ, φ)) < 1.0e-14
 
         k = get_layer(sph, r)
         ℂ = region_stiffness(sol, k)
-        @test _maxabs(local_stress_strain_concentration(sol, x) - ℂ ⊡ A) < 1.0e-12
-        @test _maxabs(local_strain_stress_concentration(sol, x) - A ⊡ 𝕊₀) < 1.0e-14
-        @test _maxabs(local_stress_stress_concentration(sol, x) - ℂ ⊡ A ⊡ 𝕊₀) < 1.0e-12
+        @test _maxabs(local_flux_gradient_concentration(sol, x) - ℂ ⊡ A) < 1.0e-12
+        @test _maxabs(local_gradient_flux_concentration(sol, x) - A ⊡ 𝕊₀) < 1.0e-14
+        @test _maxabs(local_flux_flux_concentration(sol, x) - ℂ ⊡ A ⊡ 𝕊₀) < 1.0e-12
 
         # The field evaluators are the tensors applied to the loading.
-        @test local_strain(sol, x, LF_ε∞) ≈ A ⊡ LF_ε∞
-        @test local_stress(sol, x, LF_ε∞) ≈ ℂ ⊡ (A ⊡ LF_ε∞)
+        @test local_gradient(sol, x, LF_ε∞) ≈ A ⊡ LF_ε∞
+        @test local_flux(sol, x, LF_ε∞) ≈ ℂ ⊡ (A ⊡ LF_ε∞)
     end
 end
 
@@ -252,8 +252,8 @@ end
     Q = Matrix(rot3(0.4, 0.9, -0.7))
     x = [0.7, -0.4, 1.1]
     Qx = Q * x
-    A = get_array(local_strain_strain_concentration(sol, x))
-    AQ = get_array(local_strain_strain_concentration(sol, Qx))
+    A = get_array(local_gradient_gradient_concentration(sol, x))
+    AQ = get_array(local_gradient_gradient_concentration(sol, Qx))
     rotated = [
         sum(
             Q[i, a] * Q[j, b] * Q[k, c] * Q[l, d] * A[a, b, c, d]
@@ -276,24 +276,24 @@ end
 
     sol = LayeredSphereFields(sph, LF_C₀)
     x = [1.0, 0.0, 0.0]
-    @test local_strain_strain_concentration(sol, x; layer = 1) ==
-        local_strain_strain_concentration(sol, x; side = :inner)
-    @test local_strain_strain_concentration(sol, x; layer = 2) ==
-        local_strain_strain_concentration(sol, x; side = :outer)
-    @test_throws ArgumentError local_strain_strain_concentration(sol, x; layer = 4)
+    @test local_gradient_gradient_concentration(sol, x; layer = 1) ==
+        local_gradient_gradient_concentration(sol, x; side = :inner)
+    @test local_gradient_gradient_concentration(sol, x; layer = 2) ==
+        local_gradient_gradient_concentration(sol, x; side = :outer)
+    @test_throws ArgumentError local_gradient_gradient_concentration(sol, x; layer = 4)
 end
 
 @testset "local fields — genericity: Dual, BigFloat, near-incompressible" begin
     # A single layer's modulus as the differentiation variable, the others
     # staying `Float64` — the heterogeneous case.
-    f(p) = local_strain_strain_concentration(
+    f(p) = local_gradient_gradient_concentration(
         LayeredSphere((1.0, 2.0), (_iso(100.0 * p, 0.2), LF_C₂)), LF_C₀, [0.5, 0.0, 0.0]
     )[1, 1, 1, 1]
     h = 1.0e-6
     @test ForwardDiff.derivative(f, 1.0) ≈ (f(1.0 + h) - f(1.0 - h)) / (2h) rtol = 1.0e-7
 
     # One interface radius as the variable — a mixed-eltype radii tuple.
-    g(r₁) = local_strain_strain_concentration(
+    g(r₁) = local_gradient_gradient_concentration(
         LayeredSphere((r₁, 2.0), (LF_C₁, LF_C₂)), LF_C₀, [0.5, 0.0, 0.0]
     )[1, 1, 1, 1]
     @test ForwardDiff.derivative(g, 0.9) ≈ (g(0.9 + h) - g(0.9 - h)) / (2h) rtol = 1.0e-6
@@ -302,11 +302,11 @@ end
         Cb₀ = _iso(big(30.0), big(3) / 10)
         Cb₁ = _iso(big(100.0), big(2) / 10)
         Cb₂ = _iso(big(10.0), big(35) / 100)
-        Ab = local_strain_strain_concentration(
+        Ab = local_gradient_gradient_concentration(
             LayeredSphere((big(1.0), big(2.0)), (Cb₁, Cb₂)), Cb₀,
             [big(1) / 2, big(0), big(0)]
         )
-        Af = local_strain_strain_concentration(
+        Af = local_gradient_gradient_concentration(
             LayeredSphere((1.0, 2.0), (LF_C₁, LF_C₂)), LF_C₀, [0.5, 0.0, 0.0]
         )
         @test Float64(maximum(abs, components_canon(Ab - Af))) < 1.0e-14
@@ -315,7 +315,7 @@ end
     # Near-incompressible core: finite, and the volumetric concentration → 0.
     C_inc = TensISO{3}(3 * 1.0e14, 2 * 1.0)
     sol = LayeredSphereFields(LayeredSphere((1.0, 2.0), (C_inc, LF_C₂)), LF_C₀)
-    A = local_strain_strain_concentration(sol, [0.5, 0.0, 0.0])
+    A = local_gradient_gradient_concentration(sol, [0.5, 0.0, 0.0])
     @test all(isfinite, get_array(A))
     @test abs(sol.AB[1][1]) < 1.0e-10
 end
@@ -327,7 +327,7 @@ end
     # cannot be found by comparison; the error must say so instead of dying
     # inside the lookup loop.  (Checked here with a stand-in that is likewise
     # not `is_hard_numeric`-comparable only through the documented path.)
-    @test_throws ArgumentError local_strain_strain_concentration(sol, [0.5, 0.0, 0.0]; layer = 0)
+    @test_throws ArgumentError local_gradient_gradient_concentration(sol, [0.5, 0.0, 0.0]; layer = 0)
 end
 
 # ── Echoes cross-check ──────────────────────────────────────────────────────
@@ -388,8 +388,8 @@ end
         sph = LayeredSphere((1.0, 2.0), (LF_C₁, LF_C₂); interfaces)
         sol = LayeredSphereFields(sph, LF_C₀)
         for (r, θ, φ, eE_diag, sE_diag) in pts
-            A = Matrix(KM(local_strain_strain_concentration(sol, r, θ, φ)))
-            S = Matrix(KM(local_stress_strain_concentration(sol, r, θ, φ)))
+            A = Matrix(KM(local_gradient_gradient_concentration(sol, r, θ, φ)))
+            S = Matrix(KM(local_flux_gradient_concentration(sol, r, θ, φ)))
             @test [A[i, i] for i in 1:6] ≈ eE_diag rtol = 1.0e-10
             @test [S[i, i] for i in 1:6] ≈ sE_diag rtol = 1.0e-10
         end
@@ -490,7 +490,7 @@ function _ball_strain_average(sol, radii, r_max, ε∞)
         mid, half = (ra + rb) / 2, (rb - ra) / 2
         for (ξ, w) in zip(LF_GLX, LF_GLW)
             r = mid + half * ξ
-            A = isotropify(local_strain_strain_concentration(sol, [r, 0.0, 0.0]; side = :inner))
+            A = isotropify(local_gradient_gradient_concentration(sol, [r, 0.0, 0.0]; side = :inner))
             c = w * half * r^2
             num = num === nothing ? c * (A ⊡ ε∞) : num + c * (A ⊡ ε∞)
         end
@@ -513,9 +513,9 @@ end
 
     # The interface radii must be untouched by the fix.
     @test get_array(cumulative_strain_average(sph, LF_C₀, LF_ε∞, 3.5)) ≈
-        get_array(sphere_strain_average(sph, LF_C₀, LF_ε∞)) rtol = 1.0e-13
+        get_array(sphere_gradient_average(sph, LF_C₀, LF_ε∞)) rtol = 1.0e-13
     @test get_array(cumulative_strain_average(sph, LF_C₀, LF_ε∞, 1.0)) ≈
-        get_array(layer_strain_average(sph, LF_C₀, LF_ε∞, 1)) rtol = 1.0e-13
+        get_array(layer_gradient_average(sph, LF_C₀, LF_ε∞, 1)) rtol = 1.0e-13
 
     # And a mid-layer radius must genuinely differ from the volume-scaled
     # full-layer average — otherwise this testset proves nothing.
@@ -523,8 +523,8 @@ end
         vol1 = 1.0^3
         vol2 = r^3 - 1.0^3
         (
-            vol1 * layer_strain_average(sph, LF_C₀, LF_ε∞, 1) +
-                vol2 * layer_strain_average(sph, LF_C₀, LF_ε∞, 2)
+            vol1 * layer_gradient_average(sph, LF_C₀, LF_ε∞, 1) +
+                vol2 * layer_gradient_average(sph, LF_C₀, LF_ε∞, 2)
         ) / (vol1 + vol2)
     end
     exact = cumulative_strain_average(sph, LF_C₀, LF_ε∞, 1.37)
@@ -539,11 +539,11 @@ end
     # Definitional, then against the scheme-facing route, which assembles
     # Σ f_k ℂ_k : A_k independently.
     for k in 1:3
-        @test layer_stress_average(sph, LF_C₀, LF_ε∞, k) ≈
-            layer_modulus(sph, k) ⊡ layer_strain_average(sph, LF_C₀, LF_ε∞, k)
+        @test layer_flux_average(sph, LF_C₀, LF_ε∞, k) ≈
+            layer_modulus(sph, k) ⊡ layer_gradient_average(sph, LF_C₀, LF_ε∞, k)
     end
-    @test get_array(sphere_stress_average(sph, LF_C₀, LF_ε∞)) ≈
-        get_array(stress_strain_concentration(sph, LF_C₁, LF_C₀) ⊡ LF_ε∞) rtol = 1.0e-13
+    @test get_array(sphere_flux_average(sph, LF_C₀, LF_ε∞)) ≈
+        get_array(flux_gradient_concentration(sph, LF_C₁, LF_C₀) ⊡ LF_ε∞) rtol = 1.0e-13
 
     # Against the pointwise field, layer 2.
     ra, rb = 1.0, 2.0
@@ -551,12 +551,12 @@ end
     num = nothing
     for (ξ, w) in zip(LF_GLX, LF_GLW)
         r = mid + half * ξ
-        A = isotropify(local_strain_strain_concentration(sol, [r, 0.0, 0.0]; side = :inner))
+        A = isotropify(local_gradient_gradient_concentration(sol, [r, 0.0, 0.0]; side = :inner))
         c = w * half * r^2
         σ = LF_C₂ ⊡ (A ⊡ LF_ε∞)
         num = num === nothing ? c * σ : num + c * σ
     end
-    @test get_array(layer_stress_average(sph, LF_C₀, LF_ε∞, 2)) ≈
+    @test get_array(layer_flux_average(sph, LF_C₀, LF_ε∞, 2)) ≈
         get_array((3 / (rb^3 - ra^3)) * num) rtol = 1.0e-13
 
     # A membrane interface carries a surface stress that belongs to neither
@@ -567,8 +567,8 @@ end
     )
     gap = maximum(
         abs,
-        get_array(sphere_stress_average(sm, LF_C₀, LF_ε∞)) .-
-            get_array(stress_strain_concentration(sm, LF_C₁, LF_C₀) ⊡ LF_ε∞)
+        get_array(sphere_flux_average(sm, LF_C₀, LF_ε∞)) .-
+            get_array(flux_gradient_concentration(sm, LF_C₁, LF_C₀) ⊡ LF_ε∞)
     )
     @test gap > 1.0e-2
 

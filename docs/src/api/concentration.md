@@ -2,11 +2,12 @@
 
 ## Concentration tensors
 
+One function per tensor serves elasticity and conduction: a fourth-order
+property pair selects the elastic method, a second-order one the conduction
+method. In conduction the flux side carries ``\boldsymbol\sigma \equiv -\underline q``,
+so that the formulas are the elastic ones symbol for symbol.
+
 ```@docs
-MeanFieldHomogenization.strain_strain_concentration
-MeanFieldHomogenization.stress_strain_concentration
-MeanFieldHomogenization.strain_stress_concentration
-MeanFieldHomogenization.stress_stress_concentration
 MeanFieldHomogenization.gradient_gradient_concentration
 MeanFieldHomogenization.flux_gradient_concentration
 MeanFieldHomogenization.gradient_flux_concentration
@@ -16,31 +17,62 @@ MeanFieldHomogenization.flux_flux_concentration
 ## Contribution tensors
 
 ```@docs
-MeanFieldHomogenization.stiffness_contribution
-MeanFieldHomogenization.compliance_contribution
-MeanFieldHomogenization.conductivity_contribution
-MeanFieldHomogenization.resistivity_contribution
+MeanFieldHomogenization.property_contribution
+MeanFieldHomogenization.inverse_property_contribution
 ```
 
 ## The amount × contribution seam
 
 ```@docs
+MeanFieldHomogenization.delta_property
+MeanFieldHomogenization.delta_inverse_property
+```
+
+For a flat inclusion the three-argument methods of these two seams share one
+geometric prefactor, [`crack_density_factor`](@ref MeanFieldHomogenization.Cracks.crack_density_factor).
+
+## The names of elasticity and of conduction
+
+Each generic function also answers to the name it has in elasticity, and the
+contributions and their seams to the name they have in conduction. Such a name
+forwards to the generic function, accepts one order only, and refuses the other
+with an error that names the generic function. The same names read the
+[`ConcentrationTensors`](@ref MeanFieldHomogenization.Schemes.ConcentrationTensors)
+of a scheme.
+
+| Generic function | Elasticity (order 4) | Conduction (order 2) |
+|:-----------------|:---------------------|:---------------------|
+| `gradient_gradient_concentration` | `strain_strain_concentration` | |
+| `flux_gradient_concentration` | `stress_strain_concentration` | |
+| `gradient_flux_concentration` | `strain_stress_concentration` | |
+| `flux_flux_concentration` | `stress_stress_concentration` | |
+| `property_contribution` | `stiffness_contribution` | `conductivity_contribution` |
+| `inverse_property_contribution` | `compliance_contribution` | `resistivity_contribution` |
+| `delta_property` | `delta_stiffness` | `delta_conductivity` |
+| `delta_inverse_property` | `delta_compliance` | `delta_resistivity` |
+
+```@docs
+MeanFieldHomogenization.strain_strain_concentration
+MeanFieldHomogenization.stress_strain_concentration
+MeanFieldHomogenization.strain_stress_concentration
+MeanFieldHomogenization.stress_stress_concentration
+MeanFieldHomogenization.stiffness_contribution
+MeanFieldHomogenization.compliance_contribution
+MeanFieldHomogenization.conductivity_contribution
+MeanFieldHomogenization.resistivity_contribution
 MeanFieldHomogenization.delta_stiffness
 MeanFieldHomogenization.delta_compliance
 MeanFieldHomogenization.delta_conductivity
 MeanFieldHomogenization.delta_resistivity
 ```
 
-For a flat inclusion the four three-argument seams share one geometric
-prefactor, [`crack_density_factor`](@ref MeanFieldHomogenization.Cracks.crack_density_factor).
-
 ## Inclusion traits and bundled seams
 
 ```@docs
 MeanFieldHomogenization.Core.is_homogeneous_inclusion
-MeanFieldHomogenization.concentration_and_stiffness
-MeanFieldHomogenization.concentration_and_stress_average
-MeanFieldHomogenization.compliance_and_stiffness_contribution
+MeanFieldHomogenization.concentration_and_contribution
+MeanFieldHomogenization.concentration_and_flux_average
+MeanFieldHomogenization.inverse_and_property_contribution
 ```
 
 ## Custom (user-defined) inclusions
@@ -258,9 +290,9 @@ MeanFieldHomogenization.NeuralInclusions
 MeanFieldHomogenization.NeuralHillInclusion
 MeanFieldHomogenization.NeuralConcentrationInclusion
 MeanFieldHomogenization.NeuralInclusions.NeuralShape
-MeanFieldHomogenization.NeuralInclusions.StrainConcentrationTI
-MeanFieldHomogenization.NeuralInclusions.StressConcentrationTI
-MeanFieldHomogenization.NeuralInclusions.StrainConcentrationCubic
+MeanFieldHomogenization.NeuralInclusions.GradientConcentrationTI
+MeanFieldHomogenization.NeuralInclusions.FluxConcentrationTI
+MeanFieldHomogenization.NeuralInclusions.GradientConcentrationCubic
 MeanFieldHomogenization.NeuralInclusions.GradientConcentrationISO2
 MeanFieldHomogenization.NeuralInclusions.GradientConcentrationTI2
 ```

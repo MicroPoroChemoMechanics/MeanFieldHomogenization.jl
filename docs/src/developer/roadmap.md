@@ -56,7 +56,7 @@ package already does is described in the [manual](@ref man-index) and the
     and would enter gate B with two measured tensors.
 - **Neural-surrogate inclusions** (see
   [Neural-surrogate inclusions](@ref man-neural-inclusions)):
-  - a `_reference_medium` for `StrainConcentrationTI` / `StressConcentrationTI`, deliberately
+  - a `_reference_medium` for `GradientConcentrationTI` / `FluxConcentrationTI`, deliberately
     absent because a heterogeneous morphology's reference has to be built from
     contrast features and guessing it would train on corrupted labels.
   - an **anisotropic reference medium**, which needs a feature set describing
@@ -77,9 +77,9 @@ the module and the traps that apply to it.
   `spheroid_strain_concentration` refuses a tilted spheroid rather than
   rotating the result for you.
 - **A compliance-side contribution tensor**, the twin of
-  `stiffness_contribution`. The stress-side concentration is what it needs:
-  `strain_strain_concentration` reaches the schemes, `stress_strain_concentration` does not exist
-  for a `LayeredSpheroid`, and the generic `compliance_contribution` is written
+  `property_contribution`. The stress-side concentration is what it needs:
+  `gradient_gradient_concentration` reaches the schemes, `flux_gradient_concentration` does not exist
+  for a `LayeredSpheroid`, and the generic `inverse_property_contribution` is written
   in terms of it.
 
 ### What will not happen

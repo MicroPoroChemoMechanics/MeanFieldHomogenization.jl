@@ -8,7 +8,7 @@
 #  inclusions, a `CrackDensity` for cracks.  Volume fractions are stored
 #  **at the RVE level**, not on the inclusions: a single inclusion is still
 #  usable for concentration-tensor calculations (`hill_tensor`,
-#  `strain_strain_concentration`, …) without any fraction-related machinery.
+#  `gradient_gradient_concentration`, …) without any fraction-related machinery.
 #
 #  The matrix amount is implicit (`f_matrix = 1 - Σ f_inc`) and crack
 #  densities are excluded from that sum (their volume contribution → 0

@@ -50,12 +50,12 @@ A temperature rise ``\Delta T`` gives each phase the free strain
 theorem gives the macroscopic one,
 ``\boldsymbol E^\ast = \sum_r f_r\,\boldsymbol\varepsilon^\ast_r:\mathbb B_r``, from the
 stress concentration tensors ``\mathbb B_r`` of the scheme. Taking
-``\Delta T = 1``, [`levin_free_strain`](@ref) returns the effective thermal
+``\Delta T = 1``, [`levin_free_gradient`](@ref) returns the effective thermal
 expansion tensor ``\boldsymbol\alpha^{\mathrm{hom}}`` directly:
 
 ```@example tutlevin
 ct = concentration_tensors(composite(0.3), MoriTanaka(:M), :C)
-α_hom = levin_free_strain(ct, Dict(:M => α_M * 𝟏, :I => α_I * 𝟏))
+α_hom = levin_free_gradient(ct, Dict(:M => α_M * 𝟏, :I => α_I * 𝟏))
 α_hom[1, 1]
 ```
 
@@ -83,7 +83,7 @@ strain, and they mix weighted by the bulk moduli,
 ```@example tutlevin
 function α_of(f, scheme)
     ct = concentration_tensors(composite(f), scheme, :C)
-    return levin_free_strain(ct, Dict(:M => α_M * 𝟏, :I => α_I * 𝟏))[1, 1]
+    return levin_free_gradient(ct, Dict(:M => α_M * 𝟏, :I => α_I * 𝟏))[1, 1]
 end
 
 fs = range(0.0, 0.6; length = 25)
@@ -117,7 +117,7 @@ applies, with the effective compliance in place of the bulk modulus:
 
 ```@example tutlevin
 ct = concentration_tensors(composite(0.3; shape = Ellipsoid(1.0, 1.0, 0.1)), MoriTanaka(:M), :C)
-α_hom = levin_free_strain(ct, Dict(:M => α_M * 𝟏, :I => α_I * 𝟏))
+α_hom = levin_free_gradient(ct, Dict(:M => α_M * 𝟏, :I => α_I * 𝟏))
 α_exact = α_M * 𝟏 + (α_I - α_M) / (1 / k_I - 1 / k_M) * (3 * (𝟏 ⊡ ct.compliance) - 𝟏 / k_M)
 (α₁₁ = α_hom[1, 1], α₃₃ = α_hom[3, 3], difference = maximum(abs, get_array(α_hom - α_exact)))
 ```
@@ -143,7 +143,7 @@ add_phase!(rve, :P, Ellipsoid(1.0), Dict(:C => zero(C_M)); fraction = 0.1)
 add_phase!(rve, :c, PennyCrack(1.0), Dict(:C => C_M); density = 0.1)
 
 ct = concentration_tensors(rve, MoriTanaka(:S), :C)
-B = -levin_prestress(ct, Dict(:P => -𝟏, :c => -𝟏))
+B = -levin_preflux(ct, Dict(:P => -𝟏, :c => -𝟏))
 (B₁₁ = B[1, 1], B₃₃ = B[3, 3])
 ```
 
@@ -180,7 +180,7 @@ rve = RVE()
 add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(k0, μ0)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness(k1, μ1)); fraction = f)
 ct = concentration_tensors(rve, MoriTanaka(:M), :C)
-α_MT = levin_free_strain(ct, Dict(:M => α0 * 𝟏, :I => α1 * 𝟏))[1, 1]
+α_MT = levin_free_gradient(ct, Dict(:M => α0 * 𝟏, :I => α1 * 𝟏))[1, 1]
 nothing # hide
 ```
 
@@ -213,7 +213,7 @@ rve_p = RVE()
 add_phase!(rve_p, :S, Ellipsoid(1.0), Dict(:C => iso_stiffness(k0, μ0)); fraction = :rest)
 add_phase!(rve_p, :P, Ellipsoid(1.0), Dict(:C => zero(iso_stiffness(k0, μ0))); fraction = f)
 ct_p = concentration_tensors(rve_p, MoriTanaka(:S), :C)
-b_MT = -levin_prestress(ct_p, Dict(:P => -𝟏))[1, 1]
+b_MT = -levin_preflux(ct_p, Dict(:P => -𝟏))[1, 1]
 simplify(b_MT - f * (3k0 + 4μ0) / (3f * k0 + 4μ0))
 ```
 

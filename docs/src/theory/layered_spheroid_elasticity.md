@@ -784,7 +784,7 @@ obstructed the way an imperfect interface is:
 - **An arbitrary axis.** The elementary problems are written about
   ``\underline e_3``; a spheroid tilted in the global frame needs the result
   rotated, which the solver does not yet do for you.
-- **A stiffness rather than a strain concentration.** `stiffness_contribution`
+- **A stiffness rather than a strain concentration.** `property_contribution`
   is assembled layer by layer; the compliance-side twin is not written.
 
 [The roadmap](@ref dev-elastic-spheroid) carries the numerical traps that apply

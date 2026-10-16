@@ -2,13 +2,13 @@
 #  compliance.jl — crack compliance / resistivity contribution tensors.
 #
 #  Public API returns the size-independent contribution tensor H (or R in
-#  the thermal case), consistent with the Echoes convention.  Helpers
-#  `delta_compliance` / `delta_resistivity` apply the Budiansky density
-#  factor to recover the full dilute compliance correction ΔS (or ΔR).
+#  the thermal case), consistent with the Echoes convention.  The helper
+#  `delta_inverse_property` applies the Budiansky density factor to recover
+#  the full dilute compliance correction ΔS (or ΔR).
 # =============================================================================
 
 """
-    compliance_contribution(crack, C₀; method=:auto, kw...) -> Tens{4,3}
+    inverse_property_contribution(crack, C₀; method=:auto, kw...) -> Tens{4,3}
 
 Size-independent **crack compliance contribution tensor**
 ``\\mathbb{H}`` (Echoes convention).  Assembled from the COD tensor
@@ -28,7 +28,7 @@ or ``S/V = 2/(\\pi c)`` (ribbon, ``S=4ab``, ``V=2\\pi abc``,
 ``a\\to\\infty``).  The Kachanov–Echoes factorization of the elliptic
 case is recovered for ``\\eta=1`` (penny).
 
-Apply [`delta_compliance`](@ref)`(crack, H, ε)` to obtain the dilute
+Apply [`delta_inverse_property`](@ref)`(crack, H, ε)` to obtain the dilute
 compliance correction ``\\Delta\\mathbb{S}``:
 
 ```math
@@ -42,7 +42,7 @@ compliance correction ``\\Delta\\mathbb{S}``:
 
 See [kachanov1992, sevostianov2002, barthelemyIJES2021](@citet).
 """
-function compliance_contribution(
+function inverse_property_contribution(
         crack::MFH_Core.AbstractCrack,
         C₀::TensND.AbstractTens{4, 3};
         K_interface::Union{Nothing, TensND.AbstractTens{2, 3}} = nothing,
@@ -146,11 +146,12 @@ _resistivity_from_b(S::Type, _crack, _b, _K₀) = _unsupported_crack_shape(S, "r
 # =============================================================================
 
 """
-    delta_compliance(crack, H, ε) -> Tens{4,3}
+    delta_inverse_property(crack, H, ε) -> AbstractTens
 
-Dilute compliance correction ``\\Delta\\mathbb{S}`` of a family of
-identical parallel cracks of Budiansky density ``\\varepsilon`` from the
-size-independent contribution tensor ``\\mathbb{H}``:
+Dilute correction of the effective inverse property — the compliance ``\\mathbb{S}``
+in elasticity, the resistivity in conduction — of a family of identical parallel
+cracks of Budiansky density ``\\varepsilon``, from the size-independent
+contribution ``\\mathbb{H}`` of one crack:
 
 - Elliptic: ``\\Delta\\mathbb{S} = \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm{d}}\\,\\mathbb{H}``
   with ``\\varepsilon^{3\\mathrm{d}} = N\\,a\\,b^{2}``.
@@ -159,30 +160,16 @@ size-independent contribution tensor ``\\mathbb{H}``:
 
 See [budiansky1976, sevostianov2002](@citet).
 """
-delta_compliance(crack::MFH_Core.AbstractCrack, H, ε) =
+delta_inverse_property(crack::MFH_Core.AbstractCrack, H, ε) =
     crack_density_factor(crack) * ε * H
-
-"""
-    delta_resistivity(crack, R, ε) -> Tens{2,3}
-
-Dilute resistivity correction ``\\Delta\\boldsymbol{R}`` of a family of
-identical parallel cracks of Budiansky density ``\\varepsilon`` from the
-size-independent contribution tensor ``\\boldsymbol{R}``:
-
-- Elliptic: ``\\Delta\\boldsymbol{R} = \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm{d}}\\,\\boldsymbol{R}``.
-- Ribbon:   ``\\Delta\\boldsymbol{R} = \\pi\\,\\varepsilon^{2\\mathrm{d}}\\,\\boldsymbol{R}``.
-"""
-delta_resistivity(crack::MFH_Core.AbstractCrack, R, ε) =
-    crack_density_factor(crack) * ε * R
 
 """
     crack_density_factor(crack) -> Real
 
 Geometric prefactor relating a **density-like amount** to the dilute
-effective correction, i.e. the single number shared by the four
+effective correction, i.e. the single number shared by the two
 three-argument seams
-[`delta_compliance`](@ref), [`delta_stiffness`](@ref),
-[`delta_conductivity`](@ref) and [`delta_resistivity`](@ref):
+[`delta_inverse_property`](@ref) and [`delta_property`](@ref):
 
 ```julia
 Δ = crack_density_factor(crack) * ε * X
@@ -214,71 +201,61 @@ _crack_density_factor(S::Type) = _unsupported_crack_shape(S, "density-factor")
 # =============================================================================
 
 """
-    stiffness_contribution(crack, C₀; kw...) -> Tens{4,3}
+    property_contribution(crack, C₀; kw...) -> Tens{4,3}
 
 Size-independent **crack stiffness contribution tensor**
 ``\\mathbb{N} = -\\mathbb{C}_0:\\mathbb{H}:\\mathbb{C}_0``, where
 ``\\mathbb{H}`` is the crack compliance contribution tensor
-([`compliance_contribution`](@ref)).  Provided for API symmetry with
+([`inverse_property_contribution`](@ref)).  Provided for API symmetry with
 solid inclusions; the associated dilute correction is
 ``\\Delta\\mathbb{C} = (4\\pi/3)\\,\\varepsilon^{3\\mathrm{d}}\\,\\mathbb{N}``
 (elliptic) or ``\\pi\\,\\varepsilon^{2\\mathrm{d}}\\,\\mathbb{N}`` (ribbon),
-assembled by [`delta_stiffness`](@ref)`(crack, N, ε)`.
+assembled by [`delta_property`](@ref)`(crack, N, ε)`.
 """
-function MFH_Core.stiffness_contribution(
+function MFH_Core.property_contribution(
         crack::MFH_Core.AbstractCrack,
         C₀::TensND.AbstractTens{4, 3};
         kw...
     )
-    H = compliance_contribution(crack, C₀; kw...)
+    H = inverse_property_contribution(crack, C₀; kw...)
     return -(C₀ ⊡ H ⊡ C₀)
 end
 
 """
-    conductivity_contribution(crack, K₀; kw...) -> Tens{2,3}
+    property_contribution(crack, K₀; kw...) -> Tens{2,3}
 
 Size-independent **crack conductivity contribution tensor**
 ``\\boldsymbol{N} = -\\boldsymbol{K}_0\\cdot\\boldsymbol{R}\\cdot\\boldsymbol{K}_0``,
 with ``\\boldsymbol{R}`` the crack resistivity contribution.
 """
-function MFH_Core.conductivity_contribution(
+function MFH_Core.property_contribution(
         crack::MFH_Core.AbstractCrack,
         K₀::TensND.AbstractTens{2, 3};
         kw...
     )
-    R = compliance_contribution(crack, K₀; kw...)
+    R = inverse_property_contribution(crack, K₀; kw...)
     return -(K₀ ⋅ R ⋅ K₀)
 end
 
 """
-    delta_stiffness(crack, N, ε) -> Tens{4,3}
+    delta_property(crack, N, ε) -> AbstractTens
 
-Dilute stiffness correction ``\\Delta\\mathbb{C}`` from the
-size-independent crack contribution tensor ``\\mathbb{N}`` and the
-Budiansky density ``\\varepsilon``:
+Dilute correction of the effective property — the stiffness ``\\mathbb{C}`` in
+elasticity, the conductivity in conduction — from the size-independent crack
+contribution ``\\mathbb{N}`` and the Budiansky density ``\\varepsilon``:
 
 - Elliptic: ``\\Delta\\mathbb{C} = \\tfrac{4\\pi}{3}\\,\\varepsilon^{3\\mathrm{d}}\\,\\mathbb{N}``.
 - Ribbon:   ``\\Delta\\mathbb{C} = \\pi\\,\\varepsilon^{2\\mathrm{d}}\\,\\mathbb{N}``.
 """
-MFH_Core.delta_stiffness(crack::MFH_Core.AbstractCrack, N, ε) =
-    crack_density_factor(crack) * ε * N
-
-"""
-    delta_conductivity(crack, N_K, ε) -> Tens{2,3}
-
-Dilute conductivity correction from the crack contribution tensor
-``\\boldsymbol{N}`` (`N_K`) and the Budiansky density, with the same prefactors as
-[`delta_stiffness`](@ref).
-"""
-MFH_Core.delta_conductivity(crack::MFH_Core.AbstractCrack, N, ε) =
+MFH_Core.delta_property(crack::MFH_Core.AbstractCrack, N, ε) =
     crack_density_factor(crack) * ε * N
 
 # =============================================================================
 #  Bundled compliance + stiffness contribution
 #
-#  `stiffness_contribution(crack, C₀)` above is DEFINED as
-#  `-(C₀ ⊡ compliance_contribution(crack, C₀) ⊡ C₀)`, and
-#  `compliance_contribution` is `_compliance_from_B(crack, cod_tensor(...))`.
+#  `property_contribution(crack, C₀)` above is DEFINED as
+#  `-(C₀ ⊡ inverse_property_contribution(crack, C₀) ⊡ C₀)`, and
+#  `inverse_property_contribution` is `_compliance_from_B(crack, cod_tensor(...))`.
 #  A scheme that needs both therefore solves `cod_tensor` — the most
 #  expensive object in the package for an anisotropic matrix (adaptive
 #  quadrature with a full residue/polynomial solve at every node) — twice.
@@ -288,16 +265,16 @@ MFH_Core.delta_conductivity(crack::MFH_Core.AbstractCrack, N, ε) =
 # =============================================================================
 
 """
-    compliance_and_stiffness_contribution(crack, C₀; K_interface, kw...) -> (H, N)
-    compliance_and_stiffness_contribution(crack, K₀; kw...)              -> (R, N_K)
+    inverse_and_property_contribution(crack, C₀; K_interface, kw...) -> (H, N)
+    inverse_and_property_contribution(crack, K₀; kw...)              -> (R, N_K)
 
-Bundled `(compliance_contribution, stiffness_contribution)` — resp.
-`(compliance_contribution, conductivity_contribution)` — for a flat crack,
-sharing the single [`cod_tensor`](@ref) solve.
+Bundled `(inverse_property_contribution, property_contribution)` for a flat
+crack, in elasticity or in conduction, sharing the single [`cod_tensor`](@ref)
+solve.
 
 Bitwise identical to calling the two functions separately.
 """
-function compliance_and_stiffness_contribution(
+function inverse_and_property_contribution(
         crack::MFH_Core.AbstractCrack,
         C₀::TensND.AbstractTens{4, 3};
         K_interface::Union{Nothing, TensND.AbstractTens{2, 3}} = nothing,
@@ -308,7 +285,7 @@ function compliance_and_stiffness_contribution(
     return (H, -(C₀ ⊡ H ⊡ C₀))
 end
 
-function compliance_and_stiffness_contribution(
+function inverse_and_property_contribution(
         crack::MFH_Core.AbstractCrack,
         K₀::TensND.AbstractTens{2, 3};
         kw...

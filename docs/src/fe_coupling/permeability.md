@@ -36,7 +36,7 @@ purely in-plane, ``\underline{n}`` being the unit normal to the fracture plane:
 using MeanFieldHomogenization, TensND
 
 cr = ConductiveCrack(1.0; conductivity = 2.0e-2)
-K  = conductivity_contribution(cr, TensISO{3}(1.0e-3))
+K  = property_contribution(cr, TensISO{3}(1.0e-3))
 (in_plane = K[1, 1], normal = K[3, 3])      # the normal component vanishes
 ```
 

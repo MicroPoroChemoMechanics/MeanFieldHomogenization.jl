@@ -42,22 +42,22 @@ pc = PennyCrack(1.0)
 B  = cod_tensor(pc, C₀)
 
 # Size-independent compliance contribution tensor H = (3/4) n̂ ⊗ˢ B ⊗ˢ n̂
-H  = compliance_contribution(pc, C₀)
+H  = inverse_property_contribution(pc, C₀)
 
 # Dilute compliance correction ΔS from the Budiansky density ε³ᵈ = N a b²
 ε³ᵈ = 0.05
-ΔS  = delta_compliance(pc, H, ε³ᵈ)      # = (4π/3) ε³ᵈ H
+ΔS  = delta_inverse_property(pc, H, ε³ᵈ)      # = (4π/3) ε³ᵈ H
 
 # Ribbon crack — same pattern, ε²ᵈ = N b² and ΔS = π ε²ᵈ H
 r   = RibbonCrack(0.5)
-H_r = compliance_contribution(r, C₀)    # H = (2/π) n̂ ⊗ˢ B ⊗ˢ n̂
-ΔS_r = delta_compliance(r, H_r, 0.05)
+H_r = inverse_property_contribution(r, C₀)    # H = (2/π) n̂ ⊗ˢ B ⊗ˢ n̂
+ΔS_r = delta_inverse_property(r, H_r, 0.05)
 
 # Thermal / conductivity — scalar COD b and rank-1 resistivity tensor R
 K₀ = TensISO{3}(1.0)
 b  = cod_tensor(pc, K₀)                  # scalar
-R  = compliance_contribution(pc, K₀)     # R = (3/4) b (ŵ⊗ŵ)
-ΔR = delta_resistivity(pc, R, 0.05)      # = (4π/3) ε³ᵈ R
+R  = inverse_property_contribution(pc, K₀)     # R = (3/4) b (ŵ⊗ŵ)
+ΔR = delta_inverse_property(pc, R, 0.05)      # = (4π/3) ε³ᵈ R
 ```
 
 ## Cracks with finite interface stiffness (Sevostianov)
@@ -82,11 +82,11 @@ crack (recovering ``\boldsymbol{B}``), and
 ```julia
 # Elasticity : iso interface stiffness K = 5·𝟏
 B_eff = cod_tensor(pc, C₀; K_interface = TensISO{3}(5.0))
-H_eff = compliance_contribution(pc, C₀; K_interface = TensISO{3}(5.0))
+H_eff = inverse_property_contribution(pc, C₀; K_interface = TensISO{3}(5.0))
 
 # Conductivity (Kapitza scalar interface conductance α)
 b_eff = cod_tensor(pc, K₀; α_interface = 1.0)
-R_eff = compliance_contribution(pc, K₀; α_interface = 1.0)
+R_eff = inverse_property_contribution(pc, K₀; α_interface = 1.0)
 ```
 
 When building an `RVE` for a `homogenize` call, attach the interface

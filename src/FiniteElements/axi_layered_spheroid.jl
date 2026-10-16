@@ -229,8 +229,8 @@ fe_axi_breakdown(s::FEAxiLayeredSpheroid, P₀::TensND.AbstractTens) = _axi_run(
 #  as for `LayeredSphere`.
 
 for (gen, order, idx) in (
-        (:(Core.strain_strain_concentration), 4, 1),
-        (:(Core.stress_strain_concentration), 4, 2),
+        (:(Core.gradient_gradient_concentration), 4, 1),
+        (:(Core.flux_gradient_concentration), 4, 2),
         (:(Core.gradient_gradient_concentration), 2, 1),
         (:(Core.flux_gradient_concentration), 2, 2),
     )

@@ -33,12 +33,12 @@ _iso(A) = TensND.get_data(A)
         s = LayeredSphere((R,), (iso_stiffness(kₛ, μₛ),); interfaces = (SpringInterface(kₙ, Inf),))
         k_eq = kₛ / (1 + 3kₛ / (kₙ * R))
         α_eq = (3k₀ + 4μ₀) / (3k_eq + 4μ₀)
-        @test _iso(strain_strain_concentration(s, C₀, C₀))[1] ≈ α_eq rtol = 1.0e-13
+        @test _iso(gradient_gradient_concentration(s, C₀, C₀))[1] ≈ α_eq rtol = 1.0e-13
         # Without the outer opening, the strain of the grain alone.
-        @test _iso(strain_strain_concentration(s, C₀, C₀; external = false))[1] ≈
+        @test _iso(gradient_gradient_concentration(s, C₀, C₀; external = false))[1] ≈
             α_eq * k_eq / kₛ rtol = 1.0e-13
         # The average stress does not see the opening: the traction is continuous.
-        @test _iso(LS_IJ.stress_strain_concentration(s, C₀, C₀))[1] ≈ 3k_eq * α_eq rtol = 1.0e-13
+        @test _iso(LS_IJ.flux_gradient_concentration(s, C₀, C₀))[1] ≈ 3k_eq * α_eq rtol = 1.0e-13
     end
 end
 
@@ -65,20 +65,20 @@ end
     # as (α, β) = (d + 2o, d − o) from the 6×6 Mandel array.
     C₀ = iso_stiffness(2.0, 1.5)
     s1 = LayeredSphere((1.0,), (iso_stiffness(10.0, 1.0),); interfaces = (SpringInterface(10.0, 1.0),))
-    @test collect(_iso(strain_strain_concentration(s1, C₀, C₀))) ≈
+    @test collect(_iso(gradient_gradient_concentration(s1, C₀, C₀))) ≈
         [0.8888888888888888, 1.438070030514018] rtol = 1.0e-12                  # eE
-    @test collect(_iso(strain_strain_concentration(s1, C₀, C₀; external = false))) ≈
+    @test collect(_iso(gradient_gradient_concentration(s1, C₀, C₀; external = false))) ≈
         [0.22222222222222238, 0.8428949542289732] rtol = 1.0e-12                # sphere_eE(0, external=False)
 
     s2 = LayeredSphere(
         (0.6, 1.0), (iso_stiffness(10.0, 4.0), iso_stiffness(3.0, 2.0));
         interfaces = (SpringInterface(5.0, 2.0), SpringInterface(8.0, 3.0))
     )
-    @test collect(_iso(strain_strain_concentration(s2, C₀, C₀))) ≈
+    @test collect(_iso(gradient_gradient_concentration(s2, C₀, C₀))) ≈
         [1.2295343215373222, 1.2460210239870269] rtol = 1.0e-12                 # eE
-    @test collect(_iso(LS_IJ.stress_strain_concentration(s2, C₀, C₀))) ≈
+    @test collect(_iso(LS_IJ.flux_gradient_concentration(s2, C₀, C₀))) ≈
         [4.622794070776065, 2.26193692803892] rtol = 1.0e-12                    # sE
-    @test collect(_iso(strain_strain_concentration(s2, C₀, C₀; external = false))) ≈
+    @test collect(_iso(gradient_gradient_concentration(s2, C₀, C₀; external = false))) ≈
         [0.6516850626903141, 0.7129372907003615] rtol = 1.0e-12                 # sphere_eE(1, external=False)
     layer_eE = (
         (ext = [0.9169408499600372, 1.1056931300520458], mat = [0.0833582590872761, 0.21152004027919052]),
@@ -88,10 +88,10 @@ end
         ),
     )
     for k in 1:2
-        @test collect(_iso(strain_strain_concentration(s2, C₀; layer = k, external = true))) ≈ layer_eE[k].ext rtol = 1.0e-12
-        @test collect(_iso(strain_strain_concentration(s2, C₀; layer = k))) ≈ layer_eE[k].mat rtol = 1.0e-12
+        @test collect(_iso(gradient_gradient_concentration(s2, C₀; layer = k, external = true))) ≈ layer_eE[k].ext rtol = 1.0e-12
+        @test collect(_iso(gradient_gradient_concentration(s2, C₀; layer = k))) ≈ layer_eE[k].mat rtol = 1.0e-12
     end
-    @test collect(_iso(strain_strain_concentration(s2, C₀; layer = 2, internal = true))) ≈ layer_eE[2].int rtol = 1.0e-12
+    @test collect(_iso(gradient_gradient_concentration(s2, C₀; layer = 2, internal = true))) ≈ layer_eE[2].int rtol = 1.0e-12
 
     rve = RVE()
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = 0.6)
@@ -142,15 +142,15 @@ end
     )
     f = ntuple(k -> layer_volume_fraction(s, k), 3)
     # Each layer owns its outer interface…
-    A_parts = sum(f[k] .* collect(_iso(strain_strain_concentration(s, C₀; layer = k, external = true))) for k in 1:3)
-    @test A_parts ≈ collect(_iso(strain_strain_concentration(s, C₀, C₀))) rtol = 1.0e-12
+    A_parts = sum(f[k] .* collect(_iso(gradient_gradient_concentration(s, C₀; layer = k, external = true))) for k in 1:3)
+    @test A_parts ≈ collect(_iso(gradient_gradient_concentration(s, C₀, C₀))) rtol = 1.0e-12
     # …or its inner one, the outermost opening then going to the matrix.
-    A_inner = sum(f[k] .* collect(_iso(strain_strain_concentration(s, C₀; layer = k, internal = true))) for k in 1:3)
-    @test A_inner ≈ collect(_iso(strain_strain_concentration(s, C₀, C₀; external = false))) rtol = 1.0e-12
+    A_inner = sum(f[k] .* collect(_iso(gradient_gradient_concentration(s, C₀; layer = k, internal = true))) for k in 1:3)
+    @test A_inner ≈ collect(_iso(gradient_gradient_concentration(s, C₀, C₀; external = false))) rtol = 1.0e-12
     # The material average is what the averages of `averages.jl` return.
     ε∞ = TensISO{3}(1.0)
-    A_mat = sum(f[k] .* collect(_iso(strain_strain_concentration(s, C₀; layer = k))) for k in 1:3)
-    @test get_array(sphere_strain_average(s, C₀, ε∞)) ≈ get_array(TensISO{3}(A_mat...) ⊡ ε∞) rtol = 1.0e-12
+    A_mat = sum(f[k] .* collect(_iso(gradient_gradient_concentration(s, C₀; layer = k))) for k in 1:3)
+    @test get_array(sphere_gradient_average(s, C₀, ε∞)) ≈ get_array(TensISO{3}(A_mat...) ⊡ ε∞) rtol = 1.0e-12
 end
 
 @testset "Interface jumps — N = B − C₀:A for either owner of the outer interface" begin
@@ -162,14 +162,14 @@ end
             interfaces = (SpringInterface(5.0, 2.0), outer)
         )
         for external in (true, false)
-            A = strain_strain_concentration(s, C₀, C₀; external)
-            B = LS_IJ.stress_strain_concentration(s, C₀, C₀; external)
-            Nc = stiffness_contribution(s, C₀, C₀; external)
+            A = gradient_gradient_concentration(s, C₀, C₀; external)
+            B = LS_IJ.flux_gradient_concentration(s, C₀, C₀; external)
+            Nc = property_contribution(s, C₀, C₀; external)
             @test get_array(Nc) ≈ get_array(B - C₀ ⊡ A) rtol = 1.0e-12
-            @test get_array(stiffness_contribution(s, C₀; external)) ≈ get_array(Nc) rtol = 1.0e-12
+            @test get_array(property_contribution(s, C₀; external)) ≈ get_array(Nc) rtol = 1.0e-12
             # The bundles return the separate results bit for bit.
-            AN = MFH_IJ.Core.concentration_and_stiffness(s, C₀, C₀; external)
-            AB = MFH_IJ.Core.concentration_and_stress_average(s, C₀, C₀; external)
+            AN = MFH_IJ.Core.concentration_and_contribution(s, C₀, C₀; external)
+            AB = MFH_IJ.Core.concentration_and_flux_average(s, C₀, C₀; external)
             @test AN[1] == A && AN[2] == Nc
             @test AB[1] == A && AB[2] == B
         end
@@ -182,10 +182,10 @@ end
         for external in (true, false)
             A = gradient_gradient_concentration(s, K₀, K₀; external)
             B = LS_IJ.flux_gradient_concentration(s, K₀, K₀; external)
-            Nc = conductivity_contribution(s, K₀, K₀; external)
+            Nc = property_contribution(s, K₀, K₀; external)
             @test _iso(Nc)[1] ≈ _iso(B)[1] - 2.0 * _iso(A)[1] rtol = 1.0e-12
-            AN = MFH_IJ.Core.concentration_and_stiffness(s, K₀, K₀; external)
-            AB = MFH_IJ.Core.concentration_and_stress_average(s, K₀, K₀; external)
+            AN = MFH_IJ.Core.concentration_and_contribution(s, K₀, K₀; external)
+            AB = MFH_IJ.Core.concentration_and_flux_average(s, K₀, K₀; external)
             @test AN[1] == A && AN[2] == Nc
             @test AB[1] == A && AB[2] == B
         end
@@ -198,7 +198,7 @@ end
     for itf in (PerfectInterface{Float64}(), MembraneInterface(0.3, 0.2))
         s = LayeredSphere((0.6, 1.0), (iso_stiffness(10.0, 4.0), iso_stiffness(3.0, 2.0)); interfaces = (itf, itf))
         α, β, f = LS_IJ._layer_concentrations(s, C₀)
-        @test collect(_iso(strain_strain_concentration(s, C₀, C₀))) == [sum(f .* α), sum(f .* β)]
+        @test collect(_iso(gradient_gradient_concentration(s, C₀, C₀))) == [sum(f .* α), sum(f .* β)]
     end
 end
 
@@ -225,10 +225,10 @@ end
     n = length(times)
     to66 = MFH_IJ.Viscoelasticity._tens_to_mandel66
     for external in (true, false)
-        A_alv = strain_strain_concentration_alv(sphere, heaviside_law(C_M), times; external)
-        N_alv = stiffness_contribution_alv(sphere, heaviside_law(C_M), times; external)
-        A_el = to66(strain_strain_concentration(sphere, C_M, C_M; external))
-        N_el = to66(stiffness_contribution(sphere, C_M; external))
+        A_alv = gradient_gradient_concentration_alv(sphere, heaviside_law(C_M), times; external)
+        N_alv = property_contribution_alv(sphere, heaviside_law(C_M), times; external)
+        A_el = to66(gradient_gradient_concentration(sphere, C_M, C_M; external))
+        N_el = to66(property_contribution(sphere, C_M; external))
         for i in 1:n
             rows = (6 * (i - 1) + 1):(6 * i)
             @test isapprox(A_alv[rows, rows], A_el; rtol = 1.0e-10, atol = 1.0e-10)
@@ -241,7 +241,7 @@ end
     k₀, μ₀, kₛ, μₛ = 2.0, 1.5, 10.0, 1.0
     C₀ = iso_stiffness(k₀, μ₀)
     α(kₙ) = _iso(
-        strain_strain_concentration(
+        gradient_gradient_concentration(
             LayeredSphere((1.0,), (iso_stiffness(kₛ, μₛ),); interfaces = (SpringInterface(kₙ, Inf),)),
             C₀, C₀
         )
@@ -292,18 +292,18 @@ end
     kₙ, R = 10.0, 1.0
     g = LayeredSphere((R,), (iso_stiffness(Inf, 1.0),); interfaces = (SpringInterface(kₙ, 1.0),))
     α_eq = (3k₀ + 4μ₀) / (kₙ * R + 4μ₀)
-    @test _iso(strain_strain_concentration(g, C₀, C₀))[1] ≈ α_eq rtol = 1.0e-14
-    @test _iso(strain_strain_concentration(g, C₀, C₀; external = false))[1] == 0
-    @test _iso(LS_IJ.stress_strain_concentration(g, C₀, C₀))[1] ≈ kₙ * R * α_eq rtol = 1.0e-14
+    @test _iso(gradient_gradient_concentration(g, C₀, C₀))[1] ≈ α_eq rtol = 1.0e-14
+    @test _iso(gradient_gradient_concentration(g, C₀, C₀; external = false))[1] == 0
+    @test _iso(LS_IJ.flux_gradient_concentration(g, C₀, C₀))[1] ≈ kₙ * R * α_eq rtol = 1.0e-14
     # k = ∞ is the end of the k → ∞ road, not a separate branch.
     layered(k) = LayeredSphere(
         (0.6, 1.0), (iso_stiffness(k, 1.0), iso_stiffness(3.0, 2.0));
         interfaces = (SpringInterface(5.0, 2.0), PerfectInterface{Float64}())
     )
     for f in (
-            s -> _iso(strain_strain_concentration(s, C₀, C₀)),
-            s -> _iso(stiffness_contribution(s, C₀, C₀)),
-            s -> _iso(stiffness_contribution(s, C₀)),
+            s -> _iso(gradient_gradient_concentration(s, C₀, C₀)),
+            s -> _iso(property_contribution(s, C₀, C₀)),
+            s -> _iso(property_contribution(s, C₀)),
         )
         @test collect(f(layered(Inf))) ≈ collect(f(layered(1.0e13))) rtol = 1.0e-10
     end
@@ -311,13 +311,13 @@ end
     s = layered(Inf)
     ε∞ = TensISO{3}(1.0) + TensISO{3}(0.0, 1.0) ⊡ Tens(Float64[1 0 0; 0 -1 0; 0 0 0])
     fr = ntuple(k -> layer_volume_fraction(s, k), 2)
-    @test get_array(sum(fr[k] * layer_stress_average(s, C₀, ε∞, k) for k in 1:2)) ≈
-        get_array(LS_IJ.stress_strain_concentration(s, C₀, C₀) ⊡ ε∞) rtol = 1.0e-12
+    @test get_array(sum(fr[k] * layer_flux_average(s, C₀, ε∞, k) for k in 1:2)) ≈
+        get_array(LS_IJ.flux_gradient_concentration(s, C₀, C₀) ⊡ ε∞) rtol = 1.0e-12
     # Pointwise: the strain is defined and traceless in the incompressible core;
     # the stress is not a function of it, and says so.
     fields = LayeredSphereFields(s, C₀)
-    ε = get_array(local_strain(fields, [0.1, 0.2, 0.3], ε∞))
+    ε = get_array(local_gradient(fields, [0.1, 0.2, 0.3], ε∞))
     @test all(isfinite, ε)
     @test abs(ε[1, 1] + ε[2, 2] + ε[3, 3]) ≤ 1.0e-14
-    @test_throws ArgumentError local_stress(fields, [0.1, 0.2, 0.3], ε∞)
+    @test_throws ArgumentError local_flux(fields, [0.1, 0.2, 0.3], ε∞)
 end

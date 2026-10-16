@@ -120,34 +120,73 @@ dilute_contribution_alv_ortho
 
 ## Cracks
 
+The stiffness contribution of a crack is a method of
+[`property_contribution_alv`](@ref), documented with the layered spheres below.
+
 ```@docs
 cod_kernel_alv
-compliance_contribution_alv
-delta_compliance_alv
-stiffness_contribution_alv
-stiffness_contribution_alv_at
-delta_stiffness_alv
+inverse_property_contribution_alv
+delta_inverse_property_alv
+property_contribution_alv_at
+delta_property_alv
 ```
 
 ## Layered spheres
+
+One function per notion serves elasticity and conduction, the order of the
+reference law selecting the method: [`gradient_gradient_concentration_alv`](@ref)
+and [`property_contribution_alv`](@ref) return a ``6n\times 6n`` matrix for a
+fourth-order reference and a ``3n\times 3n`` one for a second-order reference.
+
+```@docs
+gradient_gradient_concentration_alv
+property_contribution_alv
+```
+
+The per-layer kernels behind them, of the bulk and shear modes in elasticity
+and of the single mode of conduction:
 
 ```@docs
 bulk_concentration_alv
 bulk_state_seq_alv
 bulk_amplitude_seq_alv
 shear_concentration_alv
-strain_strain_concentration_alv
+gradient_concentration_alv
 ```
 
-In conduction (order 2):
+## The names of elasticity and of conduction
+
+Each generic function also answers to the name it has in elasticity, and the
+contribution to the name it has in conduction. Such a name forwards to the
+generic function, accepts one order only, and refuses the other with an error
+that names the generic function. The crack functions are elastic only, and
+their names in elasticity are plain synonyms.
+
+| Generic function | Elasticity (order 4) | Conduction (order 2) |
+|:-----------------|:---------------------|:---------------------|
+| `gradient_gradient_concentration_alv` | `strain_strain_concentration_alv` | |
+| `property_contribution_alv` | `stiffness_contribution_alv` | `conductivity_contribution_alv` |
+| `property_contribution_alv_at` | `stiffness_contribution_alv_at` | |
+| `inverse_property_contribution_alv` | `compliance_contribution_alv` | |
+| `delta_property_alv` | `delta_stiffness_alv` | |
+| `delta_inverse_property_alv` | `delta_compliance_alv` | |
 
 ```@docs
-gradient_concentration_alv
-gradient_gradient_concentration_alv
+strain_strain_concentration_alv
+stiffness_contribution_alv
 conductivity_contribution_alv
+stiffness_contribution_alv_at
+compliance_contribution_alv
+delta_stiffness_alv
+delta_compliance_alv
 ```
 
 ## Order-2 ALV (conductivity / diffusion)
+
+The kernels below act on Volterra matrices, which do not carry their order in
+their type: a ``3n\times 3n`` matrix with ``n`` even also has ``6m`` rows. They
+keep the order in their names, as the iso, TI and ortho fast paths keep their
+symmetry class; [`homogenize_alv`](@ref) chooses among them from the property.
 
 ```@docs
 hill_kernel_order2

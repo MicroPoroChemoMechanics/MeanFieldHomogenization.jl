@@ -89,8 +89,8 @@ end
     A, B = fe_axi_concentration(incl, AX_C_MAT)
 
     sph = LayeredSphere((cbrt(AX_W), 1.0), (AX_C_CORE, AX_C_SHELL))
-    Aex = ax_mandel(strain_strain_concentration(sph, AX_C_MAT, AX_C_MAT))
-    Bex = ax_mandel(stress_strain_concentration(sph, AX_C_MAT, AX_C_MAT))
+    Aex = ax_mandel(gradient_gradient_concentration(sph, AX_C_MAT, AX_C_MAT))
+    Bex = ax_mandel(flux_gradient_concentration(sph, AX_C_MAT, AX_C_MAT))
     Anum, Bnum = ax_mandel(A), ax_mandel(B)
 
     @test ax_bulk(Anum) ≈ ax_bulk(Aex) rtol = 2.0e-3
@@ -107,7 +107,7 @@ end
     @test maximum(abs, Anum[1:3, 4:6]) < 1.0e-10
 
     # The contribution identity `N = B − C₀:A` must hold on the FE tensors.
-    N = stiffness_contribution(incl, AX_C_MAT, AX_C_MAT)
+    N = property_contribution(incl, AX_C_MAT, AX_C_MAT)
     Nid = ax_mandel(B) - ax_mandel(AX_C_MAT) * ax_mandel(A)
     @test ax_mandel(N) ≈ Nid rtol = 1.0e-10
 end
@@ -132,7 +132,7 @@ end
 @testset "The boundary correction is what makes R small" begin
     exact = ax_bulk(
         ax_mandel(
-            strain_strain_concentration(
+            gradient_gradient_concentration(
                 LayeredSphere((cbrt(AX_W), 1.0), (AX_C_CORE, AX_C_SHELL)),
                 AX_C_MAT, AX_C_MAT
             )
@@ -188,14 +188,14 @@ end
         eccentricity = 0.2, nradial = 12, radius_ratio = 4.0
     )
     @test fe_assembly_count(incl) == 0
-    strain_strain_concentration(incl, AX_C_MAT, AX_C_MAT)
+    gradient_gradient_concentration(incl, AX_C_MAT, AX_C_MAT)
     @test fe_assembly_count(incl) == 1
     # The stress-side tensor comes out of the *same* solve.
-    stress_strain_concentration(incl, AX_C_MAT, AX_C_MAT)
+    flux_gradient_concentration(incl, AX_C_MAT, AX_C_MAT)
     @test fe_assembly_count(incl) == 1
-    strain_strain_concentration(incl, AX_C_MAT, iso_stiffness(10.0, 6.0))
+    gradient_gradient_concentration(incl, AX_C_MAT, iso_stiffness(10.0, 6.0))
     @test fe_assembly_count(incl) == 1              # same content, same key
-    strain_strain_concentration(incl, AX_C_MAT, iso_stiffness(11.0, 6.0))
+    gradient_gradient_concentration(incl, AX_C_MAT, iso_stiffness(11.0, 6.0))
     @test fe_assembly_count(incl) == 2
     fe_reset!(incl)
     @test fe_assembly_count(incl) == 0

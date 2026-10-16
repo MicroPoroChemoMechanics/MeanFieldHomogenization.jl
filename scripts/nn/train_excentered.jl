@@ -85,8 +85,8 @@ geometry(x) = FEExcenteredSphere(
 #  twice — once per surrogate — would mesh and factorize everything a second
 #  time for nothing. The two label matrices are filled from one pass.
 
-const SPEC_A = NI.DimensionlessHill(NI.StrainConcentrationTI())
-const SPEC_B = NI.DimensionlessHill(NI.StressConcentrationTI())
+const SPEC_A = NI.DimensionlessHill(NI.GradientConcentrationTI())
+const SPEC_B = NI.DimensionlessHill(NI.FluxConcentrationTI())
 
 function label(X)
     n = size(X, 2)
@@ -96,15 +96,15 @@ function label(X)
     for j in 1:n
         x = collect(view(X, :, j))
         geom = geometry(x)
-        frame = NI._class_frame(NI.StrainConcentrationTI(), geom)
+        frame = NI._class_frame(NI.GradientConcentrationTI(), geom)
         A, B = fe_axi_concentration(geom, C0)
         ## `components` checks the projection residual, so a wrong axis or a
         ## response that is not transversely isotropic about it fails here rather
         ## than training quietly on corrupted labels.
-        ZA[:, j] .= collect(NI.components(NI.StrainConcentrationTI(), A, frame; atol = 1.0e-6)) .*
-            NI.dimensionless_scale(NI.StrainConcentrationTI(), C0)
-        ZB[:, j] .= collect(NI.components(NI.StressConcentrationTI(), B, frame; atol = 1.0e-6)) .*
-            NI.dimensionless_scale(NI.StressConcentrationTI(), C0)
+        ZA[:, j] .= collect(NI.components(NI.GradientConcentrationTI(), A, frame; atol = 1.0e-6)) .*
+            NI.dimensionless_scale(NI.GradientConcentrationTI(), C0)
+        ZB[:, j] .= collect(NI.components(NI.FluxConcentrationTI(), B, frame; atol = 1.0e-6)) .*
+            NI.dimensionless_scale(NI.FluxConcentrationTI(), C0)
         if j % 25 == 0 || j == n
             el = time() - t0
             @printf(

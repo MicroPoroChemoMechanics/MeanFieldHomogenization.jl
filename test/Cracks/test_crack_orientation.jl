@@ -83,7 +83,7 @@ end
     C = _ti_medium()
     for (θ, fro_ref, contract_ref) in ECHOES_H
         crack = PennyCrack(1.0; euler_angles = (θ, 0.0))
-        H = compliance_contribution(crack, C)      # `:auto`
+        H = inverse_property_contribution(crack, C)      # `:auto`
         @test norm(H) ≈ fro_ref rtol = 1.0e-5
         @test _contract(H) ≈ contract_ref rtol = 1.0e-5
     end
@@ -94,10 +94,10 @@ end
     # problem as leaving the crack on e₃ and tilting the medium by -θ. This is
     # exact, and it is what the frame mixing broke.
     for θ in (0.0, π / 8, π / 4, 3π / 8, π / 2)
-        H_crack = compliance_contribution(
+        H_crack = inverse_property_contribution(
             PennyCrack(1.0; euler_angles = (θ, 0.0)), _ti_medium()
         )
-        H_medium = compliance_contribution(
+        H_medium = inverse_property_contribution(
             PennyCrack(1.0), _ti_medium((sin(-θ), 0.0, cos(-θ)))
         )
         @test norm(H_crack) ≈ norm(H_medium) rtol = 1.0e-8
@@ -110,10 +110,10 @@ end
     # configuration, so every invariant must equal the canonical aligned one.
     # This is the case that `change_tens` used to corrupt, and it exercises the
     # closed-form TI branch (`_ti_aligned` → `Analytical`).
-    H0 = compliance_contribution(PennyCrack(1.0), _ti_medium())
+    H0 = inverse_property_contribution(PennyCrack(1.0), _ti_medium())
     for θ in (π / 8, π / 4, 3π / 8, π / 2)
         n = (sin(θ), 0.0, cos(θ))
-        H = compliance_contribution(PennyCrack(1.0; euler_angles = (θ, 0.0)), _ti_medium(n))
+        H = inverse_property_contribution(PennyCrack(1.0; euler_angles = (θ, 0.0)), _ti_medium(n))
         @test norm(H) ≈ norm(H0) rtol = 1.0e-8
         @test _contract(H) ≈ _contract(H0) rtol = 1.0e-8
     end
@@ -129,8 +129,8 @@ end
     for θ in (0.0, π / 6, π / 4, π / 3)
         crack = PennyCrack(1.0; euler_angles = (θ, 0.0))
         for method in (:auto, :nestedquadgk)
-            H_ti = compliance_contribution(crack, C_ti; method = method)
-            H_gen = compliance_contribution(crack, C_generic; method = method)
+            H_ti = inverse_property_contribution(crack, C_ti; method = method)
+            H_gen = inverse_property_contribution(crack, C_generic; method = method)
             @test norm(H_ti) ≈ norm(H_gen) rtol = 1.0e-9
             @test _contract(H_ti) ≈ _contract(H_gen) rtol = 1.0e-9
         end
@@ -142,9 +142,9 @@ end
     # normal cannot change any invariant of ℍ. A frame mix-up would break this.
     C = _ti_medium()
     θ = π / 4
-    ref = compliance_contribution(PennyCrack(1.0; euler_angles = (θ, 0.0)), C)
+    ref = inverse_property_contribution(PennyCrack(1.0; euler_angles = (θ, 0.0)), C)
     for φ in (π / 5, π / 2, π, 3π / 2)
-        H = compliance_contribution(PennyCrack(1.0; euler_angles = (θ, φ)), C)
+        H = inverse_property_contribution(PennyCrack(1.0; euler_angles = (θ, φ)), C)
         @test norm(H) ≈ norm(ref) rtol = 1.0e-8
         @test _contract(H) ≈ _contract(ref) rtol = 1.0e-8
     end
@@ -162,11 +162,11 @@ end
     # would make this test's outcome depend on whether `DECUHR` happens to be
     # imported.
     for θ in (0.0, π / 6, π / 4)
-        H_crack = compliance_contribution(
+        H_crack = inverse_property_contribution(
             RibbonCrack(1.0; euler_angles = (θ, 0.0)), _ti_medium();
             method = :nestedquadgk
         )
-        H_medium = compliance_contribution(
+        H_medium = inverse_property_contribution(
             RibbonCrack(1.0), _ti_medium((sin(-θ), 0.0, cos(-θ)));
             method = :nestedquadgk
         )
@@ -177,8 +177,8 @@ end
     # it they disagreed by ~57% at θ = π/4.
     for θ in (π / 6, π / 4)
         crack = RibbonCrack(1.0; euler_angles = (θ, 0.0))
-        r = norm(compliance_contribution(crack, _ti_medium(); method = :residues))
-        q = norm(compliance_contribution(crack, _ti_medium(); method = :nestedquadgk))
+        r = norm(inverse_property_contribution(crack, _ti_medium(); method = :residues))
+        q = norm(inverse_property_contribution(crack, _ti_medium(); method = :nestedquadgk))
         @test r ≈ q rtol = 1.0e-8
     end
 end
@@ -199,15 +199,15 @@ end
         crack = PennyCrack(1.0; euler_angles = (θ, 0.0))
         algo = MeanFieldHomogenization.Core._resolve_algo(Val(:auto), crack, C)
         θ == 0.0 || @test !(algo isa MeanFieldHomogenization.Core.Residue)
-        @test norm(compliance_contribution(crack, C; method = :auto)) ≈ fro_ref rtol = 1.0e-5
+        @test norm(inverse_property_contribution(crack, C; method = :auto)) ≈ fro_ref rtol = 1.0e-5
     end
 
     # Away from the degeneracy the residue reduction agrees with the cubature to
     # near machine precision — that is the regime it is meant for.
     for θ in (0.0, π / 8, π / 4, 0.4π)
         crack = PennyCrack(1.0; euler_angles = (θ, 0.0))
-        r = norm(compliance_contribution(crack, C; method = :residues))
-        q = norm(compliance_contribution(crack, C; method = :nestedquadgk))
+        r = norm(inverse_property_contribution(crack, C; method = :residues))
+        q = norm(inverse_property_contribution(crack, C; method = :nestedquadgk))
         @test r ≈ q rtol = 1.0e-8
     end
 
@@ -215,7 +215,7 @@ end
     # π/2. Guard the *documented* behavior so a future improvement shows up as
     # a failing test rather than going unnoticed.
     crack90 = PennyCrack(1.0; euler_angles = (π / 2, 0.0))
-    r90 = norm(compliance_contribution(crack90, C; method = :residues))
-    q90 = norm(compliance_contribution(crack90, C; method = :nestedquadgk))
+    r90 = norm(inverse_property_contribution(crack90, C; method = :residues))
+    q90 = norm(inverse_property_contribution(crack90, C; method = :nestedquadgk))
     @test !isapprox(r90, q90; rtol = 1.0e-3)
 end

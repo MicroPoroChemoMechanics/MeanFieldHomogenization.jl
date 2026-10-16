@@ -207,7 +207,7 @@ function eshelby_tensor end
 #
 #  Declared here so that every sub-module (Elasticity, Cracks,
 #  Conductivity, LayeredSphere, user extensions) can add methods via
-#  `import ..Core: stiffness_contribution` + method definition, all
+#  `import ..Core: property_contribution` + method definition, all
 #  attaching to a single generic function.  Definitions live in
 #  `src/concentration.jl` and `src/contribution.jl` (loaded at
 #  MeanFieldHomogenization top level after all sub-modules).
@@ -236,149 +236,133 @@ formula.
 """
 is_homogeneous_inclusion(::AbstractInclusion) = true
 
-"""
-    strain_strain_concentration(incl, C₁, C₀; kw...)  -> Tens{4,3}
-
-Dilute strain-strain concentration tensor ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` (Eshelby).
-"""
-function strain_strain_concentration end
-
-"""
-    stress_strain_concentration(incl, C₁, C₀; kw...)  -> Tens{4,3}
-"""
-function stress_strain_concentration end
+# ── Concentration and contribution: one function per notion ─────────────────
+#
+# Each generic serves both tensor orders: a fourth-order stiffness in elasticity,
+# where the gradient is the strain and the flux the stress, and a second-order
+# conductivity in conduction, where they are the gradient and the opposite of
+# the flux of the potential. The methods follow the order of the property
+# tensors they receive. The names of elasticity and conduction are aliases,
+# each restricted to its order (`order_aliases.jl`).
 
 """
-    strain_stress_concentration(incl, C₁, C₀; kw...)  -> Tens{4,3}
-"""
-function strain_stress_concentration end
+    gradient_gradient_concentration(incl, P₁, P₀; kw...) -> AbstractTens
 
-"""
-    stress_stress_concentration(incl, C₁, C₀; kw...)  -> Tens{4,3}
-"""
-function stress_stress_concentration end
-
-"""
-    gradient_gradient_concentration(incl, K₁, K₀; kw...) -> Tens{2,3}
+Dilute gradient concentration tensor of an inclusion of property `P₁` in an
+infinite matrix of property `P₀`: the mean gradient in the inclusion per unit
+remote gradient. With fourth-order stiffnesses it is the strain concentration
+tensor ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` of Eshelby's problem; with
+second-order conductivities, the gradient concentration tensor
+``\\boldsymbol{A}``. Explicit name in elasticity:
+[`strain_strain_concentration`](@ref).
 """
 function gradient_gradient_concentration end
 
 """
-    flux_gradient_concentration(incl, K₁, K₀; kw...)    -> Tens{2,3}
+    flux_gradient_concentration(incl, P₁, P₀; kw...) -> AbstractTens
+
+Dilute flux concentration tensor per unit remote gradient: the mean stress in
+the inclusion per unit remote strain, ``\\mathbb{A}_{\\sigma\\varepsilon}``, in
+elasticity; the mean opposite of the flux per unit remote gradient in
+conduction. Explicit name in elasticity: [`stress_strain_concentration`](@ref).
 """
 function flux_gradient_concentration end
 
 """
-    gradient_flux_concentration(incl, K₁, K₀; kw...)    -> Tens{2,3}
+    gradient_flux_concentration(incl, P₁, P₀; kw...) -> AbstractTens
+
+Dilute gradient concentration tensor per unit remote flux: the mean strain per
+unit remote stress, ``\\mathbb{A}_{\\varepsilon\\sigma}``, in elasticity. Explicit
+name in elasticity: [`strain_stress_concentration`](@ref).
 """
 function gradient_flux_concentration end
 
 """
-    flux_flux_concentration(incl, K₁, K₀; kw...)        -> Tens{2,3}
+    flux_flux_concentration(incl, P₁, P₀; kw...) -> AbstractTens
+
+Dilute flux concentration tensor per unit remote flux: the stress concentration
+tensor ``\\mathbb{A}_{\\sigma\\sigma}`` in elasticity, its analog for the flux in
+conduction. Explicit name in elasticity: [`stress_stress_concentration`](@ref).
 """
 function flux_flux_concentration end
 
 """
-    stiffness_contribution(incl, C₁, C₀; kw...) -> Tens{4,3}
-    stiffness_contribution(crack, C₀; kw...)   -> Tens{4,3}
+    property_contribution(incl, P₁, P₀; kw...) -> AbstractTens
+    property_contribution(crack, P₀; kw...)     -> AbstractTens
 
-Size-independent stiffness contribution tensor ``\\mathbb{N}`` of an inclusion in
-a matrix `C₀`.  For a dilute family of volume fraction ``f``:
-``\\Delta\\mathbb{C}^{\\mathrm{hom}} = f\\,\\mathbb{N}`` (see [`delta_stiffness`](@ref)).
+Size-independent contribution of an inclusion to the property tensor of a
+matrix `P₀`: the stiffness contribution ``\\mathbb{N}`` in elasticity, the
+conductivity contribution ``\\boldsymbol{N}`` in conduction. For a dilute family
+of volume fraction ``f``, the effective property is corrected by ``f\\,\\mathbb{N}``
+(see [`delta_property`](@ref)). Explicit names: [`stiffness_contribution`](@ref)
+and [`conductivity_contribution`](@ref).
 """
-function stiffness_contribution end
-
-"""
-    conductivity_contribution(incl, K₁, K₀; kw...) -> Tens{2,3}
-    conductivity_contribution(crack, K₀; kw...)     -> Tens{2,3}
-
-Size-independent conductivity contribution tensor for the 2nd-order
-transport problem.  Analog of [`stiffness_contribution`](@ref).
-"""
-function conductivity_contribution end
+function property_contribution end
 
 """
-    resistivity_contribution(incl, K₁, K₀; kw...) -> Tens{2,3}
+    inverse_property_contribution(incl, P₁, P₀; kw...) -> AbstractTens
+    inverse_property_contribution(incl, P₀; kw...)     -> AbstractTens
 
-Size-independent resistivity contribution tensor of an inclusion
-(2nd-order analog of [`compliance_contribution`](@ref) for solid
-ellipsoids).
-"""
-function resistivity_contribution end
+Size-independent contribution of an inclusion to the inverse of the property
+tensor of a matrix `P₀`: the compliance contribution ``\\mathbb{H}`` in elasticity,
+the resistivity contribution ``\\boldsymbol{R}`` in conduction. For a dilute family
+of volume fraction ``f``, the effective inverse property is corrected by
+``f\\,\\mathbb{H}`` (see [`delta_inverse_property`](@ref)).
 
-"""
-    compliance_contribution(incl, P₁, P₀; kw...) -> Tens
-    compliance_contribution(incl, P₀; kw...)     -> Tens
-
-Size-independent compliance contribution tensor ``\\mathbb{H}`` of an inclusion in a
-matrix `P₀`.  For a dilute family of volume fraction ``f``:
-``\\Delta\\mathbb{S}^{\\mathrm{hom}} = f\\,\\mathbb{H}`` (see [`delta_compliance`](@ref)).
-
-The **two-argument** form is the *flat-object* flavor used by cracks and,
-more generally, by any inclusion registered in an
+The **two-argument** form is the *flat-object* flavor used by cracks and, more
+generally, by any inclusion registered in an
 [`RVE`](@ref MeanFieldHomogenization.Schemes.RVE) with a
 [`CrackDensity`](@ref MeanFieldHomogenization.Schemes.CrackDensity) amount: the
-inclusion carries no property of its own, and the amount is applied
-afterwards by the three-argument [`delta_compliance`](@ref).
+inclusion carries no property of its own, and the amount is applied afterwards
+by the three-argument [`delta_inverse_property`](@ref).
 
 Methods for the built-in cracks live in `Cracks/compliance.jl`; the generic
-three-argument method for solid inclusions lives in `src/contribution.jl`.
+three-argument methods for solid inclusions live in `src/contribution.jl`.
+Explicit names: [`compliance_contribution`](@ref) and
+[`resistivity_contribution`](@ref).
 """
-function compliance_contribution end
-
-"""
-    delta_stiffness(N, f) -> Tens{4,3}
-
-Dilute effective-stiffness correction ``\\Delta\\mathbb{C} = f\\,\\mathbb{N}`` from the size-
-independent contribution tensor ``\\mathbb{N}`` and the volume fraction ``f``.
-"""
-function delta_stiffness end
+function inverse_property_contribution end
 
 """
-    delta_conductivity(N_K, f) -> Tens{2,3}
+    delta_property(N, f)        -> AbstractTens
+    delta_property(incl, N, ε)  -> AbstractTens
 
-Dilute effective-conductivity correction ``\\Delta\\boldsymbol{K} = f\\,\\boldsymbol{N}``,
-with ``\\boldsymbol{N}`` the conductivity contribution `N_K`.
+Dilute correction of the effective property, ``f\\,\\mathbb{N}``, from the
+size-independent contribution ``\\mathbb{N}`` (stiffness or conductivity) and the
+volume fraction ``f``; the three-argument form applies a density-like amount
+``\\varepsilon`` with the geometric prefactor of the inclusion, as for
+[`delta_inverse_property`](@ref). Explicit names: [`delta_stiffness`](@ref) and
+[`delta_conductivity`](@ref).
 """
-function delta_conductivity end
+function delta_property end
 
 """
-    delta_compliance(H, f)        -> Tens
-    delta_compliance(incl, H, ε)  -> Tens
+    delta_inverse_property(H, f)        -> AbstractTens
+    delta_inverse_property(incl, H, ε)  -> AbstractTens
 
-Dilute effective-compliance correction from the size-independent
-contribution tensor ``\\mathbb{H}``.
+Dilute correction of the effective inverse property from the size-independent
+contribution ``\\mathbb{H}`` (compliance or resistivity).
 
-The **two-argument** form is the volume-fraction one, ``\\Delta\\mathbb{S} = f\\,\\mathbb{H}``.  The
-**three-argument** form is the *amount × contribution* seam of flat objects:
-it carries the geometric prefactor relating a density-like amount to the
-effective correction (``4\\pi/3`` for an elliptical crack of Budiansky density
+The **two-argument** form is the volume-fraction one, ``f\\,\\mathbb{H}``. The
+**three-argument** form is the *amount × contribution* seam of flat objects: it
+carries the geometric prefactor relating a density-like amount to the effective
+correction (``4\\pi/3`` for an elliptical crack of Budiansky density
 ``\\varepsilon^{3\\mathrm{d}} = N\\,a\\,b^{2}``, ``\\pi`` for a ribbon crack of
-``\\varepsilon^{2\\mathrm{d}} = N\\,b^{2}``).  Every inclusion
-meant to be registered with a
-[`CrackDensity`](@ref MeanFieldHomogenization.Schemes.CrackDensity) amount must provide
-the three-argument methods of `delta_compliance`, [`delta_stiffness`](@ref),
-[`delta_conductivity`](@ref) and [`delta_resistivity`](@ref).
+``\\varepsilon^{2\\mathrm{d}} = N\\,b^{2}``). Every inclusion meant to be registered
+with a [`CrackDensity`](@ref MeanFieldHomogenization.Schemes.CrackDensity) amount
+must provide the three-argument methods of `delta_inverse_property` and
+[`delta_property`](@ref). Explicit names: [`delta_compliance`](@ref) and
+[`delta_resistivity`](@ref).
 """
-function delta_compliance end
+function delta_inverse_property end
 
 """
-    delta_resistivity(R, f)        -> Tens{2,3}
-    delta_resistivity(incl, R, ε)  -> Tens{2,3}
-
-Dilute effective-resistivity correction — 2nd-order analog of
-[`delta_compliance`](@ref), with the same two calling conventions.
-"""
-function delta_resistivity end
-
-"""
-    concentration_and_stiffness(incl, P₁, P₀; kw...) -> (A, N)
+    concentration_and_contribution(incl, P₁, P₀; kw...) -> (A, N)
 
 Bundled evaluation of the dilute concentration tensor `A`
-([`strain_strain_concentration`](@ref) / [`gradient_gradient_concentration`](@ref)) **and** the
-size-independent contribution tensor `N` ([`stiffness_contribution`](@ref) /
-[`conductivity_contribution`](@ref)) of the *same* inclusion in the *same*
-reference medium, sharing the single expensive Hill / recurrence solve.
+([`gradient_gradient_concentration`](@ref)) **and** the size-independent
+contribution `N` ([`property_contribution`](@ref)) of the *same* inclusion in the
+*same* reference medium, sharing the single expensive Hill / recurrence solve.
 
 Both quantities are needed per phase by Mori-Tanaka and by the
 self-consistent kernels; computing them separately evaluates
@@ -387,40 +371,38 @@ arguments.
 
 !!! note "Contract"
     The returned pair must be **bitwise identical** to
-    `(strain_strain_concentration(incl, P₁, P₀; kw...),
-      stiffness_contribution(incl, P₁, P₀; kw...))`.
+    `(gradient_gradient_concentration(incl, P₁, P₀; kw...),
+      property_contribution(incl, P₁, P₀; kw...))`.
     The generic fallback *is* that pair; specializations are a pure
     performance concern and must not reassociate the arithmetic.
 
 Internal seam — not exported.
 """
-function concentration_and_stiffness end
+function concentration_and_contribution end
 
 """
-    concentration_and_stress_average(incl, P₁, P₀; kw...) -> (A, B)
+    concentration_and_flux_average(incl, P₁, P₀; kw...) -> (A, B)
 
-Bundled `(strain_strain_concentration, stress_strain_concentration)` — resp.
-`(gradient_gradient_concentration, flux_gradient_concentration)` — sharing one concentration
-solve.  Same bitwise contract as [`concentration_and_stiffness`](@ref).
+Bundled `(gradient_gradient_concentration, flux_gradient_concentration)`, sharing
+one concentration solve. Same bitwise contract as
+[`concentration_and_contribution`](@ref).
 
 Internal seam — not exported.
 """
-function concentration_and_stress_average end
+function concentration_and_flux_average end
 
 """
-    compliance_and_stiffness_contribution(incl, P₀; kw...) -> (H, N)
+    inverse_and_property_contribution(incl, P₀; kw...) -> (H, N)
 
 Bundled two-argument contribution pair of a **flat** inclusion — the
-density-amount counterpart of [`concentration_and_stiffness`](@ref), sharing whatever
-single expensive solve produces both (for a crack, one
-[`cod_tensor`](@ref MeanFieldHomogenization.Cracks.cod_tensor)).
-
-Returns `(compliance_contribution, stiffness_contribution)` for a 4th-order
-`P₀` and `(compliance_contribution, conductivity_contribution)` for a
-2nd-order one.  Same bitwise contract as [`concentration_and_stiffness`](@ref): the
-generic fallback in `src/contribution.jl` *is* that pair, and any
-specialization is a pure performance concern.
+density-amount counterpart of [`concentration_and_contribution`](@ref), sharing
+whatever single expensive solve produces both (for a crack, one
+[`cod_tensor`](@ref MeanFieldHomogenization.Cracks.cod_tensor)): the pair
+`(inverse_property_contribution, property_contribution)`. Same bitwise
+contract as [`concentration_and_contribution`](@ref): the generic fallback in
+`src/contribution.jl` *is* that pair, and any specialization is a pure
+performance concern.
 
 Internal seam — not exported.
 """
-function compliance_and_stiffness_contribution end
+function inverse_and_property_contribution end

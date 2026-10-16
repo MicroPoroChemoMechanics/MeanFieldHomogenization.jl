@@ -47,7 +47,7 @@ end
 
     α = MeanFieldHomogenization.LayeredSpheres._cond_concentration(s, k₀)
     @test all(isfinite, α)
-    N = conductivity_contribution(s, K₀)
+    N = property_contribution(s, K₀)
     @test isfinite(N[1, 1])
 
     # ITZ mortar (impermeable aggregate + conductive shell, MT) — matches the
@@ -144,11 +144,11 @@ end
     @test α_large[1] != α_perfect[1]
 end
 
-@testset "conductivity_contribution — single layer matches Ellipsoid" begin
+@testset "property_contribution — single layer matches Ellipsoid" begin
     K₀ = TensISO{3}(2.0)
     K₁ = TensISO{3}(5.0)
     s = LayeredSphere((1.0,), (K₁,))
-    N_sphere = conductivity_contribution(s, K₀)
-    N_ell = conductivity_contribution(Ellipsoid(1.0), K₁, K₀)
+    N_sphere = property_contribution(s, K₀)
+    N_ell = property_contribution(Ellipsoid(1.0), K₁, K₀)
     @test N_sphere[1, 1] ≈ N_ell[1, 1] rtol = 1.0e-10
 end

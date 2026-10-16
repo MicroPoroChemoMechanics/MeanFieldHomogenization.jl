@@ -82,9 +82,9 @@ export NeuralSurrogate, Provenance, worst_error
 export save_surrogate, load_surrogate, model_path, shipped_models
 
 # The physics of the output
-export HillISO, HillTI, HillOrtho, HillISO2, HillTI2, StrainConcentrationCubic
+export HillISO, HillTI, HillOrtho, HillISO2, HillTI2, GradientConcentrationCubic
 export GradientConcentrationISO2, GradientConcentrationTI2
-export StrainConcentrationTI, StressConcentrationTI
+export GradientConcentrationTI, FluxConcentrationTI
 export DimensionlessHill, AnchoredHill, AffineHill
 
 # The learning system

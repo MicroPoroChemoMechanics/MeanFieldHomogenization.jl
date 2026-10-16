@@ -34,7 +34,7 @@ fixed and known symbolically — or an already-discretized ``6n\\times 6n``
 relaxation matrix.  The latter is what the self-consistent and
 differential schemes need: their reference is the *running* effective
 medium, which exists only as a block matrix.  Same role as the `_at`
-suffix on the crack kernels (`stiffness_contribution_alv_at`).
+suffix on the crack kernels (`property_contribution_alv_at`).
 """
 const _ALVReference = Union{ViscoLaw, AbstractMatrix}
 
@@ -1086,24 +1086,9 @@ function _strain_jump_terms_alv(
     return Δα, Δβ
 end
 
-"""
-    strain_strain_concentration_alv(sphere, C0_law, times; external = true) -> Matrix{T}
-
-``6n\\times 6n`` block matrix describing the volume-averaged strain-strain
-concentration across the **entire** layered sphere under a unit
-Volterra far-field strain.  In iso form this is
-``\\langle\\widetilde{\\mathbb{A}}\\rangle = \\langle\\alpha\\rangle\\,\\mathbb{J} + \\langle\\beta\\rangle\\,\\mathbb{K}`` with
-``\\langle\\alpha\\rangle = \\sum_k f_k\\,\\alpha_k(t,t') + \\Delta\\alpha`` and ``\\langle\\beta\\rangle = \\sum_k f_k\\,\\beta_k(t,t') + \\Delta\\beta`` (Volterra
-products), ``\\Delta\\alpha``, ``\\Delta\\beta`` being the displacement jumps of the spring
-interfaces (`_strain_jump_terms_alv`). `external` decides whether the
-outer interface belongs to the sphere, as in the elastic
-[`strain_strain_concentration`](@ref).
-
-This is the analog used by the ALV dilute / MT / Maxwell schemes
-when the inclusion phase is a `LayeredSphere`.
-"""
-function strain_strain_concentration_alv(
-        sphere::LayeredSphere{T, N},
+# The elastic gradient (strain) concentration of the whole sphere: see the generic.
+function _gradient_gradient_concentration_alv(
+        ::Val{4}, sphere::LayeredSphere{T, N},
         C0_law::_ALVReference,
         times::AbstractVector{<:Real};
         external::Bool = true,
@@ -1117,33 +1102,9 @@ function strain_strain_concentration_alv(
     return iso_blocks_from_params(α_avg .+ Δα, β_avg .+ Δβ)
 end
 
-"""
-    stiffness_contribution_alv(sphere, C0_law, times) -> Matrix{T}
-
-``6n\\times 6n`` size-independent ALV stiffness contribution of a layered
-sphere relative to its iso ALV matrix `C0_law`.  Iso parameters
-(``\\alpha``-, ``\\beta``-blocks of the assembled matrix) are
-
-```math
-\\begin{aligned}
-\\alpha &= 3\\sum_k f_k\\,(\\widetilde{k}_k - \\widetilde{k}_0)\\circ\\alpha_k - 3\\,\\widetilde{k}_0\\circ\\Delta\\alpha,
-\\\\
-\\beta &= 2\\sum_k f_k\\,(\\widetilde{\\mu}_k - \\widetilde{\\mu}_0)\\circ\\beta_k - 2\\,\\widetilde{\\mu}_0\\circ\\Delta\\beta,
-\\end{aligned}
-```
-
-where ``\\alpha_k``, ``\\beta_k`` are the per-layer concentration matrices, ``\\widetilde{k}_k``,
-``\\widetilde{\\mu}_k`` (`M_κ_k`, `M_μ_k`) the per-layer Volterra moduli and ``\\Delta\\alpha``,
-``\\Delta\\beta`` the displacement jumps of the spring interfaces, plus the surface
-stress of the membranes. `external` has the meaning it has in
-[`strain_strain_concentration_alv`](@ref).
-
-The dilute-scheme effective stiffness with this inclusion at volume
-fraction ``f`` is ``\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0 + f\\,\\widetilde{\\mathbb{N}}``,
-with ``\\widetilde{\\mathbb{N}}`` = `stiffness_contribution_alv(sphere, …)`.
-"""
-function stiffness_contribution_alv(
-        sphere::LayeredSphere{T, N},
+# The elastic (stiffness) contribution of the whole sphere: see the generic.
+function _property_contribution_alv(
+        ::Val{4}, sphere::LayeredSphere{T, N},
         C0_law::_ALVReference,
         times::AbstractVector{<:Real};
         external::Bool = true,
@@ -1172,10 +1133,10 @@ function stiffness_contribution_alv(
 end
 
 """
-    stiffness_contribution_alv_at(sphere::LayeredSphere, C_ref::AbstractMatrix, times)
+    property_contribution_alv_at(sphere::LayeredSphere, C_ref::AbstractMatrix, times)
 
 Layered-sphere counterpart of
-[`stiffness_contribution_alv_at`](@ref MeanFieldHomogenization.Viscoelasticity.stiffness_contribution_alv_at)
+[`property_contribution_alv_at`](@ref MeanFieldHomogenization.Viscoelasticity.property_contribution_alv_at)
 for cracks: the same size-independent ALV contribution, but against a
 pre-discretized ``6n\\times 6n`` reference — the *running* effective medium
 of the differential (or self-consistent) ODE rather than the matrix law.
@@ -1183,12 +1144,12 @@ of the differential (or self-consistent) ODE rather than the matrix law.
 The reference must be isotropic, as everywhere in the layered-sphere ALV
 recurrences.
 """
-function stiffness_contribution_alv_at(
+function property_contribution_alv_at(
         sphere::LayeredSphere,
         C_ref::AbstractMatrix,
         times::AbstractVector{<:Real}
     )
-    return stiffness_contribution_alv(sphere, C_ref, times)
+    return property_contribution_alv(sphere, C_ref, times)
 end
 
 """

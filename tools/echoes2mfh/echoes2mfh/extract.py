@@ -720,8 +720,8 @@ class Extractor:
                 node,
                 "see scripts/80_custom_inclusion_contract.jl and "
                 "check_inclusion_interface; the four tensors eE/sE/eS/sS "
-                "become strain_strain_concentration / stress_strain_concentration / "
-                "strain_stress_concentration / stress_stress_concentration callbacks",
+                "become gradient_gradient_concentration / flux_gradient_concentration / "
+                "gradient_flux_concentration / flux_flux_concentration callbacks",
             )
         raise Untranslatable(f"class `{node.name}` has no MFH counterpart", node)
 
@@ -1286,7 +1286,7 @@ class Extractor:
                 "scope to fix the reference medium",
                 node,
                 "MFH needs the reference explicitly: "
-                "strain_strain_concentration(inclusion, C_inclusion, C_reference)",
+                "gradient_gradient_concentration(inclusion, C_inclusion, C_reference)",
             )
         if scheme.startswith(("SelfConsistent", "AsymmetricSelfConsistent")):
             if self._current_result is None:

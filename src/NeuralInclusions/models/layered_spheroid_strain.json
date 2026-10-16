@@ -4940,7 +4940,7 @@
             "identity",
             "identity"
         ],
-        "class": "strain_concentration_ti",
+        "class": "gradient_concentration_ti",
         "shift": [
             0.8673079858169985,
             0.831731005469773,

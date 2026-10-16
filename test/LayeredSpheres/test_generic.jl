@@ -68,16 +68,16 @@ end
     sol = LayeredSphereFields(sphere, C₀)
 
     SymPy.@syms r_sym::positive
-    @test_throws ArgumentError local_strain_strain_concentration(sol, r_sym, 0.4, 0.9)
+    @test_throws ArgumentError local_gradient_gradient_concentration(sol, r_sym, 0.4, 0.9)
     @test_throws ArgumentError get_layer(sphere, r_sym)
 
     # With the layer named, the whole reconstruction goes through symbolically.
-    A = local_strain_strain_concentration(sol, r_sym, 0.4, 0.9; layer = 2)
+    A = local_gradient_gradient_concentration(sol, r_sym, 0.4, 0.9; layer = 2)
     @test eltype(A) <: Sym
     ℓ = TensND.get_ℓ(A)
     @test length(ℓ) == 6
     # Substituting a numeric radius must reproduce the numeric evaluation.
-    A_num = local_strain_strain_concentration(sol, 1.5, 0.4, 0.9; layer = 2)
+    A_num = local_gradient_gradient_concentration(sol, 1.5, 0.4, 0.9; layer = 2)
     ℓ_num = TensND.get_ℓ(A_num)
     for i in 1:6
         @test Float64(subs(ℓ[i], Dict(r_sym => Sym(3) // 2))) ≈ ℓ_num[i] rtol = 1.0e-12
@@ -91,14 +91,14 @@ end
     @syms k::positive μ::positive ks::positive μs::positive kn::positive kt::positive R::positive
     C = iso_stiffness(k, μ)
     grain = LayeredSphere((R,), (iso_stiffness(ks, μs),); interfaces = (SpringInterface(kn, kt),))
-    α, β = TensND.get_data(strain_strain_concentration(grain, C, C))
+    α, β = TensND.get_data(gradient_gradient_concentration(grain, C, C))
     # The bonded grain answers a pressure as a grain of modulus kₛ/(1 + 3kₛ/(kₙR)).
     k_eq = ks / (1 + 3ks / (kn * R))
     @test simplify(α - (3k + 4μ) / (3k_eq + 4μ)) == 0
     # The deviatoric part agrees with the numeric recurrence.
     vals = Dict(k => 2.0, μ => 1.5, ks => 10.0, μs => 1.0, kn => 10.0, kt => 1.0, R => 1.0)
     β_num = TensND.get_data(
-        strain_strain_concentration(
+        gradient_gradient_concentration(
             LayeredSphere((1.0,), (iso_stiffness(10.0, 1.0),); interfaces = (SpringInterface(10.0, 1.0),)),
             iso_stiffness(2.0, 1.5), iso_stiffness(2.0, 1.5)
         )

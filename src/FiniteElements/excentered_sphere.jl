@@ -306,8 +306,8 @@ fe_axi_concentration(s::FEExcenteredSphere, P₀::TensND.AbstractTens; kw...) =
 #  geometry object — so the middle argument is accepted and ignored.
 
 for (gen, order, idx) in (
-        (:(Core.strain_strain_concentration), 4, 1),
-        (:(Core.stress_strain_concentration), 4, 2),
+        (:(Core.gradient_gradient_concentration), 4, 1),
+        (:(Core.flux_gradient_concentration), 4, 2),
         (:(Core.gradient_gradient_concentration), 2, 1),
         (:(Core.flux_gradient_concentration), 2, 2),
     )

@@ -69,7 +69,7 @@ end
     @test β2[2] ≈ β1 rtol = 1.0e-9
 end
 
-@testset "Shear — stiffness_contribution respects single-layer Eshelby" begin
+@testset "Shear — property_contribution respects single-layer Eshelby" begin
     κ₀, μ₀ = 100.0, 70.0
     κ₁, μ₁ = 250.0, 160.0
     C₀ = TensISO{3}(3κ₀, 2μ₀)
@@ -79,11 +79,11 @@ end
     # sphere of radius a containing C₁ at volume fraction (a/b)³.
     a, b = 0.4, 1.0
     s2 = LayeredSphere((a, b), (C₁, C₀))
-    N2 = stiffness_contribution(s2, C₀)
+    N2 = property_contribution(s2, C₀)
 
     # Reference: single-sphere Eshelby result scaled by (a/b)³.
     ell = Ellipsoid(a)
-    N_ref_ell = stiffness_contribution(ell, C₁, C₀)
+    N_ref_ell = property_contribution(ell, C₁, C₀)
     scale = (a / b)^3
     # Compare shear coefficients.
     @test N2.data[2] ≈ scale * N_ref_ell.data[2] rtol = 1.0e-8

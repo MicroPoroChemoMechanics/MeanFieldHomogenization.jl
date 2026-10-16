@@ -504,7 +504,7 @@ function _diff_dilute_correction(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
-    N = MFH_Core.stiffness_contribution(geom, P_i, P₀_proj; kw...)
+    N = MFH_Core.property_contribution(geom, P_i, P₀_proj; kw...)
     return _apply_symmetrize(N, sym)
 end
 
@@ -516,12 +516,12 @@ function _diff_dilute_correction(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
-    N = MFH_Core.conductivity_contribution(geom, P_i, P₀_proj; kw...)
+    N = MFH_Core.property_contribution(geom, P_i, P₀_proj; kw...)
     return _apply_symmetrize(N, sym)
 end
 
 # Crack contribution kernel **per unit density** : returns
-# `delta_stiffness(geom, N, 1.0)` (or `delta_conductivity` for 2-tensor)
+# `delta_property(geom, N, 1.0)`, of either order,
 # so the RHS multiplies by `dε/dτ` directly.
 function _diff_crack_density_kernel(
         rve::RVE, name::Symbol, prop::Symbol,
@@ -531,11 +531,11 @@ function _diff_crack_density_kernel(
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
     K_int = _crack_interface_K4(rve, name)
-    N = MFH_Core.stiffness_contribution(
+    N = MFH_Core.property_contribution(
         geom, P₀_proj;
         K_interface = K_int, kw...
     )
-    return _apply_symmetrize(MFH_Core.delta_stiffness(geom, N, 1.0), sym)
+    return _apply_symmetrize(MFH_Core.delta_property(geom, N, 1.0), sym)
 end
 
 function _diff_crack_density_kernel(
@@ -546,11 +546,11 @@ function _diff_crack_density_kernel(
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
     α_int = _crack_interface_α(rve, name)
-    N = MFH_Core.conductivity_contribution(
+    N = MFH_Core.property_contribution(
         geom, P₀_proj;
         α_interface = α_int, kw...
     )
-    return _apply_symmetrize(MFH_Core.delta_conductivity(geom, N, 1.0), sym)
+    return _apply_symmetrize(MFH_Core.delta_property(geom, N, 1.0), sym)
 end
 
 # ── Dual (compliance-side) per-phase kernels ────────────────────────────────
@@ -558,7 +558,7 @@ end
 # Mirror images of the four kernels above, evaluated against the same
 # running STIFFNESS `P_curr` (the caller inverts the state once per RHS
 # step) but returning the compliance / resistivity contribution, so the
-# ODE integrates S rather than C.  `compliance_contribution` evaluates
+# ODE integrates S rather than C.  `inverse_property_contribution` evaluates
 # `ℍ = −𝕊 : 𝐍 : 𝕊`, which holds for heterogeneous inclusions and voids alike.
 
 # Unit-amount compliance contribution `ℍ_i(C)` of a solid inclusion phase.
@@ -570,7 +570,7 @@ function _diff_compliance_correction(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
-    H = compliance_contribution(geom, P_i, P₀_proj; kw...)
+    H = inverse_property_contribution(geom, P_i, P₀_proj; kw...)
     return _apply_symmetrize(H, sym)
 end
 
@@ -582,7 +582,7 @@ function _diff_compliance_correction(
     P_i = phase_property(rve, name, prop)
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
-    R = MFH_Core.resistivity_contribution(geom, P_i, P₀_proj; kw...)
+    R = MFH_Core.inverse_property_contribution(geom, P_i, P₀_proj; kw...)
     return _apply_symmetrize(R, sym)
 end
 
@@ -596,8 +596,8 @@ function _diff_crack_density_compliance_kernel(
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
     K_int = _crack_interface_K4(rve, name)
-    H = compliance_contribution(geom, P₀_proj; K_interface = K_int, kw...)
-    return _apply_symmetrize(delta_compliance(geom, H, 1.0), sym)
+    H = inverse_property_contribution(geom, P₀_proj; K_interface = K_int, kw...)
+    return _apply_symmetrize(delta_inverse_property(geom, H, 1.0), sym)
 end
 
 function _diff_crack_density_compliance_kernel(
@@ -608,6 +608,6 @@ function _diff_crack_density_compliance_kernel(
     sym = phase_symmetrize(rve, name)
     P₀_proj = _project_matrix(P_curr, sym)
     α_int = _crack_interface_α(rve, name)
-    R = compliance_contribution(geom, P₀_proj; α_interface = α_int, kw...)
-    return _apply_symmetrize(delta_resistivity(geom, R, 1.0), sym)
+    R = inverse_property_contribution(geom, P₀_proj; α_interface = α_int, kw...)
+    return _apply_symmetrize(delta_inverse_property(geom, R, 1.0), sym)
 end

@@ -15,7 +15,7 @@ Dilute scheme on the compliance side for property `:p`: averages the
 size-independent compliance / resistivity contributions and inverts the
 result. For mixed RVEs (solid inclusions + cracks) this is the
 preferred form because the crack compliance contribution
-[`compliance_contribution`](@ref)`(crack, C₀)` is finite while the
+[`inverse_property_contribution`](@ref)`(crack, C₀)` is finite while the
 stiffness one is the rank-1 limit of a divergent eigenvalue.
 
 Reference: [kachanov2018](@citet).

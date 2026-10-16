@@ -156,17 +156,9 @@ function _cond_interface_terms_alv(
     return Δα, surface
 end
 
-"""
-    gradient_gradient_concentration_alv(sphere, K0_law, times; external = true) -> Matrix
-
-``3n\\times 3n`` gradient concentration of the whole [`LayeredSphere`](@ref) in an
-isotropic aging reference, ``\\sum_k f_k\\,\\alpha_k + \\Delta\\alpha``, the conduction twin
-of [`strain_strain_concentration_alv`](@ref): ``\\Delta\\alpha`` adds the temperature jumps
-``[\\![T]\\!] = \\rho\\,\\sigma_n = -\\rho\\,q_n`` of the Kapitza interfaces, the outer one
-when `external` is `true`, as in the elastic [`gradient_gradient_concentration`](@ref).
-"""
-function gradient_gradient_concentration_alv(
-        sphere::LayeredSphere{T, N}, K0_law::_ALVReference,
+# The gradient concentration of the whole sphere in conduction: see the generic.
+function _gradient_gradient_concentration_alv(
+        ::Val{2}, sphere::LayeredSphere{T, N}, K0_law::_ALVReference,
         times::AbstractVector{<:Real}; external::Bool = true
     ) where {T, N}
     amps, states, A_∞, _, _ = _cond_amplitude_seq_alv(sphere, K0_law, times)
@@ -176,19 +168,9 @@ function gradient_gradient_concentration_alv(
     return iso_order2_blocks_from_params(α .+ Δα)
 end
 
-"""
-    conductivity_contribution_alv(sphere, K0_law, times; external = true) -> Matrix
-
-``3n\\times 3n`` conductivity contribution of the whole [`LayeredSphere`](@ref),
-``\\sum_k f_k\\,(k_k - k_0)\\circ\\alpha_k - k_0\\circ\\Delta\\alpha`` plus the surface flux of the
-surface-conductive interfaces: the conduction twin of
-[`stiffness_contribution_alv`](@ref) and the Volterra counterpart of the elastic
-`conductivity_contribution`. `K0_law` may also be the ``3n\\times 3n`` matrix of a
-running estimate, which is how the self-consistent and differential schemes
-call it.
-"""
-function conductivity_contribution_alv(
-        sphere::LayeredSphere{T, N}, K0_law::_ALVReference,
+# The conductivity contribution of the whole sphere: see the generic.
+function _property_contribution_alv(
+        ::Val{2}, sphere::LayeredSphere{T, N}, K0_law::_ALVReference,
         times::AbstractVector{<:Real}; external::Bool = true
     ) where {T, N}
     amps, states, A_∞, layers, k₀ = _cond_amplitude_seq_alv(sphere, K0_law, times)

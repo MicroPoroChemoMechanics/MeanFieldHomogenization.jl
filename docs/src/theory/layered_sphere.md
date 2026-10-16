@@ -238,9 +238,9 @@ modulus of [christensenLo1979](@citet) and passes the Eshelby consistency tests
 
 Three volume-average flavors are provided:
 
-- [`layer_strain_average`](@ref)`(sphere, C₀, ε∞, k)` — mean strain in
+- [`layer_gradient_average`](@ref)`(sphere, C₀, ε∞, k)` — mean strain in
   layer ``k`` (bulk + deviatoric parts).
-- [`sphere_strain_average`](@ref)`(sphere, C₀, ε∞)` — mean strain in
+- [`sphere_gradient_average`](@ref)`(sphere, C₀, ε∞)` — mean strain in
   the whole composite.
 - [`cumulative_strain_average`](@ref)`(sphere, C₀, ε∞, r)` — mean
   strain inside the ball of radius ``r``.
@@ -327,18 +327,18 @@ interface term restores. In conduction, the same reasoning gives
 
 | Call | Inner interfaces | Outer interface ``r_N`` | Echoes |
 |:--|:--|:--|:--|
-| `strain_strain_concentration(sphere, C₀, C₀)` | counted | counted | `eE` |
-| `strain_strain_concentration(sphere, C₀, C₀; external = false)` | counted | not counted | `sphere_eE(n-1, external=False)` |
-| `strain_strain_concentration(sphere, C₀; layer = k)` | — | — | `layer_eE(k-1, external=False)` |
-| `strain_strain_concentration(sphere, C₀; layer = k, external = true)` | — | ``r_k`` counted | `layer_eE(k-1)` |
-| `strain_strain_concentration(sphere, C₀; layer = k, internal = true)` | ``r_{k-1}`` counted | — | `layer_eE(k-1, internal=True)` |
-| `layer_strain_average`, `sphere_strain_average` | — | — | |
+| `gradient_gradient_concentration(sphere, C₀, C₀)` | counted | counted | `eE` |
+| `gradient_gradient_concentration(sphere, C₀, C₀; external = false)` | counted | not counted | `sphere_eE(n-1, external=False)` |
+| `gradient_gradient_concentration(sphere, C₀; layer = k)` | — | — | `layer_eE(k-1, external=False)` |
+| `gradient_gradient_concentration(sphere, C₀; layer = k, external = true)` | — | ``r_k`` counted | `layer_eE(k-1)` |
+| `gradient_gradient_concentration(sphere, C₀; layer = k, internal = true)` | ``r_{k-1}`` counted | — | `layer_eE(k-1, internal=True)` |
+| `layer_gradient_average`, `sphere_gradient_average` | — | — | |
 
 `external` and `internal` keep the meaning they have in Echoes; only the
 default of the per-layer form differs, the material average. With
 `external = true` on every layer, the shells partition the sphere:
 ``\sum_k f_k\,\mathbb A_k = \mathbb A_\Omega``. The same keyword moves the surface stress
-of an outer membrane out of [`stress_strain_concentration`](@ref), so that
+of an outer membrane out of [`flux_gradient_concentration`](@ref), so that
 ``\mathbb N = \mathbb A_{\sigma\varepsilon} - \mathbb C_0:\mathbb A_\Omega`` holds for either value. Conduction
 follows the same rules through [`gradient_gradient_concentration`](@ref) and
 [`flux_gradient_concentration`](@ref). The schemes use the defaults.

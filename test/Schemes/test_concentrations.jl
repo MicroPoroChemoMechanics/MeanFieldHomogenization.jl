@@ -100,8 +100,8 @@ _ct_tol(_) = 1.0e-12
         # Contributions, for the default reference and for an arbitrary one.
         P_M = ct.properties[:M]
         P_any = prop === :C ? TensISO{3}(50.0, 20.0) : TensISO{3}(5.0)
-        contribution = prop === :C ? stiffness_contribution : conductivity_contribution
-        dual_contribution = prop === :C ? compliance_contribution : resistivity_contribution
+        contribution = prop === :C ? property_contribution : property_contribution
+        dual_contribution = prop === :C ? inverse_property_contribution : inverse_property_contribution
         for (ref, P_ref) in ((:M, P_M), (P_any, P_any))
             N = sum(ct.weights[n] * contribution(ct, n; reference = ref) for n in keys(ct))
             @test _ct_rel(P_ref + N, P_hom) < tol
@@ -122,12 +122,12 @@ end
     rve = RVE(; distribution_shape = Ellipsoid(1.0))
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 0.4), Dict(:C => C₁); fraction = 0.0)
-    A_dil = strain_strain_concentration(concentration_tensors(rve, Dilute(:M), :C), :I)
+    A_dil = gradient_gradient_concentration(concentration_tensors(rve, Dilute(:M), :C), :I)
     for sch in _CT_SCHEMES
         ct = concentration_tensors(rve, sch, :C)
         @test all(n -> all(isfinite, get_array(ct.strain[n])) && all(isfinite, get_array(ct.stress[n])), keys(ct))
         if sch isa Union{MoriTanaka, Maxwell, PonteCastanedaWillis, DifferentialScheme, SelfConsistent, AsymmetricSelfConsistent}
-            @test _ct_rel(strain_strain_concentration(ct, :I), A_dil) < (sch isa DifferentialScheme ? 1.0e-6 : 1.0e-10)
+            @test _ct_rel(gradient_gradient_concentration(ct, :I), A_dil) < (sch isa DifferentialScheme ? 1.0e-6 : 1.0e-10)
         end
     end
 end
@@ -136,12 +136,12 @@ end
     rve = _ct_cell()
     ct = concentration_tensors(rve, MoriTanaka(:M), :C)
     S_hom = ct.compliance
-    sB = sum(ct.weights[n] * stress_stress_concentration(ct, n) for n in keys(ct))
-    sA = sum(ct.weights[n] * strain_stress_concentration(ct, n) for n in keys(ct))
+    sB = sum(ct.weights[n] * flux_flux_concentration(ct, n) for n in keys(ct))
+    sA = sum(ct.weights[n] * gradient_flux_concentration(ct, n) for n in keys(ct))
     @test _ct_rel(sB, _ct_id(:C)) < 1.0e-12
     @test _ct_rel(sA, S_hom) < 1.0e-12
-    @test _ct_rel(strain_strain_concentration(ct, :I), ct.strain[:I]) == 0
-    @test _ct_rel(stress_strain_concentration(ct, :I), ct.stress[:I]) == 0
+    @test _ct_rel(gradient_gradient_concentration(ct, :I), ct.strain[:I]) == 0
+    @test _ct_rel(flux_gradient_concentration(ct, :I), ct.stress[:I]) == 0
 
     ctK = concentration_tensors(rve, MoriTanaka(:M); property = :K)
     sB = sum(ctK.weights[n] * flux_flux_concentration(ctK, n) for n in keys(ctK))
@@ -182,21 +182,21 @@ end
     rve = _ct_spheres(k₀, μ₀, k₁, μ₁, f)
 
     ct = concentration_tensors(rve, Dilute(:M), :C)
-    A = strain_strain_concentration(ct, :I)
+    A = gradient_gradient_concentration(ct, :I)
     @test _ct_bulk(A) ≈ ak rtol = 1.0e-13
     @test _ct_shear(A) ≈ aμ rtol = 1.0e-13
-    @test _ct_bulk(strain_strain_concentration(ct, :M)) ≈ (1 - f * ak) / (1 - f) rtol = 1.0e-13
+    @test _ct_bulk(gradient_gradient_concentration(ct, :M)) ≈ (1 - f * ak) / (1 - f) rtol = 1.0e-13
 
     for sch in (MoriTanaka(:M), Maxwell(:M), PonteCastanedaWillis(:M))
         ct = concentration_tensors(rve, sch, :C)
-        A = strain_strain_concentration(ct, :I)
+        A = gradient_gradient_concentration(ct, :I)
         @test _ct_bulk(A) ≈ _ct_mt(ak, f) rtol = 1.0e-13
         @test _ct_shear(A) ≈ _ct_mt(aμ, f) rtol = 1.0e-13
-        A₀ = strain_strain_concentration(ct, :M)
+        A₀ = gradient_gradient_concentration(ct, :M)
         @test _ct_bulk(A₀) ≈ 1 / (1 - f + f * ak) rtol = 1.0e-13
         @test _ct_shear(A₀) ≈ 1 / (1 - f + f * aμ) rtol = 1.0e-13
         # The stress tensor of the inclusion is its stiffness on its strain.
-        @test _ct_bulk(stress_strain_concentration(ct, :I)) ≈ 3k₁ * _ct_mt(ak, f) rtol = 1.0e-13
+        @test _ct_bulk(flux_gradient_concentration(ct, :I)) ≈ 3k₁ * _ct_mt(ak, f) rtol = 1.0e-13
     end
 
     aK = _ct_aK(2.0, 7.0)
@@ -219,18 +219,18 @@ _ct_levin_exact(α₁, α₂, S₁, S₂, S) = α₁ + (α₂ - α₁) ⊡ inv(S
         for sch in _CT_SCHEMES
             ct = concentration_tensors(rve, sch, :C)
             exact = _ct_levin_exact(α₁, α₂, inv(C₁), inv(C₂), ct.compliance)
-            E = levin_free_strain(ct, Dict(:M => α₁, :I => α₂))
+            E = levin_free_gradient(ct, Dict(:M => α₁, :I => α₂))
             @test _ct_rel(E, exact) < max(_ct_tol(sch), 1.0e-11)
             # A free strain is a prestress -ℂ_r : ε*_r: the two forms agree.
-            Σ = levin_prestress(ct, Dict(:M => -(C₁ ⊡ α₁), :I => -(C₂ ⊡ α₂)))
+            Σ = levin_preflux(ct, Dict(:M => -(C₁ ⊡ α₁), :I => -(C₂ ⊡ α₂)))
             @test _ct_rel(Σ, -(ct.effective ⊡ E)) < max(_ct_tol(sch), 1.0e-11)
         end
     end
     # A phase left out carries nothing; a uniform free strain is the macroscopic one.
     rve = _ct_cell(; cracks = false)
     ct = concentration_tensors(rve, MoriTanaka(:M), :C)
-    @test _ct_rel(levin_free_strain(ct, Dict(:M => α₁, :I => α₁, :P => α₁)), α₁) < 1.0e-12
-    @test iszero(get_array(levin_free_strain(ct, Dict{Symbol, typeof(α₁)}())))
+    @test _ct_rel(levin_free_gradient(ct, Dict(:M => α₁, :I => α₁, :P => α₁)), α₁) < 1.0e-12
+    @test iszero(get_array(levin_free_gradient(ct, Dict{Symbol, typeof(α₁)}())))
 end
 
 @testset "Levin — Biot tensor of a porous solid" begin
@@ -241,7 +241,7 @@ end
     for sch in (MoriTanaka(:S), SelfConsistent(), DifferentialScheme(:S))
         ct = concentration_tensors(rve, sch, :C)
         # A pore pressure p is the prestress -p 𝟏 of the pores: Σ* = -p b.
-        b = -levin_prestress(ct, Dict(:P => -_CT_1))
+        b = -levin_preflux(ct, Dict(:P => -_CT_1))
         @test _ct_rel(b, biot_tensor(ct.effective, C_s)) < _ct_tol(sch)
     end
     # The pressure also fills a family of aligned cracks, which enters with its
@@ -250,9 +250,9 @@ end
     add_phase!(rve, :c, PennyCrack(1.0), Dict(:C => C_s); density = 0.1)
     for sch in (MoriTanaka(:S), SelfConsistent(), DifferentialScheme(:S))
         ct = concentration_tensors(rve, sch, :C)
-        b = -levin_prestress(ct, Dict(:P => -_CT_1, :c => -_CT_1))
+        b = -levin_preflux(ct, Dict(:P => -_CT_1, :c => -_CT_1))
         @test _ct_rel(b, biot_tensor(ct.effective, C_s)) < _ct_tol(sch)
-        b_pores = -levin_prestress(ct, Dict(:P => -_CT_1))
+        b_pores = -levin_preflux(ct, Dict(:P => -_CT_1))
         @test !(_ct_rel(b_pores, b) < 1.0e-3)
     end
 end
@@ -293,14 +293,14 @@ end
 
 @testset "Concentration tensors — ForwardDiff against closed forms" begin
     k₀, μ₀, k₁, μ₁, f₀ = 10.0, 4.0, 40.0, 25.0, 0.3
-    A_I(f) = _ct_bulk(strain_strain_concentration(concentration_tensors(_ct_spheres(k₀, μ₀, k₁, μ₁, f), MoriTanaka(:M), :C), :I))
+    A_I(f) = _ct_bulk(gradient_gradient_concentration(concentration_tensors(_ct_spheres(k₀, μ₀, k₁, μ₁, f), MoriTanaka(:M), :C), :I))
     ref_I(f) = _ct_mt(_ct_ak(k₀, μ₀, k₁), f)
     @test FD.derivative(A_I, f₀) ≈ FD.derivative(ref_I, f₀) rtol = 1.0e-12
     # Nested, under distinct tags.
     @test FD.derivative(f -> FD.derivative(A_I, f), f₀) ≈ FD.derivative(f -> FD.derivative(ref_I, f), f₀) rtol = 1.0e-11
 
     # Through a property: the matrix closure carries the derivative too.
-    A_M(k) = _ct_bulk(strain_strain_concentration(concentration_tensors(_ct_spheres(k₀, μ₀, k, μ₁, f₀), MoriTanaka(:M), :C), :M))
+    A_M(k) = _ct_bulk(gradient_gradient_concentration(concentration_tensors(_ct_spheres(k₀, μ₀, k, μ₁, f₀), MoriTanaka(:M), :C), :M))
     ref_M(k) = 1 / (1 - f₀ + f₀ * _ct_ak(k₀, μ₀, k))
     @test FD.derivative(A_M, k₁) ≈ FD.derivative(ref_M, k₁) rtol = 1.0e-12
 
@@ -309,7 +309,7 @@ end
     α₀, α₁ = 1.0e-5, 4.0e-5
     function α_levin(f)
         ct = concentration_tensors(_ct_spheres(k₀, μ₀, k₁, μ₁, f), MoriTanaka(:M), :C)
-        return tr(get_array(levin_free_strain(ct, Dict(:M => α₀ * _CT_1, :I => α₁ * _CT_1)))) / 3
+        return tr(get_array(levin_free_gradient(ct, Dict(:M => α₀ * _CT_1, :I => α₁ * _CT_1)))) / 3
     end
     function α_ref(f)
         k = k₀ + f * (k₁ - k₀) * _ct_mt(_ct_ak(k₀, μ₀, k₁), f)
@@ -357,12 +357,12 @@ if _CT_HAS_SYMPY
         ak, aμ = _ct_ak(k0, μ0, k1), _ct_aμ(k0, μ0, μ1)
         for sch in (MoriTanaka(:M), Maxwell(:M))
             ct = concentration_tensors(rve, sch, :C)
-            a, b = get_data(strain_strain_concentration(ct, :I))
+            a, b = get_data(gradient_gradient_concentration(ct, :I))
             @test SymPy.simplify(a - _ct_mt(ak, f)) == 0
             @test SymPy.simplify(b - _ct_mt(aμ, f)) == 0
         end
         ct = concentration_tensors(rve, Dilute(:M), :C)
-        a, _ = get_data(strain_strain_concentration(ct, :I))
+        a, _ = get_data(gradient_gradient_concentration(ct, :I))
         @test SymPy.simplify(a - ak) == 0
 
         # Levin on symbols: the two-phase thermal expansion through the
@@ -370,7 +370,7 @@ if _CT_HAS_SYMPY
         SymPy.@syms α0::positive α1::positive
         ct = concentration_tensors(rve, MoriTanaka(:M), :C)
         one2 = TensISO{3}(SymPy.Sym(1))
-        E = levin_free_strain(ct, Dict(:M => α0 * one2, :I => α1 * one2))
+        E = levin_free_gradient(ct, Dict(:M => α0 * one2, :I => α1 * one2))
         k_hom = k0 + f * (k1 - k0) * _ct_mt(ak, f)
         α_ref = α0 + (α1 - α0) * (1 / k_hom - 1 / k0) / (1 / k1 - 1 / k0)
         @test SymPy.simplify(get_array(E)[1, 1] - α_ref) == 0
@@ -380,7 +380,7 @@ if _CT_HAS_SYMPY
         add_phase!(rve_p, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3k0, 2μ0)); fraction = :rest)
         add_phase!(rve_p, :P, Ellipsoid(1.0), Dict(:C => zero(TensISO{3}(3k0, 2μ0))); fraction = f)
         ct = concentration_tensors(rve_p, MoriTanaka(:M), :C)
-        b = -levin_prestress(ct, Dict(:P => -one2))
+        b = -levin_preflux(ct, Dict(:P => -one2))
         k_p = k0 + f * (0 - k0) * _ct_mt(_ct_ak(k0, μ0, 0), f)
         @test SymPy.simplify(get_array(b)[1, 1] - (1 - k_p / k0)) == 0
 
@@ -421,12 +421,12 @@ if _CT_HAS_SYMBOLICS
         _num(x) = Symbolics.value(Symbolics.substitute(x, point))
         for sch in (Dilute(:M), MoriTanaka(:M), Maxwell(:M))
             ct = concentration_tensors(rve, sch, :C)
-            a, b = get_data(strain_strain_concentration(ct, :I))
+            a, b = get_data(gradient_gradient_concentration(ct, :I))
             @test a isa Symbolics.Num
             ref_a, ref_b = sch isa Dilute ? (ak, aμ) : (_ct_mt(ak, f), _ct_mt(aμ, f))
             @test _num(a) ≈ _num(ref_a) rtol = 1.0e-13
             @test _num(b) ≈ _num(ref_b) rtol = 1.0e-13
-            N = stiffness_contribution(ct, :I)
+            N = property_contribution(ct, :I)
             @test _num(get_data(N)[1]) ≈ _num(3 * (k1 - k0) * ref_a) rtol = 1.0e-13
         end
         # Conduction, through the same schemes.
@@ -442,7 +442,7 @@ if _CT_HAS_SYMBOLICS
             a = get_array(gradient_gradient_concentration(ct, :I))[1, 1]
             ref = sch isa Dilute ? aK : _ct_mt(aK, f)
             @test _numK(a) ≈ _numK(ref) rtol = 1.0e-13
-            N = get_array(conductivity_contribution(ct, :I))[1, 1]
+            N = get_array(property_contribution(ct, :I))[1, 1]
             @test _numK(N) ≈ _numK((K1 - K0) * ref) rtol = 1.0e-13
         end
     end
@@ -498,7 +498,7 @@ end
     ct = concentration_tensors(lam, Laminated(), :C)
     α₁, α₂ = 1.0e-5 * _CT_1, 4.0e-5 * _CT_1
     exact = _ct_levin_exact(α₁, α₂, inv(C₁), inv(C₂), ct.compliance)
-    @test _ct_rel(levin_free_strain(ct, Dict(:A => α₁, :B => α₂)), exact) < 1.0e-11
+    @test _ct_rel(levin_free_gradient(ct, Dict(:A => α₁, :B => α₂)), exact) < 1.0e-11
 
     Cm, Ci = TensISO{3}(3.0, 0.8), TensISO{3}(30.0, 12.0)
     for kind in (:sc, :bcc), sch in (ClusterModel(), EquivalentInclusion())
@@ -508,7 +508,7 @@ end
         @test _ct_rel(ct.effective, homogenize(asm, sch, :C)) < 1.0e-14
         @test _ct_rel(sum(ct.weights[n] * ct.strain[n] for n in keys(ct)), _ct_id(:C)) < 1.0e-12
         @test _ct_rel(sum(ct.weights[n] * ct.stress[n] for n in keys(ct)), ct.effective) < 1.0e-12
-        @test _ct_rel(Cm + sum(ct.weights[n] * stiffness_contribution(ct, n) for n in keys(ct)), ct.effective) < 1.0e-12
+        @test _ct_rel(Cm + sum(ct.weights[n] * property_contribution(ct, n) for n in keys(ct)), ct.effective) < 1.0e-12
     end
     for kind in (:sc, :bcc), sch in (ClusterModel(), EquivalentInclusion())
         asm = cubic_lattice(kind, Dict(:K => TensISO{3}(1.0)), Dict(:K => TensISO{3}(20.0)); fraction = 0.25, cutoff = 2.0)
@@ -516,7 +516,7 @@ end
         @test _ct_rel(ct.effective, homogenize(asm, sch, :K)) < 1.0e-14
         @test _ct_rel(sum(ct.weights[n] * ct.strain[n] for n in keys(ct)), _ct_id(:K)) < 1.0e-12
         @test _ct_rel(sum(ct.weights[n] * ct.stress[n] for n in keys(ct)), ct.effective) < 1.0e-12
-        @test _ct_rel(TensISO{3}(1.0) + sum(ct.weights[n] * conductivity_contribution(ct, n) for n in keys(ct)), ct.effective) < 1.0e-12
+        @test _ct_rel(TensISO{3}(1.0) + sum(ct.weights[n] * property_contribution(ct, n) for n in keys(ct)), ct.effective) < 1.0e-12
     end
     @test keys(concentration_tensors(cubic_lattice(:sc, Dict(:C => Cm), Dict(:C => Ci); fraction = 0.25), ClusterModel(), :C)) ==
         [:matrix, :family_1]
@@ -529,29 +529,30 @@ end
     ct = concentration_tensors(asm, EquivalentInclusion(), :C)
     km = get_data(Cm)[1] / 3, get_data(Cm)[2] / 2
     ki = get_data(Ci)[1] / 3, get_data(Ci)[2] / 2
-    @test _ct_bulk(strain_strain_concentration(ct, :p1)) ≈ _ct_mt(_ct_ak(km[1], km[2], ki[1]), f) rtol = 1.0e-12
-    @test _ct_shear(strain_strain_concentration(ct, :p1)) ≈ _ct_mt(_ct_aμ(km[1], km[2], ki[2]), f) rtol = 1.0e-12
+    @test _ct_bulk(gradient_gradient_concentration(ct, :p1)) ≈ _ct_mt(_ct_ak(km[1], km[2], ki[1]), f) rtol = 1.0e-12
+    @test _ct_shear(gradient_gradient_concentration(ct, :p1)) ≈ _ct_mt(_ct_aμ(km[1], km[2], ki[2]), f) rtol = 1.0e-12
 end
 
 @testset "Concentration tensors — error paths" begin
     rve = _ct_cell()
     ct = concentration_tensors(rve, SelfConsistent(), :C)
-    @test_throws ArgumentError stiffness_contribution(ct, :I)          # no reference
-    @test_throws ArgumentError compliance_contribution(ct, :I)
-    @test_throws ArgumentError stiffness_contribution(ct, :I; reference = :c)  # a crack
-    @test_throws ArgumentError strain_strain_concentration(ct, :nope)
-    @test_throws ArgumentError levin_free_strain(ct, Dict(:c => _CT_1))   # no material
-    @test levin_prestress(ct, Dict(:c => -_CT_1)) isa TensND.AbstractTens{2, 3}
-    @test_throws ArgumentError levin_prestress(ct, Dict(:nope => _CT_1))
-    # Elasticity and conduction readers do not mix.
-    @test_throws MethodError gradient_gradient_concentration(ct, :I)
+    @test_throws ArgumentError property_contribution(ct, :I)          # no reference
+    @test_throws ArgumentError inverse_property_contribution(ct, :I)
+    @test_throws ArgumentError property_contribution(ct, :I; reference = :c)  # a crack
+    @test_throws ArgumentError gradient_gradient_concentration(ct, :nope)
+    @test_throws ArgumentError levin_free_gradient(ct, Dict(:c => _CT_1))   # no material
+    @test levin_preflux(ct, Dict(:c => -_CT_1)) isa TensND.AbstractTens{2, 3}
+    @test_throws ArgumentError levin_preflux(ct, Dict(:nope => _CT_1))
+    # One reader serves both orders; the names of one physics refuse the other.
     ctK = concentration_tensors(rve, SelfConsistent(), :K)
-    @test_throws MethodError strain_strain_concentration(ctK, :I)
-    @test_throws MethodError levin_free_strain(ctK, Dict(:I => _CT_1))
+    @test gradient_gradient_concentration(ctK, :I) isa TensND.AbstractTens{2, 3}
+    @test_throws ArgumentError strain_strain_concentration(ctK, :I)
+    @test_throws ArgumentError conductivity_contribution(ct, :I; reference = :M)
+    @test_throws MethodError levin_free_gradient(ctK, Dict(:I => _CT_1))
     @test_throws MethodError levin_free_gradient(ct, Dict(:I => Tens([1.0, 0.0, 0.0])))
     @test_throws ArgumentError levin_free_gradient(ctK, Dict(:c => Tens([1.0, 0.0, 0.0])))
     @test_throws "levin_preflux" levin_free_gradient(ctK, Dict(:c => Tens([1.0, 0.0, 0.0])))
-    @test_throws "levin_prestress" levin_free_strain(ct, Dict(:c => _CT_1))
+    @test_throws "levin_preflux" levin_free_gradient(ct, Dict(:c => _CT_1))
     # A scheme the cell does not support.
     lam = Laminate(; normal = (0, 0, 1))
     add_layer!(lam, :A, Dict(:C => TensISO{3}(30.0, 10.0)); thickness = 0.3)

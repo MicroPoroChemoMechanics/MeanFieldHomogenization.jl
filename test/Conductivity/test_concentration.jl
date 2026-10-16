@@ -67,21 +67,21 @@ end
     @test A0 ≈ TensISO{3}(1.0) atol = 1.0e-10
 end
 
-@testset "conductivity_contribution and resistivity_contribution" begin
+@testset "property_contribution and inverse_property_contribution" begin
     K₀ = TensISO{3}(2.0)
     K₁ = TensISO{3}(5.0)
     ell = Ellipsoid(1.0)
 
-    N_K = conductivity_contribution(ell, K₁, K₀)
-    H_R = resistivity_contribution(ell, K₁, K₀)
+    N_K = property_contribution(ell, K₁, K₀)
+    H_R = inverse_property_contribution(ell, K₁, K₀)
     # For iso sphere: N_K = (K₁-K₀) · A_∇∇ = 3k₀(k₁-k₀)/(2k₀+k₁) · 𝟙
     expected_N = 3 * 2.0 * (5.0 - 2.0) / (2 * 2.0 + 5.0)
     @test N_K[1, 1] ≈ expected_N rtol = 1.0e-12
 
     # Dilute coherence: K_eff ≈ K₀ + f N_K ; R_eff ≈ R₀ + f H_R ≈ inv(K_eff) to first order
     f = 0.01
-    ΔK = delta_conductivity(N_K, f)
-    ΔR = delta_resistivity(H_R, f)
+    ΔK = delta_property(N_K, f)
+    ΔR = delta_inverse_property(H_R, f)
     K_eff = K₀ + ΔK
     R_eff = inv(K₀) + ΔR
     R_from_K = inv(K_eff)
@@ -90,14 +90,14 @@ end
 
 # An insulating sphere has the finite resistivity contribution 3/(2k₀) 𝟏,
 # read as −𝐊₀⁻¹ ⋅ 𝐍 ⋅ 𝐊₀⁻¹ without inverting K₁ = 0 (NaN before 0.16.3).
-@testset "resistivity_contribution — insulating sphere" begin
+@testset "inverse_property_contribution — insulating sphere" begin
     for k₀ in (2.0, 7.5)
         K₀ = TensISO{3}(k₀)
-        R = @inferred resistivity_contribution(Ellipsoid(1.0), zero(K₀), K₀)
+        R = @inferred inverse_property_contribution(Ellipsoid(1.0), zero(K₀), K₀)
         @test R ≈ TensISO{3}(3 / (2k₀)) rtol = 1.0e-13
     end
     d = ForwardDiff.derivative(
-        k -> resistivity_contribution(Ellipsoid(1.0), zero(TensISO{3}(k)), TensISO{3}(k))[1, 1], 2.0
+        k -> inverse_property_contribution(Ellipsoid(1.0), zero(TensISO{3}(k)), TensISO{3}(k))[1, 1], 2.0
     )
     @test d ≈ -3 / (2 * 2.0^2) rtol = 1.0e-12
 end

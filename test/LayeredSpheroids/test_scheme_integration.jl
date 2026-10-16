@@ -63,7 +63,7 @@ end
         s = LayeredSpheroid(radii_a, radii_b, moduli; Nseries = 6)
         A = gradient_gradient_concentration(s, K_I, K_M)
         B = flux_gradient_concentration(s, K_I, K_M)
-        N = conductivity_contribution(s, K_I, K_M)
+        N = property_contribution(s, K_I, K_M)
         @test get_array(N) ≈ get_array(B - K_M ⋅ A) rtol = 1.0e-12
     end
 end
@@ -73,8 +73,11 @@ end
     s = LayeredSpheroid((2.9, 3.0), (sqrt(2.9^2 - 8.0), 1.0), (K1, K2); Nseries = 6)
     f1 = layer_volume_fraction(s, 1)
     f2 = layer_volume_fraction(s, 2)
-    voigt = MeanFieldHomogenization.LayeredSpheroids.layer_conductivity_average(s)
-    reuss = MeanFieldHomogenization.LayeredSpheroids.layer_resistivity_average(s)
+    LS = MeanFieldHomogenization.LayeredSpheroids
+    voigt = LS.layer_property_average(s, K1)
+    reuss = LS.layer_inverse_property_average(s, K1)
     @test voigt.data[1] ≈ f1 * 5.0 + f2 * 20.0
     @test reuss.data[1] ≈ f1 / 5.0 + f2 / 20.0
+    @test LS.layer_conductivity_average(s) == voigt
+    @test LS.layer_resistivity_average(s) == reuss
 end

@@ -30,7 +30,7 @@ flavor. A new scheme slots in beside them:
    — so the scheme serves elasticity and transport from one implementation, as
    `_mt_dispatch` does in `mori_tanaka.jl`.
 4. **Go through `contribution_helpers.jl`.** Never call
-   `stiffness_contribution` and friends directly on a phase geometry: the
+   `property_contribution` and friends directly on a phase geometry: the
    `_phase_*` helpers apply the amount, honor the `symmetrize` setting, hand
    the kernel the correctly pre-projected reference medium, and branch on
    [`is_homogeneous_inclusion`](@ref). Two invariants stated in that file's

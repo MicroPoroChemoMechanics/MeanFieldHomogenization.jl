@@ -37,7 +37,7 @@ end
     @testset "SpringInterface — normal stiffness kn" begin
         f = function (kn)
             s = LayeredSphere((0.5, 1.0), Cs; interfaces = (SpringInterface(kn, 2.0), perfect))
-            return strain_strain_concentration(s, C₀; layer = 1)[1, 1, 1, 1]
+            return gradient_gradient_concentration(s, C₀; layer = 1)[1, 1, 1, 1]
         end
         @test ForwardDiff.derivative(f, 3.0) ≈ _central(f, 3.0) rtol = 1.0e-6
     end
@@ -45,7 +45,7 @@ end
     @testset "SpringInterface — tangential stiffness kt" begin
         f = function (kt)
             s = LayeredSphere((0.5, 1.0), Cs; interfaces = (SpringInterface(3.0, kt), perfect))
-            return strain_strain_concentration(s, C₀; layer = 1)[1, 2, 1, 2]
+            return gradient_gradient_concentration(s, C₀; layer = 1)[1, 2, 1, 2]
         end
         @test ForwardDiff.derivative(f, 2.0) ≈ _central(f, 2.0) rtol = 1.0e-6
     end
@@ -55,14 +55,14 @@ end
         # rule through `kn = 1/sn`.
         fs = function (sn)
             s = LayeredSphere((0.5, 1.0), Cs; interfaces = (SpringInterface(; sn, st = 0.5), perfect))
-            return strain_strain_concentration(s, C₀; layer = 1)[1, 1, 1, 1]
+            return gradient_gradient_concentration(s, C₀; layer = 1)[1, 1, 1, 1]
         end
         fk = function (kn)
             s = LayeredSphere(
                 (0.5, 1.0), Cs;
                 interfaces = (SpringInterface(; kn, st = 0.5), perfect)
             )
-            return strain_strain_concentration(s, C₀; layer = 1)[1, 1, 1, 1]
+            return gradient_gradient_concentration(s, C₀; layer = 1)[1, 1, 1, 1]
         end
         sn₀ = 0.25
         @test ForwardDiff.derivative(fs, sn₀) ≈ _central(fs, sn₀) rtol = 1.0e-6
@@ -76,11 +76,11 @@ end
         # `Dual`; without it this is a `MethodError` at construction time.
         fκ = function (κs)
             s = LayeredSphere((0.5, 1.0), Cs; interfaces = (MembraneInterface(κs, 0.5), perfect))
-            return strain_strain_concentration(s, C₀; layer = 1)[1, 1, 1, 1]
+            return gradient_gradient_concentration(s, C₀; layer = 1)[1, 1, 1, 1]
         end
         fμ = function (μs)
             s = LayeredSphere((0.5, 1.0), Cs; interfaces = (MembraneInterface(0.3, μs), perfect))
-            return strain_strain_concentration(s, C₀; layer = 1)[1, 2, 1, 2]
+            return gradient_gradient_concentration(s, C₀; layer = 1)[1, 2, 1, 2]
         end
         @test ForwardDiff.derivative(fκ, 0.3) ≈ _central(fκ, 0.3) rtol = 1.0e-6
         @test ForwardDiff.derivative(fμ, 0.5) ≈ _central(fμ, 0.5) rtol = 1.0e-6
@@ -114,7 +114,7 @@ end
         # homogenized property.
         f = function (kn)
             s = LayeredSphere((0.5, 1.0), Cs; interfaces = (SpringInterface(kn, 2.0), perfect))
-            A = strain_strain_concentration(s, C₀; layer = 1)
+            A = gradient_gradient_concentration(s, C₀; layer = 1)
             return A[1, 1, 1, 1] + A[1, 2, 1, 2]
         end
         d = ForwardDiff.derivative(f, 3.0)
