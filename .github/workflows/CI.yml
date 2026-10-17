@@ -25,8 +25,13 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.12'
-          - '1.13'
+          # Aliases, so that no release of Julia calls for an edit here: 'min' is
+          # the latest patch of the oldest minor that `julia` admits in
+          # Project.toml, '1' the latest release, which also measures the
+          # coverage (keep it, or move the coverage conditions below with it),
+          # and 'pre' the latest prerelease.
+          - 'min'
+          - '1'
           - 'pre'
         # The suite runs in four parts (`TEST_PARTS` in test/runtests.jl). Whole,
         # it took 52 to 85 minutes depending on the runner, and the coverage job
@@ -43,6 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
+        id: julia
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
@@ -50,10 +56,13 @@ jobs:
       # and precompile the same test environment. A cache per part made twelve,
       # which with those of the documentation overflowed the 10 GB a repository
       # may hold: the caches evicted each other and jobs started from a cold
-      # depot, precompiling every dependency again.
+      # depot, precompiling every dependency again. The key also names the
+      # installed version, since the aliases of the matrix stay the same when
+      # Julia changes: a new release starts its own depot instead of carrying the
+      # old `compiled/` along.
       - uses: julia-actions/cache@v3
         with:
-          cache-name: julia-cache;workflow=${{ github.workflow }};job=${{ github.job }};version=${{ matrix.version }}
+          cache-name: julia-cache;workflow=${{ github.workflow }};job=${{ github.job }};version=${{ matrix.version }};julia=${{ steps.julia.outputs.julia-version }}
           include-matrix: false
       # The Pkg server intermittently advertises a General tree hash that its
       # CDN then answers with a 404, which kills the first `Pkg.add` of a cold
@@ -96,9 +105,10 @@ jobs:
       - uses: julia-actions/julia-runtest@v1
         with:
           test_args: ${{ matrix.part }}
-          # Instrument only the primary job: coverage disables precompilation
-          # caching and would slow down every other matrix entry for nothing.
-          coverage: ${{ matrix.version == '1.12' }}
+          # Instrument only the jobs on the latest release: coverage disables
+          # precompilation caching and would slow down every other matrix entry
+          # for nothing.
+          coverage: ${{ matrix.version == '1' }}
       # The coverage of the four parts is merged before it is processed, into one
       # report. Processed part by part, a file that a part never runs counts every
       # executable line as missed, and the union Codecov takes of the reports then
@@ -107,12 +117,12 @@ jobs:
       # the file. Each part keeps its raw `.cov` files instead, tagged with its name
       # so that two runners reusing a process id cannot overwrite each other's.
       - name: Tag the coverage files with the part
-        if: matrix.version == '1.12'
+        if: matrix.version == '1'
         run: |
           find src ext -name '*.cov' -print0 |
             while IFS= read -r -d '' f; do mv "$f" "${f%.cov}.${{ matrix.part }}.cov"; done
       - uses: actions/upload-artifact@v7
-        if: matrix.version == '1.12'
+        if: matrix.version == '1'
         with:
           name: coverage-${{ matrix.part }}
           path: |
@@ -137,7 +147,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
         with:
-          version: '1.12'
+          version: '1'
       - uses: actions/download-artifact@v8
         with:
           pattern: coverage-*
@@ -150,6 +160,11 @@ jobs:
           if [ "$n" -eq 4 ]; then
             for d in coverage-parts/*/; do cp -r "$d". .; done
             echo "complete=true" >> "$GITHUB_OUTPUT"
+          elif [ "$n" -eq 0 ]; then
+            # Either every part failed, or no job of the matrix satisfies the
+            # coverage conditions any more, which would otherwise go unnoticed.
+            echo "::error::no test part produced coverage"
+            exit 1
           else
             echo "::warning::coverage from $n of the 4 test parts: nothing uploaded"
             echo "complete=false" >> "$GITHUB_OUTPUT"

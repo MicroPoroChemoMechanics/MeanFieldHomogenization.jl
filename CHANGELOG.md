@@ -32,6 +32,17 @@ the API, to the results or to the files.
   name `catalog` in the caller's world, before the binding exists there.
   `Base.@invokelatest catalog()` also looks the name up in the latest world;
   the replies are unchanged.
+- **The coverage is measured on the latest release of Julia, whatever its
+  number.** The CI named its versions '1.12' and '1.13' and measured the
+  coverage where the version was '1.12', a literal the matrix had to keep
+  listing: TensND sent Codecov nothing for a month once its matrix and its
+  conditions no longer agreed. The matrix now names the aliases 'min' (the
+  oldest minor that Project.toml admits), '1' and 'pre', which no release of
+  Julia makes stale, and the coverage runs on '1'. The depot caches of the
+  tests, the documentation and the format check are keyed on the installed
+  version as well, so that a new release does not carry the previous one's
+  `compiled/` along, and the job that merges the coverage of the four parts
+  fails when none of them produced any, rather than warning.
 
 ### Documentation
 
