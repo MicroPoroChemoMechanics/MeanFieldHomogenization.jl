@@ -9,13 +9,13 @@ Pkg.activate(joinpath(@__DIR__, "..", ".."); io = devnull)
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
-using JSON3
+using JSON
 using Printf
 
 const HERE = @__DIR__
 const json_path = joinpath(HERE, "bench_layered_alv_step_python.json")
 isfile(json_path) || error("Run `bench_layered_alv_step.py` first")
-ref = JSON3.read(read(json_path, String))
+ref = JSON.parsefile(json_path)
 
 T_grid = collect(Float64.(ref.T))
 n = length(T_grid)

@@ -161,8 +161,8 @@ function verify_only(o)
         chk = c.checksum(c.body(c.setup()))
         sha = checksum_sha(chk)
         status = "—"
-        if ref !== nothing && haskey(ref.cases, Symbol(c.id))
-            r = ref.cases[Symbol(c.id)]
+        if ref !== nothing && haskey(ref.cases, c.id)
+            r = ref.cases[c.id]
             ok, detail = gate_check(
                 (checksum = (sha256 = sha, values = chk),),
                 r, Symbol(o["gate"]); tol = o["tol"]

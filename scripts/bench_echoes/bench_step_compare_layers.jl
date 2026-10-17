@@ -5,11 +5,11 @@ Pkg.activate(joinpath(@__DIR__, "..", ".."); io = devnull)
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
-using JSON3
+using JSON
 using Printf
 
 const json_path = joinpath(@__DIR__, "bench_step_layer_kernel_python.json")
-ref = JSON3.read(read(json_path, String))
+ref = JSON.parsefile(json_path)
 
 T_grid = collect(Float64.(ref.T))
 n = length(T_grid)

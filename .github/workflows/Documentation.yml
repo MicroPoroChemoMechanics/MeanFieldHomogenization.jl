@@ -40,9 +40,12 @@ jobs:
         with:
           fetch-depth: 0
       - uses: julia-actions/setup-julia@v3
+        id: julia
         with:
           version: '1'
       - uses: julia-actions/cache@v3
+        with:
+          cache-name: julia-cache;workflow=${{ github.workflow }};job=${{ github.job }};julia=${{ steps.julia.outputs.julia-version }}
       # Node itself comes from NodeJS_20_jll, which the Julia depot cache above
       # already covers; this caches only what `npm install` fetches for the
       # VitePress build (MathJax, mermaid, plotly), keyed on the manifest that
@@ -122,9 +125,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
+        id: julia
         with:
           version: '1'
       - uses: julia-actions/cache@v3
+        with:
+          cache-name: julia-cache;workflow=${{ github.workflow }};job=${{ github.job }};julia=${{ steps.julia.outputs.julia-version }}
       # Node itself comes from NodeJS_20_jll, which the Julia depot cache above
       # already covers; this caches only what `npm install` fetches for the
       # VitePress build (MathJax, mermaid, plotly), keyed on the manifest that
@@ -198,6 +204,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
+        id: julia
         with:
           version: '1'
       # One depot cache for the seven shards, which build from the same
@@ -205,6 +212,7 @@ jobs:
       # the 10 GB a repository may hold.
       - uses: julia-actions/cache@v3
         with:
+          cache-name: julia-cache;workflow=${{ github.workflow }};job=${{ github.job }};julia=${{ steps.julia.outputs.julia-version }}
           include-matrix: false
       # Node itself comes from NodeJS_20_jll, which the Julia depot cache above
       # already covers; this caches only what `npm install` fetches for the

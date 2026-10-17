@@ -52,7 +52,7 @@ first command on a new machine.
 
 Two things go wrong in practice.
 
-**The environment has never been instantiated.** The sidecar's `using JSON3`
+**The environment has never been instantiated.** The sidecar's `using JSON`
 then dies with a stack trace whose only advice is to run `Pkg.instantiate()`.
 The sidecar now runs it itself on first start, which takes a few minutes once.
 By hand:

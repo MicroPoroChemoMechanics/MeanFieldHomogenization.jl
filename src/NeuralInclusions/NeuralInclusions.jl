@@ -60,7 +60,7 @@ using TensND
 import LinearAlgebra
 import Random
 import ForwardDiff
-import JSON3
+import JSON
 
 using Printf: @printf, @sprintf
 

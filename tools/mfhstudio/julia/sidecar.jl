@@ -16,18 +16,18 @@ import Pkg
 
 # The sidecar runs with `--project=<MeanFieldHomogenization root>`. On a fresh checkout —
 # or after a dependency is added — that environment has not been instantiated,
-# and `using JSON3` dies with a stack trace whose only advice is to run
+# and `using JSON` dies with a stack trace whose only advice is to run
 # `Pkg.instantiate()`. Printing that advice at somebody is worse than following
 # it, so this does.
 function _ensure_dependencies()
     try
-        @eval using JSON3
+        @eval using JSON
         return nothing
     catch
         @info "mfhstudio: installing the project's dependencies (first run — this can take a few minutes)"
         flush(stderr)
         Pkg.instantiate()
-        @eval using JSON3
+        @eval using JSON
         return nothing
     end
 end
@@ -57,12 +57,15 @@ end
 # The handlers below live in files `include`d at run time by `_boot`, so they
 # are newer than this function's world age and must be reached through
 # `invokelatest`. Calling them directly raises "method too new to be called
-# from this world context".
+# from this world context". The macro form also looks the *name* up in the
+# latest world: `Base.invokelatest(catalog)` reads the binding `catalog` in the
+# caller's world first, which Julia 1.12 flags as an access before its
+# definition and announces will become an error.
 function handle(op::String, payload)
     op == "ping" && return Dict("pong" => true, "ready" => STATE["ready"])
-    op == "catalog" && return Base.invokelatest(catalog)
+    op == "catalog" && return Base.@invokelatest catalog()
     op == "traces" && return _traces(payload)
-    op == "parse" && return Base.invokelatest(parse_script, String(payload["source"]))
+    op == "parse" && return Base.@invokelatest parse_script(String(payload["source"]))
     op == "run" && return _run(payload)
     error("unknown op `$op`")
 end
@@ -83,7 +86,7 @@ function _traces(payload)
     haskey(payload, "cutaway") && (kw[:cutaway] = Bool(payload["cutaway"]))
     haskey(payload, "guides") && (kw[:guides] = Bool(payload["guides"]))
     # `scene` comes from a run-time `include` — see the note on `handle`.
-    return Base.invokelatest(scene, geom; kw...)
+    return Base.@invokelatest scene(geom; kw...)
 end
 
 # Geometry expressions come from the interface's own form state, not from a
@@ -192,28 +195,28 @@ end
 function serve()
     _boot()
     # The first line tells the client whether the session is usable at all.
-    println(JSON3.write(Dict("event" => "ready", "ok" => STATE["ready"], "error" => STATE["error"])))
+    println(JSON.json(Dict("event" => "ready", "ok" => STATE["ready"], "error" => STATE["error"])))
     flush(stdout)
 
     for line in eachline(stdin)
         isempty(strip(line)) && continue
         local req
         try
-            req = JSON3.read(line)
+            req = JSON.parse(line)
         catch e
-            println(JSON3.write(Dict("id" => nothing, "ok" => false, "error" => "bad JSON: $(sprint(showerror, e))")))
+            println(JSON.json(Dict("id" => nothing, "ok" => false, "error" => "bad JSON: $(sprint(showerror, e))")))
             flush(stdout)
             continue
         end
-        id = get(req, :id, nothing)
-        op = String(get(req, :op, ""))
-        payload = get(req, :payload, Dict{String, Any}())
+        id = get(req, "id", nothing)
+        op = String(get(req, "op", ""))
+        payload = get(req, "payload", Dict{String, Any}())
         resp = try
             Dict("id" => id, "ok" => true, "result" => handle(op, payload))
         catch e
             Dict("id" => id, "ok" => false, "error" => sprint(showerror, e, catch_backtrace()))
         end
-        println(JSON3.write(resp))
+        println(JSON.json(resp))
         flush(stdout)
     end
     return nothing

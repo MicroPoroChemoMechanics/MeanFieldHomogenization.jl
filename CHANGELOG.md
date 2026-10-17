@@ -1,5 +1,76 @@
 # Changelog
 
+## v0.17.1 — JSON.jl 1 in place of the deprecated JSON3.jl
+
+A patch release. JSON3.jl is deprecated: its README now sends its users to
+JSON.jl 1, which absorbed its features, and it receives no further releases.
+The package used it in a single place, the files of the neural-inclusion
+surrogates, but as a strong dependency, loaded by every
+`using MeanFieldHomogenization`. It now uses JSON.jl instead, with no change to
+the API, to the results or to the files.
+
+### Changed
+
+- **The JSON dependency is JSON.jl 1, no longer JSON3.jl.** `save_surrogate`
+  writes with `JSON.json(io, payload; pretty = 4)` and `load_surrogate` reads
+  with `JSON.parsefile`. The surrogate format is unchanged (1.2.0): the shipped
+  models, and any model saved by an earlier version, load as before and give
+  the same predictions bit for bit; a model saved now also loads in an earlier
+  version. Keys are looked up by string, which every JSON.jl 1.x release
+  supports, hence the bound `JSON = "1"`.
+
+### Tooling
+
+- The benchmark harness (`scripts/bench`), the comparisons against Echoes
+  (`scripts/bench_echoes`) and the MFH Studio sidecar read and write JSON with
+  JSON.jl as well. The environment of `scripts/bench_echoes` now declares it:
+  its scripts loaded JSON3 without declaring it, so they only ran from an
+  environment that happened to provide it.
+- **The MFH Studio sidecar warned, on its first catalog, trace and parse
+  requests, that its code would error in a future Julia.** It reached the handlers defined at run time through
+  `Base.invokelatest(catalog)`, which calls the latest method but reads the
+  name `catalog` in the caller's world, before the binding exists there.
+  `Base.@invokelatest catalog()` also looks the name up in the latest world;
+  the replies are unchanged.
+- **The coverage is measured on the latest release of Julia, whatever its
+  number.** The CI named its versions '1.12' and '1.13' and measured the
+  coverage where the version was '1.12', a literal the matrix had to keep
+  listing: TensND sent Codecov nothing for a month once its matrix and its
+  conditions no longer agreed. The matrix now names the aliases 'min' (the
+  oldest minor that Project.toml admits), '1' and 'pre', which no release of
+  Julia makes stale, and the coverage runs on '1'. The depot caches of the
+  tests, the documentation and the format check are keyed on the installed
+  version as well, so that a new release does not carry the previous one's
+  `compiled/` along, and the job that merges the coverage of the four parts
+  fails when none of them produced any, rather than warning.
+
+### Documentation
+
+- **The norm of a deviator carries no factor.** The conventions page now
+  defines σ_d = √(σᵈ:σᵈ), and ε_d likewise, as in Barthélémy (2005), and the
+  nomenclature follows. The pages that reproduce an article — the sandstone of
+  Dormieux et al. (2010), the granular medium of Maalej et al. (2009), the
+  mortar of Pichler and Hellmich (2011) — keep the ½ under the root of the
+  article and say so, with the conversion; the map of the local fields of a
+  layered sphere shows σ_d rather than the von Mises stress.
+- **The strength ellipse of the porous-strength tutorial was displayed
+  inverted.** The page and `scripts/40_porous_strength_criterion.jl` printed
+  x²/(2A) + y²/B = 1/(1 − φ), while the code draws 2A x² + B y² = 1 − φ. The
+  formula now matches the code, which is unchanged and gives back eq. (5.33) of
+  the thesis for spherical pores under Mori–Tanaka.
+- **The quasi-brittle strength page showed a formula off by √2 and a wrong
+  strength.** With M = S:∂ℂ/∂μ:S it wrote 2μ² where the article's eq. (22) gives
+  μ²; the code, which differentiates with respect to 2μ, was right. And it said
+  that Pichler and Hellmich calibrate σ_ult to 70–90 MPa, where they identify
+  about 50 MPa (their eq. 31); the model gives 49.1 MPa from their
+  f_c = 54.1 MPa.
+- **Levin's theorem is proved on two drawn decompositions**, with prestresses
+  under a macroscopic strain and with free strains under a macroscopic stress,
+  and with averages: Σ* = ⟨σ*:𝔸⟩ and E* = ⟨ε*:𝔹⟩ for fields of any form, the
+  sums over the phases coming last. The free strain is proved directly.
+- The Hill tensor tutorial writes P₁₁₁₁ of a sphere as
+  1/(5(λ + 2μ)) + 2/(15μ).
+
 ## v0.17.0 — concentration tensors of every scheme, Levin's theorem, one function whatever the order
 
 A minor release, and a breaking one. Every scheme now returns, besides the
