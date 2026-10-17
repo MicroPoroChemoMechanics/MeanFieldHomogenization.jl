@@ -24,8 +24,9 @@ cost is measured, and which path dominates a computation.
   over. Returning a generic tensor from a new builder silently deoptimizes every
   scheme downstream.
 - `ForwardDiff.Dual` propagates through the nested `QuadGK` paths. The AD path
-  must stay clear of `PolynomialRoots`, which is why `Residue` is `Float64`-only
-  and `:auto` routes `Dual` inputs elsewhere.
+  must stay clear of polynomial root finding (the eigenvalues of a companion
+  matrix, by LAPACK), which is why `Residue` is `Float64`-only and `:auto`
+  routes `Dual` inputs elsewhere.
 
 ## Measuring
 
@@ -67,7 +68,7 @@ Rough ordering, useful for deciding what to optimize:
 | Path | Cost |
 | :--- | :--- |
 | `Analytical` (isotropic, conduction, coaxial TI) | ``O(1)``, no quadrature |
-| `Residue` (3-D anisotropic, `:residues` only) | ~4 ms; one polynomial solve + 1-D quadrature per call. Not the default: it throws on a reference anisotropic in type and isotropic in value |
+| `Residue` (3-D anisotropic, `:residues` only) | ~3 ms; one eigenvalue solve and a residue sum per node of a 1-D quadrature. Not the default: it takes `Float64` coefficients only |
 | `NestedQuadGK` / `DECUHR` (3-D anisotropic; `:auto` is `NestedQuadGK`) | ~1 ms / ~4 ms on a triaxial ellipsoid in a triclinic matrix ([Performance vs Echoes](@ref dev-benchmarks)); adaptive cubature, AD-safe, robust everywhere; `NestedQuadGK` is also the more accurate, ~1e-13 against 1e-11 to 1e-8 at the default tolerances |
 | ALV (aging linear Volterra) | dominates everything: operators are ``(B n)\times(B n)`` block-triangular matrices, so cost grows with the *square* of the time-grid length. The structured kernel classes (`ALVKernelISO`, `ALVKernelTI`, `ALVKernelOrtho`) exist precisely to cut the storage and the Volterra algebra from ``36n^2`` down to ``2n^2``–``12n^2``; see [Aging linear Volterra behavior](@ref th-viscoelasticity). |
 | Spheroid coupling matrices | quadrature backend is `Float64` and converges to machine precision; the `:series` BigFloat backend is an *oracle*, orders of magnitude slower, and should never be a default |

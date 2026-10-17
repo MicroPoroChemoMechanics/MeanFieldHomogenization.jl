@@ -11,10 +11,11 @@
             -> Matrix{Float64}  (3×3, symmetric)
 
 Per-``\\varphi`` kernel of the crack-plane line integral that produces
-the COD tensor of an anisotropic matrix, evaluated by Cauchy residues
-(the reduction of [masson2008](@citet) adapted to the crack limit, with the
-limit-algorithm construction of [barthelemyIJSS2009](@citet)).
-Float64 only.
+the COD tensor of an anisotropic matrix: the reduced kernel
+``\\hat{\\boldsymbol{Q}}^{\\star}_{nn}(\\underline{\\xi}^{\\star})``
+[kanaunlevin2009, barthelemyIJSS2026](@cite), an integral over the normal
+coordinate ``\\xi_n`` of a rational function whose poles are the roots of the
+acoustic polynomial, evaluated here by the residue theorem. Float64 only.
 """
 function _Qnn_star_residue(
         C::AbstractArray{Float64, 4},
@@ -25,10 +26,6 @@ function _Qnn_star_residue(
     sys = MFH_Core._build_poly_system(C, ξs, n̂)
     adj = sys.adj_poly
     Q = sys.Q
-    dQ = sys.dQ
-    roots_uhp = sys.roots_uhp
-    # Adaptive singular-root guard: skip roots where |Q'(zᵣ)| ≪ scale of Q.
-    dQ_thresh = 1.0e-14 * maximum(abs, coeffs(Q))
 
     # Tncon[i, p, q] = Σ_α C_{i α p q} n̂_α
     Tncon = zeros(Float64, 3, 3, 3)
@@ -72,14 +69,26 @@ function _Qnn_star_residue(
         Bpoly[i, k] = acc
     end
 
-    # Residue sum over UHP roots
+    # Residue sum over the roots of the upper half plane, by groups so that a
+    # multiple root, or roots that nearly coincide, are summed as a whole: for
+    # coincident roots the group sum is the residue at a multiple pole, and an
+    # isotropic matrix has a triple root. Skipping such roots, as was done, lost
+    # their contribution altogether.
+    poles = vcat(sys.roots_uhp, conj.(sys.roots_uhp))
+    lead = ComplexF64(coeffs(Q)[end])
+    T = zeros(ComplexF64, maximum(b -> length(coeffs(b)), Bpoly))
     result = zeros(Float64, 3, 3)
-    @inbounds for zr in roots_uhp
-        dQr = dQ(zr)
-        abs(dQr) < dQ_thresh && continue
-        for i in 1:3, k in 1:3
-            contrib = im * Bpoly[i, k](zr) / dQr
-            result[i, k] -= real(contrib)
+    for members in MFH_Core._pole_clusters(poles, 3; logfactor = false)
+        c, H, _ = MFH_Core._cluster_weights(poles, members, lead; logfactor = false)
+        @inbounds for i in 1:3, k in 1:3
+            a = coeffs(Bpoly[i, k])
+            m = min(length(H), length(a))
+            MFH_Core._taylor_at!(T, a, c, m)
+            s = zero(ComplexF64)
+            for j in 1:m
+                s += T[j] * H[j]
+            end
+            result[i, k] -= real(im * s)
         end
     end
 

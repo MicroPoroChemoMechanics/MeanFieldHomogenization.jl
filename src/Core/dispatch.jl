@@ -68,15 +68,10 @@ _resolve_algo(::Val, ::AbstractEllipsoidalInclusion, ::TensND.AbstractTens{2, 2}
 # ─── 3D anisotropic elasticity ───────────────────────────────────────────────
 
 # `:auto` picks a CUBATURE, never the residue algorithm — the same choice
-# ECHOES makes with its `NUMINT` default.  The residue path is not robust:
-# its acoustic polynomial degenerates whenever the reference is anisotropic in
-# *type* and isotropic in *value*, and it then throws an `ArgumentError`
-# rather than return a number.  That reference is not exotic — it is
-# exactly what the differential and self-consistent schemes feed back at
-# their first step, and `Dilute` / `MoriTanaka` reach it too as soon as an
-# anisotropically-typed matrix happens to hold isotropic values.  A default
-# must not fail on a legitimate input, so `Residue` is now available on
-# explicit `method = :residues` only.
+# ECHOES makes with its `NUMINT` default. The residue algorithm finds the roots
+# of a polynomial, so it takes `Float64` coefficients only and carries no
+# derivative through a scheme; it is available on an explicit
+# `method = :residues`.
 #
 # Between the two cubatures, `NestedQuadGK` is the default. On every case
 # measured it is both the faster and the more accurate: against closed forms,

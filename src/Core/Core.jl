@@ -43,7 +43,6 @@ using QuadGK
 using ForwardDiff
 using ..Elliptic
 using Polynomials
-using PolynomialRoots
 
 include("counters.jl")
 include("abstractions.jl")

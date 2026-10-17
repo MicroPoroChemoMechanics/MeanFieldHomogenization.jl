@@ -22,11 +22,9 @@
 #  tensor, Barthélémy 2009), hence a factor ≈ 10 between ω = 1e-2 and
 #  ω = 1e-3; the threshold is set at 5 to leave room for the quadrature.
 #
-#  Backend note: `method = :residues` is NOT usable here — it returns NaN on
-#  ellipsoids flatter than about c ≈ 1e-3 (independently of `reltol`), which
-#  is exactly the regime this oracle lives in.  The nested-QuadGK backend is
-#  validated down to ω = 1e-3 in `test/Elasticity/test_hill_nestedquadgk_oblate.jl`,
-#  which is why the sweep stops there.
+#  Backend note: the nested-QuadGK backend is validated down to ω = 1e-3 in
+#  `test/Elasticity/test_hill_nestedquadgk_oblate.jl`, which is why the sweep
+#  stops there.
 # =============================================================================
 
 using Test

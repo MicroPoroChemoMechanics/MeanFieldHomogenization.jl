@@ -1,5 +1,90 @@
 # Changelog
 
+## v0.17.3 — The residue algorithm on multiple and nearly multiple roots
+
+A patch release. The residue algorithm, reached by an explicit
+`method = :residues`, lost its accuracy, gave a wrong value without warning, or
+refused the case, whenever roots of the acoustic polynomial coincided or nearly
+did: an isotropic or transversely isotropic reference along the ellipsoid axes,
+a reference close to one, and flat ellipsoids, whose roots all shrink with the
+aspect ratio. The default `method = :auto`, which uses a cubature, is not
+affected. Errors below are relative, against the cubature or a closed form, as
+measured on 0.17.2 and on this release.
+
+### Fixed
+
+- **`cod_tensor(...; method = :residues)` dropped multiple roots.** A root
+  where the derivative of the acoustic polynomial vanished was skipped, and its
+  contribution lost, where the residue at a multiple pole was due. For an
+  isotropic matrix entered as a general tensor, which has a triple root, the
+  COD tensor came out wrong by 1.0 for a penny-shaped crack, 0.73 for a ribbon,
+  1.0 for an ellipse of aspect 0.5; a transversely isotropic matrix with a
+  double root, by 1.1e-7. All are now within 1e-12.
+- **`hill_tensor(...; method = :residues)` on multiple and close roots.** Roots
+  closer than 1e-3 in absolute terms were declared coincident and moved to their
+  mean, an error of the order of their distance. A transversely isotropic matrix
+  around a sphere was wrong by 8.2e-3 with C66 = C44 (1 + 1e-3), a cubic matrix
+  around a 3:1:1 prolate spheroid by 8.4e-6, a double root away from `i` by
+  1.9e-5. An isotropic matrix entered as a general tensor, around a sphere or a
+  spheroid, a transversely isotropic one with C11 = C33, and one with a double
+  root at `i` were refused with an `ArgumentError`. All are now within 3e-12, and
+  the isotropic ones within 1e-13 of Eshelby's tensor.
+- **Flat ellipsoids.** The roots shrink with the aspect ratio, so that the same
+  absolute threshold grouped distinct roots: a flat ellipsoid of aspect 1e-3 in a
+  triclinic matrix was wrong by 1.3e-2, and flatter ones were refused. Down to
+  1e-6 they are now within the tolerance of the outer quadrature, 1e-15 at
+  tight tolerances.
+- **The root finder.** On the polynomial of an isotropic reference around a
+  sphere, with two triple roots, the iterative root finder returned, at some
+  angles, five roots out of six far from any root. The roots are now the
+  eigenvalues of the companion matrix, which the QR algorithm finds with a
+  backward error at the rounding level.
+- **A reference without a Green operator.** A reference whose acoustic tensor is
+  singular along a direction of the integration, one without shear stiffness for
+  instance, was integrated on a polynomial cut down to a lower degree, which
+  turned an undefined integral into a number. It is refused with an
+  `ArgumentError`, as is a reference whose acoustic tensor changes sign.
+
+The residues of roots that coincide or nearly do are now summed as a group, by
+the expansion of the contour integral around it, which depends on the roots only
+through symmetric functions of their offsets and is well conditioned; for
+coincident roots it is the residue at a multiple pole. The inner integral of the
+Hill tensor is taken in the variable of Masson's substitution `t = cot(θ/2)`, in
+which `i` is a double pole like any other, with its numerators in factored form,
+so that no digit is lost near `t = ±1` or `t = 0`, where the poles of flat and
+long ellipsoids lie. The derivation is on the theory page of Hill tensors.
+
+### Changed
+
+- The residue algorithm runs faster: 2.6 ms for the Hill tensor of a 3:2:1
+  ellipsoid in a triclinic matrix, against 4.1 ms, with 2.5 MiB allocated against
+  7.0 MiB. The 21 numerators are integrated through their coefficients rather
+  than built as polynomials at each angle.
+- The `PolynomialRoots` dependency is dropped.
+
+### Tests
+
+- The residue sums over groups of poles against partial fractions in 512-bit
+  arithmetic; the inner integral of the Hill tensor against a quadrature of the
+  same rational function; the Hill tensor on multiple and nearly multiple roots
+  against the cubature and Eshelby's tensor; the COD tensor of an isotropic
+  matrix entered as a general tensor against the closed forms. A test that
+  pinned the failure of the residues for a crack whose normal is perpendicular
+  to the axis of a transversely isotropic matrix now checks their agreement with
+  the cubature there.
+- A test file of the residue algorithm on aligned transversely isotropic and
+  orthotropic matrices was never included in the test suite; it is now.
+
+### Documentation
+
+- The COD tensor of an arbitrarily anisotropic matrix is described as what the
+  code computes: the inverse of an integral of the reduced kernel
+  ``\hat{\boldsymbol{Q}}^{\star}_{nn}``, after Barthélémy (2026), a line integral
+  along the normal (Kanaun and Levin, 2009). The docstrings attributed it to the
+  flattening of an ellipsoid (Barthélémy, 2009), an independent route to the
+  same tensor, and its residue evaluation to Masson (2008), whose paper does not
+  treat cracks.
+
 ## v0.17.2 — Mori–Tanaka in aging viscoelasticity, on aligned inclusions
 
 A patch release. The aging linear viscoelastic Mori–Tanaka scheme gave a wrong

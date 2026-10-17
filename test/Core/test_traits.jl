@@ -15,11 +15,11 @@ end
 # =============================================================================
 #  `_resolve_algo` policy for a 3D anisotropic elastic reference.
 #
-#  `:auto` must pick a CUBATURE, never the residue algorithm: the residue
-#  acoustic polynomial degenerates whenever the reference is anisotropic in
-#  *type* and isotropic in *value* — the state the differential and
-#  self-consistent schemes feed back at their first step — and returns NaN
-#  there.  `Residue` stays reachable on an explicit `:residues`.
+#  `:auto` must pick a CUBATURE, never the residue algorithm, which takes
+#  `Float64` coefficients only. `Residue` stays reachable on an explicit
+#  `:residues`, including on a reference anisotropic in *type* and isotropic in
+#  *value* — the state the differential and self-consistent schemes feed back
+#  at their first step — whose acoustic polynomial has a triple root.
 # =============================================================================
 
 @testset "Core — `:auto` picks a cubature for a 3D anisotropic reference" begin
@@ -41,13 +41,13 @@ end
             MeanFieldHomogenization.Core.Residue
     end
 
-    # …and the default actually returns the right number on the degenerate
-    # reference, where the residue path throws.
+    # …and the default returns the right number on the degenerate reference.
     P = hill_tensor(tri, aniso_typed)
     P_ref = hill_tensor(tri, C_iso)                     # closed form
     @test maximum(abs, Array(P) .- Array(P_ref)) / maximum(abs, Array(P_ref)) < 1.0e-8
-    # Explicitly asked for, the residue path refuses it and says why.
-    @test_throws ArgumentError hill_tensor(tri, aniso_typed; method = :residues)
+    # So does the residue path, asked for explicitly.
+    P_res = hill_tensor(tri, aniso_typed; method = :residues)
+    @test maximum(abs, Array(P_res) .- Array(P_ref)) / maximum(abs, Array(P_ref)) < 1.0e-10
 
     # Non-Float64 coefficients keep the type-generic cubature.
     @test MeanFieldHomogenization.Core._aniso_default_algo(ComplexF64(1) * (C_iso + 0.35 * N)) isa

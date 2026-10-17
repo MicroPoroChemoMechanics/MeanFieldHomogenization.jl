@@ -393,11 +393,11 @@ The three curves are straight lines of **slope 1**: the error decays like
 [barthelemyIJSS2009](@cite). That slope is the real content of the check — a
 single ``\rho`` would not distinguish a true limit from a coincidence.
 
-!!! note "Two limits of the flattening route"
-    The Hill tensor is validated down to ``\rho = 10^{-3}``, where the sweep
-    stops, and the residue backend fails below about ``c \approx 10^{-3}`` —
-    hence `method = :nestedquadgk` for the anisotropic cases. Neither affects [`cod_tensor`](@ref), which resolves the limit
-    analytically instead of flattening an ellipsoid.
+!!! note "How flat the flattening route goes"
+    The sweep stops at ``\rho = 10^{-3}``. Both numerical back-ends hold far
+    below it: at ``c = 10^{-4}`` the residues agree with the cubature to
+    ``10^{-15}``. None of this concerns [`cod_tensor`](@ref), which resolves the
+    limit analytically instead of flattening an ellipsoid.
 
 ## [4. From the Green operator to ``\boldsymbol{B}``](@id th-cod-green)
 

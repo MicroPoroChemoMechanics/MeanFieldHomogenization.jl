@@ -11,9 +11,11 @@
 """
     _Qnn_star_nestedquadgk(C, ξs, n̂; abstol, reltol, maxiters) -> Matrix
 
-ForwardDiff-compatible evaluation of the crack-plane kernel via
-nested 1-D QuadGK adaptive quadrature — used in the ``\\omega \\to 0``
-limit algorithm of [barthelemyIJSS2009](@citet).
+ForwardDiff-compatible evaluation of the reduced kernel
+``\\hat{\\boldsymbol{Q}}^{\\star}_{nn}(\\underline{\\xi}^{\\star})``
+[kanaunlevin2009, barthelemyIJSS2026](@cite) by adaptive quadrature of its line
+integral along the normal, with ``\\xi_n = \\rho\\cot\\alpha`` and the two
+signs of ``\\xi_n`` taken together.
 """
 function _Qnn_star_nestedquadgk(
         C::AbstractArray{TC, 4},

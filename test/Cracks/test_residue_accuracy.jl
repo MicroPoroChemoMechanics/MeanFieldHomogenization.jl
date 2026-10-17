@@ -60,7 +60,7 @@ using TensND
         @test err / scale < 1.0e-6
     end
 
-    @testset "Polished roots — |Q(zᵣ)| near machine epsilon" begin
+    @testset "Roots — |Q(zᵣ)| at the rounding level" begin
         # Build a cubic C_arr that yields a well-conditioned degree-6 Q.
         Cr = zeros(3, 3, 3, 3)
         for i in 1:3, j in 1:3, k in 1:3, l in 1:3
@@ -77,5 +77,45 @@ using TensND
         max_resid = maximum(abs(sys.Q(zr)) for zr in sys.roots_uhp)
         Qscale = maximum(abs, MeanFieldHomogenization.Core.Polynomials.coeffs(sys.Q))
         @test max_resid < 1.0e-10 * Qscale
+    end
+
+    @testset "Multiple roots — summed, not skipped" begin
+        # An isotropic matrix entered as a general tensor: the acoustic polynomial
+        # has a triple root, whose contribution used to be skipped (relative error
+        # 1 on a penny-shaped crack). Against the closed forms.
+        λ, μ = 18.0, 12.0
+        KM_iso = [
+            λ + 2μ λ λ 0.0 0.0 0.0;
+            λ λ + 2μ λ 0.0 0.0 0.0;
+            λ λ λ + 2μ 0.0 0.0 0.0;
+            0.0 0.0 0.0 2μ 0.0 0.0;
+            0.0 0.0 0.0 0.0 2μ 0.0;
+            0.0 0.0 0.0 0.0 0.0 2μ
+        ]
+        C_iso = TensND.inv_KM(KM_iso, basis)
+        C_iso_t = TensISO{3}(3λ + 2μ, 2μ)
+        for crack in (
+                PennyCrack(1.0), EllipticCrack(1.0, 0.5), RibbonCrack(1.0),
+                EllipticCrack(1.0, 0.5; euler_angles = (0.3, 0.7, 0.1)),
+            )
+            @test components_canon(cod_tensor(crack, C_iso; method = :residues)) ≈
+                components_canon(cod_tensor(crack, C_iso_t)) rtol = 1.0e-10
+        end
+        # Transversely isotropic, with (C13 + C44)² = (C11 - C44)(C33 - C44): a
+        # double root. Against the cubature.
+        C11, C33, C44 = 60.0, 45.0, 20.0
+        C13 = sqrt((C11 - C44) * (C33 - C44)) - C44
+        KM_ti = [
+            C11 C11 - 2C44 C13 0.0 0.0 0.0;
+            C11 - 2C44 C11 C13 0.0 0.0 0.0;
+            C13 C13 C33 0.0 0.0 0.0;
+            0.0 0.0 0.0 2C44 0.0 0.0;
+            0.0 0.0 0.0 0.0 2C44 0.0;
+            0.0 0.0 0.0 0.0 0.0 2C44
+        ]
+        C_ti = TensND.inv_KM(KM_ti, basis)
+        crack = EllipticCrack(1.0, 0.5; euler_angles = (0.3, 0.7, 0.1))
+        @test components_canon(cod_tensor(crack, C_ti; method = :residues)) ≈
+            components_canon(cod_tensor(crack, C_ti; method = :nestedquadgk, abstol = 1.0e-12, reltol = 1.0e-11)) rtol = 1.0e-10
     end
 end

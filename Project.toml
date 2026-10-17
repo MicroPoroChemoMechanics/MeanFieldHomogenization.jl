@@ -1,6 +1,6 @@
 name = "MeanFieldHomogenization"
 uuid = "c1e5f8a3-7b2d-4a6c-9e4f-3b8a2c5d7e9f"
-version = "0.17.2"
+version = "0.17.3"
 authors = ["Jean-François Barthélémy <jean-francois.barthelemy@cerema.fr>"]
 
 [deps]
@@ -10,7 +10,6 @@ ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
-PolynomialRoots = "3a141323-8675-5d76-9d11-e1df1406c778"
 Polynomials = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
@@ -65,7 +64,6 @@ MittagLeffler = "1"
 NonlinearSolve = "4"
 Optimisers = "0.4"
 OrdinaryDiffEq = "6, 7"
-PolynomialRoots = "1"
 Polynomials = "4"
 Printf = "1"
 QuadGK = "2"
