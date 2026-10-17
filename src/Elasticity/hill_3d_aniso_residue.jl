@@ -12,29 +12,24 @@
 
 # Eₙ(t) = t^(7-n) vⁿ, v = (t² - 1)/2, n = 0, …, 6, which is t⁷ ξⁿ with
 # ξ(t) = (t² - 1)/(2t): a numerator p of degree ≤ 6 in ξ becomes
-# t⁷ p(ξ(t)) = Σₙ pₙ Eₙ(t). Its first `M` Taylor coefficients at `c` go to the
-# columns of `T`, from the factored form: for a flat or a long ellipsoid the poles
-# lie near t = ±1 or near 0, where the expanded polynomials lose every digit to
-# cancellation. `v₀ = (c² - 1)/2` is passed in, computed without cancellation.
-function _joukowski_taylor!(T::AbstractMatrix{ComplexF64}, c::ComplexF64, v₀::ComplexF64, M::Int)
-    # Powers of v(c + t) = v₀ + c t + t²/2 in the even columns of a scratch
-    # layout: column n + 1 holds vⁿ, then is multiplied by (c + t)^(7 - n).
-    fill!(T, zero(ComplexF64))
-    @inbounds begin
-        T[1, 1] = 1
-        for n in 1:6, i in 1:M
-            a = v₀ * T[i, n]
-            i >= 2 && (a += c * T[i - 1, n])
-            i >= 3 && (a += T[i - 2, n] / 2)
-            T[i, n + 1] = a
-        end
-        for n in 0:6
-            for _ in 1:(7 - n), i in M:-1:1
-                T[i, n + 1] = c * T[i, n + 1] + (i >= 2 ? T[i - 1, n + 1] : zero(ComplexF64))
-            end
-        end
-    end
-    return T
+# t⁷ p(ξ(t)) = Σₙ pₙ Eₙ(t). Their first `M` Taylor coefficients at `c`, as the
+# columns of a matrix, from the factored form: for a flat or a long ellipsoid
+# the poles lie near t = ±1 or near 0, where the expanded polynomials lose every
+# digit to cancellation. `v₀ = (c² - 1)/2` is passed in, computed without
+# cancellation.
+function _joukowski_taylor(c::ComplexF64, v₀::ComplexF64, M::Int)
+    # A lone pole, by far the most frequent, needs the values Eₙ(c) alone.
+    M == 1 && return reshape(c .^ (7:-1:1) .* v₀ .^ (0:6), 1, 7)
+    v = MFH_Core._series_powers(ComplexF64[v₀, c, 1 / 2], 6, M)      # vⁿ
+    t = MFH_Core._series_powers(ComplexF64[c, 1], 7, M)              # (c + t)ᵏ
+    return reduce(hcat, [MFH_Core._series_product(v[n + 1], t[8 - n], M) for n in 0:6])
+end
+
+# v - 1 and v + 1 at a preimage v of z: (v - 1)(v + 1) = 2 z v gives the smaller
+# of the two without the difference that cancels.
+function _unit_offsets(z::ComplexF64, v::ComplexF64)
+    a, b = v - 1, v + 1
+    return abs(a) < abs(b) ? (2 * z * v / b, b) : (a, 2 * z * v / a)
 end
 
 """
@@ -59,43 +54,27 @@ The poles are summed by groups, so that ``i`` and the roots that coincide with
 it or with each other, exactly or nearly, need no case of their own.
 """
 function _hill_line_weights(Q::Polynomial, roots_uhp::AbstractVector{ComplexF64})
-    # The poles of the upper half plane, with w - 1 and w + 1 for each: at a
-    # preimage of z, (w - 1)(w + 1) = 2 z w, so the smaller factor comes from that
-    # product rather than from a difference that cancels.
-    upper = ComplexF64[im, im]
-    wm1 = ComplexF64[im - 1, im - 1]
-    wp1 = ComplexF64[im + 1, im + 1]
-    for z in roots_uhp
-        s = sqrt(1 + z^2)
-        # The preimages have product -1: the larger one directly, the other as its
-        # inverse.
-        w = abs(z + s) >= abs(z - s) ? z + s : z - s
-        for v in (w, -1 / w)
-            a, b = v - 1, v + 1
-            abs(a) < abs(b) ? (a = 2 * z * v / b) : (b = 2 * z * v / a)
-            push!(upper, v)
-            push!(wm1, a)
-            push!(wp1, b)
-        end
-    end
-    poles = vcat(upper, conj.(upper))
+    # The poles of the upper half plane: i twice, then the two preimages of each
+    # root, the larger directly and the other as its inverse (their product is
+    # -1), each with its offsets from ±1.
+    s = sqrt.(1 .+ roots_uhp .^ 2)
+    w = @. ifelse(abs(roots_uhp + s) >= abs(roots_uhp - s), roots_uhp + s, roots_uhp - s)
+    z = repeat(roots_uhp; inner = 2)
+    v = vec(permutedims([w -inv.(w)]))      # w₁, -1/w₁, w₂, -1/w₂, …
+    offs = _unit_offsets.(z, v)
+    i = ComplexF64(im)
+    upper = [i; i; v]
+    wm1 = [i - 1; i - 1; first.(offs)]
+    wp1 = [i + 1; i + 1; last.(offs)]
+    poles = [upper; conj.(upper)]
     lead = ComplexF64(coeffs(Q)[end] / 64)        # leading coefficient of D
     W = zeros(Float64, 7)
-    T = zeros(ComplexF64, 14, 7)
     for members in MFH_Core._pole_clusters(poles, length(upper); logfactor = true)
         c, H_one, H_log = MFH_Core._cluster_weights(poles, members, lead; logfactor = true)
         M = min(length(H_one), 14)
-        k = length(members)
-        v₀ = sum(wm1[j] for j in members) * sum(wp1[j] for j in members) / (2 * k^2)
-        _joukowski_taylor!(T, c, v₀, M)
-        for n in 1:7
-            s_log = s_one = zero(ComplexF64)
-            @inbounds for i in 1:M
-                s_log += T[i, n] * H_log[i]
-                s_one += T[i, n] * H_one[i]
-            end
-            W[n] -= 2 * (2 * real(s_log) + 2π * imag(s_one))
-        end
+        v₀ = sum(view(wm1, members)) * sum(view(wp1, members)) / (2 * length(members)^2)
+        T = transpose(_joukowski_taylor(c, v₀, M))       # 7 × M
+        W .-= 2 .* (2 .* real.(T * view(H_log, 1:M)) .+ 2π .* imag.(T * view(H_one, 1:M)))
     end
     return W
 end
@@ -146,33 +125,23 @@ function _hill_3d_aniso_residue(
         W = _hill_line_weights(sys.Q, sys.roots_uhp)
 
         # The 21 numerators (upper Voigt) are sums of four products
-        # ζ_a ζ_b adj(K)_cd, each of degree ≤ 6, and the inner integral is linear
-        # in their coefficients: Λ[a, b, c, d] = Σₘ (ζ_a ζ_b adj_cd)ₘ Wₘ.
-        Λ = zeros(Float64, 3, 3, 3, 3)
-        @inbounds for d in 1:3, c in 1:3
-            ad = coeffs(sys.adj_poly[c, d])
-            for b in 1:3, a in 1:b
-                q = (
-                    α₀ζ[a] * α₀ζ[b],
-                    α₀ζ[a] * α₁ζ[b] + α₁ζ[a] * α₀ζ[b],
-                    α₁ζ[a] * α₁ζ[b],
-                )
-                s = 0.0
-                for t in eachindex(ad), u in 1:3
-                    s += q[u] * real(ad[t]) * W[t + u - 1]
-                end
-                Λ[a, b, c, d] = Λ[b, a, c, d] = s
+        # ζ_a ζ_b adj(K)_cd, each of degree ≤ 6, and the inner integral is a
+        # bilinear form in their coefficients, through the Hankel matrix of the
+        # weights: Λ(a, b, c, d) = Σ_{u,t} (ζ_a ζ_b)_u (adj_cd)_t W_{u+t}.
+        Hk = [W[u + t - 1] for u in 1:3, t in 1:5]
+        q = [
+            SVector(α₀ζ[a] * α₀ζ[b], α₀ζ[a] * α₁ζ[b] + α₁ζ[a] * α₀ζ[b], α₁ζ[a] * α₁ζ[b])
+                for a in 1:3, b in 1:3
+        ]
+        HA = Hk * reduce(hcat, sys.adj)
+        Λ(a, b, c, d) = dot(q[a, b], view(HA, :, c + 3 * (d - 1)))
+        return SVector{21}(
+            map(_VOIGT_UPPER21) do (I, J)
+                vi, vj = _VOIGT_IJ[I]
+                vk, vl = _VOIGT_IJ[J]
+                (Λ(vi, vl, vj, vk) + Λ(vi, vk, vj, vl) + Λ(vj, vl, vi, vk) + Λ(vj, vk, vi, vl)) / 4
             end
-        end
-        res = zeros(Float64, 21)
-        @inbounds for (n, (I, J)) in enumerate(_VOIGT_UPPER21)
-            vi, vj = _VOIGT_IJ[I]
-            vk, vl = _VOIGT_IJ[J]
-            res[n] = 0.25 * (
-                Λ[vi, vl, vj, vk] + Λ[vi, vk, vj, vl] + Λ[vj, vl, vi, vk] + Λ[vj, vk, vi, vl]
-            )
-        end
-        return res
+        )
     end
 
     MFH_Core._bump!(MFH_Core.QUADGK_OUTER)
@@ -181,7 +150,7 @@ function _hill_3d_aniso_residue(
         atol = abstol, rtol = reltol, maxevals = maxiters
     )
 
-    P_vals ./= π
+    P_vals = P_vals / π
 
     P_arr = _fill_hill21!(zeros(Float64, 3, 3, 3, 3), P_vals)
 

@@ -101,3 +101,37 @@ end
         @test errs[1] / errs[2] > 5
     end
 end
+
+@testset "Cracks — every route to ℍ and 𝐁 agrees (triclinic matrix)" begin
+    # 𝐁 from the reduced kernel (Barthélémy 2026) by three integrators, turned
+    # into ℍ by `compliance_from_cod`; ℍ from the flattening of an ellipsoid
+    # (Barthélémy 2009), with the Hill tensor by three integrators, extrapolated
+    # to ω → 0 from two flatnesses — the error is O(ω), Richardson's combination
+    # O(ω²) — and turned back into 𝐁 by `cod_from_compliance`.
+    basis = TensND.CanonicalBasis{3, Float64}()
+    KM_tri = [
+        210.0 80.0 75.0 5.0 4.0 3.0;
+        80.0 195.0 90.0 -2.0 3.0 -1.0;
+        75.0 90.0 220.0 1.0 -2.0 2.0;
+        5.0 -2.0 1.0 60.0 2.5 1.5;
+        4.0 3.0 -2.0 2.5 65.0 -1.0;
+        3.0 -1.0 2.0 1.5 -1.0 55.0
+    ]
+    C₀ = TensND.inv_KM(KM_tri, basis)
+    tol = (; abstol = 1.0e-12, reltol = 1.0e-10)
+
+    for η in (1.0, 0.5)
+        crack = _crack(η)
+        Bs = [cod_tensor(crack, C₀; method = m, tol...) for m in (:nestedquadgk, :decuhr, :residues)]
+        H_ref = compliance_from_cod(Bs[1], crack)
+        @test all(B -> _relerr(B, Bs[1]) < 1.0e-12, Bs)
+        @test _relerr(inverse_property_contribution(crack, C₀; tol...), H_ref) < 1.0e-12
+        # Measured: 1.5e-9 with the cubature and the residues from ω = 1e-4 and
+        # 1e-5, 1.5e-5 with DECUHR from ω = 1e-2 and 1e-3.
+        for (m, ω, rtol) in ((:nestedquadgk, 1.0e-4, 1.0e-8), (:residues, 1.0e-4, 1.0e-8), (:decuhr, 1.0e-2, 1.0e-4))
+            H = (10 * _H_from_hill(1.0, η, ω / 10, C₀; method = m, tol...) - _H_from_hill(1.0, η, ω, C₀; method = m, tol...)) / 9
+            @test _relerr(H, H_ref) < rtol
+            @test _relerr(cod_from_compliance(H, crack), Bs[1]) < rtol
+        end
+    end
+end

@@ -1,15 +1,17 @@
 # Changelog
 
-## v0.17.3 — The residue algorithm on multiple and nearly multiple roots
+## v0.17.3 — Residues on multiple roots, and the bridge from B to H
 
 A patch release. The residue algorithm, reached by an explicit
 `method = :residues`, lost its accuracy, gave a wrong value without warning, or
 refused the case, whenever roots of the acoustic polynomial coincided or nearly
 did: an isotropic or transversely isotropic reference along the ellipsoid axes,
 a reference close to one, and flat ellipsoids, whose roots all shrink with the
-aspect ratio. The default `method = :auto`, which uses a cubature, is not
-affected. Errors below are relative, against the cubature or a closed form, as
-measured on 0.17.2 and on this release.
+aspect ratio. The default `method = :auto`, which uses a cubature, was not
+affected. Two defects outside the residues are fixed too: `compliance_from_cod`
+returned a wrong ℍ from 𝐁 for all but one component, and the cubature of 𝐁 broke
+down at tight tolerances. Errors below are relative, against the cubature or a
+closed form, as measured on 0.17.2 and on this release.
 
 ### Fixed
 
@@ -39,6 +41,25 @@ measured on 0.17.2 and on this release.
   angles, five roots out of six far from any root. The roots are now the
   eigenvalues of the companion matrix, which the QR algorithm finds with a
   backward error at the rounding level.
+- **`compliance_from_cod` was right on ℍ₃₃₃₃ only.** It placed the components
+  ``H_{i3k3}`` of ``k\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}``
+  and then averaged over eight index permutations as if all were filled, so
+  that, the normal being ``\underline{e}_3``, ``H_{1313}`` came out as
+  ``k B_{11}/16`` instead of ``k B_{11}/4`` and ``H_{1333}`` as ``k B_{13}/4``
+  instead of ``k B_{13}/2``, which its docstring presented as a property of the
+  framework. It now forms the symmetrized product, as
+  `inverse_property_contribution` always did, and is the exact inverse
+  of `cod_from_compliance`, which was right. Both dispatch on the shape family
+  of the crack, so that a user-defined crack declaring its `shape_trait` has
+  them too.
+- **The cubature of 𝐁 at tight tolerances.** Along the normal coordinate
+  ``\xi_n = \rho\cot\alpha`` the kernel cancels down to ``O(\sin^2\alpha)``
+  as ``\alpha \to 0`` and lost ``\epsilon/\sin^2\alpha`` of its accuracy: asked
+  for 1e-13, the adaptive quadrature chased the rounding noise down to
+  ``\alpha \approx 10^{-150}`` and stopped on a `DomainError`. Below
+  ``\sin\alpha = 0.05`` the kernel is now taken in a form free of cancellation;
+  at tight tolerances the cubature then agrees with the residues to 1.6e-15.
+  This concerns `:nestedquadgk`, the default, and `:decuhr` alike.
 - **A reference without a Green operator.** A reference whose acoustic tensor is
   singular along a direction of the integration, one without shear stiffness for
   instance, was integrated on a polynomial cut down to a lower degree, which
@@ -56,10 +77,12 @@ long ellipsoids lie. The derivation is on the theory page of Hill tensors.
 
 ### Changed
 
-- The residue algorithm runs faster: 2.6 ms for the Hill tensor of a 3:2:1
-  ellipsoid in a triclinic matrix, against 4.1 ms, with 2.5 MiB allocated against
-  7.0 MiB. The 21 numerators are integrated through their coefficients rather
-  than built as polynomials at each angle.
+- The residue algorithm runs twice as fast: 1.9 ms for the Hill tensor of a
+  3:2:1 ellipsoid in a triclinic matrix, against 4.1 ms, with 2.7 MiB allocated
+  against 7.0 MiB; 1.3 ms for the COD tensor of a penny-shaped crack, against
+  2.7 ms. The acoustic polynomial, its adjugate and the numerators are products
+  of fixed size rather than polynomial objects, and the 21 numerators of the
+  Hill tensor are integrated through their coefficients, as a bilinear form.
 - The `PolynomialRoots` dependency is dropped.
 
 ### Tests
@@ -74,9 +97,18 @@ long ellipsoids lie. The derivation is on the theory page of Hill tensors.
   the cubature there.
 - A test file of the residue algorithm on aligned transversely isotropic and
   orthotropic matrices was never included in the test suite; it is now.
+- Every route to ℍ and 𝐁 in a triclinic matrix: 𝐁 from the reduced kernel by
+  the cubature, DECUHR and the residues, and ℍ from the flattening of an
+  ellipsoid with the Hill tensor by the same three, extrapolated to zero
+  flatness, compared both ways through the bridge. They agree to 1e-14 among
+  the integrations of 𝐁, and to 1.5e-9 with the extrapolated flattening.
+- The bridge between ℍ and 𝐁 on every component, against the symmetrized
+  product written out from its definition.
 
 ### Documentation
 
+- The page on COD tensors shows the comparison of every route in a triclinic
+  matrix.
 - The COD tensor of an arbitrarily anisotropic matrix is described as what the
   code computes: the inverse of an integral of the reduced kernel
   ``\hat{\boldsymbol{Q}}^{\star}_{nn}``, after Barthélémy (2026), a line integral

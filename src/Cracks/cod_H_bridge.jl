@@ -5,14 +5,34 @@
 #  The factorization H = k (n̂ ⊗ˢ B ⊗ˢ n̂) depends on the crack shape:
 #     k = 3/4  for an elliptic (including penny) crack (Kachanov / Echoes)
 #     k = 2/π  for a ribbon (tunnel) crack
-#  The inverse mapping therefore dispatches on the crack type.
+#  The factor dispatches on the shape family, as the rest of the crack algebra
+#  (`compliance.jl`), so that a user-defined crack declaring its `shape_trait`
+#  inherits it.
 # =============================================================================
 
-# -----------------------------------------------------------------------------
-# Factor tables — keep the geometric k as a scalar helper for clarity.
-# -----------------------------------------------------------------------------
-@inline _H_over_B_factor(::EllipticCrack, T) = T(3) / T(4)
-@inline _H_over_B_factor(::RibbonCrack, T) = T(2) / T(π)
+_H_over_B_factor(crack::MFH_Core.AbstractCrack, ::Type{T}) where {T} =
+    _H_over_B_factor(MFH_Core.shape_trait(crack), T)
+_H_over_B_factor(::Type{<:CrackShape}, ::Type{T}) where {T} = 3 * one(T) / 4
+_H_over_B_factor(::Type{Ribbon}, ::Type{T}) where {T} = 2 * one(T) / T(π)
+_H_over_B_factor(S::Type, ::Type) = _unsupported_crack_shape(S, "compliance")
+
+# H = k n ⊗ˢ B ⊗ˢ n, with n the third vector of ℬ.
+function _H_from_B(B, k, ℬ::TensND.AbstractBasis)
+    n̂ = TensND.tens_basis(ℬ, 3)
+    return k * (n̂ ⊗ˢ TensND.change_tens(B, ℬ) ⊗ˢ n̂)
+end
+
+# Its inverse: in ℬ, where n = e₃, (n ⊗ˢ B ⊗ˢ n)_{i3j3} = B_ij (1 + δ_i3)(1 + δ_j3) / 4,
+# and these components of H determine B.
+function _B_from_H(H, k, ℬ::TensND.AbstractBasis)
+    newH = TensND.change_tens(H, ℬ)
+    return TensND.Tens(
+        Tensors.SymmetricTensor{2, 3}(
+            (i, j) -> 4 * newH[i, 3, j, 3] / (k * (1 + (i == 3)) * (1 + (j == 3)))
+        ),
+        ℬ,
+    )
+end
 
 """
     cod_from_compliance(H, crack, ℬ=get_basis(H)) -> Tens{2,3}
@@ -24,38 +44,16 @@ compliance contribution tensor ``\\mathbb{H}`` using
 \\mathbb{H} = k\\,\\underline{n}\\stackrel{s}{\\otimes}\\boldsymbol{B}\\stackrel{s}{\\otimes}\\underline{n},
 ```
 
-with ``k = 3/4`` for an elliptic crack and ``k = 2/\\pi`` for a ribbon.
+with ``k = 3/4`` for an elliptic crack and ``k = 2/\\pi`` for a ribbon, and
+``\\underline{n}`` the third vector of `ℬ`, the crack normal when `H` comes from
+[`inverse_property_contribution`](@ref). The exact inverse of
+[`compliance_from_cod`](@ref).
 
-Dispatches on the crack type
+Dispatches on the shape family of the crack
 [kachanov1992, barthelemyIJES2021](@cite).
-
-!!! note
-    The pair [`compliance_from_cod`](@ref) / [`cod_from_compliance`](@ref)
-    only preserves the ``B_{nn}`` component exactly; off-diagonal
-    components involve Kelvin–Mandel pre-factors that are not inverted
-    by the pair.
 """
-function cod_from_compliance(
-        H, crack::MFH_Core.AbstractCrack,
-        ℬ::TensND.AbstractBasis = TensND.get_basis(H),
-    )
-    T = eltype(H)
-    k = _H_over_B_factor(crack, T)
-    newH = TensND.change_tens(H, ℬ)
-    return TensND.Tens(
-        Tensors.SymmetricTensor{2, 3}(
-            (i, j) ->
-            newH[i, 3, j, 3] /
-                (
-                k * (
-                    one(T) + MFH_Core._δ(i, 3, T) + MFH_Core._δ(j, 3, T) +
-                        MFH_Core._δ(i, 3, T) * MFH_Core._δ(j, 3, T)
-                ) / T(4)
-            )
-        ),
-        ℬ,
-    )
-end
+cod_from_compliance(H, crack::MFH_Core.AbstractCrack, ℬ::TensND.AbstractBasis = TensND.get_basis(H)) =
+    _B_from_H(H, _H_over_B_factor(crack, eltype(H)), ℬ)
 
 """
     cod_from_compliance(H, ℬ=get_basis(H)) -> Tens{2,3}
@@ -65,61 +63,21 @@ with the Kachanov factor ``k = 3/4``.  Kept for back-compatibility with
 code that does not carry the crack object.  For a ribbon, pass the
 `RibbonCrack` explicitly.
 """
-function cod_from_compliance(H, ℬ::TensND.AbstractBasis = TensND.get_basis(H))
-    T = eltype(H)
-    newH = TensND.change_tens(H, ℬ)
-    return TensND.Tens(
-        Tensors.SymmetricTensor{2, 3}(
-            (i, j) ->
-            16 * newH[i, 3, j, 3] /
-                (
-                3 * (
-                    one(T) + MFH_Core._δ(i, 3, T) + MFH_Core._δ(j, 3, T) +
-                        MFH_Core._δ(i, 3, T) * MFH_Core._δ(j, 3, T)
-                )
-            )
-        ),
-        ℬ,
-    )
-end
+cod_from_compliance(H, ℬ::TensND.AbstractBasis = TensND.get_basis(H)) =
+    _B_from_H(H, _H_over_B_factor(EllipticShape, eltype(H)), ℬ)
 
 const BfromH = cod_from_compliance
 
 """
     compliance_from_cod(B, crack, ℬ=get_basis(B)) -> Tens{4,3}
 
-Inverse of [`cod_from_compliance`](@ref).  Reconstruct ``\\mathbb{H}``
-from ``\\boldsymbol{B}`` with the crack-shape-dependent factor ``k``.
+``\\mathbb{H} = k\\,\\underline{n}\\stackrel{s}{\\otimes}\\boldsymbol{B}\\stackrel{s}{\\otimes}\\underline{n}``,
+with the crack-shape-dependent factor ``k`` and ``\\underline{n}`` the third
+vector of `ℬ`: what [`inverse_property_contribution`](@ref) returns from
+[`cod_tensor`](@ref), and the exact inverse of [`cod_from_compliance`](@ref).
 """
-function compliance_from_cod(
-        B, crack::MFH_Core.AbstractCrack,
-        ℬ::TensND.AbstractBasis = TensND.get_basis(B),
-    )
-    T = eltype(B)
-    k = _H_over_B_factor(crack, T)
-    newB = TensND.change_tens(B, ℬ)
-    data = zeros(T, 3, 3, 3, 3)
-    @inbounds for i in 1:3, kidx in 1:3
-        j = 3
-        l = 3
-        v = newB[i, kidx] * k *
-            (
-            one(T) + MFH_Core._δ(i, 3, T) + MFH_Core._δ(kidx, 3, T) +
-                MFH_Core._δ(i, 3, T) * MFH_Core._δ(kidx, 3, T)
-        ) / T(4)
-        data[i, j, kidx, l] = v
-    end
-    sym = zeros(T, 3, 3, 3, 3)
-    @inbounds for i in 1:3, j in 1:3, kidx in 1:3, l in 1:3
-        sym[i, j, kidx, l] = (
-            data[i, j, kidx, l] + data[j, i, kidx, l] +
-                data[i, j, l, kidx] + data[j, i, l, kidx] +
-                data[kidx, l, i, j] + data[l, kidx, i, j] +
-                data[kidx, l, j, i] + data[l, kidx, j, i]
-        ) / 8
-    end
-    return TensND.Tens(sym, ℬ)
-end
+compliance_from_cod(B, crack::MFH_Core.AbstractCrack, ℬ::TensND.AbstractBasis = TensND.get_basis(B)) =
+    _H_from_B(B, _H_over_B_factor(crack, eltype(B)), ℬ)
 
 """
     compliance_from_cod(B, ℬ=get_basis(B)) -> Tens{4,3}
@@ -127,31 +85,7 @@ end
 Elliptic / 3D default: identical to `compliance_from_cod(B, EllipticCrack-like, ℬ)`.
 Kept for back-compatibility.
 """
-function compliance_from_cod(B, ℬ::TensND.AbstractBasis = TensND.get_basis(B))
-    T = eltype(B)
-    newB = TensND.change_tens(B, ℬ)
-    data = zeros(T, 3, 3, 3, 3)
-    @inbounds for i in 1:3, k in 1:3
-        j = 3
-        l = 3
-        v = newB[i, k] * 3 *
-            (
-            one(T) + MFH_Core._δ(i, 3, T) + MFH_Core._δ(k, 3, T) +
-                MFH_Core._δ(i, 3, T) * MFH_Core._δ(k, 3, T)
-        ) /
-            16
-        data[i, j, k, l] = v
-    end
-    sym = zeros(T, 3, 3, 3, 3)
-    @inbounds for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        sym[i, j, k, l] = (
-            data[i, j, k, l] + data[j, i, k, l] +
-                data[i, j, l, k] + data[j, i, l, k] +
-                data[k, l, i, j] + data[l, k, i, j] +
-                data[k, l, j, i] + data[l, k, j, i]
-        ) / 8
-    end
-    return TensND.Tens(sym, ℬ)
-end
+compliance_from_cod(B, ℬ::TensND.AbstractBasis = TensND.get_basis(B)) =
+    _H_from_B(B, _H_over_B_factor(EllipticShape, eltype(B)), ℬ)
 
 const HfromB = compliance_from_cod

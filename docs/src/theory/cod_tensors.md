@@ -299,8 +299,9 @@ the limit by ``b``: one definition covers the 2-D and the 3-D geometry, and
 ``\mathbb{H}`` inherits ``\boldsymbol{B}``'s size-independence.
 
 The bridge in both directions is [`compliance_from_cod`](@ref) /
-[`cod_from_compliance`](@ref) (`src/Cracks/cod_H_bridge.jl`), dispatching on the
-crack type to apply the correct factor.
+[`cod_from_compliance`](@ref) (`src/Cracks/cod_H_bridge.jl`), each the exact
+inverse of the other, dispatching on the shape family of the crack to apply the
+correct factor.
 
 ### Conventions: what ``\boldsymbol{B}`` and ``\mathbb{H}`` are normalized by
 
@@ -398,6 +399,47 @@ single ``\rho`` would not distinguish a true limit from a coincidence.
     below it: at ``c = 10^{-4}`` the residues agree with the cubature to
     ``10^{-15}``. None of this concerns [`cod_tensor`](@ref), which resolves the
     limit analytically instead of flattening an ellipsoid.
+
+### Every route, in a triclinic matrix
+
+In a matrix without any symmetry, ``\boldsymbol{B}`` comes from the reduced
+kernel ``\hat{\boldsymbol{Q}}^{\star}_{nn}`` of [section 4](@ref th-cod-green)
+by three integrators, and ``\mathbb{H}`` from the flattening above with the
+Hill tensor by three integrators. The flattening error being ``O(\rho)``, the
+combination ``\bigl(10\,\mathbb{H}(\rho/10)-\mathbb{H}(\rho)\bigr)/9`` cancels
+its first-order term and leaves ``O(\rho^{2})``. Each side is compared with the
+other through [`compliance_from_cod`](@ref) and [`cod_from_compliance`](@ref):
+
+```@example Horacle
+import DECUHR, Integrals   # loads the `:decuhr` back-end
+using Printf
+
+KM = [210.0 80 75 5 4 3; 80 195 90 -2 3 -1; 75 90 220 1 -2 2;
+      5 -2 1 60 2.5 1.5; 4 3 -2 2.5 65 -1; 3 -1 2 1.5 -1 55]   # Kelvin–Mandel
+C_tri = TensND.inv_KM(KM, TensND.CanonicalBasis{3, Float64}())
+crack = EllipticCrack(1.0, 0.5)
+tol = (; abstol = 1.0e-12, reltol = 1.0e-10)
+
+B_ref = cod_tensor(crack, C_tri; method = :nestedquadgk, tol...)
+H_ref = compliance_from_cod(B_ref, crack)
+function H_flat(method, ρ)   # (c/b) ℚ⁻¹ of the flattened ellipsoid
+    P = hill_tensor(Ellipsoid(1.0, 0.5, 0.5ρ), C_tri; method, tol...)
+    return ρ * inv(C_tri - C_tri ⊡ P ⊡ C_tri)
+end
+
+for m in (:residues, :decuhr)
+    @printf "B by %-12s against :nestedquadgk   %.0e\n" m relerr(cod_tensor(crack, C_tri; method = m, tol...), B_ref)
+end
+for (m, ρ) in ((:nestedquadgk, 1.0e-4), (:residues, 1.0e-4), (:decuhr, 1.0e-2))
+    H = (10 * H_flat(m, ρ / 10) - H_flat(m, ρ)) / 9
+    @printf "H flattened, %-12s ρ = %.0e: on H %.0e, on B %.0e\n" m ρ relerr(H, H_ref) relerr(cod_from_compliance(H, crack), B_ref)
+end
+```
+
+The three integrations of ``\boldsymbol{B}`` agree to rounding. The extrapolated
+flattening meets them to about ``10^{-9}`` with the cubature and the residues,
+and to about ``10^{-5}`` with DECUHR, taken at ``\rho = 10^{-2}`` and
+``10^{-3}`` only, where it stays fast.
 
 ## [4. From the Green operator to ``\boldsymbol{B}``](@id th-cod-green)
 

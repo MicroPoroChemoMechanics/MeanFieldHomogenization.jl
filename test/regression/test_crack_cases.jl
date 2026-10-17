@@ -59,35 +59,31 @@ using LinearAlgebra
         @test B_r[1, 1] ≈ χ / (1 - ν)               rtol = 1.0e-10
     end
 
-    @testset "H ↔ B conversion (diagonal slot only)" begin
-        # The forward/backward transform via `compliance_from_cod` /
-        # `cod_from_compliance` only preserves the `B[3,3]` slot
-        # exactly (that slot carries the full opening information for a
-        # flat crack whose normal is the third frame axis).  Other slots
-        # scale by an asymmetric factor inherited from the Kelvin/Mandel
-        # conversion — this is a known feature of the Kachanov framework
-        # with n̂ ≡ e₃.  See `src/Cracks/cod_H_bridge.jl`.
+    @testset "H ↔ B conversion, every component" begin
+        # `compliance_from_cod` is k n ⊗ˢ B ⊗ˢ n and `cod_from_compliance` its
+        # exact inverse. Up to 0.17.2 the first divided the shear components by
+        # a further 2 to 4, and only the B[3,3] slot survived a round trip.
         ℬ = CanonicalBasis{3, Float64}()
-        Bdata = [
-            1.2  0.1  0.0;
-            0.1  0.9  0.0;
-            0.0  0.0  1.5
-        ]
-        B = Tens(Bdata, ℬ)
-
-        # Elliptic / 3D factor (3/4)
-        H_ell = compliance_from_cod(B, PennyCrack(1.0), ℬ)
-        B_back_ell = cod_from_compliance(H_ell, PennyCrack(1.0), ℬ)
-        @test B_back_ell[3, 3] ≈ B[3, 3] atol = 1.0e-12
-
-        # Ribbon / 2D factor (2/π)
-        H_rib = compliance_from_cod(B, RibbonCrack(1.0), ℬ)
-        B_back_rib = cod_from_compliance(H_rib, RibbonCrack(1.0), ℬ)
-        @test B_back_rib[3, 3] ≈ B[3, 3] atol = 1.0e-12
-
-        # Back-compat (no-crack) defaults to the elliptic factor
-        H_default = compliance_from_cod(B, ℬ)
-        @test H_default[3, 3, 3, 3] ≈ H_ell[3, 3, 3, 3] atol = 1.0e-12
+        B = Tens([1.2 0.1 0.3; 0.1 0.9 -0.2; 0.3 -0.2 1.5], ℬ)
+        n = [0.0, 0.0, 1.0]
+        for (crack, k) in ((PennyCrack(1.0), 3 / 4), (RibbonCrack(1.0), 2 / π))
+            H = compliance_from_cod(B, crack, ℬ)
+            # The symmetrized product, written out from its definition.
+            H_ref = [
+                k * (
+                    n[i] * B[j, p] * n[q] + n[j] * B[i, p] * n[q] +
+                        n[i] * B[j, q] * n[p] + n[j] * B[i, q] * n[p]
+                ) / 4
+                    for i in 1:3, j in 1:3, p in 1:3, q in 1:3
+            ]
+            @test components_canon(H) ≈ H_ref rtol = 1.0e-14
+            @test components_canon(cod_from_compliance(H, crack, ℬ)) ≈ components_canon(B) rtol = 1.0e-14
+        end
+        # Without a crack, the elliptic factor.
+        @test components_canon(compliance_from_cod(B, ℬ)) ≈
+            components_canon(compliance_from_cod(B, PennyCrack(1.0), ℬ)) rtol = 1.0e-14
+        @test components_canon(cod_from_compliance(compliance_from_cod(B, ℬ), ℬ)) ≈
+            components_canon(B) rtol = 1.0e-14
     end
 
     @testset "Compliance contribution — H factorization (ellipse vs ribbon)" begin
@@ -220,8 +216,8 @@ using LinearAlgebra
         ec = EllipticCrack(1.0, 0.4)
         B = cod_tensor(ec, C₀)
         H = compliance_from_cod(B, ec)
-        @test H[3, 3, 3, 3] ≈ inverse_property_contribution(ec, C₀)[3, 3, 3, 3] rtol = 1.0e-12
-        @test cod_from_compliance(H, ec)[3, 3] ≈ B[3, 3] rtol = 1.0e-10
+        @test components_canon(H) ≈ components_canon(inverse_property_contribution(ec, C₀)) rtol = 1.0e-12
+        @test components_canon(cod_from_compliance(H, ec)) ≈ components_canon(B) rtol = 1.0e-12
     end
 
     @testset "SIF — ribbon analytical" begin
