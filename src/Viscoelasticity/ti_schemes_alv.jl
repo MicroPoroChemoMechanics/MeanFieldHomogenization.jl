@@ -451,7 +451,10 @@ function mori_tanaka_alv_ti(
         _ti_add!(num, fractions[r], contribs_ti[r])
         _ti_add!(den, fractions[r], A_duts_ti[r])
     end
-    factor = _ti_left_divide(den, num)
+    # (Σ fᵣ Ñᵣ) ∘ (f₀ 𝟙 + Σ fₛ Ãₛ)^{-1}, the den on the RIGHT as in `mori_tanaka_alv`:
+    # the normal block of a TI operator is a 2×2 Walpole matrix and the time
+    # axis a lower-triangular Volterra one, and neither commutes.
+    factor = _ti_prod(num, _ti_inv(den))
     return ntuple(k -> ℓ_0[k] .+ factor[k], 6)
 end
 

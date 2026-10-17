@@ -391,6 +391,7 @@ end
         include("Viscoelasticity/test_order2_alv.jl")
         include("Viscoelasticity/test_extra_schemes_alv.jl")
         include("Viscoelasticity/test_crack_schemes_alv.jl")
+        include("Viscoelasticity/test_alv_symmetry_paths.jl")
         include("Viscoelasticity/test_glassy_limit_alv.jl")
     end
 

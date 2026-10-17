@@ -479,7 +479,10 @@ function mori_tanaka_alv_ortho(
         _ortho_add!(num, fractions[r], contribs_ortho[r])
         _ortho_add!(den, fractions[r], A_duts_ortho[r])
     end
-    factor = _ortho_left_divide(den, num)
+    # (Σ fᵣ Ñᵣ) ∘ (f₀ 𝟙 + Σ fₛ Ãₛ)^{-1}, the den on the RIGHT as in `mori_tanaka_alv`:
+    # the normal block of an orthotropic operator is a 3×3 matrix and the time
+    # axis a lower-triangular Volterra one, and neither commutes.
+    factor = _ortho_prod(num, _ortho_inv(den))
     return ntuple(k -> o_0[k] .+ factor[k], 12)
 end
 
