@@ -6,6 +6,13 @@
     [The coupled poroelastic problem](@ref fe-poro-coupling) for the equations
     of the two-field element.
 
+The finite-element code owns the mesh, the assembly and the global equilibrium;
+at each quadrature point it hands the law the strain (and, for the coupled
+element, the pore pressure) with the state of the last converged step, and gets
+back the stress, the tangent and the new state. Here the law is an MFH material,
+its state the openings of its cracks or whatever else the material carries from
+step to step.
+
 The material contract knows nothing about any finite-element library, so
 coupling to one needs almost no adapter. What Ferrite does *not* provide is
 per-quadrature-point material state, so that bookkeeping — and an element
