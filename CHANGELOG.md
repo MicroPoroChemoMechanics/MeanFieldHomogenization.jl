@@ -1,5 +1,51 @@
 # Changelog
 
+## v0.17.2 — Mori–Tanaka in aging viscoelasticity, on aligned inclusions
+
+A patch release. The aging linear viscoelastic Mori–Tanaka scheme gave a wrong
+stiffness whenever its fast transversely isotropic or orthotropic path was taken,
+that is for inclusions aligned with the canonical frame and not all spherical.
+
+### Fixed
+
+- **`homogenize_alv` with `MoriTanaka()` composed its two operators in the wrong
+  order on the transversely isotropic and orthotropic paths.** The scheme is
+  ``\tilde{\mathbb{C}}_0 + \bigl(\sum_i f_i \tilde{\mathbb{N}}_i\bigr)\circ
+  \bigl(f_0\,\mathbb{I} + \sum_j f_j \tilde{\mathbb{A}}_j\bigr)^{-\circ}``, the
+  inverse on the right, and the general path computes it so; the two fast paths
+  divided on the left. Neither the normal block of a transversely isotropic or
+  orthotropic operator (a 2×2 or 3×3 matrix) nor the time axis of an aging one
+  commutes, so the answer was wrong even in the elastic limit, where the
+  shear terms alone came out right: by 0.4 % of the largest stiffness for oblate
+  spheroids of aspect 0.3 at a contrast of 2 and 20 % inclusions, by 4.3 % for
+  an aspect of 0.1 at a contrast of 10 and 30 %, by 4.6 % for 10:1 fibers at a
+  contrast of 20 and 30 %. The isotropic path, spherical inclusions, and every
+  other scheme were right. Both paths now agree with the general one to the
+  rounding, in the elastic limit and on random aging operators.
+
+### Tests
+
+- Every ALV scheme on each path its dispatch takes by symmetry — transversely
+  isotropic, orthotropic and general — is held to its elastic limit, and the
+  structured Mori–Tanaka and Maxwell paths to the general algebra on random
+  aging operators. A test of the orthotropic path claimed to check Mori–Tanaka
+  and Maxwell and checked neither.
+- The Ferrite material backend is tested: the plane-strain element on a thick
+  cylinder against Lamé's solution, converging at second order, and the coupled
+  ``(\underline{u}, p)`` element on the integrals it must assemble, which a field
+  linear in the coordinates reproduces exactly.
+
+### Tooling
+
+- The Gridap backend is left out of the coverage report: CI does not install
+  Gridap, whose Gmsh reader pulls MPI and Metis, and its tests run where the
+  stack is installed.
+
+### Documentation
+
+- The Ferrite backend page says first what the finite-element code and the
+  Gauss-point law each do.
+
 ## v0.17.1 — JSON.jl 1 in place of the deprecated JSON3.jl
 
 A patch release. JSON3.jl is deprecated: its README now sends its users to
