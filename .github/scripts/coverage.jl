@@ -58,7 +58,15 @@ function report(fcs)
     return (cov, tot)
 end
 
-fcs = merged_coverage()
+# The Gridap backend is left out of the report. CI does not install Gridap: its
+# Gmsh reader pulls GridapDistributed, PartitionedArrays (hence MPI) and Metis,
+# which is a lot to install on every run for a second backend of the
+# axisymmetric Fourier solve that Ferrite already provides. Its tests run where
+# the stack is installed (`test/FiniteElements/test_gridap_backend.jl`), and
+# counted as never run it would only hide the coverage of everything else.
+const NOT_MEASURED = ["ext/MeanFieldHomogenizationGridapExt"]
+
+fcs = filter(fc -> !any(d -> startswith(fc.filename, d), NOT_MEASURED), merged_coverage())
 covered, total = report(fcs)
 # Without `.cov` files every source lands in the "never loaded" branch and the
 # report is a silent 0 % — which would be uploaded and shown on the badge as if
