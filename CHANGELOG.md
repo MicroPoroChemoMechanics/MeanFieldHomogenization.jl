@@ -33,6 +33,33 @@ the API, to the results or to the files.
   `Base.@invokelatest catalog()` also looks the name up in the latest world;
   the replies are unchanged.
 
+### Documentation
+
+- **The norm of a deviator carries no factor.** The conventions page now
+  defines σ_d = √(σᵈ:σᵈ), and ε_d likewise, as in Barthélémy (2005), and the
+  nomenclature follows. The pages that reproduce an article — the sandstone of
+  Dormieux et al. (2010), the granular medium of Maalej et al. (2009), the
+  mortar of Pichler and Hellmich (2011) — keep the ½ under the root of the
+  article and say so, with the conversion; the map of the local fields of a
+  layered sphere shows σ_d rather than the von Mises stress.
+- **The strength ellipse of the porous-strength tutorial was displayed
+  inverted.** The page and `scripts/40_porous_strength_criterion.jl` printed
+  x²/(2A) + y²/B = 1/(1 − φ), while the code draws 2A x² + B y² = 1 − φ. The
+  formula now matches the code, which is unchanged and gives back eq. (5.33) of
+  the thesis for spherical pores under Mori–Tanaka.
+- **The quasi-brittle strength page showed a formula off by √2 and a wrong
+  strength.** With M = S:∂ℂ/∂μ:S it wrote 2μ² where the article's eq. (22) gives
+  μ²; the code, which differentiates with respect to 2μ, was right. And it said
+  that Pichler and Hellmich calibrate σ_ult to 70–90 MPa, where they identify
+  about 50 MPa (their eq. 31); the model gives 49.1 MPa from their
+  f_c = 54.1 MPa.
+- **Levin's theorem is proved on two drawn decompositions**, with prestresses
+  under a macroscopic strain and with free strains under a macroscopic stress,
+  and with averages: Σ* = ⟨σ*:𝔸⟩ and E* = ⟨ε*:𝔹⟩ for fields of any form, the
+  sums over the phases coming last. The free strain is proved directly.
+- The Hill tensor tutorial writes P₁₁₁₁ of a sphere as
+  1/(5(λ + 2μ)) + 2/(15μ).
+
 ## v0.17.0 — concentration tensors of every scheme, Levin's theorem, one function whatever the order
 
 A minor release, and a breaking one. Every scheme now returns, besides the
