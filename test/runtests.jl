@@ -356,6 +356,8 @@ end
         include("Constitutive/test_material_api.jl")
         include("Constitutive/test_cracked.jl")
         include("Constitutive/test_poroelastic.jl")
+        # The same laws as the Gauss-point law of a Ferrite computation.
+        HAS_FERRITE && include("Constitutive/test_ferrite_backend.jl")
     end
 
     rungroup("Viscoelasticity") && @testset "Viscoelasticity" begin
@@ -389,6 +391,7 @@ end
         include("Viscoelasticity/test_order2_alv.jl")
         include("Viscoelasticity/test_extra_schemes_alv.jl")
         include("Viscoelasticity/test_crack_schemes_alv.jl")
+        include("Viscoelasticity/test_alv_symmetry_paths.jl")
         include("Viscoelasticity/test_glassy_limit_alv.jl")
     end
 
