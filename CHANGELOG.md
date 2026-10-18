@@ -106,6 +106,10 @@ as measured on 0.17.2 and on this release.
   the documented domain, is now refused.
 - `check_material_interface` reported a tangent check skipped at a zero tangent
   as "non-smooth".
+- `method = :residues` with a dual, symbolic or complex stiffness or geometry
+  failed with a `MethodError` deep in the kernel; it is refused with an
+  `ArgumentError` that points to the cubature, which `:auto` selects and which
+  differentiates.
 
 The residues of roots that coincide or nearly do are now summed as a group, by
 the expansion of the contour integral around it, which depends on the roots only
@@ -160,6 +164,11 @@ long ellipsoids lie. The derivation is on the theory page of Hill tensors.
   numerical ones.
 - The potentials of a cylinder near a circular section against those of an
   elongated ellipsoid, with their derivatives.
+- 𝐁 of an elliptical and of a ribbon-like crack in an elliptically orthotropic
+  and in a transformed transversely isotropic (monoclinic) matrix, by the three
+  integrators, against the transformation rule of Barthélémy (2026) applied to
+  the closed forms: within 2e-13. The derivative with respect to a modulus, by
+  ForwardDiff through the cubature, against the same rule.
 - Branches no test reached: the regularized and the Picard steps of
   `NewtonDefault`, aging viscoelastic cracks with an interface stiffness against
   their elastic limit, the unfinished self-consistent iterations of aging

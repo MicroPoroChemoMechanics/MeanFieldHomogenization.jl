@@ -96,8 +96,9 @@ determinant of the acoustic tensor (`_hill_line_weights`).
     use the `NestedQuadGK` backend (`method = :nestedquadgk`), which is
     type-generic and AD-compatible.  The `:auto` dispatch already picks
     `NestedQuadGK` automatically whenever `eltype(C₀) !== Float64`
-    (see `Core/dispatch.jl`); only an explicit `method = :residues` under a
-    non-`Float64` matrix will error.
+    (see `Core/dispatch.jl`); an explicit `method = :residues` under a
+    non-`Float64` matrix or geometry is refused with an `ArgumentError` that
+    says so.
 """
 function _hill_3d_aniso_residue(
         ell::Ellipsoid{3}, C₀;

@@ -308,6 +308,7 @@ end
 
 # Residue — anisotropic matrix
 function _kernel(crack::EllipticCrack, C₀::TensND.AbstractTens{4, 3}, ::MFH_Core.Residue; kw...)
+    MFH_Core._residues_in_floats(crack, C₀)
     return _cod_elliptic_numerical(
         crack, C₀, _residue_backend;
         abstol = get(kw, :abstol, 1.0e-8),
@@ -317,9 +318,9 @@ function _kernel(crack::EllipticCrack, C₀::TensND.AbstractTens{4, 3}, ::MFH_Co
 end
 
 function _kernel(crack::RibbonCrack, C₀::TensND.AbstractTens{4, 3}, ::MFH_Core.Residue; kw...)
+    MFH_Core._residues_in_floats(crack, C₀)
     return _cod_ribbon_numerical(
-        crack, C₀,
-        (Carr, ξ, n̂; kw2...) -> _Qnn_star_residue(Carr, ξ, n̂);
+        crack, C₀, _residue_backend;
         abstol = get(kw, :abstol, 1.0e-8),
         reltol = get(kw, :reltol, 1.0e-6),
         maxiters = get(kw, :maxiters, 100_000)

@@ -65,6 +65,26 @@ function _build_acoustic_coeffs(
 end
 
 """
+    _residues_in_floats(::AbstractInclusion{T}, C₀::AbstractTens) -> nothing
+
+The residue algorithm locates the poles as the eigenvalues of a companion matrix,
+which LAPACK computes in `Float64`. A geometry or a stiffness of another element
+type (a dual number, a symbol, a complex modulus) is refused here with the way
+out, rather than met by a `MethodError` deep in the kernel: the cubature
+(`method = :nestedquadgk`, which `:auto` selects) is generic and differentiates.
+"""
+_residues_in_floats(::AbstractInclusion{T}, C₀::TensND.AbstractTens) where {T} =
+    _residues_in_floats(promote_type(T, eltype(C₀)))
+_residues_in_floats(::Type{<:Union{AbstractFloat, Integer, Rational}}) = nothing
+_residues_in_floats(::Type{T}) where {T} = throw(
+    ArgumentError(
+        "`method = :residues` evaluates the residues in Float64 (the poles are the " *
+            "eigenvalues of a companion matrix); with $T entries use the cubature, " *
+            "`method = :nestedquadgk`, which `:auto` selects and which differentiates"
+    )
+)
+
+"""
     _build_poly_system(C, α₀ζ, α₁ζ) -> (adj, Q, roots_uhp)
 
 Build the polynomial acoustic tensor

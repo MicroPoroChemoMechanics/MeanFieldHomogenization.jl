@@ -31,6 +31,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+using ForwardDiff
 
 # ω-family of the definition: (c/b) ℚ⁻¹ evaluated at finite flatness ω = c/b.
 function _H_from_hill(a, b, ω, C₀; kw...)
@@ -134,4 +135,104 @@ end
             @test _relerr(cod_from_compliance(H, crack), Bs[1]) < rtol
         end
     end
+end
+
+# =============================================================================
+#  An analytic anchor in anisotropic matrices: the linear transformation of the
+#  crack problem (Barthélémy, 2026, "Transformation of the crack problem").
+#  With x = P x̃, the matrix C = (P ⊠ˢ P) : C̃ : (P ⊠ˢ P)ᵀ and the crack (a, b, ℓ,
+#  m, n) are the images of C̃ and of the crack (ã, b̃, ℓ̃, m̃, ñ), and the COD
+#  tensors, both normalized by the half-width as everywhere in MFH, satisfy
+#      𝐁ᴱ = (b̃/b) / ‖Pᵀn‖ · P⁻ᵀ · 𝐁̃ᴱ · P⁻¹,    𝐁ᴿ = P⁻ᵀ · 𝐁̃ᴿ · P⁻¹ / (‖P⁻¹ℓ‖ |det P|).
+#  An isotropic C̃ gives an elliptically orthotropic matrix (EO), a transversely
+#  isotropic one whose axis is the transformed normal a transformed transversely
+#  isotropic one (TraTI, monoclinic here): 𝐁̃ then has a closed form, and the
+#  three integrators of the anisotropic 𝐁 are held to it.
+# =============================================================================
+
+# The transformed crack, radii and axes in closed form (same reference).
+function _transformed_crack(P, a, b, ℓ, m, n)
+    g, h = P \ ℓ, P \ m
+    area = norm(cross(g, h))
+    s₊ = sqrt(a^2 * norm(g)^2 + b^2 * norm(h)^2 + 2a * b * area)
+    s₋ = sqrt(a^2 * norm(g)^2 + b^2 * norm(h)^2 - 2a * b * area)
+    ã, b̃ = (s₊ + s₋) / 2, (s₊ - s₋) / 2
+    ñ = normalize(transpose(P) * n)
+    w_ℓ = (a^2 * norm(g)^2 - b̃^2) * g + b^2 * dot(g, h) * h
+    w_m = a^2 * dot(g, h) * g + (b^2 * norm(h)^2 - b̃^2) * h
+    ℓ̃ = normalize(norm(w_ℓ) ≥ norm(w_m) ? w_ℓ : w_m)
+    return ã, b̃, ℓ̃, cross(ñ, ℓ̃), ñ
+end
+
+# A right-handed crack frame (ℓ, m, n) of normal n, turned by ψ in its plane.
+function _crack_frame(n, ψ)
+    n = normalize(n)
+    t = abs(n[3]) < 0.9 ? [0.0, 0.0, 1.0] : [1.0, 0.0, 0.0]
+    e₁ = normalize(cross(t, n))
+    ℓ = cos(ψ) * e₁ + sin(ψ) * cross(n, e₁)
+    return ℓ, cross(n, ℓ), n
+end
+
+@testset "Cracks — 𝐁 in EO and TraTI matrices against the transformation rule" begin
+    canonical = TensND.CanonicalBasis{3, Float64}()
+    P = [1.3 0.2 -0.1; 0.15 0.8 0.25; -0.05 0.3 1.1]
+    PP = TensND.KM(Tens(P) ⊠ˢ Tens(P))
+    image(C̃) = TensND.inv_KM(PP * TensND.KM(C̃) * transpose(PP), canonical)
+    tol = (; abstol = 1.0e-12, reltol = 1.0e-10)
+    references = (
+        (TensISO{3}(3 * 20.0, 2 * 9.0), [0.3, -0.5, 0.8]),                                       # EO
+        (TensTI{4}(30.0, 2 * 25.0, sqrt(2) * 8.0, 2 * 10.0, 2 * 6.0, (0.0, 0.0, 1.0)), nothing),  # TraTI
+    )
+    for (C̃, n₀) in references
+        C = image(C̃)
+        # TraTI: the normal whose image is the axis of C̃, for the closed form.
+        n = n₀ === nothing ? normalize(transpose(P) \ [0.0, 0.0, 1.0]) : normalize(n₀)
+        ℓ, m, _ = _crack_frame(n, 0.6)
+
+        a, b = 1.0, 0.45
+        ã, b̃, ℓ̃, m̃, ñ = _transformed_crack(P, a, b, ℓ, m, n)
+        B̃ = components_canon(cod_tensor(EllipticCrack(ã, b̃, hcat(ℓ̃, m̃, ñ)), C̃))
+        Bᴱ = (b̃ / b) / norm(transpose(P) * n) * (transpose(P) \ B̃ / P)
+
+        g = P \ ℓ
+        ℓ̃ᴿ = normalize(g)
+        B̃ᴿ = components_canon(cod_tensor(RibbonCrack(1.0, hcat(ℓ̃ᴿ, cross(ñ, ℓ̃ᴿ), ñ)), C̃))
+        Bᴿ = (transpose(P) \ B̃ᴿ / P) / (norm(g) * abs(det(P)))
+
+        # Measured: 4e-16 to 2e-13 for the ellipse, 2e-15 to 6e-15 for the ribbon.
+        for method in (:nestedquadgk, :residues, :decuhr)
+            Bₑ = components_canon(cod_tensor(EllipticCrack(a, b, hcat(ℓ, m, n)), C; method, tol...))
+            Bᵣ = components_canon(cod_tensor(RibbonCrack(0.7, hcat(ℓ, m, n)), C; method, tol...))
+            @test norm(Bₑ - Bᴱ) / norm(Bᴱ) < 1.0e-11
+            @test norm(Bᵣ - Bᴿ) / norm(Bᴿ) < 1.0e-11
+        end
+    end
+end
+
+@testset "Cracks — derivatives of 𝐁 through the transformation rule" begin
+    # d𝐁/dμ̃ by ForwardDiff through the cubature of the anisotropic 𝐁, against the
+    # same derivative through the closed form of the isotropic one and the
+    # transformation rule: two independent paths.
+    canonical = TensND.CanonicalBasis{3, Float64}()
+    P = [1.3 0.2 -0.1; 0.15 0.8 0.25; -0.05 0.3 1.1]
+    PP = TensND.KM(Tens(P) ⊠ˢ Tens(P))
+    image(C̃) = TensND.inv_KM(PP * TensND.KM(C̃) * transpose(PP), canonical)
+    ℓ, m, n = _crack_frame([0.3, -0.5, 0.8], 0.6)
+    a, b = 1.0, 0.45
+    ã, b̃, ℓ̃, m̃, ñ = _transformed_crack(P, a, b, ℓ, m, n)
+    crack, crack̃ = EllipticCrack(a, b, hcat(ℓ, m, n)), EllipticCrack(ã, b̃, hcat(ℓ̃, m̃, ñ))
+    B_rule(μ) = (b̃ / b) / norm(transpose(P) * n) *
+        (transpose(P) \ components_canon(cod_tensor(crack̃, TensISO{3}(3 * 20.0, 2μ))) / P)
+    B_cubature(μ) = components_canon(
+        cod_tensor(crack, image(TensISO{3}(3 * 20.0, 2μ)); method = :nestedquadgk, abstol = 1.0e-12, reltol = 1.0e-10)
+    )
+    dB = ForwardDiff.derivative(B_rule, 9.0)
+    @test norm(ForwardDiff.derivative(B_cubature, 9.0) - dB) / norm(dB) < 1.0e-9
+
+    # The residues work in Float64 and say so, rather than failing deep inside.
+    μ = ForwardDiff.Dual(9.0, 1.0)
+    C_dual = image(TensISO{3}(3 * 20.0, 2μ))
+    @test_throws r"method = :nestedquadgk" cod_tensor(crack, C_dual; method = :residues)
+    @test_throws r"method = :nestedquadgk" cod_tensor(RibbonCrack(1.0, hcat(ℓ, m, n)), C_dual; method = :residues)
+    @test_throws r"method = :nestedquadgk" hill_tensor(Ellipsoid(1.0, 0.6, 0.3), C_dual; method = :residues)
 end
