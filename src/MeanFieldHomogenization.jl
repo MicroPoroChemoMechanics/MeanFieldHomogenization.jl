@@ -458,4 +458,8 @@ const HillAlgorithm = AbstractAlgorithm
 const CrackAlgorithm = AbstractAlgorithm
 export HillAlgorithm, CrackAlgorithm
 
+# ── MFH Studio, in Julia (`src/studio`) ──────────────────────────────────────
+# Last, since its code generation and its views read the whole package.
+include("studio/Studio.jl")
+
 end # module
