@@ -157,7 +157,10 @@ Double-click a handle to put that one back where it started. The sizes are
 remembered between sessions, per browser.
 
 The button ◐ in the header switches the theme: as the system has it, light or
-dark. The choice is remembered per browser, and the plots follow it.
+dark. The choice is remembered per browser, and the plots follow it. The
+button FR (EN once switched) puts the page in French or back in English,
+remembered the same way; the script, its comments and the messages from Julia
+stay in English, since they are what a run prints and a file keeps.
 
 The **Shape** panel draws the geometry of the phase currently selected — a
 single inclusion, from its semi-axes and orientation. It is not a picture of the

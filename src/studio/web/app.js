@@ -51,9 +51,9 @@ async function api(path, body) {
 }
 
 function toast(msg, bad = false) {
-  const t = el("div", { class: bad ? "bad" : "" }, msg);
-  $("#toast").append(t);
-  setTimeout(() => t.remove(), bad ? 9000 : 3500);
+  const d = el("div", { class: bad ? "bad" : "" }, msg);
+  $("#toast").append(d);
+  setTimeout(() => d.remove(), bad ? 9000 : 3500);
 }
 
 /** Push the edited model and re-render from the server's answer. */
@@ -74,9 +74,11 @@ function apply(st) {
   }
   $("#code").textContent = st.script;
   $("#problems").textContent = S.problems.length
-    ? `${S.problems.length} problem(s)`
+    ? t("{n} problem(s)", { n: S.problems.length })
     : "";
   $("#problems").className = S.problems.length ? "problem" : "muted";
+  // the problems themselves are those the script's header lists, in English
+  $("#problems").title = S.problems.join("\n");
   S.path = st.path || null; // the server's: an example opens unbound
   setPathLabel(S.path);
   render();
@@ -174,17 +176,17 @@ function laminateEditor(c) {
 
   const out = [
     el("div", { class: "note" },
-      "A periodic stack of parallel layers of common normal — no matrix and no "
+      t("A periodic stack of parallel layers of common normal — no matrix and no "
       + "reference medium. `Laminated` is exact for it; `Voigt` and `Reuss` "
-      + "bracket it, and two of the bracketings are equalities."),
-    el("h3", {}, "Stacking direction",
+      + "bracket it, and two of the bracketings are equalities.")),
+    el("h3", {}, t("Stacking direction"),
       el("button", {
         class: "small",
-        title: "Back to the canonical frame",
+        title: t("Back to the canonical frame"),
         onclick: () => { c.euler_angles = []; c.normal = [0, 0, 1]; push(); },
-      }, "reset")),
-    field("Given as", select(
-      [["euler", "ZYZ Euler angles"], ["normal", "normal vector"]],
+      }, t("reset"))),
+    field(t("Given as"), select(
+      [["euler", t("ZYZ Euler angles")], ["normal", t("normal vector")]],
       c.frame_mode || "euler",
       (v) => { c.frame_mode = v; push(); }
     )),
@@ -194,15 +196,15 @@ function laminateEditor(c) {
     // No heading of its own: the stack has exactly one orientation, already
     // announced above, and a second title would suggest a second frame.
     out.push(anglesEditor(c, 3, null,
-      "The normal is the third axis of the frame: θ tilts it away from e₃ and "
+      t("The normal is the third axis of the frame: θ tilts it away from e₃ and "
       + "φ turns it about e₃. ψ spins the layer axes in the plane, which the "
-      + "stack feels only when a layer is anisotropic."));
+      + "stack feels only when a layer is anisotropic.")));
   } else {
     c.normal = c.normal && c.normal.length === 3 ? c.normal : [0, 0, 1];
     out.push(
       el("div", { class: "note" },
-        "(0, 0, 1) is the canonical frame, where the kernel skips the rotation "
-        + "altogether."),
+        t("(0, 0, 1) is the canonical frame, where the kernel skips the rotation "
+        + "altogether.")),
       // `nx, ny, nz` is what `Laminate(; normal = …)` calls them, set as real
       // subscripts so the three read as one notation.
       el("div", { class: "grid3" },
@@ -216,10 +218,10 @@ function laminateEditor(c) {
   }
 
   out.push(
-    el("h3", {}, "Layers",
+    el("h3", {}, t("Layers"),
       el("button", {
         class: "small",
-        title: "Add a layer on top of the stack",
+        title: t("Add a layer on top of the stack"),
         onclick: () => {
           c.layers.push({
             name: String.fromCharCode(65 + c.layers.length),
@@ -236,17 +238,17 @@ function laminateEditor(c) {
     // The choice belongs to the cell, not the layer: MeanFieldHomogenization
     // refuses a stack that mixes the two forms, because with an imperfect
     // interface the absolute period is physically meaningful.
-    field("Layers given by", select(
-      [["fraction", "volume fraction (Σ = 1)"], ["thickness", "absolute thickness"]],
+    field(t("Layers given by"), select(
+      [["fraction", t("volume fraction (Σ = 1)")], ["thickness", t("absolute thickness")]],
       kind,
       (v) => { for (const l of c.layers) l.amount_kind = v; push(); }
     )),
     el("div", { class: "note" }, kind === "fraction"
-      ? "Fractions of the period; they must sum to 1. The period is then "
+      ? t("Fractions of the period; they must sum to 1. The period is then "
         + "irrelevant — unless an interface is imperfect, which is what "
-        + "absolute thicknesses are for."
-      : "Absolute heights. Their sum is the period L, and an imperfect "
-        + "interface enters with weight 1/L — an interface density.")
+        + "absolute thicknesses are for.")
+      : t("Absolute heights. Their sum is the period L, and an imperfect "
+        + "interface enters with weight 1/L — an interface density."))
   );
 
   c.layers.forEach((l, i) => out.push(layerCard(c, l, i)));
@@ -266,22 +268,23 @@ function layerCard(c, l, i) {
 
   return el("div", { class: "card" },
     el("header", {},
-      el("b", {}, `${i + 1}. ${l.name || "(unnamed)"}`),
-      seam ? el("span", { class: "tag seam" }, "nested scale") : null,
-      el("button", { class: "small", title: "Move down the stack", onclick: () => move(-1) }, "↑"),
-      el("button", { class: "small", title: "Move up the stack", onclick: () => move(+1) }, "↓"),
-      el("button", { class: "small", onclick: () => { c.layers.splice(i, 1); push(); } }, "−")),
+      el("b", {}, `${i + 1}. ${l.name || t("(unnamed)")}`),
+      seam ? el("span", { class: "tag seam" }, t("nested scale")) : null,
+      el("button", { class: "small", title: t("Move down the stack"), onclick: () => move(-1) }, "↑"),
+      el("button", { class: "small", title: t("Move up the stack"), onclick: () => move(+1) }, "↓"),
+      el("button", { class: "small", title: t("Remove this layer"), onclick: () => { c.layers.splice(i, 1); push(); } }, "−")),
     el("div", { class: "grid2" },
-      field("Name", input(l.name, (v) => { l.name = v; push(); })),
-      field(l.amount_kind === "thickness" ? "thickness h" : "fraction f",
+      field(t("Name"), input(l.name, (v) => { l.name = v; push(); })),
+      field(l.amount_kind === "thickness" ? t("thickness h") : t("fraction f"),
         input(l.amount, (v) => {
           l.amount = isFinite(+v) && v.trim() !== "" ? +v : v;
           push();
         }))
     ),
-    el("h3", {}, "Properties",
+    el("h3", {}, t("Properties"),
       el("button", {
         class: "small",
+        title: t("Add a property"),
         onclick: () => {
           l.properties.push({
             key: ":C", source: "builder", builder: "iso_stiffness",
@@ -291,13 +294,13 @@ function layerCard(c, l, i) {
         },
       }, "+")),
     ...(l.properties || []).map((pr, j) => propertyEditor(l, pr, j)),
-    el("h3", {}, "Interface on top"),
+    el("h3", {}, t("Interface on top")),
     el("div", { class: "note" },
       i === c.layers.length - 1
-        ? "The last one closes the cell back onto layer 1 by periodicity."
-        : `Between this layer and ${(c.layers[i + 1] || {}).name || "the next"}.`),
+        ? t("The last one closes the cell back onto layer 1 by periodicity.")
+        : t("Between this layer and {next}.", { next: (c.layers[i + 1] || {}).name || t("the next one") })),
     select(
-      (S.catalog.interfaces || []).map((x) => [x.name, x.label]),
+      (S.catalog.interfaces || []).map((x) => [x.name, t(x.label)]),
       itf.kind,
       (v) => {
         const f = (S.catalog.interfaces || []).find((x) => x.name === v);
@@ -307,9 +310,9 @@ function layerCard(c, l, i) {
         push();
       }
     ),
-    itfForm && itfForm.doc ? el("div", { class: "note" }, itfForm.doc) : null,
+    itfForm && itfForm.doc ? el("div", { class: "note" }, t(itfForm.doc)) : null,
     ...((itfForm && itfForm.fields) || []).map((fl) =>
-      field(fl.label, input(itf.args[fl.name] ?? fl.default, (v) => {
+      field(t(fl.label), input(itf.args[fl.name] ?? fl.default, (v) => {
         itf.args[fl.name] = fl.type === "code"
           ? v
           : (isFinite(+v) && v.trim() !== "" ? +v : v);
@@ -322,12 +325,12 @@ function phaseCard(ph, i) {
   const seam = (ph.properties || []).some((p) => p.source === "cell");
   const head = el(
     "header", {},
-    el("b", {}, ph.name || "(unnamed)"),
-    ph.amount_kind === "rest" ? el("span", { class: "tag matrix" }, "matrix") : null,
-    seam ? el("span", { class: "tag seam" }, "nested scale") : null,
+    el("b", {}, ph.name || t("(unnamed)")),
+    ph.amount_kind === "rest" ? el("span", { class: "tag matrix" }, t("matrix")) : null,
+    seam ? el("span", { class: "tag seam" }, t("nested scale")) : null,
     el("button", {
       class: "small",
-      title: "Remove this phase",
+      title: t("Remove this phase"),
       onclick: (e) => { e.stopPropagation(); cell().phases.splice(i, 1); push(); },
     }, "−")
   );
@@ -335,9 +338,9 @@ function phaseCard(ph, i) {
   const body = el("div", {});
   if (i === S.phaseIdx) {
     body.append(
-      field("Name", input(ph.name, (v) => { ph.name = v; push(); })),
-      field("Role", select(
-        [["inclusion", "inclusion"], ["matrix", "matrix"]],
+      field(t("Name"), input(ph.name, (v) => { ph.name = v; push(); })),
+      field(t("Role"), select(
+        [["inclusion", t("inclusion")], ["matrix", t("matrix")]],
         ph.amount_kind === "rest" ? "matrix" : "inclusion",
         (v) => {
           // The matrix is the phase whose amount is the rest: MFH derives it as
@@ -358,25 +361,26 @@ function phaseCard(ph, i) {
       )),
       ph.amount_kind === "rest"
         ? el("div", { class: "note" },
-            "The matrix amount is derived as 1 − Σ f of the inclusions; MeanFieldHomogenization raises if it is set.")
+            t("The matrix amount is derived as 1 − Σ f of the inclusions; MeanFieldHomogenization raises if it is set."))
         : el("div", { class: "grid2" },
-            field("Amount", select(
-              [["fraction", "volume fraction"], ["density", "crack density"]],
+            field(t("Amount"), select(
+              [["fraction", t("volume fraction")], ["density", t("crack density")]],
               ph.amount_kind, (v) => { ph.amount_kind = v; push(); }
             )),
-            field("Value", input(ph.amount, (v) => {
+            field(t("Value"), input(ph.amount, (v) => {
               ph.amount = isFinite(+v) && v.trim() !== "" ? +v : v;
               push();
             }))
           ),
       geometryEditor(ph),
-      field("Orientation average", select(
-        (S.catalog.symmetrize || []).map((s) => [s.name, s.label]),
+      field(t("Orientation average"), select(
+        (S.catalog.symmetrize || []).map((s) => [s.name, t(s.label)]),
         ph.symmetrize, (v) => { ph.symmetrize = v; push(); }
       )),
-      el("h3", {}, "Properties",
+      el("h3", {}, t("Properties"),
         el("button", {
           class: "small",
+          title: t("Add a property"),
           onclick: () => {
             ph.properties.push({
               key: ":C", source: "builder", builder: "iso_stiffness",
@@ -410,7 +414,7 @@ function geometryEditor(ph) {
   const g = ph.geometry;
   const form = geomForm(g.kind);
   const box = el("div", {},
-    field("Shape", select(
+    field(t("Shape"), select(
       (S.catalog.geometries || []).map((x) => [x.kind, x.name]),
       g.kind,
       (v) => {
@@ -426,12 +430,12 @@ function geometryEditor(ph) {
       }
     ))
   );
-  if (form && form.doc) box.append(el("div", { class: "note" }, form.doc));
+  if (form && form.doc) box.append(el("div", { class: "note" }, t(form.doc)));
   const fields = (form && form.fields) || [];
   if (fields.length) {
     box.append(el("div", { class: fields.length > 2 ? "grid3" : "grid2" },
       ...fields.map((f) =>
-        field(f.label, input(g.args[f.name] ?? f.default, (v) => {
+        field(t(f.label), input(g.args[f.name] ?? f.default, (v) => {
           g.args[f.name] = isFinite(+v) && v.trim() !== "" ? +v : v;
           push();
         }))
@@ -480,7 +484,7 @@ function angleValue(v) {
 
 // `title = null` drops the heading and its reset button, for a caller that
 // already introduced the frame and owns the reset itself.
-function anglesEditor(g, count, title = "Orientation", what = null) {
+function anglesEditor(g, count, title = t("Orientation"), what = null) {
   g.euler_angles = g.euler_angles || [];
   const deg = (v) => {
     const x = angleValue(v);
@@ -490,15 +494,15 @@ function anglesEditor(g, count, title = "Orientation", what = null) {
     title === null ? null : el("h3", {}, title,
       el("button", {
         class: "small",
-        title: "Back to the canonical frame",
+        title: t("Back to the canonical frame"),
         onclick: () => { g.euler_angles = []; push(); },
-      }, "reset")),
+      }, t("reset"))),
     el("div", { class: "note" },
-      "ZYZ Euler angles in radians — `π/4`, `2pi/3` and plain decimals all "
-      + "work, and an expression is kept as written in the script. "
-      + (what || (count === 2
-        ? "θ and φ point the symmetry axis."
-        : "θ, φ, ψ orient the principal axes.")))
+      t("ZYZ Euler angles in radians — `π/4`, `2pi/3` and plain decimals all "
+      + "work, and an expression is kept as written in the script.")
+      + " " + (what || (count === 2
+        ? t("θ and φ point the symmetry axis.")
+        : t("θ, φ, ψ orient the principal axes."))))
   );
   const grid = el("div", { class: count > 2 ? "grid3" : "grid2" });
   for (let i = 0; i < count; i++) {
@@ -506,10 +510,10 @@ function anglesEditor(g, count, title = "Orientation", what = null) {
     grid.append(field(
       `${ANGLE_NAMES[i]} (rad) ${deg(cur)}`,
       input(cur ?? "", (v) => {
-        const t = v.trim();
+        const s = v.trim();
         // Keep the array dense up to the last angle the user set: MFH takes a
         // tuple of 0-3 and reads it positionally.
-        g.euler_angles[i] = t === "" ? 0.0 : (isFinite(+t) && t !== "" ? +t : t);
+        g.euler_angles[i] = s === "" ? 0.0 : (isFinite(+s) && s !== "" ? +s : s);
         while (g.euler_angles.length && isTrailingZero(g.euler_angles)) {
           g.euler_angles.pop();
         }
@@ -574,9 +578,10 @@ function layersEditor(g, form) {
   };
 
   const box = el("div", {},
-    el("h3", {}, "Layers",
+    el("h3", {}, t("Layers"),
       el("button", {
         class: "small",
+        title: t("Add a layer"),
         onclick: () => {
           g.layers = g.layers || [];
           const l = mk();
@@ -589,9 +594,9 @@ function layersEditor(g, form) {
         },
       }, "+")),
     el("div", { class: "note" }, byFraction
-      ? "Core first. Fractions are of the total volume and are normalized; "
-        + "the confocal radii are solved for."
-      : "Ascending radii, r = 0 implicit at the center; layer 1 is the core.")
+      ? t("Core first. Fractions are of the total volume and are normalized; "
+        + "the confocal radii are solved for.")
+      : t("Ascending radii, r = 0 implicit at the center; layer 1 is the core."))
   );
 
   (g.layers || []).forEach((l, i) => {
@@ -599,13 +604,13 @@ function layersEditor(g, form) {
     const fields = (pf && pf.fields) || [];
     const row = el("div", { class: fields.length > 1 ? "grid3" : "grid2" },
       byFraction
-        ? field("fraction", input(l.fraction ?? 0.5, (v) => {
+        ? field(t("fraction"), input(l.fraction ?? 0.5, (v) => {
             l.fraction = isFinite(+v) && v.trim() !== "" ? +v : v; push();
           }))
-        : field("outer r", input(l.radius, (v) => {
+        : field(t("outer r"), input(l.radius, (v) => {
             l.radius = isFinite(+v) && v.trim() !== "" ? +v : v; push();
           })),
-      ...fields.map((fl) => field(fl.label, input(
+      ...fields.map((fl) => field(t(fl.label), input(
         (l.property.args || {})[fl.name] ?? fl.default,
         (v) => {
           l.property.args[fl.name] = isFinite(+v) && v.trim() !== "" ? +v : v;
@@ -614,15 +619,15 @@ function layersEditor(g, form) {
       )))
     );
     box.append(el("div", { class: "card" },
-      el("header", {}, el("b", {}, `layer ${i + 1}`),
-        el("button", { class: "small", onclick: () => { g.layers.splice(i, 1); push(); } }, "\u2212")),
+      el("header", {}, el("b", {}, t("layer {n}", { n: i + 1 })),
+        el("button", { class: "small", title: t("Remove this layer"), onclick: () => { g.layers.splice(i, 1); push(); } }, "\u2212")),
       row,
       // The anisotropic interfaces are laminate-only: they are written in the
       // layer frame (ℓ, m, n), and a concentric shell has no such frame.
-      field("Interface with the next layer", select(
+      field(t("Interface with the next layer"), select(
         (S.catalog.interfaces || [])
           .filter((x) => !x.laminate_only)
-          .map((x) => [x.name, x.label]),
+          .map((x) => [x.name, t(x.label)]),
         (l.interface && l.interface.kind) || "PerfectInterface",
         (v) => {
           const f = (S.catalog.interfaces || []).find((x) => x.name === v);
@@ -640,24 +645,24 @@ function layersEditor(g, form) {
 function propertyEditor(ph, pr, j) {
   const others = S.model.cells.filter((c) => c.id !== S.cellId);
   const sourceOptions = [
-    ["builder", "from moduli"],
-    ["expr", "Julia expression"],
+    ["builder", t("from moduli")],
+    ["expr", t("Julia expression")],
   ];
-  if (others.length) sourceOptions.push(["cell", "another scale (nested)"]);
+  if (others.length) sourceOptions.push(["cell", t("another scale (nested)")]);
 
   const box = el("div", { class: "card" },
     el("header", {},
       el("b", {}, pr.key),
-      el("button", { class: "small", onclick: () => { ph.properties.splice(j, 1); push(); } }, "−")),
+      el("button", { class: "small", title: t("Remove this property"), onclick: () => { ph.properties.splice(j, 1); push(); } }, "−")),
     el("div", { class: "grid2" },
-      field("Key", input(pr.key, (v) => { pr.key = v.startsWith(":") ? v : ":" + v; push(); })),
-      field("Source", select(sourceOptions, pr.source, (v) => { pr.source = v; push(); }))
+      field(t("Key"), input(pr.key, (v) => { pr.key = v.startsWith(":") ? v : ":" + v; push(); })),
+      field(t("Source"), select(sourceOptions, pr.source, (v) => { pr.source = v; push(); }))
     )
   );
 
   if (pr.source === "builder") {
-    box.append(field("Parametrization", select(
-      (S.catalog.properties || []).map((p) => [p.name, p.label]),
+    box.append(field(t("Parametrization"), select(
+      (S.catalog.properties || []).map((p) => [p.name, t(p.label)]),
       pr.form || "iso_kmu",
       (v) => {
         const f = propForm(v);
@@ -669,11 +674,11 @@ function propertyEditor(ph, pr, j) {
       }
     )));
     const f = propForm(pr.form || "iso_kmu");
-    if (f && f.doc) box.append(el("div", { class: "note" }, f.doc));
+    if (f && f.doc) box.append(el("div", { class: "note" }, t(f.doc)));
     const fields = (f && f.fields) || [];
     box.append(el("div", { class: fields.length > 2 ? "grid3" : "grid2" },
       ...fields.map((fl) =>
-        field(fl.label, input(pr.args[fl.name] ?? fl.default, (v) => {
+        field(t(fl.label), input(pr.args[fl.name] ?? fl.default, (v) => {
           pr.args[fl.name] = isFinite(+v) && v.trim() !== "" ? +v : v;
           push();
         }))
@@ -691,15 +696,15 @@ function propertyEditor(ph, pr, j) {
   } else if (pr.source === "cell") {
     box.append(
       el("div", { class: "note" },
-        "The seam: this property is the effective value of another scale, "
-        + "resolved by the outer scheme when it reads the key."),
+        t("The seam: this property is the effective value of another scale, "
+        + "resolved by the outer scheme when it reads the key.")),
       el("div", { class: "grid2" },
-        field("Inner scale", select(
+        field(t("Inner scale"), select(
           others.map((c) => [c.id, c.name]),
           pr.cell || (others[0] && others[0].id),
           (v) => { pr.cell = v; push(); }
         )),
-        field("Homogenized with", select(
+        field(t("Homogenized with"), select(
           (S.catalog.schemes || []).map((s) => [s.name, s.name]),
           pr.scheme || "MoriTanaka",
           (v) => { pr.scheme = v; push(); }
@@ -715,7 +720,7 @@ function propertyEditor(ph, pr, j) {
 function schemeOptions(name, target) {
   const s = (S.catalog.schemes || []).find((x) => x.name === name);
   const opts = ((s && s.options) || []).filter((o) => o.editable);
-  if (!opts.length) return el("div", { class: "note" }, "No solver options.");
+  if (!opts.length) return el("div", { class: "note" }, t("No solver options."));
   return el("div", { class: "grid2" },
     ...opts.map((o) =>
       field(o.name, typeof o.default === "boolean"
@@ -729,10 +734,11 @@ function schemeOptions(name, target) {
 
 /* ── sweep ──────────────────────────────────────────────────────── */
 
-const OUTPUT_KINDS = [
-  ["k", "k (bulk)"], ["mu", "μ (shear)"], ["E", "E"], ["nu", "ν"],
-  ["km", "Kelvin-Mandel component"], ["comp", "tensor component (2nd order)"],
-  ["trace3", "tr/3 (mean conductivity)"],
+// a function, so that the labels follow the page's language
+const outputKinds = () => [
+  ["k", t("k (bulk)")], ["mu", t("μ (shear)")], ["E", "E"], ["nu", "ν"],
+  ["km", t("Kelvin-Mandel component")], ["comp", t("tensor component (2nd order)")],
+  ["trace3", t("tr/3 (mean conductivity)")],
 ];
 const ISOTROPIC_ONLY = ["k", "mu", "E", "nu"];
 
@@ -741,15 +747,15 @@ function renderSweep() {
   sw.schemes = sw.schemes && sw.schemes.length
     ? sw.schemes : [{ name: "MoriTanaka", options: {} }];
   sw.outputs = sw.outputs && sw.outputs.length ? sw.outputs : [{ kind: "k" }];
-  const t = $("#tab-sweep");
+  const tab = $("#tab-sweep");
   const inner = sw.lens.inner || (sw.lens.inner = { kind: "amount", phase: "", property: ":C", field_name: "semi_axes", index: 1, member: "", inner: null });
   const sweeping = sw.enabled && sw.mode !== "single";
   // The sweep runs on one cell, and it need not be the one being edited.
   const target = S.model.cells.find((c) => c.id === sw.cell) || rootCell();
 
   const kids = [
-    field("What to compute", select(
-      [["single", "one point, with the amounts above"], ["sweep", "sweep a parameter"]],
+    field(t("What to compute"), select(
+      [["single", t("one point, with the amounts above")], ["sweep", t("sweep a parameter")]],
       sw.mode || "sweep",
       (v) => {
         sw.mode = v;
@@ -761,21 +767,21 @@ function renderSweep() {
       }
     )),
     el("div", { class: "note" }, sw.mode === "single"
-      ? "Homogenizes once with the fractions entered in Scales."
-      : "Varies one lens over a range and draws the curve."),
+      ? t("Homogenizes once with the fractions entered in Scales.")
+      : t("Varies one lens over a range and draws the curve.")),
   ];
 
   if (sweeping) {
     kids.push(
       el("div", { class: "grid3" },
-        field("Variable", input(sw.variable, (v) => { sw.variable = v || "x"; push(); })),
-        field("From", input(sw.start, (v) => { sw.start = +v; push(); })),
-        field("To", input(sw.stop, (v) => { sw.stop = +v; push(); }))
+        field(t("Variable"), input(sw.variable, (v) => { sw.variable = v || "x"; push(); })),
+        field(t("From"), input(sw.start, (v) => { sw.start = +v; push(); })),
+        field(t("To"), input(sw.stop, (v) => { sw.stop = +v; push(); }))
       ),
-      field("Points", input(sw.length, (v) => { sw.length = Math.max(2, +v | 0); push(); })),
-      el("h3", {}, "What varies"),
-      field("Lens", select(
-        lensesFor(target).map((l) => [l.name, l.label]),
+      field(t("Points"), input(sw.length, (v) => { sw.length = Math.max(2, +v | 0); push(); })),
+      el("h3", {}, t("What varies")),
+      field(t("Lens"), select(
+        lensesFor(target).map((l) => [l.name, t(l.label)]),
         sw.lens.kind, (v) => { sw.lens.kind = v; push(); }
       )),
       lensDoc(sw.lens.kind),
@@ -784,18 +790,19 @@ function renderSweep() {
   }
 
   // ── schemes: a list, so several land on one figure
-  kids.push(el("h3", {}, "Schemes",
+  kids.push(el("h3", {}, t("Schemes"),
     el("button", {
       class: "small",
+      title: t("Add a scheme"),
       onclick: () => { sw.schemes.push({ name: "MoriTanaka", options: {} }); push(); },
     }, "+")));
   sw.schemes.forEach((sc, i) => {
     kids.push(el("div", { class: "card" },
       el("header", {}, el("b", {}, sc.name),
         sw.schemes.length > 1
-          ? el("button", { class: "small", onclick: () => { sw.schemes.splice(i, 1); push(); } }, "\u2212")
+          ? el("button", { class: "small", title: t("Remove this scheme"), onclick: () => { sw.schemes.splice(i, 1); push(); } }, "\u2212")
           : null),
-      field("Scheme", select(
+      field(t("Scheme"), select(
         schemesFor(target).map((x) => [x.name, x.name]),
         sc.name,
         (v) => {
@@ -812,9 +819,10 @@ function renderSweep() {
   });
 
   // ── outputs
-  kids.push(el("h3", {}, "Outputs",
+  kids.push(el("h3", {}, t("Outputs"),
     el("button", {
       class: "small",
+      title: t("Add an output"),
       onclick: () => { sw.outputs.push({ kind: "km", i: 1, j: 1 }); push(); },
     }, "+")));
   const needsIso = sw.outputs.some((o) => ISOTROPIC_ONLY.includes(o.kind));
@@ -827,12 +835,12 @@ function renderSweep() {
   );
   if (needsIso && sw.projection === "none" && anyFree) {
     kids.push(el("div", { class: "note problem" },
-      "k, μ, E and ν exist only for an isotropic tensor. This model has phases "
+      t("k, μ, E and ν exist only for an isotropic tensor. This model has phases "
       + "with no orientation average, so the result need not be isotropic — "
-      + "pick a reporting projection below, or plot Kelvin-Mandel components."));
+      + "pick a reporting projection below, or plot Kelvin-Mandel components.")));
   }
   sw.outputs.forEach((o, i) => {
-    const row = [field("Quantity", select(OUTPUT_KINDS, o.kind, (v) => { o.kind = v; push(); }))];
+    const row = [field(t("Quantity"), select(outputKinds(), o.kind, (v) => { o.kind = v; push(); }))];
     if (o.kind === "km" || o.kind === "comp") {
       row.push(
         field("i", input(o.i ?? 1, (v) => { o.i = Math.max(1, +v | 0); push(); })),
@@ -842,7 +850,7 @@ function renderSweep() {
     kids.push(el("div", { class: "card" },
       el("header", {}, el("b", {}, outputLabel(o)),
         sw.outputs.length > 1
-          ? el("button", { class: "small", onclick: () => { sw.outputs.splice(i, 1); push(); } }, "\u2212")
+          ? el("button", { class: "small", title: t("Remove this output"), onclick: () => { sw.outputs.splice(i, 1); push(); } }, "\u2212")
           : null),
       el("div", { class: row.length > 1 ? "grid3" : "grid2" }, ...row)
     ));
@@ -850,29 +858,29 @@ function renderSweep() {
 
   kids.push(
     el("div", { class: "grid2" },
-      field("Property", input(sw.property, (v) => { sw.property = v.startsWith(":") ? v : ":" + v; push(); })),
-      field("Report as", select(
-        (S.catalog.projections || []).map((p) => [p.name, p.label]),
+      field(t("Property"), input(sw.property, (v) => { sw.property = v.startsWith(":") ? v : ":" + v; push(); })),
+      field(t("Report as"), select(
+        (S.catalog.projections || []).map((p) => [p.name, t(p.label)]),
         sw.projection, (v) => { sw.projection = v; push(); }
       ))
     )
   );
   kids.push(
     field("", checkboxLabel(
-      "clip negative values to zero", !!sw.clamp_zero,
+      t("clip negative values to zero"), !!sw.clamp_zero,
       (v) => { sw.clamp_zero = v; push(); }
     )),
     el("div", { class: "note" },
-      "A scheme pushed outside its range gives negative moduli — Dilute does, "
+      t("A scheme pushed outside its range gives negative moduli — Dilute does, "
       + "well before f = 1 — and on a shared figure that one curve sets the "
       + "scale for every other. Clipping is a display choice; on a single "
       + "scheme, a negative modulus is the useful signal and is better left "
-      + "showing.")
+      + "showing."))
   );
   if (sweeping) {
-    kids.push(field("Plot", checkboxLabel("draw a figure", sw.plot, (v) => { sw.plot = v; push(); })));
+    kids.push(field(t("Plot"), checkboxLabel(t("draw a figure"), sw.plot, (v) => { sw.plot = v; push(); })));
   }
-  t.replaceChildren(...kids);
+  tab.replaceChildren(...kids);
 }
 
 function outputLabel(o) {
@@ -883,7 +891,7 @@ function outputLabel(o) {
 
 function lensDoc(kind) {
   const l = (S.catalog.lenses || []).find((x) => x.name === kind);
-  return l && l.doc ? el("div", { class: "note" }, l.doc) : el("span");
+  return l && l.doc ? el("div", { class: "note" }, t(l.doc)) : el("span");
 }
 
 /** The lenses that exist on this kind of cell.
@@ -905,13 +913,13 @@ function lensFields(lens, inner, c = cell()) {
   if (lens.kind === "nested") {
     out.push(
       el("div", { class: "grid2" },
-        field(isLaminate(c) ? "Through layer" : "Through phase",
+        field(isLaminate(c) ? t("Through layer") : t("Through phase"),
           select(names, lens.member || (names[0] && names[0][0]), (v) => { lens.member = v; push(); })),
-        field("Key", input(lens.property, (v) => { lens.property = v.startsWith(":") ? v : ":" + v; push(); }))
+        field(t("Key"), input(lens.property, (v) => { lens.property = v.startsWith(":") ? v : ":" + v; push(); }))
       ),
-      el("h3", {}, "Inside that scale"),
-      field("Lens", select(
-        lensesFor(c).filter((l) => l.name !== "nested").map((l) => [l.name, l.label]),
+      el("h3", {}, t("Inside that scale")),
+      field(t("Lens"), select(
+        lensesFor(c).filter((l) => l.name !== "nested").map((l) => [l.name, t(l.label)]),
         inner.kind, (v) => { inner.kind = v; push(); }
       )),
       ...lensFields(inner, {}, c)
@@ -919,7 +927,7 @@ function lensFields(lens, inner, c = cell()) {
     return out;
   }
   if (lens.kind === "thickness") {
-    out.push(field("Layer", select(
+    out.push(field(t("Layer"), select(
       names, lens.phase || (names[0] && names[0][0]),
       (v) => { lens.phase = v; push(); }
     )));
@@ -927,32 +935,32 @@ function lensFields(lens, inner, c = cell()) {
     const fields = ((S.catalog.lenses || []).find((l) => l.name === "interface_param")
       || {}).fields || [];
     out.push(el("div", { class: "grid2" },
-      field("Interface (on top of layer)", input(lens.index, (v) => {
+      field(t("Interface (on top of layer)"), input(lens.index, (v) => {
         lens.index = Math.max(1, +v | 0); push();
       })),
-      field("Field", select(
+      field(t("Field"), select(
         fields.map((f) => [f, f]), lens.field_name,
         (v) => { lens.field_name = v; push(); }
       ))
     ));
   } else if (lens.kind === "amount") {
-    out.push(field("Phase", select(names, lens.phase || (names[0] && names[0][0]), (v) => { lens.phase = v; push(); })));
+    out.push(field(t("Phase"), select(names, lens.phase || (names[0] && names[0][0]), (v) => { lens.phase = v; push(); })));
   } else if (lens.kind === "property") {
     out.push(el("div", { class: "grid3" },
-      field("Phase", select(names, lens.phase, (v) => { lens.phase = v; push(); })),
-      field("Key", input(lens.property, (v) => { lens.property = v; push(); })),
-      field("Index", input(lens.index, (v) => { lens.index = +v | 0 || 1; push(); }))
+      field(t("Phase"), select(names, lens.phase, (v) => { lens.phase = v; push(); })),
+      field(t("Key"), input(lens.property, (v) => { lens.property = v; push(); })),
+      field(t("Index"), input(lens.index, (v) => { lens.index = +v | 0 || 1; push(); }))
     ));
   } else if (lens.kind === "geometry") {
     out.push(el("div", { class: "grid3" },
-      field("Phase", select(names, lens.phase, (v) => { lens.phase = v; push(); })),
-      field("Field", input(lens.field_name, (v) => { lens.field_name = v; push(); })),
-      field("Index", input(lens.index, (v) => { lens.index = +v | 0 || 1; push(); }))
+      field(t("Phase"), select(names, lens.phase, (v) => { lens.phase = v; push(); })),
+      field(t("Field"), input(lens.field_name, (v) => { lens.field_name = v; push(); })),
+      field(t("Index"), input(lens.index, (v) => { lens.index = +v | 0 || 1; push(); }))
     ));
   } else if (lens.kind === "shape_param") {
     out.push(el("div", { class: "grid2" },
-      field("Field", input(lens.field_name, (v) => { lens.field_name = v; push(); })),
-      field("Index", input(lens.index, (v) => { lens.index = +v | 0 || 1; push(); }))
+      field(t("Field"), input(lens.field_name, (v) => { lens.field_name = v; push(); })),
+      field(t("Index"), input(lens.index, (v) => { lens.index = +v | 0 || 1; push(); }))
     ));
   }
   return out;
@@ -974,13 +982,13 @@ function renderSens() {
   const s = S.model.sens;
   s.lenses = s.lenses && s.lenses.length ? s.lenses : [{ kind: "amount", phase: "", property: ":C", field_name: "semi_axes", index: 1, member: "", inner: null }];
   s.output = s.output || { kind: "k" };
-  const t = $("#tab-sens");
+  const tab = $("#tab-sens");
   const target = S.model.cells.find((c) => c.id === s.cell) || rootCell();
   const many = s.kind !== "derivative";
 
   const kids = [
-    field("Compute", checkboxLabel(
-      "differentiate the effective property", s.enabled,
+    field(t("Compute"), checkboxLabel(
+      t("differentiate the effective property"), s.enabled,
       (v) => {
         s.enabled = v;
         // The three result modes are exclusive: one `Result` section is
@@ -990,15 +998,15 @@ function renderSens() {
       }
     )),
     el("div", { class: "note" },
-      "ForwardDiff through the whole scheme — and through a nested scale too, "
-      + "the `nested` lens composing across the seam in one pass."),
+      t("ForwardDiff through the whole scheme — and through a nested scale too, "
+      + "the `nested` lens composing across the seam in one pass.")),
   ];
 
-  if (!s.enabled) { t.replaceChildren(...kids); return; }
+  if (!s.enabled) { tab.replaceChildren(...kids); return; }
 
   kids.push(
-    field("Kind", select(
-      (S.catalog.sensitivities || []).map((x) => [x.name, x.label]),
+    field(t("Kind"), select(
+      (S.catalog.sensitivities || []).map((x) => [x.name, t(x.label)]),
       s.kind,
       (v) => {
         s.kind = v;
@@ -1008,16 +1016,16 @@ function renderSens() {
     )),
     sensDoc(s.kind),
     el("div", { class: "grid2" },
-      field("Scale", select(
+      field(t("Scale"), select(
         S.model.cells.map((c) => [c.id, c.name]),
         s.cell || (target && target.id),
         (v) => { s.cell = v; push(); }
       )),
-      field("Property", input(s.property, (v) => {
+      field(t("Property"), input(s.property, (v) => {
         s.property = v.startsWith(":") ? v : ":" + v; push();
       }))
     ),
-    field("Scheme", select(
+    field(t("Scheme"), select(
       schemesFor(target).map((x) => [x.name, x.name]),
       s.scheme,
       (v) => { s.scheme = v; s.scheme_options = {}; push(); }
@@ -1025,10 +1033,11 @@ function renderSens() {
     schemeOptions(s.scheme, s.scheme_options || (s.scheme_options = {}))
   );
 
-  kids.push(el("h3", {}, many ? "Parameters" : "Parameter",
+  kids.push(el("h3", {}, many ? t("Parameters") : t("Parameter"),
     many
       ? el("button", {
           class: "small",
+          title: t("Add a parameter"),
           onclick: () => {
             s.lenses.push({ kind: "amount", phase: "", property: ":C", field_name: "semi_axes", index: 1, member: "", inner: null });
             push();
@@ -1041,10 +1050,10 @@ function renderSens() {
     kids.push(el("div", { class: "card" },
       el("header", {}, el("b", {}, `p${i + 1}`),
         s.lenses.length > 1
-          ? el("button", { class: "small", onclick: () => { s.lenses.splice(i, 1); push(); } }, "−")
+          ? el("button", { class: "small", title: t("Remove this parameter"), onclick: () => { s.lenses.splice(i, 1); push(); } }, "−")
           : null),
-      field("Lens", select(
-        lensesFor(target).map((x) => [x.name, x.label]),
+      field(t("Lens"), select(
+        lensesFor(target).map((x) => [x.name, t(x.label)]),
         l.kind, (v) => { l.kind = v; push(); }
       )),
       lensDoc(l.kind),
@@ -1055,7 +1064,7 @@ function renderSens() {
   // A jacobian differentiates the whole tensor, so there is nothing to extract
   // — and that is also the way out when the result is not isotropic.
   if (s.kind !== "jacobian") {
-    const row = [field("Quantity", select(OUTPUT_KINDS, s.output.kind, (v) => {
+    const row = [field(t("Quantity"), select(outputKinds(), s.output.kind, (v) => {
       s.output.kind = v; push();
     }))];
     if (s.output.kind === "km" || s.output.kind === "comp") {
@@ -1064,29 +1073,29 @@ function renderSens() {
         field("j", input(s.output.j ?? 1, (v) => { s.output.j = Math.max(1, +v | 0); push(); }))
       );
     }
-    row.push(field("Report as", select(
-      (S.catalog.projections || []).map((p) => [p.name, p.label]),
+    row.push(field(t("Report as"), select(
+      (S.catalog.projections || []).map((p) => [p.name, t(p.label)]),
       s.projection || "iso", (v) => { s.projection = v; push(); }
     )));
-    kids.push(el("h3", {}, "Differentiated quantity"),
+    kids.push(el("h3", {}, t("Differentiated quantity")),
       el("div", { class: row.length > 2 ? "grid3" : "grid2" }, ...row),
       el("div", { class: "note" },
-        "The projection sits inside the differentiated function, so what comes "
-        + "out is the derivative of the reported quantity."));
+        t("The projection sits inside the differentiated function, so what comes "
+        + "out is the derivative of the reported quantity.")));
   } else {
     kids.push(el("div", { class: "note" },
-      "The whole effective tensor, flattened — no scalar is extracted, so no "
-      + "isotropy is required."));
+      t("The whole effective tensor, flattened — no scalar is extracted, so no "
+      + "isotropy is required.")));
   }
 
   kids.push(el("div", { class: "note" },
-    "The answer is a table, in the output panel: a gradient is not a curve."));
-  t.replaceChildren(...kids);
+    t("The answer is a table, in the output panel: a gradient is not a curve.")));
+  tab.replaceChildren(...kids);
 }
 
 function sensDoc(kind) {
   const x = (S.catalog.sensitivities || []).find((s) => s.name === kind);
-  return x && x.doc ? el("div", { class: "note" }, x.doc) : el("span");
+  return x && x.doc ? el("div", { class: "note" }, t(x.doc)) : el("span");
 }
 
 /* ── viscoelasticity ────────────────────────────────────────────── */
@@ -1109,94 +1118,95 @@ function renderAlv() {
   $("#tab-alv").replaceChildren(
     blocked
       ? el("div", { class: "note problem" },
-          "Aging viscoelasticity cannot be combined with a nested scale: "
+          t("Aging viscoelasticity cannot be combined with a nested scale: "
           + "MeanFieldHomogenization cannot re-express a homogenized inner result as a "
-          + "ViscoLaw. Remove the seam first.")
+          + "ViscoLaw. Remove the seam first."))
       : el("span"),
     el("div", { class: "note" },
-      "Give a phase a viscoelastic law in Scales → Properties → Parametrization "
-      + "(Maxwell, Kelvin chain, elastic, or a custom J(t, t′)). "
-      + (viscoPhases.length
-          ? "Found on: " + viscoPhases.join(", ") + "."
-          : "No phase carries one yet, so this run has nothing to age.")),
-    field("", checkboxLabel("Aging linear viscoelastic run", a.enabled, (v) => {
+      t("Give a phase a viscoelastic law in Scales → Properties → Parametrization "
+      + "(Maxwell, Kelvin chain, elastic, or a custom J(t, t′)).")
+      + " " + (viscoPhases.length
+          ? t("Found on: {phases}.", { phases: viscoPhases.join(", ") })
+          : t("No phase carries one yet, so this run has nothing to age."))),
+    field("", checkboxLabel(t("Aging linear viscoelastic run"), a.enabled, (v) => {
       a.enabled = v;
       // One `Result` section is emitted; two run modes would fight over it.
       if (v) S.model.sens.enabled = false;
       push();
     })),
     el("div", { class: "grid3" },
-      field(a.log_time ? "log₁₀ t from" : "t from", input(a.t_start, (v) => { a.t_start = +v; push(); })),
-      field(a.log_time ? "log₁₀ t to" : "t to", input(a.t_stop, (v) => { a.t_stop = +v; push(); })),
-      field("Steps", input(a.length, (v) => { a.length = Math.max(2, +v | 0); push(); }))
+      field(a.log_time ? t("log₁₀ t from") : t("t from"), input(a.t_start, (v) => { a.t_start = +v; push(); })),
+      field(a.log_time ? t("log₁₀ t to") : t("t to"), input(a.t_stop, (v) => { a.t_stop = +v; push(); })),
+      field(t("Steps"), input(a.length, (v) => { a.length = Math.max(2, +v | 0); push(); }))
     ),
-    field("", checkboxLabel("logarithmic time", a.log_time, (v) => { a.log_time = v; push(); })),
+    field("", checkboxLabel(t("logarithmic time"), a.log_time, (v) => { a.log_time = v; push(); })),
     el("div", { class: "grid2" },
-      field("Property", input(a.property, (v) => { a.property = v.startsWith(":") ? v : ":" + v; push(); })),
-      field("Scale", select(
+      field(t("Property"), input(a.property, (v) => { a.property = v.startsWith(":") ? v : ":" + v; push(); })),
+      field(t("Scale"), select(
         S.model.cells.map((c) => [c.id, c.name]),
         a.cell || (S.model.cells[0] && S.model.cells[0].id),
         (v) => { a.cell = v; push(); }
       ))
     ),
-    el("h3", {}, "Curve"),
+    el("h3", {}, t("Curve")),
     el("div", { class: "note" },
-      "The effective relaxation operator is inverted to a creep operator; the "
+      t("The effective relaxation operator is inverted to a creep operator; the "
       + "curve is the response to a unit step, read on one Kelvin-Mandel "
-      + "component. (1, 1) is uniaxial."),
+      + "component. (1, 1) is uniaxial.")),
     el("div", { class: "grid2" },
-      field("component i", input(a.component[0], (v) => { a.component[0] = Math.max(1, +v | 0); push(); })),
-      field("component j", input(a.component[1], (v) => { a.component[1] = Math.max(1, +v | 0); push(); }))
+      field(t("component i"), input(a.component[0], (v) => { a.component[0] = Math.max(1, +v | 0); push(); })),
+      field(t("component j"), input(a.component[1], (v) => { a.component[1] = Math.max(1, +v | 0); push(); }))
     ),
-    field("Plot", checkboxLabel("draw a figure", a.plot !== false, (v) => { a.plot = v; push(); })),
+    field(t("Plot"), checkboxLabel(t("draw a figure"), a.plot !== false, (v) => { a.plot = v; push(); })),
     el("div", { class: "note" },
-      "The schemes come from the Sweep tab, so several can share the figure.")
+      t("The schemes come from the Sweep tab, so several can share the figure."))
   );
 }
 
 /* ── constants and kept blocks ──────────────────────────────────── */
 
 function renderParams() {
-  const t = $("#tab-params");
-  t.replaceChildren(
-    el("h3", {}, "Constants",
+  const tab = $("#tab-params");
+  tab.replaceChildren(
+    el("h3", {}, t("Constants"),
       el("button", {
         class: "small",
+        title: t("Add a constant"),
         onclick: () => { S.model.params.push({ name: "x", value: "1.0", comment: "", origin: null, edited: true }); push(); },
       }, "+")),
     ...S.model.params.map((p, i) =>
       el("div", { class: "card" },
         el("header", {}, el("b", {}, p.name),
-          p.origin && !p.edited ? el("span", { class: "tag" }, "as written") : null,
-          el("button", { class: "small", onclick: () => { S.model.params.splice(i, 1); push(); } }, "−")),
+          p.origin && !p.edited ? el("span", { class: "tag" }, t("as written")) : null,
+          el("button", { class: "small", title: t("Remove this constant"), onclick: () => { S.model.params.splice(i, 1); push(); } }, "−")),
         el("div", { class: "grid2" },
-          field("Name", input(p.name, (v) => { p.name = v; p.edited = true; push(); })),
-          field("Value", input(p.value, (v) => { p.value = v; p.edited = true; push(); }))
+          field(t("Name"), input(p.name, (v) => { p.name = v; p.edited = true; push(); })),
+          field(t("Value"), input(p.value, (v) => { p.value = v; p.edited = true; push(); }))
         ))
     ),
     S.model.params.length ? el("div", { class: "note" },
-      "A constant read from a file keeps its original text until you edit it, "
-      + "so multi-line layout is not collapsed.") : el("span")
+      t("A constant read from a file keeps its original text until you edit it, "
+      + "so multi-line layout is not collapsed.")) : el("span")
   );
 }
 
 function renderKept() {
-  const t = $("#tab-kept");
+  const tab = $("#tab-kept");
   const kept = S.model.opaque || [];
   const rep = S.keptReport;
-  t.replaceChildren(
+  tab.replaceChildren(
     el("div", { class: "note" },
-      "Code MFH Studio did not recognize. It is written back unchanged — "
-      + "editing the model never rewrites it."),
+      t("Code MFH Studio did not recognize. It is written back unchanged — "
+      + "editing the model never rewrites it.")),
     rep && rep.exact
-      ? el("div", { class: "note" }, "This file was written by the studio and reopened exactly.")
+      ? el("div", { class: "note" }, t("This file was written by the studio and reopened exactly."))
       : el("span"),
     ...kept.map((o) =>
       el("div", {},
         o.note ? el("div", { class: "muted" }, o.note) : null,
         el("div", { class: "kept" }, o.source))
     ),
-    kept.length ? null : el("div", { class: "muted" }, "Nothing kept.")
+    kept.length ? null : el("div", { class: "muted" }, t("Nothing kept."))
   );
 }
 
@@ -1224,8 +1234,8 @@ function input(value, on) {
   return n;
 }
 function select(pairs, value, on) {
-  const n = el("select", {}, ...pairs.map(([v, t]) =>
-    el("option", { value: v, selected: String(v) === String(value) }, t)));
+  const n = el("select", {}, ...pairs.map(([v, label]) =>
+    el("option", { value: v, selected: String(v) === String(value) }, label)));
   n.addEventListener("change", () => on(n.value));
   return n;
 }
@@ -1275,7 +1285,7 @@ async function draw3d() {
     ? { cell: c.id, cutaway: $("#cutaway").checked }
     : { cell: c.id, phase: ph.name, cutaway: $("#cutaway").checked };
   const shown = lam
-    ? `Laminate — ${(c.layers || []).length} layer(s)`
+    ? t("Laminate — {n} layer(s)", { n: (c.layers || []).length })
     : `${ph.name}: ${ph.geometry.kind}`;
   $("#shape-label").textContent = shown;
   const key = JSON.stringify([body, lam ? JSON.stringify(c) : JSON.stringify(ph), S.model.params]);
@@ -1299,19 +1309,19 @@ async function draw3d() {
 async function run() {
   const btn = $("#run");
   btn.disabled = true;
-  btn.textContent = "Running…";
+  btn.textContent = t("Running…");
   $("#stdout").textContent = "";
   try {
     const r = await api("/api/run", {});
     $("#stdout").textContent = (r.stdout || "") + (r.error ? "\n" + r.error : "");
     if (r.results) { S.results = r.results; plotResults(r.results); }
-    if (r.ok) toast("Ran cleanly.");
-    else toast(r.timeout ? "Timed out." : "The script raised — see the output.", true);
+    if (r.ok) toast(t("Ran cleanly."));
+    else toast(r.timeout ? t("Timed out.") : t("The script raised — see the output."), true);
   } catch (e) {
     toast(e.message, true);
   } finally {
     btn.disabled = false;
-    btn.textContent = "Run";
+    btn.textContent = t("Run");
   }
 }
 
@@ -1325,13 +1335,14 @@ function plotResults(res) {
   const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
   const axis = { color: css("--muted"), gridcolor: css("--line"), zerolinecolor: css("--line") };
   Plotly.react("plot", traces, {
-    margin: { l: 48, r: 10, t: 10, b: 38 },
+    margin: { l: 48, r: 10, t: 30, b: 38 },
     xaxis: Object.assign({ title: res.xlabel || "x" }, axis),
     yaxis: axis,
     font: { color: css("--ink") },
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
-    legend: { orientation: "h" },
+    // above the plot: below it, the legend sat on the title of the x axis
+    legend: { orientation: "h", x: 0, y: 1.02, yanchor: "bottom" },
   }, { displayModeBar: false, responsive: true });
 }
 
@@ -1364,8 +1375,9 @@ async function openFile() {
     } else {
       const r = st.read_report || {};
       toast(r.exact
-        ? "Reopened from the model embedded in the file."
-        : `Read: ${r.recognized || 0} construct(s) understood, ${r.opaque || 0} kept as written.`);
+        ? t("Reopened from the model embedded in the file.")
+        : t("Read: {recognized} construct(s) understood, {opaque} kept as written.",
+            { recognized: r.recognized || 0, opaque: r.opaque || 0 }));
     }
   } catch (e) {
     toast(e.message, true);
@@ -1380,11 +1392,11 @@ function showConversion(c) {
   if (!c.findings.length) { banner.hidden = true; return; }
   banner.hidden = false;
   banner.replaceChildren(
-    el("b", {}, `Translated from ${c.source.replace(/^.*[\\/]/, "")} — `),
+    el("b", {}, t("Translated from {file}", { file: c.source.replace(/^.*[\\/]/, "") }) + " — "),
     el("span", {}, c.summary),
     el("pre", {}, c.findings
       .slice(0, 10)
-      .map((f) => `line ${f.line}  [${f.severity}]  ${f.reason}`)
+      .map((f) => `${t("line {n}", { n: f.line })}  [${f.severity}]  ${f.reason}`)
       .join("\n"))
   );
 }
@@ -1400,7 +1412,7 @@ async function saveFile(askPath) {
     const r = await api("/api/save", { path });
     S.path = r.path;
     setPathLabel(r.path);
-    toast(`Saved ${r.bytes} bytes to ${r.path}`);
+    toast(t("Saved {bytes} bytes to {path}", { bytes: r.bytes, path: r.path }));
   } catch (e) {
     toast(e.message, true);
   }
@@ -1408,8 +1420,8 @@ async function saveFile(askPath) {
 
 function setPathLabel(p) {
   const el = $("#path-label");
-  el.textContent = p || "untitled";
-  el.title = p || "No file yet";
+  el.textContent = p || t("untitled");
+  el.title = p || t("No file yet: Save asks for a name.");
 }
 
 /* ── compute process status ─────────────────────────────────── */
@@ -1423,9 +1435,9 @@ async function pollStatus() {
   }
   const b = $("#status");
   const labels = {
-    ready: ["Julia ready", "badge ok"], busy: [`running… ${Math.round(s.elapsed || 0)} s`, "badge"],
-    preparing: ["preparing…", "badge"], starting: ["loading MeanFieldHomogenization…", "badge"],
-    stopped: ["stopped", "badge bad"], failed: ["Julia unavailable", "badge bad"],
+    ready: [t("Julia ready"), "badge ok"], busy: [t("running… {s} s", { s: Math.round(s.elapsed || 0) }), "badge"],
+    preparing: [t("preparing…"), "badge"], starting: [t("loading MeanFieldHomogenization…"), "badge"],
+    stopped: [t("stopped"), "badge bad"], failed: [t("Julia unavailable"), "badge bad"],
   };
   const [text, cls] = labels[s.state] || [s.state, "badge"];
   b.textContent = text;
@@ -1438,10 +1450,10 @@ async function pollStatus() {
   if (s.state === "failed" || s.state === "preparing") {
     banner.hidden = false;
     banner.replaceChildren(
-      el("b", {}, s.state === "failed" ? "The compute process could not start — " : "Preparing the compute process — "),
+      el("b", {}, (s.state === "failed" ? t("The compute process could not start") : t("Preparing the compute process")) + " — "),
       el("span", {}, s.state === "failed"
-        ? "you can still build, view, open and save a script; Run is off."
-        : "this happens once and takes a few minutes; everything but Run works meanwhile."),
+        ? t("you can still build, view, open and save a script; Run is off.")
+        : t("this happens once and takes a few minutes; everything but Run works meanwhile.")),
       el("pre", {}, (s.log || []).slice(-8).join("\n"))
     );
   } else {
@@ -1456,7 +1468,7 @@ async function stopRun() {
 async function restartCompute() {
   try {
     await api("/api/compute/restart", {});
-    toast("The compute process is restarting; the next run compiles again.");
+    toast(t("The compute process is restarting; the next run compiles again."));
   } catch (e) { toast(e.message, true); }
 }
 
@@ -1472,6 +1484,7 @@ async function loadCatalog() {
 }
 
 async function boot() {
+  await setLanguage(I18n.savedLanguage());
   try {
     // The catalog answers with or without Julia; the model always does. The
     // interface must come up either way — otherwise every control throws on
@@ -1479,11 +1492,28 @@ async function boot() {
     await loadCatalog();
     apply(await api("/api/state"));
   } catch (e) {
-    toast("Could not reach the studio server: " + e.message, true);
+    toast(t("Could not reach the studio server: {error}", { error: e.message }), true);
+  }
+}
+
+/** Switch the page's words; the parts built by the code are built again. */
+async function setLanguage(l) {
+  await I18n.setLanguage(l);
+  // the button names the language it switches to
+  $("#lang").textContent = I18n.language() === "en" ? "FR" : "EN";
+  if ($("#run").disabled === false) $("#run").textContent = t("Run");
+  if (S.model) {
+    render();
+    setPathLabel(S.path);
+    $("#problems").textContent = S.problems.length ? t("{n} problem(s)", { n: S.problems.length }) : "";
+    lastExpr = null;
+    draw3d();
+    pollStatus();
   }
 }
 
 function wire() {
+  $("#lang").addEventListener("click", () => setLanguage(I18n.language() === "en" ? "fr" : "en"));
   $("#theme").addEventListener("click", () => {
     applyTheme(THEMES[(THEMES.indexOf(savedTheme()) + 1) % THEMES.length]);
     if (S.results) plotResults(S.results);

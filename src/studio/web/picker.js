@@ -11,6 +11,11 @@ const Picker = (() => {
   let state = { path: null, selected: null, mode: "open", resolve: null };
 
   const q = (s) => document.querySelector(s);
+  // the shortcuts the server offers, named in the page's language
+  const placeName = (label) => ({
+    examples: t("examples"), scripts: t("scripts"), package: t("package"),
+    home: t("home"), cwd: t("current folder"),
+  })[label] || label;
 
   function humanSize(n) {
     if (n < 1024) return n + " B";
@@ -34,9 +39,9 @@ const Picker = (() => {
     const i = document.createElement("span");
     i.className = "ico";
     i.textContent = icon;
-    const t = document.createElement("span");
-    t.textContent = label;
-    d.append(i, t);
+    const text = document.createElement("span");
+    text.textContent = label;
+    d.append(i, text);
     if (extra) {
       const s = document.createElement("span");
       s.className = "size";
@@ -65,7 +70,7 @@ const Picker = (() => {
       ...data.places.map((p) => {
         const b = document.createElement("button");
         b.className = "small";
-        b.textContent = p.label;
+        b.textContent = placeName(p.label);
         b.title = p.path;
         b.addEventListener("click", () => show(p.path));
         return b;
@@ -86,15 +91,15 @@ const Picker = (() => {
           state.selected = f.path;
           q("#picker-name").value = f.name;
           if (dbl) accept();
-        }, f.echoes ? "Echoes · " + humanSize(f.size) : humanSize(f.size))
+        }, f.echoes ? t("Echoes · {size}", { size: humanSize(f.size) }) : humanSize(f.size))
       );
     }
     if (!rows.length) {
       const e = document.createElement("div");
       e.className = "empty";
       e.textContent = state.mode === "save"
-        ? "Nothing here yet — type a name below."
-        : "No Julia or Echoes scripts here.";
+        ? t("Nothing here yet — type a name below.")
+        : t("No Julia or Echoes scripts here.");
       rows.push(e);
     }
     list_.replaceChildren(...rows);
@@ -105,7 +110,7 @@ const Picker = (() => {
     let path = state.selected;
     if (state.mode === "save" || !path) {
       if (!name) {
-        toast("Give a file name.", true);
+        toast(t("Give a file name."), true);
         return;
       }
       const sep = state.path.includes("\\") ? "\\" : "/";
@@ -131,9 +136,9 @@ const Picker = (() => {
   function pick(mode, startDir, suggestedName) {
     state.mode = mode;
     q("#picker-title").textContent = mode === "save"
-      ? "Save the script as"
-      : "Open a script  (.jl to edit, .py to translate from Echoes)";
-    q("#picker-ok").textContent = mode === "save" ? "Save" : "Open";
+      ? t("Save the script as")
+      : t("Open a script (.jl to edit, .py to translate from Echoes)");
+    q("#picker-ok").textContent = mode === "save" ? t("Save") : t("Open");
     q("#picker-name").value = suggestedName || "";
     q("#picker").hidden = false;
     document.addEventListener("keydown", onKey);

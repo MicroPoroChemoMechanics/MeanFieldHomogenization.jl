@@ -187,13 +187,15 @@ section {
 
 /* ── tabs ───────────────────────────────────────────────────────── */
 
+/* the tabs wrap rather than scroll: a scrolled-away tab is a tab one never
+   finds, and the French names are longer than the English ones */
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--line);
-  overflow-x: auto;
 }
 .tabs button {
-  flex: 1;
+  flex: 1 0 auto;
   border: none;
   border-bottom: 2px solid transparent;
   background: none;

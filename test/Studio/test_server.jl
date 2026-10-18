@@ -21,6 +21,10 @@ payload(r) = JSON.parse(String(r.body); dicttype = Dict{String, Any})
     @test occursin("MFH Studio", String(r.body))
     @test occursin("script-src 'self'", HTTP.header(r, "Content-Security-Policy"))
     @test get("/app.js"; headers = Pair{String, String}[]).status == 200
+    # the French words, from a folder of the page, as JSON
+    r = get("/i18n/fr.json"; headers = Pair{String, String}[])
+    @test r.status == 200 && startswith(HTTP.header(r, "Content-Type"), "application/json")
+    @test HTTP.header(get("/favicon.svg"; headers = Pair{String, String}[]), "Content-Type") == "image/svg+xml"
     @test get("/nothing.js"; headers = Pair{String, String}[]).status == 404
     @test get("/%2e%2e/%2e%2e/etc/passwd"; headers = Pair{String, String}[]).status == 404
     @test MS.static_file(MS.WEB_DIR, "/../model.jl") === nothing

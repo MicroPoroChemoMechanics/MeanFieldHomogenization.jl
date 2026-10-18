@@ -175,8 +175,8 @@
     head.append(Object.assign(document.createElement("b"), { textContent: c.name }));
     const pick = document.createElement("button");
     pick.className = "small";
-    pick.textContent = "edit";
-    pick.title = "Edit this scale in the panel";
+    pick.textContent = t("edit");
+    pick.title = t("Edit this scale in the panel");
     pick.addEventListener("click", (e) => {
       e.stopPropagation();
       S.cellId = c.id;
@@ -217,7 +217,7 @@
     const out = document.createElement("div");
     out.className = "port out";
     out.dataset.out = c.id;
-    out.title = "Drag from here onto a property of another scale";
+    out.title = t("Drag from here onto a property of another scale");
     out.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
       // The in-flight connector goes in the front layer too, so it is visible
@@ -240,8 +240,8 @@
     p.dataset.in = portId(c.id, mb.name, pr.key);
     p.textContent = pr.key;
     p.title = seam
-      ? "Fed by another scale — click the connector to detach"
-      : "Drop a scale's output here to feed this property";
+      ? t("Fed by another scale — click the connector to detach")
+      : t("Drop a scale's output here to feed this property");
     return p;
   }
 
