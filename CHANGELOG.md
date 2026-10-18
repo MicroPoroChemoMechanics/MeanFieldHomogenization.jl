@@ -194,6 +194,14 @@ long ellipsoids lie. The derivation is on the theory page of Hill tensors.
 
 ### Documentation
 
+- A tutorial, *Two routes to a crack: the COD tensor and the flattened
+  ellipsoid*: 𝐁 from the crack plane and ℍ from the first-order term of the Hill
+  tensor of a flattened ellipsoid, inverted on the kernel of the leading term,
+  met through the bridge. Exact in SymPy in an isotropic matrix, where both give
+  Sneddon's crack; with the first-order term by ForwardDiff in random anisotropic
+  matrices, where they meet within 3e-8; with the residues and DECUHR beside the
+  nested cubature; and against the transformation rule of an elliptically
+  orthotropic matrix.
 - The page on COD tensors shows the comparison of every route in a triclinic
   matrix.
 - The COD tensor of an arbitrarily anisotropic matrix is described as what the
