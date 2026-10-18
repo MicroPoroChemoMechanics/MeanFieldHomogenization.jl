@@ -17,7 +17,9 @@ module Studio
 
 using ..MeanFieldHomogenization: MeanFieldHomogenization
 using HTTP: HTTP
+using InteractiveUtils: InteractiveUtils
 using JSON: JSON
+using LinearAlgebra: I, cross, normalize
 using Malt: Malt
 using Printf: Printf
 using Random: Random
@@ -43,6 +45,8 @@ include("model.jl")
 include("codegen.jl")
 include("parse.jl")
 include("readback.jl")
+include("catalog.jl")
+include("geometry.jl")
 
 """
 The packages the compute process needs: MeanFieldHomogenization itself, at the

@@ -15,6 +15,7 @@ const MS = MeanFieldHomogenization.Studio
     @testset "model" include("test_model.jl")
     @testset "code generation" include("test_codegen.jl")
     @testset "read-back" include("test_readback.jl")
+    @testset "catalog and views" include("test_views.jl")
     @testset "memory" include("test_memory.jl")
     @testset "environment" include("test_environment.jl")
     @testset "server" include("test_server.jl")
