@@ -1,0 +1,18 @@
+# Line endings are normalized to LF in the working tree on every platform.
+#
+# Without this, git on Windows checks text files out with CRLF by default, and
+# the tests compare text the repository holds: the worked examples of MFH Studio
+# (src/studio/library) must be, byte for byte, what the code generation writes
+# from their own models, and that comparison is one stray `\r` away from a
+# failure that says nothing about the code.
+#
+# LF everywhere also keeps a diff from showing every line of a file as changed
+# the first time a Windows contributor saves it.
+* text=auto eol=lf
+
+# Binaries, left exactly as they are.
+*.png binary
+*.gif binary
+*.ico binary
+*.jpg binary
+*.pdf binary

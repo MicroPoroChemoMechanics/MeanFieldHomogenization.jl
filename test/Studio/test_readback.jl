@@ -132,6 +132,10 @@ end
     @test isempty(MS.validate(back))
     out = MS.generate(back; embed_model = false)
     @test all(l -> occursin(strip(l), out), filter(l -> !isempty(strip(l)), split(src, '\n')))
+    # saved on Windows, the same script: its builders compare with what the
+    # code generation writes line by line, not with a `\r` at each end
+    crlf, crlf_report = MS.model_from_script(replace(src, "\n" => "\r\n"))
+    @test crlf_report == report && MS.generate(crlf; embed_model = false) == out
     # an inner builder kept as written keeps the outer one as written too: the
     # seam is never rewritten into an expression that would break the script
     hand = replace(src, "function _foam()" => "function _foam(x::Float64 = 1.0)")
