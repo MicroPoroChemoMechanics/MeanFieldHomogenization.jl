@@ -544,6 +544,17 @@ as a form. That is why the
 [worked examples](@ref tools-mfhstudio-examples) exist: they are the same
 models in the shape the studio can hand back.
 
+## Inside the studio
+
+The studio is the submodule `MeanFieldHomogenization.Studio`, written in Julia
+like the rest of the package, apart from its page (HTML and JavaScript). The
+notes for those who work on it, how it is built and how it is tested, are in
+`src/studio/README.md`.
+
+```@docs
+MeanFieldHomogenization.Studio
+```
+
 ## Where to go next
 
 The companions of the library continue with
