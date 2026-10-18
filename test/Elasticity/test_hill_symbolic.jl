@@ -19,8 +19,9 @@ Symbolics.@variables hs_a hs_b hs_c hs_k hs_μ
 const HS_VARS = [hs_a, hs_b, hs_c, hs_k, hs_μ]
 const HS_POINT = [1.0, 0.6, 0.3, 5.0, 2.0]
 
-# A symbolic tensor evaluated at `HS_POINT` through a compiled function.
-_hs_eval(P) = Symbolics.build_function(get_array(P), HS_VARS; expression = Val(false))[1](HS_POINT)
+# A symbolic tensor, or vector, evaluated at `HS_POINT` through a compiled function.
+_hs_eval_vec(v) = Symbolics.build_function(v, HS_VARS; expression = Val(false))[1](HS_POINT)
+_hs_eval(P) = _hs_eval_vec(get_array(P))
 
 @testset "Hill tensors of symbolic inclusions" begin
     shapes = (
@@ -38,6 +39,17 @@ _hs_eval(P) = Symbolics.build_function(get_array(P), HS_VARS; expression = Val(f
         P = hill_tensor(sym, C_sym)
         @test eltype(get_array(P)) <: Symbolics.Num
         @test _hs_eval(P) ≈ get_array(hill_tensor(num, C_num)) rtol = 1.0e-13 atol = 1.0e-15
+    end
+
+    # The Newton potentials themselves, the sphere's included (its Hill tensor
+    # takes Eshelby's closed form and never calls them).
+    np3 = MeanFieldHomogenization.Core.newton_potential_3d
+    for (sym, num) in (
+            ((hs_a, hs_a, hs_a), (1.0, 1.0, 1.0)), ((hs_a, hs_a, hs_c), (1.0, 1.0, 0.3)),
+            ((hs_a, hs_c, hs_c), (1.0, 0.3, 0.3)), ((hs_a, hs_b, hs_c), (1.0, 0.6, 0.3)),
+        )
+        Iv, IIv = np3(sym...)
+        @test _hs_eval_vec([Iv..., IIv...]) ≈ [Iterators.flatten(np3(num...))...] rtol = 1.0e-13
     end
 
     # The shape class follows the structure of the expressions.

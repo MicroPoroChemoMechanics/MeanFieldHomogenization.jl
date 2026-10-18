@@ -164,6 +164,13 @@ end
     @test get_layer(s, q₁; side = :outer) == 2
     @test get_layer(s, q₁) == 2                       # `:outer` is the default
     @test get_layer(s, 0.5 * q₁; side = :inner) == 1
+    # Off the interfaces the side does not matter: the layer beyond the first,
+    # and the surrounding matrix.
+    q₂ = real(s.q[2])
+    for side in (:inner, :outer)
+        @test get_layer(s, (q₁ + q₂) / 2; side) == 2
+        @test get_layer(s, 2q₂; side) == 3
+    end
     @test_throws ArgumentError get_layer(s, q₁; side = :both)
 end
 

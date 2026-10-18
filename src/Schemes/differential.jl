@@ -350,37 +350,13 @@ function _diff_state_proto(
     T_contrib = eltype(P_init)
     isempty(incl) && return P_init, T_contrib
     proto = P_init
-    for pass in 1:4
+    for _ in 1:4
         # The kernels always take the stiffness-like tensor; in the dual
         # formulation the state — and hence `proto` — is its inverse.
         ref = dual ? inv(proto) : proto
         acc = proto
         for name in incl
-            contribution = try
-                _diff_probe_contribution(rve, name, prop, ref, dual; kw...)
-            catch err
-                # The widened reference is a fully anisotropic *type* holding,
-                # at τ = 0, isotropic *values* — the case on which the residue
-                # algorithm's acoustic polynomial degenerates.  `:auto` routes
-                # around it (it selects a cubature, see `Core/dispatch.jl`), so
-                # this is only reachable when the caller asked for
-                # `method = :residues` explicitly.
-                pass == 1 && rethrow()
-                throw(
-                    ArgumentError(
-                        "DifferentialScheme: the running effective medium of " *
-                            "this RVE is fully anisotropic from the first step, " *
-                            "and the Hill-tensor backend selected for phase " *
-                            ":$(name) cannot be evaluated against it while its " *
-                            "values are still isotropic " *
-                            "($(sprint(showerror, err))). The residue algorithm " *
-                            "degenerates there: drop `method = :residues` and let " *
-                            "`:auto` pick a cubature, or give the phase an " *
-                            "orientation average (`symmetrize = :iso`), which " *
-                            "keeps the running medium isotropic."
-                    )
-                )
-            end
+            contribution = _diff_probe_contribution(rve, name, prop, ref, dual; kw...)
             T_contrib = promote_type(T_contrib, eltype(contribution))
             acc += contribution
         end

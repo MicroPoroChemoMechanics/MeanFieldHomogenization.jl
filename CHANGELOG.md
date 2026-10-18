@@ -128,6 +128,10 @@ long ellipsoids lie. The derivation is on the theory page of Hill tensors.
 - `newton_potential_3d` and `newton_potential_2d` accept semi-axes of mixed
   types, as `newton_potential_3d_cylinder` did.
 - `fe_available_gb` takes the file to read, `/proc/meminfo` by default.
+- The differential scheme no longer intercepts a failure of the Hill tensor at
+  its first steps to advise against `method = :residues`: the residues now take
+  the isotropic values a fully anisotropic running medium starts from, and any
+  other failure reports its own message.
 
 ### Tests
 
@@ -152,7 +156,8 @@ long ellipsoids lie. The derivation is on the theory page of Hill tensors.
   spectrum, for every class it knows; the self-consistent estimate of auxetic
   phases against its own condition, evaluated without the guard.
 - Symbolic Hill tensors of spheroids, triaxial ellipsoids and cylinders, in
-  elasticity and conduction, against the numerical ones.
+  elasticity and conduction, and the symbolic Newton potentials, against the
+  numerical ones.
 - The potentials of a cylinder near a circular section against those of an
   elongated ellipsoid, with their derivatives.
 - Branches no test reached: the regularized and the Picard steps of
