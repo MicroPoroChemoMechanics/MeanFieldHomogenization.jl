@@ -41,6 +41,8 @@ include("core/launcher.jl")
 include("pyformat.jl")
 include("model.jl")
 include("codegen.jl")
+include("parse.jl")
+include("readback.jl")
 
 """
 The packages the compute process needs: MeanFieldHomogenization itself, at the
