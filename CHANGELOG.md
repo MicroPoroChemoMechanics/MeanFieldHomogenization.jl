@@ -93,6 +93,13 @@ as measured on 0.17.2 and on this release.
   integrals as unexpanded calls, which the Symbolics extension now registers as
   it did the complete ones. SymPy, whose `Sym` is not a `Real`, was not
   affected.
+- **A crack given in numbers under symbolic moduli lost its exact closed form.**
+  The factors of the circle (π/4, π/2) were evaluated in the arithmetic of the
+  crack geometry, Float64, so that the COD tensor of `PennyCrack(1.0)` in a
+  matrix of symbolic `E`, `ν` carried `1.6977…` in place of `16/(3π)`. They are
+  evaluated in the arithmetic of the moduli when it is symbolic, and a ratio given
+  as `1.0` enters as the integer it is: the result is Sneddon's closed form,
+  exactly.
 - **Cylinders and ellipses close to circular.** The Newton potentials of an
   elliptic cylinder and of an ellipse switched to the circular forms within
   1e-6 (relative) of a circular section, although the elliptic forms hold down

@@ -173,6 +173,19 @@ end
     @test iszero(tsimplify(Br[3, 3] - χr))
 end
 
+@testset "COD symbolic — a numerical circle under symbolic moduli stays exact" begin
+    # The most common call: a crack given in numbers, the matrix in symbols. The
+    # factors of the circle were evaluated in the arithmetic of the geometry,
+    # Float64, and the COD tensor carried 1.6977 in place of 16/(3π). Reference:
+    # Sneddon's penny-shaped crack, normalized by the radius.
+    SymPy.@syms Es::positive νs::positive
+    C_sym = TensISO{3}(Es / (1 - 2 * νs), Es / (1 + νs))
+    B = cod_tensor(PennyCrack(1.0), C_sym)
+    @test iszero(tsimplify(B[3, 3] - 16 * (1 - νs^2) / (3 * PI * Es)))
+    @test iszero(tsimplify(B[1, 1] - 32 * (1 - νs^2) / (3 * PI * (2 - νs) * Es)))
+    @test iszero(tsimplify(B[2, 2] - B[1, 1]))
+end
+
 @testset "COD symbolic — TI matrix aligned with the crack normal" begin
     # Symbolic stiffness components, TI axis = e₃ = crack normal.  Before the
     # `_ti_aligned` guard this call threw inside dispatch.
