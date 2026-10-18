@@ -98,13 +98,51 @@ end
     @test foam.phases[3].amount_kind == "density" && foam.phases[3].amount == 0.1 && isempty(foam.phases[3].properties)
     @test any(b -> occursin("a comment between statements", b.source), m.opaque)
     @test any(b -> occursin("homogenize(build_foam(0.2)", b.source), m.opaque)
-    @test report["recognized"] == 4 && report["cells"] == ["foam"] && isempty(report["unresolved_cells"])
+    @test report["recognized"] == 4 && report["cells"] == ["foam"]
     # what is read back is written back: the script keeps every line
     out = MS.generate(m; embed_model = false)
     @test all(l -> occursin(strip(l), out), filter(l -> !isempty(strip(l)), split(src, '\n')))
     # whatever does not parse is kept as written
     m, report = MS.model_from_script("x = (\n")
     @test isempty(m.cells) && only(m.opaque).source == "x = (" && report["recognized"] == 0
+end
+
+@testset "the matrix and the scales, read back" begin
+    # `fraction = :rest` marks the phase taking up the rest: read as a fraction
+    # ":rest", it left the cell with no matrix
+    back, _ = MS.model_from_script(MS.generate(MS.default_model(); embed_model = false))
+    @test only(back.cells).phases[1].amount_kind == "rest" && isempty(MS.validate(back))
+    # two scales written without their model block read back whole: the seam
+    # names its builder, whatever its name, and keeps the options of its scheme
+    inner = MS.Cell(;
+        name = "foam", builder_name = "_foam", phases = [
+            MS.Phase(; name = "SOLID", amount_kind = "rest", properties = [MS.Property(; args = MS.jdict("k" => 72.0, "mu" => 32.0))]),
+            MS.Phase(; name = "PORE", amount = 0.3, properties = [MS.Property(; args = MS.jdict("k" => 1.0e-6, "mu" => 1.0e-6))]),
+        ]
+    )
+    seam = MS.Property(; source = "cell", cell = inner.id, scheme = "SelfConsistent", scheme_options = MS.jdict("abstol" => 1.0e-10, "maxiters" => 300, "verbose" => true))
+    outer = MS.Cell(; name = "paste", phases = [MS.Phase(; name = "FOAM", amount_kind = "rest", properties = [seam]), MS.Phase(; name = "C", amount = 0.2, properties = [MS.Property()])])
+    m = MS.StudioModel(; title = "ms", cells = [inner, outer], root_cell = outer.id)
+    src = MS.generate(m; embed_model = false)
+    back, report = MS.model_from_script(src)
+    @test report["cells"] == ["_foam", "paste"]
+    got = back.cells[2].phases[1].properties[1]
+    @test got.source == "cell" && got.cell == back.cells[1].id && got.scheme == "SelfConsistent"
+    @test got.scheme_options == MS.jdict("abstol" => 1.0e-10, "maxiters" => 300, "verbose" => true)
+    @test isempty(MS.validate(back))
+    out = MS.generate(back; embed_model = false)
+    @test all(l -> occursin(strip(l), out), filter(l -> !isempty(strip(l)), split(src, '\n')))
+    # an inner builder kept as written keeps the outer one as written too: the
+    # seam is never rewritten into an expression that would break the script
+    hand = replace(src, "function _foam()" => "function _foam(x::Float64 = 1.0)")
+    back, report = MS.model_from_script(hand)
+    @test isempty(back.cells) && count(b -> startswith(b.note, "kept as written"), back.opaque) == 2
+    # a seam whose scheme takes a positional argument, or whose builder is not
+    # a plain call, is an expression
+    @test MS.parse_property(":C", "Homogenized(build_x(), Scheme(1))").source == "expr"
+    @test MS.parse_property(":C", "Homogenized(cells[1], MoriTanaka())").source == "expr"
+    @test MS.parse_property(":C", "Homogenized(build_x(), schemes[1])").source == "expr"
+    @test MS.parse_property(":C", "Homogenized(build_x(), Voigt(; a = :b))").scheme_options == MS.jdict("a" => ":b")
 end
 
 @testset "what is kept as written, and why" begin
@@ -158,8 +196,8 @@ end
     @test MS.parse_property(":C", "iso_stiffness_E_nu(30.0, 0.2)").args == MS.jdict("E" => 30.0, "nu" => 0.2)
     @test MS.parse_property(":C", "hoenig_stiffness(1, 2, 3, 4, 5)").builder == "hoenig_stiffness"
     seam = MS.parse_property(":C", "Homogenized(build_inner(), Voigt())")
-    @test seam.cell == "@name:inner" && seam.scheme == "Voigt"
-    @test MS.parse_property(":C", "Homogenized(build_inner())").scheme == "MoriTanaka"
+    @test seam.cell == "@builder:build_inner" && seam.scheme == "Voigt" && isempty(seam.scheme_options)
+    @test MS.parse_property(":C", "Homogenized(build_inner())").source == "expr"
     @test MS.parse_property(":K", " TensISO{3}(2.0) ").expr == "TensISO{3}(2.0)"
     @test isempty(MS.parse_properties("props")) && isempty(MS.parse_properties("Dict{Symbol, Any}()"))
     ps = MS.parse_properties("Dict(:C => iso_stiffness(1.0, 2.0), :K => TensISO{3}(f(1, 2)), \"x\" => 1, junk)")

@@ -64,23 +64,42 @@ const PROP_PATTERNS = [
     ),
 ]
 
+"A literal of a keyword argument as the model keeps it: a number or a flag as it is, else its code."
+literal_value(v::Union{Number, Bool, AbstractString}) = v
+literal_value(v) = string(v)
+
+"""
+    parse_seam(key, expr) -> Union{Nothing, Property}
+
+The multiscale seam `Homogenized(builder(args...), Scheme(; options...))` as a
+property whose cell is named by its builder (`"@builder:<name>"`, resolved
+once every builder is read), with the scheme and its options; `nothing` for any
+other expression.
+"""
+function parse_seam(key::AbstractString, expr::AbstractString)
+    ex = Meta.parse(expr; raise = false)
+    (is_call(ex, :Homogenized) && length(ex.args) == 3) || return nothing
+    inner, scheme = ex.args[2], ex.args[3]
+    (inner isa Expr && inner.head === :call && inner.args[1] isa Symbol) || return nothing
+    (scheme isa Expr && scheme.head === :call && scheme.args[1] isa Symbol) || return nothing
+    isempty(positional_args(scheme)) || return nothing
+    options = jdict((k => literal_value(Meta.parse(v)) for (k, v) in sort!(collect(keyword_args(scheme))))...)
+    p = Property(; key, source = "cell", scheme = String(scheme.args[1]), scheme_options = options)
+    p.cell = "@builder:" * String(inner.args[1])
+    return p
+end
+
 """
     parse_property(key, expr) -> Property
 
 A property as the forms model it: the multiscale seam (its inner cell resolved
-by name once every cell is read), a tensor from its moduli, or the expression
-as written.
+once every builder is read), a tensor from its moduli, or the expression as
+written.
 """
 function parse_property(key::AbstractString, expr::AbstractString)
     e = String(strip(expr))
-    m = match(r"(*UCP)^Homogenized\(\s*build_([A-Za-z_][\w]*)\s*\(", e)
-    if m !== nothing
-        rest = SubString(e, m.offset + ncodeunits(m.match))
-        sm = match(r"(*UCP),\s*([A-Za-z][\w]*)\s*\(", rest)
-        p = Property(; key, source = "cell", scheme = sm === nothing ? "MoriTanaka" : String(sm[1]))
-        p.cell = "@name:" * m[1]
-        return p
-    end
+    seam = parse_seam(key, e)
+    seam === nothing || return seam
     for (b, names, pattern) in PROP_PATTERNS
         mm = match(pattern, e)
         mm === nothing && continue
@@ -271,7 +290,8 @@ function cell_from_node(node::AbstractDict)
             properties = parse_properties(field(p, "properties", "")),
         )
         opts = either(get(p, "options", nothing), Dict{String, String}())
-        if haskey(opts, "fraction")
+        # `fraction = :rest` marks the phase taking up the rest, not an amount
+        if haskey(opts, "fraction") && opts["fraction"] != ":rest"
             ph.amount_kind, ph.amount = "fraction", number_or_text(opts["fraction"])
         elseif haskey(opts, "density")
             ph.amount_kind, ph.amount = "density", number_or_text(opts["density"])
@@ -315,20 +335,58 @@ function laminate_from_node(node::AbstractDict)
     return c
 end
 
+"The seams of `c` pointed at the cells of `by_builder` (by the name of their builder)."
+function resolve_seams!(c::Cell, by_builder::AbstractDict)
+    for mb in members(c), pr in mb.properties
+        (pr.source == "cell" && pr.cell isa String && startswith(pr.cell, "@builder:")) || continue
+        target = get(by_builder, pr.cell[(ncodeunits("@builder:") + 1):end], nothing)
+        target === nothing || (pr.cell = target.id)
+    end
+    return c
+end
+
 """
-    fails_to_reproduce(node, original) -> Union{Nothing, String}
+    fails_to_reproduce(node, original, others) -> Union{Nothing, String}
 
 Would writing this cell back change the file? The cell is rendered as it would
-be saved and compared with the text it came from, indentation and blank lines
-aside: a construct the studio parses but cannot reproduce is one it leaves
-alone. (`unrepresentable` has refused first what the cell could not be built
-from.)
+be saved, its seams pointing at the builders `others` names, and compared with
+the text it came from, indentation and blank lines aside: a construct the
+studio parses but cannot reproduce is one it leaves alone. (`unrepresentable`
+has refused first what the cell could not be built from.)
 """
-function fails_to_reproduce(node::AbstractDict, original::AbstractString)
+function fails_to_reproduce(node::AbstractDict, original::AbstractString, others::AbstractDict)
     norm(text) = [String(strip(l)) for l in py_splitlines(text) if !isempty(strip(l))]
     c = cell_from_node(node)
-    norm(render_cell(StudioModel(; cells = [c]), c)) == norm(original) && return nothing
+    stubs = Dict{String, Cell}(f => cell_from_node(n) for (f, n) in others)
+    stubs[builder(c)] = c
+    resolve_seams!(c, stubs)
+    m = StudioModel(; cells = vcat(c, [x for x in values(stubs) if x !== c]))
+    norm(render_cell(m, c)) == norm(original) && return nothing
     return "writing it back would not reproduce the original text"
+end
+
+"""
+    readable_builders(nodes) -> IdDict
+
+Why each builder node is kept as written (`nothing` for one the studio
+models). A cell is checked with the builders it reads through its seams, which
+must be readable too: the check is repeated until no builder drops out, so that
+a seam never points at a builder kept as written.
+"""
+function readable_builders(nodes)
+    why = IdDict{Any, Union{Nothing, String}}(n => unrepresentable(n) for n in nodes)
+    dropped = true
+    while dropped
+        accepted = Dict(String(n["function"]) => n for n in nodes if why[n] === nothing)
+        dropped = false
+        for n in values(accepted)
+            reason = fails_to_reproduce(n, n["source"], accepted)
+            reason === nothing && continue
+            why[n] = reason
+            dropped = true
+        end
+    end
+    return why
 end
 
 """
@@ -350,7 +408,8 @@ function model_from_script(source::AbstractString)
     end
     parsed = parse_script(source)
     m = StudioModel(; title = "opened")
-    by_name = Dict{String, Cell}()
+    why = readable_builders([n for n in parsed["nodes"] if get(n, "kind", nothing) in ("rve_builder", "laminate_builder")])
+    by_builder = Dict{String, Cell}()
     order = 0
     for node in parsed["nodes"]
         kind = get(node, "kind", nothing)
@@ -365,15 +424,13 @@ function model_from_script(source::AbstractString)
             push!(m.params, Param(; name = node["name"], value = node["value"], origin = src))
             order += 1
         elseif kind in ("rve_builder", "laminate_builder")
-            why = unrepresentable(node)
-            why === nothing && (why = fails_to_reproduce(node, src))
-            if why === nothing
+            if why[node] === nothing
                 c = cell_from_node(node)
                 push!(m.cells, c)
-                by_name[c.name] = c
+                by_builder[builder(c)] = c
             else
                 # regenerating it would change its signature and break its callers
-                push!(m.opaque, OpaqueBlock(; source = src, order, note = "kept as written: $why"))
+                push!(m.opaque, OpaqueBlock(; source = src, order, note = "kept as written: $(why[node])"))
             end
             order += 1
         else
@@ -382,24 +439,12 @@ function model_from_script(source::AbstractString)
             order += 1
         end
     end
-    # the multiscale seams, now that every cell has a name
-    unresolved = String[]
-    for c in m.cells, mb in members(c), pr in mb.properties
-        (pr.source == "cell" && pr.cell isa String && startswith(pr.cell, "@name:")) || continue
-        name = pr.cell[(ncodeunits("@name:") + 1):end]
-        target = get(by_name, name, nothing)
-        if target === nothing
-            push!(unresolved, name)
-            pr.source = "expr"
-            pr.expr = "#= unresolved inner cell `$name` =#"
-        else
-            pr.cell = target.id
-        end
-    end
+    # the seams, now that every cell is read: each points at a readable builder
+    foreach(c -> resolve_seams!(c, by_builder), m.cells)
     isempty(m.cells) || (m.root_cell = last(m.cells).id)
     report = jdict(
         "exact" => false, "recognized" => parsed["recognized"], "opaque" => length(m.opaque),
-        "cells" => [c.name for c in m.cells], "unresolved_cells" => unresolved,
+        "cells" => [c.name for c in m.cells],
         "note" => "the parts shown as preserved were not recognized and will be written back unchanged",
     )
     return m, report
