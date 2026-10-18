@@ -23,7 +23,7 @@ payload(r) = JSON.parse(String(r.body); dicttype = Dict{String, Any})
     @test get("/app.js"; headers = Pair{String, String}[]).status == 200
     @test get("/nothing.js"; headers = Pair{String, String}[]).status == 404
     @test get("/%2e%2e/%2e%2e/etc/passwd"; headers = Pair{String, String}[]).status == 404
-    @test MS.static_file(MS.WEB_DIR, "/../mfhstudio/server.py") === nothing
+    @test MS.static_file(MS.WEB_DIR, "/../model.jl") === nothing
     @test MS.static_file(MS.WEB_DIR, "/a%00b") === nothing
     @test HTTP.post(base * "/", [], ""; status_exception = false).status == 405
 end

@@ -59,7 +59,7 @@ flavor. A new scheme slots in beside them:
     `RVE` does not carry — positions, in the N-body case — add a cell rather
     than widening `RVE`, and remember that MFH Studio discovers every concrete
     `HomogenizationScheme` automatically: a scheme the interface cannot drive
-    must be listed in `ASSEMBLY_SCHEMES` (`tools/mfhstudio/mfhstudio/model.py`)
+    must be listed in `ASSEMBLY_SCHEMES` (`src/studio/model.jl`)
     so it is filtered out of its catalog.
 
 ## Where to go next

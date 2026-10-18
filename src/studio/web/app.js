@@ -77,7 +77,7 @@ function apply(st) {
     ? `${S.problems.length} problem(s)`
     : "";
   $("#problems").className = S.problems.length ? "problem" : "muted";
-  S.path = st.path || S.path;
+  S.path = st.path || null; // the server's: an example opens unbound
   setPathLabel(S.path);
   render();
   draw3d();

@@ -160,8 +160,6 @@ using .FiniteElements
 using .NeuralInclusions
 using .Constitutive
 
-# ─── MFH Studio launcher ─────────────────────────────────────────────────────
-include("Studio.jl")
 
 # ── Abstractions ─────────────────────────────────────────────────────────────
 export AbstractInclusion, AbstractEllipsoidalInclusion, AbstractCrack
@@ -458,8 +456,9 @@ const HillAlgorithm = AbstractAlgorithm
 const CrackAlgorithm = AbstractAlgorithm
 export HillAlgorithm, CrackAlgorithm
 
-# ── MFH Studio, in Julia (`src/studio`) ──────────────────────────────────────
+# ── MFH Studio (`src/studio`) ────────────────────────────────────────────────
 # Last, since its code generation and its views read the whole package.
 include("studio/Studio.jl")
+using .Studio: mfhstudio
 
 end # module

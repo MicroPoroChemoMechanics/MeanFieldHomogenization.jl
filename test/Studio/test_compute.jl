@@ -8,7 +8,7 @@ project = ENV["MFHSTUDIO_WORKER_PROJECT"]
 julia = first(Base.julia_cmd().exec)
 
 h = redirect_stdout(devnull) do
-    withenv(() -> MS.studio(; port = 0, no_browser = true, wait = false, project), "MFHSTUDIO_PROJECT" => nothing)
+    withenv(() -> mfhstudio(; port = 0, no_browser = true, wait = false, project), "MFHSTUDIO_PROJECT" => nothing)
 end
 cp = h.session.compute
 token = last(split(MS.studio_url(h), "token="))
@@ -150,7 +150,7 @@ end
 @testset "check = true" begin
     out = Pipe()
     ok = redirect_stdout(out) do
-        withenv(() -> MS.studio(; check = true, project), "MFHSTUDIO_PROJECT" => nothing)
+        withenv(() -> mfhstudio(; check = true, project), "MFHSTUDIO_PROJECT" => nothing)
     end
     close(out.in)
     text = read(out, String)

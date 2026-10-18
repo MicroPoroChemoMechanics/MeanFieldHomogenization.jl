@@ -90,7 +90,7 @@ anything it does not recognize.
 - **No installation beyond Julia.** Python 3.10+ standard library only, and the
   browser you already have.
 
-Ten [worked examples](tools/mfhstudio/examples/) open with every form filled
+Ten [worked examples](src/studio/library/) open with every form filled
 in — start with `01_porous_schemes.jl`. The full guide, with screenshots, is in
 [the manual](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/tools/mfhstudio/).
 Its sibling for the chemistry of cement pastes is

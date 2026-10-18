@@ -110,13 +110,18 @@ function open_script(st::StudioState, path::AbstractString; source = nothing, ou
     m, report = model_from_script(source)
     lock(st.lock) do
         st.model = m
-        st.path = isempty(path) ? nothing : String(path)
+        st.path = bound_path(path)
     end
     out = state_payload(st)
     out["read_report"] = report
     conversion === nothing || (out["conversion"] = conversion)
     return out
 end
+
+# A library example is a starting point, not a file to write over (an installed
+# package is read-only): it opens unbound, and Save asks for a name.
+bound_path(path::AbstractString) = isempty(path) || in_library(path) ? nothing : String(path)
+in_library(path::AbstractString) = (d = dirname(abspath(path)); isdir(d) && samefile(d, LIBRARY_DIR))
 
 function post_open(st::StudioState, req::HTTP.Request)
     body = read_json(req)
@@ -133,8 +138,14 @@ function post_save(st::StudioState, req::HTTP.Request)
     path = either(get(body, "path", nothing), lock(() -> st.path, st.lock))
     path === nothing && return bad_request("no path given")
     source = either(get(body, "source", nothing), generate(lock(() -> st.model, st.lock)))
-    mkpath(dirname(abspath(path)))
-    write(path, source)
+    try
+        mkpath(dirname(abspath(path)))
+        write(path, source)
+    catch err
+        # a folder one may not write in, a read-only disk
+        err isa Union{SystemError, Base.IOError} || rethrow()
+        return json_response(422, Dict("error" => "Cannot write $path ($(sprint(showerror, err))). Choose another place with Save as…"))
+    end
     lock(() -> (st.path = path), st.lock)
     return json_response(200, Dict("path" => path, "bytes" => ncodeunits(source)))
 end
@@ -143,23 +154,24 @@ end
 function places()
     root = pkgdir(MeanFieldHomogenization)
     candidates = (
-        "examples" => normpath(STUDIO_ROOT, "..", "..", "tools", "mfhstudio", "examples"),
+        "examples" => LIBRARY_DIR,
         "scripts" => joinpath(root, "scripts"), "package" => root, "home" => homedir(), "cwd" => pwd(),
     )
     return [Dict("label" => label, "path" => abspath(p)) for (label, p) in candidates if isdir(p)]
 end
 
 """
-    browse(path, bound) -> Dict
+    browse(path, bound; saving = false) -> Dict
 
 A folder for the file picker: its folders and its Julia and Echoes scripts,
 hidden entries aside. The page cannot have a real path from a file input, and a
 path is what saving back to the same file needs; the server's file system is
 also what a remote session must reach. Without a path, the folder of the bound
-file, else the examples.
+file, else the examples to open one, or the session's folder to save, since the
+library is no place for one's own files.
 """
-function browse(path::AbstractString, bound)
-    fallback = bound === nothing ? first(p["path"] for p in places()) : dirname(abspath(bound))
+function browse(path::AbstractString, bound; saving::Bool = false)
+    fallback = bound !== nothing ? dirname(abspath(bound)) : saving ? pwd() : first(p["path"] for p in places())
     start = isempty(path) ? fallback : abspath(expanduser(path))
     isfile(start) && (start = dirname(start))
     isdir(start) || (start = fallback)
@@ -188,6 +200,9 @@ function browse(path::AbstractString, bound)
     )
 end
 
+browse_route(st::StudioState, q) =
+    browse(get(q, "path", ""), lock(() -> st.path, st.lock); saving = get(q, "for", "") == "save")
+
 "Register the routes of MFH Studio."
 function mfh_routes!(router::HTTP.Router, session::Session)
     st = session.state
@@ -198,7 +213,7 @@ function mfh_routes!(router::HTTP.Router, session::Session)
     HTTP.register!(router, "POST", "/api/run", req -> post_run(session, st, req))
     HTTP.register!(router, "POST", "/api/open", req -> post_open(st, req))
     HTTP.register!(router, "POST", "/api/save", req -> post_save(st, req))
-    HTTP.register!(router, "GET", "/api/browse", req -> json_response(200, browse(get(query(req), "path", ""), lock(() -> st.path, st.lock))))
+    HTTP.register!(router, "GET", "/api/browse", req -> json_response(200, browse_route(st, query(req))))
     HTTP.register!(router, "GET", "/api/convert/available", _ -> json_response(200, Dict("available" => find_translator() !== nothing)))
     return nothing
 end

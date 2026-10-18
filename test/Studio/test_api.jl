@@ -92,6 +92,12 @@ end
         @test read(target, String) == "# mine\n"
         lock(() -> (st.path = nothing), st.lock)
         @test api_post("/api/save", Dict()).status == 400
+        # a library example opens unbound, so that Save asks for a name of one's
+        # own, and the save picker starts in the session's folder, not the library
+        r = api_json(api_post("/api/open", Dict("path" => first(MS.library_files()))))
+        @test r["read_report"]["exact"] && r["path"] === nothing && st.path === nothing
+        @test api_json(api_get("/api/browse?for=save"))["path"] == pwd()
+        @test api_json(api_get("/api/browse"))["path"] == MS.LIBRARY_DIR
         # the file picker: folders and scripts, hidden entries left out
         mkpath(joinpath(dir, "folder"))
         write(joinpath(dir, "B.py"), "")
@@ -114,6 +120,12 @@ end
             locked = mkpath(joinpath(dir, "locked"))
             chmod(locked, 0o000)
             @test isempty(MS.browse(locked, nothing)["files"])
+            # a file or a folder that cannot be written is refused with a reason,
+            # the bound file left as it was
+            for target in (joinpath(locked, "x.jl"), joinpath(locked, "sub", "x.jl"))
+                r = api_post("/api/save", Dict("path" => target))
+                @test r.status == 422 && occursin("Cannot write", api_json(r)["error"]) && st.path == joinpath(dir, "hand.jl")
+            end
             chmod(locked, 0o755)
         end
     end

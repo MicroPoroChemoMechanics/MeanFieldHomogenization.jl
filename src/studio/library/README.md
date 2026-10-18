@@ -31,14 +31,20 @@ builder function per scale, and a trailing comment block carrying the model
 itself. That block is what lets a file reopen exactly as it was left, with every
 form filled in.
 
-So: read `scripts/` for the physics, open `examples/` to turn the knobs.
+So: read `scripts/` for the physics, open these examples to turn the knobs.
 
 ## Regenerating
 
-    python3 examples/build_examples.py
+Each example is what the code generation writes from the model it embeds, with
+the note under its banner kept. After a change of the code generation, write
+them again from their own models:
 
-They are generated from `build_examples.py`, not maintained by hand, so an
-example cannot drift from what the interface would produce today. Cell ids are
-numbered rather than random, which makes regenerating a no-op when nothing has
-changed — and `test_every_example_validates_and_is_up_to_date` fails when it is
-not.
+```julia
+using MeanFieldHomogenization
+MeanFieldHomogenization.Studio.regenerate_library!()
+```
+
+The tests regenerate each example and fail when the file differs, so that an
+example cannot drift from what the studio writes today. To change an example,
+open it in the studio, edit the model, save it, and put its note back under the
+banner. Cell ids are numbered rather than random, which keeps the files stable.

@@ -191,7 +191,7 @@ memory_refusal(room, floor) =
 function stop_message(reason::Symbol, cap::Integer)
     reason === :user && return "Stopped. The compute process is restarting, so the next run compiles again."
     return "The calculation was stopped: it needed more than the $(gigabytes(cap)) GB the machine can spare. " *
-        "Make the calculation smaller (fewer points, fewer species), then run again."
+        "Make the calculation smaller (fewer points, for instance), then run again."
 end
 
 # Waits for a running call, killing the process if it outgrows `cap`, if the

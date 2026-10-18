@@ -9,9 +9,10 @@ its own.
 The server runs in the user's session, where MeanFieldHomogenization is
 loaded; the scripts run in a separate Julia process, in an environment of its
 own (`@mfh-studio`) holding this very version of MeanFieldHomogenization, which
-the first launch prepares. The files under `core/` hold what any studio needs
-and never refer to homogenization; `worker/` is the code the compute process
-includes.
+the first launch prepares. Start it with `mfhstudio`. The files under `core/`
+hold what any studio needs and never refer to homogenization; `worker/` is the
+code the compute process includes; `web/` is the page; `library/` holds the
+worked examples.
 """
 module Studio
 
@@ -24,6 +25,8 @@ using Malt: Malt
 using Printf: Printf
 using Random: Random
 using TOML: TOML
+
+export mfhstudio
 
 const STUDIO_ROOT = @__DIR__
 const WORKER_DIR = joinpath(STUDIO_ROOT, "worker")
@@ -47,6 +50,7 @@ include("readback.jl")
 include("catalog.jl")
 include("geometry.jl")
 include("convert.jl")
+include("library.jl")
 include("api.jl")
 
 """
@@ -76,17 +80,59 @@ const APP = StudioApp(;
 )
 
 """
-    studio(; host = "127.0.0.1", port = nothing, no_browser = false,
-             project = nothing, julia = nothing, check = false, wait = true,
-             update = false)
+    mfhstudio(; host = "127.0.0.1", port = nothing, no_browser = false,
+                project = nothing, julia = nothing, check = false, wait = true,
+                update = false)
 
-Start MFH Studio in Julia; `mfhstudio` takes these options. Without `port`, the
-studio listens on 8765, or on the next free port when 8765 is taken (ChemistryLab
-Studio uses 8766, so both run together). The compute environment is
-`@mfh-studio` unless `project` or `MFHSTUDIO_PROJECT` names another, which is
-then only checked.
+Start MFH Studio, the graphical builder of MeanFieldHomogenization models, and
+block until it stops (press Ctrl-C in the REPL). With `wait = false`, return a
+handle at once and keep the REPL free: `close(handle)` stops the studio.
+
+The page builds the scales of a model, its phases and its schemes, shows its
+inclusions in 3-D, writes the Julia script of the model as it changes, reads a
+script back (keeping verbatim what it does not model), and runs it. The scripts
+run in a separate Julia process, in an environment of their own,
+`@mfh-studio`, which the first launch prepares (several minutes; the page opens
+at once and shows the progress).
+
+# Arguments
+- `host`/`port` — where to listen; the address printed is
+  `http://host:port/?token=…`, the token being what the page presents with
+  every request (the studio runs code on request). Without `port`, the studio
+  takes 8765, or the next free port when 8765 is taken (ChemistryLab Studio
+  uses 8766, so both run together); a `port` given explicitly is used or
+  refused.
+- `no_browser` — start without opening the browser (the address is printed).
+- `project` — the environment the scripts run in: a folder, or `@name` for a
+  shared one. By default the studio's own `@mfh-studio`, which it creates and
+  keeps; the `MFHSTUDIO_PROJECT` environment variable is honored. An
+  environment named this way is only checked, never modified.
+- `julia` — the Julia executable of the compute process (default: the running
+  one; the `JULIA` environment variable is honored).
+- `check` — prepare and check the compute environment, print what it holds,
+  and stop instead of serving.
+- `wait` — block until the studio stops (default), or return its handle.
+- `update` — update the packages of the studio's environment before starting.
+
+Opening an Echoes script (`.py`) translates it with `tools/echoes2mfh`, which
+needs Python 3.10 or later (the `MFHSTUDIO_PYTHON` environment variable names
+one); nothing else in the studio does.
+
+On a remote machine (SSH, a VS Code remote window) the studio prints its
+address: open it on your own machine, after forwarding the port
+(`ssh -L 8765:127.0.0.1:8765 …`; VS Code forwards it by itself).
+
+# Examples
+```julia
+using MeanFieldHomogenization
+mfhstudio()                     # opens the browser on http://127.0.0.1:8765
+mfhstudio(port = 9000)          # another port
+mfhstudio(no_browser = true)    # stay in the terminal
+h = mfhstudio(wait = false)     # keep the REPL; later `close(h)`
+mfhstudio(check = true)         # diagnose the compute environment
+```
 """
-function studio(;
+function mfhstudio(;
         host::AbstractString = "127.0.0.1",
         port::Union{Nothing, Integer} = nothing,
         no_browser::Bool = false,

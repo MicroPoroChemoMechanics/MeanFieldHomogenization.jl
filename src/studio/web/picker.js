@@ -19,7 +19,9 @@ const Picker = (() => {
   }
 
   async function list(path) {
-    const url = "/api/browse" + (path ? "?path=" + encodeURIComponent(path) : "");
+    // a save with nothing bound starts in the session's folder, not the library
+    const args = [path ? "path=" + encodeURIComponent(path) : "", state.mode === "save" ? "for=save" : ""];
+    const url = "/api/browse" + (args.some(Boolean) ? "?" + args.filter(Boolean).join("&") : "");
     const r = await studioFetch(url);
     const j = await r.json();
     if (j.error) throw new Error(j.error);

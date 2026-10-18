@@ -17,91 +17,104 @@ format to be locked into.
 
 ## Starting the studio
 
-From a Julia session with MeanFieldHomogenization loaded — the studio ships with the
-checkout you develop:
+The studio comes with the package. In a Julia session:
 
 ```julia
 using MeanFieldHomogenization
-mfhstudio()                  # starts the server and opens a browser
-mfhstudio(port = 9000)       # pick a different port
-mfhstudio(no_browser = true) # stay in the terminal
-mfhstudio(check = true)      # verify the Julia side and exit
+mfhstudio()                  # starts the studio and opens a browser
+mfhstudio(port = 9000)       # another port
+mfhstudio(no_browser = true) # stay in the terminal; the address is printed
+h = mfhstudio(wait = false)  # keep the REPL free; close(h) stops the studio
+mfhstudio(check = true)      # prepare and check the compute environment, then stop
 ```
 
 ```@docs
 mfhstudio
 ```
 
+`mfhstudio()` blocks the REPL, like `Pluto.run()`, until the studio stops:
+Ctrl-C shuts it down cleanly. With `wait = false` it returns a handle at once,
+and `close(h)` stops the studio, as the end of the Julia session does.
+
+### Two processes, and the first launch
+
+The page talks to a small server that runs in your Julia session, where
+MeanFieldHomogenization is already loaded: the forms, the script, the 3-D view
+and reading a script back are served from there. **Run** is not. A script runs
+in a second Julia process, in an environment of its own named `@mfh-studio`,
+which holds the very MeanFieldHomogenization you loaded (the clone you
+develop, if that is what is loaded), TensND for the tensors the scripts write,
+and Plots for their figures. A script that loops forever or exhausts the
+memory takes that process down, never your session.
+
+The first launch prepares `@mfh-studio`. On a fresh installation this
+downloads and compiles the packages, which takes several minutes, once. The
+page opens at once and shows the progress in a banner; everything but **Run**
+works meanwhile. Each launch then loads the packages and compiles a first
+homogenization, and the badge in the top-right reads *Julia ready* when
+**Run** can be pressed.
+
+- **Stop** interrupts a run. When the interrupt does not take (code that never
+  yields, or Windows), the compute process is restarted after a few seconds,
+  and the next run compiles again.
+- **Restart** boots the compute process anew, after a failure for instance.
+- A run is refused, before it starts, when less than 1.5 GB of memory are
+  free, and a run that outgrows what the machine can spare is stopped, with a
+  message saying so.
+
+`project = …`, or the `MFHSTUDIO_PROJECT` environment variable, runs the
+scripts in another environment, a folder or `@name`. Such an environment is
+checked (it must hold the MeanFieldHomogenization that runs, TensND and
+Plots), never modified. `update = true` updates the packages of `@mfh-studio`
+before starting.
+
+### The address and its token
+
 Without `port`, the studio listens on 8765, or on the next free port when
-8765 is taken, by an editor's port forward or by another studio; a `port` you
-name is used or refused. The address it prints ends with `?token=…`, a random
-key drawn at each start. The page sends it back with every request and the
-server answers no request without it, nor one coming from another site: the
-studio runs Julia code on request, and the key keeps other web pages and other
-users of the machine out. Keep the address to yourself.
+8765 is taken, by an editor's port forward or by another studio (ChemistryLab
+Studio uses 8766, so both run together); a `port` you name is used or refused.
+The address it prints ends with `?token=…`, a random key drawn at each start.
+The page sends it back with every request and the server answers no request
+without it, nor one coming from another site: the studio runs Julia code on
+request, and the key keeps other web pages and other users of the machine out.
+Keep the address to yourself.
 
-`mfhstudio` blocks the REPL, like `Pluto.run()`, until the studio stops:
-Ctrl-C in the REPL shuts the server and its Julia sidecar down cleanly. Pass
-`wait = false` to keep working while the studio runs — it returns the process
-handle, and `wait(p)` / `kill(p)` take it down again. `host`, `port`,
-`project`, `julia` and `python` map onto the Python app's command-line options
-below; `project = "@mfhstudio"` uses a shared environment, `julia = ...` /
-`python = ...` point at a specific executable (or set the `MFHSTUDIO_PROJECT`
-/ `MFHSTUDIO_PYTHON` environment variables).
+### On a remote machine
 
-The same tool starts from a shell — Python 3.10+ underneath, standard library
-only:
+When Julia runs on another machine (over SSH, or in a VS Code remote window),
+the studio prints its address instead of opening a browser. Open it on your
+own machine: VS Code forwards the port by itself, and over SSH you forward it
+when you connect, `ssh -L 8765:127.0.0.1:8765 user@machine`.
+
+### Running a saved script without the studio
+
+A script the studio saved runs on its own, in the studio's environment:
 
 ```bash
-cd tools/mfhstudio
-python3 -m mfhstudio                # starts the server and opens a browser
-python3 -m mfhstudio --port 9000    # pick the port
-python3 -m mfhstudio --no-browser   # stay in the terminal
-python3 -m mfhstudio --check        # verify the Julia side and exit
+julia --project=@mfh-studio porous_schemes.jl
 ```
 
-On Windows, `python -m mfhstudio`.
+Its first lines look for a `Project.toml` naming MeanFieldHomogenization in
+the folders above the script, and activate it when they find one: a script
+saved inside a clone, or inside a project of yours, runs in that project
+whatever environment started it.
 
-It needs Python 3.10+ (standard library only) and a `julia` on `PATH` able to
-load MeanFieldHomogenization. Loading the package takes about ten seconds, paid once when
-the interface starts; the badge in the top-right turns green when it is ready.
-On a fresh checkout the sidecar instantiates the package environment first,
-which takes a few minutes once.
+### When something goes wrong
 
-If Julia cannot start, the interface still comes up and says so in a banner:
-building and saving a script works, while the 3-D view, reading a script back
-and **Run** are off. `--check` diagnoses the Julia side without paying the load
-time, and is the right first command on a new machine.
-
-One failure is worth knowing about. A development machine's local
-`Manifest.toml` — untracked, one per clone — may pin some dependencies to
-sibling checkouts (`path = "../TensND.jl"`), which only resolve when those
-siblings are there. If yours does and they are not, the studio does not need
-the clone's environment at all: MeanFieldHomogenization is registered in General, so a
-shared environment resolves everything from the registry.
-
-```julia
-using Pkg
-Pkg.activate("mfhstudio", shared = true)
-Pkg.add("MeanFieldHomogenization")
-```
-
-To run the studio against a clone you are editing rather than the released
-version, develop it into that same environment instead:
-
-```julia
-Pkg.develop(path = raw"<path to MeanFieldHomogenization.jl>")
-```
-
-Either way, start the studio against that shared environment —
-`mfhstudio(project = "@mfhstudio")`, or `--project @mfhstudio` from the shell.
-`--check` reads the manifest and names the missing checkouts itself.
+| What you see | What to do |
+| :--- | :--- |
+| The banner says *Preparing the compute process* | Wait: the log under it shows what is installed or compiled. |
+| *Julia unavailable*, with a message | Read the message (hover the badge); `mfhstudio(check = true)` diagnoses the environment, and **Restart** tries again. |
+| *Only … GB of memory are free* | Close other programs, then run again. |
+| *The calculation was stopped: it needed more than …* | Make the calculation smaller (fewer points in the sweep, for instance). |
+| *port … is already in use* | Another program holds that port: `mfhstudio(port = 9000)`. |
+| The packages are old | `mfhstudio(update = true)`. |
 
 ## [Start here: the worked examples](@id tools-mfhstudio-examples)
 
-The quickest way in is not to build a model but to open one. **Open…** starts in
-`tools/mfhstudio/examples/`, which holds ten small models covering most of what
-the interface can express:
+The quickest way in is not to build a model but to open one. **Open…** starts
+in the studio's library of ten small models, covering most of what the
+interface can express:
 
 | file | what it shows |
 | :--- | :--- |
@@ -118,14 +131,17 @@ the interface can express:
 
 Each is a running script *and* a filled-in model: open one, change a number in
 the form, watch the Julia on the right follow, press **Run**. Each names the
-`scripts/` demo it is drawn from, so the physics is one click away.
+`scripts/` demo it is drawn from, so the physics is one click away. An example
+opens with no file bound to it, and **Save** asks where to keep your copy: the
+library belongs to the package.
 
-They are the studio's own output — generated by `examples/build_examples.py`
-from the same code generator that writes your scripts — which is why they reopen
-with every form filled in. The hand-written demos in `scripts/` do not: they
-build their cells at top level, the way one writes Julia directly, and the studio
-*preserves* those verbatim rather than offering them for editing. Read `scripts/`
-for the physics; open `examples/` to turn the knobs.
+They are the studio's own output, written by the same code generation as your
+scripts from the model each one embeds, which is why they reopen with every
+form filled in; the tests check that they still match what the studio writes
+today. The hand-written demos in `scripts/` do not reopen that way: they build
+their cells at top level, the way one writes Julia directly, and the studio
+*preserves* those verbatim rather than offering them for editing. Read
+`scripts/` for the physics; open the library to turn the knobs.
 
 ## The layout
 
@@ -462,6 +478,11 @@ Julia should go, write it, and open the result — one action rather than a
 separate convert button, because the extension already says which of the two is
 happening.
 
+The translator is written in Python: this is the one part of the studio that
+needs Python 3.10 or later, found on `PATH` or named by the `MFHSTUDIO_PYTHON`
+environment variable. Without one, opening a `.py` says so and gives the
+command that translates it by hand.
+
 The translator's findings come back with it. A script it could not translate
 whole reports how many constructs it refused, and each one sits in the written
 script as an `UNTRANSLATED` block that raises at run time, so a half-translated
@@ -469,12 +490,12 @@ model cannot quietly produce numbers.
 
 ## Reading an existing script
 
-**Open…** browses the server's own filesystem — with shortcuts to `examples/`,
-`scripts/`, the package root and your home directory — rather than using the
-browser's file input. The browser never reveals a real path, and a path is
+**Open…** browses the server's own filesystem — with shortcuts to the library
+of examples, `scripts/`, the package root, your home directory and the folder
+the session runs in — rather than using the browser's file input. The browser never reveals a real path, and a path is
 exactly what saving back to the same file needs; listing server-side also keeps
 the picker correct when the studio runs on a remote machine. **Save** writes to
-the current file, **Save as…** asks for a new one.
+the current file, or asks for one when none is bound; **Save as…** always asks.
 
 Reading a `.jl` file back, two things can happen.
 

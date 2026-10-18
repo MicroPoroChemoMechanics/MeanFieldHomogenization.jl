@@ -62,7 +62,7 @@ end
 @testset "a studio that cannot boot" begin
     h = redirect_stdout(devnull) do
         withenv("MFHSTUDIO_PROJECT" => nothing) do
-            MS.studio(; port = 0, no_browser = true, wait = false, project = lacking)
+            mfhstudio(; port = 0, no_browser = true, wait = false, project = lacking)
         end
     end
     @test occursin("?token=", MS.studio_url(h))
@@ -87,7 +87,7 @@ end
 @testset "a user's environment is checked, not modified" begin
     e = try
         redirect_stdout(devnull) do
-            MS.studio(; check = true, project = lacking)
+            mfhstudio(; check = true, project = lacking)
         end
     catch err
         err
@@ -96,7 +96,7 @@ end
     # the environment variable names the environment just as the keyword does
     e = try
         redirect_stdout(devnull) do
-            withenv(() -> MS.studio(; check = true), "MFHSTUDIO_PROJECT" => lacking)
+            withenv(() -> mfhstudio(; check = true), "MFHSTUDIO_PROJECT" => lacking)
         end
     catch err
         err
@@ -106,7 +106,7 @@ end
 
 @testset "a blocking run stops on an interrupt" begin
     result = redirect_stdout(devnull) do
-        task = @async MS.studio(; port = 0, no_browser = true, project = lacking)
+        task = @async mfhstudio(; port = 0, no_browser = true, project = lacking)
         sleep(2)
         schedule(task, InterruptException(); error = true)
         fetch(task)
@@ -139,7 +139,7 @@ Base.readline(io::OnceInterrupting; keep::Bool = false) = popfirst!(io.lines)
     @test Threads.atomic_xchg!(MS.INTERRUPTED, false)
     # the waiting loop raises what was recorded, and the studio stops
     h = redirect_stdout(devnull) do
-        MS.studio(; port = 0, no_browser = true, wait = false, project = lacking)
+        mfhstudio(; port = 0, no_browser = true, wait = false, project = lacking)
     end
     MS.INTERRUPTED[] = true
     @test_throws InterruptException wait(h)
@@ -151,7 +151,7 @@ end
 # A terminal's Ctrl-C on a studio run as a script ends it at once; its compute
 # process follows (test_compute.jl). Windows has no SIGINT to send.
 Sys.iswindows() || @testset "Ctrl-C stops a studio run as a script" begin
-    code = "using MeanFieldHomogenization; MeanFieldHomogenization.Studio.studio(; port = 0, no_browser = true, project = $(repr(lacking)))"
+    code = "using MeanFieldHomogenization; mfhstudio(; port = 0, no_browser = true, project = $(repr(lacking)))"
     cmd = `$(Base.julia_cmd()) $(MS.coverage_flags()) --project=$(Base.active_project()) -e $code`
     log = tempname()
     p = run(pipeline(ignorestatus(cmd); stdout = log, stderr = log); wait = false)
