@@ -171,17 +171,13 @@ jobs:
           fi
       # Not julia-actions/julia-processcoverage: see the header of the script
       # for why its `amend_coverage_from_src!` step misreports this package.
+      # MFH Studio is left to Studio.yml, which runs its compute process: see
+      # the header of the script.
       - name: Process coverage
         if: steps.merge.outputs.complete == 'true'
-        shell: julia --color=yes {0}
         run: |
-          using Pkg
-          Pkg.activate(; temp = true)
-          Pkg.add("Coverage")
-          # `pwd()` is the workspace root.  An absolute path is required: the
-          # `run:` block is written to a temp file by the runner, and `include`
-          # resolves relative to THAT file's directory, not the cwd.
-          include(joinpath(pwd(), ".github", "scripts", "coverage.jl"))
+          julia --color=yes -e 'using Pkg; Pkg.activate(; temp = true); Pkg.add("Coverage"); include(".github/scripts/coverage.jl")' \
+            lcov.info src ext --exclude src/studio
       - uses: codecov/codecov-action@v7
         if: steps.merge.outputs.complete == 'true'
         with:

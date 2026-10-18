@@ -1,0 +1,130 @@
+name: Studio
+# MFH Studio (`src/studio`, the submodule `MeanFieldHomogenization.Studio`): its
+# tests with a compute process running the MeanFieldHomogenization of this
+# commit, on the three systems, where spawning, interrupting and killing that
+# process, and reading its memory, take different routes. The studio's coverage
+# is reported from here only (CI.yml excludes `src/studio`): the compute
+# process's files never load in the main suite. It runs on every change, so that
+# no report of Codecov lacks the studio.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+jobs:
+  test:
+    name: Studio - Julia ${{ matrix.version }} - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    permissions:
+      actions: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - 'min'
+          - '1'
+        os:
+          - ubuntu-latest
+          # Windows and macOS, where spawning, interrupting and killing the
+          # compute process, and reading its memory, take other routes.
+          - windows-latest
+          - macos-latest
+        exclude:
+          - os: windows-latest
+            version: 'min'
+          - os: macos-latest
+            version: 'min'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        id: julia
+        with:
+          version: ${{ matrix.version }}
+      - uses: julia-actions/cache@v3
+        with:
+          cache-name: julia-cache;workflow=${{ github.workflow }};job=${{ github.job }};version=${{ matrix.version }};julia=${{ steps.julia.outputs.julia-version }}
+          include-matrix: false
+      # Opening an Echoes script runs the translator, tools/echoes2mfh, which
+      # needs Python 3.10 or later: the tests translate one when it is there.
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      # As in CI.yml: the Pkg server intermittently fails to serve the registry
+      # of a cold depot; a direct clone is the fallback.
+      - name: Install the General registry
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          regdir = joinpath(first(DEPOT_PATH), "registries")
+          if isdir(joinpath(regdir, "General")) || isfile(joinpath(regdir, "General.tar.gz"))
+              @info "General registry already installed"
+          else
+              try
+                  Pkg.Registry.add("General")
+              catch err
+                  @warn "Pkg server could not serve the registry; cloning from GitHub" err
+                  withenv("JULIA_PKG_SERVER" => "") do
+                      Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/JuliaRegistries/General.git"))
+                  end
+              end
+          end
+      # As in CI.yml: TensND loads SymPy, whose Python module `sympy` goes into
+      # the private Python of Conda.jl, in the session and in the compute process.
+      - name: Install dependencies (PyCall/SymPy)
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          ENV["PYTHON"] = ""
+          Pkg.add("PyCall")
+          Pkg.add("SymPy")
+          Pkg.build("PyCall")
+          using PyCall
+          pyimport_conda("sympy", "sympy")
+      # The environment the compute process runs in, as the studio's own would
+      # hold it, with the MeanFieldHomogenization of this commit rather than the
+      # registered one. It lives outside the repository's tree.
+      - name: Build the compute environment
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          Pkg.activate(joinpath(ENV["RUNNER_TEMP"], "studio-worker"))
+          Pkg.develop(path = pwd())
+          Pkg.add(["TensND", "Plots"])
+          Pkg.precompile()
+      - name: Test
+        shell: bash
+        env:
+          MFHSTUDIO_WORKER_PROJECT: ${{ runner.temp }}/studio-worker
+        run: |
+          # Coverage on the latest release of every system: reading the memory
+          # of a process takes a route of its own on each, merged by Codecov.
+          coverage=""
+          if [ "${{ matrix.version }}" = "1" ]; then
+            coverage="--code-coverage=@$GITHUB_WORKSPACE/src/studio"
+          fi
+          julia --color=yes $coverage --project=. -e 'using Pkg; Pkg.instantiate(); include("test/Studio/runtests.jl")'
+      # The repository's script: raw counts for the files a run loaded, so
+      # that a method whose body is a constant (no counter) is not counted
+      # missed; see .github/scripts/coverage.jl. The worked examples are
+      # scripts the studio opens, not code the package loads.
+      - name: Process coverage
+        if: matrix.version == '1'
+        shell: bash
+        run: |
+          julia --color=yes -e 'using Pkg; Pkg.activate(; temp = true); Pkg.add("Coverage"); include(".github/scripts/coverage.jl")' \
+            lcov-studio.info src/studio --exclude src/studio/library
+      - uses: codecov/codecov-action@v7
+        if: matrix.version == '1'
+        with:
+          files: lcov-studio.info
+          flags: studio
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false

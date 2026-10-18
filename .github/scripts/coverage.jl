@@ -14,17 +14,37 @@
 #   • a file never loaded at all  → amended, i.e. every executable line counted
 #     as missed, so genuine gaps (`src/submanifold.jl`, `ext/…Ext.jl`) stay
 #     visible at 0 % instead of silently vanishing from the report.
+#
+# Usage: `julia coverage.jl [output [folder...] [--exclude folder...]]`, by
+# default `lcov.info` from `src` and `ext`. MFH Studio (`src/studio`) is
+# reported by its own workflow, which runs its compute process: CI.yml excludes
+# it, since its worker files, never loaded in-process, would land here amended
+# and Codecov's union would then count the lines Julia never instruments as
+# missed. Studio.yml excludes `src/studio/library`, the worked examples, which
+# are scripts the studio opens, not code the package loads.
 
 # CoverageTools is a dependency of Coverage
 using Coverage
 using Coverage.CoverageTools
 
-const DIRS = ["src", "ext"]
+const SPLIT = something(findfirst(==("--exclude"), ARGS), length(ARGS) + 1)
+const OUTPUT = SPLIT > 1 ? ARGS[1] : "lcov.info"
+const DIRS = SPLIT > 2 ? ARGS[2:(SPLIT - 1)] : ["src", "ext"]
+const EXCLUDED = [normpath(d) * Base.Filesystem.path_separator for d in ARGS[(SPLIT + 1):end]]
 # `.cov` files are also dropped next to the test sources; wipe them too so a
 # local run leaves the working tree clean.
 const CLEAN_DIRS = ["src", "ext", "test", "docs"]
 
-collect_dirs() = reduce(vcat, (process_folder(d) for d in DIRS if isdir(d)); init = FileCoverage[])
+# The Gridap backend is left out of the report. CI does not install Gridap: its
+# Gmsh reader pulls GridapDistributed, PartitionedArrays (hence MPI) and Metis,
+# which is a lot to install on every run for a second backend of the
+# axisymmetric Fourier solve that Ferrite already provides. Its tests run where
+# the stack is installed (`test/FiniteElements/test_gridap_backend.jl`), and
+# counted as never run it would only hide the coverage of everything else.
+const NOT_MEASURED = [normpath("ext/MeanFieldHomogenizationGridapExt")]
+
+kept(fc) = !any(d -> startswith(normpath(fc.filename), d), vcat(EXCLUDED, NOT_MEASURED))
+collect_dirs() = filter(kept, reduce(vcat, (process_folder(d) for d in DIRS if isdir(d)); init = FileCoverage[]))
 
 """
 Raw counts for loaded files, amended (all-missed) counts for never-loaded ones.
@@ -58,15 +78,7 @@ function report(fcs)
     return (cov, tot)
 end
 
-# The Gridap backend is left out of the report. CI does not install Gridap: its
-# Gmsh reader pulls GridapDistributed, PartitionedArrays (hence MPI) and Metis,
-# which is a lot to install on every run for a second backend of the
-# axisymmetric Fourier solve that Ferrite already provides. Its tests run where
-# the stack is installed (`test/FiniteElements/test_gridap_backend.jl`), and
-# counted as never run it would only hide the coverage of everything else.
-const NOT_MEASURED = ["ext/MeanFieldHomogenizationGridapExt"]
-
-fcs = filter(fc -> !any(d -> startswith(fc.filename, d), NOT_MEASURED), merged_coverage())
+fcs = merged_coverage()
 covered, total = report(fcs)
 # Without `.cov` files every source lands in the "never loaded" branch and the
 # report is a silent 0 % — which would be uploaded and shown on the badge as if
@@ -75,5 +87,7 @@ covered == 0 && error(
     "No coverage data found: every file reports 0 %.  Did `julia-runtest` run " *
         "with `coverage: true`, and is this script running from the repo root?"
 )
-LCOV.writefile("lcov.info", fcs)
+# Paths with forward slashes, so that a report written on Windows names the
+# same files as the others when Codecov merges them.
+LCOV.writefile(OUTPUT, [FileCoverage(replace(fc.filename, '\\' => '/'), fc.source, fc.coverage) for fc in fcs])
 clean_folder.(filter(isdir, CLEAN_DIRS))
