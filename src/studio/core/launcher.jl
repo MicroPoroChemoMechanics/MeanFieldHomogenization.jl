@@ -103,7 +103,7 @@ end
 """
     run_studio(app; host, port, no_browser, project, julia, check, wait, update)
 
-Start the studio `app`; see [`mfhstudio`](@ref) for the options. Returns a
+Start the studio `app`; see `mfhstudio` for the options. Returns a
 [`StudioHandle`](@ref) when `wait = false`, `nothing` after a blocking run, and
 whether the check passed with `check = true`.
 """
