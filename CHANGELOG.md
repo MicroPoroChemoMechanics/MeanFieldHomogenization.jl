@@ -203,7 +203,13 @@ long ellipsoids lie. The derivation is on the theory page of Hill tensors.
   nested cubature; and against the transformation rule of an elliptically
   orthotropic matrix.
 - The page on COD tensors shows the comparison of every route in a triclinic
-  matrix.
+  matrix, and proves the identity ℍ = k n ⊗ˢ 𝐁 ⊗ˢ n step by step in the
+  normalization of the package (𝐁 and the flatness both by the half-width b, as
+  in Barthélémy, 2026): the strain a cavity adds carried by its surface, Eshelby's
+  uniform strain, the collapse of the surface onto the lips, and k = cS/V. The
+  normalization by the semi-major axis of Barthélémy et al. (2021, 2023) and
+  Echoes follows from it, with tensors η times those of the package and the same
+  factor 3/4.
 - The COD tensor of an arbitrarily anisotropic matrix is described as what the
   code computes: the inverse of an integral of the reduced kernel
   ``\hat{\boldsymbol{Q}}^{\star}_{nn}``, after Barthélémy (2026), a line integral

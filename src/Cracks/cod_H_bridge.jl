@@ -2,9 +2,11 @@
 #  cod_H_bridge.jl — bridge between the crack compliance contribution
 #  tensor H and the COD tensor B.
 #
-#  The factorization H = k (n̂ ⊗ˢ B ⊗ˢ n̂) depends on the crack shape:
-#     k = 3/4  for an elliptic (including penny) crack (Kachanov / Echoes)
+#  The factorization H = k (n̂ ⊗ˢ B ⊗ˢ n̂), with B and the flatness both
+#  normalized by the half-width b (barthelemyIJSS2026), depends on the shape:
+#     k = 3/4  for an elliptic (including penny) crack
 #     k = 2/π  for a ribbon (tunnel) crack
+#  The derivation is §3 of docs/src/theory/cod_tensors.md.
 #  The factor dispatches on the shape family, as the rest of the crack algebra
 #  (`compliance.jl`), so that a user-defined crack declaring its `shape_trait`
 #  inherits it.
@@ -49,8 +51,9 @@ with ``k = 3/4`` for an elliptic crack and ``k = 2/\\pi`` for a ribbon, and
 [`inverse_property_contribution`](@ref). The exact inverse of
 [`compliance_from_cod`](@ref).
 
-Dispatches on the shape family of the crack
-[kachanov1992, barthelemyIJES2021](@cite).
+Dispatches on the shape family of the crack. ``\boldsymbol{B}`` is normalized by
+the half-width ``b`` [barthelemyIJSS2026](@cite), and the factor ``k`` is derived
+in [From B to the compliance H](@ref th-cod-compliance) [kachanov1992](@cite).
 """
 cod_from_compliance(H, crack::MFH_Core.AbstractCrack, ℬ::TensND.AbstractBasis = TensND.get_basis(H)) =
     _B_from_H(H, _H_over_B_factor(crack, eltype(H)), ℬ)

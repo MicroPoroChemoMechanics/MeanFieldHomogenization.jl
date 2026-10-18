@@ -1,33 +1,30 @@
 # # [Two routes to a crack: the COD tensor and the flattened ellipsoid](@id tut-crack-routes)
 #
 # !!! info "Before this page"
-#     The theory page [Crack opening displacement and compliance](@ref th-cod-tensors),
-#     which defines the COD tensor ``\boldsymbol{B}``, the compliance contribution
-#     ``\mathbb{H}`` and the bridge between them.
+#     The theory page [Crack opening displacement and compliance](@ref th-cod-tensors):
+#     §2 defines the COD tensor ``\boldsymbol{B}``, normalized by the half-width
+#     ``b`` of the crack, and [§3](@ref th-cod-compliance) proves that the
+#     compliance contribution of an elliptical crack is
+#     ``\mathbb{H} = \lim_{\rho\to 0}\rho\,\mathbb{Q}^{-1}
+#     = \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}``,
+#     with ``\rho = c/b`` the flatness of the ellipsoid it is the limit of. Every
+#     tensor on this page is in that normalization; the
+#     [Conventions](@ref th-cod-conventions) give the factor ``\eta = b/a`` that
+#     separates it from papers normalizing by ``a``.
 #
-# A flat crack can be reached two ways, and this page runs both, first in an
-# isotropic matrix where everything is a closed form, then in matrices drawn at
-# random, to show that they meet.
+# The identity of §3 joins two independent computations of a crack, and this
+# page runs both, first in an isotropic matrix where everything is a closed form,
+# then in matrices drawn at random, to show that they meet.
 #
 # - **From the crack plane.** `cod_tensor` integrates the reduced kernel of the
 #   Green operator along the crack normal and around the crack front
 #   [kanaunlevin2009, barthelemyIJSS2026](@cite): it returns ``\boldsymbol{B}``,
-#   and ``\mathbb{H}`` follows from the bridge (`compliance_from_cod`).
+#   and ``\mathbb{H}`` follows from the identity (`compliance_from_cod`).
 # - **From a flattened ellipsoid.** The crack is the limit of the ellipsoid of
-#   semi-axes ``(a, b, \omega b)`` as ``\omega \to 0`` [barthelemyIJSS2009](@cite).
-#   The first-order term of its Hill tensor in ``\omega`` gives ``\mathbb{H}`` by
+#   semi-axes ``(a, b, \rho b)`` as ``\rho \to 0`` [barthelemyIJSS2009](@cite).
+#   The first-order term of its Hill tensor in ``\rho`` gives ``\mathbb{H}`` by
 #   a computation on blocks of a matrix, and ``\boldsymbol{B}`` follows from the
-#   bridge the other way (`cod_from_compliance`).
-#
-# !!! note "One normalization throughout"
-#     ``\boldsymbol{B}`` is normalized by the half-width ``b``,
-#     ``\langle [\![\underline{u}]\!] \rangle / b = \boldsymbol{B}\cdot\boldsymbol{\Sigma}\cdot\underline{n}``,
-#     and the flatness is ``\omega = c/b``, so that, for an elliptical crack,
-#     ``\mathbb{H} = \lim_{\omega\to 0}\omega\,\mathbb{Q}^{-1}
-#     = \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}``,
-#     as everywhere in the package and in [barthelemyIJSS2026](@citet). Papers
-#     that normalize by the semi-major axis ``a`` give tensors scaled by
-#     ``\eta = b/a``: see the warning on the theory page.
+#   identity read the other way (`cod_from_compliance`).
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
@@ -38,10 +35,8 @@ using LinearAlgebra
 using ForwardDiff
 using Random
 using Printf
-using Plots
 import SymPy
 import DECUHR, Integrals
-gr()
 
 const canonical = TensND.CanonicalBasis{3, Float64}()
 const tol = (; abstol = 1.0e-12, reltol = 1.0e-10)
@@ -49,17 +44,17 @@ relerr(A, B) = norm(components_canon(A) - components_canon(B)) / norm(components
 
 # ## The flattened ellipsoid to first order
 #
-# The Hill tensor of the ellipsoid of semi-axes ``(a, b, \omega b)``, whose
+# The Hill tensor of the ellipsoid of semi-axes ``(a, b, \rho b)``, whose
 # third axis is the crack normal ``\underline{n}``, expands as
 #
 # ```math
-# \mathbb{P}(\omega) = \mathbb{P}_0 + \omega\,\mathbb{P}_1 + O(\omega^2),
+# \mathbb{P}(\rho) = \mathbb{P}_0 + \rho\,\mathbb{P}_1 + O(\rho^2),
 # \qquad
 # \mathbb{P}_0 = \underline{n}\stackrel{s}{\otimes}\bigl(\underline{n}\cdot\mathbb{C}\cdot\underline{n}\bigr)^{-1}\stackrel{s}{\otimes}\underline{n},
 # ```
 #
 # so that the second Hill tensor ``\mathbb{Q} = \mathbb{C} - \mathbb{C}:\mathbb{P}:\mathbb{C}``
-# expands as ``\mathbb{Q}_0 + \omega\,\mathbb{Q}_1`` with
+# expands as ``\mathbb{Q}_0 + \rho\,\mathbb{Q}_1`` with
 # ``\mathbb{Q}_1 = -\mathbb{C}:\mathbb{P}_1:\mathbb{C}``. The leading term is
 # singular: every strain ``\underline{n}\stackrel{s}{\otimes}\underline{v}`` lies in
 # its kernel, three dimensions which, in the Kelvin–Mandel components of the
@@ -67,14 +62,14 @@ relerr(A, B) = norm(components_canon(A) - components_canon(B)) / norm(components
 # components ``33``, ``23`` and ``13``. In these blocks,
 #
 # ```math
-# \omega\,\mathbb{Q}^{-1}
-# = \omega\begin{pmatrix} X + \omega Y_{11} & \omega Y_{12} \\ \omega Y_{12}^{\!T} & \omega Y_{22}\end{pmatrix}^{-1}
-# \;\xrightarrow[\omega\to 0]{}\;
+# \rho\,\mathbb{Q}^{-1}
+# = \rho\begin{pmatrix} X + \rho Y_{11} & \rho Y_{12} \\ \rho Y_{12}^{\!T} & \rho Y_{22}\end{pmatrix}^{-1}
+# \;\xrightarrow[\rho\to 0]{}\;
 # \begin{pmatrix} 0 & 0 \\ 0 & Y_{22}^{-1}\end{pmatrix} = \mathbb{H},
 # ```
 #
 # with ``Y_{22}`` the block of ``\mathbb{Q}_1`` on the kernel of ``\mathbb{Q}_0``
-# [barthelemyIJSS2009](@cite). Only ``\mathbb{P}_1 = \mathrm{d}\mathbb{P}/\mathrm{d}\omega\,(0)``
+# [barthelemyIJSS2009](@cite). Only ``\mathbb{P}_1 = \mathrm{d}\mathbb{P}/\mathrm{d}\rho\,(0)``
 # is needed. The function below takes it as a Kelvin–Mandel matrix, in whatever
 # arithmetic produced it, and returns ``\mathbb{H}`` in the crack frame ``\mathcal{B}``.
 
@@ -86,6 +81,13 @@ function H_from_first_order(P₁, C, ℬ)
     return inv_KM(H, ℬ)
 end
 
+# Evaluating ``\rho\,\mathbb{Q}^{-1}`` at a small but finite flatness is the
+# obvious alternative, and the theory page does it: its error decreases only
+# like ``\rho`` ([the check of ``\mathbb{H}``](@ref th-cod-H-check)), and two
+# flatnesses are combined to cancel that first-order error
+# ([every route in a triclinic matrix](@ref th-cod-every-route)). The block
+# computation removes it at the source, with no flatness to choose.
+#
 # ## In an isotropic matrix, exactly
 #
 # With ``\mathbb{C}`` of Young's modulus ``E`` and Poisson's ratio ``\nu``, both
@@ -99,15 +101,15 @@ end
 #
 # and `cod_tensor` returns it exactly (the difference simplifies to zero):
 
-E, ν, ω = SymPy.symbols("E ν ω", positive = true)
+E, ν, ρ = SymPy.symbols("E ν ρ", positive = true)
 C_sym = TensISO{3}(E / (1 - 2ν), E / (1 + ν))
 B_sym = get_array(cod_tensor(PennyCrack(1), C_sym))
 B_sneddon = 16 * (1 - ν^2) / (3 * SymPy.PI * E) * Diagonal([2 / (2 - ν), 2 / (2 - ν), 1])
 SymPy.simplify.(B_sym - B_sneddon)
 
 # The flattened route takes the Hill tensor of the oblate spheroid
-# ``(b, b, \omega b)``, a closed form in ``\arccos\omega``, differentiates it with
-# respect to ``\omega`` and lets ``\omega \to 0``. The block computation then gives
+# ``(b, b, \rho b)``, a closed form in ``\arccos\rho``, differentiates it with
+# respect to ``\rho`` and lets ``\rho \to 0``. The block computation then gives
 #
 # ```math
 # H_{3333} = \frac{4\,(1-\nu^2)}{\pi E}, \qquad
@@ -115,10 +117,10 @@ SymPy.simplify.(B_sym - B_sneddon)
 # ```
 #
 # which is ``\tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}``
-# for the ``\boldsymbol{B}`` above, exactly, as the bridge says:
+# for the ``\boldsymbol{B}`` above, exactly, as §3 says:
 
-P_sym = KM(hill_tensor(Ellipsoid(1, 1, ω), C_sym))
-P₁_sym = [SymPy.limit(SymPy.diff(p, ω), ω => 0) for p in P_sym]
+P_sym = KM(hill_tensor(Ellipsoid(1, 1, ρ), C_sym))
+P₁_sym = [SymPy.limit(SymPy.diff(p, ρ), ρ => 0) for p in P_sym]
 H_sym = H_from_first_order(P₁_sym, C_sym, canonical)
 SymPy.simplify.(KM(H_sym) - KM(compliance_from_cod(Tens(B_sym), PennyCrack(1))))
 
@@ -128,13 +130,13 @@ SymPy.simplify.(KM(H_sym) - KM(compliance_from_cod(Tens(B_sym), PennyCrack(1))))
 # fully anisotropic (21 independent constants), and each crack has a random
 # orientation. ``\mathbb{P}_1`` is now the derivative, by ForwardDiff, of the
 # Hill tensor computed by the nested cubature, taken at two small flatnesses
-# ``\omega_0`` and ``\omega_0/2`` and combined so that its own first-order term
-# cancels: ``\mathbb{P}_1 \approx 2\,\mathbb{P}'(\omega_0/2) - \mathbb{P}'(\omega_0)``.
+# ``\rho_0`` and ``\rho_0/2`` and combined so that its own first-order term
+# cancels: ``\mathbb{P}_1 \approx 2\,\mathbb{P}'(\rho_0/2) - \mathbb{P}'(\rho_0)``.
 
-function P₁_by_forwarddiff(a, b, R, C; ω₀ = 1.0e-5)
-    P(ω) = KM(hill_tensor(Ellipsoid(a, b, ω * b, R), C; method = :nestedquadgk, tol...), canonical)
-    P′(ω) = ForwardDiff.derivative(P, ω)
-    return 2 * P′(ω₀ / 2) - P′(ω₀)
+function P₁_by_forwarddiff(a, b, R, C; ρ₀ = 1.0e-5)
+    P(ρ) = KM(hill_tensor(Ellipsoid(a, b, ρ * b, R), C; method = :nestedquadgk, tol...), canonical)
+    P′(ρ) = ForwardDiff.derivative(P, ρ)
+    return 2 * P′(ρ₀ / 2) - P′(ρ₀)
 end
 
 function random_stiffness(rng)
@@ -150,7 +152,7 @@ end
 
 # For each matrix and each aspect ratio ``\eta = b/a``, the table compares
 # ``\mathbb{H}`` from the flattening with ``\mathbb{H}`` from ``\boldsymbol{B}`` by the
-# bridge, and the reverse; then ``\boldsymbol{B}`` from the crack plane by its
+# identity, and the reverse; then ``\boldsymbol{B}`` from the crack plane by its
 # three integrators, the nested cubature being the reference: the residues and
 # DECUHR.
 
@@ -172,39 +174,12 @@ for k in 1:4
 end
 
 # The two routes agree to between ``10^{-10}`` and ``3\times 10^{-8}``, whatever the
-# anisotropy: the residual of the ``O(\omega_0^2)`` left in ``\mathbb{P}_1``,
+# anisotropy: the residual of the ``O(\rho_0^2)`` left in ``\mathbb{P}_1``,
 # larger for the narrower cracks. On the reduced kernel, the residues meet the
-# nested cubature to rounding, and DECUHR, at the same tolerances, to a few
-# ``10^{-13}``: the nested cubature is the default, DECUHR a second opinion.
-
-# ## Why the derivative: a finite flatness converges only as ``\omega``
+# nested cubature to rounding, and DECUHR, at the same tolerances, to
+# ``3\times 10^{-12}`` at worst: the nested cubature is the default, DECUHR a
+# second opinion.
 #
-# Taking ``\omega\,\mathbb{Q}^{-1}`` at a small but finite ``\omega`` is the obvious
-# alternative. Its error decreases only linearly, by the first-order term the
-# block computation removes. Both cubatures of the Hill tensor are shown.
-
-C = random_stiffness(Xoshiro(1))
-R = random_rotation(Xoshiro(2))
-η = 0.5
-crack = EllipticCrack(1.0, η, R)
-H_ref = compliance_from_cod(cod_tensor(crack, C; method = :nestedquadgk, tol...), crack)
-H_at(ω, method) = (P = hill_tensor(Ellipsoid(1.0, η, ω * η, R), C; method, tol...); ω * inv(C - C ⊡ P ⊡ C))
-ωs = 10.0 .^ (-1:-0.5:-4)
-H_first = H_from_first_order(P₁_by_forwarddiff(1.0, η, R, C), C, crack_basis(crack))
-
-p = plot(;
-    xscale = :log10, yscale = :log10, xlabel = "flatness ω = c/b", ylabel = "relative error on ℍ",
-    legend = :bottomright, size = (640, 420),
-)
-plot!(p, ωs, [relerr(H_at(ω, :nestedquadgk), H_ref) for ω in ωs]; marker = :circle, label = "ω ℚ⁻¹, nested cubature")
-plot!(p, ωs, [relerr(H_at(ω, :decuhr), H_ref) for ω in ωs]; marker = :diamond, linestyle = :dash, label = "ω ℚ⁻¹, DECUHR")
-hline!(p, [relerr(H_first, H_ref)]; linestyle = :dot, label = "first order, ℙ₁ by ForwardDiff")
-p
-
-const figdir = joinpath(@__DIR__, "figures")                        #jl
-isdir(figdir) || mkdir(figdir)                                       #jl
-savefig(p, joinpath(figdir, "17_crack_routes.png"))                 #jl
-
 # ## An analytic anchor in an anisotropic matrix
 #
 # Neither route above is a closed form in an anisotropic matrix. One exists when
@@ -214,7 +189,7 @@ savefig(p, joinpath(figdir, "17_crack_routes.png"))                 #jl
 # (elliptic orthotropy). The crack of radii ``(a, b)`` maps to a crack of radii
 # ``(\tilde{a}, \tilde{b})`` and normal ``\tilde{\underline{n}}`` in the isotropic
 # matrix, whose ``\tilde{\boldsymbol{B}}`` is a closed form, and
-# [barthelemyIJSS2026](@cite) gives, in the normalization of this page,
+# [barthelemyIJSS2026](@cite) gives, in the normalization of the package,
 #
 # ```math
 # \boldsymbol{B} = \frac{\tilde{b}/b}{\lVert\boldsymbol{P}^{\!T}\cdot\underline{n}\rVert}\;
@@ -239,6 +214,7 @@ PP = KM(Tens(Pmap) ⊠ˢ Tens(Pmap))
 C̃ = TensISO{3}(3 * 20.0, 2 * 9.0)
 C_EO = inv_KM(PP * KM(C̃) * transpose(PP), canonical)
 a, b = 1.0, 0.45
+R = random_rotation(Xoshiro(2))
 ℓ, m, n = eachcol(R)
 ã, b̃, R̃ = transformed_crack(Pmap, a, b, ℓ, m, n)
 B̃ = components_canon(cod_tensor(EllipticCrack(ã, b̃, R̃), C̃))
@@ -258,3 +234,12 @@ end
 # flattened ellipsoid to the accuracy of its first-order term. The same
 # comparison, for transformed transversely isotropic matrices and ribbon-like
 # cracks, is part of the test suite.
+#
+# ## Where to go next
+#
+# A single crack is all this page needs. [Crack distributions: isotropic or
+# parallel](@ref tut-crack-distributions) gives populations of them a density and
+# an orientation rule, and follows the self-consistent estimates to percolation;
+# [Validating a finite-element crack](@ref tut-fe-crack) computes the opening of
+# one crack by finite elements and compares it with the closed-form
+# ``\boldsymbol{B}``.

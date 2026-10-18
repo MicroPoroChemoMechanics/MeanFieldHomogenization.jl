@@ -51,7 +51,7 @@ the dilute compliance correction is
 
 ```math
 \Delta\mathbb{S} = \frac{4\pi}{3}\,\varepsilon\,\mathbb{H}, \qquad
-\mathbb{H} = \tfrac{3}{4}\,\underline{n}\otimes^{\!s}\boldsymbol{B}\otimes^{\!s}\underline{n},
+\mathbb{H} = \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n},
 ```
 
 [kachanov1992, kachanov1993](@citet) — ``\mathbb{H}`` is the
@@ -128,7 +128,11 @@ concentration tensor.
 
 ## Where to go next
 
-The cracks above are averaged over all orientations.
+The ``\mathbb{H}`` above is built from ``\boldsymbol{B}`` by the factor ``3/4``
+[proved on the theory page](@ref th-cod-compliance).
+[Two routes to a crack](@ref tut-crack-routes) computes it independently, from
+the Hill tensor of a flattening ellipsoid, and checks that factor in anisotropic
+matrices. The cracks above are averaged over all orientations.
 [Crack distributions: isotropic or parallel](@ref tut-crack-distributions)
 compares that rule with a family of parallel cracks at the same density, and
 follows both self-consistent forms to their percolation thresholds. The crack
