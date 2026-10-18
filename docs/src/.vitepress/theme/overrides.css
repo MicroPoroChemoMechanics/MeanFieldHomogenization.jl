@@ -355,3 +355,18 @@ mjx-container[data-nomen] {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* The screenshots of MFH Studio, taken in each theme
+ * (src/studio/tools/screenshots.mjs): the one of the current theme is
+ * shown, framed as a window. */
+.studio-shot {
+  display: block;
+  width: 100%;
+  margin: 1rem 0;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+.studio-shot.dark-only { display: none; }
+.dark .studio-shot.light-only { display: none; }
+.dark .studio-shot.dark-only { display: block; }

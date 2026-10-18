@@ -51,6 +51,16 @@ Studio* of the documentation. This file is for those who work on the studio.
 - **Echoes scripts** (`.py`) are translated by `tools/echoes2mfh` in a Python of
   their own when one is there (`convert.jl`); nothing else needs Python.
 
+## Screenshots
+
+The screenshots of the documentation and of the README are taken from a studio
+just started by `tools/screenshots.mjs` (Node and playwright-core), in the
+light and the dark theme, then reduced to 256 colors:
+
+```bash
+node src/studio/tools/screenshots.mjs --url 'http://127.0.0.1:8765/?token=…'
+```
+
 ## Tests
 
 The tests are `test/Studio/`, the `Studio` group of the suite (`core` part);

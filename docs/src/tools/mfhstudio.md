@@ -145,7 +145,10 @@ their cells at top level, the way one writes Julia directly, and the studio
 
 ## The layout
 
-![The porous benchmark in MFH Studio](../assets/mfhstudio/overview.png)
+```@raw html
+<img class="studio-shot light-only" src="../assets/mfhstudio/overview_light.png" alt="The porous benchmark in MFH Studio">
+<img class="studio-shot dark-only" src="../assets/mfhstudio/overview_dark.png" alt="The porous benchmark in MFH Studio, dark theme">
+```
 
 Three columns: the model on the left, the shape and the results in the middle,
 the Julia on the right. The script is regenerated on every edit, so what is
@@ -204,7 +207,10 @@ anything — see [Solver tolerances](@ref man-schemes-tolerances).
 
 ## Layered inclusions
 
-![A layered sphere, cut away](../assets/mfhstudio/layered.png)
+```@raw html
+<img class="studio-shot light-only" src="../assets/mfhstudio/layered_light.png" alt="A layered sphere, cut away">
+<img class="studio-shot dark-only" src="../assets/mfhstudio/layered_dark.png" alt="A layered sphere, cut away, dark theme">
+```
 
 Choosing `LayeredSphere` turns the phase editor into a table of layers — outer
 radius, moduli, and the interface with the next layer (perfect, spring,
@@ -330,7 +336,10 @@ through the seam, and the whole chain is differentiated in one pass.
 
 ## Multiscale
 
-![A two-scale model with the seam drawn](../assets/mfhstudio/multiscale.png)
+```@raw html
+<img class="studio-shot light-only" src="../assets/mfhstudio/multiscale_light.png" alt="A two-scale model with the seam drawn">
+<img class="studio-shot dark-only" src="../assets/mfhstudio/multiscale_dark.png" alt="A two-scale model with the seam drawn, dark theme">
+```
 
 This is where the interface earns the most. MeanFieldHomogenization chains scales
 declaratively: a phase property may hold a `Homogenized(inner_cell, scheme)`
@@ -418,7 +427,10 @@ chain, an elastic (Heaviside) phase, or a custom ``J(t, t')``. The generated
 call uses MeanFieldHomogenization's own signatures — `maxwell_iso(k, μ, η_k, η_μ)` takes
 *two* relaxation times, `kelvin_iso` takes whole branch vectors.
 
-![A creeping mortar under two schemes](../assets/mfhstudio/viscoelastic.png)
+```@raw html
+<img class="studio-shot light-only" src="../assets/mfhstudio/viscoelastic_light.png" alt="A creeping mortar under two schemes">
+<img class="studio-shot dark-only" src="../assets/mfhstudio/viscoelastic_dark.png" alt="A creeping mortar under two schemes, dark theme">
+```
 
 The **Viscoelastic** tab then only decides the time grid and the curve. It
 lists which phases carry a law, so a run with nothing to age says so rather

@@ -58,7 +58,10 @@ its own. It ships with the package:
 julia> using MeanFieldHomogenization; mfhstudio()
 ```
 
-![MFH Studio: a two-scale model, its 3-D shape and the Julia it generates](assets/mfhstudio/readme.png)
+```@raw html
+<img class="studio-shot light-only" src="./assets/mfhstudio/readme_light.png" alt="MFH Studio: a two-scale model, its 3-D shape and the Julia it generates">
+<img class="studio-shot dark-only" src="./assets/mfhstudio/readme_dark.png" alt="MFH Studio: a two-scale model, its 3-D shape and the Julia it generates, dark theme">
+```
 
 Ten worked examples open with every form filled in
 ([Start here](@ref tools-mfhstudio-examples)). The rest of this page writes the

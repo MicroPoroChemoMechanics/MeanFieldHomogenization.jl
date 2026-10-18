@@ -1298,7 +1298,16 @@ async function draw3d() {
       $("#shape-label").textContent = shown + " — " + sc.note.split("\n")[0];
       return;
     }
-    Plotly.react("view3d", sc.data, sc.layout, { displayModeBar: false, responsive: true });
+    // the colors of the theme in force: Plotly's own text is dark, unreadable
+    // on the dark theme
+    const c = themeColors();
+    const layout = Object.assign({}, sc.layout, { font: { color: c.ink } });
+    if (layout.scene) {
+      for (const a of ["xaxis", "yaxis", "zaxis"]) {
+        layout.scene[a] = Object.assign({ color: c.muted, gridcolor: c.line, zerolinecolor: c.line }, layout.scene[a]);
+      }
+    }
+    Plotly.react("view3d", sc.data, layout, { displayModeBar: false, responsive: true });
   } catch (e) {
     $("#shape-label").textContent = shown + " — " + e.message.split("\n")[0];
   }
@@ -1325,20 +1334,25 @@ async function run() {
   }
 }
 
+/** The colors of the theme in force, read from the page's own tokens. */
+function themeColors() {
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  return { ink: css("--ink"), muted: css("--muted"), line: css("--line") };
+}
+
 function plotResults(res) {
   const x = res.x || [];
   const traces = Object.entries(res)
     .filter(([k]) => k !== "x" && k !== "xlabel")
     .map(([k, y]) => ({ x, y, name: k, type: "scatter", mode: "lines+markers" }));
   if (!traces.length) return;
-  // The colors of the theme in force, read from the page's own tokens.
-  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-  const axis = { color: css("--muted"), gridcolor: css("--line"), zerolinecolor: css("--line") };
+  const c = themeColors();
+  const axis = { color: c.muted, gridcolor: c.line, zerolinecolor: c.line };
   Plotly.react("plot", traces, {
     margin: { l: 48, r: 10, t: 30, b: 38 },
     xaxis: Object.assign({ title: res.xlabel || "x" }, axis),
     yaxis: axis,
-    font: { color: css("--ink") },
+    font: { color: c.ink },
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
     // above the plot: below it, the legend sat on the title of the x axis
@@ -1517,6 +1531,8 @@ function wire() {
   $("#theme").addEventListener("click", () => {
     applyTheme(THEMES[(THEMES.indexOf(savedTheme()) + 1) % THEMES.length]);
     if (S.results) plotResults(S.results);
+    lastExpr = null;
+    draw3d();
   });
   document.querySelectorAll(".tabs button").forEach((b) =>
     b.addEventListener("click", () => {

@@ -71,7 +71,10 @@ using MeanFieldHomogenization
 mfhstudio()
 ```
 
-![MFH Studio: a two-scale model, its 3-D shape and the Julia it generates](docs/src/assets/mfhstudio/readme.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/src/assets/mfhstudio/readme_dark.png">
+  <img alt="MFH Studio: a two-scale model, its 3-D shape and the Julia it generates" src="docs/src/assets/mfhstudio/readme_light.png">
+</picture>
 
 A local web interface for writing the scripts above. Describe each phase in a
 form, watch the Julia on the right change as you type, and press **Run**. The
