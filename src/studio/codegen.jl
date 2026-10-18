@@ -257,11 +257,11 @@ end
 code_or_number(x) = x isa AbstractString ? String(x) : julia_number(x)
 amount_text(x) = x isa AbstractString ? String(x) : julia_float(x)
 
-const SYMMETRIZE = Dict("iso" => "IsoSymmetrize()", "ti" => "TISymmetrize()")
+const SYMMETRIZE_CODE = Dict("iso" => "IsoSymmetrize()", "ti" => "TISymmetrize()")
 
 function emit_phase!(g::CodeGen, ph::Phase)
     opts = String[]
-    (truthy(ph.symmetrize) && ph.symmetrize != "none") && push!(opts, "symmetrize = " * SYMMETRIZE[ph.symmetrize])
+    (truthy(ph.symmetrize) && ph.symmetrize != "none") && push!(opts, "symmetrize = " * SYMMETRIZE_CODE[ph.symmetrize])
     # `fraction = :rest` marks the phase taking up the volume the others leave
     pushfirst!(opts, ph.amount_kind == "rest" ? "fraction = :rest" : "$(ph.amount_kind) = $(amount_text(ph.amount))")
     call!(g, "add_phase!(rve, :$(ph.name), $(geometry_expr(g, ph)), $(properties_expr(g, ph.properties)); " * join(opts, ", ") * ")")
@@ -482,10 +482,10 @@ function main!(g::CodeGen)
     return nothing
 end
 
-const PROJECTIONS = Dict("iso" => "best_fit_iso", "ti" => "best_fit_ti", "ortho" => "best_fit_ortho")
+const PROJECTION_CODE = Dict("iso" => "best_fit_iso", "ti" => "best_fit_ti", "ortho" => "best_fit_ortho")
 
 function project(g::CodeGen, var::AbstractString)
-    fn = get(PROJECTIONS, g.m.sweep.projection, nothing)
+    fn = get(PROJECTION_CODE, g.m.sweep.projection, nothing)
     return fn === nothing ? String(var) : "$fn($var)"
 end
 
@@ -669,7 +669,7 @@ function sens_main!(g::CodeGen, r::Cell)
     indexer = ""
     if s.kind != "jacobian"
         # the projection sits inside the differentiated function
-        fn = get(PROJECTIONS, s.projection, nothing)
+        fn = get(PROJECTION_CODE, s.projection, nothing)
         indexer = ", indexer = C -> $(output_expr(s.output, fn === nothing ? "C" : "$fn(C)"))"
     end
     arg = s.kind == "derivative" ? "param" : "params"

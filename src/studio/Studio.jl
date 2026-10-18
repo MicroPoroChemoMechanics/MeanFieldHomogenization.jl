@@ -27,8 +27,7 @@ using TOML: TOML
 
 const STUDIO_ROOT = @__DIR__
 const WORKER_DIR = joinpath(STUDIO_ROOT, "worker")
-# The page of the studio, served from the tool's folder until it moves here.
-const WEB_DIR = normpath(STUDIO_ROOT, "..", "..", "tools", "mfhstudio", "web")
+const WEB_DIR = joinpath(STUDIO_ROOT, "web")
 
 "The version of the studio: that of MeanFieldHomogenization, which ships it."
 const STUDIO_VERSION = pkgversion(MeanFieldHomogenization)
@@ -47,6 +46,8 @@ include("parse.jl")
 include("readback.jl")
 include("catalog.jl")
 include("geometry.jl")
+include("convert.jl")
+include("api.jl")
 
 """
 The packages the compute process needs: MeanFieldHomogenization itself, at the
@@ -58,35 +59,6 @@ const ENVIRONMENT = EnvironmentSpec(
     PackageSource(MeanFieldHomogenization),
     ["TensND" => "0.6", "Plots" => "1"],
 )
-
-"""
-    StudioState()
-
-The state of a session.
-"""
-mutable struct StudioState
-    const lock::ReentrantLock
-end
-
-StudioState() = StudioState(ReentrantLock())
-
-"Register the routes of MFH Studio."
-mfh_routes!(router::HTTP.Router, session::Session) = nothing
-
-"""
-    warm_up!(session)
-
-Load the package in the compute process, so that its compilation is paid before
-the user's first run.
-"""
-function warm_up!(session::Session)
-    cp = session.compute
-    set_state!(cp, :ready, "Loading MeanFieldHomogenization in the compute process.")
-    loaded = call!(cp, :(Main.StudioWorker.check_report()))
-    loaded.stopped === :none || return nothing
-    set_state!(cp, :ready)
-    return nothing
-end
 
 const APP = StudioApp(;
     name = "MFH Studio",

@@ -1,0 +1,128 @@
+<meta charset="utf-8">
+<title>MFH Studio</title>
+<link rel="stylesheet" href="/style.css">
+
+<header>
+  <h1>MFH&nbsp;Studio</h1>
+  <div class="file">
+    <span id="path-label" class="pathlabel" title="No file yet">untitled</span>
+    <button id="open">Open…</button>
+    <button id="save" class="primary">Save</button>
+    <button id="saveas">Save as…</button>
+  </div>
+  <div class="spacer"></div>
+  <button id="theme" class="small" title="Theme: as the system, light or dark">◐</button>
+  <span id="status" class="badge" title="The compute process">starting…</span>
+  <button id="run" class="primary">Run</button>
+  <button id="stop" class="small" title="Stop the run" disabled>Stop</button>
+  <button id="restart" class="small" title="Restart the compute process">Restart</button>
+</header>
+
+<div id="banner" hidden></div>
+
+<main>
+  <!-- ── left: the model ─────────────────────────────────────────── -->
+  <section id="left">
+    <nav class="tabs">
+      <button data-tab="scales" class="on">Scales</button>
+      <button data-tab="sweep">Sweep</button>
+      <button data-tab="sens">Sensitivity</button>
+      <button data-tab="alv">Viscoelastic</button>
+      <button data-tab="params">Constants</button>
+      <button data-tab="kept">Kept</button>
+    </nav>
+
+    <div class="tab on" id="tab-scales">
+      <div class="row">
+        <select id="cell-select"></select>
+        <button id="cell-add" title="Add a scale">+</button>
+        <button id="cell-del" title="Remove this scale">−</button>
+      </div>
+      <div class="field">
+        <label>Scale name</label>
+        <input id="cell-name" type="text" spellcheck="false">
+      </div>
+      <div class="field">
+        <label>Kind</label>
+        <select id="cell-kind">
+          <option value="rve">RVE (matrix + inclusions)</option>
+          <option value="laminate">Laminate (periodic stack)</option>
+        </select>
+      </div>
+      <h3 id="phase-head">Phases <button id="phase-add" class="small">+ phase</button></h3>
+      <div id="phases"></div>
+    </div>
+
+    <div class="tab" id="tab-sweep"></div>
+    <div class="tab" id="tab-sens"></div>
+    <div class="tab" id="tab-alv"></div>
+    <div class="tab" id="tab-params"></div>
+    <div class="tab" id="tab-kept"></div>
+  </section>
+
+  <div class="gutter gutter-v" data-col="l" title="Drag to resize · double-click to reset"></div>
+
+  <!-- ── middle: 3-D and results ─────────────────────────────────── -->
+  <section id="middle">
+    <div class="panel-head" id="graph-head" hidden>
+      <span>Scales</span>
+      <span class="muted">drag a box to move it · drag the blue dot onto a
+        property slot to feed it from that scale · click a connector to detach</span>
+    </div>
+    <div id="graph" class="graph pane" hidden></div>
+    <div class="gutter gutter-h" id="gutter-graph" data-above="graph" data-below="view3d" hidden></div>
+    <div class="panel-head">
+      <span>Shape</span>
+      <label class="inline"><input type="checkbox" id="cutaway" checked> cut-away</label>
+      <span id="shape-label" class="muted"></span>
+    </div>
+    <div id="view3d" class="pane"></div>
+    <div class="gutter gutter-h" data-above="view3d" data-below="plot"
+         title="Drag to resize · double-click to reset"></div>
+    <div class="panel-head"><span>Results</span></div>
+    <div id="plot" class="pane"></div>
+    <!-- stdout sizes itself to its content up to a cap rather than claiming a
+         share, so this one handle gives it an explicit height instead. -->
+    <div class="gutter gutter-h" data-above="plot" data-below="stdout" data-mode="fixed-below"
+         title="Drag to resize · double-click to reset"></div>
+    <pre id="stdout"></pre>
+  </section>
+
+  <div class="gutter gutter-v" data-col="r" title="Drag to resize · double-click to reset"></div>
+
+  <!-- ── right: the script ───────────────────────────────────────── -->
+  <section id="right">
+    <div class="panel-head">
+      <span>Julia</span>
+      <span id="problems" class="muted"></span>
+    </div>
+    <pre id="code"></pre>
+  </section>
+</main>
+
+<!-- file picker: the browser cannot hand back a real path, and a path is what
+     saving to the same file needs, so the server lists its own filesystem -->
+<div id="picker" class="modal" hidden>
+  <div class="dialog">
+    <header>
+      <b id="picker-title">Open a script</b>
+      <button id="picker-close" class="small">✕</button>
+    </header>
+    <div class="places" id="picker-places"></div>
+    <div class="crumb" id="picker-crumb"></div>
+    <div class="listing" id="picker-list"></div>
+    <footer>
+      <input id="picker-name" type="text" spellcheck="false" placeholder="file name.jl">
+      <button id="picker-ok" class="primary">Open</button>
+    </footer>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="/token.js"></script>
+<script src="/vendor/plotly.min.js"></script>
+<script src="/picker.js"></script>
+<script src="/split.js"></script>
+<script src="/graph.js"></script>
+<script src="/app.js"></script>

@@ -97,14 +97,15 @@ function json_response(status::Integer, payload)
 end
 
 """
-    read_json(req) -> Dict{String, Any}
+    read_json(req) -> JSON.Object{String, Any}
 
-The JSON object a request carries; an empty object for an empty body.
+The JSON object a request carries, its keys in their order (the model reads
+the arguments of an interface by position); an empty object for an empty body.
 """
 function read_json(req::HTTP.Request)
-    isempty(req.body) && return Dict{String, Any}()
-    value = JSON.parse(String(copy(req.body)); dicttype = Dict{String, Any})
-    value isa Dict{String, Any} || throw(ArgumentError("the request body is not a JSON object"))
+    isempty(req.body) && return JSON.Object{String, Any}()
+    value = JSON.parse(String(copy(req.body)))
+    value isa AbstractDict || throw(ArgumentError("the request body is not a JSON object"))
     return value
 end
 
