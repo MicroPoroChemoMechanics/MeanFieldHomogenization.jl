@@ -86,7 +86,7 @@ function julia_number(x::AbstractFloat)
 end
 julia_number(x::AbstractString) = String(x)
 julia_number(::Nothing) = "None"
-julia_number(x) = string(x)
+julia_number(x) = py_str(x)
 
 """
     julia_float(x) -> String
@@ -97,6 +97,34 @@ julia_number(x) = string(x)
 julia_float(x::Bool) = julia_number(x)
 julia_float(x::Integer) = julia_number(Float64(x))
 julia_float(x) = julia_number(x)
+
+"The characters Python's `str.splitlines` breaks a line on."
+const LINE_BREAKS = ('\n', '\r', '\v', '\f', '\x1c', '\x1d', '\x1e', '\u85', '\u2028', '\u2029')
+
+"""
+    py_splitlines(s) -> Vector{String}
+
+The lines of `s` as Python's `str.splitlines` gives them: broken on every line
+break (`\r\n` counting as one), with no empty last line for a trailing break.
+"""
+function py_splitlines(s::AbstractString)
+    lines = String[]
+    start = firstindex(s)
+    i = start
+    while i <= ncodeunits(s)
+        c = s[i]
+        if c in LINE_BREAKS
+            push!(lines, s[start:prevind(s, i)])
+            i = nextind(s, i)
+            c == '\r' && i <= ncodeunits(s) && s[i] == '\n' && (i = nextind(s, i))
+            start = i
+        else
+            i = nextind(s, i)
+        end
+    end
+    start <= ncodeunits(s) && push!(lines, s[start:end])
+    return lines
+end
 
 # ── Python's json.dumps(x, indent = 1, sort_keys = True) ─────────────────────
 
@@ -171,3 +199,64 @@ end
 `x` as Python's `json.dumps(x, indent = 1, sort_keys = True)` writes it.
 """
 py_json(x) = sprint(py_json_value, x, 0)
+
+# ── Python's json.loads ─────────────────────────────────────────────────────
+
+"The tokens beyond JSON that Python's `json` reads and writes, longest first."
+const SPECIAL_FLOATS = ("-Infinity" => -Inf, "Infinity" => Inf, "NaN" => NaN)
+const SPECIAL_MARK = "\0py:"
+
+"""
+    parse_python_json(text) -> Any
+
+JSON as Python's `json.loads` reads it: `NaN`, `Infinity` and `-Infinity` are
+floats, and every other number is read as JSON.jl reads it, an integer staying
+an integer (JSON.jl's `allownan` would read every number as a float). The
+special tokens outside the strings become marked strings for the strict
+parser, then floats again.
+"""
+function parse_python_json(text::AbstractString)
+    io = IOBuffer()
+    i = firstindex(text)
+    instring = false
+    while i <= ncodeunits(text)
+        c = text[i]
+        if instring
+            print(io, c)
+            if c == '\\'
+                i = nextind(text, i)
+                i <= ncodeunits(text) && print(io, text[i])
+            elseif c == '"'
+                instring = false
+            end
+        elseif c == '"'
+            instring = true
+            print(io, c)
+        else
+            k = findfirst(p -> startswith(SubString(text, i), p.first), SPECIAL_FLOATS)
+            if k === nothing
+                print(io, c)
+            else
+                token = SPECIAL_FLOATS[k].first
+                print(io, "\"\\u0000py:", token, '"')
+                i += ncodeunits(token) - 1
+            end
+        end
+        i = nextind(text, i)
+    end
+    return restore_special(JSON.parse(String(take!(io))))
+end
+
+function restore_special(x::AbstractString)
+    startswith(x, SPECIAL_MARK) || return x
+    token = x[(ncodeunits(SPECIAL_MARK) + 1):end]
+    return last(SPECIAL_FLOATS[findfirst(p -> p.first == token, SPECIAL_FLOATS)])
+end
+restore_special(x::AbstractVector) = map!(restore_special, x, x)
+function restore_special(x::AbstractDict)
+    for (k, v) in x
+        x[k] = restore_special(v)
+    end
+    return x
+end
+restore_special(x) = x

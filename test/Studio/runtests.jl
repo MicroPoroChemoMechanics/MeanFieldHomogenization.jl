@@ -13,6 +13,7 @@ const MS = MeanFieldHomogenization.Studio
 @testset "MFH Studio" begin
     @testset "text conventions" include("test_pyformat.jl")
     @testset "model" include("test_model.jl")
+    @testset "code generation" include("test_codegen.jl")
     @testset "memory" include("test_memory.jl")
     @testset "environment" include("test_environment.jl")
     @testset "server" include("test_server.jl")
