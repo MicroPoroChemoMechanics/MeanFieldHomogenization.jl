@@ -44,7 +44,7 @@ async function api(path, body) {
   const opt = body === undefined
     ? {}
     : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
-  const r = await fetch(path, opt);
+  const r = await studioFetch(path, opt);
   const j = await r.json().catch(() => ({ error: `${r.status} ${r.statusText}` }));
   if (j && j.error) throw new Error(j.error);
   return j;
@@ -391,7 +391,7 @@ function phaseCard(ph, i) {
   const head = el(
     "header", {},
     el("b", {}, ph.name || "(unnamed)"),
-    ph.is_matrix ? el("span", { class: "tag matrix" }, "matrix") : null,
+    ph.amount_kind === "rest" ? el("span", { class: "tag matrix" }, "matrix") : null,
     seam ? el("span", { class: "tag seam" }, "nested scale") : null,
     el("button", {
       class: "small",
@@ -406,19 +406,25 @@ function phaseCard(ph, i) {
       field("Name", input(ph.name, (v) => { ph.name = v; push(); })),
       field("Role", select(
         [["inclusion", "inclusion"], ["matrix", "matrix"]],
-        ph.is_matrix ? "matrix" : "inclusion",
+        ph.amount_kind === "rest" ? "matrix" : "inclusion",
         (v) => {
-          ph.is_matrix = v === "matrix";
-          if (ph.is_matrix) {
-            // MFH derives the matrix amount as 1 − Σ f and refuses to be told
-            // otherwise, so the field simply goes away.
-            for (const o of cell().phases) if (o !== ph) o.is_matrix = false;
+          // The matrix is the phase whose amount is the rest: MFH derives it as
+          // 1 − Σ f and refuses to be told otherwise, so its amount goes. A cell
+          // has one, so the phase that was the matrix becomes an inclusion.
+          if (v === "matrix") {
+            for (const o of cell().phases) {
+              if (o !== ph && o.amount_kind === "rest") { o.amount_kind = "fraction"; o.amount = 0.1; }
+            }
+            ph.amount_kind = "rest";
             cell().matrix_name = ph.name;
+          } else if (ph.amount_kind === "rest") {
+            ph.amount_kind = "fraction";
+            ph.amount = 0.1;
           }
           push();
         }
       )),
-      ph.is_matrix
+      ph.amount_kind === "rest"
         ? el("div", { class: "note" },
             "The matrix amount is derived as 1 − Σ f of the inclusions; MeanFieldHomogenization raises if it is set.")
         : el("div", { class: "grid2" },
@@ -1377,7 +1383,7 @@ async function run() {
   try {
     const r = await api("/api/run", {});
     $("#stdout").textContent = (r.stdout || "") + (r.error ? "\n" + r.error : "");
-    if (r.results) plotResults(r.results);
+    if (r.results) { S.results = r.results; plotResults(r.results); }
     if (r.ok) toast("Ran cleanly.");
     else toast(r.timeout ? "Timed out." : "The script raised — see the output.", true);
   } catch (e) {
@@ -1394,9 +1400,14 @@ function plotResults(res) {
     .filter(([k]) => k !== "x" && k !== "xlabel")
     .map(([k, y]) => ({ x, y, name: k, type: "scatter", mode: "lines+markers" }));
   if (!traces.length) return;
+  // The colors of the theme in force, read from the page's own tokens.
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const axis = { color: css("--muted"), gridcolor: css("--line"), zerolinecolor: css("--line") };
   Plotly.react("plot", traces, {
     margin: { l: 48, r: 10, t: 10, b: 38 },
-    xaxis: { title: res.xlabel || "x" },
+    xaxis: Object.assign({ title: res.xlabel || "x" }, axis),
+    yaxis: axis,
+    font: { color: css("--ink") },
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
     legend: { orientation: "h" },
@@ -1539,6 +1550,10 @@ async function boot() {
 }
 
 function wire() {
+  $("#theme").addEventListener("click", () => {
+    applyTheme(THEMES[(THEMES.indexOf(savedTheme()) + 1) % THEMES.length]);
+    if (S.results) plotResults(S.results);
+  });
   document.querySelectorAll(".tabs button").forEach((b) =>
     b.addEventListener("click", () => {
       document.querySelectorAll(".tabs button").forEach((x) => x.classList.remove("on"));
@@ -1559,7 +1574,7 @@ function wire() {
       builder_name: null, rve_options: {},
       ui: { x: 40 + ((n - 1) % 3) * 210, y: 30 + Math.floor((n - 1) / 3) * 150 },
       phases: [{
-        name: "MATRIX", is_matrix: true, amount_kind: "fraction", amount: 0, symmetrize: "none",
+        name: "MATRIX", amount_kind: "rest", amount: 0, symmetrize: "none",
         geometry: { kind: "spheroid", args: { omega: 1.0 }, euler_angles: [], layers: [] },
         properties: [{ key: ":C", source: "builder", builder: "iso_stiffness", form: "iso_kmu", args: { k: 10, mu: 5 }, scheme_options: {} }],
       }],
@@ -1596,7 +1611,7 @@ function wire() {
   $("#cell-matrix").addEventListener("change", (e) => { cell().matrix_name = e.target.value; push(); });
   $("#phase-add").addEventListener("click", () => {
     cell().phases.push({
-      name: "PHASE" + cell().phases.length, is_matrix: false,
+      name: "PHASE" + cell().phases.length,
       amount_kind: "fraction", amount: 0.1, symmetrize: "none",
       geometry: { kind: "spheroid", args: { omega: 1.0 }, euler_angles: [], layers: [] },
       properties: [{ key: ":C", source: "builder", builder: "iso_stiffness", form: "iso_kmu", args: { k: 10, mu: 5 }, scheme_options: {} }],

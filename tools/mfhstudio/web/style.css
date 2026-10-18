@@ -11,8 +11,10 @@
   --gutter: 6px;
 }
 
+/* The system's preference by default; the header's button forces light or
+   dark, by an attribute on the root element. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #14181d;
     --panel: #1b2028;
     --line: #2c333d;
@@ -22,6 +24,17 @@
     --warn: #e0a45c;
     --bad: #e07070;
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #14181d;
+  --panel: #1b2028;
+  --line: #2c333d;
+  --ink: #e6eaf0;
+  --muted: #93a0b0;
+  --accent: #5aa2e8;
+  --warn: #e0a45c;
+  --bad: #e07070;
 }
 
 * { box-sizing: border-box; }

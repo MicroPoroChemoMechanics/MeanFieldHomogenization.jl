@@ -33,6 +33,14 @@ The Julia launcher tries all three in that spirit and skips any that fails to
 import `mfhstudio`, so it does not settle on an interpreter that would only
 fail once the server started.
 
+Without `--port` the studio takes 8765, or the next free port when 8765 is
+taken (a VS Code forward, another studio); a port given is used or refused.
+The printed address ends with `?token=…`, drawn at random at each start: the
+page keeps it for the tab, takes it out of the address bar, and sends it back
+with every request, and the server refuses a request without it, or from
+another site. The studio runs Julia on request, so the address is not to be
+shared.
+
 Over SSH or in a VS Code remote session the studio serves on the *remote*
 machine; open the printed URL locally, which VS Code and `ssh -L` both forward.
 The console says so when it detects one. It still asks the local browser to

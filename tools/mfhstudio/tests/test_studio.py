@@ -716,6 +716,112 @@ def test_session_serves_a_catalog_when_the_sidecar_is_dead():
     assert "add_phase!" in s.script()
 
 
+def _served_session():
+    """A studio server on a free port, in a thread, its sidecar never started."""
+    import threading
+
+    from mfhstudio.server import Handler, Session, bind
+
+    session = Session()
+    session.bridge.julia = "/nonexistent-julia"
+    handler = type("BoundHandler", (Handler,), {"session": session})
+    httpd = bind(handler, "127.0.0.1", 0)
+    session.port = httpd.server_address[1]
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    return session, httpd
+
+
+def _request(session, path, body=None, headers=None):
+    import json
+    import urllib.error
+    import urllib.request
+
+    data = None if body is None else json.dumps(body).encode()
+    req = urllib.request.Request(f"http://127.0.0.1:{session.port}{path}", data=data)
+    for k, v in (headers or {}).items():
+        req.add_header(k, v)
+    try:
+        with urllib.request.urlopen(req) as r:
+            return r.status, json.loads(r.read() or b"{}")
+    except urllib.error.HTTPError as e:
+        return e.code, json.loads(e.read() or b"{}")
+
+
+def test_api_calls_need_the_session_token():
+    """The studio runs Julia on request: no other page may talk to it."""
+    session, httpd = _served_session()
+    try:
+        token = {"X-Studio-Token": session.token}
+        assert _request(session, "/api/state")[0] == 403
+        assert _request(session, "/api/state", headers={"X-Studio-Token": "x" * 32})[0] == 403
+        assert _request(session, "/api/state", headers=token)[0] == 200
+        foreign = dict(token, Origin="http://evil.example")
+        assert _request(session, "/api/state", headers=foreign)[0] == 403
+        same = dict(token, Origin=f"http://127.0.0.1:{session.port}")
+        assert _request(session, "/api/state", headers=same)[0] == 200
+        rebound = dict(token, Host=f"evil.example:{session.port}")
+        assert _request(session, "/api/state", headers=rebound)[0] == 403
+        plain = dict(token, **{"Content-Type": "text/plain"})
+        assert _request(session, "/api/run", body={}, headers=plain)[0] == 403
+        # the static page itself needs no token: it carries none yet
+        import urllib.request
+
+        with urllib.request.urlopen(f"http://127.0.0.1:{session.port}/") as r:
+            assert r.status == 200
+    finally:
+        httpd.shutdown()
+
+
+def test_a_failed_open_leaves_the_model_and_the_file_alone():
+    """Saving after a failed open must not write an empty model over a script."""
+    import tempfile
+
+    session, httpd = _served_session()
+    try:
+        session.path = "/kept/before.jl"
+        before = session.model.to_dict()
+        with tempfile.NamedTemporaryFile("w", suffix=".jl", delete=False) as fh:
+            fh.write("x = 1\n")              # not a studio script, and no sidecar to read it
+        headers = {"X-Studio-Token": session.token, "Content-Type": "application/json"}
+        code, body = _request(session, "/api/open", body={"path": fh.name}, headers=headers)
+        assert code == 422 and body["error"]
+        assert session.path == "/kept/before.jl"
+        assert session.model.to_dict() == before
+        os.unlink(fh.name)
+    finally:
+        httpd.shutdown()
+
+
+def test_the_default_port_gives_way_to_the_next_free_one():
+    from mfhstudio.server import DEFAULT_PORT, Handler, bind
+
+    first = bind(Handler, "127.0.0.1", None)
+    second = bind(Handler, "127.0.0.1", None)
+    try:
+        assert first.server_address[1] >= DEFAULT_PORT
+        assert second.server_address[1] > first.server_address[1]
+        taken = first.server_address[1]
+        try:
+            bind(Handler, "127.0.0.1", taken)
+        except SystemExit as e:
+            assert f"--port {taken + 1}" in str(e)
+        else:
+            raise AssertionError("a port named explicitly must not be replaced")
+    finally:
+        first.server_close()
+        second.server_close()
+
+
+def test_a_cell_has_one_matrix():
+    m = default_model()
+    c = m.cells[0]
+    rest = [p for p in c.phases if p.amount_kind == "rest"]
+    assert len(rest) == 1, "the default cell has its matrix"
+    other = next(p for p in c.phases if p.amount_kind != "rest")
+    other.amount_kind = "rest"
+    assert any("matrix phases" in p for p in m.validate())
+
+
 def test_startup_failure_is_diagnosed_not_dumped():
     """A stack trace says what happened; the user needs to know what to do."""
     from mfhstudio.juliabridge import _diagnose

@@ -689,6 +689,14 @@ class Model:
                 problems.extend(self._laminate_problems(c))
             elif c.matrix() is None:
                 problems.append(f"cell `{c.name}` has no matrix phase")
+            else:
+                # The matrix is the phase whose amount is the rest; two of them
+                # would leave one out of the script without a word.
+                rest = [p.name for p in c.phases if p.amount_kind == "rest"]
+                if len(rest) > 1:
+                    problems.append(
+                        f"cell `{c.name}` has {len(rest)} matrix phases ({', '.join(rest)}); a cell has one"
+                    )
             what = "layers" if c.is_laminate() else "phases"
             mn = [m.name for m in c.members()]
             for n in set(mn):

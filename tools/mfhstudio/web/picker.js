@@ -20,7 +20,7 @@ const Picker = (() => {
 
   async function list(path) {
     const url = "/api/browse" + (path ? "?path=" + encodeURIComponent(path) : "");
-    const r = await fetch(url);
+    const r = await studioFetch(url);
     const j = await r.json();
     if (j.error) throw new Error(j.error);
     return j;
