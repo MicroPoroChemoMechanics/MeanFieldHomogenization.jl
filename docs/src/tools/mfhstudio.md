@@ -32,6 +32,14 @@ mfhstudio(check = true)      # verify the Julia side and exit
 mfhstudio
 ```
 
+Without `port`, the studio listens on 8765, or on the next free port when
+8765 is taken, by an editor's port forward or by another studio; a `port` you
+name is used or refused. The address it prints ends with `?token=…`, a random
+key drawn at each start. The page sends it back with every request and the
+server answers no request without it, nor one coming from another site: the
+studio runs Julia code on request, and the key keeps other web pages and other
+users of the machine out. Keep the address to yourself.
+
 `mfhstudio` blocks the REPL, like `Pluto.run()`, until the studio stops:
 Ctrl-C in the REPL shuts the server and its Julia sidecar down cleanly. Pass
 `wait = false` to keep working while the studio runs — it returns the process
@@ -131,6 +139,9 @@ Every boundary between panels is a **drag handle** — the two between the colum
 and the ones between the graph, the 3-D view, the results and the output log.
 Double-click a handle to put that one back where it started. The sizes are
 remembered between sessions, per browser.
+
+The button ◐ in the header switches the theme: as the system has it, light or
+dark. The choice is remembered per browser, and the plots follow it.
 
 The **Shape** panel draws the geometry of the phase currently selected — a
 single inclusion, from its semi-axes and orientation. It is not a picture of the

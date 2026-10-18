@@ -204,7 +204,7 @@
       const row = document.createElement("div");
       row.className = "phase";
       const tag = document.createElement("span");
-      tag.className = "pill" + (mb.is_matrix ? " matrix" : "");
+      tag.className = "pill" + (mb.amount_kind === "rest" ? " matrix" : "");
       tag.textContent = mb.name;
       row.append(tag);
       for (const pr of mb.properties || []) {

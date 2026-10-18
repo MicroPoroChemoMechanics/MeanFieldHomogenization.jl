@@ -19,7 +19,8 @@ import sys
 def main(argv: list | None = None) -> int:
     p = argparse.ArgumentParser(prog="mfhstudio", description=__doc__)
     p.add_argument("--host", default="127.0.0.1")
-    p.add_argument("--port", type=int, default=8765)
+    p.add_argument("--port", type=int, default=None,
+                   help="port to listen on (default: 8765, or the next free one)")
     p.add_argument("--no-browser", action="store_true")
     p.add_argument(
         "--project",

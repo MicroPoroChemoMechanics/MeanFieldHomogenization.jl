@@ -11,7 +11,7 @@
 # =============================================================================
 
 """
-    mfhstudio(; host="127.0.0.1", port=8765, no_browser=false,
+    mfhstudio(; host="127.0.0.1", port=nothing, no_browser=false,
               project=nothing, julia=nothing, python=nothing,
               check=false, wait=true)
 
@@ -29,8 +29,11 @@ after `python` and `python3` — those two are often a Store stub or an MSYS2
 build there.
 
 # Arguments
-- `host`/`port` — where to bind; the printed URL is `http://host:port/`.
-  Pick a different `port` when the default 8765 is taken.
+- `host`/`port` — where to bind; the printed address is
+  `http://host:port/?token=…`, the token being what the page must present with
+  every request (the studio runs code on request). Without `port`, the studio
+  takes 8765, or the next free port when 8765 is taken; a `port` given is used
+  or refused.
 - `no_browser` — start without asking the browser to open.
 - `project` — Julia environment for the sidecar: a directory, or `@name` for a
   shared one. Defaults to the MeanFieldHomogenization checkout (as the Python app does),
@@ -43,7 +46,7 @@ build there.
 # Examples
 ```julia
 using MeanFieldHomogenization
-mfhstudio()                  # http://127.0.0.1:8765, opens a browser
+mfhstudio()                  # http://127.0.0.1:8765/?token=…, opens a browser
 mfhstudio(port = 9000)       # pick a different port
 mfhstudio(no_browser = true) # stay in the terminal
 p = mfhstudio(wait = false)  # keep the REPL; later `wait(p)` or `kill(p)`
@@ -51,7 +54,7 @@ p = mfhstudio(wait = false)  # keep the REPL; later `wait(p)` or `kill(p)`
 """
 function mfhstudio(;
         host::AbstractString = "127.0.0.1",
-        port::Integer = 8765,
+        port::Union{Integer, Nothing} = nothing,
         no_browser::Bool = false,
         project::Union{AbstractString, Nothing} = nothing,
         julia::Union{AbstractString, Nothing} = nothing,
@@ -110,11 +113,12 @@ end
 function _studio_dir()
     root = pkgdir(MeanFieldHomogenization)
     dir = joinpath(root, "tools", "mfhstudio")
+    # The studio ships with the package (`tools/` is part of every release);
+    # a folder missing here means an installation that lost it.
     isdir(dir) || error(
-        "MFH Studio lives in the MeanFieldHomogenization checkout at `tools/mfhstudio`, " *
-            "which is missing here ($dir). It is not part of the released package: " *
-            "develop a clone and start the studio from there\n" *
-            "    julia -e 'using Pkg; Pkg.develop(path = raw\"<MeanFieldHomogenization.jl>\")'",
+        "MFH Studio should be at `tools/mfhstudio` of the MeanFieldHomogenization package, " *
+            "and is missing here ($dir). Reinstall the package (`] add MeanFieldHomogenization`), " *
+            "or develop a clone and start the studio from there.",
     )
     return dir
 end
@@ -195,7 +199,7 @@ end
 """The `Cmd` that starts the studio — kept pure so the launcher is testable."""
 function _studio_cmd(;
         host::AbstractString = "127.0.0.1",
-        port::Integer = 8765,
+        port::Union{Integer, Nothing} = nothing,
         no_browser::Bool = false,
         project::Union{AbstractString, Nothing} = nothing,
         julia::Union{AbstractString, Nothing} = nothing,
@@ -204,7 +208,7 @@ function _studio_cmd(;
     )
     args = [_find_python(python); "-m"; "mfhstudio"]
     append!(args, ["--host", String(host)])
-    append!(args, ["--port", string(port)])
+    port !== nothing && append!(args, ["--port", string(port)])
     no_browser && push!(args, "--no-browser")
     project !== nothing && append!(args, ["--project", String(project)])
     julia !== nothing && append!(args, ["--julia", String(julia)])

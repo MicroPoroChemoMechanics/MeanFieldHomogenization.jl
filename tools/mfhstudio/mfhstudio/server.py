@@ -9,8 +9,10 @@ static files.
 
 from __future__ import annotations
 
+import hmac
 import json
 import os
+import secrets
 import threading
 import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -48,6 +50,12 @@ class Session:
     """
 
     def __init__(self, project: Optional[str] = None, julia: Optional[str] = None) -> None:
+        # The page must present this token with every /api call: the studio
+        # runs Julia on request, so no other web page the user has open, and
+        # no other user of the machine, may talk to it.
+        self.token = secrets.token_urlsafe(24)
+        self.host = "127.0.0.1"
+        self.port = 0
         self.model: Model = default_model()
         self.path: Optional[str] = None
         self.bridge = Bridge(julia=julia, project=project or PROJECT_ROOT)
@@ -120,10 +128,40 @@ class Handler(BaseHTTPRequestHandler):
             return {}
         return json.loads(self.rfile.read(n).decode("utf-8"))
 
+    def _refusal(self, method: str) -> Optional[str]:
+        """Why an /api request is refused, or None.
+
+        A missing or wrong token; a Host that is not the studio's (a page using
+        DNS rebinding); an Origin that is not the studio's page; a POST that is
+        not JSON, which a form on another page could send without the browser
+        asking first.
+        """
+        s = self.session
+        token = self.headers.get("X-Studio-Token") or ""
+        if not hmac.compare_digest(token.encode(), s.token.encode()):
+            return "missing or wrong token"
+        host = self.headers.get("Host") or ""
+        if s.host in ("127.0.0.1", "localhost", "::1"):
+            allowed = {f"127.0.0.1:{s.port}", f"localhost:{s.port}", f"[::1]:{s.port}"}
+            if host not in allowed:
+                return "unexpected Host header"
+        origin = self.headers.get("Origin")
+        if origin and origin != f"http://{host}":
+            return "cross-origin request refused"
+        if method == "POST":
+            ctype = (self.headers.get("Content-Type") or "").lower()
+            if not ctype.startswith("application/json"):
+                return "a POST must carry application/json"
+        return None
+
     # -- routing ----------------------------------------------------------
 
     def do_GET(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
+        if path.startswith("/api/"):
+            refusal = self._refusal("GET")
+            if refusal:
+                return self._json({"error": refusal}, 403)
         try:
             if path == "/api/state":
                 return self._json(self._state())
@@ -148,6 +186,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
+        refusal = self._refusal("POST")
+        if refusal:
+            return self._json({"error": refusal}, 403)
         try:
             body = self._body()
             if path == "/api/model":
@@ -337,6 +378,10 @@ class Handler(BaseHTTPRequestHandler):
                 source = fh.read()
 
         model, report = model_from_script(source, self.session.bridge)
+        if "error" in report:
+            # Nothing was read: the model and the file bound stay as they were,
+            # so that a Save cannot write an empty model over the script.
+            return self._json({"error": report["error"], "read_report": report}, 422)
         with self.session.lock:
             self.session.model = model
             self.session.path = path or None
@@ -356,6 +401,9 @@ class Handler(BaseHTTPRequestHandler):
             fh.write(conv.julia)
 
         model, report = model_from_script(conv.julia, self.session.bridge)
+        if "error" in report:
+            # The translation is written; reading it back needs the sidecar.
+            return self._json({"error": report["error"], "read_report": report, "output": target}, 422)
         with self.session.lock:
             self.session.model = model
             self.session.path = target
@@ -435,23 +483,52 @@ def _is_remote() -> bool:
     )
 
 
+DEFAULT_PORT = 8765
+PORT_TRIES = 20
+
+
+def bind(handler, host: str, port: Optional[int]) -> ThreadingHTTPServer:
+    """The server on `port`, or, without one, on 8765 or the next free port.
+
+    A port the user names is used or refused; the default one gives way, so
+    that a second studio, or a forwarded port, does not stop the first start.
+    """
+    ports = [port] if port is not None else range(DEFAULT_PORT, DEFAULT_PORT + PORT_TRIES)
+    last = None
+    for p in ports:
+        try:
+            return ThreadingHTTPServer((host, p), handler)
+        except OSError as exc:  # the port is taken
+            last = exc
+    if port is not None:
+        raise SystemExit(f"port {port} is already in use; start with another one, --port {port + 1}") from last
+    raise SystemExit(
+        f"ports {DEFAULT_PORT} to {DEFAULT_PORT + PORT_TRIES - 1} are all in use; start with --port"
+    ) from last
+
+
 def serve(
-    host: str = "127.0.0.1", port: int = 8765, open_browser: bool = True,
+    host: str = "127.0.0.1", port: Optional[int] = None, open_browser: bool = True,
     project: Optional[str] = None, julia: Optional[str] = None,
 ) -> None:
     session = Session(project=project, julia=julia)
     handler = type("BoundHandler", (Handler,), {"session": session})
-    httpd = ThreadingHTTPServer((host, port), handler)
+    httpd = bind(handler, host, port)
+    session.host = host
+    session.port = httpd.server_address[1]
+    if port is None and session.port != DEFAULT_PORT:
+        print(f"Port {DEFAULT_PORT} is taken; the studio uses port {session.port}.", flush=True)
 
-    url = f"http://{host}:{port}/"
+    shown = "localhost" if host in ("0.0.0.0", "::") else host
+    url = f"http://{shown}:{session.port}/?token={session.token}"
     print(f"MFH Studio → {url}", flush=True)
     if _is_remote():
         print(
             "  (remote session: open that URL on your own machine — VS Code "
-            "and `ssh -L` both forward the port)",
+            f"forwards the port, and so does `ssh -L {session.port}:127.0.0.1:{session.port}`)",
             flush=True,
         )
-    print("Starting the Julia sidecar (MeanFieldHomogenization takes ~10 s to load)…", flush=True)
+    print("Starting the Julia sidecar (loading MeanFieldHomogenization takes a while)…", flush=True)
 
     def warm() -> None:
         # Reading the manifest is instant and names a missing local checkout

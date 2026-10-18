@@ -64,6 +64,38 @@ the strength of a sandstone, bituminous mixtures — lives under [`docs/src/appl
 and the [Applications](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/applications/)
 section of the docs.
 
+## MFH Studio — building models in the browser
+
+```julia
+using MeanFieldHomogenization
+mfhstudio()
+```
+
+![MFH Studio: a two-scale model, its 3-D shape and the Julia it generates](docs/src/assets/mfhstudio/readme.png)
+
+A local web interface for writing the scripts above. Describe each phase in a
+form, watch the Julia on the right change as you type, and press **Run**. The
+script stays the deliverable — the studio is a way of writing one, not a format
+to be locked into: it reads an existing script back and preserves verbatim
+anything it does not recognize.
+
+- **RVEs and laminates.** A matrix with inclusions — spheroids, ellipsoids,
+  cylinders, cracks, layered spheres and spheroids — or a periodic stack of
+  parallel layers, solved exactly rather than estimated.
+- **Multiscale by dragging.** Each box is a scale; drag its output dot onto a
+  property slot of another and the seam appears as
+  `Homogenized(inner, scheme)`, with the builders emitted in topological order.
+- **Sweeps, sensitivities, aging creep.** Several schemes on one figure;
+  ForwardDiff derivatives through the whole chain; the effective creep curve.
+- **No installation beyond Julia.** Python 3.10+ standard library only, and the
+  browser you already have.
+
+Ten [worked examples](tools/mfhstudio/examples/) open with every form filled
+in — start with `01_porous_schemes.jl`. The full guide, with screenshots, is in
+[the manual](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/tools/mfhstudio/).
+Its sibling for the chemistry of cement pastes is
+[ChemistryLab Studio](https://github.com/MicroPoroChemoMechanics/ChemistryLab.jl#chemistrylab-studio-a-graphical-interface-for-cement-pastes).
+
 ## Features
 
 | Sub-module | Responsibility |
@@ -192,36 +224,6 @@ differentiates through `ForwardDiff` and accepts symbolic (`SymPy`/
 `Symbolics`) coefficients. See the in-line docstrings and the
 [Tutorials](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/tutorials/)
 for details.
-
-## MFH Studio — building models in the browser
-
-```julia
-using MeanFieldHomogenization
-mfhstudio()
-```
-
-![MFH Studio: a two-scale model, its 3-D shape and the Julia it generates](docs/src/assets/mfhstudio/readme.png)
-
-A local web interface for writing the scripts above. Describe each phase in a
-form, watch the Julia on the right change as you type, and press **Run**. The
-script stays the deliverable — the studio is a way of writing one, not a format
-to be locked into: it reads an existing script back and preserves verbatim
-anything it does not recognize.
-
-- **RVEs and laminates.** A matrix with inclusions — spheroids, ellipsoids,
-  cylinders, cracks, layered spheres and spheroids — or a periodic stack of
-  parallel layers, solved exactly rather than estimated.
-- **Multiscale by dragging.** Each box is a scale; drag its output dot onto a
-  property slot of another and the seam appears as
-  `Homogenized(inner, scheme)`, with the builders emitted in topological order.
-- **Sweeps, sensitivities, aging creep.** Several schemes on one figure;
-  ForwardDiff derivatives through the whole chain; the effective creep curve.
-- **No installation beyond Julia.** Python 3.10+ standard library only, and the
-  browser you already have.
-
-Ten [worked examples](tools/mfhstudio/examples/) open with every form filled
-in — start with `01_porous_schemes.jl`. The full guide, with screenshots, is in
-[the manual](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/tools/mfhstudio/).
 
 ## Tests
 

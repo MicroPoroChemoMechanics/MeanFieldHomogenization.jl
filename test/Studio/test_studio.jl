@@ -62,10 +62,11 @@
     ) == "ModuleNotFoundError: nope"
     @test MeanFieldHomogenization._last_line("   \n\n") == "no output"
 
-    # The default command is `python3 -m mfhstudio --host <host> --port <port>`
-    # run from the studio directory, so `-m mfhstudio` resolves.
+    # The default command is `python3 -m mfhstudio --host <host>`, run from the
+    # studio directory so that `-m mfhstudio` resolves; without a port the
+    # studio takes 8765 or the next free one.
     cmd = MeanFieldHomogenization._studio_cmd(python = "python3")
-    @test cmd.exec == ["python3", "-m", "mfhstudio", "--host", "127.0.0.1", "--port", "8765"]
+    @test cmd.exec == ["python3", "-m", "mfhstudio", "--host", "127.0.0.1"]
     @test cmd.dir == dir
 
     # Every option is forwarded, and only when set.
