@@ -130,21 +130,13 @@ end
 the interface of type `intf` located at radius ``r``.  The adjacent
 layer Volterra moduli `(M_κ, M_μ)` are passed in for type promotion.
 
-Supports the same interface types as the elastic counterpart:
-[`PerfectInterface`](@ref), [`SpringInterface`](@ref) (primal,
-displacement jump driven by the compliance ``s_n = 1/k_n``), and
-[`MembraneInterface`](@ref)
-(dual, traction jump driven by ``\\kappa^{\\mathrm s}``).  The interface parameters are
-constant in time (see `_iface_param_volterra`).
+Supports the imperfect interfaces of the elastic counterpart:
+[`SpringInterface`](@ref) (primal, displacement jump driven by the compliance
+``s_n = 1/k_n``) and [`MembraneInterface`](@ref) (dual, traction jump driven by
+``\\kappa^{\\mathrm s}``). A perfect interface jumps nothing and is skipped by the
+callers. The interface parameters are constant in time (see
+`_iface_param_volterra`).
 """
-function _bulk_interface_T_alv(
-        ::PerfectInterface, M_κ, M_μ, r,
-        times::AbstractVector, n::Int
-    )
-    T = promote_type(eltype(M_κ), eltype(M_μ))
-    return Matrix{T}(I, 2 * n, 2 * n)
-end
-
 function _bulk_interface_T_alv(
         intf::SpringInterface, M_κ, M_μ, r,
         times::AbstractVector, n::Int
@@ -450,9 +442,8 @@ amplitudes, exactly as in the elastic `LayeredSpheres._shear_M_matrix`:
 rows 3 and 4 are polynomials in ``(\\widetilde{k}, \\widetilde{\\mu})`` (the Volterra
 moduli `M_κ`, `M_μ`) — ``\\mathbf{M}_{31} = 4\\widetilde{\\mu}``,
 ``\\mathbf{M}_{44} = 3\\widetilde{k}/r^3`` — and are continuous across a perfect
-interface, which is why
-[`_shear_interface_T_alv`](@ref)`(::PerfectInterface, …)` is the
-identity and needs no modulus conversion.
+interface, which is why a perfect interface is the identity
+(`_across_interface_alv`) and needs no modulus conversion.
 
 Block for block this is the elastic matrix with the scalar ``x = k/\\mu``
 replaced by the Volterra ratio ``\\widetilde{\\mu}^{-\\circ}\\circ\\widetilde{k}`` applied **on the
@@ -597,16 +588,6 @@ The interface parameters being constant in time, the ``4n\\times 4n`` matrix is
 block-diagonal in the ``4\\times 4`` sense: the diagonal blocks repeat the elastic
 ``4\\times 4`` jump for every time step.
 """
-function _shear_interface_T_alv(
-        ::PerfectInterface,
-        M_κ_a, M_μ_a, M_κ_b, M_μ_b,
-        r, times::AbstractVector, n::Int
-    )
-    # σ-state perfect interface: identity on (U, V, σ_rr, σ_rθ).
-    T = promote_type(eltype(M_μ_a), eltype(M_μ_b))
-    return Matrix{T}(I, 4 * n, 4 * n)
-end
-
 function _shear_interface_T_alv(
         intf::SpringInterface,
         M_κ_a, M_μ_a, M_κ_b, M_μ_b,

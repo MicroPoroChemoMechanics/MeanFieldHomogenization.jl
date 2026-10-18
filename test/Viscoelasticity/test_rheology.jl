@@ -2,6 +2,9 @@ using Test
 using MeanFieldHomogenization
 using SpecialFunctions
 using ForwardDiff
+# Activates `MeanFieldHomogenizationMittagLefflerExt`, whose closed form of the
+# Rabotnov relaxation is pinned below against the Carson inversion.
+import MittagLeffler
 
 # =============================================================================
 #  test_rheology.jl — the scalar model catalog.
@@ -177,6 +180,22 @@ end
     @test equilibrium_modulus(m) < glassy_modulus(m)     # it relaxes
     @test isfinite(relaxation(m, 1.0))
     @test_throws ArgumentError Rabotnov(1.0, -0.5, -1.5, 1.0)
+end
+
+@testset "Rabotnov — the Mittag-Leffler closed form against the Carson inversion" begin
+    # With MittagLeffler loaded, R(t) comes from the closed form in the band of
+    # orders the extension accepts (here α + 1 = 0.54); the numerical inversion
+    # of the elementary transform is the independent reference.
+    V = MeanFieldHomogenization.Viscoelasticity
+    m = Rabotnov(1.7, -0.495, -0.46, 0.98)
+    @test V._mittag_leffler(0.54, 1.0, -0.5) !== nothing
+    for t in (0.1, 1.0, 5.0)
+        @test relaxation(m, t) ≈ V.inverse_carson(p -> carson_relaxation(m, p), t) rtol = 1.0e-6
+    end
+    # A dual number is declined, so the derivative goes through the inversion.
+    @test V._mittag_leffler(0.54, 1.0, ForwardDiff.Dual(-0.5, 1.0)) === nothing
+    @test ForwardDiff.derivative(t -> relaxation(m, t), 1.0) ≈
+        ForwardDiff.derivative(t -> V.inverse_carson(p -> carson_relaxation(m, p), t), 1.0) rtol = 1.0e-6
 end
 
 @testset "loss factor is non-negative — passivity smoke test" begin

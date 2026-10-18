@@ -8,10 +8,13 @@ refused the case, whenever roots of the acoustic polynomial coincided or nearly
 did: an isotropic or transversely isotropic reference along the ellipsoid axes,
 a reference close to one, and flat ellipsoids, whose roots all shrink with the
 aspect ratio. The default `method = :auto`, which uses a cubature, was not
-affected. Two defects outside the residues are fixed too: `compliance_from_cod`
-returned a wrong ℍ from 𝐁 for all but one component, and the cubature of 𝐁 broke
-down at tight tolerances. Errors below are relative, against the cubature or a
-closed form, as measured on 0.17.2 and on this release.
+affected. Defects outside the residues are fixed too: `compliance_from_cod`
+returned a wrong ℍ from 𝐁 for all but one component, the cubature of 𝐁 broke
+down at tight tolerances, the self-consistent scheme converged to a wrong
+tensor wherever the transversely isotropic or orthotropic estimate had a
+negative or zero coupling, and symbolic spheroids, ellipsoids and cylinders
+were refused. Errors below are relative, against the cubature or a closed form,
+as measured on 0.17.2 and on this release.
 
 ### Fixed
 
@@ -65,6 +68,44 @@ closed form, as measured on 0.17.2 and on this release.
   instance, was integrated on a polynomial cut down to a lower degree, which
   turned an undefined integral into a number. It is refused with an
   `ArgumentError`, as is a reference whose acoustic tensor changes sign.
+- **The self-consistent iteration clamped couplings.** Before each step, the
+  guard that keeps the running estimate away from the trivial null fixed point
+  raised every stored coefficient below a small threshold to that threshold.
+  Those of an isotropic or a cubic tensor are its eigenvalues; those of a
+  transversely isotropic (Walpole) or an orthotropic tensor include couplings,
+  which are negative for an auxetic material and zero for an uncoupled one, and
+  clamping them moved the fixed point. With phases of Poisson's ratios -0.4 and
+  -0.3 around aligned 3:1 spheroids at 40 %, `SelfConsistent()` returned a
+  tensor that missed its own condition by 1.3e-3, and
+  `SelfConsistent(algorithm = NewtonDefault())` one that missed it by 1.0, the
+  coupling at -2052 instead of -6.8. The guard now reads the spectrum block by
+  block and raises only the eigenvalues below the threshold, keeping their
+  eigenvectors; both algorithms meet the condition to 1e-11. Its isotropic
+  method, declared on the wrong type parameter, had never applied.
+- **Symbolic inclusions.** `Symbolics.Num` subtypes `Real`, and the Newton
+  potentials, the classification of a cylinder and the stopping tests of
+  Carlson's integrals were routed on `T <: Real`: the Hill tensor of a symbolic
+  spheroid, triaxial ellipsoid or cylinder, and the construction of a symbolic
+  `Cylinder` itself, threw `TypeError: non-boolean (Num) used in boolean
+  context`, where the docstrings announce symbolic support. They are now routed
+  on whether comparisons return a `Bool`. The spheroids take their closed forms
+  in `acos` and `acosh`; the triaxial ellipsoid keeps its incomplete elliptic
+  integrals as unexpanded calls, which the Symbolics extension now registers as
+  it did the complete ones. SymPy, whose `Sym` is not a `Real`, was not
+  affected.
+- **Cylinders and ellipses close to circular.** The Newton potentials of an
+  elliptic cylinder and of an ellipse switched to the circular forms within
+  1e-6 (relative) of a circular section, although the elliptic forms hold down
+  to it: up to 5e-7 in value, and the whole derivative along the difference of
+  the semi-axes, were lost there. The circular forms are now taken only for
+  semi-axes that are one, value and derivatives; the potentials agree with the
+  limit of an elongated ellipsoid to 1e-12, in value and in derivative.
+- **`cumulative_strain_average` beyond the outer radius** returned the average
+  over the sphere alone, normalized by the sphere's volume, for a ball that
+  takes in the surrounding medium too. A radius beyond the outer one, outside
+  the documented domain, is now refused.
+- `check_material_interface` reported a tangent check skipped at a zero tangent
+  as "non-smooth".
 
 The residues of roots that coincide or nearly do are now summed as a group, by
 the expansion of the contour integral around it, which depends on the roots only
@@ -84,6 +125,9 @@ long ellipsoids lie. The derivation is on the theory page of Hill tensors.
   of fixed size rather than polynomial objects, and the 21 numerators of the
   Hill tensor are integrated through their coefficients, as a bilinear form.
 - The `PolynomialRoots` dependency is dropped.
+- `newton_potential_3d` and `newton_potential_2d` accept semi-axes of mixed
+  types, as `newton_potential_3d_cylinder` did.
+- `fe_available_gb` takes the file to read, `/proc/meminfo` by default.
 
 ### Tests
 
@@ -104,6 +148,19 @@ long ellipsoids lie. The derivation is on the theory page of Hill tensors.
   the integrations of 𝐁, and to 1.5e-9 with the extrapolated flattening.
 - The bridge between ℍ and 𝐁 on every component, against the symmetrized
   product written out from its definition.
+- The guard of the self-consistent iteration against the full Kelvin–Mandel
+  spectrum, for every class it knows; the self-consistent estimate of auxetic
+  phases against its own condition, evaluated without the guard.
+- Symbolic Hill tensors of spheroids, triaxial ellipsoids and cylinders, in
+  elasticity and conduction, against the numerical ones.
+- The potentials of a cylinder near a circular section against those of an
+  elongated ellipsoid, with their derivatives.
+- Branches no test reached: the regularized and the Picard steps of
+  `NewtonDefault`, aging viscoelastic cracks with an interface stiffness against
+  their elastic limit, the unfinished self-consistent iterations of aging
+  viscoelasticity, the Rabotnov model against its Mittag-Leffler form, the
+  complete elliptic integrals of a complex parameter, and the refusals of
+  assemblies, laminates, finite elements and neural surrogates.
 
 ### Documentation
 

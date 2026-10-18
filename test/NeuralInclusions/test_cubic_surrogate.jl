@@ -86,6 +86,26 @@ const NI = MeanFieldHomogenization.NeuralInclusions
             options = NI.TrainingOptions(; hidden = [24, 24], epochs = 1500, seed = 1),
         )
 
+        @testset "plateaus decay the step, then stop the run" begin
+            # A step just above its floor (1e-6) barely moves the loss, and a
+            # patience of one epoch makes every stall a plateau: the first one
+            # decays the step below the floor, the next stops the run, long
+            # before the epoch budget. The curve is recorded epoch by epoch.
+            curve = Any[]
+            Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
+                NI.train_surrogate(
+                    spec, box, train, val; history = curve,
+                    options = NI.TrainingOptions(;
+                        hidden = [4], epochs = 2000, patience = 1, decay = 0.1,
+                        learning_rate = 2.0e-6, seed = 1, verbose = true,
+                    ),
+                )
+            end
+            @test 2 < length(curve) < 20
+            @test [h.epoch for h in curve] == 1:length(curve)
+            @test all(h -> isfinite(h.train) && isfinite(h.validation), curve)
+        end
+
         @testset "it learns the teacher" begin
             # The teacher here is a closed form, so the fit is the only source
             # of error and 5 % is a generous ceiling on "the pipeline ran".
@@ -339,4 +359,28 @@ end
         pore = FESupershapePore(Supersphere(1.0, 0.2); transport = sc, guard = :error)
         @test_throws Exception fe_cell_concentration(pore, TensISO{3}(1.0))
     end
+end
+
+@testset "surrogates — the corner cases of their pieces" begin
+    NI = MeanFieldHomogenization.NeuralInclusions
+    # A log-scaled axis is sampled geometrically.
+    X = NI.grid_box(NI.SampleBox([:p], [0.25], [4.0]; scale = :log), 3)
+    @test vec(X) ≈ [0.25, 1.0, 4.0]
+    # Constant features or outputs cannot be standardized.
+    net = NI.glorot_mlp(Random.MersenneTwister(1), [1, 4, 1])
+    out = NI.DimensionlessHill(GradientConcentrationISO2())
+    @test_throws ArgumentError NI.NeuralSurrogate(; net, features = [:p], output = out, x_scale = [0.0])
+    @test_throws ArgumentError NI.NeuralSurrogate(; net, features = [:p], output = out, y_scale = [0.0])
+    # A transform is one of the two the networks are fitted with.
+    @test_throws ArgumentError NI.apply_transform(:sqrt, 2.0)
+    @test_throws ArgumentError NI.invert_transform(:sqrt, 2.0)
+    # A spheroid has a single symmetry axis; a triaxial ellipsoid has none.
+    @test NI._spheroid_axis_index((1.0, 2.0, 2.0)) == 1
+    @test_throws ArgumentError NI._spheroid_axis_index((1.0, 2.0, 3.0))
+    # A file's format has to be a version number.
+    @test_throws ArgumentError NI._check_format("one-point-oh", "model.json")
+    # A format-1.0 file carries the per-component errors only; with none
+    # recorded, the block error is unknown, hence infinite.
+    @test NI._read_block_error(NI.JSON.parse("{\"max_rel_error\": []}")) == Inf
+    @test NI._read_block_error(NI.JSON.parse("{\"max_rel_error\": [0.1, 0.3]}")) == 0.3
 end

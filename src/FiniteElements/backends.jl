@@ -91,8 +91,8 @@ function _resolve_backend(b::FEBackend)
     return b
 end
 
-function _resolve_backend(::AutoBackend)
-    for b in _AXI_BACKENDS
+function _resolve_backend(::AutoBackend, backends = _AXI_BACKENDS)
+    for b in backends
         _backend_loaded(b) && return b
     end
     return error(

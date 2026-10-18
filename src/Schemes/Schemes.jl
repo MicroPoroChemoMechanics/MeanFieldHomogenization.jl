@@ -20,6 +20,7 @@ using TensND
 using Tensors
 using ForwardDiff
 using OrdinaryDiffEq
+using StaticArrays: SMatrix
 
 import ..Core
 using ..Core

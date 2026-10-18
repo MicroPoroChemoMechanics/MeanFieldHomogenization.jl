@@ -517,6 +517,11 @@ end
     @test get_array(cumulative_strain_average(sph, LF_C₀, LF_ε∞, 1.0)) ≈
         get_array(layer_gradient_average(sph, LF_C₀, LF_ε∞, 1)) rtol = 1.0e-13
 
+    # Beyond the outer radius the ball takes in the surrounding medium, which
+    # is not the sphere's: refused rather than averaged over the sphere alone.
+    @test_throws ArgumentError cumulative_strain_average(sph, LF_C₀, LF_ε∞, 3.6)
+    @test_throws ArgumentError cumulative_strain_average(sph, LF_C₀, LF_ε∞, 0.0)
+
     # And a mid-layer radius must genuinely differ from the volume-scaled
     # full-layer average — otherwise this testset proves nothing.
     naive = let r = 1.37

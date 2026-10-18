@@ -633,3 +633,19 @@ end
         @test norm(compl - stiff) <= 1.0e-6 * norm(stiff)
     end
 end
+
+@testset "Differential — an increment narrower than the state layout" begin
+    # Where every rate vanishes (a `Sequential` window boundary) the increment
+    # is `zero` of a TI state, which TensND returns as a `TensISO`; an
+    # isotropic increment is narrower too. Either is written into the TI
+    # layout, and must read back as itself.
+    S = MeanFieldHomogenization.Schemes
+    proto = TensTI{4}(20.0, 30.0, 6.0, 9.0, 12.0, (0.0, 0.0, 1.0))
+    tag = S._symmetry_tag(proto)
+    for Δ in (zero(proto), TensISO{3}(3.0, 2.0))
+        @test Δ isa TensISO
+        du = zeros(length(S._get_state(tag, proto)))
+        S._set_state_layout!(du, tag, proto, Δ)
+        @test get_array(S._reconstruct_tens(tag, proto, du)) ≈ get_array(Δ) atol = 1.0e-14
+    end
+end

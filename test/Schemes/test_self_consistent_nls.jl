@@ -104,12 +104,12 @@ end
     C_auto = homogenize(rve, SelfConsistent(; algorithm = AutoNonlinear()))
     @test _cmp(C_auto, C_tr; atol = 1.0e-10, rtol = 1.0e-10)
 
-    # Extension-absent fallback: unit-test the resolver's other branch
-    # directly (the extension is process-global and cannot be unloaded
-    # once `using NonlinearSolve` has run in this session).
+    # Extension-absent fallback: the resolver dispatches on the extension, so
+    # its other branch is reached directly with `nothing` (the extension is
+    # process-global and cannot be unloaded once `using NonlinearSolve` has run).
     step = C -> MeanFieldHomogenization.Schemes._sc_step(rve, C, :C)
     C_m = phase_property(rve, :M, :C)
-    C_fallback = MeanFieldHomogenization.Schemes._solve_sc(NewtonDefault(), step, C_m)
+    C_fallback = MeanFieldHomogenization.Schemes._solve_sc_auto(nothing, step, C_m)
     C_newton = homogenize(rve, SelfConsistent(; algorithm = NewtonDefault()))
     @test _cmp(C_fallback, C_newton)
 end

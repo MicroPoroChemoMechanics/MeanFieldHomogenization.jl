@@ -22,8 +22,8 @@ function _alv_crack_record(rve, name, a::CrackDensity, times, who)
     ph = rve.phases[name]
     ph.geometry isa MFH_Core.AbstractCrack ||
         throw(ArgumentError("$who: phase $name has CrackDensity but geometry is not a crack"))
-    Rn_mat = haskey(ph.properties, :Rn) ? _trapezoidal_relaxation_scalar(ph.properties[:Rn], times) : nothing
-    Rt_mat = haskey(ph.properties, :Rt) ? _trapezoidal_relaxation_scalar(ph.properties[:Rt], times) : nothing
+    Rn_mat = _trapezoidal_relaxation_scalar(get(ph.properties, :Rn, nothing), times)
+    Rt_mat = _trapezoidal_relaxation_scalar(get(ph.properties, :Rt, nothing), times)
     return (ph.geometry, a.value, phase_symmetrize(rve, name), Rn_mat, Rt_mat)
 end
 
@@ -358,21 +358,9 @@ function _build_sc_crack_extra_J(C_m::AbstractMatrix, crack_data)
         error("self_consistent_alv with cracks: only iso running estimate is supported")
     α_c, β_c = _iso_pair(C_m)
     B_n_base, B_t_base = _penny_cod_alv(α_c, β_c)
-    Iₙ = Matrix{T}(LinearAlgebra.I, size(α_c, 1), size(α_c, 1))
     @inbounds for (geom, ε, sym, Rn_mat, Rt_mat) in crack_data
-        B_n = B_n_base
-        B_t = B_t_base
-        if Rn_mat !== nothing || Rt_mat !== nothing
-            b = semi_minor(geom)
-            if Rn_mat !== nothing
-                KB = Rn_mat * B_n; @. KB *= b; @. KB += Iₙ
-                B_n = B_n * volterra_inverse(KB; block_size = 1)
-            end
-            if Rt_mat !== nothing
-                KB = Rt_mat * B_t; @. KB *= b; @. KB += Iₙ
-                B_t = B_t * volterra_inverse(KB; block_size = 1)
-            end
-        end
+        B_n = _interface_corrected(B_n_base, Rn_mat, semi_minor(geom))
+        B_t = _interface_corrected(B_t_base, Rt_mat, semi_minor(geom))
         Z = zeros(T, size(α_c))
         ℓ₁ = (3 / 4) .* B_n
         ℓ₆ = (3 / 8) .* B_t

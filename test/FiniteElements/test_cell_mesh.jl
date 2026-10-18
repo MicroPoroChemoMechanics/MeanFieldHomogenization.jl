@@ -31,6 +31,13 @@ const FE = MeanFieldHomogenization.FiniteElements
 
     @testset "the budget guard refuses rather than crashes the session" begin
         @test fe_available_gb() > 0
+        # Where the memory cannot be read, it is unknown, hence unlimited.
+        @test fe_available_gb(joinpath(mktempdir(), "no-meminfo")) == Inf
+        mktemp() do path, io
+            write(io, "MemTotal: 1000 kB\n")
+            close(io)
+            @test fe_available_gb(path) == Inf
+        end
         @test_throws ErrorException FE._fe_check_budget(
             10^9; max_dofs = 1000, min_free_gb = 0.0
         )
@@ -153,4 +160,16 @@ const FE = MeanFieldHomogenization.FiniteElements
             gmsh, shape, FECellMeshOptions(; order = 0)
         )
     end
+end
+
+# A backend that implements none of the contract.
+struct _NoMethodsBackend <: FE.FEBackend end
+FE._backend_import(::_NoMethodsBackend) = "import NoSuchBackend"
+
+@testset "backends — the contract names what is missing" begin
+    @test_throws ErrorException FE.fe_axi_grid(_NoMethodsBackend(), nothing)
+    @test_throws ErrorException FE.fe_crack_grid(_NoMethodsBackend(), nothing)
+    @test_throws ErrorException FE.fe_cell_grid(_NoMethodsBackend(), nothing, nothing)
+    # With no backend loaded, the automatic choice names what to import.
+    @test_throws r"no finite-element backend is loaded" FE._resolve_backend(AutoBackend(), ())
 end

@@ -198,3 +198,24 @@ end
     # Original untouched
     @test get_param(rve, ps[1]) ≈ 0.2
 end
+
+# Geometry types with several numeric fields, as a user may define them: the
+# generic reconstruction promotes the siblings of the replaced field together.
+struct _TwoRadiusBlob{T}
+    r::T
+    s::T
+end
+struct _AxesBlob{T}
+    axes::NTuple{2, T}
+    c::T
+end
+
+@testset "_replace_geom_field — numeric siblings are promoted together" begin
+    R = MeanFieldHomogenization.Schemes._replace_geom_field
+    d = ForwardDiff.Dual(3.0, 1.0)
+    g = R(_TwoRadiusBlob(1.0, 2.0), Val(:r), nothing, d)
+    @test g isa _TwoRadiusBlob{typeof(d)} && g.r == d && g.s == 2.0
+    h = R(_AxesBlob((1.0, 2.0), 0.5), Val(:axes), 2, d)
+    @test h isa _AxesBlob{typeof(d)} && h.axes == (1.0, d) && h.c == 0.5
+    @test_throws ArgumentError R(_TwoRadiusBlob(1.0, 2.0), Val(:q), nothing, 1.0)
+end

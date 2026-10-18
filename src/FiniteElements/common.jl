@@ -69,7 +69,7 @@ _fe_cache(incl) = throw(
 #  cell already factorizes systems of order 10⁵.
 
 """
-    fe_available_gb() -> Float64
+    fe_available_gb(meminfo = "/proc/meminfo") -> Float64
 
 `MemAvailable` from `/proc/meminfo`, in GiB, or `Inf` where that file is not
 readable — every platform other than Linux, and some containers.
@@ -77,9 +77,9 @@ readable — every platform other than Linux, and some containers.
 `Inf` is the deliberate answer for "unknown": a guard that refuses to run
 because it cannot measure is worse than no guard.
 """
-function fe_available_gb()
+function fe_available_gb(meminfo::AbstractString = "/proc/meminfo")
     try
-        for line in eachline("/proc/meminfo")
+        for line in eachline(meminfo)
             startswith(line, "MemAvailable:") || continue
             return parse(Float64, split(line)[2]) / 1024 / 1024
         end

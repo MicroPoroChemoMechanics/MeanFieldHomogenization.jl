@@ -110,13 +110,8 @@ function cod_kernel_alv(
     # Volterra rationals for B̃_n and B̃_t — traction-free penny limit.
     B_n, B_t = _penny_cod_alv(α, β)
 
-    # Interface-stiffness post-correction.
-    if Rn !== nothing || Rt !== nothing
-        B_n, B_t = _apply_interface_stiffness_alv(
-            B_n, B_t, Rn, Rt, times,
-            semi_minor(crack)
-        )
-    end
+    # Interface-stiffness post-correction (identity without interface).
+    B_n, B_t = _apply_interface_stiffness_alv(B_n, B_t, Rn, Rt, times, semi_minor(crack))
     return (B_n = B_n, B_t = B_t)
 end
 
@@ -163,28 +158,23 @@ function _apply_interface_stiffness_alv(
         times::AbstractVector{<:Real},
         b::Real
     )
-    n = size(B_n, 1)
-    Iₙ = Matrix{eltype(B_n)}(LinearAlgebra.I, n, n)
-    if Rn !== nothing
-        K_n = _trapezoidal_relaxation_scalar(Rn, times)
-        KB = K_n * B_n                        # b·K_n·B_n  (Volterra product)
-        @. KB *= b
-        @. KB += Iₙ                            # 𝟙 + b·K_n·B_n
-        B_n = B_n * volterra_inverse(KB; block_size = 1)
-    end
-    if Rt !== nothing
-        K_t = _trapezoidal_relaxation_scalar(Rt, times)
-        KB = K_t * B_t
-        @. KB *= b
-        @. KB += Iₙ
-        B_t = B_t * volterra_inverse(KB; block_size = 1)
-    end
-    return B_n, B_t
+    return (
+        _interface_corrected(B_n, _trapezoidal_relaxation_scalar(Rn, times), b),
+        _interface_corrected(B_t, _trapezoidal_relaxation_scalar(Rt, times), b),
+    )
 end
+
+# B̃ ∘ (𝟙 + b K̃ ∘ B̃)^{-∘}: the COD coefficient of a crack whose faces an interface
+# of discretized stiffness K̃ holds; without one (`nothing`) the direction is
+# traction-free and B̃ is left as it is.
+_interface_corrected(B::AbstractMatrix, ::Nothing, b) = B
+_interface_corrected(B::AbstractMatrix, K::AbstractMatrix, b) =
+    B * volterra_inverse(LinearAlgebra.I + b * (K * B); block_size = 1)
 
 # Build the scalar (n × n) trapezoidal matrix of an interface ViscoLaw,
 # inverting if the law is in `:creep` mode (so the user can pass a creep
-# kernel and the algebra still expects a relaxation matrix).
+# kernel and the algebra still expects a relaxation matrix); none for none.
+_trapezoidal_relaxation_scalar(::Nothing, ::AbstractVector{<:Real}) = nothing
 function _trapezoidal_relaxation_scalar(
         law::ViscoLaw,
         times::AbstractVector{<:Real}
@@ -298,19 +288,8 @@ function property_contribution_alv_at(
     # `Rn_mat`, `Rt_mat` (n × n Volterra) — the iteration of SC against
     # the running estimate does not need to re-trapezoidalize the
     # interface laws each pass.
-    if Rn_mat !== nothing || Rt_mat !== nothing
-        n_t = size(α, 1)
-        Iₙ = Matrix{eltype(α)}(LinearAlgebra.I, n_t, n_t)
-        b = semi_minor(crack)
-        if Rn_mat !== nothing
-            KB = Rn_mat * B_n; @. KB *= b; @. KB += Iₙ
-            B_n = B_n * volterra_inverse(KB; block_size = 1)
-        end
-        if Rt_mat !== nothing
-            KB = Rt_mat * B_t; @. KB *= b; @. KB += Iₙ
-            B_t = B_t * volterra_inverse(KB; block_size = 1)
-        end
-    end
+    B_n = _interface_corrected(B_n, Rn_mat, semi_minor(crack))
+    B_t = _interface_corrected(B_t, Rt_mat, semi_minor(crack))
     n = size(α, 1)
     T = eltype(α)
     Z = zeros(T, n, n)

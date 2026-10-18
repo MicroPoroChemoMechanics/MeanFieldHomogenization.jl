@@ -25,6 +25,19 @@ end
     end
 end
 
+@testset "Elliptic — complex parameter, by the fixed AGM iteration" begin
+    # A complex scalar does not compare: no stopping test, the 60 iterations.
+    # Reference: the defining integrals over [0, π/2], by quadrature.
+    quadgk = MeanFieldHomogenization.Core.QuadGK.quadgk
+    E = MeanFieldHomogenization.Elliptic
+    for m in (0.3 + 0.2im, -0.5 - 0.4im)
+        K_ref = quadgk(θ -> 1 / sqrt(1 - m * sin(θ)^2), 0.0, π / 2; rtol = 1.0e-14)[1]
+        E_ref = quadgk(θ -> sqrt(1 - m * sin(θ)^2), 0.0, π / 2; rtol = 1.0e-14)[1]
+        @test E.ell_K(m) ≈ K_ref rtol = 1.0e-13
+        @test E.ell_E(m) ≈ E_ref rtol = 1.0e-13
+    end
+end
+
 @testset "Elliptic — Carlson identities (RF, RD)" begin
     # K(m) = RF(0, 1-m, 1)
     for m in (0.1, 0.5, 0.9)

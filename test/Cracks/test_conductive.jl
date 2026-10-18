@@ -10,6 +10,9 @@ _g(t) = get_array(TensND.change_tens(t, CANON_CD))
     a, k₀, C = 1.0, 1.0e-3, 2.0e-2
     cr = ConductiveCrack(a; conductivity = C)
     @test fracture_conductivity(cr) == C
+    # Its geometry is the wrapped penny's.
+    @test semi_major(cr) == semi_minor(cr) == a
+    @test aspect_ratio(cr) == 1
 
     # 𝕂 = γ/(1 + πγ/(4k₀)) (δ − n̂⊗n̂),  γ = C/2a
     γ = C / (2a)

@@ -21,18 +21,23 @@ Returns:
 - `Iv` ``= (I_a, I_b, I_c)`` with ``I_a + I_b + I_c = 4\\pi``
 - `IIv` ``= (I_{aa}, I_{bb}, I_{cc}, I_{bc}, I_{ca}, I_{ab})``
 
-Two methods are provided:
-- `T<:Real` (includes `Float64`, `ForwardDiff.Dual`): a spheroid, sphere
+The route depends on whether comparisons on `T` return a `Bool`
+(`is_hard_numeric`), not on `T <: Real`, which `Symbolics.Num` also satisfies:
+- numbers (`Float64`, `ForwardDiff.Dual`, …): a spheroid, sphere
   included, goes through the integrals of `src/Core/spheroid_integrals.jl`; a
   triaxial ellipsoid whose two closer semi-axes differ by less than 2 %
   (relative, in squares) through their expansion around that spheroid; any
   other through elliptic integrals. All three are exact to rounding, and the
   first two stay differentiable where two semi-axes meet: a dual semi-axis is
   merged with another one only when their derivatives coincide too.
-- `T<:Number` (e.g. `SymPy.Sym`, `Symbolics.Num`): structural equality via `isequal`
-  selects the same four cases.
+- symbolic types (`Symbolics.Num`, `SymPy.Sym`): structural equality via `isequal`
+  selects the same four cases, in closed form.
 """
-function newton_potential_3d(a::T, b::T, c::T) where {T <: Real}
+newton_potential_3d(a::T, b::T, c::T) where {T <: Number} =
+    _newton_potential_3d(Val(is_hard_numeric(T)), a, b, c)
+newton_potential_3d(a::Number, b::Number, c::Number) = newton_potential_3d(promote(a, b, c)...)
+
+function _newton_potential_3d(::Val{true}, a::T, b::T, c::T) where {T}
     # The closer pair of semi-axes: its relative gap in squares, and the
     # spheroid it sits next to (axis c for a ≈ b, axis a for b ≈ c).
     a², b², c² = a * a, b * b, c * c
@@ -58,8 +63,9 @@ function newton_potential_3d(a::T, b::T, c::T) where {T <: Real}
     return _newton_potential_3d_triaxial(a, b, c)
 end
 
-# Symbolic types (T<:Number but not T<:Real)
-function newton_potential_3d(a::T, b::T, c::T) where {T <: Number}
+# Symbolic types: no comparison returns a `Bool`, the semi-axes are ordered by
+# the caller and the cases are told apart structurally.
+function _newton_potential_3d(::Val{false}, a::T, b::T, c::T) where {T}
     AeqB = isequal(a, b)
     BeqC = isequal(b, c)
 
@@ -132,73 +138,34 @@ Returns:
 - `Iv` ``= (I_a, I_b, I_c)`` with ``I_a + I_b + I_c = 4\\pi``, ``I_a = 0``.
 - `IIv` ``= (I_{aa}, I_{bb}, I_{cc}, I_{bc}, I_{ca}, I_{ab})`` with ``I_{aa} = I_{ab} = I_{ac} = 0``.
 
-Two methods are provided:
-- `T<:Real` (includes `Float64`, `ForwardDiff.Dual`): numerically stable
-  case-split via tolerance comparison to pick the circular (``b = c``) or the
-  elliptic (``b > c``) branch.
-- `T<:Number` (`SymPy.Sym`, `Symbolics.Num`, …): structural equality via
-  `isequal` selects the two branches.
-
-Both branches are written as closed-form limits — no ``1/(b^2 - c^2)`` style
-denominators, so the routine is free of ``0/0`` indeterminacies at ``b = c``
-and differentiable through `ForwardDiff`.
+The elliptic closed forms hold down to ``b = c``, where they reduce to the
+circular ones (``I_b = I_c = 2\\pi``, ``I_{bb} = I_{cc} = I_{bc} = \\pi/b^2``): there is
+no ``1/(b^2 - c^2)`` denominator, so no tolerance is needed, and the circular forms
+are taken only for semi-axes that are one — the same expression, or the same
+number with the same derivatives (`_one_semi_axis`). Generic in the scalar type:
+`Float64`, `ForwardDiff.Dual`, `Symbolics.Num`, `SymPy.Sym`.
 """
 function newton_potential_3d_cylinder(b, c)
     T = promote_type(typeof(b), typeof(c))
     return newton_potential_3d_cylinder(T(b), T(c))
 end
 
-function newton_potential_3d_cylinder(b::T, c::T) where {T <: Real}
-    tol = 1.0e-6 * one(T)
-    BeqC = (b - c) ≤ b * tol
-
-    if BeqC
-        # Circular base (b = c): I_b = I_c = 2π, I_bb = I_cc = I_bc = π/b²
-        B2 = b * b
-        Ia = zero(T)
-        Ib = Ic = 2 * T(π)
-        Iaa = Iab = Ica = zero(T)
-        Ibb = Icc = Ibc = T(π) / B2
-        return (Ia, Ib, Ic), (Iaa, Ibb, Icc, Ibc, Ica, Iab)
-    else
-        # Elliptic base (b > c)
-        s = b + c
-        s2 = s * s
-        Ia = zero(T)
-        Ib = 4 * T(π) * c / s
-        Ic = 4 * T(π) * b / s
-        Iaa = Iab = Ica = zero(T)
-        Ibc = 4 * T(π) / s2
-        Ibb = 4 * T(π) / 3 * (one(T) / (b * b) - one(T) / s2)
-        Icc = 4 * T(π) / 3 * (one(T) / (c * c) - one(T) / s2)
-        return (Ia, Ib, Ic), (Iaa, Ibb, Icc, Ibc, Ica, Iab)
-    end
-end
-
-# Symbolic types (T<:Number but not T<:Real) — structural equality
 function newton_potential_3d_cylinder(b::T, c::T) where {T <: Number}
-    if isequal(b, c)
-        B2 = b * b
-        Ia = zero(T)
+    Ia = Iaa = Iab = Ica = zero(T)
+    if _one_semi_axis(b, c)
         Ib = Ic = 2 * T(π)
-        Iaa = Iab = Ica = zero(T)
-        Ibb = Icc = Ibc = T(π) / B2
-        return (Ia, Ib, Ic), (Iaa, Ibb, Icc, Ibc, Ica, Iab)
-    else
-        s = b + c
-        s2 = s * s
-        Ia = zero(T)
-        Ib = 4 * T(π) * c / s
-        Ic = 4 * T(π) * b / s
-        Iaa = Iab = Ica = zero(T)
-        Ibc = 4 * T(π) / s2
-        Ibb = 4 * T(π) / 3 * (one(T) / (b * b) - one(T) / s2)
-        Icc = 4 * T(π) / 3 * (one(T) / (c * c) - one(T) / s2)
+        Ibb = Icc = Ibc = T(π) / (b * b)
         return (Ia, Ib, Ic), (Iaa, Ibb, Icc, Ibc, Ica, Iab)
     end
+    s = b + c
+    s2 = s * s
+    Ib = 4 * T(π) * c / s
+    Ic = 4 * T(π) * b / s
+    Ibc = 4 * T(π) / s2
+    Ibb = 4 * T(π) / 3 * (one(T) / (b * b) - one(T) / s2)
+    Icc = 4 * T(π) / 3 * (one(T) / (c * c) - one(T) / s2)
+    return (Ia, Ib, Ic), (Iaa, Ibb, Icc, Ibc, Ica, Iab)
 end
-
-# ── 2-D Newton potentials ─────────────────────────────────────────────────────
 
 """
     newton_potential_2d(a, b) -> (Ia, Ib)
@@ -212,21 +179,9 @@ Formulas:
 - Circle: ``I_a = I_b = \\pi``
 - General ellipse: ``I_a = 2\\pi b/(a+b)``, ``I_b = 2\\pi a/(a+b)``
 """
-function newton_potential_2d(a::T, b::T) where {T <: Real}
-    tol = 1.0e-6 * one(T)
-    if (a - b) ≤ a * tol
-        return (T(π), T(π))
-    else
-        s = a + b
-        return (2 * T(π) * b / s, 2 * T(π) * a / s)
-    end
-end
-
 function newton_potential_2d(a::T, b::T) where {T <: Number}
-    if isequal(a, b)
-        return (T(π), T(π))
-    else
-        s = a + b
-        return (2 * T(π) * b / s, 2 * T(π) * a / s)
-    end
+    _one_semi_axis(a, b) && return (T(π), T(π))
+    s = a + b
+    return (2 * T(π) * b / s, 2 * T(π) * a / s)
 end
+newton_potential_2d(a::Number, b::Number) = newton_potential_2d(promote(a, b)...)

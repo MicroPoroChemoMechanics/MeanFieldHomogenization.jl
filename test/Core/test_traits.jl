@@ -78,3 +78,9 @@ end
     @test all(isfinite, get_array(hill_tensor(Ellipsoid(1.0, 0.6, 0.3), C_iso; method = :nestedquadgk)))
     @test all(isfinite, get_array(cod_tensor(PennyCrack(1.0), C_iso; method = :nestedquadgk)))
 end
+
+@testset "DECUHR seam — the message a missing extension gives" begin
+    # The extension's method takes vector bounds; any other call reaches the
+    # core fallback, the one a session without `DECUHR` and `Integrals` meets.
+    @test_throws r"requires the DECUHR extension" MeanFieldHomogenization.Core._decuhr_cubature(nothing)
+end

@@ -79,9 +79,6 @@ function _normalize_euler(angles::Tuple{Vararg{Number}})
             "euler_angles accepts at most 3 ZYZ angles; got $n values ($(angles))."
         )
     )
-    if n == 0
-        return (0.0, 0.0, 0.0)
-    end
     T_promoted = promote_type(map(typeof, angles)...)
     # `float` is what turns an `Int` or an `Irrational` angle into a usable one,
     # and leaves a `ForwardDiff.Dual` a dual (which is not an `AbstractFloat`);
@@ -92,7 +89,7 @@ function _normalize_euler(angles::Tuple{Vararg{Number}})
     return ntuple(i -> i ≤ n ? convert(T, angles[i]) : zero(T), 3)
 end
 
-# Convenience forwarding methods for common concrete-type patterns.
+# No angle: the identity rotation (`promote_type()` of no type is `Union{}`).
 _normalize_euler(::Tuple{}) = (0.0, 0.0, 0.0)
 
 """
@@ -424,6 +421,17 @@ Whether two semi-axes are exactly equal, derivatives included: the condition for
 the closed forms of a spheroid to be exact in value and in derivative.
 """
 @inline _same_semi_axis(a, b) = a == b && _no_derivative(a - b)
+
+"""
+    _one_semi_axis(a, b) -> Bool
+
+Whether two semi-axes are one, in any scalar type: [`_same_semi_axis`](@ref) where
+comparisons return a `Bool`, the same expression for a symbolic type, where they
+do not (`Symbolics.Num <: Real` notwithstanding).
+"""
+@inline _one_semi_axis(a::T, b::T) where {T} = _one_semi_axis(Val(is_hard_numeric(T)), a, b)
+@inline _one_semi_axis(::Val{true}, a, b) = _same_semi_axis(a, b)
+@inline _one_semi_axis(::Val{false}, a, b) = isequal(a, b)
 
 # Whether `x` carries no derivative, at any nesting level of dual numbers.
 @inline _no_derivative(x) = true

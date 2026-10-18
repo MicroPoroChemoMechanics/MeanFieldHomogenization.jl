@@ -522,3 +522,20 @@ end
         CustomInclusion(2.0, 1.0, 1.0; hill_tensor = (P₀; kw...) -> hill_tensor(ell, P₀; kw...))
     ) == 3
 end
+
+# An inclusion type with no method at all: the contract check says what is
+# missing, and fails at level 0, where `shape_trait` keys the kernels.
+struct _ShapelessInclusion <: MeanFieldHomogenization.Core.AbstractInclusion{Float64} end
+
+@testset "contract check — an inclusion without `shape_trait`" begin
+    report = mktemp() do path, io
+        ok = redirect_stdout(io) do
+            check_inclusion_interface(_ShapelessInclusion(); physics = :conduction)
+        end
+        close(io)
+        (ok, read(path, String))
+    end
+    @test report[1] == false
+    @test occursin("does NOT satisfy the inclusion contract (physics = :conduction", report[2])
+    @test occursin("level 0: `shape_trait` has no method", report[2])
+end

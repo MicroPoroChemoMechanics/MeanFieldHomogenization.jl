@@ -108,7 +108,7 @@ function check_material_interface(
     if haskey(r.tangents, :σε) && haskey(r.fluxes, :σ)
         ok_tan = _check_tangent(m, ε, st0, r.tangents.σε; Δ = Δ, rtol = rtol)
         if ok_tan === nothing
-            say("  ~ tangent check skipped (non-smooth at the probe state)")
+            say("  ~ tangent check skipped (zero tangent at the probe state)")
         elseif ok_tan
             pass("σε agrees with a central finite difference")
         else

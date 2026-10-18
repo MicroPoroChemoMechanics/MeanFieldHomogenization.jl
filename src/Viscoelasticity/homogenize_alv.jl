@@ -416,8 +416,8 @@ function homogenize_alv(
                 throw(ArgumentError("homogenize_alv: phase $name has CrackDensity but geometry $(typeof(geom)) is not a crack"))
             ε = a.value
             # Optional interface-stiffness laws (`:Rn` normal, `:Rt` tangential).
-            Rn_law = haskey(ph.properties, :Rn) ? ph.properties[:Rn] : nothing
-            Rt_law = haskey(ph.properties, :Rt) ? ph.properties[:Rt] : nothing
+            Rn_law = get(ph.properties, :Rn, nothing)
+            Rt_law = get(ph.properties, :Rt, nothing)
             # Compliance + stiffness contributions, with optional
             # interface-stiffness Sevostianov correction
             # `B̃_eff = B̃ ∘ (𝟙 + b·K ∘ B̃)^{-vol}`.

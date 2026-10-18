@@ -68,13 +68,16 @@ function gradient(
         out = homogenize(rve′, scheme; property = output, kw...)
         return indexer(out)
     end
-    if chunk === nothing
-        return ForwardDiff.gradient(f, x₀)
-    else
-        cfg = ForwardDiff.GradientConfig(f, x₀, chunk)
-        return ForwardDiff.gradient(f, x₀, cfg)
-    end
+    return _fd_gradient(f, x₀, chunk)
 end
+
+# ForwardDiff with its own chunk size, or with the one the caller fixes.
+_fd_gradient(f, x₀, ::Nothing) = ForwardDiff.gradient(f, x₀)
+_fd_gradient(f, x₀, chunk::ForwardDiff.Chunk) =
+    ForwardDiff.gradient(f, x₀, ForwardDiff.GradientConfig(f, x₀, chunk))
+_fd_jacobian(f, x₀, ::Nothing) = ForwardDiff.jacobian(f, x₀)
+_fd_jacobian(f, x₀, chunk::ForwardDiff.Chunk) =
+    ForwardDiff.jacobian(f, x₀, ForwardDiff.JacobianConfig(f, x₀, chunk))
 
 """
     jacobian(rve, scheme, params::AbstractVector{<:AbstractParameter};
@@ -102,12 +105,7 @@ function jacobian(
         out = homogenize(rve′, scheme; property = output, kw...)
         return _flatten_for_jacobian(indexer(out))
     end
-    if chunk === nothing
-        return ForwardDiff.jacobian(f, x₀)
-    else
-        cfg = ForwardDiff.JacobianConfig(f, x₀, chunk)
-        return ForwardDiff.jacobian(f, x₀, cfg)
-    end
+    return _fd_jacobian(f, x₀, chunk)
 end
 
 # Single-parameter convenience: pass one AbstractParameter, return jacobian
@@ -142,17 +140,15 @@ Without `using ForwardDiff`: error.
 """
 function sensitivity(f, x₀; kind::Symbol = :auto, kw...)
     actual = kind === :auto ? _autoselect(f, x₀) : kind
-    if actual === :derivative
-        return ForwardDiff.derivative(f, x₀)
-    elseif actual === :gradient
-        return ForwardDiff.gradient(f, x₀)
-    elseif actual === :jacobian
-        wrapper = x -> _flatten_for_jacobian(f(x))
-        return ForwardDiff.jacobian(wrapper, x₀)
-    else
-        throw(ArgumentError("sensitivity: unknown kind=:$(actual); expected :derivative, :gradient or :jacobian"))
-    end
+    return _sensitivity(Val(actual), f, x₀)
 end
+
+_sensitivity(::Val{:derivative}, f, x₀) = ForwardDiff.derivative(f, x₀)
+_sensitivity(::Val{:gradient}, f, x₀) = ForwardDiff.gradient(f, x₀)
+_sensitivity(::Val{:jacobian}, f, x₀) = ForwardDiff.jacobian(x -> _flatten_for_jacobian(f(x)), x₀)
+_sensitivity(::Val{K}, f, x₀) where {K} = throw(
+    ArgumentError("sensitivity: unknown kind=:$(K); expected :derivative, :gradient or :jacobian")
+)
 
 function _autoselect(f, x₀::Number)
     y = f(x₀)

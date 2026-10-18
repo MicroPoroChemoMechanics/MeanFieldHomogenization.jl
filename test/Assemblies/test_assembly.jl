@@ -182,3 +182,18 @@ end
     @test MeanFieldHomogenization.Assemblies._family_fraction(asm, 2) ≈
         4π * 0.15^3 / 3 rtol = 1.0e-12
 end
+
+@testset "Assemblies — what is refused" begin
+    # A particle that fits in the SVE but leaves no room for a second one: the
+    # seeding grid finds no two admissible points and says so.
+    @test_throws ArgumentError random_assembly(
+        2, Dict(:C => _Cm()), Dict(:C => _Ci());
+        radius = 0.9, rng = Random.MersenneTwister(1), cycles = 10,
+        boundary = MixedBC(Ellipsoid(1.0))
+    )
+    @test_throws ArgumentError max_packing_fraction(:hcp)
+    asm = ParticleAssembly(; boundary = PeriodicBox(1.0))
+    add_matrix!(asm, Dict(:C => _Cm()))
+    add_particle!(asm, :a1, (0.0, 0.0, 0.0), Ellipsoid(0.1), Dict(:C => _Ci()); family = 1)
+    @test_throws ArgumentError MeanFieldHomogenization.Assemblies._family_representative(asm, 2)
+end

@@ -406,10 +406,8 @@ function differential_alv(
             # isotropic orientation average keeps the running medium iso.
             sym isa IsoSymmetrize ||
                 _alv_diff_iso_error(name, "the transversely isotropic crack contribution")
-            Rn_mat = haskey(ph.properties, :Rn) ?
-                _trapezoidal_relaxation_scalar(ph.properties[:Rn], times) : nothing
-            Rt_mat = haskey(ph.properties, :Rt) ?
-                _trapezoidal_relaxation_scalar(ph.properties[:Rt], times) : nothing
+            Rn_mat = _trapezoidal_relaxation_scalar(get(ph.properties, :Rn, nothing), times)
+            Rt_mat = _trapezoidal_relaxation_scalar(get(ph.properties, :Rt, nothing), times)
             push!(
                 crack_data, (
                     name = name,

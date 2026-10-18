@@ -249,3 +249,20 @@ import ForwardDiff as FD
         @test g ≈ (f(1.0 + h) - f(1.0 - h)) / 2h rtol = 1.0e-4
     end
 end
+
+@testset "conduction — the flux average of an orientation-averaged anisotropic phase" begin
+    # The flux of an anisotropic phase whose orientations are averaged is the
+    # average of 𝐊ᵢ·𝐀, not 𝐊ᵢ times the averaged 𝐀; for an isotropic average,
+    # tr(𝐊ᵢ·𝐀)/3 𝟏, which the shortcut misses.
+    K_M = TensISO{3}(1.0)
+    K_I = Tens([2.0 0.3 0.0; 0.3 5.0 0.0; 0.0 0.0 9.0])
+    ell = Ellipsoid(1.0, 0.5, 0.2)
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => K_M); fraction = :rest)
+    add_phase!(rve, :I, ell, Dict(:K => K_I); fraction = 0.2, symmetrize = :iso)
+    A, B = MeanFieldHomogenization.Schemes._phase_dilute_and_stress_average(rve, :I, :K, K_M)
+    A_raw = gradient_gradient_concentration(ell, K_I, K_M)
+    B_ref = tr(get_array(K_I ⋅ A_raw)) / 3 * I(3)
+    @test get_array(B) ≈ B_ref rtol = 1.0e-12
+    @test !isapprox(get_array(B), get_array(K_I ⋅ A); rtol = 1.0e-3)
+end

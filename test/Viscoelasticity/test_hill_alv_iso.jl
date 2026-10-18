@@ -99,3 +99,15 @@ end
     @test size(Q) == (6n, 6n)
     @test isfinite(maximum(abs, Q))
 end
+
+@testset "hill_kernel — a reference given as a creep law" begin
+    # A creep law is turned into its relaxation operator before the Hill
+    # kernel is built: the elastic compliance, given in creep mode, gives the
+    # same kernel as the stiffness given in relaxation mode.
+    C = TensISO{3}(3 * 10.0, 2 * 4.0)
+    times = [0.0, 0.5, 1.0]
+    ell = Ellipsoid(1.0, 0.8, 0.5)
+    P_rel = hill_kernel(ell, heaviside_law(C), times)
+    P_creep = hill_kernel(ell, heaviside_law(inv(C); mode = :creep), times)
+    @test P_creep ≈ P_rel rtol = 1.0e-12
+end

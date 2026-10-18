@@ -64,7 +64,7 @@ When an `Ellipsoid` constructor receives a real semi-axis equal to
 | `Ellipsoid(Inf, Inf, c)` | `ArgumentError` (slab, out of scope) | |
 | `Ellipsoid(a, 0, 0)` | `ArgumentError` (needle, out of scope) | |
 
-The detection is active only for real element types; with symbolic
+The detection is active only for numerical element types; with symbolic
 types (`SymPy.Sym`, `Symbolics.Num`) call the dedicated constructor
 (`Cylinder`, `EllipticCrack`, `RibbonCrack`) explicitly.
 

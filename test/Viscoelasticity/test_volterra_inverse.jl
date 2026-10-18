@@ -86,3 +86,14 @@ end
     B = LowerTriangular(rand(4, 4)) + 0.1 * I
     @test volterra_product(Matrix(A), Matrix(B)) == Matrix(A) * Matrix(B)
 end
+
+@testset "volterra_left_divide — the BLAS path of a long scalar history" begin
+    # From 64 time steps a scalar Volterra division goes to a triangular solve,
+    # converting a mixed pair of element types first; it must solve S X = M.
+    n = 80
+    S = LowerTriangular(rand(n, n) + n * I)
+    M = Float32.(tril(rand(n, n)))
+    X = volterra_left_divide(Matrix(S), M; block_size = 1)
+    @test eltype(X) == Float64
+    @test S * X ≈ M rtol = 1.0e-10
+end
