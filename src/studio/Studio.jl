@@ -19,6 +19,7 @@ using ..MeanFieldHomogenization: MeanFieldHomogenization
 using HTTP: HTTP
 using JSON: JSON
 using Malt: Malt
+using Printf: Printf
 using Random: Random
 using TOML: TOML
 
@@ -36,6 +37,9 @@ include("core/environment.jl")
 include("core/compute.jl")
 include("core/server.jl")
 include("core/launcher.jl")
+
+include("pyformat.jl")
+include("model.jl")
 
 """
 The packages the compute process needs: MeanFieldHomogenization itself, at the
