@@ -165,9 +165,14 @@ function _hill_3d_aniso_nestedquadgk(
     u_breaks = ω_val < 1.0e-3 ?
         map(z -> 1.0 - (1.0 - z)^(1 / α), (ω_val, 10ω_val, 100ω_val)) : ()
 
-    function integrand_at(z, φ)
-        uz = sqrt(one(T) - T(z) * T(z))
-        ζ = (uz * cos(T(φ)), uz * sin(T(φ)) / η, T(z) / ω)
+    # The quadrature variables stay plain numbers, and ζ takes the derivatives of
+    # the semi-axes from η and ω alone. Promoted to a dual first, √(1 − z²) had a
+    # derivative 0·∞ = NaN at the node where 1 − z² rounds to zero, which a flat
+    # ellipsoid (ω ≲ 5e-6) reaches; and 1 − z² is formed as (1 − z)(1 + z) from
+    # the exact 1 − z = (1 − u)^α, where 1 − z² lost every digit near z = 1.
+    function integrand_at(z, one_minus_z, φ)
+        uz = sqrt(one_minus_z * (1 + z))
+        ζ = (uz * cos(φ), uz * sin(φ) / η, z / ω)
         return _hill_integrand21(_sym3_inv_acoustic(C₀_arr, ζ), ζ, T)
     end
 
@@ -180,10 +185,11 @@ function _hill_3d_aniso_nestedquadgk(
         norm = MFH_Core._quadgk_norm
     ) do u
         one_minus_u = 1.0 - u
-        z = 1.0 - one_minus_u^α
+        one_minus_z = one_minus_u^α
+        z = 1.0 - one_minus_z
         jac = α * one_minus_u^(α - 1.0)
         inner, _ = MFH_Core._counted_quadgk(
-            φ -> integrand_at(z, φ),
+            φ -> integrand_at(z, one_minus_z, φ),
             0.0, 2π;
             atol = abstol / 10,
             rtol = reltol

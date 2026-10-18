@@ -106,6 +106,15 @@ as measured on 0.17.2 and on this release.
   the documented domain, is now refused.
 - `check_material_interface` reported a tangent check skipped at a zero tangent
   as "non-smooth".
+- **The derivative of the Hill tensor of a very flat ellipsoid was NaN** at some
+  flatnesses below 5e-6, by the cubature (`:nestedquadgk`, the default for an
+  anisotropic matrix, and `:decuhr`), its value being right. The cubature
+  variable was promoted to the dual type before `√(1 − z²)`, whose derivative at
+  the node where `1 − z²` rounds to zero is `0·∞`. The cubature variables now stay
+  plain numbers, and `1 − z²` is formed from the exact `1 − z`. The first-order
+  term of the Hill tensor in the flatness, by ForwardDiff, then gives the crack
+  compliance by the block computation of Barthélémy (2009) within 1e-8 of the
+  one from the COD tensor.
 - `method = :residues` with a dual, symbolic or complex stiffness or geometry
   failed with a `MethodError` deep in the kernel; it is refused with an
   `ArgumentError` that points to the cubature, which `:auto` selects and which

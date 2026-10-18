@@ -236,3 +236,37 @@ end
     @test_throws r"method = :nestedquadgk" cod_tensor(RibbonCrack(1.0, hcat(ℓ, m, n)), C_dual; method = :residues)
     @test_throws r"method = :nestedquadgk" hill_tensor(Ellipsoid(1.0, 0.6, 0.3), C_dual; method = :residues)
 end
+
+@testset "Cracks — ℍ from the first-order term of the Hill tensor, by ForwardDiff" begin
+    # ℙ(ω) = ℙ₀ + ω ℙ₁ for the ellipsoid (a, b, ω b); ℚ₁ = −ℂ:ℙ₁:ℂ, and ℍ is the
+    # inverse of the block of ℚ₁ on the kernel of ℚ₀, the Kelvin–Mandel components
+    # 33, 23, 13 of the crack frame (Barthélémy 2009). ℙ₁ is the derivative of the
+    # cubature, at ω₀/2 and ω₀ combined to cancel its own first-order term; at
+    # ω₀/2 = 2e-6 that derivative was NaN, √(1 − z²) having been promoted to a
+    # dual where 1 − z² rounds to zero.
+    canonical = TensND.CanonicalBasis{3, Float64}()
+    KM_tri = [
+        210.0 80.0 75.0 5.0 4.0 3.0;
+        80.0 195.0 90.0 -2.0 3.0 -1.0;
+        75.0 90.0 220.0 1.0 -2.0 2.0;
+        5.0 -2.0 1.0 60.0 2.5 1.5;
+        4.0 3.0 -2.0 2.5 65.0 -1.0;
+        3.0 -1.0 2.0 1.5 -1.0 55.0
+    ]
+    C = TensND.inv_KM(KM_tri, canonical)
+    tol = (; abstol = 1.0e-12, reltol = 1.0e-10)
+    R = hcat(_crack_frame([0.3, -0.5, 0.8], 0.6)...)
+    for η in (1.0, 0.5)
+        P(ω) = TensND.KM(hill_tensor(Ellipsoid(1.0, η, ω * η, R), C; tol...), canonical)
+        ω₀ = 4.0e-6
+        P₁ = 2 * ForwardDiff.derivative(P, ω₀ / 2) - ForwardDiff.derivative(P, ω₀)
+        @test all(isfinite, P₁)
+        crack = EllipticCrack(1.0, η, R)
+        Y = TensND.KM(TensND.inv_KM(-TensND.KM(C) * P₁ * TensND.KM(C), canonical), crack_basis(crack))
+        H = zeros(6, 6)
+        H[3:5, 3:5] = inv(Y[3:5, 3:5])
+        H_ref = compliance_from_cod(cod_tensor(crack, C; method = :nestedquadgk, tol...), crack)
+        # Measured: 1.0e-8, the accuracy of the derivative of the cubature there.
+        @test _relerr(TensND.inv_KM(H, crack_basis(crack)), H_ref) < 5.0e-8
+    end
+end
