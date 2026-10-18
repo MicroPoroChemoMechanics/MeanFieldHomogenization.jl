@@ -13,6 +13,17 @@ _g(t::TensND.AbstractTens) = get_array(TensND.change_tens(t, CANON_MAT))
 struct _NonConforming <: AbstractMFHMaterial end
 MeanFieldHomogenization.initial_state(::_NonConforming) = nothing
 
+# A conforming material whose tangent is its stress derivative times `s`.
+struct _ScaledTangent{M} <: AbstractMFHMaterial
+    m::M
+    s::Float64
+end
+MeanFieldHomogenization.initial_state(w::_ScaledTangent) = initial_state(w.m)
+function MeanFieldHomogenization.material_response(w::_ScaledTangent, g::NamedTuple, st::AbstractMaterialState, Δt::Real; kw...)
+    r = material_response(w.m, g, st, Δt; kw...)
+    return MaterialResponse(r.fluxes, (σε = w.s * r.tangents.σε,), r.state)
+end
+
 function _composite_rve(; f = 0.2)
     rve = RVE()
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => CS_MAT); fraction = :rest)
@@ -77,6 +88,11 @@ end
     # A material that does not conform is reported, not propagated: its state
     # is not a material state and its response throws.
     @test check_material_interface(_NonConforming(); verbose = false) === false
+    # A tangent that is not the derivative of the stress is caught; a zero one
+    # cannot be judged, and the check is skipped rather than failed.
+    m = HomogenizedElastic(_composite_rve(), MoriTanaka())
+    @test check_material_interface(_ScaledTangent(m, 2.0); verbose = false) === false
+    @test check_material_interface(_ScaledTangent(m, 0.0); verbose = false)
 end
 
 @testset "Tensors.jl bridge" begin

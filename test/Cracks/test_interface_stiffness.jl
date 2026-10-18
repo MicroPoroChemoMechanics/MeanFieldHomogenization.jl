@@ -157,3 +157,33 @@ end
     C_M = trapezoidal_matrix(law_M, times)
     @test isapprox(C_rigid, C_M; rtol = 1.0e-6)   # crack contribution → 0
 end
+
+@testset "ALV crack interface — elastic limit against the elastic schemes" begin
+    # With laws that do not creep, the ALV operators are block diagonal and each
+    # block is the elastic tensor, so the interface correction applied to the
+    # discretized laws (as the self-consistent iterations do) must give what
+    # the elastic schemes give with `K_interface`.
+    mandel = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66
+    C_M = TensISO{3}(3 * 10.0, 2 * 4.0)
+    k = 5.0
+    times = [0.0, 0.5, 1.0]
+    function rve_with(alv::Bool)
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => alv ? heaviside_law(C_M) : C_M); fraction = :rest)
+        props = alv ? Dict(:C => heaviside_law(C_M), :Rn => heaviside_law(k), :Rt => heaviside_law(k)) :
+            Dict(:C => C_M, :K_interface => TensISO{3}(k))
+        add_phase!(rve, :CRACK, PennyCrack(1.0), props; density = 0.05, symmetrize = :iso)
+        return rve
+    end
+    for scheme in (MoriTanaka(), SelfConsistent(), AsymmetricSelfConsistent())
+        M_ref = mandel(homogenize(rve_with(false), scheme, :C))
+        C_alv = homogenize_alv(rve_with(true), scheme, :C; times = times)
+        for i in 1:length(times)
+            rows = (6 * (i - 1) + 1):(6 * i)
+            @test C_alv[rows, rows] ≈ M_ref rtol = 1.0e-8
+            for j in 1:(i - 1)
+                @test maximum(abs, C_alv[rows, (6 * (j - 1) + 1):(6 * j)]) <= 1.0e-8 * maximum(abs, M_ref)
+            end
+        end
+    end
+end

@@ -455,3 +455,97 @@ end
         @test maximum(abs, canon(x) .- canon(x_cub)) / maximum(abs, canon(x_cub)) < 1.0e-8
     end
 end
+
+@testset "SC — the positive-definite guard reads eigenvalues, not couplings" begin
+    S = MeanFieldHomogenization.Schemes
+    ε = 1.0e-3
+    n = (0.0, 0.0, 1.0)
+    # Reference: the spectrum of the full Kelvin-Mandel matrix. The guard must
+    # raise the eigenvalues below ε to ε and keep every eigenvector.
+    sym(M) = (M + M') / 2
+    function check_clamped(x)
+        y = S._sc_pd_guard_apply(x, ε)
+        Mx, My = sym(KM(x)), sym(KM(y))
+        λ, V = eigen(Symmetric(Mx))
+        @test any(<(ε), λ)
+        @test My ≈ V * Diagonal(max.(λ, ε)) * V' atol = 1.0e-12
+        # The antisymmetric part, which stores no energy, is left alone.
+        @test KM(y) - My ≈ KM(x) - Mx atol = 1.0e-12
+        return y
+    end
+
+    # Positive definite, with a negative coupling: untouched.
+    ti = TensTI{4}(20.0, 30.0, -6.0, 9.0, 12.0, n)
+    @test isposdef(Symmetric(KM(ti)))
+    @test S._sc_pd_guard_apply(ti, ε) === ti
+    ortho = TensOrtho(20.0, 25.0, 30.0, -4.0, 0.0, 3.0, 6.0, 7.0, 8.0, TensND.CanonicalBasis{3, Float64}())
+    @test S._sc_pd_guard_apply(ortho, ε) === ortho
+
+    # Not positive definite: one eigenvalue clamped, its eigenvector kept.
+    y = check_clamped(TensTI{4}(20.0, 30.0, -40.0, 9.0, 12.0, n))
+    @test y isa TensND.TensTI{4, Float64, 5}
+    check_clamped(TensTI{4}(20.0, 30.0, -40.0, -30.0, 9.0, -1.0, n))
+    check_clamped(TensTI{4}(20.0, 30.0, -40.0, -30.0, 9.0, 12.0, 0.7, -0.4, n))
+    check_clamped(TensOrtho(20.0, 25.0, 30.0, -30.0, 0.0, 3.0, 6.0, -7.0, 8.0, TensND.CanonicalBasis{3, Float64}()))
+    check_clamped(TensISO{3}(-3.0, 2.0))
+    check_clamped(TensND.tens_cubic(10.0, 12.0, 2.0, TensND.CanonicalBasis{3, Float64}()))
+    t2 = S._sc_pd_guard_apply(TensTI{2}(-1.0, 2.0, 0.5, n), ε)
+    @test TensND.get_data(t2) == (ε, 2.0, 0.5)
+
+    # Only the clamped coefficient changes: the other keeps its imaginary part
+    # and its derivative.
+    @test TensND.get_data(S._sc_pd_guard_apply(TensISO{3}(-1.0 + 0.5im, 2.0 + 0.3im), ε)) == (ε + 0im, 2.0 + 0.3im)
+    d = ForwardDiff.Dual(2.0, 1.0)
+    iso_d = @inferred S._sc_pd_guard_apply(TensISO{3}(-one(d), d), ε)
+    @test TensND.get_data(iso_d)[2] === d
+    @inferred S._sc_pd_guard_apply(TensTI{4}(d, 30.0, -40.0, 9.0, 12.0, n), ε)
+
+    # A class without that structure is passed through.
+    gen = TensND.change_tens_canon(TensISO{3}(-3.0, 2.0))
+    @test S._sc_pd_guard_apply(gen, ε) === gen
+
+    # Auxetic phases (λ < 0) around aligned spheroids: the estimate is TI with a
+    # negative Walpole coupling. The guard used to clamp it at every iterate,
+    # and the returned tensor missed the SC condition by 1e-3 (Picard) or 1
+    # (Newton). The condition is checked here by one pass of the scheme,
+    # without the guard.
+    iso(E, ν) = TensISO{3}(E / (1 - 2ν), E / (1 + ν))
+    rve = RVE(; distribution_shape = Ellipsoid(1.0))
+    add_phase!(rve, :M, Ellipsoid(1.0, 1.0, 3.0), Dict(:C => iso(10.0, -0.4)); fraction = :rest)
+    add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 3.0), Dict(:C => iso(30.0, -0.3)); fraction = 0.4)
+    estimates = map((AndersonDefault(), NewtonDefault())) do algorithm
+        C = homogenize(rve, SelfConsistent(; algorithm, abstol = 1.0e-12, reltol = 1.0e-12, maxiters = 300))
+        @test C isa TensND.TensTI{4, Float64, 5}
+        @test TensND.get_data(C)[3] < 0
+        @test get_array(S._sc_step(rve, C, :C)) ≈ get_array(C) rtol = 1.0e-11
+        C
+    end
+    @test get_array(estimates[1]) ≈ get_array(estimates[2]) rtol = 1.0e-11
+end
+
+@testset "NewtonDefault — singular Jacobian, failed line search, failing step" begin
+    S = MeanFieldHomogenization.Schemes
+    debug = Base.CoreLogging.Debug
+
+    # A map that leaves β where it is: the Jacobian has a zero column, the LU
+    # factorization fails, and the Tikhonov-regularized step solves for α alone.
+    step_singular(x) = ((α, β) = TensND.get_data(x); TensISO{3}(α + (7.0 - α) / 2, β))
+    x = @test_logs (:debug, r"linear solve failed") min_level = debug match_mode = :any S._solve_sc(
+        NewtonDefault(), step_singular, TensISO{3}(1.0, 2.0)
+    )
+    @test TensND.get_data(x)[1] ≈ 7.0 rtol = 1.0e-9
+    @test TensND.get_data(x)[2] == 2.0
+
+    # No fixed point in α, and a residual 1 + 1e-12 sin(1e12 α) that no step
+    # of the line search reduces by the Armijo fraction: every iteration falls
+    # back on a Picard step, so two iterations return step(step(x₀)).
+    step_flat(x) = ((α, β) = TensND.get_data(x); TensISO{3}(α + 1 + 1.0e-12 * sin(1.0e12 * α), β + (2.0 - β) / 2))
+    x₀ = TensISO{3}(5.0, 2.0)
+    x = @test_logs (:info, r"line search failed") match_mode = :any S._solve_sc(
+        NewtonDefault(), step_flat, x₀; maxiters = 2, verbose = true
+    )
+    @test collect(TensND.get_data(x)) ≈ collect(TensND.get_data(step_flat(step_flat(x₀)))) rtol = 1.0e-14
+
+    # A step that fails at the seed fails in the main loop too, with its own error.
+    @test_throws ErrorException("boom") S._solve_sc(NewtonDefault(), x -> error("boom"), x₀)
+end

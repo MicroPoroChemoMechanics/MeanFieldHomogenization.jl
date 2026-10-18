@@ -97,6 +97,8 @@ end
     add_phase!(outer, :M, Ellipsoid(1.0), Dict(:C => Homogenized(inner, ClusterModel())); fraction = :rest)
     add_phase!(outer, :F, Ellipsoid(1.0), Dict(:C => _Cf()); fraction = 0.2)
     @test MeanFieldHomogenization.Core.has_nested_property(outer, :C)
+    # A member that lacks the property is skipped, not an error.
+    @test !MeanFieldHomogenization.Core.has_nested_property(outer, :K)
 
     asm = ParticleAssembly(; boundary = PeriodicBox(1.0; cutoff = 1.0))
     add_matrix!(asm, Dict(:C => _Cm()))

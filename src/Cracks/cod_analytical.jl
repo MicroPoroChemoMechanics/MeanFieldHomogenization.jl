@@ -51,6 +51,17 @@ otherwise return `NaN`. Restricting it to `Real` made
     end
 end
 
+# The aspect ratio in the arithmetic of the moduli when that arithmetic is
+# symbolic, so that the factors of the circle stay exact (π/4, π/2) instead of
+# entering a symbolic COD tensor as Float64 numbers; a numerical ratio is kept as
+# it is, the Float64 elliptic integrals being the fast path.
+_ratio_in(::Type{T}, η) where {T} = _ratio_in(Val(is_hard_numeric(T)), T, η)
+_ratio_in(::Val{true}, ::Type, η) = η
+_ratio_in(::Val{false}, ::Type{T}, η) where {T} = T(η)
+# The circle given as `1.0` enters as the integer it is, so that its closed form
+# is exact; any other float stays the float it was given as.
+_ratio_in(::Val{false}, ::Type{T}, η::AbstractFloat) where {T} = isinteger(η) ? T(Int(η)) : T(η)
+
 # 𝒞, 𝒮, ℰ near the circle, |k²| ≤ 0.1: 40 terms leave a truncation below
 # 0.1⁴⁰. The coefficients aₙ = ((½)ₙ/n!)² follow from aₙ = aₙ₋₁ ((2n − 1)/(2n))².
 @inline function _elliptic_CS_series(k²)
@@ -110,7 +121,7 @@ limit ``\\eta=1``: ``B_{nn} = 16(1-\\nu^{2})/(3\\pi E)``,
 """
 function _cod_iso_ellipse(c::EllipticCrack, E::Number, ν::Number)
     T = promote_type(typeof(E), typeof(ν))
-    η = aspect_ratio(c)
+    η = _ratio_in(T, aspect_ratio(c))
     𝒞, 𝒮, ℰ = _elliptic_CS(η)
     χ = 8 * (one(T) - ν^2) / (3 * E)
     Bll = χ / ((one(T) - ν) * 𝒞 + η^2 * 𝒮)
@@ -158,7 +169,7 @@ isotropic case for ``\\nu_{1}=\\nu_{2}=\\nu``, ``H=\\Gamma=1``.
 """
 function _cod_ti_ellipse(c::EllipticCrack, E::Number, H::Number, ν₁::Number, ν₂::Number, Γ::Number)
     T = promote_type(typeof(E), typeof(H), typeof(ν₁), typeof(ν₂), typeof(Γ))
-    η = aspect_ratio(c)
+    η = _ratio_in(T, aspect_ratio(c))
     σᵞ = _ti_sigma_gamma(E, H, ν₁, ν₂, Γ)
     𝒞, 𝒮, ℰ = _elliptic_CS(η)
     χ = 4 * σᵞ * (one(T) - ν₁^2) / (3 * E)

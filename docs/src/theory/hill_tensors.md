@@ -521,16 +521,64 @@ options:
   `method = :decuhr` once its (weak-dependency) extension is loaded.
 - **`Residue`** — the inner ``\varphi`` integral is reduced to a sum of residues
   at the roots of the acoustic polynomial by the Cauchy theorem, leaving a
-  single 1-D quadrature [masson2008](@cite). Roots that nearly coincide are
-  grouped and summed as one root of the corresponding multiplicity, at a cost
-  in accuracy: on a prolate ``3{:}1{:}1`` in a cubic matrix the residues are off
-  by ``7\times10^{-4}``. The method
-  is `Float64`-only (its polynomial root finder is not differentiable by
-  ForwardDiff) and reachable on an explicit `method = :residues` only: a
-  multiplicity its residue sums do not handle — a reference anisotropic in
-  *type* but isotropic or transversely isotropic in *value* along the ellipsoid
-  axes, which is what the differential and self-consistent schemes feed back at
-  their first step — makes it throw an `ArgumentError`.
+  single 1-D quadrature [masson2008](@cite). With the substitution
+  ``t = \cot(\theta/2)`` of that paper, the inner integral is that of a rational
+  function of ``t`` over ``(0, \infty)``, which is minus the sum of the residues
+  of its product with ``\log t``. Roots that coincide or nearly do, as for an
+  isotropic or transversely isotropic reference along the ellipsoid axes or a
+  reference close to one, are summed as a group (below), so that the sum keeps
+  the accuracy of separated roots. The method is `Float64`-only (the roots are
+  the eigenvalues of a companion matrix, which ForwardDiff does not
+  differentiate) and reachable on an explicit `method = :residues` only.
+
+```@raw html
+<details><summary>Summing the residues of a group of poles</summary>
+```
+
+A root of multiplicity ``k`` comes out of any root finder as ``k`` roots about
+``\epsilon^{1/k}`` apart, ``\epsilon`` the rounding unit, and the residue at each
+is of the order of the inverse of their distance: taken one by one, the residues
+cancel and leave little accuracy; declared coincident below some distance, they
+carry an error of the order of that distance. The residues of a group are
+summed as a whole instead. Let ``w_1, \dots, w_k`` be poles of ``f N / D`` close
+to one another, with ``N`` and ``D`` polynomials and ``f`` analytic around them,
+``c`` their centroid, ``\delta_j = w_j - c``, and
+``R(w) = D(w) / \prod_j (w - w_j)``, which does not vanish near ``c``. Outside
+the group,
+
+```math
+\frac{1}{\prod_{j=1}^{k} (w - w_j)}
+= \frac{1}{(w - c)^{k}} \prod_{j=1}^{k} \frac{1}{1 - \delta_j / (w - c)}
+= \sum_{l \ge 0} \frac{h_l(\delta_1, \dots, \delta_k)}{(w - c)^{k + l}},
+```
+
+with ``h_l`` the complete homogeneous symmetric polynomial of degree ``l``, and
+``f N / R = \sum_{n \ge 0} g_n\, (w - c)^n`` up to the next singularity. The sum
+of the residues in the group is the coefficient of ``(w - c)^{-1}`` in the
+product of the two expansions:
+
+```math
+\sum_{j=1}^{k} \operatorname{Res}_{w_j} \frac{f N}{D}
+= \sum_{l \ge 0} g_{l + k - 1}\, h_l(\delta_1, \dots, \delta_k).
+```
+
+Coincident poles leave the term ``l = 0`` alone, ``g_{k-1}``, the residue at a
+pole of order ``k``; a lone pole leaves ``g_0 = f(w_1) N(w_1) / D'(w_1)``. The
+terms decrease as ``(\max_j |\delta_j| / \rho)^l``, with ``\rho`` the distance
+from ``c`` to the nearest other singularity of ``f N / D``, and the poles enter
+only through symmetric functions of the ``\delta_j``, which, unlike the
+individual roots of a cluster, are well conditioned. The groups are the largest
+nodes of the single-linkage tree of the poles whose radius stays below
+``\rho / 10``.
+
+For the Hill tensor, ``f = \log`` and the poles are ``\pm i``, twice each, and the
+two preimages ``t = z \pm \sqrt{1 + z^2}`` of each root ``z`` of the acoustic
+polynomial. For the line integral of the crack opening tensor, ``f = 1`` and the
+poles are the roots themselves.
+
+```@raw html
+</details>
+```
 
 All three honor the `abstol` (default ``10^{-8}``), `reltol` (``10^{-6}``) and
 `maxiters` (``10^{6}`` evaluations) keywords of [`hill_tensor`](@ref). At these

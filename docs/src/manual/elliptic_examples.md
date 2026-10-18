@@ -104,15 +104,16 @@ ell_K(m)       # → K(m) as a SymPy expression
 ell_E(π/4, m)  # → SymPy elliptic_e(π/4, m)
 ```
 
-With `Symbolics` (no extension required — the pure-arithmetic AGM path
-is used):
+With `Symbolics`, the extension `MeanFieldHomogenizationSymbolicsExt`, loaded
+with it, keeps the complete and incomplete integrals as unexpanded calls, which
+evaluate once numbers are substituted:
 
 ```julia
 using MeanFieldHomogenization, Symbolics
 
-@variables m
-expr = ell_K(m)
-# Symbolics expression — use `simplify(expr)` to compact the output.
+@variables m φ
+expr = ell_K(m) + ell_F(φ, m)    # two unexpanded calls
+Symbolics.value(Symbolics.substitute(expr, Dict(m => 0.5, φ => 0.3); fold = Val(true)))
 ```
 
 ## Custom scalar backends

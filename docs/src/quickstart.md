@@ -26,7 +26,7 @@ julia> import Pkg; Pkg.add("MeanFieldHomogenization")
 
 No additional registry is required: the dependencies (`TensND.jl`,
 `OrdinaryDiffEq.jl`, `Elliptic.jl`, `QuadGK.jl`, `Polynomials.jl`,
-`PolynomialRoots.jl`, `Tensors.jl`, …) come from General as well, and the
+`Tensors.jl`, …) come from General as well, and the
 type-generic elliptic integrals are bundled as the
 [`MeanFieldHomogenization.Elliptic`](@ref MeanFieldHomogenization.Elliptic)
 submodule.

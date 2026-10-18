@@ -95,12 +95,15 @@ E(\varphi, m) = F(\varphi, m)
 ```
 
 `R_F` and `R_D` are implemented by the duplication theorem (Carlson
-1995, §2): each iteration halves the relative spread of
-``x, y, z`` until their ratio approaches unity, at which point a
+1995, §2): each iteration divides the differences between
+``x, y, z`` by four, until their relative spread is small enough for a
 fifth-order Taylor series in the Carlson invariants ``E_2, E_3`` (and
-``E_4, E_5`` for ``R_D``) is used. The recursion is arithmetic-only —
+``E_4, E_5`` for ``R_D``). The recursion is arithmetic-only —
 no branch cuts, no transcendentals — so it extends to any `Number`
-subtype.
+subtype. A scalar whose comparisons do not return a `Bool` (a complex
+number) has no stopping test and runs a fixed number of duplications; a
+symbolic one never gets there, the SymPy and Symbolics extensions keeping
+the integrals as unexpanded calls.
 
 ## 4. Dispatch table
 
@@ -110,7 +113,7 @@ subtype.
 | `ForwardDiff.Dual`   | pure-Julia AGM / Carlson (derivatives work)      |
 | `BigFloat`, generic  | AGM / Carlson                                    |
 | `SymPy.Sym`          | `sympy.elliptic_{k,e,f}` via the SymPy weak ext  |
-| `Symbolics.Num`      | AGM / Carlson (verbose; use `simplify` if needed)|
+| `Symbolics.Num`      | unexpanded calls, via the Symbolics weak ext     |
 
 !!! note "Why a SymPy weak extension?"
     The AGM unrolls ~60 nested `sqrt(a*b)` operations. On a `SymPy.Sym`

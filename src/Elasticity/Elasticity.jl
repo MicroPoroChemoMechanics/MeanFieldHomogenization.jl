@@ -13,7 +13,6 @@ using QuadGK
 using StaticArrays: SVector
 using ..Elliptic
 using Polynomials
-using PolynomialRoots
 
 import ..Core
 using ..Core

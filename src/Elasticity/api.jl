@@ -86,13 +86,15 @@ _kernel(ell::Ellipsoid{3}, C₀::TensND.TensISO{4, 3}, ::MFH_Core.Analytical; kw
 _kernel(ell::Ellipsoid{3}, C₀::TensND.TensTI{4}, ::MFH_Core.Analytical; kw...) =
     _hill_3d_ti_coaxial(ell, C₀)
 
-_kernel(ell::Ellipsoid{3}, C₀::TensND.AbstractTens{4, 3}, ::MFH_Core.Residue; kw...) =
-    _hill_3d_aniso_residue(
-    ell, C₀;
-    abstol = get(kw, :abstol, 1.0e-8),
-    reltol = get(kw, :reltol, 1.0e-6),
-    maxiters = get(kw, :maxiters, 1_000_000)
-)
+function _kernel(ell::Ellipsoid{3}, C₀::TensND.AbstractTens{4, 3}, ::MFH_Core.Residue; kw...)
+    MFH_Core._residues_in_floats(ell, C₀)
+    return _hill_3d_aniso_residue(
+        ell, C₀;
+        abstol = get(kw, :abstol, 1.0e-8),
+        reltol = get(kw, :reltol, 1.0e-6),
+        maxiters = get(kw, :maxiters, 1_000_000)
+    )
+end
 
 _kernel(ell::Ellipsoid{3}, C₀::TensND.AbstractTens{4, 3}, ::MFH_Core.DECUHR; kw...) =
     _hill_3d_aniso_decuhr(

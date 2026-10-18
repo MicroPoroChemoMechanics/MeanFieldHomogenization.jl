@@ -1,6 +1,7 @@
 using Test
 using MeanFieldHomogenization
 using ForwardDiff
+using LinearAlgebra
 
 # =============================================================================
 #  test_prony.jl — the exact Kelvin ↔ Maxwell conversion.
@@ -244,4 +245,23 @@ end
         p -> carson_relaxation(zener_maxwell(2.0, E1, 1.0), p), τs; nonneg = false
     ).E_inf
     @test isfinite(ForwardDiff.derivative(f, 3.0))
+end
+
+@testset "Prony — the corner cases of the conversion and of the fit" begin
+    V = MeanFieldHomogenization.Viscoelasticity
+    # A fluid Kelvin chain with no branch is a dashpot behind a spring: its creep
+    # J(t) = J₀ + φ t is a Maxwell element of modulus 1/J₀ and time J₀/φ.
+    J₀, φ = 0.5, 0.2
+    r = kelvin_to_maxwell(PronyCreep(J₀, Float64[], Float64[], φ))
+    @test r.E_inf == 0 && r.E ≈ [1 / J₀] && r.tau ≈ [J₀ / φ]
+    # A function with no sign change has no bracket, outward or inward.
+    @test_throws ArgumentError V._expand_bracket(σ -> 1.0, 1.0, 4.0, 5)
+    @test_throws ArgumentError V._shrink_bracket(σ -> 1.0, 1.0, 4.0, 5)
+    # The regularized least squares is the minimizer of ‖A x − b‖² + λ ‖x‖².
+    A = [1.0 0.5; 0.2 1.0; 0.3 0.1]
+    b = [1.0, 2.0, 0.5]
+    λ = 0.1
+    @test V._lsq(A, b, false, λ) ≈ (A' * A + λ * I) \ (A' * b)
+    x₊ = V._lsq(A, b, true, λ)
+    @test all(≥(0), x₊) && x₊ ≈ (A' * A + λ * I) \ (A' * b)    # the constraint is idle here
 end

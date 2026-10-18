@@ -643,12 +643,12 @@ without `using NonlinearSolve`.
 """
 function _solve_sc(::AutoNonlinear, step, x0::TensND.AbstractTens; kw...)
     ext = Base.get_extension(parentmodule(@__MODULE__), :MeanFieldHomogenizationNonlinearSolveExt)
-    if ext === nothing
-        return _solve_sc(NewtonDefault(), step, x0; kw...)
-    else
-        return ext.default_solve_sc(step, x0; kw...)
-    end
+    return _solve_sc_auto(ext, step, x0; kw...)
 end
+
+# The extension when it is loaded, the built-in Newton solver otherwise.
+_solve_sc_auto(ext::Module, step, x0; kw...) = ext.default_solve_sc(step, x0; kw...)
+_solve_sc_auto(::Nothing, step, x0; kw...) = _solve_sc(NewtonDefault(), step, x0; kw...)
 
 # ── Positive-definite guard for the SC running estimate ───────────────────
 #
@@ -662,60 +662,109 @@ end
 # positive identity (`mX = EPSILON · I`) before each step — this
 # prevents the iteration from collapsing to zero and lets it find the
 # physical finite-modulus branch when it exists.  We mirror the same
-# guard here: when any canonical eigenvalue of the running estimate
-# falls below a relative threshold, we reset it to `ε · α_M_init`
-# (matrix scale).
+# guard here, eigenvalue by eigenvalue: every eigenvalue of the running
+# estimate that falls below a threshold relative to the starting point is
+# raised to that threshold, and the eigenvectors are kept.
+#
+# The structured classes are direct sums of blocks of their stored
+# coefficients, and the spectrum is read block by block.  The coefficients of
+# an isotropic, a cubic and a symmetric second-order TI tensor are its
+# eigenvalues; those of a fourth-order TI tensor (Walpole) and of an
+# orthotropic one hold a 2×2 or 3×3 symmetric block whose off-diagonal
+# couplings are legitimately negative or zero — clamping each coefficient on
+# its own moved the fixed point of every auxetic or uncoupled material.  A
+# class with no such structure is passed through.
 
-# `x0` is fixed for the entire SC iteration (Picard or Newton) — computing
-# this once and passing `ε_pos` into `_sc_pd_guard_apply` directly avoids
-# recomputing `_max_canonical_value(x0)` (which itself does a `try`/`catch`,
-# blocking inlining) on every single guard call within the loop.
+# `x0` is fixed for the entire SC iteration (Picard or Newton), so the threshold
+# is computed once. It is a tolerance and carries no derivative.
 function _sc_pd_eps(x0)
     α0_max = _max_canonical_value(x0)
     return max(α0_max * sqrt(eps(real(_value_eltype(x0)))), 1.0e-12)
 end
 
-# Iso 4-tensor: check (α, β); reset to ε·𝕁 + ε·𝕂 if either component
-# is non-positive.
-function _sc_pd_guard_apply(x::TensND.TensISO{3}, ε_pos)
-    α, β = TensND.get_data(x)
-    if real(α) ≤ ε_pos || real(β) ≤ ε_pos
-        return TensND.TensISO{3}(max(real(α), ε_pos), max(real(β), ε_pos))
-    end
-    return x
-end
+const _SCGuardedTens = Union{TensND.TensISO, TensND.TensCubic, TensND.TensTI, TensND.TensOrtho}
 
-# Default: try to detect the smallest canonical component value.  If
-# any canonical component is non-positive, reset to a tiny positive
-# baseline of the same shape.  Falls back to passthrough for tensors
-# whose `get_data` does not give a meaningful "smallest eigenvalue"
-# notion.
-function _sc_pd_guard_apply(x::TensND.AbstractTens, ε_pos)
-    try
-        d = TensND.get_data(x)
-        for v in d
-            real(v) ≤ ε_pos && return _rebuild_min_eps(x, ε_pos)
-        end
-    catch
-    end
-    return x
-end
+# Scale of the threshold: the largest stored coefficient, and 1 for a class the
+# guard passes through (the threshold is then never used).
+_max_canonical_value(x::_SCGuardedTens) =
+    maximum(v -> _scalar_value(abs(real(v))), TensND.get_data(x))
+_max_canonical_value(::TensND.AbstractTens) = 1.0
 
-function _rebuild_min_eps(x::TensND.AbstractTens, ε_pos)
+_sc_pd_guard_apply(x::TensND.AbstractTens, ε_pos) = x
+
+# Every stored coefficient is an eigenvalue: on (𝕁, 𝕂), on (𝕁, 𝔼, 𝕋), on (nT, nₙ).
+function _sc_pd_guard_apply(
+        x::Union{TensND.TensISO, TensND.TensCubic, TensND.TensTI{2, <:Any, 2}}, ε_pos
+    )
     d = TensND.get_data(x)
-    new_d = Tuple(real(v) ≤ ε_pos ? ε_pos : v for v in d)
-    return TensND._rebuild(x, new_d)
+    all(v -> _sc_above(v, ε_pos), d) && return x
+    return TensND._rebuild(x, map(v -> _sc_clamp(v, ε_pos), d))
 end
 
-# Used to scale the eigenvalue tolerance.
-_max_canonical_value(x::TensND.AbstractTens) = begin
-    try
-        d = TensND.get_data(x)
-        return maximum(abs(real(v)) for v in d)
-    catch
-        return 1.0
-    end
+# a nT + b nₙ + c w: the in-plane rotation c w is antisymmetric and stores no
+# energy, a and b are the eigenvalues of the symmetric part.
+function _sc_pd_guard_apply(x::TensND.TensTI{2, <:Any, 3}, ε_pos)
+    a, b, c = TensND.get_data(x)
+    _sc_above(a, ε_pos) && _sc_above(b, ε_pos) && return x
+    return TensND._rebuild(x, (_sc_clamp(a, ε_pos), _sc_clamp(b, ε_pos), c))
 end
+
+# Walpole coefficients ([[ℓ₁, ℓ₃], [ℓ₃, ℓ₂]], ℓ₅, ℓ₆) of a major-symmetric TI
+# tensor: ℓ₅ and ℓ₆ are eigenvalues, the 2×2 block holds the other two.
+function _sc_pd_guard_apply(x::TensND.TensTI{4, <:Any, 5}, ε_pos)
+    ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆ = TensND.get_data(x)
+    B = SMatrix{2, 2}(ℓ₁, ℓ₃, ℓ₃, ℓ₂)
+    _sc_above(B, ε_pos) && _sc_above(ℓ₅, ε_pos) && _sc_above(ℓ₆, ε_pos) && return x
+    C = _sc_clamp(B, ε_pos)
+    return TensND._rebuild(x, (C[1, 1], C[2, 2], C[1, 2], _sc_clamp(ℓ₅, ε_pos), _sc_clamp(ℓ₆, ε_pos)))
+end
+
+# A TI tensor without major symmetry (N = 6), or with the in-plane rotation
+# couplings ℓ₇ and ℓ₈ (N = 8, both antisymmetric): the guard acts on the
+# symmetric part, and the antisymmetric part (ℓ₃ - ℓ₄)/2, ℓ₇, ℓ₈ is kept.
+function _sc_pd_guard_apply(x::TensND.TensTI{4, <:Any, N}, ε_pos) where {N}
+    d = TensND.get_data(x)
+    ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆ = d
+    s, a = (ℓ₃ + ℓ₄) / 2, (ℓ₃ - ℓ₄) / 2
+    B = SMatrix{2, 2}(ℓ₁, s, s, ℓ₂)
+    _sc_above(B, ε_pos) && _sc_above(ℓ₅, ε_pos) && _sc_above(ℓ₆, ε_pos) && return x
+    C = _sc_clamp(B, ε_pos)
+    return TensND._rebuild(
+        x, (
+            C[1, 1], C[2, 2], C[1, 2] + a, C[1, 2] - a,
+            _sc_clamp(ℓ₅, ε_pos), _sc_clamp(ℓ₆, ε_pos), ntuple(i -> d[6 + i], Val(N - 6))...,
+        )
+    )
+end
+
+# (C₁₁, C₂₂, C₃₃, C₁₂, C₁₃, C₂₃, C₄₄, C₅₅, C₆₆): a 3×3 block in the material
+# frame, and the eigenvalues 2C₄₄, 2C₅₅, 2C₆₆.
+function _sc_pd_guard_apply(x::TensND.TensOrtho, ε_pos)
+    c₁₁, c₂₂, c₃₃, c₁₂, c₁₃, c₂₃, c₄₄, c₅₅, c₆₆ = TensND.get_data(x)
+    B = SMatrix{3, 3}(c₁₁, c₁₂, c₁₃, c₁₂, c₂₂, c₂₃, c₁₃, c₂₃, c₃₃)
+    shear = (c₄₄, c₅₅, c₆₆)
+    _sc_above(B, ε_pos) && all(c -> _sc_above(2c, ε_pos), shear) && return x
+    C = _sc_clamp(B, ε_pos)
+    return TensND._rebuild(
+        x, (C[1, 1], C[2, 2], C[3, 3], C[1, 2], C[1, 3], C[2, 3], map(c -> _sc_clamp(2c, ε_pos) / 2, shear)...)
+    )
+end
+
+# Whether an eigenvalue, or every eigenvalue of a symmetric block, exceeds ε.
+# Decided on the real values, which is what a comparison of duals reads anyway.
+_sc_above(v::Number, ε) = real(v) > ε
+_sc_above(B::SMatrix, ε) = minimum(eigvals(Symmetric(_sc_values(B)))) > ε
+
+# Unchanged above ε; otherwise ε, or V max(Λ, ε) Vᵀ for a block, whose
+# eigenvectors are kept. A clamped iterate is a reset and carries no derivative.
+_sc_clamp(v::Number, ε) = _sc_above(v, ε) ? v : oftype(v, ε)
+function _sc_clamp(B::SMatrix{n, n, T}, ε) where {n, T}
+    _sc_above(B, ε) && return B
+    λ, V = eigen(Symmetric(_sc_values(B)))
+    return T.(V * Diagonal(max.(λ, ε)) * V')
+end
+
+_sc_values(B::SMatrix) = map(v -> _scalar_value(real(v)), B)
 
 # ── Tens ↔ canonical parameter vector helpers ──────────────────────────────
 #

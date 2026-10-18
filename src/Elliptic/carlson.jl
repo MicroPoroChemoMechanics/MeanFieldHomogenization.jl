@@ -16,9 +16,14 @@
 # ≈ 2.4·10⁻³ (consistent with the SLATEC default); for BigFloat the
 # threshold tightens automatically with the working precision.
 
+#
+# A scalar whose comparisons do not return a `Bool` (complex, symbolic —
+# `Symbolics.Num <: Real` notwithstanding) has no stopping test and runs the
+# fixed 50 duplications. A symbolic argument never gets that far: the SymPy and
+# Symbolics extensions keep `ell_F` and `ell_E` as unexpanded calls.
+
 @inline _carlson_tol(::Type{T}) where {T <: AbstractFloat} = eps(T)^(1 / 6)
-@inline _carlson_tol(::Type{T}) where {T <: Real} = eps(Float64)^(1 / 6)
-@inline _carlson_tol(::Type{T}) where {T <: Number} = zero(Float64)
+@inline _carlson_tol(::Type{T}) where {T <: Number} = is_hard_numeric(T) ? eps(Float64)^(1 / 6) : 0.0
 
 
 """
@@ -46,7 +51,7 @@ function ell_RF(x::Tx, y::Ty, z::Tz) where {Tx <: Number, Ty <: Number, Tz <: Nu
         xk = (xk + λ) / 4
         yk = (yk + λ) / 4
         zk = (zk + λ) / 4
-        if T <: Real
+        if is_hard_numeric(T)
             μ = (xk + yk + zk) / 3
             spread = max(abs((μ - xk) / μ), abs((μ - yk) / μ), abs((μ - zk) / μ))
             spread < tol && break
@@ -96,7 +101,7 @@ function ell_RD(x::Tx, y::Ty, z::Tz) where {Tx <: Number, Ty <: Number, Tz <: Nu
         xk = (xk + λ) / 4
         yk = (yk + λ) / 4
         zk = (zk + λ) / 4
-        if T <: Real
+        if is_hard_numeric(T)
             μ = (xk + yk + 3 * zk) / 5
             spread = max(abs((μ - xk) / μ), abs((μ - yk) / μ), abs((μ - zk) / μ))
             spread < tol && break

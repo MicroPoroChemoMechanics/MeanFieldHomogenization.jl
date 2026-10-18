@@ -86,6 +86,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | `14_sif_computation.jl` | — | stress/displacement intensity factors |
 | `15_cracks_iso_interface.jl` | iso cracks + spring interface | Sevostianov spring interface |
 | `16_cod_symbolic_thermal.jl` | `barthelemyIJSS2026` (transport twin) | SymPy, end-to-end derivation of the **thermal** COD scalar from the order-2 Green operator. The acoustic form is a scalar, so the ξₙ integral closes at **full anisotropy**: `Q̂*ₙₙ = ½√[(n̲∧ξ̲*)·adj(K₀)·(n̲∧ξ̲*)]`, and the contour integral reduces to an effective ellipse (`√λ₁`, `η′`). Cross-checked against the Hill flattening limit and the textbook penny jump |
+| `17_crack_routes.jl` | `barthelemyIJSS2026` / `barthelemyIJSS2009` | **published tutorial** (`crack_routes`): 𝐁 from the reduced kernel (cubature, residues, DECUHR) and ℍ from the first-order term of the Hill tensor of the flattened ellipsoid, ℚ₁ = −ℂ:ℙ₁:ℂ inverted on the kernel of ℚ₀; exact in SymPy for an isotropic matrix (Sneddon), ℙ₁ by ForwardDiff in random anisotropic matrices (routes within 3e-8); the transformation rule of an elliptically orthotropic matrix as an analytic anchor |
 
 ### 20–29 Elastic schemes
 | Script | reference / topic | Notes |

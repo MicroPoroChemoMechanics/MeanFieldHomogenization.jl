@@ -55,17 +55,6 @@ struct Cylinder{S <: CylindricalShape, T <: Number, B <: TensND.AbstractBasis} <
     basis::B
 end
 
-# ── Shape classification (internal) ──────────────────────────────────────────
-
-function _classify_cylinder_shape(::Type{T}, b, c) where {T}
-    if T <: Real
-        is_equal = MFH_Core._coincident(b, c, 1.0e-10)
-    else
-        is_equal = isequal(b, c)
-    end
-    return is_equal ? 1 : 2  # 1 → CircularCylindrical, 2 → EllipticCylindrical
-end
-
 # ── Constructors ─────────────────────────────────────────────────────────────
 
 """
@@ -89,7 +78,7 @@ function Cylinder(
     T = MFH_Core._floatlike(promote_type(Tb, Tc))
     basis_in = MFH_Core._default_basis(T, euler_angles)
     axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(b), T(c)), basis_in, Val(:cylinder))
-    code = _classify_cylinder_shape(T, axes_sorted...)
+    code = MFH_Core._classify_shape_2d(T, axes_sorted...)
     S = _SHAPE_CYLINDER[code]
     return Cylinder{S, T, typeof(basis)}(axes_sorted, basis)
 end
@@ -105,7 +94,7 @@ function Cylinder(b::Tb, c::Tc, R::AbstractMatrix) where {Tb, Tc}
     T = MFH_Core._floatlike(promote_type(Tb, Tc))
     basis_in = TensND.RotatedBasis(Matrix{float(eltype(R))}(R))
     axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(b), T(c)), basis_in, Val(:cylinder))
-    code = _classify_cylinder_shape(T, axes_sorted...)
+    code = MFH_Core._classify_shape_2d(T, axes_sorted...)
     S = _SHAPE_CYLINDER[code]
     return Cylinder{S, T, typeof(basis)}(axes_sorted, basis)
 end
@@ -121,7 +110,7 @@ cylinder axis; columns 2 and 3 are the transverse axes associated with
 function Cylinder(b::Tb, c::Tc, basis::TensND.AbstractBasis) where {Tb, Tc}
     T = MFH_Core._floatlike(promote_type(Tb, Tc))
     axes_sorted, basis_out = MFH_Core._sort_axes_and_basis((T(b), T(c)), basis, Val(:cylinder))
-    code = _classify_cylinder_shape(T, axes_sorted...)
+    code = MFH_Core._classify_shape_2d(T, axes_sorted...)
     S = _SHAPE_CYLINDER[code]
     return Cylinder{S, T, typeof(basis_out)}(axes_sorted, basis_out)
 end

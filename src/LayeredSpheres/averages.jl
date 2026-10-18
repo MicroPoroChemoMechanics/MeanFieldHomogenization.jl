@@ -114,6 +114,11 @@ function cumulative_strain_average(
     ) where {T, N}
     r > 0 || throw(ArgumentError("cumulative_strain_average radius must be > 0"))
     radii = sphere.radii
+    # Beyond r_N the ball takes in the surrounding medium, which is not this
+    # sphere's: the average over the sphere alone used to be returned.
+    r ≤ radii[N] || throw(
+        ArgumentError("cumulative_strain_average radius must not exceed the outer radius $(radii[N]); got $r")
+    )
 
     κ₀, μ₀ = _iso_bulk_shear(C₀)
     α = _bulk_concentration(sphere, κ₀, μ₀)
@@ -125,32 +130,17 @@ function cumulative_strain_average(
     ε_sph = (tr_ε∞ / 3) * I2
     ε_dev = ε∞ - ε_sph
 
-    # Accumulate the "volume × average" contribution layer by layer.
-    acc_vol_times_avg = nothing
-    total_vol = zero(Tres)
-
-    for k in 1:N
-        r_prev = k == 1 ? zero(Tres) : radii[k - 1]
-        r_k = radii[k]
-        if r ≤ r_prev
-            break   # ball no longer reaches into this layer
-        end
-        r_upper = min(Tres(r), Tres(r_k))
-        vol_k = (4 * π / 3) * (r_upper^3 - r_prev^3)
+    # The layers the ball reaches — all those inside it, and the one it cuts —
+    # each weighted by the volume of its part inside the ball. Those volumes add
+    # up to the ball's.
+    K = count(<(r), radii) + 1
+    acc = sum(1:K) do k
+        r_prev = k == 1 ? zero(Tres) : Tres(radii[k - 1])
+        r_upper = min(Tres(r), Tres(radii[k]))
         β_k = _layer_dev_concentration_upto(sphere, amps, k, r_upper)
-        avg_k = α[k] * ε_sph + β_k * ε_dev
-        acc_vol_times_avg = acc_vol_times_avg === nothing ?
-            vol_k * avg_k :
-            acc_vol_times_avg + vol_k * avg_k
-        total_vol += vol_k
-        if r ≤ r_k
-            break   # ball does not extend beyond this layer
-        end
+        (r_upper^3 - r_prev^3) * (α[k] * ε_sph + β_k * ε_dev)
     end
-
-    acc_vol_times_avg === nothing &&
-        throw(ArgumentError("cumulative_strain_average: ball is empty"))
-    return (1 / total_vol) * acc_vol_times_avg
+    return (1 / Tres(r)^3) * acc
 end
 
 # ── Stress and transport averages ────────────────────────────────────────────

@@ -176,3 +176,36 @@ end
     @test α ≈ lower([[4.272689333671794], [-1.2841395313625679, 4.003516637323179], [-0.36990479296289147, -3.601174676535309, 4.755441449535003]]) rtol = 1.0e-6
     @test β ≈ lower([[1.7297859422284707], [-0.5474610920054662, 1.864948809282462], [-0.2589671145064161, -1.8299722030102268, 2.712448059696108]]) rtol = 1.0e-6
 end
+
+@testset "DiluteDual ALV — inclusions and cracks together, elastic limit" begin
+    # The dual scheme adds the compliance contributions of the solid phases and
+    # of the cracks: in the elastic limit each diagonal block is the elastic
+    # DiluteDual stiffness, the off-diagonal ones vanish.
+    mandel = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66
+    C_M, C_I = TensISO{3}(3 * 10.0, 2 * 4.0), TensISO{3}(3 * 30.0, 2 * 12.0)
+    times = [0.0, 0.5, 1.0]
+    function rve_with(law)
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => law(C_M)); fraction = :rest)
+        add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => law(C_I)); fraction = 0.1)
+        add_phase!(rve, :CRACK, PennyCrack(1.0), Dict(:C => law(C_M)); density = 0.05, symmetrize = :iso)
+        return rve
+    end
+    M_ref = mandel(homogenize(rve_with(identity), DiluteDual(), :C))
+    C_alv = homogenize_alv(rve_with(heaviside_law), DiluteDual(), :C; times = times)
+    for i in eachindex(times)
+        rows = (6 * (i - 1) + 1):(6 * i)
+        @test C_alv[rows, rows] ≈ M_ref rtol = 1.0e-9
+        for j in 1:(i - 1)
+            @test maximum(abs, C_alv[rows, (6 * (j - 1) + 1):(6 * j)]) <= 1.0e-9 * maximum(abs, M_ref)
+        end
+    end
+end
+
+@testset "has_visco_property — a phase without the property is passed over" begin
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => heaviside_law(TensISO{3}(30.0, 8.0))); fraction = :rest)
+    add_phase!(rve, :P, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)); fraction = 0.1)
+    @test has_visco_property(rve, :C)
+    @test !has_visco_property(rve, :K)
+end

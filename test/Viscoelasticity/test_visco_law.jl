@@ -89,3 +89,10 @@ end
     @test occursin("ViscoLaw", s)
     @test occursin(":relaxation", s)
 end
+
+@testset "kelvin_iso — causal" begin
+    # Before the load is applied the compliance is zero, of the same class.
+    law = kelvin_iso(10.0, 4.0, [2.0], [1.0], [0.5], [0.3])
+    z = law(0.0, 1.0)
+    @test z isa TensISO{4, 3} && all(iszero, TensND.get_data(z))
+end

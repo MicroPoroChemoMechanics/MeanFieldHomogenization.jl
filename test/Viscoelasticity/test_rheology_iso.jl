@@ -58,6 +58,15 @@ end
     @test TensND.get_data(Cν)[1] ≈
         carson_relaxation(E, 0.7) / (1 - 2 * carson_relaxation(νm, 0.7))
     @test relaxation(mν, 0.7) isa TensISO{4, 3}
+
+    # The glassy and equilibrium limits are those of the Carson transform at
+    # p → ∞ and p → 0, with ν relaxing or not.
+    for model in (m, mν)
+        @test collect(TensND.get_data(glassy_modulus(model))) ≈
+            collect(TensND.get_data(carson_relaxation(model, 1.0e12))) rtol = 1.0e-9
+        @test collect(TensND.get_data(equilibrium_modulus(model))) ≈
+            collect(TensND.get_data(carson_relaxation(model, 1.0e-12))) rtol = 1.0e-9
+    end
 end
 
 @testset "ViscoLaw from a model — the bridge to the aging pipeline" begin

@@ -153,6 +153,8 @@ end
         ∂ = derivative(rve, MoriTanaka(), p; indexer = idxC)
         @test isapprox(∇[i], ∂; rtol = 1.0e-10)
     end
+    # A chunk fixed by the caller changes the passes, not the answer.
+    @test gradient(rve, MoriTanaka(), ps; indexer = idxC, chunk = ForwardDiff.Chunk{1}()) ≈ ∇ rtol = 1.0e-12
 end
 
 @testset "jacobian — shape & consistency with gradient" begin
@@ -167,6 +169,7 @@ end
 
     ∂_C1111_∂K = derivative(rve, MoriTanaka(), ps[2]; indexer = idxC)
     @test isapprox(J[1, 2], ∂_C1111_∂K; rtol = 1.0e-10)
+    @test jacobian(rve, MoriTanaka(), ps; chunk = ForwardDiff.Chunk{1}()) ≈ J rtol = 1.0e-12
 end
 
 @testset "single-parameter jacobian convenience" begin
@@ -189,6 +192,10 @@ end
     f3 = xs -> [xs[1] * xs[2], xs[1] + xs[2]]
     J = sensitivity(f3, [2.0, 3.0])
     @test J ≈ [3.0 2.0; 1.0 1.0]
+
+    # Asked by name, the same; an unknown kind is refused.
+    @test sensitivity(f2, [1.5, 0.5]; kind = :gradient) ≈ g
+    @test_throws ArgumentError sensitivity(f1, 2.0; kind = :hessian)
 end
 
 @testset "sensitivity — multi-scale closure (anticipates Pichler script)" begin

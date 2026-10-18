@@ -463,8 +463,7 @@ end
 
     # An aligned TRIAXIAL inclusion takes the running medium all the way out of
     # the TI class, so the Hill tensors come from the cubature `:auto` selects
-    # for an anisotropic reference (the residue path degenerates at the
-    # isotropic start — see `Core/dispatch.jl`).
+    # for an anisotropic reference (see `Core/dispatch.jl`).
     @testset "aligned triaxial ellipsoid" begin
         rve = RVE()
         add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
@@ -474,8 +473,10 @@ end
         Cv = get_array(homogenize(rve, Voigt(), :C))[1, 1, 1, 1]
         Cr = get_array(homogenize(rve, Reuss(), :C))[1, 1, 1, 1]
         @test Cr - RTOL_DIFF * abs(Cr) ≤ get_array(C)[1, 1, 1, 1] ≤ Cv + RTOL_DIFF * abs(Cv)
-        # Asking for the residue path explicitly is refused with an explanation.
-        @test_throws ArgumentError homogenize(rve, DifferentialScheme(), :C; method = :residues)
+        # The residue path, asked for explicitly, starts from the same isotropic
+        # value and agrees.
+        @test get_array(homogenize(rve, DifferentialScheme(), :C; method = :residues)) ≈
+            get_array(C) rtol = 1.0e-6
     end
 
     for geom in (Spheroid(0.2), Spheroid(3.0))
@@ -630,5 +631,21 @@ end
         compl = homogenize(rve, DifferentialScheme(:M; formulation = :compliance), p)
         @test all(isfinite, components_canon(compl))
         @test norm(compl - stiff) <= 1.0e-6 * norm(stiff)
+    end
+end
+
+@testset "Differential — an increment narrower than the state layout" begin
+    # Where every rate vanishes (a `Sequential` window boundary) the increment
+    # is `zero` of a TI state, which TensND returns as a `TensISO`; an
+    # isotropic increment is narrower too. Either is written into the TI
+    # layout, and must read back as itself.
+    S = MeanFieldHomogenization.Schemes
+    proto = TensTI{4}(20.0, 30.0, 6.0, 9.0, 12.0, (0.0, 0.0, 1.0))
+    tag = S._symmetry_tag(proto)
+    for Δ in (zero(proto), TensISO{3}(3.0, 2.0))
+        @test Δ isa TensISO
+        du = zeros(length(S._get_state(tag, proto)))
+        S._set_state_layout!(du, tag, proto, Δ)
+        @test get_array(S._reconstruct_tens(tag, proto, du)) ≈ get_array(Δ) atol = 1.0e-14
     end
 end

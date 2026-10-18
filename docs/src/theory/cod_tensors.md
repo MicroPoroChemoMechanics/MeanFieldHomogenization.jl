@@ -33,7 +33,7 @@ correction ``\Delta\mathbb{S}`` to the effective compliance; independently,
 `MeanFieldHomogenization` computes ``\boldsymbol{B}`` first — the intensity factors need
 it, and rebuilding ``\mathbb{H}`` from it avoids inverting a rank-deficient
 order-4 tensor. Its normalization is not unique in the literature, hence the
-*Conventions* section below.
+[Conventions](@ref th-cod-conventions) section below.
 
 ## 1. Geometry
 
@@ -254,74 +254,204 @@ the same formula and must not be confused.
 
 ## [3. From ``\boldsymbol{B}`` to the compliance ``\mathbb{H}``](@id th-cod-compliance)
 
-The extra strain a crack contributes, per unit volume of the ellipsoid or
-cylinder of §1 that it is the flat limit of, is the average of the displacement jump over the crack surface
-``S``, spread over the volume ``V``:
-
-```math
-\boldsymbol{\varepsilon}^{\mathrm{extra}}
-= \frac{1}{V}\int_{S} [\![\underline{u}]\!] \stackrel{s}{\otimes}\underline{n}\,\mathrm{d}S
-= \frac{S}{V}\,
-  \bigl\langle [\![\underline{u}]\!] \bigr\rangle_{\mathcal{I}}
-  \stackrel{s}{\otimes}\underline{n}
-= \frac{S\,b}{V}\;
-  \underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}
-  :\boldsymbol{\Sigma},
-```
-
-using the definition of ``\boldsymbol{B}``. Identifying this with
-``\mathbb{Q}^{-1}:\boldsymbol{\Sigma}``, where
-``\mathbb{Q} = \mathbb{C}-\mathbb{C}:\mathbb{P}:\mathbb{C}`` is the
-[second Hill tensor](@ref th-eshelby-problem), gives
-``\mathbb{Q}^{-1} = (Sb/V)\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}
-\stackrel{s}{\otimes}\underline{n}``, and hence
+The compliance contribution ``\mathbb{H}`` of a crack is defined from the
+ellipsoid, or the elliptic cylinder, of §1 as it flattens; ``\boldsymbol{B}`` is
+defined from the opening of the crack itself. This section proves that, with
+``\boldsymbol{B}`` normalized by the half-width ``b`` as in §2 and the flatness
+``\rho = c/b`` of §1,
 
 ```math
 \boxed{\;
-\mathbb{H}
-\;=\; \lim_{c/b\,\to\,0}\ \frac{c}{b}\,\mathbb{Q}^{-1}
-\;=\; \frac{c\,S}{V}\;
-      \underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}.
+\mathbb{H} \;=\; \lim_{\rho\to 0}\ \rho\,\mathbb{Q}^{-1}
+\;=\; k\;\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n},
+\qquad
+k = \tfrac{3}{4}\ \text{(ellipse)},\quad k = \tfrac{2}{\pi}\ \text{(ribbon)},
 \;}
 ```
 
-The limit is finite: the components ``(\mathbb{Q}^{-1})_{nijk}`` diverge like
-``b/c``, so ``(c/b)\,\mathbb{Q}^{-1}`` stays bounded. Evaluating the geometric
-factor ``cS/V`` for each family gives the two numbers used in the code:
+with ``\mathbb{Q} = \mathbb{C}-\mathbb{C}:\mathbb{P}:\mathbb{C}`` the
+[second Hill tensor](@ref th-eshelby-problem). The idea goes back to
+[kachanov1992](@citet): the surface of a flat cavity becomes the two lips of the
+crack [barthelemyIJSS2009, barthelemyIJES2021](@cite). It is written out here
+because both sides of the identity depend on two lengths, the one
+``\boldsymbol{B}`` is normalized by and the one the flatness is measured on,
+which the sources choose differently ([Conventions](@ref th-cod-conventions)
+below).
 
-| | surface ``S`` | volume ``V`` | ``cS/V`` | ``\mathbb{H}`` |
-| :-- | :-- | :-- | :-- | :-- |
-| **elliptic** (3-D) | ``\pi a b`` | ``\tfrac{4}{3}\pi a b c`` | ``\tfrac{3}{4}`` | ``\mathbb{H}^{\mathcal{E}} = \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}^{\mathcal{E}}\stackrel{s}{\otimes}\underline{n}`` |
-| **ribbon** (2-D) | ``4ab`` | ``2\pi a b c`` | ``\tfrac{2}{\pi}`` | ``\mathbb{H}^{\mathcal{R}} = \tfrac{2}{\pi}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}^{\mathcal{R}}\stackrel{s}{\otimes}\underline{n}`` |
+### Step 1: the strain a cavity adds is carried by its surface
 
-Both factors are **independent of ``\eta``**, which is the point of normalizing
-the limit by ``b``: one definition covers the 2-D and the 3-D geometry, and
-``\mathbb{H}`` inherits ``\boldsymbol{B}``'s size-independence.
-
-The bridge in both directions is [`compliance_from_cod`](@ref) /
-[`cod_from_compliance`](@ref) (`src/Cracks/cod_H_bridge.jl`), dispatching on the
-crack type to apply the correct factor.
-
-### Conventions: what ``\boldsymbol{B}`` and ``\mathbb{H}`` are normalized by
-
-The ``3/4`` above looks like it disagrees with the literature. It does not — the
-sources normalize the **limit** differently. Naming them once avoids a great
-deal of confusion:
-
-| convention | elliptic ``\mathbb{H}^{\mathcal{E}}`` | ribbon ``\mathbb{H}^{\mathcal{R}}`` |
-| :--------- | :------------------------------------ | :---------------------------------- |
-| **`MeanFieldHomogenization`** — limit normalized by ``b``, uniformly | ``\lim (c/b)\,\mathbb{Q}^{-1} = \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` | ``\tfrac{2}{\pi}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` |
-| **Echoes** and [barthelemyMMS2023](@citet) — elliptic normalized by ``a`` | ``\lim \omega\,\mathbb{Q}^{-1} = \tfrac{3\eta}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` | ``\tfrac{2}{\pi}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` |
-
-So the two elliptic compliances differ by exactly ``\eta``:
+A volume ``\Omega``, of measure ``|\Omega|``, of a linear elastic solid of
+stiffness ``\mathbb{C} = \mathbb{S}^{-1}`` contains a cavity ``\Omega_c`` of
+volume ``V``, whose surface is free of traction, and ``\underline{\nu}`` is the
+unit normal to ``\partial\Omega_c`` pointing out of the cavity. Its outer
+boundary carries the tractions ``\boldsymbol{\Sigma}\cdot\underline{n}`` of a
+uniform stress ``\boldsymbol{\Sigma}``, and its overall strain is the average of
+the boundary displacement:
 
 ```math
-\mathbb{H}^{\mathcal{E}}_{\mathrm{MeanFieldHomogenization}}
-= \frac{1}{\eta}\;\mathbb{H}^{\mathcal{E}}_{\mathrm{Echoes}},
-\qquad
-\mathbb{H}^{\mathcal{R}}_{\mathrm{MeanFieldHomogenization}}
-= \mathbb{H}^{\mathcal{R}}_{\mathrm{Echoes}} .
+\boldsymbol{E} = \frac{1}{|\Omega|}\int_{\partial\Omega}\underline{u}\stackrel{s}{\otimes}\underline{n}\,\mathrm{d}S .
 ```
+
+The boundary of the solid ``\Omega\setminus\Omega_c`` is ``\partial\Omega`` and
+``\partial\Omega_c``, the latter with the normal ``-\underline{\nu}``, so the
+divergence theorem gives
+
+```math
+\int_{\partial\Omega}\underline{u}\stackrel{s}{\otimes}\underline{n}\,\mathrm{d}S
+= \int_{\Omega\setminus\Omega_c}\boldsymbol{\varepsilon}\,\mathrm{d}V
++ \int_{\partial\Omega_c}\underline{u}\stackrel{s}{\otimes}\underline{\nu}\,\mathrm{d}S .
+```
+
+In the solid ``\boldsymbol{\varepsilon} = \mathbb{S}:\boldsymbol{\sigma}``, and
+the stress integrates to ``|\Omega|\,\boldsymbol{\Sigma}`` over the solid: by
+the same theorem, ``\int\boldsymbol{\sigma}\,\mathrm{d}V`` is the first moment
+of the tractions on the boundary, which are those of ``\boldsymbol{\Sigma}``
+outside and vanish on the cavity. Hence
+
+```math
+\boldsymbol{E} = \mathbb{S}:\boldsymbol{\Sigma}
++ \frac{1}{|\Omega|}\int_{\partial\Omega_c}\underline{u}\stackrel{s}{\otimes}\underline{\nu}\,\mathrm{d}S .
+\tag{1}
+```
+
+The strain added by the cavity is an integral over its surface alone; neither
+its shape nor its size has been used.
+
+### Step 2: an ellipsoidal cavity
+
+Let ``\Omega_c`` be the ellipsoid of §1, alone in an infinite matrix, which is
+the dilute limit of (1). It is an inhomogeneity of zero stiffness, so by
+[Eshelby's theorem](@ref th-eshelby-problem) the displacement of its surface is,
+up to a rigid motion, that of the uniform strain
+
+```math
+\boldsymbol{\varepsilon}_c
+= \bigl(\mathbb{I}-\mathbb{P}:\mathbb{C}\bigr)^{-1}:\mathbb{S}:\boldsymbol{\Sigma}
+= \mathbb{Q}^{-1}:\boldsymbol{\Sigma},
+\qquad\text{since}\quad
+\mathbb{Q} = \mathbb{C}:\bigl(\mathbb{I}-\mathbb{P}:\mathbb{C}\bigr).
+```
+
+A rigid motion adds nothing to the integral of (1), and
+``\int_{\partial\Omega_c}\underline{x}\otimes\underline{\nu}\,\mathrm{d}S = V\,\boldsymbol{1}``,
+so that
+
+```math
+\int_{\partial\Omega_c}\underline{u}\stackrel{s}{\otimes}\underline{\nu}\,\mathrm{d}S
+= V\,\boldsymbol{\varepsilon}_c = V\,\mathbb{Q}^{-1}:\boldsymbol{\Sigma}.
+\tag{2}
+```
+
+With (1), a cavity of volume fraction ``f = V/|\Omega|`` adds
+``f\,\mathbb{Q}^{-1}`` to the compliance: ``\mathbb{Q}^{-1}`` is the compliance
+contribution of a cavity ([contribution tensors](@ref th-concentration)).
+
+### Step 3: the surface collapses onto the lips
+
+Let the third semi-axis ``c = \rho\,b`` tend to zero at fixed ``a`` and ``b``
+(for the ribbon, the elliptic cylinder of half-axes ``b`` and ``\rho b``, per
+unit length along ``\underline{\ell}``). The volume ``V`` vanishes like
+``\rho``, and ``\mathbb{Q}^{-1}`` diverges like ``1/\rho``, but the surface
+integral (2) has a finite limit: the upper half of ``\partial\Omega_c`` becomes
+the lip of ``\mathcal{I}`` facing ``+\underline{n}``, where
+``\underline{\nu}\to\underline{n}`` and ``\underline{u}\to\underline{u}^{+}``,
+and the lower half the lip facing ``-\underline{n}``, where
+``\underline{\nu}\to-\underline{n}`` and ``\underline{u}\to\underline{u}^{-}``.
+With ``S`` the area of ``\mathcal{I}`` and the definition of §2,
+
+```math
+\lim_{\rho\to 0}\int_{\partial\Omega_c}\underline{u}\stackrel{s}{\otimes}\underline{\nu}\,\mathrm{d}S
+= \int_{\mathcal{I}}[\![\underline{u}]\!]\stackrel{s}{\otimes}\underline{n}\,\mathrm{d}S
+= S\,\bigl\langle[\![\underline{u}]\!]\bigr\rangle_{\mathcal{I}}\stackrel{s}{\otimes}\underline{n}
+= S\,b\,\bigl(\boldsymbol{B}\cdot\boldsymbol{\Sigma}\cdot\underline{n}\bigr)\stackrel{s}{\otimes}\underline{n}.
+\tag{3}
+```
+
+The last term is linear in ``\boldsymbol{\Sigma}``. For any symmetric
+``\boldsymbol{\Sigma}``,
+``(\boldsymbol{B}\cdot\boldsymbol{\Sigma}\cdot\underline{n})\stackrel{s}{\otimes}\underline{n}
+= (\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}):\boldsymbol{\Sigma}``,
+where the order-4 tensor has the components
+
+```math
+\bigl(\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}\bigr)_{ijkl}
+= \tfrac{1}{4}\bigl(n_i B_{jk} n_l + n_j B_{ik} n_l + n_i B_{jl} n_k + n_j B_{il} n_k\bigr).
+```
+
+Equating (2) and (3) for every ``\boldsymbol{\Sigma}``,
+
+```math
+\lim_{\rho\to 0} V\,\mathbb{Q}^{-1}
+= S\,b\;\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}.
+\tag{4}
+```
+
+### Step 4: the compliance contribution
+
+Multiplying (4) by ``\rho/V = c/(b\,V)``,
+
+```math
+\mathbb{H} = \lim_{\rho\to 0}\rho\,\mathbb{Q}^{-1}
+= \frac{c\,S}{V}\;\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n},
+```
+
+and ``cS/V`` is a number set by the shape alone:
+
+| | surface ``S`` | volume ``V`` | ``k = cS/V`` |
+| :-- | :-- | :-- | :-- |
+| **elliptic** (3-D) | ``\pi a b`` | ``\tfrac{4}{3}\pi a b c`` | ``\tfrac{3}{4}`` |
+| **ribbon** (2-D), per unit length | ``2b`` | ``\pi b c`` | ``\tfrac{2}{\pi}`` |
+
+Both factors are **independent of ``\eta``**, which is the point of normalizing
+both ``\boldsymbol{B}`` and the flatness by ``b``: one definition covers the 2-D
+and the 3-D geometry, and ``\mathbb{H}`` inherits ``\boldsymbol{B}``'s
+independence of size.
+
+### Step 5: the dilute correction, and back from ``\mathbb{H}`` to ``\boldsymbol{B}``
+
+``N`` cracks per unit volume (per unit area for ribbons) add, by step 2,
+``N V\,\mathbb{Q}^{-1}`` to the compliance, whose limit (4) is
+``N S b\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}
+= (N S b/k)\,\mathbb{H}``: ``\tfrac{4\pi}{3}\,N a b^{2}\,\mathbb{H}`` for the
+ellipse and ``\pi N b^{2}\,\mathbb{H}`` for the ribbon, the crack densities of
+[§6](@ref th-cod-dilute).
+
+The map ``\boldsymbol{B}\mapsto\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}``
+loses nothing on a symmetric ``\boldsymbol{B}``, which the COD tensor is: in a
+frame where ``\underline{n} = \underline{e}_3``, the components ``i3j3`` of the
+image are ``B_{ij}(1+\delta_{i3})(1+\delta_{j3})/4``. ``\boldsymbol{B}`` is
+therefore read back from ``\mathbb{H}``, and the bridge works both ways:
+[`compliance_from_cod`](@ref) and [`cod_from_compliance`](@ref)
+(`src/Cracks/cod_H_bridge.jl`), each the exact inverse of the other, apply the
+factor ``k`` of the shape family of the crack.
+
+### [Conventions: what ``\boldsymbol{B}`` and ``\mathbb{H}`` are normalized by](@id th-cod-conventions)
+
+Steps 1 and 2 involve no convention. Step 3 uses two lengths: the one the mean
+opening is divided by in the definition of ``\boldsymbol{B}``, and the one the
+flatness is measured on. `MeanFieldHomogenization` takes the half-width ``b``
+for both, as [barthelemyIJSS2026](@citet) does for ``\boldsymbol{B}``.
+[barthelemyIJES2021](@citet) and [barthelemyMMS2023](@citet) take the semi-major
+axis ``a`` for an elliptic crack: their mean opening is
+``\langle[\![\underline{u}]\!]\rangle/a`` and their flatness
+``\omega = c/a = \eta\,\rho``. Steps 3 and 4 with ``a`` in place of ``b`` give
+
+```math
+\boldsymbol{B}_a = \eta\,\boldsymbol{B},
+\qquad
+\mathbb{H}_a = \lim_{\omega\to 0}\omega\,\mathbb{Q}^{-1} = \eta\,\mathbb{H}
+= \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}_a\stackrel{s}{\otimes}\underline{n}:
+```
+
+the factor ``3/4`` holds in either convention, while the tensors of an elliptic
+crack differ by ``\eta``. The ribbon has no length ``a``, and the sources
+normalize it by ``b`` as this package does. Echoes follows the elliptic
+normalization by ``a`` and returns ``\mathbb{H}_a``:
+
+| convention | elliptic | ribbon |
+| :--------- | :------- | :----- |
+| **`MeanFieldHomogenization`**, ``\boldsymbol{B}`` of [barthelemyIJSS2026](@citet): ``b`` | ``\lim \rho\,\mathbb{Q}^{-1} = \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` | ``\lim \rho\,\mathbb{Q}^{-1} = \tfrac{2}{\pi}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` |
+| [barthelemyIJES2021](@citet), [barthelemyMMS2023](@citet), Echoes: ``a`` for the ellipse | ``\lim \omega\,\mathbb{Q}^{-1} = \tfrac{3\eta}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` | as in `MeanFieldHomogenization` |
 
 They coincide for the **penny crack** ``\eta=1``, which is why the discrepancy is
 invisible on the most common test case — and why a penny-only cross-check cannot
@@ -339,14 +469,14 @@ On the `MeanFieldHomogenization` side the ``3/4`` is ``\eta``-independent to mac
 precision (``\mathbb{H}_{3333}/B_{33} = 0.750000`` for every ``\eta``).
 
 !!! warning "Check the normalization before comparing across sources"
-    `MeanFieldHomogenization` and [barthelemyIJSS2026](@citet) normalize
-    ``\boldsymbol{B}`` by the half-width ``b``. [barthelemyIJES2021](@citet) and
-    [barthelemyMMS2023](@citet) normalize their COD tensors differently, as
-    [barthelemyIJSS2026](@citet) points out, and Echoes never forms
-    ``\boldsymbol{B}``: it returns ``\mathbb{H}`` directly. Whether you compare a
-    ``\boldsymbol{B}`` or an ``\mathbb{H}``, check the normalization first.
+    For an elliptic crack, the ``\boldsymbol{B}`` and ``\mathbb{H}`` of
+    [barthelemyIJES2021](@citet) and [barthelemyMMS2023](@citet), and the
+    ``\mathbb{H}`` that Echoes returns (it never forms ``\boldsymbol{B}``), are
+    ``\eta`` times those of this package and of [barthelemyIJSS2026](@citet).
+    Whether you compare a ``\boldsymbol{B}`` or an ``\mathbb{H}``, check the
+    normalization first.
 
-### Checking ``\mathbb{H}`` without going through ``\boldsymbol{B}``
+### [Checking ``\mathbb{H}`` without going through ``\boldsymbol{B}``](@id th-cod-H-check)
 
 The closed forms of the next section give ``\boldsymbol{B}``, and ``\mathbb{H}``
 follows from it by the ``3/4``. Comparing ``\mathbb{H}`` to those closed forms
@@ -393,11 +523,58 @@ The three curves are straight lines of **slope 1**: the error decays like
 [barthelemyIJSS2009](@cite). That slope is the real content of the check — a
 single ``\rho`` would not distinguish a true limit from a coincidence.
 
-!!! note "Two limits of the flattening route"
-    The Hill tensor is validated down to ``\rho = 10^{-3}``, where the sweep
-    stops, and the residue backend fails below about ``c \approx 10^{-3}`` —
-    hence `method = :nestedquadgk` for the anisotropic cases. Neither affects [`cod_tensor`](@ref), which resolves the limit
-    analytically instead of flattening an ellipsoid.
+!!! note "How flat the flattening route goes"
+    The sweep stops at ``\rho = 10^{-3}``. Both numerical back-ends hold far
+    below it: at ``c = 10^{-4}`` the residues agree with the cubature to
+    ``10^{-15}``. None of this concerns [`cod_tensor`](@ref), which resolves the
+    limit analytically instead of flattening an ellipsoid.
+
+### [Every route, in a triclinic matrix](@id th-cod-every-route)
+
+In a matrix without any symmetry, ``\boldsymbol{B}`` comes from the reduced
+kernel ``\hat{\boldsymbol{Q}}^{\star}_{nn}`` of [section 4](@ref th-cod-green)
+by three integrators, and ``\mathbb{H}`` from the flattening above with the
+Hill tensor by three integrators. The flattening error being ``O(\rho)``, the
+combination ``\bigl(10\,\mathbb{H}(\rho/10)-\mathbb{H}(\rho)\bigr)/9`` cancels
+its first-order term and leaves ``O(\rho^{2})``. Each side is compared with the
+other through [`compliance_from_cod`](@ref) and [`cod_from_compliance`](@ref):
+
+```@example Horacle
+import DECUHR, Integrals   # loads the `:decuhr` back-end
+using Printf
+
+KM = [210.0 80 75 5 4 3; 80 195 90 -2 3 -1; 75 90 220 1 -2 2;
+      5 -2 1 60 2.5 1.5; 4 3 -2 2.5 65 -1; 3 -1 2 1.5 -1 55]   # Kelvin–Mandel
+C_tri = TensND.inv_KM(KM, TensND.CanonicalBasis{3, Float64}())
+crack = EllipticCrack(1.0, 0.5)
+tol = (; abstol = 1.0e-12, reltol = 1.0e-10)
+
+B_ref = cod_tensor(crack, C_tri; method = :nestedquadgk, tol...)
+H_ref = compliance_from_cod(B_ref, crack)
+function H_flat(method, ρ)   # (c/b) ℚ⁻¹ of the flattened ellipsoid
+    P = hill_tensor(Ellipsoid(1.0, 0.5, 0.5ρ), C_tri; method, tol...)
+    return ρ * inv(C_tri - C_tri ⊡ P ⊡ C_tri)
+end
+
+for m in (:residues, :decuhr)
+    @printf "B by %-12s against :nestedquadgk   %.0e\n" m relerr(cod_tensor(crack, C_tri; method = m, tol...), B_ref)
+end
+for (m, ρ) in ((:nestedquadgk, 1.0e-4), (:residues, 1.0e-4), (:decuhr, 1.0e-2))
+    H = (10 * H_flat(m, ρ / 10) - H_flat(m, ρ)) / 9
+    @printf "H flattened, %-12s ρ = %.0e: on H %.0e, on B %.0e\n" m ρ relerr(H, H_ref) relerr(cod_from_compliance(H, crack), B_ref)
+end
+```
+
+The three integrations of ``\boldsymbol{B}`` agree to rounding. The extrapolated
+flattening meets them to about ``10^{-9}`` with the cubature and the residues,
+and to about ``10^{-5}`` with DECUHR, taken at ``\rho = 10^{-2}`` and
+``10^{-3}`` only, where it stays fast.
+
+The tutorial [Two routes to a crack](@ref tut-crack-routes) takes the limit
+otherwise: from the first-order term of ``\mathbb{P}`` in ``\rho``, the route of
+[barthelemyIJSS2009](@citet), with no extrapolation, in random anisotropic
+matrices and for several aspect ratios, and exactly in SymPy for an isotropic
+one.
 
 ## [4. From the Green operator to ``\boldsymbol{B}``](@id th-cod-green)
 
@@ -1052,7 +1229,7 @@ when the reference is anisotropic in *type* and isotropic in *value*, a case the
 self-consistent and differential schemes reach at their first step, so it is
 available on explicit `method = :residues` only (`src/Core/dispatch.jl`).
 
-## 6. Dilute correction to the effective compliance
+## [6. Dilute correction to the effective compliance](@id th-cod-dilute)
 
 [`inverse_property_contribution`](@ref)`(crack, C₀)` returns ``\mathbb{H}`` itself —
 the *size-independent* contribution, not the dilute correction. Cracks have no

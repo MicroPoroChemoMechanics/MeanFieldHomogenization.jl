@@ -1,5 +1,223 @@
 # Changelog
 
+## v0.17.3 — Residues on multiple roots, and the bridge from B to H
+
+A patch release. The residue algorithm, reached by an explicit
+`method = :residues`, lost its accuracy, gave a wrong value without warning, or
+refused the case, whenever roots of the acoustic polynomial coincided or nearly
+did: an isotropic or transversely isotropic reference along the ellipsoid axes,
+a reference close to one, and flat ellipsoids, whose roots all shrink with the
+aspect ratio. The default `method = :auto`, which uses a cubature, was not
+affected. Defects outside the residues are fixed too: `compliance_from_cod`
+returned a wrong ℍ from 𝐁 for all but one component, the cubature of 𝐁 broke
+down at tight tolerances, the self-consistent scheme converged to a wrong
+tensor wherever the transversely isotropic or orthotropic estimate had a
+negative or zero coupling, and symbolic spheroids, ellipsoids and cylinders
+were refused. Errors below are relative, against the cubature or a closed form,
+as measured on 0.17.2 and on this release.
+
+### Fixed
+
+- **`cod_tensor(...; method = :residues)` dropped multiple roots.** A root
+  where the derivative of the acoustic polynomial vanished was skipped, and its
+  contribution lost, where the residue at a multiple pole was due. For an
+  isotropic matrix entered as a general tensor, which has a triple root, the
+  COD tensor came out wrong by 1.0 for a penny-shaped crack, 0.73 for a ribbon,
+  1.0 for an ellipse of aspect 0.5; a transversely isotropic matrix with a
+  double root, by 1.1e-7. All are now within 1e-12.
+- **`hill_tensor(...; method = :residues)` on multiple and close roots.** Roots
+  closer than 1e-3 in absolute terms were declared coincident and moved to their
+  mean, an error of the order of their distance. A transversely isotropic matrix
+  around a sphere was wrong by 8.2e-3 with C66 = C44 (1 + 1e-3), a cubic matrix
+  around a 3:1:1 prolate spheroid by 8.4e-6, a double root away from `i` by
+  1.9e-5. An isotropic matrix entered as a general tensor, around a sphere or a
+  spheroid, a transversely isotropic one with C11 = C33, and one with a double
+  root at `i` were refused with an `ArgumentError`. All are now within 3e-12, and
+  the isotropic ones within 1e-13 of Eshelby's tensor.
+- **Flat ellipsoids.** The roots shrink with the aspect ratio, so that the same
+  absolute threshold grouped distinct roots: a flat ellipsoid of aspect 1e-3 in a
+  triclinic matrix was wrong by 1.3e-2, and flatter ones were refused. Down to
+  1e-6 they are now within the tolerance of the outer quadrature, 1e-15 at
+  tight tolerances.
+- **The root finder.** On the polynomial of an isotropic reference around a
+  sphere, with two triple roots, the iterative root finder returned, at some
+  angles, five roots out of six far from any root. The roots are now the
+  eigenvalues of the companion matrix, which the QR algorithm finds with a
+  backward error at the rounding level.
+- **`compliance_from_cod` was right on ℍ₃₃₃₃ only.** It placed the components
+  ``H_{i3k3}`` of ``k\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}``
+  and then averaged over eight index permutations as if all were filled, so
+  that, the normal being ``\underline{e}_3``, ``H_{1313}`` came out as
+  ``k B_{11}/16`` instead of ``k B_{11}/4`` and ``H_{1333}`` as ``k B_{13}/4``
+  instead of ``k B_{13}/2``, which its docstring presented as a property of the
+  framework. It now forms the symmetrized product, as
+  `inverse_property_contribution` always did, and is the exact inverse
+  of `cod_from_compliance`, which was right. Both dispatch on the shape family
+  of the crack, so that a user-defined crack declaring its `shape_trait` has
+  them too.
+- **The cubature of 𝐁 at tight tolerances.** Along the normal coordinate
+  ``\xi_n = \rho\cot\alpha`` the kernel cancels down to ``O(\sin^2\alpha)``
+  as ``\alpha \to 0`` and lost ``\epsilon/\sin^2\alpha`` of its accuracy: asked
+  for 1e-13, the adaptive quadrature chased the rounding noise down to
+  ``\alpha \approx 10^{-150}`` and stopped on a `DomainError`. Below
+  ``\sin\alpha = 0.05`` the kernel is now taken in a form free of cancellation;
+  at tight tolerances the cubature then agrees with the residues to 1.6e-15.
+  This concerns `:nestedquadgk`, the default, and `:decuhr` alike.
+- **A reference without a Green operator.** A reference whose acoustic tensor is
+  singular along a direction of the integration, one without shear stiffness for
+  instance, was integrated on a polynomial cut down to a lower degree, which
+  turned an undefined integral into a number. It is refused with an
+  `ArgumentError`, as is a reference whose acoustic tensor changes sign.
+- **The self-consistent iteration clamped couplings.** Before each step, the
+  guard that keeps the running estimate away from the trivial null fixed point
+  raised every stored coefficient below a small threshold to that threshold.
+  Those of an isotropic or a cubic tensor are its eigenvalues; those of a
+  transversely isotropic (Walpole) or an orthotropic tensor include couplings,
+  which are negative for an auxetic material and zero for an uncoupled one, and
+  clamping them moved the fixed point. With phases of Poisson's ratios -0.4 and
+  -0.3 around aligned 3:1 spheroids at 40 %, `SelfConsistent()` returned a
+  tensor that missed its own condition by 1.3e-3, and
+  `SelfConsistent(algorithm = NewtonDefault())` one that missed it by 1.0, the
+  coupling at -2052 instead of -6.8. The guard now reads the spectrum block by
+  block and raises only the eigenvalues below the threshold, keeping their
+  eigenvectors; both algorithms meet the condition to 1e-11. Its isotropic
+  method, declared on the wrong type parameter, had never applied.
+- **Symbolic inclusions.** `Symbolics.Num` subtypes `Real`, and the Newton
+  potentials, the classification of a cylinder and the stopping tests of
+  Carlson's integrals were routed on `T <: Real`: the Hill tensor of a symbolic
+  spheroid, triaxial ellipsoid or cylinder, and the construction of a symbolic
+  `Cylinder` itself, threw `TypeError: non-boolean (Num) used in boolean
+  context`, where the docstrings announce symbolic support. They are now routed
+  on whether comparisons return a `Bool`. The spheroids take their closed forms
+  in `acos` and `acosh`; the triaxial ellipsoid keeps its incomplete elliptic
+  integrals as unexpanded calls, which the Symbolics extension now registers as
+  it did the complete ones. SymPy, whose `Sym` is not a `Real`, was not
+  affected.
+- **A crack given in numbers under symbolic moduli lost its exact closed form.**
+  The factors of the circle (π/4, π/2) were evaluated in the arithmetic of the
+  crack geometry, Float64, so that the COD tensor of `PennyCrack(1.0)` in a
+  matrix of symbolic `E`, `ν` carried `1.6977…` in place of `16/(3π)`. They are
+  evaluated in the arithmetic of the moduli when it is symbolic, and a ratio given
+  as `1.0` enters as the integer it is: the result is Sneddon's closed form,
+  exactly.
+- **Cylinders and ellipses close to circular.** The Newton potentials of an
+  elliptic cylinder and of an ellipse switched to the circular forms within
+  1e-6 (relative) of a circular section, although the elliptic forms hold down
+  to it: up to 5e-7 in value, and the whole derivative along the difference of
+  the semi-axes, were lost there. The circular forms are now taken only for
+  semi-axes that are one, value and derivatives; the potentials agree with the
+  limit of an elongated ellipsoid to 1e-12, in value and in derivative.
+- **`cumulative_strain_average` beyond the outer radius** returned the average
+  over the sphere alone, normalized by the sphere's volume, for a ball that
+  takes in the surrounding medium too. A radius beyond the outer one, outside
+  the documented domain, is now refused.
+- `check_material_interface` reported a tangent check skipped at a zero tangent
+  as "non-smooth".
+- **The derivative of the Hill tensor of a very flat ellipsoid was NaN** at some
+  flatnesses below 5e-6, by the cubature (`:nestedquadgk`, the default for an
+  anisotropic matrix, and `:decuhr`), its value being right. The cubature
+  variable was promoted to the dual type before `√(1 − z²)`, whose derivative at
+  the node where `1 − z²` rounds to zero is `0·∞`. The cubature variables now stay
+  plain numbers, and `1 − z²` is formed from the exact `1 − z`. The first-order
+  term of the Hill tensor in the flatness, by ForwardDiff, then gives the crack
+  compliance by the block computation of Barthélémy (2009) within 1e-8 of the
+  one from the COD tensor.
+- `method = :residues` with a dual, symbolic or complex stiffness or geometry
+  failed with a `MethodError` deep in the kernel; it is refused with an
+  `ArgumentError` that points to the cubature, which `:auto` selects and which
+  differentiates.
+
+The residues of roots that coincide or nearly do are now summed as a group, by
+the expansion of the contour integral around it, which depends on the roots only
+through symmetric functions of their offsets and is well conditioned; for
+coincident roots it is the residue at a multiple pole. The inner integral of the
+Hill tensor is taken in the variable of Masson's substitution `t = cot(θ/2)`, in
+which `i` is a double pole like any other, with its numerators in factored form,
+so that no digit is lost near `t = ±1` or `t = 0`, where the poles of flat and
+long ellipsoids lie. The derivation is on the theory page of Hill tensors.
+
+### Changed
+
+- The residue algorithm runs twice as fast: 1.9 ms for the Hill tensor of a
+  3:2:1 ellipsoid in a triclinic matrix, against 4.1 ms, with 2.7 MiB allocated
+  against 7.0 MiB; 1.3 ms for the COD tensor of a penny-shaped crack, against
+  2.7 ms. The acoustic polynomial, its adjugate and the numerators are products
+  of fixed size rather than polynomial objects, and the 21 numerators of the
+  Hill tensor are integrated through their coefficients, as a bilinear form.
+- The `PolynomialRoots` dependency is dropped.
+- `newton_potential_3d` and `newton_potential_2d` accept semi-axes of mixed
+  types, as `newton_potential_3d_cylinder` did.
+- `fe_available_gb` takes the file to read, `/proc/meminfo` by default.
+- The differential scheme no longer intercepts a failure of the Hill tensor at
+  its first steps to advise against `method = :residues`: the residues now take
+  the isotropic values a fully anisotropic running medium starts from, and any
+  other failure reports its own message.
+
+### Tests
+
+- The residue sums over groups of poles against partial fractions in 512-bit
+  arithmetic; the inner integral of the Hill tensor against a quadrature of the
+  same rational function; the Hill tensor on multiple and nearly multiple roots
+  against the cubature and Eshelby's tensor; the COD tensor of an isotropic
+  matrix entered as a general tensor against the closed forms. A test that
+  pinned the failure of the residues for a crack whose normal is perpendicular
+  to the axis of a transversely isotropic matrix now checks their agreement with
+  the cubature there.
+- A test file of the residue algorithm on aligned transversely isotropic and
+  orthotropic matrices was never included in the test suite; it is now.
+- Every route to ℍ and 𝐁 in a triclinic matrix: 𝐁 from the reduced kernel by
+  the cubature, DECUHR and the residues, and ℍ from the flattening of an
+  ellipsoid with the Hill tensor by the same three, extrapolated to zero
+  flatness, compared both ways through the bridge. They agree to 1e-14 among
+  the integrations of 𝐁, and to 1.5e-9 with the extrapolated flattening.
+- The bridge between ℍ and 𝐁 on every component, against the symmetrized
+  product written out from its definition.
+- The guard of the self-consistent iteration against the full Kelvin–Mandel
+  spectrum, for every class it knows; the self-consistent estimate of auxetic
+  phases against its own condition, evaluated without the guard.
+- Symbolic Hill tensors of spheroids, triaxial ellipsoids and cylinders, in
+  elasticity and conduction, and the symbolic Newton potentials, against the
+  numerical ones.
+- The potentials of a cylinder near a circular section against those of an
+  elongated ellipsoid, with their derivatives.
+- 𝐁 of an elliptical and of a ribbon-like crack in an elliptically orthotropic
+  and in a transformed transversely isotropic (monoclinic) matrix, by the three
+  integrators, against the transformation rule of Barthélémy (2026) applied to
+  the closed forms: within 2e-13. The derivative with respect to a modulus, by
+  ForwardDiff through the cubature, against the same rule.
+- Branches no test reached: the regularized and the Picard steps of
+  `NewtonDefault`, aging viscoelastic cracks with an interface stiffness against
+  their elastic limit, the unfinished self-consistent iterations of aging
+  viscoelasticity, the Rabotnov model against its Mittag-Leffler form, the
+  complete elliptic integrals of a complex parameter, and the refusals of
+  assemblies, laminates, finite elements and neural surrogates.
+
+### Documentation
+
+- A tutorial, *Two routes to a crack: the COD tensor and the flattened
+  ellipsoid*: 𝐁 from the crack plane and ℍ from the first-order term of the Hill
+  tensor of a flattened ellipsoid, inverted on the kernel of the leading term,
+  met through the bridge. Exact in SymPy in an isotropic matrix, where both give
+  Sneddon's crack; with the first-order term by ForwardDiff in random anisotropic
+  matrices, where they meet within 3e-8; with the residues and DECUHR beside the
+  nested cubature; and against the transformation rule of an elliptically
+  orthotropic matrix.
+- The page on COD tensors shows the comparison of every route in a triclinic
+  matrix, and proves the identity ℍ = k n ⊗ˢ 𝐁 ⊗ˢ n step by step in the
+  normalization of the package (𝐁 and the flatness both by the half-width b, as
+  in Barthélémy, 2026): the strain a cavity adds carried by its surface, Eshelby's
+  uniform strain, the collapse of the surface onto the lips, and k = cS/V. The
+  normalization by the semi-major axis of Barthélémy et al. (2021, 2023) and
+  Echoes follows from it, with tensors η times those of the package and the same
+  factor 3/4.
+- The COD tensor of an arbitrarily anisotropic matrix is described as what the
+  code computes: the inverse of an integral of the reduced kernel
+  ``\hat{\boldsymbol{Q}}^{\star}_{nn}``, after Barthélémy (2026), a line integral
+  along the normal (Kanaun and Levin, 2009). The docstrings attributed it to the
+  flattening of an ellipsoid (Barthélémy, 2009), an independent route to the
+  same tensor, and its residue evaluation to Masson (2008), whose paper does not
+  treat cracks.
+
 ## v0.17.2 — Mori–Tanaka in aging viscoelasticity, on aligned inclusions
 
 A patch release. The aging linear viscoelastic Mori–Tanaka scheme gave a wrong

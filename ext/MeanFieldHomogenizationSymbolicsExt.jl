@@ -4,7 +4,7 @@ using MeanFieldHomogenization
 using Symbolics
 
 # ──────────────────────────────────────────────────────────────────────────────
-#  Complete elliptic integrals as *opaque* symbolic functions on `Symbolics.Num`
+#  Elliptic integrals as *opaque* symbolic functions on `Symbolics.Num`
 #
 #  The Symbolics counterpart of `MeanFieldHomogenizationSymPyExt`, and it exists
 #  for the same reason — but the failure mode it avoids is worse.
@@ -18,8 +18,12 @@ using Symbolics
 #
 #  `@register_symbolic` makes `ell_K`/`ell_E` stop at an unexpanded call node on
 #  a symbolic argument, while any *numeric* argument still reaches the fast
-#  Float64 method. So a symbolic result stays compact and
-#  `Symbolics.substitute` + `Symbolics.value` evaluates it exactly.
+#  Float64 method. The incomplete integrals `ell_F(φ, m)` and `ell_E(φ, m)`, on
+#  which the Newton potential of a triaxial ellipsoid rests, and Carlson's
+#  `ell_RF` and `ell_RD` are registered for the same reason: the duplication
+#  needs a stopping test that a `Num` cannot answer. So a symbolic result stays compact and
+#  `Symbolics.substitute(…; fold = Val(true))` + `Symbolics.value` evaluates it
+#  exactly (without `fold`, the call node is kept with numeric arguments).
 #
 #  **Differentiation is deliberately not wired here.** Registering the analytic
 #  derivatives (NIST DLMF 19.4.1–19.4.2,
@@ -37,6 +41,14 @@ const _Ell = MeanFieldHomogenization.Elliptic
 
 Symbolics.@register_symbolic _Ell.ell_K(m)
 Symbolics.@register_symbolic _Ell.ell_E(m)
+Symbolics.@register_symbolic _Ell.ell_F(φ, m)
+# A second overload of `ell_E`: its shape rule, which takes any number of
+# arguments, came with the first, so only the two-argument type rule is added.
+Symbolics.@register_symbolic _Ell.ell_E(φ, m) false
+Symbolics.SymbolicUtils.promote_symtype(::typeof(_Ell.ell_E), ::Type, ::Type) = Real
+# Carlson's integrals, exported too, for the same reason.
+Symbolics.@register_symbolic _Ell.ell_RF(x, y, z)
+Symbolics.@register_symbolic _Ell.ell_RD(x, y, z)
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Dividing an ALV kernel by a symbolic scalar

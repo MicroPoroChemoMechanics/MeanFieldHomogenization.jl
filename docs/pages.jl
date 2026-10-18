@@ -159,6 +159,7 @@ pages = [
         "Inclusions, geometries and orientation" => [
             "tutorials/generated/hill_tensors.md",
             "tutorials/cracks.md",
+            "tutorials/generated/crack_routes.md",
             "tutorials/generated/crack_distributions.md",
             "tutorials/fe_crack.md",
             "tutorials/generated/layered_sphere.md",

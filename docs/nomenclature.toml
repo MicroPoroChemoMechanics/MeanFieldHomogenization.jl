@@ -510,7 +510,7 @@ tex = '\eta'
 label = "η"
 name = "in-plane aspect ratio b/a"
 unit = "1"
-pages = ["theory/notation.md", "theory/eshelby_problem.md", "theory/hill_tensors.md", "theory/cod_tensors.md", "manual/ellipsoidal_inclusions.md", "manual/inclusion_gallery.md", "manual/cracks.md", "tutorials/cracks.md", "manual/particle_assemblies.md", "theory/differential_scheme.md", "theory/thermal_cracks.md", "developer/validation.md"]
+pages = ["theory/notation.md", "theory/eshelby_problem.md", "theory/hill_tensors.md", "theory/cod_tensors.md", "tutorials/generated/crack_routes.md", "manual/ellipsoidal_inclusions.md", "manual/inclusion_gallery.md", "manual/cracks.md", "tutorials/cracks.md", "manual/particle_assemblies.md", "theory/differential_scheme.md", "theory/thermal_cracks.md", "developer/validation.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -1140,7 +1140,7 @@ tex = '\rho'
 label = "ρ"
 name = "flatness c/b of the ellipsoid or elliptic cylinder a crack is the limit of"
 unit = "1"
-pages = ["theory/cod_tensors.md"]
+pages = ["theory/cod_tensors.md", "tutorials/generated/crack_routes.md"]
 
 [[symbol]]
 group = "Shape and Walpole coefficients"

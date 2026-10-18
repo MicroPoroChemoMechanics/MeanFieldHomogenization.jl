@@ -123,7 +123,7 @@ function _resolve_degenerate_ellipsoid(axes_sorted::NTuple{3, T}, basis) where {
 
     # Cylinder: one axis Inf, the other two finite > 0
     if n_inf == 1 && n_zero == 0
-        return Cylinder{_SHAPE_CYLINDER[_classify_cylinder_shape(T, a2, a3)], T, typeof(basis)}(
+        return Cylinder{_SHAPE_CYLINDER[MFH_Core._classify_shape_2d(T, a2, a3)], T, typeof(basis)}(
             (a2, a3), basis
         )
     end
@@ -136,15 +136,10 @@ function _resolve_degenerate_ellipsoid(axes_sorted::NTuple{3, T}, basis) where {
         return Base.invokelatest(getfield(Cracks, :RibbonCrack), a2, basis)
     end
 
-    # Flat elliptic crack (penny or elliptic): one axis zero, two finite > 0
-    if n_inf == 0 && n_zero == 1
-        # EllipticCrack takes a ≥ b and a basis built from Euler angles.
-        # We pass the axes in descending order and the pre-built basis.
-        return Base.invokelatest(
-            getfield(Cracks, :EllipticCrack), a1, a2, basis
-        )
-    end
-    return nothing
+    # Flat elliptic crack (penny or elliptic): one axis zero, two finite > 0 —
+    # the one case left. EllipticCrack takes a ≥ b and a basis built from Euler
+    # angles: the axes go in descending order, with the pre-built basis.
+    return Base.invokelatest(getfield(Cracks, :EllipticCrack), a1, a2, basis)
 end
 
 _resolve_degenerate_ellipsoid(::NTuple{3, T}, _) where {T} = nothing
@@ -183,7 +178,7 @@ function Ellipsoid(
     axes_in = (T(a), T(b), T(c))
     basis_in = MFH_Core._default_basis(T, euler_angles)
     axes_sorted, basis = MFH_Core._sort_axes_and_basis(axes_in, basis_in, Val(:ellipsoid_3d))
-    if T <: Real
+    if is_hard_numeric(T)
         redirected = _resolve_degenerate_ellipsoid(axes_sorted, basis)
         redirected === nothing || return redirected
     end
@@ -207,7 +202,7 @@ function Ellipsoid(a::Ta, b::Tb, c::Tc, R::AbstractMatrix) where {Ta, Tb, Tc}
     axes_in = (T(a), T(b), T(c))
     basis_in = TensND.RotatedBasis(Matrix{float(eltype(R))}(R))
     axes_sorted, basis = MFH_Core._sort_axes_and_basis(axes_in, basis_in, Val(:ellipsoid_3d))
-    if T <: Real
+    if is_hard_numeric(T)
         redirected = _resolve_degenerate_ellipsoid(axes_sorted, basis)
         redirected === nothing || return redirected
     end
@@ -232,7 +227,7 @@ function Ellipsoid(
     T = MFH_Core._floatlike(promote_type(Ta, Tb, Tc))
     axes_in = (T(a), T(b), T(c))
     axes_sorted, basis_out = MFH_Core._sort_axes_and_basis(axes_in, basis, Val(:ellipsoid_3d))
-    if T <: Real
+    if is_hard_numeric(T)
         redirected = _resolve_degenerate_ellipsoid(axes_sorted, basis_out)
         redirected === nothing || return redirected
     end

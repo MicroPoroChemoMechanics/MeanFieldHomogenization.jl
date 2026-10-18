@@ -43,23 +43,20 @@ end
 # `TensND/src/array_utils.jl` and is re-exported by this module for the eight
 # sub-modules that reach it through `using ..Elliptic`.
 #
-# Known consumers: `_agm_converged` below, `Core._sort_axes_and_basis`,
-# `Core._classify_shape_2d/3d`, `Cracks._classify_crack`,
+# Known consumers: `_agm_converged` below, the stopping tests of `ell_RF` and
+# `ell_RD`, `Core._sort_axes_and_basis`, `Core._classify_shape_2d/3d`,
+# `Core._one_semi_axis` (Newton potentials), the `Ellipsoid` constructors,
+# `Cracks._classify_crack`,
 # `Cracks._is_unit_alignment`, `Cracks._elliptic_CS`, `Laminates._parallel`,
 # `Laminates.add_layer!` / `validate_laminate`, `Schemes.validate_rve`,
 # `Viscoelasticity._checkable`.
 
 # ─── Tolerances — tuned per scalar type ──────────────────────────────────────
 
-function _agm_tol(::Type{T}) where {T <: Number}
-    if T <: AbstractFloat
-        return 10 * eps(T)
-    elseif T <: Real
-        return 10 * eps(Float64)
-    else
-        return 0.0                 # symbolic types — fall back to fixed max-iter
-    end
-end
+# A tolerance at the working precision where comparisons return a `Bool`; none
+# for a complex or a symbolic scalar, which runs the fixed 60 iterations.
+_agm_tol(::Type{T}) where {T <: AbstractFloat} = 10 * eps(T)
+_agm_tol(::Type{T}) where {T <: Number} = is_hard_numeric(T) ? 10 * eps(Float64) : 0.0
 
 """
     _agm_converged(::Type{T}, a, b, tol) -> Bool
@@ -71,19 +68,13 @@ can drive `&&`.
 tolerance": `Symbolics.Num <: Real`, yet `<` on a `Num` yields a symbolic
 inequality rather than a `Bool`, and using it in a boolean context throws. (The
 same wrong predicate once made `Cracks._elliptic_CS` return `NaN` on a symbolic
-penny and `Cracks._ti_aligned` throw on a symbolic TI reference.) `ForwardDiff.Dual`
-is also `<: Real` and *does* compare to a `Bool`, so the type alone cannot
-separate the cases — the comparison result is inspected instead. A symbolic
-scalar therefore never signals convergence and simply runs the fixed 60
-iterations, which is what `_agm_tol` already anticipates.
+penny and `Cracks._ti_aligned` throw on a symbolic TI reference.)
+[`is_hard_numeric`](@ref) is the predicate: a `ForwardDiff.Dual` compares, a
+`Num`, a `SymPy.Sym` or a complex number does not, and never signals
+convergence: it runs the fixed 60 iterations.
 """
 function _agm_converged(::Type{T}, a, b, tol) where {T <: Number}
-    T <: Real || return false
+    is_hard_numeric(T) || return false
     denom = abs(a)
-    # Both the `iszero` and the `<` can come back symbolic; either one is enough
-    # to declare "cannot decide", and the numeric path is untouched.
-    at_zero = iszero(denom)
-    at_zero isa Bool || return false
-    verdict = at_zero ? abs(a - b) < tol : abs(a - b) < tol * denom
-    return verdict isa Bool ? verdict : false
+    return iszero(denom) ? abs(a - b) < tol : abs(a - b) < tol * denom
 end

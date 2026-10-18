@@ -1,6 +1,7 @@
 using Test
 using MeanFieldHomogenization
 using ForwardDiff
+import Symbolics
 
 @testset "Core — newton_potential_3d_cylinder" begin
     # Circular base (b = c): I_b = I_c = 2π, I_bb = I_cc = I_bc = π/b²
@@ -49,4 +50,38 @@ using ForwardDiff
     df = ForwardDiff.derivative(f, 2.0)
     @test isfinite(df)
     @test !isnan(df)
+end
+
+@testset "Core — cylinder and ellipse potentials hold down to a circular section" begin
+    np_cyl = MeanFieldHomogenization.Core.newton_potential_3d_cylinder
+    np_3d = MeanFieldHomogenization.Core.newton_potential_3d
+    np_2d = MeanFieldHomogenization.Core.newton_potential_2d
+    # The elliptic forms are exact down to b = c and must be used there, in value
+    # and in derivative: the circular ones were taken within 1e-6 (relative), at
+    # a cost of 2.5e-8 in value and of the whole derivative along c. Reference:
+    # the ellipsoid of semi-axes (1e7, 1, c), whose potentials tend to the
+    # cylinder's as log(a)/a² — near 1e-13 here.
+    I_bc(f, x) = collect(f(x)[1][2:3])
+    II_bc(f, x) = collect(f(x)[2][2:4])
+    cyl(x) = np_cyl(1.0, x)
+    ell(x) = np_3d(1.0e7, 1.0, x)
+    for c in (1 - 1.0e-7, 1.0)
+        @test I_bc(cyl, c) ≈ I_bc(ell, c) rtol = 1.0e-12
+        @test II_bc(cyl, c) ≈ II_bc(ell, c) rtol = 1.0e-12
+        @test ForwardDiff.derivative(x -> I_bc(cyl, x), c) ≈ ForwardDiff.derivative(x -> I_bc(ell, x), c) rtol = 1.0e-11
+        @test ForwardDiff.derivative(x -> II_bc(cyl, x), c) ≈ ForwardDiff.derivative(x -> II_bc(ell, x), c) rtol = 1.0e-11
+        # The cross-section, an ellipse, carries half the transverse potentials.
+        @test collect(np_2d(1.0, c)) ≈ I_bc(cyl, c) ./ 2 rtol = 1.0e-15
+        @test ForwardDiff.derivative(x -> collect(np_2d(1.0, x)), c) ≈
+            ForwardDiff.derivative(x -> I_bc(cyl, x), c) ./ 2 rtol = 1.0e-15
+    end
+    # One semi-axis: equal numbers with equal derivatives, or the same expression.
+    one_axis = MeanFieldHomogenization.Core._one_semi_axis
+    d = ForwardDiff.Dual(1.0, 1.0)
+    @test one_axis(d, d)
+    @test !one_axis(d, ForwardDiff.Dual(1.0, 0.0))
+    @test !one_axis(1.0, prevfloat(1.0))
+    Symbolics.@variables s
+    @test one_axis(s, s)
+    @test !one_axis(s, 2s)
 end

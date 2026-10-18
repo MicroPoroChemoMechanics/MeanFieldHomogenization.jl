@@ -1108,7 +1108,7 @@ weakdeps = ["SparseArrays"]
     MaybeInplaceSparseArraysExt = "SparseArrays"
 
 [[deps.MeanFieldHomogenization]]
-deps = ["Dates", "Elliptic", "ForwardDiff", "JSON", "LinearAlgebra", "OrdinaryDiffEq", "PolynomialRoots", "Polynomials", "Printf", "QuadGK", "Random", "SpecialFunctions", "StaticArrays", "TensND", "Tensors"]
+deps = ["Dates", "Elliptic", "ForwardDiff", "JSON", "LinearAlgebra", "OrdinaryDiffEq", "Polynomials", "Printf", "QuadGK", "Random", "SpecialFunctions", "StaticArrays", "TensND", "Tensors"]
 path = "../.."
 uuid = "c1e5f8a3-7b2d-4a6c-9e4f-3b8a2c5d7e9f"
 version = "0.17.1"
@@ -1452,12 +1452,6 @@ weakdeps = ["REPL"]
 
     [deps.Pkg.extensions]
     REPLExt = "REPL"
-
-[[deps.PolynomialRoots]]
-git-tree-sha1 = "b23a239f8a930b819f877af45fd5372fc6fa65ea"
-registries = "General"
-uuid = "3a141323-8675-5d76-9d11-e1df1406c778"
-version = "1.1.0"
 
 [[deps.Polynomials]]
 deps = ["LinearAlgebra", "OrderedCollections", "Setfield", "SparseArrays"]

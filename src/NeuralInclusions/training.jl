@@ -28,7 +28,7 @@ Everything the optimizer needs, with defaults sized for the ellipsoid pilot
 | `batchsize` | `128` | mini-batch size; `0` means full batch |
 | `learning_rate` | `1.0e-2` | initial Adam step |
 | `decay` | `0.3` | multiplicative decay applied to the step at each plateau |
-| `patience` | `250` | epochs without validation improvement before decaying, and `3·patience` before stopping |
+| `patience` | `250` | epochs without validation improvement before the step is decayed; a plateau once the step has reached its floor (`1e-6`) stops the run |
 | `seed` | `20260730` | RNG seed of the weight initialization, so a retraining is reproducible |
 | `verbose` | `true` | print the validation curve as it goes |
 """

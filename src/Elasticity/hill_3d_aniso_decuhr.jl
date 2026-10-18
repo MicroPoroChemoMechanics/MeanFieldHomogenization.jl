@@ -45,11 +45,13 @@ function _hill_3d_aniso_decuhr(
     end
 
     # Integrand on the unit square (z, φ) ∈ [0, 1] × [0, 2π]: the 21
-    # independent components of the Hill tensor (`_hill_integrand21`).
+    # independent components of the Hill tensor (`_hill_integrand21`). The
+    # cubature variables stay plain numbers, as in the nested cubature: ζ takes
+    # the derivatives of the semi-axes from η and ω alone.
     function integrand(u, _)
         z, φ = u[1], u[2]
-        uz = sqrt(one(T) - T(z) * T(z))
-        ζ = (uz * cos(T(φ)), uz * sin(T(φ)) / η, T(z) / ω)
+        uz = sqrt((1 - z) * (1 + z))
+        ζ = (uz * cos(φ), uz * sin(φ) / η, z / ω)
         return _hill_integrand21(_sym3_inv_acoustic(C₀_arr, ζ), ζ, T)
     end
 

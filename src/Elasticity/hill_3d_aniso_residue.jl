@@ -1,15 +1,83 @@
 # =============================================================================
 #  hill_3d_aniso_residue.jl
 #
-#  Thin wrapper around the factored polynomial machinery of
-#  `Core.green_residue.jl`.  The Hill residue algorithm specific pieces
-#  — per-φ ζ(z) parametrization, 21 Voigt-indexed numerators, Masson
-#  log-factor post-processing — live here.  The generic polynomial
-#  bookkeeping (acoustic tensor, adjugate, determinant, root finding) is
-#  delegated to `Core._build_poly_system`.
-#
-#  Implementation of Masson (2008) Eq. (20). Float64 only.
+#  The Hill tensor by residues, after Masson (2008). The surface integral over
+#  the unit sphere is split into an outer integral over an angle φ and an inner
+#  one which, by the substitution t = cot(θ/2), is that of a rational function of
+#  t over (0, ∞) (Masson's Eq. (18)); the inner one is evaluated exactly by
+#  residues and the outer one by quadrature. The generic polynomial bookkeeping
+#  (acoustic tensor, adjugate, determinant, root finding) and the residue sums
+#  over groups of poles are in `Core.green_residue.jl`. Float64 only.
 # =============================================================================
+
+# Eₙ(t) = t^(7-n) vⁿ, v = (t² - 1)/2, n = 0, …, 6, which is t⁷ ξⁿ with
+# ξ(t) = (t² - 1)/(2t): a numerator p of degree ≤ 6 in ξ becomes
+# t⁷ p(ξ(t)) = Σₙ pₙ Eₙ(t). Their first `M` Taylor coefficients at `c`, as the
+# columns of a matrix, from the factored form: for a flat or a long ellipsoid
+# the poles lie near t = ±1 or near 0, where the expanded polynomials lose every
+# digit to cancellation. `v₀ = (c² - 1)/2` is passed in, computed without
+# cancellation.
+function _joukowski_taylor(c::ComplexF64, v₀::ComplexF64, M::Int)
+    # A lone pole, by far the most frequent, needs the values Eₙ(c) alone.
+    M == 1 && return reshape(c .^ (7:-1:1) .* v₀ .^ (0:6), 1, 7)
+    v = MFH_Core._series_powers(ComplexF64[v₀, c, 1 / 2], 6, M)      # vⁿ
+    t = MFH_Core._series_powers(ComplexF64[c, 1], 7, M)              # (c + t)ᵏ
+    return reduce(hcat, [MFH_Core._series_product(v[n + 1], t[8 - n], M) for n in 0:6])
+end
+
+# v - 1 and v + 1 at a preimage v of z: (v - 1)(v + 1) = 2 z v gives the smaller
+# of the two without the difference that cancels.
+function _unit_offsets(z::ComplexF64, v::ComplexF64)
+    a, b = v - 1, v + 1
+    return abs(a) < abs(b) ? (2 * z * v / b, b) : (a, 2 * z * v / a)
+end
+
+"""
+    _hill_line_weights(Q, roots_uhp) -> Vector{Float64}
+
+The seven integrals ``W_n = 2 \\int_0^\\infty E_n(t) / D(t)\\,\\mathrm{d}t``, with
+``E_n(t) = t^{7-n} \\bigl((t^2 - 1)/2\\bigr)^n``,
+``D(t) = (1 + t^2)^2\\, t^6\\, Q(\\xi(t))`` and ``\\xi(t) = (t^2 - 1)/(2t)``, so
+that the inner integral of the Hill tensor at one angle φ, for a numerator
+``p`` of coefficients ``p_n`` in ``\\xi``, is ``\\sum_n p_n W_n``
+[masson2008](@cite).
+
+The roots of ``D`` are ``\\pm i``, twice each, and the two preimages
+``w = z \\pm \\sqrt{1 + z^2}`` of each root ``z`` of ``Q``, which lie in the
+half plane of ``z``. The integral over ``(0, \\infty)`` is minus the sum of the
+residues of ``\\log(w)\\,E_n/D`` at all of them, with the logarithm cut along the
+positive axis. The residues at conjugate poles are conjugate, up to the
+``2\\pi i`` the logarithm gains across the cut, so that the sum reduces to the upper
+half plane:
+``2\\,\\mathrm{Re} \\sum \\mathrm{Res} \\log(w) E_n/D + 2\\pi\\,\\mathrm{Im} \\sum \\mathrm{Res}\\, E_n/D``.
+The poles are summed by groups, so that ``i`` and the roots that coincide with
+it or with each other, exactly or nearly, need no case of their own.
+"""
+function _hill_line_weights(Q::Polynomial, roots_uhp::AbstractVector{ComplexF64})
+    # The poles of the upper half plane: i twice, then the two preimages of each
+    # root, the larger directly and the other as its inverse (their product is
+    # -1), each with its offsets from ±1.
+    s = sqrt.(1 .+ roots_uhp .^ 2)
+    w = @. ifelse(abs(roots_uhp + s) >= abs(roots_uhp - s), roots_uhp + s, roots_uhp - s)
+    z = repeat(roots_uhp; inner = 2)
+    v = vec(permutedims([w -inv.(w)]))      # w₁, -1/w₁, w₂, -1/w₂, …
+    offs = _unit_offsets.(z, v)
+    i = ComplexF64(im)
+    upper = [i; i; v]
+    wm1 = [i - 1; i - 1; first.(offs)]
+    wp1 = [i + 1; i + 1; last.(offs)]
+    poles = [upper; conj.(upper)]
+    lead = ComplexF64(coeffs(Q)[end] / 64)        # leading coefficient of D
+    W = zeros(Float64, 7)
+    for members in MFH_Core._pole_clusters(poles, length(upper); logfactor = true)
+        c, H_one, H_log = MFH_Core._cluster_weights(poles, members, lead; logfactor = true)
+        M = min(length(H_one), 14)
+        v₀ = sum(view(wm1, members)) * sum(view(wp1, members)) / (2 * length(members)^2)
+        T = transpose(_joukowski_taylor(c, v₀, M))       # 7 × M
+        W .-= 2 .* (2 .* real.(T * view(H_log, 1:M)) .+ 2π .* imag.(T * view(H_one, 1:M)))
+    end
+    return W
+end
 
 """
     _hill_3d_aniso_residue(ell, C₀; abstol, reltol, maxiters) -> AbstractTens{4,3}
@@ -17,19 +85,20 @@
 Hill polarization tensor of a 3-D ellipsoid in an arbitrarily
 anisotropic matrix, evaluated by reducing the 2-D surface integral of
 [willis1977](@citet) to a 1-D line quadrature via the
-Cauchy residue theorem of [masson2008](@citet). The inner
-``\\varphi`` integral is collapsed into a finite sum over the roots of
-the determinant of the acoustic tensor lying inside the unit circle.
+Cauchy residue theorem of [masson2008](@citet): at each angle ``\\varphi``
+the inner integral is a finite sum of residues at the roots of the
+determinant of the acoustic tensor (`_hill_line_weights`).
 
 !!! note "Float64 only, by design"
-    The residue algorithm finds polynomial roots (`PolynomialRoots`) and
-    therefore only accepts `Float64` coefficients — it does NOT propagate
+    The residue algorithm finds polynomial roots (the eigenvalues of a
+    companion matrix, by LAPACK) and therefore only accepts `Float64` coefficients — it does NOT propagate
     `ForwardDiff.Dual`, `Complex`, or symbolic element types.  For those,
     use the `NestedQuadGK` backend (`method = :nestedquadgk`), which is
     type-generic and AD-compatible.  The `:auto` dispatch already picks
     `NestedQuadGK` automatically whenever `eltype(C₀) !== Float64`
-    (see `Core/dispatch.jl`); only an explicit `method = :residues` under a
-    non-`Float64` matrix will error.
+    (see `Core/dispatch.jl`); an explicit `method = :residues` under a
+    non-`Float64` matrix or geometry is refused with an `ArgumentError` that
+    says so.
 """
 function _hill_3d_aniso_residue(
         ell::Ellipsoid{3}, C₀;
@@ -46,8 +115,6 @@ function _hill_3d_aniso_residue(
         C[i, j, k, l] = Float64(C₀_princ[i, j, k, l])
     end
 
-    const_I = ComplexF64(0.0, 1.0)
-
     function hill_at_phi(φ::Float64)
         m1 = cos(φ)
         m2 = sin(φ) / η
@@ -56,85 +123,35 @@ function _hill_3d_aniso_residue(
         α₁ζ = [0.0, 0.0, 1.0 / ω]
 
         sys = MFH_Core._build_poly_system(C, α₀ζ, α₁ζ)
-        adj_poly = sys.adj_poly
-        Q = sys.Q
-        roots_uhp = sys.roots_uhp
+        W = _hill_line_weights(sys.Q, sys.roots_uhp)
 
-        # Multiplicity-aware processing: promote near-multiple Bairstow /
-        # Durand-Kerner clusters to exact multiplicity counts via the
-        # polynomial-derivative criterion. Reference point z=i is added
-        # explicitly so the log_I term can read off its multiplicity.
-        z_list, mults, idxI = MFH_Core._gather_almost_multiple_roots(
-            Q, roots_uhp; ref = const_I
-        )
-
-        # ζ as a vector of Polynomial{ComplexF64,:z}
-        ζ_poly = [Polynomial(ComplexF64[α₀ζ[i], α₁ζ[i]], :z) for i in 1:3]
-
-        # 21 numerator polynomials (upper-Voigt) of degree ≤ 5
-        P_num = Vector{Polynomial{ComplexF64, :z}}(undef, 21)
-        for (n, (I, J)) in enumerate(_VOIGT_UPPER21)
-            vi, vj = _VOIGT_IJ[I]
-            vk, vl = _VOIGT_IJ[J]
-            p = (
-                ζ_poly[vi] * (adj_poly[vj, vk] * ζ_poly[vl] + adj_poly[vj, vl] * ζ_poly[vk]) +
-                    ζ_poly[vj] * (adj_poly[vi, vk] * ζ_poly[vl] + adj_poly[vi, vl] * ζ_poly[vk])
-            )
-            P_num[n] = p * 0.25
-        end
-
-        res = zeros(Float64, 21)
-
-        # Term 1: z = i  (multiplicity-aware log_I residue)
-        mI = idxI > 0 ? mults[idxI] : 0
-        for α in 1:21
-            r = MFH_Core._residue_logI(P_num[α], Q, mI)
-            isnan(real(r)) && return fill(NaN, 21)   # signal fallback
-            res[α] += real(r)
-        end
-
-        # Term 2: other UHP roots of Q (multiplicity-aware log_z residue)
-        for j in eachindex(z_list)
-            j == idxI && continue
-            mj = mults[j]
-            mj > 0 || continue
-            zr = z_list[j]
-            for α in 1:21
-                r = MFH_Core._residue_logz(P_num[α], Q, zr, mj)
-                isnan(real(r)) && return fill(NaN, 21)
-                res[α] += real(r)
+        # The 21 numerators (upper Voigt) are sums of four products
+        # ζ_a ζ_b adj(K)_cd, each of degree ≤ 6, and the inner integral is a
+        # bilinear form in their coefficients, through the Hankel matrix of the
+        # weights: Λ(a, b, c, d) = Σ_{u,t} (ζ_a ζ_b)_u (adj_cd)_t W_{u+t}.
+        Hk = [W[u + t - 1] for u in 1:3, t in 1:5]
+        q = [
+            SVector(α₀ζ[a] * α₀ζ[b], α₀ζ[a] * α₁ζ[b] + α₁ζ[a] * α₀ζ[b], α₁ζ[a] * α₁ζ[b])
+                for a in 1:3, b in 1:3
+        ]
+        HA = Hk * reduce(hcat, sys.adj)
+        Λ(a, b, c, d) = dot(q[a, b], view(HA, :, c + 3 * (d - 1)))
+        return SVector{21}(
+            map(_VOIGT_UPPER21) do (I, J)
+                vi, vj = _VOIGT_IJ[I]
+                vk, vl = _VOIGT_IJ[J]
+                (Λ(vi, vl, vj, vk) + Λ(vi, vk, vj, vl) + Λ(vj, vl, vi, vk) + Λ(vj, vk, vi, vl)) / 4
             end
-        end
-
-        return res
+        )
     end
 
     MFH_Core._bump!(MFH_Core.QUADGK_OUTER)
-    # A root multiplicity the residue sums do not handle (mult ≥ 4 in log_I or
-    # ≥ 3 in log_z: a reference anisotropic in type but isotropic or
-    # transversely isotropic in value along the ellipsoid axes) makes the
-    # integrand NaN, which QuadGK refuses with a `DomainError`. Say what failed
-    # and what evaluates the same integral, rather than relay that refusal.
-    P_vals, _ = try
-        MFH_Core._counted_quadgk(
-            hill_at_phi, 0.0, π;
-            atol = abstol, rtol = reltol, maxevals = maxiters
-        )
-    catch err
-        err isa DomainError || rethrow()
-        throw(
-            ArgumentError(
-                "the residue algorithm cannot evaluate this Hill tensor: the " *
-                    "acoustic polynomial has roots of a multiplicity it does not " *
-                    "handle, as for a reference anisotropic in type but isotropic " *
-                    "or transversely isotropic in value along the ellipsoid axes. " *
-                    "`method = :auto` or `:nestedquadgk` evaluates the same integral " *
-                    "by cubature. ($(sprint(showerror, err)))"
-            )
-        )
-    end
+    P_vals, _ = MFH_Core._counted_quadgk(
+        hill_at_phi, 0.0, π;
+        atol = abstol, rtol = reltol, maxevals = maxiters
+    )
 
-    P_vals ./= π
+    P_vals = P_vals / π
 
     P_arr = _fill_hill21!(zeros(Float64, 3, 3, 3, 3), P_vals)
 

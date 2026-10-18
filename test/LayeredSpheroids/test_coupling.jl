@@ -29,6 +29,10 @@ using MeanFieldHomogenization.LayeredSpheroids: coupling_matrices, _gamma_table
     end
 end
 
+@testset "coupling_matrices — an unknown method is refused" begin
+    @test_throws ArgumentError coupling_matrices(1.3, 2; method = :spline)
+end
+
 @testset "coupling_matrices — quadrature ≡ series (prolate)" begin
     for q in (1.3, 1.7, 3.3, 10.0), Nseries in (1, 2, 3, 5)
         I, J, K, L = coupling_matrices(q, Nseries; method = :quadrature)

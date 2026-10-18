@@ -138,6 +138,19 @@ stack-resident and the function is pure.
         ca::T, sa::T,
         scale::T
     ) where {T}
+    # Near α = 0, ξ_n → ∞, the three terms below cancel down to O(sin²α), and
+    # the difference loses ε / sin²α: an adaptive quadrature asked for tight
+    # tolerances then chased the rounding noise down to α ~ 1e-150, where it
+    # became NaN. Below sin α = 0.05, where that loss would exceed 1e-13, take
+    # the form free of cancellation; the second test bounds ‖tan α A⁻¹ Vs‖ so
+    # that V = cos α A (I ± tan α A⁻¹ Vs) is invertible. (Comparisons on values:
+    # this path takes numbers, not symbolic ones.)
+    if abs(sa) < 0.05
+        iA = _inv3(A)
+        if 2 * abs(sa) * maximum(sum(abs, iA * Vs; dims = 2)) < abs(ca)
+            return _qnn_pair_small_angle(A, iA, Vs, Ks, ca, sa, scale)
+        end
+    end
     cs = ca * sa
     ca² = ca * ca
     sa² = sa * sa
@@ -148,4 +161,19 @@ stack-resident and the function is pure.
     Bp = (Vp * _inv3(Kp)) * transpose(Vp)
     Bm = (Vm * _inv3(Km)) * transpose(Vm)
     return (2 * A - Bp - Bm) * scale
+end
+
+# The same pair without cancellation. With S = Ks - Vsᵀ A⁻¹ Vs, independent of α,
+# and V± = cos α A ± sin α Vs, the acoustic tensor is K± = V±ᵀ A⁻¹ V± + sin²α S
+# exactly (Kns = Vs + Vsᵀ), so that
+#     A - V± K±⁻¹ V±ᵀ = sin²α (A⁻¹ + sin²α W±)⁻¹ W± A,   W± = V±⁻ᵀ S V±⁻¹,
+# and the factor sin²α cancels against `scale` analytically.
+@inline function _qnn_pair_small_angle(A, iA, Vs, Ks, ca, sa, scale)
+    S = Ks - transpose(Vs) * iA * Vs
+    s² = sa * sa
+    iVp = _inv3(ca * A + sa * Vs)
+    iVm = _inv3(ca * A - sa * Vs)
+    Wp = transpose(iVp) * S * iVp
+    Wm = transpose(iVm) * S * iVm
+    return (_inv3(iA + s² * Wp) * Wp + _inv3(iA + s² * Wm) * Wm) * A * (s² * scale)
 end

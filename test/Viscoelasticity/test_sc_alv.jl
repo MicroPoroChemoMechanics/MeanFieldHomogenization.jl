@@ -90,3 +90,20 @@ end
     C_M = trapezoidal_matrix(maxwell_iso(10.0, 4.0, 1.0, 0.5), times)
     @test isapprox(C_alv, C_M; atol = 1.0e-10)
 end
+
+@testset "SC and ASC ALV — an unfinished iteration returns its best iterate" begin
+    # Three Picard steps leave the fixed point well beyond the tolerance, and
+    # the iteration contracting, the best of them is the last one: with
+    # `select_best` or without, the same matrix comes back.
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => heaviside_law(TensISO{3}(30.0, 8.0))); fraction = :rest)
+    add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(TensISO{3}(300.0, 160.0))); fraction = 0.3)
+    times = [0.0, 1.0]
+    for solve in (self_consistent_alv, asymmetric_self_consistent_alv)
+        C_conv = solve(rve, :C; times = times, maxiters = 500)
+        C_3 = solve(rve, :C; times = times, maxiters = 3)
+        C_3_best = solve(rve, :C; times = times, maxiters = 3, select_best = true)
+        @test norm(C_3 - C_conv) > 1.0e-6 * norm(C_conv)
+        @test C_3_best ≈ C_3 rtol = 1.0e-14
+    end
+end

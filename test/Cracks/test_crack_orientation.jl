@@ -183,18 +183,14 @@ end
     end
 end
 
-@testset "the residue backend degenerates as n̂ ⟂ TI axis" begin
-    # KNOWN LIMITATION, not a frame bug. The `Residue` algorithm reduces the
-    # crack-plane integral to a sum over the roots of a sextic; those roots
-    # coalesce as the crack normal becomes perpendicular to the symmetry axis,
-    # and the reduction loses accuracy and then breaks down.
-    #
-    # This is benign in practice because `:auto` never selects `Residue` for a
-    # non-aligned crack (it hands over to a cubature) — which the first block
-    # below pins — but an explicit `method = :residues` does hit it.
+@testset "the residue backend holds as n̂ ⟂ TI axis" begin
+    # The `Residue` algorithm reduces the crack-plane integral to a sum over the
+    # roots of a sextic; those roots coalesce as the crack normal becomes
+    # perpendicular to the symmetry axis. Summed as groups, they keep the accuracy
+    # of separated roots up to and at π/2, where the reduction used to break down.
+    # `:auto` still hands a non-aligned crack over to a cubature.
     C = _ti_medium()
 
-    # `:auto` stays on a cubature and stays correct, including at θ = π/2.
     for (θ, fro_ref, _) in ECHOES_H
         crack = PennyCrack(1.0; euler_angles = (θ, 0.0))
         algo = MeanFieldHomogenization.Core._resolve_algo(Val(:auto), crack, C)
@@ -202,20 +198,10 @@ end
         @test norm(inverse_property_contribution(crack, C; method = :auto)) ≈ fro_ref rtol = 1.0e-5
     end
 
-    # Away from the degeneracy the residue reduction agrees with the cubature to
-    # near machine precision — that is the regime it is meant for.
-    for θ in (0.0, π / 8, π / 4, 0.4π)
+    for θ in (0.0, π / 8, π / 4, 0.4π, π / 2 - 1.0e-3, π / 2 - 1.0e-6, π / 2)
         crack = PennyCrack(1.0; euler_angles = (θ, 0.0))
         r = norm(inverse_property_contribution(crack, C; method = :residues))
         q = norm(inverse_property_contribution(crack, C; method = :nestedquadgk))
         @test r ≈ q rtol = 1.0e-8
     end
-
-    # …and it is documented as unreliable in the immediate neighborhood of
-    # π/2. Guard the *documented* behavior so a future improvement shows up as
-    # a failing test rather than going unnoticed.
-    crack90 = PennyCrack(1.0; euler_angles = (π / 2, 0.0))
-    r90 = norm(inverse_property_contribution(crack90, C; method = :residues))
-    q90 = norm(inverse_property_contribution(crack90, C; method = :nestedquadgk))
-    @test !isapprox(r90, q90; rtol = 1.0e-3)
 end

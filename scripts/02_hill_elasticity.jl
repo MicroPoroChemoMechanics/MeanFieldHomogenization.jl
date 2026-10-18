@@ -163,11 +163,9 @@ end
 
 # !!! note "method = :auto does not pick the residues"
 #     For an anisotropic 3-D elastic reference the automatic choice is a
-#     cubature, not the residue algorithm: the residue acoustic polynomial
-#     degenerates when the reference is anisotropic in *type* and isotropic in
-#     *value*, which is exactly what the self-consistent and differential
-#     schemes feed back at their first step. `method = :residues` remains
-#     available explicitly, as above. The automatic choice is
+#     cubature, not the residue algorithm, which takes `Float64` coefficients
+#     only and so carries no derivative through a scheme. `method = :residues`
+#     remains available explicitly, as above. The automatic choice is
 #     `:nestedquadgk`, the faster and the more accurate of the two cubatures;
 #     `:decuhr` is an explicit choice once `import DECUHR, Integrals` has run.
 

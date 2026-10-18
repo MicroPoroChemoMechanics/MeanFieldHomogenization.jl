@@ -15,7 +15,6 @@ using Tensors
 using QuadGK
 using ..Elliptic
 using Polynomials
-using PolynomialRoots
 
 import ..Core
 using ..Core

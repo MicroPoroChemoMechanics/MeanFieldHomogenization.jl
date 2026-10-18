@@ -351,3 +351,21 @@ end
     h = 1.0e-8
     @test ForwardDiff.derivative(f, 1.1e-2) ≈ (f(1.1e-2 + h) - f(1.1e-2 - h)) / (2h) rtol = 1.0e-5
 end
+
+@testset "Laminate — what validation and the interface lenses refuse" begin
+    C = TensISO{3}(3 * 10.0, 2 * 4.0)
+    # Two layers of zero thickness make no period.
+    lam = Laminate(; normal = (0.0, 0.0, 1.0))
+    add_layer!(lam, :A, Dict(:C => C); thickness = 0.0)
+    add_layer!(lam, :B, Dict(:C => C); thickness = 0.0)
+    @test_throws ArgumentError validate_laminate(lam)
+    # A thickness that turned negative after construction is caught.
+    lam = Laminate(; normal = (0.0, 0.0, 1.0))
+    add_layer!(lam, :A, Dict(:C => C); thickness = 0.5)
+    add_layer!(lam, :B, Dict(:C => C); thickness = 0.5, interface = SpringInterface(1.0e3, 5.0e2))
+    lam.thicknesses[:A] = -0.1
+    @test_throws ArgumentError validate_laminate(lam)
+    # A spring has four parameters, its two stiffnesses and their compliances.
+    lam.thicknesses[:A] = 0.5
+    @test_throws ArgumentError set_param(lam, interface_param(2, :kz), 1.0)
+end
