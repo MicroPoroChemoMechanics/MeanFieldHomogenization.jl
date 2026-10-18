@@ -68,7 +68,7 @@ relerr(A, B) = norm(components_canon(A) - components_canon(B)) / norm(components
 #
 # ```math
 # \omega\,\mathbb{Q}^{-1}
-# = \omega\begin{pmatrix} X + \omega Y_{11} & \omega Y_{12} \\ \omega Y_{12}^{\mathsf{T}} & \omega Y_{22}\end{pmatrix}^{-1}
+# = \omega\begin{pmatrix} X + \omega Y_{11} & \omega Y_{12} \\ \omega Y_{12}^{\!T} & \omega Y_{22}\end{pmatrix}^{-1}
 # \;\xrightarrow[\omega\to 0]{}\;
 # \begin{pmatrix} 0 & 0 \\ 0 & Y_{22}^{-1}\end{pmatrix} = \mathbb{H},
 # ```
@@ -210,15 +210,15 @@ savefig(p, joinpath(figdir, "17_crack_routes.png"))                 #jl
 # Neither route above is a closed form in an anisotropic matrix. One exists when
 # the matrix is the image of an isotropic one by a linear map
 # ``\underline{x} = \boldsymbol{P}\cdot\tilde{\underline{x}}``,
-# ``\mathbb{C} = (\boldsymbol{P}\boxtimes^{s}\boldsymbol{P}):\tilde{\mathbb{C}}:(\boldsymbol{P}\boxtimes^{s}\boldsymbol{P})^{\mathsf{T}}``
+# ``\mathbb{C} = (\boldsymbol{P}\stackrel{s}{\boxtimes}\boldsymbol{P}):\tilde{\mathbb{C}}:(\boldsymbol{P}\stackrel{s}{\boxtimes}\boldsymbol{P})^{\!T}``
 # (elliptic orthotropy). The crack of radii ``(a, b)`` maps to a crack of radii
 # ``(\tilde{a}, \tilde{b})`` and normal ``\tilde{\underline{n}}`` in the isotropic
 # matrix, whose ``\tilde{\boldsymbol{B}}`` is a closed form, and
 # [barthelemyIJSS2026](@cite) gives, in the normalization of this page,
 #
 # ```math
-# \boldsymbol{B} = \frac{\tilde{b}/b}{\lVert\boldsymbol{P}^{\mathsf{T}}\cdot\underline{n}\rVert}\;
-# \boldsymbol{P}^{-\mathsf{T}}\cdot\tilde{\boldsymbol{B}}\cdot\boldsymbol{P}^{-1}.
+# \boldsymbol{B} = \frac{\tilde{b}/b}{\lVert\boldsymbol{P}^{\!T}\cdot\underline{n}\rVert}\;
+# \boldsymbol{P}^{-T}\cdot\tilde{\boldsymbol{B}}\cdot\boldsymbol{P}^{-1}.
 # ```
 
 function transformed_crack(P, a, b, ℓ, m, n)
