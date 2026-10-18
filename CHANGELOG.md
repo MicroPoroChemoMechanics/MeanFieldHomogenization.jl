@@ -1,5 +1,42 @@
 # Changelog
 
+## v0.17.4 — MFH Studio: a session token, a free port, a theme, and four defects
+
+A patch release of the studio shipped in `tools/mfhstudio`; the package itself
+is unchanged. The studio runs Julia on request, and any web page the user
+visited could ask it to: it now answers only its own page. Its default port
+gives way when taken instead of failing, and four defects found while reading
+it are fixed.
+
+### Fixed
+
+- **Any web page could run code through the studio.** The server checked
+  neither who called it nor from where. Each start now draws a random token,
+  printed in the address (`http://127.0.0.1:8765/?token=…`); the page keeps it
+  for the tab, removes it from the address bar and sends it with every
+  request, and the server refuses a request without it, one from another site
+  (`Origin`, `Host`), or a body that is not JSON.
+- **A failed *Open* put an empty model on the file's path**, so that the next
+  *Save* overwrote the script with nothing. A file that cannot be read back
+  is now refused with its reason (422), and the model and the path are left as
+  they were.
+- **Two matrix phases dropped one from the script without a word.** The page
+  read a flag the server never sent (`is_matrix`), so it showed no phase as the
+  matrix and let two be declared. The matrix is now the phase whose amount is
+  the rest, as the model has it; choosing another one turns the former matrix
+  into an inclusion, and a model with two is refused with both names.
+- **`mfhstudio()`'s message for a missing studio** said the studio was not part
+  of the released package; it is, under `tools/mfhstudio`.
+
+### Changed
+
+- **The port.** Without `port` (in `mfhstudio`, or `--port` in the shell) the
+  studio takes 8765, or the next free port when 8765 is taken, by a port
+  forward or another studio; a port given is used or refused as before.
+  `mfhstudio(; port)` defaults to `nothing` instead of `8765`.
+- **A light or a dark theme**, from a button in the header: as the system has
+  it by default; the plots follow the theme.
+
 ## v0.17.3 — Residues on multiple roots, and the bridge from B to H
 
 A patch release. The residue algorithm, reached by an explicit
