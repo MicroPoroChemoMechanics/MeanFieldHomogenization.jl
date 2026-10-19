@@ -53,10 +53,11 @@ MeanFieldHomogenization = "0"
 MittagLeffler = "1"
 NonlinearSolve = "4"
 Optimisers = "0.4"
-# PyCall 1.97.0, registered on 2026-10-19, rewrote how it takes Python's GIL and
-# finalizes Python objects; the same day the CI of this package, unchanged
-# otherwise, ended in segmentation faults. Held at 1.96 until 1.97 is checked.
-PyCall = "~1.96"
+# PyCall 1.97.0, registered on 2026-10-19, reaches Python without the GIL from
+# the `hash` SymPy.jl defines: the tests and the documentation of this package
+# ended in segmentation faults the same day. This bound excludes that release
+# only, so that any later one is taken as soon as it is registered.
+PyCall = "< 1.97.0, >= 1.97.1"
 Random = "1"
 SpecialFunctions = "2"
 StaticArrays = "1"
