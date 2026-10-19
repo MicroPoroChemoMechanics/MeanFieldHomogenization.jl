@@ -102,7 +102,7 @@ jobs:
             ENV["PYTHON"] = ""
             withenv(() -> Pkg.add("Conda"), "JULIA_PKG_PRECOMPILE_AUTO" => "0")
             Pkg.build("Conda")
-            Pkg.add("PyCall")
+            Pkg.add(name = "PyCall", version = "1.96")   # as test/ and docs/ hold it: 1.97 crashed
             Pkg.add("SymPy")
             # conda-forge now and then answers a transient error (a 502 on its index):
             # what is downloaded from it is tried three times, a minute apart
