@@ -90,9 +90,11 @@ jobs:
             Pkg.build("Conda")
             Pkg.add("PyCall")
             Pkg.add("SymPy")
-            Pkg.build("PyCall")
+            # conda-forge now and then answers a transient error (a 502 on its index):
+            # what is downloaded from it is tried three times, a minute apart
+            retry(() -> Pkg.build("PyCall"); delays = fill(60.0, 2))()
             using PyCall
-            pyimport_conda("sympy", "sympy")'
+            retry(() -> pyimport_conda("sympy", "sympy"); delays = fill(60.0, 2))()'
       - name: Install dependencies
         shell: julia --project=docs/ --color=yes {0}
         run: |
@@ -181,9 +183,11 @@ jobs:
             Pkg.build("Conda")
             Pkg.add("PyCall")
             Pkg.add("SymPy")
-            Pkg.build("PyCall")
+            # conda-forge now and then answers a transient error (a 502 on its index):
+            # what is downloaded from it is tried three times, a minute apart
+            retry(() -> Pkg.build("PyCall"); delays = fill(60.0, 2))()
             using PyCall
-            pyimport_conda("sympy", "sympy")'
+            retry(() -> pyimport_conda("sympy", "sympy"); delays = fill(60.0, 2))()'
       - name: Install dependencies
         shell: julia --project=docs/ --color=yes {0}
         run: |
@@ -270,9 +274,11 @@ jobs:
             Pkg.build("Conda")
             Pkg.add("PyCall")
             Pkg.add("SymPy")
-            Pkg.build("PyCall")
+            # conda-forge now and then answers a transient error (a 502 on its index):
+            # what is downloaded from it is tried three times, a minute apart
+            retry(() -> Pkg.build("PyCall"); delays = fill(60.0, 2))()
             using PyCall
-            pyimport_conda("sympy", "sympy")'
+            retry(() -> pyimport_conda("sympy", "sympy"); delays = fill(60.0, 2))()'
       - name: Install dependencies
         shell: julia --project=docs/ --color=yes {0}
         run: |
