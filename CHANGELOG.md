@@ -1,5 +1,93 @@
 # Changelog
 
+## v0.18.0 — MFH Studio in Julia, inside the package
+
+A minor release. MFH Studio, until now a Python application shipped beside the
+package in `tools/mfhstudio` with a Julia sidecar, is now Julia from end to
+end: the submodule `MeanFieldHomogenization.Studio` (`src/studio/`), started by
+`mfhstudio()` as before. Using it needs Julia and a browser, nothing else; only
+the translation of an Echoes script still calls Python. The homogenization
+itself is unchanged: no function outside the studio changed, and no result
+moves.
+
+### Breaking changes
+
+- **The compat bound.** Below 1.0 a minor version is breaking for Julia's
+  resolver: a bound `MeanFieldHomogenization = "0.17"` does not admit 0.18, so
+  a package or an environment that bounds MeanFieldHomogenization must widen
+  its bound to take this release.
+- **New dependencies: HTTP.jl 2.11 and Malt.jl 1.4**, with the standard
+  libraries TOML and InteractiveUtils, which the studio needs. An environment
+  that also holds a package requiring HTTP 1.x can no longer resolve with this
+  release until that package admits HTTP 2.
+- **`mfhstudio` lost its `python` keyword**, there being no Python server any
+  more. The `MFHSTUDIO_PYTHON` environment variable now only names the Python
+  that translates Echoes scripts.
+- **`tools/mfhstudio` is removed**: `python3 -m mfhstudio` no longer exists. The
+  worked examples moved to `src/studio/library/`.
+- **`mfhstudio(; project)`** names the environment the scripts run in, which
+  is checked (it must hold the MeanFieldHomogenization that runs, TensND and
+  Plots) and never modified. Without it, the studio uses an environment of its
+  own, `@mfh-studio`, which its first launch prepares, instead of the
+  package's environment.
+- **`mfhstudio(wait = false)`** returns a handle that `close(h)` stops (and
+  `wait(h)` waits on), instead of the handle of a Python process.
+
+### Added
+
+- **The studio in Julia.** The page talks to a server running in the user's
+  session (HTTP.jl, on the loopback interface, with the session's random token
+  required on every call), where MeanFieldHomogenization is loaded: the forms,
+  the generated script, the 3-D view and the reading of a script back answer at
+  once, with no process to wait for. A script runs in a second Julia process
+  (Malt.jl) in `@mfh-studio`, which holds the very MeanFieldHomogenization
+  that is loaded (that version, or the clone being developed), TensND and
+  Plots; a script that loops or exhausts the memory takes that process down,
+  never the session. Its first launch prepares the environment, with the
+  progress shown in the page; **Stop** interrupts a run, and restarts the
+  process when the interrupt does not take; **Restart** boots it anew; a run
+  is refused when less than 1.5 GB of memory are free, and stopped when it
+  outgrows what the machine can spare. The scripts it writes are the ones the
+  Python studio wrote, byte for byte, on the 1,115 generations recorded from
+  it (the ten examples, the demo scripts, the models of its tests and random
+  models).
+- **The page in English or in French**, from a button in the header; the
+  script and its comments stay in English.
+- **`MeanFieldHomogenization.Studio.regenerate_library!()`** writes the worked
+  examples again from their own models after a change of the code
+  generation; the tests check that they match what the studio writes today.
+
+### Fixed
+
+Defects of the Python studio, found while porting it:
+
+- **Reading back a script lost its matrix.** The phase taking up the rest
+  (`fraction = :rest`) was read as a phase of fraction `":rest"`: the cell had
+  no matrix, and every save wrote that problem into the script's header.
+- **No multiscale script was ever read back as a model.** A builder holding a
+  seam (`Homogenized(build_x(), scheme)`) was recognized only under the
+  `build_` prefix, and checked in a model holding it alone, where its inner
+  scale was missing, so that it was always kept as written. The seams are now
+  read with Julia's parser, under any builder name and with the options of
+  their scheme, and the builders are checked together.
+- **The 3-D view evaluated the text the page sent**, in a "sandbox" that let
+  any expression through. The views are now built from the model by the
+  package's own constructors, a size or an angle being a number or an
+  arithmetic expression of numbers and parameters. The page's JavaScript copy
+  of the code generation, which lost the orientation of a layered spheroid, is
+  gone, and a laminate with a layer read from an inner scale can be drawn.
+- **A hung sidecar could not be restarted** from the page: Stop and Restart
+  now exist.
+- **The "Matrix phase" field changed a name the script never reads**; it is
+  gone, the role of each phase deciding the matrix.
+- **Saving after opening a worked example wrote over the package's file**, or
+  failed with a bare error where the package is installed read-only. An
+  example now opens with no file bound to it, and Save asks where to keep the
+  copy; a save that cannot write says why.
+- **On the dark theme**, the legend and the axes of the 3-D view were dark gray
+  on a dark background; the legend of the results sat on the title of the
+  x axis.
+
 ## v0.17.4 — MFH Studio: a session token, a free port, a theme, and four defects
 
 A patch release of the studio shipped in `tools/mfhstudio`; the package itself

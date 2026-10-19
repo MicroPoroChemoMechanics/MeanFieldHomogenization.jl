@@ -405,7 +405,7 @@ end
     end
 
     rungroup("Studio") && @testset "Studio" begin
-        include("Studio/test_studio.jl")
+        include("Studio/runtests.jl")
     end
 
     rungroup("Documentation") && @testset "Documentation" begin

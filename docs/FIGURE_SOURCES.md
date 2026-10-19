@@ -50,4 +50,5 @@ The plots of finite-element and neural-network results under `src/assets/fe/`,
 `src/assets/fe_coupling/` and `src/assets/nn/` are written by the scripts that
 compute them (`scripts/fe/make_*_figures.jl`, `scripts/fe/arma2011_welltest.jl`,
 `scripts/nn/`). The screenshots under `src/assets/mfhstudio/` are taken from
-MFH Studio.
+a running MFH Studio, in the light and the dark theme, by
+`src/studio/tools/screenshots.mjs` (repository root), which says how to run it.
