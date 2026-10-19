@@ -7,20 +7,22 @@
 is_remote_session() = haskey(ENV, "SSH_CONNECTION") || haskey(ENV, "VSCODE_IPC_HOOK_CLI")
 
 """
-    browser_command(url) -> Union{Nothing, Cmd}
+    browser_command(url; kernel = Sys.KERNEL) -> Union{Nothing, Cmd}
 
-The command that opens `url`: `\$BROWSER` when it is set, otherwise the
-system's opener. `nothing` on a remote session without `\$BROWSER`, where no
-local opener would show the page to the user.
+The command that opens `url`: `\$BROWSER` when it is set, otherwise the opener
+of the system `kernel` names (`:Darwin`, `:NT`, any other being taken for a
+desktop with `xdg-open`; a keyword so that each is tested on every system).
+`nothing` on a remote session without `\$BROWSER`, where no local opener would
+show the page to the user.
 """
-function browser_command(url::AbstractString)
+function browser_command(url::AbstractString; kernel::Symbol = Sys.KERNEL)
     custom = get(ENV, "BROWSER", "")
     isempty(custom) || return Cmd([Base.shell_split(custom)..., url])
     is_remote_session() && return nothing
-    Sys.isapple() && return `open $url`
+    Sys.isapple(kernel) && return `open $url`
     # `rundll32` takes the URL as one argument, where `cmd /c start` would
     # have to be taught the quoting of `&` and `?`.
-    Sys.iswindows() && return `rundll32 url.dll,FileProtocolHandler $url`
+    Sys.iswindows(kernel) && return `rundll32 url.dll,FileProtocolHandler $url`
     return `xdg-open $url`
 end
 

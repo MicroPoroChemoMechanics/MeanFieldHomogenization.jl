@@ -47,26 +47,6 @@ is unavailable without it.
 | `Ferrite` (alone) | the material interface of the [finite-element coupling](@ref fe-coupling) — a microstructure as a Gauss-point law |
 | `Lux`, `Optimisers`, `Zygote` | *training* a [neural surrogate](@ref man-neural-inclusions); evaluating a shipped model needs none of them |
 
-## Prefer a graphical interface? MFH Studio
-
-The models of this documentation can also be built with forms, in your
-browser, with [MFH Studio](@ref tools-mfhstudio): describe each phase, choose
-the schemes, run, and read the Julia script it writes as you go, which runs on
-its own. It ships with the package:
-
-```julia
-julia> using MeanFieldHomogenization; mfhstudio()
-```
-
-```@raw html
-<img class="studio-shot light-only" src="./assets/mfhstudio/readme_light.png" alt="MFH Studio: a two-scale model, its 3-D shape and the Julia it generates">
-<img class="studio-shot dark-only" src="./assets/mfhstudio/readme_dark.png" alt="MFH Studio: a two-scale model, its 3-D shape and the Julia it generates, dark theme">
-```
-
-Ten worked examples open with every form filled in
-([Start here](@ref tools-mfhstudio-examples)). The rest of this page writes the
-model in Julia.
-
 ## A first estimate
 
 A matrix of bulk modulus ``k_0 = 30`` GPa and shear modulus ``\mu_0 = 10`` GPa
@@ -138,6 +118,26 @@ reader already knows.
   [Manual](@ref man-index) that matches the morphology at hand.
 - A user of Echoes will find the correspondence between the two libraries in
   [From Echoes to MeanFieldHomogenization](@ref tools-from-echoes).
+
+## An alternative to scripting: MFH Studio
+
+MeanFieldHomogenization is a library driven from Julia, as on this page. The
+same models can also be built with forms, in the browser, with
+[MFH Studio](@ref tools-mfhstudio): describe each phase, choose the schemes,
+run, and read the Julia script it writes as you go, which runs on its own. It
+ships with the package:
+
+```julia
+julia> using MeanFieldHomogenization; mfhstudio()
+```
+
+```@raw html
+<img class="studio-shot light-only" src="./assets/mfhstudio/readme_light.png" alt="MFH Studio: a two-scale model, its 3-D shape and the Julia it generates">
+<img class="studio-shot dark-only" src="./assets/mfhstudio/readme_dark.png" alt="MFH Studio: a two-scale model, its 3-D shape and the Julia it generates, dark theme">
+```
+
+Ten worked examples open with every form filled in
+([Start here](@ref tools-mfhstudio-examples)).
 
 ## Citing MeanFieldHomogenization
 

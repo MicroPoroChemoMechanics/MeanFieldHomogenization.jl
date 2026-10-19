@@ -19,6 +19,10 @@
         cmd = MS.browser_command("http://x/")
         @test last(cmd.exec) == "http://x/"
         @test first(cmd.exec) == (Sys.isapple() ? "open" : Sys.iswindows() ? "rundll32" : "xdg-open")
+        # the opener of each system, whichever runs the tests
+        @test MS.browser_command("http://x/?a&b"; kernel = :Darwin).exec == ["open", "http://x/?a&b"]
+        @test MS.browser_command("http://x/?a&b"; kernel = :NT).exec == ["rundll32", "url.dll,FileProtocolHandler", "http://x/?a&b"]
+        @test MS.browser_command("http://x/?a&b"; kernel = :Linux).exec == ["xdg-open", "http://x/?a&b"]
     end
     if Sys.isunix()
         withenv("BROWSER" => "true") do

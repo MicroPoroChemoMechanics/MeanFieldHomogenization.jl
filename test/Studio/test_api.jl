@@ -116,6 +116,16 @@ end
         lock(() -> (st.path = joinpath(dir, "hand.jl")), st.lock)
         @test api_json(api_get("/api/browse"))["path"] == dir
         @test MS.browse("/", nothing)["parent"] === nothing
+        if Sys.isunix()
+            # an entry that refuses a stat (a loop of links here, a file the
+            # system holds open on Windows) is left out, and a path to it falls
+            # back as a missing one does
+            symlink(joinpath(dir, "loop_b"), joinpath(dir, "loop_a"))
+            symlink(joinpath(dir, "loop_a"), joinpath(dir, "loop_b"))
+            listing = MS.browse(dir, nothing)
+            @test !any(e -> startswith(e["name"], "loop"), vcat(listing["dirs"], listing["files"]))
+            @test MS.browse(joinpath(dir, "loop_a"), nothing)["path"] == first(MS.places())["path"]
+        end
         if Sys.isunix() && !(Base.get(ENV, "USER", "") == "root")
             locked = mkpath(joinpath(dir, "locked"))
             chmod(locked, 0o000)

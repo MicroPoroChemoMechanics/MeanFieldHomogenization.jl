@@ -173,8 +173,12 @@ library is no place for one's own files.
 function browse(path::AbstractString, bound; saving::Bool = false)
     fallback = bound !== nothing ? dirname(abspath(bound)) : saving ? pwd() : first(p["path"] for p in places())
     start = isempty(path) ? fallback : abspath(expanduser(path))
-    isfile(start) && (start = dirname(start))
-    isdir(start) || (start = fallback)
+    s = path_stat(start)
+    if s !== nothing && isfile(s)
+        start = dirname(start)
+    elseif s === nothing || !isdir(s)
+        start = fallback
+    end
     dirs, files = Dict{String, Any}[], Dict{String, Any}[]
     names = try
         readdir(start)
@@ -186,11 +190,13 @@ function browse(path::AbstractString, bound; saving::Bool = false)
     for name in sort(names; by = lowercase)
         startswith(name, '.') && continue
         full = joinpath(start, name)
-        if isdir(full)
+        s = path_stat(full)
+        s === nothing && continue
+        if isdir(s)
             push!(dirs, Dict("name" => name, "path" => full))
-        elseif isfile(full) && (endswith(name, ".jl") || endswith(name, ".py"))
+        elseif isfile(s) && (endswith(name, ".jl") || endswith(name, ".py"))
             # an Echoes script is opened by translating it: the listing says so
-            push!(files, Dict("name" => name, "path" => full, "size" => filesize(full), "echoes" => endswith(name, ".py")))
+            push!(files, Dict("name" => name, "path" => full, "size" => filesize(s), "echoes" => endswith(name, ".py")))
         end
     end
     parent = dirname(start)
@@ -198,6 +204,19 @@ function browse(path::AbstractString, bound; saving::Bool = false)
         "path" => start, "parent" => parent == start ? nothing : parent, "dirs" => dirs, "files" => files,
         "places" => places(), "sep" => Base.Filesystem.path_separator,
     )
+end
+
+# The status of a path, or `nothing` when even that cannot be read: a file the
+# system holds open on Windows (`C:\DumpStack.log.tmp`, `C:\pagefile.sys`)
+# refuses a stat, as a loop of symbolic links does anywhere. Such an entry is
+# left out of a listing rather than failing it.
+function path_stat(path::AbstractString)
+    return try
+        stat(path)
+    catch err
+        err isa Base.IOError || rethrow()
+        nothing
+    end
 end
 
 browse_route(st::StudioState, q) =
