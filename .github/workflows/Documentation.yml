@@ -77,11 +77,17 @@ jobs:
                   end
               end
           end
+      # The cache restores the depot's packages, Conda's deps/deps.jl among them,
+      # but not ~/.julia/conda, the root environment that file names: on a new
+      # release of Julia, Conda is precompiled again and fails on the missing
+      # directory. Building Conda first makes that directory again.
       - name: Install dependencies (PyCall/SymPy)
         run: |
           julia -e '
             using Pkg
             ENV["PYTHON"] = ""
+            withenv(() -> Pkg.add("Conda"), "JULIA_PKG_PRECOMPILE_AUTO" => "0")
+            Pkg.build("Conda")
             Pkg.add("PyCall")
             Pkg.add("SymPy")
             Pkg.build("PyCall")
@@ -162,11 +168,17 @@ jobs:
                   end
               end
           end
+      # The cache restores the depot's packages, Conda's deps/deps.jl among them,
+      # but not ~/.julia/conda, the root environment that file names: on a new
+      # release of Julia, Conda is precompiled again and fails on the missing
+      # directory. Building Conda first makes that directory again.
       - name: Install dependencies (PyCall/SymPy)
         run: |
           julia -e '
             using Pkg
             ENV["PYTHON"] = ""
+            withenv(() -> Pkg.add("Conda"), "JULIA_PKG_PRECOMPILE_AUTO" => "0")
+            Pkg.build("Conda")
             Pkg.add("PyCall")
             Pkg.add("SymPy")
             Pkg.build("PyCall")
@@ -245,11 +257,17 @@ jobs:
                   end
               end
           end
+      # The cache restores the depot's packages, Conda's deps/deps.jl among them,
+      # but not ~/.julia/conda, the root environment that file names: on a new
+      # release of Julia, Conda is precompiled again and fails on the missing
+      # directory. Building Conda first makes that directory again.
       - name: Install dependencies (PyCall/SymPy)
         run: |
           julia -e '
             using Pkg
             ENV["PYTHON"] = ""
+            withenv(() -> Pkg.add("Conda"), "JULIA_PKG_PRECOMPILE_AUTO" => "0")
+            Pkg.build("Conda")
             Pkg.add("PyCall")
             Pkg.add("SymPy")
             Pkg.build("PyCall")
