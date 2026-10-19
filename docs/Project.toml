@@ -29,7 +29,7 @@ TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
 path = ".."
 
 [compat]
-ChemistryLab = "0.39"
+ChemistryLab = "0.40"
 DECUHR = "0.3"
 Documenter = "1.17"
 DocumenterCitations = "1"
