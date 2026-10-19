@@ -116,8 +116,9 @@ end
 """
     process_rss(pid) -> Union{Nothing, Int}
 
-The resident memory of process `pid`, in bytes, read from the system: `/proc`
-on Linux, `proc_pidinfo` on macOS, `K32GetProcessMemoryInfo` on Windows.
+The memory process `pid` holds, in bytes, read from the system: its resident size
+from `/proc` on Linux and from `K32GetProcessMemoryInfo` on Windows, its physical
+footprint (compressed pages included) from `proc_pid_rusage` on macOS.
 `nothing` for a process that does not exist (any more), or a system that
 offers none of these. Each system compiles its own method only.
 """
@@ -136,16 +137,19 @@ function process_rss end
         return k === nothing ? nothing : 1024 * parse(Int, split(lines[k])[2])
     end
 elseif Sys.isapple()
-    # `struct proc_taskinfo` of <sys/proc_info.h>, 96 bytes: the resident size
-    # is its second field, after the virtual size, both 64-bit.
+    # What macOS charges a process, read with `proc_pid_rusage`: its physical
+    # footprint, resident and compressed pages together (a buffer of one repeated
+    # byte compresses to almost nothing and leaves the resident size flat). A
+    # `struct rusage_info_v2` of <sys/resource.h> is a 16-byte uuid followed by
+    # 64-bit counters, the footprint tenth of the buffer read as `UInt64`s. Read
+    # with `proc_pidinfo(…, PROC_PIDTASKINFO, …)`, the compute process never showed
+    # the watchdog its growth on the macOS runners of GitHub, while it allocated
+    # 600 MB: it was never stopped.
     function process_rss(pid::Integer)
-        info = zeros(UInt64, 12)
-        PROC_PIDTASKINFO = Cint(4)
-        n = ccall(
-            (:proc_pidinfo, "libproc"), Cint, (Cint, Cint, UInt64, Ptr{UInt64}, Cint),
-            pid, PROC_PIDTASKINFO, 0, info, sizeof(info),
-        )
-        return n == sizeof(info) ? Int(info[2]) : nothing
+        info = zeros(UInt64, 32)            # the 160 bytes of the version 2, and room
+        RUSAGE_INFO_V2 = Cint(2)
+        status = ccall((:proc_pid_rusage, "libproc"), Cint, (Cint, Cint, Ptr{UInt64}), pid, RUSAGE_INFO_V2, info)
+        return status == 0 ? Int(info[10]) : nothing
     end
 elseif Sys.iswindows()
     # `PROCESS_MEMORY_COUNTERS` of <psapi.h>: two 32-bit counters, then SIZE_T

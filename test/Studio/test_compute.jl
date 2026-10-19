@@ -140,7 +140,9 @@ close(h)          # a normal exit of the compute process
 @testset "watchdog" begin
     cp2 = MS.ComputeProcess(; project, julia, boot = joinpath(MS.WORKER_DIR, "boot.jl"))
     MS.start!(cp2)
-    rss = something(MS.process_rss(cp2.worker.proc_pid), 0)
+    rss = MS.process_rss(cp2.worker.proc_pid)
+    @test rss !== nothing && rss > 0          # the watchdog reads the memory of the compute process
+    rss = something(rss, 0)
     # random bytes, not ones: macOS compresses a uniform buffer to almost nothing,
     # its resident size then stays under the cap and nothing is stopped
     r = MS.call!(cp2, :(x = rand(UInt8, 600_000_000); sleep(30); sum(x)); cap = rss + 200 * 2^20)
