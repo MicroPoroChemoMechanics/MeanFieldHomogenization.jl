@@ -383,6 +383,10 @@ section, so turning one on turns the others off:
 | **Sensitivity** | derivatives, by autodiff |
 | **Viscoelastic** | an aging creep or relaxation curve |
 
+The plot under the 3-D view shows the curve of the last run. A run that draws
+none (one point, a sensitivity, or a script that failed) leaves it empty with a
+note: its numbers are in the output below.
+
 The **Sweep** tab decides the shape of the run.
 
 *One point* homogenizes once with the amounts entered in Scales — the answer
