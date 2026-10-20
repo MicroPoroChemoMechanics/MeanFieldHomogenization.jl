@@ -140,8 +140,12 @@ close(h)          # a normal exit of the compute process
 @testset "watchdog" begin
     cp2 = MS.ComputeProcess(; project, julia, boot = joinpath(MS.WORKER_DIR, "boot.jl"))
     MS.start!(cp2)
-    rss = something(MS.process_rss(cp2.worker.proc_pid), 0)
-    r = MS.call!(cp2, :(x = ones(UInt8, 600_000_000); sleep(30); sum(x)); cap = rss + 200 * 2^20)
+    rss = MS.process_rss(cp2.worker.proc_pid)
+    @test rss !== nothing && rss > 0          # the watchdog reads the memory of the compute process
+    rss = something(rss, 0)
+    # random bytes, not ones: macOS compresses a uniform buffer to almost nothing,
+    # its resident size then stays under the cap and nothing is stopped
+    r = MS.call!(cp2, :(x = rand(UInt8, 600_000_000); sleep(30); sum(x)); cap = rss + 200 * 2^20)
     @test !r.ok && r.stopped === :memory && occursin("Make the calculation smaller", r.error)
     @test MS.status(cp2).state == "stopped"
     @test occursin("not ready", MS.call!(cp2, :(1 + 1)).error)

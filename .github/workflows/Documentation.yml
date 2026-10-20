@@ -77,16 +77,24 @@ jobs:
                   end
               end
           end
+      # The cache restores the depot's packages, Conda's deps/deps.jl among them,
+      # but not ~/.julia/conda, the root environment that file names: on a new
+      # release of Julia, Conda is precompiled again and fails on the missing
+      # directory. Building Conda first makes that directory again.
       - name: Install dependencies (PyCall/SymPy)
         run: |
           julia -e '
             using Pkg
             ENV["PYTHON"] = ""
-            Pkg.add("PyCall")
+            withenv(() -> Pkg.add("Conda"), "JULIA_PKG_PRECOMPILE_AUTO" => "0")
+            Pkg.build("Conda")
+            Pkg.add(PackageSpec(name = "PyCall", version = Pkg.Types.semver_spec("< 1.97.0, >= 1.97.1")))   # as test/ and docs/ bound it
             Pkg.add("SymPy")
-            Pkg.build("PyCall")
+            # conda-forge now and then answers a transient error (a 502 on its index):
+            # what is downloaded from it is tried three times, a minute apart
+            retry(() -> Pkg.build("PyCall"); delays = fill(60.0, 2))()
             using PyCall
-            pyimport_conda("sympy", "sympy")'
+            retry(() -> pyimport_conda("sympy", "sympy"); delays = fill(60.0, 2))()'
       - name: Install dependencies
         shell: julia --project=docs/ --color=yes {0}
         run: |
@@ -162,16 +170,24 @@ jobs:
                   end
               end
           end
+      # The cache restores the depot's packages, Conda's deps/deps.jl among them,
+      # but not ~/.julia/conda, the root environment that file names: on a new
+      # release of Julia, Conda is precompiled again and fails on the missing
+      # directory. Building Conda first makes that directory again.
       - name: Install dependencies (PyCall/SymPy)
         run: |
           julia -e '
             using Pkg
             ENV["PYTHON"] = ""
-            Pkg.add("PyCall")
+            withenv(() -> Pkg.add("Conda"), "JULIA_PKG_PRECOMPILE_AUTO" => "0")
+            Pkg.build("Conda")
+            Pkg.add(PackageSpec(name = "PyCall", version = Pkg.Types.semver_spec("< 1.97.0, >= 1.97.1")))   # as test/ and docs/ bound it
             Pkg.add("SymPy")
-            Pkg.build("PyCall")
+            # conda-forge now and then answers a transient error (a 502 on its index):
+            # what is downloaded from it is tried three times, a minute apart
+            retry(() -> Pkg.build("PyCall"); delays = fill(60.0, 2))()
             using PyCall
-            pyimport_conda("sympy", "sympy")'
+            retry(() -> pyimport_conda("sympy", "sympy"); delays = fill(60.0, 2))()'
       - name: Install dependencies
         shell: julia --project=docs/ --color=yes {0}
         run: |
@@ -245,16 +261,24 @@ jobs:
                   end
               end
           end
+      # The cache restores the depot's packages, Conda's deps/deps.jl among them,
+      # but not ~/.julia/conda, the root environment that file names: on a new
+      # release of Julia, Conda is precompiled again and fails on the missing
+      # directory. Building Conda first makes that directory again.
       - name: Install dependencies (PyCall/SymPy)
         run: |
           julia -e '
             using Pkg
             ENV["PYTHON"] = ""
-            Pkg.add("PyCall")
+            withenv(() -> Pkg.add("Conda"), "JULIA_PKG_PRECOMPILE_AUTO" => "0")
+            Pkg.build("Conda")
+            Pkg.add(PackageSpec(name = "PyCall", version = Pkg.Types.semver_spec("< 1.97.0, >= 1.97.1")))   # as test/ and docs/ bound it
             Pkg.add("SymPy")
-            Pkg.build("PyCall")
+            # conda-forge now and then answers a transient error (a 502 on its index):
+            # what is downloaded from it is tried three times, a minute apart
+            retry(() -> Pkg.build("PyCall"); delays = fill(60.0, 2))()
             using PyCall
-            pyimport_conda("sympy", "sympy")'
+            retry(() -> pyimport_conda("sympy", "sympy"); delays = fill(60.0, 2))()'
       - name: Install dependencies
         shell: julia --project=docs/ --color=yes {0}
         run: |

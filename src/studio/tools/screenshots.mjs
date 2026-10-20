@@ -62,10 +62,22 @@ async function openExample(page, name) {
   await api(page, "/api/open", { path: file.path });
 }
 
+// The studio is free once its badge says so and still does a moment later: at
+// start, the warm-up calculation follows the first "ready".
+async function settled(page, minutes) {
+  await ready(page, minutes);
+  await page.waitForTimeout(2000);
+  await ready(page, minutes);
+}
+
+// A run the studio refused or that failed leaves no curve: the script stops
+// with what the run printed rather than take a picture of nothing.
 async function run(page, minutes) {
   await page.click("#run");
   await page.waitForFunction(() => !document.querySelector("#run").disabled, null, { timeout: minutes * 60000 });
   await page.waitForTimeout(1500);   // the plot settles
+  const drawn = await page.evaluate(() => !!document.querySelector("#plot .main-svg") && !document.querySelector("#plot .plot-empty"));
+  if (!drawn) throw new Error(`the run drew no curve: ${(await page.textContent("#stdout")).trim().slice(-2000)}`);
 }
 
 async function shoot(page, id, prepare, view = VIEW) {
@@ -75,8 +87,7 @@ async function shoot(page, id, prepare, view = VIEW) {
     // reload in the theme, then the calculation again
     await page.evaluate((t) => { try { localStorage.setItem("mfhstudio.theme", t); } catch (e) { /* none */ } }, theme);
     await page.reload();
-    await ready(page, 2);
-    await page.waitForTimeout(300);
+    await settled(page, 5);
     await prepare(page);
     await page.waitForTimeout(800);
     // no toast of the run over the picture
@@ -97,7 +108,7 @@ try {
   await page.goto(args.url);
   await page.evaluate(() => { try { localStorage.setItem("mfhstudio.lang", "en"); } catch (e) { /* none */ } });
   await page.reload();
-  await ready(page, 15);
+  await settled(page, 15);
   // the first picture is the default model of a studio just started, which
   // nothing can bring back once an example is opened
   const start = await api(page, "/api/state");

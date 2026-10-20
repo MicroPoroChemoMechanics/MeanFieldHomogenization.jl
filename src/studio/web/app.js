@@ -1323,7 +1323,10 @@ async function run() {
   try {
     const r = await api("/api/run", {});
     $("#stdout").textContent = (r.stdout || "") + (r.error ? "\n" + r.error : "");
-    if (r.results) { S.results = r.results; plotResults(r.results); }
+    // the plot shows what this run drew: a run that draws nothing (one point, a
+    // sensitivity, a failure) clears the curves of the one before
+    S.results = r.results || null;
+    plotResults(S.results);
     if (r.ok) toast(t("Ran cleanly."));
     else toast(r.timeout ? t("Timed out.") : t("The script raised — see the output."), true);
   } catch (e) {
@@ -1341,11 +1344,17 @@ function themeColors() {
 }
 
 function plotResults(res) {
-  const x = res.x || [];
-  const traces = Object.entries(res)
+  const x = (res && res.x) || [];
+  const traces = Object.entries(res || {})
     .filter(([k]) => k !== "x" && k !== "xlabel")
     .map(([k, y]) => ({ x, y, name: k, type: "scatter", mode: "lines+markers" }));
-  if (!traces.length) return;
+  const box = $("#plot");
+  if (!traces.length) {
+    Plotly.purge(box);
+    box.replaceChildren(el("p", { class: "muted plot-empty" }, t("This calculation draws no curve: its numbers are in the output below.")));
+    return;
+  }
+  box.querySelectorAll(".plot-empty").forEach((p) => p.remove());
   const c = themeColors();
   const axis = { color: c.muted, gridcolor: c.line, zerolinecolor: c.line };
   Plotly.react("plot", traces, {

@@ -138,6 +138,7 @@
  "Quantity": "Grandeur",
  "RVE (matrix + inclusions)": "VER (matrice + inclusions)",
  "Ran cleanly.": "Exécuté sans erreur.",
+ "This calculation draws no curve: its numbers are in the output below.": "Ce calcul ne trace pas de courbe : ses valeurs sont dans la sortie ci-dessous.",
  "Reaches into a Homogenized inner cell; crosses scales for AD.": "Atteint une cellule intérieure Homogenized ; traverse les échelles pour la différentiation automatique.",
  "Read: {recognized} construct(s) understood, {opaque} kept as written.": "Lu : {recognized} construction(s) comprise(s), {opaque} conservée(s) telle(s) quelle(s).",
  "Remove this constant": "Retirer cette constante",

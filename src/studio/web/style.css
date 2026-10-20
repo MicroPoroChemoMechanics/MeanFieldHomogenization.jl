@@ -557,3 +557,4 @@ h3 {
 .listing .row .ico { width: 1.2em; opacity: .75; }
 .listing .row .size { margin-left: auto; font: 10.5px/1 var(--mono); opacity: .6; }
 .listing .empty { padding: 14px; color: var(--muted); font-size: 12px; }
+#plot .plot-empty { padding: 14px; font-size: 12px; }

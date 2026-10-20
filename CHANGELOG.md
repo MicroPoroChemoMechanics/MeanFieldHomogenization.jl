@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.18.1 — MFH Studio: the plot of the run shown, and no other
+
+A patch release of the studio; the homogenization is unchanged.
+
+### Fixed
+
+- **A run that draws no curve left the curve of the run before.** After a
+  sweep, a run of one point or of a sensitivity, or a script that failed or was
+  refused, kept the previous curves under *Results*, although the current
+  script computes nothing of the kind: the page showed a result the script on
+  the right does not produce. Such a run now clears the plot, with a note that
+  its numbers are in the output.
+- **The memory guard of the studio did not see the compute process grow on
+  macOS.** It read the resident size of that process with
+  `proc_pidinfo(…, PROC_PIDTASKINFO, …)`, which on the macOS runners of GitHub
+  never showed the watchdog a process allocating 600 MB: it was never stopped,
+  and its test failed there. It now reads its physical footprint with
+  `proc_pid_rusage`, what macOS charges a process, compressed pages included. A
+  test reads the memory of a child process on every system, and the test of the
+  watchdog allocates random bytes, which no system compresses.
+- **The script that takes the screenshots of the documentation** waited only
+  for the *Run* button to come back, so a run the studio refused (not enough
+  memory free, a calculation already running) or that failed would have given
+  a picture of an empty plot without a word. It now waits until the studio is
+  free (the warm-up calculation follows its first "ready"), and stops with what
+  the run printed when no curve is drawn.
+
 ## v0.18.0 — MFH Studio in Julia, inside the package
 
 A minor release. MFH Studio, until now a Python application shipped beside the
