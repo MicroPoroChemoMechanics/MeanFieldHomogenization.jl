@@ -27,19 +27,11 @@ function _hill_order2_3d_iso(ell::Ellipsoid{3, Spherical}, K₀)
 end
 
 function _hill_order2_3d_iso(ell::Ellipsoid{3}, K₀)
-    T = promote_type(eltype(ell.semi_axes), eltype(K₀))
     k = K₀.data[1]
     IA = tens_IA(ell)
-    # `IA[i, j]` reads the components in the *ellipsoid's own* basis, so wrapping
-    # them straight into a canonical `Tens` would silently drop the orientation:
-    # a rotated spheroid would return the tensor of the unrotated one. Convert to
-    # canonical components first, as the anisotropic kernel below already does.
-    IA_can = TensND.components_canon(IA)
-    P_arr = zeros(T, 3, 3)
-    for i in 1:3, j in 1:3
-        P_arr[i, j] = T(IA_can[i, j]) / k
-    end
-    return TensND.Tens(P_arr)
+    # `P = I^A / k₀` as a tensor operation, in the basis `IA` is written in (the
+    # ellipsoid's): no component is copied or changed of basis.
+    return IA / k
 end
 
 """
@@ -65,18 +57,14 @@ diagonalizing ``\\boldsymbol{K}^{-1/2}\\cdot\\boldsymbol{A}^{\\!T}\\!\\cdot
 \\boldsymbol{A}\\cdot\\boldsymbol{K}^{-1/2}``).
 """
 function _hill_order2_3d_aniso(ell::Ellipsoid{3}, K₀)
-    T_mat = eltype(K₀)
-
-    K_arr = Matrix{T_mat}(undef, 3, 3)
-    for i in 1:3, j in 1:3
-        K_arr[i, j] = K₀[i, j]
-    end
-
-    R_ell = [ell.basis[i, j] for i in 1:3, j in 1:3]
-    A = R_ell * Diagonal(collect(ell.semi_axes)) * R_ell'
-
-    P_arr = _hill_order2_aniso(A, K_arr)
-    return TensND.Tens(P_arr, TensND.CanonicalBasis{3, Float64}())
+    # In the ellipsoid's principal frame, where its shape tensor is diagonal: only
+    # the conductivity, a 3×3, changes basis, and the result is written in that
+    # frame, as the elastic kernels write theirs. `K₀[i, j]`, read before as
+    # canonical, gave the components of `K₀` in its own basis, wrong for a
+    # conductivity written in a rotated one.
+    K_arr = MFH_Core._components_in(K₀, ell.basis)
+    A = Diagonal(collect(ell.semi_axes))
+    return TensND.Tens(_hill_order2_aniso(A, K_arr), ell.basis)
 end
 
 # P = K^{-1/2} · I^{A·K^{-1/2}} · K^{-1/2} in closed form: the semi-axes and
@@ -159,17 +147,9 @@ I_3^{\\mathrm{cyl}} = \\frac{b}{b+c} .
 cylinder axis.
 """
 function _hill_order2_3d_iso(cyl::Cylinder, K₀)
-    T = promote_type(eltype(cyl.semi_axes), eltype(K₀))
     k = K₀.data[1]
     IA = tens_IA(cyl)
-    # As for the ellipsoid: canonical components, or the cylinder's orientation
-    # is lost.
-    IA_can = TensND.components_canon(IA)
-    P_arr = zeros(T, 3, 3)
-    for i in 1:3, j in 1:3
-        P_arr[i, j] = T(IA_can[i, j]) / k
-    end
-    return TensND.Tens(P_arr)
+    return IA / k             # as for the ellipsoid, in the cylinder's basis
 end
 
 """
@@ -185,27 +165,10 @@ the 2-D Newton potentials produce the transverse block, and the axial
 row/column is re-embedded as zero (``P_{1j}=0``).
 """
 function _hill_order2_3d_aniso(cyl::Cylinder, K₀)
-    T = promote_type(eltype(cyl.semi_axes), eltype(K₀))
-    T_mat = eltype(K₀)
-
-    K₀_princ = TensND.change_tens(K₀, cyl.basis)
-    K_full = Matrix{T_mat}(undef, 3, 3)
-    for i in 1:3, j in 1:3
-        K_full[i, j] = K₀_princ[i, j]
-    end
-
-    K2 = Matrix{T_mat}(undef, 2, 2)
-    for i in 1:2, j in 1:2
-        K2[i, j] = K_full[i + 1, j + 1]
-    end
-
+    # The transverse block of `K₀` in the cylinder's frame carries the 2-D
+    # problem; the axial row and column of `P` are zero.
+    K2 = MFH_Core._components_in(K₀, cyl.basis)[2:3, 2:3]
     b, c = cyl.semi_axes
-    P_arr_2d = _hill_order2_aniso(Diagonal([b, c]), K2)
-
-    P_arr_3d_princ = zeros(T, 3, 3)
-    for i in 1:2, j in 1:2
-        P_arr_3d_princ[i + 1, j + 1] = P_arr_2d[i, j]
-    end
-
-    return TensND.Tens(P_arr_3d_princ, cyl.basis)
+    P2 = _hill_order2_aniso(Diagonal([b, c]), K2)
+    return TensND.Tens(cat(zero(eltype(P2)), P2; dims = (1, 2)), cyl.basis)
 end

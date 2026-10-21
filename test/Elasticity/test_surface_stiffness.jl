@@ -154,7 +154,7 @@ end
     f, R = 0.15, 0.01                       # 10 nm particles
     sph = Ellipsoid(R)
     C_eq = equivalent_particle(C_i, sph, κs, μs)
-    @test get_array(C_eq) ≈ get_array(C_i) .+ get_array(surface_stiffness(sph, κs, μs)) rtol = 1.0e-14
+    @test C_eq ≈ C_i .+ components_canon(surface_stiffness(sph, κs, μs)) rtol = 1.0e-14
 
     rve = RVE()
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
@@ -176,7 +176,7 @@ end
     @test abs(C_big[1, 2, 1, 2] - C_bulk[1, 2, 1, 2]) <
         abs(C_nano[1, 2, 1, 2] - C_bulk[1, 2, 1, 2])
     # No interface ⇒ the plain particle.
-    @test get_array(equivalent_particle(C_i, sph, 0.0, 0.0)) ≈ get_array(C_i) atol = 1.0e-14
+    @test equivalent_particle(C_i, sph, 0.0, 0.0) ≈ C_i atol = 1.0e-14
 end
 
 @testset "Surface stiffness — error paths and ForwardDiff" begin

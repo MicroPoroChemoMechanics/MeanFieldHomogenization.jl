@@ -86,7 +86,7 @@ end
 
 @inline _to_order2_mat(s::AbstractMatrix) = s
 @inline function _to_order2_mat(s::TensND.AbstractTens{2, 3})
-    return TensND.get_array(s)
+    return TensND.components_canon(s)   # the ALV matrices are canonical
 end
 
 @inline function _set_block_order2!(
@@ -208,19 +208,12 @@ function hill_kernel_order2_at(ell, K_0::AbstractMatrix)
         throw(ArgumentError("hill_kernel_order2: only iso ALV matrix is currently supported"))
     α_0 = iso_order2_params_from_blocks(K_0)
     α_0_inv = volterra_inverse(α_0; block_size = 1)
-    IA = TensND.get_array(Elasticity.tens_IA(ell))
-    n = size(α_0, 1)
+    # Canonical components: the 3n×3n matrices of the ALV algebra are written in
+    # the canonical frame, and `tens_IA` is in the ellipsoid's. `get_array` read
+    # it there, so a rotated ellipsoid was silently aligned with the axes.
+    IA = TensND.components_canon(Elasticity.tens_IA(ell))
     T = promote_type(eltype(α_0_inv), eltype(IA))
-    P = zeros(T, 3 * n, 3 * n)
-    @inbounds for i in 1:n, j in 1:n
-        rows = (3 * (i - 1) + 1):(3 * i)
-        cols = (3 * (j - 1) + 1):(3 * j)
-        v = T(α_0_inv[i, j])
-        for k in 1:3, l in 1:3
-            P[rows[k], cols[l]] = v * IA[k, l]
-        end
-    end
-    return P
+    return kron(Matrix{T}(α_0_inv), Matrix{T}(IA))   # block (i, j) = α⁻¹[i, j] I^A
 end
 
 # A layered sphere has no Hill kernel: its contribution comes from the

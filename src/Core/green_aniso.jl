@@ -203,13 +203,10 @@ function _green_operator_aniso(C₀::TensND.AbstractTens{4, 3}, x::AbstractVecto
     # H[(i,j), k, l] = ∂²G_ij/∂x_k∂x_l, obtained as a jacobian of a jacobian.
     f = y -> vec(Matrix(_green_function_aniso(C, y, nodes)))
     J2 = ForwardDiff.jacobian(y -> vec(ForwardDiff.jacobian(f, y)), collect(x))
-    T = eltype(J2)
-    H = Array{T, 4}(undef, 3, 3, 3, 3)
-    @inbounds for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        # `f` is column-major over (i, j); the inner jacobian appends k, the
-        # outer one appends l.
-        H[i, j, k, l] = J2[(k - 1) * 9 + (j - 1) * 3 + i, l]
-    end
+    # `f` is column-major over (i, j), the inner jacobian appends k and the
+    # outer one l: row i + 3(j − 1) + 9(k − 1), column l, the column-major
+    # layout of a 3×3×3×3 array.
+    H = reshape(J2, 3, 3, 3, 3)
     return SArray{Tuple{3, 3, 3, 3}}(
         @inbounds [
             -(H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
@@ -246,7 +243,7 @@ green_operator_aniso(K₀::TensND.AbstractTens{2, 3}, x::AbstractVector) =
     TensND.Tens(_green_operator_aniso(K₀, x))
 
 _green_operator_aniso(K₀::TensND.AbstractTens{2, 3}, x::AbstractVector) =
-    _green_operator_aniso_order2(TensND.get_array(K₀), x, 3)
+    _green_operator_aniso_order2(TensND.components_canon(K₀), x, 3)
 
 """
     green_operator_aniso(K₀::AbstractTens{2,2}, x) -> Tens{2,2}
@@ -265,7 +262,7 @@ green_operator_aniso(K₀::TensND.AbstractTens{2, 2}, x::AbstractVector) =
     TensND.Tens(_green_operator_aniso(K₀, x))
 
 _green_operator_aniso(K₀::TensND.AbstractTens{2, 2}, x::AbstractVector) =
-    _green_operator_aniso_order2(TensND.get_array(K₀), x, 2)
+    _green_operator_aniso_order2(TensND.components_canon(K₀), x, 2)
 
 function _green_operator_aniso_order2(K, x::AbstractVector, d::Int)
     Kinv = inv(Matrix(K))

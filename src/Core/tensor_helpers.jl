@@ -40,34 +40,23 @@ end
 """
     _C_array(C₀) -> Array{T,4}
 
-Dense `3×3×3×3` component array of a TensND stiffness tensor (element
-type inherited from `eltype(C₀)`).  Used by the numerical residue and
-DECUHR algorithms.
+**Canonical** components of a 4th-order TensND tensor, as a dense `3×3×3×3`
+array (element type inherited from `C₀`). Every caller combines them with
+canonical data (a position, a direction, another canonical array), and
+`C₀[i, j, k, l]` or `get_array(C₀)` would read a tensor written in a rotated
+basis in that basis instead. Free for a tensor already in the canonical basis,
+which `components_canon` returns as it is.
 """
-function _C_array(C₀::TensND.AbstractTens{4, 3})
-    T = eltype(C₀)
-    C = Array{T}(undef, 3, 3, 3, 3)
-    @inbounds for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        C[i, j, k, l] = C₀[i, j, k, l]
-    end
-    return C
-end
+_C_array(C₀::TensND.AbstractTens{4, 3}) = Array(TensND.components_canon(C₀))
 
 """
-    _C_array(C₀, ::Type{Tdst}) -> Array{Tdst,4}
+    _components_in(t, basis) -> Array
 
-Variant of [`_C_array`](@ref) that casts the component array to a
-different element type `Tdst`.  Used by the residue algorithm to obtain
-a `ComplexF64` array even when the TensND tensor stores `Float64`.
+Components of a TensND tensor in `basis`, as a plain array. No change of basis
+when `t` is written in `basis` already: `change_tens` returns it as it is.
 """
-function _C_array(C₀::TensND.AbstractTens{4, 3}, ::Type{Tdst}) where {Tdst}
-    C_src = _C_array(C₀)
-    C = Array{Tdst}(undef, 3, 3, 3, 3)
-    @inbounds for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        C[i, j, k, l] = Tdst(C_src[i, j, k, l])
-    end
-    return C
-end
+_components_in(t::TensND.AbstractTens, basis::TensND.AbstractBasis) =
+    Array(TensND.get_array(TensND.change_tens(t, basis)))
 
 # ─── Orthotropic assembly (3D, 4th order) ────────────────────────────────────
 

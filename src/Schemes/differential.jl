@@ -415,8 +415,15 @@ end
 function _diff_same_layout(a, b)
     tag = _symmetry_tag(a)
     tag === _symmetry_tag(b) || return false
-    return _state_length(tag, a) == _state_length(tag, b)
+    return _state_length(tag, a) == _state_length(tag, b) && _same_orientation(tag, a, b)
 end
+
+# A structured state holds coefficients about an axis or a frame: one tensor's
+# coefficients stand for the other's only about the same one. `isequal`, not
+# `==`: it answers a `Bool` on symbolic axes too.
+_same_orientation(::Val{:ti}, a, b) = isequal(TensND.axis(a), TensND.axis(b))
+_same_orientation(::Val{:ortho}, a, b) = isequal(TensND.frame(a), TensND.frame(b))
+_same_orientation(::Val, a, b) = true
 
 _state_length(::Val, t) = length(TensND.get_data(t))
 _state_length(::Val{:full_4}, t) = 36
@@ -442,16 +449,21 @@ _get_state(::Val{:iso_4}, t) = collect(TensND.get_data(t))
 _get_state(::Val{:iso_2}, t) = collect(TensND.get_data(t))
 _get_state(::Val{:ti}, t) = collect(TensND.get_data(t))
 _get_state(::Val{:ortho}, t) = collect(TensND.get_data(t))
-_get_state(::Val{:full_4}, t) = vec(collect(TensND.KM(t)))
-_get_state(::Val{:full_2}, t) = vec(collect(TensND.KM(t)))
+# Canonical Kelvin-Mandel components, as `inv_KM` rebuilds them: `KM(t)` alone
+# is in `t`'s own basis, and an anisotropic Hill tensor is written in its
+# inclusion's. A tensor already canonical is not changed of basis.
+_km_canon(t::TensND.AbstractTens{order, dim}) where {order, dim} =
+    TensND.KM(t, TensND.CanonicalBasis{dim, eltype(t)}())
+_get_state(::Val{:full_4}, t) = vec(collect(_km_canon(t)))
+_get_state(::Val{:full_2}, t) = vec(collect(_km_canon(t)))
 
 # Push a tensor into a flat vector for `du`.
 _set_state!(du, ::Val{:iso_4}, Δ) = (du .= TensND.get_data(Δ); nothing)
 _set_state!(du, ::Val{:iso_2}, Δ) = (du .= TensND.get_data(Δ); nothing)
 _set_state!(du, ::Val{:ti}, Δ) = (du .= TensND.get_data(Δ); nothing)
 _set_state!(du, ::Val{:ortho}, Δ) = (du .= TensND.get_data(Δ); nothing)
-_set_state!(du, ::Val{:full_4}, Δ) = (du .= vec(TensND.KM(Δ)); nothing)
-_set_state!(du, ::Val{:full_2}, Δ) = (du .= vec(TensND.KM(Δ)); nothing)
+_set_state!(du, ::Val{:full_4}, Δ) = (du .= vec(_km_canon(Δ)); nothing)
+_set_state!(du, ::Val{:full_2}, Δ) = (du .= vec(_km_canon(Δ)); nothing)
 
 # Reconstruct the tensor from a state vector.
 _reconstruct_tens(::Val{:iso_4}, ::TensND.AbstractTens, u) =

@@ -52,7 +52,10 @@
 # We restrict to canonical-axis penny cracks for the iso ALV fast path —
 # arbitrary orientation will require a 6×6 Mandel rotation per (i,j) block.
 @inline function _crack_axis_is_e3(crack)
-    n̂ = TensND.get_array(TensND.tens_basis(crack_basis(crack), 3))
+    # Canonical components of the normal: `tens_basis(ℬ, 3)` is the third vector
+    # of ℬ written in ℬ, so its own components are always (0, 0, 1), and this
+    # test passed for every orientation.
+    n̂ = MFH_Core._frame_columns(crack_basis(crack))[3]
     return abs(n̂[1]) < 1.0e-10 && abs(n̂[2]) < 1.0e-10 && abs(n̂[3] - 1) < 1.0e-10
 end
 

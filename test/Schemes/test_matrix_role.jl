@@ -286,5 +286,5 @@ end
     C_hom = homogenize(rve, MoriTanaka(:S), :C)
     b_default = biot_tensor(rve, C_hom)
     b_named = biot_tensor(rve, C_hom; solid = :S)
-    @test get_array(b_default) ≈ get_array(b_named)
+    @test b_default ≈ b_named
 end

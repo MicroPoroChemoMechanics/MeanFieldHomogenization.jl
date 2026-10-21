@@ -517,10 +517,10 @@ end
         C = homogenize(rve, SelfConsistent(; algorithm, abstol = 1.0e-12, reltol = 1.0e-12, maxiters = 300))
         @test C isa TensND.TensTI{4, Float64, 5}
         @test TensND.get_data(C)[3] < 0
-        @test get_array(S._sc_step(rve, C, :C)) ≈ get_array(C) rtol = 1.0e-11
+        @test S._sc_step(rve, C, :C) ≈ C rtol = 1.0e-11
         C
     end
-    @test get_array(estimates[1]) ≈ get_array(estimates[2]) rtol = 1.0e-11
+    @test (estimates[1]) ≈ (estimates[2]) rtol = 1.0e-11
 end
 
 @testset "NewtonDefault — singular Jacobian, failed line search, failing step" begin

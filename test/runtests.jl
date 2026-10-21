@@ -147,12 +147,14 @@ end
         include("Core/test_counters.jl")
         include("Core/test_hot_paths.jl")
         include("Core/test_order_aliases.jl")
+        include("Core/test_random_bases.jl")
     end
 
     rungroup("Elasticity") && @testset "Elasticity" begin
         include("Elasticity/test_hill.jl")
         include("Elasticity/test_hill_2d.jl")
         include("Elasticity/test_hill_cylinder.jl")
+        include("Elasticity/test_hill_random_bases.jl")
         include("Elasticity/test_hill_symbolic.jl")
         include("Elasticity/test_shape_tensor.jl")
         include("Elasticity/test_eshelby.jl")

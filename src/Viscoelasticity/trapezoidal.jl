@@ -143,11 +143,15 @@ end
 # Convert a TensND 4-tensor in {3,3,3,3} array form to a 6×6 Mandel matrix.
 # Mandel convention: σ_4 = √2 σ_23, σ_5 = √2 σ_13, σ_6 = √2 σ_12.
 function _tens_to_mandel66(C::TensND.AbstractTens{4, 3})
-    arr = TensND.get_array(C)
+    # Canonical components, as the ALV matrices are: a Hill tensor of a rotated
+    # 2-D or triaxial inclusion is written in the inclusion's basis.
+    arr = TensND.components_canon(C)
     T = eltype(arr)
     M = zeros(T, 6, 6)
     sq2 = sqrt(T(2))
     voigt = ((1, 1), (2, 2), (3, 3), (2, 3), (1, 3), (1, 2))
+    # An index map, kept as a loop: `mandel66_minor` would average the minor
+    # symmetries and move the last bits of every ALV kernel.
     for I in 1:6, J in 1:6
         i, j = voigt[I]
         k, l = voigt[J]

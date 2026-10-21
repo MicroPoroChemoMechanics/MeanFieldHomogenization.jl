@@ -806,9 +806,22 @@ _rebuild_from_data(::TensND.TensISO{3}, p) = TensND.TensISO{3}(p[1], p[2])
 _rebuild_from_data(t::TensND.AbstractTens, p) =
     TensND._rebuild(t, ntuple(i -> p[i], length(p)))
 
-# Residual norm operating on stored components (works for any tensor type).
-_sc_residual_norm(a::TensND.AbstractTens, b::TensND.AbstractTens) =
-    sqrt(sum(abs2, get_array(a) .- get_array(b)))
+# Residual norm on the components of `a` and `b` in one basis: `same_basis`
+# leaves them as they are when they share one, the usual case, and otherwise
+# writes them in a common one. Subtracting each one's own components compared
+# a canonical seed with an iterate written in an inclusion's basis.
+function _sc_residual_norm(a::TensND.AbstractTens, b::TensND.AbstractTens)
+    na, nb = TensND.same_basis(a, b)
+    ℬ = TensND.get_basis(na)
+    return sqrt(sum(abs2, _comparable(na, ℬ) .- _comparable(nb, ℬ)))
+end
+
+# Components of a tensor written in `ℬ` whose sum of squares is its Frobenius
+# norm. In an orthonormal basis, the stored array itself: two tensors in the
+# same one are compared by plain matrix arithmetic. In any other basis the
+# stored components carry a metric and variances, so the canonical ones are.
+_comparable(t, ::TensND.OrthonormalBasis) = get_array(t)
+_comparable(t, ::TensND.AbstractBasis) = TensND.components_canon(t)
 
 # Frobenius norm of a tensor, from its stored array. Basis-independent for an
 # orthonormal frame, so a rotated tensor's local components give the same value
@@ -908,8 +921,12 @@ _sc_converged(r::Real, abstol::Real) = r ≤ abstol
 # while the derivatives have not moved. Each partial — at every level of
 # nesting — is therefore tested on its own and against its own scale, as the
 # value is: ‖∂Δ‖ ≤ abstol + reltol ‖∂x‖.
-_sc_partials_converged(x_new::TensND.AbstractTens, x::TensND.AbstractTens; kw...) =
-    _sc_partials_converged(get_array(x_new) .- get_array(x), get_array(x); kw...)
+function _sc_partials_converged(x_new::TensND.AbstractTens, x::TensND.AbstractTens; kw...)
+    a, b = TensND.same_basis(x_new, x)          # one basis, as for the residual
+    ℬ = TensND.get_basis(b)
+    xb = _comparable(b, ℬ)
+    return _sc_partials_converged(_comparable(a, ℬ) .- xb, xb; kw...)
+end
 
 function _sc_partials_converged(Δ::AbstractArray, x::AbstractArray; abstol::Real, reltol::Real)
     T = promote_type(eltype(Δ), eltype(x))

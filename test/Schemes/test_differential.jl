@@ -556,8 +556,8 @@ end
     @test length(Cs) == 21
     @test τ[1] == 0.0 && τ[end] == 1.0
     # τ = 0 is the matrix, τ = 1 is what `homogenize` returns.
-    @test get_array(Cs[1]) ≈ get_array(C_m)
-    @test get_array(Cs[end]) ≈ get_array(homogenize(rve, sch, :C))
+    @test (Cs[1]) ≈ C_m
+    @test (Cs[end]) ≈ homogenize(rve, sch, :C)
     # Monotone stiffening towards a stiffer inclusion.
     ks = [k_mu(C)[1] for C in Cs]
     @test all(≥(0), diff(ks))
@@ -646,6 +646,6 @@ end
         @test Δ isa TensISO
         du = zeros(length(S._get_state(tag, proto)))
         S._set_state_layout!(du, tag, proto, Δ)
-        @test get_array(S._reconstruct_tens(tag, proto, du)) ≈ get_array(Δ) atol = 1.0e-14
+        @test S._reconstruct_tens(tag, proto, du) ≈ Δ atol = 1.0e-14
     end
 end

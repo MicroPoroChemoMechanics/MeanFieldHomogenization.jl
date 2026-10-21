@@ -283,7 +283,7 @@ function _crack_local_frame(
         c::MFH_Core.AbstractCrack, C₀::TensND.AbstractTens{4, 3}
     )
     basis = crack_basis(c)
-    Carr = MFH_Core._C_array(TensND.change_tens(C₀, basis))
+    Carr = MFH_Core._components_in(C₀, basis)
     T = eltype(Carr)
     l̂ = T[one(T), zero(T), zero(T)]
     m̂ = T[zero(T), one(T), zero(T)]

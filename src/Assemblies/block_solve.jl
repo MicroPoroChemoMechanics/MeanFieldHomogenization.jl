@@ -40,19 +40,25 @@ _mandel_size(::TensND.AbstractTens{2, 2}) = 2
 # 3D, and its 2D counterpart written out here (three components, weights √2).
 # 2nd order: the identity map — a symmetric 2nd-order tensor is already its own
 # Mandel vector in the sense used by `⋅`.
+#
+# Canonical components throughout: the blocks of one system come in different
+# bases (a Hill tensor in its particle's, a reference in the canonical one) and
+# `_from_mandel` rebuilds canonical tensors. `get_array` read each block in its
+# own basis, which mixed frames in one matrix for every oriented particle.
+# A block already canonical is read as it is.
 
 const _MANDEL_IDX_2D = ((1, 1), (2, 2), (1, 2))
 
-_to_mandel(A, ::TensND.AbstractTens{4, 3}) = MFH_Core.mandel66_minor(TensND.get_array(A))
-_to_mandel(A, ::TensND.AbstractTens{2}) = Matrix(TensND.get_array(A))
+_to_mandel(A, ::TensND.AbstractTens{4, 3}) = MFH_Core.mandel66_minor(TensND.components_canon(A))
+_to_mandel(A, ::TensND.AbstractTens{2}) = Matrix(TensND.components_canon(A))
 
 function _to_mandel(A, ::TensND.AbstractTens{4, 2})
-    arr = TensND.get_array(A)
+    arr = TensND.components_canon(A)
     T = eltype(arr)
     sq2 = sqrt(T(2))
     Λ(I) = I ≤ 2 ? one(T) : sq2
     M = Matrix{T}(undef, 3, 3)
-    for I in 1:3, J in 1:3
+    for I in 1:3, J in 1:3          # an index map (2-D Kelvin-Mandel): kept as a loop
         (i, j) = _MANDEL_IDX_2D[I]
         (k, l) = _MANDEL_IDX_2D[J]
         v = (arr[i, j, k, l] + arr[j, i, k, l] + arr[i, j, l, k] + arr[j, i, l, k]) / 4

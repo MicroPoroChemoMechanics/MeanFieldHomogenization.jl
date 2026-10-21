@@ -508,7 +508,7 @@ end
     for r in (0.4, 0.7, 1.0, 1.2, 1.37, 1.7, 2.0, 2.4, 2.9, 3.2, 3.5)
         got = cumulative_strain_average(sph, LF_C₀, LF_ε∞, r)
         ref = _ball_strain_average(sol, radii, r, LF_ε∞)
-        @test get_array(got) ≈ get_array(ref) rtol = 1.0e-13
+        @test got ≈ ref rtol = 1.0e-13
     end
 
     # The interface radii must be untouched by the fix.

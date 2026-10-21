@@ -126,18 +126,9 @@ function _frame_matrix(crack)
     return hcat(l̂, m̂, n̂)
 end
 
-"Components of `C₀` in the crack's local frame, as a `SymmetricTensor{4,3}`."
+"Components of `C₀` in the crack's local frame, as a `SymmetricTensor{4,3}`: one change of basis."
 function _local_stiffness(crack, C₀::TensND.AbstractTens{4, 3})
-    Cg = Core._C_array(C₀)
-    R = _frame_matrix(crack)
-    Cl = zeros(Float64, 3, 3, 3, 3)
-    @inbounds for p in 1:3, q in 1:3, r in 1:3, s in 1:3
-        acc = 0.0
-        for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-            acc += R[i, p] * R[j, q] * R[k, r] * R[l, s] * Cg[i, j, k, l]
-        end
-        Cl[p, q, r, s] = acc
-    end
+    Cl = Core._components_in(C₀, Core.inclusion_basis(crack))
     return Tensors.SymmetricTensor{4, 3}((i, j, k, l) -> Cl[i, j, k, l])
 end
 

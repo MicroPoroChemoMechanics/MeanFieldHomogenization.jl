@@ -310,7 +310,7 @@ end
         @test eltype(get_array(rb.A)) === BigFloat
         sf = LayeredSpheroid((1.0,), (sqrt(1 - c^2),), (C₁,); Nseries = 5)
         rf = spheroid_strain_concentration(sf, C₀; D = 4)
-        @test Float64(get_array(rb.A)[3, 3, 3, 3]) ≈ get_array(rf.A)[3, 3, 3, 3] rtol = 1.0e-8
+        @test Float64(components_canon(rb.A)[3, 3, 3, 3]) ≈ components_canon(rf.A)[3, 3, 3, 3] rtol = 1.0e-8
     end
 end
 

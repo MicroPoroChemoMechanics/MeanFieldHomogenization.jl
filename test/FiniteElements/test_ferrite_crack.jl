@@ -116,7 +116,7 @@ using LinearAlgebra
         @test get_array(Nb) == get_array(N)
 
         ε = 0.05
-        @test get_array(delta_inverse_property(crack6, H, ε)) ≈ get_array((4π / 3) * ε * H)
+        @test delta_inverse_property(crack6, H, ε) ≈ ((4π / 3) * ε * H)
         @test check_inclusion_interface(crack6; amount = :density, verbose = false)
     end
 

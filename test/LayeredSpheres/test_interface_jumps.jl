@@ -150,7 +150,7 @@ end
     # The material average is what the averages of `averages.jl` return.
     ε∞ = TensISO{3}(1.0)
     A_mat = sum(f[k] .* collect(_iso(gradient_gradient_concentration(s, C₀; layer = k))) for k in 1:3)
-    @test get_array(sphere_gradient_average(s, C₀, ε∞)) ≈ get_array(TensISO{3}(A_mat...) ⊡ ε∞) rtol = 1.0e-12
+    @test sphere_gradient_average(s, C₀, ε∞) ≈ (TensISO{3}(A_mat...) ⊡ ε∞) rtol = 1.0e-12
 end
 
 @testset "Interface jumps — N = B − C₀:A for either owner of the outer interface" begin
@@ -165,8 +165,8 @@ end
             A = gradient_gradient_concentration(s, C₀, C₀; external)
             B = LS_IJ.flux_gradient_concentration(s, C₀, C₀; external)
             Nc = property_contribution(s, C₀, C₀; external)
-            @test get_array(Nc) ≈ get_array(B - C₀ ⊡ A) rtol = 1.0e-12
-            @test get_array(property_contribution(s, C₀; external)) ≈ get_array(Nc) rtol = 1.0e-12
+            @test Nc ≈ (B - C₀ ⊡ A) rtol = 1.0e-12
+            @test property_contribution(s, C₀; external) ≈ Nc rtol = 1.0e-12
             # The bundles return the separate results bit for bit.
             AN = MFH_IJ.Core.concentration_and_contribution(s, C₀, C₀; external)
             AB = MFH_IJ.Core.concentration_and_flux_average(s, C₀, C₀; external)

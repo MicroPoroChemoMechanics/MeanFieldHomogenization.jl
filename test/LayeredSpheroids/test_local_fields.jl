@@ -191,7 +191,7 @@ end
             local_gradient_gradient_concentration, local_flux_gradient_concentration,
             local_gradient_flux_concentration, local_flux_flux_concentration,
         )
-        @test get_array(g(s, K0, q, p, φ)) ≈ get_array(g(f, q, p, φ))
+        @test g(s, K0, q, p, φ) ≈ g(f, q, p, φ)
     end
 end
 

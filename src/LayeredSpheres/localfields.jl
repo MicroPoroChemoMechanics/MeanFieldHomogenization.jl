@@ -611,10 +611,12 @@ end
 function _local_u(f::LayeredSphereFields, r, n, k::Int, ε∞)
     f_over_r, _, g_over_r, _, h_over_r, _ = _radial_scalars(f, k, r)
 
-    tr_ε = ε∞[1, 1] + ε∞[2, 2] + ε∞[3, 3]
-    e_v = tr_ε / 3
+    # Canonical components: `n` is canonical, and `ε∞[i, j]` reads a strain
+    # written in a rotated basis in that basis (free when it is canonical).
+    E = TensND.components_canon(ε∞)
+    e_v = (E[1, 1] + E[2, 2] + E[3, 3]) / 3
     # Deviatoric part of the remote strain, applied to n.
-    En = ntuple(i -> sum(ε∞[i, j] * n[j] for j in 1:3) - e_v * n[i], 3)
+    En = ntuple(i -> sum(E[i, j] * n[j] for j in 1:3) - e_v * n[i], 3)
     s = sum(En[i] * n[i] for i in 1:3)
 
     fr = f_over_r * r

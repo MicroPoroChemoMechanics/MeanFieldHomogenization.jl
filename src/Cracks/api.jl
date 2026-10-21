@@ -174,15 +174,19 @@ function _apply_interface_stiffness(
         B::TensND.AbstractTens{2, 3},
         K::TensND.AbstractTens{2, 3}, b::Real
     )
-    B_M = TensND.get_array(B)        # 3 × 3
-    K_M = TensND.get_array(K)
-    I3 = Matrix{eltype(B_M)}(LinearAlgebra.I, 3, 3)
-    KB = Matrix(K_M) * Matrix(B_M)
-    M = I3 + b .* KB
-    B_eff_M = Matrix(B_M) / M
+    # In the basis `B` is written in (the crack's): only `K`, a 3×3, changes
+    # basis, and the result stays in that basis. `get_array(K)` was read there
+    # as if it were, and the result was relabeled canonical, so an oriented
+    # crack with an interface stiffness came back in the wrong frame.
+    # The algebra below is matrix algebra, right in an orthonormal basis only:
+    # the orthonormal one `B` is written in (read as it is), or its parent.
+    ℬ = TensND.relevant_OrthonormalBasis(TensND.get_basis(B))
+    B_M = MFH_Core._components_in(B, ℬ)
+    K_M = MFH_Core._components_in(K, ℬ)
+    M = LinearAlgebra.I + b .* (K_M * B_M)
+    B_eff_M = B_M / M
     # Symmetrize to remove rounding drift.
-    B_eff_M = (B_eff_M + B_eff_M') ./ 2
-    return TensND.TensCanonical(B_eff_M)
+    return TensND.Tens((B_eff_M + transpose(B_eff_M)) ./ 2, ℬ)
 end
 
 # Order-2 (conductivity) — thermal COD scalar
