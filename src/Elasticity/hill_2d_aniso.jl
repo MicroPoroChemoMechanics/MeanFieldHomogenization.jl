@@ -22,11 +22,7 @@ function _hill_2d_aniso(
     T = promote_type(eltype(ell.semi_axes), eltype(C₀))
     ρ = ell.semi_axes[2] / ell.semi_axes[1]
 
-    C₀_princ = TensND.change_tens(C₀, ell.basis)
-    C₀_arr = Array{T, 4}(undef, 2, 2, 2, 2)
-    for i in 1:2, j in 1:2, k in 1:2, l in 1:2
-        C₀_arr[i, j, k, l] = C₀_princ[i, j, k, l]
-    end
+    C₀_arr = T.(MFH_Core._components_in(C₀, ell.basis))   # in the ellipse's frame
 
     function γ_integrand(ψ)
         ζ = (cos(ψ), sin(ψ) / ρ)
@@ -73,13 +69,9 @@ function _hill_2d_aniso(
         γ_integrand, 0.0, π;
         atol = abstol, rtol = reltol, maxevals = maxiters
     )
-    P_arr = zeros(T, 2, 2, 2, 2)
-    let n = 0
-        for α in 1:2, β in 1:2, γ in 1:2, δ in 1:2
-            n += 1
-            P_arr[α, β, γ, δ] = vals[n] / π
-        end
-    end
+    # `vals` runs over (α, β, γ, δ) with δ fastest; `reshape` puts the first
+    # index fastest, hence the reversal of the four indices.
+    P_arr = permutedims(reshape(collect(vals) ./ π, 2, 2, 2, 2), (4, 3, 2, 1))
 
     # Project on the minor and major symmetries. Averaged in place, an entry
     # already overwritten entered the average of the next member of its orbit,

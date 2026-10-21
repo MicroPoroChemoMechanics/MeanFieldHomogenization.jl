@@ -109,11 +109,9 @@ function _hill_3d_aniso_residue(
     η = Float64(ell.semi_axes[2] / ell.semi_axes[1])
     ω = Float64(ell.semi_axes[3] / ell.semi_axes[1])
 
-    C₀_princ = TensND.change_tens(C₀, ell.basis)
-    C = zeros(Float64, 3, 3, 3, 3)
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        C[i, j, k, l] = Float64(C₀_princ[i, j, k, l])
-    end
+    # Components in the ellipsoid's frame, in `Float64`: this route finds
+    # polynomial roots and is `Float64`-only by design (see the note above).
+    C = Float64.(MFH_Core._components_in(C₀, ell.basis))
 
     function hill_at_phi(φ::Float64)
         m1 = cos(φ)
