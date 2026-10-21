@@ -131,7 +131,27 @@ struct CustomInclusion{dim, T <: Number, B <: TensND.AbstractBasis, NT <: NamedT
     homogeneous::Bool
     density_factor::Union{Nothing, Float64}
     fns::NT
+    CustomInclusion{dim, T, B, NT}(
+        semi_axes, basis, homogeneous, density_factor, fns
+    ) where {dim, T <: Number, B <: TensND.AbstractBasis, NT <: NamedTuple} =
+        new{dim, T, B, NT}(semi_axes, basis, homogeneous, density_factor, fns)
 end
+
+# Positional forms, for `Schemes._replace_geom_field`: written out because the
+# generated one leaves `dim` and `T` unbound when there are no semi-axes (Aqua,
+# Julia 1.14), and could not be called then. Without semi-axes, `dim` is the
+# basis's and `T` is `Float64`, as the keyword constructor chooses.
+CustomInclusion(
+    semi_axes::Tuple{T, Vararg{T, M}}, basis::B, homogeneous::Bool,
+    density_factor::Union{Nothing, Float64}, fns::NT
+) where {T <: Number, M, B <: TensND.AbstractBasis, NT <: NamedTuple} =
+    CustomInclusion{M + 1, T, B, NT}(semi_axes, basis, homogeneous, density_factor, fns)
+
+CustomInclusion(
+    ::Nothing, basis::B, homogeneous::Bool,
+    density_factor::Union{Nothing, Float64}, fns::NT
+) where {dim, B <: TensND.AbstractBasis{dim}, NT <: NamedTuple} =
+    CustomInclusion{dim, Float64, B, NT}(nothing, basis, homogeneous, density_factor, fns)
 
 function CustomInclusion(
         semi_axes::Union{Nothing, NTuple{<:Any, <:Number}} = nothing;

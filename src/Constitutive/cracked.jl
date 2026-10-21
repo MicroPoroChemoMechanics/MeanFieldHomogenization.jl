@@ -45,7 +45,14 @@ struct CrackedState{N, T, E, S} <: AbstractMaterialState
     open::NTuple{N, Bool}
     ε::E
     σ::S
+    CrackedState{N, T, E, S}(ω, open, ε, σ) where {N, T, E, S} = new{N, T, E, S}(ω, open, ε, σ)
 end
+
+# One family at least, as `MicrocrackedMaterial` requires: `T` is then bound by
+# the first aspect ratio, which `NTuple{N, T}` leaves free for the empty tuple.
+CrackedState(
+    ω::Tuple{T, Vararg{T, M}}, open::Tuple{Bool, Vararg{Bool, M}}, ε::E, σ::S
+) where {T, M, E, S} = CrackedState{M + 1, T, E, S}(ω, open, ε, σ)
 
 """
     open_set(st::CrackedState) -> NTuple{N,Bool}
@@ -110,7 +117,15 @@ struct MicrocrackedMaterial{N, S, R, T, K} <: AbstractMFHMaterial
     ω₀::NTuple{N, T}
     property::Symbol
     kw::K
+    MicrocrackedMaterial{N, S, R, T, K}(rve, scheme, families, ω₀, property, kw) where {N, S, R, T, K} =
+        new{N, S, R, T, K}(rve, scheme, families, ω₀, property, kw)
 end
+
+MicrocrackedMaterial(
+    rve::R, scheme::S, families::Tuple{Symbol, Vararg{Symbol, M}},
+    ω₀::Tuple{T, Vararg{T, M}}, property::Symbol, kw::K
+) where {R, S, T, M, K} =
+    MicrocrackedMaterial{M + 1, S, R, T, K}(rve, scheme, families, ω₀, property, kw)
 
 function MicrocrackedMaterial(
         rve, scheme;

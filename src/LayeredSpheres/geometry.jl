@@ -45,7 +45,16 @@ struct LayeredSphere{T <: Number, N, Cs, Is} <: MFH_Core.AbstractLayeredInclusio
     radii::NTuple{N, T}
     moduli::Cs
     interfaces::Is
+    LayeredSphere{T, N, Cs, Is}(radii, moduli, interfaces) where {T <: Number, N, Cs, Is} =
+        new{T, N, Cs, Is}(radii, moduli, interfaces)
 end
+
+# Positional form, for `Schemes._replace_geom_field`: written out because the
+# generated one leaves `T` unbound for the empty tuple (Aqua, Julia 1.14).
+LayeredSphere(
+    radii::Tuple{T, Vararg{T, M}}, moduli::Cs, interfaces::Is
+) where {T <: Number, M, Cs, Is} =
+    LayeredSphere{T, M + 1, Cs, Is}(radii, moduli, interfaces)
 
 # `Tuple{T, Vararg{T, M}}` rather than `NTuple{N, T}`: the latter also matches
 # the empty tuple, where `T` is bound by nothing at all — a signature Julia

@@ -25,6 +25,14 @@ using SymPy   # top level on purpose: `@syms` below is expanded before any
     @test d_auto ≈ d_analytic rtol = 1.0e-10
 end
 
+@testset "LayeredSphere — rebuilt from its fields" begin
+    # The contract `Schemes._replace_geom_field` relies on: the positional
+    # constructor, called with the fields, gives back the same object.
+    rebuilt(x) = typeof(x).name.wrapper(getfield.(Ref(x), fieldnames(typeof(x)))...)
+    s = LayeredSphere((0.5, 1.0), (TensISO{3}(180.0, 60.0), TensISO{3}(15.0, 4.0)))
+    @test rebuilt(s) === s
+end
+
 @testset "LayeredSphere — ForwardDiff through conductivity concentration" begin
     k₀ = 2.0
     function α1_of_k1(k₁)

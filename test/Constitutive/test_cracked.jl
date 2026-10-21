@@ -49,6 +49,18 @@ end
     @test _g(tangent(r)) ≈ _g(homogenize(rve, MoriTanaka())) rtol = 1.0e-12
 end
 
+@testset "material and state rebuilt from their fields" begin
+    # The contract `Schemes._replace_geom_field` relies on: the positional
+    # constructor, called with the fields, gives back the same object.
+    rebuilt(x) = typeof(x).name.wrapper(getfield.(Ref(x), fieldnames(typeof(x)))...)
+    mat = MicrocrackedMaterial(
+        _cracked_rve((0.0, 0.7), (0.05, 0.05)), MoriTanaka(); ω₀ = (1.0e-3, 2.0e-3)
+    )
+    st = initial_state(mat)
+    @test rebuilt(mat) === mat
+    @test rebuilt(st) === st
+end
+
 @testset "compression closes a family and stiffens the medium" begin
     rve = _cracked_rve((0.0,), (0.1,))
     mat = MicrocrackedMaterial(rve, MoriTanaka(); ω₀ = (1.0e-3,))
