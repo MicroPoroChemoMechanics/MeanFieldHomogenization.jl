@@ -240,6 +240,16 @@ function confocal_layer_radii(
     return axis_radii, disk_radii
 end
 
+# Mixed element types — promote, then delegate: the method above binds one `T`
+# across `ω`, the outer semi-axis and every fraction, so the sensitivity to a
+# single fraction (a dual among plain numbers) was a `MethodError`.
+function confocal_layer_radii(
+        ω::Number, outer_axis_radius::Number, layer_fractions::Tuple{Number, Vararg{Number, M}}
+    ) where {M}
+    T = promote_type(typeof(ω), typeof(outer_axis_radius), map(typeof, layer_fractions)...)
+    return confocal_layer_radii(T(ω), T(outer_axis_radius), map(T, layer_fractions))
+end
+
 """
     layered_spheroid_from_fractions(ω, outer_axis_radius, layer_fractions, moduli;
                                      interfaces, Nseries = 5, axis = (0., 0., 1.))

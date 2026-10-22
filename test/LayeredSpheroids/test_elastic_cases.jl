@@ -462,3 +462,18 @@ end
         @test prev < 2.0e-4         # `8.1e-5` measured at ω = 0.999
     end
 end
+
+@testset "confocal_layer_radii — derivatives by dual numbers, one argument at a time" begin
+    # A dual on a single argument among plain numbers was a `MethodError`.
+    # References are exact identities: the fractions (x, 1 - w) are normalized,
+    # so the core occupies x / (x + 1 - w) of the volume (spheroid volume ∝
+    # axis · disk²), whose derivative at x = w is 1 - w; the outer axis
+    # semi-axis is fixed and the outer disk one is 1/ω.
+    for ω in (0.5, 2.0), w in (0.3, 0.6)
+        core(x) = ((ar, dr) = confocal_layer_radii(ω, 1.0, (x, 1 - w)); ar[1] * dr[1]^2 / (ar[2] * dr[2]^2))
+        @test ForwardDiff.derivative(core, w) ≈ 1 - w rtol = 1.0e-10
+        outer(x) = ((ar, dr) = confocal_layer_radii(x, 1.0, (w, 1 - w)); (ar[2], dr[2]))
+        @test abs(ForwardDiff.derivative(x -> outer(x)[1], ω)) < 1.0e-14
+        @test ForwardDiff.derivative(x -> outer(x)[2], ω) ≈ -1 / ω^2 rtol = 1.0e-12
+    end
+end
