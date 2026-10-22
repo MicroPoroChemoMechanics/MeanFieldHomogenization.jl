@@ -690,7 +690,7 @@ function _invert(F, t::Real, method::DeHoog)
     # mathematics — so it is taken on the value of `t` alone, which keeps the
     # `Dual` in the one place where `t` enters analytically, exp(iπt/T).
     # Letting `T` carry partials would push them into `S(Tscale)` and fail.
-    Tscale = method.T === nothing ? 2 * MFH_Core._primal(t) : method.T
+    Tscale = method.T === nothing ? 2 * MFH_Core.primal(t) : method.T
     S = _scalar_float(_worktype(t))
     nodes = _dehoog_nodes(method, S, Tscale)
     values = map(F, nodes)
@@ -753,7 +753,7 @@ function _invert_grid(F, times::AbstractVector{<:Real}, method::DeHoog)
     order = sortperm(times)
     ratio = 1 / (2 * _DEHOOG_MIN_RATIO)          # t_max / t_min within a block
     for blk in _dehoog_blocks(order, times, ratio)
-        Tscale = 2 * MFH_Core._primal(times[order[last(blk)]])
+        Tscale = 2 * MFH_Core.primal(times[order[last(blk)]])
         nodes = _dehoog_nodes(method, S, Tscale)
         values = map(F, nodes)
         for j in blk

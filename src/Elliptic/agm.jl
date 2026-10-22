@@ -47,7 +47,7 @@ end
 # `ell_RD`, `Core._sort_axes_and_basis`, `Core._classify_shape_2d/3d`,
 # `Core._one_semi_axis` (Newton potentials), the `Ellipsoid` constructors,
 # `Cracks._classify_crack`,
-# `Cracks._is_unit_alignment`, `Cracks._elliptic_CS`, `Laminates._parallel`,
+# `Cracks._elliptic_CS`,
 # `Laminates.add_layer!` / `validate_laminate`, `Schemes.validate_rve`,
 # `Viscoelasticity._checkable`.
 

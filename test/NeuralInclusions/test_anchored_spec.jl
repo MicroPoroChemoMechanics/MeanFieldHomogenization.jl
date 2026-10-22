@@ -170,7 +170,7 @@ end
     ν = 0.2
     C₀ = NIB._iso_ref(ν)
     feats = [:log_aspect, :core_fraction, :log_mu_ratio_1, :log_mu_ratio_2]
-    id4 = NIB._identity_4sym(Float64)
+    id4 = TensND.tens_Id4(Val(3), Val(Float64))
     own_axis(c) = let sph = Spheroid(c)
         MeanFieldHomogenization.Core._basis_col(
             MeanFieldHomogenization.Core.inclusion_basis(sph),

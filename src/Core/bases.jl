@@ -47,10 +47,10 @@ convenience form used by the numerical (residue / DECUHR) algorithms.
 The returned element type follows the basis element type.
 """
 @inline function _frame_columns(basis::TensND.AbstractBasis)
-    l̂ = Vector(TensND.components_canon(TensND.tens_basis(basis, 1)))
-    m̂ = Vector(TensND.components_canon(TensND.tens_basis(basis, 2)))
-    n̂ = Vector(TensND.components_canon(TensND.tens_basis(basis, 3)))
-    return l̂, m̂, n̂
+    # The columns of `vecbasis(ℬ, :cov)` are the basis vectors in canonical
+    # components, whatever the basis: no tensor to build and read back.
+    E = TensND.vecbasis(basis, :cov)
+    return E[:, 1], E[:, 2], E[:, 3]
 end
 
 """
@@ -198,11 +198,7 @@ because its callers feed purely numerical kernels (cubature, multipole sums,
 axis permutations). Anything that has to survive a symbolic frame — the laminate
 does — must go through this one instead: `Float64(::Sym)` throws.
 """
-function _frame_matrix(basis::TensND.AbstractBasis)
-    E = TensND.vecbasis(basis, :cov)
-    d = size(E, 1)
-    return [E[i, j] for i in 1:d, j in 1:d]
-end
+_frame_matrix(basis::TensND.AbstractBasis) = Matrix(TensND.vecbasis(basis, :cov))
 
 # ─── Basis-permutation helpers ────────────────────────────────────────────────
 #
@@ -223,13 +219,7 @@ quadrature oracle of the pair tensors). Anything that may meet a dual or
 symbolic frame reads [`_frame_matrix`](@ref), which keeps the element type.
 """
 function _basis_matrix(basis::TensND.AbstractBasis)
-    E = TensND.vecbasis(basis, :cov)
-    d = size(E, 1)
-    M = zeros(Float64, d, d)
-    @inbounds for j in 1:d, i in 1:d
-        M[i, j] = Float64(E[i, j])
-    end
-    return M
+    return Matrix{Float64}(TensND.vecbasis(basis, :cov))
 end
 
 """
@@ -412,7 +402,7 @@ derivatives differ would build a sphere, a spheroid or a circle that no longer
 depends on their gap, and the derivative along it would be lost without a word.
 """
 @inline _coincident(a, b, rtol) =
-    abs(a - b) ≤ max(abs(a), abs(b)) * rtol && _no_derivative(a - b)
+    abs(a - b) ≤ max(abs(a), abs(b)) * rtol && !carries_partials(a - b)
 
 """
     _same_semi_axis(a, b) -> Bool
@@ -420,7 +410,7 @@ depends on their gap, and the derivative along it would be lost without a word.
 Whether two semi-axes are exactly equal, derivatives included: the condition for
 the closed forms of a spheroid to be exact in value and in derivative.
 """
-@inline _same_semi_axis(a, b) = a == b && _no_derivative(a - b)
+@inline _same_semi_axis(a, b) = a == b && !carries_partials(a - b)
 
 """
     _one_semi_axis(a, b) -> Bool
@@ -433,10 +423,4 @@ do not (`Symbolics.Num <: Real` notwithstanding).
 @inline _one_semi_axis(::Val{true}, a, b) = _same_semi_axis(a, b)
 @inline _one_semi_axis(::Val{false}, a, b) = isequal(a, b)
 
-# Whether `x` carries no derivative, at any nesting level of dual numbers.
-@inline _no_derivative(x) = true
-@inline _no_derivative(x::ForwardDiff.Dual) =
-    all(_iszero_dual, ForwardDiff.partials(x)) && _no_derivative(ForwardDiff.value(x))
-@inline _iszero_dual(x) = iszero(x)
-@inline _iszero_dual(x::ForwardDiff.Dual) =
-    _iszero_dual(ForwardDiff.value(x)) && all(_iszero_dual, ForwardDiff.partials(x))
+# Whether `x` carries a derivative at any nesting level: TensND's `carries_partials`.

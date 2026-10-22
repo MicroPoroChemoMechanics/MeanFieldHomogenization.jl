@@ -149,7 +149,7 @@ function _hill_3d_aniso_nestedquadgk(
     # α = 1 (identity) when ω ≥ 0.1; beyond that α ≈ 2, 3, … for each decade.
     # Any α gives the same integral, so it is read on the value of ω alone: a
     # dual semi-axis keeps its derivatives in ζ, where they belong.
-    ω_val = MFH_Core._primal(ω)
+    ω_val = MFH_Core.primal(ω)
     α = max(1.0, -log10(ω_val))
 
     # --- Boundary layer at z = 0 ----------------------------------------------

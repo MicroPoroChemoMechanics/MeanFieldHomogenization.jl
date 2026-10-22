@@ -96,7 +96,7 @@ end
 # user's parameter dropped. The Jacobian's tag is created inside the user's
 # derivative, so it nests outside the user's tag, as in `NewtonDefault`.
 _primal_jacobian(residual_vec, p::AbstractVector, ::Type{T}) where {T} =
-    MeanFieldHomogenization.Core._primal.(ForwardDiff.jacobian(residual_vec, convert.(T, p)))
+    MeanFieldHomogenization.Core.primal.(ForwardDiff.jacobian(residual_vec, convert.(T, p)))
 
 """
     _solve_sc(algo::NonlinearSolve.AbstractNonlinearAlgorithm, step, x0; kw...)

@@ -233,8 +233,8 @@ function _ti_project_blocks3(M::AbstractMatrix, axis)
 end
 
 # The axis reaches us either as a plain 3-vector/tuple or as a TensND
-# 1-tensor, exactly as `TISymmetrize` stores it.
-_alv_axis_components(axis::TensND.AbstractTens) = collect(TensND.get_array(axis))
+# 1-tensor; its canonical components, whatever basis the vector is written in.
+_alv_axis_components(axis::TensND.AbstractTens) = collect(TensND.components_canon(axis))
 _alv_axis_components(axis) = collect(axis)
 
 function _alv_unit_axis3(axis)

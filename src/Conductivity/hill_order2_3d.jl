@@ -99,9 +99,9 @@ end
 # closed form at the values, so that the value of a differentiated evaluation
 # is the evaluation itself, and its derivatives from the integral.
 function _hill_order2_aniso(A::AbstractMatrix, K_arr::AbstractMatrix)
-    P₀ = _hill_order2_aniso(MFH_Core._primal.(A), MFH_Core._primal.(K_arr))
+    P₀ = _hill_order2_aniso(MFH_Core.primal.(A), MFH_Core.primal.(K_arr))
     P = _hill_order2_integral(A, K_arr)
-    return P₀ .+ (P .- MFH_Core._primal.(P))
+    return P₀ .+ (P .- MFH_Core.primal.(P))
 end
 
 _hill_order2_integral(A::AbstractMatrix, K_arr::AbstractMatrix) =
@@ -112,7 +112,7 @@ function _hill_order2_integral(A::SMatrix{d, d}, K_arr::AbstractMatrix) where {d
     K = SMatrix{d, d}(K_arr)
     # u = c (t / (1 − t))², c a scale of G over K: the integrand, which
     # decays as u^{-(d+2)/2}, is then smooth on [0, 1] at both ends.
-    c = tr(MFH_Core._primal.(G)) / tr(MFH_Core._primal.(K))
+    c = tr(MFH_Core.primal.(G)) / tr(MFH_Core.primal.(K))
     function integrand(t)
         τ = t / (1 - t)
         M = G + (c * τ^2) * K

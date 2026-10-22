@@ -12,12 +12,11 @@
 #      (validating the SVD-free replacement *against* the SVD).
 #   4. The Hill identities `ℙ:ℂ:ℙ = ℙ` and `ℚ:ℙ = 0`.
 #   5. `_inv_km6` (block elimination, no pivoting) against `inv`.
-#   6. `_bond6` against `TensND.KM(C, basis)`.
-#   7. `laminate_stiffness` : N = 1 degeneracy, identical layers, the exact
+#   6. `laminate_stiffness` : N = 1 degeneracy, identical layers, the exact
 #      Backus (1962) bilayer closed form, in-plane rotation invariance.
-#   8. Concentration : `Σ f 𝔸 = Σ f 𝔹 = 𝕀`, the block structure of `𝔸`, and
+#   7. Concentration : `Σ f 𝔸 = Σ f 𝔹 = 𝕀`, the block structure of `𝔸`, and
 #      `⟨ℂ:𝔸⟩ = ℂ_hom`.
-#   9. `laminate_conductivity` : the exact series / parallel laws.
+#   8. `laminate_conductivity` : the exact series / parallel laws.
 #  10. ForwardDiff through the kernel.
 # =============================================================================
 
@@ -119,19 +118,6 @@ end
     end
 end
 
-@testset "_bond6 against TensND" begin
-    b = TensND.RotatedBasis(0.37, 0.91, -0.55)
-    R = SMatrix{3, 3}(Matrix(TensND.vecbasis(b, :cov)))
-    Q = MFHC._bond6(R)
-    @test Q' * Q ≈ I atol = 1.0e-12
-
-    rng = MersenneTwister(43)
-    M = _rand_km6(rng)
-    Ct = Tens(inv_KM(Matrix(M)))                       # canonical basis
-    # Components in the frame `b` are Q' M Q.
-    @test Q' * M * Q ≈ Matrix(KM(Ct, b)) atol = 1.0e-10
-end
-
 @testset "laminate_stiffness — degeneracies" begin
     rng = MersenneTwister(47)
     Z = zero(SMatrix{6, 6, Float64})
@@ -182,7 +168,7 @@ end
 
     φ = 0.83
     Rz = SMatrix{3, 3}(cos(φ), sin(φ), 0.0, -sin(φ), cos(φ), 0.0, 0.0, 0.0, 1.0)
-    Qz = MFHC._bond6(Rz)
+    Qz = TensND.KM_rotation(Rz)
     C6r = ntuple(i -> Qz' * C6s[i] * Qz, 3)
     @test MFHC.laminate_stiffness(C6r, f, Z, Z) ≈ Qz' * Ch * Qz atol = 1.0e-10
 end

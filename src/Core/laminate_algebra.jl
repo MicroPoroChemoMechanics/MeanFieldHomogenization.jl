@@ -56,8 +56,6 @@
 #  not constructible for a non-`isbits` `T` such as `SymPy.Sym`.
 # =============================================================================
 
-using TensND: _KM_rotation
-
 """
     KM_IP
 
@@ -311,18 +309,7 @@ end
 
 # ── Frame handling ──────────────────────────────────────────────────────────
 
-"""
-    _bond6(R) -> SMatrix{6,6}
-
-6×6 Kelvin-Mandel (Bond) matrix of the 3×3 rotation `R`, such that the Mandel
-matrix of a 4th-order tensor in the frame whose basis vectors are the
-**columns** of `R` is `Q' * KM(C) * Q`. `Q` is orthogonal.
-
-A thin alias over `TensND._KM_rotation`, which builds the same object with
-`SMatrix`/`ntuple` and is therefore usable for `ForwardDiff.Dual` and for
-symbolic element types alike.
-"""
-@inline _bond6(R::AbstractMatrix) = TensND._KM_rotation(R)
+# The Kelvin-Mandel (Bond) rotation of a frame is TensND's `KM_rotation(R)`.
 
 # ── The laminate kernels ────────────────────────────────────────────────────
 

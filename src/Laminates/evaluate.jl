@@ -73,28 +73,10 @@ _frame_eltype(basis::TensND.AbstractBasis) = eltype(basis)
 # is exactly TI about that normal. Every interface type is in-plane
 # isotropic, so none of them breaks it.
 
-@inline function _parallel(a, b)
-    T = promote_type(eltype(a), eltype(b))
-    # `is_hard_numeric`, not `T <: Real`: `Symbolics.Num` subtypes `Real` and
-    # answers no comparison, so it belongs on the symbolic side.
-    is_hard_numeric(T) || return _parallel_exact(a, b)
-    da = sqrt(sum(x -> x^2, a))
-    db = sqrt(sum(x -> x^2, b))
-    (da > 0 && db > 0) || return false
-    return isapprox(abs(sum(a .* b)), da * db; rtol = 1.0e-12, atol = 1.0e-14)
-end
-
-# Symbolic axes: `‖a‖‖b‖ − |a·b| = 0` is a question no symbolic backend answers
-# reliably (it needs the sign of a root of an expression), so collinearity is
-# decided STRUCTURALLY — the two axes are the same expression, up to an overall
-# sign. Conservative by construction: never a false positive, so a laminate that
-# *is* transversely isotropic may still be returned as a generic `Tens`, which
-# is lossless. Without this a symbolic `TensTI` layer could never be recognized
-# as coaxial with the laminate normal, even when written with the same symbols.
-@inline function _parallel_exact(a, b)
-    all(i -> isequal(a[i], b[i]), eachindex(a)) && return true
-    return all(i -> isequal(a[i], -b[i]), eachindex(a))
-end
+# TensND's `isparallel`, at the tolerance this rule always had (1e-12 relative on
+# |a·b|, about 2e-12 on its square): a tolerance on comparable numbers, an exact
+# structural test on symbolic ones, never a false positive.
+_parallel(a, b) = TensND.isparallel(a, b; rtol = 2.0e-12)
 
 _ti_about(::TensND.TensISO{4, 3}, n) = true
 # `TensTI{4,T,5}` ONLY — the major-symmetric Walpole form. The 6- and

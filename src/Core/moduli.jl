@@ -48,7 +48,7 @@ whose axis of symmetry is `n̂`.  Used by the closed-form COD formulas
 of the `Cracks` sub-module.
 
 The moduli are defined through the compliance tensor
-``\\mathbb{S} = \\mathbb{C}_0^{-1}`` as:
+``\\mathbb{S} = \\mathbb{C}_0^{-1}``, read in a frame whose third axis is the axis:
 
 * ``E = 1/S_{1111}``
 * ``H = 1/(S_{3333}\\,E)``
@@ -56,21 +56,17 @@ The moduli are defined through the compliance tensor
 * ``\\nu_2 = -E\\,S_{1133}``
 * ``\\Gamma = (1+\\nu_1)/(2\\,E\\,S_{2323})``
 
-See the package documentation for the full derivation.
+They do not depend on the axis: TensND's `arg_TI_Hoenig` reads them off the
+Walpole coefficients of ``\\mathbb{S}``, exactly and with no change of basis (it
+holds for symbolic moduli too). A `C₀` that is not a `TensTI` is first projected on
+the transversely isotropic tensors about `n̂` (`best_fit_ti`).
 """
-function extract_ti_moduli(C₀, n̂)
-    𝕊 = inv(C₀)
-    ℬ_current = TensND.get_basis(𝕊)
-    𝕊_rot = TensND.tens_basis(ℬ_current, 3) == n̂ ? 𝕊 :
-        TensND.change_tens(
-            𝕊,
-            TensND.Basis(TensND.angles(TensND.components_canon(n̂))...)
-        )
-    E = inv(𝕊_rot[1, 1, 1, 1])
-    H = inv(𝕊_rot[3, 3, 3, 3] * E)
-    ν₁ = -E * 𝕊_rot[1, 1, 2, 2]
-    ν₂ = -E * 𝕊_rot[1, 1, 3, 3]
-    Γ = inv(𝕊_rot[2, 3, 2, 3]) * (one(E) + ν₁) / (2 * E)
+extract_ti_moduli(C₀::TensND.TensTI{4}, n̂) = _ti_moduli(C₀)
+extract_ti_moduli(C₀::TensND.AbstractTens{4, 3}, n̂) =
+    _ti_moduli(TensND.best_fit_ti(C₀, collect(TensND._extract_vec(n̂))))
+
+function _ti_moduli(C₀::TensND.TensTI{4})
+    E, ν₁, ν₂, H, Γ = TensND.arg_TI_Hoenig(inv(C₀))
     return (E = E, H = H, ν₁ = ν₁, ν₂ = ν₂, Γ = Γ)
 end
 

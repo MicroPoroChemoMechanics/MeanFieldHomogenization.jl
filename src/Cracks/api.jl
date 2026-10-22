@@ -14,40 +14,13 @@ NB: this is the actual TI symmetry axis (`TensND.axis(C₀)`), not the
 third basis vector of `TensND.get_basis(C₀)` (which is always ``\\underline{e}_3`` for
 a `TensTI{4}` since the underlying basis is canonical — the symmetry
 axis is stored separately in the structured container).
-"""
-function _ti_aligned(C₀::TensND.TensTI{4}, ℬ_crack::TensND.AbstractBasis)
-    axis_C = collect(TensND.axis(C₀))
-    axis_n = TensND.components_canon(TensND.tens_basis(ℬ_crack, 3))
-    # Both unit vectors, so parallel ⟺ (axis·n̂)² = 1. The **square**, not
-    # `|axis·n̂|`: `Symbolics` does not fold `abs` of a literal, so on a
-    # `TensTI{4, Num}` whose axis is exactly `e₃` the product came out as an
-    # unevaluated `abs(1.0)` that nothing downstream could collapse — not even
-    # `tsimplify`, which returns `-1 + abs(1.0)`. Squaring uses only `*`, which
-    # does fold, and is mathematically identical here.
-    return _is_unit_alignment(dot(axis_C, axis_n)^2)
-end
 
-# Both directions being unit vectors, `d = |axis · n̂|` equals 1 exactly when they
-# are parallel.  A comparable scalar takes a tolerance; anything else is tested
-# structurally, after simplification.
-#
-# The split is `Elliptic.is_hard_numeric`, **not** `d isa Real`: `Symbolics.Num`
-# is `<: Real` but `isapprox` on it returns a symbolic inequality that throws in
-# a boolean context, while `ForwardDiff.Dual` is `<: Real` and compares fine.
-# Dispatching on `::Real` here made `cod_tensor` throw on a `TensTI{4, Num}`
-# reference; guarding on the type made it throw on `Sym`.
-function _is_unit_alignment(d)
-    is_hard_numeric(d) && return isapprox(d, one(d); atol = 1.0e-10)
-    # Structural branch. Test `d - 1 == 0` rather than `d == 1`: on a
-    # `Symbolics.Num` the axis components carry `Float64` literals while `one(d)`
-    # carries an `Int`, so `isequal(d, one(d))` is *false* for a genuinely
-    # aligned axis. Subtracting first lets the literals collapse. Getting this
-    # wrong sent an aligned `TensTI{4, Num}` down the numerical back-end, which
-    # then failed inside StaticArrays instead of using the closed form.
-    gap = tsimplify(d - one(d))
-    verdict = iszero(gap)
-    return verdict isa Bool ? verdict : false
-end
+The test is TensND's `isparallel`: a tolerance on comparable numbers, an exact
+structural test on symbolic ones (no `dot`, no `abs`: they conjugate a `Sym`, and
+`Symbolics` does not fold `abs` of a literal).
+"""
+_ti_aligned(C₀::TensND.TensTI{4}, ℬ_crack::TensND.AbstractBasis) =
+    TensND.isparallel(TensND.axis(C₀), TensND.tens_basis(ℬ_crack, 3))
 
 # TI-aligned dispatch rules — refine Core dispatch for `AbstractCrack` + TensTI{4}.
 # Explicit Val{:auto}, Val{:residues}, etc. methods are needed to disambiguate

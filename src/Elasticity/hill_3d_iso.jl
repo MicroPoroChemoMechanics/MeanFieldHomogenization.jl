@@ -109,8 +109,5 @@ function _hill_3d_iso(ell::Ellipsoid{3, Triaxial}, C₀)
     C44 = d * T(ua23) + inv_m * (T(I2) + T(I3)) / 4
     C55 = d * T(ua13) + inv_m * (T(I1) + T(I3)) / 4
     C66 = d * T(ua12) + inv_m * (T(I1) + T(I2)) / 4
-    return MFH_Core._make_ortho(
-        T, C11, C22, C33, C12, C13, C23, C44, C55, C66,
-        nothing, ell.basis
-    )
+    return TensND.TensOrtho(C11, C22, C33, C12, C13, C23, C44, C55, C66, ell.basis)
 end

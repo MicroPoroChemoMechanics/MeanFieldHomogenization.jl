@@ -30,24 +30,8 @@
 #  does; it relies only on TensND algebra (`+`, `-`, `⊡`, `inv`).
 # =============================================================================
 
-"""
-    _identity_4sym(::Type{T}) -> TensISO{4,3}
-
-Symmetric 4-tensor identity
-``\\mathbb{I}_{ijkl} = \\tfrac{1}{2}(\\delta_{ik}\\delta_{jl} + \\delta_{il}\\delta_{jk})``
-in its most compact `TensISO` form (3D).  ``\\mathbb{I}:\\mathbb{X} = \\mathbb{X}``
-for any symmetric `Tens{4,3}`.
-"""
-_identity_4sym(::Type{T}) where {T <: Number} = TensISO{3}(one(T), one(T))
-
-"""
-    _identity_2(::Type{T}) -> TensISO{2,3}
-
-Identity 2-tensor ``\\boldsymbol{1}`` (components ``\\delta_{ij}``) in 3D
-(`TensISO{2,3}`).  ``\\boldsymbol{1}\\cdot\\underline{x} = \\underline{x}`` for any
-`Tens{2,3}` or 3-vector.
-"""
-_identity_2(::Type{T}) where {T <: Number} = TensISO{3}(one(T))
+# The identities are TensND's `tens_Id4(Val(3), Val(T))` and `tens_Id2(Val(3), Val(T))`,
+# in the element type of the problem.
 
 # =============================================================================
 #  Elastic concentration (4-tensor fields)
@@ -80,7 +64,7 @@ function gradient_gradient_concentration(
     T = promote_type(eltype(C₁), eltype(C₀))
     P = hill_tensor(incl, C₀; kw...)
     δC = C₁ - C₀
-    return inv(_identity_4sym(T) + (P ⊡ δC))
+    return inv(TensND.tens_Id4(Val(3), Val(T)) + (P ⊡ δC))
 end
 
 """
@@ -225,7 +209,7 @@ function gradient_gradient_concentration(
     T = promote_type(eltype(K₁), eltype(K₀))
     P = hill_tensor(incl, K₀; kw...)
     δK = K₁ - K₀
-    return inv(_identity_2(T) + (P ⋅ δK))
+    return inv(TensND.tens_Id2(Val(3), Val(T)) + (P ⋅ δK))
 end
 
 """

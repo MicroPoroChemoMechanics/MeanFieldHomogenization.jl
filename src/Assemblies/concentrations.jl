@@ -47,7 +47,7 @@ _family_key(label::Integer) = Symbol(:family_, label)
 function _with_assembly_matrix(asm, P₀, P_hom, names, strain, stress, weights, properties)
     m = asm.matrix_name
     f_m = one(eltype(P_hom)) - sum(values(weights))
-    Id = _identity_like(P₀)
+    Id = one(P₀)
     strain[m] = (Id - sum((weights[n] * strain[n] for n in names); init = zero(P₀))) / f_m
     stress[m] = (P_hom - sum((weights[n] * stress[n] for n in names); init = zero(P_hom))) / f_m
     weights_all = merge(weights, Dict(m => f_m))

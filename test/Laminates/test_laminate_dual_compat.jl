@@ -219,7 +219,7 @@ end
     end
     C(θ) = Matrix(KM(homogenize(lam_at(θ), Laminated(), :C)))
     Q(θ) = Matrix(
-        MeanFieldHomogenization.Core._bond6(
+        TensND.KM_rotation(
             MeanFieldHomogenization.Core._frame_matrix(MeanFieldHomogenization.Laminates.laminate_basis(lam_at(θ)))
         )
     )

@@ -246,9 +246,7 @@ build(::Union{GradientConcentrationTI, FluxConcentrationTI}, c, axis) =
 # The cube frame is a TensND basis, like `HillOrtho`'s material frame.
 build(::GradientConcentrationCubic, c, frame) = TensND.TensCubic(c[1], c[2], c[3], frame)
 
-build(::HillOrtho, c, frame) = Core._make_ortho(
-    eltype(c), c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], nothing, frame
-)
+build(::HillOrtho, c, frame) = TensND.TensOrtho(c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], frame)
 
 """
     components(class, P, frame; atol = 1.0e-8) -> NTuple
@@ -781,9 +779,9 @@ end
 # `𝔸 = (𝕀 − ℙ:ℂ₀)⁻¹` — the cavity limit of `gradient_gradient_concentration`, with the
 # operator the order demands: `⊡` in elasticity, `⋅` in transport.
 _cavity_concentration(P::TensND.AbstractTens{4, 3}, C₀::TensND.AbstractTens{4, 3}) =
-    inv(_identity_4sym(promote_type(eltype(P), eltype(C₀))) - (P ⊡ C₀))
+    inv(TensND.tens_Id4(Val(3), Val(promote_type(eltype(P), eltype(C₀)))) - (P ⊡ C₀))
 _cavity_concentration(P::TensND.AbstractTens{2, 3}, K₀::TensND.AbstractTens{2, 3}) =
-    inv(_identity_2(promote_type(eltype(P), eltype(K₀))) - (P ⋅ K₀))
+    inv(TensND.tens_Id2(Val(3), Val(promote_type(eltype(P), eltype(K₀)))) - (P ⋅ K₀))
 
 # The layers' mean modulus, as a multiple of the reference. Every constituent of
 # the shipped layered-spheroid models shares the reference's Poisson ratio, so
@@ -849,11 +847,11 @@ end
 _homogeneous_concentration(
     P::TensND.AbstractTens{4, 3}, C̄::TensND.AbstractTens{4, 3},
     C₀::TensND.AbstractTens{4, 3},
-) = inv(_identity_4sym(promote_type(eltype(P), eltype(C₀))) + (P ⊡ (C̄ - C₀)))
+) = inv(TensND.tens_Id4(Val(3), Val(promote_type(eltype(P), eltype(C₀)))) + (P ⊡ (C̄ - C₀)))
 _homogeneous_concentration(
     P::TensND.AbstractTens{2, 3}, K̄::TensND.AbstractTens{2, 3},
     K₀::TensND.AbstractTens{2, 3},
-) = inv(_identity_2(promote_type(eltype(P), eltype(K₀))) + (P ⋅ (K̄ - K₀)))
+) = inv(TensND.tens_Id2(Val(3), Val(promote_type(eltype(P), eltype(K₀)))) + (P ⋅ (K̄ - K₀)))
 
 # A strain or gradient class anchors against the concentration itself; a stress
 # class against the concentration carrying the mean modulus.

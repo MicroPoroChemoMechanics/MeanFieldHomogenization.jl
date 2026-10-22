@@ -261,7 +261,13 @@ _major_symmetrize(P::TensND.TensISO{4, 3}) = P
 _major_symmetrize(P::TensND.TensISO{2, 3}) = P
 _major_symmetrize(P::TensND.TensOrtho) = P
 _major_symmetrize(P::TensND.TensTI{4, T, 5}) where {T} = P
-_major_symmetrize(P::TensND.TensTI{2}) = P
+_major_symmetrize(P::TensND.TensTI{2, T, 2}) where {T} = P
+# The three-parameter form a·𝟏ₜ + b·n⊗n + c·w carries the skew in-plane part
+# c·w; its symmetric part is the two-parameter tensor (a, b) about the same axis.
+function _major_symmetrize(P::TensND.TensTI{2, T, 3}) where {T}
+    a, b, _ = TensND.get_data(P)
+    return TensND.TensTI{2}(a, b, TensND.axis(P))
+end
 
 # A transversely isotropic estimate stays one. In the Walpole basis the major
 # transpose swaps ℓ₃ and ℓ₄ and changes the sign of ℓ₇ and ℓ₈, the
@@ -812,21 +818,27 @@ _rebuild_from_data(t::TensND.AbstractTens, p) =
 # a canonical seed with an iterate written in an inclusion's basis.
 function _sc_residual_norm(a::TensND.AbstractTens, b::TensND.AbstractTens)
     na, nb = TensND.same_basis(a, b)
-    ℬ = TensND.get_basis(na)
-    return sqrt(sum(abs2, _comparable(na, ℬ) .- _comparable(nb, ℬ)))
+    return _frobenius_distance(na, nb, TensND.get_basis(na))
 end
 
-# Components of a tensor written in `ℬ` whose sum of squares is its Frobenius
-# norm. In an orthonormal basis, the stored array itself: two tensors in the
-# same one are compared by plain matrix arithmetic. In any other basis the
-# stored components carry a metric and variances, so the canonical ones are.
+# The Frobenius norm of a tensor, and the distance of two tensors written in the
+# same basis: plain sums of squares of the stored arrays in an orthonormal basis;
+# in any other, the tensor norm of TensND, which carries the metric and the
+# variances, with no detour through the canonical basis.
+_frobenius(t::TensND.AbstractTens) = sqrt(_frob_sq(t))
+_frob_sq(t::TensND.AbstractTens) = _frob_sq(t, TensND.get_basis(t))
+_frob_sq(t, ::TensND.OrthonormalBasis) = sum(abs2, get_array(t))
+_frob_sq(t, ::TensND.AbstractBasis) = LinearAlgebra.norm(t)^2
+_frobenius_distance(a, b, ::TensND.OrthonormalBasis) = sqrt(sum(abs2, get_array(a) .- get_array(b)))
+_frobenius_distance(a, b, ::TensND.AbstractBasis) = LinearAlgebra.norm(a - b)
+
+# Components whose sums of squares, channel by channel, are Frobenius norms: the
+# stored array in an orthonormal basis; in any other, where the convergence of
+# the derivatives needs components rather than a norm, the canonical ones.
 _comparable(t, ::TensND.OrthonormalBasis) = get_array(t)
 _comparable(t, ::TensND.AbstractBasis) = TensND.components_canon(t)
 
-# Frobenius norm of a tensor, from its stored array. Basis-independent for an
-# orthonormal frame, so a rotated tensor's local components give the same value
-# as its canonical ones.
-_sc_frobenius(t::TensND.AbstractTens) = sqrt(sum(abs2, get_array(t)))
+_sc_frobenius(t::TensND.AbstractTens) = _frobenius(t)
 
 # `‖rebuild(prototype, v)‖_F`, or `nothing` when the class cannot be rebuilt
 # from those components at all. Not every symmetry class accepts every
@@ -898,7 +910,7 @@ _sc_residual_zero(x0::TensND.AbstractTens) = zero(real(eltype(x0)))
 # Float64 view of a residual or a norm, for tolerances, comparisons and
 # best-iterate tracking: a `ForwardDiff.Dual` is a `Real`, so `float` alone
 # would keep its partials.
-_scalar_value(r::Real) = float(MFH_Core._primal(r))
+_scalar_value(r::Real) = float(MFH_Core.primal(r))
 
 # Float64 type of `_scalar_value(zero_like_eltype(x0))`. Used to pick a
 # safe `typemax` for `resid_best_val` regardless of whether x0 is real
@@ -1064,7 +1076,6 @@ function _asc_use_stiffness(rve::RVE, prop::Symbol, m::Symbol; kw...)
     return _frob_sq(_evaluate(rve, probe, Val(prop); kw...)) ≥ _frob_sq(P₀)
 end
 
-_frob_sq(t::TensND.AbstractTens) = sum(abs2, get_array(t))
 
 # ── Stiffness-form iteration ────────────────────────────────────────────────
 #

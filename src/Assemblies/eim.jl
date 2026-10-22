@@ -107,7 +107,7 @@ function _eim_polarizations(asm, P₀, prop::Symbol, scheme; kw...)
             end
         end
     end
-    rhs = [_identity_like(P₀) for _ in 1:n]
+    rhs = [one(P₀) for _ in 1:n]
     return _solve_tensor_system(blocks, rhs, P₀), names
 end
 

@@ -47,7 +47,7 @@ function _cod_elliptic_numerical(
     MFH_Core._bump!(MFH_Core.QUADGK_OUTER)
     # Bounds are plain numbers: the derivatives live in the integrand, and QuadGK
     # has no Gauss–Kronrod rule for a dual interval.
-    F = typeof(float(MFH_Core._primal(zero(Tp))))
+    F = typeof(float(MFH_Core.primal(zero(Tp))))
     Tvec, _ = MFH_Core._counted_quadgk(
         vec_at, zero(F), 2 * F(π);
         atol = abstol, rtol = reltol, maxevals = maxiters

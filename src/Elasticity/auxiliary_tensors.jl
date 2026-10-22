@@ -2,8 +2,8 @@
 #  auxiliary_tensors.jl
 #
 #  2nd- and 4th-order auxiliary tensors `I^A`, `U^A`, `V^A` for an
-#  ellipsoid `A`. Low-level helpers (`_basis_col`, `_make_ortho`,
-#  `_fill_sym4!`) are routed through the `Core` sub-module.
+#  ellipsoid `A`. Orthotropic results are TensND's `TensOrtho` in the
+#  inclusion's basis; `_basis_col` comes from the `Core` sub-module.
 # =============================================================================
 
 # ── tens_IA ───────────────────────────────────────────────────────────────────
@@ -151,10 +151,7 @@ function tens_UA(ell::Ellipsoid{3, Triaxial})
     C11 = 3 * (I1 - a2 * I11) / 2;     C22 = 3 * (I2 - b2 * I22) / 2;  C33 = 3 * (I3 - c * c * I33) / 2
     C12 = (I2 - a2 * I12) / 2;        C13 = (I3 - a2 * I13) / 2;    C23 = (I3 - b2 * I23) / 2
     C44 = C23;                     C55 = C13;                  C66 = C12
-    return MFH_Core._make_ortho(
-        T, C11, C22, C33, C12, C13, C23, C44, C55, C66,
-        nothing, ell.basis
-    )
+    return TensND.TensOrtho(C11, C22, C33, C12, C13, C23, C44, C55, C66, ell.basis)
 end
 
 function tens_UA(cyl::Cylinder{CircularCylindrical})
@@ -192,10 +189,7 @@ function tens_UA(cyl::Cylinder{EllipticCylindrical})
     C44 = C23
     C55 = C13
     C66 = C12
-    return MFH_Core._make_ortho(
-        T, C11, C22, C33, C12, C13, C23, C44, C55, C66,
-        nothing, cyl.basis
-    )
+    return TensND.TensOrtho(C11, C22, C33, C12, C13, C23, C44, C55, C66, cyl.basis)
 end
 
 function tens_UA(ell::Ellipsoid{2})
@@ -276,10 +270,7 @@ function tens_VA(ell::Ellipsoid{3, Triaxial})
     C11 = I1;              C22 = I2;              C33 = I3
     C12 = zero(T);         C13 = zero(T);         C23 = zero(T)
     C44 = (I2 + I3) / 4;  C55 = (I1 + I3) / 4;  C66 = (I1 + I2) / 4
-    return MFH_Core._make_ortho(
-        T, C11, C22, C33, C12, C13, C23, C44, C55, C66,
-        nothing, ell.basis
-    )
+    return TensND.TensOrtho(C11, C22, C33, C12, C13, C23, C44, C55, C66, ell.basis)
 end
 
 function tens_VA(cyl::Cylinder{CircularCylindrical})
@@ -298,10 +289,7 @@ function tens_VA(cyl::Cylinder{EllipticCylindrical})
     C11 = I1;              C22 = I2;              C33 = I3
     C12 = zero(T);         C13 = zero(T);         C23 = zero(T)
     C44 = (I2 + I3) / 4;   C55 = (I1 + I3) / 4;   C66 = (I1 + I2) / 4
-    return MFH_Core._make_ortho(
-        T, C11, C22, C33, C12, C13, C23, C44, C55, C66,
-        nothing, cyl.basis
-    )
+    return TensND.TensOrtho(C11, C22, C33, C12, C13, C23, C44, C55, C66, cyl.basis)
 end
 
 function tens_VA(ell::Ellipsoid{2})

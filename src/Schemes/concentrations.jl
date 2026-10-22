@@ -228,7 +228,7 @@ function _with_matrix(rve::RVE, m::Symbol, names, pairs, 𝔼, P_hom)
         n => _compose(CA, 𝔼) for (n, (_, CA)) in zip(names, pairs)
     )
     f_m = volume_fraction(rve, m)
-    strain[m] = (_identity_like(P_hom) - _weighted_sum(rve, names, strain, P_hom)) / f_m
+    strain[m] = (one(P_hom) - _weighted_sum(rve, names, strain, P_hom)) / f_m
     stress[m] = (P_hom - _weighted_sum(rve, names, stress, P_hom)) / f_m
     return vcat(m, names), strain, stress
 end
@@ -241,7 +241,7 @@ _weighted_sum(rve::RVE, names, tensors, proto) =
 # Voigt: a uniform strain. The bounds read no shape and ignore cracks.
 function _scheme_concentrations(rve::RVE, ::Voigt, ::Val{p}, P_hom; kw...) where {p}
     names = _volume_phase_names(rve)
-    I = _identity_like(P_hom)
+    I = one(P_hom)
     strain = Dict{Symbol, TensND.AbstractTens}(n => I for n in names)
     stress = Dict{Symbol, TensND.AbstractTens}(
         n => _phase_voigt_property(rve, n, p, P_hom) for n in names
@@ -274,7 +274,7 @@ function _scheme_concentrations(rve::RVE, scheme::_MatrixReferenceScheme, prop::
 end
 
 # Dilute: the macroscopic strain itself.
-_remote_field(::Dilute, rve, prop, m, names, pairs, P₀, P_hom; kw...) = _identity_like(P₀)
+_remote_field(::Dilute, rve, prop, m, names, pairs, P₀, P_hom; kw...) = one(P₀)
 
 # Dual dilute: the strain of the matrix under the macroscopic stress, 𝕊₀ : ℂ^hom.
 _remote_field(::DiluteDual, rve, prop, m, names, pairs, P₀, P_hom; kw...) =
@@ -283,7 +283,7 @@ _remote_field(::DiluteDual, rve, prop, m, names, pairs, P₀, P_hom; kw...) =
 # Mori–Tanaka: the mean strain of the matrix, (f₀ 𝕀 + Σ w 𝔸^dil)⁻¹, cracks
 # included through their openings.
 function _remote_field(::MoriTanaka, rve, prop, m, names, pairs, P₀, P_hom; kw...)
-    A_avg = volume_fraction(rve, m) * _identity_like(P₀) +
+    A_avg = volume_fraction(rve, m) * one(P₀) +
         sum((_phase_weight(rve, n) * A for (n, (A, _)) in zip(names, pairs)); init = zero(P₀))
     return inv(A_avg)
 end
@@ -295,7 +295,7 @@ function _remote_field(
     ) where {p}
     N_Σ = _accumulate_contributions(rve, P₀, p, m; kw...)
     P_d = hill_tensor(distribution_shape_of(distribution_shape(rve, scheme)), P₀; kw...)
-    return inv(_identity_like(P₀) - _compose(P_d, N_Σ))
+    return inv(one(P₀) - _compose(P_d, N_Σ))
 end
 
 # Asymmetric self-consistent: the inclusions solve their dilute problem in the
@@ -306,7 +306,7 @@ function _scheme_concentrations(
     m = matrix_name(scheme, rve)
     names = inclusion_phase_names(rve, m)
     pairs = [_dilute_pair(rve, n, p, P_hom; kw...) for n in names]
-    return _with_matrix(rve, m, names, pairs, _identity_like(P_hom), P_hom)
+    return _with_matrix(rve, m, names, pairs, one(P_hom), P_hom)
 end
 
 # Self-consistent: every phase solves its dilute problem in the effective
@@ -370,7 +370,7 @@ function _concentration_tensors(rve::RVE, scheme::DifferentialScheme, ::Val{p}; 
         n => _from_flat(_flat_block(y, q, k, 1), P_matrix) for (k, n) in enumerate(names)
     )
     f_m = volume_fraction(rve, m)
-    strain[m] = (_identity_like(P_hom) - _weighted_sum(rve, names, strain, P_hom)) / f_m
+    strain[m] = (one(P_hom) - _weighted_sum(rve, names, strain, P_hom)) / f_m
     stress[m] = (P_hom - _weighted_sum(rve, names, stress, P_hom)) / f_m
     return _concentration_result(rve, scheme, p, P_hom, vcat(m, names), strain, stress)
 end
@@ -464,7 +464,7 @@ end
 
 # Kelvin–Mandel matrix in the canonical basis at order 4, components at order 2.
 _flat_matrix(t::TensND.AbstractTens{4, 3}) =
-    Matrix(TensND.KM(t, TensND.CanonicalBasis{3, Float64}()))
+    Matrix(TensND.KM(t, TensND.CanonicalBasis{3, eltype(t)}()))
 _flat_matrix(t::TensND.AbstractTens{2, 3}) = Matrix(TensND.components_canon(t))
 
 _from_flat(M::AbstractMatrix, ::TensND.AbstractTens{4, 3}) = TensND.inv_KM(Matrix(M))

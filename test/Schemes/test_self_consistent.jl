@@ -549,3 +549,13 @@ end
     # A step that fails at the seed fails in the main loop too, with its own error.
     @test_throws ErrorException("boom") S._solve_sc(NewtonDefault(), x -> error("boom"), x₀)
 end
+
+@testset "major-symmetric part of a transversely isotropic 2nd-order tensor" begin
+    n = normalize([0.3, -0.5, 0.8])
+    P = TensND.TensTI{2}(2.0, 5.0, 0.7, n)            # carries a skew part c·w
+    S = MeanFieldHomogenization.Schemes._major_symmetrize(P)
+    A = Matrix(TensND.components_canon(P))
+    @test Matrix(TensND.components_canon(S)) ≈ (A + transpose(A)) / 2
+    Q = TensND.TensTI{2}(2.0, 5.0, n)
+    @test MeanFieldHomogenization.Schemes._major_symmetrize(Q) === Q
+end

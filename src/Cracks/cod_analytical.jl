@@ -65,7 +65,7 @@ _ratio_in(::Val{false}, ::Type{T}, η::AbstractFloat) where {T} = isinteger(η) 
 # 𝒞, 𝒮, ℰ near the circle, |k²| ≤ 0.1: 40 terms leave a truncation below
 # 0.1⁴⁰. The coefficients aₙ = ((½)ₙ/n!)² follow from aₙ = aₙ₋₁ ((2n − 1)/(2n))².
 @inline function _elliptic_CS_series(k²)
-    F = typeof(float(MFH_Core._primal(k²)))
+    F = typeof(float(MFH_Core.primal(k²)))
     a = one(F)
     𝒦 = one(k²)
     𝒮 = zero(k²)

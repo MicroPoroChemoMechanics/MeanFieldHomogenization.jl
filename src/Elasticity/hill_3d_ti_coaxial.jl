@@ -237,19 +237,13 @@ _hill_3d_ti_coaxial(ell::Ellipsoid{3, Spherical}, C₀::TensND.TensTI{4, T, 8}) 
 `true` when the TI symmetry axis of `C₀` is parallel to the (unique)
 spheroid axis of `ell` (column 3 for `Oblate`/`Spherical`, column 1 for
 `Prolate`).  Used by the dispatcher to route coaxial-spheroid problems
-to the analytical TI builder.
+to the analytical TI builder. The test is TensND's `isparallel`, safe on symbolic
+axes, where `isapprox(abs(dot(…)), 1)` threw on a `Num` and conjugated a `Sym`.
 """
-function _ti_coaxial(C₀::TensND.TensTI{4}, ell::Ellipsoid{3, Oblate})
-    axis_C = collect(TensND.axis(C₀))
-    axis_e = collect(TensND.components_canon(TensND.tens_basis(ell.basis, 3)))
-    return isapprox(abs(dot(axis_C, axis_e)), 1.0; atol = 1.0e-10)
-end
-
-function _ti_coaxial(C₀::TensND.TensTI{4}, ell::Ellipsoid{3, Prolate})
-    axis_C = collect(TensND.axis(C₀))
-    axis_e = collect(TensND.components_canon(TensND.tens_basis(ell.basis, 1)))
-    return isapprox(abs(dot(axis_C, axis_e)), 1.0; atol = 1.0e-10)
-end
+_ti_coaxial(C₀::TensND.TensTI{4}, ell::Ellipsoid{3, Oblate}) =
+    TensND.isparallel(TensND.axis(C₀), TensND.tens_basis(ell.basis, 3))
+_ti_coaxial(C₀::TensND.TensTI{4}, ell::Ellipsoid{3, Prolate}) =
+    TensND.isparallel(TensND.axis(C₀), TensND.tens_basis(ell.basis, 1))
 
 # Sphere is coaxial with anything (no preferred axis on the inclusion side).
 _ti_coaxial(::TensND.TensTI{4}, ::Ellipsoid{3, Spherical}) = true

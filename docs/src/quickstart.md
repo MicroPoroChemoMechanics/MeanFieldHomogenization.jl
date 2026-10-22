@@ -89,7 +89,7 @@ estimate of the effective stiffness reads
 ```
 
 with ``f_0`` the volume fraction of the matrix. [`homogenize`](@ref) evaluates
-it for the property `:C` of the RVE, and [`k_mu`](@ref) reads back the bulk and
+it for the property `:C` of the RVE, and `k_mu` (from TensND) reads back the bulk and
 shear moduli of the isotropic result:
 
 ```@example getting-started
