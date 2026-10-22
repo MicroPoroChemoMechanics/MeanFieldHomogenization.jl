@@ -227,7 +227,7 @@ function LayeredSphereFields(
         sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}
     ) where {T, N}
     κμ = _bulk_layer_moduli(sphere)
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κ₀, μ₀ = TensND.k_mu(C₀)
     TP = _bulk_promote(sphere, κμ, κ₀, μ₀)
     radii = sphere.radii
 

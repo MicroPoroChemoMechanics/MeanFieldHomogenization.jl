@@ -33,7 +33,7 @@ function layer_gradient_average(
         layer::Int,
     ) where {T, N}
     1 ≤ layer ≤ N || throw(BoundsError(sphere, layer))
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κ₀, μ₀ = TensND.k_mu(C₀)
     α = _bulk_concentration(sphere, κ₀, μ₀)[layer]
     β = _shear_concentration(sphere, C₀)[layer]
 
@@ -83,7 +83,7 @@ average.  With `r_upper = r_layer` this returns the full-layer ``\\beta`` exactl
 function _layer_dev_concentration_upto(
         sphere::LayeredSphere{T, N}, amps, layer::Int, r_upper
     ) where {T, N}
-    κ_k, μ_k = _iso_bulk_shear(layer_modulus(sphere, layer))
+    κ_k, μ_k = TensND.k_mu(layer_modulus(sphere, layer))
     a_k, b_k, _, _ = amps[layer]
     r_a = layer == 1 ? zero(eltype(sphere.radii)) : sphere.radii[layer - 1]
     return a_k + b_k * _layer_avg_dev_shear_factor(r_a, r_upper, κ_k, μ_k)
@@ -120,7 +120,7 @@ function cumulative_strain_average(
         ArgumentError("cumulative_strain_average radius must not exceed the outer radius $(radii[N]); got $r")
     )
 
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κ₀, μ₀ = TensND.k_mu(C₀)
     α = _bulk_concentration(sphere, κ₀, μ₀)
     amps = _shear_amplitude_seq(sphere, C₀)
 
@@ -171,12 +171,12 @@ function layer_flux_average(
     ) where {T, N}
     1 ≤ layer ≤ N || throw(BoundsError(sphere, layer))
     C_k = layer_modulus(sphere, layer)
-    κk, μk = _iso_bulk_shear(C_k)
+    κk, μk = TensND.k_mu(C_k)
     _is_incompressible(κk) ||
         return C_k ⊡ layer_gradient_average(sphere, C₀, ε∞, layer)
     # k = ∞: the volumetric strain vanishes and the mean pressure is read from
     # the traction (`_layer_pressures`), not from ∞·0.
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κ₀, μ₀ = TensND.k_mu(C₀)
     α = _bulk_concentration(sphere, κ₀, μ₀)
     P = _layer_pressures(sphere, C₀, α)[layer]
     β = _shear_concentration(sphere, C₀)[layer]

@@ -273,8 +273,8 @@ function spheroid_elastic_coefficients(
         )
     end
 
-    κμ = ntuple(k -> _iso_bulk_shear(layer_modulus(s, k)), Val(N))
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κμ = ntuple(k -> TensND.k_mu(layer_modulus(s, k)), Val(N))
+    κ₀, μ₀ = TensND.k_mu(C₀)
     Tp = promote_type(
         T, real(Q), typeof(κ₀), typeof(μ₀), typeof(εa), typeof(εt),
         ntuple(k -> typeof(κμ[k][1]), N)..., ntuple(k -> typeof(κμ[k][2]), N)...,
@@ -351,7 +351,7 @@ against.
 """
 function spheroid_core_strain(s::LayeredSpheroid, C₀, εa, εt; kw...)
     r = spheroid_elastic_coefficients(s, C₀, εa, εt; kw...)
-    κ₁, μ₁ = _iso_bulk_shear(layer_modulus(s, 1))
+    κ₁, μ₁ = TensND.k_mu(layer_modulus(s, 1))
     ν₁ = _poisson(κ₁, μ₁)
     c = real(s.c)
     A₂ = zero(eltype(r.amplitudes[1]))

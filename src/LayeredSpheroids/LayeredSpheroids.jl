@@ -44,7 +44,6 @@ import ..Core
 using ..Core
 const MFH_Core = Core
 
-import ..LayeredSpheres: _iso_bulk_shear
 import ..LayeredSpheres: PerfectInterface, KapitzaInterface, SurfaceConductiveInterface,
     AbstractInterface, interfaces_eltype,
     layer_property_average, layer_inverse_property_average,

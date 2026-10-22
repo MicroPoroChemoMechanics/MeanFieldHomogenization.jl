@@ -309,8 +309,8 @@ function _solve_elastic(
         )
     end
 
-    κμ = ntuple(k -> _iso_bulk_shear(layer_modulus(s, k)), Val(N))
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κμ = ntuple(k -> TensND.k_mu(layer_modulus(s, k)), Val(N))
+    κ₀, μ₀ = TensND.k_mu(C₀)
     # `Q` itself, not `real(Q)`: an oblate spheroid carries `q = iτ` and
     # `c = -i c̄`, and the whole solve goes through in `Complex` arithmetic — the
     # same substitution the conduction side uses. Discarding the imaginary part
@@ -564,8 +564,8 @@ function spheroid_strain_concentration(
                 "rotate the result."
         )
     )
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
-    κμ = ntuple(k -> _iso_bulk_shear(layer_modulus(s, k)), Val(N))
+    κ₀, μ₀ = TensND.k_mu(C₀)
+    κμ = ntuple(k -> TensND.k_mu(layer_modulus(s, k)), Val(N))
     # The LAYER moduli belong in this promotion, and leaving them out is the
     # same defect v0.10.1 fixed on the conduction side: a single `Dual` layer
     # among `Float64` ones then meets a `Float64` buffer and throws.
@@ -620,8 +620,8 @@ function spheroid_layer_strain_concentration(
                 "written about ê₃; got axis = $(s.axis)."
         )
     )
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
-    κμ = ntuple(k -> _iso_bulk_shear(layer_modulus(s, k)), Val(N))
+    κ₀, μ₀ = TensND.k_mu(C₀)
+    κμ = ntuple(k -> TensND.k_mu(layer_modulus(s, k)), Val(N))
     Tp = promote_type(
         T, Q, typeof(κ₀), typeof(μ₀),
         ntuple(k -> typeof(κμ[k][1]), N)..., ntuple(k -> typeof(κμ[k][2]), N)...,

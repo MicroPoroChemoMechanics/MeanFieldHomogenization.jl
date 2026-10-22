@@ -14,14 +14,7 @@ Extract Young's modulus `E` and Poisson's ratio `ν` from an isotropic
 4th-order stiffness `TensISO{4,3}`.  The internal TensND convention is
 ``\\mathbb{C}_0 = 3k\\,\\mathbb{J} + 2\\mu\\,\\mathbb{K}`` i.e. `C₀.data = (3k, 2μ)`.
 """
-function extract_iso_moduli(C₀::TensND.TensISO{4, 3})
-    α, β = C₀.data           # α = 3k, β = 2μ
-    k = α / 3
-    μ = β / 2
-    E = 9k * μ / (3k + μ)
-    ν = (3k - 2μ) / (2 * (3k + μ))
-    return E, ν
-end
+extract_iso_moduli(C₀::TensND.TensISO{4, 3}) = TensND.E_nu(C₀)
 
 """
     extract_iso_moduli(C₀::TensISO{4,2}) -> (E, ν)

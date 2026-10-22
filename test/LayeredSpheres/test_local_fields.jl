@@ -27,7 +27,7 @@
 using Test
 using MeanFieldHomogenization
 using MeanFieldHomogenization.LayeredSpheres: _bulk_concentration, _shear_concentration,
-    _iso_bulk_shear, _cond_concentration
+    _cond_concentration
 using MeanFieldHomogenization.Interactions: _pair_ball_iso
 using TensND
 using LinearAlgebra
@@ -96,7 +96,7 @@ end
 @testset "local fields — shell averages reproduce α_k and β_k" begin
     sph = LayeredSphere((1.0, 2.0, 3.5), (LF_C₁, LF_C₂, LF_C₃))
     sol = LayeredSphereFields(sph, LF_C₀)
-    α = _bulk_concentration(sph, _iso_bulk_shear(LF_C₀)...)
+    α = _bulk_concentration(sph, TensND.k_mu(LF_C₀)...)
     β = _shear_concentration(sph, LF_C₀)
     for k in 1:3
         a, b = shell_concentration(sol, k)
