@@ -303,19 +303,20 @@ fe_cell_concentration(s::FESupershapePore, P₀::TensND.AbstractTens) =
 # worry about, and nothing else.
 function _fe_cell_cached(s::FESupershapePore, P₀::TensND.AbstractTens{O, 3}) where {O}
     has_surrogate(s, O) && return _fe_cell_run(s, P₀)
-    return get!(() -> _fe_cell_run(s, P₀), s.cache.tensors, _fe_cache_key(P₀))
+    return _fe_memo(() -> _fe_cell_run(s, P₀), s.cache, _fe_cache_key(P₀))
 end
 
 "Build the cell once and keep it: the mesh does not depend on the reference."
 function _fe_cell_setup(s::FESupershapePore, ncomp::Int)
     b = _resolve_backend(s.backend)
-    if s.cache.setup === nothing
+    st = _fe_setup!(s.cache) do
         g = fe_cell_grid(b, s.shape, s.mesh)
-        s.cache.setup = (; backend = b, g.grid, g.built, spaces = Dict{Int, Any}())
+        (; backend = b, g.grid, g.built, spaces = Dict{Int, Any}())
     end
-    st = s.cache.setup
-    space = get!(st.spaces, ncomp) do
-        fe_cell_space(st.backend, st.grid, s.mesh.order, ncomp)
+    space = lock(s.cache.lock) do
+        get!(st.spaces, ncomp) do
+            fe_cell_space(st.backend, st.grid, s.mesh.order, ncomp)
+        end
     end
     ndofs, _, _ = fe_cell_dof_split(st.backend, space)
     _fe_check_budget(

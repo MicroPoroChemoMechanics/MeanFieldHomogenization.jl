@@ -20,6 +20,11 @@ using Gmsh: gmsh
 const FEO = MeanFieldHomogenization.FiniteElements
 const _BO = FEO.FerriteBackend()
 
+# A shape that deliberately does not opt in, to check that the guard is a guard.
+# Also defined in `test_cell_octant_algebra.jl`: an identical redefinition is a
+# no-op, and this file then runs on its own.
+struct _NotMirroredShape <: MeanFieldHomogenization.Superspheres.AbstractSuperShape{Float64} end
+
 _octC(μ, ν) = (
     λ = 2μ * ν / (1 - 2ν);
     Tensors.SymmetricTensor{4, 3}(

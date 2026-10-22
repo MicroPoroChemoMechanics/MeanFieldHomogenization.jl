@@ -20,14 +20,29 @@ the reference medium.
 to prove the memoization works. The field is deliberately kept out of the
 struct's numeric fields so that it never interferes with `ForwardDiff`
 reconstruction of a geometry parameter.
+
+Every access goes through `lock`: tasks sharing one inclusion (threads over a
+parameter sweep) build the discretization once and run each reference medium
+once, one solve at a time — which a finite-element solve needs anyway, for
+memory.
 """
 mutable struct FECache
     setup::Any
-    tensors::Dict{Any, Any}
+    const tensors::Dict{Any, Any}
     assemblies::Int
+    const lock::ReentrantLock
 end
 
-FECache() = FECache(nothing, Dict{Any, Any}(), 0)
+FECache() = FECache(nothing, Dict{Any, Any}(), 0, ReentrantLock())
+
+# The response for reference `key`, computed by `f()` on first request.
+_fe_memo(f, c::FECache, key) = lock(() -> get!(f, c.tensors, key), c.lock)
+
+# The discretization, built by `f()` on first request.
+_fe_setup!(f, c::FECache) = lock(c.lock) do
+    c.setup === nothing && (c.setup = f())
+    c.setup
+end
 
 """
     fe_assembly_count(incl) -> Int
@@ -46,9 +61,11 @@ Drop the cached discretization and every memoized response tensor.
 """
 function fe_reset!(incl)
     c = _fe_cache(incl)
-    c.setup = nothing
-    empty!(c.tensors)
-    c.assemblies = 0
+    lock(c.lock) do
+        c.setup = nothing
+        empty!(c.tensors)
+        c.assemblies = 0
+    end
     return incl
 end
 

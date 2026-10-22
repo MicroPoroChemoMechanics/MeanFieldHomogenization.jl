@@ -34,13 +34,10 @@ struct CrackSetup{B, G, S}
     space::S
 end
 
-function _crack_setup(crack::FEEllipticCrack)
-    if crack.cache.setup === nothing
-        b = _resolve_backend(crack.backend)
-        grid = fe_crack_grid(b, crack)
-        crack.cache.setup = CrackSetup(b, grid, fe_crack_space(b, grid, crack.mesh.order))
-    end
-    return crack.cache.setup
+_crack_setup(crack::FEEllipticCrack) = _fe_setup!(crack.cache) do
+    b = _resolve_backend(crack.backend)
+    grid = fe_crack_grid(b, crack)
+    CrackSetup(b, grid, fe_crack_space(b, grid, crack.mesh.order))
 end
 
 # Σ⁽ⁱ⁾ with Σ⁽ⁱ⁾·e₃ = eᵢ, and eₘ ⊗ˢ e₃ — in the *local* crack frame, where the
@@ -182,7 +179,7 @@ function _fe_cod_tensor(
     C_local = _local_stiffness(crack, C₀)
     key = _cache_key(C_local)
 
-    B_local = get!(crack.cache.tensors, key) do
+    B_local = _fe_memo(crack.cache, key) do
         _, _, B = _solve_cod_local(crack, C_local, μ, ν)
         B
     end

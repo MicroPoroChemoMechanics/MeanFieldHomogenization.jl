@@ -213,7 +213,7 @@ fe_axi_concentration(s::FEAxiLayeredSpheroid, P₀::TensND.AbstractTens; kw...) 
 
 _fe_axi_concentration(
     s::FEAxiLayeredSpheroid, P₀::TensND.AbstractTens; kw...
-) = let res = get!(() -> _axi_run(s, P₀), s.cache.tensors, _fe_cache_key(P₀))
+) = let res = _fe_memo(() -> _axi_run(s, P₀), s.cache, _fe_cache_key(P₀))
     (res.A, res.B)
 end
 

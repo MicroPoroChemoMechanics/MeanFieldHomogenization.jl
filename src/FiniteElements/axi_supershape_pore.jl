@@ -238,7 +238,7 @@ function fe_axi_pore_concentration(s::FEAxiSupershapePore, P₀::TensND.Abstract
     # `fe_cell_concentration` in the three-dimensional pore. Asking for `.A`
     # made every shipped axisymmetric model unusable.
     has_surrogate(s, O) && return _axi_pore_run(s, P₀)
-    r = get!(() -> _axi_pore_run(s, P₀), s.cache.tensors, _fe_cache_key(P₀))
+    r = _fe_memo(() -> _axi_pore_run(s, P₀), s.cache, _fe_cache_key(P₀))
     return _axi_pore_tensor(r)
 end
 
