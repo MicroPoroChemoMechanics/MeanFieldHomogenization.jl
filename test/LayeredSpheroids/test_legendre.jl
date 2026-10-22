@@ -1,13 +1,14 @@
 using Test
+using ForwardDiff
 using MeanFieldHomogenization.LayeredSpheroids: legendre_odd
 
 # =============================================================================
 #  test_legendre.jl — associated Legendre recurrences (`legendre.jl`).
 #
 #  Checked against closed-form low-degree polynomials (P₁, P₃, P₅, P₁¹,
-#  Q₁, Q₁¹) and, for the higher-degree / Q¹ entries with no simple
-#  closed form at hand, against a central finite-difference derivative
-#  — cheap and independent of the recurrence itself.
+#  Q₁, Q₁¹); the hand-coded derivative tables against the dual-number
+#  derivative of the values (exact) and, as a cross-check, a centered
+#  finite difference.
 # =============================================================================
 
 @testset "legendre_odd — P0 (plain Legendre) against closed forms" begin
@@ -62,6 +63,19 @@ end
         P1p_lo, _ = legendre_odd(:P1p, p - h, Nseries)
         fd = (P1p_hi .- P1p_lo) ./ (2h)
         @test all(isapprox.(fd, dP1p; rtol = 1.0e-4, atol = 1.0e-6))
+    end
+end
+
+@testset "legendre_odd — derivative tables match the dual-number derivative" begin
+    # The recurrences differentiated by dual numbers: exact, so the hand-coded
+    # derivative tables must agree to rounding, at every degree.
+    for x in (1.3, 1.7, 3.3), Nseries in (1, 2, 4), kind in (:P0, :Q0, :P1, :Q1)
+        _, ders = legendre_odd(kind, x, Nseries)
+        @test ForwardDiff.derivative(y -> legendre_odd(kind, y, Nseries)[1], x) ≈ ders rtol = 1.0e-12
+    end
+    for p in (0.3, -0.6), Nseries in (1, 2, 4)
+        _, ders = legendre_odd(:P1p, p, Nseries)
+        @test ForwardDiff.derivative(y -> legendre_odd(:P1p, y, Nseries)[1], p) ≈ ders rtol = 1.0e-12
     end
 end
 

@@ -140,7 +140,7 @@ _sc_initial(init::TensND.AbstractTens, ::RVE, ::Symbol; kw...) = init
 # advantage and one drawback: across a porous RVE at f ∈ {0.1, 0.3, 0.45, 0.6}
 # and a stiff one at f ∈ {0.1, 0.3, 0.5, 0.7} the two agree to 1e-9 or better,
 # and on a deeply percolated oblate configuration the Voigt start makes
-# `TrustRegion` stop where the finite-difference IFT Jacobian is exactly
+# `TrustRegion` stop where its Jacobian is exactly
 # singular, which the phase seed does not. Equivalent where it matters, worse in
 # one corner: not a default worth taking.
 function _sc_initial(::Nothing, rve::RVE, prop::Symbol; kw...)

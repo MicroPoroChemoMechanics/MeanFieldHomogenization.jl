@@ -288,7 +288,7 @@ accepts `:voigt`, `:reuss`, a phase name, or an explicit tensor. A phase named
     `72` and the damped Picard crawls along a degenerate fixed point;
     `NewtonDefault` agrees to `1e-7` even there. On a deeply percolated oblate
     RVE the Voigt start also makes `TrustRegion` stop where the
-    finite-difference IFT Jacobian is exactly singular. Hence the default above.
+    Jacobian is exactly singular. Hence the default above.
 
 !!! warning "The seed also sets a floor"
     Every solver keeps each component of its iterate above
