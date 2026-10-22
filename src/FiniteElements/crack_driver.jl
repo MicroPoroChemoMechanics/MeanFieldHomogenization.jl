@@ -181,7 +181,7 @@ function _fe_cod_tensor(
         B
     end
 
-    R = Matrix(TensND.vecbasis(crack, :cov))
+    R = _frame_matrix(crack)
     return TensND.TensCanonical(R * B_local * R')
 end
 
@@ -207,7 +207,7 @@ function fe_cod_breakdown(
     μ, ν = _isotropic_moduli(crack, C₀)
     C_local = _local_stiffness(crack, C₀)
     B_s, B_u, B_inf = _solve_cod_local(crack, C_local, μ, ν)
-    R = Matrix(TensND.vecbasis(crack, :cov))
+    R = _frame_matrix(crack)
     return (;
         B_s, B_u, B_inf,
         B_s_glob = TensND.TensCanonical(R * B_s * R'),
