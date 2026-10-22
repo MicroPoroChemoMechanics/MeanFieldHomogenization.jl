@@ -56,6 +56,7 @@ end
 # A tolerance at the working precision where comparisons return a `Bool`; none
 # for a complex or a symbolic scalar, which runs the fixed 60 iterations.
 _agm_tol(::Type{T}) where {T <: AbstractFloat} = 10 * eps(T)
+_agm_tol(::Type{<:ForwardDiff.Dual{<:Any, V}}) where {V} = _agm_tol(V)   # precision of the value
 _agm_tol(::Type{T}) where {T <: Number} = is_hard_numeric(T) ? 10 * eps(Float64) : 0.0
 
 """

@@ -23,6 +23,7 @@
 # Symbolics extensions keep `ell_F` and `ell_E` as unexpanded calls.
 
 @inline _carlson_tol(::Type{T}) where {T <: AbstractFloat} = eps(T)^(1 / 6)
+@inline _carlson_tol(::Type{<:ForwardDiff.Dual{<:Any, V}}) where {V} = _carlson_tol(V)
 @inline _carlson_tol(::Type{T}) where {T <: Number} = is_hard_numeric(T) ? eps(Float64)^(1 / 6) : 0.0
 
 

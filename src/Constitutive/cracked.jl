@@ -278,17 +278,14 @@ end
 # Δω_i = n̂_i · (𝕊_i : ΔΣ) · n̂_i, with n̂_i the crack normal in GLOBAL components
 # (`_frame_columns`, not `crack_normal`, whose components are local).
 function _aperture_increments(m::MicrocrackedMaterial{N}, 𝕊, Δσ, open) where {N}
-    canon = TensND.CanonicalBasis{3, Float64}()
     return ntuple(N) do i
         open[i] || return zero(eltype(m.ω₀))
         S_i = get(𝕊, m.families[i], nothing)
         S_i === nothing && return zero(eltype(m.ω₀))
-        e = TensND.change_tens(S_i ⊡ Δσ, canon)
-        A = get_array(e)
         n̂ = MFH_Core._frame_columns(
             Cracks.crack_basis(m.rve.phases[m.families[i]].geometry)
         )[3]
-        return sum(n̂[a] * A[a, b] * n̂[b] for a in 1:3, b in 1:3)
+        return transpose(n̂) * TensND.components_canon(S_i ⊡ Δσ) * n̂
     end
 end
 

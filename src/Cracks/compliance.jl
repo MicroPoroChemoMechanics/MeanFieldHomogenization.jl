@@ -186,12 +186,13 @@ the four `delta_*` ones.
 
 See [budiansky1976](@citet).
 """
-crack_density_factor(crack::MFH_Core.AbstractCrack) =
-    _crack_density_factor(MFH_Core.shape_trait(crack))
+crack_density_factor(crack::MFH_Core.AbstractCrack{T}) where {T} =
+    _crack_density_factor(MFH_Core.shape_trait(crack), T)
 
-_crack_density_factor(::Type{<:CrackShape}) = 4 * Float64(π) / 3
-_crack_density_factor(::Type{Ribbon}) = Float64(π)
-_crack_density_factor(S::Type) = _unsupported_crack_shape(S, "density-factor")
+# In the crack's own number type: a symbolic crack keeps π symbolic.
+_crack_density_factor(::Type{<:CrackShape}, ::Type{T}) where {T} = 4 * T(π) / 3
+_crack_density_factor(::Type{Ribbon}, ::Type{T}) where {T} = T(π)
+_crack_density_factor(S::Type, ::Type) = _unsupported_crack_shape(S, "density-factor")
 
 # =============================================================================
 #  Stiffness / conductivity contribution for cracks (API symmetry with
