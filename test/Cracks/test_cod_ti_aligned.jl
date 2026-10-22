@@ -25,7 +25,7 @@ const ATOL_COD_RES = 1.0e-9
 const ATOL_COD_DEC = 1.0e-7
 
 # Helper: convert TI stiffness to engineering compliance moduli.
-# (Same routine `extract_ti_moduli` used internally by the analytical kernel.)
+# (TensND.arg_TI_Hoenig, as the analytical kernel reads them.)
 
 @testset "COD TI aligned — iso-as-TI recovers isotropic builder" begin
     # Build an isotropic stiffness, then re-express it as a degenerate TI

@@ -11,7 +11,7 @@ using LinearAlgebra
 #  the stiffness the elastic scheme gives, which is computed by another pipeline.
 # =============================================================================
 
-const _alv_mandel = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66
+const _alv_mandel = TensND.mandel66
 
 const _C_MAT = TensISO{3}(3 * 10.0, 2 * 4.0)
 const _C_INC = TensISO{3}(3 * 20.0, 2 * 8.0)

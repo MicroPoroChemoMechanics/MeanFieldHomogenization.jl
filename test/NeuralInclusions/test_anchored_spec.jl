@@ -172,10 +172,7 @@ end
     feats = [:log_aspect, :core_fraction, :log_mu_ratio_1, :log_mu_ratio_2]
     id4 = TensND.tens_Id4(Val(3), Val(Float64))
     own_axis(c) = let sph = Spheroid(c)
-        MeanFieldHomogenization.Core._basis_col(
-            MeanFieldHomogenization.Core.inclusion_basis(sph),
-            NIB._spheroid_axis_index(NIB._axes(sph)),
-        )
+        Tuple(TensND.vecbasis(MeanFieldHomogenization.Core.inclusion_basis(sph), :cov)[:, NIB._spheroid_axis_index(NIB._axes(sph))])
     end
     # The exact homogeneous-inclusion concentration, built independently of the
     # code under test, and transversely isotropic about the spheroid's **own**

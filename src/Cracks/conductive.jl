@@ -120,7 +120,7 @@ MFH_Core.property_contribution(
 
 # Isotropic reference: the closed form.
 function _conductive_crack_K(c::ConductiveCrack, K₀::TensND.TensISO{2, 3})
-    k₀ = MFH_Core.extract_iso_conductivity(K₀)
+    k₀ = first(TensND.get_data(K₀))
     γ = c.conductivity / (2 * semi_major(c))
     T = float(promote_type(typeof(γ), typeof(k₀)))
     κ = T(γ) / (one(T) + T(π) * T(γ) / (4 * T(k₀)))

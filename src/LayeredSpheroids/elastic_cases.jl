@@ -146,18 +146,18 @@ with ``A = \\alpha = \\mu_0\\,\\varepsilon/(2\\nu_0 - 1)``. The signs follow fro
 ``\\rho = -c\\,P_1^1(p)P_1^1(q)`` and ``z = c\\,P_1(p)P_1(q)``.
 """
 function _case_remote(::AxisymmetricCase, c, κ₀, μ₀, εa, εt)
-    ν₀ = _poisson(κ₀, μ₀)
+    ν₀ = TensND.poisson_ratio(κ₀, μ₀)
     γ = -μ₀ * (εa + 2 * εt) / (1 - 2 * ν₀)
     return [(1, 2) => -4 * c^2 * μ₀ * εt / 3, (2, 1) => γ * c]
 end
 
 function _case_remote(::TransverseShearCase, c, κ₀, μ₀, ε)
-    A = μ₀ * ε / (2 * _poisson(κ₀, μ₀) - 1)
+    A = μ₀ * ε / (2 * TensND.poisson_ratio(κ₀, μ₀) - 1)
     return [(3, 1) => -A * c]
 end
 
 function _case_remote(::LongitudinalShearCase, c, κ₀, μ₀, ε)
-    α = μ₀ * ε / (2 * _poisson(κ₀, μ₀) - 1)
+    α = μ₀ * ε / (2 * TensND.poisson_ratio(κ₀, μ₀) - 1)
     return [(2, 1) => α * c, (3, 1) => -α * c]
 end
 
@@ -356,7 +356,7 @@ function _solve_elastic(
         rows = (nt * (ℓ - 1) + 1):(nt * ℓ)
         κi, μi = κμ[ℓ]
         κo, μo = ℓ < N ? κμ[ℓ + 1] : (κ₀, μ₀)
-        νi, νo = _poisson(κi, μi), _poisson(κo, μo)
+        νi, νo = TensND.poisson_ratio(κi, μi), TensND.poisson_ratio(κo, μo)
         Mi, _ = _elastic_block(groups, regs[ℓ], qs[ℓ], c, μi, νi, ϕ₀, xg, wg, tdegs, Tp)
         Mo, _ = _elastic_block(groups, regs[ℓ + 1], qs[ℓ], c, μo, νo, ϕ₀, xg, wg, tdegs, Tp)
         A[rows, (offs[ℓ] + 1):offs[ℓ + 1]] .= Mi
@@ -577,7 +577,7 @@ function spheroid_strain_concentration(
     c = s.c
     q_N = s.q[N]
     κN, μN = κμ[N]
-    νN = _poisson(κN, μN)
+    νN = TensND.poisson_ratio(κN, μN)
 
     loads = _basis_loadings(Tp)
     Xc = Matrix{Tp}(undef, 6, 6)
@@ -642,13 +642,13 @@ function spheroid_layer_strain_concentration(
         Xc[:, kk] .= KM(E)
         for ℓ in 1:N
             κℓ, μℓ = κμ[ℓ]
-            νℓ = _poisson(κℓ, μℓ)
+            νℓ = TensND.poisson_ratio(κℓ, μℓ)
             q_in = ℓ == 1 ? one(qs[1]) : qs[ℓ - 1]
             εk = _avg_strain(r.groups, r.amplitudes[ℓ], qs[ℓ], q_in, c, μℓ, νℓ, Tp)
             Yl[ℓ][:, kk] .= KM(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εk[i, j])))
         end
         κN, μN = κμ[N]
-        εt = _avg_strain(r.groups, r.amplitudes[N], qs[N], one(qs[N]), c, μN, _poisson(κN, μN), Tp)
+        εt = _avg_strain(r.groups, r.amplitudes[N], qs[N], one(qs[N]), c, μN, TensND.poisson_ratio(κN, μN), Tp)
         Yt[:, kk] .= KM(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εt[i, j])))
         resids[kk] = r.residual
     end

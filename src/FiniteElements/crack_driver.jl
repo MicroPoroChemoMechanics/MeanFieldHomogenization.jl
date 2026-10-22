@@ -118,14 +118,11 @@ end
 #  (isotropic, or symmetrization-projected) matrix, share one single solve.
 
 "Rotation matrix whose columns are the crack's local axes in global coordinates."
-function _frame_matrix(crack)
-    l̂, m̂, n̂ = Core._frame_columns(Core.inclusion_basis(crack))
-    return hcat(l̂, m̂, n̂)
-end
+_frame_matrix(crack) = Matrix(TensND.vecbasis(Core.inclusion_basis(crack), :cov))
 
 "Components of `C₀` in the crack's local frame, as a `SymmetricTensor{4,3}`: one change of basis."
 function _local_stiffness(crack, C₀::TensND.AbstractTens{4, 3})
-    Cl = Core._components_in(C₀, Core.inclusion_basis(crack))
+    Cl = Array(TensND.components(C₀, Core.inclusion_basis(crack)))
     return Tensors.SymmetricTensor{4, 3}((i, j, k, l) -> Cl[i, j, k, l])
 end
 
@@ -148,7 +145,7 @@ uses (an isotropically-symmetrized crack family, for instance).
 function _isotropic_moduli(crack, C₀::TensND.AbstractTens{4, 3}; rtol = 1.0e-8)
     C_iso = Core.isotropify(C₀)
     if !(C₀ isa TensND.TensISO{4, 3})
-        A, Aiso = Core._C_array(C₀), Core._C_array(C_iso)
+        A, Aiso = Array(TensND.components_canon(C₀)), Array(TensND.components_canon(C_iso))
         dev = maximum(abs, A .- Aiso)
         dev ≤ rtol * max(maximum(abs, Aiso), eps()) || throw(
             ArgumentError(
@@ -166,8 +163,8 @@ function _isotropic_moduli(crack, C₀::TensND.AbstractTens{4, 3}; rtol = 1.0e-8
             )
         )
     end
-    E, ν = Core.extract_iso_moduli(C_iso)
-    return Float64(E / (2 * (1 + ν))), Float64(ν)
+    μ, ν = TensND.mu_nu(C_iso)
+    return Float64(μ), Float64(ν)
 end
 
 # ─── The seam ────────────────────────────────────────────────────────────────
@@ -184,7 +181,7 @@ function _fe_cod_tensor(
         B
     end
 
-    R = _frame_matrix(crack)
+    R = Matrix(TensND.vecbasis(crack, :cov))
     return TensND.TensCanonical(R * B_local * R')
 end
 
@@ -210,7 +207,7 @@ function fe_cod_breakdown(
     μ, ν = _isotropic_moduli(crack, C₀)
     C_local = _local_stiffness(crack, C₀)
     B_s, B_u, B_inf = _solve_cod_local(crack, C_local, μ, ν)
-    R = _frame_matrix(crack)
+    R = Matrix(TensND.vecbasis(crack, :cov))
     return (;
         B_s, B_u, B_inf,
         B_s_glob = TensND.TensCanonical(R * B_s * R'),

@@ -49,8 +49,7 @@ Throws a `DomainError` at the origin.  Type-generic (`Float64`,
 See also [`dipole_displacement_iso`](@ref).
 """
 function green_gradient_iso(C₀::TensND.TensISO{4, 3}, x::AbstractVector)
-    E, ν = extract_iso_moduli(C₀)
-    μ = E / (2 * (1 + ν))
+    μ, ν = TensND.mu_nu(C₀)
     return _green_gradient_iso(μ, ν, x)
 end
 
@@ -110,8 +109,7 @@ latter case it is read in the canonical frame.
 See also [`green_gradient_iso`](@ref).
 """
 function dipole_displacement_iso(C₀::TensND.TensISO{4, 3}, x::AbstractVector, Π)
-    E, ν = extract_iso_moduli(C₀)
-    μ = E / (2 * (1 + ν))
+    μ, ν = TensND.mu_nu(C₀)
     return _dipole_displacement_iso(μ, ν, x, _as_matrix3(Π))
 end
 
@@ -167,7 +165,7 @@ See also [`dipole_temperature_iso`](@ref), and
 [`green_gradient_iso`](@ref) for the elastic case this mirrors.
 """
 green_gradient_iso2(K₀::TensND.TensISO{2, 3}, x::AbstractVector) =
-    green_gradient_iso2(extract_iso_conductivity(K₀), x)
+    green_gradient_iso2(first(TensND.get_data(K₀)), x)
 
 function green_gradient_iso2(k₀::Number, x::AbstractVector)
     r2 = x[1]^2 + x[2]^2 + x[3]^2

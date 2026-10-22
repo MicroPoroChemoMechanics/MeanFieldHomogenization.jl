@@ -137,7 +137,7 @@ function _hill_3d_aniso_nestedquadgk(
     # `C₀_arr` is assigned once, already permuted: the integrand captures it,
     # and a captured variable assigned twice is boxed, every access dynamic.
     p = sortperm(collect(ell.semi_axes), rev = true)
-    C₀_arr = T.(MFH_Core._components_in(C₀, ell.basis)[p, p, p, p])
+    C₀_arr = T.(Array(TensND.components(C₀, ell.basis))[p, p, p, p])
 
     semi_sorted = ell.semi_axes[p]
     η = semi_sorted[2] / semi_sorted[1]

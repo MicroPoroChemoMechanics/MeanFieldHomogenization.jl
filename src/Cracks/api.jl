@@ -154,8 +154,8 @@ function _apply_interface_stiffness(
     # The algebra below is matrix algebra, right in an orthonormal basis only:
     # the orthonormal one `B` is written in (read as it is), or its parent.
     ℬ = TensND.relevant_OrthonormalBasis(TensND.get_basis(B))
-    B_M = MFH_Core._components_in(B, ℬ)
-    K_M = MFH_Core._components_in(K, ℬ)
+    B_M = Array(TensND.components(B, ℬ))
+    K_M = Array(TensND.components(K, ℬ))
     M = LinearAlgebra.I + b .* (K_M * B_M)
     B_eff_M = B_M / M
     # Symmetrize to remove rounding drift.
@@ -220,10 +220,10 @@ end
 
 # Analytical dispatch: iso vs aniso.
 _cod_thermal(crack::EllipticCrack, K₀::TensND.TensISO{2, 3}) =
-    _cod_iso_ellipse_thermal(crack, MFH_Core.extract_iso_conductivity(K₀))
+    _cod_iso_ellipse_thermal(crack, first(TensND.get_data(K₀)))
 
 _cod_thermal(crack::RibbonCrack, K₀::TensND.TensISO{2, 3}) =
-    _cod_iso_ribbon_thermal(crack, MFH_Core.extract_iso_conductivity(K₀))
+    _cod_iso_ribbon_thermal(crack, first(TensND.get_data(K₀)))
 
 _cod_thermal(crack::EllipticCrack, K₀::TensND.AbstractTens{2, 3}) =
     _cod_aniso_ellipse_thermal(crack, K₀)
@@ -261,26 +261,24 @@ end
 
 # Analytical — isotropic matrix
 function _kernel(crack::EllipticCrack, C₀::TensND.TensISO{4, 3}, ::MFH_Core.Analytical; kw...)
-    E, ν = MFH_Core.extract_iso_moduli(C₀)
+    E, ν = TensND.E_nu(C₀)
     return _cod_iso_ellipse(crack, E, ν)
 end
 
 function _kernel(crack::RibbonCrack, C₀::TensND.TensISO{4, 3}, ::MFH_Core.Analytical; kw...)
-    E, ν = MFH_Core.extract_iso_moduli(C₀)
+    E, ν = TensND.E_nu(C₀)
     return _cod_iso_ribbon(crack, E, ν)
 end
 
 # Analytical — TI matrix aligned with n̂
 function _kernel(crack::EllipticCrack, C₀::TensND.TensTI{4}, ::MFH_Core.Analytical; kw...)
-    n̂ = TensND.tens_basis(crack_basis(crack), 3)
-    nt = MFH_Core.extract_ti_moduli(C₀, n̂)
-    return _cod_ti_ellipse(crack, nt.E, nt.H, nt.ν₁, nt.ν₂, nt.Γ)
+    E, ν₁, ν₂, H, Γ = TensND.arg_TI_Hoenig(inv(C₀))
+    return _cod_ti_ellipse(crack, E, H, ν₁, ν₂, Γ)
 end
 
 function _kernel(crack::RibbonCrack, C₀::TensND.TensTI{4}, ::MFH_Core.Analytical; kw...)
-    n̂ = TensND.tens_basis(crack_basis(crack), 3)
-    nt = MFH_Core.extract_ti_moduli(C₀, n̂)
-    return _cod_ti_ribbon(crack, nt.E, nt.H, nt.ν₁, nt.ν₂, nt.Γ)
+    E, ν₁, ν₂, H, Γ = TensND.arg_TI_Hoenig(inv(C₀))
+    return _cod_ti_ribbon(crack, E, H, ν₁, ν₂, Γ)
 end
 
 # Residue — anisotropic matrix

@@ -58,7 +58,7 @@ end
 
 @testset "Anisotropic Green function — reduces to Kelvin" begin
     C₀ = _Ciso()
-    E, ν = MeanFieldHomogenization.Core.extract_iso_moduli(C₀)
+    E, ν = TensND.E_nu(C₀)
     μ = E / (2 * (1 + ν))
     for x in ([1.3, -0.7, 2.1], [0.0, 0.0, 1.0], [1.0, 1.0, 1.0])
         r = norm(x)
@@ -203,4 +203,22 @@ end
     @test t1 == t2 && w1 == w2
     @test all(0 .≤ t1 .≤ 2π)
     @test sum(w1) ≈ 2π rtol = 1.0e-14
+end
+
+@testset "2-D isotropic Green operator — the plane-strain Poisson ratio" begin
+    # The 2-D tensor is the in-plane restriction of a 3-D isotropic stiffness,
+    # read component by component, and its Green operator is the plane-strain one
+    # of that 3-D material: A₂ = 1/(8πμ(1 − ν)) with ν = (3k − 2μ)/(2(3k + μ)).
+    # The 2-D tensor used to be read with the 3-D formulas (k = α/3), which gave
+    # ν = (α − β)/(2α + β) instead of the plane-strain (α − β)/(2α) its 2-D Hill
+    # tensor uses.
+    for (k, μ) in ((12.0, 5.0), (3.0, 2.5))
+        C3 = get_array(iso_stiffness(k, μ))
+        C2 = TensISO{2}(C3[1, 1, 1, 1] + C3[1, 1, 2, 2], C3[1, 1, 1, 1] - C3[1, 1, 2, 2])
+        ν = (3k - 2μ) / (2 * (3k + μ))
+        for x in ([1.3, -0.7], [0.0, 2.0])
+            @test get_array(green_operator_iso(C2, x)) ≈
+                get_array(TensND.Tens(MeanFieldHomogenization.Core._green_operator_iso_2d(μ, ν, x))) rtol = 1.0e-13
+        end
+    end
 end

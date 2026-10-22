@@ -64,7 +64,7 @@ include("mori_tanaka.jl")
 include("maxwell.jl")
 include("pcw.jl")
 include("self_consistent.jl")
-# Needs `_sc_solid_averages` (self_consistent.jl) and `_frob_sq`, hence its
+# Needs `_sc_solid_averages` (self_consistent.jl) and `TensND.sqnorm`, hence its
 # position after every scheme body it decomposes.
 include("crack_families.jl")
 include("fracture_permeability.jl")

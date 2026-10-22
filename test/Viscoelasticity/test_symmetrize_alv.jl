@@ -10,7 +10,7 @@ using TensND
 using LinearAlgebra
 using Random
 import MeanFieldHomogenization.Viscoelasticity: _iso_project_blocks, _ti_project_blocks,
-    _maybe_symmetrize_alv, _iso_project_mandel66,
+    _maybe_symmetrize_alv,
     _iso_project_blocks3, _ti_project_blocks3, _maybe_symmetrize_alv2
 const MCr = MeanFieldHomogenization.Core
 
@@ -29,7 +29,7 @@ end
         M = _rand_minor_mandel(rng)
         # ISO — non-symmetric block: the full Σ M[i,j] must be used, not
         # a symmetric 2·M[1,2] shortcut (regression for Volterra blocks)
-        α, β = _iso_project_mandel66(M)
+        α, β = TensND.iso_average_mandel66(M)
         αc, βc = MCr.iso_average_mandel66(M)
         @test α ≈ αc
         @test β ≈ βc

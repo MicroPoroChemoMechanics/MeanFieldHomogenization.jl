@@ -166,25 +166,25 @@ function relaxation(
     ) where {A}
     E = relaxation(m.a, t; method)
     ν = m.b
-    return TensND.TensISO{3}(E / (1 - 2ν), E / (1 + ν))
+    return TensND.iso_stiffness_E_nu(E, ν)
 end
 
 glassy_modulus(m::IsoRheology{BulkShear}) =
-    TensND.TensISO{3}(3 * glassy_modulus(m.a), 2 * glassy_modulus(m.b))
+    TensND.iso_stiffness(glassy_modulus(m.a), glassy_modulus(m.b))
 
 equilibrium_modulus(m::IsoRheology{BulkShear}) =
-    TensND.TensISO{3}(3 * equilibrium_modulus(m.a), 2 * equilibrium_modulus(m.b))
+    TensND.iso_stiffness(equilibrium_modulus(m.a), equilibrium_modulus(m.b))
 
 function glassy_modulus(m::IsoRheology{YoungPoisson})
     E = glassy_modulus(m.a)
     ν = _nu_limit(m.b, glassy_modulus)
-    return TensND.TensISO{3}(E / (1 - 2ν), E / (1 + ν))
+    return TensND.iso_stiffness_E_nu(E, ν)
 end
 
 function equilibrium_modulus(m::IsoRheology{YoungPoisson})
     E = equilibrium_modulus(m.a)
     ν = _nu_limit(m.b, equilibrium_modulus)
-    return TensND.TensISO{3}(E / (1 - 2ν), E / (1 + ν))
+    return TensND.iso_stiffness_E_nu(E, ν)
 end
 
 _nu_limit(ν::Real, _) = ν

@@ -125,8 +125,8 @@ function self_consistent_alv(
 
     # 2. Pre-compute the Mandel forms of U^A, V^A for each phase
     #    (eltype follows the geometry parameters — Dual-safe).
-    U_M_phases = Matrix[_tens_to_mandel66(tens_UA(g)) for g in geometries]
-    V_M_phases = Matrix[_tens_to_mandel66(tens_VA(g)) for g in geometries]
+    U_M_phases = Matrix[TensND.mandel66(tens_UA(g)) for g in geometries]
+    V_M_phases = Matrix[TensND.mandel66(tens_VA(g)) for g in geometries]
 
     # 3. Iterate — the running estimate carries the promoted eltype of every
     #    input (kernels, fractions, geometry tensors, crack data) so Dual

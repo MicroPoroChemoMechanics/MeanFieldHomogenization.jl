@@ -156,7 +156,7 @@ AnisotropicSurfaceConductiveInterface(K) =
 @inline _ip_mandel_block(M::AbstractMatrix, basis, ::Type{T}) where {T} =
     SMatrix{3, 3, T}(M)
 @inline _ip_mandel_block(t::TensND.AbstractTens{4, 3}, basis, ::Type{T}) where {T} =
-    SMatrix{3, 3, T}(MFH_Core._ip_block(SMatrix{6, 6}(TensND.KM(t, basis))))
+    SMatrix{3, 3, T}(TensND.km_ip_block(SMatrix{6, 6}(TensND.KM(t, basis))))
 
 # Zero the out-of-plane row and column of a 3×3 written in the layer frame:
 # the in-plane projection `p · X · p`.
@@ -195,12 +195,12 @@ function _interface_P(itf::SpringInterface, basis, ::Type{T}) where {T}
     kt = convert(T, st)
     z = zero(T)
     𝕂 = SMatrix{3, 3, T}(kt, z, z, z, kt, z, z, z, kn)   # (ℓ, m, n) frame
-    return MFH_Core._op_embed(MFH_Core.compliance_op_block(𝕂))
+    return TensND.km_op_embed(MFH_Core.compliance_op_block(𝕂))
 end
 
 function _interface_P(itf::AnisotropicSpringInterface, basis, ::Type{T}) where {T}
     𝕂 = _in_layer_frame(itf.compliance, basis, T)
-    return MFH_Core._op_embed(MFH_Core.compliance_op_block(𝕂))
+    return TensND.km_op_embed(MFH_Core.compliance_op_block(𝕂))
 end
 
 # Dual types contribute nothing to ⟨ℙ⟩ …
@@ -249,11 +249,11 @@ function _interface_Cs(itf::MembraneInterface, basis, ::Type{T}) where {T}
     μ = convert(T, itf.μs)
     z = zero(T)
     B = SMatrix{3, 3, T}(κ + μ, κ - μ, z, κ - μ, κ + μ, z, z, z, 2μ)
-    return MFH_Core._ip_embed(B)
+    return TensND.km_ip_embed(B)
 end
 
 function _interface_Cs(itf::AnisotropicMembraneInterface, basis, ::Type{T}) where {T}
-    return MFH_Core._ip_embed(_ip_mandel_block(itf.stiffness, basis, T))
+    return TensND.km_ip_embed(_ip_mandel_block(itf.stiffness, basis, T))
 end
 
 _interface_Cs(::KapitzaInterface, basis, ::Type{T}) where {T} = zero(SMatrix{6, 6, T})

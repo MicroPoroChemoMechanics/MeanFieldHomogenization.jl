@@ -497,14 +497,14 @@ function _solve_sc(
     # the Picard loop tests, rather than an unweighted sum over canonical
     # components that means something different in every symmetry class.
     w = _sc_param_weights(x_seed)
-    p0 = w .* _tens_to_param_vec(x_seed)
+    p0 = w .* TensND.to_vector(x_seed)
     L = length(p0)
-    rebuild = p -> _tens_from_param_vec(x_seed, p ./ w)
+    rebuild = p -> TensND.from_vector(x_seed, p ./ w)
     ε_pos = _sc_pd_eps(x_seed)
     residual_vec = function (p)
         x_in = _sc_pd_guard_apply(rebuild(p), ε_pos)
         x_out = step(x_in)
-        return w .* (_tens_to_param_vec(x_out) .- _tens_to_param_vec(x_in))
+        return w .* (TensND.to_vector(x_out) .- TensND.to_vector(x_in))
     end
     # The class basis is orthogonal, so the Euclidean norm of the scaled vector
     # *is* the Frobenius norm of the tensor it encodes.
@@ -530,8 +530,8 @@ function _solve_sc(
     p_best = copy(p); resid_best = Inf
     for iter in 1:maxiters
         MFH_Core._bump!(MFH_Core.SC_ITERATIONS)
-        norm_r = _l2(r)
-        norm_p = _l2(p)
+        norm_r = LinearAlgebra.norm(r)
+        norm_p = LinearAlgebra.norm(p)
         tol_eff = abstol + reltol * _scalar_value(norm_p)
         verbose && @info "SC-Newton iter $iter : ‖F‖ = $norm_r   tol = $tol_eff"
         if select_best && _scalar_value(norm_r) < resid_best
@@ -568,7 +568,7 @@ function _solve_sc(
         for _ in 1:30
             p_new = p .+ α_step .* δ
             r_new = residual_vec(p_new)
-            if _l2(r_new) ≤ (1 - 1.0e-4 * α_step) * norm_r
+            if LinearAlgebra.norm(r_new) ≤ (1 - 1.0e-4 * α_step) * norm_r
                 p .= p_new
                 r .= r_new
                 accepted = true
@@ -758,32 +758,19 @@ function _sc_newton_seed(x0::TensND.AbstractTens, step)
     return length(TensND.get_data(x1)) == length(TensND.get_data(x0)) ? x0 : x1
 end
 
-_tens_to_param_vec(t::TensND.AbstractTens) = collect(TensND.get_data(t))
-_tens_from_param_vec(prototype::TensND.AbstractTens, p::AbstractVector) =
-    _rebuild_from_data(prototype, p)
+# The Newton unknowns are the coordinates of TensND's `to_vector` (the
+# coefficients of a structured class, the canonical Kelvin-Mandel components of a
+# generic tensor), weighted by TensND's `param_norms` so that their Euclidean
+# norm is the Frobenius norm of the tensor they encode: `abstol` and `reltol`
+# then mean the same whatever the `algorithm` and the symmetry class. Newton is
+# invariant under that diagonal rescaling (the root and the iterates are
+# untouched); only the norm of the stopping test and of the Armijo condition
+# changes, and a trust region is put in a physical metric.
+_sc_param_weights(prototype::TensND.AbstractTens) =
+    [float(TensND.primal(w)) for w in TensND.param_norms(prototype)]
 
-# The structured classes rebuild from their coefficient tuple.
-_rebuild_from_data(t::TensND.AbstractTens, p) = TensND._rebuild(t, Tuple(p))
-
-# Residual norm on the components of `a` and `b` in one basis: `same_basis`
-# leaves them as they are when they share one, the usual case, and otherwise
-# writes them in a common one. Subtracting each one's own components compared
-# a canonical seed with an iterate written in an inclusion's basis.
-function _sc_residual_norm(a::TensND.AbstractTens, b::TensND.AbstractTens)
-    na, nb = TensND.same_basis(a, b)
-    return _frobenius_distance(na, nb, TensND.get_basis(na))
-end
-
-# The Frobenius norm of a tensor, and the distance of two tensors written in the
-# same basis: plain sums of squares of the stored arrays in an orthonormal basis;
-# in any other, the tensor norm of TensND, which carries the metric and the
-# variances, with no detour through the canonical basis.
-_frobenius(t::TensND.AbstractTens) = sqrt(_frob_sq(t))
-_frob_sq(t::TensND.AbstractTens) = _frob_sq(t, TensND.get_basis(t))
-_frob_sq(t, ::TensND.OrthonormalBasis) = sum(abs2, get_array(t))
-_frob_sq(t, ::TensND.AbstractBasis) = LinearAlgebra.norm(t)^2
-_frobenius_distance(a, b, ::TensND.OrthonormalBasis) = sqrt(sum(abs2, get_array(a) .- get_array(b)))
-_frobenius_distance(a, b, ::TensND.AbstractBasis) = LinearAlgebra.norm(a - b)
+# The residual of two iterates, written in one basis by TensND's subtraction.
+_sc_residual_norm(a::TensND.AbstractTens, b::TensND.AbstractTens) = LinearAlgebra.norm(a - b)
 
 # Components whose sums of squares, channel by channel, are Frobenius norms: the
 # stored array in an orthonormal basis; in any other, where the convergence of
@@ -791,80 +778,16 @@ _frobenius_distance(a, b, ::TensND.AbstractBasis) = LinearAlgebra.norm(a - b)
 _comparable(t, ::TensND.OrthonormalBasis) = get_array(t)
 _comparable(t, ::TensND.AbstractBasis) = TensND.components_canon(t)
 
-_sc_frobenius(t::TensND.AbstractTens) = _frobenius(t)
-
-_l2(v) = sqrt(sum(abs2, v))
-
-# `‖rebuild(prototype, v)‖_F`. The probe is written in the prototype's element
-# type, since a dual axis does not convert to a plain number.
-function _sc_basis_norm(prototype::TensND.AbstractTens, v::AbstractVector)
-    T = eltype(TensND.get_data(prototype))
-    return _scalar_value(_sc_frobenius(_rebuild_from_data(prototype, convert.(T, v))))
-end
-
-"""
-    _sc_param_weights(prototype) -> w::Vector{Float64}
-
-Per-component weights making the Euclidean norm of the Newton / SciML parameter
-vector equal the **Frobenius norm of the tensor it encodes**, so that `abstol`
-and `reltol` express the same requirement whatever the `algorithm` and whatever
-the symmetry class.
-
-The canonical components are coordinates in a basis of the symmetry class
-(``(\\alpha, \\beta)`` on ``(\\mathbb{J}, \\mathbb{K})`` for `TensISO`, the Walpole coefficients for `TensTI`, …).
-Those bases are *orthogonal* but not orthonormal — ``\\|\\mathbb{J}\\|_F = 1`` while
-``\\|\\mathbb{K}\\|_F = \\sqrt{5}`` — so the plain Euclidean norm of the component vector understates
-the tensor norm, and understates it by a class-dependent factor. Scaling
-component `i` by ``w_i = \\|\\mathrm{rebuild}(e_i)\\|_F`` restores the isometry exactly:
-
-```math
-\\lVert w \\odot p \\rVert_2 = \\lVert \\mathrm{rebuild}(p) \\rVert_F .
-```
-
-Newton is invariant under a diagonal rescaling of its unknowns — ``\\mathbf{J}`` becomes
-``\\mathbf{W}\\mathbf{J}\\mathbf{W}^{-1}``, the step ``\\mathbf{W}\\delta``, and the iterate ``\\mathbf{W}(p + \\delta)`` — so the root and the
-sequence of iterates are untouched; only the norm the stopping test and the
-Armijo condition are measured in changes. A trust-region method is *not*
-invariant, and there the rescaling additionally puts its region in a
-physically meaningful metric.
-
-The isometry needs the class basis to be orthogonal. It is for every class
-that has a parameter vector (`TensISO`, `TensTI` in its five-, six- and
-eight-parameter forms and at order 2, `TensOrtho`, `TensCubic`), and it is
-checked rather than assumed, so that a class added later with a basis that is
-not orthogonal is refused instead of measured in the wrong norm.
-"""
-function _sc_param_weights(prototype::TensND.AbstractTens)
-    L = length(TensND.get_data(prototype))
-    w = [_sc_basis_norm(prototype, [j == i ? 1.0 : 0.0 for j in 1:L]) for i in 1:L]
-    # Orthogonality probe: a vector with pairwise-distinct entries, so that a
-    # non-zero cross term `2 qᵢ qⱼ ⟨Eᵢ, Eⱼ⟩` cannot cancel out by symmetry.
-    q = collect(1.0:L)
-    isapprox(_sc_basis_norm(prototype, q)^2, sum(abs2, q .* w); rtol = 1.0e-10) || throw(
-        ArgumentError("the parameter basis of $(typeof(prototype)) is not orthogonal; its weights do not make an isometry")
-    )
-    return w
-end
-
 # Initial zero residual with eltype matching `x0` (Dual-preserving).
 _sc_residual_zero(x0::TensND.AbstractTens) = zero(real(eltype(x0)))
 
 # Float64 view of a residual or a norm, for tolerances, comparisons and
 # best-iterate tracking: a `ForwardDiff.Dual` is a `Real`, so `float` alone
 # would keep its partials.
-_scalar_value(r::Real) = float(MFH_Core.primal(r))
+_scalar_value(r::Real) = float(TensND.primal(r))
 
-# Float64 type of `_scalar_value(zero_like_eltype(x0))`. Used to pick a
-# safe `typemax` for `resid_best_val` regardless of whether x0 is real
-# or Dual. ForwardDiff.Dual is `<: Real` so we can't dispatch on `T<:Real`
-# alone — we must inspect the `:value` field first, only falling through
-# to `Real` for plain numeric eltypes.
-_value_eltype(::TensND.AbstractTens{<:Any, <:Any, T}) where {T} = _value_eltype(T)
-function _value_eltype(::Type{T}) where {T}
-    hasfield(T, :value) && return _value_eltype(fieldtype(T, :value))
-    T <: Real && return float(T)
-    return Float64
-end
+# The plain float type under the duals of `x0`, for a `typemax` and a tolerance.
+_value_eltype(x0::TensND.AbstractTens) = real(TensND.primal_type(eltype(x0)))
 
 # Convergence of the value: `‖Δ‖ ≤ abstol + reltol ‖x‖`, compared on values.
 _sc_converged(r::Real, abstol::Real) = r ≤ abstol
@@ -891,21 +814,14 @@ function _sc_partials_converged(Δ::AbstractArray, x::AbstractArray; abstol::Rea
 end
 
 # Σ over `a` of the squares of every coefficient of an element: the value, then
-# each partial, recursively through the nesting.
+# each partial, recursively through the nesting (TensND's `dual_channels`).
 function _channel_sqnorms(a::AbstractArray, ::Type{T}) where {T}
-    acc = map(abs2, _channels(zero(T)))
+    acc = map(abs2, TensND.dual_channels(zero(T)))
     for v in a
-        acc = acc .+ map(abs2, _channels(convert(T, v)))
+        acc = acc .+ map(abs2, TensND.dual_channels(convert(T, v)))
     end
     return acc
 end
-
-_channels(x::Real) = (x,)
-_channels(d::ForwardDiff.Dual) = (
-    _channels(ForwardDiff.value(d))...,
-    _flatten_tuples(map(_channels, ForwardDiff.partials(d).values))...,
-)
-_flatten_tuples(t::Tuple) = foldl((a, b) -> (a..., b...), t; init = ())
 
 # =============================================================================
 #  AsymmetricSelfConsistent — Mori-Tanaka-style iteration with self-reference.
@@ -1015,7 +931,7 @@ function _asc_use_stiffness(rve::RVE, prop::Symbol, m::Symbol; kw...)
     any(_is_crack_family, values(rve.amounts)) && return false
     P₀ = phase_property(rve, m, prop)
     probe = _bounds_available(rve) ? Voigt() : Dilute()
-    return _frob_sq(_evaluate(rve, probe, Val(prop); kw...)) ≥ _frob_sq(P₀)
+    return TensND.sqnorm(_evaluate(rve, probe, Val(prop); kw...)) ≥ TensND.sqnorm(P₀)
 end
 
 

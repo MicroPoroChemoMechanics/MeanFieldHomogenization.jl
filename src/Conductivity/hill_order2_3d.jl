@@ -62,7 +62,7 @@ function _hill_order2_3d_aniso(ell::Ellipsoid{3}, K₀)
     # frame, as the elastic kernels write theirs. `K₀[i, j]`, read before as
     # canonical, gave the components of `K₀` in its own basis, wrong for a
     # conductivity written in a rotated one.
-    K_arr = MFH_Core._components_in(K₀, ell.basis)
+    K_arr = Array(TensND.components(K₀, ell.basis))
     A = Diagonal(collect(ell.semi_axes))
     return TensND.Tens(_hill_order2_aniso(A, K_arr), ell.basis)
 end
@@ -167,7 +167,7 @@ row/column is re-embedded as zero (``P_{1j}=0``).
 function _hill_order2_3d_aniso(cyl::Cylinder, K₀)
     # The transverse block of `K₀` in the cylinder's frame carries the 2-D
     # problem; the axial row and column of `P` are zero.
-    K2 = MFH_Core._components_in(K₀, cyl.basis)[2:3, 2:3]
+    K2 = Array(TensND.components(K₀, cyl.basis))[2:3, 2:3]
     b, c = cyl.semi_axes
     P2 = _hill_order2_aniso(Diagonal([b, c]), K2)
     return TensND.Tens(cat(zero(eltype(P2)), P2; dims = (1, 2)), cyl.basis)

@@ -153,7 +153,7 @@ which is correct: the geometry itself is floating point.
 @inline _frame_axis(::TensND.CanonicalBasis{3}, ::Type{Tel}) where {Tel} =
     (zero(Tel), zero(Tel), one(Tel))
 @inline function _frame_axis(basis::TensND.AbstractBasis{3}, ::Type{Tel}) where {Tel}
-    n = MFH_Core._basis_col(basis, 3)
+    n = Tuple(TensND.vecbasis(basis, :cov)[:, 3])
     return ntuple(i -> convert(Tel, n[i]), 3)
 end
 
@@ -223,8 +223,7 @@ about the normal, a generic `Tens{2,3}` otherwise.
 """
 function _wrap2(lam::Laminate, prop::Symbol, M3::AbstractMatrix)
     if _all_ti(lam, prop, Val(2))
-        a = (M3[1, 1] + M3[2, 2]) / 2
-        b = M3[3, 3]
+        a, b, _ = TensND.ti2_params_from_matrix(M3)
         return TensND.TensTI{2}(a, b, _frame_axis(lam.basis, eltype(M3)))
     end
     return TensND.Tens(Matrix(M3), lam.basis)
@@ -295,8 +294,8 @@ end
 
 function _bounds_dispatch(lam::Laminate, ::Reuss, ::TensND.AbstractTens{4, 3}, ::Val{p}) where {p}
     mats, fs, _ = _gather(lam, p, Val(4))
-    S = sum(fs[i] * MFH_Core._inv_km6(mats[i]) for i in eachindex(mats))
-    return _wrap4(lam, p, MFH_Core._inv_km6(S))
+    S = sum(fs[i] * TensND.km_inv_schur(mats[i]) for i in eachindex(mats))
+    return _wrap4(lam, p, TensND.km_inv_schur(S))
 end
 
 function _bounds_dispatch(lam::Laminate, ::Reuss, ::TensND.AbstractTens{2, 3}, ::Val{p}) where {p}
@@ -515,7 +514,7 @@ function interface_jump(lam::Laminate, k::Integer, E; property::Symbol = :C)
     jump_local = _interface_jump_local(itf, t)
     # back to canonical components — `_frame_matrix`, not `_basis_matrix`:
     # the latter pins the frame to `Float64` and `Float64(::Sym)` throws.
-    R = MFH_Core._frame_matrix(lam.basis)
+    R = Matrix(TensND.vecbasis(lam.basis, :cov))
     return ntuple(i -> sum(R[i, j] * jump_local[j] for j in 1:3), 3)
 end
 

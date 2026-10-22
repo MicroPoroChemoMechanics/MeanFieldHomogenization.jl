@@ -52,7 +52,7 @@ end
 
 function _region_nodes(ell::Ellipsoid{3}, nodes::NTuple{3, Int})
     nr, np, na = nodes
-    Q = MFH_Core._basis_matrix(ell.basis)
+    Q = Matrix{Float64}(TensND.vecbasis(ell.basis, :cov))
     a1, a2, a3 = ell.semi_axes
     jac = a1 * a2 * a3                      # |det| of the unit-ball mapping
     ρ, wρ = MFH_Core.gauss_legendre_nodes(nr, 0.0, 1.0)
@@ -73,7 +73,7 @@ end
 
 function _region_nodes(ell::Ellipsoid{2}, nodes::NTuple{3, Int})
     nr, _, na = nodes
-    Q = MFH_Core._basis_matrix(ell.basis)
+    Q = Matrix{Float64}(TensND.vecbasis(ell.basis, :cov))
     a1, a2 = ell.semi_axes
     jac = a1 * a2
     ρ, wρ = MFH_Core.gauss_legendre_nodes(nr, 0.0, 1.0)

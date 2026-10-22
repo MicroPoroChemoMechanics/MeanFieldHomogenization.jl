@@ -806,17 +806,9 @@ function local_temperature(
     return _local_T(f, rr, n, _resolve_layer(f.sphere, rr; side, layer), ∇T∞)
 end
 
-# `𝐀 · G` in closed form.  `TensTI{2}` is a *structured* tensor: `⋅` against a
-# plain vector falls through to `LinearAlgebra.dot`, which flattens both
-# operands and computes an inner product of mismatched lengths.  Writing the
-# transverse/axial split out is both correct and cheaper than materializing the
-# 3×3 array.
-@inline function _ti2_dot(f_over_r, fp, n, g)
-    ng = n[1] * g[1] + n[2] * g[2] + n[3] * g[3]
-    return TensND.Vec{3}(
-        ntuple(i -> f_over_r * (g[i] - ng * n[i]) + fp * ng * n[i], 3)
-    )
-end
+# `𝐀 · G` with `𝐀 = (f/r)(𝟏 − n⊗n) + f′ n⊗n`, TensND's closed form of a
+# transversely isotropic second-order tensor against a vector.
+@inline _ti2_dot(f_over_r, fp, n, g) = TensND.TensTI{2}(f_over_r, fp, Tuple(n)) ⋅ TensND.Vec{3}(Tuple(g))
 
 function _local_gradient_vec(f::LayeredSphereTransportFields, r, n, k::Int, ∇T∞)
     f_over_r, fp = _cond_radial_scalars(f, k, r)

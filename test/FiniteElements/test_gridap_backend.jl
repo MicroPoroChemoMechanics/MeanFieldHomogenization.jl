@@ -27,7 +27,7 @@ const GX_K_SHELL = TensISO{3}(1.0)
 const GX_K_MAT = TensISO{3}(3.0)
 const GX_W = 0.5
 
-gx_mandel(T) = MeanFieldHomogenization.Core.mandel66_minor(MeanFieldHomogenization.Core._C_array(T))
+gx_mandel(T) = MeanFieldHomogenization.Core.mandel66_minor(Array(TensND.components_canon(T)))
 gx_bulk(M) = M[1, 1] + 2M[1, 2]
 gx_shear(M) = M[4, 4]
 gx_rel(X, Y) = maximum(abs, X - Y) / maximum(abs, X)

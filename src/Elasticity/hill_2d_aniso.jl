@@ -22,7 +22,7 @@ function _hill_2d_aniso(
     T = promote_type(eltype(ell.semi_axes), eltype(C₀))
     ρ = ell.semi_axes[2] / ell.semi_axes[1]
 
-    C₀_arr = T.(MFH_Core._components_in(C₀, ell.basis))   # in the ellipse's frame
+    C₀_arr = T.(Array(TensND.components(C₀, ell.basis)))   # in the ellipse's frame
 
     function γ_integrand(ψ)
         ζ = (cos(ψ), sin(ψ) / ρ)

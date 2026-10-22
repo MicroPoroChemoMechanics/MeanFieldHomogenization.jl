@@ -9,7 +9,7 @@ using LinearAlgebra
 #  ordering Reuss ≤ MT ≤ Voigt).
 # =============================================================================
 
-const _to_mandel = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66
+const _to_mandel = TensND.mandel66
 
 # Helper: build a 2-phase elastic-limit setup (sphere inclusion in iso matrix).
 function _setup_2phase_elastic(;

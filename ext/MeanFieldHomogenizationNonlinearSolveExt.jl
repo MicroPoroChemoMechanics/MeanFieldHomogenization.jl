@@ -83,11 +83,11 @@ const _AbstractNLSAlg = NonlinearSolve.SciMLBase.AbstractNonlinearAlgorithm
 #    the step's output) ────────────────────────────────────────────────
 
 function _nls_residual(step, x0, ε_pos)
-    rebuild = p -> S._tens_from_param_vec(x0, p)
+    rebuild = p -> TensND.from_vector(x0, p)
     return function residual_vec(p)
         x_in = S._sc_pd_guard_apply(rebuild(p), ε_pos)
         x_out = step(x_in)
-        return S._tens_to_param_vec(x_out) .- S._tens_to_param_vec(x_in)
+        return TensND.to_vector(x_out) .- TensND.to_vector(x_in)
     end
 end
 
@@ -98,9 +98,6 @@ end
 _primal_jacobian(residual_vec, p::AbstractVector, ::Type{T}) where {T} =
     TensND.primal.(ForwardDiff.jacobian(residual_vec, convert.(T, p)))
 
-# Levels of `ForwardDiff.Dual` nested in `T` (0 for a plain number).
-_dual_depth(::Type{<:ForwardDiff.Dual{<:Any, V}}) where {V} = 1 + _dual_depth(V)
-_dual_depth(::Type) = 0
 
 """
     _solve_sc(algo::NonlinearSolve.AbstractNonlinearAlgorithm, step, x0; kw...)
@@ -109,7 +106,7 @@ SC / ASC fixed-point solver backed by `NonlinearSolve.jl`. `algo` is any
 concrete algorithm (`NewtonRaphson()`, `TrustRegion()`,
 `LevenbergMarquardt()`, …). The fixed point `x = step(x)` is recast as
 the root problem `F(p) = 0` on the canonical symmetry components `p`
-(same `_tens_to_param_vec` / `_tens_from_param_vec` bridge as
+(same `TensND.to_vector` / `TensND.from_vector` bridge as
 [`NewtonDefault`](@ref)), with the positive-definite guard applied
 before every `step` evaluation.
 
@@ -145,8 +142,8 @@ function S._solve_sc(
     )
     ε_pos = S._sc_pd_eps(x0)
     residual_vec = _nls_residual(step, x0, ε_pos)
-    rebuild = p -> S._tens_from_param_vec(x0, p)
-    p0 = S._tens_to_param_vec(x0)
+    rebuild = p -> TensND.from_vector(x0, p)
+    p0 = TensND.to_vector(x0)
     # `abstol` has to mean the same thing here as it does for the two built-in
     # solvers, namely a bound on the Frobenius norm of the tensor. The weights
     # of `S._sc_param_weights` convert one into the other, and they are applied
@@ -231,7 +228,7 @@ function S._solve_sc(
         # Under nested duals the primal Jacobian leaves the cross terms
         # (ε₁ε₂, …) wrong; each full Newton step at the dual level squares the
         # error in the partials, so one step per further level makes them exact.
-        for _ in 2:_dual_depth(T_full)
+        for _ in 2:TensND.dual_depth(T_full)
             pstar_dual = pstar_dual .-
                 ForwardDiff.jacobian(residual_vec, pstar_dual) \ residual_vec(pstar_dual)
         end

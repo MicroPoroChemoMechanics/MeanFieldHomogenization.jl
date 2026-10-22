@@ -40,10 +40,10 @@ _acoustic(t, basis) = MFHC_O.acoustic_tensor(SMatrix{6, 6}(KM(t, basis)))
 # In-plane Schur complement of a 4th-order property, in the layer frame.
 function _schur_ip(t, basis)
     M = SMatrix{6, 6}(KM(t, basis))
-    A = MFHC_O._ip_block(M)
+    A = MFHC_O.TensND.km_ip_block(M)
     B = SMatrix{3, 3}(M[MFHC_O.KM_IP, MFHC_O.KM_OP])
     C = SMatrix{3, 3}(M[MFHC_O.KM_OP, MFHC_O.KM_IP])
-    return A - B * MFHC_O._inv3(MFHC_O._op_block(M)) * C
+    return A - B * MFHC_O._inv3(MFHC_O.TensND.km_op_block(M)) * C
 end
 
 # A random, genuinely triclinic, positive-definite stiffness.
@@ -224,7 +224,7 @@ end
         MA = SMatrix{6, 6}(KM(A, b))
         # The macroscopic in-plane strain reaches every layer unchanged:
         # ε_i = E + a_i ⊗ˢ n.
-        @test MFHC_O._ip_block(MA) ≈ I atol = ATOL_LAM
+        @test MFHC_O.TensND.km_ip_block(MA) ≈ I atol = ATOL_LAM
         @test maximum(abs, MA[MFHC_O.KM_IP, MFHC_O.KM_OP]) < ATOL_LAM
     end
 

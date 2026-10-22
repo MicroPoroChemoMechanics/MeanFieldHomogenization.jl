@@ -1,23 +1,19 @@
 # =============================================================================
-#  test_km_blocks.jl — in-plane / out-of-plane Kelvin-Mandel block algebra
-#  (`src/Core/laminate_algebra.jl`), the layer below the laminate cell.
+#  test_km_blocks.jl — the laminate kernels (`src/Core/laminate_algebra.jl`),
+#  the layer below the laminate cell. The Kelvin-Mandel block algebra they are
+#  written on (partition, blocks, Schur inverse, plane pseudo-inverses, acoustic
+#  tensor) is TensND's and tested there (`test/test_km_blocks.jl`).
 #
 #  Coverage:
-#   1. The IP/OP partition and the embed ∘ block round trips.
-#   2. `acoustic_tensor` against a naive `K[i,j] = C[3,i,3,j]` loop — on a
-#      TRICLINIC stiffness, the only case that catches the (3,2,1) index
-#      reversal between the OP Mandel slots and the acoustic indices.
-#   3. `flat_hill` against the closed-form flat-inclusion Hill tensor of an
-#      isotropic matrix, and `plane_pinv` against `LinearAlgebra.pinv`
-#      (validating the SVD-free replacement *against* the SVD).
-#   4. The Hill identities `ℙ:ℂ:ℙ = ℙ` and `ℚ:ℙ = 0`.
-#   5. `_inv_km6` (block elimination, no pivoting) against `inv`.
-#   6. `laminate_stiffness` : N = 1 degeneracy, identical layers, the exact
+#   1. `flat_hill` against the closed-form flat-inclusion Hill tensor of an
+#      isotropic matrix, and `plane_pinv` against `LinearAlgebra.pinv`.
+#   2. The Hill identities `ℙ:ℂ:ℙ = ℙ` and `ℚ:ℙ = 0`.
+#   3. `laminate_stiffness` : N = 1 degeneracy, identical layers, the exact
 #      Backus (1962) bilayer closed form, in-plane rotation invariance.
-#   7. Concentration : `Σ f 𝔸 = Σ f 𝔹 = 𝕀`, the block structure of `𝔸`, and
+#   4. Concentration : `Σ f 𝔸 = Σ f 𝔹 = 𝕀`, the block structure of `𝔸`, and
 #      `⟨ℂ:𝔸⟩ = ℂ_hom`.
-#   8. `laminate_conductivity` : the exact series / parallel laws.
-#  10. ForwardDiff through the kernel.
+#   5. `laminate_conductivity` : the exact series / parallel laws.
+#   6. ForwardDiff through the kernel.
 # =============================================================================
 
 using Test
@@ -39,40 +35,6 @@ end
 
 _iso_km(k, μ) = SMatrix{6, 6}(KM(TensISO{3}(3k, 2μ)))
 
-@testset "Mandel IP/OP partition" begin
-    @test MFHC.KM_IP == SVector(1, 2, 6)
-    @test MFHC.KM_OP == SVector(3, 4, 5)
-
-    rng = MersenneTwister(11)
-    M = _rand_km6(rng)
-
-    # embed ∘ block is the projection onto each subspace; the two projections
-    # are complementary on a block-diagonal input and always idempotent.
-    Bop = MFHC._op_block(M)
-    @test MFHC._op_block(MFHC._op_embed(Bop)) ≈ Bop atol = ATOL_KM
-    Bip = MFHC._ip_block(M)
-    @test MFHC._ip_block(MFHC._ip_embed(Bip)) ≈ Bip atol = ATOL_KM
-    # an OP-embedded matrix has a strictly zero in-plane block
-    @test iszero(MFHC._ip_block(MFHC._op_embed(Bop)))
-    @test iszero(MFHC._op_block(MFHC._ip_embed(Bip)))
-end
-
-@testset "acoustic_tensor — triclinic guard on the (3,2,1) reversal" begin
-    rng = MersenneTwister(23)
-    M = _rand_km6(rng)
-    arr = Array(inv_KM(Matrix(M)))
-    # K_ab = n_i C_iajb n_j with n = e₃, i.e. C[3,a,3,b]
-    K_naive = SMatrix{3, 3}(arr[3, :, 3, :])
-    @test MFHC.acoustic_tensor(M) ≈ K_naive atol = ATOL_KM
-    # ... and it is genuinely non-diagonal here, so the reversal is exercised
-    @test !isapprox(K_naive, Diagonal(K_naive); atol = 1.0e-6)
-
-    # isotropic sanity: K = diag(μ, μ, λ+2μ)
-    k, μ = 2.0, 0.8
-    λ = k - 2μ / 3
-    @test MFHC.acoustic_tensor(_iso_km(k, μ)) ≈ Diagonal([μ, μ, λ + 2μ]) atol = ATOL_KM
-end
-
 @testset "flat_hill / plane_pinv" begin
     k, μ = 2.0, 0.8
     λ = k - 2μ / 3
@@ -82,13 +44,13 @@ end
     @test P[3, 3] ≈ 1 / (λ + 2μ) atol = ATOL_KM
     @test P[4, 4] ≈ 2 * (1 / (4μ)) atol = ATOL_KM     # Mandel: [4,4] = 2·P_2323
     @test P[5, 5] ≈ 2 * (1 / (4μ)) atol = ATOL_KM
-    @test iszero(MFHC._ip_block(P))
+    @test iszero(TensND.km_ip_block(P))
 
     rng = MersenneTwister(31)
     M = _rand_km6(rng)
     # `plane_pinv` reproduces the Moore-Penrose pseudo-inverse of the
     # OP-supported part — the SVD-free path validated against the SVD.
-    Mop = MFHC._op_embed(MFHC._op_block(M))
+    Mop = TensND.km_op_embed(TensND.km_op_block(M))
     @test MFHC.plane_pinv(M) ≈ pinv(Matrix(Mop)) atol = 1.0e-10
     # ⟨ℙ⟩† : ⟨ℙ⟩ = Πᴼ
     P = MFHC.flat_hill(M)
@@ -106,15 +68,6 @@ end
         # ℚ operates within in-plane tensors only
         @test maximum(abs, Q[MFHC.KM_OP, :]) < 1.0e-10
         @test maximum(abs, Q[:, MFHC.KM_OP]) < 1.0e-10
-    end
-end
-
-@testset "_inv_km6 — block elimination without pivoting" begin
-    rng = MersenneTwister(41)
-    for _ in 1:5
-        M = _rand_km6(rng)
-        @test MFHC._inv_km6(M) * M ≈ I atol = 1.0e-10
-        @test MFHC._inv_km6(M) ≈ inv(Matrix(M)) atol = 1.0e-10
     end
 end
 
@@ -187,7 +140,7 @@ end
     @test sum(f[i] * Bs[i] for i in 1:3) ≈ I atol = 1.0e-10
     # The macroscopic in-plane strain reaches every layer unchanged.
     for A in As
-        @test MFHC._ip_block(A) ≈ I atol = ATOL_KM
+        @test TensND.km_ip_block(A) ≈ I atol = ATOL_KM
         @test maximum(abs, A[MFHC.KM_IP, MFHC.KM_OP]) < ATOL_KM
     end
     # ⟨ℂ:𝔸⟩ = ℂ_hom

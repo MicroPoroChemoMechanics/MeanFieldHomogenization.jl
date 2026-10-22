@@ -37,10 +37,10 @@ _acoustic_i(t, basis) = MFHC_I.acoustic_tensor(SMatrix{6, 6}(KM(t, basis)))
 
 function _schur_ip_i(t, basis)
     M = SMatrix{6, 6}(KM(t, basis))
-    A = MFHC_I._ip_block(M)
+    A = MFHC_I.TensND.km_ip_block(M)
     B = SMatrix{3, 3}(M[MFHC_I.KM_IP, MFHC_I.KM_OP])
     C = SMatrix{3, 3}(M[MFHC_I.KM_OP, MFHC_I.KM_IP])
-    return A - B * MFHC_I._inv3(MFHC_I._op_block(M)) * C
+    return A - B * MFHC_I._inv3(MFHC_I.TensND.km_op_block(M)) * C
 end
 
 # Two-layer reference cell, parameterized by its interfaces and its period.

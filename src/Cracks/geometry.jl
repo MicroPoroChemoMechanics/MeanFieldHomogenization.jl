@@ -92,8 +92,8 @@ function EllipticCrack(
         a::Ta, b::Tb;
         euler_angles::Tuple{Vararg{Real}} = ()
     ) where {Ta, Tb}
-    T = MFH_Core._floatlike(promote_type(Ta, Tb))
-    basis_in = MFH_Core._default_basis(T, euler_angles)
+    T = TensND.float_like(promote_type(Ta, Tb))
+    basis_in = TensND.euler_basis(euler_angles; T = T)
     axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(a), T(b)), basis_in, Val(:crack))
     a_, b_ = axes_sorted
     S = _classify_crack(T, a_, b_)
@@ -106,7 +106,7 @@ end
 Elliptical flat crack whose local frame columns are the columns of `R`.
 """
 function EllipticCrack(a::Ta, b::Tb, R::AbstractMatrix) where {Ta, Tb}
-    T = MFH_Core._floatlike(promote_type(Ta, Tb))
+    T = TensND.float_like(promote_type(Ta, Tb))
     basis_in = TensND.RotatedBasis(Matrix{float(eltype(R))}(R))
     axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(a), T(b)), basis_in, Val(:crack))
     a_, b_ = axes_sorted
@@ -120,7 +120,7 @@ end
 Elliptical flat crack with an already-constructed TensND basis.
 """
 function EllipticCrack(a::Ta, b::Tb, basis::TensND.AbstractBasis) where {Ta, Tb}
-    T = MFH_Core._floatlike(promote_type(Ta, Tb))
+    T = TensND.float_like(promote_type(Ta, Tb))
     axes_sorted, basis_out = MFH_Core._sort_axes_and_basis((T(a), T(b)), basis, Val(:crack))
     a_, b_ = axes_sorted
     S = _classify_crack(T, a_, b_)
@@ -144,8 +144,8 @@ function RibbonCrack(
         b::Tb;
         euler_angles::Tuple{Vararg{Real}} = ()
     ) where {Tb}
-    T = MFH_Core._floatlike(Tb)
-    basis = MFH_Core._default_basis(T, euler_angles)
+    T = TensND.float_like(Tb)
+    basis = TensND.euler_basis(euler_angles; T = T)
     return RibbonCrack{T, typeof(basis)}(T(b), basis)
 end
 
@@ -156,7 +156,7 @@ Ribbon-like crack whose local frame ``(\\underline{\\ell}, \\underline{m}, \\und
 is given by the columns of `R`.
 """
 function RibbonCrack(b::Tb, R::AbstractMatrix) where {Tb}
-    T = MFH_Core._floatlike(Tb)
+    T = TensND.float_like(Tb)
     basis = TensND.RotatedBasis(Matrix{float(eltype(R))}(R))
     return RibbonCrack{T, typeof(basis)}(T(b), basis)
 end
@@ -167,7 +167,7 @@ end
 Ribbon-like crack with an already-constructed TensND basis.
 """
 function RibbonCrack(b::Tb, basis::TensND.AbstractBasis) where {Tb}
-    T = MFH_Core._floatlike(Tb)
+    T = TensND.float_like(Tb)
     return RibbonCrack{T, typeof(basis)}(T(b), basis)
 end
 
@@ -270,7 +270,7 @@ the crack's own frame vectors *in that same basis* — where they are, by
 construction, the canonical triad ``(\\underline{e}_1, \\underline{e}_2, \\underline{e}_3)``
 with ``\\underline{e}_3 = \\underline{n}``.
 
-Frame consistency is the whole point. `MFH_Core._frame_columns(ℬ)` returns the
+Frame consistency is the whole point. `eachcol(TensND.vecbasis(ℬ, :cov))` returns the
 crack frame in *global* coordinates; combining those with components expressed
 in `ℬ` mixes two frames and yields a wrong COD for every crack that is not
 aligned with the canonical axes. The aligned case coincides, which is exactly
@@ -283,7 +283,7 @@ function _crack_local_frame(
         c::MFH_Core.AbstractCrack, C₀::TensND.AbstractTens{4, 3}
     )
     basis = crack_basis(c)
-    Carr = MFH_Core._components_in(C₀, basis)
+    Carr = Array(TensND.components(C₀, basis))
     T = eltype(Carr)
     l̂ = T[one(T), zero(T), zero(T)]
     m̂ = T[zero(T), one(T), zero(T)]

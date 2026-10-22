@@ -12,7 +12,7 @@
 #   * an interface compliance is differentiable even though the layers and the
 #     thicknesses stay `Float64` (the element type has to be promoted with the
 #     interfaces, not just with the layers);
-#   * the cofactor `_inv3` / `_inv_km6` route keeps the derivative exact where
+#   * the cofactor `_inv3` / `TensND.km_inv_schur` route keeps the derivative exact where
 #     an SVD-based pseudo-inverse would not be differentiable at all.
 # =============================================================================
 
@@ -162,7 +162,7 @@ end
 end
 
 @testset "AD — anisotropic layers, second derivative" begin
-    # The kernel is smooth: `_inv3` and `_inv_km6` are rational in their
+    # The kernel is smooth: `_inv3` and `TensND.km_inv_schur` are rational in their
     # entries, so nested Duals go through and match a finite difference of
     # the first derivative.
     f = x -> _C33(homogenize(_cell(; μA = x), Laminated(), :C))
@@ -220,7 +220,7 @@ end
     C(θ) = Matrix(KM(homogenize(lam_at(θ), Laminated(), :C)))
     Q(θ) = Matrix(
         TensND.KM_rotation(
-            MeanFieldHomogenization.Core._frame_matrix(MeanFieldHomogenization.Laminates.laminate_basis(lam_at(θ)))
+            Matrix(TensND.vecbasis(MeanFieldHomogenization.Laminates.laminate_basis(lam_at(θ)), :cov))
         )
     )
     C₀ = C(0.0)

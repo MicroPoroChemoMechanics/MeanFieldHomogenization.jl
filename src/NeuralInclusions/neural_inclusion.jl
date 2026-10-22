@@ -287,8 +287,8 @@ function NeuralHillInclusion(
     _check_order(transport, 2, :transport)
     guard in (:warn, :error, :none) ||
         throw(ArgumentError("`guard` must be :warn, :error or :none, got :$guard"))
-    T = Core._floatlike(promote_type(typeof.(semi_axes)...))
-    b0 = basis === nothing ? Core._default_basis(T, euler_angles) : basis
+    T = TensND.float_like(promote_type(typeof.(semi_axes)...))
+    b0 = basis === nothing ? TensND.euler_basis(euler_angles; T = T) : basis
     axes_, b = _canonical_axes(map(T, semi_axes), b0)
     for s in (elastic, transport)
         s === nothing || _check_geometry(s, axes_)
@@ -544,8 +544,8 @@ function NeuralConcentrationInclusion(
                 "rebuilds the struct by reflection over them"
         )
     )
-    T = Core._floatlike(promote_type(typeof.(semi_axes)...))
-    b0 = basis === nothing ? Core._default_basis(T, euler_angles) : basis
+    T = TensND.float_like(promote_type(typeof.(semi_axes)...))
+    b0 = basis === nothing ? TensND.euler_basis(euler_angles; T = T) : basis
     # **Not** `_canonical_axes` here, unlike `NeuralHillInclusion` above, and the
     # asymmetry is the whole correctness argument. Sorting the semi-axes
     # descending exists to match `Ellipsoid`, the analytic teacher of a *Hill*
@@ -567,7 +567,7 @@ function NeuralConcentrationInclusion(
     el = strain === nothing ? nothing : (strain, stress)
     tr = gradient === nothing ? nothing : (gradient, flux)
     vals = values(shape_params)
-    TS = isempty(vals) ? T : Core._floatlike(promote_type(typeof.(vals)...))
+    TS = isempty(vals) ? T : TensND.float_like(promote_type(typeof.(vals)...))
     sp = map(TS, vals)
     sn = keys(shape_params)
     return NeuralConcentrationInclusion{

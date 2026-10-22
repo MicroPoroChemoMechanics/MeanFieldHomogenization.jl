@@ -48,7 +48,7 @@ function _hill_3d_iso(cyl::Cylinder{CircularCylindrical}, C₀)
     p3 = d * T(u3)
     p5 = d * T(u5) + inv_m * T(I2)
     p6 = d * T(u6) + inv_m * (T(I1) + T(I2)) / 2
-    return TensND.TensTI{4}(p1, p2, p3, p5, p6, MFH_Core._basis_col(cyl.basis, 1))
+    return TensND.TensTI{4}(p1, p2, p3, p5, p6, Tuple(TensND.vecbasis(cyl.basis, :cov)[:, 1]))
 end
 
 function _hill_3d_iso(cyl::Cylinder{EllipticCylindrical}, C₀)

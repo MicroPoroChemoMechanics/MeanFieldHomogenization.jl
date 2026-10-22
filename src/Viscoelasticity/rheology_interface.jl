@@ -149,7 +149,7 @@ complex_modulus(model::AnyRheology, ω::Number) = carson_relaxation(model, im * 
 
 ``E'(\\omega) = \\Re E^{*}(\\omega)`` — the in-phase, elastically stored part.
 """
-storage_modulus(model::AnyRheology, ω::Number) = _realpart(complex_modulus(model, ω))
+storage_modulus(model::AnyRheology, ω::Number) = real(complex_modulus(model, ω))
 
 """
     loss_modulus(model, ω)

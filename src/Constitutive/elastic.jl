@@ -46,7 +46,7 @@ struct HomogenizedElastic{T, C <: TensND.AbstractTens{4, 3}} <: AbstractMFHMater
 end
 
 function HomogenizedElastic(C_hom::TensND.AbstractTens{4, 3})
-    C = _to_canonical(C_hom)
+    C = TensND.change_tens_canon(C_hom)
     return HomogenizedElastic{eltype(C), typeof(C)}(C)
 end
 
@@ -71,23 +71,3 @@ function material_response(
     σ = m.C_hom ⊡ ε
     return MaterialResponse((σ = σ,), (σε = m.C_hom,), NoState())
 end
-
-"""
-    _to_canonical(t) -> AbstractTens
-
-Express a property in the canonical (global) frame — the frame an FE code reads
-components in — whenever it is not already there.
-
-The guard is not an optimization. `change_tens` rebuilds a structured tensor as
-a generic `Tens`, and a structured type carries information its consumers rely
-on: `k_mu` is only defined for `TensISO{4}`, and the algorithm dispatch keys on
-the symmetry class. Since `TensISO`, `TensTI` and `TensOrtho` all store their
-components in the canonical frame already (a `TensTI` keeps its symmetry axis
-separately), converting them is both unnecessary and destructive.
-
-Only a genuinely rotated tensor — what an RVE with tilted inclusions returns —
-is converted, and there the conversion is what makes the material correct.
-"""
-_to_canonical(t::TensND.AbstractTens) = _to_canonical(t, TensND.get_basis(t))
-_to_canonical(t, ::TensND.CanonicalBasis) = t
-_to_canonical(t, ::TensND.AbstractBasis) = TensND.change_tens(t, TensND.CanonicalBasis{3, eltype(t)}())

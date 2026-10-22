@@ -38,7 +38,7 @@ function _hill_3d_aniso_decuhr(
     η = ell.semi_axes[2] / ell.semi_axes[1]
     ω = ell.semi_axes[3] / ell.semi_axes[1]
 
-    C₀_arr = T.(MFH_Core._components_in(C₀, ell.basis))   # in the ellipsoid's frame
+    C₀_arr = T.(Array(TensND.components(C₀, ell.basis)))   # in the ellipsoid's frame
 
     # Integrand on the unit square (z, φ) ∈ [0, 1] × [0, 2π]: the 21
     # independent components of the Hill tensor (`_hill_integrand21`). The

@@ -130,7 +130,7 @@ its centroid, expressed in the global frame. For an ellipsoid of semi-axes
 with ``\\mathbf{Q}`` the matrix whose columns are the principal axes.
 """
 function _second_moment(ell::Ellipsoid{dim}) where {dim}
-    Q = MFH_Core._frame_matrix(ell.basis)
+    Q = Matrix(TensND.vecbasis(ell.basis, :cov))
     a = ell.semi_axes
     return Q * Diagonal([aᵢ^2 / (dim + 2) for aᵢ in a]) * transpose(Q)
 end

@@ -138,7 +138,7 @@ end
 @syms kn::positive L::positive
 z = zero(kn)
 𝕂 = SMatrix{3, 3}([z z z; z z z; z z kn])          # normal compliance only
-P_int = MFHC._op_embed(MFHC.compliance_op_block(𝕂)) / L
+P_int = TensND.km_op_embed(MFHC.compliance_op_block(𝕂)) / L
 Chi = MFHC.laminate_stiffness((iso_km(λ₁, μ₁), iso_km(λ₂, μ₂)), (f₁, f₂), P_int, Z)
 
 println("\n§4  With a normal spring interface of compliance kn over a period L")

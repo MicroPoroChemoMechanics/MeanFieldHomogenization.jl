@@ -36,7 +36,7 @@
 
 Extract the scalar conductivity from an isotropic `TensISO{2,3}`.
 """
-_iso_scalar(K::TensND.TensISO{2, 3}) = MFH_Core.extract_iso_conductivity(K)
+_iso_scalar(K::TensND.TensISO{2, 3}) = first(TensND.get_data(K))
 
 # =============================================================================
 #  Bulk (spherical) part — 2×2 transfer matrix in the (u, σ) state vector.

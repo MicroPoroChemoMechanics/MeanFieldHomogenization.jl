@@ -35,7 +35,7 @@ const NI = MeanFieldHomogenization.NeuralInclusions
     # very test that uses it.
     _geom(x) = FESupershapePore(Supersphere(1.0, x[1]))
     function response(g, C₀)
-        _, ν = MeanFieldHomogenization.Core.extract_iso_moduli(C₀)
+        _, ν = TensND.E_nu(C₀)
         return _teacher(g.shape.p, ν)
     end
 
@@ -117,7 +117,7 @@ const NI = MeanFieldHomogenization.NeuralInclusions
             # held-out set and one at a point drawn from outside it.
             tol = 3 * NI.worst_error(s.provenance)
             C₀ = iso_stiffness(2.0, 0.75)
-            _, ν = MeanFieldHomogenization.Core.extract_iso_moduli(C₀)
+            _, ν = TensND.E_nu(C₀)
             for p in (0.4, 0.8, 1.2)
                 pore = FESupershapePore(Supersphere(1.0, p); elastic = s)
                 A = fe_cell_concentration(pore, C₀)

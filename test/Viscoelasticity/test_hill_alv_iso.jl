@@ -11,7 +11,7 @@ using LinearAlgebra
 
 # Convert a TensND.AbstractTens{4,3} to a 6×6 Mandel matrix using the
 # package-internal helper.
-const _to_mandel = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66
+const _to_mandel = TensND.mandel66
 
 @testset "hill_kernel — sphere, elastic limit (Heaviside)" begin
     ell = Spheroid(1.0)

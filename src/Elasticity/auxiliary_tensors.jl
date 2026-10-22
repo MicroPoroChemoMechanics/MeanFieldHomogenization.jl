@@ -3,7 +3,7 @@
 #
 #  2nd- and 4th-order auxiliary tensors `I^A`, `U^A`, `V^A` for an
 #  ellipsoid `A`. Orthotropic results are TensND's `TensOrtho` in the
-#  inclusion's basis; `_basis_col` comes from the `Core` sub-module.
+#  inclusion's basis, read by `TensND.vecbasis`.
 # =============================================================================
 
 # ── tens_IA ───────────────────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ function tens_UA(ell::Ellipsoid{3, Prolate})
     u3 = sqrt(T(2)) * (I2 - a2 * I12) / 2
     u5 = 3 * (I2 - b2 * I22) / 2 - (I2 - b2 * I23) / 2
     u6 = I2 - a2 * I12
-    return TensND.TensTI{4}(u1, u2, u3, u5, u6, MFH_Core._basis_col(ell.basis, 1))
+    return TensND.TensTI{4}(u1, u2, u3, u5, u6, Tuple(TensND.vecbasis(ell.basis, :cov)[:, 1]))
 end
 
 function tens_UA(ell::Ellipsoid{3, Oblate})
@@ -150,7 +150,7 @@ function tens_UA(ell::Ellipsoid{3, Oblate})
     u3 = sqrt(T(2)) * (I3 - a2 * I13) / 2
     u5 = 3 * (I1 - a2 * I11) / 2 - (I1 - a2 * I12) / 2
     u6 = I3 - a2 * I13
-    return TensND.TensTI{4}(u1, u2, u3, u5, u6, MFH_Core._basis_col(ell.basis, 3))
+    return TensND.TensTI{4}(u1, u2, u3, u5, u6, Tuple(TensND.vecbasis(ell.basis, :cov)[:, 3]))
 end
 
 function tens_UA(ell::Ellipsoid{3, Triaxial})
@@ -182,7 +182,7 @@ function tens_UA(cyl::Cylinder{CircularCylindrical})
     u3 = zero(T)
     u5 = 3 * (I2 - b2 * I22) / 2 - (I2 - b2 * I23) / 2
     u6 = zero(T)
-    return TensND.TensTI{4}(u1, u2, u3, u5, u6, MFH_Core._basis_col(cyl.basis, 1))
+    return TensND.TensTI{4}(u1, u2, u3, u5, u6, Tuple(TensND.vecbasis(cyl.basis, :cov)[:, 1]))
 end
 
 function tens_UA(cyl::Cylinder{EllipticCylindrical})
@@ -255,7 +255,7 @@ function tens_VA(ell::Ellipsoid{3, Prolate})
     Iv, _ = MFH_Core.newton_potential_3d(a, b, c)
     fac = 4T(π)
     I1, I2 = Iv[1] / fac, Iv[2] / fac
-    return TensND.TensTI{4}(I1, I2, zero(T), I2, (I1 + I2) / 2, MFH_Core._basis_col(ell.basis, 1))
+    return TensND.TensTI{4}(I1, I2, zero(T), I2, (I1 + I2) / 2, Tuple(TensND.vecbasis(ell.basis, :cov)[:, 1]))
 end
 
 function tens_VA(ell::Ellipsoid{3, Oblate})
@@ -264,7 +264,7 @@ function tens_VA(ell::Ellipsoid{3, Oblate})
     Iv, _ = MFH_Core.newton_potential_3d(a, b, c)
     fac = 4T(π)
     I1, I3 = Iv[1] / fac, Iv[3] / fac
-    return TensND.TensTI{4}(I3, I1, zero(T), I1, (I1 + I3) / 2, MFH_Core._basis_col(ell.basis, 3))
+    return TensND.TensTI{4}(I3, I1, zero(T), I1, (I1 + I3) / 2, Tuple(TensND.vecbasis(ell.basis, :cov)[:, 3]))
 end
 
 function tens_VA(ell::Ellipsoid{3, Triaxial})
@@ -284,7 +284,7 @@ function tens_VA(cyl::Cylinder{CircularCylindrical})
     Iv, _ = MFH_Core.newton_potential_3d_cylinder(cyl.semi_axes[1], cyl.semi_axes[2])
     fac = 4 * T(π)
     I1, I2 = Iv[1] / fac, Iv[2] / fac
-    return TensND.TensTI{4}(I1, I2, zero(T), I2, (I1 + I2) / 2, MFH_Core._basis_col(cyl.basis, 1))
+    return TensND.TensTI{4}(I1, I2, zero(T), I2, (I1 + I2) / 2, Tuple(TensND.vecbasis(cyl.basis, :cov)[:, 1]))
 end
 
 function tens_VA(cyl::Cylinder{EllipticCylindrical})

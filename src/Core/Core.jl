@@ -13,13 +13,13 @@ Contents
                              (`Homogenized`, `NestedParameter`)
 - `traits.jl`             : algorithm and material-symmetry traits
 - `bases.jl`              : helpers around `TensND` bases
-- `tensor_helpers.jl`     : low-level utilities (`_δ`, `_C_array`, Voigt)
+- `tensor_helpers.jl`     : low-level utilities (`_δ`, `_sfill`, `_fill_sym4!`)
 - `moduli.jl`             : modulus extractors for the common symmetry classes
 - `newton_potential.jl`   : Newton potentials (2D / 3D)
 - `green_kernel.jl`       : closed-form 3×3 inverse (`_inv3`)
-- `laminate_algebra.jl`   : in-plane / out-of-plane Kelvin-Mandel block
-                             algebra of a periodic laminate (`plane_pinv`,
-                             `flat_hill`, `laminate_stiffness`, …)
+- `laminate_algebra.jl`   : the laminate kernels (`flat_hill`,
+                             `laminate_stiffness`, …) on TensND's Kelvin-Mandel
+                             block algebra about the layer normal
 - `green_residue.jl`      : Masson / Cauchy residue summation
 - `green_helpers.jl`      : quadrature-agnostic Green-function helpers
 - `green_dipole.jl`       : real-space Kelvin Green gradient and the dipole
@@ -111,8 +111,10 @@ export green_gradient_iso2, dipole_temperature_iso
 export green_operator_iso, green_operator_aniso, green_operator
 export green_function_aniso, gauss_legendre_nodes
 
-# Laminate block algebra (public — used by Laminates, the ALV twin and users)
-export KM_IP, KM_OP
+# Laminate block algebra (public — used by Laminates, the ALV twin and users).
+# The Kelvin-Mandel block algebra about a normal is TensND's, re-exported so that
+# `Core.plane_pinv` and the like keep working.
+export KM_IP, KM_OP, km_ip_block, km_op_block, km_ip_embed, km_op_embed, km_from_blocks, km_inv_schur
 export plane_pinv, plane_pinv2, flat_hill, acoustic_tensor, compliance_op_block
 export laminate_stiffness, laminate_conductivity
 export laminate_strain_concentration, laminate_stress_concentration

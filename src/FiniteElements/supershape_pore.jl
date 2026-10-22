@@ -242,7 +242,7 @@ function FESupershapePore(
         throw(ArgumentError("`guard` must be :warn, :error or :none, got :$guard"))
     _check_pore_surrogate(elastic, 4, :elastic, shape)
     _check_pore_surrogate(transport, 2, :transport, shape)
-    bas = basis === nothing ? Core._default_basis(Float64, euler_angles) : basis
+    bas = basis === nothing ? TensND.euler_basis(euler_angles; T = Float64) : basis
     return FESupershapePore{T, typeof(shape), typeof(bas)}(
         shape, bas, opts, FECache(), backend, elastic, transport, guard
     )

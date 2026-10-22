@@ -183,11 +183,7 @@ end
 # is built as a `dcontract` of two N=5 tensors (the result is structurally
 # allowed to be non-major-symmetric even when the operands are not).
 
-function _ti6_to_ti5(C::TensND.TensTI{4, T, 6}) where {T}
-    ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆ = TensND.get_data(C)
-    ℓ34 = (ℓ₃ + ℓ₄) / 2
-    return TensND.TensTI{4, T, 5}((ℓ₁, ℓ₂, ℓ34, ℓ₅, ℓ₆), TensND.axis(C))
-end
+_ti6_to_ti5(C::TensND.TensTI{4, T, 6}) where {T} = TensND.Tensors.majorsymmetric(C)
 
 _hill_3d_ti_coaxial(ell::Ellipsoid{3, Oblate}, C₀::TensND.TensTI{4, T, 6}) where {T} =
     _hill_3d_ti_coaxial(ell, _ti6_to_ti5(C₀))
@@ -217,10 +213,7 @@ _hill_3d_ti_coaxial(ell::Ellipsoid{3, Spherical}, C₀::TensND.TensTI{4, T, 6}) 
 # Dropping them here is therefore exact for every reference medium the
 # analytical builder is meant to accept, and is the same convention as the
 # N=6 → N=5 collapse just above (which averages a non-trivial ℓ₃ ≠ ℓ₄).
-function _ti8_to_ti6(C::TensND.TensTI{4, T, 8}) where {T}
-    ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆, _, _ = TensND.get_ℓ8(C)
-    return TensND.TensTI{4, T, 6}((ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆), TensND.axis(C))
-end
+_ti8_to_ti6(C::TensND.TensTI{4, T, 8}) where {T} = TensND.rebuild(C, TensND.get_ℓ8(C)[1:6])
 
 _hill_3d_ti_coaxial(ell::Ellipsoid{3, Oblate}, C₀::TensND.TensTI{4, T, 8}) where {T} =
     _hill_3d_ti_coaxial(ell, _ti8_to_ti6(C₀))

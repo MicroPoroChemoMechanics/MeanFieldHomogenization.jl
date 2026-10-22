@@ -25,7 +25,7 @@ using MeanFieldHomogenization
 
     # Moduli extractors
     C_iso = TensND.TensISO{3}(3.0, 2.0)
-    E, ν = MeanFieldHomogenization.Core.extract_iso_moduli(C_iso)
+    E, ν = TensND.E_nu(C_iso)
     @test E > 0
     @test -1 < ν < 0.5
 end

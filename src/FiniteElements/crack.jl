@@ -113,8 +113,8 @@ function FEEllipticCrack(
         radius_ratio = 5.0, htipdiv = 12.0, order = 2,
         backend::FEBackend = AutoBackend()
     ) where {Ta <: Real, Tb <: Real}
-    T = Core._floatlike(promote_type(Ta, Tb))
-    bas = basis === nothing ? Core._default_basis(T, euler_angles) : basis
+    T = TensND.float_like(promote_type(Ta, Tb))
+    bas = basis === nothing ? TensND.euler_basis(euler_angles; T = T) : basis
     a_, b_ = T(a), T(b)
     a_ >= b_ > 0 || throw(
         ArgumentError("semi-axes must satisfy a ≥ b > 0, got a = $a_, b = $b_")

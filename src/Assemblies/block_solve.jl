@@ -36,8 +36,8 @@ _mandel_size(::TensND.AbstractTens{2, 2}) = 2
 
 # ─── Flattening ──────────────────────────────────────────────────────────────
 #
-# 4th order: the package-wide `mandel66_minor` / `array_from_mandel66` pair in
-# 3D, and its 2D counterpart written out here (three components, weights √2).
+# 4th order: TensND's `mandel66_minor` / `array_from_mandel66` pair in 3D and
+# `mandel33_minor` / `array_from_mandel33` in 2D.
 # 2nd order: the identity map — a symmetric 2nd-order tensor is already its own
 # Mandel vector in the sense used by `⋅`.
 #
@@ -47,45 +47,13 @@ _mandel_size(::TensND.AbstractTens{2, 2}) = 2
 # own basis, which mixed frames in one matrix for every oriented particle.
 # A block already canonical is read as it is.
 
-const _MANDEL_IDX_2D = ((1, 1), (2, 2), (1, 2))
-
-_to_mandel(A, ::TensND.AbstractTens{4, 3}) = MFH_Core.mandel66_minor(TensND.components_canon(A))
+_to_mandel(A, ::TensND.AbstractTens{4, 3}) = TensND.mandel66_minor(TensND.components_canon(A))
+_to_mandel(A, ::TensND.AbstractTens{4, 2}) = TensND.mandel33_minor(TensND.components_canon(A))
 _to_mandel(A, ::TensND.AbstractTens{2}) = Matrix(TensND.components_canon(A))
 
-function _to_mandel(A, ::TensND.AbstractTens{4, 2})
-    arr = TensND.components_canon(A)
-    T = eltype(arr)
-    sq2 = sqrt(T(2))
-    Λ(I) = I ≤ 2 ? one(T) : sq2
-    M = Matrix{T}(undef, 3, 3)
-    for I in 1:3, J in 1:3          # an index map (2-D Kelvin-Mandel): kept as a loop
-        (i, j) = _MANDEL_IDX_2D[I]
-        (k, l) = _MANDEL_IDX_2D[J]
-        v = (arr[i, j, k, l] + arr[j, i, k, l] + arr[i, j, l, k] + arr[j, i, l, k]) / 4
-        M[I, J] = Λ(I) * Λ(J) * v
-    end
-    return M
-end
-
-_from_mandel(M, ::TensND.AbstractTens{4, 3}) = TensND.Tens(MFH_Core.array_from_mandel66(M))
+_from_mandel(M, ::TensND.AbstractTens{4, 3}) = TensND.Tens(TensND.array_from_mandel66(M))
+_from_mandel(M, ::TensND.AbstractTens{4, 2}) = TensND.Tens(TensND.array_from_mandel33(M))
 _from_mandel(M, ::TensND.AbstractTens{2}) = TensND.Tens(M)
-
-function _from_mandel(M, ::TensND.AbstractTens{4, 2})
-    T = eltype(M)
-    sq2 = sqrt(T(2))
-    Λ(I) = I ≤ 2 ? one(T) : sq2
-    arr = Array{T, 4}(undef, 2, 2, 2, 2)
-    for I in 1:3, J in 1:3
-        (i, j) = _MANDEL_IDX_2D[I]
-        (k, l) = _MANDEL_IDX_2D[J]
-        v = M[I, J] / (Λ(I) * Λ(J))
-        arr[i, j, k, l] = v
-        arr[j, i, k, l] = v
-        arr[i, j, l, k] = v
-        arr[j, i, l, k] = v
-    end
-    return TensND.Tens(arr)
-end
 
 """
     _solve_tensor_system(blocks, rhs, P₀) -> Vector

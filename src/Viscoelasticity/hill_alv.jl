@@ -66,8 +66,8 @@ function hill_kernel(ell, C0_law::ViscoLaw, times::AbstractVector{<:Real})
     # 5. Geometric 4-tensors of the inclusion in Mandel form.
     U_A = tens_UA(ell)
     V_A = tens_VA(ell)
-    U_M = _tens_to_mandel66(U_A)
-    V_M = _tens_to_mandel66(V_A)
+    U_M = TensND.mandel66(U_A)
+    V_M = TensND.mandel66(V_A)
     D_M = V_M - U_M
     # 6. Assemble.
     T = promote_type(eltype(J_long), eltype(J_shear), eltype(U_M))

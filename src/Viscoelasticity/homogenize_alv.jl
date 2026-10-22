@@ -52,14 +52,6 @@ _is_visco_value(h::MFH_Core.Homogenized, key::Symbol) =
 # Iso averaging of a TI block over a uniform orientation distribution
 # matches ECHOES `symmetrize=[ISO]` exactly.
 
-@inline function _iso_project_mandel66(M::AbstractMatrix)
-    @assert size(M) == (6, 6)
-    # Full top-left 3×3 sum (echoes `isotropify`) — Volterra blocks are
-    # generally NOT major-symmetric, so M[1,2] and M[2,1] must be summed
-    # separately (a `2·M[1,2]` shortcut is only valid for symmetric blocks).
-    return MFH_Core.iso_average_mandel66(M)
-end
-
 """
     _iso_project_blocks(M::AbstractMatrix) -> Matrix
 
@@ -82,7 +74,7 @@ function _iso_project_blocks(M::AbstractMatrix)
     @inbounds for i in 1:n, j in 1:n
         rows = (6 * (i - 1) + 1):(6 * i)
         cols = (6 * (j - 1) + 1):(6 * j)
-        a, b = _iso_project_mandel66(view(M, rows, cols))
+        a, b = TensND.iso_average_mandel66(view(M, rows, cols))
         α[i, j] = a
         β[i, j] = b
     end
@@ -197,33 +189,10 @@ function _ti_project_blocks3(M::AbstractMatrix, axis)
         throw(ArgumentError("_ti_project_blocks3: size $(sz) not divisible by 3"))
     n = sz ÷ 3
     nv = _alv_unit_axis3(axis)
-    T = float(eltype(M))
-    out = zeros(T, sz, sz)
-    @inbounds for i in 1:n, j in 1:n
-        r = 3 * (i - 1)
-        c = 3 * (j - 1)
-        B = @view M[(r + 1):(r + 3), (c + 1):(c + 3)]
-        tr_B = B[1, 1] + B[2, 2] + B[3, 3]
-        a_n = zero(T)
-        for k in 1:3, l in 1:3
-            a_n += nv[k] * B[k, l] * nv[l]
-        end
-        a_t = (tr_B - a_n) / 2
-        # c = (B_skew : [n̂]×) / 2, with [n̂]×_{kl} = -ε_{klm} n̂_m.
-        cc = (
-            (B[3, 2] - B[2, 3]) * nv[1] +
-                (B[1, 3] - B[3, 1]) * nv[2] +
-                (B[2, 1] - B[1, 2]) * nv[3]
-        ) / 2
-        for k in 1:3, l in 1:3
-            nn = nv[k] * nv[l]
-            δ = (k == l) ? one(T) : zero(T)
-            out[r + k, c + l] = a_t * (δ - nn) + a_n * nn
-        end
-        # + c [n̂]×
-        out[r + 1, c + 2] -= cc * nv[3]; out[r + 2, c + 1] += cc * nv[3]
-        out[r + 2, c + 3] -= cc * nv[1]; out[r + 3, c + 2] += cc * nv[1]
-        out[r + 3, c + 1] -= cc * nv[2]; out[r + 1, c + 3] += cc * nv[2]
+    out = zeros(float(eltype(M)), sz, sz)
+    for i in 1:n, j in 1:n
+        rows, cols = (3i - 2):(3i), (3j - 2):(3j)
+        out[rows, cols] .= TensND.ti_average_mat33(view(M, rows, cols), nv)
     end
     return out
 end

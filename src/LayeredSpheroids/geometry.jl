@@ -399,7 +399,7 @@ outer_semiaxes(s::LayeredSpheroid) = layer_semiaxes(s, layer_count(s))
 MFH_Core.dimension(::LayeredSpheroid) = 3
 
 MFH_Core.inclusion_basis(::LayeredSpheroid{T}) where {T} =
-    TensND.CanonicalBasis{3, MFH_Core._basis_eltype(T)}()
+    TensND.CanonicalBasis{3, TensND.canonical_eltype(T)}()
 
 struct SpheroidalLayered end
 MFH_Core.shape_trait(::LayeredSpheroid) = SpheroidalLayered

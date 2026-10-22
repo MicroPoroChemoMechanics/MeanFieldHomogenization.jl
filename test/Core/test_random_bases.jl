@@ -60,7 +60,7 @@ end
         Pr = _mrb_canon(hill_tensor(ell, _mrb_rotated(K, R)))
         @test Pr ≈ Pc
         # Reference: the shape tensor assembled in canonical coordinates.
-        Re = hcat(_MRB.Core._frame_columns(ell.basis)...)
+        Re = Matrix(TensND.vecbasis(ell.basis, :cov))
         A = Re * Diagonal(collect(ell.semi_axes)) * transpose(Re)
         @test Pc ≈ _MRB.Conductivity._hill_order2_aniso(A, K)
     end

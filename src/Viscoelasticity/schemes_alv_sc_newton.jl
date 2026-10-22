@@ -111,8 +111,8 @@ function self_consistent_alv_newton(
         push!(symmetrizes, phase_symmetrize(rve, name))
     end
 
-    U_M_phases = Matrix[_tens_to_mandel66(tens_UA(g)) for g in geometries]
-    V_M_phases = Matrix[_tens_to_mandel66(tens_VA(g)) for g in geometries]
+    U_M_phases = Matrix[TensND.mandel66(tens_UA(g)) for g in geometries]
+    V_M_phases = Matrix[TensND.mandel66(tens_VA(g)) for g in geometries]
 
     # Promoted scalar type of every input the Newton state must carry
     # (matrix/phase kernels, fractions, geometry tensors, crack data) so

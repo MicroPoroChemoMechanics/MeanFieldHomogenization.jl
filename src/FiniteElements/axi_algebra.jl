@@ -46,7 +46,7 @@ Rotation matrix whose columns are the inclusion's local axes in global
 coordinates. Shared by every finite-element inclusion: each one solves in its
 own frame and rotates the result out.
 """
-_fe_frame(incl) = hcat(Core._frame_columns(Core.inclusion_basis(incl))...)
+_fe_frame(incl) = Matrix(TensND.vecbasis(Core.inclusion_basis(incl), :cov))
 
 """
 Components of a 4th-order tensor in the local frame `R` (columns: the local axes
@@ -55,10 +55,10 @@ a tensor already written in that frame. It read the tensor's own components as
 global ones before rotating them, so a property given in a rotated basis was
 rotated twice.
 """
-_to_local4(P::TensND.AbstractTens{4, 3}, R) = Core._components_in(P, TensND.RotatedBasis(R))
+_to_local4(P::TensND.AbstractTens{4, 3}, R) = Array(TensND.components(P, TensND.RotatedBasis(R)))
 
 "Components of a 2nd-order tensor in the local frame, as a 3×3 matrix."
-_to_local2(P::TensND.AbstractTens{2, 3}, R) = R' * TensND.components_canon(P) * R
+_to_local2(P::TensND.AbstractTens{2, 3}, R) = Array(TensND.components(P, TensND.RotatedBasis(R)))
 
 """
 The tensor whose local-frame Kelvin-Mandel components are `M66`, written in that
@@ -135,7 +135,7 @@ function _fe_iso_moduli(
         what::AbstractString = "this inclusion",
     )
     C_iso = Core.isotropify(C₀)
-    A, Aiso = Core._C_array(C₀), Core._C_array(C_iso)
+    A, Aiso = Array(TensND.components_canon(C₀)), Array(TensND.components_canon(C_iso))
     dev = maximum(abs, A .- Aiso)
     dev ≤ rtol * max(maximum(abs, Aiso), eps()) || throw(
         ArgumentError(
@@ -147,8 +147,8 @@ function _fe_iso_moduli(
                 "iterative scheme."
         )
     )
-    E, ν = Core.extract_iso_moduli(C_iso)
-    return Float64(E / (2 * (1 + ν))), Float64(ν)
+    μ, ν = TensND.mu_nu(C_iso)
+    return Float64(μ), Float64(ν)
 end
 
 function _fe_iso_scalar(
@@ -175,6 +175,6 @@ end
 #  purposes of a finite-element solve, the same reference.
 
 _fe_cache_key(P₀::TensND.AbstractTens{4, 3}) =
-    map(x -> round(x, sigdigits = 12), Tuple(Core._C_array(P₀)))
+    map(x -> round(x, sigdigits = 12), Tuple(Array(TensND.components_canon(P₀))))
 _fe_cache_key(P₀::TensND.AbstractTens{2, 3}) =
     map(x -> round(x, sigdigits = 12), Tuple(TensND.components_canon(P₀)))

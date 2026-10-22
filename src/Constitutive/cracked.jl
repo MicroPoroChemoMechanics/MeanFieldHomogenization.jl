@@ -155,7 +155,8 @@ _crack_phase_names(rve) = Tuple(
 )
 
 function initial_state(m::MicrocrackedMaterial{N}) where {N}
-    z = _zero_tens2(eltype(m.ω₀))
+    # A genuine zero `Tens{2,3}`: `zero(::TensISO)` narrows the class.
+    z = TensND.Tens(Tensors.SymmetricTensor{2, 3}((i, j) -> zero(eltype(m.ω₀))))
     return CrackedState(m.ω₀, ntuple(_ -> true, N), z, z)
 end
 
@@ -224,11 +225,6 @@ _toggle_family(open::NTuple{N}, i, closing) where {N} = ntuple(k -> k == i ? !cl
 _reset_aperture(ω::NTuple{N}, i, closing) where {N} =
     ntuple(k -> k == i ? (closing ? zero(eltype(ω)) : eps(eltype(ω))) : ω[k], N)
 
-# A genuine zero `Tens{2,3}`: `zero(::TensISO)` narrows the class, and a
-# structured zero would not promote the way an accumulator needs to.
-_zero_tens2(::Type{T}) where {T} =
-    TensND.Tens(Tensors.SymmetricTensor{2, 3}((i, j) -> zero(T)))
-
 # ── Internals ────────────────────────────────────────────────────────────────
 
 # `C_hom` and the per-family compliance contributions for one open/closed
@@ -238,7 +234,7 @@ function _cracked_state_tensors(m::MicrocrackedMaterial, open, cache)
     return cached!(cache, (objectid(m), open)) do
         rve = _rve_with_open(m, open)
         C = Schemes.homogenize(rve, m.scheme, m.property; m.kw...)
-        C_can = _to_canonical(C)   # preserves a structured type; see its docstring
+        C_can = TensND.change_tens_canon(C)   # a structured tensor is returned as it is
         𝕊 = if any(open)
             dec = Schemes.crack_family_compliances(rve, m.scheme, C; property = m.property, m.kw...)
             Dict(k => v for (k, v) in dec.families)
@@ -282,9 +278,7 @@ function _aperture_increments(m::MicrocrackedMaterial{N}, 𝕊, Δσ, open) wher
         open[i] || return zero(eltype(m.ω₀))
         S_i = get(𝕊, m.families[i], nothing)
         S_i === nothing && return zero(eltype(m.ω₀))
-        n̂ = MFH_Core._frame_columns(
-            Cracks.crack_basis(m.rve.phases[m.families[i]].geometry)
-        )[3]
+        n̂ = eachcol(TensND.vecbasis(Cracks.crack_basis(m.rve.phases[m.families[i]].geometry), :cov))[3]
         return transpose(n̂) * TensND.components_canon(S_i ⊡ Δσ) * n̂
     end
 end
@@ -340,6 +334,4 @@ end
 
 # The crack normal in GLOBAL components. `crack_normal` returns it in the
 # crack's own basis, where it is trivially `(0,0,1)` — useless here.
-_family_normal(m::MicrocrackedMaterial, i) = MFH_Core._frame_columns(
-    Cracks.crack_basis(m.rve.phases[m.families[i]].geometry)
-)[3]
+_family_normal(m::MicrocrackedMaterial, i) = eachcol(TensND.vecbasis(Cracks.crack_basis(m.rve.phases[m.families[i]].geometry), :cov))[3]

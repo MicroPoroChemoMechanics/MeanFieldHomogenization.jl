@@ -60,8 +60,7 @@ strain induced in the receiver. The result is transversely isotropic about the
 line of centers and has a strictly vanishing isotropic part.
 """
 function _pair_ball_iso(a, b, r::AbstractVector, C₀::TensND.TensISO{4, 3})
-    E, ν = MFH_Core.extract_iso_moduli(C₀)
-    μ = E / (2 * (1 + ν))
+    μ, ν = TensND.mu_nu(C₀)
     R = sqrt(r[1]^2 + r[2]^2 + r[3]^2)
     _check_separation(R, a, b)
     T = promote_type(typeof(a), typeof(b), typeof(μ), typeof(R))
@@ -110,8 +109,7 @@ Poisson ratio: with ``R = \\|\\underline{r}\\|`` and ``\\underline{n} = \\underl
     `_green_operator` alone.
 """
 function _pair_ball_iso(a, b, r::AbstractVector, C₀::TensND.TensISO{4, 2})
-    E, ν = MFH_Core.extract_iso_moduli(C₀)
-    μ = E / (2 * (1 + ν))
+    μ, ν = TensND.mu_nu(C₀)
     R = sqrt(r[1]^2 + r[2]^2)
     _check_separation(R, a, b)
     V_b = π * b^2

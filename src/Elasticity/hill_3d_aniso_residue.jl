@@ -111,7 +111,7 @@ function _hill_3d_aniso_residue(
 
     # Components in the ellipsoid's frame, in `Float64`: this route finds
     # polynomial roots and is `Float64`-only by design (see the note above).
-    C = Float64.(MFH_Core._components_in(C₀, ell.basis))
+    C = Float64.(Array(TensND.components(C₀, ell.basis)))
 
     function hill_at_phi(φ::Float64)
         m1 = cos(φ)

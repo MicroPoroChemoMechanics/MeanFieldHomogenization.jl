@@ -136,11 +136,11 @@ function Laminate(;
             throw(ArgumentError("Laminate: `basis` must be a 3-D TensND basis"))
         basis
     elseif euler_angles !== nothing
-        MFH_Core._default_basis(T, euler_angles isa Tuple ? euler_angles : (euler_angles,))
+        TensND.euler_basis(euler_angles isa Tuple ? euler_angles : (euler_angles,); T = T)
     elseif normal !== nothing
         MFH_Core._frame_from_normal(normal; T = T, in_plane = in_plane)
     else
-        TensND.CanonicalBasis{3, MFH_Core._basis_eltype(T)}()
+        TensND.CanonicalBasis{3, TensND.canonical_eltype(T)}()
     end
     return Laminate{T, typeof(b)}(
         Symbol[], Dict{Symbol, Layer}(), Dict{Symbol, Any}(),
@@ -313,7 +313,7 @@ laminate_basis(lam::Laminate) = lam.basis
 The layer normal ``\\underline{n}``, i.e. the third axis of [`laminate_basis`](@ref),
 in canonical components.
 """
-laminate_normal(lam::Laminate) = MFH_Core._basis_col(lam.basis, 3)
+laminate_normal(lam::Laminate) = Tuple(TensND.vecbasis(lam.basis, :cov)[:, 3])
 
 """
     layer_interface(lam, k::Integer) -> AbstractInterface

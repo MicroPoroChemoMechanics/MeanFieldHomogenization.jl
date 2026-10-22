@@ -442,45 +442,18 @@ _symmetry_tag(::TensND.TensOrtho) = Val(:ortho)
 _symmetry_tag(::TensND.AbstractTens{4, 3}) = Val(:full_4)
 _symmetry_tag(::TensND.AbstractTens{2, 3}) = Val(:full_2)
 
-# Flatten / reconstruct helpers : the iso / TI / ortho cases use the
-# canonical components ; the full-aniso fallback uses the Mandel
-# array.
-
-# Initial state vector for the ODE solver.
-_get_state(::Val{:iso_4}, t) = collect(TensND.get_data(t))
-_get_state(::Val{:iso_2}, t) = collect(TensND.get_data(t))
-_get_state(::Val{:ti}, t) = collect(TensND.get_data(t))
-_get_state(::Val{:ortho}, t) = collect(TensND.get_data(t))
-# Canonical Kelvin-Mandel components, as `inv_KM` rebuilds them: `KM(t)` alone
-# is in `t`'s own basis, and an anisotropic Hill tensor is written in its
-# inclusion's. A tensor already canonical is not changed of basis.
-_km_canon(t::TensND.AbstractTens{order, dim}) where {order, dim} =
-    TensND.KM(t, TensND.CanonicalBasis{dim, eltype(t)}())
-_get_state(::Val{:full_4}, t) = vec(collect(_km_canon(t)))
-_get_state(::Val{:full_2}, t) = vec(collect(_km_canon(t)))
-
-# Push a tensor into a flat vector for `du`.
-_set_state!(du, ::Val{:iso_4}, Δ) = (du .= TensND.get_data(Δ); nothing)
-_set_state!(du, ::Val{:iso_2}, Δ) = (du .= TensND.get_data(Δ); nothing)
-_set_state!(du, ::Val{:ti}, Δ) = (du .= TensND.get_data(Δ); nothing)
-_set_state!(du, ::Val{:ortho}, Δ) = (du .= TensND.get_data(Δ); nothing)
-_set_state!(du, ::Val{:full_4}, Δ) = (du .= vec(_km_canon(Δ)); nothing)
-_set_state!(du, ::Val{:full_2}, Δ) = (du .= vec(_km_canon(Δ)); nothing)
-
-# Reconstruct the tensor from a state vector.
-_reconstruct_tens(::Val{:iso_4}, ::TensND.AbstractTens, u) =
-    TensND.TensISO{3}(u[1], u[2])
-_reconstruct_tens(::Val{:iso_2}, ::TensND.AbstractTens, u) =
-    TensND.TensISO{3}(u[1])
-_reconstruct_tens(::Val{:ti}, proto::TensND.AbstractTens, u) =
-    TensND._rebuild(proto, ntuple(i -> u[i], length(u)))
-_reconstruct_tens(::Val{:ortho}, proto::TensND.AbstractTens, u) =
-    TensND._rebuild(proto, ntuple(i -> u[i], length(u)))
-# Fully-anisotropic fallback : rebuild from the Mandel 6×6 form.
-_reconstruct_tens(::Val{:full_4}, ::TensND.AbstractTens, u) =
-    TensND.inv_KM(reshape(u, 6, 6))
-_reconstruct_tens(::Val{:full_2}, ::TensND.AbstractTens, u) =
-    TensND.inv_KM(collect(u))
+# Flatten / reconstruct: TensND's `to_vector` / `from_vector`, the coefficients
+# of a structured class (with its axis or frame), the canonical Kelvin-Mandel
+# components of a generic tensor (an anisotropic Hill tensor is written in its
+# inclusion's basis, and `from_vector` rebuilds it canonical).
+# The full layouts hold canonical Kelvin-Mandel components whatever the class of
+# the tensor read into them (the matrix property may be isotropic while the state
+# is anisotropic): `generic_tens` first.
+const _FullLayout = Union{Val{:full_4}, Val{:full_2}}
+_get_state(::Val, t) = TensND.to_vector(t)
+_get_state(::_FullLayout, t) = TensND.to_vector(TensND.generic_tens(t))
+_set_state!(du, tag::Val, Δ) = (du .= _get_state(tag, Δ); nothing)
+_reconstruct_tens(::Val, proto::TensND.AbstractTens, u) = TensND.from_vector(proto, u)
 
 # ── Per-phase contribution helpers ──────────────────────────────────────────
 

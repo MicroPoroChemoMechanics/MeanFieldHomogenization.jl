@@ -223,7 +223,7 @@ end
     )
     times = collect(0.0:0.5:1.0)
     n = length(times)
-    to66 = MFH_IJ.Viscoelasticity._tens_to_mandel66
+    to66 = TensND.mandel66
     for external in (true, false)
         A_alv = gradient_gradient_concentration_alv(sphere, heaviside_law(C_M), times; external)
         N_alv = property_contribution_alv(sphere, heaviside_law(C_M), times; external)

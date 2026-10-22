@@ -75,8 +75,8 @@ function Cylinder(
         b::Tb, c::Tc;
         euler_angles::Tuple{Vararg{Real}} = ()
     ) where {Tb, Tc}
-    T = MFH_Core._floatlike(promote_type(Tb, Tc))
-    basis_in = MFH_Core._default_basis(T, euler_angles)
+    T = TensND.float_like(promote_type(Tb, Tc))
+    basis_in = TensND.euler_basis(euler_angles; T = T)
     axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(b), T(c)), basis_in, Val(:cylinder))
     code = MFH_Core._classify_shape_2d(T, axes_sorted...)
     S = _SHAPE_CYLINDER[code]
@@ -91,7 +91,7 @@ Infinite cylinder whose local axes are the columns of the rotation matrix
 axes associated with `b` and `c` respectively.
 """
 function Cylinder(b::Tb, c::Tc, R::AbstractMatrix) where {Tb, Tc}
-    T = MFH_Core._floatlike(promote_type(Tb, Tc))
+    T = TensND.float_like(promote_type(Tb, Tc))
     basis_in = TensND.RotatedBasis(Matrix{float(eltype(R))}(R))
     axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(b), T(c)), basis_in, Val(:cylinder))
     code = MFH_Core._classify_shape_2d(T, axes_sorted...)
@@ -108,7 +108,7 @@ cylinder axis; columns 2 and 3 are the transverse axes associated with
 `b` and `c` respectively.
 """
 function Cylinder(b::Tb, c::Tc, basis::TensND.AbstractBasis) where {Tb, Tc}
-    T = MFH_Core._floatlike(promote_type(Tb, Tc))
+    T = TensND.float_like(promote_type(Tb, Tc))
     axes_sorted, basis_out = MFH_Core._sort_axes_and_basis((T(b), T(c)), basis, Val(:cylinder))
     code = MFH_Core._classify_shape_2d(T, axes_sorted...)
     S = _SHAPE_CYLINDER[code]
@@ -127,8 +127,8 @@ function Cylinder(
         b::T;
         euler_angles::Tuple{Vararg{Real}} = ()
     ) where {T <: Number}
-    Tf = MFH_Core._floatlike(T)
-    basis = MFH_Core._default_basis(Tf, euler_angles)
+    Tf = TensND.float_like(T)
+    basis = TensND.euler_basis(euler_angles; T = Tf)
     return Cylinder{CircularCylindrical, Tf, typeof(basis)}((Tf(b), Tf(b)), basis)
 end
 

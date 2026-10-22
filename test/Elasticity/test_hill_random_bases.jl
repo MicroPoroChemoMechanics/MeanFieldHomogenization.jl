@@ -73,7 +73,7 @@ function _hrb_structured(c)
 end
 
 _hrb_km(P) = _HRB_CORE.mandel66_minor(TensND.components_canon(P))
-_hrb_frame(ell) = hcat(_HRB_CORE._frame_columns(ell.basis)...)
+_hrb_frame(ell) = Matrix(TensND.vecbasis(ell.basis, :cov))
 const _HRB_TIGHT = (abstol = 1.0e-13, reltol = 1.0e-11)
 
 @testset "Hill tensors against echoes, random ellipsoids, media and bases" begin

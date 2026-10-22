@@ -64,7 +64,7 @@ LayeredSphere(
 function LayeredSphere(
         radii::Tuple{T, Vararg{T, M}},
         moduli::Cs;
-        interfaces::Is = ntuple(_ -> PerfectInterface{MFH_Core._floatlike(T)}(), Val(M + 1)),
+        interfaces::Is = ntuple(_ -> PerfectInterface{TensND.float_like(T)}(), Val(M + 1)),
     ) where {T <: Number, M, Cs, Is}
     N = M + 1
     # Validate ascending radii for Real types (skip for symbolic).
@@ -80,7 +80,7 @@ function LayeredSphere(
             )
         end
     end
-    Tf = MFH_Core._floatlike(T)
+    Tf = TensND.float_like(T)
     radii_f = NTuple{N, Tf}(Tf.(radii))
     return LayeredSphere{Tf, N, typeof(moduli), typeof(interfaces)}(
         radii_f, moduli, interfaces
@@ -161,7 +161,7 @@ outer_radius(sphere::LayeredSphere) = sphere.radii[end]
 MFH_Core.dimension(::LayeredSphere) = 3
 
 MFH_Core.inclusion_basis(::LayeredSphere{T}) where {T} =
-    TensND.CanonicalBasis{3, MFH_Core._basis_eltype(T)}()
+    TensND.CanonicalBasis{3, TensND.canonical_eltype(T)}()
 
 struct SphericalLayered end
 MFH_Core.shape_trait(::LayeredSphere) = SphericalLayered

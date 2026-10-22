@@ -91,8 +91,8 @@ green_operator_iso(C₀::TensND.TensISO{4, 3}, x::AbstractVector) =
     TensND.Tens(_green_operator_iso(C₀, x))
 
 function _green_operator_iso(C₀::TensND.TensISO{4, 3}, x::AbstractVector)
-    E, ν = extract_iso_moduli(C₀)
-    return _green_operator_iso(E / (2 * (1 + ν)), ν, x)
+    μ, ν = TensND.mu_nu(C₀)
+    return _green_operator_iso(μ, ν, x)
 end
 
 function _green_operator_iso(μ, ν, x::AbstractVector)
@@ -157,7 +157,7 @@ green_operator_iso(K₀::TensND.TensISO{2, 3}, x::AbstractVector) =
     TensND.Tens(_green_operator_iso(K₀, x))
 
 function _green_operator_iso(K₀::TensND.TensISO{2, 3}, x::AbstractVector)
-    return _green_operator_iso_order2(extract_iso_conductivity(K₀), x)
+    return _green_operator_iso_order2(first(TensND.get_data(K₀)), x)
 end
 
 function _green_operator_iso_order2(σ₀, x::AbstractVector)
@@ -191,7 +191,7 @@ green_operator_iso(K₀::TensND.TensISO{2, 2}, x::AbstractVector) =
     TensND.Tens(_green_operator_iso(K₀, x))
 
 function _green_operator_iso(K₀::TensND.TensISO{2, 2}, x::AbstractVector)
-    return _green_operator_iso_order2_2d(extract_iso_conductivity(K₀), x)
+    return _green_operator_iso_order2_2d(first(TensND.get_data(K₀)), x)
 end
 
 function _green_operator_iso_order2_2d(σ₀, x::AbstractVector)
@@ -240,8 +240,8 @@ green_operator_iso(C₀::TensND.TensISO{4, 2}, x::AbstractVector) =
     TensND.Tens(_green_operator_iso(C₀, x))
 
 function _green_operator_iso(C₀::TensND.TensISO{4, 2}, x::AbstractVector)
-    E, ν = extract_iso_moduli(C₀)
-    return _green_operator_iso_2d(E / (2 * (1 + ν)), ν, x)
+    μ, ν = TensND.mu_nu(C₀)
+    return _green_operator_iso_2d(μ, ν, x)
 end
 
 function _green_operator_iso_2d(μ, ν, x::AbstractVector)

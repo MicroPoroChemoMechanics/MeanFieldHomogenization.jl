@@ -182,8 +182,8 @@ function CustomInclusion(
         )
     )
     T = semi_axes === nothing ? Float64 :
-        Core._floatlike(promote_type(typeof.(semi_axes)...))
-    b = basis === nothing ? Core._default_basis(T, euler_angles) : basis
+        TensND.float_like(promote_type(typeof.(semi_axes)...))
+    b = basis === nothing ? TensND.euler_basis(euler_angles; T = T) : basis
     axes = semi_axes === nothing ? nothing : map(T, semi_axes)
     return CustomInclusion{dim, T, typeof(b), typeof(fns)}(
         axes, b, homogeneous,

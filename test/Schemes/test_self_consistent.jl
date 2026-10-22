@@ -401,7 +401,7 @@ end
         @test all(>(0), w)
         # ‖w ⊙ p‖₂ == ‖rebuild(p)‖_F, on a vector aligned with no single axis.
         q = Float64[1 / (i + 1) for i in 1:L]
-        @test norm(q .* w) ≈ norm(S._rebuild_from_data(T, q)) rtol = 1.0e-12
+        @test norm(q .* w) ≈ norm(TensND.rebuild(T, q)) rtol = 1.0e-12
     end
 
     # The deviatoric basis tensor is not a unit tensor: an isotropic stiffness
@@ -513,7 +513,7 @@ end
     @inferred S._sc_pd_guard_apply(TensTI{4}(d, 30.0, -40.0, 9.0, 12.0, n), ε)
 
     # A class without that structure is passed through.
-    gen = TensND.change_tens_canon(TensISO{3}(-3.0, 2.0))
+    gen = TensND.generic_tens(TensISO{3}(-3.0, 2.0))
     @test S._sc_pd_guard_apply(gen, ε) === gen
 
     # Auxetic phases (λ < 0) around aligned spheroids: the estimate is TI with a

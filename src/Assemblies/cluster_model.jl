@@ -114,7 +114,7 @@ lying inside the cluster — including the periodic images, and excluding `rep`
 itself.
 """
 function _family_interaction(asm, rep::Symbol, label::Int, P₀, L, cutoff, pass)
-    acc = _zero_like(P₀)
+    acc = zero(TensND.generic_tens(P₀))
     ga = particle_geometry(asm, rep)
     ca = particle_center(asm, rep)
     for nm in particle_names(asm)
@@ -224,8 +224,3 @@ _kernel_options(opts::NamedTuple) = Base.structdiff(opts, NamedTuple{_SCHEME_ONL
 # The identity is `one(P₀)` (TensND), in the element type of the reference property:
 # `tens_Id4()` with no type builds a symbolic identity, which would poison an
 # otherwise `Float64` (or `Dual`) system on first contact.
-
-_zero_like(P₀::TensND.AbstractTens{4, 3}) = TensND.Tens(zeros(eltype(P₀), 3, 3, 3, 3))
-_zero_like(P₀::TensND.AbstractTens{4, 2}) = TensND.Tens(zeros(eltype(P₀), 2, 2, 2, 2))
-_zero_like(P₀::TensND.AbstractTens{2, 3}) = TensND.Tens(zeros(eltype(P₀), 3, 3))
-_zero_like(P₀::TensND.AbstractTens{2, 2}) = TensND.Tens(zeros(eltype(P₀), 2, 2))
