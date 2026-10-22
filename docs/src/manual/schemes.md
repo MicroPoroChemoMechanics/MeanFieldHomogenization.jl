@@ -419,10 +419,9 @@ DifferentialScheme(; alg = Vern9(), abstol = 1e-12, reltol = 1e-10)
 DifferentialScheme(; maxiters = 10^7)   # unrecognised kwargs go to `solve`
 ```
 
-Implicit algorithms need a non-AD Jacobian
-(`Rosenbrock23(autodiff = AutoFiniteDiff())`): the RHS calls the
-Hill-tensor backends, which are not differentiable with respect to the
-ODE state.
+Implicit algorithms (`Rosenbrock23()`, `Rodas5P()`, …) work with their default
+ForwardDiff Jacobian and time gradient: the right-hand side accepts dual numbers
+in the state and in `τ`, so no finite-difference Jacobian is needed.
 
 To follow the effective property *along* the incorporation path rather
 than at `τ = 1` only:

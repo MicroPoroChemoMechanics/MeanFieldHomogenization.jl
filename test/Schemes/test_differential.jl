@@ -649,3 +649,23 @@ end
         @test S._reconstruct_tens(tag, proto, du) ≈ Δ atol = 1.0e-14
     end
 end
+
+@testset "Differential — implicit solvers with their default AD" begin
+    # The right-hand side takes its element type from τ as well as from the
+    # state, so the ForwardDiff time gradient of a Rosenbrock method goes
+    # through (it threw on a Float64 conversion before). Reference: the
+    # explicit default solver at tight tolerances.
+    ODE = MeanFieldHomogenization.Schemes.OrdinaryDiffEq
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)); fraction = :rest)
+    add_phase!(rve, :I, Spheroid(0.2), Dict(:C => iso_stiffness(60.0, 40.0)); fraction = 0.3, symmetrize = IsoSymmetrize())
+    ref = homogenize(rve, DifferentialScheme(; abstol = 1.0e-12, reltol = 1.0e-12))
+    for alg in (ODE.Rosenbrock23(), ODE.Rodas5P())
+        C = homogenize(rve, DifferentialScheme(; alg, abstol = 1.0e-10, reltol = 1.0e-10))
+        @test norm(C - ref) < 1.0e-8 * norm(ref)
+    end
+    # The concentration tensors integrate the same right-hand side.
+    A_ref = concentration_tensors(rve, DifferentialScheme(; abstol = 1.0e-12, reltol = 1.0e-12), :C)
+    A_imp = concentration_tensors(rve, DifferentialScheme(; alg = ODE.Rodas5P(), abstol = 1.0e-10, reltol = 1.0e-10), :C)
+    @test norm(A_imp.strain[:I] - A_ref.strain[:I]) < 1.0e-8 * norm(A_ref.strain[:I])
+end

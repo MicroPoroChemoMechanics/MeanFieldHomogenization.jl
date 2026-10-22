@@ -379,9 +379,10 @@ function _diff_concentration_rhs!(dy, y, q, τ)
     p = q.params
     Pτ = _reconstruct_tens(p.sym_tag, p.proto, view(y, 1:q.nu))
     Cτ = p.dual ? inv(Pτ) : Pτ
-    dφ, dφᶜ = _diff_rates(p, τ, eltype(y))
+    T = promote_type(eltype(y), typeof(τ))
+    dφ, dφᶜ = _diff_rates(p, τ, T)
     rates = vcat(dφ, dφᶜ)
-    unit = _diff_unit_rates(p, τ, eltype(y))
+    unit = _diff_unit_rates(p, τ, T)
     active = findall(!iszero, unit)
     bundles = Dict(
         k => _diff_phase_bundle(p.rve, q.names[k], q.prop, Cτ, p.dual; p.kw...) for k in active
@@ -391,7 +392,7 @@ function _diff_concentration_rhs!(dy, y, q, τ)
     _set_state_layout!(view(dy, 1:q.nu), p.sym_tag, p.proto, Δ)
     flat = Dict(k => (_flat_matrix(bundles[k][2]), _flat_matrix(bundles[k][3])) for k in active)
     r = isqrt(q.L)
-    X = sum((rates[k] * first(flat[k]) for k in active); init = zeros(eltype(y), r, r))
+    X = sum((rates[k] * first(flat[k]) for k in active); init = zeros(T, r, r))
     for k in eachindex(q.names), part in (0, 1)
         dG = _flat_block(dy, q, k, part)
         dG .= -(_flat_block(y, q, k, part) * X)

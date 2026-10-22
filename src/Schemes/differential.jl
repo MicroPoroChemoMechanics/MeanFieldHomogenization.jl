@@ -230,7 +230,9 @@ function _diff_ode_rhs!(du, u, p, τ)
     # evaluated against C = S⁻¹ (closed-form inverse for ISO / TI / ortho).
     Pτ = _reconstruct_tens(p.sym_tag, p.proto, u)
     Cτ = p.dual ? inv(Pτ) : Pτ
-    dφ, dφᶜ = _diff_rates(p, τ, eltype(u))
+    # The rates take the type of τ as well as the state's: an implicit solver
+    # differentiates the right-hand side in τ with dual numbers.
+    dφ, dφᶜ = _diff_rates(p, τ, promote_type(eltype(u), typeof(τ)))
     Δ = zero(Pτ)
     @inbounds for (i, name) in enumerate(p.solid_names)
         dφᵢ = dφ[i]

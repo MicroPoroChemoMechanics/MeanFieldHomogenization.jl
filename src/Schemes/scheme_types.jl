@@ -483,10 +483,9 @@ along the chosen `trajectory`.
 - `alg` — explicit ODE algorithm.  `nothing` selects `Tsit5()` (5th
   order adaptive Runge-Kutta).  Pass any `OrdinaryDiffEqAlgorithm`
   instance to override (e.g. `Vern9()` for higher accuracy).  Implicit
-  algorithms must be built with a non-AD Jacobian
-  (`Rosenbrock23(autodiff = AutoFiniteDiff())`): the RHS calls the
-  Hill-tensor backends, which are not differentiable with respect to
-  the ODE state.
+  algorithms (`Rosenbrock23()`, `Rodas5P()`) work with their default
+  ForwardDiff Jacobian and time gradient: the right-hand side accepts dual
+  numbers in the state and in `τ`.
 - `kwargs...` — any other keyword is forwarded verbatim to
   `OrdinaryDiffEq.solve` (`maxiters`, `dtmax`, `dt`, `callback`, …).
 """
