@@ -90,8 +90,8 @@ end
 Only Ferrite is wired today. The contract itself is backend-agnostic, so a
 Gridap, FEniCSx or Abaqus UMAT driver needs the same two pieces — a per-point
 state container and an element routine — plus, outside Julia, a way to carry
-`ε` and `σ` across the boundary ([`voigt_strain`](@ref) and
-[`voigt_stress`](@ref) exist for that). Those are on the
+`ε` and `σ` across the boundary (`voigt_strain` and
+`voigt_stress` exist for that). Those are on the
 [roadmap](@ref dev-roadmap), not in the package.
 
 ## Where to go next

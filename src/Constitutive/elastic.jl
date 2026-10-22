@@ -21,7 +21,7 @@ scheme.
 The scheme is run **once**, at construction, and the resulting `C_hom` is stored
 in the **canonical frame** — an RVE with oriented inclusions returns its estimate
 in a rotated basis, and a material handed to an FE code must speak the global
-frame (see [`to_tensors`](@ref)).
+frame (see `to_tensors`).
 
 ```julia
 rve = RVE()
