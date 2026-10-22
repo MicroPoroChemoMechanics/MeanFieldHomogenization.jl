@@ -101,6 +101,20 @@ U^{\\boldsymbol{A}}_{iijj} = U^{\\boldsymbol{A}}_{ijij} = U^{\\boldsymbol{A}}_{i
 
 with the ``I_i^{\\boldsymbol{A}}`` and ``I_{ij}^{\\boldsymbol{A}}`` coefficients
 given in the Echoes appendix (tables ``I_i`` / ``I_{ij}``).
+
+In two dimensions the weight is ``\\det\\boldsymbol{A}/(2\\pi\\,\\|\\boldsymbol{A}\\cdot\\underline{\\xi}\\|^{2})``
+on the unit circle, the one of [`tens_IA`](@ref) and [`tens_VA`](@ref), and an
+ellipse of semi-axes ``(a, b)`` has, with ``s = a + b``,
+
+```math
+U^{\\boldsymbol{A}}_{1111} = \\frac{b\\,(a + 2b)}{2s^{2}},\\qquad
+U^{\\boldsymbol{A}}_{2222} = \\frac{a\\,(2a + b)}{2s^{2}},\\qquad
+U^{\\boldsymbol{A}}_{1122} = U^{\\boldsymbol{A}}_{1212} = \\frac{ab}{2s^{2}},
+```
+
+so that the Hill tensor of an isotropic medium is
+``\\mathbb{U}^{\\boldsymbol{A}}/(\\lambda + 2\\mu) + (\\mathbb{V}^{\\boldsymbol{A}} - \\mathbb{U}^{\\boldsymbol{A}})/\\mu``
+in both dimensions. These closed forms hold at ``a = b``.
 """
 function tens_UA(ell::Ellipsoid{3, Spherical})
     T = eltype(ell.semi_axes)
@@ -192,28 +206,20 @@ function tens_UA(cyl::Cylinder{EllipticCylindrical})
     return TensND.TensOrtho(C11, C22, C33, C12, C13, C23, C44, C55, C66, cyl.basis)
 end
 
+# The 2-D coefficients are those of the docstring: with the 2-D weight, the
+# ``I_i``, ``I_{ij}`` of the ellipse reduce to ``b/s``, ``a/s`` and ``1/s^2``,
+# so no division by ``a^2 - b^2`` (and no switch near the circle) is needed.
 function tens_UA(ell::Ellipsoid{2})
-    T = eltype(ell.semi_axes)
     a, b = ell.semi_axes
-    a2, b2 = a * a, b * b
-    Iv = MFH_Core.newton_potential_2d(a, b)
-    fac = 2 * T(π)
-    I1, I2 = Iv[1] / fac, Iv[2] / fac
-
-    is_circle = T <: Real ? (a - b) ≤ a * (1.0e-6 * one(T)) : isequal(a, b)
-    I12 = is_circle ? I1 / (4 * a2) : (I2 - I1) / (a2 - b2)
-    I11 = (I1 - b2 * I12) / (2 * a2)
-    I22 = (I2 - a2 * I12) / (2 * b2)
-
-    U_arr = zeros(T, 2, 2, 2, 2)
-    U_arr[1, 1, 1, 1] = 3 * (I1 - a2 * I11) / 2
-    U_arr[2, 2, 2, 2] = 3 * (I2 - b2 * I22) / 2
-    v12 = (I2 - a2 * I12) / 2
-    for idx in ((1, 1, 2, 2), (2, 2, 1, 1), (1, 2, 1, 2), (2, 1, 2, 1), (1, 2, 2, 1), (2, 1, 1, 2))
-        U_arr[idx...] = v12
-    end
+    s2 = 2 * (a + b)^2
+    u = (b * (a + 2b) / s2, a * b / s2, a * (2a + b) / s2)   # U₁₁₁₁, U₁₁₂₂, U₂₂₂₂
+    # U is fully symmetric: a component depends only on how many of its
+    # indices are 2 — none, two or four; an odd count gives zero.
+    U_arr = [_ua_2d(count(==(2), (i, j, k, l)), u) for i in 1:2, j in 1:2, k in 1:2, l in 1:2]
     return TensND.Tens(U_arr, ell.basis)
 end
+
+_ua_2d(n2, u) = iseven(n2) ? u[n2 ÷ 2 + 1] : zero(u[1])
 
 # ── tens_VA ───────────────────────────────────────────────────────────────────
 
