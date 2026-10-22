@@ -97,7 +97,8 @@ _normalize_euler(::Tuple{}) = (0.0, 0.0, 0.0)
 
 Complete a normal vector `n` into an orthonormal frame
 ``(\\underline{\\ell}, \\underline{m}, \\underline{n})`` whose **third** axis is `n`
-normalized, by Gram-Schmidt against a reference axis.
+normalized, by Gram-Schmidt against a reference axis: TensND's
+`frame_from_axis`, after the checks a laminate normal needs.
 Returns a `CanonicalBasis` when `n` is exactly the third canonical axis, so the
 common laminate needs no rotation at all.
 
@@ -112,8 +113,8 @@ symbolic `1.0` multiplying every coefficient of the result.
 fixes ``\\underline{\\ell}`` in the plane of the layers; it must not be parallel to ``\\underline{n}``. Left
 unset, a **numeric** normal picks whichever canonical axis is least aligned with
 ``\\underline{n}``, which can never degenerate; a **symbolic** normal cannot answer that
-comparison, so it falls back to ``\\underline{e}_1`` and the caller must pass another reference
-when ``\\underline{n} \\parallel \\underline{e}_1``.
+comparison, so it takes ``\\underline{e}_1``, or ``\\underline{e}_2`` when ``\\underline{n}`` lies along ``\\underline{e}_1``
+identically.
 
 The effective property of a laminate is invariant under rotation about its
 normal, so this choice never changes the physics and never leaks into a
@@ -129,43 +130,15 @@ function _frame_from_normal(nvec; T = nothing, in_plane = nothing)
     Tn = _floatlike(promote_type(typeof(nvec[1]), typeof(nvec[2]), typeof(nvec[3])))
     n = SVector{3, Tn}(ntuple(i -> convert(Tn, nvec[i]), 3))
     # The split is `is_hard_numeric`, NOT `Tn <: Real`: `Symbolics.Num` subtypes
-    # `Real` yet answers no comparison, so a `Real` guard would let it through
-    # and fail deep inside `argmin`.
-    if !is_hard_numeric(Tn)
-        n̂ = n / sqrt(n ⋅ n)
-        ref = in_plane === nothing ? (1, 0, 0) : in_plane
-        return _gram_schmidt_frame(n̂, SVector{3, Tn}(ntuple(i -> convert(Tn, ref[i]), 3)))
+    # `Real` yet answers no comparison.
+    if is_hard_numeric(Tn)
+        iszero(n) && throw(ArgumentError("a laminate normal must be non-zero"))
+        # The canonical laminate (n = e₃) keeps the canonical basis in the
+        # element type of the cell, so that a symbolic cell keeps exact 0 and 1.
+        in_plane === nothing && n / sqrt(sum(abs2, n)) == SVector{3, Tn}(0, 0, 1) &&
+            return TensND.CanonicalBasis{3, _basis_eltype(T === nothing ? Tn : T)}()
     end
-    nrm = sqrt(n ⋅ n)
-    nrm > 0 || throw(ArgumentError("a laminate normal must be non-zero"))
-    n̂ = n / nrm
-    # The canonical laminate (n = e₃) keeps the canonical basis: exact, and it
-    # lets the kernel skip the Bond rotation entirely.
-    if in_plane === nothing && n̂ == SVector{3, Tn}(0, 0, 1)
-        return TensND.CanonicalBasis{3, _basis_eltype(T === nothing ? Tn : T)}()
-    end
-    a = if in_plane === nothing
-        k = argmin(abs.(n̂))
-        SVector{3, Tn}(ntuple(i -> i == k ? one(Tn) : zero(Tn), 3))
-    else
-        SVector{3, Tn}(ntuple(i -> convert(Tn, in_plane[i]), 3))
-    end
-    return _gram_schmidt_frame(n̂, a)
-end
-
-# Shared completion, once `n̂` is normalized and the in-plane reference chosen.
-# `(ℓ̂, m̂, n̂)` is right-handed: ℓ̂ × m̂ = n̂.
-function _gram_schmidt_frame(n̂::SVector{3, T}, a::SVector{3, T}) where {T}
-    ℓ = a - (a ⋅ n̂) * n̂
-    ℓ̂ = ℓ / sqrt(ℓ ⋅ ℓ)
-    m̂ = n̂ × ℓ̂
-    R = [ifelse(j == 1, ℓ̂[i], ifelse(j == 2, m̂[i], n̂[i])) for i in 1:3, j in 1:3]
-    # `tsimplify` is the identity on every numeric element type, so this costs
-    # the numeric path nothing. On a symbolic one it is what turns
-    # `sin(θ)/√(sin²θ + cos²θ)` back into `sin(θ)` — worth doing ONCE here
-    # rather than leaving the normalization to resurface in every component of
-    # every result, and in `show`.
-    return TensND.RotatedBasis(TensND.tsimplify(R))
+    return TensND.frame_from_axis(n; in_plane)
 end
 
 """
