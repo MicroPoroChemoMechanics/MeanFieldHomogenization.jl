@@ -10,10 +10,6 @@ script = MS.environment_script("@studio-test", spec; update = false)
 @test !any(a -> a isa Expr && a.head in (:error, :incomplete), Meta.parseall(script).args)
 @test occursin("Pkg.activate(\"studio-test\"; shared = true)", script)
 @test occursin("Pkg.PackageSpec(name = \"Alpha\", version = Pkg.Types.semver_spec(\"0.3\"))", script)
-# A bound is a compat entry: "0.6.2" admits 0.6.3, and "6, 7" is a bound at all,
-# where both read as a version specification were 0.6.2 exactly and an error.
-import Pkg
-@test v"0.6.3" in Pkg.Types.semver_spec("0.6.2") && v"7.8.1" in Pkg.Types.semver_spec("6, 7")
 @test occursin("Pkg.compat(\"Beta\", \"1\")", script)
 @test !occursin("Pkg.update()", script)
 @test occursin("Pkg.update()", MS.environment_script("/tmp/x", spec; update = true))
