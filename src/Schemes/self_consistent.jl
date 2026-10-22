@@ -381,7 +381,7 @@ Convergence is declared when ``\\|x_{\\mathrm{new}} - x_{\\mathrm{old}}\\| \\le 
 given `abstol` expresses one requirement regardless of `algorithm` and of the
 symmetry class the fixed point lives in. The Picard loop measures it directly;
 the Newton path reaches it by working in the isometric parametrization of
-[`_sc_param_weights`](@ref); the `NonlinearSolve` path passes those same
+the weights of TensND's `param_norms`; the `NonlinearSolve` path passes those same
 weights to SciML as the `internalnorm` of its termination condition, leaving
 the unknowns alone — a trust region is not invariant under a rescaling of
 them, and moving its metric moves where it stops.
