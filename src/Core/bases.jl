@@ -196,52 +196,6 @@ function _basis_matrix(basis::TensND.AbstractBasis)
 end
 
 """
-    _permute_basis_3d(basis, σ::NTuple{3,Int}) -> RotatedBasis
-
-Return a new 3D basis whose column `k` is the `σ[k]`-th column of
-`basis`.  If `σ` is an odd permutation, the 3rd column is negated to
-preserve a right-handed (``\\det = +1``) frame — physically equivalent since
-flipping an axis direction leaves an ellipsoid invariant.
-"""
-function _permute_basis_3d(basis::TensND.AbstractBasis, σ::NTuple{3, Int})
-    M = _frame_matrix(basis)
-    M′ = similar(M)
-    @inbounds for k in 1:3
-        M′[:, k] = M[:, σ[k]]
-    end
-    # Sign of permutation (1,2,3) → even; one transposition → odd; …
-    _permutation_sign(σ) == -1 && (M′[:, 3] .*= -1)
-    return TensND.RotatedBasis(M′)
-end
-
-"""
-    _permute_basis_2d(basis, swap::Bool) -> RotatedBasis
-
-Return a new 2D basis: the original basis unchanged when `swap=false`,
-or the basis with columns `(1, 2)` swapped and column 2 negated when
-`swap=true` (preserves ``\\det = +1``).
-"""
-function _permute_basis_2d(basis::TensND.AbstractBasis, swap::Bool)
-    M = _frame_matrix(basis)
-    swap || return TensND.RotatedBasis(M)
-    M′ = similar(M)
-    @inbounds begin
-        M′[:, 1] = M[:, 2]
-        M′[:, 2] = -M[:, 1]
-    end
-    return TensND.RotatedBasis(M′)
-end
-
-# Sign of a permutation of {1,2,3} (σ as NTuple{3,Int}).
-@inline function _permutation_sign(σ::NTuple{3, Int})
-    inv = 0
-    @inbounds for i in 1:3, j in (i + 1):3
-        σ[i] > σ[j] && (inv += 1)
-    end
-    return isodd(inv) ? -1 : 1
-end
-
-"""
     _sort_axes_and_basis(axes, basis, layout::Val) -> (sorted_axes, new_basis)
 
 Sort `axes` into descending order and permute the columns of `basis`
@@ -265,7 +219,7 @@ function _sort_axes_and_basis(
     σ = Tuple(sortperm(collect(axes); rev = true))::NTuple{3, Int}
     σ == (1, 2, 3) && return (axes, basis)
     sorted = (axes[σ[1]], axes[σ[2]], axes[σ[3]])
-    return (sorted, _permute_basis_3d(basis, σ))
+    return (sorted, TensND.permute_basis(basis, σ))
 end
 
 function _sort_axes_and_basis(
@@ -277,44 +231,14 @@ function _sort_axes_and_basis(
     return ((b, a), _swap_axes_basis(basis, layout))
 end
 
-# The two columns a 2-axis layout swaps.
-_swap_axes_basis(basis, ::Val{:ellipsoid_2d}) = _permute_basis_2d(basis, true)
-# axes = (b, c); the cylinder axis is column 1 and stays fixed.
-_swap_axes_basis(basis, ::Val{:cylinder}) = _permute_basis_cols23(basis)
-# axes = (a, b); the crack normal is column 3 and stays fixed.
-_swap_axes_basis(basis, ::Val{:crack}) = _permute_basis_cols12(basis)
-
-"""
-    _permute_basis_cols23(basis) -> RotatedBasis
-
-Swap the 2nd and 3rd columns of a 3D basis (column 1 fixed) and negate
-column 3 to keep ``\\det = +1``.  Used by `Cylinder`.
-"""
-function _permute_basis_cols23(basis::TensND.AbstractBasis)
-    M = _frame_matrix(basis)
-    M′ = copy(M)
-    @inbounds begin
-        M′[:, 2] = M[:, 3]
-        M′[:, 3] = -M[:, 2]
-    end
-    return TensND.RotatedBasis(M′)
-end
-
-"""
-    _permute_basis_cols12(basis) -> RotatedBasis
-
-Swap the 1st and 2nd columns of a 3D basis (column 3 fixed) and negate
-column 2 to keep ``\\det = +1``.  Used by `EllipticCrack`.
-"""
-function _permute_basis_cols12(basis::TensND.AbstractBasis)
-    M = _frame_matrix(basis)
-    M′ = copy(M)
-    @inbounds begin
-        M′[:, 1] = M[:, 2]
-        M′[:, 2] = -M[:, 1]
-    end
-    return TensND.RotatedBasis(M′)
-end
+# The two columns a 2-axis layout swaps, the frame kept right-handed by
+# reversing one vector (`TensND.permute_basis`): the second in 2-D; for a
+# cylinder (axes = (b, c), its axis in column 1, fixed) the third; for a crack
+# (axes = (a, b), its normal in column 3, fixed) the second, so that the normal
+# keeps its sign.
+_swap_axes_basis(basis, ::Val{:ellipsoid_2d}) = TensND.permute_basis(basis, (2, 1))
+_swap_axes_basis(basis, ::Val{:cylinder}) = TensND.permute_basis(basis, (1, 3, 2))
+_swap_axes_basis(basis, ::Val{:crack}) = TensND.permute_basis(basis, (2, 1, 3); negate = 2)
 
 # ─── Shape classification helpers ─────────────────────────────────────────────
 
