@@ -214,7 +214,9 @@ and provides:
   per supported scheme (type the scheme argument: leaving it untyped is
   ambiguous with the error-raising fallback);
 - `cell_member_names`, `cell_container_property` and `cell_set_property` to
-  take part in declarative nesting and in the parameter lenses.
+  take part in declarative nesting and in the parameter lenses; optionally
+  `cell_has_property`, whose default asks `cell_container_property` and reads
+  an `ArgumentError` or a `KeyError` as "absent".
 
 `RVE` and `Laminate` are the two worked examples.
 

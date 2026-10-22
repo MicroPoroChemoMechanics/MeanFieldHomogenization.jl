@@ -96,7 +96,11 @@ end
 # user's parameter dropped. The Jacobian's tag is created inside the user's
 # derivative, so it nests outside the user's tag, as in `NewtonDefault`.
 _primal_jacobian(residual_vec, p::AbstractVector, ::Type{T}) where {T} =
-    MeanFieldHomogenization.Core.primal.(ForwardDiff.jacobian(residual_vec, convert.(T, p)))
+    TensND.primal.(ForwardDiff.jacobian(residual_vec, convert.(T, p)))
+
+# Levels of `ForwardDiff.Dual` nested in `T` (0 for a plain number).
+_dual_depth(::Type{<:ForwardDiff.Dual{<:Any, V}}) where {V} = 1 + _dual_depth(V)
+_dual_depth(::Type) = 0
 
 """
     _solve_sc(algo::NonlinearSolve.AbstractNonlinearAlgorithm, step, x0; kw...)
@@ -152,7 +156,7 @@ function S._solve_sc(
     # plateau of the positive-definiteness guard, where the residual is large
     # and its Jacobian identically zero. Measuring differently is safe;
     # searching differently is not.
-    w_nls, _isometric = S._sc_param_weights(x0)
+    w_nls = S._sc_param_weights(x0)
     _wnorm(v) = sqrt(sum(abs2, w_nls .* v))
     # `NormTerminationMode` keeps BOTH tolerances — `‖Δ‖ ≤ abstol` or
     # `‖Δ‖ ≤ reltol · ‖Δ + u‖` — which is `max` where the package's own contract
@@ -209,8 +213,8 @@ function S._solve_sc(
         #    residual *value* is stripped to `Float64` for the primal
         #    solve.
         embed(p) = convert.(T_full, p)
-        u0 = Float64[ForwardDiff.value(x) for x in p0]
-        Fval(p) = ForwardDiff.value.(residual_vec(embed(p)))
+        u0 = TensND.primal.(p0)
+        Fval(p) = TensND.primal.(residual_vec(embed(p)))
         Jval(p) = _primal_jacobian(residual_vec, p, T_full)
         nf = NonlinearFunction((p, _) -> Fval(p); jac = (p, _) -> Jval(p))
         prob = NonlinearProblem(nf, u0)
@@ -224,6 +228,13 @@ function S._solve_sc(
         r_dual = residual_vec(embed(pstar))  # single-layer Dual{UserTag}: value ≈ 0
         Jf = Jval(pstar)                     # Float64 ∂F/∂p at the primal root
         pstar_dual = embed(pstar) .- (Jf \ r_dual)  # IFT correction: dp*/dθ = -Jf⁻¹ ∂F/∂θ
+        # Under nested duals the primal Jacobian leaves the cross terms
+        # (ε₁ε₂, …) wrong; each full Newton step at the dual level squares the
+        # error in the partials, so one step per further level makes them exact.
+        for _ in 2:_dual_depth(T_full)
+            pstar_dual = pstar_dual .-
+                ForwardDiff.jacobian(residual_vec, pstar_dual) \ residual_vec(pstar_dual)
+        end
         return rebuild(pstar_dual)
     end
 end

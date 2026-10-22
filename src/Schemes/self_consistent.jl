@@ -535,7 +535,7 @@ function _solve_sc(
     # are the Frobenius norms of the tensors they stand for — the same quantity
     # the Picard loop tests, rather than an unweighted sum over canonical
     # components that means something different in every symmetry class.
-    w, isometric = _sc_param_weights(x_seed)
+    w = _sc_param_weights(x_seed)
     p0 = w .* _tens_to_param_vec(x_seed)
     L = length(p0)
     rebuild = p -> _tens_from_param_vec(x_seed, p ./ w)
@@ -545,12 +545,8 @@ function _solve_sc(
         x_out = step(x_in)
         return w .* (_tens_to_param_vec(x_out) .- _tens_to_param_vec(x_in))
     end
-    # With an orthogonal class basis the Euclidean norm of the scaled vector
-    # *is* the Frobenius norm. Where the probe failed (unit weights) fall back
-    # to measuring the tensors themselves: exact too, only more costly.
-    _nrm_r = isometric ? (r, p) -> sqrt(sum(abs2, r)) :
-        (r, p) -> _sc_residual_norm(rebuild(p .+ r), rebuild(p))
-    _nrm_p = isometric ? p -> sqrt(sum(abs2, p)) : p -> _sc_frobenius(rebuild(p))
+    # The class basis is orthogonal, so the Euclidean norm of the scaled vector
+    # *is* the Frobenius norm of the tensor it encodes.
     # `eltype(p0)` alone is not always enough to know whether `Dual`s are
     # in play: when the differentiated parameter lives on a phase other
     # than the one `x0` is built from (e.g. differentiating w.r.t. an
@@ -573,8 +569,8 @@ function _solve_sc(
     p_best = copy(p); resid_best = Inf
     for iter in 1:maxiters
         MFH_Core._bump!(MFH_Core.SC_ITERATIONS)
-        norm_r = _nrm_r(r, p)
-        norm_p = _nrm_p(p)
+        norm_r = _l2(r)
+        norm_p = _l2(p)
         tol_eff = abstol + reltol * _scalar_value(norm_p)
         verbose && @info "SC-Newton iter $iter : ‖F‖ = $norm_r   tol = $tol_eff"
         if select_best && _scalar_value(norm_r) < resid_best
@@ -596,7 +592,10 @@ function _solve_sc(
         δ = try
             J \ (-r)
         catch err
-            @debug "SC-Newton: linear solve failed, applying tiny Tikhonov" err
+            # Only a singular (or numerically singular) Jacobian is regularized;
+            # any other error is a bug and must surface.
+            err isa Union{LinearAlgebra.SingularException, LinearAlgebra.LAPACKException} || rethrow()
+            @debug "SC-Newton: singular Jacobian, applying tiny Tikhonov" err
             (J + 1.0e-10 * sqrt(sum(abs2, J)) * LinearAlgebra.I) \ (-r)
         end
         # Backtracking line search (Armijo).  The accepted `r_new` IS the
@@ -608,7 +607,7 @@ function _solve_sc(
         for _ in 1:30
             p_new = p .+ α_step .* δ
             r_new = residual_vec(p_new)
-            if _nrm_r(r_new, p_new) ≤ (1 - 1.0e-4 * α_step) * norm_r
+            if _l2(r_new) ≤ (1 - 1.0e-4 * α_step) * norm_r
                 p .= p_new
                 r .= r_new
                 accepted = true
@@ -794,11 +793,7 @@ The extra `step` call is not wasted work: its result is also a strictly
 better starting iterate than `x0`.
 """
 function _sc_newton_seed(x0::TensND.AbstractTens, step)
-    x1 = try
-        step(x0)
-    catch
-        return x0            # let the main loop surface the real failure
-    end
+    x1 = step(x0)        # an error here is the one the main loop would raise
     return length(TensND.get_data(x1)) == length(TensND.get_data(x0)) ? x0 : x1
 end
 
@@ -806,11 +801,8 @@ _tens_to_param_vec(t::TensND.AbstractTens) = collect(TensND.get_data(t))
 _tens_from_param_vec(prototype::TensND.AbstractTens, p::AbstractVector) =
     _rebuild_from_data(prototype, p)
 
-# Default rebuild: `_rebuild` is TensND-internal; for known types we use
-# the public constructor.
-_rebuild_from_data(::TensND.TensISO{3}, p) = TensND.TensISO{3}(p[1], p[2])
-_rebuild_from_data(t::TensND.AbstractTens, p) =
-    TensND._rebuild(t, ntuple(i -> p[i], length(p)))
+# The structured classes rebuild from their coefficient tuple.
+_rebuild_from_data(t::TensND.AbstractTens, p) = TensND._rebuild(t, Tuple(p))
 
 # Residual norm on the components of `a` and `b` in one basis: `same_basis`
 # leaves them as they are when they share one, the usual case, and otherwise
@@ -840,21 +832,17 @@ _comparable(t, ::TensND.AbstractBasis) = TensND.components_canon(t)
 
 _sc_frobenius(t::TensND.AbstractTens) = _frobenius(t)
 
-# `‖rebuild(prototype, v)‖_F`, or `nothing` when the class cannot be rebuilt
-# from those components at all. Not every symmetry class accepts every
-# coordinate vector — a rebuild that validates its argument rejects the
-# canonical unit vectors, which are semi-definite — so this is a normal answer
-# rather than an error, and one guarded call site serves both probes below.
+_l2(v) = sqrt(sum(abs2, v))
+
+# `‖rebuild(prototype, v)‖_F`. The probe is written in the prototype's element
+# type, since a dual axis does not convert to a plain number.
 function _sc_basis_norm(prototype::TensND.AbstractTens, v::AbstractVector)
-    return try
-        _scalar_value(_sc_frobenius(_rebuild_from_data(prototype, v)))
-    catch
-        return nothing
-    end
+    T = eltype(TensND.get_data(prototype))
+    return _scalar_value(_sc_frobenius(_rebuild_from_data(prototype, convert.(T, v))))
 end
 
 """
-    _sc_param_weights(prototype) -> (w::Vector{Float64}, isometric::Bool)
+    _sc_param_weights(prototype) -> w::Vector{Float64}
 
 Per-component weights making the Euclidean norm of the Newton / SciML parameter
 vector equal the **Frobenius norm of the tensor it encodes**, so that `abstol`
@@ -879,29 +867,22 @@ Armijo condition are measured in changes. A trust-region method is *not*
 invariant, and there the rescaling additionally puts its region in a
 physically meaningful metric.
 
-The isometry needs the class basis to be orthogonal, which is checked rather
-than assumed: `isometric = false` (with unit weights) is returned when the
-probe fails — the general `Mandel66` fallback among others — and the caller
-then measures the tensor norm directly instead.
+The isometry needs the class basis to be orthogonal. It is for every class
+that has a parameter vector (`TensISO`, `TensTI` in its five-, six- and
+eight-parameter forms and at order 2, `TensOrtho`, `TensCubic`), and it is
+checked rather than assumed, so that a class added later with a basis that is
+not orthogonal is refused instead of measured in the wrong norm.
 """
 function _sc_param_weights(prototype::TensND.AbstractTens)
     L = length(TensND.get_data(prototype))
-    ones_w = ones(Float64, L)
-    w = Vector{Float64}(undef, L)
-    for i in 1:L
-        e = zeros(Float64, L)
-        e[i] = 1.0
-        wi = _sc_basis_norm(prototype, e)
-        (wi === nothing || !isfinite(wi) || wi ≤ 0) && return (ones_w, false)
-        w[i] = wi
-    end
+    w = [_sc_basis_norm(prototype, [j == i ? 1.0 : 0.0 for j in 1:L]) for i in 1:L]
     # Orthogonality probe: a vector with pairwise-distinct entries, so that a
     # non-zero cross term `2 qᵢ qⱼ ⟨Eᵢ, Eⱼ⟩` cannot cancel out by symmetry.
-    q = Float64[i for i in 1:L]
-    nq = _sc_basis_norm(prototype, q)
-    nq === nothing && return (ones_w, false)
-    isapprox(nq^2, sum(abs2, q .* w); rtol = 1.0e-10) || return (ones_w, false)
-    return (w, true)
+    q = collect(1.0:L)
+    isapprox(_sc_basis_norm(prototype, q)^2, sum(abs2, q .* w); rtol = 1.0e-10) || throw(
+        ArgumentError("the parameter basis of $(typeof(prototype)) is not orthogonal; its weights do not make an isometry")
+    )
+    return w
 end
 
 # Initial zero residual with eltype matching `x0` (Dual-preserving).

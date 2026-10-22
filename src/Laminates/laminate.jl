@@ -386,6 +386,9 @@ MFH_Core.cell_member_names(lam::Laminate) = lam.layer_names
 MFH_Core.cell_container_property(lam::Laminate, name::Symbol, key::Symbol) =
     layer_property_raw(lam, name, key)
 
+MFH_Core.cell_has_property(lam::Laminate, name::Symbol, key::Symbol) =
+    haskey(lam.layers, name) && haskey(lam.layers[name].properties, key)
+
 function MFH_Core.cell_set_property(lam::Laminate, name::Symbol, key::Symbol, value)
     haskey(lam.layers, name) ||
         throw(ArgumentError("no layer named :$(name) in Laminate"))

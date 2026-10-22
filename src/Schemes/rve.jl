@@ -1126,6 +1126,9 @@ cell_member_names(rve::RVE) = rve.phase_names
 cell_container_property(rve::RVE, name::Symbol, key::Symbol) =
     phase_property_raw(rve, name, key)
 
+cell_has_property(rve::RVE, name::Symbol, key::Symbol) =
+    haskey(rve.phases, name) && haskey(rve.phases[name].properties, key)
+
 function cell_set_property(rve::RVE, name::Symbol, key::Symbol, value)
     haskey(rve.phases, name) ||
         throw(ArgumentError("no phase named :$(name) in RVE"))

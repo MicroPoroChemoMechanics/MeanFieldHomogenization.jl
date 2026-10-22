@@ -427,6 +427,10 @@ MFH_Core.cell_member_names(asm::ParticleAssembly) =
 MFH_Core.cell_container_property(asm::ParticleAssembly, name::Symbol, key::Symbol) =
     _fetch_property(asm, name, key)
 
+MFH_Core.cell_has_property(asm::ParticleAssembly, name::Symbol, key::Symbol) =
+    name === asm.matrix_name ? haskey(asm.matrix_properties, key) :
+    haskey(asm.particles, name) && haskey(asm.particles[name].properties, key)
+
 function MFH_Core.cell_set_property(
         asm::ParticleAssembly{T, B}, name::Symbol, key::Symbol, value
     ) where {T, B}

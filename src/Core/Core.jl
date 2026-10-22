@@ -72,7 +72,7 @@ export AbstractInclusion, AbstractEllipsoidalInclusion,
 # The homogenization cell contract + declarative multiscale nesting
 export AbstractHomogenizationCell, AbstractParameter
 export homogenize, validate_cell, get_param, set_param
-export cell_member_names, cell_container_property, cell_set_property
+export cell_member_names, cell_container_property, cell_set_property, cell_has_property
 export Homogenized, NestedParameter, nested, resolve_property, has_nested_property
 export dimension, element_type, inclusion_basis, shape_trait, shape_tensor
 export eshelby_tensor

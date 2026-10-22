@@ -113,6 +113,7 @@ MeanFieldHomogenization.Core.AbstractHomogenizationCell
 MeanFieldHomogenization.Core.validate_cell
 MeanFieldHomogenization.Core.cell_member_names
 MeanFieldHomogenization.Core.cell_container_property
+MeanFieldHomogenization.Core.cell_has_property
 MeanFieldHomogenization.Core.cell_set_property
 MeanFieldHomogenization.Core.Homogenized
 MeanFieldHomogenization.Core.NestedParameter

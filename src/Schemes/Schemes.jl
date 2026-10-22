@@ -32,7 +32,7 @@ const MFH_Core = Core
 # laminate unit cell is another.
 import ..Core: AbstractHomogenizationCell, AbstractParameter,
     homogenize, validate_cell, _evaluate, get_param, set_param,
-    cell_member_names, cell_container_property, cell_set_property,
+    cell_member_names, cell_container_property, cell_set_property, cell_has_property,
     Homogenized, NestedParameter, nested, resolve_property
 
 # Forward declarations of inclusion types we touch from the other sub-modules

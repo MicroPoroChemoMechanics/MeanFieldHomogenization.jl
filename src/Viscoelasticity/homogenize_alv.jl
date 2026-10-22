@@ -26,12 +26,8 @@ is still reported.
 """
 function has_visco_property(cell::MFH_Core.AbstractHomogenizationCell, prop::Symbol = :C)
     for name in MFH_Core.cell_member_names(cell)
-        v = try
-            MFH_Core.cell_container_property(cell, name, prop)
-        catch
-            continue
-        end
-        _is_visco_value(v, prop) && return true
+        MFH_Core.cell_has_property(cell, name, prop) || continue
+        _is_visco_value(MFH_Core.cell_container_property(cell, name, prop), prop) && return true
     end
     return false
 end

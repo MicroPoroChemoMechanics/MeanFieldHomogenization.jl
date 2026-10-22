@@ -381,7 +381,7 @@ end
     end
 end
 
-@testset "SelfConsistent — the isometric parametrization and its fallback" begin
+@testset "SelfConsistent — the isometric parametrization, every class" begin
     # `abstol` bounds the Frobenius norm of the tensor for every solver, and
     # what converts one into the other is the weight vector below. The identity
     # holds only if the class basis is orthogonal, which the code checks rather
@@ -395,8 +395,7 @@ end
     C_ti = homogenize(rve, MoriTanaka(), :C)
 
     for T in (C_iso, C_ti)
-        w, isometric = S._sc_param_weights(T)
-        @test isometric
+        w = S._sc_param_weights(T)
         L = length(TensND.get_data(T))
         @test length(w) == L
         @test all(>(0), w)
@@ -408,15 +407,28 @@ end
     # The deviatoric basis tensor is not a unit tensor: an isotropic stiffness
     # weights (α, β) by (1, √5). This is the whole reason the plain Euclidean
     # norm of the components understated the tensor norm.
-    w_iso, _ = S._sc_param_weights(C_iso)
+    w_iso = S._sc_param_weights(C_iso)
     @test w_iso[1] ≈ 1.0 rtol = 1.0e-12
     @test w_iso[2] ≈ sqrt(5) rtol = 1.0e-12
 
-    # The fallback: a coordinate vector the class cannot be rebuilt from is a
-    # normal answer (`nothing`), not an exception — that is what lets the
-    # caller degrade to measuring the tensor directly instead of failing.
-    @test S._sc_basis_norm(C_ti, [1.0, 2.0, 3.0]) === nothing
-    @test S._sc_basis_norm(C_ti, collect(1.0:length(TensND.get_data(C_ti)))) isa Real
+    # Every class with a parameter vector has an orthogonal basis: the weights
+    # are √2 off the diagonal pairs, 2 on the orthotropic shears, √3 for the
+    # cubic hydrostatic projector.
+    F = RotatedBasis(0.3, 1.2, -0.4)
+    @test S._sc_param_weights(TensND.TensOrtho(9.0, 8.0, 7.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, F)) ≈
+        [1, 1, 1, √2, √2, √2, 2, 2, 2]
+    @test S._sc_param_weights(TensND.TensCubic(9.0, 4.0, 3.0, F)) ≈ [1, √2, √3]
+    @test S._sc_param_weights(TensND.TensTI{2}(1.0, 2.0, 0.5, (0.36, 0.48, 0.8))) ≈ [√2, 1, √2]
+
+    # A prototype carrying dual numbers, its axis included, keeps the isometric
+    # weights of its value: the probes are written in its element type. They
+    # were rebuilt in Float64, which a dual axis does not convert to, and the
+    # caught error fell back to unit weights.
+    D = ForwardDiff.Dual{:sc_w}(1.0, 1.0)
+    C_dual = TensND.TensTI{4, typeof(D), length(TensND.get_data(C_ti))}(
+        map(x -> D * x, TensND.get_data(C_ti)), map(x -> D * x, TensND.axis(C_ti))
+    )
+    @test S._sc_param_weights(C_dual) ≈ S._sc_param_weights(C_ti) rtol = 1.0e-12
 end
 
 @testset "AsymmetricSelfConsistent — insulating cracks in conduction" begin
@@ -530,7 +542,7 @@ end
     # A map that leaves β where it is: the Jacobian has a zero column, the LU
     # factorization fails, and the Tikhonov-regularized step solves for α alone.
     step_singular(x) = ((α, β) = TensND.get_data(x); TensISO{3}(α + (7.0 - α) / 2, β))
-    x = @test_logs (:debug, r"linear solve failed") min_level = debug match_mode = :any S._solve_sc(
+    x = @test_logs (:debug, r"singular Jacobian") min_level = debug match_mode = :any S._solve_sc(
         NewtonDefault(), step_singular, TensISO{3}(1.0, 2.0)
     )
     @test TensND.get_data(x)[1] ≈ 7.0 rtol = 1.0e-9

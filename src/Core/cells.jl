@@ -164,6 +164,24 @@ resolving accessors are `phase_property` / `layer_property`.
 function cell_container_property end
 
 """
+    cell_has_property(cell, name::Symbol, key::Symbol) -> Bool
+
+Whether member `name` of `cell` carries a property under `key`. The cells of the
+package answer directly; for any other cell this falls back on
+[`cell_container_property`](@ref), whose refusal (`ArgumentError` or `KeyError`)
+means "absent" and any other error is rethrown.
+"""
+function cell_has_property(cell::AbstractHomogenizationCell, name::Symbol, key::Symbol)
+    try
+        cell_container_property(cell, name, key)
+        return true
+    catch err
+        err isa Union{ArgumentError, KeyError} || rethrow()
+        return false
+    end
+end
+
+"""
     cell_set_property(cell, name::Symbol, key::Symbol, value)
 
 Return a new cell in which property `key` of member `name` has been replaced
@@ -317,12 +335,8 @@ Purely introspective — it never resolves anything.
 """
 function has_nested_property(cell::AbstractHomogenizationCell, key::Symbol)
     for name in cell_member_names(cell)
-        v = try
-            cell_container_property(cell, name, key)
-        catch
-            continue
-        end
-        v isa Homogenized && return true
+        cell_has_property(cell, name, key) || continue
+        cell_container_property(cell, name, key) isa Homogenized && return true
     end
     return false
 end
