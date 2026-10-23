@@ -493,11 +493,15 @@ end
 # count as an implementation.
 const _FALLBACK_OWNERS = (Core.AbstractInclusion, Core.AbstractCustomInclusion)
 
-# The declared type of the first argument of the method that would be called.
-# `m.sig` is a `UnionAll` whenever the method is parametric, hence the unwrap.
+# The declared type of the first argument of the method that would be called,
+# as the `UnionAll` of its type name. `m.sig` is a `UnionAll` whenever the method
+# is parametric, hence the unwrap; and the argument of a parametric abstract type
+# comes back as that `UnionAll` on Julia 1.13 but as its body, with a free type
+# variable, on 1.14, which compares unequal to it.
 function _dispatch_owner(f, argtypes)
     sig = Base.unwrap_unionall(which(f, argtypes).sig)
-    return Base.unwrap_unionall(sig.parameters[2])
+    owner = Base.unwrap_unionall(sig.parameters[2])
+    return owner isa DataType ? owner.name.wrapper : owner
 end
 
 function _provides(::Core.AbstractInclusion, ::Symbol, f, args...)

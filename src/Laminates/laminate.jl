@@ -313,7 +313,7 @@ laminate_basis(lam::Laminate) = lam.basis
 The layer normal ``\\underline{n}``, i.e. the third axis of [`laminate_basis`](@ref),
 in canonical components.
 """
-laminate_normal(lam::Laminate) = Tuple(TensND.vecbasis(lam.basis, :cov)[:, 3])
+laminate_normal(lam::Laminate) = MFH_Core._basis_axis(lam.basis, 3)
 
 """
     layer_interface(lam, k::Integer) -> AbstractInterface

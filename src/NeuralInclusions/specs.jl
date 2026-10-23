@@ -385,7 +385,7 @@ _class_frame(::Union{HillTI, HillTI2}, geom) =
 # normal. A wrong choice here does not pass silently: `components` measures the
 # projection residual.
 _class_frame(::Union{GradientConcentrationTI, FluxConcentrationTI, GradientConcentrationTI2}, geom) =
-    Tuple(TensND.vecbasis(Core.inclusion_basis(geom), :cov)[:, 3])
+    Core._basis_axis(Core.inclusion_basis(geom), 3)
 
 # The cube axes are the inclusion's own basis, all three columns of it — a cube
 # has no distinguished direction to single out, which is the whole difference

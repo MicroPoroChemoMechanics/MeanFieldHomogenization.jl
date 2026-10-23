@@ -101,7 +101,15 @@ The generic tensor algebra MFH carried moves to TensND 0.7.
   basis.
 - **Julia 1.14**: six generated constructors had unbound type parameters (Aqua);
   rebuilding a `NeuralConcentrationInclusion` without shape parameters threw,
-  so its sensitivity to a semi-axis did.
+  so its sensitivity to a semi-axis did. On Julia 1.14 the Hill, auxiliary and
+  concentration tensors of a spheroid or a cylinder were inferred as the
+  abstract `TensTI`: their symmetry axis was read off the basis as a tuple of
+  run-time length, which 1.14 no longer sees through. It is now built with a
+  static length, and the type is concrete on every version. And
+  `check_inclusion_interface` took the package's generic fallbacks for methods
+  an inclusion supplies, so it reported a crack as a valid volume-fraction
+  phase: 1.14 hands the declared type of a parametric argument back in another
+  form, which the comparison missed.
 - **`_major_symmetrize` of a 3-parameter `TensTI{2}`** kept its skew part.
 - **`extract_ti_moduli`** went through an Euler-angle frame and 81 components to
   read five moduli that do not depend on the axis; they are read off the Walpole

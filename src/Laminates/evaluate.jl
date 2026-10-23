@@ -153,7 +153,7 @@ which is correct: the geometry itself is floating point.
 @inline _frame_axis(::TensND.CanonicalBasis{3}, ::Type{Tel}) where {Tel} =
     (zero(Tel), zero(Tel), one(Tel))
 @inline function _frame_axis(basis::TensND.AbstractBasis{3}, ::Type{Tel}) where {Tel}
-    n = Tuple(TensND.vecbasis(basis, :cov)[:, 3])
+    n = MFH_Core._basis_axis(basis, 3)
     return ntuple(i -> convert(Tel, n[i]), 3)
 end
 

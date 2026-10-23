@@ -9,6 +9,19 @@
 # =============================================================================
 
 """
+    _basis_axis(basis, k) -> NTuple{3}
+
+The `k`-th covariant vector of a 3-D `basis`, as a tuple of static length: the axis
+a `TensTI` or a laminate normal is built on. `Tuple(vecbasis(basis, :cov)[:, k])`
+has a length known only at run time, which Julia 1.14 no longer recovers when
+inferring the `TensTI` built on it.
+"""
+function _basis_axis(basis, k::Integer)
+    V = TensND.vecbasis(basis, :cov)
+    return ntuple(i -> V[i, k], Val(3))
+end
+
+"""
     _frame_from_normal(n; T = nothing, in_plane = nothing) -> AbstractBasis
 
 The frame of a laminate of normal `n`: TensND's `frame_from_axis(n; in_plane, T)`,
