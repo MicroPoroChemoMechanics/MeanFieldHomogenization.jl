@@ -493,8 +493,15 @@ function _surface_moment(
     return E
 end
 
-"Confocal volume up to ``q``: ``\\tfrac{4\\pi}{3}\\,c^3\\,q(q^2-1)``, and 0 at ``q = 1``."
-@inline _confocal_volume(q, c) = abs(4 * π / 3 * c^3 * q * (q^2 - one(q)))
+"""
+Confocal volume up to ``q``: ``\\tfrac{4\\pi}{3}\\,c^3\\,q(q^2-1)``, and 0 at ``q = 1``.
+
+Real and nonnegative as it stands, for a prolate spheroid and for an oblate one
+(``q = \\mathrm{i}\\tau``, ``c = -\\mathrm{i}\\,\\bar c``: ``c^3 q (q^2-1) = \\bar c^3 \\tau(\\tau^2+1)``), so it is
+taken by `real`, not `abs`: the modulus of a complex zero has no derivative, and
+gave `NaN` partials to every oblate concentration differentiated by duals.
+"""
+@inline _confocal_volume(q, c) = real(4 * c^3 * q * (q^2 - one(q)) * π / 3)
 
 """
     _avg_strain(groups, amps, q_out, q_in, c, μ, ν, ::Type{T}; kw...) -> 3×3

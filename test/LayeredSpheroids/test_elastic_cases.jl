@@ -190,6 +190,23 @@ end
         @test ForwardDiff.partials(d)[1] ≈ (4 * cd(h / 2) - cd(h)) / 3 rtol = 1.0e-9
     end
 
+    @testset "oblate, differentiated by duals: no NaN from the degenerate volume" begin
+        # The whole-inclusion average takes `q_in = 1`, a complex zero volume for
+        # an oblate spheroid; its modulus gave `NaN` partials.
+        ν₀ = 0.2
+        ce(E) = iso_stiffness(E / (3 * (1 - 2ν₀)), E / (2 * (1 + ν₀)))
+        A1111(w) = (
+            r = confocal_layer_radii(0.4, 1.0, (w, 1 - w));
+            components_canon(gradient_gradient_concentration(LayeredSpheroid(r[1], r[2], (ce(3.0), ce(0.6))), ce(1.0), ce(1.0)))[1, 1, 1, 1]
+        )
+        w₀ = 0.6
+        d = A1111(ForwardDiff.Dual{:w}(w₀, 1.0))
+        @test ForwardDiff.value(d) ≈ A1111(w₀) rtol = 1.0e-13
+        h = 1.0e-4
+        cd(h) = (A1111(w₀ + h) - A1111(w₀ - h)) / 2h
+        @test ForwardDiff.partials(d)[1] ≈ (4 * cd(h / 2) - cd(h)) / 3 rtol = 1.0e-9
+    end
+
     @testset "degree 0 of φ₀ is not optional" begin
         # Only its REGULAR part is a constant and inert. The irregular one is
         # `arccoth q`, an essential mode: dropping it made the case-I system
