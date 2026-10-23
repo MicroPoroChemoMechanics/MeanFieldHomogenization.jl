@@ -38,6 +38,14 @@ const FE = MeanFieldHomogenization.FiniteElements
             close(io)
             @test fe_available_gb(path) == Inf
         end
+        # A line it cannot parse, or one cut short: unknown as well.
+        for line in ("MemAvailable: lots kB\n", "MemAvailable:\n")
+            mktemp() do path, io
+                write(io, line)
+                close(io)
+                @test fe_available_gb(path) == Inf
+            end
+        end
         @test_throws ErrorException FE._fe_check_budget(
             10^9; max_dofs = 1000, min_free_gb = 0.0
         )

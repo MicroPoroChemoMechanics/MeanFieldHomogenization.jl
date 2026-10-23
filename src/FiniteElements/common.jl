@@ -100,8 +100,10 @@ function fe_available_gb(meminfo::AbstractString = "/proc/meminfo")
             startswith(line, "MemAvailable:") || continue
             return parse(Float64, split(line)[2]) / 1024 / 1024
         end
-    catch
+    catch err
         # Unreadable, absent, or a format this does not know: fall through.
+        # Anything else is a bug and surfaces.
+        err isa Union{SystemError, ArgumentError, BoundsError} || rethrow()
     end
     return Inf
 end

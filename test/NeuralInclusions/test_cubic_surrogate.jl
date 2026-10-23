@@ -379,6 +379,7 @@ end
     @test_throws ArgumentError NI._spheroid_axis_index((1.0, 2.0, 3.0))
     # A file's format has to be a version number.
     @test_throws ArgumentError NI._check_format("one-point-oh", "model.json")
+    @test_throws ArgumentError NI._check_format(1.0, "model.json")
     # A format-1.0 file carries the per-component errors only; with none
     # recorded, the block error is unknown, hence infinite.
     @test NI._read_block_error(NI.JSON.parse("{\"max_rel_error\": []}")) == Inf
