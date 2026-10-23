@@ -29,6 +29,18 @@
 #  an artifact of a gauge that drops one of them, not a physical requirement.
 #  The Eshelby oracle confirms it: case III lands on the analytic answer to
 #  `1e-15` with no rotation in the unknown list.
+#
+#  ONE FIELD-FREE COMBINATION PER REGULAR REGION, removed before the solve.
+#  Papkovich–Neuber potentials are not unique: for any harmonic `ζ`,
+#  `φ⃗ = ∇ζ`, `φ₀ = 4(1-ν) ζ - x⃗·∇ζ` give `Φ = 4(1-ν) ζ` and hence `u = 0`.
+#  With the families of a case, `φ⃗ = ∇ζ` must stay inside the active
+#  potentials, which leaves one `ζ` in each shear case and none in case I
+#  (see `_gauge_group`). It is a polynomial, so it lives in every region with
+#  regular modes — the core and each inner shell — and makes those columns
+#  exactly dependent: two singular values at `1e-16` for two layers, a solve
+#  that returned the concentration to `1e-6` only, differently for `Float64`
+#  and for duals. Dropping one column of that combination in each such region
+#  spans the same fields with a full-rank system.
 # =============================================================================
 
 """
@@ -124,6 +136,33 @@ _case_groups(cs::LongitudinalShearCase, D::Int) = [
     ModeGroup(cs.trig === :cos ? 1 : 2, 0, :cos, 1:2:(2D - 1)),
     ModeGroup(3, 1, cs.trig, 1:2:(2D - 1)),
 ]
+
+"""
+    _gauge_group(case) -> Union{Nothing, Tuple{Int, Int}}
+
+The `(group index, degree)` in [`_case_groups`](@ref) of the regular column
+dropped from each region that has regular modes, or `nothing` when the case has
+no field-free combination.
+
+A harmonic `ζ` gives `u = 0` through `φ⃗ = ∇ζ`, `φ₀ = 4(1-ν) ζ - x⃗·∇ζ`. The
+families of a case admit it only when `∇ζ` has no component outside the active
+potentials and degrees:
+
+- case I keeps `φ₃` alone, so `ζ = ζ(z)`, harmonic, is `z`, whose `φ₃ = 1` is of
+  degree 0, outside the odd degrees: none;
+- case II ties `(φ₁, φ₂)` at order 1 with `φ₃ = 0`: `ζ = xy` (`:sin`) or
+  `(x² - y²)/2` (`:cos`), the tied pair at degree 1 and `φ₀ = (2-4ν) ζ`;
+- case III has `φ₂ = 0` (`:cos`): `ζ = x h(z)` harmonic is `x(a + bz)`, and
+  `ζ = x` falls outside the odd degrees of `φ₁`, so `ζ = xz` remains, with `φ₁`
+  at degree 1 (`φ₂` for `:sin`, `ζ = yz`).
+
+The dropped column is the one of the pair `(φ₁, φ₂)` or of `φ₁`/`φ₂` at degree 1:
+its coefficient in the combination is 1, whatever `ν`, where the one of `φ₀`,
+`2 - 4ν`, vanishes for an incompressible layer.
+"""
+_gauge_group(::AxisymmetricCase) = nothing
+_gauge_group(::TransverseShearCase) = (3, 1)
+_gauge_group(::LongitudinalShearCase) = (2, 1)
 
 """
     _case_remote(case, c, κ₀, μ₀, ε...) -> Vector{Pair}
@@ -331,7 +370,7 @@ function _solve_elastic(
     c = s.c
     qs = s.q
 
-    regs = Vector{Any}(undef, N + 1)
+    regs = Vector{Tuple{Vararg{Symbol}}}(undef, N + 1)
     regs[1] = (:regular,)
     for ℓ in 2:N
         regs[ℓ] = (:regular, :irregular)
@@ -377,7 +416,10 @@ function _solve_elastic(
     # a `ForwardDiff.Dual` element type it raised `SingularException`. Filtering
     # is both the fix and better conditioning, and it catches any other null
     # direction a future case might introduce.
-    keep = [j for j in axes(A, 2) if any(!iszero, @view A[:, j])]
+    # The field-free combination of `_gauge_group` is removed too, in every
+    # region that has regular modes (all but the matrix).
+    gauge = _gauge_columns(_gauge_group(case), groups, regs, offs, N)
+    keep = [j for j in axes(A, 2) if !(j in gauge) && any(!iszero, @view A[:, j])]
     # The column scaling lives in `_equilibrated_solve`, whose docstring says
     # why it is a change of unknowns and not a tolerance.
     solk = _equilibrated_solve(A[:, keep], rhs)
@@ -396,6 +438,17 @@ function _solve_elastic(
         ] for ℓ in 1:(N + 1)
     ]
     return (; amplitudes, groups, residual)
+end
+
+# The global indices of the gauge column in regions `1:N`, each listing its
+# columns `(gi, r, n)` in the order `_elastic_block` does.
+_gauge_columns(::Nothing, groups, regs, offs, N) = Int[]
+function _gauge_columns((g, n)::Tuple{Int, Int}, groups, regs, offs, N)
+    return [
+        offs[ℓ] + i for ℓ in 1:N for (i, col) in enumerate(
+                (gi, r, k) for gi in eachindex(groups) for r in regs[ℓ] for k in groups[gi].degrees
+            ) if col == (g, :regular, n)
+    ]
 end
 
 """

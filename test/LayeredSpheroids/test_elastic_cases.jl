@@ -159,6 +159,37 @@ end
         @test all(k -> abs(t_rot[k]) < 1.0e-12 * max(1.0, maximum(abs, t_sym)), 1:3)
     end
 
+    @testset "the field-free combination is removed, so duals and Float64 agree" begin
+        # `ζ = xz`: `φ₁ = z`, `φ₃ = x`, `φ₀ = (2 - 4ν) xz` move nothing. The
+        # amplitudes of `z`, `x` and `xz` in the modes: `z = c P₁P₁`,
+        # `x = -c P₁¹P₁¹ cos φ`, `xz = -(c²/9) P₂¹P₂¹ cos φ`.
+        c, μ, ν = 0.8, 3.0, 0.27
+        p, q, ϕ = 0.37, 1.6, 0.41
+        f(pot, n, m) = LSec.mode_fields(LSec.PNMode(pot, :regular, n, m, :cos), ϕ, p, q, c, μ, ν, Float64)
+        (u1, t1), (u3, t3), (u0, t0) = f(1, 1, 0), f(3, 1, 1), f(0, 2, 1)
+        w = (c, -c, -(2 - 4ν) * c^2 / 9)
+        u = ntuple(k -> w[1] * u1[k] + w[2] * u3[k] + w[3] * u0[k], 3)
+        t = ntuple(k -> w[1] * t1[k] + w[2] * t3[k] + w[3] * t0[k], 3)
+        @test maximum(abs, u) < 1.0e-14 * maximum(abs, u1) && maximum(abs, t) < 1.0e-14 * maximum(abs, t1)
+        @test LSec._gauge_group(AxisymmetricCase()) === nothing
+        # Two layers, so a core and a shell with regular modes: their combinations
+        # made the system singular, and the concentration came out to `2e-6` and
+        # differently along the dual path. Now both agree, and the derivative is the
+        # one a converged centered difference gives.
+        ν₀ = 0.2
+        ce(E) = iso_stiffness(E / (3 * (1 - 2ν₀)), E / (2 * (1 + ν₀)))
+        A1111(w) = (
+            r = confocal_layer_radii(2.6, 1.0, (w, 1 - w));
+            components_canon(gradient_gradient_concentration(LayeredSpheroid(r[1], r[2], (ce(3.0), ce(0.6))), ce(1.0), ce(1.0)))[1, 1, 1, 1]
+        )
+        w₀ = 0.66
+        d = A1111(ForwardDiff.Dual{:w}(w₀, 1.0))
+        @test ForwardDiff.value(d) ≈ A1111(w₀) rtol = 1.0e-13
+        h = 1.0e-4
+        cd(h) = (A1111(w₀ + h) - A1111(w₀ - h)) / 2h
+        @test ForwardDiff.partials(d)[1] ≈ (4 * cd(h / 2) - cd(h)) / 3 rtol = 1.0e-9
+    end
+
     @testset "degree 0 of φ₀ is not optional" begin
         # Only its REGULAR part is a constant and inert. The irregular one is
         # `arccoth q`, an essential mode: dropping it made the case-I system
