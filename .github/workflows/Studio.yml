@@ -101,9 +101,10 @@ jobs:
               # whose only conda-forge builds carry no win-64 `cli-64.exe`: the
               # transaction fails on every try. pip makes its own launchers, so
               # `sympy` goes into the same Python through it until conda is fixed.
-              using Conda
-              Conda.pip_interop(true)
-              retry(() -> Conda.pip("install", "sympy"); delays = fill(60.0, 2))()
+              # pip is called directly on the interpreter PyCall uses: `Conda.pip`
+              # checks `pip_interop_enabled`, which conda 26 renamed
+              # (`prefix_data_interoperability`), and refuses even once it is set.
+              retry(() -> run(`$(PyCall.python) -m pip install sympy`); delays = fill(60.0, 2))()
               pyimport("sympy")
           else
               retry(() -> pyimport_conda("sympy", "sympy"); delays = fill(60.0, 2))()
