@@ -78,11 +78,8 @@ function _hill_2d_aniso(
     # and the result was not exactly symmetric; each orbit is now averaged
     # once, in the order of its smallest index, and that value given to all
     # its members.
-    P_sym = similar(P_arr)
-    for α in 1:2, β in 1:2, γ in 1:2, δ in 1:2
-        rep = minimum(_orbit8(α, β, γ, δ))
-        P_sym[α, β, γ, δ] = sum(P_arr[I...] for I in _orbit8(rep...)) / 8
-    end
+    _orbit_mean(I) = sum(P_arr[J...] for J in _orbit8(minimum(_orbit8(I...))...)) / 8
+    P_sym = [_orbit_mean((α, β, γ, δ)) for α in 1:2, β in 1:2, γ in 1:2, δ in 1:2]
 
     return TensND.Tens(P_sym, ell.basis)
 end
