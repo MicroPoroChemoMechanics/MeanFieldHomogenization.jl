@@ -43,26 +43,19 @@ end
     @test dP1p[1] ≈ -p / (-sqrt(1 - p^2))
 end
 
-@testset "legendre_odd — derivative tables match finite differences" begin
-    # Coarse sanity check only (higher degrees grow fast, so a fixed step
-    # trades truncation vs. cancellation error): the precise validation is
-    # the closed-form checks above and the coupling-matrix cross-check
-    # against the independent BigFloat series in `test_coupling.jl`.
-    h = 1.0e-5
+@testset "legendre_odd — derivative tables match the derivative of the values" begin
+    # The tables carry the derivative by their own recurrences; dual numbers
+    # differentiate the value recurrences instead, an independent route that
+    # agrees to rounding (a centered difference could only check 1e-4).
     for x in (1.3, 1.7, 3.3), Nseries in (1, 2, 4)
         for kind in (:P0, :Q0, :P1, :Q1)
-            vals_p, ders = legendre_odd(kind, x, Nseries)
-            vals_hi, _ = legendre_odd(kind, x + h, Nseries)
-            vals_lo, _ = legendre_odd(kind, x - h, Nseries)
-            fd = (vals_hi .- vals_lo) ./ (2h)
-            @test all(isapprox.(fd, ders; rtol = 1.0e-4, atol = 1.0e-6))
+            _, ders = legendre_odd(kind, x, Nseries)
+            ad = ForwardDiff.derivative(y -> legendre_odd(kind, y, Nseries)[1], x)
+            @test all(isapprox.(ad, ders; rtol = 1.0e-10))
         end
         p = 0.3
-        P1p, dP1p = legendre_odd(:P1p, p, Nseries)
-        P1p_hi, _ = legendre_odd(:P1p, p + h, Nseries)
-        P1p_lo, _ = legendre_odd(:P1p, p - h, Nseries)
-        fd = (P1p_hi .- P1p_lo) ./ (2h)
-        @test all(isapprox.(fd, dP1p; rtol = 1.0e-4, atol = 1.0e-6))
+        _, dP1p = legendre_odd(:P1p, p, Nseries)
+        @test all(isapprox.(ForwardDiff.derivative(y -> legendre_odd(:P1p, y, Nseries)[1], p), dP1p; rtol = 1.0e-12))
     end
 end
 

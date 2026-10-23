@@ -32,12 +32,12 @@ const λ_ref = E_ref * ν_ref / ((1 + ν_ref) * (1 - 2ν_ref))
 const μ_ref = E_ref / (2 * (1 + ν_ref))
 const k_ref = λ_ref + 2μ_ref / 3
 
-# Helper: centerd finite difference derivative
+# Helper: centered finite-difference derivative
 function fd_deriv(f, x₀; h = 1.0e-5)
     return (f(x₀ + h) - f(x₀ - h)) / (2h)
 end
 
-# Helper: centerd FD gradient (vector-valued scalar function)
+# Helper: centered FD gradient (vector-valued scalar function)
 function fd_grad(f, x₀; h = 1.0e-5)
     n = length(x₀)
     g = similar(x₀)
