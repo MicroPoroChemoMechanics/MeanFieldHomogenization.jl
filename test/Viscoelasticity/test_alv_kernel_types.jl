@@ -141,6 +141,14 @@ end
     @test K_inv isa ALVKernelOrtho
 end
 
+@testset "ALVKernelTI / ALVKernelOrtho — components of unequal sizes are refused" begin
+    n = 3
+    ℓ = (ntuple(_ -> _alvk_rand_lt(n), 5)..., _alvk_rand_lt(n + 1))
+    o = (_alvk_rand_lt(n + 1), ntuple(_ -> _alvk_rand_lt(n), 11)...)
+    @test_throws "ALVKernelTI: all components must be n×n" ALVKernelTI(ℓ)
+    @test_throws "ALVKernelOrtho: all components must be n×n" ALVKernelOrtho(o)
+end
+
 @testset "ALV kernel ladder — iso ⊂ TI ⊂ ortho" begin
     n = 4
     α = _alvk_rand_lt(n); β = _alvk_rand_lt(n)

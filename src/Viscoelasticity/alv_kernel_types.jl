@@ -94,10 +94,8 @@ struct ALVKernelTI{T} <: AbstractALVKernel{T}
             axis::NTuple{3, Real}
         ) where {T}
         n = size(ℓ[1], 1)
-        @inbounds for k in 1:6
-            size(ℓ[k]) == (n, n) ||
-                throw(ArgumentError("ALVKernelTI: all components must be n×n"))
-        end
+        all(c -> size(c) == (n, n), ℓ) ||
+            throw(ArgumentError("ALVKernelTI: all components must be n×n"))
         return new{T}(
             ntuple(k -> Matrix{T}(ℓ[k]), 6),
             map(_alv_axis_float, axis)
@@ -138,10 +136,8 @@ struct ALVKernelOrtho{T} <: AbstractALVKernel{T}
             axes::NTuple{3, NTuple{3, Real}}
         ) where {T}
         n = size(o[1], 1)
-        @inbounds for k in 1:12
-            size(o[k]) == (n, n) ||
-                throw(ArgumentError("ALVKernelOrtho: all components must be n×n"))
-        end
+        all(c -> size(c) == (n, n), o) ||
+            throw(ArgumentError("ALVKernelOrtho: all components must be n×n"))
         return new{T}(
             ntuple(k -> Matrix{T}(o[k]), 12),
             map(a -> map(_alv_axis_float, a), axes)

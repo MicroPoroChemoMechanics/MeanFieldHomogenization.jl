@@ -168,13 +168,6 @@ end
 
 # ── Schemes ─────────────────────────────────────────────────────────────────
 
-# Element type spanning EVERY block of a list, not just the first one:
-# differentiating with respect to a phase property or an inclusion geometry
-# makes some blocks `Dual` while the others stay `Float64`.  `Bool` is the
-# neutral seed — it promotes away against any numeric type.  The schemes
-# promote the same way (`_alg_promote`); the order-2 pipeline uses this one.
-_alv_blocks_eltype(mats) = mapreduce(eltype, promote_type, mats; init = Bool)
-
 """
     voigt_alv_order2(matrices, fractions) -> Matrix
 

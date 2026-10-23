@@ -30,18 +30,6 @@ function _alv_promoted_eltype(C_list, fractions, U_list, crack_data)
     return Tp
 end
 
-# A discrete identity 6n×6n matrix in Mandel form: block-diagonal with
-# 6×6 identity blocks.
-function _identity_alv(n::Int, T::Type)
-    M = zeros(T, 6 * n, 6 * n)
-    @inbounds for i in 1:n
-        for k in 1:6
-            M[6 * (i - 1) + k, 6 * (i - 1) + k] = one(T)
-        end
-    end
-    return M
-end
-
 # ── Dilute concentration & contribution tensors ─────────────────────────────
 
 """
