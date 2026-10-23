@@ -52,6 +52,15 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
+      # The machine the job runs on: the processor and its vector extensions,
+      # and what Julia makes of them. A crash inside the compiler can depend on
+      # the target it generates code for, which no other line of the log names.
+      - name: Machine
+        shell: bash
+        run: |
+          lscpu | grep -E '^(Model name|CPU\(s\)|Thread|Core|Socket)'
+          grep -o -w -E 'avx2|avx512[a-z_0-9]*|amx[a-z_0-9]*' /proc/cpuinfo | sort -u | tr '\n' ' '; echo
+          julia --startup-file=no -e 'using InteractiveUtils; versioninfo()'
       # One depot cache per Julia version, shared by the four parts, which install
       # and precompile the same test environment. A cache per part made twelve,
       # which with those of the documentation overflowed the 10 GB a repository
