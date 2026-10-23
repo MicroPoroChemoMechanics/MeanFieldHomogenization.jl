@@ -198,6 +198,16 @@ solution is only worth anything if both are handed the *same* geometry.
 function confocal_layer_radii(
         ω::T, outer_axis_radius::T, layer_fractions::NTuple{N, T}
     ) where {N, T <: Real}
+    # The inner parameters are roots found by bisection, which decides by sign
+    # tests: a symbolic `T` (`Symbolics.Num <: Real` included) has none.
+    is_hard_numeric(T) || throw(
+        ArgumentError(
+            "confocal_layer_radii: the inner confocal parameters are found by " *
+                "bisection, a numerical root search; got $T arguments. Give numbers " *
+                "(dual numbers differentiate through it), or pass symbolic semi-axes " *
+                "to LayeredSpheroid directly."
+        )
+    )
     ω ≈ 1 && throw(
         ArgumentError(
             "confocal_layer_radii: ω ≈ 1 is a sphere, which has no focal " *

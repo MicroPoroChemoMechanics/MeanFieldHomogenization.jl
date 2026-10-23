@@ -524,4 +524,7 @@ end
         @test abs(ForwardDiff.derivative(x -> outer(x)[1], ω)) < 1.0e-14
         @test ForwardDiff.derivative(x -> outer(x)[2], ω) ≈ -1 / ω^2 rtol = 1.0e-12
     end
+    # A bisection has no symbolic counterpart: refused with a message.
+    Symbolics.@variables ωs
+    @test_throws ArgumentError confocal_layer_radii(ωs, 1.0, (0.3, 0.7))
 end
