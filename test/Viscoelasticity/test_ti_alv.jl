@@ -172,3 +172,15 @@ end
     C_voigt_ref = voigt_alv([C_M, C_I], [0.8, 0.2])
     @test isapprox(C_eff, C_voigt_ref; atol = 1.0e-12)
 end
+
+@testset "TI blocks keep the precision of their element type" begin
+    # √2 was a Float64 constant converted to the element type: a BigFloat
+    # coupling carried a 1e-17 error.
+    ℓ = ntuple(k -> fill(big(k + 1.0), 1, 1), 6)
+    M = ti_blocks_from_params(ℓ)
+    @test M[3, 1] ≈ big(4) / sqrt(big(2)) rtol = 1.0e-70
+    @test all(ti_params_from_blocks(M) .≈ ℓ)
+    # Integer parameters give float blocks: the entries are divided.
+    @test ti_blocks_from_params(ntuple(k -> fill(k + 1, 1, 1), 6))[3, 1] ≈ 4 / sqrt(2)
+    @test iso_blocks_from_params(fill(3, 1, 1), fill(2, 1, 1))[1, 1] ≈ 7 / 3
+end
