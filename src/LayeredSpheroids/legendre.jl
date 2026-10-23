@@ -144,11 +144,13 @@ function _q_recurrence_plan(x, Nmax::Int, ::Type{Tx}) where {Tx}
     k_max = 10 * Nmax + 100
     k ≤ k_max && return (:downward, k)
 
-    # Unreachable for any `ρ` that makes upward unsafe, and provably so:
-    # `k > k_max` forces `lρ < budget / (2 k_max)`, hence
-    # `loss = 2 Nmax lρ < Nmax·budget / (10 Nmax + 100) < budget/10` — under
-    # four nats, a factor of about 40.  So whenever Miller would be too
-    # expensive, upward is accurate.
+    # Miller too expensive, and upward then cheap: `k > k_max` forces
+    # `lρ < budget / (2 k_max)`, hence
+    # `loss = 2 Nmax lρ < Nmax·budget / (10 Nmax + 100) < budget/10`, a tenth
+    # of the digits.  In `Float64` that is under four nats, below the factor 100
+    # tested above, so this line is reached only in a wider precision
+    # (`BigFloat`), where a tenth of the digits is still many more than Float64
+    # has.
     return (:upward, 0)
 end
 

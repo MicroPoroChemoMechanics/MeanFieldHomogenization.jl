@@ -158,6 +158,12 @@ end
     # route every oblate case onto the upward recurrence — the very instability
     # Miller's downward variant is here for.
     @test first(plan(5.0, 12, Float64)) === :downward
+    # In BigFloat, near-degenerate charts make Miller too long and upward still
+    # accurate to a tenth of the digits (ρ ≈ 1.35, Nmax = 12).
+    x = (big(1.35) + 1 / big(1.35)) / 2
+    @test 2 * 12 * log(big(1.35)) > log(100)     # not the cheap-upward branch
+    @test plan(x, 12, BigFloat) == (:upward, 0)
+    @test first(plan(Float64(x), 12, Float64)) === :downward
     @test first(plan(im * 5.0, 12, Complex{Float64})) === :downward
     @test first(plan(im * 50.0, 12, Complex{Float64})) === :downward
     @test first(plan(big(5.0), 12, BigFloat)) === :downward
