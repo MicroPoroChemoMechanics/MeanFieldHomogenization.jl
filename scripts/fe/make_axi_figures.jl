@@ -47,7 +47,7 @@ mkpath(OUT)
 
 const FE = MeanFieldHomogenization.FiniteElements
 
-mand(T) = MeanFieldHomogenization.Core.mandel66_minor(MeanFieldHomogenization.Core._C_array(T))
+mand(T) = MeanFieldHomogenization.Core.mandel66_minor(TensND.components_canon(T))
 kelvin_J(M) = (M[1, 1] + 2M[1, 2]) / 3        # 𝕁-eigenvalue of a TI/iso tensor
 kelvin_K(M) = M[4, 4]                          # 𝕂-eigenvalue
 iso(C) = MeanFieldHomogenization.Core.isotropify(C)
