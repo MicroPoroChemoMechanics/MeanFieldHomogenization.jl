@@ -521,18 +521,7 @@ function _shear_M_matrix_alv(
     blocks[3, 4] = -2 * inv_r³ * (9 .* Mκ .+ 4 .* Mμ)
     blocks[4, 4] = 3 * inv_r³ * Mκ
 
-    # Assemble into the 4n × 4n time-major matrix.
-    M = zeros(T, 4 * n, 4 * n)
-    @inbounds for i in 1:4, j in 1:4
-        Aij = blocks[i, j]
-        for s in 1:n
-            cs = (s - 1) * 4 + j
-            for t in s:n     # Volterra causality: t ≥ s.
-                M[(t - 1) * 4 + i, cs] = Aij[t, s]
-            end
-        end
-    end
-    return M
+    return _assemble_4n_time_major(blocks, n)
 end
 
 # ── Shear (4n × 4n, time-major) ALV interface transfer matrices ────────────
@@ -553,18 +542,18 @@ function _assemble_4n_time_major(
         blocks::AbstractArray{<:AbstractMatrix, 2},
         n::Int
     )
-    T = mapreduce(eltype, promote_type, blocks)
-    M = zeros(T, 4 * n, 4 * n)
-    @inbounds for i in 1:4, j in 1:4
-        Aij = blocks[i, j]
-        for s in 1:n
-            cs = (s - 1) * 4 + j
-            for t in s:n
-                M[(t - 1) * 4 + i, cs] = Aij[t, s]
-            end
-        end
-    end
-    return M
+    return _time_major(blocks, n)
+end
+
+# A b×b grid of causal n×n Volterra blocks as one (bn × bn) time-major matrix:
+# entry (t, s) of block (i, j) goes to row b(t-1)+i, column b(s-1)+j, and only
+# its causal part t ≥ s is kept. That is the block matrix of the grid with its
+# rows and columns permuted from component-major to time-major order.
+function _time_major(blocks::AbstractMatrix{<:AbstractMatrix}, n::Int)
+    b = size(blocks, 1)
+    grid = reduce(vcat, [reduce(hcat, [tril(blocks[i, j]) for j in 1:b]) for i in 1:b])
+    p = vec([(i - 1) * n + t for i in 1:b, t in 1:n])
+    return grid[p, p]
 end
 
 # The shear states `sa`, `sb` carried across the interface `intf`, of transfer
@@ -601,10 +590,7 @@ function _shear_interface_T_alv(
     )
     Id = Matrix{T}(I, n, n)
     Z = zeros(T, n, n)
-    blocks = Matrix{Matrix{T}}(undef, 4, 4)
-    @inbounds for i in 1:4, j in 1:4
-        blocks[i, j] = Z
-    end
+    blocks = fill(Z, 4, 4)
     blocks[1, 1] = Id
     blocks[2, 2] = Id
     blocks[3, 3] = Id
@@ -629,10 +615,7 @@ function _shear_interface_T_alv(
     Id = Matrix{T}(I, n, n)
     Z = zeros(T, n, n)
     inv_r² = one(T) / T(r * r)
-    blocks = Matrix{Matrix{T}}(undef, 4, 4)
-    @inbounds for i in 1:4, j in 1:4
-        blocks[i, j] = Z
-    end
+    blocks = fill(Z, 4, 4)
     blocks[1, 1] = Id
     blocks[2, 2] = Id
     blocks[3, 3] = Id
@@ -721,10 +704,7 @@ function _shear_M_inverse_alv(
     # Per-(i,j) block scaling: factor[i, j] = D_col[i] · D_row[j].
     D_row = (T(1 // 2), T(1), T(1 // 2), T(1))
     D_col = (T(1), T(1), T(2), T(2))
-    blocks = Array{Matrix{T}, 2}(undef, 4, 4)
-    @inbounds for i in 1:4, j in 1:4
-        blocks[i, j] = (D_col[i] * D_row[j]) .* blocks_cpp[i, j]
-    end
+    blocks = [(D_col[i] * D_row[j]) .* blocks_cpp[i, j] for i in 1:4, j in 1:4]
     return _assemble_4n_time_major(blocks, n)
 end
 
@@ -790,19 +770,8 @@ function _shear_amp_blocks_alv(
     # modulus — see `_shear_M_inverse_alv`).
     M_r_inv = _shear_M_inverse_alv(r, M_κ, M_μ, n)
     amp = M_r_inv * state                            # (4n × m)
-    m = size(state, 2)
-    T = eltype(amp)
-    a = zeros(T, n, m)
-    b = zeros(T, n, m)
-    @inbounds for t in 1:n
-        row_a = (t - 1) * 4 + 1
-        row_b = (t - 1) * 4 + 2
-        for s in 1:m
-            a[t, s] = amp[row_a, s]
-            b[t, s] = amp[row_b, s]
-        end
-    end
-    return a, b
+    # The first two state components at every time: rows 1 and 2 of each 4-block.
+    return amp[1:4:(4n), :], amp[2:4:(4n), :]
 end
 
 """
@@ -827,38 +796,14 @@ function _shear_solve_far_field_alv(
         b_a::AbstractMatrix, b_b::AbstractMatrix,
         n::Int
     )
-    T = promote_type(eltype(a_a), eltype(a_b), eltype(b_a), eltype(b_b))
-    M_sys = zeros(T, 2 * n, 2 * n)
-    @inbounds for s in 1:n
-        c1 = (s - 1) * 2 + 1
-        c2 = (s - 1) * 2 + 2
-        for t in s:n
-            r1 = (t - 1) * 2 + 1
-            r2 = (t - 1) * 2 + 2
-            M_sys[r1, c1] = a_a[t, s]
-            M_sys[r1, c2] = a_b[t, s]
-            M_sys[r2, c1] = b_a[t, s]
-            M_sys[r2, c2] = b_b[t, s]
-        end
-    end
-    M_sys_inv = volterra_inverse(M_sys; block_size = 2)
-    # RHS is (I_n; 0) packed in time-major form: rhs[(t-1)*2+1, t] = 1.
+    M_sys = _time_major(reshape([a_a, b_a, a_b, b_b], 2, 2), n)   # the grid [a_a a_b; b_a b_b]
+    T = eltype(M_sys)
+    # The right-hand side (𝟙ₙ; 0) in time-major order, and the solution read
+    # back the same way.
     rhs = zeros(T, 2 * n, n)
-    @inbounds for t in 1:n
-        rhs[(t - 1) * 2 + 1, t] = one(T)
-    end
-    λ = M_sys_inv * rhs                              # (2n × n)
-    λ_a = zeros(T, n, n)
-    λ_b = zeros(T, n, n)
-    @inbounds for t in 1:n
-        r1 = (t - 1) * 2 + 1
-        r2 = (t - 1) * 2 + 2
-        for s in 1:n
-            λ_a[t, s] = λ[r1, s]
-            λ_b[t, s] = λ[r2, s]
-        end
-    end
-    return λ_a, λ_b
+    rhs[1:2:(2n), :] = Matrix{T}(I, n, n)
+    λ = volterra_inverse(M_sys; block_size = 2) * rhs  # (2n × n)
+    return λ[1:2:(2n), :], λ[2:2:(2n), :]
 end
 
 # ── Forward propagation of the two probes through the layers ────────────────
@@ -1096,15 +1041,10 @@ function _property_contribution_alv(
     f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
     n = length(times)
 
-    Tα = promote_type(eltype(M_κ_0), eltype(α_k[1]), eltype(layers[1][1]))
-    Tβ = promote_type(eltype(M_μ_0), eltype(β_k[1]), eltype(layers[1][2]))
-    N_bulk = zeros(Tα, n, n)
-    N_shear = zeros(Tβ, n, n)
-    @inbounds for k in 1:N
-        (M_κ_k, M_μ_k) = layers[k]
-        N_bulk .+= f[k] .* ((M_κ_k - M_κ_0) * α_k[k])
-        N_shear .+= f[k] .* ((M_μ_k - M_μ_0) * β_k[k])
-    end
+    # Summed, not accumulated into a buffer typed by the first layer: any layer
+    # or fraction may carry a dual number.
+    N_bulk = sum(f[k] .* ((layers[k][1] - M_κ_0) * α_k[k]) for k in 1:N)
+    N_shear = sum(f[k] .* ((layers[k][2] - M_μ_0) * β_k[k]) for k in 1:N)
     a_surf, b_surf = _membrane_surface_stress_alv(sphere, C0_law, times; external)
     Δα, Δβ = _strain_jump_terms_alv(sphere, C0_law, times; external)
     return iso_blocks_from_params(
@@ -1191,11 +1131,7 @@ function _membrane_surface_stress_alv(
         u_r = (r .* A_k .+ (1 / r^2) .* B_k) * A_M_inv     # normalized u_r(r_k)
         a_surf .+= (4 * κs * r / R³) .* u_r
         combo = inside_a[k] * λ_a + inside_b[k] * λ_b       # (4n × n) state
-        U = zeros(Tb, n, n); W = zeros(Tb, n, n)
-        @inbounds for t in 1:n, s in 1:n
-            U[t, s] = combo[(t - 1) * 4 + 1, s]
-            W[t, s] = combo[(t - 1) * 4 + 2, s]
-        end
+        U, W = combo[1:4:(4n), :], combo[2:4:(4n), :]
         b_surf .+= (r / R³) .* ((2 / 5) .* (-κs .* U .+ 3κs .* W .+ 6μs .* W))
     end
     return a_surf, b_surf
