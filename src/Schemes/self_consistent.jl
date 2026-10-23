@@ -758,14 +758,19 @@ function _sc_newton_seed(x0::TensND.AbstractTens, step)
     return length(TensND.get_data(x1)) == length(TensND.get_data(x0)) ? x0 : x1
 end
 
-# The Newton unknowns are the coordinates of TensND's `to_vector` (the
-# coefficients of a structured class, the canonical Kelvin-Mandel components of a
-# generic tensor), weighted by TensND's `param_norms` so that their Euclidean
-# norm is the Frobenius norm of the tensor they encode: `abstol` and `reltol`
-# then mean the same whatever the `algorithm` and the symmetry class. Newton is
-# invariant under that diagonal rescaling (the root and the iterates are
-# untouched); only the norm of the stopping test and of the Armijo condition
-# changes, and a trust region is put in a physical metric.
+"""
+    _sc_param_weights(prototype) -> Vector
+
+The weights of the Newton unknowns of the self-consistent solvers. The unknowns
+are the coordinates of TensND's `to_vector` (the coefficients of a structured
+class, the canonical Kelvin-Mandel components of a generic tensor), weighted by
+TensND's `param_norms` so that their Euclidean norm is the Frobenius norm of the
+tensor they encode: `abstol` and `reltol` then mean the same whatever the
+`algorithm` and the symmetry class. Newton is invariant under that diagonal
+rescaling (the root and the iterates are untouched); only the norm of the
+stopping test and of the Armijo condition changes, and a trust region is put in
+a physical metric.
+"""
 _sc_param_weights(prototype::TensND.AbstractTens) =
     [float(TensND.primal(w)) for w in TensND.param_norms(prototype)]
 
