@@ -57,7 +57,7 @@ end
 # for a complex or a symbolic scalar, which runs the fixed 60 iterations.
 _agm_tol(::Type{T}) where {T <: AbstractFloat} = 10 * eps(T)
 _agm_tol(::Type{<:ForwardDiff.Dual{<:Any, V}}) where {V} = _agm_tol(V)   # precision of the value
-_agm_tol(::Type{T}) where {T <: Number} = is_hard_numeric(T) ? 10 * eps(Float64) : 0.0
+_agm_tol(::Type{T}) where {T <: Number} = is_hard_numeric(T) ? _agm_tol(float(T)) : 0.0
 
 """
     _agm_converged(::Type{T}, a, b, tol) -> Bool

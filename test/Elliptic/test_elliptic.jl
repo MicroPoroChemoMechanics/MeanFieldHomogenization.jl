@@ -61,6 +61,15 @@ end
     @test ForwardDiff.derivative(φ -> ell_F(φ, m0), φ0) ≈ 1 / sqrt(1 - m0 * sin(φ0)^2)  rtol = 1.0e-70
 end
 
+@testset "Elliptic — exact rational arguments take the precision they float to" begin
+    # A `Rational{BigInt}` floats to `BigFloat`; the duplication stopped at the
+    # tolerance of `Float64` and lost all but sixteen digits.
+    x, y, z = big(1) // 1, big(2) // 1, big(3) // 1
+    @test ell_RF(x, y, z) ≈ ell_RF(big"1.0", big"2.0", big"3.0")  rtol = 1.0e-70
+    @test ell_RD(x, y, z) ≈ ell_RD(big"1.0", big"2.0", big"3.0")  rtol = 1.0e-70
+    @test ell_RF(1, 2, 3) ≈ ell_RF(1.0, 2.0, 3.0)  rtol = 1.0e-15
+end
+
 @testset "Elliptic — ForwardDiff compatibility (Dual)" begin
     # dK/dm = (E(m) - (1-m)K(m)) / (2m(1-m))
     for m0 in (0.2, 0.5, 0.7)
