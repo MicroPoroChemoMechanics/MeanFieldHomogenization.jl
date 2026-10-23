@@ -51,11 +51,22 @@ def py_chom_porous(phi, sch_name, omegas=1.0, omegap=1.0, iso_sym=False,
     ver['PORE'].fraction  = phi
     ver['SOLID'].fraction = 1.0 - phi
     ver.set_prop('C', Cs)
-    try:
+    def run(nb):
         C = homogenize(prop='C', rve=ver, scheme=_SCH[sch_name],
-                       verbose=False, maxnb=maxnb, epsrel=epsrel,
+                       verbose=False, maxnb=nb, epsrel=epsrel,
                        select_best=True)
-        return float(max(C.k, 0.0)), float(max(C.mu, 0.0))
+        return float(C.k), float(C.mu)
+    try:
+        if sch_name == 'DIFF':
+            # echoes integrates the differential scheme in `maxnb` explicit
+            # steps, first order: at 300 steps it is 3 % off at φ = 0.9. The
+            # reference is the Richardson extrapolation of 3000 and 30000 steps
+            # (it agrees with an independent RK4 integration to 1e-7).
+            (k1, m1), (k2, m2) = run(3000), run(30000)
+            k, mu = k2 + (k2 - k1) / 9, m2 + (m2 - m1) / 9
+        else:
+            k, mu = run(maxnb)
+        return max(k, 0.0), max(mu, 0.0)
     except Exception as e:
         return float('nan'), float('nan')
 """

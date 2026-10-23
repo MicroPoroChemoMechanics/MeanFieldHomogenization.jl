@@ -97,11 +97,17 @@ def homogenize_py(omega, T, sch_name, frac):
                               fraction=frac)
     # Python writes set_visco_mat with the discrete relaxation matrix.
     ver.set_visco_mat("C", visco_law(Js_py, CREEP).relaxation_mat(np.asarray(T)))
-    V = homogenize_visco(prop="C", rve=ver,
-                         time_series=np.asarray(T),
-                         scheme=_SCH[sch_name],
-                         epsrel=1.e-6, maxnb=100, verbose=False)
-    return np.asarray(V)
+    def run(nb):
+        return np.asarray(homogenize_visco(prop="C", rve=ver,
+                                           time_series=np.asarray(T),
+                                           scheme=_SCH[sch_name],
+                                           epsrel=1.e-10, maxnb=nb, verbose=False))
+    if sch_name == "DIFF":
+        # The differential scheme in `maxnb` explicit steps is first order:
+        # the reference is the Richardson extrapolation of 1000 and 10000.
+        V1, V2 = run(1000), run(10000)
+        return V2 + (V2 - V1) / 9
+    return run(1000)
 """
 
 const py_trapz_creep = py"trapz_creep"
