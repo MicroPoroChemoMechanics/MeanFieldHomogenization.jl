@@ -172,13 +172,24 @@ Definiteness is tested on the Kelvin-Mandel matrix of the contrast
 """
 function eim_bound_type(asm::ParticleAssembly, prop::Symbol = :C)
     P₀ = matrix_property(asm, prop)
+    # A sign test, read on the values under any dual numbers; a symbolic
+    # contrast has no sign to read.
+    M₀ = TensND.primal.(_to_mandel(P₀, P₀))
+    is_hard_numeric(eltype(M₀)) || throw(
+        ArgumentError(
+            "eim_bound_type: the bound type is a sign test on eigenvalues, which " *
+                "symbolic moduli of type $(eltype(M₀)) do not have; substitute numbers first"
+        )
+    )
+    # Relative to the reference, so that the answer does not depend on the unit
+    # of the moduli.
+    tol = 1.0e-12 * maximum(abs, eigvals(Symmetric(M₀)))
     all_neg = true
     all_pos = true
     for nm in particle_names(asm)
-        M = _to_mandel(particle_property(asm, nm, prop) - P₀, P₀)
-        λ = eigvals(Symmetric(Float64.(M)))
-        all(λ .≤ 1.0e-12) || (all_neg = false)
-        all(λ .≥ -1.0e-12) || (all_pos = false)
+        λ = eigvals(Symmetric(TensND.primal.(_to_mandel(particle_property(asm, nm, prop) - P₀, P₀))))
+        all(λ .≤ tol) || (all_neg = false)
+        all(λ .≥ -tol) || (all_pos = false)
     end
     all_neg && return :upper
     all_pos && return :lower

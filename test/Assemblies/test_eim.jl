@@ -4,6 +4,7 @@ using TensND
 using LinearAlgebra
 using Random
 using ForwardDiff
+import Symbolics
 
 # =============================================================================
 #  test_eim.jl — the variational equivalent inclusion method (Brisard,
@@ -111,6 +112,17 @@ end
         :bcc, Dict(:C => _Cm()), [Dict(:C => _Ci()), Dict(:C => _Cvoid())]; fraction = 0.2
     )
     @test eim_bound_type(asm) === :none
+    # The verdict does not depend on the unit of the moduli: with an absolute
+    # threshold, moduli in tiny units read as zero contrast, both signs at once.
+    asm = cubic_lattice(:sc, Dict(:C => 1.0e-15 * _Cm()), Dict(:C => 1.0e-15 * _Ci()); fraction = 0.2)
+    @test eim_bound_type(asm) === :lower
+    # Dual moduli are read by their values (they were converted to Float64).
+    d = ForwardDiff.Dual{:k}(1.0, 1.0)
+    asm = cubic_lattice(:sc, Dict(:C => d * _Cm()), Dict(:C => _Ci()); fraction = 0.2)
+    @test eim_bound_type(asm) === :lower
+    Symbolics.@variables s
+    asm = cubic_lattice(:sc, Dict(:C => s * _Cm()), Dict(:C => _Ci()); fraction = 0.2)
+    @test_throws ArgumentError eim_bound_type(asm)
 end
 
 @testset "EIM — Brisard et al. (2014) Table 1, plane strain" begin
