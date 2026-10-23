@@ -344,6 +344,18 @@ end
     @test maximum(abs.(Γab .- Q)) < RTOL_QUAD * maximum(abs.(Γab))
 end
 
+@testset "𝕋^{ab} — the quadrature oracle differentiates through a radius" begin
+    # The node generator forced Float64, so a dual semi-axis threw. The
+    # derivative with respect to the radius of the second ball is checked
+    # against the one of the closed form.
+    C₀ = _C3()
+    r = [2.0, -3.0, 4.5]
+    T(b, method; kw...) = get_array(interaction_tensor(_ball(1.3), _ball(b), r, C₀; method, kw...))
+    dQ = ForwardDiff.derivative(b -> T(b, :quadrature; nodes = (10, 10, 20)), 0.4)
+    dΓ = ForwardDiff.derivative(b -> T(b, :auto), 0.4)          # the closed form
+    @test maximum(abs.(dQ .- dΓ)) < RTOL_QUAD * maximum(abs.(dΓ))
+end
+
 @testset "𝕋^{ab} — error paths" begin
     C₀ = _C3()
     # Overlapping regions
