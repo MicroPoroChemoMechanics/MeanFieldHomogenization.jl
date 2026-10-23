@@ -364,7 +364,7 @@ function differential_alv(
                     "as the matrix, or give it an explicit fraction."
             )
         )
-        if amt isa Schemes.VolumeFraction
+        if !(amt isa Schemes.CrackDensity)   # volume: the remainder is refused above
             sym = phase_symmetrize(rve, name)
             geom = ph.geometry
             if geom isa LayeredSphere
