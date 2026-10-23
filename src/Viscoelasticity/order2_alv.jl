@@ -619,7 +619,12 @@ function differential_alv_order2(
     sz = 3 * n
     dual = formulation === :compliance
     x0 = vec(Tp.(dual ? volterra_inverse(K_0; block_size = 3) : K_0))
-    ode_p = (n = n, sz = sz, solid_data = solid_data, paths = paths, dual = dual, times = times)
+    # A tuple of concrete records, each carrying its own trajectory: the
+    # right-hand side runs over it without a dynamic dispatch per phase.
+    ode_p = (
+        sz = sz, dual = dual, times = times,
+        solid_data = Tuple(merge(r, (path = paths[r.name],)) for r in solid_data),
+    )
     rhs! = (du, u, p, τ) -> _diff_alv2_ode_rhs!(du, u, p, τ)
     prob = ODEProblem(rhs!, x0, (0.0, 1.0), ode_p)
     sol = solve(
@@ -642,40 +647,31 @@ _diff_alv2_contribution(s::LayeredSphere, K_r, K_curr, times) =
     property_contribution_alv(s, K_curr, times)
 
 function _diff_alv2_ode_rhs!(du, u, p, τ)
-    sz = p.sz
-    P_curr = reshape(u, sz, sz)
+    T = eltype(u)
+    P_curr = reshape(u, p.sz, p.sz)
     K_curr = p.dual ? volterra_inverse(P_curr; block_size = 3) : P_curr
-    Δ = zeros(eltype(u), sz, sz)
-
-    n_solid = length(p.solid_data)
-    n_solid == 0 && (du .= vec(Δ); return nothing)
+    Δ = reshape(du, p.sz, p.sz)
+    fill!(Δ, zero(T))
 
     # Sherman-Morrison : dφ_α/dτ = df_α/dτ + (f_α / f_0) · sum(df).
-    f = Vector{eltype(u)}(undef, n_solid)
-    df = Vector{eltype(u)}(undef, n_solid)
-    @inbounds for (i, r) in enumerate(p.solid_data)
-        nt = p.paths[r.name]
-        f[i] = nt.f(τ) * r.target
-        df[i] = nt.df(τ) * r.target
-    end
-    f0 = one(eltype(u)) - sum(f; init = zero(eltype(u)))
-    sum_df = sum(df; init = zero(eltype(u)))
+    f = map(r -> r.path.f(τ) * r.target, p.solid_data)
+    df = map(r -> r.path.df(τ) * r.target, p.solid_data)
+    f0 = one(T) - sum(f; init = zero(T))
+    sum_df = sum(df; init = zero(T))
 
-    @inbounds for (i, r) in enumerate(p.solid_data)
-        dφᵢ = df[i] + (f[i] / f0) * sum_df
-        iszero(dφᵢ) && continue
-        contrib = _diff_alv2_contribution(r.geom, r.K_r, K_curr, p.times)
+    map(p.solid_data, f, df) do r, fᵢ, dfᵢ
+        dφᵢ = dfᵢ + (fᵢ / f0) * sum_df
+        iszero(dφᵢ) && return nothing
         # Order-2 projector: `K_curr` is a (3n × 3n) matrix of 2-tensor
         # blocks.  Using the order-4 (6×6 Mandel) one here silently mixed two
         # consecutive TIME blocks, so the "averaged" contribution was not
         # isotropic and the running medium drifted out of the class the
         # order-2 Hill kernel needs.
-        contrib = _maybe_symmetrize_alv2(contrib, r.sym)
+        contrib = _maybe_symmetrize_alv2(_diff_alv2_contribution(r.geom, r.K_r, K_curr, p.times), r.sym)
         term = p.dual ? -(P_curr * contrib * P_curr) : contrib
         @. Δ += dφᵢ * term
+        return nothing
     end
-
-    du .= vec(Δ)
     return nothing
 end
 

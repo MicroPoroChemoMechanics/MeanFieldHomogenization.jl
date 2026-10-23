@@ -173,6 +173,14 @@ The generic tensor algebra MFH carried moves to TensND 0.7.
   faster (1.08 µs to 0.40 µs in 3-D).
 - Anisotropic Green operator static throughout (stiffness, input point, nested
   Jacobians): 15 % faster and 9 times fewer allocations.
+- Aging-viscoelastic self-consistent, asymmetric self-consistent and
+  differential schemes compute their products and inverses in the cheapest
+  algebra the operands share (isotropic, transversely isotropic, orthotropic)
+  rather than on dense 6n×6n block matrices, build the Hill kernel of an
+  ellipsoid as a Kronecker sum, and run the right-hand side of the differential
+  ODE over concrete records: 1.2 to 1.4, 1.5 and 1.6 times faster on 25 times
+  with a prolate and a spherical family, with up to 30 % fewer allocations,
+  results identical to 3e-16.
 
 ### Tests
 

@@ -133,9 +133,6 @@ function self_consistent_alv(
     #    parameters propagate through the fixed point.
     Tp = _alv_promoted_eltype(C_phases, fractions, U_M_phases, crack_data)
     Tp = _alv_layered_eltype(Tp, layered_data, C_0, times)
-    n = length(times)
-    sz = 6 * n
-    Id = _identity_alv(n, Tp)
     C_m = Tp.(C_0)
     best_resid = Inf
     C_best = C_m
@@ -157,13 +154,13 @@ function self_consistent_alv(
         if isempty(crack_data)
             C_m_new = _sc_alv_step(
                 C_m, C_phases, U_M_phases, V_M_phases,
-                fractions, n, Id, symmetrizes; extra_A, extra_CA
+                fractions, symmetrizes; extra_A, extra_CA
             )
         else
             C_m_new = _sc_alv_step_echoes_form(
                 C_m, C_phases,
                 U_M_phases, V_M_phases,
-                fractions, n, Id, symmetrizes,
+                fractions, symmetrizes,
                 crack_data; extra_A, extra_CA
             )
         end
@@ -232,49 +229,11 @@ _alv_sc_refuse_layered(::LayeredSphere, name::Symbol, scheme::AbstractString) = 
 # `Ã^dil = (𝟙 + P̃_α ∘ ΔC̃)^{-vol}` with the phase Hill kernel
 # `P̃_α[i,j] = J_long[i,j]·U_M + J_shear[i,j]·D_M` (geometry tensors `U_M`,
 # `D_M = V_M − U_M` against the iso-decoupled running estimate, whose scalar
-# Volterra inverses are `J_long`, `J_shear`).
-#
-# FAST PATH — when the running estimate, the phase stiffness and the geometry
-# tensors are all iso-block (spherical inclusions in an iso ALV estimate), the
-# whole thing reduces to two scalar n×n Volterra problems via
-# `dilute_concentration_alv_iso`, avoiding the dense 6n×6n `P_α * ΔC` gemm
-# (O((6n)³)) and the `block_size = 6` Volterra inverse.  This is the SAME fast
-# path `_inclusion_alv_quantities` uses per-inclusion (homogenize_alv.jl);
-# here it is applied inside the SC Picard loop.  The iso params of the
-# constant 6×6 geometry tensors combine linearly with the scalar `J_long`,
-# `J_shear`, so `P_α`'s iso params are `α_P = α_U·J_long + α_D·J_shear`,
-# `β_P = β_U·J_long + β_D·J_shear`.  Because iso blocks are closed under the
-# Volterra product and inverse (they block-diagonalize into the {𝕁,𝕂}
-# channels), the fast path is numerically identical to the dense path (a
-# direct comparison confirms `< 1e-12`); it FALLS BACK to the exact dense
-# computation for any non-iso operand.
-function _sc_alv_dilute_conc(
-        C_phase::AbstractMatrix, C_m::AbstractMatrix,
-        U_M::AbstractMatrix, D_M::AbstractMatrix,
-        J_long::AbstractMatrix, J_shear::AbstractMatrix,
-        α_m::AbstractMatrix, β_m::AbstractMatrix,
-        n::Int, sz::Int, Id::AbstractMatrix, ::Type{T}
-    ) where {T}
-    if _is_iso_block(C_m) && _is_iso_block(C_phase) &&
-            _is_iso_block(U_M) && _is_iso_block(D_M)
-        α_U = U_M[1, 1] + 2 * U_M[1, 2]; β_U = U_M[4, 4]
-        α_D = D_M[1, 1] + 2 * D_M[1, 2]; β_D = D_M[4, 4]
-        α_P = α_U .* J_long .+ α_D .* J_shear
-        β_P = β_U .* J_long .+ β_D .* J_shear
-        α_E, β_E = _iso_pair(C_phase)
-        αβ_A = dilute_concentration_alv_iso((α_E, β_E), (α_m, β_m), (α_P, β_P))
-        return _iso_blocks(αβ_A)
-    end
-    P_α = zeros(T, sz, sz)
-    @inbounds for i in 1:n, j in 1:i
-        block = J_long[i, j] .* U_M .+ J_shear[i, j] .* D_M
-        rows = (6 * (i - 1) + 1):(6 * i)
-        cols = (6 * (j - 1) + 1):(6 * j)
-        P_α[rows, cols] = block
-    end
-    ΔC = C_phase - C_m
-    return volterra_inverse(Id + P_α * ΔC; block_size = 6)
-end
+# Volterra inverses are `J_long`, `J_shear`), evaluated in the cheapest algebra
+# the operands share: two scalar n×n Volterra problems for a sphere in an iso
+# estimate, the dense 6n×6n ones only for an operand that needs them.
+_sc_alv_dilute_conc(C_phase, U_M, V_M, J_long, J_shear, C_m) =
+    _alv_dilute_concentration(C_phase, C_m, _alv_hill_blocks(J_long, J_shear, U_M, V_M .- U_M))
 
 # ── ECHOES SC body for ALV with cracks ─────────────────────────────────────
 #
@@ -296,33 +255,22 @@ function _sc_alv_step_echoes_form(
         U_M_phases::AbstractVector{<:AbstractMatrix},
         V_M_phases::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector{<:Real},
-        n::Int, Id::AbstractMatrix,
         symmetrizes::AbstractVector{<:AbstractSymmetrize},
         crack_data;
         extra_A::Union{Nothing, AbstractMatrix} = nothing,
         extra_CA::Union{Nothing, AbstractMatrix} = nothing
     )
-    sz = size(C_m, 1)
     T = eltype(C_m)
-    A_avg = zeros(T, sz, sz)   # = Σ f·sym(A_α)            (no J_m yet)
-    CA_avg = zeros(T, sz, sz)   # = Σ f·sym(C_α·A_α)        (no J_m yet)
+    A_avg = zero(C_m)    # = Σ f·sym(A_α)            (no J_m yet)
+    CA_avg = zero(C_m)   # = Σ f·sym(C_α·A_α)        (no J_m yet)
     extra_A === nothing || (A_avg .+= extra_A)
     extra_CA === nothing || (CA_avg .+= extra_CA)
-    α_m, β_m = iso_params_from_blocks(C_m)
-    M_long = @. (α_m + 2 * β_m) / 3
-    M_shear = β_m ./ 2
-    J_long = volterra_inverse(M_long; block_size = 1)
-    J_shear = volterra_inverse(M_shear; block_size = 1)
-    @inbounds for α in eachindex(C_phases)
-        U_M = U_M_phases[α]
-        V_M = V_M_phases[α]
-        D_M = V_M .- U_M
-        A_dil = _sc_alv_dilute_conc(
-            C_phases[α], C_m, U_M, D_M, J_long, J_shear, α_m, β_m, n, sz, Id, T
-        )
+    J_long, J_shear = _alv_iso_inverses(C_m)
+    for α in eachindex(C_phases)
+        A_dil = _sc_alv_dilute_conc(C_phases[α], U_M_phases[α], V_M_phases[α], J_long, J_shear, C_m)
         sym = symmetrizes[α]
         A_dil_sym = _maybe_symmetrize_alv(A_dil, sym)
-        CA_sym = _maybe_symmetrize_alv(C_phases[α] * A_dil, sym)
+        CA_sym = _maybe_symmetrize_alv(_alv_prod(C_phases[α], A_dil), sym)
         f = T(fractions[α])
         @. A_avg += f * A_dil_sym
         @. CA_avg += f * CA_sym
@@ -331,10 +279,10 @@ function _sc_alv_step_echoes_form(
     # essential ECHOES form difference compared to solids).
     H_total = _build_sc_crack_extra_J(C_m, crack_data)
     # Apply the ECHOES `B · A^{-vol}` formula with explicit `J_m`.
-    J_m = volterra_inverse(C_m; block_size = 6)
-    A_E = (A_avg * J_m) .+ H_total
-    B_E = CA_avg * J_m
-    return B_E * volterra_inverse(A_E; block_size = 6)
+    J_m = _alv_inv(C_m)
+    A_E = _alv_prod(A_avg, J_m) .+ H_total
+    B_E = _alv_prod(CA_avg, J_m)
+    return _alv_right_divide(B_E, A_E)
 end
 
 # ── Crack compliance contribution against the running estimate ─────────────
@@ -350,9 +298,8 @@ end
 #       for the Newton-Raphson SC solver, which uses the same algebra
 #       but solves `F(C) = 0` instead of iterating Picard).
 function _build_sc_crack_extra_J(C_m::AbstractMatrix, crack_data)
-    sz = size(C_m, 1)
     T = eltype(C_m)
-    extra = zeros(T, sz, sz)
+    extra = zero(C_m)
     isempty(crack_data) && return extra
     _is_iso_block(C_m) ||
         error("self_consistent_alv with cracks: only iso running estimate is supported")
@@ -385,40 +332,22 @@ function _sc_alv_step(
         U_M_phases::AbstractVector{<:AbstractMatrix},
         V_M_phases::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector{<:Real},
-        n::Int, Id::AbstractMatrix,
         symmetrizes::AbstractVector{<:AbstractSymmetrize};
         extra_A::Union{Nothing, AbstractMatrix} = nothing,
         extra_CA::Union{Nothing, AbstractMatrix} = nothing
     )
-    sz = size(C_m, 1)
-    T = eltype(C_m)
-    A_avg = zeros(T, sz, sz)
-    CA_avg = zeros(T, sz, sz)
-    if extra_A !== nothing
-        @. A_avg += extra_A
-    end
-    if extra_CA !== nothing
-        @. CA_avg += extra_CA
-    end
+    A_avg = zero(C_m)
+    CA_avg = zero(C_m)
+    extra_A === nothing || (A_avg .+= extra_A)
+    extra_CA === nothing || (CA_avg .+= extra_CA)
     # Iso parameters of the running estimate → scalar Volterra inverses
     # for the Hill-kernel time-space decoupling.
-    α_m, β_m = iso_params_from_blocks(C_m)
-    M_long = @. (α_m + 2 * β_m) / 3
-    M_shear = β_m ./ 2
-    J_long = volterra_inverse(M_long; block_size = 1)
-    J_shear = volterra_inverse(M_shear; block_size = 1)
-
-    @inbounds for α in eachindex(C_phases)
-        # Phase Hill kernel against current estimate C_m.
-        U_M = U_M_phases[α]
-        V_M = V_M_phases[α]
-        D_M = V_M .- U_M
-        # Dilute concentration & scaled contribution (iso fast path when
-        # every operand is iso-block; exact dense fallback otherwise).
-        A_dil = _sc_alv_dilute_conc(
-            C_phases[α], C_m, U_M, D_M, J_long, J_shear, α_m, β_m, n, sz, Id, T
-        )
-        CA = C_phases[α] * A_dil
+    J_long, J_shear = _alv_iso_inverses(C_m)
+    for α in eachindex(C_phases)
+        # Phase Hill kernel against the current estimate, dilute concentration
+        # and its scaled contribution.
+        A_dil = _sc_alv_dilute_conc(C_phases[α], U_M_phases[α], V_M_phases[α], J_long, J_shear, C_m)
+        CA = _alv_prod(C_phases[α], A_dil)
         # Apply orientation-averaging projection (`symmetrize=[ISO]` for
         # ECHOES) to both the dilute concentration and its scaled
         # contribution.  This matters per SC iteration so that the
@@ -430,5 +359,5 @@ function _sc_alv_step(
         @. A_avg += f * A_dil
         @. CA_avg += f * CA
     end
-    return CA_avg * volterra_inverse(A_avg; block_size = 6)
+    return _alv_right_divide(CA_avg, A_avg)
 end

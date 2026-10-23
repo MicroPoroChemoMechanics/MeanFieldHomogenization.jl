@@ -97,6 +97,14 @@ function _alg_dilute_concentration(a, Cᴱ, C₀, P)
     return _alg_inv(a, _alg_add(a, Id, _alg_prod(a, P, _alg_sub(a, Cᴱ, C₀))))
 end
 
+# Dense blocks: the identity goes onto the diagonal of the product rather than
+# into a 6n×6n matrix of its own, built at every call of a fixed-point loop.
+function _alg_dilute_concentration(::_DenseALV{B}, Cᴱ, C₀, P) where {B}
+    M = P * (Cᴱ - C₀)
+    view(M, LinearAlgebra.diagind(M)) .+= one(eltype(M))
+    return volterra_inverse(M; block_size = B)
+end
+
 _alg_dilute_contribution(a, Cᴱ, C₀, P) =
     _alg_prod(a, _alg_sub(a, Cᴱ, C₀), _alg_dilute_concentration(a, Cᴱ, C₀, P))
 
@@ -180,3 +188,17 @@ end
 _evaluate_in(a, f::F, singles, lists) where {F} = _alv_from(
     a, f(a, map(M -> _alv_to(a, M), singles)..., map(l -> [_alv_to(a, M) for M in l], lists)...)
 )
+
+# ── Dense operators, computed in the cheapest algebra they share ───────────
+
+# The product, inverse and right division of dense block matrices (6n×6n), each
+# taken in the cheapest algebra its operands belong to: an isotropic product
+# costs two n×n ones where the dense one costs a (6n)³ gemm.
+_alv_prod(X, Y) = _in_cheapest_algebra(_alg_prod, (X, Y), ())
+_alv_inv(X) = _in_cheapest_algebra(_alg_inv, (X,), ())
+_alv_right_divide(X, Y) = _in_cheapest_algebra((a, X, Y) -> _alg_prod(a, X, _alg_inv(a, Y)), (X, Y), ())
+
+# The dilute concentration (𝕀 + ℙ ∘ (ℂᴱ − ℂ₀))⁻¹ and contribution
+# (ℂᴱ − ℂ₀) ∘ 𝔸 of a phase against a reference, as dense block matrices.
+_alv_dilute_concentration(Cᴱ, C₀, P) = _in_cheapest_algebra(_alg_dilute_concentration, (Cᴱ, C₀, P), ())
+_alv_dilute_contribution(Cᴱ, C₀, P) = _in_cheapest_algebra(_alg_dilute_contribution, (Cᴱ, C₀, P), ())
