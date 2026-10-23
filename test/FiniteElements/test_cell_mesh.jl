@@ -32,18 +32,50 @@ const FE = MeanFieldHomogenization.FiniteElements
     @testset "the budget guard refuses rather than crashes the session" begin
         @test fe_available_gb() > 0
         # Where the memory cannot be read, it is unknown, hence unlimited.
-        @test fe_available_gb(joinpath(mktempdir(), "no-meminfo")) == Inf
+        # (`cgroup` pointed nowhere: the control group of the test process
+        # itself would otherwise be read.)
+        nocg = joinpath(mktempdir(), "no-cgroup")
+        @test fe_available_gb(joinpath(mktempdir(), "no-meminfo"); cgroup = nocg) == Inf
         mktemp() do path, io
             write(io, "MemTotal: 1000 kB\n")
             close(io)
-            @test fe_available_gb(path) == Inf
+            @test fe_available_gb(path; cgroup = nocg) == Inf
+        end
+        # Under a control group, the room left under the tightest limit of the
+        # group and its ancestors, the page cache counted as reclaimable.
+        mktempdir() do d
+            root = joinpath(d, "cg")
+            b = joinpath(root, "a", "b")
+            mkpath(b)
+            write(joinpath(d, "cgroup"), "0::/a/b\n")
+            GiB = 2^30
+            write(joinpath(b, "memory.current"), "$(GiB ÷ 2)\n")
+            write(joinpath(b, "memory.max"), "max\n")
+            write(joinpath(b, "memory.high"), "$(GiB)\n")
+            write(joinpath(b, "memory.stat"), "anon 1\nfile $(GiB ÷ 4)\n")
+            write(joinpath(root, "a", "memory.current"), "$(GiB)\n")
+            write(joinpath(root, "a", "memory.max"), "$(2GiB)\n")
+            nomem = joinpath(d, "no-meminfo")
+            room(; kw...) = fe_available_gb(nomem; cgroup = joinpath(d, "cgroup"), cgroup_root = root, kw...)
+            @test room() ≈ 0.75                       # 1 - 1/2 + 1/4 GiB, under memory.high
+            write(joinpath(b, "memory.high"), "max\n")
+            @test room() ≈ 1.0                        # now the ancestor's 2 - 1 GiB
+            # The host's MemAvailable when it is the smaller.
+            mem = joinpath(d, "meminfo")
+            write(mem, "MemAvailable: 524288 kB\n")
+            @test fe_available_gb(mem; cgroup = joinpath(d, "cgroup"), cgroup_root = root) ≈ 0.5
+            # No limit anywhere, or a v1-only system: unknown.
+            write(joinpath(root, "a", "memory.max"), "max\n")
+            @test room() == Inf
+            write(joinpath(d, "cgroup"), "4:memory:/a/b\n")
+            @test room() == Inf
         end
         # A line it cannot parse, or one cut short: unknown as well.
         for line in ("MemAvailable: lots kB\n", "MemAvailable:\n")
             mktemp() do path, io
                 write(io, line)
                 close(io)
-                @test fe_available_gb(path) == Inf
+                @test fe_available_gb(path; cgroup = nocg) == Inf
             end
         end
         @test_throws ErrorException FE._fe_check_budget(

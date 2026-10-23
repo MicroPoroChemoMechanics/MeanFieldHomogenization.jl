@@ -86,15 +86,32 @@ _fe_cache(incl) = throw(
 #  cell already factorizes systems of order 10⁵.
 
 """
-    fe_available_gb(meminfo = "/proc/meminfo") -> Float64
+    fe_available_gb(meminfo = "/proc/meminfo"; cgroup = "/proc/self/cgroup",
+                    cgroup_root = "/sys/fs/cgroup") -> Float64
 
-`MemAvailable` from `/proc/meminfo`, in GiB, or `Inf` where that file is not
-readable — every platform other than Linux, and some containers.
+The memory this process can still use, in GiB: the smaller of `MemAvailable`
+from `/proc/meminfo` and the room left under the control group it runs in
+(cgroup v2), or `Inf` where neither can be read — every platform other than
+Linux, and some containers.
+
+The room under a control group is, over the group and each of its ancestors,
+the limit (`memory.max`, or `memory.high` where the kernel starts reclaiming)
+minus `memory.current`, plus the page cache it holds (`file` in `memory.stat`),
+which the kernel can reclaim. Without it, a process capped well below the free
+memory of the host was let through and killed by the kernel.
 
 `Inf` is the deliberate answer for "unknown": a guard that refuses to run
 because it cannot measure is worse than no guard.
 """
-function fe_available_gb(meminfo::AbstractString = "/proc/meminfo")
+function fe_available_gb(
+        meminfo::AbstractString = "/proc/meminfo";
+        cgroup::AbstractString = "/proc/self/cgroup",
+        cgroup_root::AbstractString = "/sys/fs/cgroup",
+    )
+    return min(_meminfo_available_gb(meminfo), _cgroup_room_gb(cgroup, cgroup_root))
+end
+
+function _meminfo_available_gb(meminfo::AbstractString)
     try
         for line in eachline(meminfo)
             startswith(line, "MemAvailable:") || continue
@@ -106,6 +123,59 @@ function fe_available_gb(meminfo::AbstractString = "/proc/meminfo")
         err isa Union{SystemError, ArgumentError, BoundsError} || rethrow()
     end
     return Inf
+end
+
+function _cgroup_room_gb(cgroup::AbstractString, root::AbstractString)
+    # The unified (v2) hierarchy is the `0::` line; a v1-only system has none.
+    rel = nothing
+    try
+        for line in eachline(cgroup)
+            startswith(line, "0::") && (rel = line[4:end]; break)
+        end
+    catch err
+        err isa SystemError || rethrow()
+    end
+    rel === nothing && return Inf
+    room = Inf
+    dir = normpath(joinpath(root, lstrip(rel, '/')))
+    top = normpath(root)
+    while true
+        current = _cgroup_bytes(joinpath(dir, "memory.current"))
+        if current !== nothing
+            cache = _cgroup_stat_bytes(joinpath(dir, "memory.stat"), "file")
+            for limit in ("memory.max", "memory.high")
+                lim = _cgroup_bytes(joinpath(dir, limit))
+                lim === nothing || (room = min(room, (lim - current + cache) / 2^30))
+            end
+        end
+        rstrip(dir, '/') == rstrip(top, '/') && break
+        dir = dirname(rstrip(dir, '/'))
+    end
+    return room
+end
+
+# A byte count from a cgroup file, or `nothing` for "max" (no limit) or a file
+# that cannot be read or parsed.
+function _cgroup_bytes(path::AbstractString)
+    try
+        s = strip(read(path, String))
+        return s == "max" ? nothing : parse(Int, s)
+    catch err
+        err isa Union{SystemError, ArgumentError} || rethrow()
+        return nothing
+    end
+end
+
+function _cgroup_stat_bytes(path::AbstractString, key::AbstractString)
+    try
+        for line in eachline(path)
+            k, v = split(line)
+            k == key && return parse(Int, v)
+        end
+    catch err
+        err isa Union{SystemError, ArgumentError, BoundsError} || rethrow()
+    end
+    return 0
 end
 
 """
