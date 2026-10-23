@@ -195,3 +195,47 @@ end
         @test eff(sch, :iso) ≈ eff(sch, :none)
     end
 end
+
+@testset "ALV Voigt and Reuss average each phase over its orientation distribution" begin
+    # The bounds average the phase stiffnesses (Voigt) or compliances (Reuss),
+    # each over its orientation distribution. With elastic (Heaviside) laws every
+    # diagonal block is the elastic bound, rebuilt here by hand from the exact
+    # averages `isotropify` / `transverse_isotropify` of the phase tensors.
+    rng = MersenneTwister(7)
+    a = randn(rng, 6, 6)
+    C_r = TensND.Tens(MCr.array_from_mandel66(a * transpose(a) + 6.0 * I))
+    C_m = TensISO{3}(3 * 20.0, 2 * 9.0)
+    b = randn(rng, 3, 3)
+    K_r = TensND.Tens(b * transpose(b) + 3.0 * I)
+    K_m = TensISO{3}(2.0)
+    f = 0.3
+    times = collect(0.0:0.5:1.5)
+    km(X) = MCr.mandel66_minor(TensND.components_canon(X))
+    canon(X) = Matrix(TensND.components_canon(X))
+    nax = (0.36, -0.48, 0.8)
+    for (sym, avg) in (
+            (:iso, X -> MCr.isotropify(X)),
+            (TISymmetrize(nax), X -> MCr.transverse_isotropify(X, nax)),
+        )
+        function bound(scheme, C, Cm, prop)
+            rve = RVE()
+            add_phase!(rve, :M, Ellipsoid(1.0), Dict(prop => heaviside_law(Cm)); fraction = :rest)
+            add_phase!(rve, :I, Ellipsoid(3.0, 1.0, 1.0), Dict(prop => heaviside_law(C)); fraction = f, symmetrize = sym)
+            return homogenize_alv(rve, scheme, prop; times)
+        end
+        voigt4 = km((1 - f) * C_m + f * avg(C_r))
+        reuss4 = inv((1 - f) * inv(km(C_m)) + f * km(avg(inv(C_r))))
+        voigt2 = canon((1 - f) * K_m + f * avg(K_r))
+        reuss2 = inv((1 - f) * inv(canon(K_m)) + f * canon(avg(inv(K_r))))
+        V4, R4 = bound(Voigt(), C_r, C_m, :C), bound(Reuss(), C_r, C_m, :C)
+        V2, R2 = bound(Voigt(), K_r, K_m, :K), bound(Reuss(), K_r, K_m, :K)
+        for i in eachindex(times)
+            @test V4[(6i - 5):(6i), (6i - 5):(6i)] ≈ voigt4 rtol = 1.0e-12
+            @test R4[(6i - 5):(6i), (6i - 5):(6i)] ≈ reuss4 rtol = 1.0e-12
+            @test V2[(3i - 2):(3i), (3i - 2):(3i)] ≈ voigt2 rtol = 1.0e-12
+            @test R2[(3i - 2):(3i), (3i - 2):(3i)] ≈ reuss2 rtol = 1.0e-12
+        end
+        # The average of the compliances, not the inverse of the averaged stiffness.
+        @test !(reuss4 ≈ inv((1 - f) * inv(km(C_m)) + f * inv(km(avg(C_r)))))
+    end
+end

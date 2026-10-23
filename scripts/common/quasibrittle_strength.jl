@@ -16,9 +16,10 @@
 #    the global axis (echoes' per-bin `symmetrize=[TI]`), preserving the
 #    non-major-symmetric content of the concentration tensors
 #    (`TensTI{4,T,8}`), plus water and air.  The reference medium of each
-#    family is iso-projected (`reference_projection = :iso` default), exact at
-#    the isotropic SC fixed point — echoes computes the per-bin concentration
-#    in the converged iso `C_hf` in the same way.
+#    family is taken through the same average about the axis: the SC estimate
+#    built from such families is TI about it, so the average leaves it
+#    unchanged — echoes computes the per-bin concentration in the running
+#    estimate likewise.
 #  * Cement Paste (CP)  — Mori-Tanaka (HF matrix + clinker).
 #  * Mortar (MO)        — Mori-Tanaka (CP matrix + sand).
 #  * Strength           — Pichler & Hellmich (2011): the quadratic average

@@ -350,7 +350,7 @@ function _homogenize_alv_order2(
             ph.geometry, scheme, K_r_law, K_M_law, K_0, times
         )
         return (
-            K_r = K_r,
+            K_r = K_r, sym = sym,
             A_dut = _maybe_symmetrize_alv2(A_dut, sym),
             N_dut = _maybe_symmetrize_alv2(N_dut, sym),
         )
@@ -366,10 +366,13 @@ function _homogenize_alv_order2(
 
     fractions = T_amount[_amount_value(rve, name) for name in incl_names]
     K_phases = Matrix{T_block}[K_0]
+    # The orientation average of each entry of `K_phases`, for the bounds.
+    phase_syms = AbstractSymmetrize[phase_symmetrize(rve, m)]
     A_duts = Matrix{T_block}[]
     contribs = Matrix{T_block}[]
     for q in per_phase
         push!(K_phases, q.K_r)
+        push!(phase_syms, q.sym)
         push!(A_duts, q.A_dut)
         push!(contribs, q.N_dut)
     end
@@ -377,7 +380,7 @@ function _homogenize_alv_order2(
     return _homogenize_alv2_dispatch(
         rve, scheme, prop, times,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law, m; kw...
+        fractions, f_M, K_M_law, m; phase_syms, kw...
     )
 end
 
@@ -402,17 +405,23 @@ end
 function _homogenize_alv2_dispatch(
         ::RVE, ::Voigt, ::Symbol, ::AbstractVector,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law, matrix::Symbol; kw...
+        fractions, f_M, K_M_law, matrix::Symbol; phase_syms, kw...
     )
-    return voigt_alv_order2(K_phases, [f_M; fractions])
+    # Each phase property averaged over its orientation distribution.
+    return voigt_alv_order2(map(_maybe_symmetrize_alv2, K_phases, phase_syms), [f_M; fractions])
 end
 
 function _homogenize_alv2_dispatch(
         ::RVE, ::Reuss, ::Symbol, ::AbstractVector,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law, matrix::Symbol; kw...
+        fractions, f_M, K_M_law, matrix::Symbol; phase_syms, kw...
     )
-    return reuss_alv_order2(K_phases, [f_M; fractions])
+    fs = [f_M; fractions]
+    all(s -> s isa NoSymmetrize, phase_syms) && return reuss_alv_order2(K_phases, fs)
+    # The resistivity of each phase is averaged over its orientation
+    # distribution, not its conductivity: the bound averages resistivities.
+    Rs = map((K, sym) -> _maybe_symmetrize_alv2(volterra_inverse(K; block_size = 3), sym), K_phases, phase_syms)
+    return volterra_inverse(voigt_alv_order2(Rs, fs); block_size = 3)
 end
 
 function _homogenize_alv2_dispatch(

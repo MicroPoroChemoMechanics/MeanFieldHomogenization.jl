@@ -51,7 +51,9 @@ function homogenize(
     # re-homogenized on every one of them. `_with_nested_cache` reuses an
     # already-active scope, so sibling and deeper cells share it.
     return MFH_Core._with_nested_cache() do
-        _evaluate(cell, scheme, Val(property); kw...)
+        result = _evaluate(cell, scheme, Val(property); kw...)
+        _warn_average_domain(cell, scheme, property, result)
+        result
     end
 end
 

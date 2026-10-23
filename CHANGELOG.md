@@ -28,9 +28,41 @@ The generic tensor algebra MFH carried moves to TensND 0.7.
   returned in the inclusion's basis rather than relabeled canonical: the same
   tensors; `get_array` of them gives components in that basis
   (`components_canon` gives canonical ones).
+- `TISymmetrize` takes the reference medium through the same average about its
+  axis, as `symmetrize = :iso` takes it through the isotropic one; the
+  `reference_projection` keyword, which let the reference be projected
+  otherwise (`:iso`, the old default, or `:none`), is removed. Results change
+  for a phase averaged about an axis in a reference that is transversely
+  isotropic about it (a TI matrix, or a self-consistent estimate the average
+  makes TI): see Fixed. A reference that is already invariant (an isotropic one,
+  or a TI one about the same axis) is used as it is, at no cost.
 
 ### Fixed
 
+- **Orientation average about an axis in a transversely isotropic reference.**
+  An average over rotations is defined only when the reference medium of the
+  auxiliary Eshelby problems is invariant under them; averaging the
+  concentrations or the contributions then gives the same scheme.
+  `TISymmetrize` replaced a reference that has that symmetry (a TI matrix about
+  the same axis, or a self-consistent estimate made TI by the average) by its
+  isotropic part, and the estimate was off by up to 6.5 % against the exact
+  azimuthal average. So were the derivatives that make an isotropic estimate
+  TI, such as the sensitivity to one family of a discretized orientation
+  distribution: on a self-consistent foam of four needle families feeding a
+  Mori-Tanaka paste, the derivative with respect to the polar angle of one
+  family came out 37 % low, and the one with respect to its shear modulus 10 %
+  low. Both now match a centered difference to 5e-11, one-shot autodiff and the
+  scale-by-scale chain rule agreeing to 1e-13. It is now exact, and matches echoes to the quadrature tolerance
+  on the dilute, dilute dual, Mori-Tanaka and self-consistent schemes, in
+  elasticity and in conduction. A reference without the symmetry of the average
+  means a mis-stated problem: it is still projected, and `homogenize` now says
+  so in a warning instead of returning an approximation without notice. The
+  check is made once, on the matrix or the self-consistent fixed point, and
+  costs nothing for an RVE without averaged phases or an isotropic reference.
+- **Aging-viscoelastic Voigt and Reuss bounds ignored `symmetrize`.** They now
+  average each phase over its orientation distribution, the relaxation matrix
+  for Voigt and its Volterra inverse for Reuss, at order 4 and order 2, as the
+  elastic bounds do with the stiffness and the compliance.
 - `ALVKernelTI` and `ALVKernelOrtho` refused an axis of mixed number types
   (`(0.0, 0, 1)`, a `TypeError`); they take any real components now, and a dual
   or symbolic axis, which the kernel cannot honor, is refused with a message.

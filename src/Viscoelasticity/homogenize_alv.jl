@@ -300,8 +300,9 @@ Supports two inclusion-geometry families, in both orders:
 `symmetrize` is honored in both orders, with the projector of the matching
 tensor order (``6\\times 6`` Mandel blocks for order 4, 2-tensor blocks for order 2 —
 see [`_maybe_symmetrize_alv`](@ref) and [`_maybe_symmetrize_alv2`](@ref)).
-`Voigt` and `Reuss` average the phase matrices directly, so the geometry —
-and hence `symmetrize` — does not enter them.
+`Voigt` and `Reuss` average the phase relaxation matrices (Voigt) or their
+Volterra inverses (Reuss) directly, each over its orientation distribution
+`symmetrize`; the geometry does not enter them.
 
 !!! warning "Reference-updating schemes need an isotropic running medium"
     Every ALV Hill kernel, order 2 and order 4 alike, is built for an
@@ -361,6 +362,8 @@ function homogenize_alv(
     contribs = Matrix[]
     A_duts = Matrix[]
     C_phases = Matrix[C_0]
+    # The orientation average of each entry of `C_phases`, for the bounds.
+    phase_syms = AbstractSymmetrize[phase_symmetrize(rve, m)]
     H_phases = Matrix[]   # per-phase Hill kernels (for Maxwell distribution)
     # crack_data tuple: (geom, density, sym, H_iso_full).  `H_iso_full` is
     # the iso-projected size-independent compliance contribution H̃ scaled
@@ -417,6 +420,7 @@ function homogenize_alv(
             A_dut = _maybe_symmetrize_alv(A_dut, sym)
             N_dut = _maybe_symmetrize_alv(N_dut, sym)
             push!(C_phases, C_r)
+            push!(phase_syms, sym)
             push!(A_duts, A_dut)
             push!(contribs, N_dut)
             push!(H_phases, P_r)
@@ -428,6 +432,7 @@ function homogenize_alv(
         rve, scheme, prop, times,
         C_0, C_phases, A_duts, contribs,
         H_phases, fractions, f_M, m;
+        phase_syms = phase_syms,
         crack_data = crack_data,
         ΔC_cracks_M = ΔC_cracks_M,
         ΔJ_cracks_M = ΔJ_cracks_M,
@@ -573,12 +578,14 @@ end
 function _homogenize_alv_dispatch(
         ::RVE, ::Voigt, ::Symbol, ::AbstractVector,
         C_0, C_phases, A_duts, contribs,
-        H_phases, fractions, f_M, matrix::Symbol; kw...
+        H_phases, fractions, f_M, matrix::Symbol; phase_syms, kw...
     )
     # Voigt ignores cracks (zero-volume convention, mirroring elastic
-    # `Schemes/voigt.jl`).  Result depends only on solid volume fractions.
+    # `Schemes/voigt.jl`).  Result depends only on solid volume fractions,
+    # each phase stiffness averaged over its orientation distribution.
     fs = [f_M; fractions]
-    return _in_cheapest_algebra((), (C_phases,)) do a, Cs
+    Cs = map(_maybe_symmetrize_alv, C_phases, phase_syms)
+    return _in_cheapest_algebra((), (Cs,)) do a, Cs
         _alg_voigt(a, Cs, fs)
     end
 end
@@ -586,12 +593,18 @@ end
 function _homogenize_alv_dispatch(
         ::RVE, ::Reuss, ::Symbol, ::AbstractVector,
         C_0, C_phases, A_duts, contribs,
-        H_phases, fractions, f_M, matrix::Symbol; kw...
+        H_phases, fractions, f_M, matrix::Symbol; phase_syms, kw...
     )
     # Reuss ignores cracks (same convention as elastic `Schemes/reuss.jl`).
     fs = [f_M; fractions]
-    return _in_cheapest_algebra((), (C_phases,)) do a, Cs
+    all(s -> s isa NoSymmetrize, phase_syms) && return _in_cheapest_algebra((), (C_phases,)) do a, Cs
         _alg_reuss(a, Cs, fs)
+    end
+    # The compliance of each phase is averaged over its orientation
+    # distribution, not its stiffness: the bound averages compliances.
+    Ss = map((C, sym) -> _maybe_symmetrize_alv(_alv_inv(C), sym), C_phases, phase_syms)
+    return _in_cheapest_algebra((), (Ss,)) do a, Ss
+        _alg_inv(a, _alg_voigt(a, Ss, fs))
     end
 end
 
@@ -711,11 +724,12 @@ function _homogenize_alv_dispatch(
         H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     # SC reads cracks directly from the RVE; strip the pre-aggregated
-    # crack kwargs that were meant for the simpler scheme dispatchers.
+    # crack kwargs, and the phase averages, meant for the simpler scheme
+    # dispatchers.
     kw_filt = Iterators.filter(
         p -> !(
             p[1] in
-                (:crack_data, :ΔC_cracks_M, :ΔJ_cracks_M)
+                (:crack_data, :ΔC_cracks_M, :ΔJ_cracks_M, :phase_syms)
         ),
         kw
     )
@@ -737,7 +751,7 @@ function _homogenize_alv_dispatch(
     kw_filt = Iterators.filter(
         p -> !(
             p[1] in
-                (:crack_data, :ΔC_cracks_M, :ΔJ_cracks_M)
+                (:crack_data, :ΔC_cracks_M, :ΔJ_cracks_M, :phase_syms)
         ),
         kw
     )
