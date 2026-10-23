@@ -55,7 +55,7 @@ the tie the interface system is underdetermined, eight families answering six
 conditions.
 """
 struct ModeGroup
-    parts::Vector{NTuple{4, Any}}
+    parts::Vector{Tuple{Int, Int, Symbol, Float64}}
     degrees::Vector{Int}
 end
 
@@ -125,8 +125,8 @@ _case_groups(cs::TransverseShearCase, D::Int) = [
     # `φ₁ = A x`, `φ₂ = -A y`. Same `A` either way.
     ModeGroup(
         cs.trig === :sin ?
-            NTuple{4, Any}[(1, 1, :sin, 1.0), (2, 1, :cos, 1.0)] :
-            NTuple{4, Any}[(1, 1, :cos, 1.0), (2, 1, :sin, -1.0)],
+            [(1, 1, :sin, 1.0), (2, 1, :cos, 1.0)] :
+            [(1, 1, :cos, 1.0), (2, 1, :sin, -1.0)],
         collect(1:2:(2D - 1))
     ),
 ]
@@ -201,17 +201,17 @@ function _case_remote(::LongitudinalShearCase, c, κ₀, μ₀, ε)
 end
 
 """
-    _group_fields(group, regularity, n, ϕ, p, q, c, μ, ν, ::Type{T})
+    _group_fields(group, regularity, n, ϕ, p, q, c, μ, ν, ::Type{T}, tables = nothing)
 
 Unit-amplitude displacement and traction of one group, summing its parts. A
 part whose order exceeds the degree contributes nothing, ``P_n^m`` vanishing there.
 """
-function _group_fields(g::ModeGroup, reg::Symbol, n::Int, ϕ, p, q, c, μ, ν, ::Type{T}) where {T}
+function _group_fields(g::ModeGroup, reg::Symbol, n::Int, ϕ, p, q, c, μ, ν, ::Type{T}, tables = nothing) where {T}
     u = ntuple(_ -> zero(T), 3)
     t = ntuple(_ -> zero(T), 3)
     for (pot, m, trig, w) in g.parts
         n < m && continue
-        uu, tt = mode_fields(PNMode(pot, reg, n, m, trig), ϕ, p, q, c, μ, ν, T)
+        uu, tt = mode_fields(PNMode(pot, reg, n, m, trig), ϕ, p, q, c, μ, ν, T, tables)
         u = _axpy3(u, w, uu)
         t = _axpy3(t, w, tt)
     end
@@ -254,9 +254,11 @@ function _elastic_block(
     M = zeros(T, 6 * nt, length(cols))
     maxdeg = maximum(tdegs)
     Pp = [legendre_degrees(:P0, x, 0:maxdeg) for x in xg]
+    nmax = maximum(n for (_, _, n) in cols)
+    tabs = [_LegendreAt{T}(x, q, nmax) for x in xg]
     for (j, (gi, r, n)) in enumerate(cols)
         for (g, x) in enumerate(xg)
-            u, t = _group_fields(groups[gi], r, n, ϕ₀, x, q, c, μ, ν, T)
+            u, t = _group_fields(groups[gi], r, n, ϕ₀, x, q, c, μ, ν, T, tabs[g])
             # (u_φ, u_p, u_q, σ_φq, σ_pq, σ_qq); the two tangential pairs get
             # the `1 - p²` weight, the normal ones do not.
             pb2 = one(T) - x^2
@@ -471,16 +473,18 @@ function _surface_moment(
     E = zero(SMatrix{3, 3, T})
     qb = sqrt(q^2 - one(q))
     dϕ = 2 * T(π) / nϕ
+    nmax = maximum(n for ((_, _, n), _) in amps)
     for (ip, x) in enumerate(xg)
         w = sqrt(q^2 - x^2)
         wp = c^2 * qb * w * wg[ip] * dϕ
+        tabs = _LegendreAt{T}(x, q, nmax)   # shared by the whole ring
         for k in 0:(nϕ - 1)
             ϕ = 2 * T(π) * k / nϕ
             # `R` takes chart components to Cartesian ones; its last column is `e_q`.
             e = _cartesian_in_chart(ϕ, x, q, T)
             R = transpose(SMatrix{3, 3, T}(e[1]..., e[2]..., e[3]...))
             uc = sum(
-                amp * SVector(_group_fields(groups[gi], r, n, ϕ, x, q, c, μ, ν, T)[1])
+                amp * SVector(_group_fields(groups[gi], r, n, ϕ, x, q, c, μ, ν, T, tabs)[1])
                     for ((gi, r, n), amp) in amps;
                 init = zero(SVector{3, T})
             )
