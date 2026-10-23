@@ -69,7 +69,7 @@ using MeanFieldHomogenization
 using TensND
 using SymPy
 using LinearAlgebra
-using Tensors
+using TensND.Tensors: SymmetricTensor   # the Tensors.jl TensND is built on
 using QuadGK
 using Printf
 

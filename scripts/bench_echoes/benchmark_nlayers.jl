@@ -14,7 +14,7 @@
 #        configurations (vanishing core, vanishing shell, core ≡ shell)
 #        compared to the closed-form single-layer Eshelby result.
 #   § 4  **Local bulk stress profile** `σ_rr(r), σ_θθ(r)` vs
-#        `echoes.conc_sS` under remote hydrostatic loading.
+#        `echoes.loc_sS` under remote hydrostatic loading.
 #
 #  History of the shear (β_k) ECHOES comparison
 #  --------------------------------------------
@@ -93,7 +93,7 @@ def py_layer_fraction(spn, k):
     return float(spn.layer_fraction(k))
 
 def py_conc_sS(spn, r, theta, phi):
-    return np.asarray(spn.conc_sS(r, theta, phi))
+    return np.asarray(spn.loc_sS(r, theta, phi))
 
 # The four pointwise concentrations, rows rotated to the CANONICAL basis.
 # ECHOES returns rows in the local spherical basis (e_theta, e_phi, e_r);
@@ -102,10 +102,10 @@ def py_conc_sS(spn, r, theta, phi):
 def py_conc_all(spn, r, theta, phi, layer):
     P = rot6(theta, phi)
     kw = {} if layer < 0 else {"layer": layer}
-    return (np.asarray(P @ spn.conc_eE(r, theta, phi, **kw)),
-            np.asarray(P @ spn.conc_sE(r, theta, phi, **kw)),
-            np.asarray(P @ spn.conc_eS(r, theta, phi, **kw)),
-            np.asarray(P @ spn.conc_sS(r, theta, phi, **kw)))
+    return (np.asarray(P @ spn.loc_eE(r, theta, phi, **kw)),
+            np.asarray(P @ spn.loc_sE(r, theta, phi, **kw)),
+            np.asarray(P @ spn.loc_eS(r, theta, phi, **kw)),
+            np.asarray(P @ spn.loc_sS(r, theta, phi, **kw)))
 
 # Interface descriptors are built ENTIRELY on the Python side.  Handing a
 # Julia vector of `[NODISC]` lists across PyCall converts the enum members to

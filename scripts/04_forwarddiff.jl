@@ -25,6 +25,7 @@ using TensND
 using ForwardDiff
 using LinearAlgebra
 using Printf
+import DECUHR, Integrals   # the `:decuhr` back-end of § 5 is an extension
 
 # ─── Reference parameters ────────────────────────────────────────────────────
 const E_ref = 210.0e3;  const ν_ref = 0.3

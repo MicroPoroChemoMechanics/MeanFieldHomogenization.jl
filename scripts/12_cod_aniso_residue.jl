@@ -12,6 +12,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+import DECUHR, Integrals   # the `:decuhr` back-end is an extension
 using Printf
 
 Kcomponents = [
