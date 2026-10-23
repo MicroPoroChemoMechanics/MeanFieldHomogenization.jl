@@ -129,7 +129,7 @@ struct CustomInclusion{dim, T <: Number, B <: TensND.AbstractBasis, NT <: NamedT
     semi_axes::Union{Nothing, NTuple{dim, T}}
     basis::B
     homogeneous::Bool
-    density_factor::Union{Nothing, Float64}
+    density_factor::Union{Nothing, T}
     fns::NT
     CustomInclusion{dim, T, B, NT}(
         semi_axes, basis, homogeneous, density_factor, fns
@@ -141,17 +141,28 @@ end
 # generated one leaves `dim` and `T` unbound when there are no semi-axes (Aqua,
 # Julia 1.14), and could not be called then. Without semi-axes, `dim` is the
 # basis's and `T` is `Float64`, as the keyword constructor chooses.
-CustomInclusion(
-    semi_axes::Tuple{T, Vararg{T, M}}, basis::B, homogeneous::Bool,
-    density_factor::Union{Nothing, Float64}, fns::NT
-) where {T <: Number, M, B <: TensND.AbstractBasis, NT <: NamedTuple} =
-    CustomInclusion{M + 1, T, B, NT}(semi_axes, basis, homogeneous, density_factor, fns)
+# The density factor shares the element type of the semi-axes, promoted with
+# its own, so that either may carry a dual number.
+function CustomInclusion(
+        semi_axes::Tuple{Number, Vararg{Number, M}}, basis::B, homogeneous::Bool,
+        density_factor::Union{Nothing, Number}, fns::NT
+    ) where {M, B <: TensND.AbstractBasis, NT <: NamedTuple}
+    T = promote_type(map(typeof, semi_axes)..., _factor_type(density_factor))
+    return CustomInclusion{M + 1, T, B, NT}(map(T, semi_axes), basis, homogeneous, _factor_as(T, density_factor), fns)
+end
 
-CustomInclusion(
-    ::Nothing, basis::B, homogeneous::Bool,
-    density_factor::Union{Nothing, Float64}, fns::NT
-) where {dim, B <: TensND.AbstractBasis{dim}, NT <: NamedTuple} =
-    CustomInclusion{dim, Float64, B, NT}(nothing, basis, homogeneous, density_factor, fns)
+function CustomInclusion(
+        ::Nothing, basis::B, homogeneous::Bool,
+        density_factor::Union{Nothing, Number}, fns::NT
+    ) where {dim, B <: TensND.AbstractBasis{dim}, NT <: NamedTuple}
+    T = promote_type(Float64, _factor_type(density_factor))
+    return CustomInclusion{dim, T, B, NT}(nothing, basis, homogeneous, _factor_as(T, density_factor), fns)
+end
+
+_factor_type(::Nothing) = Union{}
+_factor_type(x::Number) = typeof(x)
+_factor_as(::Type, ::Nothing) = nothing
+_factor_as(::Type{T}, x::Number) where {T} = T(x)
 
 function CustomInclusion(
         semi_axes::Union{Nothing, NTuple{<:Any, <:Number}} = nothing;
@@ -181,13 +192,17 @@ function CustomInclusion(
             "`dim` = $dim contradicts the $(length(semi_axes)) semi-axes given"
         )
     )
-    T = semi_axes === nothing ? Float64 :
-        TensND.float_like(promote_type(typeof.(semi_axes)...))
+    T = TensND.float_like(
+        promote_type(
+            semi_axes === nothing ? Float64 : promote_type(typeof.(semi_axes)...),
+            _factor_type(density_factor)
+        )
+    )
     b = basis === nothing ? TensND.euler_basis(euler_angles; T = T) : basis
     axes = semi_axes === nothing ? nothing : map(T, semi_axes)
     return CustomInclusion{dim, T, typeof(b), typeof(fns)}(
         axes, b, homogeneous,
-        density_factor === nothing ? nothing : Float64(density_factor), fns
+        _factor_as(T, density_factor), fns
     )
 end
 

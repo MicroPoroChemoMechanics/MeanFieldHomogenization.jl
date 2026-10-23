@@ -173,6 +173,20 @@ end
         )
     end
 
+    @testset "the prefactor takes a dual number" begin
+        # It was stored as a Float64, so a sensitivity to it threw. The seam is
+        # linear in it: the derivative is the seam divided by the prefactor.
+        with(f) = CustomInclusion(
+            (a, b, 0.0);
+            basis = MeanFieldHomogenization.inclusion_basis(crack),
+            density_factor = f,
+            inverse_property_contribution = (P₀; kw...) -> inverse_property_contribution(crack, P₀; kw...),
+        )
+        H = inverse_property_contribution(flat, CI_C_M)
+        d = ForwardDiff.derivative(f -> get_array(delta_inverse_property(with(f), H, ε)), 4π / 3)
+        @test d ≈ get_array(delta_inverse_property(flat, H, ε)) / (4π / 3) rtol = 1.0e-14
+    end
+
     @testset "a density amount without a density_factor is refused" begin
         nofactor = CustomInclusion(
             (a, b, 0.0);
