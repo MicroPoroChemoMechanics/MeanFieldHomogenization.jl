@@ -240,18 +240,8 @@ function dilute_concentration_alv_order2(
         K_E::AbstractMatrix, K_0::AbstractMatrix,
         P::AbstractMatrix
     )
-    sz = size(K_E, 1)
-    sz % 3 == 0 ||
-        throw(ArgumentError("dilute_concentration_alv_order2: size not divisible by 3"))
-    n = sz ÷ 3
-    T = promote_type(eltype(K_E), eltype(K_0), eltype(P))
-    Id = zeros(T, sz, sz)
-    @inbounds for i in 1:n
-        rows = (3 * (i - 1) + 1):(3 * i)
-        Id[rows, rows] = Matrix{T}(LinearAlgebra.I, 3, 3)
-    end
-    arg = Id .+ P * (K_E .- K_0)
-    return volterra_inverse(arg; block_size = 3)
+    _alg_check_dense("dilute_concentration_alv_order2", _DenseALV{3}(), K_E, K_0, P)
+    return _alg_dilute_concentration(_DenseALV{3}(), K_E, K_0, P)
 end
 
 """
@@ -263,19 +253,17 @@ function dilute_contribution_alv_order2(
         K_E::AbstractMatrix, K_0::AbstractMatrix,
         P::AbstractMatrix
     )
-    A_dil = dilute_concentration_alv_order2(K_E, K_0, P)
-    return (K_E .- K_0) * A_dil
+    _alg_check_dense("dilute_contribution_alv_order2", _DenseALV{3}(), K_E, K_0, P)
+    return _alg_dilute_contribution(_DenseALV{3}(), K_E, K_0, P)
 end
 
 # ── Schemes ─────────────────────────────────────────────────────────────────
 
-# Element type spanning EVERY per-phase block a kernel accumulates, not just
-# the first one or the matrix block.  The kernels below allocate their
-# accumulators up front, so a block the promotion misses is rejected by the
-# broadcast that adds it: differentiating with respect to a phase property or
-# an inclusion geometry makes `contribs` / `A_duts` (and any phase's `K̃_r`)
-# `Dual` while `K̃_0` and the fractions stay `Float64`.  `Bool` is the neutral
-# seed — it promotes away against any numeric type.
+# Element type spanning EVERY block of a list, not just the first one:
+# differentiating with respect to a phase property or an inclusion geometry
+# makes some blocks `Dual` while the others stay `Float64`.  `Bool` is the
+# neutral seed — it promotes away against any numeric type.  The schemes
+# promote the same way (`_alg_promote`); the order-2 pipeline uses this one.
 _alv_blocks_eltype(mats) = mapreduce(eltype, promote_type, mats; init = Bool)
 
 """
@@ -287,15 +275,9 @@ function voigt_alv_order2(
         matrices::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector
     )
-    length(matrices) == length(fractions) ||
-        throw(ArgumentError("voigt_alv_order2: phase counts mismatch"))
+    _alg_check("voigt_alv_order2", matrices, fractions)
     isempty(matrices) && throw(ArgumentError("voigt_alv_order2: at least one phase required"))
-    T = promote_type(_alv_blocks_eltype(matrices), eltype(fractions))
-    out = zeros(T, size(matrices[1])...)
-    @inbounds for r in eachindex(matrices)
-        @. out += fractions[r] * matrices[r]
-    end
-    return out
+    return _alg_voigt(_DenseALV{3}(), matrices, fractions)
 end
 
 """
@@ -307,11 +289,9 @@ function reuss_alv_order2(
         matrices::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector
     )
-    length(matrices) == length(fractions) ||
-        throw(ArgumentError("reuss_alv_order2: phase counts mismatch"))
-    inv_phases = [volterra_inverse(M; block_size = 3) for M in matrices]
-    inv_eff = voigt_alv_order2(inv_phases, fractions)
-    return volterra_inverse(inv_eff; block_size = 3)
+    _alg_check("reuss_alv_order2", matrices, fractions)
+    isempty(matrices) && throw(ArgumentError("reuss_alv_order2: at least one phase required"))
+    return _alg_reuss(_DenseALV{3}(), matrices, fractions)
 end
 
 """
@@ -324,16 +304,8 @@ function dilute_alv_order2(
         contribs::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector
     )
-    length(contribs) == length(fractions) ||
-        throw(ArgumentError("dilute_alv_order2: phase counts mismatch"))
-    T = promote_type(
-        eltype(K_0), _alv_blocks_eltype(contribs), eltype(fractions)
-    )
-    out = T.(K_0)
-    @inbounds for r in eachindex(contribs)
-        @. out += fractions[r] * contribs[r]
-    end
-    return out
+    _alg_check("dilute_alv_order2", contribs, fractions)
+    return _alg_dilute(_DenseALV{3}(), K_0, contribs, fractions)
 end
 
 """
@@ -346,9 +318,8 @@ function dilute_dual_alv_order2(
         contribs_compliance::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector
     )
-    R_0 = volterra_inverse(K_0; block_size = 3)
-    R_eff = dilute_alv_order2(R_0, contribs_compliance, fractions)
-    return volterra_inverse(R_eff; block_size = 3)
+    _alg_check("dilute_dual_alv_order2", contribs_compliance, fractions)
+    return _alg_dilute_dual(_DenseALV{3}(), K_0, contribs_compliance, fractions)
 end
 
 """
@@ -368,31 +339,8 @@ function mori_tanaka_alv_order2(
         contribs::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector, f_M::Real
     )
-    length(A_duts) == length(contribs) == length(fractions) ||
-        throw(ArgumentError("mori_tanaka_alv_order2: phase counts mismatch"))
-    sz = size(K_0, 1)
-    sz % 3 == 0 || throw(ArgumentError("mori_tanaka_alv_order2: size not divisible by 3"))
-    n = sz ÷ 3
-    T = promote_type(
-        eltype(K_0), eltype(fractions), typeof(f_M),
-        _alv_blocks_eltype(A_duts), _alv_blocks_eltype(contribs)
-    )
-    Id = zeros(T, sz, sz)
-    @inbounds for i in 1:n
-        rows = (3 * (i - 1) + 1):(3 * i)
-        Id[rows, rows] = Matrix{T}(LinearAlgebra.I, 3, 3)
-    end
-    num = zeros(T, sz, sz)
-    den = T(f_M) .* Id
-    @inbounds for r in eachindex(A_duts)
-        @. num += fractions[r] * contribs[r]
-        @. den += fractions[r] * A_duts[r]
-    end
-    # `num ∘ den^{-∘}`, the inverse on the RIGHT, as at order 4: the matrix
-    # gradient is `den^{-∘}` applied to the average one, and `num` acts on it.
-    # The two orders agree only when the Volterra matrices commute.
-    factor = num * volterra_inverse(den; block_size = 3)
-    return K_0 .+ factor
+    _alg_check("mori_tanaka_alv_order2", A_duts, contribs, fractions)
+    return _alg_mori_tanaka(_DenseALV{3}(), K_0, A_duts, contribs, fractions, f_M)
 end
 
 """
@@ -408,26 +356,8 @@ function maxwell_alv_order2(
         fractions::AbstractVector;
         H_0::AbstractMatrix
     )
-    length(contribs) == length(fractions) ||
-        throw(ArgumentError("maxwell_alv_order2: phase counts mismatch"))
-    sz = size(K_0, 1)
-    sz % 3 == 0 || throw(ArgumentError("maxwell_alv_order2: size not divisible by 3"))
-    n = sz ÷ 3
-    T = promote_type(
-        eltype(K_0), eltype(fractions), eltype(H_0),
-        _alv_blocks_eltype(contribs)
-    )
-    Id = zeros(T, sz, sz)
-    @inbounds for i in 1:n
-        rows = (3 * (i - 1) + 1):(3 * i)
-        Id[rows, rows] = Matrix{T}(LinearAlgebra.I, 3, 3)
-    end
-    Σ = zeros(T, sz, sz)
-    @inbounds for r in eachindex(contribs)
-        @. Σ += fractions[r] * contribs[r]
-    end
-    factor = Σ * volterra_inverse(Id .- H_0 * Σ; block_size = 3)
-    return K_0 .+ factor
+    _alg_check("maxwell_alv_order2", contribs, fractions)
+    return _alg_maxwell(_DenseALV{3}(), K_0, contribs, fractions, H_0)
 end
 
 # ── Order-2 ALV pipeline (internal — dispatched from homogenize_alv) ───────

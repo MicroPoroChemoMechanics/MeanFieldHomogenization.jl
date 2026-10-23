@@ -4,17 +4,18 @@
 #
 #  Voigt, Reuss, dilute, dilute dual, Mori-Tanaka and Maxwell, and the dilute
 #  concentration and contribution, are the same few Volterra sums, products and
-#  inverses whatever the operator is written as: a dense 6n×6n block matrix, or
-#  the n×n parameter matrices of an isotropic (α, β), transversely isotropic
-#  (ℓ₁…ℓ₆) or orthotropic (o₁…o₁₂) operator. Each representation is an algebra
-#  type that supplies its identity, product and inverse; the schemes are written
-#  once against it, and the exported `*_alv`, `*_alv_iso`, `*_alv_ti` and
-#  `*_alv_ortho` functions check their arguments and call them.
+#  inverses whatever the operator is written as: a dense block matrix (6n×6n at
+#  order 4, 3n×3n at order 2), or the n×n parameter matrices of an isotropic
+#  (α, β), transversely isotropic (ℓ₁…ℓ₆) or orthotropic (o₁…o₁₂) operator.
+#  Each representation is an algebra type that supplies its identity, product
+#  and inverse; the schemes are written once against it, and the exported
+#  `*_alv`, `*_alv_order2`, `*_alv_iso`, `*_alv_ti` and `*_alv_ortho` functions
+#  check their arguments and call them.
 # =============================================================================
 
 abstract type _ALVAlgebra end
-"Dense ``6n\\times 6n`` block matrices, blocks of the Kelvin-Mandel size 6."
-struct _DenseALV <: _ALVAlgebra end
+"Dense block matrices, `B×B` blocks per pair of times: 6 at order 4, 3 at order 2."
+struct _DenseALV{B} <: _ALVAlgebra end
 "Isotropic parameter pairs ``(\\alpha, \\beta)``."
 struct _IsoALV <: _ALVAlgebra end
 "Transversely isotropic Walpole parameters ``(\\ell_1, \\dots, \\ell_6)``."
@@ -24,14 +25,14 @@ struct _OrthoALV <: _ALVAlgebra end
 
 # The number of times of the grid, the element type of one operator, and the
 # map of a function over its components (a dense matrix is its own component).
-_alg_ntimes(::_DenseALV, C) = size(C, 1) ÷ 6
+_alg_ntimes(::_DenseALV{B}, C) where {B} = size(C, 1) ÷ B
 _alg_ntimes(::_ALVAlgebra, C) = size(first(C), 1)
 _alg_eltype(::_DenseALV, C) = eltype(C)
 _alg_eltype(::_ALVAlgebra, C) = mapreduce(eltype, promote_type, C)
 _alg_map(::_DenseALV, f, X...) = f(X...)
 _alg_map(::_ALVAlgebra, f, X...) = map(f, X...)
 
-_alg_one(::_DenseALV, n, T) = _identity_alv(n, T)
+_alg_one(::_DenseALV{B}, n, T) where {B} = Matrix{T}(LinearAlgebra.I, B * n, B * n)
 _alg_one(::_IsoALV, n, T) = _iso_identity(n, T)
 _alg_one(::_TIALV, n, T) = _ti_identity(n, T)
 _alg_one(::_OrthoALV, n, T) = _ortho_identity(n, T)
@@ -41,7 +42,7 @@ _alg_prod(::_IsoALV, X, Y) = _iso_prod(X, Y)
 _alg_prod(::_TIALV, X, Y) = _ti_prod(X, Y)
 _alg_prod(::_OrthoALV, X, Y) = _ortho_prod(X, Y)
 
-_alg_inv(::_DenseALV, X) = volterra_inverse(X; block_size = 6)
+_alg_inv(::_DenseALV{B}, X) where {B} = volterra_inverse(X; block_size = B)
 _alg_inv(::_IsoALV, X) = _iso_inv(X)
 _alg_inv(::_TIALV, X) = _ti_inv(X)
 _alg_inv(::_OrthoALV, X) = _ortho_inv(X)
@@ -124,11 +125,11 @@ end
 _alg_check(name, lists...) = allequal(map(length, lists)) ||
     throw(ArgumentError("$name: phase counts mismatch ($(join(map(length, lists), ", ")))"))
 
-# Dense operators are square block matrices of one size, a multiple of 6.
-function _alg_check_dense(name, Xs...)
+# Dense operators are square block matrices of one size, a multiple of the block.
+function _alg_check_dense(name, ::_DenseALV{B}, Xs...) where {B}
     sz = size(first(Xs))
-    all(X -> size(X) == sz, Xs) && sz[1] == sz[2] && sz[1] % 6 == 0 || throw(
-        DimensionMismatch("$name: expected square 6n×6n block matrices of one size, got $(map(size, Xs))")
+    all(X -> size(X) == sz, Xs) && sz[1] == sz[2] && sz[1] % B == 0 || throw(
+        DimensionMismatch("$name: expected square $(B)n×$(B)n block matrices of one size, got $(map(size, Xs))")
     )
     return nothing
 end

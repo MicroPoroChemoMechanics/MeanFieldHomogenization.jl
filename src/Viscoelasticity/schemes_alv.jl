@@ -57,8 +57,8 @@ function dilute_concentration_alv(
         C_E::AbstractMatrix, C_0::AbstractMatrix,
         P::AbstractMatrix
     )
-    _alg_check_dense("dilute_concentration_alv", C_E, C_0, P)
-    return _alg_dilute_concentration(_DenseALV(), C_E, C_0, P)
+    _alg_check_dense("dilute_concentration_alv", _DenseALV{6}(), C_E, C_0, P)
+    return _alg_dilute_concentration(_DenseALV{6}(), C_E, C_0, P)
 end
 
 """
@@ -72,8 +72,8 @@ function dilute_contribution_alv(
         C_E::AbstractMatrix, C_0::AbstractMatrix,
         P::AbstractMatrix
     )
-    _alg_check_dense("dilute_contribution_alv", C_E, C_0, P)
-    return _alg_dilute_contribution(_DenseALV(), C_E, C_0, P)
+    _alg_check_dense("dilute_contribution_alv", _DenseALV{6}(), C_E, C_0, P)
+    return _alg_dilute_contribution(_DenseALV{6}(), C_E, C_0, P)
 end
 
 # ── Voigt / Reuss bounds ────────────────────────────────────────────────────
@@ -91,7 +91,7 @@ function voigt_alv(
     )
     _alg_check("voigt_alv", C_phases, fractions)
     isempty(C_phases) && throw(ArgumentError("voigt_alv: at least one phase required"))
-    return _alg_voigt(_DenseALV(), C_phases, fractions)
+    return _alg_voigt(_DenseALV{6}(), C_phases, fractions)
 end
 
 """
@@ -112,7 +112,7 @@ function reuss_alv(
     )
     _alg_check("reuss_alv", C_phases, fractions)
     isempty(C_phases) && throw(ArgumentError("reuss_alv: at least one phase required"))
-    return _alg_reuss(_DenseALV(), C_phases, fractions)
+    return _alg_reuss(_DenseALV{6}(), C_phases, fractions)
 end
 
 # ── Dilute scheme ───────────────────────────────────────────────────────────
@@ -135,7 +135,7 @@ function dilute_alv(
         fractions::AbstractVector{<:Real}
     )
     _alg_check("dilute_alv", contribs, fractions)
-    return _alg_dilute(_DenseALV(), C_0, contribs, fractions)
+    return _alg_dilute(_DenseALV{6}(), C_0, contribs, fractions)
 end
 
 # ── Mori-Tanaka scheme ──────────────────────────────────────────────────────
@@ -167,7 +167,7 @@ function mori_tanaka_alv(
         f_matrix::Real
     )
     _alg_check("mori_tanaka_alv", A_duts, contribs, fractions)
-    return _alg_mori_tanaka(_DenseALV(), C_0, A_duts, contribs, fractions, f_matrix)
+    return _alg_mori_tanaka(_DenseALV{6}(), C_0, A_duts, contribs, fractions, f_matrix)
 end
 
 # ── Maxwell scheme ──────────────────────────────────────────────────────────
@@ -200,7 +200,7 @@ function maxwell_alv(
         H_0::AbstractMatrix
     )
     _alg_check("maxwell_alv", contribs, fractions)
-    return _alg_maxwell(_DenseALV(), C_0, contribs, fractions, H_0)
+    return _alg_maxwell(_DenseALV{6}(), C_0, contribs, fractions, H_0)
 end
 
 # ── DiluteDual: compliance-side dilute scheme ───────────────────────────────
@@ -235,5 +235,5 @@ function dilute_dual_alv(
         fractions::AbstractVector{<:Real}
     )
     _alg_check("dilute_dual_alv", contribs_compliance, fractions)
-    return _alg_dilute_dual(_DenseALV(), C_0, contribs_compliance, fractions)
+    return _alg_dilute_dual(_DenseALV{6}(), C_0, contribs_compliance, fractions)
 end
