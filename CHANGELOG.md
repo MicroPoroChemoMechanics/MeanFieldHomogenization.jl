@@ -1,5 +1,180 @@
 # Changelog
 
+## v0.19.0 — tensors read in the basis they are written in; generic tensor code in TensND
+
+A minor release. Components of TensND tensors were read in their own basis as if
+they were canonical in a dozen places, which gave wrong results as soon as a
+tensor was written in a rotated basis: a user's property, and above all the
+anisotropic Hill tensors, `tens_IA` and the COD tensors, which are written in
+their inclusion's basis. Every such place now reads the tensor in the basis it
+is written in, or brings the cheap object (an axis, a frame, a 3×3 matrix) into
+that basis. The Hill tensors are checked against echoes on 102 cases drawn at
+random (shapes, media, orientations, and the basis each medium is written in).
+The generic tensor algebra MFH carried moves to TensND 0.7.
+
+### Breaking changes
+
+- The minor version, and `TensND = "0.7"`: `[compat]` bounds on 0.18 do not
+  accept 0.19.
+- Results change where they were wrong, for tensors written in a rotated basis
+  (list under Fixed).
+- `extract_iso_moduli`, `extract_iso_conductivity` and `extract_ti_moduli` are
+  deprecated in favor of TensND's `E_nu` / `mu_nu`, `get_data` and
+  `arg_TI_Hoenig`; the Kelvin-Mandel block algebra (`KM_IP`, `KM_OP`,
+  `plane_pinv`, `plane_pinv2`, `acoustic_tensor`, `compliance_op_block`) is
+  TensND's, re-exported unchanged from `Core`.
+- The anisotropic conduction Hill tensor of an ellipsoid, the finite-element
+  concentration tensors and the COD tensor with an interface stiffness are now
+  returned in the inclusion's basis rather than relabeled canonical: the same
+  tensors; `get_array` of them gives components in that basis
+  (`components_canon` gives canonical ones).
+
+### Fixed
+
+- `ALVKernelTI` and `ALVKernelOrtho` refused an axis of mixed number types
+  (`(0.0, 0, 1)`, a `TypeError`); they take any real components now, and a dual
+  or symbolic axis, which the kernel cannot honor, is refused with a message.
+- `fe_available_gb` and the format check of a neural surrogate file caught every
+  exception; they now catch the failures they mean and let a bug surface.
+- An aging-viscoelastic estimate (`homogenize_alv`) could not be differentiated
+  with respect to a crack density: the crack contributions, and the crack term
+  of Mori-Tanaka, were accumulated in place into buffers of the reference's
+  element type. They are now sums; the derivative matches the one of the
+  elastic scheme in the elastic limit.
+- `eim_bound_type` compared the eigenvalues of each contrast with an absolute
+  1e-12: with moduli in small units every contrast read as zero and the answer
+  was `:upper` whatever the particles. The threshold is now relative to the
+  reference; dual moduli are read by their value (they threw), and symbolic ones
+  are refused with a message.
+- The quadrature oracle of `interaction_tensor` (`method = :quadrature`) and the
+  `density_factor` of a `CustomInclusion` forced `Float64`, so a sensitivity to
+  a semi-axis or to the factor threw; both now take the element type of the
+  geometry.
+- `confocal_layer_radii` with symbolic arguments failed with an obscure
+  non-boolean error; it is a bisection, and now refuses them with a message
+  (dual numbers still differentiate through it).
+- Carlson's elliptic integrals on exact `Rational{BigInt}` arguments stopped at
+  the tolerance of `Float64` (sixteen digits) instead of the `BigFloat`
+  precision they float to.
+- **An oblate layered spheroid differentiated by dual numbers had `NaN`
+  derivatives** (its value was right). The confocal volume was taken by `abs`,
+  and the whole-inclusion average evaluates it at a complex zero, where the
+  modulus has no derivative. The volume is real and nonnegative as it stands,
+  and is now taken by `real`; the derivative matches an extrapolated centered
+  difference to 1e-11. The `4π/3` factor also follows the element type now,
+  instead of being a `Float64`.
+- **The elastic confocal layered spheroid was solved on a singular system** as
+  soon as it had an inner shell. Papkovich–Neuber potentials are not unique, and
+  the shear cases (transverse and longitudinal) admit one field-free combination
+  of their regular modes, in the core and in every inner shell: two singular
+  values at 1e-16 for two layers. The concentration came out to about 1e-6 only,
+  differently along the dual path (2.4e-6 apart at ω = 2.6), and its derivative
+  was off by 1e-5. One column of that combination is now removed in each region
+  with regular modes; the system is full-rank (condition number about 1e4),
+  Float64 and duals agree to 1e-15, and the derivative matches an extrapolated
+  centered difference to 1e-11. A single inclusion was not affected beyond
+  rounding.
+- **2-D Green operator and 2-D pair tensors** (EIM, cluster model): a 2-D
+  isotropic stiffness was read with the 3-D formulas (k = α/3), giving the Poisson
+  ratio (α − β)/(2α + β) where the 2-D Hill tensor uses the plane-strain
+  (α − β)/(2α); both now use the latter, the Poisson ratio of the 3-D material
+  whose plane-strain stiffness the 2-D tensor is.
+- **Conduction Hill tensor of an ellipsoid in an anisotropic conductor written in
+  a rotated basis**: the conductivity was read in its own basis next to a
+  canonical shape tensor.
+- **EIM and cluster assemblies** flattened blocks written in different bases into
+  one matrix.
+- **Order-2 ALV Hill kernel**: `tens_IA` was read in the ellipsoid's basis as
+  canonical, so a rotated ellipsoid was silently aligned.
+- **Differential scheme**: the fully anisotropic state was read in the tensor's
+  own basis; a TI or orthotropic increment about another axis was copied as if
+  about the same.
+- **Self-consistent residual and convergence of the derivatives** compared
+  iterates written in different bases.
+- **Interface stiffness of an oriented crack**: the COD tensor came back in the
+  wrong frame.
+- **ALV crack guard**: it read the crack normal in the crack's own basis, where
+  it is always e₃, so a rotated crack passed it.
+- **Finite-element frames**: a property written in a rotated basis was rotated
+  twice.
+- **Layered-sphere local displacement** under a strain written in a rotated
+  basis.
+- **Julia 1.14**: six generated constructors had unbound type parameters (Aqua);
+  rebuilding a `NeuralConcentrationInclusion` without shape parameters threw,
+  so its sensitivity to a semi-axis did.
+- **`_major_symmetrize` of a 3-parameter `TensTI{2}`** kept its skew part.
+- **`extract_ti_moduli`** went through an Euler-angle frame and 81 components to
+  read five moduli that do not depend on the axis; they are read off the Walpole
+  coefficients, exactly, symbolic moduli included.
+- **TI coaxiality test of the Hill dispatcher** threw on a symbolic axis.
+- **`tens_UA` of an ellipse** (2-D): its diagonal carried the 3/2 factor of the
+  3-D formula, and it switched to another, also wrong, formula when the semi-axes
+  came within 1e-6 of each other, so the value jumped there and the derivative
+  along the gap was lost. It is now the closed form of the 2-D integral, valid at
+  `a = b`, and rebuilds Mura's Hill tensor exactly.
+- **Self-consistent scheme through NonlinearSolve under nested dual numbers**
+  (a second derivative) threw; the implicit-function lift now gives every order.
+- **Self-consistent Newton** took any error of its linear solve, a bug included,
+  for a singular Jacobian and regularized it; only a singular system is now
+  regularized, and an error in the seed step is no longer swallowed.
+- **Choice of the pipeline for nested or viscoelastic properties** skipped a member
+  on any error raised while reading it; a missing property is now tested for, and
+  any other error surfaces.
+- **Finite-element inclusions shared by several tasks** could assemble the same
+  cell twice or corrupt their cache; the cache is now locked.
+- **Implicit ODE solvers in the differential scheme** (`Rosenbrock23()`,
+  `Rodas5P()`) failed at their first time gradient: the incorporation rates
+  were built in the state's element type only, so the dual τ of the time
+  gradient was forced into Float64. They now run with their default ForwardDiff,
+  and the documentation no longer recommends `AutoFiniteDiff()`.
+
+### Changed
+
+- `homogenize_alv` picks, once per call, the cheapest algebra all the operators
+  belong to (isotropic, TI, orthotropic, else dense) and runs the scheme there,
+  instead of four written-out attempts per scheme.
+- The closed-form ALV schemes (Voigt, Reuss, dilute, dilute dual, Mori-Tanaka,
+  Maxwell, dilute concentration and contribution) are written once over the
+  algebra of the operator, instead of five times (dense order 4, dense order 2,
+  iso, TI, orthotropic). The exported functions keep their signatures. The TI
+  and orthotropic dilute schemes now accept dual fractions, and a dense
+  concentration or contribution with blocks of the wrong size raises
+  `DimensionMismatch` (order 2 raised `ArgumentError`, order 4 an assertion).
+- `k_mu`, `iso_stiffness`, `E_nu`, `iso_stiffness_E_nu` are TensND's, re-exported
+  unchanged; `hoenig_params` / `hoenig_stiffness` are built on TensND's Hoenig
+  forms. Internal duplicates of TensND (`_bond6`, `_primal`, `_no_derivative`,
+  `_make_ortho`, the identities, three axis-parallel tests) are gone.
+- Orthotropic auxiliary and Hill tensors keep their `TensOrtho` structure under
+  dual numbers (they fell back to a dense tensor).
+- Hill kernels: components by one change of basis, axis permutations by
+  indexing, instead of nested copy loops.
+- Tensor comparisons in the tests are made as tensors, in their common basis.
+
+### Performance
+
+- The Laplacian of the plane-strain Green operator used by the disk-pair
+  interaction is built on the stack: 3 times faster and allocation-free.
+- The elastic strain concentration of a layered confocal spheroid is 13 times
+  faster for a prolate one (790 ms → 59 ms for two layers) and 4 times for an
+  oblate one (1.22 s → 0.28 s), with 90 times fewer allocations: the mode groups
+  are concrete, the Legendre tables of a quadrature point are built once and
+  shared by every mode and every azimuth, and the surface moment works on static
+  matrices.
+- Isotropic Green operator (elastic, 3-D and 2-D) written in its symmetrized
+  closed form, without the two intermediate 81-component arrays: 2.7 times
+  faster (1.08 µs to 0.40 µs in 3-D).
+- Anisotropic Green operator static throughout (stiffness, input point, nested
+  Jacobians): 15 % faster and 9 times fewer allocations.
+
+### Tests
+
+- `test/Core/test_random_bases.jl`: each fixed function with its operands in
+  random bases.
+- `test/Elasticity/test_hill_random_bases.jl`: 102 echoes references
+  (`scripts/bench_echoes/make_hill_random_bases.py`), each medium given in the
+  canonical basis, a rotated one, a non-orthonormal one and its structured type;
+  derivatives on exact identities.
+
 ## v0.18.1 — MFH Studio: the plot of the run shown, and no other
 
 A patch release of the studio; the homogenization is unchanged.
