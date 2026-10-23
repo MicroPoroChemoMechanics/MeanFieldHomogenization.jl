@@ -2,6 +2,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+using ForwardDiff
 
 # =============================================================================
 #  test_crack_schemes_alv.jl — crack-aware ALV homogenization schemes:
@@ -208,4 +209,14 @@ end
     add_phase!(rve, :P, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)); fraction = 0.1)
     @test has_visco_property(rve, :C)
     @test !has_visco_property(rve, :K)
+end
+
+@testset "Mori-Tanaka with cracks — differentiated by the crack density" begin
+    # The crack term was accumulated into a buffer of the matrix's element
+    # type, which a dual density could not enter. In the elastic limit the
+    # derivative is the one of the elastic scheme.
+    ctx = _setup_crack_elastic()
+    alv(ε) = homogenize_alv(_build_alv(merge(ctx, (; ε))), MoriTanaka(), :C; times = ctx.times)[1:6, 1:6]
+    el(ε) = _to_mandel(homogenize(_build_el(merge(ctx, (; ε))), MoriTanaka(), :C))
+    @test ForwardDiff.derivative(alv, 0.1) ≈ ForwardDiff.derivative(el, 0.1) rtol = 1.0e-10
 end

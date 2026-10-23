@@ -368,8 +368,11 @@ function homogenize_alv(
     # `π` for 2D ribbon).  Used by the ECHOES-form MT / Maxwell / PCW
     # multiplicative formula `C_eff = C_M · (I + Σ ε_c·(4π/3)·H_iso_c·C_M)^{-1}`.
     crack_data = Tuple{Any, Any, AbstractSymmetrize, AbstractMatrix}[]
-    ΔC_cracks_M = zeros(eltype(C_0), size(C_0)...)   # cracks-against-C_M sum
-    ΔJ_cracks_M = zeros(eltype(C_0), size(C_0)...)   # for Reuss/DiluteDual
+    # Cracks-against-C_M sums (stiffness, and compliance for Reuss/DiluteDual),
+    # added rather than accumulated in place so that a dual crack density
+    # promotes them.
+    ΔC_cracks_M = zero(C_0)
+    ΔJ_cracks_M = zero(C_0)
 
     for name in incl_names
         ph = rve.phases[name]
@@ -402,10 +405,10 @@ function homogenize_alv(
             Ñ = -(C_0 * H̃ * C_0)
             ΔC = delta_property_alv(geom, Ñ, ε)
             ΔC = _maybe_symmetrize_alv(ΔC, sym)
-            ΔC_cracks_M .+= ΔC
+            ΔC_cracks_M = ΔC_cracks_M + ΔC
             ΔJ = delta_inverse_property_alv(geom, H̃, ε)
             ΔJ = _maybe_symmetrize_alv(ΔJ, sym)
-            ΔJ_cracks_M .+= ΔJ
+            ΔJ_cracks_M = ΔJ_cracks_M + ΔJ
         else
             C_r_law = phase_property(rve, name, prop)
             C_r, A_dut, N_dut, P_r = _inclusion_alv_quantities(
