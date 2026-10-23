@@ -75,25 +75,11 @@ function _solve_tensor_system(blocks, rhs, P₀::TensND.AbstractTens)
     m = _mandel_size(P₀)
     Mb = [[_to_mandel(blocks[i][k], P₀) for k in 1:n] for i in 1:n]
     Rb = [_to_mandel(rhs[i], P₀) for i in 1:n]
-    # The element type is read off the assembled matrices themselves, not from
-    # `eltype` of their container: the blocks live in an untyped vector (their
-    # TensND symmetry classes differ), and under AD they mix `Dual` blocks with
-    # `Float64` ones, so container inference lands on `Any` and `zeros(Any, …)`
-    # then fails. Scanning the actual matrices is what keeps a `Dual` anywhere
-    # in the assembly from being silently lost.
-    T = promote_type(
-        mapreduce(eltype, promote_type, Iterators.flatten(Mb)),
-        mapreduce(eltype, promote_type, Rb)
-    )
-    A = zeros(T, n * m, n * m)
-    B = zeros(T, n * m, m)
-    for i in 1:n
-        rows = ((i - 1) * m + 1):(i * m)
-        B[rows, :] .= Rb[i]
-        for k in 1:n
-            A[rows, ((k - 1) * m + 1):(k * m)] .= Mb[i][k]
-        end
-    end
-    X = A \ B
-    return [_from_mandel(X[((i - 1) * m + 1):(i * m), :], P₀) for i in 1:n]
+    # `hcat` and `vcat` promote across the blocks they join: the blocks live in an
+    # untyped vector (their TensND symmetry classes differ) and under AD mix
+    # `Dual` blocks with `Float64` ones, so a `Dual` anywhere in the assembly
+    # carries through the solve.
+    A = reduce(vcat, [reduce(hcat, row) for row in Mb])
+    X = A \ reduce(vcat, Rb)
+    return [_from_mandel(X[rows, :], P₀) for rows in Iterators.partition(axes(X, 1), m)]
 end
