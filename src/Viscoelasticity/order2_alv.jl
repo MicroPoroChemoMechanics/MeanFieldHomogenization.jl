@@ -14,89 +14,14 @@
 # ── Trapezoidal fillers for order-2 (3×3 block) kernels ─────────────────────
 # Defined in trapezoidal.jl entry points; bodies live here for cohesion.
 
-@inline function _fill_trapezoidal_order2_tens!(
-        M::AbstractMatrix, law::ViscoLaw,
-        times::AbstractVector
-    )
-    n = length(times)
-    n == 0 && return M
-    T = eltype(M)
-    cache = Vector{Matrix{T}}(undef, n)
-    @inbounds begin
-        cache[1] = _to_order2_mat(visco_eval(law, times[1], times[1]))
-        _set_block_order2!(M, 1, 1, cache[1])
-        for i in 2:n
-            for k in 1:i
-                cache[k] = _to_order2_mat(visco_eval(law, times[i], times[k]))
-            end
-            _fill_row_blocks_order2_from_cache!(M, cache, i, T)
-        end
-    end
-    return M
-end
-
-@inline function _fill_trapezoidal_order2_mat!(
-        M::AbstractMatrix, law::ViscoLaw,
-        times::AbstractVector
-    )
-    n = length(times)
-    n == 0 && return M
-    T = eltype(M)
-    cache = Vector{Matrix{T}}(undef, n)
-    @inbounds begin
-        cache[1] = copy(visco_eval(law, times[1], times[1]))
-        _set_block_order2!(M, 1, 1, cache[1])
-        for i in 2:n
-            for k in 1:i
-                cache[k] = visco_eval(law, times[i], times[k])
-            end
-            _fill_row_blocks_order2_from_cache!(M, cache, i, T)
-        end
-    end
-    return M
-end
-
-# Place row `i` blocks (3×3 each) into `M` using cached evaluations.
-@inline function _fill_row_blocks_order2_from_cache!(
-        M::AbstractMatrix,
-        cache::Vector{<:AbstractMatrix},
-        i::Int, ::Type{T}
-    ) where {T}
-    half = inv(T(2))
-    @inbounds begin
-        c1, c2 = cache[1], cache[2]
-        for kk in 1:3, ll in 1:3
-            M[3 * (i - 1) + kk, ll] = (c1[kk, ll] - c2[kk, ll]) * half
-        end
-        for j in 2:(i - 1)
-            cm, cp = cache[j - 1], cache[j + 1]
-            for kk in 1:3, ll in 1:3
-                M[3 * (i - 1) + kk, 3 * (j - 1) + ll] =
-                    (cm[kk, ll] - cp[kk, ll]) * half
-            end
-        end
-        cm, cp = cache[i - 1], cache[i]
-        for kk in 1:3, ll in 1:3
-            M[3 * (i - 1) + kk, 3 * (i - 1) + ll] =
-                (cm[kk, ll] + cp[kk, ll]) * half
-        end
-    end
-    return M
-end
+_fill_trapezoidal_order2_tens!(M::AbstractMatrix, law::ViscoLaw, times::AbstractVector) =
+    _fill_trapezoidal_blocks!(M, law, times, Val(3), _to_order2_mat)
+_fill_trapezoidal_order2_mat!(M::AbstractMatrix, law::ViscoLaw, times::AbstractVector) =
+    _fill_trapezoidal_blocks!(M, law, times, Val(3), identity)
 
 @inline _to_order2_mat(s::AbstractMatrix) = s
 @inline function _to_order2_mat(s::TensND.AbstractTens{2, 3})
     return TensND.components_canon(s)   # the ALV matrices are canonical
-end
-
-@inline function _set_block_order2!(
-        M::AbstractMatrix, i::Int, j::Int,
-        block::AbstractMatrix
-    )
-    rows = (3 * (i - 1) + 1):(3 * i)
-    cols = (3 * (j - 1) + 1):(3 * j)
-    @inbounds M[rows, cols] = block
-    return M
 end
 
 # ── Iso order-2 parameter extraction (single scalar α per (i,j)) ───────────
@@ -114,15 +39,9 @@ function iso_order2_params_from_blocks(M::AbstractMatrix)
     sz % 3 == 0 ||
         throw(ArgumentError("iso_order2_params_from_blocks: size $(sz) not divisible by 3"))
     n = sz ÷ 3
-    T = eltype(M)
-    α = zeros(T, n, n)
-    @inbounds for i in 1:n, j in 1:n
-        r = 3 * (i - 1)
-        c = 3 * (j - 1)
-        # Average of diagonal entries of the 3×3 block.
-        α[i, j] = (M[r + 1, c + 1] + M[r + 2, c + 2] + M[r + 3, c + 3]) / 3
-    end
-    return α
+    # A third of the trace of each 3×3 block.
+    blk(i) = (3 * (i - 1) + 1):(3 * i)
+    return [tr(@view M[blk(i), blk(j)]) / 3 for i in 1:n, j in 1:n]
 end
 
 """
@@ -135,17 +54,7 @@ function iso_order2_blocks_from_params(α::AbstractMatrix)
     n = size(α, 1)
     n == size(α, 2) ||
         throw(ArgumentError("iso_order2_blocks_from_params: α must be square"))
-    T = eltype(α)
-    M = zeros(T, 3 * n, 3 * n)
-    @inbounds for i in 1:n, j in 1:n
-        a = T(α[i, j])
-        rows = (3 * (i - 1) + 1):(3 * i)
-        cols = (3 * (j - 1) + 1):(3 * j)
-        M[rows[1], cols[1]] = a
-        M[rows[2], cols[2]] = a
-        M[rows[3], cols[3]] = a
-    end
-    return M
+    return kron(α, Matrix{eltype(α)}(I, 3, 3))
 end
 
 """
