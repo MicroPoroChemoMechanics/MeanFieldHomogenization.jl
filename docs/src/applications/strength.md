@@ -56,7 +56,8 @@ const K_san, μ_san = 37.8, 44.3
 
 # Water/air are regularized to a tiny positive stiffness: it selects the
 # percolating SC branch and keeps the iteration smooth (deliberate deviation
-# from the exact zero — the source of the ~2% f_c gap with Echoes).
+# from the exact zero of Echoes, and the source of the gap with it: 1 to 3 % on
+# f_c at the lowest hydration degrees, below 0.5 % beyond).
 const TINY = 1.0e-3
 const NTHETA = 20
 const ω_aspect = 1.0e4
@@ -90,8 +91,10 @@ function build_hf(wc, α_p, μ_b0; N = NTHETA, ω = ω_aspect)
     T = typeof(μ_b0)
     ez = (0.0, 0.0, 1.0)
     rve = RVE(; T = T)
-    # Zero-volume matrix = SC seed only (Σ inclusion fractions = 1).
-    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => TensISO{3}(convert(T, 3K_hyd_ref), convert(T, 2μ_hyd_ref))); fraction = :rest, symmetrize = :iso)
+    # Zero-volume matrix = SC seed only (Σ inclusion fractions = 1). The spheres
+    # (seed, water, air) are not averaged: an isotropic sphere contributes with
+    # the symmetry of the reference already, transversely isotropic about e₃.
+    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => TensISO{3}(convert(T, 3K_hyd_ref), convert(T, 2μ_hyd_ref))); fraction = :rest)
     for (i, bin) in enumerate(polar_orientation_bins(N))
         μ_h = i == 1 ? μ_b0 : convert(T, μ_hyd_ref)
         add_phase!(
@@ -102,10 +105,10 @@ function build_hf(wc, α_p, μ_b0; N = NTHETA, ω = ω_aspect)
         )
     end
     C_tiny = TensISO{3}(convert(T, 3TINY), convert(T, 2TINY))
-    add_phase!(rve, :W, Ellipsoid(1.0), Dict(:C => C_tiny); fraction = ftw, symmetrize = :iso)
-    add_phase!(rve, :AIR, Ellipsoid(1.0), Dict(:C => C_tiny); fraction = ftair, symmetrize = :iso)
+    add_phase!(rve, :W, Ellipsoid(1.0), Dict(:C => C_tiny); fraction = ftw)
+    add_phase!(rve, :AIR, Ellipsoid(1.0), Dict(:C => C_tiny); fraction = ftair)
     return homogenize(
-        rve, SelfConsistent(; abstol = 1.0e-8, maxiters = 1000, damping = 0.5),
+        rve, SelfConsistent(; abstol = 1.0e-8, maxiters = 1000),
         :C; select_best = true
     )
 end
@@ -319,14 +322,11 @@ pμ = plot(; xlabel = "α", ylabel = "μ_mortar (GPa)", legend = false, framesty
 pfc = plot(; xlabel = "α", ylabel = "f_c / σ_ult", legend = false, framestyle = :box)
 
 for wc in wc_list
-    αs = range(0.05, αmax(wc) * (1 - 1e-9); length = 14)
+    αs = range(0.05, αmax(wc) * (1 - 1e-9); length = 6)
     ks, μs, fcs, ak = Float64[], Float64[], Float64[], Float64[]
     for α in αs
-        try
-            r = compute_point(wc, α)
-            push!(ak, α); push!(ks, r.K_mo); push!(μs, r.μ_mo); push!(fcs, r.fc)
-        catch
-        end
+        r = compute_point(wc, α)
+        push!(ak, α); push!(ks, r.K_mo); push!(μs, r.μ_mo); push!(fcs, r.fc)
     end
     plot!(pk, ak, ks; label = "w/c=$wc", lw = 2)
     plot!(pμ, ak, μs; lw = 2)
@@ -347,14 +347,11 @@ the normalized strength at full hydration, the effect being sharper at low
 psc = plot(; xlabel = "sand-to-cement ratio s/c", ylabel = "f_c / σ_ult",
     legend = :topright, framestyle = :box, size = (720, 440))
 for wc in (0.35, 0.5, 0.65)
-    scs = range(0.0, 5.0; length = 12)
+    scs = range(0.0, 5.0; length = 6)
     vals, kept = Float64[], Float64[]
     for sc in scs
-        try
-            fc = compute_point(wc, αmax(wc) * (1 - 1e-9); sc = sc).fc
-            fc > 0 && (push!(kept, sc); push!(vals, fc))
-        catch
-        end
+        fc = compute_point(wc, αmax(wc) * (1 - 1e-9); sc = sc).fc
+        push!(kept, sc); push!(vals, fc)
     end
     plot!(psc, kept, vals; label = "w/c=$wc", lw = 2, marker = :circle, ms = 3)
 end
