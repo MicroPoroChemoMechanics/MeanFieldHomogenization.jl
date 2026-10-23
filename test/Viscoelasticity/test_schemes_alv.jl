@@ -2,6 +2,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+using ForwardDiff
 
 # =============================================================================
 #  test_schemes_alv.jl — homogenization schemes in the elastic limit
@@ -110,6 +111,23 @@ end
     @test_throws ArgumentError voigt_alv([M], [0.5, 0.5])
     @test_throws ArgumentError reuss_alv(Matrix{Float64}[], Float64[])
     @test_throws ArgumentError mori_tanaka_alv(M, [M], [M], [0.5, 0.5], 0.5)
+    @test_throws DimensionMismatch dilute_concentration_alv(M, zeros(12, 12), M)
+end
+
+@testset "schemes_alv — dilute differentiated by a fraction, in every algebra" begin
+    # The scheme is linear in the fractions, so the derivative is the
+    # contribution itself; the TI and orthotropic forms accumulated into a copy
+    # of the reference, which a dual fraction could not enter.
+    n = 3
+    rnd(k) = [i ≥ j ? 0.1 * (i + k * j) : 0.0 for i in 1:n, j in 1:n]
+    for (C₀, N, dilute) in (
+            ((rnd(1), rnd(2)), (rnd(3), rnd(4)), dilute_alv_iso),
+            (ntuple(k -> rnd(k), 6), ntuple(k -> rnd(k + 6), 6), dilute_alv_ti),
+            (ntuple(k -> rnd(k), 12), ntuple(k -> rnd(k + 12), 12), dilute_alv_ortho),
+        )
+        flat(X) = reduce(vcat, map(vec, X))
+        @test ForwardDiff.derivative(f -> flat(dilute(C₀, [N], [f])), 0.3) == flat(N)
+    end
 end
 
 @testset "schemes_alv — single-step grid (n=1) ≡ elastic MT" begin

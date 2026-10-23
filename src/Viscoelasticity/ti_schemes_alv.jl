@@ -28,13 +28,6 @@
 # Promote `T` with the element type of every tuple of parameter matrices in
 # `list` (TI 6-tuples, orthotropic 12-tuples): a phase may carry a wider
 # element type than the matrix, a dual geometry for one.
-@inline function _params_list_eltype(T::Type, list::AbstractVector)
-    for a in list
-        T = promote_type(T, eltype(a[1]))
-    end
-    return T
-end
-
 """
     _ti_identity(n, T) -> NTuple{6, Matrix{T}}
 
@@ -46,18 +39,6 @@ TI form of the ``6n\\times 6n`` block-diagonal identity matrix:
     Iₙ = Matrix{T}(LinearAlgebra.I, n, n)
     Zₙ = zeros(T, n, n)
     return (Iₙ, copy(Iₙ), Zₙ, copy(Zₙ), copy(Iₙ), copy(Iₙ))
-end
-
-"""
-    _ti_add!(acc, c, a) -> acc
-
-In-place TI scalar AXPY: `acc[k] .+= c · a[k]` for ``k = 1, \\dots, 6``.
-"""
-@inline function _ti_add!(acc::NTuple{6, <:Matrix}, c::Real, a::NTuple{6, <:Matrix})
-    @inbounds for k in 1:6
-        @. acc[k] += c * a[k]
-    end
-    return acc
 end
 
 """
@@ -86,38 +67,6 @@ Each entry of the ``2\\times 2`` product expands to two ``n\\times n`` Volterra 
     c5 = a[5] * b[5]
     c6 = a[6] * b[6]
     return (c1, c2, c3, c4, c5, c6)
-end
-
-"""
-    _ti_prod!(out, a, b) -> out
-
-In-place TI Volterra product : 8 `mul!` calls for the ``2\\times 2`` normal
-block + 2 `mul!` for the shears.  No allocation if `out`'s entries
-have the right size.
-"""
-@inline function _ti_prod!(
-        out::NTuple{6, <:Matrix},
-        a::NTuple{6, <:Matrix},
-        b::NTuple{6, <:Matrix}
-    )
-    T = eltype(out[1])
-    one_T = one(T)
-    # c1 = a[1] * b[1] + a[3] * b[4]
-    mul!(out[1], a[1], b[1])
-    mul!(out[1], a[3], b[4], one_T, one_T)
-    # c2 = a[4] * b[3] + a[2] * b[2]
-    mul!(out[2], a[4], b[3])
-    mul!(out[2], a[2], b[2], one_T, one_T)
-    # c3 = a[1] * b[3] + a[3] * b[2]
-    mul!(out[3], a[1], b[3])
-    mul!(out[3], a[3], b[2], one_T, one_T)
-    # c4 = a[4] * b[1] + a[2] * b[4]
-    mul!(out[4], a[4], b[1])
-    mul!(out[4], a[2], b[4], one_T, one_T)
-    # c5 = a[5] * b[5], c6 = a[6] * b[6]
-    mul!(out[5], a[5], b[5])
-    mul!(out[6], a[6], b[6])
-    return out
 end
 
 # ── Pack / unpack the Walpole 2×2 part as a (2n)×(2n) block-Volterra ──────
@@ -318,16 +267,9 @@ end
 TI-form Voigt bound: ``\\ell_k^{\\mathrm{hom}} = \\sum_i f_i\\,\\ell_{k,i}`` for each Walpole component ``k``.
 """
 function voigt_alv_ti(ℓ_phases::AbstractVector, fractions::AbstractVector)
-    length(ℓ_phases) == length(fractions) ||
-        throw(ArgumentError("voigt_alv_ti: phase counts mismatch"))
+    _alg_check("voigt_alv_ti", ℓ_phases, fractions)
     isempty(ℓ_phases) && throw(ArgumentError("voigt_alv_ti: at least one phase required"))
-    n = size(ℓ_phases[1][1], 1)
-    T = _params_list_eltype(eltype(fractions), ℓ_phases)
-    eff = ntuple(_ -> zeros(T, n, n), 6)
-    @inbounds for r in eachindex(ℓ_phases)
-        _ti_add!(eff, fractions[r], ℓ_phases[r])
-    end
-    return eff
+    return _alg_voigt(_TIALV(), ℓ_phases, fractions)
 end
 
 """
@@ -337,11 +279,9 @@ TI-form Reuss bound: invert per-phase compliances in TI Walpole form,
 average, invert back.
 """
 function reuss_alv_ti(ℓ_phases::AbstractVector, fractions::AbstractVector)
-    length(ℓ_phases) == length(fractions) ||
-        throw(ArgumentError("reuss_alv_ti: phase counts mismatch"))
-    ℓ_inv_phases = [_ti_inv(ℓ) for ℓ in ℓ_phases]
-    ℓ_inv_eff = voigt_alv_ti(ℓ_inv_phases, fractions)
-    return _ti_inv(ℓ_inv_eff)
+    _alg_check("reuss_alv_ti", ℓ_phases, fractions)
+    isempty(ℓ_phases) && throw(ArgumentError("reuss_alv_ti: at least one phase required"))
+    return _alg_reuss(_TIALV(), ℓ_phases, fractions)
 end
 
 """
@@ -357,13 +297,7 @@ function dilute_concentration_alv_ti(
         ℓ_0::NTuple{6, <:Matrix},
         ℓ_P::NTuple{6, <:Matrix}
     )
-    n = size(ℓ_E[1], 1)
-    T = promote_type(eltype(ℓ_E[1]), eltype(ℓ_0[1]), eltype(ℓ_P[1]))
-    Δ = ntuple(k -> ℓ_E[k] .- ℓ_0[k], 6)
-    PΔ = _ti_prod(ℓ_P, Δ)
-    Id = _ti_identity(n, T)
-    sum_ti = ntuple(k -> Id[k] .+ PΔ[k], 6)
-    return _ti_inv(sum_ti)
+    return _alg_dilute_concentration(_TIALV(), ℓ_E, ℓ_0, ℓ_P)
 end
 
 """
@@ -376,9 +310,7 @@ function dilute_contribution_alv_ti(
         ℓ_0::NTuple{6, <:Matrix},
         ℓ_P::NTuple{6, <:Matrix}
     )
-    A_dil = dilute_concentration_alv_ti(ℓ_E, ℓ_0, ℓ_P)
-    Δ = ntuple(k -> ℓ_E[k] .- ℓ_0[k], 6)
-    return _ti_prod(Δ, A_dil)
+    return _alg_dilute_contribution(_TIALV(), ℓ_E, ℓ_0, ℓ_P)
 end
 
 """
@@ -391,13 +323,8 @@ function dilute_alv_ti(
         contribs_ti::AbstractVector,
         fractions::AbstractVector
     )
-    length(contribs_ti) == length(fractions) ||
-        throw(ArgumentError("dilute_alv_ti: phase counts mismatch"))
-    out = ntuple(k -> copy(ℓ_0[k]), 6)
-    @inbounds for r in eachindex(contribs_ti)
-        _ti_add!(out, fractions[r], contribs_ti[r])
-    end
-    return out
+    _alg_check("dilute_alv_ti", contribs_ti, fractions)
+    return _alg_dilute(_TIALV(), ℓ_0, contribs_ti, fractions)
 end
 
 """
@@ -412,9 +339,8 @@ function dilute_dual_alv_ti(
         contribs_compliance_ti::AbstractVector,
         fractions::AbstractVector
     )
-    ℓ_J_0 = _ti_inv(ℓ_0)
-    ℓ_J_eff = dilute_alv_ti(ℓ_J_0, contribs_compliance_ti, fractions)
-    return _ti_inv(ℓ_J_eff)
+    _alg_check("dilute_dual_alv_ti", contribs_compliance_ti, fractions)
+    return _alg_dilute_dual(_TIALV(), ℓ_0, contribs_compliance_ti, fractions)
 end
 
 """
@@ -437,25 +363,8 @@ function mori_tanaka_alv_ti(
         contribs_ti::AbstractVector,
         fractions::AbstractVector, f_M::Real
     )
-    length(A_duts_ti) == length(contribs_ti) == length(fractions) ||
-        throw(ArgumentError("mori_tanaka_alv_ti: phase counts mismatch"))
-    n = size(ℓ_0[1], 1)
-    T = _params_list_eltype(
-        _params_list_eltype(promote_type(eltype(ℓ_0[1]), eltype(fractions), typeof(f_M)), A_duts_ti),
-        contribs_ti,
-    )
-    Id = _ti_identity(n, T)
-    num = ntuple(_ -> zeros(T, n, n), 6)
-    den = ntuple(k -> T(f_M) .* Id[k], 6)
-    @inbounds for r in eachindex(A_duts_ti)
-        _ti_add!(num, fractions[r], contribs_ti[r])
-        _ti_add!(den, fractions[r], A_duts_ti[r])
-    end
-    # (Σ fᵣ Ñᵣ) ∘ (f₀ 𝟙 + Σ fₛ Ãₛ)^{-1}, the den on the RIGHT as in `mori_tanaka_alv`:
-    # the normal block of a TI operator is a 2×2 Walpole matrix and the time
-    # axis a lower-triangular Volterra one, and neither commutes.
-    factor = _ti_prod(num, _ti_inv(den))
-    return ntuple(k -> ℓ_0[k] .+ factor[k], 6)
+    _alg_check("mori_tanaka_alv_ti", A_duts_ti, contribs_ti, fractions)
+    return _alg_mori_tanaka(_TIALV(), ℓ_0, A_duts_ti, contribs_ti, fractions, f_M)
 end
 
 """
@@ -469,17 +378,6 @@ function maxwell_alv_ti(
         fractions::AbstractVector,
         ℓ_H_0::NTuple{6, <:Matrix}
     )
-    length(contribs_ti) == length(fractions) ||
-        throw(ArgumentError("maxwell_alv_ti: phase counts mismatch"))
-    n = size(ℓ_0[1], 1)
-    T = _params_list_eltype(promote_type(eltype(ℓ_0[1]), eltype(fractions), eltype(ℓ_H_0[1])), contribs_ti)
-    Id = _ti_identity(n, T)
-    Σ = ntuple(_ -> zeros(T, n, n), 6)
-    @inbounds for r in eachindex(contribs_ti)
-        _ti_add!(Σ, fractions[r], contribs_ti[r])
-    end
-    HΣ = _ti_prod(ℓ_H_0, Σ)
-    inv_arg = ntuple(k -> Id[k] .- HΣ[k], 6)
-    factor = _ti_prod(Σ, _ti_inv(inv_arg))
-    return ntuple(k -> ℓ_0[k] .+ factor[k], 6)
+    _alg_check("maxwell_alv_ti", contribs_ti, fractions)
+    return _alg_maxwell(_TIALV(), ℓ_0, contribs_ti, fractions, ℓ_H_0)
 end

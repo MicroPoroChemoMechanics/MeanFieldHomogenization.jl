@@ -46,21 +46,6 @@ and the three shears are each ``\\mathbb 1``.
 end
 
 """
-    _ortho_add!(acc, c, a) -> acc
-
-In-place ortho scalar AXPY: `acc[k] .+= c · a[k]` for ``k = 1, \\dots, 12``.
-"""
-@inline function _ortho_add!(
-        acc::NTuple{12, <:Matrix}, c::Real,
-        a::NTuple{12, <:Matrix}
-    )
-    @inbounds for k in 1:12
-        @. acc[k] += c * a[k]
-    end
-    return acc
-end
-
-"""
     _ortho_prod(a, b) -> NTuple{12, Matrix}
 
 Ortho Volterra product ``M_a\\circ M_b``.  The normal ``3\\times 3`` block follows the
@@ -83,39 +68,6 @@ component-wise.
     c11 = a[11] * b[11]
     c12 = a[12] * b[12]
     return (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12)
-end
-
-"""
-    _ortho_prod!(out, a, b) -> out
-
-In-place ortho Volterra product.  27 `mul!` for the normal block + 3
-for the shears.  No allocation when `out`'s components are sized
-correctly.
-"""
-@inline function _ortho_prod!(
-        out::NTuple{12, <:Matrix},
-        a::NTuple{12, <:Matrix},
-        b::NTuple{12, <:Matrix}
-    )
-    T = eltype(out[1])
-    one_T = one(T)
-    # Normal 3×3 block c_{ij} = Σ_k a_{ik} · b_{kj}
-    @inbounds for ii in 1:3, jj in 1:3
-        idx_c = 3 * (ii - 1) + jj            # (ii, jj) → flat index 1..9
-        idx_a1 = 3 * (ii - 1) + 1
-        idx_b1 = 0 * 3 + jj                   # k = 1 → (1, jj) flat = jj
-        mul!(out[idx_c], a[idx_a1], b[idx_b1])
-        for k in 2:3
-            idx_a = 3 * (ii - 1) + k         # (ii, k)
-            idx_b = 3 * (k - 1) + jj         # (k, jj)
-            mul!(out[idx_c], a[idx_a], b[idx_b], one_T, one_T)
-        end
-    end
-    # Shears
-    mul!(out[10], a[10], b[10])
-    mul!(out[11], a[11], b[11])
-    mul!(out[12], a[12], b[12])
-    return out
 end
 
 # ── Pack / unpack the normal 3×3 part as a (3n)×(3n) block-Volterra ───────
@@ -347,16 +299,9 @@ end
 Ortho-form Voigt bound: ``o_k^{\\mathrm{hom}} = \\sum_i f_i\\,o_{k,i}`` for each component ``k``.
 """
 function voigt_alv_ortho(o_phases::AbstractVector, fractions::AbstractVector)
-    length(o_phases) == length(fractions) ||
-        throw(ArgumentError("voigt_alv_ortho: phase counts mismatch"))
+    _alg_check("voigt_alv_ortho", o_phases, fractions)
     isempty(o_phases) && throw(ArgumentError("voigt_alv_ortho: at least one phase required"))
-    n = size(o_phases[1][1], 1)
-    T = _params_list_eltype(eltype(fractions), o_phases)
-    eff = ntuple(_ -> zeros(T, n, n), 12)
-    @inbounds for r in eachindex(o_phases)
-        _ortho_add!(eff, fractions[r], o_phases[r])
-    end
-    return eff
+    return _alg_voigt(_OrthoALV(), o_phases, fractions)
 end
 
 """
@@ -366,11 +311,9 @@ Ortho-form Reuss bound: invert per-phase compliances in ortho form,
 average, invert back.
 """
 function reuss_alv_ortho(o_phases::AbstractVector, fractions::AbstractVector)
-    length(o_phases) == length(fractions) ||
-        throw(ArgumentError("reuss_alv_ortho: phase counts mismatch"))
-    o_inv_phases = [_ortho_inv(o) for o in o_phases]
-    o_inv_eff = voigt_alv_ortho(o_inv_phases, fractions)
-    return _ortho_inv(o_inv_eff)
+    _alg_check("reuss_alv_ortho", o_phases, fractions)
+    isempty(o_phases) && throw(ArgumentError("reuss_alv_ortho: at least one phase required"))
+    return _alg_reuss(_OrthoALV(), o_phases, fractions)
 end
 
 """
@@ -385,13 +328,7 @@ function dilute_concentration_alv_ortho(
         o_0::NTuple{12, <:Matrix},
         o_P::NTuple{12, <:Matrix}
     )
-    n = size(o_E[1], 1)
-    T = promote_type(eltype(o_E[1]), eltype(o_0[1]), eltype(o_P[1]))
-    Δ = ntuple(k -> o_E[k] .- o_0[k], 12)
-    PΔ = _ortho_prod(o_P, Δ)
-    Id = _ortho_identity(n, T)
-    sum_o = ntuple(k -> Id[k] .+ PΔ[k], 12)
-    return _ortho_inv(sum_o)
+    return _alg_dilute_concentration(_OrthoALV(), o_E, o_0, o_P)
 end
 
 """
@@ -404,9 +341,7 @@ function dilute_contribution_alv_ortho(
         o_0::NTuple{12, <:Matrix},
         o_P::NTuple{12, <:Matrix}
     )
-    A_dil = dilute_concentration_alv_ortho(o_E, o_0, o_P)
-    Δ = ntuple(k -> o_E[k] .- o_0[k], 12)
-    return _ortho_prod(Δ, A_dil)
+    return _alg_dilute_contribution(_OrthoALV(), o_E, o_0, o_P)
 end
 
 """
@@ -419,13 +354,8 @@ function dilute_alv_ortho(
         contribs_ortho::AbstractVector,
         fractions::AbstractVector
     )
-    length(contribs_ortho) == length(fractions) ||
-        throw(ArgumentError("dilute_alv_ortho: phase counts mismatch"))
-    out = ntuple(k -> copy(o_0[k]), 12)
-    @inbounds for r in eachindex(contribs_ortho)
-        _ortho_add!(out, fractions[r], contribs_ortho[r])
-    end
-    return out
+    _alg_check("dilute_alv_ortho", contribs_ortho, fractions)
+    return _alg_dilute(_OrthoALV(), o_0, contribs_ortho, fractions)
 end
 
 """
@@ -440,9 +370,8 @@ function dilute_dual_alv_ortho(
         contribs_compliance_ortho::AbstractVector,
         fractions::AbstractVector
     )
-    o_J_0 = _ortho_inv(o_0)
-    o_J_eff = dilute_alv_ortho(o_J_0, contribs_compliance_ortho, fractions)
-    return _ortho_inv(o_J_eff)
+    _alg_check("dilute_dual_alv_ortho", contribs_compliance_ortho, fractions)
+    return _alg_dilute_dual(_OrthoALV(), o_0, contribs_compliance_ortho, fractions)
 end
 
 """
@@ -465,25 +394,8 @@ function mori_tanaka_alv_ortho(
         contribs_ortho::AbstractVector,
         fractions::AbstractVector, f_M::Real
     )
-    length(A_duts_ortho) == length(contribs_ortho) == length(fractions) ||
-        throw(ArgumentError("mori_tanaka_alv_ortho: phase counts mismatch"))
-    n = size(o_0[1], 1)
-    T = _params_list_eltype(
-        _params_list_eltype(promote_type(eltype(o_0[1]), eltype(fractions), typeof(f_M)), A_duts_ortho),
-        contribs_ortho,
-    )
-    Id = _ortho_identity(n, T)
-    num = ntuple(_ -> zeros(T, n, n), 12)
-    den = ntuple(k -> T(f_M) .* Id[k], 12)
-    @inbounds for r in eachindex(A_duts_ortho)
-        _ortho_add!(num, fractions[r], contribs_ortho[r])
-        _ortho_add!(den, fractions[r], A_duts_ortho[r])
-    end
-    # (Σ fᵣ Ñᵣ) ∘ (f₀ 𝟙 + Σ fₛ Ãₛ)^{-1}, the den on the RIGHT as in `mori_tanaka_alv`:
-    # the normal block of an orthotropic operator is a 3×3 matrix and the time
-    # axis a lower-triangular Volterra one, and neither commutes.
-    factor = _ortho_prod(num, _ortho_inv(den))
-    return ntuple(k -> o_0[k] .+ factor[k], 12)
+    _alg_check("mori_tanaka_alv_ortho", A_duts_ortho, contribs_ortho, fractions)
+    return _alg_mori_tanaka(_OrthoALV(), o_0, A_duts_ortho, contribs_ortho, fractions, f_M)
 end
 
 """
@@ -497,17 +409,6 @@ function maxwell_alv_ortho(
         fractions::AbstractVector,
         o_H_0::NTuple{12, <:Matrix}
     )
-    length(contribs_ortho) == length(fractions) ||
-        throw(ArgumentError("maxwell_alv_ortho: phase counts mismatch"))
-    n = size(o_0[1], 1)
-    T = _params_list_eltype(promote_type(eltype(o_0[1]), eltype(fractions), eltype(o_H_0[1])), contribs_ortho)
-    Id = _ortho_identity(n, T)
-    Σ = ntuple(_ -> zeros(T, n, n), 12)
-    @inbounds for r in eachindex(contribs_ortho)
-        _ortho_add!(Σ, fractions[r], contribs_ortho[r])
-    end
-    HΣ = _ortho_prod(o_H_0, Σ)
-    inv_arg = ntuple(k -> Id[k] .- HΣ[k], 12)
-    factor = _ortho_prod(Σ, _ortho_inv(inv_arg))
-    return ntuple(k -> o_0[k] .+ factor[k], 12)
+    _alg_check("maxwell_alv_ortho", contribs_ortho, fractions)
+    return _alg_maxwell(_OrthoALV(), o_0, contribs_ortho, fractions, o_H_0)
 end
