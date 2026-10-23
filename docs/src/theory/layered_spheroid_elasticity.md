@@ -547,6 +547,57 @@ traction must vanish identically — which is how the test states it — and the
 Eshelby oracle confirms the whole thing: case III lands on the analytic answer
 with no rotation in the unknown list.
 
+### [One field-free combination per regular region](@id th-spheroid-field-free)
+
+The symmetric combination above is the remote shear only once ``\varphi_0`` is
+left out of it; with the right ``\varphi_0`` added, it moves nothing at all.
+Papkovich–Neuber is redundant in a precise way: for **any** harmonic ``\zeta``,
+
+```math
+\underline\varphi = \nabla\zeta,\qquad
+\varphi_0 = 4(1-\nu)\,\zeta - \underline x\cdot\nabla\zeta
+\quad\Longrightarrow\quad
+\Phi = \varphi_0 + \underline x\cdot\underline\varphi = 4(1-\nu)\,\zeta,
+\qquad
+2\mu\,\underline u = \nabla\Phi - 4(1-\nu)\,\underline\varphi = \underline 0 .
+```
+
+The four potentials are harmonic, as they must be: ``\nabla\zeta`` is, and
+``\Delta(\underline x\cdot\nabla\zeta) = 2\,\Delta\zeta + \underline x\cdot\nabla\Delta\zeta = 0``.
+
+The families of a case admit such a ``\zeta`` only when ``\nabla\zeta`` has no
+component outside the active potentials and their degrees:
+
+- **case I** keeps ``\varphi_3`` alone, so ``\zeta`` depends on ``z`` only, and a
+  harmonic ``\zeta(z)`` is ``z``, whose ``\varphi_3 = 1`` is of degree ``0``, outside
+  the odd degrees of ``\varphi_3``: none;
+- **case III** (``\cos``) has ``\varphi_2 = 0``, so ``\zeta = x\,h(z)``, harmonic
+  for ``h'' = 0``; ``\zeta = x`` would need ``\varphi_1`` of degree ``0``, which is
+  not in the list, and ``\zeta = xz`` remains, with ``\varphi_1 = z``,
+  ``\varphi_3 = x`` and ``\varphi_0 = (2-4\nu)\,xz`` (``\zeta = yz`` for ``\sin``);
+- **case II** has ``\varphi_3 = 0``: ``\zeta = xy`` (``\sin``) or
+  ``(x^2-y^2)/2`` (``\cos``), which is exactly the tie of the pair
+  ``(\varphi_1, \varphi_2)`` at degree 1, with ``\varphi_0 = (2-4\nu)\,\zeta``.
+
+Each ``\zeta`` is a polynomial, so the combination lives in every region with
+regular modes — the core and each inner shell — but not in the matrix. A single
+inclusion carries one, which the pivoted factorization of `Float64` happened to
+absorb; with an inner shell there are two, and they made the interface system
+exactly singular (two
+singular values at ``10^{-16}`` after the column scaling, a condition number of
+``2\cdot10^{16}``): the concentration tensor came out to about ``10^{-6}`` only,
+and differently for `Float64` and for dual numbers, whose factorizations pivot
+differently.
+
+The cure is to fix this last freedom as well: in each region with regular modes,
+the regular column of degree 1 of ``\varphi_1`` (``\varphi_2``) in case III, or of
+the tied pair in case II, is removed. Its coefficient in the combination is
+``1``, whatever ``\nu``, so the remaining columns span the same fields with a
+full-rank system; the coefficient of ``\varphi_0``, ``2-4\nu``, would vanish for
+an incompressible layer. The condition number falls to about ``10^4``, `Float64`
+and dual values agree to ``10^{-15}``, and the derivative matches an extrapolated
+centered difference to ``10^{-11}``.
+
 ### [Two things that are not optional](@id th-spheroid-not-optional)
 
 Both were found by the oracle disagreeing, and both are easy to get wrong.
