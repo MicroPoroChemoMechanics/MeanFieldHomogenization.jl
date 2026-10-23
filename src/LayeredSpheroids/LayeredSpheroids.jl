@@ -38,6 +38,7 @@ module LayeredSpheroids
 
 using LinearAlgebra
 using QuadGK
+using StaticArrays: SMatrix, SVector
 using TensND
 
 import ..Core

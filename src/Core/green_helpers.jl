@@ -40,6 +40,8 @@ function _A_and_Tn(C::AbstractArray, n̂::AbstractVector, ::Type{T}) where {T}
                 "crack normal. Check the alignment, or substitute numbers first."
         )
     )
+    # Loops into mutable static arrays, kept on measurement: the same sums by
+    # `_sfill` allocate (their closures capture `C` or `Tn`) and are no faster.
     Tn_m = MArray{Tuple{3, 3, 3}, T}(undef)
     @inbounds for q in 1:3, p in 1:3, i in 1:3
         s = zero(T)
@@ -81,6 +83,7 @@ function _phi_cache(
         n̂::AbstractVector, ξshat::AbstractVector,
         ::Type{T}
     ) where {T}
+    # Loops kept on measurement, as in `_A_and_Tn`.
     Vs_m = MMatrix{3, 3, T}(undef)
     Ks_m = MMatrix{3, 3, T}(undef)
     @inbounds for p in 1:3, i in 1:3

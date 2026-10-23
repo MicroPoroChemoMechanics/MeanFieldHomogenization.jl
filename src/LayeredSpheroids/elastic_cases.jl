@@ -468,7 +468,7 @@ function _surface_moment(
         groups, amps, q, c, μ, ν, ::Type{T}; np::Int = 40, nϕ::Int = 48
     ) where {T}
     xg, wg = QuadGK.gauss(_quad_eltype(T), np)
-    E = zeros(T, 3, 3)
+    E = zero(SMatrix{3, 3, T})
     qb = sqrt(q^2 - one(q))
     dϕ = 2 * T(π) / nϕ
     for (ip, x) in enumerate(xg)
@@ -476,18 +476,16 @@ function _surface_moment(
         wp = c^2 * qb * w * wg[ip] * dϕ
         for k in 0:(nϕ - 1)
             ϕ = 2 * T(π) * k / nϕ
+            # `R` takes chart components to Cartesian ones; its last column is `e_q`.
             e = _cartesian_in_chart(ϕ, x, q, T)
-            U = zeros(T, 3)
-            for ((gi, r, n), amp) in amps
-                u, _ = _group_fields(groups[gi], r, n, ϕ, x, q, c, μ, ν, T)
-                for i in 1:3, a in 1:3
-                    U[i] += amp * u[a] * e[i][a]
-                end
-            end
-            n3 = ntuple(i -> e[i][3], 3)
-            for i in 1:3, j in 1:3
-                E[i, j] += wp * (U[i] * n3[j] + U[j] * n3[i]) / 2
-            end
+            R = transpose(SMatrix{3, 3, T}(e[1]..., e[2]..., e[3]...))
+            uc = sum(
+                amp * SVector(_group_fields(groups[gi], r, n, ϕ, x, q, c, μ, ν, T)[1])
+                    for ((gi, r, n), amp) in amps;
+                init = zero(SVector{3, T})
+            )
+            U, eq = R * uc, R[:, 3]
+            E += wp * (U * transpose(eq) + eq * transpose(U)) / 2
         end
     end
     return E
