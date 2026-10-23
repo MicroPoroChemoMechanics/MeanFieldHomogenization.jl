@@ -39,7 +39,10 @@ ECHOES manual appendix `viscoelastic_hill_kernel.qmd`:
   2. Extract the iso scalar parameter matrices ``(\\alpha, \\beta)`` of ``\\widetilde{\\mathbb{C}}_0``
      (``\\alpha = 3k``, ``\\beta = 2\\mu`` per Mandel convention).
   3. Build the longitudinal ``M_{\\mathrm{long}} = (\\alpha + 2\\beta)/3`` and the shear
-     ``M_{\\mathrm{shear}} = \\beta/2`` ``n\\times n`` matrices.
+     ``M_{\\mathrm{shear}} = \\beta/2`` ``n\\times n`` matrices: the two eigenvalues
+     of the acoustic tensor, which the Hill tensor inverts. The bulk and shear
+     kernels follow linearly, ``k = M_{\\mathrm{long}} - \\tfrac{4}{3} M_{\\mathrm{shear}}``
+     and ``\\mu = M_{\\mathrm{shear}}``; their inverses do not (see the theory page).
   4. Take the scalar Volterra inverses
      ``J_{\\mathrm{long}} = M_{\\mathrm{long}}^{-\\circ}`` and ``J_{\\mathrm{shear}} = M_{\\mathrm{shear}}^{-\\circ}``.
   5. Compute the Mandel forms ``\\mathrm{Mat}(\\mathbb{U}^{\\boldsymbol{A}})`` and
