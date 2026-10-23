@@ -555,70 +555,6 @@ end
 # products and ~18× for inversion compared to the generic block-LU
 # `(6n × 6n)` path.
 
-"""
-    _try_iso_pairs(matrices) -> Vector{Tuple} or nothing
-
-If every matrix in `matrices` passes the iso-form check
-(`_is_iso_block`), return a `Vector` of ``(\\alpha, \\beta)`` ``n\\times n`` parameter
-tuples extracted from each.  Otherwise return `nothing`.
-
-Used by the scheme fast paths to opt into the iso pipeline only when
-all phases really are iso 4-tensors.
-"""
-function _try_iso_pairs(matrices::AbstractVector{<:AbstractMatrix})
-    T = isempty(matrices) ? Float64 : _alv_blocks_eltype(matrices)
-    isempty(matrices) && return Tuple{Matrix{T}, Matrix{T}}[]
-    out = Vector{Tuple{Matrix{T}, Matrix{T}}}()
-    for M in matrices
-        _is_iso_block(M) || return nothing
-        push!(out, _iso_pair(M))
-    end
-    return out
-end
-
-"""
-    _try_ti_tuples(matrices) -> Vector{NTuple{6, Matrix}} or nothing
-
-If every matrix passes the TI-form check (`_is_ti_block`), return a
-`Vector` of 6-tuples of ``n\\times n`` Walpole parameter matrices extracted
-from each.  Otherwise return `nothing`.
-
-Iso block matrices automatically satisfy the TI test (iso ⊂ TI), so a
-mixed iso/TI phase setup with the canonical axis works.
-"""
-function _try_ti_tuples(matrices::AbstractVector{<:AbstractMatrix})
-    T = isempty(matrices) ? Float64 : _alv_blocks_eltype(matrices)
-    isempty(matrices) && return NTuple{6, Matrix{T}}[]
-    out = Vector{NTuple{6, Matrix{T}}}()
-    for M in matrices
-        _is_ti_block(M) || return nothing
-        push!(out, _ti_pair(M))
-    end
-    return out
-end
-
-"""
-    _try_ortho_tuples(matrices) -> Vector{NTuple{12, Matrix}} or nothing
-
-If every matrix passes the ortho-form check (`_is_ortho_block`), return
-a `Vector` of 12-tuples of ``n\\times n`` ortho parameter matrices extracted
-from each.  Otherwise return `nothing`.
-
-Iso and TI (axis ``\\underline{e}_3``) block matrices automatically satisfy the ortho
-test, so a mixed iso/TI/ortho phase setup with the canonical material
-frame works.
-"""
-function _try_ortho_tuples(matrices::AbstractVector{<:AbstractMatrix})
-    T = isempty(matrices) ? Float64 : _alv_blocks_eltype(matrices)
-    isempty(matrices) && return NTuple{12, Matrix{T}}[]
-    out = Vector{NTuple{12, Matrix{T}}}()
-    for M in matrices
-        _is_ortho_block(M) || return nothing
-        push!(out, _ortho_pair(M))
-    end
-    return out
-end
-
 # ── Dispatch table on scheme types ──────────────────────────────────────────
 #
 # Crack handling.  Every dispatcher honors the optional kwargs
@@ -638,22 +574,10 @@ function _homogenize_alv_dispatch(
     )
     # Voigt ignores cracks (zero-volume convention, mirroring elastic
     # `Schemes/voigt.jl`).  Result depends only on solid volume fractions.
-    iso = _try_iso_pairs(C_phases)
-    if iso !== nothing
-        αβ_eff = voigt_alv_iso(iso, [f_M; fractions])
-        return _iso_blocks(αβ_eff)
+    fs = [f_M; fractions]
+    return _in_cheapest_algebra((), (C_phases,)) do a, Cs
+        _alg_voigt(a, Cs, fs)
     end
-    ti = _try_ti_tuples(C_phases)
-    if ti !== nothing
-        ℓ_eff = voigt_alv_ti(ti, [f_M; fractions])
-        return _ti_blocks(ℓ_eff)
-    end
-    ortho = _try_ortho_tuples(C_phases)
-    if ortho !== nothing
-        o_eff = voigt_alv_ortho(ortho, [f_M; fractions])
-        return _ortho_blocks(o_eff)
-    end
-    return voigt_alv(C_phases, [f_M; fractions])
 end
 
 function _homogenize_alv_dispatch(
@@ -662,22 +586,10 @@ function _homogenize_alv_dispatch(
         H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     # Reuss ignores cracks (same convention as elastic `Schemes/reuss.jl`).
-    iso = _try_iso_pairs(C_phases)
-    if iso !== nothing
-        αβ_eff = reuss_alv_iso(iso, [f_M; fractions])
-        return _iso_blocks(αβ_eff)
+    fs = [f_M; fractions]
+    return _in_cheapest_algebra((), (C_phases,)) do a, Cs
+        _alg_reuss(a, Cs, fs)
     end
-    ti = _try_ti_tuples(C_phases)
-    if ti !== nothing
-        ℓ_eff = reuss_alv_ti(ti, [f_M; fractions])
-        return _ti_blocks(ℓ_eff)
-    end
-    ortho = _try_ortho_tuples(C_phases)
-    if ortho !== nothing
-        o_eff = reuss_alv_ortho(ortho, [f_M; fractions])
-        return _ortho_blocks(o_eff)
-    end
-    return reuss_alv(C_phases, [f_M; fractions])
 end
 
 function _homogenize_alv_dispatch(
@@ -685,29 +597,11 @@ function _homogenize_alv_dispatch(
         C_0, C_phases, A_duts, contribs,
         H_phases, fractions, f_M, matrix::Symbol; kw...
     )
-    if !_has_cracks(kw)
-        iso_contribs = _try_iso_pairs(contribs)
-        if iso_contribs !== nothing && _is_iso_block(C_0)
-            αβ_0 = _iso_pair(C_0)
-            αβ_eff = dilute_alv_iso(αβ_0, iso_contribs, fractions)
-            return _iso_blocks(αβ_eff)
-        end
-        ti_contribs = _try_ti_tuples(contribs)
-        if ti_contribs !== nothing && _is_ti_block(C_0)
-            ℓ_0 = _ti_pair(C_0)
-            ℓ_eff = dilute_alv_ti(ℓ_0, ti_contribs, fractions)
-            return _ti_blocks(ℓ_eff)
-        end
-        ortho_contribs = _try_ortho_tuples(contribs)
-        if ortho_contribs !== nothing && _is_ortho_block(C_0)
-            o_0 = _ortho_pair(C_0)
-            o_eff = dilute_alv_ortho(o_0, ortho_contribs, fractions)
-            return _ortho_blocks(o_eff)
-        end
-        return dilute_alv(C_0, contribs, fractions)
-    end
     # Cracks: additive — `C̃_dilute + ΔC̃_cracks_M`.
-    return dilute_alv(C_0, contribs, fractions) .+ kw[:ΔC_cracks_M]
+    _has_cracks(kw) && return _alg_dilute(_DenseALV{6}(), C_0, contribs, fractions) .+ kw[:ΔC_cracks_M]
+    return _in_cheapest_algebra((C_0,), (contribs,)) do a, C₀, Ns
+        _alg_dilute(a, C₀, Ns, fractions)
+    end
 end
 
 function _homogenize_alv_dispatch(
@@ -728,34 +622,12 @@ function _homogenize_alv_dispatch(
     J_M = volterra_inverse(C_0; block_size = 6)
     contribs_J = [-(J_M * N̄ * J_M) for N̄ in contribs]
 
-    if _has_cracks(kw)
-        # Solid compliance contribs + crack ΔJ̃, then invert back.
-        J_eff = copy(J_M)
-        @inbounds for (f, H̄) in zip(fractions, contribs_J)
-            @. J_eff += f * H̄
-        end
-        J_eff .+= kw[:ΔJ_cracks_M]
-        return volterra_inverse(J_eff; block_size = 6)
+    # Cracks: solid compliance contributions and the crack ΔJ̃, inverted back.
+    _has_cracks(kw) &&
+        return volterra_inverse(_alg_dilute(_DenseALV{6}(), J_M, contribs_J, fractions) .+ kw[:ΔJ_cracks_M]; block_size = 6)
+    return _in_cheapest_algebra((C_0,), (contribs_J,)) do a, C₀, Hs
+        _alg_dilute_dual(a, C₀, Hs, fractions)
     end
-    iso_contribs = _try_iso_pairs(contribs_J)
-    if iso_contribs !== nothing && _is_iso_block(C_0)
-        αβ_0 = _iso_pair(C_0)
-        αβ_eff = dilute_dual_alv_iso(αβ_0, iso_contribs, fractions)
-        return _iso_blocks(αβ_eff)
-    end
-    ti_contribs = _try_ti_tuples(contribs_J)
-    if ti_contribs !== nothing && _is_ti_block(C_0)
-        ℓ_0 = _ti_pair(C_0)
-        ℓ_eff = dilute_dual_alv_ti(ℓ_0, ti_contribs, fractions)
-        return _ti_blocks(ℓ_eff)
-    end
-    ortho_contribs = _try_ortho_tuples(contribs_J)
-    if ortho_contribs !== nothing && _is_ortho_block(C_0)
-        o_0 = _ortho_pair(C_0)
-        o_eff = dilute_dual_alv_ortho(o_0, ortho_contribs, fractions)
-        return _ortho_blocks(o_eff)
-    end
-    return dilute_dual_alv(C_0, contribs_J, fractions)
 end
 
 function _homogenize_alv_dispatch(
@@ -764,28 +636,9 @@ function _homogenize_alv_dispatch(
         H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     if !_has_cracks(kw)
-        iso_contribs = _try_iso_pairs(contribs)
-        iso_A = _try_iso_pairs(A_duts)
-        if iso_contribs !== nothing && iso_A !== nothing && _is_iso_block(C_0)
-            αβ_0 = _iso_pair(C_0)
-            αβ_eff = mori_tanaka_alv_iso(αβ_0, iso_A, iso_contribs, fractions, f_M)
-            return _iso_blocks(αβ_eff)
+        return _in_cheapest_algebra((C_0,), (A_duts, contribs)) do a, C₀, As, Ns
+            _alg_mori_tanaka(a, C₀, As, Ns, fractions, f_M)
         end
-        ti_contribs = _try_ti_tuples(contribs)
-        ti_A = _try_ti_tuples(A_duts)
-        if ti_contribs !== nothing && ti_A !== nothing && _is_ti_block(C_0)
-            ℓ_0 = _ti_pair(C_0)
-            ℓ_eff = mori_tanaka_alv_ti(ℓ_0, ti_A, ti_contribs, fractions, f_M)
-            return _ti_blocks(ℓ_eff)
-        end
-        ortho_contribs = _try_ortho_tuples(contribs)
-        ortho_A = _try_ortho_tuples(A_duts)
-        if ortho_contribs !== nothing && ortho_A !== nothing && _is_ortho_block(C_0)
-            o_0 = _ortho_pair(C_0)
-            o_eff = mori_tanaka_alv_ortho(o_0, ortho_A, ortho_contribs, fractions, f_M)
-            return _ortho_blocks(o_eff)
-        end
-        return mori_tanaka_alv(C_0, A_duts, contribs, fractions, f_M)
     end
     # Crack-aware MT — ECHOES B·A^{-vol} form.
     #
@@ -802,18 +655,15 @@ function _homogenize_alv_dispatch(
     # reduces to the MFH additive form **plus** a non-zero crack
     # `Ã_crack = ε·sym(H_c)·C_M` term in the denominator accumulator.
     # That is the ECHOES-equivalent MT formula at finite density.
-    sz = size(C_0, 1)
-    T = eltype(C_0)
-    A_crack_total = zeros(T, sz, sz)
-    @inbounds for (geom, ε, sym, H_full) in kw[:crack_data]
-        # `H_full = ε·sym(H_c)` already includes the Budiansky factor and
-        # the iso/TI projection.  Right-multiply by `C_0` (Volterra-product)
-        # to land on `ε·sym(H_c)·C_M` — the ECHOES `strain_Strain` term.
-        A_crack_total .+= H_full * C_0
-    end
+    # `H_full = ε·sym(H_c)` already includes the Budiansky factor and the
+    # iso/TI projection.  Right-multiplied by `C_0` (Volterra product) it is
+    # `ε·sym(H_c)·C_M` — the ECHOES `strain_Strain` term; summed, not
+    # accumulated into a buffer of `C_0`'s type, so that a dual crack density
+    # carries.
+    A_crack_total = sum(H_full * C_0 for (_, _, _, H_full) in kw[:crack_data])
     contribs_aug = vcat(contribs, [kw[:ΔC_cracks_M]])
     A_duts_aug = vcat(A_duts, [A_crack_total])
-    fractions_aug = vcat(fractions, [one(T)])
+    fractions_aug = vcat(fractions, [one(eltype(C_0))])
     return mori_tanaka_alv(C_0, A_duts_aug, contribs_aug, fractions_aug, f_M)
 end
 
@@ -832,34 +682,20 @@ function _homogenize_alv_dispatch(
     # a `nothing` field access rather than as the explanatory error.
     C_M_law = phase_property(rve, matrix, prop)
     H_0 = hill_kernel(Schemes.distribution_shape(rve, scheme).shape, C_M_law, times)
-    if !_has_cracks(kw)
-        iso_contribs = _try_iso_pairs(contribs)
-        if iso_contribs !== nothing && _is_iso_block(C_0) && _is_iso_block(H_0)
-            αβ_0 = _iso_pair(C_0)
-            αβ_H_0 = _iso_pair(H_0)
-            αβ_eff = maxwell_alv_iso(αβ_0, iso_contribs, fractions, αβ_H_0)
-            return _iso_blocks(αβ_eff)
-        end
-        ti_contribs = _try_ti_tuples(contribs)
-        if ti_contribs !== nothing && _is_ti_block(C_0) && _is_ti_block(H_0)
-            ℓ_0 = _ti_pair(C_0)
-            ℓ_H_0 = _ti_pair(H_0)
-            ℓ_eff = maxwell_alv_ti(ℓ_0, ti_contribs, fractions, ℓ_H_0)
-            return _ti_blocks(ℓ_eff)
-        end
-        ortho_contribs = _try_ortho_tuples(contribs)
-        if ortho_contribs !== nothing && _is_ortho_block(C_0) && _is_ortho_block(H_0)
-            o_0 = _ortho_pair(C_0)
-            o_H_0 = _ortho_pair(H_0)
-            o_eff = maxwell_alv_ortho(o_0, ortho_contribs, fractions, o_H_0)
-            return _ortho_blocks(o_eff)
-        end
-        return maxwell_alv(C_0, contribs, fractions; H_0 = H_0)
+    return _alv_maxwell_form(C_0, contribs, fractions, H_0, kw)
+end
+
+# The Maxwell form `C̃₀ + Ñ ∘ (𝟙 - H̃ ∘ Ñ)⁻¹`, shared by Maxwell and PCW; cracks
+# enter the sum of the contributions.
+function _alv_maxwell_form(C_0, contribs, fractions, H, kw)
+    if _has_cracks(kw)
+        contribs_aug = vcat(contribs, [kw[:ΔC_cracks_M]])
+        fractions_aug = vcat(fractions, [one(eltype(C_0))])
+        return maxwell_alv(C_0, contribs_aug, fractions_aug; H_0 = H)
     end
-    # Crack-aware Maxwell : append cracks to the contribution sum (Σ).
-    contribs_aug = vcat(contribs, [kw[:ΔC_cracks_M]])
-    fractions_aug = vcat(fractions, [1.0])
-    return maxwell_alv(C_0, contribs_aug, fractions_aug; H_0 = H_0)
+    return _in_cheapest_algebra((C_0, H), (contribs,)) do a, C₀, H₀, Ns
+        _alg_maxwell(a, C₀, Ns, fractions, H₀)
+    end
 end
 
 # Self-Consistent ALV: re-routes to `self_consistent_alv` (different
@@ -922,34 +758,8 @@ function _homogenize_alv_dispatch(
     dist isa UniformDistribution ||
         throw(ArgumentError("PCW-ALV: only UniformDistribution is currently supported"))
     H_d = hill_kernel(dist.shape, C_M_law, times)
-    if !_has_cracks(kw)
-        iso_contribs = _try_iso_pairs(contribs)
-        if iso_contribs !== nothing && _is_iso_block(C_0) && _is_iso_block(H_d)
-            αβ_0 = _iso_pair(C_0)
-            αβ_H = _iso_pair(H_d)
-            αβ_eff = maxwell_alv_iso(αβ_0, iso_contribs, fractions, αβ_H)
-            return _iso_blocks(αβ_eff)
-        end
-        ti_contribs = _try_ti_tuples(contribs)
-        if ti_contribs !== nothing && _is_ti_block(C_0) && _is_ti_block(H_d)
-            ℓ_0 = _ti_pair(C_0)
-            ℓ_H = _ti_pair(H_d)
-            ℓ_eff = maxwell_alv_ti(ℓ_0, ti_contribs, fractions, ℓ_H)
-            return _ti_blocks(ℓ_eff)
-        end
-        ortho_contribs = _try_ortho_tuples(contribs)
-        if ortho_contribs !== nothing && _is_ortho_block(C_0) && _is_ortho_block(H_d)
-            o_0 = _ortho_pair(C_0)
-            o_H = _ortho_pair(H_d)
-            o_eff = maxwell_alv_ortho(o_0, ortho_contribs, fractions, o_H)
-            return _ortho_blocks(o_eff)
-        end
-        return pcw_alv(C_0, contribs, fractions; H_dist = H_d)
-    end
-    # Crack-aware PCW : same as Maxwell with rve distribution shape.
-    contribs_aug = vcat(contribs, [kw[:ΔC_cracks_M]])
-    fractions_aug = vcat(fractions, [1.0])
-    return pcw_alv(C_0, contribs_aug, fractions_aug; H_dist = H_d)
+    # PCW is Maxwell with the Hill kernel of the distribution shape.
+    return _alv_maxwell_form(C_0, contribs, fractions, H_d, kw)
 end
 
 # Differential ALV — SciML ODE on the fictitious incorporation time τ.

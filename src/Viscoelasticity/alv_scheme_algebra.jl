@@ -133,3 +133,50 @@ function _alg_check_dense(name, ::_DenseALV{B}, Xs...) where {B}
     )
     return nothing
 end
+
+# ── The cheapest algebra of a call ─────────────────────────────────────────
+
+# Membership of a dense block matrix in a structured algebra, and the
+# conversions both ways; a dense matrix is its own representation.
+_alv_belongs(::_IsoALV, M) = _is_iso_block(M)
+_alv_belongs(::_TIALV, M) = _is_ti_block(M)
+_alv_belongs(::_OrthoALV, M) = _is_ortho_block(M)
+_alv_to(::_IsoALV, M) = _iso_pair(M)
+_alv_to(::_TIALV, M) = _ti_pair(M)
+_alv_to(::_OrthoALV, M) = _ortho_pair(M)
+_alv_to(::_DenseALV, M) = M
+_alv_from(::_IsoALV, X) = _iso_blocks(X)
+_alv_from(::_TIALV, X) = _ti_blocks(X)
+_alv_from(::_OrthoALV, X) = _ortho_blocks(X)
+_alv_from(::_DenseALV, X) = X
+
+"""
+    _cheapest_algebra(operators) -> _ALVAlgebra
+
+The cheapest algebra every one of the dense block matrices `operators` belongs
+to: isotropic, then transversely isotropic about ``\\underline{e}_3``, then orthotropic in
+the canonical frame (iso ⊂ TI ⊂ ortho), else the dense block matrices.
+"""
+function _cheapest_algebra(operators)
+    for a in (_IsoALV(), _TIALV(), _OrthoALV())
+        all(M -> _alv_belongs(a, M), operators) && return a
+    end
+    return _DenseALV{6}()
+end
+
+"""
+    _in_cheapest_algebra(f, singles::Tuple, lists::Tuple) -> Matrix
+
+`f(algebra, singles..., lists...)` evaluated in the cheapest algebra all the
+operators belong to — `singles` are dense block matrices, `lists` vectors of
+them, one per phase — with the result written back as a dense block matrix.
+"""
+function _in_cheapest_algebra(f::F, singles::Tuple, lists::Tuple) where {F}
+    a = _cheapest_algebra(Iterators.flatten((singles, lists...)))
+    return _evaluate_in(a, f, singles, lists)
+end
+
+# A function barrier: the algebra is known from here on.
+_evaluate_in(a, f::F, singles, lists) where {F} = _alv_from(
+    a, f(a, map(M -> _alv_to(a, M), singles)..., map(l -> [_alv_to(a, M) for M in l], lists)...)
+)
