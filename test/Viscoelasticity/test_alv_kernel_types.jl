@@ -212,6 +212,11 @@ end
     @test isequal(Symbolics.value.(Q_iso.β), Symbolics.value.(K_iso.β ./ c))
 
     K_ti = ALVKernelTI(ntuple(_ -> _alvk_rand_lt(n), 6); axis = (0.0, 1.0, 0.0))
+    # An axis is a plain-number label, of mixed number types if need be; a
+    # symbolic one is refused with a message.
+    @test ALVKernelTI(ntuple(_ -> _alvk_rand_lt(n), 6); axis = (0.0, 0, 1)).axis === (0.0, 0.0, 1.0)
+    @test_throws ArgumentError ALVKernelTI(ntuple(_ -> _alvk_rand_lt(n), 6); axis = (0.0, 0.0, c))
+    @test_throws ArgumentError ALVKernelOrtho(ntuple(_ -> _alvk_rand_lt(n), 12); axes = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, c)))
     Q_ti = K_ti / c
     @test Q_ti isa ALVKernelTI
     @test Q_ti.axis == K_ti.axis
