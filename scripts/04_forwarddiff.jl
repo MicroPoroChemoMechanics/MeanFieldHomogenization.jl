@@ -14,7 +14,7 @@
 #   § 2  Full shape gradient  ∇_{a,b,c} P  (all three semi-axes)
 #   § 3  Material sensitivity  ∂P/∂μ, ∂P/∂k  (isotropic elastic matrix)
 #   § 4  Conductivity:  ∂P/∂ρ  (2D ellipse) and  ∂P/∂k₀
-#   § 5  Validation against centerd finite differences
+#   § 5  Validation against centered finite differences
 # =============================================================================
 
 import Pkg
