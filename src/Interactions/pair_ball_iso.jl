@@ -179,15 +179,12 @@ function _laplacian_green_operator_iso_2d(μ, ν, x::AbstractVector)
     A = -24 * one(r) / (8 * π * μ * (1 - ν) * r^4)
     T = typeof(A)
     δ = (i, j) -> MFH_Core._δ(i, j, T)
-    return SArray{Tuple{2, 2, 2, 2}}(
-        @inbounds [
-            A * (
-                (δ(i, k) * δ(j, l) + δ(i, l) * δ(j, k)) / 2 - δ(i, j) * δ(k, l) / 2
-                    - (2 * n[i] * n[j] - δ(i, j)) * (2 * n[k] * n[l] - δ(k, l))
-            )
-                for i in 1:2, j in 1:2, k in 1:2, l in 1:2
-        ]
-    )
+    return MFH_Core._sfill(Val((2, 2, 2, 2))) do i, j, k, l
+        @inbounds A * (
+            (δ(i, k) * δ(j, l) + δ(i, l) * δ(j, k)) / 2 - δ(i, j) * δ(k, l) / 2
+                - (2 * n[i] * n[j] - δ(i, j)) * (2 * n[k] * n[l] - δ(k, l))
+        )
+    end
 end
 
 function _check_separation(R, a, b)
