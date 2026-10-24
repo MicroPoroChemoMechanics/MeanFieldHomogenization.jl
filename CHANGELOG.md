@@ -16,7 +16,7 @@ a crash of Julia 1.14 when differentiating through a concentration tensor.
 
 ### Breaking changes
 
-- The minor version, and `TensND = "0.8"`: `[compat]` bounds on 0.18 do not
+- The minor version, and `TensND = "0.8.1"`: `[compat]` bounds on 0.18 do not
   accept 0.19.
 - Symbolic support goes through SymPyPythonCall (PythonCall) instead of SymPy.jl
   (PyCall), following TensND 0.8: write `using SymPyPythonCall` instead of
@@ -212,6 +212,18 @@ a crash of Julia 1.14 when differentiating through a concentration tensor.
 
 ### Performance
 
+- Mori-Tanaka and the self-consistent schemes no longer dispatch every tensor
+  operation at run time. The properties of the phases come out of the RVE's
+  heterogeneous containers untyped, and every product, sum and inverse that
+  followed was dispatched dynamically, a cost that grew with the methods TensND
+  0.8 adds to its algebra. The phase helpers now read a phase and hand it to a
+  function compiled for its concrete types, and the weighted sums go through one
+  such call per phase. With TensND 0.8.1, whose basis vectors are now inferred
+  (the Hill tensor of a spheroid in a transversely isotropic medium compares
+  the two axes through them), Mori-Tanaka is 20 % faster than in 0.18 on spheres
+  and prolate spheroids (0.94 → 0.74 µs, 1.19 → 0.93 µs), and the
+  self-consistent scheme 7 to 12 % faster (12.9 → 11.4 µs, 72.7 → 67.5 µs),
+  with fewer allocations, and identical results.
 - The Laplacian of the plane-strain Green operator used by the disk-pair
   interaction is built on the stack: 3 times faster and allocation-free.
 - The elastic strain concentration of a layered confocal spheroid is 13 times

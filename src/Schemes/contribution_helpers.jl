@@ -370,6 +370,16 @@ end
 #       `symmetrize ≠ NoSymmetrize`.  See the CHANGELOG entry for v0.1.1.
 # =============================================================================
 
+# A property of the RVE: a stiffness (order 4) or a conductivity (order 2).
+const _PropertyTens = Union{TensND.AbstractTens{4, 3}, TensND.AbstractTens{2, 3}}
+
+# The weighted sums of the schemes, past a function barrier: the phase terms
+# come out of the RVE's heterogeneous containers untyped, and one call compiled
+# for their concrete types replaces a dynamic dispatch per tensor operation.
+_add_weighted(S₁, S₂, f, X₁, X₂) = (S₁ + f * X₁, S₂ + f * X₂)
+# The asymmetric self-consistent increment f (⟨P:A⟩ − P_m:⟨A⟩).
+_add_weighted_gap(Δ, f, PA, P_m, A) = Δ + f * (PA - _compose(P_m, A))
+
 """
     _phase_dilute_and_contribution(rve, name, prop, P₀; kw...) -> (A_dil, N)
 
@@ -379,33 +389,24 @@ calling the two helpers separately.  `CrackDensity` phases must go through
 [`_phase_compliance_and_contribution`](@ref).
 """
 function _phase_dilute_and_contribution(
-        rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{4, 3}; kw...
+        rve::RVE, name::Symbol, prop::Symbol, P₀::_PropertyTens; kw...
     )
-    geom = rve.phases[name].geometry
-    P_i = phase_property(rve, name, prop)
-    sym = phase_symmetrize(rve, name)
-    P₀_proj = _project_matrix(P₀, sym)
-    A_raw, N_raw = MFH_Core.concentration_and_contribution(geom, P_i, P₀_proj; kw...)
-    return (
-        _apply_symmetrize(A_raw, sym),
-        volume_fraction(rve, name) * _apply_symmetrize(N_raw, sym),
+    return _dilute_and_contribution(
+        rve.phases[name].geometry, phase_property(rve, name, prop), P₀,
+        phase_symmetrize(rve, name), volume_fraction(rve, name), values(kw)
     )
 end
 
-function _phase_dilute_and_contribution(
-        rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{2, 3}; kw...
+# Function barrier: the geometry, the property and the symmetrization come out
+# of the RVE's heterogeneous containers, so everything after the read is
+# compiled here for their concrete types instead of dispatched at run time. The
+# keywords cross as a positional `NamedTuple`: a dynamic call with keywords
+# goes through `Core.kwcall`, whose argument type is rebuilt on every call.
+function _dilute_and_contribution(geom, P_i, P₀, sym, φ, kw::NamedTuple)
+    A_raw, N_raw = MFH_Core.concentration_and_contribution(
+        geom, P_i, _project_matrix(P₀, sym); kw...
     )
-    geom = rve.phases[name].geometry
-    P_i = phase_property(rve, name, prop)
-    sym = phase_symmetrize(rve, name)
-    P₀_proj = _project_matrix(P₀, sym)
-    A_raw, N_raw = MFH_Core.concentration_and_contribution(geom, P_i, P₀_proj; kw...)
-    return (
-        _apply_symmetrize(A_raw, sym),
-        volume_fraction(rve, name) * _apply_symmetrize(N_raw, sym),
-    )
+    return (_apply_symmetrize(A_raw, sym), φ * _apply_symmetrize(N_raw, sym))
 end
 
 """
@@ -418,17 +419,9 @@ function _phase_compliance_and_contribution(
         rve::RVE, name::Symbol, prop::Symbol,
         P₀::TensND.AbstractTens{4, 3}; kw...
     )
-    geom = rve.phases[name].geometry
-    sym = phase_symmetrize(rve, name)
-    P₀_proj = _project_matrix(P₀, sym)
-    a = rve.amounts[name]
-    K_int = _crack_interface_K4(rve, name)
-    H_raw, N_raw = inverse_and_property_contribution(
-        geom, P₀_proj; K_interface = K_int, kw...
-    )
-    return (
-        _apply_symmetrize(delta_inverse_property(geom, H_raw, amount_value(a)), sym),
-        _apply_symmetrize(MFH_Core.delta_property(geom, N_raw, amount_value(a)), sym),
+    return _compliance_and_contribution(
+        rve.phases[name].geometry, P₀, phase_symmetrize(rve, name),
+        amount_value(rve.amounts[name]), (; K_interface = _crack_interface_K4(rve, name), kw...)
     )
 end
 
@@ -436,17 +429,19 @@ function _phase_compliance_and_contribution(
         rve::RVE, name::Symbol, prop::Symbol,
         P₀::TensND.AbstractTens{2, 3}; kw...
     )
-    geom = rve.phases[name].geometry
-    sym = phase_symmetrize(rve, name)
-    P₀_proj = _project_matrix(P₀, sym)
-    a = rve.amounts[name]
-    α_int = _crack_interface_α(rve, name)
-    R_raw, N_raw = inverse_and_property_contribution(
-        geom, P₀_proj; α_interface = α_int, kw...
+    return _compliance_and_contribution(
+        rve.phases[name].geometry, P₀, phase_symmetrize(rve, name),
+        amount_value(rve.amounts[name]), (; α_interface = _crack_interface_α(rve, name), kw...)
     )
+end
+
+# Function barrier, as for `_dilute_and_contribution`; `kw` carries the
+# interface keyword of the property's order.
+function _compliance_and_contribution(geom, P₀, sym, d, kw::NamedTuple)
+    H_raw, N_raw = inverse_and_property_contribution(geom, _project_matrix(P₀, sym); kw...)
     return (
-        _apply_symmetrize(delta_inverse_property(geom, R_raw, amount_value(a)), sym),
-        _apply_symmetrize(MFH_Core.delta_property(geom, N_raw, amount_value(a)), sym),
+        _apply_symmetrize(delta_inverse_property(geom, H_raw, d), sym),
+        _apply_symmetrize(MFH_Core.delta_property(geom, N_raw, d), sym),
     )
 end
 
@@ -463,38 +458,23 @@ agree only to ~1e-16, so collapsing them would break bit-identity on the
 existing suite.
 """
 function _phase_dilute_and_stress_average(
-        rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{4, 3}; kw...
+        rve::RVE, name::Symbol, prop::Symbol, P₀::_PropertyTens; kw...
     )
     geom = rve.phases[name].geometry
     geom isa MFH_Core.AbstractCrack && return (zero(P₀), zero(P₀))
-    P_i = phase_property(rve, name, prop)
-    sym = phase_symmetrize(rve, name)
-    P₀_proj = _project_matrix(P₀, sym)
-    if MFH_Core.is_homogeneous_inclusion(geom)
-        A_raw = MFH_Core.gradient_gradient_concentration(geom, P_i, P₀_proj; kw...)
-        A_dil = _apply_symmetrize(A_raw, sym)
-        _average_commutes(sym, P_i) && return (A_dil, P_i ⊡ A_dil)
-        return (A_dil, _apply_symmetrize(P_i ⊡ A_raw, sym))
-    end
-    A_raw, B_raw = MFH_Core.concentration_and_flux_average(geom, P_i, P₀_proj; kw...)
-    return (_apply_symmetrize(A_raw, sym), _apply_symmetrize(B_raw, sym))
+    return _dilute_and_stress_average(
+        geom, phase_property(rve, name, prop), P₀, phase_symmetrize(rve, name), values(kw)
+    )
 end
 
-function _phase_dilute_and_stress_average(
-        rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{2, 3}; kw...
-    )
-    geom = rve.phases[name].geometry
-    geom isa MFH_Core.AbstractCrack && return (zero(P₀), zero(P₀))
-    P_i = phase_property(rve, name, prop)
-    sym = phase_symmetrize(rve, name)
+# Function barrier, as for `_dilute_and_contribution`.
+function _dilute_and_stress_average(geom, P_i, P₀, sym, kw::NamedTuple)
     P₀_proj = _project_matrix(P₀, sym)
     if MFH_Core.is_homogeneous_inclusion(geom)
         A_raw = MFH_Core.gradient_gradient_concentration(geom, P_i, P₀_proj; kw...)
         A_dil = _apply_symmetrize(A_raw, sym)
-        _average_commutes(sym, P_i) && return (A_dil, P_i ⋅ A_dil)
-        return (A_dil, _apply_symmetrize(P_i ⋅ A_raw, sym))
+        _average_commutes(sym, P_i) && return (A_dil, _compose(P_i, A_dil))
+        return (A_dil, _apply_symmetrize(_compose(P_i, A_raw), sym))
     end
     A_raw, B_raw = MFH_Core.concentration_and_flux_average(geom, P_i, P₀_proj; kw...)
     return (_apply_symmetrize(A_raw, sym), _apply_symmetrize(B_raw, sym))

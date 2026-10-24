@@ -216,8 +216,7 @@ function _sc_solid_averages(
     for name in _volume_phase_names(rve)
         f = volume_fraction(rve, name)
         A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, P_n; kw...)
-        A_avg += f * A_dil
-        CA_avg += f * CA
+        A_avg, CA_avg = _add_weighted(A_avg, CA_avg, f, A_dil, CA)
     end
     return A_avg, CA_avg
 end
@@ -998,7 +997,7 @@ function _asc_step_stiffness_dispatch(
         # handles heterogeneous inclusions and symmetrizes the product; the
         # `C_m` term reuses ⟨A⟩.
         A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, C_n; kw...)
-        Δ += f * (CA - C_m ⊡ A_dil)
+        Δ = _add_weighted_gap(Δ, f, CA, C_m, A_dil)
     end
     return C_m + Δ
 end
@@ -1012,7 +1011,7 @@ function _asc_step_stiffness_dispatch(
     for name in _volume_phase_names(rve, m)
         f = volume_fraction(rve, name)
         A_dil, KA = _phase_dilute_and_stress_average(rve, name, prop, K_n; kw...)
-        Δ += f * (KA - K_m ⋅ A_dil)
+        Δ = _add_weighted_gap(Δ, f, KA, K_m, A_dil)
     end
     return K_m + Δ
 end
@@ -1068,8 +1067,7 @@ function _asc_step_compliance_dispatch(
         # stress average the declared (placeholder) property of a
         # `LayeredSphere` cannot give.
         A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, C_n; kw...)
-        A_avg += f * A_dil
-        CA_avg += f * CA
+        A_avg, CA_avg = _add_weighted(A_avg, CA_avg, f, A_dil, CA)
     end
     S_new = S_m + (A_avg - S_m ⊡ CA_avg) ⊡ S_n
     # Crack contributions add directly to the compliance.
@@ -1092,8 +1090,7 @@ function _asc_step_compliance_dispatch(
         f = volume_fraction(rve, name)
         # `⟨K·A⟩`, not `K ⋅ ⟨A⟩` — see the order-4 dispatch above.
         A_dil, KA = _phase_dilute_and_stress_average(rve, name, prop, K_n; kw...)
-        A_avg += f * A_dil
-        KA_avg += f * KA
+        A_avg, KA_avg = _add_weighted(A_avg, KA_avg, f, A_dil, KA)
     end
     R_new = R_m + (A_avg - R_m ⋅ KA_avg) ⋅ R_n
     # Crack contributions add directly to the resistivity, as at order 4.
