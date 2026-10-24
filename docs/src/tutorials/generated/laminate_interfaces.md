@@ -104,7 +104,7 @@ A Gurtin-Murdoch membrane of surface moduli `(κs, μs)` adds `μs/L` to
 println("\nmembrane interface (κs, μs = κs/2)")
 println("       κs        C₃₃₃₃        C₁₂₁₂      ΔC₁₂₁₂")
 println("─"^54)
-for κs in (0.0, 0.02, 0.05, 0.10, 0.20)
+for κs in (0.0, 0.02, 0.05, 0.1, 0.2)
     cell = bilayer(; itf = MembraneInterface(κs, κs / 2))
     @printf "  %8.3f  %10.6f  %10.6f  %10.6f\n" κs C₃₃(cell) C₁₂(cell) (C₁₂(cell) - C₁₂(ref))
 end

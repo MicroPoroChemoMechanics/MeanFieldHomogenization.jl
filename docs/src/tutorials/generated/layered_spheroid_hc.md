@@ -141,8 +141,10 @@ end
 println()
 println("Sanity checks:")
 @printf "  β → 0 recovers the insulating particle : k_t = %.2e (expect ≈ %.0e)\n" _keq(0.5, 1.0e-9)[1] KCORE
-println("  k^eq grows monotonically with β at fixed shape :        ",
-    all(kt_obl[0.25] .< kt_obl[2.0]) ? "OK" : "FAILED")
+println(
+    "  k^eq grows monotonically with β at fixed shape :        ",
+    all(kt_obl[0.25] .< kt_obl[2.0]) ? "OK" : "FAILED"
+)
 println()
 ````
 
@@ -204,10 +206,12 @@ for β in βsweep
 end
 
 @printf "Mori–Tanaka, aligned platelets ϖ=%.2f at f=%.2f, insulating core:\n" OMEGA_PLATE FRAC
-@printf "  β = 0 :  k_11/k_m = %.4f   k_33/k_m = %.4f\n" kh_t[1]/KM kh_a[1]/KM
-@printf "  β = 3 :  k_11/k_m = %.4f   k_33/k_m = %.4f\n" kh_t[end]/KM kh_a[end]/KM
-println("  → the skin turns an obstacle into a conductor above β ≈ ",
-    (idx = findfirst(kh_t .> KM); idx === nothing ? "never (in this range)" : @sprintf("%.2f", βsweep[idx])))
+@printf "  β = 0 :  k_11/k_m = %.4f   k_33/k_m = %.4f\n" kh_t[1] / KM kh_a[1] / KM
+@printf "  β = 3 :  k_11/k_m = %.4f   k_33/k_m = %.4f\n" kh_t[end] / KM kh_a[end] / KM
+println(
+    "  → the skin turns an obstacle into a conductor above β ≈ ",
+    (idx = findfirst(kh_t .> KM); idx === nothing ? "never (in this range)" : @sprintf("%.2f", βsweep[idx]))
+)
 
 p_hom = plot(
     βsweep, kh_t ./ KM; label = "k₁₁ (in-plane)", lw = 2.5, color = :steelblue,

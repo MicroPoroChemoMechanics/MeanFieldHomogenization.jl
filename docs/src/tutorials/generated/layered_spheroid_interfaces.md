@@ -333,8 +333,8 @@ end
 
 println("HC interface on an insulating oblate particle (ρ_a=$OBL_A, ρ_t=$OBL_T)")
 println("─"^70)
-@printf "kˢ = 0.0 :  k_t^eq/k_m = %6.3f   k_a^eq/k_m = %6.3f\n" keq_t[1]/OBL_KM keq_a[1]/OBL_KM
-@printf "kˢ = 3.0 :  k_t^eq/k_m = %6.3f   k_a^eq/k_m = %6.3f\n" keq_t[end]/OBL_KM keq_a[end]/OBL_KM
+@printf "kˢ = 0.0 :  k_t^eq/k_m = %6.3f   k_a^eq/k_m = %6.3f\n" keq_t[1] / OBL_KM keq_a[1] / OBL_KM
+@printf "kˢ = 3.0 :  k_t^eq/k_m = %6.3f   k_a^eq/k_m = %6.3f\n" keq_t[end] / OBL_KM keq_a[end] / OBL_KM
 println()
 
 p_keq = plot(
@@ -389,10 +389,10 @@ function _plotly_streamlines(β; nrev = 8, uid = "spheroid-3d")
         Y = [x * sin(θ) for x in sx]
         push!(
             traces, """{type:"scatter3d",mode:"lines",
-            x:[$(join(round.(X; digits=3), ","))],
-            y:[$(join(round.(Y; digits=3), ","))],
-            z:[$(join(round.(sz; digits=3), ","))],
-            line:{width:3,color:[$(join(round.(sp; digits=3), ","))],
+            x:[$(join(round.(X; digits = 3), ","))],
+            y:[$(join(round.(Y; digits = 3), ","))],
+            z:[$(join(round.(sz; digits = 3), ","))],
+            line:{width:3,color:[$(join(round.(sp; digits = 3), ","))],
                   colorscale:"Hot",cmin:0,cmax:2.2},showlegend:false}"""
         )
     end
