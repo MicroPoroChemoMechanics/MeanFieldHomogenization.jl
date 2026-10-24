@@ -282,13 +282,13 @@ block by block in time.
 Going back to bulk and shear is linear on the relaxation kernels:
 
 ```math
-k = M_{\mathrm{long}} - \tfrac{4}{3}\,M_{\mathrm{shear}},
-\qquad
-\mu = M_{\mathrm{shear}},
-\qquad\text{that is}\qquad
-\alpha = 3\,M_{\mathrm{long}} - 4\,M_{\mathrm{shear}},
-\quad
-\beta = 2\,M_{\mathrm{shear}} .
+\begin{aligned}
+k &= M_{\mathrm{long}} - \tfrac{4}{3}\,M_{\mathrm{shear}},
+& \mu &= M_{\mathrm{shear}},
+\\
+\alpha &= 3\,M_{\mathrm{long}} - 4\,M_{\mathrm{shear}},
+& \beta &= 2\,M_{\mathrm{shear}} .
+\end{aligned}
 ```
 
 It is not linear on their inverses: ``J_{\mathrm{long}}`` is the Volterra inverse

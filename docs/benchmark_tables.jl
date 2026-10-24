@@ -18,7 +18,7 @@ function _fmt_time(t)
 end
 # A ratio below 1 (Echoes faster) in bold, so that it cannot be missed.
 _fmt_ratio(r) = r < 1 ? @sprintf("**%.2g×**", r) : r < 100 ? @sprintf("%.3g×", r) :
-    string(round(Int, r; sigdigits = 2), "×")
+    string(Int(round(r; sigdigits = 2)), "×")
 
 """
     machine_line(name) -> Markdown.MD
