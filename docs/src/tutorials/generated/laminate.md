@@ -70,7 +70,7 @@ avg(g) = f₁ * g(λ(k₁, μ₁), μ₁) + f₂ * g(λ(k₂, μ₂), μ₂)
 r₃₃ = 1 / avg((l, m) -> 1 / (l + 2m))
 rλ = avg((l, m) -> l / (l + 2m))
 
-M = Matrix(KM(Cᵉᶠᶠ))
+M = Matrix(mandel(Cᵉᶠᶠ))
 backus = (
     ("C₁₁₁₁", M[1, 1], avg((l, m) -> 4m * (l + m) / (l + 2m)) + r₃₃ * rλ^2),
     ("C₁₁₂₂", M[1, 2], avg((l, m) -> 2m * l / (l + 2m)) + r₃₃ * rλ^2),
@@ -95,7 +95,7 @@ bracket the exact answer — and two of the bracketings are equalities.
 ````@example laminate
 Cᵥ = homogenize(lam, Voigt(), :C)
 Cᵣ = homogenize(lam, Reuss(), :C)
-Mv, Mr = Matrix(KM(Cᵥ)), Matrix(KM(Cᵣ))
+Mv, Mr = Matrix(mandel(Cᵥ)), Matrix(mandel(Cᵣ))
 
 @printf "\nout-of-plane  C₃₃₃₃ : Reuss %.6f ≤ exact %.6f ≤ Voigt %.6f\n" Mr[3, 3] M[3, 3] Mv[3, 3]
 @printf "  exact − Reuss = %.2e   (the laminate SATURATES the Reuss bound)\n" abs(M[3, 3] - Mr[3, 3])
@@ -138,7 +138,7 @@ sumB = sum(fs[nm] * 𝔹[nm] for nm in layer_names(lam))
 @printf "\n‖Σ fᵢ 𝔸ᵢ − 𝕀‖ = %.2e\n" norm(sumA - 𝕀)
 @printf "‖Σ fᵢ 𝔹ᵢ − 𝕀‖ = %.2e\n" norm(sumB - 𝕀)
 
-MA = Matrix(KM(𝔸[:A]))
+MA = Matrix(mandel(𝔸[:A]))
 @printf "in-plane block of 𝔸_A is the identity : %.2e\n" maximum(
     abs, MA[[1, 2, 6], [1, 2, 6]] - I
 )

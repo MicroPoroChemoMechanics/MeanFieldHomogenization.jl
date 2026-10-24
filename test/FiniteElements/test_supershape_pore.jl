@@ -43,7 +43,7 @@ const _K0 = TensND.TensISO{3}(1.0)
         Z2 = MeanFieldHomogenization.Core.flux_gradient_concentration(pore, _K0, _K0)
         # Identically zero, not zero to the discretization error: no solve is
         # even run for it.
-        @test iszero(KM(Z4))
+        @test iszero(mandel(Z4))
         @test iszero(get_array(change_tens_canon(Z2)))
         @test fe_assembly_count(pore) == 0
     end
@@ -64,12 +64,12 @@ const _K0 = TensND.TensISO{3}(1.0)
         # from the same `A` through the package's own generic formulas.
         N = property_contribution(pore, _C0, _C0)
         H = inverse_property_contribution(pore, _C0, _C0)
-        @test norm(KM(H ⊡ _C0 + inv(_C0) ⊡ N)) < 1.0e-12 * norm(KM(H ⊡ _C0))
+        @test norm(mandel(H ⊡ _C0 + inv(_C0) ⊡ N)) < 1.0e-12 * norm(mandel(H ⊡ _C0))
 
         # And the phase property really is ignored: a wildly different `C₁`
         # changes nothing.
         Nother = property_contribution(pore, iso_stiffness(99.0, 42.0), _C0)
-        @test norm(KM(Nother) - KM(N)) < 1.0e-12 * norm(KM(N))
+        @test norm(mandel(Nother) - mandel(N)) < 1.0e-12 * norm(mandel(N))
         @test fe_assembly_count(pore) == 1
     end
 
@@ -92,7 +92,7 @@ const _K0 = TensND.TensISO{3}(1.0)
         N = property_contribution(pore, _C0, _C0)
         # `Dilute` *is* `C₀ + f N` by definition, so this is a wiring check with
         # no tolerance to argue about.
-        @test norm(KM(Cd) - KM(_C0 + 0.05 * N)) < 1.0e-12 * norm(KM(Cd))
+        @test norm(mandel(Cd) - mandel(_C0 + 0.05 * N)) < 1.0e-12 * norm(mandel(Cd))
 
         Cmt = homogenize(rve, MoriTanaka(), :C)
         k, μ = k_mu(best_fit_iso(Cmt))
@@ -129,7 +129,7 @@ const _K0 = TensND.TensISO{3}(1.0)
         # An anisotropic reference: the corrected condition uses the closed-form
         # Kelvin dipole, which exists for an isotropic matrix only.
         Caniso = TensND.Tens(
-            TensND.inv_KM(Matrix(KM(_C0)) + Diagonal([0.0, 0.0, 0.4, 0, 0, 0]))
+            TensND.from_mandel(Matrix(mandel(_C0)) + Diagonal([0.0, 0.0, 0.4, 0, 0, 0]))
         )
         err = try
             fe_cell_concentration(pore, Caniso)

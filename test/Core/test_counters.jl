@@ -28,7 +28,7 @@ const MC = MeanFieldHomogenization.Core
         210.0 80.0 75.0 5.0 4.0 3.0; 80.0 195.0 90.0 -2.0 3.0 -1.0; 75.0 90.0 220.0 1.0 -2.0 2.0;
         5.0 -2.0 1.0 60.0 2.5 1.5; 4.0 3.0 -2.0 2.5 65.0 -1.0; 3.0 -1.0 2.0 1.5 -1.0 55.0
     ]
-    C = TensND.inv_KM(KM, TensND.CanonicalBasis{3, Float64}())
+    C = TensND.from_mandel(KM, TensND.CanonicalBasis{3, Float64}())
     ell = Ellipsoid(1.0, 0.7, 0.3)
     MC.reset_counters!()
     P = hill_tensor(ell, C; method = :nestedquadgk)

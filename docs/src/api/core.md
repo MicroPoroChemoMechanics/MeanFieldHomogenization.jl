@@ -48,7 +48,7 @@ them:
 | `isotropify(t)` | the exact SO(3) average, `TensISO{4}` or `TensISO{2}` |
 | `transverse_isotropify(t, n)` | the exact azimuthal average about `n`, `TensTI{4,T,8}` or `TensTI{2,T,3}` — `ℓ₃ ≠ ℓ₄` and the antisymmetric couplings `ℓ₇`, `ℓ₈` are preserved |
 | `mandel66_minor(arr)` / `array_from_mandel66(M)` | 6×6 Kelvin-Mandel ↔ 3×3×3×3, minor-symmetrizing, no major symmetry assumed |
-| `ti8_params_from_KM(M)` / `KM_from_ti8_params(p)` | the eight Walpole coefficients of an axially-invariant tensor about `e₃`, read off exactly — the non-major-symmetric counterpart of `TensND.ti_params_from_KM` |
+| `ti8_params_from_mandel(M)` / `mandel_from_ti8_params(p)` | the eight Walpole coefficients of an axially-invariant tensor about `e₃`, read off exactly — the non-major-symmetric counterpart of `TensND.ti_params_from_mandel` |
 | `ti_average_mandel66(M, n)` / `iso_average_mandel66(M)` | the same averages, on a 6×6 block rather than on a tensor (the aging-viscoelastic Volterra path) |
 
 See the TensND documentation for the full docstrings.

@@ -174,7 +174,7 @@ function _cell_elastic_concentration(
         solve = nothing
     end
 
-    C66 = Matrix{Float64}(TensND.KM(TensND.Tens(C)))
+    C66 = Matrix{Float64}(TensND.mandel(TensND.Tens(C)))
     A, dnorm = _cell_close_dipole(L_s, L_u, (sign * V) .* C66)
     return (; A, A_uncorrected = L_s, L_s, L_u, dipole_norm = dnorm)
 end
@@ -266,7 +266,7 @@ The `i`-th Kelvin-Mandel basis tensor, orthonormal for the Frobenius inner
 product — which is what makes a unit load in this basis a unit load, and lets
 the same six matrices serve both as remote strains and as dipole moments.
 """
-_cell_kelvin_basis(i::Integer) = Array(TensND.get_array(TensND.inv_KM(TensND.StaticArrays.SVector{6}(ntuple(k -> Float64(k == i), 6)))))
+_cell_kelvin_basis(i::Integer) = Array(TensND.get_array(TensND.from_mandel(TensND.StaticArrays.SVector{6}(ntuple(k -> Float64(k == i), 6)))))
 
 """
 The distinct parity classes of the six Kelvin load cases: `(+,+,+)` shared by

@@ -78,8 +78,8 @@ MeanFieldHomogenization.Viscoelasticity.laminate_alv
 The kernel behind the cell, in `Core`, so that the aging-viscoelastic
 laminate reuses it with the Volterra inversion substituted. It is written on the
 Kelvin–Mandel block algebra about the layer normal, which is TensND's and is
-re-exported from `Core`: the slots `KM_IP` and `KM_OP`, the blocks and their
-embeddings, the Schur inverse `km_inv_schur`, the plane pseudo-inverses
+re-exported from `Core`: the slots `MANDEL_IP` and `MANDEL_OP`, the blocks and their
+embeddings, the Schur inverse `mandel_inv_schur`, the plane pseudo-inverses
 `plane_pinv` and `plane_pinv2`, `acoustic_tensor` and `compliance_op_block` (see
 [Kelvin-Mandel blocks about a normal](https://MicroPoroChemoMechanics.github.io/TensND.jl/stable/api/tensors)
 in the TensND documentation).

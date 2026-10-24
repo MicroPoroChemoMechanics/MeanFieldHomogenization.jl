@@ -72,7 +72,7 @@ end
     fr(E) = cod_tensor(RibbonCrack(1.0), iso(E, 0.3))[3, 3]
     @test ForwardDiff.derivative(fr, 210.0) ≈ (fr(210.0 + h) - fr(210.0 - h)) / (2h) rtol = 1.0e-6
 
-    fTI(E) = cod_tensor(PennyCrack(1.0), fromISO(iso(E, 0.3), [0.0, 0.0, 1.0]))[3, 3]
+    fTI(E) = cod_tensor(PennyCrack(1.0), iso_to_ti(iso(E, 0.3), [0.0, 0.0, 1.0]))[3, 3]
     @test ForwardDiff.derivative(fTI, 210.0) ≈ (fTI(210.0 + h) - fTI(210.0 - h)) / (2h) rtol = 1.0e-6
 end
 
@@ -118,8 +118,8 @@ end
     #     uses only `*`, which does fold.
     Sy.@variables c11 c12 c33 c44
     MFHCr = MeanFieldHomogenization.Cracks
-    C_al = tens_TI(c11, c12 / 2, c12, c11, c44, [0.0, 0.0, 1.0])
-    C_rot = tens_TI(c11, c12 / 2, c12, c11, c44, [1.0, 0.0, 0.0])
+    C_al = tens_ti(c11, c12 / 2, c12, c11, c44, [0.0, 0.0, 1.0])
+    C_rot = tens_ti(c11, c12 / 2, c12, c11, c44, [1.0, 0.0, 0.0])
     penny = PennyCrack(1.0)
 
     @test MFHCr._ti_aligned(C_al, crack_basis(penny))
@@ -190,7 +190,7 @@ end
     # Symbolic stiffness components, TI axis = e₃ = crack normal.  Before the
     # `_ti_aligned` guard this call threw inside dispatch.
     SymPy.@syms C1111::positive C1122::real C1133::real C3333::positive C2323::positive
-    C_ti = tens_TI(C1111, C1122, C1133, C3333, C2323, [Sym(0), Sym(0), Sym(1)])
+    C_ti = tens_ti(C1111, C1122, C1133, C3333, C2323, [Sym(0), Sym(0), Sym(1)])
     @test C_ti isa TensND.TensTI{4}
     @test eltype(get_array(C_ti)) <: Sym
 
@@ -214,7 +214,7 @@ end
     MFHC = MeanFieldHomogenization.Core
     MFHCr = MeanFieldHomogenization.Cracks
     @test MFHCr._ti_aligned(C_ti, crack_basis(PennyCrack(one(Sym))))
-    C_ti_x = tens_TI(C1111, C1122, C1133, C3333, C2323, [Sym(1), Sym(0), Sym(0)])
+    C_ti_x = tens_ti(C1111, C1122, C1133, C3333, C2323, [Sym(1), Sym(0), Sym(0)])
     @test !MFHCr._ti_aligned(C_ti_x, crack_basis(PennyCrack(one(Sym))))
     @test MFHC._resolve_algo(Val(:auto), PennyCrack(one(Sym)), C_ti) isa MFHC.Analytical
 end
@@ -291,7 +291,7 @@ end
     SymPy.@syms ηs::positive
     λs, μs = Sym(1), Sym(1) / 2
     C_iso = TensISO{3}(3 * (λs + 2 * μs / 3), 2 * μs)
-    C_ti = tens_TI(λs + 2μs, λs, λs, λs + 2μs, μs, [Sym(0), Sym(0), Sym(1)])
+    C_ti = tens_ti(λs + 2μs, λs, λs, λs + 2μs, μs, [Sym(0), Sym(0), Sym(1)])
     @test C_ti isa TensND.TensTI{4}
 
     for crack in (EllipticCrack(one(Sym), ηs), PennyCrack(one(Sym)), RibbonCrack(one(Sym)))

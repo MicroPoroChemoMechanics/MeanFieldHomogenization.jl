@@ -23,7 +23,7 @@ const _CANON = TensND.CanonicalBasis{3, Float64}()
 const _ALV_CLASSES = (
     ti = (
         shape = Ellipsoid(1.0, 1.0, 0.3),
-        C_inc = tens_TI(30.0, 12.0, 6.0, 14.0, 9.0, (0.0, 0.0, 1.0)),
+        C_inc = tens_ti(30.0, 12.0, 6.0, 14.0, 9.0, (0.0, 0.0, 1.0)),
     ),
     ortho = (
         shape = Ellipsoid(1.0, 0.6, 0.3),
@@ -31,7 +31,7 @@ const _ALV_CLASSES = (
     ),
     general = (
         shape = Ellipsoid(1.0, 1.0, 0.3; euler_angles = (0.4, 0.7, 0.2)),
-        C_inc = tens_TI(30.0, 12.0, 6.0, 14.0, 9.0, (0.6, 0.0, 0.8)),
+        C_inc = tens_ti(30.0, 12.0, 6.0, 14.0, 9.0, (0.6, 0.0, 0.8)),
     ),
 )
 

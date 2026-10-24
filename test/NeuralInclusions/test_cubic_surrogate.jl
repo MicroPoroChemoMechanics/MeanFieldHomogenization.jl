@@ -57,10 +57,10 @@ const NI = MeanFieldHomogenization.NeuralInclusions
         c = NI.components(GradientConcentrationCubic(), C, can)
         @test length(c) == 3
         @test all(isapprox.(c, TensND.get_data(C); atol = 1.0e-12))
-        @test norm(KM(NI.build(GradientConcentrationCubic(), c, can)) - KM(C)) < 1.0e-12
+        @test norm(mandel(NI.build(GradientConcentrationCubic(), c, can)) - mandel(C)) < 1.0e-12
 
         # A tensor outside the class is refused loudly rather than trained on.
-        ti = TensND.tens_TI(10.0, 3.0, 2.5, 12.0, 2.0, [0.0, 0.0, 1.0])
+        ti = TensND.tens_ti(10.0, 3.0, 2.5, 12.0, 2.0, [0.0, 0.0, 1.0])
         @test_throws ArgumentError NI.components(GradientConcentrationCubic(), ti, can)
 
         # The frame comes from the inclusion's own basis, all three columns of
@@ -122,7 +122,7 @@ const NI = MeanFieldHomogenization.NeuralInclusions
                 pore = FESupershapePore(Supersphere(1.0, p); elastic = s)
                 A = fe_cell_concentration(pore, C₀)
                 @test A isa TensND.TensCubic
-                @test norm(KM(A) - KM(_teacher(p, ν))) < tol * norm(KM(_teacher(p, ν)))
+                @test norm(mandel(A) - mandel(_teacher(p, ν))) < tol * norm(mandel(_teacher(p, ν)))
                 # No mesh was built and no system factorized.
                 @test fe_assembly_count(pore) == 0
                 @test has_surrogate(pore, 4)
@@ -137,12 +137,12 @@ const NI = MeanFieldHomogenization.NeuralInclusions
             add_phase!(rve, :p, pore, Dict(:C => C₀); fraction = 0.05)
             Cd = homogenize(rve, Dilute(), :C)
             N = property_contribution(pore, C₀, C₀)
-            @test norm(KM(Cd) - KM(C₀ + 0.05 * N)) < 1.0e-12 * norm(KM(Cd))
+            @test norm(mandel(Cd) - mandel(C₀ + 0.05 * N)) < 1.0e-12 * norm(mandel(Cd))
             @test fe_assembly_count(pore) == 0
             # Still a cavity: the stress side is identically zero, so the
             # contribution identity holds exactly as it does for the meshed one.
             H = inverse_property_contribution(pore, C₀, C₀)
-            @test norm(KM(H ⊡ C₀ + inv(C₀) ⊡ N)) < 1.0e-10 * norm(KM(H ⊡ C₀))
+            @test norm(mandel(H ⊡ C₀ + inv(C₀) ⊡ N)) < 1.0e-10 * norm(mandel(H ⊡ C₀))
         end
 
         @testset "and it differentiates in the morphology, which the mesh cannot" begin
@@ -157,16 +157,16 @@ const NI = MeanFieldHomogenization.NeuralInclusions
                 r
             end
             d = derivative(build_rve(0.7), Dilute(), geometry(:p, :p))
-            @test all(isfinite, KM(d))
-            @test norm(KM(d)) > 1.0e-6                     # it really depends on p
+            @test all(isfinite, mandel(d))
+            @test norm(mandel(d)) > 1.0e-6                     # it really depends on p
 
             # Against a central difference over freshly built inclusions.
             h = 1.0e-5
             fd = (
-                KM(homogenize(build_rve(0.7 + h), Dilute(), :C)) -
-                    KM(homogenize(build_rve(0.7 - h), Dilute(), :C))
+                mandel(homogenize(build_rve(0.7 + h), Dilute(), :C)) -
+                    mandel(homogenize(build_rve(0.7 - h), Dilute(), :C))
             ) ./ 2h
-            @test norm(Matrix(KM(d)) - Matrix(fd)) < 1.0e-4 * norm(Matrix(fd))
+            @test norm(Matrix(mandel(d)) - Matrix(fd)) < 1.0e-4 * norm(Matrix(fd))
 
             # The meshed pore refuses the same request rather than returning a
             # silent zero -- the contrast that is the whole point.
@@ -347,7 +347,7 @@ end
         J = v * v' / 3
         K = Matrix(1.0I, 6, 6) - J
         Aex = inv(Matrix(1.0I, 6, 6) - (SJ * J + SK * K))
-        A = Matrix(KM(fe_cell_concentration(pore, C₀)))
+        A = Matrix(mandel(fe_cell_concentration(pore, C₀)))
         @test norm(A - Aex) / norm(Aex) < 3 * NI.worst_error(se.provenance)
     end
 

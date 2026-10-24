@@ -506,10 +506,10 @@ for (label, itf_jl, tags, p1s, p2s) in ITF_CASES
         jl_lay = lay === nothing ? nothing : lay + 1        # Julia is 1-based
         ref = py_conc_all(spn, r, θ, φ, py_lay)
         got = (
-            Matrix(KM(local_gradient_gradient_concentration(sol, r, θ, φ; layer = jl_lay))),
-            Matrix(KM(local_flux_gradient_concentration(sol, r, θ, φ; layer = jl_lay))),
-            Matrix(KM(local_gradient_flux_concentration(sol, r, θ, φ; layer = jl_lay))),
-            Matrix(KM(local_flux_flux_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(mandel(local_gradient_gradient_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(mandel(local_flux_gradient_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(mandel(local_gradient_flux_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(mandel(local_flux_flux_concentration(sol, r, θ, φ; layer = jl_lay))),
         )
         for q in 1:4
             scale = max(1.0, maximum(abs, ref[q]))

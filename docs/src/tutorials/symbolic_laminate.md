@@ -50,7 +50,7 @@ the printed expressions short enough to read.
 
 ```@example tutsymlam
 Chom = homogenize(lam, Laminated(), :C)
-M = simplify.(KM(Chom))
+M = simplify.(mandel(Chom))
 ```
 
 Two things are worth reading off that matrix before any formula.
@@ -163,7 +163,7 @@ lam3 = Laminate(; normal = (0, 0, 1))
 add_layer!(lam3, :A, Dict(:C => iso_lame(λ₁, μ₁)); fraction = f₁)
 add_layer!(lam3, :B, Dict(:C => iso_lame(λ₂, μ₂)); fraction = f₂ₛ)
 add_layer!(lam3, :C, Dict(:C => iso_lame(λ₃, μ₃)); fraction = 1 - f₁ - f₂ₛ)
-M3 = KM(homogenize(lam3, Laminated(), :C))
+M3 = mandel(homogenize(lam3, Laminated(), :C))
 
 avg3(g) = f₁ * g(λ₁, μ₁) + f₂ₛ * g(λ₂, μ₂) + (1 - f₁ - f₂ₛ) * g(λ₃, μ₃)
 A3 = avg3((λ, μ) -> 1 / (λ + 2μ))
@@ -229,7 +229,7 @@ lamI = Laminate(; normal = (0, 0, 1))
 add_layer!(lamI, :A, Dict(:C => iso_lame(λ₁, μ₁)); thickness = f₁ * L,
            interface = SpringInterface(kn, zero(kn)))
 add_layer!(lamI, :B, Dict(:C => iso_lame(λ₂, μ₂)); thickness = f₂ * L)
-MI = KM(homogenize(lamI, Laminated(), :C))
+MI = mandel(homogenize(lamI, Laminated(), :C))
 
 (compliance_adds_to_the_series_law = simplify(1 / MI[3, 3] - (A + kn / L)),
  in_plane_shear_untouched          = simplify(MI[6, 6] / 2 - F))

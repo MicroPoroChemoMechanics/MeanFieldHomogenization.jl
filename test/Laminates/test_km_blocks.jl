@@ -33,7 +33,7 @@ function _rand_km6(rng)
     return SMatrix{6, 6}(A * A' + 8I)
 end
 
-_iso_km(k, μ) = SMatrix{6, 6}(KM(TensISO{3}(3k, 2μ)))
+_iso_km(k, μ) = SMatrix{6, 6}(mandel(TensISO{3}(3k, 2μ)))
 
 @testset "flat_hill / plane_pinv" begin
     k, μ = 2.0, 0.8
@@ -44,13 +44,13 @@ _iso_km(k, μ) = SMatrix{6, 6}(KM(TensISO{3}(3k, 2μ)))
     @test P[3, 3] ≈ 1 / (λ + 2μ) atol = ATOL_KM
     @test P[4, 4] ≈ 2 * (1 / (4μ)) atol = ATOL_KM     # Mandel: [4,4] = 2·P_2323
     @test P[5, 5] ≈ 2 * (1 / (4μ)) atol = ATOL_KM
-    @test iszero(TensND.km_ip_block(P))
+    @test iszero(TensND.mandel_ip_block(P))
 
     rng = MersenneTwister(31)
     M = _rand_km6(rng)
     # `plane_pinv` reproduces the Moore-Penrose pseudo-inverse of the
     # OP-supported part — the SVD-free path validated against the SVD.
-    Mop = TensND.km_op_embed(TensND.km_op_block(M))
+    Mop = TensND.mandel_op_embed(TensND.mandel_op_block(M))
     @test MFHC.plane_pinv(M) ≈ pinv(Matrix(Mop)) atol = 1.0e-10
     # ⟨ℙ⟩† : ⟨ℙ⟩ = Πᴼ
     P = MFHC.flat_hill(M)
@@ -66,8 +66,8 @@ end
         @test P * M * P ≈ P atol = 1.0e-10
         @test maximum(abs, Q * P) < 1.0e-10
         # ℚ operates within in-plane tensors only
-        @test maximum(abs, Q[MFHC.KM_OP, :]) < 1.0e-10
-        @test maximum(abs, Q[:, MFHC.KM_OP]) < 1.0e-10
+        @test maximum(abs, Q[MFHC.MANDEL_OP, :]) < 1.0e-10
+        @test maximum(abs, Q[:, MFHC.MANDEL_OP]) < 1.0e-10
     end
 end
 
@@ -121,7 +121,7 @@ end
 
     φ = 0.83
     Rz = SMatrix{3, 3}(cos(φ), sin(φ), 0.0, -sin(φ), cos(φ), 0.0, 0.0, 0.0, 1.0)
-    Qz = TensND.KM_rotation(Rz)
+    Qz = TensND.mandel_rotation(Rz)
     C6r = ntuple(i -> Qz' * C6s[i] * Qz, 3)
     @test MFHC.laminate_stiffness(C6r, f, Z, Z) ≈ Qz' * Ch * Qz atol = 1.0e-10
 end
@@ -140,8 +140,8 @@ end
     @test sum(f[i] * Bs[i] for i in 1:3) ≈ I atol = 1.0e-10
     # The macroscopic in-plane strain reaches every layer unchanged.
     for A in As
-        @test TensND.km_ip_block(A) ≈ I atol = ATOL_KM
-        @test maximum(abs, A[MFHC.KM_IP, MFHC.KM_OP]) < ATOL_KM
+        @test TensND.mandel_ip_block(A) ≈ I atol = ATOL_KM
+        @test maximum(abs, A[MFHC.MANDEL_IP, MFHC.MANDEL_OP]) < ATOL_KM
     end
     # ⟨ℂ:𝔸⟩ = ℂ_hom
     @test sum(f[i] * C6s[i] * As[i] for i in 1:3) ≈ Ch atol = 1.0e-10

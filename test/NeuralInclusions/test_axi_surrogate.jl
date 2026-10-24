@@ -274,7 +274,7 @@ end
         J = v * v' / 3
         K = Matrix(1.0I, 6, 6) - J
         Aex = inv(Matrix(1.0I, 6, 6) - (SJ * J + SK * K))
-        A = Matrix(KM(fe_axi_pore_concentration(pore, C₀)))
+        A = Matrix(mandel(fe_axi_pore_concentration(pore, C₀)))
         @test norm(A - Aex) / norm(Aex) < 4 * NIA.worst_error(se.provenance)
     end
 

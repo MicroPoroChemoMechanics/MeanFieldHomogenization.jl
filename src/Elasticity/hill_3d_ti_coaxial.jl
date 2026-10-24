@@ -155,7 +155,7 @@ Reference: [barthelemyIJES2020_hilltrans](@citet).
 function _hill_3d_ti_coaxial(ell::Ellipsoid{3, Oblate}, C₀::TensND.TensTI{4, T, 5}) where {T}
     a, _, c = ell.semi_axes
     ω = c / a   # generic division — preserves Dual derivatives
-    C1111, C1122, C1133, C3333, C2323 = TensND.arg_TI(C₀)
+    C1111, C1122, C1133, C3333, C2323 = TensND.ti_args(C₀)
     P1, P2, P3, P5, P6 = _hill_ti_walpole(ω, C1111, C1122, C1133, C3333, C2323)
     return TensND.TensTI{4}(P1, P2, P3, P5, P6, TensND.axis(C₀))
 end
@@ -163,14 +163,14 @@ end
 function _hill_3d_ti_coaxial(ell::Ellipsoid{3, Prolate}, C₀::TensND.TensTI{4, T, 5}) where {T}
     a, b, _ = ell.semi_axes
     ω = a / b   # generic division — preserves Dual derivatives
-    C1111, C1122, C1133, C3333, C2323 = TensND.arg_TI(C₀)
+    C1111, C1122, C1133, C3333, C2323 = TensND.ti_args(C₀)
     P1, P2, P3, P5, P6 = _hill_ti_walpole(ω, C1111, C1122, C1133, C3333, C2323)
     return TensND.TensTI{4}(P1, P2, P3, P5, P6, TensND.axis(C₀))
 end
 
 function _hill_3d_ti_coaxial(::Ellipsoid{3, Spherical}, C₀::TensND.TensTI{4, T, 5}) where {T}
     # Spheroid degenerates to sphere — ω = 1, formula limit values
-    C1111, C1122, C1133, C3333, C2323 = TensND.arg_TI(C₀)
+    C1111, C1122, C1133, C3333, C2323 = TensND.ti_args(C₀)
     P1, P2, P3, P5, P6 = _hill_ti_walpole(one(T), C1111, C1122, C1133, C3333, C2323)
     return TensND.TensTI{4}(P1, P2, P3, P5, P6, TensND.axis(C₀))
 end

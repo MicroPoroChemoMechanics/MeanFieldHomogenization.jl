@@ -221,5 +221,5 @@ end
     x = mt(C₀)
     @test x isa TensND.TensOrtho{4, Float64, 12}
     y = mt(TensND.generic_tens(C₀); method = :nestedquadgk, reltol = 1.0e-12, abstol = 1.0e-14)
-    @test norm(KM(x) - KM(y)) / norm(KM(y)) < 1.0e-12
+    @test norm(mandel(x) - mandel(y)) / norm(mandel(y)) < 1.0e-12
 end

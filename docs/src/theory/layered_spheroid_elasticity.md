@@ -91,8 +91,8 @@ X, Y, Z = getcoords(Cart)
 f = ntuple(i -> SymFunction("f$(i-1)")(X, Y, Z), 4)
 φv = Tens([f[2], f[3], f[4]])
 Φc = f[1] + X * f[2] + Y * f[3] + Z * f[4]
-uc = (GRAD(Φc, Cart) - 4 * (1 - ν) * φv) / (2μ)
-εc = SYMGRAD(uc, Cart)
+uc = (grad(Φc, Cart) - 4 * (1 - ν) * φv) / (2μ)
+εc = symgrad(uc, Cart)
 PTc = Dict(X => Sym(2)//7, Y => Sym(3)//5, Z => Sym(11)//9, μ => Sym(7)//3, ν => Sym(1)//4)
 atomc(e) = foldl((a, g) -> subs(a, g[1] => g[2]),
     [(diff(f[i], v...), symbols("w$(i)_$(join(string.(v)))"))
@@ -100,7 +100,7 @@ atomc(e) = foldl((a, g) -> subs(a, g[1] => g[2]),
                             (X,), (Y,), (Z,))] ∪ [(f[i], symbols("w$(i)_0")) for i in 1:4];
     init = e)
 harmc(e) = foldl((a, g) -> subs(a, diff(g, Z, 2) => -diff(g, X, 2) - diff(g, Y, 2)), f; init = e)
-simplify(expand(subs(atomc(harmc(tr(εc) + (1 - 2ν) * DIV(φv, Cart) / μ)), PTc...)))
+simplify(expand(subs(atomc(harmc(tr(εc) + (1 - 2ν) * divergence(φv, Cart) / μ)), PTc...)))
 ```
 
 Zero — and `test/LayeredSpheroids/test_pn_symbolic.jl` carries the same check on
@@ -161,8 +161,8 @@ e₃ = Tens([Sym(0), Sym(0), Sym(1)])
 φ₃ = SymFunction("phi3")(p, q)
 Φ  = φ₀ + c * p * q * φ₃
 
-u = (GRAD(Φ, S) - 4 * (1 - ν) * φ₃ * e₃) / (2μ)
-ε = SYMGRAD(u, S)
+u = (grad(Φ, S) - 4 * (1 - ν) * φ₃ * e₃) / (2μ)
+ε = symgrad(u, S)
 σ = λ * tr(ε) * one(ε) + 2μ * ε
 nothing # hide
 ```
@@ -281,9 +281,9 @@ with the three geometric factors
 Both boxed statements, checked:
 
 ```@example spheroid_elastic
-∇φ₃  = GRAD(φ₃, S)
+∇φ₃  = grad(φ₃, S)
 ∂zφ₃ = ∇φ₃ ⋅ e₃
-σ_cf = -2ν * ∂zφ₃ * one(ε) + HESS(Φ, S) - 2 * (1 - ν) * (e₃ ⊗ ∇φ₃ + ∇φ₃ ⊗ e₃)
+σ_cf = -2ν * ∂zφ₃ * one(ε) + hess(Φ, S) - 2 * (1 - ν) * (e₃ ⊗ ∇φ₃ + ∇φ₃ ⊗ e₃)
 cd, cc = components_canon(σ), components_canon(σ_cf)
 [reduce_h(tr(ε) + (1 - 2ν) * ∂zφ₃ / μ);
  [reduce_h(cd[i, j] - cc[i, j]) for i in 1:3 for j in i:3]]
@@ -472,8 +472,8 @@ classical, and it is coordinate-free, so re-deriving it in a particular chart
 proves nothing about elasticity.
 
 What the check below *does* establish is that the machinery producing the
-operators above is sound: TensND's spheroidal chart, the wiring of `GRAD`,
-`SYMGRAD` and `DIV`, the transcription of the gauge ``\varphi_1=\varphi_2=0``
+operators above is sound: TensND's spheroidal chart, the wiring of `grad`,
+`symgrad` and `divergence`, the transcription of the gauge ``\varphi_1=\varphi_2=0``
 with its ``\underline e_3`` term, and the ``\lambda \leftrightarrow \nu``
 conversion. Every expression on this page comes out of that same machinery, so
 a non-zero residual here would have invalidated all of them. It is a plumbing
@@ -490,7 +490,7 @@ once in ``p`` and once in ``q`` supplies the third-order eliminations that
 ``\operatorname{div}\boldsymbol\sigma`` needs. Imposing only that:
 
 ```@example spheroid_elastic
-dz = components_canon(DIV(σ, S))[3]           # the axial component
+dz = components_canon(divergence(σ, S))[3]           # the axial component
 reduce_h(dz)
 ```
 
@@ -778,7 +778,7 @@ homothetic" stated in millimeters, and it means a confocal interphase models a
 compliance that **varies along the interface** rather than a uniform spring.
 
 ```@example spheroid_elastic
-χ = Lame(S)
+χ = lame_coefficients(S)
 [simplify(subs(χ[3], p => 1)),                       # pole
  simplify(subs(χ[3], p => 0)),                       # equator
  simplify(subs(χ[3], p => 0) / subs(χ[3], p => 1) - q / sqrt(q^2 - 1))]

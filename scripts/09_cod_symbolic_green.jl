@@ -541,7 +541,7 @@ println("="^78)                                                              #jl
 @syms C₁₁₁₁::positive C₁₂₁₂::positive C₁₁₃₃::real C₃₃₃₃::positive C₂₃₂₃::positive
 
 C₁₁₂₂ = C₁₁₁₁ - 2 * C₁₂₁₂
-ℂᵗⁱ = tens_TI(C₁₁₁₁, C₁₁₂₂, C₁₁₃₃, C₃₃₃₃, C₂₃₂₃, [Sym(0), Sym(0), Sym(1)])
+ℂᵗⁱ = tens_ti(C₁₁₁₁, C₁₁₂₂, C₁₁₃₃, C₃₃₃₃, C₂₃₂₃, [Sym(0), Sym(0), Sym(1)])
 
 Aᵗⁱ, Vᵗⁱ, Nᵗⁱ = reduced_blocks(ℂᵗⁱ, 𝐧, 𝛏)
 
@@ -673,7 +673,7 @@ a₁ᵞ = subs(a₁_σ, σ => σᵞ_paper)
 a₃ᵞ = subs(a₃_σ, σ => σᵞ_paper)
 B_ti = cod_from_coefficients(a₁ᵞ, a₂ᵗⁱ, a₃ᵞ, η, 𝒞η, 𝒮η, ℰη)
 
-## `Cv = (C₁₁₁₁, C₁₁₂₂, C₁₁₃₃, C₃₃₃₃, C₂₃₂₃)` — the argument order of `tens_TI`;
+## `Cv = (C₁₁₁₁, C₁₁₂₂, C₁₁₃₃, C₃₃₃₃, C₂₃₂₃)` — the argument order of `tens_ti`;
 ## the derivation's independent symbol is `C₁₂₁₂ = (C₁₁₁₁-C₁₁₂₂)/2`.
 ti_subs(Cv) = Dict(
     C₁₁₁₁ => Sym(Cv[1]), C₁₂₁₂ => Sym(Cv[1] - Cv[2]) / 2, C₁₁₃₃ => Sym(Cv[3]),
@@ -681,7 +681,7 @@ ti_subs(Cv) = Dict(
 )
 
 for Cv in ((14, 6, 5, 11, 3), (9, 4, 3, 20, 5)), ηv in (2 // 5, 7 // 10, 9 // 10)
-    ℂnum = tens_TI(Sym.(Cv)..., [Sym(0), Sym(0), Sym(1)])
+    ℂnum = tens_ti(Sym.(Cv)..., [Sym(0), Sym(0), Sym(1)])
     B_code = cod_tensor(EllipticCrack(one(Sym), Sym(ηv)), ℂnum)
     B_here = [subs(subs(e, ti_subs(Cv)), η => Sym(ηv)) for e in B_ti]
     err = maximum(abs(Float64(N(B_here[i] - B_code[i, i]))) for i in 1:3)
@@ -693,7 +693,7 @@ end
 ## rather than take a 0/0 limit of 𝒮η at η = 1.
 let Cv = (14, 6, 5, 11, 3),
         B_pen = cod_from_coefficients(a₁ᵞ, a₂ᵗⁱ, a₃ᵞ, Sym(1), PI / 4, PI / 4, PI / 2),
-        B_code = cod_tensor(PennyCrack(one(Sym)), tens_TI(Sym.(Cv)..., [Sym(0), Sym(0), Sym(1)]))
+        B_code = cod_tensor(PennyCrack(one(Sym)), tens_ti(Sym.(Cv)..., [Sym(0), Sym(0), Sym(1)]))
     err = maximum(abs(Float64(N(subs(B_pen[i], ti_subs(Cv)) - B_code[i, i]))) for i in 1:3)
     @printf "  C = %-18s penny   : max|𝐁_here - 𝐁_code| = %.2e\n" string(Cv) err   #jl
     @assert err < 1.0e-12 "TI penny 𝐁 mismatch"
@@ -744,7 +744,7 @@ println("="^78)                                             #jl
 
 let Cv = (14, 6, 5, 11, 3),
         axis = [Sym(1), Sym(1), Sym(1)] / sqrt(Sym(3)),
-        ℂtilt = tens_TI(Sym.(Cv)..., axis),
+        ℂtilt = tens_ti(Sym.(Cv)..., axis),
         Ntilt = Matrix(𝛏 ⋅ ℂtilt ⋅ 𝛏),
         dets = sympy.expand(det(Ntilt)),
         odd = [poly_coeff(dets, ξ₃, n) for n in (1, 3, 5)]

@@ -443,7 +443,7 @@ end
 end
 
 @testset "the elastic confocal spheroid approaching the sphere" begin
-    _nsk(t) = Matrix(KM(TensND.change_tens(t, TensND.CanonicalBasis{3, Float64}())))
+    _nsk(t) = Matrix(mandel(TensND.change_tens(t, TensND.CanonicalBasis{3, Float64}())))
     C1 = iso_stiffness(4.0 / (3 * (1 - 2 * 0.2)), 4.0 / (2 * (1 + 0.2)))
     C₀ = iso_stiffness(1.0 / (3 * (1 - 2 * 0.25)), 1.0 / (2 * (1 + 0.25)))
     K1, K₀ = TensISO{3}(5.0), TensISO{3}(1.0)

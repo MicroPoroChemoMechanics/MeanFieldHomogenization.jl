@@ -272,12 +272,12 @@ end
 
 # Analytical — TI matrix aligned with n̂
 function _kernel(crack::EllipticCrack, C₀::TensND.TensTI{4}, ::MFH_Core.Analytical; kw...)
-    E, ν₁, ν₂, H, Γ = TensND.arg_TI_Hoenig(inv(C₀))
+    E, ν₁, ν₂, H, Γ = TensND.ti_args_hoenig(inv(C₀))
     return _cod_ti_ellipse(crack, E, H, ν₁, ν₂, Γ)
 end
 
 function _kernel(crack::RibbonCrack, C₀::TensND.TensTI{4}, ::MFH_Core.Analytical; kw...)
-    E, ν₁, ν₂, H, Γ = TensND.arg_TI_Hoenig(inv(C₀))
+    E, ν₁, ν₂, H, Γ = TensND.ti_args_hoenig(inv(C₀))
     return _cod_ti_ribbon(crack, E, H, ν₁, ν₂, Γ)
 end
 

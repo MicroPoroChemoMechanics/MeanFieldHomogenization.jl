@@ -198,7 +198,7 @@ keeps the rest of the page symbolically tractable. Here is the whole particle
 stiffness, in Kelvin-Mandel form:
 
 ```@example lamellar
-KM(Cpar)
+mandel(Cpar)
 ```
 
 Everything the model says about a particle is in that matrix.

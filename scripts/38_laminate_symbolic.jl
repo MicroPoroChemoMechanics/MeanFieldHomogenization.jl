@@ -138,7 +138,7 @@ end
 @syms kn::positive L::positive
 z = zero(kn)
 𝕂 = SMatrix{3, 3}([z z z; z z z; z z kn])          # normal compliance only
-P_int = TensND.km_op_embed(MFHC.compliance_op_block(𝕂)) / L
+P_int = TensND.mandel_op_embed(MFHC.compliance_op_block(𝕂)) / L
 Chi = MFHC.laminate_stiffness((iso_km(λ₁, μ₁), iso_km(λ₂, μ₂)), (f₁, f₂), P_int, Z)
 
 println("\n§4  With a normal spring interface of compliance kn over a period L")
@@ -169,7 +169,7 @@ println("─"^78)
 println("  returned type : ", typeof(Csym))
 println("  (isotropic layers ⇒ EXACTLY transversely isotropic about n)")
 @printf "  axis          : %s   (exact integers, not 0.0 / 1.0)\n" string(TensND.axis(Csym))
-Msym = KM(Csym)
+Msym = mandel(Csym)
 lame(κ, μ) = κ - 2μ / 3
 @printf "  1/C₃₃₃₃ − ⟨1/(λ+2μ)⟩ = %s\n" string(
     simplify(1 / Msym[3, 3] - (f₁ / (lame(κ₁, μ₁) + 2μ₁) + f₂ / (lame(κ₂, μ₂) + 2μ₂)))

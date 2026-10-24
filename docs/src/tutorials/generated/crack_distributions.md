@@ -257,8 +257,8 @@ returns the components in *that* frame — the crack frame — not in the global
 one. Both are useful, and they are different matrices:
 
 ````@example crack_distributions
-C_local = TensND.KM(C_par)                              # crack frame
-C_global = TensND.KM(TensND.components_canon(C_par))    # global frame
+C_local = TensND.mandel(C_par)                              # crack frame
+C_global = TensND.mandel(TensND.components_canon(C_par))    # global frame
 round.(C_local; digits = 6)
 ````
 
@@ -276,7 +276,7 @@ reporting form Echoes prints as `Param(size=5)` — come straight from the local
 matrix:
 
 ````@example crack_distributions
-walpole = TensND.ti_params_from_KM(C_local)
+walpole = TensND.ti_params_from_mandel(C_local)
 round.(collect(walpole); digits = 6)
 ````
 
@@ -309,7 +309,7 @@ catch err
 end
 
 C_par_asc = homogenize(rve_parallel(ε), ASC, :C)
-round.(collect(TensND.ti_params_from_KM(TensND.KM(C_par_asc))); digits = 6)
+round.(collect(TensND.ti_params_from_mandel(TensND.mandel(C_par_asc))); digits = 6)
 ````
 
 ## Isotropic against parallel, at equal density
@@ -321,7 +321,7 @@ measured in only in the second case.
 ````@example crack_distributions
 function young_along(C, d)
     # Uniaxial stress along the unit vector `d`; E = σ / ε_dd.
-    S = inv(Array(TensND.components_canon(C)) |> A -> TensND.KM(TensND.Tens(A)))
+    S = inv(Array(TensND.components_canon(C)) |> A -> TensND.mandel(TensND.Tens(A)))
     e = [d[1]^2, d[2]^2, d[3]^2, √2 * d[2] * d[3], √2 * d[1] * d[3], √2 * d[1] * d[2]]
     return 1 / (e' * S * e)
 end

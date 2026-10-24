@@ -59,7 +59,7 @@ const base_cell = build_lam()
 function evaluate(scheme, h_A)
     cell = set_param(base_cell, thickness(:A), h_A)
     C = homogenize(cell, scheme, :C)
-    KMC = KM(C)
+    KMC = mandel(C)
     return (KMC[3, 3], KMC[4, 4])
 end
 

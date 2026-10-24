@@ -27,7 +27,7 @@ a crash of Julia 1.14 when differentiating through a concentration tensor.
   (list under Fixed).
 - `extract_iso_moduli`, `extract_iso_conductivity` and `extract_ti_moduli` are
   deprecated in favor of TensND's `E_nu` / `mu_nu`, `get_data` and
-  `arg_TI_Hoenig`; the Kelvin-Mandel block algebra (`KM_IP`, `KM_OP`,
+  `ti_args_hoenig`; the Kelvin-Mandel block algebra (`MANDEL_IP`, `MANDEL_OP`,
   `plane_pinv`, `plane_pinv2`, `acoustic_tensor`, `compliance_op_block`) is
   TensND's, re-exported unchanged from `Core`.
 - The anisotropic conduction Hill tensor of an ellipsoid, the finite-element
@@ -201,6 +201,8 @@ a crash of Julia 1.14 when differentiating through a concentration tensor.
 - Hill kernels: components by one change of basis, axis permutations by
   indexing, instead of nested copy loops.
 - Tensor comparisons in the tests are made as tensors, in their common basis.
+- Uses TensND 0.8's Julia-style names (`mandel`, `from_mandel`, `isisotropic`,
+  `CoordinateSystem`, …) throughout; the re-exports of `Core` follow them.
 
 ### Performance
 

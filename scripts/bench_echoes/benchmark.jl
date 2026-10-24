@@ -116,7 +116,7 @@ const C_cubic = TensND.TensOrtho(
 
 # 3. Triclinic
 const C_tric_KM = Matrix{Float64}(KE.C_TRIC_KM)
-const C_tric = inv_KM(C_tric_KM, CanonicalBasis{3, Float64}())
+const C_tric = from_mandel(C_tric_KM, CanonicalBasis{3, Float64}())
 
 const MEDIA_PY = KE."MEDIA"
 const C_iso_py = get(MEDIA_PY, PyObject, "iso")
@@ -172,7 +172,7 @@ function bench_hill(
     θ_ea, φ_ea, ψ_ea = euler_angles
 
     P_jl = hill_tensor(ell_jl, C_jl; method = jl_method)
-    P_jl_KM = KM(change_tens_canon(P_jl))
+    P_jl_KM = mandel(change_tens_canon(P_jl))
     tJ = @belapsed hill_tensor($ell_jl, $C_jl; method = $jl_method)
 
     println()
@@ -303,7 +303,7 @@ function bench_crack(
     crack = PennyCrack(1.0)
 
     H_jl = inverse_property_contribution(crack, C_jl; method = jl_method)
-    H_jl_KM = KM(change_tens_canon(H_jl))
+    H_jl_KM = mandel(change_tens_canon(H_jl))
     tJ = @belapsed inverse_property_contribution(
         $crack, $C_jl;
         method = $jl_method
@@ -584,8 +584,8 @@ function bench_hill_derivative_iso(label, ell_jl)
     @printf "  ISO Case: %s\n" label
 
     # Julia ForwardDiff wrt κ (= α)
-    f_α = α -> KM(change_tens_canon(hill_tensor(ell_jl, iso_from_walpole(α, β₀))))
-    f_β = β -> KM(change_tens_canon(hill_tensor(ell_jl, iso_from_walpole(α₀, β))))
+    f_α = α -> mandel(change_tens_canon(hill_tensor(ell_jl, iso_from_walpole(α, β₀))))
+    f_β = β -> mandel(change_tens_canon(hill_tensor(ell_jl, iso_from_walpole(α₀, β))))
     dP_jl_κ = ForwardDiff.derivative(f_α, α₀)
     dP_jl_η = ForwardDiff.derivative(f_β, β₀)
     tJ_κ = @belapsed ForwardDiff.derivative($f_α, $α₀)
@@ -650,7 +650,7 @@ function dP_dortho_forwarddiff(
         z = zero(δ)
         p = ntuple(k -> k == jl_idx ? base[k] + δ : base[k] + z, 9)
         C = ortho_from_params(p)
-        return KM(change_tens_canon(hill_tensor(ell, C; method = method)))
+        return mandel(change_tens_canon(hill_tensor(ell, C; method = method)))
     end
     return ForwardDiff.derivative(f, 0.0)
 end
@@ -743,7 +743,7 @@ let ell = Ellipsoid(2.0, 1.0, 0.5), basis = CanonicalBasis{3, Float64}()
             if i != j
                 C[j, i] += δ
             end
-            return KM(change_tens_canon(hill_tensor(ell, inv_KM(C, basis); method = :decuhr)))
+            return mandel(change_tens_canon(hill_tensor(ell, from_mandel(C, basis); method = :decuhr)))
         end
         return ForwardDiff.derivative(f, 0.0)
     end

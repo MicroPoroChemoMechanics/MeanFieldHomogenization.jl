@@ -493,7 +493,7 @@ df = ForwardDiff.derivative(0.3) do f
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
                fraction = f)
-    KM(homogenize(rve, MoriTanaka()))[1, 1]
+    mandel(homogenize(rve, MoriTanaka()))[1, 1]
 end
 ```
 

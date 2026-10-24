@@ -35,21 +35,21 @@ _iso(k, μ) = TensISO{3}(3k, 2μ)
 _lame(k, μ) = (k - 2μ / 3, μ)
 
 # Out-of-plane 3×3 acoustic tensor of a laminate result / of a layer property.
-_acoustic(t, basis) = MFHC_O.acoustic_tensor(SMatrix{6, 6}(KM(t, basis)))
+_acoustic(t, basis) = MFHC_O.acoustic_tensor(SMatrix{6, 6}(mandel(t, basis)))
 
 # In-plane Schur complement of a 4th-order property, in the layer frame.
 function _schur_ip(t, basis)
-    M = SMatrix{6, 6}(KM(t, basis))
-    A = MFHC_O.TensND.km_ip_block(M)
-    B = SMatrix{3, 3}(M[MFHC_O.KM_IP, MFHC_O.KM_OP])
-    C = SMatrix{3, 3}(M[MFHC_O.KM_OP, MFHC_O.KM_IP])
-    return A - B * MFHC_O._inv3(MFHC_O.TensND.km_op_block(M)) * C
+    M = SMatrix{6, 6}(mandel(t, basis))
+    A = MFHC_O.TensND.mandel_ip_block(M)
+    B = SMatrix{3, 3}(M[MFHC_O.MANDEL_IP, MFHC_O.MANDEL_OP])
+    C = SMatrix{3, 3}(M[MFHC_O.MANDEL_OP, MFHC_O.MANDEL_IP])
+    return A - B * MFHC_O._inv3(MFHC_O.TensND.mandel_op_block(M)) * C
 end
 
 # A random, genuinely triclinic, positive-definite stiffness.
 function _rand_stiffness(rng)
     A = randn(rng, 6, 6)
-    return Tens(inv_KM(Matrix(A * A' + 8I)))
+    return Tens(from_mandel(Matrix(A * A' + 8I)))
 end
 
 @testset "Laminate — O1: exact out-of-plane series law (anisotropic)" begin
@@ -96,7 +96,7 @@ end
     add_layer!(lam, :A, Dict(:C => _iso(k1, μ1)); fraction = f1)
     add_layer!(lam, :B, Dict(:C => _iso(k2, μ2)); fraction = f2)
     Ch = homogenize(lam, Laminated(), :C)
-    M = Matrix(KM(Ch))
+    M = Matrix(mandel(Ch))
 
     avg(g) = f1 * g(λ1, μ1) + f2 * g(λ2, μ2)
     r33 = 1 / avg((l, m) -> 1 / (l + 2m))
@@ -130,7 +130,7 @@ end
     add_layer!(lam2, :A, Dict(:C => _iso(k1, μ1)); thickness = 0.2)
     add_layer!(lam2, :B, Dict(:C => _iso(k1, μ1)); thickness = 0.5)
     add_layer!(lam2, :C, Dict(:C => _iso(k1, μ1)); thickness = 0.3)
-    @test Matrix(KM(homogenize(lam2, Laminated(), :C))) ≈ Matrix(KM(_iso(k1, μ1))) atol = ATOL_LAM
+    @test Matrix(mandel(homogenize(lam2, Laminated(), :C))) ≈ Matrix(mandel(_iso(k1, μ1))) atol = ATOL_LAM
 
     # Layer ORDER is irrelevant with perfect interfaces (the cell is periodic
     # and every layer sees the same traction).
@@ -140,16 +140,16 @@ end
     lam_b = Laminate()
     add_layer!(lam_b, :B, Dict(:C => _iso(k2, μ2)); thickness = 0.7)
     add_layer!(lam_b, :A, Dict(:C => _iso(k1, μ1)); thickness = 0.3)
-    @test Matrix(KM(homogenize(lam_a, Laminated(), :C))) ≈
-        Matrix(KM(homogenize(lam_b, Laminated(), :C))) atol = ATOL_LAM
+    @test Matrix(mandel(homogenize(lam_a, Laminated(), :C))) ≈
+        Matrix(mandel(homogenize(lam_b, Laminated(), :C))) atol = ATOL_LAM
 
     # The result depends on the fractions, not on the absolute period, when
     # every interface is perfect.
     lam_c = Laminate()
     add_layer!(lam_c, :A, Dict(:C => _iso(k1, μ1)); thickness = 3.0)
     add_layer!(lam_c, :B, Dict(:C => _iso(k2, μ2)); thickness = 7.0)
-    @test Matrix(KM(homogenize(lam_c, Laminated(), :C))) ≈
-        Matrix(KM(homogenize(lam_a, Laminated(), :C))) atol = ATOL_LAM
+    @test Matrix(mandel(homogenize(lam_c, Laminated(), :C))) ≈
+        Matrix(mandel(homogenize(lam_a, Laminated(), :C))) atol = ATOL_LAM
 end
 
 @testset "Laminate — frame covariance" begin
@@ -186,9 +186,9 @@ end
     add_layer!(lam, :A, Dict(:C => _iso(k1, μ1)); fraction = 0.3)
     add_layer!(lam, :B, Dict(:C => _iso(k2, μ2)); fraction = 0.7)
 
-    Mh = Matrix(KM(homogenize(lam, Laminated(), :C)))
-    Mv = Matrix(KM(homogenize(lam, Voigt(), :C)))
-    Mr = Matrix(KM(homogenize(lam, Reuss(), :C)))
+    Mh = Matrix(mandel(homogenize(lam, Laminated(), :C)))
+    Mv = Matrix(mandel(homogenize(lam, Voigt(), :C)))
+    Mr = Matrix(mandel(homogenize(lam, Reuss(), :C)))
 
     @test Mr[3, 3] ≤ Mh[3, 3] + ATOL_LAM
     @test Mh[3, 3] ≤ Mv[3, 3] + ATOL_LAM
@@ -211,27 +211,27 @@ end
     As = [layer_strain_concentration(lam, nm) for nm in names]
     Bs = [layer_stress_concentration(lam, nm) for nm in names]
 
-    @test Matrix(KM(sum(fs[i] * As[i] for i in 1:3))) ≈ Matrix(1.0I, 6, 6) atol = ATOL_LAM
-    @test Matrix(KM(sum(fs[i] * Bs[i] for i in 1:3))) ≈ Matrix(1.0I, 6, 6) atol = ATOL_LAM
+    @test Matrix(mandel(sum(fs[i] * As[i] for i in 1:3))) ≈ Matrix(1.0I, 6, 6) atol = ATOL_LAM
+    @test Matrix(mandel(sum(fs[i] * Bs[i] for i in 1:3))) ≈ Matrix(1.0I, 6, 6) atol = ATOL_LAM
 
     Ch = homogenize(lam, Laminated(), :C)
     # ⟨ℂ:𝔸⟩ = ℂ_hom
-    @test Matrix(KM(sum(fs[i] * (Cs[i] ⊡ As[i]) for i in 1:3))) ≈
-        Matrix(KM(Ch)) atol = ATOL_LAM
+    @test Matrix(mandel(sum(fs[i] * (Cs[i] ⊡ As[i]) for i in 1:3))) ≈
+        Matrix(mandel(Ch)) atol = ATOL_LAM
 
     b = laminate_basis(lam)
     for A in As
-        MA = SMatrix{6, 6}(KM(A, b))
+        MA = SMatrix{6, 6}(mandel(A, b))
         # The macroscopic in-plane strain reaches every layer unchanged:
         # ε_i = E + a_i ⊗ˢ n.
-        @test MFHC_O.TensND.km_ip_block(MA) ≈ I atol = ATOL_LAM
-        @test maximum(abs, MA[MFHC_O.KM_IP, MFHC_O.KM_OP]) < ATOL_LAM
+        @test MFHC_O.TensND.mandel_ip_block(MA) ≈ I atol = ATOL_LAM
+        @test maximum(abs, MA[MFHC_O.MANDEL_IP, MFHC_O.MANDEL_OP]) < ATOL_LAM
     end
 
     # The two Hill tensors and their identities.
     P, Q = laminate_hill(lam, :L1)
-    @test Matrix(KM(P ⊡ Cs[1] ⊡ P)) ≈ Matrix(KM(P)) atol = ATOL_LAM
-    @test maximum(abs, Matrix(KM(Q ⊡ P))) < ATOL_LAM
+    @test Matrix(mandel(P ⊡ Cs[1] ⊡ P)) ≈ Matrix(mandel(P)) atol = ATOL_LAM
+    @test maximum(abs, Matrix(mandel(Q ⊡ P))) < ATOL_LAM
 end
 
 @testset "Laminate — the four concentration generics" begin
@@ -254,10 +254,10 @@ end
 
     # The two aliases are the very same object as the `layer_*` names.
     for (i, nm) in enumerate(names)
-        @test Matrix(KM(gradient_gradient_concentration(lam, nm))) ==
-            Matrix(KM(layer_strain_concentration(lam, nm)))
-        @test Matrix(KM(flux_flux_concentration(lam, nm))) ==
-            Matrix(KM(layer_stress_concentration(lam, nm)))
+        @test Matrix(mandel(gradient_gradient_concentration(lam, nm))) ==
+            Matrix(mandel(layer_strain_concentration(lam, nm)))
+        @test Matrix(mandel(flux_flux_concentration(lam, nm))) ==
+            Matrix(mandel(layer_stress_concentration(lam, nm)))
         @test Matrix(gradient_gradient_concentration(lam, nm; property = :K)) ==
             Matrix(layer_gradient_concentration(lam, nm; property = :K))
         @test Matrix(flux_flux_concentration(lam, nm; property = :K)) ==
@@ -265,10 +265,10 @@ end
 
         # The two mixed tensors, against their definitions.
         A = gradient_gradient_concentration(lam, nm)
-        @test Matrix(KM(flux_gradient_concentration(lam, nm))) ≈ Matrix(KM(Cs[i] ⊡ A)) atol = ATOL_LAM
-        @test Matrix(KM(gradient_flux_concentration(lam, nm))) ≈ Matrix(KM(A ⊡ Sh)) atol = ATOL_LAM
-        @test Matrix(KM(flux_flux_concentration(lam, nm))) ≈
-            Matrix(KM(flux_gradient_concentration(lam, nm) ⊡ Sh)) atol = ATOL_LAM
+        @test Matrix(mandel(flux_gradient_concentration(lam, nm))) ≈ Matrix(mandel(Cs[i] ⊡ A)) atol = ATOL_LAM
+        @test Matrix(mandel(gradient_flux_concentration(lam, nm))) ≈ Matrix(mandel(A ⊡ Sh)) atol = ATOL_LAM
+        @test Matrix(mandel(flux_flux_concentration(lam, nm))) ≈
+            Matrix(mandel(flux_gradient_concentration(lam, nm) ⊡ Sh)) atol = ATOL_LAM
 
         a = gradient_gradient_concentration(lam, nm; property = :K)
         @test Matrix(flux_gradient_concentration(lam, nm; property = :K)) ≈ Matrix(Ks[i] ⋅ a) atol = ATOL_LAM
@@ -277,12 +277,12 @@ end
 
     # The four sum rules, at both orders.
     _sum(g) = sum(fs[i] * g(names[i]) for i in eachindex(names))
-    @test Matrix(KM(_sum(nm -> gradient_gradient_concentration(lam, nm)))) ≈ Id4 atol = ATOL_LAM
-    @test Matrix(KM(_sum(nm -> flux_flux_concentration(lam, nm)))) ≈ Id4 atol = ATOL_LAM
-    @test Matrix(KM(_sum(nm -> flux_gradient_concentration(lam, nm)))) ≈
-        Matrix(KM(Ch)) atol = ATOL_LAM
-    @test Matrix(KM(_sum(nm -> gradient_flux_concentration(lam, nm)))) ≈
-        Matrix(KM(Sh)) atol = ATOL_LAM
+    @test Matrix(mandel(_sum(nm -> gradient_gradient_concentration(lam, nm)))) ≈ Id4 atol = ATOL_LAM
+    @test Matrix(mandel(_sum(nm -> flux_flux_concentration(lam, nm)))) ≈ Id4 atol = ATOL_LAM
+    @test Matrix(mandel(_sum(nm -> flux_gradient_concentration(lam, nm)))) ≈
+        Matrix(mandel(Ch)) atol = ATOL_LAM
+    @test Matrix(mandel(_sum(nm -> gradient_flux_concentration(lam, nm)))) ≈
+        Matrix(mandel(Sh)) atol = ATOL_LAM
     @test Matrix(_sum(nm -> gradient_gradient_concentration(lam, nm; property = :K))) ≈ Id2 atol = ATOL_LAM
     @test Matrix(_sum(nm -> flux_flux_concentration(lam, nm; property = :K))) ≈ Id2 atol = ATOL_LAM
     @test Matrix(_sum(nm -> flux_gradient_concentration(lam, nm; property = :K))) ≈ Matrix(Kh) atol = ATOL_LAM
@@ -306,7 +306,7 @@ end
         @test collect(TensND.axis(A)) ≈ [0.0, 0.6, 0.8]
         # ℓ₇ and ℓ₈ are structurally zero — the six-coefficient Walpole span is
         # closed under product and inverse — so nothing is dropped by N = 6.
-        p8 = TensND.ti8_params_from_KM(Matrix(KM(A, laminate_basis(lam_ti))))
+        p8 = TensND.ti8_params_from_mandel(Matrix(mandel(A, laminate_basis(lam_ti))))
         @test abs(p8[7]) < ATOL_LAM
         @test abs(p8[8]) < ATOL_LAM
         # ℓ₃ ≠ ℓ₄: the tensor really is outside the major-symmetric span, so a
@@ -338,9 +338,9 @@ end
     As_s = [gradient_gradient_concentration(lam_s, nm) for nm in layer_names(lam_s)]
     Bs_s = [flux_flux_concentration(lam_s, nm) for nm in layer_names(lam_s)]
     @test !isapprox(
-        Matrix(KM(sum(fs_s[i] * As_s[i] for i in 1:2))), Id4; atol = 1.0e-6
+        Matrix(mandel(sum(fs_s[i] * As_s[i] for i in 1:2))), Id4; atol = 1.0e-6
     )
-    @test Matrix(KM(sum(fs_s[i] * Bs_s[i] for i in 1:2))) ≈ Id4 atol = ATOL_LAM
+    @test Matrix(mandel(sum(fs_s[i] * Bs_s[i] for i in 1:2))) ≈ Id4 atol = ATOL_LAM
 end
 
 @testset "Laminate — the exact-TI claim, class by class" begin
@@ -379,7 +379,7 @@ end
 
         # ... and the claim matches reality: check the TI identities on the
         # component matrix in the layer frame.
-        M = Matrix(KM(Ch, laminate_basis(lam)))
+        M = Matrix(mandel(Ch, laminate_basis(lam)))
         resid = max(
             abs(M[1, 1] - M[2, 2]), abs(M[1, 3] - M[2, 3]), abs(M[4, 4] - M[5, 5]),
             abs(M[6, 6] - (M[1, 1] - M[1, 2])),
@@ -398,7 +398,7 @@ end
     n = (0.0, 0.0, 1.0)
     W8 = TensTI{4}(20.0, 25.0, 7.0, 9.0, 6.0, 5.0, 0.4, 0.3, n)
     @test W8 isa TensND.TensTI{4, Float64, 8}
-    @test !isapprox(Matrix(KM(W8)), Matrix(KM(W8))'; atol = 1.0e-12)   # not major-symmetric
+    @test !isapprox(Matrix(mandel(W8)), Matrix(mandel(W8))'; atol = 1.0e-12)   # not major-symmetric
 
     lam = Laminate(; normal = n)
     add_layer!(lam, :A, Dict(:C => W8); fraction = 0.5)
@@ -409,12 +409,12 @@ end
     # Lossless: the wrapped result equals the raw kernel output exactly.
     b = laminate_basis(lam)
     C6s = [
-        SMatrix{6, 6}(KM(W8, b)),
-        SMatrix{6, 6}(KM(_iso(0.5, 0.2), b)),
+        SMatrix{6, 6}(mandel(W8, b)),
+        SMatrix{6, 6}(mandel(_iso(0.5, 0.2), b)),
     ]
     Z = zero(SMatrix{6, 6, Float64})
     raw = MFHC_O.laminate_stiffness(C6s, [0.5, 0.5], Z, Z)
-    @test Matrix(KM(Ch, b)) ≈ Matrix(raw) atol = ATOL_LAM
+    @test Matrix(mandel(Ch, b)) ≈ Matrix(raw) atol = ATOL_LAM
 end
 
 @testset "Laminate — asymmetric anisotropic case" begin
@@ -453,9 +453,9 @@ end
     @test _schur_ip(Ch, b) ≈ sum(fs[i] * _schur_ip(props[i], b) for i in 1:3) atol = ATOL_LAM
 
     # Major symmetry is preserved.
-    M = Matrix(KM(Ch, b))
+    M = Matrix(mandel(Ch, b))
     @test M ≈ M' atol = ATOL_LAM
 
     As = [layer_strain_concentration(lam, nm) for nm in names]
-    @test Matrix(KM(sum(fs[i] * As[i] for i in 1:3))) ≈ Matrix(1.0I, 6, 6) atol = ATOL_LAM
+    @test Matrix(mandel(sum(fs[i] * As[i] for i in 1:3))) ≈ Matrix(1.0I, 6, 6) atol = ATOL_LAM
 end

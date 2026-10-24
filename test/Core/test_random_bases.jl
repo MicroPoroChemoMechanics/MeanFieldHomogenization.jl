@@ -2,7 +2,7 @@
 #  test_random_bases.jl — results do not depend on the basis a tensor is
 #  written in.
 #
-#  `get_array(t)`, `t[i, j]` and `KM(t)` read a TensND tensor in its own basis.
+#  `get_array(t)`, `t[i, j]` and `mandel(t)` read a TensND tensor in its own basis.
 #  Structured tensors (`TensISO`, `TensTI`, …) answer in the canonical one, so
 #  code tested with them only looks right, and is wrong as soon as a `Tens`
 #  written in a rotated basis reaches it: an anisotropic Hill tensor, `tens_IA`,
@@ -133,9 +133,9 @@ end
         @test _MRB.Schemes._sc_residual_norm(tc, tr_) ≤ 1.0e-10 * norm(C)
         @test _MRB.Schemes._get_state(Val(:full_4), tr_) ≈ _MRB.Schemes._get_state(Val(:full_4), tc)
         n1, n2 = normalize(randn(rng, 3)), normalize(randn(rng, 3))
-        a = tens_TI(10.0, 3.0, 2.5, 12.0, 2.0, n1)
-        @test _MRB.Schemes._diff_same_layout(a, tens_TI(1.0, 0.3, 0.2, 1.2, 0.5, n1))
-        @test !_MRB.Schemes._diff_same_layout(a, tens_TI(1.0, 0.3, 0.2, 1.2, 0.5, n2))
+        a = tens_ti(10.0, 3.0, 2.5, 12.0, 2.0, n1)
+        @test _MRB.Schemes._diff_same_layout(a, tens_ti(1.0, 0.3, 0.2, 1.2, 0.5, n1))
+        @test !_MRB.Schemes._diff_same_layout(a, tens_ti(1.0, 0.3, 0.2, 1.2, 0.5, n2))
     end
 
     @testset "schemes: an anisotropic property in a rotated basis" begin

@@ -414,14 +414,14 @@ def test_tensor_array_dispatches_on_shape_at_runtime():
     src = "from echoes import *\nC=tensor(M)\n"
     out = translate(src)
     assert "echoes_tensor(M)" in out
-    assert "size(M) == (3, 3) ? Tens(M) : inv_KM(M)" in out
+    assert "size(M) == (3, 3) ? Tens(M) : from_mandel(M)" in out
 
 
 def test_km_maps_to_tensnd_counterparts():
     src = "from echoes import *\nA=KM(t)\nB=invKM(M)\n"
     out = translate(src)
-    assert "KM(t)" in out
-    assert "inv_KM(M)" in out
+    assert "mandel(t)" in out
+    assert "from_mandel(M)" in out
 
 
 # ---------------------------------------------------------------------------

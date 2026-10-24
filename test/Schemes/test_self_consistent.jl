@@ -246,7 +246,7 @@ end
     # with e₃ in its own frame. Built this way it is stored as the 5-component
     # (major-symmetric) flavor, so any asymmetry downstream was created by the
     # scheme rather than inherited from the input.
-    C_i = TensND.tens_TI_eng(2.0, 1.0, 0.25, 0.2, 0.45, (0.0, 0.0, 1.0))
+    C_i = TensND.tens_ti_eng(2.0, 1.0, 0.25, 0.2, 0.45, (0.0, 0.0, 1.0))
     @test C_i isa TensND.TensTI{4, Float64, 5}
 
     function build(sym)
@@ -270,7 +270,7 @@ end
     # anisotropic behind.
     @test C_asc isa TensND.TensISO
     # …and the result is an admissible stiffness.
-    KM = collect(TensND.KM(C_asc))
+    KM = collect(TensND.mandel(C_asc))
     @test maximum(abs, KM - KM') / maximum(abs, KM) < 1.0e-12
     # Both formulations share one fixed point; only the dynamics differ.
     @test k_mu(C_asc)[1] ≈ k_mu(C_sc)[1] rtol = 1.0e-8
@@ -313,7 +313,7 @@ end
         end
         return tot
     end
-    dev_I(T) = maximum(abs, collect(TensND.KM(T)) - Matrix{Float64}(I, 6, 6))
+    dev_I(T) = maximum(abs, collect(TensND.mandel(T)) - Matrix{Float64}(I, 6, 6))
 
     @testset "equal shapes — spheres" begin
         rve = build(Ellipsoid(1.0), Ellipsoid(1.0))
@@ -477,18 +477,18 @@ end
     sym(M) = (M + M') / 2
     function check_clamped(x)
         y = S._sc_pd_guard_apply(x, ε)
-        Mx, My = sym(KM(x)), sym(KM(y))
+        Mx, My = sym(mandel(x)), sym(mandel(y))
         λ, V = eigen(Symmetric(Mx))
         @test any(<(ε), λ)
         @test My ≈ V * Diagonal(max.(λ, ε)) * V' atol = 1.0e-12
         # The antisymmetric part, which stores no energy, is left alone.
-        @test KM(y) - My ≈ KM(x) - Mx atol = 1.0e-12
+        @test mandel(y) - My ≈ mandel(x) - Mx atol = 1.0e-12
         return y
     end
 
     # Positive definite, with a negative coupling: untouched.
     ti = TensTI{4}(20.0, 30.0, -6.0, 9.0, 12.0, n)
-    @test isposdef(Symmetric(KM(ti)))
+    @test isposdef(Symmetric(mandel(ti)))
     @test S._sc_pd_guard_apply(ti, ε) === ti
     ortho = TensOrtho(20.0, 25.0, 30.0, -4.0, 0.0, 3.0, 6.0, 7.0, 8.0, TensND.CanonicalBasis{3, Float64}())
     @test S._sc_pd_guard_apply(ortho, ε) === ortho
@@ -504,7 +504,7 @@ end
     R = TensND.RotatedBasis(0.3, 0.5, 0.2)
     ortho12 = TensOrtho(20.0, 25.0, 30.0, -4.0, 1.0, 3.0, 6.0, 7.0, 8.0, -2.0, 0.5, 2.0, R)
     @test ortho12 isa TensND.TensOrtho{4, Float64, 12}
-    @test isposdef(Symmetric(sym(KM(ortho12))))
+    @test isposdef(Symmetric(sym(mandel(ortho12))))
     @test S._sc_pd_guard_apply(ortho12, ε) === ortho12
     y12 = check_clamped(TensOrtho(20.0, 25.0, 30.0, -34.0, 1.0, 3.0, 6.0, -7.0, 8.0, -26.0, 0.5, 2.0, R))
     @test y12 isa TensND.TensOrtho{4, Float64, 12}

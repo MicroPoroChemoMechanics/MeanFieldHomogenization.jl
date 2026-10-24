@@ -149,7 +149,7 @@ def conduction(shape, ax, eu, medium, k, material=None):
 
 def ti_material():
     """Material KM of a TI tensor about e3, and (C1111, C1122, C1133, C3333, C2323), the
-    arguments of TensND's `tens_TI`."""
+    arguments of TensND's `tens_ti`."""
     p = [30 + 5 * rng.random(), 8 + 2 * rng.random(), 6 + 2 * rng.random(),
          45 + 10 * rng.random(), 7 + 3 * rng.random()]
     return km_ti(*p), [float(x) for x in p]

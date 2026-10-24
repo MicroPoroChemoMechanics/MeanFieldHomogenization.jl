@@ -83,7 +83,7 @@ end
     Z = SMatrix{6, 6}(zeros(Sym, 6, 6))
     z = zero(kn)
     𝕂 = SMatrix{3, 3}([z z z; z z z; z z kn])          # normal compliance only
-    P_int = MFHC_S.TensND.km_op_embed(MFHC_S.compliance_op_block(𝕂)) / L
+    P_int = MFHC_S.TensND.mandel_op_embed(MFHC_S.compliance_op_block(𝕂)) / L
 
     Ch = MFHC_S.laminate_stiffness(C6s, fs, P_int, Z)
 
@@ -285,14 +285,14 @@ end
     @test Ch isa TensND.TensTI{4}          # isotropic layers ⇒ exactly TI
 
     λ(κ, μ) = κ - 2μ / 3
-    M = KM(Ch)
+    M = mandel(Ch)
     @test simplify(
         1 / M[3, 3] - (f₁ / (λ(κ₁, μ₁) + 2μ₁) + (1 - f₁) / (λ(κ₂, μ₂) + 2μ₂))
     ) == 0
     @test simplify(M[6, 6] / 2 - (f₁ * μ₁ + (1 - f₁) * μ₂)) == 0
 
     # Voigt and Reuss stay symbolic too.
-    @test simplify(KM(homogenize(lam, Voigt(), :C))[6, 6] / 2 - (f₁ * μ₁ + (1 - f₁) * μ₂)) == 0
+    @test simplify(mandel(homogenize(lam, Voigt(), :C))[6, 6] / 2 - (f₁ * μ₁ + (1 - f₁) * μ₂)) == 0
 end
 
 

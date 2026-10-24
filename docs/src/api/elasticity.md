@@ -35,7 +35,7 @@ The isotropic moduli are TensND's, re-exported by the package unchanged:
 `iso_stiffness(k, μ)`, `k_mu(ℂ)`, `E_nu(ℂ)` and `iso_stiffness_E_nu(E, ν)`
 ([TensND, isotropic elastic moduli](https://MicroPoroChemoMechanics.github.io/TensND.jl/stable/api/structured)).
 The Hoenig parameters of a transversely isotropic stiffness are read and built here,
-on TensND's compliance forms `arg_TI_Hoenig` and `tens_TI_Hoenig`.
+on TensND's compliance forms `ti_args_hoenig` and `tens_ti_hoenig`.
 
 ```@docs
 MeanFieldHomogenization.Elasticity.hoenig_params

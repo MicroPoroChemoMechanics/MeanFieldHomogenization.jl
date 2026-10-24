@@ -9,11 +9,11 @@
 # ── Gathering the cell into the layer frame ─────────────────────────────────
 
 # Kelvin-Mandel components of a 4th-order layer property **in the laminate
-# frame**. `KM(C, basis)` is the general route and the correct one: a layer
+# frame**. `mandel(C, basis)` is the general route and the correct one: a layer
 # property may be stored in any basis of its own (a `TensTI` about its own
 # axis, a `TensRotated`, …), so its canonical components are not what the
 # kernel needs. When the laminate frame is canonical, this is a no-op.
-@inline _layer_km4(C, basis) = SMatrix{6, 6}(TensND.KM(C, basis))
+@inline _layer_km4(C, basis) = SMatrix{6, 6}(TensND.mandel(C, basis))
 
 # Components of a 2nd-order layer property in the laminate frame. Both bases
 # used by a laminate are orthonormal, so co- and contravariant components
@@ -172,11 +172,11 @@ into a TensND tensor, picking the tightest **exact** type:
 """
 function _wrap4(lam::Laminate, prop::Symbol, M6::AbstractMatrix)
     if _all_ti(lam, prop, Val(4))
-        ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆ = TensND.ti_params_from_KM(M6)
+        ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆ = TensND.ti_params_from_mandel(M6)
         n = _frame_axis(lam.basis, eltype(M6))
         return TensND.TensTI{4}(ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆, n)
     end
-    return TensND.inv_KM(Matrix(M6), lam.basis)
+    return TensND.from_mandel(Matrix(M6), lam.basis)
 end
 
 """
@@ -187,10 +187,10 @@ layer normal but **not major-symmetric** — every concentration tensor, ``\\mat
 first of all: ``\\mathbb{A}_i = \\mathbb{I} + \\mathbb{P}_i:(\\mathbb{C}^{\\mathrm{hom}} - \\mathbb{C}_i)`` is a product of major-symmetric
 tensors and a product of two such is not one.
 
-`_wrap4` cannot be reused because `TensND.ti_params_from_KM` *projects* onto
+`_wrap4` cannot be reused because `TensND.ti_params_from_mandel` *projects* onto
 the 5-coefficient major-symmetric Walpole span: fed a concentration tensor it
 would replace ``\\ell_3`` and ``\\ell_4`` by their half-sum and report the result as exact.
-The read-off here is `TensND.ti8_params_from_KM`, which is the identity on the
+The read-off here is `TensND.ti8_params_from_mandel`, which is the identity on the
 whole axially-invariant subspace.
 
 ``\\ell_7`` and ``\\ell_8``, the antisymmetric azimuthal couplings, are **structurally** zero
@@ -207,11 +207,11 @@ magnitude larger than the six coefficients that actually describe the tensor.
 """
 function _wrap4_general(lam::Laminate, prop::Symbol, M6::AbstractMatrix)
     if _all_ti(lam, prop, Val(4))
-        ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆, _, _ = TensND.ti8_params_from_KM(Matrix(M6))
+        ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆, _, _ = TensND.ti8_params_from_mandel(Matrix(M6))
         n = _frame_axis(lam.basis, eltype(M6))
         return TensND.TensTI{4}(ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆, n)
     end
-    return TensND.inv_KM(Matrix(M6), lam.basis)
+    return TensND.from_mandel(Matrix(M6), lam.basis)
 end
 
 """
@@ -294,8 +294,8 @@ end
 
 function _bounds_dispatch(lam::Laminate, ::Reuss, ::TensND.AbstractTens{4, 3}, ::Val{p}) where {p}
     mats, fs, _ = _gather(lam, p, Val(4))
-    S = sum(fs[i] * TensND.km_inv_schur(mats[i]) for i in eachindex(mats))
-    return _wrap4(lam, p, TensND.km_inv_schur(S))
+    S = sum(fs[i] * TensND.mandel_inv_schur(mats[i]) for i in eachindex(mats))
+    return _wrap4(lam, p, TensND.mandel_inv_schur(S))
 end
 
 function _bounds_dispatch(lam::Laminate, ::Reuss, ::TensND.AbstractTens{2, 3}, ::Val{p}) where {p}
@@ -325,8 +325,8 @@ function laminate_hill(lam::Laminate, name::Symbol; property::Symbol = :C)
     P = MFH_Core.flat_hill(C6)
     Q = C6 - C6 * P * C6
     return (
-        TensND.inv_KM(Matrix(P), lam.basis),
-        TensND.inv_KM(Matrix(Q), lam.basis),
+        TensND.from_mandel(Matrix(P), lam.basis),
+        TensND.from_mandel(Matrix(Q), lam.basis),
     )
 end
 

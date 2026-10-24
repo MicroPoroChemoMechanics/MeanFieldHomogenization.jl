@@ -66,7 +66,7 @@ function _hrb_structured(c)
         return c["kind"] == "elastic" ? iso_stiffness(p...) : TensISO{3}(p[1])
     end
     F = TensND.RotatedBasis(Float64.(m["euler"])...)
-    m["type"] == "TI" && return tens_TI(p..., Matrix(TensND.vecbasis(F))[:, 3])
+    m["type"] == "TI" && return tens_ti(p..., Matrix(TensND.vecbasis(F))[:, 3])
     m["type"] == "ortho" && return TensND.TensOrtho(p..., F)
     m["type"] == "cubic" && return TensND.tens_cubic(p..., F)
     error("unknown material type $(m["type"])")

@@ -78,11 +78,11 @@ arithmetic produced it, and returns ``\mathbb{H}`` in the crack frame ``\mathcal
 
 ````@example crack_routes
 function H_from_first_order(P₁, C, ℬ)
-    Q₁ = -KM(C) * P₁ * KM(C)
-    Y = KM(inv_KM(Q₁, canonical), ℬ)
+    Q₁ = -mandel(C) * P₁ * mandel(C)
+    Y = mandel(from_mandel(Q₁, canonical), ℬ)
     H = zeros(eltype(Y), 6, 6)
     H[3:5, 3:5] = inv(Y[3:5, 3:5])
-    return inv_KM(H, ℬ)
+    return from_mandel(H, ℬ)
 end
 ````
 
@@ -127,10 +127,10 @@ which is ``\tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackr
 for the ``\boldsymbol{B}`` above, exactly, as §3 says:
 
 ````@example crack_routes
-P_sym = KM(hill_tensor(Ellipsoid(1, 1, ρ), C_sym))
+P_sym = mandel(hill_tensor(Ellipsoid(1, 1, ρ), C_sym))
 P₁_sym = [SymPy.limit(SymPy.diff(p, ρ), ρ => 0) for p in P_sym]
 H_sym = H_from_first_order(P₁_sym, C_sym, canonical)
-SymPy.simplify.(KM(H_sym) - KM(compliance_from_cod(Tens(B_sym), PennyCrack(1))))
+SymPy.simplify.(mandel(H_sym) - mandel(compliance_from_cod(Tens(B_sym), PennyCrack(1))))
 ````
 
 ## In random anisotropic matrices
@@ -144,14 +144,14 @@ cancels: ``\mathbb{P}_1 \approx 2\,\mathbb{P}'(\rho_0/2) - \mathbb{P}'(\rho_0)``
 
 ````@example crack_routes
 function P₁_by_forwarddiff(a, b, R, C; ρ₀ = 1.0e-5)
-    P(ρ) = KM(hill_tensor(Ellipsoid(a, b, ρ * b, R), C; method = :nestedquadgk, tol...), canonical)
+    P(ρ) = mandel(hill_tensor(Ellipsoid(a, b, ρ * b, R), C; method = :nestedquadgk, tol...), canonical)
     P′(ρ) = ForwardDiff.derivative(P, ρ)
     return 2 * P′(ρ₀ / 2) - P′(ρ₀)
 end
 
 function random_stiffness(rng)
     G = randn(rng, 6, 6)
-    return inv_KM(100 * (G * transpose(G) / 6 + I), canonical)
+    return from_mandel(100 * (G * transpose(G) / 6 + I), canonical)
 end
 
 function random_rotation(rng)
@@ -224,9 +224,9 @@ function transformed_crack(P, a, b, ℓ, m, n)
 end
 
 Pmap = [1.3 0.2 -0.1; 0.15 0.8 0.25; -0.05 0.3 1.1]
-PP = KM(Tens(Pmap) ⊠ˢ Tens(Pmap))
+PP = mandel(Tens(Pmap) ⊠ˢ Tens(Pmap))
 C̃ = TensISO{3}(3 * 20.0, 2 * 9.0)
-C_EO = inv_KM(PP * KM(C̃) * transpose(PP), canonical)
+C_EO = from_mandel(PP * mandel(C̃) * transpose(PP), canonical)
 a, b = 1.0, 0.45
 R = random_rotation(Xoshiro(2))
 ℓ, m, n = eachcol(R)

@@ -225,8 +225,8 @@ end
     C = TensISO{3}(3 * 5.0, 2 * 2.0)
     @test (@test_deprecated MC.extract_iso_moduli(C)) == TensND.E_nu(C)
     @test (@test_deprecated MC.extract_iso_conductivity(TensISO{3}(2.5))) == 2.5
-    Cti = TensND.tens_TI(10.0, 3.0, 2.5, 12.0, 2.0, [0.0, 0.0, 1.0])
-    E, ν₁, ν₂, H, Γ = TensND.arg_TI_Hoenig(inv(Cti))
+    Cti = TensND.tens_ti(10.0, 3.0, 2.5, 12.0, 2.0, [0.0, 0.0, 1.0])
+    E, ν₁, ν₂, H, Γ = TensND.ti_args_hoenig(inv(Cti))
     @test (@test_deprecated MC.extract_ti_moduli(Cti, (0.0, 0.0, 1.0))) == (E = E, H = H, ν₁ = ν₁, ν₂ = ν₂, Γ = Γ)
     # A tensor that is not a `TensTI` is first projected on the TI class.
     g = @test_deprecated MC.extract_ti_moduli(TensND.generic_tens(Cti), (0.0, 0.0, 1.0))

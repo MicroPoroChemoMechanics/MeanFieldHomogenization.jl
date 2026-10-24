@@ -34,8 +34,8 @@ const KM_CUBIC = [
 
 const CB3 = CanonicalBasis{3, Float64}()
 
-C_tri() = TensND.inv_KM(KM_TRI, CB3)
-C_cubic() = TensND.inv_KM(KM_CUBIC, CB3)
+C_tri() = TensND.from_mandel(KM_TRI, CB3)
+C_cubic() = TensND.from_mandel(KM_CUBIC, CB3)
 
 # Fully-anisotropic K₀ — test/regression/test_anisotropic.jl:46
 K_aniso() = TensND.Tens([3.0 0.5 0.3; 0.5 2.0 0.2; 0.3 0.2 1.5])

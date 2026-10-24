@@ -152,7 +152,7 @@ end
 println("\n  Fully triclinic reference — MeanFieldHomogenization ForwardDiff only")
 println("  (echoes hill_derivative has no triclinic parameterization)")
 let ell_jl = Ellipsoid(3.0, 2.0, 1.0; euler_angles = (0.2, 0.3, 0.1))
-    C_KM = collect(KM(TensISO{3}(3 * 60.0e3, 2 * 40.0e3)))
+    C_KM = collect(mandel(TensISO{3}(3 * 60.0e3, 2 * 40.0e3)))
     C_KM[1, 1] += 8.0e3; C_KM[1, 4] += 3.0e3; C_KM[4, 1] += 3.0e3   # break symmetry class
     build(t) = begin
         M = C_KM .+ zero(t); M[1, 1] += t     # eltype promotes to typeof(t) (Dual-safe)

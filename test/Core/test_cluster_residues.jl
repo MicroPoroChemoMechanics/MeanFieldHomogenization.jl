@@ -129,7 +129,7 @@ end
     ]
     arr(C) = [Float64(C[i, j, k, l]) for i in 1:3, j in 1:3, k in 1:3, l in 1:3]
     for (KM, η, ω, φ) in ((KM_tri, 0.7, 0.4, 0.3), (KM_tri, 1.0, 20.0, 1.1), (KM_iso, 1.0, 1.0, 0.8))
-        C = arr(TensND.inv_KM(Float64.(KM), basis))
+        C = arr(TensND.from_mandel(Float64.(KM), basis))
         sys = _CR._build_poly_system(C, [cos(φ), sin(φ) / η, 0.0], [0.0, 0.0, 1 / ω])
         W = @inferred _EL._hill_line_weights(sys.Q, sys.roots_uhp)
         Wq = map(0:6) do n

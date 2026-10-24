@@ -650,11 +650,11 @@ function spheroid_strain_concentration(
         r = _solve_elastic(s, C₀, case, remote; D, kw...)
         # `u` is continuous, so the outer boundary is read from layer N.
         εav = _avg_strain(r.groups, r.amplitudes[N], q_N, one(q_N), c, μN, νN, Tp)
-        Xc[:, k] .= KM(E)
-        Yc[:, k] .= KM(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εav[i, j])))
+        Xc[:, k] .= mandel(E)
+        Yc[:, k] .= mandel(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εav[i, j])))
         resids[k] = r.residual
     end
-    return (; A = inv_KM(_realify(Yc * inv(Xc), Tp)), residuals = real.(resids))
+    return (; A = from_mandel(_realify(Yc * inv(Xc), Tp)), residuals = real.(resids))
 end
 
 """
@@ -701,24 +701,24 @@ function spheroid_layer_strain_concentration(
     for (kk, (case, args, E)) in enumerate(loads)
         remote = _case_remote(case, c, κ₀, μ₀, args...)
         r = _solve_elastic(s, C₀, case, remote; D, kw...)
-        Xc[:, kk] .= KM(E)
+        Xc[:, kk] .= mandel(E)
         for ℓ in 1:N
             κℓ, μℓ = κμ[ℓ]
             νℓ = TensND.poisson_ratio(κℓ, μℓ)
             q_in = ℓ == 1 ? one(qs[1]) : qs[ℓ - 1]
             εk = _avg_strain(r.groups, r.amplitudes[ℓ], qs[ℓ], q_in, c, μℓ, νℓ, Tp)
-            Yl[ℓ][:, kk] .= KM(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εk[i, j])))
+            Yl[ℓ][:, kk] .= mandel(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εk[i, j])))
         end
         κN, μN = κμ[N]
         εt = _avg_strain(r.groups, r.amplitudes[N], qs[N], one(qs[N]), c, μN, TensND.poisson_ratio(κN, μN), Tp)
-        Yt[:, kk] .= KM(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εt[i, j])))
+        Yt[:, kk] .= mandel(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εt[i, j])))
         resids[kk] = r.residual
     end
 
     iX = inv(Xc)
     return (;
-        A = inv_KM(_realify(Yt * iX, Tp)),
-        layers = ntuple(ℓ -> inv_KM(_realify(Yl[ℓ] * iX, Tp)), Val(N)),
+        A = from_mandel(_realify(Yt * iX, Tp)),
+        layers = ntuple(ℓ -> from_mandel(_realify(Yl[ℓ] * iX, Tp)), Val(N)),
         residuals = real.(resids),
     )
 end

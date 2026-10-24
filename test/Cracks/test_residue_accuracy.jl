@@ -7,7 +7,7 @@ using TensND
     basis = TensND.CanonicalBasis{3, Float64}()
     δ(a, b) = a == b ? 1.0 : 0.0
 
-    # Cubic stiffness (Fe-like) as a 6×6 KM matrix → Tens via inv_KM
+    # Cubic stiffness (Fe-like) as a 6×6 KM matrix → Tens via from_mandel
     c11, c12, c44 = 237.0, 141.0, 116.0
     KM_cubic = [
         c11 c12 c12 0.0 0.0 0.0;
@@ -17,7 +17,7 @@ using TensND
         0.0 0.0 0.0 0.0 2c44 0.0;
         0.0 0.0 0.0 0.0 0.0 2c44
     ]
-    C_cubic = TensND.inv_KM(KM_cubic, basis)
+    C_cubic = TensND.from_mandel(KM_cubic, basis)
 
     # Triclinic stiffness — hand-picked symmetric-positive KM (6×6)
     KM_tri = [
@@ -28,7 +28,7 @@ using TensND
         4.0 3.0 -2.0 2.5 65.0 -1.0;
         3.0 -1.0 2.0 1.5 -1.0 55.0
     ]
-    C_tric = TensND.inv_KM(KM_tri, basis)
+    C_tric = TensND.from_mandel(KM_tri, basis)
 
     @testset "Penny / cubic — :residues vs :nestedquadgk" begin
         crack = PennyCrack(1.0)
@@ -92,7 +92,7 @@ using TensND
             0.0 0.0 0.0 0.0 2μ 0.0;
             0.0 0.0 0.0 0.0 0.0 2μ
         ]
-        C_iso = TensND.inv_KM(KM_iso, basis)
+        C_iso = TensND.from_mandel(KM_iso, basis)
         C_iso_t = TensISO{3}(3λ + 2μ, 2μ)
         for crack in (
                 PennyCrack(1.0), EllipticCrack(1.0, 0.5), RibbonCrack(1.0),
@@ -113,7 +113,7 @@ using TensND
             0.0 0.0 0.0 0.0 2C44 0.0;
             0.0 0.0 0.0 0.0 0.0 2C44
         ]
-        C_ti = TensND.inv_KM(KM_ti, basis)
+        C_ti = TensND.from_mandel(KM_ti, basis)
         crack = EllipticCrack(1.0, 0.5; euler_angles = (0.3, 0.7, 0.1))
         @test components_canon(cod_tensor(crack, C_ti; method = :residues)) ≈
             components_canon(cod_tensor(crack, C_ti; method = :nestedquadgk, abstol = 1.0e-12, reltol = 1.0e-11)) rtol = 1.0e-10

@@ -32,7 +32,7 @@ using LinearAlgebra
         # A genuinely transversely isotropic one is not. (Taking the TI
         # projection of an *isotropic* tensor would not do: it gives that same
         # isotropic tensor back, which is cubic.)
-        @test cubic_residual(TensND.tens_TI(10.0, 3.0, 2.5, 12.0, 2.0, [0.0, 0.0, 1.0])) >
+        @test cubic_residual(TensND.tens_ti(10.0, 3.0, 2.5, 12.0, 2.0, [0.0, 0.0, 1.0])) >
             1.0e-2
     end
 
@@ -51,10 +51,10 @@ using LinearAlgebra
         @test TensND.cubic_anisotropy(cub) ≈ (10 - 4 - 4) / 10
 
         # Perturb *out* of the class and only the residual moves.
-        M = Matrix(KM(cub))
+        M = Matrix(mandel(cub))
         M[1, 1] += 0.5
         M[3, 3] -= 0.5
-        off = TensND.Tens(TensND.inv_KM(M))
+        off = TensND.Tens(TensND.from_mandel(M))
         @test cubic_residual(off) > 1.0e-2
         @test TensND.cubic_anisotropy(best_fit_cubic(off, can)) ≈
             TensND.cubic_anisotropy(cub) atol = 1.0e-2

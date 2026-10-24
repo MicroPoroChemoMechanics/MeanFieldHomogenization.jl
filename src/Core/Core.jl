@@ -94,13 +94,13 @@ export extract_iso_moduli, extract_ti_moduli, extract_iso_conductivity
 # Kelvin-Mandel block forms. They used to live in `Core/rotational_average.jl`;
 # being pure tensor algebra with nothing homogenization-specific about them
 # they now belong to TensND (`src/tens_rotational_average.jl`), together with
-# the non-major-symmetric Walpole read-off `ti8_params_from_KM` that the
+# the non-major-symmetric Walpole read-off `ti8_params_from_mandel` that the
 # laminate concentration needs. Re-exported here so that every call site of the
 # form `Core.isotropify(...)` keeps working unchanged.
 export isotropify, transverse_isotropify
 export ti_average_mandel66, iso_average_mandel66
 export mandel66_minor, array_from_mandel66
-export ti8_params_from_KM, KM_from_ti8_params
+export ti8_params_from_mandel, mandel_from_ti8_params
 
 # Newton potentials (public — used downstream and in tests)
 export newton_potential_3d, newton_potential_2d, newton_potential_3d_cylinder
@@ -114,7 +114,7 @@ export green_function_aniso, gauss_legendre_nodes
 # Laminate block algebra (public — used by Laminates, the ALV twin and users).
 # The Kelvin-Mandel block algebra about a normal is TensND's, re-exported so that
 # `Core.plane_pinv` and the like keep working.
-export KM_IP, KM_OP, km_ip_block, km_op_block, km_ip_embed, km_op_embed, km_from_blocks, km_inv_schur
+export MANDEL_IP, MANDEL_OP, mandel_ip_block, mandel_op_block, mandel_ip_embed, mandel_op_embed, mandel_from_blocks, mandel_inv_schur
 export plane_pinv, plane_pinv2, flat_hill, acoustic_tensor, compliance_op_block
 export laminate_stiffness, laminate_conductivity
 export laminate_strain_concentration, laminate_stress_concentration

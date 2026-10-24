@@ -24,7 +24,7 @@ const basis = TensND.CanonicalBasis{3, Float64}()
         0.0 0.0 0.0 0.0   2C44  0.0;
         0.0 0.0 0.0 0.0   0.0   2C66
     ]
-    C_TI = TensND.inv_KM(KM, basis)
+    C_TI = TensND.from_mandel(KM, basis)
 
     ell = Ellipsoid(2.0, 2.0, 1.0)        # spheroid, axis along e3
 
@@ -47,7 +47,7 @@ end
         0.0   0.0  0.0   0.0   150.0 0.0;
         0.0   0.0  0.0   0.0   0.0   120.0
     ]
-    C_O = TensND.inv_KM(KM, basis)
+    C_O = TensND.from_mandel(KM, basis)
     ell = Ellipsoid(3.0, 1.5, 1.0)
 
     P_res = hill_tensor(ell, C_O; method = :residues)
@@ -71,7 +71,7 @@ end
         0.0 0.0 0.0 0.0  2C44 0.0;
         0.0 0.0 0.0 0.0  0.0  2C66
     ]
-    C_TI = TensND.inv_KM(KM, basis)
+    C_TI = TensND.from_mandel(KM, basis)
 
     ell = Ellipsoid(2.0, 2.0, 1.0; euler_angles = (deg2rad(5.0), 0.0, 0.0))
 
@@ -94,7 +94,7 @@ end
         4.0   3.0  -2.0   5.0 130.0 -2.0;
         3.0  -1.0   2.0   3.0 -2.0 110.0
     ]
-    C = TensND.inv_KM(KM, basis)
+    C = TensND.from_mandel(KM, basis)
     ell = Ellipsoid(10.6, 1.2, 0.5)
 
     P_res = hill_tensor(ell, C; method = :residues)
@@ -104,7 +104,7 @@ end
     @test diff < 1.0e-6
 end
 
-# A tetragonal stiffness about e₃, in the Kelvin-Mandel form `TensND.inv_KM`
+# A tetragonal stiffness about e₃, in the Kelvin-Mandel form `TensND.from_mandel`
 # reads (shear terms doubled): transversely isotropic when C66 = (C11 - C12)/2,
 # cubic when C33 = C11, C13 = C12 and C44 = C66.
 function _ti_km(C11, C12, C13, C33, C44, C66)
@@ -116,7 +116,7 @@ function _ti_km(C11, C12, C13, C33, C44, C66)
         0.0 0.0 0.0 0.0 2C44 0.0;
         0.0 0.0 0.0 0.0 0.0 2C66
     ]
-    return TensND.inv_KM(KM, basis)
+    return TensND.from_mandel(KM, basis)
 end
 
 @testset "Hill residue — roots of multiplicity 2 and 3, and what is refused" begin

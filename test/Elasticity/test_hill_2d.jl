@@ -123,7 +123,7 @@ end
     # entry already overwritten entered the next average of its orbit: equal
     # only to rounding. Each orbit is now averaged once, and its members are
     # equal exactly — what decides the symmetric storage of the result.
-    C = TensND.Tens(TensND.inv_KM([10.0 3.0 1.0; 3.0 8.0 0.5; 1.0 0.5 4.0]))
+    C = TensND.Tens(TensND.from_mandel([10.0 3.0 1.0; 3.0 8.0 0.5; 1.0 0.5 4.0]))
     P = get_array(_hill_2d_aniso(Ellipsoid(1.0, 0.6; angle = 0.3), C))
     @test P == permutedims(P, (3, 4, 1, 2)) == permutedims(P, (2, 1, 3, 4)) == permutedims(P, (1, 2, 4, 3))
 end

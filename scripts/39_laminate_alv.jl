@@ -54,7 +54,7 @@ times = [0.0, 1.0, 3.0, 7.0]
 lam_el = Laminate(; normal = (0, 0, 1))
 add_layer!(lam_el, :BINDER, Dict(:C => C_binder); thickness = f_binder)
 add_layer!(lam_el, :REINF, Dict(:C => C_reinf); thickness = f_reinf)
-C_elastic = Matrix(KM(homogenize(lam_el, Laminated(), :C)))
+C_elastic = Matrix(mandel(homogenize(lam_el, Laminated(), :C)))
 
 lam_h = Laminate(; normal = (0, 0, 1))
 add_layer!(lam_h, :BINDER, Dict(:C => heaviside_law(C_binder)); thickness = f_binder)

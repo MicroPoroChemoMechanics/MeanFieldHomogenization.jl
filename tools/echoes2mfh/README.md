@@ -190,7 +190,7 @@ constructs need code in `extract.py`/`emit.py`.
   | 2 | isotropic 4th order, `C = αJ + βK` | `TensISO{3}(α, β)` |
   | 3 (+3 angles) | 2nd order, eigenvalues in the rotated frame | `Tens(diag, Basis(P))` |
   | 5 (+2 angles) | TI 4th order, **sym-Walpole coefficients** | `TensTI{4,T,5}(p, n)` |
-  | 9 (+3 angles) | orthotropic 4th order, **Cijkl components** | `inv_KM(M, Basis(P))` |
+  | 9 (+3 angles) | orthotropic 4th order, **Cijkl components** | `from_mandel(M, Basis(P))` |
   | 21 | triclinic | refused — ordering unverified |
 
   Two traps worth recording. First, the 5-parameter form is *not* the
@@ -207,7 +207,7 @@ constructs need code in `extract.py`/`emit.py`.
   Echoes' rotation matrix — which sidesteps any Euler-convention matching.
   For the rotated 2nd-order and orthotropic forms the rotation matrix is
   transcribed verbatim and passed as `Basis(P)`, whose direction was checked
-  against `P·A·Pᵀ`. `KM`/`invKM` map to TensND's `KM`/`inv_KM`.
+  against `P·A·Pᵀ`. `KM`/`invKM` map to TensND's `mandel`/`from_mandel`.
 - Python's 0-based indexing: when a loop variable is used *only* as a
   subscript, the range is emitted 1-based and subscripts are left alone;
   otherwise the range stays 0-based and each subscript gets an explicit `+ 1`.

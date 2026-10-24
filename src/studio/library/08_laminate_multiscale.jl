@@ -77,7 +77,7 @@ const base_cell = build_lam()
 function evaluate(scheme, φ)
     cell = set_param(base_cell, nested(:POROUS, :C, amount(:PORE)), φ)
     C = homogenize(cell, scheme, :C)
-    return (KM(C)[3, 3],)
+    return (mandel(C)[3, 3],)
 end
 
 const SCHEMES = [

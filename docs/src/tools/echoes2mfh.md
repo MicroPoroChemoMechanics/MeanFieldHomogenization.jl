@@ -116,7 +116,7 @@ builder actually calls:
 | 2 | isotropic 4th order, ``\mathbb C = \alpha \mathbb J + \beta \mathbb K`` | `TensISO{3}(α, β)` |
 | 3 (+3 angles) | 2nd order, eigenvalues in the rotated frame | `Tens(diag, Basis(P))` |
 | 5 (+2 angles) | transversely isotropic, **sym-Walpole coefficients** | `TensTI{4,T,5}(p, n)` |
-| 9 (+3 angles) | orthotropic, **Cijkl components** | `inv_KM(M, Basis(P))` |
+| 9 (+3 angles) | orthotropic, **Cijkl components** | `from_mandel(M, Basis(P))` |
 | 21 | triclinic | refused — component ordering unverified |
 
 Two traps are worth stating. The 5-parameter form is *not* the

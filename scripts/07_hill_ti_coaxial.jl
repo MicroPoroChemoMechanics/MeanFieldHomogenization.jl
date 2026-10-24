@@ -65,7 +65,7 @@ for ξ in (0.1, 0.3, 0.5, 1.0, 2.0, 3.0, 10.0)
         n_axis = [1.0, 0.0, 0.0]
         i_ax, i_tr = 1, 2
     end
-    C_TI = tens_TI(C1111, C1122, C1133, C3333, C2323, n_axis)
+    C_TI = tens_ti(C1111, C1122, C1133, C3333, C2323, n_axis)
     P = hill_tensor(ell, C_TI)                     # analytical via dispatcher
     S = P ⊡ C_TI                                   # Eshelby tensor
     Sa = get_array(S)
@@ -82,7 +82,7 @@ println()
 
 # ── Cross-validation block needs a fixed config — use the canonical e₃ ------
 n_axis = [0.0, 0.0, 1.0]
-C_TI = tens_TI(C1111, C1122, C1133, C3333, C2323, Tens(n_axis))
+C_TI = tens_ti(C1111, C1122, C1133, C3333, C2323, Tens(n_axis))
 
 # ── Cross-validation: analytical vs. numerical paths --------------------------
 println("Cross-validation on a moderate oblate spheroid (1, 1, 0.3):")
@@ -153,7 +153,7 @@ let
             n_axis = [1.0, 0.0, 0.0]
             i_a, i_t, i_t′ = 1, 2, 3
         end
-        C_TI = tens_TI(C1111, C1122, C1133, C3333, C2323, n_axis)
+        C_TI = tens_ti(C1111, C1122, C1133, C3333, C2323, n_axis)
         P = hill_tensor(ell, C_TI; method = :auto)
         Sa = get_array(P ⊡ C_TI)
         S1111[k] = Sa[i_t, i_t, i_t, i_t]

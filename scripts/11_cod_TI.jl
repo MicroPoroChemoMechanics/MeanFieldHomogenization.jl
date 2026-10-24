@@ -23,7 +23,7 @@ E₃ = H_ * E₁
 ν₁₂ = ν₁
 ν₃₁ = H_ * ν₂
 G₃₁ = Γ_ * E₁ / (2 * (1 + ν₁₂))
-S = tens_TI(inv(E₁), -ν₁₂ / E₁, -ν₃₁ / E₃, inv(E₃), inv(4G₃₁), n̂)
+S = tens_ti(inv(E₁), -ν₁₂ / E₁, -ν₃₁ / E₃, inv(E₃), inv(4G₃₁), n̂)
 C₀ = inv(S)
 
 # Penny in TI isotropy plane

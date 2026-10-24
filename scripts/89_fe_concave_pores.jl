@@ -141,7 +141,7 @@ println("Compliance contribution: three constants, not two")
 println("-"^78)
 @printf "%-8s %12s %12s %12s %14s\n" "p" "H₁₁₁₁" "H₁₁₂₂" "H₁₂₁₂" "anisotropy"
 for p in PS
-    M = Matrix(KM(MEASURED[p].H))
+    M = Matrix(mandel(MEASURED[p].H))
     h11, h12 = M[1, 1], M[1, 2]
     h44 = M[4, 4] / 2                     # Kelvin carries a factor 2 on the shear block
     # Zener's ratio, zero for an isotropic tensor by construction.
@@ -332,7 +332,7 @@ println("At p = 1 the body is a sphere, whose contribution tensors the package")
 println("knows in closed form. Nothing about the paper enters this row.")
 let
     c = axi_contributions(1.0)
-    Hm = Matrix(KM(c.H))
+    Hm = Matrix(mandel(c.H))
     Rm = Matrix(get_array(c.R))
     # Eq. (3.9) of the paper, which is the classical result.
     HG = 10 * (1 - ν₀_axi) / (7 - 5ν₀_axi)
@@ -358,7 +358,7 @@ for p in AXI_P
     AXI_MEASURED[p] = axi_contributions(p)
 end
 for p in sort(collect(keys(THEIR_H)))
-    H = Matrix(KM(AXI_MEASURED[p].H))
+    H = Matrix(mandel(AXI_MEASURED[p].H))
     t = THEIR_H[p]
     # Kelvin-Mandel carries a factor 2 on the shear block.
     mine = (H[1, 1], H[1, 2], H[1, 3], H[3, 3], H[5, 5] / 2)
@@ -388,7 +388,7 @@ let path = joinpath(tempdir(), "axi_vs_sevostianov.csv")
     open(path, "w") do io
         println(io, "p,H1111,H1122,H1133,H3333,H1313,R11,R33")
         for p in AXI_P
-            H = Matrix(KM(AXI_MEASURED[p].H))
+            H = Matrix(mandel(AXI_MEASURED[p].H))
             R = Matrix(get_array(AXI_MEASURED[p].R))
             @printf io "%.2f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f\n" p H[1, 1] H[1, 2] H[1, 3] H[3, 3] (
                 H[5, 5] / 2
@@ -418,8 +418,8 @@ let
             opts = FEAxiMeshOptions(; nradial = 20, radius_ratio = rr)
         )
         b = fe_axi_pore_breakdown(pore, C₀_axi)
-        ec = norm(Matrix(KM(b.A)) - Aex) / norm(Aex)
-        eu = norm(Matrix(KM(b.A_uncorrected)) - Aex) / norm(Aex)
+        ec = norm(Matrix(mandel(b.A)) - Aex) / norm(Aex)
+        eu = norm(Matrix(mandel(b.A_uncorrected)) - Aex) / norm(Aex)
         @printf "%-8.1f %-14.2e %-14.2e %.0fx\n" rr ec eu eu / ec
         flush(stdout)
     end

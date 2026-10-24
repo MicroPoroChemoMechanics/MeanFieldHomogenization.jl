@@ -2,8 +2,8 @@
 #  laminate_algebra.jl — the laminate kernels, in the Kelvin-Mandel
 #  representation, on TensND's block algebra about the layer normal.
 #
-#  The partition of the Kelvin-Mandel slots into in-plane (`KM_IP`) and
-#  out-of-plane (`KM_OP`) symmetric tensors, the blocks and their embeddings,
+#  The partition of the Kelvin-Mandel slots into in-plane (`MANDEL_IP`) and
+#  out-of-plane (`MANDEL_OP`) symmetric tensors, the blocks and their embeddings,
 #  the Schur inverse, the plane pseudo-inverses, the acoustic tensor and the
 #  spring-interface compliance block are tensor algebra and live in TensND
 #  (`src/km_blocks.jl`); they are re-exported from `Core`. What stays here is the
@@ -35,7 +35,7 @@ out-of-plane block of ``\\mathbb{P}`` is the matrix inverse of the out-of-plane 
 
 # ── Frame handling ──────────────────────────────────────────────────────────
 
-# The Kelvin-Mandel (Bond) rotation of a frame is TensND's `KM_rotation(R)`.
+# The Kelvin-Mandel (Bond) rotation of a frame is TensND's `mandel_rotation(R)`.
 
 # ── The laminate kernels ────────────────────────────────────────────────────
 
@@ -152,7 +152,7 @@ end
 
 _plane_pinv_of(::StaticMatrix{6, 6}) = plane_pinv
 _plane_pinv_of(::StaticMatrix{3, 3}) = plane_pinv2
-_inv_km(M::StaticMatrix{6, 6}) = km_inv_schur(M)
+_inv_km(M::StaticMatrix{6, 6}) = mandel_inv_schur(M)
 _inv_km(M::StaticMatrix{3, 3}) = _inv3(M)
 
 """

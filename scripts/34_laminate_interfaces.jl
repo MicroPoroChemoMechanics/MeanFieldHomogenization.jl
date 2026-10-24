@@ -46,8 +46,8 @@ function bilayer(; itf = PerfectInterface(), itf2 = PerfectInterface(), L = 1.0)
     return lam
 end
 
-C₃₃(lam) = Matrix(KM(homogenize(lam, Laminated(), :C)))[3, 3]
-C₁₂(lam) = Matrix(KM(homogenize(lam, Laminated(), :C)))[6, 6] / 2
+C₃₃(lam) = Matrix(mandel(homogenize(lam, Laminated(), :C)))[3, 3]
+C₁₂(lam) = Matrix(mandel(homogenize(lam, Laminated(), :C)))[6, 6] / 2
 k_perp(lam) = Matrix(components(homogenize(lam, Laminated(), :K)))[3, 3]
 k_par(lam) = Matrix(components(homogenize(lam, Laminated(), :K)))[1, 1]
 

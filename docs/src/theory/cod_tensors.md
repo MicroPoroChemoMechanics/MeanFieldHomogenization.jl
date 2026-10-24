@@ -545,7 +545,7 @@ using Printf
 
 KM = [210.0 80 75 5 4 3; 80 195 90 -2 3 -1; 75 90 220 1 -2 2;
       5 -2 1 60 2.5 1.5; 4 3 -2 2.5 65 -1; 3 -1 2 1.5 -1 55]   # Kelvin–Mandel
-C_tri = TensND.inv_KM(KM, TensND.CanonicalBasis{3, Float64}())
+C_tri = TensND.from_mandel(KM, TensND.CanonicalBasis{3, Float64}())
 crack = EllipticCrack(1.0, 0.5)
 tol = (; abstol = 1.0e-12, reltol = 1.0e-10)
 
@@ -1171,7 +1171,7 @@ They reduce to the isotropic forms above for ``\nu_1=\nu_2=\nu`` and
 ``H=\Gamma=1``, where ``\sigma_\gamma = 2`` and ``\beta = 1-\nu``.
 ``\sigma_\gamma`` is the sum ``\gamma_1+\gamma_2`` of the two in-plane Stroh roots
 of §4. Implementation: `src/Cracks/cod_analytical.jl`, with the parameters
-read by TensND's `arg_TI_Hoenig` from the compliance.
+read by TensND's `ti_args_hoenig` from the compliance.
 
 ```@raw html
 <details><summary>The stiffness components in the engineering parameters</summary>

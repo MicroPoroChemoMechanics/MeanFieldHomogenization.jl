@@ -162,7 +162,7 @@ _alv_to_layer_frame(M, ::TensND.CanonicalBasis, n) = M
 _alv_to_layer_frame(M, basis, n) = _alv_rotate_blocks(M, _alv_bond6(basis), n, 6)
 _alv_from_layer_frame(M, ::TensND.CanonicalBasis, n) = M
 _alv_from_layer_frame(M, basis, n) = _alv_rotate_blocks(M, transpose(_alv_bond6(basis)), n, 6)
-_alv_bond6(basis) = TensND.KM_rotation(Matrix(TensND.vecbasis(basis, :cov)))
+_alv_bond6(basis) = TensND.mandel_rotation(Matrix(TensND.vecbasis(basis, :cov)))
 
 function laminate_alv(lam::Laminates.Laminate, ::Val{2}; times, property::Symbol = :K)
     names = Laminates.layer_names(lam)

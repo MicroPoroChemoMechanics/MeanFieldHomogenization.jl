@@ -388,8 +388,8 @@ end
         sph = LayeredSphere((1.0, 2.0), (LF_C₁, LF_C₂); interfaces)
         sol = LayeredSphereFields(sph, LF_C₀)
         for (r, θ, φ, eE_diag, sE_diag) in pts
-            A = Matrix(KM(local_gradient_gradient_concentration(sol, r, θ, φ)))
-            S = Matrix(KM(local_flux_gradient_concentration(sol, r, θ, φ)))
+            A = Matrix(mandel(local_gradient_gradient_concentration(sol, r, θ, φ)))
+            S = Matrix(mandel(local_flux_gradient_concentration(sol, r, θ, φ)))
             @test [A[i, i] for i in 1:6] ≈ eE_diag rtol = 1.0e-10
             @test [S[i, i] for i in 1:6] ≈ sE_diag rtol = 1.0e-10
         end
