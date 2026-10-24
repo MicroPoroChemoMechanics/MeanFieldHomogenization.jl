@@ -48,10 +48,6 @@ OptimaSolver = "0.8, 0.9"
 OrderedCollections = "1, 2"
 OrdinaryDiffEq = "6, 7"
 Plots = "1"
-# PyCall 1.97.0, registered on 2026-10-19, reaches Python without the GIL from
-# the `hash` SymPy.jl defines: the tests and the documentation of this package
-# ended in segmentation faults the same day. This bound excludes that release
-# only, so that any later one is taken as soon as it is registered.
 PyCall = "< 1.97.0, >= 1.97.1"
 QuadGK = "2"
 SpecialFunctions = "2"
@@ -59,5 +55,5 @@ Statistics = "1"
 SymPy = "2"
 Symbolics = "6, 7"
 TOML = "1"
-TensND = "0.6.2"
+TensND = "0.7"
 julia = "1.12"
