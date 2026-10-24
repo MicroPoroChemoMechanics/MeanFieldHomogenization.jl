@@ -137,11 +137,7 @@ function _hill_3d_aniso_nestedquadgk(
     # `C₀_arr` is assigned once, already permuted: the integrand captures it,
     # and a captured variable assigned twice is boxed, every access dynamic.
     p = sortperm(collect(ell.semi_axes), rev = true)
-    C₀_princ = TensND.change_tens(C₀, ell.basis)
-    C₀_arr = Array{T, 4}(undef, 3, 3, 3, 3)
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        C₀_arr[i, j, k, l] = C₀_princ[p[i], p[j], p[k], p[l]]
-    end
+    C₀_arr = T.(Array(TensND.components(C₀, ell.basis))[p, p, p, p])
 
     semi_sorted = ell.semi_axes[p]
     η = semi_sorted[2] / semi_sorted[1]
@@ -153,7 +149,7 @@ function _hill_3d_aniso_nestedquadgk(
     # α = 1 (identity) when ω ≥ 0.1; beyond that α ≈ 2, 3, … for each decade.
     # Any α gives the same integral, so it is read on the value of ω alone: a
     # dual semi-axis keeps its derivatives in ζ, where they belong.
-    ω_val = MFH_Core._primal(ω)
+    ω_val = MFH_Core.primal(ω)
     α = max(1.0, -log10(ω_val))
 
     # --- Boundary layer at z = 0 ----------------------------------------------
@@ -202,12 +198,7 @@ function _hill_3d_aniso_nestedquadgk(
     P_perm = _fill_hill21!(zeros(T, 3, 3, 3, 3), P_vals)
 
     # --- Un-permute back to original axis ordering ----------------------------
-    # P_orig[q[i],q[j],q[k],q[l]] = P_perm[i,j,k,l]  where  q = invperm(p).
-    q = invperm(p)
-    P_arr = zeros(T, 3, 3, 3, 3)
-    for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        P_arr[q[i], q[j], q[k], q[l]] = P_perm[i, j, k, l]
-    end
-
-    return TensND.Tens(P_arr, ell.basis)
+    # P[q[i], q[j], q[k], q[l]] = P_perm[i, j, k, l] with q = invperm(p), that is
+    # P = P_perm[p, p, p, p].
+    return TensND.Tens(P_perm[p, p, p, p], ell.basis)
 end

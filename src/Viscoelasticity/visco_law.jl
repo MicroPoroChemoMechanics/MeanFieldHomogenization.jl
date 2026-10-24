@@ -150,7 +150,7 @@ function kelvin_creep(
         result = deepcopy(J_0)
         Δt = t - t_p
         @inbounds for i in eachindex(J_branches)
-            result = result + J_branches[i] * (one(eltype_data(J_branches[i])) - exp(-Δt / taus[i]))
+            result = result + J_branches[i] * (one(eltype(J_branches[i])) - exp(-Δt / taus[i]))
         end
         return result
     end
@@ -159,9 +159,6 @@ end
 
 # Helper for kelvin_creep — extract a scalar element type to write `1 - exp(...)`
 # in a way compatible with both scalar and tensor branches.
-@inline eltype_data(x::Number) = typeof(x)
-@inline eltype_data(x::TensND.AbstractTens) = eltype(x)
-@inline eltype_data(x::AbstractArray) = eltype(x)
 
 """
     maxwell_iso(k, mu, eta_k, eta_mu) -> ViscoLaw

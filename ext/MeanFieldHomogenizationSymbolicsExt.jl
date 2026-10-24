@@ -6,7 +6,7 @@ using Symbolics
 # ──────────────────────────────────────────────────────────────────────────────
 #  Elliptic integrals as *opaque* symbolic functions on `Symbolics.Num`
 #
-#  The Symbolics counterpart of `MeanFieldHomogenizationSymPyExt`, and it exists
+#  The Symbolics counterpart of `MeanFieldHomogenizationSymPyPythonCallExt`, and it exists
 #  for the same reason — but the failure mode it avoids is worse.
 #
 #  Without this extension `ell_K(m::Num)` falls through to the generic AGM

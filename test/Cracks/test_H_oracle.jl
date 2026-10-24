@@ -64,7 +64,7 @@ end
 @testset "Cracks — ℍ oracle: transversely isotropic matrix, axis = crack normal" begin
     # Sevostianov-Yilmaz-Kushch-Levin (2005) test stiffness, as in
     # `test_cod_ti_aligned.jl`.
-    C₀ = tens_TI(2.179, 0.579, 0.689, 10.345, 1.0, [0.0, 0.0, 1.0])
+    C₀ = tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, [0.0, 0.0, 1.0])
 
     for η in (1.0, 0.5)
         H_ref = inverse_property_contribution(_crack(η), C₀)
@@ -89,7 +89,7 @@ end
         4.0 3.0 -2.0 2.5 65.0 -1.0;
         3.0 -1.0 2.0 1.5 -1.0 55.0
     ]
-    C₀ = TensND.inv_KM(KM_tri, basis)
+    C₀ = TensND.from_mandel(KM_tri, basis)
 
     for η in (1.0, 0.5)
         H_ref = inverse_property_contribution(_crack(η), C₀)
@@ -118,7 +118,7 @@ end
         4.0 3.0 -2.0 2.5 65.0 -1.0;
         3.0 -1.0 2.0 1.5 -1.0 55.0
     ]
-    C₀ = TensND.inv_KM(KM_tri, basis)
+    C₀ = TensND.from_mandel(KM_tri, basis)
     tol = (; abstol = 1.0e-12, reltol = 1.0e-10)
 
     for η in (1.0, 0.5)
@@ -176,8 +176,8 @@ end
 @testset "Cracks — 𝐁 in EO and TraTI matrices against the transformation rule" begin
     canonical = TensND.CanonicalBasis{3, Float64}()
     P = [1.3 0.2 -0.1; 0.15 0.8 0.25; -0.05 0.3 1.1]
-    PP = TensND.KM(Tens(P) ⊠ˢ Tens(P))
-    image(C̃) = TensND.inv_KM(PP * TensND.KM(C̃) * transpose(PP), canonical)
+    PP = TensND.mandel(Tens(P) ⊠ˢ Tens(P))
+    image(C̃) = TensND.from_mandel(PP * TensND.mandel(C̃) * transpose(PP), canonical)
     tol = (; abstol = 1.0e-12, reltol = 1.0e-10)
     references = (
         (TensISO{3}(3 * 20.0, 2 * 9.0), [0.3, -0.5, 0.8]),                                       # EO
@@ -215,8 +215,8 @@ end
     # transformation rule: two independent paths.
     canonical = TensND.CanonicalBasis{3, Float64}()
     P = [1.3 0.2 -0.1; 0.15 0.8 0.25; -0.05 0.3 1.1]
-    PP = TensND.KM(Tens(P) ⊠ˢ Tens(P))
-    image(C̃) = TensND.inv_KM(PP * TensND.KM(C̃) * transpose(PP), canonical)
+    PP = TensND.mandel(Tens(P) ⊠ˢ Tens(P))
+    image(C̃) = TensND.from_mandel(PP * TensND.mandel(C̃) * transpose(PP), canonical)
     ℓ, m, n = _crack_frame([0.3, -0.5, 0.8], 0.6)
     a, b = 1.0, 0.45
     ã, b̃, ℓ̃, m̃, ñ = _transformed_crack(P, a, b, ℓ, m, n)
@@ -253,20 +253,20 @@ end
         4.0 3.0 -2.0 2.5 65.0 -1.0;
         3.0 -1.0 2.0 1.5 -1.0 55.0
     ]
-    C = TensND.inv_KM(KM_tri, canonical)
+    C = TensND.from_mandel(KM_tri, canonical)
     tol = (; abstol = 1.0e-12, reltol = 1.0e-10)
     R = hcat(_crack_frame([0.3, -0.5, 0.8], 0.6)...)
     for η in (1.0, 0.5)
-        P(ω) = TensND.KM(hill_tensor(Ellipsoid(1.0, η, ω * η, R), C; tol...), canonical)
+        P(ω) = TensND.mandel(hill_tensor(Ellipsoid(1.0, η, ω * η, R), C; tol...), canonical)
         ω₀ = 4.0e-6
         P₁ = 2 * ForwardDiff.derivative(P, ω₀ / 2) - ForwardDiff.derivative(P, ω₀)
         @test all(isfinite, P₁)
         crack = EllipticCrack(1.0, η, R)
-        Y = TensND.KM(TensND.inv_KM(-TensND.KM(C) * P₁ * TensND.KM(C), canonical), crack_basis(crack))
+        Y = TensND.mandel(TensND.from_mandel(-TensND.mandel(C) * P₁ * TensND.mandel(C), canonical), crack_basis(crack))
         H = zeros(6, 6)
         H[3:5, 3:5] = inv(Y[3:5, 3:5])
         H_ref = compliance_from_cod(cod_tensor(crack, C; method = :nestedquadgk, tol...), crack)
         # Measured: 1.0e-8, the accuracy of the derivative of the cubature there.
-        @test _relerr(TensND.inv_KM(H, crack_basis(crack)), H_ref) < 5.0e-8
+        @test _relerr(TensND.from_mandel(H, crack_basis(crack)), H_ref) < 5.0e-8
     end
 end

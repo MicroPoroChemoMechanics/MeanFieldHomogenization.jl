@@ -71,13 +71,6 @@ end
     return e_q, e_p, ephi
 end
 
-@inline function _metric(c::Qx, q, p) where {Qx}
-    qb = sqrt(q^2 - 1)
-    pb = sqrt(1 - p^2)
-    qp = sqrt(q^2 - p^2)
-    return c * qp / qb, c * qp / pb, c * qb * pb   # h_q, h_p, h_φ
-end
-
 """
     _spheroid_field_coeffs(s, k₀) -> (Xa, Xt)
 

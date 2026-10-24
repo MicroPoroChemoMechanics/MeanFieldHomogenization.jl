@@ -50,42 +50,31 @@ end
 
 # ─── Node generation on an ellipsoid, centered at the origin ────────────────
 
+# The nodes are listed azimuth fastest, then polar angle, then radius. The
+# element type is the one of the frame and the semi-axes, so that a dual radius
+# carries through.
 function _region_nodes(ell::Ellipsoid{3}, nodes::NTuple{3, Int})
     nr, np, na = nodes
-    Q = MFH_Core._basis_matrix(ell.basis)
-    a1, a2, a3 = ell.semi_axes
-    jac = a1 * a2 * a3                      # |det| of the unit-ball mapping
+    Q = SMatrix{3, 3}(TensND.vecbasis(ell.basis, :cov))
+    a = SVector(ell.semi_axes)
+    jac = prod(a)                           # |det| of the unit-ball mapping
     ρ, wρ = MFH_Core.gauss_legendre_nodes(nr, 0.0, 1.0)
     c, wc = MFH_Core.gauss_legendre_nodes(np, -1.0, 1.0)  # c = cos θ
     φ = [2π * (k - 1) / na for k in 1:na]
-    wφ = fill(2π / na, na)
-    pts = Vector{SVector{3, Float64}}()
-    wts = Float64[]
-    for i in 1:nr, j in 1:np, k in 1:na
-        s = sqrt(1 - c[j]^2)
-        u = SVector{3, Float64}(ρ[i] * s * cos(φ[k]), ρ[i] * s * sin(φ[k]), ρ[i] * c[j])
-        x = Q * SVector{3, Float64}(a1 * u[1], a2 * u[2], a3 * u[3])
-        push!(pts, x)
-        push!(wts, wρ[i] * ρ[i]^2 * wc[j] * wφ[k] * jac)
-    end
+    unit(i, j, k) = ρ[i] * SVector(sqrt(1 - c[j]^2) * cos(φ[k]), sqrt(1 - c[j]^2) * sin(φ[k]), c[j])
+    pts = vec([Q * (a .* unit(i, j, k)) for k in 1:na, j in 1:np, i in 1:nr])
+    wts = vec([wρ[i] * ρ[i]^2 * wc[j] * (2π / na) * jac for k in 1:na, j in 1:np, i in 1:nr])
     return pts, wts
 end
 
 function _region_nodes(ell::Ellipsoid{2}, nodes::NTuple{3, Int})
     nr, _, na = nodes
-    Q = MFH_Core._basis_matrix(ell.basis)
-    a1, a2 = ell.semi_axes
-    jac = a1 * a2
+    Q = SMatrix{2, 2}(TensND.vecbasis(ell.basis, :cov))
+    a = SVector(ell.semi_axes)
+    jac = prod(a)
     ρ, wρ = MFH_Core.gauss_legendre_nodes(nr, 0.0, 1.0)
     φ = [2π * (k - 1) / na for k in 1:na]
-    wφ = fill(2π / na, na)
-    pts = Vector{SVector{2, Float64}}()
-    wts = Float64[]
-    for i in 1:nr, k in 1:na
-        u = SVector{2, Float64}(ρ[i] * cos(φ[k]), ρ[i] * sin(φ[k]))
-        x = Q * SVector{2, Float64}(a1 * u[1], a2 * u[2])
-        push!(pts, x)
-        push!(wts, wρ[i] * ρ[i] * wφ[k] * jac)
-    end
+    pts = vec([Q * (a .* (ρ[i] * SVector(cos(φ[k]), sin(φ[k])))) for k in 1:na, i in 1:nr])
+    wts = vec([wρ[i] * ρ[i] * (2π / na) * jac for k in 1:na, i in 1:nr])
     return pts, wts
 end

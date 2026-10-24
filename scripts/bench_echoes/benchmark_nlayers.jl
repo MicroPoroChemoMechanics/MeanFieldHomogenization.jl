@@ -14,7 +14,7 @@
 #        configurations (vanishing core, vanishing shell, core ≡ shell)
 #        compared to the closed-form single-layer Eshelby result.
 #   § 4  **Local bulk stress profile** `σ_rr(r), σ_θθ(r)` vs
-#        `echoes.conc_sS` under remote hydrostatic loading.
+#        `echoes.loc_sS` under remote hydrostatic loading.
 #
 #  History of the shear (β_k) ECHOES comparison
 #  --------------------------------------------
@@ -47,12 +47,15 @@
 import Pkg
 Pkg.activate(@__DIR__; io = devnull)
 
+# Which Python holds Echoes: chosen before PythonCall is loaded
+include(joinpath(@__DIR__, "echoes_python.jl"))
+
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using Printf
 using Random
-using PyCall
+using PythonCall
 using Plots
 
 # The pointwise field is public API since v0.10.0, so the local-stress section
@@ -65,78 +68,22 @@ import MeanFieldHomogenization.LayeredSpheres: _shear_M_matrix,
 
 # ─── Python-side wrappers ────────────────────────────────────────────────────
 
-py"""
-import echoes
-import numpy as np
-from echoes import rot6, sphere_nlayers, NODISC, PRIMALDISC, DUALDISC
+pyimport("sys").path.insert(0, @__DIR__)
+include(joinpath(@__DIR__, "pyjl.jl"))
+const NL = pyimport("nlayers_echoes")
 
-def py_stiff_kmu(K, mu):
-    return echoes.stiff_kmu(float(K), float(mu))
-
-def py_make_nlayers(radii, props, Cref):
-    radii_np = np.asarray(radii, dtype=float)
-    spn = echoes.sphere_nlayers(radii=radii_np, prop={'C': props})
-    spn.set_ref('C', Cref)
-    return spn
-
-def py_layer_eE(spn, k):
-    # ECHOES is 0-indexed.
-    return np.asarray(spn.layer_eE(k))
-
-def py_eE(spn):
-    return np.asarray(spn.eE)
-
-def py_sE(spn):
-    return np.asarray(spn.sE)
-
-def py_layer_fraction(spn, k):
-    return float(spn.layer_fraction(k))
-
-def py_conc_sS(spn, r, theta, phi):
-    return np.asarray(spn.conc_sS(r, theta, phi))
-
-# The four pointwise concentrations, rows rotated to the CANONICAL basis.
-# ECHOES returns rows in the local spherical basis (e_theta, e_phi, e_r);
-# rot6(theta, phi) brings them back to global Cartesian, which is what
-# MeanFieldHomogenization returns.  `layer` is 0-based, -1 = auto.
-def py_conc_all(spn, r, theta, phi, layer):
-    P = rot6(theta, phi)
-    kw = {} if layer < 0 else {"layer": layer}
-    return (np.asarray(P @ spn.conc_eE(r, theta, phi, **kw)),
-            np.asarray(P @ spn.conc_sE(r, theta, phi, **kw)),
-            np.asarray(P @ spn.conc_eS(r, theta, phi, **kw)),
-            np.asarray(P @ spn.conc_sS(r, theta, phi, **kw)))
-
-# Interface descriptors are built ENTIRELY on the Python side.  Handing a
-# Julia vector of `[NODISC]` lists across PyCall converts the enum members to
-# plain integers and ECHOES then silently returns NaN rather than raising, so
-# the tag is passed as a string and the list is assembled here.
-def _itf(tag, p1, p2):
-    if tag == "perfect":
-        return [NODISC]
-    if tag == "spring":
-        return [float(p1), float(p2), PRIMALDISC]
-    if tag == "membrane":
-        return [float(p1), float(p2), DUALDISC]
-    raise ValueError("unknown interface tag " + str(tag))
-
-def py_make_nlayers_itf(radii, props, ref, tags, p1s, p2s):
-    interf = [_itf(t, a, b) for t, a, b in zip(tags, p1s, p2s)]
-    spn = sphere_nlayers(radii=np.asarray(radii, dtype=float),
-                         prop={"C": props}, interf_prop={"C": interf})
-    spn.set_ref("C", ref)
-    return spn
-"""
-
-const py_stiff_kmu = py"py_stiff_kmu"
-const py_make_nlayers = py"py_make_nlayers"
-const py_layer_eE = py"py_layer_eE"
-const py_eE_total = py"py_eE"
-const py_sE_total = py"py_sE"
-const py_layer_frac = py"py_layer_fraction"
-const py_conc_sS = py"py_conc_sS"
-const py_conc_all = py"py_conc_all"
-const py_make_nlayers_itf = py"py_make_nlayers_itf"
+# Julia vectors cross the bridge as Python lists, and every array that comes
+# back is a Julia matrix, so that the rest of the script reads as before.
+const py_stiff_kmu = NL.py_stiff_kmu
+py_make_nlayers(radii, props, Cref) = NL.py_make_nlayers(pylist(radii), pylist(props), Cref)
+py_layer_eE(spn, k) = pymat(NL.py_layer_eE(spn, k))
+py_eE_total(spn) = pymat(NL.py_eE(spn))
+py_sE_total(spn) = pymat(NL.py_sE(spn))
+py_layer_frac(spn, k) = pyconvert(Float64, NL.py_layer_fraction(spn, k))
+py_conc_sS(spn, r, theta, phi) = pymat(NL.py_conc_sS(spn, r, theta, phi))
+py_conc_all(spn, r, theta, phi, layer) = Tuple(pymat(x) for x in NL.py_conc_all(spn, r, theta, phi, layer))
+py_make_nlayers_itf(radii, props, ref, tags, p1s, p2s) =
+    NL.py_make_nlayers_itf(pylist(radii), pylist(props), ref, pylist(tags), pylist(p1s), pylist(p2s))
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -506,10 +453,10 @@ for (label, itf_jl, tags, p1s, p2s) in ITF_CASES
         jl_lay = lay === nothing ? nothing : lay + 1        # Julia is 1-based
         ref = py_conc_all(spn, r, θ, φ, py_lay)
         got = (
-            Matrix(KM(local_gradient_gradient_concentration(sol, r, θ, φ; layer = jl_lay))),
-            Matrix(KM(local_flux_gradient_concentration(sol, r, θ, φ; layer = jl_lay))),
-            Matrix(KM(local_gradient_flux_concentration(sol, r, θ, φ; layer = jl_lay))),
-            Matrix(KM(local_flux_flux_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(mandel(local_gradient_gradient_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(mandel(local_flux_gradient_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(mandel(local_gradient_flux_concentration(sol, r, θ, φ; layer = jl_lay))),
+            Matrix(mandel(local_flux_flux_concentration(sol, r, θ, φ; layer = jl_lay))),
         )
         for q in 1:4
             scale = max(1.0, maximum(abs, ref[q]))

@@ -85,7 +85,7 @@ end
     s_s = inv(CS_PORO)
     B1 = biot_tensor(C_hom, CS_PORO)
     B2 = δ - C_hom ⊡ (s_s ⊡ δ)
-    @test get_array(B1) ≈ get_array(B2) atol = 1.0e-14
+    @test B1 ≈ B2 atol = 1.0e-14
 
     # Aligned cracks make the pore space transversely isotropic: the normal
     # component must dominate the in-plane ones.
@@ -101,7 +101,7 @@ end
     B, M = par.B, par.modulus
 
     C_u = undrained_stiffness(C_hom, B, M)
-    @test get_array(drained_stiffness(C_u, B, M)) ≈ get_array(C_hom) atol = 1.0e-10
+    @test drained_stiffness(C_u, B, M) ≈ C_hom atol = 1.0e-10
 
     k_hom, μ_hom = k_mu(C_hom)
     k_u, μ_u = k_mu(C_u)
@@ -142,7 +142,7 @@ end
 
     # Biot effective stress coincides with Terzaghi iff B = δ.
     δ = TensND.tens_Id2(Val(3), Val(Float64))
-    @test get_array(biot_effective_stress(Σ, p, δ)) ≈ get_array(Σ_t)
+    @test biot_effective_stress(Σ, p, δ) ≈ Σ_t
 
     B = TensISO{3}(0.6)
     @test biot_effective_stress(Σ, p, B)[1, 1] ≈ Σ[1, 1] + 0.6 * p
@@ -183,7 +183,7 @@ end
     # contraction routes for `B` must agree to full working precision.
     δ_big = TensND.tens_Id2(Val(3), Val(BigFloat))
     B_alt = δ_big - C_hom_big ⊡ (inv(C_big) ⊡ δ_big)
-    @test get_array(par_big.B) ≈ get_array(B_alt) rtol = 1.0e-60
+    @test par_big.B ≈ B_alt rtol = 1.0e-60
 
     # ForwardDiff through the porosity: d(1/M)/dφ = -1/k_s at fixed C_hom.
     C_hom = homogenize(_porous_rve(φ), MoriTanaka())

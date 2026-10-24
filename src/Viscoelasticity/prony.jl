@@ -141,7 +141,7 @@ struct PronyCreep{T} <: AbstractRheology
             )
         )
         _checkable(J_0) && (
-            MFH_Core._primal(J_0) > 0 || throw(
+            MFH_Core.primal(J_0) > 0 || throw(
                 ArgumentError(
                     "PronyCreep: the instantaneous compliance J_0 must be positive; got $J_0"
                 )
@@ -199,7 +199,7 @@ function _sort_and_merge(w::Vector{T}, tau::Vector{T}, merge_tol::Real, who::Abs
                 "branches live in the `E_inf` / `J_0` and `phi` fields, not in `tau`"
         )
     )
-    perm = sortperm(tau; by = MFH_Core._primal)
+    perm = sortperm(tau; by = MFH_Core.primal)
     ws = w[perm]
     ts = tau[perm]
 
@@ -213,7 +213,7 @@ function _sort_and_merge(w::Vector{T}, tau::Vector{T}, merge_tol::Real, who::Abs
             push!(tout, ts[i])
         end
     end
-    if any(<(0), MFH_Core._primal.(wout))
+    if any(<(0), MFH_Core.primal.(wout))
         @warn "$who: the spectrum has negative weights; the model is not passive " *
             "and `loss_factor` may come out negative." maxlog = 1
     end
@@ -444,7 +444,7 @@ which is exactly the implicit function theorem for a simple root.  No nested
 duals, and no differentiation of the solver.
 """
 function _root_with_ad(f, df, lo::Real, hi::Real; rtol::Real = 1.0e-14)
-    σ = _bracketed_root(σ -> MFH_Core._primal(f(σ)), MFH_Core._primal(lo), MFH_Core._primal(hi); rtol)
+    σ = _bracketed_root(σ -> MFH_Core.primal(f(σ)), MFH_Core.primal(lo), MFH_Core.primal(hi); rtol)
     return σ - f(σ) / df(σ)
 end
 
@@ -541,7 +541,7 @@ function maxwell_to_kelvin(m::PronyRelaxation{T}; rtol::Real = 1.0e-14) where {T
     end
     if !fluid                                 # the outermost root is finite
         lo = _just_above(m.tau[n])
-        hi = _expand_bracket(σ -> MFH_Core._primal(Φ(σ)), MFH_Core._primal(lo))
+        hi = _expand_bracket(σ -> MFH_Core.primal(Φ(σ)), MFH_Core.primal(lo))
         push!(σs, _root_with_ad(Φ, dΦ, lo, hi; rtol))
     end
 
@@ -638,7 +638,7 @@ function kelvin_to_maxwell(k::PronyCreep{T}; rtol::Real = 1.0e-14) where {T}
 
     σs = T[]
     hi1 = _just_below(k.tau[1])               # the root below the first pole
-    lo1 = _shrink_bracket(σ -> MFH_Core._primal(Ψ(σ)), MFH_Core._primal(hi1))
+    lo1 = _shrink_bracket(σ -> MFH_Core.primal(Ψ(σ)), MFH_Core.primal(hi1))
     push!(σs, _root_with_ad(Ψ, dΨ, lo1, hi1; rtol))
     for j in 1:(n - 1)
         push!(
@@ -648,7 +648,7 @@ function kelvin_to_maxwell(k::PronyCreep{T}; rtol::Real = 1.0e-14) where {T}
     end
     if fluid                                  # the extra branch of a fluid
         lo = _just_above(k.tau[n])
-        hi = _expand_bracket(σ -> MFH_Core._primal(Ψ(σ)), MFH_Core._primal(lo))
+        hi = _expand_bracket(σ -> MFH_Core.primal(Ψ(σ)), MFH_Core.primal(lo))
         push!(σs, _root_with_ad(Ψ, dΨ, lo, hi; rtol))
     end
 
@@ -658,9 +658,9 @@ function kelvin_to_maxwell(k::PronyCreep{T}; rtol::Real = 1.0e-14) where {T}
     E_inf = fluid ? zero(T) : E_glassy - sum(Es)
     if !fluid
         expected = one(T) / (k.J_0 + sum(k.J))
-        isapprox(MFH_Core._primal(E_inf), MFH_Core._primal(expected); rtol = 1.0e-8) || @warn """
+        isapprox(MFH_Core.primal(E_inf), MFH_Core.primal(expected); rtol = 1.0e-8) || @warn """
         kelvin_to_maxwell: the equilibrium modulus from the residues \
-        ($(MFH_Core._primal(E_inf))) disagrees with 1/J*(0) ($(MFH_Core._primal(expected))). \
+        ($(MFH_Core.primal(E_inf))) disagrees with 1/J*(0) ($(MFH_Core.primal(expected))). \
         The input spectrum is probably not a valid Stieltjes function.""" maxlog = 1
     end
     return PronyRelaxation(E_inf, Es, σs)
@@ -700,7 +700,7 @@ end
 function _warn_ill_conditioned(tau, who::AbstractString)
     _numeric_spectrum(tau) || return nothing
     for j in 1:(length(tau) - 1)
-        lo, hi = MFH_Core._primal(tau[j]), MFH_Core._primal(tau[j + 1])
+        lo, hi = MFH_Core.primal(tau[j]), MFH_Core.primal(tau[j + 1])
         if hi - lo ≤ 1.0e3 * PRONY_MERGE_TOL * lo
             @warn """
             $who: the times $lo and $hi are nearly equal. The conversion stays \
@@ -715,9 +715,9 @@ end
 
 function _assert_positive(v, who::AbstractString, what::AbstractString)
     for x in v
-        MFH_Core._primal(x) > 0 || throw(
+        MFH_Core.primal(x) > 0 || throw(
             ErrorException(
-                "$who: obtained a non-positive $what ($(MFH_Core._primal(x))). " *
+                "$who: obtained a non-positive $what ($(MFH_Core.primal(x))). " *
                     "The sign is structural for a valid spectrum, so this means a " *
                     "root was located in the wrong bracket — please report it."
             )

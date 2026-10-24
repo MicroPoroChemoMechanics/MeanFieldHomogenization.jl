@@ -101,8 +101,10 @@ function layered_ellipsoid()
         xs = vcat(0.0, ρts)
         names = ("Omega_1", "Omega_2", "dots.c", "Omega_N")
         for k in 1:4
-            label(m(names[k]), c + Point(k == 1 ? 26 : (xs[k] + xs[k + 1]) / 2, 18); size = 15,
-                color = k == 4 ? "#ffffff" : INK)
+            label(
+                m(names[k]), c + Point(k == 1 ? 26 : (xs[k] + xs[k + 1]) / 2, 18); size = 15,
+                color = k == 4 ? "#ffffff" : INK
+            )
         end
         label(m("Omega_(N+1)"), c + Point(ρts[end] + 40, 18); size = 15)
         for (name, ρt) in zip(("cal(I)_1", "cal(I)_2", "", "cal(I)_N"), ρts)
@@ -184,9 +186,11 @@ levin_prestress() = levin_sum(
             m("angle.l bold(sigma)^b angle.r = bold(Sigma)^ast"),
         ),
     ),
-    m("angle.l bold(sigma)^b : bold(epsilon)^a angle.r = bold(Sigma)^ast : bold(E), quad " *
-        "angle.l bold(sigma)^a : bold(epsilon)^b angle.r = 0 quad => quad " *
-        "bold(Sigma)^ast = angle.l bold(sigma)^ast : bb(A) angle.r = sum_r f_r bold(sigma)^ast_r : bb(A)_r"),
+    m(
+        "angle.l bold(sigma)^b : bold(epsilon)^a angle.r = bold(Sigma)^ast : bold(E), quad " *
+            "angle.l bold(sigma)^a : bold(epsilon)^b angle.r = 0 quad => quad " *
+            "bold(Sigma)^ast = angle.l bold(sigma)^ast : bb(A) angle.r = sum_r f_r bold(sigma)^ast_r : bb(A)_r"
+    ),
 )
 
 """
@@ -219,9 +223,11 @@ levin_free_strain() = levin_sum(
             m("angle.l bold(epsilon)^b angle.r = bold(E)^ast"),
         ),
     ),
-    m("angle.l bold(sigma)^a : bold(epsilon)^b angle.r = bold(Sigma) : bold(E)^ast, quad " *
-        "angle.l bold(sigma)^b : bold(epsilon)^a angle.r = 0 quad => quad " *
-        "bold(E)^ast = angle.l bold(epsilon)^ast : bb(B) angle.r = sum_r f_r bold(epsilon)^ast_r : bb(B)_r"),
+    m(
+        "angle.l bold(sigma)^a : bold(epsilon)^b angle.r = bold(Sigma) : bold(E)^ast, quad " *
+            "angle.l bold(sigma)^b : bold(epsilon)^a angle.r = 0 quad => quad " *
+            "bold(E)^ast = angle.l bold(epsilon)^ast : bb(B) angle.r = sum_r f_r bold(epsilon)^ast_r : bb(B)_r"
+    ),
 )
 
 geometry_figures() = (

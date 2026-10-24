@@ -67,7 +67,7 @@ function _cluster_concentrations(asm, P₀, prop::Symbol, R_c, pass; kw...)
     reps = [_family_representative(asm, lab) for lab in labels]
     n = length(labels)
     L, cutoff = _lattice_parameters(asm, R_c)
-    Id = _identity_like(P₀)
+    Id = one(P₀)
 
     # Volume fraction and property contrast, per family.
     f = [_family_fraction(asm, lab) for lab in labels]
@@ -114,7 +114,7 @@ lying inside the cluster — including the periodic images, and excluding `rep`
 itself.
 """
 function _family_interaction(asm, rep::Symbol, label::Int, P₀, L, cutoff, pass)
-    acc = _zero_like(P₀)
+    acc = zero(TensND.generic_tens(P₀))
     ga = particle_geometry(asm, rep)
     ca = particle_center(asm, rep)
     for nm in particle_names(asm)
@@ -142,7 +142,7 @@ with the matrix concentration following from the strain average rule,
 ``f_0\\,\\mathbb{A}_0 = \\mathbb{I} - \\sum_I f_I\\,\\mathbb{A}_I``.
 """
 function _effective_from_concentrations(asm, P₀, prop::Symbol, A, reps)
-    Id = _identity_like(P₀)
+    Id = one(P₀)
     f = [_family_fraction(asm, particle_family(asm, reps[k])) for k in eachindex(reps)]
     acc = Id
     for k in eachindex(reps)
@@ -221,15 +221,6 @@ _kernel_options(opts::NamedTuple) = Base.structdiff(opts, NamedTuple{_SCHEME_ONL
 ⊙(A::TensND.AbstractTens{4}, B::TensND.AbstractTens{4}) = A ⊡ B
 ⊙(A::TensND.AbstractTens{2}, B::TensND.AbstractTens{2}) = A ⋅ B
 
-# The element type is taken from the reference property, not defaulted:
-# `tens_Id4()` builds a symbolic identity, which would poison an otherwise
-# `Float64` (or `Dual`) system on first contact.
-_identity_like(P₀::TensND.AbstractTens{4, 3}) = TensND.tens_Id4(Val(3), Val(eltype(P₀)))
-_identity_like(P₀::TensND.AbstractTens{4, 2}) = TensND.tens_Id4(Val(2), Val(eltype(P₀)))
-_identity_like(P₀::TensND.AbstractTens{2, 3}) = TensND.tens_Id2(Val(3), Val(eltype(P₀)))
-_identity_like(P₀::TensND.AbstractTens{2, 2}) = TensND.tens_Id2(Val(2), Val(eltype(P₀)))
-
-_zero_like(P₀::TensND.AbstractTens{4, 3}) = TensND.Tens(zeros(eltype(P₀), 3, 3, 3, 3))
-_zero_like(P₀::TensND.AbstractTens{4, 2}) = TensND.Tens(zeros(eltype(P₀), 2, 2, 2, 2))
-_zero_like(P₀::TensND.AbstractTens{2, 3}) = TensND.Tens(zeros(eltype(P₀), 3, 3))
-_zero_like(P₀::TensND.AbstractTens{2, 2}) = TensND.Tens(zeros(eltype(P₀), 2, 2))
+# The identity is `one(P₀)` (TensND), in the element type of the reference property:
+# `tens_Id4()` with no type builds a symbolic identity, which would poison an
+# otherwise `Float64` (or `Dual`) system on first contact.

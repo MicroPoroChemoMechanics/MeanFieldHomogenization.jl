@@ -286,41 +286,19 @@ Reasons to override it:
 """
 const DEFAULT_INVERSION = FixedTalbot(24)
 
-# ── Value algebra: real part, and scalar decomposition ──────────────────────
-#
-# `TensND` provides no `real(::AbstractTens)`.  Going through `_rebuild`
-# (rather than `get_array`) is what keeps a `TensTI` a `TensTI` with its axis
-# intact — dropping to a generic `Tens` would be the same class of bug as the
-# `zero` trap documented on `_accumulate` below.
-
-const _StructuredTens = Union{TensND.TensISO, TensND.TensTI, TensND.TensOrtho}
-
-"""
-    _realpart(x)
-
-Discard the imaginary part left over by a numerical inversion, whatever the
-container.  Every inversion method here evaluates the transform on complex
-nodes, so a real-valued original comes back with an imaginary residue of the
-order of the quadrature error; the caller wants the real object back, not a
-complex one.
-
-The tensor methods rebuild through `TensND._rebuild` rather than through
-`get_array`, which is what keeps a `TensISO`/`TensTI`/`TensOrtho` in its own
-class with its axis or frame intact — dropping to a generic `Tens` would lose
-the symmetry the scheme just established.
-"""
-_realpart(x::Real) = x
-_realpart(x::Number) = real(x)
-_realpart(M::AbstractMatrix) = real.(M)
-_realpart(A::_StructuredTens) = TensND._rebuild(A, real.(TensND.get_data(A)))
-_realpart(A::TensND.AbstractTens) =
-    TensND.Tens(real.(TensND.get_array(A)), TensND.get_basis(A), TensND.get_var(A))
+# The real part of a transform value, whatever its container, is `real`:
+# TensND's keeps a structured tensor in its class with its axis or frame
+# (dropping to a generic `Tens` would lose the symmetry the scheme just
+# established). Every inversion here evaluates the transform on complex nodes,
+# so a real original comes back with an imaginary residue of the order of the
+# quadrature error.
 
 """
     _decompose(x) -> (components::Vector, rebuild)
 
 Split a transform value into a vector of scalar components together with a
-closure putting them back into the same shape and symmetry class.
+closure putting them back into the same shape and symmetry class: TensND's
+`to_vector` / `from_vector` for a tensor.
 
 Used only by [`DeHoog`](@ref), whose quotient-difference acceleration divides
 samples by one another and is therefore *not* linear in the transform values.
@@ -328,20 +306,7 @@ The other three methods never need this: they are weighted sums, so they run on
 the value type directly.
 """
 _decompose(x::Number) = ([x], c -> @inbounds c[1])
-
-function _decompose(A::_StructuredTens)
-    d = TensND.get_data(A)
-    n = length(d)
-    return collect(d), c -> TensND._rebuild(A, ntuple(i -> @inbounds(c[i]), n))
-end
-
-function _decompose(A::TensND.AbstractTens)
-    arr = TensND.get_array(A)
-    basis = TensND.get_basis(A)
-    var = TensND.get_var(A)
-    sz = size(arr)
-    return vec(collect(arr)), c -> TensND.Tens(reshape(collect(c), sz), basis, var)
-end
+_decompose(A::TensND.AbstractTens) = (TensND.to_vector(A), c -> TensND.from_vector(A, c))
 
 function _decompose(M::AbstractMatrix)
     sz = size(M)
@@ -381,18 +346,6 @@ end
 # `ForwardDiff.Dual` or a `BigFloat` time survive all the way to the nodes.
 
 @inline _worktype(t::Real) = typeof(float(t))
-
-"""
-    _scalar_float(T)
-
-The plain floating-point type underlying `T`, peeling `ForwardDiff.Dual`
-wrappers.  The quadrature weights are built in this type: they never carry
-partials (they depend on `N` and `t` only), and promotion does the rest.
-"""
-_scalar_float(::Type{T}) where {T <: AbstractFloat} = T
-_scalar_float(::Type{T}) where {T <: Real} = float(T)
-_scalar_float(::Type{D}) where {D <: ForwardDiff.Dual} =
-    _scalar_float(ForwardDiff.valtype(D))
 
 # ── Gaver-Stehfest weights: exact rationals, cached per N ───────────────────
 #
@@ -453,7 +406,7 @@ end
 
 function _nodes_weights(m::GaverStehfest, t::Real)
     T = _worktype(t)
-    S = _scalar_float(T)
+    S = TensND.primal_type(T)
     a = log(S(2)) / t
     V = _gs_weights(S, m.N)
     nodes = [a * k for k in 1:(m.N)]
@@ -463,7 +416,7 @@ end
 
 function _nodes_weights(m::FixedTalbot, t::Real)
     T = _worktype(t)
-    S = _scalar_float(T)
+    S = TensND.primal_type(T)
     N = m.N
     r = 2 * S(N) / (5 * t)
 
@@ -487,7 +440,7 @@ end
 
 function _nodes_weights(m::TalbotTrefethen, t::Real)
     T = _worktype(t)
-    S = _scalar_float(T)
+    S = TensND.primal_type(T)
     N = m.N
     c1, c2, c3, c4 = S(0.5017), S(0.6407), S(0.6122), S(0.2645)
     h = 2 * S(π) / N
@@ -682,7 +635,7 @@ inverse_carson_rate(
 function _invert(F, t::Real, method::AbstractLaplaceInversion)
     nodes, weights = _nodes_weights(method, t)
     values = map(F, nodes)
-    return _realpart(_accumulate(values, weights))
+    return real(_accumulate(values, weights))
 end
 
 function _invert(F, t::Real, method::DeHoog)
@@ -690,8 +643,8 @@ function _invert(F, t::Real, method::DeHoog)
     # mathematics — so it is taken on the value of `t` alone, which keeps the
     # `Dual` in the one place where `t` enters analytically, exp(iπt/T).
     # Letting `T` carry partials would push them into `S(Tscale)` and fail.
-    Tscale = method.T === nothing ? 2 * MFH_Core._primal(t) : method.T
-    S = _scalar_float(_worktype(t))
+    Tscale = method.T === nothing ? 2 * MFH_Core.primal(t) : method.T
+    S = TensND.primal_type(_worktype(t))
     nodes = _dehoog_nodes(method, S, Tscale)
     values = map(F, nodes)
     return _dehoog_from_values(values, t, method, Tscale)
@@ -736,7 +689,7 @@ end
 # user asked for a single block covering everything, so we honor that and warn
 # about any time the node set cannot resolve.
 function _invert_grid(F, times::AbstractVector{<:Real}, method::DeHoog)
-    S = _scalar_float(_worktype(float(first(times))))
+    S = TensND.primal_type(_worktype(float(first(times))))
     out = Vector{Any}(undef, length(times))
 
 
@@ -753,7 +706,7 @@ function _invert_grid(F, times::AbstractVector{<:Real}, method::DeHoog)
     order = sortperm(times)
     ratio = 1 / (2 * _DEHOOG_MIN_RATIO)          # t_max / t_min within a block
     for blk in _dehoog_blocks(order, times, ratio)
-        Tscale = 2 * MFH_Core._primal(times[order[last(blk)]])
+        Tscale = 2 * MFH_Core.primal(times[order[last(blk)]])
         nodes = _dehoog_nodes(method, S, Tscale)
         values = map(F, nodes)
         for j in blk
@@ -797,10 +750,10 @@ function _dehoog_from_values(values, t::Real, method::DeHoog, Tscale)
     comps, rebuild = _decompose(first(values))
     ncomp = length(comps)
     if ncomp == 1 && first(values) isa Number
-        return _realpart(_dehoog_scalar([v for v in values], t, method, Tscale))
+        return real(_dehoog_scalar([v for v in values], t, method, Tscale))
     end
     out = map(1:ncomp) do i
-        _realpart(_dehoog_scalar([_decompose(v)[1][i] for v in values], t, method, Tscale))
+        real(_dehoog_scalar([_decompose(v)[1][i] for v in values], t, method, Tscale))
     end
     return rebuild(out)
 end
@@ -816,7 +769,7 @@ function _dehoog_scalar(a::AbstractVector, t::Real, method::DeHoog, Tscale)
     M = method.N
     n = 2M
     T = _worktype(t)
-    S = _scalar_float(T)
+    S = TensND.primal_type(T)
     # The working type must come from the *samples* and from `t`, never be
     # hard-coded: a `ForwardDiff.Dual` reaches this routine either through the
     # transform values (differentiation wrt a model parameter) or through `t`

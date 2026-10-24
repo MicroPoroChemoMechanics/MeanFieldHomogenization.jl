@@ -91,7 +91,7 @@ function _resolve_paths(c::CustomPath, rve::RVE, nsteps::Int, matrix::Symbol)
             traj[k + 1] - traj[k] ≥ -1.0e-12 ||
                 throw(ArgumentError("CustomPath[:$(name)] is not monotone non-decreasing"))
         end
-        traj_f = collect(Float64.(traj))
+        traj_f = float.(collect(traj))
         f = let traj_f = traj_f, N = N
             τ -> _piecewise_linear(traj_f, N, τ)
         end

@@ -26,3 +26,6 @@ CLAUDE.md
 Thumbs.db
 *.swp
 *.swo
+
+# Bytecode of the Python modules next to the scripts
+__pycache__/

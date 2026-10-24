@@ -12,6 +12,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+import DECUHR, Integrals   # the `:decuhr` back-end is an extension
 
 E, ν = 1.0, 0.25
 k, μ = E / (3(1 - 2ν)), E / (2(1 + ν))

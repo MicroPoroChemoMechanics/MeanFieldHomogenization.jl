@@ -173,8 +173,11 @@ derivative(rve, Dilute(), geometry(:I, :eccentricity);
 ```
 
 This requires the whole path to be type-generic, so that `ForwardDiff.Dual`
-propagates. An external numerical solver in the loop generally breaks that —
-fall back to finite differences there.
+propagates. An external numerical solver in the loop generally breaks that:
+give the solve its derivative by the implicit-function theorem — solve on the
+values, then one Newton correction carrying the duals — rather than
+differentiating it by finite differences, whose step trades truncation against
+cancellation and loses the derivative's accuracy.
 
 ### A crack, from `cod_tensor` alone
 

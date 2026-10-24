@@ -45,7 +45,7 @@ purely mechanical law only ever sees the one-gradient specialization.
 | [`MicrocrackedMaterial`](@ref) | crack families that open and close; exact piecewise-linear tangent |
 | [`FracturedPoroelasticRock`](@ref) | the saturated fractured rock: two gradients, two fluxes, evolving permeability |
 | [`MaterialCache`](@ref), [`cache_stats`](@ref) | memoization on the microstructural configuration |
-| [`to_tensors`](@ref), [`from_tensors`](@ref) | the `Tensors.jl` bridge |
+| `to_tensors`, `from_tensors` | the `Tensors.jl` bridge (TensND's) |
 | [`plane_strain_response`](@ref) | driving a 3-D material from a 2-D element loop |
 | [`check_material_interface`](@ref) | conformance checker |
 
@@ -54,7 +54,7 @@ purely mechanical law only ever sees the one-gradient specialization.
 - **Frames.** A `Tensors.jl` tensor has no basis; its components are global. A
   TensND tensor returns its components in its *own* basis, and a homogenized
   property whose RVE carries tilted inclusions comes back rotated. Always cross
-  the boundary through [`to_tensors`](@ref) / [`from_tensors`](@ref), never
+  the boundary through `to_tensors` / `from_tensors`, never
   through `get_array`.
 - **State is immutable.** [`material_response`](@ref) returns a new state
   instead of mutating its argument, so a rejected Newton iteration is recovered
@@ -73,7 +73,10 @@ import ..Schemes
 import ..Cracks
 import ..Poromechanics
 
-include("tensors_bridge.jl")
+# The Tensors.jl bridge and the Voigt forms are TensND's: components in the
+# canonical basis, whatever basis a tensor is written in. Re-exported unchanged.
+import TensND: to_tensors, from_tensors, voigt_stress, voigt_strain, stress_from_voigt, strain_from_voigt
+
 include("material.jl")
 include("cache.jl")
 include("elastic.jl")

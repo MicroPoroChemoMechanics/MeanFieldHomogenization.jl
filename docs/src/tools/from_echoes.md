@@ -10,10 +10,10 @@ mean-field homogenization library (with a Python interface) developed at
 Cerema. If you already have Echoes scripts, this page is a direct
 translation guide: the same RVE/scheme/homogenize concepts, a line-by-line
 API table, and a worked example that calls **both** implementations —
-Echoes live from Julia via [PyCall.jl](https://github.com/JuliaPy/PyCall.jl)
+Echoes live from Julia via [PythonCall.jl](https://github.com/JuliaPy/PythonCall.jl)
 — to check that they agree.
 
-The `@example` blocks run at build time; the Python and PyCall blocks are
+The `@example` blocks run at build time; the Python and PythonCall blocks are
 shown for reference, and the Echoes numbers below were captured by running
 them against Echoes 1.0.
 
@@ -122,26 +122,32 @@ Line for line, the two snippets build the same RVE and call the same
 scheme — this is the translation to internalize for every other Echoes
 script.
 
-## Calling Echoes from Julia with PyCall
+## Calling Echoes from Julia with PythonCall
 
 To cross-check MFH against a *live* Echoes instead of hand-copied
-numbers, [PyCall.jl](https://github.com/JuliaPy/PyCall.jl) can call
+numbers, [PythonCall.jl](https://github.com/JuliaPy/PythonCall.jl) can call
 Echoes directly from a Julia session. This requires Echoes installed in
 some Python environment — any interpreter where `import echoes` succeeds
-will do, conda or otherwise:
+will do, conda or otherwise, provided it also has `sympy` (`pip install
+sympy`), which the symbolic layer of the stack imports:
 
 ```julia
-# One-time setup: point PyCall at the interpreter where `import echoes`
-# succeeds, then rebuild the binding.
-ENV["PYTHON"] = raw"/path/to/that/python"
-using Pkg
-Pkg.build("PyCall")
+# One-time setup, before the first `using PythonCall` of the session: point
+# PythonCall at the interpreter where `import echoes` succeeds, and tell CondaPkg
+# to manage nothing, so that the packages of that interpreter (the numpy
+# version Echoes was built against, often numpy 1.x) are kept as they are.
+ENV["JULIA_CONDAPKG_BACKEND"] = "Null"
+ENV["JULIA_PYTHONCALL_EXE"] = raw"/path/to/that/python"
 ```
 
-```julia
-using PyCall
+The same two settings can be exported in the shell before starting Julia, or
+stored once as preferences of PythonCall and CondaPkg. The complete recipe,
+with the benchmark scripts, is in `scripts/bench_echoes/README.md`.
 
-py"""
+```julia
+using PythonCall
+
+pyexec("""
 from echoes import *
 
 def run_echoes(phi, scheme_name):
@@ -157,9 +163,9 @@ def run_echoes(phi, scheme_name):
     C = homogenize(prop="C", rve=myrve, scheme=scheme,
                    epsrel=1e-6, maxnb=300, select_best=True)
     return max(C.k, 0.), max(C.mu, 0.)
-"""
+""", Main)
 
-k_e, μ_e = py"run_echoes"(0.3, "MT")
+k_e, μ_e = pyconvert(Tuple{Float64, Float64}, Main.run_echoes(0.3, "MT"))
 ```
 
 Running this snippet against Echoes 1.0 returns
@@ -167,9 +173,10 @@ Running this snippet against Echoes 1.0 returns
 matching the reference table below to solver tolerance. This is the same
 pattern used throughout
 `scripts/bench_echoes/`
-(see [Production cross-checks](@ref from-echoes-where-next)) — a
-`py"""..."""` block defining a small helper,
-called from Julia like an ordinary function.
+(see [Production cross-checks](@ref from-echoes-where-next)) — a small
+Python helper (there, a module next to the script, imported with `pyimport`),
+called from Julia like an ordinary function, its results converted with
+`pyconvert`.
 
 ## The benchmark result
 
@@ -244,7 +251,7 @@ end
 
 ## [Production cross-checks](@id from-echoes-where-next)
 
-`scripts/bench_echoes/` runs the same PyCall pattern systematically; tolerances
+`scripts/bench_echoes/` runs the same PythonCall pattern systematically; tolerances
 and measured agreement are in [Cross-validation](@ref dev-validation),
 timings in [Performance vs Echoes](@ref dev-benchmarks).
 
@@ -257,7 +264,7 @@ up a place where the two libraries do *not* line up trivially:
 | [Crack distributions: isotropic or parallel](@ref tut-crack-distributions) | `MoriTanaka` and `SelfConsistent` reproduce Echoes to ``\sim 10^{-7}`` on both an isotropic and a single-orientation crack population — but `AsymmetricSelfConsistent` is a *different* fixed point, not the translation of Echoes' `SC`, and it percolates at about half the crack density |
 | [Aging creep: loading age against inclusion shape](@ref tut-aging-ages-aspect) | the aging-viscoelastic counterpart of the table above: `ViscoLaw(J, :creep)` against Echoes' `visco_prop={"C": (Js, CREEP)}`, swept over loading ages and aspect ratios |
 
-Without Echoes or PyCall, each cross-check has a PyCall-free counterpart:
+Without Echoes or PythonCall, each cross-check has a counterpart that needs neither:
 committed `*_python.json` dumps, and pure-Julia transcriptions such as
 `scripts/55_aging_creep_dirichlet_chains.jl`.
 

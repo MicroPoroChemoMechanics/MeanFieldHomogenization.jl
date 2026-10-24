@@ -129,7 +129,7 @@ function material_response(
     # incompressible solid (𝐁 = 𝟏), which is the paper's own consistency check.
     𝟏 = TensND.tens_Id2(Val(3), Val(Float64))
     Δp = p - st.p
-    Δσ_extra = Δp * _to_canonical(𝟏 - par.B)
+    Δσ_extra = Δp * TensND.change_tens_canon(𝟏 - par.B)
 
     mech = _advance_cracks(m.mech, ε, Δσ_extra, st.mech, cache)
 
@@ -138,7 +138,7 @@ function material_response(
     Cnew = ntuple(i -> m.C₀[i] * (ω[i] / ω₀[i])^3, N)
 
     C_hom, par = _poro_parameters(m, open_set(mech), cache)
-    σ = mech.σ - p * _to_canonical(par.B)
+    σ = mech.σ - p * TensND.change_tens_canon(par.B)
     φ = (par.B ⊡ ε) + p * par.inverse_modulus
 
     return MaterialResponse(
@@ -203,7 +203,7 @@ function _poro_parameters(m::FracturedPoroelasticRock, open, cache)
         C_hom, _ = _cracked_state_tensors(m.mech, open, cache)
         # The skeleton is the reference medium the MECHANICAL scheme chose:
         # that is where the information lives now, not on the RVE.
-        C_s = _to_canonical(
+        C_s = TensND.change_tens_canon(
             Schemes.reference_property(m.mech.rve, m.mech.scheme, m.mech.property)
         )
         (C_hom, Poromechanics.poroelastic_parameters(C_hom, C_s, m.porosity_ref))

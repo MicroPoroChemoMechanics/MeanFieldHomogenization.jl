@@ -30,12 +30,9 @@ As ``N \\to \\infty`` the family sum converges (in ``O(\\Delta\\theta^2)``) to t
 """
 function polar_orientation_bins(N::Int)
     N ≥ 2 || throw(ArgumentError("polar_orientation_bins: N ≥ 2 required"))
-    out = Vector{@NamedTuple{θ::Float64, weight::Float64}}(undef, N)
-    for i in 1:N
-        θ = (π / 2) * (i - 1) / (N - 1)
-        θm = i == 1 ? 0.0 : (π / 2) * (i - 1.5) / (N - 1)
-        θp = i == N ? π / 2 : (π / 2) * (i - 0.5) / (N - 1)
-        out[i] = (θ = θ, weight = cos(θm) - cos(θp))
-    end
-    return out
+    # Bin `i` is centered on `θᵢ` and bounded by the midpoints to its
+    # neighbors, clipped to `[0, π/2]`; its weight is the solid-angle share.
+    θ(i) = (π / 2) * (i - 1) / (N - 1)
+    edge(x) = clamp((π / 2) * (x - 1) / (N - 1), 0.0, π / 2)
+    return [(θ = θ(i), weight = cos(edge(i - 0.5)) - cos(edge(i + 0.5))) for i in 1:N]
 end

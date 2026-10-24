@@ -282,7 +282,7 @@ type from, so `Laminate(; T = Sym)` and `Laminate(; T = Sym, normal = (0, 0, 1))
 agree — but neither is required to obtain an exact symbolic answer.
 
 ```julia
-using SymPy
+using SymPyPythonCall
 @syms k_A::positive mu_A::positive k_B::positive mu_B::positive f::positive
 
 lam = Laminate(; normal = (0, 0, 1))

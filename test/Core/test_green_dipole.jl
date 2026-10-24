@@ -9,7 +9,7 @@ const _MFHC = MeanFieldHomogenization.Core
 @testset "Kelvin Green gradient / dipole far field (isotropic)" begin
 
     C₀ = iso_stiffness(10.0, 6.0)              # k = 10, μ = 6
-    E, ν = _MFHC.extract_iso_moduli(C₀)
+    E, ν = TensND.E_nu(C₀)
     μ = E / (2 * (1 + ν))
 
     Π = [
@@ -98,7 +98,7 @@ end
     pts = ([0.3, -0.7, 1.1], [1.0, 0.0, 0.0], [-2.0, 3.0, -1.5], [0.01, 0.02, -0.03])
 
     @testset "against the closed form" begin
-        @test _MFHC.extract_iso_conductivity(K₀) == k₀
+        @test first(TensND.get_data(K₀)) == k₀
         for x in pts
             r = norm(x)
             @test collect(green_gradient_iso2(K₀, x)) ≈ -x ./ (4π * k₀ * r^3)

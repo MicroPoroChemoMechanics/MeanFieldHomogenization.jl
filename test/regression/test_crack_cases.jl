@@ -77,7 +77,7 @@ using LinearAlgebra
                     for i in 1:3, j in 1:3, p in 1:3, q in 1:3
             ]
             @test components_canon(H) ≈ H_ref rtol = 1.0e-14
-            @test components_canon(cod_from_compliance(H, crack, ℬ)) ≈ components_canon(B) rtol = 1.0e-14
+            @test cod_from_compliance(H, crack, ℬ) ≈ B rtol = 1.0e-14
         end
         # Without a crack, the elliptic factor.
         @test components_canon(compliance_from_cod(B, ℬ)) ≈
@@ -216,8 +216,8 @@ using LinearAlgebra
         ec = EllipticCrack(1.0, 0.4)
         B = cod_tensor(ec, C₀)
         H = compliance_from_cod(B, ec)
-        @test components_canon(H) ≈ components_canon(inverse_property_contribution(ec, C₀)) rtol = 1.0e-12
-        @test components_canon(cod_from_compliance(H, ec)) ≈ components_canon(B) rtol = 1.0e-12
+        @test H ≈ inverse_property_contribution(ec, C₀) rtol = 1.0e-12
+        @test cod_from_compliance(H, ec) ≈ B rtol = 1.0e-12
     end
 
     @testset "SIF — ribbon analytical" begin

@@ -66,7 +66,7 @@ function gradient_gradient_concentration(
         kw...,
     ) where {T, N}
     1 ≤ layer ≤ N || throw(BoundsError(sphere, layer))
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κ₀, μ₀ = TensND.k_mu(C₀)
     α_k = _bulk_concentration(sphere, κ₀, μ₀)[layer]
     β_k = _shear_concentration(sphere, C₀)[layer]
     Δα, Δβ = _layer_strain_jump_terms(sphere, C₀, layer; external, internal)

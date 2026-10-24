@@ -340,17 +340,17 @@ end
 end
 
 const _CT_HAS_SYMPY = try
-    @eval import SymPy
+    @eval import SymPyPythonCall
     true
 catch
     false
 end
 
 if _CT_HAS_SYMPY
-    # `@eval` defers the expansion of `SymPy.@syms` until the conditional
+    # `@eval` defers the expansion of `SymPyPythonCall.@syms` until the conditional
     # import above has run.
     @eval @testset "Concentration tensors — SymPy closed forms" begin
-        SymPy.@syms k0::positive μ0::positive k1::positive μ1::positive f::positive
+        SymPyPythonCall.@syms k0::positive μ0::positive k1::positive μ1::positive f::positive
         rve = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3k0, 2μ0)); fraction = :rest)
         add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(3k1, 2μ1)); fraction = f)
@@ -358,23 +358,23 @@ if _CT_HAS_SYMPY
         for sch in (MoriTanaka(:M), Maxwell(:M))
             ct = concentration_tensors(rve, sch, :C)
             a, b = get_data(gradient_gradient_concentration(ct, :I))
-            @test SymPy.simplify(a - _ct_mt(ak, f)) == 0
-            @test SymPy.simplify(b - _ct_mt(aμ, f)) == 0
+            @test SymPyPythonCall.simplify(a - _ct_mt(ak, f)) == 0
+            @test SymPyPythonCall.simplify(b - _ct_mt(aμ, f)) == 0
         end
         ct = concentration_tensors(rve, Dilute(:M), :C)
         a, _ = get_data(gradient_gradient_concentration(ct, :I))
-        @test SymPy.simplify(a - ak) == 0
+        @test SymPyPythonCall.simplify(a - ak) == 0
 
         # Levin on symbols: the two-phase thermal expansion through the
         # Mori–Tanaka bulk modulus.
-        SymPy.@syms α0::positive α1::positive
+        SymPyPythonCall.@syms α0::positive α1::positive
         ct = concentration_tensors(rve, MoriTanaka(:M), :C)
-        one2 = TensISO{3}(SymPy.Sym(1))
+        one2 = TensISO{3}(SymPyPythonCall.Sym(1))
         E = levin_free_gradient(ct, Dict(:M => α0 * one2, :I => α1 * one2))
         k_hom = k0 + f * (k1 - k0) * _ct_mt(ak, f)
         α_ref = α0 + (α1 - α0) * (1 / k_hom - 1 / k0) / (1 / k1 - 1 / k0)
-        @test SymPy.simplify(get_array(E)[1, 1] - α_ref) == 0
-        @test SymPy.simplify(get_array(E)[1, 2]) == 0
+        @test SymPyPythonCall.simplify(get_array(E)[1, 1] - α_ref) == 0
+        @test SymPyPythonCall.simplify(get_array(E)[1, 2]) == 0
         # Biot coefficient of the porous limit, b = 1 - k^hom / k₀.
         rve_p = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve_p, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3k0, 2μ0)); fraction = :rest)
@@ -382,22 +382,22 @@ if _CT_HAS_SYMPY
         ct = concentration_tensors(rve_p, MoriTanaka(:M), :C)
         b = -levin_preflux(ct, Dict(:P => -one2))
         k_p = k0 + f * (0 - k0) * _ct_mt(_ct_ak(k0, μ0, 0), f)
-        @test SymPy.simplify(get_array(b)[1, 1] - (1 - k_p / k0)) == 0
+        @test SymPyPythonCall.simplify(get_array(b)[1, 1] - (1 - k_p / k0)) == 0
 
         # Conduction: the gradient concentration and the free gradient of the
         # Mori–Tanaka estimate on spheres, in closed form.
-        SymPy.@syms K0::positive K1::positive g0::real g1::real
+        SymPyPythonCall.@syms K0::positive K1::positive g0::real g1::real
         rve_K = RVE(; distribution_shape = Ellipsoid(1.0))
         add_phase!(rve_K, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(K0)); fraction = :rest)
         add_phase!(rve_K, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(K1)); fraction = f)
         ct = concentration_tensors(rve_K, MoriTanaka(:M), :K)
         aK = _ct_aK(K0, K1)
-        @test SymPy.simplify(get_array(gradient_gradient_concentration(ct, :I))[1, 1] - _ct_mt(aK, f)) == 0
-        e = Tens(SymPy.Sym[1, 0, 0])
+        @test SymPyPythonCall.simplify(get_array(gradient_gradient_concentration(ct, :I))[1, 1] - _ct_mt(aK, f)) == 0
+        e = Tens(SymPyPythonCall.Sym[1, 0, 0])
         G = levin_free_gradient(ct, Dict(:M => g0 * e, :I => g1 * e))
         K_hom = K0 + f * (K1 - K0) * _ct_mt(aK, f)
-        @test SymPy.simplify(get_array(G)[1] - (g0 + (g1 - g0) * (1 / K_hom - 1 / K0) / (1 / K1 - 1 / K0))) == 0
-        @test SymPy.simplify(get_array(G)[2]) == 0
+        @test SymPyPythonCall.simplify(get_array(G)[1] - (g0 + (g1 - g0) * (1 / K_hom - 1 / K0) / (1 / K1 - 1 / K0))) == 0
+        @test SymPyPythonCall.simplify(get_array(G)[2]) == 0
     end
 end
 

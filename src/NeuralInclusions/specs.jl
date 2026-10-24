@@ -246,9 +246,7 @@ build(::Union{GradientConcentrationTI, FluxConcentrationTI}, c, axis) =
 # The cube frame is a TensND basis, like `HillOrtho`'s material frame.
 build(::GradientConcentrationCubic, c, frame) = TensND.TensCubic(c[1], c[2], c[3], frame)
 
-build(::HillOrtho, c, frame) = Core._make_ortho(
-    eltype(c), c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], nothing, frame
-)
+build(::HillOrtho, c, frame) = TensND.TensOrtho(c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], frame)
 
 """
     components(class, P, frame; atol = 1.0e-8) -> NTuple
@@ -301,15 +299,13 @@ _project(::HillOrtho, P, frame) = TensND.proj_tens(Val(:ORTHO), P, frame)
 _project(::GradientConcentrationCubic, P, frame) = TensND.proj_tens(Val(:CUBIC), P, frame)
 
 # `proj_tens(Val(:TI), …)` returns the *five*-component major-symmetric form, so
-# it cannot serve a concentration tensor. `Core.transverse_isotropify` is the exact
-# rotation-group average about the axis and keeps the non-major-symmetric content
-# (`TensTI{4,·,8}`); dropping `ℓ₇`, `ℓ₈` — which vanish identically for a tensor
-# with the minor symmetries — leaves the six components wanted. The residual is
-# measured explicitly, in canonical components so that two different bases cannot
-# be compared by accident.
+# it cannot serve a concentration tensor; `proj_tens(Val(:TI6), …)` is the
+# projection onto the six-component class, without major symmetry. The residual
+# is measured here in the max-norm of the canonical components, the one the
+# labeler's thresholds are written in.
 function _project(::Union{GradientConcentrationTI, FluxConcentrationTI}, P, axis)
-    l = TensND.get_ℓ8(Core.transverse_isotropify(P, axis))
-    B = TensND.TensTI{4}(l[1], l[2], l[3], l[4], l[5], l[6], axis)
+    l = TensND.get_data(first(TensND.proj_tens(Val(:TI6), P, axis)))
+    B = TensND.TensTI{4}(l..., axis)
     ref = Array(TensND.components_canon(P))
     d = maximum(abs, Array(TensND.components_canon(B)) .- ref)
     nrm = maximum(abs, ref)
@@ -378,7 +374,7 @@ _class_frame(::Union{HillISO, HillISO2, GradientConcentrationISO2}, _geom) = not
 _class_frame(::HillOrtho, geom) = Core.inclusion_basis(geom)
 
 _class_frame(::Union{HillTI, HillTI2}, geom) =
-    Core._basis_col(Core.inclusion_basis(geom), _spheroid_axis_index(_axes(geom)))
+    Tuple(TensND.vecbasis(Core.inclusion_basis(geom), :cov)[:, _spheroid_axis_index(_axes(geom))])
 
 # A concentration pair does *not* get its axis from the semi-axes: the morphology
 # it describes may well be a sphere (`FEExcenteredSphere` is one) whose response
@@ -389,7 +385,7 @@ _class_frame(::Union{HillTI, HillTI2}, geom) =
 # normal. A wrong choice here does not pass silently: `components` measures the
 # projection residual.
 _class_frame(::Union{GradientConcentrationTI, FluxConcentrationTI, GradientConcentrationTI2}, geom) =
-    Core._basis_col(Core.inclusion_basis(geom), 3)
+    Core._basis_axis(Core.inclusion_basis(geom), 3)
 
 # The cube axes are the inclusion's own basis, all three columns of it — a cube
 # has no distinguished direction to single out, which is the whole difference
@@ -772,18 +768,16 @@ function _anchor(::Val{:spheroid_cavity}, class, x, features, P₀, frame)
     # Using the class convention here makes the projection residual explode for
     # every prolate shape and nothing at all for oblate ones, which is how the
     # mistake hides.
-    axis = Core._basis_col(
-        Core.inclusion_basis(sph), _spheroid_axis_index(_axes(sph))
-    )
+    axis = Tuple(TensND.vecbasis(Core.inclusion_basis(sph), :cov)[:, _spheroid_axis_index(_axes(sph))])
     return build(class, components(class, Ab, axis), frame)
 end
 
 # `𝔸 = (𝕀 − ℙ:ℂ₀)⁻¹` — the cavity limit of `gradient_gradient_concentration`, with the
 # operator the order demands: `⊡` in elasticity, `⋅` in transport.
 _cavity_concentration(P::TensND.AbstractTens{4, 3}, C₀::TensND.AbstractTens{4, 3}) =
-    inv(_identity_4sym(promote_type(eltype(P), eltype(C₀))) - (P ⊡ C₀))
+    inv(TensND.tens_Id4(Val(3), Val(promote_type(eltype(P), eltype(C₀)))) - (P ⊡ C₀))
 _cavity_concentration(P::TensND.AbstractTens{2, 3}, K₀::TensND.AbstractTens{2, 3}) =
-    inv(_identity_2(promote_type(eltype(P), eltype(K₀))) - (P ⋅ K₀))
+    inv(TensND.tens_Id2(Val(3), Val(promote_type(eltype(P), eltype(K₀)))) - (P ⋅ K₀))
 
 # The layers' mean modulus, as a multiple of the reference. Every constituent of
 # the shipped layered-spheroid models shares the reference's Poisson ratio, so
@@ -837,9 +831,7 @@ function _anchor(::Val{:layered_spheroid}, class, x, features, P₀, frame)
     # Same frame discipline as the cavity anchor: `Spheroid` sorts its semi-axes
     # and permutes its basis, so the baseline is read in its own axis and rebuilt
     # in the caller's.
-    axis = Core._basis_col(
-        Core.inclusion_basis(sph), _spheroid_axis_index(_axes(sph))
-    )
+    axis = Tuple(TensND.vecbasis(Core.inclusion_basis(sph), :cov)[:, _spheroid_axis_index(_axes(sph))])
     Bb = _anchor_moduli_side(class, P̄, Ab)
     return build(class, components(class, Bb, axis), frame)
 end
@@ -849,11 +841,11 @@ end
 _homogeneous_concentration(
     P::TensND.AbstractTens{4, 3}, C̄::TensND.AbstractTens{4, 3},
     C₀::TensND.AbstractTens{4, 3},
-) = inv(_identity_4sym(promote_type(eltype(P), eltype(C₀))) + (P ⊡ (C̄ - C₀)))
+) = inv(TensND.tens_Id4(Val(3), Val(promote_type(eltype(P), eltype(C₀)))) + (P ⊡ (C̄ - C₀)))
 _homogeneous_concentration(
     P::TensND.AbstractTens{2, 3}, K̄::TensND.AbstractTens{2, 3},
     K₀::TensND.AbstractTens{2, 3},
-) = inv(_identity_2(promote_type(eltype(P), eltype(K₀))) + (P ⋅ (K̄ - K₀)))
+) = inv(TensND.tens_Id2(Val(3), Val(promote_type(eltype(P), eltype(K₀)))) + (P ⋅ (K̄ - K₀)))
 
 # A strain or gradient class anchors against the concentration itself; a stress
 # class against the concentration carrying the mean modulus.

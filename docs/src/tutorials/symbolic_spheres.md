@@ -7,7 +7,7 @@
     that are derived symbolically.
 
 `TensND` is generic in its element type: the same tensor algebra (`⊡`, `inv`,
-projectors, …) runs on `Float64`, on **SymPy.jl** `Sym` and on **Symbolics.jl**
+projectors, …) runs on `Float64`, on **SymPyPythonCall.jl** `Sym` and on **Symbolics.jl**
 `Num`. The classical homogenization formulas therefore come out **in closed
 form**, with numbers substituted only at the end.
 
@@ -21,7 +21,7 @@ general inclusion, **porous** limit (``k_i,\mu_i \to 0``) and **rigid** limit
 ```@example tutsymsph
 using MeanFieldHomogenization
 using TensND
-using SymPy
+using SymPyPythonCall
 using Plots
 gr()  # headless backend; GKSwstype is set to "100" in make.jl
 

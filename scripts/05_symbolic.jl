@@ -1,13 +1,13 @@
 # =============================================================================
 #  05_symbolic.jl
 #
-#  Symbolic computation with SymPy.jl.
+#  Symbolic computation with SymPyPythonCall.jl.
 #
 #  Run from the MeanFieldHomogenization.jl root:
 #    julia --project=. scripts/05_symbolic.jl
 #
 #  Prerequisites:
-#    julia> using Pkg; Pkg.add("SymPy")
+#    julia> using Pkg; Pkg.add("SymPyPythonCall")
 #
 #  @syms assumption syntax (SymPyCore):
 #    @syms x::positive            # single assumption
@@ -20,7 +20,7 @@
 #
 #  What does NOT work:
 #   ❌ 3D symbolic geometry — the general triaxial formula uses Elliptic.jl
-#      (C-library calls), which does not accept SymPy.Sym inputs.
+#      (C-library calls), which does not accept SymPyPythonCall.Sym inputs.
 #      Workaround: use Float64 geometry + symbolic material parameters.
 #
 #  Note on Ellipsoid with symbolic semi-axes:
@@ -42,12 +42,12 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)
 
 using MeanFieldHomogenization
 using TensND
-using SymPy
+using SymPyPythonCall
 using Printf
 
 # ═══════════════════════════════════════════════════════════════════════════
 println("="^70)
-println("  § 1  2D ELLIPSE — symbolic semi-axes  a, b  (SymPy.Sym)")
+println("  § 1  2D ELLIPSE — symbolic semi-axes  a, b  (SymPyPythonCall.Sym)")
 println("="^70)
 
 @syms a::positive b::positive
@@ -111,7 +111,7 @@ println("  P[1111]-P[2222] = ", diff_circ, "  (substituting a=b manually gives 0
 println("\n", "="^70)
 println("  § 3  3D SPHERE — symbolic elastic constants  (λ, μ)")
 println("="^70)
-println("  Geometry: Sym (one(Sym)).  Material: SymPy.Sym.")
+println("  Geometry: Sym (one(Sym)).  Material: SymPyPythonCall.Sym.")
 
 @syms λs::positive μs::positive
 

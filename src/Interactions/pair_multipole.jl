@@ -86,13 +86,13 @@ end
 # M² carrying derivatives: the frame on its value, every derivative in
 # N = Vᵀ M² V (header of this file).
 function _moment_contraction(P₀, r::AbstractVector, M²::AbstractMatrix; kw...)
-    λ₀, V = eigen(Symmetric(MFH_Core._primal.(M²)))
+    λ₀, V = eigen(Symmetric(MFH_Core.primal.(M²)))
     N = V' * M² * V
     # What is left of an entry of N once its value is taken off: its
     # derivatives, at every level of nesting. The diagonal keeps λ₀ for its
     # value, so that the value of a differentiated evaluation is the
     # evaluation itself; the off-diagonal is zero in value.
-    δ(x) = x - MFH_Core._primal(x)
+    δ(x) = x - MFH_Core.primal(x)
     λ = [λ₀[k] + δ(N[k, k]) for k in eachindex(λ₀)]
     D = [_second_directional(P₀, r, @view(V[:, k]); kw...) for k in eachindex(λ₀)]
     acc = _spectral_sum(D, λ)
@@ -130,7 +130,7 @@ its centroid, expressed in the global frame. For an ellipsoid of semi-axes
 with ``\\mathbf{Q}`` the matrix whose columns are the principal axes.
 """
 function _second_moment(ell::Ellipsoid{dim}) where {dim}
-    Q = MFH_Core._frame_matrix(ell.basis)
+    Q = Matrix(TensND.vecbasis(ell.basis, :cov))
     a = ell.semi_axes
     return Q * Diagonal([aᵢ^2 / (dim + 2) for aᵢ in a]) * transpose(Q)
 end

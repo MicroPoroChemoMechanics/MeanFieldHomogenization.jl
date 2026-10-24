@@ -22,11 +22,7 @@ function _hill_2d_aniso(
     T = promote_type(eltype(ell.semi_axes), eltype(C₀))
     ρ = ell.semi_axes[2] / ell.semi_axes[1]
 
-    C₀_princ = TensND.change_tens(C₀, ell.basis)
-    C₀_arr = Array{T, 4}(undef, 2, 2, 2, 2)
-    for i in 1:2, j in 1:2, k in 1:2, l in 1:2
-        C₀_arr[i, j, k, l] = C₀_princ[i, j, k, l]
-    end
+    C₀_arr = T.(Array(TensND.components(C₀, ell.basis)))   # in the ellipse's frame
 
     function γ_integrand(ψ)
         ζ = (cos(ψ), sin(ψ) / ρ)
@@ -73,24 +69,17 @@ function _hill_2d_aniso(
         γ_integrand, 0.0, π;
         atol = abstol, rtol = reltol, maxevals = maxiters
     )
-    P_arr = zeros(T, 2, 2, 2, 2)
-    let n = 0
-        for α in 1:2, β in 1:2, γ in 1:2, δ in 1:2
-            n += 1
-            P_arr[α, β, γ, δ] = vals[n] / π
-        end
-    end
+    # `vals` runs over (α, β, γ, δ) with δ fastest; `reshape` puts the first
+    # index fastest, hence the reversal of the four indices.
+    P_arr = permutedims(reshape(collect(vals) ./ π, 2, 2, 2, 2), (4, 3, 2, 1))
 
     # Project on the minor and major symmetries. Averaged in place, an entry
     # already overwritten entered the average of the next member of its orbit,
     # and the result was not exactly symmetric; each orbit is now averaged
     # once, in the order of its smallest index, and that value given to all
     # its members.
-    P_sym = similar(P_arr)
-    for α in 1:2, β in 1:2, γ in 1:2, δ in 1:2
-        rep = minimum(_orbit8(α, β, γ, δ))
-        P_sym[α, β, γ, δ] = sum(P_arr[I...] for I in _orbit8(rep...)) / 8
-    end
+    _orbit_mean(I) = sum(P_arr[J...] for J in _orbit8(minimum(_orbit8(I...))...)) / 8
+    P_sym = [_orbit_mean((α, β, γ, δ)) for α in 1:2, β in 1:2, γ in 1:2, δ in 1:2]
 
     return TensND.Tens(P_sym, ell.basis)
 end

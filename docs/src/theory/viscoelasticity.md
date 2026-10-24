@@ -255,6 +255,92 @@ matrix law, extracts ``(3k, 2\mu)``, inverts ``k+\tfrac{4}{3}\mu`` and ``\mu``
 in the Volterra sense, and assembles against [`tens_UA`](@ref) and
 [`tens_VA`](@ref). An anisotropic reference kernel has no such fast path.
 
+**Why the longitudinal modulus, and not the bulk one.** The Hill tensor inverts
+the acoustic tensor of the reference. For an isotropic one,
+``\underline{\xi}\cdot\mathbb{C}_0\cdot\underline{\xi}
+= \bigl(k + \tfrac{4}{3}\mu\bigr)\,\underline{\xi}\otimes\underline{\xi}
++ \mu\,\bigl(\boldsymbol{1} - \underline{\xi}\otimes\underline{\xi}\bigr)``
+for a unit ``\underline{\xi}``: its two eigenvalues are the *longitudinal*
+(P-wave) modulus ``k + \tfrac{4}{3}\mu`` and the shear modulus ``\mu``. These two,
+not the bulk modulus alone, are the scalars the formula above inverts, which is
+why the code works with the pair
+
+```math
+M_{\mathrm{long}} = k + \tfrac{4}{3}\mu = \frac{\alpha + 2\beta}{3},
+\qquad
+M_{\mathrm{shear}} = \mu = \frac{\beta}{2},
+```
+
+with ``(\alpha, \beta) = (3k, 2\mu)`` the coefficients of ``\mathbb{J}`` and
+``\mathbb{K}``, and with their Volterra inverses
+``J_{\mathrm{long}} = M_{\mathrm{long}}^{-\circ}`` and
+``J_{\mathrm{shear}} = M_{\mathrm{shear}}^{-\circ}``, so that
+``\widetilde{\mathbb{P}} = J_{\mathrm{long}}\,\mathbb{U}^{\boldsymbol{A}}
++ J_{\mathrm{shear}}\,\bigl(\mathbb{V}^{\boldsymbol{A}} - \mathbb{U}^{\boldsymbol{A}}\bigr)``,
+block by block in time.
+
+Going back to bulk and shear is linear on the relaxation kernels:
+
+```math
+\begin{aligned}
+k &= M_{\mathrm{long}} - \tfrac{4}{3}\,M_{\mathrm{shear}},
+& \mu &= M_{\mathrm{shear}},
+\\
+\alpha &= 3\,M_{\mathrm{long}} - 4\,M_{\mathrm{shear}},
+& \beta &= 2\,M_{\mathrm{shear}} .
+\end{aligned}
+```
+
+It is not linear on their inverses: ``J_{\mathrm{long}}`` is the Volterra inverse
+of the longitudinal kernel, not a combination of the bulk and shear creep
+functions. Those are ``k^{-\circ}`` and ``\mu^{-\circ}``, one Volterra inversion
+each of the kernels above; in the elastic limit
+``J_{\mathrm{long}} = 1/(k + \tfrac{4}{3}\mu) \neq 1/k``.
+
+The example below follows these steps on a Maxwell law discretized on five
+instants. [`trapezoidal_matrix`](@ref) gives the ``6n \times 6n`` block matrix of
+the relaxation kernel, [`iso_params_from_blocks`](@ref) its ``n \times n`` kernels
+``\alpha`` and ``\beta``, and [`volterra_inverse`](@ref) the discrete Volterra
+inverse of a scalar kernel (`block_size = 1`).
+
+```@example alv_long_shear
+using MeanFieldHomogenization, TensND
+
+law = maxwell_iso(10.0, 4.0, 1.0, 0.5)   # k, μ and their relaxation times
+times = collect(range(0.0, 2.0; length = 5))
+α, β = iso_params_from_blocks(trapezoidal_matrix(law, times))   # 3k and 2μ
+
+# longitudinal and shear kernels, the pair the Hill kernel inverts
+M_long, M_shear = (α .+ 2 .* β) ./ 3, β ./ 2
+
+# back to bulk and shear: linear on the relaxation kernels
+k, μ = M_long .- (4 / 3) .* M_shear, M_shear
+(k ≈ α ./ 3, μ ≈ β ./ 2)
+```
+
+The inverses do not convert this way: the longitudinal creep kernel differs from
+the bulk one, already at the first instant, where both reduce to the elastic
+values ``1/(k + \tfrac{4}{3}\mu)`` and ``1/k``.
+
+```@example alv_long_shear
+J_long = volterra_inverse(M_long; block_size = 1)
+J_shear = volterra_inverse(M_shear; block_size = 1)
+J_bulk = volterra_inverse(k; block_size = 1)
+(J_long[1, 1], J_bulk[1, 1], 1 / (10.0 + 4 / 3 * 4.0), 1 / 10.0)
+```
+
+Assembling ``J_{\mathrm{long}}\,\mathbb{U}^{\boldsymbol{A}}
++ J_{\mathrm{shear}}\,(\mathbb{V}^{\boldsymbol{A}} - \mathbb{U}^{\boldsymbol{A}})``
+by hand, in Kelvin–Mandel components, gives the Hill kernel that
+[`hill_kernel`](@ref) returns:
+
+```@example alv_long_shear
+ell = Ellipsoid(3.0, 1.0, 1.0)
+U = TensND.mandel66(tens_UA(ell))
+D = TensND.mandel66(tens_VA(ell)) - U
+kron(J_long, U) + kron(J_shear, D) ≈ hill_kernel(ell, law, times)
+```
+
 For a **sphere** the geometric tensors are
 ``\mathbb{U}^{\boldsymbol{A}} = \tfrac{1}{3}\mathbb{J} + \tfrac{2}{15}\mathbb{K}``
 and ``\mathbb{V}^{\boldsymbol{A}} = \tfrac{1}{3}\mathbb{I}``, giving the closed

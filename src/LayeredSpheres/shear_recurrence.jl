@@ -239,7 +239,7 @@ regularity zeros ``c_1 = d_1 = 0`` exactly instead of re-solving for them.
 """
 function _shear_probe_seq(sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}) where {T, N}
     κμ = _bulk_layer_moduli(sphere)
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κ₀, μ₀ = TensND.k_mu(C₀)
     TP = _bulk_promote(sphere, κμ, κ₀, μ₀)
     radii = sphere.radii
 
@@ -318,7 +318,7 @@ function _shear_amplitude_seq(
     ) where {T, N}
     inside_a, inside_b, sa, sb, λa, λb, TP = _shear_probe_seq(sphere, C₀)
     κμ = _bulk_layer_moduli(sphere)
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κ₀, μ₀ = TensND.k_mu(C₀)
     radii = sphere.radii
     z = zero(TP)
 

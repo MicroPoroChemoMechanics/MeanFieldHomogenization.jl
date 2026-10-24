@@ -129,9 +129,40 @@ struct CustomInclusion{dim, T <: Number, B <: TensND.AbstractBasis, NT <: NamedT
     semi_axes::Union{Nothing, NTuple{dim, T}}
     basis::B
     homogeneous::Bool
-    density_factor::Union{Nothing, Float64}
+    density_factor::Union{Nothing, T}
     fns::NT
+    CustomInclusion{dim, T, B, NT}(
+        semi_axes, basis, homogeneous, density_factor, fns
+    ) where {dim, T <: Number, B <: TensND.AbstractBasis, NT <: NamedTuple} =
+        new{dim, T, B, NT}(semi_axes, basis, homogeneous, density_factor, fns)
 end
+
+# Positional forms, for `Schemes._replace_geom_field`: written out because the
+# generated one leaves `dim` and `T` unbound when there are no semi-axes (Aqua,
+# Julia 1.14), and could not be called then. Without semi-axes, `dim` is the
+# basis's and `T` is `Float64`, as the keyword constructor chooses.
+# The density factor shares the element type of the semi-axes, promoted with
+# its own, so that either may carry a dual number.
+function CustomInclusion(
+        semi_axes::Tuple{Number, Vararg{Number, M}}, basis::B, homogeneous::Bool,
+        density_factor::Union{Nothing, Number}, fns::NT
+    ) where {M, B <: TensND.AbstractBasis, NT <: NamedTuple}
+    T = promote_type(map(typeof, semi_axes)..., _factor_type(density_factor))
+    return CustomInclusion{M + 1, T, B, NT}(map(T, semi_axes), basis, homogeneous, _factor_as(T, density_factor), fns)
+end
+
+function CustomInclusion(
+        ::Nothing, basis::B, homogeneous::Bool,
+        density_factor::Union{Nothing, Number}, fns::NT
+    ) where {dim, B <: TensND.AbstractBasis{dim}, NT <: NamedTuple}
+    T = promote_type(Float64, _factor_type(density_factor))
+    return CustomInclusion{dim, T, B, NT}(nothing, basis, homogeneous, _factor_as(T, density_factor), fns)
+end
+
+_factor_type(::Nothing) = Union{}
+_factor_type(x::Number) = typeof(x)
+_factor_as(::Type, ::Nothing) = nothing
+_factor_as(::Type{T}, x::Number) where {T} = T(x)
 
 function CustomInclusion(
         semi_axes::Union{Nothing, NTuple{<:Any, <:Number}} = nothing;
@@ -161,13 +192,17 @@ function CustomInclusion(
             "`dim` = $dim contradicts the $(length(semi_axes)) semi-axes given"
         )
     )
-    T = semi_axes === nothing ? Float64 :
-        Core._floatlike(promote_type(typeof.(semi_axes)...))
-    b = basis === nothing ? Core._default_basis(T, euler_angles) : basis
+    T = TensND.float_like(
+        promote_type(
+            semi_axes === nothing ? Float64 : promote_type(typeof.(semi_axes)...),
+            _factor_type(density_factor)
+        )
+    )
+    b = basis === nothing ? TensND.euler_basis(euler_angles; T = T) : basis
     axes = semi_axes === nothing ? nothing : map(T, semi_axes)
     return CustomInclusion{dim, T, typeof(b), typeof(fns)}(
         axes, b, homogeneous,
-        density_factor === nothing ? nothing : Float64(density_factor), fns
+        _factor_as(T, density_factor), fns
     )
 end
 
@@ -458,11 +493,15 @@ end
 # count as an implementation.
 const _FALLBACK_OWNERS = (Core.AbstractInclusion, Core.AbstractCustomInclusion)
 
-# The declared type of the first argument of the method that would be called.
-# `m.sig` is a `UnionAll` whenever the method is parametric, hence the unwrap.
+# The declared type of the first argument of the method that would be called,
+# as the `UnionAll` of its type name. `m.sig` is a `UnionAll` whenever the method
+# is parametric, hence the unwrap; and the argument of a parametric abstract type
+# comes back as that `UnionAll` on Julia 1.13 but as its body, with a free type
+# variable, on 1.14, which compares unequal to it.
 function _dispatch_owner(f, argtypes)
     sig = Base.unwrap_unionall(which(f, argtypes).sig)
-    return Base.unwrap_unionall(sig.parameters[2])
+    owner = Base.unwrap_unionall(sig.parameters[2])
+    return owner isa DataType ? owner.name.wrapper : owner
 end
 
 function _provides(::Core.AbstractInclusion, ::Symbol, f, args...)

@@ -1,84 +1,29 @@
 # =============================================================================
 #  moduli.jl
 #
-#  Extractors for the engineering moduli used by the analytical formulas in
-#  the sub-modules `Elasticity`, `Cracks` and `Conductivity`.  The
-#  routines only *read* components of the TensND tensor — they do not
-#  perform any homogenization step.
+#  The modulus readers of the isotropic and transversely isotropic classes are
+#  TensND's: `E_nu`, `k_mu`, `mu_nu`, `poisson_ratio` (3-D and plane-strain 2-D)
+#  and `ti_args_hoenig`. The names this package used to export for them are kept,
+#  deprecated, and point there.
+#
+#  `extract_iso_moduli` of a 2-D tensor read it with the 3-D formulas
+#  (`k = α/3`), which gave the Green operator of a 2-D medium the Poisson ratio
+#  `(α − β)/(2α + β)` where its Hill tensor uses the plane-strain `(α − β)/(2α)`;
+#  `TensND.E_nu` returns the latter, the one of the 3-D material whose
+#  plane-strain stiffness the 2-D tensor is.
 # =============================================================================
 
-"""
-    extract_iso_moduli(C₀::TensISO{4,3}) -> (E, ν)
+Base.@deprecate extract_iso_moduli(C₀) TensND.E_nu(C₀)
+Base.@deprecate extract_iso_conductivity(K₀) first(TensND.get_data(K₀))
 
-Extract Young's modulus `E` and Poisson's ratio `ν` from an isotropic
-4th-order stiffness `TensISO{4,3}`.  The internal TensND convention is
-``\\mathbb{C}_0 = 3k\\,\\mathbb{J} + 2\\mu\\,\\mathbb{K}`` i.e. `C₀.data = (3k, 2μ)`.
-"""
-function extract_iso_moduli(C₀::TensND.TensISO{4, 3})
-    α, β = C₀.data           # α = 3k, β = 2μ
-    k = α / 3
-    μ = β / 2
-    E = 9k * μ / (3k + μ)
-    ν = (3k - 2μ) / (2 * (3k + μ))
-    return E, ν
-end
-
-"""
-    extract_iso_moduli(C₀::TensISO{4,2}) -> (E, ν)
-
-2D plane-strain counterpart of [`extract_iso_moduli`](@ref) for
-`TensISO{4,2}`.  The same 3D formulas are used because the TensND
-storage is dimension-agnostic (`TensISO{4,d}` stores the same
-``(\\alpha, \\beta) = (3k, 2\\mu)`` pair).
-"""
-function extract_iso_moduli(C₀::TensND.TensISO{4, 2})
-    α, β = C₀.data
-    k = α / 3
-    μ = β / 2
-    E = 9k * μ / (3k + μ)
-    ν = (3k - 2μ) / (2 * (3k + μ))
-    return E, ν
-end
-
-"""
-    extract_ti_moduli(C₀, n̂) -> (E, H, ν₁, ν₂, Γ)
-
-Read the five TI compliance moduli out of a stiffness tensor `C₀`
-whose axis of symmetry is `n̂`.  Used by the closed-form COD formulas
-of the `Cracks` sub-module.
-
-The moduli are defined through the compliance tensor
-``\\mathbb{S} = \\mathbb{C}_0^{-1}`` as:
-
-* ``E = 1/S_{1111}``
-* ``H = 1/(S_{3333}\\,E)``
-* ``\\nu_1 = -E\\,S_{1122}``
-* ``\\nu_2 = -E\\,S_{1133}``
-* ``\\Gamma = (1+\\nu_1)/(2\\,E\\,S_{2323})``
-
-See the package documentation for the full derivation.
-"""
-function extract_ti_moduli(C₀, n̂)
-    𝕊 = inv(C₀)
-    ℬ_current = TensND.get_basis(𝕊)
-    𝕊_rot = TensND.tens_basis(ℬ_current, 3) == n̂ ? 𝕊 :
-        TensND.change_tens(
-            𝕊,
-            TensND.Basis(TensND.angles(TensND.components_canon(n̂))...)
-        )
-    E = inv(𝕊_rot[1, 1, 1, 1])
-    H = inv(𝕊_rot[3, 3, 3, 3] * E)
-    ν₁ = -E * 𝕊_rot[1, 1, 2, 2]
-    ν₂ = -E * 𝕊_rot[1, 1, 3, 3]
-    Γ = inv(𝕊_rot[2, 3, 2, 3]) * (one(E) + ν₁) / (2 * E)
+function extract_ti_moduli(C₀::TensND.AbstractTens{4, 3}, n̂)
+    Base.depwarn(
+        "`extract_ti_moduli(C₀, n̂)` is deprecated: use `TensND.ti_args_hoenig(inv(C₀))` " *
+            "(after `TensND.best_fit_ti(C₀, n̂)` for a tensor that is not a `TensTI`), " *
+            "or `hoenig_params`.",
+        :extract_ti_moduli,
+    )
+    C = C₀ isa TensND.TensTI{4} ? C₀ : TensND.best_fit_ti(C₀, collect(TensND._extract_vec(n̂)))
+    E, ν₁, ν₂, H, Γ = TensND.ti_args_hoenig(inv(C))
     return (E = E, H = H, ν₁ = ν₁, ν₂ = ν₂, Γ = Γ)
 end
-
-"""
-    extract_iso_conductivity(K₀::TensISO{2,d}) -> k
-
-Extract the (scalar) conductivity coefficient of an isotropic 2nd-order
-transport tensor `TensISO{2,d}` (``\\boldsymbol{K}_0 = k_0\\,\\boldsymbol{1}``).
-"""
-extract_iso_conductivity(K₀::TensND.TensISO{2, 3}) = K₀.data[1]
-extract_iso_conductivity(K₀::TensND.TensISO{2, 2}) = K₀.data[1]

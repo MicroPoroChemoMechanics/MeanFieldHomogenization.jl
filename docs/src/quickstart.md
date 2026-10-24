@@ -41,7 +41,7 @@ is unavailable without it.
 | :--- | :--- |
 | `DECUHR`, `Integrals` | the adaptive-cubature backend `method = :decuhr` for arbitrary anisotropy; the bundled `method = :nestedquadgk` covers the same cases |
 | `NonlinearSolve` | any SciML algorithm for the self-consistent fixed points ([Iterative solvers](@ref man-schemes)) |
-| `SymPy` | symbolic closed forms of the elliptic integrals |
+| `SymPyPythonCall` | symbolic closed forms of the elliptic integrals |
 | `Ferrite`, `FerriteGmsh`, `Gmsh` | the reference finite-element backend for [FE inclusions](@ref man-fe-inclusions) |
 | `Gridap`, `GridapGmsh` | the second FE backend for the same morphologies |
 | `Ferrite` (alone) | the material interface of the [finite-element coupling](@ref fe-coupling) — a microstructure as a Gauss-point law |
@@ -89,7 +89,7 @@ estimate of the effective stiffness reads
 ```
 
 with ``f_0`` the volume fraction of the matrix. [`homogenize`](@ref) evaluates
-it for the property `:C` of the RVE, and [`k_mu`](@ref) reads back the bulk and
+it for the property `:C` of the RVE, and `k_mu` (from TensND) reads back the bulk and
 shear moduli of the isotropic result:
 
 ```@example getting-started

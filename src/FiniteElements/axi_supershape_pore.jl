@@ -83,7 +83,7 @@ function FEAxiSupershapePore(
         throw(ArgumentError("`guard` must be :warn, :error or :none, got :$guard"))
     _check_pore_surrogate(elastic, 4, :elastic, shape)
     _check_pore_surrogate(transport, 2, :transport, shape)
-    bas = basis === nothing ? Core._default_basis(Float64, euler_angles) : basis
+    bas = basis === nothing ? TensND.euler_basis(euler_angles; T = Float64) : basis
     return FEAxiSupershapePore{T, typeof(shape), typeof(bas)}(
         shape, bas, opts, FECache(), backend, elastic, transport, guard
     )
@@ -238,7 +238,7 @@ function fe_axi_pore_concentration(s::FEAxiSupershapePore, P₀::TensND.Abstract
     # `fe_cell_concentration` in the three-dimensional pore. Asking for `.A`
     # made every shipped axisymmetric model unusable.
     has_surrogate(s, O) && return _axi_pore_run(s, P₀)
-    r = get!(() -> _axi_pore_run(s, P₀), s.cache.tensors, _fe_cache_key(P₀))
+    r = _fe_memo(() -> _axi_pore_run(s, P₀), s.cache, _fe_cache_key(P₀))
     return _axi_pore_tensor(r)
 end
 

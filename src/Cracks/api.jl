@@ -14,40 +14,13 @@ NB: this is the actual TI symmetry axis (`TensND.axis(C₀)`), not the
 third basis vector of `TensND.get_basis(C₀)` (which is always ``\\underline{e}_3`` for
 a `TensTI{4}` since the underlying basis is canonical — the symmetry
 axis is stored separately in the structured container).
-"""
-function _ti_aligned(C₀::TensND.TensTI{4}, ℬ_crack::TensND.AbstractBasis)
-    axis_C = collect(TensND.axis(C₀))
-    axis_n = TensND.components_canon(TensND.tens_basis(ℬ_crack, 3))
-    # Both unit vectors, so parallel ⟺ (axis·n̂)² = 1. The **square**, not
-    # `|axis·n̂|`: `Symbolics` does not fold `abs` of a literal, so on a
-    # `TensTI{4, Num}` whose axis is exactly `e₃` the product came out as an
-    # unevaluated `abs(1.0)` that nothing downstream could collapse — not even
-    # `tsimplify`, which returns `-1 + abs(1.0)`. Squaring uses only `*`, which
-    # does fold, and is mathematically identical here.
-    return _is_unit_alignment(dot(axis_C, axis_n)^2)
-end
 
-# Both directions being unit vectors, `d = |axis · n̂|` equals 1 exactly when they
-# are parallel.  A comparable scalar takes a tolerance; anything else is tested
-# structurally, after simplification.
-#
-# The split is `Elliptic.is_hard_numeric`, **not** `d isa Real`: `Symbolics.Num`
-# is `<: Real` but `isapprox` on it returns a symbolic inequality that throws in
-# a boolean context, while `ForwardDiff.Dual` is `<: Real` and compares fine.
-# Dispatching on `::Real` here made `cod_tensor` throw on a `TensTI{4, Num}`
-# reference; guarding on the type made it throw on `Sym`.
-function _is_unit_alignment(d)
-    is_hard_numeric(d) && return isapprox(d, one(d); atol = 1.0e-10)
-    # Structural branch. Test `d - 1 == 0` rather than `d == 1`: on a
-    # `Symbolics.Num` the axis components carry `Float64` literals while `one(d)`
-    # carries an `Int`, so `isequal(d, one(d))` is *false* for a genuinely
-    # aligned axis. Subtracting first lets the literals collapse. Getting this
-    # wrong sent an aligned `TensTI{4, Num}` down the numerical back-end, which
-    # then failed inside StaticArrays instead of using the closed form.
-    gap = tsimplify(d - one(d))
-    verdict = iszero(gap)
-    return verdict isa Bool ? verdict : false
-end
+The test is TensND's `isparallel`: a tolerance on comparable numbers, an exact
+structural test on symbolic ones (no `dot`, no `abs`: they conjugate a `Sym`, and
+`Symbolics` does not fold `abs` of a literal).
+"""
+_ti_aligned(C₀::TensND.TensTI{4}, ℬ_crack::TensND.AbstractBasis) =
+    TensND.isparallel(TensND.axis(C₀), TensND.tens_basis(ℬ_crack, 3))
 
 # TI-aligned dispatch rules — refine Core dispatch for `AbstractCrack` + TensTI{4}.
 # Explicit Val{:auto}, Val{:residues}, etc. methods are needed to disambiguate
@@ -174,15 +147,19 @@ function _apply_interface_stiffness(
         B::TensND.AbstractTens{2, 3},
         K::TensND.AbstractTens{2, 3}, b::Real
     )
-    B_M = TensND.get_array(B)        # 3 × 3
-    K_M = TensND.get_array(K)
-    I3 = Matrix{eltype(B_M)}(LinearAlgebra.I, 3, 3)
-    KB = Matrix(K_M) * Matrix(B_M)
-    M = I3 + b .* KB
-    B_eff_M = Matrix(B_M) / M
+    # In the basis `B` is written in (the crack's): only `K`, a 3×3, changes
+    # basis, and the result stays in that basis. `get_array(K)` was read there
+    # as if it were, and the result was relabeled canonical, so an oriented
+    # crack with an interface stiffness came back in the wrong frame.
+    # The algebra below is matrix algebra, right in an orthonormal basis only:
+    # the orthonormal one `B` is written in (read as it is), or its parent.
+    ℬ = TensND.relevant_OrthonormalBasis(TensND.get_basis(B))
+    B_M = Array(TensND.components(B, ℬ))
+    K_M = Array(TensND.components(K, ℬ))
+    M = LinearAlgebra.I + b .* (K_M * B_M)
+    B_eff_M = B_M / M
     # Symmetrize to remove rounding drift.
-    B_eff_M = (B_eff_M + B_eff_M') ./ 2
-    return TensND.TensCanonical(B_eff_M)
+    return TensND.Tens((B_eff_M + transpose(B_eff_M)) ./ 2, ℬ)
 end
 
 # Order-2 (conductivity) — thermal COD scalar
@@ -243,10 +220,10 @@ end
 
 # Analytical dispatch: iso vs aniso.
 _cod_thermal(crack::EllipticCrack, K₀::TensND.TensISO{2, 3}) =
-    _cod_iso_ellipse_thermal(crack, MFH_Core.extract_iso_conductivity(K₀))
+    _cod_iso_ellipse_thermal(crack, first(TensND.get_data(K₀)))
 
 _cod_thermal(crack::RibbonCrack, K₀::TensND.TensISO{2, 3}) =
-    _cod_iso_ribbon_thermal(crack, MFH_Core.extract_iso_conductivity(K₀))
+    _cod_iso_ribbon_thermal(crack, first(TensND.get_data(K₀)))
 
 _cod_thermal(crack::EllipticCrack, K₀::TensND.AbstractTens{2, 3}) =
     _cod_aniso_ellipse_thermal(crack, K₀)
@@ -284,26 +261,24 @@ end
 
 # Analytical — isotropic matrix
 function _kernel(crack::EllipticCrack, C₀::TensND.TensISO{4, 3}, ::MFH_Core.Analytical; kw...)
-    E, ν = MFH_Core.extract_iso_moduli(C₀)
+    E, ν = TensND.E_nu(C₀)
     return _cod_iso_ellipse(crack, E, ν)
 end
 
 function _kernel(crack::RibbonCrack, C₀::TensND.TensISO{4, 3}, ::MFH_Core.Analytical; kw...)
-    E, ν = MFH_Core.extract_iso_moduli(C₀)
+    E, ν = TensND.E_nu(C₀)
     return _cod_iso_ribbon(crack, E, ν)
 end
 
 # Analytical — TI matrix aligned with n̂
 function _kernel(crack::EllipticCrack, C₀::TensND.TensTI{4}, ::MFH_Core.Analytical; kw...)
-    n̂ = TensND.tens_basis(crack_basis(crack), 3)
-    nt = MFH_Core.extract_ti_moduli(C₀, n̂)
-    return _cod_ti_ellipse(crack, nt.E, nt.H, nt.ν₁, nt.ν₂, nt.Γ)
+    E, ν₁, ν₂, H, Γ = TensND.ti_args_hoenig(inv(C₀))
+    return _cod_ti_ellipse(crack, E, H, ν₁, ν₂, Γ)
 end
 
 function _kernel(crack::RibbonCrack, C₀::TensND.TensTI{4}, ::MFH_Core.Analytical; kw...)
-    n̂ = TensND.tens_basis(crack_basis(crack), 3)
-    nt = MFH_Core.extract_ti_moduli(C₀, n̂)
-    return _cod_ti_ribbon(crack, nt.E, nt.H, nt.ν₁, nt.ν₂, nt.Γ)
+    E, ν₁, ν₂, H, Γ = TensND.ti_args_hoenig(inv(C₀))
+    return _cod_ti_ribbon(crack, E, H, ν₁, ν₂, Γ)
 end
 
 # Residue — anisotropic matrix

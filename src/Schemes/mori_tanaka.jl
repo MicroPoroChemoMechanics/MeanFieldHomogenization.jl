@@ -28,41 +28,25 @@ for conductivity (`:K`).
 function _evaluate(rve::RVE, scheme::MoriTanaka, ::Val{p}; kw...) where {p}
     m = matrix_name(scheme, rve)
     P₀ = phase_property(rve, m, p)
-    return _mt_dispatch(rve, P₀, m, Val(p); kw...)
+    return _mt_kernel(rve, P₀, m, Val(p); kw...)
 end
 
-_mt_dispatch(rve, C₀::TensND.AbstractTens{4, 3}, m::Symbol, ::Val{p}; kw...) where {p} =
-    _mt_4(rve, C₀, m, Val(p); kw...)
-_mt_dispatch(rve, K₀::TensND.AbstractTens{2, 3}, m::Symbol, ::Val{p}; kw...) where {p} =
-    _mt_2(rve, K₀, m, Val(p); kw...)
-
-# ── 4th-order (elasticity) ──────────────────────────────────────────────────
-function _mt_4(rve, C₀::TensND.AbstractTens{4, 3}, m::Symbol, ::Val{p}; kw...) where {p}
-    f_m = volume_fraction(rve, m)
-    Iref = _identity_like(C₀)
-    A_avg = f_m * Iref          # ⟨A_dil⟩, matrix carries A_dil = I
-    Nsum = zero(C₀)
+# The phase properties come out of heterogeneous containers, so each phase's
+# terms are added to the sums inside one call compiled for their concrete
+# types (`_mt_accumulate`), and the closure is another: a few dynamic
+# dispatches per phase instead of one per tensor operation. The 4th-order
+# (elasticity) and 2nd-order (conductivity) kernels differ only by the
+# contraction, which `_compose` carries.
+function _mt_kernel(rve, P₀::_PropertyTens, m::Symbol, ::Val{p}; kw...) where {p}
+    A_avg = volume_fraction(rve, m) * one(P₀)   # ⟨A_dil⟩, matrix carries A_dil = I
+    Nsum = zero(P₀)
     for name in inclusion_phase_names(rve, m)
-        ΔA, N = _mt_terms(rve.amounts[name], rve, name, p, C₀; kw...)
-        A_avg += ΔA
-        Nsum += N
+        A_avg, Nsum = _mt_step(rve.amounts[name], A_avg, Nsum, rve, name, p, P₀; kw...)
     end
-    return C₀ + Nsum ⊡ inv(A_avg)
+    return _mt_close(P₀, Nsum, A_avg)
 end
 
-# ── 2nd-order (conductivity) ────────────────────────────────────────────────
-function _mt_2(rve, K₀::TensND.AbstractTens{2, 3}, m::Symbol, ::Val{p}; kw...) where {p}
-    f_m = volume_fraction(rve, m)
-    Iref = _identity_like(K₀)
-    A_avg = f_m * Iref
-    Nsum = zero(K₀)
-    for name in inclusion_phase_names(rve, m)
-        ΔA, N = _mt_terms(rve.amounts[name], rve, name, p, K₀; kw...)
-        A_avg += ΔA
-        Nsum += N
-    end
-    return K₀ + Nsum ⋅ inv(A_avg)
-end
+_mt_close(P₀, Nsum, A_avg) = P₀ + _compose(Nsum, inv(A_avg))
 
 # The terms a phase adds to ⟨A⟩ and to the contribution sum, in one loop over
 # the phases so that the sums keep their order.
@@ -72,9 +56,9 @@ end
 # the layers of an internally heterogeneous inclusion (LayeredSphere) instead
 # of reading a phase property that does not represent it, and symmetrizes the
 # product (C_i − C₀):A, not A alone.
-function _mt_terms(::AbstractAmount, rve, name, p, P₀; kw...)
+function _mt_step(::AbstractAmount, A_avg, Nsum, rve, name, p, P₀; kw...)
     A_dil, N = _phase_dilute_and_contribution(rve, name, p, P₀; kw...)
-    return volume_fraction(rve, name) * A_dil, N
+    return _mt_accumulate(A_avg, Nsum, volume_fraction(rve, name), A_dil, N)
 end
 
 # A crack family, in the ECHOES `B · A⁻¹` form: strain-stress term
@@ -82,26 +66,14 @@ end
 # contribution −ε C₀ : sym(H_c) : C₀ as in the additive form. The crack term in
 # the denominator ⟨A⟩ is what prevents the spurious percolation of the
 # additive form at moderate density.
-function _mt_terms(::CrackDensity, rve, name, p, C₀::TensND.AbstractTens{4, 3}; kw...)
-    H, N = _phase_compliance_and_contribution(rve, name, p, C₀; kw...)
-    return H ⊡ C₀, N
+function _mt_step(::CrackDensity, A_avg, Nsum, rve, name, p, P₀; kw...)
+    H, N = _phase_compliance_and_contribution(rve, name, p, P₀; kw...)
+    return _mt_accumulate_crack(A_avg, Nsum, H, P₀, N)
 end
 
-function _mt_terms(::CrackDensity, rve, name, p, K₀::TensND.AbstractTens{2, 3}; kw...)
-    R, N = _phase_compliance_and_contribution(rve, name, p, K₀; kw...)
-    return R ⋅ K₀, N
-end
+_mt_accumulate(A_avg, Nsum, φ, A_dil, N) = (A_avg + φ * A_dil, Nsum + N)
+_mt_accumulate_crack(A_avg, Nsum, H, P₀, N) = (A_avg + _compose(H, P₀), Nsum + N)
 
-# ── Identity tensor matching the algebra of the property tensor ─────────────
-
-"""
-    _identity_like(P) -> AbstractTens
-
-Identity tensor of the same order/dimension as `P`. Used as the ``\\mathbb{A}^{\\mathrm{dil}}``
-weight of the matrix in average-strain schemes (Mori-Tanaka,
-self-consistent, …).
-"""
-_identity_like(C::TensND.AbstractTens{4, 3}) =
-    TensND.tens_Id4(Val(3), Val(eltype(C)))
-_identity_like(K::TensND.AbstractTens{2, 3}) =
-    TensND.tens_Id2(Val(3), Val(eltype(K)))
+# The identity of the property's algebra is `one(P)` (TensND): same order and
+# dimension, same element type. It weighs the matrix in average-strain schemes
+# (Mori-Tanaka, self-consistent, …).

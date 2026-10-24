@@ -63,7 +63,7 @@ with the concentration tensors of the grain ``\mathrm S`` and of the pore
 and a compliant normal contact, the spherical equation is linear in ``k``:
 
 ```@example sandstone
-using SymPy
+using SymPyPythonCall
 @syms k::positive μ::positive ks::positive μs::positive kn::positive kt::positive
 @syms R::positive φ::positive x::positive κ::positive ϵ::positive
 

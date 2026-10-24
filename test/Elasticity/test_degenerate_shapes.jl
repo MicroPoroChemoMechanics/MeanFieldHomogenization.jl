@@ -113,7 +113,7 @@ end
     canon = P -> TensND.get_array(TensND.change_tens_canon(P))
     rel = (A, B) -> maximum(abs, A .- B) / maximum(abs, B)
     n_axis = [0.0, 0.0, 1.0]
-    C_TI = tens_TI(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
+    C_TI = tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
     for ω in (1.0e2, 1.0e3)
         P = canon(hill_tensor(Spheroid(ω), C_TI))
         R = canon(hill_tensor(Spheroid(ω), TensND.change_tens_canon(C_TI); method = :nestedquadgk, abstol = 1.0e-14, reltol = 1.0e-13))
@@ -122,7 +122,7 @@ end
     # Isotropic values in a TI type against the isotropic builder, exact for
     # any aspect ratio.
     C_iso = TensISO{3}(3 * 30.0, 2 * 18.0)
-    C_ti = fromISO(C_iso, n_axis)
+    C_ti = iso_to_ti(C_iso, n_axis)
     for ω in (1.0e4, 1.0e6)
         @test rel(canon(hill_tensor(Spheroid(ω), C_ti)), canon(hill_tensor(Spheroid(ω), C_iso))) < 1.0e-13
     end

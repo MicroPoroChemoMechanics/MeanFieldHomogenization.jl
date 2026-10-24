@@ -46,40 +46,27 @@ Rotation matrix whose columns are the inclusion's local axes in global
 coordinates. Shared by every finite-element inclusion: each one solves in its
 own frame and rotates the result out.
 """
-_fe_frame(incl) = hcat(Core._frame_columns(Core.inclusion_basis(incl))...)
+_fe_frame(incl) = Matrix(TensND.vecbasis(Core.inclusion_basis(incl), :cov))
 
-"Components of a 4th-order tensor in the local frame, as a 3×3×3×3 array."
-function _to_local4(P::TensND.AbstractTens{4, 3}, R)
-    G = Core._C_array(P)
-    L = zeros(Float64, 3, 3, 3, 3)
-    @inbounds for p in 1:3, q in 1:3, r in 1:3, s in 1:3
-        acc = 0.0
-        for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-            acc += R[i, p] * R[j, q] * R[k, r] * R[l, s] * G[i, j, k, l]
-        end
-        L[p, q, r, s] = acc
-    end
-    return L
-end
+"""
+Components of a 4th-order tensor in the local frame `R` (columns: the local axes
+in global coordinates), as a 3×3×3×3 array: one change of basis, none at all for
+a tensor already written in that frame. It read the tensor's own components as
+global ones before rotating them, so a property given in a rotated basis was
+rotated twice.
+"""
+_to_local4(P::TensND.AbstractTens{4, 3}, R) = Array(TensND.components(P, TensND.RotatedBasis(R)))
 
 "Components of a 2nd-order tensor in the local frame, as a 3×3 matrix."
-_to_local2(P::TensND.AbstractTens{2, 3}, R) = R' * TensND.components_canon(P) * R
+_to_local2(P::TensND.AbstractTens{2, 3}, R) = Array(TensND.components(P, TensND.RotatedBasis(R)))
 
-"Rebuild a global-frame `Tens{4,3}` from local-frame Kelvin-Mandel components."
-function _from_local66(M66::AbstractMatrix{Float64}, R)
-    L = Core.array_from_mandel66(M66)
-    G = zeros(Float64, 3, 3, 3, 3)
-    @inbounds for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        acc = 0.0
-        for p in 1:3, q in 1:3, r in 1:3, s in 1:3
-            acc += R[i, p] * R[j, q] * R[k, r] * R[l, s] * L[p, q, r, s]
-        end
-        G[i, j, k, l] = acc
-    end
-    return TensND.TensCanonical(
-        Tensors.Tensor{4, 3}((i, j, k, l) -> G[i, j, k, l])
-    )
-end
+"""
+The tensor whose local-frame Kelvin-Mandel components are `M66`, written in that
+frame: it is the same tensor as its global-frame rewrite, which no consumer
+needs, so no rotation is spent on it.
+"""
+_from_local66(M66::AbstractMatrix{Float64}, R) =
+    TensND.Tens(Core.array_from_mandel66(M66), TensND.RotatedBasis(R))
 
 _from_local33(M::AbstractMatrix{Float64}, R) = TensND.TensCanonical(R * M * R')
 
@@ -148,7 +135,7 @@ function _fe_iso_moduli(
         what::AbstractString = "this inclusion",
     )
     C_iso = Core.isotropify(C₀)
-    A, Aiso = Core._C_array(C₀), Core._C_array(C_iso)
+    A, Aiso = Array(TensND.components_canon(C₀)), Array(TensND.components_canon(C_iso))
     dev = maximum(abs, A .- Aiso)
     dev ≤ rtol * max(maximum(abs, Aiso), eps()) || throw(
         ArgumentError(
@@ -160,8 +147,8 @@ function _fe_iso_moduli(
                 "iterative scheme."
         )
     )
-    E, ν = Core.extract_iso_moduli(C_iso)
-    return Float64(E / (2 * (1 + ν))), Float64(ν)
+    μ, ν = TensND.mu_nu(C_iso)
+    return Float64(μ), Float64(ν)
 end
 
 function _fe_iso_scalar(
@@ -188,6 +175,6 @@ end
 #  purposes of a finite-element solve, the same reference.
 
 _fe_cache_key(P₀::TensND.AbstractTens{4, 3}) =
-    map(x -> round(x, sigdigits = 12), Tuple(Core._C_array(P₀)))
+    map(x -> round(x, sigdigits = 12), Tuple(Array(TensND.components_canon(P₀))))
 _fe_cache_key(P₀::TensND.AbstractTens{2, 3}) =
     map(x -> round(x, sigdigits = 12), Tuple(TensND.components_canon(P₀)))

@@ -120,15 +120,13 @@ function asymmetric_self_consistent_alv(
         push!(symmetrizes, phase_symmetrize(rve, name))
     end
 
-    U_M_phases = Matrix[_tens_to_mandel66(tens_UA(g)) for g in geometries]
-    V_M_phases = Matrix[_tens_to_mandel66(tens_VA(g)) for g in geometries]
+    U_M_phases = Matrix[TensND.mandel66(tens_UA(g)) for g in geometries]
+    V_M_phases = Matrix[TensND.mandel66(tens_VA(g)) for g in geometries]
 
     Tp = _alv_promoted_eltype(
         vcat(Matrix[C_M], C_phases), fractions, U_M_phases, crack_data
     )
     Tp = _alv_layered_eltype(Tp, layered_data, C_M, times)
-    n = length(times)
-    Id = _identity_alv(n, Tp)
     C_n = Tp.(C_M)
     best_resid = Inf
     C_best = C_n
@@ -136,13 +134,13 @@ function asymmetric_self_consistent_alv(
     for iter in 1:maxiters
         C_n_new = _asc_alv_step(
             C_M, C_n, C_phases, U_M_phases, V_M_phases,
-            fractions, symmetrizes, n, Id
+            fractions, symmetrizes
         )
         # A layered sphere adds (C_r − C_M) ∘ A_r through its average stress:
         # B_r − C_M ∘ A_r, both against the running estimate.
         for d in layered_data
             A, B = _alv_layered_AB(d.geom, C_n, times)
-            C_n_new = C_n_new .+ d.f .* _maybe_symmetrize_alv(B .- C_M * A, d.sym)
+            C_n_new = C_n_new .+ d.f .* _maybe_symmetrize_alv(B .- _alv_prod(C_M, A), d.sym)
         end
         # Crack contribution (Budiansky-O'Connell SC):
         # `ΔJ̃_cracks(C_n)` against the running estimate, added to the
@@ -190,36 +188,14 @@ function _asc_alv_step(
         U_M_phases::AbstractVector{<:AbstractMatrix},
         V_M_phases::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector{<:Real},
-        symmetrizes::AbstractVector{<:AbstractSymmetrize},
-        n::Int, Id::AbstractMatrix
+        symmetrizes::AbstractVector{<:AbstractSymmetrize}
     )
-    sz = size(C_n, 1)
-    T = eltype(C_n)
-    Δ = zeros(T, sz, sz)
-    α_n, β_n = iso_params_from_blocks(C_n)
-    M_long = @. (α_n + 2 * β_n) / 3
-    M_shear = β_n ./ 2
-    J_long = volterra_inverse(M_long; block_size = 1)
-    J_shear = volterra_inverse(M_shear; block_size = 1)
-
-    @inbounds for r in eachindex(C_phases)
-        U_M = U_M_phases[r]
-        V_M = V_M_phases[r]
-        D_M = V_M .- U_M
-        P_r = zeros(T, sz, sz)
-        for i in 1:n, j in 1:i
-            block = J_long[i, j] .* U_M .+ J_shear[i, j] .* D_M
-            rows = (6 * (i - 1) + 1):(6 * i)
-            cols = (6 * (j - 1) + 1):(6 * j)
-            P_r[rows, cols] = block
-        end
-        ΔCr = C_phases[r] - C_n
-        A_dil = volterra_inverse(Id + P_r * ΔCr; block_size = 6)
-        contrib = (C_phases[r] - C_M) * A_dil
-        sym = symmetrizes[r]
-        contrib = _maybe_symmetrize_alv(contrib, sym)
-        f = fractions[r]
-        @. Δ += f * contrib
+    Δ = zero(C_n)
+    J_long, J_shear = _alv_iso_inverses(C_n)
+    for r in eachindex(C_phases)
+        A_dil = _sc_alv_dilute_conc(C_phases[r], U_M_phases[r], V_M_phases[r], J_long, J_shear, C_n)
+        contrib = _maybe_symmetrize_alv(_alv_prod(C_phases[r] - C_M, A_dil), symmetrizes[r])
+        @. Δ += fractions[r] * contrib
     end
     return C_M .+ Δ
 end
@@ -364,7 +340,7 @@ function differential_alv(
                     "as the matrix, or give it an explicit fraction."
             )
         )
-        if amt isa Schemes.VolumeFraction
+        if !(amt isa Schemes.CrackDensity)   # volume: the remainder is refused above
             sym = phase_symmetrize(rve, name)
             geom = ph.geometry
             if geom isa LayeredSphere
@@ -373,7 +349,7 @@ function differential_alv(
                 # is a placeholder, exactly as in the elastic pipeline.
                 push!(
                     solid_data, (
-                        name = name, kind = :layered_sphere,
+                        name = name,
                         C_r = nothing, geom = geom,
                         target = amt.value, sym = sym,
                         U_M = nothing, V_M = nothing,
@@ -389,13 +365,13 @@ function differential_alv(
                 _alv_diff_iso_error(name, "the shape or the anisotropy")
             push!(
                 solid_data, (
-                    name = name, kind = :ellipsoid,
+                    name = name,
                     C_r = C_r,
                     geom = geom,
                     target = amt.value,
                     sym = sym,
-                    U_M = _tens_to_mandel66(tens_UA(geom)),
-                    V_M = _tens_to_mandel66(tens_VA(geom)),
+                    U_M = TensND.mandel66(tens_UA(geom)),
+                    V_M = TensND.mandel66(tens_VA(geom)),
                 )
             )
         else  # CrackDensity
@@ -443,11 +419,12 @@ function differential_alv(
     dual = formulation === :compliance
     # The dual form integrates the creep function J̃ = C̃^{-vol}.
     x0 = vec(Tp.(dual ? volterra_inverse(C_M_full; block_size = 6) : C_M_full))
+    # Tuples of concrete records, each carrying its own trajectory: the
+    # right-hand side runs over them without a dynamic dispatch per phase.
     ode_p = (
-        n = n, sz = sz,
-        solid_data = solid_data,
-        crack_data = crack_data,
-        paths = paths,
+        sz = sz,
+        solid_data = Tuple(merge(r, (path = paths[r.name],)) for r in solid_data),
+        crack_data = Tuple(merge(r, (path = paths[r.name],)) for r in crack_data),
         times = times,
         dual = dual,
     )
@@ -468,68 +445,34 @@ end
 # ── ALV ODE RHS ─────────────────────────────────────────────────────────────
 
 function _diff_alv_ode_rhs!(du, u, p, τ)
-    n, sz = p.n, p.sz
+    T = eltype(u)
     # In the dual form the state carries J̃ and every phase kernel is still
     # evaluated against the running relaxation C̃ = J̃^{-vol}; each stiffness
     # contribution Ñ is mapped to its compliance counterpart by the exact
     # identity H̃ = − J̃ ∘ Ñ ∘ J̃ (same relation as
     # `property_contribution_alv(crack, …)`, read backwards).
-    P_curr = reshape(u, sz, sz)
-    C_curr = p.dual ? volterra_inverse(P_curr; block_size = 6) : P_curr
-    J_curr = p.dual ? P_curr : nothing
-    Δ = zeros(eltype(u), sz, sz)
-    Id = _identity_alv(n, eltype(u))
-    push_contrib! = (contrib, weight) -> begin
-        term = p.dual ? -(J_curr * contrib * J_curr) : contrib
-        @. Δ += weight * term
-        nothing
-    end
+    P_curr = reshape(u, p.sz, p.sz)
+    C_curr = p.dual ? _alv_inv(P_curr) : P_curr
+    Δ = reshape(du, p.sz, p.sz)
+    fill!(Δ, zero(T))
 
-    n_solid = length(p.solid_data)
     # Sherman-Morrison : dφ_α/dτ = df_α/dτ + (f_α / f_0) · sum(df).  Only
     # solid phases enter the volume balance; the sum is needed by the crack
     # loop below as well, so it is computed unconditionally.
-    f = Vector{eltype(u)}(undef, n_solid)
-    df = Vector{eltype(u)}(undef, n_solid)
-    @inbounds for (i, r) in enumerate(p.solid_data)
-        nt = p.paths[r.name]
-        f[i] = nt.f(τ) * r.target
-        df[i] = nt.df(τ) * r.target
-    end
-    f0 = one(eltype(u)) - sum(f; init = zero(eltype(u)))
-    sum_df = sum(df; init = zero(eltype(u)))
+    f = map(r -> r.path.f(τ) * r.target, p.solid_data)
+    df = map(r -> r.path.df(τ) * r.target, p.solid_data)
+    f0 = one(T) - sum(f; init = zero(T))
+    sum_df = sum(df; init = zero(T))
 
-    if n_solid > 0
-        # Pre-compute Volterra inverses against C_curr (shared across solid phases).
-        α_c, β_c = iso_params_from_blocks(C_curr)
-        M_long = @. (α_c + 2 * β_c) / 3
-        M_shear = β_c ./ 2
-        J_long = volterra_inverse(M_long; block_size = 1)
-        J_shear = volterra_inverse(M_shear; block_size = 1)
-
-        @inbounds for (i, r) in enumerate(p.solid_data)
-            dφᵢ = df[i] + (f[i] / f0) * sum_df
-            iszero(dφᵢ) && continue
-            contrib = if r.kind === :layered_sphere
-                # No Hill kernel: the bulk + shear ALV recurrences give the
-                # contribution of the whole composite sphere directly.
-                property_contribution_alv_at(r.geom, C_curr, p.times)
-            else
-                # Per-phase Hill kernel against C_curr.
-                D_M = r.V_M .- r.U_M
-                P_r = zeros(eltype(u), sz, sz)
-                for ii in 1:n, jj in 1:ii
-                    block = J_long[ii, jj] .* r.U_M .+ J_shear[ii, jj] .* D_M
-                    rows = (6 * (ii - 1) + 1):(6 * ii)
-                    cols = (6 * (jj - 1) + 1):(6 * jj)
-                    P_r[rows, cols] = block
-                end
-                ΔC = r.C_r - C_curr
-                A_dil = volterra_inverse(Id + P_r * ΔC; block_size = 6)
-                ΔC * A_dil
-            end
-            push_contrib!(_maybe_symmetrize_alv(contrib, r.sym), dφᵢ)
-        end
+    # Volterra inverses against C_curr, shared across the solid phases.
+    J_long, J_shear = _alv_iso_inverses(C_curr)
+    map(p.solid_data, f, df) do r, fᵢ, dfᵢ
+        dφᵢ = dfᵢ + (fᵢ / f0) * sum_df
+        iszero(dφᵢ) || _diff_alv_add!(
+            Δ, _maybe_symmetrize_alv(_diff_alv_solid_contribution(r, r.geom, C_curr, J_long, J_shear, p.times), r.sym),
+            dφᵢ, p.dual, P_curr
+        )
+        return nothing
     end
 
     # Crack contributions : dε_α/dτ · ΔC̃^crack_α(C_curr) where the
@@ -539,20 +482,30 @@ function _diff_alv_ode_rhs!(du, u, p, τ)
     # As in the elastic scheme, a crack family carries no volume but is
     # still diluted by the solid increments:
     #     dφ_c^ε = dε_c + (ε_c / f_0) Σ_{j solid} df_j .
-    @inbounds for r in p.crack_data
-        nt = p.paths[r.name]
-        εᶜ = nt.f(τ) * r.target
-        dφᶜ = nt.df(τ) * r.target + (εᶜ / f0) * sum_df
-        iszero(dφᶜ) && continue
-        Ñ = property_contribution_alv_at(
-            r.geom, C_curr;
-            Rn_mat = r.Rn_mat, Rt_mat = r.Rt_mat
-        )
-        ΔC = delta_property_alv(r.geom, Ñ, 1.0)
-        push_contrib!(_maybe_symmetrize_alv(ΔC, r.sym), dφᶜ)
+    map(p.crack_data) do r
+        εᶜ = r.path.f(τ) * r.target
+        dφᶜ = r.path.df(τ) * r.target + (εᶜ / f0) * sum_df
+        iszero(dφᶜ) && return nothing
+        Ñ = property_contribution_alv_at(r.geom, C_curr; Rn_mat = r.Rn_mat, Rt_mat = r.Rt_mat)
+        _diff_alv_add!(Δ, _maybe_symmetrize_alv(delta_property_alv(r.geom, Ñ, 1.0), r.sym), dφᶜ, p.dual, P_curr)
+        return nothing
     end
+    return nothing
+end
 
-    du .= vec(Δ)
+# The contribution of a solid phase against the running medium: from its
+# Hill kernel for an ellipsoid, from the bulk and shear ALV recurrences of the
+# whole composite sphere for a layered one, which has no Hill kernel.
+_diff_alv_solid_contribution(r, ::LayeredSphere, C_curr, J_long, J_shear, times) =
+    property_contribution_alv_at(r.geom, C_curr, times)
+_diff_alv_solid_contribution(r, geom, C_curr, J_long, J_shear, times) =
+    _alv_dilute_contribution(r.C_r, C_curr, _alv_hill_blocks(J_long, J_shear, r.U_M, r.V_M .- r.U_M))
+
+# Adds `weight` times a stiffness contribution to the right-hand side, mapped to
+# its compliance counterpart −J̃ ∘ Ñ ∘ J̃ in the dual form.
+function _diff_alv_add!(Δ, contrib, weight, dual::Bool, J_curr)
+    term = dual ? -_alv_prod(J_curr, _alv_prod(contrib, J_curr)) : contrib
+    @. Δ += weight * term
     return nothing
 end
 

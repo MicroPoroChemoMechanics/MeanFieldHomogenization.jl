@@ -46,8 +46,10 @@ matrix has to flow around them.
 
 ````@example aging_ages_aspect
 plotly_scene(
-    rve_traces(; n = 60, semi_axes = (0.085, 0.085, 0.028), seed = 1949,
-        orientation = (0.0, 0.0, 1.0));
+    rve_traces(;
+        n = 60, semi_axes = (0.085, 0.085, 0.028), seed = 1949,
+        orientation = (0.0, 0.0, 1.0)
+    );
     uid = "aa-rve", height = 470,
     title = "Aligned oblate inclusions, ω = 1/3 (drawn thicker than the run for legibility)"
 )
@@ -209,8 +211,10 @@ panels = map(AGES) do tp
     p
 end
 
-p_all = plot(panels...; layout = (1, 3), size = (1080, 440),
-    left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, titlefontsize = 9)
+p_all = plot(
+    panels...; layout = (1, 3), size = (1080, 440),
+    left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, titlefontsize = 9
+)
 ````
 
 Three things are worth naming in that figure.
@@ -241,9 +245,11 @@ p_ratio = plot(;
 for tp in AGES, ω in (0.1, 0.01)
     t, J = results[(tp, ω)]
     _, J1 = results[(tp, 1.0)]
-    plot!(p_ratio, t .- t[1] .+ 1, J ./ J1;
+    plot!(
+        p_ratio, t .- t[1] .+ 1, J ./ J1;
         lw = 2, color = COLORS[ω], ls = (tp == 0.0 ? :solid : tp == 20.0 ? :dash : :dot),
-        label = "ω = $ω, t′ = $(Int(tp))")
+        label = "ω = $ω, t′ = $(Int(tp))"
+    )
 end
 p_ratio
 ````

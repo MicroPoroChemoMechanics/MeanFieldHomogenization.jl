@@ -2,7 +2,7 @@
 #  benchmark_porous.jl
 #
 #  Cross-validation of every MeanFieldHomogenization porous scheme against the C++
-#  porous reference called via PyCall. Two geometric
+#  porous reference called via PythonCall. Two geometric
 #  cases:
 #
 #   1) Spherical pores in a solid matrix.
@@ -22,45 +22,18 @@
 import Pkg
 Pkg.activate(@__DIR__; io = devnull)
 
+# Which Python holds Echoes: chosen before PythonCall is loaded
+include(joinpath(@__DIR__, "echoes_python.jl"))
+
 using MeanFieldHomogenization
 using TensND
 using Printf
-using PyCall
+using PythonCall
 
 # ── Python-side wrapper ──────────────────────────────────────────────────────
 
-py"""
-import echoes
-from echoes import (rve, ellipsoid, spheroidal, stiff_kmu, homogenize, ISO,
-                    VOIGT, REUSS, MT, SC, ASC, DIFF, DIL, DILD, MAX, PCW)
-
-_SCH = {'VOIGT':VOIGT, 'REUSS':REUSS, 'MT':MT, 'SC':SC, 'ASC':ASC,
-        'DIFF':DIFF, 'DIL':DIL, 'DILD':DILD, 'MAX':MAX, 'PCW':PCW}
-
-def py_chom_porous(phi, sch_name, omegas=1.0, omegap=1.0, iso_sym=False,
-                   ks=72., mus=32., kp=1.e-6, mup=1.e-6,
-                   epsrel=1.e-10, maxnb=300):
-    Cs = stiff_kmu(ks, mus); Cp = stiff_kmu(kp, mup)
-    ver = rve(matrix='SOLID')
-    if iso_sym:
-        ver['SOLID'] = ellipsoid(shape=spheroidal(omegas), symmetrize=[ISO], prop={'C':Cs})
-        ver['PORE']  = ellipsoid(shape=spheroidal(omegap), symmetrize=[ISO], prop={'C':Cp})
-    else:
-        ver['SOLID'] = ellipsoid(shape=spheroidal(omegas), prop={'C':Cs})
-        ver['PORE']  = ellipsoid(shape=spheroidal(omegap), prop={'C':Cp})
-    ver['PORE'].fraction  = phi
-    ver['SOLID'].fraction = 1.0 - phi
-    ver.set_prop('C', Cs)
-    try:
-        C = homogenize(prop='C', rve=ver, scheme=_SCH[sch_name],
-                       verbose=False, maxnb=maxnb, epsrel=epsrel,
-                       select_best=True)
-        return float(max(C.k, 0.0)), float(max(C.mu, 0.0))
-    except Exception as e:
-        return float('nan'), float('nan')
-"""
-
-const py_chom_porous = py"py_chom_porous"
+pyimport("sys").path.insert(0, @__DIR__)
+const py_chom_porous = pyimport("porous_echoes").py_chom_porous
 
 # ── Julia-side wrapper ───────────────────────────────────────────────────────
 
@@ -212,7 +185,7 @@ function run_sweep!(rows::Vector{BenchRow})
                     ω_s = ω, ω_p = ω,
                     sym_s = sym, sym_p = sym
                 )
-                k_py, μ_py = py_chom_porous(φ, lbl, ω, ω, case.iso)
+                k_py, μ_py = pyconvert(Tuple{Float64, Float64}, py_chom_porous(φ, lbl, ω, ω, case.iso))
                 tol = _tol(ω, φ)
                 pass_k = _within(k_jl, k_py; tol...)
                 pass_μ = _within(μ_jl, μ_py; tol...)

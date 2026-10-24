@@ -118,7 +118,7 @@ end
                     gradient_gradient_concentration, flux_gradient_concentration,
                     gradient_flux_concentration, flux_flux_concentration,
                 ), (P₁, P₀) in ((CI_C_I, CI_C_M), (CI_K_I, CI_K_M))
-            @test get_array(f(gate_A, P₁, P₀)) ≈ get_array(f(ell, P₁, P₀))
+            @test f(gate_A, P₁, P₀) ≈ f(ell, P₁, P₀)
         end
     end
 end
@@ -171,6 +171,20 @@ end
             get_array(delta_inverse_property(wrong, H, ε)),
             get_array(delta_inverse_property(crack, H, ε))
         )
+    end
+
+    @testset "the prefactor takes a dual number" begin
+        # It was stored as a Float64, so a sensitivity to it threw. The seam is
+        # linear in it: the derivative is the seam divided by the prefactor.
+        with(f) = CustomInclusion(
+            (a, b, 0.0);
+            basis = MeanFieldHomogenization.inclusion_basis(crack),
+            density_factor = f,
+            inverse_property_contribution = (P₀; kw...) -> inverse_property_contribution(crack, P₀; kw...),
+        )
+        H = inverse_property_contribution(flat, CI_C_M)
+        d = ForwardDiff.derivative(f -> get_array(delta_inverse_property(with(f), H, ε)), 4π / 3)
+        @test d ≈ get_array(delta_inverse_property(flat, H, ε)) / (4π / 3) rtol = 1.0e-14
     end
 
     @testset "a density amount without a density_factor is refused" begin
@@ -231,13 +245,13 @@ MeanFieldHomogenization.Cracks.cod_tensor(
 
     H = inverse_property_contribution(mine, CI_C_M)
     N = property_contribution(mine, CI_C_M)
-    @test get_array(delta_inverse_property(mine, H, ε)) ≈ get_array(delta_inverse_property(ref, H, ε))
-    @test get_array(delta_property(mine, N, ε)) ≈ get_array(delta_property(ref, N, ε))
+    @test delta_inverse_property(mine, H, ε) ≈ delta_inverse_property(ref, H, ε)
+    @test delta_property(mine, N, ε) ≈ delta_property(ref, N, ε)
 
     for scheme in (Dilute(), DiluteDual(), MoriTanaka(), SelfConsistent())
         got = homogenize(_ci_rve_with(mine, CI_C_M, CI_C_M, :C; density = ε), scheme, :C)
         exp = homogenize(_ci_rve_with(ref, CI_C_M, CI_C_M, :C; density = ε), scheme, :C)
-        @test get_array(got) ≈ get_array(exp) rtol = 1.0e-10
+        @test got ≈ exp rtol = 1.0e-10
     end
 
     @testset "an unknown shape trait fails loudly, not silently" begin
@@ -275,14 +289,14 @@ MeanFieldHomogenization.Elasticity._kernel(
     blob = KernelBlob(1.0, TensND.CanonicalBasis{3, Float64}())
     ell = Ellipsoid(1.0)
 
-    @test get_array(hill_tensor(blob, CI_C_M)) ≈ get_array(hill_tensor(ell, CI_C_M))
-    @test get_array(eshelby_tensor(blob, CI_C_M)) ≈ get_array(eshelby_tensor(ell, CI_C_M))
-    @test get_array(hill_tensor(blob, CI_K_M)) ≈ get_array(hill_tensor(ell, CI_K_M))
+    @test hill_tensor(blob, CI_C_M) ≈ hill_tensor(ell, CI_C_M)
+    @test eshelby_tensor(blob, CI_C_M) ≈ eshelby_tensor(ell, CI_C_M)
+    @test hill_tensor(blob, CI_K_M) ≈ hill_tensor(ell, CI_K_M)
 
     for scheme in (Dilute(), MoriTanaka(), SelfConsistent())
         got = homogenize(_ci_rve_with(blob, CI_C_M, CI_C_I, :C; fraction = 0.2), scheme, :C)
         exp = homogenize(_ci_rve_with(ell, CI_C_M, CI_C_I, :C; fraction = 0.2), scheme, :C)
-        @test get_array(got) ≈ get_array(exp) rtol = 1.0e-10
+        @test got ≈ exp rtol = 1.0e-10
     end
 
     @test check_inclusion_interface(blob; verbose = false)
@@ -361,7 +375,7 @@ end
     asc = homogenize(ok, AsymmetricSelfConsistent(), :C)
     @test get_array(asc) ≈
         get_array(homogenize(ref, AsymmetricSelfConsistent(), :C)) rtol = 1.0e-8
-    @test get_array(asc) ≈ get_array(homogenize(ok, SelfConsistent(), :C)) rtol = 1.0e-6
+    @test asc ≈ (homogenize(ok, SelfConsistent(), :C)) rtol = 1.0e-6
 
     # The root cause, isolated: the two stress-side concentrations disagree.
     @test !isapprox(
@@ -416,7 +430,7 @@ end
         got = _ci_rve_with(custom, CI_C_M, CI_C_I, :C; fraction = 0.2, symmetrize = sym)
         Cref = homogenize(ref, MoriTanaka(), :C)
         Cgot = homogenize(got, MoriTanaka(), :C)
-        @test get_array(Cgot) ≈ get_array(Cref) rtol = 1.0e-10
+        @test Cgot ≈ Cref rtol = 1.0e-10
     end
 
     # Isotropic averaging of an anisotropic inclusion must produce an
@@ -526,6 +540,18 @@ end
 # An inclusion type with no method at all: the contract check says what is
 # missing, and fails at level 0, where `shape_trait` keys the kernels.
 struct _ShapelessInclusion <: MeanFieldHomogenization.Core.AbstractInclusion{Float64} end
+
+@testset "CustomInclusion — rebuilt from its fields" begin
+    # The contract `Schemes._replace_geom_field` relies on: the positional
+    # constructor, called with the fields, gives back the same object.
+    rebuilt(x) = typeof(x).name.wrapper(getfield.(Ref(x), fieldnames(typeof(x)))...)
+    hill = (P₀; kw...) -> hill_tensor(Ellipsoid(1.0), P₀; kw...)
+    with_axes = CustomInclusion((2.0, 1.0, 0.5); hill_tensor = hill, density_factor = 0.5)
+    without_axes = CustomInclusion(; hill_tensor = hill)
+    @test without_axes.semi_axes === nothing
+    @test rebuilt(with_axes) === with_axes
+    @test rebuilt(without_axes) === without_axes
+end
 
 @testset "contract check — an inclusion without `shape_trait`" begin
     report = mktemp() do path, io

@@ -230,7 +230,9 @@ function _diff_ode_rhs!(du, u, p, τ)
     # evaluated against C = S⁻¹ (closed-form inverse for ISO / TI / ortho).
     Pτ = _reconstruct_tens(p.sym_tag, p.proto, u)
     Cτ = p.dual ? inv(Pτ) : Pτ
-    dφ, dφᶜ = _diff_rates(p, τ, eltype(u))
+    # The rates take the type of τ as well as the state's: an implicit solver
+    # differentiates the right-hand side in τ with dual numbers.
+    dφ, dφᶜ = _diff_rates(p, τ, promote_type(eltype(u), typeof(τ)))
     Δ = zero(Pτ)
     @inbounds for (i, name) in enumerate(p.solid_names)
         dφᵢ = dφ[i]
@@ -415,8 +417,15 @@ end
 function _diff_same_layout(a, b)
     tag = _symmetry_tag(a)
     tag === _symmetry_tag(b) || return false
-    return _state_length(tag, a) == _state_length(tag, b)
+    return _state_length(tag, a) == _state_length(tag, b) && _same_orientation(tag, a, b)
 end
+
+# A structured state holds coefficients about an axis or a frame: one tensor's
+# coefficients stand for the other's only about the same one. `isequal`, not
+# `==`: it answers a `Bool` on symbolic axes too.
+_same_orientation(::Val{:ti}, a, b) = isequal(TensND.axis(a), TensND.axis(b))
+_same_orientation(::Val{:ortho}, a, b) = isequal(TensND.frame(a), TensND.frame(b))
+_same_orientation(::Val, a, b) = true
 
 _state_length(::Val, t) = length(TensND.get_data(t))
 _state_length(::Val{:full_4}, t) = 36
@@ -433,40 +442,18 @@ _symmetry_tag(::TensND.TensOrtho) = Val(:ortho)
 _symmetry_tag(::TensND.AbstractTens{4, 3}) = Val(:full_4)
 _symmetry_tag(::TensND.AbstractTens{2, 3}) = Val(:full_2)
 
-# Flatten / reconstruct helpers : the iso / TI / ortho cases use the
-# canonical components ; the full-aniso fallback uses the Mandel
-# array.
-
-# Initial state vector for the ODE solver.
-_get_state(::Val{:iso_4}, t) = collect(TensND.get_data(t))
-_get_state(::Val{:iso_2}, t) = collect(TensND.get_data(t))
-_get_state(::Val{:ti}, t) = collect(TensND.get_data(t))
-_get_state(::Val{:ortho}, t) = collect(TensND.get_data(t))
-_get_state(::Val{:full_4}, t) = vec(collect(TensND.KM(t)))
-_get_state(::Val{:full_2}, t) = vec(collect(TensND.KM(t)))
-
-# Push a tensor into a flat vector for `du`.
-_set_state!(du, ::Val{:iso_4}, Δ) = (du .= TensND.get_data(Δ); nothing)
-_set_state!(du, ::Val{:iso_2}, Δ) = (du .= TensND.get_data(Δ); nothing)
-_set_state!(du, ::Val{:ti}, Δ) = (du .= TensND.get_data(Δ); nothing)
-_set_state!(du, ::Val{:ortho}, Δ) = (du .= TensND.get_data(Δ); nothing)
-_set_state!(du, ::Val{:full_4}, Δ) = (du .= vec(TensND.KM(Δ)); nothing)
-_set_state!(du, ::Val{:full_2}, Δ) = (du .= vec(TensND.KM(Δ)); nothing)
-
-# Reconstruct the tensor from a state vector.
-_reconstruct_tens(::Val{:iso_4}, ::TensND.AbstractTens, u) =
-    TensND.TensISO{3}(u[1], u[2])
-_reconstruct_tens(::Val{:iso_2}, ::TensND.AbstractTens, u) =
-    TensND.TensISO{3}(u[1])
-_reconstruct_tens(::Val{:ti}, proto::TensND.AbstractTens, u) =
-    TensND._rebuild(proto, ntuple(i -> u[i], length(u)))
-_reconstruct_tens(::Val{:ortho}, proto::TensND.AbstractTens, u) =
-    TensND._rebuild(proto, ntuple(i -> u[i], length(u)))
-# Fully-anisotropic fallback : rebuild from the Mandel 6×6 form.
-_reconstruct_tens(::Val{:full_4}, ::TensND.AbstractTens, u) =
-    TensND.inv_KM(reshape(u, 6, 6))
-_reconstruct_tens(::Val{:full_2}, ::TensND.AbstractTens, u) =
-    TensND.inv_KM(collect(u))
+# Flatten / reconstruct: TensND's `to_vector` / `from_vector`, the coefficients
+# of a structured class (with its axis or frame), the canonical Kelvin-Mandel
+# components of a generic tensor (an anisotropic Hill tensor is written in its
+# inclusion's basis, and `from_vector` rebuilds it canonical).
+# The full layouts hold canonical Kelvin-Mandel components whatever the class of
+# the tensor read into them (the matrix property may be isotropic while the state
+# is anisotropic): `generic_tens` first.
+const _FullLayout = Union{Val{:full_4}, Val{:full_2}}
+_get_state(::Val, t) = TensND.to_vector(t)
+_get_state(::_FullLayout, t) = TensND.to_vector(TensND.generic_tens(t))
+_set_state!(du, tag::Val, Δ) = (du .= _get_state(tag, Δ); nothing)
+_reconstruct_tens(::Val, proto::TensND.AbstractTens, u) = TensND.from_vector(proto, u)
 
 # ── Per-phase contribution helpers ──────────────────────────────────────────
 

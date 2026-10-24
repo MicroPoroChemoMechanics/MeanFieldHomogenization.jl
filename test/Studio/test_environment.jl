@@ -9,7 +9,7 @@ spec = MS.EnvironmentSpec(["Alpha" => "0.3", "Beta" => "1"])
 script = MS.environment_script("@studio-test", spec; update = false)
 @test !any(a -> a isa Expr && a.head in (:error, :incomplete), Meta.parseall(script).args)
 @test occursin("Pkg.activate(\"studio-test\"; shared = true)", script)
-@test occursin("Pkg.PackageSpec(name = \"Alpha\", version = \"0.3\")", script)
+@test occursin("Pkg.PackageSpec(name = \"Alpha\", version = Pkg.Types.semver_spec(\"0.3\"))", script)
 @test occursin("Pkg.compat(\"Beta\", \"1\")", script)
 @test !occursin("Pkg.update()", script)
 @test occursin("Pkg.update()", MS.environment_script("/tmp/x", spec; update = true))
@@ -49,6 +49,20 @@ s1 = MS.environment_script("@x", MS.EnvironmentSpec(installed, ["Beta" => "1"]);
 @test whole_script(s1)
 @test occursin("Pkg.add(Pkg.PackageSpec(name = \"Alpha\", version = \"1.2.3\"))", s1) && occursin("Pkg.pin(\"Alpha\")", s1)
 @test occursin("d.is_pinned", s1) && occursin("Pkg.free(\"Alpha\")", s1)   # `add` would keep a previous pin
+# The bounds an earlier version wrote into the environment are replaced before
+# anything is added: left until after, they keep the new version of the studio's
+# package out, as ChemistryLab 0.40's `OptimaSolver = "0.8"` kept 0.41.0 out.
+@test occursin("for (name, bound) in [\"Beta\" => \"1\"]", s1)
+@test findfirst("Pkg.compat(name, bound)", s1).start < findfirst("Pkg.add(Pkg.PackageSpec(name = \"Alpha\"", s1).start
+
+# The bounds of the studio's environment are MeanFieldHomogenization's own
+# wherever it declares one: copied by hand, a bound outlives the version it was
+# written for.
+own_compat = MS.TOML.parsefile(joinpath(pkgdir(MeanFieldHomogenization), "Project.toml"))["compat"]
+for (name, bound) in MS.ENVIRONMENT.packages
+    haskey(own_compat, name) && @test bound == own_compat[name]
+end
+@test any(p -> first(p) == "TensND", MS.ENVIRONMENT.packages)
 mktempdir() do clone
     developed = MS.PackageSource("Alpha", v"1.2.3", clone)
     s2 = MS.environment_script("@x", MS.EnvironmentSpec(developed, ["Beta" => "1"]); update = false)

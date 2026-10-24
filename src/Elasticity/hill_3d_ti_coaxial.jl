@@ -155,7 +155,7 @@ Reference: [barthelemyIJES2020_hilltrans](@citet).
 function _hill_3d_ti_coaxial(ell::Ellipsoid{3, Oblate}, C₀::TensND.TensTI{4, T, 5}) where {T}
     a, _, c = ell.semi_axes
     ω = c / a   # generic division — preserves Dual derivatives
-    C1111, C1122, C1133, C3333, C2323 = TensND.arg_TI(C₀)
+    C1111, C1122, C1133, C3333, C2323 = TensND.ti_args(C₀)
     P1, P2, P3, P5, P6 = _hill_ti_walpole(ω, C1111, C1122, C1133, C3333, C2323)
     return TensND.TensTI{4}(P1, P2, P3, P5, P6, TensND.axis(C₀))
 end
@@ -163,14 +163,14 @@ end
 function _hill_3d_ti_coaxial(ell::Ellipsoid{3, Prolate}, C₀::TensND.TensTI{4, T, 5}) where {T}
     a, b, _ = ell.semi_axes
     ω = a / b   # generic division — preserves Dual derivatives
-    C1111, C1122, C1133, C3333, C2323 = TensND.arg_TI(C₀)
+    C1111, C1122, C1133, C3333, C2323 = TensND.ti_args(C₀)
     P1, P2, P3, P5, P6 = _hill_ti_walpole(ω, C1111, C1122, C1133, C3333, C2323)
     return TensND.TensTI{4}(P1, P2, P3, P5, P6, TensND.axis(C₀))
 end
 
 function _hill_3d_ti_coaxial(::Ellipsoid{3, Spherical}, C₀::TensND.TensTI{4, T, 5}) where {T}
     # Spheroid degenerates to sphere — ω = 1, formula limit values
-    C1111, C1122, C1133, C3333, C2323 = TensND.arg_TI(C₀)
+    C1111, C1122, C1133, C3333, C2323 = TensND.ti_args(C₀)
     P1, P2, P3, P5, P6 = _hill_ti_walpole(one(T), C1111, C1122, C1133, C3333, C2323)
     return TensND.TensTI{4}(P1, P2, P3, P5, P6, TensND.axis(C₀))
 end
@@ -183,11 +183,7 @@ end
 # is built as a `dcontract` of two N=5 tensors (the result is structurally
 # allowed to be non-major-symmetric even when the operands are not).
 
-function _ti6_to_ti5(C::TensND.TensTI{4, T, 6}) where {T}
-    ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆ = TensND.get_data(C)
-    ℓ34 = (ℓ₃ + ℓ₄) / 2
-    return TensND.TensTI{4, T, 5}((ℓ₁, ℓ₂, ℓ34, ℓ₅, ℓ₆), TensND.axis(C))
-end
+_ti6_to_ti5(C::TensND.TensTI{4, T, 6}) where {T} = TensND.Tensors.majorsymmetric(C)
 
 _hill_3d_ti_coaxial(ell::Ellipsoid{3, Oblate}, C₀::TensND.TensTI{4, T, 6}) where {T} =
     _hill_3d_ti_coaxial(ell, _ti6_to_ti5(C₀))
@@ -217,10 +213,7 @@ _hill_3d_ti_coaxial(ell::Ellipsoid{3, Spherical}, C₀::TensND.TensTI{4, T, 6}) 
 # Dropping them here is therefore exact for every reference medium the
 # analytical builder is meant to accept, and is the same convention as the
 # N=6 → N=5 collapse just above (which averages a non-trivial ℓ₃ ≠ ℓ₄).
-function _ti8_to_ti6(C::TensND.TensTI{4, T, 8}) where {T}
-    ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆, _, _ = TensND.get_ℓ8(C)
-    return TensND.TensTI{4, T, 6}((ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆), TensND.axis(C))
-end
+_ti8_to_ti6(C::TensND.TensTI{4, T, 8}) where {T} = TensND.rebuild(C, TensND.get_ℓ8(C)[1:6])
 
 _hill_3d_ti_coaxial(ell::Ellipsoid{3, Oblate}, C₀::TensND.TensTI{4, T, 8}) where {T} =
     _hill_3d_ti_coaxial(ell, _ti8_to_ti6(C₀))
@@ -237,19 +230,13 @@ _hill_3d_ti_coaxial(ell::Ellipsoid{3, Spherical}, C₀::TensND.TensTI{4, T, 8}) 
 `true` when the TI symmetry axis of `C₀` is parallel to the (unique)
 spheroid axis of `ell` (column 3 for `Oblate`/`Spherical`, column 1 for
 `Prolate`).  Used by the dispatcher to route coaxial-spheroid problems
-to the analytical TI builder.
+to the analytical TI builder. The test is TensND's `isparallel`, safe on symbolic
+axes, where `isapprox(abs(dot(…)), 1)` threw on a `Num` and conjugated a `Sym`.
 """
-function _ti_coaxial(C₀::TensND.TensTI{4}, ell::Ellipsoid{3, Oblate})
-    axis_C = collect(TensND.axis(C₀))
-    axis_e = collect(TensND.components_canon(TensND.tens_basis(ell.basis, 3)))
-    return isapprox(abs(dot(axis_C, axis_e)), 1.0; atol = 1.0e-10)
-end
-
-function _ti_coaxial(C₀::TensND.TensTI{4}, ell::Ellipsoid{3, Prolate})
-    axis_C = collect(TensND.axis(C₀))
-    axis_e = collect(TensND.components_canon(TensND.tens_basis(ell.basis, 1)))
-    return isapprox(abs(dot(axis_C, axis_e)), 1.0; atol = 1.0e-10)
-end
+_ti_coaxial(C₀::TensND.TensTI{4}, ell::Ellipsoid{3, Oblate}) =
+    TensND.isparallel(TensND.axis(C₀), TensND.tens_basis(ell.basis, 3))
+_ti_coaxial(C₀::TensND.TensTI{4}, ell::Ellipsoid{3, Prolate}) =
+    TensND.isparallel(TensND.axis(C₀), TensND.tens_basis(ell.basis, 1))
 
 # Sphere is coaxial with anything (no preferred axis on the inclusion side).
 _ti_coaxial(::TensND.TensTI{4}, ::Ellipsoid{3, Spherical}) = true

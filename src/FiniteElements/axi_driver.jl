@@ -46,12 +46,9 @@ end
 # before, and an abstract supertype would fight the inclusion hierarchy for no
 # gain. The rest of the driver *is* typed per morphology, because the
 # constituents, the averaging sets and the fixed point genuinely differ.
-function _axi_setup(incl)
-    if incl.cache.setup === nothing
-        b = _resolve_backend(incl.backend)
-        incl.cache.setup = AxiSetup(b, fe_axi_grid(b, incl), Dict{Tuple{Symbol, Int}, Any}())
-    end
-    return incl.cache.setup
+_axi_setup(incl) = _fe_setup!(incl.cache) do
+    b = _resolve_backend(incl.backend)
+    AxiSetup(b, fe_axi_grid(b, incl), Dict{Tuple{Symbol, Int}, Any}())
 end
 
 "Number of scalar unknowns, and the components the axis pins to zero, per mode."
@@ -227,7 +224,7 @@ _axi_run(incl, P₀::TensND.AbstractTens{2, 3}) = _axi_run_cond(incl, P₀)
 function _fe_axi_concentration(
         incl::FEExcenteredSphere, P₀::TensND.AbstractTens; kw...
     )
-    res = get!(() -> _axi_run(incl, P₀), incl.cache.tensors, _fe_cache_key(P₀))
+    res = _fe_memo(() -> _axi_run(incl, P₀), incl.cache, _fe_cache_key(P₀))
     return res.A, res.B
 end
 

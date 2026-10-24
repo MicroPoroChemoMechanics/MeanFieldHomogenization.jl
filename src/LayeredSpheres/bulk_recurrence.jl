@@ -29,25 +29,14 @@
 #  incompressible core while `σ(r_1⁻) = P_1` stays finite.
 # =============================================================================
 
-# ── ISO moduli extraction from TensISO stiffness tensor ─────────────────────
-
-"""
-    _iso_bulk_shear(C) -> (κ, μ)
-
-Extract (bulk modulus, shear modulus) from an isotropic stiffness
-`TensISO{4,3}`.  TensND stores ``(3k, 2\\mu)`` internally.
-"""
-function _iso_bulk_shear(C::TensND.TensISO{4, 3})
-    α, β = C.data
-    return α / 3, β / 2
-end
+# ── ISO moduli: TensND's `k_mu` gives (bulk, shear) of a `TensISO{4,3}` ─────
 
 """
     _iso_scalar(K) -> k
 
 Extract the scalar conductivity from an isotropic `TensISO{2,3}`.
 """
-_iso_scalar(K::TensND.TensISO{2, 3}) = MFH_Core.extract_iso_conductivity(K)
+_iso_scalar(K::TensND.TensISO{2, 3}) = first(TensND.get_data(K))
 
 # =============================================================================
 #  Bulk (spherical) part — 2×2 transfer matrix in the (u, σ) state vector.
@@ -120,7 +109,7 @@ end
 
 # Cached tuple of per-layer `(κ, μ)` moduli pairs.
 @inline function _bulk_layer_moduli(sphere::LayeredSphere{T, N}) where {T, N}
-    return ntuple(k -> _iso_bulk_shear(layer_modulus(sphere, k)), Val(N))
+    return ntuple(k -> TensND.k_mu(layer_modulus(sphere, k)), Val(N))
 end
 
 # `κμ` is deliberately typed `Tuple{Vararg{Any, N}}` and NOT `NTuple{N, <:Any}`:

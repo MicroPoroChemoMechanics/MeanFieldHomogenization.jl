@@ -5,7 +5,7 @@
 #   * the volume fraction of an inclusion phase,
 #   * the moduli of a phase (E-like, μ-like).
 #
-#  Compares the AD derivative against a centerd-finite-difference reference
+#  Compares the AD derivative against a centered-finite-difference reference
 #  to relative tolerance 1e-5.
 # =============================================================================
 

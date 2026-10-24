@@ -14,7 +14,7 @@
 #    * the pseudo-inverse is a cofactor inverse of the 3×3 out-of-plane block,
 #      never `LinearAlgebra.pinv` — an SVD is not symbolically evaluable;
 #    * every intermediate is an `SMatrix`, never an `MMatrix`, which cannot
-#      even be CONSTRUCTED for a non-isbits element type such as `SymPy.Sym`.
+#      even be CONSTRUCTED for a non-isbits element type such as `SymPyPythonCall.Sym`.
 #
 #  NOT published to the documentation gallery: SymPy-heavy scripts are kept
 #  out of the Literate build (repo policy, see scripts/README.md). Its content
@@ -29,7 +29,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)
 using MeanFieldHomogenization
 using TensND
 using StaticArrays
-using SymPy
+using SymPyPythonCall
 using Printf
 
 const MFHC = MeanFieldHomogenization.Core
@@ -47,9 +47,9 @@ function iso_km(λ, μ)
     z = zero(λ)
     return SMatrix{6, 6}(
         [
-            λ+2μ λ λ z z z
-            λ λ+2μ λ z z z
-            λ λ λ+2μ z z z
+            λ + 2μ λ λ z z z
+            λ λ + 2μ λ z z z
+            λ λ λ + 2μ z z z
             z z z 2μ z z
             z z z z 2μ z
             z z z z z 2μ
@@ -82,11 +82,11 @@ F = avg0((l, m) -> m)                     # arithmetic mean of the shear moduli
 G = avg0((l, m) -> 1 / m)                 # harmonic mean of the shear moduli
 
 M_claim = [
-    E+B^2/A+2F E+B^2/A B/A 0 0 0
-    E+B^2/A E+B^2/A+2F B/A 0 0 0
-    B/A B/A 1/A 0 0 0
-    0 0 0 2/G 0 0
-    0 0 0 0 2/G 0
+    E + B^2 / A + 2F E + B^2 / A B / A 0 0 0
+    E + B^2 / A E + B^2 / A + 2F B / A 0 0 0
+    B / A B / A 1 / A 0 0 0
+    0 0 0 2 / G 0 0
+    0 0 0 0 2 / G 0
     0 0 0 0 0 2F
 ]
 
@@ -138,7 +138,7 @@ end
 @syms kn::positive L::positive
 z = zero(kn)
 𝕂 = SMatrix{3, 3}([z z z; z z z; z z kn])          # normal compliance only
-P_int = MFHC._op_embed(MFHC.compliance_op_block(𝕂)) / L
+P_int = TensND.mandel_op_embed(MFHC.compliance_op_block(𝕂)) / L
 Chi = MFHC.laminate_stiffness((iso_km(λ₁, μ₁), iso_km(λ₂, μ₂)), (f₁, f₂), P_int, Z)
 
 println("\n§4  With a normal spring interface of compliance kn over a period L")
@@ -169,7 +169,7 @@ println("─"^78)
 println("  returned type : ", typeof(Csym))
 println("  (isotropic layers ⇒ EXACTLY transversely isotropic about n)")
 @printf "  axis          : %s   (exact integers, not 0.0 / 1.0)\n" string(TensND.axis(Csym))
-Msym = KM(Csym)
+Msym = mandel(Csym)
 lame(κ, μ) = κ - 2μ / 3
 @printf "  1/C₃₃₃₃ − ⟨1/(λ+2μ)⟩ = %s\n" string(
     simplify(1 / Msym[3, 3] - (f₁ / (lame(κ₁, μ₁) + 2μ₁) + f₂ / (lame(κ₂, μ₂) + 2μ₂)))

@@ -127,8 +127,8 @@ one, and its value is that evaluation itself; the derivatives ride on the same
 nodes.
 """
 @inline _quadgk_norm(x) = LinearAlgebra.norm(x)
-@inline _quadgk_norm(x::ForwardDiff.Dual) = LinearAlgebra.norm(_primal(x))
-@inline _quadgk_norm(x::AbstractArray{<:ForwardDiff.Dual}) = LinearAlgebra.norm(_primal.(x))
+@inline _quadgk_norm(x::ForwardDiff.Dual) = LinearAlgebra.norm(primal(x))
+@inline _quadgk_norm(x::AbstractArray{<:ForwardDiff.Dual}) = LinearAlgebra.norm(primal.(x))
 
 """
     _counted_quadgk(f, a, b; atol, rtol, maxevals) -> (value, error)

@@ -106,7 +106,7 @@ end
 # ── Moments M_{n,k,p} of one root ──────────────────────────────────────────
 
 function _spheroid_moment_series(k̄, n, k, p)
-    F = typeof(float(_primal(real(k̄))))
+    F = typeof(float(primal(real(k̄))))
     β = 2 * one(F) / (n + 1)
     for i in 1:k
         β = β * (2i) / (2i + n + 1)
@@ -299,9 +299,9 @@ function _newton_near_spheroid(L, B₁, B₂)
     m̄ = (m₁ + m₂) / 2
     d = (m₁ - m₂) / 2
     K = _NEAR_SPHEROID_ORDER
-    F = typeof(float(_primal(m̄)))
+    F = typeof(float(primal(m̄)))
     U = _spheroid_moment_table(m̄, K + 3)
-    π_ = oftype(float(_primal(m̄)), π)
+    π_ = oftype(float(primal(m̄)), π)
     function G(aL, a₁, a₂)
         c = _near_spheroid_coefficients(F, a₁, a₂, K)
         n = aL + a₁ + a₂ - 3

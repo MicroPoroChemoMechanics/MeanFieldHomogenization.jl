@@ -158,9 +158,7 @@ function _check_tangent(m, ε, st, C; Δ, rtol)
                 (σp - σm) / (2Δ), TensND.CanonicalBasis{3, Float64}()
             )
         )
-        for i in 1:3, j in 1:3
-            maxerr = max(maxerr, abs(fd[i, j] - A[i, j, k, l]))
-        end
+        maxerr = max(maxerr, maximum(abs, fd .- view(A, :, :, k, l)))
     end
     return maxerr <= rtol * scale
 end

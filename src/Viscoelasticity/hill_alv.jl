@@ -39,7 +39,10 @@ ECHOES manual appendix `viscoelastic_hill_kernel.qmd`:
   2. Extract the iso scalar parameter matrices ``(\\alpha, \\beta)`` of ``\\widetilde{\\mathbb{C}}_0``
      (``\\alpha = 3k``, ``\\beta = 2\\mu`` per Mandel convention).
   3. Build the longitudinal ``M_{\\mathrm{long}} = (\\alpha + 2\\beta)/3`` and the shear
-     ``M_{\\mathrm{shear}} = \\beta/2`` ``n\\times n`` matrices.
+     ``M_{\\mathrm{shear}} = \\beta/2`` ``n\\times n`` matrices: the two eigenvalues
+     of the acoustic tensor, which the Hill tensor inverts. The bulk and shear
+     kernels follow linearly, ``k = M_{\\mathrm{long}} - \\tfrac{4}{3} M_{\\mathrm{shear}}``
+     and ``\\mu = M_{\\mathrm{shear}}``; their inverses do not (see the theory page).
   4. Take the scalar Volterra inverses
      ``J_{\\mathrm{long}} = M_{\\mathrm{long}}^{-\\circ}`` and ``J_{\\mathrm{shear}} = M_{\\mathrm{shear}}^{-\\circ}``.
   5. Compute the Mandel forms ``\\mathrm{Mat}(\\mathbb{U}^{\\boldsymbol{A}})`` and
@@ -49,34 +52,33 @@ ECHOES manual appendix `viscoelastic_hill_kernel.qmd`:
      ``[\\widetilde{\\mathbb{P}}]_{ij} = (J_{\\mathrm{long}})_{ij}\\,\\mathrm{Mat}(\\mathbb{U}^{\\boldsymbol{A}}) + (J_{\\mathrm{shear}})_{ij}\\,\\mathrm{Mat}(\\mathbb{V}^{\\boldsymbol{A}} - \\mathbb{U}^{\\boldsymbol{A}})``.
 """
 function hill_kernel(ell, C0_law::ViscoLaw, times::AbstractVector{<:Real})
-    n = length(times)
     # 1. Build the 6n×6n RELAXATION matrix of the iso reference (invert
     #    the trapezoidal compliance if the law is in `:creep` mode).
     R_M = trapezoidal_matrix(C0_law, times)
     if visco_mode(C0_law) === :creep
         R_M = volterra_inverse(R_M; block_size = 6)
     end
-    # 2-3. Extract iso parameters (α=3K, β=2μ) and build longitudinal / shear.
-    α, β = iso_params_from_blocks(R_M)
-    M_long = @. (α + 2 * β) / 3      # = K + 4μ/3
-    M_shear = β ./ 2                  # = μ
-    # 4. Scalar Volterra inverses (n×n each).
-    J_long = volterra_inverse(M_long; block_size = 1)
-    J_shear = volterra_inverse(M_shear; block_size = 1)
+    # 2-4. The longitudinal and shear Volterra inverses of the reference.
+    J_long, J_shear = _alv_iso_inverses(R_M)
     # 5. Geometric 4-tensors of the inclusion in Mandel form.
-    U_A = tens_UA(ell)
-    V_A = tens_VA(ell)
-    U_M = _tens_to_mandel66(U_A)
-    V_M = _tens_to_mandel66(V_A)
-    D_M = V_M - U_M
+    U_M = TensND.mandel66(tens_UA(ell))
+    D_M = TensND.mandel66(tens_VA(ell)) - U_M
     # 6. Assemble.
-    T = promote_type(eltype(J_long), eltype(J_shear), eltype(U_M))
-    P = zeros(T, 6 * n, 6 * n)
-    @inbounds for i in 1:n, j in 1:i
-        block = J_long[i, j] .* U_M .+ J_shear[i, j] .* D_M
-        rows = (6 * (i - 1) + 1):(6 * i)
-        cols = (6 * (j - 1) + 1):(6 * j)
-        P[rows, cols] = block
-    end
+    return _alv_hill_blocks(J_long, J_shear, U_M, D_M)
+end
+
+# The longitudinal ``(\alpha + 2\beta)/3`` and shear ``\beta/2`` Volterra
+# inverses of an isotropic block matrix: what its Hill kernel is made of.
+function _alv_iso_inverses(C::AbstractMatrix)
+    α, β = iso_params_from_blocks(C)
+    return volterra_inverse(@.((α + 2 * β) / 3); block_size = 1), volterra_inverse(β ./ 2; block_size = 1)
+end
+
+# The ALV Hill kernel of an ellipsoid of geometry tensors `U_M`, `D_M = V_M - U_M`
+# against an isotropic reference: block (i, j) is J_long[i, j] U_M + J_shear[i, j] D_M.
+# Both inverses are lower triangular, so the blocks above the diagonal vanish.
+function _alv_hill_blocks(J_long, J_shear, U_M, D_M)
+    P = kron(J_long, U_M)
+    P .+= kron(J_shear, D_M)
     return P
 end

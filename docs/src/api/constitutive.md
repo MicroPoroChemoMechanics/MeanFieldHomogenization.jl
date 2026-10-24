@@ -54,12 +54,11 @@ reset_cache!
 
 ## `Tensors.jl` bridge
 
+`to_tensors`, `from_tensors`, `voigt_stress`, `voigt_strain`, `stress_from_voigt`
+and `strain_from_voigt` are TensND's, re-exported unchanged: components in the
+canonical basis, whatever basis a tensor is written in
+([TensND, Tensors.jl and the Voigt forms](https://MicroPoroChemoMechanics.github.io/TensND.jl/stable/api/tensors)).
+
 ```@docs
-to_tensors
-from_tensors
 plane_strain_response
-voigt_stress
-voigt_strain
-stress_from_voigt
-strain_from_voigt
 ```

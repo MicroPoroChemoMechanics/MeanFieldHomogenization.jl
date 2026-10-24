@@ -141,6 +141,14 @@ end
     @test K_inv isa ALVKernelOrtho
 end
 
+@testset "ALVKernelTI / ALVKernelOrtho — components of unequal sizes are refused" begin
+    n = 3
+    ℓ = (ntuple(_ -> _alvk_rand_lt(n), 5)..., _alvk_rand_lt(n + 1))
+    o = (_alvk_rand_lt(n + 1), ntuple(_ -> _alvk_rand_lt(n), 11)...)
+    @test_throws "ALVKernelTI: all components must be n×n" ALVKernelTI(ℓ)
+    @test_throws "ALVKernelOrtho: all components must be n×n" ALVKernelOrtho(o)
+end
+
 @testset "ALV kernel ladder — iso ⊂ TI ⊂ ortho" begin
     n = 4
     α = _alvk_rand_lt(n); β = _alvk_rand_lt(n)
@@ -212,6 +220,11 @@ end
     @test isequal(Symbolics.value.(Q_iso.β), Symbolics.value.(K_iso.β ./ c))
 
     K_ti = ALVKernelTI(ntuple(_ -> _alvk_rand_lt(n), 6); axis = (0.0, 1.0, 0.0))
+    # An axis is a plain-number label, of mixed number types if need be; a
+    # symbolic one is refused with a message.
+    @test ALVKernelTI(ntuple(_ -> _alvk_rand_lt(n), 6); axis = (0.0, 0, 1)).axis === (0.0, 0.0, 1.0)
+    @test_throws ArgumentError ALVKernelTI(ntuple(_ -> _alvk_rand_lt(n), 6); axis = (0.0, 0.0, c))
+    @test_throws ArgumentError ALVKernelOrtho(ntuple(_ -> _alvk_rand_lt(n), 12); axes = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, c)))
     Q_ti = K_ti / c
     @test Q_ti isa ALVKernelTI
     @test Q_ti.axis == K_ti.axis

@@ -3,7 +3,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
-using SymPy   # top level on purpose: `@syms` below is expanded before any
+using SymPyPythonCall   # top level on purpose: `@syms` below is expanded before any
 # `using` nested in a @testset body would have run.
 
 # =============================================================================
@@ -69,7 +69,7 @@ end
         4.0 3.0 -2.0 2.5 65.0 -1.0;
         3.0 -1.0 2.0 1.5 -1.0 55.0
     ]
-    C₀ = TensND.inv_KM(_KM_tri, ℬ)
+    C₀ = TensND.from_mandel(_KM_tri, ℬ)
     C₁ = 2.0 * C₀   # same symmetry, doubled
     ell = Ellipsoid(3.0, 2.0, 1.0)
 

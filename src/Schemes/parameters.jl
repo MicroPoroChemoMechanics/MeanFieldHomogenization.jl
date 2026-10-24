@@ -190,27 +190,17 @@ _resolve_selector(t::TensND.AbstractTens, sel::Symbol) = throw(
     _replace_data_at(t, i, v) -> typeof_promoted(t)
 
 Return a new tensor of the same structural type as `t`, with the scalar
-at index `i` (in `get_data`) replaced by `v`. The element type is
-promoted to absorb `typeof(v)`.
+at index `i` (in `get_data`) replaced by `v`: TensND's `rebuild`, which promotes
+the coefficients (and a TI axis with them) to absorb `typeof(v)`.
 """
 _replace_data_at(t, i, v) = throw(
     ArgumentError(
-        "_replace_data_at not implemented for tensor of type $(typeof(t)); add a method"
+        "_replace_data_at not implemented for tensor of type $(typeof(t)): a parameter " *
+            "is a coefficient of a TensISO, TensTI, TensOrtho or TensCubic"
     )
 )
-
-function _replace_data_at(t::TensND.TensISO{order, dim, T, N}, i::Int, v::Tv) where {order, dim, T, N, Tv}
-    Tnew = promote_type(T, Tv)
-    new_data = ntuple(k -> k == i ? convert(Tnew, v) : convert(Tnew, t.data[k]), N)
-    return TensND.TensISO{dim}(new_data...)
-end
-
-function _replace_data_at(t::TensND.TensTI{order, T, N}, i::Int, v::Tv) where {order, T, N, Tv}
-    Tnew = promote_type(T, Tv)
-    new_data = ntuple(k -> k == i ? convert(Tnew, v) : convert(Tnew, t.data[k]), N)
-    new_n = ntuple(k -> convert(Tnew, t.n[k]), 3)
-    return TensND.TensTI{order, Tnew, N}(new_data, new_n)
-end
+_replace_data_at(t::Union{TensND.TensISO, TensND.TensTI, TensND.TensOrtho, TensND.TensCubic}, i::Int, v) =
+    TensND.rebuild(t, Base.setindex(TensND.get_data(t), v, i))
 
 # =============================================================================
 #  Inclusion-geometry reconstruction with one field replaced

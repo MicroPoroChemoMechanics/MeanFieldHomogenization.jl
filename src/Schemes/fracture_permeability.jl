@@ -87,8 +87,8 @@ function fracture_permeability(
     converged = false
     for it in 1:maxiters
         K_new = _fracture_permeability_step(K_s, cracks, densities, K; kw...)
-        Δ = sqrt(_frob_sq(K_new - K))
-        scale = sqrt(_frob_sq(K_new))
+        Δ = sqrt(TensND.sqnorm(K_new - K))
+        scale = sqrt(TensND.sqnorm(K_new))
         K = damping == 1 ? K_new : K + damping * (K_new - K)
         verbose && @info "fracture_permeability iter $it : ‖Δ‖/‖K‖ = $(Δ / scale)"
         if Δ <= abstol + reltol * scale

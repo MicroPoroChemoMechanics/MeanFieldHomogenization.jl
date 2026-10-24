@@ -74,7 +74,7 @@ function lattice_interaction_tensor(
         L::Real, R_c::Real; kw...
     )
     imgs = periodic_images(r, L, R_c; skip_self = true)
-    isempty(imgs) && return _zero_interaction(P₀)
+    isempty(imgs) && return zero(TensND.generic_tens(P₀))
     acc = interaction_tensor(incl_a, incl_b, imgs[1], P₀; kw...)
     for k in 2:length(imgs)
         acc = acc + interaction_tensor(incl_a, incl_b, imgs[k], P₀; kw...)
@@ -82,11 +82,7 @@ function lattice_interaction_tensor(
     return acc
 end
 
-# A zero of the same tensor order as the reference property.  Built from the
-# reference itself rather than from `zero(::TensTI)`, which would narrow the
+# A zero of the same tensor order as the reference property, generic
+# (`TensND.generic_tens`) rather than `zero(::TensTI)`, which would narrow the
 # symmetry class (`zero(TensTI)` is a `TensISO`) and produce a value that no
 # longer accepts a TI update.
-_zero_interaction(P₀::TensND.AbstractTens{4, 3}) = zero(TensND.Tens(zeros(eltype(P₀), 3, 3, 3, 3)))
-_zero_interaction(P₀::TensND.AbstractTens{4, 2}) = zero(TensND.Tens(zeros(eltype(P₀), 2, 2, 2, 2)))
-_zero_interaction(P₀::TensND.AbstractTens{2, 3}) = zero(TensND.Tens(zeros(eltype(P₀), 3, 3)))
-_zero_interaction(P₀::TensND.AbstractTens{2, 2}) = zero(TensND.Tens(zeros(eltype(P₀), 2, 2)))

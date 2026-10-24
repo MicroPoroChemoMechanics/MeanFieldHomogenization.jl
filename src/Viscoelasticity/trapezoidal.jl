@@ -137,108 +137,50 @@ end
 # preserving element type.
 @inline _to_mandel(sample::AbstractMatrix) = sample
 @inline function _to_mandel(sample::TensND.AbstractTens{4, 3})
-    return _tens_to_mandel66(sample)
+    return TensND.mandel66(sample)
 end
 
-# Convert a TensND 4-tensor in {3,3,3,3} array form to a 6×6 Mandel matrix.
-# Mandel convention: σ_4 = √2 σ_23, σ_5 = √2 σ_13, σ_6 = √2 σ_12.
-function _tens_to_mandel66(C::TensND.AbstractTens{4, 3})
-    arr = TensND.get_array(C)
-    T = eltype(arr)
-    M = zeros(T, 6, 6)
-    sq2 = sqrt(T(2))
-    voigt = ((1, 1), (2, 2), (3, 3), (2, 3), (1, 3), (1, 2))
-    for I in 1:6, J in 1:6
-        i, j = voigt[I]
-        k, l = voigt[J]
-        scale = (I ≥ 4 ? sq2 : one(T)) * (J ≥ 4 ? sq2 : one(T))
-        M[I, J] = arr[i, j, k, l] * scale
-    end
-    return M
-end
-
-# Fill the (6×6)-block-structured matrix from a 4-tensor kernel.
-# Per-row cache halves the number of `visco_eval` + `_to_mandel` calls.
+# The block cases, B×B blocks: 6 for a 4-tensor or a 6×6 Mandel matrix, 3 for a
+# 2-tensor or a 3×3 matrix. `convert_sample` turns a kernel value into its B×B
+# block. A per-row cache halves the number of `visco_eval` calls; the weights are
+# the layout at the top of this file.
 # (Threading reverted: see note in `_fill_trapezoidal_scalar!`.)
-@inline function _fill_trapezoidal_tensor!(
-        M::AbstractMatrix, law::ViscoLaw,
-        times::AbstractVector
-    )
+@inline function _fill_trapezoidal_blocks!(
+        M::AbstractMatrix, law::ViscoLaw, times::AbstractVector, ::Val{B}, convert_sample::F
+    ) where {B, F}
     n = length(times)
     n == 0 && return M
     T = eltype(M)
     cache = Vector{Matrix{T}}(undef, n)
     @inbounds begin
-        cache[1] = _to_mandel(visco_eval(law, times[1], times[1]))
-        _set_block!(M, 1, 1, cache[1])
+        cache[1] = convert_sample(visco_eval(law, times[1], times[1]))
+        _put_block!(M, 1, 1, cache[1], cache[1], +, inv(T(2)), Val(B))
         for i in 2:n
             for k in 1:i
-                cache[k] = _to_mandel(visco_eval(law, times[i], times[k]))
+                cache[k] = convert_sample(visco_eval(law, times[i], times[k]))
             end
-            _fill_row_blocks_from_cache!(M, cache, i, T)
+            _put_block!(M, i, 1, cache[1], cache[2], -, inv(T(2)), Val(B))
+            for j in 2:(i - 1)
+                _put_block!(M, i, j, cache[j - 1], cache[j + 1], -, inv(T(2)), Val(B))
+            end
+            _put_block!(M, i, i, cache[i - 1], cache[i], +, inv(T(2)), Val(B))
         end
     end
     return M
 end
 
-@inline function _fill_trapezoidal_mandel!(
-        M::AbstractMatrix, law::ViscoLaw,
-        times::AbstractVector
-    )
-    n = length(times)
-    n == 0 && return M
-    T = eltype(M)
-    cache = Vector{Matrix{T}}(undef, n)
-    @inbounds begin
-        cache[1] = copy(visco_eval(law, times[1], times[1]))
-        _set_block!(M, 1, 1, cache[1])
-        for i in 2:n
-            for k in 1:i
-                cache[k] = visco_eval(law, times[i], times[k])
-            end
-            _fill_row_blocks_from_cache!(M, cache, i, T)
-        end
+# Block (i, j) of `M` set to `op(a, b) / 2`, by a loop over its B×B entries:
+# measured faster than a broadcast over views (1.3 times at B = 3). `(a + a)/2`
+# writes the first block exactly.
+@inline function _put_block!(M, i, j, a, b, op::F, half, ::Val{B}) where {F, B}
+    r, c = B * (i - 1), B * (j - 1)
+    @inbounds for l in 1:B, k in 1:B
+        M[r + k, c + l] = op(a[k, l], b[k, l]) * half
     end
     return M
 end
 
-# Place row `i` blocks into `M` from the cache `cache[1..i]` of
-# `_to_mandel(visco_eval(law, times[i], times[k]))`.  Writes blocks
-# directly entry-by-entry, no temporary `(a ± b) / 2` allocation.
-@inline function _fill_row_blocks_from_cache!(
-        M::AbstractMatrix,
-        cache::Vector{<:AbstractMatrix},
-        i::Int, ::Type{T}
-    ) where {T}
-    half = inv(T(2))
-    @inbounds begin
-        # j = 1 : (cache[1] - cache[2]) / 2
-        c1, c2 = cache[1], cache[2]
-        for kk in 1:6, ll in 1:6
-            M[6 * (i - 1) + kk, ll] = (c1[kk, ll] - c2[kk, ll]) * half
-        end
-        # 1 < j < i : (cache[j-1] - cache[j+1]) / 2
-        for j in 2:(i - 1)
-            cm, cp = cache[j - 1], cache[j + 1]
-            for kk in 1:6, ll in 1:6
-                M[6 * (i - 1) + kk, 6 * (j - 1) + ll] =
-                    (cm[kk, ll] - cp[kk, ll]) * half
-            end
-        end
-        # j = i : (cache[i-1] + cache[i]) / 2  (note + sign)
-        cm, cp = cache[i - 1], cache[i]
-        for kk in 1:6, ll in 1:6
-            M[6 * (i - 1) + kk, 6 * (i - 1) + ll] =
-                (cm[kk, ll] + cp[kk, ll]) * half
-        end
-    end
-    return M
-end
-
-# Place a 6×6 block into the (i, j)-th block of the 6n×6n matrix.
-@inline function _set_block!(M::AbstractMatrix, i::Int, j::Int, block::AbstractMatrix)
-    rows = (6 * (i - 1) + 1):(6 * i)
-    cols = (6 * (j - 1) + 1):(6 * j)
-    @inbounds M[rows, cols] = block
-    return M
-end
+_fill_trapezoidal_tensor!(M::AbstractMatrix, law::ViscoLaw, times::AbstractVector) =
+    _fill_trapezoidal_blocks!(M, law, times, Val(6), _to_mandel)
+_fill_trapezoidal_mandel!(M::AbstractMatrix, law::ViscoLaw, times::AbstractVector) =
+    _fill_trapezoidal_blocks!(M, law, times, Val(6), identity)

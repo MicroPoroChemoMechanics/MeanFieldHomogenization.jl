@@ -48,13 +48,13 @@ end
 const cell = build_lam()
 
 C_Laminated = homogenize(cell, Laminated(), :C)
-KMC_Laminated = KM(C_Laminated)
+KMC_Laminated = mandel(C_Laminated)
 @printf "Laminated                 KM33 = %.6f  KM66 = %.6f\n" KMC_Laminated[3, 3] KMC_Laminated[6, 6]
 C_Voigt = homogenize(cell, Voigt(), :C)
-KMC_Voigt = KM(C_Voigt)
+KMC_Voigt = mandel(C_Voigt)
 @printf "Voigt                     KM33 = %.6f  KM66 = %.6f\n" KMC_Voigt[3, 3] KMC_Voigt[6, 6]
 C_Reuss = homogenize(cell, Reuss(), :C)
-KMC_Reuss = KM(C_Reuss)
+KMC_Reuss = mandel(C_Reuss)
 @printf "Reuss                     KM33 = %.6f  KM66 = %.6f\n" KMC_Reuss[3, 3] KMC_Reuss[6, 6]
 
 #= mfhstudio-model v1

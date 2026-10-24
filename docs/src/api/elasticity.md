@@ -20,7 +20,6 @@ MeanFieldHomogenization.tens_UA
 MeanFieldHomogenization.tens_VA
 MeanFieldHomogenization.hill_tensor
 MeanFieldHomogenization.Core.eshelby_tensor
-MeanFieldHomogenization.Elasticity.iso_stiffness
 ```
 
 ## Nanoinclusion interfaces
@@ -32,10 +31,13 @@ equivalent_particle
 
 ## Parameter conversions
 
+The isotropic moduli are TensND's, re-exported by the package unchanged:
+`iso_stiffness(k, μ)`, `k_mu(ℂ)`, `E_nu(ℂ)` and `iso_stiffness_E_nu(E, ν)`
+([TensND, isotropic elastic moduli](https://MicroPoroChemoMechanics.github.io/TensND.jl/stable/api/structured)).
+The Hoenig parameters of a transversely isotropic stiffness are read and built here,
+on TensND's compliance forms `ti_args_hoenig` and `tens_ti_hoenig`.
+
 ```@docs
-k_mu
-E_nu
-iso_stiffness_E_nu
 MeanFieldHomogenization.Elasticity.hoenig_params
 MeanFieldHomogenization.Elasticity.hoenig_stiffness
 ```

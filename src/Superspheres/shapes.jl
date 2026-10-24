@@ -75,16 +75,16 @@ struct Superspheroid{T <: Number} <: AbstractSuperShape{T}
     Superspheroid{T}(a::T, c::T, p::T) where {T <: Number} = new(a, c, p)
 end
 
-# The promoting constructors. `_floatlike` rather than `float`: `float(Sym)` is
+# The promoting constructors. `TensND.float_like` rather than `float`: `float(Sym)` is
 # `Float64`, which would silently drop a symbolic element type at the door.
 function Supersphere(a::Number, p::Number)
-    T = Core._floatlike(promote_type(typeof(a), typeof(p)))
+    T = TensND.float_like(promote_type(typeof(a), typeof(p)))
     _check_shape_parameters(T, (:a => a,), p)
     return Supersphere{T}(convert(T, a), convert(T, p))
 end
 
 function Superspheroid(a::Number, c::Number, p::Number)
-    T = Core._floatlike(promote_type(typeof(a), typeof(c), typeof(p)))
+    T = TensND.float_like(promote_type(typeof(a), typeof(c), typeof(p)))
     _check_shape_parameters(T, (:a => a, :c => c), p)
     return Superspheroid{T}(convert(T, a), convert(T, c), convert(T, p))
 end

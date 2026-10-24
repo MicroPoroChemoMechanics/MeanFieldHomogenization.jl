@@ -38,7 +38,7 @@ Root abstract supertype for every inclusion geometry recognized by
 `MeanFieldHomogenization`.  The type parameter `T` is the element type of the
 geometric scalars (semi-axes, half-widths, …) and propagates through
 every tensor produced by the package, supporting `Float64`,
-`ForwardDiff.Dual`, `SymPy.Sym`, `Symbolics.Num`, …
+`ForwardDiff.Dual`, `SymPyPythonCall.Sym`, `Symbolics.Num`, …
 """
 abstract type AbstractInclusion{T <: Number} end
 
@@ -112,7 +112,7 @@ function dimension end
     element_type(incl::AbstractInclusion{T}) -> Type{T}
 
 Element type of the geometric scalars stored in the inclusion
-(`Float64`, `ForwardDiff.Dual`, `SymPy.Sym`, …).
+(`Float64`, `ForwardDiff.Dual`, `SymPyPythonCall.Sym`, …).
 """
 element_type(::AbstractInclusion{T}) where {T} = T
 

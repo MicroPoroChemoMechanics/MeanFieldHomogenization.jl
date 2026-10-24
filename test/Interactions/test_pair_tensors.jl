@@ -8,7 +8,8 @@ using ForwardDiff
 #  test_pair_tensors.jl — two-inclusion interaction tensors 𝕋^{ab}.
 #
 #  Coverage:
-#   1. Green operator 𝔾⁰ against a finite difference of `green_gradient_iso`,
+#   1. Green operator 𝔾⁰ against the dual-number derivative of
+#      `green_gradient_iso` (and a centered difference as a cross-check),
 #      including the leading MINUS of the Brisard convention.
 #   2. Zero isotropic part: T_iijj = T_ijij = 0 (elasticity), tr 𝕋 = 0
 #      (conduction) — the invariant behind "cubic arrays keep the Mori-Tanaka
@@ -55,13 +56,19 @@ _disk(a) = Ellipsoid(a, a)
         xm = copy(x); xm[k] -= h
         (green_gradient_iso(C₀, xp) .- green_gradient_iso(C₀, xm)) ./ (2h)
     end
-    H = [dG(l)[i, k, j] for i in 1:3, k in 1:3, j in 1:3, l in 1:3]
-    Gfd = [
+    _sym_neg(H) = [
         -(H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
             for i in 1:3, j in 1:3, k in 1:3, l in 1:3
     ]
     G = green_operator_iso(C₀, x)
-    @test maximum(abs, G .- Gfd) < 1.0e-6 * maximum(abs, G)
+    # The second derivative by dual numbers: exact, so the agreement is to
+    # rounding. H[i, k, j, l] = ∂(∂G_ik/∂x_j)/∂x_l.
+    J = ForwardDiff.jacobian(y -> vec(Array(green_gradient_iso(C₀, y))), x)
+    @test maximum(abs, Array(G) .- _sym_neg(reshape(J, 3, 3, 3, 3))) < 1.0e-13 * maximum(abs, Array(G))
+    # The centered difference (step ≈ ε^(1/3)·|x|) as an independent cross-check
+    # of the dual computation, at the accuracy of its truncation error.
+    H = [dG(l)[i, k, j] for i in 1:3, k in 1:3, j in 1:3, l in 1:3]
+    @test maximum(abs, Array(G) .- _sym_neg(H)) < 1.0e-6 * maximum(abs, Array(G))
     # …and it is a `Tens`, like every other tensor-valued public entry point.
     @test G isa TensND.AbstractTens{4, 3}
 end
@@ -335,6 +342,18 @@ end
     @test !isapprox(Γab, Γba; rtol = 1.0e-6)
     Q = get_array(interaction_tensor(_ball(a), _ball(b), r, C₀; method = :quadrature, nodes = (10, 10, 20)))
     @test maximum(abs.(Γab .- Q)) < RTOL_QUAD * maximum(abs.(Γab))
+end
+
+@testset "𝕋^{ab} — the quadrature oracle differentiates through a radius" begin
+    # The node generator forced Float64, so a dual semi-axis threw. The
+    # derivative with respect to the radius of the second ball is checked
+    # against the one of the closed form.
+    C₀ = _C3()
+    r = [2.0, -3.0, 4.5]
+    T(b, method; kw...) = get_array(interaction_tensor(_ball(1.3), _ball(b), r, C₀; method, kw...))
+    dQ = ForwardDiff.derivative(b -> T(b, :quadrature; nodes = (10, 10, 20)), 0.4)
+    dΓ = ForwardDiff.derivative(b -> T(b, :auto), 0.4)          # the closed form
+    @test maximum(abs.(dQ .- dΓ)) < RTOL_QUAD * maximum(abs.(dΓ))
 end
 
 @testset "𝕋^{ab} — error paths" begin

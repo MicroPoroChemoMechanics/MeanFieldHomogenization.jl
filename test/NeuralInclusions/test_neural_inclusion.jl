@@ -43,8 +43,10 @@ const NN_C_I = iso_stiffness(60.0, 20.0)
 const NN_K_M = TensISO{3}(2.0)
 const NN_K_I = TensISO{3}(7.0)
 
-_nn_c1111(C) = get_array(C)[1, 1, 1, 1]
-_nn_k11(K) = get_array(K)[1, 1]
+# Canonical components: a homogenized tensor keeps the basis of the Hill tensors it
+# was built from (a sorted spheroid's is permuted), and `get_array` reads that one.
+_nn_c1111(C) = TensND.components_canon(C)[1, 1, 1, 1]
+_nn_k11(K) = TensND.components_canon(K)[1, 1]
 
 "Two-phase RVE whose inclusion geometry is `geom`."
 function _nn_rve(geom, prop_m, prop_i, key; kwargs...)
@@ -120,13 +122,13 @@ end
 
     @testset "zero contrast gives the identity to machine precision" begin
         A = gradient_gradient_concentration(incl, NN_C_M, NN_C_M)
-        @test get_array(A) ≈ get_array(TensISO{3}(1.0, 1.0)) atol = 1.0e-14
+        @test A ≈ (TensISO{3}(1.0, 1.0)) atol = 1.0e-14
     end
 
     @testset "homogeneity in the reference moduli" begin
         P = hill_tensor(incl, NN_C_M)
         for λ in (0.25, 3.0, 17.0)
-            @test λ .* get_array(hill_tensor(incl, λ * NN_C_M)) ≈ get_array(P) atol = 1.0e-14
+            @test λ .* hill_tensor(incl, λ * NN_C_M) ≈ P atol = 1.0e-14
         end
     end
 
@@ -447,10 +449,10 @@ end
         A = gradient_gradient_concentration(incl, NN_C_I, NN_C_M)
         B = flux_gradient_concentration(incl, NN_C_I, NN_C_M)
         N = property_contribution(incl, NN_C_I, NN_C_M)
-        @test get_array(N) ≈ get_array(B) - get_array(NN_C_M ⊡ A) atol = 1.0e-12
+        @test N ≈ B - TensND.components_canon(NN_C_M ⊡ A) atol = 1.0e-12
         # And *not* the homogeneous formula, which the stress-side surrogate
         # deliberately disagrees with.
-        @test !isapprox(get_array(N), get_array((NN_C_I - NN_C_M) ⊡ A); atol = 1.0e-8)
+        @test !isapprox(TensND.components_canon(N), TensND.components_canon((NN_C_I - NN_C_M) ⊡ A); atol = 1.0e-8)
     end
 
     @testset "gate B is reported, with no missing stress side" begin
@@ -466,9 +468,9 @@ end
         )
         @test MeanFieldHomogenization.Schemes.has_layer_average(bounded)
         v = MeanFieldHomogenization.Schemes._layer_voigt(bounded, NN_C_M)
-        @test get_array(v) ≈ get_array(0.3 * NN_C_I + 0.7 * NN_C_M) atol = 1.0e-12
+        @test v ≈ (0.3 * NN_C_I + 0.7 * NN_C_M) atol = 1.0e-12
         r = MeanFieldHomogenization.Schemes._layer_reuss(bounded, NN_C_M)
-        @test get_array(r) ≈ get_array(0.3 * inv(NN_C_I) + 0.7 * inv(NN_C_M)) atol = 1.0e-12
+        @test r ≈ (0.3 * inv(NN_C_I) + 0.7 * inv(NN_C_M)) atol = 1.0e-12
     end
 
     @testset "half a pair is refused" begin
@@ -489,6 +491,33 @@ end
             (1.0, 1.0, 0.4); strain = s4, stress = s4b,
             fractions = (0.5, 0.4), properties = (NN_C_I, NN_C_M)
         )
+    end
+
+    @testset "rebuilt from its fields, without shape parameters" begin
+        # The contract `Schemes._replace_geom_field` relies on: the positional
+        # constructor, called with the fields, gives back the same object.
+        rebuilt(x) = typeof(x).name.wrapper(getfield.(Ref(x), fieldnames(typeof(x)))...)
+        @test rebuilt(incl) === incl
+        hill = NeuralHillInclusion((1.0, 1.0, 0.4); elastic = s4, guard = :none)
+        @test rebuilt(hill) === hill
+    end
+
+    @testset "a semi-axis is differentiated without shape parameters" begin
+        # Without `shape_params`, the generated positional constructor left their
+        # element type unbound, and rebuilding the inclusion with a dual
+        # semi-axis threw. The reference differentiates through the keyword
+        # constructor, which never took that path.
+        idx = C -> TensND.components_canon(C)[3, 3, 3, 3]
+        rve_of(a) = _nn_rve(
+            NeuralConcentrationInclusion(
+                (1.0, 1.0, a); strain = s4, stress = s4b, guard = :none
+            ),
+            NN_C_M, NN_C_I, :C; fraction = 0.2
+        )
+        d = derivative(rve_of(0.4), MoriTanaka(), geometry(:I, :semi_axes, 3); indexer = idx)
+        ref = ForwardDiff.derivative(a -> idx(homogenize(rve_of(a), MoriTanaka())), 0.4)
+        @test d ≈ ref rtol = 1.0e-10
+        @test !iszero(d)
     end
 end
 
@@ -594,7 +623,7 @@ end
         @test length(TensND.get_data(A)) == 6
         @test length(TensND.get_data(B)) == 6
         N = property_contribution(incl, NN_C_I, NN_C_M)
-        @test get_array(N) ≈ get_array(B - NN_C_M ⊡ A) atol = 1.0e-12
+        @test N ≈ (B - NN_C_M ⊡ A) atol = 1.0e-12
         @test check_inclusion_interface(incl; verbose = false)
     end
 
@@ -602,7 +631,7 @@ end
         # The capability the finite-element inclusion refuses. `shape_params`
         # carries its own type parameter precisely so that perturbing it does not
         # have to perturb the semi-axes too.
-        idx = C -> get_array(C)[1, 1, 1, 1]
+        idx = C -> TensND.components_canon(C)[1, 1, 1, 1]
         function rve_of(α)
             i = NeuralConcentrationInclusion(
                 (1.0, 1.0, 1.0); strain = sA, stress = sB,
@@ -617,13 +646,18 @@ end
         d = derivative(
             rve_of(0.4), MoriTanaka(), geometry(:I, :shape_params, 1); indexer = idx
         )
-        h = 1.0e-6
-        fd = (
-            idx(homogenize(rve_of(0.4 + h), MoriTanaka())) -
-                idx(homogenize(rve_of(0.4 - h), MoriTanaka()))
-        ) / (2h)
-        @test d ≈ fd rtol = 1.0e-5
+        # Reference: ForwardDiff through the keyword constructor, a path that
+        # does not go through `_replace_geom_field`.
+        ref = ForwardDiff.derivative(α -> idx(homogenize(rve_of(α), MoriTanaka())), 0.4)
+        @test d ≈ ref rtol = 1.0e-10
         @test abs(d) > 1.0e-6                    # not accidentally zero
+    end
+
+    @testset "rebuilt from its fields, with shape parameters" begin
+        # The contract `Schemes._replace_geom_field` relies on: the positional
+        # constructor, called with the fields, gives back the same object.
+        rebuilt(x) = typeof(x).name.wrapper(getfield.(Ref(x), fieldnames(typeof(x)))...)
+        @test rebuilt(incl) === incl
     end
 
     @testset "shape parameters must be numbers" begin

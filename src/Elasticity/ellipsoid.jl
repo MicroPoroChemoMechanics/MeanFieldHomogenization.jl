@@ -77,7 +77,7 @@ The shape `S` is determined at construction time:
 - 2-D: `Circular` or `Elliptic`
 
 `T` can be any `Number` subtype (`Float64`, `ForwardDiff.Dual`,
-`SymPy.Sym`, `Symbolics.Num`, …).
+`SymPyPythonCall.Sym`, `Symbolics.Num`, …).
 """
 struct Ellipsoid{dim, S <: EllipsoidShape, T <: Number, B <: TensND.AbstractBasis} <:
     MFH_Core.AbstractEllipsoidalInclusion{dim, T}
@@ -174,9 +174,9 @@ function Ellipsoid(
         a::Ta, b::Tb, c::Tc;
         euler_angles::Tuple{Vararg{Real}} = ()
     ) where {Ta, Tb, Tc}
-    T = MFH_Core._floatlike(promote_type(Ta, Tb, Tc))
+    T = TensND.float_like(promote_type(Ta, Tb, Tc))
     axes_in = (T(a), T(b), T(c))
-    basis_in = MFH_Core._default_basis(T, euler_angles)
+    basis_in = TensND.euler_basis(euler_angles; T = T)
     axes_sorted, basis = MFH_Core._sort_axes_and_basis(axes_in, basis_in, Val(:ellipsoid_3d))
     if is_hard_numeric(T)
         redirected = _resolve_degenerate_ellipsoid(axes_sorted, basis)
@@ -198,7 +198,7 @@ degenerate-limit redirection rules as
 [`Ellipsoid(a, b, c; euler_angles)`](@ref).
 """
 function Ellipsoid(a::Ta, b::Tb, c::Tc, R::AbstractMatrix) where {Ta, Tb, Tc}
-    T = MFH_Core._floatlike(promote_type(Ta, Tb, Tc))
+    T = TensND.float_like(promote_type(Ta, Tb, Tc))
     axes_in = (T(a), T(b), T(c))
     basis_in = TensND.RotatedBasis(Matrix{float(eltype(R))}(R))
     axes_sorted, basis = MFH_Core._sort_axes_and_basis(axes_in, basis_in, Val(:ellipsoid_3d))
@@ -224,7 +224,7 @@ one passed in).  Same degenerate-limit redirection rules as
 function Ellipsoid(
         a::Ta, b::Tb, c::Tc, basis::TensND.AbstractBasis
     ) where {Ta, Tb, Tc}
-    T = MFH_Core._floatlike(promote_type(Ta, Tb, Tc))
+    T = TensND.float_like(promote_type(Ta, Tb, Tc))
     axes_in = (T(a), T(b), T(c))
     axes_sorted, basis_out = MFH_Core._sort_axes_and_basis(axes_in, basis, Val(:ellipsoid_3d))
     if is_hard_numeric(T)
@@ -248,8 +248,8 @@ the stored `semi_axes` are sorted descending and the orientation is
 adjusted to preserve the physical geometry in the canonical frame.
 """
 function Ellipsoid(a::Ta, b::Tb; angle::Real = 0.0) where {Ta, Tb}
-    T = MFH_Core._floatlike(promote_type(Ta, Tb))
-    Tbasis = MFH_Core._basis_eltype(T)
+    T = TensND.float_like(promote_type(Ta, Tb))
+    Tbasis = TensND.canonical_eltype(T)
     basis_in = iszero(angle) ? TensND.CanonicalBasis{2, Tbasis}() : TensND.RotatedBasis(float(angle))
     axes_sorted, basis = MFH_Core._sort_axes_and_basis((T(a), T(b)), basis_in, Val(:ellipsoid_2d))
     code = MFH_Core._classify_shape_2d(T, axes_sorted...)
@@ -265,9 +265,9 @@ end
 Sphere (3-D) or circle (2-D) of radius `r`.
 """
 function Ellipsoid(r::T; dim::Int = 3) where {T <: Number}
-    Tf = MFH_Core._floatlike(T)
+    Tf = TensND.float_like(T)
     axes = ntuple(_ -> Tf(r), dim)
-    basis = TensND.CanonicalBasis{dim, MFH_Core._basis_eltype(Tf)}()
+    basis = TensND.CanonicalBasis{dim, TensND.canonical_eltype(Tf)}()
     S = dim == 3 ? Spherical : Circular
     return Ellipsoid{dim, S, Tf, typeof(basis)}(axes, basis)
 end

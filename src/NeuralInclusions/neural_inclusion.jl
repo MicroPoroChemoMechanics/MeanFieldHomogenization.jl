@@ -253,7 +253,21 @@ struct NeuralHillInclusion{dim, T <: Number, B <: TensND.AbstractBasis, S4, S2} 
     elastic::S4
     transport::S2
     guard::Symbol
+    NeuralHillInclusion{dim, T, B, S4, S2}(
+        semi_axes, basis, elastic, transport, guard
+    ) where {dim, T <: Number, B <: TensND.AbstractBasis, S4, S2} =
+        new{dim, T, B, S4, S2}(semi_axes, basis, elastic, transport, guard)
 end
+
+# Written out rather than generated: the generated positional constructor
+# leaves the element type of an empty tuple unbound, which Aqua reports from
+# Julia 1.14 on and which cannot be called. `Schemes._replace_geom_field`
+# rebuilds geometries through the positional form, so it is kept, with every
+# type parameter bound.
+NeuralHillInclusion(
+    semi_axes::Tuple{T, Vararg{T, M}}, basis::B, elastic::S4, transport::S2, guard::Symbol
+) where {T <: Number, M, B <: TensND.AbstractBasis, S4, S2} =
+    NeuralHillInclusion{M + 1, T, B, S4, S2}(semi_axes, basis, elastic, transport, guard)
 
 function NeuralHillInclusion(
         semi_axes::Tuple{Vararg{Number}};
@@ -273,8 +287,8 @@ function NeuralHillInclusion(
     _check_order(transport, 2, :transport)
     guard in (:warn, :error, :none) ||
         throw(ArgumentError("`guard` must be :warn, :error or :none, got :$guard"))
-    T = Core._floatlike(promote_type(typeof.(semi_axes)...))
-    b0 = basis === nothing ? Core._default_basis(T, euler_angles) : basis
+    T = TensND.float_like(promote_type(typeof.(semi_axes)...))
+    b0 = basis === nothing ? TensND.euler_basis(euler_angles; T = T) : basis
     axes_, b = _canonical_axes(map(T, semi_axes), b0)
     for s in (elastic, transport)
         s === nothing || _check_geometry(s, axes_)
@@ -446,7 +460,39 @@ struct NeuralConcentrationInclusion{
     fractions::F
     properties::P
     guard::Symbol
+    NeuralConcentrationInclusion{dim, T, TS, B, S4, S2, NS, F, P}(
+        semi_axes, basis, elastic, transport, shape_params, shape_names,
+        fractions, properties, guard,
+    ) where {dim, T <: Number, TS <: Number, B <: TensND.AbstractBasis, S4, S2, NS, F, P} =
+        new{dim, T, TS, B, S4, S2, NS, F, P}(
+        semi_axes, basis, elastic, transport, shape_params, shape_names,
+        fractions, properties, guard,
+    )
 end
+
+# Positional forms, for `Schemes._replace_geom_field` (see `NeuralHillInclusion`).
+# Without shape parameters, `TS` is the semi-axes type, as the keyword
+# constructor chooses: the generated form left it unbound, so rebuilding such an
+# inclusion with a new semi-axis, which the sensitivity API does, threw.
+NeuralConcentrationInclusion(
+    semi_axes::Tuple{T, Vararg{T, M}}, basis::B, elastic::S4, transport::S2,
+    shape_params::Tuple{TS, Vararg{TS, K}}, shape_names::Tuple{Symbol, Vararg{Symbol, K}},
+    fractions::F, properties::P, guard::Symbol,
+) where {T <: Number, M, TS <: Number, K, B <: TensND.AbstractBasis, S4, S2, F, P} =
+    NeuralConcentrationInclusion{M + 1, T, TS, B, S4, S2, K + 1, F, P}(
+    semi_axes, basis, elastic, transport, shape_params, shape_names,
+    fractions, properties, guard,
+)
+
+NeuralConcentrationInclusion(
+    semi_axes::Tuple{T, Vararg{T, M}}, basis::B, elastic::S4, transport::S2,
+    shape_params::Tuple{}, shape_names::Tuple{},
+    fractions::F, properties::P, guard::Symbol,
+) where {T <: Number, M, B <: TensND.AbstractBasis, S4, S2, F, P} =
+    NeuralConcentrationInclusion{M + 1, T, T, B, S4, S2, 0, F, P}(
+    semi_axes, basis, elastic, transport, shape_params, shape_names,
+    fractions, properties, guard,
+)
 
 function NeuralConcentrationInclusion(
         semi_axes::Tuple{Vararg{Number}};
@@ -498,8 +544,8 @@ function NeuralConcentrationInclusion(
                 "rebuilds the struct by reflection over them"
         )
     )
-    T = Core._floatlike(promote_type(typeof.(semi_axes)...))
-    b0 = basis === nothing ? Core._default_basis(T, euler_angles) : basis
+    T = TensND.float_like(promote_type(typeof.(semi_axes)...))
+    b0 = basis === nothing ? TensND.euler_basis(euler_angles; T = T) : basis
     # **Not** `_canonical_axes` here, unlike `NeuralHillInclusion` above, and the
     # asymmetry is the whole correctness argument. Sorting the semi-axes
     # descending exists to match `Ellipsoid`, the analytic teacher of a *Hill*
@@ -521,7 +567,7 @@ function NeuralConcentrationInclusion(
     el = strain === nothing ? nothing : (strain, stress)
     tr = gradient === nothing ? nothing : (gradient, flux)
     vals = values(shape_params)
-    TS = isempty(vals) ? T : Core._floatlike(promote_type(typeof.(vals)...))
+    TS = isempty(vals) ? T : TensND.float_like(promote_type(typeof.(vals)...))
     sp = map(TS, vals)
     sn = keys(shape_params)
     return NeuralConcentrationInclusion{

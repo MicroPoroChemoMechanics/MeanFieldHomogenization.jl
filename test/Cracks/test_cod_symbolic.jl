@@ -22,7 +22,7 @@
 using Test
 using MeanFieldHomogenization
 using TensND
-using SymPy
+using SymPyPythonCall
 using ForwardDiff
 import Symbolics
 
@@ -72,7 +72,7 @@ end
     fr(E) = cod_tensor(RibbonCrack(1.0), iso(E, 0.3))[3, 3]
     @test ForwardDiff.derivative(fr, 210.0) ≈ (fr(210.0 + h) - fr(210.0 - h)) / (2h) rtol = 1.0e-6
 
-    fTI(E) = cod_tensor(PennyCrack(1.0), fromISO(iso(E, 0.3), [0.0, 0.0, 1.0]))[3, 3]
+    fTI(E) = cod_tensor(PennyCrack(1.0), iso_to_ti(iso(E, 0.3), [0.0, 0.0, 1.0]))[3, 3]
     @test ForwardDiff.derivative(fTI, 210.0) ≈ (fTI(210.0 + h) - fTI(210.0 - h)) / (2h) rtol = 1.0e-6
 end
 
@@ -118,8 +118,8 @@ end
     #     uses only `*`, which does fold.
     Sy.@variables c11 c12 c33 c44
     MFHCr = MeanFieldHomogenization.Cracks
-    C_al = tens_TI(c11, c12 / 2, c12, c11, c44, [0.0, 0.0, 1.0])
-    C_rot = tens_TI(c11, c12 / 2, c12, c11, c44, [1.0, 0.0, 0.0])
+    C_al = tens_ti(c11, c12 / 2, c12, c11, c44, [0.0, 0.0, 1.0])
+    C_rot = tens_ti(c11, c12 / 2, c12, c11, c44, [1.0, 0.0, 0.0])
     penny = PennyCrack(1.0)
 
     @test MFHCr._ti_aligned(C_al, crack_basis(penny))
@@ -141,7 +141,7 @@ end
 end
 
 @testset "COD symbolic — isotropic matrix, symbolic (E, ν, η)" begin
-    SymPy.@syms Es::positive νs::positive ηs::positive
+    SymPyPythonCall.@syms Es::positive νs::positive ηs::positive
     C_sym = TensISO{3}(Es / (1 - 2 * νs), Es / (1 + νs))    # (3k, 2μ)
 
     crack = EllipticCrack(one(Sym), ηs)
@@ -178,7 +178,7 @@ end
     # factors of the circle were evaluated in the arithmetic of the geometry,
     # Float64, and the COD tensor carried 1.6977 in place of 16/(3π). Reference:
     # Sneddon's penny-shaped crack, normalized by the radius.
-    SymPy.@syms Es::positive νs::positive
+    SymPyPythonCall.@syms Es::positive νs::positive
     C_sym = TensISO{3}(Es / (1 - 2 * νs), Es / (1 + νs))
     B = cod_tensor(PennyCrack(1.0), C_sym)
     @test iszero(tsimplify(B[3, 3] - 16 * (1 - νs^2) / (3 * PI * Es)))
@@ -189,8 +189,8 @@ end
 @testset "COD symbolic — TI matrix aligned with the crack normal" begin
     # Symbolic stiffness components, TI axis = e₃ = crack normal.  Before the
     # `_ti_aligned` guard this call threw inside dispatch.
-    SymPy.@syms C1111::positive C1122::real C1133::real C3333::positive C2323::positive
-    C_ti = tens_TI(C1111, C1122, C1133, C3333, C2323, [Sym(0), Sym(0), Sym(1)])
+    SymPyPythonCall.@syms C1111::positive C1122::real C1133::real C3333::positive C2323::positive
+    C_ti = tens_ti(C1111, C1122, C1133, C3333, C2323, [Sym(0), Sym(0), Sym(1)])
     @test C_ti isa TensND.TensTI{4}
     @test eltype(get_array(C_ti)) <: Sym
 
@@ -214,7 +214,7 @@ end
     MFHC = MeanFieldHomogenization.Core
     MFHCr = MeanFieldHomogenization.Cracks
     @test MFHCr._ti_aligned(C_ti, crack_basis(PennyCrack(one(Sym))))
-    C_ti_x = tens_TI(C1111, C1122, C1133, C3333, C2323, [Sym(1), Sym(0), Sym(0)])
+    C_ti_x = tens_ti(C1111, C1122, C1133, C3333, C2323, [Sym(1), Sym(0), Sym(0)])
     @test !MFHCr._ti_aligned(C_ti_x, crack_basis(PennyCrack(one(Sym))))
     @test MFHC._resolve_algo(Val(:auto), PennyCrack(one(Sym)), C_ti) isa MFHC.Analytical
 end
@@ -225,7 +225,7 @@ end
     # needs only a 2×2 eigenvalue problem on `adj(K₀)`. Before v0.4.0 the
     # anisotropic branch went through `eigen` + `svdvals` and could not run on
     # `Sym` at all.
-    SymPy.@syms k₀s::positive ηs::positive
+    SymPyPythonCall.@syms k₀s::positive ηs::positive
 
     K_iso = TensISO{3}(k₀s)
     for (crack, ref) in (
@@ -241,7 +241,7 @@ end
     # Fully anisotropic K₀, six free symbols: the adjugate branch must produce a
     # symbolic answer at all. That is the regression guard — before v0.4.0 this
     # call went through `eigen`/`svdvals` and threw on `Sym`.
-    SymPy.@syms K11::positive K22::positive K33::positive K12::real K13::real K23::real
+    SymPyPythonCall.@syms K11::positive K22::positive K33::positive K12::real K13::real K23::real
     K_aniso = TensND.Tens(
         Sym[K11 K12 K13; K12 K22 K23; K13 K23 K33], CanonicalBasis{3, Sym}()
     )
@@ -254,7 +254,7 @@ end
     # free `ηs`: the eigenvalue gap carries √(tr²−4det), which for the diagonal
     # cases is √((1−η²)²), and nothing in SymPy's assumption system says η ≤ 1,
     # so it stays unevaluated. With a concrete η the radical closes.
-    SymPy.@syms k_ts::positive k_ns::positive
+    SymPyPythonCall.@syms k_ts::positive k_ns::positive
     K_ti = TensND.Tens(Sym[k_ts 0 0; 0 k_ts 0; 0 0 k_ns], CanonicalBasis{3, Sym}())
 
     for ηv in (Sym(1) / 2, Sym(7) / 10)
@@ -288,10 +288,10 @@ end
     # symbolic λ, μ the TI branch carries the nested radical σᵞ and the
     # difference becomes a `simplify` SymPy will not close. With rational
     # moduli σᵞ collapses to a number and the comparison is exact in η.
-    SymPy.@syms ηs::positive
+    SymPyPythonCall.@syms ηs::positive
     λs, μs = Sym(1), Sym(1) / 2
     C_iso = TensISO{3}(3 * (λs + 2 * μs / 3), 2 * μs)
-    C_ti = tens_TI(λs + 2μs, λs, λs, λs + 2μs, μs, [Sym(0), Sym(0), Sym(1)])
+    C_ti = tens_ti(λs + 2μs, λs, λs, λs + 2μs, μs, [Sym(0), Sym(0), Sym(1)])
     @test C_ti isa TensND.TensTI{4}
 
     for crack in (EllipticCrack(one(Sym), ηs), PennyCrack(one(Sym)), RibbonCrack(one(Sym)))

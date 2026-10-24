@@ -75,6 +75,8 @@ export tens_IA, tens_UA, tens_VA
 export hill_tensor
 export surface_stiffness, equivalent_particle
 export cubic_residual, CubicSym
+# The isotropic moduli are TensND's, re-exported (`Elasticity.k_mu` is used elsewhere).
+import TensND: k_mu, iso_stiffness, E_nu, iso_stiffness_E_nu
 export k_mu, iso_stiffness, E_nu, iso_stiffness_E_nu
 export hoenig_params, hoenig_stiffness
 

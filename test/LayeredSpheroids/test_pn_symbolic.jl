@@ -1,6 +1,6 @@
 using Test
 using TensND
-using SymPy
+using SymPyPythonCall
 using LinearAlgebra
 
 # =============================================================================
@@ -107,19 +107,19 @@ _reduce(e) = simplify(_at_point(_atomize(_impose_harmonic(e))))
 
 "Papkovich–Neuber, Duan (2.2), in the case-I gauge `φ₁ = φ₂ = 0`."
 _pn_displacement(φ₀, φ₃) =
-    (GRAD(φ₀ + _z * φ₃, _S) - 4 * (1 - _ν) * φ₃ * _e₃) / (2 * _μ)
+    (grad(φ₀ + _z * φ₃, _S) - 4 * (1 - _ν) * φ₃ * _e₃) / (2 * _μ)
 
 function _pn_stress(φ₀, φ₃)
-    ε = SYMGRAD(_pn_displacement(φ₀, φ₃), _S)
+    ε = symgrad(_pn_displacement(φ₀, φ₃), _S)
     return _λ * tr(ε) * one(ε) + 2 * _μ * ε
 end
 
 @testset "Papkovich–Neuber in spheroidal coordinates — case I (axisymmetric)" begin
 
     @testset "the chart is the one the derivation assumes" begin
-        OM = components_canon(getOM(_S))
+        OM = components_canon(position_vector(_S))
         @test iszero(simplify(OM[3] - _c * _p * _q))
-        # `getOM` is written with the chart's auxiliary symbols `p̄`, `q̄`. They
+        # `position_vector` is written with the chart's auxiliary symbols `p̄`, `q̄`. They
         # are opaque to `subs` — not functions of `p`, `q` — and rebuilding them
         # with `symbols("p̄")` yields a DIFFERENT symbol, since the chart's carry
         # assumptions. Take the objects the expression itself contains.
@@ -134,8 +134,8 @@ end
     end
 
     @testset "the potentials used below are harmonic" begin
-        @test iszero(simplify(LAPLACE(_p * _q, _S)))                          # P₁(p)P₁(q)
-        @test iszero(simplify(LAPLACE((3 * _p^2 - 1) * (3 * _q^2 - 1) / 4, _S)))  # P₂P₂
+        @test iszero(simplify(laplacian(_p * _q, _S)))                          # P₁(p)P₁(q)
+        @test iszero(simplify(laplacian((3 * _p^2 - 1) * (3 * _q^2 - 1) / 4, _S)))  # P₂P₂
     end
 
     @testset "axisymmetry is structural, not imposed" begin
@@ -187,15 +187,15 @@ end
         # the theory page presents it — an equation a reader can hold, and the
         # chart doing the bookkeeping.
         Φ = _φ₀ + _z * _φ₃
-        u = (GRAD(Φ, _S) - 4 * (1 - _ν) * _φ₃ * _e₃) / (2 * _μ)
-        ε = SYMGRAD(u, _S)
-        ∇φ₃ = GRAD(_φ₃, _S)
+        u = (grad(Φ, _S) - 4 * (1 - _ν) * _φ₃ * _e₃) / (2 * _μ)
+        ε = symgrad(u, _S)
+        ∇φ₃ = grad(_φ₃, _S)
         ∂zφ₃ = ∇φ₃ ⋅ _e₃
 
         @test iszero(_reduce(tr(ε) + (1 - 2 * _ν) * ∂zφ₃ / _μ))
 
         σ_def = _λ * tr(ε) * one(ε) + 2 * _μ * ε
-        σ_cf = -2 * _ν * ∂zφ₃ * one(ε) + HESS(Φ, _S) -
+        σ_cf = -2 * _ν * ∂zφ₃ * one(ε) + hess(Φ, _S) -
             2 * (1 - _ν) * (_e₃ ⊗ ∇φ₃ + ∇φ₃ ⊗ _e₃)
         cd, cc = components_canon(σ_def), components_canon(σ_cf)
         for i in 1:3, j in i:3
@@ -207,7 +207,7 @@ end
         # `∂_z` and `∂_ρ` on the chart. These are what the interface conditions
         # are written on — see the next testset for why not `∂_p`, `∂_q`.
         f = SymFunction("f_probe")(_p, _q)
-        ∇f = GRAD(f, _S)
+        ∇f = grad(f, _S)
         eρ = Tens([cos(_ϕ), sin(_ϕ), Sym(0)])
         w2 = _q^2 - _p^2
 
@@ -268,7 +268,7 @@ end
         proj(e, k) = simplify(integrate(expand(e) * P(k) * Sym(2k + 1) // 2, (_p, -1, 1)))
         function reach(mult, n)
             e = expand(mult(n))
-            d = Int(sympy.degree(e, gen = _p))
+            d = convert(Int, sympy.degree(e, gen = _p))   # a Python int, wrapped
             hit = [k for k in 0:d if !iszero(proj(e, k))]
             return isempty(hit) ? 0 : maximum(abs.(hit .- n))
         end
@@ -298,8 +298,8 @@ end
         # components the interface conditions match.
         F = SymFunction("F_hess")(_p, _q)
         𝐞 = normalized_basis(_S)
-        H = components(HESS(F, _S), 𝐞, (:cont, :cont))
-        G = components(GRAD(F, _S), 𝐞, (:cont,))
+        H = components(hess(F, _S), 𝐞, (:cont, :cont))
+        G = components(grad(F, _S), 𝐞, (:cont,))
         pb, qb, w2 = sqrt(1 - _p^2), sqrt(_q^2 - 1), _q^2 - _p^2
 
         atomF(e) = foldl(
@@ -381,7 +381,7 @@ end
         # value at the equator and at the pole is exactly the aspect ratio. A
         # confocal interphase therefore models a compliance that VARIES along
         # the interface, not a uniform spring.
-        χ = Lame(_S)
+        χ = lame_coefficients(_S)
         pole = simplify(subs(χ[3], _p => 1))
         equator = simplify(subs(χ[3], _p => 0))
         @test iszero(simplify(pole - _c))
@@ -395,7 +395,7 @@ end
                 (Sym(0), _p * _q),                                   # the z φ₃ ê₃ term alone
                 ((3 * _p^2 - 1) * (3 * _q^2 - 1) / 4, _p * _q),      # both, different degrees
             )
-            d = components_canon(DIV(_pn_stress(φ₀, φ₃), _S))
+            d = components_canon(divergence(_pn_stress(φ₀, φ₃), _S))
             for i in 1:3
                 @test iszero(simplify(_at_point(d[i])))
             end
@@ -406,11 +406,11 @@ end
         # NOT a result: Papkovich–Neuber with harmonic potentials satisfies
         # Navier identically, classically and without reference to coordinates.
         # This is a self-test of the toolchain that produces every expression
-        # above — the chart, the `GRAD`/`SYMGRAD`/`DIV` wiring, the gauge as
+        # above — the chart, the `grad`/`symgrad`/`divergence` wiring, the gauge as
         # transcribed from Duan (2.2), the λ ↔ ν conversion. A non-zero residual
         # here would mean the operators are wrong, which is why it earns its
         # place despite costing the bulk of this file's runtime.
-        d = components_canon(DIV(_pn_stress(_φ₀, _φ₃), _S))
+        d = components_canon(divergence(_pn_stress(_φ₀, _φ₃), _S))
         for i in 1:3
             @test iszero(_at_point(_atomize(_impose_harmonic(d[i]))))
         end

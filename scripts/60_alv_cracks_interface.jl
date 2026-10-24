@@ -31,14 +31,17 @@
 import Pkg
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)
 
+# Which Python holds Echoes: chosen before PythonCall is loaded
+include(joinpath(@__DIR__, "bench_echoes", "echoes_python.jl"))
+
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using Printf
-using PyCall
+using PythonCall
 using Plots
 
-# ─── ECHOES import via PyCall ──────────────────────────────────────────────
+# ─── ECHOES import via PythonCall ──────────────────────────────────────────────
 
 const echoes = pyimport("echoes")
 const np = pyimport("numpy")
@@ -71,36 +74,8 @@ const TIMES = vcat(
 
 # ─── ECHOES side ───────────────────────────────────────────────────────────
 
-py"""
-from numpy import *
-from echoes import *
-
-_SCHEMES = {"MT": MT, "SC": SC, "PCW": PCW}
-
-def run_echoes(t0, T, density, scheme_name):
-    sch = _SCHEMES[scheme_name]
-    k0=5.; mu0=2.; kinf=3.; muinf=1.; tau=1.
-    C0=stiff_kmu(k0,mu0); Cinf=stiff_kmu(kinf,muinf)
-    V=lambda t,tp: Cinf.array + (C0*(1.+0.2*sqrt(max(tp, 0.0))) - Cinf).array * exp(-(t-tp)/tau)
-    kn=10.; kt=5.; kninf=5.; ktinf=2.5; taun=2.; taut=3.
-    Rn=lambda t,tp:1.*(1.+0.1*tp**0.4)*(kninf+(kn-kninf)*exp(-(t-tp)/taun))
-    Rt=lambda t,tp:1.*(1.+0.1*tp**0.2)*(ktinf+(kt-ktinf)*exp(-(t-tp)/taut))
-    ver=rve(matrix="MATRIX")
-    ver["MATRIX"]=ellipsoid(shape=spherical, symmetrize=[ISO],
-                            prop={"C":tensor(V(t0,t0)), "Cinf":Cinf},
-                            visco_prop={"C":(V,RELAXATION)})
-    ver["CRACK"]=crack(shape=spheroidal(1.e-3), symmetrize=[ISO],
-                       interf_prop={"C":[Rn(t0,t0), Rt(t0,t0)],
-                                    "Cinf":[kninf, ktinf]},
-                       interf_visco_prop={"C":[(Rn,RELAXATION),(Rt,RELAXATION)]},
-                       density=density)
-    iV = linalg.inv(homogenize_visco(prop="C", rve=ver, time_series=T,
-                                     scheme=sch, epsrel=1.e-6, verbose=False))
-    S = zeros(len(T)*6)
-    for i in range(len(T)):
-        S[6*i] = 1.0
-    return iV.dot(S)[::6]
-"""
+pyimport("sys").path.insert(0, @__DIR__)
+const echoes_run_py = pyimport("echoes_alv_cracks_interface").run_echoes
 
 const JULIA_SCHEME_OBJ = Dict(
     "MT" => MoriTanaka(),
@@ -113,8 +88,8 @@ const SCHEME_COLORS = Dict("MT" => :blue, "SC" => :red, "PCW" => :green)
 ε_echoes = Dict{String, Vector{Float64}}()
 for name in SCHEME_NAMES
     println("Running ECHOES ($name, t₀=$(t₀), density=$(DENSITY))…")
-    out = py"run_echoes"(t₀, TIMES, DENSITY, name)
-    ε_echoes[name] = Float64[Float64(x) for x in out]
+    out = echoes_run_py(t₀, np.array(pylist(TIMES)), DENSITY, name)
+    ε_echoes[name] = pyconvert(Vector{Float64}, out)
     println("  ECHOES ε_xx(t_max)  [$name] = ", ε_echoes[name][end])
 end
 

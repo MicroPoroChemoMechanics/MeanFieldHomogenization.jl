@@ -18,7 +18,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
-using SymPy
+using SymPyPythonCall
 using ForwardDiff
 
 const ATOL_LALV = 1.0e-9
@@ -54,7 +54,7 @@ end
 
 @testset "ALV laminate — the elastic limit" begin
     times = [0.0, 1.0, 3.0, 7.0]
-    C_el = Matrix(KM(homogenize(_elastic_laminate(), Laminated(), :C)))
+    C_el = Matrix(mandel(homogenize(_elastic_laminate(), Laminated(), :C)))
     M = homogenize_alv(_heaviside_laminate(), Laminated(), :C; times = times)
 
     @test size(M) == (6 * length(times), 6 * length(times))
@@ -75,7 +75,7 @@ end
 @testset "ALV laminate — the elastic limit with interfaces" begin
     times = [0.0, 1.0, 4.0]
     for (kn, κs) in ((5.0e-2, 0.0), (0.0, 0.07), (5.0e-2, 0.07))
-        C_el = Matrix(KM(homogenize(_elastic_laminate(; kn = kn, κs = κs), Laminated(), :C)))
+        C_el = Matrix(mandel(homogenize(_elastic_laminate(; kn = kn, κs = κs), Laminated(), :C)))
         M = homogenize_alv(_heaviside_laminate(; kn = kn, κs = κs), Laminated(), :C; times = times)
         for i in eachindex(times)
             @test _blk(M, i) ≈ C_el atol = ATOL_LALV
@@ -217,7 +217,7 @@ end
         add_layer!(lam, :B, Dict(:C => law(_isoa(0.5, 0.2))); thickness = 0.7)
         return lam
     end
-    C_el(θ) = Matrix(KM(homogenize(lam_at(θ, identity), Laminated(), :C)))
+    C_el(θ) = Matrix(mandel(homogenize(lam_at(θ, identity), Laminated(), :C)))
     blk(θ) = _blk(homogenize_alv(lam_at(θ, heaviside_law), Laminated(), :C; times = [0.0, 1.0]), 2)
     θ = 0.4
     @test blk(θ) ≈ C_el(θ) atol = ATOL_LALV

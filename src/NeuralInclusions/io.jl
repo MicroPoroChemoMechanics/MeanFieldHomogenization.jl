@@ -200,7 +200,9 @@ function _check_format(raw, path)
     )
     v = try
         VersionNumber(String(raw))
-    catch
+    catch err
+        # Not a version string (`ArgumentError`), or not a string at all.
+        err isa Union{ArgumentError, MethodError} || rethrow()
         throw(ArgumentError("$path declares an unparsable format \"$raw\""))
     end
     v.major == SURROGATE_FORMAT.major || throw(

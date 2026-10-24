@@ -36,50 +36,24 @@ _mandel_size(::TensND.AbstractTens{2, 2}) = 2
 
 # ─── Flattening ──────────────────────────────────────────────────────────────
 #
-# 4th order: the package-wide `mandel66_minor` / `array_from_mandel66` pair in
-# 3D, and its 2D counterpart written out here (three components, weights √2).
+# 4th order: TensND's `mandel66_minor` / `array_from_mandel66` pair in 3D and
+# `mandel33_minor` / `array_from_mandel33` in 2D.
 # 2nd order: the identity map — a symmetric 2nd-order tensor is already its own
 # Mandel vector in the sense used by `⋅`.
+#
+# Canonical components throughout: the blocks of one system come in different
+# bases (a Hill tensor in its particle's, a reference in the canonical one) and
+# `_from_mandel` rebuilds canonical tensors. `get_array` read each block in its
+# own basis, which mixed frames in one matrix for every oriented particle.
+# A block already canonical is read as it is.
 
-const _MANDEL_IDX_2D = ((1, 1), (2, 2), (1, 2))
+_to_mandel(A, ::TensND.AbstractTens{4, 3}) = TensND.mandel66_minor(TensND.components_canon(A))
+_to_mandel(A, ::TensND.AbstractTens{4, 2}) = TensND.mandel33_minor(TensND.components_canon(A))
+_to_mandel(A, ::TensND.AbstractTens{2}) = Matrix(TensND.components_canon(A))
 
-_to_mandel(A, ::TensND.AbstractTens{4, 3}) = MFH_Core.mandel66_minor(TensND.get_array(A))
-_to_mandel(A, ::TensND.AbstractTens{2}) = Matrix(TensND.get_array(A))
-
-function _to_mandel(A, ::TensND.AbstractTens{4, 2})
-    arr = TensND.get_array(A)
-    T = eltype(arr)
-    sq2 = sqrt(T(2))
-    Λ(I) = I ≤ 2 ? one(T) : sq2
-    M = Matrix{T}(undef, 3, 3)
-    for I in 1:3, J in 1:3
-        (i, j) = _MANDEL_IDX_2D[I]
-        (k, l) = _MANDEL_IDX_2D[J]
-        v = (arr[i, j, k, l] + arr[j, i, k, l] + arr[i, j, l, k] + arr[j, i, l, k]) / 4
-        M[I, J] = Λ(I) * Λ(J) * v
-    end
-    return M
-end
-
-_from_mandel(M, ::TensND.AbstractTens{4, 3}) = TensND.Tens(MFH_Core.array_from_mandel66(M))
+_from_mandel(M, ::TensND.AbstractTens{4, 3}) = TensND.Tens(TensND.array_from_mandel66(M))
+_from_mandel(M, ::TensND.AbstractTens{4, 2}) = TensND.Tens(TensND.array_from_mandel33(M))
 _from_mandel(M, ::TensND.AbstractTens{2}) = TensND.Tens(M)
-
-function _from_mandel(M, ::TensND.AbstractTens{4, 2})
-    T = eltype(M)
-    sq2 = sqrt(T(2))
-    Λ(I) = I ≤ 2 ? one(T) : sq2
-    arr = Array{T, 4}(undef, 2, 2, 2, 2)
-    for I in 1:3, J in 1:3
-        (i, j) = _MANDEL_IDX_2D[I]
-        (k, l) = _MANDEL_IDX_2D[J]
-        v = M[I, J] / (Λ(I) * Λ(J))
-        arr[i, j, k, l] = v
-        arr[j, i, k, l] = v
-        arr[i, j, l, k] = v
-        arr[j, i, l, k] = v
-    end
-    return TensND.Tens(arr)
-end
 
 """
     _solve_tensor_system(blocks, rhs, P₀) -> Vector
@@ -101,25 +75,11 @@ function _solve_tensor_system(blocks, rhs, P₀::TensND.AbstractTens)
     m = _mandel_size(P₀)
     Mb = [[_to_mandel(blocks[i][k], P₀) for k in 1:n] for i in 1:n]
     Rb = [_to_mandel(rhs[i], P₀) for i in 1:n]
-    # The element type is read off the assembled matrices themselves, not from
-    # `eltype` of their container: the blocks live in an untyped vector (their
-    # TensND symmetry classes differ), and under AD they mix `Dual` blocks with
-    # `Float64` ones, so container inference lands on `Any` and `zeros(Any, …)`
-    # then fails. Scanning the actual matrices is what keeps a `Dual` anywhere
-    # in the assembly from being silently lost.
-    T = promote_type(
-        mapreduce(eltype, promote_type, Iterators.flatten(Mb)),
-        mapreduce(eltype, promote_type, Rb)
-    )
-    A = zeros(T, n * m, n * m)
-    B = zeros(T, n * m, m)
-    for i in 1:n
-        rows = ((i - 1) * m + 1):(i * m)
-        B[rows, :] .= Rb[i]
-        for k in 1:n
-            A[rows, ((k - 1) * m + 1):(k * m)] .= Mb[i][k]
-        end
-    end
-    X = A \ B
-    return [_from_mandel(X[((i - 1) * m + 1):(i * m), :], P₀) for i in 1:n]
+    # `hcat` and `vcat` promote across the blocks they join: the blocks live in an
+    # untyped vector (their TensND symmetry classes differ) and under AD mix
+    # `Dual` blocks with `Float64` ones, so a `Dual` anywhere in the assembly
+    # carries through the solve.
+    A = reduce(vcat, [reduce(hcat, row) for row in Mb])
+    X = A \ reduce(vcat, Rb)
+    return [_from_mandel(X[rows, :], P₀) for rows in Iterators.partition(axes(X, 1), m)]
 end

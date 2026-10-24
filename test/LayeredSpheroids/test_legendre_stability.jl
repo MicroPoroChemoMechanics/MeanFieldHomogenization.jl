@@ -157,8 +157,8 @@ end
         A_classic = inv(TensISO{3}(1.0) + hill_tensor(Spheroid(a / b), K0) ⋅ (K1 - K0))
         for ns in (2, 6, 16)
             s = LayeredSpheroid((a,), (b,), (K1,); Nseries = ns, axis = (0.0, 0.0, 1.0))
-            @test get_array(gradient_gradient_concentration(s, K1, K0)) ≈
-                get_array(A_classic) rtol = 1.0e-12
+            @test components_canon(gradient_gradient_concentration(s, K1, K0)) ≈
+                components_canon(A_classic) rtol = 1.0e-12
         end
     end
 end

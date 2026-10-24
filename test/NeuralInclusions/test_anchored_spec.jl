@@ -22,7 +22,7 @@ const NIB = MeanFieldHomogenization.NeuralInclusions
 
 const _AN_CAN = TensND.CanonicalBasis{3, Float64}()
 const _AN_E3 = TensND.Tens(TensND.Vec(0.0, 0.0, 1.0), _AN_CAN)
-_an_km(t) = Matrix(KM(TensND.change_tens(t, _AN_CAN)))
+_an_km(t) = Matrix(mandel(TensND.change_tens(t, _AN_CAN)))
 _an_arr(t) = Matrix(TensND.get_array(TensND.change_tens(t, _AN_CAN)))
 
 # The exact cavity of revolution, built the way the finite-element suite builds
@@ -170,12 +170,9 @@ end
     ν = 0.2
     C₀ = NIB._iso_ref(ν)
     feats = [:log_aspect, :core_fraction, :log_mu_ratio_1, :log_mu_ratio_2]
-    id4 = NIB._identity_4sym(Float64)
+    id4 = TensND.tens_Id4(Val(3), Val(Float64))
     own_axis(c) = let sph = Spheroid(c)
-        MeanFieldHomogenization.Core._basis_col(
-            MeanFieldHomogenization.Core.inclusion_basis(sph),
-            NIB._spheroid_axis_index(NIB._axes(sph)),
-        )
+        Tuple(TensND.vecbasis(MeanFieldHomogenization.Core.inclusion_basis(sph), :cov)[:, NIB._spheroid_axis_index(NIB._axes(sph))])
     end
     # The exact homogeneous-inclusion concentration, built independently of the
     # code under test, and transversely isotropic about the spheroid's **own**

@@ -14,7 +14,7 @@
 #
 #  Also covers the two branches that had no test coverage before the bundles
 #  were introduced:
-#    * Mori-Tanaka with a `CrackDensity` phase (`_mt_4`/`_mt_2` `else` branch);
+#    * Mori-Tanaka with a `CrackDensity` phase (the `CrackDensity` method of `_mt_step`);
 #    * a non-`TensISO` phase property under a non-trivial `symmetrize`
 #      (the slow branch of `_phase_stress_strain_average`).
 # =============================================================================
@@ -40,7 +40,7 @@ const _KM_TRI_B = [
 ]
 
 @testset "concentration_and_contribution / concentration_and_flux_average — bitwise contract" begin
-    C_tri = TensND.inv_KM(_KM_TRI_B, CanonicalBasis{3, Float64}())
+    C_tri = TensND.from_mandel(_KM_TRI_B, CanonicalBasis{3, Float64}())
     C_iso = TensISO{3}(3 * 20.0, 2 * 12.0)
     C_i = TensISO{3}(3 * 80.0, 2 * 50.0)
     C_ti = TensTI{4}(20.0, 30.0, 4.0, 5.0, 8.0, (0.0, 0.0, 1.0))
@@ -140,7 +140,7 @@ const _KM_TRI_B = [
 end
 
 @testset "inverse_and_property_contribution — bitwise contract" begin
-    C_tri = TensND.inv_KM(_KM_TRI_B, CanonicalBasis{3, Float64}())
+    C_tri = TensND.from_mandel(_KM_TRI_B, CanonicalBasis{3, Float64}())
     C_iso = TensISO{3}(3 * 24.0, 2 * 12.0)
 
     @testset "elastic — $nm" for (nm, crack, C₀) in [
@@ -287,7 +287,7 @@ end
     # Invisible on an isotropic matrix (`isotropify` is then a no-op to
     # ~1e-16), which is why every pre-existing `symmetrize` test missed it.
     # These cases use an ANISOTROPIC matrix, where the projection really bites.
-    C_tri = TensND.inv_KM(_KM_TRI_B, CanonicalBasis{3, Float64}())
+    C_tri = TensND.from_mandel(_KM_TRI_B, CanonicalBasis{3, Float64}())
     sym = MeanFieldHomogenization.Schemes.IsoSymmetrize()
     C_proj = MeanFieldHomogenization.Schemes._project_matrix(C_tri, sym)
     @test maximum(abs, _vals(C_proj) .- _vals(C_tri)) > 1.0        # really differs
@@ -323,7 +323,9 @@ end
         @test _vals(Hb) == _vals(H)
         @test _vals(Nb) == _vals(N)
 
-        @test all(isfinite, _vals(homogenize(rve, MoriTanaka(), :C)))
+        # Out of the domain of the average, which `homogenize` reports.
+        C_mt = @test_logs (:warn, r"Phase :CR is averaged over every rotation") homogenize(rve, MoriTanaka(), :C)
+        @test all(isfinite, _vals(C_mt))
     end
 
     @testset "solid phase, 2nd order" begin
@@ -353,4 +355,39 @@ end
         @test _vals(Ab) == _vals(A)
         @test _vals(Nb) == _vals(N)
     end
+end
+
+@testset "the phase helpers are inferred past their function barrier" begin
+    # The geometry, the property and the symmetrization of a phase come out of
+    # the RVE's heterogeneous containers, so the helpers read them and hand them
+    # to a function compiled for their concrete types: everything after the
+    # read, the concentration solve and the tensor algebra, is inferred.
+    S = MeanFieldHomogenization.Schemes
+    C₀ = TensISO{3}(60.0, 18.0)
+    ell = Ellipsoid(5.0, 1.0, 1.0)
+    none = S.NoSymmetrize()
+    A, N = @inferred S._dilute_and_contribution(ell, TensISO{3}(180.0, 60.0), C₀, none, 0.3, (;))
+    @test A isa TensND.TensTI{4, Float64, 6} && N isa TensND.TensTI{4, Float64, 6}
+    A, CA = @inferred S._dilute_and_stress_average(ell, TensISO{3}(180.0, 60.0), C₀, none, (;))
+    @test CA isa TensND.TensTI{4, Float64, 6}
+    # The crack route is not inferred inside: its compliance is built from the
+    # COD tensor by `n ⊗ˢ B ⊗ˢ n`, and TensND stores the third-order middle
+    # term as an `Array`, whose dimension is a run-time value. Its result is
+    # checked against the separate helpers instead.
+    rve_c = RVE()
+    add_phase!(rve_c, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
+    add_phase!(rve_c, :CR, PennyCrack(1.0), Dict(:C => C₀); density = 0.08)
+    H, Nc = S._compliance_and_contribution(PennyCrack(1.0), C₀, none, 0.08, (; K_interface = nothing))
+    @test _vals(H) == _vals(S._phase_compliance_contribution(rve_c, :CR, :C, C₀))
+    @test _vals(Nc) == _vals(S._phase_stiffness_contribution(rve_c, :CR, :C, C₀))
+    # A Mori-Tanaka estimate goes through the same helpers; a spheroid in a
+    # transversely isotropic matrix, the class the barrier was measured on.
+    C_ti = TensND.tens_ti(30.0, 10.0, 8.0, 20.0, 6.0, (0.0, 0.0, 1.0))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_ti); fraction = :rest)
+    add_phase!(rve, :I, Spheroid(0.2), Dict(:C => TensISO{3}(180.0, 60.0)); fraction = 0.25)
+    S_mt = homogenize(rve, MoriTanaka(), :C)
+    A_dil = S._phase_dilute_concentration(rve, :I, :C, C_ti)
+    N_i = S._phase_stiffness_contribution(rve, :I, :C, C_ti)
+    @test S_mt ≈ C_ti + N_i ⊡ inv(0.75 * one(C_ti) + 0.25 * A_dil)
 end

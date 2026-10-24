@@ -53,15 +53,22 @@ include("convert.jl")
 include("library.jl")
 include("api.jl")
 
+# The bounds MeanFieldHomogenization declares, read from its own Project.toml.
+# Copied by hand, a bound of the studio outlives the version it was written for:
+# ChemistryLab Studio bounded OptimaSolver at "0.8" after ChemistryLab 0.41.0
+# came to require 0.9.3, and its compute process never started.
+const OWN_COMPAT = TOML.parsefile(joinpath(@__DIR__, "..", "..", "Project.toml"))["compat"]
+
 """
 The packages the compute process needs: MeanFieldHomogenization itself, at the
 version running (the studio and the homogenization it drives are one), and the
-others with the bounds the studio is tested against. TensND writes the tensors
-of the scripts; Plots draws their figures.
+others with MeanFieldHomogenization's own bounds where it declares one. TensND
+writes the tensors of the scripts; Plots draws their figures, and is no
+dependency of MeanFieldHomogenization: its bound is the studio's.
 """
 const ENVIRONMENT = EnvironmentSpec(
     PackageSource(MeanFieldHomogenization),
-    ["TensND" => "0.6", "Plots" => "1"],
+    ["TensND" => OWN_COMPAT["TensND"], "Plots" => "1"],
 )
 
 const APP = StudioApp(;

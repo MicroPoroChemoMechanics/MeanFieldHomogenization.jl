@@ -14,7 +14,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)         #jl
 ```
 
 That is deliberate, and it is not the package's own environment. Most of these
-scripts use `Plots`, and several use `SymPy`, `Symbolics` or `DECUHR` — none of
+scripts use `Plots`, and several use `SymPyPythonCall`, `Symbolics` or `DECUHR` — none of
 which the package environment can load: `Plots` is not a dependency of
 `MeanFieldHomogenization` at all, and the other three are *weak* dependencies, so
 they are unavailable from `Project.toml` too. Activating `..` therefore only ever
@@ -32,8 +32,10 @@ The four finite-element scripts are the exception: `Ferrite`, `FerriteGmsh` and
 instantiate [`scripts/fe/`](fe/) instead, keeping `gmsh_jll` out of every
 documentation build.
 
-The two cross-validation scripts that `pyimport("echoes")` through `PyCall`
-(`15`, `60`) need a Python environment with `echoes` installed, and depend
+The two cross-validation scripts that `pyimport("echoes")` through `PythonCall`
+(`15`, `60`) need a Python environment with `echoes` installed (and `sympy`,
+which `SymPyPythonCall` asks for), pointed at as described in
+[`bench_echoes/README.md`](bench_echoes/README.md), and depend
 on the machine whichever project is active. They are validation harnesses, not
 demos. (`52` used to be a third: it reached for a Python Mittag-Leffler module,
 and no longer needs to — the Rabotnov kernel is in the model library, whose
@@ -131,7 +133,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 |---|---|---|
 | `50_visco_law_basics.jl` | `visco_law` | Maxwell/Kelvin kernels |
 | `51_frequency_sweep_viscoelastic.jl` | complex moduli | frequency sweep, built on `iso_rheology` + `zener_maxwell` |
-| `52_rabotnov_mittag_leffler.jl` | Rabotnov / Mittag-Leffler | Rabotnov closed form; PyCall-free since the `Rabotnov` model landed |
+| `52_rabotnov_mittag_leffler.jl` | Rabotnov / Mittag-Leffler | Rabotnov closed form; free of any Python bridge since the `Rabotnov` model landed |
 | `53_aging_creep_solid.jl` | solidifying creep | ALV creep |
 | `54_aging_creep_ellipsoid2.jl` | ellipsoid-2 creep | ALV creep |
 | `55_aging_creep_dirichlet_chains.jl` | Granger creep | aging creep (Granger–Bažant 1995 law) |
@@ -163,7 +165,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | `84_neural_inclusion_ellipsoid.jl` | — | **published tutorial** (`neural_inclusion`): a trained network as an inclusion, both phases. §1 how one is trained — Mermaid schematics of the network and of the fitting loop, the recipe (shown, not run) and the committed learning curve; §2 onwards how one is used — what stays exact whatever the fit (zero contrast, homogeneity, symmetry class, frame), accuracy against the closed form, the `AffineHill` factorization that makes ν₀ exact, every scheme, and `ForwardDiff` on the aspect ratio. Loads the committed models: no ML dependency, nothing trained at build time |
 
 | `85_neural_excentered_sphere.jl` | Adessina et al. (2017), IJES 119, 1-15 | **published tutorial** (`neural_excentered_sphere`): a surrogate trained on the *finite-element* concentration tensors of `FEExcenteredSphere`. Gate B with the 6-component TI pair, why the features are contrast ratios and not the gate-A homogeneity, accuracy and speed-up against the finite elements, and `ForwardDiff` on the eccentricity — which the finite-element type refuses. Trained by `scripts/nn/train_excentered.jl` (~1500 solves), compared by `scripts/nn/make_excentered_figures.jl`; the page loads the committed models |
-| `86_crack_distributions.jl` | echoes `crack` + `symmetrize=[ISO]` | **published tutorial** (`crack_distributions`): the same penny cracks at ε = 0.6 under two orientation rules. MT and the symmetric SC match Echoes 1.0 to ~1e-7 in both cases; `AsymmetricSelfConsistent` is the compliance-form fixed point instead; both percolate but at different densities (9/16 exactly for the compliance form, about 1.158 for the stiffness one, both independent of the matrix Poisson ratio). Also documents the local-versus-canonical component trap of a `TensRotated` result, and reads the five Walpole coefficients with `TensND.ti_params_from_KM` |
+| `86_crack_distributions.jl` | echoes `crack` + `symmetrize=[ISO]` | **published tutorial** (`crack_distributions`): the same penny cracks at ε = 0.6 under two orientation rules. MT and the symmetric SC match Echoes 1.0 to ~1e-7 in both cases; `AsymmetricSelfConsistent` is the compliance-form fixed point instead; both percolate but at different densities (9/16 exactly for the compliance form, about 1.158 for the stiffness one, both independent of the matrix Poisson ratio). Also documents the local-versus-canonical component trap of a `TensRotated` result, and reads the five Walpole coefficients with `TensND.ti_params_from_mandel` |
 | `87_aging_ages_aspect.jl` | — | **published tutorial** (`aging_ages_aspect`): aging creep with `ViscoLaw(J, :creep)` on both phases — three loading ages t' x three inclusion aspect ratios under Mori-Tanaka. Shows that the morphological effect is a near-constant offset independent of t', and that flattening the inclusions *reduces* the effective creep. Eleven ALV runs on a 60-point grid |
 
 Scripts 84 and 85 need nothing beyond the package: it loads the surrogates committed

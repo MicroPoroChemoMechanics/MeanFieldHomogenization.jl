@@ -55,7 +55,7 @@ function _layer_concentrations(
         C₀::TensND.TensISO{4, 3},
     ) where {T, N}
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κ₀, μ₀ = TensND.k_mu(C₀)
     α = _bulk_concentration(sphere, κ₀, μ₀)
     β = _shear_concentration(sphere, C₀)
     return α, β, _layer_fractions(sphere)
@@ -71,7 +71,7 @@ end
 @inline _is_incompressible(κ) = is_hard_numeric(κ) && isinf(κ)
 
 _any_incompressible(sphere::LayeredSphere{T, N}) where {T, N} =
-    any(k -> _is_incompressible(_iso_bulk_shear(layer_modulus(sphere, k))[1]), 1:N)
+    any(k -> _is_incompressible(TensND.k_mu(layer_modulus(sphere, k))[1]), 1:N)
 
 """
     _layer_pressures(sphere, C₀, α) -> NTuple{N}
@@ -83,7 +83,7 @@ from the state at ``r_k^-``: ``3k_kA_k = \\sigma_{rr} + 4\\mu_k\\,u_r/r_k``.
 function _layer_pressures(sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}, α) where {T, N}
     C_k = _layer_iso_pairs(sphere)
     _any_incompressible(sphere) || return ntuple(k -> C_k[k][1] * α[k], Val(N))
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κ₀, μ₀ = TensND.k_mu(C₀)
     κμ = _bulk_layer_moduli(sphere)
     radii = sphere.radii
     inside, s_m = _bulk_state_seq(sphere, κ₀, μ₀)
@@ -151,7 +151,7 @@ function _membrane_surface_stress(
         sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3};
         external::Bool = true,
     ) where {T, N}
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κ₀, μ₀ = TensND.k_mu(C₀)
     radii = sphere.radii
     R³ = radii[N]^3
 
@@ -226,7 +226,7 @@ rows vanish unless the interface is primal.
 function _strain_jump_moments(
         sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}
     ) where {T, N}
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κ₀, μ₀ = TensND.k_mu(C₀)
     κμ = _bulk_layer_moduli(sphere)
     radii = sphere.radii
     inside_b, s_b = _bulk_state_seq(sphere, κ₀, μ₀)

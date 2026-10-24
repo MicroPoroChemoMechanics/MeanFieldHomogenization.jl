@@ -91,6 +91,33 @@ end
     @test C3[1, 1, 1, 1] < C2[1, 1, 1, 1]        # adding porosity softens it
 end
 
+# A user cell with only the mandatory accessors: `cell_has_property` falls back
+# on `cell_container_property`, an `ArgumentError` or a `KeyError` meaning
+# "absent" and anything else being a bug that must surface.
+struct _ProbeCell <: MeanFieldHomogenization.Core.AbstractHomogenizationCell
+    props::Dict{Symbol, Dict{Symbol, Any}}
+end
+MeanFieldHomogenization.Core.cell_member_names(c::_ProbeCell) = collect(keys(c.props))
+function MeanFieldHomogenization.Core.cell_container_property(c::_ProbeCell, name::Symbol, key::Symbol)
+    key === :broken && error("a bug inside the cell")
+    d = c.props[name]                                       # KeyError for an unknown member
+    haskey(d, key) || throw(ArgumentError("member :$name has no :$key"))
+    return d[key]
+end
+
+@testset "Multiscale — `cell_has_property` of a user cell" begin
+    MC = MeanFieldHomogenization.Core
+    cell = _ProbeCell(Dict(:a => Dict{Symbol, Any}(:C => _Cm())))
+    @test MC.cell_has_property(cell, :a, :C)
+    @test !MC.cell_has_property(cell, :a, :K)
+    @test !MC.cell_has_property(cell, :zz, :C)
+    @test !MC.has_nested_property(cell, :C)
+    @test !MC.has_nested_property(cell, :K)
+    # Swallowed by a bare `catch` before, which read the bug as "no property".
+    @test_throws ErrorException MC.cell_has_property(cell, :a, :broken)
+    @test_throws ErrorException MC.has_nested_property(cell, :broken)
+end
+
 @testset "Multiscale — introspection and the raw accessor" begin
     inner = cubic_lattice(:sc, Dict(:C => _Cm()), Dict(:C => _Ci()); fraction = 0.2, cutoff = 1.0)
     outer = RVE()
@@ -104,6 +131,21 @@ end
     add_matrix!(asm, Dict(:C => _Cm()))
     add_particle!(asm, :p, (0.0, 0.0, 0.0), Ellipsoid(0.2), Dict(:C => _Ci()))
     @test !MeanFieldHomogenization.Core.has_nested_property(asm, :C)
+
+    MC = MeanFieldHomogenization.Core
+    @test MC.cell_has_property(outer, :M, :C)
+    @test !MC.cell_has_property(outer, :M, :K)
+    @test !MC.cell_has_property(outer, :nope, :C)
+    @test MC.cell_has_property(asm, :matrix, :C)
+    @test !MC.cell_has_property(asm, :matrix, :K)
+    @test MC.cell_has_property(asm, :p, :C)
+    @test !MC.cell_has_property(asm, :p, :K)
+    @test !MC.cell_has_property(asm, :nope, :C)
+    lam = Laminate()
+    add_layer!(lam, :A, Dict(:C => _Cm()); thickness = 1.0)
+    @test MC.cell_has_property(lam, :A, :C)
+    @test !MC.cell_has_property(lam, :A, :K)
+    @test !MC.cell_has_property(lam, :nope, :C)
 
     # The raw accessor must NOT resolve — that is what type inspections rely on.
     @test MeanFieldHomogenization.Core.cell_container_property(outer, :M, :C) isa Homogenized

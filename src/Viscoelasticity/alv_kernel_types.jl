@@ -66,6 +66,18 @@ ALVKernelISO(M::AbstractMatrix) =
 
 # ─── ALVKernelTI ───────────────────────────────────────────────────────────
 
+# The axes of a kernel label it: the algebra of its parameters does not depend
+# on them, and only the conversion to dense blocks reads them (about e₃). They
+# are stored as Float64, so a dual or symbolic axis, which would carry a
+# derivative or an expression the kernel cannot honor, is refused.
+_alv_axis_float(x::Union{AbstractFloat, Integer, Rational}) = Float64(x)
+_alv_axis_float(x) = throw(
+    ArgumentError(
+        "ALV kernel axes are plain numbers (the kernel algebra does not depend " *
+            "on them); got a $(typeof(x)). Rotate the operator instead."
+    )
+)
+
 """
     ALVKernelTI{T}(ℓ::NTuple{6, Matrix{T}}; axis = (0, 0, 1))
     ALVKernelTI(M::AbstractMatrix; axis = (0, 0, 1))
@@ -79,23 +91,21 @@ struct ALVKernelTI{T} <: AbstractALVKernel{T}
     axis::NTuple{3, Float64}
     function ALVKernelTI{T}(
             ℓ::NTuple{6, <:AbstractMatrix},
-            axis::NTuple{3, <:Real}
+            axis::NTuple{3, Real}
         ) where {T}
         n = size(ℓ[1], 1)
-        @inbounds for k in 1:6
-            size(ℓ[k]) == (n, n) ||
-                throw(ArgumentError("ALVKernelTI: all components must be n×n"))
-        end
+        all(c -> size(c) == (n, n), ℓ) ||
+            throw(ArgumentError("ALVKernelTI: all components must be n×n"))
         return new{T}(
             ntuple(k -> Matrix{T}(ℓ[k]), 6),
-            (Float64(axis[1]), Float64(axis[2]), Float64(axis[3]))
+            map(_alv_axis_float, axis)
         )
     end
 end
 
 function ALVKernelTI(
         ℓ::NTuple{6, <:AbstractMatrix};
-        axis::NTuple{3, <:Real} = (0.0, 0.0, 1.0)
+        axis::NTuple{3, Real} = (0.0, 0.0, 1.0)
     )
     T = promote_type(map(eltype, ℓ)...)
     return ALVKernelTI{T}(ℓ, axis)
@@ -103,9 +113,9 @@ end
 
 ALVKernelTI(
     M::AbstractMatrix;
-    axis::NTuple{3, <:Real} = (0.0, 0.0, 1.0)
+    axis::NTuple{3, Real} = (0.0, 0.0, 1.0)
 ) =
-    ALVKernelTI(ti_params_from_blocks(M; axis = (Float64.(axis)...,)); axis = axis)
+    ALVKernelTI(ti_params_from_blocks(M; axis = map(_alv_axis_float, axis)); axis = axis)
 
 # ─── ALVKernelOrtho ────────────────────────────────────────────────────────
 
@@ -123,21 +133,14 @@ struct ALVKernelOrtho{T} <: AbstractALVKernel{T}
     axes::NTuple{3, NTuple{3, Float64}}
     function ALVKernelOrtho{T}(
             o::NTuple{12, <:AbstractMatrix},
-            axes::NTuple{3, <:NTuple{3, <:Real}}
+            axes::NTuple{3, NTuple{3, Real}}
         ) where {T}
         n = size(o[1], 1)
-        @inbounds for k in 1:12
-            size(o[k]) == (n, n) ||
-                throw(ArgumentError("ALVKernelOrtho: all components must be n×n"))
-        end
+        all(c -> size(c) == (n, n), o) ||
+            throw(ArgumentError("ALVKernelOrtho: all components must be n×n"))
         return new{T}(
             ntuple(k -> Matrix{T}(o[k]), 12),
-            ntuple(
-                i -> (
-                    Float64(axes[i][1]), Float64(axes[i][2]),
-                    Float64(axes[i][3]),
-                ), 3
-            )
+            map(a -> map(_alv_axis_float, a), axes)
         )
     end
 end
@@ -146,7 +149,7 @@ const _CANON_AXES_F64 = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
 
 function ALVKernelOrtho(
         o::NTuple{12, <:AbstractMatrix};
-        axes::NTuple{3, <:NTuple{3, <:Real}} = _CANON_AXES_F64
+        axes::NTuple{3, NTuple{3, Real}} = _CANON_AXES_F64
     )
     T = promote_type(map(eltype, o)...)
     return ALVKernelOrtho{T}(o, axes)
@@ -154,12 +157,12 @@ end
 
 ALVKernelOrtho(
     M::AbstractMatrix;
-    axes::NTuple{3, <:NTuple{3, <:Real}} = _CANON_AXES_F64
+    axes::NTuple{3, NTuple{3, Real}} = _CANON_AXES_F64
 ) =
     ALVKernelOrtho(
     ortho_params_from_blocks(
         M;
-        axes = ntuple(i -> (Float64.(axes[i])...,), 3)
+        axes = map(a -> map(_alv_axis_float, a), axes)
     );
     axes = axes
 )

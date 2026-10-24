@@ -498,7 +498,7 @@ to: `k` and `μ` come out of one `k_mu`, a component and a trace out of one
 """
 const REDUCERS = Dict(
     "k" => ("km", "k_mu"), "mu" => ("km", "k_mu"), "E" => ("Enu", "E_nu"), "nu" => ("Enu", "E_nu"),
-    "km" => ("KMC", "KM"), "comp" => ("arr", "Array"), "trace3" => ("arr", "Array"),
+    "km" => ("KMC", "mandel"), "comp" => ("arr", "Array"), "trace3" => ("arr", "Array"),
 )
 
 """

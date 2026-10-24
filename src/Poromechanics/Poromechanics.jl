@@ -34,7 +34,7 @@ is solved: everything follows from `C_hom`, `C_s` and `φ`.
 | [`pore_volume_fraction`](@ref) | ``\\varphi`` summed over declared pore phases |
 
 Everything is plain TensND algebra, hence type-generic (`Float64`, `BigFloat`,
-`ForwardDiff.Dual`, `ComplexF64`, `SymPy.Sym`) at no cost.
+`ForwardDiff.Dual`, `ComplexF64`, `SymPyPythonCall.Sym`) at no cost.
 
 !!! note "Homogeneous solid phase"
     The relations above hold when the solid phase has *uniform* elastic

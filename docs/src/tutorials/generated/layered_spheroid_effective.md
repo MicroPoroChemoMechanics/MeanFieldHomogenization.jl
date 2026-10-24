@@ -334,11 +334,11 @@ end
 println()
 
 p_cv_a = plot(
-    xlabel = "𝒩 (truncation order)", ylabel = "rel. change, axial",
+    xlabel = "N (truncation order)", ylabel = "rel. change, axial",
     yscale = :log10, ylims = (1.0e-16, 1.0e-1), title = "Axial", legend = :topright,
 )
 p_cv_t = plot(
-    xlabel = "𝒩 (truncation order)", ylabel = "rel. change, transverse",
+    xlabel = "N (truncation order)", ylabel = "rel. change, transverse",
     yscale = :log10, ylims = (1.0e-16, 1.0e-1), title = "Transverse", legend = :topright,
 )
 markers = (:circle, :diamond, :utriangle, :square, :star5, :cross)

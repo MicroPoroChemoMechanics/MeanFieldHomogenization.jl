@@ -33,14 +33,14 @@ const MFHC_I = MeanFieldHomogenization.Core
 const ATOL_ITF = 1.0e-11
 
 _isoi(k, μ) = TensISO{3}(3k, 2μ)
-_acoustic_i(t, basis) = MFHC_I.acoustic_tensor(SMatrix{6, 6}(KM(t, basis)))
+_acoustic_i(t, basis) = MFHC_I.acoustic_tensor(SMatrix{6, 6}(mandel(t, basis)))
 
 function _schur_ip_i(t, basis)
-    M = SMatrix{6, 6}(KM(t, basis))
-    A = MFHC_I._ip_block(M)
-    B = SMatrix{3, 3}(M[MFHC_I.KM_IP, MFHC_I.KM_OP])
-    C = SMatrix{3, 3}(M[MFHC_I.KM_OP, MFHC_I.KM_IP])
-    return A - B * MFHC_I._inv3(MFHC_I._op_block(M)) * C
+    M = SMatrix{6, 6}(mandel(t, basis))
+    A = MFHC_I.TensND.mandel_ip_block(M)
+    B = SMatrix{3, 3}(M[MFHC_I.MANDEL_IP, MFHC_I.MANDEL_OP])
+    C = SMatrix{3, 3}(M[MFHC_I.MANDEL_OP, MFHC_I.MANDEL_IP])
+    return A - B * MFHC_I._inv3(MFHC_I.TensND.mandel_op_block(M)) * C
 end
 
 # Two-layer reference cell, parameterized by its interfaces and its period.
@@ -111,18 +111,18 @@ end
     @test _acoustic_i(Ch, b) ≈ _acoustic_i(ref, b) atol = ATOL_ITF
 
     # Read off directly: the in-plane shear gains exactly μs/L.
-    M, Mr = Matrix(KM(Ch)), Matrix(KM(ref))
+    M, Mr = Matrix(mandel(Ch)), Matrix(mandel(ref))
     @test M[6, 6] / 2 - Mr[6, 6] / 2 ≈ μs / L atol = ATOL_ITF
     @test M[3, 3] ≈ Mr[3, 3] atol = ATOL_ITF
 end
 
 @testset "Interfaces — the 1/L size effect" begin
     kn, kt = 0.05, 0.05
-    ref = Matrix(KM(homogenize(_bilayer(), Laminated(), :C)))
+    ref = Matrix(mandel(homogenize(_bilayer(), Laminated(), :C)))
     itf = SpringInterface(; sn = kn, st = kt)
 
-    C1 = Matrix(KM(homogenize(_bilayer(; itf1 = itf, scale = 1.0), Laminated(), :C)))
-    C2 = Matrix(KM(homogenize(_bilayer(; itf1 = itf, scale = 2.0), Laminated(), :C)))
+    C1 = Matrix(mandel(homogenize(_bilayer(; itf1 = itf, scale = 1.0), Laminated(), :C)))
+    C2 = Matrix(mandel(homogenize(_bilayer(; itf1 = itf, scale = 2.0), Laminated(), :C)))
 
     # The interface correction lives in the out-of-plane compliance and scales
     # like 1/L: doubling every thickness at fixed fractions halves it.
@@ -131,7 +131,7 @@ end
     @test d2 ≈ d1 / 2 atol = ATOL_ITF
 
     # L → ∞ recovers the perfect interface.
-    Cbig = Matrix(KM(homogenize(_bilayer(; itf1 = itf, scale = 1.0e8), Laminated(), :C)))
+    Cbig = Matrix(mandel(homogenize(_bilayer(; itf1 = itf, scale = 1.0e8), Laminated(), :C)))
     @test Cbig ≈ ref rtol = 1.0e-7
 end
 
@@ -139,7 +139,7 @@ end
     prev = Inf
     for kn in (1.0e-4, 1.0e-3, 1.0e-2, 1.0e-1, 1.0e0, 1.0e2)
         lam = _bilayer(; itf1 = SpringInterface(; sn = kn, st = kn))
-        C33 = Matrix(KM(homogenize(lam, Laminated(), :C)))[3, 3]
+        C33 = Matrix(mandel(homogenize(lam, Laminated(), :C)))[3, 3]
         @test C33 < prev                       # strictly softer as kn grows
         prev = C33
     end
@@ -148,7 +148,7 @@ end
     Ch = homogenize(lam, Laminated(), :C)
     @test norm(_acoustic_i(Ch, laminate_basis(lam))) < 1.0e-8
     # ... but the in-plane stiffness is untouched (O2 again).
-    @test Matrix(KM(Ch))[6, 6] ≈ Matrix(KM(homogenize(_bilayer(), Laminated(), :C)))[6, 6] atol = ATOL_ITF
+    @test Matrix(mandel(Ch))[6, 6] ≈ Matrix(mandel(homogenize(_bilayer(), Laminated(), :C)))[6, 6] atol = ATOL_ITF
 end
 
 @testset "Interfaces — the displacement jump" begin
@@ -234,13 +234,13 @@ end
     𝕂 = SMatrix{3, 3}(Diagonal([kt, kt, kn]))          # (ℓ, m, n) frame
     a = homogenize(_bilayer(; itf1 = AnisotropicSpringInterface(𝕂)), Laminated(), :C)
     b0 = homogenize(_bilayer(; itf1 = SpringInterface(; sn = kn, st = kt)), Laminated(), :C)
-    @test Matrix(KM(a)) ≈ Matrix(KM(b0)) atol = ATOL_ITF
+    @test Matrix(mandel(a)) ≈ Matrix(mandel(b0)) atol = ATOL_ITF
 
     κs, μs = 0.07, 0.04
     Cs = SMatrix{3, 3}(κs + μs, κs - μs, 0.0, κs - μs, κs + μs, 0.0, 0.0, 0.0, 2μs)
     am = homogenize(_bilayer(; itf1 = AnisotropicMembraneInterface(Cs)), Laminated(), :C)
     bm = homogenize(_bilayer(; itf1 = MembraneInterface(κs, μs)), Laminated(), :C)
-    @test Matrix(KM(am)) ≈ Matrix(KM(bm)) atol = ATOL_ITF
+    @test Matrix(mandel(am)) ≈ Matrix(mandel(bm)) atol = ATOL_ITF
 
     ks = 0.06
     Ks = SMatrix{3, 3}(ks, 0.0, 0.0, 0.0, ks, 0.0, 0.0, 0.0, 0.0)
@@ -250,8 +250,8 @@ end
 
     # The null tensor is still the perfect interface.
     Z3 = zero(SMatrix{3, 3, Float64})
-    @test Matrix(KM(homogenize(_bilayer(; itf1 = AnisotropicSpringInterface(Z3)), Laminated(), :C))) ≈
-        Matrix(KM(homogenize(_bilayer(), Laminated(), :C))) atol = ATOL_ITF
+    @test Matrix(mandel(homogenize(_bilayer(; itf1 = AnisotropicSpringInterface(Z3)), Laminated(), :C))) ≈
+        Matrix(mandel(homogenize(_bilayer(), Laminated(), :C))) atol = ATOL_ITF
 end
 
 @testset "Anisotropic interfaces — both oracles stay exact" begin
@@ -304,7 +304,7 @@ end
     lam = _bilayer(; itf1 = AnisotropicSpringInterface(𝕂))
     Ch = homogenize(lam, Laminated(), :C)
     @test !(Ch isa TensND.TensTI)
-    M = Matrix(KM(Ch, laminate_basis(lam)))
+    M = Matrix(mandel(Ch, laminate_basis(lam)))
     @test abs(M[4, 4] - M[5, 5]) > 1.0e-6          # genuinely not TI
 
     # ... while the scalar interface types keep the TI claim.
@@ -339,14 +339,14 @@ end
         interface = AnisotropicSpringInterface(𝕂)
     )
     add_layer!(lam2, :B, Dict(:C => _isoi(0.5, 0.2)); thickness = 0.7)
-    @test Matrix(KM(homogenize(lam2, Laminated(), :C), b)) ≈ Matrix(KM(Ch, b)) atol = ATOL_ITF
+    @test Matrix(mandel(homogenize(lam2, Laminated(), :C), b)) ≈ Matrix(mandel(Ch, b)) atol = ATOL_ITF
 end
 
 @testset "Anisotropic interfaces — ForwardDiff reaches a tensor entry" begin
     base = [3.0e-3 5.0e-4 7.0e-4; 5.0e-4 8.0e-3 2.0e-4; 7.0e-4 2.0e-4 0.0]
     f = function (x)
         K = SMatrix{3, 3}(base + [0.0 0 0; 0 0 0; 0 0 x])
-        return Matrix(KM(homogenize(_bilayer(; itf1 = AnisotropicSpringInterface(K)), Laminated(), :C)))[3, 3]
+        return Matrix(mandel(homogenize(_bilayer(; itf1 = AnisotropicSpringInterface(K)), Laminated(), :C)))[3, 3]
     end
     h = 1.0e-8
     @test ForwardDiff.derivative(f, 1.1e-2) ≈ (f(1.1e-2 + h) - f(1.1e-2 - h)) / (2h) rtol = 1.0e-5

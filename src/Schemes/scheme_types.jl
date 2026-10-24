@@ -288,7 +288,7 @@ accepts `:voigt`, `:reuss`, a phase name, or an explicit tensor. A phase named
     `72` and the damped Picard crawls along a degenerate fixed point;
     `NewtonDefault` agrees to `1e-7` even there. On a deeply percolated oblate
     RVE the Voigt start also makes `TrustRegion` stop where the
-    finite-difference IFT Jacobian is exactly singular. Hence the default above.
+    Jacobian is exactly singular. Hence the default above.
 
 !!! warning "The seed also sets a floor"
     Every solver keeps each component of its iterate above
@@ -483,10 +483,9 @@ along the chosen `trajectory`.
 - `alg` — explicit ODE algorithm.  `nothing` selects `Tsit5()` (5th
   order adaptive Runge-Kutta).  Pass any `OrdinaryDiffEqAlgorithm`
   instance to override (e.g. `Vern9()` for higher accuracy).  Implicit
-  algorithms must be built with a non-AD Jacobian
-  (`Rosenbrock23(autodiff = AutoFiniteDiff())`): the RHS calls the
-  Hill-tensor backends, which are not differentiable with respect to
-  the ODE state.
+  algorithms (`Rosenbrock23()`, `Rodas5P()`) work with their default
+  ForwardDiff Jacobian and time gradient: the right-hand side accepts dual
+  numbers in the state and in `τ`.
 - `kwargs...` — any other keyword is forwarded verbatim to
   `OrdinaryDiffEq.solve` (`maxiters`, `dtmax`, `dt`, `callback`, …).
 """

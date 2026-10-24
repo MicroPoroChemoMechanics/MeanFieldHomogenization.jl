@@ -45,7 +45,7 @@ end
     m.sweep.projection = "none"
     m.sweep.outputs = Any[props("kind" => "km", "i" => 1, "j" => 1), props("kind" => "km", "i" => 3, "j" => 3)]
     src = gen(m)
-    @test occursin("KMC = KM(C)", src) && occursin("KMC[1, 1]", src) && occursin("KMC[3, 3]", src)
+    @test occursin("KMC = mandel(C)", src) && occursin("KMC[1, 1]", src) && occursin("KMC[3, 3]", src)
     @test !occursin("k_mu", src)
     m = MS.default_model()
     @test !occursin("max(", gen(m))
@@ -60,7 +60,7 @@ end
     @test !occursin("km = ", src) && occursin("k_mu(C)[1]", src) && occursin("return (k_mu(C)[1],)", src)
     m.sweep.outputs = Any[props("kind" => "km", "i" => 1, "j" => 1), props("kind" => "km", "i" => 3, "j" => 3), props("kind" => "k")]
     src = gen(m)
-    @test occursin("KMC = KM(C)", src) && count_of("KM(C)", src) == 1 && occursin("k_mu(C)[1]", src)
+    @test occursin("KMC = mandel(C)", src) && count_of("mandel(C)", src) == 1 && occursin("k_mu(C)[1]", src)
     m.sweep.mode = "single"
     m.sweep.outputs = Any[props("kind" => "k"), props("kind" => "mu")]
     m.sweep.schemes = Any[props("name" => "MoriTanaka", "options" => MS.JDict()), props("name" => "Voigt", "options" => MS.JDict())]
@@ -71,7 +71,7 @@ end
         props("kind" => "E"), props("kind" => "nu"), props("kind" => "comp", "i" => 2, "j" => 3),
         props("kind" => "trace3"), props("kind" => "other"), props("kind" => "km", "i" => 1.0, "j" => "2"),
     ]
-    @test [MS.output_expr(o) for o in outs] == ["E_nu(C)[1]", "E_nu(C)[2]", "Array(C)[2, 3]", "tr(Array(C)) / 3", "k_mu(C)[1]", "KM(C)[1, 2]"]
+    @test [MS.output_expr(o) for o in outs] == ["E_nu(C)[1]", "E_nu(C)[2]", "Array(C)[2, 3]", "tr(Array(C)) / 3", "k_mu(C)[1]", "mandel(C)[1, 2]"]
     @test [MS.output_label(o) for o in outs] == ["E", "nu", "C23", "tr/3", "other", "KM12"]
     m.sweep.outputs = Any[]
     @test occursin("@printf \"MoriTanaka" * " "^16 * "value = %.6f\\n\" C_MoriTanaka", gen(m))

@@ -14,89 +14,14 @@
 # ── Trapezoidal fillers for order-2 (3×3 block) kernels ─────────────────────
 # Defined in trapezoidal.jl entry points; bodies live here for cohesion.
 
-@inline function _fill_trapezoidal_order2_tens!(
-        M::AbstractMatrix, law::ViscoLaw,
-        times::AbstractVector
-    )
-    n = length(times)
-    n == 0 && return M
-    T = eltype(M)
-    cache = Vector{Matrix{T}}(undef, n)
-    @inbounds begin
-        cache[1] = _to_order2_mat(visco_eval(law, times[1], times[1]))
-        _set_block_order2!(M, 1, 1, cache[1])
-        for i in 2:n
-            for k in 1:i
-                cache[k] = _to_order2_mat(visco_eval(law, times[i], times[k]))
-            end
-            _fill_row_blocks_order2_from_cache!(M, cache, i, T)
-        end
-    end
-    return M
-end
-
-@inline function _fill_trapezoidal_order2_mat!(
-        M::AbstractMatrix, law::ViscoLaw,
-        times::AbstractVector
-    )
-    n = length(times)
-    n == 0 && return M
-    T = eltype(M)
-    cache = Vector{Matrix{T}}(undef, n)
-    @inbounds begin
-        cache[1] = copy(visco_eval(law, times[1], times[1]))
-        _set_block_order2!(M, 1, 1, cache[1])
-        for i in 2:n
-            for k in 1:i
-                cache[k] = visco_eval(law, times[i], times[k])
-            end
-            _fill_row_blocks_order2_from_cache!(M, cache, i, T)
-        end
-    end
-    return M
-end
-
-# Place row `i` blocks (3×3 each) into `M` using cached evaluations.
-@inline function _fill_row_blocks_order2_from_cache!(
-        M::AbstractMatrix,
-        cache::Vector{<:AbstractMatrix},
-        i::Int, ::Type{T}
-    ) where {T}
-    half = inv(T(2))
-    @inbounds begin
-        c1, c2 = cache[1], cache[2]
-        for kk in 1:3, ll in 1:3
-            M[3 * (i - 1) + kk, ll] = (c1[kk, ll] - c2[kk, ll]) * half
-        end
-        for j in 2:(i - 1)
-            cm, cp = cache[j - 1], cache[j + 1]
-            for kk in 1:3, ll in 1:3
-                M[3 * (i - 1) + kk, 3 * (j - 1) + ll] =
-                    (cm[kk, ll] - cp[kk, ll]) * half
-            end
-        end
-        cm, cp = cache[i - 1], cache[i]
-        for kk in 1:3, ll in 1:3
-            M[3 * (i - 1) + kk, 3 * (i - 1) + ll] =
-                (cm[kk, ll] + cp[kk, ll]) * half
-        end
-    end
-    return M
-end
+_fill_trapezoidal_order2_tens!(M::AbstractMatrix, law::ViscoLaw, times::AbstractVector) =
+    _fill_trapezoidal_blocks!(M, law, times, Val(3), _to_order2_mat)
+_fill_trapezoidal_order2_mat!(M::AbstractMatrix, law::ViscoLaw, times::AbstractVector) =
+    _fill_trapezoidal_blocks!(M, law, times, Val(3), identity)
 
 @inline _to_order2_mat(s::AbstractMatrix) = s
 @inline function _to_order2_mat(s::TensND.AbstractTens{2, 3})
-    return TensND.get_array(s)
-end
-
-@inline function _set_block_order2!(
-        M::AbstractMatrix, i::Int, j::Int,
-        block::AbstractMatrix
-    )
-    rows = (3 * (i - 1) + 1):(3 * i)
-    cols = (3 * (j - 1) + 1):(3 * j)
-    @inbounds M[rows, cols] = block
-    return M
+    return TensND.components_canon(s)   # the ALV matrices are canonical
 end
 
 # ── Iso order-2 parameter extraction (single scalar α per (i,j)) ───────────
@@ -114,15 +39,9 @@ function iso_order2_params_from_blocks(M::AbstractMatrix)
     sz % 3 == 0 ||
         throw(ArgumentError("iso_order2_params_from_blocks: size $(sz) not divisible by 3"))
     n = sz ÷ 3
-    T = eltype(M)
-    α = zeros(T, n, n)
-    @inbounds for i in 1:n, j in 1:n
-        r = 3 * (i - 1)
-        c = 3 * (j - 1)
-        # Average of diagonal entries of the 3×3 block.
-        α[i, j] = (M[r + 1, c + 1] + M[r + 2, c + 2] + M[r + 3, c + 3]) / 3
-    end
-    return α
+    # A third of the trace of each 3×3 block.
+    blk(i) = (3 * (i - 1) + 1):(3 * i)
+    return [tr(@view M[blk(i), blk(j)]) / 3 for i in 1:n, j in 1:n]
 end
 
 """
@@ -135,17 +54,7 @@ function iso_order2_blocks_from_params(α::AbstractMatrix)
     n = size(α, 1)
     n == size(α, 2) ||
         throw(ArgumentError("iso_order2_blocks_from_params: α must be square"))
-    T = eltype(α)
-    M = zeros(T, 3 * n, 3 * n)
-    @inbounds for i in 1:n, j in 1:n
-        a = T(α[i, j])
-        rows = (3 * (i - 1) + 1):(3 * i)
-        cols = (3 * (j - 1) + 1):(3 * j)
-        M[rows[1], cols[1]] = a
-        M[rows[2], cols[2]] = a
-        M[rows[3], cols[3]] = a
-    end
-    return M
+    return kron(α, Matrix{eltype(α)}(I, 3, 3))
 end
 
 """
@@ -208,19 +117,12 @@ function hill_kernel_order2_at(ell, K_0::AbstractMatrix)
         throw(ArgumentError("hill_kernel_order2: only iso ALV matrix is currently supported"))
     α_0 = iso_order2_params_from_blocks(K_0)
     α_0_inv = volterra_inverse(α_0; block_size = 1)
-    IA = TensND.get_array(Elasticity.tens_IA(ell))
-    n = size(α_0, 1)
+    # Canonical components: the 3n×3n matrices of the ALV algebra are written in
+    # the canonical frame, and `tens_IA` is in the ellipsoid's. `get_array` read
+    # it there, so a rotated ellipsoid was silently aligned with the axes.
+    IA = TensND.components_canon(Elasticity.tens_IA(ell))
     T = promote_type(eltype(α_0_inv), eltype(IA))
-    P = zeros(T, 3 * n, 3 * n)
-    @inbounds for i in 1:n, j in 1:n
-        rows = (3 * (i - 1) + 1):(3 * i)
-        cols = (3 * (j - 1) + 1):(3 * j)
-        v = T(α_0_inv[i, j])
-        for k in 1:3, l in 1:3
-            P[rows[k], cols[l]] = v * IA[k, l]
-        end
-    end
-    return P
+    return kron(Matrix{T}(α_0_inv), Matrix{T}(IA))   # block (i, j) = α⁻¹[i, j] I^A
 end
 
 # A layered sphere has no Hill kernel: its contribution comes from the
@@ -247,18 +149,8 @@ function dilute_concentration_alv_order2(
         K_E::AbstractMatrix, K_0::AbstractMatrix,
         P::AbstractMatrix
     )
-    sz = size(K_E, 1)
-    sz % 3 == 0 ||
-        throw(ArgumentError("dilute_concentration_alv_order2: size not divisible by 3"))
-    n = sz ÷ 3
-    T = promote_type(eltype(K_E), eltype(K_0), eltype(P))
-    Id = zeros(T, sz, sz)
-    @inbounds for i in 1:n
-        rows = (3 * (i - 1) + 1):(3 * i)
-        Id[rows, rows] = Matrix{T}(LinearAlgebra.I, 3, 3)
-    end
-    arg = Id .+ P * (K_E .- K_0)
-    return volterra_inverse(arg; block_size = 3)
+    _alg_check_dense("dilute_concentration_alv_order2", _DenseALV{3}(), K_E, K_0, P)
+    return _alg_dilute_concentration(_DenseALV{3}(), K_E, K_0, P)
 end
 
 """
@@ -270,20 +162,11 @@ function dilute_contribution_alv_order2(
         K_E::AbstractMatrix, K_0::AbstractMatrix,
         P::AbstractMatrix
     )
-    A_dil = dilute_concentration_alv_order2(K_E, K_0, P)
-    return (K_E .- K_0) * A_dil
+    _alg_check_dense("dilute_contribution_alv_order2", _DenseALV{3}(), K_E, K_0, P)
+    return _alg_dilute_contribution(_DenseALV{3}(), K_E, K_0, P)
 end
 
 # ── Schemes ─────────────────────────────────────────────────────────────────
-
-# Element type spanning EVERY per-phase block a kernel accumulates, not just
-# the first one or the matrix block.  The kernels below allocate their
-# accumulators up front, so a block the promotion misses is rejected by the
-# broadcast that adds it: differentiating with respect to a phase property or
-# an inclusion geometry makes `contribs` / `A_duts` (and any phase's `K̃_r`)
-# `Dual` while `K̃_0` and the fractions stay `Float64`.  `Bool` is the neutral
-# seed — it promotes away against any numeric type.
-_alv_blocks_eltype(mats) = mapreduce(eltype, promote_type, mats; init = Bool)
 
 """
     voigt_alv_order2(matrices, fractions) -> Matrix
@@ -294,15 +177,9 @@ function voigt_alv_order2(
         matrices::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector
     )
-    length(matrices) == length(fractions) ||
-        throw(ArgumentError("voigt_alv_order2: phase counts mismatch"))
+    _alg_check("voigt_alv_order2", matrices, fractions)
     isempty(matrices) && throw(ArgumentError("voigt_alv_order2: at least one phase required"))
-    T = promote_type(_alv_blocks_eltype(matrices), eltype(fractions))
-    out = zeros(T, size(matrices[1])...)
-    @inbounds for r in eachindex(matrices)
-        @. out += fractions[r] * matrices[r]
-    end
-    return out
+    return _alg_voigt(_DenseALV{3}(), matrices, fractions)
 end
 
 """
@@ -314,11 +191,9 @@ function reuss_alv_order2(
         matrices::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector
     )
-    length(matrices) == length(fractions) ||
-        throw(ArgumentError("reuss_alv_order2: phase counts mismatch"))
-    inv_phases = [volterra_inverse(M; block_size = 3) for M in matrices]
-    inv_eff = voigt_alv_order2(inv_phases, fractions)
-    return volterra_inverse(inv_eff; block_size = 3)
+    _alg_check("reuss_alv_order2", matrices, fractions)
+    isempty(matrices) && throw(ArgumentError("reuss_alv_order2: at least one phase required"))
+    return _alg_reuss(_DenseALV{3}(), matrices, fractions)
 end
 
 """
@@ -331,16 +206,8 @@ function dilute_alv_order2(
         contribs::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector
     )
-    length(contribs) == length(fractions) ||
-        throw(ArgumentError("dilute_alv_order2: phase counts mismatch"))
-    T = promote_type(
-        eltype(K_0), _alv_blocks_eltype(contribs), eltype(fractions)
-    )
-    out = T.(K_0)
-    @inbounds for r in eachindex(contribs)
-        @. out += fractions[r] * contribs[r]
-    end
-    return out
+    _alg_check("dilute_alv_order2", contribs, fractions)
+    return _alg_dilute(_DenseALV{3}(), K_0, contribs, fractions)
 end
 
 """
@@ -353,9 +220,8 @@ function dilute_dual_alv_order2(
         contribs_compliance::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector
     )
-    R_0 = volterra_inverse(K_0; block_size = 3)
-    R_eff = dilute_alv_order2(R_0, contribs_compliance, fractions)
-    return volterra_inverse(R_eff; block_size = 3)
+    _alg_check("dilute_dual_alv_order2", contribs_compliance, fractions)
+    return _alg_dilute_dual(_DenseALV{3}(), K_0, contribs_compliance, fractions)
 end
 
 """
@@ -375,31 +241,8 @@ function mori_tanaka_alv_order2(
         contribs::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector, f_M::Real
     )
-    length(A_duts) == length(contribs) == length(fractions) ||
-        throw(ArgumentError("mori_tanaka_alv_order2: phase counts mismatch"))
-    sz = size(K_0, 1)
-    sz % 3 == 0 || throw(ArgumentError("mori_tanaka_alv_order2: size not divisible by 3"))
-    n = sz ÷ 3
-    T = promote_type(
-        eltype(K_0), eltype(fractions), typeof(f_M),
-        _alv_blocks_eltype(A_duts), _alv_blocks_eltype(contribs)
-    )
-    Id = zeros(T, sz, sz)
-    @inbounds for i in 1:n
-        rows = (3 * (i - 1) + 1):(3 * i)
-        Id[rows, rows] = Matrix{T}(LinearAlgebra.I, 3, 3)
-    end
-    num = zeros(T, sz, sz)
-    den = T(f_M) .* Id
-    @inbounds for r in eachindex(A_duts)
-        @. num += fractions[r] * contribs[r]
-        @. den += fractions[r] * A_duts[r]
-    end
-    # `num ∘ den^{-∘}`, the inverse on the RIGHT, as at order 4: the matrix
-    # gradient is `den^{-∘}` applied to the average one, and `num` acts on it.
-    # The two orders agree only when the Volterra matrices commute.
-    factor = num * volterra_inverse(den; block_size = 3)
-    return K_0 .+ factor
+    _alg_check("mori_tanaka_alv_order2", A_duts, contribs, fractions)
+    return _alg_mori_tanaka(_DenseALV{3}(), K_0, A_duts, contribs, fractions, f_M)
 end
 
 """
@@ -415,26 +258,8 @@ function maxwell_alv_order2(
         fractions::AbstractVector;
         H_0::AbstractMatrix
     )
-    length(contribs) == length(fractions) ||
-        throw(ArgumentError("maxwell_alv_order2: phase counts mismatch"))
-    sz = size(K_0, 1)
-    sz % 3 == 0 || throw(ArgumentError("maxwell_alv_order2: size not divisible by 3"))
-    n = sz ÷ 3
-    T = promote_type(
-        eltype(K_0), eltype(fractions), eltype(H_0),
-        _alv_blocks_eltype(contribs)
-    )
-    Id = zeros(T, sz, sz)
-    @inbounds for i in 1:n
-        rows = (3 * (i - 1) + 1):(3 * i)
-        Id[rows, rows] = Matrix{T}(LinearAlgebra.I, 3, 3)
-    end
-    Σ = zeros(T, sz, sz)
-    @inbounds for r in eachindex(contribs)
-        @. Σ += fractions[r] * contribs[r]
-    end
-    factor = Σ * volterra_inverse(Id .- H_0 * Σ; block_size = 3)
-    return K_0 .+ factor
+    _alg_check("maxwell_alv_order2", contribs, fractions)
+    return _alg_maxwell(_DenseALV{3}(), K_0, contribs, fractions, H_0)
 end
 
 # ── Order-2 ALV pipeline (internal — dispatched from homogenize_alv) ───────
@@ -518,7 +343,7 @@ function _homogenize_alv_order2(
             ph.geometry, scheme, K_r_law, K_M_law, K_0, times
         )
         return (
-            K_r = K_r,
+            K_r = K_r, sym = sym,
             A_dut = _maybe_symmetrize_alv2(A_dut, sym),
             N_dut = _maybe_symmetrize_alv2(N_dut, sym),
         )
@@ -534,10 +359,13 @@ function _homogenize_alv_order2(
 
     fractions = T_amount[_amount_value(rve, name) for name in incl_names]
     K_phases = Matrix{T_block}[K_0]
+    # The orientation average of each entry of `K_phases`, for the bounds.
+    phase_syms = AbstractSymmetrize[phase_symmetrize(rve, m)]
     A_duts = Matrix{T_block}[]
     contribs = Matrix{T_block}[]
     for q in per_phase
         push!(K_phases, q.K_r)
+        push!(phase_syms, q.sym)
         push!(A_duts, q.A_dut)
         push!(contribs, q.N_dut)
     end
@@ -545,7 +373,7 @@ function _homogenize_alv_order2(
     return _homogenize_alv2_dispatch(
         rve, scheme, prop, times,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law, m; kw...
+        fractions, f_M, K_M_law, m; phase_syms, kw...
     )
 end
 
@@ -570,17 +398,23 @@ end
 function _homogenize_alv2_dispatch(
         ::RVE, ::Voigt, ::Symbol, ::AbstractVector,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law, matrix::Symbol; kw...
+        fractions, f_M, K_M_law, matrix::Symbol; phase_syms, kw...
     )
-    return voigt_alv_order2(K_phases, [f_M; fractions])
+    # Each phase property averaged over its orientation distribution.
+    return voigt_alv_order2(map(_maybe_symmetrize_alv2, K_phases, phase_syms), [f_M; fractions])
 end
 
 function _homogenize_alv2_dispatch(
         ::RVE, ::Reuss, ::Symbol, ::AbstractVector,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law, matrix::Symbol; kw...
+        fractions, f_M, K_M_law, matrix::Symbol; phase_syms, kw...
     )
-    return reuss_alv_order2(K_phases, [f_M; fractions])
+    fs = [f_M; fractions]
+    all(s -> s isa NoSymmetrize, phase_syms) && return reuss_alv_order2(K_phases, fs)
+    # The resistivity of each phase is averaged over its orientation
+    # distribution, not its conductivity: the bound averages resistivities.
+    Rs = map((K, sym) -> _maybe_symmetrize_alv2(volterra_inverse(K; block_size = 3), sym), K_phases, phase_syms)
+    return volterra_inverse(voigt_alv_order2(Rs, fs); block_size = 3)
 end
 
 function _homogenize_alv2_dispatch(
@@ -787,7 +621,12 @@ function differential_alv_order2(
     sz = 3 * n
     dual = formulation === :compliance
     x0 = vec(Tp.(dual ? volterra_inverse(K_0; block_size = 3) : K_0))
-    ode_p = (n = n, sz = sz, solid_data = solid_data, paths = paths, dual = dual, times = times)
+    # A tuple of concrete records, each carrying its own trajectory: the
+    # right-hand side runs over it without a dynamic dispatch per phase.
+    ode_p = (
+        sz = sz, dual = dual, times = times,
+        solid_data = Tuple(merge(r, (path = paths[r.name],)) for r in solid_data),
+    )
     rhs! = (du, u, p, τ) -> _diff_alv2_ode_rhs!(du, u, p, τ)
     prob = ODEProblem(rhs!, x0, (0.0, 1.0), ode_p)
     sol = solve(
@@ -810,40 +649,31 @@ _diff_alv2_contribution(s::LayeredSphere, K_r, K_curr, times) =
     property_contribution_alv(s, K_curr, times)
 
 function _diff_alv2_ode_rhs!(du, u, p, τ)
-    sz = p.sz
-    P_curr = reshape(u, sz, sz)
+    T = eltype(u)
+    P_curr = reshape(u, p.sz, p.sz)
     K_curr = p.dual ? volterra_inverse(P_curr; block_size = 3) : P_curr
-    Δ = zeros(eltype(u), sz, sz)
-
-    n_solid = length(p.solid_data)
-    n_solid == 0 && (du .= vec(Δ); return nothing)
+    Δ = reshape(du, p.sz, p.sz)
+    fill!(Δ, zero(T))
 
     # Sherman-Morrison : dφ_α/dτ = df_α/dτ + (f_α / f_0) · sum(df).
-    f = Vector{eltype(u)}(undef, n_solid)
-    df = Vector{eltype(u)}(undef, n_solid)
-    @inbounds for (i, r) in enumerate(p.solid_data)
-        nt = p.paths[r.name]
-        f[i] = nt.f(τ) * r.target
-        df[i] = nt.df(τ) * r.target
-    end
-    f0 = one(eltype(u)) - sum(f; init = zero(eltype(u)))
-    sum_df = sum(df; init = zero(eltype(u)))
+    f = map(r -> r.path.f(τ) * r.target, p.solid_data)
+    df = map(r -> r.path.df(τ) * r.target, p.solid_data)
+    f0 = one(T) - sum(f; init = zero(T))
+    sum_df = sum(df; init = zero(T))
 
-    @inbounds for (i, r) in enumerate(p.solid_data)
-        dφᵢ = df[i] + (f[i] / f0) * sum_df
-        iszero(dφᵢ) && continue
-        contrib = _diff_alv2_contribution(r.geom, r.K_r, K_curr, p.times)
+    map(p.solid_data, f, df) do r, fᵢ, dfᵢ
+        dφᵢ = dfᵢ + (fᵢ / f0) * sum_df
+        iszero(dφᵢ) && return nothing
         # Order-2 projector: `K_curr` is a (3n × 3n) matrix of 2-tensor
         # blocks.  Using the order-4 (6×6 Mandel) one here silently mixed two
         # consecutive TIME blocks, so the "averaged" contribution was not
         # isotropic and the running medium drifted out of the class the
         # order-2 Hill kernel needs.
-        contrib = _maybe_symmetrize_alv2(contrib, r.sym)
+        contrib = _maybe_symmetrize_alv2(_diff_alv2_contribution(r.geom, r.K_r, K_curr, p.times), r.sym)
         term = p.dual ? -(P_curr * contrib * P_curr) : contrib
         @. Δ += dφᵢ * term
+        return nothing
     end
-
-    du .= vec(Δ)
     return nothing
 end
 

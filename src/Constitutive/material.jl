@@ -156,8 +156,8 @@ Gauss point and one per distinct microstructural state.
 
 !!! note "Tensors are TensND objects in the global frame"
     `ε` is expected in the canonical (global) frame, which is where an FE code
-    computes it. Use [`from_tensors`](@ref) on the way in and
-    [`to_tensors`](@ref) on the way out; do not hand raw component arrays
+    computes it. Use `from_tensors` on the way in and
+    `to_tensors` on the way out; do not hand raw component arrays
     across the boundary.
 """
 function material_response end

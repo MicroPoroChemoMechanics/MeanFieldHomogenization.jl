@@ -52,6 +52,15 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
+      # The machine the job runs on: the processor and its vector extensions,
+      # and what Julia makes of them. A crash inside the compiler can depend on
+      # the target it generates code for, which no other line of the log names.
+      - name: Machine
+        shell: bash
+        run: |
+          lscpu | grep -E '^(Model name|CPU\(s\)|Thread|Core|Socket)'
+          grep -o -w -E 'avx2|avx512[a-z_0-9]*|amx[a-z_0-9]*' /proc/cpuinfo | sort -u | tr '\n' ' '; echo
+          julia --startup-file=no -e 'using InteractiveUtils; versioninfo()'
       # One depot cache per Julia version, shared by the four parts, which install
       # and precompile the same test environment. A cache per part made twelve,
       # which with those of the documentation overflowed the 10 GB a repository
@@ -86,29 +95,6 @@ jobs:
                   end
               end
           end
-      # MeanFieldHomogenization loads TensND, which does an unconditional `using SymPy`,
-      # which in turn needs the Python `sympy` module.  The runner's
-      # /usr/bin/python3 does not have it, so point PyCall at the private
-      # Conda.jl Python and install sympy there.  Without this the whole test
-      # run dies at `using MeanFieldHomogenization` with `ModuleNotFoundError: sympy`.
-      # The cache restores the depot's packages, Conda's deps/deps.jl among them,
-      # but not ~/.julia/conda, the root environment that file names: on a new
-      # release of Julia, Conda is precompiled again and fails on the missing
-      # directory. Building Conda first makes that directory again.
-      - name: Install dependencies (PyCall/SymPy)
-        run: |
-          julia -e '
-            using Pkg
-            ENV["PYTHON"] = ""
-            withenv(() -> Pkg.add("Conda"), "JULIA_PKG_PRECOMPILE_AUTO" => "0")
-            Pkg.build("Conda")
-            Pkg.add(PackageSpec(name = "PyCall", version = Pkg.Types.semver_spec("< 1.97.0, >= 1.97.1")))   # as test/ and docs/ bound it
-            Pkg.add("SymPy")
-            # conda-forge now and then answers a transient error (a 502 on its index):
-            # what is downloaded from it is tried three times, a minute apart
-            retry(() -> Pkg.build("PyCall"); delays = fill(60.0, 2))()
-            using PyCall
-            retry(() -> pyimport_conda("sympy", "sympy"); delays = fill(60.0, 2))()'
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         with:

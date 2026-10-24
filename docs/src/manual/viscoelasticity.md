@@ -526,7 +526,7 @@ a central finite difference at `rtol ≤ 1e-7`.
 | `52_rabotnov_mittag_leffler.jl` | Rabotnov / Mittag-Leffler closed form, [barthelemyIJES2019](@cite) §5 | `rtol ≤ 1.3e-3` at `n_times = 200` |
 
 The Rabotnov kernel needed by that benchmark used to come from an external
-Python module through PyCall, which made the script machine-dependent. It no
+Python module through a Python bridge, which made the script machine-dependent. It no
 longer does — [`Rabotnov`](@ref) is in the
 [model library](@ref man-rheological-models):
 

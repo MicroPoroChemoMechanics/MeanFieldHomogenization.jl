@@ -15,7 +15,7 @@
 #
 #  The whole file is pure tensor algebra on TensND objects — no Eshelby
 #  problem, no scheme — so it is type-generic (Float64, BigFloat,
-#  ForwardDiff.Dual, ComplexF64, SymPy.Sym) for free.
+#  ForwardDiff.Dual, ComplexF64, SymPyPythonCall.Sym) for free.
 # =============================================================================
 
 """
