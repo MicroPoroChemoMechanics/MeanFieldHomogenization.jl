@@ -268,7 +268,7 @@ end
         proj(e, k) = simplify(integrate(expand(e) * P(k) * Sym(2k + 1) // 2, (_p, -1, 1)))
         function reach(mult, n)
             e = expand(mult(n))
-            d = Int(sympy.degree(e, gen = _p))
+            d = convert(Int, sympy.degree(e, gen = _p))   # a Python int, wrapped
             hit = [k for k in 0:d if !iszero(proj(e, k))]
             return isempty(hit) ? 0 : maximum(abs.(hit .- n))
         end

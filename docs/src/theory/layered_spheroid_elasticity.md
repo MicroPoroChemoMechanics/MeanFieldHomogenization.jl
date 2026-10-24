@@ -366,7 +366,7 @@ The identities, and the counter-examples so that none of this is taken on faith:
 ```@example spheroid_elastic
 P(n) = n < 0 ? Sym(0) : sympy.legendre(n, p)
 proj(e, k) = simplify(integrate(expand(e) * P(k) * Sym(2k + 1) // 2, (p, -1, 1)))
-reach(f, n) = (d = Int(sympy.degree(expand(f(n)), gen = p));
+reach(f, n) = (d = convert(Int, sympy.degree(expand(f(n)), gen = p));
                [k for k in 0:d if !iszero(proj(f(n), k))])
 
 banded = [(n, reach(m -> (1 - p^2) * diff(P(m), p), n), reach(m -> p * P(m), n),
