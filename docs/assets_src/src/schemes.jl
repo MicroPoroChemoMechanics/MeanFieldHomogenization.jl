@@ -27,8 +27,12 @@ function card_rve(c::Point = RVE_C, side = RVE_SIDE; s = 0.95)
     kinds = (Ellipsoidal(), Needle(), Coated(), Ellipsoidal(), Needle(), Coated(), Ellipsoidal(), Needle(), Coated())
     @layer begin
         box(c, side - 4, side - 4, 9, :clip)
-        draw_all(scatter(rng, kinds, in_box(c, side - 22, side - 22); s = s, gap = 9,
-            avoid = [(c + Point(side / 2 - 24, side / 2 - 20), 20.0)]); s = s)
+        draw_all(
+            scatter(
+                rng, kinds, in_box(c, side - 22, side - 22); s = s, gap = 9,
+                avoid = [(c + Point(side / 2 - 24, side / 2 - 20), 20.0)]
+            ); s = s
+        )
     end
     label(m("bb(C)_0"), c + Point(side / 2 - 9, side / 2 - 17); size = 18, halign = :right)
     return nothing

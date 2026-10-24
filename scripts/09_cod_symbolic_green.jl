@@ -613,7 +613,7 @@ p₂γ = tsimplify(c₂ / c₄ / ρ^2)          # γ₁²+γ₂²
 
 println("  γ₁²γ₂² = ", e₂γ)                                        #jl
 println("  γ₁²+γ₂² = ", p₂γ)                                       #jl
-println("  σᵞ = γ₁+γ₂ = ", σᵞ,  "   → matches the published σᵞ")   #jl
+println("  σᵞ = γ₁+γ₂ = ", σᵞ, "   → matches the published σᵞ")   #jl
 
 """
     factored_xi3_integral(expr, x, den_expanded, den_factored)
@@ -706,9 +706,9 @@ end
 # ``\sigma_\gamma = 2``, the value the published reduction rule postulates.
 
 let iso = Dict(
-            C₁₁₁₁ => λ + 2 * μ, C₁₂₁₂ => μ, C₁₁₃₃ => λ,
-            C₃₃₃₃ => λ + 2 * μ, C₂₃₂₃ => μ,
-        )
+        C₁₁₁₁ => λ + 2 * μ, C₁₂₁₂ => μ, C₁₁₃₃ => λ,
+        C₃₃₃₃ => λ + 2 * μ, C₂₃₂₃ => μ,
+    )
     σ_iso = tsimplify(subs(σᵞ_paper, iso))
     @assert iszero(tsimplify(σ_iso - 2)) "σᵞ does not reduce to 2"
     @assert iszero(tsimplify(subs(subs(a₁_σ, iso), σ => σ_iso) - a₁)) "a₁ᵗⁱ does not reduce to a₁ᶦˢᵒ"

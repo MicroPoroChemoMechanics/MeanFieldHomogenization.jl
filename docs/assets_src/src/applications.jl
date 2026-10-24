@@ -118,8 +118,10 @@ function ver_multi_mix(; path = "ver_multi_mix", words = MIX_WORDS)
         radii = sort([11 + 17 * rand(rng) for _ in 1:44]; rev = true)
         centers = contact_packing(rng, radii, cs[1]; e = e)
         grains = collect(zip(centers, radii))
-        voids = pack(rng, 10, in_disk(cs[1], R - 6), rng -> 2.5 + 2.5 * rand(rng); gap = 1.5,
-            avoid = [(p, r + e) for (p, r) in grains])
+        voids = pack(
+            rng, 10, in_disk(cs[1], R - 6), rng -> 2.5 + 2.5 * rand(rng); gap = 1.5,
+            avoid = [(p, r + e) for (p, r) in grains]
+        )
         # the contact magnified: a pair in contact, well inside, on the left side
         contacts = [
             (i, j) for i in eachindex(grains) for j in (i + 1):lastindex(grains)
@@ -340,8 +342,10 @@ function interfoliar_layer()
         label(txt("free sliding"), Point(x1 + 210, y1 - 22); size = 13, color = MUTED, halign = :left)
         arrow_ab(Point(x2 - 60, y4 + 22), Point(x2 - 200, y4 + 22); color = VECTOR, lw = 1.6)
         label(txt("free sliding"), Point(x2 - 210, y4 + 22); size = 13, color = MUTED, halign = :right)
-        label(txt("linearized around ") * m("h_o") * txt(", the layer has a normal stiffness ") * m("Pi") * txt(" and no other stiffness at all"),
-            Point(300, 326); size = 13, color = MUTED)
+        label(
+            txt("linearized around ") * m("h_o") * txt(", the layer has a normal stiffness ") * m("Pi") * txt(" and no other stiffness at all"),
+            Point(300, 326); size = 13, color = MUTED
+        )
     end
 end
 
@@ -352,8 +356,10 @@ function axi_schematic()
     w = 0.5                      # old aggregate / whole inclusion, the value of the page
     ratio = round(cbrt(w); digits = 3)
     return sheet("fe/axi_schematic", 960, 400) do
-        label(m("a_c = a w^(1\\/3)") * txt(", ") * m("d = alpha (a - a_c)") * txt("      (here ") * m("w = $w") *
-            txt(", so ") * m("a_c \\/ a = $ratio") * txt(")"), Point(480, 30); size = 16)
+        label(
+            m("a_c = a w^(1\\/3)") * txt(", ") * m("d = alpha (a - a_c)") * txt("      (here ") * m("w = $w") *
+                txt(", so ") * m("a_c \\/ a = $ratio") * txt(")"), Point(480, 30); size = 16
+        )
         titles = (m("alpha = 0") * txt(" — concentric"), m("alpha = 0.6"), m("alpha = 1") * txt(" — tangency, by definition"))
         for (k, α) in enumerate((0.0, 0.6, 1.0))
             o = Point(165 + 315 * (k - 1), 228)

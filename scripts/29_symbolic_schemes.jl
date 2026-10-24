@@ -143,8 +143,8 @@ println("="^78)                                #jl
 
 k_dil_por = simplify(subs(k_dil, ki => 0, μi => 0))
 μ_dil_por = simplify(subs(μ_dil, ki => 0, μi => 0))
-kMT_por   = simplify(subs(kMT, ki => 0, μi => 0))
-μMT_por   = simplify(subs(μMT, ki => 0, μi => 0))
+kMT_por = simplify(subs(kMT, ki => 0, μi => 0))
+μMT_por = simplify(subs(μMT, ki => 0, μi => 0))
 
 println("\n  Dilute, porous:")
 println("    k_dil(pore) = ", k_dil_por)
@@ -161,7 +161,7 @@ println("  § 5  RIGID LIMIT  (kᵢ, μᵢ → ∞)")      #jl
 println("="^78)                                #jl
 
 k_dil_rig = simplify(limit(limit(k_dil, ki => oo), μi => oo))
-kMT_rig   = simplify(limit(limit(kMT, ki => oo), μi => oo))
+kMT_rig = simplify(limit(limit(kMT, ki => oo), μi => oo))
 
 println("\n  Dilute, rigid inclusion:")
 println("    k_dil(rigid) = ", k_dil_rig)
@@ -174,31 +174,35 @@ println()
 println("="^78)                                                                    #jl
 println("  § 6  SELF-CONSISTENT — hand-derived equation (never symbolic via API)")  #jl
 println("="^78)                                                                    #jl
-println("""
-  The self-consistent scheme is intrinsically a numerical fixed-point
-  iteration in MeanFieldHomogenization (Anderson/Picard, convergence tests, positive-
-  definiteness guards) — none of that can run on a Sym scalar. Instead, the
-  self-consistent condition is written by hand and solved with SymPy's
-  `solve`.  For two isotropic spherical phases it separates into two SCALAR
-  equations (Kᵢ = 4μsc/3, the sphere's Hill "auxiliary" bulk modulus, and μ*
-  its Mori–Tanaka-type shear reference):
-""")
+println(
+    """
+      The self-consistent scheme is intrinsically a numerical fixed-point
+      iteration in MeanFieldHomogenization (Anderson/Picard, convergence tests, positive-
+      definiteness guards) — none of that can run on a Sym scalar. Instead, the
+      self-consistent condition is written by hand and solved with SymPy's
+      `solve`.  For two isotropic spherical phases it separates into two SCALAR
+      equations (Kᵢ = 4μsc/3, the sphere's Hill "auxiliary" bulk modulus, and μ*
+      its Mori–Tanaka-type shear reference):
+    """
+)
 
 @syms ksc::positive μsc::positive
 
-κstar  = 4 * μsc / 3
-μstar  = μsc * (9 * ksc + 8 * μsc) / (6 * (ksc + 2 * μsc))
+κstar = 4 * μsc / 3
+μstar = μsc * (9 * ksc + 8 * μsc) / (6 * (ksc + 2 * μsc))
 
 eqk = (1 - f) * (k0 - ksc) / (k0 + κstar) + f * (ki - ksc) / (ki + κstar)
 eqμ = (1 - f) * (μ0 - μsc) / (μ0 + μstar) + f * (μi - μsc) / (μi + μstar)
 
 println("  eq_k(ksc,μsc) = (1-f)(k₀-ksc)/(k₀+4μsc/3) + f(kᵢ-ksc)/(kᵢ+4μsc/3) = 0")
 println("  eq_μ(ksc,μsc) = (1-f)(μ₀-μsc)/(μ₀+μ*)     + f(μᵢ-μsc)/(μᵢ+μ*)     = 0")
-println("""
-  The general two-phase case couples eq_k and eq_μ through μ* — a coupled
-  polynomial system with no compact closed form. The clean limits do have
-  one:
-""")
+println(
+    """
+      The general two-phase case couples eq_k and eq_μ through μ* — a coupled
+      polynomial system with no compact closed form. The clean limits do have
+      one:
+    """
+)
 
 # ── Porous SC: kᵢ = μᵢ = 0 ───────────────────────────────────────────────
 eqk_por = subs(eqk, ki => 0)
@@ -260,12 +264,14 @@ println()
 println("="^78)                                                    #jl
 println("  § 7  SYMBOLICS.JL BONUS — same computation, the Num backend")  #jl
 println("="^78)                                                    #jl
-println("""
-  TensND does not care which symbolic engine produced the scalars: the same
-  tensor algebra (⊡, inv, tens_Id4, ...) dispatches identically on SymPy's
-  Sym and on Symbolics.jl's Num. Below, P and S are recomputed with @variables
-  instead of @syms.
-""")
+println(
+    """
+      TensND does not care which symbolic engine produced the scalars: the same
+      tensor algebra (⊡, inv, tens_Id4, ...) dispatches identically on SymPy's
+      Sym and on Symbolics.jl's Num. Below, P and S are recomputed with @variables
+      instead of @syms.
+    """
+)
 
 using Symbolics
 

@@ -47,9 +47,9 @@ function iso_km(λ, μ)
     z = zero(λ)
     return SMatrix{6, 6}(
         [
-            λ+2μ λ λ z z z
-            λ λ+2μ λ z z z
-            λ λ λ+2μ z z z
+            λ + 2μ λ λ z z z
+            λ λ + 2μ λ z z z
+            λ λ λ + 2μ z z z
             z z z 2μ z z
             z z z z 2μ z
             z z z z z 2μ
@@ -82,11 +82,11 @@ F = avg0((l, m) -> m)                     # arithmetic mean of the shear moduli
 G = avg0((l, m) -> 1 / m)                 # harmonic mean of the shear moduli
 
 M_claim = [
-    E+B^2/A+2F E+B^2/A B/A 0 0 0
-    E+B^2/A E+B^2/A+2F B/A 0 0 0
-    B/A B/A 1/A 0 0 0
-    0 0 0 2/G 0 0
-    0 0 0 0 2/G 0
+    E + B^2 / A + 2F E + B^2 / A B / A 0 0 0
+    E + B^2 / A E + B^2 / A + 2F B / A 0 0 0
+    B / A B / A 1 / A 0 0 0
+    0 0 0 2 / G 0 0
+    0 0 0 0 2 / G 0
     0 0 0 0 0 2F
 ]
 

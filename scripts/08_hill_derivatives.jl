@@ -82,8 +82,10 @@ println("  ∂P/∂ℓᵢ (ForwardDiff, analytical TI-coaxial Hill):")
 for i in 1:5
     g = ForwardDiff.derivative(t -> P_arr(SPH, ti_from(ntuple(j -> j == i ? ℓ0[j] + t : ℓ0[j], 5))), 0.0)
     fd = let hh = 1.0e-4
-        (P_arr(SPH, ti_from(ntuple(j -> j == i ? ℓ0[j] + hh : ℓ0[j], 5))) -
-            P_arr(SPH, ti_from(ntuple(j -> j == i ? ℓ0[j] - hh : ℓ0[j], 5)))) / (2hh)
+        (
+            P_arr(SPH, ti_from(ntuple(j -> j == i ? ℓ0[j] + hh : ℓ0[j], 5))) -
+                P_arr(SPH, ti_from(ntuple(j -> j == i ? ℓ0[j] - hh : ℓ0[j], 5)))
+        ) / (2hh)
     end
     @printf "     ∂P/∂ℓ%d : ‖∂P‖∞ = %.4e   AD vs FD rel diff = %.2e\n" i maximum(abs, g) maxrel(g, fd)
 end

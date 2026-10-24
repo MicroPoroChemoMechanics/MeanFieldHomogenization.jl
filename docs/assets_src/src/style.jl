@@ -114,8 +114,10 @@ changes; the files shrink by about half.
 function compact_svg(path::AbstractString)
     s = read(path, String)
     s = replace(s, r"-?\d+\.\d{3,}" => _short)
-    for a in (" fill-opacity=\"1\"", " stroke-opacity=\"1\"", " stroke-linecap=\"butt\"",
-            " stroke-linejoin=\"miter\"", " fill-rule=\"nonzero\"")
+    for a in (
+            " fill-opacity=\"1\"", " stroke-opacity=\"1\"", " stroke-linecap=\"butt\"",
+            " stroke-linejoin=\"miter\"", " fill-rule=\"nonzero\"",
+        )
         s = replace(s, a => "")
     end
     write(path, s)
@@ -496,8 +498,10 @@ One inclusion of each family of `kinds`, at a point drawn by `inside(rng, r)`
 and a random angle, none overlapping another nor a disk of `avoid`. Returns
 `(family, center, angle)` triples; a family that finds no room is left out.
 """
-function scatter(rng, kinds, inside; s::Real = 1.0, gap::Real = 6.0, tries::Int = 5000,
-        avoid = Tuple{Point, Float64}[])
+function scatter(
+        rng, kinds, inside; s::Real = 1.0, gap::Real = 6.0, tries::Int = 5000,
+        avoid = Tuple{Point, Float64}[]
+    )
     placed = Tuple{Point, Float64}[]
     out = Tuple{Family, Point, Float64}[]
     for k in kinds
@@ -526,8 +530,10 @@ function rve_box(c::Point, w, h; fill = MATRIX)
 end
 
 "The auxiliary problem: an unbounded medium, its tensor, its remote loading."
-function aux_box(c::Point, w, h; fill = MATRIX, tensor = "bb(C)_0",
-        load = "underline(u) = bold(E)^0 dot underline(x)", size = 16)
+function aux_box(
+        c::Point, w, h; fill = MATRIX, tensor = "bb(C)_0",
+        load = "underline(u) = bold(E)^0 dot underline(x)", size = 16
+    )
     unbounded_box(c, w, h; fill = fill, label_tensor = tensor)
     remote_loading(c + Point(w / 2, -h / 2), load; size = size)
     return nothing
