@@ -46,7 +46,7 @@ revolution is also ``\\underline{e}_1``.
 - [`CircularCylindrical`](@ref) when ``b = c`` (transversely isotropic result).
 - [`EllipticCylindrical`](@ref) when ``b > c`` (orthotropic result).
 
-`T` can be any `Number` subtype (`Float64`, `ForwardDiff.Dual`, `SymPy.Sym`,
+`T` can be any `Number` subtype (`Float64`, `ForwardDiff.Dual`, `SymPyPythonCall.Sym`,
 `Symbolics.Num`, …) — all analytical paths are type-generic.
 """
 struct Cylinder{S <: CylindricalShape, T <: Number, B <: TensND.AbstractBasis} <:

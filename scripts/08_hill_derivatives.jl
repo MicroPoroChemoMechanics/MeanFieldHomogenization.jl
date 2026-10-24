@@ -10,14 +10,14 @@
 #  `hill_tensor` kernel — for ANY parametrization, including fully triclinic
 #  references that a symmetry-typed routine cannot handle.
 #
-#  This demo (main environment, no PyCall) :
+#  This demo (main environment, no PythonCall) :
 #    * computes ∂P/∂κ and ∂P/∂η of an isotropic reference (κ = 3k, η = 2μ)
 #      for a triaxial ellipsoid — echoes `hill_derivative(ell, C, index, ISO)`,
 #    * validates each AD derivative against a central finite difference,
 #    * differentiates a TI reference (`tensor([5,3,4,8,3])`) w.r.t. its five
 #      Walpole coefficients, on a coaxial spheroid (analytical Hill).
 #
-#  The live echoes-vs-MeanFieldHomogenization cross-check (PyCall, incl. the ORTHO and
+#  The live echoes-vs-MeanFieldHomogenization cross-check (PythonCall, incl. the ORTHO and
 #  triclinic cases) lives in `scripts/bench_echoes/benchmark_hill_derivative.jl`.
 # =============================================================================
 
@@ -71,7 +71,7 @@ fd_η = (f_η(β0 + h) - f_η(β0 - h)) / (2h)
 # exact and cleanly differentiable.  (A TI reference with a non-coaxial
 # ellipsoid falls back to the NestedQuadGK cubature, whose adaptive node
 # placement makes ForwardDiff derivatives only quadrature-accurate; use
-# `method = :nestedquadgk` with tight tolerances there, or the PyCall bench
+# `method = :nestedquadgk` with tight tolerances there, or the PythonCall bench
 # script for the echoes cross-check.)
 n = (0.0, 0.0, 1.0)
 const SPH = Spheroid(2.0)                  # prolate, revolution axis = ez

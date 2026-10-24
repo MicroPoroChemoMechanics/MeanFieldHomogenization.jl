@@ -10,9 +10,9 @@ using Test
 using MeanFieldHomogenization
 using LinearAlgebra: norm
 import ForwardDiff
-import SymPy
+import SymPyPythonCall
 import TensND
-using SymPy: Sym
+using SymPyPythonCall: Sym
 
 const _UNIT(v) = v ./ norm(v)
 
@@ -304,7 +304,7 @@ end
         # and an undecidable comparison there returns `false` instead of
         # raising -- so the guard has to raise first, or a symbolic supersphere
         # would silently report itself as never spherical.
-        p = SymPy.symbols("p", positive = true)
+        p = SymPyPythonCall.symbols("p", positive = true)
         s = Supersphere(Sym(1), p)
         @test !TensND.is_hard_numeric(eltype(s))
         @test_throws ArgumentError is_sphere(s)

@@ -107,7 +107,7 @@ only strain measure the layer feels,
 ```@example lamellar
 using MeanFieldHomogenization
 using TensND
-using SymPy
+using SymPyPythonCall
 using Printf
 
 # h₀ = reference interfoliar distance      dπ = ∂π^g/∂h at h₀

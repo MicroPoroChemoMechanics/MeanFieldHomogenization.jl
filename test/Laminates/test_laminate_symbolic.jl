@@ -18,7 +18,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using StaticArrays
-using SymPy
+using SymPyPythonCall
 import LinearAlgebra
 
 const MFHC_S = MeanFieldHomogenization.Core
@@ -149,7 +149,7 @@ if LAM_HAS_SYMBOLICS
     end
 
     # The CELL, not just the kernel, on `Symbolics.Num`. `Num <: Real` while
-    # `SymPy.Sym` is not, so the `h isa Real && h < 0` guards in `add_layer!` /
+    # `SymPyPythonCall.Sym` is not, so the `h isa Real && h < 0` guards in `add_layer!` /
     # `validate_laminate` / `validate_rve` used to reach `h < 0`, get a `Num`
     # back and throw `TypeError: non-boolean (Num) used in boolean context`.
     # The guards now go through `is_hard_numeric`.

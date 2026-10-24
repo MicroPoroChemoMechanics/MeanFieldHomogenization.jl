@@ -92,7 +92,7 @@ the harmonicity of the series are **derived at documentation-build time** from
 the position map alone.
 
 ```@example spheroidal
-using TensND, SymPy
+using TensND, SymPyPythonCall
 Spheroidal = coorsys_spheroidal()
 ϕ, p, q = getcoords(Spheroidal)
 c = symbols("c", positive = true)

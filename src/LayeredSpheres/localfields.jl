@@ -93,7 +93,7 @@ the test suite checks it against the prescribed jump.
 
 Radii beyond ``r_N`` always give ``N+1``, whatever `side`.
 
-A **symbolic** radius is refused rather than located.  `SymPy.Sym` answers a
+A **symbolic** radius is refused rather than located.  `SymPyPythonCall.Sym` answers a
 comparison it cannot decide with a plain `false` — `r ≥ 1.0` on a positive
 symbol returns `Bool(false)`, not an error — so the loop below would silently
 return layer 1 for any symbol.  Name the region explicitly instead: every
@@ -129,7 +129,7 @@ Region index to evaluate the field in.  `layer` short-circuits the lookup;
 otherwise [`get_layer`](@ref) decides from `r`.
 
 A **symbolic** radius cannot be located by comparison — `Symbolics.Num` and
-`SymPy.Sym` subtype `Real` without being ordered — so the lookup is refused
+`SymPyPythonCall.Sym` subtype `Real` without being ordered — so the lookup is refused
 with an actionable message rather than a `MethodError` deep in a `while`.
 Symbolic work is exactly the case where the region is known up front, so
 passing `layer = k` costs nothing and keeps the whole reconstruction

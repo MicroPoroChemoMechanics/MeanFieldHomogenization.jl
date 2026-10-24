@@ -71,7 +71,7 @@ inequality rather than a `Bool`, and using it in a boolean context throws. (The
 same wrong predicate once made `Cracks._elliptic_CS` return `NaN` on a symbolic
 penny and `Cracks._ti_aligned` throw on a symbolic TI reference.)
 [`is_hard_numeric`](@ref) is the predicate: a `ForwardDiff.Dual` compares, a
-`Num`, a `SymPy.Sym` or a complex number does not, and never signals
+`Num`, a `SymPyPythonCall.Sym` or a complex number does not, and never signals
 convergence: it runs the fixed 60 iterations.
 """
 function _agm_converged(::Type{T}, a, b, tol) where {T <: Number}

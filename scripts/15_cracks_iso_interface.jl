@@ -32,11 +32,14 @@
 import Pkg
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)
 
+# Which Python holds Echoes: chosen before PythonCall is loaded
+include(joinpath(@__DIR__, "bench_echoes", "echoes_python.jl"))
+
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using Printf
-using PyCall
+using PythonCall
 using Plots
 
 default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
@@ -59,40 +62,13 @@ const SCHEME_COLORS = Dict(
     "DIFF" => :blue, "PCW" => :green, "MAX" => :purple
 )
 
-# ─── ECHOES side via PyCall ────────────────────────────────────────────────
+# ─── ECHOES side via PythonCall ────────────────────────────────────────────────
 
 const echoes = pyimport("echoes")
 println("ECHOES imported")
 
-py"""
-from numpy import *
-from echoes import *
-
-_SCHEMES = {"MT": MT, "SC": SC, "ASC": ASC, "DIFF": DIFF, "PCW": PCW, "MAX": MAX}
-
-def run_echoes(dens, scheme_name, omega, ko, kt, kn, E_s, nu_s):
-    sch = _SCHEMES[scheme_name]
-    Cs = stiff_Enu(E_s, nu_s)
-    ver = rve(matrix="SOLID")
-    ver["SOLID"] = ellipsoid(shape=spheroidal(1),
-                              prop={"C":Cs, "K":ko*tId2})
-    ver["CRACK"] = crack(shape=spheroidal(omega), symmetrize=[ISO],
-                          prop={"C":tZ4, "K":tensor(kt,kt,kn)})
-    ver["CRACK"].density = float(dens)
-    try:
-        C = homogenize(prop="C", rve=ver, scheme=sch, maxnb=200,
-                       epsrel=1.e-5, select_best=True, verbose=False)
-        k_eff = float(C.k); mu_eff = float(C.mu)
-    except Exception:
-        k_eff = float('nan'); mu_eff = float('nan')
-    try:
-        K = homogenize(prop="K", rve=ver, scheme=sch, maxnb=200,
-                       epsrel=1.e-5, select_best=True, verbose=False)
-        K_eff = float(K.param[0])
-    except Exception:
-        K_eff = float('nan')
-    return k_eff, mu_eff, K_eff
-"""
+pyimport("sys").path.insert(0, @__DIR__)
+const echoes_run_py = pyimport("echoes_cracks_iso_interface").run_echoes
 
 println("Running ECHOES sweep over density × {MT, ASC, DIFF, PCW, MAX} …")
 echoes_results = Dict{String, NamedTuple}()
@@ -100,7 +76,7 @@ for name in SCHEME_NAMES
     @printf "  ECHOES scheme=%s\n" name
     k_arr = Float64[]; μ_arr = Float64[]; K_arr = Float64[]
     for d in DENS
-        k_e, μ_e, K_e = py"run_echoes"(d, name, ω, k_o, K_t, K_t, E_s, ν_s)
+        k_e, μ_e, K_e = pyconvert(Tuple{Float64, Float64, Float64}, echoes_run_py(d, name, ω, k_o, K_t, K_t, E_s, ν_s))
         push!(k_arr, max(k_e / k_s, 0.0))
         push!(μ_arr, max(μ_e / μ_s, 0.0))
         push!(K_arr, K_e / (ω * K_t))

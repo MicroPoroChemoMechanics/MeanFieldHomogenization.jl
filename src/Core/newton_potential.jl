@@ -4,7 +4,7 @@
 #  Newton potentials `Iᵢ` (2D / 3D) for an ellipsoid given its semi-axes.
 #  Kept in Core because both the `Elasticity` and `Conductivity`
 #  sub-modules need it. Element-type genericity covers `Float64`,
-#  `ForwardDiff.Dual`, `SymPy.Sym`, `Symbolics.Num`.
+#  `ForwardDiff.Dual`, `SymPyPythonCall.Sym`, `Symbolics.Num`.
 #
 #  The `newton_potential_3d(ell::Ellipsoid)` and
 #  `newton_potential_2d(ell::Ellipsoid)` convenience methods are deliberately
@@ -30,7 +30,7 @@ The route depends on whether comparisons on `T` return a `Bool`
   other through elliptic integrals. All three are exact to rounding, and the
   first two stay differentiable where two semi-axes meet: a dual semi-axis is
   merged with another one only when their derivatives coincide too.
-- symbolic types (`Symbolics.Num`, `SymPy.Sym`): structural equality via `isequal`
+- symbolic types (`Symbolics.Num`, `SymPyPythonCall.Sym`): structural equality via `isequal`
   selects the same four cases, in closed form.
 """
 newton_potential_3d(a::T, b::T, c::T) where {T <: Number} =
@@ -143,7 +143,7 @@ circular ones (``I_b = I_c = 2\\pi``, ``I_{bb} = I_{cc} = I_{bc} = \\pi/b^2``): 
 no ``1/(b^2 - c^2)`` denominator, so no tolerance is needed, and the circular forms
 are taken only for semi-axes that are one — the same expression, or the same
 number with the same derivatives (`_one_semi_axis`). Generic in the scalar type:
-`Float64`, `ForwardDiff.Dual`, `Symbolics.Num`, `SymPy.Sym`.
+`Float64`, `ForwardDiff.Dual`, `Symbolics.Num`, `SymPyPythonCall.Sym`.
 """
 function newton_potential_3d_cylinder(b, c)
     T = promote_type(typeof(b), typeof(c))
@@ -173,7 +173,7 @@ end
 Newton potential integrals for a 2-D ellipse with semi-axes ``a \\ge b > 0``.
 Returns `(Ia, Ib)` ``= (I_a, I_b)`` with ``I_a + I_b = 2\\pi``.
 
-Works for any `T<:Number` including `ForwardDiff.Dual`, `SymPy.Sym`, `Symbolics.Num`.
+Works for any `T<:Number` including `ForwardDiff.Dual`, `SymPyPythonCall.Sym`, `Symbolics.Num`.
 
 Formulas:
 - Circle: ``I_a = I_b = \\pi``

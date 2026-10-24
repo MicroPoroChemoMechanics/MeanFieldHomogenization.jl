@@ -121,10 +121,19 @@ scheme_table(; strength = true)
 
 ## Reproducing
 
-The Julia scripts call the Echoes side through PyCall, from Python modules
-next to them; Echoes must be importable as `import echoes` from the
-interpreter PyCall uses (see `scripts/bench_echoes/README.md`). From the root
-of the repository, alone on the machine:
+The Julia scripts call the Echoes side through PythonCall, from Python modules
+next to them. Install Echoes in a Python environment of your choice, which must
+also have `sympy` (`pip install sympy`), activate it, then start Julia from the
+same shell: `scripts/bench_echoes/echoes_python.jl`, included by every script
+before PythonCall loads, takes the active `python3` (or the interpreter named by
+`ECHOES_PYTHON`), checks that it imports `echoes` and `sympy`, and tells
+PythonCall to use it and CondaPkg to manage nothing. The explicit alternative is
+`JULIA_CONDAPKG_BACKEND=Null` and `JULIA_PYTHONCALL_EXE=<path to that python>`.
+CondaPkg then touches nothing, so the numpy version Echoes was built against
+(often numpy 1.x, `numpy < 2`) is kept; never let CondaPkg manage an environment
+where Echoes is installed, or pin that numpy in its `CondaPkg.toml`. Details in
+`scripts/bench_echoes/README.md`. From the root of the repository, alone on the
+machine:
 
 ```bash
 julia --project=scripts/bench_echoes scripts/bench_echoes/benchmark.jl

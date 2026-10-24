@@ -18,6 +18,12 @@ a crash of Julia 1.14 when differentiating through a concentration tensor.
 
 - The minor version, and `TensND = "0.8"`: `[compat]` bounds on 0.18 do not
   accept 0.19.
+- Symbolic support goes through SymPyPythonCall (PythonCall) instead of SymPy.jl
+  (PyCall), following TensND 0.8: write `using SymPyPythonCall` instead of
+  `using SymPy`. The weak dependency, and with it the extension, change name:
+  `MeanFieldHomogenizationSymPyPythonCallExt`. The first load lets CondaPkg
+  install a private Python with `sympy`, so nothing has to be set up by hand.
+  The Echoes benchmark scripts use PythonCall too.
 - A product of orthotropic tensors on a common frame (a Hill tensor of a
   triaxial ellipsoid in an isotropic matrix, and every concentration built on
   it) is TensND 0.8's twelve-constant `TensOrtho{4, T, 12}` instead of a generic

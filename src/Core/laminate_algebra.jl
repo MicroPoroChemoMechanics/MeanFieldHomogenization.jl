@@ -12,7 +12,7 @@
 #  concentration tensors of its layers.
 #
 #  Every matrix is an `SMatrix`, never an `MMatrix`: `MMatrix{6,6,T}(undef)` is
-#  not constructible for a non-`isbits` `T` such as `SymPy.Sym`.
+#  not constructible for a non-`isbits` `T` such as `SymPyPythonCall.Sym`.
 # =============================================================================
 
 """

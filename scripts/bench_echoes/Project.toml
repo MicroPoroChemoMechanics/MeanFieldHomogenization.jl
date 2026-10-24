@@ -7,7 +7,7 @@ JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MeanFieldHomogenization = "c1e5f8a3-7b2d-4a6c-9e4f-3b8a2c5d7e9f"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
-PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
 TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
 
 

@@ -19,14 +19,18 @@
 import Pkg
 Pkg.activate(@__DIR__; io = devnull)
 
-using PyCall
+# Which Python holds Echoes: chosen before PythonCall is loaded
+include(joinpath(@__DIR__, "echoes_python.jl"))
+
+using PythonCall
 using Printf
 using LinearAlgebra
 
 include(joinpath(@__DIR__, "..", "common", "quasibrittle_strength.jl"))
 
 # ── echoes Python reference: `strength_echoes.py`, next to this file ────────
-pushfirst!(PyVector(pyimport("sys")."path"), @__DIR__)
+pyimport("sys").path.insert(0, @__DIR__)
+include(joinpath(@__DIR__, "pyjl.jl"))
 
 const py_strength_reference = pyimport("strength_echoes").py_strength_reference
 
@@ -61,7 +65,7 @@ rows = NamedTuple[]
 for wc in WCS
     αs = range(0.05, αmax(wc) * (1 - 1.0e-9); length = N_α)
     for α in αs
-        py = py_strength_reference(wc, α, 0.0, ω_aspect, NTHETA)
+        py = pyjl(py_strength_reference(wc, α, 0.0, ω_aspect, NTHETA))
         py[1] || continue                       # skip physically invalid points
         _, k_py, mu_py, E_py, fc_py = py
         jl = try

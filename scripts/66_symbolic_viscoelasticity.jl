@@ -34,7 +34,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)
 
 using MeanFieldHomogenization
 using TensND
-using SymPy
+using SymPyPythonCall
 using Symbolics
 using Printf
 
@@ -84,8 +84,8 @@ println("  J*(p) R*(p) - 1 = ",
 
 banner("§3  Symbolic inversion: the closed forms, derived")
 
-SymPy.@syms ts::positive τ::positive Einf::positive E1::positive
-SymPy.@syms ks::positive ηs::positive kp::positive ηp::positive
+SymPyPythonCall.@syms ts::positive τ::positive Einf::positive E1::positive
+SymPyPythonCall.@syms ks::positive ηs::positive kp::positive ηp::positive
 
 # The standard solid: both functions of time, from the transform alone.
 z = zener_maxwell(Einf, E1, τ)
@@ -117,7 +117,7 @@ println("  ", Rb)
 
 banner("§4  How far the symbolic route goes")
 
-SymPy.@syms Vsb::positive ps::positive αsym::positive E0::positive δs::positive
+SymPyPythonCall.@syms Vsb::positive ps::positive αsym::positive E0::positive δs::positive
 
 # (a) A springpot with a *rational* exponent inverts exactly, and agrees with
 #     the closed form the model already carries.

@@ -26,7 +26,7 @@ Isotropic `N`-layer spherical composite inclusion (core + concentric
 shells) embedded in an infinite matrix.  Type parameters:
 
 - `T` — element type of the radii (`Float64`, `BigFloat`,
-  `ForwardDiff.Dual`, `SymPy.Sym`, `Symbolics.Num`, …).
+  `ForwardDiff.Dual`, `SymPyPythonCall.Sym`, `Symbolics.Num`, …).
 - `N` — number of layers (``N \\ge 1``).
 - `Cs` — concrete type of the `moduli` NTuple.
 - `Is` — concrete type of the `interfaces` NTuple.

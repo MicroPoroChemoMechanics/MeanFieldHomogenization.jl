@@ -77,7 +77,7 @@ The shape `S` is determined at construction time:
 - 2-D: `Circular` or `Elliptic`
 
 `T` can be any `Number` subtype (`Float64`, `ForwardDiff.Dual`,
-`SymPy.Sym`, `Symbolics.Num`, …).
+`SymPyPythonCall.Sym`, `Symbolics.Num`, …).
 """
 struct Ellipsoid{dim, S <: EllipsoidShape, T <: Number, B <: TensND.AbstractBasis} <:
     MFH_Core.AbstractEllipsoidalInclusion{dim, T}

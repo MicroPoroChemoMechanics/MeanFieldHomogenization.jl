@@ -14,7 +14,7 @@
 #    * the pseudo-inverse is a cofactor inverse of the 3×3 out-of-plane block,
 #      never `LinearAlgebra.pinv` — an SVD is not symbolically evaluable;
 #    * every intermediate is an `SMatrix`, never an `MMatrix`, which cannot
-#      even be CONSTRUCTED for a non-isbits element type such as `SymPy.Sym`.
+#      even be CONSTRUCTED for a non-isbits element type such as `SymPyPythonCall.Sym`.
 #
 #  NOT published to the documentation gallery: SymPy-heavy scripts are kept
 #  out of the Literate build (repo policy, see scripts/README.md). Its content
@@ -29,7 +29,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)
 using MeanFieldHomogenization
 using TensND
 using StaticArrays
-using SymPy
+using SymPyPythonCall
 using Printf
 
 const MFHC = MeanFieldHomogenization.Core

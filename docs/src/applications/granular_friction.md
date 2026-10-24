@@ -76,7 +76,7 @@ rigid grain obtained as ``k_{\mathrm s} = \mu_{\mathrm s} = 1/\epsilon``, ``\eps
 give back the two results of the article:
 
 ```@example granular
-using SymPy
+using SymPyPythonCall
 @syms k::positive μ::positive Kn::positive Kt::positive a::positive φ::positive
 @syms ϵ::positive X::positive ρ::positive
 

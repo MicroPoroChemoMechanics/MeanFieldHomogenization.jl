@@ -2,7 +2,7 @@
 #  scripts/bench_echoes/benchmark.jl
 #
 #  Side-by-side benchmark of MeanFieldHomogenization.jl (Julia) vs Echoes (C++ via
-#  PyCall).
+#  PythonCall).
 #
 #  Sections:
 #   § 1  Hill tensor P (4th order, elasticity)
@@ -19,7 +19,7 @@
 #  algorithm name).  Aniso cases keep the RESIDUES + NUMINT3D comparison.
 #
 #  Echoes must be importable as `import echoes` from the Python
-#  interpreter pointed to by PyCall (see README.md).
+#  interpreter pointed to by PythonCall (see README.md).
 #
 #  Run from the MeanFieldHomogenization.jl package root:
 #    julia --project=scripts/bench_echoes scripts/bench_echoes/benchmark.jl
@@ -28,13 +28,16 @@
 import Pkg
 Pkg.activate(@__DIR__; io = devnull)
 
+# Which Python holds Echoes: chosen before PythonCall is loaded
+include(joinpath(@__DIR__, "echoes_python.jl"))
+
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using Printf
 using BenchmarkTools
 using ForwardDiff
-using PyCall
+using PythonCall
 using JSON
 
 # `jl_method = :decuhr` is benchmarked below (§ 1), and that backend lives in a
@@ -52,7 +55,8 @@ BenchmarkTools.DEFAULT_PARAMETERS.seconds = 1.0
 # The media, the cases and the Echoes calls are defined there once; run on its
 # own, that module times the Echoes side alone.
 
-pushfirst!(PyVector(pyimport("sys")."path"), @__DIR__)
+pyimport("sys").path.insert(0, @__DIR__)
+include(joinpath(@__DIR__, "pyjl.jl"))
 const KE = pyimport("kernels_echoes")
 const py_hill = KE.py_hill
 const py_crack = KE.py_crack
@@ -89,7 +93,7 @@ function compare(A::AbstractArray, B::AbstractArray)
     return (maxabs, maxabs / scale)
 end
 
-to_jlmat(x) = x === nothing ? nothing : convert(Array{Float64, 2}, x)
+to_jlmat(x) = pymat(x)
 
 fmt_time(t) =
     t < 1.0e-6 ? (@sprintf "%7.2f ns" (t * 1.0e9)) :
@@ -100,39 +104,39 @@ fmt_time(t) =
 # ─── Reference matrices ──────────────────────────────────────────────────────
 
 # 1. Isotropic steel: E = 210 GPa, ν = 0.3
-const E_iso = KE.E_ISO
-const ν_iso = KE.NU_ISO
+const E_iso = pyconvert(Float64, KE.E_ISO)
+const ν_iso = pyconvert(Float64, KE.NU_ISO)
 const λ_iso = E_iso * ν_iso / ((1 + ν_iso) * (1 - 2ν_iso))
 const μ_iso = E_iso / (2 * (1 + ν_iso))
 const k_iso = λ_iso + 2μ_iso / 3
 const C_iso = TensISO{3}(3k_iso, 2μ_iso)
 
 # 2. Cubic crystal: C11=250, C12=100, C44=80 GPa
-const C11c, C12c, C44c = KE.C11C, KE.C12C, KE.C44C
+const C11c, C12c, C44c = pyconvert.(Float64, (KE.C11C, KE.C12C, KE.C44C))
 const C_cubic = TensND.TensOrtho(
     C11c, C11c, C11c, C12c, C12c, C12c, C44c, C44c, C44c,
     TensND.CanonicalBasis{3, Float64}(),
 )
 
 # 3. Triclinic
-const C_tric_KM = Matrix{Float64}(KE.C_TRIC_KM)
+const C_tric_KM = pyconvert(Matrix{Float64}, KE.C_TRIC_KM)
 const C_tric = from_mandel(C_tric_KM, CanonicalBasis{3, Float64}())
 
-const MEDIA_PY = KE."MEDIA"
-const C_iso_py = get(MEDIA_PY, PyObject, "iso")
-const C_cubic_py = get(MEDIA_PY, PyObject, "cubic")
-const C_tric_py = get(MEDIA_PY, PyObject, "triclinic")
+const MEDIA_PY = KE.MEDIA
+const C_iso_py = MEDIA_PY["iso"]
+const C_cubic_py = MEDIA_PY["cubic"]
+const C_tric_py = MEDIA_PY["triclinic"]
 
 # 4. Conductivity tensors (2nd order)
-const k_cond = KE.K_COND
+const k_cond = pyconvert(Float64, KE.K_COND)
 const K_iso = TensISO{3}(k_cond)
 const K_iso_mat = [k_cond 0.0 0.0; 0.0 k_cond 0.0; 0.0 0.0 k_cond]
-const K_iso_py = get(MEDIA_PY, PyObject, "K iso")
+const K_iso_py = MEDIA_PY["K iso"]
 
 # Anisotropic conductivity: rotation of diag(100, 20, 50) by π/4 in 1-2 plane
-const K_aniso_mat = Matrix{Float64}(KE.K_ANISO_MAT)
+const K_aniso_mat = pyconvert(Matrix{Float64}, KE.K_ANISO_MAT)
 const K_aniso = TensND.Tens(Array{Float64, 2}(K_aniso_mat))
-const K_aniso_py = get(MEDIA_PY, PyObject, "K aniso")
+const K_aniso_py = MEDIA_PY["K aniso"]
 
 # =============================================================================
 # Running storage for the summary tables
@@ -258,9 +262,9 @@ const MEDIA_JL = Dict(
 _ellipsoid(c) = Ellipsoid(Float64.(c["axes"])...; euler_angles = Tuple(Float64.(c["euler"])))
 _is_closed_form(c) = c["algos"] == ["DEFAULT"]
 
-for c in KE.HILL_CASES
+for c in pyjl(KE.HILL_CASES)
     bench_hill(
-        c["label"], _ellipsoid(c), MEDIA_JL[c["medium"]], get(MEDIA_PY, PyObject, c["medium"]);
+        c["label"], _ellipsoid(c), MEDIA_JL[c["medium"]], MEDIA_PY[c["medium"]];
         jl_method = Symbol(c["jl_method"]), is_iso = _is_closed_form(c),
         echoes_algos = Tuple(c["algos"]), euler_angles = Tuple(Float64.(c["euler"]))
     )
@@ -374,9 +378,9 @@ function bench_crack(
     return nothing
 end
 
-for c in KE.CRACK_CASES
+for c in pyjl(KE.CRACK_CASES)
     bench_crack(
-        c["label"], MEDIA_JL[c["medium"]], get(MEDIA_PY, PyObject, c["medium"]);
+        c["label"], MEDIA_JL[c["medium"]], MEDIA_PY[c["medium"]];
         jl_method = Symbol(c["jl_method"]), is_iso = _is_closed_form(c),
         echoes_algos = Tuple(c["algos"])
     )
@@ -394,7 +398,7 @@ end
 #        H_echoes  ==  η · H_MeanFieldHomogenization
 # -----------------------------------------------------------------------------
 
-function bench_crack_elliptic(C_jl, C_py; ωflat = KE.ELLIPTIC_CRACK_FLATNESS, ηs = Tuple(KE.ELLIPTIC_CRACK_ETAS))
+function bench_crack_elliptic(C_jl, C_py; ωflat = pyconvert(Float64, KE.ELLIPTIC_CRACK_FLATNESS), ηs = Tuple(pyconvert(Vector{Float64}, KE.ELLIPTIC_CRACK_ETAS)))
     println()
     println("─"^78)
     println("  § 2b  Elliptic crack — convention check  H_echoes = η · H_MFH")
@@ -534,9 +538,9 @@ function bench_hill_order2(
     return nothing
 end
 
-for c in KE.COND_CASES
+for c in pyjl(KE.COND_CASES)
     bench_hill_order2(
-        c["label"], _ellipsoid(c), MEDIA_JL[c["medium"]], get(MEDIA_PY, PyObject, c["medium"]);
+        c["label"], _ellipsoid(c), MEDIA_JL[c["medium"]], MEDIA_PY[c["medium"]];
         is_iso = _is_closed_form(c), echoes_algos = Tuple(c["algos"]),
         euler_angles = Tuple(Float64.(c["euler"]))
     )
@@ -570,7 +574,7 @@ iso_from_walpole(α, β) = TensND.TensISO{3}(α, β)
 # Indices map between `TensOrtho(C11, C22, C33, C12, C13, C23, μ23, μ13, μ12)` and
 # Echoes' ORTHO parameter order `(C11, C12, C13, C22, C23, C33, μ23, μ13, μ12)`:
 # `JL_TO_ECHOES_ORTHO[k]` is the Echoes index of the k-th Julia argument.
-const JL_TO_ECHOES_ORTHO = Tuple(KE.JL_TO_ECHOES_ORTHO)
+const JL_TO_ECHOES_ORTHO = Tuple(pyconvert(Vector{Int}, KE.JL_TO_ECHOES_ORTHO))
 const ORTHO_LABELS = ("C11", "C22", "C33", "C12", "C13", "C23", "μ₂₃", "μ₁₃", "μ₁₂")
 
 # ─── 4.1 — ISO cases (derive w.r.t. κ = 3k, η = 2μ) ───────────────────────
@@ -622,7 +626,7 @@ function bench_hill_derivative_iso(label, ell_jl)
     return nothing
 end
 
-for c in KE.DERIV_ISO_CASES
+for c in pyjl(KE.DERIV_ISO_CASES)
     bench_hill_derivative_iso(c["label"], Ellipsoid(Float64.(c["axes"])...))
 end
 
@@ -636,7 +640,9 @@ const JL_ORTHO_BASE = (
 )       # μ23, μ13, μ12
 
 # Corresponding echoes-order params [C11, C12, C13, C22, C23, C33, μ23, μ13, μ12]
-const ECHOES_ORTHO_BASE = Vector{Float64}(KE.ECHOES_ORTHO_BASE)
+const ECHOES_ORTHO_BASE = pyconvert(Vector{Float64}, KE.ECHOES_ORTHO_BASE)
+# The same parameters as a Python list, built once so that no conversion enters the timing
+const ECHOES_ORTHO_BASE_PY = pylist(ECHOES_ORTHO_BASE)
 
 function ortho_from_params(p::NTuple{9, T}) where {T <: Number}
     return TensND.TensOrtho(p..., TensND.CanonicalBasis{3, T}())
@@ -682,7 +688,7 @@ function bench_hill_derivative_ortho(
             dP_py = to_jlmat(
                 py_hill_derivative_ortho(
                     a, b, c,
-                    ECHOES_ORTHO_BASE,
+                    ECHOES_ORTHO_BASE_PY,
                     echoes_idx, algo
                 )
             )
@@ -701,7 +707,7 @@ function bench_hill_derivative_ortho(
             maxabs, maxrel = compare(dP_jl, dP_py)
             tE = @belapsed py_hill_derivative_ortho(
                 $a, $b, $c,
-                $ECHOES_ORTHO_BASE,
+                $ECHOES_ORTHO_BASE_PY,
                 $echoes_idx, $algo
             )
             @printf "    %-4s Echoes %-8s : max|Δ| = %.3e  ε_rel = %.3e  t = %s  ratio E/J = %.2f×\n" comp_label algo maxabs maxrel fmt_time(tE) (tE / tJ)
@@ -718,7 +724,7 @@ function bench_hill_derivative_ortho(
     return nothing
 end
 
-for c in KE.DERIV_ORTHO_CASES
+for c in pyjl(KE.DERIV_ORTHO_CASES)
     bench_hill_derivative_ortho(c["label"], Ellipsoid(Float64.(c["axes"])...); echoes_algos = Tuple(c["algos"]))
 end
 
@@ -795,7 +801,7 @@ let path = joinpath(@__DIR__, "figures", "benchmark_kernels.json")
         "julia" => string(VERSION), "mfh" => string(pkgversion(MeanFieldHomogenization)),
         "tensnd" => string(pkgversion(TensND)), "cpu" => Sys.cpu_info()[1].model,
         "threads" => Threads.nthreads(),
-        "protocol" => "BenchmarkTools @belapsed minimum of 20 samples, one thread each; Echoes through PyCall",
+        "protocol" => "BenchmarkTools @belapsed minimum of 20 samples, one thread each; Echoes through PythonCall",
         "hill" => map(_jsonrow, hill_rows), "crack" => map(_jsonrow, crack_rows),
         "conduction" => map(_jsonrow, hill2_rows), "derivative" => map(_jsonrow, dhill_rows),
     )

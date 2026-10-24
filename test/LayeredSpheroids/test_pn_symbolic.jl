@@ -1,6 +1,6 @@
 using Test
 using TensND
-using SymPy
+using SymPyPythonCall
 using LinearAlgebra
 
 # =============================================================================

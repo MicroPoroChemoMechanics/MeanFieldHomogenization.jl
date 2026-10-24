@@ -408,7 +408,7 @@ _wrap_km(lam::Laminate, property::Symbol, M::StaticMatrix{3, 3}) = _wrap2(lam, p
 #  Each method is one call to `_concentration_setup` plus one kernel from
 #  `Core/laminate_algebra.jl`, which inverts by cofactors and never by LU — so
 #  every one of them is exact under `ForwardDiff.Dual` and evaluable on
-#  `SymPy.Sym` / `Symbolics.Num`.
+#  `SymPyPythonCall.Sym` / `Symbolics.Num`.
 #
 #  Sum rules: `Σ_i f_i 𝔸_i = 𝕀`, `Σ_i f_i 𝔹_i = 𝕀`, `Σ_i f_i ℂ_i:𝔸_i = ℂ^{hom}`
 #  and `Σ_i f_i 𝔸_i:𝕊^{hom} = 𝕊^{hom}`. They hold for perfect and for dual

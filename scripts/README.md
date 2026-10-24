@@ -14,7 +14,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)         #jl
 ```
 
 That is deliberate, and it is not the package's own environment. Most of these
-scripts use `Plots`, and several use `SymPy`, `Symbolics` or `DECUHR` — none of
+scripts use `Plots`, and several use `SymPyPythonCall`, `Symbolics` or `DECUHR` — none of
 which the package environment can load: `Plots` is not a dependency of
 `MeanFieldHomogenization` at all, and the other three are *weak* dependencies, so
 they are unavailable from `Project.toml` too. Activating `..` therefore only ever
@@ -32,8 +32,10 @@ The four finite-element scripts are the exception: `Ferrite`, `FerriteGmsh` and
 instantiate [`scripts/fe/`](fe/) instead, keeping `gmsh_jll` out of every
 documentation build.
 
-The two cross-validation scripts that `pyimport("echoes")` through `PyCall`
-(`15`, `60`) need a Python environment with `echoes` installed, and depend
+The two cross-validation scripts that `pyimport("echoes")` through `PythonCall`
+(`15`, `60`) need a Python environment with `echoes` installed (and `sympy`,
+which `SymPyPythonCall` asks for), pointed at as described in
+[`bench_echoes/README.md`](bench_echoes/README.md), and depend
 on the machine whichever project is active. They are validation harnesses, not
 demos. (`52` used to be a third: it reached for a Python Mittag-Leffler module,
 and no longer needs to — the Rabotnov kernel is in the model library, whose
@@ -131,7 +133,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 |---|---|---|
 | `50_visco_law_basics.jl` | `visco_law` | Maxwell/Kelvin kernels |
 | `51_frequency_sweep_viscoelastic.jl` | complex moduli | frequency sweep, built on `iso_rheology` + `zener_maxwell` |
-| `52_rabotnov_mittag_leffler.jl` | Rabotnov / Mittag-Leffler | Rabotnov closed form; PyCall-free since the `Rabotnov` model landed |
+| `52_rabotnov_mittag_leffler.jl` | Rabotnov / Mittag-Leffler | Rabotnov closed form; free of any Python bridge since the `Rabotnov` model landed |
 | `53_aging_creep_solid.jl` | solidifying creep | ALV creep |
 | `54_aging_creep_ellipsoid2.jl` | ellipsoid-2 creep | ALV creep |
 | `55_aging_creep_dirichlet_chains.jl` | Granger creep | aging creep (Granger–Bažant 1995 law) |

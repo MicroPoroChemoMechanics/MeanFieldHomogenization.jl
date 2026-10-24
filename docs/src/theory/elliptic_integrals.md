@@ -7,7 +7,7 @@
 The [`MeanFieldHomogenization.Elliptic`](@ref MeanFieldHomogenization.Elliptic) submodule provides
 type-generic Legendre and Carlson integrals that flow end-to-end through
 automatic differentiation (`ForwardDiff.Dual`), arbitrary precision
-(`BigFloat`) and symbolic scalars (`SymPy.Sym`, `Symbolics.Num`).
+(`BigFloat`) and symbolic scalars (`SymPyPythonCall.Sym`, `Symbolics.Num`).
 
 ## 1. Legendre elliptic integrals
 
@@ -112,13 +112,13 @@ the integrals as unexpanded calls.
 | `Float64`            | `Elliptic.jl` (GSL C binding, fastest)           |
 | `ForwardDiff.Dual`   | pure-Julia AGM / Carlson (derivatives work)      |
 | `BigFloat`, generic  | AGM / Carlson                                    |
-| `SymPy.Sym`          | `sympy.elliptic_{k,e,f}` via the SymPy weak ext  |
+| `SymPyPythonCall.Sym`          | `sympy.elliptic_{k,e,f}` via the SymPy weak ext  |
 | `Symbolics.Num`      | unexpanded calls, via the Symbolics weak ext     |
 
 !!! note "Why a SymPy weak extension?"
-    The AGM unrolls ~60 nested `sqrt(a*b)` operations. On a `SymPy.Sym`
+    The AGM unrolls ~60 nested `sqrt(a*b)` operations. On a `SymPyPythonCall.Sym`
     input this builds a deeply nested symbolic tree that overflows
-    SymPy's pretty-printer. The weak extension `MeanFieldHomogenizationSymPyExt`
+    SymPy's pretty-printer. The weak extension `MeanFieldHomogenizationSymPyPythonCallExt`
     (loaded automatically whenever `SymPy` is loaded alongside
     `MeanFieldHomogenization`) routes `ell_K`, `ell_E`, `ell_F` on `Sym` arguments
     directly to `sympy.elliptic_{k,e,f}`, returning the native closed

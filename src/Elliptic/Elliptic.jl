@@ -6,7 +6,7 @@ Type-generic complete and incomplete elliptic integrals.
 Provides the Legendre integrals ``K(m)``, ``E(m)``, ``F(\\varphi, m)``,
 ``E(\\varphi, m)`` and Carlson's symmetric integrals ``R_F(x, y, z)``,
 ``R_D(x, y, z)`` in a form that works for every `Number` subtype —
-`Float64`, `ForwardDiff.Dual`, `BigFloat`, `SymPy.Sym`, `Symbolics.Num`,
+`Float64`, `ForwardDiff.Dual`, `BigFloat`, `SymPyPythonCall.Sym`, `Symbolics.Num`,
 and arbitrary user-defined scalar types.
 
 Dispatch table
@@ -16,7 +16,7 @@ Dispatch table
 | :-------------------- | :------------------------------ |
 | `Float64`             | `Elliptic.jl` (GSL C binding)   |
 | `ForwardDiff.Dual`    | AGM / Carlson (pure arithmetic) |
-| `SymPy.Sym`           | `sympy.elliptic_{k,e,f}` via the optional SymPy extension |
+| `SymPyPythonCall.Sym`           | `sympy.elliptic_{k,e,f}` via the optional SymPy extension |
 | `Symbolics.Num`       | AGM / Carlson (arithmetic-only — verbose but correct; user can `simplify()`) |
 | any other `Number`    | AGM / Carlson                   |
 

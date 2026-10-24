@@ -2,7 +2,7 @@
 
 Hill tensors (elasticity and conduction), crack compliance contributions and Hill
 derivatives. The media and the cases are defined here once: `benchmark.jl` imports this
-module through PyCall, builds the same tensors in MeanFieldHomogenization.jl and times
+module through PythonCall, builds the same tensors in MeanFieldHomogenization.jl and times
 both codes. Run on its own, this module times the Echoes side alone:
 
     python3 -I scripts/bench_echoes/kernels_echoes.py

@@ -35,7 +35,7 @@ using LinearAlgebra
 using ForwardDiff
 using Random
 using Printf
-import SymPy
+import SymPyPythonCall
 import DECUHR, Integrals
 
 const canonical = TensND.CanonicalBasis{3, Float64}()
@@ -101,11 +101,11 @@ end
 #
 # and `cod_tensor` returns it exactly (the difference simplifies to zero):
 
-E, ν, ρ = SymPy.symbols("E ν ρ", positive = true)
+E, ν, ρ = SymPyPythonCall.symbols("E ν ρ", positive = true)
 C_sym = TensISO{3}(E / (1 - 2ν), E / (1 + ν))
 B_sym = get_array(cod_tensor(PennyCrack(1), C_sym))
-B_sneddon = 16 * (1 - ν^2) / (3 * SymPy.PI * E) * Diagonal([2 / (2 - ν), 2 / (2 - ν), 1])
-SymPy.simplify.(B_sym - B_sneddon)
+B_sneddon = 16 * (1 - ν^2) / (3 * SymPyPythonCall.PI * E) * Diagonal([2 / (2 - ν), 2 / (2 - ν), 1])
+SymPyPythonCall.simplify.(B_sym - B_sneddon)
 
 # The flattened route takes the Hill tensor of the oblate spheroid
 # ``(b, b, \rho b)``, a closed form in ``\arccos\rho``, differentiates it with
@@ -120,9 +120,9 @@ SymPy.simplify.(B_sym - B_sneddon)
 # for the ``\boldsymbol{B}`` above, exactly, as §3 says:
 
 P_sym = mandel(hill_tensor(Ellipsoid(1, 1, ρ), C_sym))
-P₁_sym = [SymPy.limit(SymPy.diff(p, ρ), ρ => 0) for p in P_sym]
+P₁_sym = [SymPyPythonCall.limit(SymPyPythonCall.diff(p, ρ), ρ => 0) for p in P_sym]
 H_sym = H_from_first_order(P₁_sym, C_sym, canonical)
-SymPy.simplify.(mandel(H_sym) - mandel(compliance_from_cod(Tens(B_sym), PennyCrack(1))))
+SymPyPythonCall.simplify.(mandel(H_sym) - mandel(compliance_from_cod(Tens(B_sym), PennyCrack(1))))
 
 # ## In random anisotropic matrices
 #

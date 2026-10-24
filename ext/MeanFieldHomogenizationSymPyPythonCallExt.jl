@@ -1,7 +1,7 @@
-module MeanFieldHomogenizationSymPyExt
+module MeanFieldHomogenizationSymPyPythonCallExt
 
 using MeanFieldHomogenization
-using SymPy
+using SymPyPythonCall
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Symbolic closed forms via SymPy's `elliptic_{k,e,f}`
@@ -59,7 +59,7 @@ the integral, which is SymPy's own way of saying so.
 # Example
 
 ```julia
-using SymPy
+using SymPyPythonCall
 @syms t::positive τ::positive E::positive
 inverse_laplace(p -> E / (p + 1 / τ), t)     # E*exp(-t/τ)
 ```
@@ -82,7 +82,7 @@ This is the one to use on anything from the
 parameters it recovers the closed-form time function:
 
 ```julia
-using SymPy, MeanFieldHomogenization
+using SymPyPythonCall, MeanFieldHomogenization
 @syms t::positive τ::positive E∞::positive E₁::positive
 m = zener_maxwell(E∞, E₁, τ)
 inverse_carson(p -> carson_relaxation(m, p), t)     # E∞ + E₁*exp(-t/τ)

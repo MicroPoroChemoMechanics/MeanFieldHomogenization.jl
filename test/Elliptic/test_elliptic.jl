@@ -98,7 +98,7 @@ end
 
 # ── SymPy weak extension (skipped when SymPy is not installed) ──────────────
 sympy_loaded = try
-    @eval using SymPy
+    @eval using SymPyPythonCall
     true
 catch
     false
@@ -106,19 +106,19 @@ end
 
 if sympy_loaded
     @testset "Elliptic — SymPy weak extension" begin
-        ext = Base.get_extension(MeanFieldHomogenization, :MeanFieldHomogenizationSymPyExt)
+        ext = Base.get_extension(MeanFieldHomogenization, :MeanFieldHomogenizationSymPyPythonCallExt)
         @test ext !== nothing
 
-        m = SymPy.symbols("m")
-        φ = SymPy.symbols("φ")
+        m = SymPyPythonCall.symbols("m")
+        φ = SymPyPythonCall.symbols("φ")
 
         # Symbolic K/E dispatch to sympy.elliptic_{k,e} — the returned
         # expression must be a simple head, *not* the 60-level AGM nest
         # that would otherwise blow up the pretty-printer.
         Km = ell_K(m)
         Em = ell_E(m)
-        @test Km isa SymPy.Sym
-        @test Em isa SymPy.Sym
+        @test Km isa SymPyPythonCall.Sym
+        @test Em isa SymPyPythonCall.Sym
         @test occursin("elliptic_k", string(Km))
         @test occursin("elliptic_e", string(Em))
 

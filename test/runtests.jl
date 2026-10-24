@@ -38,11 +38,12 @@ catch
 end
 
 # Both symbolic backends, for `test_symbolic_rheology.jl`.  They are in
-# `test/Project.toml`, so this is a guard against a broken PyCall/SymPy install
-# rather than against a missing dependency — a `Sym` needs a working Python,
-# which is the one thing in this suite that can fail for reasons outside Julia.
+# `test/Project.toml`, so this is a guard against a broken SymPyPythonCall install
+# (a failed CondaPkg resolution, no network on the first load) rather than against
+# a missing dependency — a `Sym` needs a working Python, which is the one thing in
+# this suite that can fail for reasons outside Julia.
 const HAS_SYMBOLIC_BACKENDS = try
-    @eval import SymPy, Symbolics
+    @eval import SymPyPythonCall, Symbolics
     true
 catch
     false

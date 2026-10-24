@@ -62,7 +62,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
 
 using MeanFieldHomogenization
 using TensND
-using SymPy
+using SymPyPythonCall
 using LinearAlgebra
 import DECUHR, Integrals   # the `:decuhr` back-end is an extension
 using QuadGK

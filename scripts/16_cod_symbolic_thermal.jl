@@ -67,7 +67,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
 
 using MeanFieldHomogenization
 using TensND
-using SymPy
+using SymPyPythonCall
 using LinearAlgebra
 using TensND.Tensors: SymmetricTensor   # the Tensors.jl TensND is built on
 using QuadGK

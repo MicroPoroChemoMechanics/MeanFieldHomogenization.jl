@@ -3,7 +3,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
-using SymPy   # top level on purpose: `@syms` below is expanded before any
+using SymPyPythonCall   # top level on purpose: `@syms` below is expanded before any
 # `using` nested in a @testset body would have run.
 
 # =============================================================================

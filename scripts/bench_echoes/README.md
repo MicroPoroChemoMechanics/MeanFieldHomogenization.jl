@@ -1,25 +1,59 @@
 # `scripts/bench_echoes/` — MeanFieldHomogenization.jl vs Echoes (C++) benchmark
 
 Side-by-side numerical + timing comparison between the Julia implementation
-and the Echoes C++ reference called from Python via `PyCall.jl`.
+and the Echoes C++ reference called from Python via `PythonCall.jl`.
 
-## Prerequisites
+## Prerequisites: a Python environment with Echoes and sympy
 
-Echoes must already be importable from a Python interpreter on this
-machine (the Boost.Python build works; no recompilation needed here).
+Echoes is not a Julia package: it lives in a Python environment of your
+choice, which must also have `sympy` (`pip install sympy`), since the symbolic
+layer of the Julia stack imports it.
 
 ```python
-# Must succeed in the target interpreter:
->>> import echoes
+# Must succeed in the interpreter that will be used:
+>>> import echoes, sympy
 ```
 
-The first time you run this benchmark, point PyCall at that interpreter
-and rebuild:
+**Normal way.** Activate that Python environment, then start Julia from the
+same shell:
 
-```julia
-julia> ENV["PYTHON"] = raw"C:\path\to\python.exe"   # or /usr/bin/python3 on Linux
-julia> using Pkg; Pkg.activate("."); Pkg.build("PyCall")
+```bash
+# activate your Echoes environment (conda activate ..., source .../bin/activate, ...)
+julia --project=scripts/bench_echoes scripts/bench_echoes/benchmark.jl
 ```
+
+Every Echoes script includes [`echoes_python.jl`](echoes_python.jl) before it
+loads PythonCall. That file takes the interpreter named by the environment
+variable `ECHOES_PYTHON` if it is set, else the `python3` (then `python`) found
+on the `PATH`; checks that it imports `echoes` and `sympy`; and, for this Julia
+process only, tells PythonCall to use it and CondaPkg to manage nothing. If the
+check fails, the script stops with a message saying what to do. To use an
+interpreter other than the active one:
+
+```bash
+ECHOES_PYTHON=/path/to/python julia --project=scripts/bench_echoes scripts/bench_echoes/benchmark.jl
+```
+
+**Explicit alternative.** The two settings can be made by hand, which
+`echoes_python.jl` then respects (or as the equivalent preferences of PythonCall
+and CondaPkg, `exe` and `backend`):
+
+```bash
+export JULIA_CONDAPKG_BACKEND=Null
+export JULIA_PYTHONCALL_EXE=/path/to/python
+```
+
+With CondaPkg managing nothing, the packages of your environment are kept as
+they are, in particular the numpy version Echoes was built against (often
+numpy 1.x, that is `numpy < 2`). Do not let CondaPkg manage an environment where
+Echoes is installed: it would resolve its own versions and could replace that
+numpy. If you do, pin it (`numpy = "<2"` in a `CondaPkg.toml`) to the version
+Echoes needs.
+
+Python results are `Py` objects: PythonCall converts nothing implicitly, so the
+scripts convert with `pyconvert` (helpers in [`pyjl.jl`](pyjl.jl)). The Echoes
+calls themselves are in Python modules next to the scripts (`kernels_echoes.py`,
+`porous_echoes.py`, `nlayers_echoes.py`, ...).
 
 ## Run
 
@@ -46,7 +80,7 @@ Timings are collected with `BenchmarkTools.@belapsed`.
 ## Notes
 
 - This subfolder has its **own Project.toml** — it does not pollute the
-  main `MeanFieldHomogenization.jl` environment with PyCall / BenchmarkTools.
+  main `MeanFieldHomogenization.jl` environment with PythonCall / BenchmarkTools.
 - `:residues` is used on both sides for the cubic and triclinic cases
   (same mathematical algorithm → expected agreement at machine
   precision).
@@ -71,7 +105,7 @@ The four production cross-checks against echoes:
 across ellipsoid shapes, for ISO and ORTHO reference media, plus a fully
 triclinic reference that has no counterpart there (MFH ForwardDiff only). The
 standalone numbered demo `scripts/08_hill_derivatives.jl` shows the same MFH
-capability without PyCall (validated against finite differences).
+capability without Python (validated against finite differences).
 
 `benchmark_strength.jl` is built on the shared model `../common/quasibrittle_strength.jl`
 (public MeanFieldHomogenization API only — multi-bin Self-Consistent hydrate foam with
@@ -84,7 +118,7 @@ hand-rolled Mandel/IFT bypass is gone, and the fc tolerance tightened from
 The `bench_layered_alv*` jl/py/json triads are cross-validation assets for the
 aging-viscoelastic (ALV) layered-sphere recurrences; the committed
 `*_python.json` dumps let the Julia side be checked WITHOUT a live echoes /
-PyCall install.
+Python install.
 
 ## Debug / development scripts (kept, documented, re-runnable)
 
@@ -95,13 +129,13 @@ X behave this way?" question and can be re-run to reproduce the finding.
 | Script | Question it answers | Re-run | Needs |
 |---|---|---|---|
 | `debug_n4_elastic.jl` | Does the N=4 layered-sphere elastic limit match Eshelby? | `julia --project=. debug_n4_elastic.jl` | — |
-| `debug_n_sweep.jl` (+ `.py`, `_python.json`) | How does the layered-ALV result converge with the number of layers N? | `julia --project=. debug_n_sweep.jl` | json (or PyCall for regen) |
+| `debug_n_sweep.jl` (+ `.py`, `_python.json`) | How does the layered-ALV result converge with the number of layers N? | `julia --project=. debug_n_sweep.jl` | json (or PythonCall for regen) |
 | `debug_volterra_divide.jl` | Is `volterra_divide` consistent with `volterra_inverse ∘ product`? | `julia --project=. debug_volterra_divide.jl` | — |
 | `bench_step_trap.jl` | Trapezoidal-step convergence of a Heaviside-loaded creep kernel | `julia --project=. bench_step_trap.jl` | — |
 | `bench_step_*` / `bench_step_n2.*` | Single-step & N=2 kernel cross-checks vs echoes Python dumps | `julia --project=. bench_step_n2.jl` | `*_python.json` |
 | `bench_volterra_lapack.jl` | LAPACK vs block-forward-substitution Volterra inverse timing/accuracy | `julia --project=. bench_volterra_lapack.jl` | — |
 | `bench_iso_fastpath.jl` | Structured-ISO ALV fast path vs dense 6n×6n | `julia --project=. bench_iso_fastpath.jl` | — |
-| `bench_ellipsoid2.jl`, `bench_order2_alv.jl`, `derive_shear_transition.py` | ellipsoid-2 / order-2 ALV and the shear-transition-matrix derivation | see file header | some need PyCall |
+| `bench_ellipsoid2.jl`, `bench_order2_alv.jl`, `derive_shear_transition.py` | ellipsoid-2 / order-2 ALV and the shear-transition-matrix derivation | see file header | some need PythonCall |
 
 To regenerate a `*_python.json` reference dump, run the paired `.py` file in a
 Python interpreter where `echoes` imports (see Prerequisites).

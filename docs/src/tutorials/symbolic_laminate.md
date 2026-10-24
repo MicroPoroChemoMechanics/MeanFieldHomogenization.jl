@@ -30,7 +30,7 @@ Terser script:
 ```@example tutsymlam
 using MeanFieldHomogenization
 using TensND
-using SymPy
+using SymPyPythonCall
 
 @syms λ₁::positive μ₁::positive λ₂::positive μ₂::positive f₁::positive
 f₂ = 1 - f₁

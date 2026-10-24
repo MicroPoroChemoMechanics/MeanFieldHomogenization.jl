@@ -2,7 +2,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using Symbolics
-using SymPy
+using SymPyPythonCall
 
 # =============================================================================
 #  test_symbolic_rheology.jl — symbolic parameters, and symbolic inversion.
@@ -73,36 +73,36 @@ end
 end
 
 @testset "SymPy: symbolic Laplace-Carson inversion" begin
-    SymPy.@syms ts::positive τ::positive Einf::positive E1::positive
+    SymPyPythonCall.@syms ts::positive τ::positive Einf::positive E1::positive
 
     # The plain transform.  `inverse_laplace` is qualified here because
     # `Symbolics` exports a function of the same name (a five-argument
     # transform for solving ODEs), so the two bindings are ambiguous once both
     # packages are `using`-ed — see the note on `inverse_laplace`.
     ilt = MeanFieldHomogenization.inverse_laplace
-    @test SymPy.simplify(ilt(p -> E1 / (p + 1 / τ), ts) - E1 * exp(-ts / τ)) == 0
+    @test SymPyPythonCall.simplify(ilt(p -> E1 / (p + 1 / τ), ts) - E1 * exp(-ts / τ)) == 0
 
     # The standard solid: both functions of time, recovered from R*(p) alone
     # and agreeing with the closed forms the model already carries.
     z = zener_maxwell(Einf, E1, τ)
     R_t = inverse_carson(p -> carson_relaxation(z, p), ts)
-    @test SymPy.simplify(R_t - relaxation(z, ts)) == 0
+    @test SymPyPythonCall.simplify(R_t - relaxation(z, ts)) == 0
 
     # Burgers, a fluid: the creep function carries a term linear in t.
-    SymPy.@syms ks::positive ηs::positive kp::positive ηp::positive
+    SymPyPythonCall.@syms ks::positive ηs::positive kp::positive ηp::positive
     b = burgers(ks, ηs, kp, ηp)
     J_t = inverse_carson(p -> carson_creep(b, p), ts)
-    @test SymPy.simplify(J_t - creep(b, ts)) == 0
+    @test SymPyPythonCall.simplify(J_t - creep(b, ts)) == 0
 end
 
 @testset "SymPy: how far the symbolic route reaches" begin
-    SymPy.@syms ts::positive V::positive α::positive τ::positive
-    SymPy.@syms Einf::positive E0::positive δ::positive
+    SymPyPythonCall.@syms ts::positive V::positive α::positive τ::positive
+    SymPyPythonCall.@syms Einf::positive E0::positive δ::positive
 
     # A rational exponent inverts exactly, and matches the model's own form —
     # `5/(2Γ(2/5)) = 1/Γ(7/5)` is the same number written two ways.
     sb = ScottBlair(V, Sym(2) // 5)
-    @test SymPy.simplify(
+    @test SymPyPythonCall.simplify(
         inverse_carson(q -> carson_creep(sb, q), ts) - creep(sb, ts)
     ) == 0
 
@@ -129,7 +129,7 @@ end
 end
 
 @testset "symbolic and numerical inversion agree" begin
-    SymPy.@syms ts::positive τ::positive Einf::positive E1::positive
+    SymPyPythonCall.@syms ts::positive τ::positive Einf::positive E1::positive
     z = zener_maxwell(Einf, E1, τ)
     R_t = inverse_carson(p -> carson_relaxation(z, p), ts)
 

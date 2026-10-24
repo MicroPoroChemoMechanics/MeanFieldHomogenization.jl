@@ -3,7 +3,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
-using SymPy   # top level on purpose: `@syms` below is expanded before any
+using SymPyPythonCall   # top level on purpose: `@syms` below is expanded before any
 # `using` nested in a @testset body would have run.
 
 # =============================================================================
@@ -66,7 +66,7 @@ end
 end
 
 @testset "LayeredSphere — pointwise field with a symbolic radius" begin
-    # A symbolic radius cannot be located by comparison (`SymPy.Sym` is not
+    # A symbolic radius cannot be located by comparison (`SymPyPythonCall.Sym` is not
     # even `<: Real`), so the region has to be named.  Refusing with a message
     # that says so is the contract; the reconstruction itself stays symbolic.
     C₀ = TensISO{3}(3 * 100.0, 2 * 70.0)
@@ -75,7 +75,7 @@ end
     sphere = LayeredSphere((1.0, 2.0), (C₁, C₂))
     sol = LayeredSphereFields(sphere, C₀)
 
-    SymPy.@syms r_sym::positive
+    SymPyPythonCall.@syms r_sym::positive
     @test_throws ArgumentError local_gradient_gradient_concentration(sol, r_sym, 0.4, 0.9)
     @test_throws ArgumentError get_layer(sphere, r_sym)
 

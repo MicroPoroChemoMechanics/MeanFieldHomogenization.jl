@@ -1,7 +1,7 @@
 # # Symbolic homogenization schemes: sphere in an isotropic matrix
 #
 # Symbolic (closed-form) homogenization schemes for a sphere embedded in an
-# isotropic matrix, using SymPy.jl through TensND's generic tensor algebra.
+# isotropic matrix, using SymPyPythonCall.jl through TensND's generic tensor algebra.
 #
 # This is the "schemes" companion of `05_symbolic.jl` (which stops at the
 # Hill/Eshelby tensors): here the same symbolic genericity is pushed through
@@ -25,7 +25,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                  #j
 
 using MeanFieldHomogenization
 using TensND
-using SymPy
+using SymPyPythonCall
 using Printf
 
 println("=== Symbolic homogenization schemes — sphere in an isotropic matrix ===")

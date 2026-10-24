@@ -37,7 +37,7 @@ Carlson's symmetric elliptic integral of the first kind,
 
 Type-generic: the duplication recursion uses only arithmetic and
 square roots, so it extends unchanged to `BigFloat`,
-`ForwardDiff.Dual`, `Symbolics.Num`, `SymPy.Sym`, and any other
+`ForwardDiff.Dual`, `Symbolics.Num`, `SymPyPythonCall.Sym`, and any other
 `Number` subtype.
 """
 function ell_RF(x::Tx, y::Ty, z::Tz) where {Tx <: Number, Ty <: Number, Tz <: Number}

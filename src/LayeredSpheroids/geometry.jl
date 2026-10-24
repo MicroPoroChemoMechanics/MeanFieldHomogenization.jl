@@ -90,7 +90,7 @@ throws, since every layer is verified to belong to the declared family.
 !!! note "Symbolic support is prolate only"
     An oblate spheroid carries ``q = \\mathrm{i}\\tau``, so its confocal parameter is a
     `Complex{T}` — and Julia's `Complex{T}` requires `T <: Real`, which
-    `SymPy.Sym` is not. `Symbolics.Num` is `<: Real` and builds, but Symbolics
+    `SymPyPythonCall.Sym` is not. `Symbolics.Num` is `<: Real` and builds, but Symbolics
     has no `sym_lu` for a `Matrix{Complex{Num}}`. Prolate works with both.
 """
 function LayeredSpheroid(

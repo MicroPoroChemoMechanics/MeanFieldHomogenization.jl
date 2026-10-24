@@ -18,7 +18,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
-using SymPy
+using SymPyPythonCall
 using ForwardDiff
 
 const ATOL_LALV = 1.0e-9

@@ -59,7 +59,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
-using SymPy
+using SymPyPythonCall
 using Printf
 
 # ── Reporting ───────────────────────────────────────────────────────────────

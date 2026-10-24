@@ -1,7 +1,7 @@
 """The Echoes side of `benchmark_schemes_speed.jl`: the cases, and their homogenization.
 
 The cases are defined here once. `benchmark_schemes_speed.jl` imports this module through
-PyCall, builds the same RVEs in MeanFieldHomogenization.jl from `CASES`, and times both
+PythonCall, builds the same RVEs in MeanFieldHomogenization.jl from `CASES`, and times both
 codes; run on its own, this module times the Echoes side alone:
 
     python3 -I scripts/bench_echoes/schemes_speed_echoes.py

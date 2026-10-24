@@ -28,7 +28,7 @@ Element type is the supplied `T = promote_type(...)`.
 function _A_and_Tn(C::AbstractArray, n̂::AbstractVector, ::Type{T}) where {T}
     # Single choke point of every numerical Green back-end, and the only place
     # that needs `T` to be `isbits`: `MArray{…,T}(undef)` cannot even be
-    # *constructed* for a boxed scalar such as `SymPy.Sym` or `Symbolics.Num`.
+    # *constructed* for a boxed scalar such as `SymPyPythonCall.Sym` or `Symbolics.Num`.
     # Without this check the failure surfaces as a bare
     # `setindex!() with non-isbitstype eltype …` from StaticArrays, several
     # frames deep, which says nothing about what to do instead.

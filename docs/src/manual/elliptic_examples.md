@@ -97,7 +97,7 @@ With the optional `SymPy` extension loaded (the package declares
 closed-form expressions:
 
 ```julia
-using MeanFieldHomogenization, SymPy
+using MeanFieldHomogenization, SymPyPythonCall
 
 @syms m
 ell_K(m)       # → K(m) as a SymPy expression

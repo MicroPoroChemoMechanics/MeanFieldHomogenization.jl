@@ -16,7 +16,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
-using SymPy
+using SymPyPythonCall
 
 const _ISO_L(k, μ) = TensISO{3}(3k, 2μ)
 

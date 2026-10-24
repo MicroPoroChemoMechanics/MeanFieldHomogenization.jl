@@ -76,39 +76,6 @@ jobs:
                   end
               end
           end
-      # As in CI.yml: TensND loads SymPy, whose Python module `sympy` goes into
-      # the private Python of Conda.jl, in the session and in the compute process.
-      # The cache restores the depot's packages, Conda's deps/deps.jl among them,
-      # but not ~/.julia/conda, the root environment that file names: on a new
-      # release of Julia, Conda is precompiled again and fails on the missing
-      # directory. Building Conda first makes that directory again.
-      - name: Install dependencies (PyCall/SymPy)
-        shell: julia --color=yes {0}
-        run: |
-          using Pkg
-          ENV["PYTHON"] = ""
-          withenv(() -> Pkg.add("Conda"), "JULIA_PKG_PRECOMPILE_AUTO" => "0")
-          Pkg.build("Conda")
-          Pkg.add("PyCall")
-          Pkg.add("SymPy")
-          # conda-forge now and then answers a transient error (a 502 on its index):
-          # what is downloaded from it is tried three times, a minute apart
-          retry(() -> Pkg.build("PyCall"); delays = fill(60.0, 2))()
-          using PyCall
-          if Sys.iswindows()
-              # conda 26.9 (the Miniforge Conda.jl installs, 2026-10-23) builds the
-              # entry-point launchers of a noarch package from `conda-launchers`,
-              # whose only conda-forge builds carry no win-64 `cli-64.exe`: the
-              # transaction fails on every try. pip makes its own launchers, so
-              # `sympy` goes into the same Python through it until conda is fixed.
-              # pip is called directly on the interpreter PyCall uses: `Conda.pip`
-              # checks `pip_interop_enabled`, which conda 26 renamed
-              # (`prefix_data_interoperability`), and refuses even once it is set.
-              retry(() -> run(`$(PyCall.python) -m pip install sympy`); delays = fill(60.0, 2))()
-              pyimport("sympy")
-          else
-              retry(() -> pyimport_conda("sympy", "sympy"); delays = fill(60.0, 2))()
-          end
       # The environment the compute process runs in, as the studio's own would
       # hold it, with the MeanFieldHomogenization of this commit rather than the
       # registered one. It lives outside the repository's tree.

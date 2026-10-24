@@ -192,7 +192,7 @@ function add_layer!(
     h = thickness !== nothing ? thickness : fraction
     # `is_hard_numeric`, not `h isa Real`: `Symbolics.Num` subtypes `Real` and
     # answers no comparison, so `h < 0` would return a `Num` and the `if` would
-    # throw `TypeError: non-boolean (Num) used in boolean context`. `SymPy.Sym`
+    # throw `TypeError: non-boolean (Num) used in boolean context`. `SymPyPythonCall.Sym`
     # is not `<: Real` and short-circuited, which is why this only ever bit the
     # Symbolics backend.
     if is_hard_numeric(h) && h < 0

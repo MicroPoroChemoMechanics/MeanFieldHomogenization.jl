@@ -26,7 +26,7 @@
 #  the same formulas with `·` in place of `:`.
 #
 #  Type-genericity: the implementation works for Float64, BigFloat,
-#  ForwardDiff.Dual, SymPy.Sym and Symbolics.Num so long as `hill_tensor`
+#  ForwardDiff.Dual, SymPyPythonCall.Sym and Symbolics.Num so long as `hill_tensor`
 #  does; it relies only on TensND algebra (`+`, `-`, `⊡`, `inv`).
 # =============================================================================
 

@@ -147,10 +147,10 @@ elastic analogs).  The per-layer gradient concentration
 
 The recurrence consists of small-size matrix arithmetic over the
 element type; it is exercised with `Float64`, `BigFloat`,
-`ForwardDiff.Dual`, `SymPy.Sym`, and `Symbolics.Num`.  Symbolically,
+`ForwardDiff.Dual`, `SymPyPythonCall.Sym`, and `Symbolics.Num`.  Symbolically,
 
 ```julia
-using SymPy; @syms κ₀ μ₀ κ₁ μ₁
+using SymPyPythonCall; @syms κ₀ μ₀ κ₁ μ₁
 s = LayeredSphere((Sym(1),), (TensISO{3}(3κ₁, 2μ₁),))
 simplify(MeanFieldHomogenization.LayeredSpheres._bulk_concentration(s, κ₀, μ₀)[1])
 # → (3κ₀ + 4μ₀) / (3κ₁ + 4μ₀)
@@ -195,7 +195,7 @@ The state vector ``\mathbf S(r) = (U, W, \sigma_{rr}, \sigma_{r\theta})`` combin
 displacement and physical traction amplitudes; this form is continuous
 across every perfect interface and rational in ``(k, \mu, r)``, so the
 recurrence is **type-generic** (supports `Float64`, `BigFloat`,
-`ForwardDiff.Dual`, `SymPy.Sym`, `Symbolics.Num`) and remains regular
+`ForwardDiff.Dual`, `SymPyPythonCall.Sym`, `Symbolics.Num`) and remains regular
 in the incompressibility limit ``k \to \infty``.
 
 Interface jumps at ``r_k``:

@@ -75,7 +75,7 @@ Nothing in either statement refers to a particular case. Checked for four
 can hide anything:
 
 ```@example spheroid_elastic
-using TensND, SymPy, LinearAlgebra
+using TensND, SymPyPythonCall, LinearAlgebra
 S = coorsys_spheroidal()
 ϕ, p, q = getcoords(S)
 c = symbols("c", positive = true)
