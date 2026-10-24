@@ -43,7 +43,7 @@ const echoes = pyimport("echoes")
 P_KM(ell, C) = MeanFieldHomogenization.Core.mandel66_minor(
     TensND.get_array(change_tens_canon(hill_tensor(ell, C)))
 )
-to_jlmat(x) = pyisnone(x) ? nothing : pyconvert(Matrix{Float64}, x)
+to_jlmat(x) = pyis(x, pybuiltins.None) ? nothing : pyconvert(Matrix{Float64}, x)
 function relerr(A, B)
     scale = max(maximum(abs, A), maximum(abs, B), 1.0e-300)
     return maximum(abs, A .- B) / scale
@@ -114,7 +114,7 @@ ortho_perturb(i, t) = TensND.TensOrtho(
     ntuple(j -> j == i ? JL_ORTHO[j] + t : Float64(JL_ORTHO[j]), 9)..., frame
 )
 
-println("\n  ORTHO reference (cubic C11=$(C11c/1e3),C12=$(C12c/1e3),C44=$(C44c/1e3) GPa), prolate (5,1,1)")
+println("\n  ORTHO reference (cubic C11=$(C11c / 1.0e3),C12=$(C12c / 1.0e3),C44=$(C44c / 1.0e3) GPa), prolate (5,1,1)")
 @printf "  %-10s %12s %12s   %s\n" "echoes idx" "‖dP‖∞" "rel.err" "pass"
 println("  " * "─"^50)
 let ell_jl = Ellipsoid(5.0, 1.0, 1.0), ell_py = py_ell(5.0, 1.0, 1.0, 0.0, 0.0, 0.0)

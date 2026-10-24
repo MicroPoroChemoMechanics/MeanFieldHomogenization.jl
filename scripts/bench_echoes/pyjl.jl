@@ -4,6 +4,9 @@
 # result is a `Py` until it is asked to become a Julia value.
 using PythonCall
 
+# Whether a Python object is `None`; PythonCall compares by identity with `pyis`.
+_pyisnone(x::Py) = pyis(x, pybuiltins.None)
+
 """
     pyjl(x)
 
@@ -13,7 +16,7 @@ Recursive conversion of a Python object to Julia: `None` → `nothing`, `bool`,
 numpy array, an Echoes tensor) is returned unchanged, as a `Py`.
 """
 function pyjl(x::Py)
-    pyisnone(x) && return nothing
+    _pyisnone(x) && return nothing
     pyisinstance(x, pybuiltins.bool) && return pyconvert(Bool, x)
     pyisinstance(x, pybuiltins.int) && return pyconvert(Int, x)
     pyisinstance(x, pybuiltins.float) && return pyconvert(Float64, x)
@@ -30,4 +33,4 @@ end
 
 A Python 2-D array (or `None`, as `nothing`) as a Julia `Matrix{Float64}`.
 """
-pymat(x::Py) = pyisnone(x) ? nothing : pyconvert(Matrix{Float64}, x)
+pymat(x::Py) = _pyisnone(x) ? nothing : pyconvert(Matrix{Float64}, x)
