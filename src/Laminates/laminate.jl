@@ -136,11 +136,11 @@ function Laminate(;
             throw(ArgumentError("Laminate: `basis` must be a 3-D TensND basis"))
         basis
     elseif euler_angles !== nothing
-        MFH_Core._default_basis(T, euler_angles isa Tuple ? euler_angles : (euler_angles,))
+        TensND.euler_basis(euler_angles isa Tuple ? euler_angles : (euler_angles,); T = T)
     elseif normal !== nothing
         MFH_Core._frame_from_normal(normal; T = T, in_plane = in_plane)
     else
-        TensND.CanonicalBasis{3, MFH_Core._basis_eltype(T)}()
+        TensND.CanonicalBasis{3, TensND.canonical_eltype(T)}()
     end
     return Laminate{T, typeof(b)}(
         Symbol[], Dict{Symbol, Layer}(), Dict{Symbol, Any}(),
@@ -192,7 +192,7 @@ function add_layer!(
     h = thickness !== nothing ? thickness : fraction
     # `is_hard_numeric`, not `h isa Real`: `Symbolics.Num` subtypes `Real` and
     # answers no comparison, so `h < 0` would return a `Num` and the `if` would
-    # throw `TypeError: non-boolean (Num) used in boolean context`. `SymPy.Sym`
+    # throw `TypeError: non-boolean (Num) used in boolean context`. `SymPyPythonCall.Sym`
     # is not `<: Real` and short-circuited, which is why this only ever bit the
     # Symbolics backend.
     if is_hard_numeric(h) && h < 0
@@ -313,7 +313,7 @@ laminate_basis(lam::Laminate) = lam.basis
 The layer normal ``\\underline{n}``, i.e. the third axis of [`laminate_basis`](@ref),
 in canonical components.
 """
-laminate_normal(lam::Laminate) = MFH_Core._basis_col(lam.basis, 3)
+laminate_normal(lam::Laminate) = MFH_Core._basis_axis(lam.basis, 3)
 
 """
     layer_interface(lam, k::Integer) -> AbstractInterface
@@ -385,6 +385,9 @@ MFH_Core.cell_member_names(lam::Laminate) = lam.layer_names
 
 MFH_Core.cell_container_property(lam::Laminate, name::Symbol, key::Symbol) =
     layer_property_raw(lam, name, key)
+
+MFH_Core.cell_has_property(lam::Laminate, name::Symbol, key::Symbol) =
+    haskey(lam.layers, name) && haskey(lam.layers[name].properties, key)
 
 function MFH_Core.cell_set_property(lam::Laminate, name::Symbol, key::Symbol, value)
     haskey(lam.layers, name) ||

@@ -52,7 +52,7 @@ Everything else is that chain generalized in one direction at a time:
   Biot coefficients and a permeability that follows the crack apertures.
 
 The package is geared toward prototyping: forward-mode automatic
-differentiation (`ForwardDiff`) and symbolic simplification (`SymPy`,
+differentiation (`ForwardDiff`) and symbolic simplification (`SymPyPythonCall`,
 `Symbolics`) are first-class, and every scheme carries sensitivities with
 respect to fractions, moduli and inclusion geometry.
 
@@ -103,6 +103,12 @@ using Pkg
 Pkg.add("MeanFieldHomogenization")
 ```
 
+Nothing else has to be installed by hand. The symbolic layer goes through
+[`SymPyPythonCall.jl`](https://github.com/jverzani/SymPyPythonCall.jl) (PythonCall),
+which `TensND.jl` depends on: the first time the package loads, CondaPkg installs
+a private Python with `sympy` (internet needed, once). To create your own symbols,
+`add SymPyPythonCall` to your environment and `using SymPyPythonCall`.
+
 No additional registry is required: every dependency (`TensND.jl`,
 `OrdinaryDiffEq.jl`, `Elliptic.jl`, `Polynomials.jl`, `PolynomialRoots.jl`,
 `QuadGK.jl`, `Tensors.jl`, …) resolves from General as well.
@@ -117,7 +123,7 @@ Nine package extensions activate on weak dependencies, each optional:
   point with any SciML algorithm (`NewtonRaphson`, `TrustRegion`, …)
   instead of the built-in Anderson/Newton iteration, with exact
   `ForwardDiff` sensitivities through the fixed point either way.
-- `SymPy.jl` — symbolic closed forms for the elliptic integrals.
+- `SymPyPythonCall.jl` — symbolic closed forms for the elliptic integrals.
 - `Symbolics.jl` — the same, for `Symbolics.Num`: the elliptic integrals are
   registered as opaque symbolic calls, so an expression stays readable instead
   of unrolling sixty nested `sqrt` of the generic AGM recursion.
@@ -188,7 +194,7 @@ plots the same comparison across the whole porosity range.
 
 Every entry point accepts `method = :auto | :residues | :decuhr` and
 the keyword tuple `(abstol, reltol, maxiters)`; every entry point also
-differentiates through `ForwardDiff` and accepts symbolic (`SymPy`/
+differentiates through `ForwardDiff` and accepts symbolic (`SymPyPythonCall`/
 `Symbolics`) coefficients. See the in-line docstrings and the
 [Tutorials](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/tutorials/)
 for details.

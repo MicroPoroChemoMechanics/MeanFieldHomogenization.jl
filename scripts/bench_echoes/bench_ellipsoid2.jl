@@ -9,9 +9,12 @@
 import Pkg
 Pkg.activate(@__DIR__; io = devnull)
 
+# Which Python holds Echoes: chosen before PythonCall is loaded
+include(joinpath(@__DIR__, "echoes_python.jl"))
+
 using LinearAlgebra
 using Printf
-using PyCall
+using PythonCall
 using MeanFieldHomogenization
 using TensND
 
@@ -29,8 +32,8 @@ fk(t) = 0.5 * exp(-t / 20.0) + 0.5
 fμ(t) = 0.5 * exp(-t / 20.0) + 0.5
 
 const _, 𝕁₄, 𝕂₄ = TensND.iso_projectors(Val(3), Val(Float64))
-const _J_M = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66(𝕁₄)
-const _K_M = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66(𝕂₄)
+const _J_M = TensND.mandel66(𝕁₄)
+const _K_M = TensND.mandel66(𝕂₄)
 
 # Julia matrix law (creep mode).
 function Js(t, tp)
@@ -45,68 +48,12 @@ const law_I = ViscoLaw((t, tp) -> Cᵢ_inv, :creep)
 
 # ─── Python side ──────────────────────────────────────────────────────────
 
-py"""
-from echoes import (rve, ellipsoid, ISO, CREEP, MT, DIFF, SC, ASC, MAX, PCW,
-                     spherical, spheroidal, stiff_Enu, tensor, tId4,
-                     visco_law, homogenize_visco, homogenize)
-import numpy as np
-
-Cs = stiff_Enu(1., 0.2); ks, mus = Cs.kmu
-def Js_py(t, tp):
-    return ((0.5*np.exp(-tp/20.)+0.5)/(3*ks) + 1e-1/ks*np.log(1.+(t-tp)/2.)) * tens_J4_arr() \
-         + ((0.5*np.exp(-tp/20.)+0.5)/(2*mus) + 1e-1/mus*np.log(1.+(t-tp)/1.)) * tens_K4_arr()
-def tens_J4_arr():
-    from echoes import J4
-    return J4
-def tens_K4_arr():
-    from echoes import K4
-    return K4
-
-def make_Js_py():
-    from echoes import J4, K4
-    def Js_py(t, tp):
-        return ((0.5*np.exp(-tp/20.)+0.5)/(3*ks) + 1e-1/ks*np.log(1.+(t-tp)/2.)) * J4 \
-             + ((0.5*np.exp(-tp/20.)+0.5)/(2*mus) + 1e-1/mus*np.log(1.+(t-tp)/1.)) * K4
-    return Js_py
-
-Ci = 1.e+6 * tId4
-def Ji_py(t, tp):
-    return np.linalg.inv(Ci.array)
-
-def trapz_creep(T):
-    Js_py = make_Js_py()
-    return np.asarray(visco_law(Js_py, CREEP).creep_mat(T))
-
-def trapz_relax(T):
-    Js_py = make_Js_py()
-    return np.asarray(visco_law(Js_py, CREEP).relaxation_mat(T))
-
-_SCH = {"MT": MT, "DIFF": DIFF, "SC": SC, "ASC": ASC, "MAX": MAX, "PCW": PCW}
-
-def homogenize_py(omega, T, sch_name, frac):
-    Js_py = make_Js_py()
-    ver = rve(matrix="SOLID")
-    sh_inc = spherical if omega == 1.0 else spheroidal(omega)
-    ver["SOLID"] = ellipsoid(shape=spherical, symmetrize=[ISO],
-                              prop={"C": Cs},
-                              visco_prop={"C": (Js_py, CREEP)},
-                              fraction=1.0 - frac)
-    ver["PORE"]  = ellipsoid(shape=sh_inc, symmetrize=[ISO],
-                              prop={"C": Ci},
-                              visco_prop={"C": (Ji_py, CREEP)},
-                              fraction=frac)
-    # Python writes set_visco_mat with the discrete relaxation matrix.
-    ver.set_visco_mat("C", visco_law(Js_py, CREEP).relaxation_mat(np.asarray(T)))
-    V = homogenize_visco(prop="C", rve=ver,
-                         time_series=np.asarray(T),
-                         scheme=_SCH[sch_name],
-                         epsrel=1.e-6, maxnb=100, verbose=False)
-    return np.asarray(V)
-"""
-
-const py_trapz_creep = py"trapz_creep"
-const py_trapz_relax = py"trapz_relax"
-const py_homogenize = py"homogenize_py"
+pyimport("sys").path.insert(0, @__DIR__)
+include(joinpath(@__DIR__, "pyjl.jl"))
+const E2 = pyimport("ellipsoid2_echoes")
+py_trapz_creep(T) = pymat(E2.trapz_creep(T))
+py_trapz_relax(T) = pymat(E2.trapz_relax(T))
+py_homogenize(omega, T, sch_name, frac) = pymat(E2.homogenize_py(omega, T, sch_name, frac))
 
 # ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -127,13 +74,14 @@ end
 const T_grid = vcat(0.0, 10 .^ range(-2, log10(50.0); length = 5))   # n=6 for clarity
 println("=== Trapezoidal (creep) and relaxation matrices of the matrix ===")
 println("  T = ", T_grid)
+const T_grid_py = np.array(pylist(T_grid))   # the grid as a numpy array, for Echoes
 
 J̃_M_jl = trapezoidal_matrix(law_M, T_grid)
-J̃_M_py = py_trapz_creep(T_grid)
+J̃_M_py = py_trapz_creep(T_grid_py)
 diff_summary("J̃_M (creep, trapezoidal)", J̃_M_jl, J̃_M_py)
 
 R̃_M_jl = volterra_inverse(J̃_M_jl; block_size = 6)
-R̃_M_py = py_trapz_relax(T_grid)
+R̃_M_py = py_trapz_relax(T_grid_py)
 diff_summary("R̃_M (relaxation = inv J̃)", R̃_M_jl, R̃_M_py)
 
 # ─── Step 2: full homogenization across schemes ────────────────────────────
@@ -163,7 +111,7 @@ for sch_name in ("MT", "DIFF", "SC", "ASC", "MAX", "PCW")
                 homogenize_alv(rve, _SCH_MAP[sch_name], :C; times = T_grid)
             end
             R̃_py_eff = try
-                py_homogenize(omega, T_grid, sch_name, f)
+                py_homogenize(omega, T_grid_py, sch_name, f)
             catch e
                 println("    $sch_name not in Python map; skipping py-side")
                 nothing
@@ -173,8 +121,7 @@ for sch_name in ("MT", "DIFF", "SC", "ASC", "MAX", "PCW")
                 @printf "  %-30s shape=%s  (Julia only)\n" label string(size(R̃_jl_eff))
             else
                 diff_summary(
-                    label, Matrix{Float64}(R̃_jl_eff),
-                    Matrix{Float64}(R̃_py_eff)
+                    label, Matrix{Float64}(R̃_jl_eff), R̃_py_eff
                 )
             end
         end

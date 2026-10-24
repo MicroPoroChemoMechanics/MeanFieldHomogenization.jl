@@ -124,7 +124,7 @@ end
     # same tensor and must give the same COD, for every backend.
     C_ti = _ti_medium()
     C_generic = Tens(get_array(C_ti))
-    @test get_array(C_generic) ≈ get_array(C_ti)
+    @test C_generic ≈ C_ti
 
     for θ in (0.0, π / 6, π / 4, π / 3)
         crack = PennyCrack(1.0; euler_angles = (θ, 0.0))

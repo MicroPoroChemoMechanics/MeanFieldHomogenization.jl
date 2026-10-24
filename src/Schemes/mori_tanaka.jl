@@ -39,7 +39,7 @@ _mt_dispatch(rve, K₀::TensND.AbstractTens{2, 3}, m::Symbol, ::Val{p}; kw...) w
 # ── 4th-order (elasticity) ──────────────────────────────────────────────────
 function _mt_4(rve, C₀::TensND.AbstractTens{4, 3}, m::Symbol, ::Val{p}; kw...) where {p}
     f_m = volume_fraction(rve, m)
-    Iref = _identity_like(C₀)
+    Iref = one(C₀)
     A_avg = f_m * Iref          # ⟨A_dil⟩, matrix carries A_dil = I
     Nsum = zero(C₀)
     for name in inclusion_phase_names(rve, m)
@@ -53,7 +53,7 @@ end
 # ── 2nd-order (conductivity) ────────────────────────────────────────────────
 function _mt_2(rve, K₀::TensND.AbstractTens{2, 3}, m::Symbol, ::Val{p}; kw...) where {p}
     f_m = volume_fraction(rve, m)
-    Iref = _identity_like(K₀)
+    Iref = one(K₀)
     A_avg = f_m * Iref
     Nsum = zero(K₀)
     for name in inclusion_phase_names(rve, m)
@@ -92,16 +92,6 @@ function _mt_terms(::CrackDensity, rve, name, p, K₀::TensND.AbstractTens{2, 3}
     return R ⋅ K₀, N
 end
 
-# ── Identity tensor matching the algebra of the property tensor ─────────────
-
-"""
-    _identity_like(P) -> AbstractTens
-
-Identity tensor of the same order/dimension as `P`. Used as the ``\\mathbb{A}^{\\mathrm{dil}}``
-weight of the matrix in average-strain schemes (Mori-Tanaka,
-self-consistent, …).
-"""
-_identity_like(C::TensND.AbstractTens{4, 3}) =
-    TensND.tens_Id4(Val(3), Val(eltype(C)))
-_identity_like(K::TensND.AbstractTens{2, 3}) =
-    TensND.tens_Id2(Val(3), Val(eltype(K)))
+# The identity of the property's algebra is `one(P)` (TensND): same order and
+# dimension, same element type. It weighs the matrix in average-strain schemes
+# (Mori-Tanaka, self-consistent, …).

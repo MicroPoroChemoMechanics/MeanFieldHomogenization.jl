@@ -56,14 +56,8 @@
 Acoustic (Christoffel) tensor ``K_{ij}(\\underline{\\xi}) = \\xi_k\\,C_{kijl}\\,\\xi_l`` of a
 stiffness given as a `3×3×3×3` array.
 """
-function _christoffel(C, ξ)
-    T = promote_type(eltype(C), eltype(ξ))
-    return SMatrix{3, 3, T}(
-        @inbounds [
-            sum(ξ[k] * C[k, i, j, l] * ξ[l] for k in 1:3, l in 1:3)
-                for i in 1:3, j in 1:3
-        ]
-    )
+_christoffel(C, ξ) = _sfill(Val((3, 3))) do i, j
+    sum(ξ[k] * C[k, i, j, l] * ξ[l] for k in 1:3, l in 1:3)
 end
 
 """
@@ -140,8 +134,11 @@ Green operator is obtained by differentiating this very function, through the
 `Tens` wrapper.
 """
 function green_function_aniso(C₀::TensND.AbstractTens{4, 3}, x::AbstractVector; nodes::Int = 32)
-    return TensND.Tens(_green_function_aniso(_C_array(C₀), x, nodes))
+    return TensND.Tens(_green_function_aniso(SArray{Tuple{3, 3, 3, 3}}(TensND.components_canon(C₀)), x, nodes))
 end
+
+# Canonical components of a stiffness as a static array: read 81 × nodes times
+# per evaluation, they stay on the stack.
 
 function _green_function_aniso(C, x::AbstractVector, nodes::Int)
     T = promote_type(eltype(C), eltype(x))
@@ -186,11 +183,13 @@ error against a 128-node reference is `1.4e-2` at 16 nodes, `8e-4` at 24,
 `1.7e-5` at 32 and `1.5e-12` at 64.
 
 The default of 32 sits well below the truncation error of the multipole
-expansion that consumes it, at about a ninth of the cost of 64 (≈ 1.5 ms versus
-13 ms per interaction tensor). Raise it for a strongly anisotropic reference.
+expansion that consumes it, at half the cost of 64 (the cost is linear in the
+node count: about 50 µs per interaction tensor at 32 nodes on a desktop
+machine). Raise it for a strongly anisotropic reference.
 
 Considerably more expensive than the isotropic closed form
-([`green_operator_iso`](@ref)) — microseconds against milliseconds — which is
+([`green_operator_iso`](@ref)) — tens of microseconds against a fraction of
+one — which is
 why the dispatcher [`green_operator`](@ref) prefers the latter whenever the
 reference is isotropic.
 """
@@ -199,23 +198,18 @@ green_operator_aniso(
 ) = TensND.Tens(_green_operator_aniso(C₀, x, nodes))
 
 function _green_operator_aniso(C₀::TensND.AbstractTens{4, 3}, x::AbstractVector, nodes::Int)
-    C = _C_array(C₀)
-    # H[(i,j), k, l] = ∂²G_ij/∂x_k∂x_l, obtained as a jacobian of a jacobian.
-    f = y -> vec(Matrix(_green_function_aniso(C, y, nodes)))
-    J2 = ForwardDiff.jacobian(y -> vec(ForwardDiff.jacobian(f, y)), collect(x))
-    T = eltype(J2)
-    H = Array{T, 4}(undef, 3, 3, 3, 3)
-    @inbounds for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        # `f` is column-major over (i, j); the inner jacobian appends k, the
-        # outer one appends l.
-        H[i, j, k, l] = J2[(k - 1) * 9 + (j - 1) * 3 + i, l]
+    C = SArray{Tuple{3, 3, 3, 3}}(TensND.components_canon(C₀))
+    # H[(i,j), k, l] = ∂²G_ij/∂x_k∂x_l, obtained as a jacobian of a jacobian,
+    # static throughout: one chunk of 3 per level, no heap array.
+    f = y -> vec(_green_function_aniso(C, y, nodes))
+    J2 = ForwardDiff.jacobian(y -> vec(ForwardDiff.jacobian(f, y)), SVector{3}(x[1], x[2], x[3]))
+    # `f` is column-major over (i, j), the inner jacobian appends k and the
+    # outer one l: row i + 3(j − 1) + 9(k − 1), column l, the column-major
+    # layout of a 3×3×3×3 array.
+    H = reshape(J2, Size(3, 3, 3, 3))
+    return _sfill(Val((3, 3, 3, 3))) do i, j, k, l
+        -(H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
     end
-    return SArray{Tuple{3, 3, 3, 3}}(
-        @inbounds [
-            -(H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
-                for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        ]
-    )
 end
 
 """
@@ -246,7 +240,7 @@ green_operator_aniso(K₀::TensND.AbstractTens{2, 3}, x::AbstractVector) =
     TensND.Tens(_green_operator_aniso(K₀, x))
 
 _green_operator_aniso(K₀::TensND.AbstractTens{2, 3}, x::AbstractVector) =
-    _green_operator_aniso_order2(TensND.get_array(K₀), x, 3)
+    _green_operator_aniso_order2(TensND.components_canon(K₀), x, 3)
 
 """
     green_operator_aniso(K₀::AbstractTens{2,2}, x) -> Tens{2,2}
@@ -265,7 +259,7 @@ green_operator_aniso(K₀::TensND.AbstractTens{2, 2}, x::AbstractVector) =
     TensND.Tens(_green_operator_aniso(K₀, x))
 
 _green_operator_aniso(K₀::TensND.AbstractTens{2, 2}, x::AbstractVector) =
-    _green_operator_aniso_order2(TensND.get_array(K₀), x, 2)
+    _green_operator_aniso_order2(TensND.components_canon(K₀), x, 2)
 
 function _green_operator_aniso_order2(K, x::AbstractVector, d::Int)
     Kinv = inv(Matrix(K))

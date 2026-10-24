@@ -3,7 +3,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
-using SymPy   # top level on purpose: `@syms` below is expanded before any
+using SymPyPythonCall   # top level on purpose: `@syms` below is expanded before any
 # `using` nested in a @testset body would have run.
 
 # =============================================================================
@@ -23,6 +23,14 @@ using SymPy   # top level on purpose: `@syms` below is expanded before any
     # Analytical: α₁ = (3κ₀ + 4μ₀)/(3κ₁ + 4μ₀) → dα/dκ₁ = -3(3κ₀+4μ₀)/(3κ₁+4μ₀)²
     d_analytic = -3 * (3κ₀ + 4μ₀) / (3 * κ₁ + 4μ₀)^2
     @test d_auto ≈ d_analytic rtol = 1.0e-10
+end
+
+@testset "LayeredSphere — rebuilt from its fields" begin
+    # The contract `Schemes._replace_geom_field` relies on: the positional
+    # constructor, called with the fields, gives back the same object.
+    rebuilt(x) = typeof(x).name.wrapper(getfield.(Ref(x), fieldnames(typeof(x)))...)
+    s = LayeredSphere((0.5, 1.0), (TensISO{3}(180.0, 60.0), TensISO{3}(15.0, 4.0)))
+    @test rebuilt(s) === s
 end
 
 @testset "LayeredSphere — ForwardDiff through conductivity concentration" begin
@@ -58,7 +66,7 @@ end
 end
 
 @testset "LayeredSphere — pointwise field with a symbolic radius" begin
-    # A symbolic radius cannot be located by comparison (`SymPy.Sym` is not
+    # A symbolic radius cannot be located by comparison (`SymPyPythonCall.Sym` is not
     # even `<: Real`), so the region has to be named.  Refusing with a message
     # that says so is the contract; the reconstruction itself stays symbolic.
     C₀ = TensISO{3}(3 * 100.0, 2 * 70.0)
@@ -67,7 +75,7 @@ end
     sphere = LayeredSphere((1.0, 2.0), (C₁, C₂))
     sol = LayeredSphereFields(sphere, C₀)
 
-    SymPy.@syms r_sym::positive
+    SymPyPythonCall.@syms r_sym::positive
     @test_throws ArgumentError local_gradient_gradient_concentration(sol, r_sym, 0.4, 0.9)
     @test_throws ArgumentError get_layer(sphere, r_sym)
 

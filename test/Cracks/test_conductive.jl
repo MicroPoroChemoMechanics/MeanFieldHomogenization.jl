@@ -73,6 +73,9 @@ end
     @test _g(cod_tensor(flow, C₀)) ≈ _g(cod_tensor(plain, C₀)) rtol = 1.0e-14
     @test _g(inverse_property_contribution(flow, C₀)) ≈ _g(inverse_property_contribution(plain, C₀)) rtol = 1.0e-14
     @test MeanFieldHomogenization.Cracks.crack_density_factor(flow) ≈ 4π / 3
+    # In the crack's number type, not rounded to Float64.
+    @test MeanFieldHomogenization.Cracks.crack_density_factor(PennyCrack(big"1.0")) == 4 * big(π) / 3
+    @test MeanFieldHomogenization.Cracks.crack_density_factor(RibbonCrack(big"1.0")) == big(π)
 end
 
 @testset "conductive crack — guards" begin

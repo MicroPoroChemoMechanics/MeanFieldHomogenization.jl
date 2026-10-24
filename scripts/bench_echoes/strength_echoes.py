@@ -1,0 +1,134 @@
+"""The Echoes side of the quasi-brittle strength model (Pichler & Hellmich, 2011).
+
+`py_strength_reference(wc, alpha, sc, omega, ntheta, tiny)` returns
+`[valid, k, mu, E, fc]` of the mortar: a self-consistent hydrate foam of `ntheta`
+needle families (aspect `omega`) averaged about e3, a Mori-Tanaka cement paste
+and a Mori-Tanaka mortar, and the strength from the chain-rule derivative with
+respect to the shear modulus of the theta = 0 family. Water and air are an exact
+zero (`tiny = 0`, as in Echoes' own script) or a small isotropic stiffness `tiny`
+(the regularization of `scripts/common/quasibrittle_strength.jl`, for a
+like-for-like comparison).
+
+Imported by `benchmark_strength.jl` and `benchmark_schemes_speed.jl`; run on its
+own, it prints the w/c = 0.5 sweep and its timings:
+
+    python3 -I scripts/bench_echoes/strength_echoes.py
+
+with `python3` the interpreter of the environment where echoes is installed.
+"""
+import math, numpy as np
+from echoes import (rve, ellipsoid, spheroidal, spherical, stiff_kmu,
+                    homogenize, homogenize_derivative, tensor, tZ4,
+                    Enu_from_kmu, ISO, TI, SC, MT, NUMINT)
+
+rho_w = 1.; rho_clin = 3.15; d_clin = rho_clin / rho_w
+rho_hyd = 2.073; d_hyd = rho_hyd / rho_w
+rho_san = 2.648; d_san = rho_san / rho_w
+
+C_clin = stiff_kmu(116.7, 53.8)
+C_w   = tZ4
+C_hyd = stiff_kmu(18.7, 11.8)
+C_air = tZ4
+C_san = stiff_kmu(37.8, 44.3)
+
+f_clin = lambda wc, alpha: (1 - alpha) / (1 + d_clin * wc)
+f_w    = lambda wc, alpha: d_clin * (wc - 0.42 * alpha) / (1 + d_clin * wc)
+f_hyd  = lambda wc, alpha: 1.42 * d_clin / d_hyd * alpha / (1 + d_clin * wc)
+fh_san = lambda wc, sc: sc / d_san / (1. / d_clin + wc + sc / d_san)
+alphamax = lambda wc: min(1., wc / 0.42)
+
+def disc_theta(ntheta):
+    return ([0.] + [math.pi / 2 * (i - 0.5) / (ntheta - 1) for i in range(1, ntheta)],
+            [math.pi / 2 * i / (ntheta - 1) for i in range(ntheta)],
+            [math.pi / 2 * (i + 0.5) / (ntheta - 1) for i in range(0, ntheta - 1)] + [math.pi / 2])
+
+def py_strength_reference(wc, alpha=-1., sc=0., omega=10000., ntheta=20, tiny=0.):
+    C_w = C_air = tZ4 if tiny == 0. else stiff_kmu(tiny, tiny)
+    if alpha < 0.: alpha = alphamax(wc)
+    if alpha == 0.: return [True, 0., 0., 0., 0.]
+    fclin = f_clin(wc, alpha)
+    fw    = f_w(wc, alpha); ftw = fw / (1 - fclin)
+    if fw < 0.: return [False, 0., 0., 0., 0.]
+    fhyd  = f_hyd(wc, alpha); fthyd = fhyd / (1 - fclin)
+    fair  = (1 - fclin - fw - fhyd); ftair = fair / (1 - fclin)
+    fhsan = fh_san(wc, sc)
+
+    rve_hf = rve()
+    rve_hf['HYD'] = ellipsoid(shape=spheroidal(omega), symmetrize=[ISO],
+                               fraction=fthyd, prop={'C': C_hyd})
+    rve_hf['W']   = ellipsoid(shape=spherical, fraction=ftw,   prop={'C': C_w})
+    rve_hf['AIR'] = ellipsoid(shape=spherical, fraction=ftair, prop={'C': C_air})
+    C_hf = homogenize(prop='C', rve=rve_hf, scheme=SC, verbose=False,
+                      epsrel=1.e-6, maxnb=100)
+    if math.isnan(C_hf.k) or math.isnan(C_hf.mu):
+        return [False, 0., 0., 0., 0.]
+
+    thm, theta, thp = disc_theta(ntheta)
+    rve2_hf = rve()
+    for i in range(ntheta):
+        rve2_hf['HYD' + str(i)] = ellipsoid(
+            shape=spheroidal(omega, theta[i]), symmetrize=[TI],
+            fraction=fthyd * (math.cos(thm[i]) - math.cos(thp[i])),
+            prop={'C': C_hyd})
+    rve2_hf['W']   = ellipsoid(shape=spherical, fraction=ftw,   prop={'C': C_w})
+    rve2_hf['AIR'] = ellipsoid(shape=spherical, fraction=ftair, prop={'C': C_air})
+    rve2_hf.set_prop('C', C_hf)
+    homogenize(prop='C', rve=rve2_hf, scheme=SC, verbose=False,
+               epsrel=1.e-3, maxnb=1)
+    rve2_hf.set_param_eshelby(algo=NUMINT, epsroots=0., epsabs=1.e-3,
+                              epsrel=1.e-3, maxnb=100000)
+    dC_hf_dmutheta = [
+        homogenize_derivative(prop='C', rve=rve2_hf, scheme=SC,
+                              phase='HYD' + str(i), index=1, sym=TI,
+                              verbose=False).paramsym(sym=TI)
+        for i in [0]
+    ]
+
+    rve_cp = rve(matrix='HF')
+    rve_cp['HF']   = ellipsoid(shape=spherical, fraction=1 - fclin,
+                                prop={'C': tensor(C_hf.array, TI)})
+    rve_cp['CLIN'] = ellipsoid(shape=spherical, fraction=fclin, prop={'C': C_clin})
+    C_cp = homogenize(prop='C', rve=rve_cp, scheme=MT, verbose=False)
+    rve_cp.set_param_eshelby(algo=NUMINT, epsroots=0., epsabs=1.e-3,
+                              epsrel=1.e-3, maxnb=100000)
+    dC_cp_dC_hf = [
+        homogenize_derivative(prop='C', rve=rve_cp, scheme=MT, phase='HF',
+                              index=i, verbose=False).paramsym(sym=TI)
+        for i in range(5)
+    ]
+
+    rve_mo = rve(matrix='CP')
+    rve_mo['CP']  = ellipsoid(shape=spherical, fraction=1 - fhsan,
+                               prop={'C': tensor(C_cp.array, TI)})
+    rve_mo['SAN'] = ellipsoid(shape=spherical, fraction=fhsan, prop={'C': C_san})
+    C_mo = homogenize(prop='C', rve=rve_mo, scheme=MT, verbose=False)
+    rve_mo.set_param_eshelby(algo=NUMINT, epsroots=0., epsabs=1.e-3,
+                              epsrel=1.e-3, maxnb=100000)
+    dC_mo_dC_cp = [
+        homogenize_derivative(prop='C', rve=rve_mo, scheme=MT, phase='CP',
+                              index=i, verbose=False).array
+        for i in range(5)
+    ]
+
+    Shom = np.linalg.inv(C_mo.array)
+    fc = []
+    for itheta in [0]:
+        dC = sum([dC_mo_dC_cp[a] * dC_cp_dC_hf[b][a] * dC_hf_dmutheta[itheta][b]
+                  for b in range(5) for a in range(5)], 0)
+        M = Shom.dot(dC.dot(Shom))
+        f = rve2_hf['HYD' + str(itheta)].fraction * (1 - fclin) * (1 - fhsan)
+        fc.append(1. / math.sqrt(M[2, 2] * 2 * (C_hyd.mu ** 2) / f))
+    minfc = min(fc)
+    mfc = 0. if math.isnan(minfc) else minfc
+    k = float(C_mo.k); mu = float(C_mo.mu)
+    E, _ = Enu_from_kmu(k, mu)
+    return [True, k, mu, float(E), float(mfc)]
+
+
+if __name__ == "__main__":
+    import timeit
+    for alpha in (0.05, 0.24, 0.43, 0.62, 0.81, 1.0 - 1e-9):
+        t0 = timeit.default_timer()
+        r = py_strength_reference(0.5, alpha, 0., 10000., 20)
+        print(f"w/c=0.50 alpha={alpha:.3f}  k={r[1]:.4f}  mu={r[2]:.4f}  E={r[3]:.4f}  "
+              f"fc={r[4]:.4f}  ({timeit.default_timer() - t0:.2f} s)", flush=True)

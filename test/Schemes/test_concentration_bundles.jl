@@ -40,7 +40,7 @@ const _KM_TRI_B = [
 ]
 
 @testset "concentration_and_contribution / concentration_and_flux_average — bitwise contract" begin
-    C_tri = TensND.inv_KM(_KM_TRI_B, CanonicalBasis{3, Float64}())
+    C_tri = TensND.from_mandel(_KM_TRI_B, CanonicalBasis{3, Float64}())
     C_iso = TensISO{3}(3 * 20.0, 2 * 12.0)
     C_i = TensISO{3}(3 * 80.0, 2 * 50.0)
     C_ti = TensTI{4}(20.0, 30.0, 4.0, 5.0, 8.0, (0.0, 0.0, 1.0))
@@ -140,7 +140,7 @@ const _KM_TRI_B = [
 end
 
 @testset "inverse_and_property_contribution — bitwise contract" begin
-    C_tri = TensND.inv_KM(_KM_TRI_B, CanonicalBasis{3, Float64}())
+    C_tri = TensND.from_mandel(_KM_TRI_B, CanonicalBasis{3, Float64}())
     C_iso = TensISO{3}(3 * 24.0, 2 * 12.0)
 
     @testset "elastic — $nm" for (nm, crack, C₀) in [
@@ -287,7 +287,7 @@ end
     # Invisible on an isotropic matrix (`isotropify` is then a no-op to
     # ~1e-16), which is why every pre-existing `symmetrize` test missed it.
     # These cases use an ANISOTROPIC matrix, where the projection really bites.
-    C_tri = TensND.inv_KM(_KM_TRI_B, CanonicalBasis{3, Float64}())
+    C_tri = TensND.from_mandel(_KM_TRI_B, CanonicalBasis{3, Float64}())
     sym = MeanFieldHomogenization.Schemes.IsoSymmetrize()
     C_proj = MeanFieldHomogenization.Schemes._project_matrix(C_tri, sym)
     @test maximum(abs, _vals(C_proj) .- _vals(C_tri)) > 1.0        # really differs
@@ -323,7 +323,9 @@ end
         @test _vals(Hb) == _vals(H)
         @test _vals(Nb) == _vals(N)
 
-        @test all(isfinite, _vals(homogenize(rve, MoriTanaka(), :C)))
+        # Out of the domain of the average, which `homogenize` reports.
+        C_mt = @test_logs (:warn, r"Phase :CR is averaged over every rotation") homogenize(rve, MoriTanaka(), :C)
+        @test all(isfinite, _vals(C_mt))
     end
 
     @testset "solid phase, 2nd order" begin

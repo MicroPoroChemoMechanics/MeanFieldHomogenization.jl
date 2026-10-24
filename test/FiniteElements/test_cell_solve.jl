@@ -140,7 +140,7 @@ end
         μ, ν = 1.0, 0.3
         se = FE.fe_cell_space(_B, g.grid, 2, 3)
         e = FE._cell_elastic_concentration(_B, se, _iso_C(μ, ν), μ, ν, V)
-        A = TensND.Tens(TensND.inv_KM(e.A))
+        A = TensND.Tens(TensND.from_mandel(e.A))
         @test cubic_residual(A) < 5.0e-3
         # And it is *not* isotropic: that is the third constant the literature's
         # two-constant fits discard. The anisotropy is read on the cubic

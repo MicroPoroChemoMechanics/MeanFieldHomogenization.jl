@@ -26,7 +26,7 @@ Isotropic `N`-layer spherical composite inclusion (core + concentric
 shells) embedded in an infinite matrix.  Type parameters:
 
 - `T` — element type of the radii (`Float64`, `BigFloat`,
-  `ForwardDiff.Dual`, `SymPy.Sym`, `Symbolics.Num`, …).
+  `ForwardDiff.Dual`, `SymPyPythonCall.Sym`, `Symbolics.Num`, …).
 - `N` — number of layers (``N \\ge 1``).
 - `Cs` — concrete type of the `moduli` NTuple.
 - `Is` — concrete type of the `interfaces` NTuple.
@@ -45,7 +45,16 @@ struct LayeredSphere{T <: Number, N, Cs, Is} <: MFH_Core.AbstractLayeredInclusio
     radii::NTuple{N, T}
     moduli::Cs
     interfaces::Is
+    LayeredSphere{T, N, Cs, Is}(radii, moduli, interfaces) where {T <: Number, N, Cs, Is} =
+        new{T, N, Cs, Is}(radii, moduli, interfaces)
 end
+
+# Positional form, for `Schemes._replace_geom_field`: written out because the
+# generated one leaves `T` unbound for the empty tuple (Aqua, Julia 1.14).
+LayeredSphere(
+    radii::Tuple{T, Vararg{T, M}}, moduli::Cs, interfaces::Is
+) where {T <: Number, M, Cs, Is} =
+    LayeredSphere{T, M + 1, Cs, Is}(radii, moduli, interfaces)
 
 # `Tuple{T, Vararg{T, M}}` rather than `NTuple{N, T}`: the latter also matches
 # the empty tuple, where `T` is bound by nothing at all — a signature Julia
@@ -55,7 +64,7 @@ end
 function LayeredSphere(
         radii::Tuple{T, Vararg{T, M}},
         moduli::Cs;
-        interfaces::Is = ntuple(_ -> PerfectInterface{MFH_Core._floatlike(T)}(), Val(M + 1)),
+        interfaces::Is = ntuple(_ -> PerfectInterface{TensND.float_like(T)}(), Val(M + 1)),
     ) where {T <: Number, M, Cs, Is}
     N = M + 1
     # Validate ascending radii for Real types (skip for symbolic).
@@ -71,7 +80,7 @@ function LayeredSphere(
             )
         end
     end
-    Tf = MFH_Core._floatlike(T)
+    Tf = TensND.float_like(T)
     radii_f = NTuple{N, Tf}(Tf.(radii))
     return LayeredSphere{Tf, N, typeof(moduli), typeof(interfaces)}(
         radii_f, moduli, interfaces
@@ -152,7 +161,7 @@ outer_radius(sphere::LayeredSphere) = sphere.radii[end]
 MFH_Core.dimension(::LayeredSphere) = 3
 
 MFH_Core.inclusion_basis(::LayeredSphere{T}) where {T} =
-    TensND.CanonicalBasis{3, MFH_Core._basis_eltype(T)}()
+    TensND.CanonicalBasis{3, TensND.canonical_eltype(T)}()
 
 struct SphericalLayered end
 MFH_Core.shape_trait(::LayeredSphere) = SphericalLayered

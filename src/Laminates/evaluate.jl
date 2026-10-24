@@ -9,11 +9,11 @@
 # ── Gathering the cell into the layer frame ─────────────────────────────────
 
 # Kelvin-Mandel components of a 4th-order layer property **in the laminate
-# frame**. `KM(C, basis)` is the general route and the correct one: a layer
+# frame**. `mandel(C, basis)` is the general route and the correct one: a layer
 # property may be stored in any basis of its own (a `TensTI` about its own
 # axis, a `TensRotated`, …), so its canonical components are not what the
 # kernel needs. When the laminate frame is canonical, this is a no-op.
-@inline _layer_km4(C, basis) = SMatrix{6, 6}(TensND.KM(C, basis))
+@inline _layer_km4(C, basis) = SMatrix{6, 6}(TensND.mandel(C, basis))
 
 # Components of a 2nd-order layer property in the laminate frame. Both bases
 # used by a laminate are orthonormal, so co- and contravariant components
@@ -73,28 +73,10 @@ _frame_eltype(basis::TensND.AbstractBasis) = eltype(basis)
 # is exactly TI about that normal. Every interface type is in-plane
 # isotropic, so none of them breaks it.
 
-@inline function _parallel(a, b)
-    T = promote_type(eltype(a), eltype(b))
-    # `is_hard_numeric`, not `T <: Real`: `Symbolics.Num` subtypes `Real` and
-    # answers no comparison, so it belongs on the symbolic side.
-    is_hard_numeric(T) || return _parallel_exact(a, b)
-    da = sqrt(sum(x -> x^2, a))
-    db = sqrt(sum(x -> x^2, b))
-    (da > 0 && db > 0) || return false
-    return isapprox(abs(sum(a .* b)), da * db; rtol = 1.0e-12, atol = 1.0e-14)
-end
-
-# Symbolic axes: `‖a‖‖b‖ − |a·b| = 0` is a question no symbolic backend answers
-# reliably (it needs the sign of a root of an expression), so collinearity is
-# decided STRUCTURALLY — the two axes are the same expression, up to an overall
-# sign. Conservative by construction: never a false positive, so a laminate that
-# *is* transversely isotropic may still be returned as a generic `Tens`, which
-# is lossless. Without this a symbolic `TensTI` layer could never be recognized
-# as coaxial with the laminate normal, even when written with the same symbols.
-@inline function _parallel_exact(a, b)
-    all(i -> isequal(a[i], b[i]), eachindex(a)) && return true
-    return all(i -> isequal(a[i], -b[i]), eachindex(a))
-end
+# TensND's `isparallel`, at the tolerance this rule always had (1e-12 relative on
+# |a·b|, about 2e-12 on its square): a tolerance on comparable numbers, an exact
+# structural test on symbolic ones, never a false positive.
+_parallel(a, b) = TensND.isparallel(a, b; rtol = 2.0e-12)
 
 _ti_about(::TensND.TensISO{4, 3}, n) = true
 # `TensTI{4,T,5}` ONLY — the major-symmetric Walpole form. The 6- and
@@ -171,7 +153,7 @@ which is correct: the geometry itself is floating point.
 @inline _frame_axis(::TensND.CanonicalBasis{3}, ::Type{Tel}) where {Tel} =
     (zero(Tel), zero(Tel), one(Tel))
 @inline function _frame_axis(basis::TensND.AbstractBasis{3}, ::Type{Tel}) where {Tel}
-    n = MFH_Core._basis_col(basis, 3)
+    n = MFH_Core._basis_axis(basis, 3)
     return ntuple(i -> convert(Tel, n[i]), 3)
 end
 
@@ -190,11 +172,11 @@ into a TensND tensor, picking the tightest **exact** type:
 """
 function _wrap4(lam::Laminate, prop::Symbol, M6::AbstractMatrix)
     if _all_ti(lam, prop, Val(4))
-        ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆ = TensND.ti_params_from_KM(M6)
+        ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆ = TensND.ti_params_from_mandel(M6)
         n = _frame_axis(lam.basis, eltype(M6))
         return TensND.TensTI{4}(ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆, n)
     end
-    return TensND.inv_KM(Matrix(M6), lam.basis)
+    return TensND.from_mandel(Matrix(M6), lam.basis)
 end
 
 """
@@ -205,10 +187,10 @@ layer normal but **not major-symmetric** — every concentration tensor, ``\\mat
 first of all: ``\\mathbb{A}_i = \\mathbb{I} + \\mathbb{P}_i:(\\mathbb{C}^{\\mathrm{hom}} - \\mathbb{C}_i)`` is a product of major-symmetric
 tensors and a product of two such is not one.
 
-`_wrap4` cannot be reused because `TensND.ti_params_from_KM` *projects* onto
+`_wrap4` cannot be reused because `TensND.ti_params_from_mandel` *projects* onto
 the 5-coefficient major-symmetric Walpole span: fed a concentration tensor it
 would replace ``\\ell_3`` and ``\\ell_4`` by their half-sum and report the result as exact.
-The read-off here is `TensND.ti8_params_from_KM`, which is the identity on the
+The read-off here is `TensND.ti8_params_from_mandel`, which is the identity on the
 whole axially-invariant subspace.
 
 ``\\ell_7`` and ``\\ell_8``, the antisymmetric azimuthal couplings, are **structurally** zero
@@ -225,11 +207,11 @@ magnitude larger than the six coefficients that actually describe the tensor.
 """
 function _wrap4_general(lam::Laminate, prop::Symbol, M6::AbstractMatrix)
     if _all_ti(lam, prop, Val(4))
-        ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆, _, _ = TensND.ti8_params_from_KM(Matrix(M6))
+        ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆, _, _ = TensND.ti8_params_from_mandel(Matrix(M6))
         n = _frame_axis(lam.basis, eltype(M6))
         return TensND.TensTI{4}(ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆, n)
     end
-    return TensND.inv_KM(Matrix(M6), lam.basis)
+    return TensND.from_mandel(Matrix(M6), lam.basis)
 end
 
 """
@@ -241,8 +223,7 @@ about the normal, a generic `Tens{2,3}` otherwise.
 """
 function _wrap2(lam::Laminate, prop::Symbol, M3::AbstractMatrix)
     if _all_ti(lam, prop, Val(2))
-        a = (M3[1, 1] + M3[2, 2]) / 2
-        b = M3[3, 3]
+        a, b, _ = TensND.ti2_params_from_matrix(M3)
         return TensND.TensTI{2}(a, b, _frame_axis(lam.basis, eltype(M3)))
     end
     return TensND.Tens(Matrix(M3), lam.basis)
@@ -313,8 +294,8 @@ end
 
 function _bounds_dispatch(lam::Laminate, ::Reuss, ::TensND.AbstractTens{4, 3}, ::Val{p}) where {p}
     mats, fs, _ = _gather(lam, p, Val(4))
-    S = sum(fs[i] * MFH_Core._inv_km6(mats[i]) for i in eachindex(mats))
-    return _wrap4(lam, p, MFH_Core._inv_km6(S))
+    S = sum(fs[i] * TensND.mandel_inv_schur(mats[i]) for i in eachindex(mats))
+    return _wrap4(lam, p, TensND.mandel_inv_schur(S))
 end
 
 function _bounds_dispatch(lam::Laminate, ::Reuss, ::TensND.AbstractTens{2, 3}, ::Val{p}) where {p}
@@ -344,8 +325,8 @@ function laminate_hill(lam::Laminate, name::Symbol; property::Symbol = :C)
     P = MFH_Core.flat_hill(C6)
     Q = C6 - C6 * P * C6
     return (
-        TensND.inv_KM(Matrix(P), lam.basis),
-        TensND.inv_KM(Matrix(Q), lam.basis),
+        TensND.from_mandel(Matrix(P), lam.basis),
+        TensND.from_mandel(Matrix(Q), lam.basis),
     )
 end
 
@@ -427,7 +408,7 @@ _wrap_km(lam::Laminate, property::Symbol, M::StaticMatrix{3, 3}) = _wrap2(lam, p
 #  Each method is one call to `_concentration_setup` plus one kernel from
 #  `Core/laminate_algebra.jl`, which inverts by cofactors and never by LU — so
 #  every one of them is exact under `ForwardDiff.Dual` and evaluable on
-#  `SymPy.Sym` / `Symbolics.Num`.
+#  `SymPyPythonCall.Sym` / `Symbolics.Num`.
 #
 #  Sum rules: `Σ_i f_i 𝔸_i = 𝕀`, `Σ_i f_i 𝔹_i = 𝕀`, `Σ_i f_i ℂ_i:𝔸_i = ℂ^{hom}`
 #  and `Σ_i f_i 𝔸_i:𝕊^{hom} = 𝕊^{hom}`. They hold for perfect and for dual
@@ -533,7 +514,7 @@ function interface_jump(lam::Laminate, k::Integer, E; property::Symbol = :C)
     jump_local = _interface_jump_local(itf, t)
     # back to canonical components — `_frame_matrix`, not `_basis_matrix`:
     # the latter pins the frame to `Float64` and `Float64(::Sym)` throws.
-    R = MFH_Core._frame_matrix(lam.basis)
+    R = Matrix(TensND.vecbasis(lam.basis, :cov))
     return ntuple(i -> sum(R[i, j] * jump_local[j] for j in 1:3), 3)
 end
 

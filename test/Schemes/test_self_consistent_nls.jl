@@ -14,8 +14,9 @@
 #      cannot be "unloaded" mid-process.
 #   5. ForwardDiff sensitivity through a SciML algorithm (inclusion
 #      modulus, volume fraction, matrix modulus) matches the built-in
-#      solvers and a central finite difference — this exercises the
-#      implicit-function-theorem lift in the extension.
+#      Newton solver, whose derivatives come from converging the partials
+#      themselves — a different algorithm from the implicit-function-theorem
+#      lift of the extension. Nested duals (a second derivative) included.
 #   6. Regression: differentiating w.r.t. the MATRIX'S OWN modulus on a
 #      non-spherical, `IsoSymmetrize`d RVE (the strength-criterion
 #      recipe of `docs/src/tutorials/strength_criteria.md`) through a SciML algorithm.
@@ -121,50 +122,33 @@ end
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
     )
-    idxC = C -> get_array(C)[1, 1, 1, 1]
-
-    # Central finite-difference ground truth (independent of any solver).
-    function f_modulus(K_I)
-        r = RVE()
-        add_phase!(r, :SOLID, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
-        add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(K_I, 20.0)); fraction = 0.3)
-        return idxC(homogenize(r, SelfConsistent()))
-    end
-    function f_fraction(f)
-        r = RVE()
-        add_phase!(r, :SOLID, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, 10.0)); fraction = :rest)
-        add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0)); fraction = f)
-        return idxC(homogenize(r, SelfConsistent()))
-    end
-    function f_matrix_shear(μ_M)
-        r = RVE()
-        add_phase!(r, :SOLID, Ellipsoid(1.0), Dict(:C => TensISO{3}(30.0, μ_M)); fraction = :rest)
-        add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0)); fraction = 0.3)
-        return idxC(homogenize(r, SelfConsistent()))
-    end
-    h = 1.0e-5
-    d_fd_modulus = (f_modulus(60.0 + h) - f_modulus(60.0 - h)) / (2h)
-    d_fd_fraction = (f_fraction(0.3 + h) - f_fraction(0.3 - h)) / (2h)
-    d_fd_matrix = (f_matrix_shear(10.0 + h) - f_matrix_shear(10.0 - h)) / (2h)
+    idxC = C -> components_canon(C)[1, 1, 1, 1]
+    tight = (; abstol = 1.0e-13, reltol = 1.0e-13)
+    newton = SelfConsistent(; algorithm = NewtonDefault(), tight...)
+    params = (property(:I, :C, :bulk), amount(:I), property(:M, :C, :shear))
+    refs = [derivative(rve, newton, q; indexer = idxC) for q in params]
 
     for algo in (NewtonRaphson(), TrustRegion())
-        sc = SelfConsistent(; algorithm = algo)
-        d_modulus = derivative(rve, sc, property(:I, :C, :bulk); indexer = idxC)
-        d_fraction = derivative(rve, sc, amount(:I); indexer = idxC)
-        d_matrix = derivative(rve, sc, property(:M, :C, :shear); indexer = idxC)
-
-        @test isapprox(d_modulus, d_fd_modulus; rtol = 1.0e-5)
-        @test isapprox(d_fraction, d_fd_fraction; rtol = 1.0e-5)
-        @test isapprox(d_matrix, d_fd_matrix; rtol = 1.0e-5)
+        sc = SelfConsistent(; algorithm = algo, tight...)
+        for (q, ref) in zip(params, refs)
+            @test isapprox(derivative(rve, sc, q; indexer = idxC), ref; rtol = 1.0e-8)
+        end
     end
 
-    # Cross-check against the built-in Picard/Newton derivatives too.
-    d_picard = derivative(rve, SelfConsistent(), property(:I, :C, :bulk); indexer = idxC)
-    d_tr = derivative(
-        rve, SelfConsistent(; algorithm = TrustRegion()),
-        property(:I, :C, :bulk); indexer = idxC
-    )
-    @test isapprox(d_tr, d_picard; rtol = 1.0e-5)
+    # Second derivative in the inclusion's bulk modulus: nested duals, whose
+    # cross terms the primal Jacobian of the lift does not give on its own.
+    function c1111(k_I, scheme)
+        r = RVE(; T = typeof(k_I))
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)); fraction = :rest)
+        add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness(k_I, 20.0)); fraction = 0.3)
+        return idxC(homogenize(r, scheme, :C))
+    end
+    d2(scheme) = ForwardDiff.derivative(k -> ForwardDiff.derivative(k′ -> c1111(k′, scheme), k), 20.0)
+    d2_ref = d2(newton)
+    @test !iszero(d2_ref)
+    for algo in (NewtonRaphson(), TrustRegion())
+        @test isapprox(d2(SelfConsistent(; algorithm = algo, tight...)), d2_ref; rtol = 1.0e-7)
+    end
 end
 
 @testset "SelfConsistent — NonlinearSolve, non-spherical IsoSymmetrize regression" begin

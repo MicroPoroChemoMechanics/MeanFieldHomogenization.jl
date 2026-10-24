@@ -1,6 +1,6 @@
 name = "MeanFieldHomogenization"
 uuid = "c1e5f8a3-7b2d-4a6c-9e4f-3b8a2c5d7e9f"
-version = "0.18.1"
+version = "0.19.0"
 authors = ["Jean-François Barthélémy <jean-francois.barthelemy@cerema.fr>"]
 
 [deps]
@@ -35,7 +35,7 @@ Lux = "b2108857-7c20-44ae-9111-449ecde12c47"
 MittagLeffler = "9c257583-4f8f-53fd-abd9-c69d5080dd54"
 NonlinearSolve = "8913a72c-1f9b-4ce2-8d82-65094dcecaec"
 Optimisers = "3bd65402-5787-11e9-1adc-39752487f4e2"
-SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
+SymPyPythonCall = "bc8888f7-b21e-4b7c-a06a-5d9c9496438c"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
@@ -47,7 +47,7 @@ MeanFieldHomogenizationGridapExt = ["Gridap", "GridapGmsh"]
 MeanFieldHomogenizationLuxExt = ["Lux", "Optimisers", "Zygote"]
 MeanFieldHomogenizationMittagLefflerExt = "MittagLeffler"
 MeanFieldHomogenizationNonlinearSolveExt = "NonlinearSolve"
-MeanFieldHomogenizationSymPyExt = "SymPy"
+MeanFieldHomogenizationSymPyPythonCallExt = "SymPyPythonCall"
 MeanFieldHomogenizationSymbolicsExt = "Symbolics"
 
 [compat]
@@ -77,10 +77,10 @@ QuadGK = "2"
 Random = "1"
 SpecialFunctions = "2"
 StaticArrays = "1"
-SymPy = "2"
+SymPyPythonCall = "0.5"
 Symbolics = "6, 7"
 TOML = "1"
-TensND = "0.6.2"
+TensND = "0.8"
 Tensors = "1"
 Zygote = "0.7"
 julia = "1.12"

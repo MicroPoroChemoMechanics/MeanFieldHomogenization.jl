@@ -183,7 +183,7 @@ Two conventions the interface removes rather than documents:
   derives it as ``1 - \sum f`` and refuses to have it set, so offering the field
   would only invite an error.
 - Moduli are entered as physical ``(k, \mu)`` or ``(E, \nu)`` and emitted
-  through [`iso_stiffness`](@ref). The raw `TensISO{3}` constructor, which
+  through `iso_stiffness` (from TensND). The raw `TensISO{3}` constructor, which
   takes ``(3k, 2\mu)``, never appears.
 
 Shapes that have one carry an **Orientation** block: ZYZ Euler angles in

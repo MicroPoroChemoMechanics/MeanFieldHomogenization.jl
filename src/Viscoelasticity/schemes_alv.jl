@@ -30,18 +30,6 @@ function _alv_promoted_eltype(C_list, fractions, U_list, crack_data)
     return Tp
 end
 
-# A discrete identity 6n×6n matrix in Mandel form: block-diagonal with
-# 6×6 identity blocks.
-function _identity_alv(n::Int, T::Type)
-    M = zeros(T, 6 * n, 6 * n)
-    @inbounds for i in 1:n
-        for k in 1:6
-            M[6 * (i - 1) + k, 6 * (i - 1) + k] = one(T)
-        end
-    end
-    return M
-end
-
 # ── Dilute concentration & contribution tensors ─────────────────────────────
 
 """
@@ -57,14 +45,8 @@ function dilute_concentration_alv(
         C_E::AbstractMatrix, C_0::AbstractMatrix,
         P::AbstractMatrix
     )
-    sz = size(C_E, 1)
-    @assert size(C_E) == size(C_0) == size(P) == (sz, sz)
-    @assert sz % 6 == 0
-    n = sz ÷ 6
-    T = promote_type(eltype(C_E), eltype(C_0), eltype(P))
-    Id = _identity_alv(n, T)
-    ΔC = C_E - C_0
-    return volterra_inverse(Id + P * ΔC; block_size = 6)
+    _alg_check_dense("dilute_concentration_alv", _DenseALV{6}(), C_E, C_0, P)
+    return _alg_dilute_concentration(_DenseALV{6}(), C_E, C_0, P)
 end
 
 """
@@ -78,9 +60,8 @@ function dilute_contribution_alv(
         C_E::AbstractMatrix, C_0::AbstractMatrix,
         P::AbstractMatrix
     )
-    A_dil = dilute_concentration_alv(C_E, C_0, P)
-    ΔC = C_E - C_0
-    return ΔC * A_dil
+    _alg_check_dense("dilute_contribution_alv", _DenseALV{6}(), C_E, C_0, P)
+    return _alg_dilute_contribution(_DenseALV{6}(), C_E, C_0, P)
 end
 
 # ── Voigt / Reuss bounds ────────────────────────────────────────────────────
@@ -96,17 +77,9 @@ function voigt_alv(
         C_phases::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector{<:Real}
     )
-    length(C_phases) == length(fractions) ||
-        throw(ArgumentError("voigt_alv: C_phases and fractions length mismatch"))
+    _alg_check("voigt_alv", C_phases, fractions)
     isempty(C_phases) && throw(ArgumentError("voigt_alv: at least one phase required"))
-    # Every phase, not the first: one of them may carry dual numbers (the
-    # layers of a layered sphere, differentiated one at a time).
-    T = promote_type(mapreduce(eltype, promote_type, C_phases), eltype(fractions))
-    C = zeros(T, size(C_phases[1])...)
-    @inbounds for r in eachindex(C_phases)
-        @. C += fractions[r] * C_phases[r]
-    end
-    return C
+    return _alg_voigt(_DenseALV{6}(), C_phases, fractions)
 end
 
 """
@@ -125,12 +98,9 @@ function reuss_alv(
         C_phases::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector{<:Real}
     )
-    length(C_phases) == length(fractions) ||
-        throw(ArgumentError("reuss_alv: C_phases and fractions length mismatch"))
+    _alg_check("reuss_alv", C_phases, fractions)
     isempty(C_phases) && throw(ArgumentError("reuss_alv: at least one phase required"))
-    J_phases = [volterra_inverse(C; block_size = 6) for C in C_phases]
-    J_eff = voigt_alv(J_phases, fractions)
-    return volterra_inverse(J_eff; block_size = 6)
+    return _alg_reuss(_DenseALV{6}(), C_phases, fractions)
 end
 
 # ── Dilute scheme ───────────────────────────────────────────────────────────
@@ -152,14 +122,8 @@ function dilute_alv(
         contribs::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector{<:Real}
     )
-    length(contribs) == length(fractions) ||
-        throw(ArgumentError("dilute_alv: contribs and fractions length mismatch"))
-    T = promote_type(eltype(C_0), _alv_blocks_eltype(contribs), eltype(fractions))
-    C = T.(C_0)
-    @inbounds for r in eachindex(contribs)
-        @. C += fractions[r] * contribs[r]
-    end
-    return C
+    _alg_check("dilute_alv", contribs, fractions)
+    return _alg_dilute(_DenseALV{6}(), C_0, contribs, fractions)
 end
 
 # ── Mori-Tanaka scheme ──────────────────────────────────────────────────────
@@ -190,26 +154,8 @@ function mori_tanaka_alv(
         fractions::AbstractVector{<:Real},
         f_matrix::Real
     )
-    length(A_duts) == length(contribs) == length(fractions) ||
-        throw(ArgumentError("mori_tanaka_alv: phase counts mismatch"))
-    sz = size(C_0, 1)
-    @assert sz % 6 == 0
-    n = sz ÷ 6
-    T = promote_type(
-        eltype(C_0), _alv_blocks_eltype(A_duts), _alv_blocks_eltype(contribs),
-        eltype(fractions), typeof(f_matrix)
-    )
-    Id = _identity_alv(n, T)
-    # Numerator: Σ_r f_r Ñ^{r,dil}
-    num = zeros(T, sz, sz)
-    # Denominator: f_0 · 𝟙 + Σ_s f_s Ã^{s,dil}
-    den = T(f_matrix) .* Id
-    @inbounds for r in eachindex(A_duts)
-        @. num += fractions[r] * contribs[r]
-        @. den += fractions[r] * A_duts[r]
-    end
-    factor = num * volterra_inverse(den; block_size = 6)
-    return T.(C_0) + factor
+    _alg_check("mori_tanaka_alv", A_duts, contribs, fractions)
+    return _alg_mori_tanaka(_DenseALV{6}(), C_0, A_duts, contribs, fractions, f_matrix)
 end
 
 # ── Maxwell scheme ──────────────────────────────────────────────────────────
@@ -241,19 +187,8 @@ function maxwell_alv(
         fractions::AbstractVector{<:Real};
         H_0::AbstractMatrix
     )
-    length(contribs) == length(fractions) ||
-        throw(ArgumentError("maxwell_alv: phase counts mismatch"))
-    sz = size(C_0, 1)
-    @assert sz % 6 == 0
-    n = sz ÷ 6
-    T = promote_type(eltype(C_0), _alv_blocks_eltype(contribs), eltype(fractions), eltype(H_0))
-    Id = _identity_alv(n, T)
-    Σ = zeros(T, sz, sz)
-    @inbounds for r in eachindex(contribs)
-        @. Σ += fractions[r] * contribs[r]
-    end
-    factor = Σ * volterra_inverse(Id - H_0 * Σ; block_size = 6)
-    return T.(C_0) + factor
+    _alg_check("maxwell_alv", contribs, fractions)
+    return _alg_maxwell(_DenseALV{6}(), C_0, contribs, fractions, H_0)
 end
 
 # ── DiluteDual: compliance-side dilute scheme ───────────────────────────────
@@ -287,9 +222,6 @@ function dilute_dual_alv(
         contribs_compliance::AbstractVector{<:AbstractMatrix},
         fractions::AbstractVector{<:Real}
     )
-    length(contribs_compliance) == length(fractions) ||
-        throw(ArgumentError("dilute_dual_alv: phase counts mismatch"))
-    J_0 = volterra_inverse(C_0; block_size = 6)
-    J = dilute_alv(J_0, contribs_compliance, fractions)
-    return volterra_inverse(J; block_size = 6)
+    _alg_check("dilute_dual_alv", contribs_compliance, fractions)
+    return _alg_dilute_dual(_DenseALV{6}(), C_0, contribs_compliance, fractions)
 end

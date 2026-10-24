@@ -90,22 +90,27 @@ import ForwardDiff as FD
         @test TensND.get_array(Kp2)[2, 1] ≈ -0.6
     end
 
-    @testset "TISymmetrize — reference_projection option" begin
-        sym_def = TISymmetrize((0.0, 0.0, 1.0))
-        @test sym_def.reference_projection === :iso
-        sym_none = TISymmetrize((0.0, 0.0, 1.0); reference_projection = :none)
-        @test sym_none.reference_projection === :none
-        @test_throws ArgumentError TISymmetrize((0.0, 0.0, 1.0); reference_projection = :foo)
-        # _project_matrix behavior
-        C_ti = TensND.TensTI{4, Float64, 5}((10.0, 6.0, 2.0, 3.0, 4.0), (0.0, 0.0, 1.0))
-        @test _project_matrix(C_ti, sym_none) === C_ti
-        @test _project_matrix(C_ti, sym_def) isa TensND.TensISO{4, 3}
-        sym_ti = TISymmetrize((0.0, 0.0, 1.0); reference_projection = :ti)
-        @test _project_matrix(C_ti, sym_ti) isa TensND.TensTI{4, Float64, 5}
-
-        # The axis-free form: e₃ by default, and the keyword still honored.
+    @testset "TISymmetrize — the reference goes through the same average" begin
+        ez, ex = (0.0, 0.0, 1.0), (1.0, 0.0, 0.0)
+        sym = TISymmetrize(ez)
+        C_ti = TensND.TensTI{4, Float64, 5}((10.0, 6.0, 2.0, 3.0, 4.0), ez)
+        C_iso = TensISO{3}(216.0, 64.0)
+        # Already invariant: returned as it is, by its type.
+        @test _project_matrix(C_ti, sym) === C_ti
+        @test _project_matrix(C_iso, sym) === C_iso
+        @test _project_matrix(C_iso, IsoSymmetrize()) === C_iso
+        # Invariant but of a generic type: the exact average leaves it unchanged.
+        @test TensND.get_array(_project_matrix(TensND.Tens(TensND.get_array(C_ti)), sym)) ≈
+            TensND.get_array(C_ti) rtol = 1.0e-14
+        # Not invariant: the exact average about the axis (that of a TI tensor
+        # about another axis is not itself).
+        C_ti_x = TensND.TensTI{4, Float64, 5}((10.0, 6.0, 2.0, 3.0, 4.0), ex)
+        P = _project_matrix(C_ti_x, sym)
+        @test TensND.get_array(P) ≈
+            TensND.get_array(MeanFieldHomogenization.Core.transverse_isotropify(C_ti_x, ez)) rtol = 1.0e-14
+        @test !(TensND.get_array(P) ≈ TensND.get_array(C_ti_x))
+        # The axis-free form: e₃ by default.
         @test TISymmetrize().axis == (0.0, 0.0, 1.0)
-        @test TISymmetrize(; reference_projection = :none).reference_projection === :none
         # And the vector form, which coerces to the tuple.
         @test TISymmetrize([0.0, 0.0, 1.0]).axis == (0.0, 0.0, 1.0)
     end
@@ -236,14 +241,20 @@ import ForwardDiff as FD
             end
             rv
         end
-        C_sc = homogenize(build(1.0), SelfConsistent(), :C)
+        # No estimate is invariant about three axes at once: out of the domain of
+        # the averages, which `homogenize` reports for each family.
+        C_sc = @test_logs (:warn, r"Phase :I1") (:warn, r"Phase :I2") (:warn, r"Phase :I3") homogenize(
+            build(1.0), SelfConsistent(), :C
+        )
         a = TensND.get_array(C_sc)
         @test all(isfinite, a)
         # stiffer than the matrix : C₃₃₃₃(matrix) = (α + 2β)/3 = (60 + 48)/3 = 36
         @test a[3, 3, 3, 3] > 36.0
         # ForwardDiff through the multi-axis SC (generic anisotropic running
         # estimate → NestedQuadGK Hill branch under Dual)
-        f = x -> TensND.get_array(homogenize(build(x), SelfConsistent(), :C))[3, 3, 3, 3]
+        f = x -> Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
+            TensND.get_array(homogenize(build(x), SelfConsistent(), :C))[3, 3, 3, 3]
+        end
         g = FD.derivative(f, 1.0)
         h = 1.0e-5
         @test g ≈ (f(1.0 + h) - f(1.0 - h)) / 2h rtol = 1.0e-4
@@ -265,4 +276,52 @@ end
     B_ref = tr(get_array(K_I ⋅ A_raw)) / 3 * I(3)
     @test get_array(B) ≈ B_ref rtol = 1.0e-12
     @test !isapprox(get_array(B), get_array(K_I ⋅ A); rtol = 1.0e-3)
+end
+
+@testset "symmetrize — warning when the reference lacks the symmetry of the average" begin
+    # An orientation average is defined only when the reference medium of the
+    # Eshelby problems is invariant under it; outside that domain the reference is
+    # projected and `homogenize` says so, once per symmetry, without refusing.
+    ez, ex = (0.0, 0.0, 1.0), (1.0, 0.0, 0.0)
+    C_ti = TensND.TensTI{4, Float64, 5}((60.0, 30.0, 8.0, 20.0, 14.0), ez)
+    C_i = TensISO{3}(216.0, 64.0)
+    function rve_with(C_m, sym; matrix_sym = nothing)
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest, symmetrize = matrix_sym)
+        add_phase!(
+            rve, :I, Ellipsoid(3.0, 1.0, 1.0; euler_angles = (0.7, 0.3, 1.1)), Dict(:C => C_i);
+            fraction = 0.2, symmetrize = sym
+        )
+        return rve
+    end
+    quiet(f) = @test_logs min_level = Base.CoreLogging.Warn f()
+
+    # Out of the domain: a TI matrix, averaged isotropically or about another axis.
+    @test_logs (:warn, r"Phase :I is averaged over every rotation.*the matrix :M") homogenize(
+        rve_with(C_ti, :iso), Dilute(), :C
+    )
+    @test_logs (:warn, r"rotations about \(1\.0, 0\.0, 0\.0\).*distance") homogenize(
+        rve_with(C_ti, TISymmetrize(ex)), MoriTanaka(), :C
+    )
+    # In the domain: a TI matrix about the axis of the average, an isotropic one for
+    # either average, and no average at all.
+    quiet(() -> homogenize(rve_with(C_ti, TISymmetrize(ez)), MoriTanaka(), :C))
+    quiet(() -> homogenize(rve_with(C_i / 3, TISymmetrize(ex)), Dilute(), :C))
+    quiet(() -> homogenize(rve_with(C_i / 3, :iso), MoriTanaka(), :C))
+    quiet(() -> homogenize(rve_with(C_ti, nothing), MoriTanaka(), :C))
+
+    # Self-consistent: the reference is the fixed point. An isotropic matrix and a
+    # family averaged about e₃ give a TI estimate about e₃, in the domain; a matrix
+    # that is TI about e₁ and left as it is drags the estimate out of it.
+    quiet(() -> homogenize(rve_with(C_i / 3, TISymmetrize(ez)), SelfConsistent(), :C))
+    C_ti_x = TensND.TensTI{4, Float64, 5}((60.0, 30.0, 8.0, 20.0, 14.0), ex)
+    @test_logs (:warn, r"the self-consistent estimate") match_mode = :any homogenize(
+        rve_with(C_ti_x, TISymmetrize(ez)), SelfConsistent(), :C
+    )
+
+    # A dual reference is checked on its value, and differentiates as before.
+    g = FD.derivative(1.0) do x
+        TensND.get_array(homogenize(rve_with(x * C_ti, TISymmetrize(ez)), MoriTanaka(), :C))[3, 3, 3, 3]
+    end
+    @test isfinite(g)
 end

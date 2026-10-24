@@ -71,8 +71,8 @@ end
 
         Cv = homogenize(rve, Voigt())
         Cr = homogenize(rve, Reuss())
-        eig_diff = eigvals(Symmetric(KM(Cv) .- KM(Cr)))
-        @test all(e -> e > -RTOL_VR * max(1.0, maximum(abs, KM(Cv))), eig_diff)
+        eig_diff = eigvals(Symmetric(mandel(Cv) .- mandel(Cr)))
+        @test all(e -> e > -RTOL_VR * max(1.0, maximum(abs, mandel(Cv))), eig_diff)
     end
 end
 

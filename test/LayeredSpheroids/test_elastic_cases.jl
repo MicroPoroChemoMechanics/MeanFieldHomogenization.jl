@@ -159,6 +159,54 @@ end
         @test all(k -> abs(t_rot[k]) < 1.0e-12 * max(1.0, maximum(abs, t_sym)), 1:3)
     end
 
+    @testset "the field-free combination is removed, so duals and Float64 agree" begin
+        # `ζ = xz`: `φ₁ = z`, `φ₃ = x`, `φ₀ = (2 - 4ν) xz` move nothing. The
+        # amplitudes of `z`, `x` and `xz` in the modes: `z = c P₁P₁`,
+        # `x = -c P₁¹P₁¹ cos φ`, `xz = -(c²/9) P₂¹P₂¹ cos φ`.
+        c, μ, ν = 0.8, 3.0, 0.27
+        p, q, ϕ = 0.37, 1.6, 0.41
+        f(pot, n, m) = LSec.mode_fields(LSec.PNMode(pot, :regular, n, m, :cos), ϕ, p, q, c, μ, ν, Float64)
+        (u1, t1), (u3, t3), (u0, t0) = f(1, 1, 0), f(3, 1, 1), f(0, 2, 1)
+        w = (c, -c, -(2 - 4ν) * c^2 / 9)
+        u = ntuple(k -> w[1] * u1[k] + w[2] * u3[k] + w[3] * u0[k], 3)
+        t = ntuple(k -> w[1] * t1[k] + w[2] * t3[k] + w[3] * t0[k], 3)
+        @test maximum(abs, u) < 1.0e-14 * maximum(abs, u1) && maximum(abs, t) < 1.0e-14 * maximum(abs, t1)
+        @test LSec._gauge_group(AxisymmetricCase()) === nothing
+        # Two layers, so a core and a shell with regular modes: their combinations
+        # made the system singular, and the concentration came out to `2e-6` and
+        # differently along the dual path. Now both agree, and the derivative is the
+        # one a converged centered difference gives.
+        ν₀ = 0.2
+        ce(E) = iso_stiffness(E / (3 * (1 - 2ν₀)), E / (2 * (1 + ν₀)))
+        A1111(w) = (
+            r = confocal_layer_radii(2.6, 1.0, (w, 1 - w));
+            components_canon(gradient_gradient_concentration(LayeredSpheroid(r[1], r[2], (ce(3.0), ce(0.6))), ce(1.0), ce(1.0)))[1, 1, 1, 1]
+        )
+        w₀ = 0.66
+        d = A1111(ForwardDiff.Dual{:w}(w₀, 1.0))
+        @test ForwardDiff.value(d) ≈ A1111(w₀) rtol = 1.0e-13
+        h = 1.0e-4
+        cd(h) = (A1111(w₀ + h) - A1111(w₀ - h)) / 2h
+        @test ForwardDiff.partials(d)[1] ≈ (4 * cd(h / 2) - cd(h)) / 3 rtol = 1.0e-9
+    end
+
+    @testset "oblate, differentiated by duals: no NaN from the degenerate volume" begin
+        # The whole-inclusion average takes `q_in = 1`, a complex zero volume for
+        # an oblate spheroid; its modulus gave `NaN` partials.
+        ν₀ = 0.2
+        ce(E) = iso_stiffness(E / (3 * (1 - 2ν₀)), E / (2 * (1 + ν₀)))
+        A1111(w) = (
+            r = confocal_layer_radii(0.4, 1.0, (w, 1 - w));
+            components_canon(gradient_gradient_concentration(LayeredSpheroid(r[1], r[2], (ce(3.0), ce(0.6))), ce(1.0), ce(1.0)))[1, 1, 1, 1]
+        )
+        w₀ = 0.6
+        d = A1111(ForwardDiff.Dual{:w}(w₀, 1.0))
+        @test ForwardDiff.value(d) ≈ A1111(w₀) rtol = 1.0e-13
+        h = 1.0e-4
+        cd(h) = (A1111(w₀ + h) - A1111(w₀ - h)) / 2h
+        @test ForwardDiff.partials(d)[1] ≈ (4 * cd(h / 2) - cd(h)) / 3 rtol = 1.0e-9
+    end
+
     @testset "degree 0 of φ₀ is not optional" begin
         # Only its REGULAR part is a constant and inert. The irregular one is
         # `arccoth q`, an essential mode: dropping it made the case-I system
@@ -310,7 +358,7 @@ end
         @test eltype(get_array(rb.A)) === BigFloat
         sf = LayeredSpheroid((1.0,), (sqrt(1 - c^2),), (C₁,); Nseries = 5)
         rf = spheroid_strain_concentration(sf, C₀; D = 4)
-        @test Float64(get_array(rb.A)[3, 3, 3, 3]) ≈ get_array(rf.A)[3, 3, 3, 3] rtol = 1.0e-8
+        @test Float64(components_canon(rb.A)[3, 3, 3, 3]) ≈ components_canon(rf.A)[3, 3, 3, 3] rtol = 1.0e-8
     end
 end
 
@@ -395,7 +443,7 @@ end
 end
 
 @testset "the elastic confocal spheroid approaching the sphere" begin
-    _nsk(t) = Matrix(KM(TensND.change_tens(t, TensND.CanonicalBasis{3, Float64}())))
+    _nsk(t) = Matrix(mandel(TensND.change_tens(t, TensND.CanonicalBasis{3, Float64}())))
     C1 = iso_stiffness(4.0 / (3 * (1 - 2 * 0.2)), 4.0 / (2 * (1 + 0.2)))
     C₀ = iso_stiffness(1.0 / (3 * (1 - 2 * 0.25)), 1.0 / (2 * (1 + 0.25)))
     K1, K₀ = TensISO{3}(5.0), TensISO{3}(1.0)
@@ -461,4 +509,22 @@ end
         end
         @test prev < 2.0e-4         # `8.1e-5` measured at ω = 0.999
     end
+end
+
+@testset "confocal_layer_radii — derivatives by dual numbers, one argument at a time" begin
+    # A dual on a single argument among plain numbers was a `MethodError`.
+    # References are exact identities: the fractions (x, 1 - w) are normalized,
+    # so the core occupies x / (x + 1 - w) of the volume (spheroid volume ∝
+    # axis · disk²), whose derivative at x = w is 1 - w; the outer axis
+    # semi-axis is fixed and the outer disk one is 1/ω.
+    for ω in (0.5, 2.0), w in (0.3, 0.6)
+        core(x) = ((ar, dr) = confocal_layer_radii(ω, 1.0, (x, 1 - w)); ar[1] * dr[1]^2 / (ar[2] * dr[2]^2))
+        @test ForwardDiff.derivative(core, w) ≈ 1 - w rtol = 1.0e-10
+        outer(x) = ((ar, dr) = confocal_layer_radii(x, 1.0, (w, 1 - w)); (ar[2], dr[2]))
+        @test abs(ForwardDiff.derivative(x -> outer(x)[1], ω)) < 1.0e-14
+        @test ForwardDiff.derivative(x -> outer(x)[2], ω) ≈ -1 / ω^2 rtol = 1.0e-12
+    end
+    # A bisection has no symbolic counterpart: refused with a message.
+    Symbolics.@variables ωs
+    @test_throws ArgumentError confocal_layer_radii(ωs, 1.0, (0.3, 0.7))
 end

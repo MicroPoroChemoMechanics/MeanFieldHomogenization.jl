@@ -32,7 +32,7 @@ const MFH_Core = Core
 # laminate unit cell is another.
 import ..Core: AbstractHomogenizationCell, AbstractParameter,
     homogenize, validate_cell, _evaluate, get_param, set_param,
-    cell_member_names, cell_container_property, cell_set_property,
+    cell_member_names, cell_container_property, cell_set_property, cell_has_property,
     Homogenized, NestedParameter, nested, resolve_property
 
 # Forward declarations of inclusion types we touch from the other sub-modules
@@ -54,6 +54,7 @@ include("symmetrize.jl")
 include("orientation.jl")
 include("scheme_types.jl")
 include("matrix_role.jl")
+include("average_domain.jl")
 include("homogenize.jl")
 include("contribution_helpers.jl")
 include("voigt.jl")
@@ -64,7 +65,7 @@ include("mori_tanaka.jl")
 include("maxwell.jl")
 include("pcw.jl")
 include("self_consistent.jl")
-# Needs `_sc_solid_averages` (self_consistent.jl) and `_frob_sq`, hence its
+# Needs `_sc_solid_averages` (self_consistent.jl) and `TensND.sqnorm`, hence its
 # position after every scheme body it decomposes.
 include("crack_families.jl")
 include("fracture_permeability.jl")

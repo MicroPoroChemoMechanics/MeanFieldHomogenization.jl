@@ -357,7 +357,7 @@ want("sevostianov") && let
     mine = Dict{Float64, Any}()
     for p in ps
         pore = FEAxiSupershapePore(Superspheroid(1.0, 1.0, p); opts)
-        H = Matrix(KM(inverse_property_contribution(pore, Cs, Cs)))
+        H = Matrix(mandel(inverse_property_contribution(pore, Cs, Cs)))
         R = Matrix(get_array(inverse_property_contribution(pore, Ks, Ks)))
         mine[p] = (
             H = (H[1, 1], H[1, 2], H[1, 3], H[3, 3], H[5, 5] / 2),

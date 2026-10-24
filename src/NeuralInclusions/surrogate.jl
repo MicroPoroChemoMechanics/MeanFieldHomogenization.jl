@@ -220,7 +220,7 @@ function check_domain(s::NeuralSurrogate, x_raw::AbstractVector, guard::Symbol)
     for (i, name) in enumerate(s.features)
         # The box is compared on values: a `ForwardDiff.Dual` feature is
         # checked on its primal part.
-        xi = Core._primal(x_raw[i])
+        xi = Core.primal(x_raw[i])
         lo, hi = s.domain_lo[i], s.domain_hi[i]
         # The bounds themselves are legitimate queries, and a caller who writes
         # `log(0.1)` where the box stored `log(0.10)` is one ulp outside. Slacken

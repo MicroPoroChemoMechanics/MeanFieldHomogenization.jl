@@ -16,9 +16,10 @@
 #    the global axis (echoes' per-bin `symmetrize=[TI]`), preserving the
 #    non-major-symmetric content of the concentration tensors
 #    (`TensTI{4,T,8}`), plus water and air.  The reference medium of each
-#    family is iso-projected (`reference_projection = :iso` default), exact at
-#    the isotropic SC fixed point — echoes computes the per-bin concentration
-#    in the converged iso `C_hf` in the same way.
+#    family is taken through the same average about the axis: the SC estimate
+#    built from such families is TI about it, so the average leaves it
+#    unchanged — echoes computes the per-bin concentration in the running
+#    estimate likewise.
 #  * Cement Paste (CP)  — Mori-Tanaka (HF matrix + clinker).
 #  * Mortar (MO)        — Mori-Tanaka (CP matrix + sand).
 #  * Strength           — Pichler & Hellmich (2011): the quadratic average
@@ -81,9 +82,10 @@ function build_hf(wc, α_p, μ_b0; N::Int = NTHETA, ω::Real = ω_aspect)
     ez = (0.0, 0.0, 1.0)
     rve = RVE(; T = T)
     # Zero-volume matrix phase = SC seed only (Σ inclusion fractions = 1).
-    # `symmetrize = :iso` keeps its (weightless) concentration on the
-    # analytical iso branch whatever the running estimate's type.
-    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => TensISO{3}(convert(T, 3 * K_hyd_ref), convert(T, 2 * μ_hyd_ref))); fraction = :rest, symmetrize = :iso)
+    # The spheres (seed, water, air) are not averaged: an isotropic sphere
+    # contributes with the symmetry of the reference already, which is
+    # transversely isotropic about e₃ here, not isotropic.
+    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => TensISO{3}(convert(T, 3 * K_hyd_ref), convert(T, 2 * μ_hyd_ref))); fraction = :rest)
     for (i, bin) in enumerate(polar_orientation_bins(N))
         μ_h = i == 1 ? μ_b0 : convert(T, μ_hyd_ref)
         add_phase!(
@@ -97,15 +99,15 @@ function build_hf(wc, α_p, μ_b0; N::Int = NTHETA, ω::Real = ω_aspect)
     C_tiny = TensISO{3}(convert(T, 3 * TINY), convert(T, 2 * TINY))
     add_phase!(
         rve, :W, Ellipsoid(1.0), Dict(:C => C_tiny);
-        fraction = ftw_t, symmetrize = :iso
+        fraction = ftw_t
     )
     add_phase!(
         rve, :AIR, Ellipsoid(1.0), Dict(:C => C_tiny);
-        fraction = ftair_t, symmetrize = :iso
+        fraction = ftair_t
     )
     return homogenize(
         rve,
-        SelfConsistent(; abstol = 1.0e-8, maxiters = 1000, damping = 0.5),
+        SelfConsistent(; abstol = 1.0e-8, maxiters = 1000),
         :C; select_best = true
     )
 end

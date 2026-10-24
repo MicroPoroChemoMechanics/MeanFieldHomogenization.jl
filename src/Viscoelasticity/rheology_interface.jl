@@ -56,7 +56,7 @@ Whether every argument is a scalar on which a comparison returns an honest
 `Bool`, so a validation may run at all.
 
 `T <: Real` is **not** this predicate: `Symbolics.Num` is `<: Real` yet `<`
-returns a symbolic expression, and `SymPy.Sym` is not even `<: Real`.  The
+returns a symbolic expression, and `SymPyPythonCall.Sym` is not even `<: Real`.  The
 model constructors below therefore validate their parameters only when the
 values are hard numeric, and stay silent on symbolic ones — which is what lets
 
@@ -149,7 +149,7 @@ complex_modulus(model::AnyRheology, ω::Number) = carson_relaxation(model, im * 
 
 ``E'(\\omega) = \\Re E^{*}(\\omega)`` — the in-phase, elastically stored part.
 """
-storage_modulus(model::AnyRheology, ω::Number) = _realpart(complex_modulus(model, ω))
+storage_modulus(model::AnyRheology, ω::Number) = real(complex_modulus(model, ω))
 
 """
     loss_modulus(model, ω)

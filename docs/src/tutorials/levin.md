@@ -170,7 +170,7 @@ SymPy:
 ```@example tutlevinsym
 using MeanFieldHomogenization
 using TensND
-using SymPy
+using SymPyPythonCall
 
 @syms k0::positive μ0::positive k1::positive μ1::positive f::positive
 @syms α0::positive α1::positive

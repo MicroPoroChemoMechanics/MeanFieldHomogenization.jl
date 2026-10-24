@@ -29,6 +29,18 @@
 #  an artifact of a gauge that drops one of them, not a physical requirement.
 #  The Eshelby oracle confirms it: case III lands on the analytic answer to
 #  `1e-15` with no rotation in the unknown list.
+#
+#  ONE FIELD-FREE COMBINATION PER REGULAR REGION, removed before the solve.
+#  Papkovich–Neuber potentials are not unique: for any harmonic `ζ`,
+#  `φ⃗ = ∇ζ`, `φ₀ = 4(1-ν) ζ - x⃗·∇ζ` give `Φ = 4(1-ν) ζ` and hence `u = 0`.
+#  With the families of a case, `φ⃗ = ∇ζ` must stay inside the active
+#  potentials, which leaves one `ζ` in each shear case and none in case I
+#  (see `_gauge_group`). It is a polynomial, so it lives in every region with
+#  regular modes — the core and each inner shell — and makes those columns
+#  exactly dependent: two singular values at `1e-16` for two layers, a solve
+#  that returned the concentration to `1e-6` only, differently for `Float64`
+#  and for duals. Dropping one column of that combination in each such region
+#  spans the same fields with a full-rank system.
 # =============================================================================
 
 """
@@ -43,7 +55,7 @@ the tie the interface system is underdetermined, eight families answering six
 conditions.
 """
 struct ModeGroup
-    parts::Vector{NTuple{4, Any}}
+    parts::Vector{Tuple{Int, Int, Symbol, Float64}}
     degrees::Vector{Int}
 end
 
@@ -113,8 +125,8 @@ _case_groups(cs::TransverseShearCase, D::Int) = [
     # `φ₁ = A x`, `φ₂ = -A y`. Same `A` either way.
     ModeGroup(
         cs.trig === :sin ?
-            NTuple{4, Any}[(1, 1, :sin, 1.0), (2, 1, :cos, 1.0)] :
-            NTuple{4, Any}[(1, 1, :cos, 1.0), (2, 1, :sin, -1.0)],
+            [(1, 1, :sin, 1.0), (2, 1, :cos, 1.0)] :
+            [(1, 1, :cos, 1.0), (2, 1, :sin, -1.0)],
         collect(1:2:(2D - 1))
     ),
 ]
@@ -124,6 +136,33 @@ _case_groups(cs::LongitudinalShearCase, D::Int) = [
     ModeGroup(cs.trig === :cos ? 1 : 2, 0, :cos, 1:2:(2D - 1)),
     ModeGroup(3, 1, cs.trig, 1:2:(2D - 1)),
 ]
+
+"""
+    _gauge_group(case) -> Union{Nothing, Tuple{Int, Int}}
+
+The `(group index, degree)` in [`_case_groups`](@ref) of the regular column
+dropped from each region that has regular modes, or `nothing` when the case has
+no field-free combination.
+
+A harmonic `ζ` gives `u = 0` through `φ⃗ = ∇ζ`, `φ₀ = 4(1-ν) ζ - x⃗·∇ζ`. The
+families of a case admit it only when `∇ζ` has no component outside the active
+potentials and degrees:
+
+- case I keeps `φ₃` alone, so `ζ = ζ(z)`, harmonic, is `z`, whose `φ₃ = 1` is of
+  degree 0, outside the odd degrees: none;
+- case II ties `(φ₁, φ₂)` at order 1 with `φ₃ = 0`: `ζ = xy` (`:sin`) or
+  `(x² - y²)/2` (`:cos`), the tied pair at degree 1 and `φ₀ = (2-4ν) ζ`;
+- case III has `φ₂ = 0` (`:cos`): `ζ = x h(z)` harmonic is `x(a + bz)`, and
+  `ζ = x` falls outside the odd degrees of `φ₁`, so `ζ = xz` remains, with `φ₁`
+  at degree 1 (`φ₂` for `:sin`, `ζ = yz`).
+
+The dropped column is the one of the pair `(φ₁, φ₂)` or of `φ₁`/`φ₂` at degree 1:
+its coefficient in the combination is 1, whatever `ν`, where the one of `φ₀`,
+`2 - 4ν`, vanishes for an incompressible layer.
+"""
+_gauge_group(::AxisymmetricCase) = nothing
+_gauge_group(::TransverseShearCase) = (3, 1)
+_gauge_group(::LongitudinalShearCase) = (2, 1)
 
 """
     _case_remote(case, c, κ₀, μ₀, ε...) -> Vector{Pair}
@@ -146,33 +185,33 @@ with ``A = \\alpha = \\mu_0\\,\\varepsilon/(2\\nu_0 - 1)``. The signs follow fro
 ``\\rho = -c\\,P_1^1(p)P_1^1(q)`` and ``z = c\\,P_1(p)P_1(q)``.
 """
 function _case_remote(::AxisymmetricCase, c, κ₀, μ₀, εa, εt)
-    ν₀ = _poisson(κ₀, μ₀)
+    ν₀ = TensND.poisson_ratio(κ₀, μ₀)
     γ = -μ₀ * (εa + 2 * εt) / (1 - 2 * ν₀)
     return [(1, 2) => -4 * c^2 * μ₀ * εt / 3, (2, 1) => γ * c]
 end
 
 function _case_remote(::TransverseShearCase, c, κ₀, μ₀, ε)
-    A = μ₀ * ε / (2 * _poisson(κ₀, μ₀) - 1)
+    A = μ₀ * ε / (2 * TensND.poisson_ratio(κ₀, μ₀) - 1)
     return [(3, 1) => -A * c]
 end
 
 function _case_remote(::LongitudinalShearCase, c, κ₀, μ₀, ε)
-    α = μ₀ * ε / (2 * _poisson(κ₀, μ₀) - 1)
+    α = μ₀ * ε / (2 * TensND.poisson_ratio(κ₀, μ₀) - 1)
     return [(2, 1) => α * c, (3, 1) => -α * c]
 end
 
 """
-    _group_fields(group, regularity, n, ϕ, p, q, c, μ, ν, ::Type{T})
+    _group_fields(group, regularity, n, ϕ, p, q, c, μ, ν, ::Type{T}, tables = nothing)
 
 Unit-amplitude displacement and traction of one group, summing its parts. A
 part whose order exceeds the degree contributes nothing, ``P_n^m`` vanishing there.
 """
-function _group_fields(g::ModeGroup, reg::Symbol, n::Int, ϕ, p, q, c, μ, ν, ::Type{T}) where {T}
+function _group_fields(g::ModeGroup, reg::Symbol, n::Int, ϕ, p, q, c, μ, ν, ::Type{T}, tables = nothing) where {T}
     u = ntuple(_ -> zero(T), 3)
     t = ntuple(_ -> zero(T), 3)
     for (pot, m, trig, w) in g.parts
         n < m && continue
-        uu, tt = mode_fields(PNMode(pot, reg, n, m, trig), ϕ, p, q, c, μ, ν, T)
+        uu, tt = mode_fields(PNMode(pot, reg, n, m, trig), ϕ, p, q, c, μ, ν, T, tables)
         u = _axpy3(u, w, uu)
         t = _axpy3(t, w, tt)
     end
@@ -215,9 +254,11 @@ function _elastic_block(
     M = zeros(T, 6 * nt, length(cols))
     maxdeg = maximum(tdegs)
     Pp = [legendre_degrees(:P0, x, 0:maxdeg) for x in xg]
+    nmax = maximum(n for (_, _, n) in cols)
+    tabs = [_LegendreAt{T}(x, q, nmax) for x in xg]
     for (j, (gi, r, n)) in enumerate(cols)
         for (g, x) in enumerate(xg)
-            u, t = _group_fields(groups[gi], r, n, ϕ₀, x, q, c, μ, ν, T)
+            u, t = _group_fields(groups[gi], r, n, ϕ₀, x, q, c, μ, ν, T, tabs[g])
             # (u_φ, u_p, u_q, σ_φq, σ_pq, σ_qq); the two tangential pairs get
             # the `1 - p²` weight, the normal ones do not.
             pb2 = one(T) - x^2
@@ -309,8 +350,8 @@ function _solve_elastic(
         )
     end
 
-    κμ = ntuple(k -> _iso_bulk_shear(layer_modulus(s, k)), Val(N))
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κμ = ntuple(k -> TensND.k_mu(layer_modulus(s, k)), Val(N))
+    κ₀, μ₀ = TensND.k_mu(C₀)
     # `Q` itself, not `real(Q)`: an oblate spheroid carries `q = iτ` and
     # `c = -i c̄`, and the whole solve goes through in `Complex` arithmetic — the
     # same substitution the conduction side uses. Discarding the imaginary part
@@ -331,7 +372,7 @@ function _solve_elastic(
     c = s.c
     qs = s.q
 
-    regs = Vector{Any}(undef, N + 1)
+    regs = Vector{Tuple{Vararg{Symbol}}}(undef, N + 1)
     regs[1] = (:regular,)
     for ℓ in 2:N
         regs[ℓ] = (:regular, :irregular)
@@ -356,7 +397,7 @@ function _solve_elastic(
         rows = (nt * (ℓ - 1) + 1):(nt * ℓ)
         κi, μi = κμ[ℓ]
         κo, μo = ℓ < N ? κμ[ℓ + 1] : (κ₀, μ₀)
-        νi, νo = _poisson(κi, μi), _poisson(κo, μo)
+        νi, νo = TensND.poisson_ratio(κi, μi), TensND.poisson_ratio(κo, μo)
         Mi, _ = _elastic_block(groups, regs[ℓ], qs[ℓ], c, μi, νi, ϕ₀, xg, wg, tdegs, Tp)
         Mo, _ = _elastic_block(groups, regs[ℓ + 1], qs[ℓ], c, μo, νo, ϕ₀, xg, wg, tdegs, Tp)
         A[rows, (offs[ℓ] + 1):offs[ℓ + 1]] .= Mi
@@ -377,7 +418,10 @@ function _solve_elastic(
     # a `ForwardDiff.Dual` element type it raised `SingularException`. Filtering
     # is both the fix and better conditioning, and it catches any other null
     # direction a future case might introduce.
-    keep = [j for j in axes(A, 2) if any(!iszero, @view A[:, j])]
+    # The field-free combination of `_gauge_group` is removed too, in every
+    # region that has regular modes (all but the matrix).
+    gauge = _gauge_columns(_gauge_group(case), groups, regs, offs, N)
+    keep = [j for j in axes(A, 2) if !(j in gauge) && any(!iszero, @view A[:, j])]
     # The column scaling lives in `_equilibrated_solve`, whose docstring says
     # why it is a change of unknowns and not a tolerance.
     solk = _equilibrated_solve(A[:, keep], rhs)
@@ -398,6 +442,17 @@ function _solve_elastic(
     return (; amplitudes, groups, residual)
 end
 
+# The global indices of the gauge column in regions `1:N`, each listing its
+# columns `(gi, r, n)` in the order `_elastic_block` does.
+_gauge_columns(::Nothing, groups, regs, offs, N) = Int[]
+function _gauge_columns((g, n)::Tuple{Int, Int}, groups, regs, offs, N)
+    return [
+        offs[ℓ] + i for ℓ in 1:N for (i, col) in enumerate(
+                (gi, r, k) for gi in eachindex(groups) for r in regs[ℓ] for k in groups[gi].degrees
+            ) if col == (g, :regular, n)
+    ]
+end
+
 """
     _surface_moment(groups, amps, q, c, μ, ν, ::Type{T}; np, nϕ) -> 3×3
 
@@ -415,33 +470,40 @@ function _surface_moment(
         groups, amps, q, c, μ, ν, ::Type{T}; np::Int = 40, nϕ::Int = 48
     ) where {T}
     xg, wg = QuadGK.gauss(_quad_eltype(T), np)
-    E = zeros(T, 3, 3)
+    E = zero(SMatrix{3, 3, T})
     qb = sqrt(q^2 - one(q))
     dϕ = 2 * T(π) / nϕ
+    nmax = maximum(n for ((_, _, n), _) in amps)
     for (ip, x) in enumerate(xg)
         w = sqrt(q^2 - x^2)
         wp = c^2 * qb * w * wg[ip] * dϕ
+        tabs = _LegendreAt{T}(x, q, nmax)   # shared by the whole ring
         for k in 0:(nϕ - 1)
             ϕ = 2 * T(π) * k / nϕ
+            # `R` takes chart components to Cartesian ones; its last column is `e_q`.
             e = _cartesian_in_chart(ϕ, x, q, T)
-            U = zeros(T, 3)
-            for ((gi, r, n), amp) in amps
-                u, _ = _group_fields(groups[gi], r, n, ϕ, x, q, c, μ, ν, T)
-                for i in 1:3, a in 1:3
-                    U[i] += amp * u[a] * e[i][a]
-                end
-            end
-            n3 = ntuple(i -> e[i][3], 3)
-            for i in 1:3, j in 1:3
-                E[i, j] += wp * (U[i] * n3[j] + U[j] * n3[i]) / 2
-            end
+            R = transpose(SMatrix{3, 3, T}(e[1]..., e[2]..., e[3]...))
+            uc = sum(
+                amp * SVector(_group_fields(groups[gi], r, n, ϕ, x, q, c, μ, ν, T, tabs)[1])
+                    for ((gi, r, n), amp) in amps;
+                init = zero(SVector{3, T})
+            )
+            U, eq = R * uc, R[:, 3]
+            E += wp * (U * transpose(eq) + eq * transpose(U)) / 2
         end
     end
     return E
 end
 
-"Confocal volume up to ``q``: ``\\tfrac{4\\pi}{3}\\,c^3\\,q(q^2-1)``, and 0 at ``q = 1``."
-@inline _confocal_volume(q, c) = abs(4 * π / 3 * c^3 * q * (q^2 - one(q)))
+"""
+Confocal volume up to ``q``: ``\\tfrac{4\\pi}{3}\\,c^3\\,q(q^2-1)``, and 0 at ``q = 1``.
+
+Real and nonnegative as it stands, for a prolate spheroid and for an oblate one
+(``q = \\mathrm{i}\\tau``, ``c = -\\mathrm{i}\\,\\bar c``: ``c^3 q (q^2-1) = \\bar c^3 \\tau(\\tau^2+1)``), so it is
+taken by `real`, not `abs`: the modulus of a complex zero has no derivative, and
+gave `NaN` partials to every oblate concentration differentiated by duals.
+"""
+@inline _confocal_volume(q, c) = real(4 * c^3 * q * (q^2 - one(q)) * π / 3)
 
 """
     _avg_strain(groups, amps, q_out, q_in, c, μ, ν, ::Type{T}; kw...) -> 3×3
@@ -564,8 +626,8 @@ function spheroid_strain_concentration(
                 "rotate the result."
         )
     )
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
-    κμ = ntuple(k -> _iso_bulk_shear(layer_modulus(s, k)), Val(N))
+    κ₀, μ₀ = TensND.k_mu(C₀)
+    κμ = ntuple(k -> TensND.k_mu(layer_modulus(s, k)), Val(N))
     # The LAYER moduli belong in this promotion, and leaving them out is the
     # same defect v0.10.1 fixed on the conduction side: a single `Dual` layer
     # among `Float64` ones then meets a `Float64` buffer and throws.
@@ -577,7 +639,7 @@ function spheroid_strain_concentration(
     c = s.c
     q_N = s.q[N]
     κN, μN = κμ[N]
-    νN = _poisson(κN, μN)
+    νN = TensND.poisson_ratio(κN, μN)
 
     loads = _basis_loadings(Tp)
     Xc = Matrix{Tp}(undef, 6, 6)
@@ -588,11 +650,11 @@ function spheroid_strain_concentration(
         r = _solve_elastic(s, C₀, case, remote; D, kw...)
         # `u` is continuous, so the outer boundary is read from layer N.
         εav = _avg_strain(r.groups, r.amplitudes[N], q_N, one(q_N), c, μN, νN, Tp)
-        Xc[:, k] .= KM(E)
-        Yc[:, k] .= KM(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εav[i, j])))
+        Xc[:, k] .= mandel(E)
+        Yc[:, k] .= mandel(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εav[i, j])))
         resids[k] = r.residual
     end
-    return (; A = inv_KM(_realify(Yc * inv(Xc), Tp)), residuals = real.(resids))
+    return (; A = from_mandel(_realify(Yc * inv(Xc), Tp)), residuals = real.(resids))
 end
 
 """
@@ -620,8 +682,8 @@ function spheroid_layer_strain_concentration(
                 "written about ê₃; got axis = $(s.axis)."
         )
     )
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
-    κμ = ntuple(k -> _iso_bulk_shear(layer_modulus(s, k)), Val(N))
+    κ₀, μ₀ = TensND.k_mu(C₀)
+    κμ = ntuple(k -> TensND.k_mu(layer_modulus(s, k)), Val(N))
     Tp = promote_type(
         T, Q, typeof(κ₀), typeof(μ₀),
         ntuple(k -> typeof(κμ[k][1]), N)..., ntuple(k -> typeof(κμ[k][2]), N)...,
@@ -639,24 +701,24 @@ function spheroid_layer_strain_concentration(
     for (kk, (case, args, E)) in enumerate(loads)
         remote = _case_remote(case, c, κ₀, μ₀, args...)
         r = _solve_elastic(s, C₀, case, remote; D, kw...)
-        Xc[:, kk] .= KM(E)
+        Xc[:, kk] .= mandel(E)
         for ℓ in 1:N
             κℓ, μℓ = κμ[ℓ]
-            νℓ = _poisson(κℓ, μℓ)
+            νℓ = TensND.poisson_ratio(κℓ, μℓ)
             q_in = ℓ == 1 ? one(qs[1]) : qs[ℓ - 1]
             εk = _avg_strain(r.groups, r.amplitudes[ℓ], qs[ℓ], q_in, c, μℓ, νℓ, Tp)
-            Yl[ℓ][:, kk] .= KM(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εk[i, j])))
+            Yl[ℓ][:, kk] .= mandel(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εk[i, j])))
         end
         κN, μN = κμ[N]
-        εt = _avg_strain(r.groups, r.amplitudes[N], qs[N], one(qs[N]), c, μN, _poisson(κN, μN), Tp)
-        Yt[:, kk] .= KM(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εt[i, j])))
+        εt = _avg_strain(r.groups, r.amplitudes[N], qs[N], one(qs[N]), c, μN, TensND.poisson_ratio(κN, μN), Tp)
+        Yt[:, kk] .= mandel(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εt[i, j])))
         resids[kk] = r.residual
     end
 
     iX = inv(Xc)
     return (;
-        A = inv_KM(_realify(Yt * iX, Tp)),
-        layers = ntuple(ℓ -> inv_KM(_realify(Yl[ℓ] * iX, Tp)), Val(N)),
+        A = from_mandel(_realify(Yt * iX, Tp)),
+        layers = ntuple(ℓ -> from_mandel(_realify(Yl[ℓ] * iX, Tp)), Val(N)),
         residuals = real.(resids),
     )
 end

@@ -3,9 +3,9 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
-using SymPy   # top level on purpose: `@syms` is expanded before a `using`
+using SymPyPythonCall   # top level on purpose: `@syms` is expanded before a `using`
 # nested in a `@testset` body would have run.
-import Symbolics   # `import`, deliberately, NOT `using`: SymPy and Symbolics both
+import Symbolics   # `import`, deliberately, NOT `using`: SymPyPythonCall and Symbolics both
 # export `@syms`, and `runtests.jl` includes every file into the same `Main`, so a
 # bare `using` here breaks the files that rely on SymPy's export. Same convention
 # as `test/Cracks/test_cod_symbolic.jl`.
@@ -15,7 +15,7 @@ const LSpd = MeanFieldHomogenization.LayeredSpheroids
 
 # =============================================================================
 #  test_ad.jl — type genericity of `LayeredSpheroid`: ForwardDiff.Dual,
-#  BigFloat and SymPy.Sym.
+#  BigFloat and SymPyPythonCall.Sym.
 #
 #  The module had no such test at all, and every one of the cases below used
 #  to throw. Three independent causes, all of the same family — a promotion
@@ -158,6 +158,12 @@ end
     # route every oblate case onto the upward recurrence — the very instability
     # Miller's downward variant is here for.
     @test first(plan(5.0, 12, Float64)) === :downward
+    # In BigFloat, near-degenerate charts make Miller too long and upward still
+    # accurate to a tenth of the digits (ρ ≈ 1.35, Nmax = 12).
+    x = (big(1.35) + 1 / big(1.35)) / 2
+    @test 2 * 12 * log(big(1.35)) > log(100)     # not the cheap-upward branch
+    @test plan(x, 12, BigFloat) == (:upward, 0)
+    @test first(plan(Float64(x), 12, Float64)) === :downward
     @test first(plan(im * 5.0, 12, Complex{Float64})) === :downward
     @test first(plan(im * 50.0, 12, Complex{Float64})) === :downward
     @test first(plan(big(5.0), 12, BigFloat)) === :downward
@@ -182,10 +188,10 @@ end
 end
 
 @testset "LayeredSpheroid — SymPy" begin
-    SymPy.@syms k₁ᶜ::positive k₂ᶜ::positive
+    SymPyPythonCall.@syms k₁ᶜ::positive k₂ᶜ::positive
 
     @testset "symbolic geometry needs an explicit prolate/oblate declaration" begin
-        SymPy.@syms aᶜ::positive bᶜ::positive
+        SymPyPythonCall.@syms aᶜ::positive bᶜ::positive
         # The sign of `a² - b²` is undecidable, and SymPy answers `false` to a
         # comparison it cannot settle — so refuse rather than guess.
         @test_throws ArgumentError LayeredSpheroid((aᶜ,), (bᶜ,), (_K(k₁ᶜ),))
@@ -205,7 +211,7 @@ end
     end
 
     @testset "fully symbolic semi-axes give a closed form" begin
-        SymPy.@syms a₁ᶜ::positive a₂ᶜ::positive
+        SymPyPythonCall.@syms a₁ᶜ::positive a₂ᶜ::positive
         s = LayeredSpheroid(
             (a₁ᶜ, a₂ᶜ), (sqrt(a₁ᶜ^2 - Sym(1) // 4), sqrt(a₂ᶜ^2 - Sym(1) // 4)),
             (_K(k₁ᶜ), _K(k₂ᶜ)); prolate = true, Nseries = 1
@@ -214,12 +220,12 @@ end
         expr = X[1][1]
         @test expr isa Sym
         # It really depends on the symbols — not a constant that slipped through.
-        @test !isempty(intersect(SymPy.free_symbols(expr), [a₁ᶜ, a₂ᶜ, k₁ᶜ, k₂ᶜ]))
+        @test !isempty(intersect(SymPyPythonCall.free_symbols(expr), [a₁ᶜ, a₂ᶜ, k₁ᶜ, k₂ᶜ]))
     end
 
     @testset "oblate is out of reach symbolically, and why" begin
         # `q = iτ`, so an oblate spheroid's confocal parameter is `Complex{T}`
-        # — and Julia's `Complex{T}` requires `T <: Real`, which `SymPy.Sym` is
+        # — and Julia's `Complex{T}` requires `T <: Real`, which `SymPyPythonCall.Sym` is
         # not. This is a language-level constraint on the representation, not a
         # missing method here; lifting it means carrying `τ` real and branching
         # on prolate/oblate instead of relying on the complex substitution.

@@ -52,7 +52,7 @@ effective medium is isotropic however anisotropic each single crack is.
 
 ````@example crack_distributions
 plotly_scene(
-    rve_traces(; n = 70, semi_axes = (0.10, 0.10, 0.004), seed = 2024);
+    rve_traces(; n = 70, semi_axes = (0.1, 0.1, 0.004), seed = 2024);
     uid = "cd-rve-iso", height = 470,
     title = "Isotropic distribution of penny cracks"
 )
@@ -66,8 +66,10 @@ isotropic about that normal.
 const n̂ = (sin(π / 4) * cos(π / 3), sin(π / 4) * sin(π / 3), cos(π / 4))
 
 plotly_scene(
-    rve_traces(; n = 70, semi_axes = (0.10, 0.10, 0.004), seed = 2024,
-        orientation = n̂);
+    rve_traces(;
+        n = 70, semi_axes = (0.1, 0.1, 0.004), seed = 2024,
+        orientation = n̂
+    );
     uid = "cd-rve-aligned", height = 470,
     title = "Parallel cracks, all normals along <u><i>n</i></u> = (√2/4, √6/4, √2/2)"
 )
@@ -126,8 +128,10 @@ const ASC = AsymmetricSelfConsistent(; abstol = 1.0e-8, maxiters = 400, select_b
 
 kμ_iso(rve, scheme) = k_mu(best_fit_iso(homogenize(rve, scheme, :C)))
 
-for (name, scheme) in (("Mori-Tanaka", MoriTanaka()), ("DiluteDual", DiluteDual()),
-        ("SelfConsistent", SC), ("Asym. SC", ASC))
+for (name, scheme) in (
+        ("Mori-Tanaka", MoriTanaka()), ("DiluteDual", DiluteDual()),
+        ("SelfConsistent", SC), ("Asym. SC", ASC),
+    )
     k, μ = kμ_iso(rve_isotropic(ε), scheme)
     @printf "%-16s : k = %.6f   μ = %.6f   (3k, 2μ) = (%.6f, %.6f)\n" name k μ 3k 2μ
 end
@@ -202,9 +206,9 @@ end
 
 # Both pairs sit where `k/k₀` is a few 10⁻³ — small enough for the linear
 # extrapolation to be short, large enough to be converged.
-ε_asc = percolation_threshold(ASC_TIGHT, 0.5600, 0.5620)
-ε_sc = percolation_threshold(SC_TIGHT, 1.1560, 1.1570)
-@printf "percolation : Asym. SC at ε = %.6f   (9/16 = %.6f, Δ = %.1e)\n" ε_asc 9/16 abs(ε_asc - 9/16)
+ε_asc = percolation_threshold(ASC_TIGHT, 0.56, 0.562)
+ε_sc = percolation_threshold(SC_TIGHT, 1.156, 1.157)
+@printf "percolation : Asym. SC at ε = %.6f   (9/16 = %.6f, Δ = %.1e)\n" ε_asc 9 / 16 abs(ε_asc - 9 / 16)
 @printf "              SC       at ε = %.6f   — later by a factor %.3f\n" ε_sc ε_sc / ε_asc
 
 p_iso = plot(;
@@ -212,21 +216,35 @@ p_iso = plot(;
     framestyle = :box, legend = :topright, size = (780, 500),
     title = "Isotropic crack distribution (E₀ = 1, ν₀ = 0.2)"
 )
-for (name, color) in (("Mori-Tanaka", :black), ("SelfConsistent", :orange),
-        ("Asym. SC", :red))
-    plot!(p_iso, εs, [c[1] / k₀ for c in curves[name]]; label = "$name  k/k₀",
-        color = color, lw = 2)
-    plot!(p_iso, εs, [c[2] / μ₀ for c in curves[name]]; label = "$name  μ/μ₀",
-        color = color, lw = 2, ls = :dash)
+for (name, color) in (
+        ("Mori-Tanaka", :black), ("SelfConsistent", :orange),
+        ("Asym. SC", :red),
+    )
+    plot!(
+        p_iso, εs, [c[1] / k₀ for c in curves[name]]; label = "$name  k/k₀",
+        color = color, lw = 2
+    )
+    plot!(
+        p_iso, εs, [c[2] / μ₀ for c in curves[name]]; label = "$name  μ/μ₀",
+        color = color, lw = 2, ls = :dash
+    )
 end
-vline!(p_iso, [ε_asc]; color = :red, ls = :dot, lw = 2,
-    label = "Asym. SC percolation")
-vline!(p_iso, [ε_sc]; color = :orange, ls = :dot, lw = 2,
-    label = "SC percolation")
-scatter!(p_iso, [ε, ε], [echoes_iso["MT"].k / k₀, echoes_iso["MT"].μ / μ₀];
-    marker = :circle, ms = 5, color = :black, label = "Echoes MT")
-scatter!(p_iso, [ε, ε], [echoes_iso["SC"].k / k₀, echoes_iso["SC"].μ / μ₀];
-    marker = :diamond, ms = 5, color = :orange, label = "Echoes SC")
+vline!(
+    p_iso, [ε_asc]; color = :red, ls = :dot, lw = 2,
+    label = "Asym. SC percolation"
+)
+vline!(
+    p_iso, [ε_sc]; color = :orange, ls = :dot, lw = 2,
+    label = "SC percolation"
+)
+scatter!(
+    p_iso, [ε, ε], [echoes_iso["MT"].k / k₀, echoes_iso["MT"].μ / μ₀];
+    marker = :circle, ms = 5, color = :black, label = "Echoes MT"
+)
+scatter!(
+    p_iso, [ε, ε], [echoes_iso["SC"].k / k₀, echoes_iso["SC"].μ / μ₀];
+    marker = :diamond, ms = 5, color = :orange, label = "Echoes SC"
+)
 p_iso
 ````
 
@@ -257,8 +275,8 @@ returns the components in *that* frame — the crack frame — not in the global
 one. Both are useful, and they are different matrices:
 
 ````@example crack_distributions
-C_local = TensND.KM(C_par)                              # crack frame
-C_global = TensND.KM(TensND.components_canon(C_par))    # global frame
+C_local = TensND.mandel(C_par)                              # crack frame
+C_global = TensND.mandel(TensND.components_canon(C_par))    # global frame
 round.(C_local; digits = 6)
 ````
 
@@ -276,7 +294,7 @@ reporting form Echoes prints as `Param(size=5)` — come straight from the local
 matrix:
 
 ````@example crack_distributions
-walpole = TensND.ti_params_from_KM(C_local)
+walpole = TensND.ti_params_from_mandel(C_local)
 round.(collect(walpole); digits = 6)
 ````
 
@@ -309,7 +327,7 @@ catch err
 end
 
 C_par_asc = homogenize(rve_parallel(ε), ASC, :C)
-round.(collect(TensND.ti_params_from_KM(TensND.KM(C_par_asc))); digits = 6)
+round.(collect(TensND.ti_params_from_mandel(TensND.mandel(C_par_asc))); digits = 6)
 ````
 
 ## Isotropic against parallel, at equal density
@@ -321,7 +339,7 @@ measured in only in the second case.
 ````@example crack_distributions
 function young_along(C, d)
     # Uniaxial stress along the unit vector `d`; E = σ / ε_dd.
-    S = inv(Array(TensND.components_canon(C)) |> A -> TensND.KM(TensND.Tens(A)))
+    S = inv(Array(TensND.components_canon(C)) |> A -> TensND.mandel(TensND.Tens(A)))
     e = [d[1]^2, d[2]^2, d[3]^2, √2 * d[2] * d[3], √2 * d[1] * d[3], √2 * d[1] * d[2]]
     return 1 / (e' * S * e)
 end
@@ -336,10 +354,14 @@ p_dir = plot(;
     proj = :polar, size = (620, 560), legend = :bottomleft,
     title = "Young's modulus in the plane of the crack normal, ε = $ε"
 )
-plot!(p_dir, angles, [young_along(C_iso, d) for d in dirs];
-    lw = 2.5, color = :black, label = "isotropic distribution")
-plot!(p_dir, angles, [young_along(C_par, d) for d in dirs];
-    lw = 2.5, color = :red, label = "parallel cracks")
+plot!(
+    p_dir, angles, [young_along(C_iso, d) for d in dirs];
+    lw = 2.5, color = :black, label = "isotropic distribution"
+)
+plot!(
+    p_dir, angles, [young_along(C_par, d) for d in dirs];
+    lw = 2.5, color = :red, label = "parallel cracks"
+)
 p_dir
 ````
 

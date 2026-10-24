@@ -75,7 +75,7 @@ Nothing in either statement refers to a particular case. Checked for four
 can hide anything:
 
 ```@example spheroid_elastic
-using TensND, SymPy, LinearAlgebra
+using TensND, SymPyPythonCall, LinearAlgebra
 S = coorsys_spheroidal()
 ϕ, p, q = getcoords(S)
 c = symbols("c", positive = true)
@@ -91,8 +91,8 @@ X, Y, Z = getcoords(Cart)
 f = ntuple(i -> SymFunction("f$(i-1)")(X, Y, Z), 4)
 φv = Tens([f[2], f[3], f[4]])
 Φc = f[1] + X * f[2] + Y * f[3] + Z * f[4]
-uc = (GRAD(Φc, Cart) - 4 * (1 - ν) * φv) / (2μ)
-εc = SYMGRAD(uc, Cart)
+uc = (grad(Φc, Cart) - 4 * (1 - ν) * φv) / (2μ)
+εc = symgrad(uc, Cart)
 PTc = Dict(X => Sym(2)//7, Y => Sym(3)//5, Z => Sym(11)//9, μ => Sym(7)//3, ν => Sym(1)//4)
 atomc(e) = foldl((a, g) -> subs(a, g[1] => g[2]),
     [(diff(f[i], v...), symbols("w$(i)_$(join(string.(v)))"))
@@ -100,7 +100,7 @@ atomc(e) = foldl((a, g) -> subs(a, g[1] => g[2]),
                             (X,), (Y,), (Z,))] ∪ [(f[i], symbols("w$(i)_0")) for i in 1:4];
     init = e)
 harmc(e) = foldl((a, g) -> subs(a, diff(g, Z, 2) => -diff(g, X, 2) - diff(g, Y, 2)), f; init = e)
-simplify(expand(subs(atomc(harmc(tr(εc) + (1 - 2ν) * DIV(φv, Cart) / μ)), PTc...)))
+simplify(expand(subs(atomc(harmc(tr(εc) + (1 - 2ν) * divergence(φv, Cart) / μ)), PTc...)))
 ```
 
 Zero — and `test/LayeredSpheroids/test_pn_symbolic.jl` carries the same check on
@@ -161,8 +161,8 @@ e₃ = Tens([Sym(0), Sym(0), Sym(1)])
 φ₃ = SymFunction("phi3")(p, q)
 Φ  = φ₀ + c * p * q * φ₃
 
-u = (GRAD(Φ, S) - 4 * (1 - ν) * φ₃ * e₃) / (2μ)
-ε = SYMGRAD(u, S)
+u = (grad(Φ, S) - 4 * (1 - ν) * φ₃ * e₃) / (2μ)
+ε = symgrad(u, S)
 σ = λ * tr(ε) * one(ε) + 2μ * ε
 nothing # hide
 ```
@@ -281,9 +281,9 @@ with the three geometric factors
 Both boxed statements, checked:
 
 ```@example spheroid_elastic
-∇φ₃  = GRAD(φ₃, S)
+∇φ₃  = grad(φ₃, S)
 ∂zφ₃ = ∇φ₃ ⋅ e₃
-σ_cf = -2ν * ∂zφ₃ * one(ε) + HESS(Φ, S) - 2 * (1 - ν) * (e₃ ⊗ ∇φ₃ + ∇φ₃ ⊗ e₃)
+σ_cf = -2ν * ∂zφ₃ * one(ε) + hess(Φ, S) - 2 * (1 - ν) * (e₃ ⊗ ∇φ₃ + ∇φ₃ ⊗ e₃)
 cd, cc = components_canon(σ), components_canon(σ_cf)
 [reduce_h(tr(ε) + (1 - 2ν) * ∂zφ₃ / μ);
  [reduce_h(cd[i, j] - cc[i, j]) for i in 1:3 for j in i:3]]
@@ -366,7 +366,7 @@ The identities, and the counter-examples so that none of this is taken on faith:
 ```@example spheroid_elastic
 P(n) = n < 0 ? Sym(0) : sympy.legendre(n, p)
 proj(e, k) = simplify(integrate(expand(e) * P(k) * Sym(2k + 1) // 2, (p, -1, 1)))
-reach(f, n) = (d = Int(sympy.degree(expand(f(n)), gen = p));
+reach(f, n) = (d = convert(Int, sympy.degree(expand(f(n)), gen = p));
                [k for k in 0:d if !iszero(proj(f(n), k))])
 
 banded = [(n, reach(m -> (1 - p^2) * diff(P(m), p), n), reach(m -> p * P(m), n),
@@ -472,8 +472,8 @@ classical, and it is coordinate-free, so re-deriving it in a particular chart
 proves nothing about elasticity.
 
 What the check below *does* establish is that the machinery producing the
-operators above is sound: TensND's spheroidal chart, the wiring of `GRAD`,
-`SYMGRAD` and `DIV`, the transcription of the gauge ``\varphi_1=\varphi_2=0``
+operators above is sound: TensND's spheroidal chart, the wiring of `grad`,
+`symgrad` and `divergence`, the transcription of the gauge ``\varphi_1=\varphi_2=0``
 with its ``\underline e_3`` term, and the ``\lambda \leftrightarrow \nu``
 conversion. Every expression on this page comes out of that same machinery, so
 a non-zero residual here would have invalidated all of them. It is a plumbing
@@ -490,7 +490,7 @@ once in ``p`` and once in ``q`` supplies the third-order eliminations that
 ``\operatorname{div}\boldsymbol\sigma`` needs. Imposing only that:
 
 ```@example spheroid_elastic
-dz = components_canon(DIV(σ, S))[3]           # the axial component
+dz = components_canon(divergence(σ, S))[3]           # the axial component
 reduce_h(dz)
 ```
 
@@ -546,6 +546,57 @@ one of the two, not a physical requirement. A rotation carries no strain, so its
 traction must vanish identically — which is how the test states it — and the
 Eshelby oracle confirms the whole thing: case III lands on the analytic answer
 with no rotation in the unknown list.
+
+### [One field-free combination per regular region](@id th-spheroid-field-free)
+
+The symmetric combination above is the remote shear only once ``\varphi_0`` is
+left out of it; with the right ``\varphi_0`` added, it moves nothing at all.
+Papkovich–Neuber is redundant in a precise way: for **any** harmonic ``\zeta``,
+
+```math
+\underline\varphi = \nabla\zeta,\qquad
+\varphi_0 = 4(1-\nu)\,\zeta - \underline x\cdot\nabla\zeta
+\quad\Longrightarrow\quad
+\Phi = \varphi_0 + \underline x\cdot\underline\varphi = 4(1-\nu)\,\zeta,
+\qquad
+2\mu\,\underline u = \nabla\Phi - 4(1-\nu)\,\underline\varphi = \underline 0 .
+```
+
+The four potentials are harmonic, as they must be: ``\nabla\zeta`` is, and
+``\Delta(\underline x\cdot\nabla\zeta) = 2\,\Delta\zeta + \underline x\cdot\nabla\Delta\zeta = 0``.
+
+The families of a case admit such a ``\zeta`` only when ``\nabla\zeta`` has no
+component outside the active potentials and their degrees:
+
+- **case I** keeps ``\varphi_3`` alone, so ``\zeta`` depends on ``z`` only, and a
+  harmonic ``\zeta(z)`` is ``z``, whose ``\varphi_3 = 1`` is of degree ``0``, outside
+  the odd degrees of ``\varphi_3``: none;
+- **case III** (``\cos``) has ``\varphi_2 = 0``, so ``\zeta = x\,h(z)``, harmonic
+  for ``h'' = 0``; ``\zeta = x`` would need ``\varphi_1`` of degree ``0``, which is
+  not in the list, and ``\zeta = xz`` remains, with ``\varphi_1 = z``,
+  ``\varphi_3 = x`` and ``\varphi_0 = (2-4\nu)\,xz`` (``\zeta = yz`` for ``\sin``);
+- **case II** has ``\varphi_3 = 0``: ``\zeta = xy`` (``\sin``) or
+  ``(x^2-y^2)/2`` (``\cos``), which is exactly the tie of the pair
+  ``(\varphi_1, \varphi_2)`` at degree 1, with ``\varphi_0 = (2-4\nu)\,\zeta``.
+
+Each ``\zeta`` is a polynomial, so the combination lives in every region with
+regular modes — the core and each inner shell — but not in the matrix. A single
+inclusion carries one, which the pivoted factorization of `Float64` happened to
+absorb; with an inner shell there are two, and they made the interface system
+exactly singular (two
+singular values at ``10^{-16}`` after the column scaling, a condition number of
+``2\cdot10^{16}``): the concentration tensor came out to about ``10^{-6}`` only,
+and differently for `Float64` and for dual numbers, whose factorizations pivot
+differently.
+
+The cure is to fix this last freedom as well: in each region with regular modes,
+the regular column of degree 1 of ``\varphi_1`` (``\varphi_2``) in case III, or of
+the tied pair in case II, is removed. Its coefficient in the combination is
+``1``, whatever ``\nu``, so the remaining columns span the same fields with a
+full-rank system; the coefficient of ``\varphi_0``, ``2-4\nu``, would vanish for
+an incompressible layer. The condition number falls to about ``10^4``, `Float64`
+and dual values agree to ``10^{-15}``, and the derivative matches an extrapolated
+centered difference to ``10^{-11}``.
 
 ### [Two things that are not optional](@id th-spheroid-not-optional)
 
@@ -727,7 +778,7 @@ homothetic" stated in millimeters, and it means a confocal interphase models a
 compliance that **varies along the interface** rather than a uniform spring.
 
 ```@example spheroid_elastic
-χ = Lame(S)
+χ = lame_coefficients(S)
 [simplify(subs(χ[3], p => 1)),                       # pole
  simplify(subs(χ[3], p => 0)),                       # equator
  simplify(subs(χ[3], p => 0) / subs(χ[3], p => 1) - q / sqrt(q^2 - 1))]

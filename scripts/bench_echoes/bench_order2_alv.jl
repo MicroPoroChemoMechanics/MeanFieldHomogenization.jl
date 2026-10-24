@@ -10,9 +10,12 @@
 import Pkg
 Pkg.activate(@__DIR__; io = devnull)
 
+# Which Python holds Echoes: chosen before PythonCall is loaded
+include(joinpath(@__DIR__, "echoes_python.jl"))
+
 using LinearAlgebra
 using Printf
-using PyCall
+using PythonCall
 using MeanFieldHomogenization
 
 const echoes = pyimport("echoes")
@@ -45,23 +48,11 @@ const law_M = ViscoLaw(Rs, :creep)
 const law_I = ViscoLaw(Ri, :creep)
 
 # Python ECHOES helpers --------------------------------------------------
-py"""
-import numpy as np
-def py_Rs(t, tp):
-    r0, r1, r2 = 1., 2., 3.
-    tau1, tau2 = 2., 10.
-    je = r0 + np.exp(-(tp/30.)**2)*(r1*(1.-np.exp(-(t-tp)/tau1))+r2*(1.-np.exp(-(t-tp)/tau2)))
-    return je*np.eye(3)
-
-def py_Ri(t, tp):
-    r0, r1, r2 = 0.2, 0.3, 1.2
-    tau1, tau2 = 1., 15.
-    je = np.exp(-(tp/30.)**2)*r0 + np.exp(-(tp/15.)**2)*(r1*(1.-np.exp(-(t-tp)/tau1))+r2*(1.-np.exp(-(t-tp)/tau2)))
-    return je*np.eye(3)
-"""
-
-const py_Rs = py"py_Rs"
-const py_Ri = py"py_Ri"
+pyimport("sys").path.insert(0, @__DIR__)
+include(joinpath(@__DIR__, "pyjl.jl"))
+const O2 = pyimport("order2_alv_echoes")
+const py_Rs = O2.py_Rs
+const py_Ri = O2.py_Ri
 
 # Build comparable Julia / ECHOES homogenize calls -----------------------
 function julia_run(omega, T, sch, frac)
@@ -75,35 +66,13 @@ function julia_run(omega, T, sch, frac)
     return homogenize_alv_order2(rve, sch, :Y; times = T)
 end
 
-py"""
-from echoes import rve, ellipsoid, ISO, CREEP, MT, MAX, DIL, REUSS, VOIGT, homogenize_visco
-import numpy as np
-
-_SCH_MAP = {"MT": MT, "MAX": MAX, "DIL": DIL, "REUSS": REUSS, "VOIGT": VOIGT}
-
-def run_order2(sh_M, sh_I, T, sch_name, frac, py_Rs, py_Ri):
-    ver = rve(matrix="MAT")
-    ver["MAT"] = ellipsoid(sh_M, symmetrize=[ISO],
-                            visco_prop={"Y": (py_Rs, CREEP)},
-                            fraction=1.0 - frac)
-    ver["INC"] = ellipsoid(sh_I, symmetrize=[ISO],
-                            visco_prop={"Y": (py_Ri, CREEP)},
-                            fraction=frac)
-    T_np = np.asarray(T, dtype=np.float64)
-    sch = _SCH_MAP[sch_name]
-    V = homogenize_visco(prop="Y", rve=ver, time_series=T_np,
-                         unitsize=3, scheme=sch,
-                         epsrel=1.e-6, maxnb=100, verbose=False)
-    return np.asarray(V)
-"""
-
-const py_run_order2 = py"run_order2"
+const py_run_order2 = O2.run_order2
 
 function echoes_run(omega, T, sch_str, frac)
     sh_M = echoes.spherical
     sh_I = omega == 1.0 ? echoes.spherical : echoes.spheroidal(omega)
-    V_np = py_run_order2(sh_M, sh_I, collect(T), sch_str, frac, py_Rs, py_Ri)
-    return Matrix{Float64}(V_np)
+    V_np = py_run_order2(sh_M, sh_I, pylist(T), sch_str, frac, py_Rs, py_Ri)
+    return pyconvert(Matrix{Float64}, V_np)
 end
 
 function compare(omega, T, sch_julia, sch_str, frac)

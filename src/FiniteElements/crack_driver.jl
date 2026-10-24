@@ -34,13 +34,10 @@ struct CrackSetup{B, G, S}
     space::S
 end
 
-function _crack_setup(crack::FEEllipticCrack)
-    if crack.cache.setup === nothing
-        b = _resolve_backend(crack.backend)
-        grid = fe_crack_grid(b, crack)
-        crack.cache.setup = CrackSetup(b, grid, fe_crack_space(b, grid, crack.mesh.order))
-    end
-    return crack.cache.setup
+_crack_setup(crack::FEEllipticCrack) = _fe_setup!(crack.cache) do
+    b = _resolve_backend(crack.backend)
+    grid = fe_crack_grid(b, crack)
+    CrackSetup(b, grid, fe_crack_space(b, grid, crack.mesh.order))
 end
 
 # Σ⁽ⁱ⁾ with Σ⁽ⁱ⁾·e₃ = eᵢ, and eₘ ⊗ˢ e₃ — in the *local* crack frame, where the
@@ -121,23 +118,11 @@ end
 #  (isotropic, or symmetrization-projected) matrix, share one single solve.
 
 "Rotation matrix whose columns are the crack's local axes in global coordinates."
-function _frame_matrix(crack)
-    l̂, m̂, n̂ = Core._frame_columns(Core.inclusion_basis(crack))
-    return hcat(l̂, m̂, n̂)
-end
+_frame_matrix(crack) = Matrix(TensND.vecbasis(Core.inclusion_basis(crack), :cov))
 
-"Components of `C₀` in the crack's local frame, as a `SymmetricTensor{4,3}`."
+"Components of `C₀` in the crack's local frame, as a `SymmetricTensor{4,3}`: one change of basis."
 function _local_stiffness(crack, C₀::TensND.AbstractTens{4, 3})
-    Cg = Core._C_array(C₀)
-    R = _frame_matrix(crack)
-    Cl = zeros(Float64, 3, 3, 3, 3)
-    @inbounds for p in 1:3, q in 1:3, r in 1:3, s in 1:3
-        acc = 0.0
-        for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-            acc += R[i, p] * R[j, q] * R[k, r] * R[l, s] * Cg[i, j, k, l]
-        end
-        Cl[p, q, r, s] = acc
-    end
+    Cl = Array(TensND.components(C₀, Core.inclusion_basis(crack)))
     return Tensors.SymmetricTensor{4, 3}((i, j, k, l) -> Cl[i, j, k, l])
 end
 
@@ -160,7 +145,7 @@ uses (an isotropically-symmetrized crack family, for instance).
 function _isotropic_moduli(crack, C₀::TensND.AbstractTens{4, 3}; rtol = 1.0e-8)
     C_iso = Core.isotropify(C₀)
     if !(C₀ isa TensND.TensISO{4, 3})
-        A, Aiso = Core._C_array(C₀), Core._C_array(C_iso)
+        A, Aiso = Array(TensND.components_canon(C₀)), Array(TensND.components_canon(C_iso))
         dev = maximum(abs, A .- Aiso)
         dev ≤ rtol * max(maximum(abs, Aiso), eps()) || throw(
             ArgumentError(
@@ -178,8 +163,8 @@ function _isotropic_moduli(crack, C₀::TensND.AbstractTens{4, 3}; rtol = 1.0e-8
             )
         )
     end
-    E, ν = Core.extract_iso_moduli(C_iso)
-    return Float64(E / (2 * (1 + ν))), Float64(ν)
+    μ, ν = TensND.mu_nu(C_iso)
+    return Float64(μ), Float64(ν)
 end
 
 # ─── The seam ────────────────────────────────────────────────────────────────
@@ -191,7 +176,7 @@ function _fe_cod_tensor(
     C_local = _local_stiffness(crack, C₀)
     key = _cache_key(C_local)
 
-    B_local = get!(crack.cache.tensors, key) do
+    B_local = _fe_memo(crack.cache, key) do
         _, _, B = _solve_cod_local(crack, C_local, μ, ν)
         B
     end

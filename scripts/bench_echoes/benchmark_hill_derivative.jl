@@ -17,13 +17,16 @@
 #    * ANISO — a fully triclinic reference ; MFH ForwardDiff only (echoes'
 #              hill_derivative has no triclinic parameterization).
 #
-#  Elastic 4th order only.  Requires PyCall + an importable `echoes`.
+#  Elastic 4th order only.  Requires PythonCall + an importable `echoes`.
 # =============================================================================
 
 import Pkg
 Pkg.activate(@__DIR__; io = devnull)
 
-using PyCall
+# Which Python holds Echoes: chosen before PythonCall is loaded
+include(joinpath(@__DIR__, "echoes_python.jl"))
+
+using PythonCall
 using MeanFieldHomogenization
 using TensND
 using ForwardDiff
@@ -40,7 +43,7 @@ const echoes = pyimport("echoes")
 P_KM(ell, C) = MeanFieldHomogenization.Core.mandel66_minor(
     TensND.get_array(change_tens_canon(hill_tensor(ell, C)))
 )
-to_jlmat(x) = x === nothing ? nothing : convert(Array{Float64, 2}, x)
+to_jlmat(x) = pyisnone(x) ? nothing : pyconvert(Matrix{Float64}, x)
 function relerr(A, B)
     scale = max(maximum(abs, A), maximum(abs, B), 1.0e-300)
     return maximum(abs, A .- B) / scale
@@ -48,27 +51,13 @@ end
 
 # echoes ellipsoid (semi-axes a,b,c + Euler angles) — matches MFH
 # `Ellipsoid(a, b, c; euler_angles = (θ, φ, ψ))`.
-py_ell(a, b, c, θ, φ, ψ) = echoes.ellipsoidal(np.array([a, b, c, θ, φ, ψ]))
+py_ell(a, b, c, θ, φ, ψ) = echoes.ellipsoidal(np.array(pylist([a, b, c, θ, φ, ψ])))
 
 # ── Python reference wrappers ───────────────────────────────────────────────
-py"""
-import numpy as np
-import echoes
-
-def hill_deriv_iso(ell, k, mu, index):
-    C = echoes.stiff_kmu(float(k), float(mu))
-    dP = echoes.hill_derivative(ell, C, index, echoes.ISO,
-                                epsrel=1e-8, epsabs=1e-8, maxnb=400000, epsroots=1e-8)
-    return np.asarray(dP)
-
-def hill_deriv_ortho(ell, params9_echoes_order, index):
-    C = echoes.tensor(list(params9_echoes_order), [0.0, 0.0, 0.0])
-    dP = echoes.hill_derivative(ell, C, index, echoes.ORTHO, algo=echoes.NUMINT3D,
-                                epsrel=1e-8, epsabs=1e-8, maxnb=400000, epsroots=1e-8)
-    return np.asarray(dP)
-"""
-const py_hill_deriv_iso = py"hill_deriv_iso"
-const py_hill_deriv_ortho = py"hill_deriv_ortho"
+pyimport("sys").path.insert(0, @__DIR__)
+const HD = pyimport("hill_derivative_echoes")
+const py_hill_deriv_iso = HD.hill_deriv_iso
+const py_hill_deriv_ortho = HD.hill_deriv_ortho
 
 # =============================================================================
 #  ISO reference
@@ -137,7 +126,7 @@ let ell_jl = Ellipsoid(5.0, 1.0, 1.0), ell_py = py_ell(5.0, 1.0, 1.0, 0.0, 0.0, 
             @printf "  %-10d  (MFH ForwardDiff through TensOrtho failed: %s)\n" e_idx typeof(err)
             continue
         end
-        dP_py = to_jlmat(py_hill_deriv_ortho(ell_py, ECHOES_ORTHO, e_idx))
+        dP_py = to_jlmat(py_hill_deriv_ortho(ell_py, pylist(ECHOES_ORTHO), e_idx))
         dP_py === nothing && (@printf "  %-10d  (echoes FAIL)\n" e_idx; continue)
         e = relerr(dP_jl, dP_py)
         ok = e < 1.0e-4
@@ -152,7 +141,7 @@ end
 println("\n  Fully triclinic reference — MeanFieldHomogenization ForwardDiff only")
 println("  (echoes hill_derivative has no triclinic parameterization)")
 let ell_jl = Ellipsoid(3.0, 2.0, 1.0; euler_angles = (0.2, 0.3, 0.1))
-    C_KM = collect(KM(TensISO{3}(3 * 60.0e3, 2 * 40.0e3)))
+    C_KM = collect(mandel(TensISO{3}(3 * 60.0e3, 2 * 40.0e3)))
     C_KM[1, 1] += 8.0e3; C_KM[1, 4] += 3.0e3; C_KM[4, 1] += 3.0e3   # break symmetry class
     build(t) = begin
         M = C_KM .+ zero(t); M[1, 1] += t     # eltype promotes to typeof(t) (Dual-safe)

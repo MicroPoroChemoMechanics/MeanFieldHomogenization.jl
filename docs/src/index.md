@@ -81,6 +81,17 @@ machinery of the [Echoes](https://jfbarthelemy.github.io/echoes/) C++/Python
 codebase; see [From Echoes to MeanFieldHomogenization](@ref tools-from-echoes)
 for the translation guide.
 
+## Installation
+
+```julia-repl
+pkg> add MeanFieldHomogenization
+```
+
+Nothing else has to be installed by hand. The symbolic layer goes through
+`SymPyPythonCall` (PythonCall), a dependency of `TensND`: the first time the
+package loads, CondaPkg installs a private Python with `sympy` (internet needed,
+once). To create your own symbols, `add SymPyPythonCall` to your environment.
+
 ## A first calculation
 
 A porous solid, and every scheme the package ships, against the bounds that

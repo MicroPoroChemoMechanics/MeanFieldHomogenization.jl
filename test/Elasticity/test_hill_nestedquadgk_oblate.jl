@@ -32,7 +32,7 @@ const _KM_obl = [
 @testset "nestedquadgk — oblate ellipsoid ω = 0.01 (α = 2)" begin
     # Stored as (1.0, 1.0, 0.01) after constructor sort; ω = 0.01 → α = 2.
     # The change-of-variable concentrates quadrature near z = 1.
-    C = TensND.inv_KM(_KM_obl, basis4)
+    C = TensND.from_mandel(_KM_obl, basis4)
     ell = Ellipsoid(1.0, 1.0, 0.01)
 
     P_nqg = hill_tensor(ell, C; method = :nestedquadgk)
@@ -46,7 +46,7 @@ end
 
 @testset "nestedquadgk — very oblate ellipsoid ω = 0.001 (α = 3)" begin
     # ω = 0.001 → α = 3; tightest practical test for the change-of-variable.
-    C = TensND.inv_KM(_KM_obl, basis4)
+    C = TensND.from_mandel(_KM_obl, basis4)
     ell = Ellipsoid(1.0, 1.0, 0.001)
 
     P_nqg = hill_tensor(ell, C; method = :nestedquadgk)
@@ -61,7 +61,7 @@ end
 @testset "nestedquadgk — regular triaxial (α = 1, regression guard)" begin
     # ω = 1/3 → α = max(1, 0.48) = 1 (identity change-of-variable).
     # Checks that the new path does not regress accuracy on well-conditioned cases.
-    C = TensND.inv_KM(_KM_obl, basis4)
+    C = TensND.from_mandel(_KM_obl, basis4)
     ell = Ellipsoid(3.0, 2.0, 1.0)
 
     P_nqg = hill_tensor(ell, C; method = :nestedquadgk, reltol = 1.0e-12)

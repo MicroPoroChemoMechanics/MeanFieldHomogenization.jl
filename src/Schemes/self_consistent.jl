@@ -140,7 +140,7 @@ _sc_initial(init::TensND.AbstractTens, ::RVE, ::Symbol; kw...) = init
 # advantage and one drawback: across a porous RVE at f ∈ {0.1, 0.3, 0.45, 0.6}
 # and a stiff one at f ∈ {0.1, 0.3, 0.5, 0.7} the two agree to 1e-9 or better,
 # and on a deeply percolated oblate configuration the Voigt start makes
-# `TrustRegion` stop where the finite-difference IFT Jacobian is exactly
+# `TrustRegion` stop where its Jacobian is exactly
 # singular, which the phase seed does not. Equivalent where it matters, worse in
 # one corner: not a default worth taking.
 function _sc_initial(::Nothing, rve::RVE, prop::Symbol; kw...)
@@ -244,52 +244,19 @@ no-op up to roundoff whenever the product is already symmetric, and it matches
 the reference ECHOES implementation, whose self-consistent estimate comes out
 exactly major-symmetric.
 
-The components are taken and rebuilt in the tensor's **own** basis, so the
-projection commutes with the orientation of the running estimate.
-
-!!! note "Structured types keep their class"
-    `TensISO`, `TensOrtho` and the five-parameter Walpole `TensTI{4,T,5}` are
-    major-symmetric *by construction*, so there is nothing to project — and
-    rebuilding them as a generic `Tens` would be actively harmful: the Newton
-    parameterization (`_sc_newton_seed`) reads the structured components through
-    `get_data`, and the symmetry-class dispatch keys on the concrete type. A
-    six- or eight-parameter `TensTI` is projected within its class, onto the
-    five-parameter form. Only the genuinely unstructured estimates — which is
-    exactly what a mix of non-coaxial families produces — are rebuilt.
+It is TensND's `Tensors.majorsymmetric` (order 4) and `Tensors.symmetric`
+(order 2), which keep the symmetry class of a structured estimate:
+`TensISO`, `TensCubic`, `TensOrtho` and the five-parameter Walpole
+`TensTI{4,T,5}` are returned as they are, a six- or eight-parameter `TensTI` as
+its five-parameter form, a three-parameter `TensTI{2}` without its skew part.
+That matters: the Newton parameterization (`_sc_newton_seed`) reads the
+structured components through `get_data`, and the symmetry-class dispatch keys
+on the concrete type. Only the genuinely unstructured estimates — which is
+exactly what a mix of non-coaxial families produces — are rebuilt, in their own
+basis.
 """
-_major_symmetrize(P::TensND.TensISO{4, 3}) = P
-_major_symmetrize(P::TensND.TensISO{2, 3}) = P
-_major_symmetrize(P::TensND.TensOrtho) = P
-_major_symmetrize(P::TensND.TensTI{4, T, 5}) where {T} = P
-_major_symmetrize(P::TensND.TensTI{2}) = P
-
-# A transversely isotropic estimate stays one. In the Walpole basis the major
-# transpose swaps ℓ₃ and ℓ₄ and changes the sign of ℓ₇ and ℓ₈, the
-# major-antisymmetric generators of the eight-parameter form, so the
-# major-symmetric part is the five-parameter tensor below. Products of TI tensors
-# land in the six- or eight-parameter form; rebuilt as a generic `Tens`, the
-# estimate lost its class, and the Hill tensor of a coaxial spheroid in it went
-# through a cubature instead of its closed form.
-function _major_symmetrize(P::TensND.TensTI{4, T}) where {T}
-    ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆, _, _ = TensND.get_ℓ8(P)
-    return TensND.TensTI{4, T, 5}((ℓ₁, ℓ₂, (ℓ₃ + ℓ₄) / 2, ℓ₅, ℓ₆), TensND.axis(P))
-end
-
-function _major_symmetrize(P::TensND.AbstractTens{4, 3})
-    A = get_array(P)
-    T = eltype(A)
-    sym = Tensors.SymmetricTensor{4, 3}(
-        (i, j, k, l) -> (A[i, j, k, l] + A[k, l, i, j]) / T(2)
-    )
-    return TensND.Tens(sym, TensND.get_basis(P))
-end
-
-function _major_symmetrize(P::TensND.AbstractTens{2, 3})
-    A = get_array(P)
-    T = eltype(A)
-    sym = Tensors.SymmetricTensor{2, 3}((i, j) -> (A[i, j] + A[j, i]) / T(2))
-    return TensND.Tens(sym, TensND.get_basis(P))
-end
+_major_symmetrize(P::TensND.AbstractTens{4}) = Tensors.majorsymmetric(P)
+_major_symmetrize(P::TensND.AbstractTens{2}) = Tensors.symmetric(P)
 
 """
     _sc_crack_total(rve, P_n, prop; kw...) -> (H_total, has_cracks)
@@ -414,7 +381,7 @@ Convergence is declared when ``\\|x_{\\mathrm{new}} - x_{\\mathrm{old}}\\| \\le 
 given `abstol` expresses one requirement regardless of `algorithm` and of the
 symmetry class the fixed point lives in. The Picard loop measures it directly;
 the Newton path reaches it by working in the isometric parametrization of
-[`_sc_param_weights`](@ref); the `NonlinearSolve` path passes those same
+the weights of TensND's `param_norms`; the `NonlinearSolve` path passes those same
 weights to SciML as the `internalnorm` of its termination condition, leaving
 the unknowns alone — a trust region is not invariant under a rescaling of
 them, and moving its metric moves where it stops.
@@ -529,22 +496,18 @@ function _solve_sc(
     # are the Frobenius norms of the tensors they stand for — the same quantity
     # the Picard loop tests, rather than an unweighted sum over canonical
     # components that means something different in every symmetry class.
-    w, isometric = _sc_param_weights(x_seed)
-    p0 = w .* _tens_to_param_vec(x_seed)
+    w = _sc_param_weights(x_seed)
+    p0 = w .* TensND.to_vector(x_seed)
     L = length(p0)
-    rebuild = p -> _tens_from_param_vec(x_seed, p ./ w)
+    rebuild = p -> TensND.from_vector(x_seed, p ./ w)
     ε_pos = _sc_pd_eps(x_seed)
     residual_vec = function (p)
         x_in = _sc_pd_guard_apply(rebuild(p), ε_pos)
         x_out = step(x_in)
-        return w .* (_tens_to_param_vec(x_out) .- _tens_to_param_vec(x_in))
+        return w .* (TensND.to_vector(x_out) .- TensND.to_vector(x_in))
     end
-    # With an orthogonal class basis the Euclidean norm of the scaled vector
-    # *is* the Frobenius norm. Where the probe failed (unit weights) fall back
-    # to measuring the tensors themselves: exact too, only more costly.
-    _nrm_r = isometric ? (r, p) -> sqrt(sum(abs2, r)) :
-        (r, p) -> _sc_residual_norm(rebuild(p .+ r), rebuild(p))
-    _nrm_p = isometric ? p -> sqrt(sum(abs2, p)) : p -> _sc_frobenius(rebuild(p))
+    # The class basis is orthogonal, so the Euclidean norm of the scaled vector
+    # *is* the Frobenius norm of the tensor it encodes.
     # `eltype(p0)` alone is not always enough to know whether `Dual`s are
     # in play: when the differentiated parameter lives on a phase other
     # than the one `x0` is built from (e.g. differentiating w.r.t. an
@@ -567,8 +530,8 @@ function _solve_sc(
     p_best = copy(p); resid_best = Inf
     for iter in 1:maxiters
         MFH_Core._bump!(MFH_Core.SC_ITERATIONS)
-        norm_r = _nrm_r(r, p)
-        norm_p = _nrm_p(p)
+        norm_r = LinearAlgebra.norm(r)
+        norm_p = LinearAlgebra.norm(p)
         tol_eff = abstol + reltol * _scalar_value(norm_p)
         verbose && @info "SC-Newton iter $iter : ‖F‖ = $norm_r   tol = $tol_eff"
         if select_best && _scalar_value(norm_r) < resid_best
@@ -590,7 +553,10 @@ function _solve_sc(
         δ = try
             J \ (-r)
         catch err
-            @debug "SC-Newton: linear solve failed, applying tiny Tikhonov" err
+            # Only a singular (or numerically singular) Jacobian is regularized;
+            # any other error is a bug and must surface.
+            err isa Union{LinearAlgebra.SingularException, LinearAlgebra.LAPACKException} || rethrow()
+            @debug "SC-Newton: singular Jacobian, applying tiny Tikhonov" err
             (J + 1.0e-10 * sqrt(sum(abs2, J)) * LinearAlgebra.I) \ (-r)
         end
         # Backtracking line search (Armijo).  The accepted `r_new` IS the
@@ -602,7 +568,7 @@ function _solve_sc(
         for _ in 1:30
             p_new = p .+ α_step .* δ
             r_new = residual_vec(p_new)
-            if _nrm_r(r_new, p_new) ≤ (1 - 1.0e-4 * α_step) * norm_r
+            if LinearAlgebra.norm(r_new) ≤ (1 - 1.0e-4 * α_step) * norm_r
                 p .= p_new
                 r .= r_new
                 accepted = true
@@ -692,9 +658,10 @@ _max_canonical_value(::TensND.AbstractTens) = 1.0
 
 _sc_pd_guard_apply(x::TensND.AbstractTens, ε_pos) = x
 
-# Every stored coefficient is an eigenvalue: on (𝕁, 𝕂), on (𝕁, 𝔼, 𝕋), on (nT, nₙ).
+# Every stored coefficient is an eigenvalue: on (𝕁, 𝕂), on (𝕁, 𝔼, 𝕋), on (nT, nₙ),
+# on (P₁, P₂, P₃).
 function _sc_pd_guard_apply(
-        x::Union{TensND.TensISO, TensND.TensCubic, TensND.TensTI{2, <:Any, 2}}, ε_pos
+        x::Union{TensND.TensISO, TensND.TensCubic, TensND.TensTI{2, <:Any, 2}, TensND.TensOrtho{2}}, ε_pos
     )
     d = TensND.get_data(x)
     all(v -> _sc_above(v, ε_pos), d) && return x
@@ -739,7 +706,7 @@ end
 
 # (C₁₁, C₂₂, C₃₃, C₁₂, C₁₃, C₂₃, C₄₄, C₅₅, C₆₆): a 3×3 block in the material
 # frame, and the eigenvalues 2C₄₄, 2C₅₅, 2C₆₆.
-function _sc_pd_guard_apply(x::TensND.TensOrtho, ε_pos)
+function _sc_pd_guard_apply(x::TensND.TensOrtho{4, <:Any, 9}, ε_pos)
     c₁₁, c₂₂, c₃₃, c₁₂, c₁₃, c₂₃, c₄₄, c₅₅, c₆₆ = TensND.get_data(x)
     B = SMatrix{3, 3}(c₁₁, c₁₂, c₁₃, c₁₂, c₂₂, c₂₃, c₁₃, c₂₃, c₃₃)
     shear = (c₄₄, c₅₅, c₆₆)
@@ -747,6 +714,26 @@ function _sc_pd_guard_apply(x::TensND.TensOrtho, ε_pos)
     C = _sc_clamp(B, ε_pos)
     return TensND._rebuild(
         x, (C[1, 1], C[2, 2], C[3, 3], C[1, 2], C[1, 3], C[2, 3], map(c -> _sc_clamp(2c, ε_pos) / 2, shear)...)
+    )
+end
+
+# An orthotropic tensor without major symmetry, (C₁₁, …, C₆₆, C₂₁, C₃₁, C₃₂): as
+# the six-parameter TI one, the guard acts on the symmetric part of the normal
+# block, and its skew part (Cₘₙ - Cₙₘ)/2 is kept.
+function _sc_pd_guard_apply(x::TensND.TensOrtho{4, <:Any, 12}, ε_pos)
+    c₁₁, c₂₂, c₃₃, c₁₂, c₁₃, c₂₃, c₄₄, c₅₅, c₆₆, c₂₁, c₃₁, c₃₂ = TensND.get_data(x)
+    s₁₂, s₁₃, s₂₃ = (c₁₂ + c₂₁) / 2, (c₁₃ + c₃₁) / 2, (c₂₃ + c₃₂) / 2
+    a₁₂, a₁₃, a₂₃ = (c₁₂ - c₂₁) / 2, (c₁₃ - c₃₁) / 2, (c₂₃ - c₃₂) / 2
+    B = SMatrix{3, 3}(c₁₁, s₁₂, s₁₃, s₁₂, c₂₂, s₂₃, s₁₃, s₂₃, c₃₃)
+    shear = (c₄₄, c₅₅, c₆₆)
+    _sc_above(B, ε_pos) && all(c -> _sc_above(2c, ε_pos), shear) && return x
+    C = _sc_clamp(B, ε_pos)
+    return TensND._rebuild(
+        x, (
+            C[1, 1], C[2, 2], C[3, 3], C[1, 2] + a₁₂, C[1, 3] + a₁₃, C[2, 3] + a₂₃,
+            map(c -> _sc_clamp(2c, ε_pos) / 2, shear)...,
+            C[1, 2] - a₁₂, C[1, 3] - a₁₃, C[2, 3] - a₂₃,
+        )
     )
 end
 
@@ -788,96 +775,34 @@ The extra `step` call is not wasted work: its result is also a strictly
 better starting iterate than `x0`.
 """
 function _sc_newton_seed(x0::TensND.AbstractTens, step)
-    x1 = try
-        step(x0)
-    catch
-        return x0            # let the main loop surface the real failure
-    end
+    x1 = step(x0)        # an error here is the one the main loop would raise
     return length(TensND.get_data(x1)) == length(TensND.get_data(x0)) ? x0 : x1
 end
 
-_tens_to_param_vec(t::TensND.AbstractTens) = collect(TensND.get_data(t))
-_tens_from_param_vec(prototype::TensND.AbstractTens, p::AbstractVector) =
-    _rebuild_from_data(prototype, p)
-
-# Default rebuild: `_rebuild` is TensND-internal; for known types we use
-# the public constructor.
-_rebuild_from_data(::TensND.TensISO{3}, p) = TensND.TensISO{3}(p[1], p[2])
-_rebuild_from_data(t::TensND.AbstractTens, p) =
-    TensND._rebuild(t, ntuple(i -> p[i], length(p)))
-
-# Residual norm operating on stored components (works for any tensor type).
-_sc_residual_norm(a::TensND.AbstractTens, b::TensND.AbstractTens) =
-    sqrt(sum(abs2, get_array(a) .- get_array(b)))
-
-# Frobenius norm of a tensor, from its stored array. Basis-independent for an
-# orthonormal frame, so a rotated tensor's local components give the same value
-# as its canonical ones.
-_sc_frobenius(t::TensND.AbstractTens) = sqrt(sum(abs2, get_array(t)))
-
-# `‖rebuild(prototype, v)‖_F`, or `nothing` when the class cannot be rebuilt
-# from those components at all. Not every symmetry class accepts every
-# coordinate vector — a rebuild that validates its argument rejects the
-# canonical unit vectors, which are semi-definite — so this is a normal answer
-# rather than an error, and one guarded call site serves both probes below.
-function _sc_basis_norm(prototype::TensND.AbstractTens, v::AbstractVector)
-    return try
-        _scalar_value(_sc_frobenius(_rebuild_from_data(prototype, v)))
-    catch
-        return nothing
-    end
-end
-
 """
-    _sc_param_weights(prototype) -> (w::Vector{Float64}, isometric::Bool)
+    _sc_param_weights(prototype) -> Vector
 
-Per-component weights making the Euclidean norm of the Newton / SciML parameter
-vector equal the **Frobenius norm of the tensor it encodes**, so that `abstol`
-and `reltol` express the same requirement whatever the `algorithm` and whatever
-the symmetry class.
-
-The canonical components are coordinates in a basis of the symmetry class
-(``(\\alpha, \\beta)`` on ``(\\mathbb{J}, \\mathbb{K})`` for `TensISO`, the Walpole coefficients for `TensTI`, …).
-Those bases are *orthogonal* but not orthonormal — ``\\|\\mathbb{J}\\|_F = 1`` while
-``\\|\\mathbb{K}\\|_F = \\sqrt{5}`` — so the plain Euclidean norm of the component vector understates
-the tensor norm, and understates it by a class-dependent factor. Scaling
-component `i` by ``w_i = \\|\\mathrm{rebuild}(e_i)\\|_F`` restores the isometry exactly:
-
-```math
-\\lVert w \\odot p \\rVert_2 = \\lVert \\mathrm{rebuild}(p) \\rVert_F .
-```
-
-Newton is invariant under a diagonal rescaling of its unknowns — ``\\mathbf{J}`` becomes
-``\\mathbf{W}\\mathbf{J}\\mathbf{W}^{-1}``, the step ``\\mathbf{W}\\delta``, and the iterate ``\\mathbf{W}(p + \\delta)`` — so the root and the
-sequence of iterates are untouched; only the norm the stopping test and the
-Armijo condition are measured in changes. A trust-region method is *not*
-invariant, and there the rescaling additionally puts its region in a
-physically meaningful metric.
-
-The isometry needs the class basis to be orthogonal, which is checked rather
-than assumed: `isometric = false` (with unit weights) is returned when the
-probe fails — the general `Mandel66` fallback among others — and the caller
-then measures the tensor norm directly instead.
+The weights of the Newton unknowns of the self-consistent solvers. The unknowns
+are the coordinates of TensND's `to_vector` (the coefficients of a structured
+class, the canonical Kelvin-Mandel components of a generic tensor), weighted by
+TensND's `param_norms` so that their Euclidean norm is the Frobenius norm of the
+tensor they encode: `abstol` and `reltol` then mean the same whatever the
+`algorithm` and the symmetry class. Newton is invariant under that diagonal
+rescaling (the root and the iterates are untouched); only the norm of the
+stopping test and of the Armijo condition changes, and a trust region is put in
+a physical metric.
 """
-function _sc_param_weights(prototype::TensND.AbstractTens)
-    L = length(TensND.get_data(prototype))
-    ones_w = ones(Float64, L)
-    w = Vector{Float64}(undef, L)
-    for i in 1:L
-        e = zeros(Float64, L)
-        e[i] = 1.0
-        wi = _sc_basis_norm(prototype, e)
-        (wi === nothing || !isfinite(wi) || wi ≤ 0) && return (ones_w, false)
-        w[i] = wi
-    end
-    # Orthogonality probe: a vector with pairwise-distinct entries, so that a
-    # non-zero cross term `2 qᵢ qⱼ ⟨Eᵢ, Eⱼ⟩` cannot cancel out by symmetry.
-    q = Float64[i for i in 1:L]
-    nq = _sc_basis_norm(prototype, q)
-    nq === nothing && return (ones_w, false)
-    isapprox(nq^2, sum(abs2, q .* w); rtol = 1.0e-10) || return (ones_w, false)
-    return (w, true)
-end
+_sc_param_weights(prototype::TensND.AbstractTens) =
+    [float(TensND.primal(w)) for w in TensND.param_norms(prototype)]
+
+# The residual of two iterates, written in one basis by TensND's subtraction.
+_sc_residual_norm(a::TensND.AbstractTens, b::TensND.AbstractTens) = LinearAlgebra.norm(a - b)
+
+# Components whose sums of squares, channel by channel, are Frobenius norms: the
+# stored array in an orthonormal basis; in any other, where the convergence of
+# the derivatives needs components rather than a norm, the canonical ones.
+_comparable(t, ::TensND.OrthonormalBasis) = get_array(t)
+_comparable(t, ::TensND.AbstractBasis) = TensND.components_canon(t)
 
 # Initial zero residual with eltype matching `x0` (Dual-preserving).
 _sc_residual_zero(x0::TensND.AbstractTens) = zero(real(eltype(x0)))
@@ -885,19 +810,10 @@ _sc_residual_zero(x0::TensND.AbstractTens) = zero(real(eltype(x0)))
 # Float64 view of a residual or a norm, for tolerances, comparisons and
 # best-iterate tracking: a `ForwardDiff.Dual` is a `Real`, so `float` alone
 # would keep its partials.
-_scalar_value(r::Real) = float(MFH_Core._primal(r))
+_scalar_value(r::Real) = float(TensND.primal(r))
 
-# Float64 type of `_scalar_value(zero_like_eltype(x0))`. Used to pick a
-# safe `typemax` for `resid_best_val` regardless of whether x0 is real
-# or Dual. ForwardDiff.Dual is `<: Real` so we can't dispatch on `T<:Real`
-# alone — we must inspect the `:value` field first, only falling through
-# to `Real` for plain numeric eltypes.
-_value_eltype(::TensND.AbstractTens{<:Any, <:Any, T}) where {T} = _value_eltype(T)
-function _value_eltype(::Type{T}) where {T}
-    hasfield(T, :value) && return _value_eltype(fieldtype(T, :value))
-    T <: Real && return float(T)
-    return Float64
-end
+# The plain float type under the duals of `x0`, for a `typemax` and a tolerance.
+_value_eltype(x0::TensND.AbstractTens) = real(TensND.primal_type(eltype(x0)))
 
 # Convergence of the value: `‖Δ‖ ≤ abstol + reltol ‖x‖`, compared on values.
 _sc_converged(r::Real, abstol::Real) = r ≤ abstol
@@ -908,8 +824,12 @@ _sc_converged(r::Real, abstol::Real) = r ≤ abstol
 # while the derivatives have not moved. Each partial — at every level of
 # nesting — is therefore tested on its own and against its own scale, as the
 # value is: ‖∂Δ‖ ≤ abstol + reltol ‖∂x‖.
-_sc_partials_converged(x_new::TensND.AbstractTens, x::TensND.AbstractTens; kw...) =
-    _sc_partials_converged(get_array(x_new) .- get_array(x), get_array(x); kw...)
+function _sc_partials_converged(x_new::TensND.AbstractTens, x::TensND.AbstractTens; kw...)
+    a, b = TensND.same_basis(x_new, x)          # one basis, as for the residual
+    ℬ = TensND.get_basis(b)
+    xb = _comparable(b, ℬ)
+    return _sc_partials_converged(_comparable(a, ℬ) .- xb, xb; kw...)
+end
 
 function _sc_partials_converged(Δ::AbstractArray, x::AbstractArray; abstol::Real, reltol::Real)
     T = promote_type(eltype(Δ), eltype(x))
@@ -920,21 +840,14 @@ function _sc_partials_converged(Δ::AbstractArray, x::AbstractArray; abstol::Rea
 end
 
 # Σ over `a` of the squares of every coefficient of an element: the value, then
-# each partial, recursively through the nesting.
+# each partial, recursively through the nesting (TensND's `dual_channels`).
 function _channel_sqnorms(a::AbstractArray, ::Type{T}) where {T}
-    acc = map(abs2, _channels(zero(T)))
+    acc = map(abs2, TensND.dual_channels(zero(T)))
     for v in a
-        acc = acc .+ map(abs2, _channels(convert(T, v)))
+        acc = acc .+ map(abs2, TensND.dual_channels(convert(T, v)))
     end
     return acc
 end
-
-_channels(x::Real) = (x,)
-_channels(d::ForwardDiff.Dual) = (
-    _channels(ForwardDiff.value(d))...,
-    _flatten_tuples(map(_channels, ForwardDiff.partials(d).values))...,
-)
-_flatten_tuples(t::Tuple) = foldl((a, b) -> (a..., b...), t; init = ())
 
 # =============================================================================
 #  AsymmetricSelfConsistent — Mori-Tanaka-style iteration with self-reference.
@@ -1044,10 +957,9 @@ function _asc_use_stiffness(rve::RVE, prop::Symbol, m::Symbol; kw...)
     any(_is_crack_family, values(rve.amounts)) && return false
     P₀ = phase_property(rve, m, prop)
     probe = _bounds_available(rve) ? Voigt() : Dilute()
-    return _frob_sq(_evaluate(rve, probe, Val(prop); kw...)) ≥ _frob_sq(P₀)
+    return TensND.sqnorm(_evaluate(rve, probe, Val(prop); kw...)) ≥ TensND.sqnorm(P₀)
 end
 
-_frob_sq(t::TensND.AbstractTens) = sum(abs2, get_array(t))
 
 # ── Stiffness-form iteration ────────────────────────────────────────────────
 #

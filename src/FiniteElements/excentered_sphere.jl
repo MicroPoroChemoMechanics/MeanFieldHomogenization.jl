@@ -181,7 +181,7 @@ function FEExcenteredSphere(
         radius_ratio = 4.0, nradial = 24, coarsening = 6.0, order = 2,
         backend::FEBackend = AutoBackend()
     ) where {O}
-    T = Core._floatlike(promote_type(typeof(a), typeof(core_fraction), typeof(eccentricity)))
+    T = TensND.float_like(promote_type(typeof(a), typeof(core_fraction), typeof(eccentricity)))
     a > 0 || throw(ArgumentError("the inclusion radius must be positive, got $a"))
     0 < core_fraction < 1 || throw(
         ArgumentError(
@@ -195,7 +195,7 @@ function FEExcenteredSphere(
                 "core inside, so it must lie in [0, 1), got $eccentricity"
         )
     )
-    bas = basis === nothing ? Core._default_basis(T, euler_angles) : basis
+    bas = basis === nothing ? TensND.euler_basis(euler_angles; T = T) : basis
     opts = FEAxiMeshOptions(; radius_ratio, nradial, coarsening, order)
     return FEExcenteredSphere{T, typeof(props), typeof(bas)}(
         T(a), T(core_fraction), T(eccentricity), props, bas, opts, FECache(), backend
@@ -209,8 +209,7 @@ end
 transport one (conductivity tensors). Fixed at construction by the pair of
 properties handed in.
 """
-tensor_order(s::FEExcenteredSphere) = _tens_order(s.props[1])
-_tens_order(::TensND.AbstractTens{O, 3}) where {O} = O
+tensor_order(s::FEExcenteredSphere) = TensND.get_order(s.props[1])
 
 """
     ExcenteredSphereShape

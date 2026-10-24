@@ -2,13 +2,13 @@
 
 !!! info "Before this page"
     [From Echoes to MeanFieldHomogenization](@ref tools-from-echoes), for the
-    PyCall setup the cross-checks rely on, and
+    PythonCall setup the cross-checks rely on, and
     [Testing conventions](@ref dev-testing-conventions), for the oracles of the
     test suite that these cross-checks complement.
 
 `MeanFieldHomogenization` is a port of the C++ [`Echoes`](@cite echoes) code, so nearly
 every quantity has an independent reference. The cross-checks live in
-`scripts/bench_echoes/` and call Echoes through `PyCall`
+`scripts/bench_echoes/` and call Echoes through `PythonCall`
 (setup: [From Echoes to MeanFieldHomogenization](@ref tools-from-echoes)); the ALV
 ones also ship `*_python.json` dumps so they run without an Echoes install.
 

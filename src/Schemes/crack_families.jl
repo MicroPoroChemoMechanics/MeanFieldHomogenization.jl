@@ -177,7 +177,7 @@ function crack_family_residual(
         geom = rve.phases[name].geometry
         acc = acc + delta_inverse_property(geom, S_i, crack_density(rve, name))
     end
-    return sqrt(_frob_sq(S_hom - acc) / _frob_sq(S_hom))
+    return sqrt(TensND.sqnorm(S_hom - acc) / TensND.sqnorm(S_hom))
 end
 
 # ── Internals ────────────────────────────────────────────────────────────────

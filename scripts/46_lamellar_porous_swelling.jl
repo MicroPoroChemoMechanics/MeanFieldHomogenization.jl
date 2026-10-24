@@ -59,7 +59,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
-using SymPy
+using SymPyPythonCall
 using Printf
 
 # ── Reporting ───────────────────────────────────────────────────────────────
@@ -177,13 +177,13 @@ D = tsimplify(Cpar - Π * (Bπ ⊗ Bπ))
 
 # The article states (10) component by component; the comparison is made on the
 # same footing, the Walpole coefficients of that component matrix being read
-# off by `ti8_params_from_KM` rather than worked out by hand.
+# off by `ti8_params_from_mandel` rather than worked out by hand.
 m = μs * (1 - f)
 Dw = zeros(Sym, 6, 6)
 Dw[1, 1] = Dw[2, 2] = 4m                # D_1111
 Dw[1, 2] = Dw[2, 1] = 2m                # D_1122
 Dw[6, 6] = 2m                           # Mandel: M_66 = 2 D_1212
-D_want = TensTI{4}(TensND.ti8_params_from_KM(Dw)[1:6]..., n̂)
+D_want = TensTI{4}(TensND.ti8_params_from_mandel(Dw)[1:6]..., n̂)
 
 report("C^par - Pi B_pi@B_pi == D of (10)         (9)", D - D_want)
 @printf "  C^par_nnnn = %s        (the normal stiffness)\n" string(tsimplify(Cpar[3, 3, 3, 3]))

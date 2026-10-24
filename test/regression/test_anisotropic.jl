@@ -46,8 +46,8 @@ const _K_aniso = TensND.Tens([3.0 0.5 0.3; 0.5 2.0 0.2; 0.3 0.2 1.5])
 # =============================================================================
 @testset "Anisotropic hill_tensor — triaxial ellipsoid" begin
     ℬ = CanonicalBasis{3, Float64}()
-    C_tri = TensND.inv_KM(_KM_tri, ℬ)
-    C_cubic = TensND.inv_KM(_KM_cubic, ℬ)
+    C_tri = TensND.from_mandel(_KM_tri, ℬ)
+    C_cubic = TensND.from_mandel(_KM_cubic, ℬ)
 
     @testset "Triaxial ellipsoid + triclinic C — algorithm consistency" begin
         ell = Ellipsoid(3.0, 2.0, 1.0)
@@ -102,7 +102,7 @@ end
 # =============================================================================
 @testset "Anisotropic inverse_property_contribution — elastic cracks" begin
     ℬ = CanonicalBasis{3, Float64}()
-    C_tri = TensND.inv_KM(_KM_tri, ℬ)
+    C_tri = TensND.from_mandel(_KM_tri, ℬ)
 
     @testset "Penny / triclinic — H = (3/4) n̂ ⊗ˢ B ⊗ˢ n̂" begin
         pc = PennyCrack(1.0)
@@ -137,7 +137,7 @@ end
     # all three numerical backends (:residues, :decuhr, :nestedquadgk)
     # must converge to the same H tensor.
     ℬ = CanonicalBasis{3, Float64}()
-    C_tri = TensND.inv_KM(_KM_tri, ℬ)
+    C_tri = TensND.from_mandel(_KM_tri, ℬ)
 
     pc = PennyCrack(1.0)
     H_res = inverse_property_contribution(pc, C_tri; method = :residues)

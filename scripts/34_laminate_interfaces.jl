@@ -46,8 +46,8 @@ function bilayer(; itf = PerfectInterface(), itf2 = PerfectInterface(), L = 1.0)
     return lam
 end
 
-C₃₃(lam) = Matrix(KM(homogenize(lam, Laminated(), :C)))[3, 3]
-C₁₂(lam) = Matrix(KM(homogenize(lam, Laminated(), :C)))[6, 6] / 2
+C₃₃(lam) = Matrix(mandel(homogenize(lam, Laminated(), :C)))[3, 3]
+C₁₂(lam) = Matrix(mandel(homogenize(lam, Laminated(), :C)))[6, 6] / 2
 k_perp(lam) = Matrix(components(homogenize(lam, Laminated(), :K)))[3, 3]
 k_par(lam) = Matrix(components(homogenize(lam, Laminated(), :K)))[1, 1]
 
@@ -93,7 +93,7 @@ series = 0.3 / (λ(k₁, μ₁) + 2μ₁) + 0.7 / (λ(k₂, μ₂) + 2μ₂)
 println("\nmembrane interface (κs, μs = κs/2)")
 println("       κs        C₃₃₃₃        C₁₂₁₂      ΔC₁₂₁₂")
 println("─"^54)
-for κs in (0.0, 0.02, 0.05, 0.10, 0.20)
+for κs in (0.0, 0.02, 0.05, 0.1, 0.2)
     cell = bilayer(; itf = MembraneInterface(κs, κs / 2))
     @printf "  %8.3f  %10.6f  %10.6f  %10.6f\n" κs C₃₃(cell) C₁₂(cell) (C₁₂(cell) - C₁₂(ref))
 end

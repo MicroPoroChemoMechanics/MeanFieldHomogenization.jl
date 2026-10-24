@@ -14,7 +14,7 @@ using LinearAlgebra
 # =============================================================================
 
 const _sc_newton = MeanFieldHomogenization.Viscoelasticity.self_consistent_alv_newton
-const _to_mandel66 = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66
+const _to_mandel66 = TensND.mandel66
 
 @testset "sc_alv_newton — elastic limit (Heaviside)" begin
     rve = RVE()

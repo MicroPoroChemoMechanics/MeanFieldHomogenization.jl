@@ -30,7 +30,7 @@
 # =============================================================================
 
 @inline function _spheroid_layer_moduli(s::LayeredSpheroid{T, N}) where {T, N}
-    return ntuple(k -> MFH_Core.extract_iso_conductivity(layer_modulus(s, k)), Val(N))
+    return ntuple(k -> first(TensND.get_data(layer_modulus(s, k))), Val(N))
 end
 
 """
@@ -42,7 +42,7 @@ to call the public API, matching `gradient_gradient_concentration`'s own `K₀`
 convention).
 """
 @inline _as_scalar_k(k₀::Number) = k₀
-@inline _as_scalar_k(k₀) = MFH_Core.extract_iso_conductivity(k₀)
+@inline _as_scalar_k(k₀) = first(TensND.get_data(k₀))
 
 """
     _spheroid_tables(s::LayeredSpheroid) -> NamedTuple

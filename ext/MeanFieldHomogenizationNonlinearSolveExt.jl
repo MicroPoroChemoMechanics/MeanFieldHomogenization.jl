@@ -83,11 +83,11 @@ const _AbstractNLSAlg = NonlinearSolve.SciMLBase.AbstractNonlinearAlgorithm
 #    the step's output) ────────────────────────────────────────────────
 
 function _nls_residual(step, x0, ε_pos)
-    rebuild = p -> S._tens_from_param_vec(x0, p)
+    rebuild = p -> TensND.from_vector(x0, p)
     return function residual_vec(p)
         x_in = S._sc_pd_guard_apply(rebuild(p), ε_pos)
         x_out = step(x_in)
-        return S._tens_to_param_vec(x_out) .- S._tens_to_param_vec(x_in)
+        return TensND.to_vector(x_out) .- TensND.to_vector(x_in)
     end
 end
 
@@ -96,7 +96,8 @@ end
 # user's parameter dropped. The Jacobian's tag is created inside the user's
 # derivative, so it nests outside the user's tag, as in `NewtonDefault`.
 _primal_jacobian(residual_vec, p::AbstractVector, ::Type{T}) where {T} =
-    MeanFieldHomogenization.Core._primal.(ForwardDiff.jacobian(residual_vec, convert.(T, p)))
+    TensND.primal.(ForwardDiff.jacobian(residual_vec, convert.(T, p)))
+
 
 """
     _solve_sc(algo::NonlinearSolve.AbstractNonlinearAlgorithm, step, x0; kw...)
@@ -105,7 +106,7 @@ SC / ASC fixed-point solver backed by `NonlinearSolve.jl`. `algo` is any
 concrete algorithm (`NewtonRaphson()`, `TrustRegion()`,
 `LevenbergMarquardt()`, …). The fixed point `x = step(x)` is recast as
 the root problem `F(p) = 0` on the canonical symmetry components `p`
-(same `_tens_to_param_vec` / `_tens_from_param_vec` bridge as
+(same `TensND.to_vector` / `TensND.from_vector` bridge as
 [`NewtonDefault`](@ref)), with the positive-definite guard applied
 before every `step` evaluation.
 
@@ -141,8 +142,8 @@ function S._solve_sc(
     )
     ε_pos = S._sc_pd_eps(x0)
     residual_vec = _nls_residual(step, x0, ε_pos)
-    rebuild = p -> S._tens_from_param_vec(x0, p)
-    p0 = S._tens_to_param_vec(x0)
+    rebuild = p -> TensND.from_vector(x0, p)
+    p0 = TensND.to_vector(x0)
     # `abstol` has to mean the same thing here as it does for the two built-in
     # solvers, namely a bound on the Frobenius norm of the tensor. The weights
     # of `S._sc_param_weights` convert one into the other, and they are applied
@@ -152,7 +153,7 @@ function S._solve_sc(
     # plateau of the positive-definiteness guard, where the residual is large
     # and its Jacobian identically zero. Measuring differently is safe;
     # searching differently is not.
-    w_nls, _isometric = S._sc_param_weights(x0)
+    w_nls = S._sc_param_weights(x0)
     _wnorm(v) = sqrt(sum(abs2, w_nls .* v))
     # `NormTerminationMode` keeps BOTH tolerances — `‖Δ‖ ≤ abstol` or
     # `‖Δ‖ ≤ reltol · ‖Δ + u‖` — which is `max` where the package's own contract
@@ -209,8 +210,8 @@ function S._solve_sc(
         #    residual *value* is stripped to `Float64` for the primal
         #    solve.
         embed(p) = convert.(T_full, p)
-        u0 = Float64[ForwardDiff.value(x) for x in p0]
-        Fval(p) = ForwardDiff.value.(residual_vec(embed(p)))
+        u0 = TensND.primal.(p0)
+        Fval(p) = TensND.primal.(residual_vec(embed(p)))
         Jval(p) = _primal_jacobian(residual_vec, p, T_full)
         nf = NonlinearFunction((p, _) -> Fval(p); jac = (p, _) -> Jval(p))
         prob = NonlinearProblem(nf, u0)
@@ -224,6 +225,13 @@ function S._solve_sc(
         r_dual = residual_vec(embed(pstar))  # single-layer Dual{UserTag}: value ≈ 0
         Jf = Jval(pstar)                     # Float64 ∂F/∂p at the primal root
         pstar_dual = embed(pstar) .- (Jf \ r_dual)  # IFT correction: dp*/dθ = -Jf⁻¹ ∂F/∂θ
+        # Under nested duals the primal Jacobian leaves the cross terms
+        # (ε₁ε₂, …) wrong; each full Newton step at the dual level squares the
+        # error in the partials, so one step per further level makes them exact.
+        for _ in 2:TensND.dual_depth(T_full)
+            pstar_dual = pstar_dual .-
+                ForwardDiff.jacobian(residual_vec, pstar_dual) \ residual_vec(pstar_dual)
+        end
         return rebuild(pstar_dual)
     end
 end

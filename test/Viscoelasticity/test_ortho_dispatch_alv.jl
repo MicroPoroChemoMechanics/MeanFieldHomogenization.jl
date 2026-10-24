@@ -3,7 +3,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 import MeanFieldHomogenization.Viscoelasticity: _is_ortho_block, _is_ti_block, _is_iso_block,
-    _try_iso_pairs, _try_ti_tuples, _try_ortho_tuples, _ortho_pair, _ortho_blocks
+    _cheapest_algebra, _IsoALV, _TIALV, _OrthoALV, _DenseALV, _ortho_pair, _ortho_blocks
 
 # =============================================================================
 #  test_ortho_dispatch_alv.jl — the ORTHO fast paths of
@@ -14,9 +14,8 @@ import MeanFieldHomogenization.Viscoelasticity: _is_ortho_block, _is_ti_block, _
 #  iso ⊂ TI ⊂ ortho, the dispatcher then takes the iso shortcut and the ortho
 #  branches of `_homogenize_alv_dispatch` are never executed.
 #
-#  This file builds a genuinely orthotropic RVE (neither iso nor TI) to force
-#  `_try_iso_pairs` and `_try_ti_tuples` to return `nothing`, so that the
-#  dispatcher falls through to `_try_ortho_tuples`.
+#  This file builds a genuinely orthotropic RVE (neither iso nor TI), so that
+#  `_cheapest_algebra` picks the orthotropic algebra.
 # =============================================================================
 
 const _ORTHO_FRAME = TensND.CanonicalBasis{3, Float64}()
@@ -52,26 +51,21 @@ end
     @test !_is_ti_block(M_M)
     @test _is_ortho_block(M_M)
 
-    @test _try_iso_pairs([M_M, M_I]) === nothing
-    @test _try_ti_tuples([M_M, M_I]) === nothing
+    @test _cheapest_algebra([M_M, M_I]) isa _OrthoALV
+    @test length(_ortho_pair(M_M)) == 12
 
-    o = _try_ortho_tuples([M_M, M_I])
-    @test o !== nothing
-    @test length(o) == 2
-    @test length(o[1]) == 12
-
-    # `_try_ortho_tuples` must return `nothing` as soon as a single matrix
-    # leaves the ortho form.
+    # A single matrix out of the ortho form sends the whole call to the dense
+    # algebra.
     M_bad = copy(M_M)
     M_bad[1, 4] += 1.0
     @test !_is_ortho_block(M_bad)
-    @test _try_ortho_tuples([M_M, M_bad]) === nothing
+    @test _cheapest_algebra([M_M, M_bad]) isa _DenseALV
 
-    # Cas vide : vecteur vide, pas `nothing`.
-    empty_in = Matrix{Float64}[]
-    @test _try_ortho_tuples(empty_in) == NTuple{12, Matrix{Float64}}[]
-    @test _try_ti_tuples(empty_in) == NTuple{6, Matrix{Float64}}[]
-    @test _try_iso_pairs(empty_in) == Tuple{Matrix{Float64}, Matrix{Float64}}[]
+    # No operator at all belongs to every algebra: the cheapest one is taken.
+    @test _cheapest_algebra(Matrix{Float64}[]) isa _IsoALV
+    # Iso ⊂ TI ⊂ ortho: an isotropic matrix stays isotropic.
+    M_iso = trapezoidal_matrix(heaviside_law(TensISO{3}(3.0, 2.0)), times)
+    @test _cheapest_algebra([M_iso]) isa _IsoALV
 end
 
 @testset "ortho dispatch — Voigt et Reuss passent par le chemin ortho" begin

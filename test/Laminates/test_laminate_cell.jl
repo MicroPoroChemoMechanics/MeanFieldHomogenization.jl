@@ -16,7 +16,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
-using SymPy
+using SymPyPythonCall
 
 const _ISO_L(k, μ) = TensISO{3}(3k, 2μ)
 
@@ -82,7 +82,7 @@ end
         nrm = sqrt(sum(x -> x^2, n))
         @test all(isapprox.(nn, n ./ nrm; atol = 1.0e-12))
         # the frame is orthonormal and right-handed
-        R = MeanFieldHomogenization.Core._basis_matrix(laminate_basis(lam))
+        R = Matrix{Float64}(TensND.vecbasis(laminate_basis(lam), :cov))
         @test R' * R ≈ I atol = 1.0e-12
         @test det(R) ≈ 1 atol = 1.0e-12
     end
@@ -106,7 +106,7 @@ end
     # about `n`), but the STORED frame does, and an anisotropic interface given
     # as a plain matrix is read in it — so it has to be honored exactly.
     lam = Laminate(; normal = (0, 0, 1), in_plane = (1, 1, 0))
-    R = MeanFieldHomogenization.Core._basis_matrix(laminate_basis(lam))
+    R = Matrix{Float64}(TensND.vecbasis(laminate_basis(lam), :cov))
     @test R[:, 1] ≈ [1, 1, 0] ./ sqrt(2) atol = 1.0e-12
     @test R[:, 3] ≈ [0, 0, 1] atol = 1.0e-12
     @test R' * R ≈ I atol = 1.0e-12
@@ -140,7 +140,7 @@ end
     b = laminate_basis(lam)
     @test b isa TensND.RotatedBasis
     @test eltype(b) <: Sym
-    R = MeanFieldHomogenization.Core._frame_matrix(b)
+    R = Matrix(TensND.vecbasis(b, :cov))
     @test all(iszero, simplify.(R' * R - I))          # orthonormal
     @test iszero(simplify(det(R) - 1))                # right-handed
     @test all(iszero, simplify.(R[:, 3] - [0, sin(θ), cos(θ)]))   # 3rd axis is n̂
@@ -148,7 +148,7 @@ end
 
     # An explicit reference, which is what a normal along e₁ needs.
     lamP = Laminate(; normal = (cos(θ), 0, sin(θ)), in_plane = (0, 1, 0))
-    RP = MeanFieldHomogenization.Core._frame_matrix(laminate_basis(lamP))
+    RP = Matrix(TensND.vecbasis(laminate_basis(lamP), :cov))
     @test all(iszero, simplify.(RP' * RP - I))
     @test all(iszero, simplify.(RP[:, 1] - [0, 1, 0]))
 
@@ -160,7 +160,7 @@ end
 
     # `_basis_matrix` pins to Float64 and would throw here; `_frame_matrix` is
     # the accessor the laminate paths must use.
-    @test_throws Exception MeanFieldHomogenization.Core._basis_matrix(b)
+    @test_throws Exception Matrix{Float64}(TensND.vecbasis(b, :cov))
 
     # `show` has neither a `float` nor a `round` to apply to a symbolic axis.
     add_layer!(lam, :A, Dict(:C => _ISO_L(2.0, 0.8)); fraction = 0.4)

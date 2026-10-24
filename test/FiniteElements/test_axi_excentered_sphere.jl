@@ -26,7 +26,7 @@ const AX_K_SHELL = TensISO{3}(1.0)
 const AX_K_MAT = TensISO{3}(3.0)
 const AX_W = 0.5                                 # core volume fraction
 
-ax_mandel(T) = MeanFieldHomogenization.Core.mandel66_minor(MeanFieldHomogenization.Core._C_array(T))
+ax_mandel(T) = MeanFieldHomogenization.Core.mandel66_minor(Array(TensND.components_canon(T)))
 ax_bulk(M) = M[1, 1] + 2M[1, 2]                  # 3× the 𝕁-eigenvalue
 ax_shear(M) = M[4, 4]                            # the 𝕂-eigenvalue
 

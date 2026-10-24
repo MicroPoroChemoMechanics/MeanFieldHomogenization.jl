@@ -246,7 +246,7 @@ end
     # with e₃ in its own frame. Built this way it is stored as the 5-component
     # (major-symmetric) flavor, so any asymmetry downstream was created by the
     # scheme rather than inherited from the input.
-    C_i = TensND.tens_TI_eng(2.0, 1.0, 0.25, 0.2, 0.45, (0.0, 0.0, 1.0))
+    C_i = TensND.tens_ti_eng(2.0, 1.0, 0.25, 0.2, 0.45, (0.0, 0.0, 1.0))
     @test C_i isa TensND.TensTI{4, Float64, 5}
 
     function build(sym)
@@ -270,7 +270,7 @@ end
     # anisotropic behind.
     @test C_asc isa TensND.TensISO
     # …and the result is an admissible stiffness.
-    KM = collect(TensND.KM(C_asc))
+    KM = collect(TensND.mandel(C_asc))
     @test maximum(abs, KM - KM') / maximum(abs, KM) < 1.0e-12
     # Both formulations share one fixed point; only the dynamics differ.
     @test k_mu(C_asc)[1] ≈ k_mu(C_sc)[1] rtol = 1.0e-8
@@ -313,7 +313,7 @@ end
         end
         return tot
     end
-    dev_I(T) = maximum(abs, collect(TensND.KM(T)) - Matrix{Float64}(I, 6, 6))
+    dev_I(T) = maximum(abs, collect(TensND.mandel(T)) - Matrix{Float64}(I, 6, 6))
 
     @testset "equal shapes — spheres" begin
         rve = build(Ellipsoid(1.0), Ellipsoid(1.0))
@@ -381,7 +381,7 @@ end
     end
 end
 
-@testset "SelfConsistent — the isometric parametrization and its fallback" begin
+@testset "SelfConsistent — the isometric parametrization, every class" begin
     # `abstol` bounds the Frobenius norm of the tensor for every solver, and
     # what converts one into the other is the weight vector below. The identity
     # holds only if the class basis is orthogonal, which the code checks rather
@@ -395,28 +395,40 @@ end
     C_ti = homogenize(rve, MoriTanaka(), :C)
 
     for T in (C_iso, C_ti)
-        w, isometric = S._sc_param_weights(T)
-        @test isometric
+        w = S._sc_param_weights(T)
         L = length(TensND.get_data(T))
         @test length(w) == L
         @test all(>(0), w)
         # ‖w ⊙ p‖₂ == ‖rebuild(p)‖_F, on a vector aligned with no single axis.
         q = Float64[1 / (i + 1) for i in 1:L]
-        @test norm(q .* w) ≈ norm(S._rebuild_from_data(T, q)) rtol = 1.0e-12
+        @test norm(q .* w) ≈ norm(TensND.rebuild(T, q)) rtol = 1.0e-12
     end
 
     # The deviatoric basis tensor is not a unit tensor: an isotropic stiffness
     # weights (α, β) by (1, √5). This is the whole reason the plain Euclidean
     # norm of the components understated the tensor norm.
-    w_iso, _ = S._sc_param_weights(C_iso)
+    w_iso = S._sc_param_weights(C_iso)
     @test w_iso[1] ≈ 1.0 rtol = 1.0e-12
     @test w_iso[2] ≈ sqrt(5) rtol = 1.0e-12
 
-    # The fallback: a coordinate vector the class cannot be rebuilt from is a
-    # normal answer (`nothing`), not an exception — that is what lets the
-    # caller degrade to measuring the tensor directly instead of failing.
-    @test S._sc_basis_norm(C_ti, [1.0, 2.0, 3.0]) === nothing
-    @test S._sc_basis_norm(C_ti, collect(1.0:length(TensND.get_data(C_ti)))) isa Real
+    # Every class with a parameter vector has an orthogonal basis: the weights
+    # are √2 off the diagonal pairs, 2 on the orthotropic shears, √3 for the
+    # cubic hydrostatic projector.
+    F = RotatedBasis(0.3, 1.2, -0.4)
+    @test S._sc_param_weights(TensND.TensOrtho(9.0, 8.0, 7.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, F)) ≈
+        [1, 1, 1, √2, √2, √2, 2, 2, 2]
+    @test S._sc_param_weights(TensND.TensCubic(9.0, 4.0, 3.0, F)) ≈ [1, √2, √3]
+    @test S._sc_param_weights(TensND.TensTI{2}(1.0, 2.0, 0.5, (0.36, 0.48, 0.8))) ≈ [√2, 1, √2]
+
+    # A prototype carrying dual numbers, its axis included, keeps the isometric
+    # weights of its value: the probes are written in its element type. They
+    # were rebuilt in Float64, which a dual axis does not convert to, and the
+    # caught error fell back to unit weights.
+    D = ForwardDiff.Dual{:sc_w}(1.0, 1.0)
+    C_dual = TensND.TensTI{4, typeof(D), length(TensND.get_data(C_ti))}(
+        map(x -> D * x, TensND.get_data(C_ti)), map(x -> D * x, TensND.axis(C_ti))
+    )
+    @test S._sc_param_weights(C_dual) ≈ S._sc_param_weights(C_ti) rtol = 1.0e-12
 end
 
 @testset "AsymmetricSelfConsistent — insulating cracks in conduction" begin
@@ -465,18 +477,18 @@ end
     sym(M) = (M + M') / 2
     function check_clamped(x)
         y = S._sc_pd_guard_apply(x, ε)
-        Mx, My = sym(KM(x)), sym(KM(y))
+        Mx, My = sym(mandel(x)), sym(mandel(y))
         λ, V = eigen(Symmetric(Mx))
         @test any(<(ε), λ)
         @test My ≈ V * Diagonal(max.(λ, ε)) * V' atol = 1.0e-12
         # The antisymmetric part, which stores no energy, is left alone.
-        @test KM(y) - My ≈ KM(x) - Mx atol = 1.0e-12
+        @test mandel(y) - My ≈ mandel(x) - Mx atol = 1.0e-12
         return y
     end
 
     # Positive definite, with a negative coupling: untouched.
     ti = TensTI{4}(20.0, 30.0, -6.0, 9.0, 12.0, n)
-    @test isposdef(Symmetric(KM(ti)))
+    @test isposdef(Symmetric(mandel(ti)))
     @test S._sc_pd_guard_apply(ti, ε) === ti
     ortho = TensOrtho(20.0, 25.0, 30.0, -4.0, 0.0, 3.0, 6.0, 7.0, 8.0, TensND.CanonicalBasis{3, Float64}())
     @test S._sc_pd_guard_apply(ortho, ε) === ortho
@@ -487,6 +499,19 @@ end
     check_clamped(TensTI{4}(20.0, 30.0, -40.0, -30.0, 9.0, -1.0, n))
     check_clamped(TensTI{4}(20.0, 30.0, -40.0, -30.0, 9.0, 12.0, 0.7, -0.4, n))
     check_clamped(TensOrtho(20.0, 25.0, 30.0, -30.0, 0.0, 3.0, 6.0, -7.0, 8.0, TensND.CanonicalBasis{3, Float64}()))
+    # Without major symmetry (C₂₁, C₃₁, C₃₂ last), in a rotated frame: the
+    # symmetric part of the normal block is guarded, its skew part kept.
+    R = TensND.RotatedBasis(0.3, 0.5, 0.2)
+    ortho12 = TensOrtho(20.0, 25.0, 30.0, -4.0, 1.0, 3.0, 6.0, 7.0, 8.0, -2.0, 0.5, 2.0, R)
+    @test ortho12 isa TensND.TensOrtho{4, Float64, 12}
+    @test isposdef(Symmetric(sym(mandel(ortho12))))
+    @test S._sc_pd_guard_apply(ortho12, ε) === ortho12
+    y12 = check_clamped(TensOrtho(20.0, 25.0, 30.0, -34.0, 1.0, 3.0, 6.0, -7.0, 8.0, -26.0, 0.5, 2.0, R))
+    @test y12 isa TensND.TensOrtho{4, Float64, 12}
+    # Order 2, diagonal in its frame: its coefficients are its eigenvalues.
+    o2 = S._sc_pd_guard_apply(TensND.TensOrtho{2}(-1.0, 2.0, 3.0, R), ε)
+    @test TensND.get_data(o2) == (ε, 2.0, 3.0)
+    @test TensND.frame(o2) == R
     check_clamped(TensISO{3}(-3.0, 2.0))
     check_clamped(TensND.tens_cubic(10.0, 12.0, 2.0, TensND.CanonicalBasis{3, Float64}()))
     t2 = S._sc_pd_guard_apply(TensTI{2}(-1.0, 2.0, 0.5, n), ε)
@@ -501,7 +526,7 @@ end
     @inferred S._sc_pd_guard_apply(TensTI{4}(d, 30.0, -40.0, 9.0, 12.0, n), ε)
 
     # A class without that structure is passed through.
-    gen = TensND.change_tens_canon(TensISO{3}(-3.0, 2.0))
+    gen = TensND.generic_tens(TensISO{3}(-3.0, 2.0))
     @test S._sc_pd_guard_apply(gen, ε) === gen
 
     # Auxetic phases (λ < 0) around aligned spheroids: the estimate is TI with a
@@ -517,10 +542,10 @@ end
         C = homogenize(rve, SelfConsistent(; algorithm, abstol = 1.0e-12, reltol = 1.0e-12, maxiters = 300))
         @test C isa TensND.TensTI{4, Float64, 5}
         @test TensND.get_data(C)[3] < 0
-        @test get_array(S._sc_step(rve, C, :C)) ≈ get_array(C) rtol = 1.0e-11
+        @test S._sc_step(rve, C, :C) ≈ C rtol = 1.0e-11
         C
     end
-    @test get_array(estimates[1]) ≈ get_array(estimates[2]) rtol = 1.0e-11
+    @test (estimates[1]) ≈ (estimates[2]) rtol = 1.0e-11
 end
 
 @testset "NewtonDefault — singular Jacobian, failed line search, failing step" begin
@@ -530,7 +555,7 @@ end
     # A map that leaves β where it is: the Jacobian has a zero column, the LU
     # factorization fails, and the Tikhonov-regularized step solves for α alone.
     step_singular(x) = ((α, β) = TensND.get_data(x); TensISO{3}(α + (7.0 - α) / 2, β))
-    x = @test_logs (:debug, r"linear solve failed") min_level = debug match_mode = :any S._solve_sc(
+    x = @test_logs (:debug, r"singular Jacobian") min_level = debug match_mode = :any S._solve_sc(
         NewtonDefault(), step_singular, TensISO{3}(1.0, 2.0)
     )
     @test TensND.get_data(x)[1] ≈ 7.0 rtol = 1.0e-9
@@ -548,4 +573,14 @@ end
 
     # A step that fails at the seed fails in the main loop too, with its own error.
     @test_throws ErrorException("boom") S._solve_sc(NewtonDefault(), x -> error("boom"), x₀)
+end
+
+@testset "major-symmetric part of a transversely isotropic 2nd-order tensor" begin
+    n = normalize([0.3, -0.5, 0.8])
+    P = TensND.TensTI{2}(2.0, 5.0, 0.7, n)            # carries a skew part c·w
+    S = MeanFieldHomogenization.Schemes._major_symmetrize(P)
+    A = Matrix(TensND.components_canon(P))
+    @test Matrix(TensND.components_canon(S)) ≈ (A + transpose(A)) / 2
+    Q = TensND.TensTI{2}(2.0, 5.0, n)
+    @test MeanFieldHomogenization.Schemes._major_symmetrize(Q) === Q
 end

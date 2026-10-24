@@ -171,7 +171,10 @@ function build_foam(f, C_hyd; N::Int = NTHETA_PASTE, ω::Real = ω_hyd, K_water 
 
     ez = (0.0, 0.0, 1.0)
     rve = RVE(; T = T)
-    add_phase!(rve, :PASTE, Ellipsoid(1.0), Dict(:C => C_hyd); fraction = :rest, symmetrize = :iso)
+    # The spheres are not averaged: the self-consistent reference is transversely
+    # isotropic about e₃ (the orientation bins are), not isotropic, and an
+    # isotropic sphere already contributes with the symmetry of the reference.
+    add_phase!(rve, :PASTE, Ellipsoid(1.0), Dict(:C => C_hyd); fraction = :rest)
 
     for bin in polar_orientation_bins(N)
         add_phase!(
@@ -187,13 +190,13 @@ function build_foam(f, C_hyd; N::Int = NTHETA_PASTE, ω::Real = ω_hyd, K_water 
     C_w = TensISO{3}(convert(T, 3 * max(K_water, TINY_LAV)), convert(T, 2 * TINY_LAV))
     add_phase!(
         rve, :WATER, Ellipsoid(1.0), Dict(:C => C_w);
-        fraction = (f_water / total) * _SC_SLACK, symmetrize = :iso
+        fraction = (f_water / total) * _SC_SLACK
     )
     # Empty porosity left by the chemical shrinkage.
     C_v = TensISO{3}(convert(T, 3 * TINY_LAV), convert(T, 2 * TINY_LAV))
     add_phase!(
         rve, :VOID, Ellipsoid(1.0), Dict(:C => C_v);
-        fraction = (f_void / total) * _SC_SLACK, symmetrize = :iso
+        fraction = (f_void / total) * _SC_SLACK
     )
 
     return homogenize(

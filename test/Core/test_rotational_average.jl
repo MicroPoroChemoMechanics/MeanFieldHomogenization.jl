@@ -185,7 +185,7 @@ end
         Id4 = TensND.tens_Id4(Val(3), Val(Float64))
         J4 = TensND.tens_J4(Val(3), Val(Float64))
         for (t, want) in ((Id4, (1.0, 1.0)), (J4, (1.0, 0.0)))
-            d = TensND.get_data(MC.isotropify(TensND.fromISO(t, nax)))
+            d = TensND.get_data(MC.isotropify(TensND.iso_to_ti(t, nax)))
             @test d[1] ≈ want[1] atol = 1.0e-14
             @test d[2] ≈ want[2] atol = 1.0e-14
         end

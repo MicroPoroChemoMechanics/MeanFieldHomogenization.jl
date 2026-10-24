@@ -91,8 +91,8 @@ green_operator_iso(C₀::TensND.TensISO{4, 3}, x::AbstractVector) =
     TensND.Tens(_green_operator_iso(C₀, x))
 
 function _green_operator_iso(C₀::TensND.TensISO{4, 3}, x::AbstractVector)
-    E, ν = extract_iso_moduli(C₀)
-    return _green_operator_iso(E / (2 * (1 + ν)), ν, x)
+    μ, ν = TensND.mu_nu(C₀)
+    return _green_operator_iso(μ, ν, x)
 end
 
 function _green_operator_iso(μ, ν, x::AbstractVector)
@@ -104,32 +104,30 @@ function _green_operator_iso(μ, ν, x::AbstractVector)
     )
     n = SVector{3}(x[1] / r, x[2] / r, x[3] / r)
     A = one(r) / (16 * π * μ * (1 - ν) * r^3)
-    c = 3 - 4 * ν
-    T = typeof(A)
-    δ = (i, j) -> _δ(i, j, T)
-    # H[i,j,k,l] = ∂²G_ij/∂x_k∂x_l
-    H = @inbounds [
+    return _kelvin_operator(A, ν, n, 3, 15)
+end
+
+# 𝔾⁰_ijkl = -[H_{ik,jl}]_{(ij)(kl)}, H_ijkl = ∂²G_ij/∂x_k∂x_l the Hessian of the
+# Kelvin solution: the double index swap turns the displacement Hessian into the
+# strain-to-polarization operator, and the leading minus is the Brisard
+# convention of the file header. Symmetrized once and for all, with
+# S_ijkl = δ_ik n_j n_l + δ_jk n_i n_l + δ_il n_j n_k + δ_jl n_i n_k,
+#
+#   𝔾⁰_ijkl = A [(1 - 2ν)(δ_ik δ_jl + δ_il δ_jk) - δ_ij δ_kl + aν S_ijkl
+#               + a (δ_ij n_k n_l + δ_kl n_i n_j) - b n_i n_j n_k n_l],
+#
+# with (a, b) = (3, 15) in 3-D and (2, 8) in 2-D, the coefficients of the
+# Hessian of r⁻¹ and of log r.
+function _kelvin_operator(A, ν, n::SVector{d}, a, b) where {d}
+    δ(i, j) = _δ(i, j, typeof(A))
+    return _sfill(Val((d, d, d, d))) do i, j, k, l
         A * (
-            c * δ(i, j) * (3 * n[k] * n[l] - δ(k, l))
-                + δ(i, k) * δ(j, l) + δ(i, l) * δ(j, k)
-                - 3 * (
-                δ(i, l) * n[j] * n[k] + δ(j, l) * n[i] * n[k]
-                    + δ(i, k) * n[j] * n[l] + δ(j, k) * n[i] * n[l]
-                    + δ(k, l) * n[i] * n[j]
-            )
-                + 15 * n[i] * n[j] * n[k] * n[l]
+            (1 - 2ν) * (δ(i, k) * δ(j, l) + δ(i, l) * δ(j, k)) - δ(i, j) * δ(k, l)
+                + a * ν * (δ(i, k) * n[j] * n[l] + δ(j, k) * n[i] * n[l] + δ(i, l) * n[j] * n[k] + δ(j, l) * n[i] * n[k])
+                + a * (δ(i, j) * n[k] * n[l] + δ(k, l) * n[i] * n[j])
+                - b * n[i] * n[j] * n[k] * n[l]
         )
-            for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-    ]
-    # 𝔾⁰_ijkl = -[H_{ik,jl}]_{(ij)(kl)} — the double index swap is what turns
-    # the displacement Hessian into the strain-to-polarization operator, and
-    # the leading minus is the Brisard convention of the file header.
-    return SArray{Tuple{3, 3, 3, 3}}(
-        @inbounds [
-            -(H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
-                for i in 1:3, j in 1:3, k in 1:3, l in 1:3
-        ]
-    )
+    end
 end
 
 """
@@ -159,7 +157,7 @@ green_operator_iso(K₀::TensND.TensISO{2, 3}, x::AbstractVector) =
     TensND.Tens(_green_operator_iso(K₀, x))
 
 function _green_operator_iso(K₀::TensND.TensISO{2, 3}, x::AbstractVector)
-    return _green_operator_iso_order2(extract_iso_conductivity(K₀), x)
+    return _green_operator_iso_order2(first(TensND.get_data(K₀)), x)
 end
 
 function _green_operator_iso_order2(σ₀, x::AbstractVector)
@@ -193,7 +191,7 @@ green_operator_iso(K₀::TensND.TensISO{2, 2}, x::AbstractVector) =
     TensND.Tens(_green_operator_iso(K₀, x))
 
 function _green_operator_iso(K₀::TensND.TensISO{2, 2}, x::AbstractVector)
-    return _green_operator_iso_order2_2d(extract_iso_conductivity(K₀), x)
+    return _green_operator_iso_order2_2d(first(TensND.get_data(K₀)), x)
 end
 
 function _green_operator_iso_order2_2d(σ₀, x::AbstractVector)
@@ -242,8 +240,8 @@ green_operator_iso(C₀::TensND.TensISO{4, 2}, x::AbstractVector) =
     TensND.Tens(_green_operator_iso(C₀, x))
 
 function _green_operator_iso(C₀::TensND.TensISO{4, 2}, x::AbstractVector)
-    E, ν = extract_iso_moduli(C₀)
-    return _green_operator_iso_2d(E / (2 * (1 + ν)), ν, x)
+    μ, ν = TensND.mu_nu(C₀)
+    return _green_operator_iso_2d(μ, ν, x)
 end
 
 function _green_operator_iso_2d(μ, ν, x::AbstractVector)
@@ -255,26 +253,5 @@ function _green_operator_iso_2d(μ, ν, x::AbstractVector)
     )
     n = SVector{2}(x[1] / r, x[2] / r)
     A = one(r) / (8 * π * μ * (1 - ν) * r^2)
-    c = 3 - 4 * ν
-    T = typeof(A)
-    δ = (i, j) -> _δ(i, j, T)
-    H = @inbounds [
-        A * (
-            c * δ(i, j) * (2 * n[k] * n[l] - δ(k, l))
-                + δ(i, k) * δ(j, l) + δ(i, l) * δ(j, k)
-                - 2 * (
-                δ(i, l) * n[j] * n[k] + δ(j, l) * n[i] * n[k]
-                    + δ(i, k) * n[j] * n[l] + δ(j, k) * n[i] * n[l]
-                    + δ(k, l) * n[i] * n[j]
-            )
-                + 8 * n[i] * n[j] * n[k] * n[l]
-        )
-            for i in 1:2, j in 1:2, k in 1:2, l in 1:2
-    ]
-    return SArray{Tuple{2, 2, 2, 2}}(
-        @inbounds [
-            -(H[i, k, j, l] + H[j, k, i, l] + H[i, l, j, k] + H[j, l, i, k]) / 4
-                for i in 1:2, j in 1:2, k in 1:2, l in 1:2
-        ]
-    )
+    return _kelvin_operator(A, ν, n, 2, 8)
 end

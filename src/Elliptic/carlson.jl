@@ -23,7 +23,8 @@
 # Symbolics extensions keep `ell_F` and `ell_E` as unexpanded calls.
 
 @inline _carlson_tol(::Type{T}) where {T <: AbstractFloat} = eps(T)^(1 / 6)
-@inline _carlson_tol(::Type{T}) where {T <: Number} = is_hard_numeric(T) ? eps(Float64)^(1 / 6) : 0.0
+@inline _carlson_tol(::Type{<:ForwardDiff.Dual{<:Any, V}}) where {V} = _carlson_tol(V)
+@inline _carlson_tol(::Type{T}) where {T <: Number} = is_hard_numeric(T) ? _carlson_tol(float(T)) : 0.0
 
 
 """
@@ -36,7 +37,7 @@ Carlson's symmetric elliptic integral of the first kind,
 
 Type-generic: the duplication recursion uses only arithmetic and
 square roots, so it extends unchanged to `BigFloat`,
-`ForwardDiff.Dual`, `Symbolics.Num`, `SymPy.Sym`, and any other
+`ForwardDiff.Dual`, `Symbolics.Num`, `SymPyPythonCall.Sym`, and any other
 `Number` subtype.
 """
 function ell_RF(x::Tx, y::Ty, z::Tz) where {Tx <: Number, Ty <: Number, Tz <: Number}

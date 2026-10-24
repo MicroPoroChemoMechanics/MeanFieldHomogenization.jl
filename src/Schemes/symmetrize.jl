@@ -54,39 +54,32 @@ _apply_symmetrize(t::TensND.AbstractTens{2, 3}, sym::TISymmetrize) =
 """
     _project_matrix(P₀::AbstractTens, sym::AbstractSymmetrize) -> AbstractTens
 
-Project the reference medium `P₀` before computing the concentration tensor
-of a phase declaring the orientation distribution `sym`.
+The reference medium `P₀` in which the concentration tensors of a phase declaring
+the orientation average `sym` are computed: its exact average over the same
+rotations (`Core.isotropify` for `IsoSymmetrize`, `Core.transverse_isotropify`
+about the axis for `TISymmetrize`), and `P₀` itself without an average.
 
-- `NoSymmetrize` : passthrough.
-- `IsoSymmetrize` : isotropic average of `P₀` (the inclusion's Hill tensor
-  in an isotropic matrix always has an analytical branch).
-- `TISymmetrize` : controlled by `sym.reference_projection` :
-    * `:iso` (default) — isotropic average of `P₀`.  Approximation whenever
-      `P₀` is not isotropic ; exact at the isotropic fixed point of the SC
-      iteration (where the reference converges to its isotropic average).
-      Rationale : an inclusion family at polar angle ``\\theta \\ne 0`` from the
-      symmetrize axis is *not* coaxial with a TI reference, so the
-      TI-coaxial analytical Hill branch does not apply ; the isotropic
-      projection guarantees an analytical, ForwardDiff-compatible branch
-      for every orientation.
-    * `:none` — no projection ; non-coaxial anisotropic references route
-      through the general-anisotropy `NestedQuadGK` Hill branch
-      (ForwardDiff-compatible, quadrature-priced).
-    * `:ti` — best-fit TI projection of `P₀` about `sym.axis`
-      (`TensTI{4,T,5}`) ; only meaningful when the phase's inclusions are
-      coaxial with the axis.
-
-The phase contribution is in all cases still exactly averaged by the
-outgoing `_apply_symmetrize`, so the outer symmetry semantics are
-preserved.
+The average is defined only for a reference invariant under it, which the
+projection then leaves unchanged; one the type already shows to be invariant (an
+isotropic tensor for every average, a transversely isotropic one about the same
+axis for `TISymmetrize`) is returned as it is, at no cost. Outside that domain,
+`homogenize` warns (see `_warn_average_domain`).
 """
 _project_matrix(P₀::TensND.AbstractTens, ::NoSymmetrize) = P₀
 _project_matrix(P₀::TensND.AbstractTens, ::IsoSymmetrize) = MFH_Core.isotropify(P₀)
-function _project_matrix(P₀::TensND.AbstractTens, sym::TISymmetrize)
-    mp = sym.reference_projection
-    mp === :none && return P₀
-    mp === :ti && return best_fit_ti(P₀, sym.axis)
-    return MFH_Core.isotropify(P₀)
+_project_matrix(P₀::TensND.TensISO, ::IsoSymmetrize) = P₀
+_project_matrix(P₀::TensND.TensISO, ::TISymmetrize) = P₀
+_project_matrix(P₀::TensND.AbstractTens, sym::TISymmetrize) = MFH_Core.transverse_isotropify(P₀, sym.axis)
+_project_matrix(P₀::TensND.TensTI, sym::TISymmetrize) =
+    _coaxial(TensND.axis(P₀), sym.axis) ? P₀ : MFH_Core.transverse_isotropify(P₀, sym.axis)
+
+# Whether two axes are parallel; a fast path only (the projection is exact either
+# way), so a symbolic axis simply takes the projection.
+_coaxial(n, a) = _coaxial(Val(is_hard_numeric(real(promote_type(eltype(n), eltype(a))))), n, a)
+_coaxial(::Val{false}, n, a) = false
+function _coaxial(::Val{true}, n, a)
+    d = abs(sum(map(*, n, a)))
+    return d ≥ (1 - 1.0e-12) * sqrt(sum(abs2, n) * sum(abs2, a))
 end
 
 # =============================================================================

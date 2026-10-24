@@ -1,13 +1,14 @@
 using Test
+using ForwardDiff
 using MeanFieldHomogenization.LayeredSpheroids: legendre_odd
 
 # =============================================================================
 #  test_legendre.jl — associated Legendre recurrences (`legendre.jl`).
 #
 #  Checked against closed-form low-degree polynomials (P₁, P₃, P₅, P₁¹,
-#  Q₁, Q₁¹) and, for the higher-degree / Q¹ entries with no simple
-#  closed form at hand, against a central finite-difference derivative
-#  — cheap and independent of the recurrence itself.
+#  Q₁, Q₁¹); the hand-coded derivative tables against the dual-number
+#  derivative of the values (exact) and, as a cross-check, a centered
+#  finite difference.
 # =============================================================================
 
 @testset "legendre_odd — P0 (plain Legendre) against closed forms" begin
@@ -42,26 +43,37 @@ end
     @test dP1p[1] ≈ -p / (-sqrt(1 - p^2))
 end
 
-@testset "legendre_odd — derivative tables match finite differences" begin
-    # Coarse sanity check only (higher degrees grow fast, so a fixed step
-    # trades truncation vs. cancellation error): the precise validation is
-    # the closed-form checks above and the coupling-matrix cross-check
-    # against the independent BigFloat series in `test_coupling.jl`.
-    h = 1.0e-5
+@testset "legendre_odd — derivative tables match the derivative of the values" begin
+    # The tables carry the derivative by their own recurrences; dual numbers
+    # differentiate the value recurrences instead, an independent route that
+    # agrees to rounding.
     for x in (1.3, 1.7, 3.3), Nseries in (1, 2, 4)
         for kind in (:P0, :Q0, :P1, :Q1)
-            vals_p, ders = legendre_odd(kind, x, Nseries)
-            vals_hi, _ = legendre_odd(kind, x + h, Nseries)
-            vals_lo, _ = legendre_odd(kind, x - h, Nseries)
-            fd = (vals_hi .- vals_lo) ./ (2h)
+            _, ders = legendre_odd(kind, x, Nseries)
+            ad = ForwardDiff.derivative(y -> legendre_odd(kind, y, Nseries)[1], x)
+            @test all(isapprox.(ad, ders; rtol = 1.0e-10))
+            # A centered difference as a third, coarser route (a fixed step
+            # trades truncation against cancellation as the degree grows).
+            h = 1.0e-5
+            fd = (legendre_odd(kind, x + h, Nseries)[1] .- legendre_odd(kind, x - h, Nseries)[1]) ./ (2h)
             @test all(isapprox.(fd, ders; rtol = 1.0e-4, atol = 1.0e-6))
         end
         p = 0.3
-        P1p, dP1p = legendre_odd(:P1p, p, Nseries)
-        P1p_hi, _ = legendre_odd(:P1p, p + h, Nseries)
-        P1p_lo, _ = legendre_odd(:P1p, p - h, Nseries)
-        fd = (P1p_hi .- P1p_lo) ./ (2h)
-        @test all(isapprox.(fd, dP1p; rtol = 1.0e-4, atol = 1.0e-6))
+        _, dP1p = legendre_odd(:P1p, p, Nseries)
+        @test all(isapprox.(ForwardDiff.derivative(y -> legendre_odd(:P1p, y, Nseries)[1], p), dP1p; rtol = 1.0e-12))
+    end
+end
+
+@testset "legendre_odd — derivative tables match the dual-number derivative" begin
+    # The recurrences differentiated by dual numbers: exact, so the hand-coded
+    # derivative tables must agree to rounding, at every degree.
+    for x in (1.3, 1.7, 3.3), Nseries in (1, 2, 4), kind in (:P0, :Q0, :P1, :Q1)
+        _, ders = legendre_odd(kind, x, Nseries)
+        @test ForwardDiff.derivative(y -> legendre_odd(kind, y, Nseries)[1], x) ≈ ders rtol = 1.0e-12
+    end
+    for p in (0.3, -0.6), Nseries in (1, 2, 4)
+        _, ders = legendre_odd(:P1p, p, Nseries)
+        @test ForwardDiff.derivative(y -> legendre_odd(:P1p, y, Nseries)[1], p) ≈ ders rtol = 1.0e-12
     end
 end
 

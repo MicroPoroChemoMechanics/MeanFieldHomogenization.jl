@@ -94,8 +94,8 @@ function FEAxiLayeredSpheroid(
     # rejects from deep inside its own pipeline, naming neither layer nor
     # semi-axis.
     check_nested_spheroids(ar, dr, opts.radius_ratio * max(maximum(ar), maximum(dr)))
-    O = _tens_order(props[1])
-    all(p -> _tens_order(p) == O, props) || throw(
+    O = TensND.get_order(props[1])
+    all(p -> TensND.get_order(p) == O, props) || throw(
         ArgumentError(
             "every layer must carry the same tensor order: order $O for layer 1, " *
                 "and the object's physics is fixed by it"
@@ -127,7 +127,7 @@ supplies its own concentration tensors.
 """
 struct LayeredSpheroidShape end
 
-tensor_order(s::FEAxiLayeredSpheroid) = _tens_order(s.props[1])
+tensor_order(s::FEAxiLayeredSpheroid) = TensND.get_order(s.props[1])
 
 Core.dimension(::FEAxiLayeredSpheroid) = 3
 Core.inclusion_basis(s::FEAxiLayeredSpheroid) = s.basis
@@ -213,7 +213,7 @@ fe_axi_concentration(s::FEAxiLayeredSpheroid, P₀::TensND.AbstractTens; kw...) 
 
 _fe_axi_concentration(
     s::FEAxiLayeredSpheroid, P₀::TensND.AbstractTens; kw...
-) = let res = get!(() -> _axi_run(s, P₀), s.cache.tensors, _fe_cache_key(P₀))
+) = let res = _fe_memo(() -> _axi_run(s, P₀), s.cache, _fe_cache_key(P₀))
     (res.A, res.B)
 end
 

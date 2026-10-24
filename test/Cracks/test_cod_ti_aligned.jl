@@ -25,7 +25,7 @@ const ATOL_COD_RES = 1.0e-9
 const ATOL_COD_DEC = 1.0e-7
 
 # Helper: convert TI stiffness to engineering compliance moduli.
-# (Same routine `extract_ti_moduli` used internally by the analytical kernel.)
+# (TensND.ti_args_hoenig, as the analytical kernel reads them.)
 
 @testset "COD TI aligned — iso-as-TI recovers isotropic builder" begin
     # Build an isotropic stiffness, then re-express it as a degenerate TI
@@ -34,7 +34,7 @@ const ATOL_COD_DEC = 1.0e-7
     E, ν = 210.0, 0.3
     k = E / (3 * (1 - 2ν)); μ = E / (2 * (1 + ν))
     C_iso = TensISO{3}(3k, 2μ)
-    C_ti = fromISO(C_iso, n_axis)
+    C_ti = iso_to_ti(C_iso, n_axis)
     @test C_ti isa TensND.TensTI{4, Float64, 5}
 
     for c in (PennyCrack(1.0), EllipticCrack(1.0, 0.5), RibbonCrack(1.0))
@@ -47,7 +47,7 @@ end
 @testset "COD TI aligned — cross-validation vs residue (true TI)" begin
     # Sevostianov-Yilmaz-Kushch-Levin (2005) test stiffness.
     n_axis = [0.0, 0.0, 1.0]
-    C_TI = tens_TI(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
+    C_TI = tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
 
     for c in (PennyCrack(1.0), EllipticCrack(1.0, 0.5), EllipticCrack(1.0, 0.2))
         B_ana = cod_tensor(c, C_TI)                                   # analytical
@@ -59,7 +59,7 @@ end
 
 @testset "COD TI aligned — cross-validation vs DECUHR (true TI)" begin
     n_axis = [0.0, 0.0, 1.0]
-    C_TI = tens_TI(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
+    C_TI = tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
 
     for c in (PennyCrack(1.0), EllipticCrack(1.0, 0.5))
         B_ana = cod_tensor(c, C_TI)
@@ -72,7 +72,7 @@ end
 @testset "COD TI aligned — dispatcher selects Analytical when aligned" begin
     # Crack basis defaults to canonical with normal = e₃.
     n_axis = [0.0, 0.0, 1.0]
-    C_TI = tens_TI(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
+    C_TI = tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
 
     for c in (PennyCrack(1.0), EllipticCrack(1.0, 0.5), RibbonCrack(1.0))
         algo = MeanFieldHomogenization.Core._resolve_algo(Val(:auto), c, C_TI)
@@ -83,7 +83,7 @@ end
 @testset "COD TI aligned — dispatcher falls back when non-aligned" begin
     # TI axis = e₁ but the crack normal stays e₃ → not aligned.
     n_axis = [1.0, 0.0, 0.0]
-    C_TI = tens_TI(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
+    C_TI = tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
     c = EllipticCrack(1.0, 0.5)
     # `:auto` falls back to a CUBATURE, never to the residue algorithm: the
     # latter degenerates on a reference that is anisotropic in type and
@@ -104,7 +104,7 @@ end
     C0 = [2.179, 0.579, 0.689, 10.345, 1.0]
 
     f = C -> begin
-        C_TI = tens_TI(C[1], C[2], C[3], C[4], C[5], n_axis)
+        C_TI = tens_ti(C[1], C[2], C[3], C[4], C[5], n_axis)
         get_array(cod_tensor(c_penny, C_TI))[3, 3]
     end
     grad = ForwardDiff.gradient(f, C0)
@@ -114,7 +114,7 @@ end
     # Also through the elliptic-crack aspect ratio
     g = b_minor -> begin
         c_e = EllipticCrack(1.0, b_minor)
-        C_TI = tens_TI(C0..., n_axis)
+        C_TI = tens_ti(C0..., n_axis)
         get_array(cod_tensor(c_e, C_TI))[3, 3]
     end
     dval = ForwardDiff.derivative(g, 0.5)
@@ -124,7 +124,7 @@ end
 @testset "COD TI aligned — complex moduli (frequency-domain viscoelasticity)" begin
     n_axis = [0.0, 0.0, 1.0]
     δ = 0.05
-    C_c = tens_TI(
+    C_c = tens_ti(
         2.179 + δ * im, 0.579 + 0.0im, 0.689 + 0.0im,
         10.345 + δ * im, 1.0 + 0.5δ * im, n_axis
     )
@@ -137,8 +137,8 @@ end
     end
 
     # Limit Im → 0 must reproduce the real result exactly.
-    C_r = tens_TI(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
-    C_0 = tens_TI(
+    C_r = tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
+    C_0 = tens_ti(
         2.179 + 0.0im, 0.579 + 0.0im, 0.689 + 0.0im,
         10.345 + 0.0im, 1.0 + 0.0im, n_axis
     )

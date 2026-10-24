@@ -34,7 +34,7 @@ const K_I = TensISO{3}(20.0)
 
         K_sph = homogenize(r_sph, scheme, :K)
         K_ell = homogenize(r_ell, scheme, :K)
-        @test get_array(K_sph) ≈ get_array(K_ell) rtol = 1.0e-10
+        @test K_sph ≈ K_ell rtol = 1.0e-10
     end
 end
 
@@ -51,7 +51,7 @@ end
 
     K_a = homogenize(r_a, MoriTanaka(), :K)
     K_b = homogenize(r_b, MoriTanaka(), :K)
-    @test get_array(K_a) ≈ get_array(K_b) atol = 1.0e-14
+    @test K_a ≈ K_b atol = 1.0e-14
 end
 
 @testset "LayeredSpheroid — N = ⟨K∇T⟩ - K₀·⟨∇T⟩" begin
@@ -64,7 +64,7 @@ end
         A = gradient_gradient_concentration(s, K_I, K_M)
         B = flux_gradient_concentration(s, K_I, K_M)
         N = property_contribution(s, K_I, K_M)
-        @test get_array(N) ≈ get_array(B - K_M ⋅ A) rtol = 1.0e-12
+        @test N ≈ (B - K_M ⋅ A) rtol = 1.0e-12
     end
 end
 

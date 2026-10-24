@@ -28,7 +28,7 @@ const _ALS = MeanFieldHomogenization.FiniteElements
 
 const _ALS_CAN = TensND.CanonicalBasis{3, Float64}()
 _als_m(t) = Matrix(TensND.get_array(TensND.change_tens(t, _ALS_CAN)))
-_als_k(t) = Matrix(KM(TensND.change_tens(t, _ALS_CAN)))
+_als_k(t) = Matrix(mandel(TensND.change_tens(t, _ALS_CAN)))
 _als_opts(nr = 12, rr = 5.0) = FEAxiMeshOptions(; nradial = nr, radius_ratio = rr)
 _als_C(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
 

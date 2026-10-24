@@ -238,7 +238,7 @@ end
 
     # Reference elastic stiffness contribution.
     N_elas = property_contribution(sphere, C_M)
-    N_elas_M = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66(N_elas)
+    N_elas_M = TensND.mandel66(N_elas)
 
     # Diagonal 6×6 blocks must match the elastic 6×6, off-diag must vanish.
     for i in 1:n
@@ -271,7 +271,7 @@ end
     )
     for sphere in spheres
         N_alv = property_contribution_alv(sphere, heaviside_law(C_M), times)
-        N_elas_M = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66(
+        N_elas_M = TensND.mandel66(
             property_contribution(sphere, C_M)
         )
         for i in 1:n
@@ -303,7 +303,7 @@ end
     # Reference elastic dilute.
     N_elas = property_contribution(sphere, C_M)
     C_eff_elas = C_M + f_I * N_elas
-    C_eff_elas_M = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66(C_eff_elas)
+    C_eff_elas_M = TensND.mandel66(C_eff_elas)
 
     for i in 1:n
         rows = (6 * (i - 1) + 1):(6 * i)
@@ -382,7 +382,7 @@ end
     block11 = C_alv[1:6, 1:6]
     @test isapprox(
         block11,
-        MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66(C_eff_t0);
+        TensND.mandel66(C_eff_t0);
         rtol = 1.0e-10, atol = 1.0e-10
     )
 end

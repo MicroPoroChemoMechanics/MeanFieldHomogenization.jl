@@ -179,8 +179,6 @@ end
     )
 end
 
-"Poisson's ratio from the isotropic pair."
-@inline _poisson(κ, μ) = (3 * κ - 2 * μ) / (2 * (3 * κ + μ))
 
 """
     _case1_remote(c, κ₀, μ₀, εa, εt) -> (A₂, C₁)
@@ -202,7 +200,7 @@ A uniform strain excites **two** coefficients and no more, which is the
 ``\\varphi_0`` being defined up to a constant, which is inert.
 """
 @inline function _case1_remote(c, κ₀, μ₀, εa, εt)
-    ν₀ = _poisson(κ₀, μ₀)
+    ν₀ = TensND.poisson_ratio(κ₀, μ₀)
     γ = -μ₀ * (εa + 2 * εt) / (1 - 2 * ν₀)
     return (-4 * c^2 * μ₀ * εt / 3, γ * c)
 end
@@ -273,8 +271,8 @@ function spheroid_elastic_coefficients(
         )
     end
 
-    κμ = ntuple(k -> _iso_bulk_shear(layer_modulus(s, k)), Val(N))
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κμ = ntuple(k -> TensND.k_mu(layer_modulus(s, k)), Val(N))
+    κ₀, μ₀ = TensND.k_mu(C₀)
     Tp = promote_type(
         T, real(Q), typeof(κ₀), typeof(μ₀), typeof(εa), typeof(εt),
         ntuple(k -> typeof(κμ[k][1]), N)..., ntuple(k -> typeof(κμ[k][2]), N)...,
@@ -307,7 +305,7 @@ function spheroid_elastic_coefficients(
         rows = (4𝒩 * (ℓ - 1) + 1):(4𝒩 * ℓ)
         κi, μi = κμ[ℓ]
         κo, μo = ℓ < N ? κμ[ℓ + 1] : (κ₀, μ₀)
-        νi, νo = _poisson(κi, μi), _poisson(κo, μo)
+        νi, νo = TensND.poisson_ratio(κi, μi), TensND.poisson_ratio(κo, μo)
         A[rows, (offs[ℓ] + 1):offs[ℓ + 1]] .=
             _case1_block(modes[ℓ], qs[ℓ], c, μi, νi, 𝒩, xg, wg, even, odd)
         A[rows, (offs[ℓ + 1] + 1):offs[ℓ + 2]] .=
@@ -351,8 +349,8 @@ against.
 """
 function spheroid_core_strain(s::LayeredSpheroid, C₀, εa, εt; kw...)
     r = spheroid_elastic_coefficients(s, C₀, εa, εt; kw...)
-    κ₁, μ₁ = _iso_bulk_shear(layer_modulus(s, 1))
-    ν₁ = _poisson(κ₁, μ₁)
+    κ₁, μ₁ = TensND.k_mu(layer_modulus(s, 1))
+    ν₁ = TensND.poisson_ratio(κ₁, μ₁)
     c = real(s.c)
     A₂ = zero(eltype(r.amplitudes[1]))
     C₁ = zero(eltype(r.amplitudes[1]))

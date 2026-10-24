@@ -34,7 +34,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)
 
 using MeanFieldHomogenization
 using TensND
-using SymPy
+using SymPyPythonCall
 using Symbolics
 using Printf
 
@@ -77,15 +77,17 @@ catch e
     println("  ", first(split(sprint(showerror, e), " The transform")))
 end
 println("\n…but the transform itself stays exact and symbolic:")
-println("  J*(p) R*(p) - 1 = ",
-    Symbolics.simplify(carson_creep(zm, p) * carson_relaxation(zm, p) - 1))
+println(
+    "  J*(p) R*(p) - 1 = ",
+    Symbolics.simplify(carson_creep(zm, p) * carson_relaxation(zm, p) - 1)
+)
 
 # ─── §3 Symbolic Laplace-Carson inversion, with SymPy ────────────────────────
 
 banner("§3  Symbolic inversion: the closed forms, derived")
 
-SymPy.@syms ts::positive τ::positive Einf::positive E1::positive
-SymPy.@syms ks::positive ηs::positive kp::positive ηp::positive
+SymPyPythonCall.@syms ts::positive τ::positive Einf::positive E1::positive
+SymPyPythonCall.@syms ks::positive ηs::positive kp::positive ηp::positive
 
 # The standard solid: both functions of time, from the transform alone.
 z = zener_maxwell(Einf, E1, τ)
@@ -96,15 +98,19 @@ println("  R(t) = ", R_t)
 println("  J(t) = ", sympy.simplify(J_t))
 
 # It agrees with the closed form the model already knows.
-println("\n  R(t) - relaxation(model, t) = ",
-    sympy.simplify(R_t - relaxation(z, ts)))
+println(
+    "\n  R(t) - relaxation(model, t) = ",
+    sympy.simplify(R_t - relaxation(z, ts))
+)
 
 # Burgers: a fluid, whose creep function carries a term linear in t.
 b = burgers(ks, ηs, kp, ηp)
 Jb = inverse_carson(p -> carson_creep(b, p), ts)
 println("\nBurgers J(t) = ", sympy.simplify(Jb))
-println("  against the closed form : ",
-    sympy.simplify(Jb - creep(b, ts)))
+println(
+    "  against the closed form : ",
+    sympy.simplify(Jb - creep(b, ts))
+)
 
 # The relaxation function of Burgers is the messy `cosh`/`sinh` expression that
 # had to be derived in a computer-algebra system to serve as this package's
@@ -117,7 +123,7 @@ println("  ", Rb)
 
 banner("§4  How far the symbolic route goes")
 
-SymPy.@syms Vsb::positive ps::positive αsym::positive E0::positive δs::positive
+SymPyPythonCall.@syms Vsb::positive ps::positive αsym::positive E0::positive δs::positive
 
 # (a) A springpot with a *rational* exponent inverts exactly, and agrees with
 #     the closed form the model already carries.
@@ -125,8 +131,10 @@ sb = ScottBlair(Vsb, Sym(2) // 5)
 println("(a) springpot, α = 2/5")
 println("    SymPy   : ", inverse_carson(q -> carson_creep(sb, q), ts))
 println("    model   : ", creep(sb, ts))
-println("    equal   : ",
-    sympy.simplify(inverse_carson(q -> carson_creep(sb, q), ts) - creep(sb, ts)) == 0)
+println(
+    "    equal   : ",
+    sympy.simplify(inverse_carson(q -> carson_creep(sb, q), ts) - creep(sb, ts)) == 0
+)
 
 # (b) The fractional Zener at α = 1/2 has a genuine closed form, and SymPy
 #     finds it: E_{1/2}(-x) = e^{x²} erfc(x).
@@ -146,15 +154,17 @@ println("\n(d) Huet-Sayegh with rational exponents")
 r_hs = inverse_carson(q -> carson_relaxation(hs2, q), ts)
 println("    R(t) = ", first(string(r_hs), 150), "…")
 
-println("""
+println(
+    """
 
-So the symbolic route reaches: rational powers, and the α = 1/2 Cole-Cole
-special case. It does **not** reach a symbolic exponent, nor a sum of several
-fractional powers — those inverses are Mittag-Leffler functions or worse.
+    So the symbolic route reaches: rational powers, and the α = 1/2 Cole-Cole
+    special case. It does **not** reach a symbolic exponent, nor a sum of several
+    fractional powers — those inverses are Mittag-Leffler functions or worse.
 
-That is not a gap in this package: it is exactly why `inverse_carson` with a
-numeric time and one of the four quadratures exists. `FixedTalbot(24)` inverts
-every one of these transforms to about 1e-12.""")
+    That is not a gap in this package: it is exactly why `inverse_carson` with a
+    numeric time and one of the four quadratures exists. `FixedTalbot(24)` inverts
+    every one of these transforms to about 1e-12."""
+)
 
 # ─── §5 A cross-check the numerical route cannot give itself ─────────────────
 

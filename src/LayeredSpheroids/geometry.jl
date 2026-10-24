@@ -90,7 +90,7 @@ throws, since every layer is verified to belong to the declared family.
 !!! note "Symbolic support is prolate only"
     An oblate spheroid carries ``q = \\mathrm{i}\\tau``, so its confocal parameter is a
     `Complex{T}` — and Julia's `Complex{T}` requires `T <: Real`, which
-    `SymPy.Sym` is not. `Symbolics.Num` is `<: Real` and builds, but Symbolics
+    `SymPyPythonCall.Sym` is not. `Symbolics.Num` is `<: Real` and builds, but Symbolics
     has no `sym_lu` for a `Matrix{Complex{Num}}`. Prolate works with both.
 """
 function LayeredSpheroid(
@@ -198,6 +198,16 @@ solution is only worth anything if both are handed the *same* geometry.
 function confocal_layer_radii(
         ω::T, outer_axis_radius::T, layer_fractions::NTuple{N, T}
     ) where {N, T <: Real}
+    # The inner parameters are roots found by bisection, which decides by sign
+    # tests: a symbolic `T` (`Symbolics.Num <: Real` included) has none.
+    is_hard_numeric(T) || throw(
+        ArgumentError(
+            "confocal_layer_radii: the inner confocal parameters are found by " *
+                "bisection, a numerical root search; got $T arguments. Give numbers " *
+                "(dual numbers differentiate through it), or pass symbolic semi-axes " *
+                "to LayeredSpheroid directly."
+        )
+    )
     ω ≈ 1 && throw(
         ArgumentError(
             "confocal_layer_radii: ω ≈ 1 is a sphere, which has no focal " *
@@ -238,6 +248,16 @@ function confocal_layer_radii(
         ℓ -> prolate ? focal * sqrt(qs[ℓ]^2 - 1) : focal * sqrt(qs[ℓ]^2 + 1), Val(N)
     )
     return axis_radii, disk_radii
+end
+
+# Mixed element types — promote, then delegate: the method above binds one `T`
+# across `ω`, the outer semi-axis and every fraction, so the sensitivity to a
+# single fraction (a dual among plain numbers) was a `MethodError`.
+function confocal_layer_radii(
+        ω::Number, outer_axis_radius::Number, layer_fractions::Tuple{Number, Vararg{Number, M}}
+    ) where {M}
+    T = promote_type(typeof(ω), typeof(outer_axis_radius), map(typeof, layer_fractions)...)
+    return confocal_layer_radii(T(ω), T(outer_axis_radius), map(T, layer_fractions))
 end
 
 """
@@ -389,7 +409,7 @@ outer_semiaxes(s::LayeredSpheroid) = layer_semiaxes(s, layer_count(s))
 MFH_Core.dimension(::LayeredSpheroid) = 3
 
 MFH_Core.inclusion_basis(::LayeredSpheroid{T}) where {T} =
-    TensND.CanonicalBasis{3, MFH_Core._basis_eltype(T)}()
+    TensND.CanonicalBasis{3, TensND.canonical_eltype(T)}()
 
 struct SpheroidalLayered end
 MFH_Core.shape_trait(::LayeredSpheroid) = SpheroidalLayered

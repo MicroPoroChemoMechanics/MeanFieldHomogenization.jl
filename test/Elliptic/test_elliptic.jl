@@ -51,21 +51,38 @@ end
     end
 end
 
+@testset "Elliptic — dual numbers over BigFloat keep the precision of BigFloat" begin
+    # The stopping tests of the AGM and of Carlson's duplication used the
+    # tolerance of Float64 for any dual number, whatever its value type.
+    m0, φ0 = big"0.3", big"0.6"
+    K = ForwardDiff.derivative(ell_K, m0)
+    @test K ≈ (ell_E(m0) - (1 - m0) * ell_K(m0)) / (2 * m0 * (1 - m0))  rtol = 1.0e-70
+    @test ForwardDiff.value(ell_K(ForwardDiff.Dual(m0, one(m0)))) ≈ ell_K(m0)  rtol = 1.0e-70
+    @test ForwardDiff.derivative(φ -> ell_F(φ, m0), φ0) ≈ 1 / sqrt(1 - m0 * sin(φ0)^2)  rtol = 1.0e-70
+end
+
+@testset "Elliptic — exact rational arguments take the precision they float to" begin
+    # A `Rational{BigInt}` floats to `BigFloat`; the duplication stopped at the
+    # tolerance of `Float64` and lost all but sixteen digits.
+    x, y, z = big(1) // 1, big(2) // 1, big(3) // 1
+    @test ell_RF(x, y, z) ≈ ell_RF(big"1.0", big"2.0", big"3.0")  rtol = 1.0e-70
+    @test ell_RD(x, y, z) ≈ ell_RD(big"1.0", big"2.0", big"3.0")  rtol = 1.0e-70
+    @test ell_RF(1, 2, 3) ≈ ell_RF(1.0, 2.0, 3.0)  rtol = 1.0e-15
+end
+
 @testset "Elliptic — ForwardDiff compatibility (Dual)" begin
     # dK/dm = (E(m) - (1-m)K(m)) / (2m(1-m))
     for m0 in (0.2, 0.5, 0.7)
         d_ad = ForwardDiff.derivative(ell_K, m0)
-        d_fd = (ell_K(m0 + 1.0e-6) - ell_K(m0 - 1.0e-6)) / 2.0e-6
-        @test d_ad ≈ d_fd  rtol = 1.0e-5
         d_th = (ell_E(m0) - (1 - m0) * ell_K(m0)) / (2 * m0 * (1 - m0))
-        @test d_ad ≈ d_th  rtol = 1.0e-6
+        @test d_ad ≈ d_th  rtol = 1.0e-12
     end
 
     # dE/dm = (E(m) - K(m)) / (2m)
     for m0 in (0.2, 0.5, 0.7)
         d_ad = ForwardDiff.derivative(ell_E, m0)
         d_th = (ell_E(m0) - ell_K(m0)) / (2 * m0)
-        @test d_ad ≈ d_th  rtol = 1.0e-6
+        @test d_ad ≈ d_th  rtol = 1.0e-12
     end
 
     # Incomplete: dF/dφ = 1/√(1 - m sin² φ)
@@ -81,7 +98,7 @@ end
 
 # ── SymPy weak extension (skipped when SymPy is not installed) ──────────────
 sympy_loaded = try
-    @eval using SymPy
+    @eval using SymPyPythonCall
     true
 catch
     false
@@ -89,19 +106,19 @@ end
 
 if sympy_loaded
     @testset "Elliptic — SymPy weak extension" begin
-        ext = Base.get_extension(MeanFieldHomogenization, :MeanFieldHomogenizationSymPyExt)
+        ext = Base.get_extension(MeanFieldHomogenization, :MeanFieldHomogenizationSymPyPythonCallExt)
         @test ext !== nothing
 
-        m = SymPy.symbols("m")
-        φ = SymPy.symbols("φ")
+        m = SymPyPythonCall.symbols("m")
+        φ = SymPyPythonCall.symbols("φ")
 
         # Symbolic K/E dispatch to sympy.elliptic_{k,e} — the returned
         # expression must be a simple head, *not* the 60-level AGM nest
         # that would otherwise blow up the pretty-printer.
         Km = ell_K(m)
         Em = ell_E(m)
-        @test Km isa SymPy.Sym
-        @test Em isa SymPy.Sym
+        @test Km isa SymPyPythonCall.Sym
+        @test Em isa SymPyPythonCall.Sym
         @test occursin("elliptic_k", string(Km))
         @test occursin("elliptic_e", string(Em))
 

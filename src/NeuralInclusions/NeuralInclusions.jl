@@ -70,8 +70,6 @@ import ..Core
 # needs them to evaluate a closed-form baseline, and importing them keeps the
 # convention single-sourced rather than re-deriving the identity here.
 import ..hill_tensor
-import .._identity_4sym
-import .._identity_2
 import ..FiniteElements
 import ..Elasticity
 import ..Schemes

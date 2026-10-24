@@ -14,7 +14,7 @@ using LinearAlgebra
 #  (conduction / diffusion) driver.
 # =============================================================================
 
-const _to_mandel = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66
+const _to_mandel = TensND.mandel66
 
 function _setup_2phase_elastic(;
         k_M = 10.0, μ_M = 4.0,

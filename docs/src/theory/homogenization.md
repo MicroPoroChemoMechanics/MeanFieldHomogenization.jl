@@ -237,7 +237,7 @@ is mandated to support:
   geometric parameters;
 - `Complex{Float64}` — frequency-domain viscoelasticity (parity with
   the C++ ECHOES library, templated on `T = double | complex<double>`);
-- `SymPy.Sym`, `Symbolics.Num`, `BigFloat` — best-effort, with explicit
+- `SymPyPythonCall.Sym`, `Symbolics.Num`, `BigFloat` — best-effort, with explicit
   documentation of any limitation (the iterative SC solvers are not
   symbolic-friendly because the linear-system Jacobian must be numeric).
 

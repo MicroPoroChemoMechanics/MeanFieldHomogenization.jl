@@ -17,7 +17,11 @@ from . import mapping, survey
 from .emit import emit
 from .extract import extract
 
-DEFAULT_PYBIND = "/home/jfbarthelemy/echoes/echoes_cpp/interface/pybind11/py_echoes"
+# The pybind11 sources of an Echoes checkout (`echoes_cpp/interface/pybind11/py_echoes`),
+# from which the Echoes side of the survey and of the drift check reads the public
+# names: given with `--pybind` or the `ECHOES_PYBIND` environment variable; without
+# either, that side is skipped.
+DEFAULT_PYBIND = os.environ.get("ECHOES_PYBIND")
 DEFAULT_MFH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "..")
 )
@@ -230,7 +234,7 @@ def main(argv: list[str] | None = None) -> int:
 
     s = sub.add_parser("survey", help="classify a corpus of Echoes scripts")
     s.add_argument("root")
-    s.add_argument("--pybind", default=DEFAULT_PYBIND)
+    s.add_argument("--pybind", default=DEFAULT_PYBIND, help="pybind11 sources of Echoes (default: $ECHOES_PYBIND)")
     s.add_argument("--json", help="also write the classification as JSON")
     s.add_argument("--top", type=int, default=25)
     s.set_defaults(func=cmd_survey)
@@ -248,7 +252,7 @@ def main(argv: list[str] | None = None) -> int:
     t.set_defaults(func=cmd_translate)
 
     d = sub.add_parser("check-drift", help="validate the mapping against both APIs")
-    d.add_argument("--pybind", default=DEFAULT_PYBIND)
+    d.add_argument("--pybind", default=DEFAULT_PYBIND, help="pybind11 sources of Echoes (default: $ECHOES_PYBIND)")
     d.add_argument("--mfh", default=DEFAULT_MFH)
     d.add_argument("-v", "--verbose", action="store_true")
     d.set_defaults(func=cmd_check_drift)

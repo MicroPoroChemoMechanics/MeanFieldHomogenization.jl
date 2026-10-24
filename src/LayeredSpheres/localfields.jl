@@ -93,7 +93,7 @@ the test suite checks it against the prescribed jump.
 
 Radii beyond ``r_N`` always give ``N+1``, whatever `side`.
 
-A **symbolic** radius is refused rather than located.  `SymPy.Sym` answers a
+A **symbolic** radius is refused rather than located.  `SymPyPythonCall.Sym` answers a
 comparison it cannot decide with a plain `false` — `r ≥ 1.0` on a positive
 symbol returns `Bool(false)`, not an error — so the loop below would silently
 return layer 1 for any symbol.  Name the region explicitly instead: every
@@ -129,7 +129,7 @@ Region index to evaluate the field in.  `layer` short-circuits the lookup;
 otherwise [`get_layer`](@ref) decides from `r`.
 
 A **symbolic** radius cannot be located by comparison — `Symbolics.Num` and
-`SymPy.Sym` subtype `Real` without being ordered — so the lookup is refused
+`SymPyPythonCall.Sym` subtype `Real` without being ordered — so the lookup is refused
 with an actionable message rather than a `MethodError` deep in a `while`.
 Symbolic work is exactly the case where the region is known up front, so
 passing `layer = k` costs nothing and keeps the whole reconstruction
@@ -227,7 +227,7 @@ function LayeredSphereFields(
         sphere::LayeredSphere{T, N}, C₀::TensND.TensISO{4, 3}
     ) where {T, N}
     κμ = _bulk_layer_moduli(sphere)
-    κ₀, μ₀ = _iso_bulk_shear(C₀)
+    κ₀, μ₀ = TensND.k_mu(C₀)
     TP = _bulk_promote(sphere, κμ, κ₀, μ₀)
     radii = sphere.radii
 
@@ -611,10 +611,12 @@ end
 function _local_u(f::LayeredSphereFields, r, n, k::Int, ε∞)
     f_over_r, _, g_over_r, _, h_over_r, _ = _radial_scalars(f, k, r)
 
-    tr_ε = ε∞[1, 1] + ε∞[2, 2] + ε∞[3, 3]
-    e_v = tr_ε / 3
+    # Canonical components: `n` is canonical, and `ε∞[i, j]` reads a strain
+    # written in a rotated basis in that basis (free when it is canonical).
+    E = TensND.components_canon(ε∞)
+    e_v = (E[1, 1] + E[2, 2] + E[3, 3]) / 3
     # Deviatoric part of the remote strain, applied to n.
-    En = ntuple(i -> sum(ε∞[i, j] * n[j] for j in 1:3) - e_v * n[i], 3)
+    En = ntuple(i -> sum(E[i, j] * n[j] for j in 1:3) - e_v * n[i], 3)
     s = sum(En[i] * n[i] for i in 1:3)
 
     fr = f_over_r * r
@@ -804,17 +806,9 @@ function local_temperature(
     return _local_T(f, rr, n, _resolve_layer(f.sphere, rr; side, layer), ∇T∞)
 end
 
-# `𝐀 · G` in closed form.  `TensTI{2}` is a *structured* tensor: `⋅` against a
-# plain vector falls through to `LinearAlgebra.dot`, which flattens both
-# operands and computes an inner product of mismatched lengths.  Writing the
-# transverse/axial split out is both correct and cheaper than materializing the
-# 3×3 array.
-@inline function _ti2_dot(f_over_r, fp, n, g)
-    ng = n[1] * g[1] + n[2] * g[2] + n[3] * g[3]
-    return TensND.Vec{3}(
-        ntuple(i -> f_over_r * (g[i] - ng * n[i]) + fp * ng * n[i], 3)
-    )
-end
+# `𝐀 · G` with `𝐀 = (f/r)(𝟏 − n⊗n) + f′ n⊗n`, TensND's closed form of a
+# transversely isotropic second-order tensor against a vector.
+@inline _ti2_dot(f_over_r, fp, n, g) = TensND.TensTI{2}(f_over_r, fp, Tuple(n)) ⋅ TensND.Vec{3}(Tuple(g))
 
 function _local_gradient_vec(f::LayeredSphereTransportFields, r, n, k::Int, ∇T∞)
     f_over_r, fp = _cond_radial_scalars(f, k, r)

@@ -73,7 +73,7 @@ function gradient_gradient_concentration(
         K₀::TensND.TensISO{2, 3};
         kw...,
     ) where {T, N}
-    k₀ = MFH_Core.extract_iso_conductivity(K₀)
+    k₀ = first(TensND.get_data(K₀))
     αt, αa, _, _ = _spheroid_concentration(s, k₀)
     return TensND.TensTI{2}(αt, αa, s.axis)
 end
@@ -96,7 +96,7 @@ function flux_gradient_concentration(
         K₀::TensND.TensISO{2, 3};
         kw...,
     ) where {T, N}
-    k₀ = MFH_Core.extract_iso_conductivity(K₀)
+    k₀ = first(TensND.get_data(K₀))
     _, _, βt, βa = _spheroid_concentration(s, k₀)
     return k₀ * TensND.TensTI{2}(βt, βa, s.axis)
 end
@@ -174,7 +174,7 @@ function Core.concentration_and_contribution(
         K₀::TensND.TensISO{2, 3};
         kw...,
     ) where {T, N}
-    k₀ = MFH_Core.extract_iso_conductivity(K₀)
+    k₀ = first(TensND.get_data(K₀))
     αt, αa, βt, βa = _spheroid_concentration(s, k₀)
     A = TensND.TensTI{2}(αt, αa, s.axis)
     B = k₀ * TensND.TensTI{2}(βt, βa, s.axis)
@@ -187,7 +187,7 @@ function Core.concentration_and_flux_average(
         K₀::TensND.TensISO{2, 3};
         kw...,
     ) where {T, N}
-    k₀ = MFH_Core.extract_iso_conductivity(K₀)
+    k₀ = first(TensND.get_data(K₀))
     αt, αa, βt, βa = _spheroid_concentration(s, k₀)
     return (
         TensND.TensTI{2}(αt, αa, s.axis),

@@ -45,7 +45,7 @@ function _Qnn_star_nestedquadgk(
 
     # Bounds are plain numbers: the derivatives live in the integrand, and QuadGK
     # has no Gauss–Kronrod rule for a dual interval.
-    F = typeof(float(MFH_Core._primal(zero(T))))
+    F = typeof(float(MFH_Core.primal(zero(T))))
     Tvec, _ = QuadGK.quadgk(
         vec_at, zero(F), F(π) / 2;
         atol = abstol, rtol = reltol, maxevals = maxiters, norm = MFH_Core._quadgk_norm
@@ -94,7 +94,7 @@ function _cod_elliptic_nestedquadgk_direct(
     inner_atol = abstol / 10
     # Bounds are plain numbers: the derivatives live in the integrand, and QuadGK
     # has no Gauss–Kronrod rule for a dual interval.
-    F = typeof(float(MFH_Core._primal(zero(Tp))))
+    F = typeof(float(MFH_Core.primal(zero(Tp))))
 
     function outer(φ)
         cφ = cos(φ); sφ = sin(φ)

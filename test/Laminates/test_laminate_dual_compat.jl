@@ -12,7 +12,7 @@
 #   * an interface compliance is differentiable even though the layers and the
 #     thicknesses stay `Float64` (the element type has to be promoted with the
 #     interfaces, not just with the layers);
-#   * the cofactor `_inv3` / `_inv_km6` route keeps the derivative exact where
+#   * the cofactor `_inv3` / `TensND.mandel_inv_schur` route keeps the derivative exact where
 #     an SVD-based pseudo-inverse would not be differentiable at all.
 # =============================================================================
 
@@ -47,8 +47,8 @@ function _cell(; hA = 0.3, hB = 0.7, μA = 0.8, sn = 0.0, st = 0.0, κs = 0.0, �
     return lam
 end
 
-_C33(C) = Matrix(KM(C))[3, 3]
-_C66(C) = Matrix(KM(C))[6, 6]
+_C33(C) = Matrix(mandel(C))[3, 3]
+_C66(C) = Matrix(mandel(C))[6, 6]
 
 @testset "AD — layer thickness, every scheme" begin
     for scheme in (Laminated(), Voigt(), Reuss())
@@ -79,9 +79,9 @@ end
     @test ad_sn ≈ _fd(x -> _C33(homogenize(_cell(; sn = x, st = st0), Laminated(), :C)), sn0) rtol = RTOL_AD
     @test ad_sn < 0                                    # a softer interface softens the stack
 
-    ad_st = derivative(lam, Laminated(), interface_param(1, :st); indexer = C -> Matrix(KM(C))[4, 4])
+    ad_st = derivative(lam, Laminated(), interface_param(1, :st); indexer = C -> Matrix(mandel(C))[4, 4])
     @test ad_st ≈ _fd(
-        x -> Matrix(KM(homogenize(_cell(; sn = sn0, st = x), Laminated(), :C)))[4, 4], st0
+        x -> Matrix(mandel(homogenize(_cell(; sn = sn0, st = x), Laminated(), :C)))[4, 4], st0
     ) rtol = RTOL_AD
 
     # The stiffness spelling differentiates too, and the chain rule through
@@ -92,7 +92,7 @@ end
     @test ad_kn ≈ -sn0^2 * ad_sn rtol = 1.0e-10
     @test ad_kn > 0                                    # a stiffer interface stiffens the stack
 
-    ad_kt = derivative(lam, Laminated(), interface_param(1, :kt); indexer = C -> Matrix(KM(C))[4, 4])
+    ad_kt = derivative(lam, Laminated(), interface_param(1, :kt); indexer = C -> Matrix(mandel(C))[4, 4])
     @test ad_kt ≈ -st0^2 * ad_st rtol = 1.0e-10
 
     # A membrane surface modulus (the second interface of the cell).
@@ -162,7 +162,7 @@ end
 end
 
 @testset "AD — anisotropic layers, second derivative" begin
-    # The kernel is smooth: `_inv3` and `_inv_km6` are rational in their
+    # The kernel is smooth: `_inv3` and `TensND.mandel_inv_schur` are rational in their
     # entries, so nested Duals go through and match a finite difference of
     # the first derivative.
     f = x -> _C33(homogenize(_cell(; μA = x), Laminated(), :C))
@@ -175,7 +175,7 @@ end
     # different storage path entirely, and used to be BLOCKED — not by anything
     # in the laminate, but upstream:
     #
-    #   TensND.KM(TensISO{4,3,Dual}, RotatedBasis{3,Float64})  →  9×9, not 6×6
+    #   TensND.mandel(TensISO{4,3,Dual}, RotatedBasis{3,Float64})  →  9×9, not 6×6
     #
     # Writing a structured tensor about a non-canonical axis leaves minor-
     # antisymmetric round-off of order 1e-16, so the components landed on the
@@ -217,10 +217,10 @@ end
         add_layer!(lam, :B, Dict(:C => _isod(0.5, 0.2)); thickness = 0.7)
         return lam
     end
-    C(θ) = Matrix(KM(homogenize(lam_at(θ), Laminated(), :C)))
+    C(θ) = Matrix(mandel(homogenize(lam_at(θ), Laminated(), :C)))
     Q(θ) = Matrix(
-        MeanFieldHomogenization.Core._bond6(
-            MeanFieldHomogenization.Core._frame_matrix(MeanFieldHomogenization.Laminates.laminate_basis(lam_at(θ)))
+        TensND.mandel_rotation(
+            Matrix(TensND.vecbasis(MeanFieldHomogenization.Laminates.laminate_basis(lam_at(θ)), :cov))
         )
     )
     C₀ = C(0.0)

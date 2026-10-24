@@ -197,10 +197,14 @@ p1 = plot(
     title = "Mori-Tanaka, f = $F_INCL", legend = :right,
 )
 plot!(p1, ωs, imag.(μ_freq); lw = 2, color = :red, label = "Im — frequency route")
-scatter!(p1, ωs, real.(μ_time); marker = :circle, ms = 3, color = :blue,
-    markerstrokewidth = 0, label = "Re — time route + LC")
-scatter!(p1, ωs, imag.(μ_time); marker = :circle, ms = 3, color = :red,
-    markerstrokewidth = 0, label = "Im — time route + LC")
+scatter!(
+    p1, ωs, real.(μ_time); marker = :circle, ms = 3, color = :blue,
+    markerstrokewidth = 0, label = "Re — time route + LC"
+)
+scatter!(
+    p1, ωs, imag.(μ_time); marker = :circle, ms = 3, color = :red,
+    markerstrokewidth = 0, label = "Im — time route + LC"
+)
 
 p2 = plot(
     ωs, rel_err; xscale = :log10, yscale = :log10, lw = 2, color = :black,
@@ -276,14 +280,14 @@ different one.
 μ_lc_gs = [
     TensND.get_data(C)[2] / 2
         for C in homogenize_lc(
-        cell_lc, MoriTanaka(), :C; times = probe_times, method = GaverStehfest(16)
-    )
+            cell_lc, MoriTanaka(), :C; times = probe_times, method = GaverStehfest(16)
+        )
 ]
 μ_lc_dh = [
     TensND.get_data(C)[2] / 2
         for C in homogenize_lc(
-        cell_lc, MoriTanaka(), :C; times = probe_times, method = DeHoog()
-    )
+            cell_lc, MoriTanaka(), :C; times = probe_times, method = DeHoog()
+        )
 ]
 
 interp_time(t) = begin

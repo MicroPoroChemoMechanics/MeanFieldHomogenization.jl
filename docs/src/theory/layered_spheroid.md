@@ -92,18 +92,18 @@ the harmonicity of the series are **derived at documentation-build time** from
 the position map alone.
 
 ```@example spheroidal
-using TensND, SymPy
+using TensND, SymPyPythonCall
 Spheroidal = coorsys_spheroidal()
 ϕ, p, q = getcoords(Spheroidal)
 c = symbols("c", positive = true)
-getOM(Spheroidal)            # the position map (A.1)
+position_vector(Spheroidal)            # the position map (A.1)
 ```
 
 The Lamé coefficients `(χ_ϕ, χ_p, χ_q)` come out of the chart, not out of the
 paper:
 
 ```@example spheroidal
-Lame(Spheroidal)
+lame_coefficients(Spheroidal)
 ```
 
 and they are (A.6). The check compares the **squares** — `SymPy` will not
@@ -112,7 +112,7 @@ so the difference of the radicals themselves does not reduce to zero even
 though they are equal on the domain:
 
 ```@example spheroidal
-χ = Lame(Spheroidal)
+χ = lame_coefficients(Spheroidal)
 χ_ref = (
     c * sqrt(1 - p^2) * sqrt(q^2 - 1),
     c * sqrt((q^2 - p^2) / (1 - p^2)),
@@ -143,7 +143,7 @@ directly, by applying the chart's Laplacian:
 
 ```@example spheroidal
 Δ = [
-    (n, m, simplify(LAPLACE(
+    (n, m, simplify(laplacian(
         sympy.assoc_legendre(n, m, p) * sympy.assoc_legendre(n, m, q) * cos(m * ϕ),
         Spheroidal,
     )))

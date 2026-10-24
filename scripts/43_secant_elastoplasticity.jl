@@ -139,8 +139,12 @@ let n = 5, f = FPORE
     radii = ntuple(i -> i == 1 ? f^(1 / 3) : (f + (1 - f) * (i - 1) / n)^(1 / 3), n + 1)
     ls = LayeredSphere(radii, ntuple(i -> iso_stiffness(KS, MUS), n + 1))
     plotly_scene(
-        shape_traces(ls; colors = ["#ffffff", "#f0ad4e", "#e8a33d", "#d4913a",
-            "#c0392b", "#8a2e22"]);
+        shape_traces(
+            ls; colors = [
+                "#ffffff", "#f0ad4e", "#e8a33d", "#d4913a",
+                "#c0392b", "#8a2e22",
+            ]
+        );
         uid = "secant-shells", height = 450,
         title = "Composite sphere: void core (f = $f) and $n plastic shells"
     )
@@ -191,10 +195,10 @@ function secant_update(μs, f, Ev, Ed2)
     n = length(μs)
     J = ForwardDiff.jacobian(m -> kmu_hom(m, f), μs)   # row 1: k, row 2: μ
     fi = (1 - f) / n
-    ε₀ = sqrt(2/3) * SIG0 / (2 * MUS)
+    ε₀ = sqrt(2 / 3) * SIG0 / (2 * MUS)
     return map(1:n) do i
         x = sqrt(max(0.0, (0.5 * J[1, i] * Ev^2 + J[2, i] * Ed2) / fi))
-        x ≤ ε₀ ? MUS : sqrt(2/3) * SIG0 / (2x)
+        x ≤ ε₀ ? MUS : sqrt(2 / 3) * SIG0 / (2x)
     end
 end
 
@@ -255,11 +259,15 @@ plt = plot(
     legend = :bottomright, title = "Porous plastic solid, hydrostatic loading (f = $FPORE)",
 )
 for n in shells
-    plot!(plt, Evs, curves[n] ./ SIG0; marker = :circle, markersize = 2,
-        label = "n = $n shell" * (n > 1 ? "s" : ""))
+    plot!(
+        plt, Evs, curves[n] ./ SIG0; marker = :circle, markersize = 2,
+        label = "n = $n shell" * (n > 1 ? "s" : "")
+    )
 end
-hline!(plt, [(2 / 3) * log(1 / FPORE)]; linestyle = :dash, color = :black,
-    label = "hollow sphere, (2/3)ln(1/f)")
+hline!(
+    plt, [(2 / 3) * log(1 / FPORE)]; linestyle = :dash, color = :black,
+    label = "hollow sphere, (2/3)ln(1/f)"
+)
 plt
 
 # ## §4 What the plateau converges to

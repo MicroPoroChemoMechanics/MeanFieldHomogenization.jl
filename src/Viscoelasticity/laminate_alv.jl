@@ -41,7 +41,7 @@ end
 """
     _plane_pinv_alv(M, n_times, nc, slots, bs) -> Matrix
 
-Volterra counterpart of [`Core.plane_pinv`](@ref): restrict `M` to the
+Volterra counterpart of TensND's `plane_pinv`: restrict `M` to the
 out-of-plane subspace of every time block, invert the restriction as a
 block-lower-triangular Volterra operator, and embed the result back with
 zeros elsewhere.
@@ -161,8 +161,8 @@ end
 _alv_to_layer_frame(M, ::TensND.CanonicalBasis, n) = M
 _alv_to_layer_frame(M, basis, n) = _alv_rotate_blocks(M, _alv_bond6(basis), n, 6)
 _alv_from_layer_frame(M, ::TensND.CanonicalBasis, n) = M
-_alv_from_layer_frame(M, basis, n) = _alv_rotate_blocks(M, _alv_bond6(basis)', n, 6)
-_alv_bond6(basis) = MFH_Core._bond6(MFH_Core._frame_matrix(basis))
+_alv_from_layer_frame(M, basis, n) = _alv_rotate_blocks(M, transpose(_alv_bond6(basis)), n, 6)
+_alv_bond6(basis) = TensND.mandel_rotation(Matrix(TensND.vecbasis(basis, :cov)))
 
 function laminate_alv(lam::Laminates.Laminate, ::Val{2}; times, property::Symbol = :K)
     names = Laminates.layer_names(lam)

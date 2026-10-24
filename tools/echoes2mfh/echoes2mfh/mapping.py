@@ -268,12 +268,12 @@ TENSOR_ATTRS: dict[str, str] = {
     "angles": "TensND.angles({0})",
 }
 
-# Kelvin-Mandel conversion. TensND provides the direct counterparts: `KM`
-# builds the Mandel representation, `inv_KM` reads one back into a tensor,
+# Kelvin-Mandel conversion. TensND provides the direct counterparts: `mandel`
+# builds the Mandel representation, `from_mandel` reads one back into a tensor,
 # dispatching on the array's shape exactly as Echoes does.
 KM_FUNCTIONS: dict[str, str] = {
-    "KM": "KM",
-    "invKM": "inv_KM",
+    "KM": "mandel",
+    "invKM": "from_mandel",
 }
 
 # ---------------------------------------------------------------------------

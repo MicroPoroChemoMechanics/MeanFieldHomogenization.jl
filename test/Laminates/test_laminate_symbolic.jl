@@ -18,7 +18,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using StaticArrays
-using SymPy
+using SymPyPythonCall
 import LinearAlgebra
 
 const MFHC_S = MeanFieldHomogenization.Core
@@ -83,7 +83,7 @@ end
     Z = SMatrix{6, 6}(zeros(Sym, 6, 6))
     z = zero(kn)
     𝕂 = SMatrix{3, 3}([z z z; z z z; z z kn])          # normal compliance only
-    P_int = MFHC_S._op_embed(MFHC_S.compliance_op_block(𝕂)) / L
+    P_int = MFHC_S.TensND.mandel_op_embed(MFHC_S.compliance_op_block(𝕂)) / L
 
     Ch = MFHC_S.laminate_stiffness(C6s, fs, P_int, Z)
 
@@ -149,7 +149,7 @@ if LAM_HAS_SYMBOLICS
     end
 
     # The CELL, not just the kernel, on `Symbolics.Num`. `Num <: Real` while
-    # `SymPy.Sym` is not, so the `h isa Real && h < 0` guards in `add_layer!` /
+    # `SymPyPythonCall.Sym` is not, so the `h isa Real && h < 0` guards in `add_layer!` /
     # `validate_laminate` / `validate_rve` used to reach `h < 0`, get a `Num`
     # back and throw `TypeError: non-boolean (Num) used in boolean context`.
     # The guards now go through `is_hard_numeric`.
@@ -240,7 +240,7 @@ end
             simplify.(collect(TensND.get_data(C)) .- collect(TensND.get_data(C0)))
         )
         # …and the frame really is an orthonormal, right-handed one about `n`.
-        R = MeanFieldHomogenization.Core._frame_matrix(laminate_basis(lam))
+        R = Matrix(TensND.vecbasis(laminate_basis(lam), :cov))
         @test all(iszero, simplify.(R' * R - LinearAlgebra.I))
         @test iszero(simplify(LinearAlgebra.det(R) - 1))
         @test all(iszero, simplify.(collect(TensND.axis(C)) .- R[:, 3]))
@@ -285,14 +285,14 @@ end
     @test Ch isa TensND.TensTI{4}          # isotropic layers ⇒ exactly TI
 
     λ(κ, μ) = κ - 2μ / 3
-    M = KM(Ch)
+    M = mandel(Ch)
     @test simplify(
         1 / M[3, 3] - (f₁ / (λ(κ₁, μ₁) + 2μ₁) + (1 - f₁) / (λ(κ₂, μ₂) + 2μ₂))
     ) == 0
     @test simplify(M[6, 6] / 2 - (f₁ * μ₁ + (1 - f₁) * μ₂)) == 0
 
     # Voigt and Reuss stay symbolic too.
-    @test simplify(KM(homogenize(lam, Voigt(), :C))[6, 6] / 2 - (f₁ * μ₁ + (1 - f₁) * μ₂)) == 0
+    @test simplify(mandel(homogenize(lam, Voigt(), :C))[6, 6] / 2 - (f₁ * μ₁ + (1 - f₁) * μ₂)) == 0
 end
 
 

@@ -67,9 +67,9 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
 
 using MeanFieldHomogenization
 using TensND
-using SymPy
+using SymPyPythonCall
 using LinearAlgebra
-using Tensors
+using TensND.Tensors: SymmetricTensor   # the Tensors.jl TensND is built on
 using QuadGK
 using Printf
 
@@ -228,9 +228,9 @@ println("  Q̂*ₙₙ = ", Q★)   #jl
 # degree 1, as it must be.
 
 adjK = Sym[
-    K₂₂ * K₃₃-K₂₃^2 K₁₃ * K₂₃-K₁₂ * K₃₃ K₁₂ * K₂₃-K₁₃ * K₂₂
-    K₁₃ * K₂₃-K₁₂ * K₃₃ K₁₁ * K₃₃-K₁₃^2 K₁₂ * K₁₃-K₁₁ * K₂₃
-    K₁₂ * K₂₃-K₁₃ * K₂₂ K₁₂ * K₁₃-K₁₁ * K₂₃ K₁₁ * K₂₂-K₁₂^2
+    K₂₂ * K₃₃ - K₂₃^2 K₁₃ * K₂₃ - K₁₂ * K₃₃ K₁₂ * K₂₃ - K₁₃ * K₂₂
+    K₁₃ * K₂₃ - K₁₂ * K₃₃ K₁₁ * K₃₃ - K₁₃^2 K₁₂ * K₁₃ - K₁₁ * K₂₃
+    K₁₂ * K₂₃ - K₁₃ * K₂₂ K₁₂ * K₁₃ - K₁₁ * K₂₃ K₁₁ * K₂₂ - K₁₂^2
 ]
 @assert all(iszero, tsimplify.(adjK - det(Karr) * inv(Karr))) "adj K ≠ det(K)·K⁻¹"
 
@@ -296,7 +296,7 @@ function inplane_Q2(adjK, η)
     A = adjK[2, 2]           # m̲·adjK·m̲
     B = adjK[2, 1]           # m̲·adjK·ℓ̲
     C = adjK[1, 1]           # ℓ̲·adjK·ℓ̲
-    Q2 = Sym[A*η^2 -B*η; -B*η C]
+    Q2 = Sym[A * η^2 -B * η; -B * η C]
     return tsimplify(Q2[1, 1] + Q2[2, 2]), tsimplify(det(Q2))
 end
 

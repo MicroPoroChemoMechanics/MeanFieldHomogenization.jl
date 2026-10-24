@@ -195,18 +195,55 @@ which ``P_n^m`` and ``Q_n^m`` both satisfy on either branch. Nothing tabulates i
 end
 
 """
-    _mode_jet(mode, ϕ, p, q, ::Type{T}) -> Jet2{T}
+    _LegendreAt{T}(p, q, Nmax)
+
+The Legendre tables of one point ``(p, q)``, each kind built once for every
+degree up to `Nmax` on first use, then read by every mode evaluated there: a
+mode needs one degree, and building its table alone, per mode and per point,
+made them most of the cost of the elastic solve. The tables do not depend on the
+azimuth, so one cache serves a whole ring of quadrature points.
+
+``Q_n^m`` comes from a downward recurrence started above `Nmax`, so it may differ
+by a few ulp from a table built up to ``n`` alone (see [`legendre_degrees`](@ref)).
+"""
+struct _LegendreAt{T}
+    p::T
+    q::T
+    Nmax::Int
+    ptabs::Dict{Symbol, Tuple{Vector{T}, Vector{T}}}
+    qtabs::Dict{Symbol, Tuple{Vector{T}, Vector{T}}}
+end
+_LegendreAt{T}(p, q, Nmax::Int) where {T} = _LegendreAt{T}(
+    T(p), T(q), Nmax, Dict{Symbol, Tuple{Vector{T}, Vector{T}}}(), Dict{Symbol, Tuple{Vector{T}, Vector{T}}}()
+)
+
+# The value and derivative of degree `n` of one branch: from the point's cache,
+# or, without one, from a table built for that degree alone.
+@inline function _branch_value(kind::Symbol, x, n::Int, ::Nothing)
+    v, d = legendre_degrees(kind, x, n:n)
+    return v[1], d[1]
+end
+@inline function _branch_value(kind::Symbol, x, n::Int, tabs::Dict, Nmax::Int)
+    tab, dtab = get!(() -> legendre_table(kind, x, Nmax), tabs, kind)
+    return tab[n + 1], dtab[n + 1]
+end
+_p_value(kind, p, n, ::Nothing) = _branch_value(kind, p, n, nothing)
+_q_value(kind, q, n, ::Nothing) = _branch_value(kind, q, n, nothing)
+_p_value(kind, p, n, L::_LegendreAt) = _branch_value(kind, L.p, n, L.ptabs, L.Nmax)
+_q_value(kind, q, n, L::_LegendreAt) = _branch_value(kind, L.q, n, L.qtabs, L.Nmax)
+
+"""
+    _mode_jet(mode, ϕ, p, q, ::Type{T}, tables = nothing) -> Jet2{T}
 
 The mode's own potential as a jet: ``P_n^m(p)\\,R_n^m(q)\\,T(m\\varphi)`` with all nine
-derivatives, each a product of tabulated univariate pieces.
+derivatives, each a product of tabulated univariate pieces, read from `tables`
+(a [`_LegendreAt`](@ref) of the point) when one is given.
 """
-function _mode_jet(mode::PNMode, ϕ, p, q, ::Type{T}) where {T}
+function _mode_jet(mode::PNMode, ϕ, p, q, ::Type{T}, tables = nothing) where {T}
     kp, kq = _branch_kinds(mode.m, mode.regularity)
     n, m = mode.n, mode.m
-    Pv, Pd = legendre_degrees(kp, T(p), n:n)
-    Rv, Rd = legendre_degrees(kq, T(q), n:n)
-    P, dP = Pv[1], Pd[1]
-    R, dR = Rv[1], Rd[1]
+    P, dP = _p_value(kp, T(p), n, tables)
+    R, dR = _q_value(kq, T(q), n, tables)
     ddP = _assoc_second(P, dP, T(p), n, m)
     ddR = _assoc_second(R, dR, T(q), n, m)
     mϕ = m * T(ϕ)
@@ -288,7 +325,7 @@ CARTESIAN components while everything else lives in the chart frame.
 end
 
 """
-    mode_fields(mode, ϕ, p, q, c, μ, ν, ::Type{T}) -> (u, t)
+    mode_fields(mode, ϕ, p, q, c, μ, ν, ::Type{T}, tables = nothing) -> (u, t)
 
 Displacement and traction of one unit-amplitude mode, in the chart frame:
 ``\\underline{u} = (u_\\varphi, u_p, u_q)`` and ``\\underline{t} = \\boldsymbol{\\sigma}\\cdot\\underline{e}_q = (\\sigma_{\\varphi q}, \\sigma_{pq}, \\sigma_{qq})``.
@@ -297,8 +334,8 @@ This is the single evaluator all three elementary problems go through. What
 distinguishes them is which modes are in the list, not how a mode is turned
 into fields.
 """
-function mode_fields(mode::PNMode, ϕ, p, q, c, μ, ν, ::Type{T}) where {T}
-    jφ = _mode_jet(mode, ϕ, p, q, T)
+function mode_fields(mode::PNMode, ϕ, p, q, c, μ, ν, ::Type{T}, tables = nothing) where {T}
+    jφ = _mode_jet(mode, ϕ, p, q, T, tables)
     i = mode.potential
     # Φ = φ₀ + x φ₁ + y φ₂ + z φ₃ — only this mode's own term survives.
     Φj = if i == 0

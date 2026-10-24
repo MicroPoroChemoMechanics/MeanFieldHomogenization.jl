@@ -556,8 +556,8 @@ end
     @test length(Cs) == 21
     @test τ[1] == 0.0 && τ[end] == 1.0
     # τ = 0 is the matrix, τ = 1 is what `homogenize` returns.
-    @test get_array(Cs[1]) ≈ get_array(C_m)
-    @test get_array(Cs[end]) ≈ get_array(homogenize(rve, sch, :C))
+    @test (Cs[1]) ≈ C_m
+    @test (Cs[end]) ≈ homogenize(rve, sch, :C)
     # Monotone stiffening towards a stiffer inclusion.
     ks = [k_mu(C)[1] for C in Cs]
     @test all(≥(0), diff(ks))
@@ -646,6 +646,26 @@ end
         @test Δ isa TensISO
         du = zeros(length(S._get_state(tag, proto)))
         S._set_state_layout!(du, tag, proto, Δ)
-        @test get_array(S._reconstruct_tens(tag, proto, du)) ≈ get_array(Δ) atol = 1.0e-14
+        @test S._reconstruct_tens(tag, proto, du) ≈ Δ atol = 1.0e-14
     end
+end
+
+@testset "Differential — implicit solvers with their default AD" begin
+    # The right-hand side takes its element type from τ as well as from the
+    # state, so the ForwardDiff time gradient of a Rosenbrock method goes
+    # through (it threw on a Float64 conversion before). Reference: the
+    # explicit default solver at tight tolerances.
+    ODE = MeanFieldHomogenization.Schemes.OrdinaryDiffEq
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)); fraction = :rest)
+    add_phase!(rve, :I, Spheroid(0.2), Dict(:C => iso_stiffness(60.0, 40.0)); fraction = 0.3, symmetrize = IsoSymmetrize())
+    ref = homogenize(rve, DifferentialScheme(; abstol = 1.0e-12, reltol = 1.0e-12))
+    for alg in (ODE.Rosenbrock23(), ODE.Rodas5P())
+        C = homogenize(rve, DifferentialScheme(; alg, abstol = 1.0e-10, reltol = 1.0e-10))
+        @test norm(C - ref) < 1.0e-8 * norm(ref)
+    end
+    # The concentration tensors integrate the same right-hand side.
+    A_ref = concentration_tensors(rve, DifferentialScheme(; abstol = 1.0e-12, reltol = 1.0e-12), :C)
+    A_imp = concentration_tensors(rve, DifferentialScheme(; alg = ODE.Rodas5P(), abstol = 1.0e-10, reltol = 1.0e-10), :C)
+    @test norm(A_imp.strain[:I] - A_ref.strain[:I]) < 1.0e-8 * norm(A_ref.strain[:I])
 end

@@ -80,7 +80,7 @@ _TENSOR_HELPER = r"""
 # class (2 → isotropic 4th order, 3 → 2nd order, 5 → transversely isotropic,
 # 9 → orthotropic).
 echoes_tensor(t::TensND.AbstractTens) = t
-echoes_tensor(M::AbstractMatrix) = size(M) == (3, 3) ? Tens(M) : inv_KM(M)
+echoes_tensor(M::AbstractMatrix) = size(M) == (3, 3) ? Tens(M) : from_mandel(M)
 echoes_tensor(v::AbstractVector, angles...) =
     echoes_tensor(Tuple(v), angles...)
 
@@ -131,8 +131,8 @@ function echoes_tensor(p::NTuple{9, T}, θ = 0.0, φ = 0.0, ψ = 0.0) where {T}
     M[4, 4] = 2 * C2323
     M[5, 5] = 2 * C3131
     M[6, 6] = 2 * C1212
-    return (θ, φ, ψ) == (0.0, 0.0, 0.0) ? inv_KM(M) :
-        inv_KM(M, Basis(echoes_rotation(θ, φ, ψ)))
+    return (θ, φ, ψ) == (0.0, 0.0, 0.0) ? from_mandel(M) :
+        from_mandel(M, Basis(echoes_rotation(θ, φ, ψ)))
 end
 """
 

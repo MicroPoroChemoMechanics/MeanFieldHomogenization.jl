@@ -111,8 +111,8 @@ function self_consistent_alv_newton(
         push!(symmetrizes, phase_symmetrize(rve, name))
     end
 
-    U_M_phases = Matrix[_tens_to_mandel66(tens_UA(g)) for g in geometries]
-    V_M_phases = Matrix[_tens_to_mandel66(tens_VA(g)) for g in geometries]
+    U_M_phases = Matrix[TensND.mandel66(tens_UA(g)) for g in geometries]
+    V_M_phases = Matrix[TensND.mandel66(tens_VA(g)) for g in geometries]
 
     # Promoted scalar type of every input the Newton state must carry
     # (matrix/phase kernels, fractions, geometry tensors, crack data) so
@@ -138,50 +138,36 @@ function self_consistent_alv_newton(
             )
                 for (g, ε, sym, Rn, Rt) in crack_data_full
         ]
-        Id_i = _identity_alv(i, Tp)
 
         residual_row_i = function (p)
             T = eltype(p)
+            # The rows already solved (lower triangular, zero above), then row i.
             α_local = zeros(T, i, i)
             β_local = zeros(T, i, i)
-            @inbounds for k in 1:(i - 1), l in 1:k
-                α_local[k, l] = T(α_full[k, l])
-                β_local[k, l] = T(β_full[k, l])
-            end
-            @inbounds for j in 1:i
-                α_local[i, j] = p[j]
-                β_local[i, j] = p[i + j]
-            end
+            α_local[1:(i - 1), 1:(i - 1)] .= view(α_full, 1:(i - 1), 1:(i - 1))
+            β_local[1:(i - 1), 1:(i - 1)] .= view(β_full, 1:(i - 1), 1:(i - 1))
+            α_local[i, :] .= view(p, 1:i)
+            β_local[i, :] .= view(p, (i + 1):(2i))
             C_m_i = iso_blocks_from_params(α_local, β_local)
             extra_A_i = isempty(crack_data_i) ? nothing :
                 _build_sc_crack_extra_J(C_m_i, crack_data_i)
-            # `_sc_alv_step` is dispatched on `Id` element type, so we
-            # promote the identity to the input element type to keep
-            # the pipeline `Dual`-friendly.
-            Id_T = T === Tp ? Id_i : T.(Id_i)
             C_m_new_i = _sc_alv_step(
                 C_m_i, C_phases_i, U_M_phases, V_M_phases,
-                fractions, i, Id_T, symmetrizes;
+                fractions, symmetrizes;
                 extra_A = extra_A_i
             )
             α_new, β_new = iso_params_from_blocks(C_m_new_i)
-            r = Vector{T}(undef, 2i)
-            @inbounds for j in 1:i
-                r[j] = α_new[i, j] - p[j]
-                r[i + j] = β_new[i, j] - p[i + j]
-            end
-            return r
+            return [view(α_new, i, :); view(β_new, i, :)] .- p
         end
 
         # Initial guess at row i : reuse the matrix-driven values
         # (or the previously-extrapolated row if i > 1).
-        p = Tp[α_full[i, j] for j in 1:i]
-        append!(p, Tp[β_full[i, j] for j in 1:i])
+        p = [α_full[i, 1:i]; β_full[i, 1:i]]
 
         for iter in 1:maxiters_per_row
             r = residual_row_i(p)
-            norm_r = sqrt(sum(abs2, r))
-            tol_eff = abstol + reltol * sqrt(sum(abs2, p))
+            norm_r = norm(r)
+            tol_eff = abstol + reltol * norm(p)
             verbose && @info "  SC-Newton row $i iter $iter : ‖F‖ = $norm_r"
             if norm_r ≤ tol_eff
                 break
@@ -194,7 +180,7 @@ function self_consistent_alv_newton(
             for _ in 1:30
                 p_new = p .+ α_step .* δ
                 r_new = residual_row_i(p_new)
-                if sqrt(sum(abs2, r_new)) ≤ (1 - 1.0e-4 * α_step) * norm_r
+                if norm(r_new) ≤ (1 - 1.0e-4 * α_step) * norm_r
                     p .= p_new
                     accepted = true
                     break
@@ -209,10 +195,8 @@ function self_consistent_alv_newton(
             end
         end
 
-        @inbounds for j in 1:i
-            α_full[i, j] = p[j]
-            β_full[i, j] = p[i + j]
-        end
+        α_full[i, 1:i] .= view(p, 1:i)
+        β_full[i, 1:i] .= view(p, (i + 1):(2i))
     end
 
     return iso_blocks_from_params(α_full, β_full)

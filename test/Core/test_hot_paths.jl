@@ -23,3 +23,23 @@ _allocs(f, args...) = (f(args...); @allocated f(args...))
         @test get_array(cod_tensor(pen, C; method)) == get_array(cod_tensor(pen, C))
     end
 end
+
+@testset "Hot paths: spheroids and cylinders infer a concrete tensor" begin
+    # The symmetry axis of a spheroid or a cylinder is read off its basis. Read as
+    # `Tuple(column)`, its length was known at run time only, and Julia 1.14 then
+    # inferred the abstract `TensTI` for every tensor built on it, Hill tensors
+    # and concentrations included.
+    C = TensISO{3}(3 * 30.0, 2 * 18.0)
+    shapes = (
+        Ellipsoid(3.0, 1.0, 1.0; euler_angles = (0.4, 1.1, 0.2)),
+        Ellipsoid(1.0, 1.0, 0.3; euler_angles = (0.9, 0.3, 2.0)),
+        Cylinder(1.0, 1.0, TensND.RotatedBasis(0.5, 0.7, 0.1)),
+    )
+    for g in shapes
+        @test isconcretetype(typeof(@inferred hill_tensor(g, C)))
+        @test isconcretetype(typeof(@inferred tens_UA(g)))
+        @test isconcretetype(typeof(@inferred tens_VA(g)))
+        @test @inferred(MeanFieldHomogenization.Core._basis_axis(g.basis, 1)) isa NTuple{3, Float64}
+    end
+    @test @inferred(laminate_normal(Laminate(; normal = (0.0, 0.6, 0.8)))) isa NTuple{3, Float64}
+end

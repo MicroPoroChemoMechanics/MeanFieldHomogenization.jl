@@ -30,10 +30,8 @@ inverse_carson_rate
 
 ```@docs
 _accumulate
-_realpart
 _decompose
 _gs_exact_weights
-_scalar_float
 _dehoog_from_values
 _dehoog_blocks
 _DEHOOG_MIN_RATIO

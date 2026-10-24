@@ -220,7 +220,9 @@ u_cr, states_cr = solve!(mat_cr, 8; cache = cache)
 closed_x = count(st -> !open_set(st)[1], Iterators.flatten(states_cr))
 closed_y = count(st -> !open_set(st)[2], Iterators.flatten(states_cr))
 ntot = getncells(grid) * getnquadpoints(cv)
-@printf("closed: family ⟂e₁ %.1f%%, family ⟂e₂ %.1f%%\n",
-    100closed_x / ntot, 100closed_y / ntot)
+@printf(
+    "closed: family ⟂e₁ %.1f%%, family ⟂e₂ %.1f%%\n",
+    100closed_x / ntot, 100closed_y / ntot
+)
 
 nothing

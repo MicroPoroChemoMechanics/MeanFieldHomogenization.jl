@@ -25,7 +25,7 @@
 #  `homogenize_alv` and overlays the closed-form curves.
 #
 #  The Mittag-Leffler function used to come from the ECHOES Python test suite
-#  through PyCall, which made this script machine-dependent.  It no longer
+#  through a Python bridge, which made this script machine-dependent.  It no longer
 #  does.  Two things replaced it:
 #
 #    * `MittagLeffler.jl` (a weak dependency) when it is loaded — the

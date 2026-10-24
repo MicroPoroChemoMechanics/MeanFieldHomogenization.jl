@@ -76,17 +76,16 @@ MeanFieldHomogenization.Viscoelasticity.laminate_alv
 ## The block algebra
 
 The kernel behind the cell, in `Core`, so that the aging-viscoelastic
-laminate reuses it with the Volterra inversion substituted.
+laminate reuses it with the Volterra inversion substituted. It is written on the
+Kelvin–Mandel block algebra about the layer normal, which is TensND's and is
+re-exported from `Core`: the slots `MANDEL_IP` and `MANDEL_OP`, the blocks and their
+embeddings, the Schur inverse `mandel_inv_schur`, the plane pseudo-inverses
+`plane_pinv` and `plane_pinv2`, `acoustic_tensor` and `compliance_op_block` (see
+[Kelvin-Mandel blocks about a normal](https://MicroPoroChemoMechanics.github.io/TensND.jl/stable/api/tensors)
+in the TensND documentation).
 
 ```@docs
-MeanFieldHomogenization.Core.KM_IP
-MeanFieldHomogenization.Core.KM_OP
-MeanFieldHomogenization.Core.plane_pinv
-MeanFieldHomogenization.Core.plane_pinv2
-MeanFieldHomogenization.Core._inv_km6
 MeanFieldHomogenization.Core.flat_hill
-MeanFieldHomogenization.Core.acoustic_tensor
-MeanFieldHomogenization.Core.compliance_op_block
 MeanFieldHomogenization.Core.laminate_stiffness
 MeanFieldHomogenization.Core.laminate_conductivity
 MeanFieldHomogenization.Core.laminate_gradient_concentration
@@ -113,6 +112,7 @@ MeanFieldHomogenization.Core.AbstractHomogenizationCell
 MeanFieldHomogenization.Core.validate_cell
 MeanFieldHomogenization.Core.cell_member_names
 MeanFieldHomogenization.Core.cell_container_property
+MeanFieldHomogenization.Core.cell_has_property
 MeanFieldHomogenization.Core.cell_set_property
 MeanFieldHomogenization.Core.Homogenized
 MeanFieldHomogenization.Core.NestedParameter

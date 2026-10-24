@@ -2,6 +2,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+using ForwardDiff
 import MeanFieldHomogenization.Elasticity: _hill_2d_iso, _hill_2d_aniso
 
 # =============================================================================
@@ -61,6 +62,28 @@ _maxdiff(P, Q) = maximum(abs, Array(P) - Array(Q))
     end
 end
 
+@testset "hill 2D — 𝕌 and 𝕍 rebuild Mura's P, through the circle" begin
+    # P = 𝕌/(λ + 2μ) + (𝕍 - 𝕌)/μ, an identity of the isotropic Green operator,
+    # checked against Mura's closed form; λ + 2μ = C₁₁₁₁ = (α + β)/2 for
+    # TensISO{2}(α, β).
+    # 𝕌 jumped where the semi-axes came within 1e-6 of each other, and its
+    # diagonal carried a 3/2 factor that belongs to 3-D.
+    for (k, mu) in ((5.0, 2.0), (1.0, 1.0)), rho in (1.0, 1 - 1.0e-7, 1 - 1.0e-5, 0.7, 0.2)
+        ell = Ellipsoid(1.0, rho)
+        U, V = tens_UA(ell), tens_VA(ell)
+        @test _maxdiff(U / ((3k + 2mu) / 2) + (V - U) / mu, _mura_P(1.0, rho, k, mu)) < 1.0e-12
+    end
+    # Circle: (1/2π)∮ ξ⊗ξ⊗ξ⊗ξ dθ, i.e. 3/8 and 1/8.
+    U = components_canon(tens_UA(Ellipsoid(1.0, 1.0)))
+    @test U[1, 1, 1, 1] ≈ 3 / 8
+    @test U[1, 1, 2, 2] ≈ 1 / 8
+    @test U[1, 2, 1, 2] ≈ 1 / 8
+    @test iszero(U[1, 1, 1, 2])
+    # Derivative through a = b: d/db [b(a + 2b) / 2(a + b)²] = 1/4 at a = b = 1.
+    @test ForwardDiff.derivative(b -> components_canon(tens_UA(Ellipsoid(1.0, b)))[1, 1, 1, 1], 1.0) ≈ 1 / 4
+    @test abs(ForwardDiff.derivative(b -> components_canon(tens_UA(Ellipsoid(1.0, b)))[1, 1, 2, 2], 1.0)) < 1.0e-15
+end
+
 @testset "hill 2D — quadrature anisotrope vs Mura (1987)" begin
     for (k, mu) in ((5.0, 2.0), (1.0, 1.0)), rho in (1.0, 0.5, 0.3)
         ell = Ellipsoid(1.0, rho)
@@ -100,7 +123,7 @@ end
     # entry already overwritten entered the next average of its orbit: equal
     # only to rounding. Each orbit is now averaged once, and its members are
     # equal exactly — what decides the symmetric storage of the result.
-    C = TensND.Tens(TensND.inv_KM([10.0 3.0 1.0; 3.0 8.0 0.5; 1.0 0.5 4.0]))
+    C = TensND.Tens(TensND.from_mandel([10.0 3.0 1.0; 3.0 8.0 0.5; 1.0 0.5 4.0]))
     P = get_array(_hill_2d_aniso(Ellipsoid(1.0, 0.6; angle = 0.3), C))
     @test P == permutedims(P, (3, 4, 1, 2)) == permutedims(P, (2, 1, 3, 4)) == permutedims(P, (1, 2, 4, 3))
 end

@@ -246,9 +246,9 @@ let
     f = 0.05
     P = hill_tensor(Ellipsoid(1.0), C_iso)
 
-    M₀ = KM(C_iso)
+    M₀ = mandel(C_iso)
     Mδ = -M₀
-    MP = KM(P)
+    MP = mandel(P)
 
     M_A = inv(I + MP * Mδ)
     M_eff = M₀ + f * Mδ * M_A

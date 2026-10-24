@@ -76,26 +76,6 @@ jobs:
                   end
               end
           end
-      # As in CI.yml: TensND loads SymPy, whose Python module `sympy` goes into
-      # the private Python of Conda.jl, in the session and in the compute process.
-      # The cache restores the depot's packages, Conda's deps/deps.jl among them,
-      # but not ~/.julia/conda, the root environment that file names: on a new
-      # release of Julia, Conda is precompiled again and fails on the missing
-      # directory. Building Conda first makes that directory again.
-      - name: Install dependencies (PyCall/SymPy)
-        shell: julia --color=yes {0}
-        run: |
-          using Pkg
-          ENV["PYTHON"] = ""
-          withenv(() -> Pkg.add("Conda"), "JULIA_PKG_PRECOMPILE_AUTO" => "0")
-          Pkg.build("Conda")
-          Pkg.add("PyCall")
-          Pkg.add("SymPy")
-          # conda-forge now and then answers a transient error (a 502 on its index):
-          # what is downloaded from it is tried three times, a minute apart
-          retry(() -> Pkg.build("PyCall"); delays = fill(60.0, 2))()
-          using PyCall
-          retry(() -> pyimport_conda("sympy", "sympy"); delays = fill(60.0, 2))()
       # The environment the compute process runs in, as the studio's own would
       # hold it, with the MeanFieldHomogenization of this commit rather than the
       # registered one. It lives outside the repository's tree.

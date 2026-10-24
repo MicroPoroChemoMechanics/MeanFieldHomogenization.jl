@@ -163,7 +163,7 @@ end
     # block is the elastic tensor, so the interface correction applied to the
     # discretized laws (as the self-consistent iterations do) must give what
     # the elastic schemes give with `K_interface`.
-    mandel = MeanFieldHomogenization.Viscoelasticity._tens_to_mandel66
+    mandel = TensND.mandel66
     C_M = TensISO{3}(3 * 10.0, 2 * 4.0)
     k = 5.0
     times = [0.0, 0.5, 1.0]

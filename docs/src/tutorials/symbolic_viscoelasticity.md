@@ -64,7 +64,7 @@ Symbolics.simplify(carson_creep(m, p) * carson_relaxation(m, p) - 1)
 The fractional and bituminous models, whose constructors carry the tightest
 validations, build symbolically as well, and the lift to a fourth-order tensor
 keeps everything symbolic: the bulk and shear moduli of the transformed tensor,
-read back with [`k_mu`](@ref), are the two channels' transforms:
+read back with `k_mu` (from TensND), are the two channels' transforms:
 
 ```@example tutsymvisco
 Symbolics.@variables kk
@@ -98,9 +98,9 @@ something different from asking at a numeric one: not *the value there* but
 *the function*.
 
 ```@example tutsymvisco
-using SymPy
+using SymPyPythonCall
 
-SymPy.@syms ts::positive τ::positive Einf::positive E1::positive
+SymPyPythonCall.@syms ts::positive τ::positive Einf::positive E1::positive
 
 z = zener_maxwell(Einf, E1, τ)
 inverse_carson(p -> carson_relaxation(z, p), ts)
@@ -110,13 +110,13 @@ It agrees with the closed form the model already carries — which is a check on
 both:
 
 ```@example tutsymvisco
-SymPy.simplify(inverse_carson(p -> carson_relaxation(z, p), ts) - relaxation(z, ts))
+SymPyPythonCall.simplify(inverse_carson(p -> carson_relaxation(z, p), ts) - relaxation(z, ts))
 ```
 
 The creep function of the same standard solid, recovered from `R*(p)` alone:
 
 ```@example tutsymvisco
-SymPy.simplify(inverse_carson(p -> carson_creep(z, p), ts))
+SymPyPythonCall.simplify(inverse_carson(p -> carson_creep(z, p), ts))
 ```
 
 ### Burgers: the oracle, derived
@@ -127,7 +127,7 @@ oracle in `test/Viscoelasticity/test_prony.jl`. Here it is derived from the
 transform in one line:
 
 ```@example tutsymvisco
-SymPy.@syms ks::positive ηs::positive kp::positive ηp::positive
+SymPyPythonCall.@syms ks::positive ηs::positive kp::positive ηp::positive
 
 b = burgers(ks, ηs, kp, ηp)
 inverse_carson(p -> carson_relaxation(b, p), ts)
@@ -137,7 +137,7 @@ and the creep function, which carries the term linear in `t` that makes Burgers
 a fluid:
 
 ```@example tutsymvisco
-SymPy.simplify(inverse_carson(p -> carson_creep(b, p), ts) - creep(b, ts))
+SymPyPythonCall.simplify(inverse_carson(p -> carson_creep(b, p), ts) - creep(b, ts))
 ```
 
 !!! note "Name clash with Symbolics.jl"
@@ -156,7 +156,7 @@ guess.
 **A rational exponent inverts exactly.**
 
 ```@example tutsymvisco
-SymPy.@syms V::positive
+SymPyPythonCall.@syms V::positive
 sb = ScottBlair(V, Sym(2) // 5)
 (inverse_carson(q -> carson_creep(sb, q), ts), creep(sb, ts))
 ```
@@ -167,7 +167,7 @@ Those two are the same number written two ways — `5/(2Γ(2/5)) = 1/Γ(7/5)`.
 ``E_{1/2}(-x) = e^{x^2}\operatorname{erfc}(x)``, and SymPy finds it:
 
 ```@example tutsymvisco
-SymPy.@syms E0::positive
+SymPyPythonCall.@syms E0::positive
 inverse_carson(q -> carson_relaxation(FractionalZener(Einf, E0, τ, Sym(1) // 2), q), ts)
 ```
 
@@ -176,7 +176,7 @@ inverse_carson(q -> carson_relaxation(FractionalZener(Einf, E0, τ, Sym(1) // 2)
 through every later substitution, so the extension warns:
 
 ```@example tutsymvisco
-SymPy.@syms α::positive
+SymPyPythonCall.@syms α::positive
 inverse_carson(q -> carson_creep(ScottBlair(V, α), q), ts)
 ```
 

@@ -166,16 +166,16 @@ end
 # refused rather than silently approximated by one of its axes.
 function _spheroid_axes(ell::Ellipsoid{3, Spherical})
     a = ell.semi_axes[1]
-    return a, a, MFH_Core._basis_col(ell.basis, 3)
+    return a, a, MFH_Core._basis_axis(ell.basis, 3)
 end
 
 # Prolate: semi-axes sorted descending, so the long (polar) axis is the first.
 _spheroid_axes(ell::Ellipsoid{3, Prolate}) =
-    (ell.semi_axes[2], ell.semi_axes[1], MFH_Core._basis_col(ell.basis, 1))
+    (ell.semi_axes[2], ell.semi_axes[1], MFH_Core._basis_axis(ell.basis, 1))
 
 # Oblate: the short (polar) axis is the last.
 _spheroid_axes(ell::Ellipsoid{3, Oblate}) =
-    (ell.semi_axes[1], ell.semi_axes[3], MFH_Core._basis_col(ell.basis, 3))
+    (ell.semi_axes[1], ell.semi_axes[3], MFH_Core._basis_axis(ell.basis, 3))
 
 _spheroid_axes(ell::Ellipsoid{3}) = throw(
     ArgumentError(

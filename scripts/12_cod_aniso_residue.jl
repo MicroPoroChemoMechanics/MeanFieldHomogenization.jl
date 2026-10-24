@@ -12,6 +12,7 @@ Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+import DECUHR, Integrals   # the `:decuhr` back-end is an extension
 using Printf
 
 Kcomponents = [
@@ -22,7 +23,7 @@ Kcomponents = [
     -0.249878 -0.161806 -0.249375  0.123902   0.442613  -0.120333
     0.038079  0.0734051 0.0735958 -0.227447 -0.120333   0.448281
 ]
-C_aniso = inv_KM(Kcomponents, CanonicalBasis{3, Float64}())
+C_aniso = from_mandel(Kcomponents, CanonicalBasis{3, Float64}())
 
 function showB(label, B)
     @printf "\n%-40s\n" label
