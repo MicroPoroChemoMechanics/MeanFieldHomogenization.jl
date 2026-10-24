@@ -30,7 +30,7 @@ for elasticity, a 3x3 matrix for conduction.
 
 Run with the Python of the environment where echoes is installed:
 
-    ~/miniconda3/envs/fenicsx-env/bin/python3 -I make_schemes_random_bases.py
+    python3 -I make_schemes_random_bases.py
 """
 
 import json
