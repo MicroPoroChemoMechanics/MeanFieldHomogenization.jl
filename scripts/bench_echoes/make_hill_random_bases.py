@@ -23,7 +23,7 @@ echoes takes and returns canonical components: 6x6 Kelvin-Mandel matrices (11, 2
 
 Run with the Python of the environment where echoes is installed:
 
-    ~/miniconda3/envs/fenicsx-env/bin/python3 -I make_hill_random_bases.py
+    python3 -I make_hill_random_bases.py
 """
 
 import json

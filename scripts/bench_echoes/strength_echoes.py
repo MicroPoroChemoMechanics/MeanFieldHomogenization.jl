@@ -12,7 +12,9 @@ like-for-like comparison).
 Imported by `benchmark_strength.jl` and `benchmark_schemes_speed.jl`; run on its
 own, it prints the w/c = 0.5 sweep and its timings:
 
-    ~/miniconda3/envs/fenicsx-env/bin/python3 -I scripts/bench_echoes/strength_echoes.py
+    python3 -I scripts/bench_echoes/strength_echoes.py
+
+with `python3` the interpreter of the environment where echoes is installed.
 """
 import math, numpy as np
 from echoes import (rve, ellipsoid, spheroidal, spherical, stiff_kmu,

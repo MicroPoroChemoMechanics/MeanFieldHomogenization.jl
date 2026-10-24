@@ -4,7 +4,9 @@ The cases are defined here once. `benchmark_schemes_speed.jl` imports this modul
 PyCall, builds the same RVEs in MeanFieldHomogenization.jl from `CASES`, and times both
 codes; run on its own, this module times the Echoes side alone:
 
-    ~/miniconda3/envs/fenicsx-env/bin/python3 -I scripts/bench_echoes/schemes_speed_echoes.py
+    python3 -I scripts/bench_echoes/schemes_speed_echoes.py
+
+with `python3` the interpreter of the environment where echoes is installed.
 
 Tolerances, equal on both sides: numerical Hill tensors to a relative 1e-6 (absolute 1e-8),
 fixed points to a relative 1e-8. Echoes integrates the differential scheme in explicit

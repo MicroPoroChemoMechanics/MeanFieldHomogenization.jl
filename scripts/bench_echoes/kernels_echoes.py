@@ -5,7 +5,9 @@ derivatives. The media and the cases are defined here once: `benchmark.jl` impor
 module through PyCall, builds the same tensors in MeanFieldHomogenization.jl and times
 both codes. Run on its own, this module times the Echoes side alone:
 
-    ~/miniconda3/envs/fenicsx-env/bin/python3 -I scripts/bench_echoes/kernels_echoes.py
+    python3 -I scripts/bench_echoes/kernels_echoes.py
+
+with `python3` the interpreter of the environment where echoes is installed.
 
 Tolerances of the numerical algorithms: relative and absolute 1e-6, roots 1e-6, at most
 200 000 integrand evaluations (`maxnb`). Echoes takes closed forms whenever the reference is
