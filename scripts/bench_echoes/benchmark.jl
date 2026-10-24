@@ -35,6 +35,7 @@ using Printf
 using BenchmarkTools
 using ForwardDiff
 using PyCall
+using JSON
 
 # `jl_method = :decuhr` is benchmarked below (§ 1), and that backend lives in a
 # package extension: without these two imports the extension never loads and the
@@ -46,103 +47,20 @@ import DECUHR, Integrals
 BenchmarkTools.DEFAULT_PARAMETERS.samples = 20
 BenchmarkTools.DEFAULT_PARAMETERS.seconds = 1.0
 
-# ─── Python-side wrappers (keep enums on the Python side) ────────────────────
+# ─── Echoes side: `kernels_echoes.py`, next to this file ─────────────────────
+#
+# The media, the cases and the Echoes calls are defined there once; run on its
+# own, that module times the Echoes side alone.
 
-py"""
-import echoes
-import numpy as np
-
-_ALGO = {
-    'DEFAULT': echoes.DEFAULT,
-    'RESIDUES': echoes.RESIDUES,
-    'NUMINT3D': echoes.NUMINT3D,
-}
-
-def py_stiffness_tensor(comps):
-    return echoes.tensor(np.asarray(list(comps), dtype=float))
-
-def py_conductivity_tensor(mat33):
-    # 3x3 symmetric ndarray → 2nd-order tens; dispatches echoes.hill on rank 2.
-    return echoes.tensor(np.asarray(mat33, dtype=float))
-
-def py_hill(a, b, c, C, algo, epsroots=1e-6, epsrel=1e-6, epsabs=1e-6,
-            maxnb=200000, theta=0.0, phi=0.0, psi=0.0):
-    ell = echoes.ellipsoidal(np.array([a, b, c, theta, phi, psi]))
-    try:
-        H = echoes.hill(ell, C, algo=_ALGO[algo],
-                        epsrel=epsrel, epsabs=epsabs,
-                        maxnb=maxnb, epsroots=epsroots)
-        return np.asarray(H)
-    except Exception:
-        return None
-
-def py_crack(C, algo, epsroots=1e-6, epsrel=1e-6, epsabs=1e-6, maxnb=200000):
-    try:
-        H = echoes.crack_compliance(echoes.spheroidal(0.0), C,
-                                    algo=_ALGO[algo],
-                                    epsrel=epsrel, epsabs=epsabs,
-                                    maxnb=maxnb, epsroots=epsroots)
-        return np.asarray(H)
-    except Exception:
-        return None
-
-def py_crack_ell(C, a, b, c, algo='DEFAULT',
-                 epsroots=1e-6, epsrel=1e-6, epsabs=1e-6, maxnb=200000):
-    # Flat TRIAXIAL ellipsoid (a >= b >> c): the elliptic-crack case, which
-    # discriminates the two H normalization conventions. `spheroidal` cannot
-    # express it — it only has one aspect ratio (the penny).
-    ell = echoes.ellipsoidal(np.array([a, b, c, 0.0, 0.0, 0.0]))
-    try:
-        H = echoes.crack_compliance(ell, C, algo=_ALGO[algo],
-                                    epsrel=epsrel, epsabs=epsabs,
-                                    maxnb=maxnb, epsroots=epsroots)
-        return np.asarray(H)
-    except Exception:
-        return None
-
-def py_hill_derivative(a, b, c, C, index, algo,
-                       epsroots=1e-6, epsrel=1e-6, epsabs=1e-6, maxnb=200000):
-    ell = echoes.ellipsoidal(np.array([a, b, c, 0.0, 0.0, 0.0]))
-    try:
-        dH = echoes.hill_derivative(ell, C, index, algo=_ALGO[algo],
-                                    epsrel=epsrel, epsabs=epsabs,
-                                    maxnb=maxnb, epsroots=epsroots)
-        return np.asarray(dH)
-    except Exception:
-        return None
-"""
-
-const py_stiffness_tensor = py"py_stiffness_tensor"
-const py_conductivity_tensor = py"py_conductivity_tensor"
-const py_hill = py"py_hill"
-const py_crack = py"py_crack"
-const py_crack_ell = py"py_crack_ell"
-const py_hill_derivative = py"py_hill_derivative"
+pushfirst!(PyVector(pyimport("sys")."path"), @__DIR__)
+const KE = pyimport("kernels_echoes")
+const py_hill = KE.py_hill
+const py_crack = KE.py_crack
+const py_crack_ell = KE.py_crack_ell
+const py_hill_derivative_iso = KE.py_hill_derivative_iso
+const py_hill_derivative_ortho = KE.py_hill_derivative_ortho
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
-
-"""
-    stiffness_to_echoes(C_KM)
-
-Convert a 6×6 Kelvin–Mandel stiffness matrix to an Echoes `tensor` via
-its triclinic 21-component constructor.  Components are read row by row
-on the upper triangle (index 0 = C[1,1], …, index 20 = C[6,6]).
-"""
-function stiffness_to_echoes(C_KM::AbstractMatrix)
-    comps = Float64[]
-    for i in 1:6, j in i:6
-        push!(comps, C_KM[i, j])
-    end
-    return py_stiffness_tensor(comps)
-end
-
-"""
-    conductivity_to_echoes(K)
-
-Pass a dense 3×3 matrix to Echoes' rank-2 `tensor(array)` constructor.
-"""
-conductivity_to_echoes(K::AbstractMatrix) =
-    py_conductivity_tensor(Array{Float64, 2}(K))
 
 """
     km_index_to_linear(i, j) -> Int
@@ -182,46 +100,39 @@ fmt_time(t) =
 # ─── Reference matrices ──────────────────────────────────────────────────────
 
 # 1. Isotropic steel: E = 210 GPa, ν = 0.3
-const E_iso = 210.0e3
-const ν_iso = 0.3
+const E_iso = KE.E_ISO
+const ν_iso = KE.NU_ISO
 const λ_iso = E_iso * ν_iso / ((1 + ν_iso) * (1 - 2ν_iso))
 const μ_iso = E_iso / (2 * (1 + ν_iso))
 const k_iso = λ_iso + 2μ_iso / 3
 const C_iso = TensISO{3}(3k_iso, 2μ_iso)
 
 # 2. Cubic crystal: C11=250, C12=100, C44=80 GPa
-const C11c, C12c, C44c = 250.0e3, 100.0e3, 80.0e3
+const C11c, C12c, C44c = KE.C11C, KE.C12C, KE.C44C
 const C_cubic = TensND.TensOrtho(
     C11c, C11c, C11c, C12c, C12c, C12c, C44c, C44c, C44c,
     TensND.CanonicalBasis{3, Float64}(),
 )
 
 # 3. Triclinic
-const C_tric_KM = [
-    0.388487  0.200301  0.13255   -0.0803777 -0.249878   0.038079
-    0.200301  1.09373   0.178878  -0.369538  -0.161806   0.0734051
-    0.13255   0.178878  0.387019  -0.210259  -0.249375   0.0735958
-    -0.0803777 -0.369538 -0.210259  0.655779   0.123902  -0.227447
-    -0.249878 -0.161806 -0.249375  0.123902   0.442613  -0.120333
-    0.038079  0.0734051 0.0735958 -0.227447 -0.120333   0.448281
-]
+const C_tric_KM = Matrix{Float64}(KE.C_TRIC_KM)
 const C_tric = inv_KM(C_tric_KM, CanonicalBasis{3, Float64}())
 
-const C_iso_py = stiffness_to_echoes(KM(C_iso))
-const C_cubic_py = stiffness_to_echoes(KM(C_cubic))
-const C_tric_py = stiffness_to_echoes(C_tric_KM)
+const MEDIA_PY = KE."MEDIA"
+const C_iso_py = get(MEDIA_PY, PyObject, "iso")
+const C_cubic_py = get(MEDIA_PY, PyObject, "cubic")
+const C_tric_py = get(MEDIA_PY, PyObject, "triclinic")
 
 # 4. Conductivity tensors (2nd order)
-const k_cond = 5.0
+const k_cond = KE.K_COND
 const K_iso = TensISO{3}(k_cond)
 const K_iso_mat = [k_cond 0.0 0.0; 0.0 k_cond 0.0; 0.0 0.0 k_cond]
-const K_iso_py = conductivity_to_echoes(K_iso_mat)
+const K_iso_py = get(MEDIA_PY, PyObject, "K iso")
 
 # Anisotropic conductivity: rotation of diag(100, 20, 50) by π/4 in 1-2 plane
-const _Rcond = [cos(π / 4) -sin(π / 4) 0.0; sin(π / 4) cos(π / 4) 0.0; 0.0 0.0 1.0]
-const K_aniso_mat = _Rcond * Diagonal([100.0, 20.0, 50.0]) * _Rcond'
+const K_aniso_mat = Matrix{Float64}(KE.K_ANISO_MAT)
 const K_aniso = TensND.Tens(Array{Float64, 2}(K_aniso_mat))
-const K_aniso_py = conductivity_to_echoes(K_aniso_mat)
+const K_aniso_py = get(MEDIA_PY, PyObject, "K aniso")
 
 # =============================================================================
 # Running storage for the summary tables
@@ -339,84 +250,21 @@ function bench_hill(
     return nothing
 end
 
-bench_hill(
-    "Sphere a=b=c=1 / ISO",
-    Ellipsoid(1.0), C_iso, C_iso_py; is_iso = true
+# The cases of `kernels_echoes.HILL_CASES`, the media by name on both sides.
+const MEDIA_JL = Dict(
+    "iso" => C_iso, "cubic" => C_cubic, "triclinic" => C_tric,
+    "K iso" => K_iso, "K aniso" => K_aniso,
 )
+_ellipsoid(c) = Ellipsoid(Float64.(c["axes"])...; euler_angles = Tuple(Float64.(c["euler"])))
+_is_closed_form(c) = c["algos"] == ["DEFAULT"]
 
-bench_hill(
-    "Prolate a=5,b=c=1 / ISO",
-    Ellipsoid(5.0, 1.0, 1.0),
-    C_iso, C_iso_py; is_iso = true
-)
-
-bench_hill(
-    "Oblate a=b=5,c=1 / ISO",
-    Ellipsoid(5.0, 5.0, 1.0),
-    C_iso, C_iso_py; is_iso = true
-)
-
-bench_hill(
-    "Prolate a=3,b=c=1 / cubic",
-    Ellipsoid(3.0, 1.0, 1.0),
-    C_cubic, C_cubic_py; jl_method = :residues,
-    echoes_algos = ("NUMINT3D",)
-)
-
-bench_hill(
-    "Prolate a=3,b=c=1 / cubic (Julia :decuhr)",
-    Ellipsoid(3.0, 1.0, 1.0),
-    C_cubic, C_cubic_py; jl_method = :decuhr,
-    echoes_algos = ("NUMINT3D",)
-)
-
-bench_hill(
-    "Prolate a=3,b=c=1 / cubic (Julia :nestedquadgk)",
-    Ellipsoid(3.0, 1.0, 1.0),
-    C_cubic, C_cubic_py; jl_method = :nestedquadgk,
-    echoes_algos = ("NUMINT3D",)
-)
-
-bench_hill(
-    "Triaxial a=2,b=1,c=0.5 / triclinic",
-    Ellipsoid(2.0, 1.0, 0.5),
-    C_tric, C_tric_py; jl_method = :residues
-)
-
-bench_hill(
-    "Triaxial a=2,b=1,c=0.5 / triclinic (Julia :decuhr)",
-    Ellipsoid(2.0, 1.0, 0.5),
-    C_tric, C_tric_py; jl_method = :decuhr
-)
-
-bench_hill(
-    "Triaxial a=2,b=1,c=0.5 / triclinic (Julia :nestedquadgk)",
-    Ellipsoid(2.0, 1.0, 0.5),
-    C_tric, C_tric_py; jl_method = :nestedquadgk
-)
-
-# ─── With Euler angles (θ = π/4, φ = π/6, ψ = π/3) ──────────────────────────
-
-bench_hill(
-    "Rotated prolate a=5,b=c=1 / ISO  (π/4,π/6,π/3)",
-    Ellipsoid(5.0, 1.0, 1.0; euler_angles = (π / 4, π / 6, π / 3)),
-    C_iso, C_iso_py;
-    is_iso = true, euler_angles = (π / 4, π / 6, π / 3)
-)
-
-bench_hill(
-    "Rotated triaxial a=2,b=1,c=0.5 / triclinic (π/4,π/6,π/3)",
-    Ellipsoid(2.0, 1.0, 0.5; euler_angles = (π / 4, π / 6, π / 3)),
-    C_tric, C_tric_py;
-    jl_method = :residues, euler_angles = (π / 4, π / 6, π / 3)
-)
-
-bench_hill(
-    "Rotated triaxial a=2,b=1,c=0.5 / triclinic :decuhr (π/4,π/6,π/3)",
-    Ellipsoid(2.0, 1.0, 0.5; euler_angles = (π / 4, π / 6, π / 3)),
-    C_tric, C_tric_py;
-    jl_method = :decuhr, euler_angles = (π / 4, π / 6, π / 3)
-)
+for c in KE.HILL_CASES
+    bench_hill(
+        c["label"], _ellipsoid(c), MEDIA_JL[c["medium"]], get(MEDIA_PY, PyObject, c["medium"]);
+        jl_method = Symbol(c["jl_method"]), is_iso = _is_closed_form(c),
+        echoes_algos = Tuple(c["algos"]), euler_angles = Tuple(Float64.(c["euler"]))
+    )
+end
 
 # =============================================================================
 #  § 2  CRACK COMPLIANCE CONTRIBUTION H  (size-independent, Echoes convention)
@@ -526,12 +374,13 @@ function bench_crack(
     return nothing
 end
 
-bench_crack("Penny / ISO", C_iso, C_iso_py; is_iso = true)
-bench_crack(
-    "Penny / cubic", C_cubic, C_cubic_py; jl_method = :residues,
-    echoes_algos = ("NUMINT3D",)
-)
-bench_crack("Penny / triclinic", C_tric, C_tric_py; jl_method = :residues)
+for c in KE.CRACK_CASES
+    bench_crack(
+        c["label"], MEDIA_JL[c["medium"]], get(MEDIA_PY, PyObject, c["medium"]);
+        jl_method = Symbol(c["jl_method"]), is_iso = _is_closed_form(c),
+        echoes_algos = Tuple(c["algos"])
+    )
+end
 
 # -----------------------------------------------------------------------------
 #  § 2b  ELLIPTIC crack, η ≠ 1 — the case that discriminates the two
@@ -545,7 +394,7 @@ bench_crack("Penny / triclinic", C_tric, C_tric_py; jl_method = :residues)
 #        H_echoes  ==  η · H_MeanFieldHomogenization
 # -----------------------------------------------------------------------------
 
-function bench_crack_elliptic(C_jl, C_py; ωflat = 1.0e-5, ηs = (1.0, 0.7, 0.5, 0.3, 0.1))
+function bench_crack_elliptic(C_jl, C_py; ωflat = KE.ELLIPTIC_CRACK_FLATNESS, ηs = Tuple(KE.ELLIPTIC_CRACK_ETAS))
     println()
     println("─"^78)
     println("  § 2b  Elliptic crack — convention check  H_echoes = η · H_MFH")
@@ -685,32 +534,13 @@ function bench_hill_order2(
     return nothing
 end
 
-bench_hill_order2(
-    "Sphere a=b=c=1 / K iso",
-    Ellipsoid(1.0), K_iso, K_iso_py; is_iso = true
-)
-bench_hill_order2(
-    "Prolate a=5,b=c=1 / K iso",
-    Ellipsoid(5.0, 1.0, 1.0), K_iso, K_iso_py;
-    is_iso = true
-)
-bench_hill_order2(
-    "Oblate a=b=5,c=1 / K iso",
-    Ellipsoid(5.0, 5.0, 1.0), K_iso, K_iso_py;
-    is_iso = true
-)
-bench_hill_order2(
-    "Triaxial a=2,b=1,c=0.5 / K aniso",
-    Ellipsoid(2.0, 1.0, 0.5),
-    K_aniso, K_aniso_py
-)
-
-bench_hill_order2(
-    "Rotated triaxial a=2,b=1,c=0.5 / K aniso (π/4,π/6,π/3)",
-    Ellipsoid(2.0, 1.0, 0.5; euler_angles = (π / 4, π / 6, π / 3)),
-    K_aniso, K_aniso_py;
-    euler_angles = (π / 4, π / 6, π / 3)
-)
+for c in KE.COND_CASES
+    bench_hill_order2(
+        c["label"], _ellipsoid(c), MEDIA_JL[c["medium"]], get(MEDIA_PY, PyObject, c["medium"]);
+        is_iso = _is_closed_form(c), echoes_algos = Tuple(c["algos"]),
+        euler_angles = Tuple(Float64.(c["euler"]))
+    )
+end
 
 # =============================================================================
 #  § 4  HILL DERIVATIVE ∂P/∂θ  (elasticity only)
@@ -737,46 +567,11 @@ println("="^78)
 # in a way that supports ForwardDiff.Dual for α and β.
 iso_from_walpole(α, β) = TensND.TensISO{3}(α, β)
 
-"""
-Indices map between Julia `TensOrtho(C11, C22, C33, C12, C13, C23, μ23, μ13, μ12)`
-and Echoes' ORTHO parameter order `(C11, C12, C13, C22, C23, C33, μ23, μ13, μ12)`.
-
-`jl_to_echoes_ortho[k] = echoes_index` for k-th Julia argument.
-"""
-const JL_TO_ECHOES_ORTHO = (0, 3, 5, 1, 2, 4, 6, 7, 8)
+# Indices map between `TensOrtho(C11, C22, C33, C12, C13, C23, μ23, μ13, μ12)` and
+# Echoes' ORTHO parameter order `(C11, C12, C13, C22, C23, C33, μ23, μ13, μ12)`:
+# `JL_TO_ECHOES_ORTHO[k]` is the Echoes index of the k-th Julia argument.
+const JL_TO_ECHOES_ORTHO = Tuple(KE.JL_TO_ECHOES_ORTHO)
 const ORTHO_LABELS = ("C11", "C22", "C33", "C12", "C13", "C23", "μ₂₃", "μ₁₃", "μ₁₂")
-
-# Python helpers for iso/ortho hill_derivative
-py"""
-def py_hill_derivative_iso(a, b, c, k, mu, index,
-                            epsrel=1e-6, epsabs=1e-6, maxnb=200000, epsroots=1e-6):
-    ell = echoes.ellipsoidal(np.array([a, b, c, 0.0, 0.0, 0.0]))
-    C = echoes.stiff_kmu(float(k), float(mu))
-    try:
-        dP = echoes.hill_derivative(ell, C, index, echoes.ISO,
-                                    epsrel=epsrel, epsabs=epsabs,
-                                    maxnb=maxnb, epsroots=epsroots)
-        return np.asarray(dP)
-    except Exception:
-        return None
-
-def py_hill_derivative_ortho(a, b, c, params9, index, algo,
-                             epsrel=1e-6, epsabs=1e-6, maxnb=200000,
-                             epsroots=1e-6):
-    ell = echoes.ellipsoidal(np.array([a, b, c, 0.0, 0.0, 0.0]))
-    # params9 = [C11, C12, C13, C22, C23, C33, mu23, mu13, mu12] (echoes order)
-    C = echoes.tensor(list(params9), [0.0, 0.0, 0.0])
-    try:
-        dP = echoes.hill_derivative(ell, C, index, echoes.ORTHO,
-                                    algo=_ALGO[algo],
-                                    epsrel=epsrel, epsabs=epsabs,
-                                    maxnb=maxnb, epsroots=epsroots)
-        return np.asarray(dP)
-    except Exception:
-        return None
-"""
-const py_hill_derivative_iso = py"py_hill_derivative_iso"
-const py_hill_derivative_ortho = py"py_hill_derivative_ortho"
 
 # ─── 4.1 — ISO cases (derive w.r.t. κ = 3k, η = 2μ) ───────────────────────
 
@@ -827,9 +622,9 @@ function bench_hill_derivative_iso(label, ell_jl)
     return nothing
 end
 
-bench_hill_derivative_iso("Sphere a=b=c=1 / ISO", Ellipsoid(1.0))
-bench_hill_derivative_iso("Prolate a=5,b=c=1 / ISO", Ellipsoid(5.0, 1.0, 1.0))
-bench_hill_derivative_iso("Oblate a=b=5,c=1 / ISO", Ellipsoid(5.0, 5.0, 1.0))
+for c in KE.DERIV_ISO_CASES
+    bench_hill_derivative_iso(c["label"], Ellipsoid(Float64.(c["axes"])...))
+end
 
 # ─── 4.2 — ORTHO case (cubic crystal, prolate, 9 params) ──────────────────
 
@@ -841,7 +636,7 @@ const JL_ORTHO_BASE = (
 )       # μ23, μ13, μ12
 
 # Corresponding echoes-order params [C11, C12, C13, C22, C23, C33, μ23, μ13, μ12]
-const ECHOES_ORTHO_BASE = [C11c, C12c, C12c, C11c, C12c, C11c, C44c, C44c, C44c]
+const ECHOES_ORTHO_BASE = Vector{Float64}(KE.ECHOES_ORTHO_BASE)
 
 function ortho_from_params(p::NTuple{9, T}) where {T <: Number}
     return TensND.TensOrtho(p..., TensND.CanonicalBasis{3, T}())
@@ -923,11 +718,9 @@ function bench_hill_derivative_ortho(
     return nothing
 end
 
-bench_hill_derivative_ortho(
-    "Prolate a=3,b=c=1 / cubic-as-ORTHO",
-    Ellipsoid(3.0, 1.0, 1.0);
-    echoes_algos = ("NUMINT3D",)
-)
+for c in KE.DERIV_ORTHO_CASES
+    bench_hill_derivative_ortho(c["label"], Ellipsoid(Float64.(c["axes"])...); echoes_algos = Tuple(c["algos"]))
+end
 
 # ─── 4.3 — Triclinic Julia-only (no Echoes counterpart) ───────────────────
 
@@ -992,3 +785,21 @@ print_summary("Hill derivative ∂P/∂C (elasticity, 4th order)", dhill_rows)
 
 println()
 println("="^78)
+
+# ─── Results file, read by the "Performance vs Echoes" page ──────────────────
+_jsonrow(r) = Dict(string(k) => (v isa AbstractFloat && !isfinite(v) ? nothing : v) for (k, v) in pairs(r))
+let path = joinpath(@__DIR__, "figures", "benchmark_kernels.json")
+    mkpath(dirname(path))
+    out = Dict(
+        "generator" => "scripts/bench_echoes/benchmark.jl (Echoes side: kernels_echoes.py)",
+        "julia" => string(VERSION), "mfh" => string(pkgversion(MeanFieldHomogenization)),
+        "tensnd" => string(pkgversion(TensND)), "cpu" => Sys.cpu_info()[1].model,
+        "threads" => Threads.nthreads(),
+        "protocol" => "BenchmarkTools @belapsed minimum of 20 samples, one thread each; Echoes through PyCall",
+        "hill" => map(_jsonrow, hill_rows), "crack" => map(_jsonrow, crack_rows),
+        "conduction" => map(_jsonrow, hill2_rows), "derivative" => map(_jsonrow, dhill_rows),
+    )
+    write(path, JSON.json(out; pretty = true))
+    println("wrote ", path)
+end
+println("=== bench done benchmark.jl")

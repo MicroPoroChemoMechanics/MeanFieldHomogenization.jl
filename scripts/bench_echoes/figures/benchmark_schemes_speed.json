@@ -1,0 +1,164 @@
+{
+  "cpu": "AMD EPYC-Milan Processor",
+  "echoes": "unknown",
+  "generator": "scripts/bench_echoes/benchmark_schemes_speed.jl",
+  "julia": "1.13.2",
+  "mfh": "0.19.0",
+  "protocol": "BenchmarkTools @belapsed minimum, one thread; Hill tensors to rtol 1e-6, atol 1e-8; fixed points to rtol 1e-8",
+  "rows": [
+    {
+      "case": "isotropic matrix, spheres",
+      "gap": 1.8588673048327055e-13,
+      "ratio": 178544.43306389757,
+      "scheme": "mori_tanaka",
+      "t_echoes": 0.168119422,
+      "t_mfh": 9.416111111111111e-7
+    },
+    {
+      "case": "isotropic matrix, spheres",
+      "gap": 1.8424770293715728e-13,
+      "ratio": 103942.98970814131,
+      "scheme": "self_consistent",
+      "t_echoes": 1.353337726,
+      "t_mfh": 1.302e-5
+    },
+    {
+      "case": "isotropic matrix, spheres",
+      "gap": 5.546882059474275e-5,
+      "ratio": 448949.94858845545,
+      "scheme": "differential",
+      "t_echoes": 85.429787817,
+      "t_mfh": 0.000190288
+    },
+    {
+      "case": "isotropic matrix, aligned prolate spheroids 5:1:1",
+      "gap": 2.119299293257842e-12,
+      "ratio": 77390.38372181887,
+      "scheme": "mori_tanaka",
+      "t_echoes": 0.225034038,
+      "t_mfh": 2.907777777777778e-6
+    },
+    {
+      "case": "isotropic matrix, aligned prolate spheroids 5:1:1",
+      "gap": 3.366054407432369e-13,
+      "ratio": 25201.68013081258,
+      "scheme": "self_consistent",
+      "t_echoes": 1.864899128,
+      "t_mfh": 7.3999e-5
+    },
+    {
+      "case": "isotropic matrix, oblate pores 1:1:0.1, isotropic average",
+      "gap": 1.7175053468620477e-13,
+      "ratio": 146546.46212326907,
+      "scheme": "mori_tanaka",
+      "t_echoes": 0.161919186,
+      "t_mfh": 1.1049e-6
+    },
+    {
+      "case": "isotropic matrix, oblate pores 1:1:0.1, isotropic average",
+      "gap": 2.9551595560394377e-12,
+      "ratio": 107129.39123176663,
+      "scheme": "self_consistent",
+      "t_echoes": 6.609883439,
+      "t_mfh": 6.17e-5
+    },
+    {
+      "case": "anisotropic matrix, two rotated triaxial families",
+      "gap": 1.4358858836932285e-11,
+      "ratio": 212.52036305908598,
+      "scheme": "dilute",
+      "t_echoes": 0.225972477,
+      "t_mfh": 0.001063298
+    },
+    {
+      "case": "anisotropic matrix, two rotated triaxial families",
+      "gap": 1.351781562398354e-11,
+      "ratio": 291.0531902627644,
+      "scheme": "mori_tanaka",
+      "t_echoes": 0.315538622,
+      "t_mfh": 0.001084127
+    },
+    {
+      "case": "conduction, isotropic matrix, spheres",
+      "gap": 1.3700624559204057e-16,
+      "ratio": 41.9914032869785,
+      "scheme": "mori_tanaka",
+      "t_echoes": 4.1519e-5,
+      "t_mfh": 9.8875e-7
+    },
+    {
+      "case": "conduction, isotropic matrix, spheres",
+      "gap": 2.554823940474821e-16,
+      "ratio": 12.899278236556343,
+      "scheme": "self_consistent",
+      "t_echoes": 0.000198378,
+      "t_mfh": 1.5379e-5
+    },
+    {
+      "case": "conduction, anisotropic matrix, rotated triaxial ellipsoids",
+      "gap": 9.735977317043984e-17,
+      "ratio": 6.56002358490566,
+      "scheme": "dilute",
+      "t_echoes": 5.5629e-5,
+      "t_mfh": 8.48e-6
+    },
+    {
+      "case": "conduction, anisotropic matrix, rotated triaxial ellipsoids",
+      "gap": 3.526235339072147e-16,
+      "ratio": 6.828068303094985,
+      "scheme": "mori_tanaka",
+      "t_echoes": 6.3979e-5,
+      "t_mfh": 9.37e-6
+    },
+    {
+      "case": "conduction, anisotropic matrix, rotated triaxial ellipsoids",
+      "gap": 4.556520941670942e-16,
+      "ratio": 1.9653010478166055,
+      "scheme": "self_consistent",
+      "t_echoes": 0.000295597,
+      "t_mfh": 0.000150408
+    },
+    {
+      "case": "ALV: Maxwell matrix, elastic spheres",
+      "gap": 2.903831106389329e-16,
+      "ratio": 10.225385309265851,
+      "scheme": "mori_tanaka",
+      "t_echoes": 0.001054227,
+      "t_mfh": 0.000103099
+    },
+    {
+      "case": "ALV: Maxwell matrix, elastic spheres",
+      "gap": 2.1186826220118765e-16,
+      "ratio": 5.738670673906522,
+      "scheme": "self_consistent",
+      "t_echoes": 0.006618099,
+      "t_mfh": 0.001153246
+    },
+    {
+      "case": "ALV: Maxwell matrix, oblate soft inclusions 1:1:0.1, isotropic average",
+      "gap": 7.878664972969575e-16,
+      "ratio": 6.231746601930498,
+      "scheme": "mori_tanaka",
+      "t_echoes": 0.001075587,
+      "t_mfh": 0.000172598
+    },
+    {
+      "case": "ALV: Maxwell matrix, oblate soft inclusions 1:1:0.1, isotropic average",
+      "gap": 6.736423335437389e-16,
+      "ratio": 3.5504516012510323,
+      "scheme": "self_consistent",
+      "t_echoes": 0.006762428,
+      "t_mfh": 0.001904667
+    },
+    {
+      "case": "three-scale strength model (20 needle families), value and derivative",
+      "gap": 0.0006033436461744857,
+      "ratio": 0.5037714791040416,
+      "scheme": "SC + MT + MT",
+      "t_echoes": 2.29166615,
+      "t_mfh": 4.549019238
+    }
+  ],
+  "tensnd": "0.7.0",
+  "threads": 1
+}
