@@ -5,70 +5,70 @@
       "label": "Sphere a=b=c=1 / K iso",
       "maxabs": 0.0,
       "maxrel": 0.0,
-      "ratio": 1143.1867745339428,
+      "ratio": 583.6088511137162,
       "status": "OK",
-      "tE": 9.76e-6,
-      "tJ": 8.537537537537539e-9
+      "tE": 4.983166666666667e-6,
+      "tJ": 8.53853853853854e-9
     },
     {
       "algo": "analytical",
       "label": "Prolate a=5,b=c=1 / K iso",
       "maxabs": 1.0408340855860843e-17,
       "maxrel": 1.1023694154363045e-16,
-      "ratio": 23.411999228345444,
+      "ratio": 11.82930287717851,
       "status": "OK",
-      "tE": 9.99e-6,
-      "tJ": 4.267042682926829e-7
+      "tE": 5.098166666666667e-6,
+      "tJ": 4.309777777777778e-7
     },
     {
       "algo": "analytical",
       "label": "Oblate a=b=5,c=1 / K iso",
       "maxabs": 2.7755575615628914e-17,
       "maxrel": 1.8491785870532537e-16,
-      "ratio": 23.475051817400537,
+      "ratio": 12.111966850249534,
       "status": "OK",
-      "tE": 9.88e-6,
-      "tJ": 4.208723404255319e-7
+      "tE": 5.004142857142857e-6,
+      "tJ": 4.13156914893617e-7
     },
     {
       "algo": "RESIDUES",
       "label": "Triaxial a=2,b=1,c=0.5 / K aniso",
       "maxabs": 2.6020852139652106e-18,
       "maxrel": 2.1992095118962952e-16,
-      "ratio": 2.3836135448733127,
+      "ratio": 1.480489494343108,
       "status": "OK",
-      "tE": 1.438e-5,
-      "tJ": 6.032857142857143e-6
+      "tE": 9.16e-6,
+      "tJ": 6.187142857142857e-6
     },
     {
       "algo": "NUMINT3D",
       "label": "Triaxial a=2,b=1,c=0.5 / K aniso",
       "maxabs": 2.6020852139652106e-18,
       "maxrel": 2.1992095118962952e-16,
-      "ratio": 2.35195358749704,
+      "ratio": 1.4627106903717386,
       "status": "OK",
-      "tE": 1.4189e-5,
-      "tJ": 6.032857142857143e-6
+      "tE": 9.05e-6,
+      "tJ": 6.187142857142857e-6
     },
     {
       "algo": "RESIDUES",
       "label": "Rotated triaxial a=2,b=1,c=0.5 / K aniso (pi/4,pi/6,pi/3)",
       "maxabs": 7.535205098774256e-18,
       "maxrel": 1.0022538934759193e-15,
-      "ratio": 2.4943202952874186,
+      "ratio": 1.1695882509357933,
       "status": "OK",
-      "tE": 1.4529e-5,
-      "tJ": 5.824833333333333e-6
+      "tE": 9.53e-6,
+      "tJ": 8.148166666666668e-6
     },
     {
       "algo": "NUMINT3D",
       "label": "Rotated triaxial a=2,b=1,c=0.5 / K aniso (pi/4,pi/6,pi/3)",
       "maxabs": 7.535205098774256e-18,
       "maxrel": 1.0022538934759193e-15,
-      "ratio": 2.4807576754699707,
+      "ratio": 1.1697109779295956,
       "status": "OK",
-      "tE": 1.445e-5,
-      "tJ": 5.824833333333333e-6
+      "tE": 9.531e-6,
+      "tJ": 8.148166666666668e-6
     }
   ],
   "cpu": "AMD EPYC-Milan Processor",
@@ -78,40 +78,40 @@
       "label": "Penny / ISO",
       "maxabs": 2.8771231646857864e-15,
       "maxrel": 5.214662883242259e-10,
-      "ratio": 4167.585141158989,
+      "ratio": 4859.267926482009,
       "status": "OK",
-      "tE": 0.056095696,
-      "tJ": 1.346e-5
+      "tE": 0.056314056,
+      "tJ": 1.1589e-5
     },
     {
       "algo": "NUMINT3D",
       "label": "Penny / cubic",
       "maxabs": 4.2028146421917286e-14,
       "maxrel": 7.099149465222793e-9,
-      "ratio": 40.505407166036456,
+      "ratio": 40.46640978511513,
       "status": "OK",
-      "tE": 0.060437875,
-      "tJ": 0.001492094
+      "tE": 0.060543819,
+      "tJ": 0.00149615
     },
     {
       "algo": "RESIDUES",
       "label": "Penny / triclinic",
       "maxabs": 2.9592355232921363e-9,
       "maxrel": 6.946736068538906e-10,
-      "ratio": 2.506783747247704,
+      "ratio": 2.442011912513754,
       "status": "OK",
-      "tE": 0.003621558,
-      "tJ": 0.001444703
+      "tE": 0.003566512,
+      "tJ": 0.001460481
     },
     {
       "algo": "NUMINT3D",
       "label": "Penny / triclinic",
       "maxabs": 2.946462629438429e-9,
       "maxrel": 6.916752004237167e-10,
-      "ratio": 71.28980766288988,
+      "ratio": 70.54703210791513,
       "status": "OK",
-      "tE": 0.102992599,
-      "tJ": 0.001444703
+      "tE": 0.1030326,
+      "tJ": 0.001460481
     }
   ],
   "derivative": [
@@ -120,150 +120,150 @@
       "label": "Sphere a=b=c=1 / ISO | κ=3k",
       "maxabs": 4.0389678347315804e-28,
       "maxrel": 4.841608132805921e-16,
-      "ratio": 23.02445485076392,
+      "ratio": 15.385880755594798,
       "status": "OK",
-      "tE": 1.2169e-5,
-      "tJ": 5.28525e-7
+      "tE": 8.936666666666665e-6,
+      "tJ": 5.808355601233298e-7
     },
     {
       "algo": "ISO",
       "label": "Sphere a=b=c=1 / ISO | η=2μ",
       "maxabs": 1.6155871338926322e-27,
       "maxrel": 9.826519677576497e-17,
-      "ratio": 22.55333238730429,
+      "ratio": 15.179281834594645,
       "status": "OK",
-      "tE": 1.192e-5,
-      "tJ": 5.28525e-7
+      "tE": 8.816666666666666e-6,
+      "tJ": 5.808355601233298e-7
     },
     {
       "algo": "ISO",
       "label": "Prolate a=5,b=c=1 / ISO | κ=3k",
       "maxabs": 4.0389678347315804e-28,
       "maxrel": 2.8510363692239725e-16,
-      "ratio": 9.963693541007482,
+      "ratio": 7.21229842056206,
       "status": "OK",
-      "tE": 1.2469e-5,
-      "tJ": 1.2514435483870968e-6
+      "tE": 9.26e-6,
+      "tJ": 1.2839180327868852e-6
     },
     {
       "algo": "ISO",
       "label": "Prolate a=5,b=c=1 / ISO | η=2μ",
       "maxabs": 1.2924697071141057e-26,
       "maxrel": 6.238526398981931e-16,
-      "ratio": 9.876594126782619,
+      "ratio": 7.181143783756177,
       "status": "OK",
-      "tE": 1.236e-5,
-      "tJ": 1.2514435483870968e-6
+      "tE": 9.22e-6,
+      "tJ": 1.2839180327868852e-6
     },
     {
       "algo": "ISO",
       "label": "Oblate a=b=5,c=1 / ISO | κ=3k",
       "maxabs": 4.0389678347315804e-28,
       "maxrel": 1.4856166383631858e-16,
-      "ratio": 10.15742254373206,
+      "ratio": 7.270133489804899,
       "status": "OK",
-      "tE": 1.233e-5,
-      "tJ": 1.213890625e-6
+      "tE": 9.011e-6,
+      "tJ": 1.2394545454545455e-6
     },
     {
       "algo": "ISO",
       "label": "Oblate a=b=5,c=1 / ISO | η=2μ",
       "maxabs": 1.2924697071141057e-26,
       "maxrel": 4.822543974886348e-16,
-      "ratio": 10.132708620267993,
+      "ratio": 7.406483790523691,
       "status": "OK",
-      "tE": 1.23e-5,
-      "tJ": 1.213890625e-6
+      "tE": 9.18e-6,
+      "tJ": 1.2394545454545455e-6
     },
     {
       "algo": "NUMINT3D",
       "label": "Prolate a=3,b=c=1 / cubic-as-ORTHO | C11",
       "maxabs": 1.4114341316713842e-16,
       "maxrel": 5.131220871135375e-5,
-      "ratio": 35.03660713288946,
+      "ratio": 36.7321206668803,
       "status": "OK",
-      "tE": 0.106705879,
-      "tJ": 0.003045554
+      "tE": 0.110729492,
+      "tJ": 0.003014514
     },
     {
       "algo": "NUMINT3D",
       "label": "Prolate a=3,b=c=1 / cubic-as-ORTHO | C22",
       "maxabs": 2.135675462466216e-17,
       "maxrel": 1.7729320821957412e-6,
-      "ratio": 36.13263651575886,
+      "ratio": 38.00030667900456,
       "status": "OK",
-      "tE": 0.110016471,
-      "tJ": 0.003044795
+      "tE": 0.114615879,
+      "tJ": 0.003016183
     },
     {
       "algo": "NUMINT3D",
       "label": "Prolate a=3,b=c=1 / cubic-as-ORTHO | C33",
       "maxabs": 2.53074183962881e-16,
       "maxrel": 2.1008966386317953e-5,
-      "ratio": 37.29556921697034,
+      "ratio": 37.69136181645444,
       "status": "OK",
-      "tE": 0.11343425,
-      "tJ": 0.003041494
+      "tE": 0.115725032,
+      "tJ": 0.003070333
     },
     {
       "algo": "NUMINT3D",
       "label": "Prolate a=3,b=c=1 / cubic-as-ORTHO | C12",
       "maxabs": 4.086614517337912e-17,
       "maxrel": 1.3358306327330812e-5,
-      "ratio": 15.014906688079177,
+      "ratio": 41.52670655589737,
       "status": "OK",
-      "tE": 0.125322249,
-      "tJ": 0.008346522
+      "tE": 0.127993698,
+      "tJ": 0.003082202
     },
     {
       "algo": "NUMINT3D",
       "label": "Prolate a=3,b=c=1 / cubic-as-ORTHO | C13",
       "maxabs": 3.8300499726273647e-16,
       "maxrel": 0.00012519649346052952,
-      "ratio": 39.686154284806655,
+      "ratio": 15.254244813069343,
       "status": "OK",
-      "tE": 0.121929518,
-      "tJ": 0.003072344
+      "tE": 0.125580845,
+      "tJ": 0.008232518
     },
     {
       "algo": "NUMINT3D",
       "label": "Prolate a=3,b=c=1 / cubic-as-ORTHO | C23",
       "maxabs": 8.419306283276533e-17,
       "maxrel": 9.314865504002902e-6,
-      "ratio": 15.254783117191783,
+      "ratio": 43.92709129115729,
       "status": "OK",
-      "tE": 0.129651317,
-      "tJ": 0.00849906
+      "tE": 0.131904709,
+      "tJ": 0.00300281
     },
     {
       "algo": "NUMINT3D",
       "label": "Prolate a=3,b=c=1 / cubic-as-ORTHO | μ₂₃",
       "maxabs": 1.7189951505150668e-16,
       "maxrel": 5.151250789467018e-6,
-      "ratio": 50.2137273274622,
+      "ratio": 52.134579898637625,
       "status": "OK",
-      "tE": 0.155624091,
-      "tJ": 0.003099234
+      "tE": 0.157397894,
+      "tJ": 0.003019069
     },
     {
       "algo": "NUMINT3D",
       "label": "Prolate a=3,b=c=1 / cubic-as-ORTHO | μ₁₃",
       "maxabs": 8.579531732476833e-16,
       "maxrel": 3.663015478518253e-5,
-      "ratio": 40.04409558357399,
+      "ratio": 28.411701352262313,
       "status": "OK",
-      "tE": 0.136441446,
-      "tJ": 0.00340728
+      "tE": 0.08715994,
+      "tJ": 0.003067748
     },
     {
       "algo": "NUMINT3D",
       "label": "Prolate a=3,b=c=1 / cubic-as-ORTHO | μ₁₂",
       "maxabs": 2.4100164913659674e-16,
       "maxrel": 1.0289644348289756e-5,
-      "ratio": 27.860864943179067,
+      "ratio": 28.31813500617885,
       "status": "OK",
-      "tE": 0.085804861,
-      "tJ": 0.003079763
+      "tE": 0.085268085,
+      "tJ": 0.003011077
     }
   ],
   "generator": "scripts/bench_echoes/benchmark.jl (Echoes side: kernels_echoes.py)",
@@ -273,175 +273,175 @@
       "label": "Sphere a=b=c=1 / ISO",
       "maxabs": 1.9510426934276856e-15,
       "maxrel": 6.618537134584303e-10,
-      "ratio": 5.316514847717626e6,
+      "ratio": 5.11011443944485e6,
       "status": "OK",
-      "tE": 0.071538555,
-      "tJ": 1.3455911823647295e-8
+      "tE": 0.070097662,
+      "tJ": 1.371743486973948e-8
     },
     {
       "algo": "analytical",
       "label": "Prolate a=5,b=c=1 / ISO",
       "maxabs": 2.0483340365659228e-15,
       "maxrel": 5.330713080029456e-10,
-      "ratio": 1.2304541455445183e6,
+      "ratio": 1.2319718554991663e6,
       "status": "OK",
-      "tE": 0.105457083,
-      "tJ": 8.570582120582121e-8
+      "tE": 0.106739732,
+      "tJ": 8.664137214137214e-8
     },
     {
       "algo": "analytical",
       "label": "Oblate a=b=5,c=1 / ISO",
       "maxabs": 1.6245844171200409e-15,
       "maxrel": 3.5741050294838465e-10,
-      "ratio": 874748.7385412242,
+      "ratio": 865717.9197948994,
       "status": "OK",
-      "tE": 0.06574489,
-      "tJ": 7.515859938208033e-8
+      "tE": 0.066074516,
+      "tJ": 7.632337796086509e-8
     },
     {
       "algo": "NUMINT3D",
       "label": "Prolate a=3,b=c=1 / cubic",
       "maxabs": 3.742775717241573e-14,
       "maxrel": 9.78086971414459e-9,
-      "ratio": 109.19852079421972,
+      "ratio": 111.6175265215472,
       "status": "OK",
-      "tE": 0.09596912,
-      "tJ": 0.00087885
+      "tE": 0.098101537,
+      "tJ": 0.000878908
     },
     {
       "algo": "NUMINT3D",
       "label": "Prolate a=3,b=c=1 / cubic (Julia :decuhr)",
       "maxabs": 2.2985053751279602e-11,
       "maxrel": 6.006606677442578e-6,
-      "ratio": 76.26103787593799,
+      "ratio": 78.36473441503541,
       "status": "OK",
-      "tE": 0.096292906,
-      "tJ": 0.001262675
+      "tE": 0.096676457,
+      "tJ": 0.001233673
     },
     {
       "algo": "NUMINT3D",
       "label": "Prolate a=3,b=c=1 / cubic (Julia :nestedquadgk)",
       "maxabs": 6.2452725994443115e-15,
       "maxrel": 1.6320560527809504e-9,
-      "ratio": 419.0354964263586,
+      "ratio": 427.03473209428034,
       "status": "OK",
-      "tE": 0.096033717,
-      "tJ": 0.000229178
+      "tE": 0.097328048,
+      "tJ": 0.000227916
     },
     {
       "algo": "RESIDUES",
       "label": "Triaxial a=2,b=1,c=0.5 / triclinic",
       "maxabs": 3.3026292722837525e-7,
       "maxrel": 1.0771698027101409e-7,
-      "ratio": 2.502577384496204,
+      "ratio": 2.5107765635840145,
       "status": "OK",
-      "tE": 0.004968482,
-      "tJ": 0.001985346
+      "tE": 0.004990653,
+      "tJ": 0.001987693
     },
     {
       "algo": "NUMINT3D",
       "label": "Triaxial a=2,b=1,c=0.5 / triclinic",
       "maxabs": 7.735790674701093e-9,
       "maxrel": 2.5230685698830115e-9,
-      "ratio": 44.721630889527574,
+      "ratio": 45.26319507086859,
       "status": "OK",
-      "tE": 0.088787911,
-      "tJ": 0.001985346
+      "tE": 0.089969336,
+      "tJ": 0.001987693
     },
     {
       "algo": "RESIDUES",
       "label": "Triaxial a=2,b=1,c=0.5 / triclinic (Julia :decuhr)",
       "maxabs": 3.303037270363518e-7,
       "maxrel": 1.0773028734126416e-7,
-      "ratio": 1.1127540828673508,
+      "ratio": 1.103522018782655,
       "status": "OK",
-      "tE": 0.004973352,
-      "tJ": 0.004469408
+      "tE": 0.004989353,
+      "tJ": 0.004521299
     },
     {
       "algo": "NUMINT3D",
       "label": "Triaxial a=2,b=1,c=0.5 / triclinic (Julia :decuhr)",
       "maxabs": 7.694990866724538e-9,
       "maxrel": 2.5097614992076775e-9,
-      "ratio": 19.93558117764142,
+      "ratio": 20.189752546779143,
       "status": "OK",
-      "tE": 0.089100246,
-      "tJ": 0.004469408
+      "tE": 0.091283908,
+      "tJ": 0.004521299
     },
     {
       "algo": "RESIDUES",
       "label": "Triaxial a=2,b=1,c=0.5 / triclinic (Julia :nestedquadgk)",
       "maxabs": 3.302626421231025e-7,
       "maxrel": 1.0771688728243891e-7,
-      "ratio": 4.648807396965572,
+      "ratio": 4.6315292227132305,
       "status": "OK",
-      "tE": 0.004983052,
-      "tJ": 0.001071899
+      "tE": 0.005015043,
+      "tJ": 0.001082805
     },
     {
       "algo": "NUMINT3D",
       "label": "Triaxial a=2,b=1,c=0.5 / triclinic (Julia :nestedquadgk)",
       "maxabs": 7.736075779973817e-9,
       "maxrel": 2.5231615584583344e-9,
-      "ratio": 82.69240012351909,
+      "ratio": 83.95956243275566,
       "status": "OK",
-      "tE": 0.088637901,
-      "tJ": 0.001071899
+      "tE": 0.090911834,
+      "tJ": 0.001082805
     },
     {
       "algo": "analytical",
       "label": "Rotated prolate a=5,b=c=1 / ISO  (pi/4,pi/6,pi/3)",
       "maxabs": 1.1180844432877421e-15,
       "maxrel": 3.017882176058491e-10,
-      "ratio": 1.152976040861813e6,
+      "ratio": 1.1671626486321983e6,
       "status": "OK",
-      "tE": 0.105627093,
-      "tJ": 9.161256544502617e-8
+      "tE": 0.108542456,
+      "tJ": 9.299685534591195e-8
     },
     {
       "algo": "RESIDUES",
       "label": "Rotated triaxial a=2,b=1,c=0.5 / triclinic (pi/4,pi/6,pi/3)",
       "maxabs": 4.787725771393525e-12,
       "maxrel": 1.4507916513760495e-12,
-      "ratio": 1.9707155962368268,
+      "ratio": 2.0051162552460906,
       "status": "OK",
-      "tE": 0.003095604,
-      "tJ": 0.001570802
+      "tE": 0.003092569,
+      "tJ": 0.001542339
     },
     {
       "algo": "NUMINT3D",
       "label": "Rotated triaxial a=2,b=1,c=0.5 / triclinic (pi/4,pi/6,pi/3)",
       "maxabs": 6.419749176700407e-10,
       "maxrel": 1.94533249242284e-10,
-      "ratio": 56.27299430482009,
+      "ratio": 58.26550259054592,
       "status": "OK",
-      "tE": 0.088393732,
-      "tJ": 0.001570802
+      "tE": 0.089865157,
+      "tJ": 0.001542339
     },
     {
       "algo": "RESIDUES",
       "label": "Rotated triaxial a=2,b=1,c=0.5 / triclinic :decuhr (pi/4,pi/6,pi/3)",
       "maxabs": 6.449112355255693e-10,
       "maxrel": 1.9542302147095385e-10,
-      "ratio": 0.5209426588504819,
+      "ratio": 0.9839277805129804,
       "status": "OK",
-      "tE": 0.003092524,
-      "tJ": 0.0059364
+      "tE": 0.003105648,
+      "tJ": 0.003156378
     },
     {
       "algo": "NUMINT3D",
       "label": "Rotated triaxial a=2,b=1,c=0.5 / triclinic :decuhr (pi/4,pi/6,pi/3)",
       "maxabs": 1.8290924330699454e-13,
       "maxrel": 5.5425731500689836e-14,
-      "ratio": 14.953257529816051,
+      "ratio": 28.580018616274728,
       "status": "OK",
-      "tE": 0.088768518,
-      "tJ": 0.0059364
+      "tE": 0.090209342,
+      "tJ": 0.003156378
     }
   ],
   "julia": "1.13.2",
   "mfh": "0.19.0",
-  "protocol": "BenchmarkTools @belapsed minimum of 20 samples, one thread each; Echoes through PyCall",
-  "tensnd": "0.7.0",
+  "protocol": "BenchmarkTools @belapsed minimum of 20 samples, one thread each; Echoes through PythonCall",
+  "tensnd": "0.8.1",
   "threads": 1
 }
