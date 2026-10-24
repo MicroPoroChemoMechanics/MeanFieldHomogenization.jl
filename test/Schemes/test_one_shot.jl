@@ -205,3 +205,21 @@ end
         @test homogenize(rve, DiluteDual(:M), :K) ≈ inv(inv(K₀) + f * TensISO{3}(3 / (2κ₀)))
     end
 end
+
+@testset "MoriTanaka — aligned triaxial ellipsoids stay orthotropic" begin
+    # The Hill tensor of a triaxial ellipsoid in an isotropic matrix is
+    # orthotropic, and so is every product of the chain: the estimate is the
+    # twelve-constant orthotropic tensor, equal to the one computed on generic
+    # tensors with a numerical Hill tensor.
+    C₀ = TensISO{3}(3 * 20.0, 2 * 12.0)
+    C₁ = TensISO{3}(3 * 80.0, 2 * 50.0)
+    mt(C; kw...) = let rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C); fraction = :rest)
+        add_phase!(rve, :I, Ellipsoid(3.0, 2.0, 1.0), Dict(:C => C₁); fraction = 0.3)
+        homogenize(rve, MoriTanaka(), :C; kw...)
+    end
+    x = mt(C₀)
+    @test x isa TensND.TensOrtho{4, Float64, 12}
+    y = mt(TensND.generic_tens(C₀); method = :nestedquadgk, reltol = 1.0e-12, abstol = 1.0e-14)
+    @test norm(KM(x) - KM(y)) / norm(KM(y)) < 1.0e-12
+end

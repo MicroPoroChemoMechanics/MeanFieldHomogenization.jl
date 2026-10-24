@@ -658,9 +658,10 @@ _max_canonical_value(::TensND.AbstractTens) = 1.0
 
 _sc_pd_guard_apply(x::TensND.AbstractTens, ε_pos) = x
 
-# Every stored coefficient is an eigenvalue: on (𝕁, 𝕂), on (𝕁, 𝔼, 𝕋), on (nT, nₙ).
+# Every stored coefficient is an eigenvalue: on (𝕁, 𝕂), on (𝕁, 𝔼, 𝕋), on (nT, nₙ),
+# on (P₁, P₂, P₃).
 function _sc_pd_guard_apply(
-        x::Union{TensND.TensISO, TensND.TensCubic, TensND.TensTI{2, <:Any, 2}}, ε_pos
+        x::Union{TensND.TensISO, TensND.TensCubic, TensND.TensTI{2, <:Any, 2}, TensND.TensOrtho{2}}, ε_pos
     )
     d = TensND.get_data(x)
     all(v -> _sc_above(v, ε_pos), d) && return x
@@ -705,7 +706,7 @@ end
 
 # (C₁₁, C₂₂, C₃₃, C₁₂, C₁₃, C₂₃, C₄₄, C₅₅, C₆₆): a 3×3 block in the material
 # frame, and the eigenvalues 2C₄₄, 2C₅₅, 2C₆₆.
-function _sc_pd_guard_apply(x::TensND.TensOrtho, ε_pos)
+function _sc_pd_guard_apply(x::TensND.TensOrtho{4, <:Any, 9}, ε_pos)
     c₁₁, c₂₂, c₃₃, c₁₂, c₁₃, c₂₃, c₄₄, c₅₅, c₆₆ = TensND.get_data(x)
     B = SMatrix{3, 3}(c₁₁, c₁₂, c₁₃, c₁₂, c₂₂, c₂₃, c₁₃, c₂₃, c₃₃)
     shear = (c₄₄, c₅₅, c₆₆)
@@ -713,6 +714,26 @@ function _sc_pd_guard_apply(x::TensND.TensOrtho, ε_pos)
     C = _sc_clamp(B, ε_pos)
     return TensND._rebuild(
         x, (C[1, 1], C[2, 2], C[3, 3], C[1, 2], C[1, 3], C[2, 3], map(c -> _sc_clamp(2c, ε_pos) / 2, shear)...)
+    )
+end
+
+# An orthotropic tensor without major symmetry, (C₁₁, …, C₆₆, C₂₁, C₃₁, C₃₂): as
+# the six-parameter TI one, the guard acts on the symmetric part of the normal
+# block, and its skew part (Cₘₙ - Cₙₘ)/2 is kept.
+function _sc_pd_guard_apply(x::TensND.TensOrtho{4, <:Any, 12}, ε_pos)
+    c₁₁, c₂₂, c₃₃, c₁₂, c₁₃, c₂₃, c₄₄, c₅₅, c₆₆, c₂₁, c₃₁, c₃₂ = TensND.get_data(x)
+    s₁₂, s₁₃, s₂₃ = (c₁₂ + c₂₁) / 2, (c₁₃ + c₃₁) / 2, (c₂₃ + c₃₂) / 2
+    a₁₂, a₁₃, a₂₃ = (c₁₂ - c₂₁) / 2, (c₁₃ - c₃₁) / 2, (c₂₃ - c₃₂) / 2
+    B = SMatrix{3, 3}(c₁₁, s₁₂, s₁₃, s₁₂, c₂₂, s₂₃, s₁₃, s₂₃, c₃₃)
+    shear = (c₄₄, c₅₅, c₆₆)
+    _sc_above(B, ε_pos) && all(c -> _sc_above(2c, ε_pos), shear) && return x
+    C = _sc_clamp(B, ε_pos)
+    return TensND._rebuild(
+        x, (
+            C[1, 1], C[2, 2], C[3, 3], C[1, 2] + a₁₂, C[1, 3] + a₁₃, C[2, 3] + a₂₃,
+            map(c -> _sc_clamp(2c, ε_pos) / 2, shear)...,
+            C[1, 2] - a₁₂, C[1, 3] - a₁₃, C[2, 3] - a₂₃,
+        )
     )
 end
 

@@ -10,12 +10,19 @@ their inclusion's basis. Every such place now reads the tensor in the basis it
 is written in, or brings the cheap object (an axis, a frame, a 3×3 matrix) into
 that basis. The Hill tensors are checked against echoes on 102 cases drawn at
 random (shapes, media, orientations, and the basis each medium is written in).
-The generic tensor algebra MFH carried moves to TensND 0.7.
+The generic tensor algebra MFH carried moves to TensND, and MFH requires TensND
+0.8, whose orthotropic tensors stay structured through products and which fixes
+a crash of Julia 1.14 when differentiating through a concentration tensor.
 
 ### Breaking changes
 
-- The minor version, and `TensND = "0.7"`: `[compat]` bounds on 0.18 do not
+- The minor version, and `TensND = "0.8"`: `[compat]` bounds on 0.18 do not
   accept 0.19.
+- A product of orthotropic tensors on a common frame (a Hill tensor of a
+  triaxial ellipsoid in an isotropic matrix, and every concentration built on
+  it) is TensND 0.8's twelve-constant `TensOrtho{4, T, 12}` instead of a generic
+  tensor: a Mori-Tanaka estimate around aligned triaxial ellipsoids is now one,
+  with the same components to 1e-16.
 - Results change where they were wrong, for tensors written in a rotated basis
   (list under Fixed).
 - `extract_iso_moduli`, `extract_iso_conductivity` and `extract_ti_moduli` are
@@ -186,6 +193,11 @@ The generic tensor algebra MFH carried moves to TensND 0.7.
   `_make_ortho`, the identities, three axis-parallel tests) are gone.
 - Orthotropic auxiliary and Hill tensors keep their `TensOrtho` structure under
   dual numbers (they fell back to a dense tensor).
+- The positive-definite guard of the self-consistent scheme handles the
+  twelve-constant orthotropic tensor (it guards the symmetric part of the normal
+  block and keeps its skew part, as for the six-parameter TI tensor) and the
+  order-2 orthotropic one; the nine-constant method would have dropped the three
+  skew couplings.
 - Hill kernels: components by one change of basis, axis permutations by
   indexing, instead of nested copy loops.
 - Tensor comparisons in the tests are made as tensors, in their common basis.
