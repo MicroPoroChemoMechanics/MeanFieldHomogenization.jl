@@ -11,13 +11,12 @@ macroscopic strain alone. The phases of a real material often carry, in
 addition, a strain that owes nothing to the stress — a thermal dilation, a
 hydric or chemical swelling — or a stress that owes nothing to the strain, such
 as the pressure of a fluid filling the pores. The macroscopic law then acquires
-an additional term, and the result known as Levin's theorem states that this
-term follows from the concentration tensors already computed, without any new
-problem to solve. Its consequences for thermal expansion were drawn by
+an additional term, and the theorem of [levin1967ru](@citet), translated into
+English the same year [levin1967en](@cite), states that this term follows from the concentration
+tensors already computed, without any new problem to solve. Its consequences for thermal expansion were drawn by
 [rosen1970](@citet) for two anisotropic phases, the relations between the
 eigenstrains of the phases and their concentration tensors are developed for
-multiphase media by [dvorak1992](@citet), and the theorem is the basis of the
-micromechanics of saturated porous media [dormieux2006microporo](@cite).
+multiphase media by [dvorak1992](@citet).
 
 ## 1. Setting
 
