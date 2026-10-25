@@ -119,6 +119,13 @@ end
     add_phase!(strict_over, :A, Ellipsoid(1.0), Dict(:C => C_A); fraction = :rest)
     add_phase!(strict_over, :B, Ellipsoid(1.0), Dict(:C => C_B); fraction = 1.4)
     @test_throws ArgumentError validate_rve(strict_over)
+    # Fractions that sum to one up to rounding, one ulp above it here, leave a
+    # complement of -2e-16, which is not an excess: no warning.
+    exact = RVE()
+    add_phase!(exact, :A, Ellipsoid(1.0), Dict(:C => C_A); fraction = :rest)
+    add_phase!(exact, :B, Ellipsoid(1.0), Dict(:C => C_B); fraction = nextfloat(1.0))
+    @test remainder_volume_fraction(exact) < 0
+    @test_logs validate_rve(exact)
 
     # Rescale: only the ratios matter.
     rel = RVE(; closure = :rescale)
