@@ -35,8 +35,7 @@ using ForwardDiff
 
 # ω-family of the definition: (c/b) ℚ⁻¹ evaluated at finite flatness ω = c/b.
 function _H_from_hill(a, b, ω, C₀; kw...)
-    P = hill_tensor(Ellipsoid(a, b, ω * b), C₀; kw...)
-    Q = C₀ - C₀ ⊡ P ⊡ C₀
+    Q = second_hill_tensor(Ellipsoid(a, b, ω * b), C₀; kw...)   # ℚ = ℂ₀ − ℂ₀:ℙ:ℂ₀
     return ω * inv(Q)
 end
 

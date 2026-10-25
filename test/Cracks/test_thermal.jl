@@ -28,11 +28,16 @@ using ForwardDiff
 
 const ELL_T = MeanFieldHomogenization.Elliptic
 
+# The semi-axes of the ellipsoid a crack is the flat limit of: a ribbon is the
+# limit of a very long one.
+_flattened_axes(crack::RibbonCrack) = (1.0e8 * crack.b, crack.b)
+_flattened_axes(crack) = (crack.a, crack.b)
+
 "The thermal crack tensor from the flattening route, at finite flatness `ω = c/b`."
 function R_from_hill_thermal(crack, K₀, ω)
-    a, bmin = crack isa RibbonCrack ? (1.0e8 * crack.b, crack.b) : (crack.a, crack.b)
-    P = hill_tensor(Ellipsoid(a, bmin, ω * bmin, crack_basis(crack)), K₀)
-    return ω * inv(K₀ - K₀ ⋅ P ⋅ K₀)
+    a, bmin = _flattened_axes(crack)
+    Q = second_hill_tensor(Ellipsoid(a, bmin, ω * bmin, crack_basis(crack)), K₀)   # 𝑲₀ − 𝑲₀·𝑷·𝑲₀
+    return ω * inv(Q)
 end
 
 @testset "Cracks / conductivity — thermal COD scalar b and R" begin

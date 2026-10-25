@@ -291,6 +291,8 @@ MeanFieldHomogenization.Elasticity._kernel(
 
     @test hill_tensor(blob, CI_C_M) ≈ hill_tensor(ell, CI_C_M)
     @test eshelby_tensor(blob, CI_C_M) ≈ eshelby_tensor(ell, CI_C_M)
+    @test second_hill_tensor(blob, CI_C_M) ≈ second_hill_tensor(ell, CI_C_M)
+    @test second_hill_tensor(blob, CI_K_M) ≈ second_hill_tensor(ell, CI_K_M)
     @test hill_tensor(blob, CI_K_M) ≈ hill_tensor(ell, CI_K_M)
 
     for scheme in (Dilute(), MoriTanaka(), SelfConsistent())

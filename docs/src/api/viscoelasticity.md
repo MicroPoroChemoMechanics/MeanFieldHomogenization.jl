@@ -54,6 +54,7 @@ ortho_blocks_from_params
 
 ```@docs
 hill_kernel
+second_hill_kernel
 ```
 
 ## Schemes — generic (6n × 6n) algebra
@@ -190,6 +191,7 @@ symmetry class; [`homogenize_alv`](@ref) chooses among them from the property.
 
 ```@docs
 hill_kernel_order2
+second_hill_kernel_order2
 voigt_alv_order2
 reuss_alv_order2
 dilute_alv_order2

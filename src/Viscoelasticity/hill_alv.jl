@@ -51,13 +51,12 @@ ECHOES manual appendix `viscoelastic_hill_kernel.qmd`:
   6. Assemble block-by-block:
      ``[\\widetilde{\\mathbb{P}}]_{ij} = (J_{\\mathrm{long}})_{ij}\\,\\mathrm{Mat}(\\mathbb{U}^{\\boldsymbol{A}}) + (J_{\\mathrm{shear}})_{ij}\\,\\mathrm{Mat}(\\mathbb{V}^{\\boldsymbol{A}} - \\mathbb{U}^{\\boldsymbol{A}})``.
 """
-function hill_kernel(ell, C0_law::ViscoLaw, times::AbstractVector{<:Real})
-    # 1. Build the 6n×6n RELAXATION matrix of the iso reference (invert
-    #    the trapezoidal compliance if the law is in `:creep` mode).
-    R_M = trapezoidal_matrix(C0_law, times)
-    if visco_mode(C0_law) === :creep
-        R_M = volterra_inverse(R_M; block_size = 6)
-    end
+hill_kernel(ell, C0_law::ViscoLaw, times::AbstractVector{<:Real}) =
+    _hill_kernel_iso(ell, _trapezoidal_relaxation(C0_law, times, 6))
+
+# Steps 2-6 on the 6n×6n RELAXATION matrix of the iso reference (step 1: the
+# trapezoidal compliance inverted if the law is in `:creep` mode).
+function _hill_kernel_iso(ell, R_M::AbstractMatrix)
     # 2-4. The longitudinal and shear Volterra inverses of the reference.
     J_long, J_shear = _alv_iso_inverses(R_M)
     # 5. Geometric 4-tensors of the inclusion in Mandel form.
@@ -65,6 +64,30 @@ function hill_kernel(ell, C0_law::ViscoLaw, times::AbstractVector{<:Real})
     D_M = TensND.mandel66(tens_VA(ell)) - U_M
     # 6. Assemble.
     return _alv_hill_blocks(J_long, J_shear, U_M, D_M)
+end
+
+"""
+    second_hill_kernel(ell, C0_law::ViscoLaw, times) -> Matrix
+
+Discrete ALV second Hill tensor kernel of the inclusion `ell` in an
+**isotropic** ALV matrix described by `C0_law`, the counterpart of
+[`second_hill_tensor`](@ref) with the double contractions replaced by
+Volterra products:
+
+```math
+\\widetilde{\\mathbb{Q}} = \\widetilde{\\mathbb{C}}_0
+- \\widetilde{\\mathbb{C}}_0\\circ\\widetilde{\\mathbb{P}}\\circ\\widetilde{\\mathbb{C}}_0 ,
+```
+
+``\\widetilde{\\mathbb{C}}_0`` being the relaxation kernel of the matrix (a creep
+law is inverted first) and ``\\widetilde{\\mathbb{P}}`` the [`hill_kernel`](@ref) built
+on it. Same ``6n\\times 6n`` lower-block-triangular Mandel layout as
+`trapezoidal_matrix`; for a law constant in time each diagonal block is the
+elastic ``\\mathbb{Q}``.
+"""
+function second_hill_kernel(ell, C0_law::ViscoLaw, times::AbstractVector{<:Real})
+    R_M = _trapezoidal_relaxation(C0_law, times, 6)
+    return R_M - R_M * _hill_kernel_iso(ell, R_M) * R_M
 end
 
 # The longitudinal ``(\alpha + 2\beta)/3`` and shear ``\beta/2`` Volterra

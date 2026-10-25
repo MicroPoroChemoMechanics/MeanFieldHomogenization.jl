@@ -494,7 +494,7 @@ function φ_elas(ωs, ωp)
     function invPQ(ν)
         C = iso_stiffness_E_nu(1.0, ν)
         iPs = inv(hill_tensor(Es, C))
-        iQp = inv(C - C ⊡ hill_tensor(Ep, C) ⊡ C)   # dual Hill of the pore
+        iQp = inv(second_hill_tensor(Ep, C))   # ℚ = ℂ − ℂ:ℙ:ℂ, dual Hill tensor of the pore
         return iPs, iQp
     end
     solf(iPs, iQp, ν) = (a = frob(𝕁, iPs); b = frob(𝕁, iQp); b / ((1 - 2ν)^2 * a + b))

@@ -68,16 +68,14 @@ inclusion rather than the strain gives the dual statement
 becomes flat, which is why the crack theory is built on it rather than on
 ``\mathbb{P}`` — see [Crack opening displacement](@ref th-cod-tensors).
 
-In `MeanFieldHomogenization`, ``\mathbb{P}`` and ``\mathbb{S}^{\mathrm{E}}`` are [`hill_tensor`](@ref)
-and [`eshelby_tensor`](@ref). There is no public accessor for ``\mathbb{Q}``:
-assemble it from ``\mathbb{P}`` when you need it,
+In `MeanFieldHomogenization`, ``\mathbb{P}``, ``\mathbb{S}^{\mathrm{E}}`` and ``\mathbb{Q}`` are
+[`hill_tensor`](@ref), [`eshelby_tensor`](@ref) and [`second_hill_tensor`](@ref),
+the last one in elasticity and in conduction alike, and
+[`second_hill_kernel`](@ref) in aging viscoelasticity:
 
 ```julia
-P = hill_tensor(inclusion, C₀)
-Q = C₀ - C₀ ⊡ P ⊡ C₀
+Q = second_hill_tensor(inclusion, C₀)   # ℚ = ℂ₀ − ℂ₀:ℙ:ℂ₀
 ```
-
-which is all the crack machinery does internally before taking the flat limit.
 
 ## 3. The transport counterpart
 

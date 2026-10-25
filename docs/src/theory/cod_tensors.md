@@ -498,8 +498,7 @@ C₀ = TensISO{3}(E / (1 - 2ν), E / (1 + ν))   # (3k, 2μ)
 
 ## ρ-family of the definition, evaluated at finite flatness
 function H_from_hill(a, b, ρ, C₀)
-    P = hill_tensor(Ellipsoid(a, b, ρ * b), C₀)
-    Q = C₀ - C₀ ⊡ P ⊡ C₀
+    Q = second_hill_tensor(Ellipsoid(a, b, ρ * b), C₀)   # ℚ = ℂ₀ − ℂ₀:ℙ:ℂ₀
     return ρ * inv(Q)
 end
 
@@ -552,8 +551,8 @@ tol = (; abstol = 1.0e-12, reltol = 1.0e-10)
 B_ref = cod_tensor(crack, C_tri; method = :nestedquadgk, tol...)
 H_ref = compliance_from_cod(B_ref, crack)
 function H_flat(method, ρ)   # (c/b) ℚ⁻¹ of the flattened ellipsoid
-    P = hill_tensor(Ellipsoid(1.0, 0.5, 0.5ρ), C_tri; method, tol...)
-    return ρ * inv(C_tri - C_tri ⊡ P ⊡ C_tri)
+    Q = second_hill_tensor(Ellipsoid(1.0, 0.5, 0.5ρ), C_tri; method, tol...)   # ℂ − ℂ:ℙ:ℂ
+    return ρ * inv(Q)
 end
 
 for m in (:residues, :decuhr)

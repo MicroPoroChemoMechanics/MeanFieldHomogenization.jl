@@ -169,7 +169,7 @@ export AbstractAlgorithm, Analytical, Residue, DECUHR, NestedQuadGK,
 export MaterialSymmetry, IsotropicSym, TransverselyIsotropicSym,
     OrthotropicSym, GeneralAnisotropicSym
 export material_symmetry, dimension, inclusion_basis, shape_trait, shape_tensor
-export eshelby_tensor
+export eshelby_tensor, second_hill_tensor
 export green_gradient_iso, dipole_displacement_iso, green_operator_iso
 export green_gradient_iso2, dipole_temperature_iso
 export green_operator_aniso, green_operator, green_function_aniso
@@ -382,7 +382,7 @@ export iso_params_from_blocks, iso_blocks_from_params
 export ti_params_from_blocks, ti_blocks_from_params
 export ortho_params_from_blocks, ortho_blocks_from_params
 export AbstractALVKernel, ALVKernelISO, ALVKernelTI, ALVKernelOrtho
-export hill_kernel
+export hill_kernel, second_hill_kernel
 export dilute_concentration_alv, dilute_contribution_alv
 export voigt_alv, reuss_alv, dilute_alv, dilute_dual_alv
 export mori_tanaka_alv, maxwell_alv
@@ -403,7 +403,7 @@ export strain_strain_concentration_alv, stiffness_contribution_alv, conductivity
 export self_consistent_alv_order2
 export homogenize_alv, has_visco_property
 export iso_order2_params_from_blocks, iso_order2_blocks_from_params
-export hill_kernel_order2
+export hill_kernel_order2, second_hill_kernel_order2
 export voigt_alv_order2, reuss_alv_order2, dilute_alv_order2,
     dilute_dual_alv_order2, mori_tanaka_alv_order2, maxwell_alv_order2
 export dilute_concentration_alv_order2, dilute_contribution_alv_order2

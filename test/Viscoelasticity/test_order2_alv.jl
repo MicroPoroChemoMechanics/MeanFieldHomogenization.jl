@@ -156,3 +156,20 @@ end
     @test homogenize_alv(oblate, PonteCastanedaWillis(), :K; times) ≈ homogenize_alv(oblate, Maxwell(), :K; times) rtol = 1.0e-12
     @test_throws ArgumentError homogenize_alv(cell(nothing), Maxwell(), :K; times)
 end
+
+@testset "second_hill_kernel_order2 — elastic limit" begin
+    # Each diagonal block is the elastic K − K·P·K, (2k/3) 𝟏 for a sphere.
+    k = 2.0
+    times = collect(range(0.0, 1.0; length = 4))
+    n = length(times)
+    for ell in (Ellipsoid(1.0), Ellipsoid(3.0, 1.0, 0.4; euler_angles = (0.2, 0.9, 0.1)))
+        Q = second_hill_kernel_order2(ell, heaviside_law(TensISO{3}(k)), times)
+        @test size(Q) == (3n, 3n)
+        Q_e = Array(components_canon(second_hill_tensor(ell, TensISO{3}(k))))
+        for i in 1:n, j in 1:n
+            block = Q[(3i - 2):(3i), (3j - 2):(3j)]
+            i == j ? (@test block ≈ Q_e rtol = 1.0e-12) : (@test maximum(abs, block) ≤ 1.0e-12)
+        end
+    end
+    @test second_hill_kernel_order2(Ellipsoid(1.0), heaviside_law(TensISO{3}(k)), times)[1:3, 1:3] ≈ (2k / 3) * I(3) rtol = 1.0e-12
+end
