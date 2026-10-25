@@ -41,6 +41,19 @@ function _frame_from_normal(nvec; T = nothing, in_plane = nothing)
 end
 
 """
+    _descending_order(t::NTuple{3}) -> NTuple{3, Int}
+
+The permutation that sorts `t` in descending order, equal entries kept in their
+order: `sortperm(collect(t); rev = true)`, without the allocation. An insertion
+sort, so an index passes another only for a strictly larger entry (`isless`).
+"""
+@inline function _descending_order(t::NTuple{3})
+    i, j = isless(t[1], t[2]) ? (2, 1) : (1, 2)
+    isless(t[j], t[3]) || return (i, j, 3)
+    return isless(t[i], t[3]) ? (3, i, j) : (i, 3, j)
+end
+
+"""
     _sort_axes_and_basis(axes, basis, layout::Val) -> (sorted_axes, new_basis)
 
 Sort `axes` into descending order and permute the columns of `basis`
@@ -61,7 +74,7 @@ function _sort_axes_and_basis(
         axes::NTuple{3, T}, basis::TensND.AbstractBasis, ::Val{:ellipsoid_3d}
     ) where {T}
     is_hard_numeric(T) || return (axes, basis)
-    σ = Tuple(sortperm(collect(axes); rev = true))::NTuple{3, Int}
+    σ = _descending_order(axes)
     σ == (1, 2, 3) && return (axes, basis)
     sorted = (axes[σ[1]], axes[σ[2]], axes[σ[3]])
     return (sorted, TensND.permute_basis(basis, σ))

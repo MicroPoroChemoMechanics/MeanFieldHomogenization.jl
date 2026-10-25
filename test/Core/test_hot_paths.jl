@@ -1,6 +1,8 @@
 using Test
 using MeanFieldHomogenization
 using TensND
+using Random
+import ForwardDiff
 
 # After a warm-up call, the bytes `f(args...)` allocates.
 _allocs(f, args...) = (f(args...); @allocated f(args...))
@@ -42,4 +44,23 @@ end
         @test @inferred(MeanFieldHomogenization.Core._basis_axis(g.basis, 1)) isa NTuple{3, Float64}
     end
     @test @inferred(laminate_normal(Laminate(; normal = (0.0, 0.6, 0.8)))) isa NTuple{3, Float64}
+end
+
+@testset "Hot paths: shapes are built without allocating a sort" begin
+    MFH_Core = MeanFieldHomogenization.Core
+    # The permutation sorting the semi-axes is `sortperm(collect(t); rev = true)`,
+    # equal entries kept in order, on every triple with ties and on random ones.
+    vals = (0.0, -0.0, 1.0, 2.0, 1.0e300)
+    for a in vals, b in vals, c in vals
+        t = (a, b, c)
+        @test MFH_Core._descending_order(t) == Tuple(sortperm(collect(t); rev = true))
+    end
+    rng = Random.Xoshiro(20261025)
+    for _ in 1:1000
+        t = Tuple(rand(rng, 1:3, 3) .* 1.0)
+        @test MFH_Core._descending_order(t) == Tuple(sortperm(collect(t); rev = true))
+    end
+    # A dual sorts on its value, as `isless` does.
+    d = ForwardDiff.Dual{:sort}.((1.0, 1.0, 5.0), (3.0, 2.0, 1.0))
+    @test MFH_Core._descending_order(d) == (3, 1, 2)
 end
