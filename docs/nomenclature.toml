@@ -494,7 +494,7 @@ tex = '\omega'
 label = "ω"
 name = "aspect ratio (defined on the page)"
 unit = "1"
-pages = ["theory/notation.md", "theory/eshelby_problem.md", "theory/hill_tensors.md", "theory/cod_tensors.md", "manual/ellipsoidal_inclusions.md", "manual/inclusion_gallery.md", "manual/cracks.md", "tutorials/cracks.md", "manual/particle_assemblies.md", "theory/differential_scheme.md", "theory/thermal_cracks.md", "theory/layered_spheroid.md", "theory/layered_spheroid_elasticity.md", "manual/layered_inclusions.md", "tutorials/porous_benchmark.md", "tutorials/strength_criteria.md", "tutorials/axi_layered_spheroid.md", "tutorials/transport.md", "fe_coupling/permeability.md", "fe_coupling/fractured_rock.md", "fe_coupling/materials.md", "fe_coupling/arma2011.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/nano_spheroids.md", "tutorials/generated/layered_spheroid_hc.md", "tutorials/generated/hill_tensors.md", "tutorials/generated/neural_inclusion.md", "manual/neural_inclusions.md"]
+pages = ["theory/notation.md", "theory/eshelby_problem.md", "theory/hill_tensors.md", "theory/cod_tensors.md", "manual/ellipsoidal_inclusions.md", "manual/inclusion_gallery.md", "manual/cracks.md", "tutorials/cracks.md", "manual/particle_assemblies.md", "theory/differential_scheme.md", "theory/thermal_cracks.md", "theory/layered_spheroid.md", "theory/layered_spheroid_elasticity.md", "manual/layered_inclusions.md", "tutorials/porous_materials.md", "tutorials/strength_criteria.md", "tutorials/axi_layered_spheroid.md", "tutorials/transport.md", "fe_coupling/permeability.md", "fe_coupling/fractured_rock.md", "fe_coupling/materials.md", "fe_coupling/arma2011.md", "tutorials/generated/aging_ages_aspect.md", "tutorials/generated/nano_spheroids.md", "tutorials/generated/layered_spheroid_hc.md", "tutorials/generated/hill_tensors.md", "tutorials/generated/neural_inclusion.md", "manual/neural_inclusions.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -563,7 +563,7 @@ tex = '\varphi'
 label = "φ"
 name = "porosity"
 unit = "1"
-pages = ["manual/poromechanics.md", "fe_coupling/materials.md", "fe_coupling/fractured_rock.md", "fe_coupling/poroelastic_coupling.md", "fe_coupling/scale_transition.md", "theory/eim.md", "applications/generated/eim_assembly.md", "tutorials/porous_benchmark.md", "tutorials/porous_materials.md", "tutorials/strength_criteria.md", "tutorials/transport.md", "tools/", "applications/cement_paste.md", "applications/cement_paste_diffusion.md", "applications/itz_concrete.md", "applications/lamellar_clay.md", "applications/strength.md", "developer/validation.md", "applications/granular_friction.md", "applications/sandstone_strength.md"]
+pages = ["manual/poromechanics.md", "fe_coupling/materials.md", "fe_coupling/fractured_rock.md", "fe_coupling/poroelastic_coupling.md", "fe_coupling/scale_transition.md", "theory/eim.md", "applications/generated/eim_assembly.md", "tutorials/porous_materials.md", "tutorials/strength_criteria.md", "tutorials/transport.md", "tools/", "applications/cement_paste.md", "applications/cement_paste_diffusion.md", "applications/itz_concrete.md", "applications/lamellar_clay.md", "applications/strength.md", "developer/validation.md", "applications/granular_friction.md", "applications/sandstone_strength.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -571,7 +571,7 @@ tex = '\varphi'
 label = "φ"
 name = "volume fraction incorporated along the trajectory"
 unit = "1"
-pages = ["theory/differential_scheme.md", "tutorials/differential_paths.md", "tutorials/differential_loading_paths.md"]
+pages = ["theory/differential_scheme.md", "tutorials/differential_paths.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -1324,7 +1324,7 @@ tex = '\tau'
 label = "τ"
 name = "fictitious incorporation time"
 unit = "1"
-pages = ["theory/differential_scheme.md", "tutorials/differential_paths.md", "tutorials/differential_loading_paths.md"]
+pages = ["theory/differential_scheme.md", "tutorials/differential_paths.md"]
 
 [[symbol]]
 group = "Viscoelasticity"
