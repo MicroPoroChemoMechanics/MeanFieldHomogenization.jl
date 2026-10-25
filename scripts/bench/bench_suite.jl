@@ -40,6 +40,7 @@ include("cases_kernels.jl")
 include("cases_schemes.jl")
 include("cases_alv.jl")
 include("cases_tensnd.jl")
+include("cases_common.jl")
 
 # ── CLI ─────────────────────────────────────────────────────────────────────
 
