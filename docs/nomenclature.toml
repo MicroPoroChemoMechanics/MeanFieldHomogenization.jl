@@ -1104,6 +1104,30 @@ pages = ["theory/hill_tensors.md", "manual/neural_inclusions.md"]
 
 [[symbol]]
 group = "Shape and Walpole coefficients"
+tex = '\gamma'
+label = "γ<sub>i</sub>"
+name = "acoustic parameter of a transversely isotropic matrix: γ<sub>1</sub>, γ<sub>2</sub> square roots of the roots of its acoustic polynomial, γ<sub>3</sub><sup>2</sup> = (C<sub>1111</sub> − C<sub>1122</sub>)/(2C<sub>2323</sub>)"
+unit = "1"
+pages = ["theory/hill_tensors.md", "theory/degenerate_shapes.md"]
+
+[[symbol]]
+group = "Shape and Walpole coefficients"
+tex = 'I'
+label = "I<sub>n</sub>"
+name = "integral of z<sup>n</sup>/D(a, z) over [−1, 1], with D(a, z) = a + (1 − a) z<sup>2</sup>"
+unit = "1"
+pages = ["theory/hill_tensors.md", "theory/degenerate_shapes.md"]
+
+[[symbol]]
+group = "Shape and Walpole coefficients"
+tex = 'J'
+label = "J<sub>n,q</sub>"
+name = "integral of z<sup>n</sup>(1 − z<sup>2</sup>)<sup>q</sup>/(D(a<sub>1</sub>, z) D(a<sub>2</sub>, z)) over [−1, 1], two acoustic roots"
+unit = "1"
+pages = ["theory/hill_tensors.md", "theory/degenerate_shapes.md"]
+
+[[symbol]]
+group = "Shape and Walpole coefficients"
 tex = '\chi'
 label = "χ"
 name = "shape coefficient of the mean opening of a crack"

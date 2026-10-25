@@ -34,7 +34,7 @@ and finite differences of the closed form.
 The integrals behind the first four rows live in
 `src/Core/spheroid_integrals.jl`.
 
-## The integrals of a spheroid
+## [The integrals of a spheroid](@id th-degenerate-integrals)
 
 With ``D(a,z) = a + (1-a)\,z^2`` and ``w = 1-z^2``, over ``z\in[-1,1]``, three
 families of integrals carry the shape of a spheroid of axial over transverse
@@ -210,13 +210,12 @@ cubature these derivatives agree to ``2\times10^{-14}``, and against central
 finite differences of the closed form to the accuracy of the differences,
 ``10^{-10}`` to ``5\times10^{-9}``.
 
-## Spheroid in a transversely isotropic matrix
+## [Spheroid in a transversely isotropic matrix](@id th-degenerate-ti-spheroid)
 
-The closed form of a spheroid coaxial with a transversely isotropic matrix
-[barthelemyIJES2020_hilltrans](@cite) involves ``J_{n,q}`` of the two acoustic
-roots ``a_{1,2} = \omega^2\gamma_{1,2}^2`` and ``I_n`` of
-``a_3 = \omega^2(C_{1111}-C_{1122})/(2C_{2323})``. Its Walpole coefficients
-are written here with
+The Walpole coefficients of a spheroid coaxial with a transversely isotropic
+matrix, given in [Hill polarization tensors](@ref th-hill-ti-coaxial), involve
+``J_n = J_{n,0}`` of the two acoustic roots ``a_{1,2} = \omega^2\gamma_{1,2}^2``
+and ``I_n`` of ``a_3 = \omega^2\gamma_3^2``. The package evaluates them with
 
 ```math
 \begin{gathered}
@@ -242,9 +241,9 @@ P_6 &= \tfrac18\big(C_{3333}\,j_4 - 2\omega^2 C_{1133}\,l_{21}
 \end{aligned}
 ```
 
-Written with ``J_0, J_2, J_4`` as in the original paper, the same coefficients
-are differences of terms ``\omega^2`` or ``\omega^4`` larger than the result
-for a needle; the combinations ``J_{2,1} = J_2 - J_4`` and
+These are the coefficients of that page, in which ``J_0, J_2, J_4`` appear in
+differences of terms ``\omega^2`` or ``\omega^4`` larger than the result for a
+needle; the combinations ``J_{2,1} = J_2 - J_4`` and
 ``J_{0,2} = J_0 - 2J_2 + J_4`` are computed directly instead.
 
 The ``J`` are symmetric in the two roots: they depend on them only through the
@@ -298,6 +297,13 @@ They are evaluated in three regimes:
    ```
 
    whose partial fractions cancel as ``1/d`` only.
+
+!!! note "The sign of the partial fractions"
+    For ``q = 0`` and ``a_1 \neq a_2``, ``\mathrm{PF}`` gives
+    ``J_n = \big((1-a_1)I_n(a_1) - (1-a_2)I_n(a_2)\big)/(a_2-a_1)``, as the
+    Python script appended to [barthelemyIJES2020_hilltrans](@citet) does. The
+    last row of its Table D.2 prints the numerator with the opposite sign, which
+    gives ``-J_n``; a quadrature of the definition settles it.
 
 No square root of ``d^2`` is taken in the first two regimes, so derivatives are
 exact where the roots coincide. In derivatives, the split ``|d| = |m|/20``

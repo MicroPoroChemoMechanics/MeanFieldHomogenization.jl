@@ -3,7 +3,7 @@
 #  spheroidal inclusion coaxial with a transversely isotropic matrix.
 #
 #  Implements the closed-form formula derived in
-#  [barthelemyIJES2020_hilltrans](@citet) (eqs. 49–58 of the post-print)
+#  [barthelemyIJES2020_hilltrans](@citet) (eqs. 30–36)
 #  for the Walpole-basis components `(P₁, P₂, P₃, P₅, P₆)` of the Hill
 #  tensor of a spheroid (prolate or oblate) whose axis is parallel to
 #  the symmetry axis of a TI elastic matrix.
@@ -70,11 +70,11 @@ the classical Mura formula.
     The function is **not** compatible with SymPy `Sym` inputs because
     Julia's `Complex{T}` parametric type requires `T <: Real`, which
     `Sym` does not satisfy. For symbolic exploration of the analytical
-    formula, derive the components by hand from eqs. 49–58 of the
+    formula, derive the components by hand from eqs. 30–36 of the
     paper, or use the residue/DECUHR backends with substituted
     numerical values.
 
-Reference: [barthelemyIJES2020_hilltrans](@citet), eqs. 49–58.
+Reference: [barthelemyIJES2020_hilltrans](@citet), eqs. 30–36.
 """
 function _hill_ti_walpole(ω, C1111, C1122, C1133, C3333, C2323)
     T = promote_type(
@@ -110,7 +110,7 @@ function _hill_ti_walpole(ω, C1111, C1122, C1133, C3333, C2323)
     i2 = MFH_Core._spheroid_I2(a3) / C44
     iw = MFH_Core._spheroid_Iw(a3) / C44
 
-    # Walpole components (eqs. 53–58 of Barthélémy 2020), written with
+    # Walpole components (eqs. 36a–36e of Barthélémy 2020), written with
     # j₂ − j₄ = l₂₁ and j₀ − 2j₂ + j₄ = l₀₂: in j₀, j₂, j₄ they are differences of
     # terms ω² or ω⁴ larger than the result for a needle.
     P1_c = (C44 * j4 + om2 * C11 * l21) / 2
