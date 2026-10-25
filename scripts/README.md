@@ -74,7 +74,6 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | `04_forwarddiff.jl` | — | AD through Hill tensors |
 | `05_symbolic.jl` | — | SymPy genericity |
 | `06_cylinder.jl` | cylinder Hill | transverse-plane quadrature |
-| `07_hill_ti_coaxial.jl` | `hill(...,TI)` | Barthélémy 2020 TI-coaxial closed form |
 | `08_hill_derivatives.jl` | `hill_derivative` | ∂P/∂C by ForwardDiff (ISO, TI), validated vs finite differences |
 | `09_cod_symbolic_green.jl` | `barthelemyIJSS2026` | SymPy, end-to-end derivation of the COD tensor 𝐁 from the Fourier Green operator: the ξ₃ integral of `Q̂*ₙₙ`, the crack-plane integral, ISO and aligned-TI closed forms recovered (σᵞ included), oracles = `cod_tensor` |
 
@@ -205,8 +204,9 @@ the opposite, so anything transcribed from his papers is flipped on the way in.
 | `93_eim_disk_assembly_2d.jl` | equivalent inclusion method, Table 1 | **published tutorial** (`eim_assembly`): 160 circular pores at φ = 0.4 in a circular SVE of radius 20a, plane strain, ν₀ = 0.3 — reproduces the p = 0 row (0.310 μ₀) by Monte-Carlo, with the HS bound and the FEM reference for scale |
 | `96_nano_spheroids.jl` (published under *Inclusions*, not here: no N-body content) | equivalent particle, Lemarchand & Brisard (2016), Eqs. (72)–(78) | **published tutorial** (`nano_spheroids`): the interface stiffness ℂ^int across aspect ratios, its three limiting cases (sphere, platelet, nanofiber) reproduced exactly, and the size effect it produces through an ordinary Mori-Tanaka estimate |
 | `97_hill_reduction.jl` (published under *The Eshelby problem*, not here: no N-body content; the 00-09 block is full) | Barthélémy (2020), eqs. 8, 14, 19–36 | **published tutorial** (`hill_reduction`): the Hill tensor of an ellipsoid as that of a sphere in the stretched medium 𝔹:ℂ:𝔹, computed both ways on a spheroid in a coaxial transversely isotropic matrix (closed forms), a rotated triaxial ellipsoid in a triclinic matrix (residues against a cubature on the sphere) and an elliptically orthotropic matrix (the isotropic closed form against a cubature) |
+| `98_hill_transformation_2020.jl` (published under *Applications, General concepts*, not here: no N-body content; the 00-09 block is full) | Barthélémy (2020), the whole paper, and its Python script | **published application** (`hill_transformation`): the transformation and the reduction to a sphere on the definition of the Hill tensor, the elliptically orthotropic and the coaxial transversely isotropic closed forms with every step proved in SymPy, the integrals of Appendix D and their correspondence with those of the package, the script transcribed with its Figure 1, and the flat (crack compliance) and needle limits |
 
-Numbers 95, 98 and 99 are free. What is deliberately **not** covered:
+Numbers 95 and 99 are free. What is deliberately **not** covered:
 Table 2 of Brisard et al. (polydisperse spheres at φ = 0.45) needs a polydisperse
 close-packing generator the package does not have, and the slender-fiber
 specialization of Martin et al. (2023) needs the axial polynomial enrichment,

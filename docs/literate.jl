@@ -38,7 +38,7 @@ const APPLICATION_MD_DIR = joinpath(@__DIR__, "src", "applications", "generated"
 # whereas these exist to reproduce a particular paper's numbers and are read for
 # the comparison. Listed by page name, so the routing is visible here rather
 # than implied by the navigation in `make.jl`.
-const APPLICATION_PAGES = Set(["cluster_model", "eim_assembly"])
+const APPLICATION_PAGES = Set(["hill_transformation", "cluster_model", "eim_assembly"])
 
 "Where a generated page is written, by what it is for."
 page_md_dir(page) = page in APPLICATION_PAGES ? APPLICATION_MD_DIR : TUTORIAL_MD_DIR
@@ -75,6 +75,7 @@ const PUBLISHED_SCRIPTS = [
     "93_eim_disk_assembly_2d.jl" => "eim_assembly",
     "96_nano_spheroids.jl" => "nano_spheroids",
     "97_hill_reduction.jl" => "hill_reduction",
+    "98_hill_transformation_2020.jl" => "hill_transformation",
 ]
 
 # `81_fe_crack_eshelby.jl`, `82_fe_crack_schemes.jl`,

@@ -168,4 +168,6 @@ against_numerics(P_reduced, rotated, C_tri)
 # exact average with a best-fit projection onto a symmetry class. The closed
 # form of the first example is written out in
 # [Transversely isotropic matrix coaxial with a spheroid](@ref th-hill-ti-coaxial),
-# and the reduction itself in [Reduction to a sphere](@ref th-hill-reduction-sphere).
+# and the reduction itself in [Reduction to a sphere](@ref th-hill-reduction-sphere);
+# the application [Hill tensors by transformation](@ref app-hill-transformation)
+# derives both step by step after the paper, with each identity proved in SymPy.

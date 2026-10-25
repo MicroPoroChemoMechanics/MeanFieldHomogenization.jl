@@ -228,8 +228,10 @@ pages = [
         # builds on. A page may move within its section, not across chapters.
         "applications/index.md",
         "General concepts" => [
-            # Both reproduce one paper's published numbers, which is why they
-            # are applications and not tutorials.
+            # Each of the first three reproduces one paper, which is why they
+            # are applications and not tutorials: the Hill tensor of a single
+            # inclusion first, then the interactions between particles.
+            "applications/generated/hill_transformation.md",
             "applications/generated/cluster_model.md",
             "applications/generated/eim_assembly.md",
             # The Fourier reduction of the first is reused by the second.

@@ -62,6 +62,19 @@ I_2 = \frac{2\,(\sqrt a\,R_C - 1)}{a-1},\qquad
 I_4 = \frac{2\,(a\sqrt a\,R_C - 1 - \tfrac43(a-1))}{(a-1)^2}.
 ```
 
+With ``a = \eta^2`` the denominator is ``z^2 + \eta^2(1-z^2)``, and these are
+the integrals of [barthelemyIJES2020_hilltrans; Appendix D](@cite) in the
+variables of that article: ``\mathcal{I}_k(\eta) = I_k(\eta^2)``,
+``\mathcal{J}_k(\eta_1,\eta_2) = J_{k,0}(\eta_1^2,\eta_2^2)``, and
+``R_C(a,1) = \operatorname{arcosh}\eta/\sqrt{\eta^2-1}``, so that the three
+closed forms above are those of its Table D.1. The moments of ``w`` that the
+package evaluates are differences of them, ``J_{2,1} = \mathcal{J}_2 - \mathcal{J}_4``
+and ``J_{0,2} = \mathcal{J}_0 - 2\mathcal{J}_2 + \mathcal{J}_4``. The application
+[Hill tensors by transformation](@ref app-hill-transformation-integrals) proves
+the closed forms and the partial fractions symbolically, and
+[the correspondence](@ref app-hill-transformation-package-integrals) between both
+writings.
+
 These cancel as ``a\to1``, the sphere. Writing ``D = 1 + k\,w`` with
 ``k = a-1``, all three families are instead power series in ``k`` there, with
 the coefficients ``\beta_{n,j} = \int_{-1}^{1} z^n w^j\,\mathrm{d}z =
@@ -303,7 +316,8 @@ They are evaluated in three regimes:
     ``J_n = \big((1-a_1)I_n(a_1) - (1-a_2)I_n(a_2)\big)/(a_2-a_1)``, as the
     Python script appended to [barthelemyIJES2020_hilltrans](@citet) does. The
     last row of its Table D.2 prints the numerator with the opposite sign, which
-    gives ``-J_n``; a quadrature of the definition settles it.
+    gives ``-J_n``; a quadrature of the definition settles it, as the application
+    [Hill tensors by transformation](@ref app-hill-transformation-script) shows.
 
 No square root of ``d^2`` is taken in the first two regimes, so derivatives are
 exact where the roots coincide. In derivatives, the split ``|d| = |m|/20``
