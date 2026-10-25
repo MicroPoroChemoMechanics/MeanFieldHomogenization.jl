@@ -95,7 +95,9 @@ function _cod_ribbon_numerical(
 end
 
 # Backend dispatch
-_residue_backend(Carr, ξ_plane, nhat; kw...) = _Qnn_star_residue(Carr, ξ_plane, nhat)
+# The inner sums an order and more below the tolerance of the outer quadrature.
+_residue_backend(Carr, ξ_plane, nhat; reltol, kw...) =
+    _Qnn_star_residue(Carr, ξ_plane, nhat; rtol = max(reltol / 16, 64 * eps()))
 
 _nestedquadgk_backend(Carr, ξ_plane, nhat; abstol, reltol, maxiters) =
     _Qnn_star_nestedquadgk(Carr, ξ_plane, nhat; abstol = abstol, reltol = reltol, maxiters = maxiters)

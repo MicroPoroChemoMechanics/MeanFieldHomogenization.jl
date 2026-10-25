@@ -119,3 +119,26 @@ using TensND
             components_canon(cod_tensor(crack, C_ti; method = :nestedquadgk, abstol = 1.0e-12, reltol = 1.0e-11)) rtol = 1.0e-10
     end
 end
+
+@testset "crack kernel: the residue sums and their quadrature fallback agree" begin
+    # Below the rounding of any sum, the tolerance sends the kernel to the
+    # quadrature that replaces residue sums whose error bound is too large: both
+    # give the same kernel.
+    CRK = MeanFieldHomogenization.Cracks
+    KM = [
+        210.0 80.0 75.0 5.0 4.0 3.0;
+        80.0 195.0 90.0 -2.0 3.0 -1.0;
+        75.0 90.0 220.0 1.0 -2.0 2.0;
+        5.0 -2.0 1.0 60.0 2.5 1.5;
+        4.0 3.0 -2.0 2.5 65.0 -1.0;
+        3.0 -1.0 2.0 1.5 -1.0 55.0
+    ]
+    C = Float64.(Array(components_canon(TensND.from_mandel(KM, TensND.CanonicalBasis{3, Float64}()))))
+    n̂ = [0.0, 0.0, 1.0]
+    for α in (0.2, 1.0, 2.5)
+        ξs = [cos(α), sin(α), 0.0]
+        R = CRK._Qnn_star_residue(C, ξs, n̂)
+        F = CRK._Qnn_star_residue(C, ξs, n̂; rtol = 5.0e-16)
+        @test F ≈ R rtol = 1.0e-13
+    end
+end
