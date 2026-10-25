@@ -185,15 +185,18 @@ _conv(a::SVector{N}, b::SVector{M}) where {N, M} = SVector{N + M - 1}(
 # g₀ = f N / D′, and k coincident ones g_{k-1}, the residue at a pole of order k.
 
 """
-    _taylor_at(a, c, n) -> Vector{ComplexF64}
+    _taylor_at(a, c, n) -> Vector
 
 The first `n` Taylor coefficients at `c` of the polynomial of ascending
-coefficients `a`, zero beyond its degree, by `n` passes of synthetic division.
+coefficients `a`, zero beyond its degree, by `n` passes of synthetic division,
+in the type of `c`. With `|a|` and `|c|` it bounds, coefficient by coefficient,
+the moduli of the terms the same divisions add up.
 """
-function _taylor_at(a::AbstractVector, c::ComplexF64, n::Int)
-    n == 1 && return [evalpoly(c, a)]
+function _taylor_at(a::AbstractVector, c::Number, n::Int)
+    S = promote_type(eltype(a), typeof(c))
+    n == 1 && return [evalpoly(c, S.(a))]
     d = length(a) - 1
-    b = [ComplexF64.(a); zeros(ComplexF64, max(n - d - 1, 0))]
+    b = [S.(a); zeros(S, max(n - d - 1, 0))]
     # A recurrence: each pass finalizes one coefficient.
     @inbounds for j in 0:(min(n, d) - 1), m in (d - 1):-1:j
         b[m + 1] += c * b[m + 2]
@@ -283,13 +286,36 @@ end
 
 # Σ_l h_l g_{l+k-1} regrouped by the Taylor coefficient of the numerator it
 # multiplies: H_i = Σ_l g_{l+k-1-i} h_l, zero from i = k + L on.
-function _regroup_weights(g::Vector{ComplexF64}, h::Vector{ComplexF64}, k::Int)
-    L = length(h) - 1
-    return [sum(g[l + k - i] * h[l + 1] for l in max(0, i - k + 1):L) for i in 0:(L + k - 1)]
-end
+_regroup_weights(g::AbstractVector, h::AbstractVector, k::Int) = [
+    sum(g[l + k - i] * h[l + 1] for l in max(0, i - k + 1):(length(h) - 1)) for i in 0:(length(h) + k - 2)
+]
+
+# The two modes of the recurrences below. `Val(false)` computes the weights;
+# `Val(true)` runs the same recurrences on the moduli of their operands, every
+# difference turned into a sum, which bounds the modulus of each term they add
+# up: the rounding error of the first is at most a small multiple of the unit
+# roundoff times the second (a running error bound).
+_modulus(::Val{false}, x) = x
+_modulus(::Val{true}, x) = abs(x)
+_minus(::Val{false}, a, b) = a - b
+_minus(::Val{true}, a, b) = a + b
+
+# Terms of the series of a cluster: enough for the remainder, which decays as the
+# ratio `r` of its radius to its distance to the next singularity, to fall below
+# the unit roundoff of `T`. A cluster qualifies only with `r < τ`, so that this
+# stays below about `precision(T) / log2(1/τ)` terms.
+# Rounding error of a residue sum, per unit roundoff and per unit of the sum of
+# the moduli of its terms, the bound `_cluster_weights` gives with `Val(true)`.
+# Against the same sums in 256-bit arithmetic, on clusters from a lone pole to an
+# eightfold one, the error stayed below that sum times the unit roundoff, by a
+# factor 2.8 at least; four leaves a margin on top.
+const _RESIDUE_ROUNDING = 4
+
+_series_terms(r::Real, ::Type{T}) where {T} =
+    iszero(r) ? 0 : clamp(ceil(Int, log(eps(T) / 16) / log(r)), 1, cld(precision(T), 3) + 8)
 
 """
-    _cluster_weights(poles, members, lead; logfactor) -> (c, H_one, H_log)
+    _cluster_weights(poles, members, lead; logfactor, bound = Val(false)) -> (c, H_one, H_log)
 
 Center `c` of the cluster `poles[members]` of the roots `poles` of a
 denominator ``D`` of leading coefficient `lead`, and the weights such that, for
@@ -301,40 +327,47 @@ every polynomial ``N`` with Taylor coefficients ``n_i`` at `c`,
 (principal branch; empty otherwise). Both have the `k + L` entries the sum
 reaches, `k` the size of the cluster and `L` the number of terms of the series
 beyond the first: one for a lone pole, whose weight is ``1/D'``.
+
+The arithmetic is that of the element type of `poles`, `Complex{Float64}` or an
+extended precision. With `bound = Val(true)` the same recurrences run on moduli
+(see `_modulus`) and return, entry by entry, an upper bound of the sum of the
+moduli of the terms each weight adds up.
 """
 function _cluster_weights(
-        poles::AbstractVector{ComplexF64}, members::AbstractVector{Int},
-        lead::ComplexF64; logfactor::Bool
+        poles::AbstractVector{<:Complex}, members::AbstractVector{Int},
+        lead::Complex; logfactor::Bool, bound::Val = Val(false)
     )
+    T = real(eltype(poles))
     k = length(members)
     c = _cluster_center(poles, members)
     δ = view(poles, members) .- c
     # Terms of the series beyond l decay as (max|δ| / ρ)^l: enough of them for
     # the remainder to fall below rounding.
-    r = maximum(abs, δ) == 0 ? 0.0 : maximum(abs, δ) / _outer_distance(poles, members, c, logfactor)
-    L = r == 0 ? 0 : clamp(ceil(Int, log(1.0e-17) / log(r)), 1, 80)
+    r = maximum(abs, δ) == 0 ? zero(T) : maximum(abs, δ) / _outer_distance(poles, members, c, logfactor)
+    L = _series_terms(r, T)
     m = L + k
+    S = typeof(_modulus(bound, zero(Complex{T})))
     # h_l(δ), l = 0, …, L: the product of the geometric series 1 / (1 - δⱼ s).
     # Multiplying by one of them is the recurrence h_l += δⱼ h_{l-1}.
-    h = [one(ComplexF64); zeros(ComplexF64, L)]
+    h = [one(S); zeros(S, L)]
     @inbounds for δⱼ in δ, l in 1:L
-        h[l + 1] += δⱼ * h[l]
+        h[l + 1] += _modulus(bound, δⱼ) * h[l]
     end
     # Taylor coefficients at c of 1 / R, R = lead · Π_{j ∉ members} (w - wⱼ), up
     # to the order L + k - 1 the sum reaches. Dividing by (c - wⱼ) + t is the
     # recurrence g_p = (g_p - g_{p-1}) / (c - wⱼ).
-    g = [inv(lead); zeros(ComplexF64, m - 1)]
+    g = [_modulus(bound, inv(lead)); zeros(S, m - 1)]
     @inbounds for j in eachindex(poles)
         j in members && continue
-        ie = inv(c - poles[j])
+        ie = _modulus(bound, inv(c - poles[j]))
         g[1] *= ie
         for p in 2:m
-            g[p] = (g[p] - g[p - 1]) * ie
+            g[p] = _minus(bound, g[p], g[p - 1]) * ie
         end
     end
     H_one = _regroup_weights(g, h, k)
-    logfactor || return c, H_one, ComplexF64[]
+    logfactor || return c, H_one, S[]
     # times log(c + t) = log c - Σ_{p ≥ 1} (-t / c)^p / p
-    ℓ = [log(c); [-(-inv(c))^p / p for p in 1:(m - 1)]]
+    ℓ = [_modulus(bound, log(c)); [_modulus(bound, -(-inv(c))^p / p) for p in 1:(m - 1)]]
     return c, H_one, _regroup_weights(_series_product(ℓ, g, m), h, k)
 end

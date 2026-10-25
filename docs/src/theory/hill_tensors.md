@@ -546,7 +546,10 @@ transversely isotropic matrix coaxial with a spheroid stays transversely
 isotropic, which gives the closed form of
 [the section below](@ref th-hill-ti-coaxial). The tutorial
 [Hill tensors by reduction to a sphere](@ref tut-hill-reduction) computes
-several Hill tensors both ways.
+several Hill tensors both ways, and the application
+[Hill tensors by transformation](@ref app-hill-transformation-reduction) derives
+the reduction, and its elliptically orthotropic case, step by step after the
+paper.
 
 ### Algorithms for an arbitrary anisotropy
 
@@ -575,54 +578,227 @@ options:
   the eigenvalues of a companion matrix, which ForwardDiff does not
   differentiate) and reachable on an explicit `method = :residues` only.
 
+The residue algorithm is the one whose accuracy depends most on how it is
+evaluated; the next section derives it in full.
+
+#### [Residue sums over groups of poles](@id th-hill-residue-groups)
+
+**The inner integral as a rational one.** At an angle ``\varphi`` of the outer
+quadrature, the directions of integration form the line
+``\underline{\zeta}(\xi) = \underline{\alpha}_0 + \xi\,\underline{\alpha}_1``,
+``\xi\in\mathbb{R}``, and the inner integral is a combination of the seven
+moments
+
+```math
+W_n = \int_{-\infty}^{\infty} \frac{\xi^n\,\mathrm{d}\xi}{2\,(1+\xi^2)^{3/2}\,Q(\xi)},
+\qquad n = 0, \dots, 6,
+```
+
+where ``Q(\xi) = \det\bigl(\underline{\zeta}(\xi)\cdot\mathbb{C}\cdot\underline{\zeta}(\xi)\bigr)``
+is the acoustic polynomial, of degree 6, positive on the real line for a strongly
+elliptic matrix, and the power ``3/2`` comes from the normalization of the
+direction. That power puts branch points at ``\xi = \pm i``, which a residue
+theorem cannot take as they are. The substitution of [masson2008](@citet),
+``\xi = (t^2 - 1)/(2t)``, removes them: ``t\mapsto\xi`` maps ``(0,\infty)`` onto
+``\mathbb{R}`` with ``1 + \xi^2 = \bigl((1+t^2)/(2t)\bigr)^2``, and
+
+```math
+\begin{gathered}
+W_n = 2\int_0^{\infty} \frac{E_n(t)}{D(t)}\,\mathrm{d}t,
+\\
+E_n(t) = t^{7-n}\Bigl(\frac{t^2-1}{2}\Bigr)^{n},
+\qquad
+D(t) = (1+t^2)^2\,t^6\,Q\bigl(\xi(t)\bigr),
+\end{gathered}
+```
+
+a rational function whose denominator, of degree 16, has the double roots
+``t = \pm i``, the images of the branch points, and the two preimages
+``t = z \pm \sqrt{1 + z^2}`` of each root ``z`` of ``Q``, the roots of
+``t^2 - 2zt - 1 = 0``, whose product is ``-1``.
+
 ```@raw html
-<details><summary>Summing the residues of a group of poles</summary>
+<details><summary>Proof of the change of variable</summary>
 ```
 
-A root of multiplicity ``k`` comes out of any root finder as ``k`` roots about
-``\epsilon^{1/k}`` apart, ``\epsilon`` the rounding unit, and the residue at each
-is of the order of the inverse of their distance: taken one by one, the residues
-cancel and leave little accuracy; declared coincident below some distance, they
-carry an error of the order of that distance. The residues of a group are
-summed as a whole instead. Let ``w_1, \dots, w_k`` be poles of ``f N / D`` close
-to one another, with ``N`` and ``D`` polynomials and ``f`` analytic around them,
-``c`` their centroid, ``\delta_j = w_j - c``, and
-``R(w) = D(w) / \prod_j (w - w_j)``, which does not vanish near ``c``. Outside
-the group,
+With ``\xi = (t^2-1)/(2t)``, ``\mathrm{d}\xi/\mathrm{d}t = (t^2+1)/(2t^2) > 0``,
+so that ``\xi`` increases from ``-\infty`` to ``\infty`` on ``(0,\infty)``, and
+``(1+\xi^2)^{1/2} = (1+t^2)/(2t)`` for ``t > 0``. Then
 
 ```math
-\frac{1}{\prod_{j=1}^{k} (w - w_j)}
-= \frac{1}{(w - c)^{k}} \prod_{j=1}^{k} \frac{1}{1 - \delta_j / (w - c)}
-= \sum_{l \ge 0} \frac{h_l(\delta_1, \dots, \delta_k)}{(w - c)^{k + l}},
+\frac{\xi^n\,\mathrm{d}\xi}{2\,(1+\xi^2)^{3/2}\,Q(\xi)}
+= \frac{\xi^n}{2\,Q(\xi)}\,\frac{8t^3}{(1+t^2)^3}\,\frac{1+t^2}{2t^2}\,\mathrm{d}t
+= \frac{2\,t\,\xi^n}{(1+t^2)^2\,Q(\xi)}\,\mathrm{d}t,
 ```
 
-with ``h_l`` the complete homogeneous symmetric polynomial of degree ``l``, and
-``f N / R = \sum_{n \ge 0} g_n\, (w - c)^n`` up to the next singularity. The sum
-of the residues in the group is the coefficient of ``(w - c)^{-1}`` in the
-product of the two expansions:
-
-```math
-\sum_{j=1}^{k} \operatorname{Res}_{w_j} \frac{f N}{D}
-= \sum_{l \ge 0} g_{l + k - 1}\, h_l(\delta_1, \dots, \delta_k).
-```
-
-Coincident poles leave the term ``l = 0`` alone, ``g_{k-1}``, the residue at a
-pole of order ``k``; a lone pole leaves ``g_0 = f(w_1) N(w_1) / D'(w_1)``. The
-terms decrease as ``(\max_j |\delta_j| / \rho)^l``, with ``\rho`` the distance
-from ``c`` to the nearest other singularity of ``f N / D``, and the poles enter
-only through symmetric functions of the ``\delta_j``, which, unlike the
-individual roots of a cluster, are well conditioned. The groups are the largest
-nodes of the single-linkage tree of the poles whose radius stays below
-``\rho / 10``.
-
-For the Hill tensor, ``f = \log`` and the poles are ``\pm i``, twice each, and the
-two preimages ``t = z \pm \sqrt{1 + z^2}`` of each root ``z`` of the acoustic
-polynomial. For the line integral of the crack opening tensor, ``f = 1`` and the
-poles are the roots themselves.
+and multiplying above and below by ``t^6`` gives ``2E_n/D``, since
+``t^7\xi^n = t^{7-n}\bigl((t^2-1)/2\bigr)^n`` and ``t^6 Q(\xi)`` is a polynomial
+in ``t``.
 
 ```@raw html
 </details>
 ```
+
+**The integral over a half line.** For a rational ``F = E/D`` with
+``\deg D \ge \deg E + 2`` and no root of ``D`` on ``[0, \infty)``,
+
+```math
+\int_0^{\infty} F(t)\,\mathrm{d}t = -\sum_{w} \operatorname{Res}_{w}\bigl(\log(w)\,F(w)\bigr),
+```
+
+the sum running over all the roots of ``D``, with the logarithm cut along the
+positive axis, ``\arg w \in (0, 2\pi)``. This is the argument of
+[masson2008; eqs. 17–19](@citet), who integrates the product of ``F`` with a
+logarithm along a keyhole contour (his Fig. 2) and writes the sum for simple
+roots of ``Q``, with formulas of their own for a root at ``i`` and for roots that
+coincide (his eqs. 21–22 and those after), the case of two roots at ``i`` being
+left open. The sums over groups of poles below take every one of these cases,
+and the roots that nearly coincide, in one formula. As ``D`` has real
+coefficients its roots come in conjugate pairs, and the sum reduces to the upper
+half plane:
+
+```math
+\int_0^{\infty} F(t)\,\mathrm{d}t
+= -\Bigl(2\,\mathrm{Re}\sum_{\mathrm{Im}\,w>0}\operatorname{Res}_{w}(\log F)
++ 2\pi\,\mathrm{Im}\sum_{\mathrm{Im}\,w>0}\operatorname{Res}_{w}F\Bigr).
+```
+
+```@raw html
+<details><summary>Proof</summary>
+```
+
+Integrate ``\log(w)F(w)`` along the keyhole contour made of the circle
+``|w| = \mathcal{R}``, the circle ``|w| = r`` and both edges of the cut
+``[r, \mathcal{R}]``. On the large circle the integrand is
+``O(\mathcal{R}^{-2}\log\mathcal{R})`` and the circle has length
+``2\pi\mathcal{R}``: its contribution vanishes as ``\mathcal{R}\to\infty``, and so
+does that of the small one, ``O(r\log r)``, as ``r\to0``. On the upper edge
+``\log w = \log t``, on the lower one ``\log w = \log t + 2\pi i``, run in the
+opposite direction, so that the two edges give
+``\int_0^\infty \bigl(\log t - \log t - 2\pi i\bigr)F(t)\,\mathrm{d}t = -2\pi i\int_0^\infty F``.
+The residue theorem gives ``2\pi i\sum_w \operatorname{Res}_w(\log F)``, whence the
+first formula.
+
+For the second, ``F(\bar w) = \overline{F(w)}`` gives
+``\operatorname{Res}_{\bar w}F = \overline{\operatorname{Res}_w F}``, and with the cut
+along the positive axis ``\log\bar w = \overline{\log w} + 2\pi i`` for
+``\mathrm{Im}\,w > 0``, an identity between functions analytic near ``\bar w``,
+which holds for poles of any multiplicity:
+``\operatorname{Res}_{\bar w}(\log F) = \overline{\operatorname{Res}_w(\log F)} + 2\pi i\,\overline{\operatorname{Res}_w F}``.
+Adding the residues at ``w`` and ``\bar w`` leaves
+``2\,\mathrm{Re}\operatorname{Res}_w(\log F) + i\,\mathrm{Im}\operatorname{Res}_w(\log F) + 2\pi i\,\overline{\operatorname{Res}_w F}``,
+and the integral, real, keeps the real part,
+``2\,\mathrm{Re}\operatorname{Res}_w(\log F) + 2\pi\,\mathrm{Im}\operatorname{Res}_w F``.
+
+```@raw html
+</details>
+```
+
+**The sum over a group of close poles.** A root of multiplicity ``k`` comes out
+of any root finder as ``k`` roots about ``\epsilon^{1/k}`` apart, ``\epsilon``
+the unit roundoff, and the residue at each is of the order of the inverse of
+their distance. Taken one by one, the residues are large, of opposite signs, and
+their sum keeps little of their accuracy; declared coincident below some
+distance, they carry an error of the order of that distance. The residues of a
+group are summed as a whole instead.
+
+Let ``w_1, \dots, w_k`` be poles of ``fN/D`` close to one another, with ``N``
+and ``D`` polynomials and ``f`` analytic around them (``f = \log`` or
+``f = 1``), ``c`` their centroid, ``\delta_j = w_j - c``,
+``\delta = \max_j|\delta_j|``, ``R(w) = D(w)/\prod_j(w - w_j)``, which does not
+vanish near ``c``, and ``\rho`` the distance from ``c`` to the nearest
+singularity of ``fN/R``: the other roots of ``D`` and, for ``f = \log``, the
+branch point ``0``. For ``\delta < \rho``,
+
+```math
+\sum_{j=1}^{k}\operatorname{Res}_{w_j}\frac{fN}{D}
+= \sum_{l\ge0} g_{l+k-1}\,h_l(\delta_1,\dots,\delta_k),
+\qquad
+\frac{fN}{R}(w) = \sum_{n\ge0} g_n\,(w-c)^n,
+```
+
+with ``h_l`` the complete homogeneous symmetric polynomial of degree ``l``, the
+sum of all the monomials of degree ``l`` in the ``\delta_j``.
+
+```@raw html
+<details><summary>Proof, and the rate of the series</summary>
+```
+
+The sum of the residues in the group is ``\frac{1}{2\pi i}\oint_\Gamma fN/D``
+along the circle ``\Gamma: |w - c| = r`` with ``\delta < r < \rho``. On
+``\Gamma``, ``|\delta_j/(w - c)| < 1`` and
+
+```math
+\frac{1}{\prod_{j=1}^{k}(w - w_j)}
+= \frac{1}{(w-c)^k}\prod_{j=1}^{k}\frac{1}{1 - \delta_j/(w-c)}
+= \sum_{l\ge0}\frac{h_l(\delta_1,\dots,\delta_k)}{(w-c)^{k+l}},
+```
+
+the product of ``k`` geometric series, uniformly convergent on ``\Gamma``; the
+Taylor series of ``fN/R`` converges uniformly there too, as ``r < \rho``. The
+integral of the product picks the coefficient of ``(w - c)^{-1}``, that is the
+terms ``n - k - l = -1``.
+
+Coincident poles leave the term ``l = 0`` alone, ``g_{k-1}``, the residue at a
+pole of order ``k``; a lone pole leaves ``g_0 = f(w_1)N(w_1)/D'(w_1)``. As
+``|h_l| \le \binom{l+k-1}{k-1}\delta^l`` and, by the Cauchy estimates on a circle
+of radius ``\rho' < \rho``, ``|g_n| \le M\rho'^{-n}``, the terms decrease as
+``\binom{l+k-1}{k-1}(\delta/\rho')^l``: the series converges geometrically at the
+rate ``\delta/\rho``, and the poles enter through symmetric functions of the
+``\delta_j`` only, which, unlike the individual roots of a cluster, are well
+conditioned: they are, up to sign, the coefficients of
+``\prod_j(w - c - \delta_j)``, which the root finder returns accurate to
+rounding.
+
+```@raw html
+</details>
+```
+
+The sum is evaluated by recurrences of fixed cost. The ``h_l`` follow from
+multiplying the ``k`` geometric series one at a time, ``h_l \mathrel{+}= \delta_j h_{l-1}``.
+The Taylor coefficients of ``1/R`` follow from dividing by each factor
+``(c - w_m) + (w - c)`` in turn, ``g_p \leftarrow (g_p - g_{p-1})/(c - w_m)``,
+those of ``\log`` from ``\log(c + u) = \log c - \sum_{p\ge1}(-u/c)^p/p``, and those
+of ``N`` from its factored form. The series is cut at the first ``L`` with
+``(\delta/\rho)^L`` below the unit roundoff. The groups are the largest nodes of
+the single-linkage tree of the poles whose ratio ``\delta/\rho`` stays below
+``1/10``, each pole going to the largest node that qualifies; a lone pole is a
+group of one. A tree is needed: four roots spread around a double pole, as a
+double root of ``Q`` at ``i`` gives, form a tight group of six that no pair, and
+no group of three, qualifies to start.
+
+**Conditioning, and the running error bound.** The sums above are exact, but
+their evaluation is not always well conditioned. When a root ``z`` of ``Q``
+approaches ``\pm i``, as it does for the directions of a plane of isotropy of
+the matrix (around a sphere in an isotropic matrix, ``Q \propto (1+\xi^2)^3``),
+its preimages approach the double pole ``t = i``, at the distance
+``|\sqrt{1+z^2}|``. Poles then crowd around ``i`` at several scales: groups of
+radius comparable to their distance to the others, or to the branch point
+``0``, cannot be merged into one whose series converges, and their contributions
+are larger than their sum by four or five orders of magnitude. The integral
+itself stays as well conditioned as anywhere else: only its representation by
+residues is not.
+
+Each sum therefore carries a running error bound. The same recurrences are run
+on the moduli of their operands, every difference turned into a sum; the result
+bounds, term by term, the moduli of the quantities each step adds up, and the
+rounding error of the sum is at most a small multiple of the unit roundoff
+times that bound [higham2002](@cite). Against the same sums in 256-bit
+arithmetic, on groups from a lone pole to an eightfold one, the error stayed
+below the bound times the unit roundoff by a factor 2.8 at least; the package
+takes four times that product. When the bound exceeds the tolerance asked of
+the inner integral, an order and more below that of the outer quadrature, the
+moments ``W_n`` are computed by an adaptive Gauss-Kronrod quadrature of their
+definition in ``t`` instead, which is accurate there. A spheroid elongated along
+the axis of a transversely isotropic matrix, at a relative tolerance of
+``10^{-12}``, met such directions over a whole range of ``\varphi``: evaluated
+anyway, the sums were ``10^{-11}`` off and kept the outer quadrature from
+converging, a million evaluations and 35 s for one tensor; with the bound, it
+takes 285 evaluations and 0.02 s, within ``2\times10^{-16}`` of the closed form.
+
+For the line integral of the crack opening tensor, ``f = 1`` and the poles are
+the roots of ``Q`` themselves: the same groups, the same bound, and the
+quadrature of the same kernel when the bound exceeds the tolerance.
 
 All three honor the `abstol` (default ``10^{-8}``), `reltol` (``10^{-6}``) and
 `maxiters` (``10^{6}`` evaluations) keywords of [`hill_tensor`](@ref). At these
@@ -710,10 +886,76 @@ coefficients (see [Conventions](@ref th-notation-bases)):
 ```
 
 The sphere in a transversely isotropic medium has a closed form
-[barthelemyIJES2020_hilltrans; eqs. 24–29](@cite); carried back through the
-stretch, it gives the spheroid as follows
-[barthelemyIJES2020_hilltrans; eqs. 30–36](@cite). The acoustic parameters of
-the matrix are the square roots ``\gamma_1, \gamma_2`` of the two roots ``Z`` of
+[barthelemyIJES2020_hilltrans; eqs. 24–29](@cite), and carried back through the
+stretch it gives the spheroid [barthelemyIJES2020_hilltrans; eqs. 30–36](@cite).
+The derivation goes in three steps, each of them carried out on free symbols in
+the application [Hill tensors by transformation](@ref app-hill-transformation-ti).
+
+```@raw html
+<details><summary>Derivation: the sphere in the transformed medium, then the spheroid</summary>
+```
+
+*The transformed medium.* With
+``\boldsymbol{A} = \underline{e}_1\otimes\underline{e}_1 + \underline{e}_2\otimes\underline{e}_2 + \omega\,\underline{e}_3\otimes\underline{e}_3``,
+``\tilde{\mathbb{C}}`` is transversely isotropic about ``\underline{e}_3``, of
+constants ``\tilde{C}_{1111} = C_{1111}``, ``\tilde{C}_{1122} = C_{1122}``,
+``\tilde{C}_{1133} = C_{1133}/\omega^2``, ``\tilde{C}_{3333} = C_{3333}/\omega^4``
+and ``\tilde{C}_{2323} = C_{2323}/\omega^2``, and the Walpole coefficients of
+``\mathbb{P}`` are those of ``\tilde{\mathbb{P}} = \mathbb{P}(\boldsymbol{1},\tilde{\mathbb{C}})``
+divided by ``\omega^4``, ``1``, ``\omega^2``, ``1`` and ``\omega^2``.
+
+*The sphere.* On the unit sphere, in the colatitude ``\theta`` and the longitude
+``\varphi`` with ``z = \cos\theta``, ``\tilde{\mathbb{P}}`` is the average of
+``\underline{\zeta}\stackrel{s}{\otimes}\tilde{\boldsymbol{N}}\stackrel{s}{\otimes}\underline{\zeta}``,
+``\tilde{\boldsymbol{N}} = (\underline{\zeta}\cdot\tilde{\mathbb{C}}\cdot\underline{\zeta})^{-1}``.
+Medium and directions are invariant by the rotations about ``\underline{e}_3``,
+so that the integrand at ``\varphi`` is that at ``\varphi = 0`` rotated, and its
+average over ``\varphi`` is the projection of the integrand at ``\varphi = 0`` on
+the Walpole basis: the integral over ``\varphi`` costs nothing. At ``\varphi = 0``
+the acoustic tensor has the components
+
+```math
+\begin{aligned}
+\tilde{N}_{11} &= \frac{z^2(\tilde{C}_{3333}-\tilde{C}_{2323}) + \tilde{C}_{2323}}{q(z)},&
+\tilde{N}_{33} &= \frac{z^2(\tilde{C}_{2323}-\tilde{C}_{1111}) + \tilde{C}_{1111}}{q(z)},\\
+\tilde{N}_{13} &= -\frac{z\sqrt{1-z^2}\,(\tilde{C}_{1133}+\tilde{C}_{2323})}{q(z)},&
+\tilde{N}_{22} &= \frac{1}{r(z)},
+\end{aligned}
+```
+
+over the two denominators
+``q(z) = \tilde{C}_{2323}\tilde{C}_{3333}\bigl(z^2+\eta_1^2(1-z^2)\bigr)\bigl(z^2+\eta_2^2(1-z^2)\bigr)``
+and ``r(z) = \tilde{C}_{2323}\bigl(z^2+\eta_3^2(1-z^2)\bigr)``, where
+``\eta_1^2, \eta_2^2`` are the roots of the acoustic polynomial written with the
+constants of ``\tilde{\mathbb{C}}`` and
+``\eta_3^2 = (\tilde{C}_{1111}-\tilde{C}_{1122})/(2\tilde{C}_{2323})``. Each
+projected coefficient is then an even polynomial in ``z`` over ``q`` or ``r``, and
+the integral over ``z\in[-1,1]`` is a combination of
+
+```math
+\begin{gathered}
+\mathcal{I}_k(\eta) = \int_{-1}^{1}\frac{z^k\,\mathrm{d}z}{z^2+\eta^2(1-z^2)},
+\\
+\mathcal{J}_k(\eta_1,\eta_2) = \int_{-1}^{1}\frac{z^k\,\mathrm{d}z}{\bigl(z^2+\eta_1^2(1-z^2)\bigr)\bigl(z^2+\eta_2^2(1-z^2)\bigr)},
+\end{gathered}
+```
+
+``k = 0, 2, 4``, which are the integrals ``I_k(\eta^2)`` and
+``J_{k,0}(\eta_1^2,\eta_2^2)`` of [Degenerate shapes](@ref th-degenerate-integrals).
+
+*Back to the spheroid.* Substituting ``\omega^2 Y`` for the unknown divides the
+acoustic polynomial of ``\tilde{\mathbb{C}}`` by ``\omega^2``, which turns it into
+that of ``\mathbb{C}``: ``\eta_i = \omega\gamma_i``, and likewise
+``\eta_3 = \omega\gamma_3``. Writing the constants of ``\tilde{\mathbb{C}}`` in
+those of ``\mathbb{C}`` and dividing by the powers of ``\omega`` above gives the
+coefficients below.
+
+```@raw html
+</details>
+```
+
+The acoustic parameters of the matrix are the square roots ``\gamma_1, \gamma_2``
+of the two roots ``Z`` of
 
 ```math
 \begin{gathered}
@@ -728,9 +970,8 @@ C_{2323}C_{3333}\,Z^2
 taken with a positive real part. As ``\mathbb{C}`` is positive definite,
 ``\gamma_1`` and ``\gamma_2`` are either both real and positive or complex
 conjugates, so that everything below is real. With
-``a_i = \omega^2\gamma_i^2``, write ``J_n = J_{n,0}(a_1,a_2)`` and
-``I_n = I_n(a_3)`` for the one-dimensional integrals of a spheroid defined in
-[Degenerate shapes](@ref th-degenerate-integrals). The Walpole coefficients are
+``J_n = \mathcal{J}_n(\omega\gamma_1, \omega\gamma_2)`` and
+``I_n = \mathcal{I}_n(\omega\gamma_3)``, the Walpole coefficients are
 
 ```math
 \begin{aligned}
@@ -759,7 +1000,37 @@ isotropic matrix stored as transversely isotropic), for a disc and for a needle,
 and a square root of zero spoils the derivatives at an isotropic point.
 [Degenerate shapes](@ref th-degenerate-ti-spheroid) rewrites them in a form
 that stays exact to rounding everywhere, derivatives included, and that is the
-form the package evaluates.
+form the package evaluates; the application transcribes the formulas as
+written, and measures what they lose
+([The script of the paper, in Julia](@ref app-hill-transformation-script)).
+
+**Flat and needle limits.** As ``\omega\to0`` the spheroid flattens into a
+penny-shaped crack and
+``\mathbb{P} = \mathbb{P}^0 + \omega\,\mathbb{P}^1 + O(\omega^2)``, with
+``\mathbb{P}^0 = \underline{e}_3\stackrel{s}{\otimes}(\underline{e}_3\cdot\mathbb{C}\cdot\underline{e}_3)^{-1}\stackrel{s}{\otimes}\underline{e}_3``,
+of Walpole coefficients ``1/C_{3333}`` and ``1/(2C_{2323})`` on ``\mathbb{W}_1`` and
+``\mathbb{W}_6``, and ``\mathbb{P}^1`` in closed form in ``\gamma_1, \gamma_2, \gamma_3``
+[barthelemyIJES2020_hilltrans; eqs. 37–39](@cite). The crack compliance
+``\mathbb{H} = \lim_{\omega\to0}\omega\,\mathbb{Q}^{-1}``, with
+``\mathbb{Q} = \mathbb{C} - \mathbb{C}:\mathbb{P}:\mathbb{C}`` the second Hill
+tensor ([`second_hill_tensor`](@ref)), depends on ``\mathbb{P}^1`` only and has
+two Walpole coefficients
+[barthelemyIJES2020_hilltrans; eqs. 40–41](@cite):
+
+```math
+\mathbb{H} = -\frac{\mathbb{W}_1}{C_{3333}^2 p^1_1 + 2C_{1133}^2 p^1_2 + 2\sqrt2\,C_{3333}C_{1133}\,p^1_3}
+- \frac{\mathbb{W}_6}{4\,C_{2323}^2\,p^1_6},
+```
+
+the transversely isotropic case of the crack opening tensors of
+[COD tensors](@ref th-cod-tensors). As ``\omega\to\infty`` the spheroid tends to
+a circular cylinder and ``p_2 \to 1/(2C_{1111})``,
+``p_5 \to 1/(4C_{1111}) + 1/(2(C_{1111}-C_{1122}))``,
+``p_6 \to 1/(4C_{2323})``, ``p_1, p_3 \to 0``, with corrections in
+``\ln\omega/\omega^2`` [barthelemyIJES2020_hilltrans; eq. 42](@cite). The
+expansions are derived symbolically, and held to the package, in
+[The flat spheroid and the crack](@ref app-hill-transformation-flat) and
+[The needle](@ref app-hill-transformation-needle).
 
 The dispatcher routes a `TensTI{4}` matrix combined with a coaxial
 `Ellipsoid{3, Spherical|Prolate|Oblate}` to this path by default; coaxiality is

@@ -1,5 +1,47 @@
 # Changelog
 
+## v0.20.1 — residue sums guarded by their rounding error; the 2020 paper on Hill tensors step by step
+
+A patch release, a fix. The residue algorithm of the Hill tensor
+(`method = :residues`) sums, at each angle of its outer quadrature, the residues
+of a rational function by groups of close poles. Next to the directions of a
+plane of isotropy of the matrix, the roots of the acoustic polynomial meet at
+``i`` and these sums cancel by four or five orders of magnitude: their
+rounding, ``10^{-11}`` of the result, kept the outer quadrature from converging
+at tight tolerances, and a spheroid elongated along the axis of a transversely
+isotropic matrix took a million evaluations and 35 s for one tensor, still
+``2\times10^{-11}`` off. The sums now carry a running error bound, the same
+recurrences on moduli, and where the bound exceeds the tolerance the inner
+integral is computed by quadrature of its definition instead: 285 evaluations,
+0.02 s and ``2\times10^{-16}`` against the closed form. The crack opening
+tensor by residues carries the same guard. Elsewhere the results and the cost
+are unchanged.
+
+### Fixed
+
+- `hill_tensor(…; method = :residues)` and `cod_tensor(…; method = :residues)`:
+  residue sums whose rounding error exceeds the tolerance are replaced by a
+  quadrature of the same integral, so that the result meets the tolerance asked
+  for, next to a plane of isotropy included.
+
+### Documentation
+
+- *Hill polarization tensors*: the residue algorithm derived in full, after
+  Masson (2008): the change of variable that makes the inner integral rational,
+  the keyhole contour, the sums over groups of close poles with their proof and
+  their rate, the recurrences, the running error bound and the fallback. The
+  closed form of a spheroid in a coaxial transversely isotropic matrix is
+  derived in the order of Barthélémy (2020), with its flat limit (the crack
+  compliance) and its needle limit; *Degenerate shapes* writes the integrals of
+  that paper in the variables of the package.
+- A new application, *Hill tensors by transformation, the 2020 paper step by
+  step*, goes through the paper in Julia: the transformation on the definition
+  of the Hill tensor, the elliptically orthotropic and transversely isotropic
+  closed forms with every identity proved in SymPy, the integrals of its
+  Appendix D, its Python script transcribed with Figure 1, and both limits, held
+  to the numerical back-ends of the package. The script `07_hill_ti_coaxial.jl`,
+  which it supersedes, is removed.
+
 ## v0.20.0 — the second Hill tensor, and Hill tensors by reduction to a sphere
 
 A minor release. The second Hill tensor ``\mathbb{Q} = \mathbb{C} - \mathbb{C}:\mathbb{P}:\mathbb{C}``,

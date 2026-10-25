@@ -20,7 +20,8 @@ acoustic polynomial, evaluated here by the residue theorem. Float64 only.
 function _Qnn_star_residue(
         C::AbstractArray{Float64, 4},
         ξs::AbstractVector,
-        n̂::AbstractVector
+        n̂::AbstractVector;
+        rtol::Real = 64 * eps()
     )
     # ζ(z) = ξs + z·n̂  ⇒  α₀ζ = ξs, α₁ζ = n̂
     sys = MFH_Core._build_poly_system(C, ξs, n̂)
@@ -39,10 +40,21 @@ function _Qnn_star_residue(
     poles = vcat(sys.roots_uhp, conj.(sys.roots_uhp))
     lead = ComplexF64(coeffs(sys.Q)[end])
     result = zeros(Float64, 3, 3)
+    err = 0.0
     for members in MFH_Core._pole_clusters(poles, 3; logfactor = false)
         c, H, _ = MFH_Core._cluster_weights(poles, members, lead; logfactor = false)
         result .-= real.(im .* [transpose(MFH_Core._taylor_at(b, c, length(H))) * H for b in numer])
+        # The same sums on moduli bound the terms they add up (`_cluster_weights`).
+        _, B, _ = MFH_Core._cluster_weights(poles, members, lead; logfactor = false, bound = Val(true))
+        err += MFH_Core._RESIDUE_ROUNDING * eps() *
+            maximum(transpose(MFH_Core._taylor_at(abs.(b), abs(c), length(B))) * B for b in numer)
     end
 
+    # Residue sums that cancel, which clusters of roots close to merging would
+    # make, are detected by their running error bound and replaced by the
+    # quadrature of the same kernel.
+    scale = maximum(abs, result)
+    err <= rtol * scale ||
+        return _Qnn_star_nestedquadgk(C, ξs, n̂; abstol = rtol * scale, reltol = rtol)
     return (result + transpose(result)) / 2
 end

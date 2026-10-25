@@ -183,3 +183,21 @@ end
             components_canon(hill_tensor(ell, C; method = :nestedquadgk, tight...)) rtol = 1.0e-10
     end
 end
+
+
+@testset "Hill residue — spheroid elongated along a TI axis, tight tolerance" begin
+    # The directions of the plane of isotropy put the roots of the acoustic
+    # polynomial at i, where the residue sums cancel. Evaluated anyway they were
+    # 1e-11 off, which kept the outer quadrature from converging: a million
+    # evaluations and 35 s for one tensor. Against the closed form.
+    CR = MeanFieldHomogenization.Core
+    C = tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, (0.0, 0.0, 1.0))
+    for ω in (2.0, 20.0)
+        ell = Ellipsoid(1.0, 1.0, ω)
+        CR.reset_counters!()
+        P = CR.with_integrand_counting(() -> hill_tensor(ell, C; method = :residues, abstol = 1.0e-13, reltol = 1.0e-12))
+        @test CR.read_counters().integrand_evals < 2000
+        P_ref = components_canon(hill_tensor(ell, C))
+        @test maximum(abs, components_canon(P) - P_ref) <= 1.0e-13 * maximum(abs, P_ref)
+    end
+end

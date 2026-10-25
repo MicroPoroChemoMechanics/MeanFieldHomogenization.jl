@@ -20,6 +20,7 @@ the pages it builds on.
 
 | Page | What it models |
 | :--- | :--- |
+| [Hill tensors by transformation, the 2020 paper step by step](@ref app-hill-transformation) | the Hill tensor of an ellipsoid as that of a sphere in a transformed medium, and the closed form it gives for a spheroid in a coaxial transversely isotropic matrix, derived symbolically and held to the numerical back-ends |
 | [The cluster model on cubic arrays](@ref app-cluster-model) | inclusions that see where their neighbors are: the pairwise interactions within a cluster, on periodic arrays |
 | [The equivalent inclusion method, against a published table](@ref app-eim-assembly) | the Galerkin form of the Lippmann–Schwinger equation on a planar assembly of disks, against a published table |
 | [A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate) | an old aggregate wrapped in a shell of adhered mortar, off center, solved by finite elements and checked against the concentric layered sphere |

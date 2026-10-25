@@ -139,3 +139,29 @@ end
         @test W ≈ Wq rtol = 1.0e-11
     end
 end
+
+@testset "inner integral of the Hill tensor next to a plane of isotropy" begin
+    # A spheroid elongated along the axis of a transversely isotropic matrix: as
+    # the direction of integration enters the plane of isotropy (φ → π/2), the
+    # roots of Q meet at i and the residue sums cancel, by up to five orders of
+    # magnitude. At every φ the running error bound covers the error of the sums,
+    # and the weights returned, by quadrature where the bound exceeds the
+    # tolerance, are those of the definition.
+    quadgk = MeanFieldHomogenization.Core.QuadGK.quadgk
+    C₀ = TensND.tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, (0.0, 0.0, 1.0))
+    ell = Ellipsoid(1.0, 1.0, 2.0)
+    η, ω = ell.semi_axes[2] / ell.semi_axes[1], ell.semi_axes[3] / ell.semi_axes[1]
+    C = Float64.(Array(TensND.components(C₀, ell.basis)))
+    for φ in (0.3, 0.8, 1.2, 1.5, 1.5707, π / 2)
+        sys = _CR._build_poly_system(C, [cos(φ), sin(φ) / η, 0.0], [0.0, 0.0, 1 / ω])
+        Wq = map(0:6) do n
+            f(t) = t^(7 - n) * ((t^2 - 1) / 2)^n / ((1 + t^2)^2 * t^6 * real(sys.Q((t^2 - 1) / (2t))))
+            2 * quadgk(f, 0.0, 1.0, Inf; rtol = 1.0e-15)[1]
+        end
+        p = _EL._hill_poles(sys.roots_uhp)
+        clusters = _CR._pole_clusters(p.poles, p.nupper; logfactor = true)
+        W_sums, err = _EL._hill_line_sums(p, clusters, _CR.Polynomials.coeffs(sys.Q)[end] / 64)
+        @test maximum(abs, W_sums - Wq) <= err
+        @test maximum(abs, _EL._hill_line_weights(sys.Q, sys.roots_uhp; rtol = 1.0e-14) - Wq) <= 1.0e-14 * maximum(abs, Wq)
+    end
+end

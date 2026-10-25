@@ -19,8 +19,8 @@
 # scripts go further on individual points: `01_auxiliary_tensors.jl` for the
 # geometric tensors ``\mathbb{I}^A, \mathbb{U}^A, \mathbb{V}^A`` underneath,
 # `03_hill_conductivity.jl` for the 2nd-order transport counterpart,
-# `06_cylinder.jl` for the infinite-cylinder limit and `07_hill_ti_coaxial.jl`
-# for the transversely-isotropic closed form.
+# `06_cylinder.jl` for the infinite-cylinder limit and
+# `98_hill_transformation_2020.jl` for the transversely isotropic closed form.
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
