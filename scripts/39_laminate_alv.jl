@@ -160,7 +160,9 @@ C33i = [blk(Mi, i)[3, 3] for i in eachindex(ts)]
 # ## Where to go next
 #
 # The laminate is the one microstructure whose aging response needs no scheme.
-# [Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities)
-# differentiates the Volterra assembly with respect to the parameters of such a
-# calculation, and the calls of the laminate cell are documented in
+# The derivatives used throughout these tutorials have their own group, from
+# [Derivatives and sensitivities](@ref tut-sensitivities); the Volterra assembly
+# is differentiated in
+# [Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities),
+# and the calls of the laminate cell are documented in
 # [Laminates — periodic multilayer cells](@ref man-laminates).

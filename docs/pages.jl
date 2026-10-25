@@ -139,29 +139,35 @@ pages = [
             "manual/elliptic_examples.md",
         ],
     ],
-    # One learning path, grouped by theme rather than by how the page
-    # happens to be produced. Pages under `tutorials/generated/` are built
-    # from `scripts/` by Literate (see `docs/literate.jl`); that is an
-    # implementation detail the reader has no reason to care about, so they
-    # sit alongside the hand-written ones.
+    # The same chapters as Theory, in the same order, so that a tutorial is
+    # found where its theory is: first steps, then the problems of a single
+    # heterogeneity (the Eshelby problem, cracks, morphological patterns), then
+    # the schemes that turn them into effective properties, then the extensions
+    # to conductivity and viscoelasticity. Two groups have no theory chapter of
+    # their own: differentiation and solvers, and symbolic computation. Pages
+    # under `tutorials/generated/` are built from `scripts/` by Literate (see
+    # `docs/literate.jl`), an implementation detail; they sit with the others.
     "Tutorials" => [
         "tutorials/index.md",
-        "Fundamentals" => [
+        "First steps" => [
             "tutorials/first_estimate.md",
             "tutorials/bounds_and_schemes.md",
-            "tutorials/porous_materials.md",
-            "tutorials/porous_benchmark.md",
-            "tutorials/transport.md",
-            "tutorials/differential_paths.md",
-            "tutorials/differential_loading_paths.md",
-            "tutorials/levin.md",
         ],
-        "Inclusions, geometries and orientation" => [
+        "The Eshelby problem" => [
             "tutorials/generated/hill_tensors.md",
+            "tutorials/generated/hill_reduction.md",
+            "tutorials/generated/symmetrization.md",
+            "tutorials/generated/custom_inclusion_contract.md",
+            "tutorials/generated/neural_inclusion.md",
+            "tutorials/generated/neural_excentered_sphere.md",
+        ],
+        "Cracks and degenerate shapes" => [
             "tutorials/cracks.md",
             "tutorials/generated/crack_routes.md",
             "tutorials/generated/crack_distributions.md",
             "tutorials/fe_crack.md",
+        ],
+        "The generalized Eshelby problem — morphological patterns" => [
             "tutorials/generated/layered_sphere.md",
             "tutorials/generated/layered_sphere_local_fields.md",
             "tutorials/generated/layered_spheroid_effective.md",
@@ -171,26 +177,23 @@ pages = [
             # calibrated against them and then taken past what they cover.
             "tutorials/axi_layered_spheroid.md",
             "tutorials/generated/nano_spheroids.md",
+        ],
+        # As in Theory: the laminate is solved exactly rather than estimated,
+        # and the N-body assemblies need the positions; they are schemes all the
+        # same. Levin's theorem closes the group, as it closes the theory one.
+        "Homogenization schemes" => [
+            "tutorials/porous_materials.md",
+            "tutorials/differential_paths.md",
             "tutorials/generated/laminate.md",
             "tutorials/generated/laminate_interfaces.md",
-            "tutorials/generated/symmetrization.md",
-            "tutorials/generated/custom_inclusion_contract.md",
-            "tutorials/generated/neural_inclusion.md",
-            "tutorials/generated/neural_excentered_sphere.md",
-        ],
-        # After the inclusion families, since an N-body tutorial assumes
-        # the reader knows them. `nano_spheroids` is NOT here: it condenses
-        # a single particle's interface into an equivalent stiffness and
-        # feeds an ordinary Mori-Tanaka — no N-body content at all.
-        #
-        # `cluster_model` and `eim_assembly` used to sit here and are now
-        # under Applications: each exists to reproduce one paper's numbers
-        # — Molinari & El Mouden's figures and a published table — which is
-        # what an application is, where a tutorial teaches the library.
-        "Interacting particle assemblies" => [
+            "tutorials/generated/laminate_multiscale.md",
             "tutorials/generated/multiscale_assemblies.md",
+            "tutorials/levin.md",
         ],
-        "Beyond elasticity" => [
+        "Extension to conductivity" => [
+            "tutorials/transport.md",
+        ],
+        "Extension to viscoelasticity" => [
             "tutorials/viscoelasticity.md",
             "tutorials/generated/rheological_models.md",
             "tutorials/generated/kelvin_maxwell.md",
@@ -207,11 +210,10 @@ pages = [
             "tutorials/nonlinear_solvers.md",
             "tutorials/generated/secant_elastoplasticity.md",
         ],
-        "Interoperability and tools" => [
+        "Symbolic computation" => [
             "tutorials/symbolic_spheres.md",
             "tutorials/symbolic_laminate.md",
             "tutorials/symbolic_viscoelasticity.md",
-            "tutorials/generated/laminate_multiscale.md",
         ],
     ],
     # Grouped by the material or the result, not by the machinery — a

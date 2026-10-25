@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/86_crack_distributions.jl"
 
 # [Crack distributions: isotropic or parallel](@id tut-crack-distributions)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/86_crack_distributions.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/86_crack_distributions.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/86_crack_distributions.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [Cracks and crack density](@ref tut-cracks), which declares a
     crack phase by its density, and the theory pages

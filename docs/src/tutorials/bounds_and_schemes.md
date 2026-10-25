@@ -115,9 +115,11 @@ random).
 
 ## Where to go next
 
-The inclusions above are stiffer than the matrix, which is the easy case.
-[Porous materials and the self-consistent trap](@ref tut-porous-materials)
-takes the opposite limit, a phase whose stiffness vanishes, where the
-self-consistent iteration stops being reliable and a compliance-form variant
-takes over. The differential scheme, only sketched here, has its own tutorial,
+Every scheme above rests on the Hill tensor of its inclusions, computed out of
+sight. [Hill polarization tensors in practice](@ref tut-hill-tensors) opens the
+tutorials on the problem of a single heterogeneity by computing that tensor
+explicitly. The schemes come back after those, starting from the limit opposite
+to the stiff inclusions above, a phase whose stiffness vanishes:
+[Porous materials: the self-consistent trap and every scheme](@ref tut-porous-materials).
+The differential scheme, only sketched here, has its own tutorial,
 [The differential scheme and path dependence](@ref tut-differential-paths).

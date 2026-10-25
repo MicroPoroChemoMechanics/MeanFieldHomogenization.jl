@@ -612,10 +612,14 @@ serves [the concave pores](@ref app-concave-pores).
 
 ## Where to go next
 
-The surrogate of the last section is the first of two uses of a trained network
-in the library; [Replacing a finite-element solve by a neural surrogate](@ref tut-neural-excentered-sphere)
-trains one on a different morphology, the sphere with an eccentric core. The
-cell is also used for an axisymmetric cavity in
+A particle whose interface is a membrane of its own, rather than a layer of
+finite thickness, is condensed into an equivalent particle in
+[Nanocomposites: the equivalent particle](@ref tut-nano-spheroids), the last
+tutorial of this group. The surrogate of the last section is one of two uses of
+a trained network in the library; the other,
+[Replacing a finite-element solve by a neural surrogate](@ref tut-neural-excentered-sphere),
+trains one on the sphere with an eccentric core. The cell is also used for an
+axisymmetric cavity in
 [Concave pores: superspheres and superspheroids](@ref app-concave-pores).
 
 * [The finite Eshelby cell](@ref th-corrected-cell) — the correction, and why

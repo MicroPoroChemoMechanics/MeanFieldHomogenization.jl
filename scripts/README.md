@@ -204,8 +204,9 @@ the opposite, so anything transcribed from his papers is flipped on the way in.
 | `92_multiscale_assemblies.jl` | — | **published tutorial** (`multiscale_assemblies`): an assembly as the inner and as the outer cell of the declarative multiscale seam, the cubic anisotropy a cluster estimate produces (and the bulk modulus that stays exactly Mori-Tanaka), a three-level chain that needs the anisotropic Green operator, a nested sensitivity, and the cost of an anisotropic reference |
 | `93_eim_disk_assembly_2d.jl` | equivalent inclusion method, Table 1 | **published tutorial** (`eim_assembly`): 160 circular pores at φ = 0.4 in a circular SVE of radius 20a, plane strain, ν₀ = 0.3 — reproduces the p = 0 row (0.310 μ₀) by Monte-Carlo, with the HS bound and the FEM reference for scale |
 | `96_nano_spheroids.jl` (published under *Inclusions*, not here: no N-body content) | equivalent particle, Lemarchand & Brisard (2016), Eqs. (72)–(78) | **published tutorial** (`nano_spheroids`): the interface stiffness ℂ^int across aspect ratios, its three limiting cases (sphere, platelet, nanofiber) reproduced exactly, and the size effect it produces through an ordinary Mori-Tanaka estimate |
+| `97_hill_reduction.jl` (published under *The Eshelby problem*, not here: no N-body content; the 00-09 block is full) | Barthélémy (2020), eqs. 8, 14, 19–36 | **published tutorial** (`hill_reduction`): the Hill tensor of an ellipsoid as that of a sphere in the stretched medium 𝔹:ℂ:𝔹, computed both ways on a spheroid in a coaxial transversely isotropic matrix (closed forms), a rotated triaxial ellipsoid in a triclinic matrix (residues against a cubature on the sphere) and an elliptically orthotropic matrix (the isotropic closed form against a cubature) |
 
-Numbers 94, 95 and 97–99 are free. What is deliberately **not** covered:
+Numbers 95, 98 and 99 are free. What is deliberately **not** covered:
 Table 2 of Brisard et al. (polydisperse spheres at φ = 0.45) needs a polydisperse
 close-packing generator the package does not have, and the slender-fiber
 specialization of Martin et al. (2023) needs the axial polynomial enrichment,

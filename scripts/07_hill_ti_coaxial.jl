@@ -3,7 +3,7 @@
 #
 #  Demonstration of the closed-form analytical Hill polarization tensor for
 #  a spheroidal inclusion coaxial with a transversely isotropic matrix
-#  (Barthélémy 2020, eqs. 49–58).
+#  (Barthélémy 2020, eqs. 30–36).
 #
 #  This script reproduces Figure 1 of the paper, plotting the Eshelby
 #  components Sᵢⱼ as a function of the spheroid aspect ratio

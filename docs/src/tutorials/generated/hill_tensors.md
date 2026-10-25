@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/02_hill_elasticity.jl"
 
 # [Hill polarization tensors in practice](@id tut-hill-tensors)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/02_hill_elasticity.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/02_hill_elasticity.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/02_hill_elasticity.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [A first homogenization](@ref tut-first-estimate), whose
     dilute estimate is rebuilt by hand in §5, and the theory pages
@@ -310,12 +315,14 @@ and the bulk modulus comes with it from the same call.
 
 ## Where to go next
 
-The oblate spheroid of §1 has a limit that the volume fraction cannot follow:
-as the aspect ratio vanishes, the inclusion becomes a crack, and
-[Cracks and crack density](@ref tut-cracks) replaces the fraction by a density
-and the Hill tensor by the crack opening displacement tensor. Every inclusion
-family that `hill_tensor` accepts, with its constructor and its options, is
-listed in [The inclusion zoo](@ref man-inclusion-gallery).
+Every Hill tensor above is computed directly on its ellipsoid.
+[Hill tensors by reduction to a sphere](@ref tut-hill-reduction) computes the
+same tensors a second way, from a sphere in a transformed medium, and checks
+that both routes agree. The oblate spheroid of §1 has a limit that the volume
+fraction cannot follow: as the aspect ratio vanishes, the inclusion becomes a
+crack, the subject of [Cracks and crack density](@ref tut-cracks). Every
+inclusion family that `hill_tensor` accepts, with its constructor and its
+options, is listed in [The inclusion zoo](@ref man-inclusion-gallery).
 
 ---
 

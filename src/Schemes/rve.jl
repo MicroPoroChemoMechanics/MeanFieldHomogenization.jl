@@ -1061,6 +1061,10 @@ function _validate_closure(c::StrictFractions, rve::RVE)
     return rve
 end
 
+# The rounding of a sum of n fractions, n ulps of one: a complement negative by no
+# more than that comes from fractions that sum to one, and is not an excess.
+_rounding_margin(rve::RVE, f) = length(rve.amounts) * eps(float(TensND.primal_type(typeof(f))))
+
 function _validate_closure(c::ComplementFraction, rve::RVE)
     rve.rest_name === nothing && throw(
         ArgumentError(
@@ -1069,7 +1073,7 @@ function _validate_closure(c::ComplementFraction, rve::RVE)
         )
     )
     f = remainder_volume_fraction(rve)
-    if is_hard_numeric(f) && f < 0
+    if is_hard_numeric(f) && f < -_rounding_margin(rve, f)
         msg = "phase :$(rve.rest_name) takes up the volume complement 1 - Σ f = " *
             "$(f) < 0 — the declared fractions already exceed 1"
         c.on_negative === :error ? throw(ArgumentError(msg)) : @warn msg

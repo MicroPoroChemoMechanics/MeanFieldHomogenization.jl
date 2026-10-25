@@ -74,6 +74,7 @@ const PUBLISHED_SCRIPTS = [
     "92_multiscale_assemblies.jl" => "multiscale_assemblies",
     "93_eim_disk_assembly_2d.jl" => "eim_assembly",
     "96_nano_spheroids.jl" => "nano_spheroids",
+    "97_hill_reduction.jl" => "hill_reduction",
 ]
 
 # `81_fe_crack_eshelby.jl`, `82_fe_crack_schemes.jl`,
@@ -136,6 +137,31 @@ end
 #      or the deployed site links to files the CI never produced.
 const BUILD_NOTEBOOKS = get(ENV, "MFH_DOCS_NOTEBOOKS", "0") == "1"
 
+const SCRIPTS_URL = "https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/"
+
+"""
+    with_script_link(script) -> Function
+
+A Literate `preprocess` that puts, under the title of the page, where its code
+lives as one runnable file: the blocks of a generated page are the script
+itself, so a reader can copy it in one piece or run it end to end.
+"""
+function with_script_link(script)
+    return function (content)
+        lines = split(content, '\n'; keepempty = true)
+        i = findfirst(l -> startswith(l, "# # "), lines)
+        i === nothing && return content
+        tip = [
+            "#",
+            "# !!! tip \"The whole page as one script\"",
+            "#     Every block of this page, in order, is [`scripts/$(script)`]($(SCRIPTS_URL)$(script)).",
+            "#     From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`",
+            "#     once, then `julia scripts/$(script)`, runs it end to end.",
+        ]
+        return join(vcat(lines[1:i], tip, lines[(i + 1):end]), '\n')
+    end
+end
+
 function build_tutorial_pages()
     check_pkg_markers()
     mkpath(TUTORIAL_MD_DIR)
@@ -145,7 +171,7 @@ function build_tutorial_pages()
     for (script, page) in PUBLISHED_SCRIPTS
         src = joinpath(SCRIPTS_DIR, script)
         isfile(src) || error("docs/literate.jl: published script not found: $src")
-        Literate.markdown(src, page_md_dir(page); documenter = true, name = page)
+        Literate.markdown(src, page_md_dir(page); documenter = true, name = page, preprocess = with_script_link(script))
         Literate.script(src, CLEAN_SCRIPT_DIR; name = page)
         BUILD_NOTEBOOKS && Literate.notebook(src, NOTEBOOK_DIR; name = page)
     end

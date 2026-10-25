@@ -75,7 +75,7 @@ export homogenize, validate_cell, get_param, set_param
 export cell_member_names, cell_container_property, cell_set_property, cell_has_property
 export Homogenized, NestedParameter, nested, resolve_property, has_nested_property
 export dimension, element_type, inclusion_basis, shape_trait, shape_tensor
-export eshelby_tensor
+export eshelby_tensor, second_hill_tensor
 export is_homogeneous_inclusion
 
 # Traits — algorithms

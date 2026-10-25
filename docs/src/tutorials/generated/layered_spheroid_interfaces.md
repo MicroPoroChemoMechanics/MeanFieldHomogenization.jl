@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/35_spheroid_interfaces.jl"
 
 # [Imperfect interfaces: what they do to the local fields](@id tut-layered-spheroid-interfaces)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/35_spheroid_interfaces.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/35_spheroid_interfaces.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/35_spheroid_interfaces.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective),
     which builds the confocal particle and its interfaces, and the theory page

@@ -504,6 +504,50 @@ integral, of a continuous integrand, vanishes only if
 </details>
 ```
 
+### [Reduction to a sphere](@id th-hill-reduction-sphere)
+
+Every ellipsoid can be described by a symmetric positive definite
+``\boldsymbol{A} = \boldsymbol{R}\cdot\mathrm{diag}(a,b,c)\cdot\boldsymbol{R}^{T}``,
+its semi-axes and their orientation. In the ``\underline{\zeta}`` form above,
+the shape then enters only through the vector
+``\boldsymbol{A}^{-1}\cdot\underline{\zeta}``, and pulling
+``\boldsymbol{A}^{-1}`` out of the integral moves it onto the stiffness: the
+integrand becomes that of a **sphere** in the medium
+
+```math
+\tilde{\mathbb{C}} = \bigl(\boldsymbol{A}^{-1}\stackrel{s}{\boxtimes}\boldsymbol{A}^{-1}\bigr)
+:\mathbb{C}:
+\bigl(\boldsymbol{A}^{-1}\stackrel{s}{\boxtimes}\boldsymbol{A}^{-1}\bigr),
+```
+
+which the affine stretch mapping the ellipsoid onto the unit ball makes of
+``\mathbb{C}``. The Hill tensor of the ellipsoid follows from that of the sphere
+by the same tensor on each side
+[barthelemyIJES2020_hilltrans; eq. 8](@cite):
+
+```math
+\boxed{\;
+\mathbb{P}(\boldsymbol{A},\mathbb{C})
+= \bigl(\boldsymbol{A}^{-1}\stackrel{s}{\boxtimes}\boldsymbol{A}^{-1}\bigr)
+:\mathbb{P}(\boldsymbol{1},\tilde{\mathbb{C}}):
+\bigl(\boldsymbol{A}^{-1}\stackrel{s}{\boxtimes}\boldsymbol{A}^{-1}\bigr).
+\;}
+```
+
+The same reduction was reached by [pouya2000, pouya2006](@citet) from the field
+equations. It has two uses. A numerical method need only treat the sphere, where
+the denominator ``\|\boldsymbol{A}\cdot\underline{\xi}\|^{3}`` of the
+``\underline{\xi}`` form is one. And a family of matrices that the stretch maps
+onto one whose spherical Hill tensor is known inherits a closed form: an
+elliptically orthotropic matrix
+``\lambda\,\boldsymbol{D}\otimes\boldsymbol{D}+2\mu\,\boldsymbol{D}\stackrel{s}{\boxtimes}\boldsymbol{D}``
+maps onto an isotropic one [barthelemyIJES2020_hilltrans; eq. 14](@cite), and a
+transversely isotropic matrix coaxial with a spheroid stays transversely
+isotropic, which gives the closed form of
+[the section below](@ref th-hill-ti-coaxial). The tutorial
+[Hill tensors by reduction to a sphere](@ref tut-hill-reduction) computes
+several Hill tensors both ways.
+
 ### Algorithms for an arbitrary anisotropy
 
 Inverting the acoustic tensor ``\underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi}``
@@ -646,12 +690,18 @@ Implementation: `src/Elasticity/hill_3d_iso.jl` and
 
 ### [Transversely isotropic matrix coaxial with a spheroid](@id th-hill-ti-coaxial)
 
-When the matrix is transversely isotropic and its symmetry axis is **parallel to
-the spheroid axis**, a fully analytical path exists
-[barthelemyIJES2020_hilltrans](@cite). The Hill tensor is transversely isotropic
-too, hence five Walpole coefficients (see
-[Conventions](@ref th-notation-bases) — there is no
-``P_4`` because ``\mathbb{P}`` is major-symmetric):
+Let the spheroid have its axis along ``\underline{e}_3`` and the aspect ratio
+``\omega`` (axial over transverse semi-axis), so that
+``\boldsymbol{A} = \underline{e}_1\otimes\underline{e}_1 + \underline{e}_2\otimes\underline{e}_2
++ \omega\,\underline{e}_3\otimes\underline{e}_3`` up to a scale, and let the
+matrix be transversely isotropic about the same axis, with the five constants
+``C_{1111}, C_{1122}, C_{1133}, C_{3333}, C_{2323}``. The stretch of the
+[reduction to a sphere](@ref th-hill-reduction-sphere) divides each component of
+``\mathbb{C}`` by ``\omega`` to the number of its indices equal to 3: the
+transformed matrix is still transversely isotropic, and so are the Hill tensors
+of the sphere in it and of the spheroid in ``\mathbb{C}``
+[barthelemyIJES2020_hilltrans; eqs. 18–20](@cite). The latter has five Walpole
+coefficients (see [Conventions](@ref th-notation-bases)):
 
 ```math
 \mathbb{P} = P_1\,\mathbb{W}_1 + P_2\,\mathbb{W}_2
@@ -659,20 +709,57 @@ too, hence five Walpole coefficients (see
            + P_5\,\mathbb{W}_5 + P_6\,\mathbb{W}_6 .
 ```
 
-The five coefficients are closed-form combinations of `acosh` and complex square
-roots [barthelemyIJES2020_hilltrans; eqs. 53–58](@cite), depending on
-the aspect ratio ``\omega`` (axial / transverse) and the five independent
-constants ``(C_{1111}, C_{1122}, C_{1133}, C_{3333}, C_{2323})``.
-They involve integrals over ``z\in[-1,1]`` of rational functions of
-``D(a,z) = a + (1-a)\,z^2``, for ``a = \omega^2\gamma_i^2`` with ``\gamma_i^2``
-the roots of the acoustic polynomial, and for
-``a = \omega^2(C_{1111}-C_{1122})/(2C_{2323})``
-[barthelemyIJES2020_hilltrans](@cite). As written, these closed forms cancel
-near the sphere, at coincident roots (an isotropic matrix stored as
-transversely isotropic), for a disc and for a needle, and a square root of
-zero spoils the derivatives at an isotropic point. How the package evaluates
-them so that they stay exact to rounding everywhere, derivatives included, is
-in [Degenerate shapes](@ref th-degenerate-shapes).
+The sphere in a transversely isotropic medium has a closed form
+[barthelemyIJES2020_hilltrans; eqs. 24–29](@cite); carried back through the
+stretch, it gives the spheroid as follows
+[barthelemyIJES2020_hilltrans; eqs. 30–36](@cite). The acoustic parameters of
+the matrix are the square roots ``\gamma_1, \gamma_2`` of the two roots ``Z`` of
+
+```math
+\begin{gathered}
+C_{2323}C_{3333}\,Z^2
++ \bigl(C_{1133}^2 + 2\,C_{1133}C_{2323} - C_{1111}C_{3333}\bigr)\,Z
++ C_{1111}C_{2323} = 0,
+\\
+\gamma_3^2 = \frac{C_{1111}-C_{1122}}{2\,C_{2323}},
+\end{gathered}
+```
+
+taken with a positive real part. As ``\mathbb{C}`` is positive definite,
+``\gamma_1`` and ``\gamma_2`` are either both real and positive or complex
+conjugates, so that everything below is real. With
+``a_i = \omega^2\gamma_i^2``, write ``J_n = J_{n,0}(a_1,a_2)`` and
+``I_n = I_n(a_3)`` for the one-dimensional integrals of a spheroid defined in
+[Degenerate shapes](@ref th-degenerate-integrals). The Walpole coefficients are
+
+```math
+\begin{aligned}
+P_1 &= \frac{(C_{2323}-\omega^2 C_{1111})\,J_4 + \omega^2 C_{1111}\,J_2}
+            {2\,C_{2323}C_{3333}},\\
+P_2 &= \frac{\omega^2}{4\,C_{2323}C_{3333}}\,\Bigl[(\omega^2 C_{2323}-C_{3333})\,J_4
+            + (C_{3333}-2\,\omega^2 C_{2323})\,J_2\\
+    &\qquad + \omega^2 C_{2323}\,J_0\Bigr],\\
+P_3 &= \omega^2\,\frac{(C_{2323}+C_{1133})\,(J_4-J_2)}{2\sqrt2\,C_{2323}C_{3333}},\\
+P_5 &= \frac{P_2}{2} + \omega^2\,\frac{I_0-I_2}{8\,C_{2323}},\\
+P_6 &= \frac{1}{8\,C_{2323}C_{3333}}\,\Bigl[(\omega^4 C_{1111}+C_{3333}+2\,\omega^2 C_{1133})\,J_4\\
+    &\qquad - 2\,\omega^2(\omega^2 C_{1111}+C_{1133})\,J_2 + \omega^4 C_{1111}\,J_0\Bigr]
+       + \frac{I_2}{8\,C_{2323}}.
+\end{aligned}
+```
+
+**A sphere** is coaxial with every axis: at ``\omega = 1`` these are the
+coefficients of a sphere in a transversely isotropic matrix, those of the
+transformed problem above with ``\tilde{\mathbb{C}} = \mathbb{C}``
+[barthelemyIJES2020_hilltrans; eq. 29](@cite). A sphere in a `TensTI` matrix
+therefore takes this closed form whatever the axis of the matrix, with no
+quadrature.
+
+As written, the coefficients cancel near the sphere, at coincident roots (an
+isotropic matrix stored as transversely isotropic), for a disc and for a needle,
+and a square root of zero spoils the derivatives at an isotropic point.
+[Degenerate shapes](@ref th-degenerate-ti-spheroid) rewrites them in a form
+that stays exact to rounding everywhere, derivatives included, and that is the
+form the package evaluates.
 
 The dispatcher routes a `TensTI{4}` matrix combined with a coaxial
 `Ellipsoid{3, Spherical|Prolate|Oblate}` to this path by default; coaxiality is

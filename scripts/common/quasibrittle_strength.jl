@@ -65,18 +65,56 @@ fh_san(wc, sc) = sc / d_san / (1 / d_clin + wc + sc / d_san)
 
 # ── Hydrate foam — multi-bin Self-Consistent ───────────────────────────────
 #
+# Two starting points for the self-consistent iteration of the needle
+# families. `start = :iso` (the default) first solves the foam with ONE
+# isotropically averaged needle family, whose Hill tensor in the isotropic
+# running estimate is a closed form, and starts the discrete families from that
+# estimate: echoes' route, and a few iterations instead of some twenty.
+# `start = :direct` starts them from the hydrate stiffness itself. Both converge
+# to the same fixed point; their agreement, and that of the isotropic estimate,
+# validates the angular discretization.
+#
+# `sc_tol` are the stopping tolerances of the self-consistent iteration.
+const SC_TOL = (; abstol = 1.0e-8)
+#
 # `μ_b0` is the shear modulus of the FIRST family (θ = 0, axis ‖ ez); it may
 # be a `ForwardDiff.Dual` — the derivative of the whole chain with respect to
 # it is the strength sensitivity.  All other families stay at
 # `μ_hyd_ref`.
-function build_hf(wc, α_p, μ_b0; N::Int = NTHETA, ω::Real = ω_aspect)
+# Fractions of hydrates, water and air within the foam.
+function foam_fractions(wc, α_p)
     fclin = f_clin(wc, α_p)
     fw = f_w(wc, α_p)
     fhyd = f_hyd(wc, α_p)
     fair = max(0.0, 1 - fclin - fw - fhyd)
-    fthyd_t = fhyd / (1 - fclin)
-    ftw_t = fw / (1 - fclin)
-    ftair_t = fair / (1 - fclin)
+    return fhyd / (1 - fclin), fw / (1 - fclin), fair / (1 - fclin)
+end
+
+# The foam with one isotropically averaged needle family: a closed form at
+# every iteration.
+function build_hf_iso(wc, α_p; ω::Real = ω_aspect, sc_tol = SC_TOL)
+    fthyd_t, ftw_t, ftair_t = foam_fractions(wc, α_p)
+    C_hyd = TensISO{3}(3 * K_hyd_ref, 2 * μ_hyd_ref)
+    rve = RVE()
+    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => C_hyd); fraction = :rest)
+    add_phase!(rve, :HYD, Spheroid(ω), Dict(:C => C_hyd); fraction = fthyd_t, symmetrize = :iso)
+    C_tiny = TensISO{3}(3 * TINY, 2 * TINY)
+    add_phase!(rve, :W, Ellipsoid(1.0), Dict(:C => C_tiny); fraction = ftw_t)
+    add_phase!(rve, :AIR, Ellipsoid(1.0), Dict(:C => C_tiny); fraction = ftair_t)
+    return homogenize(rve, SelfConsistent(; sc_tol..., maxiters = 1000), :C; select_best = true)
+end
+
+# The starting point of the discrete families, in the element type `T` of the
+# chain.
+_hf_init(::Val{:iso}, wc, α_p, ω, sc_tol, ::Type{T}) where {T} =
+    TensISO{3}(map(x -> convert(T, x), TensND.get_data(build_hf_iso(wc, α_p; ω, sc_tol)))...)
+_hf_init(::Val{:direct}, wc, α_p, ω, sc_tol, ::Type) = nothing
+
+function build_hf(
+        wc, α_p, μ_b0; N::Int = NTHETA, ω::Real = ω_aspect,
+        start::Symbol = :iso, sc_tol = SC_TOL
+    )
+    fthyd_t, ftw_t, ftair_t = foam_fractions(wc, α_p)
 
     T = typeof(μ_b0)
     ez = (0.0, 0.0, 1.0)
@@ -105,9 +143,9 @@ function build_hf(wc, α_p, μ_b0; N::Int = NTHETA, ω::Real = ω_aspect)
         rve, :AIR, Ellipsoid(1.0), Dict(:C => C_tiny);
         fraction = ftair_t
     )
+    init = _hf_init(Val(start), wc, α_p, ω, sc_tol, T)
     return homogenize(
-        rve,
-        SelfConsistent(; abstol = 1.0e-8, maxiters = 1000),
+        rve, SelfConsistent(; init, sc_tol..., maxiters = 1000),
         :C; select_best = true
     )
 end
@@ -148,11 +186,11 @@ end
 # `best_fit_ti` extracts the physical 5-parameter TI stiffness — echoes does
 # the same with `tensor(C_hf.array, TI)` before the CP scale — keeping the
 # CP / MO Mori-Tanaka stages on the analytical TI-coaxial Hill branch.
-function multiscale_C_mo(wc, α_p, sc, μ_b0; N::Int = NTHETA, ω::Real = ω_aspect)
-    C_hf = best_fit_ti(build_hf(wc, α_p, μ_b0; N = N, ω = ω), (0.0, 0.0, 1.0))
+function multiscale_C_mo(wc, α_p, sc, μ_b0; N::Int = NTHETA, ω::Real = ω_aspect, kw...)
+    C_hf = best_fit_ti(build_hf(wc, α_p, μ_b0; N = N, ω = ω, kw...), (0.0, 0.0, 1.0))
     C_cp = build_cp(wc, α_p, C_hf)
     C_mo = build_mo(wc, sc, C_cp)
-    return get_array(C_mo)
+    return Array(components_canon(C_mo))
 end
 
 # ── Iso bulk / shear moduli of a (nearly) iso 4-tensor ─────────────────────
@@ -183,10 +221,10 @@ end
 # The derivative `dC_mo/dμ_b0` is a SINGLE ForwardDiff pass through the
 # complete chain (multi-bin SC + MT + MT); value and derivative come from
 # one Dual evaluation.
-function compute_point(wc, α_p; sc = 0.0, N::Int = NTHETA, ω::Real = ω_aspect)
+function compute_point(wc, α_p; sc = 0.0, N::Int = NTHETA, ω::Real = ω_aspect, kw...)
     TagT = typeof(ForwardDiff.Tag(multiscale_C_mo, Float64))
     μ_dual = ForwardDiff.Dual{TagT}(float(μ_hyd_ref), 1.0)
-    arr_dual = multiscale_C_mo(wc, α_p, sc, μ_dual; N = N, ω = ω)
+    arr_dual = multiscale_C_mo(wc, α_p, sc, μ_dual; N = N, ω = ω, kw...)
     arr_C_mo = ForwardDiff.value.(arr_dual)
     arr_dC_mo = ForwardDiff.partials.(arr_dual, 1)
 

@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/39_laminate_alv.jl"
 
 # [A creeping laminate: the multilayer in aging viscoelasticity](@id tut-laminate-alv)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/39_laminate_alv.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/39_laminate_alv.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/39_laminate_alv.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [Periodic multilayer: the exact laminate solution](@ref tut-laminate),
     whose elastic algebra is transposed here, and the theory page
@@ -179,9 +184,11 @@ series law requires, and leaves the in-plane response unchanged.
 ## Where to go next
 
 The laminate is the one microstructure whose aging response needs no scheme.
-[Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities)
-differentiates the Volterra assembly with respect to the parameters of such a
-calculation, and the calls of the laminate cell are documented in
+The derivatives used throughout these tutorials have their own group, from
+[Derivatives and sensitivities](@ref tut-sensitivities); the Volterra assembly
+is differentiated in
+[Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities),
+and the calls of the laminate cell are documented in
 [Laminates — periodic multilayer cells](@ref man-laminates).
 
 ---

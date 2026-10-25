@@ -159,6 +159,7 @@ end
         include("Elasticity/test_hill_symbolic.jl")
         include("Elasticity/test_shape_tensor.jl")
         include("Elasticity/test_eshelby.jl")
+        include("Elasticity/test_second_hill.jl")
         include("Elasticity/test_concentration.jl")
         include("Elasticity/test_contribution.jl")
         include("Elasticity/test_hill_nestedquadgk_oblate.jl")

@@ -169,11 +169,13 @@ jump = interface_jump(lam, 1, E)
 #
 # ## Where to go next
 #
-# A laminate is anisotropic by construction, and so is any population of aligned
-# inclusions. [Symmetrization showcase: exact average vs best-fit projection](@ref tut-symmetrization)
-# compares the two ways of extracting an isotropic or transversely isotropic
-# response from such a tensor, the exact average over orientations and the
-# best-fit projection onto a symmetry class. The same interface models on a
+# A laminate can also be one scale of a larger model.
+# [Multiscale chaining: explicit and declarative, side by side](@ref tut-laminate-multiscale)
+# chains it with a porous cell, writes the chain twice and differentiates through
+# it. A laminate is anisotropic by construction, as is any population of aligned
+# inclusions; [Symmetrization showcase: exact average vs best-fit projection](@ref tut-symmetrization)
+# extracts an isotropic or transversely isotropic response from such a tensor.
+# The same interface models on a
 # curved surface are those of
 # [n-layer sphere: pointwise fields](@ref tut-layered-sphere-local-fields), and
 # a stack of clay platelets built on this cell is the subject of

@@ -1,7 +1,7 @@
 # [Transport properties](@id tut-transport)
 
 !!! info "Before this page"
-    The tutorial [Porous benchmark: all schemes](@ref tut-porous-benchmark),
+    The tutorial [Every scheme on the whole porosity range](@ref tut-porous-benchmark),
     whose porous medium and schemes are carried over below to a diffusivity,
     and the theory page [Extension to conductivity](@ref th-conductivity), which
     states the dictionary between the elastic and the transport problems.
@@ -316,10 +316,10 @@ described once and read twice through the property key.
 
 ## Where to go next
 
-Every scheme used so far is evaluated in one shot or as a fixed point.
-[The differential scheme and path dependence](@ref tut-differential-paths)
-builds the composite incrementally instead, which makes the order of
-incorporation of the phases a modeling choice. The order-2 calls of the library
+Every tutorial so far is elastic or conductive, with no dependence on time.
+[Viscoelastic composites](@ref tut-viscoelasticity) opens the extension to
+viscoelasticity, with complex moduli in the frequency domain and a first aging
+creep calculation. The order-2 calls of the library
 are collected in [Conductivity](@ref man-conductivity) of the manual, and
 [Cement paste: chloride diffusivity and elasticity](@ref app-cement-paste-diffusion)
 applies the cross-property route of the last section to a hydrating cement

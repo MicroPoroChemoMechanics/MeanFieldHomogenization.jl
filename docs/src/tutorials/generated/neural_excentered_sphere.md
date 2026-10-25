@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/85_neural_excentered_sphere.jl"
 
 # [Replacing a finite-element solve by a neural surrogate](@id tut-neural-excentered-sphere)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/85_neural_excentered_sphere.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/85_neural_excentered_sphere.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/85_neural_excentered_sphere.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [An inclusion whose response is a neural network](@ref tut-neural-inclusion),
     where the surrogate is trained and checked against a closed form, and the
@@ -273,11 +278,11 @@ can compute — and optimize against.
 
 ## Where to go next
 
-Every scheme used so far places one inclusion in a reference medium and
-accounts for the others on average.
-[Chaining scales through an N-body scheme](@ref tut-multiscale-assemblies)
-opens the tutorials on interacting particle assemblies, in which positions are
-given and the interactions are resolved inclusion by inclusion. The recycled
+Every inclusion so far keeps a volume. As an oblate spheroid flattens, its
+volume fraction vanishes while its effect does not:
+[Cracks and crack density](@ref tut-cracks) opens the tutorials on that limit,
+in which the fraction gives way to a density and the Hill tensor to the crack
+opening displacement tensor. The recycled
 aggregate whose eccentricity is differentiated above is studied with the
 finite-element cell itself in
 [A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate).

@@ -90,3 +90,20 @@ MFH_Core.eshelby_tensor(
     incl::MFH_Core.AbstractCustomInclusion, K₀::TensND.AbstractTens{2, 3};
     kw...
 ) = Elasticity.hill_tensor(incl, K₀; kw...) ⋅ K₀
+
+# ── Second Hill tensor (2nd order) — Q = K₀ − K₀ · P · K₀ ─────────────────────
+
+MFH_Core.second_hill_tensor(
+    incl::MFH_Core.AbstractEllipsoidalInclusion, K₀::TensND.AbstractTens{2, 3};
+    kw...
+) = MFH_Core._second_hill_tensor(Elasticity.hill_tensor(incl, K₀; kw...), K₀)
+
+MFH_Core.second_hill_tensor(
+    incl::MFH_Core.AbstractEllipsoidalInclusion, K₀::TensND.AbstractTens{2, 2};
+    kw...
+) = MFH_Core._second_hill_tensor(Elasticity.hill_tensor(incl, K₀; kw...), K₀)
+
+MFH_Core.second_hill_tensor(
+    incl::MFH_Core.AbstractCustomInclusion, K₀::TensND.AbstractTens{2, 3};
+    kw...
+) = MFH_Core._second_hill_tensor(Elasticity.hill_tensor(incl, K₀; kw...), K₀)

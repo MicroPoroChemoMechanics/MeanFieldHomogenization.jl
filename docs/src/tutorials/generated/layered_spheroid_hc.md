@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/37_spheroid_hc_conductivity.jl"
 
 # [Highly conducting interfaces: equivalent conductivity vs. aspect ratio](@id tut-layered-spheroid-hc)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/37_spheroid_hc_conductivity.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/37_spheroid_hc_conductivity.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/37_spheroid_hc_conductivity.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [Imperfect interfaces: what they do to the local fields](@ref tut-layered-spheroid-interfaces),
     where the highly conducting skin of an insulating particle is introduced at

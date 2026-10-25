@@ -104,6 +104,23 @@ function hill_kernel_order2(
 end
 
 """
+    second_hill_kernel_order2(ell, K_0_law::ViscoLaw, times) -> Matrix
+
+Discrete ALV second Hill tensor kernel (size ``3n\\times 3n``) of an ellipsoidal
+inclusion in an isotropic ALV matrix of conductivity law `K_0_law`:
+``\\widetilde{\\boldsymbol{Q}} = \\widetilde{\\boldsymbol{K}}_0 - \\widetilde{\\boldsymbol{K}}_0\\circ\\widetilde{\\boldsymbol{P}}\\circ\\widetilde{\\boldsymbol{K}}_0``,
+with ``\\widetilde{\\boldsymbol{P}}`` the [`hill_kernel_order2`](@ref); the order-2
+counterpart of [`second_hill_kernel`](@ref).
+"""
+function second_hill_kernel_order2(
+        ell, K_0_law::ViscoLaw,
+        times::AbstractVector{<:Real}
+    )
+    K_0 = _trapezoidal_relaxation(K_0_law, times, 3)
+    return K_0 - K_0 * hill_kernel_order2_at(ell, K_0) * K_0
+end
+
+"""
     hill_kernel_order2_at(ell, K_0::AbstractMatrix) -> Matrix
 
 Variant of [`hill_kernel_order2`](@ref) taking an already-discretized

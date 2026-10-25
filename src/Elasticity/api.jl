@@ -162,3 +162,20 @@ MFH_Core.eshelby_tensor(
     incl::MFH_Core.AbstractCustomInclusion, C₀::TensND.AbstractTens{4, 3};
     kw...
 ) = hill_tensor(incl, C₀; kw...) ⊡ C₀
+
+# ── Second Hill tensor (4th order) — Q = C₀ − C₀ : P : C₀ ─────────────────────
+
+MFH_Core.second_hill_tensor(
+    incl::AbstractEllipsoidalInclusion, C₀::TensND.AbstractTens{4, 3};
+    kw...
+) = MFH_Core._second_hill_tensor(hill_tensor(incl, C₀; kw...), C₀)
+
+MFH_Core.second_hill_tensor(
+    incl::AbstractEllipsoidalInclusion, C₀::TensND.AbstractTens{4, 2};
+    kw...
+) = MFH_Core._second_hill_tensor(hill_tensor(incl, C₀; kw...), C₀)
+
+MFH_Core.second_hill_tensor(
+    incl::MFH_Core.AbstractCustomInclusion, C₀::TensND.AbstractTens{4, 3};
+    kw...
+) = MFH_Core._second_hill_tensor(hill_tensor(incl, C₀; kw...), C₀)

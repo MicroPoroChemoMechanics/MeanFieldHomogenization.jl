@@ -362,7 +362,7 @@ its own straight line and the first-order term is the same — and they separate
 like ``f`` at finite fractions. The spread is a *feature* of the scheme, not a
 numerical artifact: it is what makes the differential scheme able to represent a
 processing history, and it is measured in
-[Comparing loading-path trajectories](@ref tut-differential-loading-paths).
+[Several trajectories, watched over the whole history](@ref tut-differential-loading-paths).
 
 ## 4. Conduction and viscoelasticity
 
@@ -473,4 +473,4 @@ Every scheme so far is an estimate for a random morphology. The next page,
 morphology whose effective behavior is known exactly, a periodic stack of
 layers. The path dependence of §3 is measured in the tutorials
 [The differential scheme and path dependence](@ref tut-differential-paths)
-and [Comparing loading-path trajectories](@ref tut-differential-loading-paths).
+and [Several trajectories, watched over the whole history](@ref tut-differential-loading-paths).

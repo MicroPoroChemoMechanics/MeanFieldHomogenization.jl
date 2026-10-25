@@ -219,7 +219,8 @@ simplify(b_MT - f * (3k0 + 4μ0) / (3f * k0 + 4μ0))
 
 ## Where to go next
 
-The theorem and its proof are in [Levin's theorem](@ref th-levin), and the
+The same schemes apply at tensor order 2, to a conductivity or a diffusivity:
+[Transport properties](@ref tut-transport) opens that extension. The theorem and its proof are in [Levin's theorem](@ref th-levin), and the
 concentration tensors of each scheme at the end of its theory page, from
 [Voigt and Reuss bounds](@ref th-scheme-bounds) to
 [The equivalent inclusion method](@ref th-eim). The tutorial

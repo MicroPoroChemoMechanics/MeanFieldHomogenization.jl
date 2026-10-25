@@ -1,6 +1,7 @@
 using Test
 using MeanFieldHomogenization
 using TensND
+using LinearAlgebra
 import Symbolics
 
 # =============================================================================
@@ -70,4 +71,16 @@ _hs_eval(P) = _hs_eval_vec(get_array(P))
         @test occursin(string(nameof(f)), string(expr))
         @test Symbolics.value(Symbolics.substitute(expr, point; fold = Val(true))) ≈ f(args...) rtol = 1.0e-15
     end
+end
+
+@testset "second_hill_tensor of a symbolic sphere" begin
+    # Q = C − C:P:C of a sphere, held to its closed form
+    # 12kμ/(3k+4μ) 𝕁 + 2μ(9k+8μ)/(5(3k+4μ)) 𝕂, and K − K·P·K = (2k/3) 𝟏 at order 2.
+    Q = second_hill_tensor(Ellipsoid(hs_a, hs_a, hs_a), TensISO{3}(3hs_k, 2hs_μ))
+    @test eltype(get_array(Q)) <: Symbolics.Num
+    k, μ = HS_POINT[4], HS_POINT[5]
+    Q_ref = TensISO{3}(12k * μ / (3k + 4μ), 2μ * (9k + 8μ) / (5 * (3k + 4μ)))
+    @test _hs_eval(Q) ≈ get_array(Q_ref) rtol = 1.0e-13
+    Q2 = second_hill_tensor(Ellipsoid(hs_a, hs_a, hs_a), TensISO{3}(hs_k))
+    @test _hs_eval(Q2) ≈ (2k / 3) * I(3) rtol = 1.0e-13
 end

@@ -190,11 +190,11 @@ display(p_full)                                                      #jl
 #
 # ## Where to go next
 #
+# This closes the problems of a single heterogeneity. The schemes that turn
+# their solutions into effective properties come next, from
+# [Porous materials: the self-consistent trap and every scheme](@ref tut-porous-materials).
 # A planar interface carries the same surface elasticity without any particle
-# around it. [Periodic multilayer: the exact laminate solution](@ref tut-laminate)
-# introduces the cell in which such an interface is placed, a stack of layers
-# with no matrix and no Eshelby problem, and
-# [Imperfect interfaces in a laminate, and the size effect](@ref tut-laminate-interfaces)
-# returns to the size effect met here. The syntax of
+# around it: [Imperfect interfaces in a laminate, and the size effect](@ref tut-laminate-interfaces),
+# in the same group, returns to the size effect met here. The syntax of
 # [`equivalent_particle`](@ref) is recalled in
 # [Particle assemblies and N-body schemes](@ref man-assemblies) of the manual.

@@ -1,5 +1,72 @@
 # Changelog
 
+## v0.20.0 — the second Hill tensor, and Hill tensors by reduction to a sphere
+
+A minor release. The second Hill tensor ``\mathbb{Q} = \mathbb{C} - \mathbb{C}:\mathbb{P}:\mathbb{C}``,
+which gives the stress inside an inclusion under an eigenstrain and has a
+finite limit when an ellipsoid flattens into a crack, had no accessor: every
+crack route, test and page rebuilt it from the Hill tensor by hand. It is now a
+function of its own, in elasticity, in conduction and in aging viscoelasticity.
+The documentation of the Hill tensor gains the reduction of an ellipsoid to a
+sphere, the closed form of a spheroid (and of a sphere) in a coaxial
+transversely isotropic matrix written out with its equations, and a tutorial
+that computes Hill tensors both ways; the tutorials follow the chapters of the
+theory.
+
+### Breaking changes
+
+- The minor version alone: a `[compat]` bound on 0.19 does not accept 0.20.
+  No function changed its behavior, apart from the warning below.
+
+### Added
+
+- `second_hill_tensor(incl, C₀; kw...)`: ``\mathbb{Q} = \mathbb{C}_0 - \mathbb{C}_0:\mathbb{P}:\mathbb{C}_0``
+  at order 4 and ``\boldsymbol{K}_0 - \boldsymbol{K}_0\cdot\boldsymbol{P}\cdot\boldsymbol{K}_0``
+  at order 2, in 3-D and 2-D, for ellipsoids and custom inclusions alike, with
+  the keywords of `hill_tensor`. The operands keep their structure: a sphere in
+  an isotropic matrix gives a `TensISO`.
+- `second_hill_kernel(ell, C0_law, times)` and
+  `second_hill_kernel_order2(ell, K0_law, times)`: the aging-viscoelastic
+  kernels ``\widetilde{\mathbb{C}}_0 - \widetilde{\mathbb{C}}_0\circ\widetilde{\mathbb{P}}\circ\widetilde{\mathbb{C}}_0``,
+  a creep law being inverted first, as for `hill_kernel`.
+
+### Fixed
+
+- A volume complement negative by no more than the rounding of the sum of the
+  declared fractions, ``-2\times10^{-16}`` when they sum to one, no longer warns
+  that the fractions exceed one; an actual excess still does.
+
+### Documentation
+
+- *Hill polarization tensors*: a section on the reduction of any ellipsoid to a
+  sphere in a stretched medium, and the closed form of a spheroid in a coaxial
+  transversely isotropic matrix written out (the acoustic polynomial, the five
+  Walpole coefficients), with the sphere as the case ``\omega = 1``. The
+  equation numbers cited from Barthélémy (2020) were wrong (49–58, 53–58); they
+  are 18–20, 24–29 and 30–36, in the source code too. *Degenerate shapes* notes
+  a sign misprint in Table D.2 of that article, which its own script and the
+  package do not have.
+- A tutorial, *Hill tensors by reduction to a sphere*: a spheroid in a
+  transversely isotropic matrix and an ellipsoid in an elliptically orthotropic
+  one by closed forms through the reduction, a rotated ellipsoid in a triclinic
+  matrix through the residues on the sphere, each against `:residues`,
+  `:decuhr` and `:nestedquadgk` applied directly.
+- The tutorials are grouped by the chapters of the theory, the two pages on
+  the differential scheme and the two on porous materials are merged, and the
+  transitions follow the new order. Every page generated from a script opens
+  with a link to that script and the two commands that run it.
+- *Quasi-brittle strength*: the hydrate foam is solved in two stages, an
+  isotropic estimate then the discrete needle families from it, which is the
+  route of the Echoes chapter and 1.7 times as fast (2.6 s against 4.5 s for
+  one point, value and derivative); the direct route is kept
+  and both are compared, with the isotropic limit, to validate the angular
+  discretization. *Performance vs Echoes* times the same route on both sides
+  and explains what still differs; its tables no longer shift their columns
+  when a label holds a `|`.
+- The bibliography gains Sevostianov et al. (2005) and Levin's article of
+  1967 with its English translation, now cited for Levin's theorem in place of
+  a textbook; the title of Laws (1985) is corrected, its DOI added.
+
 ## v0.19.0 — tensors read in the basis they are written in; generic tensor code in TensND
 
 A minor release. Components of TensND tensors were read in their own basis as if

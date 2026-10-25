@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/61_freq_vs_time.jl"
 
 # [Frequency or time? Three routes to the same viscoelastic composite](@id tut-freq-vs-time)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/61_freq_vs_time.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/61_freq_vs_time.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/61_freq_vs_time.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorials [Viscoelastic composites](@ref tut-viscoelasticity), where
     the three routes are first called, and

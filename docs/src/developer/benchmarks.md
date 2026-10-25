@@ -83,17 +83,21 @@ The differential scheme is not the same algorithm on both sides: Echoes takes
 to a relative ``10^{-8}``, hence a gap of a few ``10^{-5}``, the error of the
 first-order steps.
 
-### The three-scale strength model: not a like-for-like timing
+### The three-scale strength model: the same route, two stopping rules
 
 The model of [Quasi-brittle strength of cement paste and mortar](@ref app-strength) computes a strength and its
 derivative with respect to the shear modulus of one family of hydrate needles.
-The two codes do not take the same route, and the ratio below compares routes
-rather than codes. Echoes converges the self-consistent estimate with the
-needles averaged isotropically (closed-form Hill tensors), then obtains the
-derivative from a single step over the 20 transversely isotropic families, with
-numerical Hill tensors to ``10^{-3}``. `MeanFieldHomogenization` converges the
-self-consistent estimate over the 20 families themselves, with dual numbers,
-every Hill tensor to ``10^{-6}``.
+Both codes take the same route, described on the page of the model: the self-consistent
+foam is first converged with the needles averaged isotropically, whose Hill
+tensors are closed forms, and the 20 transversely isotropic families start from
+that estimate. They stop differently. Echoes takes a single step over the
+families and obtains the derivative there, with numerical Hill tensors to
+``10^{-3}``. `MeanFieldHomogenization` iterates the families to convergence,
+the derivative included through dual numbers, every Hill tensor to
+``10^{-6}``. The second row starts the families from the hydrate stiffness
+instead, the direct route kept to validate the first
+([Validating the angular discretization](@ref app-strength-validation)); both rows
+reach the same strength.
 
 ```@eval
 using MeanFieldHomogenization

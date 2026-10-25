@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/87_aging_ages_aspect.jl"
 
 # [Aging creep: loading age against inclusion shape](@id tut-aging-ages-aspect)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/87_aging_ages_aspect.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/87_aging_ages_aspect.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/87_aging_ages_aspect.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [Aging viscoelastic schemes side by side](@ref tut-alv-schemes),
     which reads a uniaxial creep test off the Volterra matrix as done below,

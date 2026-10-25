@@ -111,3 +111,22 @@ end
     P_creep = hill_kernel(ell, heaviside_law(inv(C); mode = :creep), times)
     @test P_creep ≈ P_rel rtol = 1.0e-12
 end
+
+@testset "second_hill_kernel — elastic limit and creep law" begin
+    # For a law constant in time every diagonal block is the elastic
+    # Q = C − C:P:C and the blocks below vanish, as for the Hill kernel; a
+    # reference given as a creep law gives the same kernel.
+    C0 = TensISO{3}(30.0, 8.0)
+    times = collect(0.0:0.5:2.0)
+    n = length(times)
+    for ell in (Ellipsoid(1.0), Ellipsoid(2.0, 1.0, 0.5; euler_angles = (0.3, 0.7, -0.4)))
+        Q = second_hill_kernel(ell, heaviside_law(C0), times)
+        @test size(Q) == (6n, 6n)
+        Q_M = _to_mandel(second_hill_tensor(ell, C0))
+        for i in 1:n, j in 1:n
+            block = Q[(6i - 5):(6i), (6j - 5):(6j)]
+            i == j ? (@test block ≈ Q_M rtol = 1.0e-12) : (@test maximum(abs, block) ≤ 1.0e-12)
+        end
+        @test second_hill_kernel(ell, heaviside_law(inv(C0); mode = :creep), times) ≈ Q rtol = 1.0e-12
+    end
+end

@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/33_laminate_basics.jl"
 
 # [Periodic multilayer: the exact laminate solution](@id tut-laminate)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/33_laminate_basics.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/33_laminate_basics.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/33_laminate_basics.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [Bounds and classical schemes](@ref tut-bounds-and-schemes),
     whose Voigt and Reuss bounds the laminate saturates, and the theory page

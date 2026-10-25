@@ -82,12 +82,51 @@ The foam (needles + water + air) is homogenized self-consistently. The shear
 modulus of the **first** family (``\theta = 0``) is kept as a separate argument
 `μ_b0` so it can later be seeded with a `ForwardDiff.Dual`.
 
-```@example strength
-function build_hf(wc, α_p, μ_b0; N = NTHETA, ω = ω_aspect)
-    fclin, fw, fhyd = f_clin(wc, α_p), f_w(wc, α_p), f_hyd(wc, α_p)
-    fair = max(0.0, 1 - fclin - fw - fhyd)
-    fthyd, ftw, ftair = fhyd / (1 - fclin), fw / (1 - fclin), fair / (1 - fclin)
+The self-consistent iteration of these families needs a starting point, and two
+are offered, which reach the same fixed point.
 
+!!! tip "Two stages: an isotropic estimate, then the discrete families"
+    With `start = :iso`, the default, the foam is first solved with a **single**
+    needle family averaged over every orientation (`symmetrize = :iso`). Its
+    reference medium stays isotropic, so every Hill tensor of that iteration is
+    a closed form, and the whole stage costs a fraction of a millisecond. The
+    discrete families start from that estimate, which their own fixed point
+    differs from by the discretization alone: a few iterations remain, each of
+    which evaluates the Hill tensors of twenty tilted needles in a transversely
+    isotropic medium by quadrature. This is the route of the Echoes chapter.
+
+!!! note "One stage: the discrete families from the hydrate stiffness"
+    With `start = :direct`, the discrete families start from the stiffness of
+    the hydrates. The iteration is longer, and its early iterates are far from
+    isotropic, which makes their quadratures more expensive; it is kept to check
+    the first route, as the section
+    [Validating the angular discretization](@ref app-strength-validation) does.
+
+```@example strength
+foam_fractions(wc, α_p) = (fclin = f_clin(wc, α_p); fw = f_w(wc, α_p); fhyd = f_hyd(wc, α_p);
+    fair = max(0.0, 1 - fclin - fw - fhyd); (fhyd, fw, fair) ./ (1 - fclin))
+const SC_TOL = (; abstol = 1.0e-8)
+
+# Stage 1: one isotropically averaged needle family, a closed form at every iteration.
+function build_hf_iso(wc, α_p; ω = ω_aspect, sc_tol = SC_TOL)
+    fthyd, ftw, ftair = foam_fractions(wc, α_p)
+    C_hyd = TensISO{3}(3K_hyd_ref, 2μ_hyd_ref)
+    rve = RVE()
+    add_phase!(rve, :CP, Ellipsoid(1.0), Dict(:C => C_hyd); fraction = :rest)
+    add_phase!(rve, :HYD, Spheroid(ω), Dict(:C => C_hyd); fraction = fthyd, symmetrize = :iso)
+    C_tiny = TensISO{3}(3TINY, 2TINY)
+    add_phase!(rve, :W, Ellipsoid(1.0), Dict(:C => C_tiny); fraction = ftw)
+    add_phase!(rve, :AIR, Ellipsoid(1.0), Dict(:C => C_tiny); fraction = ftair)
+    return homogenize(rve, SelfConsistent(; sc_tol..., maxiters = 1000), :C; select_best = true)
+end
+
+# The starting point of the discrete families, in the element type T of the chain.
+_hf_init(::Val{:iso}, wc, α_p, ω, sc_tol, ::Type{T}) where {T} =
+    TensISO{3}(map(x -> convert(T, x), TensND.get_data(build_hf_iso(wc, α_p; ω, sc_tol)))...)
+_hf_init(::Val{:direct}, wc, α_p, ω, sc_tol, ::Type) = nothing
+
+function build_hf(wc, α_p, μ_b0; N = NTHETA, ω = ω_aspect, start = :iso, sc_tol = SC_TOL)
+    fthyd, ftw, ftair = foam_fractions(wc, α_p)
     T = typeof(μ_b0)
     ez = (0.0, 0.0, 1.0)
     rve = RVE(; T = T)
@@ -107,10 +146,8 @@ function build_hf(wc, α_p, μ_b0; N = NTHETA, ω = ω_aspect)
     C_tiny = TensISO{3}(convert(T, 3TINY), convert(T, 2TINY))
     add_phase!(rve, :W, Ellipsoid(1.0), Dict(:C => C_tiny); fraction = ftw)
     add_phase!(rve, :AIR, Ellipsoid(1.0), Dict(:C => C_tiny); fraction = ftair)
-    return homogenize(
-        rve, SelfConsistent(; abstol = 1.0e-8, maxiters = 1000),
-        :C; select_best = true
-    )
+    init = _hf_init(Val(start), wc, α_p, ω, sc_tol, T)
+    return homogenize(rve, SelfConsistent(; init, sc_tol..., maxiters = 1000), :C; select_best = true)
 end
 nothing # hide
 ```
@@ -148,11 +185,11 @@ function build_mo(wc, sc, C_cp)
 end
 
 # Full chain: scalar μ_b0 in, C_mo array out.
-function multiscale_C_mo(wc, α_p, sc, μ_b0; N = NTHETA, ω = ω_aspect)
-    C_hf = best_fit_ti(build_hf(wc, α_p, μ_b0; N = N, ω = ω), (0.0, 0.0, 1.0))
+function multiscale_C_mo(wc, α_p, sc, μ_b0; N = NTHETA, ω = ω_aspect, kw...)
+    C_hf = best_fit_ti(build_hf(wc, α_p, μ_b0; N = N, ω = ω, kw...), (0.0, 0.0, 1.0))
     C_cp = build_cp(wc, α_p, C_hf)
     C_mo = build_mo(wc, sc, C_cp)
-    return get_array(C_mo)
+    return Array(components_canon(C_mo))
 end
 nothing # hide
 ```
@@ -202,10 +239,10 @@ function quasibrittle_strength(arr_C_mo, arr_dC, μh, f_θ)
     return 1 / sqrt(abs(M[3, 3, 3, 3]) * 2μh^2 / f_θ)
 end
 
-function compute_point(wc, α_p; sc = 0.0, N = NTHETA, ω = ω_aspect)
+function compute_point(wc, α_p; sc = 0.0, N = NTHETA, ω = ω_aspect, kw...)
     TagT = typeof(ForwardDiff.Tag(multiscale_C_mo, Float64))
     μ_dual = ForwardDiff.Dual{TagT}(float(μ_hyd_ref), 1.0)
-    arr = multiscale_C_mo(wc, α_p, sc, μ_dual; N = N, ω = ω)
+    arr = multiscale_C_mo(wc, α_p, sc, μ_dual; N = N, ω = ω, kw...)
     arr_C = ForwardDiff.value.(arr)
     arr_dC = ForwardDiff.partials.(arr, 1)
 
@@ -221,6 +258,31 @@ r = compute_point(0.5, αmax(0.5) * (1 - 1e-12))
 (k = round(r.K_mo, digits = 3), μ = round(r.μ_mo, digits = 3),
     E = round(r.E_mo, digits = 2), fc = round(r.fc, digits = 4))
 ```
+
+## [Validating the angular discretization](@id app-strength-validation)
+
+The two starting points of the foam converge to the same fixed point, and the
+isotropic estimate of the first stage is the limit of the discrete families
+when the bins become infinitely many. Computing the point above both ways, and
+comparing the foam with that limit, checks the discretization into `NTHETA`
+bins:
+
+```@example strength
+let wc = 0.5, α_p = αmax(0.5) * (1 - 1e-12)
+    r_iso = compute_point(wc, α_p)                      # two stages
+    r_dir = compute_point(wc, α_p; start = :direct)     # one stage
+    k_bins, μ_bins = k_mu(best_fit_iso(build_hf(wc, α_p, μ_hyd_ref)))
+    k_iso, μ_iso = k_mu(build_hf_iso(wc, α_p))
+    (E_gap = abs(r_iso.E_mo - r_dir.E_mo) / r_dir.E_mo,
+        fc_gap = abs(r_iso.fc - r_dir.fc) / r_dir.fc,
+        foam_vs_isotropic_limit = max(abs(k_bins - k_iso) / k_iso, abs(μ_bins - μ_iso) / μ_iso))
+end
+```
+
+The two routes agree to a few parts in ``10^{9}`` on the modulus and in
+``10^{8}`` on the strength, which involves the derivative and is converged to
+the tolerance of its partials; and twenty bins reproduce the isotropic limit of
+the foam to a few parts in ``10^{9}``.
 
 The rest of the chapter uses this single-pass sensitivity throughout. The
 following section is a **pedagogical aside** — it opens the black box to show

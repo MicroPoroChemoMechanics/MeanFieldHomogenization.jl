@@ -285,9 +285,11 @@ end
 #
 # ## Where to go next
 #
-# The oblate spheroid of §1 has a limit that the volume fraction cannot follow:
-# as the aspect ratio vanishes, the inclusion becomes a crack, and
-# [Cracks and crack density](@ref tut-cracks) replaces the fraction by a density
-# and the Hill tensor by the crack opening displacement tensor. Every inclusion
-# family that `hill_tensor` accepts, with its constructor and its options, is
-# listed in [The inclusion zoo](@ref man-inclusion-gallery).
+# Every Hill tensor above is computed directly on its ellipsoid.
+# [Hill tensors by reduction to a sphere](@ref tut-hill-reduction) computes the
+# same tensors a second way, from a sphere in a transformed medium, and checks
+# that both routes agree. The oblate spheroid of §1 has a limit that the volume
+# fraction cannot follow: as the aspect ratio vanishes, the inclusion becomes a
+# crack, the subject of [Cracks and crack density](@ref tut-cracks). Every
+# inclusion family that `hill_tensor` accepts, with its constructor and its
+# options, is listed in [The inclusion zoo](@ref man-inclusion-gallery).

@@ -1,7 +1,7 @@
 # [From derivatives to a strength criterion](@id tut-strength-criteria)
 
 !!! info "Before this page"
-    The tutorials [Porous benchmark: all schemes](@ref tut-porous-benchmark), for
+    The tutorials [Every scheme on the whole porosity range](@ref tut-porous-benchmark), for
     the schemes compared below, and [Derivatives and sensitivities](@ref tut-sensitivities),
     for the derivatives from which the criterion is assembled.
 

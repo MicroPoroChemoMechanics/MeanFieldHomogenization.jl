@@ -202,6 +202,45 @@ See also [`hill_tensor`](@ref MeanFieldHomogenization.Elasticity.hill_tensor).
 """
 function eshelby_tensor end
 
+"""
+    second_hill_tensor(incl, C₀; method=:auto, abstol, reltol, maxiters) -> AbstractTens
+
+Second Hill tensor of the inclusion `incl` in a matrix of stiffness or
+conductivity `C₀`:
+
+```math
+\\mathbb{Q} = \\mathbb{C}_0 - \\mathbb{C}_0:\\mathbb{P}:\\mathbb{C}_0
+```
+
+in elasticity (order 4), and
+
+```math
+\\boldsymbol{Q} = \\boldsymbol{K}_0 - \\boldsymbol{K}_0\\cdot\\boldsymbol{P}\\cdot\\boldsymbol{K}_0
+```
+
+in conductivity / diffusion (order 2), with ``\\mathbb{P}`` (``\\boldsymbol{P}``)
+the Hill tensor. It gives the stress (flux) inside the inclusion under an
+eigenstrain (eigengradient), ``\\boldsymbol{\\sigma} = -\\mathbb{Q}:\\boldsymbol{\\varepsilon}^{\\star}``,
+and, unlike ``\\mathbb{P}``, has a finite limit when the ellipsoid flattens into
+a crack, whose compliance is ``\\lim_{\\rho\\to0}\\rho\\,\\mathbb{Q}^{-1}``; see
+[The Eshelby inclusion problem](@ref th-eshelby-problem).
+
+The order of `C₀` selects the formula, and the structure of the operands is
+kept: an isotropic or a coaxial transversely isotropic pair gives a structured
+``\\mathbb{Q}``. The keyword arguments are forwarded to
+[`hill_tensor`](@ref MeanFieldHomogenization.Elasticity.hill_tensor). For an
+aging-viscoelastic matrix, see
+[`second_hill_kernel`](@ref MeanFieldHomogenization.Viscoelasticity.second_hill_kernel) and
+[`second_hill_kernel_order2`](@ref MeanFieldHomogenization.Viscoelasticity.second_hill_kernel_order2).
+
+See also [`eshelby_tensor`](@ref).
+"""
+function second_hill_tensor end
+
+# The rule, written once for both orders and shared by every inclusion type.
+_second_hill_tensor(P::TensND.AbstractTens{4}, C₀::TensND.AbstractTens{4}) = C₀ - C₀ ⊡ P ⊡ C₀
+_second_hill_tensor(P::TensND.AbstractTens{2}, K₀::TensND.AbstractTens{2}) = K₀ - K₀ ⋅ P ⋅ K₀
+
 # =============================================================================
 #  Concentration & contribution public API stubs
 #

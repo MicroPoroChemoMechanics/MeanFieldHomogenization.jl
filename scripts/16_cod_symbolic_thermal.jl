@@ -461,18 +461,17 @@ end
 
 # ### The Hill-tensor flattening oracle
 #
-# Independent of everything above: build the order-2 Hill tensor of a flat
-# ellipsoid, assemble ``\boldsymbol{\Lambda} = \boldsymbol{K}_0 -
-# \boldsymbol{K}_0\boldsymbol{P}\boldsymbol{K}_0``, and take
+# Independent of everything above: take the order-2 second Hill tensor of a
+# flat ellipsoid, ``\boldsymbol{\Lambda} = \boldsymbol{K}_0 -
+# \boldsymbol{K}_0\boldsymbol{P}\boldsymbol{K}_0`` ([`second_hill_tensor`](@ref)), and take
 # ``\boldsymbol{R} = \lim_{\omega\to0}\omega\,\boldsymbol{\Lambda}^{-1}`` with
 # ``\omega = c/\underline{b}``. The limit must be
 # ``\tfrac34\,b\,\underline{n}\otimes\underline{n}``.
 
 "`R₃₃` from the flattening route, at finite flatness `ω = c/b`."
 function R_from_hill(a, bmin, ω, k)
-    P = hill_tensor(Ellipsoid(a, bmin, ω * bmin), TensISO{3}(k))
-    Λ = TensISO{3}(k) - TensISO{3}(k) ⋅ P ⋅ TensISO{3}(k)
-    return ω * inv([Λ[i, j] for i in 1:3, j in 1:3])[3, 3]
+    Λ = second_hill_tensor(Ellipsoid(a, bmin, ω * bmin), TensISO{3}(k))   # 𝑲₀ − 𝑲₀·𝑷·𝑲₀
+    return ω * components_canon(inv(Λ))[3, 3]
 end
 
 for ηv in (1.0, 0.5)
