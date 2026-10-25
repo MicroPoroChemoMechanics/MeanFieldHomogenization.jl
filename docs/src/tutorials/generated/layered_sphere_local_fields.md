@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/31_local_nlayers.jl"
 
 # [n-layer sphere: pointwise fields](@id tut-layered-sphere-local-fields)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/31_local_nlayers.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/31_local_nlayers.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/31_local_nlayers.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere),
     whose layer averages the pointwise fields must reproduce, and the section

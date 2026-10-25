@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/17_crack_routes.jl"
 
 # [Two routes to a crack: the COD tensor and the flattened ellipsoid](@id tut-crack-routes)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/17_crack_routes.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/17_crack_routes.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/17_crack_routes.jl`, runs it end to end.
+
 !!! info "Before this page"
     The theory page [Crack opening displacement and compliance](@ref th-cod-tensors):
     §2 defines the COD tensor ``\boldsymbol{B}``, normalized by the half-width

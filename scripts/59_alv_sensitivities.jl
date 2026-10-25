@@ -190,7 +190,10 @@ dμ_dτK_FD = (eff_mu_vs_τK(τK₀ + h) - eff_mu_vs_τK(τK₀ - h)) / (2h)
 #
 # The four patterns above give the derivative of an effective modulus with
 # respect to the parameters of a time-domain calculation.
+# [A creeping laminate](@ref tut-laminate-alv) closes the extension to
+# viscoelasticity with the one microstructure whose aging response needs no
+# scheme, and
 # [Nonlinear homogenization: the secant method on a porous plastic solid](@ref tut-secant-elastoplasticity)
-# puts a derivative of the same kind to use inside a nonlinear closure, and the
+# puts a derivative of the same kind to use inside a nonlinear closure. The
 # lenses and indexers themselves are documented in
 # [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities).

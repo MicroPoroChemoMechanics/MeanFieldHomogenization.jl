@@ -6,72 +6,98 @@ the same overall response. `MeanFieldHomogenization` computes that response from
 properties, geometries, volume fractions, and a **scheme** encoding an
 assumption about how the phases interact.
 
-Simplest first within each group. Pages under `generated/` are produced from the
-runnable demos in `scripts/` by
+The groups follow the chapters of [Theory](@ref th-index), in the same order,
+so that a tutorial sits where its theory is: the problems of a single
+heterogeneity first, then the schemes that turn them into effective
+properties, then the extensions to conductivity and viscoelasticity. Two
+groups have no theory chapter of their own, differentiation and symbolic
+computation. Simplest first within each group. Pages under `generated/` are
+produced from the runnable demos in `scripts/` by
 [Literate.jl](https://github.com/fredrikekre/Literate.jl).
 
-## Fundamentals
-
-The **porous material** gets two pages: the simplest non-trivial microstructure,
-and the one where the choice of scheme matters most.
+## First steps
 
 | Page | What it shows |
 | :--- | :--- |
 | [A first homogenization](@ref tut-first-estimate) | build an RVE; dilute vs Mori–Tanaka |
 | [Bounds and classical schemes](@ref tut-bounds-and-schemes) | Voigt/Reuss bounds, self-consistent, where each scheme sits |
-| [Porous materials and the self-consistent trap](@ref tut-porous-materials) | why soft pores break the naive SC iteration |
-| [Porous benchmark: all schemes](@ref tut-porous-benchmark) | every scheme on the canonical porosity sweep, spheres and oblate pores |
-| [Transport properties](@ref tut-transport) | the same algebra at tensor order 2: diffusivity of a porous medium, anisotropy from oriented pores |
-| [The differential scheme and path dependence](@ref tut-differential-paths) | incremental homogenization; why mixing order matters |
-| [Comparing loading-path trajectories](@ref tut-differential-loading-paths) | the same target fractions, four trajectories, watched τ by τ |
-| [Thermal expansion and Biot tensor](@ref tut-levin) | Levin's theorem on the concentration tensors of a scheme: the thermal expansion of a two-phase composite under five schemes, anisotropic with aligned platelets, the Biot tensor of a solid with pores and pressurized cracks, and both in closed form |
 
-## Inclusions, geometries and orientation
+## The Eshelby problem
+
+One inclusion in an infinite matrix: its Hill tensor, how an orientation
+average acts on it, and inclusions that go beyond the ellipsoid. Theory:
+[The Eshelby inclusion problem](@ref th-eshelby-problem) and
+[Hill polarization tensors](@ref th-hill-tensors).
 
 | Page | What it shows |
 | :--- | :--- |
 | [Hill polarization tensors in practice](@ref tut-hill-tensors) | `hill_tensor` on four geometries; residues vs cubature on an anisotropic matrix; the Eshelby tensor against its closed form; `P` → a dilute estimate |
-| [Cracks and crack density](@ref tut-cracks) | volume fraction → crack density; the COD tensor |
-| [Two routes to a crack: the COD tensor and the flattened ellipsoid](@ref tut-crack-routes) | the identity ``\mathbb{H} = \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` checked: ``\boldsymbol{B}`` from the crack plane, ``\mathbb{H}`` from the first-order term of the Hill tensor of a flattened ellipsoid (by SymPy in an isotropic matrix, by ForwardDiff in random anisotropic ones); the three integrators of ``\boldsymbol{B}``; an analytic anchor in an elliptically orthotropic matrix |
-| [Crack distributions: isotropic or parallel](@ref tut-crack-distributions) | the same density, two orientation rules; the two self-consistent forms and their two percolation thresholds (9/16 exactly for the compliance form, ≈ 1.158 for the stiffness one); the local-versus-global frame of a `TensRotated` result |
-| [Validating a finite-element crack](@ref tut-fe-crack) | the same crack solved by finite elements: what the corrected boundary condition buys, and convergence to the closed-form COD |
-| [Layered spheres](@ref tut-layered-sphere) | Hervé–Zaoui `n`-layer concentration and layer averages |
-| [Layered spheroids: geometry and effective conductivity](@ref tut-layered-spheroid-effective) | the confocal `n`-layer spheroid, the equivalent particle, harmonic-series accuracy |
-| [Imperfect interfaces: what they do to the local fields](@ref tut-layered-spheroid-interfaces) | pointwise temperature and flux, streamlines, conductance sweep, 3-D view |
-| [Highly conducting interfaces](@ref tut-layered-spheroid-hc) | equivalent conductivity of an HC-coated particle vs aspect ratio |
-| [A layered spheroid, meshed](@ref tut-axi-layered-spheroid) | the same body by Fourier axisymmetric finite elements: calibrated against the two closed forms, taken to nests neither covers, then replaced by a surrogate trained on the cell so the morphology becomes differentiable |
-| [Nanocomposites: the equivalent particle](@ref tut-nano-spheroids) | a Gurtin-Murdoch interface condensed into a particle stiffness, its three limiting shapes reproduced exactly, and the size effect it produces through an ordinary Mori-Tanaka estimate — no new scheme needed |
-| [Periodic multilayer: the exact laminate solution](@ref tut-laminate) | a cell with no matrix and no Eshelby problem: the exact effective tensor, per-layer concentration, the bounds it saturates |
-| [Imperfect interfaces in a laminate, and the size effect](@ref tut-laminate-interfaces) | the four interface models on a planar interface, and the interface *density* that makes the period matter |
+| [Hill tensors by reduction to a sphere](@ref tut-hill-reduction) | every Hill tensor is that of a sphere in a transformed medium: the same tensor computed both ways, on a spheroid in a transversely isotropic matrix, a triaxial ellipsoid in a triclinic one and an elliptically orthotropic matrix |
 | [Symmetrization](@ref tut-symmetrization) | exact rotation-group average vs best-fit projection |
 | [The custom-inclusion contract](@ref tut-custom-inclusion-contract) | plugging an arbitrary morphology into every scheme — the three entry gates, the density seam, free orientation averaging |
 | [An inclusion whose response is a neural network](@ref tut-neural-inclusion) | both phases — how a surrogate is **trained** (schematics of the network and of the fitting loop, the recorded learning curve) and how a trained one is **used**: what stays exact whatever the fit, accuracy against the closed form, every scheme, and the derivative with respect to the *morphology* |
 | [Replacing a finite-element solve by a surrogate](@ref tut-neural-excentered-sphere) | the case the machinery exists for: the eccentric-core sphere, whose concentration tensors have no closed form. Gate B with the 6-component transversely isotropic pair, the contrast ratios that replace gate A's homogeneity, the accuracy against the finite elements, the speed-up, and a derivative with respect to the **eccentricity** |
 
+## Cracks and degenerate shapes
+
+The flat limit of the ellipsoid, where the volume fraction gives way to a crack
+density. Theory: [Crack opening displacement and compliance](@ref th-cod-tensors).
+
+| Page | What it shows |
+| :--- | :--- |
+| [Cracks and crack density](@ref tut-cracks) | volume fraction → crack density; the COD tensor |
+| [Two routes to a crack: the COD tensor and the flattened ellipsoid](@ref tut-crack-routes) | the identity ``\mathbb{H} = \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` checked: ``\boldsymbol{B}`` from the crack plane, ``\mathbb{H}`` from the first-order term of the Hill tensor of a flattened ellipsoid (by SymPy in an isotropic matrix, by ForwardDiff in random anisotropic ones); the three integrators of ``\boldsymbol{B}``; an analytic anchor in an elliptically orthotropic matrix |
+| [Crack distributions: isotropic or parallel](@ref tut-crack-distributions) | the same density, two orientation rules; the two self-consistent forms and their two percolation thresholds (9/16 exactly for the compliance form, ≈ 1.158 for the stiffness one); the local-versus-global frame of a `TensRotated` result |
+| [Validating a finite-element crack](@ref tut-fe-crack) | the same crack solved by finite elements: what the corrected boundary condition buys, and convergence to the closed-form COD |
+
+## The generalized Eshelby problem — morphological patterns
+
 Composite inclusions carry no Hill tensor at all: they enter the schemes through
-their volume-averaged concentration tensors instead.
+their volume-averaged concentration tensors instead. Theory:
+[the layered sphere](@ref th-layered-sphere) and
+[the layered spheroid](@ref th-layered-spheroid).
 
-## Interacting particle assemblies
+| Page | What it shows |
+| :--- | :--- |
+| [Layered spheres](@ref tut-layered-sphere) | Hervé–Zaoui `n`-layer concentration and layer averages |
+| [n-layer sphere: pointwise fields](@ref tut-layered-sphere-local-fields) | the strain, stress and displacement at any point inside and outside an n-layer sphere, perfect or imperfect interfaces, consistent with the layer averages |
+| [Layered spheroids: geometry and effective conductivity](@ref tut-layered-spheroid-effective) | the confocal `n`-layer spheroid, the equivalent particle, harmonic-series accuracy |
+| [Imperfect interfaces: what they do to the local fields](@ref tut-layered-spheroid-interfaces) | pointwise temperature and flux, streamlines, conductance sweep, 3-D view |
+| [Highly conducting interfaces](@ref tut-layered-spheroid-hc) | equivalent conductivity of an HC-coated particle vs aspect ratio |
+| [A layered spheroid, meshed](@ref tut-axi-layered-spheroid) | the same body by Fourier axisymmetric finite elements: calibrated against the two closed forms, taken to nests neither covers, then replaced by a surrogate trained on the cell so the morphology becomes differentiable |
+| [Nanocomposites: the equivalent particle](@ref tut-nano-spheroids) | a Gurtin-Murdoch interface condensed into a particle stiffness, its three limiting shapes reproduced exactly, and the size effect it produces through an ordinary Mori-Tanaka estimate — no new scheme needed |
 
-The two **N-body** schemes. Every other scheme of the package sees a single
-inclusion in a reference medium and averages the interaction; these two resolve
-it inclusion by inclusion, so they need a `ParticleAssembly` — a cell that
-carries positions — rather than an `RVE`. Both are built on the same
-two-inclusion interaction tensor.
+## Homogenization schemes
 
-| Tutorial | What it shows |
-|:--|:--|
+The schemes that turn those solutions into effective properties: the mean-field
+estimates, the exact laminate, and the two **N-body** schemes, which resolve the
+interactions inclusion by inclusion and so need a `ParticleAssembly`, a cell
+that carries positions, rather than an `RVE`. The cluster model on cubic arrays
+and the equivalent inclusion method against a published table are under
+**Applications**: each exists to reproduce one paper's numbers rather than to
+teach the library. Theory: [Homogenization schemes](@ref th-homogenization);
+for the N-body schemes, [interaction tensors](@ref th-interaction),
+[the cluster model](@ref th-cluster) and
+[the equivalent inclusion method](@ref th-eim), with the API on the
+[particle-assembly manual page](@ref man-assemblies).
+
+| Page | What it shows |
+| :--- | :--- |
+| [Porous materials: the self-consistent trap and every scheme](@ref tut-porous-materials) | why soft pores break the naive self-consistent iteration, then every scheme on the canonical porosity sweep, spheres and oblate pores |
+| [The differential scheme and path dependence](@ref tut-differential-paths) | incremental homogenization; why mixing order matters, and four trajectories to the same fractions watched τ by τ |
+| [Periodic multilayer: the exact laminate solution](@ref tut-laminate) | a cell with no matrix and no Eshelby problem: the exact effective tensor, per-layer concentration, the bounds it saturates |
+| [Imperfect interfaces in a laminate, and the size effect](@ref tut-laminate-interfaces) | the four interface models on a planar interface, and the interface *density* that makes the period matter |
+| [Multiscale chaining: explicit and declarative, side by side](@ref tut-laminate-multiscale) | the two ways of chaining scales, the same answer, and the `ForwardDiff` pass that goes through both |
 | [Chaining scales through an N-body scheme](@ref tut-multiscale-assemblies) | the declarative multiscale seam with an assembly on either side, and why chaining two N-body estimates needs the *anisotropic* Green operator: a cluster estimate on a cubic array is cubic, not isotropic. Three scales end to end, plus a sensitivity across them |
+| [Thermal expansion and Biot tensor](@ref tut-levin) | Levin's theorem on the concentration tensors of a scheme: the thermal expansion of a two-phase composite under five schemes, anisotropic with aligned platelets, the Biot tensor of a solid with pores and pressurized cracks, and both in closed form |
 
-The cluster model on cubic arrays and the equivalent inclusion method against a
-published table are under **Applications**: each exists to reproduce one paper's
-numbers rather than to teach the library.
+## Extension to conductivity
 
-Theory: [interaction tensors](@ref th-interaction), [the cluster
-model](@ref th-cluster), [the equivalent inclusion method](@ref th-eim); the
-API is on the [particle-assembly manual page](@ref man-assemblies).
+| Page | What it shows |
+| :--- | :--- |
+| [Transport properties](@ref tut-transport) | the same algebra at tensor order 2: diffusivity of a porous medium, anisotropy from oriented pores |
 
-## Beyond elasticity
+## Extension to viscoelasticity
 
 | Page | What it shows |
 | :--- | :--- |
@@ -82,8 +108,8 @@ API is on the [particle-assembly manual page](@ref man-assemblies).
 | [Frequency or time?](@ref tut-freq-vs-time) | the complex-modulus and time-domain ALV routes, cross-checked on the same non-aging composite |
 | [Aging viscoelastic schemes side by side](@ref tut-alv-schemes) | Dilute / Mori-Tanaka / Maxwell / PCW on one creep test; the aspect ratio; where the distribution shape decides the answer |
 | [Aging creep: loading age against inclusion shape](@ref tut-aging-ages-aspect) | aging and morphology on the same output: three loading ages × three aspect ratios, and why the shape effect is an offset independent of the age |
-| [A creeping laminate](@ref tut-laminate-alv) | the exact multilayer in aging viscoelasticity: the same algebra with Volterra products in place of tensor products |
 | [Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities) | `ForwardDiff` through the Volterra assembly: the `set_param` lens for RVE parameters, closure capture for moduli and relaxation times |
+| [A creeping laminate](@ref tut-laminate-alv) | the exact multilayer in aging viscoelasticity: the same algebra with Volterra products in place of tensor products |
 
 ## Differentiation and solvers
 
@@ -94,11 +120,10 @@ API is on the [particle-assembly manual page](@ref man-assemblies).
 | [Nonlinear solvers for the self-consistent fixed point](@ref tut-nonlinear-solvers) | `NonlinearSolve.jl` instead of Picard, and sensitivities that agree either way |
 | [Nonlinear homogenization by the secant method](@ref tut-secant-elastoplasticity) | elastic–perfectly plastic porous solid, closed by second moments |
 
-## Interoperability and tools
+## Symbolic computation
 
 | Page | What it shows |
 | :--- | :--- |
 | [Symbolic spheres](@ref tut-symbolic-spheres) | the same tensor algebra on `SymPy` / `Symbolics` expressions: Eshelby/Hill tensors and the closed-form estimates |
 | [Symbolic laminates: arithmetic and harmonic averages](@ref tut-symbolic-laminate) | the one microstructure whose effective behavior is a closed form, derived symbolically |
 | [Symbolic viscoelasticity](@ref tut-symbolic-viscoelasticity) | models with symbolic parameters, and symbolic Laplace-Carson inversion: the Burgers relaxation function *derived* rather than transcribed, and precisely where the symbolic route stops |
-| [Multiscale chaining: explicit and declarative, side by side](@ref tut-laminate-multiscale) | the two ways of chaining scales, the same answer, and the `ForwardDiff` pass that goes through both |

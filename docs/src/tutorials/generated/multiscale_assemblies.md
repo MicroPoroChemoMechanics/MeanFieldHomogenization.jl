@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/92_multiscale_assemblies.jl"
 
 # [Chaining scales through an N-body scheme](@id tut-multiscale-assemblies)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/92_multiscale_assemblies.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/92_multiscale_assemblies.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/92_multiscale_assemblies.jl`, runs it end to end.
+
 !!! info "Before this page"
     The manual page [Particle assemblies and N-body schemes](@ref man-assemblies),
     where a [`ParticleAssembly`](@ref) is built and the cluster model called,
@@ -220,10 +225,10 @@ matrix and of each of the three scales built on it.
 
 ## Where to go next
 
-Every tutorial so far is elastic or conductive, with no dependence on time.
-[Viscoelastic composites](@ref tut-viscoelasticity) opens the tutorials that
-go beyond elasticity, with complex moduli in the frequency domain and a first
-aging creep calculation. The two N-body schemes are taken to published results
+Every scheme above, mean-field or N-body, gives concentration tensors as well
+as an effective stiffness. [Thermal expansion and Biot tensor](@ref tut-levin)
+closes the tutorials on schemes with what those tensors give beyond the
+stiffness, through Levin's theorem. The two N-body schemes are taken to published results
 in [The cluster model on cubic arrays](@ref app-cluster-model) and
 [The equivalent inclusion method, against a published table](@ref app-eim-assembly),
 and the `Homogenized` seam used throughout this page is described in

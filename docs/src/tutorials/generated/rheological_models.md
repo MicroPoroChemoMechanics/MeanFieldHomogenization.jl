@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/65_rheological_models.jl"
 
 # [The rheological model catalog](@id tut-rheological-models)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/65_rheological_models.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/65_rheological_models.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/65_rheological_models.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [Viscoelastic composites](@ref tut-viscoelasticity), where a
     rheological model first describes a phase, and the theory page

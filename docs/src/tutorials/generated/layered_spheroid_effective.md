@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/32_spheroid_effective_conductivity.jl"
 
 # [The n-layer confocal spheroid: geometry and effective conductivity](@id tut-layered-spheroid-effective)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/32_spheroid_effective_conductivity.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/32_spheroid_effective_conductivity.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/32_spheroid_effective_conductivity.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorials [n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere),
     the spherical case of the composite inclusion treated here, and

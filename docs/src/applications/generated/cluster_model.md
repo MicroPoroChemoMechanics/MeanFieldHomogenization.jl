@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/91_cluster_cubic_arrays.jl"
 
 # [The cluster model on cubic arrays](@id app-cluster-model)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/91_cluster_cubic_arrays.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/91_cluster_cubic_arrays.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/91_cluster_cubic_arrays.jl`, runs it end to end.
+
 !!! info "Before this page"
     [Two-inclusion interaction tensors](@ref th-interaction), on which the
     scheme rests, [The cluster model](@ref th-cluster), where it is derived,

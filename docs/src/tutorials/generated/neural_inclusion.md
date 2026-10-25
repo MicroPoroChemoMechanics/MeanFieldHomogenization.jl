@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/84_neural_inclusion_ellipsoid.jl"
 
 # [An inclusion whose response is a neural network](@id tut-neural-inclusion)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/84_neural_inclusion_ellipsoid.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/84_neural_inclusion_ellipsoid.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/84_neural_inclusion_ellipsoid.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [The custom-inclusion contract: three entry gates, one answer](@ref tut-custom-inclusion-contract),
     whose gates the surrogate enters through, and the theory page

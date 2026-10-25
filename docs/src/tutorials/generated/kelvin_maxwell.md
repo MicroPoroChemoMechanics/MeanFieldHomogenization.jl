@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/63_kelvin_maxwell.jl"
 
 # [Generalized Kelvin ⇄ generalized Maxwell](@id tut-kelvin-maxwell)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/63_kelvin_maxwell.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/63_kelvin_maxwell.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/63_kelvin_maxwell.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [The rheological model catalog](@ref tut-rheological-models),
     whose classical chains rely on the conversion examined here, and the

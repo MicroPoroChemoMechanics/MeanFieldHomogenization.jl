@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/93_eim_disk_assembly_2d.jl"
 
 # [The equivalent inclusion method, against a published table](@id app-eim-assembly)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/93_eim_disk_assembly_2d.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/93_eim_disk_assembly_2d.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/93_eim_disk_assembly_2d.jl`, runs it end to end.
+
 !!! info "Before this page"
     [The equivalent inclusion method](@ref th-eim), where the variational form
     and the bounds used below are derived,

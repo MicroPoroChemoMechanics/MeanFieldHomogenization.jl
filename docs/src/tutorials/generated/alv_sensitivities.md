@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/59_alv_sensitivities.jl"
 
 # [Derivatives through the aging-viscoelastic pipeline](@id tut-alv-sensitivities)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/59_alv_sensitivities.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/59_alv_sensitivities.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/59_alv_sensitivities.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [Aging viscoelastic schemes side by side](@ref tut-alv-schemes),
     whose time-domain pipeline is differentiated below, and the manual page
@@ -208,8 +213,11 @@ approximation being checked against it.
 
 The four patterns above give the derivative of an effective modulus with
 respect to the parameters of a time-domain calculation.
+[A creeping laminate](@ref tut-laminate-alv) closes the extension to
+viscoelasticity with the one microstructure whose aging response needs no
+scheme, and
 [Nonlinear homogenization: the secant method on a porous plastic solid](@ref tut-secant-elastoplasticity)
-puts a derivative of the same kind to use inside a nonlinear closure, and the
+puts a derivative of the same kind to use inside a nonlinear closure. The
 lenses and indexers themselves are documented in
 [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities).
 

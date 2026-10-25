@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/80_custom_inclusion_contract.jl"
 
 # [The custom-inclusion contract: three entry gates, one answer](@id tut-custom-inclusion-contract)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/80_custom_inclusion_contract.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/80_custom_inclusion_contract.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/80_custom_inclusion_contract.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [Hill polarization tensors in practice](@ref tut-hill-tensors),
     whose Hill tensor is the first of the three entry gates, and the theory

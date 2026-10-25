@@ -4,8 +4,13 @@ EditURL = "../../../../scripts/70_symmetrization_showcase.jl"
 
 # [Symmetrization showcase: exact average vs best-fit projection](@id tut-symmetrization)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/70_symmetrization_showcase.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/70_symmetrization_showcase.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/70_symmetrization_showcase.jl`, runs it end to end.
+
 !!! info "Before this page"
-    The tutorial [Porous benchmark: all schemes](@ref tut-porous-benchmark),
+    The tutorial [Every scheme on the whole porosity range](@ref tut-porous-benchmark),
     where `IsoSymmetrize()` first averages a population of pores over their
     orientations, and the section
     [Isotropic and transversely isotropic bases](@ref th-notation-bases) of the

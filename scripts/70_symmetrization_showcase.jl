@@ -1,7 +1,7 @@
 # # [Symmetrization showcase: exact average vs best-fit projection](@id tut-symmetrization)
 #
 # !!! info "Before this page"
-#     The tutorial [Porous benchmark: all schemes](@ref tut-porous-benchmark),
+#     The tutorial [Every scheme on the whole porosity range](@ref tut-porous-benchmark),
 #     where `IsoSymmetrize()` first averages a population of pores over their
 #     orientations, and the section
 #     [Isotropic and transversely isotropic bases](@ref th-notation-bases) of the

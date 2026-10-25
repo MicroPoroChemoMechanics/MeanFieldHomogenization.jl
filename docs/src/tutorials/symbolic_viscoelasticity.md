@@ -211,9 +211,9 @@ zn = zener_maxwell(2.0, 3.0, 1.5)
 ## Where to go next
 
 The numerical counterpart of the inversion performed here is measured in
-[Choosing a numerical Laplace inversion](@ref tut-laplace-inversion). The last
-tutorial, [Multiscale chaining: explicit and declarative, side by side](@ref tut-laminate-multiscale),
-chains scales and differentiates through them.
+[Choosing a numerical Laplace inversion](@ref tut-laplace-inversion), and the
+applications take these tools to real materials, from
+[Multiscale elasticity of a hydrating cement paste](@ref app-cement-paste).
 
 - [The rheological model library](@ref man-rheological-models) — the models and their parameters
 - [Numerical Laplace inversion](@ref man-laplace-inversion) — the numerical route

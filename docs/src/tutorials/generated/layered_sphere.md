@@ -4,6 +4,11 @@ EditURL = "../../../../scripts/30_average_nlayers.jl"
 
 # [n-layer sphere: volume-averaged concentration tensors](@id tut-layered-sphere)
 
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/30_average_nlayers.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/30_average_nlayers.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/30_average_nlayers.jl`, runs it end to end.
+
 !!! info "Before this page"
     The tutorial [Hill polarization tensors in practice](@ref tut-hill-tensors),
     whose dilute estimate built from one concentration tensor is extended here
