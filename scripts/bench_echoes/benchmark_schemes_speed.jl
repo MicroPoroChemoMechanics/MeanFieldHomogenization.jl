@@ -161,19 +161,25 @@ include(joinpath(@__DIR__, "..", "common", "quasibrittle_strength.jl"))
 # The Echoes side of the model: `strength_echoes.py`, with the same tiny
 # regularization of water and air as `quasibrittle_strength.jl`.
 py_strength(wc, α, sc, ω, nθ) = ES_STRENGTH.py_strength_reference(wc, α, sc, ω, nθ, TINY)
+# MFH takes Echoes' route by default (`start = :iso`): the foam solved with one
+# isotropically averaged needle family, then the 20 families from it. The
+# direct route (`start = :direct`), the families from the hydrate stiffness, is
+# timed as well, for reference.
 let wc = 0.5, α = 0.43
-    fc_jl = compute_point(wc, α).fc
     fc_py = pyconvert(Float64, py_strength(wc, α, 0.0, ω_aspect, NTHETA)[4])   # 0-based on the Python side
-    tJ = @belapsed compute_point($wc, $α) samples = 3 evals = 1
     tE = @belapsed py_strength($wc, $α, 0.0, $ω_aspect, $NTHETA) samples = 3 evals = 1
-    label = "three-scale strength model (20 needle families), value and derivative"
-    @printf "%-62s %-16s %10.3g s %10.3g s %9.1f×   gap %.1e\n" label "SC + MT + MT" tJ tE tE / tJ abs(fc_jl - fc_py) / fc_py
-    push!(
-        rows, Dict(
-            "case" => label, "scheme" => "SC + MT + MT", "t_mfh" => tJ, "t_echoes" => tE,
-            "ratio" => tE / tJ, "gap" => abs(fc_jl - fc_py) / fc_py
+    for (start, scheme) in ((:iso, "SC + MT + MT, from the isotropic foam"), (:direct, "SC + MT + MT, direct"))
+        fc_jl = compute_point(wc, α; start).fc
+        tJ = @belapsed compute_point($wc, $α; start = $start) samples = 3 evals = 1
+        label = "three-scale strength model (20 needle families), value and derivative"
+        @printf "%-62s %-38s %10.3g s %10.3g s %9.2f×   gap %.1e\n" label scheme tJ tE tE / tJ abs(fc_jl - fc_py) / fc_py
+        push!(
+            rows, Dict(
+                "case" => label, "scheme" => scheme, "t_mfh" => tJ, "t_echoes" => tE,
+                "ratio" => tE / tJ, "gap" => abs(fc_jl - fc_py) / fc_py
+            )
         )
-    )
+    end
 end
 
 out = Dict(

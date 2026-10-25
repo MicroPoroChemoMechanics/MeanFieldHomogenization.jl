@@ -16,6 +16,9 @@ function _fmt_time(t)
     t < 1.0 && return @sprintf("%.3g ms", 1.0e3 * t)
     return @sprintf("%.3g s", t)
 end
+# A text cell: a `|` in a label ("ISO | κ=3k") would end the cell and shift every
+# column after it.
+_cell(s) = replace(string(s), "|" => "\\|")
 # A ratio below 1 (Echoes faster) in bold, so that it cannot be missed.
 _fmt_ratio(r) = r < 1 ? @sprintf("**%.2g×**", r) : r < 100 ? @sprintf("%.3g×", r) :
     string(Int(round(r; sigdigits = 2)), "×")
@@ -46,7 +49,7 @@ function kernel_table(section)
     println(io, "| :--- | :--- | ---: | ---: | ---: | ---: |")
     for r in bench_data("benchmark_kernels.json")[section]
         @printf(
-            io, "| %s | %s | %s | %s | %s | %.1e |\n", r["label"], r["algo"],
+            io, "| %s | %s | %s | %s | %s | %.1e |\n", _cell(r["label"]), _cell(r["algo"]),
             _fmt_time(r["tJ"]), _fmt_time(r["tE"]), _fmt_ratio(r["ratio"]), r["maxrel"]
         )
     end
@@ -66,7 +69,7 @@ function scheme_table(; strength::Bool = false)
     for r in bench_data("benchmark_schemes_speed.json")["rows"]
         startswith(r["case"], "three-scale") == strength || continue
         @printf(
-            io, "| %s | %s | %s | %s | %s | %.1e |\n", r["case"], replace(r["scheme"], "_" => " "),
+            io, "| %s | %s | %s | %s | %s | %.1e |\n", _cell(r["case"]), _cell(replace(r["scheme"], "_" => " ")),
             _fmt_time(r["t_mfh"]), _fmt_time(r["t_echoes"]), _fmt_ratio(r["ratio"]), r["gap"]
         )
     end
