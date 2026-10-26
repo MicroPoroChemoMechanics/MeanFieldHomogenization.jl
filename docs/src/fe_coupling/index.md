@@ -47,6 +47,9 @@ them, then worked models.
 
 | Page | |
 |:--|:--|
+| **Getting started** | |
+| [Quickstart: a structure with a nonlinear law](@ref fe-quickstart) | the whole path in one script: a thick tube of elastoplastic steel inflated to collapse |
+| [Step by step](@ref fe-step-by-step) | the same script piece by piece, what goes wrong without each piece, troubleshooting |
 | **Theory** | |
 | [Scale transition](@ref fe-scale-transition) | the equations: incremental format, consistent tangent, tangent blocks |
 | [The coupled poroelastic problem](@ref fe-poro-coupling) | the same, with a fluid: two balances, the Biot blocks, the four tangents |
@@ -54,7 +57,7 @@ them, then worked models.
 | **Manual** | |
 | [Materials](@ref fe-materials) | the Gauss-point contract, in code |
 | [Building a fractured-rock material](@ref fe-fractured-rock) | the ARMA 2011 material: two gradients, two fluxes, evolving permeability |
-| [Ferrite backend](@ref fe-backends) | the three helpers a Ferrite driver needs |
+| [Ferrite backend](@ref fe-backends) | what the package and the Ferrite adapter each provide, and how to couple another code |
 | **Examples** | |
 | [Thick-walled cylinder](@ref fe-thick-cylinder) | worked model, checked against Lamé, then with closing cracks |
 | [A fractured-reservoir well test](@ref fe-arma2011) | the ARMA 2011 well test, end to end |

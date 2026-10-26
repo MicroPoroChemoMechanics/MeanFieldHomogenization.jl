@@ -49,6 +49,14 @@ A step is type-stable and allocates nothing.
   interaction matrix, any orientation).
 - `probe_gradients`: the gradients at which `check_material_interface`
   exercises a material.
+- The coupling to finite-element codes, generic: `QuadratureStates` with
+  `commit!` and `rollback!` (the states of the quadrature points, kept twice),
+  the modeling hypotheses `ThreeD`, `PlaneStrain` and `Axisymmetric`
+  (`mandel_strain`, `volume_weight`), and `quasistatic!`, a global Newton
+  iteration with step cutting that calls the assembly through one function
+  (`GlobalNewtonError`). With Ferrite loaded, `material_element!` (one cell, any
+  material of the contract, any hypothesis), `material_system` (the assembly and
+  the boundary conditions for the driver) and `write_material_vtk`.
 
 ### Changed
 
@@ -73,6 +81,10 @@ A step is type-stable and allocates nothing.
   a law, driving a point, plugging a law into a computation) and three examples
   (elastoplastic cycles, a damage law written from scratch, drained and
   undrained poroelasticity, the latter also on the fractured rock of ARMA 2011).
+- Finite-element coupling: a *Quickstart* (a thick tube of elastoplastic steel
+  inflated toward its limit pressure, in one script run by the build) and a
+  *Step by step* page that rebuilds it piece by piece, with troubleshooting;
+  the Ferrite backend page rewritten for the public functions.
 
 ## v0.20.2 — shapes built and self-consistent schemes iterated without run-time lookups
 

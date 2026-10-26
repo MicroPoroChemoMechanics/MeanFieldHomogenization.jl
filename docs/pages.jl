@@ -298,6 +298,10 @@ pages = [
     # build a model with them, then worked models.
     "Finite-element coupling" => [
         "fe_coupling/index.md",
+        "Getting started" => [
+            "fe_coupling/quickstart.md",
+            "fe_coupling/step_by_step.md",
+        ],
         "Theory" => [
             "fe_coupling/scale_transition.md",
             "fe_coupling/poroelastic_coupling.md",
