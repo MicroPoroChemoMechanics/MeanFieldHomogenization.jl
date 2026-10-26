@@ -391,3 +391,16 @@ end
     N_i = S._phase_stiffness_contribution(rve, :I, :C, C_ti)
     @test S_mt ≈ C_ti + N_i ⊡ inv(0.75 * one(C_ti) + 0.25 * A_dil)
 end
+
+@testset "A crack phase has no strain concentration, and needs no property" begin
+    S = MeanFieldHomogenization.Schemes
+    C_m = TensISO{3}(3 * 30.0, 2 * 18.0)
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)
+    # A dry crack family, declared without any property.
+    add_phase!(rve, :CRACK, PennyCrack(1.0), Dict{Symbol, Any}(); density = 0.1)
+    A_dil, CA = S._phase_dilute_and_stress_average(rve, :CRACK, :C, C_m)
+    @test _vals(A_dil) == _vals(zero(C_m))
+    @test _vals(CA) == _vals(zero(C_m))
+    @test S._phase_view(rve, :CRACK, :C).property === nothing
+end

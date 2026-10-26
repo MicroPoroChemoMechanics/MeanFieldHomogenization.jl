@@ -56,8 +56,13 @@ include("api.jl")
 # The bounds MeanFieldHomogenization declares, read from its own Project.toml.
 # Copied by hand, a bound of the studio outlives the version it was written for:
 # ChemistryLab Studio bounded OptimaSolver at "0.8" after ChemistryLab 0.41.0
-# came to require 0.9.3, and its compute process never started.
-const OWN_COMPAT = TOML.parsefile(joinpath(@__DIR__, "..", "..", "Project.toml"))["compat"]
+# came to require 0.9.3, and its compute process never started. The file is a
+# dependency of the precompiled image: a release that changes only the bounds
+# touches no source file, and a cached image would keep the bounds of the
+# previous one.
+const OWN_PROJECT = joinpath(@__DIR__, "..", "..", "Project.toml")
+include_dependency(OWN_PROJECT)
+const OWN_COMPAT = TOML.parsefile(OWN_PROJECT)["compat"]
 
 """
 The packages the compute process needs: MeanFieldHomogenization itself, at the

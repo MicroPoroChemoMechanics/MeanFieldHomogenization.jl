@@ -131,8 +131,9 @@ end
     #
     # Only `Voigt`/`Reuss` are checked numerically here, because the rest of
     # the one-site family is 3D-only on an `RVE` (`_mt_dispatch`,
-    # `_phase_stiffness_contribution` and `_sc_step_dispatch` have no
-    # `AbstractTens{4,2}` methods). That limitation is the RVE's, and the
+    # `_phase_stiffness_contribution` and `_compose`, the contraction of the
+    # self-consistent step, have no `AbstractTens{4,2}` methods). That
+    # limitation is the RVE's, and the
     # bridge inherits it exactly — which is what the last block asserts.
     C_m = TensISO{2}(3 * 1.0, 2 * 0.4)
     C_i = TensISO{2}(3 * 10.0, 2 * 6.0)

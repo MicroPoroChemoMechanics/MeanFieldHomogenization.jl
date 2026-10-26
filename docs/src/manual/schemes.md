@@ -322,6 +322,19 @@ to the built-in Newton otherwise. It is **not** the default: a root-finder is
 not guaranteed to track the physical branch through the SC bifurcation the way
 the Picard guard does.
 
+!!! tip "What an iteration costs, and how to keep it cheap"
+    A self-consistent solve reads the phases of the RVE once, then iterates on
+    them: in an isotropic reference a step is a few tens of nanoseconds per
+    phase and allocates nothing for them ([Performance notes](@ref dev-performance-notes)).
+    What remains is paid once per call: building the RVE, choosing the form of
+    the asymmetric scheme, and the first compilation for a new kind of RVE. In
+    a loop over many evaluations (a parameter sweep, the Gauss points of a
+    finite-element computation), build the RVE once and homogenize it again
+    rather than rebuilding it, and start each solve from the previous estimate
+    with `init`. That shortens the iteration as long as the previous estimate
+    lies on the same branch: the same open and closed cracks, the same side of
+    percolation.
+
 All three are `ForwardDiff`-compatible — differentiating `homogenize` through a
 `NonlinearSolve` algorithm uses an implicit-function-theorem lift, so no nested
 `Dual`s ever form (see [`derivative`](@ref) and the

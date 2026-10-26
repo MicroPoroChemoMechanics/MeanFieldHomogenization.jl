@@ -1,4 +1,4 @@
-# # [Hill tensors by transformation, the 2020 paper step by step](@id app-hill-transformation)
+# # [Hill tensors by transformation: closed forms derived step by step](@id app-hill-transformation)
 #
 # !!! info "Before this page"
 #     The section [Reduction to a sphere](@ref th-hill-reduction-sphere) and the

@@ -1,5 +1,60 @@
 # Changelog
 
+## v0.20.2 — shapes built and self-consistent schemes iterated without run-time lookups
+
+A patch release, for speed. Two paths cost far more than the arithmetic they
+perform. **Building a shape whose semi-axes have to be sorted** (a prolate
+`Spheroid(5.0)`, declared along ``\underline{e}_3``) sorted three numbers with
+`sortperm` on a collected vector and built the permuted basis from a matrix
+whose size was read at run time, so the basis of the shape, and every
+computation on it, was decided at run time. **A step of `SelfConsistent` or
+`AsymmetricSelfConsistent`** read, at every iteration, the list of phase names,
+then the fraction, property and orientation average of each phase from
+dictionaries holding `Any`, and called the concentration kernel through a
+dynamic dispatch per phase. The semi-axes are now sorted on the tuple, the
+basis is built with its dimension known (TensND 0.8.3), and a solve gathers the
+phases it reads once, into views on which the iteration specializes.
+
+The arithmetic is the same, in the same order: every case of `scripts/bench`
+returns a checksum identical to the bit with 0.20.1, with the same number of
+Hill tensors evaluated and of iterations. Measured on one thread, with the
+shape or the RVE built inside the timed call: `Spheroid(5.0)` 1.48 → 0.45 µs,
+its Hill tensor in an isotropic matrix 1.41 → 0.57 µs, a Mori–Tanaka estimate
+on spheres 1.95 → 1.44 µs, an asymmetric self-consistent one 20.6 → 5.7 µs, a
+porous self-consistent one 37.7 → 20.9 µs. The anisotropic cubatures, whose
+cost is the integration, are unchanged.
+
+### Changed
+
+- The step of the self-consistent schemes reads the phases through views
+  gathered once per solve. In an isotropic reference the kernel call is static
+  and a step allocates nothing for the phases. In any other reference the
+  kernel stays behind an inference barrier: a fully inferable step let
+  inference reach down through the anisotropic Hill cubature and, with a crack
+  family next to an inclusion, take more than 4.8 GB.
+- The stiffness and the conductivity forms of each step are one method instead
+  of two copies.
+- `TensND` bound raised to `"0.8.3"`, which builds a permuted basis with its
+  dimension known.
+
+### Fixed
+
+- MFH Studio reads the bounds of `Project.toml` again whenever the file
+  changes. It keeps them in a constant computed at precompile time, and a
+  release that changes only the bounds touches no source file: a cached
+  precompiled image kept the previous bounds, so the compute environment
+  would have required an older TensND than the package itself.
+
+### Documentation
+
+- *Performance notes*: the fast paths of the shapes and of the self-consistent
+  schemes, what changed in their implementation, the measured gains, and why
+  the kernel is called dynamically in an anisotropic reference; why the damped
+  Picard iteration remains the default solver.
+- *Homogenization schemes*: what an iteration costs and how to keep a loop of
+  estimates cheap.
+- The application on Hill tensors by transformation is titled by its content.
+
 ## v0.20.1 — residue sums guarded by their rounding error; the 2020 paper on Hill tensors step by step
 
 A patch release, a fix. The residue algorithm of the Hill tensor
