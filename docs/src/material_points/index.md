@@ -79,6 +79,7 @@ entropy in the same manner.
 | [Integrating a law over a step](@ref mp-theory) | the incremental problem, the consistent tangent by the implicit-function theorem, the potential route, exact derivatives |
 | **Manual** | |
 | [Writing a law](@ref mp-writing) | the residual route, the potential route, internal variables, coupled fields |
+| [The laws shipped](@ref mp-laws) | the six laws, their equations, parameters and behavior along typical paths |
 | [Driving a point](@ref mp-driving) | loading paths, mixed control, reading the response |
 | [Plugging a law into a computation](@ref mp-plugging) | the Gauss-point contract, the flat interface for speed, differentiating with respect to parameters |
 | **Examples** | |

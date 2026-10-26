@@ -280,6 +280,7 @@ pages = [
         ],
         "Manual" => [
             "material_points/writing.md",
+            "material_points/laws.md",
             "material_points/driving.md",
             "material_points/plugging.md",
         ],
