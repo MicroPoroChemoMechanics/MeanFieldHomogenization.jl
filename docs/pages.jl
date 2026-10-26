@@ -278,6 +278,7 @@ pages = [
         "Theory" => [
             "material_points/theory.md",
             "material_points/theory_secant.md",
+            "material_points/theory_crack_damage.md",
         ],
         "Manual" => [
             "material_points/writing.md",
@@ -290,6 +291,7 @@ pages = [
             "material_points/ex_damage.md",
             "material_points/ex_biot.md",
             "material_points/ex_composite.md",
+            "material_points/ex_crack_damage.md",
         ],
     ],
     # MeanFieldHomogenization *inside* a finite-element code — the exact

@@ -62,6 +62,13 @@ ModifiedSecant
 secant_moduli
 ```
 
+## Damage by the growth of microcracks
+
+```@docs
+CrackGrowthDamage
+CrackGrowthResistance
+```
+
 ## Driving a point
 
 ```@docs

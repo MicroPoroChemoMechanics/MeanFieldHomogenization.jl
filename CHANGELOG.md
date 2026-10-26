@@ -1,5 +1,33 @@
 # Changelog
 
+## Unreleased — nonlinear models of cracked and porous solids
+
+### Added
+
+- `CrackGrowthDamage`: damage by the growth of microcracks, derived from the
+  homogenized energy of the cracked solid instead of being fitted. Its internal
+  variables are the crack densities of the families of an RVE; the force
+  driving each family is the derivative of the stored energy with respect to its
+  density, computed by automatic differentiation through any scheme that
+  handles cracks; a family grows when that force reaches its resistance, a
+  function of the density. `CrackGrowthResistance` is the resistance that
+  Griffith's criterion gives for cracks growing in size at fixed number; it
+  decreases, so that the growth is unstable, and the keyword `τ` regularizes it
+  by a viscosity. Oriented families grow each under the tractions on their own
+  plane, so that the damage becomes anisotropic.
+
+### Changed
+
+- `LocalNewton` halves a correction that leads the internal variables where the
+  residual of the law is not finite (a law returns `NaN` outside its domain).
+  A law whose residual is finite everywhere is integrated as before.
+
+### Documentation
+
+- *Material points*: a theory page on damage by the growth of microcracks (the
+  driving force, Griffith's resistance, stability, regularization) and an
+  example (progressive and unstable growth, a load cycle).
+
 ## v0.21.0 — nonlinear laws at a material point (`MaterialPoints`)
 
 A minor release. Nothing that existed computes differently (only

@@ -79,6 +79,7 @@ entropy in the same manner.
 | **Theory** | |
 | [Integrating a law over a step](@ref mp-theory) | the incremental problem, the consistent tangent by the implicit-function theorem, the potential route, exact derivatives |
 | [Homogenizing nonlinear phases: secant methods](@ref mp-theory-secant) | the linear comparison composite, the classical and the modified secant methods, the composite as a law |
+| [Damage by the growth of microcracks](@ref mp-theory-crack-damage) | crack densities as internal variables, the driving force from the homogenized energy, Griffith's resistance, stability and viscous regularization |
 | **Manual** | |
 | [Writing a law](@ref mp-writing) | the residual route, the potential route, internal variables, coupled fields |
 | [The laws shipped](@ref mp-laws) | the six laws, their equations, parameters and behavior along typical paths |
@@ -89,6 +90,7 @@ entropy in the same manner.
 | [A damage law written from scratch](@ref mp-ex-damage) | a law of your own, with a threshold and an evolving internal variable |
 | [Drained and undrained poroelasticity](@ref mp-ex-biot) | a coupled law, the same sample in two tests |
 | [A composite of nonlinear phases](@ref mp-ex-composite) | two power-law phases homogenized by both secant methods, against the Voigt bound |
+| [Damage by the growth of microcracks](@ref mp-ex-crack-damage) | progressive and unstable crack growth in a brittle solid, a load cycle, the viscous regularization |
 
 !!! note "Small strain"
     The laws are written in infinitesimal strain. The kinematics is a trait of
