@@ -53,6 +53,7 @@ include("laws.jl")
 include("algorithms.jl")
 include("contract.jl")
 include("library.jl")
+include("crystal.jl")
 include("loading.jl")
 include("driver.jl")
 
@@ -66,7 +67,7 @@ export AbstractLocalAlgorithm, LocalNewton, LocalIntegrationError, point_update
 
 # ── The laws shipped ─────────────────────────────────────────────────────────
 export LinearElasticity, PowerLawElasticity, MaxwellViscoelasticity, BiotPoroelasticity
-export NortonViscoplasticity, J2Plasticity
+export NortonViscoplasticity, J2Plasticity, CrystalViscoplasticity, slip_systems
 
 # ── Driving a point ──────────────────────────────────────────────────────────
 export LoadingPath, point_response, PointResponse, PointDriverError

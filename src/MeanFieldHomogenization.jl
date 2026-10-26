@@ -458,7 +458,7 @@ export kinematics, SmallStrain, state_layout, gradient_layout, flux_layout, law_
 export Mandel, identity_mandel, trace_mandel, deviator, von_mises, equivalent_strain
 export AbstractLocalAlgorithm, LocalNewton, LocalIntegrationError, point_update
 export LinearElasticity, PowerLawElasticity, MaxwellViscoelasticity, BiotPoroelasticity
-export NortonViscoplasticity, J2Plasticity
+export NortonViscoplasticity, J2Plasticity, CrystalViscoplasticity, slip_systems
 export LoadingPath, point_response, PointResponse, PointDriverError
 
 # ── MFH Studio launcher ──────────────────────────────────────────────────────

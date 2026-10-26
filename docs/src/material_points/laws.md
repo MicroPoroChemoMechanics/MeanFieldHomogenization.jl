@@ -229,3 +229,66 @@ Isotropic hardening expands the elastic domain, so reverse yielding starts late;
 kinematic hardening moves it, so reverse yielding starts early (the
 Bauschinger effect); the saturating law hardens fast at first and then flattens
 to ``\sigma_0 + 150`` MPa.
+
+## Single-crystal viscoplasticity
+
+A crystal deforms by slip on the systems of its lattice: a plane of normal
+``\underline{n}_s`` and a direction ``\underline{m}_s`` in it, of Schmid tensor
+``\boldsymbol P_s = \operatorname{sym}(\underline m_s \otimes \underline n_s)``. Each
+system slips when its resolved shear stress exceeds its critical value, and
+hardens with the slip accumulated on all of them ([meric1991](@citet)):
+
+```math
+\tau_s = \boldsymbol\sigma : \boldsymbol P_s,
+\qquad
+\dot\gamma_s = \left\langle \frac{|\tau_s| - r_s}{K} \right\rangle^{n} \operatorname{sign}\tau_s,
+\qquad
+\boldsymbol\varepsilon^p = \sum_s \gamma_s\,\boldsymbol P_s,
+```
+
+```math
+\dot v_s = |\dot\gamma_s|,
+\qquad
+r_s = \tau_0 + Q \sum_j h_{sj}\left(1 - e^{-b\,v_j}\right).
+```
+
+| parameter | meaning |
+|:--|:--|
+| `C₁₁`, `C₁₂`, `C₄₄` | the cubic elastic constants |
+| `lattice` | `:fcc` (12 systems ``\{111\}\langle110\rangle``) or `:bcc` (12 systems ``\{110\}\langle111\rangle``), see [`slip_systems`](@ref) |
+| `frame` | the orientation: a TensND basis whose vectors are the cube axes |
+| `K`, `n` | the viscous stress scale and exponent of the slip rate |
+| `τ₀` | the initial critical resolved shear stress |
+| `Q`, `b` | the saturation and the rate of the hardening |
+| `latent` | the interaction between systems: 1, every system hardens every other alike |
+
+The response depends on the orientation of the crystal with respect to the
+load, through the Schmid factors ``(\underline a\cdot\underline n_s)(\underline a\cdot\underline m_s)``
+of the loading axis ``\underline a``. A copper-like FCC crystal pulled at a
+constant strain rate along three of its directions, each brought onto the
+tensile axis ``\underline e_1`` by rotating the crystal:
+
+```@example mp_laws
+using TensND, StaticArrays, LinearAlgebra
+# The crystal frame that brings the crystal direction d onto the global e₁.
+function along(d)
+    d = normalize(SVector{3, Float64}(d))
+    u = normalize(cross(d, abs(d[3]) < 0.9 ? SVector(0.0, 0, 1) : SVector(0.0, 1, 0)))
+    return RotatedBasis(SMatrix{3, 3}(vcat(d', u', cross(d, u)')))
+end
+crystal(frame) = CrystalViscoplasticity(; C₁₁ = 168e3, C₁₂ = 121e3, C₄₄ = 75e3, frame,
+    K = 10.0, n = 10.0, τ₀ = 10.0, Q = 3.0, b = 20.0)
+pull = LoadingPath(range(0, 20; length = 81); ε11 = t -> 1e-3 * t)       # 1e-3 /s up to 2 %
+p = plot(; xlabel = "axial strain ε₁₁ (%)", ylabel = "axial stress σ₁₁ (MPa)", legend = :bottomright)
+for (name, d) in ("[001]" => (0, 0, 1), "[011]" => (0, 1, 1), "[111]" => (1, 1, 1))
+    r = point_response(crystal(along(d)), pull)
+    plot!(p, r[:ε11] * 100, r[:σ11]; label = "tension along $name", lw = 2)
+end
+p
+```
+
+Along ``[001]`` and ``[011]`` the most stressed systems have the largest Schmid
+factor, ``1/\sqrt6 \approx 0.41``, and the crystal yields at the same axial
+stress; along ``[111]`` it is ``0.27``, and the crystal yields about 1.5 times
+higher. The elastic slopes differ too: a cubic crystal is stiffer along
+``[111]`` than along ``[001]``.

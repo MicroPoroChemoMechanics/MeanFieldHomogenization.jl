@@ -48,6 +48,8 @@ MaxwellViscoelasticity
 BiotPoroelasticity
 NortonViscoplasticity
 J2Plasticity
+CrystalViscoplasticity
+slip_systems
 ```
 
 ## Driving a point

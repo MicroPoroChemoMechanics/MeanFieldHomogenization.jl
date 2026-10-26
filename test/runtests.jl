@@ -373,6 +373,7 @@ end
         include("MaterialPoints/test_laws.jl")
         include("MaterialPoints/test_engine.jl")
         include("MaterialPoints/test_driver.jl")
+        include("MaterialPoints/test_crystal.jl")
     end
 
     rungroup("Viscoelasticity") && @testset "Viscoelasticity" begin
