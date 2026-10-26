@@ -15,8 +15,25 @@
   decreases, so that the growth is unstable, and the keyword `τ` regularizes it
   by a viscosity. Oriented families grow each under the tractions on their own
   plane, so that the damage becomes anisotropic.
+- `ClosingCrackPoroelasticity`: nonlinear poroelasticity of a saturated rock
+  whose microcracks close progressively under the Terzaghi effective stress
+  ``Σ + p 𝟏``, so that its drained stiffness rises and its Biot tensor falls
+  with the confinement. A law of two fields (strain and pore pressure), whose
+  moduli are those of the solid with the open densities, integrated
+  incrementally. `ExponentialClosure` is the open fraction of a family whose
+  closure stresses are distributed exponentially.
+- `Poromechanics.poroelastic_parameters` also takes Kelvin–Mandel matrices.
 
 ### Changed
+
+- The laws whose state moves crack densities evaluate the stiffness of the
+  cracked solid as an exact affine compliance when the scheme is Mori–Tanaka
+  and the matrix is the only phase carrying volume: the compliances of the
+  families are taken once from the homogenization, and a step is a few 6 × 6
+  operations. A damaging step of `CrackGrowthDamage` went from 1.8 ms to 11 µs
+  (isotropic family) and from 26 ms to 19 µs (three oriented families), a step
+  of `ClosingCrackPoroelasticity` from 12 ms to 27 µs, with no allocation (one
+  thread, minimum of BenchmarkTools). Other schemes keep the generic route.
 
 - `LocalNewton` halves a correction that leads the internal variables where the
   residual of the law is not finite (a law returns `NaN` outside its domain).
@@ -26,7 +43,9 @@
 
 - *Material points*: a theory page on damage by the growth of microcracks (the
   driving force, Griffith's resistance, stability, regularization) and an
-  example (progressive and unstable growth, a load cycle).
+  example (progressive and unstable growth, a load cycle); a theory page on the
+  nonlinear poroelasticity of cracked rocks and an example (a rock under
+  confinement, the two roles of the pore pressure).
 
 ## v0.21.0 — nonlinear laws at a material point (`MaterialPoints`)
 

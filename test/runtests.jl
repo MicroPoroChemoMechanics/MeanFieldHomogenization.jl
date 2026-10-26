@@ -375,7 +375,9 @@ end
         include("MaterialPoints/test_driver.jl")
         include("MaterialPoints/test_crystal.jl")
         include("MaterialPoints/test_homogenized.jl")
+        include("MaterialPoints/test_crack_stiffness.jl")
         include("MaterialPoints/test_crack_damage.jl")
+        include("MaterialPoints/test_closing_cracks.jl")
         # The coupling to a finite-element code, through the Ferrite adapter.
         HAS_FERRITE && include("MaterialPoints/test_fe_coupling.jl")
     end

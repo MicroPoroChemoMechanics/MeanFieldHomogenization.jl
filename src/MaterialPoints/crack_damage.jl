@@ -104,25 +104,20 @@ function CrackGrowthDamage(
         name, stress = _cd_stress, residual = _cd_residual, elastic = _cd_below_threshold,
         layout = NamedTuple{fams}(ntuple(_ -> 1, length(fams))),
         y₀ = [Schemes.get_param(rve, Schemes.AmountParameter(φ)) for φ in fams],
-        p = (; rve, scheme, resistances, τ)
+        p = (; model = cracked_stiffness(rve, scheme, fams), resistances, τ)
     )
 end
 
 _family_resistance(R::NamedTuple, φ) = R[φ]
 _family_resistance(R, φ) = R
 
-# The cracked solid at the densities y.
-_cracked_rve(p, y) = foldl((rve, φ) -> Schemes.set_param(rve, Schemes.AmountParameter(φ), y[φ]), keys(p.resistances); init = p.rve)
+# The densities of the families, in their order, as a vector.
+_densities(y, p) = SVector(map(φ -> y[φ], keys(p.resistances)))
 
-_cd_stress(ε, y, p) = _effective_stiffness(_cracked_rve(p, y), p.scheme) * ε
+_cd_stress(ε, y, p) = _stiffness_at(p.model, _densities(y, p)) * ε
 
-# The forces driving the families, Yᵢ = −∂W/∂dᵢ at fixed strain.
-function _driving_forces(ε, y, p)
-    φs = keys(p.resistances)
-    d = SVector(map(φ -> y[φ], φs))
-    W(x) = _quadratic(ε, _effective_stiffness(_cracked_rve(p, NamedTuple{φs}(Tuple(x))), p.scheme))
-    return NamedTuple{φs}(Tuple(-ForwardDiff.gradient(W, d)))
-end
+# The forces driving the families, Yᵢ = −∂W/∂dᵢ at fixed strain, by name.
+_driving_forces(ε, y, p) = NamedTuple{keys(p.resistances)}(Tuple(_driving_forces_at(p.model, ε, _densities(y, p))))
 
 # Elastic when no family has reached its resistance at the densities of the
 # last step.

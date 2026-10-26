@@ -181,6 +181,20 @@ function poroelastic_parameters(
     return (B = B, inverse_modulus = invM, modulus = inv(invM))
 end
 
+# The same relations on Kelvin–Mandel components (6 × 6 matrices for the
+# stiffnesses, a 6-vector for the Biot tensor), for callers that evaluate them
+# inside nested dual numbers, as the laws of MaterialPoints do, where the tensor
+# path costs minutes of compilation. Both stiffnesses being symmetric,
+# 𝟏 : (𝕀 − 𝕊ₛ : ℂ) is 𝟏 − ℂ 𝕊ₛ 𝟏.
+function poroelastic_parameters(C_hom::StaticMatrix{6, 6}, C_s::StaticMatrix{6, 6}, φ::Number)
+    s_s = inv(C_s)
+    T = promote_type(eltype(C_hom), eltype(s_s), typeof(φ))
+    𝟏 = SVector{6, T}(1, 1, 1, 0, 0, 0)
+    B = 𝟏 - C_hom * (s_s * 𝟏)
+    invM = transpose(𝟏) * (s_s * (B - φ * 𝟏))
+    return (B = B, inverse_modulus = invM, modulus = inv(invM))
+end
+
 """
     undrained_stiffness(C_hom, B, M) -> Tens{4,3}
 

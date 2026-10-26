@@ -69,6 +69,13 @@ CrackGrowthDamage
 CrackGrowthResistance
 ```
 
+## Nonlinear poroelasticity of cracked rocks
+
+```@docs
+ClosingCrackPoroelasticity
+ExponentialClosure
+```
+
 ## Driving a point
 
 ```@docs
