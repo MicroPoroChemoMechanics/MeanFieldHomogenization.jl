@@ -27,8 +27,8 @@ abstract type SecantMethod end
     ClassicalSecant()
 
 The effective strain of a phase is the equivalent strain of its **average**
-strain, ``\\bar\\varepsilon_{eq,r} = \\varepsilon_{eq}(\\mathbb A_r : \\boldsymbol E)``,
-``\\mathbb A_r`` being the strain concentration tensor of the phase in the linear
+strain, ``\\bar\\varepsilon_i = \\varepsilon_{\\mathrm{eq}}(\\mathbb{A}_i : \\boldsymbol{E})``,
+``\\mathbb{A}_i`` being the strain concentration tensor of the phase in the linear
 comparison composite.
 """
 struct ClassicalSecant <: SecantMethod end
@@ -40,14 +40,15 @@ The effective strain of a phase is the square root of the **second moment** of
 its equivalent strain,
 
 ```math
-\\bar\\varepsilon_{eq,r}^2 = \\langle \\varepsilon_{eq}^2 \\rangle_r
-= \\frac{2}{3\\,c_r}\\;\\boldsymbol E : \\frac{\\partial\\widetilde{\\mathbb C}}{\\partial (2\\mu_r)} : \\boldsymbol E,
+\\bar\\varepsilon_i^2 = \\langle \\varepsilon_{\\mathrm{eq}}^2 \\rangle_i
+= \\frac{2}{3\\,f_i}\\;\\boldsymbol{E} : \\frac{\\partial\\mathbb{C}^{\\mathrm{hom}}}{\\partial (2\\mu_i)} : \\boldsymbol{E},
 ```
 
 the derivative of the effective stiffness of the linear comparison composite
 with respect to the shear modulus of the phase giving the energy the phase
 stores [kreher1990](@cite). It is the method whose estimates coincide with the
-variational ones of [ponteCastaneda1991](@citet) for power-law phases.
+variational ones of [ponteCastaneda1991](@citet) for power-law phases (see
+[the theory page](@ref mp-theory-secant)).
 """
 struct ModifiedSecant <: SecantMethod end
 
@@ -56,8 +57,8 @@ struct ModifiedSecant <: SecantMethod end
 
 The isotropic secant moduli of a phase law without internal variable at the
 equivalent strain `εeq`, read on its own response: the shear modulus from a
-deviatoric strain ``\\varepsilon_{eq}\\,(1, -\\tfrac12, -\\tfrac12)``, of
-equivalent strain ``\\varepsilon_{eq}``, and the bulk modulus from a volume
+deviatoric strain ``\\varepsilon_{\\mathrm{eq}}\\,(1, -\\tfrac12, -\\tfrac12)``, of
+equivalent strain ``\\varepsilon_{\\mathrm{eq}}``, and the bulk modulus from a volume
 change of the same size.
 """
 function secant_moduli(law::AbstractPointLaw, εeq)
@@ -79,14 +80,14 @@ maps phase names to laws of `MaterialPoints` without internal variable
 keeps its linear stiffness. `scheme` is any linear homogenization scheme of the
 package, `method` a [`SecantMethod`](@ref).
 
-At the macroscopic strain ``\\boldsymbol E``, every phase ``r`` with a law takes
-its secant moduli at its effective strain ``\\bar\\varepsilon_{eq,r}``, the linear
-composite they form is homogenized into ``\\widetilde{\\mathbb C}``, and
+At the macroscopic strain ``\\boldsymbol{E}``, every phase ``i`` with a law takes
+its secant moduli at its effective strain ``\\bar\\varepsilon_i``, the linear
+composite they form is homogenized into ``\\mathbb{C}^{\\mathrm{hom}}``, and
 
 ```math
-\\boldsymbol\\Sigma = \\widetilde{\\mathbb C}(\\bar\\varepsilon_{eq}) : \\boldsymbol E,
+\\boldsymbol{\\Sigma} = \\mathbb{C}^{\\mathrm{hom}}(\\bar\\varepsilon_1, \\ldots, \\bar\\varepsilon_n) : \\boldsymbol{E},
 \\qquad
-\\bar\\varepsilon_{eq,r} = \\text{the effective strain of phase } r \\text{ in that composite},
+\\bar\\varepsilon_i = \\text{the effective strain of phase } i \\text{ in that composite},
 ```
 
 a fixed point in the effective strains. The result is a
@@ -156,7 +157,8 @@ end
 
 function _phase_strain(::ModifiedSecant, rve, p, φ, ε)
     shear = Schemes.PropertyParameter(φ, :C, :shear)
-    energy(x) = (ℂ = _effective_stiffness(Schemes.set_param(rve, shear, x), p.scheme); transpose(ε) * (ℂ * ε))
-    ∂ = ForwardDiff.derivative(energy, Schemes.get_param(rve, shear))
-    return sqrt(2 * ∂ / (3 * p.fractions[φ]))
+    # W = ½ E:ℂ:E, whose derivative with respect to 2μ of the phase is ¾ fᵢ ⟨ε_eq²⟩ᵢ.
+    energy(x) = _quadratic(ε, _effective_stiffness(Schemes.set_param(rve, shear, x), p.scheme))
+    ∂W = ForwardDiff.derivative(energy, Schemes.get_param(rve, shear))
+    return sqrt(4 * ∂W / (3 * p.fractions[φ]))
 end

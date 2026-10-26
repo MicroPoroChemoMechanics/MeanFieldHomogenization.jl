@@ -9,7 +9,8 @@ history, and that may couple several fields. With it you can
 - **test it** along any loading path, a tensile test, a creep test, a cycle, an
   undrained compression, before using it anywhere else;
 - **plug it** into a finite-element computation, exactly where a homogenized
-  material plugs in today.
+  material plugs in today;
+- **homogenize** a composite of nonlinear phases into a law of the same kind.
 
 The consistent tangent, the coupling blocks between fields and the derivatives
 with respect to the parameters are computed for you, by automatic
@@ -77,6 +78,7 @@ entropy in the same manner.
 |:--|:--|
 | **Theory** | |
 | [Integrating a law over a step](@ref mp-theory) | the incremental problem, the consistent tangent by the implicit-function theorem, the potential route, exact derivatives |
+| [Homogenizing nonlinear phases: secant methods](@ref mp-theory-secant) | the linear comparison composite, the classical and the modified secant methods, the composite as a law |
 | **Manual** | |
 | [Writing a law](@ref mp-writing) | the residual route, the potential route, internal variables, coupled fields |
 | [The laws shipped](@ref mp-laws) | the six laws, their equations, parameters and behavior along typical paths |
@@ -86,6 +88,7 @@ entropy in the same manner.
 | [Elastoplastic bar under cycles](@ref mp-ex-plasticity) | J2 plasticity against the closed form, isotropic and kinematic hardening |
 | [A damage law written from scratch](@ref mp-ex-damage) | a law of your own, with a threshold and an evolving internal variable |
 | [Drained and undrained poroelasticity](@ref mp-ex-biot) | a coupled law, the same sample in two tests |
+| [A composite of nonlinear phases](@ref mp-ex-composite) | two power-law phases homogenized by both secant methods, against the Voigt bound |
 
 !!! note "Small strain"
     The laws are written in infinitesimal strain. The kinematics is a trait of

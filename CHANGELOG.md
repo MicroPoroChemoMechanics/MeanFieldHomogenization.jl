@@ -93,6 +93,11 @@ A step is type-stable and allocates nothing.
   inflated toward its limit pressure, in one script run by the build) and a
   *Step by step* page that rebuilds it piece by piece, with troubleshooting;
   the Ferrite backend page rewritten for the public functions.
+- Nonlinear homogenization: a theory page on the secant methods (the linear
+  comparison composite, the second moments derived from the energy of the
+  phases, the composite as a law whose internal variables are the effective
+  strains) and an example, a composite of two power-law phases computed by both
+  methods against the Voigt bound, with its checks.
 
 ## v0.20.2 — shapes built and self-consistent schemes iterated without run-time lookups
 

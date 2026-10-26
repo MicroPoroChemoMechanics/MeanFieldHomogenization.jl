@@ -11,9 +11,9 @@
 # components (TensND's isotropic stiffness, converted once at construction).
 _iso_mandel(E, ν) = _mandel(TensND.iso_stiffness_young_poisson(E, ν))
 
-# ½ a:𝔸:a, the quadratic form of a stiffness, written without `dot` (which
-# conjugates, and a symbolic entry must not see that).
-_quadratic(a, 𝔸) = sum(a .* (𝔸 * a)) / 2
+# ½ a:𝔸:a, the quadratic form of a stiffness, written with `transpose` rather
+# than `dot` (which conjugates, and a symbolic entry must not see that).
+_quadratic(a, 𝔸) = transpose(a) * (𝔸 * a) / 2
 
 # ── Potential route ──────────────────────────────────────────────────────────
 
