@@ -103,3 +103,32 @@ end
     @test rr[:σ33][end] ≈ components_canon(stress(direct))[3, 3] rtol = 1.0e-10
     @test rr[:φ][end] ≈ direct.fluxes.φ rtol = 1.0e-10
 end
+
+@testset "external variables" begin
+    # A thermoelastic law written by a user: the temperature T is read, not
+    # returned; free expansion α (T − T₀) 1.
+    k, μ, α, T₀ = 160.0e3, 80.0e3, 1.2e-5, 293.0
+    J = identity_mandel() * transpose(identity_mandel()) / 3
+    ℂ = 3k * J + 2μ * (one(SMatrix{6, 6, Float64}) - J)
+    elastic_part(g, p) = g.ε - p.α * (p.T - p.T₀) * identity_mandel()
+    thermo = PotentialLaw(; energy = (g, a, p) -> sum(elastic_part(g, p) .* (p.ℂ * elastic_part(g, p))) / 2, p = (; ℂ, α, T₀))
+    zero6 = zero(SVector{6, Float64})
+    σ, _, _ = point_update(thermo, zero6, initial_state(thermo), 0.0; external = (T = 343.0,))
+    @test σ ≈ -3k * α * 50 * identity_mandel() rtol = 1.0e-12
+    @test ForwardDiff.derivative(T -> point_update(thermo, zero6, initial_state(thermo), 0.0; external = (T = T,))[1][1], 343.0) ≈
+        -3k * α rtol = 1.0e-12
+    r = material_response(thermo, (ε = from_mandel(zero6),), initial_state(thermo), 0.0; external = (T = 343.0,))
+    @test components_canon(stress(r))[1, 1] ≈ -3k * α * 50 rtol = 1.0e-12
+    # Along a path: free expansion under a temperature ramp, then blocked.
+    ramp = (T = t -> 293.0 + 100.0 * t,)
+    free = point_response(thermo, LoadingPath(0:0.5:1; external = ramp))
+    @test free[:ε11] ≈ α * 100 .* [0.0, 0.5, 1.0] atol = 1.0e-15
+    @test free[:ε12] ≈ zeros(3) atol = 1.0e-15
+    blocked = point_response(thermo, LoadingPath(0:0.5:1; ε11 = 0, ε22 = 0, ε33 = 0, ε23 = 0, ε13 = 0, ε12 = 0, external = ramp))
+    @test blocked[:σ22] ≈ -3k * α * 100 .* [0.0, 0.5, 1.0] atol = 1.0e-9
+    # A name already in `p` takes the value given: a yield stress varying along a path.
+    soft = point_response(J2_DRV, LoadingPath(0:0.5:1; ε11 = t -> 3.0e-3 * t, external = (σ₀ = 200.0,)))
+    @test soft[:σ11][end] ≈ 200.0 + 200.0e3 * 2.0e3 / 202.0e3 * (3.0e-3 - 200.0 / 200.0e3) rtol = 1.0e-10
+    # A material of the contract that reads no external variable refuses them.
+    @test_throws ArgumentError point_response(HomogenizedElastic(TensISO{3}(3 * 30.0, 2 * 18.0)), LoadingPath(0:1; ε11 = 1.0e-3, external = (T = 300.0,)))
+end

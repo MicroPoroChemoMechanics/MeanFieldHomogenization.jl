@@ -386,6 +386,24 @@ function _incremental_energy(law::PotentialLaw, a, g, prev, Δt)
     return _energy(law, g, a) + Δt * law.dissipation(rate, _named(prev.y, law.layout), law.p)
 end
 
+# ── External variables ───────────────────────────────────────────────────────
+# A temperature, a time, any field the law reads without returning its flux: the
+# caller gives them by name for the step, and the law reads them in `p` beside
+# its parameters (a name already in `p` takes the given value, which makes a
+# parameter vary along a path). A dual value is differentiated like a parameter.
+
+_with_external(law, ::NamedTuple{()}) = law
+_with_external(law, ext::NamedTuple) = _with_parameters(law, merge(law.p, ext))
+
+# The same law with other parameters.
+_with_parameters(law::ResidualLaw, p) = ResidualLaw(
+    law.name, law.flux_function, law.residual, law.elastic, law.y₀, p,
+    law.layout, law.gradients, law.fluxes
+)
+_with_parameters(law::PotentialLaw, p) = PotentialLaw(
+    law.name, law.energy, law.dissipation, law.y₀, p, law.layout, law.gradients, law.fluxes, law.signs
+)
+
 # ── Display ──────────────────────────────────────────────────────────────────
 
 function Base.show(io::IO, law::Union{ResidualLaw, PotentialLaw})

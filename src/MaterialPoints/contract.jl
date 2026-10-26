@@ -11,22 +11,24 @@
 # =============================================================================
 
 """
-    material_response(law::AbstractPointLaw, gradients, prev, Δt; algorithm = LocalNewton(), cache = nothing)
+    material_response(law::AbstractPointLaw, gradients, prev, Δt; algorithm = LocalNewton(), external = (;), cache = nothing)
 
 The Gauss-point contract for a law of
 [`MaterialPoints`](@ref MeanFieldHomogenization.MaterialPoints):
 [`point_update`](@ref) with the gradients given and the fluxes returned by name,
 tensors as TensND tensors in the canonical frame and scalars as numbers, and
-the tangent as the blocks `σε`, `σp`, `φε`, … (flux then gradient). `cache` is
+the tangent as the blocks `σε`, `σp`, `φε`, … (flux then gradient). `external`
+gives the variables the law reads without returning their flux, as for
+[`point_update`](@ref). `cache` is
 accepted for the contract and unused: a law has nothing to memoize across
 points.
 """
 function Constitutive.material_response(
         law::AbstractPointLaw, gradients::NamedTuple, prev::PointState, Δt::Real;
-        algorithm::AbstractLocalAlgorithm = LocalNewton(), cache = nothing
+        algorithm::AbstractLocalAlgorithm = LocalNewton(), external::NamedTuple = (;), cache = nothing
     )
     g = _flat(map(_field_components, NamedTuple{keys(law.gradients)}(gradients)), law.gradients)
-    F, 𝕂, state = _point_update(law, g, prev, Δt, algorithm)
+    F, 𝕂, state = _point_update(_with_external(law, external), g, prev, Δt, algorithm)
     fluxes = map(r -> _field_value(F[r]), law.fluxes)
     blocks = _tangent_blocks(𝕂, law.fluxes, law.gradients)
     return MaterialResponse(fluxes, blocks, state)

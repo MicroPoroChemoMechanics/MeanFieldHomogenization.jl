@@ -27,6 +27,9 @@ constant) or a function of time.
 - A scalar field by its name: `p` for the pore pressure, `φ` for the change of
   fluid content of a [`BiotPoroelasticity`](@ref) law.
 - A component named in neither form has a **zero flux**: a free face.
+- `external` gives the variables the law reads without returning their flux,
+  by name, as numbers or functions of time: `external = (T = t -> 293 + 0.5t,)`
+  for a temperature (see [`point_update`](@ref)).
 
 ```julia
 tension   = LoadingPath(range(0, 1; length = 101); ε11 = t -> 2e-3 * t)   # uniaxial stress
@@ -39,15 +42,16 @@ The first time is the initial instant: the response there is computed from the
 initial state with a step of zero length. The names are checked against the
 law's fields when the path is run.
 """
-struct LoadingPath{T, C <: NamedTuple}
+struct LoadingPath{T, C <: NamedTuple, X <: NamedTuple}
     times::Vector{T}
     controls::C
+    external::X
 end
 
-function LoadingPath(times::AbstractVector{<:Real}; controls...)
+function LoadingPath(times::AbstractVector{<:Real}; external::NamedTuple = (;), controls...)
     length(times) ≥ 2 || throw(ArgumentError("a loading path needs at least two times; got $(length(times))"))
     all(>(0), diff(times)) || throw(ArgumentError("the times of a loading path must increase strictly"))
-    return LoadingPath(collect(float.(times)), map(_of_time, NamedTuple(controls)))
+    return LoadingPath(collect(float.(times)), map(_of_time, NamedTuple(controls)), map(_of_time, external))
 end
 
 # A prescribed value: a number is held constant, a function of time is used as is.

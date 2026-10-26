@@ -78,7 +78,7 @@ Base.showerror(io::IO, e::LocalIntegrationError) = print(
 # ── One step ─────────────────────────────────────────────────────────────────
 
 """
-    point_update(law, g, prev, Δt; algorithm = LocalNewton()) -> (F, 𝕂, state)
+    point_update(law, g, prev, Δt; algorithm = LocalNewton(), external = (;)) -> (F, 𝕂, state)
 
 Integrate `law` over a step of length `Δt` that brings its gradients to `g`,
 from the [`PointState`](@ref) `prev`. Returns the fluxes `F`, the consistent
@@ -94,15 +94,19 @@ it for the TensND contract, [`point_response`](@ref) drives it along a loading
 path, an element loop calls it at each quadrature point. Its inputs and outputs
 are static arrays and it allocates nothing.
 
-The numbers may be `ForwardDiff.Dual`, in `g`, in `prev`, in `Δt` or in the
-law's parameters, nested or not: the fluxes, the tangent and the state then
-carry the derivatives, exactly.
+`external` gives, by name, the variables the law reads without returning their
+flux at the end of the step: a temperature `(T = 350.0,)`, say. The law reads
+them in `p`, beside its parameters.
+
+The numbers may be `ForwardDiff.Dual`, in `g`, in `prev`, in `Δt`, in the
+law's parameters or in `external`, nested or not: the fluxes, the tangent and
+the state then carry the derivatives, exactly.
 """
 function point_update(
         law::AbstractPointLaw, g::StaticVector, prev::PointState, Δt::Real;
-        algorithm::AbstractLocalAlgorithm = LocalNewton()
+        algorithm::AbstractLocalAlgorithm = LocalNewton(), external::NamedTuple = (;)
     )
-    return _point_update(law, _checked_length(SVector(g), law.gradients), prev, Δt, algorithm)
+    return _point_update(_with_external(law, external), _checked_length(SVector(g), law.gradients), prev, Δt, algorithm)
 end
 
 function _point_update(law, g, prev, Δt, alg)

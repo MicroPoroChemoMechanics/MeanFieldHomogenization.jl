@@ -119,7 +119,7 @@ function point_response(
     )
     gradients, fluxes, layout = _driver_fields(material)
     driven, targets, factors = _resolve(path, gradients, fluxes)
-    drive = (; driven, targets, factors)
+    drive = (; driven, targets, factors, external = path.external)
     opts = (; algorithm, rtol, maxiters, max_cuts)
     return _run(material, path.times, drive, state, opts, on_step, (gradients, fluxes, layout))
 end
@@ -163,11 +163,12 @@ end
 function _mixed_step(m, drive, t, Δt, g_guess, st, opts)
     c = drive.driven
     target = SVector(map(f -> f(t), drive.targets)) .* drive.factors
+    ext = map(f -> f(t), drive.external)
     # The target is plain, the guess may carry derivatives: one element type for both.
     T = promote_type(eltype(target), eltype(g_guess))
     g = map((driven, a, b) -> driven ? T(a) : T(b), c, target, g_guess)
     it = 1
-    F, 𝕂, st_new = _update(m, g, st, Δt, opts.algorithm)
+    F, 𝕂, st_new = _update(m, g, st, Δt, opts.algorithm, ext)
     # Newton steps still to take: −1 while the values have not converged, then
     # the derivative steps, down to 0.
     left = _steps_left(F, 𝕂, g, c, target, t, it, opts)
@@ -175,7 +176,7 @@ function _mixed_step(m, drive, t, Δt, g_guess, st, opts)
         # Row i is the identity where gᵢ is driven, the tangent elsewhere.
         g = g - ifelse.(c, one(𝕂), 𝕂) \ _flux_residual(F, c, target)
         it += 1
-        F, 𝕂, st_new = _update(m, g, st, Δt, opts.algorithm)
+        F, 𝕂, st_new = _update(m, g, st, Δt, opts.algorithm, ext)
         left = left > 0 ? left - 1 : _steps_left(F, 𝕂, g, c, target, t, it, opts)
     end
     return F, g, st_new
@@ -213,8 +214,17 @@ function _driver_fields(m::AbstractMFHMaterial)
 end
 
 # One step of any material, on flat vectors.
-_update(m::AbstractPointLaw, g, st, Δt, alg) = _point_update(m, g, st, Δt, alg)
-function _update(m::AbstractMFHMaterial, g, st, Δt, alg)
+_update(m::AbstractPointLaw, g, st, Δt, alg, ext) = _point_update(_with_external(m, ext), g, st, Δt, alg)
+# A material of the contract reads no external variable: one given is refused.
+_no_external(m, ::NamedTuple{()}) = nothing
+_no_external(m, ext::NamedTuple) = throw(
+    ArgumentError(
+        "external variables $(keys(ext)) are read by the laws of MaterialPoints; " *
+            "$(nameof(typeof(m))) reads none"
+    )
+)
+function _update(m::AbstractMFHMaterial, g, st, Δt, alg, ext)
+    _no_external(m, ext)
     gl, fl, _ = _driver_fields(m)
     gradients = map(r -> _field_value(g[r]), gl)
     r = Constitutive.material_response(m, gradients, st, Δt)
