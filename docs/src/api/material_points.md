@@ -52,6 +52,16 @@ CrystalViscoplasticity
 slip_systems
 ```
 
+## Nonlinear homogenization
+
+```@docs
+NonlinearHomogenized
+SecantMethod
+ClassicalSecant
+ModifiedSecant
+secant_moduli
+```
+
 ## Driving a point
 
 ```@docs

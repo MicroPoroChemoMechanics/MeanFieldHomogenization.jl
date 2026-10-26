@@ -460,6 +460,7 @@ export AbstractLocalAlgorithm, LocalNewton, LocalIntegrationError, point_update
 export LinearElasticity, PowerLawElasticity, MaxwellViscoelasticity, BiotPoroelasticity
 export NortonViscoplasticity, J2Plasticity, CrystalViscoplasticity, slip_systems
 export LoadingPath, point_response, PointResponse, PointDriverError
+export NonlinearHomogenized, SecantMethod, ClassicalSecant, ModifiedSecant, secant_moduli
 export QuadratureStates, commit!, rollback!
 export ModelingHypothesis, ThreeD, PlaneStrain, Axisymmetric, mandel_strain, volume_weight
 export quasistatic!, GlobalNewtonError, material_element!, material_system, write_material_vtk

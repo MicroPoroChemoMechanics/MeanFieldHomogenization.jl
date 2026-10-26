@@ -61,7 +61,7 @@ PowerLawElasticity(; k, σ₀, ε₀, m) =
 # differentiation of x^a at x = 0 gives 0·∞ for a < 1: that point is taken apart
 # (a value test, hence a numerical-only branch; a symbolic strain never is zero).
 function _power_law_energy(g, α, p)
-    εeq² = 2 * _sqnorm(deviator(g.ε)) / 3
+    εeq² = 2 * _sqnorm_deviator(g.ε) / 3
     volumetric = p.k / 2 * trace_mandel(g.ε)^2
     iszero(εeq²) && return volumetric + zero(εeq²)
     return volumetric + p.σ₀ * p.ε₀ / (p.m + 1) * (εeq² / p.ε₀^2)^((p.m + 1) / 2)
@@ -153,7 +153,7 @@ _norton_stress(ε, y, p) = p.ℂ * (ε - y.εᵖ)
 # no square root to differentiate.
 function _norton_rate(σ, p)
     s = deviator(σ)
-    σeq² = 3 * _sqnorm(s) / 2
+    σeq² = 3 * _sqnorm_deviator(σ) / 2
     return (3 / (2 * p.K)) * (σeq² / p.K^2)^((p.n - 1) / 2) * s
 end
 
@@ -161,7 +161,7 @@ _norton_residual(y, g, prev, Δt, p) =
     (εᵖ = (y.εᵖ - prev.y.εᵖ) - Δt * _norton_rate(_norton_stress(g.ε, y, p), p),)
 # No time, or no deviatoric stress at the trial state: no creep over the step.
 _norton_elastic(g, prev, Δt, p) =
-    iszero(Δt) || iszero(_sqnorm(deviator(_norton_stress(g.ε, prev.y, p))))
+    iszero(Δt) || iszero(_sqnorm_deviator(_norton_stress(g.ε, prev.y, p)))
 
 """
     J2Plasticity(; E, ν, σ₀, H = 0, Hkin = 0, hardening = nothing)

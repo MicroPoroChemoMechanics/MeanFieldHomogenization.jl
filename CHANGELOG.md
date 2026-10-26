@@ -49,6 +49,14 @@ A step is type-stable and allocates nothing.
   interaction matrix, any orientation).
 - `probe_gradients`: the gradients at which `check_material_interface`
   exercises a material.
+- `NonlinearHomogenized`: a composite of nonlinear phases (laws of the strain
+  alone, such as `PowerLawElasticity`) homogenized by a secant method,
+  `ClassicalSecant` (first moments of the phase strains) or `ModifiedSecant`
+  (second moments, from the derivative of the linear comparison composite), on
+  any linear scheme of the package. It is a law of `MaterialPoints` whose
+  internal variables are the effective strains of the phases, so its consistent
+  tangent, the point driver and the finite-element coupling come with it.
+  `secant_moduli` reads the secant moduli of a phase on its law.
 - The coupling to finite-element codes, generic: `QuadratureStates` with
   `commit!` and `rollback!` (the states of the quadrature points, kept twice),
   the modeling hypotheses `ThreeD`, `PlaneStrain` and `Axisymmetric`

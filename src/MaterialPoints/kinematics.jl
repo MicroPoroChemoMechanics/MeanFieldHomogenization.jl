@@ -78,7 +78,7 @@ The von Mises equivalent stress ``\\sigma_{eq} = \\sqrt{\\tfrac32\\,\\boldsymbol
     response must be differentiated there writes its flow rule with
     ``\\sigma_{eq}^2`` instead, as [`NortonViscoplasticity`](@ref) does.
 """
-von_mises(σ::Mandel) = sqrt(3 * _sqnorm(deviator(σ)) / 2)
+von_mises(σ::Mandel) = sqrt(3 * _sqnorm_deviator(σ) / 2)
 
 """
     equivalent_strain(ε::Mandel)
@@ -88,11 +88,15 @@ The equivalent strain ``\\varepsilon_{eq} = \\sqrt{\\tfrac23\\,\\boldsymbol{e}:\
 to [`von_mises`](@ref), and equal to ``|\\varepsilon|`` for an incompressible
 uniaxial strain.
 """
-equivalent_strain(ε::Mandel) = sqrt(2 * _sqnorm(deviator(ε)) / 3)
+equivalent_strain(ε::Mandel) = sqrt(2 * _sqnorm_deviator(ε) / 3)
 
-# `dot(v, v)` conjugates, which a symbolic entry must not see; the components
-# are real, so the plain sum of squares is the squared norm.
-_sqnorm(v) = sum(abs2, v)
+# The squared norm of the deviator, from the differences of the normal
+# components: exactly zero for a change of volume, whatever the rounding, where
+# subtracting the mean would leave a few ulps (and a law with a power of the
+# deviatoric strain would take them for a deviatoric strain, or produce 0 × ∞
+# in its derivatives).
+_sqnorm_deviator(v::Mandel) =
+    ((v[1] - v[2])^2 + (v[2] - v[3])^2 + (v[3] - v[1])^2) / 3 + v[4]^2 + v[5]^2 + v[6]^2
 
 # ── The boundary with TensND ─────────────────────────────────────────────────
 # Components in the canonical basis (`to_tensors`), whatever basis the tensor is
