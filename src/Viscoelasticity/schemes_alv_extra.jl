@@ -207,7 +207,7 @@ end
 #  RHS    : reshape `u → C̃`, build the per-phase Hill kernel against
 #           `C̃`, assemble Norris terms via Sherman-Morrison and crack
 #           density terms, return the flattened tensor derivative.
-#  Solver : `OrdinaryDiffEq.solve` with `Tsit5` default.
+#  Solver : the SciML `solve` with `Tsit5` default.
 # =============================================================================
 
 """

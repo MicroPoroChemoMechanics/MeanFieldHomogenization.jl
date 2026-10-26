@@ -36,6 +36,19 @@ cost is the integration, are unchanged.
   of two copies.
 - `TensND` bound raised to `"0.8.3"`, which builds a permuted basis with its
   dimension known.
+- **The ODE dependency is `OrdinaryDiffEqTsit5` instead of `OrdinaryDiffEq`.**
+  The package only ever integrates with `Tsit5`, the default of
+  `DifferentialScheme` and of the aging viscoelastic schemes, but
+  `OrdinaryDiffEq` loads every family of solvers and `NonlinearSolve.jl` with
+  them: 29 more packages, and 39 % of the precompiled code (190 of 480 MB)
+  that a first `import` had to build. On the runner that checks a registration, that build exceeded
+  the disk quota and `import MeanFieldHomogenization` failed. Any other
+  algorithm is still accepted by `alg` once its package is loaded:
+  `using OrdinaryDiffEq` for all of them, or one family
+  (`using OrdinaryDiffEqVerner` for `Vern9()`, `using OrdinaryDiffEqRosenbrock`
+  for `Rodas5P()`). `AutoNonlinear` resolves to a `NonlinearSolve.jl` algorithm
+  when `NonlinearSolve` is loaded, and to `NewtonDefault` otherwise: loading the
+  package no longer loads `NonlinearSolve` behind the user's back.
 
 ### Fixed
 

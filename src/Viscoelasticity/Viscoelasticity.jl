@@ -70,7 +70,7 @@ using ..Schemes: RVE, HomogenizationScheme, Laminated, Voigt, Reuss, Dilute, Dil
     phase_symmetrize,
     VolumeFraction, CrackDensity, amount_value, _is_crack_family
 using ForwardDiff
-using OrdinaryDiffEq
+using OrdinaryDiffEqTsit5
 using SpecialFunctions: gamma, expintx
 
 # ── The Laplace-Carson half (non-aging) ────────────────────────────────────

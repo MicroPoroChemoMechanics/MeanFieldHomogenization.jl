@@ -795,7 +795,7 @@ end
 # Solver options shared by the order-4 and order-2 ALV differential
 # drivers.  Mirrors the elastic `DifferentialScheme` contract: the
 # recognized keywords are read out, everything else is forwarded to
-# `OrdinaryDiffEq.solve`.
+# the SciML `solve`.
 function _diff_alv_options(sch::DifferentialScheme)
     return (
         nsteps = get(sch.options, :nsteps, 100),
