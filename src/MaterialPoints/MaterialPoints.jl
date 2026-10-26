@@ -56,6 +56,7 @@ include("library.jl")
 include("crystal.jl")
 include("loading.jl")
 include("driver.jl")
+include("coupling.jl")
 
 # ── Writing a law ────────────────────────────────────────────────────────────
 export AbstractPointLaw, ResidualLaw, PotentialLaw, PointState
@@ -71,5 +72,10 @@ export NortonViscoplasticity, J2Plasticity, CrystalViscoplasticity, slip_systems
 
 # ── Driving a point ──────────────────────────────────────────────────────────
 export LoadingPath, point_response, PointResponse, PointDriverError
+
+# ── Coupling to a finite-element code ───────────────────────────────────────
+export QuadratureStates, commit!, rollback!
+export ModelingHypothesis, ThreeD, PlaneStrain, Axisymmetric, mandel_strain, volume_weight
+export quasistatic!, GlobalNewtonError, material_element!, material_system, write_material_vtk
 
 end # module

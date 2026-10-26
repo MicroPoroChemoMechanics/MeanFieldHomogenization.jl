@@ -213,8 +213,10 @@ function _driver_fields(m::AbstractMFHMaterial)
     return _layout(sizes(gnames)), _layout(sizes(fnames)), (;)
 end
 
-# One step of any material, on flat vectors.
-_update(m::AbstractPointLaw, g, st, Δt, alg, ext) = _point_update(_with_external(m, ext), g, st, Δt, alg)
+# One step of any material, on flat vectors: the same conversions as an element
+# loop (`_mandel_update`, coupling.jl).
+_update(m, g, st, Δt, alg, ext) = _mandel_update(m, g, st, Δt; algorithm = alg, external = ext)
+
 # A material of the contract reads no external variable: one given is refused.
 _no_external(m, ::NamedTuple{()}) = nothing
 _no_external(m, ext::NamedTuple) = throw(
@@ -223,17 +225,6 @@ _no_external(m, ext::NamedTuple) = throw(
             "$(nameof(typeof(m))) reads none"
     )
 )
-function _update(m::AbstractMFHMaterial, g, st, Δt, alg, ext)
-    _no_external(m, ext)
-    gl, fl, _ = _driver_fields(m)
-    gradients = map(r -> _field_value(g[r]), gl)
-    r = Constitutive.material_response(m, gradients, st, Δt)
-    F = _flat(map(_field_components, NamedTuple{keys(fl)}(r.fluxes)), fl)
-    rows = map(keys(fl), values(fl)) do f, rf
-        reduce(hcat, map((gn, rg) -> _block_matrix(r.tangents[Symbol(f, gn)], _width(rf), _width(rg)), keys(gl), values(gl)))
-    end
-    return F, reduce(vcat, rows), Constitutive.state(r)
-end
 
 # A tangent block of the contract as a static matrix of the given shape.
 _block_matrix(x::Number, nf, ng) = SMatrix{1, 1}(x)

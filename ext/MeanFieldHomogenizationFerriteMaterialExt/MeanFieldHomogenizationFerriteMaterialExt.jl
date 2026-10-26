@@ -2,8 +2,9 @@
     MeanFieldHomogenizationFerriteMaterialExt
 
 Ferrite glue for **MeanFieldHomogenization as a Gauss-point constitutive law** —
-`mfh_states`, `mfh_element!`, `mfh_poro_element!`, `annulus_grid`,
-`cylinder_sector_grid`.
+the Ferrite methods of the coupling of `MaterialPoints` (`material_element!`,
+`material_system`, `write_material_vtk`), and `mfh_states`, `mfh_element!`,
+`mfh_poro_element!`, `annulus_grid`, `cylinder_sector_grid`.
 
 Activated by `import Ferrite` alone. That is the point of keeping it separate
 from [`MeanFieldHomogenizationFerriteExt`](@ref), which serves the opposite
@@ -25,5 +26,6 @@ using Tensors
 using LinearAlgebra
 
 include("material_backend.jl")
+include("material_points.jl")
 
 end # module
