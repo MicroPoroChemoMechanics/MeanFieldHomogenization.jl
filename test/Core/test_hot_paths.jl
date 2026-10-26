@@ -64,3 +64,45 @@ end
     d = ForwardDiff.Dual{:sort}.((1.0, 1.0, 5.0), (3.0, 2.0, 1.0))
     @test MFH_Core._descending_order(d) == (3, 1, 2)
 end
+
+@testset "Hot paths: a self-consistent step reads the RVE once" begin
+    S = MeanFieldHomogenization.Schemes
+    C0 = iso_stiffness(30.0, 10.0)
+    C1 = iso_stiffness(150.0, 80.0)
+    Cn = iso_stiffness(40.0, 15.0)
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C0); fraction = :rest)
+    add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => C1); fraction = 0.3)
+    views = S._phase_views(rve, S._volume_phase_names(rve, :M), :C)
+    @test views isa Tuple
+    # The step on the views is the step read phase by phase from the RVE, to the bit.
+    A, CA = S._phase_dilute_and_stress_average(rve, :I, :C, Cn)
+    ref = C0 + (zero(Cn) + 0.3 * (CA - C0 ⊡ A))
+    step = @inferred S._asc_step_stiffness(views, C0, Cn, (;))
+    @test get_array(step) == get_array(ref)
+    # What used to be looked up at every step (phase names, fractions, properties,
+    # then a dynamic call per phase) is gone from it.
+    @test _allocs(S._asc_step_stiffness, views, C0, Cn, (;)) == 0
+
+    # The asymmetric scheme starts from the matrix unless `init` names another
+    # start: starting from the matrix explicitly is the default, to the bit.
+    seeded = AsymmetricSelfConsistent(; init = C0, reltol = 1.0e-12, abstol = 0.0)
+    default = AsymmetricSelfConsistent(; reltol = 1.0e-12, abstol = 0.0)
+    @test get_array(homogenize(rve, seeded, :C)) == get_array(homogenize(rve, default, :C))
+
+    # Beyond `_MAX_TUPLE_VIEWS` phases the views are a vector. Nine equal phases
+    # are one phase of the total fraction: the same estimate, up to the rounding
+    # of the nine-term sums.
+    many = RVE()
+    add_phase!(many, :M, Ellipsoid(1.0), Dict(:C => C0); fraction = :rest)
+    for i in 1:9
+        add_phase!(many, Symbol(:I, i), Ellipsoid(1.0), Dict(:C => C1); fraction = 0.3 / 9)
+    end
+    @test S._phase_views(many, S._volume_phase_names(many, :M), :C) isa Vector
+    for sch in (
+            AsymmetricSelfConsistent(; reltol = 1.0e-12, abstol = 0.0),
+            SelfConsistent(; reltol = 1.0e-12, abstol = 0.0),
+        )
+        @test get_array(homogenize(many, sch, :C)) ≈ get_array(homogenize(rve, sch, :C)) rtol = 1.0e-12
+    end
+end

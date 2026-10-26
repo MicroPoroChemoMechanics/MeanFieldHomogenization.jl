@@ -73,8 +73,17 @@ function _evaluate(rve::RVE, sc::SelfConsistent, ::Val{p}; kw...) where {p}
     # density.
     P_init = _sc_initial(sc.init, rve, p; kw...)
     solver_kw, step_kw = _split_sc_kwargs(kw)
-    step = C -> _sc_step(rve, C, p; step_kw...)
-    return _solve_sc(sc.algorithm, step, P_init; sc.options..., solver_kw...)
+    step_nt = values(step_kw)
+    make_step(views, cracks) = C -> _sc_step(views, cracks, rve, C, p, step_nt)
+    return _solve_sc_on(sc.algorithm, sc.options, solver_kw, P_init, make_step, _sc_parts(rve, p)...)
+end
+
+# Function barrier of the self-consistent solves. What a step reads of the RVE
+# (`parts`, see `_PhaseView`) is gathered once, of a type known only at run time;
+# past this call it is concrete, so the step built from it, and the solver loop
+# calling that step, specialize on it.
+function _solve_sc_on(algorithm, options, solver_kw, x0, make_step::F, parts...) where {F}
+    return _solve_sc(algorithm, make_step(parts...), x0; options..., solver_kw...)
 end
 
 # The Voigt average is infinite as soon as one phase is rigid or incompressible
@@ -170,16 +179,10 @@ function _split_sc_kwargs(kw)
     return pairs(NamedTuple(solver)), pairs(NamedTuple(step))
 end
 
-# ── SC step (one Mori-Tanaka-like iterate against current estimate) ─────────
-
-function _sc_step(rve::RVE, C_n, prop::Symbol; kw...)
-    return _sc_step_dispatch(rve, C_n, prop; kw...)
-end
-
 # ── The two accumulator loops of the SC body, factored out ───────────────────
 #
-# They are shared by the 4th- and 2nd-order `_sc_step_dispatch` methods above
-# (only the contraction operator differs, and that stays in the caller) *and*
+# They are shared by the self-consistent step `_sc_step` below, by the two forms
+# of the asymmetric scheme *and*
 # by `crack_family_compliances` in `crack_families.jl`, which has to reproduce
 # the very same averages at the converged estimate to expose the per-family
 # compliance contributions. Keeping one definition is what stops the two from
@@ -211,14 +214,24 @@ they are collected by [`_sc_crack_total`](@ref) instead.
 function _sc_solid_averages(
         rve::RVE, P_n::TensND.AbstractTens, prop::Symbol; kw...
     )
-    A_avg = zero(P_n)
-    CA_avg = zero(P_n)
-    for name in _volume_phase_names(rve)
-        f = volume_fraction(rve, name)
-        A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, P_n; kw...)
-        A_avg, CA_avg = _add_weighted(A_avg, CA_avg, f, A_dil, CA)
+    return _weighted_averages(_phase_views(rve, _volume_phase_names(rve), prop), P_n, values(kw))
+end
+
+# The two accumulators over phase views (see `_PhaseView`), summed in the order of
+# the views, which is the order of the loop over phase names they replace.
+function _weighted_averages(views, P_n::TensND.AbstractTens, kw::NamedTuple)
+    return foldl(views; init = (zero(P_n), zero(P_n))) do (A_avg, CA_avg), v
+        A_dil, CA = _dilute_and_stress_average(v, P_n, kw)
+        _add_weighted(A_avg, CA_avg, v.fraction, A_dil, CA)
     end
-    return A_avg, CA_avg
+end
+
+# The gap of the asymmetric scheme, `Σ fᵢ (⟨Pᵢ:Aᵢ⟩ − P_m:⟨Aᵢ⟩)`, over the same views.
+function _weighted_gaps(views, P_m::TensND.AbstractTens, P_n::TensND.AbstractTens, kw::NamedTuple)
+    return foldl(views; init = zero(P_n)) do Δ, v
+        A_dil, PA = _dilute_and_stress_average(v, P_n, kw)
+        _add_weighted_gap(Δ, v.fraction, PA, P_m, A_dil)
+    end
 end
 
 """
@@ -258,10 +271,10 @@ _major_symmetrize(P::TensND.AbstractTens{4}) = Tensors.majorsymmetric(P)
 _major_symmetrize(P::TensND.AbstractTens{2}) = Tensors.symmetric(P)
 
 """
-    _sc_crack_total(rve, P_n, prop; kw...) -> (H_total, has_cracks)
+    _sc_crack_total(rve, names, P_n, prop, kw) -> (H_total, has_cracks)
 
-Sum of the *density-scaled* compliance (resistivity) contributions of every
-[`CrackDensity`](@ref) phase, evaluated in the reference medium `P_n`:
+Sum of the *density-scaled* compliance (resistivity) contributions of the
+[`CrackDensity`](@ref) phases `names`, evaluated in the reference medium `P_n`:
 
 ```math
 \\mathbb{H}^{\\mathrm{tot}} = \\sum_i \\kappa_i\\,\\varepsilon_i\\,\\mathbb{H}_i(\\mathbb{P}_n) ,
@@ -274,25 +287,36 @@ with ``\\kappa_i = 4\\pi/3`` for an elliptic family and ``\\pi`` for a ribbon fa
 the crack branch of the SC body.
 """
 function _sc_crack_total(
-        rve::RVE, P_n::TensND.AbstractTens, prop::Symbol; kw...
+        rve::RVE, names::AbstractVector{Symbol}, P_n::TensND.AbstractTens, prop::Symbol,
+        kw::NamedTuple
     )
     H_total = zero(P_n)
-    has_cracks = false
-    for name in _crack_phase_names(rve)
+    for name in names
         H_total += _phase_compliance_contribution(rve, name, prop, P_n; kw...)
-        has_cracks = true
     end
-    return H_total, has_cracks
+    return H_total, !isempty(names)
 end
 
-# 4th-order — symmetric (Hill 1965 / Budiansky 1965) self-consistent
-# iteration : all phases (matrix included) carry a non-trivial dilute strain
-# concentration A_α = inv(I + P(C_α - C_n)) computed in the iterating
-# effective medium C_n. This gives the textbook SC fixed point with
-# Hashin-Shtrikman lower-bound percolation behavior for porous media.
-function _sc_step_dispatch(
-        rve::RVE, C_n::TensND.AbstractTens{4, 3}, prop::Symbol;
-        kw...
+# What one self-consistent step reads of the RVE: the views of the phases that
+# carry volume and the names of the crack families. Gathered once per solve, not
+# at every step.
+_sc_parts(rve::RVE, prop::Symbol) =
+    (_phase_views(rve, _volume_phase_names(rve), prop), _crack_phase_names(rve))
+
+# One self-consistent step from the RVE itself, for a caller outside the solve.
+_sc_step(rve::RVE, C_n, prop::Symbol; kw...) =
+    _sc_step(_sc_parts(rve, prop)..., rve, C_n, prop, values(kw))
+
+# Symmetric (Hill 1965 / Budiansky 1965) self-consistent iteration: all phases
+# (matrix included) carry a non-trivial dilute concentration
+# A_α = inv(I + P(P_α - P_n)) computed in the iterating effective medium P_n.
+# This gives the textbook SC fixed point with Hashin-Shtrikman lower-bound
+# percolation behavior for porous media. The same body serves the stiffness
+# (order 4, `⊡`) and the conductivity (order 2, `⋅`): `_compose` is the
+# contraction of the order.
+function _sc_step(
+        views, cracks::AbstractVector{Symbol}, rve::RVE, P_n::TensND.AbstractTens,
+        prop::Symbol, kw::NamedTuple
     )
     # Self-consistent body :
     #   strain_Stress_α  = A_α(C_n) · S_n   (solid)
@@ -307,36 +331,15 @@ function _sc_step_dispatch(
     # compliance contribution `H_c`.  This breaks the cancellation and
     # gives a different fixed point than the textbook
     # `(Σ f·C·A)·(Σ f·A)^{-1}` SC body when cracks are present.
-    A_avg, CA_avg = _sc_solid_averages(rve, C_n, prop; kw...)
-    H_total, has_cracks = _sc_crack_total(rve, C_n, prop; kw...)
-    if has_cracks
-        S_n = inv(C_n)
-        A_E = (A_avg ⊡ S_n) + H_total
-        B_E = CA_avg ⊡ S_n
-        return _major_symmetrize(B_E ⊡ inv(A_E))
-    else
-        return _major_symmetrize(CA_avg ⊡ inv(A_avg))
-    end
-end
-
-# 2nd-order — same symmetric SC structure for conductivity / diffusion.
-function _sc_step_dispatch(
-        rve::RVE, K_n::TensND.AbstractTens{2, 3}, prop::Symbol;
-        kw...
-    )
-    # Conduction analog of the 4th-order ECHOES SC body :
-    # solids have `gradient_Flux = A · R_n` (R_n = inv(K_n) — resistivity),
-    # cracks contribute the bare resistivity contribution `R_c`.
-    A_avg, KA_avg = _sc_solid_averages(rve, K_n, prop; kw...)
-    R_total, has_cracks = _sc_crack_total(rve, K_n, prop; kw...)
-    if has_cracks
-        R_n = inv(K_n)
-        A_E = (A_avg ⋅ R_n) + R_total
-        B_E = KA_avg ⋅ R_n
-        return _major_symmetrize(B_E ⋅ inv(A_E))
-    else
-        return _major_symmetrize(KA_avg ⋅ inv(A_avg))
-    end
+    # In conduction, solids have `gradient_Flux = A · R_n` (R_n = inv(K_n),
+    # the resistivity) and cracks the bare resistivity contribution `R_c`.
+    A_avg, CA_avg = _weighted_averages(views, P_n, kw)
+    H_total, has_cracks = _sc_crack_total(rve, cracks, P_n, prop, kw)
+    has_cracks || return _major_symmetrize(_compose(CA_avg, inv(A_avg)))
+    S_n = inv(P_n)
+    A_E = _compose(A_avg, S_n) + H_total
+    B_E = _compose(CA_avg, S_n)
+    return _major_symmetrize(_compose(B_E, inv(A_E)))
 end
 
 # ── Built-in solvers ────────────────────────────────────────────────────────
@@ -973,48 +976,27 @@ function _asc_iterate_stiffness(
     ) where {p}
     C_m = phase_property(rve, m, p)
     solver_kw, step_kw = _split_sc_kwargs(kw)
-    step = C_n -> _asc_step_stiffness(rve, p, m, C_m, C_n; step_kw...)
-    x0 = asc.init === nothing ? C_m : _sc_initial(asc.init, rve, p; kw...)
-    return _solve_sc(asc.algorithm, step, x0; asc.options..., solver_kw...)
+    step_nt = values(step_kw)
+    make_step(views) = C_n -> _asc_step_stiffness(views, C_m, C_n, step_nt)
+    x0 = _asc_seed(asc.init, C_m, rve, p; kw...)
+    # Cracks are not supported in the stiffness form: `_asc_use_stiffness` sends
+    # any RVE with a crack family to the compliance form.
+    views = _phase_views(rve, _volume_phase_names(rve, m), p)
+    return _solve_sc_on(asc.algorithm, asc.options, solver_kw, x0, make_step, views)
 end
 
-function _asc_step_stiffness(rve::RVE, prop::Symbol, m::Symbol, C_m, C_n; kw...)
-    return _asc_step_stiffness_dispatch(rve, prop, m, C_m, C_n; kw...)
-end
+# The seed of both forms: the matrix itself unless `init` says otherwise.
+_asc_seed(::Nothing, C_m, rve::RVE, prop::Symbol; kw...) = C_m
+_asc_seed(init, C_m, rve::RVE, prop::Symbol; kw...) = _sc_initial(init, rve, prop; kw...)
 
-function _asc_step_stiffness_dispatch(
-        rve::RVE, prop::Symbol, m::Symbol,
-        C_m::TensND.AbstractTens{4, 3},
-        C_n::TensND.AbstractTens{4, 3}; kw...
-    )
-    Δ = zero(C_n)
-    for name in _volume_phase_names(rve, m)   # cracks not supported in stiffness form
-        f = volume_fraction(rve, name)
-        # The asymmetry that defines the ASC: concentration is computed in the
-        # CURRENT reference `C_n`, but the contribution is measured against the
-        # MATRIX `C_m`.  `_phase_stiffness_contribution` cannot be used here —
-        # it uses one and the same reference for both.  The B tensor (⟨C:A⟩)
-        # handles heterogeneous inclusions and symmetrizes the product; the
-        # `C_m` term reuses ⟨A⟩.
-        A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, C_n; kw...)
-        Δ = _add_weighted_gap(Δ, f, CA, C_m, A_dil)
-    end
-    return C_m + Δ
-end
-
-function _asc_step_stiffness_dispatch(
-        rve::RVE, prop::Symbol, m::Symbol,
-        K_m::TensND.AbstractTens{2, 3},
-        K_n::TensND.AbstractTens{2, 3}; kw...
-    )
-    Δ = zero(K_n)
-    for name in _volume_phase_names(rve, m)
-        f = volume_fraction(rve, name)
-        A_dil, KA = _phase_dilute_and_stress_average(rve, name, prop, K_n; kw...)
-        Δ = _add_weighted_gap(Δ, f, KA, K_m, A_dil)
-    end
-    return K_m + Δ
-end
+# The asymmetry that defines the ASC: concentration is computed in the CURRENT
+# reference `P_n`, but the contribution is measured against the MATRIX `P_m`.
+# `_phase_stiffness_contribution` cannot be used here, as it uses one and the same
+# reference for both. The B tensor (⟨C:A⟩) handles heterogeneous inclusions and
+# symmetrizes the product; the `P_m` term reuses ⟨A⟩. Stiffness (order 4) and
+# conductivity (order 2) alike.
+_asc_step_stiffness(views, P_m::TensND.AbstractTens, P_n::TensND.AbstractTens, kw::NamedTuple) =
+    P_m + _weighted_gaps(views, P_m, P_n, kw)
 
 # ── Compliance-form iteration ───────────────────────────────────────────────
 #
@@ -1034,68 +1016,39 @@ function _asc_iterate_compliance(
     C_m = phase_property(rve, m, p)
     S_m = inv(C_m)
     solver_kw, step_kw = _split_sc_kwargs(kw)
-    step = C_n -> _asc_step_compliance(rve, p, m, C_m, S_m, C_n; step_kw...)
-    x0 = asc.init === nothing ? C_m : _sc_initial(asc.init, rve, p; kw...)
-    return _solve_sc(asc.algorithm, step, x0; asc.options..., solver_kw...)
+    step_nt = values(step_kw)
+    make_step(views, cracks) = C_n -> _asc_step_compliance(views, cracks, rve, p, S_m, C_n, step_nt)
+    x0 = _asc_seed(asc.init, C_m, rve, p; kw...)
+    views = _phase_views(rve, _volume_phase_names(rve, m), p)
+    return _solve_sc_on(
+        asc.algorithm, asc.options, solver_kw, x0, make_step, views, _crack_phase_names(rve, m)
+    )
 end
 
-function _asc_step_compliance(rve::RVE, prop::Symbol, m::Symbol, C_m, S_m, C_n; kw...)
-    return _asc_step_compliance_dispatch(rve, prop, m, C_m, S_m, C_n; kw...)
-end
-
-function _asc_step_compliance_dispatch(
-        rve::RVE, prop::Symbol, m::Symbol,
-        C_m::TensND.AbstractTens{4, 3},
-        S_m::TensND.AbstractTens{4, 3},
-        C_n::TensND.AbstractTens{4, 3}; kw...
+function _asc_step_compliance(
+        views, cracks::AbstractVector{Symbol}, rve::RVE, prop::Symbol,
+        S_m::TensND.AbstractTens, C_n::TensND.AbstractTens, kw::NamedTuple
     )
     S_n = inv(C_n)
-    A_avg = zero(C_n)
-    CA_avg = zero(C_n)
     # Volume-fraction inclusions: standard A_εε. Crack densities: the strain
     # concentration is singular; their compliance contribution is the natural
     # object instead and is added directly to S^{n+1} below.
-    for name in _volume_phase_names(rve, m)
-        f = volume_fraction(rve, name)
-        # `⟨C:A⟩`, NOT `C ⊡ ⟨A⟩`: the orientation average does not commute
-        # with the tensor product, so the product has to be formed on the RAW
-        # concentration tensor and averaged afterwards, which is what the bundle
-        # does: formed from the averaged `A_dil` and the raw `C_i`, an
-        # iso-symmetrized anisotropic phase would come back transversely
-        # isotropic, and not even major-symmetric. The bundle also routes
-        # heterogeneous inclusions through `concentration_and_flux_average`, whose
-        # stress average the declared (placeholder) property of a
-        # `LayeredSphere` cannot give.
-        A_dil, CA = _phase_dilute_and_stress_average(rve, name, prop, C_n; kw...)
-        A_avg, CA_avg = _add_weighted(A_avg, CA_avg, f, A_dil, CA)
-    end
-    S_new = S_m + (A_avg - S_m ⊡ CA_avg) ⊡ S_n
+    #
+    # `⟨C:A⟩`, NOT `C ⊡ ⟨A⟩`: the orientation average does not commute
+    # with the tensor product, so the product has to be formed on the RAW
+    # concentration tensor and averaged afterwards, which is what the bundle
+    # does: formed from the averaged `A_dil` and the raw `C_i`, an
+    # iso-symmetrized anisotropic phase would come back transversely
+    # isotropic, and not even major-symmetric. The bundle also routes
+    # heterogeneous inclusions through `concentration_and_flux_average`, whose
+    # stress average the declared (placeholder) property of a
+    # `LayeredSphere` cannot give. In conduction, `⟨K·A⟩`, not `K ⋅ ⟨A⟩`, for
+    # the same reason, and the cracks add to the resistivity.
+    A_avg, CA_avg = _weighted_averages(views, C_n, kw)
+    S_new = S_m + _compose(A_avg - _compose(S_m, CA_avg), S_n)
     # Crack contributions add directly to the compliance.
-    for name in _crack_phase_names(rve, m)
+    for name in cracks
         S_new += _phase_compliance_contribution(rve, name, prop, C_n; kw...)
     end
     return inv(S_new)
-end
-
-function _asc_step_compliance_dispatch(
-        rve::RVE, prop::Symbol, m::Symbol,
-        K_m::TensND.AbstractTens{2, 3},
-        R_m::TensND.AbstractTens{2, 3},
-        K_n::TensND.AbstractTens{2, 3}; kw...
-    )
-    R_n = inv(K_n)
-    A_avg = zero(K_n)
-    KA_avg = zero(K_n)
-    for name in _volume_phase_names(rve, m)
-        f = volume_fraction(rve, name)
-        # `⟨K·A⟩`, not `K ⋅ ⟨A⟩` — see the order-4 dispatch above.
-        A_dil, KA = _phase_dilute_and_stress_average(rve, name, prop, K_n; kw...)
-        A_avg, KA_avg = _add_weighted(A_avg, KA_avg, f, A_dil, KA)
-    end
-    R_new = R_m + (A_avg - R_m ⋅ KA_avg) ⋅ R_n
-    # Crack contributions add directly to the resistivity, as at order 4.
-    for name in _crack_phase_names(rve, m)
-        R_new += _phase_compliance_contribution(rve, name, prop, K_n; kw...)
-    end
-    return inv(R_new)
 end

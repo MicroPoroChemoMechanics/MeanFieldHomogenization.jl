@@ -460,12 +460,69 @@ existing suite.
 function _phase_dilute_and_stress_average(
         rve::RVE, name::Symbol, prop::Symbol, P₀::_PropertyTens; kw...
     )
-    geom = rve.phases[name].geometry
-    geom isa MFH_Core.AbstractCrack && return (zero(P₀), zero(P₀))
-    return _dilute_and_stress_average(
-        geom, phase_property(rve, name, prop), P₀, phase_symmetrize(rve, name), values(kw)
-    )
+    return _dilute_and_stress_average(_phase_view(rve, name, prop), P₀, values(kw))
 end
+
+"""
+    _PhaseView(fraction, geometry, property, symmetrize)
+
+What the dilute-concentration kernels read of one phase: its resolved volume
+fraction, its geometry, its property and its orientation average. An iterative
+scheme reads them at every step of its fixed point; gathered once per
+`homogenize` call by [`_phase_views`](@ref), they cost one dictionary lookup each
+instead of one per step, and the step specializes on the types they carry.
+"""
+struct _PhaseView{F, G, P, S}
+    fraction::F
+    geometry::G
+    property::P
+    symmetrize::S
+end
+
+_phase_view(rve::RVE, name::Symbol, prop::Symbol) = _PhaseView(
+    volume_fraction(rve, name), rve.phases[name].geometry,
+    _view_property(rve.phases[name].geometry, rve, name, prop), phase_symmetrize(rve, name),
+)
+
+# A crack has no strain concentration, so its property is never read, and a
+# crack phase need not carry one.
+_view_property(::MFH_Core.AbstractCrack, rve, name, prop) = nothing
+_view_property(::AbstractInclusion, rve, name, prop) = phase_property(rve, name, prop)
+
+# Up to this many phases, the views go in a tuple, so that a step over a mix of
+# shapes specializes on each of them; a longer list (a discretized orientation
+# distribution) stays a vector, so as not to compile one method per length.
+const _MAX_TUPLE_VIEWS = 8
+
+"""
+    _phase_views(rve, names, prop) -> Tuple or Vector of _PhaseView
+
+The views of the phases `names`, in that order: the order in which the scheme
+sums their contributions, kept so that the sums are those of a loop over `names`.
+"""
+function _phase_views(rve::RVE, names::AbstractVector{Symbol}, prop::Symbol)
+    views = [_phase_view(rve, name, prop) for name in names]
+    return length(views) ≤ _MAX_TUPLE_VIEWS ? Tuple(views) : views
+end
+
+# In an isotropic reference the kernel is a closed form, and the call is static:
+# the step specializes on the phases and allocates nothing for them.
+_dilute_and_stress_average(v::_PhaseView, P₀::TensND.TensISO, kw::NamedTuple) =
+    _dilute_and_stress_average(v.geometry, v.property, P₀, v.symmetrize, kw)
+
+# In any other reference, an inference barrier, on purpose. With concrete views
+# the whole step is known at compile time, and inferring it reached down through
+# the concentration kernel, the anisotropic Hill cubature included: on a generic
+# anisotropic reference (a crack family next to an inclusion,
+# `test/Constitutive/test_cracked.jl`) that inference took more than 4.8 GB, where
+# the kernel compiled on its own takes 1.6. Neither `@noinline` nor
+# `@constprop :none` stopped it. The kernel is therefore called dynamically there,
+# as it was when the step read the RVE through type-unstable lookups, and compiles
+# on its own; its cost (a cubature) dwarfs that of the dispatch.
+_dilute_and_stress_average(v::_PhaseView, P₀, kw::NamedTuple) =
+    Base.inferencebarrier(_dilute_and_stress_average)(v.geometry, v.property, P₀, v.symmetrize, kw)
+_dilute_and_stress_average(::MFH_Core.AbstractCrack, ::Nothing, P₀, sym, kw::NamedTuple) =
+    (zero(P₀), zero(P₀))
 
 # Function barrier, as for `_dilute_and_contribution`.
 function _dilute_and_stress_average(geom, P_i, P₀, sym, kw::NamedTuple)

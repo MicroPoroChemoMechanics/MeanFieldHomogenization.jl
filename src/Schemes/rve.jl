@@ -424,7 +424,7 @@ mutable struct Phase
 end
 
 Phase(geometry::AbstractInclusion, properties::AbstractDict) =
-    Phase(geometry, Dict{Symbol, Any}(properties...))
+    Phase(geometry, Dict{Symbol, Any}(properties))
 
 # =============================================================================
 #  RVE: ordered collection of phases + fraction closure + distribution shape
