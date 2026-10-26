@@ -26,6 +26,7 @@ flux_names
 tangent_blocks
 transport_property
 check_material_interface
+probe_gradients
 ```
 
 ## Materials

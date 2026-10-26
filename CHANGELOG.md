@@ -1,5 +1,65 @@
 # Changelog
 
+## Unreleased — nonlinear laws at a material point (`MaterialPoints`)
+
+MeanFieldHomogenization could put a homogenized material at every Gauss point of
+a finite-element computation, but every material it had was linear or
+piecewise linear. **`MaterialPoints`** is the generic layer the nonlinear
+homogenization methods will be built on, and a tool of its own: a nonlinear law
+is written in a few lines of mathematics, integrated over a step with its
+consistent tangent, run along a loading path, and plugged into any caller of
+the Gauss-point contract, exactly where a homogenized material plugs in.
+
+Four pieces that do not depend on each other: the **law** (`ResidualLaw`, the
+local equations of its implicit integration, or `PotentialLaw`, a free energy
+and a dissipation potential), the **local algorithm** (`LocalNewton`), the
+**loading** (`LoadingPath`, each component driven by its gradient or by its
+flux) and the **coupling** (`point_response` at one point, `material_response`
+in an element loop). A law may carry internal variables with their evolution
+(plasticity, damage, viscosity) and may couple several primal fields with their
+conjugate fluxes (strain and pore pressure, …); the tangent then holds every
+coupling block.
+
+No derivative is written by hand. The consistent tangent comes from automatic
+differentiation and the implicit-function theorem, and every number may be a
+`ForwardDiff.Dual`, nested or not, in the strain, the state, the time step or
+the parameters: the internal variables are solved on the values, then exact
+derivatives are attached by Newton steps taken in dual numbers from the root.
+A step is type-stable and allocates nothing.
+
+### Added
+
+- `MaterialPoints`: `ResidualLaw`, `PotentialLaw`, `PointState`, `LocalNewton`,
+  `point_update`, `LoadingPath`, `point_response`, `PointResponse`, the
+  Kelvin–Mandel helpers (`Mandel`, `trace_mandel`, `deviator`, `von_mises`,
+  `equivalent_strain`, `identity_mandel`), the layouts (`state_layout`,
+  `gradient_layout`, `flux_layout`), `law_parameters`, the `kinematics` trait
+  (small strain, `SmallStrain`, so that finite strain can be added without
+  changing the laws), and the errors `LocalIntegrationError` and
+  `PointDriverError` that a driver catches to cut a step.
+- Laws shipped, each tested against a closed form: `LinearElasticity`,
+  `PowerLawElasticity`, `MaxwellViscoelasticity`, `BiotPoroelasticity` (two
+  coupled fields), `NortonViscoplasticity`, `J2Plasticity` (isotropic hardening,
+  linear or given as a function, and linear kinematic hardening).
+- `probe_gradients`: the gradients at which `check_material_interface`
+  exercises a material.
+
+### Changed
+
+- `check_material_interface` gives a material every gradient it declares, so
+  that it checks a material of several fields (poroelastic ones included) and
+  not only a material of the strain alone; the tangent check perturbs the strain
+  with the other gradients held.
+
+### Documentation
+
+- A new chapter, *Material points: nonlinear laws*: the theory of the
+  integration over a step (consistent tangent, potential route, exact
+  derivatives with respect to the parameters, mixed control), a manual (writing
+  a law, driving a point, plugging a law into a computation) and three examples
+  (elastoplastic cycles, a damage law written from scratch, drained and
+  undrained poroelasticity, the latter also on the fractured rock of ARMA 2011).
+
 ## v0.20.2 — shapes built and self-consistent schemes iterated without run-time lookups
 
 A patch release, for speed. Two paths cost far more than the arithmetic they

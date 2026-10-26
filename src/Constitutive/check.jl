@@ -16,8 +16,8 @@ and does not honor. Returns `true` when every check passes.
 What is verified:
 
 1. `initial_state` returns an [`AbstractMaterialState`](@ref);
-2. [`material_response`](@ref) accepts both the bare-strain and the
-   `NamedTuple` forms and returns a [`MaterialResponse`](@ref);
+2. [`material_response`](@ref), given every gradient the material declares
+   ([`probe_gradients`](@ref)), returns a [`MaterialResponse`](@ref);
 3. every name declared by [`flux_names`](@ref) and [`tangent_blocks`](@ref) is
    actually present in the response;
 4. the response is **frame-honest**: the fluxes and tangents come back in the
@@ -25,7 +25,7 @@ What is verified:
 5. `state_old` is **not mutated** — the contract requires a new state, so that a
    rejected Newton iteration can simply be retried;
 6. the declared `σε` block agrees with a **central finite difference** of the
-   stress. This is the check that matters: a plausible-but-wrong tangent costs
+   stress, the other gradients held fixed. This is the check that matters: a plausible-but-wrong tangent costs
    quadratic convergence and nothing else, so it is easy to ship.
 
 The tangent check is skipped where it is meaningless — at a state on a
@@ -47,7 +47,7 @@ julia> check_material_interface(HomogenizedElastic(rve, MoriTanaka()));
 """
 function check_material_interface(
         m::AbstractMFHMaterial;
-        probe::Union{Nothing, TensND.AbstractTens{2, 3}} = nothing,
+        probe::TensND.AbstractTens{2, 3} = _probe_strain(),
         Δ::Real = 1.0e-7, rtol::Real = 1.0e-5, verbose::Bool = true
     )
     ok = Ref(true)        # cleared by `fail`; a captured `Bool` would be boxed
@@ -66,13 +66,14 @@ function check_material_interface(
     st0 isa AbstractMaterialState ? pass("initial_state") :
         fail("initial_state returned $(typeof(st0)), not an AbstractMaterialState")
 
-    ε = probe === nothing ? _probe_strain() : probe
+    g = probe_gradients(m, probe)
 
     # 2-3. response shape
     local r
     try
-        r = material_response(m, ε, st0, 0.0)
+        r = material_response(m, g, st0, 0.0)
     catch err
+        # Whatever the material throws is what the checker exists to report.
         fail("material_response threw: $(sprint(showerror, err))")
         return ok[]
     end
@@ -100,13 +101,13 @@ function check_material_interface(
 
     # 5. no mutation of the old state
     st_before = deepcopy(st0)
-    material_response(m, ε, st0, 0.0)
+    material_response(m, g, st0, 0.0)
     _states_equal(st0, st_before) ? pass("state_old is not mutated") :
         fail("material_response mutated state_old; the contract requires a new state")
 
     # 6. tangent vs central finite differences
     if haskey(r.tangents, :σε) && haskey(r.fluxes, :σ)
-        ok_tan = _check_tangent(m, ε, st0, r.tangents.σε; Δ = Δ, rtol = rtol)
+        ok_tan = _check_tangent(m, g, st0, r.tangents.σε; Δ = Δ, rtol = rtol)
         if ok_tan === nothing
             say("  ~ tangent check skipped (zero tangent at the probe state)")
         elseif ok_tan
@@ -122,6 +123,17 @@ function check_material_interface(
     say(ok[] ? "  → conforms" : "  → DOES NOT conform")
     return ok[]
 end
+
+"""
+    probe_gradients(m::AbstractMFHMaterial, ε) -> NamedTuple
+
+The gradients at which [`check_material_interface`](@ref) exercises `m`: the
+strain `ε` for the gradient named `:ε`, and a small value (`1e-3`) for every
+other gradient [`gradient_names`](@ref) declares, a pore pressure for instance.
+A material whose other gradients are not scalars adds a method.
+"""
+probe_gradients(m::AbstractMFHMaterial, ε) =
+    NamedTuple{gradient_names(m)}(map(name -> name === :ε ? ε : 1.0e-3, gradient_names(m)))
 
 # A triaxial probe with shear, so a law that only ever saw uniaxial tension is
 # exercised properly.
@@ -141,8 +153,9 @@ _states_equal(a, b) = false
 # Central differences on each independent component of ε. Returns `nothing` when
 # the law turns out to be non-smooth at the probe (the perturbed responses
 # disagree with each other in a way a tangent cannot represent).
-function _check_tangent(m, ε, st, C; Δ, rtol)
-    A = get_array(TensND.change_tens(C, TensND.CanonicalBasis{3, Float64}()))
+function _check_tangent(m, g, st, C; Δ, rtol)
+    ε = g.ε
+    A = TensND.components_canon(C)
     maxerr = 0.0
     scale = maximum(abs, A)
     scale == 0 && return nothing
@@ -151,13 +164,9 @@ function _check_tangent(m, ε, st, C; Δ, rtol)
             (i, j) -> ((i, j) == (k, l) || (i, j) == (l, k)) ? (k == l ? 1.0 : 0.5) : 0.0
         )
         dE = TensND.Tens(E)
-        σp = material_response(m, ε + Δ * dE, st, 0.0).fluxes.σ
-        σm = material_response(m, ε - Δ * dE, st, 0.0).fluxes.σ
-        fd = get_array(
-            TensND.change_tens(
-                (σp - σm) / (2Δ), TensND.CanonicalBasis{3, Float64}()
-            )
-        )
+        σp = material_response(m, merge(g, (; ε = ε + Δ * dE)), st, 0.0).fluxes.σ
+        σm = material_response(m, merge(g, (; ε = ε - Δ * dE)), st, 0.0).fluxes.σ
+        fd = TensND.components_canon((σp - σm) / (2Δ))
         maxerr = max(maxerr, maximum(abs, fd .- view(A, :, :, k, l)))
     end
     return maxerr <= rtol * scale
