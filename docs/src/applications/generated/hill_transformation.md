@@ -2,7 +2,7 @@
 EditURL = "../../../../scripts/98_hill_transformation_2020.jl"
 ```
 
-# [Hill tensors by transformation, the 2020 paper step by step](@id app-hill-transformation)
+# [Hill tensors by transformation: closed forms derived step by step](@id app-hill-transformation)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/98_hill_transformation_2020.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/98_hill_transformation_2020.jl).
