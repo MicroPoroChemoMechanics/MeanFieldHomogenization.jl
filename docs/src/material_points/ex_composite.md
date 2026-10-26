@@ -101,10 +101,10 @@ plot!(r_cla[:ε11] * 1e3, [r_cla[:M] r_cla[:P]] * 1e3; lw = 2, ls = :dash,
     label = ["matrix, classical" "particles, classical"])
 ```
 
-At the end of the path:
+At the end of the path, in ‰:
 
 ```@example mp_ex_composite
-(matrix_modified = r_mod[:M][end], matrix_classical = r_cla[:M][end], macroscopic = e_max)
+map(x -> round(1e3 * x; digits = 2), (matrix_modified = r_mod[:M][end], matrix_classical = r_cla[:M][end], macroscopic = e_max))
 ```
 
 The matrix takes most of the deformation, more than the macroscopic strain

@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased — nonlinear laws at a material point (`MaterialPoints`)
+## v0.21.0 — nonlinear laws at a material point (`MaterialPoints`)
+
+A minor release. Nothing that existed computes differently (only
+`check_material_interface` checks more, see *Changed*): the version is minor
+because the release opens a new part of the package. Below 1.0, Julia's
+resolver treats a minor bump as breaking whatever the API did, so a dependent
+bounded at `MeanFieldHomogenization = "0.20"` widens its bound to receive it.
 
 MeanFieldHomogenization could put a homogenized material at every Gauss point of
 a finite-element computation, but every material it had was linear or
