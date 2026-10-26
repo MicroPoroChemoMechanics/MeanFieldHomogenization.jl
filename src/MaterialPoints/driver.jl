@@ -166,31 +166,36 @@ function _mixed_step(m, drive, t, Δt, g_guess, st, opts)
     # The target is plain, the guess may carry derivatives: one element type for both.
     T = promote_type(eltype(target), eltype(g_guess))
     g = map((driven, a, b) -> driven ? T(a) : T(b), c, target, g_guess)
-    worst = Inf
-    extra = -1                    # derivative steps left once the values converged
-    for it in 1:(opts.maxiters + 3)
-        F, 𝕂, st_new = _update(m, g, st, Δt, opts.algorithm)
-        r = ifelse.(c, zero(F), F - target)
-        if extra < 0
-            # Relative to the fluxes, with one floor: the rounding of 𝕂·g, below
-            # which no iteration can go. A residual exactly zero (every component
-            # driven by its gradient) is converged whatever the tangent, which may
-            # be infinite at a point.
-            nr = _primal_norm(r)
-            worst = nr / max(_primal_norm(F), _primal_norm(target), floatmin(Float64))
-            if iszero(nr) || worst <= opts.rtol || nr <= 64 * eps(Float64) * _primal_norm(𝕂) * _primal_norm(g)
-                extra = _derivative_steps(promote_type(eltype(F), eltype(g)))
-            elseif it > opts.maxiters
-                throw(PointDriverError(Float64(TensND.primal(t)), it - 1, worst))
-            end
-        end
-        extra == 0 && return F, g, st_new
+    it = 1
+    F, 𝕂, st_new = _update(m, g, st, Δt, opts.algorithm)
+    # Newton steps still to take: −1 while the values have not converged, then
+    # the derivative steps, down to 0.
+    left = _steps_left(F, 𝕂, g, c, target, t, it, opts)
+    while left != 0
         # Row i is the identity where gᵢ is driven, the tangent elsewhere.
-        A = ifelse.(c, one(𝕂), 𝕂)
-        g = g - A \ r
-        extra > 0 && (extra -= 1)
+        g = g - ifelse.(c, one(𝕂), 𝕂) \ _flux_residual(F, c, target)
+        it += 1
+        F, 𝕂, st_new = _update(m, g, st, Δt, opts.algorithm)
+        left = left > 0 ? left - 1 : _steps_left(F, 𝕂, g, c, target, t, it, opts)
     end
-    throw(PointDriverError(Float64(TensND.primal(t)), opts.maxiters, worst))
+    return F, g, st_new
+end
+
+_flux_residual(F, c, target) = ifelse.(c, zero(F), F - target)
+
+# Once the values have converged, the Newton steps that make the derivatives
+# exact; −1 before; an error after `maxiters` iterations. Relative to the
+# fluxes, with one floor: the rounding of 𝕂·g, below which no iteration can go.
+# A residual exactly zero (every component driven by its gradient) is converged
+# whatever the tangent, which may be infinite at a point.
+function _steps_left(F, 𝕂, g, c, target, t, it, opts)
+    nr = _primal_norm(_flux_residual(F, c, target))
+    worst = nr / max(_primal_norm(F), _primal_norm(target), floatmin(Float64))
+    if iszero(nr) || worst <= opts.rtol || nr <= 64 * eps(Float64) * _primal_norm(𝕂) * _primal_norm(g)
+        return _derivative_steps(promote_type(eltype(F), eltype(g)))
+    end
+    it > opts.maxiters && throw(PointDriverError(Float64(TensND.primal(t)), it - 1, worst))
+    return -1
 end
 
 _primal_norm(x) = norm(TensND.primal.(x))
