@@ -374,6 +374,8 @@ end
         include("MaterialPoints/test_engine.jl")
         include("MaterialPoints/test_driver.jl")
         include("MaterialPoints/test_crystal.jl")
+        # The coupling to a finite-element code, through the Ferrite adapter.
+        HAS_FERRITE && include("MaterialPoints/test_fe_coupling.jl")
     end
 
     rungroup("Viscoelasticity") && @testset "Viscoelasticity" begin

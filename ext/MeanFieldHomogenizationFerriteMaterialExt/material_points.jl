@@ -53,10 +53,10 @@ function MP.material_element!(
             )
         end
         for i in 1:n
-            re[i] += dot(δ[i], σ) * w
+            re[i] += (transpose(δ[i]) * σ) * w
             𝕂ᵀδᵢ = transpose(𝕂) * δ[i]
             for j in 1:n
-                Ke[i, j] += dot(𝕂ᵀδᵢ, δ[j]) * w
+                Ke[i, j] += (transpose(𝕂ᵀδᵢ) * δ[j]) * w
             end
         end
     end
@@ -69,6 +69,8 @@ function MP.material_system(
         external_forces! = nothing, external::NamedTuple = (;),
         algorithm::MP.AbstractLocalAlgorithm = MP.LocalNewton(), cache = nothing
     )
+    # The global system is Ferrite's sparse Float64 matrix, and so are the element
+    # buffers: derivatives through a structural solve are not this function's job.
     K = Ferrite.allocate_matrix(dh, ch)
     r = zeros(Ferrite.ndofs(dh))
     nd = Ferrite.ndofs_per_cell(dh)

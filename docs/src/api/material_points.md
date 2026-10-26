@@ -60,3 +60,23 @@ point_response
 PointResponse
 PointDriverError
 ```
+
+## Coupling to a finite-element code
+
+```@docs
+QuadratureStates
+commit!
+rollback!
+ModelingHypothesis
+ThreeD
+PlaneStrain
+Axisymmetric
+mandel_strain
+volume_weight
+quasistatic!
+GlobalNewtonError
+material_element!
+material_system
+write_material_vtk
+```
+
