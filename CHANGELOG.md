@@ -57,6 +57,14 @@ A step is type-stable and allocates nothing.
   not only a material of the strain alone; the tangent check perturbs the strain
   with the other gradients held.
 
+### Fixed
+
+- MFH Studio skips a port that Windows reserves (Hyper-V, WinNAT) as it skips
+  a busy one. A bind there fails with "permission denied", not "address in
+  use", and the studio stopped instead of trying the next port: the Studio
+  workflow failed on Windows whenever the port after a taken one fell in a
+  reserved range.
+
 ### Documentation
 
 - A new chapter, *Material points: nonlinear laws*: the theory of the
