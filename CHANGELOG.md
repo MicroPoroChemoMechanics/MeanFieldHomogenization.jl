@@ -37,6 +37,14 @@ cost is the integration, are unchanged.
 - `TensND` bound raised to `"0.8.3"`, which builds a permuted basis with its
   dimension known.
 
+### Fixed
+
+- MFH Studio reads the bounds of `Project.toml` again whenever the file
+  changes. It keeps them in a constant computed at precompile time, and a
+  release that changes only the bounds touches no source file: a cached
+  precompiled image kept the previous bounds, so the compute environment
+  would have required an older TensND than the package itself.
+
 ### Documentation
 
 - *Performance notes*: the fast paths of the shapes and of the self-consistent
