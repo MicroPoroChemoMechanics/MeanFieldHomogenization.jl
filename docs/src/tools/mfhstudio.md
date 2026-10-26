@@ -202,7 +202,7 @@ fall behind MeanFieldHomogenization because it never hard-codes that list.
 The default shown beside each option is the one the scheme actually uses, and
 it is not the same for every scheme: the self-consistent solvers stop at
 `abstol = 1e-12`, `reltol = 1e-8`, while `DifferentialScheme` hands
-`1e-8` / `1e-6` to `OrdinaryDiffEq`. Overriding `abstol` alone rarely changes
+`1e-8` / `1e-6` to the SciML `solve`. Overriding `abstol` alone rarely changes
 anything — see [Solver tolerances](@ref man-schemes-tolerances).
 
 ## Layered inclusions

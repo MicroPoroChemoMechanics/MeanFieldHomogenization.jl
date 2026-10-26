@@ -27,6 +27,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
+import OrdinaryDiffEqRosenbrock
 
 const ATOL_DIFF = 1.0e-9
 const RTOL_DIFF = 1.0e-8
@@ -654,8 +655,9 @@ end
     # The right-hand side takes its element type from τ as well as from the
     # state, so the ForwardDiff time gradient of a Rosenbrock method goes
     # through (it threw on a Float64 conversion before). Reference: the
-    # explicit default solver at tight tolerances.
-    ODE = MeanFieldHomogenization.Schemes.OrdinaryDiffEq
+    # explicit default solver at tight tolerances. The package loads Tsit5 alone;
+    # the Rosenbrock family is loaded here, as a user would.
+    ODE = OrdinaryDiffEqRosenbrock
     rve = RVE()
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)); fraction = :rest)
     add_phase!(rve, :I, Spheroid(0.2), Dict(:C => iso_stiffness(60.0, 40.0)); fraction = 0.3, symmetrize = IsoSymmetrize())

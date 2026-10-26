@@ -383,7 +383,7 @@ isotropic reference, and the reference of the differential scheme is its
 
 ## 5. Numerical resolution
 
-The ODE is integrated by `OrdinaryDiffEq.solve`, adaptive `Tsit5` by default;
+The ODE is integrated by the SciML `solve`, adaptive `Tsit5` by default;
 the algorithm and its tolerances are user-facing — see
 [Homogenization schemes](@ref man-schemes) for the keywords.
 

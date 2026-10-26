@@ -10,7 +10,7 @@
 #  with the volumetric balance `df = (𝟙 − f ⊗ 𝐔) · dφ` inverted by
 #  Sherman-Morrison so the user supplies effective volume fractions
 #  `f_α(τ)` along the chosen `trajectory`.  The ODE is solved by
-#  `OrdinaryDiffEq.solve` with an adaptive RK (default `Tsit5`) and
+#  the SciML `solve` with an adaptive RK (default `Tsit5`) and
 #  the result returned at `τ = 1`.
 #
 #  Cracks have negligible volume — their density `ε_c(τ)` enters the
@@ -31,7 +31,7 @@
 # =============================================================================
 
 # Solver options are read out of `scheme.options`; every OTHER keyword
-# stored there is forwarded verbatim to `OrdinaryDiffEq.solve` (`maxiters`,
+# stored there is forwarded verbatim to the SciML `solve` (`maxiters`,
 # `dtmax`, `dt`, `callback`, …).
 const _DIFF_RESERVED_OPTIONS = (:nsteps, :abstol, :reltol, :alg, :formulation)
 
@@ -56,7 +56,7 @@ end
 
 Differential scheme for property `:p` [norris1985](@cite).
 Integrates the multi-phase incorporation-sequence ODE on ``\\tau \\in [0, 1]``
-with the SciML `OrdinaryDiffEq.solve` driver (default `Tsit5`), in the
+with the SciML `solve` (default `Tsit5`), in the
 stiffness or the compliance variable according to the scheme's
 `formulation`.
 """

@@ -19,7 +19,7 @@ using LinearAlgebra
 using TensND
 using Tensors
 using ForwardDiff
-using OrdinaryDiffEq
+using OrdinaryDiffEqTsit5
 using StaticArrays: SMatrix
 
 import ..Core

@@ -356,7 +356,7 @@ requirement.
 | :--- | ---: | ---: | ---: |
 | [`SelfConsistent`](@ref), [`AsymmetricSelfConsistent`](@ref) | `1e-12` | `1e-8` | `100` |
 | ALV (aging-viscoelastic) counterparts | `1e-10` | `1e-8` | `200` |
-| [`DifferentialScheme`](@ref) (forwarded to `OrdinaryDiffEq`) | `1e-8` | `1e-6` | → `solve` |
+| [`DifferentialScheme`](@ref) (forwarded to the SciML `solve`) | `1e-8` | `1e-6` | → `solve` |
 | [`hill_tensor`](@ref) cubature backends | `1e-8` | `1e-6` | `10^6` |
 
 !!! warning "`abstol` alone will not tighten a stiffness iteration"
@@ -423,11 +423,16 @@ control. Prefer `:compliance` for a medium softening towards percolation
 
 ### Solver control
 
-The ODE is solved by `OrdinaryDiffEq`. `nsteps` sets **only** the density
+The ODE is solved by the SciML `solve`, with `Tsit5()` by default: it is the
+only ODE algorithm MeanFieldHomogenization loads. Any other algorithm of the
+`OrdinaryDiffEq` family is passed by `alg` once its package is loaded:
+`using OrdinaryDiffEq` brings them all, `using OrdinaryDiffEqVerner` only the
+Verner methods. `nsteps` sets **only** the density
 of saved points along `τ`; the step size is adaptive and governed by the
 tolerances.
 
 ```julia
+using OrdinaryDiffEqVerner          # or: using OrdinaryDiffEq
 DifferentialScheme(; alg = Vern9(), abstol = 1e-12, reltol = 1e-10)
 DifferentialScheme(; maxiters = 10^7)   # unrecognised kwargs go to `solve`
 ```

@@ -232,21 +232,20 @@ struct NewtonDefault end
 Marker selecting an **auto-resolving** nonlinear solver: at each call it
 checks, at runtime, whether the weak extension
 `MeanFieldHomogenizationNonlinearSolveExt` is active (`Base.get_extension`) — i.e.
-whether `NonlinearSolve.jl` has been loaded into the session, whether by
-an explicit `using NonlinearSolve` or transitively through some other
-dependency (empirically, on a typical installation today the extension
-is already active as soon as `MeanFieldHomogenization` itself is loaded — the
-exact transitive path depends on the resolved dependency graph and is
-not guaranteed across versions).
+whether `NonlinearSolve.jl` has been loaded into the session, by an
+explicit `using NonlinearSolve` or through another package that loads it.
+MeanFieldHomogenization itself does not: since 0.20.2 it depends on
+`OrdinaryDiffEqTsit5` alone, which does not load `NonlinearSolve.jl`
+(the full `OrdinaryDiffEq` did, which made the extension active as soon as
+the package was loaded).
 
 - If active, it dispatches to a globalized SciML algorithm
   (`NonlinearSolve.TrustRegion()` — chosen over a plain `NewtonRaphson()`
   for its better robustness near the self-consistent bifurcation),
   through the same ForwardDiff-safe path (implicit-function-theorem
   lift) as any other `NonlinearSolve.jl` algorithm passed explicitly.
-- Otherwise (a slimmed-down dependency set, or a future `OrdinaryDiffEq`
-  that no longer needs `NonlinearSolve.jl` internally) it falls back to
-  the dependency-free built-in [`NewtonDefault`](@ref).
+- Otherwise it falls back to the dependency-free built-in
+  [`NewtonDefault`](@ref).
 
 This gives a solver choice that always works, with or without
 `NonlinearSolve.jl` explicitly requested.
@@ -478,16 +477,19 @@ along the chosen `trajectory`.
   the SciML ODE solver).  The integration step is controlled by
   `abstol` / `reltol`, **not** by `nsteps`.  See
   [`differential_path`](@ref) to read the saved states back.
-- `abstol`, `reltol` — ODE solver tolerances (forwarded to
-  `OrdinaryDiffEq.solve`).
+- `abstol`, `reltol` — ODE solver tolerances (forwarded to the SciML
+  `solve`).
 - `alg` — explicit ODE algorithm.  `nothing` selects `Tsit5()` (5th
-  order adaptive Runge-Kutta).  Pass any `OrdinaryDiffEqAlgorithm`
-  instance to override (e.g. `Vern9()` for higher accuracy).  Implicit
+  order adaptive Runge-Kutta), the only one MeanFieldHomogenization loads.
+  Any other algorithm of the `OrdinaryDiffEq` family is accepted once its
+  package is loaded in the session: `using OrdinaryDiffEq` for all of
+  them, or one family alone (`using OrdinaryDiffEqVerner` for `Vern9()`,
+  `using OrdinaryDiffEqRosenbrock` for `Rodas5P()`).  Implicit
   algorithms (`Rosenbrock23()`, `Rodas5P()`) work with their default
   ForwardDiff Jacobian and time gradient: the right-hand side accepts dual
   numbers in the state and in `τ`.
-- `kwargs...` — any other keyword is forwarded verbatim to
-  `OrdinaryDiffEq.solve` (`maxiters`, `dtmax`, `dt`, `callback`, …).
+- `kwargs...` — any other keyword is forwarded verbatim to the SciML
+  `solve` (`maxiters`, `dtmax`, `dt`, `callback`, …).
 """
 struct DifferentialScheme{P <: DifferentialTrajectory, M, K <: NamedTuple} <:
     HomogenizationScheme
