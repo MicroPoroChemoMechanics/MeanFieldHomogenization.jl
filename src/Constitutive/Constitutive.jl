@@ -90,7 +90,7 @@ export AbstractMFHMaterial, AbstractMaterialState, NoState
 export MaterialResponse, stress, tangent, state
 export initial_state, material_response
 export gradient_names, flux_names, tangent_blocks, transport_property
-export check_material_interface
+export check_material_interface, probe_gradients
 
 # ── Materials ────────────────────────────────────────────────────────────────
 export HomogenizedElastic, stiffness

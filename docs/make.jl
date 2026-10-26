@@ -346,6 +346,7 @@ const DOC_MODULES = [
     MeanFieldHomogenization.Laminates,
     MeanFieldHomogenization.Poromechanics,
     MeanFieldHomogenization.Constitutive,
+    MeanFieldHomogenization.MaterialPoints,
     MeanFieldHomogenization.Viscoelasticity,
     MeanFieldHomogenization.CustomInclusions,
     MeanFieldHomogenization.FiniteElements,

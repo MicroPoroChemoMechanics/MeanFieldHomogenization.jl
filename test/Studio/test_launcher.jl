@@ -44,6 +44,12 @@ newsession(port) = MS.Session(
     MS.StudioState(), false,
 )
 
+# A stand-in for the wrapper of the socket layer, which carries the system error
+# in its `err` field.
+struct _WrappedBindError <: Exception
+    err::Exception
+end
+
 @testset "port taken" begin
     blocker = HTTP.serve!(_ -> HTTP.Response(200), "127.0.0.1", 0)
     taken = parse(Int, last(split(HTTP.server_addr(blocker), ':')))
@@ -54,6 +60,16 @@ newsession(port) = MS.Session(
         err
     end
     @test e isa ArgumentError && occursin("`port = $(taken + 1)`", e.msg)
+    # A port the system reserves (Windows) is skipped like a busy one; another
+    # failure to bind is not hidden.
+    # The socket layer wraps the system error in an error with an `err` field.
+    wrapped(errnum) = HTTP.ConnectError("127.0.0.1:49682", _WrappedBindError(SystemError("bind", errnum)))
+    @test MS.port_unavailable(wrapped(Libc.EACCES))
+    @test MS.port_unavailable(wrapped(10013))
+    @test MS.port_unavailable(HTTP.ConnectError("127.0.0.1:49682", SystemError("bind", Libc.EACCES)))
+    @test !MS.port_unavailable(wrapped(Libc.ENOENT))
+    @test !MS.port_unavailable(HTTP.ConnectError("127.0.0.1:49682", ArgumentError("no system error")))
+    @test !MS.port_unavailable(ArgumentError("not a bind failure"))
     s = newsession(taken)
     server = redirect_stdout(devnull) do
         MS.serve(s, HTTP.Router(); tries = 5)

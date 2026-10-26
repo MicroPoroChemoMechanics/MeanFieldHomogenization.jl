@@ -270,6 +270,28 @@ pages = [
         "tools/echoes2mfh.md",
         "tools/mfhstudio.md",
     ],
+    # Nonlinear laws at one material point: written, integrated, driven along a
+    # path, and plugged into any caller of the Gauss-point contract. Before the
+    # finite-element coupling, whose element loops call these laws.
+    "Material points: nonlinear laws" => [
+        "material_points/index.md",
+        "Theory" => [
+            "material_points/theory.md",
+            "material_points/theory_secant.md",
+        ],
+        "Manual" => [
+            "material_points/writing.md",
+            "material_points/laws.md",
+            "material_points/driving.md",
+            "material_points/plugging.md",
+        ],
+        "Examples" => [
+            "material_points/ex_plasticity.md",
+            "material_points/ex_damage.md",
+            "material_points/ex_biot.md",
+            "material_points/ex_composite.md",
+        ],
+    ],
     # MeanFieldHomogenization *inside* a finite-element code — the exact
     # opposite of `manual/fe_inclusions.md`, which is the FE solver inside
     # MeanFieldHomogenization. Kept as its own top-level section so the two
@@ -278,6 +300,10 @@ pages = [
     # build a model with them, then worked models.
     "Finite-element coupling" => [
         "fe_coupling/index.md",
+        "Getting started" => [
+            "fe_coupling/quickstart.md",
+            "fe_coupling/step_by_step.md",
+        ],
         "Theory" => [
             "fe_coupling/scale_transition.md",
             "fe_coupling/poroelastic_coupling.md",
@@ -319,6 +345,7 @@ pages = [
         "api/schemes.md",
         "api/poromechanics.md",
         "api/constitutive.md",
+        "api/material_points.md",
         "api/assemblies.md",
         "api/viscoelasticity.md",
         "api/laplace_carson.md",

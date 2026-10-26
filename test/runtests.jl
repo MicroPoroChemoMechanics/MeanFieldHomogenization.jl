@@ -100,7 +100,7 @@ end
 const TEST_PARTS = Dict(
     "core" => (
         "Aqua", "Elliptic", "Core", "Elasticity", "Cracks", "Conductivity",
-        "Interactions", "Poromechanics", "Constitutive", "Regression", "Studio",
+        "Interactions", "Poromechanics", "Constitutive", "MaterialPoints", "Regression", "Studio",
         "Documentation",
     ),
     "schemes" => ("Schemes", "Assemblies", "CustomInclusions"),
@@ -365,6 +365,18 @@ end
         include("Constitutive/test_poroelastic.jl")
         # The same laws as the Gauss-point law of a Ferrite computation.
         HAS_FERRITE && include("Constitutive/test_ferrite_backend.jl")
+    end
+
+    # Nonlinear laws written as materials of the same contract, so they run
+    # after it.
+    rungroup("MaterialPoints") && @testset "MaterialPoints" begin
+        include("MaterialPoints/test_laws.jl")
+        include("MaterialPoints/test_engine.jl")
+        include("MaterialPoints/test_driver.jl")
+        include("MaterialPoints/test_crystal.jl")
+        include("MaterialPoints/test_homogenized.jl")
+        # The coupling to a finite-element code, through the Ferrite adapter.
+        HAS_FERRITE && include("MaterialPoints/test_fe_coupling.jl")
     end
 
     rungroup("Viscoelasticity") && @testset "Viscoelasticity" begin

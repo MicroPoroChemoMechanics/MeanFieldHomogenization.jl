@@ -44,9 +44,9 @@ Base.show(io::IO, h::StudioHandle) =
 """
     serve(session, router; tries) -> server
 
-Bind the server on the session's port, or, when that port is taken and
-`tries > 1`, on the next free one (the session's port is updated). A port
-taken that cannot be replaced is refused with the way out.
+Bind the server on the session's port, or, when that port is taken (or
+reserved by the system) and `tries > 1`, on the next free one (the session's
+port is updated). A port that cannot be replaced is refused with the way out.
 """
 function serve(session::Session, router::HTTP.Router; tries::Integer = 1)
     first_port = session.port
@@ -55,7 +55,7 @@ function serve(session::Session, router::HTTP.Router; tries::Integer = 1)
         server = try
             HTTP.serve!(handler(session, router), session.host, session.port)
         catch err
-            err isa HTTP.AddressInUseError || rethrow()
+            port_unavailable(err) || rethrow()
             continue
         end
         # port 0 asks the system for a free one: the address bound says which
@@ -66,11 +66,32 @@ function serve(session::Session, router::HTTP.Router; tries::Integer = 1)
     throw(
         ArgumentError(
             tries == 1 ?
-                "port $first_port is already in use; start with another one, `port = $(first_port + 1)`." :
-                "ports $first_port to $(first_port + tries - 1) are all in use; start with `port = …`."
+                "port $first_port is already in use or reserved; start with another one, `port = $(first_port + 1)`." :
+                "ports $first_port to $(first_port + tries - 1) are all in use or reserved; start with `port = …`."
         )
     )
 end
+
+"""
+    port_unavailable(err) -> Bool
+
+Whether binding a port failed because the port cannot be had, so that the next
+one is worth trying: it is in use, or the system refuses it. Windows reserves
+ranges of ports (Hyper-V, WinNAT: `netsh int ipv4 show excludedportrange`), and
+a bind there fails with "permission denied" (`EACCES`, `WSAEACCES` = 10013), not
+with "address in use".
+"""
+port_unavailable(::HTTP.AddressInUseError) = true
+function port_unavailable(err::HTTP.ConnectError)
+    e = _system_error(err.cause)
+    return e !== nothing && e.errnum in (Libc.EACCES, 10013)
+end
+port_unavailable(err) = false
+
+# The system error under the wrappers of the socket layer (an error carrying it
+# in its `err` field), or `nothing`.
+_system_error(e::SystemError) = e
+_system_error(e) = hasproperty(e, :err) ? _system_error(getproperty(e, :err)) : nothing
 
 "The host as a browser should reach it."
 url_host(host::AbstractString) = host in ("0.0.0.0", "::") ? "localhost" : host == "::1" ? "[::1]" : host

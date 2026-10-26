@@ -153,12 +153,16 @@ include("NeuralInclusions/NeuralInclusions.jl")
 # mirror image of `FiniteElements`: there the FE code is inside MFH, here MFH is
 # inside the FE code.
 include("Constitutive/Constitutive.jl")
+# `MaterialPoints` writes nonlinear laws as materials of that same contract, so
+# it comes right after it.
+include("MaterialPoints/MaterialPoints.jl")
 
 using .Superspheres
 using .CustomInclusions
 using .FiniteElements
 using .NeuralInclusions
 using .Constitutive
+using .MaterialPoints
 
 
 # ── Abstractions ─────────────────────────────────────────────────────────────
@@ -439,7 +443,7 @@ export AbstractMFHMaterial, AbstractMaterialState, NoState
 export MaterialResponse, stress, tangent, state
 export initial_state, material_response
 export gradient_names, flux_names, tangent_blocks, transport_property
-export check_material_interface
+export check_material_interface, probe_gradients
 export HomogenizedElastic, stiffness
 export MicrocrackedMaterial, CrackedState, open_set, apertures
 export FracturedPoroelasticRock, PoroFracturedState, conductivities, fluid_content
@@ -447,6 +451,19 @@ export MaterialCache, cached!, cache_stats, reset_cache!
 export plane_strain_response
 export to_tensors, from_tensors
 export voigt_stress, voigt_strain, stress_from_voigt, strain_from_voigt
+
+# ── MaterialPoints : nonlinear laws at a material point ─────────────────────
+export AbstractPointLaw, ResidualLaw, PotentialLaw, PointState
+export kinematics, SmallStrain, state_layout, gradient_layout, flux_layout, law_parameters
+export Mandel, identity_mandel, trace_mandel, deviator, von_mises, equivalent_strain
+export AbstractLocalAlgorithm, LocalNewton, LocalIntegrationError, point_update
+export LinearElasticity, PowerLawElasticity, MaxwellViscoelasticity, BiotPoroelasticity
+export NortonViscoplasticity, J2Plasticity, CrystalViscoplasticity, slip_systems
+export LoadingPath, point_response, PointResponse, PointDriverError
+export NonlinearHomogenized, SecantMethod, ClassicalSecant, ModifiedSecant, secant_moduli
+export QuadratureStates, commit!, rollback!
+export ModelingHypothesis, ThreeD, PlaneStrain, Axisymmetric, mandel_strain, volume_weight
+export quasistatic!, GlobalNewtonError, material_element!, material_system, write_material_vtk
 
 # ── MFH Studio launcher ──────────────────────────────────────────────────────
 export mfhstudio
