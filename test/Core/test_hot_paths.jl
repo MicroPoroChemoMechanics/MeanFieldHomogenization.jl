@@ -63,6 +63,14 @@ end
     # A dual sorts on its value, as `isless` does.
     d = ForwardDiff.Dual{:sort}.((1.0, 1.0, 5.0), (3.0, 2.0, 1.0))
     @test MFH_Core._descending_order(d) == (3, 1, 2)
+    # The basis of a sorted shape has its dimension in its type: the permuted
+    # basis used to be built from a matrix whose size was read at run time.
+    B = TensND.CanonicalBasis{3, Float64}()
+    U = Union{TensND.CanonicalBasis{3, Float64}, TensND.RotatedBasis{3, Float64}}
+    @test @inferred(
+        Tuple{NTuple{3, Float64}, U},
+        MFH_Core._sort_axes_and_basis((1.0, 1.0, 5.0), B, Val(:ellipsoid_3d))
+    )[1] == (5.0, 1.0, 1.0)
 end
 
 @testset "Hot paths: a self-consistent step reads the RVE once" begin
