@@ -48,21 +48,21 @@ const Mandel{T} = SVector{6, T}
 """
     identity_mandel(T = Float64) -> Mandel{T}
 
-The second-order identity ``\\mathbf{1}``, in Kelvin–Mandel components.
+The second-order identity ``\\boldsymbol{1}``, in Kelvin–Mandel components.
 """
 identity_mandel(::Type{T} = Float64) where {T} = Mandel{T}(one(T), one(T), one(T), zero(T), zero(T), zero(T))
 
 """
     trace_mandel(v::Mandel)
 
-The trace ``\\operatorname{tr}\\boldsymbol{v} = \\boldsymbol{v} : \\mathbf{1}``.
+The trace ``\\operatorname{tr}\\boldsymbol{v} = \\boldsymbol{v} : \\boldsymbol{1}``.
 """
 trace_mandel(v::Mandel) = v[1] + v[2] + v[3]
 
 """
     deviator(v::Mandel) -> Mandel
 
-The deviatoric part ``\\boldsymbol{v} - \\tfrac13 (\\operatorname{tr}\\boldsymbol{v})\\,\\mathbf{1}``.
+The deviatoric part ``\\boldsymbol{v} - \\tfrac13 (\\operatorname{tr}\\boldsymbol{v})\\,\\boldsymbol{1}``.
 """
 deviator(v::Mandel) = v - (trace_mandel(v) / 3) * identity_mandel(eltype(v))
 

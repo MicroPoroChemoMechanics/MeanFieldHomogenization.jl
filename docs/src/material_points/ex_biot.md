@@ -8,7 +8,7 @@ with their fluxes, the stress ``\boldsymbol\sigma`` and the change of fluid
 content ``\phi`` (see [`BiotPoroelasticity`](@ref)):
 
 ```math
-\boldsymbol\sigma = \mathbb{C}:\boldsymbol\varepsilon - b\,p\,\mathbf{1},\qquad
+\boldsymbol\sigma = \mathbb{C}:\boldsymbol\varepsilon - b\,p\,\boldsymbol{1},\qquad
 \phi = b\operatorname{tr}\boldsymbol\varepsilon + \frac{p}{M}.
 ```
 

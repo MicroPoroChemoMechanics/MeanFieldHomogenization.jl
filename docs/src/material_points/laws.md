@@ -119,7 +119,7 @@ to the stress and to the change of fluid content ``\phi``
 ([Coussy (2004)](@cite coussy2004)):
 
 ```math
-\boldsymbol\sigma = \mathbb{C}:\boldsymbol\varepsilon - b\,p\,\mathbf{1},
+\boldsymbol\sigma = \mathbb{C}:\boldsymbol\varepsilon - b\,p\,\boldsymbol{1},
 \qquad
 \phi = b\operatorname{tr}\boldsymbol\varepsilon + \frac{p}{M}.
 ```

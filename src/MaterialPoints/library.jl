@@ -103,7 +103,7 @@ stress ``\\boldsymbol{\\sigma}`` and to the change of fluid content ``\\phi``
 (see [Coussy (2004)](@cite coussy2004)),
 
 ```math
-\\boldsymbol{\\sigma} = \\mathbb{C}:\\boldsymbol{\\varepsilon} - b\\,p\\,\\mathbf{1},
+\\boldsymbol{\\sigma} = \\mathbb{C}:\\boldsymbol{\\varepsilon} - b\\,p\\,\\boldsymbol{1},
 \\qquad
 \\phi = b\\,\\operatorname{tr}\\boldsymbol{\\varepsilon} + \\frac{p}{M},
 ```
@@ -113,7 +113,7 @@ derived from the potential
 ``\\boldsymbol\\sigma = \\partial\\psi/\\partial\\boldsymbol\\varepsilon`` and
 ``\\phi = -\\partial\\psi/\\partial p``. Gradients `(ε = 6, p = 1)`, fluxes
 `(σ = 6, φ = 1)`; the tangent blocks are those of the Gauss-point contract,
-`σε` ``= \\mathbb{C}``, `σp` ``= -b\\,\\mathbf{1}``, `φε` ``= b\\,\\mathbf{1}``,
+`σε` ``= \\mathbb{C}``, `σp` ``= -b\\,\\boldsymbol{1}``, `φε` ``= b\\,\\boldsymbol{1}``,
 `φp` ``= 1/M``. The example of a coupled law.
 """
 BiotPoroelasticity(; E, ν, b, M) = PotentialLaw(;

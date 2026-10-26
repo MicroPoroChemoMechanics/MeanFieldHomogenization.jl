@@ -177,7 +177,7 @@ Some variables are read by a law without being returned with a flux: a
 temperature imposed by a separate heat computation, a time, a degree of
 hydration. They are given by name for the step, `external = (T = …,)`, and the
 law reads them in `p`, beside its parameters. A thermoelastic law, whose free
-expansion is ``\alpha\,(T - T_0)\,\mathbf 1``:
+expansion is ``\alpha\,(T - T_0)\,\boldsymbol{1}``:
 
 ```@example mp_writing
 thermal(g, p) = g.ε - p.α * (p.T - p.T₀) * identity_mandel()
