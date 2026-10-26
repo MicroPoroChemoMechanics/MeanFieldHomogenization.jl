@@ -67,6 +67,11 @@ shear    = LoadingPath(range(0, 1; length = 21); ε12 = t -> 2e-3 * t, ε11 = 0,
 nothing # hide
 ```
 
+A variable the law reads without returning its flux, a temperature for
+instance, is given by `external`, as a number or a function of time:
+`LoadingPath(times; ε11 = …, external = (T = t -> 293 + t,))` (see
+[Writing a law](@ref mp-writing)).
+
 For a law of coupled fields, a drained test holds the pore pressure
 (`p = 0`), an undrained one leaves the fluid content unprescribed, hence zero:
 see [Drained and undrained poroelasticity](@ref mp-ex-biot).

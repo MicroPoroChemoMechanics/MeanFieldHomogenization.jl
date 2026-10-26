@@ -35,7 +35,10 @@ A step is type-stable and allocates nothing.
   `equivalent_strain`, `identity_mandel`), the layouts (`state_layout`,
   `gradient_layout`, `flux_layout`), `law_parameters`, the `kinematics` trait
   (small strain, `SmallStrain`, so that finite strain can be added without
-  changing the laws), and the errors `LocalIntegrationError` and
+  changing the laws), external variables (`external = (T = …,)`: a
+  temperature or any field a law reads without returning its flux, merged
+  into its parameters for the step, functions of time along a path), and the
+  errors `LocalIntegrationError` and
   `PointDriverError` that a driver catches to cut a step.
 - Laws shipped, each tested against a closed form: `LinearElasticity`,
   `PowerLawElasticity`, `MaxwellViscoelasticity`, `BiotPoroelasticity` (two

@@ -171,6 +171,33 @@ heat flux, is declared by its size too. The residual route takes the same
 `gradients` and `flux_names`, with `fluxes = (g, y, p) -> (σ = …, φ = …)` in
 place of `stress`.
 
+## External variables: a temperature
+
+Some variables are read by a law without being returned with a flux: a
+temperature imposed by a separate heat computation, a time, a degree of
+hydration. They are given by name for the step, `external = (T = …,)`, and the
+law reads them in `p`, beside its parameters. A thermoelastic law, whose free
+expansion is ``\alpha\,(T - T_0)\,\mathbf 1``:
+
+```@example mp_writing
+thermal(g, p) = g.ε - p.α * (p.T - p.T₀) * identity_mandel()
+thermo = PotentialLaw(;
+    name = :Thermoelastic,
+    energy = (g, a, p) -> sum(thermal(g, p) .* (p.ℂ * thermal(g, p))) / 2,
+    p = (ℂ = ℂ_mandel, α = 1.2e-5, T₀ = 293.0),
+)
+σ_hot, _, _ = point_update(thermo, zero(ε), initial_state(thermo), 0.0; external = (T = 343.0,))
+σ_hot[1], -3 * 160e3 * 1.2e-5 * 50            # blocked expansion: −3kαΔT
+```
+
+A loading path gives them as functions of time, and a value already in `p`
+takes the value given, which makes a parameter vary along the path:
+
+```@example mp_writing
+heating = LoadingPath(0:0.25:1; external = (T = t -> 293.0 + 100t,))   # free faces
+point_response(thermo, heating)[:ε11]           # α ΔT along the ramp
+```
+
 ## Checking a law
 
 [`check_material_interface`](@ref) exercises a law against the Gauss-point
