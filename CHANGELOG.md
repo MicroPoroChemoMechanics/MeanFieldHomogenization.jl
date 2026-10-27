@@ -45,7 +45,11 @@
   driving force, Griffith's resistance, stability, regularization) and an
   example (progressive and unstable growth, a load cycle); a theory page on the
   nonlinear poroelasticity of cracked rocks and an example (a rock under
-  confinement, the two roles of the pore pressure).
+  confinement, the two roles of the pore pressure); a theory page on the
+  strength of a porous plastic solid, obtained by running `NonlinearHomogenized`
+  with a rigid–perfectly plastic solid (`PowerLawElasticity` with `m = 0`), and
+  an example that recovers the closed-form ellipse of Mori–Tanaka and the
+  derivative construction of the strength tutorial, to 10⁻⁹.
 
 ## v0.21.0 — nonlinear laws at a material point (`MaterialPoints`)
 
