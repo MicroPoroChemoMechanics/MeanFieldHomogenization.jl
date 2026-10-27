@@ -62,6 +62,7 @@ include("crack_stiffness.jl")
 include("crack_damage.jl")
 include("closing_cracks.jl")
 include("frictional_strength.jl")
+include("uniform_fields.jl")
 
 # ── Writing a law ────────────────────────────────────────────────────────────
 export AbstractPointLaw, ResidualLaw, PotentialLaw, PointState
@@ -83,6 +84,7 @@ export NonlinearHomogenized, SecantMethod, ClassicalSecant, ModifiedSecant, seca
 export CrackGrowthDamage, CrackGrowthResistance
 export ClosingCrackPoroelasticity, ExponentialClosure
 export DruckerPrager, Heterogeneities, Pores, RigidInclusions, FrictionalComposite, limit_stress
+export AbstractPhaseComposite, UniformStrain, UniformStress
 
 # ── Coupling to a finite-element code ───────────────────────────────────────
 export QuadratureStates, commit!, rollback!

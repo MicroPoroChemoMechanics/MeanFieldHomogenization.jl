@@ -16,17 +16,28 @@
   states and the flow rules of the paper for spherical heterogeneities (the
   elliptic domain of a porous medium, independent of `t`; the friction cone
   of a reinforced matrix) are recovered at first order in the regularization.
+- `UniformStrain` and `UniformStress`: the composites of any phase laws with a
+  uniform strain (Voigt, Taylor) or a uniform stress (Reuss, Sachs), the
+  phases keeping their internal variables; the consistent tangent of the
+  composite comes from the implicit-function theorem.
 
 ### Changed
 
 - The Newton solve with exact derivatives of `MaterialPoints` is shared by the
   laws and the strength computations (no change in what a law computes).
+- The local Newton iteration returns an exact root at once; a non-finite
+  Jacobian, or local equations singular at the root, fail the step (a
+  `LocalIntegrationError`, which the driver cuts) instead of an error of the
+  linear solve; where a phase law has no finite tangent the tangent of the
+  step is returned undefined (`NaN`).
 
 ### Documentation
 
 - *Material points*: a theory page on the strength of a frictional matrix with
   a non-associated flow rule and an example (porous and reinforced frictional
-  solids, the domain and the flow rule against the closed forms).
+  solids, the domain and the flow rule against the closed forms); a theory page
+  on the uniform-field composites and an example (Taylor and Sachs composites
+  of two elastoplastic phases).
 
 ## v0.22.0 — nonlinear laws derived from the microstructure
 

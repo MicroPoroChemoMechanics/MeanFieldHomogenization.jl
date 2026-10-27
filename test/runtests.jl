@@ -380,6 +380,7 @@ end
         include("MaterialPoints/test_closing_cracks.jl")
         include("MaterialPoints/test_strength.jl")
         include("MaterialPoints/test_frictional_strength.jl")
+        include("MaterialPoints/test_uniform_fields.jl")
         # The coupling to a finite-element code, through the Ferrite adapter.
         HAS_FERRITE && include("MaterialPoints/test_fe_coupling.jl")
     end

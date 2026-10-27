@@ -278,6 +278,7 @@ pages = [
         "Theory" => [
             "material_points/theory.md",
             "material_points/theory_secant.md",
+            "material_points/theory_uniform_fields.md",
             "material_points/theory_crack_damage.md",
             "material_points/theory_closing_cracks.md",
             "material_points/theory_strength.md",
@@ -294,6 +295,7 @@ pages = [
             "material_points/ex_damage.md",
             "material_points/ex_biot.md",
             "material_points/ex_composite.md",
+            "material_points/ex_uniform_fields.md",
             "material_points/ex_crack_damage.md",
             "material_points/ex_closing_cracks.md",
             "material_points/ex_strength.md",

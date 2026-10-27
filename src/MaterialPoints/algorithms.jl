@@ -165,8 +165,12 @@ function _solve_local(alg::LocalNewton, law, g, prev::PointState{N}, Δt) where 
     T = _step_type(law, g, prev, Δt, prev.y)
     _frozen(law, g, prev, Δt) && return SVector{N, T}(prev.y), true
     R(z) = _residual(law, z, g, prev, Δt)
-    return _root(R, TensND.primal.(prev.y), alg, law.name, T), false
+    return _root(R, TensND.primal.(_newton_start(law, g, prev)), alg, law.name, T), false
 end
+
+# Where the Newton iteration of a step starts: the internal variables of the
+# previous step, unless a law knows a better predictor.
+_newton_start(law, g, prev) = prev.y
 
 # The root of R in the element type T: Newton's method on the values from y₀,
 # then the steps in T that attach exact derivatives to the root.
@@ -185,7 +189,13 @@ function _newton_values(R, y, alg::LocalNewton, name::Symbol)
     last = Inf
     r = TensND.primal.(R(y))
     for it in 1:alg.maxiters
+        # An exact root needs no Jacobian, which may not exist there (a power
+        # law has no finite tangent at zero strain).
+        iszero(r) && return y
         J = TensND.primal.(ForwardDiff.jacobian(R, y))
+        # A non-finite Jacobian (a law without a finite tangent at the iterate)
+        # is a failed step for the driver to cut, as a singular one is.
+        all(isfinite, J) || throw(LocalIntegrationError(name, it, last, "singular or non-finite Jacobian"))
         δ = J \ r
         all(isfinite, δ) || throw(LocalIntegrationError(name, it, last, "singular or non-finite Jacobian"))
         step = _finite_step(R, y, δ)
@@ -220,5 +230,17 @@ function _fluxes_and_tangent(law, y, g, prev, Δt, frozen::Bool)
     ∂F∂y = ForwardDiff.jacobian(z -> _fluxes(law, g, z), y)
     ∂R∂y = ForwardDiff.jacobian(z -> _residual(law, z, g, prev, Δt), y)
     ∂R∂g = ForwardDiff.jacobian(h -> _residual(law, y, h, prev, Δt), g)
-    return F, ∂F∂g - ∂F∂y * (∂R∂y \ ∂R∂g)
+    # Where a phase law has no finite tangent (a power law at zero strain), the
+    # tangent of the step does not exist either: it is returned undefined.
+    all(isfinite, ∂R∂y) || return F, ∂F∂g .* oftype(zero(eltype(∂F∂g)), NaN)
+    # A root at which the local equations are singular is no solution of a
+    # well-posed step (any neighbor is a root too): a failed step to cut.
+    ∂y∂g = try
+        ∂R∂y \ ∂R∂g
+    catch err
+        err isa LinearAlgebra.SingularException || rethrow()
+        throw(LocalIntegrationError(law.name, 0, NaN, "singular local equations at the root"))
+    end
+    all(isfinite, ∂y∂g) || throw(LocalIntegrationError(law.name, 0, NaN, "singular local equations at the root"))
+    return F, ∂F∂g - ∂F∂y * ∂y∂g
 end

@@ -464,6 +464,7 @@ export NonlinearHomogenized, SecantMethod, ClassicalSecant, ModifiedSecant, seca
 export CrackGrowthDamage, CrackGrowthResistance
 export ClosingCrackPoroelasticity, ExponentialClosure
 export DruckerPrager, Heterogeneities, Pores, RigidInclusions, FrictionalComposite, limit_stress
+export AbstractPhaseComposite, UniformStrain, UniformStress
 export QuadratureStates, commit!, rollback!
 export ModelingHypothesis, ThreeD, PlaneStrain, Axisymmetric, mandel_strain, volume_weight
 export quasistatic!, GlobalNewtonError, material_element!, material_system, write_material_vtk

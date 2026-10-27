@@ -69,6 +69,14 @@ CrackGrowthDamage
 CrackGrowthResistance
 ```
 
+## Uniform fields
+
+```@docs
+AbstractPhaseComposite
+UniformStrain
+UniformStress
+```
+
 ## Strength of a frictional matrix
 
 ```@docs
