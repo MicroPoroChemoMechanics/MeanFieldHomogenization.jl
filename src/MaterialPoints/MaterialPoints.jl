@@ -58,6 +58,9 @@ include("loading.jl")
 include("driver.jl")
 include("coupling.jl")
 include("homogenized.jl")
+include("crack_stiffness.jl")
+include("crack_damage.jl")
+include("closing_cracks.jl")
 
 # ── Writing a law ────────────────────────────────────────────────────────────
 export AbstractPointLaw, ResidualLaw, PotentialLaw, PointState
@@ -76,6 +79,8 @@ export LoadingPath, point_response, PointResponse, PointDriverError
 
 # ── Nonlinear homogenization ─────────────────────────────────────────────────
 export NonlinearHomogenized, SecantMethod, ClassicalSecant, ModifiedSecant, secant_moduli
+export CrackGrowthDamage, CrackGrowthResistance
+export ClosingCrackPoroelasticity, ExponentialClosure
 
 # ── Coupling to a finite-element code ───────────────────────────────────────
 export QuadratureStates, commit!, rollback!

@@ -46,6 +46,7 @@ module Poromechanics
 
 using LinearAlgebra
 using TensND
+using StaticArrays: StaticMatrix, SVector
 
 import ..Core
 const MFH_Core = Core

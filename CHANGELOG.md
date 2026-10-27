@@ -1,5 +1,69 @@
 # Changelog
 
+## v0.22.0 — nonlinear laws derived from the microstructure
+
+The laws of `MaterialPoints` so far were phenomenological, or a composite of
+such laws. This release adds laws that the homogenization itself derives from
+the microstructure, with nothing fitted but a resistance or a closure
+distribution: damage by the growth of microcracks, the nonlinear
+poroelasticity of a rock whose cracks close under the effective stress, and the
+strength of a porous plastic solid. Where the scheme allows it exactly, the
+crack laws cost tens of microseconds per point instead of milliseconds, which
+makes them usable at the quadrature points of a structure.
+
+A minor release, for the new part of the package: nothing that existed computes
+differently. Below 1.0, Julia's resolver treats a minor bump as breaking
+whatever the API did, so a dependent bounded at `MeanFieldHomogenization =
+"0.21"` widens its bound to receive it.
+
+### Added
+
+- `CrackGrowthDamage`: damage by the growth of microcracks, derived from the
+  homogenized energy of the cracked solid instead of being fitted. Its internal
+  variables are the crack densities of the families of an RVE; the force
+  driving each family is the derivative of the stored energy with respect to its
+  density, computed by automatic differentiation through any scheme that
+  handles cracks; a family grows when that force reaches its resistance, a
+  function of the density. `CrackGrowthResistance` is the resistance that
+  Griffith's criterion gives for cracks growing in size at fixed number; it
+  decreases, so that the growth is unstable, and the keyword `τ` regularizes it
+  by a viscosity. Oriented families grow each under the tractions on their own
+  plane, so that the damage becomes anisotropic.
+- `ClosingCrackPoroelasticity`: nonlinear poroelasticity of a saturated rock
+  whose microcracks close progressively under the Terzaghi effective stress
+  ``Σ + p 𝟏``, so that its drained stiffness rises and its Biot tensor falls
+  with the confinement. A law of two fields (strain and pore pressure), whose
+  moduli are those of the solid with the open densities, integrated
+  incrementally. `ExponentialClosure` is the open fraction of a family whose
+  closure stresses are distributed exponentially.
+- `Poromechanics.poroelastic_parameters` also takes Kelvin–Mandel matrices.
+
+### Changed
+
+- The laws whose state moves crack densities evaluate the stiffness of the
+  cracked solid as an exact affine compliance when the scheme is Mori–Tanaka
+  and the matrix is the only phase carrying volume: the compliances of the
+  families are taken once from the homogenization, and a step is a few 6 × 6
+  operations. A damaging step of `CrackGrowthDamage` went from 1.8 ms to 11 µs
+  (isotropic family) and from 26 ms to 19 µs (three oriented families), a step
+  of `ClosingCrackPoroelasticity` from 12 ms to 27 µs, with no allocation (one
+  thread, minimum of BenchmarkTools). Other schemes keep the generic route.
+- `LocalNewton` halves a correction that leads the internal variables where the
+  residual of the law is not finite (a law returns `NaN` outside its domain).
+  A law whose residual is finite everywhere is integrated as before.
+
+### Documentation
+
+- *Material points*: a theory page on damage by the growth of microcracks (the
+  driving force, Griffith's resistance, stability, regularization) and an
+  example (progressive and unstable growth, a load cycle); a theory page on the
+  nonlinear poroelasticity of cracked rocks and an example (a rock under
+  confinement, the two roles of the pore pressure); a theory page on the
+  strength of a porous plastic solid, obtained by running `NonlinearHomogenized`
+  with a rigid–perfectly plastic solid (`PowerLawElasticity` with `m = 0`), and
+  an example that recovers the closed-form ellipse of Mori–Tanaka and the
+  derivative construction of the strength tutorial, to 10⁻⁹.
+
 ## v0.21.0 — nonlinear laws at a material point (`MaterialPoints`)
 
 A minor release. Nothing that existed computes differently (only

@@ -36,6 +36,10 @@ of a [`ResidualLaw`](@ref) in strain units and the stationarity condition of a
 iterations without convergence, or at a singular Jacobian, a
 [`LocalIntegrationError`](@ref) is thrown, which a driver catches to cut the
 step.
+
+A correction that leads the internal variables where the residual is not
+finite (a law returns `NaN` outside its domain, a negative crack density for
+instance) is halved until the residual is finite again, at most 30 times.
 """
 struct LocalNewton{T <: Real} <: AbstractLocalAlgorithm
     abstol::T
@@ -174,16 +178,31 @@ end
 # derivatives. Converged on the size of the correction, in the units of y.
 function _newton_values(R, y, alg::LocalNewton, name::Symbol)
     last = Inf
+    r = TensND.primal.(R(y))
     for it in 1:alg.maxiters
-        r = TensND.primal.(R(y))
         J = TensND.primal.(ForwardDiff.jacobian(R, y))
         δ = J \ r
         all(isfinite, δ) || throw(LocalIntegrationError(name, it, last, "singular or non-finite Jacobian"))
+        step = _finite_step(R, y, δ)
+        step === nothing && throw(LocalIntegrationError(name, it, last, "residual not finite along the correction"))
+        δ, r = step
         y = y - δ
         last = maximum(abs, δ)
         last <= alg.abstol + alg.reltol * maximum(abs, y) && return y
     end
     throw(LocalIntegrationError(name, alg.maxiters, last, "no convergence"))
+end
+
+# The correction, halved while it leads out of the domain where the residual is
+# finite, and the residual where it leads; `nothing` when no fraction of it
+# stays in the domain.
+function _finite_step(R, y, δ)
+    for _ in 1:30
+        r = TensND.primal.(R(y - δ))
+        all(isfinite, r) && return δ, r
+        δ = δ / 2
+    end
+    return nothing
 end
 
 # Fluxes and consistent tangent at the end of the step. When the step leaves the

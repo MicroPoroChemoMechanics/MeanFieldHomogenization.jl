@@ -62,6 +62,20 @@ ModifiedSecant
 secant_moduli
 ```
 
+## Damage by the growth of microcracks
+
+```@docs
+CrackGrowthDamage
+CrackGrowthResistance
+```
+
+## Nonlinear poroelasticity of cracked rocks
+
+```@docs
+ClosingCrackPoroelasticity
+ExponentialClosure
+```
+
 ## Driving a point
 
 ```@docs
