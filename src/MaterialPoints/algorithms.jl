@@ -165,12 +165,17 @@ function _solve_local(alg::LocalNewton, law, g, prev::PointState{N}, Δt) where 
     T = _step_type(law, g, prev, Δt, prev.y)
     _frozen(law, g, prev, Δt) && return SVector{N, T}(prev.y), true
     R(z) = _residual(law, z, g, prev, Δt)
-    y = _newton_values(R, TensND.primal.(prev.y), alg, law.name)
-    yT = SVector{N, T}(y)
+    return _root(R, TensND.primal.(prev.y), alg, law.name, T), false
+end
+
+# The root of R in the element type T: Newton's method on the values from y₀,
+# then the steps in T that attach exact derivatives to the root.
+function _root(R, y₀::SVector{N}, alg::LocalNewton, name::Symbol, ::Type{T}) where {N, T}
+    yT = SVector{N, T}(_newton_values(R, y₀, alg, name))
     for _ in 1:_derivative_steps(T)
         yT = yT - ForwardDiff.jacobian(R, yT) \ R(yT)
     end
-    return yT, false
+    return yT
 end
 
 # Newton on the values only: the iterate stays a vector of plain numbers, the

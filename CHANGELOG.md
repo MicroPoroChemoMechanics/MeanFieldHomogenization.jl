@@ -1,5 +1,33 @@
 # Changelog
 
+## Unreleased — strength of frictional composites
+
+### Added
+
+- `FrictionalComposite` and `limit_stress`: the macroscopic limit stress states
+  of a composite whose matrix obeys a Drucker–Prager criterion with a
+  non-associated flow rule (`DruckerPrager`, of friction `T` and dilatancy
+  `t ≤ T`), around pores (`Pores`) or rigid inclusions (`RigidInclusions`), by
+  the modified secant method of Maghous, Dormieux and Barthélémy (2009). The
+  plastic matrix is the limit of a viscous one with an isotropic prestress;
+  the effective strain rates of the matrix are the roots of their second
+  moments, from the derivatives of the effective potential of the comparison
+  composite by automatic differentiation, on any linear scheme. The limit
+  states and the flow rules of the paper for spherical heterogeneities (the
+  elliptic domain of a porous medium, independent of `t`; the friction cone
+  of a reinforced matrix) are recovered at first order in the regularization.
+
+### Changed
+
+- The Newton solve with exact derivatives of `MaterialPoints` is shared by the
+  laws and the strength computations (no change in what a law computes).
+
+### Documentation
+
+- *Material points*: a theory page on the strength of a frictional matrix with
+  a non-associated flow rule and an example (porous and reinforced frictional
+  solids, the domain and the flow rule against the closed forms).
+
 ## v0.22.0 — nonlinear laws derived from the microstructure
 
 The laws of `MaterialPoints` so far were phenomenological, or a composite of

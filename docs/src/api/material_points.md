@@ -69,6 +69,17 @@ CrackGrowthDamage
 CrackGrowthResistance
 ```
 
+## Strength of a frictional matrix
+
+```@docs
+DruckerPrager
+Heterogeneities
+Pores
+RigidInclusions
+FrictionalComposite
+limit_stress
+```
+
 ## Nonlinear poroelasticity of cracked rocks
 
 ```@docs

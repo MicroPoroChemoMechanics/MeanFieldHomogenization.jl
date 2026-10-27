@@ -463,6 +463,7 @@ export LoadingPath, point_response, PointResponse, PointDriverError
 export NonlinearHomogenized, SecantMethod, ClassicalSecant, ModifiedSecant, secant_moduli
 export CrackGrowthDamage, CrackGrowthResistance
 export ClosingCrackPoroelasticity, ExponentialClosure
+export DruckerPrager, Heterogeneities, Pores, RigidInclusions, FrictionalComposite, limit_stress
 export QuadratureStates, commit!, rollback!
 export ModelingHypothesis, ThreeD, PlaneStrain, Axisymmetric, mandel_strain, volume_weight
 export quasistatic!, GlobalNewtonError, material_element!, material_system, write_material_vtk
