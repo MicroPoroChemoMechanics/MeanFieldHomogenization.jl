@@ -1,6 +1,20 @@
 # Changelog
 
-## Unreleased — nonlinear models of cracked and porous solids
+## v0.22.0 — nonlinear laws derived from the microstructure
+
+The laws of `MaterialPoints` so far were phenomenological, or a composite of
+such laws. This release adds laws that the homogenization itself derives from
+the microstructure, with nothing fitted but a resistance or a closure
+distribution: damage by the growth of microcracks, the nonlinear
+poroelasticity of a rock whose cracks close under the effective stress, and the
+strength of a porous plastic solid. Where the scheme allows it exactly, the
+crack laws cost tens of microseconds per point instead of milliseconds, which
+makes them usable at the quadrature points of a structure.
+
+A minor release, for the new part of the package: nothing that existed computes
+differently. Below 1.0, Julia's resolver treats a minor bump as breaking
+whatever the API did, so a dependent bounded at `MeanFieldHomogenization =
+"0.21"` widens its bound to receive it.
 
 ### Added
 
@@ -34,7 +48,6 @@
   (isotropic family) and from 26 ms to 19 µs (three oriented families), a step
   of `ClosingCrackPoroelasticity` from 12 ms to 27 µs, with no allocation (one
   thread, minimum of BenchmarkTools). Other schemes keep the generic route.
-
 - `LocalNewton` halves a correction that leads the internal variables where the
   residual of the law is not finite (a law returns `NaN` outside its domain).
   A law whose residual is finite everywhere is integrated as before.
