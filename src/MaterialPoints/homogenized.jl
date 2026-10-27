@@ -119,7 +119,10 @@ function NonlinearHomogenized(
         name, stress = _nh_stress, residual = _nh_residual, elastic = _nh_at_rest,
         layout = NamedTuple{phases}(ntuple(_ -> 1, length(phases))),
         y₀ = [_reference_strain(lawsnt[φ]) for φ in phases],
-        p = (; rve, scheme, method, laws = lawsnt, fractions)
+        # A zero of the element type of the cell's stiffnesses and fractions: the
+        # homogenization of a cell is not inferred, and its results are
+        # converted to the promotion of this type with those of the step.
+        p = (; rve, scheme, method, laws = lawsnt, fractions, numeric = zero(_cell_numeric(rve)))
     )
 end
 
@@ -138,13 +141,24 @@ end
 
 _effective_stiffness(rve, scheme) = _mandel(Schemes.homogenize(rve, scheme, :C))
 
-_nh_stress(ε, y, p) = _effective_stiffness(_secant_rve(p, y), p.scheme) * ε
+# The element type of a step: that of the strain, the effective strains, the
+# cell and the parameters of the phase laws.
+_nh_type(p, ε, y) = promote_type(eltype(ε), eltype(values(y)), typeof(p.numeric), _numeric_type(map(law_parameters, p.laws)))
+
+function _nh_stress(ε, y, p)
+    T = _nh_type(p, ε, y)
+    return SVector{6, T}(_effective_stiffness(_secant_rve(p, y), p.scheme) * ε)::SVector{6, T}
+end
 
 function _nh_residual(y, g, prev, Δt, p)
     rve = _secant_rve(p, y)
     φs = keys(p.laws)
-    return NamedTuple{φs}(map(φ -> y[φ] - _phase_strain(p.method, rve, p, φ, g.ε), φs))
+    T = _nh_type(p, g.ε, y)
+    return NamedTuple{φs}(map(φ -> convert(T, y[φ] - _phase_strain(p.method, rve, p, φ, g.ε))::T, φs))
 end
+
+# The element type of a cell's stiffnesses and amounts.
+_cell_numeric(rve) = mapreduce(φ -> eltype(Schemes.phase_property(rve, φ, :C)), promote_type, Schemes.phase_names(rve); init = typeof(float(Schemes.volume_fraction(rve, first(Schemes.phase_names(rve))))))
 
 # No macroscopic strain, no strain in the phases: the effective strains keep
 # their starting values (the secant moduli of a law may not exist at zero).

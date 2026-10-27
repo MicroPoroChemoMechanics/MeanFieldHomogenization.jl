@@ -79,6 +79,7 @@ end
     E = SVector(1.5e-3, -0.5e-3, -0.8e-3, 2.0e-4, -1.0e-4, 3.0e-4)
     σ, 𝕂, _ = point_update(h, E, initial_state(h), 0.0)
     @test 𝕂 ≈ ForwardDiff.jacobian(e -> point_update(h, e, initial_state(h), 0.0)[1], E) rtol = 1.0e-8
+    @inferred point_update(h, E, initial_state(h), 0.0)
     # And with respect to a parameter of a phase law.
     σ₀M(s) = point_update(NonlinearHomogenized(_two_phase_rve(0.3), Dict(:M => power(; σ₀ = s), :I => power(; m = 0.5, σ₀ = 300.0))), E, initial_state(h), 0.0)[1][1]
     @test ForwardDiff.derivative(σ₀M, 100.0) ≈ (σ₀M(100.0 + 1.0e-3) - σ₀M(100.0 - 1.0e-3)) / 2.0e-3 rtol = 1.0e-6
