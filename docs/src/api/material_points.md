@@ -77,6 +77,12 @@ UniformStrain
 UniformStress
 ```
 
+## The incremental tangent approach
+
+```@docs
+IncrementalTangent
+```
+
 ## Polycrystals
 
 ```@docs

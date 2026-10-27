@@ -25,6 +25,13 @@
   `random_orientations` draws a random texture uniformly over the rotations.
   The Taylor factor of a random FCC aggregate (about 3.06, Bishop and Hill) is
   recovered.
+- `IncrementalTangent`: the incremental tangent approach (Hill 1965) for phases
+  with a history: at each step every phase is linearized by its consistent
+  tangent at the end of the step, projected on the isotropic tensors (as
+  Doghri and Ouaar 2003), and a linear scheme concentrates the strain
+  increment; the fixed point is solved with the phase laws, and the tangent of
+  the composite comes from the implicit-function theorem. Elastic phases give
+  the linear estimate exactly.
 
 ### Changed
 
@@ -51,7 +58,9 @@
   solids, the domain and the flow rule against the closed forms); a theory page
   on the uniform-field composites and an example (Taylor and Sachs composites
   of two elastoplastic phases); a theory page on polycrystals and an example
-  (a random FCC aggregate). The chapter is titled *Nonlinear laws*.
+  (a random FCC aggregate); a theory page on the incremental tangent approach
+  and an example (a particle-reinforced alloy). The chapter is titled
+  *Nonlinear laws*.
 
 ## v0.22.0 — nonlinear laws derived from the microstructure
 
