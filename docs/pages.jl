@@ -273,12 +273,13 @@ pages = [
     # Nonlinear laws at one material point: written, integrated, driven along a
     # path, and plugged into any caller of the Gauss-point contract. Before the
     # finite-element coupling, whose element loops call these laws.
-    "Material points: nonlinear laws" => [
+    "Nonlinear laws" => [
         "material_points/index.md",
         "Theory" => [
             "material_points/theory.md",
             "material_points/theory_secant.md",
             "material_points/theory_uniform_fields.md",
+            "material_points/theory_polycrystals.md",
             "material_points/theory_crack_damage.md",
             "material_points/theory_closing_cracks.md",
             "material_points/theory_strength.md",
@@ -296,6 +297,7 @@ pages = [
             "material_points/ex_biot.md",
             "material_points/ex_composite.md",
             "material_points/ex_uniform_fields.md",
+            "material_points/ex_polycrystal.md",
             "material_points/ex_crack_damage.md",
             "material_points/ex_closing_cracks.md",
             "material_points/ex_strength.md",

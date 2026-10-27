@@ -77,6 +77,17 @@ UniformStrain
 UniformStress
 ```
 
+## Polycrystals
+
+```@docs
+PolycrystalModel
+TaylorModel
+Polycrystal
+PolycrystalState
+grain_states
+random_orientations
+```
+
 ## Strength of a frictional matrix
 
 ```@docs

@@ -20,6 +20,11 @@
   uniform strain (Voigt, Taylor) or a uniform stress (Reuss, Sachs), the
   phases keeping their internal variables; the consistent tangent of the
   composite comes from the implicit-function theorem.
+- `Polycrystal` with `TaylorModel`: an aggregate of many grains under a
+  uniform strain, every grain integrated on its own (hundreds of grains);
+  `random_orientations` draws a random texture uniformly over the rotations.
+  The Taylor factor of a random FCC aggregate (about 3.06, Bishop and Hill) is
+  recovered.
 
 ### Changed
 
@@ -30,6 +35,14 @@
   `LocalIntegrationError`, which the driver cuts) instead of an error of the
   linear solve; where a phase law has no finite tangent the tangent of the
   step is returned undefined (`NaN`).
+- **The local Newton iteration no longer accepts a runaway.** Its convergence,
+  judged on the size of the correction relative to the iterate, accepted an
+  iterate that had diverged (a crystal pushed in one long step: internal
+  variables of 10¹⁴, stresses of 10¹³), since the correction is then small
+  against the iterate itself. An iterate is now accepted only if its residual
+  has not grown since the start of the step, or if its correction is small at
+  the scale of the starting state; a runaway fails the step, which the driver
+  cuts.
 
 ### Documentation
 
@@ -37,7 +50,8 @@
   a non-associated flow rule and an example (porous and reinforced frictional
   solids, the domain and the flow rule against the closed forms); a theory page
   on the uniform-field composites and an example (Taylor and Sachs composites
-  of two elastoplastic phases).
+  of two elastoplastic phases); a theory page on polycrystals and an example
+  (a random FCC aggregate). The chapter is titled *Nonlinear laws*.
 
 ## v0.22.0 — nonlinear laws derived from the microstructure
 

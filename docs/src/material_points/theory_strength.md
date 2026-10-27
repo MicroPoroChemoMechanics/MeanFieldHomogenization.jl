@@ -25,10 +25,13 @@ its secant shear modulus is
 \varepsilon_d = \sqrt{\boldsymbol{e}:\boldsymbol{e}}.
 ```
 
-The law of the package is written with the von Mises stress
+Two measures of the same bound must not be confused. This page bounds the
+norm of the stress deviator, ``\sigma_d \le \sigma_o``. The law
+[`PowerLawElasticity`](@ref) is written instead with the von Mises stress
 ``\sigma_{\mathrm{eq}} = \sqrt{3/2}\,\sigma_d`` and the equivalent strain
-``\varepsilon_{\mathrm{eq}} = \sqrt{2/3}\,\varepsilon_d``, so that `σ₀` is
-``\sqrt{3/2}\,\sigma_o``. A positive exponent ``m`` gives a hardening solid whose
+``\varepsilon_{\mathrm{eq}} = \sqrt{2/3}\,\varepsilon_d``, and its parameter `σ₀`
+is a von Mises stress. A solid that bounds ``\sigma_d`` by ``\sigma_o`` is
+therefore the law with `σ₀ = sqrt(3/2) * σo`, as in the example. A positive exponent ``m`` gives a hardening solid whose
 response tends to the rigid–plastic one as ``m \to 0``. Plastic flow conserves
 the volume: the solid is given a bulk modulus large against its secant shear
 modulus.

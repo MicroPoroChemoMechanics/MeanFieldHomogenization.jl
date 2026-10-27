@@ -28,7 +28,10 @@ differentiation.
 
 The step is converged when the Newton correction ``\\delta`` of the internal
 variables ``\\boldsymbol{y}`` satisfies
-``\\max_i|\\delta_i| \\le`` `abstol` ``+`` `reltol` ``\\max_i|y_i|``. The
+``\\max_i|\\delta_i| \\le`` `abstol` ``+`` `reltol` ``\\max_i|y_i|``, the residual
+being no larger than at the start of the step or the correction small at the
+scale of the starting state: an iterate that has run away has a small
+correction against its own size only, and is not accepted. The
 correction has the units of the internal variables whatever the units of the
 residual, so the residual of a law may be written in any units: the equations
 of a [`ResidualLaw`](@ref) in strain units and the stationarity condition of a
@@ -188,6 +191,10 @@ end
 function _newton_values(R, y, alg::LocalNewton, name::Symbol)
     last = Inf
     r = TensND.primal.(R(y))
+    # The size of the residual at the start: an iterate whose residual exceeds it
+    # has run away, however small its last correction looks against its own size.
+    r₀ = mapreduce(abs, max, r; init = zero(eltype(r)))
+    tol₀ = alg.abstol + alg.reltol * mapreduce(abs, max, y; init = zero(eltype(y)))
     for it in 1:alg.maxiters
         # An exact root needs no Jacobian, which may not exist there (a power
         # law has no finite tangent at zero strain).
@@ -196,14 +203,24 @@ function _newton_values(R, y, alg::LocalNewton, name::Symbol)
         # A non-finite Jacobian (a law without a finite tangent at the iterate)
         # is a failed step for the driver to cut, as a singular one is.
         all(isfinite, J) || throw(LocalIntegrationError(name, it, last, "singular or non-finite Jacobian"))
-        δ = J \ r
+        # A singular Jacobian fails the step: an exception of the factorization
+        # (large systems) or a non-finite correction (small static ones).
+        δ = try
+            J \ r
+        catch err
+            err isa LinearAlgebra.SingularException || rethrow()
+            throw(LocalIntegrationError(name, it, last, "singular or non-finite Jacobian"))
+        end
         all(isfinite, δ) || throw(LocalIntegrationError(name, it, last, "singular or non-finite Jacobian"))
         step = _finite_step(R, y, δ)
         step === nothing && throw(LocalIntegrationError(name, it, last, "residual not finite along the correction"))
         δ, r = step
         y = y - δ
         last = maximum(abs, δ)
-        last <= alg.abstol + alg.reltol * maximum(abs, y) && return y
+        # Converged on the correction, and not a runaway: either the residual
+        # has not grown, or the correction is small at the scale of the start.
+        last <= alg.abstol + alg.reltol * maximum(abs, y) &&
+            (mapreduce(abs, max, r; init = zero(eltype(r))) <= r₀ || last <= tol₀) && return y
     end
     throw(LocalIntegrationError(name, alg.maxiters, last, "no convergence"))
 end
