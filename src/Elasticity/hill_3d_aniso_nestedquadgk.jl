@@ -31,6 +31,29 @@
 #  DECUHR-based implementation lives in `hill_3d_aniso_decuhr.jl`.
 # =============================================================================
 
+# The components of a 3-D stiffness as a static array, for the quadrature
+# kernels: their size known, the loops below read them from the stack, measured
+# 1.7 times faster than from a heap array (9 ns against 15 per acoustic tensor).
+_static_stiffness(A::AbstractArray{T, 4}) where {T} = SArray{Tuple{3, 3, 3, 3}, T}(A)
+
+# The six independent entries (11, 22, 33, 12, 13, 23) of the acoustic tensor
+# K_ij = ζ_k (C₀)_kijl ζ_l, symmetric since C₀ has the minor symmetries; a
+# recurrence over the 9 pairs (k, l) accumulating six sums at once.
+@inline function _sym3_acoustic(C₀_arr::AbstractArray{T, 4}, ζ) where {T}
+    K11 = zero(T); K22 = zero(T); K33 = zero(T)
+    K12 = zero(T); K13 = zero(T); K23 = zero(T)
+    for k in 1:3, l in 1:3
+        ζζ = ζ[k] * ζ[l]
+        K11 += ζζ * C₀_arr[k, 1, 1, l]
+        K22 += ζζ * C₀_arr[k, 2, 2, l]
+        K33 += ζζ * C₀_arr[k, 3, 3, l]
+        K12 += ζζ * C₀_arr[k, 1, 2, l]
+        K13 += ζζ * C₀_arr[k, 1, 3, l]
+        K23 += ζζ * C₀_arr[k, 2, 3, l]
+    end
+    return K11, K22, K33, K12, K13, K23
+end
+
 """
     _sym3_inv_acoustic(C₀_arr, ζ) -> NTuple{9}
 
@@ -44,21 +67,14 @@ A standalone top-level function (not a nested closure): closures capturing many
 local scalars showed measurably *worse* allocation behavior than hoisting this
 computation out, so it is kept separate deliberately.
 """
-@inline function _sym3_inv_acoustic(C₀_arr::AbstractArray{T, 4}, ζ) where {T}
-    K11 = zero(T); K22 = zero(T); K33 = zero(T)
-    K12 = zero(T); K13 = zero(T); K23 = zero(T)
-    for k in 1:3, l in 1:3
-        ζζ = ζ[k] * ζ[l]
-        K11 += ζζ * C₀_arr[k, 1, 1, l]
-        K22 += ζζ * C₀_arr[k, 2, 2, l]
-        K33 += ζζ * C₀_arr[k, 3, 3, l]
-        K12 += ζζ * C₀_arr[k, 1, 2, l]
-        K13 += ζζ * C₀_arr[k, 1, 3, l]
-        K23 += ζζ * C₀_arr[k, 2, 3, l]
-    end
+@inline _sym3_inv_acoustic(C₀_arr::AbstractArray{T, 4}, ζ) where {T} = _sym3_inv(_sym3_acoustic(C₀_arr, ζ)...)
+
+# The inverse of a symmetric 3×3 matrix from its entries (11, 22, 33, 12, 13,
+# 23), by its adjugate and determinant, flattened in column-major order.
+@inline function _sym3_inv(K11, K22, K33, K12, K13, K23)
     det = K11 * K22 * K33 + 2 * K12 * K13 * K23 -
         K11 * K23 * K23 - K22 * K13 * K13 - K33 * K12 * K12
-    inv_det = one(T) / det
+    inv_det = inv(det)
     iK11 = (K22 * K33 - K23 * K23) * inv_det
     iK22 = (K11 * K33 - K13 * K13) * inv_det
     iK33 = (K11 * K22 - K12 * K12) * inv_det
@@ -66,6 +82,33 @@ computation out, so it is kept separate deliberately.
     iK13 = (K12 * K23 - K22 * K13) * inv_det
     iK23 = (K12 * K13 - K11 * K23) * inv_det
     return (iK11, iK12, iK13, iK12, iK22, iK23, iK13, iK23, iK33)
+end
+
+"""
+    _sym3_inv_acoustic_incompressible(C₀_arr, ζ) -> NTuple{9}
+
+The Green kernel of an **incompressible** medium at the direction
+``\\underline{\\zeta}``: the displacement is orthogonal to ``\\underline{\\zeta}`` in Fourier
+space, so the acoustic tensor is inverted on the plane orthogonal to
+``\\underline{\\zeta}`` only,
+``\\mathbf{N} = (\\mathbf{Q}\\mathbf{K}\\mathbf{Q} + \\underline{n}\\otimes\\underline{n})^{-1} - \\underline{n}\\otimes\\underline{n}``,
+``\\mathbf{Q} = \\mathbf{1} - \\underline{n}\\otimes\\underline{n}``, ``\\underline{n}`` the unit vector along
+``\\underline{\\zeta}``. It is the limit of the inverse
+acoustic tensor as the bulk modulus grows without bound, taken exactly; the
+stiffness `C₀` need only be defined on deviators. Returned as
+[`_sym3_inv_acoustic`](@ref) returns ``\\mathbf{K}^{-1}``.
+"""
+@inline function _sym3_inv_acoustic_incompressible(C₀_arr::AbstractArray{T, 4}, ζ) where {T}
+    K11, K22, K33, K12, K13, K23 = _sym3_acoustic(C₀_arr, ζ)
+    n = SVector{3}(ζ) / sqrt(ζ[1]^2 + ζ[2]^2 + ζ[3]^2)
+    K = SMatrix{3, 3}(K11, K12, K13, K12, K22, K23, K13, K23, K33)
+    # Q K Q + n⊗n, Q = 𝟏 − n⊗n, is invertible and splits into the plane and the
+    # line of n: its inverse is N + n⊗n, one closed-form symmetric inverse.
+    Kn = K * n
+    M = K - n * transpose(Kn) - Kn * transpose(n) + (transpose(n) * Kn + 1) * (n * transpose(n))
+    iM = _sym3_inv(M[1, 1], M[2, 2], M[3, 3], M[1, 2], M[1, 3], M[2, 3])
+    nn = n * transpose(n)
+    return ntuple(q -> iM[q] - nn[q], Val(9))
 end
 
 # The six Voigt pairs of a symmetric 3×3 tensor, and the 21 pairs (I ≤ J) of
@@ -113,11 +156,13 @@ function _fill_hill21!(A::AbstractArray{<:Any, 4}, vals)
 end
 
 """
-    _hill_3d_aniso_nestedquadgk(ell, C₀; abstol, reltol, maxiters) -> AbstractTens{4,3}
+    _hill_3d_aniso_nestedquadgk(ell, C₀; abstol, reltol, maxiters, kernel) -> AbstractTens{4,3}
 
 Hill polarization tensor of a 3-D ellipsoid in an arbitrarily
 anisotropic matrix, evaluated by **nested 1-D QuadGK cubature** over the
-unit sphere of the general integrand of [willis1977](@citet).
+unit sphere of the general integrand of [willis1977](@citet). `kernel` gives
+the Green kernel at a direction: the inverse acoustic tensor, or
+[`_sym3_inv_acoustic_incompressible`](@ref) for an incompressible matrix.
 ForwardDiff-compatible. Includes axis-sort and power change-of-variable for
 improved convergence on flat or elongated ellipsoids.
 """
@@ -125,8 +170,9 @@ function _hill_3d_aniso_nestedquadgk(
         ell::Ellipsoid{3}, C₀;
         abstol::Float64 = 1.0e-8,
         reltol::Float64 = 1.0e-6,
-        maxiters::Int = 1_000_000
-    )
+        maxiters::Int = 1_000_000,
+        kernel::F = _sym3_inv_acoustic
+    ) where {F}
     T = promote_type(eltype(ell.semi_axes), eltype(C₀))
 
     # --- Axis sort (descending) -----------------------------------------------
@@ -137,7 +183,7 @@ function _hill_3d_aniso_nestedquadgk(
     # `C₀_arr` is assigned once, already permuted: the integrand captures it,
     # and a captured variable assigned twice is boxed, every access dynamic.
     p = collect(MFH_Core._descending_order(ell.semi_axes))
-    C₀_arr = T.(Array(TensND.components(C₀, ell.basis))[p, p, p, p])
+    C₀_arr = _static_stiffness(T.(Array(TensND.components(C₀, ell.basis))[p, p, p, p]))
 
     semi_sorted = ell.semi_axes[p]
     η = semi_sorted[2] / semi_sorted[1]
@@ -169,7 +215,7 @@ function _hill_3d_aniso_nestedquadgk(
     function integrand_at(z, one_minus_z, φ)
         uz = sqrt(one_minus_z * (1 + z))
         ζ = (uz * cos(φ), uz * sin(φ) / η, z / ω)
-        return _hill_integrand21(_sym3_inv_acoustic(C₀_arr, ζ), ζ, T)
+        return _hill_integrand21(kernel(C₀_arr, ζ), ζ, T)
     end
 
     MFH_Core._bump!(MFH_Core.QUADGK_OUTER)

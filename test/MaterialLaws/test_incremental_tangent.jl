@@ -22,11 +22,11 @@ end
 const PLASTIC_IT = (M = J2Plasticity(; E = 70.0e3, ν = 0.33, σ₀ = 150.0, H = 1.0e3), I = LinearElasticity(; E = 400.0e3, ν = 0.2))
 
 @testset "the isotropic projection" begin
-    k, μ = MP_IT._isotropic_moduli(MP_IT._mandel(TensISO{3}(3 * 40.0, 2 * 25.0)))
+    k, μ = TensND.bulk_shear(TensND.isotropify(TensND.from_mandel(MP_IT._mandel(TensISO{3}(3 * 40.0, 2 * 25.0)))))
     @test k ≈ 40.0 rtol = 1.0e-14
     @test μ ≈ 25.0 rtol = 1.0e-14
     C11, C12, C44 = 168.4, 121.4, 75.4
-    k, μ = MP_IT._isotropic_moduli(MP_IT._mandel(TensND.change_tens_canon(TensND.tens_cubic(C11, C12, C44, TensND.RotatedBasis(0.4, 1.1, 0.3)))))
+    k, μ = TensND.bulk_shear(TensND.isotropify(TensND.from_mandel(MP_IT._mandel(TensND.change_tens_canon(TensND.tens_cubic(C11, C12, C44, TensND.RotatedBasis(0.4, 1.1, 0.3)))))))
     @test k ≈ (C11 + 2C12) / 3 rtol = 1.0e-12
     @test μ ≈ (C11 - C12 + 3C44) / 5 rtol = 1.0e-12
 end

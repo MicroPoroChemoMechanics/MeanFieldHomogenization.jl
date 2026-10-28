@@ -84,7 +84,7 @@ end
     # (𝕀 + ℙ(L_I − L_M)) ε_I = ε_M − ℙ(τ_I − τ_M), and the mixture rule closes it.
     LM, LI = _tangent_af(laws.M, εM), _tangent_af(laws.I, εI)
     τM, τI = _stress_af(laws.M, εM) - LM * εM, _stress_af(laws.I, εI) - LI * εI
-    ℙ = MP_AF._mandel(TensND.change_tens_canon(hill_tensor(shape, MP_AF._symmetric_tensor(LM))))
+    ℙ = MP_AF._mandel(TensND.change_tens_canon(hill_tensor(shape, TensND.from_mandel(LM))))
     B = inv(I + ℙ * (LI - LM))
     @test (I + (0.3 / 0.7) * B) \ (B * (E_AF / 0.7 - ℙ * (τI - τM))) ≈ εI rtol = 1.0e-12
     @test σ ≈ 0.7 * _stress_af(laws.M, εM) + 0.3 * _stress_af(laws.I, εI) rtol = 1.0e-14

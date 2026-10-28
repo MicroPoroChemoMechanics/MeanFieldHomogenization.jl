@@ -92,7 +92,7 @@ function _residual(c::AffineComposite, y, g, prev, Δt)
     τ₁, τ₂ = _fluxes(c.phases[1], ε₁, _NO_STATE) - L₁ * ε₁, _fluxes(c.phases[2], ε₂, _NO_STATE) - L₂ * ε₂
     # The linear comparison composite of the tangents.
     cell = foldl(zip(c.p.names, (L₁, L₂)); init = c.p.cell) do cell, (φ, L)
-        MFH_Core.cell_set_property(cell, φ, :C, _symmetric_tensor(L))
+        MFH_Core.cell_set_property(cell, φ, :C, TensND.from_mandel(L))
     end
     A = Schemes.concentration_tensors(cell, c.p.scheme, :C; c.p.options...).strain
     A₁, A₂ = map(φ -> _mandel(TensND.change_tens_canon(A[φ])), c.p.names)
@@ -111,9 +111,6 @@ end
 # At rest the phases carry no strain: the linearization of a law may not exist
 # there (a power law has no finite tangent at zero strain), and none is needed.
 _frozen(::AffineComposite, g, prev, Δt) = iszero(g) && iszero(prev.y)
-
-# A stiffness with the minor symmetries, as the schemes expect it.
-_symmetric_tensor(L::StaticMatrix{6, 6}) = TensND.Tens(Tensors.frommandel(Tensors.SymmetricTensor{4, 3}, Matrix(L)))
 
 # The first phase starts from its strain of the last step plus the macroscopic
 # increment.

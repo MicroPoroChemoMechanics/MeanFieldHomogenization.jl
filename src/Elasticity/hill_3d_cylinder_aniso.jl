@@ -31,7 +31,7 @@ function _hill_3d_cylinder_aniso(
     T = promote_type(eltype(cyl.semi_axes), eltype(C₀))
     b, c = cyl.semi_axes
 
-    C₀_arr = T.(Array(TensND.components(C₀, cyl.basis)))   # in the cylinder's frame
+    C₀_arr = _static_stiffness(T.(Array(TensND.components(C₀, cyl.basis))))   # in the cylinder's frame
 
     function integrand_at(φ)
         ζ = (zero(T), cos(T(φ)) / b, sin(T(φ)) / c)

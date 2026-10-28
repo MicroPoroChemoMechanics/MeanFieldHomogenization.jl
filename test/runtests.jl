@@ -159,6 +159,7 @@ end
         include("Elasticity/test_hill_2d.jl")
         include("Elasticity/test_hill_cylinder.jl")
         include("Elasticity/test_hill_random_bases.jl")
+        include("Elasticity/test_hill_incompressible.jl")
         include("Elasticity/test_hill_symbolic.jl")
         include("Elasticity/test_shape_tensor.jl")
         include("Elasticity/test_eshelby.jl")
