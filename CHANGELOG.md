@@ -1,6 +1,19 @@
 # Changelog
 
-## Unreleased — models of nonlinear composites and polycrystals
+## v0.23.0 — models of nonlinear composites and polycrystals
+
+0.22.0 derived nonlinear laws from the microstructure by the secant method.
+This release adds the other classical routes of nonlinear homogenization, each
+as a law of `MaterialPoints` that runs in `point_response` and in the
+finite-element coupling: the bounds of uniform strain and uniform stress, the
+incremental tangent approach of Hill for phases with a history, the affine
+formulation of Masson et al., polycrystals under the Taylor, Kröner and
+Berveiller–Zaoui models, the tangent self-consistent model of Molinari et al.
+for viscoplastic polycrystals, and the strength of a frictional matrix with a
+non-associated flow rule. Nothing that existed computes differently, except a
+local Newton iteration that used to accept a runaway (see *Changed*). The
+version is minor: below 1.0, Julia's resolver treats it as breaking, so a
+dependent bounded at `MeanFieldHomogenization = "0.22"` widens its bound.
 
 ### Added
 
