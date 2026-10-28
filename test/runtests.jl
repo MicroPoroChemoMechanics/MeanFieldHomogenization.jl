@@ -100,9 +100,12 @@ end
 const TEST_PARTS = Dict(
     "core" => (
         "Aqua", "Elliptic", "Core", "Elasticity", "Cracks", "Conductivity",
-        "Interactions", "Poromechanics", "Constitutive", "MaterialPoints", "Regression", "Studio",
+        "Interactions", "Poromechanics", "Constitutive", "Regression", "Studio",
         "Documentation",
     ),
+    # Its own part since 0.23.0, whose models (affine, polycrystals) took `core`
+    # past the 90-minute timeout of the minimum Julia version.
+    "material-points" => ("MaterialPoints",),
     "schemes" => ("Schemes", "Assemblies", "CustomInclusions"),
     "patterns" => (
         "LayeredSpheres", "Laminates", "LayeredSpheroids", "Superspheres",
