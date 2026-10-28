@@ -105,7 +105,7 @@ const TEST_PARTS = Dict(
     ),
     # Its own part since 0.23.0, whose models took `core` past the 90-minute
     # timeout of the minimum Julia version; the polycrystals run with `schemes`.
-    "material-points" => ("MaterialPoints",),
+    "material-laws" => ("MaterialLaws",),
     "schemes" => ("Schemes", "Assemblies", "CustomInclusions", "Polycrystals"),
     "patterns" => (
         "LayeredSpheres", "Laminates", "LayeredSpheroids", "Superspheres",
@@ -370,33 +370,33 @@ end
         HAS_FERRITE && include("Constitutive/test_ferrite_backend.jl")
     end
 
-    # Nonlinear laws written as materials of the same contract, so they run
+    # Material laws written as materials of the same contract, so they run
     # after it.
-    rungroup("MaterialPoints") && @testset "MaterialPoints" begin
-        include("MaterialPoints/test_laws.jl")
-        include("MaterialPoints/test_engine.jl")
-        include("MaterialPoints/test_driver.jl")
-        include("MaterialPoints/test_homogenized.jl")
-        include("MaterialPoints/test_crack_stiffness.jl")
-        include("MaterialPoints/test_crack_damage.jl")
-        include("MaterialPoints/test_closing_cracks.jl")
-        include("MaterialPoints/test_strength.jl")
-        include("MaterialPoints/test_frictional_strength.jl")
-        include("MaterialPoints/test_uniform_fields.jl")
-        include("MaterialPoints/test_incremental_tangent.jl")
-        include("MaterialPoints/test_affine.jl")
+    rungroup("MaterialLaws") && @testset "MaterialLaws" begin
+        include("MaterialLaws/test_laws.jl")
+        include("MaterialLaws/test_engine.jl")
+        include("MaterialLaws/test_driver.jl")
+        include("MaterialLaws/test_homogenized.jl")
+        include("MaterialLaws/test_crack_stiffness.jl")
+        include("MaterialLaws/test_crack_damage.jl")
+        include("MaterialLaws/test_closing_cracks.jl")
+        include("MaterialLaws/test_strength.jl")
+        include("MaterialLaws/test_frictional_strength.jl")
+        include("MaterialLaws/test_uniform_fields.jl")
+        include("MaterialLaws/test_incremental_tangent.jl")
+        include("MaterialLaws/test_affine.jl")
         # The coupling to a finite-element code, through the Ferrite adapter.
-        HAS_FERRITE && include("MaterialPoints/test_fe_coupling.jl")
+        HAS_FERRITE && include("MaterialLaws/test_fe_coupling.jl")
     end
 
     # Single crystals and polycrystals (Taylor, Kröner, Berveiller–Zaoui, the
-    # tangent model): laws of `MaterialPoints` too, a group of their own so that
+    # tangent model): laws of `MaterialLaws` too, a group of their own so that
     # the CI parts stay under their timeout.
     rungroup("Polycrystals") && @testset "Polycrystals" begin
-        include("MaterialPoints/test_crystal.jl")
-        include("MaterialPoints/test_polycrystal.jl")
-        include("MaterialPoints/test_kroner_bz.jl")
-        include("MaterialPoints/test_viscoplastic_polycrystal.jl")
+        include("MaterialLaws/test_crystal.jl")
+        include("MaterialLaws/test_polycrystal.jl")
+        include("MaterialLaws/test_kroner_bz.jl")
+        include("MaterialLaws/test_viscoplastic_polycrystal.jl")
     end
 
     rungroup("Viscoelasticity") && @testset "Viscoelasticity" begin

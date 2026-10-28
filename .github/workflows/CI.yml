@@ -36,7 +36,7 @@ jobs:
         # The suite runs in five parts (`TEST_PARTS` in test/runtests.jl). Whole,
         # it took 52 to 85 minutes depending on the runner, and the coverage job
         # crossed the 90-minute timeout; each part is a fraction of that. The
-        # nonlinear laws of `MaterialPoints` left `core` in 0.23.0, when their
+        # constitutive laws of `MaterialLaws` left `core` in 0.23.0, when their
         # models took it past the timeout on the minimum Julia version (about
         # 50 minutes of them alone); the polycrystals run with `schemes`.
         part:
@@ -44,7 +44,7 @@ jobs:
           - 'schemes'
           - 'patterns'
           - 'visco-neural'
-          - 'material-points'
+          - 'material-laws'
         os:
           - ubuntu-latest
         arch:

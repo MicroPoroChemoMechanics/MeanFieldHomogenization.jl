@@ -153,16 +153,16 @@ include("NeuralInclusions/NeuralInclusions.jl")
 # mirror image of `FiniteElements`: there the FE code is inside MFH, here MFH is
 # inside the FE code.
 include("Constitutive/Constitutive.jl")
-# `MaterialPoints` writes nonlinear laws as materials of that same contract, so
+# `MaterialLaws` writes constitutive laws as materials of that same contract, so
 # it comes right after it.
-include("MaterialPoints/MaterialPoints.jl")
+include("MaterialLaws/MaterialLaws.jl")
 
 using .Superspheres
 using .CustomInclusions
 using .FiniteElements
 using .NeuralInclusions
 using .Constitutive
-using .MaterialPoints
+using .MaterialLaws
 
 
 # ── Abstractions ─────────────────────────────────────────────────────────────
@@ -452,7 +452,7 @@ export plane_strain_response
 export to_tensors, from_tensors
 export voigt_stress, voigt_strain, stress_from_voigt, strain_from_voigt
 
-# ── MaterialPoints : nonlinear laws at a material point ─────────────────────
+# ── MaterialLaws : constitutive laws at a material point ────────────────
 export AbstractPointLaw, ResidualLaw, PotentialLaw, PointState
 export kinematics, SmallStrain, state_layout, gradient_layout, flux_layout, law_parameters
 export Mandel, identity_mandel, trace_mandel, deviator, von_mises, equivalent_strain

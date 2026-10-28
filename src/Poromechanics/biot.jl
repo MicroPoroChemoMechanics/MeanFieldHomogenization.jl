@@ -183,7 +183,7 @@ end
 
 # The same relations on Kelvin–Mandel components (6 × 6 matrices for the
 # stiffnesses, a 6-vector for the Biot tensor), for callers that evaluate them
-# inside nested dual numbers, as the laws of MaterialPoints do, where the tensor
+# inside nested dual numbers, as the laws of MaterialLaws do, where the tensor
 # path costs minutes of compilation. Both stiffnesses being symmetric,
 # 𝟏 : (𝕀 − 𝕊ₛ : ℂ) is 𝟏 − ℂ 𝕊ₛ 𝟏.
 function poroelastic_parameters(C_hom::StaticMatrix{6, 6}, C_s::StaticMatrix{6, 6}, φ::Number)
