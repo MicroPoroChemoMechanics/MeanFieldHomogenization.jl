@@ -124,17 +124,21 @@ const _𝕂 = SMatrix{6, 6, Float64}(_mandel(TensND.TensISO{3}(0, 1)))
 function _grain_flow(c::PowerLawCrystal, b, a, σ₀, alg::LocalNewton, ::Type{T}) where {T}
     cv, bv, av = _primal_crystal(c), TensND.primal.(b), TensND.primal(a)
     σ = SVector{6, Float64}(TensND.primal.(σ₀))
-    tol = alg.reltol * maximum(abs, bv)
     for it in 1:alg.maxiters
         r = _grain_gradient(cv, σ, bv, av)
-        if maximum(abs, r) <= tol
+        H = ForwardDiff.jacobian(s -> _grain_gradient(cv, s, bv, av), σ)
+        # The tolerance relative to the load, plus the residual a stress known to
+        # rounding can reach, ‖H‖·eps·|σ|: for large n the slip rates are so steep
+        # that this floor approaches the tolerance, and a machine whose rounding
+        # differs would otherwise iterate on noise.
+        if maximum(abs, r) <= alg.reltol * maximum(abs, bv) + 8 * eps(Float64) * opnorm(H, Inf) * maximum(abs, σ)
             σT = SVector{6, T}(σ)
             for _ in 1:_derivative_steps(T)
                 σT = σT - ForwardDiff.jacobian(s -> _grain_gradient(c, s, b, a), σT) \ _grain_gradient(c, σT, b, a)
             end
             return σT
         end
-        δ = ForwardDiff.jacobian(s -> _grain_gradient(cv, s, bv, av), σ) \ r
+        δ = H \ r
         all(isfinite, δ) || throw(LocalIntegrationError(:PowerLawCrystal, it, NaN, "singular or non-finite Hessian"))
         # Armijo's sufficient decrease of φ; near the minimum, where that
         # decrease falls below rounding, a step that lowers the residual.

@@ -35,7 +35,7 @@ const D_VP = SVector(1.0, -0.5, -0.5, 0.2, 0, 0.1) * 1.0e-3
 end
 
 @testset "between Sachs and Taylor; averages" begin
-    for n in (3.0, 10.0)
+    for n in (3.0, 10.0, 20.0)
         p = _aggregate_vp(n)
         D = SVector(1.0, -0.5, -0.5, 0, 0, 0) * 1.0e-3
         rT, rt = flow_stress(p, D; model = TaylorModel()), flow_stress(p, D)
