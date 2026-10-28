@@ -2146,3 +2146,91 @@ label = "<b>A</b><sup>q</sup>"
 name = "flux concentration tensor of a phase in conduction"
 unit = "1"
 pages = ["theory/levin.md"]
+
+[[symbol]]
+group = "Strength"
+tex = '\sigma_m'
+label = "σ<sub>m</sub>"
+name = "mean stress, tr <b>σ</b>/3"
+unit = "Pa"
+pages = ["material_laws/generated/ml_frictional_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'd_v'
+label = "d<sub>v</sub>"
+name = "volume strain rate, tr <b>d</b>"
+unit = "1/s"
+pages = ["material_laws/generated/ml_frictional_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'd_d'
+label = "d<sub>d</sub>"
+name = "norm of the strain-rate deviator, (<b>d</b><sup>d</sup>:<b>d</b><sup>d</sup>)<sup>1/2</sup>, <b>d</b><sup>d</sup> = <b>d</b> − (d<sub>v</sub>/3)<b>1</b>"
+unit = "1/s"
+pages = ["material_laws/generated/ml_frictional_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'D_v'
+label = "D<sub>v</sub>"
+name = "macroscopic volume strain rate, tr <b>D</b>"
+unit = "1/s"
+pages = ["material_laws/generated/ml_frictional_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'D_d'
+label = "D<sub>d</sub>"
+name = "norm of the macroscopic strain-rate deviator, (<b>D</b><sup>d</sup>:<b>D</b><sup>d</sup>)<sup>1/2</sup>"
+unit = "1/s"
+pages = ["material_laws/generated/ml_frictional_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'T'
+label = "T"
+name = "friction coefficient of the Drucker–Prager matrix"
+unit = "1"
+pages = ["material_laws/generated/ml_frictional_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 't'
+label = "t"
+name = "dilatancy coefficient of the matrix, d<sub>v</sub> = t d<sub>d</sub> at flow (t ≤ T)"
+unit = "1"
+pages = ["material_laws/generated/ml_frictional_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'h'
+label = "h"
+name = "isotropic tensile strength of the matrix"
+unit = "Pa"
+pages = ["material_laws/generated/ml_frictional_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'Y'
+label = "Y"
+name = "d<sub>v</sub> − t d<sub>d</sub>, the distance to the flow rule of the matrix"
+unit = "1/s"
+pages = ["material_laws/generated/ml_frictional_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 'T^{\mathrm{hom}}'
+label = "T<sup>hom</sup>"
+name = "macroscopic friction coefficient, Σ<sub>d</sub> = T<sup>hom</sup>(h − Σ<sub>m</sub>)"
+unit = "1"
+pages = ["material_laws/generated/ml_frictional_strength.md"]
+
+[[symbol]]
+group = "Strength"
+tex = 't^{\mathrm{hom}}'
+label = "t<sup>hom</sup>"
+name = "macroscopic dilatancy coefficient, D<sub>v</sub> = t<sup>hom</sup> D<sub>d</sub>"
+unit = "1"
+pages = ["material_laws/generated/ml_frictional_strength.md"]
