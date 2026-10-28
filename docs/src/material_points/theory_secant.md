@@ -207,4 +207,4 @@ serving only as the starting point of the Newton iteration.
 | phases | isotropic, laws of the strain alone (nonlinear elasticity, deformation theory); a phase without a law keeps its linear stiffness |
 | schemes | any linear scheme of the package, with its own assumptions on the microstructure |
 | effective strain | one per nonlinear phase: the deviatoric response is secant, the bulk response is read at the same strain size |
-| not covered | phases with internal variables (plasticity by increments, viscosity), for which the incremental and tangent variants of the secant idea are needed |
+| not covered | phases with internal variables (plasticity by increments, viscosity), for which the [incremental approach](@ref mp-theory-incremental-tangent) is needed; for phases without, the [affine formulation](@ref mp-theory-affine) linearizes by the tangent instead of the secant |

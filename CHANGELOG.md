@@ -32,6 +32,14 @@
   increment; the fixed point is solved with the phase laws, and the tangent of
   the composite comes from the implicit-function theorem. Elastic phases give
   the linear estimate exactly.
+- `AffineComposite`: the affine formulation (Masson, Bornert, Suquet and Zaoui
+  2000) for two phases of nonlinear elastic or viscous laws: each phase is
+  replaced by its tangent and prestress at its average strain, and Levin's
+  theorem gives the average strains of the thermoelastic comparison composite
+  on any linear scheme, with the anisotropic tangents. Exact for laminates;
+  between the classical and the modified secant estimates for power-law
+  composites, and sensitive to the third invariant of the loading, which the
+  secant estimates are not.
 
 ### Changed
 
@@ -59,7 +67,9 @@
   on the uniform-field composites and an example (Taylor and Sachs composites
   of two elastoplastic phases); a theory page on polycrystals and an example
   (a random FCC aggregate); a theory page on the incremental tangent approach
-  and an example (a particle-reinforced alloy). The chapter is titled
+  and an example (a particle-reinforced alloy); a theory page on the affine
+  formulation and an example (a power-law composite against the secant
+  estimates, in tension and in shear). The chapter is titled
   *Nonlinear laws*.
 
 ## v0.22.0 — nonlinear laws derived from the microstructure

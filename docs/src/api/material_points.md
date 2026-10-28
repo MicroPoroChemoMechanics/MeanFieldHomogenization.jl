@@ -83,6 +83,12 @@ UniformStress
 IncrementalTangent
 ```
 
+## The affine formulation
+
+```@docs
+AffineComposite
+```
+
 ## Polycrystals
 
 ```@docs

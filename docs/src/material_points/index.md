@@ -82,6 +82,7 @@ entropy in the same manner.
 | [Uniform fields: Voigt–Taylor and Reuss–Sachs](@ref mp-theory-uniform-fields) | every phase at the macroscopic strain or at the macroscopic stress, for any phase laws |
 | [Polycrystals](@ref mp-theory-polycrystals) | grains of single crystals under the Taylor model, the Taylor factor, random textures |
 | [The incremental tangent approach](@ref mp-theory-incremental-tangent) | phases with a history linearized by their tangents at each step, isotropic projection, any linear scheme |
+| [The affine formulation](@ref mp-theory-affine) | nonlinear elastic phases replaced by their tangents and prestresses at their average strains, Levin's theorem, exact for laminates |
 | [Damage by the growth of microcracks](@ref mp-theory-crack-damage) | crack densities as internal variables, the driving force from the homogenized energy, Griffith's resistance, stability and viscous regularization |
 | [Nonlinear poroelasticity of a cracked rock](@ref mp-theory-closing-cracks) | cracks closing under the Terzaghi effective stress, stress-dependent stiffness and Biot tensor, the rate equations |
 | [The strength of a porous plastic solid](@ref mp-theory-strength) | the rigid–plastic limit of the secant method, a strength domain from a phase law, normality |
@@ -99,6 +100,7 @@ entropy in the same manner.
 | [Two elastoplastic phases: uniform strain and uniform stress](@ref mp-ex-uniform-fields) | Taylor and Sachs composites of a steel and an alloy, against the elastic bounds and linear hardening |
 | [A random FCC aggregate](@ref mp-ex-polycrystal) | a Taylor aggregate of 60 crystals in tension, the Taylor factor of a random texture |
 | [A particle-reinforced alloy](@ref mp-ex-incremental-tangent) | an elastoplastic alloy with stiff particles, between the uniform fields, the fraction of particles |
+| [A power-law composite by the affine formulation](@ref mp-ex-affine) | the affine estimate between the secant ones, tension against shear |
 | [Damage by the growth of microcracks](@ref mp-ex-crack-damage) | progressive and unstable crack growth in a brittle solid, a load cycle, the viscous regularization |
 | [A cracked rock under confinement](@ref mp-ex-closing-cracks) | stiffening and falling Biot coefficient under confinement, the two roles of the pore pressure |
 | [The strength of a porous plastic solid](@ref mp-ex-strength) | the strength domain from the phase law, against the closed-form ellipse and the derivative construction |

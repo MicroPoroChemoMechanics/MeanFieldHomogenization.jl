@@ -78,4 +78,4 @@ the scheme.
 | phases | any laws of the strain and the stress, with internal variables; one law per phase of the cell |
 | schemes | any linear scheme of the package; the phases are projected on isotropic tensors |
 | cost | about 1 ms per step for two phases and the Mori–Tanaka scheme |
-| not covered | the anisotropic tangent (without projection), and the other linearizations of the literature (affine, second order), which give different estimates |
+| not covered | the anisotropic tangent (without projection), and the other linearizations of the literature, which give different estimates: the [affine formulation](@ref mp-theory-affine) for laws of the strain alone, the second-order one |

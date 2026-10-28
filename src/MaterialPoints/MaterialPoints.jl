@@ -65,6 +65,7 @@ include("frictional_strength.jl")
 include("uniform_fields.jl")
 include("polycrystal.jl")
 include("incremental_tangent.jl")
+include("affine.jl")
 
 # ── Writing a law ────────────────────────────────────────────────────────────
 export AbstractPointLaw, ResidualLaw, PotentialLaw, PointState
@@ -88,7 +89,7 @@ export ClosingCrackPoroelasticity, ExponentialClosure
 export DruckerPrager, Heterogeneities, Pores, RigidInclusions, FrictionalComposite, limit_stress
 export AbstractPhaseComposite, UniformStrain, UniformStress
 export PolycrystalModel, TaylorModel, Polycrystal, PolycrystalState, grain_states, random_orientations
-export IncrementalTangent
+export IncrementalTangent, AffineComposite
 
 # ── Coupling to a finite-element code ───────────────────────────────────────
 export QuadratureStates, commit!, rollback!
