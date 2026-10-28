@@ -1,14 +1,14 @@
-# # [Polycrystals](@id mp-theory-polycrystals)
+# # [Polycrystals](@id ml-theory-polycrystals)
 #
 # A metal is an aggregate of grains, each a single crystal that deforms by slip
 # on its own slip systems, oriented at random or along a texture. Its response
-# follows from the [single-crystal law](@ref mp-laws) of every grain and from a
+# follows from the [single-crystal law](@ref ml-laws) of every grain and from a
 # rule saying how the grains share the macroscopic strain and stress. This page
 # states three such rules for an aggregate of many grains: the uniform strain of
 # Taylor, and the interaction of each grain with a matrix standing for the
 # others, elastic after Kröner and elastoplastic after Berveiller and Zaoui. The
-# [uniform-field composites](@ref mp-theory-uniform-fields) are the uniform rules
-# for a few phases. [The example below](@ref mp-ex-polycrystal) runs an aggregate.
+# [uniform-field composites](@ref ml-theory-uniform-fields) are the uniform rules
+# for a few phases. [The example below](@ref ml-ex-polycrystal) runs an aggregate.
 #
 # ## The grains
 #
@@ -34,7 +34,7 @@
 # \frac{\partial\boldsymbol{\Sigma}}{\partial\boldsymbol{E}} = \sum_g w_g\,\frac{\partial\boldsymbol{\sigma}_g}{\partial\boldsymbol{E}} .
 # ```
 #
-# It is the [uniform-strain composite](@ref mp-theory-uniform-fields) of the
+# It is the [uniform-strain composite](@ref ml-theory-uniform-fields) of the
 # grains. Since a grain then sees nothing of the others, each is integrated on
 # its own: [`Polycrystal`](@ref) keeps the state of every grain in a vector and
 # calls the local integration of each, which scales to hundreds of grains, where
@@ -177,7 +177,7 @@
 # ## What is not covered
 #
 # - The **Sachs** model, every grain at the macroscopic stress, is the
-#   [uniform-stress composite](@ref mp-theory-uniform-fields) of the grains, for a
+#   [uniform-stress composite](@ref ml-theory-uniform-fields) of the grains, for a
 #   few of them. For an aggregate of nearly rigid–plastic grains it needs the
 #   stress of the step to stay below the flow stress of every grain while it is
 #   sought, which a strain-driven iteration does not ensure; it is not offered
@@ -186,10 +186,10 @@
 #   elastoplastic scheme with the anisotropic tangent of the aggregate, and the
 #   anisotropic matrix of [lebensohnTome1993](@citet) in the tangent model.
 #
-# ## [Example: a random FCC aggregate](@id mp-ex-polycrystal)
+# ## [Example: a random FCC aggregate](@id ml-ex-polycrystal)
 #
 # This example pulls an aggregate of copper-like grains of random orientations,
-# under the [Taylor model](@ref mp-theory-polycrystals), and recovers the Taylor
+# under the [Taylor model](@ref ml-theory-polycrystals), and recovers the Taylor
 # factor of a random FCC texture.
 #
 # ### The aggregate

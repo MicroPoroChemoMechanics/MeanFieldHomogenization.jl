@@ -70,7 +70,7 @@ fields.
 ```
 
 The internal variables are those of the phases, renamed after them (`M_εᵖ`,
-`M_p`, …). See [the theory page](@ref mp-theory-uniform-fields).
+`M_p`, …). See [the theory page](@ref ml-theory-uniform-fields).
 """
 struct UniformStrain{P <: Tuple, F <: Tuple, S <: Tuple, N, Y, Q <: NamedTuple, L <: NamedTuple, G <: NamedTuple, FL <: NamedTuple} <: AbstractPhaseComposite
     name::Symbol
@@ -121,7 +121,7 @@ for the polycrystals. Same arguments as [`UniformStrain`](@ref).
 The gradient of each phase and the macroscopic flux are unknowns of the step:
 the internal variables are the macroscopic flux (`Σ_σ`, …), the gradients of
 the phases (`M_ε`, …) and their internal variables (`M_εᵖ`, …). See
-[the theory page](@ref mp-theory-uniform-fields).
+[the theory page](@ref ml-theory-uniform-fields).
 """
 struct UniformStress{P <: Tuple, F <: Tuple, SG <: Tuple, SY <: Tuple, B, N, Y, Q <: NamedTuple, L <: NamedTuple, G <: NamedTuple, FL <: NamedTuple} <: AbstractPhaseComposite
     name::Symbol

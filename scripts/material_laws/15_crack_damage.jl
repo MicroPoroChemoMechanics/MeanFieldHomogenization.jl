@@ -1,4 +1,4 @@
-# # [Damage by the growth of microcracks](@id mp-theory-crack-damage)
+# # [Damage by the growth of microcracks](@id ml-theory-crack-damage)
 #
 # In most damage models, a scalar variable degrades the stiffness through a
 # function chosen to fit tests. This page derives a damage law from the
@@ -7,7 +7,7 @@
 # of the cracked solid, and the evolution follows from an energy balance on the
 # cracks. The approach is that of [dormieuxKondo2016book](@citet), applied by
 # [dormieuxKondoUlm2006damage](@citet) to fluid-saturated media.
-# [The example below](@ref mp-ex-crack-damage) runs the law.
+# [The example below](@ref ml-ex-crack-damage) runs the law.
 #
 # ## State and energy
 #
@@ -158,9 +158,9 @@
 # | schemes | any linear scheme of the package that handles cracks |
 # | softening | a softening law localizes in a structure; the response of a finite-element computation then depends on the mesh, which a point computation does not show |
 #
-# ## [Example: damage by the growth of microcracks](@id mp-ex-crack-damage)
+# ## [Example: damage by the growth of microcracks](@id ml-ex-crack-damage)
 #
-# This example runs the [damage law derived from the microcracks](@ref mp-theory-crack-damage)
+# This example runs the [damage law derived from the microcracks](@ref ml-theory-crack-damage)
 # of a brittle solid. It compares a progressive damage with the unstable growth
 # that Griffith's criterion gives, and it shows how a viscosity regularizes the
 # latter.

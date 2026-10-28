@@ -1,4 +1,4 @@
-# [The laws shipped](@id mp-laws)
+# [The laws shipped](@id ml-laws)
 
 Six laws come with `MaterialLaws`. Each is an instance of
 [`ResidualLaw`](@ref) or [`PotentialLaw`](@ref), written in a few lines of

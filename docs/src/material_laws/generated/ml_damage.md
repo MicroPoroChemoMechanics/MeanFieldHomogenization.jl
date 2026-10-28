@@ -2,7 +2,7 @@
 EditURL = "../../../../scripts/material_laws/02_damage.jl"
 ```
 
-# [A damage law written from scratch](@id mp-ex-damage)
+# [A damage law written from scratch](@id ml-ex-damage)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/material_laws/02_damage.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/material_laws/02_damage.jl).
@@ -36,7 +36,7 @@ Over a step this reads: if ``d^\ast(Y) \le d_n`` the step is elastic,
 
 ## The law in code
 
-````@example mp_damage
+````@example ml_damage
 using MeanFieldHomogenization, StaticArrays, Plots
 
 k, μ = 20e3, 12e3                                     # bulk and shear moduli, MPa
@@ -71,7 +71,7 @@ tangent of a damaging step, is not written: it comes from the
 implicit-function theorem applied to the residual. The contract checker
 confirms it against a finite difference:
 
-````@example mp_damage
+````@example ml_damage
 check_material_interface(damage; verbose = false)
 ````
 
@@ -80,7 +80,7 @@ check_material_interface(damage; verbose = false)
 Uniaxial strain (``\varepsilon_{22} = \varepsilon_{33} = 0``), loaded, unloaded
 to zero, then loaded further:
 
-````@example mp_damage
+````@example ml_damage
 ε_axial(t) = t < 0.4 ? 5e-4 * t / 0.4 : t < 0.6 ? 5e-4 * (0.6 - t) / 0.2 : 1e-3 * (t - 0.6) / 0.4
 path = LoadingPath(range(0, 1; length = 101); ε11 = ε_axial, ε22 = 0, ε33 = 0)
 r = point_response(damage, path)
@@ -97,7 +97,7 @@ maximum before damage resumes.
 In uniaxial strain ``Y = \tfrac12\,\mathbb{C}_{1111}\,\varepsilon_{11}^2``. The damage
 is the running maximum of ``d^\ast``, and the stress follows:
 
-````@example mp_damage
+````@example ml_damage
 C11 = ℂ[1, 1]
 d_ref = accumulate(max, [e == 0 ? 0.0 : max(0.0, 1 - sqrt(1e-3 / (C11 * e^2 / 2))) for e in r[:ε11]])
 maximum(abs, r[:d] - d_ref), maximum(abs, r[:σ11] - (1 .- d_ref) .* C11 .* r[:ε11])

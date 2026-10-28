@@ -2,7 +2,7 @@
 EditURL = "../../../../scripts/material_laws/01_plasticity.jl"
 ```
 
-# [Elastoplastic bar under cycles](@id mp-ex-plasticity)
+# [Elastoplastic bar under cycles](@id ml-ex-plasticity)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/material_laws/01_plasticity.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/material_laws/01_plasticity.jl).
@@ -21,7 +21,7 @@ The parameters, in MPa: Young's modulus ``E``, Poisson's ratio ``\nu``, the
 initial yield stress ``\sigma_0``, and a hardening modulus of 10 GPa, given to
 the isotropic part in one law and to the kinematic part in the other.
 
-````@example mp_plasticity
+````@example ml_plasticity
 using MeanFieldHomogenization, Plots
 
 E, ν, σ₀, h = 200e3, 0.3, 250.0, 10e3
@@ -33,7 +33,7 @@ nothing #hide
 The path drives the axial strain through a cycle, 0 → 0.4 % → −0.4 % → 0.4 %,
 the lateral faces being free (every other stress component is zero):
 
-````@example mp_plasticity
+````@example ml_plasticity
 ε_axial(t) = t < 0.25 ? 4e-3 * 4t : t < 0.75 ? 4e-3 * (1 - 4(t - 0.25)) : 4e-3 * (-1 + 4(t - 0.75))
 path = LoadingPath(range(0, 1; length = 201); ε11 = ε_axial)
 r_iso = point_response(isotropic, path)
@@ -47,7 +47,7 @@ In uniaxial stress the elastic part has slope ``E`` up to ``\sigma_0``, then the
 slope is ``E h/(E + h)``: each increment of strain splits between an elastic
 part ``\mathrm{d}\sigma/E`` and a plastic part ``\mathrm{d}\sigma/h``.
 
-````@example mp_plasticity
+````@example ml_plasticity
 first_load = 1:51                      # t ∈ [0, 0.25]
 ε = r_iso[:ε11][first_load]
 closed_form = [e ≤ σ₀ / E ? E * e : σ₀ + E * h / (E + h) * (e - σ₀ / E) for e in ε]
@@ -60,7 +60,7 @@ of linear hardening is exact, and the driver finds the free lateral strains to
 
 ## What the reversal shows
 
-````@example mp_plasticity
+````@example ml_plasticity
 plot(r_iso[:ε11] * 100, r_iso[:σ11]; label = "isotropic hardening", lw = 2,
     xlabel = "axial strain ε₁₁ (%)", ylabel = "axial stress σ₁₁ (MPa)", legend = :topleft)
 plot!(r_kin[:ε11] * 100, r_kin[:σ11]; label = "kinematic hardening", lw = 2, ls = :dash)

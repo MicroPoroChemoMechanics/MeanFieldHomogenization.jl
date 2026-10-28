@@ -48,7 +48,7 @@ the derivative of the effective stiffness of the linear comparison composite
 with respect to the shear modulus of the phase giving the energy the phase
 stores [kreher1990](@cite). It is the method whose estimates coincide with the
 variational ones of [ponteCastaneda1991](@citet) for power-law phases (see
-[the theory page](@ref mp-theory-secant)).
+[the theory page](@ref ml-theory-secant)).
 """
 struct ModifiedSecant <: SecantMethod end
 

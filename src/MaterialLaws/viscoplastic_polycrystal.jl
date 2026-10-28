@@ -62,7 +62,7 @@ _slip_rates(c::PowerLawCrystal, τ) = c.γ̇₀ .* abs.(τ ./ c.τ₀) .^ c.n .*
 The tangent self-consistent model of [molinari1987](@citet), with the isotropic
 matrix of their computations: each spherical grain interacts with a matrix of
 the tangent viscosity of the aggregate, ``\\eta_t = \\eta_s/n``, ``\\eta_s`` its
-secant viscosity. See [the theory page](@ref mp-theory-polycrystals).
+secant viscosity. See [the theory page](@ref ml-theory-polycrystals).
 """
 struct TangentModel <: PolycrystalModel end
 

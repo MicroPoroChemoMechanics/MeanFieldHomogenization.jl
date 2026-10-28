@@ -1,4 +1,4 @@
-# [Integrating a law over a step](@id mp-theory)
+# [Integrating a law over a step](@id ml-theory)
 
 A nonlinear law is not a formula that turns a strain into a stress: the stress
 also depends on the history, carried by internal variables that evolve. A

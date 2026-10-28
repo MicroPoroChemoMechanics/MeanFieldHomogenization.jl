@@ -1,6 +1,6 @@
-# # [The incremental tangent approach](@id mp-theory-incremental-tangent)
+# # [The incremental tangent approach](@id ml-theory-incremental-tangent)
 #
-# The [secant methods](@ref mp-theory-secant) need phases whose stress is a
+# The [secant methods](@ref ml-theory-secant) need phases whose stress is a
 # function of the strain alone. A plastic phase has a history: its stress depends
 # on the path, and a secant modulus means nothing for it. The incremental approach
 # of [hill1965](@citet) linearizes such a phase on each step instead: over an
@@ -8,8 +8,8 @@
 # tangent stiffness, and a linear scheme concentrates the increment of the
 # macroscopic strain in the phases. It applies to any phase law of
 # `MaterialLaws`, plasticity, viscosity or damage, and stands between the two
-# [uniform-field composites](@ref mp-theory-uniform-fields), which ignore the
-# morphology. [The example below](@ref mp-ex-incremental-tangent) runs it.
+# [uniform-field composites](@ref ml-theory-uniform-fields), which ignore the
+# morphology. [The example below](@ref ml-ex-incremental-tangent) runs it.
 #
 # ## A step
 #
@@ -68,7 +68,7 @@
 # variation of the concentration tensors with the tangents included. With
 # elastic phases it is the linear estimate of the scheme, exactly. With plastic
 # phases its response lies between the [uniform stress and the uniform
-# strain](@ref mp-theory-uniform-fields), and depends on the morphology through
+# strain](@ref ml-theory-uniform-fields), and depends on the morphology through
 # the scheme.
 #
 # ## Scope
@@ -78,13 +78,13 @@
 # | phases | any laws of the strain and the stress, with internal variables; one law per phase of the cell |
 # | schemes | any linear scheme of the package; the phases are projected on isotropic tensors |
 # | cost | about 1 ms per step for two phases and the Mori–Tanaka scheme |
-# | not covered | the anisotropic tangent (without projection), and the other linearizations of the literature, which give different estimates: the [affine formulation](@ref mp-theory-affine) for laws of the strain alone, the second-order one |
+# | not covered | the anisotropic tangent (without projection), and the other linearizations of the literature, which give different estimates: the [affine formulation](@ref ml-theory-affine) for laws of the strain alone, the second-order one |
 #
-# ## [Example: a particle-reinforced alloy](@id mp-ex-incremental-tangent)
+# ## [Example: a particle-reinforced alloy](@id ml-ex-incremental-tangent)
 #
 # This example homogenizes an elastoplastic aluminum alloy reinforced by stiff
-# elastic particles with the [incremental tangent approach](@ref mp-theory-incremental-tangent),
-# and places it between the [uniform-field composites](@ref mp-theory-uniform-fields).
+# elastic particles with the [incremental tangent approach](@ref ml-theory-incremental-tangent),
+# and places it between the [uniform-field composites](@ref ml-theory-uniform-fields).
 #
 # ### The composite
 #

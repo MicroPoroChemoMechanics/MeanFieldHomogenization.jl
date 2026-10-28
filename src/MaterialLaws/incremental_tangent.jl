@@ -31,7 +31,7 @@ of the macroscopic strain:
 The geometry and the fractions come from `rve`; the stiffnesses it declares
 are replaced. The internal variables are the strains of the phases (`M_ε`, …)
 and their own internal variables (`M_εᵖ`, …). See
-[the theory page](@ref mp-theory-incremental-tangent).
+[the theory page](@ref ml-theory-incremental-tangent).
 """
 struct IncrementalTangent{P <: Tuple, F <: Tuple, SG <: Tuple, SY <: Tuple, N, Y, Q <: NamedTuple, L <: NamedTuple, G <: NamedTuple, FL <: NamedTuple} <: AbstractPhaseComposite
     name::Symbol

@@ -1,14 +1,14 @@
-# # [The affine formulation](@id mp-theory-affine)
+# # [The affine formulation](@id ml-theory-affine)
 #
-# The [secant methods](@ref mp-theory-secant) replace each nonlinear phase by a
+# The [secant methods](@ref ml-theory-secant) replace each nonlinear phase by a
 # linear one of the same stress at the same strain, without prestress: a line
-# through the origin. The [incremental approach](@ref mp-theory-incremental-tangent)
+# through the origin. The [incremental approach](@ref ml-theory-incremental-tangent)
 # uses the tangent, but only for the increments of a step. Between the two, the
 # affine formulation of [massonAffine2000](@citet) uses the tangent on the total
 # strain: every phase is replaced by the line that touches its stress–strain
 # curve at the current strain, a linear law with a prestress. The composite of
 # these phases is a linear thermoelastic one, which the schemes of the package
-# homogenize. [The example below](@ref mp-ex-affine) runs it.
+# homogenize. [The example below](@ref ml-ex-affine) runs it.
 #
 # ## The linearization of a phase
 #
@@ -75,7 +75,7 @@
 #   laws, [massonAffine2000](@citet) find the affine estimate softer than the
 #   classical secant and incremental ones, and in general stiffer than the
 #   variational (modified secant) one, except in shear at very high nonlinearity;
-#   [the example below](@ref mp-ex-affine) finds the same order with Mori–Tanaka.
+#   [the example below](@ref ml-ex-affine) finds the same order with Mori–Tanaka.
 # - **The third invariant.** The anisotropic tangent sees the direction of the
 #   strain deviator: unlike the secant estimates, the affine one distinguishes a
 #   tension from a shear of the same equivalent strain.
@@ -108,11 +108,11 @@
 # | cost | about 70 ms per step for spheres and Mori–Tanaka, most of it in the derivatives of the anisotropic Hill tensors |
 # | not covered | more than two phases (Levin's theorem then needs the eigenstress concentration of the scheme); the extension to history-dependent laws in the same paper; the tangent model of [molinari1987](@citet) for viscoplastic polycrystals, which uses the same linearization but, as [massonAffine2000](@citet) show, combines it with a secant concentration rule, an inconsistency that drives it toward the Reuss bound at high nonlinearity |
 #
-# ## [Example: a power-law composite by the affine formulation](@id mp-ex-affine)
+# ## [Example: a power-law composite by the affine formulation](@id ml-ex-affine)
 #
-# This example homogenizes the composite of [the secant example](@ref mp-ex-composite)
-# with the [affine formulation](@ref mp-theory-affine), and compares it with the
-# secant estimates and the [uniform-field composites](@ref mp-theory-uniform-fields).
+# This example homogenizes the composite of [the secant example](@ref ml-ex-composite)
+# with the [affine formulation](@ref ml-theory-affine), and compares it with the
+# secant estimates and the [uniform-field composites](@ref ml-theory-uniform-fields).
 #
 # ### The composite
 #
@@ -133,8 +133,8 @@ nothing #hide
 # | code | theory |
 # |:--|:--|
 # | `AffineComposite(rve, laws)` | each phase replaced by its tangent and prestress at its average strain, Mori–Tanaka on the comparison composite |
-# | `NonlinearHomogenized(rve, Dict(pairs(laws)); method)` | the [secant estimates](@ref mp-theory-secant), classical or modified |
-# | `UniformStrain`, `UniformStress` | the [uniform-field composites](@ref mp-theory-uniform-fields) |
+# | `NonlinearHomogenized(rve, Dict(pairs(laws)); method)` | the [secant estimates](@ref ml-theory-secant), classical or modified |
+# | `UniformStrain`, `UniformStress` | the [uniform-field composites](@ref ml-theory-uniform-fields) |
 #
 # ### Tension
 #

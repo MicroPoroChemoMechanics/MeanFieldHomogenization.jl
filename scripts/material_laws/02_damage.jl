@@ -1,4 +1,4 @@
-# # [A damage law written from scratch](@id mp-ex-damage)
+# # [A damage law written from scratch](@id ml-ex-damage)
 #
 # This example writes a law that is not shipped with the package, from its
 # equations to a cyclic test, in about fifteen lines. It is a scalar isotropic

@@ -2,7 +2,7 @@
 EditURL = "../../../../scripts/material_laws/12_polycrystals.jl"
 ```
 
-# [Polycrystals](@id mp-theory-polycrystals)
+# [Polycrystals](@id ml-theory-polycrystals)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/material_laws/12_polycrystals.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/material_laws/12_polycrystals.jl).
@@ -11,13 +11,13 @@ EditURL = "../../../../scripts/material_laws/12_polycrystals.jl"
 
 A metal is an aggregate of grains, each a single crystal that deforms by slip
 on its own slip systems, oriented at random or along a texture. Its response
-follows from the [single-crystal law](@ref mp-laws) of every grain and from a
+follows from the [single-crystal law](@ref ml-laws) of every grain and from a
 rule saying how the grains share the macroscopic strain and stress. This page
 states three such rules for an aggregate of many grains: the uniform strain of
 Taylor, and the interaction of each grain with a matrix standing for the
 others, elastic after Kröner and elastoplastic after Berveiller and Zaoui. The
-[uniform-field composites](@ref mp-theory-uniform-fields) are the uniform rules
-for a few phases. [The example below](@ref mp-ex-polycrystal) runs an aggregate.
+[uniform-field composites](@ref ml-theory-uniform-fields) are the uniform rules
+for a few phases. [The example below](@ref ml-ex-polycrystal) runs an aggregate.
 
 ## The grains
 
@@ -43,7 +43,7 @@ Every grain undergoes the macroscopic strain:
 \frac{\partial\boldsymbol{\Sigma}}{\partial\boldsymbol{E}} = \sum_g w_g\,\frac{\partial\boldsymbol{\sigma}_g}{\partial\boldsymbol{E}} .
 ```
 
-It is the [uniform-strain composite](@ref mp-theory-uniform-fields) of the
+It is the [uniform-strain composite](@ref ml-theory-uniform-fields) of the
 grains. Since a grain then sees nothing of the others, each is integrated on
 its own: [`Polycrystal`](@ref) keeps the state of every grain in a vector and
 calls the local integration of each, which scales to hundreds of grains, where
@@ -186,7 +186,7 @@ rate of each grain. The example below shows the trend.
 ## What is not covered
 
 - The **Sachs** model, every grain at the macroscopic stress, is the
-  [uniform-stress composite](@ref mp-theory-uniform-fields) of the grains, for a
+  [uniform-stress composite](@ref ml-theory-uniform-fields) of the grains, for a
   few of them. For an aggregate of nearly rigid–plastic grains it needs the
   stress of the step to stay below the flow stress of every grain while it is
   sought, which a strain-driven iteration does not ensure; it is not offered
@@ -195,15 +195,15 @@ rate of each grain. The example below shows the trend.
   elastoplastic scheme with the anisotropic tangent of the aggregate, and the
   anisotropic matrix of [lebensohnTome1993](@citet) in the tangent model.
 
-## [Example: a random FCC aggregate](@id mp-ex-polycrystal)
+## [Example: a random FCC aggregate](@id ml-ex-polycrystal)
 
 This example pulls an aggregate of copper-like grains of random orientations,
-under the [Taylor model](@ref mp-theory-polycrystals), and recovers the Taylor
+under the [Taylor model](@ref ml-theory-polycrystals), and recovers the Taylor
 factor of a random FCC texture.
 
 ### The aggregate
 
-````@example mp_polycrystals
+````@example ml_polycrystals
 using MeanFieldHomogenization, Random, Plots, ForwardDiff
 
 τ₀ = 10.0                                                   # critical resolved shear stress, MPa
@@ -224,7 +224,7 @@ nothing #hide
 
 The aggregate is pulled along ``\underline{e}_1``, its lateral faces free:
 
-````@example mp_polycrystals
+````@example ml_polycrystals
 r = point_response(aggregate, LoadingPath(range(0, 1; length = 26); ε11 = t -> 1e-2 * t))
 plot(r[:ε11] * 100, r[:σ11] / τ₀; lw = 2, label = "Taylor aggregate, 60 grains",
     xlabel = "axial strain (%)", ylabel = "σ₁₁ / τ₀", legend = :bottomright)
@@ -236,7 +236,7 @@ flows at about ``3.06\,\tau_0``: the Taylor factor of a random FCC texture. The
 plateau is slightly above it, by the viscous overstress of the grains and the
 sampling of 60 orientations:
 
-````@example mp_polycrystals
+````@example ml_polycrystals
 r[:σ11][end] / τ₀
 ````
 
@@ -245,7 +245,7 @@ r[:σ11][end] / τ₀
 The state of every grain is kept. The number of slip systems that slipped in
 each grain over the last step:
 
-````@example mp_polycrystals
+````@example ml_polycrystals
 active(s_old, s_new) = count(abs.(s_new.y[1:12] - s_old.y[1:12]) .> 1e-8)
 counts = active.(grain_states(r.states[end - 1]), grain_states(r.states[end]))
 histogram(counts; bins = 0.5:1:12.5, label = "", xlabel = "active slip systems in a grain",
@@ -263,7 +263,7 @@ Both interaction models assume grains of the isotropic elasticity of the
 matrix; the grains below have it (``C_{44} = (C_{11} - C_{12})/2``), with a
 slower viscous law than above. Eight grains keep the page light:
 
-````@example mp_polycrystals
+````@example ml_polycrystals
 E_y, ν = 120e3, 0.3                                                     # MPa
 C₁₁, C₁₂ = E_y * (1 - ν) / ((1 + ν) * (1 - 2ν)), E_y * ν / ((1 + ν) * (1 - 2ν))
 iso_grain(frame) = CrystalViscoplasticity(; C₁₁, C₁₂, C₄₄ = (C₁₁ - C₁₂) / 2, K = 1.0, n = 5, τ₀, frame)
@@ -290,7 +290,7 @@ Rigid–viscoplastic grains of the same random texture, pulled at a constant
 strain rate, for exponents from linear viscosity to nearly rate-independent
 slip:
 
-````@example mp_polycrystals
+````@example ml_polycrystals
 crystals(n) = ViscoplasticPolycrystal([PowerLawCrystal(; γ̇₀ = 1e-3, τ₀, n, frame) for frame in frames])
 D = Mandel{Float64}(1e-3, -5e-4, -5e-4, 0, 0, 0)                  # 1/s, isochoric tension
 # Sachs: every grain at the uniaxial stress s whose average axial rate is D₁₁.

@@ -2,7 +2,7 @@
 EditURL = "../../../../scripts/material_laws/10_secant.jl"
 ```
 
-# [Homogenizing nonlinear phases: secant methods](@id mp-theory-secant)
+# [Homogenizing nonlinear phases: secant methods](@id ml-theory-secant)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/material_laws/10_secant.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/material_laws/10_secant.jl).
@@ -17,7 +17,7 @@ answer exactly within their assumptions: the effective stiffness
 fractions and their shapes. When a phase is nonlinear, its stiffness changes
 from point to point with the local strain, and no scheme applies as it stands.
 The secant methods bring the problem back to a sequence of linear ones. This
-page derives them; [the example below](@ref mp-ex-composite) runs them.
+page derives them; [the example below](@ref ml-ex-composite) runs them.
 
 ## The phases
 
@@ -167,7 +167,7 @@ nothing specific to a scheme is written.
     comparison composite the modified effective strain is therefore at least
     the classical one. A phase whose secant modulus decreases with the strain
     (``m < 1``) is then softer under the modified method, and the composite is
-    expected to be softer as well, which [the example below](@ref mp-ex-composite)
+    expected to be softer as well, which [the example below](@ref ml-ex-composite)
     shows.
 
 The modified method has a further standing. For phases whose energy is a
@@ -188,7 +188,7 @@ R_i\big(\bar\varepsilon_1, \ldots, \bar\varepsilon_n;\ \boldsymbol{E}\big)
 = \bar\varepsilon_i - \mathcal{M}_i\big(\boldsymbol{E};\ \bar\varepsilon_1, \ldots, \bar\varepsilon_n\big) = 0,
 ```
 
-it has exactly the form of the [local problem of a law](@ref mp-theory): the
+it has exactly the form of the [local problem of a law](@ref ml-theory): the
 effective strains play the role of the internal variables, the macroscopic
 strain that of the gradient, and the macroscopic stress that of the flux.
 [`NonlinearHomogenized`](@ref) builds that law. Everything the chapter says
@@ -216,12 +216,12 @@ serving only as the starting point of the Newton iteration.
 | phases | isotropic, laws of the strain alone (nonlinear elasticity, deformation theory); a phase without a law keeps its linear stiffness |
 | schemes | any linear scheme of the package, with its own assumptions on the microstructure |
 | effective strain | one per nonlinear phase: the deviatoric response is secant, the bulk response is read at the same strain size |
-| not covered | phases with internal variables (plasticity by increments, viscosity), for which the [incremental approach](@ref mp-theory-incremental-tangent) is needed; for phases without, the [affine formulation](@ref mp-theory-affine) linearizes by the tangent instead of the secant |
+| not covered | phases with internal variables (plasticity by increments, viscosity), for which the [incremental approach](@ref ml-theory-incremental-tangent) is needed; for phases without, the [affine formulation](@ref ml-theory-affine) linearizes by the tangent instead of the secant |
 
-## [Example: a composite of nonlinear phases](@id mp-ex-composite)
+## [Example: a composite of nonlinear phases](@id ml-ex-composite)
 
 This example computes the response of a composite whose two phases follow
-nonlinear laws. It compares the [two secant methods](@ref mp-theory-secant)
+nonlinear laws. It compares the [two secant methods](@ref ml-theory-secant)
 with each other and with a bound. The theory page explains each step. This page
 shows how each one is done, and checks the result where a check is available.
 
@@ -232,7 +232,7 @@ power law ([`PowerLawElasticity`](@ref)). The matrix hardens little
 (``m = 0.2``, close to perfect plasticity). The particles are four times
 stronger and harden more (``m = 0.6``).
 
-````@example mp_secant
+````@example ml_secant
 using MeanFieldHomogenization, TensND, Plots
 
 f = 0.3                                                              # particle fraction
@@ -245,7 +245,7 @@ The microstructure is a cell of the package, as for a linear composite. The
 stiffness given to each phase is only a placeholder: the method replaces it by
 the secant stiffness of the phase.
 
-````@example mp_secant
+````@example ml_secant
 rve = RVE()
 add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0, 1.0)); fraction = :rest)
 add_phase!(rve, :P, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0, 1.0)); fraction = f)
@@ -270,7 +270,7 @@ The macroscopic strain is an isochoric extension
 ``\boldsymbol{E} = e\,(1, -\tfrac12, -\tfrac12)``, whose equivalent strain is ``e``.
 Every component of the strain is prescribed:
 
-````@example mp_secant
+````@example ml_secant
 e_max = 5e-3
 path = LoadingPath(range(0, 1; length = 26); ε11 = t -> e_max * t,
     ε22 = t -> -e_max * t / 2, ε33 = t -> -e_max * t / 2, ε23 = 0, ε13 = 0, ε12 = 0)
@@ -282,7 +282,7 @@ nothing #hide
 Uniform strain in every phase gives an upper bound, the Voigt bound: each phase
 is driven along the same path, and the stresses are averaged.
 
-````@example mp_secant
+````@example ml_secant
 r_M = point_response(matrix, path)
 r_P = point_response(particles, path)
 σ_eq(r) = r[:σ11] - r[:σ22]                       # the von Mises stress on this path
@@ -312,7 +312,7 @@ particles strain much less.
 The effective strains are the internal variables of the law, named after the
 phases:
 
-````@example mp_secant
+````@example ml_secant
 plot(r_mod[:ε11] * 1e3, [r_mod[:M] r_mod[:P]] * 1e3; lw = 2,
     label = ["matrix, modified" "particles, modified"],
     xlabel = "macroscopic equivalent strain (‰)", ylabel = "effective strain of the phase (‰)",
@@ -323,7 +323,7 @@ plot!(r_cla[:ε11] * 1e3, [r_cla[:M] r_cla[:P]] * 1e3; lw = 2, ls = :dash,
 
 At the end of the path, in ‰:
 
-````@example mp_secant
+````@example ml_secant
 map(x -> round(1e3 * x; digits = 2), (matrix_modified = r_mod[:M][end], matrix_classical = r_cla[:M][end], macroscopic = e_max))
 ````
 
@@ -338,7 +338,7 @@ linear elasticity of shear modulus ``\sigma_0/(3\varepsilon_0)``. The secant
 moduli are then constant, the fixed point is trivial, and the tangent of the
 composite must be the Mori–Tanaka stiffness itself:
 
-````@example mp_secant
+````@example ml_secant
 linear(μ, k) = PowerLawElasticity(; k, σ₀ = 3μ * 1e-3, ε₀ = 1e-3, m = 1.0)
 rve_lin = RVE()
 add_phase!(rve_lin, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 60e3, 2 * 20e3)); fraction = :rest)
@@ -352,7 +352,7 @@ E = Mandel{Float64}(1e-3, 2e-4, -3e-4, 1e-4, 0, 2e-4)
 **The tangent is consistent.** The contract checker compares the tangent from
 the implicit-function theorem with the derivative of the stress:
 
-````@example mp_secant
+````@example ml_secant
 check_material_interface(modified; verbose = false)
 ````
 

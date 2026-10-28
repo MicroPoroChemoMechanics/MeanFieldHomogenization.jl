@@ -1,4 +1,4 @@
-# [Driving a point](@id mp-driving)
+# [Driving a point](@id ml-driving)
 
 Before a law goes into a structural computation, it is run at a single
 material point along a known path, as a specimen in a test machine. That is
@@ -28,7 +28,7 @@ constant) or a function of time. The names are
 | field | by its gradient | by its flux |
 |:--|:--|:--|
 | strain / stress | `ε11`, `ε22`, `ε33`, `ε23`, `ε13`, `ε12` | `σ11`, …, `σ12` |
-| a scalar field (a law of [coupled fields](@ref mp-writing)) | its name: `p` | its flux's name: `φ` |
+| a scalar field (a law of [coupled fields](@ref ml-writing)) | its name: `p` | its flux's name: `φ` |
 
 Shear components are tensor components: `ε12` is ``\varepsilon_{12}``, half the
 engineering shear. `ε21` and `ε12` name the same component. A component
@@ -55,7 +55,7 @@ plot(r[:ε11] * 100, r[:σ11]; xlabel = "axial strain ε₁₁ (%)", ylabel = "a
 The lateral strain ``\varepsilon_{22}`` is not prescribed: at each time the
 driver finds the lateral strains that make the lateral stresses vanish, by
 Newton's method with the consistent tangent (see
-[mixed control](@ref mp-theory)).
+[mixed control](@ref ml-theory)).
 
 ## Common tests
 
@@ -70,11 +70,11 @@ nothing # hide
 A variable the law reads without returning its flux, a temperature for
 instance, is given by `external`, as a number or a function of time:
 `LoadingPath(times; ε11 = …, external = (T = t -> 293 + t,))` (see
-[Writing a law](@ref mp-writing)).
+[Writing a law](@ref ml-writing)).
 
 For a law of coupled fields, a drained test holds the pore pressure
 (`p = 0`), an undrained one leaves the fluid content unprescribed, hence zero:
-see [Drained and undrained poroelasticity](@ref mp-ex-biot).
+see [Drained and undrained poroelasticity](@ref ml-ex-biot).
 
 ## Robustness
 

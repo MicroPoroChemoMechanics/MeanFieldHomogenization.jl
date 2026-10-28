@@ -1,4 +1,4 @@
-# # [Nonlinear poroelasticity of a cracked rock](@id mp-theory-closing-cracks)
+# # [Nonlinear poroelasticity of a cracked rock](@id ml-theory-closing-cracks)
 #
 # A rock that contains microcracks is soft under a small confinement and stiffens
 # as the confinement grows, because its cracks close one after the other. The
@@ -8,7 +8,7 @@
 # rocks in this way. [deude2002](@citet) put it in a micromechanical setting of
 # nonlinear poroelasticity. This page derives the law that MeanFieldHomogenization
 # builds from the linear poroelasticity of the cracked solid.
-# [The example below](@ref mp-ex-closing-cracks) runs it.
+# [The example below](@ref ml-ex-closing-cracks) runs it.
 #
 # ## The linear poroelastic solid at given open cracks
 #
@@ -125,9 +125,9 @@
 # | fluid | incompressible, as in the fractured-rock material; the porosity ``\phi`` is held at its given value while the cracks close |
 # | not covered | the permeability of the cracks; the opening of the cracks beyond their initial aperture under tension |
 #
-# ## [Example: a cracked rock under confinement](@id mp-ex-closing-cracks)
+# ## [Example: a cracked rock under confinement](@id ml-ex-closing-cracks)
 #
-# This example runs the [nonlinear poroelastic law of a cracked rock](@ref mp-theory-closing-cracks):
+# This example runs the [nonlinear poroelastic law of a cracked rock](@ref ml-theory-closing-cracks):
 # a rock whose microcracks close as it is confined, so that its stiffness rises and
 # its Biot coefficient falls. It then shows the two roles of the pore pressure,
 # which reopens the cracks through the Terzaghi effective stress but deforms the
@@ -213,7 +213,7 @@ p2 = plot(P, 3 * r[:ε11] * 1e3; lw = 2, label = "drained confinement",
 plot!(p2, -r2[:Σ′11][reopen], 3 * r2[:ε11][reopen] * 1e3; lw = 2, ls = :dash, label = "pore pressure raised")
 plot(p1, p2; layout = (1, 2), size = (760, 320), left_margin = 3Plots.mm, bottom_margin = 4Plots.mm)
 #
-# The two plots tell the two principles of the [theory](@ref mp-theory-closing-cracks)
+# The two plots tell the two principles of the [theory](@ref ml-theory-closing-cracks)
 # apart. The moduli are the same along both paths at the same effective
 # pressure: the open cracks, hence the stiffness and the Biot tensor, depend on
 # the Terzaghi effective stress alone. The deformation is not: raising the pore

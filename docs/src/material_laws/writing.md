@@ -1,4 +1,4 @@
-# [Writing a law](@id mp-writing)
+# [Writing a law](@id ml-writing)
 
 A law is written as **plain functions and a `NamedTuple` of parameters**.
 There are two ways to write one, and both give a material that runs everywhere
@@ -11,7 +11,7 @@ in the package:
 
 Neither asks for a derivative: the consistent tangent and the derivatives with
 respect to the parameters are obtained by automatic differentiation (see
-[Integrating a law over a step](@ref mp-theory)).
+[Integrating a law over a step](@ref ml-theory)).
 
 ## What the functions receive
 
@@ -211,7 +211,7 @@ check_material_interface(damage; verbose = false), check_material_interface(biot
 !!! tip "Parameters belong in `p`"
     Put every number of the law in `p`: building the law again with
     `ForwardDiff.Dual` parameters then differentiates its whole response with
-    respect to them (see [Plugging a law into a computation](@ref mp-plugging)).
+    respect to them (see [Plugging a law into a computation](@ref ml-plugging)).
 
 !!! note "Symbolic numbers"
     A law without internal variable evaluates with `Symbolics.Num` entries, which

@@ -2,7 +2,7 @@
 EditURL = "../../../../scripts/material_laws/16_closing_cracks.jl"
 ```
 
-# [Nonlinear poroelasticity of a cracked rock](@id mp-theory-closing-cracks)
+# [Nonlinear poroelasticity of a cracked rock](@id ml-theory-closing-cracks)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/material_laws/16_closing_cracks.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/material_laws/16_closing_cracks.jl).
@@ -17,7 +17,7 @@ to the solid. [walsh1965](@citet) explained the nonlinear compressibility of
 rocks in this way. [deude2002](@citet) put it in a micromechanical setting of
 nonlinear poroelasticity. This page derives the law that MeanFieldHomogenization
 builds from the linear poroelasticity of the cracked solid.
-[The example below](@ref mp-ex-closing-cracks) runs it.
+[The example below](@ref ml-ex-closing-cracks) runs it.
 
 ## The linear poroelastic solid at given open cracks
 
@@ -134,9 +134,9 @@ strain and the pressure, the stress and the fluid content, is computed.
 | fluid | incompressible, as in the fractured-rock material; the porosity ``\phi`` is held at its given value while the cracks close |
 | not covered | the permeability of the cracks; the opening of the cracks beyond their initial aperture under tension |
 
-## [Example: a cracked rock under confinement](@id mp-ex-closing-cracks)
+## [Example: a cracked rock under confinement](@id ml-ex-closing-cracks)
 
-This example runs the [nonlinear poroelastic law of a cracked rock](@ref mp-theory-closing-cracks):
+This example runs the [nonlinear poroelastic law of a cracked rock](@ref ml-theory-closing-cracks):
 a rock whose microcracks close as it is confined, so that its stiffness rises and
 its Biot coefficient falls. It then shows the two roles of the pore pressure,
 which reopens the cracks through the Terzaghi effective stress but deforms the
@@ -150,7 +150,7 @@ families are the simplest sampling of the orientations that keeps the rock
 symmetric under a hydrostatic loading. Their closure stresses are distributed
 exponentially, with a mean of 20 MPa.
 
-````@example mp_closing_cracks
+````@example ml_closing_cracks
 using MeanFieldHomogenization, TensND, Plots
 
 C_s = TensISO{3}(3 * 40e3, 2 * 25e3)                                  # MPa
@@ -174,7 +174,7 @@ nothing #hide
 The rock is confined to 80 MPa with the pore pressure held at zero, so that the
 effective stress is the total stress:
 
-````@example mp_closing_cracks
+````@example ml_closing_cracks
 P_max = 80.0
 confine = LoadingPath(range(0, 1; length = 41); σ11 = t -> -P_max * t, σ22 = t -> -P_max * t,
     σ33 = t -> -P_max * t, σ23 = 0, σ13 = 0, σ12 = 0, p = 0)
@@ -187,7 +187,7 @@ not move. Its blocks are the drained stiffness ``\mathbb{C}^{\mathrm{hom}}`` and
 the Biot tensor ``\boldsymbol{B}``. Their isotropic parts give the drained bulk
 modulus ``K`` and the Biot coefficient ``b``:
 
-````@example mp_closing_cracks
+````@example ml_closing_cracks
 function moduli(law, state)
     _, 𝕂, _ = point_update(law, state.g, state, 1.0)
     K = sum(𝕂[1:3, 1:3]) / 9                  # (1 : C : 1) / 9
@@ -214,7 +214,7 @@ Starting from the confined state, the total stress is now held at 80 MPa and the
 pore pressure raised to 60 MPa. The effective stress falls to 20 MPa, and the
 cracks that the confinement had closed reopen:
 
-````@example mp_closing_cracks
+````@example ml_closing_cracks
 times = vcat(range(0, 1; length = 41), range(1.025, 2; length = 40))
 both = LoadingPath(times; σ11 = t -> -P_max * min(t, 1), σ22 = t -> -P_max * min(t, 1),
     σ33 = t -> -P_max * min(t, 1), σ23 = 0, σ13 = 0, σ12 = 0, p = t -> 60.0 * max(t - 1, 0))
@@ -230,7 +230,7 @@ plot!(p2, -r2[:Σ′11][reopen], 3 * r2[:ε11][reopen] * 1e3; lw = 2, ls = :dash
 plot(p1, p2; layout = (1, 2), size = (760, 320), left_margin = 3Plots.mm, bottom_margin = 4Plots.mm)
 ````
 
-The two plots tell the two principles of the [theory](@ref mp-theory-closing-cracks)
+The two plots tell the two principles of the [theory](@ref ml-theory-closing-cracks)
 apart. The moduli are the same along both paths at the same effective
 pressure: the open cracks, hence the stiffness and the Biot tensor, depend on
 the Terzaghi effective stress alone. The deformation is not: raising the pore
@@ -245,7 +245,7 @@ pore pressure acts on the deformation far less than on the cracks.
 closes, and the law gives the moduli of the fractured-rock material
 [`FracturedPoroelasticRock`](@ref) with every family open:
 
-````@example mp_closing_cracks
+````@example ml_closing_cracks
 fr = FracturedPoroelasticRock(rve, MoriTanaka(); ω₀ = (1e-3, 1e-3, 1e-3), porosity_ref = 0.005)
 g = (ε = Mandel{Float64}(1e-4, 1e-4, 1e-4, 0, 0, 0), p = 0.0)
 a = material_response(rock, g, initial_state(rock), 1.0).tangents.φp
@@ -255,7 +255,7 @@ a ≈ b
 
 **The tangent is consistent**, every block of it:
 
-````@example mp_closing_cracks
+````@example ml_closing_cracks
 check_material_interface(rock; verbose = false)
 ````
 

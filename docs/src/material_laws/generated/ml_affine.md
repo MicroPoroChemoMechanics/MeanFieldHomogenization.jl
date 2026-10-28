@@ -2,22 +2,22 @@
 EditURL = "../../../../scripts/material_laws/14_affine.jl"
 ```
 
-# [The affine formulation](@id mp-theory-affine)
+# [The affine formulation](@id ml-theory-affine)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/material_laws/14_affine.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/material_laws/14_affine.jl).
     From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
     once, then `julia scripts/material_laws/14_affine.jl`, runs it end to end.
 
-The [secant methods](@ref mp-theory-secant) replace each nonlinear phase by a
+The [secant methods](@ref ml-theory-secant) replace each nonlinear phase by a
 linear one of the same stress at the same strain, without prestress: a line
-through the origin. The [incremental approach](@ref mp-theory-incremental-tangent)
+through the origin. The [incremental approach](@ref ml-theory-incremental-tangent)
 uses the tangent, but only for the increments of a step. Between the two, the
 affine formulation of [massonAffine2000](@citet) uses the tangent on the total
 strain: every phase is replaced by the line that touches its stress–strain
 curve at the current strain, a linear law with a prestress. The composite of
 these phases is a linear thermoelastic one, which the schemes of the package
-homogenize. [The example below](@ref mp-ex-affine) runs it.
+homogenize. [The example below](@ref ml-ex-affine) runs it.
 
 ## The linearization of a phase
 
@@ -84,7 +84,7 @@ the phases carry the stress of their average strain.
   laws, [massonAffine2000](@citet) find the affine estimate softer than the
   classical secant and incremental ones, and in general stiffer than the
   variational (modified secant) one, except in shear at very high nonlinearity;
-  [the example below](@ref mp-ex-affine) finds the same order with Mori–Tanaka.
+  [the example below](@ref ml-ex-affine) finds the same order with Mori–Tanaka.
 - **The third invariant.** The anisotropic tangent sees the direction of the
   strain deviator: unlike the secant estimates, the affine one distinguishes a
   tension from a shear of the same equivalent strain.
@@ -117,18 +117,18 @@ pure volume change, is refused.
 | cost | about 70 ms per step for spheres and Mori–Tanaka, most of it in the derivatives of the anisotropic Hill tensors |
 | not covered | more than two phases (Levin's theorem then needs the eigenstress concentration of the scheme); the extension to history-dependent laws in the same paper; the tangent model of [molinari1987](@citet) for viscoplastic polycrystals, which uses the same linearization but, as [massonAffine2000](@citet) show, combines it with a secant concentration rule, an inconsistency that drives it toward the Reuss bound at high nonlinearity |
 
-## [Example: a power-law composite by the affine formulation](@id mp-ex-affine)
+## [Example: a power-law composite by the affine formulation](@id ml-ex-affine)
 
-This example homogenizes the composite of [the secant example](@ref mp-ex-composite)
-with the [affine formulation](@ref mp-theory-affine), and compares it with the
-secant estimates and the [uniform-field composites](@ref mp-theory-uniform-fields).
+This example homogenizes the composite of [the secant example](@ref ml-ex-composite)
+with the [affine formulation](@ref ml-theory-affine), and compares it with the
+secant estimates and the [uniform-field composites](@ref ml-theory-uniform-fields).
 
 ### The composite
 
 A soft matrix holds 30 % of stronger spherical particles, both of power-law
 type ([`PowerLawElasticity`](@ref)).
 
-````@example mp_affine
+````@example ml_affine
 using MeanFieldHomogenization, TensND, Plots
 
 f = 0.3                                                              # particle fraction
@@ -144,14 +144,14 @@ nothing #hide
 | code | theory |
 |:--|:--|
 | `AffineComposite(rve, laws)` | each phase replaced by its tangent and prestress at its average strain, Mori–Tanaka on the comparison composite |
-| `NonlinearHomogenized(rve, Dict(pairs(laws)); method)` | the [secant estimates](@ref mp-theory-secant), classical or modified |
-| `UniformStrain`, `UniformStress` | the [uniform-field composites](@ref mp-theory-uniform-fields) |
+| `NonlinearHomogenized(rve, Dict(pairs(laws)); method)` | the [secant estimates](@ref ml-theory-secant), classical or modified |
+| `UniformStrain`, `UniformStress` | the [uniform-field composites](@ref ml-theory-uniform-fields) |
 
 ### Tension
 
 An isochoric tension, of equivalent strain `e_max` at the end:
 
-````@example mp_affine
+````@example ml_affine
 e_max = 5e-3
 tension = LoadingPath(range(0, 1; length = 26); ε11 = t -> e_max * t,
     ε22 = t -> -e_max * t / 2, ε33 = t -> -e_max * t / 2, ε23 = 0, ε13 = 0, ε12 = 0)
@@ -177,7 +177,7 @@ Hashin–Shtrikman estimate.
 
 A shear of the same equivalent strain:
 
-````@example mp_affine
+````@example ml_affine
 shear = LoadingPath(range(0, 1; length = 11); ε11 = 0, ε22 = 0, ε33 = 0, ε23 = 0, ε13 = 0,
     ε12 = t -> sqrt(3) / 2 * e_max * t)
 final(c) = (rt = point_response(c, tension); rs = point_response(c, shear);
@@ -195,7 +195,7 @@ along it, and the composite sees the direction of the loading.
 With linear phases the formulation is the linear Mori–Tanaka estimate. A
 power law of exponent one is linear, of shear modulus ``\sigma_0/(3\varepsilon_0)``:
 
-````@example mp_affine
+````@example ml_affine
 linear = (M = PowerLawElasticity(; k = 60e3, σ₀ = 80.0, ε₀ = 1e-3, m = 1.0),
           P = PowerLawElasticity(; k = 150e3, σ₀ = 320.0, ε₀ = 1e-3, m = 1.0))
 c = AffineComposite(rve, linear)

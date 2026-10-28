@@ -70,7 +70,7 @@ densities give the rates
 
 integrated by a backward Euler step. Gradients `(ε = 6, p = 1)`, fluxes
 `(σ = 6, φ = 1)`, internal variables the effective stress `Σ′` and the fluid
-content `φ`. The derivation is in [the theory page](@ref mp-theory-closing-cracks).
+content `φ`. The derivation is in [the theory page](@ref ml-theory-closing-cracks).
 """
 function ClosingCrackPoroelasticity(
         rve::Schemes.RVE; scheme = Schemes.MoriTanaka(), closure, porosity::Real = 0,

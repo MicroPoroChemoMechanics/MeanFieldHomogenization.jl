@@ -1,4 +1,4 @@
-# # [Uniform fields: Voigt–Taylor and Reuss–Sachs](@id mp-theory-uniform-fields)
+# # [Uniform fields: Voigt–Taylor and Reuss–Sachs](@id ml-theory-uniform-fields)
 #
 # The simplest composites of nonlinear phases assume one field to be uniform:
 # every phase undergoes the macroscopic strain, or every phase carries the
@@ -6,10 +6,10 @@
 # For linear elastic phases they are the bounds of [voigt1889](@citet) and
 # [reuss1929](@citet), between which every estimate of the effective stiffness
 # lies [hill1952](@cite). For plastic phases they are the models of Taylor and
-# of Sachs, the extremes of the [polycrystal models](@ref mp-theory-polycrystals).
+# of Sachs, the extremes of the [polycrystal models](@ref ml-theory-polycrystals).
 # This page states them for any law of `MaterialLaws`; the
-# [secant methods](@ref mp-theory-secant) and the polycrystal interactions sit in
-# between. [The example below](@ref mp-ex-uniform-fields) runs them.
+# [secant methods](@ref ml-theory-secant) and the polycrystal interactions sit in
+# between. [The example below](@ref ml-ex-uniform-fields) runs them.
 #
 # ## Uniform strain
 #
@@ -70,9 +70,9 @@
 # | strongly nonlinear phases | inverting a phase law (a power law of small exponent) is ill-conditioned: the driver cuts the steps that fail |
 # | no finite tangent | a phase without a finite tangent at the current strain (a power law at zero strain) makes the tangent of the composite undefined there (`NaN`), not the update |
 #
-# ## [Example: two elastoplastic phases](@id mp-ex-uniform-fields)
+# ## [Example: two elastoplastic phases](@id ml-ex-uniform-fields)
 #
-# This example builds the two [uniform-field composites](@ref mp-theory-uniform-fields)
+# This example builds the two [uniform-field composites](@ref ml-theory-uniform-fields)
 # of a steel and an aluminum alloy, and checks them against the elastic bounds
 # and against the closed form of linear hardening.
 #

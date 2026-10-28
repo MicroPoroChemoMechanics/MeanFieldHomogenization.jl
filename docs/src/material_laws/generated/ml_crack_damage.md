@@ -2,7 +2,7 @@
 EditURL = "../../../../scripts/material_laws/15_crack_damage.jl"
 ```
 
-# [Damage by the growth of microcracks](@id mp-theory-crack-damage)
+# [Damage by the growth of microcracks](@id ml-theory-crack-damage)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/material_laws/15_crack_damage.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/material_laws/15_crack_damage.jl).
@@ -16,7 +16,7 @@ microcracks that the solid contains, the stiffness is the homogenized stiffness
 of the cracked solid, and the evolution follows from an energy balance on the
 cracks. The approach is that of [dormieuxKondo2016book](@citet), applied by
 [dormieuxKondoUlm2006damage](@citet) to fluid-saturated media.
-[The example below](@ref mp-ex-crack-damage) runs the law.
+[The example below](@ref ml-ex-crack-damage) runs the law.
 
 ## State and energy
 
@@ -167,9 +167,9 @@ not.
 | schemes | any linear scheme of the package that handles cracks |
 | softening | a softening law localizes in a structure; the response of a finite-element computation then depends on the mesh, which a point computation does not show |
 
-## [Example: damage by the growth of microcracks](@id mp-ex-crack-damage)
+## [Example: damage by the growth of microcracks](@id ml-ex-crack-damage)
 
-This example runs the [damage law derived from the microcracks](@ref mp-theory-crack-damage)
+This example runs the [damage law derived from the microcracks](@ref ml-theory-crack-damage)
 of a brittle solid. It compares a progressive damage with the unstable growth
 that Griffith's criterion gives, and it shows how a viscosity regularizes the
 latter.
@@ -181,7 +181,7 @@ penny-shaped microcracks of all orientations, of initial density
 ``d_0 = 0.05``. The stiffness of the cracked solid is the Mori–Tanaka one, as for
 a linear computation:
 
-````@example mp_crack_damage
+````@example ml_crack_damage
 using MeanFieldHomogenization, TensND, Plots
 
 k, μ = 30e3, 20e3                                                 # MPa
@@ -200,7 +200,7 @@ solid stays isotropic as the cracks grow.
 A first resistance increases with the density, as if the cracks met obstacles
 while they grow:
 
-````@example mp_crack_damage
+````@example ml_crack_damage
 rising(d) = 0.04 * (1 + 20 * (d - 0.05))                          # MPa
 progressive = CrackGrowthDamage(rve; resistance = rising)
 nothing #hide
@@ -215,7 +215,7 @@ nothing #hide
 The bar is pulled, unloaded to zero strain, then pulled further. Its lateral
 faces are free.
 
-````@example mp_crack_damage
+````@example ml_crack_damage
 ε_axial(t) = t < 0.5 ? 3e-3 * t / 0.5 : t < 0.7 ? 3e-3 * (0.7 - t) / 0.2 : 4e-3 * (t - 0.7) / 0.3
 r = point_response(progressive, LoadingPath(range(0, 1; length = 61); ε11 = ε_axial))
 
@@ -237,7 +237,7 @@ homogenization gives for the density reached.
 Griffith's resistance, for cracks of initial radius 1 mm and a toughness of
 20 J/m², decreases as the cracks grow:
 
-````@example mp_crack_damage
+````@example ml_crack_damage
 griffith = CrackGrowthResistance(; Gc = 0.02, a₀ = 1.0, d₀ = 0.05)   # N/mm, mm
 nothing #hide
 ````
@@ -247,7 +247,7 @@ rate-independent law cannot follow the jump from the density of the last step,
 so the growth is regularized by a time ``\tau``, compared here with the duration
 of the loading (one unit of time):
 
-````@example mp_crack_damage
+````@example ml_crack_damage
 path = LoadingPath(range(0, 1; length = 41); ε11 = t -> 2e-3 * t)
 p1 = plot(; xlabel = "axial strain (‰)", ylabel = "axial stress (MPa)", legend = :bottomright)
 p2 = plot(; xlabel = "axial strain (‰)", ylabel = "crack density d", legend = :topleft)
@@ -274,14 +274,14 @@ those that fail.
 the implicit-function theorem with the derivative of the stress, on a damaging
 step:
 
-````@example mp_crack_damage
+````@example ml_crack_damage
 check_material_interface(progressive; verbose = false)
 ````
 
 **Below the threshold, the law is the linear cracked solid.** Its tangent is
 then the Mori–Tanaka stiffness at the initial density:
 
-````@example mp_crack_damage
+````@example ml_crack_damage
 σ, 𝕂, _ = point_update(progressive, Mandel{Float64}(2e-4, -1e-4, 0, 1e-4, 0, 0), initial_state(progressive), 1.0)
 𝕂 ≈ KM(homogenize(rve, MoriTanaka(), :C))
 ````

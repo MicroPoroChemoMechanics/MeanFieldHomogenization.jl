@@ -1,4 +1,4 @@
-# # [Strength of a frictional matrix with a non-associated flow rule](@id mp-theory-frictional-strength)
+# # [Strength of a frictional matrix with a non-associated flow rule](@id ml-theory-frictional-strength)
 #
 # Soils, rocks, mortars and concretes have a strength that depends on the mean
 # stress, and their plastic flow is usually less dilatant than the normality rule
@@ -7,9 +7,9 @@
 # rule, around pores or rigid inclusions. The method is that of
 # [maghous2009](@citet), which extends to non-associated plasticity the
 # approach of [barthelemyDormieux2003](@citet) for a von Mises matrix
-# ([the strength of a porous plastic solid](@ref mp-theory-strength)). The
+# ([the strength of a porous plastic solid](@ref ml-theory-strength)). The
 # equation numbers below are those of the 2009 paper.
-# [The example below](@ref mp-ex-frictional-strength) runs it.
+# [The example below](@ref ml-ex-frictional-strength) runs it.
 #
 # ## The matrix
 #
@@ -70,7 +70,7 @@
 # ## The modified secant method
 #
 # The moduli and the prestress vary through the matrix with the local strain
-# rate. As in the [secant methods](@ref mp-theory-secant), the matrix is given
+# rate. As in the [secant methods](@ref ml-theory-secant), the matrix is given
 # uniform values, taken at effective strain rates: the square roots of the second
 # moments of ``d_v`` and ``d_d`` over the matrix, eq. (25),
 # ``d_v^e = \sqrt{\langle d_v^2\rangle_m}``, ``d_d^e = \sqrt{\langle d_d^2\rangle_m}``. The
@@ -141,7 +141,7 @@
 #
 # The tests of the package recover these closed forms from the general fixed
 # point, and the von Mises limit (``h \to \infty``, ``T \to 0`` with ``T h`` fixed, eq. (56))
-# from the [rigid–plastic secant composite](@ref mp-theory-strength).
+# from the [rigid–plastic secant composite](@ref ml-theory-strength).
 #
 # ## Numerical notes and scope
 #
@@ -154,11 +154,11 @@
 # | cost | about 40 µs per limit state for a two-phase Mori–Tanaka cell |
 # | scope | a matrix and one kind of heterogeneity, pores or rigid inclusions, any scheme and shape of the package; a single effective strain rate for the whole matrix, which, as the paper notes, underestimates the strength of a porous medium in compression near the porosity ``2T^2/3`` |
 #
-# ## [Example: porous and reinforced frictional solids](@id mp-ex-frictional-strength)
+# ## [Example: porous and reinforced frictional solids](@id ml-ex-frictional-strength)
 #
 # This example computes the macroscopic limit states of composites with a
 # Drucker–Prager matrix whose flow is less dilatant than the normality rule, by
-# the [method of Maghous, Dormieux and Barthélémy](@ref mp-theory-frictional-strength),
+# the [method of Maghous, Dormieux and Barthélémy](@ref ml-theory-frictional-strength),
 # and compares them with the closed forms of [maghous2009](@citet).
 #
 # ### A porous frictional solid
@@ -274,5 +274,5 @@ r
 #
 # - Any scheme of the package replaces Mori–Tanaka (`scheme = SelfConsistent()`),
 #   and any shape of heterogeneity, with no closed form to compare with.
-# - The [rigid–plastic secant composite](@ref mp-ex-strength) is the von Mises
+# - The [rigid–plastic secant composite](@ref ml-ex-strength) is the von Mises
 #   limit of this one, ``h \to \infty`` and ``T \to 0`` with ``T h`` fixed.

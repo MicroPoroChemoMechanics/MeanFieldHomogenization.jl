@@ -2,7 +2,7 @@
 EditURL = "../../../../scripts/material_laws/18_frictional_strength.jl"
 ```
 
-# [Strength of a frictional matrix with a non-associated flow rule](@id mp-theory-frictional-strength)
+# [Strength of a frictional matrix with a non-associated flow rule](@id ml-theory-frictional-strength)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/material_laws/18_frictional_strength.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/material_laws/18_frictional_strength.jl).
@@ -16,9 +16,9 @@ matrix obeys such a law, a Drucker–Prager criterion with a non-associated flow
 rule, around pores or rigid inclusions. The method is that of
 [maghous2009](@citet), which extends to non-associated plasticity the
 approach of [barthelemyDormieux2003](@citet) for a von Mises matrix
-([the strength of a porous plastic solid](@ref mp-theory-strength)). The
+([the strength of a porous plastic solid](@ref ml-theory-strength)). The
 equation numbers below are those of the 2009 paper.
-[The example below](@ref mp-ex-frictional-strength) runs it.
+[The example below](@ref ml-ex-frictional-strength) runs it.
 
 ## The matrix
 
@@ -79,7 +79,7 @@ not depend on this choice.
 ## The modified secant method
 
 The moduli and the prestress vary through the matrix with the local strain
-rate. As in the [secant methods](@ref mp-theory-secant), the matrix is given
+rate. As in the [secant methods](@ref ml-theory-secant), the matrix is given
 uniform values, taken at effective strain rates: the square roots of the second
 moments of ``d_v`` and ``d_d`` over the matrix, eq. (25),
 ``d_v^e = \sqrt{\langle d_v^2\rangle_m}``, ``d_d^e = \sqrt{\langle d_d^2\rangle_m}``. The
@@ -150,7 +150,7 @@ Mori–Tanaka scheme the paper finds the limit in closed form:
 
 The tests of the package recover these closed forms from the general fixed
 point, and the von Mises limit (``h \to \infty``, ``T \to 0`` with ``T h`` fixed, eq. (56))
-from the [rigid–plastic secant composite](@ref mp-theory-strength).
+from the [rigid–plastic secant composite](@ref ml-theory-strength).
 
 ## Numerical notes and scope
 
@@ -163,11 +163,11 @@ from the [rigid–plastic secant composite](@ref mp-theory-strength).
 | cost | about 40 µs per limit state for a two-phase Mori–Tanaka cell |
 | scope | a matrix and one kind of heterogeneity, pores or rigid inclusions, any scheme and shape of the package; a single effective strain rate for the whole matrix, which, as the paper notes, underestimates the strength of a porous medium in compression near the porosity ``2T^2/3`` |
 
-## [Example: porous and reinforced frictional solids](@id mp-ex-frictional-strength)
+## [Example: porous and reinforced frictional solids](@id ml-ex-frictional-strength)
 
 This example computes the macroscopic limit states of composites with a
 Drucker–Prager matrix whose flow is less dilatant than the normality rule, by
-the [method of Maghous, Dormieux and Barthélémy](@ref mp-theory-frictional-strength),
+the [method of Maghous, Dormieux and Barthélémy](@ref ml-theory-frictional-strength),
 and compares them with the closed forms of [maghous2009](@citet).
 
 ### A porous frictional solid
@@ -176,7 +176,7 @@ A solid with a tensile strength ``h = 1`` and a friction coefficient
 ``T = 0.3`` holds 15 % of spherical pores. Three dilatancy coefficients are
 compared, from the normality rule ``t = T`` to a nearly isochoric flow:
 
-````@example mp_frictional_strength
+````@example ml_frictional_strength
 using MeanFieldHomogenization, TensND, Plots
 
 φ, h, T = 0.15, 1.0, 0.3
@@ -199,7 +199,7 @@ Each direction of the strain rate, from compaction to expansion, gives a point
 of the boundary. Two regularizations and a Richardson extrapolation remove the
 first-order error in ``a``:
 
-````@example mp_frictional_strength
+````@example ml_frictional_strength
 𝟏 = Mandel{Float64}(1, 1, 1, 0, 0, 0)
 shear = Mandel{Float64}(1, -0.5, -0.5, 0, 0, 0)
 mean_dev(σ) = (m = sum(σ[1:3]) / 3; (m, sqrt(sum(abs2, σ - m * 𝟏))))
@@ -229,7 +229,7 @@ given stress does. With the normality rule, the strain rate is normal to the
 domain; with ``t < T``, it is normal to the plastic potential of eqs. (53) and
 (55), the same ellipse with ``T^2`` replaced by ``T t``:
 
-````@example mp_frictional_strength
+````@example ml_frictional_strength
 θs = range(-1.2, 1.2; length = 9)
 q = plot(Σm_line, [sqrt(max(-(A * x^2 + B * x + C) / Dd, 0)) for x in Σm_line]; lw = 2, color = :black,
     label = "", xlabel = "Σ_m / h", ylabel = "Σ_d / h", aspect_ratio = :equal)
@@ -259,7 +259,7 @@ that reach it follow the macroscopic flow rule ``D_v = t^{\mathrm{hom}} D_d``,
 eq. (39); the point on the cone depends on their distance to it, of the order
 of the regularization:
 
-````@example mp_frictional_strength
+````@example ml_frictional_strength
 t_hom(φ, t) = t * sqrt((1 + 1.5φ) / (1 - 2φ * t^2 / 3))
 T_hom(φ, t) = T * sqrt((1 + 1.5φ) * (1 - 2φ * t^2 / 3)) / (1 - 2φ * t * T / 3)
 function friction(φ, t; offset = 0.4)
@@ -291,7 +291,7 @@ of eq. (40).
 
 - Any scheme of the package replaces Mori–Tanaka (`scheme = SelfConsistent()`),
   and any shape of heterogeneity, with no closed form to compare with.
-- The [rigid–plastic secant composite](@ref mp-ex-strength) is the von Mises
+- The [rigid–plastic secant composite](@ref ml-ex-strength) is the von Mises
   limit of this one, ``h \to \infty`` and ``T \to 0`` with ``T h`` fixed.
 
 ---

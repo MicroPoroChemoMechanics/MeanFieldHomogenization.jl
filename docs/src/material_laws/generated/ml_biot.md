@@ -2,7 +2,7 @@
 EditURL = "../../../../scripts/material_laws/03_biot.jl"
 ```
 
-# [Drained and undrained poroelasticity](@id mp-ex-biot)
+# [Drained and undrained poroelasticity](@id ml-ex-biot)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/material_laws/03_biot.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/material_laws/03_biot.jl).
@@ -23,7 +23,7 @@ content ``\phi`` (see [`BiotPoroelasticity`](@ref)):
 
 ## Two tests, one law
 
-````@example mp_biot
+````@example ml_biot
 using MeanFieldHomogenization
 
 E, ν, b, M = 10e3, 0.25, 0.8, 5e3        # MPa; Biot coefficient and modulus
@@ -49,7 +49,7 @@ With the oedometric modulus ``M_{oed} = k + 4\mu/3`` and the strain
   ``\sigma_{11} = (M_{oed} + b^2 M)\,\varepsilon``: the trapped fluid stiffens the
   sample by ``b^2 M``.
 
-````@example mp_biot
+````@example ml_biot
 k, μ = E / (3(1 - 2ν)), E / (2(1 + ν))
 Moed, ε = k + 4μ / 3, -1e-3
 (drained[:σ11][end] - Moed * ε, drained[:φ][end] - b * ε,
@@ -64,7 +64,7 @@ the same contract with the same two fields. Its stiffness and its Biot
 parameters come from a homogenization of the rock and its fractures, and its
 fractures close under compression. The driver runs it along the same paths:
 
-````@example mp_biot
+````@example ml_biot
 using TensND
 C0 = TensISO{3}(3 * 30.0e3, 2 * 18.0e3)                 # intact rock, MPa
 rve = RVE()

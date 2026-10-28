@@ -1,4 +1,4 @@
-# [Material laws](@id mp-index)
+# [Material laws](@id ml-index)
 
 `MaterialLaws` is the part of MeanFieldHomogenization that deals with **one
 material point**: a constitutive law, linear or not, that may remember its
@@ -81,26 +81,26 @@ runs it: the blocks of a page, in order, form a script of
 | page | |
 |:--|:--|
 | **Common ground** | |
-| [Integrating a law over a step](@ref mp-theory) | the incremental problem, the consistent tangent by the implicit-function theorem, the potential route, exact derivatives |
+| [Integrating a law over a step](@ref ml-theory) | the incremental problem, the consistent tangent by the implicit-function theorem, the potential route, exact derivatives |
 | **Manual** | |
-| [Writing a law](@ref mp-writing) | the residual route, the potential route, internal variables, coupled fields |
-| [The laws shipped](@ref mp-laws) | the six laws, their equations, parameters and behavior along typical paths |
-| [Driving a point](@ref mp-driving) | loading paths, mixed control, reading the response |
-| [Plugging a law into a computation](@ref mp-plugging) | the Gauss-point contract, the flat interface for speed, differentiating with respect to parameters |
+| [Writing a law](@ref ml-writing) | the residual route, the potential route, internal variables, coupled fields |
+| [The laws shipped](@ref ml-laws) | the six laws, their equations, parameters and behavior along typical paths |
+| [Driving a point](@ref ml-driving) | loading paths, mixed control, reading the response |
+| [Plugging a law into a computation](@ref ml-plugging) | the Gauss-point contract, the flat interface for speed, differentiating with respect to parameters |
 | **Laws** | |
-| [Elastoplastic bar under cycles](@ref mp-ex-plasticity) | J2 plasticity against the closed form, isotropic and kinematic hardening |
-| [A damage law written from scratch](@ref mp-ex-damage) | a law of your own, with a threshold and an evolving internal variable |
-| [Drained and undrained poroelasticity](@ref mp-ex-biot) | a coupled law, the same sample in two tests |
+| [Elastoplastic bar under cycles](@ref ml-ex-plasticity) | J2 plasticity against the closed form, isotropic and kinematic hardening |
+| [A damage law written from scratch](@ref ml-ex-damage) | a law of your own, with a threshold and an evolving internal variable |
+| [Drained and undrained poroelasticity](@ref ml-ex-biot) | a coupled law, the same sample in two tests |
 | **Homogenized laws** | |
-| [Secant methods](@ref mp-theory-secant) | the linear comparison composite, the classical and the modified secant methods; two power-law phases against the Voigt bound |
-| [Uniform fields: Voigt–Taylor and Reuss–Sachs](@ref mp-theory-uniform-fields) | every phase at the macroscopic strain or at the macroscopic stress, for any phase laws; a steel and an alloy |
-| [Polycrystals](@ref mp-theory-polycrystals) | grains of single crystals under the Taylor model; the Taylor factor of a random FCC aggregate |
-| [The incremental tangent approach](@ref mp-theory-incremental-tangent) | phases with a history linearized by their tangents at each step, isotropic projection; a particle-reinforced alloy |
-| [The affine formulation](@ref mp-theory-affine) | phases replaced by their tangents and prestresses at their average strains, Levin's theorem, exact for laminates; against the secant estimates |
-| [Damage by the growth of microcracks](@ref mp-theory-crack-damage) | crack densities as internal variables, Griffith's resistance, stability and viscous regularization |
-| [Nonlinear poroelasticity of a cracked rock](@ref mp-theory-closing-cracks) | cracks closing under the Terzaghi effective stress, stress-dependent stiffness and Biot tensor |
-| [The strength of a porous plastic solid](@ref mp-theory-strength) | the rigid–plastic limit of the secant method, a strength domain from a phase law, normality |
-| [Strength of a frictional matrix](@ref mp-theory-frictional-strength) | a Drucker–Prager matrix with a non-associated flow rule, limit states around pores or rigid inclusions |
+| [Secant methods](@ref ml-theory-secant) | the linear comparison composite, the classical and the modified secant methods; two power-law phases against the Voigt bound |
+| [Uniform fields: Voigt–Taylor and Reuss–Sachs](@ref ml-theory-uniform-fields) | every phase at the macroscopic strain or at the macroscopic stress, for any phase laws; a steel and an alloy |
+| [Polycrystals](@ref ml-theory-polycrystals) | grains of single crystals under the Taylor model; the Taylor factor of a random FCC aggregate |
+| [The incremental tangent approach](@ref ml-theory-incremental-tangent) | phases with a history linearized by their tangents at each step, isotropic projection; a particle-reinforced alloy |
+| [The affine formulation](@ref ml-theory-affine) | phases replaced by their tangents and prestresses at their average strains, Levin's theorem, exact for laminates; against the secant estimates |
+| [Damage by the growth of microcracks](@ref ml-theory-crack-damage) | crack densities as internal variables, Griffith's resistance, stability and viscous regularization |
+| [Nonlinear poroelasticity of a cracked rock](@ref ml-theory-closing-cracks) | cracks closing under the Terzaghi effective stress, stress-dependent stiffness and Biot tensor |
+| [The strength of a porous plastic solid](@ref ml-theory-strength) | the rigid–plastic limit of the secant method, a strength domain from a phase law, normality |
+| [Strength of a frictional matrix](@ref ml-theory-frictional-strength) | a Drucker–Prager matrix with a non-associated flow rule, limit states around pores or rigid inclusions |
 
 !!! note "Small strain"
     The laws are written in infinitesimal strain. The kinematics is a trait of

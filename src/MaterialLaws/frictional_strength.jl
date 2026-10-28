@@ -77,7 +77,7 @@ rate: the limit states are the limits
 
 [`limit_stress`](@ref) gives the macroscopic limit stress state reached under a
 macroscopic strain rate. The method and its limits are in
-[the theory page](@ref mp-theory-frictional-strength).
+[the theory page](@ref ml-theory-frictional-strength).
 """
 struct FrictionalComposite{R, S, H <: Heterogeneities, T, N, E <: Number}
     rve::R
@@ -182,7 +182,7 @@ the direction of `D` only. For [`Pores`](@ref) every direction gives a point of
 the boundary of the strength domain. For [`RigidInclusions`](@ref) the limit
 states form a cone whose points share one flow direction: `D` must satisfy the
 macroscopic flow rule to within the regularization, its distance to it setting
-the point on the cone (see [the example](@ref mp-ex-frictional-strength)); a
+the point on the cone (see [the example](@ref ml-ex-frictional-strength)); a
 strain rate that admits no limit state is refused (an `ArgumentError`, or a
 [`LocalIntegrationError`](@ref) when the iteration finds no fixed point at
 all).

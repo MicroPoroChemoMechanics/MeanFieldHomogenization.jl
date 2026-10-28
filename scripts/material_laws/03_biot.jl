@@ -1,4 +1,4 @@
-# # [Drained and undrained poroelasticity](@id mp-ex-biot)
+# # [Drained and undrained poroelasticity](@id ml-ex-biot)
 #
 # A saturated porous sample is compressed in an oedometer twice: once with its
 # fluid free to leave (**drained**), once with the fluid trapped (**undrained**).

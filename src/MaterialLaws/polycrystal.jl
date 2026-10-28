@@ -38,7 +38,7 @@ grains and matrix sharing the isotropic elasticity (`E`, `ν`)
 [kroner1961](@cite). Eshelby's solution gives the interaction law
 ``\\boldsymbol{\\sigma}_g = \\boldsymbol{\\Sigma} + 2\\mu(1-\\beta)(\\boldsymbol{E}^p - \\boldsymbol{\\varepsilon}^p_g)``
 for deviatoric plastic strains, ``\\beta = 2(4-5\\nu)/(15(1-\\nu))``. See
-[the theory page](@ref mp-theory-polycrystals).
+[the theory page](@ref ml-theory-polycrystals).
 """
 struct KronerModel{T <: Real} <: PolycrystalModel
     k::T
@@ -57,7 +57,7 @@ accommodation factor ``\\alpha \\in (0, 1]``:
 ``\\boldsymbol{\\sigma}_g = \\boldsymbol{\\Sigma} + 2\\alpha\\mu(1-\\beta)(\\boldsymbol{E}^p - \\boldsymbol{\\varepsilon}^p_g)``.
 Out of proportional loading, ``h`` is read as the ratio of the norms of
 ``\\boldsymbol{E}^p`` and ``\\boldsymbol{S}``. See
-[the theory page](@ref mp-theory-polycrystals).
+[the theory page](@ref ml-theory-polycrystals).
 """
 struct BerveillerZaouiModel{T <: Real} <: PolycrystalModel
     k::T
@@ -85,7 +85,7 @@ same law with different orientations, typically a [`CrystalViscoplasticity`](@re
 per grain), with the volume `weights` (equal by default), sharing the macroscopic
 fields as `model` says. It runs in [`point_response`](@ref) and in the
 finite-element coupling like a law; its state holds the state of every grain.
-See [the theory page](@ref mp-theory-polycrystals).
+See [the theory page](@ref ml-theory-polycrystals).
 """
 struct Polycrystal{L <: AbstractPointLaw, W <: Real, M <: PolycrystalModel} <: AbstractMFHMaterial
     grains::Vector{L}

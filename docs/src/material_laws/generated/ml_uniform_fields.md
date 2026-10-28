@@ -2,7 +2,7 @@
 EditURL = "../../../../scripts/material_laws/11_uniform_fields.jl"
 ```
 
-# [Uniform fields: Voigt–Taylor and Reuss–Sachs](@id mp-theory-uniform-fields)
+# [Uniform fields: Voigt–Taylor and Reuss–Sachs](@id ml-theory-uniform-fields)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/material_laws/11_uniform_fields.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/material_laws/11_uniform_fields.jl).
@@ -15,10 +15,10 @@ macroscopic stress. They ignore the shapes and the arrangement of the phases.
 For linear elastic phases they are the bounds of [voigt1889](@citet) and
 [reuss1929](@citet), between which every estimate of the effective stiffness
 lies [hill1952](@cite). For plastic phases they are the models of Taylor and
-of Sachs, the extremes of the [polycrystal models](@ref mp-theory-polycrystals).
+of Sachs, the extremes of the [polycrystal models](@ref ml-theory-polycrystals).
 This page states them for any law of `MaterialLaws`; the
-[secant methods](@ref mp-theory-secant) and the polycrystal interactions sit in
-between. [The example below](@ref mp-ex-uniform-fields) runs them.
+[secant methods](@ref ml-theory-secant) and the polycrystal interactions sit in
+between. [The example below](@ref ml-ex-uniform-fields) runs them.
 
 ## Uniform strain
 
@@ -79,15 +79,15 @@ with several fields, provided the phases share their fields.
 | strongly nonlinear phases | inverting a phase law (a power law of small exponent) is ill-conditioned: the driver cuts the steps that fail |
 | no finite tangent | a phase without a finite tangent at the current strain (a power law at zero strain) makes the tangent of the composite undefined there (`NaN`), not the update |
 
-## [Example: two elastoplastic phases](@id mp-ex-uniform-fields)
+## [Example: two elastoplastic phases](@id ml-ex-uniform-fields)
 
-This example builds the two [uniform-field composites](@ref mp-theory-uniform-fields)
+This example builds the two [uniform-field composites](@ref ml-theory-uniform-fields)
 of a steel and an aluminum alloy, and checks them against the elastic bounds
 and against the closed form of linear hardening.
 
 ### The phases
 
-````@example mp_uniform_fields
+````@example ml_uniform_fields
 using MeanFieldHomogenization, Plots
 
 steel = J2Plasticity(; E = 200e3, ν = 0.3, σ₀ = 250.0, H = 10e3)     # MPa
@@ -106,7 +106,7 @@ nothing #hide
 
 ### A tensile test
 
-````@example mp_uniform_fields
+````@example ml_uniform_fields
 path = LoadingPath(range(0, 1; length = 41); ε11 = t -> 6e-3 * t)
 rT, rS = point_response(taylor, path), point_response(sachs, path)
 p = plot(rT[:ε11] * 1e3, rT[:σ11]; lw = 2, label = "uniform strain (Taylor)",
@@ -120,7 +120,7 @@ yields first and takes most of the strain, which the composite shows as an
 earlier and lower plastic branch. The internal variables of each phase are read
 by name:
 
-````@example mp_uniform_fields
+````@example ml_uniform_fields
 (alloy_p_taylor = rT[:A_p][end], alloy_p_sachs = rS[:A_p][end], alloy_strain_sachs = rS[:A_ε11][end])
 ````
 
@@ -131,7 +131,7 @@ in uniaxial stress ``\sigma``, and its axial strain is
 ``\sigma/E + \langle\sigma - \sigma_0\rangle/H``. The macroscopic strain is
 their average:
 
-````@example mp_uniform_fields
+````@example ml_uniform_fields
 axial(σ, E, σ₀, H) = σ / E + max(σ - σ₀, 0) / H
 expected = [0.3 * axial(σ, 200e3, 250.0, 10e3) + 0.7 * axial(σ, 70e3, 150.0, 2e3) for σ in rS[:σ11]]
 maximum(abs, expected - rS[:ε11])
@@ -140,7 +140,7 @@ maximum(abs, expected - rS[:ε11])
 **The elastic bounds.** In the elastic range the tangents of the two composites
 are the Voigt and Reuss stiffnesses of the package:
 
-````@example mp_uniform_fields
+````@example ml_uniform_fields
 using TensND, StaticArrays
 rve = RVE()
 add_phase!(rve, :S, Ellipsoid(1.0), Dict(:C => iso_stiffness_young_poisson(200e3, 0.3)); fraction = 0.3)

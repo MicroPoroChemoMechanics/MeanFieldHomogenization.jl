@@ -1,4 +1,4 @@
-# # [Homogenizing nonlinear phases: secant methods](@id mp-theory-secant)
+# # [Homogenizing nonlinear phases: secant methods](@id ml-theory-secant)
 #
 # The laws of this chapter so far describe one material. This page turns to a
 # composite whose phases are each described by such a law, and asks for the law
@@ -8,7 +8,7 @@
 # fractions and their shapes. When a phase is nonlinear, its stiffness changes
 # from point to point with the local strain, and no scheme applies as it stands.
 # The secant methods bring the problem back to a sequence of linear ones. This
-# page derives them; [the example below](@ref mp-ex-composite) runs them.
+# page derives them; [the example below](@ref ml-ex-composite) runs them.
 #
 # ## The phases
 #
@@ -158,7 +158,7 @@
 #     comparison composite the modified effective strain is therefore at least
 #     the classical one. A phase whose secant modulus decreases with the strain
 #     (``m < 1``) is then softer under the modified method, and the composite is
-#     expected to be softer as well, which [the example below](@ref mp-ex-composite)
+#     expected to be softer as well, which [the example below](@ref ml-ex-composite)
 #     shows.
 #
 # The modified method has a further standing. For phases whose energy is a
@@ -179,7 +179,7 @@
 # = \bar\varepsilon_i - \mathcal{M}_i\big(\boldsymbol{E};\ \bar\varepsilon_1, \ldots, \bar\varepsilon_n\big) = 0,
 # ```
 #
-# it has exactly the form of the [local problem of a law](@ref mp-theory): the
+# it has exactly the form of the [local problem of a law](@ref ml-theory): the
 # effective strains play the role of the internal variables, the macroscopic
 # strain that of the gradient, and the macroscopic stress that of the flux.
 # [`NonlinearHomogenized`](@ref) builds that law. Everything the chapter says
@@ -207,12 +207,12 @@
 # | phases | isotropic, laws of the strain alone (nonlinear elasticity, deformation theory); a phase without a law keeps its linear stiffness |
 # | schemes | any linear scheme of the package, with its own assumptions on the microstructure |
 # | effective strain | one per nonlinear phase: the deviatoric response is secant, the bulk response is read at the same strain size |
-# | not covered | phases with internal variables (plasticity by increments, viscosity), for which the [incremental approach](@ref mp-theory-incremental-tangent) is needed; for phases without, the [affine formulation](@ref mp-theory-affine) linearizes by the tangent instead of the secant |
+# | not covered | phases with internal variables (plasticity by increments, viscosity), for which the [incremental approach](@ref ml-theory-incremental-tangent) is needed; for phases without, the [affine formulation](@ref ml-theory-affine) linearizes by the tangent instead of the secant |
 #
-# ## [Example: a composite of nonlinear phases](@id mp-ex-composite)
+# ## [Example: a composite of nonlinear phases](@id ml-ex-composite)
 #
 # This example computes the response of a composite whose two phases follow
-# nonlinear laws. It compares the [two secant methods](@ref mp-theory-secant)
+# nonlinear laws. It compares the [two secant methods](@ref ml-theory-secant)
 # with each other and with a bound. The theory page explains each step. This page
 # shows how each one is done, and checks the result where a check is available.
 #

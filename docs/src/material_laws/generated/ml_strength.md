@@ -2,7 +2,7 @@
 EditURL = "../../../../scripts/material_laws/17_strength.jl"
 ```
 
-# [The strength of a porous plastic solid](@id mp-theory-strength)
+# [The strength of a porous plastic solid](@id ml-theory-strength)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/material_laws/17_strength.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/material_laws/17_strength.jl).
@@ -13,10 +13,10 @@ A porous solid whose solid phase obeys a von Mises criterion has a macroscopic
 strength domain: the set of macroscopic stresses it can carry. The tutorial
 [From derivatives to a strength criterion](@ref tut-strength-criteria) builds
 that domain from the derivatives of the linear effective moduli. This page shows
-that the same domain is what the [secant homogenization](@ref mp-theory-secant)
+that the same domain is what the [secant homogenization](@ref ml-theory-secant)
 of [`NonlinearHomogenized`](@ref) gives, when the solid is a
 rigid–perfectly plastic phase law. The approach is that of
-[barthelemyDormieux2003](@citet); [the example below](@ref mp-ex-strength) runs it.
+[barthelemyDormieux2003](@citet); [the example below](@ref ml-ex-strength) runs it.
 
 ## The solid as a phase law
 
@@ -110,10 +110,10 @@ the normality on the ellipse.
 | iterative schemes | with a self-consistent scheme, the tolerance of the local Newton iteration must also stay above that of the scheme's own fixed point |
 | scope | a von Mises solid. A frictional (Drucker–Prager) solid also needs the second moment of the mean strain, as in [maghous2009](@citet); it is not covered |
 
-## [Example: the strength of a porous plastic solid](@id mp-ex-strength)
+## [Example: the strength of a porous plastic solid](@id ml-ex-strength)
 
 This example obtains the macroscopic strength domain of a porous solid by
-running the [secant homogenization](@ref mp-theory-strength) of a phase law. It
+running the [secant homogenization](@ref ml-theory-strength) of a phase law. It
 compares the result with the closed-form ellipse of Mori–Tanaka and with the
 construction of the tutorial [From derivatives to a strength criterion](@ref tut-strength-criteria).
 
@@ -123,7 +123,7 @@ The solid fills 85 % of the volume; the pores are spheres. The solid bounds the
 norm of its stress deviator by ``\sigma_o``, its strength in units of which every
 stress below is given:
 
-````@example mp_strength
+````@example ml_strength
 using MeanFieldHomogenization, TensND, Plots
 
 φ, σo = 0.15, 1.0
@@ -147,7 +147,7 @@ Under a deviatoric macroscopic strain, a hardening solid (``m > 0``) makes the
 composite harden, and the rigid–plastic solid (``m = 0``) makes it flow at a
 constant stress:
 
-````@example mp_strength
+````@example ml_strength
 dev = LoadingPath(range(0, 1; length = 21); ε11 = t -> 2.0 * t, ε22 = t -> -t, ε33 = t -> -t,
     ε23 = 0, ε13 = 0, ε12 = 0)
 p = plot(; xlabel = "macroscopic strain E₁₁", ylabel = "Σ_d / σo", legend = :bottomright)
@@ -164,14 +164,14 @@ only the direction of the strain matters, not its size. The tolerance of the
 local Newton iteration is looser than the default: as the strain grows, the
 secant shear modulus of the solid falls against its bulk modulus, and the
 fixed point loses accuracy in proportion (see the
-[numerical notes](@ref mp-theory-strength)).
+[numerical notes](@ref ml-theory-strength)).
 
 ### The strength domain
 
 Each direction of the macroscopic strain, from pure expansion to pure
 contraction through pure shear, gives a point of the boundary of the domain:
 
-````@example mp_strength
+````@example ml_strength
 𝟏 = Mandel{Float64}(1, 1, 1, 0, 0, 0)
 shear = Mandel{Float64}(1, -0.5, -0.5, 0, 0, 0)
 mean_dev(σ) = (m = sum(σ[1:3]) / 3; (m, sqrt(sum(abs2, σ - m * 𝟏))))
@@ -201,7 +201,7 @@ self-consistent scheme, the domain shrinks sharply. The construction of the
 tutorial, from the derivatives of the linear moduli, gives the ellipse to
 compare with:
 
-````@example mp_strength
+````@example ml_strength
 ω = 0.1
 scheme = SelfConsistent(; abstol = 1e-12, maxiters = 500)
 function grains(μ_s::T) where {T}

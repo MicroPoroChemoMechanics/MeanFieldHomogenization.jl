@@ -86,7 +86,7 @@ densities, named after the families: its consistent tangent includes the growth
 of the cracks, and it runs in [`point_response`](@ref) and in a finite-element
 computation like any other law. The cracks stay open (no unilateral contact).
 The approach is that of [dormieuxKondo2016book](@citet); the derivation is in
-[the theory page](@ref mp-theory-crack-damage).
+[the theory page](@ref ml-theory-crack-damage).
 """
 function CrackGrowthDamage(
         rve::Schemes.RVE; scheme = Schemes.MoriTanaka(), resistance, τ = nothing, families = nothing,

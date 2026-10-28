@@ -1,4 +1,4 @@
-# [Plugging a law into a computation](@id mp-plugging)
+# [Plugging a law into a computation](@id ml-plugging)
 
 A law of `MaterialLaws` is an [`AbstractMFHMaterial`](@ref): it answers the
 same Gauss-point contract as a homogenized material, so every caller of that
@@ -70,7 +70,7 @@ maximum(abs, σ_tight - σ)
 
 Every number may be a `ForwardDiff.Dual`. Building the law with dual parameters
 differentiates its response, exactly (see the
-[theory](@ref mp-theory)): the internal variables are solved on the values,
+[theory](@ref ml-theory)): the internal variables are solved on the values,
 then their derivatives come from the implicit-function theorem.
 
 ```@example mp_plugging

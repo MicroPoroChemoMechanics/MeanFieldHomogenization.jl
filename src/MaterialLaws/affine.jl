@@ -40,7 +40,7 @@ in general, replace the stiffnesses the cell declares; `options` go to the
 computation of the concentration tensors (`reltol` of the Hill tensors of an
 anisotropic medium, for instance). The internal variable is the average strain
 of the first phase (`M_ε`, after its name). See
-[the theory page](@ref mp-theory-affine).
+[the theory page](@ref ml-theory-affine).
 """
 struct AffineComposite{P <: Tuple, F <: Tuple, Q <: NamedTuple, L <: NamedTuple, G <: NamedTuple, FL <: NamedTuple, Y} <: AbstractPhaseComposite
     name::Symbol

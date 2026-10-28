@@ -1,4 +1,4 @@
-# # [Elastoplastic bar under cycles](@id mp-ex-plasticity)
+# # [Elastoplastic bar under cycles](@id ml-ex-plasticity)
 #
 # A steel bar is pulled, pushed back and pulled again. With von Mises plasticity
 # the response depends on how the yield surface hardens: it grows
