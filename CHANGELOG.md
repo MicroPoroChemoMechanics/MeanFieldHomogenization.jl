@@ -1,5 +1,122 @@
 # Changelog
 
+## v0.23.0 — models of nonlinear composites and polycrystals
+
+0.22.0 derived nonlinear laws from the microstructure by the secant method.
+This release adds the other classical routes of nonlinear homogenization, each
+as a law of `MaterialLaws` that runs in `point_response` and in the
+finite-element coupling: the bounds of uniform strain and uniform stress, the
+incremental tangent approach of Hill for phases with a history, the affine
+formulation of Masson et al., polycrystals under the Taylor, Kröner and
+Berveiller–Zaoui models, the tangent self-consistent model of Molinari et al.
+for viscoplastic polycrystals, and the strength of a frictional matrix with a
+non-associated flow rule. The module is renamed `MaterialLaws` (see *Breaking
+changes*); nothing that existed computes differently, except a local Newton
+iteration that used to accept a runaway (see *Changed*). The
+version is minor: below 1.0, Julia's resolver treats it as breaking, so a
+dependent bounded at `MeanFieldHomogenization = "0.22"` widens its bound.
+
+### Breaking changes
+
+- The module `MaterialPoints` (0.21, 0.22) is renamed `MaterialLaws`, and its
+  chapter *Material laws*: it holds linear laws as well as nonlinear ones, and
+  laws written as homogenized models, while the Gauss-point contract they obey
+  keeps its name, `Constitutive`. The exported names are unchanged; only code
+  that names the module (`MeanFieldHomogenization.MaterialPoints`) changes.
+
+### Added
+
+- `FrictionalComposite` and `limit_stress`: the macroscopic limit stress states
+  of a composite whose matrix obeys a Drucker–Prager criterion with a
+  non-associated flow rule (`DruckerPrager`, of friction `T` and dilatancy
+  `t ≤ T`), around pores (`Pores`) or rigid inclusions (`RigidInclusions`), by
+  the modified secant method of Maghous, Dormieux and Barthélémy (2009). The
+  plastic matrix is the limit of a viscous one with an isotropic prestress;
+  the effective strain rates of the matrix are the roots of their second
+  moments, from the derivatives of the effective potential of the comparison
+  composite by automatic differentiation, on any linear scheme. The limit
+  states and the flow rules of the paper for spherical heterogeneities (the
+  elliptic domain of a porous medium, independent of `t`; the friction cone
+  of a reinforced matrix) are recovered at first order in the regularization.
+- `UniformStrain` and `UniformStress`: the composites of any phase laws with a
+  uniform strain (Voigt, Taylor) or a uniform stress (Reuss, Sachs), the
+  phases keeping their internal variables; the consistent tangent of the
+  composite comes from the implicit-function theorem.
+- `Polycrystal` with `TaylorModel`: an aggregate of many grains under a
+  uniform strain, every grain integrated on its own (hundreds of grains);
+  `random_orientations` draws a random texture uniformly over the rotations.
+  The Taylor factor of a random FCC aggregate (about 3.06, Bishop and Hill) is
+  recovered.
+- `IncrementalTangent`: the incremental tangent approach (Hill 1965) for phases
+  with a history: at each step every phase is linearized by its consistent
+  tangent at the end of the step, projected on the isotropic tensors (as
+  Doghri and Ouaar 2003), and a linear scheme concentrates the strain
+  increment; the fixed point is solved with the phase laws, and the tangent of
+  the composite comes from the implicit-function theorem. Elastic phases give
+  the linear estimate exactly.
+- `AffineComposite`: the affine formulation (Masson, Bornert, Suquet and Zaoui
+  2000) for two phases of nonlinear elastic or viscous laws: each phase is
+  replaced by its tangent and prestress at its average strain, and Levin's
+  theorem gives the average strains of the thermoelastic comparison composite
+  on any linear scheme, with the anisotropic tangents. Exact for laminates;
+  between the classical and the modified secant estimates for power-law
+  composites, and sensitive to the third invariant of the loading, which the
+  secant estimates are not.
+- `KronerModel` and `BerveillerZaouiModel` for `Polycrystal`: every grain a
+  spherical inclusion in a matrix that stands for the others, elastic (Kröner
+  1961) or with the secant elastoplastic stiffness of Berveiller and Zaoui
+  (1978), whose plastic accommodation factor tempers the interaction. Written
+  in strains for grains of any law, the plastic strain of a grain being what
+  its stress leaves of its strain; the grains are coupled through the average
+  plastic strain only, solved with the strains of the grains by
+  SimpleNonlinearSolve's trust-region method, and the consistent tangent comes
+  from the implicit-function theorem. The interaction laws of both papers are
+  recovered grain by grain.
+- `ViscoplasticPolycrystal`, `PowerLawCrystal` and `flow_stress`: the steady
+  flow of rigid–viscoplastic power-law crystals under the Taylor model or the
+  tangent self-consistent model of Molinari, Canova and Ahzi (1987,
+  `TangentModel`, isotropic matrix of the tangent viscosity). Exact for
+  linear grains against the linear self-consistent solution, between the
+  Sachs and Taylor estimates, and tending to Sachs as the exponent grows, as
+  Lebensohn and Tomé (1993) found; homogeneous of degree 1/n in the strain
+  rate, with exact ForwardDiff derivatives.
+
+### Changed
+
+- **New dependency: SimpleNonlinearSolve** (SciML), for the coupled root
+  problems of the polycrystal models, by its trust-region method; a trial
+  point where the law of a grain fails is rejected and the trust radius
+  shrunk. The inversion of a viscoplastic grain, a strictly convex
+  minimization whose Hessian becomes nearly singular for large exponents,
+  uses Newton's method with Armijo's line search.
+- The Newton solve with exact derivatives of `MaterialLaws` is shared by the
+  laws and the strength computations (no change in what a law computes).
+- The local Newton iteration returns an exact root at once; a non-finite
+  Jacobian, or local equations singular at the root, fail the step (a
+  `LocalIntegrationError`, which the driver cuts) instead of an error of the
+  linear solve; where a phase law has no finite tangent the tangent of the
+  step is returned undefined (`NaN`).
+- **The local Newton iteration no longer accepts a runaway.** Its convergence,
+  judged on the size of the correction relative to the iterate, accepted an
+  iterate that had diverged (a crystal pushed in one long step: internal
+  variables of 10¹⁴, stresses of 10¹³), since the correction is then small
+  against the iterate itself. An iterate is now accepted only if its residual
+  has not grown since the start of the step, or if its correction is small at
+  the scale of the starting state; a runaway fails the step, which the driver
+  cuts.
+
+### Documentation
+
+- The chapter *Material laws* (formerly *Material points: nonlinear laws*) is
+  rewritten as one page per law or model, theory and code together: each page
+  is generated by Literate.jl from a script of `scripts/material_laws/` that
+  also runs on its own. New pages: secant methods, uniform fields, polycrystals
+  (Taylor, Kröner, Berveiller–Zaoui, and the tangent model in steady flow),
+  the incremental tangent approach, the affine formulation, and the strength
+  of a frictional matrix; the existing ones (plasticity, damage, poroelasticity,
+  crack growth, closing cracks, strength of a porous solid) merged with their
+  theory.
+
 ## v0.22.0 — nonlinear laws derived from the microstructure
 
 The laws of `MaterialPoints` so far were phenomenological, or a composite of

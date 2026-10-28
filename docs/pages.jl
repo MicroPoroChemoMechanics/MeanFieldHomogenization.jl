@@ -270,32 +270,33 @@ pages = [
         "tools/echoes2mfh.md",
         "tools/mfhstudio.md",
     ],
-    # Nonlinear laws at one material point: written, integrated, driven along a
+    # Material laws at one material point: written, integrated, driven along a
     # path, and plugged into any caller of the Gauss-point contract. Before the
     # finite-element coupling, whose element loops call these laws.
-    "Material points: nonlinear laws" => [
-        "material_points/index.md",
-        "Theory" => [
-            "material_points/theory.md",
-            "material_points/theory_secant.md",
-            "material_points/theory_crack_damage.md",
-            "material_points/theory_closing_cracks.md",
-            "material_points/theory_strength.md",
-        ],
+    "Material laws" => [
+        "material_laws/index.md",
+        "material_laws/theory.md",
         "Manual" => [
-            "material_points/writing.md",
-            "material_points/laws.md",
-            "material_points/driving.md",
-            "material_points/plugging.md",
+            "material_laws/writing.md",
+            "material_laws/laws.md",
+            "material_laws/driving.md",
+            "material_laws/plugging.md",
         ],
-        "Examples" => [
-            "material_points/ex_plasticity.md",
-            "material_points/ex_damage.md",
-            "material_points/ex_biot.md",
-            "material_points/ex_composite.md",
-            "material_points/ex_crack_damage.md",
-            "material_points/ex_closing_cracks.md",
-            "material_points/ex_strength.md",
+        "Laws" => [
+            "material_laws/generated/ml_plasticity.md",
+            "material_laws/generated/ml_damage.md",
+            "material_laws/generated/ml_biot.md",
+        ],
+        "Homogenized laws" => [
+            "material_laws/generated/ml_secant.md",
+            "material_laws/generated/ml_uniform_fields.md",
+            "material_laws/generated/ml_polycrystals.md",
+            "material_laws/generated/ml_incremental_tangent.md",
+            "material_laws/generated/ml_affine.md",
+            "material_laws/generated/ml_crack_damage.md",
+            "material_laws/generated/ml_closing_cracks.md",
+            "material_laws/generated/ml_strength.md",
+            "material_laws/generated/ml_frictional_strength.md",
         ],
     ],
     # MeanFieldHomogenization *inside* a finite-element code — the exact
@@ -351,7 +352,7 @@ pages = [
         "api/schemes.md",
         "api/poromechanics.md",
         "api/constitutive.md",
-        "api/material_points.md",
+        "api/material_laws.md",
         "api/assemblies.md",
         "api/viscoelasticity.md",
         "api/laplace_carson.md",

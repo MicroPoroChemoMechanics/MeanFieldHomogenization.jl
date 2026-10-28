@@ -20,7 +20,7 @@ law = J2Plasticity(; E = 200e3, ν = 0.3, σ₀)
 ```
 
 Any material of the Gauss-point contract fits here: a law of
-[`MaterialPoints`](@ref mp-index), written by you or shipped, or a homogenized
+[`MaterialLaws`](@ref ml-index), written by you or shipped, or a homogenized
 material such as [`HomogenizedElastic`](@ref). The rest of the script does not
 change.
 

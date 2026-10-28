@@ -2,7 +2,7 @@
     MeanFieldHomogenizationFerriteMaterialExt
 
 Ferrite glue for **MeanFieldHomogenization as a Gauss-point constitutive law** —
-the Ferrite methods of the coupling of `MaterialPoints` (`material_element!`,
+the Ferrite methods of the coupling of `MaterialLaws` (`material_element!`,
 `material_system`, `write_material_vtk`), and `mfh_states`, `mfh_element!`,
 `mfh_poro_element!`, `annulus_grid`, `cylinder_sector_grid`.
 
@@ -26,6 +26,6 @@ using Tensors
 using LinearAlgebra
 
 include("material_backend.jl")
-include("material_points.jl")
+include("material_laws.jl")
 
 end # module

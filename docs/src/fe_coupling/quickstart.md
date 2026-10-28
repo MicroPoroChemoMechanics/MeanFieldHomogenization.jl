@@ -3,7 +3,7 @@
 The whole path from a law to a structural computation, in one script: a thick
 tube of an elastoplastic steel, inflated by an internal pressure until it
 almost collapses. The law is a [`J2Plasticity`](@ref) of
-[`MaterialPoints`](@ref mp-index); the mesh, the assembly and the boundary
+[`MaterialLaws`](@ref ml-index); the mesh, the assembly and the boundary
 conditions are Ferrite's; MeanFieldHomogenization provides the element, the
 global Newton iteration and the output. [Step by step](@ref fe-step-by-step)
 explains every line.
