@@ -94,10 +94,17 @@ AffineComposite
 ```@docs
 PolycrystalModel
 TaylorModel
+KronerModel
+BerveillerZaouiModel
+TangentModel
 Polycrystal
 PolycrystalState
 grain_states
 random_orientations
+PowerLawCrystal
+crystal_strain_rate
+ViscoplasticPolycrystal
+flow_stress
 ```
 
 ## Strength of a frictional matrix

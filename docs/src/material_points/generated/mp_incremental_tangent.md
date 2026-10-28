@@ -1,4 +1,13 @@
+```@meta
+EditURL = "../../../../scripts/material_points/13_incremental_tangent.jl"
+```
+
 # [The incremental tangent approach](@id mp-theory-incremental-tangent)
+
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/material_points/13_incremental_tangent.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/material_points/13_incremental_tangent.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/material_points/13_incremental_tangent.jl`, runs it end to end.
 
 The [secant methods](@ref mp-theory-secant) need phases whose stress is a
 function of the strain alone. A plastic phase has a history: its stress depends
@@ -9,7 +18,7 @@ tangent stiffness, and a linear scheme concentrates the increment of the
 macroscopic strain in the phases. It applies to any phase law of
 `MaterialPoints`, plasticity, viscosity or damage, and stands between the two
 [uniform-field composites](@ref mp-theory-uniform-fields), which ignore the
-morphology. [The example](@ref mp-ex-incremental-tangent) runs it.
+morphology. [The example below](@ref mp-ex-incremental-tangent) runs it.
 
 ## A step
 
@@ -79,3 +88,80 @@ the scheme.
 | schemes | any linear scheme of the package; the phases are projected on isotropic tensors |
 | cost | about 1 ms per step for two phases and the Mori–Tanaka scheme |
 | not covered | the anisotropic tangent (without projection), and the other linearizations of the literature, which give different estimates: the [affine formulation](@ref mp-theory-affine) for laws of the strain alone, the second-order one |
+
+## [Example: a particle-reinforced alloy](@id mp-ex-incremental-tangent)
+
+This example homogenizes an elastoplastic aluminum alloy reinforced by stiff
+elastic particles with the [incremental tangent approach](@ref mp-theory-incremental-tangent),
+and places it between the [uniform-field composites](@ref mp-theory-uniform-fields).
+
+### The composite
+
+````@example mp_incremental_tangent
+using MeanFieldHomogenization, TensND, Plots
+
+alloy = J2Plasticity(; E = 70e3, ν = 0.33, σ₀ = 150.0, H = 1e3)       # MPa
+particle = LinearElasticity(; E = 400e3, ν = 0.2)
+cell(f) = (rve = RVE();
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0, 1.0)); fraction = :rest);
+    add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0, 1.0)); fraction = f);
+    rve)
+laws = (M = alloy, I = particle)
+nothing #hide
+````
+
+| code | theory |
+|:--|:--|
+| `cell(f)` | the morphology: a matrix and spherical particles of fraction `f`; its stiffnesses are replaced |
+| `IncrementalTangent(cell(f), laws)` | every phase linearized by its tangent at each step, Mori–Tanaka on the isotropic projections |
+
+### Tension
+
+````@example mp_incremental_tangent
+path = LoadingPath(range(0, 1; length = 41); ε11 = t -> 1e-2 * t)
+p = plot(; xlabel = "axial strain (%)", ylabel = "axial stress (MPa)", legend = :topleft)
+r = point_response(IncrementalTangent(cell(0.3), laws), path)
+plot!(p, r[:ε11] * 100, r[:σ11]; lw = 2, label = "incremental tangent, 30 % particles")
+for (c, label) in ((UniformStrain(laws, (M = 0.7, I = 0.3)), "uniform strain"),
+                   (UniformStress(laws, (M = 0.7, I = 0.3)), "uniform stress"))
+    rc = point_response(c, path)
+    plot!(p, rc[:ε11] * 100, rc[:σ11]; lw = 2, ls = :dash, label)
+end
+plot!(p, r[:ε11] * 100, point_response(alloy, path)[:σ11]; lw = 2, ls = :dot, label = "alloy alone")
+p
+````
+
+The incremental tangent estimate lies between the two uniform fields. The
+uniform strain loads the stiff particles with the full strain of the alloy and
+overestimates the stress by far; the uniform stress lets the alloy carry all the
+strain. The particles stiffen the alloy and raise its apparent yield stress, by
+carrying a share of the load that grows as the alloy yields.
+
+### The fraction of particles
+
+````@example mp_incremental_tangent
+q = plot(; xlabel = "axial strain (%)", ylabel = "axial stress (MPa)", legend = :topleft)
+for f in (0.0001, 0.1, 0.2, 0.3)
+    rf = point_response(IncrementalTangent(cell(f), laws), path)
+    plot!(q, rf[:ε11] * 100, rf[:σ11]; lw = 2, label = "f = $f")
+end
+q
+````
+
+### Check
+
+With elastic phases the approach is the linear Mori–Tanaka estimate:
+
+````@example mp_incremental_tangent
+elastic = IncrementalTangent(cell(0.3), (M = LinearElasticity(; E = 70e3, ν = 0.33), I = particle))
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness_young_poisson(70e3, 0.33)); fraction = :rest)
+add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness_young_poisson(400e3, 0.2)); fraction = 0.3)
+E = Mandel{Float64}(1e-3, 0, 0, 0, 0, 0)
+point_update(elastic, E, initial_state(elastic), 1.0)[2] ≈ KM(homogenize(rve, MoriTanaka(), :C))
+````
+
+---
+
+*This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
+

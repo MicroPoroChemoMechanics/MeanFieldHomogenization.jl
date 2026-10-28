@@ -1,4 +1,13 @@
+```@meta
+EditURL = "../../../../scripts/material_points/03_biot.jl"
+```
+
 # [Drained and undrained poroelasticity](@id mp-ex-biot)
+
+!!! tip "The whole page as one script"
+    Every block of this page, in order, is [`scripts/material_points/03_biot.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/material_points/03_biot.jl).
+    From a clone of the repository, `julia --project=docs -e 'using Pkg; Pkg.instantiate()'`
+    once, then `julia scripts/material_points/03_biot.jl`, runs it end to end.
 
 A saturated porous sample is compressed in an oedometer twice: once with its
 fluid free to leave (**drained**), once with the fluid trapped (**undrained**).
@@ -14,7 +23,7 @@ content ``\phi`` (see [`BiotPoroelasticity`](@ref)):
 
 ## Two tests, one law
 
-```@example mp_ex_biot
+````@example mp_biot
 using MeanFieldHomogenization
 
 E, ν, b, M = 10e3, 0.25, 0.8, 5e3        # MPa; Biot coefficient and modulus
@@ -24,7 +33,7 @@ oedometer = (ε11 = t -> -1e-3 * t, ε22 = 0, ε33 = 0)          # lateral strai
 drained   = point_response(law, LoadingPath(0:0.25:1; oedometer..., p = 0))   # pore pressure held
 undrained = point_response(law, LoadingPath(0:0.25:1; oedometer...))        # φ unnamed: zero
 [drained[:σ11][end] undrained[:σ11][end]; drained[:p][end] undrained[:p][end]]
-```
+````
 
 In the drained test the pore pressure is prescribed (zero) and the fluid
 content is free; in the undrained test the fluid content is not named, so it is
@@ -40,12 +49,12 @@ With the oedometric modulus ``M_{oed} = k + 4\mu/3`` and the strain
   ``\sigma_{11} = (M_{oed} + b^2 M)\,\varepsilon``: the trapped fluid stiffens the
   sample by ``b^2 M``.
 
-```@example mp_ex_biot
+````@example mp_biot
 k, μ = E / (3(1 - 2ν)), E / (2(1 + ν))
 Moed, ε = k + 4μ / 3, -1e-3
 (drained[:σ11][end] - Moed * ε, drained[:φ][end] - b * ε,
  undrained[:p][end] + M * b * ε, undrained[:σ11][end] - (Moed + b^2 * M) * ε)
-```
+````
 
 ## The same tests on the fractured rock of ARMA 2011
 
@@ -55,7 +64,7 @@ the same contract with the same two fields. Its stiffness and its Biot
 parameters come from a homogenization of the rock and its fractures, and its
 fractures close under compression. The driver runs it along the same paths:
 
-```@example mp_ex_biot
+````@example mp_biot
 using TensND
 C0 = TensISO{3}(3 * 30.0e3, 2 * 18.0e3)                 # intact rock, MPa
 rve = RVE()
@@ -67,9 +76,14 @@ oedometer_z = (ε33 = t -> -1e-5 * t, ε11 = 0, ε22 = 0)
 rock_drained   = point_response(rock, LoadingPath(0:0.25:1; oedometer_z..., p = 0))
 rock_undrained = point_response(rock, LoadingPath(0:0.25:1; oedometer_z...))
 rock_drained[:σ33][end], rock_undrained[:σ33][end], rock_undrained[:p][end]
-```
+````
 
 The undrained sample is again stiffer, and the trapped fluid takes a part of
 the load as pore pressure. Here the Biot coefficient and modulus are not
 parameters but results of the homogenization, recomputed as the fractures open
 or close.
+
+---
+
+*This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
+

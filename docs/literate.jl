@@ -40,8 +40,13 @@ const APPLICATION_MD_DIR = joinpath(@__DIR__, "src", "applications", "generated"
 # than implied by the navigation in `make.jl`.
 const APPLICATION_PAGES = Set(["hill_transformation", "cluster_model", "eim_assembly"])
 
+# The chapter on nonlinear laws (`MaterialPoints`) is written as one script per
+# model, theory and code together, under `scripts/material_points/`; its pages,
+# named `mp_*`, go to that chapter.
+const MATERIAL_POINT_MD_DIR = joinpath(@__DIR__, "src", "material_points", "generated")
+
 "Where a generated page is written, by what it is for."
-page_md_dir(page) = page in APPLICATION_PAGES ? APPLICATION_MD_DIR : TUTORIAL_MD_DIR
+page_md_dir(page) = startswith(page, "mp_") ? MATERIAL_POINT_MD_DIR : page in APPLICATION_PAGES ? APPLICATION_MD_DIR : TUTORIAL_MD_DIR
 const NOTEBOOK_DIR = joinpath(@__DIR__, "generated_notebooks")
 const CLEAN_SCRIPT_DIR = joinpath(@__DIR__, "generated_scripts")
 
@@ -76,6 +81,18 @@ const PUBLISHED_SCRIPTS = [
     "96_nano_spheroids.jl" => "nano_spheroids",
     "97_hill_reduction.jl" => "hill_reduction",
     "98_hill_transformation_2020.jl" => "hill_transformation",
+    "material_points/01_plasticity.jl" => "mp_plasticity",
+    "material_points/02_damage.jl" => "mp_damage",
+    "material_points/03_biot.jl" => "mp_biot",
+    "material_points/10_secant.jl" => "mp_secant",
+    "material_points/11_uniform_fields.jl" => "mp_uniform_fields",
+    "material_points/12_polycrystals.jl" => "mp_polycrystals",
+    "material_points/13_incremental_tangent.jl" => "mp_incremental_tangent",
+    "material_points/14_affine.jl" => "mp_affine",
+    "material_points/15_crack_damage.jl" => "mp_crack_damage",
+    "material_points/16_closing_cracks.jl" => "mp_closing_cracks",
+    "material_points/17_strength.jl" => "mp_strength",
+    "material_points/18_frictional_strength.jl" => "mp_frictional_strength",
 ]
 
 # `81_fe_crack_eshelby.jl`, `82_fe_crack_schemes.jl`,
@@ -167,6 +184,7 @@ function build_tutorial_pages()
     check_pkg_markers()
     mkpath(TUTORIAL_MD_DIR)
     mkpath(APPLICATION_MD_DIR)
+    mkpath(MATERIAL_POINT_MD_DIR)
     mkpath(CLEAN_SCRIPT_DIR)
     BUILD_NOTEBOOKS && mkpath(NOTEBOOK_DIR)
     for (script, page) in PUBLISHED_SCRIPTS

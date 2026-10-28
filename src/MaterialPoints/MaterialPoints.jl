@@ -43,6 +43,7 @@ using StaticArrays
 using ForwardDiff
 import TensND
 import Tensors
+import SimpleNonlinearSolve as SNS
 
 import ..Constitutive
 import ..Constitutive: AbstractMFHMaterial, AbstractMaterialState, MaterialResponse,
@@ -64,6 +65,7 @@ include("closing_cracks.jl")
 include("frictional_strength.jl")
 include("uniform_fields.jl")
 include("polycrystal.jl")
+include("viscoplastic_polycrystal.jl")
 include("incremental_tangent.jl")
 include("affine.jl")
 
@@ -88,7 +90,8 @@ export CrackGrowthDamage, CrackGrowthResistance
 export ClosingCrackPoroelasticity, ExponentialClosure
 export DruckerPrager, Heterogeneities, Pores, RigidInclusions, FrictionalComposite, limit_stress
 export AbstractPhaseComposite, UniformStrain, UniformStress
-export PolycrystalModel, TaylorModel, Polycrystal, PolycrystalState, grain_states, random_orientations
+export PolycrystalModel, TaylorModel, KronerModel, BerveillerZaouiModel, Polycrystal, PolycrystalState, grain_states, random_orientations
+export PowerLawCrystal, crystal_strain_rate, TangentModel, ViscoplasticPolycrystal, flow_stress
 export IncrementalTangent, AffineComposite
 
 # ── Coupling to a finite-element code ───────────────────────────────────────

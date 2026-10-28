@@ -237,6 +237,58 @@ function _finite_step(R, y, δ)
     return nothing
 end
 
+# The root of r on the values by the trust-region method of SimpleNonlinearSolve,
+# with the Jacobian j supplied. The system is preconditioned by the Jacobian at
+# the start, J₀⁻¹ r(x) (affine invariance, as in Deuflhard's Newton methods): the
+# residual of the solver is then in the units of x, the size of a Newton step
+# near the root, and the tolerances of `LocalNewton` keep their meaning,
+# `abstol + reltol·|x₀|` on it. A failure is a failed step, for the driver to cut.
+function _trust_region_values(r, j, x₀::SVector, alg::LocalNewton, name::Symbol)
+    J₀ = lu(j(x₀); check = false)
+    issuccess(J₀) || throw(LocalIntegrationError(name, 0, NaN, "singular Jacobian at the start"))
+    f = SNS.NonlinearFunction{false}((x, _) -> J₀ \ r(x); jac = (x, _) -> J₀ \ j(x))
+    abstol = alg.abstol + alg.reltol * maximum(abs, x₀)
+    sol = try
+        SNS.solve(SNS.NonlinearProblem(f, x₀), SNS.SimpleTrustRegion(); abstol, maxiters = alg.maxiters)
+    catch err
+        err isa LinearAlgebra.SingularException || rethrow()
+        throw(LocalIntegrationError(name, 0, NaN, "singular Jacobian"))
+    end
+    SNS.SciMLBase.successful_retcode(sol) ||
+        throw(LocalIntegrationError(name, alg.maxiters, NaN, "no convergence of the trust-region iteration ($(sol.retcode))"))
+    return sol.u
+end
+
+# The root in the element type T of a residual `f` that returns its value, its
+# Jacobian and what else it computed: the trust-region iteration on the values
+# (each iterate evaluated once, its residual and Jacobian kept together), then
+# the Newton steps in T that attach exact derivatives; returns the root and
+# what `f` computed there.
+function _root_with_payload(f, x₀::SVector{N}, alg::LocalNewton, name::Symbol, ::Type{T}) where {N, T}
+    xv = SVector{N, Float64}(TensND.primal.(x₀))
+    memo = Ref((xv, f(xv)))
+    evaluated(x) = memo[][1] == x ? memo[][2] : (v = f(x); memo[] = (x, v); v)
+    x = SVector{N, T}(_trust_region_values(x -> _residual_or_nan(evaluated, x), x -> TensND.primal.(evaluated(x)[2]), xv, alg, name))
+    r, J, out = f(x)
+    for _ in 1:_derivative_steps(T)
+        x = x - J \ r
+        r, J, out = f(x)
+    end
+    return x, out
+end
+
+# The residual at a trial point; NaN where the evaluation fails (a grain whose
+# own law cannot follow the strain proposed): the trust-region iteration then
+# rejects the trial point and shrinks its radius.
+function _residual_or_nan(evaluated, x::SVector{N}) where {N}
+    return try
+        SVector{N, Float64}(TensND.primal.(evaluated(x)[1]))
+    catch err
+        err isa LocalIntegrationError || rethrow()
+        SVector{N, Float64}(ntuple(_ -> NaN, Val(N)))
+    end
+end
+
 # Fluxes and consistent tangent at the end of the step. When the step leaves the
 # internal variables unchanged they do not depend on g; otherwise the
 # implicit-function theorem gives their derivative from the residual.

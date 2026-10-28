@@ -74,37 +74,33 @@ entropy in the same manner.
 
 ## Reading order
 
+Each law and each homogenized model has one page, which states the theory and
+runs it: the blocks of a page, in order, form a script of
+`scripts/material_points/` that runs on its own.
+
 | page | |
 |:--|:--|
-| **Theory** | |
+| **Common ground** | |
 | [Integrating a law over a step](@ref mp-theory) | the incremental problem, the consistent tangent by the implicit-function theorem, the potential route, exact derivatives |
-| [Homogenizing nonlinear phases: secant methods](@ref mp-theory-secant) | the linear comparison composite, the classical and the modified secant methods, the composite as a law |
-| [Uniform fields: Voigt–Taylor and Reuss–Sachs](@ref mp-theory-uniform-fields) | every phase at the macroscopic strain or at the macroscopic stress, for any phase laws |
-| [Polycrystals](@ref mp-theory-polycrystals) | grains of single crystals under the Taylor model, the Taylor factor, random textures |
-| [The incremental tangent approach](@ref mp-theory-incremental-tangent) | phases with a history linearized by their tangents at each step, isotropic projection, any linear scheme |
-| [The affine formulation](@ref mp-theory-affine) | nonlinear elastic phases replaced by their tangents and prestresses at their average strains, Levin's theorem, exact for laminates |
-| [Damage by the growth of microcracks](@ref mp-theory-crack-damage) | crack densities as internal variables, the driving force from the homogenized energy, Griffith's resistance, stability and viscous regularization |
-| [Nonlinear poroelasticity of a cracked rock](@ref mp-theory-closing-cracks) | cracks closing under the Terzaghi effective stress, stress-dependent stiffness and Biot tensor, the rate equations |
-| [The strength of a porous plastic solid](@ref mp-theory-strength) | the rigid–plastic limit of the secant method, a strength domain from a phase law, normality |
-| [Strength of a frictional matrix with a non-associated flow rule](@ref mp-theory-frictional-strength) | a Drucker–Prager matrix with a dilatancy below its friction, viscous regularization, limit states around pores or rigid inclusions |
 | **Manual** | |
 | [Writing a law](@ref mp-writing) | the residual route, the potential route, internal variables, coupled fields |
 | [The laws shipped](@ref mp-laws) | the six laws, their equations, parameters and behavior along typical paths |
 | [Driving a point](@ref mp-driving) | loading paths, mixed control, reading the response |
 | [Plugging a law into a computation](@ref mp-plugging) | the Gauss-point contract, the flat interface for speed, differentiating with respect to parameters |
-| **Examples** | |
+| **Laws** | |
 | [Elastoplastic bar under cycles](@ref mp-ex-plasticity) | J2 plasticity against the closed form, isotropic and kinematic hardening |
 | [A damage law written from scratch](@ref mp-ex-damage) | a law of your own, with a threshold and an evolving internal variable |
 | [Drained and undrained poroelasticity](@ref mp-ex-biot) | a coupled law, the same sample in two tests |
-| [A composite of nonlinear phases](@ref mp-ex-composite) | two power-law phases homogenized by both secant methods, against the Voigt bound |
-| [Two elastoplastic phases: uniform strain and uniform stress](@ref mp-ex-uniform-fields) | Taylor and Sachs composites of a steel and an alloy, against the elastic bounds and linear hardening |
-| [A random FCC aggregate](@ref mp-ex-polycrystal) | a Taylor aggregate of 60 crystals in tension, the Taylor factor of a random texture |
-| [A particle-reinforced alloy](@ref mp-ex-incremental-tangent) | an elastoplastic alloy with stiff particles, between the uniform fields, the fraction of particles |
-| [A power-law composite by the affine formulation](@ref mp-ex-affine) | the affine estimate between the secant ones, tension against shear |
-| [Damage by the growth of microcracks](@ref mp-ex-crack-damage) | progressive and unstable crack growth in a brittle solid, a load cycle, the viscous regularization |
-| [A cracked rock under confinement](@ref mp-ex-closing-cracks) | stiffening and falling Biot coefficient under confinement, the two roles of the pore pressure |
-| [The strength of a porous plastic solid](@ref mp-ex-strength) | the strength domain from the phase law, against the closed-form ellipse and the derivative construction |
-| [Strength of a frictional matrix with a non-associated flow rule](@ref mp-ex-frictional-strength) | porous and reinforced frictional solids, the domain and the flow rule against the closed forms |
+| **Homogenized laws** | |
+| [Secant methods](@ref mp-theory-secant) | the linear comparison composite, the classical and the modified secant methods; two power-law phases against the Voigt bound |
+| [Uniform fields: Voigt–Taylor and Reuss–Sachs](@ref mp-theory-uniform-fields) | every phase at the macroscopic strain or at the macroscopic stress, for any phase laws; a steel and an alloy |
+| [Polycrystals](@ref mp-theory-polycrystals) | grains of single crystals under the Taylor model; the Taylor factor of a random FCC aggregate |
+| [The incremental tangent approach](@ref mp-theory-incremental-tangent) | phases with a history linearized by their tangents at each step, isotropic projection; a particle-reinforced alloy |
+| [The affine formulation](@ref mp-theory-affine) | phases replaced by their tangents and prestresses at their average strains, Levin's theorem, exact for laminates; against the secant estimates |
+| [Damage by the growth of microcracks](@ref mp-theory-crack-damage) | crack densities as internal variables, Griffith's resistance, stability and viscous regularization |
+| [Nonlinear poroelasticity of a cracked rock](@ref mp-theory-closing-cracks) | cracks closing under the Terzaghi effective stress, stress-dependent stiffness and Biot tensor |
+| [The strength of a porous plastic solid](@ref mp-theory-strength) | the rigid–plastic limit of the secant method, a strength domain from a phase law, normality |
+| [Strength of a frictional matrix](@ref mp-theory-frictional-strength) | a Drucker–Prager matrix with a non-associated flow rule, limit states around pores or rigid inclusions |
 
 !!! note "Small strain"
     The laws are written in infinitesimal strain. The kinematics is a trait of
