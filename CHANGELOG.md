@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased — the nonlinear homogenization models still missing
+
+### Added
+
+- `AnisotropicTangentModel` for `ViscoplasticPolycrystal`: the tangent
+  self-consistent model with the anisotropic matrix of Lebensohn and Tomé
+  (1993). The matrix is the aggregate itself, its secant compliance on the
+  deviators found self-consistently (their equation 25) by the trust-region
+  method, and the interaction of a spherical grain goes through the Hill tensor
+  of the incompressible anisotropic matrix. For linear grains it is the linear
+  self-consistent scheme, which the tests check against the package's own
+  scheme on grains made compressible, the gap closing as the inverse of the
+  bulk stiffness.
+- The Hill tensor of an incompressible anisotropic matrix, by its exact Green
+  kernel: the acoustic tensor inverted on the plane orthogonal to each
+  direction, the limit of an infinite bulk modulus taken exactly.
+
+### Changed
+
+- The anisotropic Hill tensor reads the stiffness from a static array: 7 to 8 %
+  faster, values unchanged.
+- Tensor algebra comes from TensND instead of copies (`isotropify` and
+  `bulk_shear` for the isotropic projection of the incremental tangent,
+  `from_mandel`, and `deviatoric_pinv`, new in TensND 0.8.4). Requires
+  TensND 0.8.4.
+
 ## v0.23.0 — models of nonlinear composites and polycrystals
 
 0.22.0 derived nonlinear laws from the microstructure by the secant method.

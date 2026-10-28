@@ -259,20 +259,36 @@ function _trust_region_values(r, j, x₀::SVector, alg::LocalNewton, name::Symbo
     return sol.u
 end
 
-# The root in the element type T of a residual `f` that returns its value, its
-# Jacobian and what else it computed: the trust-region iteration on the values
-# (each iterate evaluated once, its residual and Jacobian kept together), then
-# the Newton steps in T that attach exact derivatives; returns the root and
-# what `f` computed there.
-function _root_with_payload(f, x₀::SVector{N}, alg::LocalNewton, name::Symbol, ::Type{T}) where {N, T}
+# The root in the element type T of a residual `f(x) -> (r, out)`, `out` what
+# else it computed, and of its Jacobian `jac(x, out)`, asked for only at the
+# iterates the trust region accepts (a Jacobian may cost far more than a
+# residual: the derivatives of a quadrature): the trust-region iteration on the
+# values, each iterate evaluated once, then the Newton steps in T that attach
+# exact derivatives; returns the root and what `f` computed there.
+#
+# `values = (f, jac)` on the values of the parameters, when `f` and `jac` carry
+# derivatives: the trust-region iteration then runs on plain numbers only, and
+# the derivatives enter at the last step.
+function _root_with_payload(f, jac, x₀::SVector{N}, alg::LocalNewton, name::Symbol, ::Type{T}; values = (f, jac)) where {N, T}
+    fv, jacv = values
     xv = SVector{N, Float64}(TensND.primal.(x₀))
-    memo = Ref((xv, f(xv)))
-    evaluated(x) = memo[][1] == x ? memo[][2] : (v = f(x); memo[] = (x, v); v)
-    x = SVector{N, T}(_trust_region_values(x -> _residual_or_nan(evaluated, x), x -> TensND.primal.(evaluated(x)[2]), xv, alg, name))
-    r, J, out = f(x)
-    for _ in 1:_derivative_steps(T)
+    memo = Ref((xv, fv(xv)))
+    evaluated(x) = memo[][1] == x ? memo[][2] : (v = fv(x); memo[] = (x, v); v)
+    root = _trust_region_values(
+        x -> _residual_or_nan(evaluated, x), x -> TensND.primal.(jacv(x, evaluated(x)[2])), xv, alg, name
+    )
+    x = SVector{N, T}(root)
+    r, out = f(x)
+    # The first step with the Jacobian on the values: the residual at the root,
+    # in T, carries ∂F/∂p, and x − J⁻¹F gives the derivatives of the
+    # implicit-function theorem exactly; a Jacobian in T would only multiply the
+    # residual (zero to rounding) and costs nested dual numbers through the whole
+    # residual (minutes of compilation through a quadrature). Higher orders take
+    # the Jacobian in T.
+    for k in 1:_derivative_steps(T)
+        J = k == 1 ? TensND.primal.(jacv(root, evaluated(root)[2])) : jac(x, out)
         x = x - J \ r
-        r, J, out = f(x)
+        r, out = f(x)
     end
     return x, out
 end

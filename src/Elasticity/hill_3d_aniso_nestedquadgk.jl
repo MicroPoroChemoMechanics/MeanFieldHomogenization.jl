@@ -91,12 +91,13 @@ The Green kernel of an **incompressible** medium at the direction
 ``\\underline{\\zeta}``: the displacement is orthogonal to ``\\underline{\\zeta}`` in Fourier
 space, so the acoustic tensor is inverted on the plane orthogonal to
 ``\\underline{\\zeta}`` only,
-``\\mathbf{N} = (\\mathbf{Q}\\mathbf{K}\\mathbf{Q} + \\underline{n}\\otimes\\underline{n})^{-1} - \\underline{n}\\otimes\\underline{n}``,
-``\\mathbf{Q} = \\mathbf{1} - \\underline{n}\\otimes\\underline{n}``, ``\\underline{n}`` the unit vector along
+``\\boldsymbol{N} = (\\boldsymbol{Q}\\boldsymbol{K}\\boldsymbol{Q} + \\lambda\\,\\underline{n}\\otimes\\underline{n})^{-1} - \\underline{n}\\otimes\\underline{n}/\\lambda``
+(any ``\\lambda > 0``; ``\\lambda = \\operatorname{tr}\\boldsymbol{K}/3`` keeps it well conditioned),
+``\\boldsymbol{Q} = \\boldsymbol{1} - \\underline{n}\\otimes\\underline{n}``, ``\\underline{n}`` the unit vector along
 ``\\underline{\\zeta}``. It is the limit of the inverse
 acoustic tensor as the bulk modulus grows without bound, taken exactly; the
 stiffness `C₀` need only be defined on deviators. Returned as
-[`_sym3_inv_acoustic`](@ref) returns ``\\mathbf{K}^{-1}``.
+[`_sym3_inv_acoustic`](@ref) returns ``\\boldsymbol{K}^{-1}``.
 """
 @inline function _sym3_inv_acoustic_incompressible(C₀_arr::AbstractArray{T, 4}, ζ) where {T}
     K11, K22, K33, K12, K13, K23 = _sym3_acoustic(C₀_arr, ζ)
@@ -104,11 +105,16 @@ stiffness `C₀` need only be defined on deviators. Returned as
     K = SMatrix{3, 3}(K11, K12, K13, K12, K22, K23, K13, K23, K33)
     # Q K Q + n⊗n, Q = 𝟏 − n⊗n, is invertible and splits into the plane and the
     # line of n: its inverse is N + n⊗n, one closed-form symmetric inverse.
+    # The line of n is given the scale λ = tr K / 3 of the plane: with a unit
+    # weight, the inverse mixes entries of order 1 and 1/K, and removing n⊗n
+    # cancels all but ~eps·K of the plane part (relative 4e-8 measured, where
+    # the quadrature stalled); with λ the matrix is conditioned as K itself.
+    λ = (K11 + K22 + K33) / 3
     Kn = K * n
-    M = K - n * transpose(Kn) - Kn * transpose(n) + (transpose(n) * Kn + 1) * (n * transpose(n))
+    M = K - n * transpose(Kn) - Kn * transpose(n) + (transpose(n) * Kn + λ) * (n * transpose(n))
     iM = _sym3_inv(M[1, 1], M[2, 2], M[3, 3], M[1, 2], M[1, 3], M[2, 3])
     nn = n * transpose(n)
-    return ntuple(q -> iM[q] - nn[q], Val(9))
+    return ntuple(q -> iM[q] - nn[q] / λ, Val(9))
 end
 
 # The six Voigt pairs of a symmetric 3×3 tensor, and the 21 pairs (I ≤ J) of

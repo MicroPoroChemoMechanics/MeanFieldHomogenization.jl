@@ -97,6 +97,7 @@ TaylorModel
 KronerModel
 BerveillerZaouiModel
 TangentModel
+AnisotropicTangentModel
 Polycrystal
 PolycrystalState
 grain_states

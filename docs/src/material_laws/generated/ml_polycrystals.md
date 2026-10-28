@@ -177,11 +177,43 @@ SimpleNonlinearSolve on the six components of ``\boldsymbol{S}``, each grain
 stress being the minimum of a strictly convex function (the dual potential of
 the grain plus the quadratic term of the interaction), found by Newton's
 method with Armijo's line search.
-[lebensohnTome1993](@citet) keep the anisotropy of the matrix; they show that,
-with the tangent viscosity in the interaction, the estimate tends to the
-uniform stress (Sachs) as ``n`` grows, and [massonAffine2000](@citet) trace
-this to the secant relation the model keeps between the stress and the strain
-rate of each grain. The example below shows the trend.
+[massonAffine2000](@citet) show that the tangent model mixes the tangent
+interaction with a secant relation between the stress and the strain rate of
+each grain, which drives its estimate toward the uniform stress (Sachs) as
+``n`` grows; the example below shows the trend.
+
+## The anisotropic matrix of Lebensohn and Tomé
+
+The aggregate of a textured or strongly nonlinear polycrystal is anisotropic,
+and so is the matrix a grain sees. [lebensohnTome1993](@citet) keep it so: the
+matrix is the aggregate itself, of secant compliance ``\mathbb{M}`` on the
+deviators, ``\boldsymbol{D} = \mathbb{M}:\boldsymbol{S}``, linearized at its tangent
+``n\,\mathbb{M}``. The interaction of a spherical grain with it goes through the
+Hill tensor ``\mathbb{P}`` of that incompressible anisotropic matrix:
+
+```math
+\boldsymbol{d}_g - \boldsymbol{D} = -\widetilde{\mathbb{M}}:\big(\boldsymbol{s}_g - \boldsymbol{S}\big),
+\qquad
+\widetilde{\mathbb{M}} = n\,\big(\mathbb{P}(\mathbb{L})^{+} - \mathbb{L}\big)^{+},
+\qquad
+\mathbb{L} = \mathbb{M}^{+},
+```
+
+``{}^{+}`` the inverse on the deviators (`deviatoric_pinv` of TensND).
+With the secant compliance ``\mathbb{M}_g`` of each grain at its stress, the
+grain stress is ``\boldsymbol{s}_g = \mathbb{B}_g:\boldsymbol{S}``,
+``\mathbb{B}_g = (\mathbb{M}_g + \widetilde{\mathbb{M}})^{+}(\mathbb{M} + \widetilde{\mathbb{M}})``,
+and the strain rates average to ``\boldsymbol{D}`` when
+``\mathbb{M} = \langle\mathbb{M}_g\,\mathbb{B}_g\rangle``, their equation (25).
+[`AnisotropicTangentModel`](@ref) solves that equation for the 15 components of
+``\mathbb{M}`` by the trust-region method of SimpleNonlinearSolve, starting from
+the isotropic matrix of [`TangentModel`](@ref). The Hill tensor of the
+incompressible matrix is computed by quadrature with its exact Green kernel,
+the acoustic tensor inverted on the plane orthogonal to each direction, where
+the paper adds a small compressibility. For linear grains the model is the
+linear self-consistent scheme, which the tests check against the package's own
+scheme on grains made compressible, the gap closing as the inverse of the bulk
+stiffness.
 
 ## What is not covered
 
@@ -191,9 +223,8 @@ rate of each grain. The example below shows the trend.
   stress of the step to stay below the flow stress of every grain while it is
   sought, which a strain-driven iteration does not ensure; it is not offered
   for large aggregates.
-- The β rule of [cailletaudPilvin1994](@citet), Hill's self-consistent
-  elastoplastic scheme with the anisotropic tangent of the aggregate, and the
-  anisotropic matrix of [lebensohnTome1993](@citet) in the tangent model.
+- The β rule of [cailletaudPilvin1994](@citet), and Hill's self-consistent
+  elastoplastic scheme with the anisotropic tangent of the aggregate.
 
 ## [Example: a random FCC aggregate](@id ml-ex-polycrystal)
 
@@ -305,18 +336,23 @@ end
 exponents = [1, 2, 3, 5, 8, 12, 20]
 taylor = [von_mises(flow_stress(crystals(n), D; model = TaylorModel()).σ) for n in exponents]
 tangent = [von_mises(flow_stress(crystals(n), D).σ) for n in exponents]
+anisotropic = [von_mises(flow_stress(crystals(n), D; model = AnisotropicTangentModel()).σ) for n in exponents]
 lower = [sachs(crystals(n)) for n in exponents]
-plot(exponents, [taylor tangent lower] / τ₀; lw = 2, marker = :circle, xscale = :log10,
-    label = ["Taylor" "tangent (Molinari et al.)" "Sachs"], xlabel = "exponent n",
+plot(exponents, [taylor anisotropic tangent lower] / τ₀; lw = 2, marker = :circle, xscale = :log10,
+    label = ["Taylor" "tangent, anisotropic matrix (Lebensohn and Tomé)" "tangent, isotropic matrix (Molinari et al.)" "Sachs"],
+    xlabel = "exponent n",
     ylabel = "Σ_eq / τ₀ at D₁₁ = γ̇₀", legend = :topleft)
 ````
 
-Under linear viscosity the three differ by the heterogeneity of the grains
-alone. As ``n`` grows, the Taylor estimate rises toward the Taylor factor, while
-the tangent one bends back toward the uniform stress, as
-[lebensohnTome1993](@citet) found: the tangent viscosity of the matrix, ``n``
-times smaller than its secant one, lets the grains deviate more and more from
-the average strain rate.
+Under linear viscosity the estimates differ by the heterogeneity of the grains
+alone, and the two tangent models nearly coincide: the aggregate of 60 grains
+is nearly isotropic. As ``n`` grows, the Taylor estimate rises toward the
+Taylor factor, while the tangent ones stay well below it: the tangent viscosity
+of the matrix, ``n`` times smaller than its secant one, lets the grains deviate
+from the average strain rate. The isotropic matrix bends back toward the
+uniform stress; the anisotropic one, stiff along the directions where the
+aggregate flows least, keeps the grains closer to the average and gives a
+stiffer estimate.
 
 ---
 

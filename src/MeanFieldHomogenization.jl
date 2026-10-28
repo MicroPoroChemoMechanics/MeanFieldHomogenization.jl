@@ -466,7 +466,7 @@ export ClosingCrackPoroelasticity, ExponentialClosure
 export DruckerPrager, Heterogeneities, Pores, RigidInclusions, FrictionalComposite, limit_stress
 export AbstractPhaseComposite, UniformStrain, UniformStress
 export PolycrystalModel, TaylorModel, KronerModel, BerveillerZaouiModel, Polycrystal, PolycrystalState, grain_states, random_orientations
-export PowerLawCrystal, crystal_strain_rate, TangentModel, ViscoplasticPolycrystal, flow_stress
+export PowerLawCrystal, crystal_strain_rate, TangentModel, AnisotropicTangentModel, ViscoplasticPolycrystal, flow_stress
 export IncrementalTangent, AffineComposite
 export QuadratureStates, commit!, rollback!
 export ModelingHypothesis, ThreeD, PlaneStrain, Axisymmetric, mandel_strain, volume_weight

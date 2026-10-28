@@ -182,12 +182,22 @@ end
 # its own law giving σ and its tangent 𝕂 at each iterate.
 function _grain_in_matrix(law, 𝒞, b, 𝕊, ε₀, prev, Δt, alg, ext, ::Type{T}) where {T}
     I6 = one(SMatrix{6, 6, T})
-    return _root_with_payload(ε₀, alg, law.name, T) do ε
+    residual(ε) = begin
         σ, 𝕂, s = _grain_update(law, ε, prev, Δt, alg, ext)
         Jg = I6 - 𝒞 * (I6 - 𝕊 * 𝕂)
-        (ε - 𝒞 * (ε - 𝕊 * σ) - b, Jg, (σ, 𝕂, s, Jg))
+        (ε - 𝒞 * (ε - 𝕊 * σ) - b, (σ, 𝕂, s, Jg))
     end
+    return _root_with_payload(residual, (ε, out) -> out[4], ε₀, alg, law.name, T)
 end
+
+# Σ_g w_g (𝕀 − 𝕊𝕂_g) J_g⁻¹ (A + 𝕁r_g ⊗ ∂c_J + 𝕂r_g ⊗ ∂c_K), r_g = ε_g − 𝕊σ_g − Eᵖ:
+# the derivative of ⟨εᵖ⟩ along a change that moves b by A and the interaction
+# coefficients by ∂c, shared by the outer iteration (A = −𝒞, the derivatives in
+# Eᵖ) and the consistent tangent (A = 𝕀, the derivatives in E).
+_plastic_strain_sensitivity(grains, weights, 𝕊, 𝕁, 𝕂ᵈ, I6, Eᵖ, A, ∂c) = sum(
+    w * (I6 - 𝕊 * 𝕂) * (Jg \ (A + (𝕁 * (ε - 𝕊 * σ - Eᵖ)) * transpose(∂c[1, :]) + (𝕂ᵈ * (ε - 𝕊 * σ - Eᵖ)) * transpose(∂c[2, :])))
+        for (w, (ε, σ, 𝕂, s, Jg)) in zip(weights, grains)
+)
 
 function _aggregate_step(model::_InclusionModel, m, E₀, st, Δt, alg, ext)
     T = float(promote_type(eltype(E₀), typeof(model.k), eltype(st.σ), eltype(m.weights), _numeric_type(first(m.grains).p)))
@@ -203,7 +213,6 @@ function _aggregate_step(model::_InclusionModel, m, E₀, st, Δt, alg, ext)
     c(Ep) = _interaction(model, ℂ, E, Ep)
     outer(Eᵖ) = begin
         cJ, cK = c(Eᵖ)
-        ∂c = ForwardDiff.jacobian(c, Eᵖ)
         𝒞 = cJ * 𝕁 + cK * 𝕂ᵈ
         b = E - 𝒞 * Eᵖ
         grains = map(m.grains, st.grains, eachindex(guesses)) do law, prev, i
@@ -211,29 +220,19 @@ function _aggregate_step(model::_InclusionModel, m, E₀, st, Δt, alg, ext)
             guesses[i] = ε
             (ε, out...)
         end
-        F = sum(w * (ε - 𝕊 * σ) for (w, (ε, σ)) in zip(m.weights, grains)) - Eᵖ
-        # dεᵖ_g/dEᵖ = (𝕀 − 𝕊𝕂_g) J_g⁻¹ (−𝒞 + 𝕁r_g ⊗ ∂c_J + 𝕂r_g ⊗ ∂c_K), r_g = ε_g − 𝕊σ_g − Eᵖ.
-        JF = sum(
-            m.weights[i] * (I6 - 𝕊 * 𝕂) * (Jg \ (-𝒞 + (𝕁 * (ε - 𝕊 * σ - Eᵖ)) * transpose(∂c[1, :]) + (𝕂ᵈ * (ε - 𝕊 * σ - Eᵖ)) * transpose(∂c[2, :])))
-                for (i, (ε, σ, 𝕂, s, Jg)) in enumerate(grains)
-        ) - I6
-        (F, JF, grains)
+        (sum(w * (ε - 𝕊 * σ) for (w, (ε, σ)) in zip(m.weights, grains)) - Eᵖ, grains)
+    end
+    # dF/dEᵖ, F = ⟨εᵖ⟩ − Eᵖ.
+    outer_jacobian(Eᵖ, grains) = begin
+        cJ, cK = c(Eᵖ)
+        _plastic_strain_sensitivity(grains, m.weights, 𝕊, 𝕁, 𝕂ᵈ, I6, Eᵖ, -(cJ * 𝕁 + cK * 𝕂ᵈ), ForwardDiff.jacobian(c, Eᵖ)) - I6
     end
     Eᵖ₀ = SVector{6, T}(st.ε - 𝕊 * st.σ)
-    Eᵖ, grains = _root_with_payload(outer, Eᵖ₀, alg, :Polycrystal, T)
+    Eᵖ, grains = _root_with_payload(outer, outer_jacobian, Eᵖ₀, alg, :Polycrystal, T)
     # The tangent: Σ = ℂ:(E − Eᵖ) at the root, Eᵖ following E through the
     # implicit-function theorem on F(Eᵖ, E) = ⟨εᵖ⟩ − Eᵖ.
-    ∂c∂E = ForwardDiff.jacobian(e -> _interaction(model, ℂ, e, Eᵖ), E)
-    cJ, cK = c(Eᵖ)
-    𝒞 = cJ * 𝕁 + cK * 𝕂ᵈ
-    ∂c∂Eᵖ = ForwardDiff.jacobian(c, Eᵖ)
-    FE, FEᵖ = zero(I6), -I6
-    for (w, (ε, σ, 𝕂, s, Jg)) in zip(m.weights, grains)
-        P = (I6 - 𝕊 * 𝕂) / Jg
-        r = ε - 𝕊 * σ - Eᵖ
-        FE += w * P * (I6 + (𝕁 * r) * transpose(∂c∂E[1, :]) + (𝕂ᵈ * r) * transpose(∂c∂E[2, :]))
-        FEᵖ += w * P * (-𝒞 + (𝕁 * r) * transpose(∂c∂Eᵖ[1, :]) + (𝕂ᵈ * r) * transpose(∂c∂Eᵖ[2, :]))
-    end
+    FE = _plastic_strain_sensitivity(grains, m.weights, 𝕊, 𝕁, 𝕂ᵈ, I6, Eᵖ, I6, ForwardDiff.jacobian(e -> _interaction(model, ℂ, e, Eᵖ), E))
+    FEᵖ = outer_jacobian(Eᵖ, grains)
     Σ = sum(w * σ for (w, (ε, σ)) in zip(m.weights, grains))
     return Σ, ℂ * (I6 + FEᵖ \ FE), [g[4] for g in grains]
 end
