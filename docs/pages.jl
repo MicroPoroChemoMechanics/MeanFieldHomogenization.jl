@@ -293,6 +293,7 @@ pages = [
             "material_laws/generated/ml_polycrystals.md",
             "material_laws/generated/ml_incremental_tangent.md",
             "material_laws/generated/ml_affine.md",
+            "material_laws/generated/ml_affine_evp.md",
             "material_laws/generated/ml_crack_damage.md",
             "material_laws/generated/ml_closing_cracks.md",
             "material_laws/generated/ml_strength.md",

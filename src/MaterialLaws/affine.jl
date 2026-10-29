@@ -207,10 +207,9 @@ function _fluxes_and_tangent(c::AffineComposite{_SecondOrderEstimate}, y, g, pre
     F = _fluxes(c, g, y)
     frozen && return F, ForwardDiff.jacobian(h -> _affine_stress(c, h, y), g)
     dydE = _average_strain_sensitivity(c, g, y)
-    columns = ntuple(k -> ForwardDiff.derivative(s -> _fluxes(c, g + s * _unit6(k), y + s * dydE[:, k]), zero(eltype(g))), Val(6))
+    columns = ntuple(k -> ForwardDiff.derivative(s -> _fluxes(c, g + s * _unit(g, k), y + s * dydE[:, k]), zero(eltype(g))), Val(6))
     return F, hcat(columns...)
 end
-_unit6(k) = SVector{6}(ntuple(i -> i == k, Val(6)))
 
 # At rest the phases carry no strain: the linearization of a law may not exist
 # there (a power law has no finite tangent at zero strain), and none is needed.

@@ -312,12 +312,20 @@ function _fluxes_and_tangent(law, y, g, prev, Δt, frozen::Bool)
     F = _fluxes(law, g, y)
     ∂F∂g = ForwardDiff.jacobian(h -> _fluxes(law, h, y), g)
     frozen && return F, ∂F∂g
-    ∂F∂y = ForwardDiff.jacobian(z -> _fluxes(law, g, z), y)
-    ∂R∂y = ForwardDiff.jacobian(z -> _residual(law, z, g, prev, Δt), y)
-    ∂R∂g = ForwardDiff.jacobian(h -> _residual(law, y, h, prev, Δt), g)
+    ∂y∂g = _state_sensitivity(law, y, g, prev, Δt)
     # Where a phase law has no finite tangent (a power law at zero strain), the
     # tangent of the step does not exist either: it is returned undefined.
-    all(isfinite, ∂R∂y) || return F, ∂F∂g .* oftype(zero(eltype(∂F∂g)), NaN)
+    ∂y∂g === nothing && return F, ∂F∂g .* oftype(zero(eltype(∂F∂g)), NaN)
+    return F, ∂F∂g + ForwardDiff.jacobian(z -> _fluxes(law, g, z), y) * ∂y∂g
+end
+
+# dy/dg at the root y of a step that moves the internal variables, by the
+# implicit-function theorem on the local residual; `nothing` where the residual
+# has no finite derivative.
+function _state_sensitivity(law, y, g, prev, Δt)
+    ∂R∂y = ForwardDiff.jacobian(z -> _residual(law, z, g, prev, Δt), y)
+    ∂R∂g = ForwardDiff.jacobian(h -> _residual(law, y, h, prev, Δt), g)
+    all(isfinite, ∂R∂y) || return nothing
     # A root at which the local equations are singular is no solution of a
     # well-posed step (any neighbor is a root too): a failed step to cut.
     ∂y∂g = try
@@ -327,7 +335,7 @@ function _fluxes_and_tangent(law, y, g, prev, Δt, frozen::Bool)
         throw(LocalIntegrationError(law.name, 0, NaN, "singular local equations at the root"))
     end
     all(isfinite, ∂y∂g) || throw(LocalIntegrationError(law.name, 0, NaN, "singular local equations at the root"))
-    return F, ∂F∂g - ∂F∂y * ∂y∂g
+    return -∂y∂g
 end
 
 # The fixed point x = g(x), g(x) -> (g, out), by Anderson's acceleration of the

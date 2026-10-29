@@ -36,6 +36,19 @@
   Pierard and Doghri (2006), Norton's viscoplastic function above the von Mises
   yield surface with any isotropic hardening; the phase law of their affine
   formulation, usable on its own.
+- `AffineEVPComposite`: the affine formulation of Pierard and Doghri (2006) for
+  a matrix with inclusions of elasto-viscoplastic phases in rate form. At the
+  end of each step every phase is linearized in time, which makes it a linear
+  viscoelastic solid with an eigenstrain that follows its actual history; the
+  Mori–Tanaka scheme concentrates the strain of the thermoelastic composite
+  this gives in the Laplace–Carson domain, brought back to time by the
+  collocation of the paper on relaxation times the user gives, and the average
+  strains are a fixed point. The history is carried by integrals at the
+  collocation points, a fixed amount of memory. The eigenstrain is written in a
+  form where the terms of the past cancel, which leaves two history integrals
+  per phase. Two identical phases give the phase exactly, elastic phases the
+  elastic Mori–Tanaka estimate, linear Maxwell phases the linear viscoelastic
+  one at first order in the time step, as the tests check.
 
 ### Changed
 

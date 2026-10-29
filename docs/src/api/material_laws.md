@@ -89,6 +89,8 @@ IncrementalTangent
 ```@docs
 AffineComposite
 SecondOrderComposite
+AffineEVPComposite
+AffineEVPState
 ```
 
 ## Polycrystals

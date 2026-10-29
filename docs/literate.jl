@@ -93,6 +93,7 @@ const PUBLISHED_SCRIPTS = [
     "material_laws/16_closing_cracks.jl" => "ml_closing_cracks",
     "material_laws/17_strength.jl" => "ml_strength",
     "material_laws/18_frictional_strength.jl" => "ml_frictional_strength",
+    "material_laws/19_affine_evp.jl" => "ml_affine_evp",
 ]
 
 # `81_fe_crack_eshelby.jl`, `82_fe_crack_schemes.jl`,
