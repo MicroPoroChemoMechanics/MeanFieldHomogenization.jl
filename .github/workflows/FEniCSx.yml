@@ -91,14 +91,21 @@ jobs:
             matplotlib-base
             pytest
             pip
-          cache-environment: true
+          # Not cached: a run on the environment restored from the cache was
+          # killed (SIGTERM) as soon as pytest imported its modules.
+          cache-environment: false
       - name: The Python packages
         run: |
           python -m pip install dolfinx-external-operator==0.10.2 juliacall==0.9.37
           python -m pip install --no-deps -e python/mfh_fenicsx
           echo "PYTHON_JULIAPKG_EXE=$(which julia)" >> "$GITHUB_ENV"
+      # The stack imported alone first, so that a failure says which part fails.
+      - name: The environment
+        run: |
+          python -X faulthandler -c "import mpi4py.MPI as M; print('MPI', M.Get_library_version().splitlines()[0])"
+          python -X faulthandler -c "import dolfinx, dolfinx_external_operator, juliacall; print('dolfinx', dolfinx.__version__)"
       - name: Tests
-        run: python -m pytest -v python/mfh_fenicsx/tests
+        run: python -X faulthandler -m pytest -v python/mfh_fenicsx/tests
       - name: Examples, reduced
         run: |
           cd python/mfh_fenicsx/examples
