@@ -162,6 +162,37 @@ that estimate is the same at every iteration.
     case of the tests, tutorials and applications, the bifurcation of a porous
     medium at percolation included. The default is unchanged.
 
+## Cracks in the schemes: checks that cost more than the computation
+
+Until version 0.23.1, a Mori–Tanaka step with a penny crack in an isotropic
+matrix spent most of its time checking symmetries it already had. The crack
+compliance ``\mathbb{H} = k\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}``
+was formed as a product of components, through an array of 81 entries, and the
+operations of the scheme with the isotropic matrix did the same; each time,
+the result was checked at run time for the minor symmetries before being
+stored. Two changes remove them:
+
+- ``\mathbb{H}`` is read off the out-of-plane block of ``\boldsymbol{B}`` in
+  the frame of the crack (`compliance_op_block`), whose Kelvin–Mandel matrix it
+  is, and stored directly with its symmetries;
+- TensND 0.8.5 keeps that storage through the sum, the difference and the
+  double contraction with an isotropic tensor, and through the negation.
+
+On one thread of the same machine (minimum of the samples), values unchanged to
+rounding:
+
+| Case of `scripts/bench` | 0.23.0 | 0.23.1 |
+| :--- | ---: | ---: |
+| `schemes/mt.crack.penny`: Mori–Tanaka, penny crack, isotropic matrix | 96 µs, 1.26 MB | 1.45 µs, 3.6 kB |
+| `schemes/mt.crack.penny.tri`: the same, triclinic matrix | 369 µs, 680 kB | 302 µs, 58 kB |
+
+```julia
+julia --project=scripts/bench scripts/bench/bench_suite.jl --filter=mt.crack
+```
+
+With a triclinic matrix the opening displacement tensor, an integral over the
+crack front, is what remains of the cost.
+
 ## Where the cost actually is
 
 Rough ordering, useful for deciding what to optimize:
