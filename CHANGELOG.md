@@ -100,7 +100,15 @@ implemented, its paper being out of reach.
   tests check a homogeneous field against Hooke's law and against Julia's
   single-point update along a plastic path, and the quadratic convergence of
   Newton's method on a heterogeneous plastic problem, which an elastic tangent
-  does not reach.
+  does not reach. The validations compare it with the package's Ferrite
+  adapter on the same mesh, with a plain dolfinx elasticity solve and with
+  Lamé's thick cylinder. Scripts in `python/mfh_fenicsx/examples`: a plate with
+  a hole in a Mori–Tanaka composite, a notched plate whose microcracks grow,
+  and the scaling with the number of Julia threads (a homogenized viscoplastic
+  composite at 24 000 points: 3.2 times faster on 4 threads than on one). The
+  package keeps Julia's signal handlers in place, which `gmsh.initialize()`
+  resets and without which a garbage collection on several threads kills the
+  process.
 
 ### Changed
 

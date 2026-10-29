@@ -26,7 +26,7 @@ from dolfinx_external_operator import (
 
 from . import Material, _SLOT, _WEIGHTS
 
-__all__ = ["Newton", "Stress", "strain"]
+__all__ = ["Newton", "NewtonError", "Stress", "quasistatic", "strain"]
 
 
 def strain(u):
@@ -138,6 +138,10 @@ class Stress:
         return np.einsum("Ia,Jb,abn->nIJ", self._back, self._back, tangent, optimize=True).ravel()
 
 
+class NewtonError(RuntimeError):
+    """Newton's method did not converge in the iterations allowed."""
+
+
 class Newton:
     """Newton's method on the residual ``residual(u; v)`` written with ``stress.sigma``.
 
@@ -159,11 +163,19 @@ class Newton:
         self.stress, self.u, self.bcs = stress, u, bcs
         self.rtol, self.atol, self.maxiter = rtol, atol, maxiter
         self.du = fem.Function(u.function_space)
+        # A direct solve by default, MUMPS when PETSc has it (PETSc's own LU
+        # made a plastic step on 28 000 dofs of quadratic tetrahedra nine times
+        # longer); `petsc_options` override it, under a prefix of this solver's own.
         self.ksp = PETSc.KSP().create(u.function_space.mesh.comm)
         self.ksp.setType("preonly")
         self.ksp.getPC().setType("lu")
+        if PETSc.Sys.hasExternalPackage("mumps"):
+            self.ksp.getPC().setFactorSolverType("mumps")
+        prefix = f"mfh_newton_{id(self)}_"
+        self.ksp.setOptionsPrefix(prefix)
+        options = PETSc.Options()
         for key, value in (petsc_options or {}).items():
-            PETSc.Options()[key] = value
+            options[prefix + key] = value
         self.ksp.setFromOptions()
 
     def residual_norm(self):
@@ -177,6 +189,25 @@ class Newton:
         b.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
         set_bc(b, self.bcs, self.u.x.petsc_vec, -1.0)
         return b, b.norm()
+
+    def reaction(self, dofs):
+        """The sum of the residual over ``dofs`` at the current state.
+
+        On the dofs of a Dirichlet condition that carries no external force, it
+        is the reaction there: the force the condition exerts, summed over the
+        processes. Call it after :meth:`solve`, whose last residual evaluated the
+        stresses at the converged state.
+        """
+        from dolfinx.fem.petsc import assemble_vector
+        from petsc4py import PETSc
+
+        b = assemble_vector(self.F)
+        b.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+        index_map = self.u.function_space.dofmap.index_map
+        owned = np.asarray(dofs)[np.asarray(dofs) < index_map.size_local * self.u.function_space.dofmap.index_map_bs]
+        local = float(np.sum(b.array_r[owned]))
+        b.destroy()
+        return self.u.function_space.mesh.comm.allreduce(local)
 
     def solve(self):
         """One step: Newton iterations from the current ``u``; the number of iterations."""
@@ -202,4 +233,50 @@ class Newton:
             A.destroy()
             b.destroy()
         b.destroy()
-        raise RuntimeError(f"Newton: no convergence in {self.maxiter} iterations (residual {norm:.3e}, first {first:.3e})")
+        raise NewtonError(f"Newton: no convergence in {self.maxiter} iterations (residual {norm:.3e}, first {first:.3e})")
+
+
+def _integration_failed(err):
+    """Whether a Julia error is a point that failed to integrate."""
+    from . import julia
+
+    jl = julia()
+    return bool(jl.isa(err.exception, jl.LocalIntegrationError))
+
+
+def quasistatic(newton, times, prescribe, on_step=None, max_cuts=8):
+    """Run the load steps between consecutive ``times``, cutting a step that fails.
+
+    ``prescribe(t)`` sets the boundary values at the time ``t``; ``on_step(t)``
+    is called after each accepted step. A step whose Newton iterations do not
+    converge, or where a point fails to integrate, is rolled back and halved, up
+    to ``max_cuts`` times. Returns the accepted times.
+    """
+    from juliacall import JuliaError
+
+    stress, u = newton.stress, newton.u
+    accepted = [times[0]]
+
+    def advance(t0, t1, depth):
+        u0 = u.x.array.copy()
+        stress.dt = t1 - t0
+        prescribe(t1)
+        try:
+            newton.solve()
+        except (NewtonError, JuliaError) as err:
+            if isinstance(err, JuliaError) and not _integration_failed(err) or depth == max_cuts:
+                raise
+            u.x.array[:] = u0
+            stress.rollback()
+            tm = (t0 + t1) / 2
+            advance(t0, tm, depth + 1)
+            advance(tm, t1, depth + 1)
+            return
+        stress.commit()
+        accepted.append(t1)
+        if on_step is not None:
+            on_step(t1)
+
+    for t0, t1 in zip(times[:-1], times[1:]):
+        advance(t0, t1, 0)
+    return accepted

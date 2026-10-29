@@ -49,9 +49,35 @@ for load in loads:
     stress.commit()          # stress.rollback() to cut the step instead
 ```
 
+`quasistatic(newton, times, prescribe)` runs the steps between `times` and halves a
+step whose Newton iterations fail or where a point fails to integrate;
+`newton.reaction(dofs)` gives the force a Dirichlet condition exerts;
+`stress.material.internal("p")` the committed values of an internal variable.
+
 Tensors cross the boundary in Kelvin–Mandel components, ordered
 (11, 22, 33, √2·23, √2·13, √2·12); `mandel_from_tensor`, `tensor_from_mandel` and
 `tensor4_from_mandel` convert from and to full tensors.
+
+## Signals: gmsh and other libraries
+
+Julia handles the signals SIGSEGV (its threads stop at safepoints through it),
+SIGBUS, SIGILL, SIGFPE and SIGINT. `gmsh.initialize()` resets them to their
+defaults, after which the next garbage collection on several threads kills the
+process. `mfh_fenicsx` saves Julia's handlers when it starts and puts them back
+before each of its calls into Julia and at exit; call `mfh_fenicsx.restore_signals()`
+before calling Julia yourself after such a library.
+
+## Examples
+
+`examples/` holds scripts that run as they are, each writing its results and its
+figure in a directory given by `--out`:
+
+1. `01_plate_with_hole.py`: a plate with a hole made of a Mori–Tanaka fiber
+   composite, against plain dolfinx with the same stiffness;
+2. `02_notched_plate_crack_growth.py`: a double-notched plate whose microcracks
+   grow (`CrackGrowthDamage`), on two meshes;
+6. `06_thread_scaling.py`: the time of a plastic load step with 1, 2, 4, …
+   Julia threads.
 
 ## Tests
 

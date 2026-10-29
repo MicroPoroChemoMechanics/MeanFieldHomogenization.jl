@@ -47,12 +47,12 @@ def _homogeneous(material, d, E, steps, dt=1.0):
         g.interpolate(lambda x, t=t: t * (E @ x[:d]))
         iterations.append(newton.solve())
         stress.commit()
-    return stress, u, iterations
+    return stress, u, iterations, newton
 
 
 def test_linear_law_three_dimensions(jl):
     E = 1.0e-3 * np.array([[1.0, 0.2, -0.1], [0.2, -0.4, 0.3], [-0.1, 0.3, 0.5]])
-    stress, u, iterations = _homogeneous("LinearElasticity(; E = 70.0e3, ν = 0.3)", 3, E, [1.0])
+    stress, u, iterations, newton = _homogeneous("LinearElasticity(; E = 70.0e3, ν = 0.3)", 3, E, [1.0])
     # The affine field is the exact solution, reached in one iteration.
     assert iterations == [1]
     x = u.function_space.tabulate_dof_coordinates()
@@ -60,12 +60,18 @@ def test_linear_law_three_dimensions(jl):
     lam, mu = 70.0e3 * 0.3 / (1.3 * 0.4), 70.0e3 / 2.6
     hooke = mf.mandel_from_tensor(lam * np.trace(E) * np.eye(3) + 2 * mu * E)
     np.testing.assert_allclose(stress.material.stress, np.repeat(hooke, stress.material.n, axis=1), rtol=1e-10)
+    # The reaction on the top face, z = 1, of unit area: σ_zz, and σ_xz along x.
+    domain = u.function_space.mesh
+    top = mesh.locate_entities_boundary(domain, 2, lambda x: np.isclose(x[2], 1.0))
+    for component, expected in ((2, hooke[2, 0]), (0, hooke[4, 0] / np.sqrt(2.0))):
+        dofs = fem.locate_dofs_topological(u.function_space.sub(component), 2, top)
+        assert newton.reaction(dofs) == pytest.approx(expected, rel=1e-10)
 
 
 def test_plastic_plane_strain_against_point_update(jl):
     E = 2.0e-3 * np.array([[1.0, 0.3], [0.3, -0.6]])
     steps = [0.5, 1.0, 1.5]
-    stress, _, _ = _homogeneous(J2, 2, E, steps)
+    stress, _, _, _ = _homogeneous(J2, 2, E, steps)
     # The same strain path at one point, through Julia's single-point update.
     path = jl.seval(
         """(law, eps, steps) -> begin
@@ -108,3 +114,73 @@ def test_consistent_tangent_converges_quadratically(jl):
     # the round-off floor: about 2 with the consistent tangent, 1 with any other.
     orders = [np.log(h[k + 1] / h[k]) / np.log(h[k] / h[k - 1]) for k in range(2, len(h) - 1) if h[k + 1] > 1e-10 * h[0]]
     assert len(orders) >= 2 and min(orders) > 1.5
+
+
+def _clamped_pull(n=2):
+    domain = mesh.create_unit_cube(MPI.COMM_WORLD, n, n, n)
+    V = fem.functionspace(domain, ("Lagrange", 1, (3,)))
+    u = fem.Function(V)
+    stress = Stress(J2, u)
+    residual = ufl.inner(stress.sigma, mf.fem.strain(ufl.TestFunction(V))) * stress.dx
+    bottom = fem.locate_dofs_geometrical(V, lambda x: np.isclose(x[2], 0.0))
+    top = fem.locate_dofs_topological(V.sub(2), 2, mesh.locate_entities_boundary(domain, 2, lambda x: np.isclose(x[2], 1.0)))
+    pull = fem.Constant(domain, 0.0)
+    bcs = [fem.dirichletbc(np.zeros(3), bottom, V), fem.dirichletbc(pull, top, V.sub(2))]
+    return stress, u, pull, bcs, residual
+
+
+def test_quasistatic_cuts_the_steps_that_fail(jl):
+    from juliacall import JuliaError
+
+    from mfh_fenicsx.fem import quasistatic
+
+    def prescribe(pull):
+        def set_value(t):
+            pull.value = 4.0e-3 * t
+
+        return set_value
+
+    # Four Newton iterations are not enough for the whole step: it is cut.
+    stress, u, pull, bcs, residual = _clamped_pull()
+    newton = Newton(stress, residual, u, bcs, rtol=1e-10, atol=1e-8, maxiter=4)
+    seen = []
+    accepted = quasistatic(newton, [0.0, 1.0], prescribe(pull), on_step=seen.append)
+    assert len(accepted) > 2 and accepted[-1] == 1.0 and seen == accepted[1:]
+    # The same steps taken directly, without a cut, give the same solution.
+    stress2, u2, pull2, bcs2, residual2 = _clamped_pull()
+    direct = Newton(stress2, residual2, u2, bcs2, rtol=1e-10, atol=1e-8)
+    for t0, t1 in zip(accepted[:-1], accepted[1:]):
+        stress2.dt = t1 - t0
+        pull2.value = 4.0e-3 * t1
+        direct.solve()
+        stress2.commit()
+    np.testing.assert_allclose(u.x.array, u2.x.array, rtol=0, atol=1e-12)
+    # A point that never integrates: cut up to max_cuts, then the error.
+    stress, u, pull, bcs, residual = _clamped_pull()
+    stress.options = {"algorithm": jl.LocalNewton(maxiters=1)}
+    with pytest.raises(JuliaError, match="LocalIntegrationError"):
+        quasistatic(Newton(stress, residual, u, bcs), [0.0, 1.0], prescribe(pull), max_cuts=2)
+    # Any other Julia error is raised at once.
+    stress, u, pull, bcs, residual = _clamped_pull()
+    stress.options = {"no_such_option": 1}
+    with pytest.raises(JuliaError, match="no_such_option"):
+        quasistatic(Newton(stress, residual, u, bcs), [0.0, 1.0], prescribe(pull))
+
+
+def test_petsc_options_reach_this_solver_only(jl):
+    from petsc4py import PETSc
+
+    stress, u, pull, bcs, residual = _clamped_pull()
+    chosen = Newton(stress, residual, u, bcs, petsc_options={"pc_factor_mat_solver_type": "petsc"})
+    default = Newton(stress, residual, u, bcs)
+    assert chosen.ksp.getPC().getFactorSolverType() == "petsc"
+    expected = "mumps" if PETSc.Sys.hasExternalPackage("mumps") else default.ksp.getPC().getFactorSolverType()
+    assert default.ksp.getPC().getFactorSolverType() == expected
+    # Both solve the same step to the same displacements.
+    pull.value = 2.0e-3
+    chosen.solve()
+    first = u.x.array.copy()
+    stress.rollback()
+    u.x.array[:] = 0.0
+    default.solve()
+    np.testing.assert_allclose(u.x.array, first, rtol=0, atol=1e-12)

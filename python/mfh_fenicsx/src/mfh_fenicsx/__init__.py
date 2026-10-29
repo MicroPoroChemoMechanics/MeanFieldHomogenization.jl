@@ -18,13 +18,19 @@ convention, ordered (11, 22, 33, √2·23, √2·13, √2·12); :func:`mandel_fr
 the full tensors a finite-element code works with.
 """
 
+import atexit
+import ctypes
 import os
+import signal
+import sys
+import time
 
 import numpy as np
 
 __all__ = [
     "start",
     "julia",
+    "restore_signals",
     "Material",
     "mandel_from_tensor",
     "tensor_from_mandel",
@@ -40,6 +46,45 @@ for _a, (_i, _j) in enumerate(_PAIRS):
     _SLOT[_i, _j] = _SLOT[_j, _i] = _a
 
 _JL = None
+
+
+# Julia handles SIGSEGV (its threads stop at safepoints through it), SIGBUS,
+# SIGILL, SIGFPE and SIGINT. A library initialized after Julia may reset them:
+# gmsh.initialize() puts them back to their defaults, and the next garbage
+# collection on several threads then kills the process. Julia's handlers are
+# saved when it starts and put back before every call into Julia and at exit.
+_SIGNALS = tuple(getattr(signal, name) for name in ("SIGSEGV", "SIGBUS", "SIGILL", "SIGFPE", "SIGINT"))
+
+
+class _SigAction(ctypes.Structure):
+    # struct sigaction of the C library: glibc (Linux), then Darwin.
+    if sys.platform.startswith("linux"):
+        _fields_ = [("handler", ctypes.c_void_p), ("mask", ctypes.c_ulong * 16), ("flags", ctypes.c_int), ("restorer", ctypes.c_void_p)]
+    else:
+        _fields_ = [("handler", ctypes.c_void_p), ("mask", ctypes.c_uint32), ("flags", ctypes.c_int)]
+
+
+_LIBC = ctypes.CDLL(None, use_errno=True) if sys.platform != "win32" else None
+_JULIA_SIGNALS = {}
+
+
+def _save_signals():
+    if _LIBC is None:
+        return
+    for number in _SIGNALS:
+        action = _SigAction()
+        _LIBC.sigaction(number, None, ctypes.byref(action))
+        _JULIA_SIGNALS[number] = action
+
+
+def restore_signals():
+    """Put back the signal handlers Julia installed when it started.
+
+    mfh_fenicsx does it before each of its calls into Julia; call it before
+    calling Julia directly after a library that resets the handlers (gmsh).
+    """
+    for number, action in _JULIA_SIGNALS.items():
+        _LIBC.sigaction(number, ctypes.byref(action), None)
 
 
 def start(project=None, threads=None, julia_exe=None):
@@ -64,20 +109,36 @@ def start(project=None, threads=None, julia_exe=None):
     os.environ.setdefault("PYTHON_JULIACALL_HANDLE_SIGNALS", "yes")
     from juliacall import Main as jl
 
+    _save_signals()
+    # Registered after juliacall's own exit hook, so that it runs before it.
+    atexit.register(restore_signals)
     jl.seval("using MeanFieldHomogenization")
     # One compiled closure, so that a call costs no `seval`.
     jl.seval(
         "_mfh_fenicsx_update!(σ, 𝕂, ε, states, Δt, material; options...) = "
         "(update_points!(σ, 𝕂, ε, states, Δt, material; options...); nothing)"
     )
+    # The committed values of an internal variable of a point law at every point.
+    jl.seval(
+        """begin
+            # A scalar variable is one row, as a tensor is six.
+            _mfh_fenicsx_rows(r::Integer) = r:r
+            _mfh_fenicsx_rows(r) = r
+            function _mfh_fenicsx_internal(states, law, name::Symbol)
+                points = reduce(vcat, states.old)
+                return [st.y[i] for i in _mfh_fenicsx_rows(law.layout[name]), st in points]
+            end
+        end"""
+    )
     _JL = jl
     return jl
 
 
 def julia():
-    """Julia's ``Main``, once :func:`start` has run."""
+    """Julia's ``Main``, once :func:`start` has run, its signal handlers in place."""
     if _JL is None:
         raise RuntimeError("mfh_fenicsx: call mfh_fenicsx.start() first")
+    restore_signals()
     return _JL
 
 
@@ -114,6 +175,8 @@ class Material:
     of dolfinx orders them. :meth:`update` computes the stresses and tangents of
     a step without committing it; :meth:`commit` makes its states the current
     ones once the step has converged, :meth:`rollback` discards them.
+    :attr:`julia_time` sums the seconds spent in Julia by :meth:`update`, over
+    :attr:`calls` calls.
     """
 
     def __init__(self, material, ncells, nqp):
@@ -126,6 +189,7 @@ class Material:
         self.stress = np.zeros((6, self.n), order="F")
         self.tangent = np.zeros((6, 6, self.n), order="F")
         self._strain = np.zeros((6, self.n), order="F")
+        self.julia_time, self.calls = 0.0, 0
 
     def update(self, strain, dt, **options):
         """Stresses and tangents at the Mandel strains ``(6, n)`` over a step ``dt``.
@@ -139,8 +203,21 @@ class Material:
         if strain.shape != (6, self.n):
             raise ValueError(f"strain of shape {strain.shape}, expected (6, {self.n})")
         self._strain[...] = strain
-        julia()._mfh_fenicsx_update_b(self.stress, self.tangent, self._strain, self.states, float(dt), self.material, **options)
+        jl = julia()
+        start = time.perf_counter()
+        jl._mfh_fenicsx_update_b(self.stress, self.tangent, self._strain, self.states, float(dt), self.material, **options)
+        self.julia_time += time.perf_counter() - start
+        self.calls += 1
         return self.stress, self.tangent
+
+    def internal(self, name):
+        """The committed values ``(width, n)`` of the internal variable ``name`` of a point law.
+
+        ``width`` is 1 for a scalar (a crack density, a cumulated plastic strain),
+        6 for a tensor in Mandel components.
+        """
+        jl = julia()
+        return np.asarray(jl._mfh_fenicsx_internal(self.states, self.material, jl.Symbol(name)))
 
     def commit(self):
         """Make the states of the last update the current ones."""

@@ -12,6 +12,7 @@ import pytest
 import mfh_fenicsx as mf
 
 RNG = np.random.default_rng(20261029)
+J2_LAW = "J2Plasticity(; E = 200.0e3, ν = 0.3, σ₀ = 250.0, H = 2.0e3)"
 
 
 @pytest.fixture(scope="module")
@@ -65,11 +66,11 @@ def test_linear_law_is_hookes_law(jl):
 
 
 def test_batch_matches_point_update_and_steps(jl):
-    law = "J2Plasticity(; E = 200.0e3, ν = 0.3, σ₀ = 250.0, H = 2.0e3)"
-    mat = mf.Material(law, 4, 3)
+    mat = mf.Material(J2_LAW, 4, 3)
     base = np.array([1.0, -0.3, -0.3, 0.0, 0.0, 0.0])
     eps = 3.0e-3 * (base[:, None] + 0.4 * RNG.standard_normal((6, mat.n)))
     sig, k = mat.update(eps, 1.0)
+    assert mat.calls == 1 and mat.julia_time > 0
     single = jl.seval(
         "(law, e) -> begin F, K, _ = point_update(law, MeanFieldHomogenization.MaterialLaws.SVector{6}(e), initial_state(law), 1.0); "
         "(collect(F), collect(K)) end"
@@ -86,12 +87,21 @@ def test_batch_matches_point_update_and_steps(jl):
     mat.commit()
     residual = mat.update(np.zeros((6, mat.n)), 1.0)[0]
     assert np.max(np.abs(residual)) > 1.0
+    # The committed internal variables, against the single-point update.
+    names = jl.seval("law -> String.(collect(keys(law.layout)))")(mat.material)
+    layout = jl.seval("(law, s) -> collect(law.layout[Symbol(s)])")
+    yfirst = jl.seval(
+        "(law, e) -> collect(point_update(law, MeanFieldHomogenization.MaterialLaws.SVector{6}(e), initial_state(law), 1.0)[3].y)"
+    )(mat.material, eps[:, 5])
+    for name in names:
+        rows = np.asarray(layout(mat.material, name)) - 1
+        np.testing.assert_array_equal(mat.internal(name)[:, 5], np.asarray(yfirst)[rows])
 
 
 def test_refusals(jl):
     from juliacall import JuliaError
 
-    mat = mf.Material("J2Plasticity(; E = 200.0e3, ν = 0.3, σ₀ = 250.0, H = 2.0e3)", 1, 2)
+    mat = mf.Material(J2_LAW, 1, 2)
     with pytest.raises(ValueError, match="expected"):
         mat.update(np.zeros((6, 3)), 1.0)
     with pytest.raises(JuliaError, match="LocalIntegrationError"):
@@ -102,3 +112,28 @@ def test_refusals(jl):
 
 def test_start_twice_returns_the_running_julia(jl):
     assert mf.start() is jl
+
+
+def test_julia_signal_handlers_are_restored(jl):
+    import ctypes
+    import signal
+
+    libc = ctypes.CDLL(None)
+
+    def handler(number):
+        action = mf._SigAction()
+        libc.sigaction(number, None, ctypes.byref(action))
+        return action.handler
+
+    julias = {n: handler(n) for n in mf._SIGNALS}
+    assert all(julias.values())
+    # What gmsh.initialize() does: every handler back to its default.
+    for number in mf._SIGNALS:
+        libc.signal(number, ctypes.c_void_p(0))
+    assert not any(handler(n) for n in mf._SIGNALS)
+    mat = mf.Material(J2_LAW, 2, 3)
+    mat.update(1.0e-3 * np.ones((6, mat.n)), 1.0)
+    assert {n: handler(n) for n in mf._SIGNALS} == julias
+    # Collections on all the threads go through the safepoints again.
+    for _ in range(3):
+        mf.julia().GC.gc()
