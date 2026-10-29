@@ -51,5 +51,5 @@ function _hill_3d_cylinder_aniso(
 
     P_arr = _fill_hill21!(zeros(T, 3, 3, 3, 3), P_vals)
 
-    return TensND.Tens(P_arr, cyl.basis)
+    return MFH_Core._tens_in(P_arr, cyl.basis)
 end

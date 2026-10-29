@@ -41,7 +41,7 @@ function tens_IA(ell::Ellipsoid{3})
     IA_arr[1, 1] = Iv[1] / fac
     IA_arr[2, 2] = Iv[2] / fac
     IA_arr[3, 3] = Iv[3] / fac
-    return TensND.Tens(IA_arr, ell.basis)
+    return MFH_Core._tens_in(IA_arr, ell.basis)
 end
 
 function tens_IA(cyl::Cylinder)
@@ -53,7 +53,7 @@ function tens_IA(cyl::Cylinder)
     IA_arr[1, 1] = Iv[1] / fac
     IA_arr[2, 2] = Iv[2] / fac
     IA_arr[3, 3] = Iv[3] / fac
-    return TensND.Tens(IA_arr, cyl.basis)
+    return MFH_Core._tens_in(IA_arr, cyl.basis)
 end
 
 function tens_IA(ell::Ellipsoid{2, Circular})
@@ -69,7 +69,7 @@ function tens_IA(ell::Ellipsoid{2})
     IA_arr = zeros(T, 2, 2)
     IA_arr[1, 1] = Iv[1] / fac
     IA_arr[2, 2] = Iv[2] / fac
-    return TensND.Tens(IA_arr, ell.basis)
+    return MFH_Core._tens_in(IA_arr, ell.basis)
 end
 
 # ── tens_UA ───────────────────────────────────────────────────────────────────
@@ -216,7 +216,7 @@ function tens_UA(ell::Ellipsoid{2})
     # U is fully symmetric: a component depends only on how many of its
     # indices are 2 — none, two or four; an odd count gives zero.
     U_arr = [_ua_2d(count(==(2), (i, j, k, l)), u) for i in 1:2, j in 1:2, k in 1:2, l in 1:2]
-    return TensND.Tens(U_arr, ell.basis)
+    return MFH_Core._tens_in(U_arr, ell.basis)
 end
 
 _ua_2d(n2, u) = iseven(n2) ? u[n2 ÷ 2 + 1] : zero(u[1])
@@ -312,5 +312,5 @@ function tens_VA(ell::Ellipsoid{2})
     V_arr[1, 2, 1, 2] = V_arr[2, 1, 1, 2] = v
     V_arr[1, 2, 2, 1] = V_arr[2, 1, 2, 1] = v
 
-    return TensND.Tens(V_arr, ell.basis)
+    return MFH_Core._tens_in(V_arr, ell.basis)
 end

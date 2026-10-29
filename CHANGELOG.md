@@ -81,8 +81,32 @@ implemented, its paper being out of reach.
   faster, values unchanged.
 - Tensor algebra comes from TensND instead of copies (`isotropify` and
   `bulk_shear` for the isotropic projection of the incremental tangent,
-  `from_mandel`, and `deviatoric_pinv`, new in TensND 0.8.4). Requires
-  TensND 0.8.4.
+  `from_mandel`, and `deviatoric_pinv`, new in TensND 0.8.4).
+- The compliance of a crack, `k n ⊗ˢ 𝐁 ⊗ˢ n`, is read off the
+  out-of-plane block of 𝐁 in the frame of the crack instead of a product of
+  components that went through 81 of them and checked their symmetries back.
+  With TensND 0.8.5, which keeps the minor-symmetric storage through the
+  isotropic operations of the scheme, a Mori–Tanaka step with a penny crack in
+  an isotropic matrix goes from 96 µs to 1.5 µs and from 1.26 MB to 3.6 kB
+  allocated; with a triclinic matrix, where the opening displacement tensor
+  dominates, from 369 µs to 302 µs. Values unchanged to rounding.
+- Requires TensND 0.8.5.
+
+### Fixed
+
+- The Hill tensors computed into an array (anisotropic matrix by residues,
+  nested quadrature or DECUHR, cylinders, two dimensions, conduction) and the
+  auxiliary and shape tensors were wrapped with a dimension read from the
+  array at run time: every scheme built on them was dispatched at run time.
+  They are now inferred with their order and dimension, which a new test
+  checks on every route.
+- A scheme with phases stored as structured tensors on frames of their own (a
+  cubic crystal on a rotated cube, inclusions transversely isotropic or
+  orthotropic) failed where TensND refused the sum of two cubic tensors on
+  different cubes. With TensND 0.8.5 every linear scheme gives the same
+  estimate as with the same phases stored as generic tensors, which a new test
+  checks. The test of the schemes against echoes in random bases was not run
+  by the suite; it is now.
 
 ## v0.23.0 — models of nonlinear composites and polycrystals
 

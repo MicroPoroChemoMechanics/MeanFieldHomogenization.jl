@@ -18,7 +18,14 @@ _H_over_B_factor(::Type{<:CrackShape}, ::Type{T}) where {T} = 3 * one(T) / 4
 _H_over_B_factor(::Type{Ribbon}, ::Type{T}) where {T} = 2 * one(T) / T(π)
 _H_over_B_factor(S::Type, ::Type) = _unsupported_crack_shape(S, "compliance")
 
-# H = k n ⊗ˢ B ⊗ˢ n, with n the third vector of ℬ.
+# H = k n ⊗ˢ B ⊗ˢ n, with n the third vector of ℬ. In an orthonormal ℬ, the
+# Kelvin–Mandel matrix of n ⊗ˢ B ⊗ˢ n is the out-of-plane block of B read in ℬ:
+# the product of the components went through 81 of them and checked their
+# symmetries back, most of the cost of a crack in a Mori–Tanaka scheme.
+function _H_from_B(B, k, ℬ::TensND.OrthonormalBasis{3})
+    X = SMatrix{3, 3}(TensND.components(B, ℬ))
+    return k * TensND.from_mandel(mandel_op_embed(compliance_op_block(X)), ℬ)
+end
 function _H_from_B(B, k, ℬ::TensND.AbstractBasis)
     n̂ = TensND.tens_basis(ℬ, 3)
     return k * (n̂ ⊗ˢ TensND.change_tens(B, ℬ) ⊗ˢ n̂)

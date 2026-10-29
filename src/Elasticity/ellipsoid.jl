@@ -344,12 +344,7 @@ convenience.  See the generic [`shape_tensor`](@ref) docstring for
 conventions.
 """
 function MFH_Core.shape_tensor(ell::Ellipsoid{dim}) where {dim}
-    T = eltype(ell.semi_axes)
-    D = zeros(T, dim, dim)
-    @inbounds for i in 1:dim
-        D[i, i] = ell.semi_axes[i]
-    end
-    return TensND.Tens(D, ell.basis)
+    return MFH_Core._tens_in(Matrix(Diagonal(collect(ell.semi_axes))), ell.basis)
 end
 
 # ── Shape helpers used by scripts and downstream code ──────────────────────

@@ -172,6 +172,25 @@ function _crack_frame(n, ψ)
     return ℓ, cross(n, ℓ), n
 end
 
+@testset "Cracks — ℍ = k n ⊗ˢ 𝐁 ⊗ˢ n from the Kelvin–Mandel block, any frame" begin
+    # In the frame of the crack, ℍ is read off the out-of-plane block of 𝐁;
+    # against the product of the components, in a general basis that takes the
+    # other route, for 𝐁 written in another frame, an elliptic and a ribbon
+    # crack, and with a dual entry of 𝐁.
+    ℬ = TensND.RotatedBasis(0.7, 1.9, -0.4)
+    n̂ = TensND.tens_basis(ℬ, 3)
+    B = TensND.change_tens(TensND.Tens([2.0 0.3 -0.2; 0.3 1.5 0.4; -0.2 0.4 0.8]), TensND.RotatedBasis(0.2, 0.5, 1.1))
+    for (crack, k) in ((EllipticCrack(1.0, 0.6; euler_angles = (0.7, 1.9, -0.4)), 3 / 4), (RibbonCrack(1.0; euler_angles = (0.7, 1.9, -0.4)), 2 / π))
+        H = compliance_from_cod(B, crack, ℬ)
+        @test TensND.get_array(H) isa TensND.Tensors.SymmetricTensor{4, 3}
+        @test Array(TensND.components_canon(H)) ≈ Array(TensND.components_canon(k * (n̂ ⊗ˢ B ⊗ˢ n̂))) atol = 1.0e-14
+        @test cod_from_compliance(H, crack, ℬ) ≈ B
+        @test compliance_from_cod(B, crack, TensND.Basis(Matrix(TensND.vecbasis(ℬ)))) ≈ H
+    end
+    dH = ForwardDiff.derivative(x -> Array(TensND.components_canon(compliance_from_cod(x * B, ℬ))), 1.0)
+    @test dH ≈ Array(TensND.components_canon(compliance_from_cod(B, ℬ)))
+end
+
 @testset "Cracks — 𝐁 in EO and TraTI matrices against the transformation rule" begin
     canonical = TensND.CanonicalBasis{3, Float64}()
     P = [1.3 0.2 -0.1; 0.15 0.8 0.25; -0.05 0.3 1.1]

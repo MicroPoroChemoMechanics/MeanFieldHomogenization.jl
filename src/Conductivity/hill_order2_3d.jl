@@ -64,7 +64,7 @@ function _hill_order2_3d_aniso(ell::Ellipsoid{3}, K₀)
     # conductivity written in a rotated one.
     K_arr = Array(TensND.components(K₀, ell.basis))
     A = Diagonal(collect(ell.semi_axes))
-    return TensND.Tens(_hill_order2_aniso(A, K_arr), ell.basis)
+    return MFH_Core._tens_in(_hill_order2_aniso(A, K_arr), ell.basis)
 end
 
 # P = K^{-1/2} · I^{A·K^{-1/2}} · K^{-1/2} in closed form: the semi-axes and
@@ -170,5 +170,5 @@ function _hill_order2_3d_aniso(cyl::Cylinder, K₀)
     K2 = Array(TensND.components(K₀, cyl.basis))[2:3, 2:3]
     b, c = cyl.semi_axes
     P2 = _hill_order2_aniso(Diagonal([b, c]), K2)
-    return TensND.Tens(cat(zero(eltype(P2)), P2; dims = (1, 2)), cyl.basis)
+    return MFH_Core._tens_in(cat(zero(eltype(P2)), P2; dims = (1, 2)), cyl.basis)
 end

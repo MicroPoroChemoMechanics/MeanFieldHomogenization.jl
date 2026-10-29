@@ -204,5 +204,5 @@ function _hill_3d_aniso_residue(
 
     P_arr = _fill_hill21!(zeros(Float64, 3, 3, 3, 3), P_vals)
 
-    return TensND.Tens(P_arr, ell.basis)
+    return MFH_Core._tens_in(P_arr, ell.basis)
 end

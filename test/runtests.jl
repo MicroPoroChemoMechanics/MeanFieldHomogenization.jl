@@ -159,6 +159,7 @@ end
         include("Elasticity/test_hill_2d.jl")
         include("Elasticity/test_hill_cylinder.jl")
         include("Elasticity/test_hill_random_bases.jl")
+        include("Elasticity/test_hill_inference.jl")
         include("Elasticity/test_hill_incompressible.jl")
         include("Elasticity/test_hill_symbolic.jl")
         include("Elasticity/test_shape_tensor.jl")
@@ -232,6 +233,8 @@ end
         include("Schemes/test_orientation.jl")
         include("Schemes/test_concentration_bundles.jl")
         include("Schemes/test_concentrations.jl")
+        include("Schemes/test_structured_phases.jl")
+        include("Schemes/test_schemes_random_bases.jl")
         include("Schemes/test_crack_families.jl")
     end
 
