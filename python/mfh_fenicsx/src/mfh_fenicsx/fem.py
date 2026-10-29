@@ -164,7 +164,7 @@ class Newton:
         self.rtol, self.atol, self.maxiter = rtol, atol, maxiter
         self.du = fem.Function(u.function_space)
         # A direct solve by default, MUMPS when PETSc has it (PETSc's own LU
-        # made a plastic step on 28 000 dofs of quadratic tetrahedra nine times
+        # made a plastic step on 28,000 dofs of quadratic tetrahedra nine times
         # longer); `petsc_options` override it, under a prefix of this solver's own.
         self.ksp = PETSc.KSP().create(u.function_space.mesh.comm)
         self.ksp.setType("preonly")

@@ -1,0 +1,101 @@
+{
+  "machine": "x86_64, 8 logical CPUs",
+  "runs": [
+    {
+      "material": "j2",
+      "threads": 1,
+      "points": 24000,
+      "step": {
+        "iterations": 9,
+        "total_s": 8.822301791980863,
+        "julia_s": 0.4388960376381874,
+        "julia_calls": 10
+      },
+      "checksum": 0.15725869224748512
+    },
+    {
+      "material": "j2",
+      "threads": 2,
+      "points": 24000,
+      "step": {
+        "iterations": 9,
+        "total_s": 8.784621011465788,
+        "julia_s": 0.2577776163816452,
+        "julia_calls": 10
+      },
+      "checksum": 0.15725869224748515
+    },
+    {
+      "material": "j2",
+      "threads": 4,
+      "points": 24000,
+      "step": {
+        "iterations": 9,
+        "total_s": 8.954017203301191,
+        "julia_s": 0.23874886520206928,
+        "julia_calls": 10
+      },
+      "checksum": 0.15725869224748515
+    },
+    {
+      "material": "j2",
+      "threads": 8,
+      "points": 24000,
+      "step": {
+        "iterations": 9,
+        "total_s": 8.760623840615153,
+        "julia_s": 0.11709029972553253,
+        "julia_calls": 10
+      },
+      "checksum": 0.15725869224748515
+    },
+    {
+      "material": "composite",
+      "threads": 1,
+      "points": 24000,
+      "step": {
+        "iterations": 4,
+        "total_s": 96.32260343432426,
+        "julia_s": 92.47905987501144,
+        "julia_calls": 5
+      },
+      "checksum": 0.1687533837933166
+    },
+    {
+      "material": "composite",
+      "threads": 2,
+      "points": 24000,
+      "step": {
+        "iterations": 4,
+        "total_s": 54.77141707763076,
+        "julia_s": 50.90725501254201,
+        "julia_calls": 5
+      },
+      "checksum": 0.1687533837933327
+    },
+    {
+      "material": "composite",
+      "threads": 4,
+      "points": 24000,
+      "step": {
+        "iterations": 4,
+        "total_s": 33.1829942855984,
+        "julia_s": 29.40013381652534,
+        "julia_calls": 5
+      },
+      "checksum": 0.16875338379337637
+    },
+    {
+      "material": "composite",
+      "threads": 8,
+      "points": 24000,
+      "step": {
+        "iterations": 4,
+        "total_s": 30.703404365107417,
+        "julia_s": 26.822121193632483,
+        "julia_calls": 5
+      },
+      "checksum": 0.1687533837932789
+    }
+  ]
+}

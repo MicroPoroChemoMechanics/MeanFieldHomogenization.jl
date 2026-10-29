@@ -169,11 +169,11 @@ xy = domain.geometry.x[:, :2]
 triangles = domain.geometry.dofmap[:ncells, :3]
 image = ax2.tripcolor(
     mtri.Triangulation(xy[:, 0], xy[:, 1], triangles), facecolors=density, cmap="viridis",
-    norm=LogNorm(vmin=0.05, vmax=density.max()), edgecolors="face",
+    norm=LogNorm(vmin=0.05, vmax=density.max()), edgecolors="face", rasterized=True,
 )
 ax2.set_aspect("equal")
 ax2.set_title(f"crack density, τ = {shown[0]}, h = {shown[1]}", fontsize="medium")
 ax2.set_axis_off()
 fig.colorbar(image, ax=ax2, shrink=0.8)
-fig.savefig(out / "notched_plate.svg")
+fig.savefig(out / "notched_plate.svg", dpi=150)  # the map of the densities as an image
 print(f"written: {out / 'results.json'}, {out / 'notched_plate.svg'}")

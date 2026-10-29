@@ -135,6 +135,9 @@ pages = [
         "Differentiation" => [
             "manual/sensitivities.md",
         ],
+        "Performance" => [
+            "manual/parallelism.md",
+        ],
         "Appendices" => [
             "manual/elliptic_examples.md",
         ],
@@ -322,6 +325,7 @@ pages = [
             "fe_coupling/materials.md",
             "fe_coupling/fractured_rock.md",
             "fe_coupling/backends.md",
+            "fe_coupling/fenicsx.md",
         ],
         "Examples" => [
             "fe_coupling/thick_cylinder.md",

@@ -17,7 +17,7 @@ first; the model that lets the grains deviate more from the average strain
 These materials are costly: about 50 ms per point and per update for Kröner's
 model, three times more for Hill's, whose steps must also be cut more often.
 The mesh is coarse, 151 linear triangles of one point each; on 4 Julia threads
-the computation took 171 s with Kröner's model and 1 152 s with Hill's
+the computation took 171 s with Kröner's model and 1,152 s with Hill's
 (results.json keeps the times of a run). Julia shares the points among its
 threads, so start it with several (PYTHON_JULIACALL_THREADS).
 

@@ -1,0 +1,8 @@
+{
+  "triangles": 5960,
+  "displacement_gap": 9.238335886908043e-14,
+  "concentration_composite": 3.6491228485378597,
+  "concentration_matrix": 3.0351486074404552,
+  "time_mfh_first_solve_s": 2.137819331139326,
+  "time_plain_dolfinx_s": 0.18253159523010254
+}

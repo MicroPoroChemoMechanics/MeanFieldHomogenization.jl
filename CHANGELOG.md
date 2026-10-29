@@ -105,10 +105,12 @@ implemented, its paper being out of reach.
   Lamé's thick cylinder. Scripts in `python/mfh_fenicsx/examples`: a plate with
   a hole in a Mori–Tanaka composite, a notched plate whose microcracks grow,
   and the scaling with the number of Julia threads (a homogenized viscoplastic
-  composite at 24 000 points: 3.2 times faster on 4 threads than on one). The
+  composite at 24,000 points: 3.2 times faster on 4 threads than on one). The
   package keeps Julia's signal handlers in place, which `gmsh.initialize()`
   resets and without which a garbage collection on several threads kills the
-  process.
+  process. Documented in the new pages "FEniCSx backend" (installation,
+  conventions, what the tests check, the examples with their figures) and
+  "Parallelism" (what runs on Julia's threads, and what it gains).
 
 ### Changed
 
