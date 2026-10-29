@@ -59,4 +59,8 @@ Tensors cross the boundary in Kelvin–Mandel components, ordered
 python -m pytest python/mfh_fenicsx/tests
 ```
 
-`tests/test_material.py` needs Julia only; `tests/test_fem.py` needs dolfinx too.
+`tests/test_material.py` needs Julia only; `tests/test_fem.py` and
+`tests/test_validation.py` need dolfinx too, and the validations need `TensND` and
+`Ferrite` in the Julia project: the same plastic problem solved through the package's
+Ferrite adapter, a homogenized composite against a plain dolfinx elasticity solve, and
+Lamé's thick cylinder in plane strain.
