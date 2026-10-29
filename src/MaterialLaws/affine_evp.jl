@@ -147,7 +147,10 @@ _step_integral(α, β, t₀, Δ, s) = (Δ * exp(-s * t₀)) * (α * _φ₁(s * �
 # polarization of the inclusion relative to the matrix. The mixture rule
 # f₀ε₀ + f₁ε₁ = E gives A₁ = B:(f₁B + f₀𝕀)⁻¹ and a₁ = f₀ A₁:d, written without
 # the inverse of C₁ − C₀ of eq. 19, so that identical phases are allowed.
-function _carson_concentration(c::AffineEVPComposite, S₀, S₁, J₀, J₁)
+# The quasi-elastic composite uses it in time, with its compliances and
+# eigenstrains (`c` gives the fractions, the shape of the inclusions, whether
+# the matrix is taken isotropic, and the options of the Hill tensor).
+function _carson_concentration(c, S₀, S₁, J₀, J₁)
     C₀, C₁ = inv(S₀), inv(S₁)
     𝔼 = _eshelby(c, C₀)
     ℙ = 𝔼 / C₀
@@ -158,7 +161,7 @@ function _carson_concentration(c::AffineEVPComposite, S₀, S₁, J₀, J₁)
     return A₁, f₀ * A₁ * (ℙ * (C₁ * J₁ - C₀ * J₀))
 end
 
-_eshelby(c::AffineEVPComposite, C₀) = c.isotropic ? _eshelby_iso(c, C₀) : _eshelby_full(c, C₀)
+_eshelby(c, C₀) = c.isotropic ? _eshelby_iso(c, C₀) : _eshelby_full(c, C₀)
 function _eshelby_iso(c, C₀)
     k, μ = TensND.bulk_shear(TensND.isotropify(TensND.from_mandel((C₀ + transpose(C₀)) / 2)))
     Ciso = TensND.TensISO{3}(3k, 2μ)
@@ -235,12 +238,8 @@ function _mandel_update(c::AffineEVPComposite, E₀, st::AffineEVPState, Δt; al
     concentration(σ₀, y₀, σ₁, y₁, E) = _evp_concentration(c, laws, S, A∞, st, σₙ, Δt, (σ₀, σ₁), (y₀, y₁), E)
     G(x, E) = (r = phases(x, E); (concentration(r[1][1], r[1][3].y, r[2][1], r[2][3].y, E)..., r))
     # The fixed point x = G(x) by successive substitutions, accelerated, as the
-    # paper iterates (its Fig. 1). Converged on the values and on their
-    # derivatives, to the tolerance of the phases relaxed a thousand times (an
-    # inexact iteration over phases solved to that tolerance).
-    tol = 1000 * algorithm.reltol
-    converged(r, x) = maximum(abs ∘ TensND.primal, r) ≤ 1000 * algorithm.abstol + tol * maximum(abs ∘ TensND.primal, x) &&
-        Schemes._sc_partials_converged(r, x; abstol = 1000 * algorithm.abstol, reltol = tol)
+    # paper iterates (its Fig. 1), on the values and on their derivatives.
+    converged = _fixed_point_test(algorithm)
     x₀ = SVector{6, T}(st.phases[2].g + (E - st.ε))
     x, (Iσ₊, Iin₊, H₊, solved) = _anderson(z -> (r = G(z, E); (r[1], Base.tail(r))), x₀, algorithm.maxiters, converged, :AffineEVPComposite)
     # The tangent: x follows E by the implicit-function theorem on x = G(x, E).
@@ -337,3 +336,14 @@ _evp_result(Σ, 𝕂, new, st, ::Type{T}) where {T} = (
     SVector{6, T}(Σ)::SVector{6, T}, SMatrix{6, 6, T, 36}(𝕂)::SMatrix{6, 6, T, 36},
     new::AffineEVPState{_state_type(typeof(st.phases[1]), T), _state_type(typeof(st.phases[2]), T), T},
 )
+
+# The test of a fixed point x = G(x) iterated over phases solved to the
+# tolerance of `alg`: the change r judged on the values and on their
+# derivatives, against ten times the relative tolerance of the phases, whose
+# rounding it stays above, and their absolute tolerance. A looser test leaves
+# the stress less accurate than a stress-driven step asks.
+function _fixed_point_test(alg::LocalNewton)
+    tol = 10 * alg.reltol
+    return (r, x) -> maximum(abs ∘ TensND.primal, r) ≤ alg.abstol + tol * maximum(abs ∘ TensND.primal, x) &&
+        Schemes._sc_partials_converged(r, x; abstol = alg.abstol, reltol = tol)
+end

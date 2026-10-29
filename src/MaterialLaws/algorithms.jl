@@ -343,7 +343,11 @@ end
 # the current one corrected by the combination of the last `depth` changes of g
 # that best cancels the residual f = g(x) − x in the least-squares sense.
 # `converged(f, x)` judges the residual; returns the fixed point and what g
-# computed there.
+# computed there. The combination is computed on the values, by a pivoted QR
+# that a degenerate history does not break: once the values have converged and
+# only the derivatives still move, the changes of the residual have no value
+# left, the combination vanishes and the iteration is the plain substitution
+# that carries the derivatives to their fixed point.
 function _anderson(g, x₀::SVector{N}, maxiters::Integer, converged, name::Symbol; depth::Integer = 4) where {N}
     x = x₀
     Δg, Δf = typeof(x₀)[], typeof(x₀)[]
@@ -358,7 +362,9 @@ function _anderson(g, x₀::SVector{N}, maxiters::Integer, converged, name::Symb
             length(Δg) > depth && (popfirst!(Δg); popfirst!(Δf))
         end
         gprev, fprev = gx, f
-        x = isempty(Δf) ? gx : gx - reduce(hcat, Δg) * (reduce(hcat, Δf) \ f)
+        x = isempty(Δf) ? gx : gx - reduce(hcat, Δg) * _mixing(reduce(hcat, Δf), f)
     end
     throw(LocalIntegrationError(name, maxiters, NaN, "no convergence of the fixed point"))
 end
+
+_mixing(F, f) = qr(TensND.primal.(F), ColumnNorm()) \ TensND.primal.(f)

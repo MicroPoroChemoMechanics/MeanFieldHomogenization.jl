@@ -91,6 +91,8 @@ AffineComposite
 SecondOrderComposite
 AffineEVPComposite
 AffineEVPState
+QuasiElasticComposite
+QuasiElasticState
 ```
 
 ## Polycrystals

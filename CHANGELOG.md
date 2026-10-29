@@ -49,6 +49,17 @@
   per phase. Two identical phases give the phase exactly, elastic phases the
   elastic Mori–Tanaka estimate, linear Maxwell phases the linear viscoelastic
   one at first order in the time step, as the tests check.
+- `QuasiElasticComposite`: the "quasi-elastic" affine formulation of Brenner,
+  Masson, Castelnau and Zaoui (2002) for a matrix with inclusions of nonlinear
+  Maxwell-type phases. The Laplace–Carson inversion is replaced by the direct
+  one of the paper, p = h(t)/t, which makes each linearized phase an elastic
+  solid with the eigenstrain of its actual history: one thermoelastic
+  Mori–Tanaka composite per iteration, in time. h = 1 for creep, or h(t) built
+  on a relaxation time for relaxation and constant strain rates. A single
+  phase is exact in creep and, with h(t), in relaxation; linear Maxwell phases
+  in creep give the elastic and the viscous Mori–Tanaka estimates at the start
+  and in the steady regime, as the paper shows and the tests check. On a creep
+  test it follows `AffineEVPComposite` to 0.2 %.
 
 ### Changed
 
