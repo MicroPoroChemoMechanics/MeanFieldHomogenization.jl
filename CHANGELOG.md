@@ -1,6 +1,18 @@
 # Changelog
 
-## Unreleased — the nonlinear homogenization models still missing
+## v0.23.1 — the nonlinear homogenization models still missing
+
+0.23.0 brought the classical routes of nonlinear homogenization; this release
+adds the models it left out that the literature at hand describes in full: the
+anisotropic matrix of Lebensohn and Tomé in the tangent model of viscoplastic
+polycrystals, Hill's self-consistent scheme for elastoplastic polycrystals, the
+second-order estimate of Ponte Castañeda, and, for phases with a history, the
+affine formulation of Pierard and Doghri and its quasi-elastic approximation
+by Brenner et al. Each is a law of `MaterialLaws` that runs in `point_response`
+and in the finite-element coupling, checked against an independent reference
+and documented on a page of its own. Everything added is additive: nothing
+that existed computes differently. The β rule of Cailletaud and Pilvin is not
+implemented, its paper being out of reach.
 
 ### Added
 

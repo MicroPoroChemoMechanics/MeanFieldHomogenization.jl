@@ -91,6 +91,9 @@ end
     @test x ≈ (I - A) \ b rtol = 1.0e-12
     @test out == :payload
     @test_throws LocalIntegrationError MP_HM._anderson(x -> (A * x + b, nothing), zero(b), 2, (f, x) -> false, :test)
+    # A state built without a tangent has none yet.
+    st = PolycrystalState([initial_state(only(g))], SVector(1.0, 0, 0, 0, 0, 0), zero(SVector{6, Float64}))
+    @test iszero(st.tangent) && st.tangent isa SMatrix{6, 6, Float64}
     @test_throws DomainError HillModel(; reltol = 0.0)
     @test_throws DomainError HillModel(; reltol = 1.0)
 end

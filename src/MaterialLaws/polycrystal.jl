@@ -162,8 +162,12 @@ function PolycrystalState(grains::Vector{<:PointState}, ε::StaticVector{6}, σ:
     return PolycrystalState(grains, SVector{6, T}(ε), SVector{6, T}(σ), SMatrix{6, 6, T}(tangent))
 end
 
+# Without a tangent, as before it was kept: none known yet.
+PolycrystalState(grains::Vector{<:PointState}, ε::StaticVector{6}, σ::StaticVector{6}) =
+    PolycrystalState(grains, ε, σ, zero(SMatrix{6, 6, promote_type(eltype(ε), eltype(σ))}))
+
 Constitutive.initial_state(m::Polycrystal) =
-    PolycrystalState(map(initial_state, m.grains), zero(SVector{6, Float64}), zero(SVector{6, Float64}), zero(SMatrix{6, 6, Float64}))
+    PolycrystalState(map(initial_state, m.grains), zero(SVector{6, Float64}), zero(SVector{6, Float64}))
 Constitutive.gradient_names(::Polycrystal) = (:ε,)
 Constitutive.flux_names(::Polycrystal) = (:σ,)
 
