@@ -234,12 +234,30 @@ end
 # own law giving σ and its tangent 𝕂 at each iterate, the Jacobian G + H 𝕂. In
 # the matrix of Kröner and Berveiller–Zaoui, ε = b + 𝒞:(ε − 𝕊:σ(ε)) is
 # G = 𝕀 − 𝒞, H = 𝒞𝕊; in Hill's medium, σ + 𝕃*:ε = b is G = 𝕃*, H = 𝕀.
-function _grain_interacting(law, G, H, b, ε₀, prev, Δt, alg, ext, ::Type{T}) where {T}
+function _grain_interacting(law, G, H, b, ε₀, prev, Δt, alg, ext, ::Type{T}; known = nothing) where {T}
     residual(ε) = begin
-        σ, 𝕂, s = _grain_update(law, ε, prev, Δt, alg, ext)
+        σ, 𝕂, s = _known_or_update(known, law, ε, prev, Δt, alg, ext)
         (G * ε + H * σ - b, (σ, 𝕂, s, G + H * 𝕂))
     end
     return _root_with_payload(residual, (ε, out) -> out[4], ε₀, alg, law.name, T)
+end
+
+# The root of a grain in an outer iterate is where its solve starts in the next
+# one, whose first evaluation would integrate the grain again at the same
+# strain: half of the grain updates of an aggregate step. `known`, the strain of
+# the last root and the update there, is read back instead when the strain is
+# the same to the bit (`===`, partials of duals included): the same numbers,
+# integrated once.
+_known_or_update(::Nothing, law, ε, prev, Δt, alg, ext) = _grain_update(law, ε, prev, Δt, alg, ext)
+_known_or_update(known::Tuple{E, U}, law, ε::E, prev, Δt, alg, ext) where {E, U} =
+    known[1] === ε ? known[2] : _grain_update(law, ε, prev, Δt, alg, ext)
+_known_or_update(::Tuple, law, ε, prev, Δt, alg, ext) = _grain_update(law, ε, prev, Δt, alg, ext)
+
+# One slot per grain for its last root and the update there, typed by the
+# update's inferred type, so that reading a slot stays a small union.
+function _known_slots(m, st, ::Type{T}, Δt, alg, ext) where {T}
+    U = Base.promote_op(_grain_update, eltype(m.grains), SVector{6, T}, eltype(st.grains), typeof(Δt), typeof(alg), typeof(ext))
+    return Vector{Union{Nothing, Tuple{SVector{6, T}, U === Union{} ? Any : U}}}(nothing, length(m.grains))
 end
 
 # Σ_g w_g (𝕀 − 𝕊𝕂_g) J_g⁻¹ (A + 𝕁r_g ⊗ ∂c_J + 𝕂r_g ⊗ ∂c_K), r_g = ε_g − 𝕊σ_g − Eᵖ:
@@ -262,14 +280,16 @@ function _aggregate_step(model::_InclusionModel, m, E₀, st, Δt, alg, ext)
     ΔE = E - st.ε
     # The strain of each grain at the last outer iterate: the start of the next.
     guesses = [SVector{6, T}(s.g) + ΔE for s in st.grains]
+    known = _known_slots(m, st, T, Δt, alg, ext)
     c(Ep) = _interaction(model, ℂ, E, Ep)
     outer(Eᵖ) = begin
         cJ, cK = c(Eᵖ)
         𝒞 = cJ * 𝕁 + cK * 𝕂ᵈ
         b = E - 𝒞 * Eᵖ
         grains = map(m.grains, st.grains, eachindex(guesses)) do law, prev, i
-            ε, out = _grain_interacting(law, I6 - 𝒞, 𝒞 * 𝕊, b, guesses[i], prev, Δt, alg, ext, T)
+            ε, out = _grain_interacting(law, I6 - 𝒞, 𝒞 * 𝕊, b, guesses[i], prev, Δt, alg, ext, T; known = known[i])
             guesses[i] = ε
+            known[i] = (ε, (out[1], out[2], out[3]))
             (ε, out...)
         end
         (sum(w * (ε - 𝕊 * σ) for (w, (ε, σ)) in zip(m.weights, grains)) - Eᵖ, grains)
@@ -328,6 +348,7 @@ function _aggregate_step(model::HillModel, m, E₀, st, Δt, alg, ext)
     Σ₀ = Ref(Σₙ + 𝕃₀ * (E - Eₙ))
     # The strain of each grain at the last iterate: the start of the next.
     guesses = [ε + E - Eₙ for ε in εₙ]
+    known = _known_slots(m, st, T, Δt, alg, ext)
     # 𝕃 converged to the accuracy of the Hill tensor: below it the change is the
     # noise of the quadrature.
     tol = 10 * model.reltol
@@ -337,8 +358,9 @@ function _aggregate_step(model::HillModel, m, E₀, st, Δt, alg, ext)
         residual(Σ) = begin
             grains = map(m.grains, st.grains, eachindex(guesses)) do law, prev, i
                 b = Σ + 𝕃s * E + (σₙ[i] - Σₙ) + 𝕃s * (εₙ[i] - Eₙ)
-                ε, out = _grain_interacting(law, 𝕃s, I6, b, guesses[i], prev, Δt, alg, ext, T)
+                ε, out = _grain_interacting(law, 𝕃s, I6, b, guesses[i], prev, Δt, alg, ext, T; known = known[i])
                 guesses[i] = ε
+                known[i] = (ε, (out[1], out[2], out[3]))
                 (ε, out...)
             end
             (sum(w * first(g) for (w, g) in zip(m.weights, grains)) - E, grains)

@@ -206,7 +206,7 @@ function _newton_values(R, y, alg::LocalNewton, name::Symbol)
         # A singular Jacobian fails the step: an exception of the factorization
         # (large systems) or a non-finite correction (small static ones).
         δ = try
-            J \ r
+            _static_ldiv(J, r)
         catch err
             err isa LinearAlgebra.SingularException || rethrow()
             throw(LocalIntegrationError(name, it, last, "singular or non-finite Jacobian"))
@@ -223,6 +223,40 @@ function _newton_values(R, y, alg::LocalNewton, name::Symbol)
             (mapreduce(abs, max, r; init = zero(eltype(r))) <= r₀ || last <= tol₀) && return y
     end
     throw(LocalIntegrationError(name, alg.maxiters, last, "no convergence"))
+end
+
+# A static system larger than 14 × 14 is beyond StaticArrays' unrolled LU: `\`
+# then copies it into a Matrix, factors a copy with LAPACK and solves on a copy
+# of the right-hand side, allocating all three and the pivots at every solve,
+# which made most of the memory of a law with 24 internal variables (a crystal
+# of 12 slip systems). `_static_ldiv` makes the same LAPACK calls, after the same
+# triangular tests, on buffers that the task keeps: the same bits and the same
+# exceptions, without the allocations. Below that size, for a triangular
+# matrix, or for numbers LAPACK does not take (duals), it is `\` itself.
+struct _LDivBuffers{T}
+    A::Matrix{T}
+    ipiv::Vector{LinearAlgebra.BlasInt}
+    B::Matrix{T}
+end
+
+function _ldiv_buffers(::Type{T}, n::Int, m::Int) where {T}
+    store = get!(Dict{Tuple{DataType, Int, Int}, Any}, task_local_storage(), :mfh_static_ldiv)::Dict{Tuple{DataType, Int, Int}, Any}
+    return get!(store, (T, n, m)) do
+        _LDivBuffers{T}(Matrix{T}(undef, n, n), Vector{LinearAlgebra.BlasInt}(undef, n), Matrix{T}(undef, n, m))
+    end::_LDivBuffers{T}
+end
+
+_static_ldiv(A::StaticMatrix, B::StaticArrays.StaticVecOrMat) = A \ B
+function _static_ldiv(A::StaticMatrix{N, N, T}, B::StaticArrays.StaticVecOrMat{T}) where {N, T <: LinearAlgebra.BlasFloat}
+    (N ≤ 14 || istril(A) || istriu(A)) && return A \ B
+    buf = _ldiv_buffers(T, N, size(B, 2))
+    copyto!(buf.A, A)
+    # As `lu`: non-finite entries refused, a singular matrix a SingularException.
+    _, _, info = LinearAlgebra.LAPACK.getrf!(buf.A, buf.ipiv)
+    LinearAlgebra.checknonsingular(info)
+    copyto!(buf.B, B)
+    LinearAlgebra.LAPACK.getrs!('N', buf.A, buf.ipiv, buf.B)
+    return similar_type(B)(buf.B)
 end
 
 # The correction, halved while it leads out of the domain where the residual is
@@ -272,13 +306,24 @@ end
 function _root_with_payload(f, jac, x₀::SVector{N}, alg::LocalNewton, name::Symbol, ::Type{T}; values = (f, jac)) where {N, T}
     fv, jacv = values
     xv = SVector{N, Float64}(TensND.primal.(x₀))
-    memo = Ref((xv, fv(xv)))
-    evaluated(x) = memo[][1] == x ? memo[][2] : (v = fv(x); memo[] = (x, v); v)
+    # The last two points evaluated: a trial point the trust region rejects
+    # would otherwise push out the accepted one, whose Jacobian is asked next.
+    v₀ = fv(xv)
+    memo = Ref(((xv, v₀), (xv, v₀)))
+    function evaluated(x)
+        (last, before) = memo[]
+        last[1] == x && return last[2]
+        before[1] == x && return before[2]
+        v = fv(x)
+        memo[] = ((x, v), last)
+        return v
+    end
     root = _trust_region_values(
         x -> _residual_or_nan(evaluated, x), x -> TensND.primal.(jacv(x, evaluated(x)[2])), xv, alg, name
     )
     x = SVector{N, T}(root)
-    r, out = f(x)
+    # On plain numbers the root's evaluation is already known, the same bits.
+    r, out = _at_root(f, fv, evaluated, x, root)
     # The first step with the Jacobian on the values: the residual at the root,
     # in T, carries ∂F/∂p, and x − J⁻¹F gives the derivatives of the
     # implicit-function theorem exactly; a Jacobian in T would only multiply the
@@ -292,6 +337,10 @@ function _root_with_payload(f, jac, x₀::SVector{N}, alg::LocalNewton, name::Sy
     end
     return x, out
 end
+
+_at_root(f, fv, evaluated, x, root) = f(x)
+_at_root(f::F, fv::F, evaluated, x::SVector{N, Float64}, root::SVector{N, Float64}) where {F, N} =
+    f === fv ? evaluated(root) : f(x)
 
 # The residual at a trial point; NaN where the evaluation fails (a grain whose
 # own law cannot follow the strain proposed): the trust-region iteration then
@@ -329,7 +378,7 @@ function _state_sensitivity(law, y, g, prev, Δt)
     # A root at which the local equations are singular is no solution of a
     # well-posed step (any neighbor is a root too): a failed step to cut.
     ∂y∂g = try
-        ∂R∂y \ ∂R∂g
+        _static_ldiv(∂R∂y, ∂R∂g)
     catch err
         err isa LinearAlgebra.SingularException || rethrow()
         throw(LocalIntegrationError(law.name, 0, NaN, "singular local equations at the root"))

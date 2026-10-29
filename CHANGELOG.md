@@ -114,6 +114,19 @@ implemented, its paper being out of reach.
 
 ### Changed
 
+- A step of a polycrystal is 2.2 times faster with Kröner's model and 2.7
+  times faster with Hill's (eight crystals of 12 slip systems: 46 → 21 ms and
+  152 → 56 ms), with the same bits. The root of each grain in an outer
+  iteration is where its solve starts in the next one, and its update there
+  was computed again: half of the grain updates. It is now read back, as is
+  the evaluation at the root of every nested solve on plain numbers, and the
+  last two points evaluated are kept, so that a rejected trial point no longer
+  pushes out the accepted one. The local Newton iterations of a law with more
+  than 14 internal variables (a crystal has 24) solved their linear systems
+  through copies that LAPACK allocated at every iteration: the same LAPACK
+  calls now run on buffers kept by each task, which cuts the memory of a
+  crystal update from 262 kB to 5 kB and of a step of Kröner's aggregate from
+  60 MB to 1.5 MB.
 - `PolycrystalState` keeps the tangent of the step that reached it (`tangent`);
   `HillModel` starts the next step from it.
 - The anisotropic Hill tensor reads the stiffness from a static array: 7 to 8 %

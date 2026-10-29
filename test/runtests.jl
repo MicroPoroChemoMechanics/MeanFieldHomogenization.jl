@@ -381,6 +381,7 @@ end
         include("MaterialLaws/test_laws.jl")
         include("MaterialLaws/test_perzyna.jl")
         include("MaterialLaws/test_engine.jl")
+        include("MaterialLaws/test_static_ldiv.jl")
         include("MaterialLaws/test_driver.jl")
         include("MaterialLaws/test_homogenized.jl")
         include("MaterialLaws/test_crack_stiffness.jl")
