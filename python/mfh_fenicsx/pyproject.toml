@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mfh-fenicsx"
+version = "0.1.0"
+description = "Materials of MeanFieldHomogenization.jl at the quadrature points of FEniCSx (dolfinx)"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["numpy", "juliacall>=0.9.37"]
+
+[project.optional-dependencies]
+dolfinx = ["dolfinx-external-operator>=0.10"]
+test = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

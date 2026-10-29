@@ -90,6 +90,17 @@ implemented, its paper being out of reach.
   3.9 times faster than one, with the same bits, and a call allocates the same
   1.2 kB whatever the number of points. A point that fails to integrate raises
   its `LocalIntegrationError`, for the caller that cuts the step.
+- `python/mfh_fenicsx`, a Python package that puts the package's mechanical
+  materials at the quadrature points of a FEniCSx (dolfinx 0.10) problem.
+  Julia is embedded through juliacall; the stress is a `FEMExternalOperator`
+  of dolfinx-external-operator, so that the residual is written in UFL as with
+  any stress and its Jacobian is the consistent tangent. Each Newton iteration
+  makes one Julia call, `update_points!` on all the points, whose stresses and
+  tangents NumPy reads without a copy; three dimensions and plane strain. The
+  tests check a homogeneous field against Hooke's law and against Julia's
+  single-point update along a plastic path, and the quadratic convergence of
+  Newton's method on a heterogeneous plastic problem, which an elastic tangent
+  does not reach.
 
 ### Changed
 
