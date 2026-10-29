@@ -103,11 +103,17 @@ using Pkg
 Pkg.add("MeanFieldHomogenization")
 ```
 
-Nothing else has to be installed by hand. The symbolic layer goes through
-[`SymPyPythonCall.jl`](https://github.com/jverzani/SymPyPythonCall.jl) (PythonCall),
-which `TensND.jl` depends on: the first time the package loads, CondaPkg installs
-a private Python with `sympy` (internet needed, once). To create your own symbols,
-`add SymPyPythonCall` to your environment and `using SymPyPythonCall`.
+Nothing else has to be installed by hand for numerical work, derivatives
+included. Symbolic computations need one more package, loaded next to this one:
+
+| to work with | add | load |
+| :--- | :--- | :--- |
+| SymPy symbols (`symbols`, `@syms`) | `SymPyPythonCall` | `using MeanFieldHomogenization, SymPyPythonCall` |
+| Symbolics variables (`@variables`) | `Symbolics` | `using MeanFieldHomogenization, Symbolics` |
+
+[`SymPyPythonCall.jl`](https://github.com/jverzani/SymPyPythonCall.jl) is optional;
+the first time it loads, CondaPkg installs a private Python with `sympy`
+(internet needed, once).
 
 No additional registry is required: every dependency (`TensND.jl`,
 `OrdinaryDiffEq.jl`, `Elliptic.jl`, `Polynomials.jl`, `PolynomialRoots.jl`,

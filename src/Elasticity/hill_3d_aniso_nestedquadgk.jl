@@ -161,6 +161,10 @@ function _fill_hill21!(A::AbstractArray{<:Any, 4}, vals)
     return A
 end
 
+# `quadgk` over the segments of `points`, for the rare calls that need
+# breakpoints (see the boundary layer below).
+@noinline _quadgk_breakpoints(f, points, opts) = QuadGK.quadgk(f, points...; opts...)
+
 """
     _hill_3d_aniso_nestedquadgk(ell, C₀; abstol, reltol, maxiters, kernel) -> AbstractTens{4,3}
 
@@ -225,13 +229,7 @@ function _hill_3d_aniso_nestedquadgk(
     end
 
     MFH_Core._bump!(MFH_Core.QUADGK_OUTER)
-    P_vals, _ = QuadGK.quadgk(
-        0.0, u_breaks..., 1.0;
-        atol = abstol,
-        rtol = reltol,
-        maxevals = maxiters,
-        norm = MFH_Core._quadgk_norm
-    ) do u
+    function outer(u)
         one_minus_u = 1.0 - u
         one_minus_z = one_minus_u^α
         z = 1.0 - one_minus_z
@@ -242,8 +240,16 @@ function _hill_3d_aniso_nestedquadgk(
             atol = abstol / 10,
             rtol = reltol
         )
-        inner .* jac
+        return inner .* jac
     end
+    # The boundary layer of a flat ellipsoid adds breakpoints, hence a second
+    # instance of QuadGK: behind an inference barrier, it is compiled only when
+    # such an ellipsoid comes, not with every first call of this function. The
+    # result type is asserted, so that the common branch stays inferred.
+    R = Tuple{SVector{21, promote_type(T, Float64)}, Float64}
+    opts = (; atol = abstol, rtol = reltol, maxevals = maxiters, norm = MFH_Core._quadgk_norm)
+    P_vals, _ = isempty(u_breaks) ? QuadGK.quadgk(outer, 0.0, 1.0; opts...) :
+        _quadgk_breakpoints(Base.inferencebarrier(outer), (0.0, u_breaks..., 1.0), opts)::R
     P_vals = P_vals ./ T(2π)
 
     # --- Build result in sorted frame -----------------------------------------

@@ -102,3 +102,17 @@ end
         @test maximum(abs, P .- R) / maximum(abs, R) < 1.0e-6
     end
 end
+
+@testset "nestedquadgk — a very flat ellipsoid: derivative and inference" begin
+    # The breakpoints of the boundary layer go through a separate QuadGK call,
+    # compiled on demand: it keeps the derivatives and an inferred result. Exact
+    # identity: ℙ(λℂ) = ℙ(ℂ)/λ, so dℙ/dλ = −ℙ at λ = 1.
+    C = TensND.change_tens_canon(TensISO{3}(3 * 30.0, 2 * 18.0))
+    ell = Ellipsoid(1.0, 0.5, 1.0e-5)
+    canon(P) = TensND.get_array(TensND.change_tens_canon(P))
+    P = canon(hill_tensor(ell, C; method = :nestedquadgk))
+    dP = ForwardDiff.derivative(λ -> canon(hill_tensor(ell, λ * C; method = :nestedquadgk)), 1.0)
+    @test dP ≈ -P rtol = 1.0e-6
+    nested = MeanFieldHomogenization.Elasticity._hill_3d_aniso_nestedquadgk
+    @test only(Base.return_types(nested, (typeof(ell), typeof(C)))) <: TensND.AbstractTens{4, 3, Float64}
+end

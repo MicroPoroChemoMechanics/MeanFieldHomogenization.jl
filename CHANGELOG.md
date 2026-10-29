@@ -90,7 +90,24 @@ implemented, its paper being out of reach.
   an isotropic matrix goes from 96 µs to 1.5 µs and from 1.26 MB to 3.6 kB
   allocated; with a triclinic matrix, where the opening displacement tensor
   dominates, from 369 µs to 302 µs. Values unchanged to rounding.
-- Requires TensND 0.8.5.
+- **Starting a session.** With TensND 0.9.0, which no longer loads SymPy's
+  Python bridge with it, `using MeanFieldHomogenization` takes 2.05 s instead
+  of 5.4 s. The first Hill tensor in an anisotropic matrix compiled two
+  instances of QuadGK it rarely needs: one for the work counters of the
+  benchmark, whose integrand now reads its flag at each node instead, and one
+  for the breakpoints of a very flat ellipsoid, now compiled only when such an
+  ellipsoid comes. Its first call takes 3.1 s instead of 7.4 s, values bitwise
+  unchanged and run times unchanged within the noise of the bench.
+  `scripts/bench/ttfx.jl` measures the load and the first calls in fresh
+  processes.
+- **Symbolic computations need `using SymPyPythonCall`.** SymPyPythonCall is
+  no longer loaded through TensND: SymPy symbols, and the SymPy methods of the
+  package, come with `using SymPyPythonCall` next to
+  `using MeanFieldHomogenization`; the home page says which package to load
+  for which symbols.
+- Requires TensND 0.9 and Julia 1.13 (1.12 is no longer tested); accepts
+  DECUHR 0.4 (and, in the documentation, ChemistryLab 0.42 and
+  OptimaSolver 0.10), which only raise their own Julia bound.
 
 ### Fixed
 

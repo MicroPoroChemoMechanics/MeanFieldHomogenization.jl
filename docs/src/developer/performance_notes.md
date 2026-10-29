@@ -193,6 +193,35 @@ julia --project=scripts/bench scripts/bench/bench_suite.jl --filter=mt.crack
 With a triclinic matrix the opening displacement tensor, an integral over the
 crack front, is what remains of the cost.
 
+## Starting a session
+
+A new session pays three costs before its first result: precompiling the
+package (once per installation or change), loading it, and compiling each path
+at its first call. Measured in fresh processes (median of three):
+
+| | 0.23.0 | 0.23.1 |
+| :--- | ---: | ---: |
+| `using MeanFieldHomogenization` | 5.4 s | 2.05 s |
+| first Hill tensor, ellipsoid in an orthotropic matrix | 7.4 s | 3.1 s |
+
+```julia
+julia --project=scripts/bench scripts/bench/ttfx.jl --runs=3
+```
+
+The load lost 3.3 s with TensND 0.9.0, which no longer loads PythonCall, the
+bridge to Python of SymPy, for sessions that write no SymPy symbol. The first
+anisotropic Hill tensor compiled QuadGK four times where it needs it twice: a
+second instance of each integral for the work counters of the benchmark, and a
+second outer integral for the breakpoints of a very flat ellipsoid. The
+integrand of the counters now reads their flag at each node, and the
+breakpoint variant sits behind an inference barrier, compiled when a flat
+ellipsoid comes.
+
+A precompile workload was measured and not kept: compiling the first calls
+into the package image removed them (0.005 s for the anisotropic Hill tensor)
+but added 31 s to every precompilation of the package, and moved the run time
+of a few microsecond kernels by up to 5 % either way.
+
 ## Where the cost actually is
 
 Rough ordering, useful for deciding what to optimize:
