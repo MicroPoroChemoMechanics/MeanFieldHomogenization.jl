@@ -108,7 +108,10 @@ out.mkdir(parents=True, exist_ok=True)
 runs = []
 for material in args.materials:
     for threads in args.threads:
-        env = dict(os.environ, PYTHON_JULIACALL_THREADS=str(threads), OPENBLAS_NUM_THREADS="1")
+        # One thread for OpenBLAS and for the OpenMP of the direct solver: their
+        # threads would compete with Julia's, and an OpenMP factorization sums in
+        # an order that changes from run to run, which the check below would see.
+        env = dict(os.environ, PYTHON_JULIACALL_THREADS=str(threads), OPENBLAS_NUM_THREADS="1", OMP_NUM_THREADS="1")
         done = subprocess.run(
             [sys.executable, __file__, "--child", str(threads), "--material", material, "--n", str(args.n)],
             env=env, capture_output=True, text=True, check=True,

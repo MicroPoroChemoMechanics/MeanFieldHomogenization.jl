@@ -28,6 +28,7 @@ and the environment that tells juliacall which Julia and which project to use:
 export PYTHON_JULIAPKG_EXE=$(which julia)
 export PYTHON_JULIAPKG_PROJECT=/path/to/the/julia/project
 export PYTHON_JULIACALL_THREADS=4
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1   # reproducible solves, cores left to Julia
 ```
 
 ## A load step

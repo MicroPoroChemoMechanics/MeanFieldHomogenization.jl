@@ -41,6 +41,9 @@ jobs:
       PYTHON_JULIACALL_HANDLE_SIGNALS: 'yes'
       JULIA_CONDAPKG_BACKEND: 'Null'
       OPENBLAS_NUM_THREADS: '1'
+      # MUMPS factorizes with OpenMP, whose sums change order from run to run:
+      # one thread, so that runs with different numbers of Julia threads compare.
+      OMP_NUM_THREADS: '1'
     steps:
       - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3

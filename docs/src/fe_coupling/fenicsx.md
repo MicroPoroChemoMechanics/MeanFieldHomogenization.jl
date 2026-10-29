@@ -59,7 +59,13 @@ pip install -e "python/mfh_fenicsx[dolfinx,test]"
 export PYTHON_JULIAPKG_EXE=$(which julia)              # the Julia to embed
 export PYTHON_JULIAPKG_PROJECT=/path/to/julia/project  # holds MeanFieldHomogenization
 export PYTHON_JULIACALL_THREADS=4                       # Julia's threads
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1         # no threads competing with Julia's
 ```
+
+The direct solver, MUMPS, factorizes with OpenMP threads when it may; their sums
+change order from one run to the next, so that two runs differ in the last
+digits. One OpenMP thread keeps the runs reproducible and leaves the cores to
+Julia.
 
 `mf.start()` sets `PYTHON_JULIAPKG_OFFLINE=yes`: juliacall then uses that
 project as it is and downloads nothing.
