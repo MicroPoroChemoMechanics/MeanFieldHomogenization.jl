@@ -118,6 +118,23 @@ def start(project=None, threads=None, julia_exe=None):
         "_mfh_fenicsx_update!(σ, 𝕂, ε, states, Δt, material; options...) = "
         "(update_points!(σ, 𝕂, ε, states, Δt, material; options...); nothing)"
     )
+    # The numbers of gradient and flux components of a material: 6 and 6 for a
+    # mechanical one, 7 and 7 for a poroelastic one (ε and p, σ and φ).
+    jl.seval(
+        """function _mfh_fenicsx_widths(material)
+            ML = MeanFieldHomogenization.MaterialLaws
+            gradients, fluxes, _ = ML._driver_fields(material)
+            return (sum(ML._width, values(gradients)), sum(ML._width, values(fluxes)))
+        end"""
+    )
+    # The fluid content of the committed states of a poroelastic point law, at
+    # every point: its flux φ, recomputed from the state (no integration).
+    jl.seval(
+        """function _mfh_fenicsx_fluid_content(states, law)
+            ML = MeanFieldHomogenization.MaterialLaws
+            return [ML._fluxes(law, st.g, st.y)[law.fluxes.φ] for st in reduce(vcat, states.old)]
+        end"""
+    )
     # The committed values of an internal variable of a point law at every point.
     jl.seval(
         """begin
@@ -167,10 +184,14 @@ def tensor4_from_mandel(k):
 
 
 class Material:
-    """A mechanical material of MeanFieldHomogenization at ``ncells × nqp`` points.
+    """A material of MeanFieldHomogenization at ``ncells × nqp`` points.
 
     ``material`` is a Julia material (a law of ``MaterialLaws``, a homogenized
-    composite, a polycrystal), built with :func:`julia` or given as Julia code.
+    composite, a polycrystal, a poroelastic law), built with :func:`julia` or
+    given as Julia code. Its gradients are stacked in one column per point, in
+    the order of the material: the Mandel strain for a mechanical material (6
+    rows), the strain then the pressure for a poroelastic one (7 rows); so are
+    its fluxes (the stress, then the fluid content).
     The points are ordered cell by cell, ``nqp`` per cell, as a quadrature space
     of dolfinx orders them. :meth:`update` computes the stresses and tangents of
     a step without committing it; :meth:`commit` makes its states the current
@@ -185,30 +206,38 @@ class Material:
         self.ncells, self.nqp = int(ncells), int(nqp)
         self.n = self.ncells * self.nqp
         self.states = jl.QuadratureStates(self.material, self.ncells, self.nqp)
+        self.ngradients, self.nfluxes = (int(w) for w in jl._mfh_fenicsx_widths(self.material))
         # Buffers Julia writes into, read by NumPy without a copy.
-        self.stress = np.zeros((6, self.n), order="F")
-        self.tangent = np.zeros((6, 6, self.n), order="F")
-        self._strain = np.zeros((6, self.n), order="F")
+        self.fluxes = np.zeros((self.nfluxes, self.n), order="F")
+        self.tangent = np.zeros((self.nfluxes, self.ngradients, self.n), order="F")
+        self._gradients = np.zeros((self.ngradients, self.n), order="F")
         self.julia_time, self.calls = 0.0, 0
 
-    def update(self, strain, dt, **options):
-        """Stresses and tangents at the Mandel strains ``(6, n)`` over a step ``dt``.
+    @property
+    def stress(self):
+        """The fluxes of the last update; the Mandel stress ``(6, n)`` of a mechanical material."""
+        return self.fluxes
 
+    def update(self, gradients, dt, **options):
+        """Fluxes and tangents at the gradients ``(ngradients, n)`` over a step ``dt``.
+
+        For a mechanical material the gradients are the Mandel strains ``(6, n)``.
         ``options`` are passed to ``update_points!`` (``algorithm``, ``ntasks``,
-        ``external``). Returns the buffers ``(stress (6, n), tangent (6, 6, n))``, overwritten by
-        the next call. A point that fails to integrate raises Julia's
-        ``LocalIntegrationError`` (a ``juliacall.JuliaError``).
+        ``external``). Returns the buffers ``(fluxes (nfluxes, n), tangent
+        (nfluxes, ngradients, n))``, overwritten by the next call. A point that
+        fails to integrate raises Julia's ``LocalIntegrationError`` (a
+        ``juliacall.JuliaError``).
         """
-        strain = np.asarray(strain, dtype=float)
-        if strain.shape != (6, self.n):
-            raise ValueError(f"strain of shape {strain.shape}, expected (6, {self.n})")
-        self._strain[...] = strain
+        gradients = np.asarray(gradients, dtype=float)
+        if gradients.shape != (self.ngradients, self.n):
+            raise ValueError(f"gradients of shape {gradients.shape}, expected ({self.ngradients}, {self.n})")
+        self._gradients[...] = gradients
         jl = julia()
         start = time.perf_counter()
-        jl._mfh_fenicsx_update_b(self.stress, self.tangent, self._strain, self.states, float(dt), self.material, **options)
+        jl._mfh_fenicsx_update_b(self.fluxes, self.tangent, self._gradients, self.states, float(dt), self.material, **options)
         self.julia_time += time.perf_counter() - start
         self.calls += 1
-        return self.stress, self.tangent
+        return self.fluxes, self.tangent
 
     def internal(self, name):
         """The committed values ``(width, n)`` of the internal variable ``name`` of a point law.

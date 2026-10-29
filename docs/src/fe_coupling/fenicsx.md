@@ -42,6 +42,7 @@ committed or rolled back as with Ferrite.
 | `mf.start()` | starts Julia, loads the package; installs nothing |
 | `Material(material, ncells, nqp)` | the material and its [`QuadratureStates`](@ref) |
 | `Stress(material, u)` | the external operator ``\boldsymbol{\sigma}(\boldsymbol{\varepsilon}(\underline{u}))`` and its quadrature space |
+| `Poroelastic(material, u, p)` | the operators ``\boldsymbol{\sigma}(\boldsymbol{\varepsilon}, p)`` and ``\phi(\boldsymbol{\varepsilon}, p)`` of a coupled problem |
 | `Newton(stress, residual, u, bcs)` | Newton's method on one step; MUMPS when PETSc has it |
 | `quasistatic(newton, times, prescribe)` | the steps, a failing one halved, as [`quasistatic!`](@ref) |
 | `stress.commit()`, `stress.rollback()` | [`commit!`](@ref), [`rollback!`](@ref) |
@@ -123,9 +124,13 @@ print(newton.reaction(top))   # the force on the top
 - **Two dimensions** mean plane strain: the material is integrated in three
   dimensions with ``\varepsilon_{13} = \varepsilon_{23} = \varepsilon_{33} = 0``,
   and the out-of-plane stress ``\sigma_{33}`` is kept in `stress.material.stress[2]`.
-  Axisymmetry and the coupled ``(\underline{u}, p)`` problem of the
-  [fractured rock](@ref fe-fractured-rock) are not covered yet: [`update_points!`](@ref)
-  refuses a material that also needs a pressure gradient.
+  Axisymmetry is not covered yet.
+- **Poroelastic materials**, of gradients ``(\boldsymbol\varepsilon, p)`` and fluxes
+  ``(\boldsymbol\sigma, \phi)`` ([`BiotPoroelasticity`](@ref),
+  [`ClosingCrackPoroelasticity`](@ref)), go to `Poroelastic(material, u, p)`: its
+  `sigma` and `phi` are two external operators on the same operands, whose values
+  and derivatives come from one Julia call; `phi_old` holds the fluid content of
+  the last committed step, for the storage term of the balance of the fluid.
 - **Processes.** The tests and the examples run on one MPI process; Julia's
   threads do the parallel work of the materials.
 
@@ -150,6 +155,7 @@ that do not go through it:
 | a cube of a Mori–Tanaka composite of tilted spheroids | a dolfinx solve written in UFL with the homogenized stiffness | ``10^{-12}`` |
 | the thick cylinder under pressure, plane strain | Lamé's closed form | second-order convergence |
 | a heterogeneous plastic problem | the order of convergence of Newton's method | about 2; an elastic tangent does not converge |
+| Terzaghi's consolidation of a column, linear Biot law, mixed ``(\underline{u}, p)`` | the Fourier series of the one-dimensional diffusion | a few percent of the undrained pressure, halved with the time step (backward Euler) |
 
 ## Examples
 
@@ -182,6 +188,22 @@ law is local: as ``\tau`` decreases the band follows the elements, which no
 mesh refinement cures.
 
 ![force–displacement curves and crack density](../assets/fe_coupling/fenicsx/notched_plate.svg)
+
+### A borehole in a rock whose cracks close
+
+`03_borehole_closing_cracks.py`. A saturated rock holds three families of
+microcracks, of normals ``\underline{e}_1``, ``\underline{e}_2``, ``\underline{e}_3``,
+which close as the effective stress compresses them across their planes
+([`ClosingCrackPoroelasticity`](@ref)). The pressure in a borehole is lowered by
+10 MPa and held; the problem is the coupled ``(\underline{u}, p)`` one, in plane
+strain. Around the hole the effective stress rises and the cracks whose normal is
+tangential to the wall close (down to 42 % open), which stiffens the rock: the
+wall moves less than with cracks that stay open. At the end the flow is steady,
+and the pressure is that of a radial flow, ``-\Delta p\,\ln(b/r)/\ln(b/a)``, to
+``3\times10^{-7}`` MPa. The mobility of the fluid is constant here: this law does
+not let the permeability follow the apertures.
+
+![pressure, wall displacement and open fraction around the borehole](../assets/fe_coupling/fenicsx/borehole.svg)
 
 ### A polycrystalline plate: Kröner and Hill
 

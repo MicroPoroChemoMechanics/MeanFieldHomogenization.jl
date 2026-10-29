@@ -170,18 +170,24 @@ end
 # ── All the quadrature points of a mesh at once ──────────────────────────────
 
 """
-    update_points!(σ, 𝕂, ε, states, Δt, material; algorithm = LocalNewton(),
-                   external = (;), ntasks = Threads.nthreads()) -> (σ, 𝕂)
+    update_points!(F, 𝕂, G, states, Δt, material; algorithm = LocalNewton(),
+                   external = (;), ntasks = Threads.nthreads()) -> (F, 𝕂)
 
-The stresses and the tangents of a mechanical `material` at all the quadrature
-points of a mesh, for a finite-element code that evaluates its strains in one
-array: column `p` of the `6 × n` matrix `ε` is the [`Mandel`](@ref) strain of
-point `p`, the points ordered cell by cell, `nqp` per cell as `states` (a
-[`QuadratureStates`](@ref) of `n ÷ nqp` cells) holds them. Column `p` of `σ`
-receives the Mandel stress and `𝕂[:, :, p]` the consistent tangent; the states
-are read from `states.old` and written into `states.new`, so that
-[`commit!`](@ref) and [`rollback!`](@ref) manage the step as in
-[`quasistatic!`](@ref).
+The fluxes and the tangents of `material` at all the quadrature points of a
+mesh, for a finite-element code that evaluates its gradients in one array:
+column `p` of `G` holds the gradients of point `p`, stacked in the order of the
+material, the points ordered cell by cell, `nqp` per cell as `states` (a
+[`QuadratureStates`](@ref) of `n ÷ nqp` cells) holds them. Column `p` of `F`
+receives the fluxes, stacked the same way, and `𝕂[:, :, p]` the consistent
+tangent, ``\\partial F/\\partial G``; the states are read from `states.old` and
+written into `states.new`, so that [`commit!`](@ref) and [`rollback!`](@ref)
+manage the step as in [`quasistatic!`](@ref).
+
+For a mechanical material `G` is the `6 × n` matrix of the [`Mandel`](@ref)
+strains, `F` the stresses and `𝕂` the `6 × 6 × n` tangents. A material of
+several fields stacks them: a poroelastic one ([`BiotPoroelasticity`](@ref),
+[`ClosingCrackPoroelasticity`](@ref)) has the gradients ``(\\boldsymbol\\varepsilon, p)``,
+7 rows, and the fluxes ``(\\boldsymbol\\sigma, \\phi)``, 7 rows.
 
 The points are independent: they are shared among `ntasks` tasks by blocks of
 cells, which run on as many threads as Julia was started with, and the result
@@ -189,18 +195,20 @@ does not depend on `ntasks`. A point whose law fails to integrate raises its
 [`LocalIntegrationError`](@ref).
 """
 function update_points!(
-        σ::AbstractMatrix, 𝕂::AbstractArray{<:Any, 3}, ε::AbstractMatrix, states::QuadratureStates,
+        F::AbstractMatrix, 𝕂::AbstractArray{<:Any, 3}, G::AbstractMatrix, states::QuadratureStates,
         Δt::Real, material; algorithm::AbstractLocalAlgorithm = LocalNewton(), external::NamedTuple = (;),
         ntasks::Integer = Threads.nthreads()
     )
-    _check_mechanical(material, :update_points!)
+    gradients, fluxes, _ = _driver_fields(material)
+    ng, nf = sum(_width, values(gradients)), sum(_width, values(fluxes))
     ncells = length(states.old)
     nqp = ncells == 0 ? 0 : length(first(states.old))
     n = ncells * nqp
-    size(ε) == (6, n) && size(σ) == (6, n) && size(𝕂) == (6, 6, n) || throw(
+    size(G) == (ng, n) && size(F) == (nf, n) && size(𝕂) == (nf, ng, n) || throw(
         DimensionMismatch(
-            "update_points!: $ncells cells of $nqp points need ε and σ of size (6, $n) and 𝕂 of size (6, 6, $n); " *
-                "got $(size(ε)), $(size(σ)) and $(size(𝕂))"
+            "update_points!: $ncells cells of $nqp points of $(nameof(typeof(material))), of gradients " *
+                "$(keys(gradients)) and fluxes $(keys(fluxes)), need G of size ($ng, $n), F of size ($nf, $n) " *
+                "and 𝕂 of size ($nf, $ng, $n); got $(size(G)), $(size(F)) and $(size(𝕂))"
         )
     )
     ntasks ≥ 1 || throw(ArgumentError("update_points!: ntasks must be positive; got $ntasks"))
@@ -209,21 +217,21 @@ function update_points!(
     # before the error of the first that failed is raised as it was raised.
     try
         @sync for cells in blocks
-            Threads.@spawn _update_cells!(σ, 𝕂, ε, states, Δt, material, cells, nqp, algorithm, external)
+            Threads.@spawn _update_cells!(F, 𝕂, G, states, Δt, material, cells, nqp, algorithm, external, Val(ng))
         end
     catch err
         throw(_first_failure(err))
     end
-    return σ, 𝕂
+    return F, 𝕂
 end
 
-function _update_cells!(σ, 𝕂, ε, states, Δt, material, cells, nqp, algorithm, external)
+function _update_cells!(F, 𝕂, G, states, Δt, material, cells, nqp, algorithm, external, ::Val{ng}) where {ng}
     for cell in cells, qp in 1:nqp
         p = (cell - 1) * nqp + qp
-        g = Mandel(ntuple(k -> ε[k, p], Val(6)))
-        F, K, st = _mandel_update(material, g, states.old[cell][qp], Δt; algorithm, external)
-        σ[:, p] .= F
-        𝕂[:, :, p] .= K
+        g = SVector{ng}(ntuple(k -> G[k, p], Val(ng)))
+        Fp, Kp, st = _mandel_update(material, g, states.old[cell][qp], Δt; algorithm, external)
+        F[:, p] .= Fp
+        𝕂[:, :, p] .= Kp
         states.new[cell][qp] = st
     end
     return nothing

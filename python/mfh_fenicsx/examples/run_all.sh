@@ -10,7 +10,7 @@ out=${1:-$here/results}
 assets=$here/../../../docs/src/assets/fe_coupling/fenicsx
 mkdir -p "$assets"
 python=${PYTHON:-python}
-for script in 01_plate_with_hole 02_notched_plate_crack_growth 04_polycrystal_plate 05_composite_beam_creep 06_thread_scaling; do
+for script in 01_plate_with_hole 02_notched_plate_crack_growth 03_borehole_closing_cracks 04_polycrystal_plate 05_composite_beam_creep 06_thread_scaling; do
     echo "== $script"
     "$python" "$here/$script.py" --out "$out/$script"
     cp "$out/$script"/*.svg "$assets/"

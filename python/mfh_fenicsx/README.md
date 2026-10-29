@@ -50,6 +50,10 @@ for load in loads:
     stress.commit()          # stress.rollback() to cut the step instead
 ```
 
+A poroelastic material, of gradients (ε, p) and fluxes (σ, φ), goes to
+`Poroelastic(material, u, p)`, whose `sigma` and `phi` enter the balances of
+the solid and of the fluid of a mixed problem.
+
 `quasistatic(newton, times, prescribe)` runs the steps between `times` and halves a
 step whose Newton iterations fail or where a point fails to integrate;
 `newton.reaction(dofs)` gives the force a Dirichlet condition exerts;
@@ -77,6 +81,8 @@ figure in a directory given by `--out`:
    composite, against plain dolfinx with the same stiffness;
 2. `02_notched_plate_crack_growth.py`: a double-notched plate whose microcracks
    grow (`CrackGrowthDamage`), on two meshes;
+3. `03_borehole_closing_cracks.py`: a borehole in a saturated rock whose
+   microcracks close (`ClosingCrackPoroelasticity`), a coupled (u, p) problem;
 4. `04_polycrystal_plate.py`: a plate with a hole of polycrystals of eight grains,
    the models of Kröner and Hill (costly: minutes to a quarter of an hour);
 5. `05_composite_beam_creep.py`: the creep of a cantilever of a homogenized

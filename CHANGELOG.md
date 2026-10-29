@@ -82,10 +82,11 @@ implemented, its paper being out of reach.
   bits. Opt-in and scoped: closed forms never consult it, dual and symbolic
   inputs bypass it, the store is bounded and thread-safe; without a cache in
   scope, timings and allocations are unchanged.
-- `update_points!(σ, 𝕂, ε, states, Δt, material)`: the stresses and the
-  tangents of a mechanical material at all the quadrature points of a mesh in
-  one call, for a finite-element code that evaluates its strains in one array
-  (the coupling with FEniCSx in preparation). The points are shared among
+- `update_points!(F, 𝕂, G, states, Δt, material)`: the fluxes and the
+  tangents of a material at all the quadrature points of a mesh in one call,
+  for a finite-element code that evaluates its gradients in one array: the
+  strains of a mechanical material, the strains and the pressures of a
+  poroelastic one (7 rows, `BiotPoroelasticity`, `ClosingCrackPoroelasticity`). The points are shared among
   tasks by blocks of cells: 4 threads compute 10 000 points of J2 plasticity
   3.9 times faster than one, with the same bits, and a call allocates the same
   1.2 kB whatever the number of points. A point that fails to integrate raises
@@ -100,7 +101,11 @@ implemented, its paper being out of reach.
   tests check a homogeneous field against Hooke's law and against Julia's
   single-point update along a plastic path, and the quadratic convergence of
   Newton's method on a heterogeneous plastic problem, which an elastic tangent
-  does not reach. The validations compare it with the package's Ferrite
+  does not reach. A poroelastic material, of gradients (ε, p) and fluxes
+  (σ, φ), goes to `Poroelastic(material, u, p)` in a mixed (u, p) problem; it
+  reproduces Terzaghi's consolidation (the Fourier series, at first order in
+  the time step), and an example drains a borehole in a rock whose microcracks
+  close (`ClosingCrackPoroelasticity`). The validations compare it with the package's Ferrite
   adapter on the same mesh, with a plain dolfinx elasticity solve and with
   Lamé's thick cylinder. Scripts in `python/mfh_fenicsx/examples`: a plate with
   a hole in a Mori–Tanaka composite, a notched plate whose microcracks grow,

@@ -112,5 +112,6 @@ jobs:
           out=$RUNNER_TEMP/examples
           python 01_plate_with_hole.py --out $out/01 --h 1.0
           python 02_notched_plate_crack_growth.py --out $out/02 --h 1.0 --tau 0.1 --steps 8
+          python 03_borehole_closing_cracks.py --out $out/03 --nr 12 --nt 6 --steps 12
           python 05_composite_beam_creep.py --out $out/05 --nx 20 --steps 6
           python 06_thread_scaling.py --out $out/06 --n 3 --threads 1 2

@@ -24,9 +24,9 @@ from dolfinx_external_operator import (
     replace_external_operators,
 )
 
-from . import Material, _SLOT, _WEIGHTS
+from . import Material, _SLOT, _WEIGHTS, julia
 
-__all__ = ["Newton", "NewtonError", "Stress", "quasistatic", "strain"]
+__all__ = ["Newton", "NewtonError", "Poroelastic", "Stress", "quasistatic", "strain"]
 
 
 def strain(u):
@@ -76,6 +76,12 @@ class Stress:
         self.space = fem.functionspace(mesh, element)
         nqp = self.space.element.interpolation_points.shape[0]
         self.material = Material(material, ncells, nqp)
+        if (self.material.ngradients, self.material.nfluxes) != (6, 6):
+            raise ValueError(
+                "Stress: a mechanical material (strain to stress) is expected; this one has "
+                f"{self.material.ngradients} gradient and {self.material.nfluxes} flux components: "
+                "a poroelastic material goes to Poroelastic"
+            )
         self.dt = dt
         self.options = options
         self.dx = ufl.Measure("dx", domain=mesh, metadata={"quadrature_degree": quadrature_degree})
@@ -136,6 +142,117 @@ class Stress:
     def _tangent_values(self, eps):
         _, tangent = self._integrate(eps)
         return np.einsum("Ia,Jb,abn->nIJ", self._back, self._back, tangent, optimize=True).ravel()
+
+
+class Poroelastic:
+    """A poroelastic material on the displacement ``u`` and the pore pressure ``p``.
+
+    ``material`` has the gradients ``(ε, p)`` and the fluxes ``(σ, φ)`` of a
+    poroelastic law of MeanFieldHomogenization (``BiotPoroelasticity``,
+    ``ClosingCrackPoroelasticity``): the total stress and the fluid content per
+    unit volume. :attr:`sigma` and :attr:`phi` are two external operators on the
+    same operands, ``ε(u)`` and ``p``, whose values and derivatives come from one
+    Julia call; :attr:`phi_old` holds the fluid content of the last committed
+    step, for the storage term ``(φ − φ_old) / Δt`` of the balance of the fluid.
+    ``u`` and ``p`` may be the parts of a mixed function (``ufl.split``). In two
+    dimensions the problem is plane strain.
+    """
+
+    def __init__(self, material, u, p, quadrature_degree=2, dt=1.0, **options):
+        from dolfinx import fem
+
+        mesh = _dolfinx_mesh(p)
+        self.dim = d = mesh.geometry.dim
+        if d not in (2, 3):
+            raise ValueError(f"Poroelastic: a mesh of dimension 2 or 3 is expected; got {d}")
+        tdim = mesh.topology.dim
+        imap = mesh.topology.index_map(tdim)
+        ncells = imap.size_local + imap.num_ghosts
+        cell = mesh.basix_cell()
+        tensor = basix.ufl.quadrature_element(cell, value_shape=(d, d), degree=quadrature_degree)
+        scalar = basix.ufl.quadrature_element(cell, value_shape=(), degree=quadrature_degree)
+        self.space_sigma = fem.functionspace(mesh, tensor)
+        self.space_phi = fem.functionspace(mesh, scalar)
+        nqp = self.space_phi.element.interpolation_points.shape[0]
+        self.material = Material(material, ncells, nqp)
+        if (self.material.ngradients, self.material.nfluxes) != (7, 7):
+            raise ValueError(
+                "Poroelastic: a material of gradients (ε, p) and fluxes (σ, φ) is expected; this one has "
+                f"{self.material.ngradients} gradient and {self.material.nfluxes} flux components"
+            )
+        self.dt = dt
+        self.options = options
+        self.dx = ufl.Measure("dx", domain=mesh, metadata={"quadrature_degree": quadrature_degree})
+        self._to, self._back = _mandel_maps(d)
+        self._seen = None
+        self.sigma = FEMExternalOperator(strain(u), p, function_space=self.space_sigma, external_function=self._external_sigma)
+        self.phi = FEMExternalOperator(strain(u), p, function_space=self.space_phi, external_function=self._external_phi)
+        self.phi_old = fem.Function(self.space_phi)
+        self._store_phi_old()
+
+    forms = Stress.forms
+    update = Stress.update
+
+    def commit(self):
+        """Make the states of the last update the current ones, φ_old with them."""
+        self.material.commit()
+        self._store_phi_old()
+        self._seen = None
+
+    def rollback(self):
+        """Discard the states of the last update."""
+        self.material.rollback()
+        self._seen = None
+
+    def _store_phi_old(self):
+        # The committed fluid content, from a step of the states as they are
+        # (no strain, no pressure change, no time): the fluxes of the states.
+        n = self.space_phi.dofmap.index_map.size_local + self.space_phi.dofmap.index_map.num_ghosts
+        self.phi_old.x.array[:] = julia()._mfh_fenicsx_fluid_content(self.material.states, self.material.material)[:n]
+
+    def _integrate(self, eps, p):
+        seen = self._seen
+        if seen is None or seen[0] != self.dt or not (np.array_equal(seen[1], eps) and np.array_equal(seen[2], p)):
+            d2 = self.dim * self.dim
+            gradients = np.vstack([self._to @ eps.reshape(-1, d2).T, p.reshape(1, -1)])
+            self.material.update(gradients, self.dt, **self.options)
+            self._seen = (self.dt, eps.copy(), p.copy())
+        return self.material.fluxes, self.material.tangent
+
+    # Derivative multi-indices on the operands (ε, p).
+    def _external_sigma(self, derivatives):
+        def values(eps, p):
+            F, K = self._integrate(eps, p)
+            if derivatives == (0, 0):
+                return (self._back @ F[:6]).T.ravel()
+            if derivatives == (1, 0):
+                return np.einsum("Ia,Jb,abn->nIJ", self._back, self._back, K[:6, :6], optimize=True).ravel()
+            if derivatives == (0, 1):
+                return (self._back @ K[:6, 6]).T.ravel()
+            raise NotImplementedError(f"Poroelastic: derivative {derivatives} of the stress is not available")
+
+        return values
+
+    def _external_phi(self, derivatives):
+        def values(eps, p):
+            F, K = self._integrate(eps, p)
+            if derivatives == (0, 0):
+                return F[6].copy()
+            if derivatives == (1, 0):
+                return (self._back @ K[6, :6]).T.ravel()
+            if derivatives == (0, 1):
+                return K[6, 6].copy()
+            raise NotImplementedError(f"Poroelastic: derivative {derivatives} of the fluid content is not available")
+
+        return values
+
+
+def _dolfinx_mesh(expr):
+    """The dolfinx mesh of a UFL expression on one domain."""
+    from dolfinx.mesh import Mesh
+
+    domain = ufl.domain.extract_unique_domain(expr)
+    return Mesh(domain.ufl_cargo(), domain)
 
 
 class NewtonError(RuntimeError):
