@@ -35,3 +35,4 @@ __pycache__/
 # moved to pixi, the .gitignore it writes there no longer hides pixi.toml,
 # pixi.lock and its own files.
 .CondaPkg/
+/python/mfh_fenicsx/tests/julia/Manifest.toml

@@ -1,0 +1,16 @@
+# The Julia project the Python tests and examples embed (PYTHON_JULIAPKG_PROJECT):
+# the MeanFieldHomogenization of this repository, PythonCall for juliacall,
+# TensND and Ferrite for the validations.
+[deps]
+Ferrite = "c061ca5d-56c9-439f-9c0e-210fe06d3992"
+MeanFieldHomogenization = "c1e5f8a3-7b2d-4a6c-9e4f-3b8a2c5d7e9f"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
+TensND = "474b5345-2588-4284-8a58-2430a1a40cb0"
+
+[sources]
+MeanFieldHomogenization = {path = "../../../.."}
+
+[compat]
+Ferrite = "1"
+PythonCall = "0.9.37"
+TensND = "0.9"
