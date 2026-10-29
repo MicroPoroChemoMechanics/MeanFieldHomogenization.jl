@@ -375,6 +375,7 @@ end
     # after it.
     rungroup("MaterialLaws") && @testset "MaterialLaws" begin
         include("MaterialLaws/test_laws.jl")
+        include("MaterialLaws/test_perzyna.jl")
         include("MaterialLaws/test_engine.jl")
         include("MaterialLaws/test_driver.jl")
         include("MaterialLaws/test_homogenized.jl")

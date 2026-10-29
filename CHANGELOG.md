@@ -32,6 +32,10 @@
   strains following the macroscopic strain by the implicit-function theorem.
   Exact for linear phases and for laminates, as the tests check, and the stress
   derives from a potential, which the affine estimate does not.
+- `PerzynaViscoplasticity`: the elasto-viscoplastic law of Perzyna type of
+  Pierard and Doghri (2006), Norton's viscoplastic function above the von Mises
+  yield surface with any isotropic hardening; the phase law of their affine
+  formulation, usable on its own.
 
 ### Changed
 

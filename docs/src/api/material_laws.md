@@ -47,6 +47,7 @@ PowerLawElasticity
 MaxwellViscoelasticity
 BiotPoroelasticity
 NortonViscoplasticity
+PerzynaViscoplasticity
 J2Plasticity
 CrystalViscoplasticity
 slip_systems
