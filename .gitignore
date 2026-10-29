@@ -36,3 +36,5 @@ __pycache__/
 # pixi.lock and its own files.
 .CondaPkg/
 /python/mfh_fenicsx/tests/julia/Manifest.toml
+/python/mfh_fenicsx/tests/julia/pyjuliapkg/
+/python/mfh_fenicsx/tests/julia/lock.pid
