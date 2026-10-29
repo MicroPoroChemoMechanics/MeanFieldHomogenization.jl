@@ -73,6 +73,15 @@ implemented, its paper being out of reach.
   and in the steady regime, as the paper shows and the tests check. On a creep
   test it follows `AffineEVPComposite` to 0.2 %.
 
+- `HillCache` and `with_hill_cache`: inside `with_hill_cache(cache) do … end`,
+  each numerical Hill tensor (anisotropic matrix: residues, nested
+  Gauss–Kronrod, DECUHR; ellipsoids and cylinders) is computed once and read
+  back afterwards, keyed by the exact shape, frame, matrix, method and
+  tolerances. A sweep of 100 Mori–Tanaka cells in a triclinic matrix takes
+  3.4 ms instead of 176 ms (`scripts/bench/hill_cache_sweep.jl`), the same
+  bits. Opt-in and scoped: closed forms never consult it, dual and symbolic
+  inputs bypass it, the store is bounded and thread-safe; without a cache in
+  scope, timings and allocations are unchanged.
 - `update_points!(σ, 𝕂, ε, states, Δt, material)`: the stresses and the
   tangents of a mechanical material at all the quadrature points of a mesh in
   one call, for a finite-element code that evaluates its strains in one array

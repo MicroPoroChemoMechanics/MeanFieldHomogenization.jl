@@ -19,6 +19,8 @@ MeanFieldHomogenization.tens_IA
 MeanFieldHomogenization.tens_UA
 MeanFieldHomogenization.tens_VA
 MeanFieldHomogenization.hill_tensor
+MeanFieldHomogenization.HillCache
+MeanFieldHomogenization.with_hill_cache
 MeanFieldHomogenization.Core.eshelby_tensor
 MeanFieldHomogenization.Core.second_hill_tensor
 ```

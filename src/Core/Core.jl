@@ -45,6 +45,7 @@ using ..Elliptic
 using Polynomials
 
 include("counters.jl")
+include("hill_cache.jl")
 include("abstractions.jl")
 include("order_aliases.jl")
 include("cells.jl")
@@ -66,6 +67,7 @@ include("dispatch.jl")
 include("dispatch_pair.jl")
 
 # Abstractions
+export HillCache, with_hill_cache
 export AbstractInclusion, AbstractEllipsoidalInclusion,
     AbstractCrack, AbstractLayeredInclusion, AbstractCustomInclusion
 

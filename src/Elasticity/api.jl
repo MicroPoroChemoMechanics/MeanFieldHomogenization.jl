@@ -75,7 +75,30 @@ Base.@constprop :aggressive @inline function _hill_tensor_entry(incl, C₀, meth
 end
 
 _hill_tensor_at(m::Val, incl, C₀, abstol, reltol, maxiters) =
-    _kernel(incl, C₀, MFH_Core._resolve_algo(m, incl, C₀); abstol, reltol, maxiters)
+    _hill_kernel(incl, C₀, MFH_Core._resolve_algo(m, incl, C₀), abstol, reltol, maxiters)
+
+# A closed form is cheaper than a lookup: it never consults a `HillCache`. A
+# numerical one is read from the cache in scope (`with_hill_cache`) when its
+# inputs are `Float64` and its shape keys it.
+_hill_kernel(incl, C₀, algo::MFH_Core.Analytical, abstol, reltol, maxiters) =
+    _kernel(incl, C₀, algo; abstol, reltol, maxiters)
+_hill_kernel(incl, C₀, algo, abstol, reltol, maxiters) = MFH_Core._hill_cached(
+    () -> _kernel(incl, C₀, algo; abstol, reltol, maxiters),
+    () -> _hill_cache_key(incl, C₀, algo, abstol, reltol, maxiters),
+)
+
+# The exact values a numerical Hill tensor depends on, as plain tuples (a frame
+# or a tensor object would not hash by its values): `nothing` for an input that
+# is not `Float64` or a shape not keyed here, which bypasses the cache.
+_hill_cache_key(incl::Union{Ellipsoid{3}, Cylinder}, C₀, algo, abstol, reltol, maxiters) =
+    _hill_cache_key(Val(_all_float64(incl, C₀)), incl, C₀, algo, abstol, reltol, maxiters)
+_hill_cache_key(incl, C₀, algo, abstol, reltol, maxiters) = nothing
+_hill_cache_key(::Val{false}, incl, C₀, algo, abstol, reltol, maxiters) = nothing
+_hill_cache_key(::Val{true}, incl, C₀, algo, abstol, reltol, maxiters) = (
+    nameof(typeof(incl)), Tuple(incl.semi_axes), Tuple(TensND.vecbasis(incl.basis, :cov)),
+    Tuple(TensND.components_canon(C₀)), typeof(algo), abstol, reltol, maxiters,
+)
+_all_float64(incl, C₀) = eltype(incl.semi_axes) === Float64 && eltype(incl.basis) === Float64 && eltype(C₀) === Float64
 
 # ── 4th-order, 3D ────────────────────────────────────────────────────────────
 

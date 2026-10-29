@@ -358,6 +358,7 @@ export ClusterModel, EquivalentInclusion
 export AndersonDefault, NewtonDefault, AutoNonlinear
 export DifferentialTrajectory, Proportional, Sequential, CustomPath, Path, DifferentialScheme
 export homogenize, differential_path
+export HillCache, with_hill_cache
 export ConcentrationTensors, concentration_tensors
 export levin_free_gradient, levin_preflux, levin_free_strain, levin_prestress
 export crack_family_compliances, crack_family_residual
