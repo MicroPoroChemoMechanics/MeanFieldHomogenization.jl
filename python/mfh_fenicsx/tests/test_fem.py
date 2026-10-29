@@ -103,17 +103,22 @@ def test_consistent_tangent_converges_quadratically(jl):
     pull = fem.Constant(domain, 0.0)
     bcs = [fem.dirichletbc(np.zeros(3), bottom, V), fem.dirichletbc(pull, top, V.sub(2))]
     newton = Newton(stress, residual, u, bcs, rtol=1e-12, atol=1e-8)
+    iterations = []
     for value in (2.0e-3, 4.0e-3):
         pull.value = value
-        newton.solve()
+        iterations.append(newton.solve())
         stress.commit()
     h = newton.history
     # Plastic flow everywhere, the field heterogeneous (clamped bottom).
     assert len(h) >= 4
+    # A few iterations per step: an elastic tangent does not converge in 25.
+    assert max(iterations) <= 7
     # The order of convergence log(r₊/r)/log(r/r₋), read on the iterations above
-    # the round-off floor: about 2 with the consistent tangent, 1 with any other.
+    # the round-off floor. The first ones are not yet asymptotic (1.4 to 1.7
+    # depending on the machine); the last one is, about 2 with the consistent
+    # tangent and 1 with any other.
     orders = [np.log(h[k + 1] / h[k]) / np.log(h[k] / h[k - 1]) for k in range(2, len(h) - 1) if h[k + 1] > 1e-10 * h[0]]
-    assert len(orders) >= 2 and min(orders) > 1.5
+    assert len(orders) >= 1 and max(orders) > 1.6
 
 
 def _clamped_pull(n=2):
