@@ -24,6 +24,14 @@
   Hill remarks, how much a yielded aggregate weakens; with Hill's constraint the
   response of a random aggregate lies below Kröner's. With elastic grains it is
   the package's linear self-consistent scheme, which the tests check.
+- `SecondOrderComposite`: the second-order estimate of Ponte Castañeda (1996)
+  for two nonlinear elastic (or viscous) phases. It shares the linear
+  comparison composite of `AffineComposite`, each phase replaced by its tangent
+  at its average strain, but estimates the effective energy by that of the
+  comparison composite and takes the stress as its derivative, the average
+  strains following the macroscopic strain by the implicit-function theorem.
+  Exact for linear phases and for laminates, as the tests check, and the stress
+  derives from a potential, which the affine estimate does not.
 
 ### Changed
 

@@ -91,6 +91,54 @@ the phases carry the stress of their average strain.
 - **No effective potential.** The stress is not the derivative of an effective
   energy, and [massonAffine2000](@citet) show that it can violate the
   Hashin–Shtrikman variational bound at small contrast and high nonlinearity.
+  The [second-order estimate](@ref ml-theory-second-order) below takes the energy of
+  the same comparison composite instead.
+
+## [The second-order estimate](@id ml-theory-second-order)
+
+[ponteCastaneda1996](@citet) builds the same comparison composite from a
+different starting point: the expansion of the energy ``w_r`` of each phase to
+second order about a reference strain, with the tangent at that strain as the
+curvature. Taking the reference strain of each phase at its average strain, as
+that paper does in its applications, the expanded energies are those of the
+linearized phases above, up to constants, and the comparison composite and its
+fixed point are those of the affine formulation. What differs is the estimate
+drawn from it: the effective energy is approximated by that of the comparison
+composite, constants included,
+
+```math
+\tilde{w}(\boldsymbol{E}) = \sum_r f_r\,\Big[w_r(\bar{\boldsymbol{\varepsilon}}_r)
+  - \boldsymbol{\sigma}_r(\bar{\boldsymbol{\varepsilon}}_r):\bar{\boldsymbol{\varepsilon}}_r
+  + \tfrac{1}{2}\,\bar{\boldsymbol{\varepsilon}}_r:\mathbb{L}_r:\bar{\boldsymbol{\varepsilon}}_r\Big]
+  + \tfrac{1}{2}\,\boldsymbol{E}:\tilde{\mathbb{L}}:\boldsymbol{E} + \tilde{\boldsymbol{\tau}}:\boldsymbol{E}
+  + \tfrac{1}{2}\,(\boldsymbol{\tau}_1 - \boldsymbol{\tau}_2):(\mathbb{L}_1 - \mathbb{L}_2)^{-1}:(\tilde{\boldsymbol{\tau}} - \langle\boldsymbol{\tau}\rangle),
+```
+
+``\tilde{\mathbb{L}} = \sum_r f_r\,\mathbb{L}_r\mathbb{A}_r`` the effective stiffness of
+the comparison composite. The bracket gathers the constants of the expanded
+energies; the next two terms are the energy of the comparison composite under
+``\boldsymbol{E}`` without its prestresses, and the last one is the energy the
+prestresses store at zero macroscopic strain, which Levin's theorem gives for
+two phases. The macroscopic stress is the derivative of this energy,
+
+```math
+\boldsymbol{\Sigma} = \frac{\mathrm{d}\tilde{w}}{\mathrm{d}\boldsymbol{E}},
+```
+
+the average strains following ``\boldsymbol{E}``. They are not stationary points of
+``\tilde{w}``, so that this derivative differs from the stress of the affine
+formulation; it needs the derivative of the average strains, which the
+implicit-function theorem gives from the fixed point. Since ``\mathrm{d}w_r`` is
+``\boldsymbol{\sigma}_r:\mathrm{d}\bar{\boldsymbol{\varepsilon}}_r``, the energies of the phases
+themselves are never needed, only their stresses and tangents.
+
+For linear phases the estimate is the linear scheme, and it is exact for a
+laminate, whose layers carry uniform strains, as the paper points out; the
+tests of the package check both, and that the stress is the derivative of the
+energy above. [`SecondOrderComposite`](@ref) builds it with the arguments of
+[`AffineComposite`](@ref). The paper also mentions, as reference for the
+curvature, the second moments of the strain in the phases instead of their
+averages, as a possibility left for later work: it is not covered.
 
 ## The composite as a law
 
@@ -114,7 +162,7 @@ pure volume change, is refused.
 |:--|:--|
 | phases | two, laws of the strain alone (nonlinear elasticity, or viscosity read in strain rates) |
 | schemes | any linear scheme of the package; the tangents are anisotropic, and the Hill tensors of an anisotropic matrix are integrated numerically |
-| cost | about 70 ms per step for spheres and Mori–Tanaka, most of it in the derivatives of the anisotropic Hill tensors |
+| cost | about 70 ms per step for spheres and Mori–Tanaka, most of it in the derivatives of the anisotropic Hill tensors; the second-order estimate about 0.3 s, its stress holding the first derivatives of the Hill tensors and its tangent the second, and its first call compiles those for several minutes |
 | not covered | more than two phases (Levin's theorem then needs the eigenstress concentration of the scheme); the extension to history-dependent laws in the same paper; the tangent model of [molinari1987](@citet) for viscoplastic polycrystals, which uses the same linearization but, as [massonAffine2000](@citet) show, combines it with a secant concentration rule, an inconsistency that drives it toward the Reuss bound at high nonlinearity |
 
 ## [Example: a power-law composite by the affine formulation](@id ml-ex-affine)
@@ -144,6 +192,7 @@ nothing #hide
 | code | theory |
 |:--|:--|
 | `AffineComposite(rve, laws)` | each phase replaced by its tangent and prestress at its average strain, Mori–Tanaka on the comparison composite |
+| `SecondOrderComposite(rve, laws)` | the same comparison composite, the stress derived from its energy |
 | `NonlinearHomogenized(rve, Dict(pairs(laws)); method)` | the [secant estimates](@ref ml-theory-secant), classical or modified |
 | `UniformStrain`, `UniformStress` | the [uniform-field composites](@ref ml-theory-uniform-fields) |
 
@@ -161,6 +210,7 @@ p = plot(; xlabel = "macroscopic equivalent strain (‰)", ylabel = "macroscopic
 for (c, label, ls) in ((UniformStrain(laws, (M = 1 - f, P = f)), "uniform strain", :dash),
                        (NonlinearHomogenized(rve, Dict(pairs(laws)); method = ClassicalSecant()), "classical secant", :solid),
                        (AffineComposite(rve, laws), "affine", :solid),
+                       (SecondOrderComposite(rve, laws), "second order", :solid),
                        (NonlinearHomogenized(rve, Dict(pairs(laws))), "modified secant", :solid),
                        (UniformStress(laws, (M = 1 - f, P = f)), "uniform stress", :dash))
     r = point_response(c, tension)
@@ -172,6 +222,9 @@ p
 The affine estimate lies between the two secant ones, softer than the classical
 and stiffer than the modified, as [massonAffine2000](@citet) find for the
 Hashin–Shtrikman estimate.
+The second-order estimate, drawn from the energy of the same comparison
+composite, is softer than both the affine and the modified secant estimates
+on this composite.
 
 ### Tension and shear
 
@@ -182,13 +235,15 @@ shear = LoadingPath(range(0, 1; length = 11); ε11 = 0, ε22 = 0, ε33 = 0, ε23
     ε12 = t -> sqrt(3) / 2 * e_max * t)
 final(c) = (rt = point_response(c, tension); rs = point_response(c, shear);
     (tension = σ_eq(rt)[end], shear = sqrt(3) * rs[:σ12][end]))
-(affine = final(AffineComposite(rve, laws)), modified_secant = final(NonlinearHomogenized(rve, Dict(pairs(laws)))))
+(affine = final(AffineComposite(rve, laws)), second_order = final(SecondOrderComposite(rve, laws)),
+    modified_secant = final(NonlinearHomogenized(rve, Dict(pairs(laws)))))
 ````
 
 The modified secant estimate depends on the strain through its second
-invariant only, and gives the same equivalent stress in both. The affine one
-does not: the tangent of each phase is stiffer across its strain deviator than
-along it, and the composite sees the direction of the loading.
+invariant only, and gives the same equivalent stress in both. The affine and
+second-order ones do not: the tangent of each phase is stiffer across its
+strain deviator than along it, and the composite sees the direction of the
+loading.
 
 ### Check
 

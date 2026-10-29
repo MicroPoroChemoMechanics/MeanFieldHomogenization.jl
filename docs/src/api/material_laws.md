@@ -87,6 +87,7 @@ IncrementalTangent
 
 ```@docs
 AffineComposite
+SecondOrderComposite
 ```
 
 ## Polycrystals
