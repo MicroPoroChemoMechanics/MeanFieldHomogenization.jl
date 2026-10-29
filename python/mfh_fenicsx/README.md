@@ -76,6 +76,10 @@ figure in a directory given by `--out`:
    composite, against plain dolfinx with the same stiffness;
 2. `02_notched_plate_crack_growth.py`: a double-notched plate whose microcracks
    grow (`CrackGrowthDamage`), on two meshes;
+4. `04_polycrystal_plate.py`: a plate with a hole of polycrystals of eight grains,
+   the models of Kröner and Hill (costly: minutes to a quarter of an hour);
+5. `05_composite_beam_creep.py`: the creep of a cantilever of a homogenized
+   viscoplastic composite, against the matrix alone;
 6. `06_thread_scaling.py`: the time of a plastic load step with 1, 2, 4, …
    Julia threads.
 
