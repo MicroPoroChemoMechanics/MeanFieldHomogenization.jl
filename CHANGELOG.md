@@ -94,6 +94,14 @@ implemented, its paper being out of reach.
 
 ### Fixed
 
+- The bundles that return a concentration with its flux concentration or its
+  contribution (`concentration_and_flux_average`, `concentration_and_contribution`)
+  promise the bits of the single functions. Since the isotropic operations of
+  TensND 0.8.5 contract in Tensors.jl, which uses `muladd`, the same expression
+  written at two sites could be fused differently where the compiler inlined it:
+  the test of that promise failed on the pre-release Julia of the CI. The flux
+  `C₁ : A` and the contribution `(C₁ − C₀) : A` are now one compiled body each,
+  which every route calls; timings unchanged within the noise of the bench.
 - The Hill tensors computed into an array (anisotropic matrix by residues,
   nested quadrature or DECUHR, cylinders, two dimensions, conduction) and the
   auxiliary and shape tensors were wrapped with a dimension read from the
