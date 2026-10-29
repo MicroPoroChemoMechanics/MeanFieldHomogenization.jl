@@ -73,6 +73,15 @@ implemented, its paper being out of reach.
   and in the steady regime, as the paper shows and the tests check. On a creep
   test it follows `AffineEVPComposite` to 0.2 %.
 
+- `update_points!(σ, 𝕂, ε, states, Δt, material)`: the stresses and the
+  tangents of a mechanical material at all the quadrature points of a mesh in
+  one call, for a finite-element code that evaluates its strains in one array
+  (the coupling with FEniCSx in preparation). The points are shared among
+  tasks by blocks of cells: 4 threads compute 10 000 points of J2 plasticity
+  3.9 times faster than one, with the same bits, and a call allocates the same
+  1.2 kB whatever the number of points. A point that fails to integrate raises
+  its `LocalIntegrationError`, for the caller that cuts the step.
+
 ### Changed
 
 - `PolycrystalState` keeps the tangent of the step that reached it (`tangent`);

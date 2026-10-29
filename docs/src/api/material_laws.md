@@ -158,6 +158,7 @@ quasistatic!
 GlobalNewtonError
 material_element!
 material_system
+update_points!
 write_material_vtk
 ```
 

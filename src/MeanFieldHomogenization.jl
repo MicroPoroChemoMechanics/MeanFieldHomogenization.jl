@@ -470,7 +470,7 @@ export PowerLawCrystal, crystal_strain_rate, TangentModel, AnisotropicTangentMod
 export IncrementalTangent, AffineComposite, SecondOrderComposite, AffineEVPComposite, AffineEVPState, QuasiElasticComposite, QuasiElasticState
 export QuadratureStates, commit!, rollback!
 export ModelingHypothesis, ThreeD, PlaneStrain, Axisymmetric, mandel_strain, volume_weight
-export quasistatic!, GlobalNewtonError, material_element!, material_system, write_material_vtk
+export quasistatic!, GlobalNewtonError, material_element!, material_system, write_material_vtk, update_points!
 
 # ── MFH Studio launcher ──────────────────────────────────────────────────────
 export mfhstudio

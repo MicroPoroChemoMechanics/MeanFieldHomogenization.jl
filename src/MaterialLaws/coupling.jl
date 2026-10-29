@@ -155,6 +155,86 @@ function _mandel_update(m::AbstractMFHMaterial, g, st, Δt; algorithm, external,
     return F, reduce(vcat, rows), Constitutive.state(r)
 end
 
+# A mechanical coupling serves a material of the strain alone.
+function _check_mechanical(material, caller::Symbol)
+    names = Constitutive.gradient_names(material)
+    names == (:ε,) || throw(
+        ArgumentError(
+            "$caller couples a mechanical problem; $(nameof(typeof(material))) " *
+                "has the gradients $names and needs a coupling of its fields"
+        )
+    )
+    return nothing
+end
+
+# ── All the quadrature points of a mesh at once ──────────────────────────────
+
+"""
+    update_points!(σ, 𝕂, ε, states, Δt, material; algorithm = LocalNewton(),
+                   external = (;), ntasks = Threads.nthreads()) -> (σ, 𝕂)
+
+The stresses and the tangents of a mechanical `material` at all the quadrature
+points of a mesh, for a finite-element code that evaluates its strains in one
+array: column `p` of the `6 × n` matrix `ε` is the [`Mandel`](@ref) strain of
+point `p`, the points ordered cell by cell, `nqp` per cell as `states` (a
+[`QuadratureStates`](@ref) of `n ÷ nqp` cells) holds them. Column `p` of `σ`
+receives the Mandel stress and `𝕂[:, :, p]` the consistent tangent; the states
+are read from `states.old` and written into `states.new`, so that
+[`commit!`](@ref) and [`rollback!`](@ref) manage the step as in
+[`quasistatic!`](@ref).
+
+The points are independent: they are shared among `ntasks` tasks by blocks of
+cells, which run on as many threads as Julia was started with, and the result
+does not depend on `ntasks`. A point whose law fails to integrate raises its
+[`LocalIntegrationError`](@ref).
+"""
+function update_points!(
+        σ::AbstractMatrix, 𝕂::AbstractArray{<:Any, 3}, ε::AbstractMatrix, states::QuadratureStates,
+        Δt::Real, material; algorithm::AbstractLocalAlgorithm = LocalNewton(), external::NamedTuple = (;),
+        ntasks::Integer = Threads.nthreads()
+    )
+    _check_mechanical(material, :update_points!)
+    ncells = length(states.old)
+    nqp = ncells == 0 ? 0 : length(first(states.old))
+    n = ncells * nqp
+    size(ε) == (6, n) && size(σ) == (6, n) && size(𝕂) == (6, 6, n) || throw(
+        DimensionMismatch(
+            "update_points!: $ncells cells of $nqp points need ε and σ of size (6, $n) and 𝕂 of size (6, 6, $n); " *
+                "got $(size(ε)), $(size(σ)) and $(size(𝕂))"
+        )
+    )
+    ntasks ≥ 1 || throw(ArgumentError("update_points!: ntasks must be positive; got $ntasks"))
+    blocks = Iterators.partition(1:ncells, max(1, cld(ncells, ntasks)))
+    # `@sync` waits for every task, so that none still writes into the arrays,
+    # before the error of the first that failed is raised as it was raised.
+    try
+        @sync for cells in blocks
+            Threads.@spawn _update_cells!(σ, 𝕂, ε, states, Δt, material, cells, nqp, algorithm, external)
+        end
+    catch err
+        throw(_first_failure(err))
+    end
+    return σ, 𝕂
+end
+
+function _update_cells!(σ, 𝕂, ε, states, Δt, material, cells, nqp, algorithm, external)
+    for cell in cells, qp in 1:nqp
+        p = (cell - 1) * nqp + qp
+        g = Mandel(ntuple(k -> ε[k, p], Val(6)))
+        F, K, st = _mandel_update(material, g, states.old[cell][qp], Δt; algorithm, external)
+        σ[:, p] .= F
+        𝕂[:, :, p] .= K
+        states.new[cell][qp] = st
+    end
+    return nothing
+end
+
+# The error a failed task raised, unwrapped from the `CompositeException` of
+# `@sync`: a `LocalIntegrationError` stays one, for the caller that cuts the
+# step. Any other exception (an interrupt) is passed on as it came.
+_first_failure(err::CompositeException) = first(err).task.exception
+_first_failure(err) = err
+
 # ── A quasi-static driver for a structure ────────────────────────────────────
 
 """

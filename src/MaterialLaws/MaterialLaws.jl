@@ -99,6 +99,6 @@ export IncrementalTangent, AffineComposite, SecondOrderComposite, AffineEVPCompo
 # ── Coupling to a finite-element code ───────────────────────────────────────
 export QuadratureStates, commit!, rollback!
 export ModelingHypothesis, ThreeD, PlaneStrain, Axisymmetric, mandel_strain, volume_weight
-export quasistatic!, GlobalNewtonError, material_element!, material_system, write_material_vtk
+export quasistatic!, GlobalNewtonError, material_element!, material_system, write_material_vtk, update_points!
 
 end # module

@@ -392,6 +392,7 @@ end
         include("MaterialLaws/test_affine.jl")
         include("MaterialLaws/test_affine_evp.jl")
         include("MaterialLaws/test_quasi_elastic.jl")
+        include("MaterialLaws/test_update_points.jl")
         # The coupling to a finite-element code, through the Ferrite adapter.
         HAS_FERRITE && include("MaterialLaws/test_fe_coupling.jl")
     end
