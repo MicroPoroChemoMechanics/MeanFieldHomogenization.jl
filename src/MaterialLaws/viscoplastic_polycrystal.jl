@@ -243,10 +243,7 @@ computed it, this one keeps its anisotropy. See
 """
 struct AnisotropicTangentModel <: PolycrystalModel
     reltol::Float64
-    function AnisotropicTangentModel(reltol::Real)
-        0 < reltol < 1 || throw(DomainError(reltol, "AnisotropicTangentModel: reltol must lie in (0, 1)"))
-        return new(reltol)
-    end
+    AnisotropicTangentModel(reltol::Real) = new(_quadrature_reltol(:AnisotropicTangentModel, reltol))
 end
 AnisotropicTangentModel(; reltol::Real = 1.0e-10) = AnisotropicTangentModel(reltol)
 
@@ -259,29 +256,12 @@ const _DEV_BASIS = SMatrix{6, 5, Float64}(
     0, 0, 0, 0, 1, 0,
     0, 0, 0, 0, 0, 1
 )
-const _UPPER5 = Tuple((i, j) for i in 1:5 for j in i:5)
-# For each entry of a 5×5 matrix in column-major order, its index among the 15.
-const _SYM5_INDEX = ntuple(25) do q
-    i, j = (q - 1) % 5 + 1, (q - 1) ÷ 5 + 1
-    findfirst(==((min(i, j), max(i, j))), _UPPER5)
-end
-
-_dev_square(m::SVector{15, T}) where {T} = SMatrix{5, 5, T}(ntuple(q -> m[_SYM5_INDEX[q]], Val(25)))
-_dev_operator(m::SVector{15}) = _DEV_BASIS * _dev_square(m) * transpose(_DEV_BASIS)
-_dev_components(M) = (S = transpose(_DEV_BASIS) * M * _DEV_BASIS; SVector{15}(ntuple(q -> (S[_UPPER5[q]...] + S[reverse(_UPPER5[q])...]) / 2, Val(15))))
+_dev_operator(m::SVector{15}) = _DEV_BASIS * _sym_matrix(m, Val(5)) * transpose(_DEV_BASIS)
+_dev_components(M) = _sym_components(transpose(_DEV_BASIS) * M * _DEV_BASIS)
 
 # The secant compliance of a grain at its stress: d = Σₛ (γ̇₀/τ₀)|τₛ/τ₀|ⁿ⁻¹ τₛ Pₛ.
 _grain_secant(c::PowerLawCrystal, σ) =
     c.P * Diagonal(c.γ̇₀ / c.τ₀ .* abs.((transpose(c.P) * σ) ./ c.τ₀) .^ (c.n - 1)) * transpose(c.P)
-
-# The Hill tensor of a sphere in the incompressible matrix of deviatoric stiffness L.
-function _incompressible_sphere_hill(L, reltol)
-    P = Elasticity._hill_3d_aniso_nestedquadgk(
-        Elasticity.Ellipsoid(1.0), TensND.from_mandel(L);
-        kernel = Elasticity._sym3_inv_acoustic_incompressible, reltol, abstol = reltol / maximum(abs ∘ TensND.primal, L)
-    )
-    return SMatrix{6, 6}(_mandel(TensND.change_tens_canon(P)))
-end
 
 # The self-consistent fixed point on the secant compliance M of the aggregate,
 # its 15 components on the deviators, started from the isotropic matrix of
@@ -298,7 +278,7 @@ function _flow_stress(model::AnisotropicTangentModel, p, D, alg)
         L = TensND.deviatoric_pinv(M)
         # The interaction compliance through the tangent matrix L/n, whose Hill
         # tensor is n P(L): M̃ = ((nP)⁺ − L/n)⁺ = n (P⁺ − L)⁺.
-        M̃ = n * TensND.deviatoric_pinv(TensND.deviatoric_pinv(_incompressible_sphere_hill(L, model.reltol)) - L)
+        M̃ = n * TensND.deviatoric_pinv(TensND.deviatoric_pinv(_sphere_hill(L, model.reltol, Elasticity._sym3_inv_acoustic_incompressible)) - L)
         Σ = L * D
         b = D + M̃ * Σ
         grains = map(eachindex(p.grains)) do i

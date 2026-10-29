@@ -329,3 +329,28 @@ function _fluxes_and_tangent(law, y, g, prev, Δt, frozen::Bool)
     all(isfinite, ∂y∂g) || throw(LocalIntegrationError(law.name, 0, NaN, "singular local equations at the root"))
     return F, ∂F∂g - ∂F∂y * ∂y∂g
 end
+
+# The fixed point x = g(x), g(x) -> (g, out), by Anderson's acceleration of the
+# successive substitutions (the "type II" form): each iterate is the image of
+# the current one corrected by the combination of the last `depth` changes of g
+# that best cancels the residual f = g(x) − x in the least-squares sense.
+# `converged(f, x)` judges the residual; returns the fixed point and what g
+# computed there.
+function _anderson(g, x₀::SVector{N}, maxiters::Integer, converged, name::Symbol; depth::Integer = 4) where {N}
+    x = x₀
+    Δg, Δf = typeof(x₀)[], typeof(x₀)[]
+    gprev, fprev = x₀, x₀
+    for k in 1:maxiters
+        gx, out = g(x)
+        f = gx - x
+        converged(f, x) && return gx, out
+        if k > 1
+            push!(Δg, gx - gprev)
+            push!(Δf, f - fprev)
+            length(Δg) > depth && (popfirst!(Δg); popfirst!(Δf))
+        end
+        gprev, fprev = gx, f
+        x = isempty(Δf) ? gx : gx - reduce(hcat, Δg) * (reduce(hcat, Δf) \ f)
+    end
+    throw(LocalIntegrationError(name, maxiters, NaN, "no convergence of the fixed point"))
+end

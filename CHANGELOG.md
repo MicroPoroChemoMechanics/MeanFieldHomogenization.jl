@@ -16,9 +16,19 @@
 - The Hill tensor of an incompressible anisotropic matrix, by its exact Green
   kernel: the acoustic tensor inverted on the plane orthogonal to each
   direction, the limit of an infinite bulk modulus taken exactly.
+- `HillModel` for `Polycrystal`: the self-consistent elastoplastic scheme of
+  Hill (1965), where every spherical grain is constrained by the aggregate
+  itself through its anisotropic tangent, found self-consistently at each step
+  (Hill's equation 18, iterated with Anderson's acceleration). Kröner's model
+  constrains the grains by the elastic aggregate, a constraint that ignores,
+  Hill remarks, how much a yielded aggregate weakens; with Hill's constraint the
+  response of a random aggregate lies below Kröner's. With elastic grains it is
+  the package's linear self-consistent scheme, which the tests check.
 
 ### Changed
 
+- `PolycrystalState` keeps the tangent of the step that reached it (`tangent`);
+  `HillModel` starts the next step from it.
 - The anisotropic Hill tensor reads the stiffness from a static array: 7 to 8 %
   faster, values unchanged.
 - Tensor algebra comes from TensND instead of copies (`isotropify` and

@@ -390,13 +390,14 @@ end
         HAS_FERRITE && include("MaterialLaws/test_fe_coupling.jl")
     end
 
-    # Single crystals and polycrystals (Taylor, Kröner, Berveiller–Zaoui, the
+    # Single crystals and polycrystals (Taylor, Kröner, Berveiller–Zaoui, Hill, the
     # tangent model): laws of `MaterialLaws` too, a group of their own so that
     # the CI parts stay under their timeout.
     rungroup("Polycrystals") && @testset "Polycrystals" begin
         include("MaterialLaws/test_crystal.jl")
         include("MaterialLaws/test_polycrystal.jl")
         include("MaterialLaws/test_kroner_bz.jl")
+        include("MaterialLaws/test_hill_polycrystal.jl")
         include("MaterialLaws/test_viscoplastic_polycrystal.jl")
     end
 

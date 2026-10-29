@@ -96,6 +96,7 @@ PolycrystalModel
 TaylorModel
 KronerModel
 BerveillerZaouiModel
+HillModel
 TangentModel
 AnisotropicTangentModel
 Polycrystal

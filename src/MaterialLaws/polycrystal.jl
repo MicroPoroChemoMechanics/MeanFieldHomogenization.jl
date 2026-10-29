@@ -12,12 +12,14 @@
 # =============================================================================
 
 import Random
+import ..Schemes
 
 """
     PolycrystalModel
 
 How the grains of a [`Polycrystal`](@ref) share the macroscopic fields:
-[`TaylorModel`](@ref), [`KronerModel`](@ref), [`BerveillerZaouiModel`](@ref).
+[`TaylorModel`](@ref), [`KronerModel`](@ref), [`BerveillerZaouiModel`](@ref),
+[`HillModel`](@ref).
 """
 abstract type PolycrystalModel end
 
@@ -78,6 +80,44 @@ end
 const _InclusionModel = Union{KronerModel, BerveillerZaouiModel}
 
 """
+    HillModel(; reltol = 1e-6)
+
+The self-consistent model of [hill1965](@citet) for elastoplastic aggregates:
+each spherical grain lies in the aggregate itself, whose tangent stiffness
+``\\mathbb{L}`` constrains it, ``\\dot{\\boldsymbol{\\sigma}}_g - \\dot{\\boldsymbol{\\Sigma}} = \\mathbb{L}^*:(\\dot{\\boldsymbol{E}} - \\dot{\\boldsymbol{\\varepsilon}}_g)``
+with ``\\mathbb{L}^* = \\mathbb{P}(\\mathbb{L})^{-1} - \\mathbb{L}``, and
+``\\mathbb{L} = \\langle\\mathbb{L}_g\\,\\mathbb{A}_g\\rangle`` is found self-consistently from
+the tangents ``\\mathbb{L}_g`` of the grains, anisotropic as they make it. The
+interaction is written on the increments of each step with the tangents at its
+end. The Hill tensor ``\\mathbb{P}`` is integrated to the relative tolerance
+`reltol`, which bounds the accuracy of the result. Where [`KronerModel`](@ref)
+constrains every grain by the elastic aggregate, this one constrains it by the
+aggregate as it flows. See [the theory page](@ref ml-theory-polycrystals).
+"""
+struct HillModel <: PolycrystalModel
+    reltol::Float64
+    HillModel(reltol::Real) = new(_quadrature_reltol(:HillModel, reltol))
+end
+HillModel(; reltol::Real = 1.0e-6) = HillModel(reltol)
+
+# The tolerance of a quadrature inside a model.
+_quadrature_reltol(name, reltol) = 0 < reltol < 1 ? Float64(reltol) : throw(DomainError(reltol, "$name: reltol must lie in (0, 1)"))
+
+# The Hill tensor of a sphere in the medium of stiffness L (Kelvin–Mandel, in the
+# canonical basis), to the relative tolerance reltol: by the package's entry for a
+# compressible medium, by the given Green `kernel` otherwise.
+_sphere_hill(L::StaticMatrix{6, 6, T}, reltol) where {T} = _canonical_mandel(
+    Elasticity.hill_tensor(Elasticity.Ellipsoid(1.0), TensND.from_mandel(L); reltol, abstol = _hill_abstol(L, reltol)), T
+)
+_sphere_hill(L::StaticMatrix{6, 6, T}, reltol, kernel::F) where {T, F} = _canonical_mandel(
+    Elasticity._hill_3d_aniso_nestedquadgk(Elasticity.Ellipsoid(1.0), TensND.from_mandel(L); kernel, reltol, abstol = _hill_abstol(L, reltol)), T
+)
+_hill_abstol(L, reltol) = reltol / maximum(abs ∘ TensND.primal, L)
+# The Hill tensor reaches here with its dimension left to run time by the
+# quadrature: the element type of the medium fixes the result.
+_canonical_mandel(P, ::Type{T}) where {T} = SMatrix{6, 6, T, 36}(_mandel(TensND.change_tens_canon(P)))::SMatrix{6, 6, T, 36}
+
+"""
     Polycrystal(grains, weights = equal; model = TaylorModel())
 
 An aggregate of `grains`, a vector of laws of `MaterialLaws` of one type (the
@@ -106,16 +146,24 @@ end
 """
     PolycrystalState
 
-The state of a [`Polycrystal`](@ref): the state of every grain (`grains`), and
-the macroscopic strain and stress it was reached at.
+The state of a [`Polycrystal`](@ref): the state of every grain (`grains`), the
+macroscopic strain and stress it was reached at, and the tangent of the step
+that reached it (`tangent`, zero in the initial state).
 """
 struct PolycrystalState{S <: PointState, T} <: AbstractMaterialState
     grains::Vector{S}
     ε::SVector{6, T}
     σ::SVector{6, T}
+    tangent::SMatrix{6, 6, T, 36}
 end
 
-Constitutive.initial_state(m::Polycrystal) = PolycrystalState(map(initial_state, m.grains), zero(SVector{6, Float64}), zero(SVector{6, Float64}))
+function PolycrystalState(grains::Vector{<:PointState}, ε::StaticVector{6}, σ::StaticVector{6}, tangent::StaticMatrix{6, 6})
+    T = promote_type(eltype(ε), eltype(σ), eltype(tangent))
+    return PolycrystalState(grains, SVector{6, T}(ε), SVector{6, T}(σ), SMatrix{6, 6, T}(tangent))
+end
+
+Constitutive.initial_state(m::Polycrystal) =
+    PolycrystalState(map(initial_state, m.grains), zero(SVector{6, Float64}), zero(SVector{6, Float64}), zero(SMatrix{6, 6, Float64}))
 Constitutive.gradient_names(::Polycrystal) = (:ε,)
 Constitutive.flux_names(::Polycrystal) = (:σ,)
 
@@ -130,7 +178,7 @@ grain_states(st::PolycrystalState) = st.grains
 # this, as for a law.
 function _mandel_update(m::Polycrystal, E, st::PolycrystalState, Δt; algorithm, external, cache = nothing)
     Σ, 𝕂, grains = _aggregate_step(m.model, m, SVector{6}(E), st, Δt, algorithm, external)
-    return Σ, 𝕂, PolycrystalState(grains, SVector{6}(E), Σ)
+    return Σ, 𝕂, PolycrystalState(grains, SVector{6}(E), Σ, 𝕂)
 end
 
 # The material of the Gauss-point contract, for the callers that use it.
@@ -178,14 +226,14 @@ function _interaction(model::_InclusionModel, ℂ, E, Eᵖ)
     return SVector(3k / (3k + 4μs), μ * βs / (μ * βs + μs * (1 - βs)))
 end
 
-# One grain in the matrix: its strain solves ε = b + 𝒞:(ε − 𝕊:σ(ε)), b = E − 𝒞:Eᵖ,
-# its own law giving σ and its tangent 𝕂 at each iterate.
-function _grain_in_matrix(law, 𝒞, b, 𝕊, ε₀, prev, Δt, alg, ext, ::Type{T}) where {T}
-    I6 = one(SMatrix{6, 6, T})
+# One grain under a linear interaction: its strain solves G ε + H σ(ε) = b, its
+# own law giving σ and its tangent 𝕂 at each iterate, the Jacobian G + H 𝕂. In
+# the matrix of Kröner and Berveiller–Zaoui, ε = b + 𝒞:(ε − 𝕊:σ(ε)) is
+# G = 𝕀 − 𝒞, H = 𝒞𝕊; in Hill's medium, σ + 𝕃*:ε = b is G = 𝕃*, H = 𝕀.
+function _grain_interacting(law, G, H, b, ε₀, prev, Δt, alg, ext, ::Type{T}) where {T}
     residual(ε) = begin
         σ, 𝕂, s = _grain_update(law, ε, prev, Δt, alg, ext)
-        Jg = I6 - 𝒞 * (I6 - 𝕊 * 𝕂)
-        (ε - 𝒞 * (ε - 𝕊 * σ) - b, (σ, 𝕂, s, Jg))
+        (G * ε + H * σ - b, (σ, 𝕂, s, G + H * 𝕂))
     end
     return _root_with_payload(residual, (ε, out) -> out[4], ε₀, alg, law.name, T)
 end
@@ -216,7 +264,7 @@ function _aggregate_step(model::_InclusionModel, m, E₀, st, Δt, alg, ext)
         𝒞 = cJ * 𝕁 + cK * 𝕂ᵈ
         b = E - 𝒞 * Eᵖ
         grains = map(m.grains, st.grains, eachindex(guesses)) do law, prev, i
-            ε, out = _grain_in_matrix(law, 𝒞, b, 𝕊, guesses[i], prev, Δt, alg, ext, T)
+            ε, out = _grain_interacting(law, I6 - 𝒞, 𝒞 * 𝕊, b, guesses[i], prev, Δt, alg, ext, T)
             guesses[i] = ε
             (ε, out...)
         end
@@ -234,7 +282,78 @@ function _aggregate_step(model::_InclusionModel, m, E₀, st, Δt, alg, ext)
     FE = _plastic_strain_sensitivity(grains, m.weights, 𝕊, 𝕁, 𝕂ᵈ, I6, Eᵖ, I6, ForwardDiff.jacobian(e -> _interaction(model, ℂ, e, Eᵖ), E))
     FEᵖ = outer_jacobian(Eᵖ, grains)
     Σ = sum(w * σ for (w, (ε, σ)) in zip(m.weights, grains))
-    return Σ, ℂ * (I6 + FEᵖ \ FE), [g[4] for g in grains]
+    return _aggregate_result(Σ, ℂ * (I6 + FEᵖ \ FE), [g[4] for g in grains], st, T)
+end
+
+# The result of a step in the element type T, which inference loses through the
+# nested solves of the grains.
+_state_type(::Type{PointState{N, M, S}}, ::Type{T}) where {N, M, S, T} = PointState{N, M, T}
+_aggregate_result(Σ, 𝕂, grains, st, ::Type{T}) where {T} =
+    (SVector{6, T}(Σ)::SVector{6, T}, SMatrix{6, 6, T, 36}(𝕂)::SMatrix{6, 6, T, 36}, grains::Vector{_state_type(eltype(st.grains), T)})
+
+# ── Hill's self-consistent model ─────────────────────────────────────────────
+#
+# Equation (2) of Hill (1965), σ̇_g − Σ̇ = 𝕃*:(Ė − ε̇_g), written on the increments
+# of the step, about the means of the previous state:
+#   σ_g + 𝕃*:ε_g = Σ + 𝕃*:E + (σ_g,n − ⟨σ_n⟩) + 𝕃*:(ε_g,n − ⟨ε_n⟩),
+# with the constraint tensor 𝕃* = ℙ(𝕃)⁻¹ − 𝕃 of a sphere in the tangent 𝕃 of
+# the aggregate at the end of the step (equations 1 and 7). For a given 𝕃, Σ
+# solves ⟨ε_g⟩ = E by Newton, the Jacobian ⟨(𝕃* + 𝕂_g)⁻¹⟩, 𝕂_g the consistent
+# tangent of the grain on the step; averaged, the interaction then gives
+# ⟨σ_g⟩ = Σ exactly. 𝕃 is the fixed point of the self-consistency in the form
+# of equation 18, (𝕃* + 𝕃)⁻¹ = ⟨(𝕃* + 𝕂_g)⁻¹⟩, equivalent to 𝕃 = ⟨𝕂_g 𝔸_g⟩
+# (equation 13), its successive substitutions contracting by about 0.05 per
+# iteration where those of equation 13 contract by 0.35 (measured), iterated
+# with Anderson's acceleration. 𝕃 is kept symmetric, as Hill's moduli are: the
+# consistent tangent of a grain need not be, by the time discretization only.
+function _aggregate_step(model::HillModel, m, E₀, st, Δt, alg, ext)
+    T = float(promote_type(eltype(E₀), eltype(st.σ), eltype(m.weights), _numeric_type(first(m.grains).p)))
+    I6 = one(SMatrix{6, 6, T})
+    E = SVector{6, T}(E₀)
+    σₙ = [SVector{6, T}(_fluxes(_with_external(law, ext), s.g, s.y)) for (law, s) in zip(m.grains, st.grains)]
+    εₙ = [SVector{6, T}(s.g) for s in st.grains]
+    Σₙ, Eₙ = sum(w * σ for (w, σ) in zip(m.weights, σₙ)), sum(w * ε for (w, ε) in zip(m.weights, εₙ))
+    # The start: the tangent of the previous step, or, from the initial state,
+    # the mean of the tangents of the grains held at their initial strains over
+    # the step, which every grain can follow (a value test: the polycrystal is
+    # numerical only).
+    𝕃₀ = iszero(TensND.primal.(st.tangent)) ?
+        sum(w * _grain_update(law, ε, s, Δt, alg, ext)[2] for (w, law, ε, s) in zip(m.weights, m.grains, εₙ, st.grains)) :
+        SMatrix{6, 6, T}(st.tangent)
+    # The stress of the last iterate: the start of the next solve on Σ.
+    Σ₀ = Ref(Σₙ + 𝕃₀ * (E - Eₙ))
+    # The strain of each grain at the last iterate: the start of the next.
+    guesses = [ε + E - Eₙ for ε in εₙ]
+    # 𝕃 converged to the accuracy of the Hill tensor: below it the change is the
+    # noise of the quadrature.
+    tol = 10 * model.reltol
+    map𝕃(l) = begin
+        𝕃 = _sym_matrix(l, Val(6))
+        𝕃s = inv(_sphere_hill(𝕃, model.reltol)) - 𝕃
+        residual(Σ) = begin
+            grains = map(m.grains, st.grains, eachindex(guesses)) do law, prev, i
+                b = Σ + 𝕃s * E + (σₙ[i] - Σₙ) + 𝕃s * (εₙ[i] - Eₙ)
+                ε, out = _grain_interacting(law, 𝕃s, I6, b, guesses[i], prev, Δt, alg, ext, T)
+                guesses[i] = ε
+                (ε, out...)
+            end
+            (sum(w * first(g) for (w, g) in zip(m.weights, grains)) - E, grains)
+        end
+        # The grains, started from their last strains, resolve them to alg.abstol,
+        # that is Σ to 𝕃*·abstol: Σ is solved to ten times it.
+        Σalg = LocalNewton(; abstol = 10 * alg.abstol * maximum(abs ∘ TensND.primal, 𝕃s), reltol = alg.reltol, maxiters = alg.maxiters)
+        Σ, grains = _root_with_payload(residual, (Σ, grains) -> sum(w * inv(g[5]) for (w, g) in zip(m.weights, grains)), Σ₀[], Σalg, :Polycrystal, T)
+        Σ₀[] = Σ
+        # Equation 18: (𝕃* + 𝕃)⁻¹ = ⟨(𝕃* + 𝕂_g)⁻¹⟩, the mean already formed as
+        # the Jacobian of the solve on Σ.
+        (_sym_components(inv(sum(w * inv(g[5]) for (w, g) in zip(m.weights, grains))) - 𝕃s), grains)
+    end
+    converged(f, l) = maximum(abs ∘ TensND.primal, f) ≤ tol * maximum(abs ∘ TensND.primal, l) &&
+        Schemes._sc_partials_converged(f, l; abstol = zero(tol), reltol = tol)
+    l, solved = _anderson(map𝕃, _sym_components(𝕃₀), alg.maxiters, converged, :Polycrystal)
+    # The tangent of the step at the constraint reached, ⟨(𝕃* + 𝕂_g)⁻¹⟩⁻¹ − 𝕃*,
+    # is 𝕃 itself at the fixed point.
+    return _aggregate_result(sum(w * g[2] for (w, g) in zip(m.weights, solved)), _sym_matrix(l, Val(6)), [g[4] for g in solved], st, T)
 end
 
 """
