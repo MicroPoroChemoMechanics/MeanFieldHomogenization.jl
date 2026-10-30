@@ -158,6 +158,17 @@ end
     # The path of the differential scheme too, which integrates the same ODE.
     @test_throws "DifferentialScheme iterates" differential_path(rve, DifferentialScheme(), :C)
     @test homogenize(rve, MoriTanaka(), :C) isa TensISO{4, 3, Symbolics.Num}
+    # Mori-Tanaka with a crack family: the estimate inverts a fourth-order
+    # tensor of symbolic components (TensND ≥ 0.11.2), held to the numbers.
+    function cracked(k, μ, d)
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1, 1, 1), Dict(:C => TensISO{3}(3k, 2μ)); fraction = :rest)
+        add_phase!(r, :F, PennyCrack(1.0), Dict(:C => TensISO{3}(0, 0)); density = d)
+        return homogenize(r, MoriTanaka(), :C)
+    end
+    Ccr = cracked(hs_k, hs_μ, hs_c)
+    Ccr_at = [Symbolics.value(Symbolics.substitute(x, Dict(zip(HS_VARS, HS_POINT)); fold = Val(true))) for x in canonical_components(Ccr)]
+    @test Ccr_at ≈ canonical_components(cracked(5.0, 2.0, 0.3)) rtol = 1.0e-12
 end
 
 @testset "symbolic routes: anisotropic conduction, cylinder in an anisotropic matrix" begin
@@ -172,7 +183,7 @@ end
             (Cylinder(hs_a, hs_c), Cylinder(1.0, 0.3)),
         )
         P = hill_tensor(ell, Kti(hs_k, hs_μ))
-        @test at_point.(get_array(P)) ≈ get_array(hill_tensor(elln, Kti(5.0, 2.0))) rtol = 1.0e-12
+        @test at_point.(canonical_components(P)) ≈ canonical_components(hill_tensor(elln, Kti(5.0, 2.0))) rtol = 1.0e-12
     end
     # A conductivity whose axes are not the inclusion's is refused.
     @test_throws "diagonal in the ellipsoid's frame" hill_tensor(Ellipsoid(hs_a, hs_b, hs_c), TensTI{2}(hs_k, hs_μ, [0, 1, 1]))

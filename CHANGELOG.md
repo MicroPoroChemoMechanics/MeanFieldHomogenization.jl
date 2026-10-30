@@ -34,12 +34,14 @@ genuine breaks are listed below.
   `rand(rng, Tens{4, 3}; definite = true)` and `rand(rng, Tens{2, 3}; definite = true)`.
   The seeded draws are not those of before.
 - Julia 1.13 is required (1.12 is no longer tested).
-- TensND 0.11 is required (`TensND = "0.11"`). It keeps the symmetries of a
+- TensND 0.11 is required. It keeps the symmetries of a
   tensor through a change of basis: in a random oblique basis the dilute
   localization of a transversely isotropic matrix could fail to invert
   (2 cases of 200), which the new draws of the tests exposed. It also holds
   the tensor operations this package kept for itself (below), so that a tensor
-  computation has one home.
+  computation has one home. Version 0.11.2 at least (`TensND = "0.11.2"`): it
+  inverts a fourth-order tensor of symbolic components, which the Mori–Tanaka
+  estimate of a material with crack families needs on symbolic moduli.
 - The tensor functions are called by their TensND 0.11 names, which say what
   they do, in the code, the tests, the scripts and the documentation:
   `express` and `canonical` (formerly `change_tens`, `change_tens_canon`),
