@@ -157,3 +157,24 @@ end
     end
     @test homogenize(rve, MoriTanaka(), :C) isa TensISO{4, 3, Symbolics.Num}
 end
+
+@testset "symbolic routes: anisotropic conduction, cylinder in an anisotropic matrix" begin
+    at_point(x) = Symbolics.value(Symbolics.substitute(x, Dict(zip(HS_VARS, HS_POINT)); fold = Val(true)))
+    # A conductivity diagonal in the inclusion's frame: the fictitious
+    # ellipsoid of semi-axes aᵢ / √Kᵢᵢ, against the numerical route
+    # (eigendecomposition, SVD and Newton potential at numbers).
+    Kti(kt, kn) = TensTI{2}(kt, kn, [0, 0, 1])
+    for (ell, elln) in (
+            (Ellipsoid(hs_a, hs_a, hs_c), Ellipsoid(1.0, 1.0, 0.3)),
+            (Ellipsoid(hs_a, hs_b, hs_c), Ellipsoid(1.0, 0.6, 0.3)),
+            (Cylinder(hs_a, hs_c), Cylinder(1.0, 0.3)),
+        )
+        P = hill_tensor(ell, Kti(hs_k, hs_μ))
+        @test at_point.(get_array(P)) ≈ get_array(hill_tensor(elln, Kti(5.0, 2.0))) rtol = 1.0e-12
+    end
+    # A conductivity whose axes are not the inclusion's is refused.
+    @test_throws "diagonal in the ellipsoid's frame" hill_tensor(Ellipsoid(hs_a, hs_b, hs_c), TensTI{2}(hs_k, hs_μ, [0, 1, 1]))
+    # The cylinder in an anisotropic elastic matrix is a quadrature: refused.
+    Cti = ti_from_constants(hs_k, hs_μ, hs_k / 3, 2hs_k, hs_μ / 2, [0, 0, 1])
+    @test_throws "adaptive quadrature" hill_tensor(Cylinder(hs_a, hs_a), Cti)
+end

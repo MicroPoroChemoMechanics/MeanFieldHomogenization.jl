@@ -88,8 +88,14 @@ function _hill_order2_aniso(A::AbstractMatrix{<:AbstractFloat}, K_arr::AbstractM
     return invsqrt_K * P₀_arr * invsqrt_K
 end
 
-# Any other element type, ForwardDiff duals among them: `eigen` and `svd` have
-# no derivatives to give, and at a repeated eigenvalue no axes. The same tensor
+# Any other element type: comparable ones (ForwardDiff duals) by the integral
+# below, symbolic ones by the closed form of a conductivity diagonal in the
+# ellipsoid's frame.
+_hill_order2_aniso(A::AbstractMatrix, K_arr::AbstractMatrix) =
+    _hill_order2_aniso(Val(TensND.is_hard_numeric(real(promote_type(eltype(A), eltype(K_arr))))), A, K_arr)
+
+# ForwardDiff duals: `eigen` and `svd` have no derivatives to give, and at a
+# repeated eigenvalue no axes. The same tensor
 # is, in any dimension d and with G = A·Aᵀ,
 #
 #     P = (det A / 2) ∫₀^∞ (G + u K)⁻¹ det(G + u K)^{-1/2} du ,
@@ -98,10 +104,32 @@ end
 # of variable x ↦ K^{-1/2} x), which needs neither. Its value is taken from the
 # closed form at the values, so that the value of a differentiated evaluation
 # is the evaluation itself, and its derivatives from the integral.
-function _hill_order2_aniso(A::AbstractMatrix, K_arr::AbstractMatrix)
+function _hill_order2_aniso(::Val{true}, A::AbstractMatrix, K_arr::AbstractMatrix)
     P₀ = _hill_order2_aniso(MFH_Core.primal.(A), MFH_Core.primal.(K_arr))
     P = _hill_order2_integral(A, K_arr)
     return P₀ .+ (P .- MFH_Core.primal.(P))
+end
+
+# Symbolic components: no eigendecomposition and no quadrature, but when the
+# conductivity is diagonal in the ellipsoid's frame (structurally: its
+# off-diagonal entries are the exact zero), K^{-1/2} is diagonal too, the
+# fictitious ellipsoid has the semi-axes aᵢ / √Kᵢᵢ on the same axes, and
+# Pᵢᵢ = Iᵢ / (2(d − 1)π Kᵢᵢ). Any other conductivity is refused.
+function _hill_order2_aniso(::Val{false}, A::Diagonal, K_arr::AbstractMatrix)
+    d = size(K_arr, 1)
+    all(isequal(K_arr[i, j], 0) for i in 1:d, j in 1:d if i != j) || throw(
+        ArgumentError(
+            "the Hill tensor of an ellipsoid in a conductivity with symbolic components " *
+                "is only written in closed form when the conductivity is diagonal in the " *
+                "ellipsoid's frame; got the components $K_arr in that frame"
+        )
+    )
+    k = diag(K_arr)
+    s = A.diag ./ sqrt.(k)
+    T = eltype(s)
+    Iv = d == 3 ? MFH_Core.newton_potential_3d(s...)[1] ./ (4 * T(π)) :
+        MFH_Core.newton_potential_2d(s...) ./ (2 * T(π))
+    return Matrix(Diagonal(collect(Iv) ./ k))
 end
 
 _hill_order2_integral(A::AbstractMatrix, K_arr::AbstractMatrix) =

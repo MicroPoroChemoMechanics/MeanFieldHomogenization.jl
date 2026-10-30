@@ -246,6 +246,17 @@ genuine breaks are listed below.
   message naming the explicit schemes, where `Num` threw a `TypeError`, `Sym` a
   `MethodError`, or the solve did not end.
 
+- The conduction Hill tensor of an ellipsoid or a cylinder in an anisotropic
+  conductivity overflowed the stack on symbolic components: the route meant for
+  duals took their values, which for a symbol is the symbol itself, and called
+  itself again. A conductivity diagonal in the inclusion's frame (a coaxial
+  transversely isotropic or orthotropic one) now takes the closed form of the
+  fictitious ellipsoid of semi-axes aᵢ/√Kᵢᵢ, with `Symbolics.Num` and SymPy; any
+  other is refused with a message, as is the Hill tensor of a cylinder in an
+  anisotropic elastic matrix, an adaptive quadrature that compared symbols
+  (`TypeError` with `Num`, no end with `Sym`). Numbers and duals keep their
+  routes.
+
 - `point_response` says when it cuts a step because the tolerance asked is out
   of the reach of the material: the Newton iteration stopping below √ε, the
   residual is the floor the solves of the material leave on its fluxes, which a
