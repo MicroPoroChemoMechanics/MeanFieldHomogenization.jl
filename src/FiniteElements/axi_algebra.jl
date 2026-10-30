@@ -66,7 +66,7 @@ frame: it is the same tensor as its global-frame rewrite, which no consumer
 needs, so no rotation is spent on it.
 """
 _from_local66(M66::AbstractMatrix{Float64}, R) =
-    TensND.Tens(Core.array_from_mandel66(M66), TensND.RotatedBasis(R))
+    TensND.from_mandel(M66, TensND.RotatedBasis(R))
 
 _from_local33(M::AbstractMatrix{Float64}, R) = TensND.TensCanonical(R * M * R')
 
@@ -135,7 +135,7 @@ function _fe_iso_moduli(
         what::AbstractString = "this inclusion",
     )
     C_iso = Core.isotropify(C₀)
-    A, Aiso = Array(TensND.components_canon(C₀)), Array(TensND.components_canon(C_iso))
+    A, Aiso = Array(TensND.canonical_components(C₀)), Array(TensND.canonical_components(C_iso))
     dev = maximum(abs, A .- Aiso)
     dev ≤ rtol * max(maximum(abs, Aiso), eps()) || throw(
         ArgumentError(
@@ -155,7 +155,7 @@ function _fe_iso_scalar(
         K₀::TensND.AbstractTens{2, 3}; rtol = 1.0e-4,
         what::AbstractString = "this inclusion",
     )
-    M = TensND.components_canon(K₀)
+    M = TensND.canonical_components(K₀)
     k = (M[1, 1] + M[2, 2] + M[3, 3]) / 3
     dev = maximum(abs, M .- k .* LinearAlgebra.I(3))
     dev ≤ rtol * max(abs(k), eps()) || throw(
@@ -175,6 +175,6 @@ end
 #  purposes of a finite-element solve, the same reference.
 
 _fe_cache_key(P₀::TensND.AbstractTens{4, 3}) =
-    map(x -> round(x, sigdigits = 12), Tuple(Array(TensND.components_canon(P₀))))
+    map(x -> round(x, sigdigits = 12), Tuple(Array(TensND.canonical_components(P₀))))
 _fe_cache_key(P₀::TensND.AbstractTens{2, 3}) =
-    map(x -> round(x, sigdigits = 12), Tuple(TensND.components_canon(P₀)))
+    map(x -> round(x, sigdigits = 12), Tuple(TensND.canonical_components(P₀)))

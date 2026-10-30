@@ -96,8 +96,8 @@ end
 nothing # hide
 ```
 
-`k_mu_hom` uses only public accessors — `iso_stiffness`,
-[`homogenize`](@ref), `best_fit_iso`, `k_mu` — the same
+`k_mu_hom` uses only public accessors — [`iso_stiffness`](@extref TensND TensND.iso_stiffness),
+[`homogenize`](@ref), [`best_fit_iso`](@extref TensND TensND.best_fit_iso), `k_mu` — the same
 building blocks as every earlier tutorial; there is no need to reach
 into the package's internals to differentiate through a homogenization
 call, whatever scheme is used.

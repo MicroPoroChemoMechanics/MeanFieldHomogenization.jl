@@ -28,8 +28,8 @@ _symmetry_defect(P₀::TensND.TensTI, sym::TISymmetrize) =
     _coaxial(TensND.axis(P₀), sym.axis) ? 0.0 : _average_distance(P₀, sym)
 _symmetry_defect(P₀, sym::AbstractSymmetrize) = _average_distance(P₀, sym)
 function _average_distance(P₀, sym)
-    A = map(_primal_value, TensND.components_canon(P₀))
-    return norm(A - TensND.components_canon(_project_matrix(TensND.Tens(A), sym))) / norm(A)
+    A = map(_primal_value, TensND.canonical_components(P₀))
+    return norm(A - TensND.canonical_components(_project_matrix(TensND.Tens(A), sym))) / norm(A)
 end
 
 _symmetry_name(::IsoSymmetrize) = "every rotation (`symmetrize = :iso`)"

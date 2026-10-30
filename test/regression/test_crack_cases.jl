@@ -76,14 +76,14 @@ using LinearAlgebra
                 ) / 4
                     for i in 1:3, j in 1:3, p in 1:3, q in 1:3
             ]
-            @test components_canon(H) ≈ H_ref rtol = 1.0e-14
+            @test canonical_components(H) ≈ H_ref rtol = 1.0e-14
             @test cod_from_compliance(H, crack, ℬ) ≈ B rtol = 1.0e-14
         end
         # Without a crack, the elliptic factor.
-        @test components_canon(compliance_from_cod(B, ℬ)) ≈
-            components_canon(compliance_from_cod(B, PennyCrack(1.0), ℬ)) rtol = 1.0e-14
-        @test components_canon(cod_from_compliance(compliance_from_cod(B, ℬ), ℬ)) ≈
-            components_canon(B) rtol = 1.0e-14
+        @test canonical_components(compliance_from_cod(B, ℬ)) ≈
+            canonical_components(compliance_from_cod(B, PennyCrack(1.0), ℬ)) rtol = 1.0e-14
+        @test canonical_components(cod_from_compliance(compliance_from_cod(B, ℬ), ℬ)) ≈
+            canonical_components(B) rtol = 1.0e-14
     end
 
     @testset "Compliance contribution — H factorization (ellipse vs ribbon)" begin

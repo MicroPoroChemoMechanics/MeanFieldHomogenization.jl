@@ -40,7 +40,7 @@ end
 # *own*-basis components, and a scheme fed rotated crack families returns an
 # estimate carried in a rotated basis — comparing raw components across
 # orientations (or against another code) is meaningless without this.
-_global(C) = get_array(TensND.change_tens(C, CANON_SCO))
+_global(C) = get_array(TensND.express(C, CANON_SCO))
 
 _major_asym(C) = (A = _global(C); maximum(abs, A - permutedims(A, (3, 4, 1, 2))))
 

@@ -471,7 +471,7 @@ end
 "`R₃₃` from the flattening route, at finite flatness `ω = c/b`."
 function R_from_hill(a, bmin, ω, k)
     Λ = second_hill_tensor(Ellipsoid(a, bmin, ω * bmin), TensISO{3}(k))   # 𝑲₀ − 𝑲₀·𝑷·𝑲₀
-    return ω * components_canon(inv(Λ))[3, 3]
+    return ω * canonical_components(inv(Λ))[3, 3]
 end
 
 for ηv in (1.0, 0.5)

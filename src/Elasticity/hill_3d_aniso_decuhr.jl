@@ -38,7 +38,7 @@ function _hill_3d_aniso_decuhr(
     η = ell.semi_axes[2] / ell.semi_axes[1]
     ω = ell.semi_axes[3] / ell.semi_axes[1]
 
-    C₀_arr = T.(Array(TensND.components(C₀, ell.basis)))   # in the ellipsoid's frame
+    C₀_arr = _static_stiffness(T.(Array(TensND.components(C₀, ell.basis))))   # in the ellipsoid's frame
 
     # Integrand on the unit square (z, φ) ∈ [0, 1] × [0, 2π]: the 21
     # independent components of the Hill tensor (`_hill_integrand21`). The
@@ -64,5 +64,5 @@ function _hill_3d_aniso_decuhr(
 
     P_arr = _fill_hill21!(zeros(T, 3, 3, 3, 3), P_vals)
 
-    return TensND.Tens(P_arr, ell.basis)
+    return MFH_Core._tens_in(P_arr, ell.basis)
 end

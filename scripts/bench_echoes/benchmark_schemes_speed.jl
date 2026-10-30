@@ -53,9 +53,9 @@ const ES_STRENGTH = pyimport("strength_echoes")
 
 # ── MFH side, built from the same description ────────────────────────────────
 
-km(X) = CO.mandel66_minor(TensND.components_canon(X))
-canon(X, elastic) = elastic ? km(X) : Matrix(TensND.components_canon(X))
-tens(v, elastic) = TensND.Tens(elastic ? CO.array_from_mandel66(v) : v)
+km(X) = TensND.mandel(TensND.canonical_components(X); symmetrize = true)
+canon(X, elastic) = elastic ? km(X) : Matrix(TensND.canonical_components(X))
+tens(v, elastic) = TensND.Tens(elastic ? TensND.get_array(TensND.from_mandel(v)) : v)
 
 function mfh_rve(phases, elastic)
     prop = elastic ? :C : :K
@@ -71,7 +71,7 @@ end
 # An isotropic medium as the structured type a user writes, so that each code
 # takes its isotropic branch; any other as canonical components.
 function _structured(v, elastic)
-    if elastic && v ≈ CO.mandel66_minor(TensND.components_canon(MFH.Core.isotropify(tens(v, true))))
+    if elastic && v ≈ TensND.mandel(TensND.canonical_components(MFH.Core.isotropify(tens(v, true))); symmetrize = true)
         α, β = TensND.get_data(MFH.Core.isotropify(tens(v, true)))
         return TensISO{3}(α, β)
     elseif !elastic && v ≈ (tr(v) / 3) * I

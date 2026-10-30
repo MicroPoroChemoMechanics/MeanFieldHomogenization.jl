@@ -24,7 +24,7 @@ using LinearAlgebra
 #  disjoint code path from `homogenize_alv`.
 # =============================================================================
 
-const _to_mandel_glassy = TensND.mandel66
+const _to_mandel_glassy = (t -> TensND.mandel(TensND.canonical_components(t); symmetrize = true))
 
 # First diagonal block of an ALV relaxation matrix.
 _first_block(R::AbstractMatrix) = R[1:6, 1:6]

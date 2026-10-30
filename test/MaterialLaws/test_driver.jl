@@ -100,7 +100,7 @@ end
     path = LoadingPath(0:0.5:1; ε33 = t -> -1.0e-5 * t, ε11 = 0, ε22 = 0, ε23 = 0, ε13 = 0, ε12 = 0, p = t -> 0.1 * t)
     rr = point_response(rock, path)
     direct = material_response(rock, (ε = from_mandel(SVector(0, 0, -1.0e-5, 0, 0, 0.0)), p = 0.1), rr.states[2], 0.5)
-    @test rr[:σ33][end] ≈ components_canon(stress(direct))[3, 3] rtol = 1.0e-10
+    @test rr[:σ33][end] ≈ canonical_components(stress(direct))[3, 3] rtol = 1.0e-10
     @test rr[:φ][end] ≈ direct.fluxes.φ rtol = 1.0e-10
 end
 
@@ -118,7 +118,7 @@ end
     @test ForwardDiff.derivative(T -> point_update(thermo, zero6, initial_state(thermo), 0.0; external = (T = T,))[1][1], 343.0) ≈
         -3k * α rtol = 1.0e-12
     r = material_response(thermo, (ε = from_mandel(zero6),), initial_state(thermo), 0.0; external = (T = 343.0,))
-    @test components_canon(stress(r))[1, 1] ≈ -3k * α * 50 rtol = 1.0e-12
+    @test canonical_components(stress(r))[1, 1] ≈ -3k * α * 50 rtol = 1.0e-12
     # Along a path: free expansion under a temperature ramp, then blocked.
     ramp = (T = t -> 293.0 + 100.0 * t,)
     free = point_response(thermo, LoadingPath(0:0.5:1; external = ramp))

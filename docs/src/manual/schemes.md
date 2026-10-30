@@ -121,6 +121,47 @@ decides when the iteration stops.
     `RVE` does not carry. They act on a [`ParticleAssembly`](@ref) instead — see
     [the particle-assembly page](@ref man-assemblies).
 
+## [A series of calls: the Hill cache](@id man-hill-cache)
+
+In an anisotropic matrix a Hill tensor is a cubature, about a millisecond, and
+it is most of the time of a scheme. A series of calls that keeps the shapes and
+the matrix, a sweep of the fractions or of the moduli of the inclusions,
+computes the same tensors again at every call. Inside [`with_hill_cache`](@ref),
+each of them is computed once and read back afterwards:
+
+```@example hillcache
+using MeanFieldHomogenization, TensND
+
+KM = [210.0 80 75 5 4 3; 80 195 90 -2 3 -1; 75 90 220 1 -2 2;
+      5 -2 1 60 2.5 1.5; 4 3 -2 2.5 65 -1; 3 -1 2 1.5 -1 55]
+C_tri = TensND.from_mandel(KM, CanonicalBasis{3, Float64}())   # a triclinic matrix
+function cell(f)
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_tri); fraction = :rest)
+    add_phase!(rve, :A, Ellipsoid(2.0, 1.0, 0.5), Dict(:C => iso_stiffness(300.0, 150.0)); fraction = f)
+    return rve
+end
+
+cache = HillCache()
+estimates = with_hill_cache(cache) do
+    [homogenize(cell(f), MoriTanaka(), :C) for f in 0.03:0.03:0.3]
+end
+(computed = cache.misses[], read_back = cache.hits[])
+```
+
+| | |
+| :--- | :--- |
+| what is stored | the numerical Hill tensors (residues, nested Gauss–Kronrod, DECUHR) of ellipsoids and cylinders, keyed by the exact shape, frame, matrix, method and tolerances |
+| what is not | closed forms (an isotropic matrix: cheaper than a lookup), and any input that is not `Float64`: derivatives go through unchanged |
+| results | the bits of the same calls without the cache |
+| scope | the calls inside `with_hill_cache`, in every task they start; `HillCache(; maxentries)` bounds the store |
+
+On 100 Mori–Tanaka cells with two families of ellipsoids in a triclinic
+matrix, the sweep takes 176 ms without a cache and 3.4 ms with a new one
+(`scripts/bench/hill_cache_sweep.jl`). A scheme that iterates on its reference
+medium (self-consistent, differential) changes the matrix at every step and
+gains nothing from it.
+
 ## [Concentration tensors of the phases](@id man-concentration-tensors)
 
 Besides the effective tensor, every scheme estimates the mean strain and the

@@ -145,7 +145,7 @@ uses (an isotropically-symmetrized crack family, for instance).
 function _isotropic_moduli(crack, C₀::TensND.AbstractTens{4, 3}; rtol = 1.0e-8)
     C_iso = Core.isotropify(C₀)
     if !(C₀ isa TensND.TensISO{4, 3})
-        A, Aiso = Array(TensND.components_canon(C₀)), Array(TensND.components_canon(C_iso))
+        A, Aiso = Array(TensND.canonical_components(C₀)), Array(TensND.canonical_components(C_iso))
         dev = maximum(abs, A .- Aiso)
         dev ≤ rtol * max(maximum(abs, Aiso), eps()) || throw(
             ArgumentError(

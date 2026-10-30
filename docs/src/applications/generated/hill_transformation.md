@@ -42,6 +42,7 @@ using TensND
 using LinearAlgebra
 using Printf
 using QuadGK: gauss
+using Random: Xoshiro
 using ForwardDiff
 using SymPyPythonCall
 using Plots
@@ -69,15 +70,31 @@ in a matrix ``\mathbb{C}`` as an integral over the unit sphere (eq. 1):
 
 where ``\boldsymbol{A}`` is any invertible tensor, symmetric or not. The
 product ``\underline{a}\stackrel{s}{\otimes}\boldsymbol{N}\stackrel{s}{\otimes}\underline{a}``
-symmetrizes ``a_i N_{jk} a_l`` over the first two and the last two indices.
-TensND's `⊠ˢ` symmetrizes over the last two only, so that the four terms are
-the half sum of ``(\underline{a}\otimes\underline{a})\stackrel{s}{\boxtimes}\boldsymbol{N}``
-and ``\boldsymbol{N}\stackrel{s}{\boxtimes}(\underline{a}\otimes\underline{a})``:
+symmetrizes ``a_i N_{jk} a_l`` over the first two and the last two indices,
+which is what TensND's `⊗ˢ` does, one pair at a time: the integrand is written
+as the paper writes it.
 
 ````@example hill_transformation
-sandwich(a, N) = ((a ⊗ a) ⊠ˢ N + N ⊠ˢ (a ⊗ a)) / 2
-hill_integrand(y, C) = sandwich(y, inv(y ⋅ C ⋅ y))
+hill_integrand(y, C) = y ⊗ˢ inv(y ⋅ C ⋅ y) ⊗ˢ y
 nothing #hide
+````
+
+For a symmetric ``\boldsymbol{N}``, the same tensor is the half sum of
+``(\underline{a}\otimes\underline{a})\stackrel{s}{\boxtimes}\boldsymbol{N}`` and
+``\boldsymbol{N}\stackrel{s}{\boxtimes}(\underline{a}\otimes\underline{a})``, where
+`⊠ˢ` symmetrizes the last two indices only. The two writings agree to the last
+bits on a random matrix and direction, and the one of the paper is the faster
+(each evaluated 10⁴ times, the best of five runs):
+
+````@example hill_transformation
+hill_integrand_halfsum(y, C) = (N = inv(y ⋅ C ⋅ y); ((y ⊗ y) ⊠ˢ N + N ⊠ˢ (y ⊗ y)) / 2)
+let C = rand(Xoshiro(98), TensND.Tens{4, 3}; definite = true), y = TensND.Tens(normalize(randn(Xoshiro(99), 3)))
+    timing(f) = minimum(@elapsed(for _ in 1:10_000; f(y, C); end) for _ in 1:5) / 10_000
+    hill_integrand(y, C); hill_integrand_halfsum(y, C)
+    @printf "gap between the two writings:  %.1e\n" relgap(hill_integrand(y, C), hill_integrand_halfsum(y, C))
+    @printf "y ⊗ˢ (y·C·y)⁻¹ ⊗ˢ y:            %.0f ns\n" 1.0e9 * timing(hill_integrand)
+    @printf "half sum of two ⊠ˢ products:   %.0f ns\n" 1.0e9 * timing(hill_integrand_halfsum)
+end
 ````
 
 The integrand is a smooth function on the sphere. A Gauss-Legendre rule in
@@ -117,14 +134,14 @@ C_tri = TensND.from_mandel(
         3.0 -1.0 2.0 1.5 -1.0 55.0
     ], CanonicalBasis{3, Float64}()
 )
-R = Matrix(rot3(0.3, 0.8, -0.5))
+R = Matrix(rotation_matrix(0.3, 0.8, -0.5))
 S = TensND.Tens(Symmetric(R * Diagonal([2.0, 1.0, 0.5]) * transpose(R)))
-Q = TensND.Tens(Matrix(rot3(1.1, -0.4, 0.7)))
+Q = TensND.Tens(Matrix(rotation_matrix(1.1, -0.4, 0.7)))
 A = Q ⋅ S
 
 "Ellipsoid of `A`: semi-axes and axes from the eigenpairs of `Aᵀ⋅A`."
 function ellipsoid_of(A)
-    F = eigen(Symmetric(Array(components_canon(transpose(A) ⋅ A))))
+    F = eigen(Symmetric(Array(canonical_components(transpose(A) ⋅ A))))
     V = F.vectors * Diagonal([1, 1, sign(det(F.vectors))])      # a rotation
     return Ellipsoid(sqrt.(F.values)..., V)
 end
@@ -164,7 +181,7 @@ removes.
 
 In eq. 1 the shape enters through ``\boldsymbol{A}^{-1}\cdot\underline{\zeta}``
 only. Writing ``\mathbb{B} = \boldsymbol{A}^{-1}\stackrel{s}{\boxtimes}\boldsymbol{A}^{-1}``,
-the acoustic tensor and the sandwich product become
+the acoustic tensor and the symmetrized product become
 ``\underline{y}\cdot\mathbb{C}\cdot\underline{y} = \underline{\zeta}\cdot(\mathbb{B}^{T}:\mathbb{C}:\mathbb{B})\cdot\underline{\zeta}``
 and ``\underline{y}\stackrel{s}{\otimes}\boldsymbol{N}\stackrel{s}{\otimes}\underline{y}
 = \mathbb{B}:(\underline{\zeta}\stackrel{s}{\otimes}\boldsymbol{N}\stackrel{s}{\otimes}\underline{\zeta}):\mathbb{B}^{T}``
@@ -195,7 +212,7 @@ function hill_by_transformation(A, C, Ã, hill_of)
     return M ⊡ hill_of(Ã, Mᵀ ⊡ C ⊡ M) ⊡ Mᵀ
 end
 
-Ã = TensND.Tens(Matrix(rot3(-0.2, 1.3, 0.4))) ⋅
+Ã = TensND.Tens(Matrix(rotation_matrix(-0.2, 1.3, 0.4))) ⋅
     TensND.Tens(Diagonal([1.0, 3.0, 1.5]))
 @printf "eq. 7 with an arbitrary Ã against the residues:  %.1e\n" relgap(hill_by_transformation(A, C_tri, Ã, hill_by_definition), P_ref)
 ````
@@ -232,7 +249,7 @@ those of the ellipsoid:
 
 ````@example hill_transformation
 λ, μ = 2.0, 1.5
-RD = Matrix(rot3(0.7, 0.5, 1.9))
+RD = Matrix(rotation_matrix(0.7, 0.5, 1.9))
 D = TensND.Tens(Symmetric(RD * Diagonal([1.6, 1.0, 0.7]) * transpose(RD)))
 C_eo = λ * (D ⊗ D) + 2μ * (D ⊠ˢ D)
 
@@ -262,7 +279,7 @@ tensor of an arbitrary ellipsoid in an elliptically orthotropic matrix is a
 closed form too.
 
 ````@example hill_transformation
-D_mh = TensND.Tens(Symmetric(inv(sqrt(Symmetric(Array(components_canon(D)))))))
+D_mh = TensND.Tens(Symmetric(inv(sqrt(Symmetric(Array(canonical_components(D)))))))
 Ã_eo = A ⋅ D_mh
 @printf "D′ = Ã⁻ᵀ⋅Ã⁻¹:  %.1e\n" relgap(D′, transpose(inv(Ã_eo)) ⋅ inv(Ã_eo))
 
@@ -318,7 +335,7 @@ component ``C_{ijkl}`` by ``\omega`` to the number of indices equal to 3
 ````@example hill_transformation
 ω = symbols("omega", positive = true)
 C₁₁, C₁₂, C₁₃, C₃₃, C₄₄ = symbols("C_1111 C_1122 C_1133 C_3333 C_2323", positive = true)
-C_TI = tens_ti(C₁₁, C₁₂, C₁₃, C₃₃, C₄₄, e₃)
+C_TI = ti_from_constants(C₁₁, C₁₂, C₁₃, C₃₃, C₄₄, e₃)
 A_sph = TensND.Tens(Diagonal(Sym[1, 1, ω]))
 B_sph = inv(A_sph) ⊠ˢ inv(A_sph)
 ℓ̃ = walpole(B_sph ⊡ C_TI ⊡ B_sph)
@@ -377,10 +394,10 @@ basis (eq. 23), and the factor ``1/(4\pi)`` leaves a half:
 ````@example hill_transformation
 z = symbols("z", real = true)
 c̃₁₁, c̃₁₂, c̃₁₃, c̃₃₃, c̃₄₄ = (C₁₁, C₁₂, C₁₃ / ω^2, C₃₃ / ω^4, C₄₄ / ω^2)
-C̃ = tens_ti(c̃₁₁, c̃₁₂, c̃₁₃, c̃₃₃, c̃₄₄, e₃)
+C̃ = ti_from_constants(c̃₁₁, c̃₁₂, c̃₁₃, c̃₃₃, c̃₄₄, e₃)
 ζ₀ = TensND.Tens(Sym[sqrt(1 - z^2), 0, z])
 Ñ = inv(ζ₀ ⋅ C̃ ⋅ ζ₀)
-p̃ᶻ = walpole(sandwich(ζ₀, Ñ)) ./ 2
+p̃ᶻ = walpole(ζ₀ ⊗ˢ Ñ ⊗ˢ ζ₀) ./ 2
 nothing #hide
 ````
 
@@ -389,7 +406,7 @@ trapezoidal rule in ``\varphi`` on numerical moduli:
 
 ````@example hill_transformation
 let vals = Dict(ω => 0.3, C₁₁ => 2.179, C₁₂ => 0.579, C₁₃ => 0.689, C₃₃ => 10.345, C₄₄ => 1.0)
-    C̃_num = tens_ti((N(subs(c, vals...)) for c in (c̃₁₁, c̃₁₂, c̃₁₃, c̃₃₃, c̃₄₄))..., (0.0, 0.0, 1.0))
+    C̃_num = ti_from_constants((N(subs(c, vals...)) for c in (c̃₁₁, c̃₁₂, c̃₁₃, c̃₃₃, c̃₄₄))..., (0.0, 0.0, 1.0))
     W_num = walpole_basis((0.0, 0.0, 1.0))
     gaps = map((-0.9, -0.2, 0.4, 0.7)) do zv
         ring = sum(
@@ -408,7 +425,7 @@ The projection gives the components of eq. 24 in terms of those of
 ``\tilde{\boldsymbol{N}}(z,0)``:
 
 ````@example hill_transformation
-Ñc = components_canon(Ñ)
+Ñc = canonical_components(Ñ)
 s = sqrt(1 - z^2)
 eq24 = (
     z^2 * Ñc[3, 3] / 2,
@@ -766,9 +783,9 @@ transcription as lines and [`hill_tensor`](@ref) of the package as markers:
 
 ````@example hill_transformation
 const C_sev = (2.179, 0.579, 0.689, 10.345, 1.0)
-C_sev_t = tens_ti(C_sev..., (0.0, 0.0, 1.0))
+C_sev_t = ti_from_constants(C_sev..., (0.0, 0.0, 1.0))
 ξs = 10 .^ range(-2, 2; length = 100)
-S_of(P) = components_canon(P ⊡ C_sev_t)
+S_of(P) = canonical_components(P ⊡ C_sev_t)
 picks = ((1, 1, 1, 1), (3, 3, 3, 3), (1, 1, 2, 2), (1, 1, 3, 3), (3, 3, 1, 1), (1, 3, 1, 3))
 labels = ["S₁₁₁₁" "S₃₃₃₃" "S₁₁₂₂" "S₁₁₃₃" "S₃₃₁₁" "S₁₃₁₃"]
 S_paper = [S_of(hill_ti_paper(1 / ξ, C_sev...))[i...] for ξ in ξs, i in picks]
@@ -800,7 +817,7 @@ closed form:
 
 ````@example hill_transformation
 dP_paper = ForwardDiff.derivative(x -> hill_ti_paper(0.2, C_sev[1], C_sev[2], x, C_sev[4], C_sev[5]), C_sev[3])
-dP_mfh = ForwardDiff.derivative(x -> hill_tensor(Ellipsoid(1.0, 1.0, 0.2), tens_ti(C_sev[1], C_sev[2], x, C_sev[4], C_sev[5], (0.0, 0.0, 1.0))), C_sev[3])
+dP_mfh = ForwardDiff.derivative(x -> hill_tensor(Ellipsoid(1.0, 1.0, 0.2), ti_from_constants(C_sev[1], C_sev[2], x, C_sev[4], C_sev[5], (0.0, 0.0, 1.0))), C_sev[3])
 @printf "∂P/∂C₁₁₃₃:  %.1e\n" relgap(dP_paper, dP_mfh)
 ````
 
@@ -816,7 +833,7 @@ moduli ``\lambda = 1``, ``\mu = 1`` and stiffen ``C_{3333}`` by a relative
 ````@example hill_transformation
 for δ in (1.0e-2, 1.0e-4, 1.0e-6, 1.0e-8, 0.0)
     moduli = (3.0, 1.0, 1.0, 3.0 * (1 + δ), 1.0)
-    P_pkg = hill_tensor(Ellipsoid(1.0, 1.0, 0.5), tens_ti(moduli..., (0.0, 0.0, 1.0)))
+    P_pkg = hill_tensor(Ellipsoid(1.0, 1.0, 0.5), ti_from_constants(moduli..., (0.0, 0.0, 1.0)))
     @printf "δ = %.0e   transcription against the package:  %.1e\n" δ relgap(hill_ti_paper(0.5, moduli...), P_pkg)
 end
 ````
@@ -908,7 +925,7 @@ flat = Dict(J₀ => eqD3[1], J₂ => eqD3[2], J₄ => eqD3[3], I₀ => subs(eqD2
 p_flat = [subs(p, flat...) for p in eq36]
 P⁰ = [laurent(p, 0) for p in p_flat]
 P¹ = [laurent(p, 1) for p in p_flat]
-eq37 = walpole(sandwich(TensND.Tens(Sym[0, 0, 1]), inv(TensND.Tens(Sym[0, 0, 1]) ⋅ C_TI ⋅ TensND.Tens(Sym[0, 0, 1]))))
+eq37 = walpole(hill_integrand(TensND.Tens(Sym[0, 0, 1]), C_TI))
 eq38 = (
     PI / (2 * (γ₁ + γ₂)) * (C₁₁ - Σ * C₄₄) / (C₄₄ * C₃₃),
     PI / (4 * (γ₁ + γ₂)) * (1 / (γ₁ * γ₂ * C₃₃) + 1 / C₄₄),
@@ -993,7 +1010,7 @@ H41 = [lambdify(Sym(h), (C₁₁, C₁₂, C₁₃, C₃₃, C₄₄, p¹...))(c
 H_eq41 = TensTI{4}(real.(H41)..., (0.0, 0.0, 1.0))
 H_lim(ω) = ω * inv(second_hill_tensor(Ellipsoid(1.0, 1.0, ω), C_sev_t))
 n₃ = TensND.Tens([0.0, 0.0, 1.0])
-H_cod = 3 / 4 * sandwich(n₃, cod_tensor(PennyCrack(1.0), C_sev_t))
+H_cod = 3 / 4 * (n₃ ⊗ˢ cod_tensor(PennyCrack(1.0), C_sev_t) ⊗ˢ n₃)
 for ω in (1.0e-2, 1.0e-4, 1.0e-6)
     @printf "ω = %.0e   ω Q⁻¹ against eq. 41:  %.1e\n" ω relgap(H_lim(ω), H_eq41)
 end

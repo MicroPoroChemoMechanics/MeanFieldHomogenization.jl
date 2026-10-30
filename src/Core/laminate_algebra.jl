@@ -153,7 +153,7 @@ end
 _plane_pinv_of(::StaticMatrix{6, 6}) = plane_pinv
 _plane_pinv_of(::StaticMatrix{3, 3}) = plane_pinv2
 _inv_km(M::StaticMatrix{6, 6}) = mandel_inv_schur(M)
-_inv_km(M::StaticMatrix{3, 3}) = _inv3(M)
+_inv_km(M::StaticMatrix{3, 3}) = inv3(M)
 
 """
     laminate_gradient_concentration(P, Phom; opinv) -> SMatrix

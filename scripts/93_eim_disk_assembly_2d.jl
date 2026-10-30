@@ -86,7 +86,7 @@ println(asm)
 println("bound type: ", eim_bound_type(asm))
 
 C = homogenize(asm, EquivalentInclusion(), :C)
-@printf "μ_app / μ₀ = %.4f   (single realization)\n" components_canon(C)[1, 2, 1, 2] / μ₀
+@printf "μ_app / μ₀ = %.4f   (single realization)\n" canonical_components(C)[1, 2, 1, 2] / μ₀
 
 # ## Monte-Carlo over realizations
 #
@@ -101,7 +101,7 @@ vals = map(1:nreal) do _
         radius = a, dim = 2, rng = rng, cycles = 4000,
         boundary = MixedBC(Ellipsoid(R, R))
     )
-    components_canon(homogenize(asm_m, EquivalentInclusion(), :C))[1, 2, 1, 2] / μ₀
+    canonical_components(homogenize(asm_m, EquivalentInclusion(), :C))[1, 2, 1, 2] / μ₀
 end
 
 mean_val = mean(vals)
@@ -164,7 +164,7 @@ for φ in φs
         radius = a, dim = 2, rng = rng, cycles = 4000,
         boundary = MixedBC(Ellipsoid(R, R))
     )
-    push!(μs, components_canon(homogenize(asm_φ, EquivalentInclusion(), :C))[1, 2, 1, 2] / μ₀)
+    push!(μs, canonical_components(homogenize(asm_φ, EquivalentInclusion(), :C))[1, 2, 1, 2] / μ₀)
     @printf "φ = %.2f  (N = %3d)  μ_app/μ₀ = %.4f\n" φ Nφ μs[end]
 end
 

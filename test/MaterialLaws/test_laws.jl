@@ -34,7 +34,7 @@ _mv(a, b, c, d = 0.0, e = 0.0, f = 0.0) = SVector(a, b, c, SQ2_MP * d, SQ2_MP * 
     # An anisotropic stiffness written in a rotated basis: the law reads it in
     # the canonical frame.
     B = SMatrix{6, 6}([i == j ? 300.0 + 10i : 20.0 / (i + j) for i in 1:6, j in 1:6])
-    ℂrot = change_tens(from_mandel(B), TensND.RotatedBasis(0.1, 0.2, 0.3))
+    ℂrot = express(from_mandel(B), TensND.RotatedBasis(0.1, 0.2, 0.3))
     law = LinearElasticity(ℂrot)
     @test point_update(law, _mv(1.0e-3, 0, 0), initial_state(law), 0.0)[2] ≈ B rtol = 1.0e-12
 end

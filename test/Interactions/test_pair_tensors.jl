@@ -457,7 +457,7 @@ end
         r = [0.0, 0.0, R]
         𝕄 = interaction_tensor(ia, ib, r, Ccub)
         ℚ = interaction_tensor(ia, ib, r, Ccub; method = :quadrature, nodes = (4, 4, 8))
-        (err = maximum(abs, components_canon(𝕄 - ℚ)) / maximum(abs, components_canon(ℚ)), ℚ = ℚ)
+        (err = maximum(abs, canonical_components(𝕄 - ℚ)) / maximum(abs, canonical_components(ℚ)), ℚ = ℚ)
     end
     errs = getproperty.(runs, :err)
     @test errs[2] < errs[1]
@@ -467,7 +467,7 @@ end
     #     that invariant is specific to an isotropic Green operator. The
     #     quadrature value from (b) confirms it independently of the multipole.
     ℚ = runs[end].ℚ
-    @test abs(𝟏 ⊡ ℚ ⊡ 𝟏) > 1.0e-3 * maximum(abs, components_canon(ℚ))
+    @test abs(𝟏 ⊡ ℚ ⊡ 𝟏) > 1.0e-3 * maximum(abs, canonical_components(ℚ))
 
     # (d) Conduction with an anisotropic conductivity. Cheap: the anisotropic
     #     conduction Green operator is a closed form, not a quadrature.

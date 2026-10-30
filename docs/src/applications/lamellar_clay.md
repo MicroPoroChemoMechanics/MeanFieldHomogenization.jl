@@ -26,7 +26,7 @@ electrical interaction. That is the model of
 It is also the most complete example in this documentation of what the package
 does **symbolically**: not a single number is entered. Every modulus, every
 volume fraction is a `SymPy` symbol, the two scales are chained on symbols, two
-degenerate limits are taken with `tlimit`, and the closed
+degenerate limits are taken with [`tlimit`](@extref TensND TensND.tlimit), and the closed
 forms come out of `solve`.
 
 !!! note "This chapter derives; the script also checks"
@@ -264,7 +264,7 @@ isotropic estimate ``\mathbb{C}^{ac} = 3k^{ac}\mathbb{J} + 2\mu^{ac}\mathbb{K}``
 
 The orientation average is the part usually done by quadrature. It does not
 have to be: the average of a tensor over SO(3) is a closed-form linear map on
-its Walpole coefficients, and that is precisely what `isotropify` computes —
+its Walpole coefficients, and that is precisely what [`isotropify`](@extref TensND TensND.isotropify) computes —
 the very routine the package runs behind `symmetrize = :iso`. Nothing is
 discretized here.
 

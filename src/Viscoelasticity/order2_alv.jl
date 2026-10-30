@@ -21,7 +21,7 @@ _fill_trapezoidal_order2_mat!(M::AbstractMatrix, law::ViscoLaw, times::AbstractV
 
 @inline _to_order2_mat(s::AbstractMatrix) = s
 @inline function _to_order2_mat(s::TensND.AbstractTens{2, 3})
-    return TensND.components_canon(s)   # the ALV matrices are canonical
+    return TensND.canonical_components(s)   # the ALV matrices are canonical
 end
 
 # ── Iso order-2 parameter extraction (single scalar α per (i,j)) ───────────
@@ -137,7 +137,7 @@ function hill_kernel_order2_at(ell, K_0::AbstractMatrix)
     # Canonical components: the 3n×3n matrices of the ALV algebra are written in
     # the canonical frame, and `tens_IA` is in the ellipsoid's. `get_array` read
     # it there, so a rotated ellipsoid was silently aligned with the axes.
-    IA = TensND.components_canon(Elasticity.tens_IA(ell))
+    IA = TensND.canonical_components(Elasticity.tens_IA(ell))
     T = promote_type(eltype(α_0_inv), eltype(IA))
     return kron(Matrix{T}(α_0_inv), Matrix{T}(IA))   # block (i, j) = α⁻¹[i, j] I^A
 end

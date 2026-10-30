@@ -103,7 +103,7 @@ direction ``\boldsymbol N``, the elastic limit is ``\boldsymbol\Sigma = s\,\bold
 stress is positive, and no limit otherwise.
 
 ```@example itzlim
-σI(σ) = eigmax(Symmetric(components_canon(σ)))
+σI(σ) = eigmax(Symmetric(canonical_components(σ)))
 separation_limit(N) = (λ = σI(B_σ ⊡ N); λ > 0 ? 1 / λ : Inf)   # in units of T^ult
 
 e₃ = 𝐞(3, 3, Float64)
@@ -241,7 +241,7 @@ times.
 θs = range(0, π / 2; length = 46)
 φs = range(0, π / 2; length = 46)
 stacked = reduce(vcat, [
-    reshape(components_canon(itz_stress_operator([sin(θ) * cos(φ), sin(θ) * sin(φ), cos(θ)])), 9, 9)
+    reshape(canonical_components(itz_stress_operator([sin(θ) * cos(φ), sin(θ) * sin(φ), cos(θ)])), 9, 9)
     for θ in θs for φ in φs
 ])
 

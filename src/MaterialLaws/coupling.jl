@@ -72,7 +72,7 @@ How the strain of a finite element is a strain of the material:
 | [`Axisymmetric`](@ref)`()` | 2-D, ``(r, z)`` | the hoop strain ``\\varepsilon_{\\theta\\theta} = u_r/r`` as third component |
 
 A hypothesis converts the strain of an element, and the virtual strain of each
-shape function, into the [`Mandel`](@ref) strain of the material, so that the
+shape function, into the `Mandel` strain of the material, so that the
 element residual is ``\\int \\delta\\boldsymbol\\varepsilon : \\boldsymbol\\sigma`` and
 its Jacobian ``\\int \\delta\\boldsymbol\\varepsilon : \\mathbb K : \\delta\\boldsymbol\\varepsilon'``
 whatever the hypothesis.
@@ -112,7 +112,7 @@ const _SQRT2 = sqrt(2.0)
     mandel_strain(hypothesis, ε, u = nothing, x = nothing) -> Mandel
 
 The strain of the material for the strain `ε` of an element (a
-`Tensors.SymmetricTensor{2, dim}`), in [`Mandel`](@ref) components. In
+`Tensors.SymmetricTensor{2, dim}`), in `Mandel` components. In
 [`Axisymmetric`](@ref) the displacement `u` and the position `x` at the point
 give the hoop strain ``u_r / r``. The same function gives the virtual strain of
 a shape function, from its symmetric gradient and its value.
@@ -154,6 +154,94 @@ function _mandel_update(m::AbstractMFHMaterial, g, st, Δt; algorithm, external,
     end
     return F, reduce(vcat, rows), Constitutive.state(r)
 end
+
+# A mechanical coupling serves a material of the strain alone.
+function _check_mechanical(material, caller::Symbol)
+    names = Constitutive.gradient_names(material)
+    names == (:ε,) || throw(
+        ArgumentError(
+            "$caller couples a mechanical problem; $(nameof(typeof(material))) " *
+                "has the gradients $names and needs a coupling of its fields"
+        )
+    )
+    return nothing
+end
+
+# ── All the quadrature points of a mesh at once ──────────────────────────────
+
+"""
+    update_points!(F, 𝕂, G, states, Δt, material; algorithm = LocalNewton(),
+                   external = (;), ntasks = Threads.nthreads()) -> (F, 𝕂)
+
+The fluxes and the tangents of `material` at all the quadrature points of a
+mesh, for a finite-element code that evaluates its gradients in one array:
+column `p` of `G` holds the gradients of point `p`, stacked in the order of the
+material, the points ordered cell by cell, `nqp` per cell as `states` (a
+[`QuadratureStates`](@ref) of `n ÷ nqp` cells) holds them. Column `p` of `F`
+receives the fluxes, stacked the same way, and `𝕂[:, :, p]` the consistent
+tangent, ``\\partial F/\\partial G``; the states are read from `states.old` and
+written into `states.new`, so that [`commit!`](@ref) and [`rollback!`](@ref)
+manage the step as in [`quasistatic!`](@ref).
+
+For a mechanical material `G` is the `6 × n` matrix of the `Mandel`
+strains, `F` the stresses and `𝕂` the `6 × 6 × n` tangents. A material of
+several fields stacks them: a poroelastic one ([`BiotPoroelasticity`](@ref),
+[`ClosingCrackPoroelasticity`](@ref)) has the gradients ``(\\boldsymbol\\varepsilon, p)``,
+7 rows, and the fluxes ``(\\boldsymbol\\sigma, \\phi)``, 7 rows.
+
+The points are independent: they are shared among `ntasks` tasks by blocks of
+cells, which run on as many threads as Julia was started with, and the result
+does not depend on `ntasks`. A point whose law fails to integrate raises its
+[`LocalIntegrationError`](@ref).
+"""
+function update_points!(
+        F::AbstractMatrix, 𝕂::AbstractArray{<:Any, 3}, G::AbstractMatrix, states::QuadratureStates,
+        Δt::Real, material; algorithm::AbstractLocalAlgorithm = LocalNewton(), external::NamedTuple = (;),
+        ntasks::Integer = Threads.nthreads()
+    )
+    gradients, fluxes, _ = _driver_fields(material)
+    ng, nf = sum(_width, values(gradients)), sum(_width, values(fluxes))
+    ncells = length(states.old)
+    nqp = ncells == 0 ? 0 : length(first(states.old))
+    n = ncells * nqp
+    size(G) == (ng, n) && size(F) == (nf, n) && size(𝕂) == (nf, ng, n) || throw(
+        DimensionMismatch(
+            "update_points!: $ncells cells of $nqp points of $(nameof(typeof(material))), of gradients " *
+                "$(keys(gradients)) and fluxes $(keys(fluxes)), need G of size ($ng, $n), F of size ($nf, $n) " *
+                "and 𝕂 of size ($nf, $ng, $n); got $(size(G)), $(size(F)) and $(size(𝕂))"
+        )
+    )
+    ntasks ≥ 1 || throw(ArgumentError("update_points!: ntasks must be positive; got $ntasks"))
+    blocks = Iterators.partition(1:ncells, max(1, cld(ncells, ntasks)))
+    # `@sync` waits for every task, so that none still writes into the arrays,
+    # before the error of the first that failed is raised as it was raised.
+    try
+        @sync for cells in blocks
+            Threads.@spawn _update_cells!(F, 𝕂, G, states, Δt, material, cells, nqp, algorithm, external, Val(ng))
+        end
+    catch err
+        throw(_first_failure(err))
+    end
+    return F, 𝕂
+end
+
+function _update_cells!(F, 𝕂, G, states, Δt, material, cells, nqp, algorithm, external, ::Val{ng}) where {ng}
+    for cell in cells, qp in 1:nqp
+        p = (cell - 1) * nqp + qp
+        g = SVector{ng}(ntuple(k -> G[k, p], Val(ng)))
+        Fp, Kp, st = _mandel_update(material, g, states.old[cell][qp], Δt; algorithm, external)
+        F[:, p] .= Fp
+        𝕂[:, :, p] .= Kp
+        states.new[cell][qp] = st
+    end
+    return nothing
+end
+
+# The error a failed task raised, unwrapped from the `CompositeException` of
+# `@sync`: a `LocalIntegrationError` stays one, for the caller that cuts the
+# step. Any other exception (an interrupt) is passed on as it came.
+_first_failure(err::CompositeException) = first(err).task.exception
+_first_failure(err) = err
 
 # ── A quasi-static driver for a structure ────────────────────────────────────
 

@@ -13,8 +13,10 @@
 #
 # ## The matrix
 #
-# The matrix can carry the stresses whose mean part ``\sigma_m`` and deviatoric
-# norm ``\sigma_d = \sqrt{\boldsymbol{\sigma}^d:\boldsymbol{\sigma}^d}`` satisfy
+# The matrix can carry the stresses whose mean stress
+# ``\sigma_m = \operatorname{tr}\boldsymbol{\sigma}/3`` and the norm of the deviator
+# ``\sigma_d = \sqrt{\boldsymbol{\sigma}^d:\boldsymbol{\sigma}^d}``, with
+# ``\boldsymbol{\sigma}^d = \boldsymbol{\sigma} - \sigma_m\,\boldsymbol{1}``, satisfy
 #
 # ```math
 # \sigma_d + T\,(\sigma_m - h) \le 0 ,
@@ -23,8 +25,12 @@
 # eq. (1): ``h`` is the isotropic tensile strength and ``T`` the friction
 # coefficient. Its plastic strain rate follows the potential
 # ``\sigma_d + t\,\sigma_m``, eq. (15), so that away from the apex
-# ``d_v = t\,d_d``, eq. (16), with ``d_v`` the volume strain rate and ``d_d`` the
-# norm of the deviatoric one. The dilatancy coefficient ``t`` lies between 0 and
+# ``d_v = t\,d_d``, eq. (16), with the volume strain rate
+# ``d_v = \operatorname{tr}\boldsymbol{d}`` and the norm of the strain-rate deviator
+# ``d_d = \sqrt{\boldsymbol{d}^d:\boldsymbol{d}^d}``,
+# ``\boldsymbol{d}^d = \boldsymbol{d} - \tfrac13\,d_v\,\boldsymbol{1}``, the definitions of the
+# paper (no factor 1/2 in the norms): with them
+# ``\boldsymbol{\sigma}:\boldsymbol{d} = \sigma_m\,d_v + \boldsymbol{\sigma}^d:\boldsymbol{d}^d``. The dilatancy coefficient ``t`` lies between 0 and
 # ``T``; the normality rule is ``t = T``. When ``t < T`` the theorems of limit
 # analysis no longer hold, and the macroscopic limit states have to be defined
 # otherwise.
@@ -100,7 +106,8 @@
 #   ``\boldsymbol{\Sigma} = \mathbb{C}^{\mathrm{hom}}:\boldsymbol{D}'``. Its derivatives are those of
 #   eq. (45) of the paper, which is recovered for the Mori–Tanaka scheme.
 # - **Rigid inclusions.** The strain rate vanishes in the inclusions, so that the
-#   average of ``\sigma^p d_v`` over the cell is ``\sigma^p D_v``:
+#   average of ``\sigma^p d_v`` over the cell is ``\sigma^p D_v``,
+#   ``D_v = \operatorname{tr}\boldsymbol{D}`` the macroscopic volume strain rate:
 #   ``W = \tfrac12\,\boldsymbol{D}:\mathbb{C}^{\mathrm{hom}}:\boldsymbol{D} + \sigma^p D_v`` and
 #   ``\boldsymbol{\Sigma} = \mathbb{C}^{\mathrm{hom}}:\boldsymbol{D} + \sigma^p\boldsymbol{1}``, eqs. (33)–(34).
 #
@@ -113,7 +120,12 @@
 # As ``a \to 0``, ``Y^e = d_v^e - t\,d_d^e \to 0`` and ``\mu/k \to 0``: the matrix of the
 # comparison composite becomes nearly incompressible about the dilatant volume
 # change ``t\,d_d^e``. The macroscopic stresses of the regularized composites tend to
-# the limit states, at first order in ``a``. For spherical heterogeneities and the
+# the limit states, at first order in ``a``. They are written with the macroscopic
+# invariants defined as the local ones: the mean stress
+# ``\Sigma_m = \operatorname{tr}\boldsymbol{\Sigma}/3``, the norm of the stress deviator
+# ``\Sigma_d = \sqrt{\boldsymbol{\Sigma}^d:\boldsymbol{\Sigma}^d}``, the volume strain rate
+# ``D_v = \operatorname{tr}\boldsymbol{D}`` and the norm of the strain-rate deviator
+# ``D_d = \sqrt{\boldsymbol{D}^d:\boldsymbol{D}^d}``. For spherical heterogeneities and the
 # Mori–Tanaka scheme the paper finds the limit in closed form:
 #
 # - **porous medium**: the elliptic domain of eq. (50),

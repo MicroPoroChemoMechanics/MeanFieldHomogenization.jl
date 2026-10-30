@@ -81,15 +81,6 @@ function IncrementalTangent(rve::Schemes.RVE, laws::NamedTuple; scheme = Schemes
     )
 end
 
-# The isotropic projection of a stiffness in Mandel components: k = J::ℂ/3,
-# μ = K::ℂ/10, J and K the projectors on volume changes and on deviators.
-function _isotropic_moduli(ℂ::StaticMatrix{6, 6})
-    J = sum(ℂ[i, j] for i in 1:3, j in 1:3) / 3
-    k = J / 3
-    μ = (sum(ℂ[i, i] for i in 1:6) - J) / 10
-    return k, μ
-end
-
 # The consistent tangent of a phase at the strain ε and the internal variables
 # y of an iterate, as the law would give it at the end of its step.
 function _phase_tangent(law, ε, y, prev, Δt)
@@ -105,7 +96,8 @@ function _residual(c::IncrementalTangent, y, g, prev, Δt)
     states = map((gs, ys) -> _phase_state(prev, ys, prev.y[gs]), c.gslices, c.yslices)
     # The linear comparison composite of the isotropic projections of the tangents.
     rve = foldl(zip(c.p.names, c.phases, εs, c.yslices, states); init = c.p.rve) do rve, (φ, law, ε, ys, st)
-        k, μ = _isotropic_moduli(_phase_tangent(law, ε, y[ys], st, Δt))
+        # The rotation average of the tangent, its isotropic projection (TensND).
+        k, μ = TensND.bulk_shear(TensND.isotropify(TensND.from_mandel(_phase_tangent(law, ε, y[ys], st, Δt))))
         rve = Schemes.set_param(rve, Schemes.PropertyParameter(φ, :C, :bulk), 3k)
         Schemes.set_param(rve, Schemes.PropertyParameter(φ, :C, :shear), 2μ)
     end
@@ -115,7 +107,7 @@ function _residual(c::IncrementalTangent, y, g, prev, Δt)
     # mixture rule for the last.
     R = length(c.phases)
     conc = map(1:(R - 1)) do r
-        εs[r] - prev.y[c.gslices[r]] - _mandel(TensND.change_tens_canon(A[c.p.names[r]])) * ΔE
+        εs[r] - prev.y[c.gslices[r]] - _mandel(TensND.canonical(A[c.p.names[r]])) * ΔE
     end
     mixture = sum(map((f, ε) -> f * ε, c.fractions, εs)) - g
     laws = map((law, ε, ys, st) -> _phase_residual(law, y[ys], ε, st, Δt), c.phases, εs, c.yslices, states)

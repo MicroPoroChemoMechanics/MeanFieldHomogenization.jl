@@ -135,6 +135,9 @@ pages = [
         "Differentiation" => [
             "manual/sensitivities.md",
         ],
+        "Performance" => [
+            "manual/parallelism.md",
+        ],
         "Appendices" => [
             "manual/elliptic_examples.md",
         ],
@@ -293,6 +296,8 @@ pages = [
             "material_laws/generated/ml_polycrystals.md",
             "material_laws/generated/ml_incremental_tangent.md",
             "material_laws/generated/ml_affine.md",
+            "material_laws/generated/ml_affine_evp.md",
+            "material_laws/generated/ml_quasi_elastic.md",
             "material_laws/generated/ml_crack_damage.md",
             "material_laws/generated/ml_closing_cracks.md",
             "material_laws/generated/ml_strength.md",
@@ -320,6 +325,7 @@ pages = [
             "fe_coupling/materials.md",
             "fe_coupling/fractured_rock.md",
             "fe_coupling/backends.md",
+            "fe_coupling/fenicsx.md",
         ],
         "Examples" => [
             "fe_coupling/thick_cylinder.md",

@@ -21,14 +21,10 @@ law_parameters
 
 ## Kelvin–Mandel algebra
 
-```@docs
-Mandel
-identity_mandel
-trace_mandel
-deviator
-von_mises
-equivalent_strain
-```
+The laws are written on the Kelvin–Mandel vectors of TensND, which the package
+re-exports: [`Mandel`](@extref TensND TensND.Mandel), [`identity_mandel`](@extref TensND TensND.identity_mandel), [`trace_mandel`](@extref TensND TensND.trace_mandel), `deviator`,
+[`sqnorm_deviator`](@extref TensND TensND.sqnorm_deviator), [`von_mises`](@extref TensND TensND.von_mises), [`equivalent_strain`](@extref TensND TensND.equivalent_strain), documented with TensND
+([Symmetric tensors as Kelvin-Mandel vectors](@extref TensND Symmetric-tensors-as-Kelvin-Mandel-vectors)).
 
 ## Integrating a step
 
@@ -47,6 +43,7 @@ PowerLawElasticity
 MaxwellViscoelasticity
 BiotPoroelasticity
 NortonViscoplasticity
+PerzynaViscoplasticity
 J2Plasticity
 CrystalViscoplasticity
 slip_systems
@@ -87,6 +84,11 @@ IncrementalTangent
 
 ```@docs
 AffineComposite
+SecondOrderComposite
+AffineEVPComposite
+AffineEVPState
+QuasiElasticComposite
+QuasiElasticState
 ```
 
 ## Polycrystals
@@ -96,11 +98,12 @@ PolycrystalModel
 TaylorModel
 KronerModel
 BerveillerZaouiModel
+HillModel
 TangentModel
+AnisotropicTangentModel
 Polycrystal
 PolycrystalState
 grain_states
-random_orientations
 PowerLawCrystal
 crystal_strain_rate
 ViscoplasticPolycrystal
@@ -150,6 +153,7 @@ quasistatic!
 GlobalNewtonError
 material_element!
 material_system
+update_points!
 write_material_vtk
 ```
 

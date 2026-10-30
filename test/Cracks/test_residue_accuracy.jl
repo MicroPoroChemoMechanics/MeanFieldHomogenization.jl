@@ -35,8 +35,8 @@ using TensND
         B_res = cod_tensor(crack, C_cubic; method = :residues)
         B_nqg = cod_tensor(crack, C_cubic; method = :nestedquadgk, reltol = 1.0e-12)
 
-        err = maximum(abs, components_canon(B_res - B_nqg))
-        scale = maximum(abs, components_canon(B_nqg))
+        err = maximum(abs, canonical_components(B_res - B_nqg))
+        scale = maximum(abs, canonical_components(B_nqg))
         @test err / scale < 1.0e-8
     end
 
@@ -45,8 +45,8 @@ using TensND
         B_res = cod_tensor(crack, C_tric; method = :residues)
         B_nqg = cod_tensor(crack, C_tric; method = :nestedquadgk, reltol = 1.0e-12)
 
-        err = maximum(abs, components_canon(B_res - B_nqg))
-        scale = maximum(abs, components_canon(B_nqg))
+        err = maximum(abs, canonical_components(B_res - B_nqg))
+        scale = maximum(abs, canonical_components(B_nqg))
         @test err / scale < 1.0e-6
     end
 
@@ -55,8 +55,8 @@ using TensND
         B_res = cod_tensor(crack, C_cubic; method = :residues)
         B_nqg = cod_tensor(crack, C_cubic; method = :nestedquadgk, reltol = 1.0e-12)
 
-        err = maximum(abs, components_canon(B_res - B_nqg))
-        scale = maximum(abs, components_canon(B_nqg))
+        err = maximum(abs, canonical_components(B_res - B_nqg))
+        scale = maximum(abs, canonical_components(B_nqg))
         @test err / scale < 1.0e-6
     end
 
@@ -98,8 +98,8 @@ using TensND
                 PennyCrack(1.0), EllipticCrack(1.0, 0.5), RibbonCrack(1.0),
                 EllipticCrack(1.0, 0.5; euler_angles = (0.3, 0.7, 0.1)),
             )
-            @test components_canon(cod_tensor(crack, C_iso; method = :residues)) ≈
-                components_canon(cod_tensor(crack, C_iso_t)) rtol = 1.0e-10
+            @test canonical_components(cod_tensor(crack, C_iso; method = :residues)) ≈
+                canonical_components(cod_tensor(crack, C_iso_t)) rtol = 1.0e-10
         end
         # Transversely isotropic, with (C13 + C44)² = (C11 - C44)(C33 - C44): a
         # double root. Against the cubature.
@@ -115,8 +115,8 @@ using TensND
         ]
         C_ti = TensND.from_mandel(KM_ti, basis)
         crack = EllipticCrack(1.0, 0.5; euler_angles = (0.3, 0.7, 0.1))
-        @test components_canon(cod_tensor(crack, C_ti; method = :residues)) ≈
-            components_canon(cod_tensor(crack, C_ti; method = :nestedquadgk, abstol = 1.0e-12, reltol = 1.0e-11)) rtol = 1.0e-10
+        @test canonical_components(cod_tensor(crack, C_ti; method = :residues)) ≈
+            canonical_components(cod_tensor(crack, C_ti; method = :nestedquadgk, abstol = 1.0e-12, reltol = 1.0e-11)) rtol = 1.0e-10
     end
 end
 
@@ -133,7 +133,7 @@ end
         4.0 3.0 -2.0 2.5 65.0 -1.0;
         3.0 -1.0 2.0 1.5 -1.0 55.0
     ]
-    C = Float64.(Array(components_canon(TensND.from_mandel(KM, TensND.CanonicalBasis{3, Float64}()))))
+    C = Float64.(Array(canonical_components(TensND.from_mandel(KM, TensND.CanonicalBasis{3, Float64}()))))
     n̂ = [0.0, 0.0, 1.0]
     for α in (0.2, 1.0, 2.5)
         ξs = [cos(α), sin(α), 0.0]

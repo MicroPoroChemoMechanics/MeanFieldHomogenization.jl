@@ -1,6 +1,6 @@
 # =============================================================================
 #  param_conversions.jl — physical-parameter interpretations of the raw
-#  symmetry-class coefficients extracted by TensND (`get_data`, `get_ℓ8`,
+#  symmetry-class coefficients extracted by TensND (`get_data`, `walpole_coeffs`,
 #  `best_fit_iso`/`best_fit_ti`/`best_fit_ortho`).
 #
 #  TensND only knows the projector coefficients — (α, β) on {𝕁, 𝕂} for an
@@ -24,7 +24,7 @@
 
 # ── Transversely isotropic: Hoenig (1978) parameters ─────────────────────────
 #
-# TensND's `ti_args_hoenig` / `tens_ti_hoenig` carry the same five numbers on the
+# TensND's `ti_constants` / `ti_from_constants` (`form = :hoenig`) carry the same five numbers on the
 # COMPLIANCE, as (E, ν₁, ν₂, H, Γ); these two read and build the STIFFNESS, with
 # MFH's names and order (E1, h, nu1, nu2, gamma). The closed forms are TensND's.
 
@@ -36,14 +36,14 @@ Hoenig (1978) parametrization of a transversely isotropic **stiffness**
 tensor: `E1` the in-plane Young's modulus, `h` the axial/in-plane modulus
 ratio, `nu1` the in-plane Poisson's ratio, `nu2` the out-of-plane Poisson's
 ratio, and `gamma` the shear anisotropy ratio: TensND's
-`TensND.ti_args_hoenig` of the compliance `inv(t)`.
+`TensND.ti_constants` of the compliance `inv(t)`.
 
 For a tensor that is not already `TensTI`, the 2-argument form projects onto
 the TI span about `axis` first (`TensND.best_fit_ti`). For a compliance tensor,
 use `hoenig_params(inv(S))` / `hoenig_params(inv(S), axis)`.
 """
 function hoenig_params(t::TensND.TensTI{4})
-    E, ν₁, ν₂, H, Γ = TensND.ti_args_hoenig(inv(t))
+    E, ν₁, ν₂, H, Γ = TensND.ti_constants(inv(t); form = :hoenig)
     return (E1 = E, h = H, nu1 = ν₁, nu2 = ν₂, gamma = Γ)
 end
 hoenig_params(t::TensND.AbstractTens{4, 3}, axis) = hoenig_params(TensND.best_fit_ti(t, axis))
@@ -53,7 +53,7 @@ hoenig_params(t::TensND.AbstractTens{4, 3}, axis) = hoenig_params(TensND.best_fi
 
 Build the TI stiffness tensor from its Hoenig (1978) parameters and symmetry
 axis — the reciprocal of [`hoenig_params`](@ref): the inverse of TensND's
-`TensND.tens_ti_hoenig` compliance.
+`TensND.ti_from_constants` compliance.
 """
 hoenig_stiffness(E1, h, nu1, nu2, gamma, axis) =
-    inv(TensND.tens_ti_hoenig(E1, nu1, nu2, h, gamma, axis))
+    inv(TensND.ti_from_constants(E1, nu1, nu2, h, gamma, axis; form = :hoenig))

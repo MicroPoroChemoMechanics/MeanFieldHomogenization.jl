@@ -3,7 +3,10 @@
 # here independently by the continuity of the tractions; with Mori–Tanaka and
 # an ellipsoidal inclusion, the phase strains it returns are those of the
 # Eshelby problem of the linear thermoelastic comparison composite; the
-# tangents and the derivatives in the parameters are consistent.
+# tangents and the derivatives in the parameters are consistent. The
+# second-order estimate of Ponte Castañeda shares the comparison composite: it
+# is exact for linear phases and for a laminate too, and its stress derives
+# from its effective potential: its consistent tangent is symmetric.
 
 using Test
 using MeanFieldHomogenization
@@ -39,7 +42,7 @@ const E_AF = SVector(1.0e-3, -2.0e-4, 3.0e-4, 1.0e-4, 0, -2.0e-4)
     c = AffineComposite(_rve_af(), (M = _power_af(50.0e3, 100.0, 1.0), I = _power_af(100.0e3, 400.0, 1.0)))
     σ, 𝕂, _ = point_update(c, E_AF, initial_state(c), 1.0)
     rve = _rve_af(; M = TensISO{3}(3 * 50.0e3, 2 * 100.0 / 3.0e-3), I = TensISO{3}(3 * 100.0e3, 2 * 400.0 / 3.0e-3))
-    C = KM(homogenize(rve, MoriTanaka(), :C))
+    C = mandel(homogenize(rve, MoriTanaka(), :C))
     @test 𝕂 ≈ C rtol = 1.0e-12
     @test σ ≈ C * E_AF rtol = 1.0e-12
 end
@@ -84,7 +87,7 @@ end
     # (𝕀 + ℙ(L_I − L_M)) ε_I = ε_M − ℙ(τ_I − τ_M), and the mixture rule closes it.
     LM, LI = _tangent_af(laws.M, εM), _tangent_af(laws.I, εI)
     τM, τI = _stress_af(laws.M, εM) - LM * εM, _stress_af(laws.I, εI) - LI * εI
-    ℙ = MP_AF._mandel(TensND.change_tens_canon(hill_tensor(shape, MP_AF._symmetric_tensor(LM))))
+    ℙ = MP_AF._mandel(TensND.canonical(hill_tensor(shape, TensND.from_mandel(LM))))
     B = inv(I + ℙ * (LI - LM))
     @test (I + (0.3 / 0.7) * B) \ (B * (E_AF / 0.7 - ℙ * (τI - τM))) ≈ εI rtol = 1.0e-12
     @test σ ≈ 0.7 * _stress_af(laws.M, εM) + 0.3 * _stress_af(laws.I, εI) rtol = 1.0e-14
@@ -113,4 +116,31 @@ end
     @test iszero(σ)
     @test MP_AF._with_external(c, (;)) === c
     @test MP_AF._with_external(c, (T = 1.0,)) isa AffineComposite
+end
+
+@testset "the second-order estimate of Ponte Castañeda" begin
+    # Linear phases: the linear Mori–Tanaka estimate.
+    c = SecondOrderComposite(_rve_af(), (M = _power_af(50.0e3, 100.0, 1.0), I = _power_af(100.0e3, 400.0, 1.0)))
+    σ, 𝕂, _ = point_update(c, E_AF, initial_state(c), 1.0)
+    C = mandel(homogenize(_rve_af(; M = TensISO{3}(3 * 50.0e3, 2 * 100.0 / 3.0e-3), I = TensISO{3}(3 * 100.0e3, 2 * 400.0 / 3.0e-3)), MoriTanaka(), :C))
+    @test σ ≈ C * E_AF rtol = 1.0e-10
+    @test 𝕂 ≈ C rtol = 1.0e-10
+    # A laminate: the exact solution, the strains being uniform in the layers.
+    laws = (A = _power_af(50.0e3, 100.0, 0.3), B = _power_af(100.0e3, 400.0, 0.3))
+    c = SecondOrderComposite(_laminate_af(), laws; scheme = Laminated())
+    @test point_update(c, E_AF, initial_state(c), 1.0)[1] ≈ first(_exact_laminate_af(laws.A, laws.B, E_AF)) rtol = 1.0e-10
+    # Mori–Tanaka: the stress derives from the effective potential, so that its
+    # consistent tangent, the Hessian of that potential, is symmetric, which the
+    # affine one, of no potential, is not; the tangent is that of the stress.
+    laws = (M = _power_af(50.0e3, 100.0, 0.3), I = _power_af(100.0e3, 400.0, 0.3))
+    c = SecondOrderComposite(_rve_af(), laws)
+    σ, 𝕂, _ = point_update(c, E_AF, initial_state(c), 1.0)
+    σa, 𝕂a, _ = point_update(AffineComposite(_rve_af(), laws), E_AF, initial_state(c), 1.0)
+    @test maximum(abs, 𝕂 - transpose(𝕂)) < 1.0e-12 * maximum(abs, 𝕂)
+    @test maximum(abs, 𝕂a - transpose(𝕂a)) > 1.0e-4 * maximum(abs, 𝕂a)
+    @test !isapprox(σ, σa; rtol = 1.0e-3)
+    @test check_material_interface(c; verbose = false)
+    @inferred point_update(c, E_AF, initial_state(c), 1.0)
+    # At rest, nothing to linearize.
+    @test iszero(point_update(c, zero(SVector{6}), initial_state(c), 1.0)[1])
 end

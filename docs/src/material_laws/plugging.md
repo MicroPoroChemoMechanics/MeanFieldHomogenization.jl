@@ -43,7 +43,7 @@ The old state is never mutated: a global iteration that fails is retried from
 ## The fast door: flat static vectors
 
 [`point_update`](@ref) is what `material_response` calls inside. It takes and
-returns static vectors (strains and stresses as [`Mandel`](@ref) vectors, the
+returns static vectors (strains and stresses as [`Mandel`](@extref TensND TensND.Mandel) vectors, the
 tangent as an `SMatrix`), is type-stable and **allocates nothing**:
 
 ```@example mp_plugging

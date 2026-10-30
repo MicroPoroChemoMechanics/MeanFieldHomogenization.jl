@@ -1,5 +1,300 @@
 # Changelog
 
+## v0.24.0 — the nonlinear models still missing, FEniCSx, faster starts and polycrystals
+
+A minor release. 0.23.0 brought the classical routes of nonlinear
+homogenization; this release adds the models it left out that the literature at hand describes in full: the
+anisotropic matrix of Lebensohn and Tomé in the tangent model of viscoplastic
+polycrystals, Hill's self-consistent scheme for elastoplastic polycrystals, the
+second-order estimate of Ponte Castañeda, and, for phases with a history, the
+affine formulation of Pierard and Doghri and its quasi-elastic approximation
+by Brenner et al. Each is a law of `MaterialLaws` that runs in `point_response`
+and in the finite-element coupling, checked against an independent reference
+and documented on a page of its own. The β rule of Cailletaud and Pilvin is
+not implemented, its paper being out of reach.
+
+It also couples the materials of the package to FEniCSx (`python/mfh_fenicsx`:
+the stress, or the stress and the fluid content of a poroelastic material, as
+external operators of dolfinx, one Julia call per Newton iteration for all the
+quadrature points, on Julia's threads), loads in 2 s instead of 5.4 s (TensND
+no longer loads SymPy), reads Hill tensors back across a series of calls
+(`HillCache`), and integrates polycrystals 2.2 to 2.7 times faster with the
+same bits. Its minor version says what a minor version says before 1.0: a
+compat entry `MeanFieldHomogenization = "0.23"` does not accept it; the
+genuine breaks are listed below.
+
+### Breaking changes
+
+- `random_orientations` is removed: a random texture is drawn with TensND,
+  whose `random_basis(rng)` gives a frame uniform over the rotations
+  (`[random_basis(rng) for _ in 1:n]`). Everything that draws a random tensor
+  or a random frame belongs to TensND, and the tests and tutorials of the
+  package now draw them there: rotations with `random_rotation`, frames with
+  `random_basis`, positive definite stiffnesses and conductivities with
+  `rand(rng, Tens{4, 3}; definite = true)` and `rand(rng, Tens{2, 3}; definite = true)`.
+  The seeded draws are not those of before.
+- Julia 1.13 is required (1.12 is no longer tested).
+- TensND 0.11 is required. It keeps the symmetries of a
+  tensor through a change of basis: in a random oblique basis the dilute
+  localization of a transversely isotropic matrix could fail to invert
+  (2 cases of 200), which the new draws of the tests exposed. It also holds
+  the tensor operations this package kept for itself (below), so that a tensor
+  computation has one home. Version 0.11.2 at least (`TensND = "0.11.2"`): it
+  inverts a fourth-order tensor of symbolic components, which the Mori–Tanaka
+  estimate of a material with crack families needs on symbolic moduli.
+- The tensor functions are called by their TensND 0.11 names, which say what
+  they do, in the code, the tests, the scripts and the documentation:
+  `express` and `canonical` (formerly `change_tens`, `change_tens_canon`),
+  `canonical_components` (`components_canon`), `mandel(A; symmetrize = true)`
+  and `from_mandel` (`mandel66_minor`, `mandel66`, `array_from_mandel66` and
+  their 2D forms), `ti_from_constants` and `ti_constants`, with
+  `form = :engineering` or `:hoenig` (`tens_ti*`, `ti_args*`),
+  `cubic_from_constants`, `walpole_coeffs`, `rotation_matrix`,
+  `rotation_tensor4`, `project`. `Core` no longer re-exports `mandel66_minor`
+  and `array_from_mandel66`.
+- `extract_iso_moduli`, `extract_iso_conductivity` and `extract_ti_moduli`,
+  deprecated since 0.20.0, are removed: `E_nu(C)`, `first(get_data(K))` and
+  `ti_constants(inv(C); form = :hoenig)` (or `hoenig_params(C)`) replace them.
+
+### Added
+
+- The elliptic integrals `ell_K`, `ell_E`, `ell_F`, `ell_RF` and `ell_RD` carry
+  their derivatives for Symbolics: `expand_derivatives` differentiates a
+  symbolic Hill tensor of a triaxial ellipsoid, or anything else built on them,
+  and the result stays a closed form in the same integrals (each rule tested
+  against ForwardDiff through the numerical methods, and the derivative of a
+  Hill tensor against that of the numerical one).
+- With SymPy, Carlson's `ell_RF` and `ell_RD` are SymPy functions, `elliprf`
+  and `elliprd`: unevaluated calls that SymPy differentiates by the same rules
+  and evaluates by mpmath, where a symbolic argument used to unroll fifty
+  duplication steps of the numerical method into the expression.
+
+- `AnisotropicTangentModel` for `ViscoplasticPolycrystal`: the tangent
+  self-consistent model with the anisotropic matrix of Lebensohn and Tomé
+  (1993). The matrix is the aggregate itself, its secant compliance on the
+  deviators found self-consistently (their equation 25) by the trust-region
+  method, and the interaction of a spherical grain goes through the Hill tensor
+  of the incompressible anisotropic matrix. For linear grains it is the linear
+  self-consistent scheme, which the tests check against the package's own
+  scheme on grains made compressible, the gap closing as the inverse of the
+  bulk stiffness.
+- The Hill tensor of an incompressible anisotropic matrix, by its exact Green
+  kernel: the acoustic tensor inverted on the plane orthogonal to each
+  direction, the limit of an infinite bulk modulus taken exactly.
+- `HillModel` for `Polycrystal`: the self-consistent elastoplastic scheme of
+  Hill (1965), where every spherical grain is constrained by the aggregate
+  itself through its anisotropic tangent, found self-consistently at each step
+  (Hill's equation 18, iterated with Anderson's acceleration). Kröner's model
+  constrains the grains by the elastic aggregate, a constraint that ignores,
+  Hill remarks, how much a yielded aggregate weakens; with Hill's constraint the
+  response of a random aggregate lies below Kröner's. With elastic grains it is
+  the package's linear self-consistent scheme, which the tests check.
+- `SecondOrderComposite`: the second-order estimate of Ponte Castañeda (1996)
+  for two nonlinear elastic (or viscous) phases. It shares the linear
+  comparison composite of `AffineComposite`, each phase replaced by its tangent
+  at its average strain, but estimates the effective energy by that of the
+  comparison composite and takes the stress as its derivative, the average
+  strains following the macroscopic strain by the implicit-function theorem.
+  Exact for linear phases and for laminates, as the tests check, and the stress
+  derives from a potential, which the affine estimate does not.
+- `PerzynaViscoplasticity`: the elasto-viscoplastic law of Perzyna type of
+  Pierard and Doghri (2006), Norton's viscoplastic function above the von Mises
+  yield surface with any isotropic hardening; the phase law of their affine
+  formulation, usable on its own.
+- `AffineEVPComposite`: the affine formulation of Pierard and Doghri (2006) for
+  a matrix with inclusions of elasto-viscoplastic phases in rate form. At the
+  end of each step every phase is linearized in time, which makes it a linear
+  viscoelastic solid with an eigenstrain that follows its actual history; the
+  Mori–Tanaka scheme concentrates the strain of the thermoelastic composite
+  this gives in the Laplace–Carson domain, brought back to time by the
+  collocation of the paper on relaxation times the user gives, and the average
+  strains are a fixed point. The history is carried by integrals at the
+  collocation points, a fixed amount of memory. The eigenstrain is written in a
+  form where the terms of the past cancel, which leaves two history integrals
+  per phase. Two identical phases give the phase exactly, elastic phases the
+  elastic Mori–Tanaka estimate, linear Maxwell phases the linear viscoelastic
+  one at first order in the time step, as the tests check.
+- `QuasiElasticComposite`: the "quasi-elastic" affine formulation of Brenner,
+  Masson, Castelnau and Zaoui (2002) for a matrix with inclusions of nonlinear
+  Maxwell-type phases. The Laplace–Carson inversion is replaced by the direct
+  one of the paper, p = h(t)/t, which makes each linearized phase an elastic
+  solid with the eigenstrain of its actual history: one thermoelastic
+  Mori–Tanaka composite per iteration, in time. h = 1 for creep, or h(t) built
+  on a relaxation time for relaxation and constant strain rates. A single
+  phase is exact in creep and, with h(t), in relaxation; linear Maxwell phases
+  in creep give the elastic and the viscous Mori–Tanaka estimates at the start
+  and in the steady regime, as the paper shows and the tests check. On a creep
+  test it follows `AffineEVPComposite` to 0.2 %.
+
+- `HillCache` and `with_hill_cache`: inside `with_hill_cache(cache) do … end`,
+  each numerical Hill tensor (anisotropic matrix: residues, nested
+  Gauss–Kronrod, DECUHR; ellipsoids and cylinders) is computed once and read
+  back afterwards, keyed by the exact shape, frame, matrix, method and
+  tolerances. A sweep of 100 Mori–Tanaka cells in a triclinic matrix takes
+  3.4 ms instead of 176 ms (`scripts/bench/hill_cache_sweep.jl`), the same
+  bits. Opt-in and scoped: closed forms never consult it, dual and symbolic
+  inputs bypass it, the store is bounded and thread-safe; without a cache in
+  scope, timings and allocations are unchanged.
+- `update_points!(F, 𝕂, G, states, Δt, material)`: the fluxes and the
+  tangents of a material at all the quadrature points of a mesh in one call,
+  for a finite-element code that evaluates its gradients in one array: the
+  strains of a mechanical material, the strains and the pressures of a
+  poroelastic one (7 rows, `BiotPoroelasticity`, `ClosingCrackPoroelasticity`). The points are shared among
+  tasks by blocks of cells: 4 threads compute 10 000 points of J2 plasticity
+  3.9 times faster than one, with the same bits, and a call allocates the same
+  1.2 kB whatever the number of points. A point that fails to integrate raises
+  its `LocalIntegrationError`, for the caller that cuts the step.
+- `python/mfh_fenicsx`, a Python package that puts the package's mechanical
+  materials at the quadrature points of a FEniCSx (dolfinx 0.10) problem.
+  Julia is embedded through juliacall; the stress is a `FEMExternalOperator`
+  of dolfinx-external-operator, so that the residual is written in UFL as with
+  any stress and its Jacobian is the consistent tangent. Each Newton iteration
+  makes one Julia call, `update_points!` on all the points, whose stresses and
+  tangents NumPy reads without a copy; three dimensions and plane strain. The
+  tests check a homogeneous field against Hooke's law and against Julia's
+  single-point update along a plastic path, and the quadratic convergence of
+  Newton's method on a heterogeneous plastic problem, which an elastic tangent
+  does not reach. A poroelastic material, of gradients (ε, p) and fluxes
+  (σ, φ), goes to `Poroelastic(material, u, p)` in a mixed (u, p) problem; it
+  reproduces Terzaghi's consolidation (the Fourier series, at first order in
+  the time step), and an example drains a borehole in a rock whose microcracks
+  close (`ClosingCrackPoroelasticity`). The validations compare it with the package's Ferrite
+  adapter on the same mesh, with a plain dolfinx elasticity solve and with
+  Lamé's thick cylinder. Scripts in `python/mfh_fenicsx/examples`: a plate with
+  a hole in a Mori–Tanaka composite, a notched plate whose microcracks grow,
+  and the scaling with the number of Julia threads (a homogenized viscoplastic
+  composite at 24,000 points: 3.2 times faster on 4 threads than on one). The
+  package keeps Julia's signal handlers in place, which `gmsh.initialize()`
+  resets and without which a garbage collection on several threads kills the
+  process. Documented in the new pages "FEniCSx backend" (installation,
+  conventions, what the tests check, the examples with their figures) and
+  "Parallelism" (what runs on Julia's threads, and what it gains).
+
+### Changed
+
+- The first differential estimate of a session takes 1.7 s instead of 2.3 s: the
+  ODE no longer carries the RVE as its parameters but in the right-hand side, so
+  that OrdinaryDiffEq reuses the integrator it precompiled for wrapped functions
+  instead of compiling one for the RVE's type. Same results to the bit, same
+  time per solve.
+
+- The documentation links to TensND's for the tensor functions and pages it
+  uses (`TensISO`, `best_fit_ti`, `mandel`, the isotropic moduli, …), through
+  DocumenterInterLinks and the inventory TensND publishes: a name or a section
+  renamed or removed in TensND fails this documentation's build, naming the
+  page, instead of leaving a dead link. The six addresses written by hand are
+  among them.
+
+- The Kelvin–Mandel vectors the laws are written on, `Mandel` and
+  `identity_mandel`, `trace_mandel`, `deviator`, `von_mises`,
+  `equivalent_strain`, are now TensND's, re-exported unchanged (same names,
+  same arithmetic, same bits), with `sqnorm_deviator`, the squared deviator
+  norm the laws differentiate. So are the closed-form 3×3 inverse (`inv3`,
+  of which this package had a copy), the acoustic tensor of a component array
+  (`acoustic_components`) and its symmetric inverse (`sym3_inv`), the kernels
+  of the anisotropic Hill tensors. They are documented with TensND.
+
+- A step of a polycrystal is 2.2 times faster with Kröner's model and 2.7
+  times faster with Hill's (eight crystals of 12 slip systems: 46 → 21 ms and
+  152 → 56 ms), with the same bits. The root of each grain in an outer
+  iteration is where its solve starts in the next one, and its update there
+  was computed again: half of the grain updates. It is now read back, as is
+  the evaluation at the root of every nested solve on plain numbers, and the
+  last two points evaluated are kept, so that a rejected trial point no longer
+  pushes out the accepted one. The local Newton iterations of a law with more
+  than 14 internal variables (a crystal has 24) solved their linear systems
+  through copies that LAPACK allocated at every iteration: the same LAPACK
+  calls now run on buffers kept by each task, which cuts the memory of a
+  crystal update from 262 kB to 5 kB and of a step of Kröner's aggregate from
+  60 MB to 1.5 MB.
+- `PolycrystalState` keeps the tangent of the step that reached it (`tangent`);
+  `HillModel` starts the next step from it.
+- The anisotropic Hill tensor reads the stiffness from a static array: 7 to 8 %
+  faster, values unchanged.
+- Tensor algebra comes from TensND instead of copies (`isotropify` and
+  `bulk_shear` for the isotropic projection of the incremental tangent,
+  `from_mandel`, and `deviatoric_pinv`, new in TensND 0.8.4).
+- The compliance of a crack, `k n ⊗ˢ 𝐁 ⊗ˢ n`, is read off the
+  out-of-plane block of 𝐁 in the frame of the crack instead of a product of
+  components that went through 81 of them and checked their symmetries back.
+  With TensND 0.8.5, which keeps the minor-symmetric storage through the
+  isotropic operations of the scheme, a Mori–Tanaka step with a penny crack in
+  an isotropic matrix goes from 96 µs to 1.5 µs and from 1.26 MB to 3.6 kB
+  allocated; with a triclinic matrix, where the opening displacement tensor
+  dominates, from 369 µs to 302 µs. Values unchanged to rounding.
+- **Starting a session.** With TensND 0.9.0, which no longer loads SymPy's
+  Python bridge with it, `using MeanFieldHomogenization` takes 2.05 s instead
+  of 5.4 s. The first Hill tensor in an anisotropic matrix compiled two
+  instances of QuadGK it rarely needs: one for the work counters of the
+  benchmark, whose integrand now reads its flag at each node instead, and one
+  for the breakpoints of a very flat ellipsoid, now compiled only when such an
+  ellipsoid comes. Its first call takes 3.1 s instead of 7.4 s, values bitwise
+  unchanged and run times unchanged within the noise of the bench.
+  `scripts/bench/ttfx.jl` measures the load and the first calls in fresh
+  processes.
+- **Symbolic computations need `using SymPyPythonCall`.** SymPyPythonCall is
+  no longer loaded through TensND: SymPy symbols, and the SymPy methods of the
+  package, come with `using SymPyPythonCall` next to
+  `using MeanFieldHomogenization`; the home page says which package to load
+  for which symbols.
+- Accepts DECUHR 0.4 (and, in the documentation, ChemistryLab 0.42 and
+  OptimaSolver 0.10), which only raise their own Julia bound.
+
+### Fixed
+
+- Symbolic moduli reach three more paths, each on its type, the numerical code
+  unchanged (same bits, same times, measured): the Hill tensor of a spheroid in
+  a coaxial transversely isotropic matrix with `Symbolics.Num` (the integrals
+  take their closed form, the analytic continuation, where their regimes were
+  chosen on values, and SymPy reached it only through comparisons answering
+  `false`; with `Num` it is evaluated at complex values, its roots being complex
+  for some moduli), and a `LayeredSphere` of symbolic radii, whose check of the
+  radii compared them. The self-consistent, asymmetric self-consistent and
+  differential schemes, which iterate on values, refuse symbolic moduli with a
+  message naming the explicit schemes, where `Num` threw a `TypeError`, `Sym` a
+  `MethodError`, or the solve did not end.
+
+- The conduction Hill tensor of an ellipsoid or a cylinder in an anisotropic
+  conductivity overflowed the stack on symbolic components: the route meant for
+  duals took their values, which for a symbol is the symbol itself, and called
+  itself again. A conductivity diagonal in the inclusion's frame (a coaxial
+  transversely isotropic or orthotropic one) now takes the closed form of the
+  fictitious ellipsoid of semi-axes aᵢ/√Kᵢᵢ, with `Symbolics.Num` and SymPy; any
+  other is refused with a message, as is the Hill tensor of a cylinder in an
+  anisotropic elastic matrix, an adaptive quadrature that compared symbols
+  (`TypeError` with `Num`, no end with `Sym`). Numbers and duals keep their
+  routes.
+
+- `point_response` says when it cuts a step because the tolerance asked is out
+  of the reach of the material: the Newton iteration stopping below √ε, the
+  residual is the floor the solves of the material leave on its fluxes, which a
+  cut does not lower, while it changes the time discretization and with it the
+  response of a rate-dependent material (by 7e-3 for a quasi-elastic composite
+  driven at `rtol = 1e-13`). A warning, once, gives the residual reached and asks
+  to raise `rtol`; cuts that cure a divergence stay silent.
+
+- The bundles that return a concentration with its flux concentration or its
+  contribution (`concentration_and_flux_average`, `concentration_and_contribution`)
+  promise the bits of the single functions. Since the isotropic operations of
+  TensND 0.8.5 contract in Tensors.jl, which uses `muladd`, the same expression
+  written at two sites could be fused differently where the compiler inlined it:
+  the test of that promise failed on the pre-release Julia of the CI. The flux
+  `C₁ : A` and the contribution `(C₁ − C₀) : A` are now one compiled body each,
+  which every route calls; timings unchanged within the noise of the bench.
+- The Hill tensors computed into an array (anisotropic matrix by residues,
+  nested quadrature or DECUHR, cylinders, two dimensions, conduction) and the
+  auxiliary and shape tensors were wrapped with a dimension read from the
+  array at run time: every scheme built on them was dispatched at run time.
+  They are now inferred with their order and dimension, which a new test
+  checks on every route.
+- A scheme with phases stored as structured tensors on frames of their own (a
+  cubic crystal on a rotated cube, inclusions transversely isotropic or
+  orthotropic) failed where TensND refused the sum of two cubic tensors on
+  different cubes. With TensND 0.8.5 every linear scheme gives the same
+  estimate as with the same phases stored as generic tensors, which a new test
+  checks. The test of the schemes against echoes in random bases was not run
+  by the suite; it is now.
+
 ## v0.23.0 — models of nonlinear composites and polycrystals
 
 0.22.0 derived nonlinear laws from the microstructure by the secant method.

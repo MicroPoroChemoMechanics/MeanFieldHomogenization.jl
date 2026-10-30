@@ -14,7 +14,7 @@ using LinearAlgebra
 #  (conduction / diffusion) driver.
 # =============================================================================
 
-const _to_mandel = TensND.mandel66
+const _to_mandel = (t -> TensND.mandel(TensND.canonical_components(t); symmetrize = true))
 
 function _setup_2phase_elastic(;
         k_M = 10.0, μ_M = 4.0,
@@ -323,7 +323,7 @@ end
 
     for dist in (Ellipsoid(1.0), Ellipsoid(1.0, 1.0, 0.1))
         for sch in (Maxwell(), PonteCastanedaWillis())
-            C_el = TensND.components_canon(homogenize(build(dist; alv = false), sch, :C))
+            C_el = TensND.canonical_components(homogenize(build(dist; alv = false), sch, :C))
             R_alv = homogenize_alv(build(dist; alv = true), sch, :C; times = times)
             @test isapprox(step_response(R_alv, 1), C_el[1, 1, 1, 1]; rtol = 1.0e-10)
             @test isapprox(step_response(R_alv, 3), C_el[3, 3, 3, 3]; rtol = 1.0e-10)

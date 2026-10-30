@@ -77,7 +77,7 @@ can hide anything:
 ```@example spheroid_elastic
 using TensND, SymPyPythonCall, LinearAlgebra
 S = coorsys_spheroidal()
-ϕ, p, q = getcoords(S)
+ϕ, p, q = get_coords(S)
 c = symbols("c", positive = true)
 μ = symbols("mu", positive = true)
 ν = symbols("nu", real = true)
@@ -87,7 +87,7 @@ nothing # hide
 
 ```@example spheroid_elastic
 Cart = coorsys_cartesian()
-X, Y, Z = getcoords(Cart)
+X, Y, Z = get_coords(Cart)
 f = ntuple(i -> SymFunction("f$(i-1)")(X, Y, Z), 4)
 φv = Tens([f[2], f[3], f[4]])
 Φc = f[1] + X * f[2] + Y * f[3] + Z * f[4]
@@ -284,7 +284,7 @@ Both boxed statements, checked:
 ∇φ₃  = grad(φ₃, S)
 ∂zφ₃ = ∇φ₃ ⋅ e₃
 σ_cf = -2ν * ∂zφ₃ * one(ε) + hess(Φ, S) - 2 * (1 - ν) * (e₃ ⊗ ∇φ₃ + ∇φ₃ ⊗ e₃)
-cd, cc = components_canon(σ), components_canon(σ_cf)
+cd, cc = canonical_components(σ), canonical_components(σ_cf)
 [reduce_h(tr(ε) + (1 - 2ν) * ∂zφ₃ / μ);
  [reduce_h(cd[i, j] - cc[i, j]) for i in 1:3 for j in i:3]]
 ```
@@ -473,7 +473,7 @@ proves nothing about elasticity.
 
 What the check below *does* establish is that the machinery producing the
 operators above is sound: TensND's spheroidal chart, the wiring of `grad`,
-`symgrad` and `divergence`, the transcription of the gauge ``\varphi_1=\varphi_2=0``
+[`symgrad`](@extref TensND TensND.symgrad) and `divergence`, the transcription of the gauge ``\varphi_1=\varphi_2=0``
 with its ``\underline e_3`` term, and the ``\lambda \leftrightarrow \nu``
 conversion. Every expression on this page comes out of that same machinery, so
 a non-zero residual here would have invalidated all of them. It is a plumbing
@@ -490,7 +490,7 @@ once in ``p`` and once in ``q`` supplies the third-order eliminations that
 ``\operatorname{div}\boldsymbol\sigma`` needs. Imposing only that:
 
 ```@example spheroid_elastic
-dz = components_canon(divergence(σ, S))[3]           # the axial component
+dz = canonical_components(divergence(σ, S))[3]           # the axial component
 reduce_h(dz)
 ```
 

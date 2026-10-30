@@ -9,7 +9,7 @@ cost is measured, and which path dominates a computation.
 
 ## What the hot paths do
 
-- Small-matrix helpers (`_inv3` in `src/Core/green_kernel.jl`,
+- Small-matrix helpers (TensND's [`inv3`](@extref TensND TensND.inv3), [`acoustic_components`](@extref TensND TensND.acoustic_components) and [`sym3_inv`](@extref TensND TensND.sym3_inv);
   `_sym3_inv_acoustic` in `src/Elasticity/hill_3d_aniso_nestedquadgk.jl`,
   `_A_and_Tn` / `_phi_cache` / `_qnn_pair_components` in
   `src/Core/green_helpers.jl`) are **pure functions returning `StaticArrays`**,
@@ -18,7 +18,7 @@ cost is measured, and which path dominates a computation.
   dominates everything else: keep new helpers on this path allocation-free and
   non-mutating.
 - The Hill-tensor builders return the **most specific** TensND type they can —
-  `TensISO`, `TensTI{4}`, `TensOrtho` rather than a generic `Tens`. This is not
+  [`TensISO`](@extref TensND TensND.TensISO), `TensTI{4}`, [`TensOrtho`](@extref TensND TensND.TensOrtho) rather than a generic `Tens`. This is not
   cosmetic: the specificity propagates into the homogenization schemes, where it
   removes redundant symmetry checks and lets the structured storage classes take
   over. Returning a generic tensor from a new builder silently deoptimizes every
@@ -108,7 +108,7 @@ axis along ``\underline{e}_3``, is built on a permuted basis.
 | | up to 0.20.1 | from 0.20.2 |
 | :--- | :--- | :--- |
 | order of the semi-axes | `sortperm` on a vector collected from the tuple | `Core._descending_order`, an insertion sort on the tuple; the same permutation, ties kept in order |
-| permuted basis | `RotatedBasis` built from a matrix whose size, hence the dimension, was read at run time; orthogonality checked again | with TensND ≥ 0.8.3, built with its dimension as a type parameter, without re-checking the orthogonality of an orthonormal basis |
+| permuted basis | [`RotatedBasis`](@extref TensND TensND.RotatedBasis) built from a matrix whose size, hence the dimension, was read at run time; orthogonality checked again | with TensND ≥ 0.8.3, built with its dimension as a type parameter, without re-checking the orthogonality of an orthonormal basis |
 | type of the shape's basis | not inferred: every computation on the shape started with a dynamic dispatch | a union of the canonical and the rotated basis of dimension 3 |
 
 !!! note "The gain needs TensND 0.8.3"
@@ -161,6 +161,66 @@ that estimate is the same at every iteration.
     ([`AndersonDefault`](@ref)), and the default is the solver that runs every
     case of the tests, tutorials and applications, the bifurcation of a porous
     medium at percolation included. The default is unchanged.
+
+## Cracks in the schemes: checks that cost more than the computation
+
+Until version 0.23.1, a Mori–Tanaka step with a penny crack in an isotropic
+matrix spent most of its time checking symmetries it already had. The crack
+compliance ``\mathbb{H} = k\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}``
+was formed as a product of components, through an array of 81 entries, and the
+operations of the scheme with the isotropic matrix did the same; each time,
+the result was checked at run time for the minor symmetries before being
+stored. Two changes remove them:
+
+- ``\mathbb{H}`` is read off the out-of-plane block of ``\boldsymbol{B}`` in
+  the frame of the crack ([`compliance_op_block`](@extref TensND TensND.compliance_op_block)), whose Kelvin–Mandel matrix it
+  is, and stored directly with its symmetries;
+- TensND 0.8.5 keeps that storage through the sum, the difference and the
+  double contraction with an isotropic tensor, and through the negation.
+
+On one thread of the same machine (minimum of the samples), values unchanged to
+rounding:
+
+| Case of `scripts/bench` | 0.23.0 | 0.23.1 |
+| :--- | ---: | ---: |
+| `schemes/mt.crack.penny`: Mori–Tanaka, penny crack, isotropic matrix | 96 µs, 1.26 MB | 1.45 µs, 3.6 kB |
+| `schemes/mt.crack.penny.tri`: the same, triclinic matrix | 369 µs, 680 kB | 302 µs, 58 kB |
+
+```julia
+julia --project=scripts/bench scripts/bench/bench_suite.jl --filter=mt.crack
+```
+
+With a triclinic matrix the opening displacement tensor, an integral over the
+crack front, is what remains of the cost.
+
+## Starting a session
+
+A new session pays three costs before its first result: precompiling the
+package (once per installation or change), loading it, and compiling each path
+at its first call. Measured in fresh processes (median of three):
+
+| | 0.23.0 | 0.23.1 |
+| :--- | ---: | ---: |
+| `using MeanFieldHomogenization` | 5.4 s | 2.05 s |
+| first Hill tensor, ellipsoid in an orthotropic matrix | 7.4 s | 3.1 s |
+
+```julia
+julia --project=scripts/bench scripts/bench/ttfx.jl --runs=3
+```
+
+The load lost 3.3 s with TensND 0.9.0, which no longer loads PythonCall, the
+bridge to Python of SymPy, for sessions that write no SymPy symbol. The first
+anisotropic Hill tensor compiled QuadGK four times where it needs it twice: a
+second instance of each integral for the work counters of the benchmark, and a
+second outer integral for the breakpoints of a very flat ellipsoid. The
+integrand of the counters now reads their flag at each node, and the
+breakpoint variant sits behind an inference barrier, compiled when a flat
+ellipsoid comes.
+
+A precompile workload was measured and not kept: compiling the first calls
+into the package image removed them (0.005 s for the anisotropic Hill tensor)
+but added 31 s to every precompilation of the package, and moved the run time
+of a few microsecond kernels by up to 5 % either way.
 
 ## Where the cost actually is
 

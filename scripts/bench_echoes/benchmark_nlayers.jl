@@ -392,7 +392,7 @@ vline!(p_local, [R_inner + ep_layer]; lw = 1, color = :black, linestyle = :dash,
 #      region forced on both sides.
 #
 #      Conventions reconciled here: ECHOES returns rows in the local spherical
-#      basis, hence the `rot6(θ, φ)` on the Python side; and its `PRIMALDISC`
+#      basis, hence the `rotation_tensor4(θ, φ)` on the Python side; and its `PRIMALDISC`
 #      takes interface STIFFNESSES, the same convention as `SpringInterface`
 #      since v0.10.0, so the same numbers go to both.
 # =============================================================================

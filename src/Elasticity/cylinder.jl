@@ -163,7 +163,7 @@ function MFH_Core.shape_tensor(cyl::Cylinder)
     D[1, 1] = T(Inf)
     D[2, 2] = cyl.semi_axes[1]
     D[3, 3] = cyl.semi_axes[2]
-    return TensND.Tens(D, cyl.basis)
+    return MFH_Core._tens_in(D, cyl.basis)
 end
 
 # ── Shape helpers ────────────────────────────────────────────────────────────

@@ -28,10 +28,7 @@ const MFHC = MeanFieldHomogenization.Core
 const ATOL_KM = 1.0e-12
 
 # A fully triclinic, symmetric-positive-definite Kelvin-Mandel matrix.
-function _rand_km6(rng)
-    A = randn(rng, 6, 6)
-    return SMatrix{6, 6}(A * A' + 8I)
-end
+_rand_km6(rng) = SMatrix{6, 6}(mandel(rand(rng, Tens{4, 3}; definite = true) + 8 * tens_Id4(Val(3), Val(Float64))))
 
 _iso_km(k, μ) = SMatrix{6, 6}(mandel(TensISO{3}(3k, 2μ)))
 

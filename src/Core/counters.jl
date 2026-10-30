@@ -95,19 +95,20 @@ read_counters() = (;
 """
     _CountingFn(f)
 
-Callable wrapper bumping `INTEGRAND_EVALS` on each call before
-forwarding to `f`.
+Callable wrapper forwarding to `f` and, while [`COUNT_INTEGRAND`](@ref) is on,
+bumping `INTEGRAND_EVALS` on each call.
 
-A `struct` rather than a closure on purpose: a closure returned from a
-branch would make the branch's return type a small `Union`, and passing a
-non-concrete callable to `quadgk` costs a dynamic dispatch **per node** —
-which would perturb precisely the hot loop the counters exist to measure.
+A `struct` rather than a closure, so that the integrand passed to `quadgk` is
+concrete. Every call of [`_counted_quadgk`](@ref) wraps its integrand, counting
+or not: QuadGK is then compiled once per integrand, where a branch between the
+plain integrand and the counting one compiled it twice, for a counting only the
+benchmark harness turns on. The price is one test of a flag per node.
 """
 struct _CountingFn{F}
     f::F
 end
 
-@inline (c::_CountingFn)(x) = (_bump!(INTEGRAND_EVALS); c.f(x))
+@inline (c::_CountingFn)(x) = (COUNT_INTEGRAND[] && _bump!(INTEGRAND_EVALS); c.f(x))
 
 """
     _quadgk_norm(x) -> Real
@@ -136,16 +137,11 @@ nodes.
 `QuadGK.quadgk` with opt-in per-node counting, and the error norm
 [`_quadgk_norm`](@ref).
 
-The [`COUNT_INTEGRAND`](@ref) branch is taken **once per `quadgk` call**, and
-each side passes a *concretely typed* callable, so the integrand loop is
-compiled exactly as it would be without instrumentation.  When counting is
-off (always, during a timed run) this is a plain `quadgk` call on the
-original function.
+The integrand is always wrapped in a [`_CountingFn`](@ref), which reads
+[`COUNT_INTEGRAND`](@ref) at each node: one compiled `quadgk` per integrand.
 """
-@inline function _counted_quadgk(f::F, a, b; kw...) where {F}
-    COUNT_INTEGRAND[] || return QuadGK.quadgk(f, a, b; norm = _quadgk_norm, kw...)
-    return QuadGK.quadgk(_CountingFn(f), a, b; norm = _quadgk_norm, kw...)
-end
+@inline _counted_quadgk(f::F, a, b; kw...) where {F} =
+    QuadGK.quadgk(_CountingFn(f), a, b; norm = _quadgk_norm, kw...)
 
 """
     with_integrand_counting(f)

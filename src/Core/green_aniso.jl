@@ -134,7 +134,7 @@ Green operator is obtained by differentiating this very function, through the
 `Tens` wrapper.
 """
 function green_function_aniso(C₀::TensND.AbstractTens{4, 3}, x::AbstractVector; nodes::Int = 32)
-    return TensND.Tens(_green_function_aniso(SArray{Tuple{3, 3, 3, 3}}(TensND.components_canon(C₀)), x, nodes))
+    return TensND.Tens(_green_function_aniso(SArray{Tuple{3, 3, 3, 3}}(TensND.canonical_components(C₀)), x, nodes))
 end
 
 # Canonical components of a stiffness as a static array: read 81 × nodes times
@@ -198,7 +198,7 @@ green_operator_aniso(
 ) = TensND.Tens(_green_operator_aniso(C₀, x, nodes))
 
 function _green_operator_aniso(C₀::TensND.AbstractTens{4, 3}, x::AbstractVector, nodes::Int)
-    C = SArray{Tuple{3, 3, 3, 3}}(TensND.components_canon(C₀))
+    C = SArray{Tuple{3, 3, 3, 3}}(TensND.canonical_components(C₀))
     # H[(i,j), k, l] = ∂²G_ij/∂x_k∂x_l, obtained as a jacobian of a jacobian,
     # static throughout: one chunk of 3 per level, no heap array.
     f = y -> vec(_green_function_aniso(C, y, nodes))
@@ -240,7 +240,7 @@ green_operator_aniso(K₀::TensND.AbstractTens{2, 3}, x::AbstractVector) =
     TensND.Tens(_green_operator_aniso(K₀, x))
 
 _green_operator_aniso(K₀::TensND.AbstractTens{2, 3}, x::AbstractVector) =
-    _green_operator_aniso_order2(TensND.components_canon(K₀), x, 3)
+    _green_operator_aniso_order2(TensND.canonical_components(K₀), x, 3)
 
 """
     green_operator_aniso(K₀::AbstractTens{2,2}, x) -> Tens{2,2}
@@ -259,7 +259,7 @@ green_operator_aniso(K₀::TensND.AbstractTens{2, 2}, x::AbstractVector) =
     TensND.Tens(_green_operator_aniso(K₀, x))
 
 _green_operator_aniso(K₀::TensND.AbstractTens{2, 2}, x::AbstractVector) =
-    _green_operator_aniso_order2(TensND.components_canon(K₀), x, 2)
+    _green_operator_aniso_order2(TensND.canonical_components(K₀), x, 2)
 
 function _green_operator_aniso_order2(K, x::AbstractVector, d::Int)
     Kinv = inv(Matrix(K))

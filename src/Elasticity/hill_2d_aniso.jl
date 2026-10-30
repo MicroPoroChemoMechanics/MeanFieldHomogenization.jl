@@ -81,7 +81,7 @@ function _hill_2d_aniso(
     _orbit_mean(I) = sum(P_arr[J...] for J in _orbit8(minimum(_orbit8(I...))...)) / 8
     P_sym = [_orbit_mean((α, β, γ, δ)) for α in 1:2, β in 1:2, γ in 1:2, δ in 1:2]
 
-    return TensND.Tens(P_sym, ell.basis)
+    return MFH_Core._tens_in(P_sym, ell.basis)
 end
 
 # The eight index tuples a tensor with minor and major symmetries maps to one value.

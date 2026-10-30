@@ -38,7 +38,7 @@ const _KM_obl = [
     P_nqg = hill_tensor(ell, C; method = :nestedquadgk)
     P_dec = hill_tensor(ell, C; method = :decuhr, reltol = 1.0e-9)
 
-    diff = maximum(abs, components_canon(P_nqg - P_dec))
+    diff = maximum(abs, canonical_components(P_nqg - P_dec))
     @test diff < ATOL4
     @test all(isfinite, P_nqg)
 end
@@ -52,7 +52,7 @@ end
     P_nqg = hill_tensor(ell, C; method = :nestedquadgk)
     P_dec = hill_tensor(ell, C; method = :decuhr, reltol = 1.0e-9)
 
-    diff = maximum(abs, components_canon(P_nqg - P_dec))
+    diff = maximum(abs, canonical_components(P_nqg - P_dec))
     @test diff < ATOL4
     @test all(isfinite, P_nqg)
 end
@@ -67,8 +67,8 @@ end
     P_nqg = hill_tensor(ell, C; method = :nestedquadgk, reltol = 1.0e-12)
     P_res = hill_tensor(ell, C; method = :residues)
 
-    scale = maximum(abs, components_canon(P_nqg))
-    diff = maximum(abs, components_canon(P_nqg - P_res))
+    scale = maximum(abs, canonical_components(P_nqg))
+    diff = maximum(abs, canonical_components(P_nqg - P_res))
     @test diff < 1.0e-7 * scale
 end
 
@@ -94,11 +94,25 @@ end
     # near z = 0 and stop with an error of 2e-5 at ω = 1e-5 for the default
     # `reltol = 1e-6`.
     C_iso = TensISO{3}(3 * 30.0, 2 * 18.0)
-    C_full = TensND.change_tens_canon(C_iso)
-    canon(P) = TensND.get_array(TensND.change_tens_canon(P))
+    C_full = TensND.canonical(C_iso)
+    canon(P) = TensND.get_array(TensND.canonical(P))
     for ω in (1.0e-5, 1.0e-6), ell in (Ellipsoid(1.0, 1.0, ω), Ellipsoid(1.0, 0.5, ω))
         P = canon(hill_tensor(ell, C_full; method = :nestedquadgk))
         R = canon(hill_tensor(ell, C_iso))
         @test maximum(abs, P .- R) / maximum(abs, R) < 1.0e-6
     end
+end
+
+@testset "nestedquadgk — a very flat ellipsoid: derivative and inference" begin
+    # The breakpoints of the boundary layer go through a separate QuadGK call,
+    # compiled on demand: it keeps the derivatives and an inferred result. Exact
+    # identity: ℙ(λℂ) = ℙ(ℂ)/λ, so dℙ/dλ = −ℙ at λ = 1.
+    C = TensND.canonical(TensISO{3}(3 * 30.0, 2 * 18.0))
+    ell = Ellipsoid(1.0, 0.5, 1.0e-5)
+    canon(P) = TensND.get_array(TensND.canonical(P))
+    P = canon(hill_tensor(ell, C; method = :nestedquadgk))
+    dP = ForwardDiff.derivative(λ -> canon(hill_tensor(ell, λ * C; method = :nestedquadgk)), 1.0)
+    @test dP ≈ -P rtol = 1.0e-6
+    nested = MeanFieldHomogenization.Elasticity._hill_3d_aniso_nestedquadgk
+    @test only(Base.return_types(nested, (typeof(ell), typeof(C)))) <: TensND.AbstractTens{4, 3, Float64}
 end

@@ -146,8 +146,8 @@ rve = RVE()
 add_phase!(rve, :S, Ellipsoid(1.0), Dict(:C => iso_stiffness_young_poisson(200e3, 0.3)); fraction = 0.3)
 add_phase!(rve, :A, Ellipsoid(1.0), Dict(:C => iso_stiffness_young_poisson(70e3, 0.33)); fraction = :rest)
 E = Mandel{Float64}(1e-4, 0, 0, 0, 0, 0)
-(point_update(taylor, E, initial_state(taylor), 1.0)[2] ≈ KM(homogenize(rve, Voigt(), :C)),
- point_update(sachs, E, initial_state(sachs), 1.0)[2] ≈ KM(homogenize(rve, Reuss(), :C)))
+(point_update(taylor, E, initial_state(taylor), 1.0)[2] ≈ mandel(homogenize(rve, Voigt(), :C)),
+ point_update(sachs, E, initial_state(sachs), 1.0)[2] ≈ mandel(homogenize(rve, Reuss(), :C)))
 ````
 
 ---

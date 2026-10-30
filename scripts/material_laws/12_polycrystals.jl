@@ -4,9 +4,10 @@
 # on its own slip systems, oriented at random or along a texture. Its response
 # follows from the [single-crystal law](@ref ml-laws) of every grain and from a
 # rule saying how the grains share the macroscopic strain and stress. This page
-# states three such rules for an aggregate of many grains: the uniform strain of
+# states such rules for an aggregate of many grains: the uniform strain of
 # Taylor, and the interaction of each grain with a matrix standing for the
-# others, elastic after Kröner and elastoplastic after Berveiller and Zaoui. The
+# others, elastic after Kröner, elastoplastic after Berveiller and Zaoui, and the
+# aggregate itself, with its anisotropic tangent, after Hill. The
 # [uniform-field composites](@ref ml-theory-uniform-fields) are the uniform rules
 # for a few phases. [The example below](@ref ml-ex-polycrystal) runs an aggregate.
 #
@@ -51,7 +52,7 @@
 #
 # ## A random texture
 #
-# [`random_orientations`](@ref) draws orientations uniformly over the rotations.
+# [`random_basis`](@extref TensND TensND.random_basis) of TensND draws a frame uniformly over the rotations.
 # With the Euler angles of TensND, ``\theta`` the angle of the third axis from
 # ``\underline{e}_3`` and ``\phi``, ``\psi`` the two azimuths, the uniform measure is
 # ``\sin\theta\,\mathrm{d}\theta\,\mathrm{d}\phi\,\mathrm{d}\psi``: ``\cos\theta``
@@ -134,6 +135,76 @@
 # Berveiller and Zaoui is meant for proportional loading; otherwise ``h`` is read
 # as the ratio of the norms of ``\boldsymbol{E}^p`` and ``\boldsymbol{S}``.
 #
+# ## The aggregate as the matrix: Hill
+#
+# Kröner's matrix stays elastic, and the matrix of Berveiller and Zaoui yields
+# isotropically. [hill1965](@citet) takes for the matrix the aggregate itself,
+# with its current tangent stiffness ``\mathbb{L}``, as anisotropic as the slip in
+# the grains makes it. A grain of tangent stiffness ``\mathbb{L}_g`` is a sphere in
+# this medium, and the solution of that problem, in rates, is the interaction law
+#
+# ```math
+# \dot{\boldsymbol{\sigma}}_g - \dot{\boldsymbol{\Sigma}} = \mathbb{L}^*:\big(\dot{\boldsymbol{E}} - \dot{\boldsymbol{\varepsilon}}_g\big),
+# \qquad
+# \mathbb{L}^* = \mathbb{P}(\mathbb{L})^{-1} - \mathbb{L},
+# ```
+#
+# ``\mathbb{P}(\mathbb{L})`` the Hill tensor of the sphere in the medium and
+# ``\mathbb{L}^*`` the constraint the medium opposes to the sphere. The grain then
+# strains as ``\dot{\boldsymbol{\varepsilon}}_g = \mathbb{A}_g:\dot{\boldsymbol{E}}`` with
+# ``\mathbb{A}_g = (\mathbb{L}^* + \mathbb{L}_g)^{-1}(\mathbb{L}^* + \mathbb{L})``.
+# Asking the strain rates of the grains to average to ``\dot{\boldsymbol{E}}``, or
+# their stress rates to ``\dot{\boldsymbol{\Sigma}} = \mathbb{L}:\dot{\boldsymbol{E}}``, gives
+# the same condition on ``\mathbb{L}``, which Hill writes in several equivalent forms:
+#
+# ```math
+# \mathbb{L} = \big\langle \mathbb{L}_g\,\mathbb{A}_g \big\rangle
+# \quad\Longleftrightarrow\quad
+# \big(\mathbb{L}^* + \mathbb{L}\big)^{-1} = \big\langle \big(\mathbb{L}^* + \mathbb{L}_g\big)^{-1} \big\rangle ,
+# ```
+#
+# an implicit equation, ``\mathbb{L}^*`` depending on ``\mathbb{L}``. With elastic
+# grains it is the self-consistent estimate of the elasticity of the aggregate.
+# Hill gives the matrix the moduli of the branch of the overall law that the
+# current loading activates, with no isotropic approximation; he remarks that
+# Kröner's scheme amounts to the constraint of the elastic aggregate, which
+# ignores how much that constraint weakens, and in which directions, once the
+# aggregate has yielded.
+#
+# ## Hill's scheme in the package
+#
+# [`HillModel`](@ref) writes the interaction law on the increments of a step, with
+# the tangents at its end: the consistent tangent ``\mathbb{K}_g`` of each grain on
+# the step, and ``\mathbb{L}`` for the aggregate. Measured from the means
+# ``\boldsymbol{\Sigma}_n``, ``\boldsymbol{E}_n`` of the previous state,
+#
+# ```math
+# \boldsymbol{\sigma}_g + \mathbb{L}^*:\boldsymbol{\varepsilon}_g = \boldsymbol{\Sigma} + \mathbb{L}^*:\boldsymbol{E}
+#   + \big(\boldsymbol{\sigma}_{g,n} - \boldsymbol{\Sigma}_n\big) + \mathbb{L}^*:\big(\boldsymbol{\varepsilon}_{g,n} - \boldsymbol{E}_n\big),
+# ```
+#
+# so that the stresses average to ``\boldsymbol{\Sigma}`` exactly once the strains
+# average to ``\boldsymbol{E}``. For a given ``\mathbb{L}``, every grain solves this
+# equation with its own law, and ``\boldsymbol{\Sigma}`` follows from
+# ``\langle\boldsymbol{\varepsilon}_g\rangle = \boldsymbol{E}`` by Newton's method,
+# whose Jacobian ``\langle(\mathbb{L}^* + \mathbb{K}_g)^{-1}\rangle`` is the mean of the
+# second form of the self-consistency. The update
+# ``\mathbb{L} \leftarrow \langle(\mathbb{L}^* + \mathbb{K}_g)^{-1}\rangle^{-1} - \mathbb{L}^*``
+# is iterated to its fixed point, accelerated as proposed by
+# [anderson1965](@citet), from the tangent of the previous step; on these
+# aggregates its plain iterates contract by about 0.05 per iteration, against
+# 0.35 for the first form. The Hill tensor of the anisotropic medium is computed
+# by [`hill_tensor`](@ref) to the relative tolerance `reltol` of the model. The
+# tangent returned is ``\mathbb{L}``, the derivative of the step with the
+# constraint held fixed: the dependence of ``\mathbb{L}^*`` on the step is not
+# differentiated.
+#
+# Hill's paper treats rate-independent crystals, whose tangent changes branch
+# with the direction of loading; the grains of the package are viscoplastic, and
+# the consistent tangent of the time step takes its place, a use of the scheme
+# outside the paper. ``\mathbb{L}`` is kept symmetric, as Hill's moduli are; the
+# consistent tangent of a grain need not be, by the time discretization.
+#
 # ## Steady viscoplastic flow: the tangent model
 #
 # At large strains the elasticity of the grains is negligible, and the grains
@@ -168,11 +239,43 @@
 # stress being the minimum of a strictly convex function (the dual potential of
 # the grain plus the quadratic term of the interaction), found by Newton's
 # method with Armijo's line search.
-# [lebensohnTome1993](@citet) keep the anisotropy of the matrix; they show that,
-# with the tangent viscosity in the interaction, the estimate tends to the
-# uniform stress (Sachs) as ``n`` grows, and [massonAffine2000](@citet) trace
-# this to the secant relation the model keeps between the stress and the strain
-# rate of each grain. The example below shows the trend.
+# [massonAffine2000](@citet) show that the tangent model mixes the tangent
+# interaction with a secant relation between the stress and the strain rate of
+# each grain, which drives its estimate toward the uniform stress (Sachs) as
+# ``n`` grows; the example below shows the trend.
+#
+# ## The anisotropic matrix of Lebensohn and Tomé
+#
+# The aggregate of a textured or strongly nonlinear polycrystal is anisotropic,
+# and so is the matrix a grain sees. [lebensohnTome1993](@citet) keep it so: the
+# matrix is the aggregate itself, of secant compliance ``\mathbb{M}`` on the
+# deviators, ``\boldsymbol{D} = \mathbb{M}:\boldsymbol{S}``, linearized at its tangent
+# ``n\,\mathbb{M}``. The interaction of a spherical grain with it goes through the
+# Hill tensor ``\mathbb{P}`` of that incompressible anisotropic matrix:
+#
+# ```math
+# \boldsymbol{d}_g - \boldsymbol{D} = -\widetilde{\mathbb{M}}:\big(\boldsymbol{s}_g - \boldsymbol{S}\big),
+# \qquad
+# \widetilde{\mathbb{M}} = n\,\big(\mathbb{P}(\mathbb{L})^{+} - \mathbb{L}\big)^{+},
+# \qquad
+# \mathbb{L} = \mathbb{M}^{+},
+# ```
+#
+# ``{}^{+}`` the inverse on the deviators ([`deviatoric_pinv`](@extref TensND TensND.deviatoric_pinv) of TensND).
+# With the secant compliance ``\mathbb{M}_g`` of each grain at its stress, the
+# grain stress is ``\boldsymbol{s}_g = \mathbb{B}_g:\boldsymbol{S}``,
+# ``\mathbb{B}_g = (\mathbb{M}_g + \widetilde{\mathbb{M}})^{+}(\mathbb{M} + \widetilde{\mathbb{M}})``,
+# and the strain rates average to ``\boldsymbol{D}`` when
+# ``\mathbb{M} = \langle\mathbb{M}_g\,\mathbb{B}_g\rangle``, their equation (25).
+# [`AnisotropicTangentModel`](@ref) solves that equation for the 15 components of
+# ``\mathbb{M}`` by the trust-region method of SimpleNonlinearSolve, starting from
+# the isotropic matrix of [`TangentModel`](@ref). The Hill tensor of the
+# incompressible matrix is computed by quadrature with its exact Green kernel,
+# the acoustic tensor inverted on the plane orthogonal to each direction, where
+# the paper adds a small compressibility. For linear grains the model is the
+# linear self-consistent scheme, which the tests check against the package's own
+# scheme on grains made compressible, the gap closing as the inverse of the bulk
+# stiffness.
 #
 # ## What is not covered
 #
@@ -182,9 +285,7 @@
 #   stress of the step to stay below the flow stress of every grain while it is
 #   sought, which a strain-driven iteration does not ensure; it is not offered
 #   for large aggregates.
-# - The β rule of [cailletaudPilvin1994](@citet), Hill's self-consistent
-#   elastoplastic scheme with the anisotropic tangent of the aggregate, and the
-#   anisotropic matrix of [lebensohnTome1993](@citet) in the tangent model.
+# - The β rule of [cailletaudPilvin1994](@citet).
 #
 # ## [Example: a random FCC aggregate](@id ml-ex-polycrystal)
 #
@@ -194,19 +295,20 @@
 #
 # ### The aggregate
 #
-using MeanFieldHomogenization, Random, Plots, ForwardDiff
+using MeanFieldHomogenization, TensND, Random, Plots, ForwardDiff
 
 τ₀ = 10.0                                                   # critical resolved shear stress, MPa
 grain(frame) = CrystalViscoplasticity(; C₁₁ = 168.4e3, C₁₂ = 121.4e3, C₄₄ = 75.4e3,
     K = 0.05, n = 10, τ₀, frame)
-frames = random_orientations(60; rng = MersenneTwister(2))
+rng = MersenneTwister(2)
+frames = [random_basis(rng) for _ in 1:60]
 aggregate = Polycrystal(grain.(frames))
 nothing #hide
 #
 # | code | theory |
 # |:--|:--|
 # | `CrystalViscoplasticity(…; frame)` | the law of a grain, its cube axes along `frame` |
-# | `random_orientations(60)` | 60 orientations drawn uniformly over the rotations |
+# | `random_basis(rng)` (TensND) | a frame drawn uniformly over the rotations; 60 of them for 60 grains |
 # | `Polycrystal(grains)` | every grain at the macroscopic strain (Taylor), equal volumes |
 #
 # ### Tension
@@ -240,20 +342,21 @@ histogram(counts; bins = 0.5:1:12.5, label = "", xlabel = "active slip systems i
 # of the grains makes no such selection, and spreads the slip over every system
 # whose resolved stress reaches its critical value.
 #
-# ### Grains in a matrix: Taylor, Kröner, Berveiller–Zaoui
+# ### Grains in a matrix: Taylor, Kröner, Berveiller–Zaoui, Hill
 #
-# Both interaction models assume grains of the isotropic elasticity of the
-# matrix; the grains below have it (``C_{44} = (C_{11} - C_{12})/2``), with a
+# The models of Kröner and of Berveiller and Zaoui assume grains of the
+# isotropic elasticity of the matrix; the grains below have it (``C_{44} = (C_{11} - C_{12})/2``), with a
 # slower viscous law than above. Eight grains keep the page light:
 #
 E_y, ν = 120e3, 0.3                                                     # MPa
 C₁₁, C₁₂ = E_y * (1 - ν) / ((1 + ν) * (1 - 2ν)), E_y * ν / ((1 + ν) * (1 - 2ν))
 iso_grain(frame) = CrystalViscoplasticity(; C₁₁, C₁₂, C₄₄ = (C₁₁ - C₁₂) / 2, K = 1.0, n = 5, τ₀, frame)
-few = random_orientations(8; rng = MersenneTwister(2))
+rng = MersenneTwister(2)
+few = [random_basis(rng) for _ in 1:8]
 pull = LoadingPath(range(0, 1; length = 7); ε11 = t -> 3e-3 * t)
 q = plot(; xlabel = "axial strain (%)", ylabel = "σ₁₁ / τ₀", legend = :bottomright)
 for (model, label) in ((TaylorModel(), "Taylor"), (KronerModel(; E = E_y, ν), "Kröner"),
-                       (BerveillerZaouiModel(; E = E_y, ν), "Berveiller–Zaoui"))
+                       (BerveillerZaouiModel(; E = E_y, ν), "Berveiller–Zaoui"), (HillModel(), "Hill"))
     rm = point_response(Polycrystal(iso_grain.(few); model), pull)
     plot!(q, rm[:ε11] * 100, rm[:σ11] / τ₀; lw = 2, marker = :circle, label)
 end
@@ -263,7 +366,11 @@ q
 # shear modulus: past the onset of slip it holds the grains almost to the
 # average strain, and the response stays close to Taylor's. The elastoplastic
 # matrix of Berveiller and Zaoui yields with the grains, lets them deviate,
-# and lowers the flow stress of the aggregate.
+# and lowers the flow stress of the aggregate. Hill's aggregate constrains the grains by
+# its own tangent, which softens in the directions of slip: it gives the softest
+# elastoplastic transition of the four, then hardens slightly above the
+# isotropic secant matrix of Berveiller and Zaoui, well below Kröner's elastic
+# constraint.
 #
 # ### Steady flow: Taylor, tangent and Sachs
 #
@@ -285,15 +392,20 @@ end
 exponents = [1, 2, 3, 5, 8, 12, 20]
 taylor = [von_mises(flow_stress(crystals(n), D; model = TaylorModel()).σ) for n in exponents]
 tangent = [von_mises(flow_stress(crystals(n), D).σ) for n in exponents]
+anisotropic = [von_mises(flow_stress(crystals(n), D; model = AnisotropicTangentModel()).σ) for n in exponents]
 lower = [sachs(crystals(n)) for n in exponents]
-plot(exponents, [taylor tangent lower] / τ₀; lw = 2, marker = :circle, xscale = :log10,
-    label = ["Taylor" "tangent (Molinari et al.)" "Sachs"], xlabel = "exponent n",
+plot(exponents, [taylor anisotropic tangent lower] / τ₀; lw = 2, marker = :circle, xscale = :log10,
+    label = ["Taylor" "tangent, anisotropic matrix (Lebensohn and Tomé)" "tangent, isotropic matrix (Molinari et al.)" "Sachs"],
+    xlabel = "exponent n",
     ylabel = "Σ_eq / τ₀ at D₁₁ = γ̇₀", legend = :topleft)
 #
-# Under linear viscosity the three differ by the heterogeneity of the grains
-# alone. As ``n`` grows, the Taylor estimate rises toward the Taylor factor, while
-# the tangent one bends back toward the uniform stress, as
-# [lebensohnTome1993](@citet) found: the tangent viscosity of the matrix, ``n``
-# times smaller than its secant one, lets the grains deviate more and more from
-# the average strain rate.
+# Under linear viscosity the estimates differ by the heterogeneity of the grains
+# alone, and the two tangent models nearly coincide: the aggregate of 60 grains
+# is nearly isotropic. As ``n`` grows, the Taylor estimate rises toward the
+# Taylor factor, while the tangent ones stay well below it: the tangent viscosity
+# of the matrix, ``n`` times smaller than its secant one, lets the grains deviate
+# from the average strain rate. The isotropic matrix bends back toward the
+# uniform stress; the anisotropic one, stiff along the directions where the
+# aggregate flows least, keeps the grains closer to the average and gives a
+# stiffer estimate.
 

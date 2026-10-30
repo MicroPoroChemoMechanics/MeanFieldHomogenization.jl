@@ -196,7 +196,7 @@ hand-written), so both paths give the same answer by construction —
 this section checks that they do:
 
 ```@example tutnls
-idxC = C -> components_canon(C)[1, 1, 1, 1]
+idxC = C -> canonical_components(C)[1, 1, 1, 1]
 
 d_picard = derivative(rve, SelfConsistent(), property(:I, :C, :bulk); indexer = idxC)
 d_newton = derivative(rve, SelfConsistent(; algorithm = NewtonDefault()), property(:I, :C, :bulk); indexer = idxC)

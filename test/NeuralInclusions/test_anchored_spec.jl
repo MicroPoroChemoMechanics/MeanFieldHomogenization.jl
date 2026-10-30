@@ -22,8 +22,8 @@ const NIB = MeanFieldHomogenization.NeuralInclusions
 
 const _AN_CAN = TensND.CanonicalBasis{3, Float64}()
 const _AN_E3 = TensND.Tens(TensND.Vec(0.0, 0.0, 1.0), _AN_CAN)
-_an_km(t) = Matrix(mandel(TensND.change_tens(t, _AN_CAN)))
-_an_arr(t) = Matrix(TensND.get_array(TensND.change_tens(t, _AN_CAN)))
+_an_km(t) = Matrix(mandel(TensND.express(t, _AN_CAN)))
+_an_arr(t) = Matrix(TensND.get_array(TensND.express(t, _AN_CAN)))
 
 # The exact cavity of revolution, built the way the finite-element suite builds
 # its oracle — independently of the code under test.

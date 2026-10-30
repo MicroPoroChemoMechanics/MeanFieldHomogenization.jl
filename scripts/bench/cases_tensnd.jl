@@ -89,10 +89,10 @@ bcase(
 )
 
 bcase(
-    "tensnd/ti_average_mandel66";
+    "tensnd/ti_average_mandel";
     group = :tensnd, tags = [:average, :alv],
     setup = () -> TensND.mandel(_gen4()),
-    body = M -> MFHC.ti_average_mandel66(M, (0.0, 0.0, 1.0)),
+    body = M -> MFHC.ti_average_mandel(M, (0.0, 0.0, 1.0)),
 )
 
 # ── KM round-trip ───────────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ bcase(
 )
 
 bcase(
-    "tensnd/inv_KM.gen";
+    "tensnd/from_mandel.gen";
     group = :tensnd, tags = [:km],
     setup = () -> KM_TRI,
     body = M -> TensND.from_mandel(M, CB3),

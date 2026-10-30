@@ -52,7 +52,7 @@ end
     rve = _cracked_rve(; oriented = false)
     law = CrackGrowthDamage(rve; scheme = SelfConsistent(), resistance = d -> 0.04 * (1 + 20 * (d - 0.05)))
     ε = SVector(2.0e-4, -1.0e-4, 0, 0, 0, 0)
-    @test point_update(law, ε, initial_state(law), 1.0)[2] ≈ MP_KS._mandel(TensND.change_tens_canon(homogenize(rve, SelfConsistent(), :C))) rtol = 1.0e-8
+    @test point_update(law, ε, initial_state(law), 1.0)[2] ≈ MP_KS._mandel(TensND.canonical(homogenize(rve, SelfConsistent(), :C))) rtol = 1.0e-8
 end
 
 @testset "derivatives through the affine form" begin

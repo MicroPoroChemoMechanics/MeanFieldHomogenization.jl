@@ -61,7 +61,7 @@ PowerLawElasticity(; k, σ₀, ε₀, m) =
 # differentiation of x^a at x = 0 gives 0·∞ for a < 1: that point is taken apart
 # (a value test, hence a numerical-only branch; a symbolic strain never is zero).
 function _power_law_energy(g, α, p)
-    εeq² = 2 * _sqnorm_deviator(g.ε) / 3
+    εeq² = 2 * sqnorm_deviator(g.ε) / 3
     volumetric = p.k / 2 * trace_mandel(g.ε)^2
     iszero(εeq²) && return volumetric + zero(εeq²)
     return volumetric + p.σ₀ * p.ε₀ / (p.m + 1) * (εeq² / p.ε₀^2)^((p.m + 1) / 2)
@@ -153,7 +153,7 @@ _norton_stress(ε, y, p) = p.ℂ * (ε - y.εᵖ)
 # no square root to differentiate.
 function _norton_rate(σ, p)
     s = deviator(σ)
-    σeq² = 3 * _sqnorm_deviator(σ) / 2
+    σeq² = 3 * sqnorm_deviator(σ) / 2
     return (3 / (2 * p.K)) * (σeq² / p.K^2)^((p.n - 1) / 2) * s
 end
 
@@ -161,7 +161,58 @@ _norton_residual(y, g, prev, Δt, p) =
     (εᵖ = (y.εᵖ - prev.y.εᵖ) - Δt * _norton_rate(_norton_stress(g.ε, y, p), p),)
 # No time, or no deviatoric stress at the trial state: no creep over the step.
 _norton_elastic(g, prev, Δt, p) =
-    iszero(Δt) || iszero(_sqnorm_deviator(_norton_stress(g.ε, prev.y, p)))
+    iszero(Δt) || iszero(sqnorm_deviator(_norton_stress(g.ε, prev.y, p)))
+
+"""
+    PerzynaViscoplasticity(; E, ν, σY, η, m, hardening = nothing)
+
+Elasto-viscoplasticity of Perzyna type with isotropic hardening, the model of
+[pierardDoghri2006](@citet): isotropic elasticity (`E`, `ν`), the yield function
+``f = \\sigma_{eq} - \\sigma_Y - R(p)`` and Norton's viscoplastic function,
+
+```math
+\\dot p = g_v = \\frac{\\sigma_Y}{\\eta}\\left\\langle\\frac{f}{\\sigma_Y}\\right\\rangle^{m},
+\\qquad
+\\dot{\\boldsymbol{\\varepsilon}}^{in} = \\frac32\\,\\dot p\\,\\frac{\\boldsymbol{s}}{\\sigma_{eq}},
+```
+
+``\\langle x\\rangle = \\max(x, 0)``, ``p`` the accumulated inelastic strain and
+``R(p)`` the hardening stress, `hardening(p)` when a function is given (their
+power law ``k\\,p^{n}`` for instance), zero otherwise. The state is
+`(εᵖ = 6, p = 1)`; the steps are integrated by the backward Euler scheme, a
+step whose trial stress lies inside the yield surface being elastic. Requires
+``m \\ge 1``.
+"""
+function PerzynaViscoplasticity(; E, ν, σY, η, m, hardening = nothing)
+    m ≥ 1 || throw(DomainError(m, "PerzynaViscoplasticity: the exponent m must be at least 1"))
+    return ResidualLaw(;
+        name = :PerzynaViscoplasticity, stress = _j2_stress, residual = _perzyna_residual, elastic = _perzyna_elastic,
+        layout = (εᵖ = 6, p = 1), p = (ℂ = _iso_mandel(E, ν), σY = σY, η = η, m = m, hardening = hardening)
+    )
+end
+
+_perzyna_hardening(::Nothing, p) = zero(p)
+_perzyna_hardening(R, p) = R(p)
+_perzyna_overstress(σ, κ, p) = von_mises(σ) - p.σY - _perzyna_hardening(p.hardening, κ)
+
+# The inelastic strain rate and the rate of p at the stress σ and the
+# accumulated strain κ. Below the yield surface nothing flows (a value test: the
+# law is solved iteratively, for numbers only), which also keeps the direction
+# s/σ_eq away from a zero stress.
+function _perzyna_rates(σ, κ, p)
+    f = _perzyna_overstress(σ, κ, p)
+    f > 0 || return zero(σ) * zero(f), zero(f)
+    ṗ = p.σY / p.η * (f / p.σY)^p.m
+    return (3 * ṗ / (2 * von_mises(σ))) * deviator(σ), ṗ
+end
+
+function _perzyna_residual(y, g, prev, Δt, p)
+    ε̇ᵖ, ṗ = _perzyna_rates(_j2_stress(g.ε, y, p), y.p, p)
+    return (εᵖ = (y.εᵖ - prev.y.εᵖ) - Δt * ε̇ᵖ, p = (y.p - prev.y.p) - Δt * ṗ)
+end
+
+# No time, or a trial stress inside the yield surface: no flow over the step.
+_perzyna_elastic(g, prev, Δt, p) = iszero(Δt) || _perzyna_overstress(_j2_stress(g.ε, prev.y, p), prev.y.p, p) <= 0
 
 """
     J2Plasticity(; E, ν, σ₀, H = 0, Hkin = 0, hardening = nothing)

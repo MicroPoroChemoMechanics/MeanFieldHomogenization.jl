@@ -74,7 +74,7 @@ function _iso_project_blocks(M::AbstractMatrix)
     @inbounds for i in 1:n, j in 1:n
         rows = (6 * (i - 1) + 1):(6 * i)
         cols = (6 * (j - 1) + 1):(6 * j)
-        a, b = TensND.iso_average_mandel66(view(M, rows, cols))
+        a, b = TensND.iso_average_mandel(view(M, rows, cols))
         α[i, j] = a
         β[i, j] = b
     end
@@ -87,7 +87,7 @@ end
 Exact azimuthal average about `axis` of every ``6\\times 6`` Mandel block of a
 ``6n\\times 6n`` ALV matrix (echoes `visco_transverse_isotropify` counterpart).
 Each block is averaged independently with
-[`Core.ti_average_mandel66`](@ref); the non-major-symmetric content of the
+[`Core.ti_average_mandel`](@ref); the non-major-symmetric content of the
 blocks (``\\ell_3 \\ne \\ell_4``, antisymmetric couplings) is preserved, which the
 6-parameter TI closure of `conversions.jl` cannot represent — hence the
 full-matrix return.
@@ -103,7 +103,7 @@ function _ti_project_blocks(M::AbstractMatrix, axis)
     @inbounds for i in 1:n, j in 1:n
         rows = (6 * (i - 1) + 1):(6 * i)
         cols = (6 * (j - 1) + 1):(6 * j)
-        out[rows, cols] = MFH_Core.ti_average_mandel66(view(M, rows, cols), axis)
+        out[rows, cols] = MFH_Core.ti_average_mandel(view(M, rows, cols), axis)
     end
     return out
 end
@@ -192,14 +192,14 @@ function _ti_project_blocks3(M::AbstractMatrix, axis)
     out = zeros(float(eltype(M)), sz, sz)
     for i in 1:n, j in 1:n
         rows, cols = (3i - 2):(3i), (3j - 2):(3j)
-        out[rows, cols] .= TensND.ti_average_mat33(view(M, rows, cols), nv)
+        out[rows, cols] .= TensND.ti_average_matrix(view(M, rows, cols), nv)
     end
     return out
 end
 
 # The axis reaches us either as a plain 3-vector/tuple or as a TensND
 # 1-tensor; its canonical components, whatever basis the vector is written in.
-_alv_axis_components(axis::TensND.AbstractTens) = collect(TensND.components_canon(axis))
+_alv_axis_components(axis::TensND.AbstractTens) = collect(TensND.canonical_components(axis))
 _alv_axis_components(axis) = collect(axis)
 
 function _alv_unit_axis3(axis)

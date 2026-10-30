@@ -68,7 +68,7 @@ _axi_axis_zeros(m::Int) = m == 0 ? (1,) : m == 1 ? (2, 3) : (1, 2, 3)
 
 Kelvin-Mandel strain ``(\\varepsilon_{\\rho\\rho}, \\varepsilon_{\\theta\\theta}, \\varepsilon_{zz}, \\gamma_{\\theta z}/\\sqrt{2}, \\gamma_{\\rho z}/\\sqrt{2}, \\gamma_{\\rho\\theta}/\\sqrt{2})`` produced
 by one scalar shape function acting on each solved component, in Fourier mode
-``m``. The index order matches `mandel66_minor` with ``1\\mapsto\\rho``, ``2\\mapsto\\theta``, ``3\\mapsto z``, so a
+``m``. The index order matches TensND's `mandel` with ``1\\mapsto\\rho``, ``2\\mapsto\\theta``, ``3\\mapsto z``, so a
 transversely isotropic material matrix can be used as is.
 """
 function _axi_B_elast(m::Int, N::Float64, dNρ::Float64, dNz::Float64, ρ::Float64)

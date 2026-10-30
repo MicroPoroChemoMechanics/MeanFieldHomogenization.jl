@@ -91,5 +91,5 @@ function _hill_2d_iso(ell::Ellipsoid{2, Elliptic}, C₀)
     for (a, b, c_, d) in ((1, 2, 1, 2), (1, 2, 2, 1), (2, 1, 1, 2), (2, 1, 2, 1))
         P_arr[a, b, c_, d] = P1212
     end
-    return TensND.Tens(P_arr, ell.basis)
+    return MFH_Core._tens_in(P_arr, ell.basis)
 end

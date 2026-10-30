@@ -33,7 +33,7 @@ using LinearAlgebra
 # =============================================================================
 
 const _S = coorsys_spheroidal()
-const _ϕ, _p, _q = getcoords(_S)
+const _ϕ, _p, _q = get_coords(_S)
 const _c = symbols("c", positive = true)
 const _μ = symbols("mu_pn", positive = true)
 const _ν = symbols("nu_pn", real = true)
@@ -117,7 +117,7 @@ end
 @testset "Papkovich–Neuber in spheroidal coordinates — case I (axisymmetric)" begin
 
     @testset "the chart is the one the derivation assumes" begin
-        OM = components_canon(position_vector(_S))
+        OM = canonical_components(position_vector(_S))
         @test iszero(simplify(OM[3] - _c * _p * _q))
         # `position_vector` is written with the chart's auxiliary symbols `p̄`, `q̄`. They
         # are opaque to `subs` — not functions of `p`, `q` — and rebuilding them
@@ -197,7 +197,7 @@ end
         σ_def = _λ * tr(ε) * one(ε) + 2 * _μ * ε
         σ_cf = -2 * _ν * ∂zφ₃ * one(ε) + hess(Φ, _S) -
             2 * (1 - _ν) * (_e₃ ⊗ ∇φ₃ + ∇φ₃ ⊗ _e₃)
-        cd, cc = components_canon(σ_def), components_canon(σ_cf)
+        cd, cc = canonical_components(σ_def), canonical_components(σ_cf)
         for i in 1:3, j in i:3
             @test iszero(_reduce(cd[i, j] - cc[i, j]))
         end
@@ -395,7 +395,7 @@ end
                 (Sym(0), _p * _q),                                   # the z φ₃ ê₃ term alone
                 ((3 * _p^2 - 1) * (3 * _q^2 - 1) / 4, _p * _q),      # both, different degrees
             )
-            d = components_canon(divergence(_pn_stress(φ₀, φ₃), _S))
+            d = canonical_components(divergence(_pn_stress(φ₀, φ₃), _S))
             for i in 1:3
                 @test iszero(simplify(_at_point(d[i])))
             end
@@ -410,7 +410,7 @@ end
         # transcribed from Duan (2.2), the λ ↔ ν conversion. A non-zero residual
         # here would mean the operators are wrong, which is why it earns its
         # place despite costing the bulk of this file's runtime.
-        d = components_canon(divergence(_pn_stress(_φ₀, _φ₃), _S))
+        d = canonical_components(divergence(_pn_stress(_φ₀, _φ₃), _S))
         for i in 1:3
             @test iszero(_at_point(_atomize(_impose_harmonic(d[i]))))
         end

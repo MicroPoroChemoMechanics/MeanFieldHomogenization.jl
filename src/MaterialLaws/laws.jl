@@ -122,7 +122,7 @@ state_layout(law::AbstractPointLaw) = _sizes(law.layout)
 The primal fields a law consumes and the fluxes it returns, with their sizes:
 `(ε = 6,)` and `(σ = 6,)` for a mechanical law, `(ε = 6, p = 1)` and
 `(σ = 6, φ = 1)` for a poroelastic one. A size-6 entry is a symmetric tensor in
-[`Mandel`](@ref) components, a size-1 entry a scalar.
+`Mandel` components, a size-1 entry a scalar.
 """
 gradient_layout(law::AbstractPointLaw) = _sizes(law.gradients)
 
@@ -188,7 +188,7 @@ A law given by the equations of its implicit integration over a step.
 
 The functions receive `g`, `y` and the previous state `prev` (fields `prev.y`,
 `prev.g`) as `NamedTuple`s: `g.ε`, `g.p`, `y.εᵖ`, `prev.y.d`. A size-6 entry
-is a symmetric tensor in [`Mandel`](@ref) components, a size-1 entry a scalar.
+is a symmetric tensor in `Mandel` components, a size-1 entry a scalar.
 
 [`point_update`](@ref) solves the residual by Newton's method with a Jacobian
 by automatic differentiation, and returns the consistent tangent of the fluxes

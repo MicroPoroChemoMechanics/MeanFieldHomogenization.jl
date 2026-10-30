@@ -85,8 +85,8 @@ new state, read from and written to a [`QuadratureStates`](@ref), and
 [`volume_weight`](@ref) gives the factor of the volume element; the virtual
 strain of a shape function is [`mandel_strain`](@ref) of its gradient. Wrapping
 the assembly in a function `system!(u, t, Δt) -> (K, r)` then gives
-[`quasistatic!`](@ref) for free. Outside Julia, `voigt_strain` and
-`voigt_stress` carry `ε` and `σ` across the boundary.
+[`quasistatic!`](@ref) for free. Outside Julia, [`voigt_strain`](@extref TensND TensND.voigt_strain) and
+[`voigt_stress`](@extref TensND TensND.voigt_stress) carry `ε` and `σ` across the boundary.
 
 ## Where to go next
 

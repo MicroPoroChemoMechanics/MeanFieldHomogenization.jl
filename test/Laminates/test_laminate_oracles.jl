@@ -43,14 +43,11 @@ function _schur_ip(t, basis)
     A = MFHC_O.TensND.mandel_ip_block(M)
     B = SMatrix{3, 3}(M[MFHC_O.MANDEL_IP, MFHC_O.MANDEL_OP])
     C = SMatrix{3, 3}(M[MFHC_O.MANDEL_OP, MFHC_O.MANDEL_IP])
-    return A - B * MFHC_O._inv3(MFHC_O.TensND.mandel_op_block(M)) * C
+    return A - B * MFHC_O.TensND.inv3(MFHC_O.TensND.mandel_op_block(M)) * C
 end
 
 # A random, genuinely triclinic, positive-definite stiffness.
-function _rand_stiffness(rng)
-    A = randn(rng, 6, 6)
-    return Tens(from_mandel(Matrix(A * A' + 8I)))
-end
+_rand_stiffness(rng) = rand(rng, Tens{4, 3}; definite = true) + 8 * tens_Id4(Val(3), Val(Float64))
 
 @testset "Laminate — O1: exact out-of-plane series law (anisotropic)" begin
     rng = MersenneTwister(1001)
@@ -311,7 +308,7 @@ end
         @test abs(p8[8]) < ATOL_LAM
         # ℓ₃ ≠ ℓ₄: the tensor really is outside the major-symmetric span, so a
         # 5-coefficient read-off would have been lossy rather than merely tight.
-        ℓ = TensND.get_ℓ(A)
+        ℓ = TensND.walpole_coeffs(A)
         @test abs(ℓ[3] - ℓ[4]) > 1.0e-3
     end
     for g in (gradient_gradient_concentration, flux_gradient_concentration, gradient_flux_concentration, flux_flux_concentration)

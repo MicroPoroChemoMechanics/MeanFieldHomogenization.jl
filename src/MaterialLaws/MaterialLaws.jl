@@ -30,7 +30,7 @@ r[:σ11], r[:p]                        # stress and cumulated plastic strain
 
 # Numbers
 
-Strains and stresses are [`Mandel`](@ref) vectors (`SVector{6}`), tangents
+Strains and stresses are `Mandel` vectors (`SVector{6}`), tangents
 `SMatrix{6, 6}`: a step allocates nothing. Every number may be a
 `ForwardDiff.Dual`, nested or not, in the strain, the state or the parameters:
 the response then carries its derivatives, exact (no finite differences). The
@@ -42,6 +42,7 @@ using LinearAlgebra
 using StaticArrays
 using ForwardDiff
 import TensND
+using TensND: Mandel, identity_mandel, trace_mandel, deviator, sqnorm_deviator, von_mises, equivalent_strain
 import Tensors
 import SimpleNonlinearSolve as SNS
 
@@ -68,6 +69,8 @@ include("polycrystal.jl")
 include("viscoplastic_polycrystal.jl")
 include("incremental_tangent.jl")
 include("affine.jl")
+include("affine_evp.jl")
+include("quasi_elastic.jl")
 
 # ── Writing a law ────────────────────────────────────────────────────────────
 export AbstractPointLaw, ResidualLaw, PotentialLaw, PointState
@@ -79,7 +82,7 @@ export AbstractLocalAlgorithm, LocalNewton, LocalIntegrationError, point_update
 
 # ── The laws shipped ─────────────────────────────────────────────────────────
 export LinearElasticity, PowerLawElasticity, MaxwellViscoelasticity, BiotPoroelasticity
-export NortonViscoplasticity, J2Plasticity, CrystalViscoplasticity, slip_systems
+export NortonViscoplasticity, PerzynaViscoplasticity, J2Plasticity, CrystalViscoplasticity, slip_systems
 
 # ── Driving a point ──────────────────────────────────────────────────────────
 export LoadingPath, point_response, PointResponse, PointDriverError
@@ -90,13 +93,13 @@ export CrackGrowthDamage, CrackGrowthResistance
 export ClosingCrackPoroelasticity, ExponentialClosure
 export DruckerPrager, Heterogeneities, Pores, RigidInclusions, FrictionalComposite, limit_stress
 export AbstractPhaseComposite, UniformStrain, UniformStress
-export PolycrystalModel, TaylorModel, KronerModel, BerveillerZaouiModel, Polycrystal, PolycrystalState, grain_states, random_orientations
-export PowerLawCrystal, crystal_strain_rate, TangentModel, ViscoplasticPolycrystal, flow_stress
-export IncrementalTangent, AffineComposite
+export PolycrystalModel, TaylorModel, KronerModel, BerveillerZaouiModel, HillModel, Polycrystal, PolycrystalState, grain_states
+export PowerLawCrystal, crystal_strain_rate, TangentModel, AnisotropicTangentModel, ViscoplasticPolycrystal, flow_stress
+export IncrementalTangent, AffineComposite, SecondOrderComposite, AffineEVPComposite, AffineEVPState, QuasiElasticComposite, QuasiElasticState
 
 # ── Coupling to a finite-element code ───────────────────────────────────────
 export QuadratureStates, commit!, rollback!
 export ModelingHypothesis, ThreeD, PlaneStrain, Axisymmetric, mandel_strain, volume_weight
-export quasistatic!, GlobalNewtonError, material_element!, material_system, write_material_vtk
+export quasistatic!, GlobalNewtonError, material_element!, material_system, write_material_vtk, update_points!
 
 end # module

@@ -60,8 +60,8 @@ function _hill_kernel_iso(ell, R_M::AbstractMatrix)
     # 2-4. The longitudinal and shear Volterra inverses of the reference.
     J_long, J_shear = _alv_iso_inverses(R_M)
     # 5. Geometric 4-tensors of the inclusion in Mandel form.
-    U_M = TensND.mandel66(tens_UA(ell))
-    D_M = TensND.mandel66(tens_VA(ell)) - U_M
+    U_M = TensND.mandel(TensND.canonical_components(tens_UA(ell)); symmetrize = true)
+    D_M = TensND.mandel(TensND.canonical_components(tens_VA(ell)); symmetrize = true) - U_M
     # 6. Assemble.
     return _alv_hill_blocks(J_long, J_shear, U_M, D_M)
 end

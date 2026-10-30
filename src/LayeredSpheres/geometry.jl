@@ -67,8 +67,8 @@ function LayeredSphere(
         interfaces::Is = ntuple(_ -> PerfectInterface{TensND.float_like(T)}(), Val(M + 1)),
     ) where {T <: Number, M, Cs, Is}
     N = M + 1
-    # Validate ascending radii for Real types (skip for symbolic).
-    if T <: Real
+    # Validate ascending radii when they compare (`Num <: Real` does not).
+    if is_hard_numeric(T)
         any(radii[k] ≤ 0 for k in 1:N) &&
             throw(ArgumentError("LayeredSphere radii must be strictly positive"))
         for k in 1:(N - 1)

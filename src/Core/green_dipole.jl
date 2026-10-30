@@ -136,7 +136,7 @@ function _dipole_displacement_iso(μ, ν, x::AbstractVector, P::AbstractMatrix)
 end
 
 _as_matrix3(P::AbstractMatrix) = P
-_as_matrix3(P::TensND.AbstractTens{2, 3}) = TensND.components_canon(P)
+_as_matrix3(P::TensND.AbstractTens{2, 3}) = TensND.canonical_components(P)
 
 # ─── The transport counterpart ───────────────────────────────────────────────
 #

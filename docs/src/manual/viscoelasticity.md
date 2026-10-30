@@ -22,7 +22,7 @@ a mode flag (`:relaxation` for the relaxation kernel `R(t, t')`,
 `:creep` for the compliance kernel `J(t, t')`). The kernel can return:
 
 * a scalar (`Float64` / `Complex{Float64}`) — 1D ALV problems,
-* a `TensISO{4, 3}` / `TensTI{4}` / `TensOrtho` / `Matrix{6×6}` — 3D
+* a `TensISO{4, 3}` / `TensTI{4}` / [`TensOrtho`](@extref TensND TensND.TensOrtho) / `Matrix{6×6}` — 3D
   4-tensor in Mandel form,
 * a `TensISO{2, 3}` / `Matrix{3×3}` — 3D 2-tensor for conductivity /
   diffusion / permittivity (order-2 ALV).

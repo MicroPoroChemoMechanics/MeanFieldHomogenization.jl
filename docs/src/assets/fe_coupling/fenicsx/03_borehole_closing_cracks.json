@@ -1,0 +1,13 @@
+{
+  "closing cracks": {
+    "wall_displacement_mm": -0.030297828677167613,
+    "least_open_fraction_e1": 0.4247642327736377,
+    "time_s": 8.301173059269786
+  },
+  "cracks always open": {
+    "wall_displacement_mm": -0.03151050310209019,
+    "least_open_fraction_e1": 0.9999999999854965,
+    "time_s": 0.5856675691902637
+  },
+  "steady_pressure_gap_MPa": 3.029362161122151e-07
+}

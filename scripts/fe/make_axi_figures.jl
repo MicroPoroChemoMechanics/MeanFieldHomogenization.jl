@@ -47,7 +47,7 @@ mkpath(OUT)
 
 const FE = MeanFieldHomogenization.FiniteElements
 
-mand(T) = MeanFieldHomogenization.Core.mandel66_minor(TensND.components_canon(T))
+mand(T) = TensND.mandel(TensND.canonical_components(T); symmetrize = true)
 kelvin_J(M) = (M[1, 1] + 2M[1, 2]) / 3        # 𝕁-eigenvalue of a TI/iso tensor
 kelvin_K(M) = M[4, 4]                          # 𝕂-eigenvalue
 iso(C) = MeanFieldHomogenization.Core.isotropify(C)
@@ -376,7 +376,7 @@ want("conductivity") && let
         )
         for k in ks
             A, B = fe_axi_concentration(incl, TensISO{3}(k * 0.1))
-            Am, Bm = TensND.components_canon(A), TensND.components_canon(B)
+            Am, Bm = TensND.canonical_components(A), TensND.canonical_components(B)
             push!(tr, Bm[1, 1] / Am[1, 1] / 0.1)
             push!(ax, Bm[3, 3] / Am[3, 3] / 0.1)
         end

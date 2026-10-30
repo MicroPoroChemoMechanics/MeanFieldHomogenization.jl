@@ -74,14 +74,14 @@ end
         @test _maxdiff(U / ((3k + 2mu) / 2) + (V - U) / mu, _mura_P(1.0, rho, k, mu)) < 1.0e-12
     end
     # Circle: (1/2π)∮ ξ⊗ξ⊗ξ⊗ξ dθ, i.e. 3/8 and 1/8.
-    U = components_canon(tens_UA(Ellipsoid(1.0, 1.0)))
+    U = canonical_components(tens_UA(Ellipsoid(1.0, 1.0)))
     @test U[1, 1, 1, 1] ≈ 3 / 8
     @test U[1, 1, 2, 2] ≈ 1 / 8
     @test U[1, 2, 1, 2] ≈ 1 / 8
     @test iszero(U[1, 1, 1, 2])
     # Derivative through a = b: d/db [b(a + 2b) / 2(a + b)²] = 1/4 at a = b = 1.
-    @test ForwardDiff.derivative(b -> components_canon(tens_UA(Ellipsoid(1.0, b)))[1, 1, 1, 1], 1.0) ≈ 1 / 4
-    @test abs(ForwardDiff.derivative(b -> components_canon(tens_UA(Ellipsoid(1.0, b)))[1, 1, 2, 2], 1.0)) < 1.0e-15
+    @test ForwardDiff.derivative(b -> canonical_components(tens_UA(Ellipsoid(1.0, b)))[1, 1, 1, 1], 1.0) ≈ 1 / 4
+    @test abs(ForwardDiff.derivative(b -> canonical_components(tens_UA(Ellipsoid(1.0, b)))[1, 1, 2, 2], 1.0)) < 1.0e-15
 end
 
 @testset "hill 2D — quadrature anisotrope vs Mura (1987)" begin

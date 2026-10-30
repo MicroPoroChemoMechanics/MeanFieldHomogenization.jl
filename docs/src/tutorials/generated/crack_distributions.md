@@ -275,13 +275,13 @@ C_par = homogenize(rve_parallel(ε), MoriTanaka(), :C)
 typeof(C_par)
 ````
 
-The result is a `TensRotated`: it **carries its own frame**. `TensND.KM` then
+The result is a `TensRotated`: it **carries its own frame**. [`TensND.mandel`](@extref TensND TensND.mandel) then
 returns the components in *that* frame — the crack frame — not in the global
 one. Both are useful, and they are different matrices:
 
 ````@example crack_distributions
 C_local = TensND.mandel(C_par)                              # crack frame
-C_global = TensND.mandel(TensND.components_canon(C_par))    # global frame
+C_global = TensND.mandel(TensND.canonical_components(C_par))    # global frame
 round.(C_local; digits = 6)
 ````
 
@@ -344,7 +344,7 @@ measured in only in the second case.
 ````@example crack_distributions
 function young_along(C, d)
     # Uniaxial stress along the unit vector `d`; E = σ / ε_dd.
-    S = inv(Array(TensND.components_canon(C)) |> A -> TensND.mandel(TensND.Tens(A)))
+    S = inv(Array(TensND.canonical_components(C)) |> A -> TensND.mandel(TensND.Tens(A)))
     e = [d[1]^2, d[2]^2, d[3]^2, √2 * d[2] * d[3], √2 * d[1] * d[3], √2 * d[1] * d[2]]
     return 1 / (e' * S * e)
 end

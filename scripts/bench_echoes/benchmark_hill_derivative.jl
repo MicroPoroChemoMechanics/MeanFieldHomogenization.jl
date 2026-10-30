@@ -39,10 +39,8 @@ const echoes = pyimport("echoes")
 # ── Conventions shared with benchmark.jl ────────────────────────────────────
 # MFH Hill tensor as a 6×6 Kelvin-Mandel matrix, minor-symmetrized (so the
 # Dual and Float64 paths agree — `tomandel` on a general Tensor would give
-# 9×9). `Core.mandel66_minor` forces the 6×6 form from the component array.
-P_KM(ell, C) = MeanFieldHomogenization.Core.mandel66_minor(
-    TensND.get_array(change_tens_canon(hill_tensor(ell, C)))
-)
+# 9×9). `symmetrize = true` forces the 6×6 form from the component array.
+P_KM(ell, C) = TensND.mandel(TensND.canonical_components(hill_tensor(ell, C)); symmetrize = true)
 to_jlmat(x) = pyis(x, pybuiltins.None) ? nothing : pyconvert(Matrix{Float64}, x)
 function relerr(A, B)
     scale = max(maximum(abs, A), maximum(abs, B), 1.0e-300)
@@ -145,7 +143,7 @@ let ell_jl = Ellipsoid(3.0, 2.0, 1.0; euler_angles = (0.2, 0.3, 0.1))
     C_KM[1, 1] += 8.0e3; C_KM[1, 4] += 3.0e3; C_KM[4, 1] += 3.0e3   # break symmetry class
     build(t) = begin
         M = C_KM .+ zero(t); M[1, 1] += t     # eltype promotes to typeof(t) (Dual-safe)
-        MeanFieldHomogenization.Core.array_from_mandel66(M) |> a -> TensND.Tens(a)
+        TensND.get_array(TensND.from_mandel(M)) |> a -> TensND.Tens(a)
     end
     dP = ForwardDiff.derivative(t -> P_KM(ell_jl, build(t)), 0.0)
     h = 1.0e-2

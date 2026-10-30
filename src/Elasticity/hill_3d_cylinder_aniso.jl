@@ -29,9 +29,16 @@ function _hill_3d_cylinder_aniso(
         maxiters::Int = 1_000_000
     )
     T = promote_type(eltype(cyl.semi_axes), eltype(C₀))
+    # An adaptive quadrature compares its error estimates: no symbolic route.
+    TensND.is_hard_numeric(real(T)) || throw(
+        ArgumentError(
+            "the Hill tensor of a cylinder in an anisotropic matrix is computed by an " *
+                "adaptive quadrature, which needs numbers; got components of type $T"
+        )
+    )
     b, c = cyl.semi_axes
 
-    C₀_arr = T.(Array(TensND.components(C₀, cyl.basis)))   # in the cylinder's frame
+    C₀_arr = _static_stiffness(T.(Array(TensND.components(C₀, cyl.basis))))   # in the cylinder's frame
 
     function integrand_at(φ)
         ζ = (zero(T), cos(T(φ)) / b, sin(T(φ)) / c)
@@ -51,5 +58,5 @@ function _hill_3d_cylinder_aniso(
 
     P_arr = _fill_hill21!(zeros(T, 3, 3, 3, 3), P_vals)
 
-    return TensND.Tens(P_arr, cyl.basis)
+    return MFH_Core._tens_in(P_arr, cyl.basis)
 end

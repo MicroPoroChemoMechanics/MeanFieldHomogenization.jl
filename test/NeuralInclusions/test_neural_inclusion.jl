@@ -45,8 +45,8 @@ const NN_K_I = TensISO{3}(7.0)
 
 # Canonical components: a homogenized tensor keeps the basis of the Hill tensors it
 # was built from (a sorted spheroid's is permuted), and `get_array` reads that one.
-_nn_c1111(C) = TensND.components_canon(C)[1, 1, 1, 1]
-_nn_k11(K) = TensND.components_canon(K)[1, 1]
+_nn_c1111(C) = TensND.canonical_components(C)[1, 1, 1, 1]
+_nn_k11(K) = TensND.canonical_components(K)[1, 1]
 
 "Two-phase RVE whose inclusion geometry is `geom`."
 function _nn_rve(geom, prop_m, prop_i, key; kwargs...)
@@ -318,7 +318,7 @@ end
     C_ref = homogenize(oriented(ell_at, 8, 0.2), MoriTanaka(), :C)
     C_nn = homogenize(oriented(nn_at, 8, 0.2), MoriTanaka(), :C)
     @test typeof(C_nn).name.name === typeof(C_ref).name.name
-    @test maximum(abs, components_canon(C_nn - C_ref)) ≤
+    @test maximum(abs, canonical_components(C_nn - C_ref)) ≤
         tol * maximum(abs, get_array(C_ref))
 end
 
@@ -449,10 +449,10 @@ end
         A = gradient_gradient_concentration(incl, NN_C_I, NN_C_M)
         B = flux_gradient_concentration(incl, NN_C_I, NN_C_M)
         N = property_contribution(incl, NN_C_I, NN_C_M)
-        @test N ≈ B - TensND.components_canon(NN_C_M ⊡ A) atol = 1.0e-12
+        @test N ≈ B - TensND.canonical_components(NN_C_M ⊡ A) atol = 1.0e-12
         # And *not* the homogeneous formula, which the stress-side surrogate
         # deliberately disagrees with.
-        @test !isapprox(TensND.components_canon(N), TensND.components_canon((NN_C_I - NN_C_M) ⊡ A); atol = 1.0e-8)
+        @test !isapprox(TensND.canonical_components(N), TensND.canonical_components((NN_C_I - NN_C_M) ⊡ A); atol = 1.0e-8)
     end
 
     @testset "gate B is reported, with no missing stress side" begin
@@ -507,7 +507,7 @@ end
         # element type unbound, and rebuilding the inclusion with a dual
         # semi-axis threw. The reference differentiates through the keyword
         # constructor, which never took that path.
-        idx = C -> TensND.components_canon(C)[3, 3, 3, 3]
+        idx = C -> TensND.canonical_components(C)[3, 3, 3, 3]
         rve_of(a) = _nn_rve(
             NeuralConcentrationInclusion(
                 (1.0, 1.0, a); strain = s4, stress = s4b, guard = :none
@@ -531,7 +531,7 @@ end
     P = hill_tensor(ell, NN_C_M)
     A = gradient_gradient_concentration(ell, NN_C_I, NN_C_M)
 
-    _major_defect(t) = let M = Array(TensND.components_canon(t))
+    _major_defect(t) = let M = Array(TensND.canonical_components(t))
         maximum(abs, M .- permutedims(M, (3, 4, 1, 2))) / maximum(abs, M)
     end
 
@@ -552,14 +552,14 @@ end
     @testset "build ∘ components is the identity on a TI concentration tensor" begin
         c = NI.components(NI.GradientConcentrationTI(), A, axis)
         rebuilt = NI.build(NI.GradientConcentrationTI(), collect(c), axis)
-        @test Array(TensND.components_canon(rebuilt)) ≈
-            Array(TensND.components_canon(A)) atol = 1.0e-12
+        @test Array(TensND.canonical_components(rebuilt)) ≈
+            Array(TensND.canonical_components(A)) atol = 1.0e-12
         @test length(TensND.get_data(rebuilt)) == 6
     end
 
     @testset "the antisymmetric couplings vanish" begin
         for t in (P, A, flux_gradient_concentration(ell, NN_C_I, NN_C_M))
-            l8 = TensND.get_ℓ8(MeanFieldHomogenization.transverse_isotropify(t, axis))
+            l8 = TensND.walpole_coeffs(MeanFieldHomogenization.transverse_isotropify(t, axis), Val(8))
             @test abs(l8[7]) < 1.0e-14
             @test abs(l8[8]) < 1.0e-14
         end
@@ -631,7 +631,7 @@ end
         # The capability the finite-element inclusion refuses. `shape_params`
         # carries its own type parameter precisely so that perturbing it does not
         # have to perturb the semi-axes too.
-        idx = C -> TensND.components_canon(C)[1, 1, 1, 1]
+        idx = C -> TensND.canonical_components(C)[1, 1, 1, 1]
         function rve_of(α)
             i = NeuralConcentrationInclusion(
                 (1.0, 1.0, 1.0); strain = sA, stress = sB,

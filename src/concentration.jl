@@ -82,6 +82,16 @@ Dilute **stress-strain concentration tensor** ``\\mathbb{A}_{\\sigma\\varepsilon
     does). [`flux_flux_concentration`](@ref) is expressed in terms of this function,
     so overriding it here fixes both.
 """
+# The flux of a homogeneous phase, C₁ : A (K₁ ⋅ A in conduction), and through it
+# the contribution (C₁ − C₀) : A: one compiled body each, which the single
+# functions and the bundles below all call. Written at each site, the same
+# expression could be fused differently by the compiler where it is inlined
+# (Tensors.jl contracts with `muladd`), and the bundles would then lose the
+# bitwise identity they promise.
+@noinline _flux_of(C₁::TensND.AbstractTens{4}, A) = C₁ ⊡ A
+@noinline _flux_of(K₁::TensND.AbstractTens{2}, A) = K₁ ⋅ A
+_contribution_of(P₁, P₀, A) = _flux_of(P₁ - P₀, A)
+
 function flux_gradient_concentration(
         incl::AbstractInclusion,
         C₁::TensND.AbstractTens{4, 3},
@@ -89,7 +99,7 @@ function flux_gradient_concentration(
         kw...
     )
     _no_generic_stress_side(incl, "flux_gradient_concentration", "C₁ : A_εε")
-    return C₁ ⊡ gradient_gradient_concentration(incl, C₁, C₀; kw...)
+    return _flux_of(C₁, gradient_gradient_concentration(incl, C₁, C₀; kw...))
 end
 
 """
@@ -234,7 +244,7 @@ function flux_gradient_concentration(
         kw...
     )
     _no_generic_stress_side(incl, "flux_gradient_concentration", "K₁ ⋅ A_∇∇")
-    return K₁ ⋅ gradient_gradient_concentration(incl, K₁, K₀; kw...)
+    return _flux_of(K₁, gradient_gradient_concentration(incl, K₁, K₀; kw...))
 end
 
 """
@@ -349,7 +359,7 @@ function concentration_and_contribution(
         kw...
     )
     A = gradient_gradient_concentration(incl, C₁, C₀; kw...)
-    return (A, (C₁ - C₀) ⊡ A)          # verbatim `contribution.jl` :39-40
+    return (A, _contribution_of(C₁, C₀, A))
 end
 
 function concentration_and_contribution(
@@ -359,7 +369,7 @@ function concentration_and_contribution(
         kw...
     )
     A = gradient_gradient_concentration(incl, K₁, K₀; kw...)
-    return (A, (K₁ - K₀) ⋅ A)
+    return (A, _contribution_of(K₁, K₀, A))
 end
 
 function concentration_and_flux_average(
@@ -369,7 +379,7 @@ function concentration_and_flux_average(
         kw...
     )
     A = gradient_gradient_concentration(incl, C₁, C₀; kw...)
-    return (A, C₁ ⊡ A)                 # verbatim `flux_gradient_concentration`
+    return (A, _flux_of(C₁, A))
 end
 
 function concentration_and_flux_average(
@@ -379,5 +389,5 @@ function concentration_and_flux_average(
         kw...
     )
     A = gradient_gradient_concentration(incl, K₁, K₀; kw...)
-    return (A, K₁ ⋅ A)
+    return (A, _flux_of(K₁, A))
 end

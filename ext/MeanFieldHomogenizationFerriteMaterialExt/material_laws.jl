@@ -17,17 +17,6 @@ _point_x(::MP.Axisymmetric, cv, qp, ::Nothing) = throw(
     ArgumentError("Axisymmetric elements need the cell coordinates: coords = getcoordinates(cell)")
 )
 
-# A mechanical element serves a material of the strain alone.
-function _check_mechanical(material)
-    names = MeanFieldHomogenization.gradient_names(material)
-    names == (:ε,) || throw(
-        ArgumentError(
-            "material_element! assembles a mechanical problem; $(nameof(typeof(material))) " *
-                "has the gradients $names and needs an element of its coupled fields"
-        )
-    )
-    return nothing
-end
 
 function MP.material_element!(
         Ke::AbstractMatrix, re::AbstractVector, cv::Ferrite.CellValues, material,
@@ -35,7 +24,7 @@ function MP.material_element!(
         cell::Integer, Δt::Real; algorithm::MP.AbstractLocalAlgorithm = MP.LocalNewton(),
         external::NamedTuple = (;), cache = nothing, coords = nothing
     )
-    _check_mechanical(material)
+    MP._check_mechanical(material, :material_element!)
     n = Ferrite.getnbasefunctions(cv)
     # The virtual strains of the shape functions at a point, in Mandel form.
     δ = Vector{MP.Mandel{float(eltype(ue))}}(undef, n)

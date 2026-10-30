@@ -58,7 +58,7 @@ function _trapezoidal_dispatch(
     )
     n = length(times)
     sample = visco_eval(law, times[1], times[1])
-    T = eltype(TensND.get_array(sample))
+    T = eltype(sample)
     M = zeros(T, 6 * n, 6 * n)
     _fill_trapezoidal_tensor!(M, law, times)
     return M
@@ -71,7 +71,7 @@ function _trapezoidal_dispatch(
     )
     n = length(times)
     sample = visco_eval(law, times[1], times[1])
-    T = eltype(TensND.get_array(sample))
+    T = eltype(sample)
     M = zeros(T, 3 * n, 3 * n)
     _fill_trapezoidal_order2_tens!(M, law, times)
     return M
@@ -137,7 +137,7 @@ end
 # preserving element type.
 @inline _to_mandel(sample::AbstractMatrix) = sample
 @inline function _to_mandel(sample::TensND.AbstractTens{4, 3})
-    return TensND.mandel66(sample)
+    return TensND.mandel(TensND.canonical_components(sample); symmetrize = true)
 end
 
 # The block cases, B×B blocks: 6 for a 4-tensor or a 6×6 Mandel matrix, 3 for a

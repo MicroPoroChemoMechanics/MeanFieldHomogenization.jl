@@ -144,7 +144,7 @@ end
 
 let
     C11, C12, C44 = 250.0e3, 100.0e3, 80.0e3
-    C_cubic = tens_cubic(C11, C12, C44, CanonicalBasis{3, Float64}())
+    C_cubic = cubic_from_constants(C11, C12, C44, CanonicalBasis{3, Float64}())
 
     @printf "Zener ratio A = 2C44/(C11−C12) = %.4f   (isotropic ⇔ 1)\n" 2C44 / (C11 - C12)
 

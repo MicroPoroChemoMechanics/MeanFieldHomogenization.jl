@@ -132,8 +132,11 @@ function _diff_integrate_ode(
         kw...
     )
     ode_kw, x0 = _diff_setup(rve, paths, prop, matrix, P_init, formulation; kw...)
-    rhs! = (du, u, p, τ) -> _diff_ode_rhs!(du, u, p, τ)
-    prob = ODEProblem(rhs!, x0, (0.0, 1.0), ode_kw)
+    # The adaptive step is controlled on values: the state's element type, which
+    # gathers the phases, the targets and the contributions, must compare.
+    _require_comparable(eltype(x0), :DifferentialScheme)
+    rhs! = (du, u, _, τ) -> _diff_ode_rhs!(du, u, ode_kw, τ)
+    prob = ODEProblem(rhs!, x0, (0.0, 1.0))
     τ_save = range(0.0, 1.0; length = max(nsteps, 1) + 1)
     sol = solve(
         prob,

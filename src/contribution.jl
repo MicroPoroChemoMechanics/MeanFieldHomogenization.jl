@@ -46,7 +46,7 @@ function property_contribution(
     )
     A = gradient_gradient_concentration(incl, C₁, C₀; kw...)
     is_homogeneous_inclusion(incl) || return flux_gradient_concentration(incl, C₁, C₀; kw...) - C₀ ⊡ A
-    return (C₁ - C₀) ⊡ A
+    return _contribution_of(C₁, C₀, A)
 end
 
 """
@@ -127,7 +127,7 @@ function property_contribution(
     )
     A = gradient_gradient_concentration(incl, K₁, K₀; kw...)
     is_homogeneous_inclusion(incl) || return flux_gradient_concentration(incl, K₁, K₀; kw...) - K₀ ⋅ A
-    return (K₁ - K₀) ⋅ A
+    return _contribution_of(K₁, K₀, A)
 end
 
 """

@@ -102,8 +102,8 @@ classes of the layers:
 - one layer with perfect interfaces → the layer property object itself,
   unchanged;
 - every layer isotropic, or **major-symmetric** TI about `n` itself
-  (`TensISO`, `TensTI{4,T,5}` / `TensTI{2,T,2}` of axis `n`), **and** every
-  interface in-plane isotropic → an exact `TensTI` about `n`;
+  ([`TensISO`](@extref TensND TensND.TensISO), `TensTI{4,T,5}` / `TensTI{2,T,2}` of axis `n`), **and** every
+  interface in-plane isotropic → an exact [`TensTI`](@extref TensND TensND.TensTI) about `n`;
 - **anything else → a generic `Tens`** in the laminate basis.
 
 The middle case is worth more than tidiness: a `TensTI` fed back into a

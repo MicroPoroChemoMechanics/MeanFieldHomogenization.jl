@@ -7,7 +7,7 @@ using LinearAlgebra
 #  test_sc_alv.jl — Self-Consistent ALV scheme.
 # =============================================================================
 
-const _to_mandel = TensND.mandel66
+const _to_mandel = (t -> TensND.mandel(TensND.canonical_components(t); symmetrize = true))
 
 @testset "self_consistent_alv — elastic limit (Heaviside)" begin
     rve = RVE()

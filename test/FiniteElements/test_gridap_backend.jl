@@ -27,7 +27,7 @@ const GX_K_SHELL = TensISO{3}(1.0)
 const GX_K_MAT = TensISO{3}(3.0)
 const GX_W = 0.5
 
-gx_mandel(T) = MeanFieldHomogenization.Core.mandel66_minor(Array(TensND.components_canon(T)))
+gx_mandel(T) = TensND.mandel(Array(TensND.canonical_components(T)); symmetrize = true)
 gx_bulk(M) = M[1, 1] + 2M[1, 2]
 gx_shear(M) = M[4, 4]
 gx_rel(X, Y) = maximum(abs, X - Y) / maximum(abs, X)
@@ -80,10 +80,10 @@ end
     ic = gx_incl(GridapBackend(), (GX_K_CORE, GX_K_SHELL); eccentricity = 0.0)
     a, b = fe_axi_concentration(ic, GX_K_MAT)
     sphk = LayeredSphere((cbrt(GX_W), 1.0), (GX_K_CORE, GX_K_SHELL))
-    aex = TensND.components_canon(gradient_gradient_concentration(sphk, GX_K_MAT, GX_K_MAT))
-    bex = TensND.components_canon(flux_gradient_concentration(sphk, GX_K_MAT, GX_K_MAT))
-    @test TensND.components_canon(a)[1, 1] ≈ aex[1, 1] rtol = 2.0e-3
-    @test TensND.components_canon(b)[1, 1] ≈ bex[1, 1] rtol = 2.0e-3
+    aex = TensND.canonical_components(gradient_gradient_concentration(sphk, GX_K_MAT, GX_K_MAT))
+    bex = TensND.canonical_components(flux_gradient_concentration(sphk, GX_K_MAT, GX_K_MAT))
+    @test TensND.canonical_components(a)[1, 1] ≈ aex[1, 1] rtol = 2.0e-3
+    @test TensND.canonical_components(b)[1, 1] ≈ bex[1, 1] rtol = 2.0e-3
 end
 
 @testset "Ferrite and Gridap agree to round-off" begin
@@ -107,8 +107,8 @@ end
         ag, bg = fe_axi_concentration(
             gx_incl(GridapBackend(), (GX_K_CORE, GX_K_SHELL); eccentricity = e), GX_K_MAT
         )
-        @test gx_rel(TensND.components_canon(af), TensND.components_canon(ag)) < 1.0e-8
-        @test gx_rel(TensND.components_canon(bf), TensND.components_canon(bg)) < 1.0e-8
+        @test gx_rel(TensND.canonical_components(af), TensND.canonical_components(ag)) < 1.0e-8
+        @test gx_rel(TensND.canonical_components(bf), TensND.canonical_components(bg)) < 1.0e-8
     end
 end
 
@@ -183,16 +183,16 @@ end
 
 @testset "Crack: Ferrite and Gridap agree to round-off" begin
     C₀ = iso_stiffness(10.0, 6.0)
-    Bf = TensND.components_canon(
+    Bf = TensND.canonical_components(
         cod_tensor(FEEllipticCrack(1.0, 0.5; backend = FerriteBackend()), C₀)
     )
-    Bg = TensND.components_canon(
+    Bg = TensND.canonical_components(
         cod_tensor(FEEllipticCrack(1.0, 0.5; backend = GridapBackend()), C₀)
     )
     @test gx_rel(Bf, Bg) < 1.0e-8
 
     # …and both stay within the documented few percent of the closed form.
-    Ba = TensND.components_canon(cod_tensor(EllipticCrack(1.0, 0.5), C₀))
+    Ba = TensND.canonical_components(cod_tensor(EllipticCrack(1.0, 0.5), C₀))
     @test Bg[1, 1] ≈ Ba[1, 1] rtol = 5.0e-2
     @test Bg[3, 3] ≈ Ba[3, 3] rtol = 5.0e-2
 end

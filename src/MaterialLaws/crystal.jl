@@ -99,7 +99,7 @@ function CrystalViscoplasticity(;
     R = SMatrix{3, 3}(TensND.vecbasis(frame))
     P = SMatrix{6, N}(_schmid_matrix(systems, R))
     H = SMatrix{N, N}([i == j ? one(latent) : latent for i in 1:N, j in 1:N])
-    ℂ = _mandel(TensND.tens_cubic(C₁₁, C₁₂, C₄₄, frame))
+    ℂ = _mandel(TensND.cubic_from_constants(C₁₁, C₁₂, C₄₄, frame))
     return ResidualLaw(;
         name = :CrystalViscoplasticity, stress = _crystal_stress, residual = _crystal_residual,
         elastic = _crystal_elastic, layout = (γ = N, v = N),

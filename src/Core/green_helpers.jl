@@ -129,7 +129,7 @@ multiplied by `scale`, from the pre-computed ``\\varphi``-only quantities
 
 This is the innermost loop of every crack COD back-end.  It used to write into
 a caller-owned `Matrix{T}` buffer and build ~10 heap `Matrix{T}` temporaries
-per call (`Vp, Vm, Kp, Km` by broadcast, `iKp, iKm` from `_inv3`, then two
+per call (`Vp, Vm, Kp, Km` by broadcast, `iKp, iKm` from TensND's `inv3`, then two
 chained `*` products).  Everything is `SMatrix` now, so the whole body is
 stack-resident and the function is pure.
 """
@@ -149,7 +149,7 @@ stack-resident and the function is pure.
     # that V = cos α A (I ± tan α A⁻¹ Vs) is invertible. (Comparisons on values:
     # this path takes numbers, not symbolic ones.)
     if abs(sa) < 0.05
-        iA = _inv3(A)
+        iA = inv3(A)
         if 2 * abs(sa) * maximum(sum(abs, iA * Vs; dims = 2)) < abs(ca)
             return _qnn_pair_small_angle(A, iA, Vs, Ks, ca, sa, scale)
         end
@@ -161,8 +161,8 @@ stack-resident and the function is pure.
     Vm = sa * Vs - ca * A
     Kp = ca² * A + cs * Kns + sa² * Ks
     Km = ca² * A - cs * Kns + sa² * Ks
-    Bp = (Vp * _inv3(Kp)) * transpose(Vp)
-    Bm = (Vm * _inv3(Km)) * transpose(Vm)
+    Bp = (Vp * inv3(Kp)) * transpose(Vp)
+    Bm = (Vm * inv3(Km)) * transpose(Vm)
     return (2 * A - Bp - Bm) * scale
 end
 
@@ -174,9 +174,9 @@ end
 @inline function _qnn_pair_small_angle(A, iA, Vs, Ks, ca, sa, scale)
     S = Ks - transpose(Vs) * iA * Vs
     s² = sa * sa
-    iVp = _inv3(ca * A + sa * Vs)
-    iVm = _inv3(ca * A - sa * Vs)
+    iVp = inv3(ca * A + sa * Vs)
+    iVm = inv3(ca * A - sa * Vs)
     Wp = transpose(iVp) * S * iVp
     Wm = transpose(iVm) * S * iVm
-    return (_inv3(iA + s² * Wp) * Wp + _inv3(iA + s² * Wm) * Wm) * A * (s² * scale)
+    return (inv3(iA + s² * Wp) * Wp + inv3(iA + s² * Wm) * Wm) * A * (s² * scale)
 end

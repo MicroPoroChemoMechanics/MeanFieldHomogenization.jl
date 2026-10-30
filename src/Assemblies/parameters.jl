@@ -23,7 +23,7 @@ Lens onto one Cartesian component of the center of particle `name` — the
 microstructural degree of freedom that no other cell of the package has.
 
 ```julia
-derivative(asm, ClusterModel(), center_param(:p2, 3); indexer = C -> components_canon(C)[1, 1, 1, 1])
+derivative(asm, ClusterModel(), center_param(:p2, 3); indexer = C -> canonical_components(C)[1, 1, 1, 1])
 ```
 """
 struct CenterParameter <: AbstractParameter

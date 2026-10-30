@@ -36,6 +36,12 @@
 #   * `TC = Complex{T}`   if `T <: Real`  — wrap to keep complex roots safe
 #   * `TC = T`            otherwise       — already complex, no double-wrap
 # and only strip the imaginary part on output when the inputs were real.
+#   * `TC = T`            for a symbolic `T`  — its functions continue into
+#     the complex plane themselves, where `Complex{Num}` sends `sqrt` and
+#     `acosh` to Base's complex methods, which compare their parts.
+_complex_working_type(::Type{T}) where {T} = _complex_working_type(Val(is_hard_numeric(T)), T)
+_complex_working_type(::Val{true}, ::Type{T}) where {T} = T <: Real ? Complex{T} : T
+_complex_working_type(::Val{false}, ::Type{T}) where {T} = T
 @inline _strip_im(x::Complex, ::Type{T}) where {T <: Real} = real(x)
 @inline _strip_im(x, ::Type) = x
 
@@ -81,7 +87,7 @@ function _hill_ti_walpole(ω, C1111, C1122, C1133, C3333, C2323)
         typeof(ω), typeof(C1111), typeof(C1122),
         typeof(C1133), typeof(C3333), typeof(C2323)
     )
-    TC = T <: Real ? Complex{T} : T
+    TC = _complex_working_type(T)
     ωc = TC(ω)
     C11 = TC(C1111)
     C12 = TC(C1122)
@@ -155,7 +161,7 @@ Reference: [barthelemyIJES2020_hilltrans](@citet).
 function _hill_3d_ti_coaxial(ell::Ellipsoid{3, Oblate}, C₀::TensND.TensTI{4, T, 5}) where {T}
     a, _, c = ell.semi_axes
     ω = c / a   # generic division — preserves Dual derivatives
-    C1111, C1122, C1133, C3333, C2323 = TensND.ti_args(C₀)
+    C1111, C1122, C1133, C3333, C2323 = TensND.ti_constants(C₀)
     P1, P2, P3, P5, P6 = _hill_ti_walpole(ω, C1111, C1122, C1133, C3333, C2323)
     return TensND.TensTI{4}(P1, P2, P3, P5, P6, TensND.axis(C₀))
 end
@@ -163,14 +169,14 @@ end
 function _hill_3d_ti_coaxial(ell::Ellipsoid{3, Prolate}, C₀::TensND.TensTI{4, T, 5}) where {T}
     a, b, _ = ell.semi_axes
     ω = a / b   # generic division — preserves Dual derivatives
-    C1111, C1122, C1133, C3333, C2323 = TensND.ti_args(C₀)
+    C1111, C1122, C1133, C3333, C2323 = TensND.ti_constants(C₀)
     P1, P2, P3, P5, P6 = _hill_ti_walpole(ω, C1111, C1122, C1133, C3333, C2323)
     return TensND.TensTI{4}(P1, P2, P3, P5, P6, TensND.axis(C₀))
 end
 
 function _hill_3d_ti_coaxial(::Ellipsoid{3, Spherical}, C₀::TensND.TensTI{4, T, 5}) where {T}
     # Spheroid degenerates to sphere — ω = 1, formula limit values
-    C1111, C1122, C1133, C3333, C2323 = TensND.ti_args(C₀)
+    C1111, C1122, C1133, C3333, C2323 = TensND.ti_constants(C₀)
     P1, P2, P3, P5, P6 = _hill_ti_walpole(one(T), C1111, C1122, C1133, C3333, C2323)
     return TensND.TensTI{4}(P1, P2, P3, P5, P6, TensND.axis(C₀))
 end
@@ -213,7 +219,7 @@ _hill_3d_ti_coaxial(ell::Ellipsoid{3, Spherical}, C₀::TensND.TensTI{4, T, 6}) 
 # Dropping them here is therefore exact for every reference medium the
 # analytical builder is meant to accept, and is the same convention as the
 # N=6 → N=5 collapse just above (which averages a non-trivial ℓ₃ ≠ ℓ₄).
-_ti8_to_ti6(C::TensND.TensTI{4, T, 8}) where {T} = TensND.rebuild(C, TensND.get_ℓ8(C)[1:6])
+_ti8_to_ti6(C::TensND.TensTI{4, T, 8}) where {T} = TensND.rebuild(C, TensND.walpole_coeffs(C, Val(8))[1:6])
 
 _hill_3d_ti_coaxial(ell::Ellipsoid{3, Oblate}, C₀::TensND.TensTI{4, T, 8}) where {T} =
     _hill_3d_ti_coaxial(ell, _ti8_to_ti6(C₀))

@@ -158,7 +158,7 @@ rve = RVE()
 add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness_young_poisson(70e3, 0.33)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness_young_poisson(400e3, 0.2)); fraction = 0.3)
 E = Mandel{Float64}(1e-3, 0, 0, 0, 0, 0)
-point_update(elastic, E, initial_state(elastic), 1.0)[2] ≈ KM(homogenize(rve, MoriTanaka(), :C))
+point_update(elastic, E, initial_state(elastic), 1.0)[2] ≈ mandel(homogenize(rve, MoriTanaka(), :C))
 ````
 
 ---

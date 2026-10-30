@@ -301,11 +301,11 @@ function _axi_layered_run_elastic(
     )
     μ, ν = _fe_iso_moduli(C₀; what = "`FEAxiLayeredSpheroid`")
     R = _fe_frame(s)
-    C0_66 = Core.mandel66_minor(_to_local4(C₀, R))
+    C0_66 = TensND.mandel(_to_local4(C₀, R); symmetrize = true)
     Dmap = vcat(
         [
             axi_layer_set(ℓ) => _axi_check_ti(
-                Core.mandel66_minor(_to_local4(s.props[ℓ], R)), "layer $ℓ"
+                TensND.mandel(_to_local4(s.props[ℓ], R); symmetrize = true), "layer $ℓ"
             ) for ℓ in 1:_nlayers(s)
         ],
         [AXI_SET_MATRIX => C0_66],

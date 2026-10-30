@@ -94,7 +94,7 @@ the position map alone.
 ```@example spheroidal
 using TensND, SymPyPythonCall
 Spheroidal = coorsys_spheroidal()
-ϕ, p, q = getcoords(Spheroidal)
+ϕ, p, q = get_coords(Spheroidal)
 c = symbols("c", positive = true)
 position_vector(Spheroidal)            # the position map (A.1)
 ```

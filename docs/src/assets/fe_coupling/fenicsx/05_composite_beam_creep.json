@@ -1,0 +1,11 @@
+{
+  "composite": {
+    "deflection_first_step_mm": 0.01977637474084494,
+    "deflection_end_mm": 0.15202584848672349
+  },
+  "matrix alone": {
+    "deflection_first_step_mm": 0.026118955539655694,
+    "deflection_end_mm": 0.232169737086638,
+    "beam_theory_elastic_mm": 0.026
+  }
+}

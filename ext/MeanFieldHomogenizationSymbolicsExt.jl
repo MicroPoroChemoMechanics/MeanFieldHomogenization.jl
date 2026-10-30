@@ -25,16 +25,21 @@ using Symbolics
 #  `Symbolics.substitute(…; fold = Val(true))` + `Symbolics.value` evaluates it
 #  exactly (without `fold`, the call node is kept with numeric arguments).
 #
-#  **Differentiation is deliberately not wired here.** Registering the analytic
-#  derivatives (NIST DLMF 19.4.1–19.4.2,
-#  `dK/dm = (E - (1-m)K)/(2m(1-m))`, `dE/dm = (E - K)/(2m)`) through
-#  `Symbolics.derivative(::typeof(f), ::NTuple{1,Any}, ::Val{1})` was tried and
-#  did **not** fire: `expand_derivatives` still returns an unexpanded
-#  `Differential(x)(ell_E(…))`. Rather than ship a rule that silently does
-#  nothing, the supported and *verified* AD route is `ForwardDiff`, which
-#  differentiates the AGM arithmetic directly and needs no registration at all
-#  (see `test/Cracks/test_cod_symbolic.jl`). Use Symbolics to *derive* and
-#  `build_function` to evaluate; use ForwardDiff to differentiate.
+#  Each carries its derivatives, so that `expand_derivatives` differentiates a
+#  symbolic Hill tensor or crack opening through them, and the result stays a
+#  closed form in the same integrals (parameter m = k², Δ = √(1 − m sin²φ)):
+#
+#      dK/dm = (E − (1 − m)K) / (2m(1 − m)),     dE/dm = (E − K) / (2m),
+#      ∂F/∂φ = 1/Δ,   ∂F/∂m = E(φ,m)/(2m(1 − m)) − F/(2m) − sin 2φ / (4(1 − m)Δ),
+#      ∂E/∂φ = Δ,     ∂E/∂m = (E(φ,m) − F(φ,m)) / (2m)          (NIST DLMF 19.4),
+#      ∂R_F/∂x = −R_D(y, z, x)/6, and by symmetry in the other arguments
+#      (DLMF 19.18.1);
+#      ∂R_D/∂x = (R_D(x, y, z) − R_D(y, z, x)) / (2(z − x)), likewise in y, from
+#      the partial fractions of the integrand; ∂R_D/∂z from the homogeneity of
+#      R_D of degree −3/2, x∂ₓ + y∂ᵧ + z∂_z = −(3/2)R_D.
+#
+#  Each is tested against ForwardDiff, which differentiates the AGM and Carlson
+#  arithmetic of the numerical methods independently.
 # ──────────────────────────────────────────────────────────────────────────────
 
 const _Ell = MeanFieldHomogenization.Elliptic
@@ -49,6 +54,24 @@ Symbolics.SymbolicUtils.promote_symtype(::typeof(_Ell.ell_E), ::Type, ::Type) = 
 # Carlson's integrals, exported too, for the same reason.
 Symbolics.@register_symbolic _Ell.ell_RF(x, y, z)
 Symbolics.@register_symbolic _Ell.ell_RD(x, y, z)
+
+Symbolics.@register_derivative _Ell.ell_K(m) 1 (_Ell.ell_E(m) - (1 - m) * _Ell.ell_K(m)) / (2m * (1 - m))
+Symbolics.@register_derivative _Ell.ell_E(m) 1 (_Ell.ell_E(m) - _Ell.ell_K(m)) / (2m)
+Symbolics.@register_derivative _Ell.ell_F(φ, m) 1 1 / sqrt(1 - m * sin(φ)^2)
+Symbolics.@register_derivative _Ell.ell_F(φ, m) 2 _Ell.ell_E(φ, m) / (2m * (1 - m)) - _Ell.ell_F(φ, m) / (2m) -
+    sin(2φ) / (4 * (1 - m) * sqrt(1 - m * sin(φ)^2))
+Symbolics.@register_derivative _Ell.ell_E(φ, m) 1 sqrt(1 - m * sin(φ)^2)
+Symbolics.@register_derivative _Ell.ell_E(φ, m) 2 (_Ell.ell_E(φ, m) - _Ell.ell_F(φ, m)) / (2m)
+Symbolics.@register_derivative _Ell.ell_RF(x, y, z) 1 -_Ell.ell_RD(y, z, x) / 6
+Symbolics.@register_derivative _Ell.ell_RF(x, y, z) 2 -_Ell.ell_RD(z, x, y) / 6
+Symbolics.@register_derivative _Ell.ell_RF(x, y, z) 3 -_Ell.ell_RD(x, y, z) / 6
+Symbolics.@register_derivative _Ell.ell_RD(x, y, z) 1 (_Ell.ell_RD(x, y, z) - _Ell.ell_RD(y, z, x)) / (2 * (z - x))
+Symbolics.@register_derivative _Ell.ell_RD(x, y, z) 2 (_Ell.ell_RD(x, y, z) - _Ell.ell_RD(z, x, y)) / (2 * (z - y))
+Symbolics.@register_derivative _Ell.ell_RD(x, y, z) 3 begin
+    ∂x = (_Ell.ell_RD(x, y, z) - _Ell.ell_RD(y, z, x)) / (2 * (z - x))
+    ∂y = (_Ell.ell_RD(x, y, z) - _Ell.ell_RD(z, x, y)) / (2 * (z - y))
+    (-3 * _Ell.ell_RD(x, y, z) / 2 - x * ∂x - y * ∂y) / z
+end
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Dividing an ALV kernel by a symbolic scalar

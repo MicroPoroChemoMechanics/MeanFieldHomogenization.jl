@@ -52,28 +52,6 @@ function inverse_property_contribution(
     return _compliance_from_B(crack, B)
 end
 
-"""
-    _compliance_from_B_elliptic(crack, B) -> Tens{4,3}
-
-Elliptic: ``\\mathbb{H} = \\tfrac{3}{4}\\,\\underline{n}\\stackrel{s}{\\otimes}\\boldsymbol{B}\\stackrel{s}{\\otimes}\\underline{n}``.
-"""
-function _compliance_from_B_elliptic(crack::MFH_Core.AbstractCrack, B)
-    n̂ = TensND.tens_basis(crack_basis(crack), 3)
-    T = eltype(B)
-    return (3 * one(T) / 4) * (n̂ ⊗ˢ B ⊗ˢ n̂)
-end
-
-"""
-    _compliance_from_B_ribbon(crack, B) -> Tens{4,3}
-
-Ribbon: ``\\mathbb{H} = \\tfrac{2}{\\pi}\\,\\underline{n}\\stackrel{s}{\\otimes}\\boldsymbol{B}\\stackrel{s}{\\otimes}\\underline{n}``.
-"""
-function _compliance_from_B_ribbon(crack::MFH_Core.AbstractCrack, B)
-    n̂ = TensND.tens_basis(crack_basis(crack), 3)
-    T = eltype(B)
-    return (2 * one(T) / T(π)) * (n̂ ⊗ˢ B ⊗ˢ n̂)
-end
-
 # ── Shape-trait dispatch ─────────────────────────────────────────────────────
 #
 #  The B → ℍ algebra and the Budiansky prefactors depend only on the *shape
@@ -94,11 +72,11 @@ function _unsupported_crack_shape(S, what)
     )
 end
 
+# ℍ = k n ⊗ˢ 𝐁 ⊗ˢ n, k = 3/4 for an elliptic crack and 2/π for a ribbon, in
+# the frame of the crack (see `compliance_from_cod`).
 _compliance_from_B(crack::MFH_Core.AbstractCrack, B) =
     _compliance_from_B(MFH_Core.shape_trait(crack), crack, B)
-_compliance_from_B(::Type{<:CrackShape}, crack, B) = _compliance_from_B_elliptic(crack, B)
-_compliance_from_B(::Type{Ribbon}, crack, B) = _compliance_from_B_ribbon(crack, B)
-_compliance_from_B(S::Type, _crack, _B) = _unsupported_crack_shape(S, "compliance")
+_compliance_from_B(S::Type, crack, B) = _H_from_B(B, _H_over_B_factor(S, eltype(B)), crack_basis(crack))
 
 # =============================================================================
 #  Thermal (2nd-order) — R from the scalar COD b

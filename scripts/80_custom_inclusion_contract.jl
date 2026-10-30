@@ -111,8 +111,8 @@ function rve_with(geom, prop_m, prop_i, key)
     return r
 end
 
-c1111(C) = components_canon(C)[1, 1, 1, 1]
-k11(K) = components_canon(K)[1, 1]
+c1111(C) = canonical_components(C)[1, 1, 1, 1]
+k11(K) = canonical_components(K)[1, 1]
 
 ALL = (
     "Dilute" => Dilute(), "DiluteDual" => DiluteDual(),
@@ -222,11 +222,11 @@ C_cus = homogenize(oriented(custom_at, 12, 0.2), MoriTanaka(), :C)
 println("\nOrientation distribution (12 polar bins) + TISymmetrize\n", "-"^78)
 println(
     "  native  : ", typeof(C_ref).name.name, "   C₃₃₃₃ = ",
-    round(components_canon(C_ref)[3, 3, 3, 3], digits = 10)
+    round(canonical_components(C_ref)[3, 3, 3, 3], digits = 10)
 )
 println(
     "  custom  : ", typeof(C_cus).name.name, "   C₃₃₃₃ = ",
-    round(components_canon(C_cus)[3, 3, 3, 3], digits = 10)
+    round(canonical_components(C_cus)[3, 3, 3, 3], digits = 10)
 )
 @printf "  ‖Δ‖ = %.3e\n" norm(C_cus - C_ref)
 

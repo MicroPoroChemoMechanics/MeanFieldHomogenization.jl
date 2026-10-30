@@ -120,8 +120,8 @@ function asymmetric_self_consistent_alv(
         push!(symmetrizes, phase_symmetrize(rve, name))
     end
 
-    U_M_phases = Matrix[TensND.mandel66(tens_UA(g)) for g in geometries]
-    V_M_phases = Matrix[TensND.mandel66(tens_VA(g)) for g in geometries]
+    U_M_phases = Matrix[TensND.mandel(TensND.canonical_components(tens_UA(g)); symmetrize = true) for g in geometries]
+    V_M_phases = Matrix[TensND.mandel(TensND.canonical_components(tens_VA(g)); symmetrize = true) for g in geometries]
 
     Tp = _alv_promoted_eltype(
         vcat(Matrix[C_M], C_phases), fractions, U_M_phases, crack_data
@@ -370,8 +370,8 @@ function differential_alv(
                     geom = geom,
                     target = amt.value,
                     sym = sym,
-                    U_M = TensND.mandel66(tens_UA(geom)),
-                    V_M = TensND.mandel66(tens_VA(geom)),
+                    U_M = TensND.mandel(TensND.canonical_components(tens_UA(geom)); symmetrize = true),
+                    V_M = TensND.mandel(TensND.canonical_components(tens_VA(geom)); symmetrize = true),
                 )
             )
         else  # CrackDensity

@@ -87,8 +87,8 @@ end
 # =============================================================================
 #
 #  `best_fit_iso` / `best_fit_ti` / `best_fit_ortho` were three one-line
-#  wrappers over `TensND.proj_tens(…)[1]` and have moved to TensND itself,
-#  next to `proj_tens` and the `*_params_from_KM` conversions they belong with.
+#  wrappers over `TensND.project(…)[1]` and have moved to TensND itself,
+#  next to `project` and the `*_params_from_KM` conversions they belong with.
 #  They are re-exported here because they are part of this package's reporting
 #  surface — `best_fit_ti(C, n)` is how a scheme result is turned into
 #  publishable TI parameters, the analog of echoes' `.paramsym(sym = TI)`.

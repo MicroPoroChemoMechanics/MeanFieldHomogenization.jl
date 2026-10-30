@@ -11,7 +11,7 @@
 #  auto-estimation path — keeping ForwardDiff compatibility.
 #
 #  Shared 2-D helpers (`_A_and_Tn`, `_phi_cache`, `_qnn_pair_components`,
-#  `_inv3`) live in `src/Core/green_helpers.jl`.  The nested-QuadGK
+#  the 3×3 inverse is TensND's `inv3`) live in `src/Core/green_helpers.jl`.  The nested-QuadGK
 #  counterpart lives in `green_nestedquadgk.jl`.
 # =============================================================================
 
@@ -74,7 +74,7 @@ function _cod_elliptic_decuhr_direct(
     Tmat[1, 3] = Tmat[3, 1] = Tvec[5] * fac
     Tmat[2, 3] = Tmat[3, 2] = Tvec[6] * fac
 
-    Bmat = (Tp(8) / Tp(3)) .* MFH_Core._inv3(Tmat)
+    Bmat = (Tp(8) / Tp(3)) .* TensND.inv3(Tmat)
     Bsym = (Bmat .+ transpose(Bmat)) ./ 2
     return TensND.Tens(Tensors.SymmetricTensor{2, 3}((i, j) -> Tp(Bsym[i, j])), basis)
 end

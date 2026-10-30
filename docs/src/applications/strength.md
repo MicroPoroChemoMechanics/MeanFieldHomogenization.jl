@@ -154,7 +154,7 @@ nothing # hide
 
 ## Scales 2 and 3 — cement paste and mortar (Mori-Tanaka)
 
-The converged foam is a `TensTI{4}`; `best_fit_ti` extracts its physical
+The converged foam is a `TensTI{4}`; [`best_fit_ti`](@extref TensND TensND.best_fit_ti) extracts its physical
 5-parameter TI stiffness (Echoes does the same with `tensor(C_hf.array, TI)`)
 before the two Mori-Tanaka stages: clinker grains in the foam matrix (CP), then
 sand grains in the paste matrix (MO).
@@ -189,7 +189,7 @@ function multiscale_C_mo(wc, α_p, sc, μ_b0; N = NTHETA, ω = ω_aspect, kw...)
     C_hf = best_fit_ti(build_hf(wc, α_p, μ_b0; N = N, ω = ω, kw...), (0.0, 0.0, 1.0))
     C_cp = build_cp(wc, α_p, C_hf)
     C_mo = build_mo(wc, sc, C_cp)
-    return Array(components_canon(C_mo))
+    return Array(canonical_components(C_mo))
 end
 nothing # hide
 ```
@@ -228,7 +228,7 @@ is obtained by seeding ``\mu_{b0}`` with a `Dual` and reading the partial of the
 final array — one pass through the whole three-scale chain.
 
 ```@example strength
-extract_kμ(arr) = k_mu(TensND.proj_tens(Val(:ISO), arr)[1])
+extract_kμ(arr) = k_mu(TensND.project(arr, Val(:ISO))[1])
 
 function quasibrittle_strength(arr_C_mo, arr_dC, μh, f_θ)
     # `arr_C_mo` (value) and `arr_dC` (∂/∂μ) are 3×3×3×3 arrays; wrap them as
@@ -315,7 +315,7 @@ run the model.
 The bridge between the two views is the TI parameterization: extract the five
 parameters of a tensor with `best_fit_ti` — one of the
 [symmetry projections](@ref api-schemes-symmetry) re-exported from
-`TensND` — and rebuild a `TensTI` from five numbers.
+`TensND` — and rebuild a [`TensTI`](@extref TensND TensND.TensTI) from five numbers.
 
 ```@example strength
 const ez = (0.0, 0.0, 1.0)

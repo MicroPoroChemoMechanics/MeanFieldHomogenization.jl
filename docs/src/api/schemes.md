@@ -128,12 +128,12 @@ both orders, and of their names in elasticity and in conduction, documented in
 
 Best-fit projection of a tensor onto a symmetry class. These force major
 symmetry, unlike the exact rotation-group averages
-`isotropify` / `transverse_isotropify` (re-exported from `TensND`); the two differ whenever the input is not
+[`isotropify`](@extref TensND TensND.isotropify) / [`transverse_isotropify`](@extref TensND TensND.transverse_isotropify) (re-exported from `TensND`); the two differ whenever the input is not
 major-symmetric, and the difference is worked through in
 [Symmetrization showcase](@ref tut-symmetrization).
 
 `best_fit_iso(t)`, `best_fit_ti(t, axis)` and `best_fit_ortho(t, frame)` live
-in **`TensND`**, next to the `proj_tens` machinery they wrap, and are
+in **`TensND`**, next to the `project` machinery they wrap, and are
 re-exported here because turning a scheme result into publishable parameters is
 part of this package's surface. See the TensND documentation for their
 docstrings.

@@ -174,7 +174,7 @@ function _cod_aniso_ellipse_thermal(c::EllipticCrack, K₀)
     # basis' own (e₁, e₂, e₃) and no two quantities live in different frames.
     # `adj` is a tensor under rotation, so the adjugate of the rotated
     # components is the rotated adjugate — the order does not matter.
-    Kloc = TensND.change_tens(K₀, crack_basis(c))
+    Kloc = TensND.express(K₀, crack_basis(c))
     adj = _adj3_sym(Kloc)
 
     A = adj[2]           # m̂·adj(K₀)·m̂
@@ -244,7 +244,7 @@ function _cod_aniso_ribbon_thermal(c::RibbonCrack, K₀)
     T_mat = eltype(K₀)
 
     # Express K₀ in the crack basis: indices 2, 3 give the (m̂, n̂) block.
-    K₀_local = TensND.change_tens(K₀, crack_basis(c))
+    K₀_local = TensND.express(K₀, crack_basis(c))
     K_mm = T_mat(K₀_local[2, 2])
     K_nn = T_mat(K₀_local[3, 3])
     K_mn = T_mat(K₀_local[2, 3])

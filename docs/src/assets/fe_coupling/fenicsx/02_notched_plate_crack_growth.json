@@ -1,0 +1,26 @@
+{
+  "tau=0.1, h=0.5": {
+    "triangles": 1857,
+    "peak_force_N_per_mm": 221.46927930306887,
+    "final_force_N_per_mm": 147.44727727626417,
+    "time_s": 22.839811021462083
+  },
+  "tau=0.1, h=0.25": {
+    "triangles": 7239,
+    "peak_force_N_per_mm": 221.40011706839215,
+    "final_force_N_per_mm": 147.39616479790305,
+    "time_s": 64.65697465091944
+  },
+  "tau=0.01, h=0.5": {
+    "triangles": 1857,
+    "peak_force_N_per_mm": 183.4877394811164,
+    "final_force_N_per_mm": 106.06083719185972,
+    "time_s": 40.90473601967096
+  },
+  "tau=0.01, h=0.25": {
+    "triangles": 7239,
+    "peak_force_N_per_mm": 186.10219245944916,
+    "final_force_N_per_mm": 105.65151739950272,
+    "time_s": 372.73318875208497
+  }
+}

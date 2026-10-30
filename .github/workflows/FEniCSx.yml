@@ -1,0 +1,117 @@
+name: FEniCSx
+# The Python package python/mfh_fenicsx: the materials of this commit at the
+# quadrature points of a dolfinx problem, Julia embedded through juliacall. Its
+# tests, then the examples at a reduced size. Example 4 (polycrystals, minutes
+# per step) is left out; the Julia side of the coupling (update_points!) is
+# tested, and its coverage reported, by CI.yml.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'ext/**'
+      - 'python/**'
+      - 'Project.toml'
+      - '.github/workflows/FEniCSx.yml'
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+jobs:
+  test:
+    name: FEniCSx - dolfinx 0.10 - Julia 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      actions: write
+      contents: read
+    defaults:
+      run:
+        shell: bash -el {0}
+    env:
+      # The Julia project of the tests, the Julia to embed, its threads; nothing
+      # downloaded by juliacall at run time.
+      PYTHON_JULIAPKG_PROJECT: ${{ github.workspace }}/python/mfh_fenicsx/tests/julia
+      PYTHON_JULIAPKG_OFFLINE: 'yes'
+      PYTHON_JULIACALL_THREADS: '2'
+      PYTHON_JULIACALL_HANDLE_SIGNALS: 'yes'
+      JULIA_CONDAPKG_BACKEND: 'Null'
+      OPENBLAS_NUM_THREADS: '1'
+      # MUMPS factorizes with OpenMP, whose sums change order from run to run:
+      # one thread, so that runs with different numbers of Julia threads compare.
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        id: julia
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v3
+        with:
+          cache-name: julia-cache;workflow=${{ github.workflow }};job=${{ github.job }};julia=${{ steps.julia.outputs.julia-version }}
+          include-matrix: false
+      # As in CI.yml: the Pkg server intermittently fails to serve the registry
+      # of a cold depot; a direct clone is the fallback.
+      - name: Install the General registry
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          regdir = joinpath(first(DEPOT_PATH), "registries")
+          if isdir(joinpath(regdir, "General")) || isfile(joinpath(regdir, "General.tar.gz"))
+              @info "General registry already installed"
+          else
+              try
+                  Pkg.Registry.add("General")
+              catch err
+                  @warn "Pkg server could not serve the registry; cloning from GitHub" err
+                  withenv("JULIA_PKG_SERVER" => "") do
+                      Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/JuliaRegistries/General.git"))
+                  end
+              end
+          end
+      - name: The Julia project of the tests
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          Pkg.activate(ENV["PYTHON_JULIAPKG_PROJECT"])
+          Pkg.instantiate()
+          Pkg.status()
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: fenicsx
+          create-args: >-
+            python=3.12
+            fenics-dolfinx=0.10
+            mpich
+            python-gmsh
+            matplotlib-base
+            pytest
+            pip
+          # Not cached: a run on the environment restored from the cache was
+          # killed (SIGTERM) as soon as pytest imported its modules.
+          cache-environment: false
+      - name: The Python packages
+        run: |
+          python -m pip install dolfinx-external-operator==0.10.2 juliacall==0.9.37
+          python -m pip install --no-deps -e python/mfh_fenicsx
+          echo "PYTHON_JULIAPKG_EXE=$(which julia)" >> "$GITHUB_ENV"
+      # The stack imported alone first, so that a failure says which part fails.
+      - name: The environment
+        run: |
+          python -X faulthandler -c "import mpi4py.MPI as M; print('MPI', M.Get_library_version().splitlines()[0])"
+          python -X faulthandler -c "import dolfinx, dolfinx_external_operator, juliacall; print('dolfinx', dolfinx.__version__)"
+      - name: Tests
+        run: python -X faulthandler -m pytest -v python/mfh_fenicsx/tests
+      - name: Examples, reduced
+        run: |
+          cd python/mfh_fenicsx/examples
+          out=$RUNNER_TEMP/examples
+          python 01_plate_with_hole.py --out $out/01 --h 1.0
+          python 02_notched_plate_crack_growth.py --out $out/02 --h 1.0 --tau 0.1 --steps 8
+          python 03_borehole_closing_cracks.py --out $out/03 --nr 12 --nt 6 --steps 12
+          python 05_composite_beam_creep.py --out $out/05 --nx 20 --steps 6
+          python 06_thread_scaling.py --out $out/06 --n 3 --threads 1 2

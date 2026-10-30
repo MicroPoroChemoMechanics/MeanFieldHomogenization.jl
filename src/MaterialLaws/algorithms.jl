@@ -93,7 +93,7 @@ tangent `𝕂 = dF/dg` and the new state.
 
 `g` and `F` are flat `SVector`s laid out as [`gradient_layout`](@ref) and
 [`flux_layout`](@ref) say: for a mechanical law, the strain and the stress as
-[`Mandel`](@ref) vectors and `𝕂` the 6×6 tangent stiffness; for a coupled law,
+`Mandel` vectors and `𝕂` the 6×6 tangent stiffness; for a coupled law,
 the fields one after the other and `𝕂` with every coupling block.
 
 This is the function every caller ends up in: [`material_response`](@ref) wraps
@@ -206,7 +206,7 @@ function _newton_values(R, y, alg::LocalNewton, name::Symbol)
         # A singular Jacobian fails the step: an exception of the factorization
         # (large systems) or a non-finite correction (small static ones).
         δ = try
-            J \ r
+            _static_ldiv(J, r)
         catch err
             err isa LinearAlgebra.SingularException || rethrow()
             throw(LocalIntegrationError(name, it, last, "singular or non-finite Jacobian"))
@@ -223,6 +223,40 @@ function _newton_values(R, y, alg::LocalNewton, name::Symbol)
             (mapreduce(abs, max, r; init = zero(eltype(r))) <= r₀ || last <= tol₀) && return y
     end
     throw(LocalIntegrationError(name, alg.maxiters, last, "no convergence"))
+end
+
+# A static system larger than 14 × 14 is beyond StaticArrays' unrolled LU: `\`
+# then copies it into a Matrix, factors a copy with LAPACK and solves on a copy
+# of the right-hand side, allocating all three and the pivots at every solve,
+# which made most of the memory of a law with 24 internal variables (a crystal
+# of 12 slip systems). `_static_ldiv` makes the same LAPACK calls, after the same
+# triangular tests, on buffers that the task keeps: the same bits and the same
+# exceptions, without the allocations. Below that size, for a triangular
+# matrix, or for numbers LAPACK does not take (duals), it is `\` itself.
+struct _LDivBuffers{T}
+    A::Matrix{T}
+    ipiv::Vector{LinearAlgebra.BlasInt}
+    B::Matrix{T}
+end
+
+function _ldiv_buffers(::Type{T}, n::Int, m::Int) where {T}
+    store = get!(Dict{Tuple{DataType, Int, Int}, Any}, task_local_storage(), :mfh_static_ldiv)::Dict{Tuple{DataType, Int, Int}, Any}
+    return get!(store, (T, n, m)) do
+        _LDivBuffers{T}(Matrix{T}(undef, n, n), Vector{LinearAlgebra.BlasInt}(undef, n), Matrix{T}(undef, n, m))
+    end::_LDivBuffers{T}
+end
+
+_static_ldiv(A::StaticMatrix, B::StaticArrays.StaticVecOrMat) = A \ B
+function _static_ldiv(A::StaticMatrix{N, N, T}, B::StaticArrays.StaticVecOrMat{T}) where {N, T <: LinearAlgebra.BlasFloat}
+    (N ≤ 14 || istril(A) || istriu(A)) && return A \ B
+    buf = _ldiv_buffers(T, N, size(B, 2))
+    copyto!(buf.A, A)
+    # As `lu`: non-finite entries refused, a singular matrix a SingularException.
+    _, _, info = LinearAlgebra.LAPACK.getrf!(buf.A, buf.ipiv)
+    LinearAlgebra.checknonsingular(info)
+    copyto!(buf.B, B)
+    LinearAlgebra.LAPACK.getrs!('N', buf.A, buf.ipiv, buf.B)
+    return similar_type(B)(buf.B)
 end
 
 # The correction, halved while it leads out of the domain where the residual is
@@ -259,23 +293,54 @@ function _trust_region_values(r, j, x₀::SVector, alg::LocalNewton, name::Symbo
     return sol.u
 end
 
-# The root in the element type T of a residual `f` that returns its value, its
-# Jacobian and what else it computed: the trust-region iteration on the values
-# (each iterate evaluated once, its residual and Jacobian kept together), then
-# the Newton steps in T that attach exact derivatives; returns the root and
-# what `f` computed there.
-function _root_with_payload(f, x₀::SVector{N}, alg::LocalNewton, name::Symbol, ::Type{T}) where {N, T}
+# The root in the element type T of a residual `f(x) -> (r, out)`, `out` what
+# else it computed, and of its Jacobian `jac(x, out)`, asked for only at the
+# iterates the trust region accepts (a Jacobian may cost far more than a
+# residual: the derivatives of a quadrature): the trust-region iteration on the
+# values, each iterate evaluated once, then the Newton steps in T that attach
+# exact derivatives; returns the root and what `f` computed there.
+#
+# `values = (f, jac)` on the values of the parameters, when `f` and `jac` carry
+# derivatives: the trust-region iteration then runs on plain numbers only, and
+# the derivatives enter at the last step.
+function _root_with_payload(f, jac, x₀::SVector{N}, alg::LocalNewton, name::Symbol, ::Type{T}; values = (f, jac)) where {N, T}
+    fv, jacv = values
     xv = SVector{N, Float64}(TensND.primal.(x₀))
-    memo = Ref((xv, f(xv)))
-    evaluated(x) = memo[][1] == x ? memo[][2] : (v = f(x); memo[] = (x, v); v)
-    x = SVector{N, T}(_trust_region_values(x -> _residual_or_nan(evaluated, x), x -> TensND.primal.(evaluated(x)[2]), xv, alg, name))
-    r, J, out = f(x)
-    for _ in 1:_derivative_steps(T)
+    # The last two points evaluated: a trial point the trust region rejects
+    # would otherwise push out the accepted one, whose Jacobian is asked next.
+    v₀ = fv(xv)
+    memo = Ref(((xv, v₀), (xv, v₀)))
+    function evaluated(x)
+        (last, before) = memo[]
+        last[1] == x && return last[2]
+        before[1] == x && return before[2]
+        v = fv(x)
+        memo[] = ((x, v), last)
+        return v
+    end
+    root = _trust_region_values(
+        x -> _residual_or_nan(evaluated, x), x -> TensND.primal.(jacv(x, evaluated(x)[2])), xv, alg, name
+    )
+    x = SVector{N, T}(root)
+    # On plain numbers the root's evaluation is already known, the same bits.
+    r, out = _at_root(f, fv, evaluated, x, root)
+    # The first step with the Jacobian on the values: the residual at the root,
+    # in T, carries ∂F/∂p, and x − J⁻¹F gives the derivatives of the
+    # implicit-function theorem exactly; a Jacobian in T would only multiply the
+    # residual (zero to rounding) and costs nested dual numbers through the whole
+    # residual (minutes of compilation through a quadrature). Higher orders take
+    # the Jacobian in T.
+    for k in 1:_derivative_steps(T)
+        J = k == 1 ? TensND.primal.(jacv(root, evaluated(root)[2])) : jac(x, out)
         x = x - J \ r
-        r, J, out = f(x)
+        r, out = f(x)
     end
     return x, out
 end
+
+_at_root(f, fv, evaluated, x, root) = f(x)
+_at_root(f::F, fv::F, evaluated, x::SVector{N, Float64}, root::SVector{N, Float64}) where {F, N} =
+    f === fv ? evaluated(root) : f(x)
 
 # The residual at a trial point; NaN where the evaluation fails (a grain whose
 # own law cannot follow the strain proposed): the trust-region iteration then
@@ -296,20 +361,59 @@ function _fluxes_and_tangent(law, y, g, prev, Δt, frozen::Bool)
     F = _fluxes(law, g, y)
     ∂F∂g = ForwardDiff.jacobian(h -> _fluxes(law, h, y), g)
     frozen && return F, ∂F∂g
-    ∂F∂y = ForwardDiff.jacobian(z -> _fluxes(law, g, z), y)
-    ∂R∂y = ForwardDiff.jacobian(z -> _residual(law, z, g, prev, Δt), y)
-    ∂R∂g = ForwardDiff.jacobian(h -> _residual(law, y, h, prev, Δt), g)
+    ∂y∂g = _state_sensitivity(law, y, g, prev, Δt)
     # Where a phase law has no finite tangent (a power law at zero strain), the
     # tangent of the step does not exist either: it is returned undefined.
-    all(isfinite, ∂R∂y) || return F, ∂F∂g .* oftype(zero(eltype(∂F∂g)), NaN)
+    ∂y∂g === nothing && return F, ∂F∂g .* oftype(zero(eltype(∂F∂g)), NaN)
+    return F, ∂F∂g + ForwardDiff.jacobian(z -> _fluxes(law, g, z), y) * ∂y∂g
+end
+
+# dy/dg at the root y of a step that moves the internal variables, by the
+# implicit-function theorem on the local residual; `nothing` where the residual
+# has no finite derivative.
+function _state_sensitivity(law, y, g, prev, Δt)
+    ∂R∂y = ForwardDiff.jacobian(z -> _residual(law, z, g, prev, Δt), y)
+    ∂R∂g = ForwardDiff.jacobian(h -> _residual(law, y, h, prev, Δt), g)
+    all(isfinite, ∂R∂y) || return nothing
     # A root at which the local equations are singular is no solution of a
     # well-posed step (any neighbor is a root too): a failed step to cut.
     ∂y∂g = try
-        ∂R∂y \ ∂R∂g
+        _static_ldiv(∂R∂y, ∂R∂g)
     catch err
         err isa LinearAlgebra.SingularException || rethrow()
         throw(LocalIntegrationError(law.name, 0, NaN, "singular local equations at the root"))
     end
     all(isfinite, ∂y∂g) || throw(LocalIntegrationError(law.name, 0, NaN, "singular local equations at the root"))
-    return F, ∂F∂g - ∂F∂y * ∂y∂g
+    return -∂y∂g
 end
+
+# The fixed point x = g(x), g(x) -> (g, out), by Anderson's acceleration of the
+# successive substitutions (the "type II" form): each iterate is the image of
+# the current one corrected by the combination of the last `depth` changes of g
+# that best cancels the residual f = g(x) − x in the least-squares sense.
+# `converged(f, x)` judges the residual; returns the fixed point and what g
+# computed there. The combination is computed on the values, by a pivoted QR
+# that a degenerate history does not break: once the values have converged and
+# only the derivatives still move, the changes of the residual have no value
+# left, the combination vanishes and the iteration is the plain substitution
+# that carries the derivatives to their fixed point.
+function _anderson(g, x₀::SVector{N}, maxiters::Integer, converged, name::Symbol; depth::Integer = 4) where {N}
+    x = x₀
+    Δg, Δf = typeof(x₀)[], typeof(x₀)[]
+    gprev, fprev = x₀, x₀
+    for k in 1:maxiters
+        gx, out = g(x)
+        f = gx - x
+        converged(f, x) && return gx, out
+        if k > 1
+            push!(Δg, gx - gprev)
+            push!(Δf, f - fprev)
+            length(Δg) > depth && (popfirst!(Δg); popfirst!(Δf))
+        end
+        gprev, fprev = gx, f
+        x = isempty(Δf) ? gx : gx - reduce(hcat, Δg) * _mixing(reduce(hcat, Δf), f)
+    end
+    throw(LocalIntegrationError(name, maxiters, NaN, "no convergence of the fixed point"))
+end
+
+_mixing(F, f) = qr(TensND.primal.(F), ColumnNorm()) \ TensND.primal.(f)

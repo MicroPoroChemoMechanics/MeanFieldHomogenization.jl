@@ -7,7 +7,7 @@ const C0_PO = TensISO{3}(3 * 30.0, 2 * 18.0)      # k = 30 GPa, μ = 18 GPa
 const KS_PO = 1.0e-18                              # tight matrix, m²
 const CF_PO = 4.0e-18                              # fracture conductivity
 const CANON_PO = TensND.CanonicalBasis{3, Float64}()
-_g(t) = get_array(TensND.change_tens(t, CANON_PO))
+_g(t) = get_array(TensND.express(t, CANON_PO))
 _ε33(e) = from_tensors(
     TensND.Tensors.SymmetricTensor{2, 3}((i, j) -> (i == j == 3) ? e : 0.0)
 )

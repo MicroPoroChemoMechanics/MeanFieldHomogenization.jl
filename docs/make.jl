@@ -47,6 +47,12 @@ write_nomenclature_json(joinpath(@__DIR__, "src", ".vitepress", "nomenclature.js
 # `literate.jl`, so that the generated pages exist when the tree is pruned.
 include("partial.jl")
 
+# Links to TensND's documentation, `[`mandel`](@extref TensND TensND.mandel)`,
+# resolved against the inventory TensND publishes: a name or a section that
+# disappears or is renamed there fails this build, naming the page to correct.
+using DocumenterInterLinks
+links = InterLinks("TensND" => "https://MicroPoroChemoMechanics.github.io/TensND.jl/stable/")
+
 bib = CitationBibliography(
     joinpath(@__DIR__, "src", "references.bib");
     style = :authoryear,
@@ -425,6 +431,7 @@ PARTIAL_BUILD || let t0 = time()
                     CitationBibliography(
                         joinpath(@__DIR__, "src", "references.bib"); style = :authoryear
                     ),
+                    links,
                 ],
                 checkdocs = :exports,
                 warnonly = [:docs_block, :cross_references, :example_block, :linkcheck],
@@ -479,7 +486,7 @@ makedocs(;
         deploy_url = "https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl",
         description = "Mean-field homogenization of heterogeneous materials in Julia",
     ),
-    plugins = [bib],
+    plugins = [bib, links],
     # `src`, or the pruned tree a partial build stands up. Filtering `pages`
     # alone would leave every other page still executing.
     source = DOCS_SOURCE,

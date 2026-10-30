@@ -466,7 +466,7 @@ end
 # Kelvin–Mandel matrix in the canonical basis at order 4, components at order 2.
 _flat_matrix(t::TensND.AbstractTens{4, 3}) =
     Matrix(TensND.mandel(t, TensND.CanonicalBasis{3, eltype(t)}()))
-_flat_matrix(t::TensND.AbstractTens{2, 3}) = Matrix(TensND.components_canon(t))
+_flat_matrix(t::TensND.AbstractTens{2, 3}) = Matrix(TensND.canonical_components(t))
 
 _from_flat(M::AbstractMatrix, ::TensND.AbstractTens{4, 3}) = TensND.from_mandel(Matrix(M))
 _from_flat(M::AbstractMatrix, ::TensND.AbstractTens{2, 3}) = TensND.TensCanonical(Matrix(M))

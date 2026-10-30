@@ -23,7 +23,7 @@ function _hill_order2_2d_iso(ell::Ellipsoid{2, Elliptic}, K₀)
     P_arr = zeros(T, 2, 2)
     P_arr[1, 1] = ρ / (k * (1 + ρ))
     P_arr[2, 2] = one(T) / (k * (1 + ρ))
-    return TensND.Tens(P_arr, ell.basis)
+    return MFH_Core._tens_in(P_arr, ell.basis)
 end
 
 """
@@ -41,7 +41,7 @@ function _hill_order2_2d(ell::Ellipsoid{2}, K₀)
     ρ = T(ell.semi_axes[2] / ell.semi_axes[1])
     ρ2 = ρ * ρ
 
-    K_princ = TensND.change_tens(K₀, ell.basis)
+    K_princ = TensND.express(K₀, ell.basis)
     k11 = K_princ[1, 1]; k12 = K_princ[1, 2]; k22 = K_princ[2, 2]
 
     t1 = k11 * k22
@@ -71,5 +71,5 @@ function _hill_order2_2d(ell::Ellipsoid{2}, K₀)
         P_arr[2, 2] = t24 * t23 * (t12 * t19 - ρ * k11 * k22 + 2 * t5 * ρ - t10 * t28 + t10 * k22)
     end
 
-    return TensND.Tens(P_arr, ell.basis)
+    return MFH_Core._tens_in(P_arr, ell.basis)
 end

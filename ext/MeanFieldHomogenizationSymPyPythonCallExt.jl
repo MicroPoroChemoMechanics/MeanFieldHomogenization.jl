@@ -26,6 +26,63 @@ MeanFieldHomogenization.Elliptic.ell_E(φ::Sym, m::Number) = sympy.elliptic_e(φ
 MeanFieldHomogenization.Elliptic.ell_E(φ::Number, m::Sym) = sympy.elliptic_e(Sym(φ), m)
 
 # ──────────────────────────────────────────────────────────────────────────────
+#  Carlson's integrals as SymPy functions
+#
+#  SymPy has no R_F nor R_D. Without them a `Sym` argument ran the duplication
+#  of the numerical method, 50 steps unrolled into the expression. They are
+#  defined here as SymPy functions, `elliprf` and `elliprd` (the names of mpmath
+#  and SciPy): unevaluated calls, which SymPy differentiates by the same rules
+#  as the Symbolics extension and evaluates numerically by mpmath's. Python
+#  objects are not precompiled, so they are built when the extension loads.
+# ──────────────────────────────────────────────────────────────────────────────
+
+const _CARLSON = """
+import sympy, mpmath
+
+class elliprf(sympy.Function):
+    nargs = 3
+    def fdiff(self, argindex=1):
+        x, y, z = self.args
+        return -elliprd(*[(y, z, x), (z, x, y), (x, y, z)][argindex - 1]) / 6
+    def _eval_evalf(self, prec):
+        if all(a.is_number for a in self.args):
+            with mpmath.workprec(prec):
+                return sympy.Expr._from_mpmath(mpmath.elliprf(*[a._to_mpmath(prec) for a in self.args]), prec)
+
+class elliprd(sympy.Function):
+    nargs = 3
+    def fdiff(self, argindex=1):
+        x, y, z = self.args
+        dx = (elliprd(x, y, z) - elliprd(y, z, x)) / (2 * (z - x))
+        dy = (elliprd(x, y, z) - elliprd(z, x, y)) / (2 * (z - y))
+        return [dx, dy, (-sympy.Rational(3, 2) * elliprd(x, y, z) - x * dx - y * dy) / z][argindex - 1]
+    def _eval_evalf(self, prec):
+        if all(a.is_number for a in self.args):
+            with mpmath.workprec(prec):
+                return sympy.Expr._from_mpmath(mpmath.elliprd(*[a._to_mpmath(prec) for a in self.args]), prec)
+"""
+const _ELLIPRF = Ref{SymPyPythonCall.PythonCall.Py}()
+const _ELLIPRD = Ref{SymPyPythonCall.PythonCall.Py}()
+
+function __init__()
+    ns = SymPyPythonCall.PythonCall.pydict()
+    SymPyPythonCall.PythonCall.pyexec(_CARLSON, ns)
+    _ELLIPRF[] = ns["elliprf"]
+    _ELLIPRD[] = ns["elliprd"]
+    return nothing
+end
+
+# Any argument symbolic: the call, the others made symbolic.
+_carlson(f, x, y, z) = Sym(f(Sym(x).o, Sym(y).o, Sym(z).o))
+for (name, f) in ((:ell_RF, :_ELLIPRF), (:ell_RD, :_ELLIPRD)),
+        sig in (
+            (:Sym, :Number, :Number), (:Number, :Sym, :Number), (:Number, :Number, :Sym),
+            (:Sym, :Sym, :Number), (:Sym, :Number, :Sym), (:Number, :Sym, :Sym), (:Sym, :Sym, :Sym),
+        )
+    @eval MeanFieldHomogenization.Elliptic.$name(x::$(sig[1]), y::$(sig[2]), z::$(sig[3])) = _carlson($f[], x, y, z)
+end
+
+# ──────────────────────────────────────────────────────────────────────────────
 #  Symbolic Laplace and Laplace-Carson inversion
 #
 #  `inverse_laplace(F, t)` with a *numeric* `t` runs one of the four

@@ -87,10 +87,19 @@ for the translation guide.
 pkg> add MeanFieldHomogenization
 ```
 
-Nothing else has to be installed by hand. The symbolic layer goes through
-`SymPyPythonCall` (PythonCall), a dependency of `TensND`: the first time the
-package loads, CondaPkg installs a private Python with `sympy` (internet needed,
-once). To create your own symbols, `add SymPyPythonCall` to your environment.
+Nothing else has to be installed by hand for numerical work, derivatives
+included.
+
+!!! tip "What to load for symbolic computations"
+    | to work with | add | load |
+    | :--- | :--- | :--- |
+    | numbers and derivatives (`ForwardDiff`) | nothing | `using MeanFieldHomogenization` |
+    | SymPy symbols (`Sym`: `symbols`, `@syms`) | `pkg> add SymPyPythonCall` | `using MeanFieldHomogenization, SymPyPythonCall` |
+    | Symbolics variables (`Num`: `@variables`) | `pkg> add Symbolics` | `using MeanFieldHomogenization, Symbolics` |
+
+    SymPyPythonCall is optional: loading it activates the SymPy methods of
+    MeanFieldHomogenization and of TensND. The first time it loads, CondaPkg
+    installs a private Python with `sympy` (internet needed, once).
 
 ## A first calculation
 

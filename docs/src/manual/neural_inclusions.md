@@ -244,10 +244,10 @@ the *distinct over equal* semi-axis ratio, so ``\omega > 1`` is prolate and
 |:--|:--|:--|:--|:--|:--|:--|
 | `spheroid_hill_iso_elastic` | ``2\mu_0\mathbb P``, `TensTI{4,·,5}` | `log_aspect`, `nu0` | ``\omega \in [1/20, 20]``, ``\nu_0 \in [0, 0.49]`` | 2→48→48→5 | 6000 / 1500 | `3.1e-3` |
 | `spheroid_hill_iso_conduction` | ``k_0\boldsymbol P``, `TensTI{2,·,2}` | `log_aspect` | ``\omega \in [1/20, 20]`` | 1→32→32→2 | 3000 / 800 | `2.1e-4` |
-| `triaxial_hill_iso_elastic` | ``2\mu_0\mathbb P``, `TensOrtho` | `log_r2`, `log_r32`, `nu0` | ``a_2/a_1,\, a_3/a_2 \in [1/20, 1/1.05]``, ``\nu_0 \in [0, 0.49]`` | 3→64→64→9 | 12000 / 3000 | `6.7e-3` |
+| `triaxial_hill_iso_elastic` | ``2\mu_0\mathbb P``, [`TensOrtho`](@extref TensND TensND.TensOrtho) | `log_r2`, `log_r32`, `nu0` | ``a_2/a_1,\, a_3/a_2 \in [1/20, 1/1.05]``, ``\nu_0 \in [0, 0.49]`` | 3→64→64→9 | 12000 / 3000 | `6.7e-3` |
 | `spheroid_hill_iso_affine` | ``\mathbb U^{\boldsymbol A}`` and ``\mathbb V^{\boldsymbol A}``, `TensTI{4,·,5}` | `log_aspect` | ``\omega \in [1/20, 20]``, **any** ``\nu_0`` | 1→48→48→10 | 6000 / 1500 | `2.6e-4` |
 | `supershape_pore_conduction` | ``\boldsymbol A_{\nabla\nabla}``, `TensISO{2}` | `p` | ``p \in [0.35, 2.5]`` | 1→24→24→1 | 120 / 40 | `1.5e-3` |
-| `supershape_pore_elastic` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensCubic` | `p`, `nu0` | ``p \in [0.35, 2.5]``, ``\nu_0 \in [0, 0.45]`` | 2→48→48→3 | 480 / 140 | `2.1e-2` |
+| `supershape_pore_elastic` | ``\mathbb A_{\varepsilon\varepsilon}``, [`TensCubic`](@extref TensND TensND.TensCubic) | `p`, `nu0` | ``p \in [0.35, 2.5]``, ``\nu_0 \in [0, 0.45]`` | 2→48→48→3 | 480 / 140 | `2.1e-2` |
 | `axi_supershape_pore_conduction` | ``\boldsymbol A_{\nabla\nabla}``, `TensTI{2,·,2}` | `log_aspect`, `log_p` | ``c/a \in [0.5, 2]``, ``p \in [0.25, 1.5]`` | 2→48→48→2 | 500 / 150 | `3.7e-3` |
 | `axi_supershape_pore_elastic` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensTI{4,·,6}` | `log_aspect`, `log_p`, `nu0` | same, and ``\nu_0 \in [0, 0.45]`` | 3→64→64→6 | 1400 / 400 | `6.3e-2` |
 | `excentered_sphere_strain` | ``\mathbb A_{\varepsilon\varepsilon}``, `TensTI{4,·,6}` | `eccentricity`, `core_fraction`, `log_mu_ratio_2` | ``\alpha \in [0, 0.8]``, ``w \in [0.2, 0.7]``, ``E_2/E_0 \in [0.1, 2]`` | 3→64→64→6 | 1200 / 300 | `6.5e-4` |

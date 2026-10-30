@@ -32,8 +32,8 @@ fk(t) = 0.5 * exp(-t / 20.0) + 0.5
 fμ(t) = 0.5 * exp(-t / 20.0) + 0.5
 
 const _, 𝕁₄, 𝕂₄ = TensND.iso_projectors(Val(3), Val(Float64))
-const _J_M = TensND.mandel66(𝕁₄)
-const _K_M = TensND.mandel66(𝕂₄)
+const _J_M = TensND.mandel(TensND.canonical_components(𝕁₄); symmetrize = true)
+const _K_M = TensND.mandel(TensND.canonical_components(𝕂₄); symmetrize = true)
 
 # Julia matrix law (creep mode).
 function Js(t, tp)

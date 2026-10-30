@@ -223,7 +223,7 @@ end
     )
     times = collect(0.0:0.5:1.0)
     n = length(times)
-    to66 = TensND.mandel66
+    to66 = (t -> TensND.mandel(TensND.canonical_components(t); symmetrize = true))
     for external in (true, false)
         A_alv = gradient_gradient_concentration_alv(sphere, heaviside_law(C_M), times; external)
         N_alv = property_contribution_alv(sphere, heaviside_law(C_M), times; external)

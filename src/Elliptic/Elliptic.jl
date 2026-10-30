@@ -16,8 +16,8 @@ Dispatch table
 | :-------------------- | :------------------------------ |
 | `Float64`             | `Elliptic.jl` (GSL C binding)   |
 | `ForwardDiff.Dual`    | AGM / Carlson (pure arithmetic) |
-| `SymPyPythonCall.Sym`           | `sympy.elliptic_{k,e,f}` via the optional SymPy extension |
-| `Symbolics.Num`       | AGM / Carlson (arithmetic-only — verbose but correct; user can `simplify()`) |
+| `SymPyPythonCall.Sym`           | `sympy.elliptic_{k,e,f}`, and `elliprf`, `elliprd` defined on SymPy, via the optional SymPy extension |
+| `Symbolics.Num`       | calls kept unexpanded, with their derivatives, via the optional Symbolics extension |
 | any other `Number`    | AGM / Carlson                   |
 
 Users can add methods to [`ell_K`](@ref), [`ell_E`](@ref), [`ell_F`](@ref),

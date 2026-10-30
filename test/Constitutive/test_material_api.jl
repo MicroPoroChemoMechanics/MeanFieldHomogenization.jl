@@ -6,7 +6,7 @@ using LinearAlgebra
 const CS_MAT = TensISO{3}(3 * 30.0, 2 * 18.0)
 const CANON_MAT = TensND.CanonicalBasis{3, Float64}()
 # Canonical-frame components — see the frame rule in `Constitutive`.
-_g(t::TensND.AbstractTens) = get_array(TensND.change_tens(t, CANON_MAT))
+_g(t::TensND.AbstractTens) = get_array(TensND.express(t, CANON_MAT))
 
 # A material that implements the contract wrongly: `initial_state` returns no
 # material state and `material_response` has no method.

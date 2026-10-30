@@ -26,84 +26,27 @@ changing the laws written for this one.
 """
 struct SmallStrain end
 
-"""
-    Mandel{T}
-
-A symmetric second-order tensor of dimension 3 in **Kelvin–Mandel** components,
-an `SVector{6, T}` ordered
-
-```math
-(v_{11},\\ v_{22},\\ v_{33},\\ \\sqrt2\\,v_{23},\\ \\sqrt2\\,v_{13},\\ \\sqrt2\\,v_{12}).
-```
-
-The basis is orthonormal: ``\\boldsymbol{\\sigma}:\\boldsymbol{\\varepsilon} =
-\\boldsymbol{\\sigma}\\cdot\\boldsymbol{\\varepsilon}`` (`dot(σ, ε)`), the norm of
-the tensor is `norm(v)`, and a fourth-order tensor with the minor symmetries is
-an `SMatrix{6, 6}` acting by the matrix product. The laws of
-[`MaterialLaws`](@ref MeanFieldHomogenization.MaterialLaws) are written on
-these vectors.
-"""
-const Mandel{T} = SVector{6, T}
-
-"""
-    identity_mandel(T = Float64) -> Mandel{T}
-
-The second-order identity ``\\boldsymbol{1}``, in Kelvin–Mandel components.
-"""
-identity_mandel(::Type{T} = Float64) where {T} = Mandel{T}(one(T), one(T), one(T), zero(T), zero(T), zero(T))
-
-"""
-    trace_mandel(v::Mandel)
-
-The trace ``\\operatorname{tr}\\boldsymbol{v} = \\boldsymbol{v} : \\boldsymbol{1}``.
-"""
-trace_mandel(v::Mandel) = v[1] + v[2] + v[3]
-
-"""
-    deviator(v::Mandel) -> Mandel
-
-The deviatoric part ``\\boldsymbol{v} - \\tfrac13 (\\operatorname{tr}\\boldsymbol{v})\\,\\boldsymbol{1}``.
-"""
-deviator(v::Mandel) = v - (trace_mandel(v) / 3) * identity_mandel(eltype(v))
-
-"""
-    von_mises(σ::Mandel)
-
-The von Mises equivalent stress ``\\sigma_{eq} = \\sqrt{\\tfrac32\\,\\boldsymbol{s}:\\boldsymbol{s}}``,
-``\\boldsymbol{s}`` being the deviator of ``\\boldsymbol{\\sigma}``: equal to
-``|\\sigma|`` in uniaxial tension.
-
-!!! note "Not differentiable at zero"
-    The square root has no derivative at a vanishing deviator. A law whose
-    response must be differentiated there writes its flow rule with
-    ``\\sigma_{eq}^2`` instead, as [`NortonViscoplasticity`](@ref) does.
-"""
-von_mises(σ::Mandel) = sqrt(3 * _sqnorm_deviator(σ) / 2)
-
-"""
-    equivalent_strain(ε::Mandel)
-
-The equivalent strain ``\\varepsilon_{eq} = \\sqrt{\\tfrac23\\,\\boldsymbol{e}:\\boldsymbol{e}}``,
-``\\boldsymbol{e}`` being the deviator of ``\\boldsymbol{\\varepsilon}``: work-conjugate
-to [`von_mises`](@ref), and equal to ``|\\varepsilon|`` for an incompressible
-uniaxial strain.
-"""
-equivalent_strain(ε::Mandel) = sqrt(2 * _sqnorm_deviator(ε) / 3)
-
-# The squared norm of the deviator, from the differences of the normal
-# components: exactly zero for a change of volume, whatever the rounding, where
-# subtracting the mean would leave a few ulps (and a law with a power of the
-# deviatoric strain would take them for a deviatoric strain, or produce 0 × ∞
-# in its derivatives).
-_sqnorm_deviator(v::Mandel) =
-    ((v[1] - v[2])^2 + (v[2] - v[3])^2 + (v[3] - v[1])^2) / 3 + v[4]^2 + v[5]^2 + v[6]^2
+# The Kelvin–Mandel vectors the laws are written on, and their operations
+# (`Mandel`, `identity_mandel`, `trace_mandel`, `deviator`, `sqnorm_deviator`,
+# `von_mises`, `equivalent_strain`), are TensND's: imported in MaterialLaws.jl
+# and exported from there with the rest of the module.
 
 # ── The boundary with TensND ─────────────────────────────────────────────────
 # Components in the canonical basis (`to_tensors`), whatever basis the tensor is
-# written in; then Tensors.jl's Mandel ordering, which is the one above.
+# written in; then Tensors.jl's Mandel ordering, which is that of `Mandel`.
 
 _mandel(t::TensND.AbstractTens{2, 3}) = Tensors.tomandel(SArray, to_tensors(t))
 _mandel(t::TensND.AbstractTens{4, 3}) = Tensors.tomandel(SArray, to_tensors(t))
 
 _tensor(v::StaticVector{6}) = TensND.from_mandel(v)
 _tensor(A::StaticMatrix{6, 6}) = TensND.from_mandel(A)
+
+# Symmetric N×N matrices by their N(N+1)/2 upper components, row by row: the
+# unknowns of the self-consistent fixed points on a compliance or a stiffness.
+@inline _upper_index(i, j, N) = (a = min(i, j); b = max(i, j); (a - 1) * N - ((a - 1) * (a - 2)) ÷ 2 + (b - a + 1))
+_sym_matrix(v::SVector{K, T}, ::Val{N}) where {K, T, N} =
+    SMatrix{N, N, T}(ntuple(q -> v[_upper_index((q - 1) % N + 1, (q - 1) ÷ N + 1, N)], Val(N * N)))
+@generated function _sym_components(M::StaticMatrix{N, N, T}) where {N, T}
+    entries = [:((M[$i, $j] + M[$j, $i]) / 2) for i in 1:N for j in i:N]
+    return :(SVector{$(length(entries))}($(entries...)))
+end

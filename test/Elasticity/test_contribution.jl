@@ -45,7 +45,7 @@ end
     # S_eff ≈ inv(C_eff) to first order in f
     S_from_C = inv(C_eff)
     # First-order agreement: residual ~ f² × scale
-    @test maximum(abs, components_canon(S_eff - S_from_C)) / maximum(abs, components_canon(S_from_C)) < 5 * f^2
+    @test maximum(abs, canonical_components(S_eff - S_from_C)) / maximum(abs, canonical_components(S_from_C)) < 5 * f^2
 end
 
 @testset "inverse_property_contribution — crack case (2-arg) still works" begin

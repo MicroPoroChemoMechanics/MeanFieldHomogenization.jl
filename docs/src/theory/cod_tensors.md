@@ -1170,7 +1170,7 @@ They reduce to the isotropic forms above for ``\nu_1=\nu_2=\nu`` and
 ``H=\Gamma=1``, where ``\sigma_\gamma = 2`` and ``\beta = 1-\nu``.
 ``\sigma_\gamma`` is the sum ``\gamma_1+\gamma_2`` of the two in-plane Stroh roots
 of §4. Implementation: `src/Cracks/cod_analytical.jl`, with the parameters
-read by TensND's `ti_args_hoenig` from the compliance.
+read by TensND's `ti_constants(…; form = :hoenig)` from the compliance.
 
 ```@raw html
 <details><summary>The stiffness components in the engineering parameters</summary>
@@ -1410,8 +1410,8 @@ Evaluation: [`sif`](@ref) and [`dif`](@ref) (`src/Cracks/sif.jl`).
 
 | `(crack, C₀)` | `:auto` selects | alternatives | ForwardDiff |
 | :------------ | :-------------- | :----------- | :---------: |
-| `EllipticCrack` / `RibbonCrack`, `TensISO` | `Analytical` | — | ✓ |
-| `EllipticCrack` / `RibbonCrack`, `TensTI` (aligned) | `Analytical` (MFH) | — | ✓ |
+| `EllipticCrack` / `RibbonCrack`, [`TensISO`](@extref TensND TensND.TensISO) | `Analytical` | — | ✓ |
+| `EllipticCrack` / `RibbonCrack`, [`TensTI`](@extref TensND TensND.TensTI) (aligned) | `Analytical` (MFH) | — | ✓ |
 | `EllipticCrack` / `RibbonCrack`, `AbstractTens{4,3}` | `NestedQuadGK` | `:residues`, `:decuhr`, `:nestedquadgk` | ✓ |
 
 Entry points: [`cod_tensor`](@ref) / [`B_tensor`](@ref) for ``\boldsymbol{B}``,

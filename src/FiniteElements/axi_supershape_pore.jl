@@ -128,7 +128,7 @@ function _axi_pore_run_elastic(
     μ, ν = _fe_iso_moduli(C₀; what = "`FEAxiSupershapePore`")
     s.elastic === nothing || return _pore_surrogate_response(s.elastic, s, C₀)
     R = _fe_frame(s)
-    C0_66 = Core.mandel66_minor(_to_local4(C₀, R))
+    C0_66 = TensND.mandel(_to_local4(C₀, R); symmetrize = true)
     Dmap = [AXI_SET_MATRIX => C0_66]
     backend = _axi_setup(s).backend
     V_D = Float64(shape_volume(s.shape))

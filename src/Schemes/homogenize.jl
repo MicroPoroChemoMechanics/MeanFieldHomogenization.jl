@@ -57,6 +57,30 @@ function homogenize(
     end
 end
 
+# An iterative scheme compares successive values (a fixed point) or controls
+# its step on them (an adaptive ODE solve), which a symbolic modulus cannot
+# answer: `Num` raises a TypeError deep in the loop, `Sym` a MethodError, or
+# the solve does not end. Refused at the entry instead, with the way out, on
+# the element type of a tensor or a state the scheme computes anyway (the seed
+# of a self-consistent iteration, the initial state of the differential ODE):
+# a check decided on a type. A `ForwardDiff.Dual` is comparable: derivatives
+# go through. The scheme is named by a `Symbol`, the throw kept out of line:
+# a scheme object passed down was boxed on the numerical path, 32 bytes for
+# each self-consistent estimate.
+@inline _require_comparable(t::TensND.AbstractTens, name::Symbol) = _require_comparable(eltype(t), name)
+@inline _require_comparable(::Type{T}, name::Symbol) where {T} =
+    is_hard_numeric(real(T)) ? nothing : _throw_not_comparable(T, name)
+@noinline function _throw_not_comparable(T, name::Symbol)
+    throw(
+        ArgumentError(
+            "$name iterates on the effective property, comparing successive values, " *
+                "which symbolic moduli ($(T)) cannot be compared by: give numbers (duals carry the " *
+                "derivatives through), or take an explicit scheme (Voigt, Reuss, Dilute, DiluteDual, " *
+                "MoriTanaka) for a closed form"
+        )
+    )
+end
+
 # Backward-compatible kwarg form, kept so existing scripts and tests using
 # the old `homogenize(rve, scheme; property = …)` signature keep working.
 # New code is encouraged to pass the property name as a positional argument

@@ -22,6 +22,12 @@ Kronecker delta ``\\delta_{ij}`` in element type `T` — returns `one(T)` when
 
 # `primal(x)`, the value under every level of dual numbers, is TensND's.
 
+# The tensor of components `arr` in `basis`, of order and dimension known from
+# the types: built from a plain array, they are read from its size at run time,
+# and inference loses them, with the type of every Hill tensor built so.
+@inline _tens_in(arr::AbstractArray{T, order}, basis::TensND.AbstractBasis{dim}) where {T, order, dim} =
+    TensND.Tens(TensND._static_tensor(arr, Val(dim), Val(order)), basis)
+
 """
     _fill_sym4!(A, i, j, k, l, v)
 

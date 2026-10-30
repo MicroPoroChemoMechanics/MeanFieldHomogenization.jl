@@ -43,7 +43,7 @@ _crystal(; frame = TensND.CanonicalBasis{3, Float64}(), kw...) = CrystalViscopla
         law = _crystal(; frame)
         ε = SVector(2.0e-5, -1.0e-5, 0.5e-5, 0, 0, 1.0e-5)
         σ, 𝕂, st = point_update(law, ε, initial_state(law), 0.0)
-        @test 𝕂 ≈ mandel(tens_cubic(C11_CR, C12_CR, C44_CR, frame), TensND.CanonicalBasis{3, Float64}()) rtol = 1.0e-12
+        @test 𝕂 ≈ mandel(cubic_from_constants(C11_CR, C12_CR, C44_CR, frame), TensND.CanonicalBasis{3, Float64}()) rtol = 1.0e-12
         @test iszero(st.y)
     end
 end
@@ -72,7 +72,7 @@ end
         a = transpose(R) * SVector(1.0, 0, 0)           # e₁ in the crystal frame
         ts = range(0, 10; length = 6)
         r = point_response(law, LoadingPath(ts; σ11 = σ))
-        S = inv(mandel(tens_cubic(C11_CR, C12_CR, C44_CR, frame), TensND.CanonicalBasis{3, Float64}()))
+        S = inv(mandel(cubic_from_constants(C11_CR, C12_CR, C44_CR, frame), TensND.CanonicalBasis{3, Float64}()))
         @test r[:ε11] ≈ [S[1, 1] * σ + _steady_axial_rate(a, σ) * t for t in ts] rtol = 1.0e-9
     end
 end

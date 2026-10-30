@@ -258,7 +258,7 @@ C_tilt = homogenize(lam_tilt, Laminated(), :C)
 (type = typeof(C_tilt), axis = simplify.(TensND.axis(C_tilt)))
 ```
 
-The type is still an exact `TensTI`, and the axis is the normal we asked for.
+The type is still an exact [`TensTI`](@extref TensND TensND.TensTI), and the axis is the normal we asked for.
 The physics, meanwhile, has not moved at all: the five Walpole coefficients are
 **identical** to those of the canonical stack — only the axis they are attached
 to has changed. That is frame covariance, stated as an identity rather than

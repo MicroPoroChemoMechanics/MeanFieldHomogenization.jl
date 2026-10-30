@@ -155,7 +155,7 @@ _states_equal(a, b) = false
 # disagree with each other in a way a tangent cannot represent).
 function _check_tangent(m, g, st, C; Δ, rtol)
     ε = g.ε
-    A = TensND.components_canon(C)
+    A = TensND.canonical_components(C)
     maxerr = 0.0
     scale = maximum(abs, A)
     scale == 0 && return nothing
@@ -166,7 +166,7 @@ function _check_tangent(m, g, st, C; Δ, rtol)
         dE = TensND.Tens(E)
         σp = material_response(m, merge(g, (; ε = ε + Δ * dE)), st, 0.0).fluxes.σ
         σm = material_response(m, merge(g, (; ε = ε - Δ * dE)), st, 0.0).fluxes.σ
-        fd = TensND.components_canon((σp - σm) / (2Δ))
+        fd = TensND.canonical_components((σp - σm) / (2Δ))
         maxerr = max(maxerr, maximum(abs, fd .- view(A, :, :, k, l)))
     end
     return maxerr <= rtol * scale

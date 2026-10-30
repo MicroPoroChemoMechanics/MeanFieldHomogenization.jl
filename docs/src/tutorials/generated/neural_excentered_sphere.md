@@ -253,7 +253,7 @@ The surrogate is smooth in its inputs, so `ForwardDiff` reaches the
 its solve would silently return zero.
 
 ````@example neural_excentered_sphere
-idx = C -> components_canon(C)[1, 1, 1, 1]
+idx = C -> canonical_components(C)[1, 1, 1, 1]
 
 println("\n  ∂C₁₁₁₁/∂α through a Mori-Tanaka estimate, f = 0.4, w = 0.5, E₂/E₀ = 0.4")
 println("  ", "-"^58)

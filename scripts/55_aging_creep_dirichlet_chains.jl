@@ -72,8 +72,8 @@ const Jk_inc, Jg_inc = granger_Jk_Jg(
 
 # Iso projectors in Mandel form (constant 6×6 matrices).
 const _, 𝕁₄, 𝕂₄ = TensND.iso_projectors(Val(3), Val(Float64))
-const _J_M = TensND.mandel66(𝕁₄)
-const _K_M = TensND.mandel66(𝕂₄)
+const _J_M = TensND.mandel(TensND.canonical_components(𝕁₄); symmetrize = true)
+const _K_M = TensND.mandel(TensND.canonical_components(𝕂₄); symmetrize = true)
 
 # ALV laws (creep mode, 6×6 matrix-valued).
 make_iso_law(Jk, Jg) = ViscoLaw(

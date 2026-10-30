@@ -302,7 +302,7 @@ export remainder_phase_name, remainder_volume_fraction, phase_names
 export AbstractDistributionShape, UniformDistribution
 export AbstractSymmetrize, NoSymmetrize, IsoSymmetrize, TISymmetrize
 export isotropify, transverse_isotropify
-export ti_average_mandel66, iso_average_mandel66
+export ti_average_mandel, iso_average_mandel
 export best_fit_ti, best_fit_iso, best_fit_ortho
 export polar_orientation_bins
 export Phase, RVE
@@ -358,6 +358,7 @@ export ClusterModel, EquivalentInclusion
 export AndersonDefault, NewtonDefault, AutoNonlinear
 export DifferentialTrajectory, Proportional, Sequential, CustomPath, Path, DifferentialScheme
 export homogenize, differential_path
+export HillCache, with_hill_cache
 export ConcentrationTensors, concentration_tensors
 export levin_free_gradient, levin_preflux, levin_free_strain, levin_prestress
 export crack_family_compliances, crack_family_residual
@@ -458,19 +459,19 @@ export kinematics, SmallStrain, state_layout, gradient_layout, flux_layout, law_
 export Mandel, identity_mandel, trace_mandel, deviator, von_mises, equivalent_strain
 export AbstractLocalAlgorithm, LocalNewton, LocalIntegrationError, point_update
 export LinearElasticity, PowerLawElasticity, MaxwellViscoelasticity, BiotPoroelasticity
-export NortonViscoplasticity, J2Plasticity, CrystalViscoplasticity, slip_systems
+export NortonViscoplasticity, PerzynaViscoplasticity, J2Plasticity, CrystalViscoplasticity, slip_systems
 export LoadingPath, point_response, PointResponse, PointDriverError
 export NonlinearHomogenized, SecantMethod, ClassicalSecant, ModifiedSecant, secant_moduli
 export CrackGrowthDamage, CrackGrowthResistance
 export ClosingCrackPoroelasticity, ExponentialClosure
 export DruckerPrager, Heterogeneities, Pores, RigidInclusions, FrictionalComposite, limit_stress
 export AbstractPhaseComposite, UniformStrain, UniformStress
-export PolycrystalModel, TaylorModel, KronerModel, BerveillerZaouiModel, Polycrystal, PolycrystalState, grain_states, random_orientations
-export PowerLawCrystal, crystal_strain_rate, TangentModel, ViscoplasticPolycrystal, flow_stress
-export IncrementalTangent, AffineComposite
+export PolycrystalModel, TaylorModel, KronerModel, BerveillerZaouiModel, HillModel, Polycrystal, PolycrystalState, grain_states
+export PowerLawCrystal, crystal_strain_rate, TangentModel, AnisotropicTangentModel, ViscoplasticPolycrystal, flow_stress
+export IncrementalTangent, AffineComposite, SecondOrderComposite, AffineEVPComposite, AffineEVPState, QuasiElasticComposite, QuasiElasticState
 export QuadratureStates, commit!, rollback!
 export ModelingHypothesis, ThreeD, PlaneStrain, Axisymmetric, mandel_strain, volume_weight
-export quasistatic!, GlobalNewtonError, material_element!, material_system, write_material_vtk
+export quasistatic!, GlobalNewtonError, material_element!, material_system, write_material_vtk, update_points!
 
 # ── MFH Studio launcher ──────────────────────────────────────────────────────
 export mfhstudio

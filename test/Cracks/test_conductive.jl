@@ -4,7 +4,7 @@ using TensND
 using LinearAlgebra
 
 const CANON_CD = TensND.CanonicalBasis{3, Float64}()
-_g(t) = get_array(TensND.change_tens(t, CANON_CD))
+_g(t) = get_array(TensND.express(t, CANON_CD))
 
 @testset "conductive crack — closed form and limits" begin
     a, k₀, C = 1.0, 1.0e-3, 2.0e-2

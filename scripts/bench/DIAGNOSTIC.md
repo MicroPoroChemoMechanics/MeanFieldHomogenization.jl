@@ -234,7 +234,7 @@ Causes identified:
    Since `TensOrtho <: AbstractArray`, any generic traversal became O(81²) for
    an O(81) operation.
 2. **No closed-form `dcontract` for `TensOrtho`**: every `⊡` went through
-   `same_basis` → `change_tens` → dense `get_array` on **both** operands before
+   `same_basis` → `express` → dense `get_array` on **both** operands before
    any arithmetic. Yet the file header (`tens_walpole.jl:863-870`) already
    states the structure: in the material frame the KM matrix is block-diagonal
    `[3×3 sym] ⊕ diag(2C₄₄,2C₅₅,2C₆₆)`, so `A⊡B` is one 3×3 product plus 3 scalar
@@ -257,7 +257,7 @@ Causes identified:
 builds a non-concrete type at compile time and construction becomes fully
 dynamic — **3 147 ns and 3 120 B** for an 81-element array, against 311 ns to
 produce that array. Every structured tensor rejoins the generic route through
-this function (`change_tens` → `same_basis` → every binary operation), so the
+this function (`express` → `same_basis` → every binary operation), so the
 cost was paid **twice per `⊡`** between structured operands. `dim` is now
 channelled through `Val`.
 
@@ -272,20 +272,20 @@ operand pair that falls back to the dense path.
 **(c) The closed-form `dcontract`, and the bottleneck it exposed.** Taken up
 later, after establishing the convention instead of assuming it.
 
-`inv_KM` had no frame problem: `KM(t)` is the **canonical** Kelvin-Mandel form,
-`inv_KM` reads it back as such, and the round trip is exact for all eight forms
+`from_mandel` had no frame problem: `mandel(t)` is the **canonical** Kelvin-Mandel form,
+`from_mandel` reads it back as such, and the round trip is exact for all eight forms
 (orders 2 and 4, symmetric or not, dim 2 and 3). The prototype did
-`inv_KM(Mₐ·M_b)` with `Mₐ`, `M_b` the KM of the **material frame**: it
+`from_mandel(Mₐ·M_b)` with `Mₐ`, `M_b` the KM of the **material frame**: it
 interpreted material components as canonical ones. In the canonical frame `Q = I`
 and the error was invisible (1.8e-12); in a rotated frame it was 6039. The
 congruence was missing.
 
 Verified on three frames rather than postulated:
 
-    KM(t) == Q · KM_material(t) · Qᵀ          (5.3e-15)
+    mandel(t) == Q · mandel_material(t) · Qᵀ          (5.3e-15)
 
 where `Q` is the Kelvin-Mandel representation of `R ⊠ˢ R`, i.e.
-`KM(rot6(θ,ϕ,ψ))` — which TensND already had. `Q` is **orthogonal** (2.2e-16):
+`mandel(rotation_tensor4(θ,ϕ,ψ))` — which TensND already had. `Q` is **orthogonal** (2.2e-16):
 exactly what Kelvin-Mandel buys over Voigt, where the analogous matrix is not.
 
 The result is not a `TensOrtho`: the product of two symmetric 3×3 blocks is not
@@ -312,7 +312,7 @@ than the algebra it guarded.
 |---|---|---|---|
 | `dcontract.ortho_ortho` | 13 860 ns / 9 136 B | 4 770 ns | **164 ns / 304 B** |
 | `dcontract.iso_ortho` | 10 900 ns | 4 380 ns | **164 ns** |
-| `inv_KM` 6×6 | 228 ns | — | **37.5 ns** |
+| `from_mandel` 6×6 | 228 ns | — | **37.5 ns** |
 
 That is **−98.8 %** on what had been named the most profitable remaining
 opportunity. The ~690× factor against the generic tensor falls to ~3.3×.
@@ -496,7 +496,7 @@ noise floor (controls, p90 of |Δt|/t) = 0.8 %
 | `tensnd/dcontract.ortho_ortho` | **−99.3 %** | **−94.9 %** |
 | `tensnd/dcontract.iso_ortho` | **−99.3 %** | **−95.6 %** |
 | `tensnd/collect.ortho` | −94.4 % | −98.6 % |
-| `tensnd/inv_KM.gen` | **−87.0 %** | +0.0 % |
+| `tensnd/from_mandel.gen` | **−87.0 %** | +0.0 % |
 | `kernels/cod.nqgk.ellipse03.tri` | −85.3 % | **−99.4 %** |
 | `kernels/hill.decuhr.tri.321` | −62.0 % | −80.7 % |
 | `schemes/mt.aniso_matrix` | −50.8 % | −50.0 % |
@@ -519,11 +519,11 @@ static), `dcontract.iso_ortho` at 4.0e-17 and `dcontract.ortho_ortho` at 1.9e-17
 looking at the sign. Verified rather than assumed: reproducible over five fresh
 processes (−4.8 to −6.8 %), allocations identical to the byte, bit-for-bit
 checksum, work counters unchanged. An A/B canceling the single `bases.jl` fix
-shows **it is not that one**; the remaining candidate is `inv_KM`, which ALV
+shows **it is not that one**; the remaining candidate is `from_mandel`, which ALV
 calls in a loop to convert its Mandel blocks. Never formally isolated.
 
 That is the limit of the control set: it was chosen assuming the tiers would not
-touch shared primitives. `inv_KM`, `tensor_or_array` and basis comparison are
+touch shared primitives. `from_mandel`, `tensor_or_array` and basis comparison are
 global, so a control can legitimately move — in the right direction here.
 
 **What goes up.** The only deterministic item is `schemes/mt.conductivity.iso2`,
@@ -565,7 +565,7 @@ and still current.
 | topic | why it is not done |
 |---|---|
 | 12-parameter orthotropic container | `A ⊡ B` of two `TensOrtho` has no major symmetry (§4c), so the result falls back to `TensCanonical` as before. A dedicated container would keep the structure across a chain of contractions but would cost kernel methods on the MFH side. The precedent cited at audit time — the `MethodError` on `TensTI{4,T,8}` (§5.2) — is **since fixed**, so the risk is known and manageable; it no longer blocks |
-| isolating the primitive behind `alv.voigt.n50`'s −5.6 % | investigation closed with no code consequence: the gain is real and beneficial, `bases.jl` ruled out by A/B, `inv_KM` the remaining candidate, never formally isolated. Kept for the record, nothing at stake |
+| isolating the primitive behind `alv.voigt.n50`'s −5.6 % | investigation closed with no code consequence: the gain is real and beneficial, `bases.jl` ruled out by A/B, `from_mandel` the remaining candidate, never formally isolated. Kept for the record, nothing at stake |
 | `prepare_logI` / `prepare_logz` cache on the `:residues` path | the most invasive tier-3 item; the path leaves the campaign unchanged |
 | `SVector{21,T}` for Hill integrand returns | not needed for the gain obtained; the `Integrals`/DECUHR path needs a separate check of buffer mutability |
 | concrete-type bases | TensND tier 7, not started: the abstract fields `Tens.basis::Basis`, `TensRotated.basis` and `CoorSystemNum.{χ,R,Γ}_func::Function` remain. `best_sym_tens` is **done** (§4 ter) |
