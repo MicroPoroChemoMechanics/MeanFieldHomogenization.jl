@@ -151,6 +151,7 @@ function _advance(m, drive, t₀, t₁, g, st, opts, depth)
     catch err
         (err isa LocalIntegrationError || err isa PointDriverError) || rethrow()
         depth < opts.max_cuts || rethrow()
+        _warn_unreachable(err, opts.rtol)
         tₘ = (t₀ + t₁) / 2
         _, gₘ, stₘ = _advance(m, drive, t₀, tₘ, g, st, opts, depth + 1)
         return _advance(m, drive, tₘ, t₁, gₘ, stₘ, opts, depth + 1)
@@ -183,6 +184,21 @@ function _mixed_step(m, drive, t, Δt, g_guess, st, opts)
 end
 
 _flux_residual(F, c, target) = ifelse.(c, zero(F), F - target)
+
+# An iteration that stopped with a residual below √ε has not diverged (Newton's
+# method, converging, would have passed that point in one step): the tolerance
+# is out of the reach of the material, whose own solves leave a floor on the
+# fluxes. Cutting the step does not lower that floor, but it does change
+# the time discretization, and with it the response of a rate-dependent
+# material: said once, rather than done silently.
+_warn_unreachable(err, rtol) = nothing
+function _warn_unreachable(err::PointDriverError, rtol)
+    err.residual <= sqrt(eps(Float64)) || return nothing
+    @warn "point_response: at t = $(err.time) the relative residual stalls at $(err.residual), above rtol = $rtol: " *
+        "the tolerance is finer than the material resolves its fluxes. The step is cut, which changes the time " *
+        "discretization; raise rtol to keep the times of the path." maxlog = 1
+    return nothing
+end
 
 # Once the values have converged, the Newton steps that make the derivatives
 # exact; −1 before; an error after `maxiters` iterations. Relative to the

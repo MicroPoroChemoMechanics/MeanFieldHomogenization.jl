@@ -216,6 +216,14 @@ genuine breaks are listed below.
 
 ### Fixed
 
+- `point_response` says when it cuts a step because the tolerance asked is out
+  of the reach of the material: the Newton iteration stopping below √ε, the
+  residual is the floor the solves of the material leave on its fluxes, which a
+  cut does not lower, while it changes the time discretization and with it the
+  response of a rate-dependent material (by 7e-3 for a quasi-elastic composite
+  driven at `rtol = 1e-13`). A warning, once, gives the residual reached and asks
+  to raise `rtol`; cuts that cure a divergence stay silent.
+
 - The bundles that return a concentration with its flux concentration or its
   contribution (`concentration_and_flux_average`, `concentration_and_contribution`)
   promise the bits of the single functions. Since the isotropic operations of

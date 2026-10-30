@@ -86,3 +86,16 @@ end
     @test_throws ArgumentError QuasiElasticComposite(rve, (M = c.phases[1], I = PerzynaViscoplasticity(; E = 1.0e5, ν = 0.3, σY = 100.0, η = 1.0e5, m = 1.0)))
     @test_throws DomainError QuasiElasticComposite(rve, (M = c.phases[1], I = c.phases[2]); relaxation_time = -1.0)
 end
+
+@testset "a tolerance out of the reach of the material is said" begin
+    rve = _rve_qe(0.2)
+    c = QuasiElasticComposite(rve, (M = NortonViscoplasticity(; E = 70.0e3, ν = 0.3, K = 300.0, n = 3), I = NortonViscoplasticity(; E = 400.0e3, ν = 0.25, K = 900.0, n = 3)))
+    path = LoadingPath(range(0, 1; length = 5); ε11 = t -> 2.0e-3 * t)
+    # Finer than the solves of the composite resolve its stress: the steps are
+    # cut, and the driver says why, once.
+    @test_logs (:warn, r"stalls") match_mode = :any point_response(c, path; rtol = 1.0e-14)
+    # A residual far from the tolerance is a failure to converge, which a cut
+    # may cure: nothing to say.
+    @test_logs MP_QE._warn_unreachable(MP_QE.PointDriverError(0.0, 25, 1.0e-2), 1.0e-10)
+    @test_logs MP_QE._warn_unreachable(MP_QE.LocalIntegrationError(:law, 50, 1.0, "no convergence"), 1.0e-10)
+end
