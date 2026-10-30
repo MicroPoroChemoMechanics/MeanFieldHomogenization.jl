@@ -42,6 +42,7 @@ using TensND
 using LinearAlgebra
 using Printf
 using QuadGK: gauss
+using Random: Xoshiro
 using ForwardDiff
 using SymPyPythonCall
 using Plots
@@ -69,15 +70,31 @@ in a matrix ``\mathbb{C}`` as an integral over the unit sphere (eq. 1):
 
 where ``\boldsymbol{A}`` is any invertible tensor, symmetric or not. The
 product ``\underline{a}\stackrel{s}{\otimes}\boldsymbol{N}\stackrel{s}{\otimes}\underline{a}``
-symmetrizes ``a_i N_{jk} a_l`` over the first two and the last two indices.
-TensND's `⊠ˢ` symmetrizes over the last two only, so that the four terms are
-the half sum of ``(\underline{a}\otimes\underline{a})\stackrel{s}{\boxtimes}\boldsymbol{N}``
-and ``\boldsymbol{N}\stackrel{s}{\boxtimes}(\underline{a}\otimes\underline{a})``:
+symmetrizes ``a_i N_{jk} a_l`` over the first two and the last two indices,
+which is what TensND's `⊗ˢ` does, one pair at a time: the integrand is written
+as the paper writes it.
 
 ````@example hill_transformation
-sandwich(a, N) = ((a ⊗ a) ⊠ˢ N + N ⊠ˢ (a ⊗ a)) / 2
-hill_integrand(y, C) = sandwich(y, inv(y ⋅ C ⋅ y))
+hill_integrand(y, C) = y ⊗ˢ inv(y ⋅ C ⋅ y) ⊗ˢ y
 nothing #hide
+````
+
+For a symmetric ``\boldsymbol{N}``, the same tensor is the half sum of
+``(\underline{a}\otimes\underline{a})\stackrel{s}{\boxtimes}\boldsymbol{N}`` and
+``\boldsymbol{N}\stackrel{s}{\boxtimes}(\underline{a}\otimes\underline{a})``, where
+`⊠ˢ` symmetrizes the last two indices only. The two writings agree to the last
+bits on a random matrix and direction, and the one of the paper is the faster
+(each evaluated 10⁴ times, the best of five runs):
+
+````@example hill_transformation
+hill_integrand_halfsum(y, C) = (N = inv(y ⋅ C ⋅ y); ((y ⊗ y) ⊠ˢ N + N ⊠ˢ (y ⊗ y)) / 2)
+let C = rand(Xoshiro(98), TensND.Tens{4, 3}; definite = true), y = TensND.Tens(normalize(randn(Xoshiro(99), 3)))
+    timing(f) = minimum(@elapsed(for _ in 1:10_000; f(y, C); end) for _ in 1:5) / 10_000
+    hill_integrand(y, C); hill_integrand_halfsum(y, C)
+    @printf "gap between the two writings:  %.1e\n" relgap(hill_integrand(y, C), hill_integrand_halfsum(y, C))
+    @printf "y ⊗ˢ (y·C·y)⁻¹ ⊗ˢ y:            %.0f ns\n" 1.0e9 * timing(hill_integrand)
+    @printf "half sum of two ⊠ˢ products:   %.0f ns\n" 1.0e9 * timing(hill_integrand_halfsum)
+end
 ````
 
 The integrand is a smooth function on the sphere. A Gauss-Legendre rule in
@@ -164,7 +181,7 @@ removes.
 
 In eq. 1 the shape enters through ``\boldsymbol{A}^{-1}\cdot\underline{\zeta}``
 only. Writing ``\mathbb{B} = \boldsymbol{A}^{-1}\stackrel{s}{\boxtimes}\boldsymbol{A}^{-1}``,
-the acoustic tensor and the sandwich product become
+the acoustic tensor and the symmetrized product become
 ``\underline{y}\cdot\mathbb{C}\cdot\underline{y} = \underline{\zeta}\cdot(\mathbb{B}^{T}:\mathbb{C}:\mathbb{B})\cdot\underline{\zeta}``
 and ``\underline{y}\stackrel{s}{\otimes}\boldsymbol{N}\stackrel{s}{\otimes}\underline{y}
 = \mathbb{B}:(\underline{\zeta}\stackrel{s}{\otimes}\boldsymbol{N}\stackrel{s}{\otimes}\underline{\zeta}):\mathbb{B}^{T}``
@@ -380,7 +397,7 @@ c̃₁₁, c̃₁₂, c̃₁₃, c̃₃₃, c̃₄₄ = (C₁₁, C₁₂, C₁�
 C̃ = ti_from_constants(c̃₁₁, c̃₁₂, c̃₁₃, c̃₃₃, c̃₄₄, e₃)
 ζ₀ = TensND.Tens(Sym[sqrt(1 - z^2), 0, z])
 Ñ = inv(ζ₀ ⋅ C̃ ⋅ ζ₀)
-p̃ᶻ = walpole(sandwich(ζ₀, Ñ)) ./ 2
+p̃ᶻ = walpole(ζ₀ ⊗ˢ Ñ ⊗ˢ ζ₀) ./ 2
 nothing #hide
 ````
 
@@ -908,7 +925,7 @@ flat = Dict(J₀ => eqD3[1], J₂ => eqD3[2], J₄ => eqD3[3], I₀ => subs(eqD2
 p_flat = [subs(p, flat...) for p in eq36]
 P⁰ = [laurent(p, 0) for p in p_flat]
 P¹ = [laurent(p, 1) for p in p_flat]
-eq37 = walpole(sandwich(TensND.Tens(Sym[0, 0, 1]), inv(TensND.Tens(Sym[0, 0, 1]) ⋅ C_TI ⋅ TensND.Tens(Sym[0, 0, 1]))))
+eq37 = walpole(hill_integrand(TensND.Tens(Sym[0, 0, 1]), C_TI))
 eq38 = (
     PI / (2 * (γ₁ + γ₂)) * (C₁₁ - Σ * C₄₄) / (C₄₄ * C₃₃),
     PI / (4 * (γ₁ + γ₂)) * (1 / (γ₁ * γ₂ * C₃₃) + 1 / C₄₄),
@@ -993,7 +1010,7 @@ H41 = [lambdify(Sym(h), (C₁₁, C₁₂, C₁₃, C₃₃, C₄₄, p¹...))(c
 H_eq41 = TensTI{4}(real.(H41)..., (0.0, 0.0, 1.0))
 H_lim(ω) = ω * inv(second_hill_tensor(Ellipsoid(1.0, 1.0, ω), C_sev_t))
 n₃ = TensND.Tens([0.0, 0.0, 1.0])
-H_cod = 3 / 4 * sandwich(n₃, cod_tensor(PennyCrack(1.0), C_sev_t))
+H_cod = 3 / 4 * (n₃ ⊗ˢ cod_tensor(PennyCrack(1.0), C_sev_t) ⊗ˢ n₃)
 for ω in (1.0e-2, 1.0e-4, 1.0e-6)
     @printf "ω = %.0e   ω Q⁻¹ against eq. 41:  %.1e\n" ω relgap(H_lim(ω), H_eq41)
 end
