@@ -33,7 +33,7 @@ path = ".."
 
 [compat]
 ChemistryLab = "0.40, 0.41"
-DECUHR = "0.3"
+DECUHR = "0.4"
 Documenter = "1.17"
 DocumenterCitations = "1"
 DocumenterVitepress = "0.3"
