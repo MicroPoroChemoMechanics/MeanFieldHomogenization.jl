@@ -169,7 +169,7 @@ concentration tensor onto the corresponding symmetry class:
 | Symmetrize value           | Meaning                                                     | Result class |
 | :------------------------- | :---------------------------------------------------------- | :----------- |
 | `:none` (default)          | inclusion at its declared orientation                       | as input     |
-| `:iso`                     | uniform spatial distribution (Reynolds avg over `SO(3)`)    | `TensISO`    |
+| `:iso`                     | uniform spatial distribution (Reynolds avg over `SO(3)`)    | [`TensISO`](@extref TensND TensND.TensISO)    |
 | `:ti` / `TISymmetrize(n)`  | uniform azimuthal distribution around axis `n` (default ez) | `TensTI(n)`  |
 
 ```julia

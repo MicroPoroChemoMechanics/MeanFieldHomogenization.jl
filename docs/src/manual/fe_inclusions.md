@@ -176,7 +176,7 @@ costs nothing and assumes nothing: no reference solution appears in it.
 
 A supersphere in an isotropic matrix is cubic, and
 [`cubic_residual`](@ref) measures exactly that distance, while TensND's
-`cubic_anisotropy` measures the departure from isotropy *inside* the class. Read together they separate a real morphological effect from a mesh
+[`cubic_anisotropy`](@extref TensND TensND.cubic_anisotropy) measures the departure from isotropy *inside* the class. Read together they separate a real morphological effect from a mesh
 artifact: an artifact would break the symmetry, a real anisotropy lives inside
 it. For a cavity at ``p = 0.6``, level 2, the residual is ``5\times10^{-3}``
 and the anisotropy an order of magnitude above it.

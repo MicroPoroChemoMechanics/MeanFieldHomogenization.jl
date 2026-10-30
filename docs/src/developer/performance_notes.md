@@ -9,7 +9,7 @@ cost is measured, and which path dominates a computation.
 
 ## What the hot paths do
 
-- Small-matrix helpers (TensND's `inv3`, `acoustic_components` and `sym3_inv`;
+- Small-matrix helpers (TensND's [`inv3`](@extref TensND TensND.inv3), [`acoustic_components`](@extref TensND TensND.acoustic_components) and [`sym3_inv`](@extref TensND TensND.sym3_inv);
   `_sym3_inv_acoustic` in `src/Elasticity/hill_3d_aniso_nestedquadgk.jl`,
   `_A_and_Tn` / `_phi_cache` / `_qnn_pair_components` in
   `src/Core/green_helpers.jl`) are **pure functions returning `StaticArrays`**,
@@ -18,7 +18,7 @@ cost is measured, and which path dominates a computation.
   dominates everything else: keep new helpers on this path allocation-free and
   non-mutating.
 - The Hill-tensor builders return the **most specific** TensND type they can —
-  `TensISO`, `TensTI{4}`, `TensOrtho` rather than a generic `Tens`. This is not
+  [`TensISO`](@extref TensND TensND.TensISO), `TensTI{4}`, [`TensOrtho`](@extref TensND TensND.TensOrtho) rather than a generic `Tens`. This is not
   cosmetic: the specificity propagates into the homogenization schemes, where it
   removes redundant symmetry checks and lets the structured storage classes take
   over. Returning a generic tensor from a new builder silently deoptimizes every
@@ -108,7 +108,7 @@ axis along ``\underline{e}_3``, is built on a permuted basis.
 | | up to 0.20.1 | from 0.20.2 |
 | :--- | :--- | :--- |
 | order of the semi-axes | `sortperm` on a vector collected from the tuple | `Core._descending_order`, an insertion sort on the tuple; the same permutation, ties kept in order |
-| permuted basis | `RotatedBasis` built from a matrix whose size, hence the dimension, was read at run time; orthogonality checked again | with TensND ≥ 0.8.3, built with its dimension as a type parameter, without re-checking the orthogonality of an orthonormal basis |
+| permuted basis | [`RotatedBasis`](@extref TensND TensND.RotatedBasis) built from a matrix whose size, hence the dimension, was read at run time; orthogonality checked again | with TensND ≥ 0.8.3, built with its dimension as a type parameter, without re-checking the orthogonality of an orthonormal basis |
 | type of the shape's basis | not inferred: every computation on the shape started with a dynamic dispatch | a union of the canonical and the rotated basis of dimension 3 |
 
 !!! note "The gain needs TensND 0.8.3"
@@ -173,7 +173,7 @@ the result was checked at run time for the minor symmetries before being
 stored. Two changes remove them:
 
 - ``\mathbb{H}`` is read off the out-of-plane block of ``\boldsymbol{B}`` in
-  the frame of the crack (`compliance_op_block`), whose Kelvin–Mandel matrix it
+  the frame of the crack ([`compliance_op_block`](@extref TensND TensND.compliance_op_block)), whose Kelvin–Mandel matrix it
   is, and stored directly with its symmetries;
 - TensND 0.8.5 keeps that storage through the sum, the difference and the
   double contraction with an isotropic tensor, and through the negation.

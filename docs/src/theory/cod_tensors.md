@@ -1410,8 +1410,8 @@ Evaluation: [`sif`](@ref) and [`dif`](@ref) (`src/Cracks/sif.jl`).
 
 | `(crack, C₀)` | `:auto` selects | alternatives | ForwardDiff |
 | :------------ | :-------------- | :----------- | :---------: |
-| `EllipticCrack` / `RibbonCrack`, `TensISO` | `Analytical` | — | ✓ |
-| `EllipticCrack` / `RibbonCrack`, `TensTI` (aligned) | `Analytical` (MFH) | — | ✓ |
+| `EllipticCrack` / `RibbonCrack`, [`TensISO`](@extref TensND TensND.TensISO) | `Analytical` | — | ✓ |
+| `EllipticCrack` / `RibbonCrack`, [`TensTI`](@extref TensND TensND.TensTI) (aligned) | `Analytical` (MFH) | — | ✓ |
 | `EllipticCrack` / `RibbonCrack`, `AbstractTens{4,3}` | `NestedQuadGK` | `:residues`, `:decuhr`, `:nestedquadgk` | ✓ |
 
 Entry points: [`cod_tensor`](@ref) / [`B_tensor`](@ref) for ``\boldsymbol{B}``,

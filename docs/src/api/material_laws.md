@@ -22,9 +22,9 @@ law_parameters
 ## Kelvin–Mandel algebra
 
 The laws are written on the Kelvin–Mandel vectors of TensND, which the package
-re-exports: `Mandel`, `identity_mandel`, `trace_mandel`, `deviator`,
-`sqnorm_deviator`, `von_mises`, `equivalent_strain`, documented with TensND
-([Symmetric tensors as Kelvin-Mandel vectors](https://MicroPoroChemoMechanics.github.io/TensND.jl/stable/api/tensors)).
+re-exports: [`Mandel`](@extref TensND TensND.Mandel), [`identity_mandel`](@extref TensND TensND.identity_mandel), [`trace_mandel`](@extref TensND TensND.trace_mandel), `deviator`,
+[`sqnorm_deviator`](@extref TensND TensND.sqnorm_deviator), [`von_mises`](@extref TensND TensND.von_mises), [`equivalent_strain`](@extref TensND TensND.equivalent_strain), documented with TensND
+([Symmetric tensors as Kelvin-Mandel vectors](@extref TensND Symmetric-tensors-as-Kelvin-Mandel-vectors)).
 
 ## Integrating a step
 

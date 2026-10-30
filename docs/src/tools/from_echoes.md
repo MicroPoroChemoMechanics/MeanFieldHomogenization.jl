@@ -47,11 +47,11 @@ picks it up unless it names another — so a translated script behaves the same.
 | `homogenize(prop="C", rve=myrve, scheme=MT, epsrel=1e-6, maxnb=300, select_best=True)` | `homogenize(rve, MoriTanaka(), :C; reltol = 1e-6, abstol = 0, maxiters = 300, select_best = true)` |
 | `C.k`, `C.mu` | `k_mu(C)` |
 | `np.trace(K.array) / 3.` | `tr(Array(homogenize(rve, scheme, :K))) / 3` |
-| `.paramsym(sym=TI)` | `best_fit_ti` |
+| `.paramsym(sym=TI)` | [`best_fit_ti`](@extref TensND TensND.best_fit_ti) |
 
 Two conventions worth flagging for a smooth transition:
 
-- **Both `stiff_kmu`/`iso_stiffness` take *physical* `(k, μ)`.** Where they
+- **Both `stiff_kmu`/[`iso_stiffness`](@extref TensND TensND.iso_stiffness) take *physical* `(k, μ)`.** Where they
   differ is in what the resulting tensor *stores*: MFH's raw
   `TensISO{3}(a, b)` constructor takes the pair `(3k, 2μ)`, not `(k, μ)` —
   see [the first tutorial](@ref tut-first-estimate-storage).

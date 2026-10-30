@@ -473,7 +473,7 @@ proves nothing about elasticity.
 
 What the check below *does* establish is that the machinery producing the
 operators above is sound: TensND's spheroidal chart, the wiring of `grad`,
-`symgrad` and `divergence`, the transcription of the gauge ``\varphi_1=\varphi_2=0``
+[`symgrad`](@extref TensND TensND.symgrad) and `divergence`, the transcription of the gauge ``\varphi_1=\varphi_2=0``
 with its ``\underline e_3`` term, and the ``\lambda \leftrightarrow \nu``
 conversion. Every expression on this page comes out of that same machinery, so
 a non-zero residual here would have invalidated all of them. It is a plumbing

@@ -91,8 +91,8 @@ basis**: its components are always global.
 A TensND tensor returns its components in **its own** basis, and a homogenized
 stiffness whose RVE carries tilted crack families comes back in a *rotated*
 basis. Handing its raw array to an FE assembler rotates the material silently.
-Cross the boundary with `to_tensors` and `from_tensors`, never
-with `get_array`.
+Cross the boundary with [`to_tensors`](@extref TensND TensND.to_tensors) and [`from_tensors`](@extref TensND TensND.from_tensors), never
+with [`get_array`](@extref TensND TensND.get_array).
 
 ```@example frames
 using MeanFieldHomogenization, TensND

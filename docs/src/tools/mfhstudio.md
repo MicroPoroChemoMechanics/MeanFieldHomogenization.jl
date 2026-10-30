@@ -183,7 +183,7 @@ Two conventions the interface removes rather than documents:
   derives it as ``1 - \sum f`` and refuses to have it set, so offering the field
   would only invite an error.
 - Moduli are entered as physical ``(k, \mu)`` or ``(E, \nu)`` and emitted
-  through `iso_stiffness` (from TensND). The raw `TensISO{3}` constructor, which
+  through [`iso_stiffness`](@extref TensND TensND.iso_stiffness) (from TensND). The raw `TensISO{3}` constructor, which
   takes ``(3k, 2\mu)``, never appears.
 
 Shapes that have one carry an **Orientation** block: ZYZ Euler angles in
@@ -417,7 +417,7 @@ figure shared by several schemes that one curve sets the scale for all of them.
 unticked: a negative modulus is then the useful signal that the estimate has
 stopped meaning anything.
 
-`k_mu` has a method for `TensISO` (a TensND type) and nothing else. An oriented
+`k_mu` has a method for [`TensISO`](@extref TensND TensND.TensISO) (a TensND type) and nothing else. An oriented
 inclusion with no orientation average does not give an isotropic effective
 tensor, so asking for `k` there fails deep inside the run with a `MethodError`.
 The interface says so before you run: either pick a reporting projection, or

@@ -52,7 +52,7 @@
 #
 # ## A random texture
 #
-# [`random_basis`](https://MicroPoroChemoMechanics.github.io/TensND.jl/stable/api/special) of TensND draws a frame uniformly over the rotations.
+# [`random_basis`](@extref TensND TensND.random_basis) of TensND draws a frame uniformly over the rotations.
 # With the Euler angles of TensND, ``\theta`` the angle of the third axis from
 # ``\underline{e}_3`` and ``\phi``, ``\psi`` the two azimuths, the uniform measure is
 # ``\sin\theta\,\mathrm{d}\theta\,\mathrm{d}\phi\,\mathrm{d}\psi``: ``\cos\theta``
@@ -261,7 +261,7 @@
 # \mathbb{L} = \mathbb{M}^{+},
 # ```
 #
-# ``{}^{+}`` the inverse on the deviators (`deviatoric_pinv` of TensND).
+# ``{}^{+}`` the inverse on the deviators ([`deviatoric_pinv`](@extref TensND TensND.deviatoric_pinv) of TensND).
 # With the secant compliance ``\mathbb{M}_g`` of each grain at its stress, the
 # grain stress is ``\boldsymbol{s}_g = \mathbb{B}_g:\boldsymbol{S}``,
 # ``\mathbb{B}_g = (\mathbb{M}_g + \widetilde{\mathbb{M}})^{+}(\mathbb{M} + \widetilde{\mathbb{M}})``,

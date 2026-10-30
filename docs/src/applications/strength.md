@@ -154,7 +154,7 @@ nothing # hide
 
 ## Scales 2 and 3 — cement paste and mortar (Mori-Tanaka)
 
-The converged foam is a `TensTI{4}`; `best_fit_ti` extracts its physical
+The converged foam is a `TensTI{4}`; [`best_fit_ti`](@extref TensND TensND.best_fit_ti) extracts its physical
 5-parameter TI stiffness (Echoes does the same with `tensor(C_hf.array, TI)`)
 before the two Mori-Tanaka stages: clinker grains in the foam matrix (CP), then
 sand grains in the paste matrix (MO).
@@ -315,7 +315,7 @@ run the model.
 The bridge between the two views is the TI parameterization: extract the five
 parameters of a tensor with `best_fit_ti` — one of the
 [symmetry projections](@ref api-schemes-symmetry) re-exported from
-`TensND` — and rebuild a `TensTI` from five numbers.
+`TensND` — and rebuild a [`TensTI`](@extref TensND TensND.TensTI) from five numbers.
 
 ```@example strength
 const ez = (0.0, 0.0, 1.0)

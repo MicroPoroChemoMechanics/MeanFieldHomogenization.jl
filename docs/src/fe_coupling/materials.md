@@ -51,7 +51,7 @@ r = material_response(mat, ε, st, 0.0)
 σ[1, 1]
 ```
 
-`to_tensors` is the only sanctioned way out — see
+[`to_tensors`](@extref TensND TensND.to_tensors) is the only sanctioned way out — see
 [the frame rule](@ref fe-scale-transition).
 
 ## Checking a material

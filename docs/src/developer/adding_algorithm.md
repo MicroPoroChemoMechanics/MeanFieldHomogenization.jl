@@ -51,7 +51,7 @@ matching simultaneously on
 2. the **inclusion class** — `AbstractInclusion`,
    `AbstractEllipsoidalInclusion`, `AbstractCrack`, `Cylinder`, …;
 3. the **matrix symmetry**, through the TensND type of ``\mathbb{C}_0``:
-   `TensND.TensISO`, `TensND.TensTI`, `TensND.AbstractTens{4,3}`,
+   [`TensND.TensISO`](@extref TensND TensND.TensISO), [`TensND.TensTI`](@extref TensND TensND.TensTI), `TensND.AbstractTens{4,3}`,
    `TensND.AbstractTens{2,3}`, `TensND.AbstractTens{4,2}`.
 
 !!! warning "Match all three axes in every signature"

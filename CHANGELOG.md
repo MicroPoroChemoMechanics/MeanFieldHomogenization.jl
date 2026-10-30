@@ -170,6 +170,13 @@ genuine breaks are listed below.
 
 ### Changed
 
+- The documentation links to TensND's for the tensor functions and pages it
+  uses (`TensISO`, `best_fit_ti`, `mandel`, the isotropic moduli, …), through
+  DocumenterInterLinks and the inventory TensND publishes: a name or a section
+  renamed or removed in TensND fails this documentation's build, naming the
+  page, instead of leaving a dead link. The six addresses written by hand are
+  among them.
+
 - The Kelvin–Mandel vectors the laws are written on, `Mandel` and
   `identity_mandel`, `trace_mandel`, `deviator`, `von_mises`,
   `equivalent_strain`, are now TensND's, re-exported unchanged (same names,

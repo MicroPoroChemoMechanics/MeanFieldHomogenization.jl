@@ -862,7 +862,7 @@ For an **infinite cylinder**, substituting
 
 Implementation: `src/Elasticity/hill_3d_iso.jl` and
 `src/Elasticity/hill_3d_cylinder_iso.jl`, selected by `method = :auto` when
-``\mathbb{C}_0`` is a `TensISO`.
+``\mathbb{C}_0`` is a [`TensISO`](@extref TensND TensND.TensISO).
 
 ### [Transversely isotropic matrix coaxial with a spheroid](@id th-hill-ti-coaxial)
 
@@ -991,7 +991,7 @@ P_6 &= \frac{1}{8\,C_{2323}C_{3333}}\,\Bigl[(\omega^4 C_{1111}+C_{3333}+2\,\omeg
 **A sphere** is coaxial with every axis: at ``\omega = 1`` these are the
 coefficients of a sphere in a transversely isotropic matrix, those of the
 transformed problem above with ``\tilde{\mathbb{C}} = \mathbb{C}``
-[barthelemyIJES2020_hilltrans; eq. 29](@cite). A sphere in a `TensTI` matrix
+[barthelemyIJES2020_hilltrans; eq. 29](@cite). A sphere in a [`TensTI`](@extref TensND TensND.TensTI) matrix
 therefore takes this closed form whatever the axis of the matrix, with no
 quadrature.
 
@@ -1163,7 +1163,7 @@ geometric auxiliaries via [`tens_IA`](@ref), [`tens_UA`](@ref),
 Cylinder shape traits: `CircularCylindrical` when ``b=c`` (transversely
 isotropic response, returned as `TensTI{4}` with axis
 ``\underline{e}^{\boldsymbol{A}}_1``) and `EllipticCylindrical` when ``b>c``
-(orthotropic, returned as `TensOrtho`). Practical usage is covered in the manual
+(orthotropic, returned as [`TensOrtho`](@extref TensND TensND.TensOrtho)). Practical usage is covered in the manual
 page [Cylindrical inclusions](@ref man-cylindrical-inclusions).
 
 ## Where to go next

@@ -56,7 +56,7 @@ simplify(αP), simplify(βP)
 
 Every isotropic 4th-order tensor decomposes as ``\mathbb A = \alpha\,\mathbb
 J + \beta\,\mathbb K`` on the spherical (``\mathbb J``) and deviatoric
-(``\mathbb K``) projectors, and `TensND.get_data` returns exactly that pair
+(``\mathbb K``) projectors, and [`TensND.get_data`](@extref TensND TensND.get_data) returns exactly that pair
 `(α, β)` — no further rescaling. For the sphere:
 
 ```math
@@ -96,7 +96,7 @@ The dilute strain concentration tensor and effective stiffness,
 \mathbb C_{\mathrm{dil}} = \mathbb C_0 + f\,(\mathbb C_i-\mathbb C_0):\mathbb A^{\mathrm{dil}},
 ```
 
-translate directly into TensND tensor algebra — `inv` on a `TensISO` is just
+translate directly into TensND tensor algebra — `inv` on a [`TensISO`](@extref TensND TensND.TensISO) is just
 the reciprocal of its two `(α, β)` scalars, so the whole computation stays
 in closed form:
 

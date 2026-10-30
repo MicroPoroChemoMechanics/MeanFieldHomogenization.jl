@@ -141,7 +141,7 @@ solid and pore geometry), so it can be read back directly with
 `k_mu` — as in the [first tutorial](@ref tut-first-estimate). Some
 schemes can return a result with tiny numerical anisotropy (e.g. from
 an iterative solve that has not fully converged); dispatching to
-`best_fit_iso` first — the best isotropic projection of the
+[`best_fit_iso`](@extref TensND TensND.best_fit_iso) first — the best isotropic projection of the
 tensor — keeps the extraction robust without changing the answer on
 already-isotropic input:
 

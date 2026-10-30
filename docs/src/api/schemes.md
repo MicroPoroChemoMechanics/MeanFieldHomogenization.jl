@@ -128,7 +128,7 @@ both orders, and of their names in elasticity and in conduction, documented in
 
 Best-fit projection of a tensor onto a symmetry class. These force major
 symmetry, unlike the exact rotation-group averages
-`isotropify` / `transverse_isotropify` (re-exported from `TensND`); the two differ whenever the input is not
+[`isotropify`](@extref TensND TensND.isotropify) / [`transverse_isotropify`](@extref TensND TensND.transverse_isotropify) (re-exported from `TensND`); the two differ whenever the input is not
 major-symmetric, and the difference is worked through in
 [Symmetrization showcase](@ref tut-symmetrization).
 

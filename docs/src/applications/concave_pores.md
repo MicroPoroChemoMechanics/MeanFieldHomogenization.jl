@@ -109,7 +109,7 @@ the whole range. So the third invariant is not a quantity to be compared: it is
 one the published study does not undertake to deliver, and one this package can
 add to it.
 
-This package measures the three separately, because `TensND.TensCubic` is a
+This package measures the three separately, because [`TensND.TensCubic`](@extref TensND TensND.TensCubic) is a
 storage class in its own right and the octant makes the cubic structure exact
 rather than approximate: the couplings symmetry forbids come out identically zero
 instead of as mesh noise at a few percent of the norm.
