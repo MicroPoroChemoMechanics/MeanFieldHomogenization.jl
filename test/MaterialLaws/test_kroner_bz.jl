@@ -22,12 +22,9 @@ const E_KB, ν_KB = 120.0e3, 0.3
 function _grains_kb(count)
     C₁₁ = E_KB * (1 - ν_KB) / ((1 + ν_KB) * (1 - 2ν_KB))
     C₁₂ = E_KB * ν_KB / ((1 + ν_KB) * (1 - 2ν_KB))
-    return [
-        CrystalViscoplasticity(; C₁₁, C₁₂, C₄₄ = (C₁₁ - C₁₂) / 2, K = 1.0, n = 5, τ₀ = 10.0, frame = f)
-            for f in let rng = MersenneTwister(2)
-                [random_basis(rng) for _ in 1:count]
-        end
-    ]
+    rng = MersenneTwister(2)
+    frames = [random_basis(rng) for _ in 1:count]
+    return [CrystalViscoplasticity(; C₁₁, C₁₂, C₄₄ = (C₁₁ - C₁₂) / 2, K = 1.0, n = 5, τ₀ = 10.0, frame = f) for f in frames]
 end
 
 _step_kb(m, E, st) = MP_KB._mandel_update(m, E, st, 0.125; algorithm = LocalNewton(), external = (;))

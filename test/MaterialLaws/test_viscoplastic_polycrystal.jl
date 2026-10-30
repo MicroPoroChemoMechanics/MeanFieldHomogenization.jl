@@ -15,12 +15,13 @@ import Symbolics
 
 const MP_VP = MeanFieldHomogenization.MaterialLaws
 
+# `count` frames uniform over the rotations, the same at every call.
+_frames_vp(count) = (rng = MersenneTwister(1); [random_basis(rng) for _ in 1:count])
+
 _aggregate_vp(n; τ₀ = 1.0, count = 40) =
     ViscoplasticPolycrystal(
     [
-        PowerLawCrystal(; γ̇₀ = 1.0e-3, τ₀, n, frame = f) for f in let rng = MersenneTwister(1)
-                [random_basis(rng) for _ in 1:count]
-        end
+        PowerLawCrystal(; γ̇₀ = 1.0e-3, τ₀, n, frame = f) for f in _frames_vp(count)
     ]
 )
 
@@ -102,11 +103,7 @@ end
     # Linear grains: the tangent model is the linear self-consistent scheme,
     # which the package computes otherwise (its own anisotropic Hill tensors) on
     # grains made compressible by a bulk stiffness κ, the gap closing as 1/κ.
-    grains = [
-        PowerLawCrystal(; γ̇₀ = 1.0e-3, τ₀ = 1.0, n = 1.0, frame = f) for f in let rng = MersenneTwister(1)
-                [random_basis(rng) for _ in 1:6]
-        end
-    ]
+    grains = [PowerLawCrystal(; γ̇₀ = 1.0e-3, τ₀ = 1.0, n = 1.0, frame = f) for f in _frames_vp(6)]
     r = flow_stress(ViscoplasticPolycrystal(grains), D_VP; model = AnisotropicTangentModel(; reltol = 1.0e-10))
     gap(κ) = begin
         rve = RVE()
