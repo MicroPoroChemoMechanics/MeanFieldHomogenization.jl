@@ -69,7 +69,11 @@ end
     path = LoadingPath(range(0, 1; length = 5); ε11 = t -> 2.0e-3 * t)
     stress(λ) = point_response(composite(λ), path).states[end].σ
     Σ = stress(1.0)
-    @test stress(3.0) ≈ 3Σ rtol = 1.0e-10
+    # Homogeneous of degree one in the moduli, to the accuracy of the solves:
+    # each response is converged to the relative tolerance of the driver
+    # (1e-10 by default), so two of them agree to a margin above it, not to
+    # it — at 1e-10 the check failed on one CI machine (1.5e-10).
+    @test stress(3.0) ≈ 3Σ rtol = 1.0e-8
     @test ForwardDiff.derivative(stress, 1.0) ≈ Σ rtol = 1.0e-8
     c = composite(1.0)
     st = point_response(c, path).states[end]
