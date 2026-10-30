@@ -170,6 +170,12 @@ genuine breaks are listed below.
 
 ### Changed
 
+- The first differential estimate of a session takes 1.7 s instead of 2.3 s: the
+  ODE no longer carries the RVE as its parameters but in the right-hand side, so
+  that OrdinaryDiffEq reuses the integrator it precompiled for wrapped functions
+  instead of compiling one for the RVE's type. Same results to the bit, same
+  time per solve.
+
 - The documentation links to TensND's for the tensor functions and pages it
   uses (`TensISO`, `best_fit_ti`, `mandel`, the isotropic moduli, …), through
   DocumenterInterLinks and the inventory TensND publishes: a name or a section
