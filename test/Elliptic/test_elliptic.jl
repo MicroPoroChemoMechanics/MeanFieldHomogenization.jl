@@ -134,3 +134,26 @@ if sympy_loaded
 else
     @info "SymPy not available in the test environment — skipping SymPy-extension tests."
 end
+
+@testset "Carlson's integrals as SymPy functions" begin
+    SP = SymPyPythonCall
+    x, y, z = SP.symbols("x y z", positive = true)
+    p₀ = (0.7, 0.4, 1.3)
+    at(e) = Float64(SP.N(SP.subs(e, x => p₀[1], y => p₀[2], z => p₀[3])))
+    for f in (ell_RF, ell_RD)
+        e = f(x, y, z)
+        # A call, not the duplication unrolled.
+        @test e isa SP.Sym && length(string(e)) < 40
+        @test at(e) ≈ f(p₀...) rtol = 1.0e-14
+        # Its derivatives, against ForwardDiff through the numerical method.
+        for (i, s) in enumerate((x, y, z))
+            g(t) = f(ntuple(j -> j == i ? t : p₀[j], 3)...)
+            @test at(SP.diff(e, s)) ≈ ForwardDiff.derivative(g, p₀[i]) rtol = 1.0e-11
+        end
+        # Any of the arguments symbolic, the others numbers.
+        @test at(f(x, 0.4, 1.3)) ≈ f(p₀...) rtol = 1.0e-14
+        @test at(f(0.7, y, z)) ≈ f(p₀...) rtol = 1.0e-14
+        @test at(f(x, y, 1.3)) ≈ at(f(0.7, 0.4, z)) rtol = 1.0e-14
+        @test at(f(x, 0.4, z)) ≈ at(f(0.7, y, 1.3)) rtol = 1.0e-14
+    end
+end

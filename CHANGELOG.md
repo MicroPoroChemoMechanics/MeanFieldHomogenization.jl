@@ -62,6 +62,10 @@ genuine breaks are listed below.
   and the result stays a closed form in the same integrals (each rule tested
   against ForwardDiff through the numerical methods, and the derivative of a
   Hill tensor against that of the numerical one).
+- With SymPy, Carlson's `ell_RF` and `ell_RD` are SymPy functions, `elliprf`
+  and `elliprd`: unevaluated calls that SymPy differentiates by the same rules
+  and evaluates by mpmath, where a symbolic argument used to unroll fifty
+  duplication steps of the numerical method into the expression.
 
 - `AnisotropicTangentModel` for `ViscoplasticPolycrystal`: the tangent
   self-consistent model with the anisotropic matrix of Lebensohn and Tomé
