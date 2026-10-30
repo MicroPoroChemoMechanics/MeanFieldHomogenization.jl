@@ -61,6 +61,7 @@ stiffness or the compliance variable according to the scheme's
 `formulation`.
 """
 function _evaluate(rve::RVE, scheme::DifferentialScheme, ::Val{p}; kw...) where {p}
+    _require_comparable(rve, p, scheme)
     return last(_differential_states(rve, scheme, p; kw...)[2])
 end
 

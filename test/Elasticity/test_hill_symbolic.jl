@@ -114,8 +114,46 @@ end
 @testset "the Hill tensor of a symbolic triaxial ellipsoid, differentiated" begin
     # ∂P/∂b of the closed form, expanded through the elliptic integrals, against
     # the derivative of the numerical Hill tensor.
+    # On the nine coefficients of the orthotropic tensor, substituted: the 81
+    # components, compiled, cost more memory than the check is worth.
     P = hill_tensor(Ellipsoid(hs_a, hs_b, hs_c), TensISO{3}(3hs_k, 2hs_μ))
-    dP = Symbolics.expand_derivatives.(Symbolics.Differential(hs_b).(get_array(P)))
-    ref = ForwardDiff.derivative(b -> Array(get_array(hill_tensor(Ellipsoid(1.0, b, 0.3), TensISO{3}(15.0, 4.0)))), 0.6)
-    @test _hs_eval_vec(vec(Array(dP))) ≈ vec(ref) rtol = 1.0e-10 atol = 1.0e-13
+    point = Dict(zip(HS_VARS, HS_POINT))
+    dP = [Symbolics.value(Symbolics.substitute(Symbolics.expand_derivatives(Symbolics.Differential(hs_b)(x)), point; fold = Val(true))) for x in get_data(P)]
+    ref = ForwardDiff.derivative(b -> collect(get_data(hill_tensor(Ellipsoid(1.0, b, 0.3), TensISO{3}(15.0, 4.0)))), 0.6)
+    @test dP ≈ ref rtol = 1.0e-10 atol = 1.0e-13
+end
+
+@testset "symbolic routes: TI coaxial spheroid, layered sphere, iterative schemes" begin
+    # A spheroid in a coaxial transversely isotropic matrix: the closed form of
+    # the integrals, taken on the type, against the numerical Hill tensor.
+    Cti(k, μ) = ti_from_constants(k, μ, k / 3, 2k, μ / 2, [0, 0, 1])
+    # Its five Walpole coefficients, substituted: compiling the 81 components
+    # of so long an expression costs more memory than the check is worth. The
+    # roots of the acoustic polynomial may be complex conjugate, so that the
+    # closed form is the analytic continuation through complex intermediates:
+    # it is evaluated at complex values, and its imaginary part vanishes.
+    point = Dict(zip(HS_VARS, complex.(HS_POINT)))
+    function walpole_at(P)
+        w = [Symbolics.value(Symbolics.substitute(ℓ, point; fold = Val(true))) for ℓ in get_data(P)]
+        @test maximum(abs ∘ imag, w) <= 1.0e-12 * maximum(abs, w)
+        return real.(w)
+    end
+    P = hill_tensor(Ellipsoid(hs_a, hs_a, hs_c), Cti(hs_k, hs_μ))
+    @test walpole_at(P) ≈ collect(get_data(hill_tensor(Ellipsoid(1.0, 1.0, 0.3), Cti(5.0, 2.0)))) rtol = 1.0e-12
+    # Prolate too, where the roots fall on the other side of 1.
+    Pp = hill_tensor(Ellipsoid(hs_c, hs_c, hs_a), Cti(hs_k, hs_μ))
+    @test walpole_at(Pp) ≈ collect(get_data(hill_tensor(Ellipsoid(0.3, 0.3, 1.0), Cti(5.0, 2.0)))) rtol = 1.0e-12
+    # A layered sphere of symbolic radii and moduli.
+    sphere(a, b, k, μ) = LayeredSphere((a, b), (TensISO{3}(6k, 4μ), TensISO{3}(9k, 8μ)))
+    N = property_contribution(sphere(hs_c, hs_a, hs_k, hs_μ), TensISO{3}(3hs_k, 2hs_μ))
+    Nn = [Symbolics.value(Symbolics.substitute(x, Dict(zip(HS_VARS, HS_POINT)); fold = Val(true))) for x in get_data(N)]
+    @test Nn ≈ collect(get_data(property_contribution(sphere(0.3, 1.0, 5.0, 2.0), TensISO{3}(15.0, 4.0)))) rtol = 1.0e-12
+    # The iterative schemes refuse symbolic moduli, by name and with the way out.
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1, 1, 1), Dict(:C => TensISO{3}(3hs_k, 2hs_μ)); fraction = :rest)
+    add_phase!(rve, :I, Ellipsoid(1, 1, 1), Dict(:C => TensISO{3}(6hs_k, 4hs_μ)); fraction = 0.2)
+    for sch in (SelfConsistent(), AsymmetricSelfConsistent(), DifferentialScheme())
+        @test_throws "explicit scheme" homogenize(rve, sch, :C)
+    end
+    @test homogenize(rve, MoriTanaka(), :C) isa TensISO{4, 3, Symbolics.Num}
 end

@@ -72,6 +72,7 @@ function _evaluate(rve::RVE, sc::SelfConsistent, ::Val{p}; kw...) where {p}
     # from collapsing to the trivial percolated fixed point at moderate
     # density.
     P_init = _sc_initial(sc.init, rve, p; kw...)
+    _require_comparable(P_init, sc)
     solver_kw, step_kw = _split_sc_kwargs(kw)
     step_nt = values(step_kw)
     make_step(views, cracks) = C -> _sc_step(views, cracks, rve, C, p, step_nt)
@@ -959,7 +960,10 @@ function _asc_use_stiffness(rve::RVE, prop::Symbol, m::Symbol; kw...)
     any(_is_crack_family, values(rve.amounts)) && return false
     P₀ = phase_property(rve, m, prop)
     probe = _bounds_available(rve) ? Voigt() : Dilute()
-    return TensND.sqnorm(_evaluate(rve, probe, Val(prop); kw...)) ≥ TensND.sqnorm(P₀)
+    P̄ = _evaluate(rve, probe, Val(prop); kw...)
+    # The comparison below is the first of the scheme on values.
+    _require_comparable(P̄, :AsymmetricSelfConsistent)
+    return TensND.sqnorm(P̄) ≥ TensND.sqnorm(P₀)
 end
 
 
@@ -979,6 +983,7 @@ function _asc_iterate_stiffness(
     step_nt = values(step_kw)
     make_step(views) = C_n -> _asc_step_stiffness(views, C_m, C_n, step_nt)
     x0 = _asc_seed(asc.init, C_m, rve, p; kw...)
+    _require_comparable(x0, asc)
     # Cracks are not supported in the stiffness form: `_asc_use_stiffness` sends
     # any RVE with a crack family to the compliance form.
     views = _phase_views(rve, _volume_phase_names(rve, m), p)
@@ -1019,6 +1024,7 @@ function _asc_iterate_compliance(
     step_nt = values(step_kw)
     make_step(views, cracks) = C_n -> _asc_step_compliance(views, cracks, rve, p, S_m, C_n, step_nt)
     x0 = _asc_seed(asc.init, C_m, rve, p; kw...)
+    _require_comparable(x0, asc)
     views = _phase_views(rve, _volume_phase_names(rve, m), p)
     return _solve_sc_on(
         asc.algorithm, asc.options, solver_kw, x0, make_step, views, _crack_phase_names(rve, m)

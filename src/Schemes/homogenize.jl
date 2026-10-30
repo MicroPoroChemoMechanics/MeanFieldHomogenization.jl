@@ -57,6 +57,31 @@ function homogenize(
     end
 end
 
+# An iterative scheme compares successive values (a fixed point) or controls
+# its step on them (an adaptive ODE solve), which a symbolic modulus cannot
+# answer: `Num` raises a TypeError deep in the loop, `Sym` a MethodError, or
+# the solve does not end. Refused at the entry instead, with the way out, on
+# the element type of a tensor the scheme computes anyway (the seed of a
+# self-consistent iteration) or of the phase properties: a check decided on a
+# type, which costs the numerical path nothing it did not already do. A
+# `ForwardDiff.Dual` is comparable: derivatives go through.
+_require_comparable(rve, p, scheme) =
+    _require_comparable(mapreduce(n -> eltype(phase_property(rve, n, p)), promote_type, _volume_phase_names(rve)), scheme)
+_require_comparable(t::TensND.AbstractTens, scheme) = _require_comparable(eltype(TensND.get_array(t)), scheme)
+_scheme_name(scheme::HomogenizationScheme) = nameof(typeof(scheme))
+_scheme_name(name::Symbol) = name
+function _require_comparable(::Type{T}, scheme) where {T}
+    is_hard_numeric(real(T)) && return nothing
+    throw(
+        ArgumentError(
+            "$(_scheme_name(scheme)) iterates on the effective property, comparing successive values, " *
+                "which symbolic moduli ($(T)) cannot be compared by: give numbers (duals carry the " *
+                "derivatives through), or take an explicit scheme (Voigt, Reuss, Dilute, DiluteDual, " *
+                "MoriTanaka) for a closed form"
+        )
+    )
+end
+
 # Backward-compatible kwarg form, kept so existing scripts and tests using
 # the old `homogenize(rve, scheme; property = …)` signature keep working.
 # New code is encouraged to pass the property name as a positional argument

@@ -74,34 +74,52 @@ end
 # R_C(a, 1) = acosh(√a)/√(a − 1), the elementary function behind I_n: real for
 # a real positive a on either side of 1 (as acos(√a)/√(1 − a) below it), and the
 # analytic continuation for a complex one.
-@inline _spheroid_rc(a::Real) = a < 1 ? acos(sqrt(a)) / sqrt(1 - a) : acosh(sqrt(a)) / sqrt(a - 1)
+@inline _spheroid_rc(a::Real) = _spheroid_rc(_spheroid_route(a), a)
+@inline _spheroid_rc(::Val{true}, a::Real) = a < 1 ? acos(sqrt(a)) / sqrt(1 - a) : acosh(sqrt(a)) / sqrt(a - 1)
+@inline _spheroid_rc(::Val{false}, a) = acosh(sqrt(a)) / sqrt(a - 1)
 @inline _spheroid_rc(a) = acosh(sqrt(a)) / sqrt(a - 1)
 
-@inline function _spheroid_I0(a)
+# The regimes below (a series near the sphere, the better conditioned of two
+# equal forms elsewhere) are chosen on values, which a symbolic number cannot
+# be compared by. It takes the closed form, exact everywhere as the analytic
+# continuation: `Val(false)`, decided on the type at compile time, so that the
+# numerical path is unchanged. (SymPy used to reach it through comparisons that
+# answer `false` when undecidable; a `Symbolics.Num` threw.)
+@inline _spheroid_route(a) = Val(is_hard_numeric(real(typeof(a))))
+
+@inline _spheroid_I0(a) = _spheroid_I0(_spheroid_route(a), a)
+@inline function _spheroid_I0(::Val{true}, a)
     k = a - 1
     abs(k) ≤ _SPHEROID_SERIES_RADIUS && return _spheroid_series(k, zero(k), 0)
-    return 2 * _spheroid_rc(a) / sqrt(a)
+    return _spheroid_I0(Val(false), a)
 end
+@inline _spheroid_I0(::Val{false}, a) = (k = a - 1; 2 * _spheroid_rc(a) / sqrt(a))
 
-@inline function _spheroid_I2(a)
+@inline _spheroid_I2(a) = _spheroid_I2(_spheroid_route(a), a)
+@inline function _spheroid_I2(::Val{true}, a)
     k = a - 1
     abs(k) ≤ _SPHEROID_SERIES_RADIUS && return _spheroid_series(k, zero(k), 2)
-    return 2 * (sqrt(a) * _spheroid_rc(a) - 1) / k
+    return _spheroid_I2(Val(false), a)
 end
+@inline _spheroid_I2(::Val{false}, a) = (k = a - 1; 2 * (sqrt(a) * _spheroid_rc(a) - 1) / k)
 
-@inline function _spheroid_I4(a)
+@inline _spheroid_I4(a) = _spheroid_I4(_spheroid_route(a), a)
+@inline function _spheroid_I4(::Val{true}, a)
     k = a - 1
     abs(k) ≤ _SPHEROID_SERIES_RADIUS && return _spheroid_series(k, zero(k), 4)
-    return 2 * (a * sqrt(a) * _spheroid_rc(a) - 1 - 4 * k / 3) / k^2
+    return _spheroid_I4(Val(false), a)
 end
+@inline _spheroid_I4(::Val{false}, a) = (k = a - 1; 2 * (a * sqrt(a) * _spheroid_rc(a) - 1 - 4 * k / 3) / k^2)
 
 # ∫ w / D(a) = I₀ − I₂, or (2 − I₂)/a, the same by w = (D − z²)/a, for a ≥ 1:
 # there I₀ and I₂ both vanish as log(a)/a while the second form does not cancel.
-@inline function _spheroid_Iw(a)
+@inline _spheroid_Iw(a) = _spheroid_Iw(_spheroid_route(a), a)
+@inline function _spheroid_Iw(::Val{true}, a)
     k = a - 1
     abs(k) ≤ _SPHEROID_SERIES_RADIUS && return _spheroid_series(k, zero(k), 0, 1)
     return abs(a) < 1 ? _spheroid_I0(a) - _spheroid_I2(a) : (2 - _spheroid_I2(a)) / a
 end
+@inline _spheroid_Iw(::Val{false}, a) = (2 - _spheroid_I2(a)) / a
 
 # ── Moments M_{n,k,p} of one root ──────────────────────────────────────────
 
@@ -178,7 +196,22 @@ whose combinations cancel as ``\\omega^2`` for a needle. Generic in the number
 type, real or complex, `ForwardDiff.Dual` included: no square root of ``d^2`` is
 taken near ``d^2 = 0``, so derivatives stay exact where the two roots coincide.
 """
-function _spheroid_JL(m, d2)
+_spheroid_JL(m, d2) = _spheroid_JL(_spheroid_route(promote(m, d2)[1]), m, d2)
+
+# Symbolic: the closed form of two distinct roots, in the needle-side writing,
+# the analytic continuation of the others.
+_spheroid_JL(::Val{false}, m, d2) = (d = sqrt(d2); _spheroid_JL_needle(m + d, m - d))
+
+# The closed form of two distinct roots a₁, a₂ in its needle-side writing.
+function _spheroid_JL_needle(a1, a2)
+    pf(f) = ((1 - a1) * f(a1) - (1 - a2) * f(a2)) / (a2 - a1)
+    p = a1 * a2
+    L21 = 2 / (3 * p) - pf(a -> _spheroid_I4(a) / a)
+    L02 = 2 / p - 2 * (a1 + a2) / (3 * p^2) + pf(a -> _spheroid_I4(a) / a^2)
+    return (pf(_spheroid_I4), L21, L02)
+end
+
+function _spheroid_JL(::Val{true}, m, d2)
     k̄ = m - 1
     if abs(k̄) + sqrt(abs(d2)) ≤ _SPHEROID_SERIES_RADIUS
         e1 = 2k̄
@@ -208,10 +241,7 @@ function _spheroid_JL(m, d2)
         J4 = (_spheroid_I2(aj) - ai * J2) / b
         return (J4, J2 - J4, J0 - 2 * J2 + J4)
     end
-    p = a1 * a2                                  # needle side
-    L21 = 2 / (3 * p) - pf(a -> _spheroid_I4(a) / a)
-    L02 = 2 / p - 2 * (a1 + a2) / (3 * p^2) + pf(a -> _spheroid_I4(a) / a^2)
-    return (pf(_spheroid_I4), L21, L02)
+    return _spheroid_JL_needle(a1, a2)            # needle side
 end
 
 """

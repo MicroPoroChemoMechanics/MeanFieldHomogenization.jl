@@ -227,6 +227,18 @@ genuine breaks are listed below.
 
 ### Fixed
 
+- Symbolic moduli reach three more paths, each on its type, the numerical code
+  unchanged (same bits, same times, measured): the Hill tensor of a spheroid in
+  a coaxial transversely isotropic matrix with `Symbolics.Num` (the integrals
+  take their closed form, the analytic continuation, where their regimes were
+  chosen on values, and SymPy reached it only through comparisons answering
+  `false`; with `Num` it is evaluated at complex values, its roots being complex
+  for some moduli), and a `LayeredSphere` of symbolic radii, whose check of the
+  radii compared them. The self-consistent, asymmetric self-consistent and
+  differential schemes, which iterate on values, refuse symbolic moduli with a
+  message naming the explicit schemes, where `Num` threw a `TypeError`, `Sym` a
+  `MethodError`, or the solve did not end.
+
 - `point_response` says when it cuts a step because the tolerance asked is out
   of the reach of the material: the Newton iteration stopping below √ε, the
   residual is the floor the solves of the material leave on its fluxes, which a

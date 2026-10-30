@@ -108,3 +108,20 @@ end
     fd = (f(0.3 + ε) - f(0.3 - ε)) / (2ε)
     @test d ≈ fd rtol = 1.0e-5
 end
+
+@testset "iterative schemes refuse SymPy moduli; the closed form of a TI coaxial spheroid" begin
+    k, μ, f = SymPyPythonCall.symbols("k μ f", positive = true)
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1, 1, 1), Dict(:C => TensISO{3}(3k, 2μ)); fraction = :rest)
+    add_phase!(rve, :I, Ellipsoid(1, 1, 1), Dict(:C => TensISO{3}(6k, 4μ)); fraction = f)
+    @test_throws "explicit scheme" homogenize(rve, SelfConsistent(), :C)
+    @test_throws "explicit scheme" homogenize(rve, DifferentialScheme(), :C)
+    # SymPy reaches the closed form by the type now, not through comparisons
+    # that answer `false` when they cannot decide.
+    Cti = ti_from_constants(k, μ, k / 3, 2k, μ / 2, [0, 0, 1])
+    P = hill_tensor(Ellipsoid(1, 1, SymPyPythonCall.Sym(3) / 10), Cti)
+    vals = (k => 5.0, μ => 2.0)
+    num = [Float64(SymPyPythonCall.N(SymPyPythonCall.subs(x, vals...))) for x in get_array(P)]
+    Cn = ti_from_constants(5.0, 2.0, 5.0 / 3, 10.0, 1.0, [0.0, 0.0, 1.0])
+    @test num ≈ Array(get_array(hill_tensor(Ellipsoid(1.0, 1.0, 0.3), Cn))) rtol = 1.0e-12
+end
