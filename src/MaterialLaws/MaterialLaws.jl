@@ -30,7 +30,7 @@ r[:σ11], r[:p]                        # stress and cumulated plastic strain
 
 # Numbers
 
-Strains and stresses are [`Mandel`](@ref) vectors (`SVector{6}`), tangents
+Strains and stresses are `Mandel` vectors (`SVector{6}`), tangents
 `SMatrix{6, 6}`: a step allocates nothing. Every number may be a
 `ForwardDiff.Dual`, nested or not, in the strain, the state or the parameters:
 the response then carries its derivatives, exact (no finite differences). The
@@ -42,6 +42,7 @@ using LinearAlgebra
 using StaticArrays
 using ForwardDiff
 import TensND
+using TensND: Mandel, identity_mandel, trace_mandel, deviator, sqnorm_deviator, von_mises, equivalent_strain
 import Tensors
 import SimpleNonlinearSolve as SNS
 

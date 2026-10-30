@@ -82,11 +82,11 @@ end
     # With the layer named, the whole reconstruction goes through symbolically.
     A = local_gradient_gradient_concentration(sol, r_sym, 0.4, 0.9; layer = 2)
     @test eltype(A) <: Sym
-    ℓ = TensND.get_ℓ(A)
+    ℓ = TensND.walpole_coeffs(A)
     @test length(ℓ) == 6
     # Substituting a numeric radius must reproduce the numeric evaluation.
     A_num = local_gradient_gradient_concentration(sol, 1.5, 0.4, 0.9; layer = 2)
-    ℓ_num = TensND.get_ℓ(A_num)
+    ℓ_num = TensND.walpole_coeffs(A_num)
     for i in 1:6
         @test Float64(subs(ℓ[i], Dict(r_sym => Sym(3) // 2))) ≈ ℓ_num[i] rtol = 1.0e-12
     end

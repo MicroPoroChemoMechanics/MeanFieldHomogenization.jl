@@ -21,14 +21,10 @@ law_parameters
 
 ## Kelvin–Mandel algebra
 
-```@docs
-Mandel
-identity_mandel
-trace_mandel
-deviator
-von_mises
-equivalent_strain
-```
+The laws are written on the Kelvin–Mandel vectors of TensND, which the package
+re-exports: `Mandel`, `identity_mandel`, `trace_mandel`, `deviator`,
+`sqnorm_deviator`, `von_mises`, `equivalent_strain`, documented with TensND
+([Symmetric tensors as Kelvin-Mandel vectors](https://MicroPoroChemoMechanics.github.io/TensND.jl/stable/api/tensors)).
 
 ## Integrating a step
 

@@ -93,7 +93,7 @@ tangent `𝕂 = dF/dg` and the new state.
 
 `g` and `F` are flat `SVector`s laid out as [`gradient_layout`](@ref) and
 [`flux_layout`](@ref) say: for a mechanical law, the strain and the stress as
-[`Mandel`](@ref) vectors and `𝕂` the 6×6 tangent stiffness; for a coupled law,
+`Mandel` vectors and `𝕂` the 6×6 tangent stiffness; for a coupled law,
 the fields one after the other and `𝕂` with every coupling block.
 
 This is the function every caller ends up in: [`material_response`](@ref) wraps

@@ -3,7 +3,7 @@
 #  and direct 2D cubature for the elliptic-crack COD, using **nested 1-D
 #  QuadGK quadrature** (historical default shipped under the `_decuhr`
 #  suffix).  Shared 2-D helpers (`_A_and_Tn`, `_phi_cache`,
-#  `_qnn_pair_components`, `_inv3`) live in
+#  `_qnn_pair_components`; the 3×3 inverse is TensND's `inv3`) live in
 #  `src/Core/green_helpers.jl`.  The true DECUHR-based counterpart lives
 #  in `green_decuhr.jl`.
 # =============================================================================
@@ -132,7 +132,7 @@ function _cod_elliptic_nestedquadgk_direct(
     Tmat[1, 3] = Tmat[3, 1] = Tvec[5] * fac
     Tmat[2, 3] = Tmat[3, 2] = Tvec[6] * fac
 
-    Bmat = (Tp(8) / Tp(3)) .* MFH_Core._inv3(Tmat)
+    Bmat = (Tp(8) / Tp(3)) .* TensND.inv3(Tmat)
     Bsym = (Bmat .+ transpose(Bmat)) ./ 2
     return TensND.Tens(Tensors.SymmetricTensor{2, 3}((i, j) -> Tp(Bsym[i, j])), basis)
 end

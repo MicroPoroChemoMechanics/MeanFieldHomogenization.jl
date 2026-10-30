@@ -47,7 +47,7 @@ import DECUHR, Integrals
 
 const canonical = TensND.CanonicalBasis{3, Float64}()
 const tol = (; abstol = 1.0e-12, reltol = 1.0e-10)
-relerr(A, B) = norm(components_canon(A) - components_canon(B)) / norm(components_canon(B))
+relerr(A, B) = norm(canonical_components(A) - canonical_components(B)) / norm(canonical_components(B))
 ````
 
 ## The flattened ellipsoid to first order
@@ -227,7 +227,7 @@ a, b = 1.0, 0.45
 R = Matrix(random_rotation(Xoshiro(2)))
 ℓ, m, n = eachcol(R)
 ã, b̃, R̃ = transformed_crack(Pmap, a, b, ℓ, m, n)
-B̃ = components_canon(cod_tensor(EllipticCrack(ã, b̃, R̃), C̃))
+B̃ = canonical_components(cod_tensor(EllipticCrack(ã, b̃, R̃), C̃))
 B_rule = (b̃ / b) / norm(transpose(Pmap) * n) * (transpose(Pmap) \ B̃ / Pmap)
 crack = EllipticCrack(a, b, R)
 H_EO = H_from_first_order(P₁_by_forwarddiff(a, b, R, C_EO), C_EO, crack_basis(crack))
@@ -237,7 +237,7 @@ for (label, B) in (
         ("crack plane, DECUHR", cod_tensor(crack, C_EO; method = :decuhr, tol...)),
         ("flattened ellipsoid", cod_from_compliance(H_EO, crack)),
     )
-    @printf "%-30s %.1e\n" label norm(components_canon(B) - B_rule) / norm(B_rule)
+    @printf "%-30s %.1e\n" label norm(canonical_components(B) - B_rule) / norm(B_rule)
 end
 ````
 

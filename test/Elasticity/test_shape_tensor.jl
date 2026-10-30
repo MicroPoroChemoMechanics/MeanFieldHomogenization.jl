@@ -18,8 +18,8 @@ end
     # Constructor with euler_angles and pass-through basis must give same tensor
     ell1 = Ellipsoid(3.0, 2.0, 1.0; euler_angles = (π / 3, π / 4, π / 5))
     ell2 = Ellipsoid(3.0, 2.0, 1.0, b)
-    A1 = change_tens_canon(shape_tensor(ell1))
-    A2 = change_tens_canon(shape_tensor(ell2))
+    A1 = canonical(shape_tensor(ell1))
+    A2 = canonical(shape_tensor(ell2))
     A1_arr = Array(A1)
     A2_arr = Array(A2)
     A_ref = R * Diagonal([3.0, 2.0, 1.0]) * R'
@@ -38,7 +38,7 @@ end
 
 @testset "shape_tensor — Ellipsoid 2D" begin
     ell = Ellipsoid(3.0, 2.0; angle = π / 4)
-    A = change_tens_canon(shape_tensor(ell))
+    A = canonical(shape_tensor(ell))
     A_arr = Array(A)
 
     c, s = cos(π / 4), sin(π / 4)
@@ -53,7 +53,7 @@ end
 @testset "shape_tensor — Cylinder (Inf on axis)" begin
     b = TensND.RotatedBasis(π / 3, π / 4, π / 5)
     cyl = Cylinder(2.0, 1.0, b)
-    A = change_tens_canon(shape_tensor(cyl))
+    A = canonical(shape_tensor(cyl))
     A_arr = Array(A)
 
     # At least one entry is Inf (the Inf diagonal in the local frame, when
@@ -79,7 +79,7 @@ end
 @testset "shape_tensor — EllipticCrack (zero on normal)" begin
     b = TensND.RotatedBasis(π / 3, π / 4, π / 5)
     crack = EllipticCrack(3.0, 2.0, b)
-    A = change_tens_canon(shape_tensor(crack))
+    A = canonical(shape_tensor(crack))
     A_arr = Array(A)
 
     # Along the crack normal n̂ (column 3), quadratic form vanishes.
@@ -112,7 +112,7 @@ end
     # Rotated: tunnel axis still yields Inf.
     b = TensND.RotatedBasis(π / 3, π / 4, π / 5)
     ribbon = RibbonCrack(2.0, b)
-    A = change_tens_canon(shape_tensor(ribbon))
+    A = canonical(shape_tensor(ribbon))
     A_arr = Array(A)
     lhat = b[:, 1]
     @test isinf(lhat' * A_arr * lhat)
@@ -130,7 +130,7 @@ end
         # Internal invariant — axes always sorted descending
         @test ell.semi_axes == (3.0, 1.0, 0.5)
         # Canonical-frame shape_tensor matches the user's input order
-        A = change_tens_canon(shape_tensor(ell))
+        A = canonical(shape_tensor(ell))
         @test A[1, 1] ≈ perm[1] rtol = 1.0e-12
         @test A[2, 2] ≈ perm[2] rtol = 1.0e-12
         @test A[3, 3] ≈ perm[3] rtol = 1.0e-12
@@ -140,7 +140,7 @@ end
     for (a_in, b_in) in ((3.0, 1.5), (1.5, 3.0))
         ell2 = Ellipsoid(a_in, b_in)
         @test ell2.semi_axes == (3.0, 1.5)
-        A2 = change_tens_canon(shape_tensor(ell2))
+        A2 = canonical(shape_tensor(ell2))
         @test A2[1, 1] ≈ a_in rtol = 1.0e-12
         @test A2[2, 2] ≈ b_in rtol = 1.0e-12
     end
@@ -148,7 +148,7 @@ end
     # EllipticCrack with b > a must swap; canonical shape matches input.
     ec = EllipticCrack(0.5, 3.0)
     @test (ec.a, ec.b) == (3.0, 0.5)
-    Aec = change_tens_canon(shape_tensor(ec))
+    Aec = canonical(shape_tensor(ec))
     @test Aec[1, 1] ≈ 0.5 rtol = 1.0e-12    # user's a (first input)
     @test Aec[2, 2] ≈ 3.0 rtol = 1.0e-12    # user's b
     @test Aec[3, 3] ≈ 0.0 atol = 1.0e-12    # normal
@@ -173,9 +173,9 @@ end
     # Shape tensors differ because the user's input order permutes axes
     # relative to the basis columns.  But the EIGENVALUES must be the
     # same sorted semi-axes, and the TRACE/DETERMINANT are identical.
-    A = change_tens_canon(shape_tensor(ell))
+    A = canonical(shape_tensor(ell))
     A_arr = Array(A)
-    Aref = change_tens_canon(shape_tensor(ell_ref))
+    Aref = canonical(shape_tensor(ell_ref))
     Aref_arr = Array(Aref)
     @test sort(eigvals(Symmetric(A_arr)); rev = true) ≈ [3.0, 1.0, 0.5]
     @test sort(eigvals(Symmetric(Aref_arr)); rev = true) ≈ [3.0, 1.0, 0.5]
@@ -186,19 +186,19 @@ end
     # Padding with trailing zeros
     ell_pad1 = Ellipsoid(4.0, 2.0, 1.0; euler_angles = (π / 2,))
     ell_pad2 = Ellipsoid(4.0, 2.0, 1.0; euler_angles = (π / 2, 0.0, 0.0))
-    @test change_tens_canon(shape_tensor(ell_pad1))[1, 1] ≈
-        change_tens_canon(shape_tensor(ell_pad2))[1, 1] rtol = 1.0e-12
+    @test canonical(shape_tensor(ell_pad1))[1, 1] ≈
+        canonical(shape_tensor(ell_pad2))[1, 1] rtol = 1.0e-12
 
     ell_pad3 = Ellipsoid(4.0, 2.0, 1.0; euler_angles = ())
     ell_pad4 = Ellipsoid(4.0, 2.0, 1.0)
-    A3 = change_tens_canon(shape_tensor(ell_pad3))
-    A4 = change_tens_canon(shape_tensor(ell_pad4))
+    A3 = canonical(shape_tensor(ell_pad3))
+    A4 = canonical(shape_tensor(ell_pad4))
     @test A3 ≈ A4 atol = 1.0e-14
 
     # Mixed types — Int + Float
     ell_mix = Ellipsoid(4.0, 2.0, 1.0; euler_angles = (π / 2, 0, 0))
-    @test change_tens_canon(shape_tensor(ell_mix))[1, 1] ≈
-        change_tens_canon(shape_tensor(ell_pad2))[1, 1] rtol = 1.0e-12
+    @test canonical(shape_tensor(ell_mix))[1, 1] ≈
+        canonical(shape_tensor(ell_pad2))[1, 1] rtol = 1.0e-12
 
     # Irrational (π directly) + Float
     ell_irr = Ellipsoid(4.0, 2.0, 1.0; euler_angles = (π, 0.0, 0.0))
@@ -236,7 +236,7 @@ end
     D = Diagonal([0.5, 3.0, 1.0])
     dA_ref = ForwardDiff.derivative(t -> Q(t) * D * Q(t)', θ)
     for incl in (t -> Ellipsoid(0.5, 3.0, 1.0; euler_angles = (t, 0.4, 0.2)), t -> Ellipsoid(0.5, 3.0, 1.0, Q(t)))
-        A(t) = Matrix(TensND.components_canon(shape_tensor(incl(t))))
+        A(t) = Matrix(TensND.canonical_components(shape_tensor(incl(t))))
         @test A(θ) ≈ Q(θ) * D * Q(θ)' rtol = 1.0e-12
         @test ForwardDiff.derivative(A, θ) ≈ dA_ref rtol = 1.0e-12
     end

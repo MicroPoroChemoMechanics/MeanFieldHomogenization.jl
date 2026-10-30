@@ -111,7 +111,7 @@ end
             Lg = deviatoric_pinv(c.γ̇₀ / c.τ₀ * c.P * transpose(c.P)) + 3κ * 𝕁
             add_phase!(rve, Symbol(:g, i), Ellipsoid(1.0), Dict(:C => TensND.from_mandel(Lg)); fraction = i == 1 ? :rest : 1 / 6)
         end
-        C = SMatrix{6, 6}(KM(TensND.change_tens_canon(homogenize(rve, SelfConsistent(), :C; reltol = 1.0e-9))))
+        C = SMatrix{6, 6}(KM(TensND.canonical(homogenize(rve, SelfConsistent(), :C; reltol = 1.0e-9))))
         maximum(abs, C * D_VP - r.σ) / maximum(abs, r.σ)
     end
     g4, g5 = gap(1.0e4), gap(1.0e5)

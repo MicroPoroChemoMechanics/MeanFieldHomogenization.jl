@@ -59,10 +59,10 @@ end
 end
 
 @testset "Crack near the circle — derivative with respect to a semi-axis" begin
-    canon = P -> TensND.get_array(TensND.change_tens_canon(P))
+    canon = P -> TensND.get_array(TensND.canonical(P))
     rel = (A, B) -> maximum(abs, A .- B) / maximum(abs, B)
     C_iso = TensISO{3}(3 * 30.0, 2 * 18.0)
-    C_full = TensND.change_tens_canon(C_iso)
+    C_full = TensND.canonical(C_iso)
     f = b -> canon(cod_tensor(EllipticCrack(1.0, b), C_iso))
     for b0 in (1 - 1.0e-6, 0.9)
         d = ForwardDiff.derivative(f, b0)

@@ -22,9 +22,9 @@ using TensND
 using ForwardDiff
 
 @testset "Degenerate shapes — triaxial ellipsoid close to a spheroid" begin
-    canon = P -> TensND.get_array(TensND.change_tens_canon(P))
+    canon = P -> TensND.get_array(TensND.canonical(P))
     C_iso = TensISO{3}(3 * 30.0, 2 * 18.0)
-    C_full = TensND.change_tens_canon(C_iso)
+    C_full = TensND.canonical(C_iso)
     tight = (abstol = 1.0e-14, reltol = 1.0e-13)
     # Both sides of the 2 % gap where the expansion around the spheroid hands
     # over to the elliptic integrals; a flat one; and a near sphere.
@@ -47,10 +47,10 @@ using ForwardDiff
 end
 
 @testset "Degenerate shapes — derivative with respect to a semi-axis where two meet" begin
-    canon = P -> TensND.get_array(TensND.change_tens_canon(P))
+    canon = P -> TensND.get_array(TensND.canonical(P))
     rel = (A, B) -> maximum(abs, A .- B) / maximum(abs, B)
     C_iso = TensISO{3}(3 * 30.0, 2 * 18.0)
-    C_full = TensND.change_tens_canon(C_iso)
+    C_full = TensND.canonical(C_iso)
     tAD = (abstol = 1.0e-13, reltol = 1.0e-12)
     cases = (
         (b -> Ellipsoid(1.0, b, 0.5), 1.0),           # two semi-axes meet
@@ -87,7 +87,7 @@ end
 end
 
 @testset "Degenerate shapes — conduction tensor of a sphere, differentiated" begin
-    canon = P -> TensND.get_array(TensND.change_tens_canon(P))
+    canon = P -> TensND.get_array(TensND.canonical(P))
     rel = (A, B) -> maximum(abs, A .- B) / maximum(abs, B)
     k = 5.0
     K = TensISO{3}(k)
@@ -97,7 +97,7 @@ end
     @test d ≈ [2 0 0; 0 2 0; 0 0 -4] ./ (15k) rtol = 1.0e-13
     # The anisotropic path, a cubature under ForwardDiff, stopped on a NaN
     # error estimate at the sphere.
-    d_aniso = ForwardDiff.derivative(c -> canon(hill_tensor(Ellipsoid(1.0, 1.0, c), TensND.change_tens_canon(K))), 1.0)
+    d_aniso = ForwardDiff.derivative(c -> canon(hill_tensor(Ellipsoid(1.0, 1.0, c), TensND.canonical(K))), 1.0)
     @test rel(d_aniso, d) < 1.0e-12
     d_fd = (f(1 + 1.0e-6) .- f(1 - 1.0e-6)) ./ 2.0e-6
     @test rel(d_fd, d) < 1.0e-7
@@ -110,13 +110,13 @@ end
 end
 
 @testset "Degenerate shapes — transversely isotropic needle" begin
-    canon = P -> TensND.get_array(TensND.change_tens_canon(P))
+    canon = P -> TensND.get_array(TensND.canonical(P))
     rel = (A, B) -> maximum(abs, A .- B) / maximum(abs, B)
     n_axis = [0.0, 0.0, 1.0]
-    C_TI = tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
+    C_TI = ti_from_constants(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
     for ω in (1.0e2, 1.0e3)
         P = canon(hill_tensor(Spheroid(ω), C_TI))
-        R = canon(hill_tensor(Spheroid(ω), TensND.change_tens_canon(C_TI); method = :nestedquadgk, abstol = 1.0e-14, reltol = 1.0e-13))
+        R = canon(hill_tensor(Spheroid(ω), TensND.canonical(C_TI); method = :nestedquadgk, abstol = 1.0e-14, reltol = 1.0e-13))
         @test rel(P, R) < 1.0e-11
     end
     # Isotropic values in a TI type against the isotropic builder, exact for

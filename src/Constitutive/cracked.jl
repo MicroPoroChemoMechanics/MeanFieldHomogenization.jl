@@ -234,7 +234,7 @@ function _cracked_state_tensors(m::MicrocrackedMaterial, open, cache)
     return cached!(cache, (objectid(m), open)) do
         rve = _rve_with_open(m, open)
         C = Schemes.homogenize(rve, m.scheme, m.property; m.kw...)
-        C_can = TensND.change_tens_canon(C)   # a structured tensor is returned as it is
+        C_can = TensND.canonical(C)   # a structured tensor is returned as it is
         𝕊 = if any(open)
             dec = Schemes.crack_family_compliances(rve, m.scheme, C; property = m.property, m.kw...)
             Dict(k => v for (k, v) in dec.families)
@@ -279,7 +279,7 @@ function _aperture_increments(m::MicrocrackedMaterial{N}, 𝕊, Δσ, open) wher
         S_i = get(𝕊, m.families[i], nothing)
         S_i === nothing && return zero(eltype(m.ω₀))
         n̂ = eachcol(TensND.vecbasis(Cracks.crack_basis(m.rve.phases[m.families[i]].geometry), :cov))[3]
-        return transpose(n̂) * TensND.components_canon(S_i ⊡ Δσ) * n̂
+        return transpose(n̂) * TensND.canonical_components(S_i ⊡ Δσ) * n̂
     end
 end
 
@@ -325,7 +325,7 @@ end
 
 # `n̂_i · σ · n̂_i` for every family, with `n̂_i` in GLOBAL components.
 function _normal_tractions(m::MicrocrackedMaterial{N}, σ) where {N}
-    A = get_array(TensND.change_tens(σ, TensND.CanonicalBasis{3, eltype(σ)}()))
+    A = get_array(TensND.express(σ, TensND.CanonicalBasis{3, eltype(σ)}()))
     return ntuple(N) do i
         n̂ = _family_normal(m, i)
         sum(n̂[a] * A[a, b] * n̂[b] for a in 1:3, b in 1:3)

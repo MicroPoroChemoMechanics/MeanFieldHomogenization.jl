@@ -300,8 +300,8 @@ end
 
 function _bounds_dispatch(lam::Laminate, ::Reuss, ::TensND.AbstractTens{2, 3}, ::Val{p}) where {p}
     mats, fs, _ = _gather(lam, p, Val(2))
-    S = sum(fs[i] * MFH_Core._inv3(mats[i]) for i in eachindex(mats))
-    return _wrap2(lam, p, MFH_Core._inv3(S))
+    S = sum(fs[i] * TensND.inv3(mats[i]) for i in eachindex(mats))
+    return _wrap2(lam, p, TensND.inv3(S))
 end
 
 # ── Per-layer fields ────────────────────────────────────────────────────────

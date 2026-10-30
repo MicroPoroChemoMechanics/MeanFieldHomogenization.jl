@@ -107,7 +107,7 @@ function _residual(c::IncrementalTangent, y, g, prev, Δt)
     # mixture rule for the last.
     R = length(c.phases)
     conc = map(1:(R - 1)) do r
-        εs[r] - prev.y[c.gslices[r]] - _mandel(TensND.change_tens_canon(A[c.p.names[r]])) * ΔE
+        εs[r] - prev.y[c.gslices[r]] - _mandel(TensND.canonical(A[c.p.names[r]])) * ΔE
     end
     mixture = sum(map((f, ε) -> f * ε, c.fractions, εs)) - g
     laws = map((law, ε, ys, st) -> _phase_residual(law, y[ys], ε, st, Δt), c.phases, εs, c.yslices, states)

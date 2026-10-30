@@ -36,53 +36,21 @@
 # 1.7 times faster than from a heap array (9 ns against 15 per acoustic tensor).
 _static_stiffness(A::AbstractArray{T, 4}) where {T} = SArray{Tuple{3, 3, 3, 3}, T}(A)
 
-# The six independent entries (11, 22, 33, 12, 13, 23) of the acoustic tensor
-# K_ij = ζ_k (C₀)_kijl ζ_l, symmetric since C₀ has the minor symmetries; a
-# recurrence over the 9 pairs (k, l) accumulating six sums at once.
-@inline function _sym3_acoustic(C₀_arr::AbstractArray{T, 4}, ζ) where {T}
-    K11 = zero(T); K22 = zero(T); K33 = zero(T)
-    K12 = zero(T); K13 = zero(T); K23 = zero(T)
-    for k in 1:3, l in 1:3
-        ζζ = ζ[k] * ζ[l]
-        K11 += ζζ * C₀_arr[k, 1, 1, l]
-        K22 += ζζ * C₀_arr[k, 2, 2, l]
-        K33 += ζζ * C₀_arr[k, 3, 3, l]
-        K12 += ζζ * C₀_arr[k, 1, 2, l]
-        K13 += ζζ * C₀_arr[k, 1, 3, l]
-        K23 += ζζ * C₀_arr[k, 2, 3, l]
-    end
-    return K11, K22, K33, K12, K13, K23
-end
-
 """
     _sym3_inv_acoustic(C₀_arr, ζ) -> NTuple{9}
 
 Inverse of the acoustic tensor ``K_{ij} = \\zeta_k\\,(C_0)_{kijl}\\,\\zeta_l`` (symmetric, since
-`C₀` has minor symmetry), in closed form: only the 6 upper-triangle scalars of
-`K` are computed, and its inverse is the scalar adjugate/determinant of a
-symmetric 3×3 matrix — no `Matrix` allocation, no LU factorization, Dual-safe.
+`C₀` has minor symmetry), in closed form: TensND's `acoustic_components` gives the
+6 upper-triangle scalars of `K` and its `sym3_inv` the adjugate over the
+determinant — no `Matrix` allocation, no LU factorization, Dual-safe.
 Returned flattened in column-major order, so `iK[i + (j-1)*3]` mirrors `iK[i,j]`.
 
 A standalone top-level function (not a nested closure): closures capturing many
 local scalars showed measurably *worse* allocation behavior than hoisting this
 computation out, so it is kept separate deliberately.
 """
-@inline _sym3_inv_acoustic(C₀_arr::AbstractArray{T, 4}, ζ) where {T} = _sym3_inv(_sym3_acoustic(C₀_arr, ζ)...)
+@inline _sym3_inv_acoustic(C₀_arr::AbstractArray{T, 4}, ζ) where {T} = TensND.sym3_inv(TensND.acoustic_components(C₀_arr, ζ)...)
 
-# The inverse of a symmetric 3×3 matrix from its entries (11, 22, 33, 12, 13,
-# 23), by its adjugate and determinant, flattened in column-major order.
-@inline function _sym3_inv(K11, K22, K33, K12, K13, K23)
-    det = K11 * K22 * K33 + 2 * K12 * K13 * K23 -
-        K11 * K23 * K23 - K22 * K13 * K13 - K33 * K12 * K12
-    inv_det = inv(det)
-    iK11 = (K22 * K33 - K23 * K23) * inv_det
-    iK22 = (K11 * K33 - K13 * K13) * inv_det
-    iK33 = (K11 * K22 - K12 * K12) * inv_det
-    iK12 = (K13 * K23 - K33 * K12) * inv_det
-    iK13 = (K12 * K23 - K22 * K13) * inv_det
-    iK23 = (K12 * K13 - K11 * K23) * inv_det
-    return (iK11, iK12, iK13, iK12, iK22, iK23, iK13, iK23, iK33)
-end
 
 """
     _sym3_inv_acoustic_incompressible(C₀_arr, ζ) -> NTuple{9}
@@ -100,7 +68,7 @@ stiffness `C₀` need only be defined on deviators. Returned as
 [`_sym3_inv_acoustic`](@ref) returns ``\\boldsymbol{K}^{-1}``.
 """
 @inline function _sym3_inv_acoustic_incompressible(C₀_arr::AbstractArray{T, 4}, ζ) where {T}
-    K11, K22, K33, K12, K13, K23 = _sym3_acoustic(C₀_arr, ζ)
+    K11, K22, K33, K12, K13, K23 = TensND.acoustic_components(C₀_arr, ζ)
     n = SVector{3}(ζ) / sqrt(ζ[1]^2 + ζ[2]^2 + ζ[3]^2)
     K = SMatrix{3, 3}(K11, K12, K13, K12, K22, K23, K13, K23, K33)
     # Q K Q + n⊗n, Q = 𝟏 − n⊗n, is invertible and splits into the plane and the
@@ -112,7 +80,7 @@ stiffness `C₀` need only be defined on deviators. Returned as
     λ = (K11 + K22 + K33) / 3
     Kn = K * n
     M = K - n * transpose(Kn) - Kn * transpose(n) + (transpose(n) * Kn + λ) * (n * transpose(n))
-    iM = _sym3_inv(M[1, 1], M[2, 2], M[3, 3], M[1, 2], M[1, 3], M[2, 3])
+    iM = TensND.sym3_inv(M[1, 1], M[2, 2], M[3, 3], M[1, 2], M[1, 3], M[2, 3])
     nn = n * transpose(n)
     return ntuple(q -> iM[q] - nn[q] / λ, Val(9))
 end

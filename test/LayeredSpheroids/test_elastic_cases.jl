@@ -180,7 +180,7 @@ end
         ce(E) = iso_stiffness(E / (3 * (1 - 2ν₀)), E / (2 * (1 + ν₀)))
         A1111(w) = (
             r = confocal_layer_radii(2.6, 1.0, (w, 1 - w));
-            components_canon(gradient_gradient_concentration(LayeredSpheroid(r[1], r[2], (ce(3.0), ce(0.6))), ce(1.0), ce(1.0)))[1, 1, 1, 1]
+            canonical_components(gradient_gradient_concentration(LayeredSpheroid(r[1], r[2], (ce(3.0), ce(0.6))), ce(1.0), ce(1.0)))[1, 1, 1, 1]
         )
         w₀ = 0.66
         d = A1111(ForwardDiff.Dual{:w}(w₀, 1.0))
@@ -197,7 +197,7 @@ end
         ce(E) = iso_stiffness(E / (3 * (1 - 2ν₀)), E / (2 * (1 + ν₀)))
         A1111(w) = (
             r = confocal_layer_radii(0.4, 1.0, (w, 1 - w));
-            components_canon(gradient_gradient_concentration(LayeredSpheroid(r[1], r[2], (ce(3.0), ce(0.6))), ce(1.0), ce(1.0)))[1, 1, 1, 1]
+            canonical_components(gradient_gradient_concentration(LayeredSpheroid(r[1], r[2], (ce(3.0), ce(0.6))), ce(1.0), ce(1.0)))[1, 1, 1, 1]
         )
         w₀ = 0.6
         d = A1111(ForwardDiff.Dual{:w}(w₀, 1.0))
@@ -358,7 +358,7 @@ end
         @test eltype(get_array(rb.A)) === BigFloat
         sf = LayeredSpheroid((1.0,), (sqrt(1 - c^2),), (C₁,); Nseries = 5)
         rf = spheroid_strain_concentration(sf, C₀; D = 4)
-        @test Float64(components_canon(rb.A)[3, 3, 3, 3]) ≈ components_canon(rf.A)[3, 3, 3, 3] rtol = 1.0e-8
+        @test Float64(canonical_components(rb.A)[3, 3, 3, 3]) ≈ canonical_components(rf.A)[3, 3, 3, 3] rtol = 1.0e-8
     end
 end
 
@@ -443,7 +443,7 @@ end
 end
 
 @testset "the elastic confocal spheroid approaching the sphere" begin
-    _nsk(t) = Matrix(mandel(TensND.change_tens(t, TensND.CanonicalBasis{3, Float64}())))
+    _nsk(t) = Matrix(mandel(TensND.express(t, TensND.CanonicalBasis{3, Float64}())))
     C1 = iso_stiffness(4.0 / (3 * (1 - 2 * 0.2)), 4.0 / (2 * (1 + 0.2)))
     C₀ = iso_stiffness(1.0 / (3 * (1 - 2 * 0.25)), 1.0 / (2 * (1 + 0.25)))
     K1, K₀ = TensISO{3}(5.0), TensISO{3}(1.0)
@@ -473,7 +473,7 @@ end
             ar, dr = confocal_layer_radii(ω, 1.0, (1.0,))
             an = Matrix(
                 TensND.get_array(
-                    TensND.change_tens(
+                    TensND.express(
                         gradient_gradient_concentration(LayeredSpheroid(ar, dr, (K1,)), K₀, K₀),
                         TensND.CanonicalBasis{3, Float64}(),
                     )
@@ -481,7 +481,7 @@ end
             )
             ex = Matrix(
                 TensND.get_array(
-                    TensND.change_tens(
+                    TensND.express(
                         gradient_gradient_concentration(Spheroid(ω), K1, K₀),
                         TensND.CanonicalBasis{3, Float64}(),
                     )

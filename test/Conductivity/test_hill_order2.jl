@@ -30,7 +30,7 @@ end
 # built the shape tensor with the rotation in it.
 
 _rot(basis) = Matrix(TensND.vecbasis(basis, :cov))
-_canon2(t) = Matrix(TensND.components_canon(t))
+_canon2(t) = Matrix(TensND.canonical_components(t))
 
 @testset "Conductivity — the order-2 Hill tensor rotates with the inclusion" begin
     K = TensISO{3}(1.7)
@@ -92,7 +92,7 @@ _diagK(k) = TensND.Tens(diagm(k))
     _P(ell, K) = _canon2(hill_tensor(ell, K))
     function P_ref(a, k)
         e = Ellipsoid(a[1] / sqrt(k[1]), a[2] / sqrt(k[2]), a[3] / sqrt(k[3]))
-        IA = TensND.components_canon(tens_IA(e))
+        IA = TensND.canonical_components(tens_IA(e))
         return [IA[i, i] / k[i] for i in 1:3]
     end
     a = [2.0, 1.2, 0.7]

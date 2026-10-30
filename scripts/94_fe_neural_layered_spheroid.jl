@@ -33,7 +33,7 @@ import Ferrite, FerriteGmsh, Gmsh
 const NI = MeanFieldHomogenization.NeuralInclusions
 const CAN = TensND.CanonicalBasis{3, Float64}()
 
-arr(t) = Array(TensND.get_array(TensND.change_tens(t, CAN)))
+arr(t) = Array(TensND.get_array(TensND.express(t, CAN)))
 reldiff(a, b) = norm(arr(a) - arr(b)) / norm(arr(b))
 ce(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
 

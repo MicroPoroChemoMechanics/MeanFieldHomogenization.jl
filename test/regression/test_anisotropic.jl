@@ -55,9 +55,9 @@ const _K_aniso = TensND.Tens([3.0 0.5 0.3; 0.5 2.0 0.2; 0.3 0.2 1.5])
         P_nqg = hill_tensor(ell, C_tri; method = :nestedquadgk, reltol = 1.0e-12)
         P_dec = hill_tensor(ell, C_tri; method = :decuhr, reltol = 1.0e-10)
 
-        scale = maximum(abs, components_canon(P_nqg))
-        @test maximum(abs, components_canon(P_res - P_nqg)) < 1.0e-7 * scale
-        @test maximum(abs, components_canon(P_dec - P_nqg)) < 1.0e-7 * scale
+        scale = maximum(abs, canonical_components(P_nqg))
+        @test maximum(abs, canonical_components(P_res - P_nqg)) < 1.0e-7 * scale
+        @test maximum(abs, canonical_components(P_dec - P_nqg)) < 1.0e-7 * scale
     end
 
     @testset "Triaxial ellipsoid + cubic C — symmetries" begin
@@ -76,8 +76,8 @@ const _K_aniso = TensND.Tens([3.0 0.5 0.3; 0.5 2.0 0.2; 0.3 0.2 1.5])
         # when expressed in the canonical frame.
         ell1 = Ellipsoid(3.0, 2.0, 1.0; euler_angles = (π / 5,))
         ell2 = Ellipsoid(1.0, 3.0, 2.0; euler_angles = (π / 5,))  # permuted input
-        P1 = change_tens_canon(hill_tensor(ell1, C_tri; method = :residues))
-        P2 = change_tens_canon(hill_tensor(ell2, C_tri; method = :residues))
+        P1 = canonical(hill_tensor(ell1, C_tri; method = :residues))
+        P2 = canonical(hill_tensor(ell2, C_tri; method = :residues))
         # The two physical inclusions differ (different axis–frame coupling)
         # so P1 != P2 in general — but eigenvalue spectrum of the KM
         # representation must be the same.
@@ -117,8 +117,8 @@ end
         ec = EllipticCrack(1.0, 0.3)
         H_res = inverse_property_contribution(ec, C_tri; method = :residues)
         H_dec = inverse_property_contribution(ec, C_tri; method = :decuhr, reltol = 1.0e-10)
-        scale = maximum(abs, components_canon(H_res))
-        @test maximum(abs, components_canon(H_res - H_dec)) < 1.0e-6 * scale
+        scale = maximum(abs, canonical_components(H_res))
+        @test maximum(abs, canonical_components(H_res - H_dec)) < 1.0e-6 * scale
     end
 
     @testset "Ribbon / triclinic — H = (2/π) n̂ ⊗ˢ B ⊗ˢ n̂" begin
@@ -144,7 +144,7 @@ end
     H_dec = inverse_property_contribution(pc, C_tri; method = :decuhr, reltol = 1.0e-10)
     H_nqg = inverse_property_contribution(pc, C_tri; method = :nestedquadgk, reltol = 1.0e-10)
 
-    scale = maximum(abs, components_canon(H_res))
-    @test maximum(abs, components_canon(H_res - H_dec)) < 1.0e-6 * scale
-    @test maximum(abs, components_canon(H_res - H_nqg)) < 1.0e-6 * scale
+    scale = maximum(abs, canonical_components(H_res))
+    @test maximum(abs, canonical_components(H_res - H_dec)) < 1.0e-6 * scale
+    @test maximum(abs, canonical_components(H_res - H_nqg)) < 1.0e-6 * scale
 end

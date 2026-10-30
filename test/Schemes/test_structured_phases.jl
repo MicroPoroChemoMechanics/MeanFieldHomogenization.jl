@@ -20,7 +20,7 @@ using Random
 
 _sp_rng = MersenneTwister(20261029)
 _sp_frame() = TensND.random_basis(_sp_rng)
-_sp_generic(C) = TensND.from_mandel(KM(TensND.change_tens_canon(C)))
+_sp_generic(C) = TensND.from_mandel(KM(TensND.canonical(C)))
 
 function _sp_rve(M, I, J)
     rve = RVE()
@@ -31,20 +31,20 @@ function _sp_rve(M, I, J)
 end
 
 @testset "linear schemes: structured phases as their generic tensors" begin
-    M = TensND.tens_cubic(168.4e3, 121.4e3, 75.4e3, _sp_frame())
-    I = TensND.tens_ti(1.0e5, 3.0e4, 2.5e4, 1.2e5, 2.0e4, normalize(randn(_sp_rng, 3)))
+    M = TensND.cubic_from_constants(168.4e3, 121.4e3, 75.4e3, _sp_frame())
+    I = TensND.ti_from_constants(1.0e5, 3.0e4, 2.5e4, 1.2e5, 2.0e4, normalize(randn(_sp_rng, 3)))
     J = TensND.TensOrtho(9.0e4, 8.0e4, 7.0e4, 1.0e4, 2.0e4, 3.0e4, 4.0e4, 5.0e4, 6.0e4, _sp_frame())
     structured, generic = _sp_rve(M, I, J), _sp_rve(_sp_generic(M), _sp_generic(I), _sp_generic(J))
     for scheme in (Voigt(), Reuss(), Dilute(), DiluteDual(), MoriTanaka(), SelfConsistent(), AsymmetricSelfConsistent())
-        Cs = KM(TensND.change_tens_canon(homogenize(structured, scheme, :C; reltol = 1.0e-10)))
-        Cg = KM(TensND.change_tens_canon(homogenize(generic, scheme, :C; reltol = 1.0e-10)))
+        Cs = KM(TensND.canonical(homogenize(structured, scheme, :C; reltol = 1.0e-10)))
+        Cg = KM(TensND.canonical(homogenize(generic, scheme, :C; reltol = 1.0e-10)))
         @test Cs ≈ Cg rtol = 1.0e-8
     end
     # Two cubic phases on different cubes, the case that failed.
-    cubic = _sp_rve(M, TensND.tens_cubic(250.0e3, 150.0e3, 120.0e3, _sp_frame()), TensND.tens_cubic(100.0e3, 60.0e3, 40.0e3, _sp_frame()))
+    cubic = _sp_rve(M, TensND.cubic_from_constants(250.0e3, 150.0e3, 120.0e3, _sp_frame()), TensND.cubic_from_constants(100.0e3, 60.0e3, 40.0e3, _sp_frame()))
     plain = _sp_rve(_sp_generic(M), map(φ -> _sp_generic(MeanFieldHomogenization.Core.cell_container_property(cubic, φ, :C)), (:I, :J))...)
     for scheme in (MoriTanaka(), SelfConsistent())
-        @test KM(TensND.change_tens_canon(homogenize(cubic, scheme, :C; reltol = 1.0e-10))) ≈
-            KM(TensND.change_tens_canon(homogenize(plain, scheme, :C; reltol = 1.0e-10))) rtol = 1.0e-8
+        @test KM(TensND.canonical(homogenize(cubic, scheme, :C; reltol = 1.0e-10))) ≈
+            KM(TensND.canonical(homogenize(plain, scheme, :C; reltol = 1.0e-10))) rtol = 1.0e-8
     end
 end

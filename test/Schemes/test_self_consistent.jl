@@ -66,7 +66,7 @@ end
     C_eff = homogenize(rve, SelfConsistent(; abstol = 1.0e-12, maxiters = 200))
     # Verify : one more SC step on C_eff itself should return ≈ C_eff
     step_once = MeanFieldHomogenization.Schemes._sc_step(rve, C_eff, :C)
-    @test maximum(abs, components_canon(step_once - C_eff)) < 1.0e-9
+    @test maximum(abs, canonical_components(step_once - C_eff)) < 1.0e-9
 end
 
 @testset "AsymmetricSelfConsistent — matches SC when matrix is soft" begin
@@ -246,7 +246,7 @@ end
     # with e₃ in its own frame. Built this way it is stored as the 5-component
     # (major-symmetric) flavor, so any asymmetry downstream was created by the
     # scheme rather than inherited from the input.
-    C_i = TensND.tens_ti_eng(2.0, 1.0, 0.25, 0.2, 0.45, (0.0, 0.0, 1.0))
+    C_i = TensND.ti_from_constants(2.0, 1.0, 0.25, 0.2, 0.45, (0.0, 0.0, 1.0); form = :engineering)
     @test C_i isa TensND.TensTI{4, Float64, 5}
 
     function build(sym)
@@ -452,7 +452,7 @@ end
     # as a generic tensor, the estimate lost its class and the Hill tensor of a
     # coaxial spheroid went through a cubature at every iterate (4 ms against
     # 46 µs). Projected within the class, it keeps the closed form.
-    canon = P -> TensND.get_array(TensND.change_tens_canon(P))
+    canon = P -> TensND.get_array(TensND.canonical(P))
     C₀ = TensISO{3}(3 * 30.0, 2 * 18.0)
     C₁ = TensISO{3}(3 * 70.0, 2 * 40.0)
     for shape in (Ellipsoid(3.0, 1.0, 1.0), Ellipsoid(1.0, 1.0, 0.3), Ellipsoid(3.0, 1.0, 1.0; euler_angles = (0.3, 0.7, 0.0)))
@@ -513,7 +513,7 @@ end
     @test TensND.get_data(o2) == (ε, 2.0, 3.0)
     @test TensND.frame(o2) == R
     check_clamped(TensISO{3}(-3.0, 2.0))
-    check_clamped(TensND.tens_cubic(10.0, 12.0, 2.0, TensND.CanonicalBasis{3, Float64}()))
+    check_clamped(TensND.cubic_from_constants(10.0, 12.0, 2.0, TensND.CanonicalBasis{3, Float64}()))
     t2 = S._sc_pd_guard_apply(TensTI{2}(-1.0, 2.0, 0.5, n), ε)
     @test TensND.get_data(t2) == (ε, 2.0, 0.5)
 
@@ -579,8 +579,8 @@ end
     n = normalize([0.3, -0.5, 0.8])
     P = TensND.TensTI{2}(2.0, 5.0, 0.7, n)            # carries a skew part c·w
     S = MeanFieldHomogenization.Schemes._major_symmetrize(P)
-    A = Matrix(TensND.components_canon(P))
-    @test Matrix(TensND.components_canon(S)) ≈ (A + transpose(A)) / 2
+    A = Matrix(TensND.canonical_components(P))
+    @test Matrix(TensND.canonical_components(S)) ≈ (A + transpose(A)) / 2
     Q = TensND.TensTI{2}(2.0, 5.0, n)
     @test MeanFieldHomogenization.Schemes._major_symmetrize(Q) === Q
 end

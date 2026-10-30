@@ -36,7 +36,7 @@ using Printf
 # that is set for plain `Float64` but not always under `ForwardDiff.Dual`,
 # which would make value (6×6) and derivative (9×9) shapes disagree.  The
 # 3×3×3×3 array is shape-stable across both.
-P_arr(ell, C) = TensND.get_array(change_tens_canon(hill_tensor(ell, C)))
+P_arr(ell, C) = TensND.get_array(canonical(hill_tensor(ell, C)))
 maxrel(A, B) = maximum(abs, A .- B) / max(maximum(abs, A), maximum(abs, B), 1.0e-300)
 
 # Triaxial ellipsoid with Euler angles — the reference triaxial shape

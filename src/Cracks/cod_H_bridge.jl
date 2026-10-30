@@ -28,13 +28,13 @@ function _H_from_B(B, k, ℬ::TensND.OrthonormalBasis{3})
 end
 function _H_from_B(B, k, ℬ::TensND.AbstractBasis)
     n̂ = TensND.tens_basis(ℬ, 3)
-    return k * (n̂ ⊗ˢ TensND.change_tens(B, ℬ) ⊗ˢ n̂)
+    return k * (n̂ ⊗ˢ TensND.express(B, ℬ) ⊗ˢ n̂)
 end
 
 # Its inverse: in ℬ, where n = e₃, (n ⊗ˢ B ⊗ˢ n)_{i3j3} = B_ij (1 + δ_i3)(1 + δ_j3) / 4,
 # and these components of H determine B.
 function _B_from_H(H, k, ℬ::TensND.AbstractBasis)
-    newH = TensND.change_tens(H, ℬ)
+    newH = TensND.express(H, ℬ)
     return TensND.Tens(
         Tensors.SymmetricTensor{2, 3}(
             (i, j) -> 4 * newH[i, 3, j, 3] / (k * (1 + (i == 3)) * (1 + (j == 3)))

@@ -190,14 +190,14 @@ function multiscale_C_mo(wc, α_p, sc, μ_b0; N::Int = NTHETA, ω::Real = ω_asp
     C_hf = best_fit_ti(build_hf(wc, α_p, μ_b0; N = N, ω = ω, kw...), (0.0, 0.0, 1.0))
     C_cp = build_cp(wc, α_p, C_hf)
     C_mo = build_mo(wc, sc, C_cp)
-    return Array(components_canon(C_mo))
+    return Array(canonical_components(C_mo))
 end
 
 # ── Iso bulk / shear moduli of a (nearly) iso 4-tensor ─────────────────────
-# `proj_tens(:ISO, ...)` is TensND's paramsym-style best-fit projection
+# `project(..., :ISO)` is TensND's paramsym-style best-fit projection
 # (echoes' `.paramsym(sym=ISO)` analog); `k_mu` is MeanFieldHomogenization's
 # stiffness-role interpretation of the resulting (α,β) = (3k,2μ) coefficients.
-extract_kμ(arr::AbstractArray) = k_mu(TensND.proj_tens(Val(:ISO), arr)[1])
+extract_kμ(arr::AbstractArray) = k_mu(TensND.project(arr, Val(:ISO))[1])
 
 # ── Strength criterion (quasi-brittle model) ───────────────────────────
 #

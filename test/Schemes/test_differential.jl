@@ -630,7 +630,7 @@ end
     for p in (:C, :K)
         stiff = homogenize(rve, DifferentialScheme(:M), p)
         compl = homogenize(rve, DifferentialScheme(:M; formulation = :compliance), p)
-        @test all(isfinite, components_canon(compl))
+        @test all(isfinite, canonical_components(compl))
         @test norm(compl - stiff) <= 1.0e-6 * norm(stiff)
     end
 end

@@ -39,7 +39,7 @@ function _H_from_hill(a, b, ω, C₀; kw...)
     return ω * inv(Q)
 end
 
-_relerr(A, B) = maximum(abs, components_canon(A - B)) / maximum(abs, components_canon(B))
+_relerr(A, B) = maximum(abs, canonical_components(A - B)) / maximum(abs, canonical_components(B))
 
 # Crack of in-plane aspect ratio η, semi-major 1 — normal along e₃ by default.
 _crack(η) = η == 1.0 ? PennyCrack(1.0) : EllipticCrack(1.0, η)
@@ -63,7 +63,7 @@ end
 @testset "Cracks — ℍ oracle: transversely isotropic matrix, axis = crack normal" begin
     # Sevostianov-Yilmaz-Kushch-Levin (2005) test stiffness, as in
     # `test_cod_ti_aligned.jl`.
-    C₀ = tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, [0.0, 0.0, 1.0])
+    C₀ = ti_from_constants(2.179, 0.579, 0.689, 10.345, 1.0, [0.0, 0.0, 1.0])
 
     for η in (1.0, 0.5)
         H_ref = inverse_property_contribution(_crack(η), C₀)
@@ -179,16 +179,16 @@ end
     # crack, and with a dual entry of 𝐁.
     ℬ = TensND.RotatedBasis(0.7, 1.9, -0.4)
     n̂ = TensND.tens_basis(ℬ, 3)
-    B = TensND.change_tens(TensND.Tens([2.0 0.3 -0.2; 0.3 1.5 0.4; -0.2 0.4 0.8]), TensND.RotatedBasis(0.2, 0.5, 1.1))
+    B = TensND.express(TensND.Tens([2.0 0.3 -0.2; 0.3 1.5 0.4; -0.2 0.4 0.8]), TensND.RotatedBasis(0.2, 0.5, 1.1))
     for (crack, k) in ((EllipticCrack(1.0, 0.6; euler_angles = (0.7, 1.9, -0.4)), 3 / 4), (RibbonCrack(1.0; euler_angles = (0.7, 1.9, -0.4)), 2 / π))
         H = compliance_from_cod(B, crack, ℬ)
         @test TensND.get_array(H) isa TensND.Tensors.SymmetricTensor{4, 3}
-        @test Array(TensND.components_canon(H)) ≈ Array(TensND.components_canon(k * (n̂ ⊗ˢ B ⊗ˢ n̂))) atol = 1.0e-14
+        @test Array(TensND.canonical_components(H)) ≈ Array(TensND.canonical_components(k * (n̂ ⊗ˢ B ⊗ˢ n̂))) atol = 1.0e-14
         @test cod_from_compliance(H, crack, ℬ) ≈ B
         @test compliance_from_cod(B, crack, TensND.Basis(Matrix(TensND.vecbasis(ℬ)))) ≈ H
     end
-    dH = ForwardDiff.derivative(x -> Array(TensND.components_canon(compliance_from_cod(x * B, ℬ))), 1.0)
-    @test dH ≈ Array(TensND.components_canon(compliance_from_cod(B, ℬ)))
+    dH = ForwardDiff.derivative(x -> Array(TensND.canonical_components(compliance_from_cod(x * B, ℬ))), 1.0)
+    @test dH ≈ Array(TensND.canonical_components(compliance_from_cod(B, ℬ)))
 end
 
 @testset "Cracks — 𝐁 in EO and TraTI matrices against the transformation rule" begin
@@ -209,18 +209,18 @@ end
 
         a, b = 1.0, 0.45
         ã, b̃, ℓ̃, m̃, ñ = _transformed_crack(P, a, b, ℓ, m, n)
-        B̃ = components_canon(cod_tensor(EllipticCrack(ã, b̃, hcat(ℓ̃, m̃, ñ)), C̃))
+        B̃ = canonical_components(cod_tensor(EllipticCrack(ã, b̃, hcat(ℓ̃, m̃, ñ)), C̃))
         Bᴱ = (b̃ / b) / norm(transpose(P) * n) * (transpose(P) \ B̃ / P)
 
         g = P \ ℓ
         ℓ̃ᴿ = normalize(g)
-        B̃ᴿ = components_canon(cod_tensor(RibbonCrack(1.0, hcat(ℓ̃ᴿ, cross(ñ, ℓ̃ᴿ), ñ)), C̃))
+        B̃ᴿ = canonical_components(cod_tensor(RibbonCrack(1.0, hcat(ℓ̃ᴿ, cross(ñ, ℓ̃ᴿ), ñ)), C̃))
         Bᴿ = (transpose(P) \ B̃ᴿ / P) / (norm(g) * abs(det(P)))
 
         # Measured: 4e-16 to 2e-13 for the ellipse, 2e-15 to 6e-15 for the ribbon.
         for method in (:nestedquadgk, :residues, :decuhr)
-            Bₑ = components_canon(cod_tensor(EllipticCrack(a, b, hcat(ℓ, m, n)), C; method, tol...))
-            Bᵣ = components_canon(cod_tensor(RibbonCrack(0.7, hcat(ℓ, m, n)), C; method, tol...))
+            Bₑ = canonical_components(cod_tensor(EllipticCrack(a, b, hcat(ℓ, m, n)), C; method, tol...))
+            Bᵣ = canonical_components(cod_tensor(RibbonCrack(0.7, hcat(ℓ, m, n)), C; method, tol...))
             @test norm(Bₑ - Bᴱ) / norm(Bᴱ) < 1.0e-11
             @test norm(Bᵣ - Bᴿ) / norm(Bᴿ) < 1.0e-11
         end
@@ -240,8 +240,8 @@ end
     ã, b̃, ℓ̃, m̃, ñ = _transformed_crack(P, a, b, ℓ, m, n)
     crack, crack̃ = EllipticCrack(a, b, hcat(ℓ, m, n)), EllipticCrack(ã, b̃, hcat(ℓ̃, m̃, ñ))
     B_rule(μ) = (b̃ / b) / norm(transpose(P) * n) *
-        (transpose(P) \ components_canon(cod_tensor(crack̃, TensISO{3}(3 * 20.0, 2μ))) / P)
-    B_cubature(μ) = components_canon(
+        (transpose(P) \ canonical_components(cod_tensor(crack̃, TensISO{3}(3 * 20.0, 2μ))) / P)
+    B_cubature(μ) = canonical_components(
         cod_tensor(crack, image(TensISO{3}(3 * 20.0, 2μ)); method = :nestedquadgk, abstol = 1.0e-12, reltol = 1.0e-10)
     )
     dB = ForwardDiff.derivative(B_rule, 9.0)

@@ -11,7 +11,7 @@
 bcase(
     "kernels/sym3_inv_acoustic";
     group = :kernels, tags = [:pernode, :quadrature],
-    setup = () -> (TensND.components_canon(C_tri()), [0.3, 0.5, 0.8]),
+    setup = () -> (TensND.canonical_components(C_tri()), [0.3, 0.5, 0.8]),
     body = ctx -> MFH.Elasticity._sym3_inv_acoustic(ctx[1], ctx[2]),
 )
 

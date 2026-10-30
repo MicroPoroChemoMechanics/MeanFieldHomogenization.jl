@@ -85,7 +85,7 @@ const K_iso3 = TensISO{3}(5.0)
         P_iso = hill_tensor(ell, C_iso3)
         P_dcr = hill_tensor(ell, C_full; method = :decuhr, abstol = 1.0e-8, reltol = 1.0e-6)
 
-        @test all(isapprox.(components_canon(P_dcr), components_canon(P_iso); atol = 5.0e-5))
+        @test all(isapprox.(canonical_components(P_dcr), canonical_components(P_iso); atol = 5.0e-5))
     end
 
     @testset "Hill 2D iso — circle" begin

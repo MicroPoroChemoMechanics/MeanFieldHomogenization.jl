@@ -30,7 +30,7 @@ rve = RVE()
 add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(30.0, 10.0)); fraction = :rest)
 add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness(60.0, 20.0)); fraction = 0.2)
 
-idxC = C -> components_canon(C)[1, 1, 1, 1]
+idxC = C -> canonical_components(C)[1, 1, 1, 1]
 
 ∂f = derivative(rve, MoriTanaka(), amount(:I); indexer = idxC)          # ∂C[1111]/∂f_I
 ∂K = derivative(rve, MoriTanaka(), property(:I, :C, :bulk); indexer = idxC)  # ∂C[1111]/∂K_I

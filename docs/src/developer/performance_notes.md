@@ -9,7 +9,7 @@ cost is measured, and which path dominates a computation.
 
 ## What the hot paths do
 
-- Small-matrix helpers (`_inv3` in `src/Core/green_kernel.jl`,
+- Small-matrix helpers (TensND's `inv3`, `acoustic_components` and `sym3_inv`;
   `_sym3_inv_acoustic` in `src/Elasticity/hill_3d_aniso_nestedquadgk.jl`,
   `_A_and_Tn` / `_phi_cache` / `_qnn_pair_components` in
   `src/Core/green_helpers.jl`) are **pure functions returning `StaticArrays`**,

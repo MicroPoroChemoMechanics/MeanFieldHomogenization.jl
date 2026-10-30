@@ -72,7 +72,7 @@ How the strain of a finite element is a strain of the material:
 | [`Axisymmetric`](@ref)`()` | 2-D, ``(r, z)`` | the hoop strain ``\\varepsilon_{\\theta\\theta} = u_r/r`` as third component |
 
 A hypothesis converts the strain of an element, and the virtual strain of each
-shape function, into the [`Mandel`](@ref) strain of the material, so that the
+shape function, into the `Mandel` strain of the material, so that the
 element residual is ``\\int \\delta\\boldsymbol\\varepsilon : \\boldsymbol\\sigma`` and
 its Jacobian ``\\int \\delta\\boldsymbol\\varepsilon : \\mathbb K : \\delta\\boldsymbol\\varepsilon'``
 whatever the hypothesis.
@@ -112,7 +112,7 @@ const _SQRT2 = sqrt(2.0)
     mandel_strain(hypothesis, ε, u = nothing, x = nothing) -> Mandel
 
 The strain of the material for the strain `ε` of an element (a
-`Tensors.SymmetricTensor{2, dim}`), in [`Mandel`](@ref) components. In
+`Tensors.SymmetricTensor{2, dim}`), in `Mandel` components. In
 [`Axisymmetric`](@ref) the displacement `u` and the position `x` at the point
 give the hoop strain ``u_r / r``. The same function gives the virtual strain of
 a shape function, from its symmetric gradient and its value.
@@ -183,7 +183,7 @@ tangent, ``\\partial F/\\partial G``; the states are read from `states.old` and
 written into `states.new`, so that [`commit!`](@ref) and [`rollback!`](@ref)
 manage the step as in [`quasistatic!`](@ref).
 
-For a mechanical material `G` is the `6 × n` matrix of the [`Mandel`](@ref)
+For a mechanical material `G` is the `6 × n` matrix of the `Mandel`
 strains, `F` the stresses and `𝕂` the `6 × 6 × n` tangents. A material of
 several fields stacks them: a poroelastic one ([`BiotPoroelasticity`](@ref),
 [`ClosingCrackPoroelasticity`](@ref)) has the gradients ``(\\boldsymbol\\varepsilon, p)``,

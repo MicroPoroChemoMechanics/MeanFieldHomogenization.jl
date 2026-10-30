@@ -26,7 +26,7 @@ const PLASTIC_IT = (M = J2Plasticity(; E = 70.0e3, ν = 0.33, σ₀ = 150.0, H =
     @test k ≈ 40.0 rtol = 1.0e-14
     @test μ ≈ 25.0 rtol = 1.0e-14
     C11, C12, C44 = 168.4, 121.4, 75.4
-    k, μ = TensND.bulk_shear(TensND.isotropify(TensND.from_mandel(MP_IT._mandel(TensND.change_tens_canon(TensND.tens_cubic(C11, C12, C44, TensND.RotatedBasis(0.4, 1.1, 0.3)))))))
+    k, μ = TensND.bulk_shear(TensND.isotropify(TensND.from_mandel(MP_IT._mandel(TensND.canonical(TensND.cubic_from_constants(C11, C12, C44, TensND.RotatedBasis(0.4, 1.1, 0.3)))))))
     @test k ≈ (C11 + 2C12) / 3 rtol = 1.0e-12
     @test μ ≈ (C11 - C12 + 3C44) / 5 rtol = 1.0e-12
 end
@@ -63,7 +63,7 @@ end
     @test_throws ArgumentError IncrementalTangent(_cell_it(), (M = PLASTIC_IT.M, I = BiotPoroelasticity(; E = 1.0, ν = 0.2, b = 0.5, M = 1.0)))
     aniso = RVE()
     add_phase!(aniso, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(1.0, 1.0)); fraction = :rest)
-    add_phase!(aniso, :I, Ellipsoid(1.0), Dict(:C => TensND.tens_cubic(3.0, 1.0, 1.0, TensND.CanonicalBasis{3, Float64}())); fraction = 0.3)
+    add_phase!(aniso, :I, Ellipsoid(1.0), Dict(:C => TensND.cubic_from_constants(3.0, 1.0, 1.0, TensND.CanonicalBasis{3, Float64}())); fraction = 0.3)
     @test_throws ArgumentError IncrementalTangent(aniso, PLASTIC_IT)
     c = IncrementalTangent(_cell_it(), PLASTIC_IT)
     @test MP_IT._with_external(c, (;)) === c

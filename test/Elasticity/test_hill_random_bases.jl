@@ -48,7 +48,7 @@ _hrb_in_frame(A::AbstractArray{<:Any, 2}, R) = transpose(R) * A * R
 _hrb_rotated(A, R) = TensND.Tens(_hrb_in_frame(A, R), TensND.RotatedBasis(R))
 
 "The tensor of canonical components `A`, written in a general basis near `R`."
-_hrb_general(A, R, rng) = TensND.change_tens(TensND.Tens(A), TensND.Basis(R + 0.3 * randn(rng, 3, 3), Val(:cov)))
+_hrb_general(A, R, rng) = TensND.express(TensND.Tens(A), TensND.Basis(R + 0.3 * randn(rng, 3, 3), Val(:cov)))
 
 "The medium as a user writes it, in its structured TensND type."
 function _hrb_structured(c)
@@ -59,13 +59,13 @@ function _hrb_structured(c)
         return c["kind"] == "elastic" ? iso_stiffness(p...) : TensISO{3}(p[1])
     end
     F = TensND.RotatedBasis(Float64.(m["euler"])...)
-    m["type"] == "TI" && return tens_ti(p..., Matrix(TensND.vecbasis(F))[:, 3])
+    m["type"] == "TI" && return ti_from_constants(p..., Matrix(TensND.vecbasis(F))[:, 3])
     m["type"] == "ortho" && return TensND.TensOrtho(p..., F)
-    m["type"] == "cubic" && return TensND.tens_cubic(p..., F)
+    m["type"] == "cubic" && return TensND.cubic_from_constants(p..., F)
     error("unknown material type $(m["type"])")
 end
 
-_hrb_km(P) = _HRB_CORE.mandel66_minor(TensND.components_canon(P))
+_hrb_km(P) = TensND.mandel(TensND.canonical_components(P); symmetrize = true)
 _hrb_frame(ell) = Matrix(TensND.vecbasis(ell.basis, :cov))
 const _HRB_TIGHT = (abstol = 1.0e-13, reltol = 1.0e-11)
 
@@ -79,14 +79,14 @@ const _HRB_TIGHT = (abstol = 1.0e-13, reltol = 1.0e-11)
             R = TensND.random_rotation(rng)
             E = _hrb_frame(ell)
             elastic = c["kind"] == "elastic"
-            A = elastic ? _HRB_CORE.array_from_mandel66(_hrb_mat(c["C_km"])) : _hrb_mat(c["K"])
+            A = elastic ? TensND.get_array(TensND.from_mandel(_hrb_mat(c["C_km"]))) : _hrb_mat(c["K"])
             ref = elastic ? _hrb_mat(c["P_km"]) : _hrb_mat(c["P"])
-            canon(P) = elastic ? _hrb_km(P) : Matrix(TensND.components_canon(P))
+            canon(P) = elastic ? _hrb_km(P) : Matrix(TensND.canonical_components(P))
             in_ell_frame(P) = elastic ?
-                _HRB_CORE.mandel66_minor(TensND.get_array(TensND.change_tens(P, ell.basis))) :
-                Matrix(TensND.get_array(TensND.change_tens(P, ell.basis)))
+                TensND.mandel(TensND.get_array(TensND.express(P, ell.basis)); symmetrize = true) :
+                Matrix(TensND.get_array(TensND.express(P, ell.basis)))
             ref_ell = elastic ?
-                _HRB_CORE.mandel66_minor(_hrb_in_frame(_HRB_CORE.array_from_mandel66(ref), E)) :
+                TensND.mandel(_hrb_in_frame(TensND.get_array(TensND.from_mandel(ref)), E); symmetrize = true) :
                 _hrb_in_frame(ref, E)
 
             media = Any[TensND.Tens(A), _hrb_rotated(A, R), _hrb_general(A, R, rng)]

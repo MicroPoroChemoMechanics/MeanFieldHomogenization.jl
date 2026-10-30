@@ -5,7 +5,7 @@
 #  that it stays evaluable symbolically, which pins two implementation
 #  choices that a purely numerical test would let rot:
 #
-#   * the pseudo-inverse goes through the cofactor `Core._inv3`, never through
+#   * the pseudo-inverse goes through the cofactor `TensND.inv3`, never through
 #     `LinearAlgebra.pinv` (an SVD is not symbolically evaluable);
 #   * every intermediate is an `SMatrix`, never an `MMatrix`
 #     (`MMatrix{6,6,T}(undef)` is not constructible for a non-`isbits` `T`).
@@ -344,5 +344,5 @@ end
     # The one closed form worth reading off: the macroscopic in-plane strain
     # reaches every layer unchanged, so ℓ₅ of 𝔸ᵢ — the in-plane deviatoric
     # coefficient — is exactly 1.
-    @test iszero(tsimplify(TensND.get_ℓ(A)[5] - 1))
+    @test iszero(tsimplify(TensND.walpole_coeffs(A)[5] - 1))
 end

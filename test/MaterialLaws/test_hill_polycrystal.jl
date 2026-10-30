@@ -30,7 +30,7 @@ end
 
 _step_hm(m, E, st, Δt; algorithm = LocalNewton()) = MP_HM._mandel_update(m, E, st, Δt; algorithm, external = (;))
 
-_canonical_hm(t) = SMatrix{6, 6}(KM(TensND.change_tens_canon(t)))
+_canonical_hm(t) = SMatrix{6, 6}(KM(TensND.canonical(t)))
 
 @testset "elastic grains: the linear self-consistent scheme" begin
     grains = _grains_hm(6)
@@ -40,7 +40,7 @@ _canonical_hm(t) = SMatrix{6, 6}(KM(TensND.change_tens_canon(t)))
     rve = RVE()
     rng = MersenneTwister(2)
     for (i, f) in enumerate([random_basis(rng) for _ in 1:6])
-        C = _canonical_hm(TensND.tens_cubic(168.4e3, 121.4e3, 75.4e3, f))
+        C = _canonical_hm(TensND.cubic_from_constants(168.4e3, 121.4e3, 75.4e3, f))
         add_phase!(rve, Symbol(:g, i), Ellipsoid(1.0), Dict(:C => TensND.from_mandel(C)); fraction = i == 1 ? :rest : 1 / 6)
     end
     C = _canonical_hm(homogenize(rve, SelfConsistent(), :C; reltol = 1.0e-10))

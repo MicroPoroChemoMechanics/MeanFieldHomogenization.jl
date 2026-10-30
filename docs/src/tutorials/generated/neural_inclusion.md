@@ -440,8 +440,8 @@ function rve_with(geom, prop_m, prop_i, key; kw...)
     return r
 end
 
-c1111(C) = components_canon(C)[1, 1, 1, 1]
-k11(K) = components_canon(K)[1, 1]
+c1111(C) = canonical_components(C)[1, 1, 1, 1]
+k11(K) = canonical_components(K)[1, 1]
 
 println("\n  Elasticity, one-shot schemes — C_eff[1,1,1,1]\n", "-"^62)
 @printf "  %-16s %14s %14s %12s\n" "scheme" "Ellipsoid" "surrogate" "rel. Δ"
@@ -545,7 +545,7 @@ come back as a silent zero. Refusing is the only honest option there; here
 there is nothing to refuse.
 
 ````@example neural_inclusion
-idx = C -> components_canon(C)[1, 1, 1, 1]
+idx = C -> canonical_components(C)[1, 1, 1, 1]
 
 function rve_of(a3, geom_of)
     r = RVE(; distribution_shape = Ellipsoid(1.0))

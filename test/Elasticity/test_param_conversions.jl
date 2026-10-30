@@ -129,7 +129,7 @@ end
     C_iso = iso_stiffness_E_nu(E, nu)
     axis = [0.0, 0.0, 1.0]
 
-    C_ti, = TensND.proj_tens(Val(:TI), Array(C_iso), axis)
+    C_ti, = TensND.project(Array(C_iso), Val(:TI), axis)
     p = hoenig_params(C_ti)
 
     @test p.gamma ≈ 1.0

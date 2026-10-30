@@ -31,7 +31,7 @@ const _K0 = TensND.TensISO{3}(1.0)
         # cavity it is -- and it is what keeps the phase property out of the
         # contribution tensors.
         @test !MeanFieldHomogenization.Core.is_homogeneous_inclusion(pore)
-        D = get_array(change_tens_canon(shape_tensor(pore)))
+        D = get_array(canonical(shape_tensor(pore)))
         @test diag(D) ≈ [1.0, 1.0, 2.0]
         @test occursin("Superspheroid", sprint(show, pore))
         @test eltype(pore.shape) === Float64
@@ -44,7 +44,7 @@ const _K0 = TensND.TensISO{3}(1.0)
         # Identically zero, not zero to the discretization error: no solve is
         # even run for it.
         @test iszero(mandel(Z4))
-        @test iszero(get_array(change_tens_canon(Z2)))
+        @test iszero(get_array(canonical(Z2)))
         @test fe_assembly_count(pore) == 0
     end
 
@@ -75,12 +75,12 @@ const _K0 = TensND.TensISO{3}(1.0)
 
     @testset "conduction on the same object and the same mesh" begin
         A = fe_cell_concentration(pore, _K0)
-        d = diag(get_array(change_tens_canon(A)))
+        d = diag(get_array(canonical(A)))
         @test all(x -> abs(x - 1.5) < 5.0e-3, d)        # exact value is 3/2
         # One assembly per physics, and the mesh was built once.
         @test fe_assembly_count(pore) == 2
         R = inverse_property_contribution(pore, _K0, _K0)
-        @test tr(get_array(change_tens_canon(R))) / 3 ≈ sum(d) / 3 rtol = 1.0e-10
+        @test tr(get_array(canonical(R))) / 3 ≈ sum(d) / 3 rtol = 1.0e-10
     end
 
     @testset "it reaches the schemes, in both physics" begin
@@ -104,9 +104,9 @@ const _K0 = TensND.TensISO{3}(1.0)
         @test k_mu(best_fit_iso(Cmt))[1] > k_mu(best_fit_iso(Cd))[1]
 
         Kmt = homogenize(rve, MoriTanaka(), :K)
-        keff = get_array(change_tens_canon(Kmt))[1, 1]
+        keff = get_array(canonical(Kmt))[1, 1]
         @test 0 < keff < 1
-        @test isapprox(keff, get_array(change_tens_canon(Kmt))[2, 2]; rtol = 5.0e-3)
+        @test isapprox(keff, get_array(canonical(Kmt))[2, 2]; rtol = 5.0e-3)
     end
 
     @testset "the mesh report makes the geometry error visible" begin

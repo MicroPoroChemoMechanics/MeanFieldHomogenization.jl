@@ -57,7 +57,7 @@ import ForwardDiff as FD
         # The exact azimuthal average now lives in the full 8-dim space,
         # with the extra components exactly zero for a TI(ez) input.
         @test Tp isa TensND.TensTI{4, Float64, 8}
-        ℓ = TensND.get_ℓ8(Tp)
+        ℓ = TensND.walpole_coeffs(Tp, Val(8))
         ref = (1.0, 2.0, 0.5, 0.5, 3.0, 4.0, 0.0, 0.0)
         for (a, b) in zip(ℓ, ref)
             @test a ≈ b atol = 1.0e-10

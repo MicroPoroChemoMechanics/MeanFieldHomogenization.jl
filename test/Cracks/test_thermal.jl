@@ -123,14 +123,14 @@ end
             R = inverse_property_contribution(crack, K₀)
             errs = map((1.0e-2, 1.0e-3)) do ω
                 O = R_from_hill_thermal(crack, K₀, ω)
-                maximum(abs, components_canon(R - O))
+                maximum(abs, canonical_components(R - O))
             end
             # Converging at all …
             @test errs[2] < errs[1]
             # … and at order ω: a tenfold smaller ω must cut the error ~tenfold.
             # A wrong prefactor would leave a constant offset and flunk this.
             @test errs[1] / errs[2] > 5
-            @test errs[2] / maximum(abs, components_canon(R)) < 5.0e-3
+            @test errs[2] / maximum(abs, canonical_components(R)) < 5.0e-3
         end
     end
 

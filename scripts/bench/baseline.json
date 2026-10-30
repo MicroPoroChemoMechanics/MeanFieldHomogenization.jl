@@ -1536225,8 +1536225,8 @@
                 ]
             }
         },
-        "tensnd/ti_average_mandel66": {
-            "id": "tensnd/ti_average_mandel66",
+        "tensnd/ti_average_mandel": {
+            "id": "tensnd/ti_average_mandel",
             "group": "tensnd",
             "tags": [
                 "average",

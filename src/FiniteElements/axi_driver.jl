@@ -130,13 +130,13 @@ two concentration tensors reassembled in the global frame.
 function _axi_run_elastic(incl::FEExcenteredSphere, C₀::TensND.AbstractTens{4, 3})
     μ, ν = _fe_iso_moduli(C₀; what = "`FEExcenteredSphere`")
     R = _fe_frame(incl)
-    C0_66 = Core.mandel66_minor(_to_local4(C₀, R))
+    C0_66 = TensND.mandel(_to_local4(C₀, R); symmetrize = true)
     Dmap = [
         AXI_SET_CORE => _axi_check_ti(
-            Core.mandel66_minor(_to_local4(incl.props[1], R)), "the core"
+            TensND.mandel(_to_local4(incl.props[1], R); symmetrize = true), "the core"
         ),
         AXI_SET_SHELL => _axi_check_ti(
-            Core.mandel66_minor(_to_local4(incl.props[2], R)), "the shell"
+            TensND.mandel(_to_local4(incl.props[2], R); symmetrize = true), "the shell"
         ),
         AXI_SET_MATRIX => C0_66,
     ]

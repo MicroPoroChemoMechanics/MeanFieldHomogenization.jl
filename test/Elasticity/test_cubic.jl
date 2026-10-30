@@ -17,13 +17,13 @@ using LinearAlgebra
     can = TensND.CanonicalBasis{3, Float64}()
     rot = TensND.RotatedBasis(0.3, 0.4, 0.5)
 
-    @testset "cubic_residual is the third return of proj_tens" begin
-        C = TensND.tens_cubic(10.0, 4.0, 2.0, can)
-        @test cubic_residual(C) == TensND.proj_tens(Val(:CUBIC), C, can)[3]
+    @testset "cubic_residual is the third return of project" begin
+        C = TensND.cubic_from_constants(10.0, 4.0, 2.0, can)
+        @test cubic_residual(C) == TensND.project(C, Val(:CUBIC), can)[3]
         @test cubic_residual(C) < 1.0e-14
         # The default frame is the canonical one, which is exactly why a rotated
         # cube must be given its own: it is not cubic about the canonical axes.
-        Cr = TensND.tens_cubic(10.0, 4.0, 2.0, rot)
+        Cr = TensND.cubic_from_constants(10.0, 4.0, 2.0, rot)
         @test cubic_residual(Cr, rot) < 1.0e-14
         @test cubic_residual(Cr) > 1.0e-2
         # An isotropic tensor is cubic about every cube.
@@ -32,7 +32,7 @@ using LinearAlgebra
         # A genuinely transversely isotropic one is not. (Taking the TI
         # projection of an *isotropic* tensor would not do: it gives that same
         # isotropic tensor back, which is cubic.)
-        @test cubic_residual(TensND.tens_ti(10.0, 3.0, 2.5, 12.0, 2.0, [0.0, 0.0, 1.0])) >
+        @test cubic_residual(TensND.ti_from_constants(10.0, 3.0, 2.5, 12.0, 2.0, [0.0, 0.0, 1.0])) >
             1.0e-2
     end
 
@@ -46,7 +46,7 @@ using LinearAlgebra
         @test cubic_residual(iso) < 1.0e-14
         @test abs(TensND.cubic_anisotropy(best_fit_cubic(iso, can))) < 1.0e-14
 
-        cub = TensND.tens_cubic(10.0, 4.0, 2.0, can)      # genuinely anisotropic
+        cub = TensND.cubic_from_constants(10.0, 4.0, 2.0, can)      # genuinely anisotropic
         @test cubic_residual(cub) < 1.0e-14               # ...and exactly in class
         @test TensND.cubic_anisotropy(cub) ≈ (10 - 4 - 4) / 10
 
@@ -64,12 +64,12 @@ using LinearAlgebra
         # It can dispatch now, and only now: `material_symmetry` answers from
         # the container, and before TensND had `TensCubic` a `CubicSym` would
         # have claimed a structure the object did not carry.
-        @test material_symmetry(TensND.tens_cubic(10.0, 4.0, 2.0, can)) isa CubicSym
+        @test material_symmetry(TensND.cubic_from_constants(10.0, 4.0, 2.0, can)) isa CubicSym
         @test CubicSym() isa MaterialSymmetry
         @test material_symmetry(iso_stiffness(2.0, 0.75)) isa IsotropicSym
         # A cubic tensor written as a plain array is still, correctly, reported
         # as unstructured: the trait is type-level, not a detection.
-        plain = TensND.Tens(get_array(TensND.tens_cubic(10.0, 4.0, 2.0, can)))
+        plain = TensND.Tens(get_array(TensND.cubic_from_constants(10.0, 4.0, 2.0, can)))
         @test material_symmetry(plain) isa GeneralAnisotropicSym
         @test cubic_residual(plain) < 1.0e-14      # ...though it *is* cubic
     end

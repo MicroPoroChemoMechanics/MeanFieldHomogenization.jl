@@ -46,7 +46,7 @@ struct HomogenizedElastic{T, C <: TensND.AbstractTens{4, 3}} <: AbstractMFHMater
 end
 
 function HomogenizedElastic(C_hom::TensND.AbstractTens{4, 3})
-    C = TensND.change_tens_canon(C_hom)
+    C = TensND.canonical(C_hom)
     return HomogenizedElastic{eltype(C), typeof(C)}(C)
 end
 

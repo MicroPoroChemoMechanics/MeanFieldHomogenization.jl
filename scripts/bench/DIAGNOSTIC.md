@@ -234,7 +234,7 @@ Causes identified:
    Since `TensOrtho <: AbstractArray`, any generic traversal became O(81²) for
    an O(81) operation.
 2. **No closed-form `dcontract` for `TensOrtho`**: every `⊡` went through
-   `same_basis` → `change_tens` → dense `get_array` on **both** operands before
+   `same_basis` → `express` → dense `get_array` on **both** operands before
    any arithmetic. Yet the file header (`tens_walpole.jl:863-870`) already
    states the structure: in the material frame the KM matrix is block-diagonal
    `[3×3 sym] ⊕ diag(2C₄₄,2C₅₅,2C₆₆)`, so `A⊡B` is one 3×3 product plus 3 scalar
@@ -257,7 +257,7 @@ Causes identified:
 builds a non-concrete type at compile time and construction becomes fully
 dynamic — **3 147 ns and 3 120 B** for an 81-element array, against 311 ns to
 produce that array. Every structured tensor rejoins the generic route through
-this function (`change_tens` → `same_basis` → every binary operation), so the
+this function (`express` → `same_basis` → every binary operation), so the
 cost was paid **twice per `⊡`** between structured operands. `dim` is now
 channelled through `Val`.
 
@@ -285,7 +285,7 @@ Verified on three frames rather than postulated:
     KM(t) == Q · KM_material(t) · Qᵀ          (5.3e-15)
 
 where `Q` is the Kelvin-Mandel representation of `R ⊠ˢ R`, i.e.
-`KM(rot6(θ,ϕ,ψ))` — which TensND already had. `Q` is **orthogonal** (2.2e-16):
+`KM(rotation_tensor4(θ,ϕ,ψ))` — which TensND already had. `Q` is **orthogonal** (2.2e-16):
 exactly what Kelvin-Mandel buys over Voigt, where the analogous matrix is not.
 
 The result is not a `TensOrtho`: the product of two symmetric 3×3 blocks is not

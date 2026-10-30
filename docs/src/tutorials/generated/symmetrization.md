@@ -64,7 +64,7 @@ n = (0.0, 0.0, 1.0)
 
 ````@example symmetrization
 A_exact = transverse_isotropify(A, n)         # TensTI{4,T,8}
-ℓ = get_ℓ8(A_exact)
+ℓ = walpole_coeffs(A_exact, Val(8))
 @printf "(B) exact TI average → TensTI{4,T,8}\n"
 @printf "    ℓ₁..ℓ₈ = %s\n" join((@sprintf("%.4f", x) for x in ℓ), ", ")
 @printf "    ℓ₃ − ℓ₄ (major-asymmetry) = %.4e\n" (ℓ[3] - ℓ[4])
@@ -104,7 +104,7 @@ end
 
 C_iso = homogenise_with(:iso)                       # full SO(3) average
 C_ti = homogenise_with(TISymmetrize(n))             # exact azimuthal average
-@printf "MT homogenised C₃₃₃₃ :  iso-average = %.4f   TI(ez)-average = %.4f\n" components_canon(C_iso)[3, 3, 3, 3] components_canon(C_ti)[3, 3, 3, 3]
+@printf "MT homogenised C₃₃₃₃ :  iso-average = %.4f   TI(ez)-average = %.4f\n" canonical_components(C_iso)[3, 3, 3, 3] canonical_components(C_ti)[3, 3, 3, 3]
 println("\nDone.")
 ````
 

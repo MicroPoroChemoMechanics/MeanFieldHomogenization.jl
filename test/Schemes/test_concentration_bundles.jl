@@ -382,7 +382,7 @@ end
     @test _vals(Nc) == _vals(S._phase_stiffness_contribution(rve_c, :CR, :C, C₀))
     # A Mori-Tanaka estimate goes through the same helpers; a spheroid in a
     # transversely isotropic matrix, the class the barrier was measured on.
-    C_ti = TensND.tens_ti(30.0, 10.0, 8.0, 20.0, 6.0, (0.0, 0.0, 1.0))
+    C_ti = TensND.ti_from_constants(30.0, 10.0, 8.0, 20.0, 6.0, (0.0, 0.0, 1.0))
     rve = RVE()
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_ti); fraction = :rest)
     add_phase!(rve, :I, Spheroid(0.2), Dict(:C => TensISO{3}(180.0, 60.0)); fraction = 0.25)

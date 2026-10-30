@@ -10,7 +10,7 @@ using LinearAlgebra
 #  anisotropic reference medium, and both were invisible to a test suite built
 #  on aligned cracks, because the aligned case coincides:
 #
-#  1. `TensND.change_tens(::TensTI, ℬ)` relabeled the stored (canonical)
+#  1. `TensND.express(::TensTI, ℬ)` relabeled the stored (canonical)
 #     components instead of rotating them, so the same physical medium gave a
 #     different answer depending on whether it was stored as a `TensTI` or as a
 #     generic `Tens`. Fixed in TensND.
@@ -59,7 +59,7 @@ const ECHOES_H = (
 
 @testset "PREREQUISITE — TensND rotates structured tensors" begin
     # If this one fails, nothing below is meaningful and the cause is NOT in
-    # MeanFieldHomogenization: the loaded TensND still has the `change_tens`
+    # MeanFieldHomogenization: the loaded TensND still has the `express`
     # bug, where a `TensTI`/`TensOrtho` handed a rotated basis kept its
     # canonical components instead of transforming them. The crack kernels then
     # receive an unrotated stiffness and every tilted-crack result collapses
@@ -71,12 +71,12 @@ const ECHOES_H = (
     C = _ti_medium()
     ℬrot = TensND.RotatedBasis(0.4, 0.7, 0.3)
     @test !isapprox(
-        get_array(TensND.change_tens(C, ℬrot)), get_array(C); atol = 1.0e-8
+        get_array(TensND.express(C, ℬrot)), get_array(C); atol = 1.0e-8
     )
     # …and it must agree with the same tensor in generic storage, for which the
     # rotation has always been correct.
-    @test get_array(TensND.change_tens(C, ℬrot)) ≈
-        get_array(TensND.change_tens(Tens(get_array(C)), ℬrot)) atol = 1.0e-12
+    @test get_array(TensND.express(C, ℬrot)) ≈
+        get_array(TensND.express(Tens(get_array(C)), ℬrot)) atol = 1.0e-12
 end
 
 @testset "tilted crack — cross-check against ECHOES" begin
@@ -108,7 +108,7 @@ end
 @testset "rotating the whole problem changes nothing" begin
     # Medium axis and crack normal tilted TOGETHER: still an aligned
     # configuration, so every invariant must equal the canonical aligned one.
-    # This is the case that `change_tens` used to corrupt, and it exercises the
+    # This is the case that `express` used to corrupt, and it exercises the
     # closed-form TI branch (`_ti_aligned` → `Analytical`).
     H0 = inverse_property_contribution(PennyCrack(1.0), _ti_medium())
     for θ in (π / 8, π / 4, 3π / 8, π / 2)

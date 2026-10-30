@@ -91,7 +91,7 @@ function ClosingCrackPoroelasticity(
     normals = NamedTuple{fams}(map(φ -> _normal_projector(rve.phases[φ].geometry), fams))
     closures = NamedTuple{fams}(map(φ -> _family_resistance(closure, φ), fams))
     densities = SVector(map(φ -> Schemes.get_param(rve, Schemes.AmountParameter(φ)), fams))
-    C_s = _mandel(TensND.change_tens_canon(Schemes.reference_property(rve, scheme, :C)))
+    C_s = _mandel(TensND.canonical(Schemes.reference_property(rve, scheme, :C)))
     model = cracked_stiffness(rve, scheme, fams)
     return ResidualLaw(;
         name, fluxes = _cc_fluxes, residual = _cc_residual,
@@ -102,7 +102,7 @@ end
 
 # n ⊗ n in Mandel components, so that n·Σ·n is its dot product with Σ.
 function _normal_projector(geometry)
-    n = TensND.components_canon(Cracks.crack_normal(geometry))
+    n = TensND.canonical_components(Cracks.crack_normal(geometry))
     return _mandel(TensND.Tens(Tensors.SymmetricTensor{2, 3}((i, j) -> n[i] * n[j])))
 end
 

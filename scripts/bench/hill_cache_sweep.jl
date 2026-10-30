@@ -27,6 +27,6 @@ fresh() = with_hill_cache(sweep, HillCache())
 sweep(); fresh()
 t = minimum(@benchmark sweep() samples = 5 evals = 1).time / 1.0e6
 tc = minimum(@benchmark fresh() samples = 5 evals = 1).time / 1.0e6
-same = all(TensND.components_canon(a) == TensND.components_canon(b) for (a, b) in zip(sweep(), fresh()))
+same = all(TensND.canonical_components(a) == TensND.canonical_components(b) for (a, b) in zip(sweep(), fresh()))
 println("100 Mori–Tanaka cells, triclinic matrix: ", round(t; digits = 1), " ms without a cache, ",
     round(tc; digits = 1), " ms with a new HillCache; the same tensors: ", same)

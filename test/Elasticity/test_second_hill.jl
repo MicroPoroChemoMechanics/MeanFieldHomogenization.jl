@@ -48,7 +48,7 @@ end
     for _ in 1:3
         C = rand(rng, Tens{4, 3}; definite = true) + 10 * tens_Id4(Val(3), Val(Float64))
         R = TensND.random_basis(rng)
-        C_rot = change_tens(C, R)
+        C_rot = express(C, R)
         ell = Ellipsoid(2.0, 1.0, 0.5; euler_angles = Tuple(π * rand(rng, 3)))
         Q = second_hill_tensor(ell, C_rot; method = :nestedquadgk)
         # The same product on the canonical Kelvin-Mandel matrices.
@@ -63,18 +63,18 @@ end
     k = 5.0
     Q = @inferred second_hill_tensor(Ellipsoid(1.0), TensISO{3}(k))
     @test Q isa TensISO
-    @test Array(components_canon(Q)) ≈ (2k / 3) * I(3) rtol = 1.0e-13
+    @test Array(canonical_components(Q)) ≈ (2k / 3) * I(3) rtol = 1.0e-13
     Q2 = second_hill_tensor(Ellipsoid(1.0; dim = 2), TensISO{2}(k))
-    @test Array(components_canon(Q2)) ≈ (k / 2) * I(2) rtol = 1.0e-13
+    @test Array(canonical_components(Q2)) ≈ (k / 2) * I(2) rtol = 1.0e-13
 
     # An anisotropic conductor in a random basis: the product on the canonical
     # components.
     rng = Random.Xoshiro(20261026)
     A = randn(rng, 3, 3)
     K = TensND.Tens(A * transpose(A) + 3I)
-    K_rot = change_tens(K, TensND.random_basis(rng))
+    K_rot = express(K, TensND.random_basis(rng))
     ell = Ellipsoid(3.0, 1.0, 0.4; euler_angles = (0.3, 1.1, -0.7))
-    Kc = Array(components_canon(K))
-    Pc = Array(components_canon(hill_tensor(ell, K)))
-    @test Array(components_canon(second_hill_tensor(ell, K_rot))) ≈ Kc - Kc * Pc * Kc rtol = 1.0e-11
+    Kc = Array(canonical_components(K))
+    Pc = Array(canonical_components(hill_tensor(ell, K)))
+    @test Array(canonical_components(second_hill_tensor(ell, K_rot))) ≈ Kc - Kc * Pc * Kc rtol = 1.0e-11
 end

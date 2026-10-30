@@ -261,13 +261,13 @@ function paste_moduli(
     _val(f_inc) < 1.0 || return (; K = zero(Tf), μ = zero(Tf), E = zero(Tf), ν = Tf(NaN))
 
     C_foam = build_foam(fn, C_hyd; N = N, ω = ω, K_water = K_water)
-    K_f, μ_f = k_mu(TensND.proj_tens(Val(:ISO), get_array(C_foam))[1])
+    K_f, μ_f = k_mu(TensND.project(get_array(C_foam), Val(:ISO))[1])
     # Below percolation the SC fixed point collapses; report setting, not noise.
     _val(μ_f) <= 1.0e-4 && return (; K = zero(Tf), μ = zero(Tf), E = zero(Tf), ν = Tf(NaN))
 
     C_foam_iso = iso_stiffness(K_f, μ_f)
     C_paste = build_paste(fn, C_foam_iso)
-    K_p, μ_p = k_mu(TensND.proj_tens(Val(:ISO), get_array(C_paste))[1])
+    K_p, μ_p = k_mu(TensND.project(get_array(C_paste), Val(:ISO))[1])
     E_p, ν_p = E_nu(iso_stiffness(K_p, μ_p))
     return (; K = K_p, μ = μ_p, E = E_p, ν = ν_p)
 end
@@ -285,7 +285,7 @@ function concrete_moduli(f, f_aggregate; f_air = 0.0, kwargs...)
     _val(m.E) > 0 || return m
     C_paste = iso_stiffness(m.K, m.μ)
     C_conc = build_concrete(C_paste, f_aggregate, f_air)
-    K_c, μ_c = k_mu(TensND.proj_tens(Val(:ISO), get_array(C_conc))[1])
+    K_c, μ_c = k_mu(TensND.project(get_array(C_conc), Val(:ISO))[1])
     E_c, ν_c = E_nu(iso_stiffness(K_c, μ_c))
     return (; K = K_c, μ = μ_c, E = E_c, ν = ν_c)
 end

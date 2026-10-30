@@ -33,7 +33,7 @@ function _generic_stiffness(m::GenericCrackedStiffness{<:Any, <:Any, N}, d) wher
     rve = foldl(1:N; init = m.rve) do rve, i
         Schemes.set_param(rve, Schemes.AmountParameter(m.families[i]), d[i])
     end
-    return _mandel(TensND.change_tens_canon(Schemes.homogenize(rve, m.scheme, :C)))
+    return _mandel(TensND.canonical(Schemes.homogenize(rve, m.scheme, :C)))
 end
 
 """

@@ -249,7 +249,7 @@ end
 @testset "local fields — rotation covariance" begin
     sph = LayeredSphere((1.0, 2.0), (LF_C₁, LF_C₂))
     sol = LayeredSphereFields(sph, LF_C₀)
-    Q = Matrix(rot3(0.4, 0.9, -0.7))
+    Q = Matrix(rotation_matrix(0.4, 0.9, -0.7))
     x = [0.7, -0.4, 1.1]
     Qx = Q * x
     A = get_array(local_gradient_gradient_concentration(sol, x))
@@ -309,7 +309,7 @@ end
         Af = local_gradient_gradient_concentration(
             LayeredSphere((1.0, 2.0), (LF_C₁, LF_C₂)), LF_C₀, [0.5, 0.0, 0.0]
         )
-        @test Float64(maximum(abs, components_canon(Ab - Af))) < 1.0e-14
+        @test Float64(maximum(abs, canonical_components(Ab - Af))) < 1.0e-14
     end
 
     # Near-incompressible core: finite, and the volumetric concentration → 0.
@@ -333,7 +333,7 @@ end
 # ── Echoes cross-check ──────────────────────────────────────────────────────
 #
 # Hard-coded from the C++ reference (`sphere_nlayers.conc_eE` / `conc_sE`,
-# rows rotated to the canonical basis with `rot6(θ, φ)`), 2-layer sphere
+# rows rotated to the canonical basis with `rotation_tensor4(θ, φ)`), 2-layer sphere
 # r = (1, 2), core E=100/ν=0.2, shell E=10/ν=0.35, matrix E=30/ν=0.3.
 # The stiffness convention matches: Echoes' `PRIMALDISC [kn, kt]` takes the
 # same numbers as `SpringInterface(kn, kt)`.
@@ -533,7 +533,7 @@ end
         ) / (vol1 + vol2)
     end
     exact = cumulative_strain_average(sph, LF_C₀, LF_ε∞, 1.37)
-    @test maximum(abs, components_canon(naive - exact)) /
+    @test maximum(abs, canonical_components(naive - exact)) /
         maximum(abs, get_array(exact)) > 1.0e-2
 end
 

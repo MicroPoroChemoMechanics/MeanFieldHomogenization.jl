@@ -104,14 +104,14 @@ C_tri = TensND.from_mandel(
         3.0 -1.0 2.0 1.5 -1.0 55.0
     ], CanonicalBasis{3, Float64}()
 )
-R = Matrix(rot3(0.3, 0.8, -0.5))
+R = Matrix(rotation_matrix(0.3, 0.8, -0.5))
 S = TensND.Tens(Symmetric(R * Diagonal([2.0, 1.0, 0.5]) * transpose(R)))
-Q = TensND.Tens(Matrix(rot3(1.1, -0.4, 0.7)))
+Q = TensND.Tens(Matrix(rotation_matrix(1.1, -0.4, 0.7)))
 A = Q ⋅ S
 
 "Ellipsoid of `A`: semi-axes and axes from the eigenpairs of `Aᵀ⋅A`."
 function ellipsoid_of(A)
-    F = eigen(Symmetric(Array(components_canon(transpose(A) ⋅ A))))
+    F = eigen(Symmetric(Array(canonical_components(transpose(A) ⋅ A))))
     V = F.vectors * Diagonal([1, 1, sign(det(F.vectors))])      # a rotation
     return Ellipsoid(sqrt.(F.values)..., V)
 end
@@ -176,7 +176,7 @@ function hill_by_transformation(A, C, Ã, hill_of)
     return M ⊡ hill_of(Ã, Mᵀ ⊡ C ⊡ M) ⊡ Mᵀ
 end
 
-Ã = TensND.Tens(Matrix(rot3(-0.2, 1.3, 0.4))) ⋅
+Ã = TensND.Tens(Matrix(rotation_matrix(-0.2, 1.3, 0.4))) ⋅
     TensND.Tens(Diagonal([1.0, 3.0, 1.5]))
 @printf "eq. 7 with an arbitrary Ã against the residues:  %.1e\n" relgap(hill_by_transformation(A, C_tri, Ã, hill_by_definition), P_ref)
 
@@ -209,7 +209,7 @@ P_sph = hill_by_transformation(A, C_tri, TensISO{3}(1.0), sphere_by_residues)
 # those of the ellipsoid:
 
 λ, μ = 2.0, 1.5
-RD = Matrix(rot3(0.7, 0.5, 1.9))
+RD = Matrix(rotation_matrix(0.7, 0.5, 1.9))
 D = TensND.Tens(Symmetric(RD * Diagonal([1.6, 1.0, 0.7]) * transpose(RD)))
 C_eo = λ * (D ⊗ D) + 2μ * (D ⊠ˢ D)
 
@@ -237,7 +237,7 @@ D′ = transpose(inv(A)) ⋅ D ⋅ inv(A)
 # tensor of an arbitrary ellipsoid in an elliptically orthotropic matrix is a
 # closed form too.
 
-D_mh = TensND.Tens(Symmetric(inv(sqrt(Symmetric(Array(components_canon(D)))))))
+D_mh = TensND.Tens(Symmetric(inv(sqrt(Symmetric(Array(canonical_components(D)))))))
 Ã_eo = A ⋅ D_mh
 @printf "D′ = Ã⁻ᵀ⋅Ã⁻¹:  %.1e\n" relgap(D′, transpose(inv(Ã_eo)) ⋅ inv(Ã_eo))
 
@@ -289,7 +289,7 @@ walpole(X) = (W₁ ⊙ X, W₂ ⊙ X, (W₃ + W₄) ⊙ X / 2, W₅ ⊙ X / 2, W
 
 ω = symbols("omega", positive = true)
 C₁₁, C₁₂, C₁₃, C₃₃, C₄₄ = symbols("C_1111 C_1122 C_1133 C_3333 C_2323", positive = true)
-C_TI = tens_ti(C₁₁, C₁₂, C₁₃, C₃₃, C₄₄, e₃)
+C_TI = ti_from_constants(C₁₁, C₁₂, C₁₃, C₃₃, C₄₄, e₃)
 A_sph = TensND.Tens(Diagonal(Sym[1, 1, ω]))
 B_sph = inv(A_sph) ⊠ˢ inv(A_sph)
 ℓ̃ = walpole(B_sph ⊡ C_TI ⊡ B_sph)
@@ -344,7 +344,7 @@ walpole(B_sph ⊡ P̃_sym ⊡ B_sph) .- (p̃[1] / ω^4, p̃[2], p̃[3] / ω^2, p
 
 z = symbols("z", real = true)
 c̃₁₁, c̃₁₂, c̃₁₃, c̃₃₃, c̃₄₄ = (C₁₁, C₁₂, C₁₃ / ω^2, C₃₃ / ω^4, C₄₄ / ω^2)
-C̃ = tens_ti(c̃₁₁, c̃₁₂, c̃₁₃, c̃₃₃, c̃₄₄, e₃)
+C̃ = ti_from_constants(c̃₁₁, c̃₁₂, c̃₁₃, c̃₃₃, c̃₄₄, e₃)
 ζ₀ = TensND.Tens(Sym[sqrt(1 - z^2), 0, z])
 Ñ = inv(ζ₀ ⋅ C̃ ⋅ ζ₀)
 p̃ᶻ = walpole(sandwich(ζ₀, Ñ)) ./ 2
@@ -354,7 +354,7 @@ nothing #hide
 # trapezoidal rule in ``\varphi`` on numerical moduli:
 
 let vals = Dict(ω => 0.3, C₁₁ => 2.179, C₁₂ => 0.579, C₁₃ => 0.689, C₃₃ => 10.345, C₄₄ => 1.0)
-    C̃_num = tens_ti((N(subs(c, vals...)) for c in (c̃₁₁, c̃₁₂, c̃₁₃, c̃₃₃, c̃₄₄))..., (0.0, 0.0, 1.0))
+    C̃_num = ti_from_constants((N(subs(c, vals...)) for c in (c̃₁₁, c̃₁₂, c̃₁₃, c̃₃₃, c̃₄₄))..., (0.0, 0.0, 1.0))
     W_num = walpole_basis((0.0, 0.0, 1.0))
     gaps = map((-0.9, -0.2, 0.4, 0.7)) do zv
         ring = sum(
@@ -371,7 +371,7 @@ end
 # The projection gives the components of eq. 24 in terms of those of
 # ``\tilde{\boldsymbol{N}}(z,0)``:
 
-Ñc = components_canon(Ñ)
+Ñc = canonical_components(Ñ)
 s = sqrt(1 - z^2)
 eq24 = (
     z^2 * Ñc[3, 3] / 2,
@@ -699,9 +699,9 @@ end
 # transcription as lines and [`hill_tensor`](@ref) of the package as markers:
 
 const C_sev = (2.179, 0.579, 0.689, 10.345, 1.0)
-C_sev_t = tens_ti(C_sev..., (0.0, 0.0, 1.0))
+C_sev_t = ti_from_constants(C_sev..., (0.0, 0.0, 1.0))
 ξs = 10 .^ range(-2, 2; length = 100)
-S_of(P) = components_canon(P ⊡ C_sev_t)
+S_of(P) = canonical_components(P ⊡ C_sev_t)
 picks = ((1, 1, 1, 1), (3, 3, 3, 3), (1, 1, 2, 2), (1, 1, 3, 3), (3, 3, 1, 1), (1, 3, 1, 3))
 labels = ["S₁₁₁₁" "S₃₃₃₃" "S₁₁₂₂" "S₁₁₃₃" "S₃₃₁₁" "S₁₃₁₃"]
 S_paper = [S_of(hill_ti_paper(1 / ξ, C_sev...))[i...] for ξ in ξs, i in picks]
@@ -729,7 +729,7 @@ end
 # closed form:
 
 dP_paper = ForwardDiff.derivative(x -> hill_ti_paper(0.2, C_sev[1], C_sev[2], x, C_sev[4], C_sev[5]), C_sev[3])
-dP_mfh = ForwardDiff.derivative(x -> hill_tensor(Ellipsoid(1.0, 1.0, 0.2), tens_ti(C_sev[1], C_sev[2], x, C_sev[4], C_sev[5], (0.0, 0.0, 1.0))), C_sev[3])
+dP_mfh = ForwardDiff.derivative(x -> hill_tensor(Ellipsoid(1.0, 1.0, 0.2), ti_from_constants(C_sev[1], C_sev[2], x, C_sev[4], C_sev[5], (0.0, 0.0, 1.0))), C_sev[3])
 @printf "∂P/∂C₁₁₃₃:  %.1e\n" relgap(dP_paper, dP_mfh)
 
 # ### Where the formulas as written lose digits
@@ -743,7 +743,7 @@ dP_mfh = ForwardDiff.derivative(x -> hill_tensor(Ellipsoid(1.0, 1.0, 0.2), tens_
 
 for δ in (1.0e-2, 1.0e-4, 1.0e-6, 1.0e-8, 0.0)
     moduli = (3.0, 1.0, 1.0, 3.0 * (1 + δ), 1.0)
-    P_pkg = hill_tensor(Ellipsoid(1.0, 1.0, 0.5), tens_ti(moduli..., (0.0, 0.0, 1.0)))
+    P_pkg = hill_tensor(Ellipsoid(1.0, 1.0, 0.5), ti_from_constants(moduli..., (0.0, 0.0, 1.0)))
     @printf "δ = %.0e   transcription against the package:  %.1e\n" δ relgap(hill_ti_paper(0.5, moduli...), P_pkg)
 end
 

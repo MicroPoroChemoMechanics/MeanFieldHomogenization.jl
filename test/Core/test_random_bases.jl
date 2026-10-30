@@ -33,13 +33,13 @@ _mrb_in_frame(A::AbstractArray{<:Any, 2}, R) =
 _mrb_rotated(A, R) = TensND.Tens(_mrb_in_frame(A, R), TensND.RotatedBasis(R))
 
 # `AbstractTens <: AbstractArray`: the tensor method must be the more specific.
-_mrb_canon(t::TensND.AbstractTens) = Array(TensND.components_canon(t))
+_mrb_canon(t::TensND.AbstractTens) = Array(TensND.canonical_components(t))
 _mrb_canon(A::AbstractArray) = Array(A)
 
 # Positive definite, kept away from singular as before: TensND's draws shifted
 # by a multiple of the identity.
-_mrb_spd3(rng) = Array(components_canon(rand(rng, Tens{2, 3}; definite = true) + 3 * tens_Id2(Val(3), Val(Float64))))
-_mrb_spd4(rng) = Array(components_canon(rand(rng, Tens{4, 3}; definite = true) + 10 * tens_Id4(Val(3), Val(Float64))))
+_mrb_spd3(rng) = Array(canonical_components(rand(rng, Tens{2, 3}; definite = true) + 3 * tens_Id2(Val(3), Val(Float64))))
+_mrb_spd4(rng) = Array(canonical_components(rand(rng, Tens{4, 3}; definite = true) + 10 * tens_Id4(Val(3), Val(Float64))))
 
 @testset "random bases — draw $k" for k in 1:5
     rng = Random.Xoshiro(_MRB_SEED + k)
@@ -115,7 +115,7 @@ _mrb_spd4(rng) = Array(components_canon(rand(rng, Tens{4, 3}; definite = true) +
         @test _MRB.FiniteElements._to_local4(_mrb_rotated(P, R), L) ≈ ref
         M = Matrix(mandel(rand(rng, Tens{4, 3})))           # symmetric, of either sign
         G = _MRB.FiniteElements._from_local66(M, L)
-        @test _mrb_canon(G) ≈ _mrb_in_frame(_MRB.Core.array_from_mandel66(M), transpose(L))
+        @test _mrb_canon(G) ≈ _mrb_in_frame(TensND.get_array(TensND.from_mandel(M)), transpose(L))
     end
 
     @testset "self-consistent residual and differential state" begin
@@ -124,9 +124,9 @@ _mrb_spd4(rng) = Array(components_canon(rand(rng, Tens{4, 3}; definite = true) +
         @test _MRB.Schemes._sc_residual_norm(tc, tr_) ≤ 1.0e-10 * norm(C)
         @test _MRB.Schemes._get_state(Val(:full_4), tr_) ≈ _MRB.Schemes._get_state(Val(:full_4), tc)
         n1, n2 = normalize(randn(rng, 3)), normalize(randn(rng, 3))
-        a = tens_ti(10.0, 3.0, 2.5, 12.0, 2.0, n1)
-        @test _MRB.Schemes._diff_same_layout(a, tens_ti(1.0, 0.3, 0.2, 1.2, 0.5, n1))
-        @test !_MRB.Schemes._diff_same_layout(a, tens_ti(1.0, 0.3, 0.2, 1.2, 0.5, n2))
+        a = ti_from_constants(10.0, 3.0, 2.5, 12.0, 2.0, n1)
+        @test _MRB.Schemes._diff_same_layout(a, ti_from_constants(1.0, 0.3, 0.2, 1.2, 0.5, n1))
+        @test !_MRB.Schemes._diff_same_layout(a, ti_from_constants(1.0, 0.3, 0.2, 1.2, 0.5, n2))
     end
 
     @testset "schemes: an anisotropic property in a rotated basis" begin

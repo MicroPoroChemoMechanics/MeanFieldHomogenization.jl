@@ -67,7 +67,7 @@ using Printf
 # A tensor is reported through its canonical coefficients — six for a
 # `TensTI{4}` whatever its `N`, so that a major-symmetric tensor and a
 # concentration tensor can be subtracted and compared on the same footing.
-_coeffs(t::TensND.TensTI{4}) = collect(TensND.get_ℓ(t))
+_coeffs(t::TensND.TensTI{4}) = collect(TensND.walpole_coeffs(t))
 _coeffs(t::Union{TensND.TensISO, TensND.TensTI, TensND.TensOrtho}) =
     collect(TensND.get_data(t))
 _coeffs(t::TensND.AbstractTens) = vec(collect(TensND.get_array(t)))   # unstructured
@@ -353,14 +353,14 @@ function particle_numeric(Πv; ksv = 1.0e10, wv = 1.0e-12)
 end
 
 Cpar_sym_num(Πv) = TensTI{4}(
-    (Float64(tsubs(ℓ, f => F_NUM, μs => MUS_NUM, Π => Πv)) for ℓ in TensND.get_ℓ(Cpar))...,
+    (Float64(tsubs(ℓ, f => F_NUM, μs => MUS_NUM, Π => Πv)) for ℓ in TensND.walpole_coeffs(Cpar))...,
     (0.0, 0.0, 1.0),
 )
 
 let Πv = 1.0e-3
     d = maximum(
         abs,
-        collect(TensND.get_ℓ(particle_numeric(Πv))) .- collect(TensND.get_ℓ(Cpar_sym_num(Πv)))
+        collect(TensND.walpole_coeffs(particle_numeric(Πv))) .- collect(TensND.walpole_coeffs(Cpar_sym_num(Πv)))
     )
     @printf "  laminate, finite ks = 1e10 and w = 1e-12 vs the limit : max|dl| = %.2e\n" d
 end

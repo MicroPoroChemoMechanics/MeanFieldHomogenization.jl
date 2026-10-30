@@ -82,10 +82,10 @@ end
     @testset "TI-4 vs echoes closed form (ez), random non-symmetric inputs" begin
         for _ in 1:20
             arr = _rand_minor4(rng)
-            M = MC.mandel66_minor(arr)
+            M = TensND.mandel(arr; symmetrize = true)
             avg = MC.transverse_isotropify(TensND.Tens(arr), (0.0, 0.0, 1.0))
             @test avg isa TensND.TensTI{4, Float64, 8}
-            TI = MC.mandel66_minor(TensND.get_array(avg))
+            TI = TensND.mandel(TensND.get_array(avg); symmetrize = true)
             @test maximum(abs, TI .- _echoes_ti_ez(M)) < 1.0e-12
         end
     end
@@ -127,9 +127,9 @@ end
 
     @testset "ISO average == echoes isotropify (α, β)" begin
         arr = _rand_minor4(rng)
-        M = MC.mandel66_minor(arr)
+        M = TensND.mandel(arr; symmetrize = true)
         iso = MC.isotropify(TensND.Tens(arr))
-        α, β = MC.iso_average_mandel66(M)
+        α, β = MC.iso_average_mandel(M)
         d = TensND.get_data(iso)
         @test d[1] ≈ α
         @test d[2] ≈ β
@@ -151,13 +151,13 @@ end
         @test a[3, 3] ≈ m2[3, 3]
     end
 
-    @testset "ti_average_mandel66 (ALV block form)" begin
+    @testset "ti_average_mandel (ALV block form)" begin
         nax = (0.36, -0.48, 0.8)
         arr = _rand_minor4(rng)
-        M = MC.mandel66_minor(arr)
+        M = TensND.mandel(arr; symmetrize = true)
         @test maximum(
             abs,
-            MC.ti_average_mandel66(M, nax) .- MC.mandel66_minor(_ti_oracle(arr, nax))
+            MC.ti_average_mandel(M, nax) .- TensND.mandel(_ti_oracle(arr, nax); symmetrize = true)
         ) < 1.0e-12
     end
 

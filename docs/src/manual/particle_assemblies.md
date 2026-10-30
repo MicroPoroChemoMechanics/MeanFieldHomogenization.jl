@@ -250,8 +250,8 @@ An assembly answers the usual differentiation entry points, with two lenses no o
 cell has:
 
 ```julia
-derivative(asm, ClusterModel(), center_param(:p2, 1); indexer = C -> components_canon(C)[1, 2, 1, 2])
-derivative(asm, ClusterModel(), radius_param(:p1);    indexer = C -> components_canon(C)[1, 2, 1, 2])
+derivative(asm, ClusterModel(), center_param(:p2, 1); indexer = C -> canonical_components(C)[1, 2, 1, 2])
+derivative(asm, ClusterModel(), radius_param(:p1);    indexer = C -> canonical_components(C)[1, 2, 1, 2])
 ```
 
 `PropertyParameter` works through the generic cell contract, so moduli need nothing
@@ -303,7 +303,7 @@ A `nested` lens addresses a scalar inside the inner cell exactly as it does for 
 
 ```julia
 lens = nested(:M, :C, property(:matrix, :C, :μ))     # an inner-scale modulus
-derivative(outer, MoriTanaka(), lens; indexer = C -> components_canon(C)[1, 2, 1, 2])
+derivative(outer, MoriTanaka(), lens; indexer = C -> canonical_components(C)[1, 2, 1, 2])
 ```
 
 What is assembly-specific is the innermost lens. An assembly answers `radius_param`,

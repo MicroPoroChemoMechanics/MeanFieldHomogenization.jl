@@ -36,8 +36,8 @@ _mandel_size(::TensND.AbstractTens{2, 2}) = 2
 
 # ─── Flattening ──────────────────────────────────────────────────────────────
 #
-# 4th order: TensND's `mandel66_minor` / `array_from_mandel66` pair in 3D and
-# `mandel33_minor` / `array_from_mandel33` in 2D.
+# 4th order: TensND's `mandel(·; symmetrize = true)` / `from_mandel` pair, in 3D
+# and in 2D alike.
 # 2nd order: the identity map — a symmetric 2nd-order tensor is already its own
 # Mandel vector in the sense used by `⋅`.
 #
@@ -47,12 +47,10 @@ _mandel_size(::TensND.AbstractTens{2, 2}) = 2
 # own basis, which mixed frames in one matrix for every oriented particle.
 # A block already canonical is read as it is.
 
-_to_mandel(A, ::TensND.AbstractTens{4, 3}) = TensND.mandel66_minor(TensND.components_canon(A))
-_to_mandel(A, ::TensND.AbstractTens{4, 2}) = TensND.mandel33_minor(TensND.components_canon(A))
-_to_mandel(A, ::TensND.AbstractTens{2}) = Matrix(TensND.components_canon(A))
+_to_mandel(A, ::TensND.AbstractTens{4}) = TensND.mandel(TensND.canonical_components(A); symmetrize = true)
+_to_mandel(A, ::TensND.AbstractTens{2}) = Matrix(TensND.canonical_components(A))
 
-_from_mandel(M, ::TensND.AbstractTens{4, 3}) = TensND.Tens(TensND.array_from_mandel66(M))
-_from_mandel(M, ::TensND.AbstractTens{4, 2}) = TensND.Tens(TensND.array_from_mandel33(M))
+_from_mandel(M, ::TensND.AbstractTens{4}) = TensND.from_mandel(M)
 _from_mandel(M, ::TensND.AbstractTens{2}) = TensND.Tens(M)
 
 """

@@ -97,7 +97,7 @@ def test_homogenized_composite_against_dolfinx_elasticity(jl):
             homogenize(rve, MoriTanaka(), :C)
         end"""
     )
-    K = np.asarray(jl.seval("C -> Array(TensND.KM(C, TensND.CanonicalBasis{3, Float64}()))")(C))
+    K = np.asarray(jl.seval("C -> Array(TensND.mandel(C, TensND.CanonicalBasis{3, Float64}()))")(C))
     C4 = mf.tensor4_from_mandel(K[:, :, None])[0]
     domain = mesh.create_unit_cube(MPI.COMM_WORLD, 3, 3, 3)
     V = fem.functionspace(domain, ("Lagrange", 1, (3,)))

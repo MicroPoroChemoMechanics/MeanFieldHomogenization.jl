@@ -13,4 +13,4 @@ MeanFieldHomogenization = {path = "../../../.."}
 [compat]
 Ferrite = "1"
 PythonCall = "0.9.37"
-TensND = "0.10.1"
+TensND = "0.11"

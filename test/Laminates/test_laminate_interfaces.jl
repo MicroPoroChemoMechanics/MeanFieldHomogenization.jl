@@ -40,7 +40,7 @@ function _schur_ip_i(t, basis)
     A = MFHC_I.TensND.mandel_ip_block(M)
     B = SMatrix{3, 3}(M[MFHC_I.MANDEL_IP, MFHC_I.MANDEL_OP])
     C = SMatrix{3, 3}(M[MFHC_I.MANDEL_OP, MFHC_I.MANDEL_IP])
-    return A - B * MFHC_I._inv3(MFHC_I.TensND.mandel_op_block(M)) * C
+    return A - B * MFHC_I.TensND.inv3(MFHC_I.TensND.mandel_op_block(M)) * C
 end
 
 # Two-layer reference cell, parameterized by its interfaces and its period.

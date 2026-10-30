@@ -44,7 +44,7 @@ end
     # Voigt: arithmetic mean
     Cv = homogenize(rve, Voigt())
     expected_v = TensISO{3}((1 - f) * 30.0 + f * 60.0, (1 - f) * 10.0 + f * 20.0)
-    @test maximum(abs, components_canon(Cv - expected_v)) < ATOL_VR
+    @test maximum(abs, canonical_components(Cv - expected_v)) < ATOL_VR
 
     # Reuss: harmonic mean
     Cr = homogenize(rve, Reuss())
@@ -52,7 +52,7 @@ end
         1 / ((1 - f) / 30.0 + f / 60.0),
         1 / ((1 - f) / 10.0 + f / 20.0),
     )
-    @test maximum(abs, components_canon(Cr - expected_r)) < ATOL_VR
+    @test maximum(abs, canonical_components(Cr - expected_r)) < ATOL_VR
 end
 
 @testset "Voigt / Reuss — Voigt ⪰ Reuss on random grid" begin

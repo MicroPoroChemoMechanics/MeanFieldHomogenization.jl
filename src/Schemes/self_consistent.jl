@@ -804,7 +804,7 @@ _sc_residual_norm(a::TensND.AbstractTens, b::TensND.AbstractTens) = LinearAlgebr
 # stored array in an orthonormal basis; in any other, where the convergence of
 # the derivatives needs components rather than a norm, the canonical ones.
 _comparable(t, ::TensND.OrthonormalBasis) = get_array(t)
-_comparable(t, ::TensND.AbstractBasis) = TensND.components_canon(t)
+_comparable(t, ::TensND.AbstractBasis) = TensND.canonical_components(t)
 
 # Initial zero residual with eltype matching `x0` (Dual-preserving).
 _sc_residual_zero(x0::TensND.AbstractTens) = zero(real(eltype(x0)))

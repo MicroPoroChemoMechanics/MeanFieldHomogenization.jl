@@ -31,7 +31,7 @@ const basis = TensND.CanonicalBasis{3, Float64}()
     P_res = hill_tensor(ell, C_TI; method = :residues)
     P_dec = hill_tensor(ell, C_TI; method = :decuhr)
 
-    diff = maximum(abs, components_canon(P_res - P_dec))
+    diff = maximum(abs, canonical_components(P_res - P_dec))
     @test diff < ATOL
     @test all(isfinite, P_res)
 end
@@ -53,7 +53,7 @@ end
     P_res = hill_tensor(ell, C_O; method = :residues)
     P_dec = hill_tensor(ell, C_O; method = :decuhr)
 
-    diff = maximum(abs, components_canon(P_res - P_dec))
+    diff = maximum(abs, canonical_components(P_res - P_dec))
     @test diff < ATOL
 end
 
@@ -78,7 +78,7 @@ end
     P_res = hill_tensor(ell, C_TI; method = :residues)
     P_dec = hill_tensor(ell, C_TI; method = :decuhr)
 
-    diff = maximum(abs, components_canon(P_res - P_dec))
+    diff = maximum(abs, canonical_components(P_res - P_dec))
     @test diff < ATOL
 end
 
@@ -100,7 +100,7 @@ end
     P_res = hill_tensor(ell, C; method = :residues)
     P_dec = hill_tensor(ell, C; method = :decuhr)
 
-    diff = maximum(abs, components_canon(P_res - P_dec))
+    diff = maximum(abs, canonical_components(P_res - P_dec))
     @test diff < 1.0e-6
 end
 
@@ -128,8 +128,8 @@ end
     λ = k - 2μ / 3
     C_iso = _ti_km(λ + 2μ, λ, λ, λ + 2μ, μ, μ)
     P_eshelby = hill_tensor(sphere, TensISO{3}(3k, 2μ))
-    @test components_canon(hill_tensor(sphere, C_iso; method = :residues)) ≈
-        components_canon(P_eshelby) rtol = 1.0e-12
+    @test canonical_components(hill_tensor(sphere, C_iso; method = :residues)) ≈
+        canonical_components(P_eshelby) rtol = 1.0e-12
 
     # Transversely isotropic about the sphere's axis. Along ζ = (cos φ, sin φ, z)
     # the wave polarized in the plane of isotropy vanishes at z² = -C66/C44, the
@@ -146,15 +146,15 @@ end
     B = -(C44b * C33 * w^2 + C11 * C44b) / w     # the middle coefficient it needs
     C_b = _ti_km(C11, C11 - 2C66b, sqrt(C11 * C33 + C44b^2 - B) - C44b, C33, C44b, C66b)
     for C in (C_a, C_b)
-        @test components_canon(hill_tensor(sphere, C; method = :residues)) ≈
-            components_canon(hill_tensor(sphere, C; method = :nestedquadgk)) rtol = 1.0e-9
+        @test canonical_components(hill_tensor(sphere, C; method = :residues)) ≈
+            canonical_components(hill_tensor(sphere, C; method = :nestedquadgk)) rtol = 1.0e-9
     end
 
     # Around a spheroid the triple root of an isotropic matrix leaves i, and
     # around a triaxial ellipsoid it moves with the angle: Eshelby's tensor again.
     for ell in (Ellipsoid(1.0, 1.0, 0.5), Ellipsoid(2.0, 1.0, 0.5))
-        @test components_canon(hill_tensor(ell, C_iso; method = :residues)) ≈
-            components_canon(hill_tensor(ell, TensISO{3}(3k, 2μ))) rtol = 1.0e-12
+        @test canonical_components(hill_tensor(ell, C_iso; method = :residues)) ≈
+            canonical_components(hill_tensor(ell, TensISO{3}(3k, 2μ))) rtol = 1.0e-12
     end
     # A reference without shear stiffness has no Green operator: refused, rather
     # than integrated on a polynomial cut down to a lower degree.
@@ -179,8 +179,8 @@ end
         (Ellipsoid(3.0, 1.0, 1.0), _ti_km(237.0, 141.0, 141.0, 237.0, 116.0, 116.0)),
     ]
     for (ell, C) in cases
-        @test components_canon(hill_tensor(ell, C; method = :residues, tight...)) ≈
-            components_canon(hill_tensor(ell, C; method = :nestedquadgk, tight...)) rtol = 1.0e-10
+        @test canonical_components(hill_tensor(ell, C; method = :residues, tight...)) ≈
+            canonical_components(hill_tensor(ell, C; method = :nestedquadgk, tight...)) rtol = 1.0e-10
     end
 end
 
@@ -191,13 +191,13 @@ end
     # 1e-11 off, which kept the outer quadrature from converging: a million
     # evaluations and 35 s for one tensor. Against the closed form.
     CR = MeanFieldHomogenization.Core
-    C = tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, (0.0, 0.0, 1.0))
+    C = ti_from_constants(2.179, 0.579, 0.689, 10.345, 1.0, (0.0, 0.0, 1.0))
     for ω in (2.0, 20.0)
         ell = Ellipsoid(1.0, 1.0, ω)
         CR.reset_counters!()
         P = CR.with_integrand_counting(() -> hill_tensor(ell, C; method = :residues, abstol = 1.0e-13, reltol = 1.0e-12))
         @test CR.read_counters().integrand_evals < 2000
-        P_ref = components_canon(hill_tensor(ell, C))
-        @test maximum(abs, components_canon(P) - P_ref) <= 1.0e-13 * maximum(abs, P_ref)
+        P_ref = canonical_components(hill_tensor(ell, C))
+        @test maximum(abs, canonical_components(P) - P_ref) <= 1.0e-13 * maximum(abs, P_ref)
     end
 end

@@ -5,7 +5,7 @@ using LinearAlgebra
 
 const C0_CR = TensISO{3}(3 * 30.0, 2 * 18.0)      # matrix: k = 30, μ = 18
 const CANON_CR = TensND.CanonicalBasis{3, Float64}()
-_g(t) = get_array(TensND.change_tens(t, CANON_CR))
+_g(t) = get_array(TensND.express(t, CANON_CR))
 
 # Uniaxial strain along e₃ — the direction normal to the first family, so
 # compression closes it.

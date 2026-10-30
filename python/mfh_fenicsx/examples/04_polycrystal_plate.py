@@ -14,10 +14,11 @@ A quarter of a plate with a hole is pulled. Near the hole the aggregate flows
 first; the model that lets the grains deviate more from the average strain
 (Hill's) flows at a lower stress, and the plate carries less load.
 
-These materials are costly: about 50 ms per point and per update for Kröner's
-model, three times more for Hill's, whose steps must also be cut more often.
+These materials are costly: about 20 ms per point and per update for Kröner's
+model, two and a half times more for Hill's, whose steps must also be cut more
+often.
 The mesh is coarse, 151 linear triangles of one point each; on 4 Julia threads
-the computation took 171 s with Kröner's model and 1,152 s with Hill's
+the computation took 109 s with Kröner's model and 440 s with Hill's
 (results.json keeps the times of a run). Julia shares the points among its
 threads, so start it with several (PYTHON_JULIACALL_THREADS).
 
@@ -55,7 +56,7 @@ if cells > 2000:
     raise SystemExit(f"about {cells:.0f} cells: too many for materials of ~0.1 s per point update")
 
 jl = mf.start()
-jl.seval("using Random")
+jl.seval("using Random, TensND")
 aggregate = jl.seval(
     """model -> let
         τ₀ = 10.0                                                    # MPa
@@ -63,7 +64,8 @@ aggregate = jl.seval(
         C₁₁, C₁₂ = E * (1 - ν) / ((1 + ν) * (1 - 2ν)), E * ν / ((1 + ν) * (1 - 2ν))
         # Grains of the isotropic elasticity that Kröner's model assumes.
         grain(frame) = CrystalViscoplasticity(; C₁₁, C₁₂, C₄₄ = (C₁₁ - C₁₂) / 2, K = 1.0, n = 5, τ₀, frame)
-        frames = random_orientations(8; rng = MersenneTwister(2))
+        rng = MersenneTwister(2)
+        frames = [random_basis(rng) for _ in 1:8]          # uniform over the rotations (TensND)
         Polycrystal(grain.(frames); model = model == "Kröner" ? KronerModel(; E, ν) : HillModel())
     end"""
 )

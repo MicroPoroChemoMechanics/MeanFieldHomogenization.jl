@@ -41,8 +41,8 @@ want(name) = SECTIONS === nothing || name in SECTIONS
 const FE = MeanFieldHomogenization.FiniteElements
 const report = IOBuffer()
 
-_km(t) = Matrix(mandel(TensND.change_tens(t, TensND.CanonicalBasis{3, Float64}())))
-_ar(t) = Matrix(TensND.get_array(TensND.change_tens(t, TensND.CanonicalBasis{3, Float64}())))
+_km(t) = Matrix(mandel(TensND.express(t, TensND.CanonicalBasis{3, Float64}())))
+_ar(t) = Matrix(TensND.get_array(TensND.express(t, TensND.CanonicalBasis{3, Float64}())))
 Ciso(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
 
 # ─── The meridian mesh ───────────────────────────────────────────────────────

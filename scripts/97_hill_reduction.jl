@@ -72,7 +72,7 @@ nothing #hide
 # ``\omega = 0.2`` sharing its axis ``\underline{e}_3``.
 
 const e₃ = (0.0, 0.0, 1.0)
-C_ti = TensND.tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, e₃)
+C_ti = TensND.ti_from_constants(2.179, 0.579, 0.689, 10.345, 1.0, e₃)
 ω = 0.2
 spheroid = Spheroid(ω)
 B = stretch(spheroid)

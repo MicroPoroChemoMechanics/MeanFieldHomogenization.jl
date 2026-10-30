@@ -47,12 +47,12 @@ function _srb_in_random_basis(A, rng, general::Bool)
     # nearly degenerate one.
     N = randn(rng, 3, 3)
     B = general ? TensND.Basis(R * (I + 0.3 * N / opnorm(N)), Val(:cov)) : TensND.RotatedBasis(R)
-    return TensND.change_tens(TensND.Tens(A), B)
+    return TensND.express(TensND.Tens(A), B)
 end
 
 "The canonical components of a stiffness (Kelvin-Mandel) or a conductivity."
-_srb_canon(X, elastic) = elastic ? _SRB_CORE.mandel66_minor(TensND.components_canon(X)) :
-    Matrix(TensND.components_canon(X))
+_srb_canon(X, elastic) = elastic ? TensND.mandel(TensND.canonical_components(X); symmetrize = true) :
+    Matrix(TensND.canonical_components(X))
 
 const _SRB_SCHEMES = Dict(
     "dilute" => Dilute(), "dilute_dual" => DiluteDual(), "mori_tanaka" => MoriTanaka(),
@@ -63,7 +63,7 @@ const _SRB_SCHEMES = Dict(
 "The RVE of a case, each medium passed through `medium`."
 function _srb_rve(c, prop, medium)
     elastic = prop === :C
-    tens(m) = elastic ? _SRB_CORE.array_from_mandel66(_srb_mat(m)) : _srb_mat(m)
+    tens(m) = elastic ? TensND.get_array(TensND.from_mandel(_srb_mat(m))) : _srb_mat(m)
     rve = RVE()
     add_phase!(
         rve, :M, Ellipsoid(1.0), Dict(prop => medium(tens(elastic ? c["C_m_km"] : c["K_m"])));
@@ -88,7 +88,7 @@ compliance form `X⁻¹ = S_M + Σ fᵣ ⟨(Sᵣ - S_M) 𝔹ᵣ(X̄)⟩` with `�
 whichever the scheme took; `X̄ = ⟨X⟩` is the reference the average is taken in.
 """
 function _srb_asc_residual(c, X, elastic)
-    tens(M) = TensND.Tens(elastic ? _SRB_CORE.array_from_mandel66(M) : M)
+    tens(M) = TensND.Tens(elastic ? TensND.get_array(TensND.from_mandel(M)) : M)
     sym = _srb_average(c)
     avg(M) = haskey(sym, :symmetrize) ?
         _srb_canon(_srb_project(tens(M), sym.symmetrize), elastic) : M

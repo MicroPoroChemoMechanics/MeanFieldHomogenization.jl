@@ -21,7 +21,7 @@ const CANON_FAM = TensND.CanonicalBasis{3, Float64}()
 # comparison between them — or against a canonically-built reference — has to
 # put both in one frame first. Comparing raw arrays silently compares two
 # different frames and, for a family at 45°, merely permutes the axes.
-_g(t) = get_array(TensND.change_tens(t, CANON_FAM))
+_g(t) = get_array(TensND.express(t, CANON_FAM))
 
 # Three non-coaxial penny families: the reference medium is genuinely
 # anisotropic, so the correction factor cannot be hidden by an isotropic

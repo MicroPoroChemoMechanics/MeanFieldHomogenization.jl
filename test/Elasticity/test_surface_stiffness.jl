@@ -154,7 +154,7 @@ end
     f, R = 0.15, 0.01                       # 10 nm particles
     sph = Ellipsoid(R)
     C_eq = equivalent_particle(C_i, sph, κs, μs)
-    @test C_eq ≈ C_i .+ components_canon(surface_stiffness(sph, κs, μs)) rtol = 1.0e-14
+    @test C_eq ≈ C_i .+ canonical_components(surface_stiffness(sph, κs, μs)) rtol = 1.0e-14
 
     rve = RVE()
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C_m); fraction = :rest)

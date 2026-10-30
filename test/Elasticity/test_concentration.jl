@@ -75,7 +75,7 @@ end
 
     A = gradient_gradient_concentration(ell, C₁, C₀; method = :residues)
     A_nqg = gradient_gradient_concentration(ell, C₁, C₀; method = :nestedquadgk, reltol = 1.0e-12)
-    @test maximum(abs, components_canon(A - A_nqg)) < 1.0e-7 * maximum(abs, components_canon(A))
+    @test maximum(abs, canonical_components(A - A_nqg)) < 1.0e-7 * maximum(abs, canonical_components(A))
 end
 
 @testset "Concentration — symbolic propagation (SymPy)" begin

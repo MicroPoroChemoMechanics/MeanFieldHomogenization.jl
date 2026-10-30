@@ -189,7 +189,7 @@ function multiscale_C_mo(wc, α_p, sc, μ_b0; N = NTHETA, ω = ω_aspect, kw...)
     C_hf = best_fit_ti(build_hf(wc, α_p, μ_b0; N = N, ω = ω, kw...), (0.0, 0.0, 1.0))
     C_cp = build_cp(wc, α_p, C_hf)
     C_mo = build_mo(wc, sc, C_cp)
-    return Array(components_canon(C_mo))
+    return Array(canonical_components(C_mo))
 end
 nothing # hide
 ```
@@ -228,7 +228,7 @@ is obtained by seeding ``\mu_{b0}`` with a `Dual` and reading the partial of the
 final array — one pass through the whole three-scale chain.
 
 ```@example strength
-extract_kμ(arr) = k_mu(TensND.proj_tens(Val(:ISO), arr)[1])
+extract_kμ(arr) = k_mu(TensND.project(arr, Val(:ISO))[1])
 
 function quasibrittle_strength(arr_C_mo, arr_dC, μh, f_θ)
     # `arr_C_mo` (value) and `arr_dC` (∂/∂μ) are 3×3×3×3 arrays; wrap them as

@@ -41,7 +41,7 @@ function _hill_order2_2d(ell::Ellipsoid{2}, K₀)
     ρ = T(ell.semi_axes[2] / ell.semi_axes[1])
     ρ2 = ρ * ρ
 
-    K_princ = TensND.change_tens(K₀, ell.basis)
+    K_princ = TensND.express(K₀, ell.basis)
     k11 = K_princ[1, 1]; k12 = K_princ[1, 2]; k22 = K_princ[2, 2]
 
     t1 = k11 * k22

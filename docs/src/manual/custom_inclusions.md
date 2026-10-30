@@ -169,7 +169,7 @@ with no extra code.
 
 ```julia
 derivative(rve, Dilute(), geometry(:I, :eccentricity);
-           indexer = C -> components_canon(C)[1, 1, 1, 1])
+           indexer = C -> canonical_components(C)[1, 1, 1, 1])
 ```
 
 This requires the whole path to be type-generic, so that `ForwardDiff.Dual`

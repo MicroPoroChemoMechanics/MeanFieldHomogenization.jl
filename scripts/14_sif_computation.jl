@@ -19,7 +19,7 @@ E_, H_, ν₁, ν₂, Γ_ = 1.0, 2.0, 0.4, 0.3, 3.0
 n̂ = tens_basis(CanonicalBasis{3, Float64}(), 3)
 E₁ = E_; E₃ = H_ * E₁; ν₁₂ = ν₁; ν₃₁ = H_ * ν₂
 G₃₁ = Γ_ * E₁ / (2 * (1 + ν₁₂))
-S = tens_ti(inv(E₁), -ν₁₂ / E₁, -ν₃₁ / E₃, inv(E₃), inv(4G₃₁), n̂)
+S = ti_from_constants(inv(E₁), -ν₁₂ / E₁, -ν₃₁ / E₃, inv(E₃), inv(4G₃₁), n̂)
 C₀ = inv(S)
 
 a, b = 1.0, 0.1

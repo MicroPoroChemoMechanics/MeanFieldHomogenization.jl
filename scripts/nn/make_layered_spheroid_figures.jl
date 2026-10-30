@@ -59,7 +59,7 @@ const CS = (ce(R1 * E0, NU), ce(R2 * E0, NU))
 const STRAIN = load_surrogate(model_path("layered_spheroid_strain"))
 const STRESS = load_surrogate(model_path("layered_spheroid_stress"))
 
-a1111(t) = Array(TensND.get_array(TensND.change_tens(t, CAN)))[1, 1, 1, 1]
+a1111(t) = Array(TensND.get_array(TensND.express(t, CAN)))[1, 1, 1, 1]
 radii(ω, w) = confocal_layer_radii(ω, 1.0, (w, 1 - w))
 
 fe_incl(ω, w) = (r = radii(ω, w);

@@ -11,7 +11,7 @@ using ForwardDiff
 #  numerator), SC / ASC (cracks iterated against the running estimate).
 # =============================================================================
 
-const _to_mandel = TensND.mandel66
+const _to_mandel = (t -> TensND.mandel(TensND.canonical_components(t); symmetrize = true))
 
 function _setup_crack_elastic(; k_M = 5.0, μ_M = 2.0, ε = 0.1, n_times = 4)
     times = collect(range(0.0, 1.0; length = n_times))
@@ -182,7 +182,7 @@ end
     # The dual scheme adds the compliance contributions of the solid phases and
     # of the cracks: in the elastic limit each diagonal block is the elastic
     # DiluteDual stiffness, the off-diagonal ones vanish.
-    mandel = TensND.mandel66
+    mandel = (t -> TensND.mandel(TensND.canonical_components(t); symmetrize = true))
     C_M, C_I = TensISO{3}(3 * 10.0, 2 * 4.0), TensISO{3}(3 * 30.0, 2 * 12.0)
     times = [0.0, 0.5, 1.0]
     function rve_with(law)

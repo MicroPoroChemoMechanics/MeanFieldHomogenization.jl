@@ -14,7 +14,7 @@ using ForwardDiff
 
 const MP_UF = MeanFieldHomogenization.MaterialLaws
 
-_canon_uf(t) = MP_UF._mandel(TensND.change_tens_canon(t))
+_canon_uf(t) = MP_UF._mandel(TensND.canonical(t))
 
 @testset "linear elastic phases: the Voigt and Reuss bounds" begin
     soft, stiff = LinearElasticity(; E = 10.0e3, ν = 0.2), LinearElasticity(; E = 70.0e3, ν = 0.3)

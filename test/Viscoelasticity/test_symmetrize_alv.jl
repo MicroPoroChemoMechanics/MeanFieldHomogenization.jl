@@ -17,7 +17,7 @@ const MCr = MeanFieldHomogenization.Core
 function _rand_minor_mandel(rng)
     a = randn(rng, 3, 3, 3, 3)
     b = (a + permutedims(a, (2, 1, 3, 4)) + permutedims(a, (1, 2, 4, 3)) + permutedims(a, (2, 1, 4, 3))) / 4
-    return MCr.mandel66_minor(b)
+    return TensND.mandel(b; symmetrize = true)
 end
 
 @testset "ALV block-wise orientation averages" begin
@@ -29,12 +29,12 @@ end
         M = _rand_minor_mandel(rng)
         # ISO — non-symmetric block: the full Σ M[i,j] must be used, not
         # a symmetric 2·M[1,2] shortcut (regression for Volterra blocks)
-        α, β = TensND.iso_average_mandel66(M)
-        αc, βc = MCr.iso_average_mandel66(M)
+        α, β = TensND.iso_average_mandel(M)
+        αc, βc = MCr.iso_average_mandel(M)
         @test α ≈ αc
         @test β ≈ βc
         # TI about an arbitrary axis
-        @test _ti_project_blocks(M, nax) ≈ MCr.ti_average_mandel66(M, nax) atol = 1.0e-12
+        @test _ti_project_blocks(M, nax) ≈ MCr.ti_average_mandel(M, nax) atol = 1.0e-12
     end
 
     @testset "multi-block matrix : block independence + idempotence" begin
@@ -47,7 +47,7 @@ end
         out = _ti_project_blocks(M, nax)
         for i in 1:n, j in 1:n
             @test out[(6i - 5):(6i), (6j - 5):(6j)] ≈
-                MCr.ti_average_mandel66(blocks[i, j], nax) atol = 1.0e-12
+                MCr.ti_average_mandel(blocks[i, j], nax) atol = 1.0e-12
         end
         # idempotence
         @test _ti_project_blocks(out, nax) ≈ out atol = 1.0e-12
@@ -208,8 +208,8 @@ end
     K_m = TensISO{3}(2.0)
     f = 0.3
     times = collect(0.0:0.5:1.5)
-    km(X) = MCr.mandel66_minor(TensND.components_canon(X))
-    canon(X) = Matrix(TensND.components_canon(X))
+    km(X) = TensND.mandel(TensND.canonical_components(X); symmetrize = true)
+    canon(X) = Matrix(TensND.canonical_components(X))
     nax = (0.36, -0.48, 0.8)
     for (sym, avg) in (
             (:iso, X -> MCr.isotropify(X)),

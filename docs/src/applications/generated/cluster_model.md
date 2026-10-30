@@ -61,7 +61,7 @@ C_rigid = TensISO{3}(3 * 1.0e4, 2 * 1.0e4)
 C_void = TensISO{3}(3 * 1.0e-9, 2 * 1.0e-9)
 
 𝟏 = TensISO{3}(1.0)
-μ_of(C) = components_canon(C)[1, 2, 1, 2]
+μ_of(C) = canonical_components(C)[1, 2, 1, 2]
 κ_of(C) = (𝟏 ⊡ C ⊡ 𝟏) / 9          # 𝟏 : ℂ : 𝟏 / 9
 ````
 
@@ -174,7 +174,7 @@ the gap is the anisotropy the one-site schemes cannot express.
 println("\n  f      C_1212/μ_m    (C_1111-C_1122)/2μ_m    anisotropy ratio")
 for f in (0.1, 0.2, 0.3, 0.4)
     asm = cubic_lattice(:sc, Dict(:C => C_m), Dict(:C => C_rigid); fraction = f, cutoff = 3.0)
-    A = components_canon(homogenize(asm, ClusterModel(), :C))
+    A = canonical_components(homogenize(asm, ClusterModel(), :C))
     μ1 = A[1, 2, 1, 2] / μ_m
     μ2 = (A[1, 1, 1, 1] - A[1, 1, 2, 2]) / (2μ_m)
     @printf " %.1f     %.5f       %.5f              %.4f\n" f μ1 μ2 (μ1 / μ2)

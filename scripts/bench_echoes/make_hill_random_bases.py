@@ -108,7 +108,7 @@ def km_ortho():
 
 
 def km_cubic():
-    """Material KM and (C11, C12, C44), the arguments of TensND's `tens_cubic`."""
+    """Material KM and (C11, C12, C44), the arguments of TensND's `cubic_from_constants`."""
     c11, c12, c44 = 30 + 10 * rng.random(), 8 + 4 * rng.random(), 6 + 6 * rng.random()
     km = np.diag([c11, c11, c11, 2 * c44, 2 * c44, 2 * c44])
     for i, j in ((0, 1), (0, 2), (1, 2)):
@@ -149,7 +149,7 @@ def conduction(shape, ax, eu, medium, k, material=None):
 
 def ti_material():
     """Material KM of a TI tensor about e3, and (C1111, C1122, C1133, C3333, C2323), the
-    arguments of TensND's `tens_ti`."""
+    arguments of TensND's `ti_from_constants`."""
     p = [30 + 5 * rng.random(), 8 + 2 * rng.random(), 6 + 2 * rng.random(),
          45 + 10 * rng.random(), 7 + 3 * rng.random()]
     return km_ti(*p), [float(x) for x in p]

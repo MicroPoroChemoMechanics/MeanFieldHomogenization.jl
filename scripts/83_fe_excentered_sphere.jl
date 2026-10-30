@@ -57,7 +57,7 @@ const C_MORTAR = ce(8.0, 0.2)        # adhered old mortar
 const C_PASTE = ce(20.0, 0.2)        # fresh cement paste, the reference medium
 const W = 0.5                        # old aggregate / whole inclusion
 
-mand(T) = MeanFieldHomogenization.Core.mandel66_minor(TensND.components_canon(T))
+mand(T) = TensND.mandel(TensND.canonical_components(T); symmetrize = true)
 kelvinJ(M) = (M[1, 1] + 2M[1, 2]) / 3
 kelvinK(M) = M[4, 4]
 iso(C) = MeanFieldHomogenization.Core.isotropify(C)
@@ -199,13 +199,13 @@ for α in (0.0, 0.4, 0.8)
         nradial = 24, radius_ratio = 4.0
     )
     A, B = fe_axi_concentration(incl, K_PASTE)
-    Am, Bm = TensND.components_canon(A), TensND.components_canon(B)
+    Am, Bm = TensND.canonical_components(A), TensND.canonical_components(B)
     @printf("  %5.2f   %14.5f   %10.5f\n", α, Bm[1, 1] / Am[1, 1], Bm[3, 3] / Am[3, 3])
 end
 
 sphk = LayeredSphere((cbrt(W), 1.0), (K_AGG, K_MORTAR))
-ak = TensND.components_canon(gradient_gradient_concentration(sphk, K_PASTE, K_PASTE))[1, 1]
-bk = TensND.components_canon(flux_gradient_concentration(sphk, K_PASTE, K_PASTE))[1, 1]
+ak = TensND.canonical_components(gradient_gradient_concentration(sphk, K_PASTE, K_PASTE))[1, 1]
+bk = TensND.canonical_components(flux_gradient_concentration(sphk, K_PASTE, K_PASTE))[1, 1]
 @printf("  exact (α = 0)  %14.5f\n", bk / ak)
 
 # ## §7 Memoization

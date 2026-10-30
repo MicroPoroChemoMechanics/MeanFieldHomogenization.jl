@@ -16,7 +16,7 @@ const _HC_KM = [
     5 -2 1 60 2.5 1.5; 4 3 -2 2.5 65 -1; 3 -1 2 1.5 -1 55
 ]
 _hc_matrix(KM = _HC_KM) = TensND.from_mandel(KM, CanonicalBasis{3, Float64}())
-_hc_vals(t) = vec(collect(TensND.components_canon(t)))
+_hc_vals(t) = vec(collect(TensND.canonical_components(t)))
 
 function _hc_cell(C, f)
     rve = RVE()
@@ -74,7 +74,7 @@ end
 @testset "HillCache: derivatives bypass it, bounded store, threads, inference" begin
     C = _hc_matrix()
     ell = Ellipsoid(2.0, 1.0, 0.5)
-    canon(P) = Array(TensND.components_canon(P))
+    canon(P) = Array(TensND.canonical_components(P))
     cache = HillCache()
     P, dP = with_hill_cache(cache) do
         canon(hill_tensor(ell, C)), ForwardDiff.derivative(λ -> canon(hill_tensor(ell, λ * C)), 1.0)

@@ -254,12 +254,12 @@ build(::HillOrtho, c, frame) = TensND.TensOrtho(c[1], c[2], c[3], c[4], c[5], c[
 The independent components of `P`, in the order [`build`](@ref) expects — the
 exact inverse of `build`.
 
-Goes through `TensND.proj_tens` rather than reading `get_data` off the tensor,
+Goes through `TensND.project` rather than reading `get_data` off the tensor,
 for two reasons. First, robustness: a teacher is free to return whichever
 concrete type it likes, and the conduction kernels do exactly that — the
 analytic transport Hill tensor of a spheroid comes back as a *generic*
 `Tens{2,3}`, not a `TensTI{2,·,2}`, so reading its data would yield nine numbers
-where two were wanted. Second, and more valuable: `proj_tens` also returns the
+where two were wanted. Second, and more valuable: `project` also returns the
 relative residual of the projection, which for a tensor genuinely in the class is
 zero to round-off. Checking it against `atol` turns a wrong axis, a wrong frame
 or a wrong class — all of which would otherwise train happily on corrupted
@@ -288,26 +288,26 @@ function components(
 end
 
 _project(::Union{HillISO, HillISO2, GradientConcentrationISO2}, P, _frame) =
-    TensND.proj_tens(Val(:ISO), P)
+    TensND.project(P, Val(:ISO))
 _project(::Union{HillTI, HillTI2, GradientConcentrationTI2}, P, axis) =
-    TensND.proj_tens(Val(:TI), P, axis)
-_project(::HillOrtho, P, frame) = TensND.proj_tens(Val(:ORTHO), P, frame)
+    TensND.project(P, Val(:TI), axis)
+_project(::HillOrtho, P, frame) = TensND.project(P, Val(:ORTHO), frame)
 
 # Unlike the TI concentration classes below, this one needs no special treatment:
-# `proj_tens(Val(:CUBIC), …)` already returns the full class, there being no
+# `project(A, Val(:CUBIC), …)` already returns the full class, there being no
 # major-symmetric sub-form to fall short of.
-_project(::GradientConcentrationCubic, P, frame) = TensND.proj_tens(Val(:CUBIC), P, frame)
+_project(::GradientConcentrationCubic, P, frame) = TensND.project(P, Val(:CUBIC), frame)
 
-# `proj_tens(Val(:TI), …)` returns the *five*-component major-symmetric form, so
-# it cannot serve a concentration tensor; `proj_tens(Val(:TI6), …)` is the
+# `project(A, Val(:TI), …)` returns the *five*-component major-symmetric form, so
+# it cannot serve a concentration tensor; `project(A, Val(:TI6), …)` is the
 # projection onto the six-component class, without major symmetry. The residual
 # is measured here in the max-norm of the canonical components, the one the
 # labeler's thresholds are written in.
 function _project(::Union{GradientConcentrationTI, FluxConcentrationTI}, P, axis)
-    l = TensND.get_data(first(TensND.proj_tens(Val(:TI6), P, axis)))
+    l = TensND.get_data(first(TensND.project(P, Val(:TI6), axis)))
     B = TensND.TensTI{4}(l..., axis)
-    ref = Array(TensND.components_canon(P))
-    d = maximum(abs, Array(TensND.components_canon(B)) .- ref)
+    ref = Array(TensND.canonical_components(P))
+    d = maximum(abs, Array(TensND.canonical_components(B)) .- ref)
     nrm = maximum(abs, ref)
     return B, d, nrm > 0 ? d / nrm : d
 end

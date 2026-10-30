@@ -302,7 +302,7 @@ export remainder_phase_name, remainder_volume_fraction, phase_names
 export AbstractDistributionShape, UniformDistribution
 export AbstractSymmetrize, NoSymmetrize, IsoSymmetrize, TISymmetrize
 export isotropify, transverse_isotropify
-export ti_average_mandel66, iso_average_mandel66
+export ti_average_mandel, iso_average_mandel
 export best_fit_ti, best_fit_iso, best_fit_ortho
 export polar_orientation_bins
 export Phase, RVE

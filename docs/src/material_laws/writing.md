@@ -25,11 +25,13 @@ The functions of a law receive their arguments **by name**:
 | `Δt` | the length of the step | a number |
 | `p` | the parameters of the law | `p.E`, `p.ℂ`, … |
 
-A symmetric tensor is a [`Mandel`](@ref) vector of six components; a scalar is
+A symmetric tensor is a `Mandel` vector of six components; a scalar is
 a number. On Mandel vectors the double contraction is `sum(a .* b)`, a
 fourth-order tensor is an `SMatrix{6, 6}` applied by `*`, and the helpers
-[`trace_mandel`](@ref), [`deviator`](@ref), [`von_mises`](@ref) and
-[`equivalent_strain`](@ref) give the usual invariants.
+`trace_mandel`, `deviator`, `sqnorm_deviator`, `von_mises` and
+`equivalent_strain` give the usual invariants. They are TensND's, re-exported by
+the package
+([Symmetric tensors as Kelvin-Mandel vectors](https://MicroPoroChemoMechanics.github.io/TensND.jl/stable/api/tensors)).
 
 ```@example mp_writing
 using MeanFieldHomogenization, StaticArrays

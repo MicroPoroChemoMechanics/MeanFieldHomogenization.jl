@@ -11,7 +11,7 @@ using LinearAlgebra
 
 # Convert a TensND.AbstractTens{4,3} to a 6×6 Mandel matrix using the
 # package-internal helper.
-const _to_mandel = TensND.mandel66
+const _to_mandel = (t -> TensND.mandel(TensND.canonical_components(t); symmetrize = true))
 
 @testset "hill_kernel — sphere, elastic limit (Heaviside)" begin
     ell = Spheroid(1.0)

@@ -148,7 +148,7 @@ end
     # and the weights returned, by quadrature where the bound exceeds the
     # tolerance, are those of the definition.
     quadgk = MeanFieldHomogenization.Core.QuadGK.quadgk
-    C₀ = TensND.tens_ti(2.179, 0.579, 0.689, 10.345, 1.0, (0.0, 0.0, 1.0))
+    C₀ = TensND.ti_from_constants(2.179, 0.579, 0.689, 10.345, 1.0, (0.0, 0.0, 1.0))
     ell = Ellipsoid(1.0, 1.0, 2.0)
     η, ω = ell.semi_axes[2] / ell.semi_axes[1], ell.semi_axes[3] / ell.semi_axes[1]
     C = Float64.(Array(TensND.components(C₀, ell.basis)))

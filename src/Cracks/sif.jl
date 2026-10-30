@@ -64,14 +64,14 @@ Base.@constprop :aggressive function sif(
     y0 = y₀ === nothing ? m̂ : y₀
     S⁻¹_y0 = 𝐒_inv ⋅ y0
     n_Sy = norm(S⁻¹_y0)
-    ν̂ = TensND.change_tens(S⁻¹_y0 / n_Sy, ℬ)
-    τ̂ = TensND.Tens(TensND.change_tens(n̂, ℬ) × TensND.change_tens(ν̂, ℬ), ℬ)
+    ν̂ = TensND.express(S⁻¹_y0 / n_Sy, ℬ)
+    τ̂ = TensND.Tens(TensND.express(n̂, ℬ) × TensND.express(ν̂, ℬ), ℬ)
 
     ℬ_ν = TensND.Basis(
         hcat(
-            TensND.components_canon(τ̂),
-            TensND.components_canon(ν̂),
-            TensND.components_canon(n̂)
+            TensND.canonical_components(τ̂),
+            TensND.canonical_components(ν̂),
+            TensND.canonical_components(n̂)
         )
     )
 
@@ -153,14 +153,14 @@ Base.@constprop :aggressive function sif(
     y0 = y₀ === nothing ? m̂ : y₀
     S⁻¹_y0 = 𝐒_inv ⋅ y0
     n_Sy = norm(S⁻¹_y0)
-    ν̂ = TensND.change_tens(S⁻¹_y0 / n_Sy, ℬ)
-    τ̂ = TensND.Tens(TensND.change_tens(n̂, ℬ) × TensND.change_tens(ν̂, ℬ), ℬ)
+    ν̂ = TensND.express(S⁻¹_y0 / n_Sy, ℬ)
+    τ̂ = TensND.Tens(TensND.express(n̂, ℬ) × TensND.express(ν̂, ℬ), ℬ)
 
     ℬ_ν = TensND.Basis(
         hcat(
-            TensND.components_canon(τ̂),
-            TensND.components_canon(ν̂),
-            TensND.components_canon(n̂)
+            TensND.canonical_components(τ̂),
+            TensND.canonical_components(ν̂),
+            TensND.canonical_components(n̂)
         )
     )
 

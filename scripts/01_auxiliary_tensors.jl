@@ -149,7 +149,7 @@ let
     ell_rot = Ellipsoid(3.0, 2.0, 1.0; euler_angles = (θ, 0.0, 0.0))
 
     IA_can = tens_IA(ell_can)
-    IA_rot = change_tens_canon(tens_IA(ell_rot))
+    IA_rot = canonical(tens_IA(ell_rot))
 
     println("\n  Canonical frame (diagonal):")
     print_IA(IA_can, 3; label = "I^A canonical")

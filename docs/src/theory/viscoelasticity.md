@@ -336,8 +336,8 @@ by hand, in Kelvin–Mandel components, gives the Hill kernel that
 
 ```@example alv_long_shear
 ell = Ellipsoid(3.0, 1.0, 1.0)
-U = TensND.mandel66(tens_UA(ell))
-D = TensND.mandel66(tens_VA(ell)) - U
+U = TensND.mandel(TensND.canonical_components(tens_UA(ell)); symmetrize = true)
+D = TensND.mandel(TensND.canonical_components(tens_VA(ell)); symmetrize = true) - U
 kron(J_long, U) + kron(J_shear, D) ≈ hill_kernel(ell, law, times)
 ```
 

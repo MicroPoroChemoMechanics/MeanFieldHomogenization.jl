@@ -3,7 +3,7 @@
 #
 #  The algebra itself lives in TensND: `TensCubic` stores the three constants
 #  and a cube frame, its products and inverses are componentwise, and
-#  `proj_tens(Val(:CUBIC), …)` projects onto the class and reports the distance.
+#  `project(A, Val(:CUBIC), …)` projects onto the class and reports the distance.
 #  Nothing of that is reimplemented here.
 #
 #  What this file adds is the two things a homogenization package wants on top:
@@ -17,7 +17,7 @@
 
 Relative Frobenius distance from `t` to its projection onto the cubic class
 with cube axes `frame` — the third value returned by
-`proj_tens(Val(:CUBIC), t, frame)`, named because it is the one that gets read.
+`project(t, Val(:CUBIC), frame)`, named because it is the one that gets read.
 
 **This is a free error bar.** Where the morphology and the medium leave the
 octahedral group invariant, the answer belongs to the class **by group theory**,
@@ -35,7 +35,7 @@ canonical axes, and the residual would say so, correctly but uselessly.
 cubic_residual(
     t::TensND.AbstractTens{4, 3},
     frame::TensND.AbstractBasis = TensND.CanonicalBasis{3, Float64}(),
-) = TensND.proj_tens(Val(:CUBIC), t, frame)[3]
+) = TensND.project(t, Val(:CUBIC), frame)[3]
 
 # ─── The symmetry trait ──────────────────────────────────────────────────────
 #

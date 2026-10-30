@@ -14,9 +14,7 @@ Contents
 - `traits.jl`             : algorithm and material-symmetry traits
 - `bases.jl`              : helpers around `TensND` bases
 - `tensor_helpers.jl`     : low-level utilities (`_δ`, `_sfill`, `_fill_sym4!`)
-- `moduli.jl`             : modulus extractors for the common symmetry classes
 - `newton_potential.jl`   : Newton potentials (2D / 3D)
-- `green_kernel.jl`       : closed-form 3×3 inverse (`_inv3`)
 - `laminate_algebra.jl`   : the laminate kernels (`flat_hill`,
                              `laminate_stiffness`, …) on TensND's Kelvin-Mandel
                              block algebra about the layer normal
@@ -52,10 +50,8 @@ include("cells.jl")
 include("traits.jl")
 include("bases.jl")
 include("tensor_helpers.jl")
-include("moduli.jl")
 include("spheroid_integrals.jl")
 include("newton_potential.jl")
-include("green_kernel.jl")
 include("laminate_algebra.jl")
 include("green_residue.jl")
 include("green_helpers.jl")
@@ -89,7 +85,6 @@ export MaterialSymmetry, IsotropicSym, TransverselyIsotropicSym,
     OrthotropicSym, GeneralAnisotropicSym, material_symmetry
 
 # Modulus extractors (public — consumed by sub-modules and users)
-export extract_iso_moduli, extract_ti_moduli, extract_iso_conductivity
 
 # Exact rotation-group averages (public — used by Schemes, ALV and users)
 # Exact SO(3) / azimuthal averages of minor-symmetric tensors, and their
@@ -100,8 +95,7 @@ export extract_iso_moduli, extract_ti_moduli, extract_iso_conductivity
 # laminate concentration needs. Re-exported here so that every call site of the
 # form `Core.isotropify(...)` keeps working unchanged.
 export isotropify, transverse_isotropify
-export ti_average_mandel66, iso_average_mandel66
-export mandel66_minor, array_from_mandel66
+export ti_average_mandel, iso_average_mandel
 export ti8_params_from_mandel, mandel_from_ti8_params
 
 # Newton potentials (public — used downstream and in tests)

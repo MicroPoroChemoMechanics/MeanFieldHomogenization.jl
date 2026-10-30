@@ -26,7 +26,7 @@ const AX_K_SHELL = TensISO{3}(1.0)
 const AX_K_MAT = TensISO{3}(3.0)
 const AX_W = 0.5                                 # core volume fraction
 
-ax_mandel(T) = MeanFieldHomogenization.Core.mandel66_minor(Array(TensND.components_canon(T)))
+ax_mandel(T) = TensND.mandel(Array(TensND.canonical_components(T)); symmetrize = true)
 ax_bulk(M) = M[1, 1] + 2M[1, 2]                  # 3× the 𝕁-eigenvalue
 ax_shear(M) = M[4, 4]                            # the 𝕂-eigenvalue
 
@@ -120,9 +120,9 @@ end
     @test MeanFieldHomogenization.FiniteElements.tensor_order(incl) == 2
     A, B = fe_axi_concentration(incl, AX_K_MAT)
     sph = LayeredSphere((cbrt(AX_W), 1.0), (AX_K_CORE, AX_K_SHELL))
-    Aex = TensND.components_canon(gradient_gradient_concentration(sph, AX_K_MAT, AX_K_MAT))
-    Bex = TensND.components_canon(flux_gradient_concentration(sph, AX_K_MAT, AX_K_MAT))
-    Anum, Bnum = TensND.components_canon(A), TensND.components_canon(B)
+    Aex = TensND.canonical_components(gradient_gradient_concentration(sph, AX_K_MAT, AX_K_MAT))
+    Bex = TensND.canonical_components(flux_gradient_concentration(sph, AX_K_MAT, AX_K_MAT))
+    Anum, Bnum = TensND.canonical_components(A), TensND.canonical_components(B)
     @test Anum[1, 1] ≈ Aex[1, 1] rtol = 1.0e-3
     @test Anum[3, 3] ≈ Aex[3, 3] rtol = 1.0e-3
     @test Bnum[1, 1] ≈ Bex[1, 1] rtol = 1.0e-3
@@ -295,10 +295,8 @@ end
     bad = FEExcenteredSphere(
         1.0, (C_ti, AX_C_SHELL); core_fraction = AX_W, nradial = 10
     )
-    C_ortho = TensND.Tens(
-        MeanFieldHomogenization.Core.array_from_mandel66(
-            diagm([20.0, 25.0, 30.0, 8.0, 9.0, 10.0])
-        )
+    C_ortho = TensND.from_mandel(
+        diagm([20.0, 25.0, 30.0, 8.0, 9.0, 10.0])
     )
     worse = FEExcenteredSphere(
         1.0, (C_ortho, AX_C_SHELL); core_fraction = AX_W, nradial = 10

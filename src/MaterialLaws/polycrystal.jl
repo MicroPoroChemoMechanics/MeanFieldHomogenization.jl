@@ -114,7 +114,7 @@ _sphere_hill(L::StaticMatrix{6, 6, T}, reltol, kernel::F) where {T, F} = _canoni
 _hill_abstol(L, reltol) = reltol / maximum(abs ∘ TensND.primal, L)
 # The Hill tensor reaches here with its dimension left to run time by the
 # quadrature: the element type of the medium fixes the result.
-_canonical_mandel(P, ::Type{T}) where {T} = SMatrix{6, 6, T, 36}(_mandel(TensND.change_tens_canon(P)))::SMatrix{6, 6, T, 36}
+_canonical_mandel(P, ::Type{T}) where {T} = SMatrix{6, 6, T, 36}(_mandel(TensND.canonical(P)))::SMatrix{6, 6, T, 36}
 
 """
     Polycrystal(grains, weights = equal; model = TaylorModel())

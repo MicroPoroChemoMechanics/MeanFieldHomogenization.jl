@@ -155,7 +155,7 @@ are interpreted as the lengths along columns 1, 2, 3 of the local
 basis defined by `euler_angles`.  For internal consistency the stored
 `semi_axes` are sorted descending and the basis columns are permuted
 accordingly, so the physical geometry in the canonical frame
-(`change_tens_canon(shape_tensor(ell))`) matches the user's input
+(`canonical(shape_tensor(ell))`) matches the user's input
 regardless of their order.
 
 **`euler_angles`**.  Any tuple of length 0–3 with heterogeneous `Real`

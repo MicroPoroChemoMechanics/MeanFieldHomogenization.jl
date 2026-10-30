@@ -218,17 +218,3 @@ end
     @test size(property_contribution_alv(sph2, K_run, OA_TIMES)) == (3n, 3n)
     @test_throws ArgumentError property_contribution_alv(sph2, ones(4n, 4n), OA_TIMES)
 end
-
-@testset "deprecated moduli extractors still answer, with a warning" begin
-    # They forward to TensND; each is checked against the call it now makes.
-    MC = MeanFieldHomogenization.Core
-    C = TensISO{3}(3 * 5.0, 2 * 2.0)
-    @test (@test_deprecated MC.extract_iso_moduli(C)) == TensND.E_nu(C)
-    @test (@test_deprecated MC.extract_iso_conductivity(TensISO{3}(2.5))) == 2.5
-    Cti = TensND.tens_ti(10.0, 3.0, 2.5, 12.0, 2.0, [0.0, 0.0, 1.0])
-    E, ν₁, ν₂, H, Γ = TensND.ti_args_hoenig(inv(Cti))
-    @test (@test_deprecated MC.extract_ti_moduli(Cti, (0.0, 0.0, 1.0))) == (E = E, H = H, ν₁ = ν₁, ν₂ = ν₂, Γ = Γ)
-    # A tensor that is not a `TensTI` is first projected on the TI class.
-    g = @test_deprecated MC.extract_ti_moduli(TensND.generic_tens(Cti), (0.0, 0.0, 1.0))
-    @test g.E ≈ E && g.H ≈ H && g.Γ ≈ Γ
-end

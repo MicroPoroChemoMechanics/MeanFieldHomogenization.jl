@@ -38,17 +38,17 @@ end
     pc = Polycrystal(_grain_pc.(frames))
     E = SVector(1.0e-5, 0, 0, 0, 0, 0)
     𝕂 = MP_PC._mandel_update(pc, E, initial_state(pc), 1.0; algorithm = LocalNewton(), external = (;))[2]
-    voigt = sum(MP_PC._mandel(TensND.change_tens_canon(TensND.tens_cubic(C11_PC, C12_PC, C44_PC, f))) for f in frames) / 5
+    voigt = sum(MP_PC._mandel(TensND.canonical(TensND.cubic_from_constants(C11_PC, C12_PC, C44_PC, f))) for f in frames) / 5
     @test 𝕂 ≈ voigt rtol = 1.0e-12
     # The contract material gives the same.
     r = material_response(pc, (ε = TensND.from_mandel(E),), initial_state(pc), 1.0)
-    @test MP_PC._mandel(TensND.change_tens_canon(r.tangents.σε)) ≈ voigt rtol = 1.0e-12
+    @test MP_PC._mandel(TensND.canonical(r.tangents.σε)) ≈ voigt rtol = 1.0e-12
 end
 
 @testset "a random texture is isotropic on average" begin
     rng = MersenneTwister(11)
     frames = [random_basis(rng) for _ in 1:4000]
-    C = sum(MP_PC._mandel(TensND.change_tens_canon(TensND.tens_cubic(C11_PC, C12_PC, C44_PC, f))) for f in frames) / length(frames)
+    C = sum(MP_PC._mandel(TensND.canonical(TensND.cubic_from_constants(C11_PC, C12_PC, C44_PC, f))) for f in frames) / length(frames)
     # The Voigt moduli of a cubic crystal.
     k_V, μ_V = (C11_PC + 2C12_PC) / 3, (C11_PC - C12_PC + 3C44_PC) / 5
     J = SMatrix{6, 6}([i <= 3 && j <= 3 ? 1 / 3 : 0.0 for i in 1:6, j in 1:6])

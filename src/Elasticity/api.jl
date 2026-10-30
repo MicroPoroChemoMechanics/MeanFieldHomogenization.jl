@@ -96,7 +96,7 @@ _hill_cache_key(incl, C₀, algo, abstol, reltol, maxiters) = nothing
 _hill_cache_key(::Val{false}, incl, C₀, algo, abstol, reltol, maxiters) = nothing
 _hill_cache_key(::Val{true}, incl, C₀, algo, abstol, reltol, maxiters) = (
     nameof(typeof(incl)), Tuple(incl.semi_axes), Tuple(TensND.vecbasis(incl.basis, :cov)),
-    Tuple(TensND.components_canon(C₀)), typeof(algo), abstol, reltol, maxiters,
+    Tuple(TensND.canonical_components(C₀)), typeof(algo), abstol, reltol, maxiters,
 )
 _all_float64(incl, C₀) = eltype(incl.semi_axes) === Float64 && eltype(incl.basis) === Float64 && eltype(C₀) === Float64
 

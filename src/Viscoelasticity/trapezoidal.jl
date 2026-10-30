@@ -137,7 +137,7 @@ end
 # preserving element type.
 @inline _to_mandel(sample::AbstractMatrix) = sample
 @inline function _to_mandel(sample::TensND.AbstractTens{4, 3})
-    return TensND.mandel66(sample)
+    return TensND.mandel(TensND.canonical_components(sample); symmetrize = true)
 end
 
 # The block cases, B×B blocks: 6 for a 4-tensor or a 6×6 Mandel matrix, 3 for a

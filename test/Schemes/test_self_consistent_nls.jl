@@ -122,7 +122,7 @@ end
         rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(60.0, 20.0));
         fraction = 0.3
     )
-    idxC = C -> components_canon(C)[1, 1, 1, 1]
+    idxC = C -> canonical_components(C)[1, 1, 1, 1]
     tight = (; abstol = 1.0e-13, reltol = 1.0e-13)
     newton = SelfConsistent(; algorithm = NewtonDefault(), tight...)
     params = (property(:I, :C, :bulk), amount(:I), property(:M, :C, :shear))

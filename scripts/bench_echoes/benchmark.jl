@@ -176,7 +176,7 @@ function bench_hill(
     θ_ea, φ_ea, ψ_ea = euler_angles
 
     P_jl = hill_tensor(ell_jl, C_jl; method = jl_method)
-    P_jl_KM = mandel(change_tens_canon(P_jl))
+    P_jl_KM = mandel(canonical(P_jl))
     tJ = @belapsed hill_tensor($ell_jl, $C_jl; method = $jl_method)
 
     println()
@@ -307,7 +307,7 @@ function bench_crack(
     crack = PennyCrack(1.0)
 
     H_jl = inverse_property_contribution(crack, C_jl; method = jl_method)
-    H_jl_KM = mandel(change_tens_canon(H_jl))
+    H_jl_KM = mandel(canonical(H_jl))
     tJ = @belapsed inverse_property_contribution(
         $crack, $C_jl;
         method = $jl_method
@@ -453,7 +453,7 @@ function bench_hill_order2(
     θ_ea, φ_ea, ψ_ea = euler_angles
 
     P_jl = hill_tensor(ell_jl, K_jl)
-    P_jl_mat = order2_as_matrix(change_tens_canon(P_jl))
+    P_jl_mat = order2_as_matrix(canonical(P_jl))
     tJ = @belapsed hill_tensor($ell_jl, $K_jl)
 
     println()
@@ -588,8 +588,8 @@ function bench_hill_derivative_iso(label, ell_jl)
     @printf "  ISO Case: %s\n" label
 
     # Julia ForwardDiff wrt κ (= α)
-    f_α = α -> mandel(change_tens_canon(hill_tensor(ell_jl, iso_from_walpole(α, β₀))))
-    f_β = β -> mandel(change_tens_canon(hill_tensor(ell_jl, iso_from_walpole(α₀, β))))
+    f_α = α -> mandel(canonical(hill_tensor(ell_jl, iso_from_walpole(α, β₀))))
+    f_β = β -> mandel(canonical(hill_tensor(ell_jl, iso_from_walpole(α₀, β))))
     dP_jl_κ = ForwardDiff.derivative(f_α, α₀)
     dP_jl_η = ForwardDiff.derivative(f_β, β₀)
     tJ_κ = @belapsed ForwardDiff.derivative($f_α, $α₀)
@@ -656,7 +656,7 @@ function dP_dortho_forwarddiff(
         z = zero(δ)
         p = ntuple(k -> k == jl_idx ? base[k] + δ : base[k] + z, 9)
         C = ortho_from_params(p)
-        return mandel(change_tens_canon(hill_tensor(ell, C; method = method)))
+        return mandel(canonical(hill_tensor(ell, C; method = method)))
     end
     return ForwardDiff.derivative(f, 0.0)
 end
@@ -749,7 +749,7 @@ let ell = Ellipsoid(2.0, 1.0, 0.5), basis = CanonicalBasis{3, Float64}()
             if i != j
                 C[j, i] += δ
             end
-            return mandel(change_tens_canon(hill_tensor(ell, from_mandel(C, basis); method = :decuhr)))
+            return mandel(canonical(hill_tensor(ell, from_mandel(C, basis); method = :decuhr)))
         end
         return ForwardDiff.derivative(f, 0.0)
     end

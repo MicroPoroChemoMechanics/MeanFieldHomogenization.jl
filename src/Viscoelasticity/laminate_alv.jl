@@ -48,7 +48,7 @@ zeros elsewhere.
 
 The elastic version inverts a ``3\\times 3`` (resp. ``1\\times 1``) block in closed form; here the
 same restriction is a ``3n\\times 3n`` (resp. ``n\\times n``) Volterra operator, and
-`volterra_inverse` plays the role of `_inv3`.
+`volterra_inverse` plays the role of TensND's `inv3`.
 """
 function _plane_pinv_alv(M::AbstractMatrix, n_times::Int, nc::Int, slots, bs::Int)
     idx = _alv_op_indices(n_times, nc, slots)

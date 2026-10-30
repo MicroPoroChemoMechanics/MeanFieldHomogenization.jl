@@ -165,7 +165,7 @@ end
     for ell in (Ellipsoid(1.0), Ellipsoid(3.0, 1.0, 0.4; euler_angles = (0.2, 0.9, 0.1)))
         Q = second_hill_kernel_order2(ell, heaviside_law(TensISO{3}(k)), times)
         @test size(Q) == (3n, 3n)
-        Q_e = Array(components_canon(second_hill_tensor(ell, TensISO{3}(k))))
+        Q_e = Array(canonical_components(second_hill_tensor(ell, TensISO{3}(k))))
         for i in 1:n, j in 1:n
             block = Q[(3i - 2):(3i), (3j - 2):(3j)]
             i == j ? (@test block ≈ Q_e rtol = 1.0e-12) : (@test maximum(abs, block) ≤ 1.0e-12)

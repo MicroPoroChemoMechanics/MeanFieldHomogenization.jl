@@ -256,7 +256,7 @@ typeof(C_par)
 # one. Both are useful, and they are different matrices:
 
 C_local = TensND.mandel(C_par)                              # crack frame
-C_global = TensND.mandel(TensND.components_canon(C_par))    # global frame
+C_global = TensND.mandel(TensND.canonical_components(C_par))    # global frame
 round.(C_local; digits = 6)
 
 # In the crack frame the transverse isotropy is plain: the 3-axis is the normal,
@@ -309,7 +309,7 @@ round.(collect(TensND.ti_params_from_mandel(TensND.mandel(C_par_asc))); digits =
 
 function young_along(C, d)
     ## Uniaxial stress along the unit vector `d`; E = σ / ε_dd.
-    S = inv(Array(TensND.components_canon(C)) |> A -> TensND.mandel(TensND.Tens(A)))
+    S = inv(Array(TensND.canonical_components(C)) |> A -> TensND.mandel(TensND.Tens(A)))
     e = [d[1]^2, d[2]^2, d[3]^2, √2 * d[2] * d[3], √2 * d[1] * d[3], √2 * d[1] * d[2]]
     return 1 / (e' * S * e)
 end

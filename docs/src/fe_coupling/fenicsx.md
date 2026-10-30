@@ -312,7 +312,7 @@ crystals of random orientations ([`Polycrystal`](@ref)), whose grains share the
 strain as [`KronerModel`](@ref) or [`HillModel`](@ref) says. Hill's aggregate,
 constrained by its own flowing tangent, carries less load than Kröner's,
 constrained by the elastic aggregate. These materials are costly: on 151
-triangles, 171 s with Kröner's model and 1,152 s with Hill's.
+triangles, 109 s with Kröner's model and 440 s with Hill's.
 
 ![force–displacement of the polycrystalline plate](../assets/fe_coupling/fenicsx/polycrystal_plate.svg)
 

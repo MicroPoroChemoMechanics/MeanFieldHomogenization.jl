@@ -34,10 +34,25 @@ genuine breaks are listed below.
   `rand(rng, Tens{4, 3}; definite = true)` and `rand(rng, Tens{2, 3}; definite = true)`.
   The seeded draws are not those of before.
 - Julia 1.13 is required (1.12 is no longer tested).
-- TensND 0.10.1 is required (`TensND = "0.10.1"`). It keeps the symmetries of a
+- TensND 0.11 is required (`TensND = "0.11"`). It keeps the symmetries of a
   tensor through a change of basis: in a random oblique basis the dilute
   localization of a transversely isotropic matrix could fail to invert
-  (2 cases of 200), which the new draws of the tests exposed.
+  (2 cases of 200), which the new draws of the tests exposed. It also holds
+  the tensor operations this package kept for itself (below), so that a tensor
+  computation has one home.
+- The tensor functions are called by their TensND 0.11 names, which say what
+  they do, in the code, the tests, the scripts and the documentation:
+  `express` and `canonical` (formerly `change_tens`, `change_tens_canon`),
+  `canonical_components` (`components_canon`), `mandel(A; symmetrize = true)`
+  and `from_mandel` (`mandel66_minor`, `mandel66`, `array_from_mandel66` and
+  their 2D forms), `ti_from_constants` and `ti_constants`, with
+  `form = :engineering` or `:hoenig` (`tens_ti*`, `ti_args*`),
+  `cubic_from_constants`, `walpole_coeffs`, `rotation_matrix`,
+  `rotation_tensor4`, `project`. `Core` no longer re-exports `mandel66_minor`
+  and `array_from_mandel66`.
+- `extract_iso_moduli`, `extract_iso_conductivity` and `extract_ti_moduli`,
+  deprecated since 0.20.0, are removed: `E_nu(C)`, `first(get_data(K))` and
+  `ti_constants(inv(C); form = :hoenig)` (or `hoenig_params(C)`) replace them.
 
 ### Added
 
@@ -143,6 +158,15 @@ genuine breaks are listed below.
   "Parallelism" (what runs on Julia's threads, and what it gains).
 
 ### Changed
+
+- The Kelvin–Mandel vectors the laws are written on, `Mandel` and
+  `identity_mandel`, `trace_mandel`, `deviator`, `von_mises`,
+  `equivalent_strain`, are now TensND's, re-exported unchanged (same names,
+  same arithmetic, same bits), with `sqnorm_deviator`, the squared deviator
+  norm the laws differentiate. So are the closed-form 3×3 inverse (`inv3`,
+  of which this package had a copy), the acoustic tensor of a component array
+  (`acoustic_components`) and its symmetric inverse (`sym3_inv`), the kernels
+  of the anisotropic Hill tensors. They are documented with TensND.
 
 - A step of a polycrystal is 2.2 times faster with Kröner's model and 2.7
   times faster with Hill's (eight crystals of 12 slip systems: 46 → 21 ms and

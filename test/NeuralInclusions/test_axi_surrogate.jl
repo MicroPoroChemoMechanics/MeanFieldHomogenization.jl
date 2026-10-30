@@ -45,7 +45,7 @@ const NIA = MeanFieldHomogenization.NeuralInclusions
         @test collect(NIA.components(c, A, e₃)) ≈ [1.5, 2.5]
         # The components in canonical axes, so that which one is which is pinned
         # rather than left to a convention: `a` is transverse, `b` axial.
-        M = Matrix(TensND.get_array(TensND.change_tens(A, can)))
+        M = Matrix(TensND.get_array(TensND.express(A, can)))
         @test diag(M) ≈ [1.5, 1.5, 2.5]
         @test norm(M - Diagonal(diag(M))) < 1.0e-14
     end
@@ -259,7 +259,7 @@ end
 
         a = Matrix(
             TensND.get_array(
-                TensND.change_tens(
+                TensND.express(
                     fe_axi_pore_concentration(pore, TensISO{3}(1.0)), can
                 )
             )

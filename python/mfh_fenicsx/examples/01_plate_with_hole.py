@@ -123,7 +123,7 @@ u_mfh, stress_mfh, t_mfh = solve_mfh(composite)
 _, stress_matrix, _ = solve_mfh(matrix)
 
 # --- The same plate in plain dolfinx, the stiffness as a constant tensor -----
-mandel = np.asarray(jl.seval("C -> Array(TensND.KM(C, TensND.CanonicalBasis{3, Float64}()))")(C_hom))
+mandel = np.asarray(jl.seval("C -> Array(TensND.mandel(C, TensND.CanonicalBasis{3, Float64}()))")(C_hom))
 C4 = mf.tensor4_from_mandel(mandel[:, :, None])[0][:2, :2, :2, :2]
 i, j, k, l = ufl.indices(4)
 w = ufl.TrialFunction(V)

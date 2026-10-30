@@ -131,7 +131,7 @@ function _comparison(c::AffineComposite, g, y)
         MFH_Core.cell_set_property(cell, φ, :C, TensND.from_mandel(L))
     end
     A = Schemes.concentration_tensors(cell, c.p.scheme, :C; c.p.options...).strain
-    A₁, A₂ = map(φ -> _mandel(TensND.change_tens_canon(A[φ])), c.p.names)
+    A₁, A₂ = map(φ -> _mandel(TensND.canonical(A[φ])), c.p.names)
     f₁, f₂ = c.fractions
     τ₁, τ₂ = σ₁ - L₁ * ε₁, σ₂ - L₂ * ε₂
     return (; ε₁, ε₂, σ₁, σ₂, L₁, L₂, A₁, A₂, τ₁, τ₂, τ̃ = f₁ * transpose(A₁) * τ₁ + f₂ * transpose(A₂) * τ₂, τ̄ = f₁ * τ₁ + f₂ * τ₂)

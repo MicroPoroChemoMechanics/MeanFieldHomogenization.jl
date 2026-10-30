@@ -60,7 +60,7 @@ const NI = MeanFieldHomogenization.NeuralInclusions
         @test norm(mandel(NI.build(GradientConcentrationCubic(), c, can)) - mandel(C)) < 1.0e-12
 
         # A tensor outside the class is refused loudly rather than trained on.
-        ti = TensND.tens_ti(10.0, 3.0, 2.5, 12.0, 2.0, [0.0, 0.0, 1.0])
+        ti = TensND.ti_from_constants(10.0, 3.0, 2.5, 12.0, 2.0, [0.0, 0.0, 1.0])
         @test_throws ArgumentError NI.components(GradientConcentrationCubic(), ti, can)
 
         # The frame comes from the inclusion's own basis, all three columns of

@@ -168,7 +168,7 @@ function _eshelby_iso(c, C₀)
     return _hill_mandel(c, Ciso) * SMatrix{6, 6}(_mandel(Ciso))
 end
 _eshelby_full(c, C₀) = _hill_mandel(c, TensND.from_mandel((C₀ + transpose(C₀)) / 2)) * C₀
-_hill_mandel(c, C) = SMatrix{6, 6}(_mandel(TensND.change_tens_canon(Elasticity.hill_tensor(c.shape, C; c.options...))))
+_hill_mandel(c, C) = SMatrix{6, 6}(_mandel(TensND.canonical(Elasticity.hill_tensor(c.shape, C; c.options...))))
 
 # ── State and step ──────────────────────────────────────────────────────────
 

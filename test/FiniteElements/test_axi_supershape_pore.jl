@@ -23,8 +23,8 @@ const _COA = MeanFieldHomogenization.Core
 # Canonical components, never the tensor's own basis: `Spheroid` sorts its
 # semi-axes and permutes its basis, so comparing `get_array` of two tensors
 # that disagree on their frame is the classic way to invent a bug.
-_kmc(t) = _COA.mandel66_minor(Array(TensND.components_canon(t)))
-_mc(t) = TensND.components_canon(t)
+_kmc(t) = TensND.mandel(Array(TensND.canonical_components(t)); symmetrize = true)
+_mc(t) = TensND.canonical_components(t)
 
 const _AXP_ν = 0.3
 const _AXP_C0 = iso_stiffness(
