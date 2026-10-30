@@ -61,20 +61,19 @@ end
 # its step on them (an adaptive ODE solve), which a symbolic modulus cannot
 # answer: `Num` raises a TypeError deep in the loop, `Sym` a MethodError, or
 # the solve does not end. Refused at the entry instead, with the way out, on
-# the element type of a tensor the scheme computes anyway (the seed of a
-# self-consistent iteration) or of the phase properties: a check decided on a
-# type, which costs the numerical path nothing it did not already do. A
-# `ForwardDiff.Dual` is comparable: derivatives go through.
-_require_comparable(rve, p, scheme) =
-    _require_comparable(mapreduce(n -> eltype(phase_property(rve, n, p)), promote_type, _volume_phase_names(rve)), scheme)
-_require_comparable(t::TensND.AbstractTens, scheme) = _require_comparable(eltype(t), scheme)
-_scheme_name(scheme::HomogenizationScheme) = nameof(typeof(scheme))
-_scheme_name(name::Symbol) = name
-function _require_comparable(::Type{T}, scheme) where {T}
-    is_hard_numeric(real(T)) && return nothing
+# the element type of a tensor or a state the scheme computes anyway (the seed
+# of a self-consistent iteration, the initial state of the differential ODE):
+# a check decided on a type. A `ForwardDiff.Dual` is comparable: derivatives
+# go through. The scheme is named by a `Symbol`, the throw kept out of line:
+# a scheme object passed down was boxed on the numerical path, 32 bytes for
+# each self-consistent estimate.
+@inline _require_comparable(t::TensND.AbstractTens, name::Symbol) = _require_comparable(eltype(t), name)
+@inline _require_comparable(::Type{T}, name::Symbol) where {T} =
+    is_hard_numeric(real(T)) ? nothing : _throw_not_comparable(T, name)
+@noinline function _throw_not_comparable(T, name::Symbol)
     throw(
         ArgumentError(
-            "$(_scheme_name(scheme)) iterates on the effective property, comparing successive values, " *
+            "$name iterates on the effective property, comparing successive values, " *
                 "which symbolic moduli ($(T)) cannot be compared by: give numbers (duals carry the " *
                 "derivatives through), or take an explicit scheme (Voigt, Reuss, Dilute, DiluteDual, " *
                 "MoriTanaka) for a closed form"

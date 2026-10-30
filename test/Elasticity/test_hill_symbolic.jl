@@ -155,6 +155,8 @@ end
     for sch in (SelfConsistent(), AsymmetricSelfConsistent(), DifferentialScheme())
         @test_throws "explicit scheme" homogenize(rve, sch, :C)
     end
+    # The path of the differential scheme too, which integrates the same ODE.
+    @test_throws "DifferentialScheme iterates" differential_path(rve, DifferentialScheme(), :C)
     @test homogenize(rve, MoriTanaka(), :C) isa TensISO{4, 3, Symbolics.Num}
 end
 

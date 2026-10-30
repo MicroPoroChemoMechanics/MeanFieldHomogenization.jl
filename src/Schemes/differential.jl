@@ -61,7 +61,6 @@ stiffness or the compliance variable according to the scheme's
 `formulation`.
 """
 function _evaluate(rve::RVE, scheme::DifferentialScheme, ::Val{p}; kw...) where {p}
-    _require_comparable(rve, p, scheme)
     return last(_differential_states(rve, scheme, p; kw...)[2])
 end
 
@@ -133,6 +132,9 @@ function _diff_integrate_ode(
         kw...
     )
     ode_kw, x0 = _diff_setup(rve, paths, prop, matrix, P_init, formulation; kw...)
+    # The adaptive step is controlled on values: the state's element type, which
+    # gathers the phases, the targets and the contributions, must compare.
+    _require_comparable(eltype(x0), :DifferentialScheme)
     rhs! = (du, u, p, τ) -> _diff_ode_rhs!(du, u, p, τ)
     prob = ODEProblem(rhs!, x0, (0.0, 1.0), ode_kw)
     τ_save = range(0.0, 1.0; length = max(nsteps, 1) + 1)
