@@ -108,7 +108,6 @@ AnisotropicTangentModel
 Polycrystal
 PolycrystalState
 grain_states
-random_orientations
 PowerLawCrystal
 crystal_strain_rate
 ViscoplasticPolycrystal

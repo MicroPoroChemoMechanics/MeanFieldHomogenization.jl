@@ -39,17 +39,14 @@ const _SRB_CORE = MeanFieldHomogenization.Core
 "A matrix from the nested arrays of a JSON file."
 _srb_mat(rows) = [Float64(rows[i][j]) for i in eachindex(rows), j in eachindex(rows[1])]
 
-"A uniform random rotation (QR of a Gaussian matrix, det fixed to +1)."
-function _srb_rotation(rng)
-    F = qr(randn(rng, 3, 3))
-    Q = Matrix(F.Q) * Diagonal(sign.(diag(F.R)))
-    return det(Q) < 0 ? Q * Diagonal([1.0, 1.0, -1.0]) : Q
-end
-
 "The tensor of canonical components `A`, written in a basis of its own drawn at random."
 function _srb_in_random_basis(A, rng, general::Bool)
-    R = _srb_rotation(rng)
-    B = general ? TensND.Basis(R + 0.3 * randn(rng, 3, 3), Val(:cov)) : TensND.RotatedBasis(R)
+    R = Matrix(TensND.random_rotation(rng))              # uniform over the rotations
+    # An oblique basis of bounded conditioning (at most 1.3/0.7): the test is that
+    # the result does not depend on the basis, not how far round-off grows in a
+    # nearly degenerate one.
+    N = randn(rng, 3, 3)
+    B = general ? TensND.Basis(R * (I + 0.3 * N / opnorm(N)), Val(:cov)) : TensND.RotatedBasis(R)
     return TensND.change_tens(TensND.Tens(A), B)
 end
 

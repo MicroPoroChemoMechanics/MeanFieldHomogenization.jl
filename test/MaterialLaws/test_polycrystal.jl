@@ -19,7 +19,9 @@ const C11_PC, C12_PC, C44_PC = 168.4e3, 121.4e3, 75.4e3          # MPa, a copper
 _grain_pc(frame; τ₀ = 10.0, K = 0.2) = CrystalViscoplasticity(; C₁₁ = C11_PC, C₁₂ = C12_PC, C₄₄ = C44_PC, K, n = 10, τ₀, frame)
 
 @testset "the same as the uniform-strain composite of its grains" begin
-    frames = random_orientations(2; rng = MersenneTwister(3))
+    frames = let rng = MersenneTwister(3)
+        [random_basis(rng) for _ in 1:2]
+    end
     grains = _grain_pc.(frames)
     # Steps short enough that neither path cuts them: a viscous law integrated
     # on other substeps differs at first order in the step.
@@ -32,7 +34,9 @@ _grain_pc(frame; τ₀ = 10.0, K = 0.2) = CrystalViscoplasticity(; C₁₁ = C11
 end
 
 @testset "elastic tangent: the Voigt average of the rotated crystals" begin
-    frames = random_orientations(5; rng = MersenneTwister(5))
+    frames = let rng = MersenneTwister(5)
+        [random_basis(rng) for _ in 1:5]
+    end
     pc = Polycrystal(_grain_pc.(frames))
     E = SVector(1.0e-5, 0, 0, 0, 0, 0)
     𝕂 = MP_PC._mandel_update(pc, E, initial_state(pc), 1.0; algorithm = LocalNewton(), external = (;))[2]
@@ -44,7 +48,9 @@ end
 end
 
 @testset "a random texture is isotropic on average" begin
-    frames = random_orientations(4000; rng = MersenneTwister(11))
+    frames = let rng = MersenneTwister(11)
+        [random_basis(rng) for _ in 1:4000]
+    end
     C = sum(MP_PC._mandel(TensND.change_tens_canon(TensND.tens_cubic(C11_PC, C12_PC, C44_PC, f))) for f in frames) / length(frames)
     # The Voigt moduli of a cubic crystal.
     k_V, μ_V = (C11_PC + 2C12_PC) / 3, (C11_PC - C12_PC + 3C44_PC) / 5
@@ -57,7 +63,13 @@ end
 
 @testset "the Taylor factor of a random FCC aggregate" begin
     τ₀ = 10.0
-    pc = Polycrystal(_grain_pc.(random_orientations(100; rng = MersenneTwister(1)); τ₀, K = 0.05))
+    pc = Polycrystal(
+        _grain_pc.(
+            let rng = MersenneTwister(1)
+                [random_basis(rng) for _ in 1:100]
+            end; τ₀, K = 0.05
+        )
+    )
     r = point_response(pc, LoadingPath(range(0, 1; length = 26); ε11 = t -> 1.0e-2 * t))
     # Bishop and Hill (1951): M ≈ 3.06; sampling (100 grains) and the small
     # viscous overstress leave a few percent.
@@ -79,7 +91,7 @@ end
     # iterates run away (residual growing to 1e20 and beyond) while their last
     # correction looks small against their own size. The step must fail, for the
     # driver to cut it, and not return them.
-    g = _grain_pc(random_orientations(1; rng = MersenneTwister(3))[1])
+    g = _grain_pc(random_basis(MersenneTwister(3)))
     E = SVector(1.0e-3, -2.5e-4, -2.5e-4, 0, 0, sqrt(2) * 2.5e-4)
     @test_throws LocalIntegrationError point_update(g, E, initial_state(g), 0.125)
     # Cut into short steps, the same loading integrates.

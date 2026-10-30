@@ -126,9 +126,9 @@ SymPyPythonCall.simplify.(mandel(H_sym) - mandel(compliance_from_cod(Tens(B_sym)
 
 # ## In random anisotropic matrices
 #
-# Each matrix below is a random symmetric positive definite Kelvin–Mandel matrix,
-# fully anisotropic (21 independent constants), and each crack has a random
-# orientation. ``\mathbb{P}_1`` is now the derivative, by ForwardDiff, of the
+# Each matrix below is a random positive definite stiffness, fully anisotropic
+# (21 independent constants), and each crack has a random orientation, both drawn
+# by TensND (`rand(rng, Tens{4, 3}; definite = true)`, `random_rotation(rng)`). ``\mathbb{P}_1`` is now the derivative, by ForwardDiff, of the
 # Hill tensor computed by the nested cubature, taken at two small flatnesses
 # ``\rho_0`` and ``\rho_0/2`` and combined so that its own first-order term
 # cancels: ``\mathbb{P}_1 \approx 2\,\mathbb{P}'(\rho_0/2) - \mathbb{P}'(\rho_0)``.
@@ -139,16 +139,10 @@ function P₁_by_forwarddiff(a, b, R, C; ρ₀ = 1.0e-5)
     return 2 * P′(ρ₀ / 2) - P′(ρ₀)
 end
 
-function random_stiffness(rng)
-    G = randn(rng, 6, 6)
-    return from_mandel(100 * (G * transpose(G) / 6 + I), canonical)
-end
-
-function random_rotation(rng)
-    F = qr(randn(rng, 3, 3))
-    R = Matrix(F.Q) * Diagonal(sign.(diag(F.R)))
-    return det(R) > 0 ? R : -R
-end
+# A random stiffness and a random rotation, drawn by TensND: positive definite
+# (shifted by the identity to stay well away from singular), and uniform over
+# the rotations.
+random_stiffness(rng) = 100 * (rand(rng, Tens{4, 3}; definite = true) + tens_Id4(Val(3), Val(Float64)))
 
 # For each matrix and each aspect ratio ``\eta = b/a``, the table compares
 # ``\mathbb{H}`` from the flattening with ``\mathbb{H}`` from ``\boldsymbol{B}`` by the
@@ -160,7 +154,7 @@ rng = Xoshiro(20261018)
 @printf "%-6s %-5s  %-13s %-13s %-13s %-13s\n" "matrix" "η" "ℍ: flat/𝐁" "𝐁: flat/𝐁" "𝐁 residues" "𝐁 DECUHR"
 for k in 1:4
     C = random_stiffness(rng)
-    R = random_rotation(rng)
+    R = Matrix(random_rotation(rng))
     for η in (1.0, 0.5, 0.2)
         crack = EllipticCrack(1.0, η, R)
         B = cod_tensor(crack, C; method = :nestedquadgk, tol...)
@@ -173,7 +167,7 @@ for k in 1:4
     end
 end
 
-# The two routes agree to between ``10^{-10}`` and ``3\times 10^{-8}``, whatever the
+# The two routes agree to between ``10^{-10}`` and ``10^{-7}``, whatever the
 # anisotropy: the residual of the ``O(\rho_0^2)`` left in ``\mathbb{P}_1``,
 # larger for the narrower cracks. On the reduced kernel, the residues meet the
 # nested cubature to rounding, and DECUHR, at the same tolerances, to
@@ -214,7 +208,7 @@ PP = mandel(Tens(Pmap) ⊠ˢ Tens(Pmap))
 C̃ = TensISO{3}(3 * 20.0, 2 * 9.0)
 C_EO = from_mandel(PP * mandel(C̃) * transpose(PP), canonical)
 a, b = 1.0, 0.45
-R = random_rotation(Xoshiro(2))
+R = Matrix(random_rotation(Xoshiro(2)))
 ℓ, m, n = eachcol(R)
 ã, b̃, R̃ = transformed_crack(Pmap, a, b, ℓ, m, n)
 B̃ = components_canon(cod_tensor(EllipticCrack(ã, b̃, R̃), C̃))

@@ -24,7 +24,9 @@ function _grains_kb(count)
     C₁₂ = E_KB * ν_KB / ((1 + ν_KB) * (1 - 2ν_KB))
     return [
         CrystalViscoplasticity(; C₁₁, C₁₂, C₄₄ = (C₁₁ - C₁₂) / 2, K = 1.0, n = 5, τ₀ = 10.0, frame = f)
-            for f in random_orientations(count; rng = MersenneTwister(2))
+            for f in let rng = MersenneTwister(2)
+                [random_basis(rng) for _ in 1:count]
+        end
     ]
 end
 

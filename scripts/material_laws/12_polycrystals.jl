@@ -52,7 +52,7 @@
 #
 # ## A random texture
 #
-# [`random_orientations`](@ref) draws orientations uniformly over the rotations.
+# [`random_basis`](https://MicroPoroChemoMechanics.github.io/TensND.jl/stable/api/special) of TensND draws a frame uniformly over the rotations.
 # With the Euler angles of TensND, ``\theta`` the angle of the third axis from
 # ``\underline{e}_3`` and ``\phi``, ``\psi`` the two azimuths, the uniform measure is
 # ``\sin\theta\,\mathrm{d}\theta\,\mathrm{d}\phi\,\mathrm{d}\psi``: ``\cos\theta``
@@ -295,19 +295,20 @@
 #
 # ### The aggregate
 #
-using MeanFieldHomogenization, Random, Plots, ForwardDiff
+using MeanFieldHomogenization, TensND, Random, Plots, ForwardDiff
 
 τ₀ = 10.0                                                   # critical resolved shear stress, MPa
 grain(frame) = CrystalViscoplasticity(; C₁₁ = 168.4e3, C₁₂ = 121.4e3, C₄₄ = 75.4e3,
     K = 0.05, n = 10, τ₀, frame)
-frames = random_orientations(60; rng = MersenneTwister(2))
+rng = MersenneTwister(2)
+frames = [random_basis(rng) for _ in 1:60]
 aggregate = Polycrystal(grain.(frames))
 nothing #hide
 #
 # | code | theory |
 # |:--|:--|
 # | `CrystalViscoplasticity(…; frame)` | the law of a grain, its cube axes along `frame` |
-# | `random_orientations(60)` | 60 orientations drawn uniformly over the rotations |
+# | `random_basis(rng)` (TensND) | a frame drawn uniformly over the rotations; 60 of them for 60 grains |
 # | `Polycrystal(grains)` | every grain at the macroscopic strain (Taylor), equal volumes |
 #
 # ### Tension
@@ -350,7 +351,8 @@ histogram(counts; bins = 0.5:1:12.5, label = "", xlabel = "active slip systems i
 E_y, ν = 120e3, 0.3                                                     # MPa
 C₁₁, C₁₂ = E_y * (1 - ν) / ((1 + ν) * (1 - 2ν)), E_y * ν / ((1 + ν) * (1 - 2ν))
 iso_grain(frame) = CrystalViscoplasticity(; C₁₁, C₁₂, C₄₄ = (C₁₁ - C₁₂) / 2, K = 1.0, n = 5, τ₀, frame)
-few = random_orientations(8; rng = MersenneTwister(2))
+rng = MersenneTwister(2)
+few = [random_basis(rng) for _ in 1:8]
 pull = LoadingPath(range(0, 1; length = 7); ε11 = t -> 3e-3 * t)
 q = plot(; xlabel = "axial strain (%)", ylabel = "σ₁₁ / τ₀", legend = :bottomright)
 for (model, label) in ((TaylorModel(), "Taylor"), (KronerModel(; E = E_y, ν), "Kröner"),

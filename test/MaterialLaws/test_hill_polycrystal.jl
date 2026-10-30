@@ -21,7 +21,9 @@ const MP_HM = MeanFieldHomogenization.MaterialLaws
 # Grains whose moduli and stresses are scaled by λ.
 _grains_hm(count; λ = 1.0) = [
     CrystalViscoplasticity(; C₁₁ = 168.4e3λ, C₁₂ = 121.4e3λ, C₄₄ = 75.4e3λ, K = λ, n = 5, τ₀ = 10λ, Q = 20λ, b = 5.0, frame = f)
-        for f in random_orientations(count; rng = MersenneTwister(2))
+        for f in let rng = MersenneTwister(2)
+            [random_basis(rng) for _ in 1:count]
+    end
 ]
 
 _step_hm(m, E, st, Δt; algorithm = LocalNewton()) = MP_HM._mandel_update(m, E, st, Δt; algorithm, external = (;))
@@ -34,7 +36,11 @@ _canonical_hm(t) = SMatrix{6, 6}(KM(TensND.change_tens_canon(t)))
     E = SVector(1.0e-5, -3.0e-6, 2.0e-6, 4.0e-6, 0, -1.0e-6)
     Σ, 𝕃, _ = _step_hm(m, E, initial_state(m), 0.1; algorithm = LocalNewton(; abstol = 1.0e-16))
     rve = RVE()
-    for (i, f) in enumerate(random_orientations(6; rng = MersenneTwister(2)))
+    for (i, f) in enumerate(
+            let rng = MersenneTwister(2)
+                [random_basis(rng) for _ in 1:6]
+            end
+        )
         C = _canonical_hm(TensND.tens_cubic(168.4e3, 121.4e3, 75.4e3, f))
         add_phase!(rve, Symbol(:g, i), Ellipsoid(1.0), Dict(:C => TensND.from_mandel(C)); fraction = i == 1 ? :rest : 1 / 6)
     end

@@ -46,9 +46,8 @@ end
 @testset "second_hill_tensor — rotated ellipsoid, anisotropic matrix, random bases" begin
     rng = Random.Xoshiro(20261025)
     for _ in 1:3
-        M = randn(rng, 6, 6)
-        C = TensND.from_mandel(M * transpose(M) + 10I, CanonicalBasis{3, Float64}())
-        R = TensND.RotatedBasis(Tuple(2π * rand(rng, 3))...)
+        C = rand(rng, Tens{4, 3}; definite = true) + 10 * tens_Id4(Val(3), Val(Float64))
+        R = TensND.random_basis(rng)
         C_rot = change_tens(C, R)
         ell = Ellipsoid(2.0, 1.0, 0.5; euler_angles = Tuple(π * rand(rng, 3)))
         Q = second_hill_tensor(ell, C_rot; method = :nestedquadgk)
@@ -73,7 +72,7 @@ end
     rng = Random.Xoshiro(20261026)
     A = randn(rng, 3, 3)
     K = TensND.Tens(A * transpose(A) + 3I)
-    K_rot = change_tens(K, TensND.RotatedBasis(Tuple(2π * rand(rng, 3))...))
+    K_rot = change_tens(K, TensND.random_basis(rng))
     ell = Ellipsoid(3.0, 1.0, 0.4; euler_angles = (0.3, 1.1, -0.7))
     Kc = Array(components_canon(K))
     Pc = Array(components_canon(hill_tensor(ell, K)))

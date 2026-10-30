@@ -37,13 +37,6 @@ const _HRB_CORE = MeanFieldHomogenization.Core
 "A matrix from the nested arrays of a JSON file."
 _hrb_mat(rows) = [Float64(rows[i][j]) for i in eachindex(rows), j in eachindex(rows[1])]
 
-"A uniform random rotation (QR of a Gaussian matrix, det fixed to +1)."
-function _hrb_rotation(rng)
-    F = qr(randn(rng, 3, 3))
-    Q = Matrix(F.Q) * Diagonal(sign.(diag(F.R)))
-    return det(Q) < 0 ? Q * Diagonal([1.0, 1.0, -1.0]) : Q
-end
-
 "Components in the frame whose vectors are the columns of `R` (an orthogonal `R`)."
 _hrb_in_frame(A::AbstractArray{<:Any, 4}, R) = [
     sum(R[i, a] * R[j, b] * R[k, c] * R[l, d] * A[i, j, k, l] for i in 1:3, j in 1:3, k in 1:3, l in 1:3)
@@ -83,7 +76,7 @@ const _HRB_TIGHT = (abstol = 1.0e-13, reltol = 1.0e-11)
             ell = Ellipsoid(Float64.(c["semi_axes"])...; euler_angles = Tuple(Float64.(c["euler"])))
             # Never the canonical basis: the ellipsoid's own frame is drawn at random.
             @test !(ell.basis isa TensND.CanonicalBasis)
-            R = _hrb_rotation(rng)
+            R = TensND.random_rotation(rng)
             E = _hrb_frame(ell)
             elastic = c["kind"] == "elastic"
             A = elastic ? _HRB_CORE.array_from_mandel66(_hrb_mat(c["C_km"])) : _hrb_mat(c["K"])

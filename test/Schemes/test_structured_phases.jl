@@ -19,7 +19,7 @@ using LinearAlgebra
 using Random
 
 _sp_rng = MersenneTwister(20261029)
-_sp_frame() = TensND.RotatedBasis(π * rand(_sp_rng), 2π * rand(_sp_rng), 2π * rand(_sp_rng))
+_sp_frame() = TensND.random_basis(_sp_rng)
 _sp_generic(C) = TensND.from_mandel(KM(TensND.change_tens_canon(C)))
 
 function _sp_rve(M, I, J)

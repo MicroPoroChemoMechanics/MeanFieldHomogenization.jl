@@ -47,10 +47,7 @@ function _schur_ip(t, basis)
 end
 
 # A random, genuinely triclinic, positive-definite stiffness.
-function _rand_stiffness(rng)
-    A = randn(rng, 6, 6)
-    return Tens(from_mandel(Matrix(A * A' + 8I)))
-end
+_rand_stiffness(rng) = rand(rng, Tens{4, 3}; definite = true) + 8 * tens_Id4(Val(3), Val(Float64))
 
 @testset "Laminate — O1: exact out-of-plane series law (anisotropic)" begin
     rng = MersenneTwister(1001)

@@ -14,6 +14,21 @@ and documented on a page of its own. Everything added is additive: nothing
 that existed computes differently. The β rule of Cailletaud and Pilvin is not
 implemented, its paper being out of reach.
 
+### Breaking changes
+
+- `random_orientations` is removed: a random texture is drawn with TensND,
+  whose `random_basis(rng)` gives a frame uniform over the rotations
+  (`[random_basis(rng) for _ in 1:n]`). Everything that draws a random tensor
+  or a random frame belongs to TensND, and the tests and tutorials of the
+  package now draw them there: rotations with `random_rotation`, frames with
+  `random_basis`, positive definite stiffnesses and conductivities with
+  `rand(rng, Tens{4, 3}; definite = true)` and `rand(rng, Tens{2, 3}; definite = true)`.
+  The seeded draws are not those of before.
+- TensND 0.10.1 is required (`TensND = "0.10.1"`). It keeps the symmetries of a
+  tensor through a change of basis: in a random oblique basis the dilute
+  localization of a transversely isotropic matrix could fail to invert
+  (2 cases of 200), which the new draws of the tests exposed.
+
 ### Added
 
 - `AnisotropicTangentModel` for `ViscoplasticPolycrystal`: the tangent

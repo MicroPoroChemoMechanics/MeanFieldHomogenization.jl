@@ -21,13 +21,6 @@ using Random
 const _MRB = MeanFieldHomogenization
 const _MRB_SEED = 20261021
 
-"A uniform random rotation (QR of a Gaussian matrix, det fixed to +1)."
-function _mrb_rotation(rng)
-    F = qr(randn(rng, 3, 3))
-    Q = Matrix(F.Q) * Diagonal(sign.(diag(F.R)))
-    return det(Q) < 0 ? Q * Diagonal([1.0, 1.0, -1.0]) : Q
-end
-
 "Components in the frame whose vectors are the columns of `R`."
 _mrb_in_frame(A::AbstractArray{<:Any, 4}, R) = [
     sum(R[i, a] * R[j, b] * R[k, c] * R[l, d] * A[i, j, k, l] for i in 1:3, j in 1:3, k in 1:3, l in 1:3)
@@ -43,16 +36,15 @@ _mrb_rotated(A, R) = TensND.Tens(_mrb_in_frame(A, R), TensND.RotatedBasis(R))
 _mrb_canon(t::TensND.AbstractTens) = Array(TensND.components_canon(t))
 _mrb_canon(A::AbstractArray) = Array(A)
 
-_mrb_spd3(rng) = (A = randn(rng, 3, 3); A * transpose(A) + 3I)
-function _mrb_spd4(rng)
-    M = randn(rng, 6, 6)
-    return _MRB.Core.array_from_mandel66(M * transpose(M) + 10I)
-end
+# Positive definite, kept away from singular as before: TensND's draws shifted
+# by a multiple of the identity.
+_mrb_spd3(rng) = Array(components_canon(rand(rng, Tens{2, 3}; definite = true) + 3 * tens_Id2(Val(3), Val(Float64))))
+_mrb_spd4(rng) = Array(components_canon(rand(rng, Tens{4, 3}; definite = true) + 10 * tens_Id4(Val(3), Val(Float64))))
 
 @testset "random bases — draw $k" for k in 1:5
     rng = Random.Xoshiro(_MRB_SEED + k)
-    R = _mrb_rotation(rng)                                   # basis of the property
-    ell = Ellipsoid(2.0, 1.0, 0.5, TensND.RotatedBasis(_mrb_rotation(rng)))
+    R = TensND.random_rotation(rng)                                   # basis of the property
+    ell = Ellipsoid(2.0, 1.0, 0.5, TensND.RotatedBasis(TensND.random_rotation(rng)))
 
     @testset "conduction Hill tensor of an ellipsoid, anisotropic conductor" begin
         K = _mrb_spd3(rng)
@@ -67,7 +59,7 @@ end
 
     @testset "tensor systems of an assembly, blocks in mixed bases" begin
         Cs = [_mrb_spd4(rng) for _ in 1:6]
-        frames = [_mrb_rotation(rng) for _ in 1:6]
+        frames = [TensND.random_rotation(rng) for _ in 1:6]
         canon = [TensND.Tens(C) for C in Cs]
         mixed = [_mrb_rotated(C, F) for (C, F) in zip(Cs, frames)]
         P₀ = TensISO{3}(3 * 30.0, 2 * 20.0)
@@ -95,7 +87,7 @@ end
         ref = Bc / (I + b * Kc * Bc)
         ref = (ref + transpose(ref)) / 2
         @test _mrb_canon(_MRB.Cracks._apply_interface_stiffness(B, TensND.Tens(Kc), b)) ≈ ref
-        Kr = _mrb_rotated(Kc, _mrb_rotation(rng))
+        Kr = _mrb_rotated(Kc, TensND.random_rotation(rng))
         @test _mrb_canon(_MRB.Cracks._apply_interface_stiffness(B, Kr, b)) ≈ ref
     end
 
@@ -117,12 +109,11 @@ end
 
     @testset "finite-element frames" begin
         P = _mrb_spd4(rng)
-        L = _mrb_rotation(rng)                               # the local frame
+        L = TensND.random_rotation(rng)                               # the local frame
         ref = _mrb_in_frame(P, L)
         @test _MRB.FiniteElements._to_local4(TensND.Tens(P), L) ≈ ref
         @test _MRB.FiniteElements._to_local4(_mrb_rotated(P, R), L) ≈ ref
-        M = randn(rng, 6, 6)
-        M = M + transpose(M)
+        M = Matrix(mandel(rand(rng, Tens{4, 3})))           # symmetric, of either sign
         G = _MRB.FiniteElements._from_local66(M, L)
         @test _mrb_canon(G) ≈ _mrb_in_frame(_MRB.Core.array_from_mandel66(M), transpose(L))
     end

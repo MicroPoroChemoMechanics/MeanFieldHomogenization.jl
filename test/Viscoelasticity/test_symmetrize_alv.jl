@@ -202,11 +202,9 @@ end
     # diagonal block is the elastic bound, rebuilt here by hand from the exact
     # averages `isotropify` / `transverse_isotropify` of the phase tensors.
     rng = MersenneTwister(7)
-    a = randn(rng, 6, 6)
-    C_r = TensND.Tens(MCr.array_from_mandel66(a * transpose(a) + 6.0 * I))
+    C_r = rand(rng, Tens{4, 3}; definite = true) + 6 * tens_Id4(Val(3), Val(Float64))
     C_m = TensISO{3}(3 * 20.0, 2 * 9.0)
-    b = randn(rng, 3, 3)
-    K_r = TensND.Tens(b * transpose(b) + 3.0 * I)
+    K_r = rand(rng, Tens{2, 3}; definite = true) + 3 * tens_Id2(Val(3), Val(Float64))
     K_m = TensISO{3}(2.0)
     f = 0.3
     times = collect(0.0:0.5:1.5)

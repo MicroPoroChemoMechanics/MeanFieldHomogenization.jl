@@ -11,7 +11,6 @@
 #  solves.
 # =============================================================================
 
-import Random
 import ..Schemes
 
 """
@@ -380,16 +379,4 @@ function _aggregate_step(model::HillModel, m, E₀, st, Δt, alg, ext)
     # The tangent of the step at the constraint reached, ⟨(𝕃* + 𝕂_g)⁻¹⟩⁻¹ − 𝕃*,
     # is 𝕃 itself at the fixed point.
     return _aggregate_result(sum(w * g[2] for (w, g) in zip(m.weights, solved)), _sym_matrix(l, Val(6)), [g[4] for g in solved], st, T)
-end
-
-"""
-    random_orientations(n; rng = Random.default_rng()) -> Vector
-
-`n` orientations drawn uniformly over the rotations (a random texture), as
-TensND bases: Euler angles ``(\\theta, \\phi, \\psi)`` in the convention of TensND,
-with ``\\cos\\theta`` uniform on ``[-1, 1]`` and ``\\phi``, ``\\psi`` uniform on
-``[0, 2\\pi)``, which is the uniform measure on the rotations.
-"""
-function random_orientations(n::Integer; rng::Random.AbstractRNG = Random.default_rng())
-    return [TensND.RotatedBasis(acos(2rand(rng) - 1), 2π * rand(rng), 2π * rand(rng)) for _ in 1:n]
 end

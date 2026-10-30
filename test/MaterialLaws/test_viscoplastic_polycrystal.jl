@@ -16,7 +16,13 @@ import Symbolics
 const MP_VP = MeanFieldHomogenization.MaterialLaws
 
 _aggregate_vp(n; τ₀ = 1.0, count = 40) =
-    ViscoplasticPolycrystal([PowerLawCrystal(; γ̇₀ = 1.0e-3, τ₀, n, frame = f) for f in random_orientations(count; rng = MersenneTwister(1))])
+    ViscoplasticPolycrystal(
+    [
+        PowerLawCrystal(; γ̇₀ = 1.0e-3, τ₀, n, frame = f) for f in let rng = MersenneTwister(1)
+                [random_basis(rng) for _ in 1:count]
+        end
+    ]
+)
 
 const D_VP = SVector(1.0, -0.5, -0.5, 0.2, 0, 0.1) * 1.0e-3
 
@@ -96,7 +102,11 @@ end
     # Linear grains: the tangent model is the linear self-consistent scheme,
     # which the package computes otherwise (its own anisotropic Hill tensors) on
     # grains made compressible by a bulk stiffness κ, the gap closing as 1/κ.
-    grains = [PowerLawCrystal(; γ̇₀ = 1.0e-3, τ₀ = 1.0, n = 1.0, frame = f) for f in random_orientations(6; rng = MersenneTwister(1))]
+    grains = [
+        PowerLawCrystal(; γ̇₀ = 1.0e-3, τ₀ = 1.0, n = 1.0, frame = f) for f in let rng = MersenneTwister(1)
+                [random_basis(rng) for _ in 1:6]
+        end
+    ]
     r = flow_stress(ViscoplasticPolycrystal(grains), D_VP; model = AnisotropicTangentModel(; reltol = 1.0e-10))
     gap(κ) = begin
         rve = RVE()
@@ -113,7 +123,7 @@ end
     # Power-law grains: one grain is the aggregate; the averages; homogeneity and
     # derivatives, to the accuracy of the Hill tensor (reltol 1e-10, the fixed
     # point converged to 1e-9).
-    c = PowerLawCrystal(; γ̇₀ = 1.0e-3, τ₀ = 1.0, n = 5.0, frame = random_orientations(1; rng = MersenneTwister(4))[1])
+    c = PowerLawCrystal(; γ̇₀ = 1.0e-3, τ₀ = 1.0, n = 5.0, frame = random_basis(MersenneTwister(4)))
     @test crystal_strain_rate(c, flow_stress(ViscoplasticPolycrystal([c]), D_VP; model = AnisotropicTangentModel()).σ) ≈ D_VP rtol = 1.0e-8
     n = 5.0
     model = AnisotropicTangentModel()
