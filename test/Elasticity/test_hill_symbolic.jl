@@ -3,6 +3,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 import Symbolics
+import ForwardDiff
 
 # =============================================================================
 #  Hill tensors of symbolic inclusions (`Symbolics.Num` semi-axes and moduli),
@@ -83,4 +84,38 @@ end
     @test _hs_eval(Q) ≈ get_array(Q_ref) rtol = 1.0e-13
     Q2 = second_hill_tensor(Ellipsoid(hs_a, hs_a, hs_a), TensISO{3}(hs_k))
     @test _hs_eval(Q2) ≈ (2k / 3) * I(3) rtol = 1.0e-13
+end
+
+@testset "derivatives of the elliptic integrals, symbolically" begin
+    # Each registered rule, expanded and evaluated, against ForwardDiff through
+    # the AGM and Carlson arithmetic of the numerical methods.
+    Symbolics.@variables m φ x y z
+    D(v) = Symbolics.Differential(v)
+    num(e, vals) = Symbolics.value(Symbolics.substitute(Symbolics.expand_derivatives(e), vals; fold = Val(true)))
+    for m₀ in (0.1, 0.5, 0.9)
+        @test num(D(m)(ell_K(m)), Dict(m => m₀)) ≈ ForwardDiff.derivative(ell_K, m₀) rtol = 1.0e-12
+        @test num(D(m)(ell_E(m)), Dict(m => m₀)) ≈ ForwardDiff.derivative(ell_E, m₀) rtol = 1.0e-12
+        for φ₀ in (0.3, 1.1)
+            v = Dict(φ => φ₀, m => m₀)
+            @test num(D(φ)(ell_F(φ, m)), v) ≈ ForwardDiff.derivative(p -> ell_F(p, m₀), φ₀) rtol = 1.0e-12
+            @test num(D(m)(ell_F(φ, m)), v) ≈ ForwardDiff.derivative(q -> ell_F(φ₀, q), m₀) rtol = 1.0e-11
+            @test num(D(φ)(ell_E(φ, m)), v) ≈ ForwardDiff.derivative(p -> ell_E(p, m₀), φ₀) rtol = 1.0e-12
+            @test num(D(m)(ell_E(φ, m)), v) ≈ ForwardDiff.derivative(q -> ell_E(φ₀, q), m₀) rtol = 1.0e-11
+        end
+    end
+    p₀ = (0.7, 0.4, 1.3)
+    v = Dict(x => p₀[1], y => p₀[2], z => p₀[3])
+    for (i, s) in enumerate((x, y, z)), f in (ell_RF, ell_RD)
+        g(t) = f(ntuple(j -> j == i ? t : p₀[j], 3)...)
+        @test num(D(s)(f(x, y, z)), v) ≈ ForwardDiff.derivative(g, p₀[i]) rtol = 1.0e-11
+    end
+end
+
+@testset "the Hill tensor of a symbolic triaxial ellipsoid, differentiated" begin
+    # ∂P/∂b of the closed form, expanded through the elliptic integrals, against
+    # the derivative of the numerical Hill tensor.
+    P = hill_tensor(Ellipsoid(hs_a, hs_b, hs_c), TensISO{3}(3hs_k, 2hs_μ))
+    dP = Symbolics.expand_derivatives.(Symbolics.Differential(hs_b).(get_array(P)))
+    ref = ForwardDiff.derivative(b -> Array(get_array(hill_tensor(Ellipsoid(1.0, b, 0.3), TensISO{3}(15.0, 4.0)))), 0.6)
+    @test _hs_eval_vec(vec(Array(dP))) ≈ vec(ref) rtol = 1.0e-10 atol = 1.0e-13
 end

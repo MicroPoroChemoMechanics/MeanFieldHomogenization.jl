@@ -56,6 +56,13 @@ genuine breaks are listed below.
 
 ### Added
 
+- The elliptic integrals `ell_K`, `ell_E`, `ell_F`, `ell_RF` and `ell_RD` carry
+  their derivatives for Symbolics: `expand_derivatives` differentiates a
+  symbolic Hill tensor of a triaxial ellipsoid, or anything else built on them,
+  and the result stays a closed form in the same integrals (each rule tested
+  against ForwardDiff through the numerical methods, and the derivative of a
+  Hill tensor against that of the numerical one).
+
 - `AnisotropicTangentModel` for `ViscoplasticPolycrystal`: the tangent
   self-consistent model with the anisotropic matrix of Lebensohn and Tomé
   (1993). The matrix is the aggregate itself, its secant compliance on the
