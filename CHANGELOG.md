@@ -1,18 +1,27 @@
 # Changelog
 
-## v0.23.1 — the nonlinear homogenization models still missing
+## v0.24.0 — the nonlinear models still missing, FEniCSx, faster starts and polycrystals
 
-0.23.0 brought the classical routes of nonlinear homogenization; this release
-adds the models it left out that the literature at hand describes in full: the
+A minor release. 0.23.0 brought the classical routes of nonlinear
+homogenization; this release adds the models it left out that the literature at hand describes in full: the
 anisotropic matrix of Lebensohn and Tomé in the tangent model of viscoplastic
 polycrystals, Hill's self-consistent scheme for elastoplastic polycrystals, the
 second-order estimate of Ponte Castañeda, and, for phases with a history, the
 affine formulation of Pierard and Doghri and its quasi-elastic approximation
 by Brenner et al. Each is a law of `MaterialLaws` that runs in `point_response`
 and in the finite-element coupling, checked against an independent reference
-and documented on a page of its own. Everything added is additive: nothing
-that existed computes differently. The β rule of Cailletaud and Pilvin is not
-implemented, its paper being out of reach.
+and documented on a page of its own. The β rule of Cailletaud and Pilvin is
+not implemented, its paper being out of reach.
+
+It also couples the materials of the package to FEniCSx (`python/mfh_fenicsx`:
+the stress, or the stress and the fluid content of a poroelastic material, as
+external operators of dolfinx, one Julia call per Newton iteration for all the
+quadrature points, on Julia's threads), loads in 2 s instead of 5.4 s (TensND
+no longer loads SymPy), reads Hill tensors back across a series of calls
+(`HillCache`), and integrates polycrystals 2.2 to 2.7 times faster with the
+same bits. Its minor version says what a minor version says before 1.0: a
+compat entry `MeanFieldHomogenization = "0.23"` does not accept it; the
+genuine breaks are listed below.
 
 ### Breaking changes
 
@@ -24,6 +33,7 @@ implemented, its paper being out of reach.
   `random_basis`, positive definite stiffnesses and conductivities with
   `rand(rng, Tens{4, 3}; definite = true)` and `rand(rng, Tens{2, 3}; definite = true)`.
   The seeded draws are not those of before.
+- Julia 1.13 is required (1.12 is no longer tested).
 - TensND 0.10.1 is required (`TensND = "0.10.1"`). It keeps the symmetries of a
   tensor through a change of basis: in a random oblique basis the dilute
   localization of a transversely isotropic matrix could fail to invert
@@ -177,8 +187,7 @@ implemented, its paper being out of reach.
   package, come with `using SymPyPythonCall` next to
   `using MeanFieldHomogenization`; the home page says which package to load
   for which symbols.
-- Requires TensND 0.9 and Julia 1.13 (1.12 is no longer tested); accepts
-  DECUHR 0.4 (and, in the documentation, ChemistryLab 0.42 and
+- Accepts DECUHR 0.4 (and, in the documentation, ChemistryLab 0.42 and
   OptimaSolver 0.10), which only raise their own Julia bound.
 
 ### Fixed
