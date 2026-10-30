@@ -14,9 +14,9 @@
 # ── Trapezoidal fillers for order-2 (3×3 block) kernels ─────────────────────
 # Defined in trapezoidal.jl entry points; bodies live here for cohesion.
 
-_fill_trapezoidal_order2_tens!(M::AbstractMatrix, law::ViscoLaw, times::AbstractVector) =
+_fill_trapezoidal_order2_tens!(M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector) =
     _fill_trapezoidal_blocks!(M, law, times, Val(3), _to_order2_mat)
-_fill_trapezoidal_order2_mat!(M::AbstractMatrix, law::ViscoLaw, times::AbstractVector) =
+_fill_trapezoidal_order2_mat!(M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector) =
     _fill_trapezoidal_blocks!(M, law, times, Val(3), identity)
 
 @inline _to_order2_mat(s::AbstractMatrix) = s
@@ -89,7 +89,7 @@ end
 # (`tens_IA(ell)` in the canonical principal-axis frame, sums to 1).
 
 """
-    hill_kernel_order2(ell, K_0_law::ViscoLaw, times) -> Matrix
+    hill_kernel_order2(ell, K_0_law::AbstractViscoLaw, times) -> Matrix
 
 Build the discrete Hill kernel ``\\widetilde{\\boldsymbol{P}}`` (size ``3n\\times 3n``) for an
 ellipsoidal inclusion in an isotropic ALV matrix.  Uses the time-space
@@ -97,14 +97,14 @@ decoupling formula ``[\\widetilde{\\boldsymbol{P}}]_{ij} = \\bigl(\\widetilde{k}
 with ``\\widetilde{\\boldsymbol{K}}_0 = \\widetilde{k}_0\\,\\boldsymbol{1}`` the discretized isotropic reference.
 """
 function hill_kernel_order2(
-        ell, K_0_law::ViscoLaw,
+        ell, K_0_law::AbstractViscoLaw,
         times::AbstractVector{<:Real}
     )
     return hill_kernel_order2_at(ell, _trapezoidal_relaxation(K_0_law, times, 3))
 end
 
 """
-    second_hill_kernel_order2(ell, K_0_law::ViscoLaw, times) -> Matrix
+    second_hill_kernel_order2(ell, K_0_law::AbstractViscoLaw, times) -> Matrix
 
 Discrete ALV second Hill tensor kernel (size ``3n\\times 3n``) of an ellipsoidal
 inclusion in an isotropic ALV matrix of conductivity law `K_0_law`:
@@ -113,7 +113,7 @@ with ``\\widetilde{\\boldsymbol{P}}`` the [`hill_kernel_order2`](@ref); the orde
 counterpart of [`second_hill_kernel`](@ref).
 """
 function second_hill_kernel_order2(
-        ell, K_0_law::ViscoLaw,
+        ell, K_0_law::AbstractViscoLaw,
         times::AbstractVector{<:Real}
     )
     K_0 = _trapezoidal_relaxation(K_0_law, times, 3)
@@ -325,7 +325,7 @@ function _homogenize_alv_order2(
     )
     m = matrix_name(scheme, rve)
     K_M_law = phase_property(rve, m, prop)
-    K_M_law isa ViscoLaw ||
+    K_M_law isa AbstractViscoLaw ||
         throw(ArgumentError("homogenize_alv_order2: matrix property $prop is not a ViscoLaw"))
     K_0 = _trapezoidal_relaxation(K_M_law, times, 3)
     f_M = volume_fraction(rve, m)
@@ -350,7 +350,7 @@ function _homogenize_alv_order2(
     per_phase = map(incl_names) do name
         ph = rve.phases[name]
         K_r_law = phase_property(rve, name, prop)
-        K_r_law isa ViscoLaw ||
+        K_r_law isa AbstractViscoLaw ||
             throw(ArgumentError("homogenize_alv_order2: phase $name property is not a ViscoLaw"))
         # `symmetrize` is honored on the dilute quantities, exactly as the
         # order-4 pipeline does (`homogenize_alv.jl`), and with the order-2
@@ -567,7 +567,7 @@ function differential_alv_order2(
     )
     m = host_phase_name(rve, matrix, "differential_alv_order2")
     K_M_law = phase_property(rve, m, prop)
-    K_M_law isa ViscoLaw ||
+    K_M_law isa AbstractViscoLaw ||
         throw(ArgumentError("differential_alv_order2: matrix property is not a ViscoLaw"))
     K_0 = _trapezoidal_relaxation(K_M_law, times, 3)
     _is_iso_order2_block(K_0) ||
@@ -603,7 +603,7 @@ function differential_alv_order2(
         ph = rve.phases[name]
         sym = phase_symmetrize(rve, name)
         K_r_law = phase_property(rve, name, prop)
-        K_r_law isa ViscoLaw ||
+        K_r_law isa AbstractViscoLaw ||
             throw(ArgumentError("differential_alv_order2: phase $name property is not a ViscoLaw"))
         K_r = _alv2_phase_kernel(ph.geometry, K_r_law, K_0, times)
         _alv_diff_keeps_iso(ph.geometry, sym, nothing) ||
@@ -764,7 +764,7 @@ function self_consistent_alv_order2(
     )
     m = host_phase_name(rve, matrix, "self_consistent_alv_order2")
     K_M_law = phase_property(rve, m, prop)
-    K_M_law isa ViscoLaw ||
+    K_M_law isa AbstractViscoLaw ||
         throw(ArgumentError("self_consistent_alv_order2: matrix property is not a ViscoLaw"))
     K_M = _trapezoidal_relaxation(K_M_law, times, 3)
     data = map([m; inclusion_phase_names(rve, m)]) do name
@@ -774,7 +774,7 @@ function self_consistent_alv_order2(
         ph = rve.phases[name]
         sym = phase_symmetrize(rve, name)
         law = phase_property(rve, name, prop)
-        law isa ViscoLaw ||
+        law isa AbstractViscoLaw ||
             throw(ArgumentError("self_consistent_alv_order2: phase $name property is not a ViscoLaw"))
         K_r = _alv2_phase_kernel(ph.geometry, law, K_M, times)
         _alv2_keeps_iso(ph.geometry, sym, K_r) ||

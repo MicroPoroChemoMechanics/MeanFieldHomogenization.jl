@@ -379,6 +379,7 @@ export pore_volume_fraction
 
 # ── Viscoelasticity (ALV) ────────────────────────────────────────────────────
 export AbstractViscoLaw, ViscoLaw, VALID_VISCO_MODES
+export SampledViscoLaw, operator_law, precipitated, dissolved
 export visco_mode, visco_eval
 export maxwell_relaxation, kelvin_creep, maxwell_iso, kelvin_iso, heaviside_law
 export trapezoidal_matrix

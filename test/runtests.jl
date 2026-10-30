@@ -426,6 +426,7 @@ end
         include("Viscoelasticity/test_laminate_alv.jl")
         include("Viscoelasticity/test_visco_law.jl")
         include("Viscoelasticity/test_trapezoidal.jl")
+        include("Viscoelasticity/test_sampled_law.jl")
         include("Viscoelasticity/test_volterra_inverse.jl")
         include("Viscoelasticity/test_hill_alv_iso.jl")
         include("Viscoelasticity/test_schemes_alv.jl")

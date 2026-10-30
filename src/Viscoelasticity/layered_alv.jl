@@ -41,7 +41,7 @@ const _ALVReference = Union{ViscoLaw, AbstractMatrix}
 # The 6n × 6n relaxation matrix of a reference: a law is discretized (one in
 # `:creep` mode, a compliance, inverted to its relaxation), a running reference
 # already is one.
-_reference_relaxation_alv(law::ViscoLaw, times) = _trapezoidal_relaxation(law, times, 6)
+_reference_relaxation_alv(law::AbstractViscoLaw, times) = _trapezoidal_relaxation(law, times, 6)
 _reference_relaxation_alv(R::AbstractMatrix, times) = R
 
 """

@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.25.0 — aging basic creep of concrete, across scales
+
+### Added
+
+- `operator_law(R, times)` turns the relaxation operator that `homogenize_alv` returns into a
+  law, a `SampledViscoLaw` known at the instants of the grid, so that a composite becomes a
+  phase of the next scale: aging viscoelastic homogenization now nests, as the elastic one
+  does. The kernel is recovered from the trapezoidal operator row by row, by sums and
+  differences only, so that duals and symbols go through; the operator of the result is the
+  one given, to rounding.
+- `precipitated(law, t_s)` and `dissolved(law, t_d)`: the relaxation kernel of a phase that
+  forms stress-free at `t_s`, or stops carrying stress at `t_d`, for any law, sampled ones
+  included. With them, a hydrating paste is a set of phases of fixed fractions, one per step
+  of its hydration.
+
 ## v0.24.0 — the nonlinear models still missing, FEniCSx, faster starts and polycrystals
 
 A minor release. 0.23.0 brought the classical routes of nonlinear

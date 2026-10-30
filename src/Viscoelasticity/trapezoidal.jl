@@ -19,7 +19,7 @@
 # =============================================================================
 
 """
-    trapezoidal_matrix(law::ViscoLaw, times::AbstractVector{<:Real}) -> Matrix
+    trapezoidal_matrix(law::AbstractViscoLaw, times::AbstractVector{<:Real}) -> Matrix
 
 Build the discrete ``(Bn)\\times(Bn)`` lower-block-triangular matrix
 representing the Stieltjes integral
@@ -32,7 +32,7 @@ The exact block layout is described at the top of `trapezoidal.jl`.
 The output is type-stable in the element type returned by
 `visco_eval(law, ...)`.
 """
-function trapezoidal_matrix(law::ViscoLaw, times::AbstractVector{<:Real})
+function trapezoidal_matrix(law::AbstractViscoLaw, times::AbstractVector{<:Real})
     n = length(times)
     n ≥ 1 || throw(ArgumentError("trapezoidal_matrix: times must be non-empty"))
     sample = visco_eval(law, times[1], times[1])
@@ -41,7 +41,7 @@ end
 
 # Scalar specialization: M is `n × n`.
 function _trapezoidal_dispatch(
-        law::ViscoLaw, times::AbstractVector{<:Real},
+        law::AbstractViscoLaw, times::AbstractVector{<:Real},
         ::Number
     )
     n = length(times)
@@ -53,7 +53,7 @@ end
 
 # Tensor specialization (TensND.AbstractTens{4,3}): M is `6n × 6n`.
 function _trapezoidal_dispatch(
-        law::ViscoLaw, times::AbstractVector{<:Real},
+        law::AbstractViscoLaw, times::AbstractVector{<:Real},
         ::TensND.AbstractTens{4, 3}
     )
     n = length(times)
@@ -66,7 +66,7 @@ end
 
 # Order-2 tensor specialization (TensND.AbstractTens{2,3}): M is `3n × 3n`.
 function _trapezoidal_dispatch(
-        law::ViscoLaw, times::AbstractVector{<:Real},
+        law::AbstractViscoLaw, times::AbstractVector{<:Real},
         ::TensND.AbstractTens{2, 3}
     )
     n = length(times)
@@ -79,7 +79,7 @@ end
 
 # Matrix specialization: dispatches by size (3×3 → 3n×3n, 6×6 → 6n×6n).
 function _trapezoidal_dispatch(
-        law::ViscoLaw, times::AbstractVector{<:Real},
+        law::AbstractViscoLaw, times::AbstractVector{<:Real},
         sample::AbstractMatrix
     )
     n = length(times)
@@ -100,7 +100,7 @@ end
 # ── Scalar case ─────────────────────────────────────────────────────────────
 
 @inline function _fill_trapezoidal_scalar!(
-        M::AbstractMatrix, law::ViscoLaw,
+        M::AbstractMatrix, law::AbstractViscoLaw,
         times::AbstractVector
     )
     n = length(times)
@@ -146,7 +146,7 @@ end
 # the layout at the top of this file.
 # (Threading reverted: see note in `_fill_trapezoidal_scalar!`.)
 @inline function _fill_trapezoidal_blocks!(
-        M::AbstractMatrix, law::ViscoLaw, times::AbstractVector, ::Val{B}, convert_sample::F
+        M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector, ::Val{B}, convert_sample::F
     ) where {B, F}
     n = length(times)
     n == 0 && return M
@@ -180,7 +180,7 @@ end
     return M
 end
 
-_fill_trapezoidal_tensor!(M::AbstractMatrix, law::ViscoLaw, times::AbstractVector) =
+_fill_trapezoidal_tensor!(M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector) =
     _fill_trapezoidal_blocks!(M, law, times, Val(6), _to_mandel)
-_fill_trapezoidal_mandel!(M::AbstractMatrix, law::ViscoLaw, times::AbstractVector) =
+_fill_trapezoidal_mandel!(M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector) =
     _fill_trapezoidal_blocks!(M, law, times, Val(6), identity)

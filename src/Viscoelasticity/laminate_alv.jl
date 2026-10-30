@@ -136,7 +136,7 @@ function laminate_alv(lam::Laminates.Laminate, ::Val{4}; times, property::Symbol
 
     Cs = map(names) do nm
         law = Laminates.layer_property(lam, nm, property)
-        law isa ViscoLaw || throw(
+        law isa AbstractViscoLaw || throw(
             ArgumentError(
                 "laminate_alv: layer :$(nm) property :$(property) is not a ViscoLaw"
             )
@@ -177,7 +177,7 @@ function laminate_alv(lam::Laminates.Laminate, ::Val{2}; times, property::Symbol
 
     Ks = map(names) do nm
         law = Laminates.layer_property(lam, nm, property)
-        law isa ViscoLaw || throw(
+        law isa AbstractViscoLaw || throw(
             ArgumentError(
                 "laminate_alv: layer :$(nm) property :$(property) is not a ViscoLaw"
             )
@@ -219,7 +219,7 @@ function homogenize_alv(
         times::AbstractVector{<:Real}, kw...
     )
     law = Laminates.layer_property(lam, first(Laminates.layer_names(lam)), prop)
-    law isa ViscoLaw ||
+    law isa AbstractViscoLaw ||
         throw(ArgumentError("homogenize_alv: property :$(prop) is not a ViscoLaw"))
     order = _alv_property_order(law, first(times))
     return laminate_alv(lam, Val(order); times = times, property = prop)

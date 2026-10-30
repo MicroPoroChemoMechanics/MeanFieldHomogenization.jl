@@ -9,7 +9,7 @@
 #  and the generic functions dispatch on it, behind that function barrier.
 # =============================================================================
 
-_alv_order(law::ViscoLaw, times::AbstractVector{<:Real}) = Val(_alv_property_order(law, first(times)))
+_alv_order(law::AbstractViscoLaw, times::AbstractVector{<:Real}) = Val(_alv_property_order(law, first(times)))
 _alv_order(::TensND.AbstractTens{N}, ::AbstractVector{<:Real}) where {N} = Val(N)
 function _alv_order(M::AbstractMatrix, times::AbstractVector{<:Real})
     n = length(times)

@@ -60,7 +60,7 @@
 end
 
 """
-    cod_kernel_alv(crack::EllipticCrack, C_M_law::ViscoLaw, times;
+    cod_kernel_alv(crack::EllipticCrack, C_M_law::AbstractViscoLaw, times;
                    Rn = nothing, Rt = nothing) -> NamedTuple
 
 Discrete ALV COD-tensor data for a penny crack ``\\eta = 1`` in an isotropic
@@ -93,7 +93,7 @@ axis (`semi_minor`) of the elliptic crack.  Limits :
 Throws if the matrix law is not iso or the crack is not a penny.
 """
 function cod_kernel_alv(
-        crack::MFH_Core.AbstractCrack, C_M_law::ViscoLaw,
+        crack::MFH_Core.AbstractCrack, C_M_law::AbstractViscoLaw,
         times::AbstractVector{<:Real};
         Rn::Union{Nothing, ViscoLaw} = nothing,
         Rt::Union{Nothing, ViscoLaw} = nothing
@@ -179,7 +179,7 @@ _interface_corrected(B::AbstractMatrix, K::AbstractMatrix, b) =
 # kernel and the algebra still expects a relaxation matrix); none for none.
 _trapezoidal_relaxation_scalar(::Nothing, ::AbstractVector{<:Real}) = nothing
 function _trapezoidal_relaxation_scalar(
-        law::ViscoLaw,
+        law::AbstractViscoLaw,
         times::AbstractVector{<:Real}
     )
     M = trapezoidal_matrix(law, times)
@@ -188,7 +188,7 @@ function _trapezoidal_relaxation_scalar(
 end
 
 """
-    inverse_property_contribution_alv(crack, C_M_law::ViscoLaw, times) -> Matrix{T}
+    inverse_property_contribution_alv(crack, C_M_law::AbstractViscoLaw, times) -> Matrix{T}
 
 Discrete ``6n\\times 6n`` size-independent compliance contribution ``\\widetilde{\\mathbb{H}}`` of a
 penny crack in an isotropic ALV matrix.  Computed via the time-space
@@ -210,7 +210,7 @@ Budiansky-O'Connell density factor is applied separately via
 """
 function inverse_property_contribution_alv(
         crack::MFH_Core.AbstractCrack,
-        C_M_law::ViscoLaw,
+        C_M_law::AbstractViscoLaw,
         times::AbstractVector{<:Real};
         Rn::Union{Nothing, ViscoLaw} = nothing,
         Rt::Union{Nothing, ViscoLaw} = nothing
@@ -256,7 +256,7 @@ running estimate `C_n`).
 """
 function property_contribution_alv(
         crack::MFH_Core.AbstractCrack,
-        C_M_law::ViscoLaw,
+        C_M_law::AbstractViscoLaw,
         times::AbstractVector{<:Real}
     )
     H̃ = inverse_property_contribution_alv(crack, C_M_law, times)

@@ -64,7 +64,7 @@ end
 
 Return the mode (`:relaxation` or `:creep`) of `law`.
 """
-visco_mode(law::ViscoLaw) = law.mode
+visco_mode(law::AbstractViscoLaw) = law.mode
 
 """
     visco_eval(law, t, t_p)
@@ -88,7 +88,7 @@ function heaviside_law(C; mode::Symbol = :relaxation)
 end
 
 # A law as it is, an elastic modulus as the Heaviside law it stands for.
-_as_visco_law(law::ViscoLaw) = law
+_as_visco_law(law::AbstractViscoLaw) = law
 _as_visco_law(C) = heaviside_law(C)
 
 """

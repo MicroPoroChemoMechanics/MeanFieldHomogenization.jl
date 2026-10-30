@@ -32,7 +32,7 @@ function has_visco_property(cell::MFH_Core.AbstractHomogenizationCell, prop::Sym
     return false
 end
 
-_is_visco_value(::ViscoLaw, ::Symbol) = true
+_is_visco_value(::AbstractViscoLaw, ::Symbol) = true
 _is_visco_value(v, ::Symbol) = false
 _is_visco_value(h::MFH_Core.Homogenized, key::Symbol) =
     has_visco_property(h.cell, h.property === nothing ? key : h.property)
@@ -223,7 +223,7 @@ ALV matrices whose blocks are 2-tensors.
     _ti_project_blocks3(M, sym.axis)
 
 """
-    _trapezoidal_relaxation(law::ViscoLaw, times, B) -> Matrix
+    _trapezoidal_relaxation(law::AbstractViscoLaw, times, B) -> Matrix
 
 Build the discrete relaxation block matrix from a `ViscoLaw`, regardless
 of whether the law is in `:relaxation` or `:creep` mode.  When the law
@@ -235,7 +235,7 @@ matrix — the convention every ALV scheme assumes internally.
 order-2 vector-tensor).
 """
 function _trapezoidal_relaxation(
-        law::ViscoLaw,
+        law::AbstractViscoLaw,
         times::AbstractVector{<:Real}, B::Int
     )
     M = trapezoidal_matrix(law, times)
@@ -246,7 +246,7 @@ function _trapezoidal_relaxation(
 end
 
 """
-    _alv_property_order(law::ViscoLaw, t) -> Int
+    _alv_property_order(law::AbstractViscoLaw, t) -> Int
 
 Inspect the sample returned by `visco_eval(law, t, t)` and report the
 tensor order (`2` for vector-tensor / ``3\\times 3``, `4` for 4-tensor / ``6\\times 6``
@@ -254,7 +254,7 @@ Mandel).  Used by [`homogenize_alv`](@ref) to dispatch between the
 order-4 (stiffness / relaxation) and order-2 (conductivity / creep
 admittance) pipelines.
 """
-_alv_property_order(law::ViscoLaw, t::Real) = _alv_sample_order(visco_eval(law, t, t))
+_alv_property_order(law::AbstractViscoLaw, t::Real) = _alv_sample_order(visco_eval(law, t, t))
 
 _alv_sample_order(::TensND.AbstractTens{2, 3}) = 2
 _alv_sample_order(::TensND.AbstractTens{4, 3}) = 4
@@ -331,7 +331,7 @@ function homogenize_alv(
     #    it resolves the scheme's reference medium itself.
     m = matrix_name(scheme, rve)
     C_M_law = phase_property(rve, m, prop)
-    C_M_law isa ViscoLaw ||
+    C_M_law isa AbstractViscoLaw ||
         throw(ArgumentError("homogenize_alv: matrix property $prop is not a ViscoLaw"))
 
     # Dispatch on the property order (2 vs 4) inferred from the sample.
@@ -454,11 +454,11 @@ the `scheme` only for the stiffness a bound assigns to the sphere.
 """
 function _inclusion_alv_quantities(
         geom, scheme, C_r_law,
-        C_M_law::ViscoLaw,
+        C_M_law::AbstractViscoLaw,
         C_0::AbstractMatrix,
         times::AbstractVector{<:Real}
     )
-    C_r_law isa ViscoLaw ||
+    C_r_law isa AbstractViscoLaw ||
         throw(ArgumentError("homogenize_alv: phase property is not a ViscoLaw"))
     C_r = _trapezoidal_relaxation(C_r_law, times, 6)
     P_r = hill_kernel(geom, C_M_law, times)
@@ -506,7 +506,7 @@ end
 
 function _inclusion_alv_quantities(
         sphere::LayeredSphere, scheme, _C_r_law,
-        C_M_law::ViscoLaw,
+        C_M_law::AbstractViscoLaw,
         C_0::AbstractMatrix,
         times::AbstractVector{<:Real}
     )
