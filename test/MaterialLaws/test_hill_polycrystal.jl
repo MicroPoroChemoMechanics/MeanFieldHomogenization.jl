@@ -30,7 +30,7 @@ end
 
 _step_hm(m, E, st, Δt; algorithm = LocalNewton()) = MP_HM._mandel_update(m, E, st, Δt; algorithm, external = (;))
 
-_canonical_hm(t) = SMatrix{6, 6}(KM(TensND.canonical(t)))
+_canonical_hm(t) = SMatrix{6, 6}(mandel(TensND.canonical(t)))
 
 @testset "elastic grains: the linear self-consistent scheme" begin
     grains = _grains_hm(6)

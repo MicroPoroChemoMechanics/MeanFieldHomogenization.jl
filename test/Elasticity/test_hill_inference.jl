@@ -31,7 +31,7 @@ _hi_inferred(f, args...) = only(Base.return_types(f, map(typeof, args)))
     ellipsoid = Ellipsoid(2.0, 1.0, 0.5; euler_angles = (0.4, 1.1, 0.3))
     cylinder = Cylinder(1.0, 0.6)
     disk = Ellipsoid(1.0, 0.5)
-    C = TensND.from_mandel(KM(TensND.canonical(TensND.cubic_from_constants(168.4e3, 121.4e3, 75.4e3, TensND.RotatedBasis(0.4, 1.1, 0.3)))))
+    C = TensND.from_mandel(mandel(TensND.canonical(TensND.cubic_from_constants(168.4e3, 121.4e3, 75.4e3, TensND.RotatedBasis(0.4, 1.1, 0.3)))))
     C₂ = TensND.Tens(Array(TensISO{2}(15.0, 4.0)))
     K = TensND.Tens([3.0 0.5 0.2; 0.5 2.0 0.1; 0.2 0.1 1.0])
     cases = (

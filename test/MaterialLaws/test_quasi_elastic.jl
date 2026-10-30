@@ -53,7 +53,7 @@ end
     rve = RVE()
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness_young_poisson(E₀, 0.3)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness_young_poisson(E₁, 0.25)); fraction = f)
-    C = KM(homogenize(rve, MoriTanaka(), :C))
+    C = mandel(homogenize(rve, MoriTanaka(), :C))
     @test r[:ε11][2] ≈ (C \ SVector(Σ, 0, 0, 0, 0, 0))[1] rtol = 1.0e-4
     # In the steady regime, the creep rate of the Mori–Tanaka estimate of the
     # viscous, incompressible phases: Σ/(3η) with η its viscosity in shear.

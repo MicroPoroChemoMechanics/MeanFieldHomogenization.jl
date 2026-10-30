@@ -275,7 +275,7 @@ C_par = homogenize(rve_parallel(ε), MoriTanaka(), :C)
 typeof(C_par)
 ````
 
-The result is a `TensRotated`: it **carries its own frame**. `TensND.KM` then
+The result is a `TensRotated`: it **carries its own frame**. `TensND.mandel` then
 returns the components in *that* frame — the crack frame — not in the global
 one. Both are useful, and they are different matrices:
 

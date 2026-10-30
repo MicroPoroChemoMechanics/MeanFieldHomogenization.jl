@@ -39,7 +39,7 @@ end
     rve = RVE()
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness_young_poisson(70.0e3, 0.33)); fraction = :rest)
     add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness_young_poisson(400.0e3, 0.2)); fraction = 0.3)
-    C = KM(homogenize(rve, MoriTanaka(), :C))
+    C = mandel(homogenize(rve, MoriTanaka(), :C))
     @test 𝕂 ≈ C rtol = 1.0e-12
     @test σ ≈ C * E rtol = 1.0e-12
 end

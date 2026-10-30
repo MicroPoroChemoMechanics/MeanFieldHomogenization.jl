@@ -261,7 +261,7 @@ check_material_interface(progressive; verbose = false)
 # then the Mori–Tanaka stiffness at the initial density:
 #
 σ, 𝕂, _ = point_update(progressive, Mandel{Float64}(2e-4, -1e-4, 0, 1e-4, 0, 0), initial_state(progressive), 1.0)
-𝕂 ≈ KM(homogenize(rve, MoriTanaka(), :C))
+𝕂 ≈ mandel(homogenize(rve, MoriTanaka(), :C))
 #
 # ### Going further
 #

@@ -258,7 +258,7 @@ lin = RVE()
 add_phase!(lin, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 60e3, 2 * 80.0 / 3e-3)); fraction = :rest)
 add_phase!(lin, :P, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 150e3, 2 * 320.0 / 3e-3)); fraction = f)
 E = Mandel{Float64}(1e-3, -5e-4, -5e-4, 0, 0, 0)
-point_update(c, E, initial_state(c), 1.0)[2] ≈ KM(homogenize(lin, MoriTanaka(), :C))
+point_update(c, E, initial_state(c), 1.0)[2] ≈ mandel(homogenize(lin, MoriTanaka(), :C))
 ````
 
 ---

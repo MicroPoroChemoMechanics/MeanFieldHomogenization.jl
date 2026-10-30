@@ -16,7 +16,7 @@ const MP_CC = MeanFieldHomogenization.MaterialLaws
 const SC_CC = MeanFieldHomogenization.Schemes
 const C0_CC = TensISO{3}(3 * 40.0e3, 2 * 25.0e3)
 # Mandel components in the canonical basis: an anisotropic result of homogenize
-# may be held in a basis of its own, which `KM(t)` alone would read.
+# may be held in a basis of its own, which `mandel(t)` alone would read.
 _canon(t) = MP_CC._mandel(TensND.canonical(t))
 
 function _three_families(; d = 0.1)

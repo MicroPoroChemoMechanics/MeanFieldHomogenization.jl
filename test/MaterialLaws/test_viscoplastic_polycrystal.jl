@@ -99,7 +99,7 @@ end
 end
 
 @testset "the anisotropic matrix of Lebensohn and Tomé" begin
-    𝕁 = SMatrix{6, 6}(KM(TensISO{3}(1.0, 0.0)))
+    𝕁 = SMatrix{6, 6}(mandel(TensISO{3}(1.0, 0.0)))
     # Linear grains: the tangent model is the linear self-consistent scheme,
     # which the package computes otherwise (its own anisotropic Hill tensors) on
     # grains made compressible by a bulk stiffness κ, the gap closing as 1/κ.
@@ -111,7 +111,7 @@ end
             Lg = deviatoric_pinv(c.γ̇₀ / c.τ₀ * c.P * transpose(c.P)) + 3κ * 𝕁
             add_phase!(rve, Symbol(:g, i), Ellipsoid(1.0), Dict(:C => TensND.from_mandel(Lg)); fraction = i == 1 ? :rest : 1 / 6)
         end
-        C = SMatrix{6, 6}(KM(TensND.canonical(homogenize(rve, SelfConsistent(), :C; reltol = 1.0e-9))))
+        C = SMatrix{6, 6}(mandel(TensND.canonical(homogenize(rve, SelfConsistent(), :C; reltol = 1.0e-9))))
         maximum(abs, C * D_VP - r.σ) / maximum(abs, r.σ)
     end
     g4, g5 = gap(1.0e4), gap(1.0e5)

@@ -29,7 +29,7 @@ function _cracked_cell(; d = 0.05, oriented = false)
     return rve
 end
 
-_stiffness_at(rve, φ, d) = KM(homogenize(SC_CD.set_param(rve, SC_CD.AmountParameter(φ), d), MoriTanaka(), :C))
+_stiffness_at(rve, φ, d) = mandel(homogenize(SC_CD.set_param(rve, SC_CD.AmountParameter(φ), d), MoriTanaka(), :C))
 # −∂W/∂d by a central difference of the homogenized energy: a reference only.
 _force_fd(rve, φ, d, ε; h = 1.0e-6) =
     -(dot(ε, _stiffness_at(rve, φ, d + h) * ε) - dot(ε, _stiffness_at(rve, φ, d - h) * ε)) / (4h)

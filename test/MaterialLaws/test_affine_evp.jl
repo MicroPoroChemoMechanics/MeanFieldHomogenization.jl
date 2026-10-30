@@ -43,7 +43,7 @@ end
 @testset "elastic phases: the elastic Mori–Tanaka estimate" begin
     laws = (M = _perzyna_ev(; σY = 1.0e6), I = _perzyna_ev(; E = 400.0e3, σY = 1.0e6))
     r = point_response(AffineEVPComposite(_rve_ev(0.3), laws; relaxation_times = θ_EV), _ramp_ev(2.0, 5))
-    C = KM(homogenize(_rve_ev(0.3; M = iso_stiffness_young_poisson(100.0e3, 0.3), I = iso_stiffness_young_poisson(400.0e3, 0.3)), MoriTanaka(), :C))
+    C = mandel(homogenize(_rve_ev(0.3; M = iso_stiffness_young_poisson(100.0e3, 0.3), I = iso_stiffness_young_poisson(400.0e3, 0.3)), MoriTanaka(), :C))
     @test r.states[end].σ ≈ C * (2.0 * D_EV) rtol = 1.0e-10
     # The whole modulus of the matrix, isotropic here, gives the same.
     r = point_response(AffineEVPComposite(_rve_ev(0.3), laws; relaxation_times = θ_EV, isotropic = false), _ramp_ev(2.0, 5))

@@ -17,18 +17,18 @@ _hill_inc(ell, L; kw...) = TensND.canonical(EL_INC._hill_3d_aniso_nestedquadgk(e
 @testset "a sphere in an isotropic incompressible matrix" begin
     μ = 3.0
     P = _hill_inc(Ellipsoid(1.0), TensISO{3}(0.0, 2μ); reltol = 1.0e-10, abstol = 1.0e-13)
-    @test KM(P) ≈ KM(TensISO{3}(0.0, 1 / (5μ))) atol = 1.0e-14
-    dP = ForwardDiff.derivative(m -> KM(_hill_inc(Ellipsoid(1.0), TensISO{3}(0.0, 2m); reltol = 1.0e-10, abstol = 1.0e-13)), μ)
-    @test dP ≈ KM(TensISO{3}(0.0, -1 / (5μ^2))) atol = 1.0e-12
+    @test mandel(P) ≈ mandel(TensISO{3}(0.0, 1 / (5μ))) atol = 1.0e-14
+    dP = ForwardDiff.derivative(m -> mandel(_hill_inc(Ellipsoid(1.0), TensISO{3}(0.0, 2m); reltol = 1.0e-10, abstol = 1.0e-13)), μ)
+    @test dP ≈ mandel(TensISO{3}(0.0, -1 / (5μ^2))) atol = 1.0e-12
 end
 
 @testset "an ellipsoid: the limit of the compressible Hill tensor" begin
-    𝕁, 𝕂 = KM(TensISO{3}(1.0, 0.0)), KM(TensISO{3}(0.0, 1.0))
-    Ldev = SMatrix{6, 6}(𝕂 * KM(TensND.cubic_from_constants(2.0, -1.0, 0.7, TensND.CanonicalBasis{3, Float64}())) * 𝕂)
+    𝕁, 𝕂 = mandel(TensISO{3}(1.0, 0.0)), mandel(TensISO{3}(0.0, 1.0))
+    Ldev = SMatrix{6, 6}(𝕂 * mandel(TensND.cubic_from_constants(2.0, -1.0, 0.7, TensND.CanonicalBasis{3, Float64}())) * 𝕂)
     ell = Ellipsoid(2.0, 1.0, 0.5)
     kw = (reltol = 1.0e-10, abstol = 1.0e-13)
-    Pi = KM(_hill_inc(ell, TensND.from_mandel(Ldev); kw...))
-    gap(κ) = KM(TensND.canonical(EL_INC._hill_3d_aniso_nestedquadgk(ell, TensND.from_mandel(Ldev + 3κ * 𝕁); kw...))) - Pi
+    Pi = mandel(_hill_inc(ell, TensND.from_mandel(Ldev); kw...))
+    gap(κ) = mandel(TensND.canonical(EL_INC._hill_3d_aniso_nestedquadgk(ell, TensND.from_mandel(Ldev + 3κ * 𝕁); kw...))) - Pi
     g4, g5 = gap(1.0e4), gap(1.0e5)
     # P(κ) − P_inc = c/κ + O(1/κ²): κ·gap is the same at both bulk stiffnesses.
     @test maximum(abs, 1.0e4 * g4 - 1.0e5 * g5) < 1.0e-3 * maximum(abs, 1.0e4 * g4)

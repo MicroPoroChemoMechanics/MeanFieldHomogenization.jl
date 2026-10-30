@@ -42,7 +42,7 @@ const E_AF = SVector(1.0e-3, -2.0e-4, 3.0e-4, 1.0e-4, 0, -2.0e-4)
     c = AffineComposite(_rve_af(), (M = _power_af(50.0e3, 100.0, 1.0), I = _power_af(100.0e3, 400.0, 1.0)))
     σ, 𝕂, _ = point_update(c, E_AF, initial_state(c), 1.0)
     rve = _rve_af(; M = TensISO{3}(3 * 50.0e3, 2 * 100.0 / 3.0e-3), I = TensISO{3}(3 * 100.0e3, 2 * 400.0 / 3.0e-3))
-    C = KM(homogenize(rve, MoriTanaka(), :C))
+    C = mandel(homogenize(rve, MoriTanaka(), :C))
     @test 𝕂 ≈ C rtol = 1.0e-12
     @test σ ≈ C * E_AF rtol = 1.0e-12
 end
@@ -122,7 +122,7 @@ end
     # Linear phases: the linear Mori–Tanaka estimate.
     c = SecondOrderComposite(_rve_af(), (M = _power_af(50.0e3, 100.0, 1.0), I = _power_af(100.0e3, 400.0, 1.0)))
     σ, 𝕂, _ = point_update(c, E_AF, initial_state(c), 1.0)
-    C = KM(homogenize(_rve_af(; M = TensISO{3}(3 * 50.0e3, 2 * 100.0 / 3.0e-3), I = TensISO{3}(3 * 100.0e3, 2 * 400.0 / 3.0e-3)), MoriTanaka(), :C))
+    C = mandel(homogenize(_rve_af(; M = TensISO{3}(3 * 50.0e3, 2 * 100.0 / 3.0e-3), I = TensISO{3}(3 * 100.0e3, 2 * 400.0 / 3.0e-3)), MoriTanaka(), :C))
     @test σ ≈ C * E_AF rtol = 1.0e-10
     @test 𝕂 ≈ C rtol = 1.0e-10
     # A laminate: the exact solution, the strains being uniform in the layers.

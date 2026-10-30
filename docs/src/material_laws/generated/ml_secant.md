@@ -346,7 +346,7 @@ add_phase!(rve_lin, :P, Ellipsoid(1.0), Dict(:C => TensISO{3}(3 * 150e3, 2 * 80e
 h = NonlinearHomogenized(rve_lin, Dict(:M => linear(20e3, 60e3), :P => linear(80e3, 150e3)))
 E = Mandel{Float64}(1e-3, 2e-4, -3e-4, 1e-4, 0, 2e-4)
 σ, 𝕂, _ = point_update(h, E, initial_state(h), 0.0)
-𝕂 ≈ KM(homogenize(rve_lin, MoriTanaka(), :C))
+𝕂 ≈ mandel(homogenize(rve_lin, MoriTanaka(), :C))
 ````
 
 **The tangent is consistent.** The contract checker compares the tangent from

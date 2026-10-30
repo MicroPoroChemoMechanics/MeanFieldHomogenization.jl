@@ -20,7 +20,7 @@ using Random
 
 _sp_rng = MersenneTwister(20261029)
 _sp_frame() = TensND.random_basis(_sp_rng)
-_sp_generic(C) = TensND.from_mandel(KM(TensND.canonical(C)))
+_sp_generic(C) = TensND.from_mandel(mandel(TensND.canonical(C)))
 
 function _sp_rve(M, I, J)
     rve = RVE()
@@ -36,15 +36,15 @@ end
     J = TensND.TensOrtho(9.0e4, 8.0e4, 7.0e4, 1.0e4, 2.0e4, 3.0e4, 4.0e4, 5.0e4, 6.0e4, _sp_frame())
     structured, generic = _sp_rve(M, I, J), _sp_rve(_sp_generic(M), _sp_generic(I), _sp_generic(J))
     for scheme in (Voigt(), Reuss(), Dilute(), DiluteDual(), MoriTanaka(), SelfConsistent(), AsymmetricSelfConsistent())
-        Cs = KM(TensND.canonical(homogenize(structured, scheme, :C; reltol = 1.0e-10)))
-        Cg = KM(TensND.canonical(homogenize(generic, scheme, :C; reltol = 1.0e-10)))
+        Cs = mandel(TensND.canonical(homogenize(structured, scheme, :C; reltol = 1.0e-10)))
+        Cg = mandel(TensND.canonical(homogenize(generic, scheme, :C; reltol = 1.0e-10)))
         @test Cs ≈ Cg rtol = 1.0e-8
     end
     # Two cubic phases on different cubes, the case that failed.
     cubic = _sp_rve(M, TensND.cubic_from_constants(250.0e3, 150.0e3, 120.0e3, _sp_frame()), TensND.cubic_from_constants(100.0e3, 60.0e3, 40.0e3, _sp_frame()))
     plain = _sp_rve(_sp_generic(M), map(φ -> _sp_generic(MeanFieldHomogenization.Core.cell_container_property(cubic, φ, :C)), (:I, :J))...)
     for scheme in (MoriTanaka(), SelfConsistent())
-        @test KM(TensND.canonical(homogenize(cubic, scheme, :C; reltol = 1.0e-10))) ≈
-            KM(TensND.canonical(homogenize(plain, scheme, :C; reltol = 1.0e-10))) rtol = 1.0e-8
+        @test mandel(TensND.canonical(homogenize(cubic, scheme, :C; reltol = 1.0e-10))) ≈
+            mandel(TensND.canonical(homogenize(plain, scheme, :C; reltol = 1.0e-10))) rtol = 1.0e-8
     end
 end

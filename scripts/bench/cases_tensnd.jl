@@ -105,7 +105,7 @@ bcase(
 )
 
 bcase(
-    "tensnd/inv_KM.gen";
+    "tensnd/from_mandel.gen";
     group = :tensnd, tags = [:km],
     setup = () -> KM_TRI,
     body = M -> TensND.from_mandel(M, CB3),
