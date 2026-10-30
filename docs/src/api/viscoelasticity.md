@@ -21,6 +21,10 @@ kelvin_creep
 maxwell_iso
 kelvin_iso
 heaviside_law
+SampledViscoLaw
+operator_law
+precipitated
+dissolved
 ```
 
 ## Trapezoidal discretization
