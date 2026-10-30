@@ -14,22 +14,33 @@ many threads as Julia was started with.
 
 ## Installation
 
-The Julia side is a Julia project that holds `MeanFieldHomogenization` and
-`PythonCall`; nothing is installed at run time. The Python side needs dolfinx
-(conda-forge), then
+1. Julia ([juliaup](https://github.com/JuliaLang/juliaup)) and a Julia project
+   holding the package and PythonCall:
 
-```bash
-pip install -e "python/mfh_fenicsx[dolfinx,test]"
-```
+   ```bash
+   julia --project=$HOME/mfh-fenicsx-julia -e 'using Pkg; Pkg.add(["MeanFieldHomogenization", "PythonCall"])'
+   ```
 
-and the environment that tells juliacall which Julia and which project to use:
+2. Python with dolfinx (conda-forge), then the packages of PyPI and this one:
 
-```bash
-export PYTHON_JULIAPKG_EXE=$(which julia)
-export PYTHON_JULIAPKG_PROJECT=/path/to/the/julia/project
-export PYTHON_JULIACALL_THREADS=4
-export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1   # reproducible solves, cores left to Julia
-```
+   ```bash
+   conda create -n fenicsx -c conda-forge python=3.12 fenics-dolfinx=0.10 mpich python-gmsh matplotlib-base pip
+   conda activate fenicsx
+   pip install dolfinx-external-operator==0.10.2 juliacall==0.9.37
+   pip install -e "python/mfh_fenicsx[test]"
+   ```
+
+3. In each session:
+
+   ```bash
+   export PYTHON_JULIAPKG_EXE=$(which julia)
+   export PYTHON_JULIAPKG_PROJECT=$HOME/mfh-fenicsx-julia
+   export PYTHON_JULIACALL_THREADS=4
+   export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1   # reproducible solves, cores left to Julia
+   ```
+
+The tests use their own Julia project, `tests/julia`, which develops the package
+of this repository.
 
 ## A load step
 

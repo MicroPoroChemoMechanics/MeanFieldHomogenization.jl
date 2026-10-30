@@ -12,6 +12,15 @@ a law of `MaterialLaws`, a nonlinear composite, a polycrystal. Julia runs
 inside the Python process, through
 [juliacall](https://github.com/JuliaPy/PythonCall.jl).
 
+!!! tip "In short"
+    1. [Install](@ref fe-fenicsx-install) Julia with this package, and Python with dolfinx and `mfh_fenicsx`.
+    2. Write the residual of your problem in UFL with `stress.sigma` where the stress goes ([A load step](@ref fe-fenicsx-step)).
+    3. Let `Newton` and `quasistatic` run the steps; read the stresses, the reactions and the internal variables.
+
+    Every law of `MaterialLaws` works this way, a homogenized composite or a
+    polycrystal as well as J2 plasticity, and so does a poroelastic material in a
+    coupled displacement–pressure problem ([A coupled problem](@ref fe-fenicsx-up)).
+
 ## How it works
 
 The stress is an *external operator* of
@@ -49,18 +58,39 @@ committed or rolled back as with Ferrite.
 | `newton.reaction(dofs)` | the force of a Dirichlet condition |
 | `stress.material.internal("p")` | the committed values of an internal variable |
 
-## Installation
+## [Installation](@id fe-fenicsx-install)
 
-Two environments meet: a Julia project that holds `MeanFieldHomogenization`
-and `PythonCall`, and a Python environment that holds dolfinx (from
-conda-forge) and `mfh_fenicsx`:
+Two environments meet: a **Julia project** that holds this package and
+`PythonCall`, and a **Python environment** that holds dolfinx and `mfh_fenicsx`.
+Nothing is downloaded at run time: both are prepared once.
+
+**1. Julia and its project.** Install Julia with
+[juliaup](https://github.com/JuliaLang/juliaup), then create a project with the
+two packages:
 
 ```bash
-pip install -e "python/mfh_fenicsx[dolfinx,test]"
-export PYTHON_JULIAPKG_EXE=$(which julia)              # the Julia to embed
-export PYTHON_JULIAPKG_PROJECT=/path/to/julia/project  # holds MeanFieldHomogenization
-export PYTHON_JULIACALL_THREADS=4                       # Julia's threads
-export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1         # no threads competing with Julia's
+julia --project=$HOME/mfh-fenicsx-julia -e 'using Pkg; Pkg.add(["MeanFieldHomogenization", "PythonCall"])'
+```
+
+**2. Python with dolfinx.** dolfinx comes from conda-forge; the other packages
+from PyPI, and `mfh_fenicsx` from the repository of this package:
+
+```bash
+conda create -n fenicsx -c conda-forge python=3.12 fenics-dolfinx=0.10 mpich python-gmsh matplotlib-base pip
+conda activate fenicsx
+pip install dolfinx-external-operator==0.10.2 juliacall==0.9.37
+pip install -e path/to/MeanFieldHomogenization.jl/python/mfh_fenicsx
+```
+
+**3. The environment of each session.** Tell juliacall which Julia and which
+project to use, how many threads Julia has, and leave the other libraries one
+thread each:
+
+```bash
+export PYTHON_JULIAPKG_EXE=$(which julia)               # the Julia to embed
+export PYTHON_JULIAPKG_PROJECT=$HOME/mfh-fenicsx-julia  # the project of step 1
+export PYTHON_JULIACALL_THREADS=4                        # Julia's threads
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1          # no threads competing with Julia's
 ```
 
 The direct solver, MUMPS, factorizes with OpenMP threads when it may; their sums
@@ -68,10 +98,14 @@ change order from one run to the next, so that two runs differ in the last
 digits. One OpenMP thread keeps the runs reproducible and leaves the cores to
 Julia.
 
-`mf.start()` sets `PYTHON_JULIAPKG_OFFLINE=yes`: juliacall then uses that
-project as it is and downloads nothing.
+**4. A check.** This starts Julia, loads the package (a few seconds the first
+time, while Julia compiles) and prints Julia's threads:
 
-## A load step
+```bash
+python -c "import mfh_fenicsx as mf; jl = mf.start(); print(jl.Threads.nthreads())"
+```
+
+## [A load step](@id fe-fenicsx-step)
 
 The code below is the core of every example: a displacement field, the
 material at its quadrature points, the residual, and the steps.
@@ -101,10 +135,17 @@ top = fem.locate_dofs_topological(V.sub(2), 2, top_facets)
 pull = fem.Constant(domain, 0.0)
 bcs = [fem.dirichletbc(np.zeros(3), bottom, V), fem.dirichletbc(pull, top, V.sub(2))]
 
+# The top is pulled to 4e-3 over ten steps of a "time" t from 0 to 1.
+def prescribe(t):
+    pull.value = 4.0e-3 * t
+
 newton = Newton(stress, residual, u, bcs)
-quasistatic(newton, np.linspace(0.0, 1.0, 11), lambda t: setattr(pull, "value", 4.0e-3 * t))
+quasistatic(newton, np.linspace(0.0, 1.0, 11), prescribe)
 print(newton.reaction(top))   # the force on the top
 ```
+
+The units are those of the numbers you give: here MPa for the moduli and a
+unit cube, so that the reaction is in MPa times the unit of area.
 
 | code | what it does |
 |:--|:--|
@@ -112,6 +153,53 @@ print(newton.reaction(top))   # the force on the top
 | `stress.dx` | the measure whose quadrature matches the space of the stress; use it in the forms |
 | `Newton(...)` | compiles the forms once; `solve()` runs one step |
 | `quasistatic(...)` | a step that fails (Newton, or a point that does not integrate) is rolled back and halved |
+| `prescribe(t)` | sets the boundary values at the time `t`; `quasistatic` calls it at each step |
+| `newton.reaction(top)` | the force that the condition on `top` exerts, summed over its degrees of freedom |
+
+## [A coupled displacement–pressure problem](@id fe-fenicsx-up)
+
+A poroelastic material ([`BiotPoroelasticity`](@ref),
+[`ClosingCrackPoroelasticity`](@ref)) depends on the strain and on the pore
+pressure ``p``, and gives the stress and the fluid content ``\phi``. The problem
+then has two unknowns, ``\underline{u}`` and ``p``, in a mixed space, and two
+balances: of the solid, with ``\boldsymbol\sigma``, and of the fluid, with the
+change of ``\phi`` over the step and Darcy's flow,
+
+```math
+\int_\Omega \boldsymbol\sigma : \boldsymbol\varepsilon(\underline{v})\,\mathrm{d}\Omega = \text{(loads)},
+\qquad
+\int_\Omega (\phi - \phi_{\mathrm{old}})\,q\,\mathrm{d}\Omega
++ \Delta t \int_\Omega \frac{k}{\mu}\,\nabla p\cdot\nabla q\,\mathrm{d}\Omega = 0 .
+```
+
+```python
+import basix.ufl
+from mfh_fenicsx.fem import Poroelastic
+
+cell = domain.basix_cell()
+W = fem.functionspace(domain, basix.ufl.mixed_element([
+    basix.ufl.element("Lagrange", cell, 2, shape=(3,)),   # u, quadratic
+    basix.ufl.element("Lagrange", cell, 1),               # p, linear
+]))
+w = fem.Function(W)
+u, p = ufl.split(w)
+v, q = ufl.TestFunctions(W)
+
+poro = Poroelastic("BiotPoroelasticity(; E = 10.0e3, ν = 0.25, b = 0.8, M = 5.0e3)", u, p)
+dt = fem.Constant(domain, 1.0)
+mobility = 1.0e-3                                          # k/μ
+residual = (
+    ufl.inner(poro.sigma, strain(v)) * poro.dx             # + the loads
+    + (poro.phi - poro.phi_old) * q * poro.dx
+    + dt * mobility * ufl.dot(ufl.grad(p), ufl.grad(q)) * poro.dx
+)
+```
+
+`poro.phi_old` is the fluid content at the end of the last committed step: it is
+updated by `poro.commit()`. The time step must be the same in the material and in
+the residual: set `dt.value` in `prescribe`, from `poro.dt`, which `quasistatic`
+sets before calling it. The test of Terzaghi's consolidation and the borehole
+example below are complete programs of this kind.
 
 ## Conventions
 
@@ -142,6 +230,18 @@ print(newton.reaction(top))   # the force on the top
     when it starts and puts them back before every call into Julia and at exit.
     After such a library, call `mfh_fenicsx.restore_signals()` before calling
     Julia yourself.
+
+## Common problems
+
+| what happens | why, and what to do |
+|:--|:--|
+| `juliacall` downloads Julia or packages, or cannot find the package | `PYTHON_JULIAPKG_EXE` or `PYTHON_JULIAPKG_PROJECT` is not set: see step 3 of the installation |
+| the first step takes seconds, the next ones milliseconds | Julia compiles the material on its first call; it is paid once per session |
+| `JuliaError: LocalIntegrationError` | a point could not follow the step; `quasistatic` halves the step by itself, `Newton.solve` alone does not |
+| `NewtonError` | the step is too large for the material, or the tangent is not consistent; use smaller steps or `quasistatic` |
+| the process dies without a message after `gmsh.initialize()` | see the warning on signals above |
+| two runs differ in the last digits | set `OMP_NUM_THREADS=1` (step 3) |
+| `Stress` refuses the material | it is not purely mechanical: a poroelastic material goes to `Poroelastic` |
 
 ## What is checked
 
