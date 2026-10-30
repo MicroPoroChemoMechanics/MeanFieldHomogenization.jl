@@ -58,7 +58,7 @@ function _trapezoidal_dispatch(
     )
     n = length(times)
     sample = visco_eval(law, times[1], times[1])
-    T = eltype(TensND.get_array(sample))
+    T = eltype(sample)
     M = zeros(T, 6 * n, 6 * n)
     _fill_trapezoidal_tensor!(M, law, times)
     return M
@@ -71,7 +71,7 @@ function _trapezoidal_dispatch(
     )
     n = length(times)
     sample = visco_eval(law, times[1], times[1])
-    T = eltype(TensND.get_array(sample))
+    T = eltype(sample)
     M = zeros(T, 3 * n, 3 * n)
     _fill_trapezoidal_order2_tens!(M, law, times)
     return M

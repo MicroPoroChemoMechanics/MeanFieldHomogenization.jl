@@ -67,7 +67,7 @@ end
 # `ForwardDiff.Dual` is comparable: derivatives go through.
 _require_comparable(rve, p, scheme) =
     _require_comparable(mapreduce(n -> eltype(phase_property(rve, n, p)), promote_type, _volume_phase_names(rve)), scheme)
-_require_comparable(t::TensND.AbstractTens, scheme) = _require_comparable(eltype(TensND.get_array(t)), scheme)
+_require_comparable(t::TensND.AbstractTens, scheme) = _require_comparable(eltype(t), scheme)
 _scheme_name(scheme::HomogenizationScheme) = nameof(typeof(scheme))
 _scheme_name(name::Symbol) = name
 function _require_comparable(::Type{T}, scheme) where {T}
