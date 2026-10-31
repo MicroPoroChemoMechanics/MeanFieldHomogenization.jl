@@ -182,7 +182,6 @@ end
     # solver, at every instant (its Newton solver: its Picard iteration crawls there and
     # stops at 4e-6 within its default 100 iterations). Started from the matrix, the
     # march reaches a root of negative stiffness, which is refused.
-    mandel(C) = TensND.mandel(TensND.canonical_components(C); symmetrize = true)
     Cm, Ci = TensISO{3}(3 * 10.0, 2 * 6.0), TensISO{3}(3.0e4, 1.4e4)
     times = [0.0, 1.0]
     for ε in (0.0, 0.3)
@@ -195,7 +194,7 @@ end
             add_phase!(el, :F, PennyCrack(1.0), Dict(:C => Cm); density = ε, symmetrize = :iso)
             add_phase!(al, :F, PennyCrack(1.0), Dict(:C => heaviside_law(Cm)); density = ε, symmetrize = :iso)
         end
-        E = mandel(homogenize(el, SelfConsistent(algorithm = NewtonDefault(), reltol = 1.0e-12), :C))
+        E = _to_mandel66(homogenize(el, SelfConsistent(algorithm = NewtonDefault(), reltol = 1.0e-12), :C))
         N = _sc_newton(al, :C; times)
         @test N[1:6, 1:6] ≈ E rtol = 1.0e-8
         @test N[7:12, 7:12] ≈ E rtol = 1.0e-8

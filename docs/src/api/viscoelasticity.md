@@ -124,15 +124,17 @@ gradient_concentration_alv
 Each generic function also answers to the name it has in elasticity, and the
 contribution to the name it has in conduction. Such a name forwards to the
 generic function, accepts one order only, and refuses the other with an error
-that names the generic function. The crack functions are elastic only, and
-their names in elasticity are plain synonyms.
+that names the generic function. The crack functions serve both orders (the
+compliance in elasticity, the resistivity of an insulating crack in conduction);
+the density factors apply at either order, and their names in elasticity are
+plain synonyms.
 
 | Generic function | Elasticity (order 4) | Conduction (order 2) |
 |:-----------------|:---------------------|:---------------------|
 | `gradient_gradient_concentration_alv` | `strain_strain_concentration_alv` | |
 | `property_contribution_alv` | `stiffness_contribution_alv` | `conductivity_contribution_alv` |
 | `property_contribution_alv_at` | `stiffness_contribution_alv_at` | |
-| `inverse_property_contribution_alv` | `compliance_contribution_alv` | |
+| `inverse_property_contribution_alv` | `compliance_contribution_alv` | `resistivity_contribution_alv` |
 | `delta_property_alv` | `delta_stiffness_alv` | |
 | `delta_inverse_property_alv` | `delta_compliance_alv` | |
 
@@ -142,6 +144,7 @@ stiffness_contribution_alv
 conductivity_contribution_alv
 stiffness_contribution_alv_at
 compliance_contribution_alv
+resistivity_contribution_alv
 delta_stiffness_alv
 delta_compliance_alv
 ```

@@ -117,10 +117,10 @@ _sc_newton_data(::Val{4}, rve, prop, times, m) = _sc_alv_dense_data(_sc_alv_phas
 _sc_newton_data(::Val{2}, rve, prop, times, m) = _sc2_phases(rve, prop, times, m, _SC_NEWTON_WHO)
 
 _sc_newton_matrix_kernel(::Val{4}, dense) = dense.C_0
-_sc_newton_matrix_kernel(::Val{2}, (K_M, _)) = K_M
+_sc_newton_matrix_kernel(::Val{2}, (K_M, _, _)) = K_M
 
 _sc_newton_eltype(::Val{4}, dense, times) = _sc_alv_dense_eltype(dense, times)
-_sc_newton_eltype(::Val{2}, (K_M, data), times) = _sc2_eltype(K_M, data, times)
+_sc_newton_eltype(::Val{2}, (K_M, data, cracks), times) = _sc2_eltype(K_M, data, cracks, times)
 
 # The isotropic estimate and its parameters, lower-triangular n × n matrices.
 _sc_newton_params(::Val{4}, C) = iso_params_from_blocks(C)
@@ -147,11 +147,12 @@ function _sc_newton_row_residual(order::Val{4}, θ, dense, times, i)
         [view(α_new, i, :); view(β_new, i, :)] .- p
     end
 end
-function _sc_newton_row_residual(order::Val{2}, θ, (K_M, data), times, i)
+function _sc_newton_row_residual(order::Val{2}, θ, (K_M, data, cracks), times, i)
     sub = [merge(d, (K_r = d.K_r[1:3i, 1:3i],)) for d in data]
+    sub_cracks = [merge(c, (A_int = _leading_block(c.A_int, i),)) for c in cracks]
     t_i = times[1:i]
     return p -> begin
-        K_new = _sc2_dense_step(_sc_newton_blocks(order, _sc_newton_with_row(θ, p, i)), sub, t_i)
+        K_new = _sc2_dense_step(_sc_newton_blocks(order, _sc_newton_with_row(θ, p, i)), sub, sub_cracks, t_i)
         (λ_new,) = _sc_newton_params(order, K_new)
         λ_new[i, :] .- p
     end

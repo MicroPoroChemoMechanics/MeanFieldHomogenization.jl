@@ -4,6 +4,11 @@ using TensND
 using LinearAlgebra
 using ForwardDiff
 
+# A crack of a shape the ALV opening does not know.
+struct NotACrack{T} <: MeanFieldHomogenization.AbstractCrack{T}
+    b::T
+end
+
 # =============================================================================
 #  test_crack_schemes_alv.jl — crack-aware ALV homogenization schemes:
 #  Voigt / Reuss (cracks ignored), Dilute / DiluteDual / MT / Maxwell / PCW
@@ -182,7 +187,6 @@ end
     # The dual scheme adds the compliance contributions of the solid phases and
     # of the cracks: in the elastic limit each diagonal block is the elastic
     # DiluteDual stiffness, the off-diagonal ones vanish.
-    mandel = (t -> TensND.mandel(TensND.canonical_components(t); symmetrize = true))
     C_M, C_I = TensISO{3}(3 * 10.0, 2 * 4.0), TensISO{3}(3 * 30.0, 2 * 12.0)
     times = [0.0, 0.5, 1.0]
     function rve_with(law)
@@ -192,7 +196,7 @@ end
         add_phase!(rve, :CRACK, PennyCrack(1.0), Dict(:C => law(C_M)); density = 0.05, symmetrize = :iso)
         return rve
     end
-    M_ref = mandel(homogenize(rve_with(identity), DiluteDual(), :C))
+    M_ref = _to_mandel(homogenize(rve_with(identity), DiluteDual(), :C))
     C_alv = homogenize_alv(rve_with(heaviside_law), DiluteDual(), :C; times = times)
     for i in eachindex(times)
         rows = (6 * (i - 1) + 1):(6 * i)
@@ -272,10 +276,74 @@ end
     C_crack = homogenize_alv(cracked, Dilute(:M), :C; times)
     @test C_crack.class isa TensOrtho
     @test Matrix(C_crack) ≈ Matrix(homogenize_alv(porous, Dilute(:M), :C; times)) rtol = 1.0e-5
-    # A ribbon has no ALV opening, and an anisotropic matrix none either: both refused.
-    @test_throws "implemented for elliptic cracks" inverse_property_contribution_alv(RibbonCrack(1.0), matrix, times)
+    # An anisotropic matrix has no ALV opening, nor a crack of an unknown shape: refused.
+    @test_throws "implemented for elliptic cracks (the penny included) and ribbons; got a NotACrack" inverse_property_contribution_alv(NotACrack(1.0), matrix, times)
     ti = heaviside_law(TensTI{4}(4.0, 6.0, 1.0, 1.5, 2.0, (0.0, 0.0, 1.0)))
     @test_throws "isotropic ALV matrix only" inverse_property_contribution_alv(PennyCrack(1.0), ti, times)
+end
+
+@testset "ALV ribbon crack — elastic limit, the ribbon limit of the ellipse, the flat limit of a void cylinder" begin
+    # The ribbon (ℓ unbounded, half-width b along m) has B̃_ℓ = π β^{-∘} and
+    # B̃_m = B̃_n = π (2α + β)^{-∘} ∘ (α + 2β) ∘ β^{-∘}. Three independent references:
+    # the elastic ribbon under a constant kernel; in an aging matrix, whose kernels do
+    # not commute, (3π/8) times the elliptic crack as η = b/a → 0 (error of order
+    # η² log η); and void elliptic cylinders of semi-axes (b, ω b) at the area
+    # fraction π ω ε, through their own Hill kernel.
+    times = [0.0, 0.3, 0.7, 1.2, 2.0]
+    n = length(times)
+    angles = (0.3, 1.1, -0.4)
+    ribbon = RibbonCrack(1.0; euler_angles = angles)
+    C₀ = TensISO{3}(30.0, 12.0)
+    H = Matrix(inverse_property_contribution_alv(ribbon, heaviside_law(C₀), times))
+    H_el = _to_mandel(inverse_property_contribution(ribbon, C₀))
+    @test all(H[(6i - 5):(6i), (6i - 5):(6i)] ≈ H_el for i in 1:n)
+    @test all(maximum(abs, H[(6i - 5):(6i), (6j - 5):(6j)]) ≤ 1.0e-12 * norm(H_el) for i in 1:n for j in 1:(i - 1))
+    matrix = ViscoLaw(
+        (t, tp) -> t >= tp ?
+            TensISO{3}(6.0 * (1 + 0.5tp) * exp(-(t - tp) / 0.8), 2.0 * (1 + tp) * exp(-(t - tp) / 1.5)) :
+            TensISO{3}(0.0, 0.0)
+    )
+    B = cod_kernel_alv(ribbon, matrix, times)
+    @test B.B_m == B.B_n
+    B_ellipse = cod_kernel_alv(EllipticCrack(1.0e5, 1.0; euler_angles = angles), matrix, times)
+    @test all(3π / 8 .* getfield(B_ellipse, k) ≈ getfield(B, k) for k in (:B_ℓ, :B_m, :B_n))
+    ε, ω = 0.1, 1.0e-6
+    cracked = RVE()
+    add_phase!(cracked, :M, Ellipsoid(1.0), Dict(:C => matrix); fraction = :rest)
+    add_phase!(cracked, :F, ribbon, Dict(:C => matrix); density = ε)
+    porous = RVE()
+    add_phase!(porous, :M, Ellipsoid(1.0), Dict(:C => matrix); fraction = :rest)
+    add_phase!(porous, :V, Ellipsoid(Inf, 1.0, ω; euler_angles = angles), Dict(:C => ViscoLaw((t, tp) -> TensISO{3}(0.0, 0.0))); fraction = π * ω * ε)
+    C_crack = homogenize_alv(cracked, Dilute(:M), :C; times)
+    @test C_crack.class isa TensOrtho
+    @test Matrix(C_crack) ≈ Matrix(homogenize_alv(porous, Dilute(:M), :C; times)) rtol = 1.0e-5
+    # A flowing crack opens as the penny it wraps.
+    @test Matrix(inverse_property_contribution_alv(ConductiveCrack(1.0; conductivity = 2.0, euler_angles = angles), matrix, times)) ≈
+        Matrix(inverse_property_contribution_alv(PennyCrack(1.0; euler_angles = angles), matrix, times))
+end
+
+@testset "ALV ribbon cracks in the schemes — elastic limit, tilted" begin
+    # Under constant kernels every ALV scheme gives the elastic estimate at every
+    # instant: oblique ribbons, orthotropic in their frame, for the schemes on the
+    # matrix; averaged in orientation for those on the running estimate.
+    times = [0.0, 1.0]
+    C₀ = TensISO{3}(30.0, 12.0)
+    ribbon = RibbonCrack(1.0; euler_angles = (0.3, 1.1, -0.4))
+    for (scheme, kw, rtol) in (
+            (Dilute(), (;), 1.0e-12), (MoriTanaka(), (;), 1.0e-12),
+            (SelfConsistent(reltol = 1.0e-12), (; symmetrize = :iso), 1.0e-11),
+            (DifferentialScheme(), (; symmetrize = :iso), 1.0e-8),
+        )
+        el, al = RVE(), RVE()
+        add_phase!(el, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
+        add_phase!(al, :M, Ellipsoid(1.0), Dict(:C => heaviside_law(C₀)); fraction = :rest)
+        add_phase!(el, :F, ribbon, Dict(:C => C₀); density = 0.15, kw...)
+        add_phase!(al, :F, ribbon, Dict(:C => heaviside_law(C₀)); density = 0.15, kw...)
+        E = _to_mandel(homogenize(el, scheme, :C))
+        A = Matrix(homogenize_alv(al, scheme, :C; times))
+        @test A[1:6, 1:6] ≈ E rtol = rtol
+        @test A[7:12, 7:12] ≈ E rtol = rtol
+    end
 end
 
 @testset "ALV elliptic cracks, iso-averaged, self-consistent — Echoes reference" begin

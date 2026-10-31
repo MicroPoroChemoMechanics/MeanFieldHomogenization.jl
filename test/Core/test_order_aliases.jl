@@ -203,11 +203,15 @@ end
     @test _oa_refuses(() -> conductivity_contribution_alv(sph4, C₀, OA_TIMES), :property_contribution_alv)
     # A second-order tensor stands for its Heaviside law.
     @test property_contribution_alv(sph2, OA_K₀, OA_TIMES) == property_contribution_alv(sph2, K₀, OA_TIMES)
-    # The crack functions are elastic only, and their names in elasticity synonyms.
+    # The crack functions serve both orders; the density factors are synonyms.
     crack = PennyCrack(1.0)
     H̃ = inverse_property_contribution_alv(crack, C₀, OA_TIMES)
     Ñ = property_contribution_alv(crack, C₀, OA_TIMES)
     @test compliance_contribution_alv(crack, C₀, OA_TIMES) == H̃
+    @test resistivity_contribution_alv(crack, K₀, OA_TIMES) == inverse_property_contribution_alv(crack, K₀, OA_TIMES)
+    @test conductivity_contribution_alv(crack, K₀, OA_TIMES) == property_contribution_alv(crack, K₀, OA_TIMES)
+    @test _oa_refuses(() -> compliance_contribution_alv(crack, K₀, OA_TIMES), :inverse_property_contribution_alv)
+    @test _oa_refuses(() -> resistivity_contribution_alv(crack, C₀, OA_TIMES), :inverse_property_contribution_alv)
     @test stiffness_contribution_alv(crack, C₀, OA_TIMES) == Ñ
     @test delta_compliance_alv(crack, H̃, 0.1) == delta_inverse_property_alv(crack, H̃, 0.1)
     @test delta_stiffness_alv(crack, Ñ, 0.1) == delta_property_alv(crack, Ñ, 0.1)

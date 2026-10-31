@@ -135,7 +135,7 @@ export homogenize_alv_order2
 export laminate_alv
 export cod_kernel_alv, inverse_property_contribution_alv, delta_inverse_property_alv
 export property_contribution_alv_at, delta_property_alv
-export compliance_contribution_alv, delta_compliance_alv
+export compliance_contribution_alv, resistivity_contribution_alv, delta_compliance_alv
 export stiffness_contribution_alv_at, delta_stiffness_alv
 
 # ── Laplace-Carson (non-aging) ─────────────────────────────────────────────
