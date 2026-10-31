@@ -136,9 +136,9 @@ function laminate_alv(lam::Laminates.Laminate, ::Val{4}; times, property::Symbol
 
     Cs = map(names) do nm
         law = Laminates.layer_property(lam, nm, property)
-        law isa AbstractViscoLaw || throw(
+        law isa ALVProperty || throw(
             ArgumentError(
-                "laminate_alv: layer :$(nm) property :$(property) is not a ViscoLaw"
+                "laminate_alv: layer :$(nm) property :$(property) is neither a viscoelastic law nor a relaxation operator"
             )
         )
         return _alv_to_layer_frame(_trapezoidal_relaxation(law, times, 6), basis, n)
@@ -177,9 +177,9 @@ function laminate_alv(lam::Laminates.Laminate, ::Val{2}; times, property::Symbol
 
     Ks = map(names) do nm
         law = Laminates.layer_property(lam, nm, property)
-        law isa AbstractViscoLaw || throw(
+        law isa ALVProperty || throw(
             ArgumentError(
-                "laminate_alv: layer :$(nm) property :$(property) is not a ViscoLaw"
+                "laminate_alv: layer :$(nm) property :$(property) is neither a viscoelastic law nor a relaxation operator"
             )
         )
         return _trapezoidal_relaxation(law, times, 3)
@@ -219,9 +219,9 @@ function homogenize_alv(
         times::AbstractVector{<:Real}, kw...
     )
     law = Laminates.layer_property(lam, first(Laminates.layer_names(lam)), prop)
-    law isa AbstractViscoLaw ||
-        throw(ArgumentError("homogenize_alv: property :$(prop) is not a ViscoLaw"))
-    order = _alv_property_order(law, first(times))
+    law isa ALVProperty ||
+        throw(ArgumentError("homogenize_alv: property :$(prop) is neither a viscoelastic law nor a relaxation operator"))
+    order = _alv_order_int(law, times)
     return laminate_alv(lam, Val(order); times = times, property = prop)
 end
 
@@ -232,7 +232,7 @@ function homogenize_alv(
         times::AbstractVector{<:Real}, kw...
     )
     names = Laminates.layer_names(lam)
-    B = _alv_property_order(Laminates.layer_property(lam, first(names), prop), first(times)) == 4 ? 6 : 3
+    B = _alv_order_int(Laminates.layer_property(lam, first(names), prop), times) == 4 ? 6 : 3
     Ms = [
         _trapezoidal_relaxation(Laminates.layer_property(lam, nm, prop), times, B)
             for nm in names
@@ -246,7 +246,7 @@ function homogenize_alv(
         times::AbstractVector{<:Real}, kw...
     )
     names = Laminates.layer_names(lam)
-    B = _alv_property_order(Laminates.layer_property(lam, first(names), prop), first(times)) == 4 ? 6 : 3
+    B = _alv_order_int(Laminates.layer_property(lam, first(names), prop), times) == 4 ? 6 : 3
     Ss = [
         volterra_inverse(
             _trapezoidal_relaxation(Laminates.layer_property(lam, nm, prop), times, B);

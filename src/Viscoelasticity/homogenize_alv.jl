@@ -33,6 +33,7 @@ function has_visco_property(cell::MFH_Core.AbstractHomogenizationCell, prop::Sym
 end
 
 _is_visco_value(::AbstractViscoLaw, ::Symbol) = true
+_is_visco_value(::AbstractALVKernel, ::Symbol) = true
 _is_visco_value(v, ::Symbol) = false
 _is_visco_value(h::MFH_Core.Homogenized, key::Symbol) =
     has_visco_property(h.cell, h.property === nothing ? key : h.property)
@@ -245,6 +246,27 @@ function _trapezoidal_relaxation(
     return M
 end
 
+# An operator given directly — the result of the scale below, or a compact kernel — is
+# already the relaxation operator on the grid: only its size is checked, and a compact
+# kernel is materialized for the dense scheme formulas.
+_trapezoidal_relaxation(R::AbstractMatrix, times::AbstractVector{<:Real}, B::Int) = _check_operator(R, times, B)
+_trapezoidal_relaxation(K::AbstractALVKernel, times::AbstractVector{<:Real}, B::Int) = Matrix(_check_operator(K, times, B))
+
+function _check_operator(R::AbstractMatrix, times::AbstractVector{<:Real}, B::Int)
+    n = length(times)
+    size(R) == (B * n, B * n) || throw(
+        DimensionMismatch(
+            "an ALV operator for $n instants and blocks of size $B is $(B * n)×$(B * n); " *
+                "this one is $(size(R, 1))×$(size(R, 2)): was it computed on another time grid?"
+        )
+    )
+    return R
+end
+
+# The order of a property, 4 or 2, from a law's sample or an operator's size.
+_alv_order_int(x, times) = _val_int(_alv_order(x, times))
+_val_int(::Val{N}) where {N} = N
+
 """
     _alv_property_order(law::AbstractViscoLaw, t) -> Int
 
@@ -270,11 +292,30 @@ _alv_order_error(sample) = throw(
 )
 
 """
-    homogenize_alv(rve, scheme, prop::Symbol; times) -> Matrix
+    homogenize_alv(rve, scheme, prop::Symbol; times) -> AbstractMatrix
 
-ALV pipeline: build the discrete block matrices of every phase, compute
-the ALV Hill kernel and dilute concentration tensors, and dispatch on
-`scheme` to the corresponding `_alv` scheme function.
+The effective relaxation operator of `rve` in aging linear viscoelasticity, on the time grid
+`times`: a lower block-triangular ``(Bn)\\times(Bn)`` matrix (``B = 6`` in elasticity, ``3`` in
+conduction) that maps a strain history sampled on `times` to the stress history.
+
+**Phase properties.** The property `prop` of a phase may be
+
+  * a law — a [`ViscoLaw`](@ref) or any [`AbstractViscoLaw`](@ref), in relaxation or creep form,
+    or an elastic tensor, which is a law constant in time;
+  * an operator on the same grid, as one scale hands it to the next (the result of another
+    `homogenize_alv`): a dense block matrix, or a compact [`ALVKernelISO`](@ref),
+    [`ALVKernelTI`](@ref) or [`ALVKernelOrtho`](@ref);
+  * a [`Homogenized`](@ref) cell, homogenized here on the same grid and memoized for the whole
+    call, as in elasticity.
+
+**Result.** An elastic (``6n\\times 6n``) result with a symmetry is returned in its compact form —
+[`ALVKernelISO`](@ref), [`ALVKernelTI`](@ref) about ``\\underline{e}_3`` or [`ALVKernelOrtho`](@ref)
+in the canonical frame — an `AbstractMatrix` that indexes, multiplies and inverts like the dense
+one, and `Matrix(R)` materializes it. Otherwise, and in conduction, it is a dense `Matrix`.
+
+The ALV pipeline builds the discrete block matrices of every phase, computes the ALV Hill
+kernel and dilute concentration tensors, and dispatches on `scheme` to the corresponding
+`_alv` scheme function.
 
 The function dispatches on the **order of the matrix property** (read
 once from the matrix `ViscoLaw` sample type):
@@ -327,15 +368,44 @@ function homogenize_alv(
         rve::RVE, scheme::HomogenizationScheme,
         prop::Symbol; times::AbstractVector{<:Real}, kw...
     )
+    R = MFH_Core._with_nested_cache() do
+        MFH_Core._with_alv_grid(() -> _homogenize_alv_rve(rve, scheme, prop; times, kw...), times)
+    end
+    return _compact_alv(R, times)
+end
+
+# A nested cell met inside an aging viscoelastic homogenization, on its grid.
+MFH_Core._resolve_alv(cell, scheme, prop::Symbol, times; kw...) = homogenize_alv(cell, scheme, prop; times, kw...)
+
+"""
+    _compact_alv(R, times) -> AbstractMatrix
+
+`R` in the cheapest compact form its symmetry allows — isotropic, transversely isotropic about
+``\\underline{e}_3``, orthotropic in the canonical frame — when it is a ``6n\\times 6n`` operator;
+as it is otherwise.
+"""
+_compact_alv(R::AbstractALVKernel, times) = R
+function _compact_alv(R::AbstractMatrix, times)
+    size(R, 1) == 6 * length(times) || return R
+    _is_iso_block(R) && return ALVKernelISO(R)
+    _is_ti_block(R) && return ALVKernelTI(R)
+    _is_ortho_block(R) && return ALVKernelOrtho(R)
+    return R
+end
+
+function _homogenize_alv_rve(
+        rve::RVE, scheme::HomogenizationScheme,
+        prop::Symbol; times::AbstractVector{<:Real}, kw...
+    )
     # 1. Matrix kernel.  `homogenize_alv` does not go through `homogenize`, so
     #    it resolves the scheme's reference medium itself.
     m = matrix_name(scheme, rve)
     C_M_law = phase_property(rve, m, prop)
-    C_M_law isa AbstractViscoLaw ||
-        throw(ArgumentError("homogenize_alv: matrix property $prop is not a ViscoLaw"))
+    C_M_law isa ALVProperty ||
+        throw(ArgumentError("homogenize_alv: matrix property $prop is neither a viscoelastic law nor a relaxation operator"))
 
     # Dispatch on the property order (2 vs 4) inferred from the sample.
-    order = _alv_property_order(C_M_law, first(times))
+    order = _alv_order_int(C_M_law, times)
     if order == 2
         return _homogenize_alv_order2(
             rve, scheme, prop;
@@ -454,12 +524,12 @@ the `scheme` only for the stiffness a bound assigns to the sphere.
 """
 function _inclusion_alv_quantities(
         geom, scheme, C_r_law,
-        C_M_law::AbstractViscoLaw,
+        C_M_law::ALVProperty,
         C_0::AbstractMatrix,
         times::AbstractVector{<:Real}
     )
-    C_r_law isa AbstractViscoLaw ||
-        throw(ArgumentError("homogenize_alv: phase property is not a ViscoLaw"))
+    C_r_law isa ALVProperty ||
+        throw(ArgumentError("homogenize_alv: phase property is neither a viscoelastic law nor a relaxation operator"))
     C_r = _trapezoidal_relaxation(C_r_law, times, 6)
     P_r = hill_kernel(geom, C_M_law, times)
     # Iso fast path : if every input matrix is iso (typical for
@@ -506,7 +576,7 @@ end
 
 function _inclusion_alv_quantities(
         sphere::LayeredSphere, scheme, _C_r_law,
-        C_M_law::AbstractViscoLaw,
+        C_M_law::ALVProperty,
         C_0::AbstractMatrix,
         times::AbstractVector{<:Real}
     )

@@ -67,8 +67,8 @@ function self_consistent_alv(
     # 1. Discretize every phase's kernel once.
     m = host_phase_name(rve, matrix, "self_consistent_alv")
     C_M_law = phase_property(rve, m, prop)
-    C_M_law isa AbstractViscoLaw ||
-        throw(ArgumentError("self_consistent_alv: matrix property is not a ViscoLaw"))
+    C_M_law isa ALVProperty ||
+        throw(ArgumentError("self_consistent_alv: matrix property is neither a viscoelastic law nor a relaxation operator"))
     C_0 = _trapezoidal_relaxation(C_M_law, times, 6)
     f_M = volume_fraction(rve, m)
     incl_names = inclusion_phase_names(rve, m)
@@ -104,8 +104,8 @@ function self_consistent_alv(
             continue
         end
         C_r_law = phase_property(rve, name, prop)
-        C_r_law isa AbstractViscoLaw ||
-            throw(ArgumentError("self_consistent_alv: phase $name property is not a ViscoLaw"))
+        C_r_law isa ALVProperty ||
+            throw(ArgumentError("self_consistent_alv: phase $name property is neither a viscoelastic law nor a relaxation operator"))
         C_r = _trapezoidal_relaxation(C_r_law, times, 6)
         sym = phase_symmetrize(rve, name)
         # Like the differential scheme, the self-consistent one uses its

@@ -270,6 +270,22 @@ end
 const _NESTED_CACHE = ScopedValue{Union{Nothing, IdDict{Any, Dict{Symbol, Any}}}}(nothing)
 const _NESTED_DEPTH = ScopedValue{Int}(0)
 
+# The time grid of the enclosing aging viscoelastic homogenization, `nothing` outside one: a
+# `Homogenized` read inside `homogenize_alv` is the operator of its cell on that grid.
+const _ALV_GRID = ScopedValue{Union{Nothing, AbstractVector{<:Real}}}(nothing)
+
+"""
+    _with_alv_grid(f, times)
+
+Run `f()` with `times` as the grid on which every nested cell is homogenized in aging
+viscoelasticity.
+"""
+_with_alv_grid(f, times::AbstractVector{<:Real}) = with(f, _ALV_GRID => times)
+
+# The aging viscoelastic homogenization of a nested cell on a grid. Core cannot call it: the
+# method lives in `Viscoelasticity`.
+function _resolve_alv end
+
 """
     MAX_NESTING
 
@@ -310,22 +326,26 @@ resolve_property(value, ::Symbol) = value
 
 function resolve_property(h::Homogenized, key::Symbol)
     prop = h.property === nothing ? key : h.property
+    grid = _ALV_GRID[]
     cache = _NESTED_CACHE[]
-    cache === nothing && return _resolve_uncached(h, prop)
+    cache === nothing && return _resolve_uncached(h, prop, grid)
     per_key = get!(() -> Dict{Symbol, Any}(), cache, h)
-    return get!(() -> _resolve_uncached(h, prop), per_key, prop)
+    # The aging viscoelastic operator of a cell is not its elastic tensor: a distinct key.
+    return get!(() -> _resolve_uncached(h, prop, grid), per_key, grid === nothing ? prop : Symbol(prop, "@alv"))
 end
 
-function _resolve_uncached(h::Homogenized, prop::Symbol)
+function _resolve_uncached(h::Homogenized, prop::Symbol, grid = nothing)
     d = _NESTED_DEPTH[]
     d ≥ MAX_NESTING && error(
         "Homogenized: nesting deeper than $(MAX_NESTING) levels while resolving " *
             ":$(prop) on a $(typeof(h.cell)) — a cell is probably nested inside itself"
     )
-    return with(_NESTED_DEPTH => d + 1) do
-        homogenize(h.cell, h.scheme, prop; h.kwargs...)
-    end
+    return with(() -> _homogenize_nested(h, prop, grid), _NESTED_DEPTH => d + 1)
 end
+
+# Elastic outside an aging viscoelastic homogenization, on its grid inside one.
+_homogenize_nested(h::Homogenized, prop::Symbol, ::Nothing) = homogenize(h.cell, h.scheme, prop; h.kwargs...)
+_homogenize_nested(h::Homogenized, prop::Symbol, grid) = _resolve_alv(h.cell, h.scheme, prop, grid; h.kwargs...)
 
 """
     has_nested_property(cell, key::Symbol) -> Bool

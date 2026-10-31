@@ -19,10 +19,8 @@
 #  follow this ladder (e.g. `ALVKernelTI(K::ALVKernelISO)`) so mixed
 #  arithmetic auto-promotes to the most general operand.
 #
-#  This is a **prototype** : the types are fully usable on their own
-#  (algebra closure verified by tests) but `homogenize_alv` does not
-#  yet accept them — pass `Matrix(K)` to materialize.  Full integration
-#  with the dispatcher is left to a follow-up PR.
+#  `homogenize_alv` takes them as phase properties and returns its
+#  elastic result in the cheapest of these forms that its symmetry allows.
 # =============================================================================
 
 """
@@ -351,20 +349,29 @@ Volterra inverse of a structured ALV kernel.  Stays in the same
 symmetry class : iso ↦ iso, TI ↦ TI, ortho ↦ ortho.  Avoids
 materializing the ``6n\\times 6n`` matrix.
 """
-function volterra_inverse(K::ALVKernelISO)
+function volterra_inverse(K::ALVKernelISO; block_size::Int = 6)
+    _check_compact_block(block_size)
     αβ = _iso_inv((K.α, K.β))
     return ALVKernelISO(αβ[1], αβ[2])
 end
 
-function volterra_inverse(K::ALVKernelTI)
+function volterra_inverse(K::ALVKernelTI; block_size::Int = 6)
+    _check_compact_block(block_size)
     ℓ = _ti_inv(K.ℓ)
     return ALVKernelTI(ℓ; axis = K.axis)
 end
 
-function volterra_inverse(K::ALVKernelOrtho)
+function volterra_inverse(K::ALVKernelOrtho; block_size::Int = 6)
+    _check_compact_block(block_size)
     o = _ortho_inv(K.o)
     return ALVKernelOrtho(o; axes = K.axes)
 end
+
+# A compact kernel is an operator of 6×6 blocks: the `block_size` the dense code passes is
+# accepted, any other refused.
+_check_compact_block(B::Int) = B == 6 || throw(
+    ArgumentError("a compact ALV kernel is made of 6×6 blocks; block_size = $B")
+)
 
 """
     volterra_left_divide(S::AbstractALVKernel, M::AbstractALVKernel)

@@ -85,8 +85,8 @@ function asymmetric_self_consistent_alv(
     )
     m = host_phase_name(rve, matrix, "asymmetric_self_consistent_alv")
     C_M_law = phase_property(rve, m, prop)
-    C_M_law isa AbstractViscoLaw ||
-        throw(ArgumentError("asymmetric_self_consistent_alv: matrix property is not a ViscoLaw"))
+    C_M_law isa ALVProperty ||
+        throw(ArgumentError("asymmetric_self_consistent_alv: matrix property is neither a viscoelastic law nor a relaxation operator"))
     C_M = _trapezoidal_relaxation(C_M_law, times, 6)
     incl_names = inclusion_phase_names(rve, m)
     # Eltype-generic containers (Dual-safe — see schemes_alv_sc.jl).
@@ -108,8 +108,8 @@ function asymmetric_self_consistent_alv(
             continue
         end
         C_r_law = phase_property(rve, name, prop)
-        C_r_law isa AbstractViscoLaw ||
-            throw(ArgumentError("asymmetric_self_consistent_alv: phase $name property is not a ViscoLaw"))
+        C_r_law isa ALVProperty ||
+            throw(ArgumentError("asymmetric_self_consistent_alv: phase $name property is neither a viscoelastic law nor a relaxation operator"))
         if ph.geometry isa LayeredSphere
             push!(layered_data, (geom = ph.geometry, f = _amount_value(rve, name), sym = phase_symmetrize(rve, name)))
             continue
@@ -312,8 +312,8 @@ function differential_alv(
     )
     m = host_phase_name(rve, matrix, "differential_alv")
     C_M_law = phase_property(rve, m, prop)
-    C_M_law isa AbstractViscoLaw ||
-        throw(ArgumentError("differential_alv: matrix property is not a ViscoLaw"))
+    C_M_law isa ALVProperty ||
+        throw(ArgumentError("differential_alv: matrix property is neither a viscoelastic law nor a relaxation operator"))
     C_M_full = _trapezoidal_relaxation(C_M_law, times, 6)
     _is_iso_block(C_M_full) ||
         throw(
@@ -358,8 +358,8 @@ function differential_alv(
                 continue
             end
             C_r_law = phase_property(rve, name, prop)
-            C_r_law isa AbstractViscoLaw ||
-                throw(ArgumentError("differential_alv: phase $name property is not a ViscoLaw"))
+            C_r_law isa ALVProperty ||
+                throw(ArgumentError("differential_alv: phase $name property is neither a viscoelastic law nor a relaxation operator"))
             C_r = _trapezoidal_relaxation(C_r_law, times, 6)
             _alv_diff_keeps_iso(geom, sym, C_r) ||
                 _alv_diff_iso_error(name, "the shape or the anisotropy")

@@ -72,8 +72,8 @@ function self_consistent_alv_newton(
     )
     m = host_phase_name(rve, matrix, "self_consistent_alv_newton")
     C_M_law = phase_property(rve, m, prop)
-    C_M_law isa AbstractViscoLaw ||
-        throw(ArgumentError("self_consistent_alv_newton: matrix property is not a ViscoLaw"))
+    C_M_law isa ALVProperty ||
+        throw(ArgumentError("self_consistent_alv_newton: matrix property is neither a viscoelastic law nor a relaxation operator"))
 
     n = length(times)
     f_M = volume_fraction(rve, m)
@@ -102,8 +102,8 @@ function self_consistent_alv_newton(
             continue
         end
         C_r_law = phase_property(rve, name, prop)
-        C_r_law isa AbstractViscoLaw ||
-            throw(ArgumentError("self_consistent_alv_newton: phase $name property is not a ViscoLaw"))
+        C_r_law isa ALVProperty ||
+            throw(ArgumentError("self_consistent_alv_newton: phase $name property is neither a viscoelastic law nor a relaxation operator"))
         _alv_sc_refuse_layered(ph.geometry, name, "self_consistent_alv_newton")
         push!(C_phases_full, _trapezoidal_relaxation(C_r_law, times, 6))
         push!(geometries, ph.geometry)

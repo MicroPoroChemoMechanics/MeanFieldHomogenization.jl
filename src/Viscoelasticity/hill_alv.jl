@@ -20,7 +20,7 @@
 
 """
     hill_kernel(ell::AbstractEllipsoidalInclusion,
-                C0_law::AbstractViscoLaw,
+                C0_law::ALVProperty,
                 times::AbstractVector{<:Real}) -> Matrix
 
 Discrete ALV Hill polarization tensor kernel for the inclusion `ell`
@@ -51,7 +51,7 @@ ECHOES manual appendix `viscoelastic_hill_kernel.qmd`:
   6. Assemble block-by-block:
      ``[\\widetilde{\\mathbb{P}}]_{ij} = (J_{\\mathrm{long}})_{ij}\\,\\mathrm{Mat}(\\mathbb{U}^{\\boldsymbol{A}}) + (J_{\\mathrm{shear}})_{ij}\\,\\mathrm{Mat}(\\mathbb{V}^{\\boldsymbol{A}} - \\mathbb{U}^{\\boldsymbol{A}})``.
 """
-hill_kernel(ell, C0_law::AbstractViscoLaw, times::AbstractVector{<:Real}) =
+hill_kernel(ell, C0_law::ALVProperty, times::AbstractVector{<:Real}) =
     _hill_kernel_iso(ell, _trapezoidal_relaxation(C0_law, times, 6))
 
 # Steps 2-6 on the 6n×6n RELAXATION matrix of the iso reference (step 1: the
@@ -67,7 +67,7 @@ function _hill_kernel_iso(ell, R_M::AbstractMatrix)
 end
 
 """
-    second_hill_kernel(ell, C0_law::AbstractViscoLaw, times) -> Matrix
+    second_hill_kernel(ell, C0_law::ALVProperty, times) -> Matrix
 
 Discrete ALV second Hill tensor kernel of the inclusion `ell` in an
 **isotropic** ALV matrix described by `C0_law`, the counterpart of
@@ -85,7 +85,7 @@ on it. Same ``6n\\times 6n`` lower-block-triangular Mandel layout as
 `trapezoidal_matrix`; for a law constant in time each diagonal block is the
 elastic ``\\mathbb{Q}``.
 """
-function second_hill_kernel(ell, C0_law::AbstractViscoLaw, times::AbstractVector{<:Real})
+function second_hill_kernel(ell, C0_law::ALVProperty, times::AbstractVector{<:Real})
     R_M = _trapezoidal_relaxation(C0_law, times, 6)
     return R_M - R_M * _hill_kernel_iso(ell, R_M) * R_M
 end
