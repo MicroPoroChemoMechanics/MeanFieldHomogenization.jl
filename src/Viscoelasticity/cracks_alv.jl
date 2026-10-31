@@ -207,7 +207,7 @@ isotropic ALV matrix, from its COD coefficients ([`cod_kernel_alv`](@ref)):
 ```
 
 with ``k = 3/4`` for an ellipse and ``k = 2/\\pi`` for a ribbon, as in elasticity
-([`compliance_from_cod`](@ref)), stored in the class of the crack: transversely
+([`compliance_from_cod`](@ref MeanFieldHomogenization.Cracks.compliance_from_cod)), stored in the class of the crack: transversely
 isotropic about its normal for a penny, orthotropic in its frame otherwise.
 
 Convention: same as the elastic [`inverse_property_contribution`](@ref MeanFieldHomogenization.Core.inverse_property_contribution) — the
@@ -228,7 +228,7 @@ matrix law of order 2), the crack is insulating and the contribution is the
 \\widetilde{b} = \\frac{\\pi}{2}\\,\\widetilde{k}_0^{-\\circ}\\ \\ (\\text{ribbon}),
 ```
 
-the elastic thermal COD ``b`` of [`cod_tensor`](@ref) with ``1/k_0`` the Volterra
+the elastic thermal COD ``b`` of [`cod_tensor`](@ref MeanFieldHomogenization.Cracks.cod_tensor) with ``1/k_0`` the Volterra
 inverse of the conductivity kernel. A Kapitza-like interface of discretized
 conductance `α_interface` (a scalar `ViscoLaw`) corrects it as in elasticity,
 ``\\widetilde{b}\\circ(\\mathbb{1} + b\\,\\widetilde{\\alpha}\\circ\\widetilde{b})^{-\\circ}``.
