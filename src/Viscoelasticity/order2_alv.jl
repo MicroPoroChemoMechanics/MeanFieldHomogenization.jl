@@ -871,14 +871,11 @@ end
 # `K`, Σ_c sym((4π/3) ε R̃_c(K)) ∘ K: the Echoes form (Σ f B̃ ∘ K̃⁻¹)(Σ f Ã ∘ K̃⁻¹ + ΔR̃)⁻¹
 # of the step, written (Σ f B̃)(Σ f Ã + ΔR̃ ∘ K̃)⁻¹, as at order 4.
 _sc2_with_cracks(A, K, cracks) = isempty(cracks) ? A : A + _sc2_crack_resistivity(K, cracks) * K
-function _sc2_crack_resistivity(K, cracks)
-    λ = _iso_order2_block_alv(K, "self_consistent_alv_order2")
-    terms = map(cracks) do c
-        R̃ = _crack_resistivity_alv(c.geom, λ, c.A_int, _operator_grid((K,), 3))
-        _maybe_symmetrize_alv2(delta_inverse_property_alv(c.geom, R̃, c.ε), c.sym)
-    end
-    return reduce(+, terms)
-end
+_sc2_crack_resistivity(K, cracks) =
+    _sc2_crack_resistivity(_iso_order2_block_alv(K, "self_consistent_alv_order2"), _operator_grid((K,), 3), cracks)
+_sc2_crack_resistivity(λ::AbstractMatrix, grid::TimeGrid, cracks) = reduce(
+    +, (_maybe_symmetrize_alv2(delta_inverse_property_alv(c.geom, _crack_resistivity_alv(c.geom, λ, c.A_int, grid), c.ε), c.sym) for c in cracks)
+)
 
 # The matrix kernel and the phases of an order-2 ALV self-consistent cell, read once
 # for the Picard and the Newton solvers (`who` names the caller in the messages).
