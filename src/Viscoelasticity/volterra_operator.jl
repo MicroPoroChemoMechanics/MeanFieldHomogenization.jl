@@ -434,6 +434,26 @@ function _iso_part(R::VolterraOperator)
     return VolterraOperator(_ISO4, (α, (trace .- α) ./ 5), R.grid)
 end
 
+"""
+    _iso_part2(R::VolterraOperator) -> VolterraOperator
+
+The isotropic part of an order-2 operator, read on its blocks: a third of the trace of
+each of its values, the trace being that of the blocks, each counted once per copy (the
+adapted basis is orthonormal).
+"""
+function _iso_part2(R::VolterraOperator)
+    n = length(R.grid)
+    trace = zeros(eltype(R), n, n)
+    map(R.blocks, _class_layout(R.class)) do B, copies
+        m = length(first(copies))
+        W = reshape(B, m, n, m, n)
+        for a in 1:m
+            trace .+= length(copies) .* view(W, a, :, a, :)
+        end
+    end
+    return VolterraOperator(_ISO2, (trace ./ 3,), R.grid)
+end
+
 # The absolute tolerance of a membership test. Values that do not compare
 # (symbols) are taken as given: no residual can be judged on them.
 _class_tolerance(R, ::Nothing) = nothing

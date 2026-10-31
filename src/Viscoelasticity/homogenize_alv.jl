@@ -223,6 +223,11 @@ Order-2 counterpart of [`_maybe_symmetrize_alv`](@ref), for ``3n\\times 3n``
 ALV matrices whose blocks are 2-tensors.
 """
 @inline _maybe_symmetrize_alv2(M::AbstractMatrix, ::NoSymmetrize) = M
+# An operator stored by blocks: the isotropic average read on its blocks (λ = tr/3);
+# the transversely isotropic one on its full matrix, and kept full.
+_maybe_symmetrize_alv2(R::VolterraOperator{<:TensISO{2, 3}}, ::IsoSymmetrize) = R
+_maybe_symmetrize_alv2(R::VolterraOperator, ::IsoSymmetrize) = _iso_part2(R)
+_maybe_symmetrize_alv2(R::VolterraOperator, s::TISymmetrize) = VolterraOperator(_maybe_symmetrize_alv2(Matrix(R), s), R.grid)
 @inline _maybe_symmetrize_alv2(M::AbstractMatrix, ::IsoSymmetrize) =
     _iso_project_blocks3(M)
 @inline _maybe_symmetrize_alv2(M::AbstractMatrix, sym::TISymmetrize) =

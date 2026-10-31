@@ -90,7 +90,7 @@ end
         A = [I + 0.1 * op(3.0), I + 0.1 * op(4.0)]
         N = [op(5.0), op(6.0)]
         f, fM = [0.2, 0.3], 0.5
-        a = V._OpALV(C0.grid)
+        a = V._OpALV{4}(C0.grid)
         mt = V._alg_mori_tanaka(a, C0, A, N, f, fM)
         @test typeof(mt.class) == typeof(C0.class)
         @test Matrix(mt) ≈ mori_tanaka_alv(Matrix(C0), Matrix.(A), Matrix.(N), f, fM) rtol = 1.0e-11

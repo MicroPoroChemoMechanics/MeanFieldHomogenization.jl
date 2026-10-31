@@ -128,7 +128,7 @@ end
     )
     for law in laws
         C₀, N = VolterraOperator(law(1.0), times), VolterraOperator(law(2.0), times)
-        d = ForwardDiff.derivative(f -> Matrix(V._alg_dilute(V._OpALV(C₀.grid), C₀, [N], [f])), 0.3)
+        d = ForwardDiff.derivative(f -> Matrix(V._alg_dilute(V._OpALV{4}(C₀.grid), C₀, [N], [f])), 0.3)
         @test d ≈ Matrix(N) rtol = 1.0e-14
     end
 end

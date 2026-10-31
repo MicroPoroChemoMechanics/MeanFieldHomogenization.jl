@@ -131,12 +131,15 @@ Volterra operators stored by the blocks of their symmetry class
 their own `*`, `inv` and `+`, each operation in the cheapest class that holds its
 operands (an isotropic operator joins the class of the other).
 """
-struct _OpALV{G <: TimeGrid} <: _ALVAlgebra
+struct _OpALV{O, G <: TimeGrid} <: _ALVAlgebra
     grid::G
 end
+_OpALV{O}(grid::G) where {O, G <: TimeGrid} = _OpALV{O, G}(grid)
 _alg_ntimes(a::_OpALV, C) = length(a.grid)
 _alg_eltype(::_OpALV, C) = eltype(C)
-_alg_one(a::_OpALV, n, ::Type{T}) where {T} = VolterraOperator(TensISO{3}(one(T), one(T)), a.grid)
+# The identity of the order: 𝕀 = 𝕁 + 𝕂 at order 4, 𝟏 at order 2.
+_alg_one(a::_OpALV{4}, n, ::Type{T}) where {T} = VolterraOperator(TensISO{3}(one(T), one(T)), a.grid)
+_alg_one(a::_OpALV{2}, n, ::Type{T}) where {T} = VolterraOperator(TensISO{3}(one(T)), a.grid)
 _alg_prod(::_OpALV, X, Y) = X * Y
 _alg_inv(::_OpALV, X) = inv(X)
 _alg_add(::_OpALV, X, Y) = X + Y
@@ -162,7 +165,7 @@ function _in_class_algebra(f::F, singles::Tuple, lists::Tuple) where {F}
     grid = _operator_grid(ops)
     candidates = _algebra_candidates(ops)
     as_op(M) = _as_class_operator(M, grid, candidates)
-    return f(_OpALV(grid), map(as_op, singles)..., map(l -> [as_op(M) for M in l], lists)...)
+    return f(_OpALV{_operands_order(ops, grid)}(grid), map(as_op, singles)..., map(l -> [as_op(M) for M in l], lists)...)
 end
 
 """
@@ -172,6 +175,15 @@ end
 the callers that compute on dense matrices.
 """
 _in_cheapest_algebra(f::F, singles::Tuple, lists::Tuple) where {F} = Matrix(_in_class_algebra(f, singles, lists))
+
+# The order of the operands: that of an operator among them, or, for plain matrices
+# alone (order 4: the dense callers), 4.
+function _operands_order(ops, grid)
+    for M in ops
+        M isa VolterraOperator && return _order(M.class)
+    end
+    return 4
+end
 
 # The grid of the operators, or, for plain matrices alone, a grid of as many
 # instants (its values are not read: only the equality of grids is).
@@ -185,10 +197,13 @@ end
 const _ISO4 = TensISO{3}(1.0, 1.0)
 const _TI4_E3 = TensTI{4}(1.0, 1.0, 0.0, 1.0, 1.0, (0.0, 0.0, 1.0))
 const _ORTHO4_CANON = TensOrtho{4, Float64}(ntuple(_ -> 1.0, 9), TensND.CanonicalBasis{3, Float64}())
+const _ISO2 = TensISO{3}(1.0)
+const _TI2_E3 = TensTI{2}(1.0, 1.0, (0.0, 0.0, 1.0))
+const _ORTHO2_CANON = TensOrtho{2, Float64}((1.0, 1.0, 1.0), TensND.CanonicalBasis{3, Float64}())
 
 function _algebra_candidates(ops)
     own = Any[c for c in map(_own_class, ops) if c !== nothing]
-    return Any[_ISO4, own..., _TI4_E3, _ORTHO4_CANON]
+    return Any[_ISO4, _ISO2, own..., _TI4_E3, _TI2_E3, _ORTHO4_CANON, _ORTHO2_CANON]
 end
 # The class an operand brings, if it is stored in one.
 _own_class(R::VolterraOperator{<:_StructuredClass}) = R.class
@@ -201,8 +216,9 @@ _is_iso_block(R::VolterraOperator; kw...) = _is_iso_block(Matrix(R); kw...)
 
 # A full matrix: the isotropic test reads the entries in place, the commonest
 # case (an iterate of a self-consistent scheme); the others go through `_compact`.
+# The order of a full matrix is read on its size against the grid.
 _as_class_operator(M::AbstractMatrix, grid, candidates) =
-    _is_iso_block(M) ? VolterraOperator(_ISO4, iso_params_from_blocks(M), grid) :
+    size(M, 1) == 6 * length(grid) && _is_iso_block(M) ? VolterraOperator(_ISO4, iso_params_from_blocks(M), grid) :
     _compact(VolterraOperator(M, grid), candidates)
 
 # ── Dense operators, computed in the cheapest algebra they share ───────────

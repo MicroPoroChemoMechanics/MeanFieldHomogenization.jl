@@ -142,6 +142,40 @@ function hill_kernel_order2_at(ell, K_0::AbstractMatrix)
     return kron(Matrix{T}(α_0_inv), Matrix{T}(IA))   # block (i, j) = α⁻¹[i, j] I^A
 end
 
+# The order-2 ALV Hill kernel against an isotropic reference stored by its block λ,
+# in the class of the geometry tensor 𝐈ᴬ of the inclusion: block k is λ⁻¹ ⊗ bₖ(𝐈ᴬ).
+function _hill_kernel_order2_op(ell, K::VolterraOperator{<:TensISO{2, 3}})
+    λ⁻¹ = volterra_inverse(K.blocks[1]; block_size = 1)
+    c, b = _depolarization_blocks(ell)
+    return VolterraOperator(c, map(bₖ -> kron(λ⁻¹, Matrix(bₖ)), b), K.grid)
+end
+# A reference of another class: its isotropic part, as the dense kernel reads it.
+_hill_kernel_order2_op(ell, K::VolterraOperator) = VolterraOperator(hill_kernel_order2_at(ell, Matrix(K)), K.grid)
+
+# 𝐈ᴬ in the cheapest class that holds it: isotropic for a sphere; otherwise, being
+# diagonal in the frame of the inclusion, transversely isotropic about one of its axes
+# (a spheroid, whichever axis its semi-axes put apart) or orthotropic in that frame, each
+# checked on the components; the full matrix when the frame is not orthonormal.
+function _depolarization_blocks(ell)
+    IA = Elasticity.tens_IA(ell)
+    return _depolarization_blocks(IA, SMatrix{3, 3}(TensND.canonical_components(IA)), ell)
+end
+_depolarization_blocks(IA::TensISO{2, 3}, M, ell) = IA, TensND.symmetry_blocks(IA)
+function _depolarization_blocks(IA, M, ell)
+    # Components that do not compare (symbols) cannot be judged: kept full.
+    is_hard_numeric(eltype(M)) || return DenseClass{2}(), (M,)
+    for c in _frame_classes2(ell.basis)
+        b = TensND.symmetry_blocks(c, M)
+        maximum(abs, TensND.symmetry_matrix(c, b) - M) ≤ _CLASS_RTOL * maximum(abs, M) && return c, b
+    end
+    return DenseClass{2}(), (M,)
+end
+_frame_classes2(ℬ::TensND.OrthonormalBasis{3}) = (
+    ntuple(k -> TensTI{2}(1.0, 1.0, Tuple(TensND.vecbasis(ℬ, Val(:cov))[:, k])), 3)...,
+    TensOrtho{2, Float64}((1.0, 1.0, 1.0), ℬ),
+)
+_frame_classes2(ℬ) = ()
+
 # A layered sphere has no Hill kernel: its contribution comes from the
 # recurrence of `layered_alv_order2.jl`. Refused by name rather than through a
 # `MethodError` of `tens_IA`, should a path ask for one.
@@ -283,20 +317,18 @@ end
 
 # The conductivity, dilute concentration and dilute contribution of one
 # inclusion, as `_inclusion_alv_quantities` at order 4.
-function _inclusion_alv2_quantities(geom, scheme, K_r_law, K_M_law, K_0, times)
-    K_r = _trapezoidal_relaxation(K_r_law, times, 3)
-    P_r = hill_kernel_order2(geom, K_M_law, times)
-    return (
-        K_r,
-        dilute_concentration_alv_order2(K_r, K_0, P_r),
-        dilute_contribution_alv_order2(K_r, K_0, P_r),
-    )
+function _inclusion_alv2_quantities(geom, scheme, K_r_law, K_M_law, K_0::VolterraOperator, times)
+    # In the class of each, as at order 4; one inverse for both quantities.
+    K_r = _relaxation_operator(K_r_law, K_0.grid)
+    P_r = _hill_kernel_order2_op(geom, K_0)
+    A = _in_class_algebra(_alg_dilute_concentration, (K_r, K_0, P_r), ())
+    return K_r, A, (K_r - K_0) * A
 end
 
 # No Hill kernel: the recurrence gives the concentration and the contribution
 # of the whole sphere, and its layers the conductivity each bound averages (the
 # phase law is a placeholder).
-_inclusion_alv2_quantities(s::LayeredSphere, scheme, K_r_law, K_M_law, K_0, times) = (
+_inclusion_alv2_quantities(s::LayeredSphere, scheme, K_r_law, K_M_law, K_0::VolterraOperator, times) = (
     _layer_bound_alv2(scheme, s, times),
     gradient_gradient_concentration_alv(s, K_M_law, times),
     property_contribution_alv(s, K_M_law, times),
@@ -327,7 +359,7 @@ function _homogenize_alv_order2(
     K_M_law = phase_property(rve, m, prop)
     K_M_law isa ALVProperty ||
         throw(ArgumentError("homogenize_alv_order2: matrix property $prop is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
-    K_0 = _trapezoidal_relaxation(K_M_law, times, 3)
+    K_0 = _relaxation_operator(K_M_law, TimeGrid(times))
     f_M = volume_fraction(rve, m)
 
     incl_names = inclusion_phase_names(rve, m)
@@ -375,11 +407,12 @@ function _homogenize_alv_order2(
         )
 
     fractions = T_amount[_amount_value(rve, name) for name in incl_names]
-    K_phases = Matrix{T_block}[K_0]
+    # Operators stored by blocks, or full matrices (a layered sphere's).
+    K_phases = AbstractMatrix[K_0]
     # The orientation average of each entry of `K_phases`, for the bounds.
     phase_syms = AbstractSymmetrize[phase_symmetrize(rve, m)]
-    A_duts = Matrix{T_block}[]
-    contribs = Matrix{T_block}[]
+    A_duts = AbstractMatrix[]
+    contribs = AbstractMatrix[]
     for q in per_phase
         push!(K_phases, q.K_r)
         push!(phase_syms, q.sym)
@@ -418,7 +451,8 @@ function _homogenize_alv2_dispatch(
         fractions, f_M, K_M_law, matrix::Symbol; phase_syms, kw...
     )
     # Each phase property averaged over its orientation distribution.
-    return voigt_alv_order2(map(_maybe_symmetrize_alv2, K_phases, phase_syms), [f_M; fractions])
+    Ks = map(_maybe_symmetrize_alv2, K_phases, phase_syms)
+    return _in_class_algebra((a, Ks) -> _alg_voigt(a, Ks, [f_M; fractions]), (), (Ks,))
 end
 
 function _homogenize_alv2_dispatch(
@@ -427,11 +461,10 @@ function _homogenize_alv2_dispatch(
         fractions, f_M, K_M_law, matrix::Symbol; phase_syms, kw...
     )
     fs = [f_M; fractions]
-    all(s -> s isa NoSymmetrize, phase_syms) && return reuss_alv_order2(K_phases, fs)
     # The resistivity of each phase is averaged over its orientation
     # distribution, not its conductivity: the bound averages resistivities.
-    Rs = map((K, sym) -> _maybe_symmetrize_alv2(volterra_inverse(K; block_size = 3), sym), K_phases, phase_syms)
-    return volterra_inverse(voigt_alv_order2(Rs, fs); block_size = 3)
+    Rs = map((K, sym) -> _maybe_symmetrize_alv2(inv(K), sym), K_phases, phase_syms)
+    return _in_class_algebra((a, Rs) -> _alg_inv(a, _alg_voigt(a, Rs, fs)), (), (Rs,))
 end
 
 function _homogenize_alv2_dispatch(
@@ -439,7 +472,7 @@ function _homogenize_alv2_dispatch(
         K_0, K_phases, A_duts, contribs,
         fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
-    return dilute_alv_order2(K_0, contribs, fractions)
+    return _in_class_algebra((a, K₀, Ns) -> _alg_dilute(a, K₀, Ns, fractions), (K_0,), (contribs,))
 end
 
 function _homogenize_alv2_dispatch(
@@ -455,9 +488,9 @@ function _homogenize_alv2_dispatch(
     # which is `(R_r − R_0) ∘ B̃^dil` written out.  Returning the
     # relaxation-side `dilute_alv_order2` here instead — as this dispatch
     # used to — made `DiluteDual` a silent alias of `Dilute`.
-    R_0 = volterra_inverse(K_0; block_size = 3)
+    R_0 = inv(K_0)
     contribs_R = [-(R_0 * N̄ * R_0) for N̄ in contribs]
-    return dilute_dual_alv_order2(K_0, contribs_R, fractions)
+    return _in_class_algebra((a, K₀, Hs) -> _alg_dilute_dual(a, K₀, Hs, fractions), (K_0,), (contribs_R,))
 end
 
 function _homogenize_alv2_dispatch(
@@ -465,7 +498,7 @@ function _homogenize_alv2_dispatch(
         K_0, K_phases, A_duts, contribs,
         fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
-    return mori_tanaka_alv_order2(K_0, A_duts, contribs, fractions, f_M)
+    return _in_class_algebra((a, K₀, As, Ns) -> _alg_mori_tanaka(a, K₀, As, Ns, fractions, f_M), (K_0,), (A_duts, contribs))
 end
 
 function _homogenize_alv2_dispatch(
@@ -476,8 +509,8 @@ function _homogenize_alv2_dispatch(
     )
     # The Hill kernel of the distribution shape the RVE declares, as at order
     # 4 and in the elastic scheme; it used to be a sphere whatever the RVE said.
-    H_0 = hill_kernel_order2(Schemes.distribution_shape(rve, scheme).shape, K_M_law, times)
-    return maxwell_alv_order2(K_0, contribs, fractions; H_0 = H_0)
+    H_0 = _hill_kernel_order2_op(Schemes.distribution_shape(rve, scheme).shape, K_0)
+    return _in_class_algebra((a, K₀, H, Ns) -> _alg_maxwell(a, K₀, Ns, fractions, H), (K_0, H_0), (contribs,))
 end
 
 # Ponte Castañeda–Willis: the Maxwell formula on the shape of a uniform
@@ -491,8 +524,8 @@ function _homogenize_alv2_dispatch(
     dist = Schemes.distribution_shape(rve, scheme)
     dist isa UniformDistribution ||
         throw(ArgumentError("PCW-ALV: only UniformDistribution is currently supported"))
-    H_d = hill_kernel_order2(dist.shape, K_M_law, times)
-    return maxwell_alv_order2(K_0, contribs, fractions; H_0 = H_d)
+    H_d = _hill_kernel_order2_op(dist.shape, K_0)
+    return _in_class_algebra((a, K₀, H, Ns) -> _alg_maxwell(a, K₀, Ns, fractions, H), (K_0, H_d), (contribs,))
 end
 
 function _homogenize_alv2_dispatch(

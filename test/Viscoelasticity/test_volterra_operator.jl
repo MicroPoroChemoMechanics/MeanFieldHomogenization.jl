@@ -3,6 +3,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using Random: Xoshiro
+using StaticArrays: SMatrix
 import ForwardDiff
 import Symbolics
 
@@ -262,6 +263,48 @@ end
     f = VolterraOperator(vo_laws()[1][2], VO_TIMES)
     both = ViscoLaw((t, tp) -> visco_eval(dissolved(heaviside_law(TensISO{3}(30.0, 20.0)), 2.0), t, tp) + visco_eval(precipitated(vo_laws()[1][2], 2.0), t, tp))
     @test dissolved(g, 2.0) + precipitated(f, 2.0) ≈ VolterraOperator(both, VO_TIMES) rtol = 1.0e-12
+end
+
+@testset "Conduction in the classes of the inclusions" begin
+    V = MeanFieldHomogenization.Viscoelasticity
+    times = VO_TIMES
+    k = ViscoLaw((t, tp) -> TensISO{3}(2.0 + exp(tp - t)))
+    angles = (0.4, 0.9, 0.2)
+    Q = vecbasis(RotatedBasis(angles...))
+    rotated(M) = (R = kron(Matrix(1.0I, length(times), length(times)), Q); R * M * transpose(R))
+    function cell(shape; sym = nothing)
+        r = RVE(; distribution_shape = Ellipsoid(1.0))
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => k); fraction = :rest)
+        add_phase!(r, :I, shape, Dict(:C => TensISO{3}(9.0)); fraction = 0.3, symmetrize = sym)
+        return r
+    end
+    # A tilted spheroid: transversely isotropic about its axis; a tilted triaxial
+    # ellipsoid: orthotropic in its frame. Each the aligned result, rotated.
+    for (axes, class) in (((1.0, 1.0, 5.0), TensTI), ((2.0, 1.0, 0.4), TensOrtho))
+        for scheme in (Dilute(), MoriTanaka(), Maxwell())
+            tilted = homogenize_alv(cell(Ellipsoid(axes...; euler_angles = angles)), scheme, :C; times)
+            @test tilted.class isa class
+            aligned = Matrix(homogenize_alv(cell(Ellipsoid(axes...)), scheme, :C; times))
+            scheme isa Maxwell || @test Matrix(tilted) ≈ rotated(aligned) rtol = 1.0e-12
+        end
+    end
+    # The isotropic orientation average, read on the blocks, against the dense projector.
+    avg = homogenize_alv(cell(Ellipsoid(1.0, 1.0, 5.0; euler_angles = angles); sym = :iso), MoriTanaka(), :C; times)
+    @test avg.class isa TensISO
+    P = V._hill_kernel_order2_op(Ellipsoid(1.0, 1.0, 5.0; euler_angles = angles), VolterraOperator(k, times))
+    @test Matrix(V._iso_part2(P)) ≈ V._iso_project_blocks3(Matrix(P)) rtol = 1.0e-13
+    # A frame that is not orthonormal: the full matrix, the dense kernel.
+    skew = Ellipsoid(2.0, 1.0, 0.5, TensND.Basis([1.0 0.3 0.0; 0.0 1.0 0.0; 0.0 0.0 1.0]))
+    K0 = VolterraOperator(k, times)
+    @test V._depolarization_blocks(skew)[1] isa DenseClass
+    @test Matrix(V._hill_kernel_order2_op(skew, K0)) ≈ V.hill_kernel_order2_at(skew, Matrix(K0)) rtol = 1.0e-13
+    # Components that do not compare are kept full.
+    Symbolics.@variables a
+    @test V._depolarization_blocks(nothing, SMatrix{3, 3}(a, 0, 0, 0, a, 0, 0, 0, 2a), skew)[1] isa DenseClass
+    # A reference of another class is refused, as by the dense kernel: the time-space
+    # decoupling holds for an isotropic reference only.
+    Kti = VolterraOperator(ViscoLaw((t, tp) -> TensTI{2}(2.0 + exp(tp - t), 3.0, (0.0, 0.0, 1.0))), times)
+    @test_throws "only iso ALV matrix" V._hill_kernel_order2_op(Ellipsoid(1.0), Kti)
 end
 
 @testset "The modes of a law, at both orders" begin
