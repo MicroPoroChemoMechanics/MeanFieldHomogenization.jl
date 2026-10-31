@@ -5,7 +5,7 @@
 #  studio reads it back and preserves anything it does not
 #  recognize.
 #
-#  Penny cracks with a random orientation distribution, averaged exactly in the kernel. The abscissa is the crack density ε = N a³ / V, not a volume fraction.
+#  Penny cracks with a random orientation distribution, averaged exactly in the kernel. The abscissa is the crack density ε = N a b² per unit volume (N a³ for these pennies of radius a), not a volume fraction.
 # =============================================================================
 #
 # After `scripts/15_cracks_iso_interface.jl` and `scripts/86_crack_distributions.jl`.
