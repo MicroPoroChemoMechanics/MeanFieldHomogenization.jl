@@ -202,7 +202,7 @@ Deleting it costs nothing but a best-effort re-reading of the code.
    }
   }
  ],
- "description": "Penny cracks with a random orientation distribution, averaged exactly in the kernel. The abscissa is the crack density \u03b5 = N a\u00b3 / V, not a volume fraction.",
+ "description": "Penny cracks with a random orientation distribution, averaged exactly in the kernel. The abscissa is the crack density \u03b5 = N a b\u00b2 per unit volume (N a\u00b3 for these pennies of radius a), not a volume fraction.",
  "opaque": [],
  "params": [],
  "root_cell": "cell1",
