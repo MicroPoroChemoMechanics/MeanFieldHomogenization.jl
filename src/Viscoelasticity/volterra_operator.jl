@@ -227,7 +227,7 @@ that it goes wherever such a matrix goes. `Matrix(R)` materializes it,
 ``(t_i, t_j)`` as a tensor of its class, [`operator_law`](@ref)`(R)` the law of
 ``(t, t')`` back, [`time_grid`](@ref)`(R)` its grid.
 """
-struct VolterraOperator{C <: _OperatorClass, T, B <: Tuple{Vararg{Matrix{T}}}, G <: TimeGrid} <: AbstractMatrix{T}
+struct VolterraOperator{C <: _OperatorClass, T, B <: Tuple{Matrix{T}, Vararg{Matrix{T}}}, G <: TimeGrid} <: AbstractMatrix{T}
     class::C
     blocks::B
     grid::G
