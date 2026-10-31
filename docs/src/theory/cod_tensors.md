@@ -1243,6 +1243,51 @@ density** [budiansky1976, kachanov1993](@cite), and reintroduced by
 
 Implementation: `src/Cracks/compliance.jl`, dispatching on the crack shape.
 
+### [Why ``N\,a\,b^{2}``](@id th-cod-density)
+
+The density is not a choice: it is what the dilute correction is made of. By step 1, a
+family of ``N`` cracks per unit volume adds to the compliance, under a stress
+``\boldsymbol{\sigma}``,
+
+```math
+\Delta\mathbb{S}:\boldsymbol{\sigma}
+= N\,S\;\underline{n}\stackrel{s}{\otimes}\langle[\![\underline{u}]\!]\rangle
+= N\,S\,b\;\underline{n}\stackrel{s}{\otimes}\bigl(\boldsymbol{B}\cdot\boldsymbol{\sigma}\cdot\underline{n}\bigr),
+```
+
+the number of cracks, times the area of each, times its mean opening. The area is
+``S = \pi a b``; the opening is proportional to the **half-width** ``b``, which the
+definition of ``\boldsymbol{B}`` (§2) divides out, so that ``\boldsymbol{B}`` depends on the
+shape ``\eta`` and on the matrix alone. Their product ``N\,S\,b = \pi N a b^{2}`` is the
+density, up to the number ``\pi/k = 4\pi/3`` that the factor ``k`` of step 4 sets. For a
+ribbon, per unit length, the area becomes the width ``2b`` and ``N\,S\,b = 2N b^{2}``,
+whence ``\varepsilon^{2\mathrm{d}} = N b^{2}`` and the factor ``\pi = 2/k``.
+
+The normalization by ``b`` is what makes this work for every shape: ``\boldsymbol{B}``, and
+so ``\mathbb{H}``, stay bounded and nonzero from the penny (``\eta = 1``) to the ribbon
+(``\eta \to 0``), and ``k`` does not depend on ``\eta``. Other normalizations move a
+factor of ``\eta`` into ``\mathbb{H}``:
+
+| density | ``\mathbb{H}`` that goes with it | as ``\eta\to 0`` at fixed ``N a b^{2}`` |
+| :-- | :-- | :-- |
+| ``N a b^{2}`` (this package, [barthelemyIJSS2026](@citet)) | ``\tfrac34\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` | finite, tends to the ribbon's |
+| ``N a^{3}`` (Echoes) | ``\eta\,\mathbb{H}`` | the density diverges, ``\eta\,\mathbb{H}\to 0`` |
+| ``N b^{3}`` | ``\mathbb{H}/\eta`` | ``\mathbb{H}/\eta`` diverges |
+
+[budiansky1976](@citet) define the density of a family of plane cracks of area ``A`` and
+perimeter ``P`` as ``\varepsilon = \tfrac{2N}{\pi}\langle A^{2}/P\rangle``. For an ellipse,
+``A = \pi a b`` and ``P = 4a\,\mathcal{E}_\eta``, whence
+``\varepsilon = \tfrac{\pi}{2\mathcal{E}_\eta}\,N a b^{2}``: proportional to
+``N a b^{2}``, with a factor of the shape that equals 1 for the penny, where every
+definition above gives ``N a^{3}``.
+
+To compare with a source, convert the density with the compliance: the same family has
+``\varepsilon = N a b^{2}`` here and ``N a^{3} = \varepsilon/\eta^{2}`` in Echoes, whose
+dilute correction ``\tfrac{4\pi}{3}\,N a^{3}\,\eta\,\mathbb{H}_a`` is the same. Measured on
+the aging viscoelastic harness against Echoes (`scripts/bench_echoes/alv_harness`, tilted
+elliptic cracks of ``\eta = 0.4``): the dilute estimates agree to ``3\times10^{-16}`` with
+this conversion, and differ by the factor ``\eta`` without it.
+
 ## 7. Intensity factors at the crack front
 
 At a point ``\underline{x}^{\star}_{0}`` of the crack front, with in-plane outer

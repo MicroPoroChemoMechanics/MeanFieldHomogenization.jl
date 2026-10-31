@@ -226,7 +226,8 @@ add_phase!(rve, :C, EllipticCrack(1.0, 0.4; euler_angles = (0.4, 0.9, 0.2)),
            Dict(:C => law_M); density = 0.05)
 ```
 
-The density is ``\varepsilon = N\,a\,b^2``, as in elasticity. Ribbon cracks are
+The density is ``\varepsilon = N\,a\,b^2``, as in elasticity ([why](@ref th-cod-density),
+and how to convert the densities of other sources). Ribbon cracks are
 not implemented in ALV and are refused. Checked against Echoes on aging
 matrices (tilted ellipses with dilute, Mori–Tanaka and self-consistent schemes,
 two families of different orientations) to ``10^{-13}``: see
