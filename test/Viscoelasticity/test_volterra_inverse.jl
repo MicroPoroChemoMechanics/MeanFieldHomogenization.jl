@@ -97,3 +97,28 @@ end
     @test eltype(X) == Float64
     @test S * X ≈ M rtol = 1.0e-10
 end
+
+@testset "volterra_inverse — long grids, blocks: halving the instants" begin
+    # Past `_HALVING_BASE` instants the blocks are inverted by halving the grid:
+    # against LAPACK's LU inverse of the same matrix, with the blocks above the
+    # diagonal exactly zero, and through ForwardDiff.
+    import ForwardDiff
+    lower(B, n, s) = [
+        i ÷ B ≥ j ÷ B ? (sin(1.3i + 0.7j + s) / (1 + abs(i ÷ B - j ÷ B))) + 3.0 * (i == j) : 0.0
+            for i in 0:(B * n - 1), j in 0:(B * n - 1)
+    ]
+    for B in (2, 3, 6)
+        n = 40
+        M = lower(B, n, 0.0)
+        X = volterra_inverse(M; block_size = B)
+        @test X ≈ inv(M) rtol = 1.0e-12
+        @test all(iszero, (X[i, j] for i in 1:(B * n), j in 1:(B * n) if (j - 1) ÷ B > (i - 1) ÷ B))
+        out = similar(M)
+        @test MeanFieldHomogenization.Viscoelasticity.volterra_inverse!(out, M; block_size = B) ≈ X
+        d = ForwardDiff.derivative(s -> volterra_inverse(lower(B, n, 0.0) .+ s .* lower(B, n, 1.0); block_size = B), 0.0)
+        @test d ≈ -X * lower(B, n, 1.0) * X rtol = 1.0e-10
+    end
+    # In place, scalar blocks on a short grid: the substitution.
+    M = lower(1, 10, 0.0)
+    @test MeanFieldHomogenization.Viscoelasticity.volterra_inverse!(similar(M), M; block_size = 1) ≈ inv(M) rtol = 1.0e-13
+end

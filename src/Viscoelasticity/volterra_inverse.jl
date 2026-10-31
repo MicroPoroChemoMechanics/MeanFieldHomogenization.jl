@@ -13,9 +13,10 @@
 #       J̃_{ii} = R̃_{ii}^{-1}
 #       J̃_{ij} = -R̃_{ii}^{-1} * Σ_{k = j+1}^{i} R̃_{ik} * J̃_{kj}     (j < i)
 #
-#  This is the Julia counterpart of a reference `get_inv_mat()`,
-#  but uses forward-substitution instead of a generic LU and is therefore
-#  ~2× faster on the lower-triangular structure.
+#  This is the Julia counterpart of a reference `get_inv_mat()`, without a
+#  generic LU: scalar kernels go to LAPACK's triangular inverse (or the
+#  substitution below for short grids), blocks to the halving of the instants
+#  into large matrix products, with the substitution for the last few.
 # =============================================================================
 
 """
@@ -29,9 +30,11 @@ lower-block-triangular and satisfies `M * volterra_inverse(M)` ``= H\\,\\mathbb 
 `block_size` must be a positive divisor of `size(M, 1)` and `size(M, 2)`,
 typically `1` (scalar Volterra kernel) or `6` (4-tensor in Mandel form).
 
-The cost is ``O(B^3 n^2)`` flops via block forward-substitution; each
-diagonal block is inverted with the dense `inv(...)` of stdlib (so
-``B = 6`` costs only a few hundred flops per block).
+The cost is ``O(B^3 n^3)`` flops, spent in large matrix products: the
+instants are halved recursively,
+``\\begin{pmatrix}A&0\\\\C&D\\end{pmatrix}^{-1} = \\begin{pmatrix}A^{-1}&0\\\\-D^{-1}CA^{-1}&D^{-1}\\end{pmatrix}``,
+down to a block forward substitution on a few instants; the blocks above the
+diagonal stay exactly zero.
 """
 function volterra_inverse(M::AbstractMatrix; block_size::Int = 6)
     B = block_size
@@ -51,12 +54,9 @@ function volterra_inverse(M::AbstractMatrix; block_size::Int = 6)
         return Matrix(inv(LowerTriangular(M)))
     end
 
+    B == 1 || return _volterra_inverse_halving(M, B)
     inv_M = zeros(T, sz, sz)
-    if B == 1
-        _volterra_forward_scalar!(inv_M, M, n)
-    else
-        _volterra_forward_block!(inv_M, M, n, B)
-    end
+    _volterra_forward_scalar!(inv_M, M, n)
     return inv_M
 end
 
@@ -95,11 +95,8 @@ function volterra_inverse!(
         return out
     end
 
-    if B == 1
-        _volterra_forward_scalar!(out, M, n)
-    else
-        _volterra_forward_block!(out, M, n, B)
-    end
+    B == 1 || return copyto!(out, _volterra_inverse_halving(M, B))
+    _volterra_forward_scalar!(out, M, n)
     return out
 end
 
@@ -127,6 +124,32 @@ end
         end
     end
     return inv_M
+end
+
+# ── Blocks of size B ≥ 2: halving the instants ──────────────────────────────
+#
+# A lower block-triangular matrix splits at half its instants into
+# [A 0; C D], whose inverse is [A⁻¹ 0; −D⁻¹ C A⁻¹  D⁻¹]: the same operations as
+# the forward substitution below, grouped into large matrix products. Measured
+# 5 to 30 times faster than block-by-block substitution at n = 80 and 200 (B = 2,
+# 3, 6); the blocks above the diagonal stay exactly zero. Below `_HALVING_BASE`
+# instants the substitution takes over.
+
+const _HALVING_BASE = 16
+
+function _volterra_inverse_halving(M::AbstractMatrix, B::Int)
+    sz = size(M, 1)
+    nb = sz ÷ B
+    nb ≤ _HALVING_BASE && return _volterra_forward_block!(zeros(eltype(M), sz, sz), M, nb, B)
+    h = (nb ÷ 2) * B
+    lo, hi = 1:h, (h + 1):sz
+    A⁻¹ = _volterra_inverse_halving(view(M, lo, lo), B)
+    D⁻¹ = _volterra_inverse_halving(view(M, hi, hi), B)
+    out = zeros(promote_type(eltype(A⁻¹), eltype(D⁻¹)), sz, sz)
+    out[lo, lo] .= A⁻¹
+    out[hi, hi] .= D⁻¹
+    out[hi, lo] .= .-(D⁻¹ * (view(M, hi, lo) * A⁻¹))
+    return out
 end
 
 # ── Block forward substitution (B×B per block, generic B) ───────────────────

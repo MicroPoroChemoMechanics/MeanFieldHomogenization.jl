@@ -172,22 +172,87 @@ function _cheapest_algebra(operators)
     return _DenseALV{6}()
 end
 
+# ── Operators stored by the blocks of their class ──────────────────────────
+
+"""
+Volterra operators stored by the blocks of their symmetry class
+([`VolterraOperator`](@ref)), on one grid: the scheme formulas run on them with
+their own `*`, `inv` and `+`, each operation in the cheapest class that holds its
+operands (an isotropic operator joins the class of the other).
+"""
+struct _OpALV{G <: TimeGrid} <: _ALVAlgebra
+    grid::G
+end
+_alg_ntimes(a::_OpALV, C) = length(a.grid)
+_alg_eltype(::_OpALV, C) = eltype(C)
+_alg_one(a::_OpALV, n, ::Type{T}) where {T} = VolterraOperator(TensISO{3}(one(T), one(T)), a.grid)
+_alg_prod(::_OpALV, X, Y) = X * Y
+_alg_inv(::_OpALV, X) = inv(X)
+_alg_add(::_OpALV, X, Y) = X + Y
+_alg_sub(::_OpALV, X, Y) = X - Y
+_alg_scale(::_OpALV, c, X) = c * X
+_alg_convert(::_OpALV, ::Type{T}, X) where {T} = _with_eltype(T, X)
+_alg_map(::_OpALV, ::typeof(zero), X) = zero(X)
+_alg_accumulate(::_OpALV, X₀, Xs, fractions) =
+    foldl((acc, (X, f)) -> acc + f * X, zip(Xs, fractions); init = X₀)
+
+"""
+    _in_class_algebra(f, singles::Tuple, lists::Tuple) -> VolterraOperator
+
+`f(algebra, singles..., lists...)` evaluated on [`VolterraOperator`](@ref)s:
+`singles` are operators, `lists` vectors of them, one per phase. An operator
+given as a plain ``6n\\times 6n`` matrix enters in the cheapest class it belongs
+to — isotropic, the class of an operator among the others, transversely isotropic
+about ``\\underline{e}_3``, orthotropic in the canonical frame, dense otherwise;
+one given as a `VolterraOperator` enters as it is.
+"""
+function _in_class_algebra(f::F, singles::Tuple, lists::Tuple) where {F}
+    ops = collect(Iterators.flatten((singles, lists...)))
+    grid = _operator_grid(ops)
+    candidates = _algebra_candidates(ops)
+    as_op(M) = _as_class_operator(M, grid, candidates)
+    return f(_OpALV(grid), map(as_op, singles)..., map(l -> [as_op(M) for M in l], lists)...)
+end
+
 """
     _in_cheapest_algebra(f, singles::Tuple, lists::Tuple) -> Matrix
 
-`f(algebra, singles..., lists...)` evaluated in the cheapest algebra all the
-operators belong to — `singles` are dense block matrices, `lists` vectors of
-them, one per phase — with the result written back as a dense block matrix.
+[`_in_class_algebra`](@ref), the result written out as a dense block matrix, for
+the callers that compute on dense matrices.
 """
-function _in_cheapest_algebra(f::F, singles::Tuple, lists::Tuple) where {F}
-    a = _cheapest_algebra(Iterators.flatten((singles, lists...)))
-    return _evaluate_in(a, f, singles, lists)
+_in_cheapest_algebra(f::F, singles::Tuple, lists::Tuple) where {F} = Matrix(_in_class_algebra(f, singles, lists))
+
+# The grid of the operators, or, for plain matrices alone, a grid of as many
+# instants (its values are not read: only the equality of grids is).
+function _operator_grid(ops)
+    for M in ops
+        M isa VolterraOperator && return M.grid
+    end
+    return TimeGrid(collect(1.0:(size(first(ops), 1) ÷ 6)))
 end
 
-# A function barrier: the algebra is known from here on.
-_evaluate_in(a, f::F, singles, lists) where {F} = _alv_from(
-    a, f(a, map(M -> _alv_to(a, M), singles)..., map(l -> [_alv_to(a, M) for M in l], lists)...)
-)
+const _ISO4 = TensISO{3}(1.0, 1.0)
+const _TI4_E3 = TensTI{4}(1.0, 1.0, 0.0, 1.0, 1.0, (0.0, 0.0, 1.0))
+const _ORTHO4_CANON = TensOrtho{4, Float64}(ntuple(_ -> 1.0, 9), TensND.CanonicalBasis{3, Float64}())
+
+function _algebra_candidates(ops)
+    own = Any[c for c in map(_own_class, ops) if c !== nothing]
+    return Any[_ISO4, own..., _TI4_E3, _ORTHO4_CANON]
+end
+# The class an operand brings, if it is stored in one.
+_own_class(R::VolterraOperator{<:_StructuredClass}) = R.class
+_own_class(M) = nothing
+
+_as_class_operator(R::VolterraOperator, grid, candidates) = (_same_grid(R.grid, grid, "ALV scheme"); R)
+# The isotropy test of the dense paths, on an operator stored by blocks.
+_is_iso_block(R::VolterraOperator{<:TensISO{4, 3}}; kw...) = true
+_is_iso_block(R::VolterraOperator; kw...) = _is_iso_block(Matrix(R); kw...)
+
+# A full matrix: the isotropic test reads the entries in place, the commonest
+# case (an iterate of a self-consistent scheme); the others go through `_compact`.
+_as_class_operator(M::AbstractMatrix, grid, candidates) =
+    _is_iso_block(M) ? VolterraOperator(_ISO4, iso_params_from_blocks(M), grid) :
+    _compact(VolterraOperator(M, grid), candidates)
 
 # ── Dense operators, computed in the cheapest algebra they share ───────────
 

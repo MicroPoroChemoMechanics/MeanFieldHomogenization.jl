@@ -209,7 +209,7 @@ instead of one ``6n\\times 6n``. It computes as its elastic counterpart does:
 At order 2 `⋅` replaces `⊡`.
 
 It **is** the discretized matrix, stored compactly: an `AbstractMatrix` of size
-``6n\times 6n`` (``3n\times 3n`` at order 2), whose matrix product is the
+``6n\\times 6n`` (``3n\\times 3n`` at order 2), whose matrix product is the
 composition, matrix inverse the Volterra inverse and sum the sum of operators, so
 that it goes wherever such a matrix goes. `Matrix(R)` materializes it,
 [`operator_value`](@ref)`(R, i, j)` is its value at the pair of instants
@@ -317,6 +317,8 @@ function Base.Matrix(R::VolterraOperator{<:Any, T}) where {T}
     return M
 end
 Base.Matrix(R::VolterraOperator{<:DenseClass}) = copy(R.blocks[1])
+# Isotropic: the single pass that writes each entry once (conversions.jl).
+Base.Matrix(R::VolterraOperator{<:TensISO{4, 3}}) = iso_blocks_from_params(R.blocks...)
 Base.Matrix(R::VolterraOperator{ScalarClass}) = copy(R.blocks[1])
 
 """
@@ -381,11 +383,14 @@ end
 `R` in the first of the classes `candidates` (tensors standing for a class and a
 frame) its values all belong to, as it is otherwise.
 """
+_compact(R::VolterraOperator{<:Union{TensISO{4, 3}, TensISO{2, 3}}}, candidates) = R
 function _compact(R::VolterraOperator, candidates)
     # Values that do not compare keep their storage: no residual can say they belong.
     is_hard_numeric(eltype(R)) || return R
     for c in candidates
         _order(c) == _order(R.class) || continue
+        # Already in this class (or in the cheapest one): nothing to convert.
+        _same_class(R.class, c) && return R
         Rc, failure = _converted(R, c, _CLASS_RTOL)
         failure === nothing && return Rc
     end
@@ -509,6 +514,10 @@ LinearAlgebra.norm(R::VolterraOperator) =
 Base.one(R::VolterraOperator{<:Any, T}) where {T} =
     VolterraOperator(R.class, map(B -> Matrix{T}(I, size(B)...), R.blocks), R.grid)
 Base.zero(R::VolterraOperator) = _blockwise(zero, R)
+
+# `R` with element type `T`, as the scheme formulas promote their operands.
+_with_eltype(::Type{T}, R::VolterraOperator{<:Any, T}) where {T} = R
+_with_eltype(::Type{T}, R::VolterraOperator) where {T} = _blockwise(B -> Matrix{T}(B), R)
 
 Base.:(==)(A::VolterraOperator, B::VolterraOperator) =
     _same_class(A.class, B.class) ? A.grid == B.grid && A.blocks == B.blocks : Matrix(A) == Matrix(B)

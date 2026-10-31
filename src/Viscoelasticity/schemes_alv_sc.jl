@@ -53,7 +53,11 @@ Returns the converged effective relaxation matrix.
 - `select_best`— return the best iterate seen (rather than the last)
   when convergence stalls.
 """
-function self_consistent_alv(
+self_consistent_alv(rve::RVE, prop::Symbol; kw...) = Matrix(_self_consistent_alv(rve, prop; kw...))
+
+# The same, returning a `VolterraOperator` when it iterates in the classes of the
+# operators (what `homogenize_alv` keeps), a full matrix otherwise.
+function _self_consistent_alv(
         rve::RVE, prop::Symbol;
         times::AbstractVector{<:Real},
         matrix::Union{Nothing, Symbol} = nothing,
@@ -69,13 +73,14 @@ function self_consistent_alv(
     C_M_law = phase_property(rve, m, prop)
     C_M_law isa ALVProperty ||
         throw(ArgumentError("self_consistent_alv: matrix property is neither a viscoelastic law nor a relaxation operator"))
-    C_0 = _trapezoidal_relaxation(C_M_law, times, 6)
+    grid = TimeGrid(times)
+    C_0 = _relaxation_operator(C_M_law, grid)
     f_M = volume_fraction(rve, m)
     incl_names = inclusion_phase_names(rve, m)
     # Containers are eltype-generic : volume fractions, crack densities and
     # geometry-derived tensors may carry `ForwardDiff.Dual` (or any Number)
     # coefficients — no `Float64` hard-coding on any AD-reachable path.
-    C_phases = Matrix[C_0]
+    C_phases = AbstractMatrix[C_0]
     geometries = Any[rve.phases[m].geometry]
     fractions = [f_M]
     symmetrizes = AbstractSymmetrize[NoSymmetrize()]
@@ -95,6 +100,7 @@ function self_consistent_alv(
     for name in incl_names
         ph = rve.phases[name]
         a = rve.amounts[name]
+        # The phases of a cell are of many types, known at run time: a branch.
         if ph.geometry isa LayeredSphere
             push!(layered_data, (geom = ph.geometry, f = _amount_value(rve, name), sym = phase_symmetrize(rve, name)))
             continue
@@ -106,7 +112,7 @@ function self_consistent_alv(
         C_r_law = phase_property(rve, name, prop)
         C_r_law isa ALVProperty ||
             throw(ArgumentError("self_consistent_alv: phase $name property is neither a viscoelastic law nor a relaxation operator"))
-        C_r = _trapezoidal_relaxation(C_r_law, times, 6)
+        C_r = _relaxation_operator(C_r_law, grid)
         sym = phase_symmetrize(rve, name)
         # Like the differential scheme, the self-consistent one uses its
         # RUNNING estimate as the reference of the ALV Hill kernel, and the
@@ -122,6 +128,19 @@ function self_consistent_alv(
         push!(fractions, _amount_value(rve, name))
         push!(symmetrizes, sym)
     end
+
+    # Without cracks or layered spheres, the iteration runs in the classes of the
+    # operators; otherwise on full matrices.
+    if isempty(crack_data) && isempty(layered_data)
+        Tp = _alv_promoted_eltype(C_phases, fractions, Matrix{Float64}[], crack_data)
+        Tp = mapreduce(g -> eltype(tens_UA(g)), promote_type, geometries; init = Tp)
+        return _sc_alv_in_classes(
+            C_0, C_phases, geometries, fractions, symmetrizes, Tp;
+            abstol, reltol, maxiters, damping, verbose, select_best
+        )
+    end
+    C_0 = Matrix(C_0)
+    C_phases = Matrix[Matrix(C) for C in C_phases]
 
     # 2. Pre-compute the Mandel forms of U^A, V^A for each phase
     #    (eltype follows the geometry parameters — Dual-safe).
@@ -182,6 +201,54 @@ function self_consistent_alv(
     @debug "self_consistent_alv: maxiters=$(maxiters) reached without convergence" abstol reltol
     return select_best ? C_best : C_m
 end
+
+# ── The iteration in the classes of the operators ──────────────────────────
+#
+# The running estimate is isotropic (the guards above refuse a phase that would
+# drag it out of the class): two n×n blocks. Each phase's Hill kernel is built in
+# the class of its shape from the two scalar inverses of the estimate, computed
+# once per iteration; the concentrations are averaged and divided in the block
+# algebra, so that no 6n×6n matrix is written out.
+function _sc_alv_in_classes(
+        C_0, C_phases, geometries, fractions, symmetrizes, ::Type{Tp};
+        abstol, reltol, maxiters, damping, verbose, select_best
+    ) where {Tp}
+    C_m = _as_iso_estimate(_with_eltype(Tp, C_0))
+    best_resid = Inf
+    C_best = C_m
+    for iter in 1:maxiters
+        C_new = _sc_alv_step_in_classes(C_m, C_phases, geometries, fractions, symmetrizes)
+        Δ = norm(C_new - C_m)
+        tol_eff = abstol + reltol * norm(C_m)
+        verbose && @info "SC-ALV iter $iter : ‖Δ‖ = $(Δ)   tol = $tol_eff"
+        if select_best && Δ < best_resid
+            best_resid = Δ
+            C_best = C_new
+        end
+        Δ ≤ tol_eff && return C_new
+        C_m = (1 - damping) * C_new + damping * C_m
+    end
+    @debug "self_consistent_alv: maxiters=$(maxiters) reached without convergence" abstol reltol
+    return select_best ? C_best : C_m
+end
+
+function _sc_alv_step_in_classes(C_m, C_phases, geometries, fractions, symmetrizes)
+    J_long, J_shear = _alv_iso_inverses(C_m)
+    terms = map(C_phases, geometries, fractions, symmetrizes) do C, g, f, sym
+        P = _hill_kernel_op(g, J_long, J_shear, C_m.grid)
+        A = inv(I + P * (C - C_m))
+        CA = C * A
+        f * _maybe_symmetrize_alv(A, sym), f * _maybe_symmetrize_alv(CA, sym)
+    end
+    A_avg = reduce(+, first.(terms))
+    CA_avg = reduce(+, last.(terms))
+    return _as_iso_estimate(CA_avg * inv(A_avg))
+end
+
+# The running estimate in the isotropic class: kept as is when it is there,
+# converted when its class is wider, refused when its values are off it.
+_as_iso_estimate(R::VolterraOperator{<:TensISO{4, 3}}) = R
+_as_iso_estimate(R::VolterraOperator) = convert_class(R, _ISO4; check = true)
 
 # The concentration `A` and the average stress `B = Ñ + C ∘ A` of a layered
 # sphere against the running estimate `C`, from its recurrences: what a phase

@@ -119,6 +119,12 @@ Apply the orientation-averaging projection corresponding to `sym` to a
 axis).
 """
 @inline _maybe_symmetrize_alv(M::AbstractMatrix, ::NoSymmetrize) = M
+# An operator stored by blocks is averaged on its full matrix: the isotropic average
+# is isotropic by construction, the transversely isotropic one stays full.
+_maybe_symmetrize_alv(R::VolterraOperator{<:TensISO{4, 3}}, ::IsoSymmetrize) = R
+_maybe_symmetrize_alv(R::VolterraOperator, s::IsoSymmetrize) =
+    first(_converted(VolterraOperator(_maybe_symmetrize_alv(Matrix(R), s), R.grid), _ISO4, nothing))
+_maybe_symmetrize_alv(R::VolterraOperator, s::TISymmetrize) = VolterraOperator(_maybe_symmetrize_alv(Matrix(R), s), R.grid)
 @inline _maybe_symmetrize_alv(M::AbstractMatrix, ::IsoSymmetrize) =
     _iso_project_blocks(M)
 @inline _maybe_symmetrize_alv(M::AbstractMatrix, sym::TISymmetrize) =
@@ -381,8 +387,26 @@ function homogenize_alv(
     R = MFH_Core._with_nested_cache() do
         MFH_Core._with_alv_grid(() -> _homogenize_alv_rve(rve, scheme, prop; times = t, kw...), t)
     end
-    return _compact(VolterraOperator(R, grid), _candidate_classes(rve, prop, t))
+    return _compact(_result_operator(R, grid), _candidate_classes(rve, prop, t))
 end
+
+# A list of operators written out, for the formulas on full matrices; typed even
+# when empty (a cell of cracks alone).
+_dense_list(Xs) = Matrix[Matrix(X) for X in Xs]
+
+_result_operator(R::VolterraOperator, grid) = R
+_result_operator(R::AbstractMatrix, grid) = VolterraOperator(R, grid)
+
+# The reference of the closed-form schemes: stored by blocks when the pipeline has it so.
+_reference(C_0, kw) = get(kw, :C_0_op, C_0)
+
+# A phase property as the relaxation operator on the grid, in the class of its values.
+_relaxation_operator(law::AbstractViscoLaw, grid::TimeGrid) = _as_relaxation(VolterraOperator(law, grid), visco_mode(law))
+_relaxation_operator(R::VolterraOperator, grid::TimeGrid) = (_same_grid(R.grid, grid, "homogenize_alv"); R)
+_relaxation_operator(M::AbstractMatrix, grid::TimeGrid) =
+    _compact(VolterraOperator(_check_operator(M, grid.times, 6), grid), (_ISO4, _TI4_E3, _ORTHO4_CANON))
+# A creep law is turned into the relaxation operator the schemes assume (a run-time mode).
+_as_relaxation(R, mode::Symbol) = mode === :creep ? inv(R) : R
 
 # A nested cell met inside an aging viscoelastic homogenization, on its grid.
 MFH_Core._resolve_alv(cell, scheme, prop::Symbol, times; kw...) = homogenize_alv(cell, scheme, prop; times, kw...)
@@ -445,7 +469,10 @@ function _homogenize_alv_rve(
         )
     end
 
-    C_0 = _trapezoidal_relaxation(C_M_law, times, 6)
+    # The reference as an operator stored by the blocks of its class, and written
+    # out for the formulas that compute on full matrices (cracks).
+    C_0_op = _relaxation_operator(C_M_law, TimeGrid(times))
+    C_0 = Matrix(C_0_op)
     f_M = volume_fraction(rve, m)
 
     # 2. Loop on inclusions, separating SOLIDS (`VolumeFraction`) from
@@ -461,12 +488,13 @@ function _homogenize_alv_rve(
     # Eltype-generic containers : per-phase matrices may carry a wider
     # element type than the matrix kernel (e.g. `ForwardDiff.Dual` geometry
     # parameters flowing through `tens_UA`/`tens_VA`).
-    contribs = Matrix[]
-    A_duts = Matrix[]
-    C_phases = Matrix[C_0]
+    # Operators stored by blocks (`VolterraOperator`) or full matrices.
+    contribs = AbstractMatrix[]
+    A_duts = AbstractMatrix[]
+    C_phases = AbstractMatrix[C_0_op]
     # The orientation average of each entry of `C_phases`, for the bounds.
     phase_syms = AbstractSymmetrize[phase_symmetrize(rve, m)]
-    H_phases = Matrix[]   # per-phase Hill kernels (for Maxwell distribution)
+    H_phases = AbstractMatrix[]   # per-phase Hill kernels (for Maxwell distribution)
     # crack_data tuple: (geom, density, sym, H_iso_full).  `H_iso_full` is
     # the iso-projected size-independent compliance contribution H̃ scaled
     # by the Budiansky concentration factor (`4π/3` for 3D penny / elliptic,
@@ -517,7 +545,7 @@ function _homogenize_alv_rve(
         else
             C_r_law = phase_property(rve, name, prop)
             C_r, A_dut, N_dut, P_r = _inclusion_alv_quantities(
-                ph.geometry, scheme, C_r_law, C_M_law, C_0, times
+                ph.geometry, scheme, C_r_law, C_M_law, C_0_op, times
             )
             A_dut = _maybe_symmetrize_alv(A_dut, sym)
             N_dut = _maybe_symmetrize_alv(N_dut, sym)
@@ -538,6 +566,7 @@ function _homogenize_alv_rve(
         crack_data = crack_data,
         ΔC_cracks_M = ΔC_cracks_M,
         ΔJ_cracks_M = ΔJ_cracks_M,
+        C_0_op = C_0_op,
         kw...
     )
 end
@@ -557,59 +586,25 @@ the `scheme` only for the stiffness a bound assigns to the sphere.
 function _inclusion_alv_quantities(
         geom, scheme, C_r_law,
         C_M_law::ALVProperty,
-        C_0::AbstractMatrix,
+        C_0::VolterraOperator,
         times::AbstractVector{<:Real}
     )
     C_r_law isa ALVProperty ||
         throw(ArgumentError("homogenize_alv: phase property is neither a viscoelastic law nor a relaxation operator"))
-    C_r = _trapezoidal_relaxation(C_r_law, times, 6)
-    P_r = hill_kernel(geom, C_M_law, times)
-    # Iso fast path : if every input matrix is iso (typical for
-    # spherical inclusions in iso ALV matrix), compute the dilute
-    # concentration and contribution as TWO scalar n×n Volterra
-    # problems and lift back to (6n × 6n) at the end.  Avoids the
-    # generic block-LU on the 6n×6n `(𝟙 + P̃ ∘ ΔC̃)` system.
-    if _is_iso_block(C_r) && _is_iso_block(C_0) && _is_iso_block(P_r)
-        αβ_E = _iso_pair(C_r)
-        αβ_0 = _iso_pair(C_0)
-        αβ_P = _iso_pair(P_r)
-        αβ_A_dut = dilute_concentration_alv_iso(αβ_E, αβ_0, αβ_P)
-        αβ_N_dut = dilute_contribution_alv_iso(αβ_E, αβ_0, αβ_P)
-        A_dut = _iso_blocks(αβ_A_dut)
-        N_dut = _iso_blocks(αβ_N_dut)
-    elseif _is_ti_block(C_r) && _is_ti_block(C_0) && _is_ti_block(P_r)
-        # TI fast path: shared canonical axis e_3 across phase, matrix
-        # and Hill kernel.  Reduces the dilute concentration to a
-        # (2n)×(2n) block-Volterra inverse + 2 scalar Volterra inverses.
-        ℓ_E = _ti_pair(C_r)
-        ℓ_0 = _ti_pair(C_0)
-        ℓ_P = _ti_pair(P_r)
-        ℓ_A_dut = dilute_concentration_alv_ti(ℓ_E, ℓ_0, ℓ_P)
-        ℓ_N_dut = dilute_contribution_alv_ti(ℓ_E, ℓ_0, ℓ_P)
-        A_dut = _ti_blocks(ℓ_A_dut)
-        N_dut = _ti_blocks(ℓ_N_dut)
-    elseif _is_ortho_block(C_r) && _is_ortho_block(C_0) && _is_ortho_block(P_r)
-        # Ortho fast path: shared canonical material frame across phase,
-        # matrix and Hill kernel.  Reduces the dilute concentration to a
-        # (3n)×(3n) block-Volterra inverse + 3 scalar Volterra inverses.
-        o_E = _ortho_pair(C_r)
-        o_0 = _ortho_pair(C_0)
-        o_P = _ortho_pair(P_r)
-        o_A_dut = dilute_concentration_alv_ortho(o_E, o_0, o_P)
-        o_N_dut = dilute_contribution_alv_ortho(o_E, o_0, o_P)
-        A_dut = _ortho_blocks(o_A_dut)
-        N_dut = _ortho_blocks(o_N_dut)
-    else
-        A_dut = dilute_concentration_alv(C_r, C_0, P_r)
-        N_dut = dilute_contribution_alv(C_r, C_0, P_r)
-    end
+    # In the class of each: the phase's law, the reference's, the geometry's (a
+    # spheroid: transversely isotropic about its axis); each operation in the
+    # cheapest class that holds its operands. One inverse for both quantities.
+    C_r = _relaxation_operator(C_r_law, C_0.grid)
+    P_r = _hill_kernel_op(geom, C_0)
+    A_dut = _in_class_algebra(_alg_dilute_concentration, (C_r, C_0, P_r), ())
+    N_dut = (C_r - C_0) * A_dut
     return (C_r, A_dut, N_dut, P_r)
 end
 
 function _inclusion_alv_quantities(
         sphere::LayeredSphere, scheme, _C_r_law,
         C_M_law::ALVProperty,
-        C_0::AbstractMatrix,
+        C_0::VolterraOperator,
         times::AbstractVector{<:Real}
     )
     # Per-layer moduli are stored inside the LayeredSphere geometry; the
@@ -716,8 +711,8 @@ function _homogenize_alv_dispatch(
         H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     # Cracks: additive — `C̃_dilute + ΔC̃_cracks_M`.
-    _has_cracks(kw) && return _alg_dilute(_DenseALV{6}(), C_0, contribs, fractions) .+ kw[:ΔC_cracks_M]
-    return _in_cheapest_algebra((C_0,), (contribs,)) do a, C₀, Ns
+    _has_cracks(kw) && return _alg_dilute(_DenseALV{6}(), C_0, _dense_list(contribs), fractions) .+ kw[:ΔC_cracks_M]
+    return _in_class_algebra((_reference(C_0, kw),), (contribs,)) do a, C₀, Ns
         _alg_dilute(a, C₀, Ns, fractions)
     end
 end
@@ -754,7 +749,7 @@ function _homogenize_alv_dispatch(
         H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     if !_has_cracks(kw)
-        return _in_cheapest_algebra((C_0,), (A_duts, contribs)) do a, C₀, As, Ns
+        return _in_class_algebra((_reference(C_0, kw),), (A_duts, contribs)) do a, C₀, As, Ns
             _alg_mori_tanaka(a, C₀, As, Ns, fractions, f_M)
         end
     end
@@ -779,8 +774,8 @@ function _homogenize_alv_dispatch(
     # accumulated into a buffer of `C_0`'s type, so that a dual crack density
     # carries.
     A_crack_total = sum(H_full * C_0 for (_, _, _, H_full) in kw[:crack_data])
-    contribs_aug = vcat(contribs, [kw[:ΔC_cracks_M]])
-    A_duts_aug = vcat(A_duts, [A_crack_total])
+    contribs_aug = vcat(_dense_list(contribs), [kw[:ΔC_cracks_M]])
+    A_duts_aug = vcat(_dense_list(A_duts), [A_crack_total])
     fractions_aug = vcat(fractions, [one(eltype(C_0))])
     return mori_tanaka_alv(C_0, A_duts_aug, contribs_aug, fractions_aug, f_M)
 end
@@ -807,11 +802,11 @@ end
 # enter the sum of the contributions.
 function _alv_maxwell_form(C_0, contribs, fractions, H, kw)
     if _has_cracks(kw)
-        contribs_aug = vcat(contribs, [kw[:ΔC_cracks_M]])
+        contribs_aug = vcat(_dense_list(contribs), [kw[:ΔC_cracks_M]])
         fractions_aug = vcat(fractions, [one(eltype(C_0))])
         return maxwell_alv(C_0, contribs_aug, fractions_aug; H_0 = H)
     end
-    return _in_cheapest_algebra((C_0, H), (contribs,)) do a, C₀, H₀, Ns
+    return _in_class_algebra((_reference(C_0, kw), H), (contribs,)) do a, C₀, H₀, Ns
         _alg_maxwell(a, C₀, Ns, fractions, H₀)
     end
 end
@@ -831,11 +826,11 @@ function _homogenize_alv_dispatch(
     kw_filt = Iterators.filter(
         p -> !(
             p[1] in
-                (:crack_data, :ΔC_cracks_M, :ΔJ_cracks_M, :phase_syms)
+                (:crack_data, :ΔC_cracks_M, :ΔJ_cracks_M, :phase_syms, :C_0_op)
         ),
         kw
     )
-    return self_consistent_alv(
+    return _self_consistent_alv(
         rve, prop; times = times, matrix = matrix,
         sc.options..., kw_filt...
     )
@@ -853,7 +848,7 @@ function _homogenize_alv_dispatch(
     kw_filt = Iterators.filter(
         p -> !(
             p[1] in
-                (:crack_data, :ΔC_cracks_M, :ΔJ_cracks_M, :phase_syms)
+                (:crack_data, :ΔC_cracks_M, :ΔJ_cracks_M, :phase_syms, :C_0_op)
         ),
         kw
     )

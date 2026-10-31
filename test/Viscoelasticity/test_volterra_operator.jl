@@ -291,8 +291,13 @@ end
     E_TI = heaviside_law(TensTI{4}(40.0, 30.0, 8.0, 12.0, 9.0, n))
     Rt = homogenize_alv(cell(m, E_TI, Spheroid(4.0; euler_angles = angles)), MoriTanaka(), :C; times)
     @test Rt.class isa TensTI && collect(Rt.class.n) ≈ collect(n)
-    # Tilted isotropic spheroids alone: no class at hand, dense.
-    @test homogenize_alv(cell(m, E_I, Spheroid(4.0; euler_angles = angles)), MoriTanaka(), :C; times).class isa DenseClass
+    # Tilted isotropic spheroids: transversely isotropic about their axis, computed
+    # in that class; the result is the one of spheroids along e₃, rotated block by block.
+    tilted = homogenize_alv(cell(m, E_I, Spheroid(4.0; euler_angles = angles)), MoriTanaka(), :C; times)
+    @test tilted.class isa TensTI && abs(dot(collect(tilted.class.n), collect(n))) ≈ 1
+    Q6 = TensND.mandel_rotation(vecbasis(RotatedBasis(angles...)))
+    aligned = Matrix(homogenize_alv(cell(m, E_I, Spheroid(4.0)), MoriTanaka(), :C; times))
+    @test Matrix(tilted) ≈ kron(Matrix(1.0I, 6, 6), Q6) * aligned * kron(Matrix(1.0I, 6, 6), transpose(Q6)) rtol = 1.0e-12
     # Conduction: the order-2 classes.
     k = ViscoLaw((t, tp) -> TensISO{3}(2 + vo_decay(t, tp)))
     @test homogenize_alv(cell(k, heaviside_law(TensISO{3}(5.0)), Ellipsoid(1.0)), MoriTanaka(), :C; times).class isa TensISO{2}
