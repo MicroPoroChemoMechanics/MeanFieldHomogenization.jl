@@ -112,6 +112,13 @@ function mfh_rve(c, sources)
     prop = c["order"] == 4 ? :C : :K
     rve = RVE()
     for (k, p) in enumerate(c["phases"])
+        if get(p, "crack", false)
+            # A crack family: its density is η² times Echoes' (see cases.py).
+            a, b = Float64.(p["axes"][1:2])
+            crack = EllipticCrack(a, b; euler_angles = Tuple(Float64.(p["euler"])))
+            add_phase!(rve, Symbol(p["name"]), crack, Dict(prop => property(p, sources)); density = (b / a)^2 * p["density"], symmetrize(p)...)
+            continue
+        end
         # The first phase takes the rest (the fractions of a case sum to 1): the matrix.
         fraction = k == 1 ? :rest : p["fraction"]
         shape = p["axes"] === nothing ? Ellipsoid(1.0) :
@@ -128,7 +135,8 @@ function run_case(c, echo, sources, echoes_sources)
     rve, prop, m = mfh_rve(c, sources)
     sch = SCHEMES[c["scheme"]](c, m)
     # 1. The phase operators against Echoes'.
-    phase_gap = maximum(c["phases"]) do p
+    # A crack's kernel is zero on both sides: not compared.
+    phase_gap = maximum(filter(p -> !get(p, "crack", false), c["phases"])) do p
         rel(relaxation(property(p, sources), times), mat(echo["phase_mats"][p["name"]]))
     end
     # 2. The effective operator, and its time.

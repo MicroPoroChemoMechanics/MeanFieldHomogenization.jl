@@ -16,6 +16,10 @@ needs; an Applications page puts the two together for the basic creep of concret
   `Matrix(R)` gives the dense matrix where one is required.
 - `ALVKernelISO`, `ALVKernelTI`, `ALVKernelOrtho` and `AbstractALVKernel` are removed:
   `VolterraOperator` replaces them, for any axis or frame and at both orders.
+- `cod_kernel_alv` returns the three components `(B_ℓ, B_m, B_n)` of the COD tensor in the
+  crack frame instead of `(B_n, B_t)`: an elliptic crack slides differently along its two
+  axes (for a penny `B_ℓ = B_m` is the former `B_t`). `inverse_property_contribution_alv`
+  and `property_contribution_alv` return a `VolterraOperator`, in the class of the crack.
 - Requires TensND 0.12.
 
 ### Added
@@ -46,10 +50,19 @@ needs; an Applications page puts the two together for the basic creep of concret
 - The mode of a law also takes the names that hold at every order, `:property` and
   `:inverse_property`, and those of conduction, `:conductivity` and `:resistivity`: the same
   two modes as `:relaxation` and `:creep`.
-- An aging viscoelastic harness against Echoes, `scripts/bench_echoes/alv_harness`: 24
+- Elliptic cracks of any aspect ratio and any orientation in aging viscoelasticity, as in
+  Echoes: only penny cracks of normal `e₃` were accepted. The COD coefficients are the
+  elastic closed form with every quotient a Volterra inverse, in the order of the flat
+  limit of a void ellipsoid, one expression for the penny and the ellipse; the compliance
+  is stored in the class of the crack, transversely isotropic about the normal of a penny,
+  orthotropic in the frame of an ellipse, rotated once as a tensor. Checked against the
+  flat limit of tilted void ellipsoids, against the elastic closed form with ForwardDiff in
+  the aspect ratio and in an angle, and against Echoes.
+- An aging viscoelastic harness against Echoes, `scripts/bench_echoes/alv_harness`: 29
   cases (spheres and spheroids, aligned and tilted, TI laws about tilted axes, orientation
-  averages, order 2, two-scale chains), the Echoes and the MFH scripts both kept; they
-  agree to 8e-16.
+  averages, order 2, two-scale chains, tilted elliptic cracks), the Echoes and the MFH
+  scripts both kept; they agree to 8e-16, and to 1.2e-13 with cracks, which Echoes gives
+  the volume of a flat ellipsoid of thickness 1e-12 (an error proportional to it).
 
 ### Changed
 

@@ -137,12 +137,25 @@ kernels written out in the docstring of `cases.py`. ROT = (0.4, 0.9, 0.2).
 | e1 | 4 | MT | the dense b3 result as spherical inclusions in a Maxwell matrix |
 | e2 | 4 | MT | the isotropic a3 (SC) result as the matrix of rotated oblate inclusions |
 | e3 | 2 | MT | the d1 result as the matrix of rotated prolate inclusions |
+| f1 | 4 | DIL | traction-free elliptic cracks 1:0.4 rotated by ROT (orthotropic result) |
+| f2 | 4 | MT | elastic spheres and elliptic cracks 1:0.15 rotated by ROT |
+| f3 | 4 | MT | Maxwell spheres and penny cracks rotated by ROT (TI result) |
+| f4 | 4 | SC | elastic spheres and elliptic cracks 1:0.4, isotropic orientation average |
+| f5 | 4 | MT | two families of elliptic cracks of different shapes and orientations |
 
 A multiscale phase gets the source case's `effective` matrix as its discretized operator
 (`visco_prop={"C": array}`, which `set_visco_prop` stores with `set_visco_mat`,
 `interface/python/py_echoes/py_microstructure/py_inclusion.h:75-99`).
 
 ## Limitations of Echoes that shaped the cases
+
+* **A crack has a volume.** Echoes builds a crack as a flat ellipsoid of semi-axes
+  (a, b, c), its compliance the limit c -> 0 (`eshelby4_builder_dim3_iso.h:200-252`), but
+  takes the volume (4 pi/3) density eta c off the matrix fraction: an error proportional to
+  c, measured 1.2e-5 at c = 1e-4 b on f3 and 1.2e-8 at 1e-7 b. The crack cases use
+  c = 1e-12 b. Its crack density is N a^3 and its compliance is normalized by a: the same
+  family has the density eta^2 times Echoes' in MeanFieldHomogenization (N a b^2), see the
+  docstring of `cases.py`.
 
 * **The reference medium is isotropic in ALV.** The ALV Hill tensor is always built by the
   isotropic builders (`src/echoes/eshelby/eshelby_builder_factory.h:110-121`), which take

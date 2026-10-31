@@ -247,3 +247,72 @@ end
         @test Matrix(in_classes) ≈ Matrix(dense) rtol = 1.0e-11
     end
 end
+
+@testset "ALV elliptic crack of any orientation — the flat limit of a void ellipsoid, aging matrix" begin
+    # An elliptic crack of semi-axes a ≥ b and density ε = N a b² is the limit of void
+    # ellipsoids of semi-axes (a, b, ω b) at volume fraction (4π/3) ω ε, whose Hill
+    # kernel, orthotropic in their frame, is computed independently of the closed
+    # form of the crack: the limit checks the elliptic functions, the order of the
+    # Volterra factors and the rotation together.
+    times = [0.0, 0.3, 0.7, 1.2, 2.0]
+    matrix = ViscoLaw(
+        (t, tp) -> t >= tp ?
+            TensISO{3}(6.0 * (1 + 0.5tp) * exp(-(t - tp) / 0.8), 2.0 * (1 + tp) * exp(-(t - tp) / 1.5)) :
+            TensISO{3}(0.0, 0.0)
+    )
+    void = ViscoLaw((t, tp) -> TensISO{3}(0.0, 0.0))
+    angles = (0.4, 0.9, 0.2)
+    ε, ω = 0.1, 1.0e-6
+    cracked = RVE()
+    add_phase!(cracked, :M, Ellipsoid(1.0), Dict(:C => matrix); fraction = :rest)
+    add_phase!(cracked, :F, EllipticCrack(1.0, 0.4; euler_angles = angles), Dict(:C => matrix); density = ε)
+    porous = RVE()
+    add_phase!(porous, :M, Ellipsoid(1.0), Dict(:C => matrix); fraction = :rest)
+    add_phase!(porous, :V, Ellipsoid(1.0, 0.4, 0.4ω; euler_angles = angles), Dict(:C => void); fraction = 4π / 3 * ω * ε)
+    C_crack = homogenize_alv(cracked, Dilute(:M), :C; times)
+    @test C_crack.class isa TensOrtho
+    @test Matrix(C_crack) ≈ Matrix(homogenize_alv(porous, Dilute(:M), :C; times)) rtol = 1.0e-5
+    # A ribbon has no ALV opening, and an anisotropic matrix none either: both refused.
+    @test_throws "implemented for elliptic cracks" inverse_property_contribution_alv(RibbonCrack(1.0), matrix, times)
+    ti = heaviside_law(TensTI{4}(4.0, 6.0, 1.0, 1.5, 2.0, (0.0, 0.0, 1.0)))
+    @test_throws "isotropic ALV matrix only" inverse_property_contribution_alv(PennyCrack(1.0), ti, times)
+end
+
+@testset "ALV elliptic cracks, iso-averaged, self-consistent — Echoes reference" begin
+    # Echoes `homogenize_visco(…, scheme = SC)`, a crack of semi-axes (1, 0.4, 1e-12)
+    # and Echoes density ε / η² (its density is N a³), averaged in orientation; the
+    # isotropic parameters of the result on three instants.
+    V = MeanFieldHomogenization.Viscoelasticity
+    times = [0.0, 0.4, 1.5]
+    g(tp) = 1 - 0.5 * exp(-tp)
+    matrix = ViscoLaw((t, tp) -> g(tp) * TensISO{3}(3 * (0.2 + 2.0 * exp(-(t - tp) / 0.8)), 2 * (0.1 + exp(-(t - tp) / 1.5))))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => matrix); fraction = :rest)
+    add_phase!(rve, :F, EllipticCrack(1.0, 0.4), Dict(:C => matrix); density = 0.1, symmetrize = :iso)
+    α, β = V.iso_params_from_blocks(homogenize_alv(rve, SelfConsistent(reltol = 1.0e-13), :C; times))
+    lower(rows) = [i >= j ? rows[i][j] : 0.0 for i in 1:3, j in 1:3]
+    @test α ≈ lower([[2.1060270141195234], [-0.6843457431162296, 2.1159961600659187], [-0.23255240795355414, -1.5820142668242856, 2.3926740244309066]]) rtol = 1.0e-10
+    @test β ≈ lower([[0.899289293076641], [-0.24595200073836723, 0.9498149450804234], [-0.12328865352225456, -0.6108357712745645, 1.1103729044170134]]) rtol = 1.0e-10
+end
+
+@testset "ALV elliptic crack — derivatives in its aspect ratio and orientation, elastic limit" begin
+    # Under a constant kernel the dilute ALV estimate is the elastic one at every
+    # instant: its derivatives in the aspect ratio and in an angle of the crack are
+    # those of the elastic closed form, an independent code.
+    C = TensISO{3}(3 * 5.0, 2 * 2.0)
+    function estimates(η, θ)
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => heaviside_law(C)); fraction = :rest)
+        add_phase!(r, :F, EllipticCrack(1.0, η; euler_angles = (θ, 0.9, 0.2)), Dict(:C => heaviside_law(C)); density = 0.1)
+        e = RVE()
+        add_phase!(e, :M, Ellipsoid(1.0), Dict(:C => C); fraction = :rest)
+        add_phase!(e, :F, EllipticCrack(1.0, η; euler_angles = (θ, 0.9, 0.2)), Dict(:C => C); density = 0.1)
+        return Matrix(homogenize_alv(r, Dilute(:M), :C; times = [0.0, 1.0]))[7:12, 7:12], _to_mandel(homogenize(e, Dilute(:M), :C))
+    end
+    for (f, x) in ((η -> estimates(η, 0.4), 0.4), (θ -> estimates(0.4, θ), 0.4))
+        d_alv = ForwardDiff.derivative(x -> first(f(x)), x)
+        d_el = ForwardDiff.derivative(x -> last(f(x)), x)
+        @test d_alv ≈ d_el rtol = 1.0e-10
+        @test norm(d_el) > 0
+    end
+end

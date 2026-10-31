@@ -16,7 +16,13 @@ phases      list of phases; the FIRST one is the matrix (reference of DIL and MT
 Keys of a phase
 ---------------
 name        phase name
-fraction    volume fraction
+fraction    volume fraction (zero for a crack family)
+crack       True for a family of flat elliptic cracks (absent otherwise); its semi-axes are
+            (a, b, c) with a >= b and c << b the flatness Echoes needs (its compliance is the
+            limit c -> 0), its law the zero kernel of a traction-free crack
+density     crack density in Echoes' convention, N a^3: Echoes adds (4 pi/3) density eta H_E,
+            its H_E normalized by a (H_E = eta H); the same family in MeanFieldHomogenization
+            has the density eta^2 * density = N a b^2, eta = b/a, its H being normalized by b
 axes        semi-axes (a1, a2, a3) of the ellipsoid along its local axes, None for a sphere
 euler       Echoes angles (theta, phi, psi): the local frame is the columns of
             P = Rz(phi) Ry(theta) Rz(psi) (echoes_cpp/src/echoes/tensor_angles.cpp:71-81),
@@ -104,6 +110,16 @@ def from_case(name):
 def phase(name, law, fraction, axes=None, euler=(0.0, 0.0, 0.0), symmetrize=None):
     return dict(name=name, law=law, fraction=fraction,
                 axes=None if axes is None else list(axes), euler=list(euler),
+                symmetrize=symmetrize)
+
+
+# Echoes takes the volume (4 pi/3) density eta flat of the flat ellipsoid off the matrix
+# fraction: an error proportional to `flat` (1.2e-5 at 1e-4 on f3, 1.2e-8 at 1e-7), which
+# MeanFieldHomogenization, whose cracks carry no volume, does not make.
+def crack_family(name, density, axes, euler=(0.0, 0.0, 0.0), symmetrize=None, flat=1e-12):
+    a, b = axes
+    return dict(name=name, law=elastic_iso(0.0, 0.0), fraction=0.0, crack=True,
+                density=density, axes=[a, b, flat * b], euler=list(euler),
                 symmetrize=symmetrize)
 
 
@@ -198,6 +214,21 @@ CASES = [
     case("e3_multiscale_d1_as_matrix_cond_MT", 2, "mori_tanaka",
          [phase("H", from_case("d1_cond_sph_MT"), 0.75),
           phase("I", elastic_cond(50.0), 0.25, axes=PROLATE, euler=ROT)]),
+    # f. order 4, elliptic cracks of any orientation in an aging matrix -------------------
+    case("f1_ellcrack_rot_DIL", 4, "dilute",
+         [phase("M", M_MAX, 1.0), crack_family("C", 0.1, (1.0, 0.4), euler=ROT)]),
+    case("f2_ellcrack_rot_MT", 4, "mori_tanaka",
+         [phase("M", M_MAX, 0.8), phase("I", I_EL, 0.2),
+          crack_family("C", 0.08, (1.0, 0.15), euler=ROT)]),
+    case("f3_penny_rot_MT", 4, "mori_tanaka",
+         [phase("M", M_MAX, 0.85), phase("I", I_MAX, 0.15),
+          crack_family("C", 0.15, (1.0, 1.0), euler=ROT)]),
+    case("f4_ellcrack_isoavg_SC", 4, "self_consistent",
+         [phase("M", M_MAX_FLOOR, 0.7), phase("I", I_EL, 0.3),
+          crack_family("C", 0.05, (1.0, 0.4), symmetrize=ISO)]),
+    case("f5_ellcrack_two_families_MT", 4, "mori_tanaka",
+         [phase("M", M_MAX, 1.0), crack_family("C1", 0.05, (1.0, 0.4), euler=ROT),
+          crack_family("C2", 0.05, (1.0, 0.6), euler=(1.2, 0.3, 0.8))]),
 ]
 
 CASES_BY_NAME = {c["name"]: c for c in CASES}

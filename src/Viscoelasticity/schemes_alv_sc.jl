@@ -267,11 +267,9 @@ end
 # transversely isotropic about its normal before its orientation average.
 function _crack_compliance_in_classes(C_m, crack_data)
     α, β = C_m.blocks
-    B_n_base, B_t_base = _penny_cod_alv(α, β)
     terms = map(crack_data) do (geom, ε, sym, Rn_mat, Rt_mat)
-        B_n = _interface_corrected(B_n_base, Rn_mat, semi_minor(geom))
-        B_t = _interface_corrected(B_t_base, Rt_mat, semi_minor(geom))
-        _maybe_symmetrize_alv(delta_inverse_property_alv(geom, _penny_compliance_operator(B_n, B_t, C_m.grid), ε), sym)
+        H̃ = _crack_compliance_alv(geom, α, β, Rn_mat, Rt_mat, C_m.grid)
+        _maybe_symmetrize_alv(delta_inverse_property_alv(geom, H̃, ε), sym)
     end
     return reduce(+, terms)
 end
@@ -401,16 +399,11 @@ end
 function _build_sc_crack_extra_J(C_m::AbstractMatrix, crack_data)
     extra = zero(C_m)
     isempty(crack_data) && return extra
-    _is_iso_block(C_m) ||
-        error("self_consistent_alv with cracks: only iso running estimate is supported")
-    α_c, β_c = iso_params_from_blocks(C_m)
-    B_n_base, B_t_base = _penny_cod_alv(α_c, β_c)
-    @inbounds for (geom, ε, sym, Rn_mat, Rt_mat) in crack_data
-        B_n = _interface_corrected(B_n_base, Rn_mat, semi_minor(geom))
-        B_t = _interface_corrected(B_t_base, Rt_mat, semi_minor(geom))
-        H_TI = _penny_compliance_blocks(B_n, B_t)
-        H_full = _maybe_symmetrize_alv(delta_inverse_property_alv(geom, H_TI, ε), sym)
-        @. extra += H_full
+    α_c, β_c = _iso_blocks_alv(C_m, "self_consistent_alv with cracks")
+    grid = _operator_grid((C_m,))
+    for (geom, ε, sym, Rn_mat, Rt_mat) in crack_data
+        H̃ = _crack_compliance_alv(geom, α_c, β_c, Rn_mat, Rt_mat, grid)
+        extra += Matrix(_maybe_symmetrize_alv(delta_inverse_property_alv(geom, H̃, ε), sym))
     end
     return extra
 end

@@ -73,7 +73,8 @@ end
         Rn = law_zero, Rt = law_zero
     )
     @test isapprox(cod_zero.B_n, cod0.B_n; atol = 1.0e-10)
-    @test isapprox(cod_zero.B_t, cod0.B_t; atol = 1.0e-10)
+    @test isapprox(cod_zero.B_ℓ, cod0.B_ℓ; atol = 1.0e-10)
+    @test isapprox(cod_zero.B_m, cod0.B_m; atol = 1.0e-10)
 
     # Rn, Rt → ∞ → B_eff → 0
     law_huge = ViscoLaw((t, tp) -> 1.0e10, :relaxation)
@@ -82,7 +83,8 @@ end
         Rn = law_huge, Rt = law_huge
     )
     @test maximum(abs, cod_huge.B_n) < 1.0e-8
-    @test maximum(abs, cod_huge.B_t) < 1.0e-8
+    @test maximum(abs, cod_huge.B_ℓ) < 1.0e-8
+    @test maximum(abs, cod_huge.B_m) < 1.0e-8
 
     # Intermediate stiffness: 0 < B_n_eff < B_n_TF (componentwise on the diag)
     law_K = ViscoLaw((t, tp) -> 1.0, :relaxation)

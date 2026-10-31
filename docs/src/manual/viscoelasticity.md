@@ -205,7 +205,7 @@ the tensor of the class at a pair of instants (see
 
 ## [5. Cracks in ALV](@id man-visco-cracks)
 
-### 5.1 Traction-free penny crack
+### 5.1 Traction-free elliptic cracks
 
 ```julia
 add_phase!(rve, :C, PennyCrack(1.0), Dict(:C => law_M);
@@ -213,9 +213,24 @@ add_phase!(rve, :C, PennyCrack(1.0), Dict(:C => law_M);
 C_eff_cracks = homogenize_alv(rve, MoriTanaka(), :C; times = times)
 ```
 
-`PennyCrack`, `EllipticCrack` and `RibbonCrack` are accepted. The
-dispatcher pre-aggregates crack stiffness and compliance contributions
-and routes them through the appropriate scheme branch.
+Elliptic cracks of any aspect ratio ``\eta = b/a`` (`EllipticCrack(a, b)`, the
+penny included) and of any orientation (`euler_angles`) are accepted, in an
+isotropic matrix. Their COD coefficients are the elastic closed form with every
+quotient a Volterra inverse, in the order of the flat limit of a void ellipsoid
+([`cod_kernel_alv`](@ref)); their compliance is stored in the class of the crack,
+transversely isotropic about the normal of a penny, orthotropic in the frame of an
+ellipse, so that an oriented family is not a dense operator:
+
+```julia
+add_phase!(rve, :C, EllipticCrack(1.0, 0.4; euler_angles = (0.4, 0.9, 0.2)),
+           Dict(:C => law_M); density = 0.05)
+```
+
+The density is ``\varepsilon = N\,a\,b^2``, as in elasticity. Ribbon cracks are
+not implemented in ALV and are refused. Checked against Echoes on aging
+matrices (tilted ellipses with dilute, Mori–Tanaka and self-consistent schemes,
+two families of different orientations) to ``10^{-13}``: see
+`scripts/bench_echoes/alv_harness`.
 
 ### 5.2 Cracks with finite interface stiffness (Sevostianov)
 
@@ -240,7 +255,8 @@ add_phase!(rve, :CRACK, PennyCrack(1.0),
 C_eff = homogenize_alv(rve, MoriTanaka(), :C; times = times)
 ```
 
-The scalar COD kernels `B̃_n`, `B̃_t` are post-corrected by the
+The scalar COD kernels `B̃_n` (normal) and `B̃_ℓ`, `B̃_m` (tangential) are
+post-corrected, `Rn` on the first and `Rt` on the other two, by the
 spring-interface construction of [sevostianovIJSS2007](@citet), transposed to
 the Volterra algebra: crack-face and interface compliances add up, at the cost
 of one extra scalar Volterra inverse per direction.
@@ -249,7 +265,7 @@ Limits, all exercised in the test suite :
 
 | Interface | Behavior                                  |
 |:----------|:-------------------------------------------|
-| `Rn = Rt = nothing`   | traction-free penny — `B̃` unchanged |
+| `Rn = Rt = nothing`   | traction-free crack — `B̃` unchanged |
 | `Rn, Rt → 0`          | recovers traction-free                |
 | `Rn, Rt → ∞` (rigid)  | `B̃_eff → 0`, cracks behave as bonded |
 

@@ -162,8 +162,12 @@ def make_rve(c, computed):
                 [echoes.TI, float(sym["theta"]), float(sym["phi"])]
         given, expected[p["name"]] = phase_operator(p, times, u, computed)
         keepalive.append(given)
-        ver[p["name"]] = echoes.ellipsoid(shape=shape, fraction=p["fraction"],
+        if p.get("crack", False):
+            ver[p["name"]] = echoes.crack(shape=shape, density=p["density"],
                                           visco_prop={prop: given}, **kw)
+        else:
+            ver[p["name"]] = echoes.ellipsoid(shape=shape, fraction=p["fraction"],
+                                              visco_prop={prop: given}, **kw)
     ver.set_param_eshelby(**HILL)
     return ver, prop, u, times, expected, keepalive
 
@@ -189,8 +193,10 @@ def run_case(c, computed):
         raise FloatingPointError(f"{c['name']}: non-finite effective operator")
     n = len(times)
     upper = max(float(np.abs(eff[i * u:(i + 1) * u, (i + 1) * u:]).max(initial=0.0)) for i in range(n))
+    # Relative to the expected operator, absolute for a crack's zero kernel.
     disc = {name: float(np.abs(phase_mats[name] - expected[name]).max()
-                        / np.abs(expected[name]).max()) for name in phase_mats}
+                        / max(np.abs(expected[name]).max(), 1.0 if not expected[name].any() else 0.0))
+            for name in phase_mats}
     return eff, dict(
         case=c,
         times=list(c["times"]),

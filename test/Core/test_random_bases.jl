@@ -91,10 +91,19 @@ _mrb_spd4(rng) = Array(canonical_components(rand(rng, Tens{4, 3}; definite = tru
         @test _mrb_canon(_MRB.Cracks._apply_interface_stiffness(B, Kr, b)) ≈ ref
     end
 
-    @testset "the ALV crack guard reads the normal in canonical coordinates" begin
-        θ = 0.3 + rand(rng)
-        @test !_MRB.Viscoelasticity._crack_axis_is_e3(PennyCrack(1.0; euler_angles = (θ, 2π * rand(rng))))
-        @test _MRB.Viscoelasticity._crack_axis_is_e3(PennyCrack(1.0))
+    @testset "ALV crack compliance in a random orientation: the elastic one under a Heaviside law" begin
+        # A constant kernel C H(t - t′) gives a block-diagonal operator whose value at
+        # each instant is the elastic compliance of the crack, rotated with it.
+        C = TensISO{3}(3 * 5.0, 2 * 2.0)
+        for crack in (
+                PennyCrack(1.0; euler_angles = Tuple(2π .* rand(rng, 3))),
+                EllipticCrack(1.0, 0.4; euler_angles = Tuple(2π .* rand(rng, 3))),
+            )
+            H̃ = inverse_property_contribution_alv(crack, heaviside_law(C), [0.0, 0.5, 1.0])
+            H_el = TensND.mandel(TensND.canonical_components(inverse_property_contribution(crack, C)); symmetrize = true)
+            @test all(i -> Matrix(H̃)[(6i - 5):6i, (6i - 5):6i] ≈ H_el, 1:3)
+            @test iszero(Matrix(H̃)[7:12, 1:6])
+        end
     end
 
     @testset "layered sphere: displacement under a strain in a rotated basis" begin
