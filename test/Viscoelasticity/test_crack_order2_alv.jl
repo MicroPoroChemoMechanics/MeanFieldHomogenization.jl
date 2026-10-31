@@ -9,7 +9,8 @@ using ForwardDiff
 #  the resistivity R̃ = k b̃ n ⊗ n, b̃ = (4/3ℰ) λ̃^{-∘} (ellipse) or (π/2) λ̃^{-∘}
 #  (ribbon), and the crack families in every order-2 ALV scheme. References:
 #  the elastic thermal crack under constant kernels, and the flat limit of
-#  insulating ellipsoids and cylinders through their own order-2 Hill kernel.
+#  insulating ellipsoids and cylinders through their own order-2 Hill kernel,
+#  whose rate is checked at both orders (elasticity too) in the last testset.
 # =============================================================================
 
 const _O2_ANGLES = (0.3, 1.1, -0.4)
@@ -142,4 +143,38 @@ end
     sc_alv = ForwardDiff.derivative(ε -> Matrix(homogenize_alv(cell(ε, heaviside_law; symmetrize = :iso), SelfConsistent(reltol = 1.0e-13), :K; times)), 0.1)
     sc_el = ForwardDiff.derivative(ε -> _o2_components(homogenize(cell(ε, identity; symmetrize = :iso), SelfConsistent(reltol = 1.0e-13), :K)), 0.1)
     @test sc_alv[4:6, 4:6] ≈ sc_el rtol = 1.0e-9
+end
+
+@testset "Flattened inclusions converge to the cracks at first order — elasticity and conduction, oblique" begin
+    # Void (insulating) ellipsoids of semi-axes (a, b, ω b) at the fraction
+    # (4π/3) ω ε, and elliptic cylinders (b, ω b) at π ω ε, tend to the elliptic
+    # crack and to the ribbon of density ε as ω → 0, through their own Hill kernels:
+    # the error of the dilute and Mori-Tanaka estimates is divided by ten at each
+    # decade of ω, in an aging matrix, at both orders.
+    times = [0.0, 0.3, 0.7, 1.2, 2.0]
+    angles = (0.4, 0.9, 0.2)
+    ε = 0.1
+    laws = (
+        C = ViscoLaw((t, tp) -> t >= tp ? TensISO{3}(6.0 * (1 + 0.5tp) * exp(-(t - tp) / 0.8), 2.0 * (1 + tp) * exp(-(t - tp) / 1.5)) : TensISO{3}(0.0, 0.0)),
+        K = ViscoLaw((t, tp) -> t >= tp ? TensISO{3}(2.0 * (1 + 0.5tp) * (0.3 + exp(-(t - tp) / 0.9))) : TensISO{3}(0.0)),
+    )
+    voids = (C = ViscoLaw((t, tp) -> TensISO{3}(0.0, 0.0)), K = ViscoLaw((t, tp) -> TensISO{3}(0.0)))
+    shapes = (
+        (EllipticCrack(1.0, 0.4; euler_angles = angles), ω -> Ellipsoid(1.0, 0.4, 0.4ω; euler_angles = angles), ω -> 4π / 3 * ω * ε),
+        (RibbonCrack(1.0; euler_angles = angles), ω -> Ellipsoid(Inf, 1.0, ω; euler_angles = angles), ω -> π * ω * ε),
+    )
+    for prop in (:C, :K), (crack, flat, fraction) in shapes, scheme in (Dilute(:M), MoriTanaka(:M))
+        cracked = RVE()
+        add_phase!(cracked, :M, Ellipsoid(1.0), Dict(prop => laws[prop]); fraction = :rest)
+        add_phase!(cracked, :F, crack, Dict(prop => laws[prop]); density = ε)
+        reference = Matrix(homogenize_alv(cracked, scheme, prop; times))
+        errors = map((1.0e-2, 1.0e-3, 1.0e-4)) do ω
+            porous = RVE()
+            add_phase!(porous, :M, Ellipsoid(1.0), Dict(prop => laws[prop]); fraction = :rest)
+            add_phase!(porous, :V, flat(ω), Dict(prop => voids[prop]); fraction = fraction(ω))
+            norm(Matrix(homogenize_alv(porous, scheme, prop; times)) - reference) / norm(reference)
+        end
+        @test errors[1] < 1.0e-2
+        @test all(0.09 < errors[k + 1] / errors[k] < 0.11 for k in 1:2)
+    end
 end
