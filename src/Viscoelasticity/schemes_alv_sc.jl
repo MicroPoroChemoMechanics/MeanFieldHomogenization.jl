@@ -279,7 +279,10 @@ end
 # The running estimate in the isotropic class: kept as is when it is there,
 # converted when its class is wider, refused when its values are off it.
 _as_iso_estimate(R::VolterraOperator{<:TensISO{4, 3}}) = R
-_as_iso_estimate(R::VolterraOperator) = convert_class(R, _ISO4; check = true)
+_as_iso_estimate(R::VolterraOperator{<:TensISO{2, 3}}) = R
+_as_iso_estimate(R::VolterraOperator) = convert_class(R, _iso_class(R.class); check = true)
+# The isotropic class of the order of `c`.
+_iso_class(c) = _order(c) == 4 ? _ISO4 : _ISO2
 
 # The concentration `A` and the average stress `B = Ñ + C ∘ A` of a layered
 # sphere against the running estimate `C`, from its recurrences: what a phase

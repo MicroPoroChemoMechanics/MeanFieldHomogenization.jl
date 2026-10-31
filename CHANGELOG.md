@@ -61,17 +61,19 @@ needs; an Applications page puts the two together for the basic creep of concret
   `n×n` blocks across its iterations, and the Volterra inverse of blocks halves the
   instants into large matrix products. The same holds at order 2 (the Hill kernel of
   conduction is transversely isotropic about an axis of the inclusion's frame, or
-  orthotropic in it), in the asymmetric self-consistent scheme, in the right-hand side of
+  orthotropic in it, and the self-consistent scheme iterates on its isotropic block), in
+  the asymmetric self-consistent scheme, in the right-hand side of
   the differential scheme, and in the self-consistent scheme with cracks, whose compliance
   is a transversely isotropic operator; only layered spheres keep full matrices. At
   `n = 80` instants: Mori–Tanaka with spheres 9.8 → 1.1 ms, with spheroids along `e₃`
   25 → 8 ms, with tilted spheroids 64 → 8 ms, isotropic self-consistent 172 → 16 ms. At
   40 instants: asymmetric self-consistent 48 → 6 ms, differential 67 → 31 ms,
-  self-consistent with cracks 43 → 10 ms. The differential scheme keeps only its end
+  self-consistent with cracks 43 → 10 ms; at 50 instants, the order-2 self-consistent
+  scheme 19 → 2.5 ms. The differential scheme keeps only its end
   state (it saved `nsteps + 1` copies of its dense state, never read) and adds its
   isotropic terms into the derivative in place: at 80 instants 242 → 140 ms, the result
   unchanged to the bit. On the harness at 50 instants (the *Performance
-  vs Echoes* page), 3.4 to 39 times faster than Echoes in elasticity, 1.8 to 14 times in
+  vs Echoes* page), 3.2 to 39 times faster than Echoes in elasticity, 3.0 to 15 times in
   conduction. The aging basic creep model of the
   Applications chapter: the high-performance concrete in 103 s against 499 s.
 

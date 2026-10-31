@@ -534,7 +534,7 @@ function _homogenize_alv2_dispatch(
         K_0, K_phases, A_duts, contribs,
         fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
-    return self_consistent_alv_order2(rve, prop; times, matrix, sc.options...)
+    return _self_consistent_alv_order2(rve, prop; times, matrix, sc.options...)
 end
 
 function _homogenize_alv2_dispatch(
@@ -768,6 +768,28 @@ function _sc2_phase_AB(s::LayeredSphere, K_r, K, sym, times)
     return _maybe_symmetrize_alv2(A, sym), _maybe_symmetrize_alv2(B, sym)
 end
 
+# The order-2 fixed point in the classes of the operators: each concentration
+# against the isotropic estimate, its Hill kernel in the class of the shape.
+function _sc2_in_classes(K_M, data, times; abstol, reltol, maxiters, damping, verbose)
+    grid = TimeGrid(times)
+    candidates = _algebra_candidates(())
+    phases = map(d -> merge(d, (K_r = _as_class_operator(d.K_r, grid, candidates),)), data)
+    Tp = mapreduce(d -> promote_type(eltype(d.K_r), typeof(d.f), eltype(Elasticity.tens_IA(d.geom))), promote_type, phases)
+    step(K) = _sc2_step_in_classes(K, phases)
+    return _fixed_point_in_classes(
+        step, _as_class_operator(K_M, grid, candidates), Tp, "SC-ALV order 2";
+        abstol, reltol, maxiters, damping, verbose, select_best = false
+    )
+end
+
+function _sc2_step_in_classes(K, phases)
+    terms = map(phases) do d
+        A = _in_class_algebra(_alg_dilute_concentration, (d.K_r, K, _hill_kernel_order2_op(d.geom, K)), ())
+        d.f * _maybe_symmetrize_alv2(A, d.sym), d.f * _maybe_symmetrize_alv2(d.K_r * A, d.sym)
+    end
+    return _as_iso_estimate(reduce(+, last.(terms)) * inv(reduce(+, first.(terms))))
+end
+
 """
     self_consistent_alv_order2(rve, prop; times, matrix = nothing, abstol = 1e-10,
                                reltol = 1e-8, maxiters = 200, damping = 0.0,
@@ -784,7 +806,11 @@ order-2 Hill kernel against it requires: a sphere of isotropic conductivity, a
 layered sphere, or `symmetrize = :iso`. Reached through
 `homogenize_alv(rve, SelfConsistent(), :K; times)`.
 """
-function self_consistent_alv_order2(
+self_consistent_alv_order2(rve::RVE, prop::Symbol; kw...) = Matrix(_self_consistent_alv_order2(rve, prop; kw...))
+
+# The estimate as `homogenize_alv` takes it: an operator stored by the blocks of its
+# class without layered spheres, a full matrix with them.
+function _self_consistent_alv_order2(
         rve::RVE, prop::Symbol;
         times::AbstractVector{<:Real},
         matrix::Union{Nothing, Symbol} = nothing,
@@ -814,6 +840,10 @@ function self_consistent_alv_order2(
         f = name === m ? volume_fraction(rve, m) : _amount_value(rve, name)
         return (geom = ph.geometry, K_r = K_r, f = f, sym = sym)
     end
+    # Without layered spheres, whose recurrences are written on full matrices, the
+    # iteration runs in the classes of the operators.
+    any(d -> d.geom isa LayeredSphere, data) ||
+        return _sc2_in_classes(K_M, data, times; abstol, reltol, maxiters, damping, verbose)
     K = K_M
     for iter in 1:maxiters
         # The comprehension captures this iteration's estimate, not `K`
