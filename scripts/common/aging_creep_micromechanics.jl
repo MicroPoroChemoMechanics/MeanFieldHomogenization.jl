@@ -58,16 +58,16 @@ function log_creep_law(E, ν, E_D; τ = CREEP_TAU)
 end
 
 """
-    hydrate_law(name; rh = 1.0) -> ViscoLaw
+    hydrate_law(name; rh = 1.0) -> ViscoLaw or elastic tensor
 
-The law of one hydrate family: logarithmic creep for C-S-H and AFm, elastic otherwise, with
-the stiffnesses of `PASTE_E_NU`.
+The law of one hydrate family: logarithmic creep for C-S-H and AFm, elastic otherwise (the
+stiffness itself, whose kernel is C H(t - t′)), with the stiffnesses of `PASTE_E_NU`.
 """
 function hydrate_law(name; rh = 1.0)
     E, ν = PASTE_E_NU[name]
     name == "C-S-H" && return log_creep_law(E, ν, csh_log_ratio(CSH_CA_SI, rh) * E)
     name == "AFm" && return log_creep_law(E, ν, csh_log_ratio(AFM_CA_SI, rh) * E)
-    return heaviside_law(_stiff(name))
+    return _stiff(name)   # an elastic tensor: its kernel is C H(t - t′)
 end
 
 # ── Kernels on the grid ─────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ hydrates as needles of aspect ratio `ω_hyd` randomly oriented.
 function foam_law(i, porosity, mixes, times)
     n = length(times)
     rve = RVE()
-    add_phase!(rve, :SEED, Ellipsoid(1.0), Dict(:C => heaviside_law(TINY_VOID)); fraction = :rest)
+    add_phase!(rve, :SEED, Ellipsoid(1.0), Dict(:C => TINY_VOID); fraction = :rest)
     for j in i:n
         f = j == i ? 1 - porosity[i] : porosity[j - 1] - porosity[j]
         (f > 0 && mixes[j] !== nothing) || continue
@@ -121,7 +121,7 @@ function foam_law(i, porosity, mixes, times)
             fraction = f * _SC_SLACK, symmetrize = :iso
         )
     end
-    add_phase!(rve, :PORE, Ellipsoid(1.0), Dict(:C => heaviside_law(TINY_VOID)); fraction = porosity[n] * _SC_SLACK)
+    add_phase!(rve, :PORE, Ellipsoid(1.0), Dict(:C => TINY_VOID); fraction = porosity[n] * _SC_SLACK)
     return homogenize_alv(rve, SelfConsistent(), :C; times)
 end
 
@@ -168,7 +168,7 @@ function concrete_relaxation(fs, times; f_aggregate, rh = 1.0)
     # The paste is homogenized where the concrete needs it, on the same grid.
     concrete = RVE()
     add_phase!(concrete, :PASTE, Ellipsoid(1.0), Dict(:C => Homogenized(paste, MoriTanaka())); fraction = :rest)
-    add_phase!(concrete, :AGG, Ellipsoid(1.0), Dict(:C => heaviside_law(_stiff("aggregate"))); fraction = f_aggregate)
+    add_phase!(concrete, :AGG, Ellipsoid(1.0), Dict(:C => _stiff("aggregate")); fraction = f_aggregate)
     return homogenize_alv(concrete, MoriTanaka(), :C; times)
 end
 

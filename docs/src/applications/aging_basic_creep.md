@@ -78,7 +78,9 @@ model:
 Each scale is a [`homogenize_alv`](@ref) on one time grid, and hands its result, a
 [`VolterraOperator`](@ref), to the next as a phase property; the paste enters the concrete
 as a [`Homogenized`](@ref) cell. Every operator here is isotropic: two ``n\times n``
-matrices instead of one ``6n\times 6n``. The model is
+matrices instead of one ``6n\times 6n``. The elastic phases (the unhydrated grains, the
+aggregates) are given by their stiffness tensor itself, whose kernel is
+``\mathbb{C}\,H(t - t')``. The model is
 `scripts/common/aging_creep_micromechanics.jl`; a phase consumed and replaced, for
 instance, is one line of it, the sum of two operators:
 

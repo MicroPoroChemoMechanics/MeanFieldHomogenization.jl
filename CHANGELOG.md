@@ -40,6 +40,12 @@ needs; an Applications page puts the two together for the basic creep of concret
   the cheapest class that holds it, including the axis or frame of a phase (a TI result
   about a tilted axis).
 - `precipitated` and `dissolved` on operators as well as on laws.
+- An elastic tensor (a conductivity at order 2) is an ALV phase property, as in Echoes: its
+  kernel is `C H(t - t′)`, its operator block diagonal in the symmetry class of `C`. It was
+  refused at order 4, and taken at order 2 for an operator already discretized.
+- The mode of a law also takes the names that hold at every order, `:property` and
+  `:inverse_property`, and those of conduction, `:conductivity` and `:resistivity`: the same
+  two modes as `:relaxation` and `:creep`.
 - An aging viscoelastic harness against Echoes, `scripts/bench_echoes/alv_harness`: 24
   cases (spheres and spheroids, aligned and tilted, TI laws about tilted axes, orientation
   averages, order 2, two-scale chains), the Echoes and the MFH scripts both kept; they
