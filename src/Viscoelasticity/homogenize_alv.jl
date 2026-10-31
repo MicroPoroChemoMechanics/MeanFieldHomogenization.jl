@@ -399,10 +399,6 @@ function homogenize_alv(
     return _compact(_result_operator(R, grid), _candidate_classes(rve, prop, t))
 end
 
-# A list of operators written out, for the formulas on full matrices; typed even
-# when empty (a cell of cracks alone).
-_dense_list(Xs) = Matrix[Matrix(X) for X in Xs]
-
 _result_operator(R::VolterraOperator, grid) = R
 _result_operator(R::AbstractMatrix, grid) = VolterraOperator(R, grid)
 
@@ -518,8 +514,8 @@ function _homogenize_alv_rve(
     # Cracks-against-C_M sums (stiffness, and compliance for Reuss/DiluteDual),
     # added rather than accumulated in place so that a dual crack density
     # promotes them.
-    ΔC_cracks_M = zero(C_0)
-    ΔJ_cracks_M = zero(C_0)
+    ΔC_cracks_M = zero(C_0_op)
+    ΔJ_cracks_M = zero(C_0_op)
 
     for name in incl_names
         ph = rve.phases[name]
@@ -536,9 +532,12 @@ function _homogenize_alv_rve(
             # Compliance + stiffness contributions, with optional
             # interface-stiffness Sevostianov correction
             # `B̃_eff = B̃ ∘ (𝟙 + b·K ∘ B̃)^{-vol}`.
-            H̃ = inverse_property_contribution_alv(
-                geom, C_M_law, times;
-                Rn = Rn_law, Rt = Rt_law
+            # Stored in the cheapest class that holds it (transversely isotropic
+            # about the normal of a penny crack along e₃), as every crack
+            # quantity below.
+            H̃ = _as_class_operator(
+                inverse_property_contribution_alv(geom, C_M_law, times; Rn = Rn_law, Rt = Rt_law),
+                C_0_op.grid, _algebra_candidates((C_0_op,))
             )
             # Iso-projected, Budiansky-scaled H̃ for the ECHOES-form MT
             # denominator (cf. ECHOES `compute_visco_strain_Stress`).  The
@@ -549,7 +548,7 @@ function _homogenize_alv_rve(
                 sym
             )
             push!(crack_data, (geom, ε, sym, H̃_full))
-            Ñ = -(C_0 * H̃ * C_0)
+            Ñ = -(C_0_op * H̃ * C_0_op)
             ΔC = delta_property_alv(geom, Ñ, ε)
             ΔC = _maybe_symmetrize_alv(ΔC, sym)
             ΔC_cracks_M = ΔC_cracks_M + ΔC
@@ -724,10 +723,12 @@ function _homogenize_alv_dispatch(
         C_0, C_phases, A_duts, contribs,
         H_phases, fractions, f_M, matrix::Symbol; kw...
     )
-    # Cracks: additive — `C̃_dilute + ΔC̃_cracks_M`.
-    _has_cracks(kw) && return _alg_dilute(_DenseALV{6}(), C_0, _dense_list(contribs), fractions) .+ kw[:ΔC_cracks_M]
-    return _in_class_algebra((_reference(C_0, kw),), (contribs,)) do a, C₀, Ns
+    _has_cracks(kw) || return _in_class_algebra((_reference(C_0, kw),), (contribs,)) do a, C₀, Ns
         _alg_dilute(a, C₀, Ns, fractions)
+    end
+    # Cracks: additive — `C̃_dilute + ΔC̃_cracks_M`.
+    return _in_class_algebra((_reference(C_0, kw), kw[:ΔC_cracks_M]), (contribs,)) do a, C₀, ΔC, Ns
+        _alg_add(a, _alg_dilute(a, C₀, Ns, fractions), ΔC)
     end
 end
 
@@ -746,14 +747,15 @@ function _homogenize_alv_dispatch(
     # heterogeneous one it is the definition the elastic pipeline uses.
     # Feeding the raw Ñ to the compliance sum would add a stiffness to a
     # compliance — see the `glassy limit` / `elastic limit` tests.
-    J_M = volterra_inverse(C_0; block_size = 6)
-    contribs_J = [-(J_M * N̄ * J_M) for N̄ in contribs]
-
+    _has_cracks(kw) || return _in_class_algebra((_reference(C_0, kw),), (contribs,)) do a, C₀, Ns
+        J_M = _alg_inv(a, C₀)
+        _alg_dilute_dual(a, C₀, [-_alg_prod(a, J_M, _alg_prod(a, N, J_M)) for N in Ns], fractions)
+    end
     # Cracks: solid compliance contributions and the crack ΔJ̃, inverted back.
-    _has_cracks(kw) &&
-        return volterra_inverse(_alg_dilute(_DenseALV{6}(), J_M, contribs_J, fractions) .+ kw[:ΔJ_cracks_M]; block_size = 6)
-    return _in_cheapest_algebra((C_0,), (contribs_J,)) do a, C₀, Hs
-        _alg_dilute_dual(a, C₀, Hs, fractions)
+    return _in_class_algebra((_reference(C_0, kw), kw[:ΔJ_cracks_M]), (contribs,)) do a, C₀, ΔJ, Ns
+        J_M = _alg_inv(a, C₀)
+        Hs = [-_alg_prod(a, J_M, _alg_prod(a, N, J_M)) for N in Ns]
+        _alg_inv(a, _alg_add(a, _alg_dilute(a, J_M, Hs, fractions), ΔJ))
     end
 end
 
@@ -787,11 +789,12 @@ function _homogenize_alv_dispatch(
     # `ε·sym(H_c)·C_M` — the ECHOES `strain_Strain` term; summed, not
     # accumulated into a buffer of `C_0`'s type, so that a dual crack density
     # carries.
-    A_crack_total = sum(H_full * C_0 for (_, _, _, H_full) in kw[:crack_data])
-    contribs_aug = vcat(_dense_list(contribs), [kw[:ΔC_cracks_M]])
-    A_duts_aug = vcat(_dense_list(A_duts), [A_crack_total])
+    C₀ = _reference(C_0, kw)
+    A_crack_total = sum(H_full * C₀ for (_, _, _, H_full) in kw[:crack_data])
     fractions_aug = vcat(fractions, [one(eltype(C_0))])
-    return mori_tanaka_alv(C_0, A_duts_aug, contribs_aug, fractions_aug, f_M)
+    return _in_class_algebra((C₀,), (vcat(A_duts, [A_crack_total]), vcat(contribs, [kw[:ΔC_cracks_M]]))) do a, C₀, As, Ns
+        _alg_mori_tanaka(a, C₀, As, Ns, fractions_aug, f_M)
+    end
 end
 
 function _homogenize_alv_dispatch(
@@ -815,13 +818,10 @@ end
 # The Maxwell form `C̃₀ + Ñ ∘ (𝟙 - H̃ ∘ Ñ)⁻¹`, shared by Maxwell and PCW; cracks
 # enter the sum of the contributions.
 function _alv_maxwell_form(C_0, contribs, fractions, H, kw)
-    if _has_cracks(kw)
-        contribs_aug = vcat(_dense_list(contribs), [kw[:ΔC_cracks_M]])
-        fractions_aug = vcat(fractions, [one(eltype(C_0))])
-        return maxwell_alv(C_0, contribs_aug, fractions_aug; H_0 = H)
-    end
-    return _in_class_algebra((_reference(C_0, kw), H), (contribs,)) do a, C₀, H₀, Ns
-        _alg_maxwell(a, C₀, Ns, fractions, H₀)
+    # Cracks enter as one more contribution, of weight one (the density is in it).
+    Ns, fs = _has_cracks(kw) ? (vcat(contribs, [kw[:ΔC_cracks_M]]), vcat(fractions, [one(eltype(C_0))])) : (contribs, fractions)
+    return _in_class_algebra((_reference(C_0, kw), H), (Ns,)) do a, C₀, H₀, Ns
+        _alg_maxwell(a, C₀, Ns, fs, H₀)
     end
 end
 

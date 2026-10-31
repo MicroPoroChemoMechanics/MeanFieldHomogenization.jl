@@ -64,14 +64,16 @@ needs; an Applications page puts the two together for the basic creep of concret
   orthotropic in it; the self-consistent scheme iterates on its isotropic block, and the
   differential scheme computes its right-hand side in the classes), in
   the asymmetric self-consistent scheme, in the right-hand side of
-  the differential scheme, and in the self-consistent scheme with cracks, whose compliance
-  is a transversely isotropic operator; only layered spheres keep full matrices. At
+  the differential scheme, and with cracks in every scheme, the compliance of a crack being
+  a transversely isotropic operator; only layered spheres keep full matrices. At
   `n = 80` instants: Mori–Tanaka with spheres 9.8 → 1.1 ms, with spheroids along `e₃`
   25 → 8 ms, with tilted spheroids 64 → 8 ms, isotropic self-consistent 172 → 16 ms. At
   40 instants: asymmetric self-consistent 48 → 6 ms, differential 67 → 31 ms,
   self-consistent with cracks 43 → 10 ms; at 50 instants, the order-2 self-consistent
   scheme 19 → 2.5 ms; at 80 instants, the order-2 differential scheme 88 → 30 ms (199 →
-  46 ms in the `:compliance` formulation). The differential scheme keeps only its end
+  46 ms in the `:compliance` formulation); with a family of penny cracks at 50 instants,
+  the dilute, Mori–Tanaka, Maxwell and PCW schemes 7–9 → 2.4–3.4 ms, the asymmetric
+  self-consistent one 160 → 8.4 ms. The differential scheme keeps only its end
   state (it saved `nsteps + 1` copies of its dense state, never read) and adds its
   isotropic terms into the derivative in place: at 80 instants 242 → 140 ms, the result
   unchanged to the bit. On the harness at 50 instants (the *Performance

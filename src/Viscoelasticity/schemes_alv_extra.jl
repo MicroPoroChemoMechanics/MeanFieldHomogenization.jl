@@ -94,7 +94,8 @@ function _asymmetric_self_consistent_alv(
     grid = TimeGrid(times)
     C_M = _relaxation_operator(C_M_law, grid)
     incl_names = inclusion_phase_names(rve, m)
-    # Eltype-generic containers (Dual-safe — see schemes_alv_sc.jl).
+    # Eltype-generic containers (Dual-safe — see schemes_alv_sc.jl); the geometries
+    # of the phases are of different shape types.
     C_phases = AbstractMatrix[]
     geometries = Any[]
     fractions = typeof(volume_fraction(rve, m))[]   # eltype of the RVE amounts
@@ -125,15 +126,14 @@ function _asymmetric_self_consistent_alv(
         push!(symmetrizes, phase_symmetrize(rve, name))
     end
 
-    # Without cracks or layered spheres, and while the estimate stays isotropic by
-    # construction (an isotropic matrix, phases spherical and isotropic or averaged in
-    # orientation), the iteration runs in the classes of the operators; otherwise on
-    # full matrices, as before.
-    if isempty(crack_data) && isempty(layered_data) && C_M.class isa TensISO &&
+    # Without layered spheres, and while the estimate stays isotropic by construction
+    # (an isotropic matrix, phases spherical and isotropic or averaged in orientation),
+    # the iteration runs in the classes of the operators; otherwise on full matrices.
+    if isempty(layered_data) && C_M.class isa TensISO &&
             all(k -> _alv_diff_keeps_iso(geometries[k], symmetrizes[k], C_phases[k]), eachindex(C_phases))
         Tp = _alv_promoted_eltype(vcat(AbstractMatrix[C_M], C_phases), fractions, Matrix{Float64}[], crack_data)
         Tp = mapreduce(g -> eltype(tens_UA(g)), promote_type, geometries; init = Tp)
-        step(C_n) = _asc_alv_step_in_classes(C_M, C_n, C_phases, geometries, fractions, symmetrizes)
+        step(C_n) = _asc_alv_step_in_classes(C_M, C_n, C_phases, geometries, fractions, symmetrizes, crack_data)
         return _fixed_point_in_classes(step, C_M, Tp, "ASC-ALV"; abstol, reltol, maxiters, damping, verbose, select_best)
     end
     C_M = Matrix(C_M)
@@ -200,13 +200,16 @@ function _asymmetric_self_consistent_alv(
 end
 
 # One ASC step in the classes of the operators: the increment anchored on C_M, the dilute
-# concentrations against the running estimate.
-function _asc_alv_step_in_classes(C_M, C_n, C_phases, geometries, fractions, symmetrizes)
+# concentrations against the running estimate. The cracks add their compliances against
+# it, −J̃ₙ ∘ ΔC̃ ∘ J̃ₙ = ε H̃, on the compliance side.
+function _asc_alv_step_in_classes(C_M, C_n, C_phases, geometries, fractions, symmetrizes, crack_data)
     J_long, J_shear = _alv_iso_inverses(C_n)
     terms = map(C_phases, geometries, fractions, symmetrizes) do C, g, f, sym
         f * _maybe_symmetrize_alv((C - C_M) * _dilute_in_classes(C, g, C_n, J_long, J_shear), sym)
     end
-    return _as_iso_estimate(isempty(terms) ? C_M : C_M + reduce(+, terms))
+    C_solid = isempty(terms) ? C_M : C_M + reduce(+, terms)
+    isempty(crack_data) && return _as_iso_estimate(C_solid)
+    return _as_iso_estimate(inv(inv(C_solid) + _crack_compliance_in_classes(C_n, crack_data)))
 end
 
 # Single ASC step — increment is anchored on C_M.

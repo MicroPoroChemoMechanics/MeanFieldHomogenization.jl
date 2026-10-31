@@ -221,7 +221,7 @@ end
     @test ForwardDiff.derivative(alv, 0.1) ≈ ForwardDiff.derivative(el, 0.1) rtol = 1.0e-10
 end
 
-@testset "SC with cracks — the class route and the full-matrix route agree" begin
+@testset "SC and ASC with cracks — the class route and the full-matrix route agree" begin
     # A one-layer sphere is the spherical inclusion, but it sends the scheme down
     # the full-matrix route, while the ellipsoid keeps it in the classes of the
     # operators: two independent computations of the same aging cracked cell,
@@ -240,8 +240,10 @@ end
         )
         return r
     end
-    in_classes = homogenize_alv(cell(Ellipsoid(1.0)), SelfConsistent(reltol = 1.0e-13), :C; times)
-    dense = homogenize_alv(cell(LayeredSphere((1.0,), (inclusion,))), SelfConsistent(reltol = 1.0e-13), :C; times)
-    @test in_classes.class isa TensISO
-    @test Matrix(in_classes) ≈ Matrix(dense) rtol = 1.0e-11
+    for scheme in (SelfConsistent(reltol = 1.0e-13), AsymmetricSelfConsistent(reltol = 1.0e-13))
+        in_classes = homogenize_alv(cell(Ellipsoid(1.0)), scheme, :C; times)
+        dense = homogenize_alv(cell(LayeredSphere((1.0,), (inclusion,))), scheme, :C; times)
+        @test in_classes.class isa TensISO
+        @test Matrix(in_classes) ≈ Matrix(dense) rtol = 1.0e-11
+    end
 end
