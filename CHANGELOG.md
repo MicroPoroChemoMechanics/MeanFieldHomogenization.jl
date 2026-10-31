@@ -55,8 +55,10 @@ needs; an Applications page puts the two together for the basic creep of concret
   `n×n` blocks across its iterations, and the Volterra inverse of blocks halves the
   instants into large matrix products. At `n = 80` instants: Mori–Tanaka with spheres
   9.8 → 1.1 ms, with spheroids along `e₃` 25 → 8 ms, with tilted spheroids 64 → 8 ms,
-  isotropic self-consistent 172 → 16 ms; against Echoes on the harness, 1.6 to 18 times
-  faster.
+  isotropic self-consistent 172 → 16 ms. On the harness at 50 instants (the *Performance vs
+  Echoes* page), 7 to 40 times faster than Echoes in elasticity, 1.3 to 2.7 times in
+  conduction, which stays on full matrices. The aging basic creep model of the
+  Applications chapter: the high-performance concrete in 103 s against 499 s.
 
 ### Fixed
 

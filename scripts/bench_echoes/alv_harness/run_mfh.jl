@@ -169,6 +169,18 @@ function main(names)
     open(joinpath(RESULTS, "mfh_report.json"), "w") do io
         JSON.print(io, rows, 2)
     end
+    # On a realistic grid, the numbers the "Performance vs Echoes" page shows.
+    haskey(ENV, "ALV_HARNESS_N") && open(joinpath(HERE, "..", "figures", "alv_harness_n$(ENV["ALV_HARNESS_N"]).json"), "w") do io
+        JSON.print(
+            io, Dict(
+                "cpu" => Sys.cpu_info()[1].model, "julia" => string(VERSION),
+                "mfh" => string(pkgversion(MeanFieldHomogenization)), "tensnd" => string(pkgversion(TensND)),
+                "threads" => Threads.nthreads(), "instants" => parse(Int, ENV["ALV_HARNESS_N"]),
+                "protocol" => "minimum of 5 runs of `homogenize_alv` after a warm-up against the minimum of 3 runs of Echoes' `homogenize_visco`, each code alone on the machine",
+                "rows" => rows,
+            ), 2
+        )
+    end
     return rows
 end
 

@@ -1,0 +1,227 @@
+{
+  "cpu": "AMD EPYC-Milan Processor",
+  "instants": 50,
+  "julia": "1.13.3",
+  "mfh": "0.25.0",
+  "protocol": "minimum of 5 runs of `homogenize_alv` after a warm-up against the minimum of 3 runs of Echoes' `homogenize_visco`, each code alone on the machine",
+  "rows": [
+    {
+      "case": "d3_cond_prolate_rot_MT",
+      "class": "DenseClass",
+      "gap": 1.6523719997599086e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.376591620390675e-17,
+      "t_echoes": 0.0081217922270298,
+      "t_mfh": 0.003639572
+    },
+    {
+      "case": "d2_cond_sph_SC",
+      "class": "TensISO",
+      "gap": 7.66156938155034e-17,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.6856692907996521e-16,
+      "t_echoes": 0.03933214209973812,
+      "t_mfh": 0.026169346
+    },
+    {
+      "case": "b5_oblate_rot_DIL",
+      "class": "TensTI",
+      "gap": 3.466269430484211e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.2244554946173435e-15,
+      "t_echoes": 0.026628077030181885,
+      "t_mfh": 0.003083001
+    },
+    {
+      "case": "b8_oblate_isoavg_SC",
+      "class": "TensISO",
+      "gap": 2.6832908615078647e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.923779634006117e-16,
+      "t_echoes": 0.24740216508507729,
+      "t_mfh": 0.01561753
+    },
+    {
+      "case": "a4_sph_maxwell_kelvin_MT",
+      "class": "TensISO",
+      "gap": 3.4392697366875093e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.2244554946173435e-15,
+      "t_echoes": 0.028599770739674568,
+      "t_mfh": 0.002518269
+    },
+    {
+      "case": "b1_prolate_e3_MT",
+      "class": "TensTI",
+      "gap": 3.3250815923389466e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.2645713360807476e-16,
+      "t_echoes": 0.02530490607023239,
+      "t_mfh": 0.003061723
+    },
+    {
+      "case": "a2_sph_maxwell_elastic_MT",
+      "class": "TensISO",
+      "gap": 2.3430242948432063e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.6587459602861218e-16,
+      "t_echoes": 0.0221699345856905,
+      "t_mfh": 0.001305649
+    },
+    {
+      "case": "b7_prolate_isoavg_MT",
+      "class": "TensISO",
+      "gap": 2.2369569487175346e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.2645713360807476e-16,
+      "t_echoes": 0.028389493003487587,
+      "t_mfh": 0.002606337
+    },
+    {
+      "case": "c2_prolate_tilaw_rot_MT",
+      "class": "TensTI",
+      "gap": 3.122449372823067e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 3.0474374726765085e-16,
+      "t_echoes": 0.026514044031500816,
+      "t_mfh": 0.002785431
+    },
+    {
+      "case": "b6_triaxial_rot_MT",
+      "class": "TensOrtho",
+      "gap": 3.788442142320375e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.2645713360807476e-16,
+      "t_echoes": 0.027228405699133873,
+      "t_mfh": 0.003965534
+    },
+    {
+      "case": "c3_prolate_tilaw_misaligned_DIL",
+      "class": "DenseClass",
+      "gap": 1.9005842899894807e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 3.1870043081294814e-16,
+      "t_echoes": 0.022497115656733513,
+      "t_mfh": 0.006563771
+    },
+    {
+      "case": "c1_sph_tilaw_rot_MT",
+      "class": "TensTI",
+      "gap": 3.1514079404321623e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 3.0474374726765085e-16,
+      "t_echoes": 0.025632446631789207,
+      "t_mfh": 0.002871488
+    },
+    {
+      "case": "a3_sph_maxwell_elastic_SC",
+      "class": "TensISO",
+      "gap": 2.046349345904995e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.923779634006117e-16,
+      "t_echoes": 0.2831773664802313,
+      "t_mfh": 0.007358487
+    },
+    {
+      "case": "b3_prolate_rot_MT",
+      "class": "TensTI",
+      "gap": 5.231081394809068e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.2645713360807476e-16,
+      "t_echoes": 0.026761041954159737,
+      "t_mfh": 0.003931315
+    },
+    {
+      "case": "d4_cond_oblate_rot_tilaw_DIL",
+      "class": "DenseClass",
+      "gap": 7.113787401771003e-17,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.890237850393966e-16,
+      "t_echoes": 0.007728235796093941,
+      "t_mfh": 0.004137389
+    },
+    {
+      "case": "b2_oblate_e3_MT",
+      "class": "TensTI",
+      "gap": 2.906113525715831e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.6587459602861218e-16,
+      "t_echoes": 0.01855764165520668,
+      "t_mfh": 0.004957602
+    },
+    {
+      "case": "b9_triaxial_tiavg_MT",
+      "class": "DenseClass",
+      "gap": 2.4674386758628717e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.2645713360807476e-16,
+      "t_echoes": 0.028026124462485313,
+      "t_mfh": 0.00815948
+    },
+    {
+      "case": "d1_cond_sph_MT",
+      "class": "TensISO",
+      "gap": 1.117577607380104e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.784421520882296e-17,
+      "t_echoes": 0.007517313584685326,
+      "t_mfh": 0.002969766
+    },
+    {
+      "case": "a1_sph_maxwell_elastic_DIL",
+      "class": "TensISO",
+      "gap": 1.7600142216337034e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.6587459602861218e-16,
+      "t_echoes": 0.020435798913240433,
+      "t_mfh": 0.001203713
+    },
+    {
+      "case": "b4_oblate_rot_MT",
+      "class": "TensTI",
+      "gap": 3.4583094764379787e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.6587459602861218e-16,
+      "t_echoes": 0.021683724597096443,
+      "t_mfh": 0.002225261
+    },
+    {
+      "case": "a5_sph_maxwell_maxwell_SC",
+      "class": "TensISO",
+      "gap": 3.235065005491369e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.2244554946173435e-15,
+      "t_echoes": 0.26202634163200855,
+      "t_mfh": 0.011125176
+    },
+    {
+      "case": "e2_multiscale_a3_as_matrix_MT",
+      "class": "TensTI",
+      "gap": 3.5204888326686773e-16,
+      "gap_with_echoes_source": 1.7121871597764566e-16,
+      "phase_gap": 2.046349345904995e-16,
+      "t_echoes": 0.012981647625565529,
+      "t_mfh": 0.001192511
+    },
+    {
+      "case": "e1_multiscale_b3_as_inclusion_MT",
+      "class": "TensTI",
+      "gap": 3.429868264898225e-16,
+      "gap_with_echoes_source": 2.1032218545373274e-16,
+      "phase_gap": 5.231081394809068e-16,
+      "t_echoes": 0.01907969079911709,
+      "t_mfh": 0.002125332
+    },
+    {
+      "case": "e3_multiscale_d1_as_matrix_cond_MT",
+      "class": "DenseClass",
+      "gap": 2.0080577877970853e-16,
+      "gap_with_echoes_source": 1.8178572533187987e-16,
+      "phase_gap": 1.117577607380104e-16,
+      "t_echoes": 0.004414604976773262,
+      "t_mfh": 0.001655168
+    }
+  ],
+  "tensnd": "0.12.0",
+  "threads": 2
+}
