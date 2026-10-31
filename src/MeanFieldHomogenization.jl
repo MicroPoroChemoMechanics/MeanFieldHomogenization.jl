@@ -380,6 +380,7 @@ export pore_volume_fraction
 # ── Viscoelasticity (ALV) ────────────────────────────────────────────────────
 export AbstractViscoLaw, ViscoLaw, VALID_VISCO_MODES
 export SampledViscoLaw, operator_law, precipitated, dissolved
+export TimeGrid, time_grid, VolterraOperator, TimeHistory, DenseClass, ScalarClass, convert_class, operator_value
 export visco_mode, visco_eval
 export maxwell_relaxation, kelvin_creep, maxwell_iso, kelvin_iso, heaviside_law
 export trapezoidal_matrix
@@ -387,7 +388,6 @@ export volterra_inverse, volterra_product, volterra_divide, volterra_left_divide
 export iso_params_from_blocks, iso_blocks_from_params
 export ti_params_from_blocks, ti_blocks_from_params
 export ortho_params_from_blocks, ortho_blocks_from_params
-export AbstractALVKernel, ALVKernelISO, ALVKernelTI, ALVKernelOrtho
 export hill_kernel, second_hill_kernel
 export dilute_concentration_alv, dilute_contribution_alv
 export voigt_alv, reuss_alv, dilute_alv, dilute_dual_alv

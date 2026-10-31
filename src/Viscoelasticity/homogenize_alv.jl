@@ -33,7 +33,7 @@ function has_visco_property(cell::MFH_Core.AbstractHomogenizationCell, prop::Sym
 end
 
 _is_visco_value(::AbstractViscoLaw, ::Symbol) = true
-_is_visco_value(::AbstractALVKernel, ::Symbol) = true
+_is_visco_value(::VolterraOperator, ::Symbol) = true
 _is_visco_value(v, ::Symbol) = false
 _is_visco_value(h::MFH_Core.Homogenized, key::Symbol) =
     has_visco_property(h.cell, h.property === nothing ? key : h.property)
@@ -246,11 +246,14 @@ function _trapezoidal_relaxation(
     return M
 end
 
-# An operator given directly — the result of the scale below, or a compact kernel — is
-# already the relaxation operator on the grid: only its size is checked, and a compact
-# kernel is materialized for the dense scheme formulas.
+# An operator given directly — the result of the scale below — is already the relaxation
+# operator on the grid: a plain matrix has its size checked, a `VolterraOperator` its grid,
+# and it is materialized for the dense scheme formulas.
 _trapezoidal_relaxation(R::AbstractMatrix, times::AbstractVector{<:Real}, B::Int) = _check_operator(R, times, B)
-_trapezoidal_relaxation(K::AbstractALVKernel, times::AbstractVector{<:Real}, B::Int) = Matrix(_check_operator(K, times, B))
+function _trapezoidal_relaxation(R::VolterraOperator, times::AbstractVector{<:Real}, B::Int)
+    _same_grid(R.grid, TimeGrid(times), "homogenize_alv")
+    return _check_operator(Matrix(R), times, B)
+end
 
 function _check_operator(R::AbstractMatrix, times::AbstractVector{<:Real}, B::Int)
     n = length(times)
@@ -292,26 +295,31 @@ _alv_order_error(sample) = throw(
 )
 
 """
-    homogenize_alv(rve, scheme, prop::Symbol; times) -> AbstractMatrix
+    homogenize_alv(rve, scheme, prop::Symbol; times = nothing) -> VolterraOperator
 
 The effective relaxation operator of `rve` in aging linear viscoelasticity, on the time grid
-`times`: a lower block-triangular ``(Bn)\\times(Bn)`` matrix (``B = 6`` in elasticity, ``3`` in
-conduction) that maps a strain history sampled on `times` to the stress history.
+`times` (a vector of instants or a [`TimeGrid`](@ref)): the operator that maps a strain
+history on the grid to the stress history, or a temperature gradient to a flux in
+conduction. `times` may be left out when a phase property is a [`VolterraOperator`](@ref):
+its grid is then the grid of the computation.
 
 **Phase properties.** The property `prop` of a phase may be
 
   * a law — a [`ViscoLaw`](@ref) or any [`AbstractViscoLaw`](@ref), in relaxation or creep form,
     or an elastic tensor, which is a law constant in time;
   * an operator on the same grid, as one scale hands it to the next (the result of another
-    `homogenize_alv`): a dense block matrix, or a compact [`ALVKernelISO`](@ref),
-    [`ALVKernelTI`](@ref) or [`ALVKernelOrtho`](@ref);
+    `homogenize_alv`): a [`VolterraOperator`](@ref), or the plain ``6n\\times 6n``
+    (``3n\\times 3n`` in conduction) matrix of one;
   * a [`Homogenized`](@ref) cell, homogenized here on the same grid and memoized for the whole
     call, as in elasticity.
 
-**Result.** An elastic (``6n\\times 6n``) result with a symmetry is returned in its compact form —
-[`ALVKernelISO`](@ref), [`ALVKernelTI`](@ref) about ``\\underline{e}_3`` or [`ALVKernelOrtho`](@ref)
-in the canonical frame — an `AbstractMatrix` that indexes, multiplies and inverts like the dense
-one, and `Matrix(R)` materializes it. Otherwise, and in conduction, it is a dense `Matrix`.
+**Result.** A [`VolterraOperator`](@ref) on the grid, stored in the cheapest symmetry class
+that holds it — isotropic, the class of a phase property (transversely isotropic about its
+axis, orthotropic in its frame, …), transversely isotropic about ``\\underline{e}_3``,
+orthotropic in the canonical frame — and dense otherwise. It is an `AbstractMatrix` that
+multiplies and inverts like the full matrix, which `Matrix(R)` writes out, and computes as
+the elastic tensors do (`⊡`, `inv`, `+`); see
+[Aging viscoelastic operators and histories](@ref man-volterra-operators).
 
 The ALV pipeline builds the discrete block matrices of every phase, computes the ALV Hill
 kernel and dilute concentration tensors, and dispatches on `scheme` to the corresponding
@@ -366,32 +374,56 @@ Volterra inverses (Reuss) directly, each over its orientation distribution
 """
 function homogenize_alv(
         rve::RVE, scheme::HomogenizationScheme,
-        prop::Symbol; times::AbstractVector{<:Real}, kw...
+        prop::Symbol; times = nothing, kw...
     )
+    grid = _alv_grid(rve, prop, times)
+    t = grid.times
     R = MFH_Core._with_nested_cache() do
-        MFH_Core._with_alv_grid(() -> _homogenize_alv_rve(rve, scheme, prop; times, kw...), times)
+        MFH_Core._with_alv_grid(() -> _homogenize_alv_rve(rve, scheme, prop; times = t, kw...), t)
     end
-    return _compact_alv(R, times)
+    return _compact(VolterraOperator(R, grid), _candidate_classes(rve, prop, t))
 end
 
 # A nested cell met inside an aging viscoelastic homogenization, on its grid.
 MFH_Core._resolve_alv(cell, scheme, prop::Symbol, times; kw...) = homogenize_alv(cell, scheme, prop; times, kw...)
 
-"""
-    _compact_alv(R, times) -> AbstractMatrix
-
-`R` in the cheapest compact form its symmetry allows — isotropic, transversely isotropic about
-``\\underline{e}_3``, orthotropic in the canonical frame — when it is a ``6n\\times 6n`` operator;
-as it is otherwise.
-"""
-_compact_alv(R::AbstractALVKernel, times) = R
-function _compact_alv(R::AbstractMatrix, times)
-    size(R, 1) == 6 * length(times) || return R
-    _is_iso_block(R) && return ALVKernelISO(R)
-    _is_ti_block(R) && return ALVKernelTI(R)
-    _is_ortho_block(R) && return ALVKernelOrtho(R)
-    return R
+# The grid of a computation: given, or that of the operators among the phase properties.
+_alv_grid(rve, prop, times) = TimeGrid(times)
+function _alv_grid(rve, prop, ::Nothing)
+    grids = [g for g in map(_grid_of, _raw_properties(rve, prop)) if g !== nothing]
+    isempty(grids) && throw(
+        ArgumentError("homogenize_alv: no time grid; give `times`, or a phase property that is a VolterraOperator")
+    )
+    for g in grids
+        _same_grid(first(grids), g, "homogenize_alv")
+    end
+    return first(grids)
 end
+
+_grid_of(R::VolterraOperator) = R.grid
+_grid_of(v) = nothing
+
+# The property values of the members, as stored (a nested cell is not resolved here).
+_raw_properties(cell, prop) = [
+    MFH_Core.cell_container_property(cell, name, prop)
+        for name in MFH_Core.cell_member_names(cell) if MFH_Core.cell_has_property(cell, name, prop)
+]
+
+# The classes a result is tried in, cheapest first: isotropic, those of the phase
+# properties (a law's value, an operator's class), transversely isotropic about e₃,
+# orthotropic in the canonical frame.
+function _candidate_classes(rve, prop, times)
+    ℬ = TensND.CanonicalBasis{3, Float64}()
+    phase = Any[c for c in (_property_class(v, times) for v in _raw_properties(rve, prop)) if c isa _StructuredClass]
+    return Any[
+        TensISO{3}(1.0, 1.0), TensISO{3}(1.0), phase...,
+        TensTI{4}(1.0, 1.0, 0.0, 1.0, 1.0, (0.0, 0.0, 1.0)), TensTI{2}(1.0, 1.0, (0.0, 0.0, 1.0)),
+        TensOrtho{4, Float64}(ntuple(_ -> 1.0, 9), ℬ), TensOrtho{2, Float64}((1.0, 1.0, 1.0), ℬ),
+    ]
+end
+_property_class(law::AbstractViscoLaw, times) = _class_of(visco_eval(law, first(times), first(times)))
+_property_class(R::VolterraOperator, times) = R.class
+_property_class(v, times) = nothing
 
 function _homogenize_alv_rve(
         rve::RVE, scheme::HomogenizationScheme,

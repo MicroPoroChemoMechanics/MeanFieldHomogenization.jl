@@ -210,13 +210,19 @@ iso_order2_params_from_blocks
 iso_order2_blocks_from_params
 ```
 
-## Structured ALV kernel types
+## Operators, histories and their grid
+
+Usage: [Aging viscoelastic operators and histories](@ref man-volterra-operators).
 
 ```@docs
-AbstractALVKernel
-ALVKernelISO
-ALVKernelTI
-ALVKernelOrtho
+TimeGrid
+time_grid
+VolterraOperator
+TimeHistory
+operator_value
+convert_class
+DenseClass
+ScalarClass
 ```
 
 ## Orientation symmetrization

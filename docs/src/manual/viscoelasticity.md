@@ -148,14 +148,21 @@ C_eff = homogenize_alv(rve, MoriTanaka(), :C; times = times)   # 300 × 300
 
 ### Nesting scales, and phases that appear or disappear
 
-The result of [`homogenize_alv`](@ref) is an operator on the time grid. Turned back into a
-law by [`operator_law`](@ref), it becomes a phase of the next scale, on the same grid:
+The result of [`homogenize_alv`](@ref) is an operator on the time grid, a
+[`VolterraOperator`](@ref). It is a phase of the next scale as it is, on the same
+grid; or the cell itself is, through [`Homogenized`](@ref), homogenized on that
+grid when the outer scale needs it:
 
 ```julia
 R_paste = homogenize_alv(paste, MoriTanaka(), :C; times = times)
-add_phase!(concrete, :paste, Ellipsoid(1.0), Dict(:C => operator_law(R_paste, times));
-           fraction = :rest)
+add_phase!(concrete, :paste, Ellipsoid(1.0), Dict(:C => R_paste); fraction = :rest)
+# or, without computing it first:
+# add_phase!(concrete, :paste, Ellipsoid(1.0), Dict(:C => Homogenized(paste, MoriTanaka())); fraction = :rest)
 ```
+
+[`operator_law`](@ref) turns it back into a law of ``(t, t')``, known on the grid.
+[Aging viscoelastic operators and histories](@ref man-volterra-operators) tells
+more about operators, histories and their shared grid.
 
 A phase that forms during the history is loaded only by the strains that follow its
 formation, and a phase that dissolves stops carrying stress: [`precipitated`](@ref) and
@@ -431,35 +438,10 @@ The classes, their stored components and the cost of each closure operation
 are tabulated in [Symmetry classes and structured
 storage](@ref th-visco-classes).
 
-Detection is heuristic (`_is_iso_block` / `_is_ti_block` /
-`_is_ortho_block`) — the user never asks for a fast path explicitly,
-and the output is still a dense `(6n × 6n)` `Matrix{T}`.
-
-For user code that wants to keep the compact storage and the type
-information, the structured wrappers
-[`ALVKernelISO`](@ref) / [`ALVKernelTI`](@ref) /
-[`ALVKernelOrtho`](@ref) are `AbstractMatrix{T}` subtypes:
-
-```julia
-M = trapezoidal_matrix(law_M, times)
-K_iso = ALVKernelISO(M)            # extracts (α, β), 18× cheaper storage
-
-# Algebra closure stays in the structured class (no (6n × 6n)
-# materialisation), with auto-promotion iso ⊂ TI ⊂ ortho
-K_prod = K_iso * K_iso             # ALVKernelISO
-K_inv  = volterra_inverse(K_iso)   # ALVKernelISO
-
-K_TI = ALVKernelTI(K_iso)          # promote to TI form
-K_O  = ALVKernelOrtho(K_iso)       # promote to ortho form
-K_iso + K_TI                       # ALVKernelTI (auto-promote)
-K_iso * K_O                        # ALVKernelOrtho
-
-Matrix(K_iso)                      # back to dense (6n × 6n) on demand
-```
-
-**Prototype**: usable for hand-rolled ALV pipelines, but `homogenize_alv`
-does not accept them as inputs — use `Matrix(K)` to cross the boundary
-(`scripts/58_alv_kernel_types.jl`).
+The result of [`homogenize_alv`](@ref) keeps that storage: it is a
+[`VolterraOperator`](@ref) in the cheapest class that holds it, which computes
+as the elastic tensors do (`⊡`, `inv`, `+`) and is an `AbstractMatrix` all the
+same. See [Aging viscoelastic operators and histories](@ref man-volterra-operators).
 
 ## 10. Sensitivities (autodiff via ForwardDiff)
 

@@ -70,6 +70,7 @@ using ..Schemes: RVE, HomogenizationScheme, Laminated, Voigt, Reuss, Dilute, Dil
     phase_symmetrize,
     VolumeFraction, CrackDensity, amount_value, _is_crack_family
 using ForwardDiff
+using StaticArrays: SMatrix, SVector
 using OrdinaryDiffEqTsit5
 using SpecialFunctions: gamma, expintx
 
@@ -89,6 +90,7 @@ include("rheology_iso.jl")
 include("trapezoidal.jl")
 include("sampled_law.jl")
 include("volterra_inverse.jl")
+include("volterra_operator.jl")
 include("conversions.jl")
 include("hill_alv.jl")
 include("schemes_alv.jl")
@@ -96,7 +98,6 @@ include("iso_schemes_alv.jl")
 include("ti_schemes_alv.jl")
 include("ortho_schemes_alv.jl")
 include("alv_scheme_algebra.jl")
-include("alv_kernel_types.jl")
 include("schemes_alv_sc.jl")
 include("schemes_alv_sc_newton.jl")
 include("schemes_alv_extra.jl")
@@ -111,6 +112,7 @@ include("alv_order.jl")
 # ── Exports ─────────────────────────────────────────────────────────────────
 export AbstractViscoLaw, ViscoLaw, VALID_VISCO_MODES
 export SampledViscoLaw, operator_law, precipitated, dissolved
+export TimeGrid, time_grid, VolterraOperator, TimeHistory, DenseClass, ScalarClass, convert_class, operator_value
 export visco_mode, visco_eval
 export maxwell_relaxation, kelvin_creep, maxwell_iso, kelvin_iso, heaviside_law
 export trapezoidal_matrix
@@ -118,7 +120,6 @@ export volterra_inverse, volterra_product, volterra_divide, volterra_left_divide
 export iso_params_from_blocks, iso_blocks_from_params
 export ti_params_from_blocks, ti_blocks_from_params
 export ortho_params_from_blocks, ortho_blocks_from_params
-export AbstractALVKernel, ALVKernelISO, ALVKernelTI, ALVKernelOrtho
 export hill_kernel, second_hill_kernel
 export dilute_concentration_alv, dilute_contribution_alv
 export voigt_alv, reuss_alv, dilute_alv, dilute_dual_alv

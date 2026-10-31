@@ -36,7 +36,7 @@ struct SampledViscoLaw{V <: AbstractVector{<:Real}, S <: AbstractMatrix} <: Abst
 end
 
 # A phase property in aging viscoelasticity: a law, or its relaxation operator on the time
-# grid — a dense block matrix or a compact `AbstractALVKernel` — as one scale hands it to the
+# grid — a dense block matrix or a `VolterraOperator` — as one scale hands it to the
 # next.
 const ALVProperty = Union{AbstractViscoLaw, AbstractMatrix}
 

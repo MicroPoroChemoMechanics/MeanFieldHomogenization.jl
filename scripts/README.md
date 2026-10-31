@@ -139,7 +139,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | `55_aging_creep_dirichlet_chains.jl` | Granger creep | aging creep (Granger–Bažant 1995 law) |
 | `56_aging_creep_order2.jl` | order-2 creep | order-2 ALV |
 | `57_aging_creep_cracks.jl` | crack creep | ALV crack creep |
-| `58_alv_kernel_types.jl` | — | structured ALV kernel types |
+| `58_volterra_operators.jl` | [operators and histories](../docs/src/manual/volterra_operators.md) | aging viscoelastic operators and histories on a shared grid, stored by symmetry blocks |
 | `59_alv_sensitivities.jl` | — | **published tutorial** — `ForwardDiff` through the ALV pipeline: `set_param` lens vs closure capture, joint gradient, relaxation-time sensitivity, all validated against central finite differences |
 
 ### 60+ ALV cracks, cross-validations, the Laplace-Carson route / symmetrization
