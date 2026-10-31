@@ -226,11 +226,14 @@ end
 # The compliance contribution of a penny crack of normal e₃, as a full matrix: transversely
 # isotropic about the normal, ℓ₁ = 3/4 B_n (opening) and ℓ₆ = 3/8 B_t (sliding), the other
 # Walpole components zero (the blocks of TensND `symmetry_blocks`).
-function _penny_compliance_blocks(B_n, B_t)
+_penny_compliance_blocks(B_n, B_t) = _dense_matrix(_TI4_E3, _penny_blocks(B_n, B_t), size(B_n, 1))
+# The same as an operator stored by its blocks.
+_penny_compliance_operator(B_n, B_t, grid) = VolterraOperator(_TI4_E3, _penny_blocks(B_n, B_t), grid)
+function _penny_blocks(B_n, B_t)
     T = promote_type(eltype(B_n), eltype(B_t))
     ℓ₁ = (T(3) / T(4)) .* B_n
     ℓ₆ = (T(3) / T(8)) .* B_t
-    return _dense_matrix(_TI4_E3, (kron(ℓ₁, T[1 0; 0 0]), zero(ℓ₁), ℓ₆), size(ℓ₁, 1))
+    return (kron(ℓ₁, T[1 0; 0 0]), zero(ℓ₁), ℓ₆)
 end
 
 """
@@ -246,7 +249,8 @@ function delta_inverse_property_alv(
         crack::MFH_Core.AbstractCrack,
         H̃::AbstractMatrix, ε::Real
     )
-    return Cracks.crack_density_factor(crack) * ε .* H̃
+    # A product by a number, not a broadcast: an operator stored by blocks keeps them.
+    return (Cracks.crack_density_factor(crack) * ε) * H̃
 end
 
 """
@@ -317,5 +321,5 @@ function delta_property_alv(
         crack::MFH_Core.AbstractCrack,
         Ñ::AbstractMatrix, ε::Real
     )
-    return Cracks.crack_density_factor(crack) * ε .* Ñ
+    return (Cracks.crack_density_factor(crack) * ε) * Ñ
 end

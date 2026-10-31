@@ -72,7 +72,11 @@ index, mirroring the reference ASC form.  Returns the
 `abstol` + `reltol` ``\\times\\,\\|\\widetilde{\\mathbb{C}}^{(m)}\\|_F`` (or after
 `maxiters` Picard steps).
 """
-function asymmetric_self_consistent_alv(
+asymmetric_self_consistent_alv(rve::RVE, prop::Symbol; kw...) = Matrix(_asymmetric_self_consistent_alv(rve, prop; kw...))
+
+# The same, returning a `VolterraOperator` when it iterates in the classes of the
+# operators (what `homogenize_alv` keeps), a full matrix otherwise.
+function _asymmetric_self_consistent_alv(
         rve::RVE, prop::Symbol;
         times::AbstractVector{<:Real},
         matrix::Union{Nothing, Symbol} = nothing,
@@ -87,10 +91,11 @@ function asymmetric_self_consistent_alv(
     C_M_law = phase_property(rve, m, prop)
     C_M_law isa ALVProperty ||
         throw(ArgumentError("asymmetric_self_consistent_alv: matrix property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
-    C_M = _trapezoidal_relaxation(C_M_law, times, 6)
+    grid = TimeGrid(times)
+    C_M = _relaxation_operator(C_M_law, grid)
     incl_names = inclusion_phase_names(rve, m)
     # Eltype-generic containers (Dual-safe — see schemes_alv_sc.jl).
-    C_phases = Matrix[]
+    C_phases = AbstractMatrix[]
     geometries = Any[]
     fractions = typeof(volume_fraction(rve, m))[]   # eltype of the RVE amounts
     symmetrizes = AbstractSymmetrize[]
@@ -114,11 +119,25 @@ function asymmetric_self_consistent_alv(
             push!(layered_data, (geom = ph.geometry, f = _amount_value(rve, name), sym = phase_symmetrize(rve, name)))
             continue
         end
-        push!(C_phases, _trapezoidal_relaxation(C_r_law, times, 6))
+        push!(C_phases, _relaxation_operator(C_r_law, grid))
         push!(geometries, ph.geometry)
         push!(fractions, _amount_value(rve, name))
         push!(symmetrizes, phase_symmetrize(rve, name))
     end
+
+    # Without cracks or layered spheres, and while the estimate stays isotropic by
+    # construction (an isotropic matrix, phases spherical and isotropic or averaged in
+    # orientation), the iteration runs in the classes of the operators; otherwise on
+    # full matrices, as before.
+    if isempty(crack_data) && isempty(layered_data) && C_M.class isa TensISO &&
+            all(k -> _alv_diff_keeps_iso(geometries[k], symmetrizes[k], C_phases[k]), eachindex(C_phases))
+        Tp = _alv_promoted_eltype(vcat(AbstractMatrix[C_M], C_phases), fractions, Matrix{Float64}[], crack_data)
+        Tp = mapreduce(g -> eltype(tens_UA(g)), promote_type, geometries; init = Tp)
+        step(C_n) = _asc_alv_step_in_classes(C_M, C_n, C_phases, geometries, fractions, symmetrizes)
+        return _fixed_point_in_classes(step, C_M, Tp, "ASC-ALV"; abstol, reltol, maxiters, damping, verbose, select_best)
+    end
+    C_M = Matrix(C_M)
+    C_phases = Matrix[Matrix(C) for C in C_phases]
 
     U_M_phases = Matrix[TensND.mandel(TensND.canonical_components(tens_UA(g)); symmetrize = true) for g in geometries]
     V_M_phases = Matrix[TensND.mandel(TensND.canonical_components(tens_VA(g)); symmetrize = true) for g in geometries]
@@ -178,6 +197,16 @@ function asymmetric_self_consistent_alv(
 
     @debug "asymmetric_self_consistent_alv: maxiters=$(maxiters) reached without convergence" abstol reltol
     return select_best ? C_best : C_n
+end
+
+# One ASC step in the classes of the operators: the increment anchored on C_M, the dilute
+# concentrations against the running estimate.
+function _asc_alv_step_in_classes(C_M, C_n, C_phases, geometries, fractions, symmetrizes)
+    J_long, J_shear = _alv_iso_inverses(C_n)
+    terms = map(C_phases, geometries, fractions, symmetrizes) do C, g, f, sym
+        f * _maybe_symmetrize_alv((C - C_M) * _dilute_in_classes(C, g, C_n, J_long, J_shear), sym)
+    end
+    return _as_iso_estimate(isempty(terms) ? C_M : C_M + reduce(+, terms))
 end
 
 # Single ASC step — increment is anchored on C_M.
@@ -352,7 +381,6 @@ function differential_alv(
                         name = name,
                         C_r = nothing, geom = geom,
                         target = amt.value, sym = sym,
-                        U_M = nothing, V_M = nothing,
                     )
                 )
                 continue
@@ -360,7 +388,9 @@ function differential_alv(
             C_r_law = phase_property(rve, name, prop)
             C_r_law isa ALVProperty ||
                 throw(ArgumentError("differential_alv: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
-            C_r = _trapezoidal_relaxation(C_r_law, times, 6)
+            # Stored by the blocks of its class: the right-hand side computes each
+            # contribution in the classes of its operators.
+            C_r = _relaxation_operator(C_r_law, TimeGrid(times))
             _alv_diff_keeps_iso(geom, sym, C_r) ||
                 _alv_diff_iso_error(name, "the shape or the anisotropy")
             push!(
@@ -370,8 +400,6 @@ function differential_alv(
                     geom = geom,
                     target = amt.value,
                     sym = sym,
-                    U_M = TensND.mandel(TensND.canonical_components(tens_UA(geom)); symmetrize = true),
-                    V_M = TensND.mandel(TensND.canonical_components(tens_VA(geom)); symmetrize = true),
                 )
             )
         else  # CrackDensity
@@ -408,7 +436,7 @@ function differential_alv(
     for sd in solid_data
         Tp = promote_type(Tp, typeof(sd.target))
         sd.C_r === nothing || (Tp = promote_type(Tp, eltype(sd.C_r)))
-        sd.U_M === nothing || (Tp = promote_type(Tp, eltype(sd.U_M)))
+        sd.C_r === nothing || (Tp = promote_type(Tp, eltype(tens_UA(sd.geom))))
     end
     for cd in crack_data
         Tp = promote_type(Tp, typeof(cd.target))
@@ -426,6 +454,7 @@ function differential_alv(
         solid_data = Tuple(merge(r, (path = paths[r.name],)) for r in solid_data),
         crack_data = Tuple(merge(r, (path = paths[r.name],)) for r in crack_data),
         times = times,
+        grid = TimeGrid(times),
         dual = dual,
     )
     rhs! = (du, u, p, τ) -> _diff_alv_ode_rhs!(du, u, p, τ)
@@ -464,13 +493,16 @@ function _diff_alv_ode_rhs!(du, u, p, τ)
     f0 = one(T) - sum(f; init = zero(T))
     sum_df = sum(df; init = zero(T))
 
-    # Volterra inverses against C_curr, shared across the solid phases.
-    J_long, J_shear = _alv_iso_inverses(C_curr)
+    # The running medium is isotropic (the setup refuses what would take it out
+    # of the class): its two blocks, and their Volterra inverses, shared across the
+    # solid phases.
+    C_op = _iso_operator(C_curr, p.grid)
+    J_long, J_shear = _alv_iso_inverses(C_op)
     map(p.solid_data, f, df) do r, fᵢ, dfᵢ
         dφᵢ = dfᵢ + (fᵢ / f0) * sum_df
         iszero(dφᵢ) || _diff_alv_add!(
-            Δ, _maybe_symmetrize_alv(_diff_alv_solid_contribution(r, r.geom, C_curr, J_long, J_shear, p.times), r.sym),
-            dφᵢ, p.dual, P_curr
+            Δ, _maybe_symmetrize_alv(_diff_alv_solid_contribution(r, r.geom, C_curr, C_op, J_long, J_shear, p.times), r.sym),
+            dφᵢ, p.dual, P_curr, p.grid
         )
         return nothing
     end
@@ -487,7 +519,7 @@ function _diff_alv_ode_rhs!(du, u, p, τ)
         dφᶜ = r.path.df(τ) * r.target + (εᶜ / f0) * sum_df
         iszero(dφᶜ) && return nothing
         Ñ = property_contribution_alv_at(r.geom, C_curr; Rn_mat = r.Rn_mat, Rt_mat = r.Rt_mat)
-        _diff_alv_add!(Δ, _maybe_symmetrize_alv(delta_property_alv(r.geom, Ñ, 1.0), r.sym), dφᶜ, p.dual, P_curr)
+        _diff_alv_add!(Δ, _maybe_symmetrize_alv(delta_property_alv(r.geom, Ñ, 1.0), r.sym), dφᶜ, p.dual, P_curr, p.grid)
         return nothing
     end
     return nothing
@@ -496,16 +528,26 @@ end
 # The contribution of a solid phase against the running medium: from its
 # Hill kernel for an ellipsoid, from the bulk and shear ALV recurrences of the
 # whole composite sphere for a layered one, which has no Hill kernel.
-_diff_alv_solid_contribution(r, ::LayeredSphere, C_curr, J_long, J_shear, times) =
+_diff_alv_solid_contribution(r, ::LayeredSphere, C_curr, C_op, J_long, J_shear, times) =
     property_contribution_alv_at(r.geom, C_curr, times)
-_diff_alv_solid_contribution(r, geom, C_curr, J_long, J_shear, times) =
-    _alv_dilute_contribution(r.C_r, C_curr, _alv_hill_blocks(J_long, J_shear, r.U_M, r.V_M .- r.U_M))
+# An ellipsoid: its dilute contribution in the classes of its operators.
+_diff_alv_solid_contribution(r, geom, C_curr, C_op, J_long, J_shear, times) =
+    (r.C_r - C_op) * _dilute_in_classes(r.C_r, geom, C_op, J_long, J_shear)
+
+# The isotropic operator of a full matrix the running medium is known to be.
+_iso_operator(M::AbstractMatrix, grid) = VolterraOperator(_ISO4, iso_params_from_blocks(M), grid)
 
 # Adds `weight` times a stiffness contribution to the right-hand side, mapped to
 # its compliance counterpart −J̃ ∘ Ñ ∘ J̃ in the dual form.
-function _diff_alv_add!(Δ, contrib, weight, dual::Bool, J_curr)
+function _diff_alv_add!(Δ, contrib::AbstractMatrix, weight, dual::Bool, J_curr, grid)
     term = dual ? -_alv_prod(J_curr, _alv_prod(contrib, J_curr)) : contrib
     @. Δ += weight * term
+    return nothing
+end
+# Stored by blocks: computed in the classes, written into the full derivative once.
+function _diff_alv_add!(Δ, contrib::VolterraOperator, weight, dual::Bool, J_curr, grid)
+    term = dual ? (J = _iso_operator(J_curr, grid); -(J * contrib * J)) : contrib
+    Δ .+= weight .* Matrix(term)
     return nothing
 end
 

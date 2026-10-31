@@ -220,3 +220,28 @@ end
     el(ε) = _to_mandel(homogenize(_build_el(merge(ctx, (; ε))), MoriTanaka(), :C))
     @test ForwardDiff.derivative(alv, 0.1) ≈ ForwardDiff.derivative(el, 0.1) rtol = 1.0e-10
 end
+
+@testset "SC with cracks — the class route and the full-matrix route agree" begin
+    # A one-layer sphere is the spherical inclusion, but it sends the scheme down
+    # the full-matrix route, while the ellipsoid keeps it in the classes of the
+    # operators: two independent computations of the same aging cracked cell,
+    # with springs on the crack faces.
+    times = collect(range(0.0, 3.0; length = 6))
+    matrix = maxwell_iso(10.0, 6.0, 0.8, 2.5)
+    inclusion = heaviside_law(TensISO{3}(3 * 30.0, 2 * 20.0))
+    function cell(shape)
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => matrix); fraction = :rest)
+        add_phase!(r, :I, shape, Dict(:C => inclusion); fraction = 0.2)
+        add_phase!(
+            r, :CRACK, PennyCrack(1.0),
+            Dict(:C => matrix, :Rn => ViscoLaw((t, tp) -> 3.0 * exp(-(t - tp) / 4)), :Rt => heaviside_law(1.5));
+            density = 0.15, symmetrize = :iso
+        )
+        return r
+    end
+    in_classes = homogenize_alv(cell(Ellipsoid(1.0)), SelfConsistent(reltol = 1.0e-13), :C; times)
+    dense = homogenize_alv(cell(LayeredSphere((1.0,), (inclusion,))), SelfConsistent(reltol = 1.0e-13), :C; times)
+    @test in_classes.class isa TensISO
+    @test Matrix(in_classes) ≈ Matrix(dense) rtol = 1.0e-11
+end

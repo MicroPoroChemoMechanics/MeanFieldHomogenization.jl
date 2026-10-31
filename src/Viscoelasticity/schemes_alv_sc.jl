@@ -129,13 +129,13 @@ function _self_consistent_alv(
         push!(symmetrizes, sym)
     end
 
-    # Without cracks or layered spheres, the iteration runs in the classes of the
-    # operators; otherwise on full matrices.
-    if isempty(crack_data) && isempty(layered_data)
+    # Without layered spheres, the iteration runs in the classes of the operators;
+    # otherwise on full matrices.
+    if isempty(layered_data)
         Tp = _alv_promoted_eltype(C_phases, fractions, Matrix{Float64}[], crack_data)
         Tp = mapreduce(g -> eltype(tens_UA(g)), promote_type, geometries; init = Tp)
         return _sc_alv_in_classes(
-            C_0, C_phases, geometries, fractions, symmetrizes, Tp;
+            C_0, C_phases, geometries, fractions, symmetrizes, crack_data, Tp;
             abstol, reltol, maxiters, damping, verbose, select_best
         )
     end
@@ -210,17 +210,28 @@ end
 # once per iteration; the concentrations are averaged and divided in the block
 # algebra, so that no 6n×6n matrix is written out.
 function _sc_alv_in_classes(
-        C_0, C_phases, geometries, fractions, symmetrizes, ::Type{Tp};
+        C_0, C_phases, geometries, fractions, symmetrizes, crack_data, ::Type{Tp};
         abstol, reltol, maxiters, damping, verbose, select_best
     ) where {Tp}
+    step(C_m) = _sc_alv_step_in_classes(C_m, C_phases, geometries, fractions, symmetrizes, crack_data)
+    return _fixed_point_in_classes(step, C_0, Tp, "SC-ALV"; abstol, reltol, maxiters, damping, verbose, select_best)
+end
+
+# The Picard iteration of the self-consistent schemes on an isotropic estimate stored by
+# its blocks: `step` maps an estimate to the next; convergence on the Frobenius norm of
+# the full matrices (read on the blocks), relaxation by `damping`.
+function _fixed_point_in_classes(
+        step::F, C_0, ::Type{Tp}, name;
+        abstol, reltol, maxiters, damping, verbose, select_best
+    ) where {F, Tp}
     C_m = _as_iso_estimate(_with_eltype(Tp, C_0))
     best_resid = Inf
     C_best = C_m
     for iter in 1:maxiters
-        C_new = _sc_alv_step_in_classes(C_m, C_phases, geometries, fractions, symmetrizes)
+        C_new = step(C_m)
         Δ = norm(C_new - C_m)
         tol_eff = abstol + reltol * norm(C_m)
-        verbose && @info "SC-ALV iter $iter : ‖Δ‖ = $(Δ)   tol = $tol_eff"
+        verbose && @info "$name iter $iter : ‖Δ‖ = $(Δ)   tol = $tol_eff"
         if select_best && Δ < best_resid
             best_resid = Δ
             C_best = C_new
@@ -228,21 +239,41 @@ function _sc_alv_in_classes(
         Δ ≤ tol_eff && return C_new
         C_m = (1 - damping) * C_new + damping * C_m
     end
-    @debug "self_consistent_alv: maxiters=$(maxiters) reached without convergence" abstol reltol
+    @debug "$name: maxiters=$(maxiters) reached without convergence" abstol reltol
     return select_best ? C_best : C_m
 end
 
-function _sc_alv_step_in_classes(C_m, C_phases, geometries, fractions, symmetrizes)
+# The dilute concentration of a phase of stiffness `C` and shape `g` against the
+# isotropic estimate `C_m`, whose two scalar inverses are given: its Hill kernel in the
+# class of the shape.
+_dilute_in_classes(C, g, C_m, J_long, J_shear) = inv(I + _hill_kernel_op(g, J_long, J_shear, C_m.grid) * (C - C_m))
+
+function _sc_alv_step_in_classes(C_m, C_phases, geometries, fractions, symmetrizes, crack_data)
     J_long, J_shear = _alv_iso_inverses(C_m)
     terms = map(C_phases, geometries, fractions, symmetrizes) do C, g, f, sym
-        P = _hill_kernel_op(g, J_long, J_shear, C_m.grid)
-        A = inv(I + P * (C - C_m))
-        CA = C * A
-        f * _maybe_symmetrize_alv(A, sym), f * _maybe_symmetrize_alv(CA, sym)
+        A = _dilute_in_classes(C, g, C_m, J_long, J_shear)
+        f * _maybe_symmetrize_alv(A, sym), f * _maybe_symmetrize_alv(C * A, sym)
     end
     A_avg = reduce(+, first.(terms))
     CA_avg = reduce(+, last.(terms))
-    return _as_iso_estimate(CA_avg * inv(A_avg))
+    isempty(crack_data) && return _as_iso_estimate(CA_avg * inv(A_avg))
+    # The Echoes form B ∘ A⁻¹ with the J_m of the estimate explicit: the crack
+    # compliances enter the denominator without it (see `_sc_alv_step_echoes_form`).
+    J_m = inv(C_m)
+    return _as_iso_estimate((CA_avg * J_m) * inv(A_avg * J_m + _crack_compliance_in_classes(C_m, crack_data)))
+end
+
+# Σ_c sym(ε_c H̃_c(C_m)), the crack compliances against the isotropic estimate, each
+# transversely isotropic about its normal before its orientation average.
+function _crack_compliance_in_classes(C_m, crack_data)
+    α, β = C_m.blocks
+    B_n_base, B_t_base = _penny_cod_alv(α, β)
+    terms = map(crack_data) do (geom, ε, sym, Rn_mat, Rt_mat)
+        B_n = _interface_corrected(B_n_base, Rn_mat, semi_minor(geom))
+        B_t = _interface_corrected(B_t_base, Rt_mat, semi_minor(geom))
+        _maybe_symmetrize_alv(delta_inverse_property_alv(geom, _penny_compliance_operator(B_n, B_t, C_m.grid), ε), sym)
+    end
+    return reduce(+, terms)
 end
 
 # The running estimate in the isotropic class: kept as is when it is there,

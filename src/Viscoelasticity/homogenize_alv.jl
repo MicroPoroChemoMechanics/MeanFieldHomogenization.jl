@@ -866,7 +866,7 @@ function _homogenize_alv_dispatch(
         ),
         kw
     )
-    return asymmetric_self_consistent_alv(
+    return _asymmetric_self_consistent_alv(
         rve, prop; times = times, matrix = matrix,
         asc.options..., kw_filt...
     )

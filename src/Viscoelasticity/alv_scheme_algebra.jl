@@ -230,7 +230,6 @@ _alv_prod(X, Y) = _in_cheapest_algebra(_alg_prod, (X, Y), ())
 _alv_inv(X) = _in_cheapest_algebra(_alg_inv, (X,), ())
 _alv_right_divide(X, Y) = _in_cheapest_algebra((a, X, Y) -> _alg_prod(a, X, _alg_inv(a, Y)), (X, Y), ())
 
-# The dilute concentration (𝕀 + ℙ ∘ (ℂᴱ − ℂ₀))⁻¹ and contribution
-# (ℂᴱ − ℂ₀) ∘ 𝔸 of a phase against a reference, as dense block matrices.
+# The dilute concentration (𝕀 + ℙ ∘ (ℂᴱ − ℂ₀))⁻¹ of a phase against a reference, as a
+# dense block matrix.
 _alv_dilute_concentration(Cᴱ, C₀, P) = _in_cheapest_algebra(_alg_dilute_concentration, (Cᴱ, C₀, P), ())
-_alv_dilute_contribution(Cᴱ, C₀, P) = _in_cheapest_algebra(_alg_dilute_contribution, (Cᴱ, C₀, P), ())
