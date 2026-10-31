@@ -512,19 +512,13 @@ _combine_rule(F, G) = F === G ? Val(:same) : F <: _IsoFamily ? Val(:left_iso) : 
 # One family in one frame stays in it; in two frames (two families of fibers of
 # different axes, say), the full blocks. The frames are values: a run-time branch,
 # whose result types are those of the class and of the dense class.
-function _combine(::Val{:same}, A, B, what)
-    _same_class(A.class, B.class) && return A, B
-    D = _dense_class(A.class)
-    return first(_converted(A, D, nothing)), first(_converted(B, D, nothing))
-end
+_combine(::Val{:same}, A, B, what) = _same_class(A.class, B.class) ? (A, B) : _both_dense(A, B)
 # An isotropic operator belongs to every class of its order: it joins the other's.
 _combine(::Val{:left_iso}, A, B, what) = first(_converted(A, B.class, nothing)), B
 _combine(::Val{:right_iso}, A, B, what) = A, first(_converted(B, A.class, nothing))
 # Two families: the full blocks.
-function _combine(::Val{:dense}, A, B, what)
-    D = _dense_class(A.class)
-    return first(_converted(A, D, nothing)), first(_converted(B, D, nothing))
-end
+_combine(::Val{:dense}, A, B, what) = _both_dense(A, B)
+_both_dense(A, B) = (D = _dense_class(A.class); (first(_converted(A, D, nothing)), first(_converted(B, D, nothing))))
 _dense_class(c) = DenseClass{_order(c)}()
 _dense_class(c::ScalarClass) = c
 

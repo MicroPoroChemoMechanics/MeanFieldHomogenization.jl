@@ -54,7 +54,16 @@ function iso_order2_blocks_from_params(α::AbstractMatrix)
     n = size(α, 1)
     n == size(α, 2) ||
         throw(ArgumentError("iso_order2_blocks_from_params: α must be square"))
-    return kron(α, Matrix{eltype(α)}(I, 3, 3))
+    return _add_iso_order2_blocks!(zeros(eltype(α), 3n, 3n), one(eltype(α)), α)
+end
+
+# M += w · (the 3n×3n matrix of the isotropic block λ), in place: λᵢⱼ 𝟏 on each
+# 3×3 block, the other entries untouched.
+function _add_iso_order2_blocks!(M::AbstractMatrix, w, λ::AbstractMatrix)
+    @inbounds for j in axes(λ, 2), i in axes(λ, 1), k in 1:3
+        M[3 * (i - 1) + k, 3 * (j - 1) + k] += w * λ[i, j]
+    end
+    return M
 end
 
 """
@@ -320,10 +329,13 @@ end
 function _inclusion_alv2_quantities(geom, scheme, K_r_law, K_M_law, K_0::VolterraOperator, times)
     # In the class of each, as at order 4; one inverse for both quantities.
     K_r = _relaxation_operator(K_r_law, K_0.grid)
-    P_r = _hill_kernel_order2_op(geom, K_0)
-    A = _in_class_algebra(_alg_dilute_concentration, (K_r, K_0, P_r), ())
+    A = _dilute2_in_classes(K_r, geom, K_0)
     return K_r, A, (K_r - K_0) * A
 end
+
+# The dilute concentration of a phase of conductivity `K_r` and shape `geom` against
+# the isotropic reference `K_0`: its Hill kernel in the class of the shape.
+_dilute2_in_classes(K_r, geom, K_0) = _in_class_algebra(_alg_dilute_concentration, (K_r, K_0, _hill_kernel_order2_op(geom, K_0)), ())
 
 # No Hill kernel: the recurrence gives the concentration and the contribution
 # of the whole sphere, and its layers the conductivity each bound averages (the
@@ -612,7 +624,7 @@ function differential_alv_order2(
                 "isotropic reference only)."
         )
     )
-    n = length(times)
+    grid = TimeGrid(times)
 
     solid_data = NamedTuple[]
     for name in inclusion_phase_names(rve, m)
@@ -638,7 +650,9 @@ function differential_alv_order2(
         K_r_law = phase_property(rve, name, prop)
         K_r_law isa ALVProperty ||
             throw(ArgumentError("differential_alv_order2: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
-        K_r = _alv2_phase_kernel(ph.geometry, K_r_law, K_0, times)
+        # Stored by the blocks of its class: the right-hand side computes each
+        # contribution in the classes of its operators.
+        K_r = _as_class_operator(_alv2_phase_kernel(ph.geometry, K_r_law, K_0, times), grid, _algebra_candidates(()))
         _alv_diff_keeps_iso(ph.geometry, sym, nothing) ||
             _alv_diff_iso_error(name, "the shape")
         push!(
@@ -660,19 +674,20 @@ function differential_alv_order2(
     # eltype it actually produces, exactly as `T_contrib` does for the
     # elastic `DifferentialScheme`.
     Tp = eltype(K_0)
+    K_0_op = _iso_operator(K_0, grid, Val(2))
     for sd in solid_data
         Tp = promote_type(
             Tp, eltype(sd.K_r), typeof(sd.target),
-            eltype(_diff_alv2_contribution(sd.geom, sd.K_r, K_0, times))
+            eltype(_diff_alv2_contribution(sd.geom, sd.K_r, K_0_op, times))
         )
     end
-    sz = 3 * n
+    sz = 3 * length(grid)
     dual = formulation === :compliance
     x0 = vec(Tp.(dual ? volterra_inverse(K_0; block_size = 3) : K_0))
     # A tuple of concrete records, each carrying its own trajectory: the
     # right-hand side runs over it without a dynamic dispatch per phase.
     ode_p = (
-        sz = sz, dual = dual, times = times,
+        sz = sz, dual = dual, times = times, grid = grid,
         solid_data = Tuple(merge(r, (path = paths[r.name],)) for r in solid_data),
     )
     rhs! = (du, u, p, τ) -> _diff_alv2_ode_rhs!(du, u, p, τ)
@@ -690,17 +705,30 @@ function differential_alv_order2(
     return dual ? volterra_inverse(P_end; block_size = 3) : P_end
 end
 
-# The dilute contribution of one phase against the running medium `K_curr`:
-# the Hill kernel of an ellipsoid, the recurrence of a layered sphere.
-_diff_alv2_contribution(geom, K_r, K_curr, times) =
-    dilute_contribution_alv_order2(K_r, K_curr, hill_kernel_order2_at(geom, K_curr))
-_diff_alv2_contribution(s::LayeredSphere, K_r, K_curr, times) =
-    property_contribution_alv(s, K_curr, times)
+# The dilute contribution of one phase against the isotropic running medium `K_op`:
+# in the classes of its operators for an ellipsoid, from the recurrence of a layered
+# sphere, which has no Hill kernel, on full matrices.
+_diff_alv2_contribution(geom, K_r, K_op, times) = (K_r - K_op) * _dilute2_in_classes(K_r, geom, K_op)
+_diff_alv2_contribution(s::LayeredSphere, K_r, K_op, times) = property_contribution_alv(s, Matrix(K_op), times)
+
+# Adds `weight` times a contribution to the right-hand side, mapped to its resistivity
+# counterpart −R̃ ∘ Ñ ∘ R̃ in the dual form: on full matrices for a layered sphere,
+# in the classes otherwise, as at order 4.
+function _diff_alv2_add!(Δ, contrib::AbstractMatrix, weight, dual::Bool, P_curr, grid)
+    term = dual ? -(P_curr * contrib * P_curr) : contrib
+    @. Δ += weight * term
+    return nothing
+end
+_diff_alv2_add!(Δ, contrib::VolterraOperator, weight, dual::Bool, P_curr, grid) =
+    _diff_alv_add!(Δ, contrib, weight, dual, P_curr, grid)
 
 function _diff_alv2_ode_rhs!(du, u, p, τ)
     T = eltype(u)
     P_curr = reshape(u, p.sz, p.sz)
-    K_curr = p.dual ? volterra_inverse(P_curr; block_size = 3) : P_curr
+    # The running medium is isotropic (the setup refuses what would take it out of
+    # the class): its block, inverted in the class in the dual form.
+    P_op = _iso_operator(P_curr, p.grid, Val(2))
+    K_op = p.dual ? inv(P_op) : P_op
     Δ = reshape(du, p.sz, p.sz)
     fill!(Δ, zero(T))
 
@@ -713,14 +741,10 @@ function _diff_alv2_ode_rhs!(du, u, p, τ)
     map(p.solid_data, f, df) do r, fᵢ, dfᵢ
         dφᵢ = dfᵢ + (fᵢ / f0) * sum_df
         iszero(dφᵢ) && return nothing
-        # Order-2 projector: `K_curr` is a (3n × 3n) matrix of 2-tensor
-        # blocks.  Using the order-4 (6×6 Mandel) one here silently mixed two
-        # consecutive TIME blocks, so the "averaged" contribution was not
-        # isotropic and the running medium drifted out of the class the
-        # order-2 Hill kernel needs.
-        contrib = _maybe_symmetrize_alv2(_diff_alv2_contribution(r.geom, r.K_r, K_curr, p.times), r.sym)
-        term = p.dual ? -(P_curr * contrib * P_curr) : contrib
-        @. Δ += dφᵢ * term
+        # The order-2 projector: the order-4 one on (3n × 3n) blocks mixed two
+        # consecutive time blocks and took the running medium out of its class.
+        contrib = _maybe_symmetrize_alv2(_diff_alv2_contribution(r.geom, r.K_r, K_op, p.times), r.sym)
+        _diff_alv2_add!(Δ, contrib, dφᵢ, p.dual, P_curr, p.grid)
         return nothing
     end
     return nothing
@@ -784,7 +808,7 @@ end
 
 function _sc2_step_in_classes(K, phases)
     terms = map(phases) do d
-        A = _in_class_algebra(_alg_dilute_concentration, (d.K_r, K, _hill_kernel_order2_op(d.geom, K)), ())
+        A = _dilute2_in_classes(d.K_r, d.geom, K)
         d.f * _maybe_symmetrize_alv2(A, d.sym), d.f * _maybe_symmetrize_alv2(d.K_r * A, d.sym)
     end
     return _as_iso_estimate(reduce(+, last.(terms)) * inv(reduce(+, first.(terms))))

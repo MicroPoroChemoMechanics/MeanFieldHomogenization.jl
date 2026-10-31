@@ -188,3 +188,17 @@ end
     @test sc(1.0).class isa TensISO
     @test ForwardDiff.derivative(k -> Matrix(sc(k)), 1.7) ≈ Matrix(sc(1.0)) rtol = 1.0e-9
 end
+
+@testset "order2_alv — differential: stiffness ≡ compliance formulation, aging matrix" begin
+    # The two formulations integrate the conductivity and the resistivity of the same
+    # path: they agree to the tolerance of the integrator, the second through the
+    # resistivity counterpart −R̃ ∘ Ñ ∘ R̃ of each contribution.
+    times = collect(range(0.0, 2.0; length = 5))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:K => ViscoLaw((t, tp) -> (1 - 0.5exp(-tp)) * TensISO{3}(2 + exp(-(t - tp))))); fraction = :rest)
+    add_phase!(r, :I, Ellipsoid(1.0, 1.0, 3.0), Dict(:K => heaviside_law(TensISO{3}(9.0))); fraction = 0.3, symmetrize = :iso)
+    tol = (abstol = 1.0e-12, reltol = 1.0e-10)
+    K_s = homogenize_alv(r, DifferentialScheme(; tol...), :K; times)
+    K_c = homogenize_alv(r, DifferentialScheme(; formulation = :compliance, tol...), :K; times)
+    @test isapprox(K_s, K_c; rtol = 1.0e-8)
+end

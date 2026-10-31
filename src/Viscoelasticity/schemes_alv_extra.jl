@@ -490,7 +490,7 @@ function _diff_alv_ode_rhs!(du, u, p, τ)
     # The running medium is isotropic (the setup refuses what would take it out
     # of the class): its two blocks, and their Volterra inverses, shared across the
     # solid phases.
-    C_op = _iso_operator(C_curr, p.grid)
+    C_op = _iso_operator(C_curr, p.grid, Val(4))
     J_long, J_shear = _alv_iso_inverses(C_op)
     map(p.solid_data, f, df) do r, fᵢ, dfᵢ
         dφᵢ = dfᵢ + (fᵢ / f0) * sum_df
@@ -529,7 +529,8 @@ _diff_alv_solid_contribution(r, geom, C_curr, C_op, J_long, J_shear, times) =
     (r.C_r - C_op) * _dilute_in_classes(r.C_r, geom, C_op, J_long, J_shear)
 
 # The isotropic operator of a full matrix the running medium is known to be.
-_iso_operator(M::AbstractMatrix, grid) = VolterraOperator(_ISO4, iso_params_from_blocks(M), grid)
+_iso_operator(M::AbstractMatrix, grid, ::Val{4}) = VolterraOperator(_ISO4, iso_params_from_blocks(M), grid)
+_iso_operator(M::AbstractMatrix, grid, ::Val{2}) = VolterraOperator(_ISO2, (iso_order2_params_from_blocks(M),), grid)
 
 # Adds `weight` times a stiffness contribution to the right-hand side, mapped to
 # its compliance counterpart −J̃ ∘ Ñ ∘ J̃ in the dual form.
@@ -542,10 +543,12 @@ end
 # place. The setup keeps every term isotropic (`_alv_diff_keeps_iso`); the
 # conversion checks it for an operator stored in a wider class.
 function _diff_alv_add!(Δ, contrib::VolterraOperator, weight, dual::Bool, J_curr, grid)
-    term = dual ? (J = _iso_operator(J_curr, grid); -(J * contrib * J)) : contrib
-    _add_iso_blocks!(Δ, weight, convert_class(term, _ISO4).blocks...)
+    term = dual ? (J = _iso_operator(J_curr, grid, Val(_order(contrib.class))); -(J * contrib * J)) : contrib
+    _add_iso!(Δ, weight, _as_iso_estimate(term))
     return nothing
 end
+_add_iso!(Δ, w, R::VolterraOperator{<:TensISO{4, 3}}) = _add_iso_blocks!(Δ, w, R.blocks...)
+_add_iso!(Δ, w, R::VolterraOperator{<:TensISO{2, 3}}) = _add_iso_order2_blocks!(Δ, w, R.blocks[1])
 
 # ── Trajectory path resolution for ALV — share the elastic
 #    `_resolve_paths` (which now returns callables, not vectors) ──────────────
