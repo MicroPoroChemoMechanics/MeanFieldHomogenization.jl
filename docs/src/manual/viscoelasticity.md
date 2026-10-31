@@ -205,7 +205,7 @@ the tensor of the class at a pair of instants (see
 
 ## [5. Cracks in ALV](@id man-visco-cracks)
 
-### 5.1 Traction-free elliptic cracks
+### 5.1 Traction-free elliptic and ribbon cracks
 
 ```julia
 add_phase!(rve, :C, PennyCrack(1.0), Dict(:C => law_M);
@@ -227,11 +227,21 @@ add_phase!(rve, :C, EllipticCrack(1.0, 0.4; euler_angles = (0.4, 0.9, 0.2)),
 ```
 
 The density is ``\varepsilon = N\,a\,b^2``, as in elasticity ([why](@ref th-cod-density),
-and how to convert the densities of other sources). Ribbon cracks are
-not implemented in ALV and are refused. Checked against Echoes on aging
+and how to convert the densities of other sources). Checked against Echoes on aging
 matrices (tilted ellipses with dilute, Mori–Tanaka and self-consistent schemes,
 two families of different orientations) to ``10^{-13}``: see
 `scripts/bench_echoes/alv_harness`.
+
+Ribbon cracks (`RibbonCrack(b)`, unbounded along their first axis, of half-width
+`b`) are accepted too, with the density ``\varepsilon = N\,b^2`` per unit area; their
+compliance is orthotropic in their frame. A [`ConductiveCrack`](@ref) opens as the
+penny it wraps. The formulas, and the limits that check them, are in
+[Cracks](@ref th-visco-cracks) of the theory:
+
+```julia
+add_phase!(rve, :R, RibbonCrack(1.0; euler_angles = (0.4, 0.9, 0.2)),
+           Dict(:C => law_M); density = 0.05)
+```
 
 ### 5.2 Cracks with finite interface stiffness (Sevostianov)
 
@@ -270,46 +280,30 @@ Limits, all exercised in the test suite :
 | `Rn, Rt → 0`          | recovers traction-free                |
 | `Rn, Rt → ∞` (rigid)  | `B̃_eff → 0`, cracks behave as bonded |
 
-### 5.3 Notes on Mori-Tanaka and Self-Consistent for cracks
+### 5.3 How each scheme takes the cracks
 
-Two well-established but **distinct** formulations co-exist in the
-literature for crack-bearing RVEs :
-
-* **Additive (Budiansky-O'Connell)** : MT adds the crack stiffness
-  contribution `(4π/3)·ε·Ñ` to the numerator with a zero
-  contribution to the denominator (cracks have no volume in the
-  strain-concentration sum).  At convergence SC writes
-  `J_eff = J_M + ε·H̃(C_eff)`.  This is what MFH currently
-  implements.
-
-* **Multiplicative (ECHOES)** : MT adds `(4π/3)·ε·H̃·C_0` to the
-  *denominator* via the strain-strain concentration tensor
-  (`strain_Strain = H̃·C_0`).  At convergence SC writes
-  `C_eff = (B_E)·(A_E)^{-vol}` where the cracks contribute to `A_E`.
-
-They coincide in the dilute limit ``\varepsilon \to 0`` and differ at finite density: at
-`d = 0.30, traction-free`, MFH MT gives ``\varepsilon_{xx}(t\to\infty) \approx 0.481`` against `0.559` for
-ECHOES MT. PCW coincides between the two implementations over the configurations
-of `scripts/60_alv_cracks_interface.jl`.
-
-The additive form is kept for consistency with the (also-additive) MFH
-elastic MT. `scripts/60_alv_cracks_interface.jl` runs the same configuration
-through both implementations: `rtol ≤ 1e-3` at low density, a few % to ~14 %
-at `d ≥ 0.20`.
-
-A static (non-aging) elastic + conductivity crack benchmark with
-matrix-only interface stiffness is in
-`scripts/15_cracks_iso_interface.jl`.
+A crack family has no volume, which decides how each scheme takes it
+([Cracks in the schemes](@ref th-visco-cracks)):
 
 | Scheme                         | Crack treatment                                     |
 |:-------------------------------|:----------------------------------------------------|
-| `Voigt`, `Reuss`               | ignored (zero-volume convention)                    |
-| `Dilute`, `DiluteDual`         | additive `+ ΔC_cracks`                              |
-| `MoriTanaka`, `Maxwell`, `PCW` | virtual phase with `A = 0`, `N = ΔC`, `f = 1`       |
-| `SC`, `ASC`                    | re-evaluated against the running effective estimate |
+| `Voigt`, `Reuss`               | ignored (no volume)                                 |
+| `Dilute`, `DiluteDual`         | its contribution added to the stiffness or the compliance |
+| `Maxwell`, `PCW`               | one more contribution, of weight one                |
+| `MoriTanaka`                   | the Echoes form ``\mathbb{B}\circ\mathbb{A}^{-\circ}``: the crack also enters the average strain, against the matrix |
+| `SelfConsistent`, `AsymmetricSelfConsistent` | the same form, against the running estimate |
+| `DifferentialScheme`           | its contribution against the running medium, at the rate of its density |
 
-A complete demo with **all seven** crack-aware ALV schemes lives in
-`scripts/57_aging_creep_cracks.jl`.
+The Echoes form is also that of the elastic Mori–Tanaka scheme with cracks: the
+crack term in the average strain is what keeps it from the spurious percolation
+of a purely additive form at moderate density. The schemes on the running
+estimate need an isotropic orientation average of each family
+(`symmetrize = :iso`), see [section 7](@ref man-alv-iso-reference).
+
+A complete demo with the crack-aware ALV schemes lives in
+`scripts/57_aging_creep_cracks.jl`, and a static (non-aging) elastic and
+conductivity crack benchmark with interface stiffness in
+`scripts/15_cracks_iso_interface.jl`.
 
 ## 6. Order-2 ALV — conductivity / diffusion
 
@@ -368,6 +362,28 @@ part.
 
 Note that the bounds are shape-blind: `Voigt` and `Reuss` average the phase
 relaxation matrices directly, so `symmetrize` cannot change their result.
+
+### [6.1 Insulating cracks in conduction](@id man-visco-cracks-order2)
+
+A crack family in a conductor is insulating: it adds the resistivity
+``\widetilde{\boldsymbol{R}} = \kappa\,\widetilde{b}\;\underline{n}\otimes\underline{n}``, with
+``\widetilde{b}`` the thermal COD of the elastic theory in which ``1/k_0`` is the
+Volterra inverse of the conductivity kernel ([the formulas](@ref th-visco-cracks)).
+Elliptic cracks of any aspect ratio, ribbons, and any orientation, in an
+isotropic ALV conductor; a Kapitza-like interface of conductance kernel
+`α_interface` (a scalar `ViscoLaw`) is attached as a property of the phase, the
+counterpart of `:Rn` and `:Rt`:
+
+```julia
+add_phase!(rve_κ, :F, EllipticCrack(1.0, 0.4; euler_angles = (0.4, 0.9, 0.2)),
+           Dict(:K => law_κ, :α_interface => heaviside_law(0.5)); density = 0.1)
+homogenize_alv(rve_κ, MoriTanaka(), :K; times = times)
+resistivity_contribution_alv(PennyCrack(1.0), law_κ, times)   # R̃ of one crack, 3n × 3n
+```
+
+Every order-2 scheme takes them, as at order 4 (the table of
+[section 5.3](@ref man-visco-cracks)), the self-consistent and differential ones
+with `symmetrize = :iso`.
 
 ## [7. Isotropic reference: what it costs the reference-updating schemes](@id man-alv-iso-reference)
 
@@ -433,13 +449,35 @@ homogenize_alv(rve, DifferentialScheme(; formulation = :compliance), :C; times =
 ```
 
 Supported inclusions: ellipsoids and spheroids, `LayeredSphere`, and
-crack families through their density (order 4) — subject to the
+crack families through their density, at both orders — subject to the
 isotropic-reference requirement of [section 7](@ref man-alv-iso-reference). The
-self-consistent and asymmetric self-consistent schemes accept the same
-inclusions at order 4; at order 2 the self-consistent scheme takes ellipsoids
-and layered spheres.
+self-consistent scheme accepts the same inclusions at both orders, and the
+asymmetric self-consistent one at order 4.
 
-## 9. Symmetry-class fast paths
+## [9. Solving the self-consistent equation: Picard or Newton](@id man-visco-sc-solver)
+
+`SelfConsistent()` solves its equation by Picard iteration from the matrix kernel,
+with the keywords `abstol`, `reltol`, `maxiters`, `damping`, `verbose` and
+`select_best`. `SelfConsistent(algorithm = NewtonDefault())` marches through the
+instants instead, solving at each one a small system by Newton's method
+([how](@ref th-visco-sc-solve)); its `maxiters` is a cap per instant, and the
+keywords of the Picard iteration alone are refused:
+
+```julia
+homogenize_alv(rve, SelfConsistent(), :C; times = times)                                   # Picard
+homogenize_alv(rve, SelfConsistent(algorithm = NewtonDefault(), reltol = 1e-12), :C; times = times)  # Newton
+```
+
+Both reach the same estimate; Newton converges in a few iterations per instant
+where the Picard iteration slows down near percolation. The march starts from the
+Picard estimate, loosely converged, because the equation may then have several
+roots and Newton's method from the matrix may reach a non-physical one; such a
+root, with a negative instantaneous modulus, is refused, and an instant that does
+not converge is reported by a warning. Another algorithm, or a seed (`init`), is
+refused rather than ignored.
+
+
+## 10. Symmetry-class fast paths
 
 When all phases share an iso / TI / ortho symmetry with compatible
 axes, [`homogenize_alv`](@ref) automatically routes through a fast
@@ -454,12 +492,12 @@ The result of [`homogenize_alv`](@ref) keeps that storage: it is a
 as the elastic tensors do (`⊡`, `inv`, `+`) and is an `AbstractMatrix` all the
 same. See [Aging viscoelastic operators and histories](@ref man-volterra-operators).
 
-## 10. Sensitivities (autodiff via ForwardDiff)
+## 11. Sensitivities (autodiff via ForwardDiff)
 
 The pipeline supports `ForwardDiff.Dual` end-to-end so derivatives of
 effective properties wrt RVE parameters are direct.
 
-### 10.1 Sensitivity wrt volume fraction — recommended `set_param` lens
+### 11.1 Sensitivity wrt volume fraction — recommended `set_param` lens
 
 ```julia
 using ForwardDiff
@@ -481,7 +519,7 @@ end
 dμ_df = ForwardDiff.derivative(eff_mu, 0.20)        # ≈ 1.66 (validated FD ≤ 1e-7)
 ```
 
-### 10.2 Sensitivity wrt a material parameter — closure-captured
+### 11.2 Sensitivity wrt a material parameter — closure-captured
 
 When the parameter lives **inside** the kernel function (e.g. a
 modulus, relaxation time, aging exponent), close it into the kernel
@@ -505,7 +543,7 @@ end
 dμ_dμM = ForwardDiff.derivative(eff_mu_vs_μM, 1.0)
 ```
 
-### 10.3 Joint gradient over multiple parameters
+### 11.3 Joint gradient over multiple parameters
 
 ```julia
 function eff_mu_vs_p(p)
@@ -527,7 +565,7 @@ The complete suite of sensitivity patterns lives in
 `scripts/59_alv_sensitivities.jl`. Each derivative is validated against
 a central finite difference at `rtol ≤ 1e-7`.
 
-## 11. Validation against ECHOES C++
+## 12. Validation against ECHOES C++
 
 | script | benchmark | agreement |
 | :--- | :--- | :--- |
@@ -563,6 +601,6 @@ Laplace-Carson route with the same objects. The tutorials
 [Aging viscoelastic schemes side by side](@ref tut-alv-schemes) run the
 pipeline of this page,
 [Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities)
-extends section 10, and
+extends section 11, and
 [Aging creep of solidifying cementitious materials](@ref app-aging-creep)
 applies it to a solidifying cementitious material.

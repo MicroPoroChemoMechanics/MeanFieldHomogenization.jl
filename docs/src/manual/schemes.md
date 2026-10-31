@@ -311,7 +311,7 @@ data, not a sign that the field is in the wrong place.
     With spherical inclusions, this is also the quickest way to check that the
     option is wired correctly.
 
-## Iterative solvers
+## [Iterative solvers](@id man-schemes-iterative)
 
 The self-consistent schemes describe the other morphology: no phase is a matrix,
 every phase is embedded in the medium being sought — which is why a polycrystal
@@ -355,13 +355,31 @@ Three solver families are available for [`SelfConsistent`](@ref) /
 | Solver | Dependency | Jacobian | Use when |
 | :--- | :--- | :--- | :--- |
 | [`AndersonDefault`](@ref) (default) | none | — (damped Picard) | always, and especially near a bifurcation: the positive-definite guard and `select_best` track the physical branch |
-| [`NewtonDefault`](@ref) | none | `ForwardDiff` on the canonical components | a smooth, well-separated fixed point; fails on complex moduli |
+| [`NewtonDefault`](@ref) | none | `ForwardDiff` on the canonical components | a tight tolerance in few iterations; fails on complex moduli |
 | `NonlinearSolve.jl` algorithm, or [`AutoNonlinear`](@ref) | `MeanFieldHomogenizationNonlinearSolveExt` | the SciML algorithm's own | you already depend on SciML and want `TrustRegion`, `LevenbergMarquardt`, … |
 
 `AutoNonlinear` resolves to a SciML algorithm when the extension is loaded and
 to the built-in Newton otherwise. It is **not** the default: a root-finder is
 not guaranteed to track the physical branch through the SC bifurcation the way
 the Picard guard does.
+
+!!! note "Several roots near percolation: how `NewtonDefault` starts"
+    The self-consistent equation may have several roots. Beyond the percolation
+    of a stiff phase (60 % of spheres a thousand times as stiff as the matrix,
+    say), Newton's method started from the matrix heads for a root of negative
+    stiffness, which the positivity guard turns into a vanishing Jacobian.
+    `NewtonDefault` therefore begins with Picard steps, until the iterate moves by
+    less than 1 % of its norm, so that Newton refines the root the Picard
+    iteration reaches; these steps count against `maxiters`. In conduction, the
+    estimate of spheres is then the root of Bruggeman's equation
+    ``\sum_r f_r\,(k_r - k)/(k_r + 2k) = 0`` [bruggeman1935](@cite), which the
+    test suite checks.
+
+The same `algorithm` selects the solver of the self-consistent equation in aging
+viscoelasticity, `homogenize_alv(rve, SelfConsistent(algorithm = NewtonDefault()), prop; times)`:
+the Picard iteration (`AndersonDefault`) or a Newton march through the instants
+([Solving the self-consistent equation](@ref th-visco-sc-solve)). Any other
+algorithm, and a seed `init`, are refused there.
 
 !!! tip "What an iteration costs, and how to keep it cheap"
     A self-consistent solve reads the phases of the RVE once, then iterates on

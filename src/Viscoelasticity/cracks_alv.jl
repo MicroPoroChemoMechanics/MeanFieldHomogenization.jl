@@ -216,16 +216,16 @@ Budiansky-O'Connell density factor is applied separately via
 
 # Conduction
 
-In an isotropic conductor of ALV conductivity ``\\widetilde{\\lambda}\\,\\boldsymbol{1}`` (a
+In an isotropic conductor of ALV conductivity ``\\widetilde{k}_0\\,\\boldsymbol{1}`` (a
 matrix law of order 2), the crack is insulating and the contribution is the
 **resistivity** contribution, transversely isotropic about the normal,
 
 ```math
 \\widetilde{\\boldsymbol{R}} = k\\,\\widetilde{b}\\;\\underline{n}\\otimes\\underline{n},
 \\qquad
-\\widetilde{b} = \\frac{4}{3\\,\\mathcal{E}}\\,\\widetilde{\\lambda}^{-\\circ}\\ \\ (\\text{ellipse}),
+\\widetilde{b} = \\frac{4}{3\\,\\mathcal{E}}\\,\\widetilde{k}_0^{-\\circ}\\ \\ (\\text{ellipse}),
 \\qquad
-\\widetilde{b} = \\frac{\\pi}{2}\\,\\widetilde{\\lambda}^{-\\circ}\\ \\ (\\text{ribbon}),
+\\widetilde{b} = \\frac{\\pi}{2}\\,\\widetilde{k}_0^{-\\circ}\\ \\ (\\text{ribbon}),
 ```
 
 the elastic thermal COD ``b`` of [`cod_tensor`](@ref) with ``1/k_0`` the Volterra

@@ -951,10 +951,14 @@ Volterra setting: the fixed point of
 every concentration ``\\widetilde{\\boldsymbol A}_\\alpha`` being taken in the running estimate
 ``\\widetilde{\\boldsymbol K}``, by Picard iteration from the matrix (the phase `matrix`, or
 the one with `fraction = :rest`). A [`LayeredSphere`](@ref) phase enters
-through its recurrence. Every phase must keep the estimate isotropic, as the
-order-2 Hill kernel against it requires: a sphere of isotropic conductivity, a
-layered sphere, or `symmetrize = :iso`. Reached through
-`homogenize_alv(rve, SelfConsistent(), :K; times)`.
+through its recurrence, and an insulating crack family through its resistivity
+against the estimate, in the denominator (the form of Echoes, as at order 4).
+Every phase must keep the estimate isotropic, as the order-2 Hill kernel against
+it requires: a sphere of isotropic conductivity, a layered sphere, or
+`symmetrize = :iso`, which a crack family always needs. Reached through
+`homogenize_alv(rve, SelfConsistent(), :K; times)`;
+`SelfConsistent(algorithm = NewtonDefault())` solves the same equation by a
+Newton march through the instants.
 """
 self_consistent_alv_order2(rve::RVE, prop::Symbol; kw...) = Matrix(_self_consistent_alv_order2(rve, prop; kw...))
 

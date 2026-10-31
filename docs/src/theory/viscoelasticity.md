@@ -530,6 +530,180 @@ products and inverses are those of these matrices.
 `AbstractMatrix` that flows through generic Julia matrix code; its use is shown
 in [Aging viscoelastic operators and histories](@ref man-volterra-operators).
 
+## [8. Cracks](@id th-visco-cracks)
+
+A crack is the flat limit of an ellipsoidal void, and in elasticity it enters the
+schemes through its crack opening displacement (COD) tensor ``\boldsymbol{B}`` and
+its compliance contribution
+``\mathbb{H} = \kappa\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}``,
+``\kappa = 3/4`` for an ellipse and ``2/\pi`` for a ribbon
+([From B to the compliance H](@ref th-cod-compliance)); a family of density
+``\varepsilon`` adds ``\tfrac{4\pi}{3}\varepsilon\,\mathbb{H}`` (ellipse,
+``\varepsilon = N\,a\,b^{2}``, [why](@ref th-cod-density)) or
+``\pi\,\varepsilon\,\mathbb{H}`` (ribbon, ``\varepsilon = N\,b^{2}`` per unit area)
+to the compliance of the matrix. This section transposes these objects to an
+isotropic ALV matrix, ``\mathbb{C} = \alpha\,\mathbb{J} + \beta\,\mathbb{K}``
+with ``(\alpha, \beta) = (3k, 2\mu)`` as in §3.
+
+### The opening of an elliptic crack
+
+In an isotropic elastic matrix ``\boldsymbol{B}`` is diagonal in the frame of
+the crack, ``\underline{\ell}`` along the semi-axis ``a``, ``\underline{m}``
+along ``b \le a`` and ``\underline{n}`` the normal, and each component is a
+rational function of ``\alpha`` and ``\beta`` with the complete elliptic
+integrals ``\mathcal{C}``, ``\mathcal{S}``, ``\mathcal{E}`` of ``\eta = b/a``
+as coefficients ([the isotropic matrix](@ref th-cod-iso-derivation)). In ALV
+every quotient becomes a Volterra inverse, and since ``\alpha`` and ``\beta``
+no longer commute for an aging matrix, the order of the factors has to be
+fixed. It is the order of the flat limit of a void ellipsoid, whose Hill kernel
+combines ``J_{\mathrm{long}}`` and ``J_{\mathrm{shear}}`` alone (§3):
+
+```math
+\widetilde{B}_{\ell} = \tfrac{8}{3}\,\widetilde{L}_{\ell}^{-\circ}\circ(\alpha + 2\beta)\circ\beta^{-\circ},
+\qquad
+\widetilde{B}_{m} = \tfrac{8}{3}\,\widetilde{L}_{m}^{-\circ}\circ(\alpha + 2\beta)\circ\beta^{-\circ},
+\qquad
+\widetilde{B}_{n} = \tfrac{8}{3\,\mathcal{E}}\,(2\alpha + \beta)^{-\circ}\circ(\alpha + 2\beta)\circ\beta^{-\circ},
+```
+
+```math
+\widetilde{L}_{\ell} = \mathcal{C}\,(\alpha + 2\beta) + \eta^{2}\mathcal{S}\,(2\alpha + \beta),
+\qquad
+\widetilde{L}_{m} = \eta^{2}\mathcal{S}\,(\alpha + 2\beta) + \mathcal{C}\,(2\alpha + \beta).
+```
+
+Under a constant (Heaviside) kernel each line is the elastic closed form. The
+compliance ``\widetilde{\mathbb{H}}`` is assembled from the three scalar
+kernels and stored in the class of the crack: transversely isotropic about
+``\underline{n}`` for a penny (``\widetilde{B}_{\ell} = \widetilde{B}_{m}``),
+orthotropic in the frame of the crack otherwise ([§7](@ref th-visco-classes)).
+[`cod_kernel_alv`](@ref) returns the three kernels and
+[`inverse_property_contribution_alv`](@ref) the compliance.
+
+### The ribbon
+
+A ribbon is unbounded along ``\underline{\ell}`` and has the half-width ``b``
+along ``\underline{m}``. Its elastic COD,
+``B_{\ell\ell} = \pi/(2\mu)`` and ``B_{mm} = B_{nn} = \pi(1-\nu)/(2\mu)``, reads,
+with ``1-\nu = (\alpha+2\beta)/(2\alpha+\beta)`` and in the same order of the
+factors,
+
+```math
+\widetilde{B}_{\ell} = \pi\,\beta^{-\circ},
+\qquad
+\widetilde{B}_{m} = \widetilde{B}_{n} = \pi\,(2\alpha + \beta)^{-\circ}\circ(\alpha + 2\beta)\circ\beta^{-\circ}.
+```
+
+It is the limit ``\eta \to 0`` of the elliptic kernels times ``3\pi/8``: as
+``\eta \to 0``, ``\mathcal{C} \to 1``, ``\mathcal{E} \to 1`` and
+``\eta^{2}\mathcal{S} \to 0``, so that ``\widetilde{L}_{\ell} \to \alpha + 2\beta``
+and ``\widetilde{L}_{m} \to 2\alpha + \beta``, and the factor ``3\pi/8`` is the
+ratio of the density factors and of the coefficients ``\kappa``. The
+compliance of a ribbon is orthotropic in its frame.
+
+### Interfaces
+
+A crack whose faces are held by springs of normal and tangential stiffness
+kernels ``\widetilde{k}_n``, ``\widetilde{k}_t`` opens less. The correction of
+[sevostianovIJSS2007](@citet) adds the compliance of the springs to that of the
+faces in each direction; in the Volterra algebra it reads
+
+```math
+\widetilde{B}^{\mathrm{int}} = \bigl(\widetilde{B}^{-\circ} + b\,\widetilde{k}\bigr)^{-\circ}
+= \widetilde{B}\circ\bigl(H + b\,\widetilde{k}\circ\widetilde{B}\bigr)^{-\circ},
+```
+
+``\widetilde{k}_n`` on ``\widetilde{B}_{n}``, ``\widetilde{k}_t`` on
+``\widetilde{B}_{\ell}`` and ``\widetilde{B}_{m}``, with ``b`` the half-width
+[barthelemyIJES2019](@cite). Rigid springs close the crack, soft ones leave it
+traction-free.
+
+### Insulating cracks in conduction
+
+In an isotropic conductor of conductivity kernel
+``\widetilde{\boldsymbol{K}}_0 = \widetilde{k}_0\,\boldsymbol{1}``, an insulating crack
+opens a temperature jump driven by the normal flux alone, so its COD is a scalar
+``b`` ([Thermal cracks](@ref th-thermal-cracks)): ``b = 4/(3\,\mathcal{E}\,k_0)``
+for an ellipse and ``\pi/(2k_0)`` for a ribbon. There is a single kernel, so no
+order to fix:
+
+```math
+\widetilde{b} = \frac{4}{3\,\mathcal{E}}\,\widetilde{k}_0^{-\circ}\ \ (\text{ellipse}),
+\qquad
+\widetilde{b} = \frac{\pi}{2}\,\widetilde{k}_0^{-\circ}\ \ (\text{ribbon}),
+\qquad
+\widetilde{\boldsymbol{R}} = \kappa\,\widetilde{b}\;\underline{n}\otimes\underline{n},
+```
+
+the resistivity contribution ``\widetilde{\boldsymbol{R}}`` being transversely
+isotropic about ``\underline{n}``, whatever the aspect ratio. A Kapitza-like
+interface of conductance kernel ``\widetilde{\alpha}`` corrects ``\widetilde{b}``
+as the springs correct ``\widetilde{B}``.
+
+### Cracks in the schemes
+
+A crack family has no volume. The bounds pass it over; the dilute schemes add
+its contribution, ``\tfrac{4\pi}{3}\varepsilon\,\widetilde{\mathbb{H}}`` to the
+compliance or ``-\tfrac{4\pi}{3}\varepsilon\,\mathbb{C}_0\circ\widetilde{\mathbb{H}}\circ\mathbb{C}_0``
+to the stiffness, and so do Maxwell and Ponte Castañeda–Willis, as one more
+contribution in ``\mathbb{N}_\Sigma``. Mori–Tanaka and the self-consistent
+scheme take the form ``\mathbb{B}\circ\mathbb{A}^{-\circ}`` of Echoes, in which
+the crack also enters the average strain: with
+``\Delta\widetilde{\mathbb{H}} = \tfrac{4\pi}{3}\varepsilon\,\widetilde{\mathbb{H}}`` evaluated
+in the reference ``\mathbb{C}_r`` (the matrix for Mori–Tanaka, the estimate for
+the self-consistent scheme), the denominator of the table of §5 gains the term
+``\Delta\widetilde{\mathbb{H}}\circ\mathbb{C}_r``, a phase of weight one whose
+stress vanishes. The differential scheme integrates the contribution of the
+family against the running medium, its density being diluted by the solid
+increments as in elasticity. A crack family is transversely isotropic about its
+normal: in the schemes whose reference is the running estimate, only an
+isotropic orientation average keeps that estimate isotropic, as their Hill
+kernels require.
+
+### What checks these formulas
+
+| Reference | What it checks |
+| :-------- | :------------- |
+| constant kernels | every kernel, compliance, resistivity and scheme against its elastic counterpart, at every instant |
+| void ellipsoids ``(a, b, \omega b)`` and elliptic cylinders ``(b, \omega b)`` | the closed forms, the order of the factors and the rotations, in an aging matrix: the error falls by ten at each decade of ``\omega`` |
+| ``\eta \to 0`` | the ribbon against ``3\pi/8`` times the ellipse, in an aging matrix |
+| Echoes | tilted elliptic cracks with the dilute, Mori–Tanaka and self-consistent schemes in aging matrices (`scripts/bench_echoes/alv_harness`) |
+
+## [9. Solving the self-consistent equation](@id th-visco-sc-solve)
+
+The self-consistent estimate is the fixed point
+``\widetilde{\mathbb{C}} = \mathcal{F}(\widetilde{\mathbb{C}})`` of the map of the
+table of §5, every concentration being computed in the estimate itself. The map
+is **causal**: the estimate at the instant ``t_i`` depends on the estimate at
+the instants ``t_j \le t_i`` only, since every product and inverse of the
+Volterra algebra is lower triangular. Two solvers use this.
+
+**Picard iteration**, the default, iterates
+``\widetilde{\mathbb{C}} \leftarrow \mathcal{F}(\widetilde{\mathbb{C}})`` from the matrix
+kernel until two iterates differ by less than the tolerance, optionally with a
+relaxation (`damping`).
+
+**Newton's method** marches through the instants. With the rows
+``1, \dots, i-1`` of the estimate known, the row ``i`` solves a small system:
+``2i`` unknowns in elasticity, the row ``i`` of the bulk and shear kernels
+``\alpha`` and ``\beta`` of the isotropic estimate, and ``i`` in conduction. Each
+system is solved by Newton's method, its Jacobian by automatic differentiation,
+with a backtracking line search and a Picard step when the search fails.
+
+The self-consistent equation may have several roots. Beyond the percolation of a
+stiff phase, for instance, the equation of spheres has a second root of
+negative stiffness; started from the matrix, Newton's method may reach it,
+where the Picard iteration reaches the physical one. The march therefore starts
+from the Picard estimate, loosely converged, and refines it; a root with a
+negative instantaneous modulus is refused. In the elastic limit both solvers
+give the elastic self-consistent estimate at every instant, which, for spheres
+in conduction, is the root of [bruggeman1935](@citet),
+``\sum_r f_r\,(k_r - k)/(k_r + 2k) = 0``.
+
+`SelfConsistent(algorithm = NewtonDefault())` selects Newton's method in
+[`homogenize_alv`](@ref), at both orders; the elastic solvers are described in
+[Iterative solvers](@ref man-schemes-iterative).
+
 ## Where to go next
 
 The theory closes with two appendices, starting with
