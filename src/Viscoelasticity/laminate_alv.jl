@@ -138,7 +138,7 @@ function laminate_alv(lam::Laminates.Laminate, ::Val{4}; times, property::Symbol
         law = Laminates.layer_property(lam, nm, property)
         law isa ALVProperty || throw(
             ArgumentError(
-                "laminate_alv: layer :$(nm) property :$(property) is neither a viscoelastic law nor a relaxation operator"
+                "laminate_alv: layer :$(nm) property :$(property) is neither a viscoelastic law, a relaxation operator nor an elastic tensor"
             )
         )
         return _alv_to_layer_frame(_trapezoidal_relaxation(law, times, 6), basis, n)
@@ -179,7 +179,7 @@ function laminate_alv(lam::Laminates.Laminate, ::Val{2}; times, property::Symbol
         law = Laminates.layer_property(lam, nm, property)
         law isa ALVProperty || throw(
             ArgumentError(
-                "laminate_alv: layer :$(nm) property :$(property) is neither a viscoelastic law nor a relaxation operator"
+                "laminate_alv: layer :$(nm) property :$(property) is neither a viscoelastic law, a relaxation operator nor an elastic tensor"
             )
         )
         return _trapezoidal_relaxation(law, times, 3)
@@ -220,7 +220,7 @@ function homogenize_alv(
     )
     law = Laminates.layer_property(lam, first(Laminates.layer_names(lam)), prop)
     law isa ALVProperty ||
-        throw(ArgumentError("homogenize_alv: property :$(prop) is neither a viscoelastic law nor a relaxation operator"))
+        throw(ArgumentError("homogenize_alv: property :$(prop) is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
     order = _alv_order_int(law, times)
     return laminate_alv(lam, Val(order); times = times, property = prop)
 end

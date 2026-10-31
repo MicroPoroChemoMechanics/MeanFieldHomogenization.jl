@@ -124,19 +124,17 @@ end
 end
 
 @testset "sc_alv_newton — input errors" begin
-    # An elastic matrix property (not a ViscoLaw).
-    rve_e = RVE()
-    add_phase!(rve_e, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => TensISO{3}(30.0, 8.0)); fraction = :rest)
-    @test_throws ArgumentError _sc_newton(rve_e, :C; times = [0.0, 1.0])
-
-    # An elastic phase property while the matrix is viscous.
-    rve_p = RVE()
-    add_phase!(rve_p, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => heaviside_law(TensISO{3}(30.0, 8.0))); fraction = :rest)
-    add_phase!(
-        rve_p, :I, Ellipsoid(1.0, 1.0, 1.0),
-        Dict(:C => TensISO{3}(60.0, 16.0)); fraction = 0.1
+    # An elastic tensor is an ALV property: its kernel is C H(t - t′), as with
+    # `heaviside_law(C)`, for the matrix and for a phase.
+    elastic(Cm, Ci) = (
+        r = RVE(); add_phase!(r, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => Cm); fraction = :rest);
+        add_phase!(r, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => Ci); fraction = 0.1); r
     )
-    @test_throws ArgumentError _sc_newton(rve_p, :C; times = [0.0, 1.0])
+    Cm, Ci = TensISO{3}(30.0, 8.0), TensISO{3}(60.0, 16.0)
+    @test _sc_newton(elastic(Cm, Ci), :C; times = [0.0, 1.0]) ≈
+        _sc_newton(elastic(heaviside_law(Cm), heaviside_law(Ci)), :C; times = [0.0, 1.0]) rtol = 1.0e-12
+    @test _sc_newton(elastic(heaviside_law(Cm), Ci), :C; times = [0.0, 1.0]) ≈
+        _sc_newton(elastic(heaviside_law(Cm), heaviside_law(Ci)), :C; times = [0.0, 1.0]) rtol = 1.0e-12
 
     # A CrackDensity on a geometry that is not a crack.
     rve_c = RVE()

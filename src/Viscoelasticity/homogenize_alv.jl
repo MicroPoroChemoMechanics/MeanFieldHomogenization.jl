@@ -255,6 +255,11 @@ end
 # operator on the grid: a plain matrix has its size checked, a `VolterraOperator` its grid,
 # and it is materialized for the dense scheme formulas.
 _trapezoidal_relaxation(R::AbstractMatrix, times::AbstractVector{<:Real}, B::Int) = _check_operator(R, times, B)
+# An elastic tensor, written out on the grid: the tensor on the block diagonal.
+_trapezoidal_relaxation(C::TensND.AbstractTens, times::AbstractVector{<:Real}, B::Int) =
+    _check_operator(Matrix(VolterraOperator(C, times)), times, B)
+_trapezoidal_relaxation(C::TensND.AbstractTens{2}, times::AbstractVector{<:Real}, B::Int) =
+    _check_operator(Matrix(VolterraOperator(C, times)), times, B)
 function _trapezoidal_relaxation(R::VolterraOperator, times::AbstractVector{<:Real}, B::Int)
     _same_grid(R.grid, TimeGrid(times), "homogenize_alv")
     return _check_operator(Matrix(R), times, B)
@@ -402,6 +407,10 @@ _reference(C_0, kw) = get(kw, :C_0_op, C_0)
 # A phase property as the relaxation operator on the grid, in the class of its values.
 _relaxation_operator(law::AbstractViscoLaw, grid::TimeGrid) = _as_relaxation(VolterraOperator(law, grid), visco_mode(law))
 _relaxation_operator(R::VolterraOperator, grid::TimeGrid) = (_same_grid(R.grid, grid, "homogenize_alv"); R)
+# An elastic tensor (a conductivity at order 2): the constant kernel C H(t - t′), block
+# diagonal, in the class of C. More specific than a matrix: a second-order tensor is one.
+_relaxation_operator(C::TensND.AbstractTens, grid::TimeGrid) = VolterraOperator(C, grid)
+_relaxation_operator(C::TensND.AbstractTens{2}, grid::TimeGrid) = VolterraOperator(C, grid)
 _relaxation_operator(M::AbstractMatrix, grid::TimeGrid) =
     _compact(VolterraOperator(_check_operator(M, grid.times, 6), grid), (_ISO4, _TI4_E3, _ORTHO4_CANON))
 # A creep law is turned into the relaxation operator the schemes assume (a run-time mode).
@@ -446,6 +455,7 @@ function _candidate_classes(rve, prop, times)
 end
 _property_class(law::AbstractViscoLaw, times) = _class_of(visco_eval(law, first(times), first(times)))
 _property_class(R::VolterraOperator, times) = R.class
+_property_class(C::TensND.AbstractTens, times) = _class_of(C)
 _property_class(v, times) = nothing
 
 function _homogenize_alv_rve(
@@ -457,7 +467,7 @@ function _homogenize_alv_rve(
     m = matrix_name(scheme, rve)
     C_M_law = phase_property(rve, m, prop)
     C_M_law isa ALVProperty ||
-        throw(ArgumentError("homogenize_alv: matrix property $prop is neither a viscoelastic law nor a relaxation operator"))
+        throw(ArgumentError("homogenize_alv: matrix property $prop is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
 
     # Dispatch on the property order (2 vs 4) inferred from the sample.
     order = _alv_order_int(C_M_law, times)
@@ -589,7 +599,7 @@ function _inclusion_alv_quantities(
         times::AbstractVector{<:Real}
     )
     C_r_law isa ALVProperty ||
-        throw(ArgumentError("homogenize_alv: phase property is neither a viscoelastic law nor a relaxation operator"))
+        throw(ArgumentError("homogenize_alv: phase property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
     # In the class of each: the phase's law, the reference's, the geometry's (a
     # spheroid: transversely isotropic about its axis); each operation in the
     # cheapest class that holds its operands. One inverse for both quantities.

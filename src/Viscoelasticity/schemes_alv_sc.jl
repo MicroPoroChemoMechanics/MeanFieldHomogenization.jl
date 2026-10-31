@@ -72,7 +72,7 @@ function _self_consistent_alv(
     m = host_phase_name(rve, matrix, "self_consistent_alv")
     C_M_law = phase_property(rve, m, prop)
     C_M_law isa ALVProperty ||
-        throw(ArgumentError("self_consistent_alv: matrix property is neither a viscoelastic law nor a relaxation operator"))
+        throw(ArgumentError("self_consistent_alv: matrix property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
     grid = TimeGrid(times)
     C_0 = _relaxation_operator(C_M_law, grid)
     f_M = volume_fraction(rve, m)
@@ -111,7 +111,7 @@ function _self_consistent_alv(
         end
         C_r_law = phase_property(rve, name, prop)
         C_r_law isa ALVProperty ||
-            throw(ArgumentError("self_consistent_alv: phase $name property is neither a viscoelastic law nor a relaxation operator"))
+            throw(ArgumentError("self_consistent_alv: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
         C_r = _relaxation_operator(C_r_law, grid)
         sym = phase_symmetrize(rve, name)
         # Like the differential scheme, the self-consistent one uses its

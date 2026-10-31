@@ -28,17 +28,14 @@ struct SampledViscoLaw{V <: AbstractVector{<:Real}, S <: AbstractMatrix} <: Abst
         size(samples) == (n, n) || throw(
             DimensionMismatch("SampledViscoLaw: $(size(samples)) samples for a grid of $n instants; expected ($n, $n)")
         )
-        mode in VALID_VISCO_MODES || throw(
-            ArgumentError("SampledViscoLaw mode must be one of $(VALID_VISCO_MODES); got :$(mode)")
-        )
-        return new{V, S}(times, samples, mode)
+        return new{V, S}(times, samples, _canonical_mode(mode))
     end
 end
 
-# A phase property in aging viscoelasticity: a law, or its relaxation operator on the time
+# A phase property in aging viscoelasticity: a law; its relaxation operator on the time
 # grid — a dense block matrix or a `VolterraOperator` — as one scale hands it to the
-# next.
-const ALVProperty = Union{AbstractViscoLaw, AbstractMatrix}
+# next; or an elastic (conduction, at order 2) tensor, whose kernel is C H(t - t').
+const ALVProperty = Union{AbstractViscoLaw, AbstractMatrix, TensND.AbstractTens}
 
 visco_eval(law::SampledViscoLaw, t, t_p) =
     law.samples[_grid_index(law.times, t), _grid_index(law.times, t_p)]

@@ -264,6 +264,28 @@ end
     @test dissolved(g, 2.0) + precipitated(f, 2.0) ≈ VolterraOperator(both, VO_TIMES) rtol = 1.0e-12
 end
 
+@testset "The modes of a law, at both orders" begin
+    # `:property` and `:inverse_property` are `:relaxation` and `:creep` under the names that
+    # hold at every order: a conductivity and a resistivity at order 2.
+    times = VO_TIMES
+    k(t, tp) = TensISO{3}(2.0 + exp(tp - t))
+    @test visco_mode(ViscoLaw(k, :property)) === :relaxation
+    @test visco_mode(ViscoLaw(k, :inverse_property)) === :creep
+    @test visco_mode(ViscoLaw(k, :conductivity)) === :relaxation
+    @test visco_mode(ViscoLaw(k, :resistivity)) === :creep
+    @test_throws "mode must be one of" ViscoLaw(k, :stiffness_of_sorts)
+    cell(law) = (
+        r = RVE(); add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => law); fraction = :rest);
+        add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(9.0)); fraction = 0.3); r
+    )
+    as_property = homogenize_alv(cell(ViscoLaw(k, :property)), MoriTanaka(), :C; times)
+    @test Matrix(as_property) == Matrix(homogenize_alv(cell(ViscoLaw(k, :relaxation)), MoriTanaka(), :C; times))
+    # A resistivity: its operator inverted is the conductivity the scheme reads.
+    ρ = ViscoLaw(k, :resistivity)
+    K = inv(VolterraOperator(ρ, times))
+    @test Matrix(homogenize_alv(cell(ρ), MoriTanaka(), :C; times)) ≈ Matrix(homogenize_alv(cell(K), MoriTanaka(), :C)) rtol = 1.0e-13
+end
+
 @testset "VolterraOperator: inference" begin
     R = VolterraOperator(vo_laws()[3][2], VO_TIMES)
     D = trapezoidal_matrix(vo_laws()[3][2], VO_TIMES)
@@ -323,6 +345,26 @@ end
     # Conduction: the order-2 classes.
     k = ViscoLaw((t, tp) -> TensISO{3}(2 + vo_decay(t, tp)))
     @test homogenize_alv(cell(k, heaviside_law(TensISO{3}(5.0)), Ellipsoid(1.0)), MoriTanaka(), :C; times).class isa TensISO{2}
+    # An elastic tensor (a conductivity at order 2) as a phase property: the kernel
+    # C H(t - t′), in the class of C, as `heaviside_law(C)` gives it.
+    for (Cm, C) in (
+            (m, TensTI{4}(40.0, 30.0, 8.0, 12.0, 9.0, (0.0, 0.0, 1.0))),
+            (k, TensTI{2}(5.0, 9.0, (0.0, 0.0, 1.0))),
+        )
+        direct = homogenize_alv(cell(Cm, C, Ellipsoid(1.0)), MoriTanaka(), :C; times)
+        @test direct.class isa TensTI
+        @test Matrix(direct) == Matrix(homogenize_alv(cell(Cm, heaviside_law(C), Ellipsoid(1.0)), MoriTanaka(), :C; times))
+    end
+    # In the self-consistent scheme, and as the matrix of a cell.
+    sc_cell(Cm, Ci) = (
+        r = RVE(); add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => Cm); fraction = :rest);
+        add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => Ci); fraction = 0.4); r
+    )
+    E = TensISO{3}(3 * 30.0, 2 * 20.0)
+    @test Matrix(homogenize_alv(sc_cell(m, E), SelfConsistent(), :C; times)) ≈
+        Matrix(homogenize_alv(sc_cell(m, heaviside_law(E)), SelfConsistent(), :C; times)) rtol = 1.0e-14
+    @test Matrix(homogenize_alv(sc_cell(E, m), MoriTanaka(), :C; times)) ≈
+        Matrix(homogenize_alv(sc_cell(heaviside_law(E), m), MoriTanaka(), :C; times)) rtol = 1.0e-14
     # No grid, two grids.
     @test_throws "no time grid" homogenize_alv(cell(m, E_I, Ellipsoid(1.0)), MoriTanaka(), :C)
     @test_throws "different time grids" homogenize_alv(cell(Rm, E_I, Ellipsoid(1.0)), MoriTanaka(), :C; times = [0.0, 1.0, 2.0, 3.0, 4.0, 6.0])

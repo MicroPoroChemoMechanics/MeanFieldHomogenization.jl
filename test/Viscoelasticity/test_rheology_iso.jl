@@ -85,6 +85,10 @@ end
     lawJ = ViscoLaw(m; mode = :creep)
     @test visco_mode(lawJ) == :creep
     @test all(isapprox.(TensND.get_data(lawJ(1.0, 0.0)), TensND.get_data(creep(m, 1.0))))
+    # Under its generic name, the same mode and the same kernel.
+    lawI = ViscoLaw(m; mode = :inverse_property)
+    @test visco_mode(lawI) == :creep
+    @test TensND.get_data(lawI(1.0, 0.0)) == TensND.get_data(lawJ(1.0, 0.0))
 
     # A scalar model works as well, for the block_size = 1 pipeline.
     ls = ViscoLaw(zener_maxwell(2.0, 3.0, 1.0))
