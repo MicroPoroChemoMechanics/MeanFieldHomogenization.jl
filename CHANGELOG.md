@@ -67,7 +67,10 @@ needs; an Applications page puts the two together for the basic creep of concret
   `n = 80` instants: Mori–Tanaka with spheres 9.8 → 1.1 ms, with spheroids along `e₃`
   25 → 8 ms, with tilted spheroids 64 → 8 ms, isotropic self-consistent 172 → 16 ms. At
   40 instants: asymmetric self-consistent 48 → 6 ms, differential 67 → 31 ms,
-  self-consistent with cracks 43 → 10 ms. On the harness at 50 instants (the *Performance
+  self-consistent with cracks 43 → 10 ms. The differential scheme keeps only its end
+  state (it saved `nsteps + 1` copies of its dense state, never read) and adds its
+  isotropic terms into the derivative in place: at 80 instants 242 → 140 ms, the result
+  unchanged to the bit. On the harness at 50 instants (the *Performance
   vs Echoes* page), 3.4 to 39 times faster than Echoes in elasticity, 1.8 to 14 times in
   conduction. The aging basic creep model of the
   Applications chapter: the high-performance concrete in 103 s against 499 s.

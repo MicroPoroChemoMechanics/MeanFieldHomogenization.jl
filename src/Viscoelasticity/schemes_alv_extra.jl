@@ -303,7 +303,8 @@ as a SciML ODE on the fictitious incorporation time ``\\tau \\in [0, 1]``
 
 with the volume balance ``[\\mathrm{d}f] = (\\mathbb 1 - [f]\\,\\mathbf{U}^{\\!T})\\,[\\mathrm{d}\\varphi]`` inverted by Sherman-
 Morrison for solid phases (cracks contribute their density derivative
-directly).  `nsteps` is the density of save points along ``\\tau`` ; the
+directly).  Only the end state is kept: `nsteps`, the density of save points
+of the elastic [`DifferentialScheme`](@ref), has no effect here; the
 integration step is controlled by `abstol` / `reltol`.
 
 `formulation = :compliance` integrates the dual ODE on the creep
@@ -371,33 +372,11 @@ function differential_alv(
         )
         if !(amt isa Schemes.CrackDensity)   # volume: the remainder is refused above
             sym = phase_symmetrize(rve, name)
-            geom = ph.geometry
-            if geom isa LayeredSphere
-                # Heterogeneous inclusion: the per-layer moduli carried by the
-                # geometry are the material data; the declared phase property
-                # is a placeholder, exactly as in the elastic pipeline.
-                push!(
-                    solid_data, (
-                        name = name,
-                        C_r = nothing, geom = geom,
-                        target = amt.value, sym = sym,
-                    )
-                )
-                continue
-            end
-            C_r_law = phase_property(rve, name, prop)
-            C_r_law isa ALVProperty ||
-                throw(ArgumentError("differential_alv: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
-            # Stored by the blocks of its class: the right-hand side computes each
-            # contribution in the classes of its operators.
-            C_r = _relaxation_operator(C_r_law, TimeGrid(times))
-            _alv_diff_keeps_iso(geom, sym, C_r) ||
-                _alv_diff_iso_error(name, "the shape or the anisotropy")
             push!(
                 solid_data, (
                     name = name,
-                    C_r = C_r,
-                    geom = geom,
+                    C_r = _diff_alv_solid_operator(ph.geometry, rve, name, prop, sym, times),
+                    geom = ph.geometry,
                     target = amt.value,
                     sym = sym,
                 )
@@ -426,9 +405,7 @@ function differential_alv(
     end
 
     # Trajectory : default proportional path.
-    paths = trajectory === nothing ?
-        _resolve_paths_alv(Schemes.Proportional(), rve, nsteps, m) :
-        _resolve_paths_alv(trajectory, rve, nsteps, m)
+    paths = _resolve_paths_alv(something(trajectory, Schemes.Proportional()), rve, nsteps, m)
 
     # ODE state and parameters — the state carries the promoted eltype of
     # every input (Dual-safe, cf. `_alv_promoted_eltype`).
@@ -461,14 +438,31 @@ function differential_alv(
     prob = ODEProblem(rhs!, x0, (0.0, 1.0), ode_p)
     sol = solve(
         prob,
-        alg === nothing ? Tsit5() : alg;
+        something(alg, Tsit5());
         abstol, reltol,
-        saveat = range(0.0, 1.0; length = max(nsteps, 1) + 1),
+        # Only the end state is returned: one copy of the dense state, not one per point.
+        saveat = (1.0,),
         dense = false,
         solver_kwargs...
     )
     P_end = reshape(sol.u[end], sz, sz)
     return dual ? volterra_inverse(P_end; block_size = 6) : P_end
+end
+
+# A layered sphere: the moduli of its layers, carried by the geometry, are the
+# material data; the declared phase property is a placeholder, as in the elastic
+# pipeline.
+_diff_alv_solid_operator(::LayeredSphere, rve, name, prop, sym, times) = nothing
+# Any other inclusion: its relaxation operator, stored by the blocks of its class,
+# in which the right-hand side computes its contribution.
+function _diff_alv_solid_operator(geom, rve, name, prop, sym, times)
+    C_r_law = phase_property(rve, name, prop)
+    C_r_law isa ALVProperty ||
+        throw(ArgumentError("differential_alv: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
+    C_r = _relaxation_operator(C_r_law, TimeGrid(times))
+    _alv_diff_keeps_iso(geom, sym, C_r) ||
+        _alv_diff_iso_error(name, "the shape or the anisotropy")
+    return C_r
 end
 
 # ── ALV ODE RHS ─────────────────────────────────────────────────────────────
@@ -544,10 +538,12 @@ function _diff_alv_add!(Δ, contrib::AbstractMatrix, weight, dual::Bool, J_curr,
     @. Δ += weight * term
     return nothing
 end
-# Stored by blocks: computed in the classes, written into the full derivative once.
+# Stored by blocks: computed in the classes, added into the full derivative in
+# place. The setup keeps every term isotropic (`_alv_diff_keeps_iso`); the
+# conversion checks it for an operator stored in a wider class.
 function _diff_alv_add!(Δ, contrib::VolterraOperator, weight, dual::Bool, J_curr, grid)
     term = dual ? (J = _iso_operator(J_curr, grid); -(J * contrib * J)) : contrib
-    Δ .+= weight .* Matrix(term)
+    _add_iso_blocks!(Δ, weight, convert_class(term, _ISO4).blocks...)
     return nothing
 end
 

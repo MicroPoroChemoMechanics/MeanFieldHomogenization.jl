@@ -74,19 +74,25 @@ function iso_blocks_from_params(α::AbstractMatrix, β::AbstractMatrix)
     # The type of a ratio: integer parameters give a float block (the entries
     # are divided), a dual or symbolic one is kept (`float(Sym)` is Float64).
     T = typeof(one(promote_type(eltype(α), eltype(β))) / 2)
-    M = zeros(T, 6 * n, 6 * n)
-    @inbounds for i in 1:n, j in 1:n
+    return _add_iso_blocks!(zeros(T, 6 * n, 6 * n), one(T), α, β)
+end
+
+# M += w · (the 6n×6n matrix of the isotropic blocks α, β), in place: each entry
+# is written once, and the weight multiplies the entry as it is, so w = 1 into
+# zeros gives the entries exactly.
+function _add_iso_blocks!(M::AbstractMatrix, w, α::AbstractMatrix, β::AbstractMatrix)
+    T = eltype(M)
+    @inbounds for j in axes(α, 2), i in axes(α, 1)
         a = T(α[i, j])
         b = T(β[i, j])
-        rows = (6 * (i - 1) + 1):(6 * i)
-        cols = (6 * (j - 1) + 1):(6 * j)
+        r, c = 6 * (i - 1), 6 * (j - 1)
         diag_top = (a + 2b) / 3
         offdiag_top = (a - b) / 3
-        for k in 1:3, l in 1:3
-            M[rows[k], cols[l]] = (k == l) ? diag_top : offdiag_top
+        for l in 1:3, k in 1:3
+            M[r + k, c + l] += w * ((k == l) ? diag_top : offdiag_top)
         end
         for k in 4:6
-            M[rows[k], cols[k]] = b
+            M[r + k, c + k] += w * b
         end
     end
     return M

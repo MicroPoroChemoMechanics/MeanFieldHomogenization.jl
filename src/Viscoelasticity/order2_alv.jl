@@ -649,9 +649,7 @@ function differential_alv_order2(
         )
     end
 
-    paths = trajectory === nothing ?
-        _resolve_paths_alv(Schemes.Proportional(), rve, nsteps, m) :
-        _resolve_paths_alv(trajectory, rve, nsteps, m)
+    paths = _resolve_paths_alv(something(trajectory, Schemes.Proportional()), rve, nsteps, m)
 
     # State eltype: the matrix law, the phase laws and the targets are not
     # the only inputs the RHS touches — it also rebuilds the order-2 ALV Hill
@@ -681,9 +679,10 @@ function differential_alv_order2(
     prob = ODEProblem(rhs!, x0, (0.0, 1.0), ode_p)
     sol = solve(
         prob,
-        alg === nothing ? Tsit5() : alg;
+        something(alg, Tsit5());
         abstol, reltol,
-        saveat = range(0.0, 1.0; length = max(nsteps, 1) + 1),
+        # Only the end state is returned: one copy of the dense state, not one per point.
+        saveat = (1.0,),
         dense = false,
         solver_kwargs...
     )
