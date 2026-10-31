@@ -28,7 +28,7 @@
 #  ENVIRONMENT: as script 44, the `docs/` project (ChemistryLab, OrdinaryDiffEq).
 #      julia --project=docs -e 'using Pkg; Pkg.instantiate()'
 #      julia scripts/47_aging_basic_creep_concrete.jl
-#  About ten minutes: four aging scales on a grid of some fifty instants, the
+#  About eight minutes: four aging scales on a grid of some fifty instants, the
 #  self-consistent foams dominating.
 # =============================================================================
 

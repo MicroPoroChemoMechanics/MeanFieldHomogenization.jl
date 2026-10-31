@@ -116,7 +116,7 @@ end
 ```
 
 The whole chain — hydration, four aging scales, compliance for every loading age — runs in
-`scripts/47_aging_basic_creep_concrete.jl`, about ten minutes; this page reads its
+`scripts/47_aging_basic_creep_concrete.jl`, about eight minutes; this page reads its
 results. The measurements are those of the NU database of [Hubler2015](@citet), entries
 `c_123_01` to `c_123_10`.
 
