@@ -119,11 +119,10 @@ Apply the orientation-averaging projection corresponding to `sym` to a
 axis).
 """
 @inline _maybe_symmetrize_alv(M::AbstractMatrix, ::NoSymmetrize) = M
-# An operator stored by blocks is averaged on its full matrix: the isotropic average
-# is isotropic by construction, the transversely isotropic one stays full.
+# An operator stored by blocks: the isotropic average read on its blocks; the
+# transversely isotropic one on its full matrix, and kept full.
 _maybe_symmetrize_alv(R::VolterraOperator{<:TensISO{4, 3}}, ::IsoSymmetrize) = R
-_maybe_symmetrize_alv(R::VolterraOperator, s::IsoSymmetrize) =
-    first(_converted(VolterraOperator(_maybe_symmetrize_alv(Matrix(R), s), R.grid), _ISO4, nothing))
+_maybe_symmetrize_alv(R::VolterraOperator, ::IsoSymmetrize) = _iso_part(R)
 _maybe_symmetrize_alv(R::VolterraOperator, s::TISymmetrize) = VolterraOperator(_maybe_symmetrize_alv(Matrix(R), s), R.grid)
 @inline _maybe_symmetrize_alv(M::AbstractMatrix, ::IsoSymmetrize) =
     _iso_project_blocks(M)

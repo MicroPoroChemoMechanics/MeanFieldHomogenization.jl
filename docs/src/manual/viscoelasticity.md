@@ -202,12 +202,11 @@ S = zeros(n * 6); for i in 1:n;  S[6 * (i - 1) + 1] = 1.0;  end
 ε_xx_t = ε[1:6:end]                            # ε_xx(tᵢ)
 ```
 
-For TI (axis = e₃), the 4-tensor Walpole parameters
-`(ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆)` are extracted similarly:
-
-```julia
-ℓ = ti_params_from_blocks(C_eff)               # NTuple{6, Matrix}
-```
+For any class, the result is stored by the blocks of its class: `C_eff.blocks` holds,
+for a transversely isotropic result, the ``2n\times 2n`` matrix of the ``2\times 2``
+Walpole blocks and the two ``n\times n`` shear ones, and `operator_value(C_eff, i, j)`
+the tensor of the class at a pair of instants (see
+[Aging viscoelastic operators and histories](@ref man-volterra-operators)).
 
 ## [5. Cracks in ALV](@id man-visco-cracks)
 

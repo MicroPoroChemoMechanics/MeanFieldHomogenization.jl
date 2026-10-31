@@ -72,22 +72,19 @@ end
 
 # ── Kernels on the grid ─────────────────────────────────────────────────────
 
-# A relaxation law sampled on the grid, from its own discrete operator.
-sampled(law, times) = operator_law(trapezoidal_matrix(law, times), times)
-
-# The relaxation kernel of two coexisting histories in the same volume: a grain that
-# dissolves while the foam precipitates in its place.
-summed(a, b) = ViscoLaw((t, tp) -> visco_eval(a, t, tp) + visco_eval(b, t, tp), :relaxation)
+# Every scale hands the next its relaxation operator on the grid (`VolterraOperator`),
+# isotropic here: two n×n blocks. Two coexisting histories in the same volume (a grain
+# that dissolves while the foam precipitates in its place) are the sum of operators.
 
 const TINY_VOID = TensISO{3}(3 * TINY_LAV, 2 * TINY_LAV)
 
 # ── Scale 1: the hydrates formed during one step ────────────────────────────
 
 """
-    hydrate_mix(composition, times; rh = 1.0) -> SampledViscoLaw
+    hydrate_mix(composition, times; rh = 1.0) -> VolterraOperator
 
 The self-consistent estimate of the hydrates of `composition` (volumes per family), all
-spherical, sampled on `times`.
+spherical: its relaxation operator on `times`.
 """
 function hydrate_mix(composition, times; rh = 1.0)
     total = sum(values(composition))
@@ -99,13 +96,13 @@ function hydrate_mix(composition, times; rh = 1.0)
             fraction = v / total * _SC_SLACK
         )
     end
-    return operator_law(homogenize_alv(rve, SelfConsistent(), :C; times), times)
+    return homogenize_alv(rve, SelfConsistent(), :C; times)
 end
 
 # ── Scale 2: the foam born at step i ────────────────────────────────────────
 
 """
-    foam_law(i, porosity, mixes, times) -> SampledViscoLaw
+    foam_law(i, porosity, mixes, times) -> VolterraOperator
 
 The foam born at `times[i]`: its solid fraction `1 - porosity[i]` at birth is the mix of
 step `i`, then each later step `j` fills `porosity[j-1] - porosity[j]` of it with the mix of
@@ -125,13 +122,13 @@ function foam_law(i, porosity, mixes, times)
         )
     end
     add_phase!(rve, :PORE, Ellipsoid(1.0), Dict(:C => heaviside_law(TINY_VOID)); fraction = porosity[n] * _SC_SLACK)
-    return operator_law(homogenize_alv(rve, SelfConsistent(), :C; times), times)
+    return homogenize_alv(rve, SelfConsistent(), :C; times)
 end
 
 # ── Scales 3 and 4 ──────────────────────────────────────────────────────────
 
 """
-    concrete_relaxation(fs, times; f_aggregate, rh = 1.0) -> Matrix
+    concrete_relaxation(fs, times; f_aggregate, rh = 1.0) -> VolterraOperator
 
 The relaxation operator of the concrete on `times`, from the volume fractions `fs[k]` of the
 paste at `times[k]` (families of `PASTE_PHASE_GROUPS`, fractions of the paste) and the
@@ -157,21 +154,20 @@ function concrete_relaxation(fs, times; f_aggregate, rh = 1.0)
     reactant(k, name) = get(fs[k], name, 0.0)
     add_phase!(paste, :FOAM1, Ellipsoid(1.0), Dict(:C => foams[1]); fraction = :rest)
     for name in PASTE_INCLUSIONS
-        grain = sampled(heaviside_law(_stiff(name)), times)
+        grain = VolterraOperator(_stiff(name), times)
         reactant(n, name) > 0 && add_phase!(
             paste, Symbol(name), Ellipsoid(1.0), Dict(:C => grain); fraction = reactant(n, name)
         )
         for i in 2:n
             dv = reactant(i - 1, name) - reactant(i, name)
             dv > 0 || continue
-            law = summed(dissolved(grain, times[i]), precipitated(foams[i], times[i]))
-            add_phase!(paste, Symbol(name, :_, i), Ellipsoid(1.0), Dict(:C => law); fraction = dv)
+            R = dissolved(grain, times[i]) + precipitated(foams[i], times[i])
+            add_phase!(paste, Symbol(name, :_, i), Ellipsoid(1.0), Dict(:C => R); fraction = dv)
         end
     end
-    R_paste = homogenize_alv(paste, MoriTanaka(), :C; times)
-
+    # The paste is homogenized where the concrete needs it, on the same grid.
     concrete = RVE()
-    add_phase!(concrete, :PASTE, Ellipsoid(1.0), Dict(:C => operator_law(R_paste, times)); fraction = :rest)
+    add_phase!(concrete, :PASTE, Ellipsoid(1.0), Dict(:C => Homogenized(paste, MoriTanaka())); fraction = :rest)
     add_phase!(concrete, :AGG, Ellipsoid(1.0), Dict(:C => heaviside_law(_stiff("aggregate"))); fraction = f_aggregate)
     return homogenize_alv(concrete, MoriTanaka(), :C; times)
 end

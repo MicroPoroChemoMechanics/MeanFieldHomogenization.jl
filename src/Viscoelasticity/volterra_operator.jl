@@ -120,8 +120,19 @@ _value_matrix(x::TensND.AbstractTens{2, 3}) = SMatrix{3, 3}(TensND.canonical_com
 # directly when it shares the frame; a value of another class or frame means
 # the law changes class over time, which no compact operator can hold.
 _value_blocks(c::_StructuredClass, x::_StructuredClass) =
-    _same_class(c, x) ? TensND.symmetry_blocks(x) : _class_change_error(c, x)
-_value_blocks(c::_StructuredClass, x) = _class_change_error(c, x)
+    _same_class(c, x) ? TensND.symmetry_blocks(x) : _value_blocks_by_matrix(c, x)
+_value_blocks(c::_StructuredClass, x) = _value_blocks_by_matrix(c, x)
+
+# A value of another type that belongs to the class all the same — an isotropic
+# value in a transversely isotropic law, or the zero of one, which TensND
+# returns isotropic — is read through its matrix; one off the class is refused.
+function _value_blocks_by_matrix(c, x)
+    M = _value_matrix(x)
+    b = TensND.symmetry_blocks(c, M)
+    is_hard_numeric(eltype(M)) && !(maximum(abs, TensND.symmetry_matrix(c, b) - M) ≤ _CLASS_RTOL * maximum(abs, M)) &&
+        _class_change_error(c, x)
+    return b
+end
 _value_blocks(::DenseClass, x) = (_value_matrix(x),)
 _value_blocks(::ScalarClass, x::Number) = (SMatrix{1, 1}(x),)
 
@@ -235,7 +246,7 @@ Base.eltype(::Type{<:VolterraOperator{C, T}}) where {C, T} = T
 function VolterraOperator(law::AbstractViscoLaw, times)
     grid = TimeGrid(times)
     t, n = grid.times, length(grid)
-    c = _class_of(visco_eval(law, t[1], t[1]))
+    c = _law_class(law, t)
     sizes = _block_sizes(c)
     T = mapreduce(eltype, promote_type, _value_blocks(c, visco_eval(law, t[1], t[1])))
     Ms = map(s -> zeros(T, _val(s) * n, _val(s) * n), sizes)
@@ -244,6 +255,17 @@ function VolterraOperator(law::AbstractViscoLaw, times)
 end
 
 VolterraOperator(f, times) = VolterraOperator(ViscoLaw(f), times)
+
+# The class of a law: that of its first value on the diagonal of the grid that is not
+# zero. A zero says nothing (TensND makes the zero of any tensor isotropic), and a
+# phase that precipitates later is zero first.
+function _law_class(law, t)
+    for tᵢ in t
+        v = visco_eval(law, tᵢ, tᵢ)
+        iszero(v) || return _class_of(v)
+    end
+    return _class_of(visco_eval(law, t[1], t[1]))
+end
 
 # A constant tensor: its trapezoidal matrix is block diagonal, the tensor on
 # the diagonal (the weights ½(f + f) on it, ½(f − f) = 0 below).
@@ -275,8 +297,9 @@ _in_class(R, like) = convert_class(R, _class_of(like); check = true)
 # ── Entries and conversions ────────────────────────────────────────────────
 
 # The blocks at the pair of instants (i, j), as static matrices.
-@inline function _entry_blocks(R::VolterraOperator, i, j)
-    return map(R.blocks, _block_sizes(R.class)) do B, s
+@inline _entry_blocks(R::VolterraOperator, i, j) = _entry_blocks(R.class, R.blocks, i, j)
+@inline function _entry_blocks(c, blocks, i, j)
+    return map(blocks, _block_sizes(c)) do B, s
         m = _val(s)
         SMatrix{m, m}(view(B, (m * (i - 1) + 1):(m * i), (m * (j - 1) + 1):(m * j)))
     end
@@ -308,11 +331,15 @@ end
 The full discretized matrix of `R`: ``6n\\times 6n`` (Kelvin-Mandel blocks) at
 order 4, ``3n\\times 3n`` at order 2, ``n\\times n`` for a scalar operator.
 """
-function Base.Matrix(R::VolterraOperator{<:Any, T}) where {T}
-    n, d = length(R.grid), _value_dim(R.class)
+Base.Matrix(R::VolterraOperator) = _dense_matrix(R.class, R.blocks, length(R.grid))
+
+# The full matrix of the operator of class `c` whose block matrices are `blocks`, on n instants.
+function _dense_matrix(c, blocks, n)
+    T = mapreduce(eltype, promote_type, blocks)
+    d = _value_dim(c)
     M = zeros(T, d * n, d * n)
     for j in 1:n, i in j:n
-        M[(d * (i - 1) + 1):(d * i), (d * (j - 1) + 1):(d * j)] .= _class_matrix(R.class, _entry_blocks(R, i, j))
+        M[(d * (i - 1) + 1):(d * i), (d * (j - 1) + 1):(d * j)] .= _class_matrix(c, _entry_blocks(c, blocks, i, j))
     end
     return M
 end
@@ -363,6 +390,48 @@ function _converted(R::VolterraOperator, c, rtol)
         end
     end
     return VolterraOperator(c, Ms, R.grid), nothing
+end
+
+# An isotropic operator belongs to every class of its order, linearly: the blocks of
+# α 𝕁 + β 𝕂 in class `c` are kron(α, b(𝕁)) + kron(β, b(𝕂)), b(𝕁) and b(𝕂) the small
+# constant blocks of the two projectors. No check, no conversion entry by entry.
+function _converted(R::VolterraOperator{<:TensISO{4, 3}}, c, rtol)
+    α, β = R.blocks
+    bJ = _matrix_blocks(c, _value_matrix(TensISO{3}(1.0, 0.0)))
+    bK = _matrix_blocks(c, _value_matrix(TensISO{3}(0.0, 1.0)))
+    return VolterraOperator(c, map((j, k) -> kron(α, Matrix(j)) + kron(β, Matrix(k)), bJ, bK), R.grid), nothing
+end
+function _converted(R::VolterraOperator{<:TensISO{2, 3}}, c, rtol)
+    λ = R.blocks[1]
+    b𝟏 = _matrix_blocks(c, _value_matrix(TensISO{3}(1.0)))
+    return VolterraOperator(c, map(b -> kron(λ, Matrix(b)), b𝟏), R.grid), nothing
+end
+
+"""
+    _iso_part(R::VolterraOperator) -> VolterraOperator
+
+The isotropic part of an order-4 operator, read on its blocks: the average over the
+rotations of each of its values, ``\\alpha = \\underline{s}\\cdot M\\cdot\\underline{s}`` (``\\underline{s}``
+the spherical Kelvin-Mandel direction) and ``\\beta = (\\operatorname{tr} M - \\alpha)/5``,
+both linear in the blocks.
+"""
+function _iso_part(R::VolterraOperator)
+    n = length(R.grid)
+    Q = _class_basis(R.class)
+    s = transpose(Q) * SVector(1, 1, 1, 0, 0, 0) / sqrt(3 * one(eltype(Q)))
+    T = promote_type(eltype(R), eltype(Q))
+    α, trace = zeros(T, n, n), zeros(T, n, n)
+    map(R.blocks, _class_layout(R.class)) do B, copies
+        m = length(first(copies))
+        W = reshape(B, m, n, m, n)
+        for a in 1:m
+            trace .+= length(copies) .* view(W, a, :, a, :)
+        end
+        for c in copies, a in 1:m, b in 1:m
+            α .+= (s[c[a]] * s[c[b]]) .* view(W, a, :, b, :)
+        end
+    end
+    return VolterraOperator(_ISO4, (α, (trace .- α) ./ 5), R.grid)
 end
 
 # The absolute tolerance of a membership test. Values that do not compare
@@ -637,6 +706,18 @@ function operator_law(R::VolterraOperator; mode::Symbol = :relaxation)
     samples = [_class_value(R.class, map((Fₖ, s) -> SMatrix{_val(s), _val(s)}(Fₖ[i, j]), F, sizes)) for i in 1:n, j in 1:n]
     return SampledViscoLaw(R.grid.times, samples; mode)
 end
+
+# On an operator: its kernel read back on the grid, switched, discretized again, in the
+# class of its values.
+"""
+    precipitated(R::VolterraOperator, t_s) -> VolterraOperator
+    dissolved(R::VolterraOperator, t_d) -> VolterraOperator
+
+The same transforms on a relaxation operator, on its grid: its kernel
+([`operator_law`](@ref)) switched on at ``t_s`` or off at ``t_d``, and discretized again.
+"""
+precipitated(R::VolterraOperator, t_s::Real) = VolterraOperator(precipitated(operator_law(R), t_s), R.grid)
+dissolved(R::VolterraOperator, t_d::Real) = VolterraOperator(dissolved(operator_law(R), t_d), R.grid)
 
 # The Volterra inverse of the matrix interface, block by block.
 function volterra_inverse(R::VolterraOperator; block_size::Int = _value_dim(R.class))

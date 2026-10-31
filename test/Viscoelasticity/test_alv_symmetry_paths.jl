@@ -71,37 +71,30 @@ end
     _check_elastic_limit(C_alv, M_ref, length(times))
 end
 
-# A random lower-triangular n×n Volterra matrix, its diagonal kept away from zero.
-function _alv_rand_lt(n; scale = 1.0)
-    M = [i >= j ? scale * randn() : 0.0 for i in 1:n, j in 1:n]
-    for i in 1:n
-        M[i, i] += sign(M[i, i]) * 1.0 + (M[i, i] == 0)
-    end
-    return M
-end
-
 @testset "MT and Maxwell on random TI and orthotropic operators match the generic algebra" begin
-    # Genuinely time-dependent operators: the structured fast paths have to
-    # agree with the 6n×6n algebra both on the order of the tensor products,
-    # whose normal blocks are 2×2 (TI) or 3×3 (orthotropic) matrices, and on the
-    # order in time, along which Volterra operators do not commute either.
+    # Genuinely time-dependent operators in a tilted axis and a random frame: the
+    # class algebra has to agree with the 6n×6n one both on the order of the tensor
+    # products, whose normal blocks are 2×2 (TI) or 3×3 (orthotropic) matrices,
+    # and on the order in time, along which Volterra operators do not commute either.
     V = MeanFieldHomogenization.Viscoelasticity
-    n = 4
-    for (np, blocks, mt_struct, mx_struct) in (
-            (6, ti_blocks_from_params, V.mori_tanaka_alv_ti, V.maxwell_alv_ti),
-            (12, ortho_blocks_from_params, V.mori_tanaka_alv_ortho, V.maxwell_alv_ortho),
-        )
-        rand_op(; scale = 1.0) = ntuple(_ -> _alv_rand_lt(n; scale), np)
-        # The identity of each class, read off its block form.
-        id = blocks === ti_blocks_from_params ? V._ti_identity(n, Float64) : V._ortho_identity(n, Float64)
-        near_id() = ntuple(k -> id[k] .+ 0.1 .* _alv_rand_lt(n; scale = 0.3), np)
-        C0, H0 = rand_op(), rand_op(; scale = 0.2)
-        A = [near_id(), near_id()]
-        N = [rand_op(), rand_op()]
+    times = collect(range(0.0, 3.0; length = 4))
+    axis = Tuple(normalize([0.3, -0.5, 0.8]))
+    frame = TensND.RotatedBasis(0.4, 0.9, 0.2)
+    laws = (
+        s -> ViscoLaw((t, tp) -> (1 + s * exp(tp - t)) * TensTI{4}(5.0 + s, 4.0, 1.0, 0.5 + 0.1s, 2.0, 1.5, axis)),
+        s -> ViscoLaw((t, tp) -> (1 + s * exp(tp - t)) * TensOrtho{4, Float64}(ntuple(k -> 1.0 + 0.3k + 0.1s * isodd(k), 12), frame)),
+    )
+    for law in laws
+        op(s) = VolterraOperator(law(s), times)
+        C0, H0 = op(1.0), 0.2 * op(2.0)
+        A = [I + 0.1 * op(3.0), I + 0.1 * op(4.0)]
+        N = [op(5.0), op(6.0)]
         f, fM = [0.2, 0.3], 0.5
-        mt = blocks(mt_struct(C0, A, N, f, fM))
-        @test mt ≈ mori_tanaka_alv(blocks(C0), blocks.(A), blocks.(N), f, fM) rtol = 1.0e-9
-        mx = blocks(mx_struct(C0, N, f, H0))
-        @test mx ≈ maxwell_alv(blocks(C0), blocks.(N), f; H_0 = blocks(H0)) rtol = 1.0e-9
+        a = V._OpALV(C0.grid)
+        mt = V._alg_mori_tanaka(a, C0, A, N, f, fM)
+        @test typeof(mt.class) == typeof(C0.class)
+        @test Matrix(mt) ≈ mori_tanaka_alv(Matrix(C0), Matrix.(A), Matrix.(N), f, fM) rtol = 1.0e-11
+        mx = V._alg_maxwell(a, C0, N, f, H0)
+        @test Matrix(mx) ≈ maxwell_alv(Matrix(C0), Matrix.(N), f; H_0 = Matrix(H0)) rtol = 1.0e-11
     end
 end

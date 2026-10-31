@@ -198,8 +198,15 @@ end
     law2 = ViscoLaw((t, tp) -> TensTI{4}(5.0, 4.0, 1.0, 2.0, 1.5, t > 1 ? (0.0, 0.0, 1.0) : (1.0, 0.0, 0.0)))
     @test_throws "changes its symmetry class" VolterraOperator(law2, VO_TIMES)
     @test_throws "6×6 (Kelvin-Mandel" VolterraOperator(ViscoLaw((t, tp) -> zeros(2, 2)), VO_TIMES)
-    law3 = ViscoLaw((t, tp) -> t > 1 ? mandel(canonical_components(TensISO{3}(3.0, 2.0))) : TensISO{3}(3.0, 2.0))
+    # A value off the class, given as a matrix, is refused; one in it is read.
+    law3 = ViscoLaw((t, tp) -> t > 1 ? mandel(canonical_components(TensTI{4}(5.0, 4.0, 1.0, 2.0, 1.5, VO_AXIS)); symmetrize = true) : TensISO{3}(3.0, 2.0))
     @test_throws "changes its symmetry class" VolterraOperator(law3, VO_TIMES)
+    law4 = ViscoLaw((t, tp) -> t > 1 ? mandel(canonical_components(TensISO{3}(3.0, 2.0)); symmetrize = true) : TensISO{3}(3.0, 2.0))
+    @test VolterraOperator(law4, VO_TIMES).class isa TensISO
+    @test Matrix(VolterraOperator(law4, VO_TIMES)) ≈ trapezoidal_matrix(law4, VO_TIMES) rtol = 1.0e-13
+    # A law zero at first (a phase that forms later) takes the class of its later values.
+    late = precipitated(vo_laws()[3][2], 1.5)
+    @test VolterraOperator(late, VO_TIMES).class isa TensTI
     # A law of generic tensors (no class) gives a dense operator, at both orders.
     for C in (TensTI{4}(5.0, 4.0, 1.0, 2.0, 1.5, VO_AXIS), TensTI{2}(2.0, 1.0, VO_AXIS))
         law = ViscoLaw((t, tp) -> (1 + vo_decay(t, tp)) * generic_tens(C))
@@ -240,6 +247,21 @@ end
     @test MeanFieldHomogenization.Viscoelasticity._compact(VolterraOperator(Matrix(R), times), [TensISO{3}(1.0, 1.0)]).class isa DenseClass
     # The values of a symbolic operator are taken in its class as given.
     @test convert_class(VolterraOperator(Matrix(R), times), TensISO{3}(1.0, 1.0)).class isa TensISO
+end
+
+@testset "VolterraOperator: precipitation and dissolution" begin
+    # On the operator, as on its law: the same discretized kernel.
+    for (name, law) in vo_laws()[[1, 3, 6]]
+        R = VolterraOperator(law, VO_TIMES)
+        @test precipitated(R, 1.0) ≈ VolterraOperator(precipitated(law, 1.0), VO_TIMES) rtol = 1.0e-12
+        @test dissolved(R, 2.0) ≈ VolterraOperator(dissolved(law, 2.0), VO_TIMES) rtol = 1.0e-12
+        @test typeof(precipitated(R, 1.0).class) == typeof(R.class)
+    end
+    # A grain dissolving while a phase precipitates in its place: the sum of operators.
+    g = VolterraOperator(TensISO{3}(30.0, 20.0), VO_TIMES)
+    f = VolterraOperator(vo_laws()[1][2], VO_TIMES)
+    both = ViscoLaw((t, tp) -> visco_eval(dissolved(heaviside_law(TensISO{3}(30.0, 20.0)), 2.0), t, tp) + visco_eval(precipitated(vo_laws()[1][2], 2.0), t, tp))
+    @test dissolved(g, 2.0) + precipitated(f, 2.0) ≈ VolterraOperator(both, VO_TIMES) rtol = 1.0e-12
 end
 
 @testset "VolterraOperator: inference" begin

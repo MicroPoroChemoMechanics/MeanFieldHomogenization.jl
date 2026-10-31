@@ -365,20 +365,16 @@ end
 #       for the Newton-Raphson SC solver, which uses the same algebra
 #       but solves `F(C) = 0` instead of iterating Picard).
 function _build_sc_crack_extra_J(C_m::AbstractMatrix, crack_data)
-    T = eltype(C_m)
     extra = zero(C_m)
     isempty(crack_data) && return extra
     _is_iso_block(C_m) ||
         error("self_consistent_alv with cracks: only iso running estimate is supported")
-    α_c, β_c = _iso_pair(C_m)
+    α_c, β_c = iso_params_from_blocks(C_m)
     B_n_base, B_t_base = _penny_cod_alv(α_c, β_c)
     @inbounds for (geom, ε, sym, Rn_mat, Rt_mat) in crack_data
         B_n = _interface_corrected(B_n_base, Rn_mat, semi_minor(geom))
         B_t = _interface_corrected(B_t_base, Rt_mat, semi_minor(geom))
-        Z = zeros(T, size(α_c))
-        ℓ₁ = (3 / 4) .* B_n
-        ℓ₆ = (3 / 8) .* B_t
-        H_TI = ti_blocks_from_params((ℓ₁, copy(Z), copy(Z), copy(Z), copy(Z), ℓ₆))
+        H_TI = _penny_compliance_blocks(B_n, B_t)
         H_full = _maybe_symmetrize_alv(delta_inverse_property_alv(geom, H_TI, ε), sym)
         @. extra += H_full
     end

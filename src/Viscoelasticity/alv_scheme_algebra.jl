@@ -5,47 +5,28 @@
 #  Voigt, Reuss, dilute, dilute dual, Mori-Tanaka and Maxwell, and the dilute
 #  concentration and contribution, are the same few Volterra sums, products and
 #  inverses whatever the operator is written as: a dense block matrix (6n×6n at
-#  order 4, 3n×3n at order 2), or the n×n parameter matrices of an isotropic
-#  (α, β), transversely isotropic (ℓ₁…ℓ₆) or orthotropic (o₁…o₁₂) operator.
-#  Each representation is an algebra type that supplies its identity, product
-#  and inverse; the schemes are written once against it, and the exported
-#  `*_alv`, `*_alv_order2`, `*_alv_iso`, `*_alv_ti` and `*_alv_ortho` functions
-#  check their arguments and call them.
+#  order 4, 3n×3n at order 2), or a `VolterraOperator` stored by the blocks of
+#  its symmetry class. Each representation is an algebra type that supplies its
+#  identity, product and inverse; the schemes are written once against it, and
+#  the exported `*_alv` and `*_alv_order2` functions check their arguments and
+#  call them.
 # =============================================================================
 
 abstract type _ALVAlgebra end
 "Dense block matrices, `B×B` blocks per pair of times: 6 at order 4, 3 at order 2."
 struct _DenseALV{B} <: _ALVAlgebra end
-"Isotropic parameter pairs ``(\\alpha, \\beta)``."
-struct _IsoALV <: _ALVAlgebra end
-"Transversely isotropic Walpole parameters ``(\\ell_1, \\dots, \\ell_6)``."
-struct _TIALV <: _ALVAlgebra end
-"Orthotropic parameters ``(o_1, \\dots, o_{12})``."
-struct _OrthoALV <: _ALVAlgebra end
 
 # The number of times of the grid, the element type of one operator, and the
-# map of a function over its components (a dense matrix is its own component).
+# map of a function over it.
 _alg_ntimes(::_DenseALV{B}, C) where {B} = size(C, 1) ÷ B
-_alg_ntimes(::_ALVAlgebra, C) = size(first(C), 1)
 _alg_eltype(::_DenseALV, C) = eltype(C)
-_alg_eltype(::_ALVAlgebra, C) = mapreduce(eltype, promote_type, C)
 _alg_map(::_DenseALV, f, X...) = f(X...)
-_alg_map(::_ALVAlgebra, f, X...) = map(f, X...)
 
 _alg_one(::_DenseALV{B}, n, T) where {B} = Matrix{T}(LinearAlgebra.I, B * n, B * n)
-_alg_one(::_IsoALV, n, T) = _iso_identity(n, T)
-_alg_one(::_TIALV, n, T) = _ti_identity(n, T)
-_alg_one(::_OrthoALV, n, T) = _ortho_identity(n, T)
 
 _alg_prod(::_DenseALV, X, Y) = X * Y
-_alg_prod(::_IsoALV, X, Y) = _iso_prod(X, Y)
-_alg_prod(::_TIALV, X, Y) = _ti_prod(X, Y)
-_alg_prod(::_OrthoALV, X, Y) = _ortho_prod(X, Y)
 
 _alg_inv(::_DenseALV{B}, X) where {B} = volterra_inverse(X; block_size = B)
-_alg_inv(::_IsoALV, X) = _iso_inv(X)
-_alg_inv(::_TIALV, X) = _ti_inv(X)
-_alg_inv(::_OrthoALV, X) = _ortho_inv(X)
 
 _alg_add(a, X, Y) = _alg_map(a, +, X, Y)
 _alg_sub(a, X, Y) = _alg_map(a, -, X, Y)
@@ -140,36 +121,6 @@ function _alg_check_dense(name, ::_DenseALV{B}, Xs...) where {B}
         DimensionMismatch("$name: expected square $(B)n×$(B)n block matrices of one size, got $(map(size, Xs))")
     )
     return nothing
-end
-
-# ── The cheapest algebra of a call ─────────────────────────────────────────
-
-# Membership of a dense block matrix in a structured algebra, and the
-# conversions both ways; a dense matrix is its own representation.
-_alv_belongs(::_IsoALV, M) = _is_iso_block(M)
-_alv_belongs(::_TIALV, M) = _is_ti_block(M)
-_alv_belongs(::_OrthoALV, M) = _is_ortho_block(M)
-_alv_to(::_IsoALV, M) = _iso_pair(M)
-_alv_to(::_TIALV, M) = _ti_pair(M)
-_alv_to(::_OrthoALV, M) = _ortho_pair(M)
-_alv_to(::_DenseALV, M) = M
-_alv_from(::_IsoALV, X) = _iso_blocks(X)
-_alv_from(::_TIALV, X) = _ti_blocks(X)
-_alv_from(::_OrthoALV, X) = _ortho_blocks(X)
-_alv_from(::_DenseALV, X) = X
-
-"""
-    _cheapest_algebra(operators) -> _ALVAlgebra
-
-The cheapest algebra every one of the dense block matrices `operators` belongs
-to: isotropic, then transversely isotropic about ``\\underline{e}_3``, then orthotropic in
-the canonical frame (iso ⊂ TI ⊂ ortho), else the dense block matrices.
-"""
-function _cheapest_algebra(operators)
-    for a in (_IsoALV(), _TIALV(), _OrthoALV())
-        all(M -> _alv_belongs(a, M), operators) && return a
-    end
-    return _DenseALV{6}()
 end
 
 # ── Operators stored by the blocks of their class ──────────────────────────

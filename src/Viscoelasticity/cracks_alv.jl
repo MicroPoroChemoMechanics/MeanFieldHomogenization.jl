@@ -103,7 +103,7 @@ function cod_kernel_alv(
     C_M = _trapezoidal_relaxation(C_M_law, times, 6)
     _is_iso_block(C_M) ||
         throw(ArgumentError("cod_kernel_alv: matrix law is not iso (only iso ALV is supported)"))
-    α, β = _iso_pair(C_M)
+    α, β = iso_params_from_blocks(C_M)
 
     # Penny check (η = 1).
     η = aspect_ratio(crack)
@@ -220,12 +220,17 @@ function inverse_property_contribution_alv(
     _crack_axis_is_e3(crack) ||
         throw(ArgumentError("inverse_property_contribution_alv: only crack normal n̂ = e_3 is currently supported"))
     cod = cod_kernel_alv(crack, C_M_law, times; Rn = Rn, Rt = Rt)
-    n = size(cod.B_n, 1)
-    T = promote_type(eltype(cod.B_n), eltype(cod.B_t))
-    Z = zeros(T, n, n)
-    ℓ₁ = (T(3) / T(4)) .* cod.B_n
-    ℓ₆ = (T(3) / T(8)) .* cod.B_t
-    return ti_blocks_from_params((ℓ₁, copy(Z), copy(Z), copy(Z), copy(Z), ℓ₆))
+    return _penny_compliance_blocks(cod.B_n, cod.B_t)
+end
+
+# The compliance contribution of a penny crack of normal e₃, as a full matrix: transversely
+# isotropic about the normal, ℓ₁ = 3/4 B_n (opening) and ℓ₆ = 3/8 B_t (sliding), the other
+# Walpole components zero (the blocks of TensND `symmetry_blocks`).
+function _penny_compliance_blocks(B_n, B_t)
+    T = promote_type(eltype(B_n), eltype(B_t))
+    ℓ₁ = (T(3) / T(4)) .* B_n
+    ℓ₆ = (T(3) / T(8)) .* B_t
+    return _dense_matrix(_TI4_E3, (kron(ℓ₁, T[1 0; 0 0]), zero(ℓ₁), ℓ₆), size(ℓ₁, 1))
 end
 
 """
@@ -286,7 +291,7 @@ function property_contribution_alv_at(
     # The fastest route is to extract (α, β) directly here.
     _is_iso_block(C_ref) ||
         throw(ArgumentError("property_contribution_alv_at: only iso reference is supported"))
-    α, β = _iso_pair(C_ref)
+    α, β = iso_params_from_blocks(C_ref)
     B_n, B_t = _penny_cod_alv(α, β)
     # Optional Sevostianov interface-stiffness correction.  Caller
     # supplies the **already-discretized** scalar interface matrices
@@ -295,12 +300,7 @@ function property_contribution_alv_at(
     # interface laws each pass.
     B_n = _interface_corrected(B_n, Rn_mat, semi_minor(crack))
     B_t = _interface_corrected(B_t, Rt_mat, semi_minor(crack))
-    n = size(α, 1)
-    T = eltype(α)
-    Z = zeros(T, n, n)
-    ℓ₁ = (T(3) / T(4)) .* B_n
-    ℓ₆ = (T(3) / T(8)) .* B_t
-    H̃ = ti_blocks_from_params((ℓ₁, copy(Z), copy(Z), copy(Z), copy(Z), ℓ₆))
+    H̃ = _penny_compliance_blocks(B_n, B_t)
     return -(C_ref * H̃ * C_ref)
 end
 

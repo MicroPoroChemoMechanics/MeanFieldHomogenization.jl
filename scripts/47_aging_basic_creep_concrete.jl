@@ -14,7 +14,8 @@
 #    cement composition, w/c, silica fume                       [lavergne2020.json]
 #      → hydration, volume fractions at each instant             [ChemistryLab]
 #      → aging viscoelastic phases, one per step of hydration    [precipitated, dissolved]
-#      → four scales SC / SC / MT / MT, nested by operator_law   [homogenize_alv]
+#      → four scales SC / SC / MT / MT, each handing its operator on   [homogenize_alv]
+#        the shared grid to the next
 #      → J(t, t') of the concrete for every loading age
 #      → against the measured compliances                       [leroy1995.json]
 #

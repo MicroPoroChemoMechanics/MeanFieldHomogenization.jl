@@ -9,10 +9,60 @@ needs; an Applications page puts the two together for the basic creep of concret
 ### Breaking changes
 
 - Before 1.0 a minor release is breaking for the resolver: a compat entry
-  `MeanFieldHomogenization = "0.24"` does not accept 0.25.0. No API breaks: the
-  viscoelastic functions that took a `ViscoLaw` now take any `AbstractViscoLaw`.
+  `MeanFieldHomogenization = "0.24"` does not accept 0.25.0.
+- `homogenize_alv` returns a `VolterraOperator` instead of a `Matrix`. It is an
+  `AbstractMatrix` (the same `6n×6n` matrix, stored by the blocks of its symmetry class),
+  so code that multiplies, inverts, indexes or compares the result keeps working;
+  `Matrix(R)` gives the dense matrix where one is required.
+- `ALVKernelISO`, `ALVKernelTI`, `ALVKernelOrtho` and `AbstractALVKernel` are removed:
+  `VolterraOperator` replaces them, for any axis or frame and at both orders.
+- Requires TensND 0.12.
 
 ### Added
+
+- `VolterraOperator`, `TimeGrid`, `TimeHistory`: an aging viscoelastic operator has two
+  faces, a function of `(t, t′)` and its matrix on a time grid, and so has a history, a
+  function of `t` and its values on the grid; both are first-class. A `TimeGrid` is shared
+  by every operator and history of one computation and given back by `time_grid` after
+  any computation; two grids are never mixed silently. An operator is built from a law,
+  any function of `(t, t′)`, a constant tensor, or the matrix of an operator already on
+  the grid (`like = C` stores it in the class of `C` after checking it belongs), and it
+  computes as the elastic tensors do: composition (`*`, `⊡`, `⋅`), Volterra inverse
+  (`inv`), `+`, `-`, products by numbers, `I`, and `R ⊡ ε` for the response to a history.
+  It stores one matrix over the instants per block of the symmetry class of its values
+  (TensND `symmetry_blocks`): two `n×n` matrices for an isotropic operator instead of one
+  `6n×6n`. `operator_value`, `convert_class`, `DenseClass`, `ScalarClass`. A manual page
+  for novices, *Aging viscoelastic operators and histories*, and
+  `scripts/58_volterra_operators.jl`.
+- `homogenize_alv` takes as a phase property a law, a `VolterraOperator`, its plain matrix,
+  or a `Homogenized` cell, homogenized on the same grid as in elasticity; `times` may be
+  left out when an operator among the properties carries the grid. The result is stored in
+  the cheapest class that holds it, including the axis or frame of a phase (a TI result
+  about a tilted axis).
+- `precipitated` and `dissolved` on operators as well as on laws.
+- An aging viscoelastic harness against Echoes, `scripts/bench_echoes/alv_harness`: 24
+  cases (spheres and spheroids, aligned and tilted, TI laws about tilted axes, orientation
+  averages, order 2, two-scale chains), the Echoes and the MFH scripts both kept; they
+  agree to 8e-16.
+
+### Changed
+
+- The aging viscoelastic schemes compute in the symmetry classes of their operators instead
+  of on dense `6n×6n` matrices: the Hill kernel is built in the class of the shape of the
+  inclusion (isotropic for a sphere, transversely isotropic about the axis of a spheroid
+  however tilted, orthotropic in the frame of an ellipsoid), the dilute concentration and
+  contribution share one inverse, the self-consistent estimate stays in two isotropic
+  `n×n` blocks across its iterations, and the Volterra inverse of blocks halves the
+  instants into large matrix products. At `n = 80` instants: Mori–Tanaka with spheres
+  9.8 → 1.1 ms, with spheroids along `e₃` 25 → 8 ms, with tilted spheroids 64 → 8 ms,
+  isotropic self-consistent 172 → 16 ms; against Echoes on the harness, 1.6 to 18 times
+  faster.
+
+### Fixed
+
+- The Echoes benchmark of the schemes handed Echoes a temporary array that Echoes borrows
+  without copying: its self-consistent fixed point could start from freed memory. The array
+  is now kept alive for the life of the RVE.
 
 - `operator_law(R, times)` turns the relaxation operator that `homogenize_alv` returns into a
   law, a `SampledViscoLaw` known at the instants of the grid, so that a composite becomes a

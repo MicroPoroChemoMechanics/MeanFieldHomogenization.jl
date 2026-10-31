@@ -75,12 +75,15 @@ model:
 | paste | Mori–Tanaka | the foam born first as matrix; a grain consumed at step ``i`` is `dissolved` at ``t_i`` while the foam born at ``t_i`` is `precipitated` in its place |
 | concrete | Mori–Tanaka | the paste and elastic aggregates |
 
-Each scale is a [`homogenize_alv`](@ref) on one time grid, and [`operator_law`](@ref) hands
-its result to the next. The model is `scripts/common/aging_creep_micromechanics.jl`; a
-phase consumed and replaced, for instance, is one line of it:
+Each scale is a [`homogenize_alv`](@ref) on one time grid, and hands its result, a
+[`VolterraOperator`](@ref), to the next as a phase property; the paste enters the concrete
+as a [`Homogenized`](@ref) cell. Every operator here is isotropic: two ``n\times n``
+matrices instead of one ``6n\times 6n``. The model is
+`scripts/common/aging_creep_micromechanics.jl`; a phase consumed and replaced, for
+instance, is one line of it, the sum of two operators:
 
 ```julia
-law = summed(dissolved(grain, times[i]), precipitated(foams[i], times[i]))
+R = dissolved(grain, times[i]) + precipitated(foams[i], times[i])
 ```
 
 A small check of these two operations: a soft phase in which a stiff one precipitates at
@@ -89,9 +92,9 @@ one day, loaded at three days, has the compliance of the stiff phase.
 ```@example basiccreep
 times = [0.5, 1.0, 2.997, 3.0, 30.0]
 C = iso_stiffness_E_nu(30.0, 0.2)
-soft = sampled(heaviside_law(TensISO{3}(3.0e-6, 2.0e-6)), times)
-stiffening = summed(soft, precipitated(sampled(heaviside_law(C), times), 1.0))
-J = uniaxial_compliance(trapezoidal_matrix(stiffening, times), times)
+soft = VolterraOperator(TensISO{3}(3.0e-6, 2.0e-6), times)
+stiffening = soft + precipitated(VolterraOperator(C, times), 1.0)
+J = uniaxial_compliance(stiffening, times)
 @printf "J(30, 3) = %.5f per GPa, 1/E = %.5f\n" J[end, 4] 1 / 30
 ```
 
