@@ -177,29 +177,24 @@ routes to the order-2 pipeline automatically (see §6).
 
 ## 4. Reading effective properties
 
-The `(6n × 6n)` output is a Mandel block matrix. Use
-[`iso_params_from_blocks`](@ref) to extract the iso `(α, β)` parameter
-matrices:
+The result is a [`VolterraOperator`](@ref). An isotropic one stores ``\alpha = 3k`` and
+``\beta = 2\mu`` as two ``n\times n`` matrices, the weights of the trapezoidal rule;
+the kernel itself, at the instants of the grid, is that of [`operator_law`](@ref):
 
 ```julia
-α, β = iso_params_from_blocks(C_eff)         # n × n each
-# 3 K_eff(t,t')   = α(t,t')
-# 2 μ_eff(t,t')   = β(t,t')
-
-# Effective shear modulus history : column index = t' = 0 (Heaviside step)
-times_keep = times                            # (length n)
-μ_eff_t = β[:, 1] ./ 2                        # μ(tᵢ, t₁) for i = 1..n
+α, β = C_eff.blocks                           # n × n each: trapezoidal weights, not kernel values
+law = operator_law(C_eff)                     # the kernel C(t, t′) on the grid
+μ_eff = [shear_modulus(visco_eval(law, t, times[1])) for t in times]   # μ(tᵢ, t₁)
 ```
 
-For a **uniaxial creep** test (unit longitudinal stress, all
-components 1, 2, 3 stay the same in iso ; 4, 5, 6 are zero):
+For a **uniaxial creep** test, a unit stress held from ``t_1``, the strain is the creep
+operator applied to that history:
 
 ```julia
-n = length(times)
-J_eff = volterra_inverse(C_eff; block_size = 6)       # creep matrix
-S = zeros(n * 6); for i in 1:n;  S[6 * (i - 1) + 1] = 1.0;  end
-ε = J_eff * S
-ε_xx_t = ε[1:6:end]                            # ε_xx(tᵢ)
+J_eff = inv(C_eff)                            # the creep operator
+σ = TimeHistory(t -> TensND.Tens(Symmetric([1.0 0 0; 0 0 0; 0 0 0])), times)
+ε = J_eff ⊡ σ
+ε_xx = [ε[i][1] for i in eachindex(times)]    # ε_xx(tᵢ)
 ```
 
 For any class, the result is stored by the blocks of its class: `C_eff.blocks` holds,
