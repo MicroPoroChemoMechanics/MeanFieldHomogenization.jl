@@ -2,6 +2,16 @@
 
 ## v0.25.0 — aging basic creep of concrete, across scales
 
+A minor release: new exported API. Aging viscoelastic homogenization nests across scales,
+and a phase can form or dissolve during the history, which is what a hydrating cement paste
+needs; an Applications page puts the two together for the basic creep of concrete.
+
+### Breaking changes
+
+- Before 1.0 a minor release is breaking for the resolver: a compat entry
+  `MeanFieldHomogenization = "0.24"` does not accept 0.25.0. No API breaks: the
+  viscoelastic functions that took a `ViscoLaw` now take any `AbstractViscoLaw`.
+
 ### Added
 
 - `operator_law(R, times)` turns the relaxation operator that `homogenize_alv` returns into a
@@ -14,6 +24,13 @@
   forms stress-free at `t_s`, or stops carrying stress at `t_d`, for any law, sampled ones
   included. With them, a hydrating paste is a set of phases of fixed fractions, one per step
   of its hydration.
+- An Applications page, *Aging basic creep of concrete*, after Lavergne & Barthélémy
+  (2020): the four-scale model of the hydrating paste in aging viscoelasticity, the
+  hydrates creeping logarithmically, one phase per step of the hydration computed by
+  ChemistryLab, against the basic creep tests of Le Roy (1995) on two concretes loaded
+  from 0.83 to 28 days (NU database). The model is shared by the page and
+  `scripts/47_aging_basic_creep_concrete.jl`, which writes the results the page reads; the
+  data are in `data/literature/leroy1995.json` and `lavergne2020.json`.
 
 ## v0.24.0 — the nonlinear models still missing, FEniCSx, faster starts and polycrystals
 

@@ -35,6 +35,7 @@ the pages it builds on.
 | [Hydration through the pore solution](@ref app-ionic-hydration) | the same paste, its hydration driven through the ionic species of the pore solution rather than stated solid reactions |
 | [Cement paste: chloride diffusivity and elasticity](@ref app-cement-paste-diffusion) | one multiscale model that predicts both the chloride diffusivity and the elastic moduli |
 | [Aging creep of solidifying cementitious materials](@ref app-aging-creep) | a phase that solidifies progressively, as C-S-H does, and the aging relaxation kernel that results |
+| [Aging basic creep of concrete: a CEM I cement, with and without silica fume](@ref app-aging-basic-creep) | the creep of a hydrating concrete from its composition, over four aging scales, against creep tests at several loading ages |
 | [Quasi-brittle strength of cement paste and mortar](@ref app-strength) | the uniaxial compressive strength upscaled from the hydrate foam to the paste and the mortar |
 | [The interfacial transition zone in concrete](@ref app-itz-concrete) | the more porous shell of paste around each aggregate, and the stiffness it costs the concrete |
 | [The elastic limit of concrete: ITZ failure and ITZ–aggregate separation](@ref app-itz-elastic-limit) | where microcracks start around the aggregates: the stress in the ITZ from the Hadamard jump conditions, and the elastic limit surface |

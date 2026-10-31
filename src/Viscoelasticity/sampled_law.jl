@@ -62,9 +62,9 @@ Its kernel is recovered row by row: on row ``i``, the operator holds
 ``f_j = f(t_i, t_j)``, a system solved exactly by sums and differences.
 [`trapezoidal_matrix`](@ref) of the result gives `R` back.
 """
-# The block size sets the type of the samples (a scalar or a block): propagated as a constant,
-# a literal `block_size` (the default included) is resolved at compile time.
 Base.@constprop :aggressive function operator_law(R::AbstractMatrix, times::AbstractVector{<:Real}; block_size::Int = 6, mode::Symbol = :relaxation)
+    # The block size sets the type of the samples (a scalar or a block): propagated as a
+    # constant, a literal `block_size` (the default included) is resolved at compile time.
     n, B = length(times), block_size
     size(R) == (B * n, B * n) || throw(
         DimensionMismatch("operator_law: a $(size(R)) operator for $n instants and blocks of size $B; expected ($(B * n), $(B * n))")

@@ -146,6 +146,23 @@ C_eff = homogenize_alv(rve, MoriTanaka(), :C; times = times)   # 300 × 300
 `DiluteDual`, `MoriTanaka`, `Maxwell`, `PonteCastanedaWillis`,
 `SelfConsistent`, `AsymmetricSelfConsistent`, `DifferentialScheme`.
 
+### Nesting scales, and phases that appear or disappear
+
+The result of [`homogenize_alv`](@ref) is an operator on the time grid. Turned back into a
+law by [`operator_law`](@ref), it becomes a phase of the next scale, on the same grid:
+
+```julia
+R_paste = homogenize_alv(paste, MoriTanaka(), :C; times = times)
+add_phase!(concrete, :paste, Ellipsoid(1.0), Dict(:C => operator_law(R_paste, times));
+           fraction = :rest)
+```
+
+A phase that forms during the history is loaded only by the strains that follow its
+formation, and a phase that dissolves stops carrying stress: [`precipitated`](@ref) and
+[`dissolved`](@ref) switch a relaxation kernel on at ``t_s`` or off at ``t_d``, for any law,
+sampled ones included. A hydrating paste is built from them, one phase per step of its
+hydration ([aging basic creep of concrete](@ref app-aging-basic-creep)).
+
 A symmetric companion exists for **conductivity / diffusion /
 permittivity** (order-2 properties, 3 × 3 kernels) — the dispatcher
 inspects the sample type returned by `visco_eval(law, t, t)` and
